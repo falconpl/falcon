@@ -210,7 +210,6 @@ FALCON_FUNC Compiler_init( ::Falcon::VMachine *vm )
 
 void internal_link( ::Falcon::VMachine *vm, Module *mod, CompilerIface *iface )
 {
-
    Runtime rt( &iface->loader(), vm );
    rt.hasMainModule(false);
    // let's try to link

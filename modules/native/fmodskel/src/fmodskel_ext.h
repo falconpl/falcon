@@ -1,6 +1,6 @@
 /*
    @{fmodskel_MAIN_PRJ}@
-   FILE: @{fmodskel_PROJECT_NAME}@_ext.cpp
+   FILE: @{fmodskel_PROJECT_NAME}@_ext.h
 
    @{fmodskel_DESCRIPTION}@
    Interface extension functions

@@ -19,12 +19,13 @@
 load nest
 import from hash
 
+Nest.pcheck = true
 Nest.debug = true
 Nest.log_level = 3
 //Nest.stylesheets += "notes.css"
 
 Nest.onStartup = function()
-   dm = Nest.dm( "DBIDataManager", "wiki_db" )
+   dm = Nest.dm( "wiki_db" )
 
    if dm.dbc == nil and Nest.pid != "create"
       Reply.redirect( Nest.pageLink("create") )

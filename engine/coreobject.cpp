@@ -68,13 +68,13 @@ CoreObject::~CoreObject()
 
 void CoreObject::gcMark( uint32 gen )
 {
+   // our class
+   const_cast<CoreClass*>(m_generatedBy)->gcMark( gen );
+
    if( gen != mark() )
    {
       // mark ourseleves
       mark( gen );
-
-      // our class
-      const_cast<CoreClass*>(m_generatedBy)->gcMark( gen );
 
       // and possibly our inner falcon data
       if ( m_bIsFalconData )

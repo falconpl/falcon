@@ -498,16 +498,11 @@ void MemPool::markItem( const Item &item )
       case FLC_ITEM_CLSMETHOD:
       {
          CoreObject *co = item.asMethodClassOwner();
-         if( co->mark() != gen ) {
-            co->gcMark( gen );
-         }
+         co->gcMark( gen );
 
          CoreClass *cls = item.asMethodClass();
          // if the class is the generator of the method, we have already marked it.
-         if( cls->mark() != gen )
-         {
-            cls->gcMark( gen );
-         }
+         cls->gcMark( gen );
       }
       break;
 
@@ -519,19 +514,19 @@ void MemPool::markItem( const Item &item )
 
 void MemPool::gcSweep()
 {
+   if ( m_curRampMode == 0) // if the ramp mode is NULL, the GC is disabled, nothing to do
+       return;
+
    TRACE( "Sweeping %ld (mingen: %d, gen: %d)", (long)gcMemAllocated(), m_mingen, m_generation );
+
    m_mtx_ramp.lock();
-   RampMode *rm = m_curRampMode;
-   if( m_curRampMode != 0 )
-   {
-      rm->onScanInit();
-   }
+   m_curRampMode->onScanInit();
    m_mtx_ramp.unlock();
 
    clearRing( m_garbageRoot );
 
    m_mtx_ramp.lock();
-   rm->onScanComplete();
+   m_curRampMode->onScanComplete();
    m_thresholdActive = m_curRampMode->activeLevel();
    m_thresholdNormal = m_curRampMode->normalLevel();
    m_mtx_ramp.unlock();

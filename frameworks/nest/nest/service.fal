@@ -19,6 +19,7 @@
 import NestError from .error as NestError
 import from .utils
 import ConfigBinder from .bindings as ConfigBinder
+import SkinBinder from .bindings as SkinBinder
 import NestModule from .nestmodule as NestModule
 
 /*#
@@ -94,11 +95,8 @@ class Service( instance ) from NestModule( instance )
    /*# Skin name. 
       Set to a logical skin name.
    */ 
-   skin = ServiceVar( "Logical name of the skin of this service", ConfigBinder )
+   skin = ServiceVar( "Logical name of the skin of this service", SkinBinder )
    level = ServiceVar( "Minimum user level needed to use this service at all.", ConfigBinder )
-
-   // Real file as detected by Nest.
-   _skin_file = nil
 
    //=========================================
    // Public interface
@@ -159,8 +157,9 @@ class Service( instance ) from NestModule( instance )
       rendering is simple enough not to require skin files.
    */
    function perform_render()
-      if self._skin_file
-         return self.renderSkin( self._skin_file )
+      if not self.allowed(): return ""
+      if (sf = self.skin.value) and sf.isCallable()
+         return self.renderSkin( sf )
       end
       return ""
    end
@@ -250,19 +249,12 @@ class Service( instance ) from NestModule( instance )
       return r
    end
 
-   /*# Used by nest to communicate the final skin to be used. */
-   function setSkinFile( fname )
-      self._skin_file = fname
-   end
-   
-
    /*# Loads a required skin file, sending it configuration data. */
-   function renderSkin( file )
+   function renderSkin( callable )
       s = StringStream()
       old = stdOut( s )
       try
-         include( file, symDict | (sd=["skin"=>nil] ) )
-         sd["skin"]( bless(self.getVariableData()), self )
+         callable( bless(self.getVariableData()), self )
          stdOut( old )
       catch in e
          stdOut( old )

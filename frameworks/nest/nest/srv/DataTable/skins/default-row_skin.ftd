@@ -1,0 +1,23 @@
+<? function skin(s, srv, row) ?>
+   <tr><?
+   
+      for action in s.front_act
+         if action.allowed()
+            >> '<td class="nest_front_act">', action.render( row.eid() ), "</td>"
+         end
+      end
+
+      // row is a DBRecord entity
+      data = row.applyView()
+      for field in data
+         >> '<td class="nest_data">', field, "</td>"
+      end
+
+      if s.back_act
+         >> '<td class="nest_back_act">'
+         for action in s.back_act: >> action.render( row.eid() )
+         >> '</td>'
+      end
+      
+   ?></tr>
+<? end ?>

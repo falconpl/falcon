@@ -23,7 +23,7 @@
 # FALCON_BUILD_FEATHERS     - Turn OFF to skip building Feathers.
 # FALCON_BUILD_MODULES      - Turn OFF to skip building Falcon modules.
 # FALCON_BUILD_NATMODS      - Turn OFF to skip building other binary native modules.
-# FALCON_BUILD_APPS         - Turn OFF to skip installing Falcon applications.
+# FALCON_BUILD_APPS         - Turn ON to install installing Falcon applications.
 # FALCON_BUILD_FWKS         - Turn OFF to skip installing Falcon frameworks.
 #
 ##  Options For Native Modules
@@ -139,7 +139,7 @@ endif()
 
 if( FALCON_BUILD_APPS )
     message( STATUS "Adding applications to this build" )
-    #add_subdirectory( apps )
+    add_subdirectory( apps )
 else()
     message( STATUS "Not building applications" )
 endif()
@@ -151,8 +151,7 @@ install(EXPORT falcon-core-targets
 
 #docs
 if(TARGET Falcon_Feathers)
-  add_subdirectory( apps/faldoc )
-  if(TARGET faldoc)
+  if(FALCON_BUILD_APPS)
     add_subdirectory(docs)
     add_subdirectory(modules/native/feathers/docs)
   endif()

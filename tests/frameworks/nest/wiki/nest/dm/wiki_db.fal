@@ -1,15 +1,14 @@
 /*
-   FALCON - DBI Data Manager
+   FALCON - The Falcon Programming Language
 
    Nest - Falcon web applcation engine
 
-   FILE: main.fal
+   FILE: wiki_db.fal
 
-   General (and simple) DBI based data manager -- ready to be exported
-   as a Nest module.
+   Test - Configuration for the datamanager of the wiki test site.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
-   Begin: Mon, 09 Aug 2010 15:33:56 +0200
+   Begin: Sun, 22 Aug 2010 12:37:43 +0200
 
    -------------------------------------------------------------------
    (C) Copyright 2010: the FALCON developers (see list in AUTHORS file)
@@ -17,4 +16,8 @@
    See LICENSE file for licensing details.
 */
 
-import SQLDM from nest.sqldm as DBIDataManager
+type = Nest.DM.DBI
+connect = vmSystemType() == "WIN" ? \
+            "sqlite3:db=C:\\Temp\\wiki.db" : \
+            "sqlite3:db=/tmp/wiki.db"
+

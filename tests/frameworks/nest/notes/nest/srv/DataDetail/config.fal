@@ -1,0 +1,29 @@
+/*
+   Nest-
+   
+   Configuration for the DataDetail service in the "notes" sample site.
+*/
+
+import from nest.action in na
+import from nest.dbview in dw
+
+_notes = Nest.dm( "notes_db" ).entity( "notes" )
+
+_detview = dw.DBView( _notes )
+_detview.fields = .[
+      dw.DBViewField( "inserted", i"Inserted on", {v=> "<b>" + v + "</b>"} )
+      dw.DBViewField( "title", i"Title", {v=>"<h2>" + htmlEscape(v) + "</h2>"} )
+      dw.DBViewField( "content", i"Content", { v=> htmlEscape(v) } )
+   ]
+
+
+handler = Nest.pageLink("home")
+view = _detview
+confirm = false
+
+actions = .[
+   na.HiddenAction( Nest.AL.STAFF, "cnf", "1" )
+   na.SubmitAction( "Delete!", Nest.AL.STAFF, "Delete!", "cmd", "del" )
+]
+
+level = Nest.AL.USER
