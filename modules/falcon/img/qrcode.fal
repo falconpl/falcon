@@ -3,13 +3,13 @@
    FILE: qrcode.fal
 
    QR Code library front end.
-   -------------------------------------------------------------------
+   -----------------------------------------------------------------------------
    Author: Giancarlo Niccolai & Giuseppe Greco
    Begin:Wed, 27 Oct 2010 21:51:41 +0200
 
-   -------------------------------------------------------------------
+   -----------------------------------------------------------------------------
    (C) Copyright 2010: the FALCON developers (see list in AUTHORS file)
-   
+
    See LICENSE file for licensing details.
 */
 
@@ -32,17 +32,16 @@ import from self.lib in qr
    import from img.qrcode in qr
 
    // Generates a QR Code image with a utf-8 encded text
-   img = qr.Maker().text( "Hello world", qr.ECL.L, "utf-8" )
+   img = qr.Maker().text("Hello world", qr.ECL.L, "utf-8")
 
    // Save it as a PNG with 3 pixels per bit and 2 pixels of white border.
-   img.savePng( "hello.png", 3, 2 )
+   img.savePng("hello.png", 3, 2)
    @endcodce
 
    The library has support for dumping the image directly to an arbitrary stream
    (and so, for example, generating a live document on a web server).
 
    The code of this library is heavily based on @link http://fukuchi.org/works/qrencode/index.en.html "Lib QR Encode".
-   
 */
 
 // workaround to circumvent error in module loader
@@ -67,15 +66,17 @@ ECL = qr.QrErrorCorrectionLevel
    @a Image instances, which are the actual content
    that can be streamed to a target file or to an
    arbitrary stream.
-
 */ 
 class Maker
-
    /*#
-   * Caching directory -- set to nil to disable cache
+   * Caching directory -- set to nil to disable cache.
    */
    cache_dir = nil
-   //cache_dir = "cache"
+
+   /*#
+   * Encoding of final output.
+   */
+   encoding = "utf-8"
 
    /*#
    * Specifies whether or not to estimate best mask.
@@ -103,19 +104,19 @@ class Maker
 
    /*# Encode a text oriented string.
       @param text The text to be encoded
-      @optparam clevel The error correction level (defaults to ECL.L).
+      @optparam errorCorrectionLevel The error correction level (defaults to ECL.L).
       @optparam encoding Optional text encoding for the final output.
       @optparam caseSensitive Set to false to create alphanumeric sequences.
 
       @see Maker.ECL
    */
-      
-   function text( text, clevel, encoding, caseSensitive )
-      qrinput = self._getInput( clevel )
+   function text(text, errorCorrectionLevel, encoding, caseSensitive)
+      qrinput = self._getInput(errorCorrectionLevel)
+      if encoding == nil: encoding = self.encoding
       if caseSensitive == nil: caseSensitive = true
 
       if encoding
-         text = transcodeTo( text, encoding )
+         text = transcodeTo(text, encoding)
       end
       
       qr.QrSplit.splitStringToInput(text, qrinput, qr.QrMode.eight_bit, caseSensitive)
@@ -124,51 +125,51 @@ class Maker
 
    /*# Encode raw binary data.
       @param text The text to be encoded
-      @optparam cLevel The error correction level (defaults to ECL.L).
+      @optparam errorCorrectionLLevel The error correction level (defaults to ECL.L).
 
       @see Maker.ECL
    */
-   function raw( data, cLevel )
-      qrinput = self._getInput( cLevel )
-      qrinput.append( qr.QrMode.eight_bit, len(data), data )
+   function raw(data, errorCorrectionLevel)
+      qrinput = self._getInput(errorCorrectionLevel)
+      qrinput.append(qr.QrMode.eight_bit, len(data), data)
       return self._encodeInput(qrinput)
    end
 
-   // TODO
-   //function encodeStruct( data, cLevel )
-   //end
+   function encodeStruct(data, errorCorrectionLevel)
+      // TODO
+   end
 
-//===============================================================================
+   /* Private part */
 
-   function _getInput( clevel )
-      if clevel == nil: clevel = qr.QrErrorCorrectionLevel.L
-      if clevel < qr.QrErrorCorrectionLevel.L \
-         or clevel > qr.QrErrorCorrectionLevel.H
-         raise qr.QrError(qr.QrError.invalid_error_correction_level, @i'$(clevel) not supported')
+   function _getInput(errorCorrectionLevel)
+      if errorCorrectionLevel == nil: errorCorrectionLevel = qr.QrErrorCorrectionLevel.L
+      if errorCorrectionLevel < qr.QrErrorCorrectionLevel.L \
+         or errorCorrectionLevel > qr.QrErrorCorrectionLevel.H
+            raise qr.QrError(qr.QrError.invalid_error_correction_level, @i'$(errorCorrectionLevel) is not supported')
       end
 
-      return qr.QrInput(0, clevel)
+      return qr.QrInput(0, errorCorrectionLevel)
    end
-   
+
    function _encodeMask(qrinput, mask)
       spec = qr.QrSpec()
       raw = qr.QrRawCode(qrinput)
       version = raw.version
       width = spec.getWidth(version)
-      frame = spec.newFrame(version, self.cache_dir )
+      frame = spec.createFrame(version, self.cache_dir)
 
       filler = qr.QrFrameFiller(width, frame)
       if filler == nil
-         raise qr.QrError(qr.QrError.encoding_error, "error creating frame filler")
+         raise qr.QrError(qr.QrError.encoding_error, i"error creating frame filler")
       end
 
-      for i in [0:raw.dataLen + raw.eccLen]
+      for i in [0:raw.dataLength + raw.eccLength]
          code = raw.getCode()
          bit = 0x80
          for j in [0:8]
-               addr = filler.next()
-               filler.setFrameAt(addr, 0x02 || ((bit && code) != 0 ? 1 : 0))
-               bit >>= 1
+            addr = filler.next()
+            filler.setFrameAt(addr, 0x02 || ((bit && code) != 0 ? 1 : 0))
+            bit >>= 1
          end
       end
 
@@ -180,34 +181,33 @@ class Maker
       end
 
       frame = filler.frame
-      maskObj = qr.QrMask( self )
+      maskObj = qr.QrMask(self)
 
       if mask < 0
          if self.find_best_mask
-               masked = maskObj.mask(width, frame, qrinput.errorCorrectionLevel)
+            masked = maskObj.mask(width, frame, qrinput.errorCorrectionLevel)
          else
-               masked = maskObj.makeMask(width, frame, self.default_mask % 8, qrinput.errorCorrectionLevel)
+            masked = maskObj.makeMask(width, frame, self.default_mask % 8, qrinput.errorCorrectionLevel)
          end
       else
          masked = maskObj.makeMask(width, frame, mask, qrinput.errorCorrectionLevel)
       end
 
       if masked == nil
-         raise qr.QrError(qr.QrError.encoding_error, "error masking frame")
+         raise qr.QrError(qr.QrError.encoding_error, i"error masking frame")
       end
 
-      return Image( version, width, masked, self )
+      return Image(version, width, masked, self)
    end
 
    function _encodeInput(qrinput)
       return self._encodeMask(qrinput, -1)
    end
-   
 end
 
 /*# Class representing a QR code image.
-   @param v The version of this QR image.
-   @param w The width of this QR image.
+   @param version The version of this QR image.
+   @param width The width of this QR image.
    @param data Raw binary data.
    @param maker The maker that built this Image (used for configuration).
 
@@ -219,54 +219,45 @@ end
    @prop version (read only) The version of this QR Image (indicating its
          complexity and data size).
    @prop width Size in read points of this image.
-   
 */
-
-class Image( v, w, data, maker )
-   _version = v
-   _width = w
+class Image(version, width, data, maker)
+   _version = version
+   _width = width
    _code = data
    _maker = maker
-
    _binarized = nil
-   
+
    /*# Saves the image on the given file name as a JPG image.
       @param fname The name/uri of the file where to save the image.
       @raise IoError i/o on error.
    */
-   function saveJpg( fname, size, margin )
-      self._saveOn( qr.QrImage.jpg, fname, size, margin  )
+   function saveJpg(fname, size, margin)
+      self._saveOn(qr.QrImage.jpg, fname, size, margin)
    end
-   
 
    /*# Saves the image on the given file name as a PNG image.
       @param fname The name/uri of the file where to save the image.
       @raise IoError i/o on error.
    */
-   function savePng( fname, size, margin )
-      self._saveOn( qr.QrImage.png, fname, size, margin )
+   function savePng(fname, size, margin)
+      self._saveOn(qr.QrImage.png, fname, size, margin)
    end
-   
+
    /*# Saves the image on the given open stream as a JPG image.
       @param outStream The stream where the image must be saved.
       @raise IoError on i/o error.
    */
-   function jpg( outStream, size, margin )
-      self._makeImage( qr.QrImage.jpg, outStream, size, margin )
+   function jpg(outStream, size, margin)
+      self._makeImage(qr.QrImage.jpg, outStream, size, margin)
    end
-   
+
    /*# Saves the image on the given open stream as a PNG image.
       @param outStream The stream where the image must be saved.
       @raise IoError on i/o error.
    */
-   function png( outStream, size, margin )
-      self._makeImage( qr.QrImage.png, outStream, size, margin )
+   function png(outStream, size, margin)
+      self._makeImage(qr.QrImage.png, outStream, size, margin)
    end
-
-
-   //===================================================================
-   // Private part
-   //
 
    function __get_version()
       return self._version
@@ -276,27 +267,28 @@ class Image( v, w, data, maker )
       return self._width
    end
 
-   function _makeImage( fnmaker, outStream, size, margin )
+   /* Private part */
 
+   function _makeImage(fnmaker, outStream, size, margin)
       if not self._binarized
-         binarized = self._binarized = qr.QrTools.binarize(self._code )
+         binarized = self._binarized = qr.QrTools.binarize(self._code)
       else
          binarized = self._binarized
       end
-      
-      maxSize = int( self._maker.png_max_size / (len(self._code) + 2 * margin))
-      fnmaker(binarized, outStream, min(max(1, size), maxSize), margin )
+
+      maxSize = int(self._maker.png_max_size / (len(self._code) + 2 * margin))
+      fnmaker(binarized, outStream, min(max(1, size), maxSize), margin)
    end
 
+   function _saveOn(func, fname, size, margin)
+      stream = OutputStream(fname)
 
-   function _saveOn( func, fname, size, margin )
-      stream = OutputStream( fname )
       try
-         self._makeImage( func, stream, size, margin )
+         self._makeImage(func, stream, size, margin)
          stream.close()
-      catch in e
+      catch in error
          stream.close()
-         raise e
+         raise error
       end
    end
 end
