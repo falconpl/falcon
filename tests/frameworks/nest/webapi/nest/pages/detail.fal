@@ -12,7 +12,6 @@ import from web.htmaker in htmaker
 
 doc = htmaker.TransitionalFrame()
 fd = Nest.service("WebAPIDetail", "", ["apidir" => "."])
-Nest.run()
 
 functionName = fd.funcname.value
 

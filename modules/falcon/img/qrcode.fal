@@ -111,7 +111,7 @@ class Maker
       @see Maker.ECL
    */
    function text(text, errorCorrectionLevel, encoding, caseSensitive)
-      qrinput = self._getInput(errorCorrectionLevel)
+      input = self._getInput(errorCorrectionLevel)
       if encoding == nil: encoding = self.encoding
       if caseSensitive == nil: caseSensitive = true
 
@@ -119,8 +119,8 @@ class Maker
          text = transcodeTo(text, encoding)
       end
       
-      qr.QrSplit.splitStringToInput(text, qrinput, qr.QrMode.eight_bit, caseSensitive)
-      return self._encodeInput(qrinput)
+      qr.QrSplit.splitStringToInput(text, input, qr.QrMode.eight_bit, caseSensitive)
+      return self._encodeInput(input)
    end
 
    /*# Encode raw binary data.
@@ -130,9 +130,9 @@ class Maker
       @see Maker.ECL
    */
    function raw(data, errorCorrectionLevel)
-      qrinput = self._getInput(errorCorrectionLevel)
-      qrinput.append(qr.QrMode.eight_bit, len(data), data)
-      return self._encodeInput(qrinput)
+      input = self._getInput(errorCorrectionLevel)
+      input.append(qr.QrMode.eight_bit, len(data), data)
+      return self._encodeInput(input)
    end
 
    function encodeStruct(data, errorCorrectionLevel)
@@ -151,9 +151,9 @@ class Maker
       return qr.QrInput(0, errorCorrectionLevel)
    end
 
-   function _encodeMask(qrinput, mask)
+   function _encodeMask(input, mask)
       spec = qr.QrSpec()
-      raw = qr.QrRawCode(qrinput)
+      raw = qr.QrRawCode(input)
       version = raw.version
       width = spec.getWidth(version)
       frame = spec.createFrame(version, self.cache_dir)
@@ -185,12 +185,12 @@ class Maker
 
       if mask < 0
          if self.find_best_mask
-            masked = maskObj.mask(width, frame, qrinput.errorCorrectionLevel)
+            masked = maskObj.mask(width, frame, input.errorCorrectionLevel)
          else
-            masked = maskObj.makeMask(width, frame, self.default_mask % 8, qrinput.errorCorrectionLevel)
+            masked = maskObj.makeMask(width, frame, self.default_mask % 8, input.errorCorrectionLevel)
          end
       else
-         masked = maskObj.makeMask(width, frame, mask, qrinput.errorCorrectionLevel)
+         masked = maskObj.makeMask(width, frame, mask, input.errorCorrectionLevel)
       end
 
       if masked == nil
@@ -200,8 +200,8 @@ class Maker
       return Image(version, width, masked, self)
    end
 
-   function _encodeInput(qrinput)
-      return self._encodeMask(qrinput, -1)
+   function _encodeInput(input)
+      return self._encodeMask(input, -1)
    end
 end
 
