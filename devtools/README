@@ -9,7 +9,7 @@
 third party modules and embedding applications.
 
   Modules and embeddings that are not included in the Falcon Source Project
-are not bound to use Falcon Development Enviroment. They just require a standard
+are not bound to use Falcon Development Environment. They just require a standard
 installation of Falcon with development support (dev packages for debian distros,
 Development option turned on for windows installer and so on), which will include
 correctly configured tools which are present in this part of the project.

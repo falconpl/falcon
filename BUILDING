@@ -16,7 +16,7 @@ in bleeding edge and official releases.
   Starting from 9.6.6.7, the package can be configured, built and tested 
 directly from an "unguarded prompt". It's not necessary to use script or 
 special configuration settings to develop Falcon, even in case that there
-is a different developmnet-enabled version of Falcon on the target system.
+is a different development-enabled version of Falcon on the target system.
  
 
 PRE-REQUISITE
@@ -161,7 +161,7 @@ RUNNING TEST BUILDS
 ===================
 
   The script devtools/falconenv.sh (for POSIX systems) to configure the 
-enviroment so that Falcon is found on a certain location rather than from the 
+environment so that Falcon is found on a certain location rather than from the 
 standard system installation location.
 
   For example, after having installed a Falcon build configured to be installed
