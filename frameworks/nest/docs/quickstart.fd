@@ -25,6 +25,13 @@ load nest
 Nest.route()
 @endcode
 
+@note A minimal but complete (for our purposes) way to serve the test
+sites in this guide is firing up falhttpd with the following command:
+
+@code
+$ falhttpd -h <path to index.fal> -p 8080 -t 600
+@endcode
+
 Route will tell nest to get the page that the overall status of the connection
 requires; by default, a new incoming user is served by the page called __home__.
 
@@ -47,7 +54,7 @@ using a ftd:
 Or if you prefer a more structured approach, we can use a falcon script:
 
 @code
-// this is head,fal
+// this is head.fal
 > '
 <html>
 <head>
@@ -71,7 +78,7 @@ Or even, you may chose to use a very structured approach through the htmaker
 module.
 
 @code
-// this is head,fal
+// this is head.fal
 
 import from htmaker in ht
 
@@ -91,6 +98,140 @@ doc.html.body.add(
 As a first example of a service, we'll introduce the Menu service, which has the role
 of generating a configurable menu that can be shown on different pages.
 
+First, let's create a site structure for our test; make the following directories:
+@code
+menus/
+  nest/
+    pages/
+    hooks/
+    srv/
+       Menu/
+@endcode
 
+We'll need to place an entry point for our application under **menus**; "index.fal"
+is the standard name. For this sample we'll add some debugging facilities that
+we'll later remove.
 
+@code
+load nest
+
+// debugging directives
+Nest.log_level = 3   // (1)
+Nest.debug = true    // (2)
+Nest.pcheck = true   // (3)
+
+// Nest site configuration
+Nest.stylesheets += "nest.css"
+Nest.frame = .[ include "frame.ftd" ]  // (4)
+Nest.addHook( "TableCheckUser" )
+
+// start the engine
+Nest.route()
+@endcode
+
+The debug directives tell Nest to perform low level logging (1) and also
+send the log output to the user after the page is generated (2)
+
+The directive at (3) instructs Nest modules to perform extra verbose
+checks on their configuration variables to catch for common mistakes
+in early site development stages.
+
+All this directives should be removed from a production server; it may
+be interesting to instruct Nest to log at level 1 (warn) or 2 (info)
+in case the site needs to be monitored for suspect activity. On some
+security sensible site, it is advisable to set the log level to 1, where
+minimal and critical information on Nest activity is sent to the web server
+for recording.
+
+The other instructions are setup directives; the most important one, at the moment,
+is (4), @a Nest.frame. It points to a function that orders to include the frame
+that will be valid for all the pages of the site (or, at least, all the pages
+accessed through this entry point).
+
+The frame is a ftd file as follows.
+
+@code
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+   "http://www.w3.org/TR/html4/strict.dtd">
+<? login = Nest.service( "Login" ) ?>
+<? menu = Nest.service( "Menu" ) ?>
+<html>
+<head>
+   <title>Nest test suite - Menu service</title>
+   <?= Nest.headings() ?>
+</head>
+<body>
+   <table class="header">
+   <tbody>
+   <tr><td><? menu.render() ?></td><td><? login.render() ?></td></tr>
+   </tbody>
+   </table>
+   <hr/>
+   <? Nest.content() ?>
+   <hr/>
+   <? if Nest.auth_level < Nest.AL.USER ?>
+   <p class="gray">To login, enter "user" / "user".</p>
+   <? end ?>
+   <p class="signature">Nest test suite.</p>
+</body>
+</html>
+@endcode
+
+Notice the @a Nest.headings call on the headings section. This allows
+Nest to fill the target page with headings suggested in the entry point
+(notice the @a Nest.stylesheets assignment in index.fal) or required by
+modules that may want to publish some meta information, stylesheet,
+css code or client-side script on the target page.
+
+The two @a Nest.service calls load the @a Login and @a Menu service. We'll
+diffusely talk about the Login service throughout the guide; let's concentrate
+on the Menu. Downwards, you can see the @a Menu.render call where the main menu
+should appare.
+
+Then, the frame includes the specific page through the @a Nest.content call.
+Finally, notice the usage of the Nest.auth_level variable do show conditional
+parts of the frame to the visitor. The variable is set through the Login service,
+and is available to the whole application as @a Nest.auth_level. The Login
+service can be configured so that your user storage system doesn't need to understand
+Nest authorization levels, and you can publish some extra authorization
+policies to the application through more sophisticated mechanisms (provided by Nest).
+This variable is a facility that can be used to rapidly prototypes simple
+web sites.
+
+@subsection qs_login_hooks Hook for the Login srvice
+
+To clear the ground from the Login service, and also introduce a concept we'll be
+using later on, we now show how to configure it to serve a simple web site.
+
+The Login service invokes a @a Hook called "check_user", passing the userID and
+the password to it in two parameters, and expects a pair of values in return in
+case of authorization granted: the @a Nest.AL authorization level (a number in 0-100),
+and an optional user-specific data that can be used by the web application
+for different reasons (i.e. displaying its real name, enforcing finer authorization
+policies and so on).
+
+You may write an Hook to serve the Login service matching your need and data
+structures, but Nest provides two ready-made hooks called TableCheckUser and
+DBCheckUser that can do the job with just a little configuration. This time, we
+use the TableCheckUser, writing the following file in the **nest/dm/TableCheckUser/config.fal** file in the site-specific nest directory.
+
+@code
+// Configuration for a TableCheckUser
+
+import from nest.hooks.TableCheckUser in tab
+
+users = [
+   "admin" => tab.User( "admin", Nest.AL.ADMIN, "Administrator" ),
+   "staff" => tab.User( "staff", Nest.AL.STAFF, "Staff member" ),
+   "user" => tab.User( "user", Nest.AL.USER, "Generic user" )
+]
+@endcode
+
+The user-id is the key of the @b users dictionary, while the @a password
+is the first parameter of the @b TableCheckUser.User class instance. There
+are more configuration options, as the ability to use @b hash function
+to check the incoming password against pre-hashed passwords stored in the table,
+but they are beyond the scope of this quikstart.
+
+@subsection qs_menuconf The configuration for the menu service.
 */

@@ -1,11 +1,11 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
    "http://www.w3.org/TR/html4/strict.dtd">
+<? login = Nest.service( "Login" ) ?>
+<? menu = Nest.service( "Menu" ) ?>
 <html>
 <head>
    <title>Nest test suite - Menu service</title>
    <?= Nest.headings() ?>
-   <? login = Nest.service( "Login" ) ?>
-   <? menu = Nest.service( "Menu" ) ?>
 </head>
 <body>
    <table class="header">
