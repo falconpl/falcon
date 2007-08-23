@@ -1,0 +1,4 @@
+PROJECT(Falcon_Core)
+
+ADD_SUBDIRECTORY(engine)
+INCLUDE_DIRECTORIES(include)
