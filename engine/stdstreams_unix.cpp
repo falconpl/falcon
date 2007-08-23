@@ -1,0 +1,115 @@
+/*
+   FALCON - The Falcon Programming Language
+   FILE: stdstreams_unix.cpp
+   $Id: stdstreams_unix.cpp,v 1.1.1.1 2006/10/08 15:05:15 gian Exp $
+
+   Unix specific standard streams factories.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: ven ago 25 2006
+   Last modified because:
+
+   -------------------------------------------------------------------
+   (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+   In order to use this file in its compiled form, this source or
+   part of it you have to read, understand and accept the conditions
+   that are stated in the LICENSE file that comes boundled with this
+   package.
+*/
+
+/** \file
+   Unix specific standard streams factories.
+*/
+
+#include <falcon/fstream.h>
+#include <falcon/transcoding.h>
+#include <falcon/stdstreams.h>
+
+namespace Falcon {
+
+Stream *stdInputStream()
+{
+   StdInStream *stdin = new StdInStream;
+   String enc;
+
+   Falcon::Transcoder *coder;
+
+   if ( Falcon::GetSystemEncoding( enc ) )
+   {
+      coder =  Falcon::TranscoderFactory( enc );
+      if ( coder == 0 ) {
+         return stdin;
+      }
+   }
+   else
+      return stdin;
+
+   coder->setUnderlying( stdin, true );
+   return coder;
+}
+
+Stream *stdOutputStream()
+{
+   StdOutStream *stdout = new StdOutStream;
+   String enc;
+
+   Falcon::Transcoder *coder;
+
+   if ( Falcon::GetSystemEncoding( enc ) )
+   {
+      coder =  Falcon::TranscoderFactory( enc );
+      if ( coder == 0 ) {
+         return stdout;
+      }
+   }
+   else
+      return stdout;
+
+   coder->setUnderlying( stdout, true );
+   return coder;
+}
+
+Stream *stdErrorStream()
+{
+   StdErrStream *stderr = new StdErrStream;
+   String enc;
+
+   Falcon::Transcoder *coder;
+
+   if ( Falcon::GetSystemEncoding( enc ) )
+   {
+      coder =  Falcon::TranscoderFactory( enc );
+      if ( coder == 0 ) {
+         return stderr;
+      }
+   }
+   else
+      return stderr;
+
+   coder->setUnderlying( stderr, true );
+   return coder;
+}
+
+Stream *DefaultTextTranscoder( Stream *underlying, bool own )
+{
+   String encoding;
+   if ( ! GetSystemEncoding( encoding ) )
+      return underlying;
+
+   Transcoder *encap = TranscoderFactory( encoding, underlying, own );
+   // in unix there's no difference between text and binary, so there's no other transcoder to add.
+   return encap;
+}
+
+
+Stream *AddSystemEOL( Stream *underlying, bool )
+{
+   return underlying;
+}
+
+}
+
+
+/* end of stdstreams_unix.cpp */

@@ -1,0 +1,47 @@
+/*
+   FALCON - The Falcon Programming Language.
+   FILE: rtl_messages.h
+   $Id: rtl_messages.h,v 1.1 2007/02/24 22:03:34 jonnymind Exp $
+
+   Short description
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: sab feb 24 2007
+   Last modified because:
+
+   -------------------------------------------------------------------
+   (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+   In order to use this file in its compiled form, this source or
+   part of it you have to read, understand and accept the conditions
+   that are stated in the LICENSE file that comes boundled with this
+   package.
+*/
+
+/** \file
+   Short description
+*/
+
+#ifndef flc_rtl_messages_H
+#define flc_rtl_messages_H
+
+namespace Falcon {
+namespace msg {
+   const int rtl_array_missing = 0;
+   const int rtl_inv_startend = 1;
+   const int rtl_arrpar1 = 2;
+   const int rtl_arrpar2 = 3;
+   const int rtl_arrpar3 = 4;
+   const int rtl_scan_end = 5;
+   const int rtl_array_first = 6;
+   const int rtl_second_call = 7;
+   const int rtl_need_two_arr = 8;
+   const int rtl_idx_not_num = 9;
+   const int rtl_start_outrange = 10;
+}
+}
+
+#endif
+
+/* end of rtl_messages.h */

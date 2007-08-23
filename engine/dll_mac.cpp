@@ -1,0 +1,99 @@
+/*
+   FALCON - The Falcon Programming Language.
+   FILE: dll_mac.cpp
+   $Id: dll_mac.cpp,v 1.2 2006/11/19 11:25:39 gian Exp $
+
+   Implementation of darwin specific DLL system
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai:
+   Modified for darwin by: Francesco Guerra
+   Begin: mar ago 3 2004
+   Last modified because:
+
+   -------------------------------------------------------------------
+   (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+   In order to use this file in its compiled form, this source or
+   part of it you have to read, understand and accept the conditions
+   that are stated in the LICENSE file that comes boundled with this
+   package.
+*/
+
+#include <falcon/dll_mac.h>
+
+namespace Falcon
+{
+
+DllLoader_Mac::~DllLoader_Mac()
+{
+   close();
+}
+
+bool DllLoader_Mac::open( const String &dll_name )
+{
+   char name[2048];
+   if ( dll_name.toCString( name, 2048 ) == -1 )
+	return false;
+
+   if( m_module != 0 )
+      if ( ! dlclose( m_module ) )
+         return false;
+
+   m_module = dlopen( name, RTLD_NOW );
+   if ( m_module == 0 )
+      return false;
+   return true;
+}
+
+bool DllLoader_Mac::close()
+{
+   if ( m_module != 0 ) {
+      if ( dlclose( m_module ) ) {
+         m_module = 0;
+         return true;
+      }
+   }
+   return false;
+}
+
+void DllLoader_Mac::assign( DllLoader_Mac &other )
+{
+   if ( m_module != 0 )
+      close();
+
+   m_module = other.m_module;
+   other.m_module = 0;
+}
+
+
+DllFunc DllLoader_Mac::getSymbol( const String &sym_name ) const
+{
+   char name[256];
+   if ( sym_name.toCString( name, 256 ) == -1 )
+      return DllFunc( 0 );
+
+   if ( m_module != 0 )
+      return DllFunc( dlsym( m_module, name ) );
+   return DllFunc( 0 );
+}
+
+bool DllLoader_Mac::isDllMark( unsigned char ch1, unsigned char ch2 )
+{
+   if ( ch1 == 0xfe && ch2 == 0xed || ch1 == 0xca && ch2 == 0xfe ) return true;
+   // Magic for Mach-O and Mach-O Fat binaries
+   return false;
+}
+
+void DllLoader_Mac::getErrorDescription( String &descr ) const
+{
+   const char *le = dlerror();
+   if ( le == 0 )
+      return;
+   descr.bufferize( le );
+}
+
+}
+
+
+/* end of dll_mac.cpp */

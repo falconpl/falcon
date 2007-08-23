@@ -1,0 +1,181 @@
+/*
+   FALCON - The Falcon Programming Language.
+   FILE: symtab.cpp
+   $Id: symtab.cpp,v 1.6 2007/03/05 08:05:54 jonnymind Exp $
+
+   Symbol table definition
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: mar ago 3 2004
+   Last modified because:
+
+   -------------------------------------------------------------------
+   (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+   In order to use this file in its compiled form, this source or
+   part of it you have to read, understand and accept the conditions
+   that are stated in the LICENSE file that comes boundled with this
+   package.
+*/
+
+
+#include <falcon/symtab.h>
+#include <falcon/symbol.h>
+#include <falcon/stream.h>
+#include <falcon/traits.h>
+#include <falcon/module.h>
+#include <falcon/traits.h>
+
+namespace Falcon {
+
+SymbolTable::SymbolTable():
+   m_map( &traits::t_stringptr, &traits::t_voidp, 19 )
+{
+}
+
+void SymbolTable::exportUndefined()
+{
+   MapIterator iter = m_map.begin();
+   while( iter.hasCurrent() )
+   {
+      Symbol *sym = *(Symbol **) iter.currentValue();
+      if( ! sym->isUndefined() )
+         sym->exported( true );
+      iter.next();
+   }
+}
+
+bool SymbolTable::add( Symbol *sym )
+{
+   if( findByName( sym->name() ) != 0 )
+      return false;
+
+   m_map.insert( &sym->name(), sym );
+   return true;
+}
+
+bool SymbolTable::add( const String *name, Symbol *sym )
+{
+   if( findByName( *name ) != 0 )
+      return false;
+
+   m_map.insert( name, sym );
+   return true;
+}
+
+bool SymbolTable::remove( const String &name )
+{
+   return m_map.erase( &name );
+}
+
+
+bool SymbolTable::save( Stream *out ) const
+{
+   uint32 value;
+   // save the symbol table size.
+   value = endianInt32( size() );
+   out->write( &value, sizeof(value) );
+   MapIterator iter = m_map.begin();
+
+   while( iter.hasCurrent() )
+   {
+      const String *first = *(const String **) iter.currentKey();
+      const Symbol *second = *(const Symbol **) iter.currentValue();
+      value = endianInt32( first->id() );
+      out->write( &value, sizeof(value) );
+
+      value = endianInt32( second->id() );
+      out->write( &value, sizeof(value) );
+      iter.next();
+   }
+
+   return true;
+}
+
+bool SymbolTable::load( Module *mod, Stream *in )
+{
+   // get the symtab type.
+   int32 value;
+   in->read( &value, sizeof(value) );
+   int32 final_size = endianInt32(value);
+
+   // preallocate all the symbols;
+   for ( int i = 0 ; i < final_size; i ++ )
+   {
+      const String *str;
+      Symbol *sym;
+      in->read( &value, sizeof(value) );
+      str = mod->getString( endianInt32(value) );
+      if ( str == 0 ) {
+         return false;
+      }
+
+      in->read( &value, sizeof(value) );
+      sym = mod->getSymbol( endianInt32(value) );
+      if ( sym == 0 ) {
+         return false;
+      }
+
+      m_map.insert( str, sym );
+   }
+
+   return true;
+}
+
+
+SymbolVector::SymbolVector():
+	GenericVector( &traits::t_voidp )
+{
+}
+
+SymbolVector::~SymbolVector()
+{
+ // free the symbols.
+   for ( uint32 i = 0; i < size(); i ++ )
+   {
+      delete symbolAt( i );
+   }
+}
+
+bool SymbolVector::save( Stream *out ) const
+{
+   uint32 value = endianInt32(size());
+   out->write( &value, sizeof(value) );
+
+   for( uint32 iter = 0; iter < size(); iter++ )
+   {
+      if ( ! symbolAt( iter )->save( out ) )
+         return false;
+   }
+
+   return true;
+}
+
+bool SymbolVector::load( Module *owner, Stream *in )
+{
+   uint32 value;
+   in->read( &value, sizeof(value) );
+   value = endianInt32( value );
+
+   resize( value );
+   for ( uint32 i = 0; i < value; i ++ )
+   {
+      Symbol *sym = new Symbol(owner);
+      sym->id( i );
+      set( sym, i );
+   }
+
+
+   for( uint32 iter = 0; iter < size(); iter++ )
+   {
+      if ( ! symbolAt( iter )->load( in ) )
+         return false;
+   }
+
+   return true;
+}
+
+}
+
+/* end of symtab.cpp */

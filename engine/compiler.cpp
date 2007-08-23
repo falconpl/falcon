@@ -1,0 +1,556 @@
+/*
+   FALCON - The Falcon Programming Language.
+   FILE: compiler.cpp
+   $Id: compiler.cpp,v 1.23 2007/08/11 22:59:07 jonnymind Exp $
+
+   Core language compiler.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: 01-08-2004
+   Last modified because:
+
+   -------------------------------------------------------------------
+   (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+   In order to use this file in its compiled form, this source or
+   part of it you have to read, understand and accept the conditions
+   that are stated in the LICENSE file that comes boundled with this
+   package.
+*/
+
+#include <falcon/compiler.h>
+#include <falcon/syntree.h>
+#include <falcon/src_lexer.h>
+#include <falcon/error.h>
+#include <falcon/deferrorhandler.h>
+#include <falcon/stdstreams.h>
+#include <falcon/itemid.h>
+#include <falcon/fassert.h>
+
+namespace Falcon
+{
+
+AliasMap::AliasMap():
+   Map( &traits::t_stringptr, &traits::t_voidp )
+{
+}
+
+//===============================================================
+// Compiler
+//===============================================================
+
+Compiler::Compiler( Module *mod, Stream* in ):
+   m_errhand(0),
+   m_baseAttribId(0x1),
+   m_currentAttribId(0x1),
+   m_enumId(0),
+   m_module( mod ),
+   m_stream( in ),
+   m_staticPrefix(0),
+   m_lambdaCount(0),
+   m_tempLine(0),
+   m_constants( &traits::t_string, &traits::t_voidp ),
+   m_requireDef( false ),
+   m_defRequired( false ),
+   m_defContext( false ),
+   m_delayRaise( false ),
+   m_rootError( 0 )
+{
+   m_module->engineVersion( FALCON_ENGINE_VERSION_NUM );
+
+   m_lexer = new SrcLexer( this, in );
+   m_root = new SourceTree;
+
+   m_errors = 0;
+   // context is empty, but the root context set must be placed.
+   pushContextSet( &m_root->statements() );
+
+   // and an empty list for the local function undefined values
+   List *l = new List;
+   m_statementVals.pushBack( l );
+
+   addPredefs();
+}
+
+Compiler::~Compiler()
+{
+   delete m_root;
+   delete m_lexer;
+
+   MapIterator iter = m_constants.begin();
+   while( iter.hasCurrent() ) {
+      delete *(Value **) iter.currentValue();
+      iter.next();
+   }
+
+   ListElement *valListE = m_statementVals.begin();
+   while( valListE != 0 )
+   {
+      delete (List *) valListE->data();
+      valListE = valListE->next();
+   }
+
+   if ( m_rootError != 0 )
+   {
+      m_rootError->decref();
+      m_rootError = 0;
+   }
+
+}
+
+bool Compiler::compile()
+{
+   m_baseAttribId = 0x1;
+   m_currentAttribId = 0x1;
+   m_enumId = 0;
+   m_lambdaCount = 0;
+
+   // reset the require def status
+   m_defRequired = m_requireDef;
+   m_defContext = false;
+
+   flc_src_parse( this );
+
+   // If the context is not empty, then we have something unclosed.
+   if ( ! m_context.empty() ) {
+      raiseError( e_unclosed_cs );
+      return false;
+   }
+
+   // leadout sequence
+   if ( m_errors == 0 ) {
+      if ( m_root->isExportAll() )
+      {
+         // export all the symbol in the global module table
+         m_module->symbolTable().exportUndefined();
+      }
+
+      // a correctly compiled module has an entry point starting at 0.
+      if ( ! m_root->statements().empty() )
+      {
+         m_module->entry( 0 );
+      }
+
+      return true;
+   }
+
+   if ( m_delayRaise && m_rootError != 0 && m_errhand != 0 )
+   {
+      m_errhand->handleError( m_rootError );
+   }
+
+   // eventually prepare for next compilation
+   if ( m_rootError != 0 )
+   {
+      m_rootError->decref();
+      m_rootError = 0;
+   }
+
+   // we had errors.
+   return false;
+}
+
+void Compiler::raiseError( int code, int line )
+{
+   raiseError( code, "", line );
+}
+
+void Compiler::raiseError( int code, const String &errorp, int line )
+{
+   if ( line == 0 )
+      line = lexer()->line()-1;
+
+   if ( m_errhand != 0 )
+   {
+      SyntaxError *error = new SyntaxError( ErrorParam(code, line).origin( e_orig_compiler ) );
+      error->extraDescription( errorp );
+      error->module( m_module->name() );
+
+      if ( m_delayRaise )
+      {
+         if ( m_rootError == 0 )
+         {
+            m_rootError = new SyntaxError( ErrorParam( e_syntax ).origin( e_orig_compiler ) );
+         }
+         m_rootError->appendSubError( error );
+      }
+      else
+      {
+         m_errhand->handleError( error );
+      }
+
+      error->decref();
+   }
+
+   m_errors++;
+}
+
+void Compiler::pushFunction( FuncDef *f )
+{
+   m_functions.pushBack( f );
+   m_statementVals.pushBack( new List );
+
+   m_alias.pushBack( new AliasMap );
+}
+
+void Compiler::popFunction()
+{
+   m_functions.popBack();
+   List *l = (List *) m_statementVals.back();
+   delete l;
+   m_statementVals.popBack();
+   DeclarationContext *dc = new DeclarationContext;
+   delete dc;
+   AliasMap *temp = (AliasMap *) m_alias.back();
+   delete temp;
+   m_alias.popBack();
+}
+
+
+void Compiler::defineVal( ArrayDecl *val )
+{
+   ListElement *iter = val->begin();
+   while( iter != 0 )
+   {
+      Value *val = (Value *) iter->data();
+      defineVal( val );
+      iter = iter->next();
+   }
+}
+
+
+void Compiler::defineVal( Value *val )
+{
+   // raise error for read-only expressions
+   if ( val->isExpr() && val->asExpr()->type() == Expression::t_array_byte_access )
+   {
+      raiseError( e_byte_access, lexer()->previousLine() );
+      // but proceed
+   }
+
+   if ( val->isSymdef() )
+   {
+      if ( staticPrefix() == 0 ) {
+         Symbol *sym;
+         if ( getFunction() != 0 ) {
+            // addlocal must also define the symbol
+            sym = addLocalSymbol( val->asSymdef(), false );
+         }
+         else {
+            // globals symbols that have been added as undefined must stay so.
+            sym = m_module->findGlobalSymbol( *val->asSymdef() );
+            if ( sym == 0 )
+            {
+               // values cannot be defined in this way if def is required AND we are not in a def context
+               if ( m_defRequired && ! m_defContext )
+               {
+                  raiseError( e_undef_sym, "", lexer()->previousLine() );
+               }
+
+               sym = addGlobalSymbol( val->asSymdef() );
+               sym->declaredAt( lexer()->previousLine() );
+               sym->setGlobal();
+            }
+         }
+
+         val->setSymbol( sym );
+      }
+      else {
+         String *symname = m_module->addString( *staticPrefix() + "#" + *val->asSymdef() );
+         Symbol *gsym = addGlobalSymbol( symname );
+         AliasMap &map = *(AliasMap*)m_alias.back();
+         map.insert( val->asSymdef(), gsym );
+         if( gsym->isUndefined() )
+         {
+            if ( m_defRequired && ! m_defContext )
+            {
+               raiseError( e_undef_sym, "", lexer()->previousLine() - 1);
+            }
+            gsym->setGlobal();
+            gsym->declaredAt( lexer()->previousLine() - 1);
+         }
+         val->setSymbol( gsym );
+      }
+   }
+}
+
+
+Symbol *Compiler::addLocalSymbol( const String *symname, bool parameter )
+{
+   // fallback to add global if not in a local table
+   FuncDef *func = getFunction();
+   if ( func == 0 )
+      return addGlobalSymbol( symname );
+
+   SymbolTable &table = func->symtab();
+   Symbol *sym = table.findByName( *symname );
+   if( sym == 0 )
+   {
+      if ( m_defRequired && ! m_defContext )
+      {
+         raiseError( e_undef_sym, "", lexer()->previousLine() );
+      }
+
+      // now we can add the symbol. As we have the string from
+      // the module already, we keep it.
+      sym = new Symbol( m_module, symname );
+      m_module->addSymbol( sym );
+      sym->declaredAt( lexer()->previousLine() );
+      if ( parameter ) {
+         sym = func->addParameter( sym );
+      }
+      else
+      {
+         sym = func->addLocal( sym );
+      }
+   }
+   return sym;
+}
+
+
+bool Compiler::checkLocalUndefined()
+{
+   List *l = (List *) m_statementVals.back();
+   while( ! l->empty() ) {
+      Value *val = (Value *) l->front();
+      if ( val->isSymdef() ) {
+         Symbol *sym = addGlobalSymbol( val->asSymdef() );
+         val->setSymbol( sym );
+      }
+      l->popFront();
+   }
+   return true;
+}
+
+Symbol *Compiler::searchLocalSymbol( const String *symname )
+{
+   // should not happen.
+   if( m_functions.empty() )
+      return searchGlobalSymbol( symname );
+
+   // first search the local symbol aliases
+   AliasMap *map = (AliasMap *) m_alias.back();
+   Symbol **sympp = (Symbol **) map->find( symname );
+   if ( sympp != 0 )
+      return *sympp;
+
+   // then try in the local symtab or just return 0.
+   FuncDef *fd = (FuncDef *) m_functions.back();
+   return fd->symtab().findByName( *symname );
+}
+
+Symbol *Compiler::searchGlobalSymbol( const String *symname )
+{
+   return module()->findGlobalSymbol( *symname );
+}
+
+Symbol *Compiler::addGlobalSymbol( const String *symname )
+{
+   // is the symbol already defined?
+   Symbol *sym = m_module->findGlobalSymbol( *symname );
+   if( sym == 0 )
+   {
+      sym = new Symbol( m_module, symname );
+      m_module->addGlobalSymbol( sym );
+      sym->declaredAt( lexer()->line() );
+   }
+   return sym;
+}
+
+Symbol *Compiler::addGlobalVar( const String *symname, VarDef *value )
+{
+   Symbol *sym = addGlobalSymbol( symname );
+   sym->declaredAt( lexer()->previousLine() );
+   sym->setVar( value );
+   return sym;
+}
+
+Symbol *Compiler::addAttribute( const String *symname )
+{
+   // find the global symbol for this.
+   Symbol *sym = searchGlobalSymbol( symname );
+
+   // Not defined?
+   if( sym == 0 ) {
+      sym = addGlobalSymbol( symname );
+      sym->declaredAt( lexer()->previousLine() );
+   }
+   else {
+      raiseError( e_already_def,  sym->name() );
+   }
+   // but change it in an attribute anyhow
+   sym->setAttribute();
+
+   return sym;
+}
+
+Symbol *Compiler::globalize( const String *symname )
+{
+   if ( ! isLocalContext() ) {
+      // an error should be raised elsewhere.
+      return 0;
+   }
+
+   // already alaised? raise an error
+   AliasMap &map = *(AliasMap *) m_alias.back();
+   Symbol **ptr = (Symbol **) map.find( symname );
+   if( ptr != 0 )
+   {
+      raiseError( e_global_again, *symname );
+      return *ptr;
+   }
+
+   // search for the global symbol that will be aliased
+   Symbol *global = m_module->findGlobalSymbol( *symname );
+   if ( global == 0 )
+   {
+      global = m_module->addGlobal( *symname, false );
+      global->declaredAt( lexer()->line() );
+      // it's defined in the module, the reference will be overwritten with
+      // defineVal() -- else it will be searched outside the module.
+      // (eventually causing a link error if not found).
+   }
+
+   map.insert( symname, global );
+   return global;
+}
+
+StmtFunction *Compiler::buildCtorFor( StmtClass *cls )
+{
+   Symbol *sym = cls->symbol();
+
+   // Make sure we are not overdoing this.
+   fassert( sym->isClass() );
+   fassert( sym->getClassDef()->constructor() == 0 );
+
+   // creates a name for the constructor
+   ClassDef *def = sym->getClassDef();
+   String cname = sym->name() + "._init";
+
+   // creates an empty symbol
+   Symbol *funcsym = addGlobalSymbol(  addString( cname ) );
+   //def->addProperty( addString( "_init" ) , new VarDef( funcsym ) );
+
+   // creates the syntree entry for the symbol; we are using the same line as the class.
+   StmtFunction *stmt_ctor = new StmtFunction( cls->line(), funcsym );
+   addFunction( stmt_ctor );
+
+   // fills the symbol to be a valid constructor
+   FuncDef *fdef = new FuncDef( 0 );
+   funcsym->setFunction( fdef );
+   def->constructor( funcsym );
+
+   // now we must copy the parameter of the class in the parameters of the constructor.
+   MapIterator iter = def->symtab().map().begin();
+   GenericVector params( &traits::t_voidp );
+
+   while( iter.hasCurrent() )
+   {
+      Symbol *symptr = *(Symbol **) iter.currentValue();
+      if ( symptr->isParam() )
+      {
+         Symbol *p = m_module->addSymbol( symptr->name() );
+         fdef->addParameter( p );
+         p->itemId( symptr->itemId() );
+      }
+      iter.next();
+   }
+
+   cls->ctorFunction( stmt_ctor );
+   stmt_ctor->setConstructorFor( cls );
+
+   return stmt_ctor;
+}
+
+void Compiler::addPredefs()
+{
+
+   addIntConstant( "NilType", FLC_ITEM_NIL );
+   addIntConstant( "IntegerType", FLC_ITEM_INT );
+   addIntConstant( "NumericType", FLC_ITEM_NUM );
+   addIntConstant( "RangeType", FLC_ITEM_RANGE );
+   addIntConstant( "FunctionType", FLC_ITEM_FUNC );
+   addIntConstant( "StringType", FLC_ITEM_STRING );
+   addIntConstant( "ArrayType", FLC_ITEM_ARRAY );
+   addIntConstant( "DictionaryType", FLC_ITEM_DICT );
+   addIntConstant( "ObjectType", FLC_ITEM_OBJECT );
+   addIntConstant( "ClassType", FLC_ITEM_CLASS );
+   addIntConstant( "MethodType", FLC_ITEM_METHOD );
+   addIntConstant( "ClassMethodType", FLC_ITEM_CLSMETHOD );
+   // Should never be received by the applications.
+   addIntConstant( "true", 1 );
+   addIntConstant( "false", 0 );
+}
+
+void Compiler::addIntConstant( const String &name, int64 value, uint32 line )
+{
+   addConstant( name, new Value( value ), line );
+}
+
+void Compiler::addNilConstant( const String &name, uint32 line )
+{
+   addConstant( name, new Value(), line );
+}
+
+void Compiler::addStringConstant( const String &name, const String &value, uint32 line )
+{
+   addConstant( name, new Value( m_module->addString( value ) ), line );
+}
+
+void Compiler::addNumConstant( const String &name, numeric value, uint32 line )
+{
+   addConstant( name, new Value( value ), line );
+}
+
+void Compiler::addConstant( const String &name, Value *val, uint32 line )
+{
+   // is a constant with the same name defined?
+   if ( m_constants.find( &name ) != 0 ) {
+      raiseError( e_already_def, name, line );
+      return;
+   }
+
+   // is a symbol with the same name defined ?
+   if ( m_module->findGlobalSymbol( name ) != 0 ) {
+      raiseError( e_already_def, name, line );
+      return;
+   }
+
+   if( ! val->isImmediate() ) {
+      raiseError( e_assign_const, name, line );
+      return;
+   }
+
+   // create a global const symbol
+   /* It's a thing I must think about
+   Symbol *sym = new Symbol( m_module->addString( name ) );
+   sym->setConst( val->genVarDef() );
+   m_module->addGlobalSymbol( sym );
+   */
+
+   // add the constant to the compiler.
+   String temp( name );
+   m_constants.insert( &temp, val );
+}
+
+void Compiler::closeFunction()
+{
+   StmtFunction *func = static_cast<Falcon::StmtFunction *>( getContext() );
+   Symbol *fsym = func->symbol();
+   FuncDef *def = fsym->getFuncDef();
+
+   // has this function a static block?
+   if ( func->hasStatic() )
+   {
+      def->onceItemId( m_module->addGlobal( "_once_" + fsym->name(), false )->itemId() );
+   }
+
+   popContext();
+   popFunctionContext();
+   popContextSet();
+   popFunction();
+}
+}
+
+/* end of compiler.cpp */

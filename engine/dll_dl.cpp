@@ -1,0 +1,97 @@
+/*
+   FALCON - The Falcon Programming Language.
+   FILE: dll_win.cpp
+   $Id: dll_dl.cpp,v 1.2 2007/08/11 10:24:40 jonnymind Exp $
+
+   Implementation of windows specific DLL system
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: mar ago 3 2004
+   Last modified because:
+
+   -------------------------------------------------------------------
+   (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+   In order to use this file in its compiled form, this source or
+   part of it you have to read, understand and accept the conditions
+   that are stated in the LICENSE file that comes boundled with this
+   package.
+*/
+
+#include <falcon/dll_dl.h>
+
+namespace Falcon
+{
+
+DllLoader_dl::~DllLoader_dl()
+{
+   close();
+}
+
+bool DllLoader_dl::open( const String &dll_name )
+{
+   char name[2048];
+   if ( dll_name.toCString( name, 2048 ) == -1 )
+      return false;
+
+   if( m_module != 0 )
+      if ( ! dlclose( m_module ) )
+         return false;
+
+   m_module = dlopen( name, RTLD_NOW );
+   if ( m_module == 0 )
+      return false;
+   return true;
+}
+
+bool DllLoader_dl::close()
+{
+   if ( m_module != 0 ) {
+      if ( dlclose( m_module ) ) {
+         m_module = 0;
+         return true;
+      }
+   }
+   return false;
+}
+
+void DllLoader_dl::assign( DllLoader_dl &other )
+{
+   if ( m_module != 0 )
+      close();
+
+   m_module = other.m_module;
+   other.m_module = 0;
+}
+
+
+DllFunc DllLoader_dl::getSymbol( const String &sym_name ) const
+{
+   char name[256];
+   if ( sym_name.toCString( name, 256 ) == -1 )
+      return DllFunc( 0 );
+
+   if ( m_module != 0 )
+      return DllFunc( dlsym( m_module, name ) );
+   return DllFunc( 0 );
+}
+
+bool DllLoader_dl::isDllMark( char ch1, char ch2 )
+{
+   if ( ch1 == 0x7f && ch2 == 'E' ) return true;
+   return false;
+}
+
+void DllLoader_dl::getErrorDescription( String &descr ) const
+{
+   const char *le = dlerror();
+   if ( le == 0 )
+      return;
+   descr.bufferize( le );
+}
+
+}
+
+
+/* end of dll_dl.cpp */

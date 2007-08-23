@@ -1,0 +1,2509 @@
+/*
+   FALCON - The Falcon Programming Language.
+   FILE: cstring.cpp
+   $Id: string.cpp,v 1.25 2007/08/16 13:46:40 jonnymind Exp $
+
+   Implementation of Core Strings.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: mer nov 24 2004
+   Last modified because:
+
+   -------------------------------------------------------------------
+   (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+   In order to use this file in its compiled form, this source or
+   part of it you have to read, understand and accept the conditions
+   that are stated in the LICENSE file that comes boundled with this
+   package.
+*/
+
+/** \file
+   Implementation of Core Strings.
+   \todo Add support for intenrational strings.
+*/
+
+#include <falcon/memory.h>
+#include <falcon/string.h>
+#include <falcon/stream.h>
+#include <falcon/common.h>
+#include <falcon/vm.h>
+#include <cstring>
+#include <stdlib.h>
+#include <stdio.h>
+
+namespace Falcon {
+
+namespace csh {
+
+Static handler_static;
+Buffer handler_buffer;
+Static16 handler_static16;
+Buffer16 handler_buffer16;
+Static32 handler_static32;
+Buffer32 handler_buffer32;
+
+
+uint32 Byte::length( const String *str ) const
+{
+   return str->size() / charSize();
+}
+
+uint32 Byte::getCharAt( const String *str, uint32 pos ) const
+{
+   return (uint32) str->getRawStorage()[pos];
+}
+
+uint32 Static16::length( const String *str ) const
+{
+   return str->size() >> 1;
+}
+
+uint32 Static32::length( const String *str ) const
+{
+   return str->size() >> 2;
+}
+
+uint32 Buffer16::length( const String *str ) const
+{
+   return str->size() >> 1;
+}
+
+uint32 Buffer32::length( const String *str ) const
+{
+   return str->size() >> 2;
+}
+
+
+uint32 Static16::getCharAt( const String *str, uint32 pos ) const
+{
+   return (uint32)  reinterpret_cast< uint16 *>(str->getRawStorage())[ pos ];
+}
+
+uint32 Buffer16::getCharAt( const String *str, uint32 pos ) const
+{
+   return (uint32)  reinterpret_cast< uint16 *>(str->getRawStorage())[ pos ];
+}
+
+uint32 Static32::getCharAt( const String *str, uint32 pos ) const
+{
+   return reinterpret_cast< uint32 *>(str->getRawStorage())[ pos ];
+}
+
+uint32 Buffer32::getCharAt( const String *str, uint32 pos ) const
+{
+   return reinterpret_cast< uint32 *>(str->getRawStorage())[ pos ];
+}
+
+
+
+void Byte::subString( const String *str, int32 start, int32 end, String *tgt ) const
+{
+   if( start < 0 )
+      start = int(str->length()) + start;
+   if( end < 0 )
+      end = int(str->length()) + end + 1;
+   if ( start < 0 || start >= (int)str->size() || end < 0 || end > (int)str->size() || end == start) {
+      tgt->size( 0 );
+      return;
+   }
+
+
+   byte *storage, *source;
+   int16 cs = charSize();
+   source = str->getRawStorage();
+
+   if ( end < start ) {
+      uint32 len = start - end + 1;
+      if ( tgt->allocated() < len * cs ) {
+         storage = (byte *) memAlloc( len * cs );
+      }
+      else
+         storage = tgt->getRawStorage();
+
+      switch( cs )
+      {
+         case 1:
+         {
+            for( uint32 i = 0; i < len ; i ++ )
+               storage[i] = source[start-i];
+            tgt->size( len );
+         }
+         break;
+
+         case 2:
+         {
+            uint16 *storage16 = (uint16 *) storage;
+            uint16 *source16 = (uint16 *) source;
+            for( uint32 i = 0; i < len ; i ++ )
+               storage16[i] = source16[start-i];
+            tgt->size( len * 2 );
+         }
+
+         case 4:
+         {
+            uint32 *storage32 = (uint32 *) storage;
+            uint32 *source32 = (uint32 *) source;
+            for( uint32 i = 0; i < len ; i ++ )
+               storage32[i] = source32[start-i];
+            tgt->size( len * 4 );
+         }
+      }
+   }
+   else {
+      uint32 len = (end - start) * cs;
+      if ( tgt->allocated() < len * cs ) {
+         storage = (byte *) memAlloc( len * cs );
+      }
+      else
+         storage = tgt->getRawStorage();
+
+      memcpy( storage, str->getRawStorage() + (start * cs) , len  );
+      tgt->size( len );
+   }
+
+   // was the storage not enough?
+   if ( storage != tgt->getRawStorage() )
+   {
+      if ( tgt->allocated() != 0 )
+         tgt->manipulator()->destroy( tgt );
+
+      uint32 oldSize = tgt->allocated();
+
+      tgt->allocated( tgt->size() );
+      tgt->setRawStorage( storage );
+
+      tgt->checkAdjustSize( oldSize );
+   }
+
+   switch( cs )
+   {
+      case 1: tgt->manipulator( &handler_buffer ); break;
+      case 2: tgt->manipulator( &handler_buffer16 ); break;
+      case 4: tgt->manipulator( &handler_buffer32 ); break;
+   }
+}
+
+
+bool Byte::change( String *str, uint32 start, uint32 end, const String *source ) const
+{
+   uint32 strLen = str->length();
+
+   if ( start >= strLen )
+      return false;
+
+   if ( end > strLen )
+      end = strLen;
+
+
+   if ( end < start ) {
+      uint32 temp = end;
+      end = start;
+      start = temp;
+   }
+   int32 len = end - start;
+   insert( str, start, len, source );
+   return true;
+}
+
+
+String *Byte::clone( const String *str ) const
+{
+   String *str1;
+
+   if ( str->garbageable() )
+   {
+      const GarbageString *gstr = static_cast< const GarbageString *>( str );
+      // the copy constructor already stores for garbage if applicable.
+      str1 = new GarbageString( *gstr );
+   }
+   else
+      str1 = new String( *str );
+
+   return str1;
+}
+
+uint32 Byte::find( const String *str, const String *element, uint32 start, uint32 end ) const
+{
+   if ( str->size() == 0 || element->size() == 0 )
+      return npos;
+
+   if ( end > str->length() )  // npos is defined to be greater than any size
+      end = str->length();
+
+   if ( end < start ) {
+      uint32 temp = end;
+      end = start;
+      start = temp;
+   }
+
+   uint32 pos = start;
+   uint32 keyStart = element->getCharAt( 0 );
+   uint32 elemLen = element->length();
+
+   while( pos + elemLen <= end ) {
+      if ( str->getCharAt( pos ) == keyStart ) {
+         uint32 len = 1;
+         while( pos + len < end && len < elemLen && element->getCharAt(len) == str->getCharAt( pos + len ) )
+            len++;
+         if ( len == elemLen )
+            return pos;
+      }
+      pos++;
+   }
+
+   // not found.
+   return npos;
+}
+
+
+uint32 Byte::rfind( const String *str, const String *element, uint32 start, uint32 end ) const
+{
+   if ( str->size() == 0 || element->size() == 0 )
+      return npos;
+
+   if ( end > str->length() )  // npos is defined to be greater than any size
+      end = str->length();
+
+   if ( end < start ) {
+      uint32 temp = end;
+      end = start;
+      start = temp;
+   }
+
+   uint32 keyStart = element->getCharAt( 0 );
+   uint32 elemLen = element->length();
+   if ( elemLen > (end - start) )
+   {
+      // can't possibly be found
+      return npos;
+   }
+
+   uint32 pos = end - elemLen;
+
+   while( pos >= start  ) {
+      if ( str->getCharAt( pos ) == keyStart ) {
+         uint32 len = 1;
+         while( pos + len < end && len < elemLen && element->getCharAt(len) == str->getCharAt( pos + len ) )
+            len++;
+         if ( len == elemLen )
+            return pos;
+      }
+      if ( pos == 0 ) break;
+      pos--;
+   }
+
+   // not found.
+   return npos;
+}
+
+
+void Byte::remove( String *str, uint32 pos, uint32 len ) const
+{
+   uint32 sl = str->length();
+   if ( len == 0 || pos > sl )
+      return;
+
+   uint32 cs = charSize();
+   if ( pos + len > sl )
+      len = sl - pos;
+
+   uint32 newLen = (sl - len) *cs;
+   byte *mem = (byte *) memAlloc( newLen );
+   if ( pos > 0 )
+      memcpy( mem, str->getRawStorage(), pos * cs );
+   if ( pos + len < sl )
+      memcpy( mem + pos *cs, str->getRawStorage() +( pos + len) *cs , (sl - pos - len) * cs );
+
+   // for non-static strings...
+   if ( str->allocated() != 0 )
+   {
+      memFree( str->getRawStorage() );
+   }
+   uint32 oldAlloc = str->allocated();
+   str->setRawStorage( mem, newLen );
+   str->checkAdjustSize( oldAlloc );
+
+   // subclasses will set correct manipulator if needed.
+}
+
+
+void Byte::bufferize( String *str ) const
+{
+   // already buffered?
+   if ( ! str->isStatic() )
+      return;
+
+   uint32 size = str->m_size;
+   if ( size != 0 ) {
+      byte *mem = (byte *) memAlloc( size );
+      memcpy( mem, str->getRawStorage(), size );
+      str->setRawStorage( mem, size );
+      str->m_class = str->m_class->bufferedManipulator();
+      str->checkAdjustSize( 0 );
+   }
+}
+
+void Byte::bufferize( String *str, const String *strOrig ) const
+{
+   // copy the other string contents.
+   uint32 oldAlloc = str->m_allocated;
+   if ( str->m_allocated != 0 )
+      memFree( str->m_storage );
+
+   uint32 size = strOrig->m_size;
+   if ( size == 0 ) {
+      str->m_class = &handler_static;
+      str->setRawStorage( 0, 0 );
+   }
+   else {
+      byte *mem = (byte *) memAlloc( size );
+      memcpy( mem, strOrig->getRawStorage(), size );
+      str->setRawStorage( mem, size );
+      str->m_class = strOrig->m_class->bufferedManipulator();
+   }
+
+   str->checkAdjustSize( oldAlloc );
+}
+
+void Byte::reserve( String *str, uint32 size, bool relative, bool block ) const
+{
+   if ( relative )
+      size += str->m_allocated;
+
+   register int32 chs = charSize();
+   if ( block )
+   {
+      if ( size % FALCON_STRING_ALLOCATION_BLOCK != 0 )
+      {
+         size /= (FALCON_STRING_ALLOCATION_BLOCK * chs);
+         size ++;
+         size *= (FALCON_STRING_ALLOCATION_BLOCK * chs);
+      }
+   }
+
+   uint32 nextAlloc = size * chs;
+
+   // the required size may be already allocated
+   if ( nextAlloc > str->allocated() )
+   {
+      // cache the old allocation.
+      uint32 oldAlloc = str->allocated();
+
+      byte *mem = (byte *) memAlloc( nextAlloc );
+      uint32 size = str->m_size;
+      if ( str->m_size > 0 )
+         memcpy( mem, str->m_storage, str->m_size );
+
+      // we can now destroy the old string.
+      destroy( str );
+
+      str->m_storage = mem;
+      str->m_size = size;
+      str->m_allocated = nextAlloc;
+      str->checkAdjustSize( oldAlloc );
+   }
+
+   // let the subclasses set the correct manipulator
+}
+
+
+//============================================================0
+
+void Static::shrink( String *str ) const
+{
+// do nothing
+}
+
+void Static::reserve( String *str, uint32 size, bool relative, bool block ) const
+{
+   Byte::reserve( str, size, relative, block );
+   str->m_class = &handler_buffer;
+}
+
+const Base *Static::bufferedManipulator() const
+{
+   return  &handler_buffer;
+}
+
+void Static16::reserve( String *str, uint32 size, bool relative, bool block ) const
+{
+   Byte::reserve( str, size, relative, block );
+   str->m_class = &handler_buffer16;
+}
+
+const Base *Static16::bufferedManipulator() const
+{
+   return  &handler_buffer16;
+}
+
+void Static32::reserve( String *str, uint32 size, bool relative, bool block ) const
+{
+   Byte::reserve( str, size, relative, block );
+   str->m_class = &handler_buffer32;
+}
+
+const Base *Static32::bufferedManipulator() const
+{
+   return  &handler_buffer32;
+}
+
+void Static::setCharAt( String *str, uint32 pos, uint32 chr ) const
+{
+
+   byte *buffer;
+   int32 size = str->size();
+
+   if( chr <= 0xFF )
+   {
+      buffer = (byte *) memAlloc( size );
+      memcpy( buffer, str->getRawStorage(), size );
+      buffer[ pos ] = (byte) chr;
+      str->manipulator( &handler_buffer );
+   }
+   else if ( chr <= 0xFFFF )
+   {
+      uint16 *buf16 =  (uint16 *) memAlloc( size * 2 );
+      buffer = str->getRawStorage();
+      for ( int i = 0; i < size; i ++ )
+         buf16[ i ] = (uint16) buffer[ i ];
+
+      buf16[ pos ] = (uint16) chr;
+      buffer = (byte *) buf16;
+      size *= 2;
+      str->manipulator( &handler_buffer16 );
+   }
+   else
+   {
+      uint32 *buf32 =  (uint32 *) memAlloc( size * 4 );
+      buffer = str->getRawStorage();
+      for ( int i = 0; i < size; i ++ )
+         buf32[ i ] = (uint32) buffer[ i ];
+
+      buf32[ pos ] = chr;
+      buffer = (byte *) buf32;
+      size *= 4;
+      str->manipulator( &handler_buffer32 );
+   }
+
+   uint32 oldSize = str->allocated();
+   str->setRawStorage( buffer, size );
+   str->checkAdjustSize( oldSize );
+}
+
+
+void Static16::setCharAt( String *str, uint32 pos, uint32 chr ) const
+{
+
+   byte *buffer;
+   int32 size = str->size();
+
+   if ( chr <= 0xFFFF )
+   {
+      uint16 *buf16 =  (uint16 *) memAlloc( size );
+      memcpy( buf16, str->getRawStorage(), size );
+      buf16[ pos ] = (uint16) chr;
+      buffer = (byte *) buf16;
+      str->manipulator( &handler_buffer16 );
+   }
+   else
+   {
+      uint32 *buf32 =  (uint32 *) memAlloc( size * 2 );
+      uint16 *buf16 = (uint16 *) str->getRawStorage();
+      for ( int i = 0; i < size; i ++ )
+         buf32[ i ] = (uint32) buf16[ i ];
+
+      buf32[ pos ] = chr;
+      buffer = (byte *) buf32;
+      size *= 2;
+      str->manipulator( &handler_buffer32 );
+   }
+
+   uint32 oldSize = str->allocated();
+   str->setRawStorage( buffer, size );
+   str->checkAdjustSize( oldSize );
+}
+
+void Static32::setCharAt( String *str, uint32 pos, uint32 chr ) const
+{
+   byte *buffer;
+   int32 size = str->size();
+
+   uint32 *buf32 =  (uint32 *) memAlloc( size );
+   memcpy( buf32, str->getRawStorage(), size );
+
+   buf32[ pos ] = chr;
+   buffer = (byte *) buf32;
+   str->manipulator( &handler_buffer32 );
+   uint32 oldSize = str->allocated();
+   str->setRawStorage( buffer, size );
+   str->checkAdjustSize( oldSize );
+}
+
+void Buffer::setCharAt( String *str, uint32 pos, uint32 chr ) const
+{
+   byte *buffer;
+   int32 size = str->size();
+
+   if( chr <= 0xFF )
+   {
+      str->getRawStorage()[ pos ] = (byte) chr;
+   }
+   else if ( chr <= 0xFFFF )
+   {
+      uint32 oldAlloc = str->allocated();
+      uint16 *buf16 =  (uint16 *) memAlloc( size * 2 );
+      buffer = str->getRawStorage();
+      for ( int i = 0; i < size; i ++ )
+         buf16[ i ] = (uint16) buffer[ i ];
+
+      buf16[ pos ] = (uint16) chr;
+      size *= 2;
+      str->manipulator( &handler_buffer16 );
+      if( str->allocated() > 0 )
+         memFree( buffer );
+      str->setRawStorage( (byte *) buf16, size );
+      str->checkAdjustSize( oldAlloc );
+   }
+   else
+   {
+      uint32 oldAlloc = str->allocated();
+      uint32 *buf32 =  (uint32 *) memAlloc( size * 4 );
+      buffer = str->getRawStorage();
+      for ( int i = 0; i < size; i ++ )
+         buf32[ i ] = (uint32) buffer[ i ];
+
+      buf32[ pos ] = chr;
+      size *= 4;
+      str->manipulator( &handler_buffer32 );
+      if( str->allocated() > 0 )
+         memFree( buffer );
+      str->setRawStorage( (byte *) buf32, size );
+      str->checkAdjustSize( oldAlloc );
+   }
+}
+
+
+void Buffer16::setCharAt( String *str, uint32 pos, uint32 chr ) const
+{
+   if ( chr <= 0xFFFF )
+   {
+      uint16 *buf16 =  (uint16 *) str->getRawStorage();
+      buf16[ pos ] = (uint16) chr;
+   }
+   else
+   {
+      uint32 oldAlloc = str->allocated();
+      int32 size = str->size();
+      uint32 *buf32 =  (uint32 *) memAlloc( size * 2 );
+      uint16 *buf16 = (uint16 *) str->getRawStorage();
+      for ( int i = 0; i < size; i ++ )
+         buf32[ i ] = (uint32) buf16[ i ];
+
+      buf32[ pos ] = chr;
+      size *= 2;
+      str->manipulator( &handler_buffer32 );
+      if( str->allocated() > 0 )
+         memFree( buf16 );
+      str->setRawStorage( (byte *) buf32, size );
+      str->checkAdjustSize( oldAlloc );
+   }
+
+}
+
+void Buffer32::setCharAt( String *str, uint32 pos, uint32 chr ) const
+{
+   uint32 *buf32 = (uint32 *) str->getRawStorage();
+   buf32[ pos ] = chr;
+}
+
+
+void Static::insert( String *str, uint32 pos, uint32 len, const String *source ) const
+{
+   // 8-bit string, len == size
+   if ( pos + len > str->size() )
+      len = str->size() - pos;
+
+   uint32 finalSize;
+   byte *mem;
+   switch( source->manipulator()->charSize() )
+   {
+      case 1:
+      {
+         // same char size
+         finalSize = str->size() + source->size() - len;
+
+         mem = (byte *) memAlloc( finalSize );
+         if ( pos > 0 )
+            memcpy( mem, str->getRawStorage(), pos );
+
+         if ( source->size() > 0 )
+            memcpy( mem + pos, source->getRawStorage(), source->size() );
+
+         if ( pos + len < str->size() )
+            memcpy( mem + pos + source->size(), str->getRawStorage() + pos + len, str->size() - pos - len );
+
+           str->manipulator(&handler_buffer);
+      }
+      break;
+
+      case 2:
+      {
+         // double size
+         finalSize = str->size() * 2 + source->size() - len * 2;
+         uint16 *mem16 = ( uint16 * ) memAlloc( finalSize );
+         mem = ( byte * ) mem16;
+         byte *tgtBuf = str->getRawStorage();
+         uint32 strLen = str->size();
+         uint32 sourceLen = source->length();
+
+         for( uint32 frontPos = 0; frontPos < pos; frontPos ++ )
+            mem16[ frontPos ] = (uint16) tgtBuf[ frontPos ];
+
+         // using mem16 + pos so we have already * x factor in target string
+         if ( source->size() > 0 )
+            memcpy( mem16 + pos, source->getRawStorage(), source->size() );
+
+         for( uint32 memPos = pos + sourceLen, backPos = pos + len; backPos < strLen; memPos++, backPos ++ )
+            mem16[ memPos ] = (uint16) tgtBuf[ backPos ];
+
+         str->manipulator(&handler_buffer16);
+      }
+      break;
+
+      case 4:
+      {
+         // quad size
+         finalSize = str->size() * 4 + source->size() - len * 4;
+         uint32 *mem32 = ( uint32 * ) memAlloc( finalSize );
+         mem = ( byte * ) mem32;
+         byte *tgtBuf = str->getRawStorage();
+         uint32 strLen = str->size();
+         uint32 sourceLen = source->length();
+
+
+         for( uint32 frontPos = 0; frontPos < pos; frontPos ++ )
+            mem32[ frontPos ] = (uint32) tgtBuf[ frontPos ];
+
+         // using mem32 + pos so we have already * x factor in target string
+         if ( source->size() > 0 )
+            memcpy( mem32 + pos, source->getRawStorage(), source->size() );
+
+         for( uint32 memPos = pos + sourceLen, backPos = pos + len; backPos < strLen; memPos++, backPos ++ )
+            mem32[ memPos ] = (uint32) tgtBuf[ backPos ];
+
+         str->manipulator(&handler_buffer32);
+      }
+      break;
+   }
+
+   str->size( finalSize );
+   uint32 oldSize = str->allocated();
+   str->allocated( finalSize );
+   str->setRawStorage( mem );
+
+   str->checkAdjustSize( oldSize );
+}
+
+void Static16::insert( String *str, uint32 pos, uint32 len, const String *source ) const
+{
+   uint32 strLen = str->length();
+   uint32 sourceLen = source->length();
+   uint16 *tgtBuf = (uint16 *) str->getRawStorage();
+   if ( pos + len > strLen )
+      len = strLen - pos;
+
+   uint32 finalSize;
+   byte *mem;
+   switch( source->manipulator()->charSize() )
+   {
+      case 1:
+      {
+         // shorter - will still be int16 in the end.
+         finalSize = str->size() + (source->size() - len) * 2;
+         uint16 *mem16 = ( uint16 * ) memAlloc( finalSize );
+         mem = ( byte * ) mem16;
+         byte *srcBuf = source->getRawStorage();
+
+         if ( pos > 0 )
+            memcpy( mem, tgtBuf, pos * 2 );
+
+         // using mem16 + pos so we have already * x factor in target string
+         for( uint32 middlePos = 0; middlePos < sourceLen; middlePos ++ )
+            mem16[ middlePos + pos ] = (uint16) srcBuf[ middlePos ];
+
+         if ( pos + len < strLen )
+            memcpy( mem16 + pos + sourceLen, tgtBuf + pos + len, ( strLen - pos - len ) * 2 );
+
+         str->manipulator(&handler_buffer16);
+      }
+      break;
+
+      case 2:
+      {
+         // same size
+         finalSize = str->size() + source->size() - (len * 2);
+         uint16 *mem16 = ( uint16 * ) memAlloc( finalSize );
+         mem = ( byte * ) mem16;
+
+         if ( pos > 0 )
+            memcpy( mem16, tgtBuf, pos * 2 );
+
+         // using mem16 + pos so we have already * x factor in target string
+         if ( source->size() > 0 )
+            memcpy( mem16 + pos, source->getRawStorage(), source->size() );
+
+         if ( pos + len < strLen )
+            memcpy( mem16 + pos + sourceLen, tgtBuf + pos + len, (strLen - pos - len)*2 );
+
+         str->manipulator(&handler_buffer16);
+      }
+      break;
+
+      case 4:
+      {
+         // double size
+         finalSize = str->size() * 2 + source->size() - (len * 4);
+         uint32 *mem32 = (uint32 *) memAlloc( finalSize );
+         mem = (byte *) mem32;
+
+         for( uint32 frontPos = 0; frontPos < pos; frontPos ++ )
+            mem32[ frontPos ] = (uint32) tgtBuf[ frontPos ];
+
+         // using mem32 + pos so we have already * x factor in target string
+         if ( source->size() > 0 )
+            memcpy( mem32 + pos, source->getRawStorage(), source->size() );
+
+         for( uint32 memPos = pos + sourceLen, backPos = pos + len; backPos < strLen; memPos++, backPos ++ )
+            mem32[ memPos ] = (uint32) tgtBuf[ backPos ];
+
+         str->manipulator(&handler_buffer32);
+      }
+      break;
+   }
+
+   uint32 oldSize = str->allocated();
+
+   str->size( finalSize );
+   str->allocated( finalSize );
+   str->setRawStorage( mem );
+
+   str->checkAdjustSize( oldSize );
+}
+
+
+void Static32::insert( String *str, uint32 pos, uint32 len, const String *source ) const
+{
+   uint32 strLen = str->length();
+   uint32 sourceLen = source->length();
+   uint32 *tgtBuf = (uint32 *) str->getRawStorage();
+   if ( pos + len > strLen )
+      len = strLen - pos;
+
+   uint32 finalSize;
+   byte *mem;
+   switch( source->manipulator()->charSize() )
+   {
+      case 1:
+      {
+         // shorter - will still be int32 in the end.
+         finalSize = str->size() + (source->size() - len) * 4;
+         uint32 *mem32 = ( uint32 * ) memAlloc( finalSize );
+         mem = (byte *) mem32;
+         byte *srcBuf = source->getRawStorage();
+
+         if ( pos > 0 )
+            memcpy( mem, tgtBuf, pos * 4 );
+
+         // using mem32 + pos so we have already * x factor in target string
+         for( uint32 middlePos = 0; middlePos < sourceLen; middlePos ++ )
+            mem32[ middlePos + pos ] = (uint32) srcBuf[ middlePos ];
+
+         if ( pos + len < strLen )
+            memcpy( mem32 + pos + sourceLen, tgtBuf + pos + len, ( strLen - pos - len ) * 4 );
+
+         str->manipulator(&handler_buffer32);
+      }
+      break;
+
+      case 2:
+      {
+         // shorter - will still be int32 in the end.
+         finalSize = str->size() + source->size() - (len * 2);
+         uint32 *mem32 = ( uint32 * ) memAlloc( finalSize );
+         mem = ( byte * ) mem32;
+         uint16 *srcBuf = (uint16 *) source->getRawStorage();
+
+         if ( pos > 0 )
+            memcpy( mem, tgtBuf, pos * 4 );
+
+         // using mem32 + pos so we have already * x factor in target string
+         for( uint32 middlePos = 0; middlePos < sourceLen; middlePos ++ )
+            mem32[ middlePos + pos ] = (uint32) srcBuf[ middlePos ];
+
+         if ( pos + len < strLen )
+            memcpy( mem32 + pos + sourceLen, tgtBuf + pos + len, ( strLen - pos - len ) * 4 );
+
+         str->manipulator(&handler_buffer32);
+      }
+      break;
+
+      case 4:
+      {
+         // same size
+         finalSize = str->size() + source->size() - (len * 4);
+         uint32 *mem32 = (uint32 *) memAlloc( finalSize );
+         mem = (byte *) mem32;
+
+         // same char size
+         finalSize = str->size() + source->size() - len;
+         mem = (byte *) memAlloc( finalSize );
+         if ( pos > 0 )
+            memcpy( mem32, tgtBuf, pos * 4 );
+
+         if ( source->size() > 0 )
+            memcpy( mem32 + pos, source->getRawStorage(), source->size() );
+
+         if ( pos + len < strLen )
+            memcpy( mem32 + pos + strLen, str->getRawStorage() + pos + len, (strLen - pos - len ) * 4 );
+
+         str->manipulator(&handler_buffer32);
+      }
+      break;
+   }
+
+   uint32 oldSize = str->allocated();
+
+   str->size( finalSize );
+   str->allocated( finalSize );
+   str->setRawStorage( mem );
+
+   str->checkAdjustSize( oldSize );
+}
+
+
+void Buffer::insert( String *str, uint32 pos, uint32 len, const String *source ) const
+{
+   // 8-bit string, len == size
+   if ( pos + len > str->size() )
+      len = str->size() - pos;
+
+   uint32 finalSize;
+   byte *mem;
+	bool toFree = str->allocated() > 0;
+   byte *tgtBuf = str->getRawStorage();
+
+   switch( source->manipulator()->charSize() )
+   {
+      case 1:
+      {
+         // same char size
+         finalSize = str->size() + source->size() - len;
+         mem = ( byte * ) memAlloc( finalSize );
+
+         if ( pos > 0 )
+            memcpy( mem, str->getRawStorage(), pos );
+
+         if ( source->size() > 0 )
+            memcpy( mem + pos, source->getRawStorage(), source->size() );
+
+         if ( pos + len < str->size() )
+            memcpy( mem + pos + source->size(), str->getRawStorage() + pos + len, str->size() - pos - len );
+
+      }
+      break;
+
+      case 2:
+      {
+         // double size
+         finalSize = str->size() * 2 + source->size() - len * 2;
+         uint32 strLen = str->size();
+         uint32 sourceLen = source->length();
+
+         uint16 *mem16 = ( uint16 * ) memAlloc( finalSize );
+         mem = ( byte * ) mem16;
+
+         for( uint32 frontPos = 0; frontPos < pos; frontPos ++ )
+            mem16[ frontPos ] = (uint16) tgtBuf[ frontPos ];
+
+         // using mem16 + pos so we have already * x factor in target string
+         if ( source->size() > 0 )
+            memcpy( mem16 + pos, source->getRawStorage(), source->size() );
+
+         for( uint32 memPos = pos + sourceLen, backPos = pos + len; backPos < strLen; memPos++, backPos ++ )
+            mem16[ memPos ] = (uint16) tgtBuf[ backPos ];
+
+         str->manipulator(&handler_buffer16);
+      }
+      break;
+
+      case 4:
+      {
+         // quad size
+         finalSize = str->size() * 4 + source->size() - len * 4;
+         uint32 *mem32;
+         uint32 strLen = str->size();
+         uint32 sourceLen = source->length();
+
+         mem32 = ( uint32 * ) memAlloc( finalSize );
+
+         mem = ( byte * ) mem32;
+
+         for( uint32 frontPos = 0; frontPos < pos; frontPos ++ )
+            mem32[ frontPos ] = (uint32) tgtBuf[ frontPos ];
+
+         // using mem32 + pos so we have already * x factor in target string
+         if ( source->size() > 0 )
+            memcpy( mem32 + pos, source->getRawStorage(), source->size() );
+
+         for( uint32 memPos = pos + sourceLen, backPos = pos + len; backPos < strLen; memPos++, backPos ++ )
+            mem32[ memPos ] = (uint32) tgtBuf[ backPos ];
+
+         str->manipulator(&handler_buffer32);
+      }
+      break;
+   }
+
+   uint32 oldSize = str->allocated();
+
+   str->size( finalSize );
+   str->allocated( finalSize );
+   if ( toFree )
+		memFree( tgtBuf );
+   str->setRawStorage( mem );
+
+   str->checkAdjustSize( oldSize );
+
+}
+
+void Buffer16::insert( String *str, uint32 pos, uint32 len, const String *source ) const
+{
+   uint32 strLen = str->length();
+   uint32 sourceLen = source->length();
+   uint16 *tgtBuf = (uint16 *) str->getRawStorage();
+   if ( pos + len > strLen )
+      len = strLen - pos;
+
+   uint32 finalSize;
+	bool toFree = str->allocated() > 0;
+   byte *mem;
+
+   switch( source->manipulator()->charSize() )
+   {
+      case 1:
+      {
+         // shorter - will still be int16 in the end.
+         finalSize = str->size() + (source->size() - len) * 2;
+         uint16 *mem16;
+         mem16 = ( uint16 * ) memAlloc( finalSize );
+         mem = ( byte * ) mem16;
+
+         byte *srcBuf = source->getRawStorage();
+
+         if ( pos > 0 )
+            memcpy( mem, tgtBuf, pos * 2 );
+
+         // using mem16 + pos so we have already * x factor in target string
+         for( uint32 middlePos = 0; middlePos < sourceLen; middlePos ++ )
+            mem16[ middlePos + pos ] = (uint16) srcBuf[ middlePos ];
+
+         if ( pos + len < strLen )
+            memcpy( mem16 + pos + sourceLen, tgtBuf + pos + len, ( strLen - pos - len ) * 2 );
+
+         str->manipulator(&handler_buffer16);
+      }
+      break;
+
+      case 2:
+      {
+         // same size
+         finalSize = str->size() + source->size() - (len * 2);
+         uint16 *mem16;
+         mem16 = ( uint16 * ) memAlloc( finalSize );
+         mem = ( byte * ) mem16;
+
+         if ( pos > 0 )
+            memcpy( mem16, tgtBuf, pos * 2 );
+
+         // using mem16 + pos so we have already * x factor in target string
+         if ( source->size() > 0 )
+            memcpy( mem16 + pos, source->getRawStorage(), source->size() );
+
+         if ( pos + len < strLen )
+            memcpy( mem16 + pos + sourceLen, tgtBuf + pos + len, (strLen - pos - len)*2 );
+
+         str->manipulator(&handler_buffer16);
+      }
+      break;
+
+      case 4:
+      {
+         // double size
+         finalSize = str->size() * 2 + source->size() - (len * 4);
+         uint32 *mem32;
+         mem32 = ( uint32 * ) memAlloc( finalSize );
+         mem = (byte *) mem32;
+
+         for( uint32 frontPos = 0; frontPos < pos; frontPos ++ )
+            mem32[ frontPos ] = (uint32) tgtBuf[ frontPos ];
+
+         // using mem32 + pos so we have already * x factor in target string
+         if ( source->size() > 0 )
+            memcpy( mem32 + pos, source->getRawStorage(), source->size() );
+
+         for( uint32 memPos = pos + sourceLen, backPos = pos + len; backPos < strLen; memPos++, backPos ++ )
+            mem32[ memPos ] = (uint32) tgtBuf[ backPos ];
+
+         str->manipulator(&handler_buffer32);
+      }
+      break;
+   }
+
+   uint32 oldSize = str->allocated();
+
+   str->size( finalSize );
+   str->allocated( finalSize );
+	if( toFree )
+		memFree( tgtBuf );
+   str->setRawStorage( mem );
+
+   str->checkAdjustSize( oldSize );
+
+}
+
+
+void Buffer32::insert( String *str, uint32 pos, uint32 len, const String *source ) const
+{
+   uint32 strLen = str->length();
+   uint32 sourceLen = source->length();
+   uint32 *tgtBuf = (uint32 *) str->getRawStorage();
+   if ( pos + len > strLen )
+      len = strLen - pos;
+
+   uint32 finalSize;
+	bool toFree = str->allocated() > 0;
+   byte *mem;
+   switch( source->manipulator()->charSize() )
+   {
+      case 1:
+      {
+         // shorter - will still be int32 in the end.
+         finalSize = str->size() + (source->size() - len) * 4;
+         uint32 *mem32;
+         mem32 = ( uint32 * ) memAlloc( finalSize );
+         mem = (byte *) mem32;
+         byte *srcBuf = source->getRawStorage();
+
+         if ( pos > 0 )
+            memcpy( mem, tgtBuf, pos * 4 );
+
+         // using mem32 + pos so we have already * x factor in target string
+         for( uint32 middlePos = 0; middlePos < sourceLen; middlePos ++ )
+            mem32[ middlePos + pos ] = (uint32) srcBuf[ middlePos ];
+
+         if ( pos + len < strLen )
+            memcpy( mem32 + pos + sourceLen, tgtBuf + pos + len, ( strLen - pos - len ) * 4 );
+
+         str->manipulator(&handler_buffer32);
+      }
+      break;
+
+      case 2:
+      {
+         // shorter - will still be int32 in the end.
+         finalSize = str->size() + source->size() - (len * 2);
+         uint32 *mem32;
+         mem32 = ( uint32 * ) tgtBuf;
+         mem = ( byte * ) mem32;
+
+         uint16 *srcBuf = (uint16 *) source->getRawStorage();
+
+         if ( pos > 0 )
+            memcpy( mem, tgtBuf, pos * 4 );
+
+         // using mem32 + pos so we have already * x factor in target string
+         for( uint32 middlePos = 0; middlePos < sourceLen; middlePos ++ )
+            mem32[ middlePos + pos ] = (uint32) srcBuf[ middlePos ];
+
+         if ( pos + len < strLen )
+            memcpy( mem32 + pos + sourceLen, tgtBuf + pos + len, ( strLen - pos - len ) * 4 );
+
+         str->manipulator(&handler_buffer32);
+      }
+      break;
+
+      case 4:
+      {
+         // same size
+         finalSize = str->size() + source->size() - (len * 4);
+         uint32 *mem32;
+         mem32 = ( uint32 * ) tgtBuf;
+         mem = (byte *) mem32;
+
+         // same char size
+         finalSize = str->size() + source->size() - len;
+         mem = (byte *) memAlloc( finalSize );
+         if ( pos > 0 )
+            memcpy( mem32, tgtBuf, pos * 4 );
+
+         if ( source->size() > 0 )
+            memcpy( mem32 + pos, source->getRawStorage(), source->size() );
+
+         if ( pos + len < strLen )
+            memcpy( mem32 + pos + strLen, str->getRawStorage() + pos + len, (strLen - pos - len ) * 4 );
+
+         str->manipulator(&handler_buffer32);
+      }
+      break;
+   }
+
+   uint32 oldSize = str->allocated();
+
+   str->size( finalSize );
+   str->allocated( finalSize );
+	if( toFree )
+		memFree( tgtBuf );
+   str->setRawStorage( mem );
+
+   str->checkAdjustSize( oldSize );
+
+}
+
+
+void Static::remove( String *str, uint32 pos, uint32 len ) const
+{
+   Byte::remove( str, pos, len );
+   // changing string type.
+   str->manipulator( &handler_buffer );
+}
+
+void Static16::remove( String *str, uint32 pos, uint32 len ) const
+{
+   Byte::remove( str, pos, len );
+   // changing string type.
+   str->manipulator( &handler_buffer16 );
+}
+
+void Static32::remove( String *str, uint32 pos, uint32 len ) const
+{
+   Byte::remove( str, pos, len );
+   // changing string type.
+   str->manipulator( &handler_buffer32 );
+}
+
+
+void Static::destroy( String * ) const
+{
+   // do nothing for static strings
+}
+
+
+void Buffer::shrink( String *str ) const
+{
+   if( str->size() > str->allocated() )
+   {
+      uint32 oldSize = str->allocated();
+
+      if ( str->size() == 0 )
+      {
+         destroy( str );
+      }
+      else {
+         byte *mem = (byte *) memRealloc( str->getRawStorage(), str->size() );
+         if ( mem != str->getRawStorage() )
+         {
+            memcpy( mem, str->getRawStorage(), str->size() );
+            str->setRawStorage( mem );
+         }
+         str->allocated( str->size() );
+      }
+      str->checkAdjustSize( oldSize );
+   }
+}
+
+void Buffer::reserve( String *str, uint32 size, bool relative, bool block ) const
+{
+   Byte::reserve( str, size, relative, block );
+   // manipulator is ok
+}
+
+
+void Buffer::destroy( String *str ) const
+{
+   if ( str->allocated() > 0 ) {
+      memFree( str->getRawStorage() );
+      str->allocated( 0 );
+      str->size(0);
+   }
+}
+
+} // namespace csh
+
+
+//=================================================================
+// The string class
+//=================================================================
+
+
+String::String( uint32 size ):
+   m_class( &csh::handler_buffer ),
+   m_garbageable( false )
+{
+   m_storage = (byte *) memAlloc( size );
+   m_allocated = size;
+   m_size = 0;
+}
+
+String::String( const char *data ):
+   m_class( &csh::handler_static ),
+   m_garbageable( false ),
+   m_allocated( 0 ),
+   m_storage( (byte*) const_cast< char *>(data) )
+{
+   m_size = strlen( data );
+}
+
+String::String( const char *data, int32 len ):
+   m_class( &csh::handler_buffer ),
+   m_garbageable( false )
+{
+   m_size = len >= 0 ? len : strlen( data );
+   m_allocated = (( m_size / FALCON_STRING_ALLOCATION_BLOCK ) + 1 ) * FALCON_STRING_ALLOCATION_BLOCK;
+   m_storage = (byte *) memAlloc( m_allocated );
+   memcpy( m_storage, data, m_size );
+}
+
+
+String::String( const wchar_t *data ):
+   m_garbageable( false ),
+   m_allocated( 0 ),
+   m_storage( (byte*) const_cast< wchar_t *>(data) )
+{
+   if ( sizeof( wchar_t ) == 2 )
+      m_class = &csh::handler_static16;
+   else
+      m_class = &csh::handler_static32;
+
+   uint32 s = 0;
+   while( data[s] != 0 )
+      ++s;
+   m_size = s * sizeof( wchar_t );
+}
+
+
+String::String( const wchar_t *data, int32 len ):
+   m_allocated( 0 ),
+   m_storage( (byte *) const_cast< wchar_t *>( data ) ),
+   m_garbageable( false )
+{
+   if ( sizeof( wchar_t ) == 2 )
+      m_class = &csh::handler_buffer16;
+   else
+      m_class = &csh::handler_buffer32;
+
+   if ( len >= 0 )
+   {
+      m_size = len * sizeof( wchar_t );
+   }
+   else
+   {
+      uint32 s = 0;
+      while( data[s] != 0 )
+         ++s;
+      m_size = s * sizeof( wchar_t );
+   }
+
+   m_allocated = (( m_size / FALCON_STRING_ALLOCATION_BLOCK ) + 1 ) * FALCON_STRING_ALLOCATION_BLOCK;
+   m_storage = (byte *) memAlloc( m_allocated );
+   memcpy( m_storage, data, m_size );
+}
+
+
+String::String( const String &other, uint32 begin, uint32 end ):
+   m_allocated( 0 ),
+   m_size( 0 ),
+   m_storage( 0 ),
+   m_garbageable( false )
+{
+   // by default, copy manipulator
+   m_class = other.m_class;
+
+   if ( other.m_allocated == 0 )
+   {
+      if ( other.m_size == 0 ) {
+         m_size = 0;
+			m_allocated = 0;
+         setRawStorage( 0 );
+      }
+      else {
+         if( begin < end )
+         {
+            uint32 cs = m_class->charSize();
+            setRawStorage( other.getRawStorage() + begin * cs );
+            m_size = (end - begin ) * cs;
+            if ( m_size > (other.m_size - (begin *cs )) )
+               m_size = other.m_size - (begin *cs );
+         }
+         else {
+            // reverse substring, we have to bufferize.
+            other.m_class->subString( &other, begin, end, this );
+         }
+      }
+   }
+   else
+      other.m_class->subString( &other, begin, end, this );
+}
+
+void String::copy( const String &other )
+{
+   uint32 oldAlloc = m_allocated;
+   if ( oldAlloc )
+      m_class->destroy( this );
+
+   m_class = other.m_class;
+   m_size = other.m_size;
+   m_allocated = other.m_allocated;
+   if ( m_allocated > 0 ) {
+		// Non-static classes cannot have m_allocated > 0, so we already have a buffer.
+      m_storage = (byte *) memAlloc( m_allocated );
+      if ( m_size > 0 )
+         memcpy( m_storage, other.m_storage, m_size );
+   }
+   else
+      m_storage = other.m_storage;
+
+   if( m_garbageable )
+      static_cast< GarbageString *>( this )->updateGCSize( oldAlloc );
+}
+
+
+String &String::adopt( char *buffer, uint32 size, uint32 allocated )
+{
+   uint32 oldAlloc = m_allocated;
+
+   if ( m_allocated != 0 )
+      m_class->destroy( this );
+
+   m_class = &csh::handler_buffer;
+   m_size = size;
+   m_allocated = allocated;
+   m_storage = (byte *) buffer;
+
+   if( m_garbageable )
+      static_cast< GarbageString *>( this )->updateGCSize( oldAlloc );
+
+   return *this;
+}
+
+String &String::adopt( wchar_t *buffer, uint32 size, uint32 allocated )
+{
+   uint32 oldAlloc = m_allocated;
+
+   if ( m_allocated != 0 )
+      m_class->destroy( this );
+
+   m_class = &csh::handler_buffer16;
+   m_size = size * sizeof( wchar_t );
+   m_allocated = allocated;
+   m_storage = (byte *) buffer;
+
+   if( m_garbageable )
+      static_cast< GarbageString *>( this )->updateGCSize( oldAlloc );
+
+   return *this;
+}
+
+int String::compare( const char *other ) const
+{
+   uint32 pos = 0;
+   uint32 len = length();
+
+   while( pos < len )
+   {
+      uint32 c1 = getCharAt( pos );
+      if ( c1 < (uint32) *other )
+         return -1;
+      // return greater also if other is ended; we are NOT ended...
+      else if ( c1 > (uint32) *other || (uint32) *other == 0 )
+         return 1;
+
+      other ++;
+      pos++;
+   }
+
+   if ( *other != 0 )
+      // other is greater
+      return -1;
+
+   // the strings are the same
+   return 0;
+}
+
+int String::compareIgnoreCase( const char *other ) const
+{
+   uint32 pos = 0;
+   uint32 len = length();
+
+   while( pos < len )
+   {
+      uint32 c1 = getCharAt( pos );
+      uint32 cmpval = (uint32) *other;
+      if ( c1 >=0x41 && c1 <= 0x5A )
+         c1 += 0x20;
+
+      if ( cmpval >=0x41 && cmpval <= 0x5A )
+         cmpval += 0x20;
+
+      if ( c1 < cmpval )
+         return -1;
+      // return greater also if other is ended; we are NOT ended...
+      else if ( c1 > cmpval || cmpval == 0 )
+         return 1;
+
+      other ++;
+      pos++;
+   }
+
+   if ( *other != 0 )
+      // other is greater
+      return -1;
+
+   // the strings are the same
+   return 0;
+}
+
+int String::compare( const wchar_t *other ) const
+{
+   uint32 pos = 0;
+   uint32 len = length();
+
+   while( pos < len )
+   {
+      uint32 c1 = getCharAt( pos );
+      if ( c1 < (uint32) *other )
+         return -1;
+      // return greater also if other is ended; we are NOT ended...
+      else if ( c1 > (uint32) *other || (uint32) *other == 0 )
+         return 1;
+
+      other ++;
+      pos++;
+   }
+
+   if ( *other != 0 )
+      // other is greater
+      return -1;
+
+   // the strings are the same
+   return 0;
+}
+
+int String::compareIgnoreCase( const wchar_t *other ) const
+{
+   uint32 pos = 0;
+   uint32 len = length();
+
+   while( pos < len )
+   {
+      uint32 c1 = getCharAt( pos );
+      uint32 cmpval = (uint32) *other;
+      if ( c1 >=0x41 && c1 <= 0x5A )
+         c1 += 0x20;
+
+      if ( cmpval >=0x41 && cmpval <= 0x5A )
+         cmpval += 0x20;
+
+      if ( c1 < cmpval )
+         return -1;
+      // return greater also if other is ended; we are NOT ended...
+      else if ( c1 > cmpval || cmpval == 0 )
+         return 1;
+
+      other ++;
+      pos++;
+   }
+
+   if ( *other != 0 )
+      // other is greater
+      return -1;
+
+   // the strings are the same
+   return 0;
+}
+
+int String::compare( const String &other ) const
+{
+   uint32 len1 = length();
+   uint32 len2 = other.length();
+   uint32 len = len1 > len2 ? len2 : len1;
+
+   uint32 pos = 0;
+   while( pos < len )
+   {
+      uint32 c1 = getCharAt( pos );
+      uint32 c2 = other.getCharAt( pos );
+
+      if ( c1 < c2 )
+         return -1;
+      // return greater also if other is ended; we are NOT ended...
+      else if ( c1 > c2 )
+         return 1;
+
+      pos++;
+   }
+
+   // the strings are the same?
+   if ( len1 < len2 )
+      return -1;
+   // return greater also if other is ended; we are NOT ended...
+   else if ( len1 > len2 )
+      return 1;
+
+   // yes
+   return 0;
+}
+
+
+int String::compareIgnoreCase( const String &other ) const
+{
+   uint32 len1 = length();
+   uint32 len2 = other.length();
+   uint32 len = len1 > len2 ? len2 : len1;
+
+   uint32 pos = 0;
+   while( pos < len )
+   {
+      uint32 c1 = getCharAt( pos );
+      uint32 c2 = other.getCharAt( pos );
+
+      if ( c1 >=0x41 && c1 <= 0x5A )
+         c1 += 0x20;
+
+      if ( c2 >=0x41 && c2 <= 0x5A )
+         c2 += 0x20;
+
+      if ( c1 < c2 )
+         return -1;
+      // return greater also if other is ended; we are NOT ended...
+      else if ( c1 > c2 )
+         return 1;
+
+      pos++;
+   }
+
+   // the strings are the same?
+
+   if ( len1 < len2 )
+      return -1;
+   // return greater also if other is ended; we are NOT ended...
+   else if ( len1 > len2 )
+      return 1;
+
+   // yes
+   return 0;
+}
+
+int32 String::toCString( char *target, uint32 bufsize ) const
+{
+   uint32 len = length();
+
+   // we already know that the buffer is too small?
+    if ( bufsize <= len )
+      return -1;
+
+   uint32 pos = 0;
+   uint32 done = 0;
+
+   while( done < len && pos < bufsize )
+   {
+      uint32 chr = getCharAt( done );
+
+      if ( chr < 0x80 )
+      {
+         target[ pos ++ ] = chr;
+      }
+      else if ( chr < 0x800 )
+      {
+         if ( bufsize <= pos + 2 )
+            return false;
+
+         target[ pos ++ ] = 0xC0 | ((chr >> 6 ) & 0x1f);
+         target[ pos ++ ] = 0x80 | (0x3f & chr);
+      }
+      else if ( chr < 0x10000 )
+      {
+         if ( bufsize <= pos + 3 )
+            return false;
+
+         target[ pos ++ ] = 0xE0 | ((chr >> 12) & 0x0f );
+         target[ pos ++ ] = 0x80 | ((chr >> 6) & 0x3f );
+         target[ pos ++ ] = 0x80 | (0x3f & chr);
+      }
+      else
+      {
+         if ( bufsize <= pos + 4 )
+            return false;
+
+         target[ pos ++ ] = 0xF0 | ((chr >> 18) & 0x7 );
+         target[ pos ++ ] = 0x80 | ((chr >> 12) & 0x3f );
+         target[ pos ++ ] = 0x80 | ((chr >> 6) & 0x3f );
+         target[ pos ++ ] = 0x80 | (0x3f & chr );
+      }
+
+      ++done;
+   }
+
+   if ( pos == bufsize )
+      return -1;
+
+   target[pos] = '\0';
+   return pos;
+}
+
+int32 String::toWideString( wchar_t *target, uint32 bufsize ) const
+{
+   uint32 len = length();
+   if ( bufsize <= len * sizeof( wchar_t ) )
+      return -1;
+
+   if ( sizeof( wchar_t ) == 2 ) {
+      for( uint32 i = 0; i < len; i ++ )
+      {
+         uint32 chr = getCharAt( i );
+         if ( chr > 0xFFFF )
+            target[ i ] = L'?';
+         else
+            target[ i ] = chr;
+      }
+   }
+   else {
+      for( uint32 i = 0; i < len; i ++ )
+      {
+         target[ i ] = getCharAt( i );
+      }
+   }
+	target[len] = 0;
+
+   return (int32) len;
+}
+
+void String::append( const String &str )
+{
+/*   if ( str.size() < FALCON_STRING_ALLOCATION_BLOCK )
+      m_class->reserve( this, FALCON_STRING_ALLOCATION_BLOCK, true, true ); */
+   m_class->insert( this, length(), 0, &str );
+}
+
+void String::append( uint32 chr )
+{
+   if ( size() >= allocated() )
+   {
+      m_class->reserve( this, size() + FALCON_STRING_ALLOCATION_BLOCK, false, true ); // allocates a whole block next
+   }
+
+   // reserve forces to buffer, so we have only to extend
+   size( size() + m_class->charSize() );
+   // and insert the last char:
+
+   setCharAt( length() - 1, chr );
+   // if the chr can't fit our size, the whole string will be refitted, including the last
+   // empty char that we added above.
+}
+
+void String::prepend( uint32 chr )
+{
+   if ( size() >= allocated() )
+   {
+      m_class->reserve( this, size() + FALCON_STRING_ALLOCATION_BLOCK, false, true ); // allocates a whole block next
+   }
+
+   // reserve forces to buffer, so we have only to extend
+   memmove( m_storage + m_class->charSize(), m_storage, size() );
+   size( size() + m_class->charSize() );
+
+   // and insert the first char
+   setCharAt( 0, chr );
+}
+
+static void uint32ToHex( uint32 number, char *buffer )
+{
+   uint32 divisor = 0x10000000;
+   int pos = 0;
+
+   while( divisor > 0 ) {
+      uint32 rest = number / divisor;
+      if( rest > 0 || pos > 0 ) {
+         buffer[pos] = rest >= 10 ? 'A' + (rest - 10):'0'+rest;
+         pos++;
+         number -= rest * divisor;
+      }
+      divisor = divisor >> 4; // divide by 16
+   }
+   buffer[pos] = 0;
+}
+
+void String::escape( String &strout ) const
+{
+   int len = length();
+   int pos = 0;
+   uint32 oldAlloc = strout.m_allocated;
+   strout.m_class->reserve( &strout, len ); // prepare for at least len chars
+   strout.size( 0 ); // clear target string
+
+   while( pos < len )
+   {
+      uint32 chat = getCharAt( pos );
+      switch( chat )
+      {
+         case '"':  strout += "\\\""; break;
+         case '\r': strout += "\\r"; break;
+         case '\n': strout += "\\n"; break;
+         case '\t': strout += "\\t"; break;
+         case '\b': strout += "\\b"; break;
+         case '\\': strout += "\\\\"; break;
+         default:
+            if ( chat < 8 ) {
+               char bufarea[12];
+               uint32ToHex( chat, bufarea );
+               strout += bufarea;
+            }
+            else{
+               strout += chat;
+            }
+      }
+      pos++;
+   }
+
+   if( strout.m_garbageable )
+      static_cast< GarbageString *>( &strout )->updateGCSize( oldAlloc );
+}
+
+void String::escapeFull( String &strout ) const
+{
+   int len = length();
+   int pos = 0;
+   uint32 oldAlloc = strout.m_allocated;
+   strout.m_class->reserve( &strout, len ); // prepare for at least len chars
+   strout.size( 0 ); // clear target string
+
+   while( pos < len )
+   {
+      uint32 chat = getCharAt( pos );
+      switch( chat )
+      {
+         case '"':  strout += "\\\""; break;
+         case '\r': strout += "\\r"; break;
+         case '\n': strout += "\\n"; break;
+         case '\t': strout += "\\t"; break;
+         case '\b': strout += "\\b"; break;
+         case '\\': strout += "\\\\"; break;
+         default:
+            if ( chat < 8 || chat > 127 ) {
+               char bufarea[12];
+               uint32ToHex( chat, bufarea );
+               strout += bufarea;
+            }
+            else{
+               strout += chat;
+            }
+      }
+      pos++;
+   }
+}
+
+void String::unescape()
+{
+   uint32 len = length();
+   uint32 pos = 0;
+   uint32 oldAlloc = m_allocated;
+
+
+   while( pos < len )
+   {
+      uint32 chat = getCharAt( pos );
+      if ( chat == (uint32) '\\' )
+      {
+         // an escape must take place
+         uint32 endSub = pos + 1;
+         if( endSub == len - 1 )
+            return;
+
+         uint32 chnext = getCharAt( endSub );
+         uint32 chsub;
+
+         switch( chnext )
+         {
+            case '"':  chsub = (uint32) '"'; break;
+            case '\r': chsub = (uint32) '\r'; break;
+            case '\n': chsub = (uint32) '\n'; break;
+            case '\t': chsub = (uint32) '\t'; break;
+            case '\b': chsub = (uint32) '\b'; break;
+            case '\\': chsub = (uint32) '\\'; break;
+            case '0':
+               // parse octal number
+               endSub ++;
+               chsub = 0;
+               // max lenght of octals = 11 chars, + 2 for stubs
+               while( endSub < len && endSub - pos < 13 )
+               {
+                  chnext = getCharAt( endSub );
+                  if ( chnext < 0x30 || chnext > 0x37 )
+                     break;
+                  chsub <<= 3; //*8
+                  chsub |= (0x7) & (chnext - 0x30);
+                  endSub ++;
+               }
+            break;
+
+            case 'x':
+               // parse exadecimal number
+               endSub ++;
+               chsub = 0;
+               // max lenght of octals = 11 chars, + 2 for stubs
+               while( endSub < len && endSub - pos < 13 )
+               {
+                  chnext = getCharAt( endSub );
+                  if ( chnext >= 0x30 && chnext <= 0x39 ) // 0 - 9
+                  {
+                     chsub <<= 4; //*16
+                     chsub |=  chnext - 0x30;
+                  }
+                  else if( chnext >= 0x41 && chnext <= 0x46 ) // A - F
+                  {
+                     chsub <<= 4; //*16
+                     chsub |=  chnext - 0x41 + 10;
+                  }
+                  else if( chnext >= 0x61 && chnext <= 0x66 ) // a - f
+                  {
+                     chsub <<= 4; //*16
+                     chsub |=  chnext - 0x61 + 10;
+                  }
+                  endSub ++;
+               }
+            break;
+         }
+         // substitute the char
+         setCharAt( pos, chsub );
+         // remove the rest
+         remove( pos + 1, endSub - pos );
+      }
+
+      pos++;
+   }
+}
+
+
+void String::serialize( Stream *out ) const
+{
+   uint32 size = endianInt32(m_size);
+   out->write( (byte *) &size, sizeof(size) );
+   if ( m_size != 0 && out->good() )
+   {
+      byte chars = m_class->charSize();
+      out->write( &chars, 1 );
+      #ifdef FALCON_LITTLE_ENDIAN
+      out->write( m_storage, m_size );
+      #else
+      // in big endian environ, we have to reverse the code.
+      if( chars == 1 )
+      {
+         out->write( m_storage, m_size );
+      }
+      else if ( chars == 2 )
+      {
+         for( int i = 0; i < m_size/2; i ++ )
+         {
+            uint16 chr = endianInt16((uint16) getCharAt( i ) );
+            out->write( (byte *) &chr, 2 );
+            if (! out->good() )
+               return;
+         }
+      }
+      else if ( chars == 2 )
+      {
+         for( int i = 0; i < m_size/4; i ++ )
+         {
+            uint16 chr = endianInt32((uint32) getCharAt( i ) );
+            out->write( (byte *) &chr, 4 );
+            if (! out->good() )
+               return;
+         }
+      }
+      #endif
+   }
+}
+
+
+bool String::deserialize( Stream *in )
+{
+   uint32 size;
+   uint32 oldAlloc = m_allocated;
+
+   in->read( (byte *) &size, sizeof( size ) );
+   m_size = endianInt32(size);
+
+   // if the size of the deserialized string is 0, we have an empty string.
+   if ( m_size == 0 )
+   {
+      // if we had something allocated, we got to free it.
+      if ( m_allocated > 0 )
+      {
+         memFree( m_storage );
+         m_storage = 0;
+         m_allocated = 0;
+
+         if( m_garbageable )
+            static_cast< GarbageString *>( this )->updateGCSize( oldAlloc );
+      }
+
+      // anyhow, set the handler to static and return.
+      manipulator(&csh::handler_static);
+      return true;
+   }
+
+   if ( in->good() )
+   {
+      byte chars;
+      in->read( &chars, 1 );
+
+      // determine the needed manipulator
+      switch( chars )
+      {
+         case 1: manipulator( &csh::handler_buffer ); break;
+         case 2: manipulator( &csh::handler_buffer16 ); break;
+         case 4: manipulator( &csh::handler_buffer32 ); break;
+         default: return false;
+      }
+
+
+      m_storage = (byte *) memRealloc( m_storage, m_size );
+      if( m_storage == 0 )
+         return false;
+
+
+      m_allocated = m_size;
+
+      #ifdef FALCON_LITTLE_ENDIAN
+      in->read( m_storage, m_size );
+      #else
+      // in big endian environ, we have to reverse the code.
+      if( chars == 1 )
+      {
+         in->read( m_storage, m_size );
+      }
+      else if ( chars == 2 )
+      {
+         for( int i = 0; i < m_size/2; i ++ )
+         {
+            uint16 chr ;
+            in->read( (byte *) &chr, 2 );
+            ((uint16) *m_storage)[i] = endianInt16((uint16) chr );
+
+            if (! out->good() )
+               return;
+         }
+      }
+      else if ( chars == 2 )
+      {
+         for( int i = 0; i < m_size/4; i ++ )
+         {
+            uint32 chr ;
+            in->read( (byte *) &chr, 4);
+            ((uint32) *m_storage)[i] = endianInt16((uint16) chr );
+            if (! out->good() )
+               return;
+         }
+      }
+      #endif
+   }
+
+   if( m_garbageable )
+      static_cast< GarbageString *>( this )->updateGCSize( oldAlloc );
+
+   return true;
+}
+
+
+bool String::parseInt( int64 &target, uint32 pos ) const
+{
+   uint32 len = length();
+   if ( pos >= len )
+      return false;
+
+   target = 0;
+
+   bool neg = false;
+
+   uint32 chnext = getCharAt( pos );
+   if ( chnext == (uint32) '-' )
+   {
+      neg = true;
+      pos ++;
+      if ( pos == len )
+         return false;
+      chnext = getCharAt( pos );
+   }
+
+   // detect overflow
+   int64 tgtCopy = target;
+   while( chnext >= 0x30 && chnext <= 0x39 )
+   {
+      if( target < tgtCopy )
+         return false;
+
+      tgtCopy = target;
+      target *= 10;
+      target += chnext - 0x30;
+      pos ++;
+      if ( pos == len )
+         break;
+      chnext = getCharAt( pos );
+   }
+
+   if ( chnext < 0x30 || chnext > 0x39 )
+      return false;
+
+   if (neg)
+      target = -target;
+
+   return true;
+}
+
+bool String::parseDouble( double &target, uint32 pos ) const
+{
+   char buffer[64];
+   uint32 maxlen = 63;
+
+   uint32 len = length();
+   if ( pos >= len )
+      return false;
+
+   // if we are single byte string, just copy
+   if ( m_class->charSize() == 1 )
+   {
+      if ( maxlen > len - pos )
+         maxlen = len - pos;
+      memcpy( buffer, m_storage, maxlen );
+      buffer[ maxlen ] = '\0';
+   }
+   else {
+
+      // else convert to C string
+      uint32 bufpos = 0;
+      while ( bufpos < maxlen && pos < len )
+      {
+         uint32 chr = getCharAt( pos );
+         if( chr != (uint32) '-' && chr != (uint32) 'e' && chr != (uint32) 'E' &&
+                  chr < 0x30 && chr > 0x39 )
+            return false;
+         buffer[ bufpos ] = (char) chr;
+         bufpos ++;
+         pos ++;
+      }
+   }
+
+   // then apply sscanf
+   if ( sscanf( buffer, "%lf", &target ) == 1 )
+      return true;
+   return false;
+}
+
+bool String::parseOctal( uint64 &target, uint32 pos ) const
+{
+   uint32 len = length();
+   if ( pos >= len )
+      return false;
+   // parse octal number
+   target = 0;
+   uint32 endSub = pos;
+
+   // max lenght of octals = 11 chars, + 2 for stubs
+   while( pos < len && endSub - pos < 26 )
+   {
+      uint32 chnext = getCharAt( endSub );
+      if ( chnext < 0x30 || chnext > 0x37 )
+         break;
+      target <<= 3; //*8
+      target |= (0x7) & (chnext - 0x30);
+      endSub ++;
+   }
+
+   if( endSub != pos )
+      return true;
+   return false;
+}
+
+bool String::parseHex( uint64 &target, uint32 pos ) const
+{
+   uint32 len = length();
+   if ( pos >= len )
+      return false;
+   // parse octal number
+   target = 0;
+   uint32 endSub = pos;
+
+   while( endSub < len && endSub - pos < 16 )
+   {
+      uint32 chnext = getCharAt( endSub );
+      if ( chnext >= 0x30 && chnext <= 0x39 ) // 0 - 9
+      {
+         target <<= 4; //*16
+         target |=  chnext - 0x30;
+      }
+      else if( chnext >= 0x41 && chnext <= 0x46 ) // A - F
+      {
+         target <<= 4; //*16
+         target |=  chnext - 0x41 + 10;
+      }
+      else if( chnext >= 0x61 && chnext <= 0x66 ) // a - f
+      {
+         target <<= 4; //*16
+         target |=  chnext - 0x61 + 10;
+      }
+      endSub ++;
+   }
+
+   if( endSub != pos )
+      return true;
+
+   return false;
+}
+
+void String::writeNumber( int64 number )
+{
+   // prepare the buffer
+   char buffer[21];
+   uint32 pos = 18;
+   buffer[19] = '\0';
+
+   if ( number == 0 )
+   {
+      buffer[pos] = '0';
+   }
+   else {
+      bool neg;
+      if ( number < 0 )
+      {
+         neg = true;
+         number = - number;
+      }
+      else
+         neg = false;
+
+      while( number != 0 ) {
+         buffer[pos--] = (char) ((number % 10) + 0x30);
+         number /= 10;
+      }
+
+      if ( neg )
+         buffer[ pos ] = '-';
+      else
+         pos++;
+   }
+
+   append( buffer + pos );
+}
+
+void String::writeNumberHex( uint64 number, bool uppercase )
+{
+   // prepare the buffer
+   char buffer[18];
+   uint32 pos = 16;
+   buffer[17] = '\0';
+
+   byte base = uppercase ? 0x41 : 0x61;
+
+   if ( number == 0 )
+   {
+      buffer[pos] = '0';
+   }
+   else {
+
+      while( number != 0 ) {
+         byte b = (byte)(number & 0xf);
+         if ( b <= 9 )
+            buffer[pos--] = (char) (b + 0x30);
+         else {
+            buffer[pos--] = (char) ( b - 10 + base );
+         }
+
+         number >>= 4;
+      }
+      pos++;
+   }
+
+   append( buffer + pos );
+}
+
+void String::writeNumberOctal( uint64 number )
+{
+   // prepare the buffer
+   char buffer[32];
+   uint32 pos = 30;
+   buffer[31] = '\0';
+
+   if ( number == 0 )
+   {
+      buffer[pos] = '0';
+   }
+   else {
+
+      while( number != 0 ) {
+         buffer[pos--] = (char) ((number & 0x7) + 0x30);
+         number >>= 3;
+      }
+      pos++;
+   }
+
+   append( buffer + pos );
+}
+
+
+void String::writeNumber( double number, const String &format )
+{
+   char buffer[64];
+
+   char bufFormat[32];
+   if ( format.toCString( bufFormat, 32 ) == - 1 )
+      return;
+
+   sprintf( buffer, bufFormat, number );
+   append( buffer );
+}
+
+
+String &String::bufferize( const String &other )
+{
+   m_class->bufferize( this, &other );
+   return *this;
+}
+
+
+String &String::bufferize()
+{
+   m_class->bufferize( this );
+   return *this;
+}
+
+
+void String::trim()
+{
+   // first, trim from behind.
+   uint32 len = length();
+   while( len > 0 )
+   {
+      uint32 chr = getCharAt( len - 1 );
+      if( chr != ' ' && chr != '\n' && chr != '\r' && chr != '\t' )
+      {
+         break;
+      }
+
+      len --;
+   }
+
+   if ( len == 0 )
+   {
+      // string is actually empty.
+      m_size = 0;
+      return;
+   }
+
+   // front trim
+   uint32 front = 0;
+   while( front < len )
+   {
+      uint32 chr = getCharAt( front );
+      if( chr != ' ' && chr != '\n' && chr != '\r' && chr != '\t' )
+      {
+         break;
+      }
+      ++front;
+   }
+
+   // front can't be == to len.
+   if ( front > 0 )
+   {
+      // source and dest should be different, but it will work for this configuration.
+      m_class->subString( this, front, len, this );
+   }
+   else {
+      m_size = len * m_class->charSize();
+   }
+}
+
+bool String::fromUTF8( const char *utf8 )
+{
+   // destroy old contents
+
+   if ( m_allocated )
+   {
+      uint32 oldAlloc = m_allocated;
+      m_class->destroy( this );
+      m_allocated = 0;
+      checkAdjustSize( oldAlloc );
+   }
+   m_size = 0;
+
+   // empty string?
+   if ( *utf8 == 0 )
+   {
+      m_class = &csh::handler_static;
+      return true;
+   }
+
+   // start scanning
+
+   while ( *utf8 != 0 )
+   {
+      uint32 chr = 0;
+
+      byte in = (byte) *utf8;
+
+      // 4 bytes? -- pattern 1111 0xxx
+      int count;
+      if ( (in & 0xF8) == 0xF0 )
+      {
+         chr = (in & 0x7 ) << 18;
+         count = 18;
+      }
+      // pattern 1110 xxxx
+      else if ( (in & 0xF0) == 0xE0 )
+      {
+         chr = (in & 0xF) << 12;
+         count = 12;
+      }
+      // pattern 110x xxxx
+      else if ( (in & 0xE0) == 0xC0 )
+      {
+         chr = (in & 0x1F) << 6;
+         count = 6;
+      }
+      else if( in < 0x80 )
+      {
+         chr = (uint32) in;
+         count = 0;
+      }
+      // invalid pattern
+      else {
+         return false;
+      }
+
+      // read the other characters with pattern 0x10xx xxxx
+      while( count > 0 )
+      {
+         count -= 6;
+
+         utf8++;
+         byte in = (byte) *utf8;
+
+         if ( in == 0 ) {
+            // short utf8 sequence
+            return false;
+         }
+         else if( (in & 0xC0) != 0x80 )
+         {
+            // unrecognized pattern, protocol error
+            return false;
+         }
+
+         chr |= (in & 0x3f) << count;
+      }
+
+      this->append( chr );
+
+      utf8++;
+   }
+
+   return true;
+}
+
+//============================================================
+
+GarbageString::GarbageString( VMachine *vm ):
+   String(),
+   m_origin( vm )
+{
+   m_garbageable = true;
+   vm->store( this );
+}
+
+GarbageString::GarbageString( VMachine *vm, uint32 prealloc ):
+   String( prealloc ),
+   m_origin( vm )
+{
+   m_garbageable = true;
+   vm->store( this );
+}
+
+GarbageString::GarbageString( VMachine *vm, const String &other, uint32 pos0, uint32 pos1 ):
+   String( other, pos0, pos1 ),
+   m_origin( vm )
+{
+   m_garbageable = true;
+   vm->store( this );
+}
+
+
+GarbageString::GarbageString( VMachine *vm, const String &other ):
+   String( other ),
+   m_origin( vm )
+{
+   m_garbageable = true;
+   vm->store( this );
+}
+
+GarbageString::GarbageString( VMachine *vm, const char *other ):
+   String( other ),
+   m_origin( vm )
+{
+   m_garbageable = true;
+   vm->store( this );
+}
+
+GarbageString::GarbageString( VMachine *vm, const wchar_t *other ):
+   String( other ),
+   m_origin( vm )
+{
+   m_garbageable = true;
+   vm->store( this );
+}
+
+GarbageString::GarbageString( VMachine *vm, const char *other, int32 len ):
+   String( other, len ),
+   m_origin( vm )
+{
+   m_garbageable = true;
+   vm->store( this );
+}
+
+GarbageString::GarbageString( VMachine *vm, const wchar_t *other, int32 len ):
+   String( other, len ),
+   m_origin( vm )
+{
+   m_garbageable = true;
+   vm->store( this );
+}
+
+GarbageString::GarbageString( const GarbageString &other ):
+   String( other ),
+   m_origin( other.m_origin )
+{
+   m_garbageable = true;
+   m_origin->store( this );
+}
+
+void GarbageString::updateGCSize( uint32 oldSize ) const
+{
+   m_origin->memPool()->updateAlloc( m_allocated - oldSize );
+}
+
+//============================================================
+void string_deletor( void *data )
+{
+   delete (String *) data;
+}
+
+}
+
+/* end of cstring.cpp */
