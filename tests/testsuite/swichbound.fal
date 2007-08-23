@@ -1,0 +1,44 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: swichbound.fal,v 1.1.1.1 2006/10/08 15:05:43 gian Exp $
+*
+* ID: 17f
+* Category: switch
+* Subcategory:
+* Short: Outbounded switch
+* Description:
+*   Switch that should go out of bounds, and so crash;
+*   Also, using complex value instead of simple one, so size of table
+*   changes.
+* [/Description]
+*
+****************************************************************************/
+
+val = 2
+
+//  lower
+switch testReflect(val)
+   case 5
+      failure( "selected 5" )
+   case 10
+      failure( "selected 10" )
+   default
+      value = 3
+end
+
+//  higher
+val = 100
+switch testReflect(val)
+   case 5
+      failure( "selected 5" )
+   case 10
+      failure( "selected 10" )
+   default
+      val = 101
+end
+
+
+success()
+
+/* End of file */

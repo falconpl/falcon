@@ -1,0 +1,40 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: coroutine.fal,v 1.1.1.1 2006/10/08 15:05:41 gian Exp $
+*
+* ID: 23b
+* Category: statements
+* Subcategory: launch
+* Short: Basic coroutines
+* Description:
+* Coroutines basic test. This test can either pass or hang the VM.
+* [/Description]
+*
+****************************************************************************/
+
+function coroutine( semaphore, count )
+   // force swapping, as we are waiting on the semaphore
+   semaphore.wait()
+   // we don't want to be interrupted now
+   beginCritical()
+   count ++
+   // not necessary, as we are going to be done, but...
+   endCritical()
+end
+
+semaphore = Semaphore()
+counter = 0
+for i = 1 to 7
+   launch coroutine( semaphore, $counter )
+end
+
+semaphore.post( 7 )
+
+while counter != 7
+   yield()
+end
+
+success()
+
+/* End of file */

@@ -1,0 +1,65 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: iter_array.fal,v 1.1 2007/07/26 21:14:26 jonnymind Exp $
+*
+* ID: 35b
+* Category: iterators
+* Subcategory:
+* Short: Iterators on arrays
+* Description:
+*	Tests for iterator usage on arrays.
+* [/Description]
+*
+****************************************************************************/
+
+array = [1, 2, 3, 4]
+
+// test 1: forward iteration
+it = Iterator( array )
+dest = 0
+while it.hasCurrent()
+	dest += it.value()
+	it.next()
+end
+
+if dest != 10: failure( "Forward iteration" )
+
+// test 2: backward iteration
+it = Iterator( array, -1 )
+dest = []
+while it.hasCurrent()
+	dest += it.value()
+	it.prev()
+end
+
+if dest[-1] != array[0]: failure( "Reverse iteration" )
+
+// test 3: item change
+it = Iterator( array )
+while it.hasCurrent()
+	if it.value() == 4
+		it.value( 10 )
+   end
+
+	it.next()
+end
+
+if array[-1] != 10: failure( "Item change" )
+
+// test 4: item remove
+it = Iterator( array )
+while it.hasCurrent()
+	if it.value() == 2
+		it.remove()
+   else
+		it.next()
+   end
+end
+
+if array[0] != 1 and array[1] != 3: failure( "Item remove" )
+if array.len() != 3: failure( "Item remove -- len" )
+
+success()
+
+/* End of file */

@@ -1,0 +1,101 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: dictloop.fal,v 1.2 2007/03/04 17:39:03 jonnymind Exp $
+*
+* ID: 16g
+* Category: loops
+* Subcategory: forin
+* Short: For in dictionary
+* Description:
+* Checks for loops on specially built dictionaries: with 0 to 3 elements.
+* This test checks for in loops without for first/for last clauses
+* [/Description]
+*
+****************************************************************************/
+
+// Empty dictionary
+dict = [=>]
+keys = []
+values = []
+
+try
+   for key, value in dict
+      keys += key
+      values += value
+   end
+catch in error
+   failure( "Empty dict: " + error.toString() )
+end
+
+// 1 element dictionary
+dict = [ 1=> "a"]
+keys = []
+values = []
+
+try
+   for key, value in dict
+      keys += key
+      values += value
+   end
+catch in error
+   failure( "1 element dict: " + error.toString() )
+end
+
+if len( keys ) != 1: failure( "1 element dict: key retrival" )
+if len( values ) != 1: failure( "1 element dict: value retrival" )
+
+// 2 elements dictionary
+dict = [ 1 => "a", 2 => "b"]
+keys = []
+values = []
+
+try
+   for key, value in dict
+      keys += key
+      values += value
+   end
+catch in error
+   failure( "2 elements dict: " + error.toString() )
+end
+
+if len( keys ) != 2: failure( "2 elements dict: key retrival" )
+if len( values ) != 2: failure( "2 elements dict: value retrival" )
+
+// 3 elements dictionary
+dict = [ 1 => "a", 2 => "b", 3 => "c" ]
+keys = []
+values = []
+
+try
+   for key, value in dict
+      keys += key
+      values += value
+   end
+catch in error
+   failure( "3 elements dict: " + error.toString() )
+end
+
+if len( keys ) != 3: failure( "3 elements dict: key retrival" )
+if len( values ) != 3: failure( "3 elements dict: value retrival" )
+
+// 4 elements dictionary
+dict = [ 1 => "a", 2 => "b", 3 => "c", 4 => "d" ]
+keys = []
+values = []
+
+try
+   for key, value in dict
+      keys += key
+      values += value
+   end
+catch in error
+   failure( "4 elements dict: " + error.toString() )
+end
+
+if len( keys ) != 4: failure( "4 elements dict: key retrival" )
+if len( values ) != 4: failure( "4 elements dict: value retrival" )
+
+success()
+
+/* End of file */

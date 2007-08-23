@@ -1,0 +1,47 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: rtlArrayScan.fal,v 1.1.1.1 2006/10/08 15:05:40 gian Exp $
+*
+* ID: 102c
+* Category: rtl
+* Subcategory: array
+* Short: Array scan
+* Description:
+*   Searching function for arrays.
+* [/Description]
+*
+****************************************************************************/
+
+function func( element )
+   if element = "alpha"
+      return 1
+   end
+   return 0
+end
+
+function func1( element )
+   if element = "000000"
+      return 1
+   end
+   return 0
+end
+
+array = [ 1, 2, "alpha", 3,  "beta", 4 ]
+
+pos = arrayScan( array, func )
+if pos != 2: failure( "arrayScan unconditional positive" )
+pos = arrayScan( array, func1 )
+if pos != -1: failure( "arrayScan unconditional negative" )
+pos = arrayScan( array, func, 2  )
+if pos != 2: failure( "arrayScan from positive" )
+pos = arrayScan( array, func, 1, 4  )
+if pos != 2: failure( "arrayScan from, to positive" )
+pos = arrayScan( array, func, 3  )
+if pos != -1: failure( "arrayScan from negative" )
+pos = arrayScan( array, func, 3, 5  )
+if pos != -1: failure( "arrayScan from, to negative" )
+
+success()
+
+/* End of file */

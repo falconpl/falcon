@@ -1,0 +1,33 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: slave_beta.fal,v 1.1.1.1 2006/10/08 15:05:41 gian Exp $
+*
+* ID: ---
+* Category: modloader
+* Subcategory:
+* Short: Advanced cascade compilation test, slave module
+* Description:
+*    This is a slave module to be loaded by master_2 (ID 50b). It is never
+*    directly executed.
+* [/Description]
+*
+****************************************************************************/
+
+load slave_world
+
+object beta
+   val = nil
+
+   init
+      world.add( self )
+   end
+
+   function setVal( param )
+      self.val = param
+   end
+end
+
+export
+
+/* End of file */

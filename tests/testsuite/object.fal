@@ -1,0 +1,39 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: object.fal,v 1.1.1.1 2006/10/08 15:05:41 gian Exp $
+*
+* ID: 22a
+* Category: types
+* Subcategory: objects
+* Short: Basic object
+* Description:
+* Object basic features
+* [/Description]
+*
+****************************************************************************/
+
+function func()
+   return [1,2]
+end
+
+object zero
+   prop_one = nil
+   prop_two = func()
+
+   init
+      self.prop_one = "hello"
+   end
+
+   function method()
+      return self.prop_one + " world"
+   end
+end
+
+if zero.prop_one != "hello": failure( "Initializer" )
+if len( zero.prop_two ) != 2: failure( "Automatic complex initializer" )
+if zero.method() != "hello world": failure( "Method call" )
+
+success()
+
+/* End of file */

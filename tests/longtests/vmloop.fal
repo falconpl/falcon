@@ -1,0 +1,46 @@
+/****************************************************************************
+* Falcon direct benchmarks
+*
+* CVS-Id: $Id: vmloop.fal,v 1.2 2007/01/06 16:04:19 jonnymind Exp $
+*
+* ID: 1a
+* Category: benchmark
+* Subcategory: vm
+* Short: Benchmark on pure VM loop
+* Description:
+*    Performing a repeated set of mean operations in a tight loop
+*    Mean VM loop time will be determined by dividing the total time by the
+*    total count of VM opcodes.
+*
+* [/Description]
+****************************************************************************/
+
+const opcodes = 8  // the if is executed half of the times
+loops = 1000000 * timeFactor()
+each = int(loops/10)
+
+// getting time
+time = seconds()
+for i = 1 to loops
+   // setting a variable
+   loopVar1 = i
+   // multiplying a variable
+   loopVar2 = loopVar1 * i
+   // doing a check
+   if i % each == 0
+      alive( i/loops*100 )
+   end
+end
+// taking end time
+time = seconds() - time
+
+timeAlive = seconds()
+for i = 1 to loops/each
+   alive( i )
+end
+timeAlive = seconds() - timeAlive
+time -= timeAlive
+
+timings( time, opcodes * loops )
+
+/* end of file */

@@ -1,0 +1,26 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: lettest.fal,v 1.1.1.1 2006/10/08 15:05:41 gian Exp $
+*
+* ID: 1e
+* Category: basic
+* Subcategory: connectors
+* Short: Let operator test
+* Description:
+*   This is a prerequisite for the conditional tests
+* [/Description]
+*
+****************************************************************************/
+
+let a = 1
+a == 1 and let b = 1
+if a = 1
+   if b = 1
+      success()
+   end
+end
+
+failure()
+
+/* End of file */

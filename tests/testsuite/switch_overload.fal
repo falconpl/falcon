@@ -1,0 +1,86 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: switch_overload.fal,v 1.1 2007/08/11 00:11:58 jonnymind Exp $
+*
+* ID: 24b
+* Category: switch
+* Subcategory: objects
+* Short: Switch with overloads
+* Description:
+*  Object items in this switch overloads the compare() BOM.
+* [/Description]
+*
+****************************************************************************/
+
+object first
+	function compare( test )
+		if test == 1: return 0
+		// ask to use normal criterion
+		return nil
+   end
+end
+
+object second
+	function compare( test )
+		if test == "It's me!!": return 0
+		// ask to use normal criterion
+		return nil
+   end
+end
+
+function call_sw( param )
+
+   switch param
+      case nil
+         return 0
+      case 2, 3
+         return 2
+      case 4 to 8
+         return 3
+      case 10 to 11, 15 to 16
+         return 4
+      case 12, 17 to 18
+         return 5
+      case "one"
+         return 6
+      case "two", "three"
+         return 7
+
+		case first
+			return 100
+
+      case second
+      	return 101
+
+      default
+         return -1
+   end
+end
+
+
+// First check if the switch still works right
+if call_sw( nil ) != 0: failure("case 0")
+if call_sw( 2 ) != 2: failure("case 2 / 1")
+if call_sw( 4 ) != 3: failure("case 3 / 1")
+if call_sw( 8 ) != 3: failure("case 3 / 3")
+
+if call_sw( "one" ) != 6: failure("case 6")
+if call_sw( "two" ) != 7: failure("case 7 / 1")
+
+if call_sw( 0 ) != -1: failure("case default / 1")
+if call_sw( "none" ) != -1: failure("case default / 2")
+if call_sw( 13 ) != -1: failure("case default / 3")
+
+// then try this specific thing.
+// first check for object identity
+if call_sw( first ) != 100: failure("case first/identity")
+if call_sw( second ) != 101: failure("case second/identity")
+
+// then check object compare() overload
+if call_sw( 1 ) != 100: failure("case first / overload")
+if call_sw( "It's me!!" ) != 101: failure("case second / overload")
+
+success()
+
+/* End of file */

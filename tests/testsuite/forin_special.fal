@@ -1,0 +1,53 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: forin_special.fal,v 1.1.1.1 2006/10/08 15:05:43 gian Exp $
+*
+* ID: 16c
+* Category: loops
+* Subcategory: forin
+* Short: Forin special
+* Description:
+* Cheks the forin loop under particular condition.
+* Checks are performed for:
+*   - element = nil
+*   - empty set
+*   - one element
+*   - two elements
+* [/Description]
+*
+****************************************************************************/
+
+array = nil
+result = []
+
+try
+   for var in array
+      result += var
+   end
+catch
+   failure( "Empty set generates error" )
+end
+
+if len( result ) != 0: failure( "Empty set" )
+
+array = [1]
+result = []
+
+for var in array
+   result += var
+end
+
+if len( result ) != 1: failure( "1 element set" )
+
+array = [ 1, 2 ]
+result = []
+for var in array
+   result += var
+end
+
+if len( result ) != 2: failure( "2 element set" )
+
+success()
+
+/* End of file */

@@ -1,0 +1,31 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: object_in.fal,v 1.1.1.1 2006/10/08 15:05:43 gian Exp $
+*
+* ID: 22e
+* Category: types
+* Subcategory: objects
+* Short: Operator "in" for objects
+* Description:
+*     The in operator, for objects, works as the provides operator, but it
+*     check for strings instead of symbols.
+* [/Description]
+*
+****************************************************************************/
+
+object zero
+   prop_one = 0
+   prop_two = "something"
+
+   function method()
+   end
+end
+
+if "prop_one" notin zero: failure( "Property check via in -- 1" )
+if "prop_two" notin zero: failure( "Property check via in -- 2" )
+if "method" notin zero: failure( "Property check via in -- 3" )
+if "not here" in zero: failure( "Property check, negative" )
+success()
+
+/* End of file */

@@ -1,0 +1,24 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: strReplicate.fal,v 1.2 2006/11/05 15:18:03 gian Exp $
+*
+* ID: 101g
+* Category: rtl
+* Subcategory: string
+* Short: strReplicate
+* Description:
+*   Test on RTL string functions
+*   string replicate
+* [/Description]
+*
+****************************************************************************/
+
+strrep = strReplicate( "a", 5 )
+if strrep != "aaaaa": failure( "strReplicate single char" )
+strrep = strReplicate( "abc ", 3 )
+if strrep != "abc abc abc ": failure( "strReplicate string" )
+
+success()
+
+/* End of file */

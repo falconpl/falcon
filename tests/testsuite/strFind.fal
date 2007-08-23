@@ -1,0 +1,44 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: strFind.fal,v 1.1.1.1 2006/10/08 15:05:43 gian Exp $
+*
+* ID: 101c
+* Category: rtl
+* Subcategory: string
+* Short: strFind
+* Description:
+*   Test on RTL string functions
+* [/Description]
+*
+****************************************************************************/
+
+string = "this is a string"
+
+pos = strFind( string, "a" )
+if pos != 8: failure( "strFind, single char" )
+pos = strFind( string, "a str" )
+if pos != 8: failure( "strFind, string" )
+pos = strFind( string, "s", 6 )
+if pos != 6: failure( "strFind, char from" )
+pos = strFind( string, "s", 6, 12 )
+if pos != 6: failure( "strFind, char from-to" )
+pos = strFind( string, "str", 5, 13 )
+if pos != 10: failure( "strFind, string from-to" )
+pos = strFind( string, "s", 13 )
+if pos != -1: failure( "strFind, negative" )
+
+pos = strTailFind( string, "t" )
+if pos != 11: failure( "strTailFind, single char" )
+pos = strTailFind( string, "a str" )
+if pos != 8: failure( "strTailFind, string" )
+pos = strTailFind( string, "s", 12 )
+if pos != -1: failure( "strTailFind, char from" )
+pos = strTailFind( string, "s", 6, 12 )
+if pos != 10: failure( "strTailFind, char from-to" )
+pos = strTailFind( string, "asdf" )
+if pos != -1: failure( "strTailFind, negative" )
+
+success()
+
+/* End of file */

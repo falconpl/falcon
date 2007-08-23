@@ -1,0 +1,69 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: class.fal,v 1.2 2006/11/04 19:21:06 gian Exp $
+*
+* ID: 21a
+* Category: types
+* Subcategory: classes
+* Short: Basic classes
+* Description:
+* Basic classes and instantation.
+* [/Description]
+*
+****************************************************************************/
+
+class zero
+   prop_one = nil
+   prop_two = nil
+end
+
+ze = zero()
+if ze.prop_one != nil: failure( "Can't access basic property" )
+ze.prop_two = "changed"
+if ze.prop_two != "changed": failure( "Can't change basic property")
+
+class basic
+   prop_nil = nil
+   prop_num = 0
+   prop_str = "Nothing"
+   prop_array = ["An array", 2, 3]
+   prop_opt = nil
+
+   init
+      if paramCount() > 0
+         self.prop_opt = paramNumber( 0 )
+      end
+   end
+
+   function multiply( param )
+      return param * self.prop_num
+   end
+
+   function dummy()
+      failure( "Missing overload" )
+   end
+end
+
+elem = basic( 10 )
+if elem.prop_nil != nil: failure( "Basic property / 2" )
+if len( elem.prop_array ) != 3: failure( "Automatic initializer" )
+if elem.prop_opt != 10: failure( "Explicit initializer" )
+
+elem.prop_num = 2
+if elem.multiply( 3 ) != 6: failure( "Method call" )
+
+temp = elem.multiply
+if temp( 3 ) != 6: failure("Basic indirect method call" )
+
+
+function test( str )
+   return str + self.prop_array[0]
+end
+
+elem.dummy = test
+if elem.dummy( "head ") != "head An array": failure( "Method overloading" )
+
+success()
+
+/* End of file */

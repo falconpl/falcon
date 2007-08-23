@@ -1,0 +1,36 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: indirect_local.fal,v 1.1 2007/06/23 18:04:37 jonnymind Exp $
+*
+* ID: 33d
+* Category: expression
+* Subcategory: indirect
+* Short: mixed symtab indirect
+* Description:
+* Test string-to-symbol indirect access, checking complex interchange local/global
+* interactions
+* [/Description]
+*
+****************************************************************************/
+
+function perform( deeparr )
+	item = [ "one", "two", "three" ]
+
+	if # "item[ access.prop[1] ]" != "two": failure( "Deep indirect 1" )
+	if # "access.prop1[ item[2] ]" != 3: failure( "Deep indirect 2" )
+
+	if # "deeparr[ access.prop[1] ][1]" != "two": failure( "Deep indirect 3" )
+	if # "deeparr[ access.prop1[ item[1] ] ][0]" != 3: failure( "Deep indirect 4" )
+end
+
+object access
+	prop = [ 0, 1, 2 ]
+	prop1 = [ "one" => 1, "two" => 2, "three" => 3 ]
+end
+
+perform( [ [1, "one"], [2, "two"], [3, "three"] ] )
+
+success()
+
+/* End of file */

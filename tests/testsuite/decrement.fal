@@ -1,0 +1,52 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: decrement.fal,v 1.1.1.1 2006/10/08 15:05:41 gian Exp $
+*
+* ID: 5b
+* Category: expression
+* Subcategory: incdec
+* Short: Decrement
+* Description:
+* Testing decrement operator under various conditions.
+* [/Description]
+*
+****************************************************************************/
+
+a = 2
+a--
+if a != 1: failure( "Basic decrement postfix" )
+--a
+if a != 0: failure( "Basic decrement prefix" )
+
+a = 1
+b = --a + 1  // should be 1
+if b != 1: failure( "Prefix value retrival in expression -- 1" )
+if a != 0: failure( "Prefix effect -- 1" )
+
+a = 1
+b = a-- + 1
+if b != 2: failure( "Postfix value retrival in expression -- 1" )
+if a != 0: failure( "Postfix effect -- 1" )
+
+a = 1
+b = 2 * --a  +1
+if b != 1: failure( "Prefix value retrival in expression -- 2" )
+if a != 0: failure( "Prefix effect -- 2" )
+
+a = 1
+b = 2 * a-- +1
+if b != 3: failure( "Postfix value retrival in expression -- 2" )
+if a != 0: failure( "Postfix effect -- 2" )
+
+a = 1
+if --a != 0: failure( "Prefix value retrival in conditional" )
+if a != 0: failure( "Prefix effect in conditional" )
+
+a = 1
+if a-- != 1: failure( "Postfix value retrival in conditional" )
+if a != 0: failure( "Postfix effect in conditional" )
+
+success()
+
+/* End of file */

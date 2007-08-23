@@ -1,0 +1,39 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: autopow.fal,v 1.1.1.1 2006/10/08 15:05:43 gian Exp $
+*
+* ID: 30i
+* Category: expression
+* Subcategory: autoassign
+* Short: Deep autoassign power
+* Description:
+* Test on complex types for autoassign power
+* [/Description]
+*
+****************************************************************************/
+
+deeparr = [ 100 ]
+array = [ deeparr ]
+
+array[0][0] **= 2
+if deeparr[0] != 10000.0: failure( "Deep array simple" )
+array[0][0] **= testReflect( 1 / 2 )
+if deeparr[0] != 100.0: failure( "Deep array complex" )
+
+object deepobj
+   property = 100
+end
+
+object one
+   property = deepobj
+end
+
+one.property.property **= 2
+if deepobj.property != 10000.0: failure( "Deep obj simple" )
+one.property.property **= testReflect( 1 / 2 )
+if deepobj.property != 100.0: failure( "Deep obj complex" )
+
+success()
+
+/* End of file */

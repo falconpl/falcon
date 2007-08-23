@@ -1,0 +1,24 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: funcbase.fal,v 1.1.1.1 2006/10/08 15:05:40 gian Exp $
+*
+* ID: 13a
+* Category: functions
+* Subcategory:
+* Short: Basic function
+* Description:
+* Minimal function call test. If this isn't passed, many things won't be
+* passed too.
+* [/Description]
+*
+****************************************************************************/
+
+function test()
+   return 1
+end
+
+if test() != 1: failure( "Basic test" )
+success()
+
+/* End of file */

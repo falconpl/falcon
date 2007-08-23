@@ -1,0 +1,68 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: rtlCall.fal,v 1.1.1.1 2006/10/08 15:05:41 gian Exp $
+*
+* ID: 113
+* Category: rtl
+* Subcategory: indirect
+* Short: call test
+* Description:
+*   Test for call through the call() function
+* [/Description]
+*
+****************************************************************************/
+
+done1 = 0
+done2 = 0
+
+function func1()
+   if paramCount() != 0: failure( "Call without parameter" )
+   global done1
+   done1 = 1
+   return 1
+end
+
+function func2()
+   if paramCount() != 2: failure( "Call with parameters 1" )
+   if paramNumber( 0 ) != "first": failure( "First parameter 1" )
+   if paramNumber( 1 ) != "second": failure( "Second parameter 1" )
+
+   global done2
+   done2 = 1
+
+   return 2
+end
+
+function func3()
+   if paramCount() != 2: failure( "Call with parameters 2" )
+   if paramNumber( 0 ) != "first": failure( "First parameter 2" )
+   if paramNumber( 1 ) != "second": failure( "Second parameter 2" )
+
+   global done2
+   done2 = 1
+
+   return 2
+end
+
+retval = call( func1 )
+if done1 != 1: failure( "Direct Call not executed" )
+if retval != 1: failure( "Return value 1" )
+
+done1 = 0
+retval = call( [ func1 ] )
+if done1 != 1: failure( "Call through array not executed" )
+if retval != 1: failure( "Return value 2" )
+
+retval = call( func2, ["first", "second"] )
+if done2 != 1: failure( "Direct call with params not executed" )
+if retval != 2: failure( "Return value 3" )
+
+done2 = 0
+retval = call( [ func3, "first", "second"] )
+if done2 != 1: failure( "Call through array with params not executed" )
+if retval != 2: failure( "Return value 3" )
+
+success()
+
+/* End of file */

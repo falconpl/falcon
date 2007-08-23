@@ -1,0 +1,213 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: dictloop4.fal,v 1.4 2007/07/06 13:23:51 jonnymind Exp $
+*
+* ID: 16j
+* Category: loops
+* Subcategory: forin
+* Short: For in dictionary/4
+* Description:
+* Checks for loops on specially built dictionaries: with 0 to 3 elements.
+* Checks forfirst and forlast clause.
+* [/Description]
+*
+****************************************************************************/
+
+// Empty dictionary
+dict = [=>]
+keys = []
+values = []
+keys_first = []
+values_first = []
+keys_last = []
+values_last = []
+
+
+try
+   for key, value in dict
+      keys += key
+      values += value
+      forfirst
+         keys_first += key
+         values_first += value
+      end
+      forlast
+         keys_last += key
+         values_last += value
+      end
+   end
+catch in error
+   failure( "Empty dict: " + error.toString() )
+end
+
+// 1 element dictionary
+dict = [ 1 => "a"]
+keys = []
+values = []
+keys_first = []
+values_first = []
+keys_last = []
+values_last = []
+keys_all = []
+values_all = []
+
+try
+   for key, value in dict
+      keys += key
+      
+      forfirst
+         keys_first += key
+         values_first += value
+      end
+      
+      values += value
+      
+      forlast
+         keys_last += key
+         values_last += value
+      end
+      forall
+         keys_all += key
+         values_all += value
+      end
+   end
+catch in error
+   failure( "1 element dict: " + error.toString() )
+end
+
+if len( keys ) != 1: failure( "1 element dict: key retrival" )
+if len( values ) != 1: failure( "1 element dict: value retrival" )
+if len( keys_first ) != 1: failure( "1 element dict for first: key retrival" )
+if len( values_first ) != 1: failure( "1 element dict for first: value retrival" )
+if len( keys_last ) != 1: failure( "1 element dict for last: key retrival" )
+if len( values_last ) != 1: failure( "1 element dict for last: value retrival" )
+if len( keys_all ) != 0: failure( "1 element dict for all: key retrival" )
+if len( values_all ) != 0: failure( "1 element dict for all: value retrival" )
+
+// 2 elements dictionary
+dict = [ 1 => "a", 2 => "b"]
+keys = []
+values = []
+keys_first = []
+values_first = []
+keys_last = []
+values_last = []
+keys_all = []
+values_all = []
+
+try
+   for key, value in dict
+      keys += key
+      values += value
+      forfirst
+         keys_first += key
+         values_first += value
+      end
+      forlast
+         keys_last += key
+         values_last += value
+      end
+      forall
+         keys_all += key
+         values_all += value
+      end
+   end
+catch in error
+   failure( "2 elements dict: " + error.toString() )
+end
+
+if len( keys ) != 2: failure( "2 elements dict: key retrival" )
+if len( values ) != 2: failure( "2 elements dict: value retrival" )
+if len( keys_first ) != 1: failure( "2 element dict for first: key retrival" )
+if len( values_first ) != 1: failure( "2 element dict for first: value retrival" )
+if len( keys_last ) != 1: failure( "2 element dict for last: key retrival" )
+if len( values_last ) != 1: failure( "2 element dict for last: value retrival" )
+if len( keys_all ) != 1: failure( "2 element dict for all: key retrival" )
+if len( values_all ) != 1: failure( "2 element dict for all: value retrival" )
+
+// 3 elements dictionary
+dict = [ 1 => "a", 2 => "b", 3 => "c" ]
+keys = []
+values = []
+keys_first = []
+values_first = []
+keys_last = []
+values_last = []
+keys_all = []
+values_all = []
+
+try
+   for key, value in dict
+      keys += key
+      values += value
+      forfirst
+         keys_first += key
+         values_first += value
+      end
+      forlast
+         keys_last += key
+         values_last += value
+      end
+      forall
+         keys_all += key
+         values_all += value
+      end
+   end
+catch in error
+   failure( "3 elements dict: " + error.toString() )
+end
+
+if len( keys ) != 3: failure( "3 elements dict: key retrival" )
+if len( values ) != 3: failure( "3 elements dict: value retrival" )
+if len( keys_first ) != 1: failure( "3 element dict for first: key retrival" )
+if len( values_first ) != 1: failure( "3 element dict for first: value retrival" )
+if len( keys_last ) != 1: failure( "3 element dict for last: key retrival" )
+if len( values_last ) != 1: failure( "3 element dict for last: value retrival" )
+if len( keys_all ) != 2: failure( "3 element dict for last: key retrival" )
+if len( values_all ) != 2: failure( "3 element dict for last: value retrival" )
+
+// 4 elements dictionary
+dict = [ 1 => "a", 2 => "b", 3 => "c", 4 => "d" ]
+keys = []
+values = []
+keys_first = []
+values_first = []
+keys_last = []
+values_last = []
+keys_all = []
+values_all = []
+
+try
+   for key, value in dict
+      keys += key
+      values += value
+      forfirst
+         keys_first += key
+         values_first += value
+      end
+      forlast
+         keys_last += key
+         values_last += value
+      end
+      forall
+         keys_all += key
+         values_all += value
+      end
+   end
+catch in error
+   failure( "4 elements dict: " + error.toString() )
+end
+
+if len( keys ) != 4: failure( "4 elements dict: key retrival" )
+if len( values ) != 4: failure( "4 elements dict: value retrival" )
+if len( keys_first ) != 1: failure( "4 element dict for first: key retrival" )
+if len( values_first ) != 1: failure( "4 element dict for first: value retrival" )
+if len( keys_last ) != 1: failure( "4 element dict for last: key retrival" )
+if len( values_last ) != 1: failure( "4 element dict for last: value retrival" )
+if len( keys_all ) != 3: failure( "4 element dict for last: key retrival" )
+if len( values_all ) != 3: failure( "4 element dict for last: value retrival" )
+
+success()
+
+/* End of file */

@@ -1,0 +1,45 @@
+/****************************************************************************
+* Falcon direct benchmarks
+*
+* CVS-Id: $Id: strBinAccess.fal,v 1.2 2007/01/06 16:04:19 jonnymind Exp $
+*
+* ID: 3c
+* Category: benchmark
+* Subcategory: strings
+* Short: String Binary access
+* Description:
+*   Performance test on 10000000 string accesses.
+* [/Description]
+****************************************************************************/
+
+loops = 1000000 * timeFactor()
+each = int(loops/10)
+
+
+str = "the string that will be accessed"
+// getting time
+
+time = seconds()
+for i = 1 to loops
+   result = str[ *5]
+
+   if i % each == 0
+      alive( i/loops*100 )
+   end
+end
+// taking end time
+time = seconds() - time
+
+// subtract alive time
+timeAlive = seconds()
+for i = 1 to loops
+   if i % each == 0
+      alive( i/loops*100 )
+   end
+end
+timeAlive = seconds() - timeAlive
+time -= timeAlive
+
+timings( time, loops )
+
+/* end of file */

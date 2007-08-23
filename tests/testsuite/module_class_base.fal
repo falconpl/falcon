@@ -1,0 +1,39 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: module_class_base.fal,v 1.2 2007/07/11 09:18:03 jonnymind Exp $
+*
+* ID: ---
+* Category: modloader
+* Subcategory: class
+* Short: Class properties across modules, base module
+* Description:
+*    This is a slave module to be loaded by module_class_main (ID 52a). 
+*    It is never directly executed.
+* [/Description]
+*
+****************************************************************************/
+
+class Base( gamma, beta, alpha )
+   gamma = gamma
+   beta = beta
+   alpha = alpha
+   static lastId = 0
+   id = nil
+   
+   init
+      if alpha = nil
+         alpha = "Nilled"
+      end
+      self.id = ++self.lastId
+   end
+   
+   function overload()
+      return "Base"
+   end
+end
+
+
+export
+
+/* End of file */

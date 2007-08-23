@@ -1,0 +1,58 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: pass.fal,v 1.1.1.1 2006/10/08 15:05:41 gian Exp $
+*
+* ID: 19a
+* Category: pass
+* Subcategory:
+* Short: Pass test
+* Description:
+* Testing the keyword pass for function intercept.
+* The pass/passin couple will be tested also in object/class tests
+* [/Description]
+*
+****************************************************************************/
+
+function proxied_one( param1, param2 )
+   return paramCount()
+end
+
+function proxy( param1, param2 )
+   pass proxied_one
+   failure( "Past pass / 1" )
+end
+
+
+// paramCount always return at minimum the fixed param count
+if proxy( 1 ) != 2: failure( "Basic pass / 1" )
+if proxy( 1, 2 ) != 2: failure( "Basic pass / 2" )
+if proxy( 1, 2, 3 ) != 3: failure( "Basic pass / 3" )
+if proxy( 1, 2, 3, 4 ) != 4: failure( "Basic pass / 4" )
+
+function proxied_two( param1, param2 )
+   val = param1 + param2
+
+   // RELEVANT: force to be upfold
+   for i = 2 to paramCount() - 1 step 1
+      val += paramNumber( i )
+   end
+
+   return val
+end
+
+glob = proxied_two
+
+function proxy_two()
+   pass glob
+   failure( "Past pass / 2" )
+end
+
+
+if proxy_two( 1, 2 ) != 3: failure( "Advanced pass / 1" )
+if proxy_two( 1, 2, 3 ) != 6: failure( "Advanced pass / 2" )
+if proxy_two( 1, 2, 3, 4 ) != 10: failure( "Advanced pass / 3" )
+
+success()
+
+/* End of file */

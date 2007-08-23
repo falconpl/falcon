@@ -1,0 +1,62 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: deepclass.fal,v 1.1.1.1 2006/10/08 15:05:40 gian Exp $
+*
+* ID: 21b
+* Category: types
+* Subcategory: classes
+* Short: Deep class access
+* Description:
+* This script tests for deep class access and class/vector access mix.
+* [/Description]
+*
+****************************************************************************/
+
+class zero
+   zero_one = nil
+   zero_two = nil
+end
+
+class one
+   one_one = nil
+   one_two = nil
+end
+
+class two
+   two_one = nil
+   two_two = nil
+end
+
+class three
+   three_one = nil
+   three_two = nil
+end
+
+o_zero = zero()
+o_one = one()
+o_two = two()
+o_three = three()
+
+o_zero.zero_one = o_one
+o_one.one_one = o_two
+o_two.two_one = o_three
+o_three.three_one = "Final"
+
+if o_zero.zero_one.one_one.two_one.three_one != "Final": failure( "Deep access" )
+
+o_zero.zero_one.one_one.two_one.three_one = "Changed"
+if o_zero.zero_one.one_one.two_one.three_one != "Changed": failure( "Deep modify" )
+if o_three.three_one != "Changed": failure( "Deep modify reference" )
+
+o_zero.zero_two = [ o_one, o_two, o_three]
+
+if o_zero.zero_two[ 1 ].two_one.three_one != "Changed": failure( "Deep access w/array" )
+
+o_zero.zero_two[ 1 ].two_one.three_one = "Again"
+if o_zero.zero_two[ 1 ].two_one.three_one != "Again": failure( "Deep modify w/array" )
+if o_three.three_one != "Again": failure( "Deep modify ref w/array" )
+
+success()
+
+/* End of file */

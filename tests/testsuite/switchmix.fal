@@ -1,0 +1,73 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: switchmix.fal,v 1.1.1.1 2006/10/08 15:05:41 gian Exp $
+*
+* ID: 17d
+* Category: switch
+* Subcategory:
+* Short: Mixed switch
+* Description:
+*  Checks repeatedly a switch in a function call
+* [/Description]
+*
+****************************************************************************/
+
+function call_sw( param )
+   switch param
+      case nil
+         return 0
+      case 1
+         return 1
+      case 2, 3
+         return 2
+      case 4 to 8
+         return 3
+      case 10 to 11, 15 to 16
+         return 4
+      case 12, 17 to 18
+         return 5
+      case "one"
+         return 6
+      case "two", "three"
+         return 7
+      case "four", 20
+         return 8
+      case "five", 21 to 23, 25
+         return 9
+      default
+         return 10
+   end
+end
+
+
+if call_sw( nil ) != 0: failure("case 0")
+if call_sw( 1 ) != 1: failure("case 1")
+if call_sw( 2 ) != 2: failure("case 2 / 1")
+if call_sw( 3 ) != 2: failure("case 2 / 2")
+if call_sw( 4 ) != 3: failure("case 3 / 1")
+if call_sw( 5 ) != 3: failure("case 3 / 2")
+if call_sw( 8 ) != 3: failure("case 3 / 3")
+if call_sw( 10 ) != 4: failure("case 4 / 1")
+if call_sw( 11 ) != 4: failure("case 4 / 2")
+if call_sw( 15 ) != 4: failure("case 4 / 3")
+if call_sw( 16 ) != 4: failure("case 4 / 4")
+if call_sw( 12 ) != 5: failure("case 5 / 1")
+if call_sw( 17 ) != 5: failure("case 5 / 2")
+if call_sw( 18 ) != 5: failure("case 5 / 3")
+if call_sw( "one" ) != 6: failure("case 6")
+if call_sw( "two" ) != 7: failure("case 7 / 1")
+if call_sw( "three" ) != 7: failure("case 7 / 2")
+if call_sw( "four" ) != 8: failure("case 8 / 1")
+if call_sw( "five" ) != 9: failure("case 9 / 1")
+if call_sw( 21 ) != 9: failure("case 9 / 2")
+if call_sw( 23 ) != 9: failure("case 9 / 3")
+if call_sw( 25 ) != 9: failure("case 9 / 4")
+
+if call_sw( 0 ) != 10: failure("case default / 1")
+if call_sw( "none" ) != 10: failure("case default / 2")
+if call_sw( 13 ) != 10: failure("case default / 3")
+
+success()
+
+/* End of file */

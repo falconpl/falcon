@@ -1,0 +1,35 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: strTrim.fal,v 1.1.1.1 2006/10/08 15:05:41 gian Exp $
+*
+* ID: 101e
+* Category: rtl
+* Subcategory: string
+* Short: Trim
+* Description:
+*   Test on RTL string functions
+* [/Description]
+*
+****************************************************************************/
+
+spaced = " a spaced string "
+nonspaced = "non spaced"
+
+if strTrim( spaced ) != " a spaced string": failure( "strTrim" )
+if strHeadTrim( spaced ) != "a spaced string ": failure( "strHeadTrim" )
+if strAllTrim( spaced ) != "a spaced string": failure( "strAllTrim" )
+
+spaced = "  \t a spaced string  \t "
+
+if strTrim( spaced ) != "  \t a spaced string": failure( "strTrim 2" )
+if strHeadTrim( spaced ) != "a spaced string  \t ": failure( "strHeadTrim 2" )
+if strAllTrim( spaced ) != "a spaced string": failure( "strAllTrim 2" )
+
+if strTrim( nonspaced ) != "non spaced": failure( "strTrim nonspaced" )
+if strHeadTrim( nonspaced ) != "non spaced": failure( "strHeadTrim nonspaced" )
+if strAllTrim( nonspaced ) != "non spaced": failure( "strAllTrim nonspaced" )
+
+success()
+
+/* End of file */

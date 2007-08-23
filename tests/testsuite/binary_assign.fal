@@ -1,0 +1,48 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: binary_assign.fal,v 1.1.1.1 2006/10/08 15:05:40 gian Exp $
+*
+* ID: 4b
+* Category: expressions
+* Subcategory:
+* Short: Binary assignment expressions
+* Description:
+* Tests for various binary expressions (assigmnent version)
+* [/Description]
+*
+****************************************************************************/
+
+a = 0xFF00
+b = 0x0FF0
+
+c = a
+c &= b
+if c != 0x0F00: failure( "AND" )
+
+c = a
+c |= b
+if c != 0xFFF0: failure( "OR" )
+
+c = a
+c ^= b
+if c != 0xF0F0: failure( "XOR" )
+
+c = a
+c <<= 1
+if c != 0x1FE00: failure( "SHL 1" )
+
+c = a
+c >>= 1
+if c != 0x7F80: failure( "SHR 1" )
+
+c = a
+c <<= 8
+if c != 0xFF0000: failure( "SHL 8" )
+c = a
+c >>= 8
+if c != 0xFF: failure( "SHR 8" )
+
+success()
+
+/* End of file */

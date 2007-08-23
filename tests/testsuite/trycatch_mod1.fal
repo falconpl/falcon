@@ -1,0 +1,46 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: trycatch_mod1.fal,v 1.1 2007/03/10 14:21:33 jonnymind Exp $
+*
+* ID: ---
+* Category:
+* Subcategory:
+* Short: try catch test / slave module 1
+* Description:
+*    This slave test will be loaded form trycatch_module.fal
+*    It loads trycatch_mod2 in turn.
+* [/Description]
+*
+****************************************************************************/
+
+load trycatch_mod2
+
+function raiseInMod1()
+	raise "Hello from module 1"
+end
+
+function callInMod1()
+   try
+      raiseInMod2()
+   catch IntegerType in err
+      failure( "Type catch - mod1 - 1" )
+   catch StringType in err
+      if err != "Hello from module 2"
+         failure( "Raise content - mod1 - 1" )
+      end
+   catch Error
+      failure( "Type catch - mod1 - 2" )
+   catch in res1
+      failure( "Type catch - mod1 - 3" )
+   end
+end
+
+
+function callInMod1_2()
+	raiseInMod2()
+end
+
+export
+
+/* End of file */

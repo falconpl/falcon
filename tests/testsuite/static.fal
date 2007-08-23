@@ -1,0 +1,41 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: static.fal,v 1.1.1.1 2006/10/08 15:05:43 gian Exp $
+*
+* ID: 13e
+* Category: functions
+* Subcategory:
+* Short: Static block
+* Description:
+* Tests static block execution and static variable access and modify
+* [/Description]
+*
+****************************************************************************/
+
+function use_static()
+   static
+      var1 = 1
+      return 0
+   end
+
+   var1++
+   return var1
+end
+
+function use_static_param( param )
+   static
+      var1 = param
+      return 0
+   end
+   return var1
+end
+
+
+if use_static() != 0: failure( "Static code execution 1" )
+if use_static() != 2: failure( "Static local access" )
+if use_static_param( "Static" ) != 0: failure( "Static code execution 2" )
+if use_static_param( "Anything" ) != "Static": failure( "Parameter access from static" )
+success()
+
+/* End of file */

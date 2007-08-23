@@ -1,0 +1,63 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: rtlRandom.fal,v 1.1.1.1 2006/10/08 15:05:43 gian Exp $
+*
+* ID: 112a
+* Category: rtl
+* Subcategory: math
+* Short: Random
+* Description:
+*  Of course, random functions are not that much suitable for automatized
+*  testsuite. Nevertheless, there are some random function whose result is
+*  partially deterministic: pick and walk function must do some things
+*  all the times (select some items... without crashing).
+* [/Description]
+****************************************************************************/
+
+// seed
+randomSeed( seconds() )
+
+// random range
+numeric = random()
+if numeric < 0.0 or numeric >= 1.0: failure( "Random in [0, 1[ interval" )
+
+// random integer
+integer = random( 2 )
+if integer != 0 and integer != 1 and integer != 2: failure( "Integer 0 to 2" )
+
+// random ranged integer
+integer = random( -1, 1 )
+if integer != -1 and integer != 0 and integer != 1: failure( "Integer -1 to 1" )
+
+// random ranged integer reverse
+integer = random( 1, -1 )
+if integer != -1 and integer != 0 and integer != 1: failure( "Integer 1 to -1" )
+
+// random pick, 2 items:
+pick = random( "a", 2 )
+if pick != "a" and pick != 2: failure( "Pick 'a' or 2" )
+
+// random pick 3 items
+pick = random( 1, 2, 3 )
+if pick != 1 and pick != 2 and pick != 3 : failure( "Pick 1, 2 or 3" )
+
+// explicit pick
+pick = randomChoice( 9, "a" )
+if pick != 9 and pick != "a": failure( "random choice 9 or 'a'" )
+
+// now some error:
+try
+   random( "a" )
+   failure( "Error not raised for random(\"a\")" )
+end
+
+try
+   randomChoice()
+   failure( "Error not raised for randomChoice()" )
+end
+
+
+success()
+
+/* End of file */

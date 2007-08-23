@@ -1,0 +1,33 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: core_tostring.fal,v 1.2 2007/06/23 18:04:37 jonnymind Exp $
+*
+* ID: 40e
+* Category: rtl
+* Subcategory: core
+* Short: toString
+* Description:
+* Test for conversion into strings
+* [/Description]
+*
+****************************************************************************/
+
+if toString( nil ) != "Nil": failure( "toString( nil )" )
+if toString( "a string" ) != "a string": failure( "isomorphism" )
+if toString( 0 ) != "0": failure( "toString( 0 )" )
+if toString( 15 ) != "15": failure( "toString( 15 )" )
+if toString( -15 ) != "-15": failure( "toString( -15 )" )
+if toString( 129319293194124 ) != "129319293194124": failure( "toString( 129319293194124 )" )
+if toString( -129319293194124 ) != "-129319293194124": failure( "toString( -129319293194124 )" )
+if toString( 12.31234, ".5" ) != "12.31234": failure( "toString( 12.31234, 5 )" )
+if toString( 12.31234, ".2" ) != "12.31": failure( "toString( 12.31234, 2 )" )
+if toString( -12.31234, ".5" ) != "-12.31234": failure( "toString( -12.31234, 5 )" )
+if toString( -12.31234, ".2" ) != "-12.31": failure( "toString( -12.31234, 2 )" )
+if toString( [1:2] ) != "[1:2]": failure( "toString( [1:2] )" )
+if toString( [-1:2] ) != "[-1:2]": failure( "toString( [-1:2] )" )
+if toString( [1:] ) != "[1:]": failure( "toString( [1:] )" )
+
+success()
+
+/* End of file */

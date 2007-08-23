@@ -1,0 +1,52 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: mincond.fal,v 1.1.1.1 2006/10/08 15:05:43 gian Exp $
+*
+* ID: 1a
+* Category: basic
+* Subcategory: conditionals
+* Short: Minimal conditionals
+* Description:
+*  The tests in "basic" category are mandatory, as they test minimal
+*  functionality that falcon scripts must support to test for themselves
+*  to be right.
+*
+*  Testsuite scripts will only use non-complex checks to evaluate the
+*  status of a script, so conditionals on basic expressions must be
+*  safe.
+*
+*  This is the minimal test that must be passed, along with the smoke test,
+*  to grant the validity of all the other tests.
+* [/Description]
+*
+****************************************************************************/
+
+a = 1
+if a != 1
+   failure( "if !=" )
+end
+
+if a > 2
+   failure( "if >" )
+end
+
+if a < 0
+   failure( "if <" )
+end
+
+if a >= 2
+   failure( "if >=" )
+end
+
+if a <= 0
+   failure( "if <=" )
+end
+
+if a == 1
+   success()
+end
+
+failure( "false negative on ==" )
+
+/* End of file */

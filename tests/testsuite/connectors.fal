@@ -1,0 +1,53 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: connectors.fal,v 1.1.1.1 2006/10/08 15:05:43 gian Exp $
+*
+* ID: 1f
+* Category: basic
+* Subcategory: connectors
+* Short: Connectors and logical expressions
+* Description:
+*   An important test, as connectors are often needed in tests.
+*   The let operator is needed, so the test 1e must be passed
+*
+* [/Description]
+*
+****************************************************************************/
+
+a = 1
+b = 0
+// expected b = 1
+(a = 1) and let b = b + 1 or failure("A point")
+// expected b = 2
+a == 2 or let b = b + 1
+// expected b = 3
+(a = 1 and let b = b + 1)
+// expected, everything as it is now
+a == 1 and a != 2 or failure( "B point" )
+// b = 4
+
+not a = 2 and let b = b + 1 or failure( "C point" )
+
+// a true
+a = (1 or 0) and (0 or 1)
+if not a
+   failure( "D point" )
+elif b != 4
+   failure( "E point" )
+end
+
+// let is an expression...
+a = 0
+if not (let a = 1 + 1 )
+   failure( "F point" )
+end
+
+a = 1
+if let a = 0
+   failure( "G point" )
+end
+
+success()
+
+/* End of file */

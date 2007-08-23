@@ -1,0 +1,72 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: core_objToString.fal,v 1.3 2007/06/23 18:04:37 jonnymind Exp $
+*
+* ID: 40f
+* Category: rtl
+* Subcategory: core
+* Short: object toString
+* Description:
+* Test for automatic calling of toString methods on objects.
+* Also checks for basic application of formats and personalized object formats.
+* [/Description]
+*
+****************************************************************************/
+
+class first
+   prop = "first"
+
+   function toString()
+      return self.prop
+   end
+end
+
+class second from first
+   prop1 = "second"
+
+   function toString()
+      return self.prop1 + ":" + self.prop
+   end
+end
+
+object obj1 from second
+   function toString()
+      return "obj1:" + second.toString()
+   end
+end
+
+object obj2 from second
+   prop = "obj2"
+end
+
+object obj3
+   function toString()
+      return "obj3"
+   end
+end
+
+object obj4 from second
+   function toString( format )
+   	if format
+      	return "obj4" + ":" + first.toString() + "/" + format
+		else
+			return "obj4" + ":" + first.toString()
+		end
+   end
+end
+
+inst1 = first()
+inst2 = second()
+
+if toString( inst1 ) != "first": failure( "First instance" )
+if toString( inst2 ) != "second:first": failure( "Second instance" )
+if toString( obj1 ) != "obj1:second:first": failure( "Obj1" )
+if toString( obj2 ) != "second:obj2": failure( "Obj2" )
+if toString( obj3 ) != "obj3": failure( "Obj3" )
+if toString( obj4 ) != "obj4:first": failure( "Obj4" )
+if toString( obj4, "20rp.|fmt!!" ) != "....obj4:first/fmt!!": failure( "Obj4 + fmt" )
+
+success()
+
+/* End of file */

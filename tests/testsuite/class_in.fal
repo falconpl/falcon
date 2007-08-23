@@ -1,0 +1,33 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: class_in.fal,v 1.1.1.1 2006/10/08 15:05:40 gian Exp $
+*
+* ID: 21j
+* Category: types
+* Subcategory: classes
+* Short: Operator "in" for classess
+* Description:
+*     The in operator, for classes, works as the provides operator, but it
+*     check for strings instead of symbols.
+* [/Description]
+*
+****************************************************************************/
+
+class test
+   prop_one = 0
+   prop_two = "something"
+
+   function method()
+   end
+end
+
+zero = test()
+
+if "prop_one" notin zero: failure( "Property check via in -- 1" )
+if "prop_two" notin zero: failure( "Property check via in -- 2" )
+if "method" notin zero: failure( "Property check via in -- 3" )
+if "not here" in zero: failure( "Property check, negative" )
+success()
+
+/* End of file */

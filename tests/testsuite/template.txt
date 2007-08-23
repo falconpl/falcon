@@ -1,0 +1,18 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: template.txt,v 1.1.1.1 2006/10/08 15:05:43 gian Exp $
+*
+* ID: 0a
+* Category: template
+* Subcategory: subtemplate
+* Short: A short description
+* Description:
+*
+* [/Description]
+*
+****************************************************************************/
+
+// Some Falcon code here
+
+/* End of file */

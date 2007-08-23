@@ -1,0 +1,84 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: files3.fal,v 1.3 2007/03/04 17:39:03 jonnymind Exp $
+*
+* ID: 109c
+* Category: rtl
+* Subcategory: file
+* Short: Space-saving file operations 2
+* Description:
+*   Test on common files operations.
+*   This test is analgue to 109a, but it uses the space-saving vesrion if the
+*   file functions, that can reuse string buffers. With respect to 109b,
+*   the space is pre-allocated, and the single functions use the pre-allocated
+*   size as a limit for the reads.
+* [/Description]
+*
+****************************************************************************/
+
+const filename = "109c.test"
+
+buffer = strBuffer( 128 )
+// buffer is "", but it has 128 allocated bytes.
+if buffer != "": failure( "Buffer allocation" )
+
+try
+   file = IOStream( filename, 0644, FILE_SHARE );
+catch in error
+   failure( "File creation: " + error.toString() )
+end
+
+
+try
+   if file.tell() != 0: failure( "Tell at 0" )
+   if file.write( "Hello world" ) != 11: failure( "Writing" )
+   if file.tell() != 11: failure( "Tell at end" )
+   // write a bit more, needed for readLine
+   file.write( "\nNext line 1\r\nNext line 2\nNext line 3" );
+   fileLen = file.tell()
+   file.seek( 0 )
+   if file.tell() != 0: failure( "Tell after seek" )
+   if file.read( $buffer, 11 ) != 11 or buffer != "Hello world": failure( "Read back" )
+
+   file.readLine( $buffer ) // discards the first \n
+
+   if file.readLine( $buffer ) != len( "Next line 1" ): failure( "readline 1" )
+   if buffer != "Next line 1": failure( "readline 2" )
+   if file.readLine( $buffer ) != len( "Next line 2" ): failure( "readline 2" )
+   if buffer != "Next line 2": failure( "readline 2" )
+   if file.readLine( $buffer ) != len( "Next line 3" ): failure( "readline 3" )
+   if buffer != "Next line 3": failure( "readline 3" )
+
+   if not file.eof(): failure( "Should be at eof" )
+
+   file.seek( 0 )
+   if file.eof(): failure( "Eof reset" )
+   file.seekEnd( 0 )
+   if file.tell() != fileLen: failure( "Return to end position" )
+
+   if file.eof(): failure( "early eof" )
+   if file.read( $buffer ) != 0: failure( "read at end of file" )
+   if buffer != "": failure( "Buffer not reset" )
+   if not file.eof(): failure( "Eof not detected." )
+
+   // seekCur test.
+   file.seek( 11 )
+   file.seekCur( -5 )
+   // 5 spaces.
+   buffer = strBuffer(5)
+
+   if file.read( $buffer ) != 5 or buffer != "world": failure( "seekCur" )
+   file.close()
+
+catch in error
+   failure( "File operations: " + error.toString() )
+end
+
+try
+   fileRemove( filename )
+catch in error
+   failure( "File removal: " + error.toString() )
+end
+
+success()

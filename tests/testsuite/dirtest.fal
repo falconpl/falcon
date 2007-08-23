@@ -1,0 +1,105 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: dirtest.fal,v 1.4 2007/07/06 13:23:51 jonnymind Exp $
+*
+* ID: 110
+* Category: rtl
+* Subcategory: dir
+* Short: Directory mangling
+* Description:
+*   Testing the directory access api.
+*   This file creates a directory (dirtest.dir), accesses it,
+*   and tries to read back the files, and to create and remove some more.
+* [/Description]
+*
+****************************************************************************/
+
+// eventually remove the directory
+try
+   dirRemove( "dirtest.dir" )
+end
+
+// get current dir
+curdir = dirCurrent()
+
+filelen = [=>]
+filelen2 = [=>]
+try
+   dirMake( "dirtest.dir" )
+   dirChange( "dirtest.dir" )
+
+   file = OutputStream( "one" )
+   file.write( "some data\n" )
+   filelen[ "one" ] = file.tell()
+   file.close()
+
+   file = OutputStream( "two" )
+   file.write( "some other data\n" )
+   filelen[ "two" ] = file.tell()
+   file.close()
+
+   file = OutputStream( "three" )
+   file.write( "some other data yet\n" )
+   filelen[ "three" ] = file.tell()
+   file.close()
+
+   file = OutputStream( "four" )
+   file.write( "some other data yet still\n" )
+   filelen[ "four" ] = file.tell()
+   file.close()
+
+   dir = DirectoryOpen( "." )
+   element = dir.read()
+   stats = FileStat()
+   while element != nil
+      if stats.readStats( element )
+         filelen2[ element ] = stats.size
+      else
+         failure( "Can't retrieve stats for " + element )
+      end
+
+      if element = "." or element = ".."
+         if fileType( element ) != FILE_TYPE_DIR
+            failure( "Filed to recognize a directory" )
+         end
+      else
+         if fileType( element ) != FILE_TYPE_NORMAL
+            failure( "Filed to recognize a file" )
+         end
+      end
+      element = dir.read()
+   end
+   dir.close()
+
+catch in error
+   failure( "Exception rised: " + error.toString() )
+end
+
+if "one" notin filelen2: failure( "one not retreived" )
+if "two" notin filelen2: failure( "two not retreived" )
+if "three" notin filelen2: failure( "thre not retreived" )
+if "four" notin filelen2: failure( "four not retreived" )
+
+if filelen["one"] != filelen2["one"]: failure( "wrong size 1" )
+if filelen["two"] != filelen2["two"]: failure( "wrong size 2" )
+if filelen["three"] != filelen2["three"]: failure( "wrong size 3" )
+if filelen["four"] != filelen2["four"]: failure( "wrong size 4" )
+
+// directory removal
+try
+   for key, val in filelen
+      fileRemove( key )
+   end
+   dirChange( ".." )
+   if dirCurrent() != curdir: failure( "Did not return to previous dir" )
+
+   dirRemove( "dirtest.dir" )
+
+catch in error
+   failure( "Dir removal, Exception rised: " + error.toString() )
+end
+
+success()
+
+/* End of file */

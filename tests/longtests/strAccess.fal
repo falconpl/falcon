@@ -1,0 +1,46 @@
+/****************************************************************************
+* Falcon direct benchmarks
+*
+* CVS-Id: $Id: strAccess.fal,v 1.2 2007/01/06 16:04:19 jonnymind Exp $
+*
+* ID: 3a
+* Category: benchmark
+* Subcategory: strings
+* Short: String access
+* Description:
+*   Performance test on 10000000 string accesses.
+* [/Description]
+****************************************************************************/
+
+loops = 1000000 * timeFactor()
+each = int(loops/10)
+
+
+str = "the string that will be accessed"
+range = [5:10]
+// getting time
+
+time = seconds()
+for i = 1 to loops
+   result = str[range]
+
+   if i % each == 0
+      alive( i/loops*100 )
+   end
+end
+// taking end time
+time = seconds() - time
+
+// subtract alive time
+timeAlive = seconds()
+for i = 1 to loops
+   if i % each == 0
+      alive( i/loops*100 )
+   end
+end
+timeAlive = seconds() - timeAlive
+time -= timeAlive
+
+timings( time, loops )
+
+/* end of file */

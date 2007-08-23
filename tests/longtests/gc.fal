@@ -1,0 +1,63 @@
+/****************************************************************************
+* Falcon test suite - benchmarks / lengthy tests
+*
+* CVS-Id: $Id: gc.fal,v 1.4 2007/01/06 16:04:19 jonnymind Exp $
+*
+* ID: 100
+* Category: stress
+* Subcategory: GC
+* Short: Basic garbage collecting.
+* Description:
+*    This test performs one million loops in which an array filled with strings
+*    and created-on-the-fly data. The array is repetedly dropped, so the GC
+*    collector must destroy it, or the memory of the machine running this test
+*    will soon crash.
+*
+*    The test takes approx 10 seconds to complete on a 2.4GHrz machine.
+* [/Description]
+*
+****************************************************************************/
+
+loops = 100000 * timeFactor()
+each = int(loops/10)
+
+function nonStatic()
+   return "a nonstatic"
+end
+
+// getting time
+time = seconds()
+static_string = "Static string"
+for i = 1 to loops
+  var = [ 1, 2, strBuffer(100000), "This is " + nonStatic() +" string", 5 ]
+  var1 = [ i, var ]
+  var2 = [ i, var1 ]
+  if i % each == 0: alive( i/loops*100 )
+  var2 = 0
+end
+// taking end time
+time = seconds() - time
+
+// subtract alive time
+timeAlive = seconds()
+for i = 1 to loops
+   if i % each == 0
+      alive( i/loops*100 )
+   end
+end
+timeAlive = seconds() - timeAlive
+time -= timeAlive
+
+// have we lost  a static string?
+if static_string != "Static"  + " " + "string"
+   failure( "GC killed a static string." )
+end
+
+if var[3] != "This is a nonstatic string"
+   failure( "GC killed the content of the array." )
+end
+
+timings( time, loops )
+success()
+
+/* end of file */

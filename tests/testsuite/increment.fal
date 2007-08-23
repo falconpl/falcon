@@ -1,0 +1,52 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: increment.fal,v 1.1.1.1 2006/10/08 15:05:43 gian Exp $
+*
+* ID: 5a
+* Category: expression
+* Subcategory: incdec
+* Short: Increment
+* Description:
+* Testing increment operator under various conditions.
+* [/Description]
+*
+****************************************************************************/
+
+a = 0
+a++
+if a != 1: failure( "Basic increment postfix" )
+++a
+if a != 2: failure( "Basic increment prefix" )
+
+a = 1
+b = ++a + 1  // should be 3
+if b != 3: failure( "Prefix value retrival in expression -- 1" )
+if a != 2: failure( "Prefix effect -- 1" )
+
+a = 1
+b = a++ + 1  // should be 2
+if b != 2: failure( "Postfix value retrival in expression -- 1" )
+if a != 2: failure( "Postfix effect -- 1" )
+
+a = 1
+b = 2 * ++a  +1
+if b != 5: failure( "Prefix value retrival in expression -- 2" )
+if a != 2: failure( "Prefix effect -- 2" )
+
+a = 1
+b = 2 * a++ +1
+if b != 3: failure( "Postfix value retrival in expression -- 2" )
+if a != 2: failure( "Postfix effect -- 2" )
+
+a = 1
+if ++a != 2: failure( "Prefix value retrival in conditional" )
+if a != 2: failure( "Prefix effect in conditional" )
+
+a = 1
+if a++ != 1: failure( "Postfix value retrival in conditional" )
+if a != 2: failure( "Postfix effect in conditional" )
+
+success()
+
+/* End of file */

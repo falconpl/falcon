@@ -1,0 +1,48 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: scoping.fal,v 1.2 2007/04/19 18:44:46 jonnymind Exp $
+*
+* ID: 13d
+* Category: functions
+* Subcategory:
+* Short: Global/local variables
+* Description:
+* Check functionality of scoping.
+* [/Description]
+*
+****************************************************************************/
+
+value = "Global"
+
+function use_private()
+   value = "private"
+   if value != "private": failure( "Private access - use_private" )
+end
+
+function read_global()
+   if value != "Global": failure( "Global read - read_global" )
+   value = "private"
+   if value != "private": failure( "Private access - read_global" )
+end
+
+function use_global()
+   if value != "Global": failure( "Global read - use_global" )
+   value = "private"
+   if value != "private": failure( "Private access - use_global" )
+   global value
+   if value != "Global": failure( "global keyword - use_global" )
+   value = "used"
+   // test for grammar.
+   global a, b
+end
+
+use_private()
+if value != "Global": failure( "Global scoping pollution 1" )
+read_global()
+if value != "Global": failure( "Global scoping pollution 2" )
+use_global()
+if value != "used": failure( "Not writing to global" )
+success()
+
+/* End of file */

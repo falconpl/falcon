@@ -1,0 +1,58 @@
+/*
+   Falcon Samples.
+
+   Control process streams from script.
+
+   This script demonstrates the usage of the basic directory
+   API.
+
+   $Id: closeStreams.fal,v 1.1 2007/08/03 17:08:46 jonnymind Exp $
+*/
+
+
+> "Control process streams from script."
+>
+> "  This test Shows how to correctly get a standard stream and close it."
+> "This is necessary when scripts are meant to work with other piped processes."
+> "So, you may try to pipe this script's output through a program, or"
+> "redirect it to a file; the output will be closed, making the piped program"
+> "to terminate, then a small sleep will be issued to show that this script"
+> "is still running..."
+>
+> "  In example, call with:"
+>
+> "      $ falcon closeStreams.fal | grep -c \"issued\""
+>
+> "  This will cause grep to print \"2\" after the close line indicated below."
+>
+
+// Let's use stdErr to show parallel
+errStream = stdErr()
+
+//Let's get the standard output
+stream = stdOut()
+stream.writeText( "This text is sent through standard output proxy.\n" )
+stream.close()
+> "Closing the standard output proxy won't close the process stream."
+// sleep to show we're still inside the pipe.
+errStream.writeText( "I just closed a standard stream proxy; piped apps should be still alive.\n" )
+for i = 3 to 0
+   sleep( 1 )
+   errStream.writeText( @ "Sleeping for $i seconds more...\n" )
+end
+
+//Now let's close it seriously
+// Use \r\n because output is not translated anymore.
+stream = stdOutRaw()
+stream.writeText( "Sent through standard output physical stream.\r\n" )
+
+// piped programs will stop now.
+errStream.writeText( "Now I close the stream; piped apps shoudld exit now:\n"
+                     "====================================================\n" )
+stream.close()
+for i = 3 to 0
+   sleep( 1 )
+   errStream.writeText( @ "Sleeping for $i seconds more...\n" )
+end
+
+errStream.writeText( "Done.\n" )

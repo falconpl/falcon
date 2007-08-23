@@ -1,0 +1,22 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: discardinc.fal,v 1.1.1.1 2006/10/08 15:05:40 gian Exp $
+*
+* ID: 5c
+* Category: expression
+* Subcategory: incdec
+* Short: Fake autoincrement
+* Description:
+* This test checks the effect on autoincrement on discardable/transient data,
+* as function returns.
+* [/Description]
+*
+****************************************************************************/
+
+if testReflect( 1 ) ++ != 1: failure( "Fake increment discard (postfix)." )
+if ++ testReflect( 1 ) != 2: failure( "Fake increment usage (prefix)." )
+
+success()
+
+/* End of file */

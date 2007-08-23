@@ -1,0 +1,36 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: rtlDictArr.fal,v 1.2 2007/07/06 13:23:52 jonnymind Exp $
+*
+* ID: 104c
+* Category: rtl
+* Subcategory: dictionary
+* Short: Dictionary to array
+* Description:
+*   This script tests the function that estracts arrays from
+*   a dictionary.
+*   This script uses arraySort, that therefore must work.
+* [/Description]
+*
+****************************************************************************/
+
+dict = [ "A" => 1, "b" => 2, "C" => 3, "d" => 4, 3 => "three", 1 => "one", 2 => "two" ]
+
+// dict keys/values extraction
+keys = dictKeys( dict )
+if len( keys ) !=  len( dict ): failure( "Keys extraction base" )
+values = dictValues( dict )
+if len( values ) !=  len( dict ): failure( "Value extraction base" )
+
+// dict keys/values test
+i = 0
+for key, value in dict
+   if key != keys[i]: failure( "Nth. key" )
+   if value != values[i]: failure( "Nth. value" )
+   i++
+end
+
+success()
+
+/* End of file */

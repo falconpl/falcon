@@ -1,0 +1,80 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: forcomplex.fal,v 1.1.1.1 2006/10/08 15:05:40 gian Exp $
+*
+* ID: 15b
+* Category: loops
+* Subcategory: for
+* Short: For loop complex
+* Description:
+* Checks for various aspects of the for loop; using variable returns, this
+* test make sures for variables are correctluy loaded.
+* [/Description]
+*
+****************************************************************************/
+
+
+function startFunc()
+   static
+      sequence = [1, 9, 1, 9]
+      value = 0
+   end
+
+   if value > 3: return 0
+   return sequence[value++]
+end
+
+function endFunc()
+   static
+      sequence = [9, 1, 9, 1]
+      value = 0
+   end
+
+   if value > 3: return 0
+   return sequence[value++]
+end
+
+function stepFunc()
+   static
+      sequence = [1, -1]
+      value = 0
+   end
+
+   if value > 1: return 0
+   return sequence[value++]
+end
+
+
+//-----------------------------------------------------
+// check a standard for
+sum = 0
+for i = startFunc() to endFunc()
+   sum += i
+end
+if sum != 45: failure( "Minimal for" )
+
+// now let's add a fixed step
+sum = 0
+for i = startFunc() to endFunc() step - 2
+   sum += i
+end
+if sum != 25: failure( "Step fixed" )
+
+// and now complex step up
+sum = 0
+for i = startFunc() to endFunc() step stepFunc()
+   sum += i
+end
+if sum != 45: failure( "Step up" )
+
+// and now complex step down
+sum = 0
+for i = startFunc() to endFunc() step stepFunc()
+   sum += i
+end
+if sum != 45: failure( "Step up" )
+
+success()
+
+/* End of file */

@@ -1,0 +1,23 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: strWideReplicate.fal,v 1.1 2006/11/05 15:18:03 gian Exp $
+*
+* ID: 101k
+* Category: rtl
+* Subcategory: string
+* Short: strReplicate wide
+* Description:
+*   Test on RTL string functions - string replicate, wide characters
+* [/Description]
+*
+****************************************************************************/
+
+strrep = strReplicate( "安", 5 )
+if strrep != "安安安安安": failure( "strReplicate single char" )
+strrep = strReplicate( "安心した ", 3 )
+if strrep != "安心した 安心した 安心した ": failure( "strReplicate string" )
+
+success()
+
+/* End of file */

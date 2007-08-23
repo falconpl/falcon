@@ -1,0 +1,30 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: recursion.fal,v 1.1.1.1 2006/10/08 15:05:41 gian Exp $
+*
+* ID: 13c
+* Category: functions
+* Subcategory:
+* Short: Recursion
+* Description:
+* Minimal function call test. If this isn't passed, many things won't be
+* passed too.
+* [/Description]
+*
+****************************************************************************/
+
+function recurse( param )
+   if param = 1
+      return 1
+   end
+
+   return param + recurse( param - 1 )
+end
+
+
+// sum the first 10 numbers
+if recurse( 10 ) != 55: failure( "Recursion count" )
+success()
+
+/* End of file */

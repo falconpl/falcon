@@ -1,0 +1,74 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: files.fal,v 1.2 2007/03/04 17:39:03 jonnymind Exp $
+*
+* ID: 109a
+* Category: rtl
+* Subcategory: file
+* Short: Common file operations.
+* Description:
+*   Test on common files operations.
+* [/Description]
+*
+****************************************************************************/
+
+const filename = "109a.test"
+try
+   file = IOStream( filename, 0644, FILE_SHARE );
+catch in error
+   failure( "File creation: " + error.toString() )
+end
+
+
+try
+   if file.tell() != 0: failure( "Tell at 0" )
+   if file.write( "Hello world" ) != 11: failure( "Writing" )
+   if file.tell() != 11: failure( "Tell at end" )
+   // write a bit more, needed for readLine
+   file.write( "\nNext line 1\r\nNext line 2\nNext line 3" );
+   fileLen = file.tell()
+   file.seek( 0 )
+   if file.tell() != 0: failure( "Tell after seek" )
+   if file.read( 11 ) != "Hello world": failure( "Read back" )
+
+   file.readLine() // discards the first \n
+
+   if file.readLine() != "Next line 1" or \
+      file.readLine() != "Next line 2" or \
+      file.readLine() != "Next line 3"
+         failure( "read line" )
+   end
+
+   if not file.eof(): failure( "Should be at eof" )
+
+   file.seek( 0 )
+   if file.eof(): failure( "Eof reset" )
+   file.seekEnd( 0 )
+   if file.tell() != fileLen: failure( "Return to end position" )
+
+   if file.eof(): failure( "early eof" )
+   if file.read( 100 ) != "": failure( "read at end of file" )
+   if not file.eof(): failure( "Eof not detected." )
+
+   // seekCur test.
+   file.seek( 11 )
+   file.seekCur( -5 )
+   if file.read( 5 ) != "world": failure( "seekCur" )
+   file.close()
+
+catch in error
+   failure( "File operations: " + error.toString() )
+end
+
+try
+   fileRemove( filename )
+catch in error
+   failure( "File removal: " + error.toString() )
+end
+
+
+
+success()
+
+/* End of file */

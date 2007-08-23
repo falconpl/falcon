@@ -1,0 +1,34 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: complexarray.fal,v 1.1.1.1 2006/10/08 15:05:41 gian Exp $
+*
+* ID: 11b
+* Category: types
+* Subcategory: array
+* Short: Advanced array
+* Description:
+* Checks subarrays and other complex operations.
+* [/Description]
+*
+****************************************************************************/
+
+// assignment test - include a compilation test
+array =  [ 0, "one", [2:3], [0,"one",2] ]
+
+// minimal access
+if array[1] != "one": failure( "Access" )
+
+// two level access
+if array[3][1] != "one": failure( "Deep access" )
+
+// subitem disanabiguation
+if array[3][1][0] != "o": failure( "Subitem disambiguation" )
+
+// changing a subitem
+array[3][1:2] = [1, "two", 3]
+if array[3][3] != 3: failure( "Subitem changing" )
+
+success()
+
+/* End of file */

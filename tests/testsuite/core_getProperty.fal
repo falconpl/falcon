@@ -1,0 +1,82 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: core_getProperty.fal,v 1.4 2007/07/10 20:40:19 jonnymind Exp $
+*
+* ID: 40g
+* Category: rtl
+* Subcategory: core
+* Short: getProperty
+* Description:
+* The core function getProperty allows to access an object property
+* by name.
+* [/Description]
+*
+****************************************************************************/
+
+class testClass
+   prop1 = "value1"
+   function func1()
+      return "func1"
+   end
+end
+
+object testObj
+   prop2 = "value2"
+
+   function testMethod()
+      return "testMethod"
+   end
+end
+
+cls = testClass()
+
+try
+   prop1 = getProperty( cls, "prop1" )
+   if prop1 != "value1": failure( "Get property on class" )
+catch
+   failure( "Property access on class" )
+end
+
+try
+   method = getProperty( cls, "func1" )
+   if not isCallable( method ): failure( "Method retrival on class" )
+   value = method()
+   if value != "func1": failure( "Method intdirect call on class" )
+catch
+   failure( "Method access on class" )
+end
+
+try
+   prop2 = getProperty( testObj, "prop2" )
+   if prop2 != "value2": failure( "Get property on object" )
+catch
+   failure( "Property access on object" )
+end
+
+try
+   method2 = getProperty( testObj, "testMethod" )
+   if not isCallable( method2 ): failure( "Method retrival on object" )
+   value2 = method2()
+   if value2 != "testMethod": failure( "Method intdirect call on object" )
+catch
+   failure( "Method access on object" )
+end
+
+try
+   getProperty( cls, "not here!!" )
+   failure( "Exception not raised for classes" )
+catch in error
+   if error.code != 60: failure( "Wrong exception raised for classes" )
+end
+
+try
+   getProperty( testObj, "not here!!" )
+   failure( "Exception not raised for object" )
+catch in error
+   if error.code != 60: failure( "Wrong exception raised for object" )
+end
+
+success()
+
+/* End of file */

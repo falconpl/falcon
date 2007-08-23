@@ -1,0 +1,25 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: powexpr.fal,v 1.1.1.1 2006/10/08 15:05:40 gian Exp $
+*
+* ID: 2c
+* Category: expression
+* Subcategory:
+* Short: Power operator
+* Description:
+*   Tests for power operator.
+*   This leverages on conditionals.
+* [/Description]
+*
+****************************************************************************/
+
+// basic expr
+a = 5 ** 2
+if a != 25.0: failure( "Simple power" )
+a = a ** ( 1 / 2 )
+if a != 5.0: failure( "Simple radix" )
+
+success()
+
+/* End of file */

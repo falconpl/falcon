@@ -1,0 +1,108 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: switchsmall.fal,v 1.1.1.1 2006/10/08 15:05:40 gian Exp $
+*
+* ID: 17e
+* Category: switch
+* Subcategory:
+* Short: Small switch
+* Description:
+*   Small switches caused VM crash.
+* [/Description]
+*
+****************************************************************************/
+
+val = 2
+
+// empty switch
+switch val
+end
+
+// single item switch, negative
+switch val
+   case 1
+      failure( "single item switch, negative" )
+end
+
+// single item switch, nil
+switch val
+   case nil
+      failure( "single item switch, nil" )
+end
+
+// single item positive
+switch val
+   case 2
+      val = 3
+end
+
+if val != 3: failure( "single item positive" )
+
+// single item switch + default negative
+switch val
+   case 1
+      failure( "single item switch + default negative" )
+   default
+      val = 2
+end
+if val != 2: failure( "not poitive -- single item switch + default negative" )
+
+// single item switch, nil + default
+switch val
+   case nil
+      failure( "single item switch, nil + default" )
+   default
+      val = 3
+end
+
+if val != 3: failure( "not poitive -- single item switch, nil + default" )
+
+// single item positive + default
+switch val
+   case 3
+      val = 2
+   default
+      failure( "defaulted -- single item positive + default" )
+end
+if val != 2: failure( "not poitive -- single item positive + default" )
+
+
+
+// double item switch + default negative
+switch val
+   case 0
+      failure( "double item switch + default negative - 0" )
+   case 1
+      failure( "double item switch + default negative - 1" )
+   default
+      val = 2
+end
+if val != 2: failure( "not poitive -- double item switch + default negative" )
+
+// double item switch, nil + default
+switch val
+   case nil
+      failure( "double item switch, nil + default" )
+   case 1
+      failure( "double item switch + default negative - 1" )
+   default
+      val = 3
+end
+
+if val != 3: failure( "not poitive -- double item switch, nil + default" )
+
+// double item positive + default
+switch val
+   case 1
+      failure( "double item switch + default positive - 1" )
+   case 3
+      val = 2
+   default
+      failure( "defaulted -- double item positive + default" )
+end
+if val != 2: failure( "not poitive -- double item positive + default" )
+
+success()
+
+/* End of file */

@@ -1,0 +1,45 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: ts_tostring.fal,v 1.1 2007/07/31 13:45:38 jonnymind Exp $
+*
+* ID: 108b
+* Category: RTL
+* Subcategory: TimeStamp
+* Short: Timestamp string fmt
+* Description:
+*   Tests some timestamp to string conversion.
+* [/Description]
+****************************************************************************/
+
+// test standard tostring
+april_30 = TimeStamp()
+april_30.year = 2006
+april_30.month = 4
+april_30.day = 28
+april_30.hour = 1
+april_30.minute = 2
+april_30.second = 3
+april_30.msec = 9
+
+if april_30.toString() != "2006-04-28 01:02:03.009"
+   failure( "Default toString with fillers 1" )
+end
+
+april_30.msec = 99
+if april_30.toString() != "2006-04-28 01:02:03.099"
+   failure( "Default toString with fillers 1" )
+end
+
+april_30.hour = 11
+april_30.minute = 12
+april_30.second = 13
+april_30.msec = 999
+
+if april_30.toString() != "2006-04-28 11:12:13.999"
+   failure( "Default toString without fillers" )
+end
+
+success()
+
+/* End of file */

@@ -1,0 +1,31 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: rtlArrayRemove.fal,v 1.1.1.1 2006/10/08 15:05:43 gian Exp $
+*
+* ID: 102g
+* Category: rtl
+* Subcategory: array
+* Short: Array remove
+* Description:
+*   Test for array item removal using rtl functions
+* [/Description]
+*
+****************************************************************************/
+
+array = [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ]
+
+// ranged remove
+arrayRemove( array, 5, 7 )
+if len( array ) != 7: failure ( "Basic removal" )
+if array[4] != 5: failure( "too early" )
+if array[5] != 9: failure( "incorrect removal" )
+
+// point remove
+arrayRemove( array, 0 )
+if len( array ) != 6: failure ( "Basic removal -- single item" )
+if array[0] != 2: failure( "incorrect removal -- single item" )
+
+success()
+
+/* End of file */

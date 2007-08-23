@@ -1,0 +1,26 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: rtlArrayDelAll.fal,v 1.1.1.1 2006/10/08 15:05:43 gian Exp $
+*
+* ID: 102j
+* Category: rtl
+* Subcategory: array
+* Short: ArrayDelAll
+* Description:
+*   Test for RTL functions operating on arrays as the VM.
+*   This tests the arrayDelAll() function
+* [/Description]
+*
+****************************************************************************/
+
+array = [ "x", 2, 3, "x", "x", "a", "b", 4 ]
+
+arrayDelAll( array, "x" )
+if len( array ) != 5: failure( "arrayDelAll resizing" )
+if array[0] != 2: failure( "arrayDelAll removal - 1" )
+if array[2] != "a": failure( "arrayDelAll removal - 2" )
+
+success()
+
+/* End of file */

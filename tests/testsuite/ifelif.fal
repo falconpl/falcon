@@ -1,0 +1,40 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: ifelif.fal,v 1.1.1.1 2006/10/08 15:05:41 gian Exp $
+*
+* ID: 1d
+* Category: basic
+* Subcategory:
+* Short: if-elif-else nesting
+* Description:
+*   This is quite an important test too, as many other tests suppos that
+*   if/else/elif works correctly.
+*
+*   Thist test also perform a minimal nidification test in conditionals
+* [/Description]
+*
+****************************************************************************/
+
+a = 1
+if a != 1
+   failure( "if !=" )
+elif a > 2
+   failure( "if >" )
+elif a < 0
+   failure( "if <" )
+else
+
+   if a >= 2
+      failure( "if >=" )
+   elif a = 1
+      success()
+   else
+      failure( "false negative on ==" )
+   end
+
+end
+
+failure( "Impossible escape from branch" )
+
+/* End of file */

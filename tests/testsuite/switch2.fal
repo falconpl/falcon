@@ -1,0 +1,35 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: switch2.fal,v 1.1.1.1 2006/10/08 15:05:40 gian Exp $
+*
+* ID: 17b
+* Category: switch
+* Subcategory:
+* Short: Nil switch
+* Description:
+*   The switch item is a NIL object
+*   As switch is a quite complex statement, we test it in different files.
+* [/Description]
+*
+****************************************************************************/
+
+a = nil
+switch a
+   case nil
+      success()
+   case 1
+      failure( "Wrong case: one" )
+   case 2
+      failure( "Wrong case: two" )
+   case 3
+      failure( "Wrong case: three" )
+   case 4
+      failure( "Wrong case: four" )
+   default
+      failure( "Default" )
+end
+
+failure( "Switch skipped" )
+
+/* End of file */

@@ -1,0 +1,24 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: master_1.fal,v 1.1.1.1 2006/10/08 15:05:41 gian Exp $
+*
+* ID: 50a
+* Category: modloader
+* Subcategory:
+* Short: Basic cascade compilation test.
+* Description:
+*   This program loads the slave_1 module, which is in the same directory
+*   as a source file. Then it calls a function that is in that module.
+* [/Description]
+*
+****************************************************************************/
+load slave_1
+
+if not fromSlave()
+   failure( "didn't load slave module" )
+end
+
+success()
+
+/* End of file */

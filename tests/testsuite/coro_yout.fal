@@ -1,0 +1,29 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: coro_yout.fal,v 1.1.1.1 2006/10/08 15:05:43 gian Exp $
+*
+* ID: 23c
+* Category: statements
+* Subcategory: launch
+* Short: Coroutine with yieldOut
+* Description:
+* Checks for yieldOut to actually quit the machine.
+* [/Description]
+*
+****************************************************************************/
+
+function coro1()
+   coro2()
+   failure( "Yieldout didn't work" )
+end
+
+function coro2()
+   yieldOut()
+end
+
+launch coro1()
+
+success()
+
+/* End of file */

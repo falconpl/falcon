@@ -1,0 +1,37 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: slave_alpha.fal,v 1.1.1.1 2006/10/08 15:05:43 gian Exp $
+*
+* ID: ---
+* Category: modloader
+* Subcategory:
+* Short: Link time init, slave.
+* Description:
+*    This is a slave module to be loaded by master_3 (ID 50c). It is never
+*    directly executed.
+* [/Description]
+*
+****************************************************************************/
+
+load slave_world
+
+object alpha from alpha_class
+   val = nil
+
+   // init should be inherithed from alpha_class
+end
+
+object delta from alpha_class
+   val = nil
+
+   init
+      // just to check for return from other step
+      if self notin world.elements: failure( "inherited initialization" )
+   end
+end
+
+
+export
+
+/* End of file */

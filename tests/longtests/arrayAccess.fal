@@ -1,0 +1,46 @@
+/****************************************************************************
+* Falcon direct benchmarks
+*
+* CVS-Id: $Id: arrayAccess.fal,v 1.1 2007/01/06 16:04:19 jonnymind Exp $
+*
+* ID: 5a
+* Category: benchmark
+* Subcategory: array
+* Short: Array access
+* Description:
+*   Performance test on 1000000 Array acesses.
+* [/Description]
+****************************************************************************/
+
+loops = 1000000 * timeFactor()
+each = int(loops/10)
+
+
+array = ["a string", ["an", "array"], 10, 11, 12.5, [13:15], 18]
+range = [2:4]
+// getting time
+
+time = seconds()
+for i = 1 to loops
+   result = array[range]
+
+   if i % each == 0
+      alive( i/loops*100 )
+   end
+end
+// taking end time
+time = seconds() - time
+
+// subtract alive time
+timeAlive = seconds()
+for i = 1 to loops
+   if i % each == 0
+      alive( i/loops*100 )
+   end
+end
+timeAlive = seconds() - timeAlive
+time -= timeAlive
+
+timings( time, loops )
+
+/* end of file */

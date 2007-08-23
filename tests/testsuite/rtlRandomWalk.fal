@@ -1,0 +1,54 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: rtlRandomWalk.fal,v 1.1.1.1 2006/10/08 15:05:40 gian Exp $
+*
+* ID: 112c
+* Category: rtl
+* Subcategory: math
+* Short: Random walk
+* Description:
+*  Of course, random functions are not that much suitable for automatized
+*  testsuite. Nevertheless, there are some random function whose result is
+*  partially deterministic: pick and walk function must do some things
+*  all the times (select some items... without crashing).
+* [/Description]
+****************************************************************************/
+
+// seed
+randomSeed( seconds() )
+
+// random pick
+array = [ "a", "b", "c" ]
+
+item = randomWalk( array )
+if len( item ) != 1
+   failure( "randomWalk" )
+end
+
+item = randomWalk( array, 2 )
+if len( item ) != 2
+   failure( "randomWalk 2 items" )
+end
+
+item = randomWalk( array, 3 )
+if len( item ) != 3
+   failure( "randomWalk 3 items" )
+end
+
+// random walk can create an array greater than the source
+item = randomWalk( array, 4 )
+if len( item ) != 4
+   failure( "randomWalk 4 items" )
+end
+
+
+// errors
+try
+   randomWalk()
+   failure( "Empty random walk not raised" )
+end
+
+success()
+
+/* End of file */

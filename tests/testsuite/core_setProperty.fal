@@ -1,0 +1,57 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: core_setProperty.fal,v 1.4 2007/07/10 20:40:19 jonnymind Exp $
+*
+* ID: 40h
+* Category: rtl
+* Subcategory: core
+* Short: setProperty
+* Description:
+* The core function setProperty allows to change an object property
+* by name.
+* [/Description]
+*
+****************************************************************************/
+
+class testClass
+   prop1 = "value1"
+end
+
+object testObj
+   prop2 = "value2"
+end
+
+cls = testClass()
+
+try
+   prop1 = setProperty( cls, "prop1", "new value" )
+   if cls.prop1 != "new value": failure( "Set property on class" )
+catch
+   failure( "Property access on class" )
+end
+
+try
+   prop2 = setProperty( testObj, "prop2", "new value" )
+   if testObj.prop2 != "new value": failure( "Set property on object" )
+catch
+   failure( "Property access on object" )
+end
+
+try
+   setProperty( cls, "not here!!", "arrg" )
+   failure( "Exception not raised for classes" )
+catch in error
+   if error.code != 60: failure( "Wrong exception raised for classes" )
+end
+
+try
+   setProperty( testObj, "not here!!", "arrg" )
+   failure( "Exception not raised for object" )
+catch in error
+   if error.code != 60: failure( "Wrong exception raised for object" )
+end
+
+success()
+
+/* End of file */

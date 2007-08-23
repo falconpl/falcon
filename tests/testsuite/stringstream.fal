@@ -1,0 +1,43 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: stringstream.fal,v 1.1.1.1 2006/10/08 15:05:43 gian Exp $
+*
+* ID: 106
+* Category: rtl
+* Subcategory: streams
+* Short: String stream
+* Description:
+*   Testing the string stream.
+*   We need it now because next is the serialization test.
+*   This is just a miminal test; a deeper test must be performed
+*   together with the file system. This test is just needed to
+*   ensure that serialization has a minimal support.
+* [/Description]
+*
+****************************************************************************/
+
+// empty string stream
+stream = StringStream()
+
+stream.write( "Hello" )
+
+// test1 -- try to read from bottom
+if stream.read(1) != "": failure( "Read from bottom" )
+if not stream.eof(): failure( "Eof not set when read from bottom" )
+
+// test2 -- read back
+stream.seek(0)
+str = stream.read( 5 )
+if str != "Hello": failure( "Read Back" )
+
+// test3 -- preallocated string stream
+stream = StringStream( "Hello wolrd" )
+str = ""
+while not stream.eof()
+   str += stream.read(1)
+end
+
+success()
+
+/* End of file */

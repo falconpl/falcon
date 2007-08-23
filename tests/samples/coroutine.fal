@@ -1,0 +1,105 @@
+/*
+   Falcon Samples.
+
+   Coroutine / light parallelism test
+
+   This script creates eight coroutines from objects (actually
+   from methods, as Falcon accepts only function calls as
+   semantically correct coroutines), and one control coroutine
+   that shows the status of the other coroutines.
+
+   Both the main coroutine and the updater are notified of
+   relevant events via two different semaphores.
+
+   The script uses willfully a combination of global variables,
+   parameter passing and object access to test and show the
+   different approaches.
+
+   $Id: coroutine.fal,v 1.4 2007/08/11 00:11:52 jonnymind Exp $
+*/
+
+//==================================================
+// Global variables
+ended = 0
+
+
+//=================================================
+// Updater thread
+//
+
+function updater( waiter, coroutineArray )
+   while true
+      // print the number of ended arrays
+      print( "\rE:", ended )
+
+      // print data on all the coroutines
+      for elem in coroutineArray
+         print( @"   c$(elem.id)=$(elem.value:3)" )
+      end
+
+      print( "\r" )
+      //wait for new updates
+      if ended < 8
+         waiter.wait()
+      else
+         // a break would do too here.
+         yieldOut()
+      end
+   end
+end
+
+
+//===============================================
+// coroutine class
+//
+class coroutine( param, su, se )
+   id = param
+   sem_updates = su
+   sem_ended = se
+   value = 0
+
+   // =======================
+   // Thread method
+   // (could have any name)
+   function run( param )
+      for i = 1 to 100
+         self.value = i
+         sleep( 0.01 * self.id )
+         self.sem_updates.post()
+      end
+      // access rw the global variable
+      global ended
+      ended ++
+      // warn both listening threads
+      self.sem_updates.post()
+      self.sem_ended.post()
+   end
+end
+
+//========================================================
+// Main program
+
+// our semaphores
+end_semaphore = Semaphore()
+upd_semaphore = Semaphore()
+
+// we save the coroutine objects here
+coro_array = []
+
+for i = 1 to 8
+   coro = coroutine( i, upd_semaphore, end_semaphore )
+   coro_array += coro
+
+   launch coro.run( i )
+end
+
+// Functions can be started normally
+launch updater( upd_semaphore, coro_array )
+
+// wait for all the threads to end
+while ended < 8
+   end_semaphore.wait()
+end
+
+printl()
+printl( "Done" )

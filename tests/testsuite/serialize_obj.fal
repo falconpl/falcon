@@ -1,0 +1,80 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: serialize_obj.fal,v 1.4 2007/08/03 13:17:07 jonnymind Exp $
+*
+* ID: 107d
+* Category: rtl
+* Subcategory: serialization
+* Short: Object serialization
+* Description:
+*   Serialization test on dictionaries.
+*   This test demonstrates the initialization of objects, by also checking
+*   execution of the init routine.
+* [/Description]
+*
+****************************************************************************/
+
+// we need a stream
+stream = StringStream()
+
+class tester( p1, p2 )
+   prop1 = p1
+   prop2 = p2
+
+   init
+      global counter
+      counter ++
+   end
+
+   function check( ck1, ck2 )
+      if ck1 != self.prop1: failure( "tester: Check on prop1" )
+      if len( ck2 ) != len( self.prop2 ): failure( "tester: Check on prop2" )
+   end
+end
+
+object testerObj
+   prop1 = "a"
+   prop2 = "b"
+
+   init
+      global counter1
+      if counter1 == nil: counter1 = 0
+      counter1 ++
+   end
+
+   function check( ck1, ck2 )
+      if ck1 != self.prop1: failure( "testerObj: Check on prop1" )
+      if ck2 != self.prop2: failure( "testerObj: Check on prop2" )
+   end
+end
+
+
+counter = 0
+counter1 = 0
+
+array = [1,2]
+t1 = tester( "first", array )
+
+serialize( stream, t1 )
+serialize( stream, testerObj )
+stream.seek(0)
+
+try
+   item1 = deserialize( stream )
+   item2 = deserialize( stream )
+
+   // the deserialization should not call the initializer (?)
+   //if counter != 2: failure( "class item has not been re-created" )
+   //if counter1 != 2: failure( "object item has not been re-created" )
+
+   item1.check( "first", array )
+   item2.check( "a", "b" )
+
+catch
+   failure( "Deserialization failed" )
+end
+
+success()
+
+/* End of file */

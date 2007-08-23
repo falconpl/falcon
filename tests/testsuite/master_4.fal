@@ -1,0 +1,27 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: master_4.fal,v 1.1.1.1 2006/10/08 15:05:41 gian Exp $
+*
+* ID: 50d
+* Category: modloader
+* Subcategory:
+* Short: Globals across modules
+* Description:
+*   This test checks for global data to be passed across modules,
+*   and for private data to stay private.
+* [/Description]
+*
+****************************************************************************/
+load slave_glob
+
+glob // import, again not necessary
+
+if glob != "From Slave": failure( "Slave module initialization" )
+glob = "Changed"
+TestGlob()
+
+success()
+
+
+/* End of file */

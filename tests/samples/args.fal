@@ -1,0 +1,47 @@
+#!falcon
+/*
+   FALCON - Samples
+
+   FILE: args.fal
+
+   $Id: args.fal,v 1.2 2006/12/24 12:19:31 gian Exp $
+
+   How to access script args
+   Provide several command line paramters and see the results.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: mer nov 3 2004
+   Last modified because:
+
+   -------------------------------------------------------------------
+   (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+   In order to use this file in its compiled form, this source or
+   part of it you have to read, understand and accept the conditions
+   that are stated in the LICENSE file that comes boundled with this
+   package.
+*/
+
+
+printl( "The Falcon Programming Language - samples. " )
+printl( "Arguments Sample.
+         This script will list all the arguments that it has received." )
+
+printl()
+
+print( "This program has been called with ", len( args ), " argument" )
+if len( args != 1 )
+   printl( "s" )
+end
+
+printl()
+
+for arg in args
+   printl( "Argument: ", arg )
+end
+
+if len( args ) != 0: printl()
+printl( "Done." )
+
+/* end */

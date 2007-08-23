@@ -1,0 +1,39 @@
+/*
+   Falcon Samples.
+
+   Interaction with the embedding application: suspend/resume.
+
+   This script suspends the execution by calling the suspend()
+   function; the embedding application( or Falcon command line)
+   will resume it by providing a user-provided value.
+
+   $Id: suspend.fal,v 1.1.1.1 2006/10/08 15:05:21 gian Exp $
+*/
+
+//==================================================
+// Print the current directory
+
+printl( "Suspend/resume sample." )
+printl( "The script will suspend it's execution, allowing the embeding
+         application to talk with it. When asked enter \"up\" or \"down\",
+         or just \"end\" to ask for script termination." )
+
+counter = 0
+while true
+   event = suspend()
+   switch event
+      case "up"
+         printl( "Counter is now ", ++counter )
+      case "down"
+         printl( "Counter is now ", --counter )
+      case "end"
+         printl( "Executing break request" )
+         break
+      default
+         printl( "Unrecognized request: ", toString( event ) )
+   end
+end
+
+printl( "Terminating execution with counter ", counter )
+printl( "Done." )
+

@@ -1,0 +1,71 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: rtlMethodCall.fal,v 1.4 2007/07/10 20:40:19 jonnymind Exp $
+*
+* ID: 114
+* Category: rtl
+* Subcategory: indirect
+* Short: Method call
+* Description:
+*   Test for indirect method call.
+* [/Description]
+*
+****************************************************************************/
+
+object testObj
+   prop = 0
+   function method( param )
+      return param * param
+   end
+end
+
+class testClass
+   prop = 0
+   function method( param )
+      return param * param
+   end
+end
+
+cls = testClass()
+
+try
+   if methodCall( testObj, "method", [2] ) != 4: failure( "Method call on objects" )
+catch
+   failure( "Method retrival on objects" )
+end
+
+try
+   if methodCall( cls, "method", [2] ) != 4: failure( "Method call on objects" )
+catch in error
+   failure( "Method retrival on classes" )
+end
+
+// Negative tests
+try
+   if methodCall( testObj, "prop" ): failure( "Property call on objects" )
+catch in error
+   error.code // certify it's an error.
+end
+
+try
+   if methodCall( cls, "prop" ): failure( "Property call on classes" )
+catch in error
+   error.code // certify it's an error.
+end
+
+try
+   if methodCall( testObj, "not here" ): failure( "Property call on objects" )
+catch in error
+   error.code // certify it's an error.
+end
+
+try
+   if methodCall( cls, "not here" ): failure( "Property call on classes" )
+catch in error
+   error.code // certify it's an error.
+end
+
+success()
+
+/* End of file */

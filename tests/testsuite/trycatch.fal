@@ -1,0 +1,54 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: trycatch.fal,v 1.2 2007/03/04 17:39:03 jonnymind Exp $
+*
+* ID: 20a
+* Category: statements
+* Subcategory: try
+* Short: Basic try and catch
+* Description:
+* Tests for ecception rising and catching.
+* After this test series, exception rising and catching can be used in
+* testsuite as a part of the test checks.
+* [/Description]
+*
+****************************************************************************/
+
+// basic try
+try
+   a = 1 + "a"
+   failure( "Exception not raised / try" )
+end
+
+// basic try catch
+try
+   a = 1 + nil
+   failure( "Exception not raised / trycatch" )
+catch
+   a = 1
+end
+
+if a != 1: failure( "Exception not catched /trycatch" )
+
+// basic try catch with value
+try
+   a = 1 + "a"
+   failure( "Exception not raised / trycatch + value" )
+catch in e
+   a = 2
+end
+
+if a != 2: failure( "Exception not catched /trycatch + value" )
+
+try
+   raise "test"
+catch in e
+   a = e
+end
+
+if e != "test": failure( "raise" )
+
+success()
+
+/* End of file */

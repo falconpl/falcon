@@ -1,0 +1,45 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: funcexpr.fal,v 1.2 2006/11/20 21:21:51 gian Exp $
+*
+* ID: 32
+* Category: expression
+* Subcategory: complex
+* Short: Functions as expressions
+* Description:
+*   Tests for usage of functions as expression elements
+* [/Description]
+*
+****************************************************************************/
+
+function testArray()
+   return [1,2,3]
+end
+
+class testClass
+  value = "hello"
+end
+
+function testObject()
+   return testClass()
+end
+
+function testString()
+	return "Hello"
+end
+
+if testArray()[1] != 2: failure( "Access as array" )
+
+testRet = testArray()[1:3]
+if testRet[0] != 2 or testRet[1] != 3: failure( "Range access" )
+
+if testString()[ * 0 ] != ord( "H" ): failure( "Integer string accessor" )
+if testString()[* 0 ] != ord( "H" ): failure( "Integer string accessor 2" )
+if testString()[*0] != ord( "H" ): failure( "Integer string accessor 3" )
+
+if testObject().value != "hello": failure( "Access as items" )
+
+success()
+
+/* End of file */

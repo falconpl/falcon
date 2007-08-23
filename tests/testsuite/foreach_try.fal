@@ -1,0 +1,95 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: foreach_try.fal,v 1.1 2007/03/09 17:14:17 jonnymind Exp $
+*
+* ID: 20f
+* Category: statements
+* Subcategory: try
+* Short: Try/catch in foreach
+* Description:
+* Tests for ecception rising and catching in foreach loops
+* [/Description]
+*
+****************************************************************************/
+
+vector = [ [1,2],
+   [3, 4],
+   [5, 6],
+   7,  // this will generate our error
+   [8, 9]
+   ]
+
+//===========================================================================
+// This function won't return cleanly if try doesn't clean the foreach stack.
+//
+function tryToReturn()
+   try
+      for v1, v2 in vector
+         if typeOf( v1 ) != IntegerType: failure( "Unpacking TRAV - ret " )
+      end
+   catch 
+      if v2 != 6 // last catched value
+         failure( "Catch from unpack ret" )
+      end
+   end
+end
+//====================
+
+//===========================================================================
+// This function will make the stack dirty if not cleanly popped
+//
+function tryToRaise()
+   for v1, v2 in vector
+      if typeOf( v1 ) != IntegerType: failure( "Unpacking TRAV - ret " )
+   end
+end
+//====================
+
+
+for subvect in vector
+   try
+      v1, v2 = subvect
+      if typeOf( v1 ) != IntegerType: failure( "Unpacking UNPS " )
+   catch 
+      if subvect != 7
+         failure( "Catch in unps" )
+      end
+   end
+end
+
+     
+try
+   for v1, v2 in vector
+      if typeOf( v1 ) != IntegerType: failure( "Unpacking TRAV " )
+   end
+catch 
+   if v2 != 6 // last catched value
+      failure( "Catch from unpack" )
+   end
+end
+    
+// if we didn't remove the stack in tryToRaise(), we'd had an error here
+for subvect in vector
+   try 
+      tryToRaise()
+   end
+end
+   
+// Try to see if we clean the foreach stack after try
+tryToReturn()
+
+// This will raise an error in TRAN if local stack isnt cleaned.
+for subvect in vector
+   try
+      for v1, v2 in vector
+         if typeOf( v1 ) != IntegerType: failure( "Unpacking TRAV - inner " )
+      end
+   catch
+      if v2 != 6 // last catched value
+         failure( "Catch from unpack - inner" )
+      end
+   end
+end
+   
+success()

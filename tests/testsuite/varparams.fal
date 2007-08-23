@@ -1,0 +1,53 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: varparams.fal,v 1.1.1.1 2006/10/08 15:05:40 gian Exp $
+*
+* ID: 13k
+* Category: functions
+* Subcategory:
+* Short: Variable parameter call
+* Description:
+* This test checks for the variable params conventions.
+* [/Description]
+*
+****************************************************************************/
+
+function test_call_two( param1, param2, param3 )
+   if param1 = nil or param2 = nil or param3 != nil
+      failure( "parameter assigment convention (fill less)" )
+   end
+end
+
+function test_call_four( param1, param2, param3 )
+   if param1 == nil or param2 == nil or param3 == nil
+      failure( "parameter assigment convention (fill more)" )
+   end
+end
+
+function test_call_var( param1, param2 )
+   for i = 0 to paramCount()
+      if i = 0 and paramNumber( i ) != param1
+         failure( "Parameter access via paramNumber() and symbol -- 1" )
+      end
+
+      if i = 1 and paramNumber( i ) != param2
+         failure( "Parameter access via paramNumber() and symbol -- 2" )
+      end
+   end
+
+   // return the last parameter
+   if paramCount() > 0
+      return paramNumber( paramCount() - 1 )
+   end
+end
+
+test_call_two( 1, 2 )
+test_call_four( 1, 2, 3, 4 )
+
+if test_call_var( 0, 1, 2, 3 ) != 3
+   failure( "ParameterNumber return" )
+end
+
+success()
+/* End of file */

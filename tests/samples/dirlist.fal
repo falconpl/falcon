@@ -1,0 +1,46 @@
+/*
+   Falcon Samples.
+
+   Directory listing.
+
+   This script demonstrates the usage of the basic directory
+   API.
+
+   $Id: dirlist.fal,v 1.5 2007/07/07 11:20:07 jonnymind Exp $
+*/
+
+//==================================================
+// Print the current directory
+
+printl( "Current directory: ", dirCurrent() )
+dir = len( args ) = 0 ? "." : args[0]
+printl( "Directory list for: ", dir )
+
+try
+   dirHandle = DirectoryOpen( dir )
+   elem = dirHandle.read()
+   stats = FileStat()
+   while elem != nil
+      fname = dir + "/" + elem
+      if stats.readStats( fname )
+         print( elem, "(", stats.type, ")", ":", stats.size, " ",  stats.mtime.toString() )
+         if stats.type = FILE_TYPE_LINK
+            printl( " ---> ", dirReadLink( fname )  )
+         else
+            printl()
+         end
+      else
+         printl( "Failure getting stats for: ", dir + "/" + elem  )
+      end
+      elem = dirHandle.read()
+   end
+   dirHandle.close()
+
+catch in error
+   printl( "Error: ", error.toString() )
+   printl( error.getSysErrDesc() )
+end
+
+
+printl()
+printl( "Done" )

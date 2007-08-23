@@ -1,0 +1,78 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: autosub.fal,v 1.1.1.1 2006/10/08 15:05:40 gian Exp $
+*
+* ID: 30b
+* Category: expression
+* Subcategory: autoassign
+* Short: Deep autoassign sub
+* Description:
+* Test on complex types for autoassign sub.
+* [/Description]
+*
+****************************************************************************/
+
+deeparr = [ 2 ]
+array = [ deeparr ]
+
+array[0][0] -= 1
+if deeparr[0] != 1: failure( "Deep array simple" )
+array[0][0] -= testReflect( 1 )
+if deeparr[0] != 0: failure( "Deep array complex" )
+
+object deepobj
+   property = 2
+end
+
+object one
+   property = deepobj
+end
+
+one.property.property -= 1
+if deepobj.property != 1: failure( "Deep obj simple" )
+one.property.property -= testReflect( 1 )
+if deepobj.property != 0: failure( "Deep obj complex" )
+
+array = [ one ]
+one.property = 2
+
+array[0].property -= 1
+if one.property != 1: failure( "Deep array->object simple." )
+array[0].property -= testReflect( 1 )
+if one.property != 0: failure( "Deep array->object complex." )
+
+one.property = array
+array[0] = 2
+
+one.property[0] -= 1
+if array[0] != 1: failure( "Deep object->array simple." )
+one.property[0] -= testReflect( 1 )
+if array[0] != 0: failure( "Deep object->array complex." )
+
+object auto
+   prop = 2
+   proparr = [ 2 ]
+
+   function test()
+      self.prop -= 1
+      self.proparr[0] -= 1
+   end
+
+   function testCpx()
+      self.prop -= testReflect( 1 )
+      self.proparr[0] -= testReflect( 1 )
+   end
+end
+
+auto.test()
+if auto.prop != 1: failure( "Deep object self assign simple." )
+if auto.proparr[0] != 1: failure( "Deep object self to array assign simple." )
+
+auto.testCpx()
+if auto.prop != 0: failure( "Deep object self assign complex." )
+if auto.proparr[0] != 0: failure( "Deep object self to array assign complex." )
+
+success()
+
+/* End of file */

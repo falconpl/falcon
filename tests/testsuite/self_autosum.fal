@@ -1,0 +1,33 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: self_autosum.fal,v 1.3 2007/01/16 14:15:37 jonnymind Exp $
+*
+* ID: 21g
+* Category: types
+* Subcategory: classes
+* Short: Self sum
+* Description:
+* Test for autooperators on sef.
+* [/Description]
+*
+****************************************************************************/
+
+class test
+   sum = ""
+
+   init
+      list = [ "a", "b", "c", "d", "e" ]
+      sum = ""
+      for elem in list
+          // we have called the accessor, so the list is initalized
+          self.sum += elem
+      end
+   end
+end
+
+item = test()
+if item.sum != "abcde": failure( "Summing up self with self" )
+success()
+
+/* End of file */

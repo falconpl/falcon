@@ -1,0 +1,75 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: classprov.fal,v 1.1.1.1 2006/10/08 15:05:43 gian Exp $
+*
+* ID: 21e
+* Category: types
+* Subcategory: classes
+* Short: Sender and provides
+* Description:
+* This tests checks for sender object access and provides keyword.
+* [/Description]
+*
+****************************************************************************/
+
+class base( pname )
+   name = pname
+
+   function method( param )
+      return param == self.name
+   end
+
+   function getSender()
+      if sender provides name
+         return sender.name
+      else
+         return nil
+      end
+   end
+
+   function setSender( val )
+      if sender provides prop
+         sender.prop = val
+         return 1
+      else
+         return 0
+      end
+   end
+end
+
+class derived(  pname ) from base( pname )
+   prop = nil
+
+   function dsender( param )
+      if param provides getSender
+         return param.getSender() = self.name
+      end
+   end
+
+   function dset( param, set )
+      if param provides setSender
+         param.setSender( set )
+         if self.prop = set
+            return true
+         end
+      end
+      return false
+   end
+
+end
+
+d1 = derived( "one" )
+d2 = derived( "two" )
+d3 = derived( "three" )
+
+if not d3 provides prop: failure( "Positive provides" )
+if d3 provides not_existing: failure( "Negative provides" )
+if not d3.dsender( d2 ): failure( "provides/sender access" )
+if not d3.dset( d2, "changed" ): failure( "provides/sender write access" )
+
+if d3.prop != "changed": failure( "sender field modify" )
+
+success()
+
+/* End of file */

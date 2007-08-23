@@ -1,0 +1,94 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: forin_string.fal,v 1.1 2007/07/20 21:06:39 jonnymind Exp $
+*
+* ID: 16m
+* Category: loops
+* Subcategory: forin
+* Short: Forin on strings
+* Description:
+*   Cheks the forin loop used on strings.
+*   Performs complete checks on every string part.
+*
+* [/Description]
+*
+****************************************************************************/
+
+string = "H8ere is a st0ri9ng"
+result = ""
+
+for c in string
+   if c >= "0" and c <= "9"
+      continue dropping
+   end
+
+   if c == " "
+      .= "-"
+   end
+
+   result += c
+end
+
+if string.len() != 16: failure( "base - Changed string size" )
+if string != "Here-is-a-string": failure( "base - Changed string content" )
+if result != "Here is a string"
+	failure( "base - String result" )
+end
+
+//===================================================
+
+string = "H8ere is a st0ri9ng"
+result = ""
+
+for c in string
+	forfirst: result += ":"
+   if c >= "0" and c <= "9"
+      continue dropping
+   end
+
+   if c == " "
+      .= "-"
+   end
+
+   result += c
+
+   forall: result += ","
+end
+
+if string.len() != 16: failure( "forall - Changed string size" )
+if string != "Here-is-a-string": failure( "forall - Changed string content" )
+if result != ":H,e,r,e, ,i,s, ,a, ,s,t,r,i,n,g,"
+	failure( "forall - String result" )
+end
+
+//===================================================
+
+string = "H8ere is a st0ri9ng"
+result = ""
+
+for c in string
+	forfirst: result += ":"
+   if c >= "0" and c <= "9"
+      continue dropping
+   end
+
+   if c == " "
+      .= "-"
+   end
+
+   result += c
+
+   forall: result += ","
+   forlast: result += "."
+end
+
+if string.len() != 16: failure( "forlast - Changed string size" )
+if string != "Here-is-a-string": failure( "forlast - Changed string content" )
+if result != ":H,e,r,e, ,i,s, ,a, ,s,t,r,i,n,g."
+	failure( "forlast - String result" )
+end
+
+success()
+
+/* End of file */

@@ -1,0 +1,65 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: indirect.fal,v 1.1 2007/06/23 18:04:37 jonnymind Exp $
+*
+* ID: 33a
+* Category: expression
+* Subcategory: indirect
+* Short: basic indirect
+* Description:
+* Test string-to-symbol indirect access, basic functionalities.
+* [/Description]
+*
+****************************************************************************/
+
+item = "Hello"
+str = "item"
+
+// immediate test
+if # "item" != "Hello": failure( "Basic indirect immediate" )
+if # "it" + "em" != "Hello": failure( "Basic indirect immediate/precedence" )
+if #str != "Hello": failure( "Basic indirect string" )
+
+item = [ "one", "two", "three" ]
+str = "item[0]"
+if #str != "one": failure( "Array indirect 1" )
+str = " item [ 2 ] "
+if #str != "three": failure( "Array indirect 2" )
+
+object test
+	prop = "Hi!"
+end
+
+if # "test.prop" != "Hi!": failure( "object indirect" )
+test.prop = [ "one", "two", "three" ]
+if # "test.prop[0]" != "one": failure( "object indirect + array access 1 " )
+if # "test.prop [ 2 ]" != "three": failure( "object indirect + array access 2" )
+
+item = [ 0, test, 1 ]
+if # "item[ 1 ]. prop [0] " != "one": failure( "array access + object indirect" )
+
+// test failure
+try
+	# "item[ 1 "
+	failure( "Negative test 1" )
+end
+
+try
+	# "item. "
+	failure( "Negative test 2" )
+end
+
+try
+	# "unexisting"
+	failure( "Negative test 3" )
+end
+
+try
+	# "item[ 1 ]. prop [0] asdfa"
+	failure( "Negative test 4" )
+end
+
+success()
+
+/* End of file */

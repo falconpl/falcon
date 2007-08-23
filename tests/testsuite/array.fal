@@ -1,0 +1,76 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: array.fal,v 1.3 2007/08/01 10:30:41 jonnymind Exp $
+*
+* ID: 11a
+* Category: types
+* Subcategory: array
+* Short: Basic array
+* Description:
+* Checks for correctness of basic array operations.
+* Using only integers in this test
+* [/Description]
+*
+****************************************************************************/
+
+// assignment test - include a compilation test
+array =  [ 0, 1, 2,
+           3, 4, 5,
+           6, 7
+         ]
+
+// minimal access
+if array[2] != 2: failure( "Smoke test" )
+
+// array update
+array[2] = 100
+if  array[2] != 100: failure( "Minimal assign" )
+
+
+// range access
+subarr = array[3:4]
+if subarr[0] != 3: failure( "Range access 1" )
+
+
+subarr = array[3:5]
+if subarr[0] != 3 or subarr[1] != 4: failure( "Range access 2" )
+
+// array reversal
+subarr = array[5:3]
+if subarr[1] != 4: failure( "Range reversal" )
+
+// array deletion
+array[6:7] = []
+if array[6] != 7: failure( "Range deletion" )
+
+// array insertion
+array[6:6] = 6
+if array[6] != 6: failure( "Range insertion 1" )
+
+array[6:6] = [1, 2, 3]
+if array[7] != 2: failure( "Range insertion 2" )
+
+// array concatenation
+test = [1,2]
+arr2 = test + [3,4] + [5,6]
+if arr2[2] != 3: failure( "Concatenation" )
+if arr2[4] != 5: failure( "Concatenation (second)" )
+if len( test ) != 2: failure( "Invariance in concatenation" )
+success()
+// array addition
+arr2 += [5,6]
+if arr2[4] != 5: failure( "Addition" )
+
+// in operator
+if not 2 in arr2: failure( "In operator - positive" )
+if 2 notin arr2: failure( "Notin operator - negative" )
+if 10 in arr2: failure( "In operator - negative" )
+if not 10 notin arr2: failure( "Notin operator - negative" )
+
+// len test
+if len( arr2 ) != 6: failure( "Len core function" )
+
+success()
+
+/* End of file */

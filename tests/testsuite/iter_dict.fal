@@ -1,0 +1,71 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: iter_dict.fal,v 1.1 2007/07/26 21:14:26 jonnymind Exp $
+*
+* ID: 35c
+* Category: iterators
+* Subcategory:
+* Short: Iterators on dictionaries
+* Description:
+*	Tests for iterator usage on dictionarys.
+* [/Description]
+*
+****************************************************************************/
+
+dictionary = [ "a"=> 1, "z" => 2, "c"=>3, "k"=>4 ]
+
+// test 1: forward iteration
+it = Iterator( dictionary )
+dest = ""
+destNum = 0
+while it.hasCurrent()
+	dest += it.key()
+	destNum += it.value()
+	it.next()
+end
+
+if destNum != 10: failure( "Forward iteration -- value" )
+if dest != "ackz": failure( "Forward iteration -- key" )
+
+// test 2: backward iteration
+it = Iterator( dictionary, -1 )
+dest = ""
+destNum = 0
+while it.hasCurrent()
+	dest += it.key()
+	destNum += it.value()
+	it.prev()
+end
+
+if destNum != 10: failure( "Reverse iteration -- value" )
+if dest != "zkca": failure( "Reverse iteration -- key" )
+
+// test 3: item change
+it = Iterator( dictionary )
+while it.hasCurrent()
+	if it.key() == "k"
+		it.value( 10 )
+   end
+
+	it.next()
+end
+
+if dictionary["k"] != 10: failure( "Item change" )
+
+// test 4: item remove
+it = Iterator( dictionary )
+while it.hasCurrent()
+	if it.key() == "k"
+		it.remove()
+   else
+		it.next()
+   end
+end
+
+if "k" in dictionary: failure( "Item remove" )
+if dictionary.len() != 3: failure( "Item remove -- len" )
+
+success()
+
+/* End of file */

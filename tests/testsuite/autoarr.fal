@@ -1,0 +1,52 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: autoarr.fal,v 1.2 2007/01/10 00:37:53 jonnymind Exp $
+*
+* ID: 11e
+* Category: types
+* Subcategory: array
+* Short: Complex array autoops
+* Description:
+* Verify the correctness of complex array access and auto ops
+* Using only integers in this test
+* [/Description]
+*
+****************************************************************************/
+
+flag = 0
+
+function changingVal( val )
+   global flag
+   if flag: return val + 1
+   flag++
+   return val
+end
+
+// assignment test - include a compilation test
+array =  [ 10,10,10,10,10,10 ]
+
+array[5]++
+return
+if array[0] != 11: failure( "auto inc base" )
+if ++array[1] != 11: failure( "auto inc pre" )
+if array[1] != 11: failure( "auto inc pre - effect" )
+if array[2]++ != 10: failure( "auto inc post - effect" )
+if array[2] != 11: failure( "auto inc post - effect" )
+
+// complex
+array[ changingVal(3) ]++
+flag = 0
+if array[changingVal(3)] != 11: failure( "auto inc complex" )
+flag = 0
+if ++array[changingVal(4)] != 11: failure( "auto inc complex pre" )
+flag = 0
+if array[changingVal(4)] != 11: failure( "auto inc complex pre - effect" )
+flag = 0
+if array[changingVal(5)]++ != 10: failure( "auto inc complex post" )
+flag = 0
+if array[changingVal(5)] != 11: failure( "auto inc complex post - effect" )
+
+success()
+
+/* End of file */

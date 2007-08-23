@@ -1,0 +1,28 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: strReplace.fal,v 1.1.1.1 2006/10/08 15:05:41 gian Exp $
+*
+* ID: 101f
+* Category: rtl
+* Subcategory: string
+* Short: strReplace
+* Description:
+*   Test on RTL string functions
+* [/Description]
+*
+****************************************************************************/
+
+string = "element with this"
+strrep = strReplace( string, "e", "a" )
+if strrep != "alamant with this": failure( "strReplace, single with single" )
+strrep = strReplace( string, "e", "al" )
+if strrep != "allalmalnt with this": failure( "strReplace, single with string" )
+strrep = strReplace( string, "th", "x" )
+if strrep != "element wix xis": failure( "strReplace, string with single" )
+strrep = strReplace( string, "th", "'another long'" )
+if strrep != "element wi'another long' 'another long'is": failure( "strReplace, string with string" )
+
+success()
+
+/* End of file */

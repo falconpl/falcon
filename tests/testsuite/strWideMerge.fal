@@ -1,0 +1,39 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: strWideMerge.fal,v 1.2 2006/11/05 15:18:03 gian Exp $
+*
+* ID: 101b
+* Category: rtl
+* Subcategory: string
+* Short: strMerge - Wide string
+* Description:
+*   Test on RTL string functions.
+*   This test strMerge when operating on international/wide strings.
+*
+* [/Description]
+*
+****************************************************************************/
+
+strarr = [ "これは", "国際な", "string", "ですよ！" ]
+strres = strMerge( strarr )
+if strres != "これは国際なstringですよ！": failure( "strMerge single param" )
+
+strres = strMerge( strarr, "," )
+if strres != "これは,国際な,string,ですよ！": failure( "strMerge" )
+
+strres = strMerge( strarr, ",", 3 )
+if strres != "これは,国際な,string": failure( "strMerge limited" )
+
+strres = strMerge( strarr, ",", 1 )
+if strres != "これは": failure( "strMerge limited to 1" )
+
+strres = strMerge( strarr, ",", 0 )
+if strres != "": failure( "strMerge limited to 0" )
+
+strres = strMerge( strarr, ",", 10 )
+if strres != "これは,国際な,string,ですよ！": failure( "strMerge overlimited" )
+
+success()
+
+/* End of file */

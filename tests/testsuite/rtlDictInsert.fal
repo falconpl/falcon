@@ -1,0 +1,35 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: rtlDictInsert.fal,v 1.2 2007/07/06 13:23:52 jonnymind Exp $
+*
+* ID: 104b
+* Category: rtl
+* Subcategory: dictionary
+* Short: Dictionary bags
+* Description:
+*    This test uses the insert function to modify a dictionary, both
+*    with set and bag semantics.
+* [/Description]
+*
+****************************************************************************/
+
+dict = [ "A" => 1, "b" => 2, "C" => 3, "d" => 4, 3 => "three", 1 => "one", 2 => "two" ]
+
+// standard insertion
+dictInsert( dict, "newkey", "newval" )
+if dict[ "newkey" ] != "newval": failure( "Basic dictInsert" )
+
+// now a bit of set semantics
+dictInsert( dict, "A", 2 )
+dictInsert( dict, "A", 3 )
+dictInsert( dict, "A", 4 )
+
+if dict[ "A" ] != 4: failure( "Overwrite dictInsert" )
+
+dictInsert( dict, "Z", 100 )
+if dict[ "Z" ] != 100: failure( "New insertion" )
+
+success()
+
+/* End of file */

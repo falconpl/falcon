@@ -1,0 +1,55 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: rtlArraySort2.fal,v 1.1.1.1 2006/10/08 15:05:40 gian Exp $
+*
+* ID: 103b
+* Category: rtl
+* Subcategory: array
+* Short: Array sort advanced
+* Description:
+*   Test for sort using a custom sorting function.
+* [/Description]
+*
+****************************************************************************/
+
+function reverseSort( a, b )
+   if a > b
+      return -1
+   elif a < b
+      return 1
+   end
+   return 0
+end
+
+array = [ 1, 5, 8, 4, 9, 4, 3, 2, 1, 2, 1, 2, 7, 4, 3, 2, 9, 10 ]
+arraySort( array, reverseSort )
+old = 1000
+for element in array
+   if element > old: failure( "Sort integers" )
+   old = element
+end
+
+array = [ "Zeta", "ypsilon", "Alfa", "beta", "GAMMA", "tetha", "TETHA",
+          "omicron", "Psi", "fi"]
+
+arraySort( array, reverseSort )
+old = "zzzzzzz"
+for element in array
+   if element > old: failure( "Sort string" )
+   old = element
+end
+
+array = [ "Zeta", "ypsilon", 5, 1, "Alfa", "beta", 8.2, "GAMMA",
+          4.1, "tetha", "TETHA", 6,  "omicron", "Psi", "fi" ]
+
+arraySort( array, reverseSort )
+old = "zzzzzzz"
+for element in array
+   if element > old: failure( "Sort mixed" )
+   old = element
+end
+
+success()
+
+/* End of file */

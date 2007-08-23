@@ -1,0 +1,131 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: gcStrings.fal,v 1.7 2007/08/11 13:14:09 jonnymind Exp $
+*
+* ID: 51b
+* Category: gc
+* Subcategory: strings
+* Short: Garbage collection - strings
+* Description:
+*  Test for correct accounting of garbage collection when strings are
+*  involved
+* [/Description]
+*
+****************************************************************************/
+
+// clean memory -- serialzation may dirty the gc.
+
+// Record initial memory requirements
+
+base_allocMem = 0
+base_allocItems = 0
+allocItems = 0
+allocMem = 0
+liveItems = 0
+liveMem = 0
+
+// initialize references
+gcPerform( true )
+gcGetParams( $allocMem, $allocItems, $liveMem, $liveItems )
+gcGetParams( $base_allocMem, $base_allocItems )
+
+//====================================
+// TEST 1
+// drop a static string
+str = "Hello world"
+str = nil
+
+gcPerform( true )
+gcGetParams( $allocMem, $allocItems, $liveMem, $liveItems )
+
+if base_allocMem != allocMem: failure( "dropped string - unmatching allocated memory" )
+if base_allocItems != allocItems: failure( "dropped string - unmatching allocated items" )
+if allocMem != liveMem: failure( "dropped string - live memory unmatching allocated memory" )
+if allocItems != liveItems: failure( "dropped string - live items umatching allocated items" )
+
+//====================================
+// TEST 2
+// string manipulation - insert string.
+str = "Hello world"
+str1 = " great "
+str[5:5] = str1   // here we have an insertion
+
+// Empty the strings...
+str = nil
+str1 = nil
+
+// ...and empty the A register
+a = 0*1
+
+gcPerform( true )
+gcGetParams( $allocMem, $allocItems, $liveMem, $liveItems )
+
+if base_allocMem != allocMem: failure( "insertion - unmatching allocated memory" )
+if base_allocItems != allocItems: failure( "insertion - unmatching allocated items" )
+if allocMem != liveMem: failure( "insertion - live memory unmatching allocated memory" )
+if allocItems != liveItems: failure( "insertion - live items umatching allocated items" )
+
+//====================================
+// TEST 3
+// string manipulation - cut down string
+str = "Hello great world"
+str[5:12] = ""   // here we have an insertion
+
+// Empty the strings...
+str = nil
+
+// ...and empty the A register
+a = 0*1
+
+gcPerform( true )
+gcGetParams( $allocMem, $allocItems, $liveMem, $liveItems )
+
+if base_allocMem != allocMem: failure( "cut - unmatching allocated memory" )
+if base_allocItems != allocItems: failure( "cut - unmatching allocated items" )
+if allocMem != liveMem: failure( "cut - live memory unmatching allocated memory" )
+if allocItems != liveItems: failure( "cut - live items umatching allocated items" )
+
+//====================================
+// TEST 4
+// string manipulation - append string
+str = "Hello great "
+str += "world"   // here we have an addition
+
+// Empty the strings...
+str = nil
+
+// ...and empty the A register
+a = 0*1
+
+gcPerform( true )
+gcGetParams( $allocMem, $allocItems, $liveMem, $liveItems )
+
+if base_allocMem != allocMem: failure( "append - unmatching allocated memory" )
+if base_allocItems != allocItems: failure( "append - unmatching allocated items" )
+if allocMem != liveMem: failure( "append - live memory unmatching allocated memory" )
+if allocItems != liveItems: failure( "append - live items umatching allocated items" )
+
+//====================================
+// TEST 5
+// string change type - append string
+str = "Hello great "
+str += 921   // here we have an addition of an unicode high
+
+// Empty the strings...
+str = nil
+
+// ...and empty the A register
+a = 0*1
+
+gcPerform( true )
+gcGetParams( $allocMem, $allocItems, $liveMem, $liveItems )
+
+if base_allocMem != allocMem: failure( "unicode - unmatching allocated memory" )
+if base_allocItems != allocItems: failure( "unicode - unmatching allocated items" )
+if allocMem != liveMem: failure( "unicode - live memory unmatching allocated memory" )
+if allocItems != liveItems: failure( "unicode - live items umatching allocated items" )
+
+success()
+
+/* End of file */

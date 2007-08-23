@@ -1,0 +1,44 @@
+/*
+   FALCON - Samples
+
+   FILE: timestamp.fal
+
+   $Id: timestamp.fal,v 1.2 2007/07/07 11:20:07 jonnymind Exp $
+
+   Shows a bit of date handling.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: mer nov 3 2004
+   Last modified because:
+
+   -------------------------------------------------------------------
+   (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+   In order to use this file in its compiled form, this source or
+   part of it you have to read, understand and accept the conditions
+   that are stated in the LICENSE file that comes boundled with this
+   package.
+*/
+
+
+
+ts = TimeStamp()
+ts.currentTime()
+printl( "Default time representation: ", ts.toString() )
+printl( "Strfmt string representation: ", ts.toString( "%X %x" ) )
+printl( "Waiting 0.35" )
+sleep( 0.35 )
+
+tsnew = TimeStamp()
+tsnew.currentTime()
+printl( tsnew.toString() )
+printl( "Comparing old -> new : ", ts.compare( tsnew ) )
+printl( "Comparing new -> old : ", tsnew.compare( ts ) )
+printl( "Comparing new -> new : ", tsnew.compare( tsnew ) )
+
+tsdiff = TimeStamp( tsnew )
+tsdiff.distance( ts )
+printl( "Difference: ", tsdiff.toString() )
+
+/* end */

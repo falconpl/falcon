@@ -1,0 +1,79 @@
+/****************************************************************************
+* Falcon direct benchmarks
+*
+* CVS-Id: $Id: smallDict.fal,v 1.1 2007/07/24 17:48:44 jonnymind Exp $
+*
+* ID: 6c
+* Category: benchmark
+* Subcategory: dict
+* Short: Small dictionary
+* Description:
+*   Performance test on repeated insertions in small dictionaries.
+* [/Description]
+****************************************************************************/
+
+loops = 10000 * timeFactor()
+each = int(loops/10)
+
+
+function testInsert()
+   dict = [ => ]
+   for i = 1 to 20
+      dict[ makeKey() ] = random()
+   end
+end
+
+function testEmpty()
+   dict = [ => ]
+   for i = 1 to 20
+      makeKey(); random()
+   end
+end
+
+// creating a default key
+function makeKey()
+   static
+      letter_a = ord('A')
+      key = "               "
+   end
+
+   for num = 0 to key.len() - 1
+      key[num] = random( 0, 25 ) + letter_a 
+   end
+
+   return key
+end
+
+
+
+// getting time
+time = seconds()
+
+// looping for insertion
+for i = 1 to loops
+   testInsert()
+   
+   if i % each == 0
+      alive( i/loops*100 )
+   end
+end
+
+// taking end time
+time = seconds() - time
+
+// subtract alive time
+timeAlive = seconds()
+for i = 1 to loops
+   testEmpty()
+
+   if i % each == 0
+      alive( i/loops*100 )
+   end
+end
+timeAlive = seconds() - timeAlive
+time -= timeAlive
+
+// we have produced 100 operations per loop
+timings( time, loops * 20 )
+
+/* end of file */

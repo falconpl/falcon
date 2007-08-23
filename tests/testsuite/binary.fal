@@ -1,0 +1,32 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: binary.fal,v 1.1.1.1 2006/10/08 15:05:40 gian Exp $
+*
+* ID: 4a
+* Category: expressions
+* Subcategory:
+* Short: Binary expressions
+* Description:
+* Tests for various binary expressions
+* [/Description]
+*
+****************************************************************************/
+
+a = 0xFF00
+b = 0x0FF0
+
+if a & b != 0x0F00: failure( "AND" )
+if a | b != 0xFFF0: failure( "OR" )
+if a ^ b != 0xF0F0: failure( "XOR" )
+if !a != 0xFFFFFFFFFFFF00FF: failure( "NOT" )
+
+if a << 1 != 0x1FE00: failure( "SHL 1" )
+if a >> 1 != 0x7F80: failure( "SHR 1" )
+
+if a << 8 != 0xFF0000: failure( "SHL 8" )
+if a >> 8 != 0xFF: failure( "SHR 8" )
+
+success()
+
+/* End of file */

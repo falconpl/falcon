@@ -1,0 +1,40 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: strCase.fal,v 1.1.1.1 2006/10/08 15:05:43 gian Exp $
+*
+* ID: 101h
+* Category: rtl
+* Subcategory: string
+* Short: Case tests
+* Description:
+*   Test on RTL string functions
+* [/Description]
+*
+****************************************************************************/
+
+string = "This Is A String;?123"
+
+if strUpper( string ) != "THIS IS A STRING;?123": failure( "strUpper" )
+if strLower( string ) != "this is a string;?123": failure( "strLower" )
+
+if strCmpIgnoreCase( "aBC", "AbC" ) != 0: failure( "strCmpIgnoreCase 1" )
+if strCmpIgnoreCase( "AbC", "AbC" ) != 0: failure( "strCmpIgnoreCase 2" )
+if strCmpIgnoreCase( "abc", "ABC" ) != 0: failure( "strCmpIgnoreCase 3" )
+if strCmpIgnoreCase( "aBC", "ABc" ) != 0: failure( "strCmpIgnoreCase 4" )
+
+if strCmpIgnoreCase( "a1BC", "B1Bc" ) != -1: failure( "strCmpIgnoreCase 5" )
+if strCmpIgnoreCase( "A1BC", "b1Bc" ) != -1: failure( "strCmpIgnoreCase 6" )
+
+if strCmpIgnoreCase( "Z1BC", "a1Bc" ) != 1: failure( "strCmpIgnoreCase 7" )
+if strCmpIgnoreCase( "z1BC", "A1Bc" ) != 1: failure( "strCmpIgnoreCase 8" )
+
+if strCmpIgnoreCase( "aB1Cd", "aB1c" ) != 1: failure( "strCmpIgnoreCase 9" )
+if strCmpIgnoreCase( "Ab1Cd", "Ab1C" ) != 1: failure( "strCmpIgnoreCase 10" )
+
+if strCmpIgnoreCase( "aBC", "aBcd" ) != -1: failure( "strCmpIgnoreCase 11" )
+if strCmpIgnoreCase( "AbC", "AbCd" ) != -1: failure( "strCmpIgnoreCase 12" )
+
+success()
+
+/* End of file */

@@ -1,0 +1,44 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: rtlEnviron.fal,v 1.1 2006/12/27 18:11:45 gian Exp $
+*
+* ID: 115
+* Category: rtl
+* Subcategory: environ
+* Short: Environment vars
+* Description:
+*   Testing setenv/getenv vars.
+*   Faltests sets a "FALCON_TESTING=1" for convenience. We'll expect this.
+*   This also tests for setenv() and unsetenv()
+* [/Description]
+*
+****************************************************************************/
+
+if getenv( "FALCON_TESTING" ) != "1"
+	failure( "FALCON_TESTING process envvar" );
+end
+
+try
+	setenv( "THIS_TEST_115", "A Value" )
+catch
+	failure( "envvar setting" )
+end
+
+if getenv( "THIS_TEST_115" ) != "A Value"
+	failure( "envvar get after setting" )
+end
+
+if getenv( "Can't possibly exist an envvar like this =" ) != nil
+	failure( "negative getenv()" )
+end
+
+unsetenv( "THIS_TEST_115" )
+
+if getenv( "THIS_TEST_115" ) != nil
+	failure( "negative getenv() after unsetenv()" )
+end
+
+success()
+
+/* End of file */

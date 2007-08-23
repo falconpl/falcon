@@ -1,0 +1,79 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: forin_forlast.fal,v 1.2 2007/07/06 08:01:32 jonnymind Exp $
+*
+* ID: 16e
+* Category: loops
+* Subcategory: forin
+* Short: Forlast special
+* Description:
+* Cheks the forin loop under particular condition.
+* Here we check the forlast clause
+* Checks are performed for:
+*   - element = nil
+*   - empty set
+*   - one, two and three element sets
+* [/Description]
+*
+****************************************************************************/
+
+array = nil
+result = []
+result_last = []
+
+try
+   for var in array
+      result += var
+      forlast
+         result_last += var
+      end
+   end
+catch
+   failure( "Empty set generates error" )
+end
+
+if len( result ) != 0: failure( "Empty set" )
+if len( result_last ) != 0: failure( "Empty set - forlast" )
+
+array = [1]
+result = []
+result_last = []
+
+for var in array
+   forlast:result_last += var
+   result += var
+end
+
+if len( result ) != 1: failure( "1 element set" )
+if len( result_last ) != 1: failure( "1 element set - forlast" )
+
+array = [ 1, 2 ]
+result = []
+result_last = []
+
+for var in array
+   result += var
+   forlast:result_last += var
+end
+
+if len( result ) != 2: failure( "2 element set" )
+if len( result_last ) != 1: failure( "2 element set - forlast" )
+
+array = [ 1, 2, 3 ]
+result = []
+result_last = []
+
+for var in array
+   result += var
+   forlast
+      result_last += var
+   end
+end
+
+if len( result ) != 3: failure( "3 element set" )
+if len( result_last ) != 1: failure( "3 element set - forlast" )
+
+success()
+
+/* End of file */

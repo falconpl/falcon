@@ -1,0 +1,48 @@
+/*
+   FALCON - Samples
+
+   FILE: fib.fal
+
+   $Id: fib.fal,v 1.1.1.1 2006/10/08 15:05:21 gian Exp $
+
+   A classical fibonacci example.
+   Provide a command-line parameter to determine the width of the fib.
+   Default is 30.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: mer nov 3 2004
+   Last modified because:
+
+   -------------------------------------------------------------------
+   (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+   In order to use this file in its compiled form, this source or
+   part of it you have to read, understand and accept the conditions
+   that are stated in the LICENSE file that comes boundled with this
+   package.
+*/
+
+
+function fib( n )
+   if n < 2
+      return n
+   else
+      return fib(n-1) + fib(n-2)
+   end
+end
+
+/* Uses a default fib value */
+/* args is provided by the VM */
+
+if len( args ) > 0
+   reach = int(args[0])
+else
+   reach = 30
+end
+
+clock = seconds()
+printl( fib( reach ) )
+printl( "Elapsed time: ", (seconds() - clock ) )
+
+/* end */

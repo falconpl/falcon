@@ -1,0 +1,120 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: obj_init_params.fal,v 1.1 2007/07/10 20:20:50 jonnymind Exp $
+*
+* ID: 22f
+* Category: types
+* Subcategory: objects
+* Short: Initialization parameters
+* Description:
+*    Checks for correct assignment of initialization variables
+*    when number of parameters is different from what expected.
+* [/Description]
+*
+****************************************************************************/
+
+class Base( gamma, alpha, beta )
+	gamma = gamma
+	alpha = alpha
+	beta = beta
+
+	init
+		if self.beta == nil
+			self.beta = "nilled"
+		end
+	end
+end
+
+class Derived( beta, alpha, sigma ) from Base( "Derived", beta, alpha )
+	sigma = sigma
+end
+
+class Derived2( beta, sigma, tau ) from Derived( "Derived2", beta )
+	tau = tau
+	sigma = sigma
+end
+
+
+//============================================
+// Test for base class
+//============================================
+
+oBase = Base( "one" )
+if oBase.gamma != "one": failure( "Base - given property" )
+if oBase.alpha != nil: failure( "Base - missing property" )
+if oBase.beta != "nilled": failure( "Base - nilled property" )
+
+oBase_two = Base( "two", "three" )
+if oBase_two.gamma != "two": failure( "Base, two params - first property" )
+if oBase_two.alpha != "three": failure( "Base, two params - second property" )
+if oBase_two.beta != "nilled": failure( "Base, two params - nilled property" )
+
+oBase_three = Base( "four", "five", "six" )
+if oBase_three.gamma != "four": failure( "Base, three params - first property" )
+if oBase_three.alpha != "five": failure( "Base, three params - second property" )
+if oBase_three.beta != "six": failure( "Base, three params - third property" )
+
+//============================================
+// Test for derived class
+//============================================
+
+oDerived = Derived()
+if oDerived.gamma != "Derived": failure( "Derived - zero params - inherithed property" )
+if oDerived.alpha != nil: failure( "Derived - zero params - missing property" )
+if oDerived.beta != "nilled": failure( "Derived - zero params - nilled property" )
+if oDerived.sigma != nil: failure( "Derived - zero params - extra private property" )
+
+oDerived_one = Derived( "two" )
+if oDerived_one.gamma != "Derived": failure( "Derived - one param - inherithed property" )
+if oDerived_one.alpha != "two": failure( "Derived - one param - given property" )
+if oDerived_one.beta != "nilled": failure( "Derived - one param - nilled property" )
+if oDerived_one.sigma != nil: failure( "Derived - one param - nilled property" )
+
+oDerived_two = Derived( "three", "four" )
+if oDerived_two.gamma != "Derived": failure( "Derived, two params - inherithed property" )
+if oDerived_two.alpha != "three": failure( "Derived, two params - given property" )
+if oDerived_two.beta != "four": failure( "Derived, two params - third property" )
+if oDerived.sigma != nil: failure( "Derived, two params - class property" )
+
+oDerived_three = Derived( "three", "four", "five" )
+if oDerived_three.gamma != "Derived": failure( "Derived, three params - inherithed property" )
+if oDerived_three.alpha != "three": failure( "Derived, three params - given property" )
+if oDerived_three.beta != "four": failure( "Derived , three params - third property" )
+if oDerived_three.sigma != "five": failure( "Derived , three params - class property" )
+
+//============================================
+// Test for derived 2 class
+//============================================
+
+oDerived2 = Derived2()
+if oDerived2.gamma != "Derived": failure( "Derived2 - zero params - base inherited property" )
+if oDerived2.alpha != "Derived2": failure( "Derived2 - zero params - inherithed property" )
+if oDerived2.beta != "nilled": failure( "Derived2 - zero params - nilled property" )
+if oDerived2.sigma != nil: failure( "Derived2 - zero params - Derived property" )
+if oDerived2.tau != nil: failure( "Derived2 - zero params - class property" )
+
+oDerived2_one = Derived2( "one" )
+if oDerived2_one.gamma != "Derived": failure( "Derived2 - one params - base inherited property" )
+if oDerived2_one.alpha != "Derived2": failure( "Derived2 - one params - inherithed property" )
+if oDerived2_one.beta != "one": failure( "Derived2 - one params - nilled property" )
+if oDerived2_one.sigma != nil: failure( "Derived2 - one params - Derived property" )
+if oDerived2_one.tau != nil: failure( "Derived2 - one params - class property" )
+
+oDerived2_two = Derived2( "one", "two" )
+if oDerived2_two.gamma != "Derived": failure( "Derived2 - two params - base inherited property" )
+if oDerived2_two.alpha != "Derived2": failure( "Derived2 - two params - inherithed property" )
+if oDerived2_two.beta != "one": failure( "Derived2 - two params - nilled property" )
+if oDerived2_two.sigma != "two": failure( "Derived2 - two params - Derived property" )
+if oDerived2_two.tau != nil: failure( "Derived2 - two params - class property" )
+
+oDerived2_three = Derived2( "one", "two", "three" )
+if oDerived2_three.gamma != "Derived": failure( "Derived2 - three params - base inherited property" )
+if oDerived2_three.alpha != "Derived2": failure( "Derived2 - three params - inherithed property" )
+if oDerived2_three.beta != "one": failure( "Derived2 - three params - nilled property" )
+if oDerived2_three.sigma != "two": failure( "Derived2 - three params - Derived property" )
+if oDerived2_three.tau != "three": failure( "Derived2 - three params - class property" )
+
+success()
+
+/* End of file */

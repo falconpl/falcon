@@ -1,0 +1,32 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: rtlDictRemove.fal,v 1.2 2007/07/06 13:23:52 jonnymind Exp $
+*
+* ID: 104d
+* Category: rtl
+* Subcategory: dictionary
+* Short: Remove from dictionary
+* Description:
+*   This script tests the function that remove elements from dictionaries.
+* [/Description]
+*
+****************************************************************************/
+
+// removal by key
+dict = [ "A" => 1, "b" => 2, "C" => 3, "d" => 4, 3 => "three", 1 => "one", 2 => "two" ]
+length = len( dict )
+if not dictRemove( dict, "d" ): failure( "Removal key" )
+if length - 1 != len( dict ): failure( "removal size - 4" )
+if dictGet( dict, "d" ) != nil: failure( "found removed key" )
+
+
+// negative remove by key
+if dictRemove( dict, "not present" ): failure( "Negative remove success")
+if length -1 != len( dict ): failure( "Negative remove activity" )
+
+dictClear( dict )
+if dict.len() > 0: failure( "Remove all" )
+success()
+
+/* End of file */

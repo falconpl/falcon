@@ -1,0 +1,29 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: forin_short.fal,v 1.1.1.1 2006/10/08 15:05:40 gian Exp $
+*
+* ID: 16c
+* Category: loops
+* Subcategory: forin
+* Short: Forin short grammar.
+* Description:
+* Cheks the forin loop, in its simplest incarnation;
+* here the shortened grammar (colon instead of eol) is checked.
+* [/Description]
+*
+****************************************************************************/
+
+array = [ "a", "b", "c", "d", "e", "f" ]
+
+
+body = []
+for var in array: body += var
+
+if len( body ) != len( array ) or body[5] != array[5]
+   failure( "Simple forin" )
+end
+
+success()
+
+/* End of file */

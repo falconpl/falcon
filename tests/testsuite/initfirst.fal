@@ -1,0 +1,65 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: initfirst.fal,v 1.1.1.1 2006/10/08 15:05:43 gian Exp $
+*
+* ID: 22d
+* Category: types
+* Subcategory: objects
+* Short: Init on first use
+* Description:
+* Tests for init on first use sample.
+* The object declaration and alphabetical order ensure that the "center"
+* object is initialized before one and after another of the two other
+* objects. This test is succesful if the main routine can correctly
+* access the properties that are initialized in this tangled way.
+* [/Description]
+*
+****************************************************************************/
+
+object alpha
+   sum = ""
+
+   init
+      // Reading first.list via the accessor
+      for i = len( center.getList() ) to 1 step -1
+          // we have called the accessor, so the list is initalized
+          self.sum += center.list[i - 1]
+      end
+   end
+end
+
+object center
+   list = nil
+
+   init
+     // forces initialization if this has not still happened
+     self.getList()
+   end
+
+   // accessor...
+   function getList()
+     // ... using init on first use idiom.
+     if self.list = nil: self.list = ["a", "b", "c"]
+     return self.list
+   end
+end
+
+object omega
+   sum = nil
+
+   init
+      // Reading first.list via the accessor
+      self.sum = ""
+      for elem in center.getList()
+         self.sum += elem
+      end
+   end
+end
+
+if alpha.sum != "cba": failure( "Alpha init" )
+if omega.sum != "abc": failure( "Omega init" )
+if center.list[0] != "a": failure( "Center init" )
+success()
+
+/* End of file */

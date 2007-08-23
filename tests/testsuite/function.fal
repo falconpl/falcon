@@ -1,0 +1,31 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: function.fal,v 1.1.1.1 2006/10/08 15:05:40 gian Exp $
+*
+* ID: 13b
+* Category: functions
+* Subcategory:
+* Short: Double function call
+* Description:
+* This test calls a function that in turns calls another function.
+* This is the minimal test to check for correct stack unwinding at
+* return, as first-level function from main entry point may return
+* correctly, while functions called from function may not.
+* [/Description]
+*
+****************************************************************************/
+
+function test1( param )
+   return param * 2
+end
+
+function test( param )
+   return test1( param ) * test1( param -1 )
+end
+
+var = 4
+if test( var ) != var * 2 * (var-1) * 2: failure( "Deep function" )
+success()
+
+/* End of file */

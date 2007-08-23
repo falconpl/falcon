@@ -1,0 +1,71 @@
+/*
+   Falcon Samples.
+
+   UDP transmission.
+
+   This scripts just waits for UDP packets from clients.
+
+   $Id: udpserver.fal,v 1.2 2007/03/04 17:39:03 jonnymind Exp $
+*/
+
+load socket
+
+if len( args ) != 1
+   printl( "Usage: udpserver.fal <listening-service>" )
+   printl( "<listening-service> may be a numeric port." )
+   exit( 0 )
+end
+
+service = args[0]
+
+// we'll listen on all the local interfaces.
+interfaces = resolveAddress( getHostName() )
+if len( interfaces ) == 0
+   printl( "Fatal: no interfaces." )
+end
+
+ifdone = []
+sockets = []
+
+for item in interfaces
+   // avoid registering duplicates.
+   if item notin ifdone
+      try
+         sockets += UDPSocket( item, service )
+         ifdone += item
+         printl( "Listening on ", item, ":", service )
+      catch in error
+         printl( "Warning: while listening on ", item, ": ", error.toString() )
+      end
+   end
+end
+
+if len( sockets ) == 0
+   printl( "Fatal: can't listen on any interface." )
+   exit( 0 )
+end
+
+while true
+   for i = 0 to len( sockets ) - 1
+      socket = sockets[i]
+      if socket.readAvailable( 10 )
+         data = socket.recv(1600)
+         parseMessage( data, socket )
+      end
+   end
+   sleep(0.01)
+end
+
+function parseMessage( message, socket )
+   if strFind( message, "WAY" ) = 0
+      printl( "Received a where are you request from ", socket.remote, ":", socket.remoteService )
+      // we must send a message telling where we are.
+      socket.sendTo( socket.remote, socket.remoteService, "IAM:" + socket.getHost() )
+      return
+   end
+
+   printl( socket.remote, ":", socket.remoteService, "> ", message )
+   socket.sendTo(  socket.remote, socket.remoteService, "ACK:" + toString( len( message ) ) )
+end
+
+/* end of udpserver.fal */

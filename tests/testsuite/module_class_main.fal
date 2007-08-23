@@ -1,0 +1,44 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: module_class_main.fal,v 1.2 2007/07/11 09:18:03 jonnymind Exp $
+*
+* ID: 52a
+* Category: modloader
+* Subcategory: class
+* Short: Class properties across modules
+* Description:
+*   This tests checks for base class initialization and correct class
+*   property initialization across modules.
+* [/Description]
+*
+****************************************************************************/
+load module_class_middle
+
+class Top( tau, beta, alpha ) from Middle( "Top", beta, alpha )
+   tau = tau
+   
+   function overload()
+      return "Top"
+   end
+end
+
+top = Top( "first",  "second", "third" )
+
+if top.Base.type() != ClassMethodType: failure( "Base class - type" )
+if top.Middle.type() != ClassMethodType: failure( "Middle class - type" )
+if top.alpha != "second": failure( "Top - alpha" )
+if top.beta != "third": failure( "Top - beta" )
+if top.gamma != "Middle": failure( "Top - gamma" )
+if top.sigma != "Top": failure( "Top - sigma" )
+if top.tau != "first": failure( "Top - tau" )
+if top.id != 1: failure( "Top - id" )
+if top.lastId != 1: failure( "Top - lastId (ref)" )
+if top.overload() != "Top": failure( "Top - overloaded function" )
+
+if top.Middle.overload() != "Middle": failure( "Top - overloaded via Middle" )
+if top.Base.overload() != "Base": failure( "Top - overloaded via Base" )
+
+success()
+
+/* End of file */

@@ -1,0 +1,36 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: complex_pagedict.fal,v 1.1 2007/07/27 09:00:25 jonnymind Exp $
+*
+* ID: 12d
+* Category: types
+* Subcategory: dictionary
+* Short: Advanced paged dictionary
+* Description:
+* Checks complex items in paged dictionaries
+* [/Description]
+*
+****************************************************************************/
+
+// assignment test - include a compilation test
+three = "three"
+dict = PageDict()
+dict += [ "one" => [1,2],
+         "two" => [],
+         three => testReflect( [ "one" => 1 ] ) ]
+
+// minimal access
+if dict[ "one" ][1] != 2: failure( "Minimal access" )
+
+// Changing items
+dict[three]["one"] = "first"
+dict1 = dict[three]
+if dict1["one"] != "first" : failure( "Deep assignment" )
+
+//in/notin
+if three notin dict: failure( "Notin operator - variable search" )
+
+success()
+
+/* End of file */

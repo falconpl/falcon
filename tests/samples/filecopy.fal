@@ -1,0 +1,96 @@
+#!/usr/bin/falcon
+/*
+   FALCON - Samples
+
+   FILE: filecopy.fal
+
+   $Id: filecopy.fal,v 1.3 2007/07/07 11:20:07 jonnymind Exp $
+
+   This samples shows how to perform a file copy with Falcon.
+   This sample also show the usage of the scriptName variable and
+   of the args vector.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: mer nov 3 2004
+   Last modified because:
+
+   -------------------------------------------------------------------
+   (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+   In order to use this file in its compiled form, this source or
+   part of it you have to read, understand and accept the conditions
+   that are stated in the LICENSE file that comes boundled with this
+   package.
+*/
+
+
+if len( args ) != 2
+   printl( "Usage: ", scriptName, " <source> <dest>" )
+   exit(1)
+end
+
+printl( "Copying ", args[0], " into ", args[1] )
+
+try
+   // try opening the input stream.
+   source = InputStream( args[0] )
+   // then try opening the output stream
+   dest = OutputStream( args[1] )
+
+   // let's see how much we have to copy; a seek to end will do
+   inSize = source.seekEnd(0)
+   source.seek(0)
+
+   // first, read a block initializing a suitable variable.
+   block = source.read( 1024 )
+   readSize = len(block)
+
+   // continue until the last read returns 0 (and this sets the EOF flag).
+   while not source.eof()
+      // write the block. We don't need to specify the lenght...
+      dest.write( block )
+      // because, as long as the block is a string, read will set its size correctly.
+      readSize += source.read( block )
+      // a bit of bells and whistles
+      gauge( inSize, readSize )
+   end
+
+   source.close()
+   dest.close()
+
+catch in err
+   printl( "Can't complete the required operation." )
+   printl( err.toString() )
+
+   if err.systemError: printl( "System error. ", err.getSysErrorDesc() )
+end
+
+printl()
+printl("Done.")
+
+exit(0)
+
+/**********************************
+* A bit of a gauge
+**********************************/
+function gauge( max, current )
+   static
+      lastRatio = -1
+   end
+
+   if max = 0: return
+   ratio = 60 * (current/max)
+   if lastRatio = int(ratio)
+      return
+   else
+      lastRatio = int(ratio)
+   end
+
+	gauge = strReplicate( "#", ratio )
+	prc = current/max*100
+   print(@"[$(gauge:60)] $(prc:6.2r)%\r")
+
+end
+
+/* end of filecopy.flc */

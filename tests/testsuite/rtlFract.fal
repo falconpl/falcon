@@ -1,0 +1,30 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: rtlFract.fal,v 1.1.1.1 2006/10/08 15:05:41 gian Exp $
+*
+* ID: 113
+* Category: rtl
+* Subcategory: math
+* Short: Fractional part
+* Description:
+*   Extracts the fractional from a floating point number.
+* [/Description]
+****************************************************************************/
+
+// integer fract
+if fract( 1 ) != 0: failure( "integer fract" )
+
+// we must round the fract part, because it is imprecise
+if int( fract( 1.2312 ) * 10000 )  != 2312: failure( "correct fract" )
+if int( fract( -1.6342 ) * 10000 ) != -6342: failure( "Negative fract" )
+
+// error
+try
+   fract( "alpha" )
+   failure( "Error not risen for parameters" )
+end
+
+success()
+
+/* End of file */

@@ -1,0 +1,31 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: indirect_dict.fal,v 1.1 2007/06/23 18:04:37 jonnymind Exp $
+*
+* ID: 33b
+* Category: expression
+* Subcategory: indirect
+* Short: dictionary indirect
+* Description:
+* Test for indirections on dictionaries.
+* [/Description]
+*
+****************************************************************************/
+
+item = [ "a" => "one", '"b"' => "two", 0 => "three" ]
+str = "item[ 'a' ]"
+if #str != "one": failure( "Dictionary indirect 1" )
+str = "item[ '\"b\"' ]"
+if #str != "two": failure( "Dictionary indirect 2" )
+
+object test
+	prop = "Hi!"
+end
+
+item["a"] = test
+if # "item[ 'a' ]. prop" != "Hi!": failure( "dictionary access + object indirect" )
+
+success()
+
+/* End of file */

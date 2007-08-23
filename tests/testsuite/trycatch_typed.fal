@@ -1,0 +1,174 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: trycatch_typed.fal,v 1.1 2007/03/04 18:03:56 jonnymind Exp $
+*
+* ID: 20e
+* Category: statements
+* Subcategory: try
+* Short: Typed try/catch
+* Description:
+* Tests for typed exception rising and catching.
+* [/Description]
+*
+****************************************************************************/
+
+// basic try catch
+try
+   a = 1 + nil
+   failure( "Exception not raised / trycatch" )
+catch TypeError
+   a = 1
+catch
+	failure( "Specific exception not caught" )
+end
+
+if a != 1: failure( "Specific error branch not executed" )
+
+// single integer
+try
+	raise 1
+catch IntegerType
+	a = 2
+end
+
+if a != 2: failure( "Raise int / 1" )
+
+// single integer, single type
+try
+	raise 1
+catch IntegerType
+	a = 3
+catch StringType
+	a = 2
+end
+
+if a != 3: failure( "Raise int / 2" )
+
+try
+	raise 1
+	a = 1
+catch IntegerType, StringType
+	a = 4
+catch TypeError
+	a = 2
+end
+
+if a != 4: failure( "Raise int / 3" )
+
+try
+	raise 1
+	a = 1
+catch IntegerType, StringType
+	a = 5
+catch TypeError, Error
+	a = 2
+end
+
+if a != 5: failure( "Raise int / 4" )
+
+try
+	raise 1
+	a = 1
+catch IntegerType, StringType
+	a = 6
+catch TypeError, Error
+	a = 2
+catch
+   a = 0
+end
+
+if a != 6: failure( "Raise / complete" )
+
+// capture raise
+try
+	raise "message"
+	a = 1
+catch IntegerType in err
+	a = 2
+catch StringType in err
+	if err != "message": failure( "catch in / caught value" )
+	a = 4
+catch Error in err
+	a = 0
+catch in err
+   a = -1
+end
+
+if a != 4: failure( "Raise / catch in 1" )
+
+// capture a subclass in order
+a = 0
+try
+	a = "1" + nil
+catch IntegerType in err
+	a = 1
+catch TypeError
+	a = 10
+catch Error
+	a = 2
+catch
+   a = 3
+end
+
+if a != 10: failure( "Catch order / 1" )
+
+// capture a subclass in reverse order
+a = 0
+try
+	a = "1" + nil
+catch IntegerType in err
+	a = 1
+catch Error
+	a = 10
+catch TypeError
+	a = 1
+catch
+   a = 3
+end
+
+if a != 10: failure( "Catch order / 2" )
+
+// capture an item
+object test
+	val = "hello"
+end
+
+a = 0
+try
+	raise test
+catch IntegerType in err
+	a = 1
+catch TypeError
+	a = 2
+catch Error
+	a = 3
+catch test in res
+   if res.val != "hello": failure( "Raised item" )
+   a = 10
+catch
+   a = 3
+end
+
+if a != 10: failure( "Catch raised item" )
+
+// catch into generic
+a = 0
+try
+	raise test
+catch IntegerType in err
+	a = 1
+catch TypeError
+	a = 2
+catch Error
+	a = 3
+catch in res1
+   if res1.val != "hello": failure( "Raised item in generic" )
+   a = 10
+end
+
+if a != 10: failure( "Catch raised item in generic" )
+
+success()
+
+/* End of file */

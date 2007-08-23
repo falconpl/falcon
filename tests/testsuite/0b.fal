@@ -1,0 +1,20 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: 0b.fal,v 1.1.1.1 2006/10/08 15:05:43 gian Exp $
+*
+* ID: 0b
+* Category: smoke
+* Subcategory:
+* Short: String smoke test
+* Description:
+*   Minimal test to check the operativity of the VM, compiler, linker and
+*   unit test package.
+*
+*   This just stores a string in the return field of the virtual machine.
+* [/Description]
+****************************************************************************/
+
+exit( "Hello world" )
+
+/* End of file */

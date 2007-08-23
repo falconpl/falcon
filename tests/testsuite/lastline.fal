@@ -1,0 +1,20 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: lastline.fal,v 1.1 2006/11/20 21:21:52 gian Exp $
+*
+* ID: 1k
+* Category: basic
+* Subcategory: parser
+* Short: Last line
+* Description:
+* Check for correct addition of a fake EOL if the file is not
+* terminating with an EOL. Of course, we'll have to drop
+* closing comment for once.
+* [/Description]
+*
+****************************************************************************/
+
+if 1
+   success() // Ok, as we want to test for the compiler ability to find "end"
+end

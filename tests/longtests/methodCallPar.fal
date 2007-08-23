@@ -1,0 +1,70 @@
+/****************************************************************************
+* Falcon direct benchmarks
+*
+* CVS-Id: $Id: methodCallPar.fal,v 1.2 2007/01/06 16:04:19 jonnymind Exp $
+*
+* ID: 2d
+* Category: benchmark
+* Subcategory: calls
+* Short: Benchmark on method calls with params
+* Description:
+*    Performing repeated method calls and returns.
+*    This test calls uses 5 parameters.
+*
+* [/Description]
+****************************************************************************/
+
+loops = 1000000 * timeFactor()
+each = int(loops/10)
+
+object item
+   prop1 = nil
+   prop2 = nil
+   prop3 = nil
+   prop4 = nil
+   prop5 = nil
+   prop6 = nil
+
+   function toBeCalled( param1, param2, param3, param4, param5 )
+   end
+
+   function not1()
+      return 0
+   end
+   function not2()
+      return 0
+   end
+   function not3()
+      return 0
+   end
+
+end
+
+
+// getting time
+time = seconds()
+for i = 1 to loops
+
+   // perform the call
+   item.toBeCalled( i, 1, "A", 2, 3 )
+
+   if i % each == 0
+      alive( i/loops*100 )
+   end
+end
+// taking end time
+time = seconds() - time
+
+// subtract alive time
+timeAlive = seconds()
+for i = 1 to loops
+   if i % each == 0
+      alive( i/loops*100 )
+   end
+end
+timeAlive = seconds() - timeAlive
+time -= timeAlive
+
+timings( time, loops )
+
+/* end of file */

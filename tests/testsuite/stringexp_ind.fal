@@ -1,0 +1,55 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: stringexp_ind.fal,v 1.1 2007/07/16 16:28:41 jonnymind Exp $
+*
+* ID: 34a
+* Category: expression
+* Subcategory: strex
+* Short: String expansion
+* Description:
+*    Test for basic string expansion.
+*    Internally, string expansion uses indirect access; so what we do here 
+*    is just checking that parsing and expansion works.
+* [/Description]
+*
+****************************************************************************/
+
+item = "Hello"
+
+// immediate test
+if @ "$(item)" != "Hello": failure( "Basic strex immediate" )
+if @ "$it" + "em" != "Hello": failure( "Basic strex immediate/precedence" )
+if @ "an expanded string: $item" != "an expanded string: Hello": failure( "Basic strex tail" )
+if @ "$item an expanded string" != "Hello an expanded string": failure( "Basic strex head" )
+if @ "$item an expanded string $item" != "Hello an expanded string Hello": failure( "Basic strex head" )
+if @ "$item an $item expanded string $item" != "Hello an Hello expanded string Hello": failure( "Basic strex triple" )
+if @ "$(item) an $(item) expanded string $(item): $(item)" != \
+            "Hello an Hello expanded string Hello: Hello"
+      failure( "Basic strex parenthethized" )
+end
+
+// =========================================================
+
+item = [ "one", "two", "three" ]
+if @ "$item[0]" != "one": failure( "Array strex 0" )
+if @ "$( item [ 2 ] )" != "three": failure( "Array strex internal trim." )
+
+object test
+	prop = "Hi!"
+end
+
+if @ "$test.prop" != "Hi!": failure( "Strex object" )
+if @ "$(test. prop)" != "Hi!": failure( "Strex object parenthetized" )
+test.prop = [ "one", "two", "three" ]
+if @ "$test.prop[0]" != "one": failure( "Strex object + array access 0" )
+if @ "$( test. prop [ 2 ] )" != "three": failure( "Strex parenthethized object + array access 2" )
+
+if @ ">$( test. prop [ 0 ] )<>$( test. prop [ 2 ] )<" != ">one<>three<": failure( "Double Strex parenthethized object + array access" )
+
+item = [ 0, test, 1 ]
+if @ "$( item[ 1 ]. prop [0] )" != "one": failure( "Strex array access + object indirect" ) 
+
+success()
+
+/* End of file */

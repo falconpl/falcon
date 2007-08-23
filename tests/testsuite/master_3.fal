@@ -1,0 +1,38 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: master_3.fal,v 1.2 2007/03/14 01:18:10 jonnymind Exp $
+*
+* ID: 50c
+* Category: modloader
+* Subcategory:
+* Short: Link time initialization.
+* Description:
+*   The structure of this compilation test is a bit more complex.
+*   We require the loading of two modules, each of which loads other
+*   two modules. One of this two modules loads again one of the modules
+*   we load.
+* [/Description]
+*
+****************************************************************************/
+load slave_alpha
+load slave_beta
+
+// explicit import; not necessary here, just to show.
+world
+
+if world.items != 3: failure( "world initialization" )
+world.elements[0].setVal( "first" )
+world.elements[1].setVal( "second" )
+world.elements[2].setVal( "third" )
+
+if alpha.val == nil: failure( "child reference - 1" )
+if beta.val == nil: failure( "child reference - 2" )
+if delta.val == nil: failure( "child reference - 3" )
+if alpha.val != "first": failure( "link order - 1" )
+if delta.val != "second": failure( "link order - 2" )
+if beta.val != "third": failure( "link order - 3" )
+
+success()
+
+/* End of file */

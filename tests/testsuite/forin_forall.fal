@@ -1,0 +1,126 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: forin_forall.fal,v 1.3 2007/07/06 13:23:51 jonnymind Exp $
+*
+* ID: 16f
+* Category: loops
+* Subcategory: forin
+* Short: Forfirst and Forlast special
+* Description:
+* Cheks the forin loop under particular condition.
+* Here we check the forfirst and forlast clauses
+* Checks are performed for:
+*   - element = nil
+*   - empty set
+*   - one, two, three and four element sets
+* [/Description]
+*
+****************************************************************************/
+
+array = nil
+result = []
+result_first = []
+result_last = []
+
+try
+   for var in array
+      result += var
+      forfirst
+         result_first += var
+      end
+      forlast
+         result_last += var
+      end
+   end
+catch
+   failure( "Empty set generates error" )
+end
+
+if len( result ) != 0: failure( "Empty set" )
+if len( result_first ) != 0: failure( "Empty set - forfirst" )
+if len( result_last ) != 0: failure( "Empty set - forlast" )
+
+array = [1]
+result = []
+result_first = []
+result_last = []
+result_all = []
+
+for var in array
+   result += var
+   forall: result_all += var
+   forfirst: result_first += var
+   forlast: result_last += var
+end
+
+if len( result ) != 1: failure( "1 element set" )
+if len( result_first ) != 1: failure( "1 element set - forfirst" )
+if len( result_last ) != 1: failure( "1 element set - forlast" )
+if len( result_all ) != 0: failure( "1 element set - forall" )
+
+array = [ 1, 2 ]
+result = []
+result_first = []
+result_last = []
+result_all = []
+
+for var in array
+   forfirst: result_first += var
+   forlast: result_last += var
+   result += var
+   forall
+      result_all += var
+   end
+end
+
+if len( result ) != 2: failure( "2 element set" )
+if len( result_first ) != 1: failure( "2 element set - forfirst" )
+if len( result_last ) != 1: failure( "2 element set - forlast" )
+if len( result_all ) != 1: failure( "2 element set - forall" )
+
+array = [ 1, 2, 3 ]
+result = []
+result_first = []
+result_last = []
+result_all = []
+
+for var in array
+   forfirst
+      result_first += var
+   end
+   result += var
+   forlast: result_last += var
+   forall: result_all += var
+end
+
+if len( result ) != 3: failure( "3 element set" )
+if len( result_first ) != 1: failure( "3 element set - forfirst" )
+if len( result_last ) != 1: failure( "3 element set - forlast" )
+if len( result_all ) != 2: failure( "3 element set - forall" )
+
+array = [ 1, 2, 3, 4 ]
+result = []
+result_first = []
+result_last = []
+result_all = []
+
+for var in array
+   forfirst
+      result_first += var
+   end
+   forlast: result_last += var
+   forall
+      result_all += var
+   end
+   result += var
+end
+
+if len( result ) != 4: failure( "4 element set" )
+if len( result_first ) != 1: failure( "4 element set - forfirst" )
+if len( result_last ) != 1: failure( "4 element set - forlast" )
+if len( result_all ) != 3: failure( "4 element set - forall" )
+
+success()
+
+/* End of file */

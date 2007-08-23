@@ -1,0 +1,78 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: autoshl.fal,v 1.1.1.1 2006/10/08 15:05:40 gian Exp $
+*
+* ID: 30j
+* Category: expression
+* Subcategory: autoassign
+* Short: Deep autoassign shift left
+* Description:
+* Test on complex types for autoassign shift left
+* [/Description]
+*
+****************************************************************************/
+
+deeparr = [ 0x0f00 ]
+array = [ deeparr ]
+
+array[0][0] <<= 4
+if deeparr[0] != 0xf000: failure( "Deep array simple" )
+array[0][0] <<= testReflect( 4 )
+if deeparr[0] != 0xf0000: failure( "Deep array complex" )
+
+object deepobj
+   property = 0x0f00
+end
+
+object one
+   property = deepobj
+end
+
+one.property.property <<= 4
+if deepobj.property != 0xf000: failure( "Deep obj simple" )
+one.property.property <<= testReflect( 4 )
+if deepobj.property != 0xf0000: failure( "Deep obj complex" )
+
+array = [ one ]
+one.property = 0x0f00
+
+array[0].property <<= 4
+if one.property != 0xf000: failure( "Deep array->object simple." )
+array[0].property <<= testReflect( 4 )
+if one.property != 0xf0000: failure( "Deep array->object complex." )
+
+one.property = array
+array[0] = 0x0f00
+
+one.property[0] <<= 4
+if array[0] != 0xf000: failure( "Deep object->array simple." )
+one.property[0] <<= testReflect( 4 )
+if array[0] != 0xf0000: failure( "Deep object->array complex." )
+
+object auto
+   prop = 0x0f00
+   proparr = [ 0x0f00 ]
+
+   function test()
+      self.prop <<= 4
+      self.proparr[0] <<= 4
+   end
+
+   function testCpx()
+      self.prop <<= testReflect( 4 )
+      self.proparr[0] <<= testReflect( 4 )
+   end
+end
+
+auto.test()
+if auto.prop != 0xf000: failure( "Deep object self assign simple." )
+if auto.proparr[0] != 0xf000: failure( "Deep object self to array assign simple." )
+
+auto.testCpx()
+if auto.prop != 0xf0000: failure( "Deep object self assign complex." )
+if auto.proparr[0] != 0xf0000: failure( "Deep object self to array assign complex." )
+
+success()
+
+/* End of file */

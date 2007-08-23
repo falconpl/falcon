@@ -1,0 +1,223 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: fbom.fal,v 1.2 2007/07/26 21:14:26 jonnymind Exp $
+*
+* ID: 36a
+* Category: fbom
+* Subcategory:
+* Short: Falcon Basic Object Model
+* Description:
+*  This script tests for Falcon basic object model. Tests on all the types
+*  are performed.
+* [/Description]
+*
+****************************************************************************/
+
+// Definitions
+
+class first
+   fprop = nil
+end
+
+class second
+   sprop = nil
+end
+
+class mixed from first, second
+	function func()
+	end
+end
+
+object obj from mixed
+end
+
+string = "A string"
+array = [ 1, 2, 3 ]
+dictionary = [ 1 => 1, 2 => 2, 3 => 3 ]
+integer = 1
+float = 1.3
+range = [1:2]
+inst = mixed()
+method = inst.func
+aNil = nil
+
+// Test 1: types
+if aNil.type() != NilType: failure( "NilType" )
+if integer.type() != IntegerType: failure( "IntegerType" )
+if float.type() != NumericType: failure( "NumericType" )
+if range.type() != RangeType: failure( "RangeType" )
+if string.type() != StringType: failure( "StringType" )
+if array.type() != ArrayType: failure( "ArrayType" )
+if dictionary.type() != DictionaryType: failure( "DictType" )
+if printl.type() != FunctionType: failure( "FunctionType" )
+if first.type() != ClassType: failure( "ClassType" )
+if obj.type() != ObjectType: failure( "ObjectType" )
+if method.type() != MethodType: failure( "MethodType" )
+
+// Test 2: toString
+if aNil.toString() != "Nil": failure( "Nil to string" )
+if integer.toString() != "1": failure( "Integer to string" )
+if float.toString() != "1.300000": failure( "Numeric to string" )
+if range.toString() != "[1:2]": failure( "Range to string" )
+if string.toString() != "A string": failure( "String to string" )
+if array.toString() != "Array": failure( "Array to string" )
+if dictionary.toString() != "Dictionary": failure( "Dictionary to string" )
+if printl.toString() != "Function printl": failure( "Function to string" )
+if first.toString() != "Class first": failure( "Class to string" )
+if obj.toString() != "Object": failure( "Object to string" )
+if method.toString() != "Method mixed.func": failure( "Method to string" )
+
+// Test 3: len
+if aNil.len() != 0: failure( "Nil to string" )
+if integer.len() != 0: failure( "Integer to string" )
+if float.len() != 0: failure( "Numeric to string" )
+if range.len() != 2: failure( "Range to string" )
+if string.len() != 8: failure( "String to string" )
+if array.len() != 3: failure( "Array to string" )
+if dictionary.len() != 3: failure( "Dictionary to string" )
+if printl.len() != 0: failure( "Function to string" )
+if first.len() != 0: failure( "Class to string" )
+if obj.len() != 0: failure( "Object to string" )
+if method.len() != 0: failure( "Method to string" )
+
+// Test 4: first
+try
+	aNil.first()
+	failure( "Nil have first" )
+end
+
+try
+	integer.first()
+	failure( "Integer have first" )
+end
+
+try
+	float.first()
+	failure( "Float have first" )
+end
+
+try
+	printl.first()
+	failure( "Function have first" )
+end
+
+try
+	first.first()
+	failure( "Class have first" )
+end
+
+try
+	obj.first()
+	failure( "Obj have first" )
+end
+
+try
+	method.first()
+	failure( "Method have first" )
+end
+
+if range.first() != 1: failure( "Range first" )
+if string.first() != Iterator( string ): failure( "String first" )
+if array.first() != Iterator( array ): failure( "Array first" )
+if dictionary.first() != Iterator( dictionary ): failure( "Dictionary first" )
+
+// Test 4: last
+try
+	aNil.last()
+	failure( "Nil have last" )
+end
+
+try
+	integer.last()
+	failure( "Integer have last" )
+end
+
+try
+	float.last()
+	failure( "Float have last" )
+end
+
+try
+	printl.last()
+	failure( "Function have last" )
+end
+
+try
+	first.last()
+	failure( "Class have last" )
+end
+
+try
+	obj.last()
+	failure( "Obj have last" )
+end
+
+try
+	method.last()
+	failure( "Method have last" )
+end
+
+if range.last() != 2: failure( "Range last" )
+if string.last() != Iterator( string, -1 ): failure( "String last" )
+if array.last() != Iterator( array, -1 ): failure( "Array last" )
+if dictionary.last() != Iterator( dictionary, -1 ): failure( "Dictionary last" )
+
+// Test 4.1: rangeOpen
+range1 = [1:]
+if range1.last() != nil: failure( "Range open positive" )
+
+//test 5: compare
+bigInt = 1500
+if bigInt.compare( integer ) <= 0: failure( "Compare verse <=" )
+if integer.compare( bigInt ) >= 0: failure( "Compare verse >=" )
+bigInt = integer
+if integer.compare( bigInt ) != 0: failure( "Compare verse == first" )
+if bigInt.compare( integer ) != 0: failure( "Compare verse == second" )
+// todo: more extensive tests in a separate file
+
+//test 6: equal
+bigInt = 1500
+if bigInt.equal( integer ): failure( "Equal negative" )
+bigInt = integer
+if not integer.equal( bigInt ): failure( "Equal positivbe" )
+// todo: more extensive tests in a separate file
+
+//test 7: className
+if aNil.className() != nil: failure( "Nil className" )
+if integer.className() != nil: failure( "Integer className" )
+if float.className() != nil: failure( "Numeric className" )
+if range.className() != nil: failure( "Range className" )
+if string.className() != nil: failure( "String className" )
+if array.className() != nil: failure( "Array className" )
+if dictionary.className() != nil: failure( "Dictionary className" )
+if printl.className() != nil: failure( "Function className" )
+if first.className() != "first": failure( "Class className" )
+if obj.className() != "%obj": failure( "Object className" )
+if inst.className() != "mixed": failure( "Instance className" )
+if method.className() != nil: failure( "Method className" )
+
+//test 8: className
+if aNil.baseClass() != nil: failure( "Nil baseClass" )
+if integer.baseClass() != nil: failure( "Integer baseClass" )
+if float.baseClass() != nil: failure( "Numeric baseClass" )
+if range.baseClass() != nil: failure( "Range baseClass" )
+if string.baseClass() != nil: failure( "String baseClass" )
+if array.baseClass() != nil: failure( "Array baseClass" )
+if dictionary.baseClass() != nil: failure( "Dictionary baseClass" )
+if printl.baseClass() != nil: failure( "Function baseClass" )
+if first.baseClass() != nil: failure( "Class baseClass" )
+if obj.baseClass() == nil: failure( "Object baseClass" )
+if inst.baseClass() != mixed: failure( "Instance baseClass" )
+if method.baseClass() != nil: failure( "Method baseClass" )
+
+//test 9: derived from
+if obj.derivedFrom( "impossible" ): failure( "Negative derived from" )
+if not obj.derivedFrom( "%obj" ): failure( "Obj derived from %obj" )
+if not obj.derivedFrom( "mixed" ): failure( "Obj derived from mixed" )
+if not obj.derivedFrom( "second" ): failure( "Obj derived from second" )
+if not obj.derivedFrom( "first" ): failure( "Obj derived from first" )
+
+success()
+
+/* End of file */

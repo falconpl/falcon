@@ -1,0 +1,33 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: rtlArrayFind.fal,v 1.3 2007/08/11 13:08:29 jonnymind Exp $
+*
+* ID: 102b
+* Category: rtl
+* Subcategory: array
+* Short: Array find
+* Description:
+*   Searching function for arrays.
+* [/Description]
+*
+****************************************************************************/
+
+array = [ 1, 2, "alpha", 3,  "beta", 4 ]
+
+pos = arrayFind( array, "alpha" )
+if pos != 2: failure( "arrayFind unconditional positive" )
+pos = arrayFind( array, 50 )
+if pos != -1: failure( "arrayFind unconditional negative" )
+pos = arrayFind( array, "alpha", 2  )
+if pos != 2: failure( "arrayFind from positive" )
+pos = arrayFind( array, "alpha", 1, 4  )
+if pos != 2: failure( "arrayFind from, to positive" )
+pos = arrayFind( array, "alpha", 3  )
+if pos != -1: failure( "arrayFind from negative" )
+pos = arrayFind( array, "alpha", 3, 5  )
+if pos != -1: failure( "arrayFind from, to negative" )
+
+success()
+
+/* End of file */

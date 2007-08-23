@@ -1,0 +1,57 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: rtlRandomGrab.fal,v 1.1.1.1 2006/10/08 15:05:43 gian Exp $
+*
+* ID: 112d
+* Category: rtl
+* Subcategory: math
+* Short: Random grab
+* Description:
+*  Of course, random functions are not that much suitable for automatized
+*  testsuite. Nevertheless, there are some random function whose result is
+*  partially deterministic: pick and walk function must do some things
+*  all the times (select some items... without crashing).
+* [/Description]
+****************************************************************************/
+
+// seed
+randomSeed( seconds() )
+
+// random pick
+array = [ "a", "b", "c" ]
+
+item = randomGrab( array )
+if len( item ) != 1  or len( array ) != 2
+   failure( "randomGrab" )
+end
+
+array = [ "a", "b", "c" ]
+item = randomGrab( array, 2 )
+if len( item ) != 2 or len( array ) != 1
+   failure( "randomWalk 2 items" )
+end
+
+array = [ "a", "b", "c" ]
+item = randomGrab( array, 3 )
+if len( item ) != 3 or len( array ) != 0
+   failure( "randomGrab 3 items" )
+end
+
+// random grab canNOT create an array greater than the source
+array = [ "a", "b", "c" ]
+item = randomGrab( array, 4 )
+if len( item ) != 3 or len( array ) != 0
+   failure( "randomWalk 4 items" )
+end
+
+
+// errors
+try
+   randomGrab()
+   failure( "Empty random walk not raised" )
+end
+
+success()
+
+/* End of file */

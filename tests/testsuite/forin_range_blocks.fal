@@ -1,0 +1,157 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: forin_range_blocks.fal,v 1.1 2007/07/20 21:30:37 jonnymind Exp $
+*
+* ID: 16o
+* Category: loops
+* Subcategory: forin
+* Short: Forin ranges blocks
+* Description:
+*   Cheks the forin loop used on ranges with forfirst,
+*   forlast and forall clauses.
+*
+* [/Description]
+*
+****************************************************************************/
+
+// Test for open range
+
+result = 0
+count = 0
+vals_first = []
+vals_last = []
+vals_all = []
+
+for c in [10:]
+	forfirst: vals_first += c
+	result += c
+	count++
+	forall: vals_all += c
+	forlast: vals_last += c
+end
+
+if result != 10: failure( "Open range - value" )
+if count != 1: failure( "Open range - times" )
+if vals_first.len() != 1: failure( "Open range - forfirst" )
+if vals_all.len() != 0: failure( "Open range - forall" )
+if vals_last.len() != 1: failure( "Open range - forlast" )
+
+//===================================================
+// Test for empty range, positive
+
+result = 0
+count = 0
+vals_first = []
+vals_last = []
+vals_all = []
+
+for c in [10:10]
+	forfirst: vals_first += c
+	result += c
+	count++
+	forall: vals_all += c
+	forlast: vals_last += c
+end
+
+if result != 0: failure( "Empty range - value" )
+if count != 0: failure( "Empty range - times" )
+if vals_first.len() != 0: failure( "Empty range - forfirst" )
+if vals_all.len() != 0: failure( "Empty range - forall" )
+if vals_last.len() != 0: failure( "Empty range - forlast" )
+
+//===================================================
+// Test for filled range, upwards
+
+result = 0
+count = 0
+vals_first = []
+vals_last = []
+vals_all = []
+
+for c in [1:5]
+	forfirst: vals_first += c
+	result += c
+	count++
+	forall: vals_all += c
+	forlast: vals_last += c
+end
+
+if result != 1+2+3+4: failure( "Upward range - value" )
+if count != 4: failure( "Upward range - times" )
+if vals_first.len() != 1: failure( "Upward range - forfirst" )
+if vals_all.len() != 3: failure( "Upward range - forall" )
+if vals_last.len() != 1: failure( "Upward range - forlast" )
+
+//===================================================
+// Test for filled range, downward
+
+result = 0
+count = 0
+vals_first = []
+vals_last = []
+vals_all = []
+
+for c in [5:1]
+	forfirst: vals_first += c
+	result += c
+	count++
+	forall: vals_all += c
+	forlast: vals_last += c
+end
+
+if result != 1+2+3+4+5: failure( "Downward range - value" )
+if count != 5: failure( "Downward range - times" )
+if vals_first.len() != 1: failure( "Downward range - forfirst" )
+if vals_all.len() != 4: failure( "Downward range - forall" )
+if vals_last.len() != 1: failure( "Downward range - forlast" )
+
+//===================================================
+// Test for filled range, one
+
+result = 0
+count = 0
+vals_first = []
+vals_last = []
+vals_all = []
+
+for c in [1:2]
+	forfirst: vals_first += c
+	result += c
+	count++
+	forall: vals_all += c
+	forlast: vals_last += c
+end
+
+if result != 1: failure( "Upward unique range - value" )
+if count != 1: failure( "Upward unique range - times" )
+if vals_first.len() != 1: failure( "Upward unique range - forfirst" )
+if vals_all.len() != 0: failure( "Upward unique range - forall" )
+if vals_last.len() != 1: failure( "Upward unique range - forlast" )
+
+//===================================================
+// Test for filled range, two, down
+
+result = 0
+count = 0
+vals_first = []
+vals_last = []
+vals_all = []
+
+for c in [2:1]
+	forfirst: vals_first += c
+	result += c
+	count++
+	forall: vals_all += c
+	forlast: vals_last += c
+end
+
+if result != 1+2: failure( "Downward double range - value" )
+if count != 2: failure( "Downward double range - times" )
+if vals_first.len() != 1: failure( "Downward double range - forfirst" )
+if vals_all.len() != 1: failure( "Downward double range - forall" )
+if vals_last.len() != 1: failure( "Downward double range - forlast" )
+
+success()
+
+/* End of file */

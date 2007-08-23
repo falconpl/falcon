@@ -1,0 +1,21 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: 0f.fal,v 1.1.1.1 2006/10/08 15:05:43 gian Exp $
+*
+* ID: 0f
+* Category: smoke
+* Subcategory:
+* Short: Smoke test on numeric
+* Description:
+*   Minimal test to check the operativity of the VM, compiler, linker and
+*   unit test package.
+*
+*   This just stores a numeric in the return field of the virtual machine.
+* [/Description]
+*
+****************************************************************************/
+
+exit( 12.30e21 )
+
+/* End of file */

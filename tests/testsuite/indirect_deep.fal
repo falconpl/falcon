@@ -1,0 +1,31 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: indirect_deep.fal,v 1.1 2007/06/23 18:04:37 jonnymind Exp $
+*
+* ID: 33c
+* Category: expression
+* Subcategory: indirect
+* Short: deep indirect
+* Description:
+* Test string-to-symbol indirect access, checking for recursive indirections.
+* [/Description]
+*
+****************************************************************************/
+
+item = [ "one", "two", "three" ]
+object access
+	prop = [ 0, 1, 2 ]
+	prop1 = [ "one" => 1, "two" => 2, "three" => 3 ]
+end
+
+if # "item[ access.prop[1] ]" != "two": failure( "Deep indirect 1" )
+if # "access.prop1[ item[2] ]" != 3: failure( "Deep indirect 2" )
+
+deeparr = [ [1, "one"], [2, "two"], [3, "three"] ]
+if # "deeparr[ access.prop[1] ][1]" != "two": failure( "Deep indirect 3" )
+if # "deeparr[ access.prop1[ item[1] ] ][0]" != 3: failure( "Deep indirect 4" )
+
+success()
+
+/* End of file */

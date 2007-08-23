@@ -1,0 +1,62 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: select.fal,v 1.1 2007/02/24 22:43:38 jonnymind Exp $
+*
+* ID: 24a
+* Category: select
+* Subcategory:
+* Short: Mixed select
+* Description:
+*  Checks repeatedly a select in a function call
+* [/Description]
+*
+****************************************************************************/
+
+function call_select( param )
+
+   select param
+
+      case IntegerType, NumericType
+         return "number"
+
+      case StringType: return "string"
+
+      case Test2: return "class test2"
+      case Test: return "class test"
+      case Instance: return "instance obj"
+      default: return "something else"
+	end
+end
+
+// Just a class test
+class Test
+	prop = 0
+end
+
+// Just a class test2
+class Test2
+	prop = 0
+end
+
+object Instance
+	prop = 0
+end
+
+if call_select( 1 ) != "number": failure( "Select on integers" )
+if call_select( 1.5 ) != "number": failure( "Select on numbers" )
+if call_select( "a string" ) != "string": failure( "Select on strings" )
+
+if call_select( Instance ) != "instance obj": failure( "select on objects" )
+
+itm = Test()
+if call_select( itm ) != "class test": failure( "select on classes 1" )
+
+itm = Test2()
+if call_select( itm ) != "class test2": failure( "select on classes 2" )
+
+if call_select( [3:2] ) != "something else": failure( "select default" )
+
+success()
+
+/* End of file */

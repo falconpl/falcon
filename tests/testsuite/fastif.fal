@@ -1,0 +1,29 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: fastif.fal,v 1.1.1.1 2006/10/08 15:05:41 gian Exp $
+*
+* ID: 1c
+* Category: basic
+* Subcategory: basic
+* Short: Fast if conditional
+* Description:
+*    This completes the test on basic conditional by testing also more complex
+*    grammar, as i.e. the short and fast if statements. This is test must
+*    be passed in order to grant the quality of the unit test.
+* [/Description]
+*
+****************************************************************************/
+
+a = 1
+b = (a == 1 and a != 0) ? 4 : 5
+if b != 4: failure( "First sequence (positive) failed" )
+if b = 4:  c = a = 0 ? 10 : 11
+
+if c == 11
+   success()
+else
+   failure( "Second sequence (negative) failed" )
+end
+
+/* End of file */

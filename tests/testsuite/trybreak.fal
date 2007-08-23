@@ -1,0 +1,103 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: trybreak.fal,v 1.2 2007/03/04 17:39:03 jonnymind Exp $
+*
+* ID: 20d
+* Category: statements
+* Subcategory: try
+* Short: Try/catch with breaks
+* Description:
+* Tests for ecception rising and catching.
+* This tests correct compilation stack unwinding out of loops.
+* Here the break (ptry count) is checked
+* After this test series, exception rising and catching can be used in
+* testsuite as a part of the test checks.
+* [/Description]
+*
+****************************************************************************/
+
+
+// first, while inside try
+i = 0
+try
+   while i < 10
+      if i == 5: break
+      i++
+   end
+end
+
+if i != 5: failure( "First break" )
+// then, while inside try with a catch before
+try
+   value = 0
+   while i < 10
+      break
+   end
+   raise 154
+   failure( "Impossible position" )
+catch in e
+   value = e == 154
+end
+
+if value != 1: failure( "First catch not correctly performed" )
+
+
+// now a try/catch inside a while
+i = 0
+while i < 10
+   try
+      value = 0
+      raise 154
+   catch in e
+      value = e == 154
+   end
+   break
+end
+
+if value != 1: failure( "Second catch not correctly performed" )
+
+// now a break inside a try inside a while
+// now a try/catch inside a while
+i = 0
+while i < 10
+   try
+      value = 0
+      break
+   end
+end
+
+// now a break inside a try/catch inside a while
+// now a try/catch inside a while
+i = 0
+while i < 10
+   try
+      value = 0
+      break
+      raise 0
+   catch in e
+      value = 1
+   end
+end
+
+if value == 1: failure( "Break didn't stop raise" )
+
+// now a break inside a catch inside a while
+// now a try/catch inside a while
+i = 0
+while i < 10
+   try
+      value = 0
+      if i == 5: raise 134
+   catch in e
+      value = e == 134
+      break
+   end
+   i++
+end
+
+if i != 5 or value != 1: failure( "Break in catch" )
+
+success()
+
+/* End of file */

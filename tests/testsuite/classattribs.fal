@@ -1,0 +1,60 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: classattribs.fal,v 1.1.1.1 2006/10/08 15:05:43 gian Exp $
+*
+* ID: 21d
+* Category: types
+* Subcategory: classes
+* Short: Class using attributes
+* Description:
+* Test attributes related grammar with classes.
+* [/Description]
+*
+****************************************************************************/
+
+attributes: attrib_one, attrib_test_compile
+
+attributes
+   attrib_two, attrib_three
+   attrib_four
+end
+
+class cl_one
+   has attrib_one, attrib_two
+end
+
+class cl_two
+   function test_three()
+      return self has attrib_three
+   end
+
+   has attrib_three
+end
+
+class cl_three from cl_one, cl_two
+   init
+      give not attrib_one to self
+   end
+
+   has not attrib_three, attrib_four
+end
+
+item = cl_three()
+
+// has/init clearing/setting
+if item has attrib_three: failure( "Attribute not cleared in inheritance" )
+if item hasnt attrib_two: failure( "Attribute not set with inheritance" )
+if item has attrib_one: failure( "Attribute not cleared in init" )
+if item hasnt attrib_four: failure( "Attribute not set in has clause" )
+
+// explicit clearing and setting
+give attrib_four, attrib_two, not attrib_one to item
+
+if item hasnt attrib_four: failure( "Attribute re-giving" )
+if item hasnt attrib_two: failure( "Attribute giving" )
+if item has attrib_one: failure( "Attribute removal" )
+
+success()
+
+/* End of file */

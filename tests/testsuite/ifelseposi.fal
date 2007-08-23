@@ -1,0 +1,26 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: ifelseposi.fal,v 1.2 2007/02/24 21:46:46 jonnymind Exp $
+*
+* ID: 1h
+* Category: basic
+* Subcategory: conditionals
+* Short: If-else positive
+* Description:
+* Checks for a minimal if/then/else to be correctly evaluated.
+* This is the positive test, that is, with the if that should
+* enter the main branch.
+* [/Description]
+*
+****************************************************************************/
+
+sel = 1
+if sel
+   success()
+else
+   failure( "Wrong branch" )
+end
+failure( "If skipped" )
+
+/* End of file */

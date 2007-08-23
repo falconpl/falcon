@@ -1,0 +1,41 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: forin_setItem.fal,v 1.4 2007/07/06 13:23:51 jonnymind Exp $
+*
+* ID: 16k
+* Category: loops
+* Subcategory: forin
+* Short: setForInItem
+* Description:
+*   Changes the content of a forin loop.
+* [/Description]
+*
+****************************************************************************/
+
+// Test in array
+array = [ "a", "b", "c", "d", "e", "f" ]
+
+for var in array
+   if var == "c"
+      .= "Z"
+   end
+end
+if array[2] != "Z": failure( "Setting item in array" )
+
+// Test in dictionary
+dict = [ 1=>"a", 2=>"b", 3=>"c", 4=>"d", 5=>"e", 6=>"f" ]
+
+for key, var in dict
+   if var == "c"
+      
+      .= "Z"
+      
+   end
+end
+
+if dict[ 3 ] != "Z":  failure( "Setting item in dictionary" )
+
+success()
+
+/* End of file */

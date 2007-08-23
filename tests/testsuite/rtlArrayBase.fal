@@ -1,0 +1,44 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: rtlArrayBase.fal,v 1.1.1.1 2006/10/08 15:05:43 gian Exp $
+*
+* ID: 102a
+* Category: rtl
+* Subcategory: array
+* Short: Array substitute ops
+* Description:
+*   Test for RTL functions operating on arrays as the VM.
+* [/Description]
+*
+****************************************************************************/
+
+array = [ "x", 2, 3, 4 ]
+
+arrayIns( array, 2, "a" )
+if len( array ) != 5: failure( "arrayIns resizing" )
+if array[2] != "a": failure( "arrayIns insertion" )
+
+arrayAdd( array, "a" )
+if len( array ) != 6: failure( "arrayAdd resizing" )
+if array[5] != "a": failure( "arrayAdd insertion" )
+
+arrayDel( array, "x" )
+if len( array ) != 5: failure( "arrayDel resizing" )
+if array[0] != 2: failure( "arrayDel removal" )
+
+arrayResize( array, 2 )
+if len( array ) != 2: failure( "arrayResize down" )
+
+arrayResize( array, 10 )
+try
+   if array[9] != nil: failure( "arrayResize clearing" )
+   array[9] = 9
+   if array[9] != 9: failure( "arrayResize write/read" )
+catch
+   failure( "Resized array access" )
+end
+
+success()
+
+/* End of file */

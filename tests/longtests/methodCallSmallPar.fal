@@ -1,0 +1,53 @@
+/****************************************************************************
+* Falcon direct benchmarks
+*
+* CVS-Id: $Id: methodCallSmallPar.fal,v 1.2 2007/01/06 16:04:19 jonnymind Exp $
+*
+* ID: 2f
+* Category: benchmark
+* Subcategory: calls
+* Short: Benchmark on mimimal method calls with params
+* Description:
+*    Performing repeated method calls and returns.
+*    The item in which the method is called is very small.
+*    This test calls uses 5 parameters.
+*
+* [/Description]
+****************************************************************************/
+
+loops = 1000000 * timeFactor()
+each = int(loops/10)
+
+object item
+   function toBeCalled( param1, param2, param3, param4, param5 )
+   end
+end
+
+
+// getting time
+time = seconds()
+for i = 1 to loops
+
+   // perform the call
+   item.toBeCalled( i, 1, "A", 2, 3 )
+
+   if i % each == 0
+      alive( i/loops*100 )
+   end
+end
+// taking end time
+time = seconds() - time
+
+// subtract alive time
+timeAlive = seconds()
+for i = 1 to loops
+   if i % each == 0
+      alive( i/loops*100 )
+   end
+end
+timeAlive = seconds() - timeAlive
+time -= timeAlive
+
+timings( time, loops )
+
+/* end of file */

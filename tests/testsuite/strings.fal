@@ -1,0 +1,67 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: strings.fal,v 1.1.1.1 2006/10/08 15:05:41 gian Exp $
+*
+* ID: 10b
+* Category: types
+* Subcategory: strings
+* Short: String test
+* Description:
+* Checks for correctness of basic string operations.
+*
+* This leverages on conditionals.
+* [/Description]
+*
+****************************************************************************/
+
+string = "Hello world"
+
+// Access test
+if string[0] != "H": failure( "Access test" )
+if string[-1] != "d": failure( "Access reverse test" )
+
+// range access
+if string[0:5] != "Hello": failure( "Range access positive definite" )
+if string[6:] != "world": failure( "Range access positive high-open" )
+if string[-1:6] != "dlrow": failure( "Range access Neagative definite" )
+if string[-5:]  != "world": failure( "Range access negative open" )
+if string[-1:0] != "dlrow olleH": failure( "Range access complete reverse" )
+
+// Assigment test
+string[5] = "-"
+if string != "Hello-world": failure( "Assignment test 1:1" )
+string[5:6] = " - "
+if string != "Hello - world": failure( "Range assigment - enlarge" )
+string[5:8] = ""
+if string != "Helloworld": failure( "Range assigment - remove" )
+string[5:5] = " "
+if string != "Hello world": failure( "Range assigment - insertion" )
+
+
+// concatenation test
+
+string = string[0:6] + "old" + string[5:]
+if string != "Hello old world": failure( "Concatenation 1" )
+string += "."
+if string != "Hello old world.": failure( "Auto-sum" )
+string[0:5] = "Good" + "bye"
+if string != "Goodbye old world.": failure( "Static string concatenation" )
+string[8:] = "cruel" + string[7:]
+if string != "Goodbye cruel old world.": failure( "Concatenation 2" )
+
+// indirect range test.
+range = [0:7]
+if string[ range ] != "Goodbye": failure( "Indirect range." )
+
+// len test
+if len( string ) != 24: failure( "Len core function" )
+
+// compilationtest for multiline string
+string = "A string
+      Spawning
+         On many lines."
+
+success()
+
+/* End of file */

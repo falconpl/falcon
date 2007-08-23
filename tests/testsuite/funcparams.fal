@@ -1,0 +1,26 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: funcparams.fal,v 1.1.1.1 2006/10/08 15:05:43 gian Exp $
+*
+* ID: 13m
+* Category: functions
+* Subcategory:
+* Short: Function paramter ordering
+* Description:
+* For unbeliveable as it may seems, all the other tests passesd with a bug in the
+* assembly generator that mixed up the order of the parameters... alphabetically!
+* [/Description]
+*
+****************************************************************************/
+
+function test( zeta, gamma, alpha )
+   if zeta != 1: failure( "First parameter mixed" )
+   if gamma != 2: failure( "Second parameter mixed" )
+   if alpha != 3: failure( "Third parameter mixed" )
+end
+
+test( 1, 2, 3 )
+success()
+
+/* End of file */

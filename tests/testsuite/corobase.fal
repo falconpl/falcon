@@ -1,0 +1,24 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: corobase.fal,v 1.1.1.1 2006/10/08 15:05:41 gian Exp $
+*
+* ID: 23a
+* Category: statements
+* Subcategory: launch
+* Short: Minimal coroutines
+* Description:
+* Coroutines smoke test
+* [/Description]
+*
+****************************************************************************/
+
+function coroutine()
+   return 0
+end
+
+launch coroutine()
+
+success()
+
+/* End of file */

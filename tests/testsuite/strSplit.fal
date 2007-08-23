@@ -1,0 +1,106 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: strSplit.fal,v 1.5 2007/05/10 11:00:53 jonnymind Exp $
+*
+* ID: 101a
+* Category: rtl
+* Subcategory: string
+* Short: strSplit
+* Description:
+*   Test on RTL string functions.
+*   Testing here strSplit function capability
+* [/Description]
+*
+****************************************************************************/
+
+string = "this is a string"
+strarr = strSplit( string, " " )
+if len(strarr) != 4: failure( "Strsplit base" )
+if strarr[0] != "this": failure( "Strsplit part 0" )
+if strarr[1] != "is": failure( "Strsplit part 1" )
+if strarr[2] != "a": failure( "Strsplit part 2" )
+if strarr[3] != "string": failure( "Strsplit parts 3" )
+
+strarr2 = strSplit( string, " ", 2 )
+if len( strarr2 ) != 2: failure( "Limited split" )
+
+strarr3 = strSplit( string, " ", 100 )
+if len( strarr3 ) != 4: failure( "Overlimited split - size" )
+if strarr3[0] != "this": failure( "Overlimited split - content 0" )
+if strarr3[1] != "is": failure( "Overlimited split - content 1" )
+if strarr3[2] != "a": failure( "Overlimited split - content 2" )
+if strarr3[3] != "string": failure( "Overlimited split - content 3" )
+
+strarr4 = strSplit( string, "zka" )
+if len( strarr4 ) != 1: failure( "Negative split - size" )
+if strarr4[0] != string: failure( "Negative split - content" )
+
+strarr5 = strSplit( "fields;;here", ";" )
+if len( strarr5 ) != 3: failure( "Adjacent fields considered - lenght" )
+if strarr5[0] != "fields": failure( "Adjacent fields considered - first" )
+if strarr5[1] != "": failure( "Adjacent fields considered - second" )
+if strarr5[2] != "here": failure( "Adjacent fields considered - third" )
+
+strarr6 = strSplitTrimmed( "fields     here", " " )
+if len( strarr6 ) != 2: failure( "Adjacent fields ignored - lenght" )
+if strarr6[0] != "fields": failure( "Adjacent fields ignored - first" )
+if strarr6[1] != "here": failure( "Adjacent fields ignored - second" )
+
+strarr7 = strSplit( "final;one;c", ";" )
+if strarr7[0] != "final": failure( "Final one char - first" )
+if strarr7[1] != "one": failure( "Final one char - second" )
+if strarr7[2] != "c": failure( "Final one char - third" )
+
+strarr7 = strSplitTrimmed( "final;one;c", ";" )
+if strarr7[0] != "final": failure( "Final one char (trimmed) - first" )
+if strarr7[1] != "one": failure( "Final one char (trimmed) - second" )
+if strarr7[2] != "c": failure( "Final one char (trimmed) - third" )
+
+strarr7 = strSplit( "final;one;", ";" )
+if len( strarr7 ) != 3: failure( "Final field missing - size" )
+if strarr7[0] != "final": failure( "Final field missing - first" )
+if strarr7[1] != "one": failure( "Final field missing - second" )
+if strarr7[2] != "": failure( "Final field missing - empty (third)" )
+
+strarr7 = strSplitTrimmed( "final;one;", ";" )
+if len( strarr7 ) != 3: failure( "Final field missing (trimmed) - size" )
+if strarr7[0] != "final": failure( "Final field missing (trimmed) - first" )
+if strarr7[1] != "one": failure( "Final field missing (trimmed) - second" )
+if strarr7[2] != "": failure( "Final field missing (trimmed) - empty (third)" )
+
+strarr7 = strSplit( "final;one;;", ";" )
+if len( strarr7 ) != 4: failure( "Two final field missing - size" )
+if strarr7[0] != "final": failure( "Two final missing - first" )
+if strarr7[1] != "one": failure( "Two final missing - second" )
+if strarr7[2] != "": failure( "Two final missing - empty (third)" )
+if strarr7[3] != "": failure( "Two final missing - empty (fourth)" )
+
+strarr7 = strSplitTrimmed( "final;one;;", ";" )
+if len( strarr7 ) != 4: failure( "Two final field missing (trimmed) - size" )
+if strarr7[0] != "final": failure( "Two final field missing (trimmed) - first" )
+if strarr7[1] != "one": failure( "Two final field missing (trimmed) - second" )
+if strarr7[2] != "": failure( "Two final field missing (trimmed) - empty (third)" )
+if strarr7[3] != "": failure( "Two final field missing (trimmed) - empty (fourth)" )
+
+//split empty strings
+strarr7 = strSplit( "", ";" )
+if len( strarr7 ) != 1: failure( "empty split - size" )
+if strarr7[0] != "": failure( "empty split - content" )
+
+strarr7 = strSplitTrimmed( "", ";" )
+if len( strarr7 ) != 1: failure( "empty split (trimmed) - size" )
+if strarr7[0] != "": failure( "empty split (trimmed) - content" )
+
+//Shorter split
+strarr7 = strSplit( "aaa", ";;;;;;" )
+if len( strarr7 ) != 1: failure( "shorter split - size" )
+if strarr7[0] != "aaa": failure( "shorter split - content" )
+
+strarr7 = strSplitTrimmed( "aaa", ";;;;;;" )
+if len( strarr7 ) != 1: failure( "shorter split (trimmed) - size" )
+if strarr7[0] != "aaa": failure( "shorter split (trimmed) - content" )
+
+success()
+
+/* End of file */

@@ -1,0 +1,54 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: serialize_dict_fbom.fal,v 1.1 2007/08/03 13:17:07 jonnymind Exp $
+*
+* ID: 107g
+* Category: fbom
+* Subcategory: serialization
+* Short: Dictionary serialization
+* Description:
+*   Serialization test on dictionaries.
+*   This test does the same things as 107b, on arrays, to make thigns a bit
+*   more complex for the serialize function; but it doesn't test the
+*   outcomes that have been already tested before.
+* [/Description]
+*
+****************************************************************************/
+
+// we need a stream
+stream = StringStream()
+
+array1 = [ "Hello", "world", "an item", 1, 2.2, nil, [2:3] ]
+array2 = [ "a", "nested", array1, "array" ]
+dict = [ "elem1" => array1, "elem2" => array2 ]
+
+array1.serialize( stream )
+dict.serialize( stream )
+array2.serialize( stream )
+
+stream.seek(0)
+
+item1 = nil
+item2 = nil
+item3 = nil
+
+try
+	// mixing deserialize and readItem
+   item1 = deserialize( stream )
+   item2 = stream.readItem()
+   item3 = deserialize( stream )
+
+   res1 = item2[ "elem1" ]
+   if len( array1 ) != len( res1 ): failure( "Basic" )
+   for i = 0 to len( array1 ) - 1
+      if array1[i] != res1[i]: failure( "Deep item retrival" )
+   end
+
+catch
+   failure( "Deserialization failed" )
+end
+
+success()
+
+/* End of file */

@@ -1,0 +1,55 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: time_clone.fal,v 1.1 2007/08/03 13:17:07 jonnymind Exp $
+*
+* ID: 108c
+* Category: rtl
+* Subcategory: TimeStamp
+* Short: Timestamp clone
+* Description:
+*   Duplicates a timestap
+* [/Description]
+****************************************************************************/
+
+// create a date for today
+today = CurrentTime()
+
+// create a date for tomorrow, copying it from today...
+tomorrow = today.clone()
+
+// first, see if they are equal
+if today.compare( tomorrow ) != 0: failure( "Clone equality" )
+// relational ops now call compare if available
+if today != tomorrow: failure( "Clone equality" )
+
+// change one and see insolation
+if today.hour == 22
+	tomorrow.hour = 23
+else
+	tomorrow.hour = 22
+end
+
+if today.hour == tomorrow.hour: failure( "Clone insolation" )
+
+// Try the same thing with item copy
+tomorrow = itemCopy( today )
+
+// first, see if they are equal
+if today.compare( tomorrow ) != 0: failure( "ItemCopy equality" )
+// relational ops now call compare if available
+if today != tomorrow: failure( "ItemCopy equality" )
+
+// change one and see insolation
+if today.hour == 22
+	tomorrow.hour = 23
+else
+	tomorrow.hour = 22
+end
+
+if today.hour == tomorrow.hour: failure( "ItemCopy insolation" )
+
+
+success()
+
+/* End of file */

@@ -1,0 +1,37 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: trycatch_ret.fal,v 1.2 2007/03/04 17:39:03 jonnymind Exp $
+*
+* ID: 20c
+* Category: statements
+* Subcategory: try
+* Short: Try/catch in functions
+* Description:
+* Tests for ecception rising and catching.
+* This tests correct return stack unwinding in case of try/catch
+* After this test series, exception rising and catching can be used in
+* testsuite as a part of the test checks.
+* [/Description]
+*
+****************************************************************************/
+
+function try_catch( param )
+
+   try
+      if param = 1: return 5
+      if param = 2: raise 10
+   catch in e
+      return e
+   end
+
+   return param
+end
+
+if try_catch( 1 ) != 5: failure( "Return in try" )
+if try_catch( 2 ) !=10: failure( "Return in catch" )
+if try_catch( 3 ) != 3: failure( "Passthrough" )
+
+success()
+
+/* End of file */

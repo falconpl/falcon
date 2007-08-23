@@ -1,0 +1,70 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: class_tplinv.fal,v 1.2 2007/03/14 01:18:10 jonnymind Exp $
+*
+* ID: 21k
+* Category: types
+* Subcategory: classes
+* Short: Class template invariancy
+* Description:
+*   Strings in class templates are shared among all the objects
+*   generated from that class. Changes in one object must alter
+*   only the local string, leaving the template string alone.
+* [/Description]
+*
+****************************************************************************/
+
+class test
+   // generate a template with a string
+   property = "something"
+
+   function alter( char, pos )
+      self.property[pos] = char
+   end
+
+   function withStatic()
+   	// in mehtods, static variables affect
+   	// ALL the methods in every object
+      static
+         test = 0
+      end
+
+      if test = 0
+         test = 1
+         return 0
+      end
+
+      return test
+   end
+
+end
+
+t1 = test()
+t2 = test()
+
+// direct change
+t1.property[0] = "z"
+if t1.property != "zomething": failure( "Direct change" )
+if t2.property != "something": failure( "Invariance (direct)" )
+
+// alter via method
+t1.alter( "a", 0 )
+if t1.property != "aomething": failure( "Indirect change" )
+if t2.property != "something": failure( "Invariance (indirect)" )
+
+// static variance
+t1.withStatic()
+t1.withStatic()
+// also t2 static variable must have been affected.
+if t2.withStatic() != 1: failure( "Static variance" )
+
+// re-use the template
+t3 = test()
+if t3.property != "something": failure( "Template invariance" )
+// t3 must come ALIVE with the static value set.
+if t3.withStatic() != 1: failure( "Template static variance" )
+
+success()
+
+/* End of file */

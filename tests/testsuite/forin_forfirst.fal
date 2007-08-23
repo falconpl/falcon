@@ -1,0 +1,86 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: forin_forfirst.fal,v 1.2 2007/07/06 08:01:32 jonnymind Exp $
+*
+* ID: 16d
+* Category: loops
+* Subcategory: forin
+* Short: Forfirst special
+* Description:
+* Cheks the forin loop under particular condition.
+* Here we check the forfirst clause
+* Checks are performed for:
+*   - element = nil
+*   - empty set
+*   - one, two and three element sets
+* [/Description]
+*
+****************************************************************************/
+
+array = nil
+result = []
+result_first = []
+
+try
+   for var in array
+      result += var
+   	forfirst
+      	result_first += var
+      end
+   end
+catch
+   failure( "Empty set generates error" )
+end
+
+if len( result ) != 0: failure( "Empty set" )
+if len( result_first ) != 0: failure( "Empty set - forfirst" )
+
+array = [1]
+result = []
+result_first = []
+
+for var in array
+   result += var
+	forfirst
+   	result_first += var
+   	continue // skipping the main block
+   end
+end
+
+if len( result ) != 0: failure( "1 element set" )
+if len( result_first ) != 1: failure( "1 element set - forfirst" )
+
+array = [ 1, 2 ]
+result = []
+result_first = []
+
+for var in array
+   result += var
+	forfirst
+   	result_first += var
+   	continue // skipping the main block
+   end
+end
+
+if len( result ) != 1: failure( "2 element set" )
+if len( result_first ) != 1: failure( "2 element set - forfirst" )
+
+array = [ 1, 2, 3 ]
+result = []
+result_first = []
+
+for var in array
+   result += var
+	forfirst
+   	result_first += var
+   	continue
+   end
+end
+
+if len( result ) != 2: failure( "3 element set" )
+if len( result_first ) != 1: failure( "3 element set - forfirst" )
+
+success()
+
+/* End of file */

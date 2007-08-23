@@ -1,0 +1,26 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: strHead.fal,v 1.1.1.1 2006/10/08 15:05:40 gian Exp $
+*
+* ID: 101d
+* Category: rtl
+* Subcategory: string
+* Short: strHead and strTail
+* Description:
+*   Test on RTL string functions
+* [/Description]
+*
+****************************************************************************/
+
+string = "this is a string"
+
+substr = strHead( string, 4 )
+if substr != "this": failure( "strHead" )
+
+substr = strTail( string, 6 )
+if substr != "string": failure( "strTail" )
+
+success()
+
+/* End of file */

@@ -1,0 +1,30 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: stringexp_fmt.fal,v 1.1 2007/07/16 16:28:41 jonnymind Exp $
+*
+* ID: 34b
+* Category: expression
+* Subcategory: strex
+* Short: String format
+* Description:
+*    Test for string expansion and format applying.
+*    Internally, string expansion uses indirect access; so what we do here 
+*    is just checking that parsing and expansion works.
+* [/Description]
+*
+****************************************************************************/
+
+
+
+
+object test
+   function toString( fmt )
+      if fmt != "Test Format": failure( "Test format" )
+   end
+end
+
+
+success()
+
+/* End of file */

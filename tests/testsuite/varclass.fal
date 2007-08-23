@@ -1,0 +1,50 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: varclass.fal,v 1.1.1.1 2006/10/08 15:05:43 gian Exp $
+*
+* ID: 21h
+* Category: types
+* Subcategory: classes
+* Short: Class variables
+* Description:
+*   A class is treated as a variable and then returned from a function.
+* [/Description]
+*
+****************************************************************************/
+
+class base
+   propbase = 0
+end
+
+class derived from base
+   propderived = 0
+end
+
+class derived1( var1, var2 ) from base
+   propderived1 = var1
+   propbase = var2
+end
+
+function generate( param )
+   if param = 0
+      return derived
+   else
+      return derived1
+   end
+end
+
+cls1 = generate( 0 )
+cls2 = generate( 1 )
+
+obj1 = cls1()
+if obj1.propderived != 0: failure( "derived initialization" )
+if obj1.propbase != 0: failure( "base initialization" )
+obj2 = cls2( 1, 2 )
+
+if obj2.propderived1 != 1: failure( "second derived initialization" )
+if obj2.propbase != 2: failure( "second base initialization" )
+
+success()
+
+/* End of file */

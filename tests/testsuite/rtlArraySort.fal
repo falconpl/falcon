@@ -1,0 +1,46 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: rtlArraySort.fal,v 1.1.1.1 2006/10/08 15:05:40 gian Exp $
+*
+* ID: 103a
+* Category: rtl
+* Subcategory: array
+* Short: Array sort basic
+* Description:
+*   Test for sorting using the default FALCON language ordering algorithm.
+* [/Description]
+*
+****************************************************************************/
+
+array = [ 1, 5, 8, 4, 9, 4, 3, 2, 1, 2, 1, 2, 7, 4, 3, 2, 9, 10 ]
+arraySort( array )
+old = 0
+for element in array
+   if element < old: failure( "Sort integers" )
+   old = element
+end
+
+array = [ "Zeta", "ypsilon", "Alfa", "beta", "GAMMA", "tetha", "TETHA",
+          "omicron", "Psi", "fi"]
+
+arraySort( array )
+old = 0
+for element in array
+   if element < old: failure( "Sort string" )
+   old = element
+end
+
+array = [ "Zeta", "ypsilon", 5, 1, "Alfa", "beta", 8.2, "GAMMA",
+          4.1, "tetha", "TETHA", 6,  "omicron", "Psi", "fi" ]
+
+arraySort( array )
+old = 0
+for element in array
+   if element < old: failure( "Sort mixed" )
+   old = element
+end
+
+success()
+
+/* End of file */

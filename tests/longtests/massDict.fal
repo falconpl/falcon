@@ -1,0 +1,64 @@
+/****************************************************************************
+* Falcon direct benchmarks
+*
+* CVS-Id: $Id: massDict.fal,v 1.1 2007/07/24 17:48:44 jonnymind Exp $
+*
+* ID: 6a
+* Category: benchmark
+* Subcategory: dict
+* Short: Massive dictionary
+* Description:
+*   Performance test on 100000 dictionary insertions.
+* [/Description]
+****************************************************************************/
+
+loops = 10000 * timeFactor()
+each = int(loops/10)
+
+
+dict = [ => ]
+// getting time
+time = seconds()
+
+// creating a default key
+function makeKey()
+   static
+      letter_a = ord('A')
+      key = "               "
+   end
+
+   for num = 0 to key.len() - 1
+      key[num] = random( 0, 25 ) + letter_a 
+   end
+
+   return key
+end
+
+// looping for insertion
+for i = 1 to loops
+   key = makeKey()
+   dict[ key ] = random()
+   
+   if i % each == 0
+      alive( i/loops*100 )
+   end
+end
+
+// taking end time
+time = seconds() - time
+
+// subtract alive time
+timeAlive = seconds()
+for i = 1 to loops
+   makeKey( key ); random()
+
+   if i % each == 0
+      alive( i/loops*100 )
+   end
+end
+timeAlive = seconds() - timeAlive
+time -= timeAlive
+
+timings( time, loops )
+
+/* end of file */

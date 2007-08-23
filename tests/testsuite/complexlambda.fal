@@ -1,0 +1,54 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: complexlambda.fal,v 1.2 2007/03/14 16:10:14 jonnymind Exp $
+*
+* ID: 18c
+* Category: lambda
+* Subcategory:
+* Short: Complex lambda
+* Description:
+* Testing lamdas with static blocks
+* [/Description]
+*
+****************************************************************************/
+
+function ret_lambda()
+   var = lambda( param )
+      static
+         values = [1,2,3,4]
+         val_id = 0
+      end
+
+      // prologue: use state only if != 0
+      if param = 0
+         return values[ val_id ]
+      elif param < 0
+         return -1
+      end
+
+      next = values[val_id++]
+      if val_id = len( values ): val_id = 0
+      
+      return next
+   end
+   return var
+end
+
+
+var = ret_lambda()
+
+// check prologue
+if var(-1) != -1: failure( "Prologue execution" )
+// enter start
+var(0)
+
+var(1)
+var(1)
+var(1)
+var(1)
+if var(0) != 1: failure( "Static advancement" )
+
+success()
+
+/* End of file */

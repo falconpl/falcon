@@ -1,0 +1,57 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: rtlArrayFilter.fal,v 1.1.1.1 2006/10/08 15:05:43 gian Exp $
+*
+* ID: 102d
+* Category: rtl
+* Subcategory: array
+* Short: Array filter
+* Description:
+*   Map function for arrays.
+* [/Description]
+*
+****************************************************************************/
+
+function func( element )
+   if element = "alpha" or element = "beta"
+      return 1
+   end
+   return 0
+end
+
+function func1( element )
+   if element = "000000"
+      return 1
+   end
+   return 0
+end
+
+array = [ 1, 2, "alpha", 3,  "beta", 4 ]
+
+arr1 = arrayFilter( array, func )
+if len( arr1 ) != 2 or arr1[0] != "alpha" or arr1[1] != "beta"
+   failure( "arrayFilter unconditional positive" )
+end
+
+arr1 = arrayFilter( array, func1 )
+if len( arr1 ) != 0 : failure( "arrayFilter unconditional negative" )
+
+arr1 = arrayFilter( array, func, 2  )
+if len( arr1 ) != 2 or arr1[0] != "alpha" or arr1[1] != "beta"
+   failure( "arrayFilter from positive" )
+end
+
+arr1 = arrayFilter( array, func, 1, 4  )
+if len( arr1 ) != 1 or arr1[0] != "alpha"
+   failure( "arrayFilter from, to positive" )
+end
+
+arr1 = arrayFilter( array, func, 5  )
+if len( arr1 ) != 0: failure( "arrayFilter from negative" )
+arr1 = arrayFilter( array, func, 5, 5  )
+if len( arr1 ): failure( "arrayFilter from, to negative" )
+
+success()
+
+/* End of file */

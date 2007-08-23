@@ -1,0 +1,81 @@
+#!/usr/local/bin/falcon
+/*
+   FALCON - Samples
+
+   FILE: random.fal
+
+   $Id: random.fal,v 1.1.1.1 2006/10/08 15:05:21 gian Exp $
+
+   A little showdown of random capabilities.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: mer nov 3 2004
+   Last modified because:
+
+   -------------------------------------------------------------------
+   (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+   In order to use this file in its compiled form, this source or
+   part of it you have to read, understand and accept the conditions
+   that are stated in the LICENSE file that comes boundled with this
+   package.
+*/
+
+const loops = 100000
+const elements = 10
+
+// let's generate a good seed
+seed = int(seconds() * 1000)
+printl( "Random functions showdown." )
+printl( "Setting random seed to ", seed )
+randomSeed( seed )
+
+printl( "Filling ", elements, " elements with ", loops, " random values" )
+
+// we'll fill an array of 10 elements with 10000 instances...
+array = []
+for i = 1 to elements
+   array += 0
+end
+
+for i = 1 to loops
+   array[ random( elements-1 ) ] += 1
+   if i % 100 == 0
+      print( "Processing: ", (i / loops)*100, "%  \r" )
+   end
+end
+
+printl( "Results:                             ")
+showResults( array )
+
+printl( "Randomizing the array with random grab." )
+array = randomGrab( array, elements )
+printl( "Results:                             ")
+showResults( array )
+
+printl()
+printl("Done.")
+
+exit(0)
+
+function showResults( array )
+   sum = 0
+   for i = 1 to elements
+      if i < 10
+         print( i, " : " )
+      else
+         print( i, ": " )
+      end
+      val = array[ i - 1 ]
+      point = val / loops * elements * elements
+      for j = 0 to point
+         print( "*" )
+      end
+      printl( " ", val )
+      sum += val
+   end
+   printl( "Sum: ", sum )
+end
+
+/* end of process.fal */

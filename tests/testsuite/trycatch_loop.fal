@@ -1,0 +1,48 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: trycatch_loop.fal,v 1.1.1.1 2006/10/08 15:05:43 gian Exp $
+*
+* ID: 20b
+* Category: statements
+* Subcategory: try
+* Short: Try/catch in loops
+* Description:
+* Tests for ecception rising and catching.
+* This tests correct compilation stack unwinding out of loops
+* After this test series, exception rising and catching can be used in
+* testsuite as a part of the test checks.
+* [/Description]
+*
+****************************************************************************/
+
+i = 0
+while i < 10
+   try
+      if i = 2
+         i++
+         continue
+         failure( "Continue in try/catchs" )
+      end
+
+      if i = 8 or i = 9
+         a = nil + 1
+      end
+   catch
+      if i = 8
+         ++i
+         continue
+      else
+         break
+      end
+
+   end
+   ++i
+end
+
+
+if i != 9: failure( "Break in try/catchs" )
+
+success()
+
+/* End of file */

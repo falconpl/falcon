@@ -1,0 +1,43 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: core_callable.fal,v 1.1.1.1 2006/10/08 15:05:40 gian Exp $
+*
+* ID: 40b
+* Category: rtl
+* Subcategory: core
+* Short: isCallable test
+* Description:
+* Tests for predefined constants and isCallable core module function.
+* [/Description]
+*
+****************************************************************************/
+
+class testClass
+end
+
+object testObj
+   function testMethod()
+   end
+end
+
+function func()
+end
+
+if isCallable( nil ) : failure( "Nil type" )
+if isCallable( 1 ) : failure( "Integer type" )
+if isCallable( 1.1 ) : failure( "Numberic type" )
+if isCallable( [1:2] ) : failure( "Range type" )
+if not isCallable( func ) : failure( "Function type" )
+if isCallable( "hello" ) : failure( "String type" )
+if isCallable( [1,2] ) : failure( "Array type" )
+if isCallable( [1 => 2 ] ) : failure( "Dictionary type" )
+if isCallable( testObj ) : failure( "Object type / automatic" )
+if isCallable( testClass() ) : failure( "Object type / created" )
+if not isCallable( testClass ) : failure( "Class type" )
+if not isCallable( testObj.testMethod ) : failure( "Method type" )
+if not isCallable( failure ) : failure( "External (library) function type" )
+
+success()
+
+/* End of file */

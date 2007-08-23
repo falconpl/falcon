@@ -1,0 +1,128 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: gcArray.fal,v 1.1 2007/06/06 19:52:53 jonnymind Exp $
+*
+* ID: 51c
+* Category: gc
+* Subcategory: array
+* Short: Garbage collection - arrays
+* Description:
+*  Test for correct accounting of garbage collection when arrays are
+*  involved
+* [/Description]
+*
+****************************************************************************/
+
+// Record initial memory requirements
+
+base_allocMem = 0
+base_allocItems = 0
+allocItems = 0
+allocMem = 0
+liveItems = 0
+liveMem = 0
+
+// initialize references
+gcGetParams( $allocMem, $allocItems, $liveMem, $liveItems )
+gcGetParams( $base_allocMem, $base_allocItems )
+
+//====================================
+// TEST 1
+// drop a static array
+array = [ 1, 2, 3, 4]
+array = nil
+
+// ...and empty the A register
+a = 0*1
+
+gcPerform( true )
+gcGetParams( $allocMem, $allocItems, $liveMem, $liveItems )
+
+if base_allocMem != allocMem: failure( "dropped - unmatching allocated memory" )
+if base_allocItems != allocItems: failure( "dropped - unmatching allocated items" )
+if allocMem != liveMem: failure( "dropped - live memory unmatching allocated memory" )
+if allocItems != liveItems: failure( "dropped - live items umatching allocated items" )
+
+//====================================
+// TEST 2
+// drop an array of arrays
+array = [ 1, 2, 3, [3,4], [5,6] ]
+
+// Empty the array...
+array = nil
+
+// ...and empty the A register
+a = 0*1
+
+gcPerform( true )
+gcGetParams( $allocMem, $allocItems, $liveMem, $liveItems )
+
+if base_allocMem != allocMem: failure( "drop array of array - unmatching allocated memory" )
+if base_allocItems != allocItems: failure( "drop array of array - unmatching allocated items" )
+if allocMem != liveMem: failure( "drop array of array - live memory unmatching allocated memory" )
+if allocItems != liveItems: failure( "drop array of array - live items umatching allocated items" )
+
+//====================================
+// TEST 3
+// Insert an item
+array = [ 1, 2, 3, 4 ]
+array[2:2] = 10   // here we have an insertion
+
+// Empty the array...
+array = nil
+
+// ...and empty the A register
+a = 0*1
+
+gcPerform( true )
+gcGetParams( $allocMem, $allocItems, $liveMem, $liveItems )
+
+if base_allocMem != allocMem: failure( "insert - unmatching allocated memory" )
+if base_allocItems != allocItems: failure( "insert - unmatching allocated items" )
+if allocMem != liveMem: failure( "insert - live memory unmatching allocated memory" )
+if allocItems != liveItems: failure( "insert - live items umatching allocated items" )
+
+//====================================
+// TEST 4
+// Remove an item
+array = [ 1, 2, 3, 4 ]
+array[3:4] = []   // here we have a removal
+
+// Empty the array...
+array = nil
+
+// ...and empty the A register
+a = 0*1
+
+gcPerform( true )
+gcGetParams( $allocMem, $allocItems, $liveMem, $liveItems )
+
+if base_allocMem != allocMem: failure( "append - unmatching allocated memory" )
+if base_allocItems != allocItems: failure( "append - unmatching allocated items" )
+if allocMem != liveMem: failure( "append - live memory unmatching allocated memory" )
+if allocItems != liveItems: failure( "append - live items umatching allocated items" )
+
+//====================================
+// TEST 5
+// append item
+array = [ 1, 2, 3, 4 ]
+array += [4,5,6]
+
+// Empty the array...
+array = nil
+
+// ...and empty the A register
+a = 0*1
+
+gcPerform( true )
+gcGetParams( $allocMem, $allocItems, $liveMem, $liveItems )
+
+if base_allocMem != allocMem: failure( "append - unmatching allocated memory" )
+if base_allocItems != allocItems: failure( "append - unmatching allocated items" )
+if allocMem != liveMem: failure( "append - live memory unmatching allocated memory" )
+if allocItems != liveItems: failure( "append - live items umatching allocated items" )
+
+success()
+
+/* End of file */

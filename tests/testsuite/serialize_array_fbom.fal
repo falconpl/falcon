@@ -1,0 +1,49 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: serialize_array_fbom.fal,v 1.1 2007/08/03 13:17:07 jonnymind Exp $
+*
+* ID: 107f
+* Category: fbom
+* Subcategory: serialization
+* Short: Array serialization
+* Description:
+*   Serialization test on arrays.
+* [/Description]
+*
+****************************************************************************/
+
+// we need a stream
+stream = StringStream()
+
+array1 = [ "Hello", "world", "an item", 1, 2.2, nil, [2:3] ]
+array2 = [ "a", "nested", array1, "array" ]
+
+array1.serialize( stream )
+array2.serialize( stream )
+
+stream.seek(0)
+
+try
+
+   item1 = stream.readItem()
+   if len( array1 ) != len( item1 ): failure( "Basic" )
+   for i = 0 to len( array1 ) - 1
+      if array1[i] != item1[i]: failure( "Deep item retrival" )
+   end
+
+   item2 = deserialize( stream )
+   if len( array2 ) != len( item2 ): failure( "Second deserialization" )
+   item3 = item2[2]
+   if len( array1 ) != len( item3 ): failure( "Deep deserialization" )
+   for i = 0 to len( array1 ) - 1
+      if array1[i] != item3[i]: failure( "Deep item retrival 2" )
+   end
+
+catch
+   failure( "Deserialization failed" )
+end
+
+success()
+
+/* End of file */

@@ -1,0 +1,27 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: morecond.fal,v 1.1.1.1 2006/10/08 15:05:41 gian Exp $
+*
+* ID: 1b
+* Category: basic
+* Subcategory: conditionals
+* Short: More conditionals
+* Description:
+*    This completes the test on basic conditional by testing also more complex
+*    grammar, as i.e. the short if statement. This is test must
+*    be passed in order to grant the quality of the unit test.
+* [/Description]
+*
+****************************************************************************/
+
+a = 1
+if a != 1: failure( "if !=" )
+if a > 2: failure( "if >" )
+if a < 0: failure( "if <" )
+if a >= 2: failure( "if >=" )
+if a <= 0: failure( "if <=" )
+if a == 1: success()
+failure( "false negative on ==" )
+
+/* End of file */

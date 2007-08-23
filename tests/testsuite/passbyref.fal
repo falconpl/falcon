@@ -1,0 +1,43 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: passbyref.fal,v 1.1.1.1 2006/10/08 15:05:40 gian Exp $
+*
+* ID: 13l
+* Category: functions
+* Subcategory:
+* Short: Variable parameter call
+* Description:
+* Checks calling by reference, both in fixed and variable convention.
+* [/Description]
+*
+****************************************************************************/
+
+function test_fixed( param1, param2 )
+   param1 = "changed"
+   param2 = "changed"
+end
+
+function test_variable()
+   for i = 1 to paramCount()
+      if paramIsRef( i )
+         paramSet( i, "changed" )
+      end
+   end
+end
+
+
+var1 = "original"
+var2 = "original"
+test_fixed( var1, $var2 )
+if var1 != "original": failure( "Fixed parameter pollution -- fixed convention" )
+if var2 != "changed": failure( "Variable parameter unchanged -- fixed convention" )
+
+var2 = "original"
+
+test_variable( var1, $var2 )
+if var1 != "original": failure( "Fixed parameter pollution -- variable convention" )
+if var2 != "changed": failure( "Variable parameter unchanged -- variable convention" )
+
+success()
+/* End of file */

@@ -1,0 +1,65 @@
+/*
+   FALCON - Samples
+
+   FILE: vminfo.fal
+
+   $Id: vminfo.fal,v 1.1 2007/07/25 19:51:50 jonnymind Exp $
+
+   Reports VM and eventually module informations.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: mer nov 3 2004
+   Last modified because:
+
+   -------------------------------------------------------------------
+   (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+   In order to use this file in its compiled form, this source or
+   part of it you have to read, understand and accept the conditions
+   that are stated in the LICENSE file that comes boundled with this
+   package.
+*/
+
+load compiler
+
+> "VM Info - Prints Falcon Virtual Machine and module informations."
+> "  To get informations on a module, pass its complete path as a paramter."
+> "  Can get informations on sources, .fam and DLL/SO modules."
+>
+
+major, minor, revision = vmVersionInfo()
+> @ "Falcon Virtual Machine $(major).$(minor).$(revision)."
+> "Version description: ", vmVersionName()
+
+if args.len() != 0
+	comp = Compiler()
+	comp.saveModules = false
+
+	try
+		mod = comp.loadModule( args[0] )
+		> @ "Module $(mod.name) (at $(mod.path))"
+		major, minor, revision = mod.moduleVersion()
+		if major or minor or revision
+			> @ "Module version $(major).$(minor).$(revision)."
+      else
+      	> "Module version information not available."
+      end
+
+		major, minor, revision = mod.engineVersion()
+		> @ "Compiled with Falcon Virtual Machine $(major).$(minor).$(revision)."
+	catch SyntaxError in error
+		> @ "Source module $args[0] couldn't be compiled due to syntax errors:"
+		for e in error.subErrors
+      	< e
+      end
+   catch CodeError in error
+		> @"Module $args[0] couldn't be loaded in the virtual machine:"
+		> error
+   catch in error
+   	> @ "Generic error while loading the module $(args[0])."
+   	> error
+   end
+end
+
+/* end of vminfo.fal */

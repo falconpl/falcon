@@ -1,0 +1,20 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: 0c.fal,v 1.1.1.1 2006/10/08 15:05:43 gian Exp $
+*
+* ID: 0c
+* Category: smoke
+* Subcategory:
+* Short: Smoke test on arrays
+* Description:
+*   Minimal test to check the operativity of the VM, compiler, linker and
+*   unit test package.
+*
+*   This just stores an array in the return field of the virtual machine.
+* [/Description]
+****************************************************************************/
+
+exit( 1, 2, 3 )
+
+/* End of file */

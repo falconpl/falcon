@@ -1,0 +1,70 @@
+/****************************************************************************
+* Falcon direct benchmarks
+*
+* CVS-Id: $Id: dictFind.fal,v 1.1 2007/07/24 17:48:43 jonnymind Exp $
+*
+* ID: 6e
+* Category: benchmark
+* Subcategory: dict
+* Short: Find in normal dictionary
+* Description:
+*   Performance test on repeated finds in small paged dictionaries.
+* [/Description]
+****************************************************************************/
+
+loops = 100000 * timeFactor()
+each = int(loops/10)
+
+// creating a default key
+function makeKey()
+   static
+      letter_a = ord('A')
+      key = "               "
+   end
+
+   for num = 0 to key.len() - 1
+      key[num] = random( 0, 25 ) + letter_a 
+   end
+
+   return key
+end
+
+
+// creating the base dictionary
+dict = [=>]
+for i = 1 to 100
+   dict[ makeKey() ] = random()
+end
+
+// getting time
+time = seconds()
+
+// looping for insertion
+for i = 1 to loops
+   // repeating the findings
+   v = makeKey() in dict
+   
+   if i % each == 0
+      alive( i/loops*100 )
+   end
+end
+
+// taking end time
+time = seconds() - time
+
+// subtract alive time
+timeAlive = seconds()
+for i = 1 to loops
+   makeKey()
+
+   if i % each == 0
+      alive( i/loops*100 )
+   end
+end
+timeAlive = seconds() - timeAlive
+time -= timeAlive
+
+// we have produced 20 operations per loop
+timings( time, loops )
+
+/* end of file */

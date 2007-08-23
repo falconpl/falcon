@@ -1,0 +1,63 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: dictloop5.fal,v 1.3 2007/08/01 10:30:41 jonnymind Exp $
+*
+* ID: 16l
+* Category: loops
+* Subcategory: forin
+* Short: For in dictionary/5
+* Description:
+* Checks for loops in dicitionary when setting and dropping elements.
+* [/Description]
+*
+****************************************************************************/
+
+// Empty dictionary
+dict = [ "A"=>1, "B" => 2, "C" => 3, "D" => 4 ]
+
+for key, value in dict
+	try
+		if key = "C"
+			// focefully generate an exception
+			printl( "first param", "second", "third", "test" * value )
+		end
+	catch 
+		continue dropping
+	end
+end
+success()
+
+if dict.len() != 3: failure( "third element removal - size" )
+
+dict = [ "A"=>1, "B" => 2, "C" => 3, "D" => 4 ]
+for key, value in dict
+	try
+		if key = "D"
+			// focefully generate an exception
+			printl( "first param", "second", "third", "test" * value )
+		end
+	catch
+		continue dropping
+	end
+end
+
+if dict.len() != 3: failure( "last element removal - size" )
+
+dict = [ "A"=>1 ]
+for key, value in dict
+	try
+		if key = "A"
+			// focefully generate an exception
+			printl( "first param", "second", "third", "test" * value )
+		end
+	catch
+		continue dropping
+	end
+end
+
+if dict.len() != 0: failure( "removal of single element" )
+
+success()
+
+/* End of file */

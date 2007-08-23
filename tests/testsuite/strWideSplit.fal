@@ -1,0 +1,50 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: strWideSplit.fal,v 1.2 2006/11/05 15:18:03 gian Exp $
+*
+* ID: 101m
+* Category: rtl
+* Subcategory: string
+* Short: strSplit Wide
+* Description:
+*   Test on RTL string functions - strSplit with wide strings
+* [/Description]
+*
+****************************************************************************/
+
+string = "これは 国際な string ですよ！"
+strarr = strSplit( string, " " )
+if len(strarr) != 4: failure( "Strsplit base" )
+if strarr[0] != "これは": failure( "Strsplit part 0" )
+if strarr[1] != "国際な": failure( "Strsplit part 1" )
+
+// notice; this will compare a wide string with a short one!
+if strarr[2] != "string": failure( "Strsplit part 2 - or long/short comparation" )
+
+if strarr[3] != "ですよ！": failure( "Strsplit part 3" )
+
+strarr2 = strSplit( string, " ", 2 )
+if len( strarr2 ) != 2: failure( "Limited split" )
+if strarr[0] != "これは": failure( "Limited Strsplit part 0" )
+if strarr[1] != "国際な": failure( "Limited Strsplit part 1" )
+
+strarr3 = strSplit( string, " ", 100 )
+if len( strarr3 ) != 4: failure( "Overlimited split - size" )
+if strarr3[0] != "これは": failure( "Overlimited split - content 0" )
+if strarr3[1] != "国際な": failure( "Overlimited split - content 1" )
+if strarr3[2] != "string": failure( "Overlimited split - content 2" )
+if strarr3[3] != "ですよ！": failure( "Overlimited split - content 3" )
+
+strarr3 = strSplit( string, "国際な" )
+if len( strarr3 ) != 2: failure( "Complex split - size" )
+if strarr3[0] != "これは ": failure( "Complex split - content 0" )
+if strarr3[1] != " string ですよ！": failure( "Complex split - content 1" )
+
+strarr4 = strSplit( string, "zka" )
+if len( strarr4 ) != 1: failure( "Negative split - size" )
+if strarr4[0] != string: failure( "Negative split - content" )
+
+success()
+
+/* End of file */

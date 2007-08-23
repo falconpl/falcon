@@ -1,0 +1,38 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: stringexp.fal,v 1.1 2007/06/23 18:04:37 jonnymind Exp $
+*
+* ID: 10d
+* Category: types
+* Subcategory: strings
+* Short: String expansion
+* Description:
+* Verify correcntess of string expansion system.
+* This is only a basic grammar test, more sophisticated tests are later on.
+*
+* [/Description]
+*
+****************************************************************************/
+
+var1 = "one"
+var2 = "two"
+var3 = 10
+var4 = 19.388
+string = "Hello $var1;"
+
+if @string != "Hello one;": failure( "First test" )
+
+string = "Hello >$var2:5r<"
+if @string != "Hello >  two<": failure( "Second test" )
+
+string = "Hello >$(var3:5r)<"
+if @string != "Hello >   10<": failure( "Numeric test" )
+
+string = "Hello >$(var4:6.2rd,)<"
+if @string != "Hello > 19,39<": failure( "Numeric comma test" )
+
+
+success()
+
+/* End of file */

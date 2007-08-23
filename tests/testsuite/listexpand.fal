@@ -1,0 +1,46 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: listexpand.fal,v 1.1.1.1 2006/10/08 15:05:43 gian Exp $
+*
+* ID: 11d
+* Category: types
+* Subcategory: array
+* Short: List expansion
+* Description:
+* This test checks the correct interpretation of expressions as
+* a, b, c = 1, 2, 3
+* Using only integers in this test
+* [/Description]
+*
+****************************************************************************/
+
+// basic test
+
+a, b, c = 1, 2, 3
+if a != 1 or b !=2 or c != 3: failure( "Basic expansion -- 1" )
+
+a, b, c = [1, 2, 3]
+if a != 1 or b !=2 or c != 3: failure( "Basic expansion -- 2" )
+
+array = 4, 5, 6
+e, f, g = array
+
+if e != 4 or f != 5 or g != 6: failure( "Translated expansion" )
+
+a, b, c = testReflect( [6, 7, 8] )
+if a != 6 or b != 7 or c != 8: failure( "Returned value expansion" )
+
+a, b, c = [1, 2], 3, 4
+if len( a ) != 2 or b != 3 or c != 4: failure( "Complex expansion" )
+
+a, b, c = testReflect( [ [1, 2], 3, 4 ] )
+if len( a ) != 2 or b != 3 or c != 4: failure( "Complex return value expansion" )
+
+array = [1, 4], 5, 6
+a, b, c = array
+if len( a ) != 2 or b != 5 or c != 6: failure( "Complex translated value expansion" )
+
+success()
+
+/* End of file */

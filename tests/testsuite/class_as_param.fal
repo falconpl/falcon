@@ -1,0 +1,55 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: class_as_param.fal,v 1.1.1.1 2006/10/08 15:05:40 gian Exp $
+*
+* ID: 21f
+* Category: types
+* Subcategory: classes
+* Short: Object as parameters
+* Description:
+* An object is passes as a parameter function and then accessed.
+* [/Description]
+*
+****************************************************************************/
+
+function func( obj1, obj2 )
+   try
+      obj1.prop = 1
+   catch
+      failure( "Can't store in obj1" )
+   end
+
+   try
+      var = obj2.prop
+   catch
+      failure( "Can't access obj2 (reference)" )
+   end
+
+   try
+      obj1.method()
+   catch
+      failure( "Can't call method in obj1" )
+   end
+
+   try
+      obj2.method()
+   catch
+      failure( "Can't call method in obj2 (reference)" )
+   end
+
+end
+
+class cls
+   prop = 0
+   function method()
+   end
+end
+
+obj1 = cls()
+obj2 = cls()
+func( obj1, $obj2 )
+
+success()
+
+/* End of file */

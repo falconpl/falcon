@@ -1,0 +1,67 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: forin.fal,v 1.2 2007/07/06 08:01:32 jonnymind Exp $
+*
+* ID: 16a
+* Category: loops
+* Subcategory: forin
+* Short: Forin simple
+* Description:
+* Cheks the forin loop, in its simplest incarnation
+* [/Description]
+*
+****************************************************************************/
+
+array = [ "a", "b", "c", "d", "e", "f" ]
+
+
+body = []
+for var in array
+   body += var
+end
+
+if len( body ) != len( array ) or body[5] != array[5]
+   failure( "Simple forin" )
+end
+
+body = []
+for var in array
+   body += var
+	forfirst:first = var
+end
+
+if first != "a" or body[1] != "b"
+   failure( "forin - forfirst" )
+end
+
+body = []
+for var in array
+   body += var
+	forlast
+   	last = var
+   end
+end
+
+
+if last != "f" or body[-1] != "f"
+   failure( "forin - forlast" )
+end
+
+body = []
+first = 0
+last = 0
+for var in array
+   body += var
+forfirst : first = var
+forlast : last = var
+end
+
+
+if first != "a" or last != "f" or body[1] != "b" or body[-1] != "f"
+   failure( "forin - forfirst - forlast" )
+end
+
+success()
+
+/* End of file */

@@ -1,0 +1,50 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: fbom_clone.fal,v 1.1 2007/08/03 13:17:07 jonnymind Exp $
+*
+* ID: 36b
+* Category: fbom
+* Subcategory: clone
+* Short: fbom clone
+* Description:
+*   Checking for item copying using fbom.
+* [/Description]
+****************************************************************************/
+
+// string on test
+string = "Hello world"
+string += "."
+smod = string.clone()
+if smod != "Hello world.": failure( "String copy" )
+string += "Modify"
+if smod != "Hello world.": failure( "String copy -- insolation" )
+
+// array copy
+array = [ "a", "b", "c" ]
+amod = array.clone()
+if len( amod ) != 3: failure( "Array copy" )
+array += "element"
+if len( amod ) != 3: failure( "Array copy -- insolation" )
+
+// dictionary copy
+dict = [ 1 => 1, 2 => 2, 3 => 3 ]
+dmod = dict.clone()
+if dmod[2] != 2: failure( "Dict copy" )
+dict[2] = "modified"
+if dmod[2] != 2: failure( "Dict copy -- insolation" )
+
+// object copy
+object test
+   prop1 = "one"
+   prop2 = "two"
+end
+
+tmod = test.clone()
+if tmod.prop1 != "one": failure( "Object copy" )
+test.prop1 = "changed"
+if tmod.prop1 != "one": failure( "Object copy -- insolation" )
+
+success()
+
+/* End of file */

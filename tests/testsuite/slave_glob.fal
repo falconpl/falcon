@@ -1,0 +1,31 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: slave_glob.fal,v 1.1.1.1 2006/10/08 15:05:41 gian Exp $
+*
+* ID: ---
+* Category: modloader
+* Subcategory:
+* Short: Globals across modules, slave
+* Description:
+*   Provides a pre-initialized global variable for the master.
+* [/Description]
+*
+****************************************************************************/
+
+glob = nil
+
+object initializer
+   init
+      global glob
+      glob = "From Slave"
+   end
+end
+
+
+function TestGlob()
+   if glob != "Changed": failure( "Global change not reflected" )
+end
+
+export TestGlob, glob
+/* End of file */

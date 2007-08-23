@@ -1,0 +1,22 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: 0g.fal,v 1.1.1.1 2006/10/08 15:05:43 gian Exp $
+*
+* ID: 0g
+* Category: smoke
+* Subcategory:
+* Short: Smoke test on encoding
+* Description:
+*   Minimal test to check the operativity of the VM, compiler, linker and
+*   unit test package.
+*
+*   An UTF-8 direct string is delivered to the VM.
+* [/Description]
+*
+****************************************************************************/
+
+// Saying: "People, this is a Japanese utf-8 string"
+exit( "皆さん、これは日本語のutf-8ストリング" )
+
+/* End of file */

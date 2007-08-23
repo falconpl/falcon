@@ -1,0 +1,33 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: module_class_middle.fal,v 1.2 2007/07/11 09:18:03 jonnymind Exp $
+*
+* ID: ---
+* Category: modloader
+* Subcategory: class
+* Short: Class properties across modules, middle module
+* Description:
+*    This is a slave module to be loaded by module_class_main (ID 52a). 
+*    It is never directly executed.
+*    This test tries also to load module_class_base, which should be already 
+*    in place.
+* [/Description]
+*
+****************************************************************************/
+
+load module_class_base
+
+// Notice alpha and beta in reverse order
+
+class Middle( sigma, beta, alpha ) from Base( "Middle", alpha, beta )
+   sigma = sigma
+   
+   function overload()
+      return "Middle"
+   end
+end
+
+export
+
+/* End of file */

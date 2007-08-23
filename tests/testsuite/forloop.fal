@@ -1,0 +1,71 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: forloop.fal,v 1.1.1.1 2006/10/08 15:05:43 gian Exp $
+*
+* ID: 15a
+* Category: loops
+* Subcategory: for
+* Short: For loop simple
+* Description:
+* Checks for various aspects of the for loop
+* [/Description]
+*
+****************************************************************************/
+
+// check a standard for
+sum = 0
+for i = 1 to 9
+   sum += i
+end
+if sum != 45: failure( "Minimal for" )
+
+// now let's add a step
+sum = 0
+for i = 1 to 9 step 2
+   sum += i
+end
+if sum != 25: failure( "Step up" )
+
+// and now let's see if we skip 10
+sum = 0
+for i = 1 to 10 step 2
+   sum += i
+end
+if sum != 25: failure( "Step up, odd ending" )
+
+// normal downstep
+sum = []
+for i = 9 to 1
+   sum += i
+end
+
+if sum[8] != 1: failure( "Step down natural" )
+
+sum = []
+for i = 9 to 1 step -3
+   sum += i
+end
+
+if sum[2] != 3: failure( "Step down -3" )
+
+// blocked up
+sum = 0
+for i = 1 to 9 step -1
+   sum += i
+end
+
+if sum != 0: failure( "Automatic exit - up" )
+
+// blocked down
+sum = 0
+for i = 9 to 1 step 1
+   sum += i
+end
+
+if sum != 0: failure( "Automatic exit - down" )
+
+
+success()
+
+/* End of file */

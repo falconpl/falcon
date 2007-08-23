@@ -1,0 +1,92 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: inheritance.fal,v 1.1.1.1 2006/10/08 15:05:41 gian Exp $
+*
+* ID: 21c
+* Category: types
+* Subcategory: classes
+* Short: Inheritance test
+* Description:
+* Tests the inheritance constructs.
+* [/Description]
+*
+****************************************************************************/
+
+class base_one(p1,p2)
+   p_one = 1
+   p_two = 2
+   p_three = nil
+
+   init
+      self.p_three = p1 + p2
+   end
+
+   function basic()
+      return 1
+   end
+end
+
+class base_two( p1, p2 )
+   p_one = 3
+   p_two = 4
+   p_three = nil
+
+   init
+      self.p_three = p1 + p2
+   end
+
+   function basic()
+      return 2
+   end
+end
+
+// simple inheritance tst
+class inh_one from base_one( 1, 2 )
+   p_four = nil
+
+   init
+      self.p_four = self.p_three
+   end
+
+   function basic()
+      return 3
+   end
+end
+
+// basic inheritance verify
+inh = inh_one()
+if inh.basic() != 3: failure( "Basic overload" )
+if inh.p_one != 1: failure( "Inherited initialization" )
+if inh.p_three != 3: failure( "Inherithed parametric initialization" )
+if inh.p_four != 3: failure( "Inheritance constructor order" )
+
+// inherited access verify
+if inh.base_one.basic() != 1: failure( "Base class method access" )
+
+//---------------------------------------------------------
+//double inheritance
+class inh_two(p1) from base_one( p1, 2 ), base_two( 5, p1 )
+   p_four = nil
+
+   init
+      self.p_four = p1
+   end
+
+   function basic()
+      return 3
+   end
+end
+
+inh = inh_two( 3 )
+
+// sequence is one, two, so:
+if inh.p_one != 3: failure( "Basic double inherit order" )
+if inh.p_three != 8: failure( "Basic double init order" )
+if inh.basic() != 3: failure( "Basic double overload" )
+if inh.base_one.basic() != 1: failure( "Double inh. base method access 1" )
+if inh.base_two.basic() != 2: failure( "Double inh. base method access 2" )
+
+success()
+
+/* End of file */

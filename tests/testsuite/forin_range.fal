@@ -1,0 +1,144 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: forin_range.fal,v 1.1 2007/07/20 21:06:39 jonnymind Exp $
+*
+* ID: 16n
+* Category: loops
+* Subcategory: forin
+* Short: Forin ranges
+* Description:
+*   Cheks the forin loop used on ranges.
+*
+* [/Description]
+*
+****************************************************************************/
+
+// Test for open range
+
+result = 0
+count = 0
+
+for c in [10:]
+	result += c
+	count++
+end
+
+if result != 10: failure( "Open range - value" )
+if count != 1: failure( "Open range - times" )
+
+//===================================================
+// Test for empty range, positive
+
+result = 0
+count = 0
+
+for c in [10:10]
+	result += c
+	count++
+end
+
+if result != 0: failure( "Empty range - value" )
+if count != 0: failure( "Empty range - times" )
+
+//===================================================
+// Test for empty range, negative
+
+result = 0
+count = 0
+
+for c in [-10:-10]
+	result += c
+	count++
+end
+
+if result != 0: failure( "Empty range neg - value" )
+if count != 0: failure( "Empty range neg - times" )
+
+//===================================================
+// Test for positive range, upwards
+
+result = 0
+count = 0
+
+for c in [1:5]
+	result += c
+	count++
+end
+
+if result != 1+2+3+4: failure( "Filled range, positive up - value" )
+if count != 4: failure( "Filled range, positive up - times" )
+
+//===================================================
+// Test for positive range, downwards
+
+result = 0
+count = 0
+
+for c in [5:1]
+	result += c
+	count++
+end
+
+if result != 1+2+3+4+5: failure( "Filled range, positive down - value" )
+if count != 5: failure( "Filled range, positive down - times" )
+
+//===================================================
+// Test for negative range, upwards
+
+result = 0
+count = 0
+
+for c in [-5:-1]
+	result += c
+	count++
+end
+
+if result != -5 -4 -3 -2: failure( "Filled range, negative up - value" )
+if count != 4: failure( "Filled range, negative up - times" )
+
+//===================================================
+// Test for negative range, downwards
+
+result = 0
+count = 0
+
+for c in [-1:-5]
+	result += c
+	count++
+end
+
+if result != -5 -4 -3 -2 -1: failure( "Filled range, negative down - value" )
+if count != 5: failure( "Filled range, negative down - times" )
+
+//===================================================
+// Test for mixed range, upwards
+
+result = 0
+count = 0
+
+for c in [-1: 4]
+	result += c
+	count++
+end
+
+if result != -1 +1+2+3 : failure( "Filled range, mixed up - value" )
+if count != 5: failure( "Filled range, mixed up - times" )
+
+//===================================================
+// Test for mixed range, downwards
+
+result = 0
+count = 0
+
+for c in [4: -1]
+	result += c
+	count++
+end
+
+if result != -1 +1+2+3+4 : failure( "Filled range, mixed down - value" )
+if count != 6: failure( "Filled range, mixed down - times" )
+
+success()
+
+/* End of file */

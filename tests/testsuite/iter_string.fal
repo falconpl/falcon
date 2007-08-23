@@ -1,0 +1,65 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: iter_string.fal,v 1.1 2007/07/26 21:14:26 jonnymind Exp $
+*
+* ID: 35a
+* Category: iterators
+* Subcategory:
+* Short: Iterators on strings
+* Description:
+*	Tests for iterator usage on strings.
+* [/Description]
+*
+****************************************************************************/
+
+string = "a string"
+
+// test 1: forward iteration
+it = Iterator( string )
+strcfr = ""
+while it.hasCurrent()
+	strcfr += it.value()
+	it.next()
+end
+
+if strcfr != string: failure( "Forward iteration" )
+
+// test 2: backward iteration
+it = Iterator( string, -1 )
+strcfr = ""
+while it.hasCurrent()
+	strcfr += it.value()
+	it.prev()
+end
+
+if strcfr != string[-1:0]: failure( "Reverse iteration" )
+
+// test 3: item change
+it = Iterator( string )
+while it.hasCurrent()
+	if it.value() == "s"
+		it.value( "x" )
+   end
+
+	it.next()
+end
+
+if string != "a xtring": failure( "Item change" )
+
+// test 4: item remove
+it = Iterator( string )
+while it.hasCurrent()
+	if it.value() == "x"
+		it.remove()
+   else
+		it.next()
+   end
+end
+
+if string != "a tring": failure( "Item remove" )
+if string.len() != 7: failure( "Item remove -- len" )
+
+success()
+
+/* End of file */

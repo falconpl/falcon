@@ -1,0 +1,47 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: pagedict.fal,v 1.1 2007/07/27 09:00:25 jonnymind Exp $
+*
+* ID: 12c
+* Category: types
+* Subcategory: dictionary
+* Short: Basic paged dictionary
+* Description:
+* Checks the basic paged dictionary functionalities with integers
+* [/Description]
+*
+****************************************************************************/
+
+// assignment test - include a compilation test
+dict = PageDict()
+dict[ 2 ] = "two"
+dict[ 0 ] = "zero"
+dict[ 1 ] = "one"
+
+// minimal access
+if dict[0] != "zero": failure( "Minimal access" )
+
+// Changing items
+dict[1] = "first"
+if dict[1] != "first": failure( "Assignment" )
+
+// item addition
+dict = dict + [ 3 => "three" ]
+if dict[3] != "three": failure( "Addition" )
+
+// item change and addition
+dict += [ 3 => "third", 4 => "four" ]
+if dict[3] != "third" or dict[4] != "four": failure( "Addition/modify" )
+
+//in/notin
+if not (1 in dict): failure( "In operator - positive" )
+if "not present" in dict: failure( "In operator - negative" )
+if 1 notin dict: failure( "Notin operator - negative" )
+if not "not present" notin dict: failure( "Notin operator - positive" )
+if len( dict ) != 5: failure( "Len core function" )
+if dict.len() != 5: failure( "Len FBOM" )
+
+success()
+
+/* End of file */

@@ -1,0 +1,26 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: struct_comma.fal,v 1.2 2007/02/24 21:46:46 jonnymind Exp $
+*
+* ID: 1i
+* Category: basic
+* Subcategory: structure
+* Short: Semicomma
+* Description:
+* Checks for semicomma parsing.
+* This tests checks both for valid ";" and fake (useless) ";"
+* [/Description]
+*
+****************************************************************************/
+
+sel = 1
+
+if sel ; success();
+else
+   failure( "Wrong branch" )
+end ;
+
+failure( "If skipped" )
+
+/* End of file */

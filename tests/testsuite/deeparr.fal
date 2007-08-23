@@ -1,0 +1,37 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: deeparr.fal,v 1.1.1.1 2006/10/08 15:05:43 gian Exp $
+*
+* ID: 11c
+* Category: types
+* Subcategory: array
+* Short: Deep array
+* Description:
+* Verify the correctness of deep array access
+* Using only integers in this test
+* [/Description]
+*
+****************************************************************************/
+
+// assignment test - include a compilation test
+array =  [ [ [1,2], [3,4] ], [ [5, 6], [7, 8] ], [ [9, 10], [11, 12] ] ]
+arr2 = [ [1,2], [2,1] ]
+
+if array[1][1][1] != 8: failure( "Deep access" )
+array[2][0][1] = 100
+if array[2][0][1] != 100: failure( "Deep assign" )
+
+if array[ arr2[1][0] ][1][0] != 11: failure( "Deep complex access" )
+
+array[ arr2[1][0] ][1][0] = 100
+if array[ arr2[1][0] ][ 10 - 9 ][ 0 * 1 ] != 100: failure( "Deep complex assign" )
+
+elem = array[ arr2[1][0] ] [1]
+if elem[0] != 100: failure( "Array loading access" )
+elem[1] = 110
+if array[ arr2[1][0] ][1][1] != 110: failure( "Array loading assign" )
+
+success()
+
+/* End of file */

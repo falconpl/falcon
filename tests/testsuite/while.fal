@@ -1,0 +1,44 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: while.fal,v 1.1.1.1 2006/10/08 15:05:43 gian Exp $
+*
+* ID: 14a
+* Category: loops
+* Subcategory: while
+* Short: Basic while
+* Description:
+* Checks for while, break and continue to work correctly
+* [/Description]
+*
+****************************************************************************/
+
+a = 10
+
+while a > 0: --a
+if a != 0: failure( "Minimal while" )
+
+a = 10
+while a > 0
+   if a = 3
+      break
+   end
+   --a
+end
+
+if a != 3: failure( "break" )
+
+a = 10
+while a > 0
+   if a = 3
+      --a
+      continue
+      failure( "continue" )
+   end
+   --a
+end
+
+if a != 0: failure( "while" )
+success()
+
+/* End of file */

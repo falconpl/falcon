@@ -1,0 +1,79 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: autoinc.fal,v 1.1.1.1 2006/10/08 15:05:43 gian Exp $
+*
+* ID: 31a
+* Category: expression
+* Subcategory: incdec
+* Short: Deep autoincrement
+* Description:
+* Test on complex types for auto increment
+* [/Description]
+*
+****************************************************************************/
+
+deeparr = [ 0 ]
+array = [ deeparr ]
+
+if array[0][0]++ != 0: failure( "Array postfix value retrival" )
+if deeparr[0] != 1: failure( "Array postfix effect" )
+if ++array[0][0] != 2: failure( "Array prefix value retrival" )
+if deeparr[0] != 2: failure( "Array prefix effect" )
+
+
+object deepobj
+   property = 0
+end
+
+object one
+   property = deepobj
+end
+
+if one.property.property++ != 0: failure( "Deep obj postfix simple retrival" )
+if deepobj.property != 1: failure( "Deep obj postfix effect" )
+if ++one.property.property != 2: failure( "Deep obj prefix simple retrival" )
+if deepobj.property != 2: failure( "Deep obj prefix effect" )
+
+array = [ one ]
+one.property = 0
+
+if array[0].property ++ != 0: failure( "Deep array->object postfix retrival." )
+if one.property != 1: failure( "Deep array->object postfix effext." )
+if ++ array[0].property != 2: failure( "Deep array->object prefix retrival." )
+if one.property != 2: failure( "Deep array->object prefix effext." )
+
+one.property = array
+array[0] = 0
+
+if one.property[0] ++ != 0: failure( "Deep object->array postfix retrival." )
+if array[0] != 1:  failure( "Deep object->array postfix effext." )
+if ++ one.property[0] != 2: failure( "Deep object->array prefix retrival." )
+if array[0] != 2:  failure( "Deep object->array prefix effext." )
+
+object auto
+   prop = 0
+   proparr = [ 0 ]
+
+   function testpost()
+      if self.prop++ != 0: failure( "Deep object self postfix retrival." )
+      if self.proparr[0]++ != 0: failure( "Deep object self to array postfix retrival." )
+   end
+
+   function testpre()
+      if ++self.prop != 2: failure( "Deep object self prefix retrival." )
+      if ++self.proparr[0] != 2: failure( "Deep object self to array prefix retrival." )
+   end
+end
+
+auto.testpost()
+if auto.prop != 1: failure( "Deep object self postfix effect." )
+if auto.proparr[0] != 1: failure( "Deep object self to array postfix effect." )
+
+auto.testpre()
+if auto.prop != 2: failure( "Deep object self prefix effect." )
+if auto.proparr[0] != 2: failure( "Deep object self to array prefix effect." )
+
+success()
+
+/* End of file */

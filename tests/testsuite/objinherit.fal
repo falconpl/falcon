@@ -1,0 +1,58 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: objinherit.fal,v 1.1.1.1 2006/10/08 15:05:43 gian Exp $
+*
+* ID: 22b
+* Category: types
+* Subcategory: objects
+* Short: Multiple inheritance object
+* Description:
+* Object that inherits from multiple classes.
+*
+* [/Description]
+*
+****************************************************************************/
+
+class one
+   pone = nil
+   init
+      self.pone = [1,2,3]
+   end
+
+   function method_one()
+      return 0
+   end
+end
+
+class two
+   ptwo = ["a"=>1, "b"=>2, "C"=>3 ]
+
+   function method_two()
+      return 0
+   end
+end
+
+object zero from one, two
+   function method_one()
+      return "redefined"
+   end
+
+   function method_three()
+      if self.method_two() != 0: failure("Internal method call")
+      if self.one.method_one() != 0: failure( "Self access class base" )
+      return 0
+   end
+
+end
+
+if zero.method_three() != 0: failure( "Declared method" )
+if len( zero.pone ) != 3: failure( "Inheritance/init block" )
+if zero.ptwo["a"] != 1: failure( "Inheritance/ auto block" )
+if zero.method_one() != "redefined": failure("Overolading" )
+if zero.method_two() != 0: failure( "Direct inherited call" )
+if zero.one.method_one() != 0: failure( "Base access" )
+
+success()
+
+/* End of file */

@@ -1,0 +1,78 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: autoxor.fal,v 1.1.1.1 2006/10/08 15:05:43 gian Exp $
+*
+* ID: 30h
+* Category: expression
+* Subcategory: autoassign
+* Short: Deep autoassign xor
+* Description:
+* Test on complex types for autoassign xor
+* [/Description]
+*
+****************************************************************************/
+
+deeparr = [ 0x0f00 ]
+array = [ deeparr ]
+
+array[0][0] ^= 0x01f0
+if deeparr[0] != 0x0Ef0: failure( "Deep array simple" )
+array[0][0] ^= testReflect( 0xf0f0 )
+if deeparr[0] != 0xfE00: failure( "Deep array complex" )
+
+object deepobj
+   property = 0x0f00
+end
+
+object one
+   property = deepobj
+end
+
+one.property.property ^= 0x01f0
+if deepobj.property != 0x0Ef0: failure( "Deep obj simple" )
+one.property.property ^= testReflect( 0xf0f0 )
+if deepobj.property != 0xfE00: failure( "Deep obj complex" )
+
+array = [ one ]
+one.property = 0x0f00
+
+array[0].property ^= 0x01f0
+if one.property != 0x0Ef0: failure( "Deep array->object simple." )
+array[0].property ^= testReflect( 0xf0f0 )
+if one.property != 0xfE00: failure( "Deep array->object complex." )
+
+one.property = array
+array[0] = 0x0f00
+
+one.property[0] ^= 0x01f0
+if array[0] != 0x0Ef0: failure( "Deep object->array simple." )
+one.property[0] ^= testReflect( 0xf0f0 )
+if array[0] != 0xfE00: failure( "Deep object->array complex." )
+
+object auto
+   prop = 0x0f00
+   proparr = [ 0x0f00 ]
+
+   function test()
+      self.prop ^= 0x01f0
+      self.proparr[0] ^= 0x01f0
+   end
+
+   function testCpx()
+      self.prop ^= testReflect( 0xf0f0 )
+      self.proparr[0] ^= testReflect( 0xf0f0 )
+   end
+end
+
+auto.test()
+if auto.prop != 0x0Ef0: failure( "Deep object self assign simple." )
+if auto.proparr[0] != 0x0Ef0: failure( "Deep object self to array assign simple." )
+
+auto.testCpx()
+if auto.prop != 0xfE00: failure( "Deep object self assign complex." )
+if auto.proparr[0] != 0xfE00: failure( "Deep object self to array assign complex." )
+
+success()
+
+/* End of file */

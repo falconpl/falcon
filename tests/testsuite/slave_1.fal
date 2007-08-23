@@ -1,0 +1,22 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: slave_1.fal,v 1.1.1.1 2006/10/08 15:05:40 gian Exp $
+*
+* ID: ---
+* Category: modloader
+* Subcategory:
+* Short: Basic cascade compilation test, slave module
+* Description:
+*    This is a slave module to be loaded by master_1 (ID 50a). It is never
+*    directly executed.
+* [/Description]
+*
+****************************************************************************/
+function fromSlave()
+   return 1
+end
+
+export fromSlave
+
+/* End of file */

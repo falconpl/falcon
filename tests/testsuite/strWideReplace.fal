@@ -1,0 +1,28 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: strWideReplace.fal,v 1.1 2006/11/05 15:18:03 gian Exp $
+*
+* ID: 101j
+* Category: rtl
+* Subcategory: string
+* Short: strReplace wide
+* Description:
+*   Test on RTL string functions - replace string in wide characters.
+* [/Description]
+*
+****************************************************************************/
+
+string = "これは internationalなストリング"
+strrep = strReplace( string, "ス", "ワ" )
+if strrep != "これは internationalなワトリング": failure( "strReplace, single with single" )
+strrep = strReplace( string, "ス", "ワヲ" )
+if strrep != "これは internationalなワヲトリング": failure( "strReplace, single with string" )
+strrep = strReplace( string, "na", "x" )
+if strrep != "これは interxtioxlなストリング": failure( "strReplace, string with single" )
+strrep = strReplace( string, "これ", "'another long'" )
+if strrep != "'another long'は internationalなストリング": failure( "strReplace, string with string" )
+
+success()
+
+/* End of file */

@@ -1,0 +1,75 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: empty_loops.fal,v 1.1 2007/08/01 13:33:12 jonnymind Exp $
+*
+* ID: 16p
+* Category: loops
+* Subcategory: empty
+* Short: Empty loops
+* Description:
+*   Cheks the while and forin loops to be performed also when empty.
+*
+* [/Description]
+*
+****************************************************************************/
+
+// Test for open range
+tc1 = false
+tc2 = false
+
+function testCall1()
+   global tc1 
+   tc1 = true
+   return false
+end
+
+function testCall2()
+   global tc2 
+   tc2 = true
+   return [1,2,3]
+end
+
+//=========================
+// test for an empty while
+//
+
+while testCall1()
+end
+
+if not tc1: failure( "Empty while" )
+
+
+//=========================
+// test for an empty for
+//
+for i = 1 to 10
+end
+
+if i != 10: failure( "Empty for" )
+
+//==========================
+// test for an empty for/in
+//
+for i in testCall2()
+end
+
+if not tc2: failure( "Empty for/in" )
+   
+//==========================
+// Now test empty forlast
+// empty forfirst and forall just do nothing
+//
+
+res = ""
+for i in [1,2,3]
+   res += i.toString()
+   forall: res += ";"
+   forlast; end
+end
+
+if res != "1;2;3": failure( "Empty forlast" )
+   
+
+
+/* End of file */

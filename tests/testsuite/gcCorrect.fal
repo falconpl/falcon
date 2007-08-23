@@ -1,0 +1,20 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: gcCorrect.fal,v 1.1 2007/07/11 06:53:03 jonnymind Exp $
+*
+* ID: 99
+* Category: memory
+* Subcategory: gc
+* Short: GC correctness test
+* Description:
+* Test for correctness of GC allocation and de-allocation
+* [/Description]
+*
+****************************************************************************/
+
+
+
+success()
+
+/* End of file */

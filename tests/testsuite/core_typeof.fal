@@ -1,0 +1,42 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: core_typeof.fal,v 1.2 2007/03/14 01:18:10 jonnymind Exp $
+*
+* ID: 40a
+* Category: rtl
+* Subcategory: core
+* Short: TypeOf test
+* Description:
+* Tests for predefined constants and typeOf core module function.
+* [/Description]
+*
+****************************************************************************/
+
+class testClass
+end
+
+object testObj
+   function testMethod()
+   end
+end
+
+function func()
+end
+
+if typeOf( nil ) != NilType: failure( "Nil type" )
+if typeOf( 1 ) != IntegerType: failure( "Integer type" )
+if typeOf( 1.1 ) != NumericType: failure( "Numberic type" )
+if typeOf( [1:2] ) != RangeType: failure( "Range type" )
+if typeOf( func ) != FunctionType: failure( "Function type" )
+if typeOf( "hello" ) != StringType: failure( "String type" )
+if typeOf( [1,2] ) != ArrayType: failure( "Array type" )
+if typeOf( [1 => 2 ] ) != DictionaryType: failure( "Dictionary type" )
+if typeOf( testObj ) != ObjectType: failure( "Object type / automatic" )
+if typeOf( testClass() ) != ObjectType: failure( "Object type / created" )
+if typeOf( testClass ) != ClassType: failure( "Class type" )
+if typeOf( testObj.testMethod ) != MethodType: failure( "Method type" )
+
+success()
+
+/* End of file */

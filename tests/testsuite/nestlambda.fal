@@ -1,0 +1,46 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: nestlambda.fal,v 1.2 2007/02/24 21:46:46 jonnymind Exp $
+*
+* ID: 18b
+* Category: lambda
+* Subcategory:
+* Short: Nested lambdas
+* Description:
+* Nested lambda functions and functions returning lambdas
+* [/Description]
+*
+****************************************************************************/
+
+function ret_lambda( sel )
+   if sel
+      var = lambda( param )
+            var = lambda( a, b )
+               return a * b
+            end
+            return param * var( 2, 3 )
+      end
+   else
+      var = lambda( param )
+            var = lambda( a, b )
+               return a + b
+            end
+            return param + var( 4, 5 )
+      end
+   end
+
+   return var
+end
+
+var = ret_lambda( 0 )
+
+if var( 10 ) != 10 + 4 + 5: failure( "Point A" )
+
+// tests also for callable function return direct call
+// and compilation issues.
+if ret_lambda(1)( 5 ) !=  5 * 2 * 3: failure( "Point B" )
+
+success()
+
+/* End of file */

@@ -1,0 +1,49 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: forincomplex.fal,v 1.2 2007/08/01 10:30:41 jonnymind Exp $
+*
+* ID: 16b
+* Category: loops
+* Subcategory: forin
+* Short: Forin complex
+* Description:
+* Cheks the forin loop, using complex effects...
+* [/Description]
+*
+****************************************************************************/
+
+function provider()
+   return [ ["a", "b", 1 ], ["c", "d", 2], ["e", "f", 3] ]
+end
+
+array1 = []
+array2 = []
+array3 = []
+
+for var1, var2, var3 in provider()
+   array1 += var1
+   array2 += var2
+   array3 += var3
+end
+
+if array1[2] != "e" or array2[2] != "f" or array3[2] != 3
+   failure( "Forin with array unpack" )
+end
+
+
+array1 = []
+array2 = []
+for key, value in [ "k1" => "v1", "k2" => "v2" ]
+   array1 += key
+   array2 += value
+end
+success()
+
+if array1[1] != "k2" or array2[1] != "v2"
+   failure( "Forin with dictionary unpack" )
+end
+
+success()
+
+/* End of file */

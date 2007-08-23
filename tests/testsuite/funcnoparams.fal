@@ -1,0 +1,24 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: funcnoparams.fal,v 1.1.1.1 2006/10/08 15:05:41 gian Exp $
+*
+* ID: 13n
+* Category: functions
+* Subcategory:
+* Short: Function without parameters
+* Description:
+* For unbeliveable as it may seems, all the other tests passesd with a bug in the
+* complire that didn't check for functions not having paramters.
+* [/Description]
+*
+****************************************************************************/
+
+function test( )
+   success()
+end
+
+test()
+failure( "Function not called" )
+
+/* End of file */

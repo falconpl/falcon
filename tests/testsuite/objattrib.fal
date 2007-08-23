@@ -1,0 +1,62 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: objattrib.fal,v 1.2 2006/11/20 21:21:52 gian Exp $
+*
+* ID: 22c
+* Category: types
+* Subcategory: objects
+* Short: Object using attributes
+* Description:
+* Test attributes related grammar with objects.
+* [/Description]
+*
+****************************************************************************/
+
+attributes: attrib_one
+
+/* Leave a space below attrib_two; it is needed to check attrib context */
+attributes
+   attrib_two
+
+   attrib_three// comment
+   /* comment */
+   attrib_four, attrib_five // comment
+end
+
+class cl_one
+   has attrib_one, attrib_two
+end // comment
+
+class cl_two
+   function test_three()
+      return self has attrib_three
+   end
+
+   has attrib_three
+end
+
+object item from cl_one, cl_two
+   init
+      give not attrib_one to self
+   end
+
+   has not attrib_three, attrib_four
+end
+
+// has/init clearing/setting
+if item has attrib_three: failure( "Attribute not cleared in inheritance" )
+if item hasnt attrib_two: failure( "Attribute not set with inheritance" )
+if item has attrib_one: failure( "Attribute not cleared in init" )
+if item hasnt attrib_four: failure( "Attribute not set in has clause" )
+
+// explicit clearing and setting
+give attrib_four, attrib_two, not attrib_one to item
+
+if item hasnt attrib_four: failure( "Attribute re-giving" )
+if item hasnt attrib_two: failure( "Attribute giving" )
+if item has attrib_one: failure( "Attribute removal" )
+
+success()
+
+/* End of file */

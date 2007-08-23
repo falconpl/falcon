@@ -1,0 +1,54 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: trycatch_module.fal,v 1.1 2007/03/10 14:21:34 jonnymind Exp $
+*
+* ID: 20g
+* Category: statements
+* Subcategory: try
+* Short: Inter-module try/catch
+* Description:
+* Tests for inter module raise and catch. Module context must be changed
+* and set up coherently on raisal, or the test will crash the vm.
+* [/Description]
+*
+****************************************************************************/
+
+load trycatch_mod1
+
+try
+	raiseInMod1()
+catch IntegerType in err
+	failure( "Type catch - top - 1" )
+catch StringType in err
+	if err != "Hello from module 1"
+		failure( "Raise content - 1" )
+	end
+catch Error
+	failure( "Type catch - top - 2" )
+catch in res1
+	failure( "Type catch - top - 3" )
+end
+
+// this raises an error in module 2 which is catched in module 1
+callInMod1()
+
+try
+	// this call a function in module 1 which calls a function in module 2
+	// which raises a string
+	callInMod1_2()
+catch IntegerType in err
+	failure( "Type catch - top - 4" )
+catch StringType in err
+	if err != "Hello from module 2"
+		failure( "Raise content - 2" )
+	end
+catch Error
+	failure( "Type catch - top - 6" )
+catch in res1
+	failure( "Type catch - top - 7" )
+end
+
+success()
+
+/* End of file */

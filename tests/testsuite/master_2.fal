@@ -1,0 +1,31 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: master_2.fal,v 1.1.1.1 2006/10/08 15:05:41 gian Exp $
+*
+* ID: 50b
+* Category: modloader
+* Subcategory:
+* Short: Multiple cascade compilation.
+* Description:
+*   The structure of this compilation test is a bit more complex.
+*   We require the loading of two modules, each of which loads other
+*   two modules. One of this two modules loads again one of the modules
+*   we load.
+* [/Description]
+*
+****************************************************************************/
+load slave_1
+load slave_2
+load slave_3
+
+if not fromSlave(): failure( "didn't load slave_1 module" )
+if not fromSlave_2(): failure( "didn't load slave_2 module" )
+if not fromSlave_3(): failure( "didn't load slave_3 module" )
+if not fromSlave_4(): failure( "didn't load slave_4 module" )
+if not fromSlave_5(): failure( "didn't load slave_5 module" )
+if not fromSlave_6(): failure( "didn't load slave_6 module" )
+
+success()
+
+/* End of file */

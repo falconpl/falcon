@@ -1,0 +1,50 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: array_sub.fal,v 1.1 2007/08/11 00:11:57 jonnymind Exp $
+*
+* ID: 11h
+* Category: types
+* Subcategory: array
+* Short: Subtract array
+* Description:
+* Checks working of subtract operator on arrays
+* [/Description]
+*
+****************************************************************************/
+
+// assignment test - include a compilation test
+arr = [ 2, 0, 1, "alpha", "beta" ]
+
+// remove an item
+arr1 = arr - "beta"
+if arr1.len() != 4: failure( "remove one item - size" )
+if "beta" in arr1 : failure( "remove one item - content" )
+
+// remove an array
+arr2 = arr - [2, "alpha"]
+if arr2.len() != 3: failure( "remove array - size" )
+if 2 in arr2 or "alpha" in arr2: failure( "remove array - content" )
+
+// invariance
+if 2 notin arr or "alpha" notin arr or "beta" notin arr
+	failure( "remove invariance" )
+end
+
+// now for self operators
+arr -= "beta"
+if arr.len() != 4: failure( "self remove one item - size" )
+if "beta" in arr : failure( "self remove one item - content" )
+
+arr -= "beta"
+if arr.len() != 4: failure( "self remove one item again - size" )
+if "beta" in arr : failure( "self remove one item again - content" )
+
+// remove an array
+arr -= [2, "alpha", "beta" ] // try also to remove an item removed
+if arr.len() != 2: failure( "self remove array - size" )
+if 2 in arr or "alpha" in arr: failure( "self remove array - content" )
+
+success()
+
+/* End of file */

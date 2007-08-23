@@ -1,0 +1,47 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: rng_as_array.fal,v 1.1 2007/07/26 21:14:26 jonnymind Exp $
+*
+* ID: 11g
+* Category: types
+* Subcategory: range
+* Short: Range as array
+* Description:
+*  Test for array access on range variables.
+* [/Description]
+*
+****************************************************************************/
+
+// a range
+range = [1:3]
+
+// basic test, we need this to certify everything works
+if range != [1:3]: failure( "Range comparation" )
+
+// test for range access
+if range[0] != 1: failure( "Range access begin" )
+if range[1] != 3: failure( "Range access end" )
+if range[-1] != 3: failure( "Range access -end" )
+
+// test for range write
+range[0] = 4
+if range != [4:3]: failure( "range set begin" )
+
+range[1] = 4
+if range != [4:4]: failure( "range set end" )
+
+range[-1] = 5
+if range != [4:5]: failure( "range set -end" )
+
+// opening the range
+range[1] = nil
+if range != [4:]: failure( "range opening" )
+
+range = [1:2]
+range[-1] = nil
+if range != [1:]: failure( "range -opening" )
+
+success()
+
+/* End of file */

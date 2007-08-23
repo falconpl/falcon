@@ -1,0 +1,24 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: trycatch_mod2.fal,v 1.1 2007/03/10 14:21:34 jonnymind Exp $
+*
+* ID: ---
+* Category:
+* Subcategory:
+* Short: try catch test / slave module 2
+* Description:
+*    This slave test will be loaded form trycatch_mod1.fal
+*    It is used to raise exceptions that will be catched
+*    in parent modules.
+* [/Description]
+*
+****************************************************************************/
+
+function raiseInMod2()
+	raise "Hello from module 2"
+end
+
+export
+
+/* End of file */

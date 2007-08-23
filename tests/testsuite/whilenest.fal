@@ -1,0 +1,36 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: whilenest.fal,v 1.1.1.1 2006/10/08 15:05:43 gian Exp $
+*
+* ID: 14b
+* Category: loops
+* Subcategory: while
+* Short: Nested while
+* Description:
+* Checks for nested whiles
+* [/Description]
+*
+****************************************************************************/
+
+a = 10
+c = 0
+
+// minimal nested while
+while a > 0
+  a --
+  b = 10
+  while b > 0
+     b --
+  end
+  if b != 0: failure( "Nested exit" )
+  c ++
+  if c > 10: failure( "Nested repetition" )
+end
+
+if a != 0: failure( "Loop condition - 1" )
+if c != 10: failure( "Loop execution - 1" )
+
+success()
+
+/* End of file */

@@ -1,0 +1,58 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: complexexpr.fal,v 1.1.1.1 2006/10/08 15:05:40 gian Exp $
+*
+* ID: 2b
+* Category: expression
+* Subcategory:
+* Short: Complex expression
+* Description:
+* As test 2a, this test checks for expressions to work, but it uses complex
+* sub expression items, in this case function calls that are found in the
+* testsuite module, to check for complex item resolution (i.e. loading an
+* expression item in A and then checking it).
+*
+* This leverages on conditionals.
+* [/Description]
+*
+****************************************************************************/
+
+// basic expr
+a = 1
+a = a = testReflect( 2 )
+if a: failure( "Assignment disambiguation 1 - simple/complex" )
+
+a = 1
+a = testReflect( a ) = 2
+if a: failure( "Assignment disambiguation 2 - complex/simple" )
+
+a = 1
+a = testReflect( a ) = testReflect( 2 )
+if a: failure( "Assignment disambiguation 3 - complex/complex" )
+
+
+// basic math
+a = 3 + testReflect( 4 ) * 2 - 1 * testReflect( 3 ) * ( 2 + 1 )
+if a != 2: failure( "Math priortiy" )
+
+// connector expr
+b = testReflect( 1 ) and 0 or testReflect( 1 ) and 2
+if not b: failure( "Connector expression 1 complex/simple mix" )
+b = 0
+b = 1 and testReflect( 0 ) or 1 and testReflect( 2 )
+if not b: failure( "Connector expression 2 complex/simple mix" )
+
+b = 0
+b = testReflect( 1 ) and testReflect( 0 ) or testReflect( 1 ) and testReflect( 2 )
+if not b: failure( "Connector expression 3 all complex" )
+
+b = 0
+testReflect( b ) or testReflect( 1 ) and testReflect( 0 ) or let b = testReflect( 2 )
+if b != 2: failure( "Connector expression 4: connectors and let, all complex")
+b = testReflect( 0 ) or testReflect( 1 ) and not testReflect( 3 ) or testReflect( 1 )
+if not b: failure( "Connector expression 5: not operator")
+
+success()
+
+/* End of file */

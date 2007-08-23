@@ -1,0 +1,22 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id $Id: 0a.fal,v 1.2 2007/08/01 00:05:45 jonnymind Exp $
+*
+* ID: 0a
+* Category: smoke
+* Subcategory:
+* Short: Minimal smoke test
+* Description:
+*   Minimal test to check the operativity of the VM, compiler, linker and
+*   unit test package.
+*
+*   This just stores 0 in the return field of the virtual machine.
+* [/Description]
+*
+* // To be implemented. Expected failure step & expected error
+****************************************************************************/
+
+exit( 0 )
+
+/* End of file */

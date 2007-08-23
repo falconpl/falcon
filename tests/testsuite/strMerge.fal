@@ -1,0 +1,44 @@
+﻿/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: strMerge.fal,v 1.1.1.1 2006/10/08 15:05:43 gian Exp $
+*
+* ID: 101b
+* Category: rtl
+* Subcategory: string
+* Short: strMerge
+* Description:
+*   Test on RTL string functions.
+*   Testing here strMerge functionalities.
+* [/Description]
+*
+****************************************************************************/
+
+strarr = [ "this", "is", "a", "string" ]
+strres = strMerge( strarr  )
+if strres != "thisisastring": failure( "strMerge single param" )
+
+strres = strMerge( strarr, "," )
+if strres != "this,is,a,string": failure( "strMerge" )
+
+strres = strMerge( strarr, ",", 3 )
+if strres != "this,is,a": failure( "strMerge limited" )
+
+strres = strMerge( strarr, ",", 1 )
+if strres != "this": failure( "strMerge limited to 1" )
+
+strres = strMerge( strarr, ",", 0 )
+if strres != "": failure( "strMerge limited to 0" )
+
+strres = strMerge( strarr, ",", 10 )
+if strres != "this,is,a,string": failure( "strMerge overlimited" )
+
+strres = strMerge( [] )
+if strres != "": failure( "strMerge with empty array" )
+
+strres = strMerge( [], ",", 10 )
+if strres != "": failure( "strMerge with empty array overlimited" )
+
+success()
+
+/* End of file */
