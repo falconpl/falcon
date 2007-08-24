@@ -1,7 +1,7 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: flcrun.cpp
-   $Id: flcrun.cpp,v 1.11 2007/08/11 00:11:55 jonnymind Exp $
+   FILE: falrun.cpp
+   $Id: falrun.cpp,v 1.11 2007/08/11 00:11:55 jonnymind Exp $
 
    A simple program that uses Falcon VM to execute falcon compiled codes.
    -------------------------------------------------------------------
@@ -49,15 +49,13 @@ static void version()
 {
    stdOut->writeString( "FALCON runtime virtual machine.\n" );
    stdOut->writeString( "Version " );
-   stdOut->writeString( FALCON_OFFICIAL_VERSION " (" FALCON_VERSION_NAME ")" );
-   stdOut->writeString( "\n" );
-   stdOut->writeString( "CVS source revision $Revision: 1.11 $\n" );
+   stdOut->writeString( FALCON_VERSION " (" FALCON_VERSION_NAME ")" );
    stdOut->writeString( "\n" );
 }
 
 static void usage()
 {
-   stdOut->writeString( "Usage: flcrun [options] file.hsc [script options]\n" );
+   stdOut->writeString( "Usage: falrun [options] file.hsc [script options]\n" );
    stdOut->writeString( "\n" );
    stdOut->writeString( "Options:\n" );
    stdOut->writeString( "   -e <enc>    select default encoding for VM streams\n" );
@@ -173,7 +171,7 @@ int main( int argc, char *argv[] )
             case 'v': version(); return 0;
 
             default:
-               stdOut->writeString( "flcrun: unrecognized option '" );
+               stdOut->writeString( "falrun: unrecognized option '" );
                stdOut->writeString( op );
                stdOut->writeString( "'.\n\n" );
                usage();
@@ -210,7 +208,7 @@ int main( int argc, char *argv[] )
    }
 
    if ( input_file == 0 ) {
-      stdOut->writeString( "flcrun: missing script name.\n" );
+      stdOut->writeString( "falrun: missing script name.\n" );
       usage();
       return 1;
    }
@@ -220,7 +218,7 @@ int main( int argc, char *argv[] )
 
    if ( ! bincode_stream->good() )
    {
-      stdOut->writeString( "flcrun: Can't open file " );
+      stdOut->writeString( "falrun: Can't open file " );
       stdOut->writeString( input_file );
       stdOut->writeString( "\n" );
       return 1;
@@ -296,4 +294,4 @@ int main( int argc, char *argv[] )
 }
 
 
-/* end of flcrun.cpp */
+/* end of falrun.cpp */

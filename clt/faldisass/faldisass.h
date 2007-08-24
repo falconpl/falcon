@@ -1,7 +1,7 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: flcdisass.h
-   $Id: flcdisass.h,v 1.2 2006/11/04 19:21:06 gian Exp $
+   FILE: faldisass.h
+   $Id: faldisass.h,v 1.2 2006/11/04 19:21:06 gian Exp $
 
    Falcon disassembler private header file.
    -------------------------------------------------------------------
@@ -25,8 +25,8 @@
    data ordered.
 */
 
-#ifndef flc_flcdisass_H
-#define flc_flcdisass_H
+#ifndef flc_faldisass_H
+#define flc_faldisass_H
 
 #include <falcon/setup.h>
 #include <falcon/types.h>
@@ -76,4 +76,4 @@ typedef std::map< int32, const Symbol * > t_funcMap;
 
 #endif
 
-/* end of flcdisass.h */
+/* end of faldisass.h */

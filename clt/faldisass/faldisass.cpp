@@ -1,6 +1,6 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: flcdisass.cpp
+   FILE: faldisass.cpp
    $Id: flcdis.cpp,v 1.13 2007/08/18 11:08:08 jonnymind Exp $
 
    Falcon disassembler
@@ -25,12 +25,11 @@
 #include <falcon/stringstream.h>
 #include <falcon/transcoding.h>
 
-
 #include <vector>
 #include <list>
 #include <map>
 
-#include "flcdisass.h"
+#include "faldisass.h"
 
 namespace Falcon
 {
@@ -1030,7 +1029,7 @@ void write_deptable( e_tabmode mode , Stream *out, Module *mod )
 void usage()
 {
    ::Falcon::Stream *stdOut = ::Falcon::stdOutputStream();
-   stdOut->writeString( "USAGE: flcdisass [options] [filename]\n" );
+   stdOut->writeString( "USAGE: faldisass [options] [filename]\n" );
    stdOut->writeString( "\t-s: Dump the string table\n" );
    stdOut->writeString( "\t-S: Write the strings inline instead of using #strid\n" );
    stdOut->writeString( "\t-y: Dump the symbol table\n" );
@@ -1073,7 +1072,7 @@ int main( int argc, char *argv[] )
                case 'd': options.m_dump_dep = true; break;
                case 'h': case '?': usage(); return 0; break;
                default:
-                  stdErr->writeString( "flcdisass: unrecognized option '-" );
+                  stdErr->writeString( "faldisass: unrecognized option '-" );
                   stdErr->put( option[pos] );
                   stdErr->writeString( "'.\n" );
                   usage();
@@ -1096,7 +1095,7 @@ int main( int argc, char *argv[] )
       inf.open( options.m_fname );
       if ( ! inf.good() )
       {
-         stdErr->writeString( "flcdisass: can't open file " );
+         stdErr->writeString( "faldisass: can't open file " );
          stdErr->writeString( options.m_fname );
          stdErr->writeString( "\n" );
          return 1;
@@ -1113,9 +1112,9 @@ int main( int argc, char *argv[] )
    if( ! module->load( in, false ) )
    {
       if ( options.m_fname == 0 || options.m_stdin )
-         stdErr->writeString( "flcdisass: invalid module in input stream\n" );
+         stdErr->writeString( "faldisass: invalid module in input stream\n" );
       else {
-         stdErr->writeString( "flcdisass: invalid module " );
+         stdErr->writeString( "faldisass: invalid module " );
          stdErr->writeString( options.m_fname );
          stdErr->writeString( "\n" );
       }
@@ -1176,4 +1175,4 @@ int main( int argc, char *argv[] )
 }
 
 
-/* end of flcdisass.cpp */
+/* end of faldisass.cpp */

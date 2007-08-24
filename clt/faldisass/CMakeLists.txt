@@ -8,7 +8,7 @@ LINK_DIRECTORIES(BEFORE $ENV{FALCON_ACTIVE_TREE}/lib )
 
 # Target
 ADD_EXECUTABLE( faldisass
-   flcdis.cpp
+   faldisass.cpp
 )
 
 #Link

@@ -150,9 +150,7 @@ static void version()
 {
    stdOut->writeString( "Falcon compiler and interpreter.\n" );
    stdOut->writeString( "Version " );
-   stdOut->writeString( FALCON_OFFICIAL_VERSION " (" FALCON_VERSION_NAME ")" );
-   stdOut->writeString( "\n" );
-   stdOut->writeString( "CVS source revision $Revision: 1.36 $\n" );
+   stdOut->writeString( FALCON_VERSION " (" FALCON_VERSION_NAME ")" );
    stdOut->writeString( "\n" );
 }
 
