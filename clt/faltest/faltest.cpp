@@ -200,8 +200,6 @@ static void version()
    stdOut->writeString( "Version " );
    stdOut->writeString( FALCON_OFFICIAL_VERSION " (" FALCON_VERSION_NAME ")" );
    stdOut->writeString( "\n" );
-   stdOut->writeString( "CVS source revision $Revision: 1.27 $\n" );
-   stdOut->writeString( "\n" );
 }
 
 static void usage()
