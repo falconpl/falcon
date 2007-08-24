@@ -1,0 +1,19 @@
+PROJECT(falrun)
+
+# Inclusion settings
+INCLUDE_DIRECTORIES(.)
+INCLUDE_DIRECTORIES(BEFORE $ENV{FALCON_BUILD_TREE}/include)
+INCLUDE_DIRECTORIES(BEFORE ../include)
+LINK_DIRECTORIES(BEFORE $ENV{FALCON_ACTIVE_TREE}/lib )
+
+# Target
+ADD_EXECUTABLE( falrun
+   falrun.cpp
+)
+
+#Link
+TARGET_LINK_LIBRARIES(faldisass falcon_engine)
+
+#Install
+INSTALL( TARGETS faldisass
+   DESTINATION $ENV{FALCON_ACTIVE_TREE}/bin )
