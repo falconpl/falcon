@@ -57,7 +57,7 @@ Compiler::Compiler( Module *mod, Stream* in ):
    m_delayRaise( false ),
    m_rootError( 0 )
 {
-   m_module->engineVersion( FALCON_ENGINE_VERSION_NUM );
+   m_module->engineVersion( FALCON_VERSION_NUM );
 
    m_lexer = new SrcLexer( this, in );
    m_root = new SourceTree;

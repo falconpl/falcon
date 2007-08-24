@@ -60,7 +60,7 @@ AsmCompiler::AsmCompiler( Module *mod, Stream *in, Stream *out ):
    m_switchItem = 0;
    m_switchJump = 0;
    m_switchEntryNil = 0;
-   m_module->engineVersion( FALCON_ENGINE_VERSION_NUM );
+   m_module->engineVersion( FALCON_VERSION_NUM );
 
    //m_switchObjList.deletor( Pseudo_Deletor );
 }

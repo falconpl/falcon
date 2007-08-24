@@ -57,15 +57,15 @@ namespace core {
 FALCON_FUNC  vmVersionInfo( ::Falcon::VMachine *vm )
 {
    CoreArray *ca = new CoreArray( vm, 3 );
-   ca->append( (int64) ((FALCON_ENGINE_VERSION_NUM >> 16) & 0xFF) );
-   ca->append( (int64) ((FALCON_ENGINE_VERSION_NUM >> 8) & 0xFF) );
-   ca->append( (int64) ((FALCON_ENGINE_VERSION_NUM ) & 0xFF) );
+   ca->append( (int64) ((FALCON_VERSION_NUM >> 16) & 0xFF) );
+   ca->append( (int64) ((FALCON_VERSION_NUM >> 8) & 0xFF) );
+   ca->append( (int64) ((FALCON_VERSION_NUM ) & 0xFF) );
    vm->retval( ca );
 }
 
 FALCON_FUNC  vmVersionName( ::Falcon::VMachine *vm )
 {
-   String *str = new GarbageString( vm, FALCON_OFFICIAL_VERSION " (" FALCON_VERSION_NAME ")" );
+   String *str = new GarbageString( vm, FALCON_VERSION " (" FALCON_VERSION_NAME ")" );
    vm->retval( str );
 }
 

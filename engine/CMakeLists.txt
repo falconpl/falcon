@@ -1,5 +1,6 @@
 PROJECT(falcon_engine)
 
+INCLUDE_DIRECTORIES(BEFORE $ENV{FALCON_BUILD_TREE}/include)
 INCLUDE_DIRECTORIES(BEFORE ../include)
 
 #Specific system files
@@ -23,13 +24,15 @@ IF(UNIX OR MAC)
          dll_win.cpp )
    ENDIF(UNIX)
 
-   ADD_CUSTOM_COMMAND( OUTPUT $ENV{FALCON_BUILD_TREE}/core/engine/fasm_parser.cpp
-      COMMAND bison $ENV{FALCON_SRC_TREE}/core/engine/fasm_parser.yy -o fasm_parser.cpp
-      COMMAND mv -f fasm_parser.hpp fasm_parser.h )
+   # Make in source tree
+   # We're "hard linking" this as pregenerated, eventually re-generating them when not there.
+   ADD_CUSTOM_COMMAND( OUTPUT $ENV{FALCON_SRC_TREE}/core/engine/fasm_parser.cpp
+      COMMAND bison $ENV{FALCON_SRC_TREE}/core/engine/fasm_parser.yy -o $ENV{FALCON_SRC_TREE}/core/engine/fasm_parser.cpp
+      COMMAND mv -f $ENV{FALCON_SRC_TREE}/core/engine/fasm_parser.hpp $ENV{FALCON_SRC_TREE}/core/engine/fasm_parser.h )
 
-   ADD_CUSTOM_COMMAND( OUTPUT $ENV{FALCON_BUILD_TREE}/core/engine/src_parser.cpp
-      COMMAND bison $ENV{FALCON_SRC_TREE}/core/engine/src_parser.yy -o src_parser.cpp
-      COMMAND mv -f src_parser.hpp src_parser.h )
+   ADD_CUSTOM_COMMAND( OUTPUT $ENV{FALCON_SRC_TREE}/core/engine/src_parser.cpp
+      COMMAND bison $ENV{FALCON_SRC_TREE}/core/engine/src_parser.yy -o $ENV{FALCON_SRC_TREE}/core/engine/src_parser.cpp
+      COMMAND mv -f $ENV{FALCON_SRC_TREE}/core/engine/src_parser.hpp $ENV{FALCON_SRC_TREE}/core/engine/src_parser.h )
 
 ELSEIF(WIN)
 
@@ -49,8 +52,8 @@ INCLUDE_DIRECTORIES($ENV{FALCON_BUILD_TREE}/core/engine/)
 
 
 ADD_LIBRARY( falcon_engine SHARED
-   $ENV{FALCON_BUILD_TREE}/core/engine/fasm_parser.cpp
-   $ENV{FALCON_BUILD_TREE}/core/engine/src_parser.cpp
+   fasm_parser.cpp
+   src_parser.cpp
 
    ${SYS_SPECIFIC}
 
@@ -113,7 +116,6 @@ ADD_LIBRARY( falcon_engine SHARED
    timestamp.cpp
    traits.cpp
    transcoding.cpp
-   trans_tables.def
    userdata.cpp
    vmcontext.cpp
    vm.cpp
