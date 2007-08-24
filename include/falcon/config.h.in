@@ -32,13 +32,10 @@
 //============================================
 // Version informations
 //
-#define FALCON_ENGINE_VERSION_NUM   0x000803
-#define FALCON_ENGINE_VERSION       "0.8.3"
-#define FALCON_OFFICIAL_VERSION     "@FALCON_VERSION@"
-#define FALCON_VERSION_NAME         "Tsubasa"
-#define FALCON_SO_VERSION           @ENGINE_VERSION_CURRENT@
-#define FALCON_SO_REVISION          @ENGINE_VERSION_REVISION@
-#define FALCON_SO_AGE               @ENGINE_VERSION_AGE@
+#define FALCON_VERSION_NUM          ( @FALCON_VERSION_MAJOR@ <<16 | @FALCON_VERSION_MINOR@ <<8 | @FALCON_VERSION_REVISION@ )
+#define FALCON_VERSION              "@FALCON_VERSION_ID@"
+#define FALCON_VERSION_NAME         "@FALCON_VERSION_NAME@"
+
 
 //============================================
 // System informations
@@ -49,19 +46,27 @@
 //   - FALCON_SYSTEM_WIN
 //   - FALCON_SYSTEM_MAC
 
-#define FALCON_SYSTEM_UNIX
+#cmakedefine FALCON_SYSTEM_UNIX
+#cmakedefine FALCON_SYSTEM_WIN
+#cmakedefine FALCON_SYSTEM_MAC
 
-#define FALCON_HOST_SYSTEM          "UNIX"
-#define FALCON_HOST_SUBSYSTEM       "@HOST_SUBSYSTEM@"
-#define FALCON_LITTLE_ENDIAN        @LITTLE_ENDIAN@
+#define FALCON_HOST_SYSTEM          "@FALCON_HOST_SYSTEM@"
+#define FALCON_LITTLE_ENDIAN        @FALCON_LITTLE_ENDIAN@
 
 //============================================
 // Config informations
 //
-#define FALCON_DEFAULT_BIN          "@INSTALL_PATH@/bin"
-#define FALCON_DEFAULT_LIB          "@INSTALL_PATH@/lib"
-#define FALCON_DEFAULT_CONFIG       "/etc"
-#define FALCON_DEFAULT_LOAD_PATH    ".;@INSTALL_PATH@/lib/falcon"
+#ifdef FALCON_SYSTEM_WIN 
+   #define FALCON_DEFAULT_BIN          "@FALCON_PREFIX@\\bin"
+   #define FALCON_DEFAULT_LIB          "@FALCON_PREFIX@\\lib"
+   #define FALCON_DEFAULT_CONFIG       "@FALCON_PREFIX@\\etc"
+   #define FALCON_DEFAULT_LOAD_PATH    ".;@FALCON_PREFIX@\\bin"
+#else
+   #define FALCON_DEFAULT_BIN          "@FALCON_PREFIX@/bin"
+   #define FALCON_DEFAULT_LIB          "@FALCON_PREFIX@/lib"
+   #define FALCON_DEFAULT_CONFIG       "/etc"
+   #define FALCON_DEFAULT_LOAD_PATH    ".;@FALCON_PREFIX@/lib/falcon"
+#endif
 
 #endif
 

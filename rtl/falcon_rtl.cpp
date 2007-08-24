@@ -35,7 +35,7 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    // Module declaration
    Falcon::Module *self = new Falcon::Module();
    self->name( "falcon_rtl" );
-   self->engineVersion( FALCON_ENGINE_VERSION_NUM );
+   self->engineVersion( FALCON_VERSION_NUM );
    self->version( RTL_VERSION_MAJOR, RTL_VERSION_MINOR, RTL_VERSION_REVISION );
 
    //=======================================================================

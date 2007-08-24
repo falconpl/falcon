@@ -30,7 +30,7 @@
    #include <config.h>
 #endif
 
-#ifdef WIN32
+#ifdef FALCON_SYSTEM_WIN
    #include <falcon/heap_win.h>
 #else
    #include <sys/mman.h>

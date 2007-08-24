@@ -23,9 +23,9 @@
 #ifndef flc_DLL_H
 #define flc_DLL_H
 
-#ifdef WIN32
+#ifdef FALCON_SYSTEM_WIN
 #include <falcon/dll_win.h>
-#elif __APPLE__
+#elif FALCON_SYSTEM_MAC
 #include <falcon/dll_mac.h>
 #else
 #include <falcon/dll_dl.h>

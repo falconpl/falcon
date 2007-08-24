@@ -128,6 +128,9 @@ SET_TARGET_PROPERTIES(falcon_engine
       VERSION "${FALCON_SONAME_VERSION}"
       SOVERSION "${FALCON_SONAME_VERSION}.${FALCON_SONAME_REVISION}.${FALCON_SONAME_AGE}" )
 
+INSTALL( TARGETS falcon_engine
+   DESTINATION $ENV{FALCON_ACTIVE_TREE}/lib )
+
 #In unix and mac we have to add extra libraries
 IF(UNIX OR MAC)
    TARGET_LINK_LIBRARIES(falcon_engine m)
@@ -135,4 +138,7 @@ IF(UNIX OR MAC)
    IF(LINUX)
       TARGET_LINK_LIBRARIES(falcon_engine dl)
    ENDIF(LINUX)
+   
+   #Finally, link everything to the lib dir
+   
 ENDIF(UNIX OR MAC)

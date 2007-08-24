@@ -35,7 +35,7 @@ different systems.
 #ifndef FLC_SETUP_H
 #define FLC_SETUP_H
 
-#ifdef WIN32
+#ifdef FALCON_SYSTEM_WIN
 #include <falcon/config_win.h>
 #include <windows.h>
 #else

@@ -83,7 +83,7 @@ FALCON_DYN_SYM bool _getEnv( const String &var, String &result );
 FALCON_DYN_SYM bool _setEnv( const String &var, const String &value );
 FALCON_DYN_SYM bool _unsetEnv( const String &var );
 
-#ifdef WIN32
+#ifdef FALCON_SYSTEM_WIN
 }
 }
    #include <windows.h>
