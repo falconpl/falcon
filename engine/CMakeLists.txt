@@ -135,10 +135,10 @@ INSTALL( TARGETS falcon_engine
 IF(UNIX OR MAC)
    TARGET_LINK_LIBRARIES(falcon_engine m)
    #also dl for linux
-   IF(LINUX)
+   IF(UNIX)
       TARGET_LINK_LIBRARIES(falcon_engine dl)
-   ENDIF(LINUX)
-   
+   ENDIF(UNIX)
+
    #Finally, link everything to the lib dir
-   
+
 ENDIF(UNIX OR MAC)

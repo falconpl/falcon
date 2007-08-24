@@ -198,7 +198,7 @@ static void version()
 {
    stdOut->writeString( "Falcon unit test package.\n" );
    stdOut->writeString( "Version " );
-   stdOut->writeString( FALCON_OFFICIAL_VERSION " (" FALCON_VERSION_NAME ")" );
+   stdOut->writeString( FALCON_VERSION " (" FALCON_VERSION_NAME ")" );
    stdOut->writeString( "\n" );
 }
 

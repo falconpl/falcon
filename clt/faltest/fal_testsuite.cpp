@@ -176,11 +176,11 @@ Falcon::Module *init_testsuite_module()
 FALCON_MODULE_DECL ( ::Falcon::EngineData *engdata ) {
    engdata->set();
 #endif
-   
+
    s_timeFactor = 1;
    Falcon::Module *tsuite = new Falcon::Module();
    tsuite->name( "falcon.testsuite" );
-   tsuite->engineVersion( FALCON_ENGINE_VERSION_NUM );
+   tsuite->engineVersion( FALCON_VERSION_NUM );
    tsuite->version( VERSION_MAJOR, VERSION_MINOR, VERSION_REVISION );
 
    tsuite->addExtFunc( "failure", flc_failure );

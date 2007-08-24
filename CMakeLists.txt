@@ -4,6 +4,8 @@ PROJECT(Falcon_Core)
 INCLUDE("$ENV{FALCON_DEVEL_TREE}/config.cmake")
 
 ADD_SUBDIRECTORY(engine)
+ADD_SUBDIRECTORY(rtl)
+ADD_SUBDIRECTORY(clt)
 
 SET( CONFIG_LIST
    include/falcon/config.h )

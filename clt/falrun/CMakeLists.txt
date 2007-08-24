@@ -12,8 +12,8 @@ ADD_EXECUTABLE( falrun
 )
 
 #Link
-TARGET_LINK_LIBRARIES(faldisass falcon_engine)
+TARGET_LINK_LIBRARIES(falrun falcon_engine)
 
 #Install
-INSTALL( TARGETS faldisass
+INSTALL( TARGETS falrun
    DESTINATION $ENV{FALCON_ACTIVE_TREE}/bin )
