@@ -1,5 +1,6 @@
 PROJECT(falcon_engine)
 
+#Specific system files
 IF(UNIX OR MAC)
    SET( SYS_SPECIFIC
          dir_sys_unix.cpp
@@ -42,7 +43,7 @@ ELSEIF(WIN)
 ENDIF(UNIX OR MAC)
 
 INCLUDE_DIRECTORIES(.)
-INCLUDE_DIRECTORIES($ENV{FALCON_ACTIVE_TREE}/build/core/engine/)
+INCLUDE_DIRECTORIES($ENV{FALCON_BUILD_TREE}/core/engine/)
 
 
 ADD_LIBRARY( falcon_engine SHARED
@@ -55,8 +56,6 @@ ADD_LIBRARY( falcon_engine SHARED
    autowstring.cpp
    basealloc.cpp
    bufferedstream.cpp
-   cmake_install.cmake
-   CMakeLists.txt
    cobject.cpp
    compiler.cpp
    corearray.cpp
@@ -90,7 +89,6 @@ ADD_LIBRARY( falcon_engine SHARED
    lineardict.cpp
    linemap.cpp
    ltree.cpp
-   Makefile
    memhash.cpp
    memory.cpp
    mempool.cpp
@@ -123,14 +121,14 @@ ADD_LIBRARY( falcon_engine SHARED
 
 SET_TARGET_PROPERTIES(falcon_engine
    PROPERTIES
-      VERSION 1
-      SOVERSION 1.6.0 )
+      VERSION "${FALCON_SONAME_VERSION}"
+      SOVERSION "${FALCON_SONAME_VERSION}.${FALCON_SONAME_REVISION}.${FALCON_SONAME_AGE}" )
 
 #In unix and mac we have to add extra libraries
 IF(UNIX OR MAC)
    TARGET_LINK_LIBRARIES(falcon_engine m)
-   #also dl
-   IF(UNIX)
+   #also dl for linux
+   IF(LINUX)
       TARGET_LINK_LIBRARIES(falcon_engine dl)
-   ENDIF(UNIX)
+   ENDIF(LINUX)
 ENDIF(UNIX OR MAC)
