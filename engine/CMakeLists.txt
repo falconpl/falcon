@@ -1,5 +1,7 @@
 PROJECT(falcon_engine)
 
+INCLUDE_DIRECTORIES(BEFORE ../include)
+
 #Specific system files
 IF(UNIX OR MAC)
    SET( SYS_SPECIFIC
