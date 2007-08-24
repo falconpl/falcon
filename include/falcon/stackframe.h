@@ -1,0 +1,72 @@
+/*
+   FALCON - The Falcon Programming Language.
+   FILE: stackframe.h
+   $Id: stackframe.h,v 1.5 2007/08/18 11:08:06 jonnymind Exp $
+
+   Short description
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: sab mar 18 2006
+   Last modified because:
+
+   -------------------------------------------------------------------
+   (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+   In order to use this file in its compiled form, this source or
+   part of it you have to read, understand and accept the conditions
+   that are stated in the LICENSE file that comes boundled with this
+   package.
+*/
+
+/** \file
+   Short description
+*/
+
+#ifndef flc_stackframe_H
+#define flc_stackframe_H
+
+#include <falcon/setup.h>
+#include <falcon/types.h>
+#include <falcon/item.h>
+#include <falcon/genericlist.h>
+#include <falcon/basealloc.h>
+
+namespace Falcon {
+
+typedef struct tag_StackFrame
+{
+   Item header;
+
+   Symbol *m_symbol;
+   uint32 m_ret_pc;
+   uint32 m_call_pc;
+   int16 m_modId;
+   bool m_initFrame;
+   bool m_break;
+   bool m_suspend;
+   byte m_param_count;
+   uint32 m_stack_base;
+   Item m_sender;
+} StackFrame;
+
+void StackFrame_deletor( void *data );
+
+class StackFrameList: public List
+{
+   friend void StackFrame_deletor( void *data );
+
+public:
+   StackFrameList():
+      List( StackFrame_deletor )
+   {}
+};
+
+
+#define VM_FRAME_SPACE (sizeof(StackFrame) / sizeof(Item) + 1)
+
+}
+
+#endif
+
+/* end of stackframe.h */

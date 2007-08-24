@@ -1,0 +1,52 @@
+/*
+   FALCON - The Falcon Programming Language.
+   FILE: engstrings.h
+   $Id: engstrings.h,v 1.3 2007/03/08 14:31:44 jonnymind Exp $
+
+   Declarations of engine string table
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: mar feb 13 2007
+   Last modified because:
+
+   -------------------------------------------------------------------
+   (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+   In order to use this file in its compiled form, this source or
+   part of it you have to read, understand and accept the conditions
+   that are stated in the LICENSE file that comes boundled with this
+   package.
+*/
+
+/** \file
+   Declarations of engine string table
+*/
+
+#ifndef flc_engstrings_H
+#define flc_engstrings_H
+
+#include <falcon/setup.h>
+#include <falcon/types.h>
+#include <falcon/string.h>
+
+namespace Falcon {
+
+class FALCON_DYN_SYM StringTable;
+FALCON_DYN_SYM extern StringTable *engineStrings;
+
+const String &getMessage( uint32 id );
+bool setTable( StringTable *tab );
+
+/** Sets the engine language.
+   Searches the given language definition in ISO format (i.e. en_US or it_IT)
+   in the string tables that the engine uses as message source.
+   The string table may be built in or searched on the disk *TODO*.
+*/
+bool FALCON_DYN_SYM setEngineLanguage( const String &language );
+
+}
+
+#endif
+
+/* end of engstrings.h */
