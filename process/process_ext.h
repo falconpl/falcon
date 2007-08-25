@@ -1,0 +1,77 @@
+/*
+   FALCON - The Falcon Programming Language.
+   FILE: process_ext.h
+   $Id: process_ext.h,v 1.2 2007/03/04 17:39:03 jonnymind Exp $
+
+   Short description
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: sab mar 11 2006
+   Last modified because:
+
+   Process module -- Falcon interface functions
+   -------------------------------------------------------------------
+   (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+   In order to use this file in its compiled form, this source or
+   part of it you have to read, understand and accept the conditions
+   that are stated in the LICENSE file that comes boundled with this
+   package.
+*/
+
+/** \file
+   Process module -- Falcon interface functions
+   This is the module declaration file.
+*/
+
+#ifndef flc_process_ext_H
+#define flc_process_ext_H
+
+#include <falcon/module.h>
+#include <falcon/error.h>
+
+namespace Falcon {
+namespace Ext {
+
+FALCON_FUNC  falcon_system ( ::Falcon::VMachine *vm );
+FALCON_FUNC  falcon_systemCall ( ::Falcon::VMachine *vm );
+FALCON_FUNC  falcon_exec ( ::Falcon::VMachine *vm );
+FALCON_FUNC  falcon_processId ( ::Falcon::VMachine *vm );
+FALCON_FUNC  falcon_processKill ( ::Falcon::VMachine *vm );
+
+/**
+   Process( command, [sinkin, sinkout, sinkerr, mergeerr, background] )
+*/
+FALCON_FUNC  Process_init ( ::Falcon::VMachine *vm );
+FALCON_FUNC  Process_wait ( ::Falcon::VMachine *vm );
+FALCON_FUNC  Process_close ( ::Falcon::VMachine *vm );
+FALCON_FUNC  Process_value ( ::Falcon::VMachine *vm );
+FALCON_FUNC  Process_getInput ( ::Falcon::VMachine *vm );
+FALCON_FUNC  Process_getOutput ( ::Falcon::VMachine *vm );
+FALCON_FUNC  Process_getAux ( ::Falcon::VMachine *vm );
+
+FALCON_FUNC  ProcessEnum_init  ( ::Falcon::VMachine *vm );
+FALCON_FUNC  ProcessEnum_next  ( ::Falcon::VMachine *vm );
+FALCON_FUNC  ProcessEnum_close  ( ::Falcon::VMachine *vm );
+
+class ProcessError: public ::Falcon::Error
+{
+public:
+   ProcessError():
+      Error( "ProcessError" )
+   {}
+
+   ProcessError( const ErrorParam &params  ):
+      Error( "ProcessError", params )
+      {}
+};
+
+FALCON_FUNC  ProcessError_init ( ::Falcon::VMachine *vm );
+
+}
+}
+
+#endif
+
+/* end of process_ext.h */
