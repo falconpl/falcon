@@ -8,6 +8,10 @@ PROJECT(regex)
 # Inclusion settings
 INCLUDE_DIRECTORIES(.)
 
+IF(WIN32)
+   SET( SYS_RC regex.rc)
+ENDIF(WIN32)
+
 # Target
 ADD_LIBRARY( regex MODULE
 pcre_chartables.c
@@ -33,6 +37,7 @@ pcre_xclass.c
 regex.cpp
 regex_ext.cpp
 regex_mod.cpp
+${SYS_RC}
 )
 
 #Link
@@ -40,5 +45,4 @@ TARGET_LINK_LIBRARIES(regex falcon_engine)
 SET_TARGET_PROPERTIES(regex
    PROPERTIES PREFIX "")
 #Install
-INSTALL( TARGETS regex
-   DESTINATION $ENV{FALCON_ACTIVE_TREE}/lib/falcon )
+FALCON_MODULE_INSTALL( regex )

@@ -11,21 +11,25 @@ INCLUDE_DIRECTORIES(.)
 IF(UNIX)
    SET(SYS_SPECIFIC socket_sys_unix.cpp)
 ELSE(UNIX)
-   SET(SYS_SPECIFIC socket_sys_win.cpp)
+   SET(SYS_SPECIFIC socket_sys_win.cpp socket.rc)
 ENDIF(UNIX)
 
 # Target
 ADD_LIBRARY( socket MODULE
-socket.cpp
-socket_ext.cpp
-socket_srv.cpp
-${SYS_SPECIFIC}
+   socket.cpp
+   socket_ext.cpp
+   socket_srv.cpp
+   ${SYS_SPECIFIC}
 )
 
 #Link
 TARGET_LINK_LIBRARIES(socket falcon_engine)
+IF(WIN32)
+   TARGET_LINK_LIBRARIES(socket ws2_32)
+ENDIF(WIN32)
+
 SET_TARGET_PROPERTIES(socket
    PROPERTIES PREFIX "")
+   
 #Install
-INSTALL( TARGETS socket
-   DESTINATION $ENV{FALCON_ACTIVE_TREE}/lib/falcon )
+FALCON_MODULE_INSTALL( socket )

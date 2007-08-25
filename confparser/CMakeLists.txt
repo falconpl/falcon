@@ -8,17 +8,22 @@ PROJECT(confparser)
 # Inclusion settings
 INCLUDE_DIRECTORIES(.)
 
+IF(WIN32)
+   SET( SYS_RC confparser.rc )
+ENDIF(WIN32)
+
 # Target
 ADD_LIBRARY( confparser MODULE
-confparser.cpp
-confparser_ext.cpp
-confparser_mod.cpp
+   confparser.cpp
+   confparser_ext.cpp
+   confparser_mod.cpp
+   ${SYS_RC}
 )
 
 #Link
 TARGET_LINK_LIBRARIES(confparser falcon_engine)
 SET_TARGET_PROPERTIES(confparser
    PROPERTIES PREFIX "")
+   
 #Install
-INSTALL( TARGETS confparser
-   DESTINATION $ENV{FALCON_ACTIVE_TREE}/lib/falcon )
+FALCON_MODULE_INSTALL( confparser )
