@@ -1,5 +1,0 @@
-/home/gian/Progetti/falcon/devel/debug/lib/falcon/compiler.so
-/home/gian/Progetti/falcon/devel/debug/lib/falcon/confparser.so
-/home/gian/Progetti/falcon/devel/debug/lib/falcon/process.so
-/home/gian/Progetti/falcon/devel/debug/lib/falcon/regex.so
-/home/gian/Progetti/falcon/devel/debug/lib/falcon/socket.so
