@@ -3,8 +3,12 @@ PROJECT(faltest)
 # Inclusion settings
 INCLUDE_DIRECTORIES(.)
 INCLUDE_DIRECTORIES(BEFORE $ENV{FALCON_BUILD_TREE}/include)
-INCLUDE_DIRECTORIES(BEFORE ../include)
+INCLUDE_DIRECTORIES(BEFORE ../../include)
 LINK_DIRECTORIES(BEFORE $ENV{FALCON_ACTIVE_TREE}/lib )
+
+IF(WIN32)
+   SET(SYS_RC faltest.rc)
+ENDIF(WIN32)
 
 # Target
 ADD_EXECUTABLE( faltest
@@ -12,6 +16,7 @@ ADD_EXECUTABLE( faltest
    fal_testsuite.cpp
    fteh.cpp
    scriptdata.cpp
+   ${SYS_RC}
 )
 
 ADD_LIBRARY( testsuite MODULE
@@ -34,5 +39,4 @@ SET_TARGET_PROPERTIES( testsuite
 INSTALL( TARGETS faltest
    DESTINATION $ENV{FALCON_ACTIVE_TREE}/bin )
 
-INSTALL( TARGETS testsuite
-   DESTINATION $ENV{FALCON_ACTIVE_TREE}/lib/falcon )
+FALCON_MODULE_INSTALL( testsuite )

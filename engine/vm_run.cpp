@@ -104,6 +104,10 @@ Item *VMachine::getOpcodeParam( register uint32 bc_pos )
       case P_PARAM_REGS1: return &m_regS1;
       case P_PARAM_REGS2: return &m_regS2;
    }
+
+   // we should not be here.
+   fassert( false );
+   return 0;
 }
 
 

@@ -3,7 +3,8 @@
 // Icon
 //
 
-MAINICON    ICON     DISCARDABLE     "resources\falcon-ico-base.ico"
+// TODO: create an icon
+//MAINICON    ICON     DISCARDABLE     "resources\falcon-ico-base.ico"
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -19,7 +20,7 @@ MAINICON    ICON     DISCARDABLE     "resources\falcon-ico-base.ico"
 
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION FALCON_MAKE_VERSION_NUMBER( FCLT_VERSION_MAJOR, FCLT_VERSION_MINOR, FCLT_VERSION_REVISION, 0 )
+ FILEVERSION FALCON_MAKE_VERSION_NUMBER( FDIS_VERSION_MAJOR, FDIS_VERSION_MINOR, FDIS_VERSION_REVISION, 0 )
  PRODUCTVERSION FALCON_VERSION_RCINFO_N
  FILEFLAGSMASK 0x17L
 #ifdef _DEBUG
@@ -36,11 +37,11 @@ BEGIN
         BLOCK "041004b0"
         BEGIN
             VALUE "CompanyName", "Falcon Committee"
-            VALUE "FileDescription", "The Falcon command line compiler"
-            VALUE "FileVersion", FALCON_MAKE_VERSION_STRING_RC( FCLT_VERSION_MAJOR, FCLT_VERSION_MINOR, FCLT_VERSION_REVISION, 0 )
-            VALUE "InternalName", "falcon"
+            VALUE "FileDescription", "The Falcon command line disassembler"
+            VALUE "FileVersion", FALCON_MAKE_VERSION_STRING_RC( FDIS_VERSION_MAJOR, FDIS_VERSION_MINOR, FDIS_VERSION_REVISION, 0 )
+            VALUE "InternalName", "faldisass"
             VALUE "LegalCopyright", "The Falcon Programming Language License"
-            VALUE "OriginalFilename", "falcon.exe"
+            VALUE "OriginalFilename", "faldisass.exe"
             VALUE "ProductName", "The Falcon Programming Language"
             VALUE "ProductVersion", FALCON_VERSION_RCINFO
         END

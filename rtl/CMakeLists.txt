@@ -6,8 +6,11 @@ INCLUDE_DIRECTORIES(BEFORE ../include)
 INCLUDE_DIRECTORIES(.)
 LINK_DIRECTORIES(BEFORE $ENV{FALCON_ACTIVE_TREE}/lib )
 
-# Target
+IF(WIN32)
+	SET(SYSTEM_RC  falcon_rtl.rc)
+ENDIF(WIN32)
 
+# Target
 ADD_LIBRARY( falcon_rtl MODULE
    array.cpp
    dict.cpp
@@ -29,6 +32,7 @@ ADD_LIBRARY( falcon_rtl MODULE
    stringstream_ext.cpp
    time_ext.cpp
    transcode_ext.cpp
+   ${SYSTEM_RC}	
 )
 
 #Link
@@ -42,5 +46,4 @@ IF(UNIX OR MAC)
 ENDIF(UNIX OR MAC)
 
 #Install
-INSTALL( TARGETS falcon_rtl
-   DESTINATION $ENV{FALCON_ACTIVE_TREE}/lib/falcon )
+FALCON_MODULE_INSTALL( falcon_rtl )

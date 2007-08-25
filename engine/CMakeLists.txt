@@ -3,6 +3,9 @@ PROJECT(falcon_engine)
 INCLUDE_DIRECTORIES(BEFORE $ENV{FALCON_BUILD_TREE}/include)
 INCLUDE_DIRECTORIES(BEFORE ../include)
 
+#Engine specific define
+ADD_DEFINITIONS(-DFALCON_ENGINE_EXPORTS)
+
 #Specific system files
 IF(UNIX OR MAC)
    SET( SYS_SPECIFIC
@@ -34,7 +37,7 @@ IF(UNIX OR MAC)
       COMMAND bison $ENV{FALCON_SRC_TREE}/core/engine/src_parser.yy -o $ENV{FALCON_SRC_TREE}/core/engine/src_parser.cpp
       COMMAND mv -f $ENV{FALCON_SRC_TREE}/core/engine/src_parser.hpp $ENV{FALCON_SRC_TREE}/core/engine/src_parser.h )
 
-ELSEIF(WIN)
+ELSEIF(WIN32)
 
    #todo: add prebuilt
    SET( SYS_SPECIFIC
@@ -43,7 +46,9 @@ ELSEIF(WIN)
       fstream_sys_win.cpp
       stdstreams_win.cpp
       sys_win.cpp
-      time_sys_win.cpp )
+      time_sys_win.cpp 
+      falcon_engine.rc
+      )
 
 ENDIF(UNIX OR MAC)
 
@@ -54,9 +59,7 @@ INCLUDE_DIRECTORIES($ENV{FALCON_BUILD_TREE}/core/engine/)
 ADD_LIBRARY( falcon_engine SHARED
    fasm_parser.cpp
    src_parser.cpp
-
-   ${SYS_SPECIFIC}
-
+   
    autocstring.cpp
    autowstring.cpp
    basealloc.cpp
@@ -121,15 +124,23 @@ ADD_LIBRARY( falcon_engine SHARED
    vm.cpp
    vmmaps.cpp
    vm_run.cpp
-   vmsema.cpp )
+   vmsema.cpp 
+   
+   ${SYS_SPECIFIC}
+   )
 
 SET_TARGET_PROPERTIES(falcon_engine
    PROPERTIES
       VERSION "${FALCON_SONAME_VERSION}"
       SOVERSION "${FALCON_SONAME_VERSION}.${FALCON_SONAME_REVISION}.${FALCON_SONAME_AGE}" )
 
-INSTALL( TARGETS falcon_engine
-   DESTINATION $ENV{FALCON_ACTIVE_TREE}/lib )
+SET(CMAKE_INSTALL_PREFIX "")
+
+INSTALL(TARGETS falcon_engine
+  RUNTIME DESTINATION $ENV{FALCON_ACTIVE_TREE}/bin
+  LIBRARY DESTINATION $ENV{FALCON_ACTIVE_TREE}/lib
+  ARCHIVE DESTINATION $ENV{FALCON_ACTIVE_TREE}/lib
+)
 
 #In unix and mac we have to add extra libraries
 IF(UNIX OR MAC)
