@@ -41,7 +41,7 @@ typedef struct tag_MapPage {
 	tag_MapPage *m_higher;
 } MAP_PAGE;
 
-class FALCON_DYN_CLASS MapIterator;
+class MapIterator;
 
 
 /** Generic Map.
@@ -124,7 +124,7 @@ public:
 
 
 
-class MapIterator: public BaseAlloc
+class FALCON_DYN_CLASS MapIterator: public BaseAlloc
 {
    const Map *m_map;
    MAP_PAGE *m_page;
