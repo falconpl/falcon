@@ -360,6 +360,8 @@ bool LinearDict::findInternal( const Item &key, uint32 &ret_pos ) const
       current = m_data + point;
 
       comparation = vm->compareItems( key, current->key() );
+      if( vm->hadError() )
+         return false;
 
       if ( comparation == 0 )
       {

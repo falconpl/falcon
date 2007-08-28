@@ -77,6 +77,7 @@ void VMachine::internal_construct()
    m_stdIn = 0;
    m_stdOut = 0;
    m_stdErr = 0;
+   m_tryFrame = i_noTryFrame;
 
    resetCounters();
 
@@ -855,7 +856,7 @@ void VMachine::reset()
 	   // clear the contexts
 	   m_contexts.clear();
 
-	   // as our frame, stack and trypos were in one of the contexts,
+	   // as our frame, stack and tryframe were in one of the contexts,
 	   // they have been destroyed.
 	   m_currentContext = new VMContext( this );
 
@@ -868,7 +869,7 @@ void VMachine::reset()
    else
    {
 	   m_stack->resize(0);
-	   m_trypos->clear();
+	   m_tryFrame = i_noTryFrame;
    }
 
 }
@@ -1004,8 +1005,8 @@ void VMachine::handleError( Error *err )
    m_event = eventRisen;
 
    // we got either pass the error to the script or to our error handler
-   // if we have trypos != 0, the script will handle it.
-   if ( m_trypos->size() == 0 )
+   // if we have a valid try frame, the script will handle somewhere.
+   if ( m_tryFrame == i_noTryFrame )
    {
       // we got to create a traceback for this error.
       fillErrorTraceback( *err );
@@ -1117,6 +1118,7 @@ bool VMachine::callItem( const Item &callable, int32 paramCount, e_callMode call
    frame->m_modId = m_moduleId;
    frame->m_param_count = (byte)paramCount;
    frame->m_stack_base = m_stackBase;
+   frame->m_try_base = m_tryFrame;
    frame->m_break = false;
    frame->m_suspend = false;
 
@@ -1477,6 +1479,9 @@ void VMachine::callReturn()
       m_code = m_modules.moduleAt( modId )->code();
       m_currentGlobals = m_globals.vpat( modId );
    }
+
+   // reset try frame
+   m_tryFrame = frame.m_try_base;
 }
 
 
@@ -1848,54 +1853,42 @@ void VMachine::resetCounters()
 void VMachine::periodicCallback()
 {}
 
-void VMachine::pushTry( int32 landingPC )
+void VMachine::pushTry( uint32 landingPC )
 {
-   TryFrame *tf = new TryFrame( landingPC, m_stack->size(), m_stackBase, m_moduleId );
-   m_trypos->pushBack( tf );
+   // a small trick; we use a range to store current landing and previous try frame
+   Item frame;
+
+
+   frame.setRange( (int32) landingPC, (int32) m_tryFrame, false );
+   m_tryFrame = m_stack->size();
+   m_stack->push( &frame );
 }
 
 void VMachine::popTry( bool moveTo )
 {
-   TryFrame *tf = (TryFrame *) m_trypos->back();
-
-
-   if ( moveTo )
+   // If the try frame is wrong or not in current stack frame...
+   if ( m_stack->size() <= m_tryFrame || m_stackBase > m_tryFrame )
    {
-      if ( m_stackBase > tf->m_frameBase )
-      {
-         // move frames back to return in our old function
-         StackFrame *frame = (StackFrame *) m_stack->at( m_stackBase - VM_FRAME_SPACE );
-         uint32 base = frame->m_stack_base;
-
-         while( base > tf->m_frameBase )
-         {
-            m_stackBase = base;
-            frame = (StackFrame *) m_stack->at( base - VM_FRAME_SPACE );
-            base = frame->m_stack_base;
-         }
-         m_stack->resize( m_stackBase );
-
-         VMachine::callReturn();
-      }
-
-      // change module. (can't be, to change module you need a frame)
-      if ( m_moduleId != tf->m_moduleId )
-      {
-         m_moduleId = tf->m_moduleId;
-         m_code = m_modules.moduleAt( m_moduleId )->code();
-         m_currentGlobals = m_globals.vpat( m_moduleId );
-      }
-
-      // resize stack
-      if ( m_stack->size() > tf->m_stackBase )
-      {
-         m_stack->resize( tf->m_stackBase );
-      }
-
-      m_pc_next = m_pc = tf->m_pc;
+      //TODO: raise proper error
+      raiseError( new CodeError( ErrorParam( e_stackuf, m_symbol->declaredAt() ).
+         origin( e_orig_vm ).
+         symbol( m_symbol->name() ).
+         module( m_modules.moduleAt(m_moduleId)->name() ) )
+      );
+      return;
    }
 
-   m_trypos->popBack();
+   // get the frame and resize the stack
+   Item frame = m_stack->itemAt( m_tryFrame );
+   m_stack->resize( m_tryFrame );
+
+   // Change the try frame, and eventually move the PC to the proper position
+   m_tryFrame = (uint32) frame.asRangeEnd();
+   if( moveTo )
+   {
+      m_pc_next = (uint32) frame.asRangeStart();
+      m_pc = m_pc_next;
+   }
 }
 
 // TODO move elsewhere
@@ -2510,30 +2503,45 @@ int VMachine::compareItems( const Item &first, const Item &second )
       Item comparer;
       if( fo->getMethod( "compare", comparer ) )
       {
+         Item oldA = m_regA;
+         m_regA = (int64)0;
+
          pushParameter( second );
          callItem( comparer, 1 );
          // if the item is nil, fallback to normal item comparation.
-         if ( hadError() )
-            return 2;
 
-         resetEvent();
+         if ( hadError() )
+         {
+            m_regA = oldA;
+            return 2;
+         }
 
          if( ! m_regA.isNil() )
-            return (int) m_regA.forceInteger();
+         {
+            int val = (int) m_regA.forceInteger();
+            m_regA = oldA;
+            return val;
+         }
+         m_regA = oldA;
       }
       else if ( fo->getMethod( "equal", comparer ) )
       {
+         Item oldA = m_regA;
+
          pushParameter( second );
          callItem( comparer, 1 );
          if ( hadError() )
+         {
+            m_regA = oldA;
             return 2;
-
-         resetEvent();
+         }
 
          if( m_regA.isTrue() )
          {
+            m_regA = oldA;
             return 0;
          }
+         m_regA = oldA;
          // else, fallback to standard item comparation.
       }
    }

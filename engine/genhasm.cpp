@@ -602,7 +602,7 @@ void GenHAsm::gen_statement( const Statement *stmt )
       {
          const StmtReturn *ret = static_cast<const StmtReturn *>( stmt );
 
-         if ( ! m_trys.empty() ) {
+         /*if ( ! m_trys.empty() ) {
             String size;
             size.writeNumber( (int64) m_trys.size() );
             m_out->writeString( "\tPTRY\t" + size + "\n" );
@@ -612,7 +612,7 @@ void GenHAsm::gen_statement( const Statement *stmt )
             String size;
             size.writeNumber( (int64) m_pushes );
             m_out->writeString( "\tIPOP\t" + size + "\n" );
-         }
+         }*/
 
          if ( ret->value() == 0 ) {
             m_out->writeString( "\tRET \t" );

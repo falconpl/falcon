@@ -22,7 +22,7 @@ for key, value in dict
 			// focefully generate an exception
 			printl( "first param", "second", "third", "test" * value )
 		end
-	catch 
+	catch
 		continue dropping
 	end
 end

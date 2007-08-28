@@ -50,9 +50,7 @@ VMContext::VMContext( VMachine *origin )
    m_stack = new ItemVector;
    m_stackBase = 0;
 
-   m_trypos = new List;
-   m_trypos->deletor( s_tryframeDestroyer );
-
+   m_tryFrame = VMachine::i_noTryFrame;
 
    m_regA = origin->m_regA;
    m_regB = origin->m_regB;
@@ -68,8 +66,7 @@ VMContext::VMContext( VMachine *origin )
 
 VMContext::~VMContext()
 {
-   delete  m_stack ;
-   delete  m_trypos;
+   delete  m_stack;
 }
 
 void VMContext::save( const VMachine *origin )
@@ -86,6 +83,7 @@ void VMContext::save( const VMachine *origin )
    m_regS2 = origin->m_regS2;
 
    m_stackBase = origin->m_stackBase;
+   m_tryFrame = origin->m_tryFrame;
 }
 
 void VMContext::restore( VMachine *origin ) const
@@ -96,9 +94,9 @@ void VMContext::restore( VMachine *origin ) const
    origin->m_code = m_code;
    origin->m_pc = m_pc;
    origin->m_pc_next = m_pc_next;
-   origin->m_trypos = m_trypos;
 
    origin->m_stackBase = m_stackBase;
+   origin->m_tryFrame = m_tryFrame;
    origin->m_stack = m_stack;
 
    origin->m_regA = m_regA;

@@ -51,7 +51,6 @@ class FALCON_DYN_CLASS VMContext: public BaseAlloc
    Item m_regS2;
 
    ItemVector *m_stack;
-   StackFrameList *m_frames;
    uint32 m_stackBase;
    byte *m_code;
    uint32 m_pc;
@@ -60,8 +59,7 @@ class FALCON_DYN_CLASS VMContext: public BaseAlloc
    numeric m_schedule;
    int32 m_priority;
 
-   List *m_trypos;
-
+   uint32 m_tryFrame;
 
 public:
    VMContext( VMachine *origin );
@@ -90,7 +88,6 @@ public:
    uint32 stackBase() const { return m_stackBase; }
 
    ItemVector *getStack() const { return m_stack; }
-   StackFrameList *getFrames() const { return m_frames; }
 };
 
 }

@@ -190,69 +190,20 @@ void VMachine::run()
          case eventReturn:
             m_pc = m_pc_next;
             resetEvent();
-
-            // an eventReturn called on an empty context means we have terminated an artifical coroutine
-            if ( m_stackBase == 0 )
-            {
-               opcodeHandler_END( this );
-
-               //! if asked to quit, return, but otherwise continue with another valid context.
-               if ( m_event != eventQuit )
-               {
-                  continue;
-               }
-            }
          return;
 
          // manage try/catch
          case eventRisen:
-            // have we an internal error?
-            if ( m_error != 0 )
+            // While the try frame is not in the current frame, we should return.
+            // this unless m_stackBase is zero; in that case, the VM must take some action.
+
+            // However, before proceding we have to create a correct stack frame report for the error.
+            // If the error is internally generated, a frame has been already created. We should
+            // create here only error data about uncaught raises from the scripts.
+
+            if( m_tryFrame == i_noTryFrame && m_error == 0 )  // uncaught error raised from scripts...
             {
-               // should we catch it?
-               if( m_error->catchable() && m_trypos->size() > 0 )
-               {
-                  CoreObject *obj = m_error->scriptize( this );
-
-                  if ( obj != 0 )
-                  {
-                     // we'll manage the error throuhg the obj, so we release the ref.
-                     m_error->decref();
-                     m_regB.setObject( obj );
-                     m_error = 0;
-                     popTry( true );
-                     m_event = eventNone;
-                     continue;
-                  }
-                  else {
-                     if( m_errhand != 0 ) {
-                        Error *err = new CodeError( ErrorParam( e_undef_sym, __LINE__ ).
-                           module( "core.vm" ).symbol( "vm_run" ).extra( m_error->className() ) );
-                        m_error->decref();
-                        m_error = err;
-                        m_errhand->handleError( err );
-                     }
-                     return;
-                  }
-
-               }
-               else {
-                  if( m_errhand != 0 )
-                     m_errhand->handleError( m_error );
-                  // we're out of business.
-                  return;
-               }
-            }
-
-            // else, we have a "raise" request from script
-            if( m_trypos->size() > 0 ) {
-               // ok, we have an handler
-               popTry( true );
-               m_event = eventNone;
-               continue;
-            }
-            else {
-               // uncaught exception
+               // create the error that the external application will see.
                Error *err;
                if ( m_regB.isOfClass( "Error" ) )
                {
@@ -264,13 +215,72 @@ void VMachine::run()
                else {
                   // else incapsulate the item in an error.
                   err = new GenericError( ErrorParam( e_uncaught ).origin( e_orig_vm ) );
-                  fillErrorContext( err );
                   err->raised( m_regB );
                }
 
+               fillErrorContext( err );
+
                m_error = err;
+            }
+
+            // Enter the stack frame that should handle the error (or raise to the top if uncaught)
+            while( m_stackBase != 0 && ( m_stackBase > m_tryFrame || m_tryFrame == i_noTryFrame ) )
+            {
+               callReturn();
+               if ( m_event == eventReturn )
+               {
+                  // yes, exit but of course, maintain the error status
+                  m_event = eventRisen;
+                  return;
+               }
+               // call return may raise eventQuit, but only when m_stackBase is zero,
+               // so we don't consider it.
+            }
+
+            // We are in the frame that should handle the error, in one way or another
+            // should we catch it?
+            // If the error is zero, we know we have a script exception ready to be caught
+            // as we have filtered it before
+            if ( m_error == 0 )
+            {
+               popTry( true );
+               m_event = eventNone;
+               continue;
+            }
+            // else catch it only if allowed.
+            else if( m_error->catchable() && m_tryFrame != i_noTryFrame )
+            {
+               CoreObject *obj = m_error->scriptize( this );
+
+               if ( obj != 0 )
+               {
+                  // we'll manage the error throuhg the obj, so we release the ref.
+                  m_error->decref();
+                  m_regB.setObject( obj );
+                  m_error = 0;
+                  popTry( true );
+                  m_event = eventNone;
+                  continue;
+               }
+               else {
+                  // panic. Should not happen
+                  if( m_errhand != 0 ) {
+                     Error *err = new CodeError( ErrorParam( e_undef_sym, __LINE__ ).
+                        module( "core.vm" ).symbol( "vm_run" ).extra( m_error->className() ) );
+                     m_error->decref();
+                     m_error = err;
+                     m_errhand->handleError( err );
+                  }
+                  return;
+               }
+            }
+            // we couldn't catch the error (this also means we're at m_stackBase zero)
+            // we should handle it then exit
+            else {
+               // we should manage the error; if we're here, m_stackBase is zero,
+               // so we are the last in charge
                if( m_errhand != 0 )
-                  m_errhand->handleError( err );
+                  m_errhand->handleError( m_error );
                // we're out of business.
                return;
             }
@@ -388,17 +398,11 @@ void opcodeHandler_RETA( register VMachine *vm )
 // 5
 void opcodeHandler_PTRY( register VMachine *vm )
 {
-   int operand = vm->getNextNTD32();
-
-   while ( operand > 0 )
+   register int32 target = vm->getNextNTD32();
+   while( target > 0 )
    {
-      if ( vm->m_trypos->empty() )
-      {
-         vm->raiseError( e_stackuf, "PTRY" );
-         break;
-      }
       vm->popTry( false );
-      --operand;
+      --target;
    }
 }
 
@@ -645,13 +649,8 @@ void opcodeHandler_JTRY( register VMachine *vm )
 {
    register int32 target = vm->getNextNTD32();
 
-   if ( vm->m_trypos->size() > 0 )
-   {
-      vm->popTry( false );
-      vm->m_pc_next = target;
-   }
-   else
-      vm->raiseError( e_stackuf, "JTRY" );
+   vm->popTry( false );  // underflows are checked here
+   vm->m_pc_next = target;
 }
 
 //19
@@ -2372,7 +2371,6 @@ void opcodeHandler_PASS( register VMachine *vm )
 void opcodeHandler_PSIN( register VMachine *vm )
 {
    Item *operand1 =  vm->getOpcodeParam( 1 )->dereference();
-   Item *operand2 =  vm->getOpcodeParam( 2 )->dereference();
 
    if( ! vm->callItemPassIn( *operand1 ) )
       vm->raiseError( e_invop, "PSIN" );

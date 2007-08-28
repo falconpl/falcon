@@ -317,7 +317,17 @@ protected:
    */
    GlobalsVector m_globals;
 
+   /** Stack base is the position of the current stack frame.
+      As there can't be any stack frame at 0, a position of 0 means that the VM is running
+      the global module code.
+   */
    uint32 m_stackBase;
+
+   /** Position of the topmost try frame handler. */
+   uint32 m_tryFrame;
+
+   /** This value indicate that there isn't any active try handler in the stack */
+   static const uint32 i_noTryFrame = 0xFFFFFFFF;
 
    /** Currently executed code.
       It's the code from m_symbol->module()->code(),
@@ -410,9 +420,6 @@ protected:
 
    /** Events that are required */
    tEvent m_event;
-
-   /** List of cached TRY positions */
-   List *m_trypos;
 
    /** Switch to suspend terminated modules.
       With this switch on, it is possible to not discard global variables when the execution of
@@ -1464,7 +1471,7 @@ public:
 
 
    /** Push current try position */
-   void pushTry( int32 landingPC );
+   void pushTry( uint32 landingPC );
 
    /** Pop a try position, eventually changing the frame to the handler. */
    void popTry( bool moveTo );
