@@ -1,52 +1,54 @@
+// Microsoft Visual C++ generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include "afxres.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// Italian (Italy) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ITA)
+#ifdef _WIN32
+LANGUAGE LANG_ITALIAN, SUBLANG_ITALIAN
+#pragma code_page(1252)
+#endif //_WIN32
+
 /////////////////////////////////////////////////////////////////////////////
 //
 // Icon
 //
 
-MAINICON    ICON     DISCARDABLE     "resources\falcon-ico-base.ico"
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+MAINICON                ICON                    "resources\\falcon-ico-base.ico"
 
 /////////////////////////////////////////////////////////////////////////////
 //
 // Version
 //
 
-// for project wide versioning...
-#include <falcon/config.h>
-#include <falcon/rc_version.h>
+#include "falcon.rc2"
 
-// and application versioning
-#include "version.h"
+#endif    // Italian (Italy) resources
+/////////////////////////////////////////////////////////////////////////////
 
 
-VS_VERSION_INFO VERSIONINFO
- FILEVERSION FALCON_MAKE_VERSION_NUMBER( FCLT_VERSION_MAJOR, FCLT_VERSION_MINOR, FCLT_VERSION_REVISION, 0 )
- PRODUCTVERSION FALCON_VERSION_RCINFO_N
- FILEFLAGSMASK 0x17L
-#ifdef _DEBUG
- FILEFLAGS 0x1L
-#else
- FILEFLAGS 0x0L
-#endif
- FILEOS 0x4L
- FILETYPE 0x2L
- FILESUBTYPE 0x0L
-BEGIN
-    BLOCK "StringFileInfo"
-    BEGIN
-        BLOCK "041004b0"
-        BEGIN
-            VALUE "CompanyName", "Falcon Committee"
-            VALUE "FileDescription", "The Falcon command line compiler"
-            VALUE "FileVersion", FALCON_MAKE_VERSION_STRING_RC( FCLT_VERSION_MAJOR, FCLT_VERSION_MINOR, FCLT_VERSION_REVISION, 0 )
-            VALUE "InternalName", "falcon"
-            VALUE "LegalCopyright", "The Falcon Programming Language License"
-            VALUE "OriginalFilename", "falcon.exe"
-            VALUE "ProductName", "The Falcon Programming Language"
-            VALUE "ProductVersion", FALCON_VERSION_RCINFO
-        END
-    END
-    BLOCK "VarFileInfo"
-    BEGIN
-        VALUE "Translation", 0x410, 1200
-    END
-END
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+
