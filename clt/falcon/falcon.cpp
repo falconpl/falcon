@@ -269,8 +269,11 @@ String get_src_encoding()
    if ( Sys::_getEnv( "FALCON_VM_ENCODING", envenc ) )
       return envenc;
 
-   GetSystemEncoding( envenc );
-   return envenc;
+   if ( GetSystemEncoding( envenc ) )
+      return envenc;
+
+   // we failed.
+   return "C";
 }
 
 String get_io_encoding()
@@ -488,7 +491,8 @@ int main( int argc, char *argv[] )
    // Function wide statics must be created here, as we may be making memory accounting later on.
    String ioEncoding;
    String sysEncoding;
-   GetSystemEncoding( sysEncoding );
+   if ( ! GetSystemEncoding( sysEncoding ) )
+      sysEncoding = "C";
    // TODO: other languages.
    setEngineLanguage( "C" );
 
