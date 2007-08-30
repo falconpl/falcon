@@ -86,11 +86,6 @@ class FALCON_DYN_CLASS GenHAsm: public Generator
    int m_branch_id;
    int m_loop_id;
    int m_try_id;
-   /** Pending pushes that can be transferred to other instructions.
-      This handles the pushes created by trav, when a return is
-      found inside a forin block.
-   */
-   int m_pushes;
 
    List m_branches;
    List m_loops;

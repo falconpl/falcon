@@ -35,8 +35,7 @@ GenHAsm::GenHAsm( Stream *out ):
    Generator( out ),
    m_branch_id(1),
    m_loop_id(1),
-   m_try_id(1),
-   m_pushes( 0 )
+   m_try_id(1)
 {}
 
 
@@ -602,18 +601,6 @@ void GenHAsm::gen_statement( const Statement *stmt )
       {
          const StmtReturn *ret = static_cast<const StmtReturn *>( stmt );
 
-         /*if ( ! m_trys.empty() ) {
-            String size;
-            size.writeNumber( (int64) m_trys.size() );
-            m_out->writeString( "\tPTRY\t" + size + "\n" );
-         }
-
-         if ( m_pushes > 0 )  {
-            String size;
-            size.writeNumber( (int64) m_pushes );
-            m_out->writeString( "\tIPOP\t" + size + "\n" );
-         }*/
-
          if ( ret->value() == 0 ) {
             m_out->writeString( "\tRET \t" );
          }
@@ -1079,7 +1066,6 @@ void GenHAsm::gen_statement( const Statement *stmt )
             gen_complex_value( elem->to() );
             m_out->writeString( "\tPUSH\tA\n" );
          }
-         m_pushes++;
 
          // save the step value
          if( elem->step() != 0 )
@@ -1096,7 +1082,6 @@ void GenHAsm::gen_statement( const Statement *stmt )
          }
          else
             m_out->writeString( "\tPUSH\t0\n" );
-         m_pushes++;
 
          // create the from value
          if( elem->from()->isSimple() ) {
@@ -1128,7 +1113,6 @@ void GenHAsm::gen_statement( const Statement *stmt )
          m_out->writeString( "_loop_end_" + branchStr + ":\n" );
 
          // FORI and FORN will pop themselves if they are activated
-         m_pushes-=2;
          m_loops.popBack();
       }
       break;
@@ -1154,7 +1138,6 @@ void GenHAsm::gen_statement( const Statement *stmt )
          int neededVars = 0;  // vars pushed by reference for target expansion
 
          int loopId = m_loop_id++;
-         m_pushes += 3;
 
          // we push the negative number to signal this is a for/in loop
          m_loops.pushBack( (void *) (-loopId) );
@@ -1251,8 +1234,6 @@ void GenHAsm::gen_statement( const Statement *stmt )
             }
          }
 
-         m_pushes += neededVars;
-
          // have we got a "first" block?
          if ( ! loop->firstBlock().empty() ) {
             gen_block( &loop->firstBlock() );
@@ -1293,8 +1274,6 @@ void GenHAsm::gen_statement( const Statement *stmt )
          m_out->writeString( "\tIPOP\t" + varToPop + "\n" );
          // internal loop out used by TRAV, TRAN and TRAL
          m_out->writeString( "_p_loop_end_" + loopStr + ":\n" );
-
-         m_pushes -= 3 + neededVars;
 
          m_loops.popBack();
       }

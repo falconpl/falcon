@@ -255,10 +255,6 @@ class FALCON_DYN_CLASS GenCode: public Generator
 
    /** Generates a function call from an expression. */
    void gen_funcall( const Expression *call, bool fork=false );
-
-   int m_try_count;
-   int m_push_count;
-
    List m_labels;
    List m_labels_loop;
 

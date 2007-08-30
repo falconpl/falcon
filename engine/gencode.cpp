@@ -142,8 +142,6 @@ void GenCode::c_jmptag::defineElif( uint32 id )
 
 GenCode::GenCode( Stream *out ):
    Generator( out ),
-   m_try_count(0),
-   m_push_count(0),
    m_lineMap( 0 )
 {}
 
@@ -604,14 +602,6 @@ void GenCode::gen_statement( const Statement *stmt )
       case Statement::t_return:
       {
          const StmtReturn *ret = static_cast<const StmtReturn *>( stmt );
-
-         //eventually pop tries.
-         if ( m_try_count != 0 )
-            gen_pcode( P_PTRY, c_param_fixed( m_try_count ) );
-
-         // then eventually discard pushed data
-         if ( m_push_count != 0 )
-            gen_pcode( P_IPOP, c_param_fixed( m_push_count ) );
 
          if ( ret->value() == 0 ) {
             gen_pcode( P_RET );
@@ -1087,7 +1077,6 @@ void GenCode::gen_statement( const Statement *stmt )
             gen_value( elem->to() );
             gen_pcode( P_PUSH, e_parA );
          }
-         m_push_count++;
 
          // save the step value
          if( elem->step() != 0 )
@@ -1102,7 +1091,6 @@ void GenCode::gen_statement( const Statement *stmt )
          }
          else
             gen_pcode( P_PUSH, 0 );
-         m_push_count++;
 
          // create the from value
          if( elem->from()->isSimple() ) {
@@ -1124,8 +1112,6 @@ void GenCode::gen_statement( const Statement *stmt )
          gen_pcode( P_FORN, c_param_fixed( tag.addQueryBegin() ), elem->counter() );
          tag.defineEnd();
 
-         // FORI and FORN will pop themselves if they are activated
-         m_push_count-=2;
          m_labels_loop.popBack();
       }
       break;
@@ -1229,9 +1215,6 @@ void GenCode::gen_statement( const Statement *stmt )
             }
          }
 
-         // trav always generates three pushes
-         m_push_count += 3 + neededVars;
-
          // have we got a "first" block?
          if ( ! loop->firstBlock().empty() ) {
             gen_block( &loop->firstBlock() );
@@ -1271,7 +1254,6 @@ void GenCode::gen_statement( const Statement *stmt )
          // create break landing code:
          tag.defineEnd();
          gen_pcode( P_IPOP, c_param_fixed( 3 + neededVars) );
-         m_push_count -= 3 + neededVars;
          tag.definePostEnd();
 
          m_labels_loop.popBack();
@@ -1285,7 +1267,6 @@ void GenCode::gen_statement( const Statement *stmt )
          if( op->children().empty() )
             break;
 
-         m_try_count ++;
          // also increment current loop try count if any.
          if ( ! m_labels_loop.empty() )
          ((c_jmptag *) m_labels_loop.back())->addTry();
@@ -1299,7 +1280,6 @@ void GenCode::gen_statement( const Statement *stmt )
 
          // When the catcher is generated, the TRY cannot be broken anymore
          // by loop controls, as the catcher pops the TRY context from the VM
-         m_try_count --;
          if ( ! m_labels_loop.empty() )
             ((c_jmptag *) m_labels_loop.back())->removeTry();
 
