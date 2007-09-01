@@ -7,6 +7,8 @@ PROJECT(process)
 
 # Inclusion settings
 INCLUDE_DIRECTORIES(.)
+INCLUDE_DIRECTORIES(BEFORE ${TARGET_DIR}/include)
+LINK_DIRECTORIES(BEFORE ${TARGET_DIR}/lib )
 
 IF(UNIX)
    SET(SYS_SPECIFIC process_sys_unix.cpp)

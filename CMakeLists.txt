@@ -16,8 +16,16 @@ ENDIF($ENV{FALCON_DEVEL_TREE} STREQUAL "")
 INCLUDE("$ENV{FALCON_DEVEL_TREE}/config.cmake")
 
 # Common for all feathers
-INCLUDE_DIRECTORIES(BEFORE $ENV{FALCON_BUILD_TREE}/include)
+INCLUDE_DIRECTORIES(BEFORE ${FALCON_ACTIVE_TREE}/include)
 LINK_DIRECTORIES(BEFORE $ENV{FALCON_ACTIVE_TREE}/lib )
+
+INCLUDE_DIRECTORIES(BEFORE include)
+
+#Also, include files that may be configured
+INCLUDE_DIRECTORIES(BEFORE ${TARGET_DIR}/include)
+
+#And generated libraries
+LINK_DIRECTORIES(BEFORE ${TARGET_DIR}/lib )
 
 #Project directories
 

@@ -7,6 +7,8 @@ PROJECT(socket)
 
 # Inclusion settings
 INCLUDE_DIRECTORIES(.)
+INCLUDE_DIRECTORIES(BEFORE ${TARGET_DIR}/include)
+LINK_DIRECTORIES(BEFORE ${TARGET_DIR}/lib )
 
 IF(UNIX)
    SET(SYS_SPECIFIC socket_sys_unix.cpp)
@@ -30,6 +32,6 @@ ENDIF(WIN32)
 
 SET_TARGET_PROPERTIES(socket
    PROPERTIES PREFIX "")
-   
+
 #Install
 FALCON_MODULE_INSTALL( socket )
