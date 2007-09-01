@@ -22,6 +22,9 @@ FALCON_ADD_SUBDIRECTORY(clt)
 #also performs installation of the include directory
 FALCON_ADD_SUBDIRECTORY("include")
 
+#Setting project wide include directories.
+MESSAGE( "INCLUDING TARGET DIR  ${TARGET_DIR}" )
+
 SET( CONFIG_LIST
    include/falcon/config.h )
 
