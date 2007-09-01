@@ -9,6 +9,7 @@ LINK_DIRECTORIES(BEFORE ${TARGET_DIR}/lib )
 
 IF(WIN32)
    SET(SYS_RC faltest.rc)
+   SET(SYS_RC_DLL testsuite.rc)
 ENDIF(WIN32)
 
 # Target
@@ -22,6 +23,7 @@ ADD_EXECUTABLE( faltest
 
 ADD_LIBRARY( testsuite MODULE
    fal_testsuite.cpp
+   ${SYS_RC_DLL}
 )
 
 #Link

@@ -72,7 +72,6 @@ ADD_LIBRARY( falcon_engine SHARED
    enginedata.cpp
    engstrings.cpp
    error.cpp
-   falcon_engine.rc
    fasm_comp.cpp
    fasm_lexer.cpp
    fassert.cpp

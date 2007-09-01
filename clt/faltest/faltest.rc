@@ -29,7 +29,7 @@ VS_VERSION_INFO VERSIONINFO
  FILEFLAGS 0x0L
 #endif
  FILEOS 0x4L
- FILETYPE 0x2L
+ FILETYPE 0x0L
  FILESUBTYPE 0x0L
 BEGIN
     BLOCK "StringFileInfo"
@@ -37,13 +37,13 @@ BEGIN
         BLOCK "041004b0"
         BEGIN
             VALUE "CompanyName", "Falcon Committee"
-            VALUE "FileDescription", "The Falcon command line module runner"
-            VALUE "FileVersion", FALCON_MAKE_VERSION_STRING_RC( VERSION_MAJOR, VERSION_MINOR, VERSION_REVISION, 0 )
-            VALUE "InternalName", "falrun"
+            VALUE "FileDescription", "The Falcon unit test interface"
+            VALUE "FileVersion", FALCON_MAKE_VERSION_STRING( VERSION_MAJOR, VERSION_MINOR, VERSION_REVISION, 0 )
+            VALUE "InternalName", "faltest"
             VALUE "LegalCopyright", "The Falcon Programming Language License"
-            VALUE "OriginalFilename", "falrun.exe"
+            VALUE "OriginalFilename", "faltest.exe"
             VALUE "ProductName", "The Falcon Programming Language"
-            VALUE "ProductVersion", FALCON_VERSION_RCINFO
+            VALUE "ProductVersion", FALCON_VERSION
         END
     END
     BLOCK "VarFileInfo"

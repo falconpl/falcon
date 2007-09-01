@@ -4,6 +4,7 @@
 
 // for project wide versioning...
 #include <falcon/config.h>
+#include <falcon/rc_version.h>
 
 VS_VERSION_INFO VERSIONINFO
  FILEVERSION FALCON_VERSION_RCINFO_N
@@ -14,8 +15,8 @@ VS_VERSION_INFO VERSIONINFO
 #else
  FILEFLAGS 0x0L
 #endif
- FILEOS 0x4L
- FILETYPE 0x2L
+ FILEOS 0x0L
+ FILETYPE 0x0L
  FILESUBTYPE 0x0L
 BEGIN
     BLOCK "StringFileInfo"
@@ -24,12 +25,12 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "Falcon Committee"
             VALUE "FileDescription", "Main Falcon engine"
-            VALUE "FileVersion", FALCON_VERSION_RCINFO
+            VALUE "FileVersion", FALCON_VERSION
             VALUE "InternalName", "engine"
             VALUE "LegalCopyright", "The Falcon Programming Language License"
             VALUE "OriginalFilename", "falcon_engine.dll"
             VALUE "ProductName", "The Falcon Programming Language"
-            VALUE "ProductVersion", FALCON_VERSION_RCINFO
+            VALUE "ProductVersion", FALCON_VERSION
         END
     END
     BLOCK "VarFileInfo"

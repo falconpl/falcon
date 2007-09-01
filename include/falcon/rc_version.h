@@ -35,3 +35,7 @@
 #define FALCON_MAKE_VERSION_STRING_4(v1,v2,v3,v4)    STR(v1) "." STR(v2) "."  STR(v3) "." STR(v4)
 
 #define FALCON_MAKE_VERSION_STRING_RC(v1,v2,v3,v4) STR(v1) ", " STR(v2) ", "  STR(v3) ", " STR(v4)
+
+#ifndef VS_VERSION_INFO
+   #define VS_VERSION_INFO 1
+#endif
