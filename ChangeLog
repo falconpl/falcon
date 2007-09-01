@@ -1,0 +1,76 @@
+Falcon (0.8.4)
+  * Linear dictionary didn't break search loop in case of VM error.
+  * VM cleared register A when comparing items. This caused weird
+    errors in dictionaries when the objects overloaded compare().
+  * Fixed try/catch sequences across internal frames; this also allowed
+    to remove the ugly trypos structure.
+  * Passin opcode extracted an unexisting second parameter; in case
+    of dirty data that caused an assert.
+
+Falcon (0.8.3)
+  * VM optimizations of about 20-25%
+  * VM Stack can now automatically shrink on need
+  * Item size reduced to 12 bytes
+  * GENR opcode didn't work correctly when operands were float.
+  * Added lenght recording to autocstring and autowstring
+  * Updated REGEX to PCRE 7.2
+  * Added compare() and version() methods for Regex class.
+  * in Error, added a method to stringize only the error header.
+  * Fixed ROStream destruction sequence.
+  * Fixed GetSystemEncoding (caused falcon cmdline to fail recognize default encodings)
+  * Added ideographic space to whitespaces and ideographic quotes to string quotes.
+  * Fixed some docs.
+
+Falcon (0.8.2)
+  * String::toCString now returns immediately if space is too short.
+  * String::toWString now returns size of converted string or -1 on error.
+  * AutoCString and AutoWString classes were not correctly exported in Windows.
+  * Fassert.h didn't compile under MINGW.
+  * Now switch on objects working in every case (including compare() overload)
+  * Now operators - and -= remove element(s) from arrays and dictionaries
+  * More rational and elegant class interface for garbage collection objects.
+  * More rational and elegant string classes constructors.
+  * Cleaner class interface for module loader search path specification.
+  * Added load module and file interface directly from Runtime
+  * END opcode now nils the A register of the VM if quitting.
+  * randomSeed() in RTL now randomizes on timer if called without parameters.
+  * Added VMachine::gcLock()/gcUnlock() to allow simpler registration of callbacks.
+
+Falcon (0.8.1)
+  * Fixed bug in VM allocation of temporary vardef that caused
+    crash when using special memory allocator.
+  * Added option -M to faltest to check for memory leaks
+  * Added option -C to falcon to check for memory leaks
+  * Removed memory leaks in some VM oprations, in maps, in compiler
+    tree destruction, module and symbol destruction and many more.
+  * Fixed timestamp method compare() that didn't allow for comparation
+    against other types.
+  * TimeStamp.toString() created a string too wide by one.
+  * Empty loops always generate code. Optimization is to be performed
+    by the (still unwritten) optimizer.
+  * stdOut() &c now return a system-transcoded stream. To obtain a
+    raw stream, use stdOutRaw() etc.
+  * Regex.replaceAll() was broken in case of multiple submatches.
+  * ProcessHandler last error was not zeroed in creation, causing random
+    false negatives (process created ok, but reported error).
+  * samples/procLoad.fal updated with correct Error class structure
+  * Updated docs.
+  * Added BOM serialization and item level cloning.
+  * Added cloning support for streams.
+  * Added cloning support for timestamps.
+  * Items containing objects and classe were not evaluated as true; fixed
+  * Added AutoCString and AutoWString class helpers for eaiser conversion
+    of falcon items and strings to POD C data.
+  * The Falcon::core::sleep function was correctly resolved when the application
+    linked against Falcon .so in linux, but when it was loaded indirectly, in
+    example, as a cascade load some app's plugin using falcon, it was resolved to the
+    system sleep() instead!!!! --- so it has been renamed to Falcon::core::_f_sleep().
+  * Fixed VM stack push (GenericVector couldn't push to themselves).
+  * Fixed VM context rotation for coroutines managed outside plugins.
+
+Falcon (0.8)
+
+  * Prepared complete Debian packaging and fixed build issues.
+  * Starting massive development.
+
+ -- Chr. Giancarlo Niccolai <gc_ /at/ _falconpl.org>  2007-04-08
