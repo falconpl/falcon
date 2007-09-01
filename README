@@ -1,0 +1,43 @@
+
+                     The Falcon Programming Language
+
+                             Falcon Feathers
+
+                                  0.8
+
+
+Falcon feathers are the fundamental, well known modules that are part of the
+official Falcon distributions. They are granted to be present in a correct
+falcon installation.
+
+Yet, they are handled as a separate project, both for administrative reasons
+and to insolate them from the development of the core system, which may be
+erratic and cause sudden changes in the interfaces.
+
+Modules admitted in the Feathers are currently:
+
+   * compiler
+   * confparser
+   * process
+   * regex
+   * socket
+
+
+BUILDING
+========
+
+To build the Falcon Feathers, you'll need a well setup Falcon Development
+Environment, as specified in the relative document at
+
+   http://www.falconpl.org/wiki/tiki-index.php?page=The+build+environment
+
+The core must be built and installed in the active tree before starting
+feathers configuration.
+
+Then,
+
+   cmake .
+   make
+   make install
+
+should do.
