@@ -1,10 +1,7 @@
 
-	          RELNOTES for Falcon 0.8.3
+                       RELNOTES for Falcon 0.8.4
 
-This is mainly an optimized version, released now as it makes a
-perfect base for module development. VM performance has been
-increased by 20-25%.
+This release has been built under the the new repository and build system.
 
-With things working great but so many things still to do, this is
-the best time to join ever. Reach http://www.falconpl.org and
-register your account on the forum.
+Other than that, we have better management of try now, and also some errors
+in return frames from inside VM requests have resolved.
