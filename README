@@ -1,0 +1,219 @@
+
+
+                     The Falcon Programming Language
+
+                                0.8 series
+
+
+
+
+This README file is meant to provide the user with minimal instrucions on
+build and setup, as well as other first-time notice that the author wishes
+to present to the users.
+
+Minimal FALCON build instructions
+=================================
+
+GNU systems/unix/linux
+======================
+
+Requirements
+------------
+
+   - gcc3.3 or gcc4.0, with libstdc++5 or libstdc++6
+   - Bison 1.3
+
+A "prebuilt" dir is provided with pre-compiled lexers and parsers; in case
+you don't have flex/bison ready, you may consider add that directory to the
+include path, and copy the C files into the relative src directories.
+
+
+
+Configure
+---------
+
+The CVS archive contains a Makefile.cvs that can be used to create the
+configure script. As usual, a configure script is provided with the release
+distrubution, but is not included in the CVS archive. To generate it,
+incase it's not present or in case you want to update the configure.in file,
+the following command can be used:
+
+   make -f Makefile.cvs
+
+Configure script has the usual parameters, the most important of which is
+--prefix, which defaults to /usr/local. The default installation directories
+are:
+   - $prefix/bin for binary files
+   - $prefix/include for development/extension headers
+   - $prefix/lib for static libraries for development
+   - $prefix/lib/falcon for falcon loadable modules.
+
+By providing the extra option --enable-modules-in-bin, the configure script
+prepares Falcon to install the modules in the same directory as the binary
+files. A suggestion for developers is to create a subdir where to perform
+compilation and temporary installation, with modules in the same directory
+as the binary files, like this:
+
+cd falcon
+mkdir my_personal_build
+cd my_personal_build
+../configure --prefix $(pwd) --enable-modules-in-bin
+
+After the configure step, make/make install will create Falcon.
+
+The option --enable-debug will generate debug symbols, will NOT declare
+the NDEBUG define and will add the DEBUG define to the compilation; it's
+the right choice for developers.
+
+For distributions
+-----------------
+
+The configure script creates a defaults.h dir that contains a default
+directory for module search path. Distributors often configure the files
+to be installed i.e. in /tmp/program_name, so that they can obtain a package
+by compressing the resulting tree.
+
+If this is the procedure, it is advisable, although not necessary, to change
+the default directory in the default.h; the define symbol DEFAULT_MODULE_PATH
+can be provided at compilation time (remember to add quotes!!!).
+
+Also, the configure script provides the option
+
+   --enable-default-modules=<different path>
+
+to set the default search path for moduels to a path which is not the one
+specified for module insstallation.
+
+So, say you are creating an RPM package temporarily prefixing the application
+in /tmp/falcon_rpm_package/usr with final target as /usr, you should:
+
+../configure --prefix=/tmp/falcon_rpm_package/usr \
+             --enable-search-modules=/usr/lib/falcon
+
+
+
+   * NOTE: a dist/ directory has been recently added to the project. 
+     It contains a set of scripts that are suitable to build 
+     installation packages for various platforms. See the README in 
+     the dist/ directory for further informations
+
+
+Kdevelop/Kate users
+-------------------
+
+A Falcon.kdev_template file is provided for usage with the Kdevelop3
+environment. Just rename the file to Falcon.kdev and open it in kdevelop.
+
+A kate syntax for the Falcon language is provided in the doc/SyntaxHilighting
+directory. Just copy it in the .kde/share/apps/kateparts/syntax
+
+
+WINDOWS SYSTEMS
+===============
+
+Microsoft Visual C 6.0 workspace file Falcon.dsw_template is provided; just
+rename it in Falcon.dsw and open it in VisualC. A batch build will create all
+the needed componetns in Falcon/Release  and Falcon/Debug directories.
+
+A Microsoft Visual C 8.0 solution file .sln is also provided. It builds
+in Falcon/Release_vs8 and Falcon/Debug_vs8.
+
+
+Visual C 6.0, STL and platform SDK
+----------------------------------
+
+Original Visual C 6.0 has a buggy version of STL that does not allow to
+export XTREE derived objects (i.e. maps) across DLLs. Patch 6a seems to
+fix this bug, that has been anyhow fixed in the platform SDK freely
+downloadable from Microsoft. If you have an older version of Visual C patch,
+or you have not the new SDK, then falcon will crash.
+
+Falcon is compatible with both stlport and MS stl, once fixed with the 
+appropriate patch.
+
+To compile the socket module, the new SDK is needed.
+
+
+IMPORTANT NOTICE FOR WINDOWS USERS
+==================================
+
+Falcon system utilizes UNIX directory separator convention. This means that
+path indicators to load scripts in command lines, or to indicate library
+search path, or to open files from within Falcon scripts, the character "/"
+must be used instead of "\".
+
+In example, to open a script in C:\documents\scripts\, you should do:
+
+falcon C:/document/scripts/myscript.fal
+
+
+
+FALCON MINIMAL OPERTION
+=======================
+
+Falcon scripts can be launched through the command
+
+   falcon /path/script_name.fal parameter1 ... parameterN
+   falcon script_module parameter1
+
+the option -? will give some interesting help; most useful parameters, to be
+placed before the script name, are:
+  -L <module_path;module_path> to specify the paths where to search for
+                               modules.
+  -p module  to pump in extra modules (preload them). Repetitions of -p load
+             other modules
+
+On unix systems, falcon scripts can be made executable and provide the execute
+instruction on the first line, like this:
+
+   #! /usr/bin/falcon
+   printl( "Hello world" )
+
+
+The environment variable FALCON_LOAD_PATH  can provide extra load path
+instruction. The priority of load paths are:
+
+- command line -L option
+- FALCON_LOAD_PATH
+- builtin directory (in defaults.h created from defaluts.h.in)
+
+So it's always possible to redirect Falcon to load user-provided modules
+instead of system ones.
+
+
+OTHER NOTICES
+=============
+
+The testsuite/ and benchmarks/ direcory contains a series of scripts that
+are meant to be used either by faltest program or by pumping in the
+testsuite module. Faltest reads the directory provided with -d command line
+option ad runs all the .fal scripts in there which provide an ID: field
+in the comments on top of the file. Valid IDs are numbers optionally followed
+by a lowercase letter. Scripts are run in numeric order, and
+a list of IDS separated by space can be provided to run one or more tests.
+Also, script may be categorized, and filtered by category/subcategory using
+-c and -C command line switches. The -l switch lists the selected scripts (or
+all the scripts found), and the -v switch reports verbose output errors. To
+know the path for a script ID, use
+
+  ./faltest -d <dir to scripts> -l -v <ID>
+
+(scripts path are displayed only with -v option).
+Finally, -t option gather execution time info. Other esotic/esoteric options
+are -m (NOT compile in memory), -s (compile via assembly), -S (do a
+serialization/ deserialization on the compiled module before running it,
+instead of using it as soon as it has been compiled).
+
+It's a good idea to launch faltests on the testsuite to verify that your
+environment is properly set up.
+
+The benchmarks/ directory has the same funciton of the testsuite/ directory,
+except for the fact that its tests are meant to run for longer times to check
+for stress/repetition features.
+
+The samples/ directory contains some sample and tests for those features that
+cannot easily be tested automatically. Those are normal falcon scripts and
+can be run with the "falcon" command.
+
+The three directories are a quite complete showdown of falcon language, and
+can be used as operating examples.
