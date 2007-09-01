@@ -1,7 +1,7 @@
 PROJECT(falcon_rtl)
 
 # Inclusion settings
-INCLUDE_DIRECTORIES(BEFORE $ENV{FALCON_BUILD_TREE}/include)
+INCLUDE_DIRECTORIES(BEFORE $ENV{FALCON_ACTIVE_TREE}/include)
 INCLUDE_DIRECTORIES(BEFORE ../include)
 INCLUDE_DIRECTORIES(.)
 LINK_DIRECTORIES(BEFORE $ENV{FALCON_ACTIVE_TREE}/lib )
@@ -32,7 +32,7 @@ ADD_LIBRARY( falcon_rtl MODULE
    stringstream_ext.cpp
    time_ext.cpp
    transcode_ext.cpp
-   ${SYSTEM_RC}	
+   ${SYSTEM_RC}
 )
 
 #Link

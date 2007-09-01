@@ -46,7 +46,7 @@ ELSEIF(WIN32)
       fstream_sys_win.cpp
       stdstreams_win.cpp
       sys_win.cpp
-      time_sys_win.cpp 
+      time_sys_win.cpp
       falcon_engine.rc
       )
 
@@ -59,7 +59,7 @@ INCLUDE_DIRECTORIES($ENV{FALCON_BUILD_TREE}/core/engine/)
 ADD_LIBRARY( falcon_engine SHARED
    fasm_parser.cpp
    src_parser.cpp
-   
+
    autocstring.cpp
    autowstring.cpp
    basealloc.cpp
@@ -124,8 +124,8 @@ ADD_LIBRARY( falcon_engine SHARED
    vm.cpp
    vmmaps.cpp
    vm_run.cpp
-   vmsema.cpp 
-   
+   vmsema.cpp
+
    ${SYS_SPECIFIC}
    )
 
@@ -135,12 +135,7 @@ SET_TARGET_PROPERTIES(falcon_engine
       SOVERSION "${FALCON_SONAME_VERSION}.${FALCON_SONAME_REVISION}.${FALCON_SONAME_AGE}" )
 
 SET(CMAKE_INSTALL_PREFIX "")
-
-INSTALL(TARGETS falcon_engine
-  RUNTIME DESTINATION $ENV{FALCON_ACTIVE_TREE}/bin
-  LIBRARY DESTINATION $ENV{FALCON_ACTIVE_TREE}/lib
-  ARCHIVE DESTINATION $ENV{FALCON_ACTIVE_TREE}/lib
-)
+FALCON_LIB_INSTALL( falcon_engine )
 
 #In unix and mac we have to add extra libraries
 IF(UNIX OR MAC)
