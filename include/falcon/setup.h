@@ -42,11 +42,11 @@ different systems.
 //
 
 #ifdef FALCON_SYSTEM_WIN
-   
+
    //===============================
    // Compiler specific defines
    //
-   
+
    /* Specifics for Borlandc */
    #ifdef __BORLANDC__
       #define DLL
@@ -73,7 +73,7 @@ different systems.
       #define CDECL __cdecl
       #define FALCON_FUNC \
          extern "C" void CDECL
-      
+
 		#ifndef FALCON_ENGINE_STATIC
 			#ifdef FALCON_ENGINE_EXPORTS
 				#define FALCON_DYN_CLASS __declspec(dllexport)
@@ -94,8 +94,8 @@ different systems.
 
       #define FALCON_MODULE_TYPE \
 		   extern "C" __declspec(dllexport) ::Falcon::Module * CDECL
-		
-		
+
+
       #pragma warning (disable: 4786 )
       #pragma warning (disable: 4291 )
       #pragma warning (disable: 579 )
@@ -110,12 +110,12 @@ different systems.
    		#endif
    	#endif
    #endif
-   
+
    /* Specifics for Gcc/Mingw */
    #ifdef __GNUC__
 	   #ifndef CDECL
 		#define CDECL
-	   #endif	
+	   #endif
 	   #define FALCON_FUNC \
 	      extern "C" void
 
@@ -137,18 +137,17 @@ different systems.
 	#endif
 
    /* Other Windonws specific system defines */
-   
+
    #define DIR_SEP_STR   "\\"
    #define DIR_SEP_CHR   '\\'
    // paths are always indicated in falcon convention.
    #define DEFAULT_TEMP_DIR "C:/TEMP"
    #define FALCON_SYS_EOL "\r\n"
-   
+
 //=================================
 // Unix specific defines
 //
 #else
-   #define DLL
    #define CDECL
    #define FALCON_FUNC \
       extern "C" void
@@ -159,6 +158,8 @@ different systems.
 
    #define FALCON_MODULE_TYPE \
       extern "C" ::Falcon::Module *
+
+   #define FALCON_FUNC_DYN_SYM   FALCON_FUNC
 
    #define DIR_SEP_STR   "/"
    #define DIR_SEP_CHR   '/'
