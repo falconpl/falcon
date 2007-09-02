@@ -60,8 +60,8 @@ typedef void * voidp;
 class VMachine;
 class Module;
 
-typedef DLL void ( CDECL *ext_func_t) ( VMachine *);
-typedef DLL Module* ( CDECL  *ext_mod_init)( const EngineData &data );
+typedef FALCON_DYN_SYM void ( CDECL *ext_func_t) ( VMachine *);
+typedef FALCON_DYN_SYM Module* ( CDECL  *ext_mod_init)( const EngineData &data );
 
 }
 

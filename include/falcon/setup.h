@@ -69,14 +69,11 @@ different systems.
 
    /* Specifigs for MSVC */
    #ifdef _MSC_VER
-	  #define DLL   __declspec( dllexport )
       #undef CDECL
       #define CDECL __cdecl
       #define FALCON_FUNC \
-         extern "C" DLL void CDECL
-      #define FALCON_MODULE_TYPE \
-		 extern "C" DLL  ::Falcon::Module * CDECL
-		
+         extern "C" void CDECL
+      
 		#ifndef FALCON_ENGINE_STATIC
 			#ifdef FALCON_ENGINE_EXPORTS
 				#define FALCON_DYN_CLASS __declspec(dllexport)
@@ -91,6 +88,13 @@ different systems.
 			#define FALCON_DYN_CLASS
 			#define FALCON_DYN_SYM
 		#endif
+
+      #define FALCON_FUNC_DYN_SYM \
+		   extern "C" FALCON_DYN_SYM void CDECL
+
+      #define FALCON_MODULE_TYPE \
+		   extern "C" __declspec(dllexport) ::Falcon::Module * CDECL
+		
 		
       #pragma warning (disable: 4786 )
       #pragma warning (disable: 4291 )
@@ -109,7 +113,6 @@ different systems.
    
    /* Specifics for Gcc/Mingw */
    #ifdef __GNUC__
-	   #define DLL
 	   #ifndef CDECL
 		#define CDECL
 	   #endif	
@@ -126,8 +129,11 @@ different systems.
 			#define EXTERN_TEMPLATE export
 		#endif
 
+      #define FALCON_FUNC_DYN_SYM \
+		   extern "C" FALCON_DYN_SYM void CDECL
+
 	   #define FALCON_MODULE_TYPE \
-	      extern "C" ::Falcon::Module *
+	      extern "C" __declspec(dllexport) ::Falcon::Module *
 	#endif
 
    /* Other Windonws specific system defines */

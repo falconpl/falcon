@@ -646,14 +646,14 @@ public:
 const String &errorDesc( int errorCode );
 
 namespace core {
-FALCON_FUNC FALCON_DYN_SYM Error_init ( ::Falcon::VMachine *vm );
-FALCON_FUNC FALCON_DYN_SYM SyntaxError_init ( ::Falcon::VMachine *vm );
-FALCON_FUNC FALCON_DYN_SYM CodeError_init ( ::Falcon::VMachine *vm );
-FALCON_FUNC FALCON_DYN_SYM IoError_init ( ::Falcon::VMachine *vm );
-FALCON_FUNC FALCON_DYN_SYM RangeError_init ( ::Falcon::VMachine *vm );
-FALCON_FUNC FALCON_DYN_SYM MathError_init ( ::Falcon::VMachine *vm );
-FALCON_FUNC FALCON_DYN_SYM ParamError_init ( ::Falcon::VMachine *vm );
-FALCON_FUNC FALCON_DYN_SYM ParseError_init ( ::Falcon::VMachine *vm );
+FALCON_FUNC_DYN_SYM Error_init ( ::Falcon::VMachine *vm );
+FALCON_FUNC_DYN_SYM SyntaxError_init ( ::Falcon::VMachine *vm );
+FALCON_FUNC_DYN_SYM CodeError_init ( ::Falcon::VMachine *vm );
+FALCON_FUNC_DYN_SYM IoError_init ( ::Falcon::VMachine *vm );
+FALCON_FUNC_DYN_SYM RangeError_init ( ::Falcon::VMachine *vm );
+FALCON_FUNC_DYN_SYM MathError_init ( ::Falcon::VMachine *vm );
+FALCON_FUNC_DYN_SYM ParamError_init ( ::Falcon::VMachine *vm );
+FALCON_FUNC_DYN_SYM ParseError_init ( ::Falcon::VMachine *vm );
 }
 
 }
