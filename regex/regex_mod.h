@@ -27,7 +27,7 @@
 #define flc_regex_mod_H
 
 #include <falcon/userdata.h>
-#include "pcre.h"
+#include "pcre_internal.h"
 
 #define OVECTOR_SIZE 60
 

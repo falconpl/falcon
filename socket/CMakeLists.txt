@@ -10,11 +10,23 @@ INCLUDE_DIRECTORIES(.)
 INCLUDE_DIRECTORIES(BEFORE ${TARGET_DIR}/include)
 LINK_DIRECTORIES(BEFORE ${TARGET_DIR}/lib )
 
-IF(UNIX)
+IF(UNIX OR MAC)
    SET(SYS_SPECIFIC socket_sys_unix.cpp)
-ELSE(UNIX)
+ELSE(UNIX OR MAC)
+   #We must configure socket_sys_win.cpp.in with the correct location of SDK
+   IF( "${CMAKE_GENERATOR}" STREQUAL "MinGW Makefiles" )
+      IF( "${MS_SDK_PATH}" STREQUAL "" )
+         SET( MS_SDK_PATH "$ENV{MS_SDK_PATH}" )
+      ENDIF( "${MS_SDK_PATH}" STREQUAL "" )
+      
+      IF( "${MS_SDK_PATH}" STREQUAL "" )
+         MESSAGE( FATAL_ERROR "Please, valorize MS_SDK_PATH CMAKE or environment variable with path to SDK" )
+      ENDIF( "${MS_SDK_PATH}" STREQUAL "" )
+   ENDIF("${CMAKE_GENERATOR}" STREQUAL "MinGW Makefiles" )
+   
+   CONFIGURE_FILE( "socket_sys_win.cpp.in" "socket/socket_sys_win.cpp" ESCAPE_QUOTES @ONLY )
    SET(SYS_SPECIFIC socket_sys_win.cpp socket.rc)
-ENDIF(UNIX)
+ENDIF(UNIX OR MAC)
 
 # Target
 ADD_LIBRARY( socket MODULE

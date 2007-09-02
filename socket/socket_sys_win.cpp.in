@@ -25,7 +25,15 @@
 
 #include <winsock2.h>
 #include <ws2tcpip.h>
-#include <Wspiapi.h>
+
+#ifdef __MINGW32__
+   #define _inline __inline
+   #include "@MS_SDK_PATH@/include/Wspiapi.h" 
+   #undef _inline
+#else
+   #include <Wspiapi.h>
+#endif
+
 #include <windows.h>
 
 #include "socket_sys.h"
