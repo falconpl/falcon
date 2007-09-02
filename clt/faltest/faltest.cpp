@@ -1097,6 +1097,7 @@ int main( int argc, char *argv[] )
       opt_libpath = FALCON_DEFAULT_LOAD_PATH;
 
    FlcLoader *modloader = new FlcLoader( opt_libpath );
+   modloader->addFalconPath();
    modloader->errorHandler( defhandler );
    modloader->alwaysRecomp( true );
    modloader->saveModules( false );

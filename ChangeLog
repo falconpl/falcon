@@ -6,7 +6,8 @@ Falcon (0.8.4)
     to remove the ugly trypos structure.
   * Passin opcode extracted an unexisting second parameter; in case
     of dirty data that caused an assert.
-  * Fixed compilation and build settings with MINGW
+  * Fixed compilation and build settings with MINGW.
+  * Fixed default load path of faltest.
 
 Falcon (0.8.3)
   * VM optimizations of about 20-25%
