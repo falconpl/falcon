@@ -92,7 +92,6 @@ different systems.
 			#define FALCON_DYN_SYM
 		#endif
 		
-      /* Includes a fixed version of a broken MSVC stl header. */
       #pragma warning (disable: 4786 )
       #pragma warning (disable: 4291 )
       #pragma warning (disable: 579 )

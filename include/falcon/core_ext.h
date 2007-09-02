@@ -42,11 +42,21 @@ FALCON_FUNC len ( ::Falcon::VMachine *vm );
 FALCON_FUNC DgetKeyAt ( ::Falcon::VMachine *vm );
 FALCON_FUNC DgetValueAt ( ::Falcon::VMachine *vm );
 FALCON_FUNC DgetPairAt( ::Falcon::VMachine *vm );
-FALCON_FUNC CreateTraceback( ::Falcon::VMachine *vm );
-FALCON_FUNC TraceStep( ::Falcon::VMachine *vm );
-FALCON_FUNC TraceStep_toString( ::Falcon::VMachine *vm );
-FALCON_FUNC Error( ::Falcon::VMachine *vm );
-FALCON_FUNC Error_toString( ::Falcon::VMachine *vm );
+
+/** Useful symbol to be exported by the engine DLL */
+FALCON_FUNC FALCON_DYN_SYM CreateTraceback( ::Falcon::VMachine *vm );
+/** Useful symbol to be exported by the engine DLL */
+FALCON_FUNC FALCON_DYN_SYM TraceStep( ::Falcon::VMachine *vm );
+/** Useful symbol to be exported by the engine DLL */
+FALCON_FUNC FALCON_DYN_SYM TraceStep_toString( ::Falcon::VMachine *vm );
+/** Useful symbol to be exported by the engine DLL */
+FALCON_FUNC FALCON_DYN_SYM Error( ::Falcon::VMachine *vm );
+/** Useful symbol to be exported by the engine DLL */
+FALCON_FUNC FALCON_DYN_SYM Error_toString( ::Falcon::VMachine *vm );
+/** Useful symbol to be exported by the engine DLL
+     This is exported also by error.h
+ */
+FALCON_FUNC FALCON_DYN_SYM Error_init( ::Falcon::VMachine *vm );
 } // end of core namespace
 
 FALCON_DYN_SYM Module * core_module_init();
