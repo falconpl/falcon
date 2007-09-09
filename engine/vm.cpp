@@ -60,6 +60,7 @@ VMachine::VMachine( bool initItems ):
 
 void VMachine::internal_construct()
 {
+   m_userData = 0;
    m_bOwnErrorHandler = false;
    m_bhasStandardStreams = false;
    m_errhand =0;

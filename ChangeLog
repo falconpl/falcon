@@ -8,6 +8,7 @@ Falcon (0.8.4)
     of dirty data that caused an assert.
   * Fixed compilation and build settings with MINGW.
   * Fixed default load path of faltest.
+  * Added a user data pointer to VM (useful for binary compatibility)
 
 Falcon (0.8.3)
   * VM optimizations of about 20-25%

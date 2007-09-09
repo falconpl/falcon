@@ -478,6 +478,11 @@ protected:
    */
    Map m_services;
 
+   /** User available pointer.
+      \see userData( void * );
+   */
+   void *m_userData;
+
    /** Utility for switch opcode.
       Just pretend it's not here.
    */
@@ -1557,6 +1562,29 @@ public:
    void gcUnlock( GarbageLock *itm ) { m_memPool->unlock( itm ); }
 
    uint32 stackBase() const { return m_stackBase; }
+
+   /** Set user data.
+      VM is passed to every extension function, and is also quite used by the
+      embedding application. To provide application specific per-vm data to
+      the scripts, the best solution for embedding applications is usually
+      to extend the VM into a subclass. Contrarily, middleware extensions,
+      as, in example, script plugins for applications, may prefer to use the
+      standard Falcon VM and use this pointer to store application specific data.
+
+      The VM makes no assumption on the kind of user data. The data is not destroyed
+      at VM destruction. If there is the need to destroy the data at VM destruction,
+      then VM derivation seems a more sensible choice.
+
+      \param ud the application specific user data.
+   */
+   void userData( void *ud ) { m_userData = ud; }
+
+   /** Get the user data associated with this VM.
+      \see userData( void * )
+      \return the previously set user data or 0 if user data is not set.
+   */
+   void *userData() const { return m_userData; }
+
 
 //==========================================================================
 //==========================================================================
