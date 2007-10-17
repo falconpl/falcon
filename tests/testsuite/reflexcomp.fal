@@ -1,0 +1,104 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: reflexcomp.fal,v 1.5 2007/08/01 10:30:41 jonnymind Exp $
+*
+* ID: 54a
+* Category: reflexive
+* Subcategory:
+* Short: Basic reflexive compiler
+* Description:
+* Loads the functions reflexcomp_1.fal twice sending and
+* getting some data.
+* [/Description]
+*
+****************************************************************************/
+
+load compiler
+
+class TestClass
+   function func( param )
+      return "Loader class func " + param.toString()
+   end
+end
+
+object TestObj
+   function func( param )
+      return "Loader obj func " + param.toString()
+   end
+end
+
+function testFunc( param )
+   return "Loader func " + param.toString()
+end
+
+
+comp = Compiler()
+disk, modPath, fname, ext = fileNameSplit( scriptPath )
+comp.path = comp.path + ";" + modPath
+comp.saveModules = false
+
+// try once
+mod1 = comp.loadByName( "reflexcomp_1" )
+success()
+mod2 = comp.loadModule( modPath + "/reflexcomp_1.fal" )
+
+test( mod1, "Module1 - first try" )
+test( mod2, "Module2 - first try" )
+
+// unload
+mod2.unload()
+mod1.unload()
+
+// try again
+mod1 = comp.loadByName( "reflexcomp_1" )
+mod2 = comp.loadModule( modPath + "/reflexcomp_1.fal" )
+
+test( mod1, "Module1 - second try" )
+test( mod2, "Module2 - second try" )
+
+function test( module, reason )
+
+   res = module.get( "__main__" )()
+   if res != "main": failure( reason + " + main" )
+
+   res = module.get( "func" )( "val1" )
+   if res != "func val1": failure( reason + " - func" )
+
+   obj = module.get( "obj" )
+   if obj.func( "val1" ) != "obj val1": failure( reason + " - obj func" )
+      
+   if obj.initData != "Initialized": failure( reason + " - init obj" )
+
+   // now inject some data.
+   module.set( "global_var", "set" )
+   if module.get( "global_var" ) != "set": failure( reason + " - global value" )
+
+   if module.get( "func_global" )( "param" ) != "func_global set param"
+      failure( reason + " - global from func" )
+   end
+
+   module.set( "global_sym", testFunc )
+   res = module.get( "func_global_sym" )( "param" )
+   if res != "Loader func param": failure(  reason + " - injected function" )
+   
+   module.set( "global_sym", TestObj )
+   res = module.get( "func_global_obj" )( "param" )
+   if res != "Loader obj func param": failure(  reason + " - injected object" )
+   
+   module.set( "global_sym", TestClass )
+   res = module.get( "func_global_class" )( "param" )
+   if res != "Loader class func param": failure(  reason + " - injected class" )
+
+   // try to import an ojbect, locally inject the symbol and call the
+   // remote method.
+   obj.remote = testFunc
+   if obj.callRemote( "param" ) != "Loader func param"
+      failure( reason + " - injected remote method" )
+   end
+   
+end
+
+success()
+
+/* End of file */
