@@ -1,14 +1,23 @@
 Falcon (0.8.4)
-  * Linear dictionary didn't break search loop in case of VM error.
-  * VM cleared register A when comparing items. This caused weird
+  * major: Old "lambda expressionss" are now "nameless functions". They are declared
+    through variable = function(...) ... end  (which was the most common
+    pattern for the old usage of lambda expressions
+  * major: Lambda expression grammar is much simplified, and they allow only one
+    expression as body.
+  * major: Added .ftd (falcon template document) file type. It's a outer-escaped
+    document (php/asp like) where unescaped literal code and escaped code
+    can be seamlessly merged.
+  * bugfix: Linear dictionary didn't break search loop in case of VM error.
+  * bugfix: VM cleared register A when comparing items. This caused weird
     errors in dictionaries when the objects overloaded compare().
-  * Fixed try/catch sequences across internal frames; this also allowed
-    to remove the ugly trypos structure.
-  * Passin opcode extracted an unexisting second parameter; in case
+  * bugfix: Fixed try/catch sequences across internal frames
+  * improvement: ^^^this also allowed to remove the ugly trypos structure.
+  * bugfix: PSIN opcode extracted an unexisting second parameter; in case
     of dirty data that caused an assert.
-  * Fixed compilation and build settings with MINGW.
-  * Fixed default load path of faltest.
-  * Added a user data pointer to VM (useful for binary compatibility)
+  * design: Fixed compilation and build settings with MINGW.
+  * bugfix: Fixed default load path of faltest.
+  * improvement: Added a user data pointer to VM (useful for binary compatibility)
+  * minor: Unclosed scoping errors now report where the scope was open.
 
 Falcon (0.8.3)
   * VM optimizations of about 20-25%

@@ -114,7 +114,10 @@ bool Compiler::compile()
 
    // If the context is not empty, then we have something unclosed.
    if ( ! m_context.empty() ) {
-      raiseError( e_unclosed_cs );
+      Statement *stmt  = getContext();
+      String temp = "from line ";
+      temp.writeNumber( (int64) stmt->line() );
+      raiseError( e_unclosed_cs, temp );
       return false;
    }
 
