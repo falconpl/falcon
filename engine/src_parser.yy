@@ -117,6 +117,9 @@ inline int flc_src_lex (void *lvalp, void *yyparam)
 %token FORDOT
 %token LOOP
 
+/* Special token used by the parser to generate a parse print */
+%token <stringp> OUTER_STRING
+
 %token CLOSEPAR OPENPAR CLOSESQUARE OPENSQUARE DOT
 /*
    Assigning rule precendence: immediate operations have maximum precedence, being resolved immediately,
@@ -167,6 +170,7 @@ inline int flc_src_lex (void *lvalp, void *yyparam)
 %type <fal_stat> self_print_statement
 %type <fal_stat> class_decl object_decl property_decl attributes_statement export_statement
 %type <fal_stat> def_statement
+%type <fal_stat> outer_print_statement
 
 %type <fal_stat> op_assignment autoadd autosub automul autodiv automod autoband autobor autobxor autopow const_statement
 %type <fal_stat> autoshl autoshr
@@ -297,6 +301,7 @@ base_statement:
    | pass_statement
    | fordot_statement
    | self_print_statement
+   | outer_print_statement
 ;
 
 def_statement:
@@ -754,6 +759,17 @@ self_print_statement:
          $$ = 0;
       }
 ;
+
+
+outer_print_statement:
+   OUTER_STRING
+   {
+      Falcon::ArrayDecl *adecl = new Falcon::ArrayDecl();
+      adecl->pushBack( new Falcon::Value( $1 ) );
+      $$ = new Falcon::StmtSelfPrint( LINE, adecl );
+   }
+;
+
 
 first_loop_block:
    FORFIRST EOL {

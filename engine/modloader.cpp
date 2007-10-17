@@ -148,7 +148,7 @@ ModuleLoader::t_filetype ModuleLoader::fileType( const String &path )
 
    FileStream in;
 
-   if ( ext == ".fal" ) {
+   if ( ext == ".fal" || ext == ".ftd" ) {
       in.open( path, FileStream::e_omReadOnly );
       if ( ! in.good() )
          return t_none;

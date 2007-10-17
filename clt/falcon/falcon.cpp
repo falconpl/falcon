@@ -812,8 +812,11 @@ int main( int argc, char *argv[] )
 
    bool exitSeq = vmachine->regA().isInteger();
    int32 exitVal;
+
    if ( exitSeq )
       exitVal = (int32) vmachine->regA().asInteger();
+   else
+      exitVal = 0;
 
    delete vmachine;
    delete runtime;

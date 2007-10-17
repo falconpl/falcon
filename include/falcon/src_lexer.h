@@ -83,6 +83,16 @@ private:
 
    t_state m_state;
 
+   typedef enum
+   {
+      t_mNormal,
+      t_mOutscape,
+      t_mEval
+   } t_mode;
+
+   t_mode m_mode;
+   bool m_bParsingFtd;
+
    /** Scans m_string for recognized tokens, and eventually returns them. */
    int checkUnlimitedTokens( uint32 nextChar );
 
@@ -121,6 +131,10 @@ private:
    // Process the state line
    int state_line( uint32 chr );
 
+   int lex_normal();
+   int lex_outscape();
+   int lex_eval();
+
 public:
    SrcLexer( Compiler *comp, Stream *in );
 
@@ -156,6 +170,11 @@ public:
    int lex();
 
    Stream *input() const { return m_in; }
+
+   bool parsingFtd() const { return m_bParsingFtd; }
+   void parsingFtd( bool b );
+
+
 };
 
 }

@@ -47,7 +47,9 @@ FlcLoader::FlcLoader( const String &path ):
       m_sourceIsAssembly( false ),
       m_compileErrors(0),
       m_delayRaise( false ),
-      m_saveMandatory( false )
+      m_saveMandatory( false ),
+      m_detectTemplate( true ),
+      m_forceTemplate( false )
 {
    // we accept sources ( by default)
    m_acceptSources = true;
@@ -72,13 +74,15 @@ Stream *FlcLoader::openResource( const String &path, t_filetype type )
 
 Module *FlcLoader::loadSource( const String &file )
 {
+   // we need it later
+   int32 dotpos = file.rfind( "." );
+
    if ( ! m_alwaysRecomp )
    {
       FileStat fs_module;
       FileStat fs_source;
       // do we have a module?
 
-      int32 dotpos = file.rfind( "." );
       int32 slashpos = file.rfind( "/" );
       String mod_name;
 
@@ -98,8 +102,19 @@ Module *FlcLoader::loadSource( const String &file )
    }
 
    // Ok, if we're here we have to load the source.
+	// should we force loading through Falcon Template Document parsing?
+	bool bOldForceFtd = m_forceTemplate;
+	if ( m_detectTemplate && ! m_forceTemplate )
+	{
+      if ( file.subString( dotpos ) == ".ftd" )
+         m_forceTemplate = true;
+   }
+
 	// use the base load source routine
 	Module *module = ModuleLoader::loadSource( file );
+
+   // reset old forcing method
+   m_forceTemplate = bOldForceFtd;
 
 	// if the base load source worked, save the result (if configured to do so).
    if ( module != 0 &&  m_saveModule )
@@ -154,6 +169,10 @@ Module *FlcLoader::loadSource( Stream *fin )
       bInAssembly = false;
 
       Compiler compiler( module, fin );
+
+      if ( m_forceTemplate )
+         compiler.parsingFtd( true );
+
       compiler.delayRaise( m_delayRaise );
 
       compiler.errorHandler( m_errhand );

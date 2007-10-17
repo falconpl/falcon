@@ -360,6 +360,10 @@ public:
 
    /** Returns true if delay raise is enabled. */
    bool delayRaise() const { return m_delayRaise; }
+
+   /** Are we parsing a normal file or an escaped template file? */
+   bool parsingFtd() const;
+   void parsingFtd( bool b );
 };
 
 } // end of namespace

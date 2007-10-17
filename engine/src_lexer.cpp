@@ -59,7 +59,8 @@ SrcLexer::SrcLexer( Compiler *comp, Stream *in ):
    m_done( false ),
    m_firstSym( true ),
    m_addEol( false ),
-   m_lineFilled( false )
+   m_lineFilled( false ),
+   m_mode( t_mNormal )
 {}
 
 /*
@@ -74,6 +75,180 @@ int SrcLexer::lex()
 */
 
 int SrcLexer::lex()
+{
+   switch( m_mode )
+   {
+      case t_mNormal: return lex_normal();
+      case t_mOutscape: return lex_outscape();
+      case t_mEval: return lex_eval();
+   }
+
+   return 0;
+}
+
+
+int SrcLexer::lex_outscape()
+{
+   enum {
+      e_normal,
+      e_esc1,
+      e_esc2,
+      e_escF,
+      e_escA,
+      e_escL,
+   }
+   state;
+
+   // clear string
+   m_string.size( 0 );
+
+   // in outscape mode, everything up to an escape (or at EOF) is a "fast print" statement.
+   uint32 chr;
+   state = e_normal;
+   m_state = e_line;
+
+   while( m_mode == t_mOutscape && m_in->get( chr ) )
+   {
+      if ( chr == '\n' )
+      {
+         m_previousLine = m_line;
+         m_line++;
+         m_character = 0;
+      }
+      else
+      {
+         m_character++;
+      }
+
+      switch( state )
+      {
+         case e_normal:
+            if ( chr == '<' )
+               state = e_esc1;
+            else
+               m_string.append( chr );
+         break;
+
+         case e_esc1:
+            if ( chr == '?' )
+               state = e_esc2;
+            else {
+               m_string.append( '<' );
+               m_string.append( chr );
+               state  = e_normal;
+            }
+         break;
+
+         case e_esc2:
+            if ( chr == '=' )
+            {
+               // we enter now in the eval mode
+               m_mode = t_mEval;
+               // and break from the loop so to return the string to print.
+               break;
+            }
+            else if ( chr == ' ' || chr == '\t' || chr == '\r' || chr == '\n' )
+            {
+               // we enter now the normal mode; we start to consider a standard program.
+               m_mode = t_mNormal;
+               // and break from the loop so to return the string to print.
+               break;
+            }
+            else if ( chr == 'f' )
+            {
+               state = e_escF;
+            }
+            else
+            {
+               state = e_normal;
+               m_string.append( '<' );
+               m_string.append( '?' );
+               m_string.append( chr );
+            }
+         break;
+
+         case e_escF:
+            if ( chr == 'a' )
+            {
+               state = e_escA;
+            }
+            else {
+               state = e_normal;
+               m_string.append( '<' );
+               m_string.append( '?' );
+               m_string.append( 'f' );
+               m_string.append( chr );
+            }
+         break;
+
+         case e_escA:
+            if ( chr == 'l' )
+            {
+              state = e_escL;
+            }
+            else {
+               state = e_normal;
+               m_string.append( '<' );
+               m_string.append( '?' );
+               m_string.append( 'f' );
+               m_string.append( 'a' );
+               m_string.append( chr );
+            }
+         break;
+
+         case e_escL:
+            if ( chr == ' ' || chr == '\t' || chr == '\r' || chr == '\n' )
+            {
+               // we enter now the normal mode; we start to consider a standard program.
+               m_mode = t_mNormal;
+               // and break from the loop so to return the string to print.
+               break;
+            }
+            else {
+               state = e_normal;
+               m_string.append( '<' );
+               m_string.append( '?' );
+               m_string.append( 'f' );
+               m_string.append( 'a' );
+               m_string.append( 'l' );
+               m_string.append( chr );
+            }
+         break;
+      }
+   }
+
+   if( m_string.size() != 0 )
+   {
+      VALUE->stringp = m_compiler->addString( m_string );
+      m_string.size( 0 );
+      return OUTER_STRING;
+   }
+
+   // else proceed with normal evaluation as we can't return nothing
+   if( m_in->good() )
+   {
+      switch( m_mode )
+      {
+         case t_mNormal: return lex_normal();
+         case t_mEval: return lex_eval();
+      }
+   }
+
+   return 0;
+}
+
+
+int SrcLexer::lex_eval()
+{
+   // prepare for a normal scan
+   m_mode = t_mNormal;
+
+   // returns an LT, which will be interpreted as a fast print
+   return LT;
+}
+
+
+int SrcLexer::lex_normal()
 {
    // generate an extra eol?
    if ( m_addEol )
@@ -210,8 +385,33 @@ int SrcLexer::lex()
             if ( token > 0 ) {
                // great, we have a token
                m_lineFilled = true;
-               m_in->unget( chr );
                m_state = e_line;
+               
+               // a bit of galore: discard extra "\n" or "\r\n" in case of outer escape
+               if ( m_mode == t_mOutscape )
+               {
+                  if ( chr != '\n' ) {
+                     
+                     // ok, not a newline; but is it an INET newline?
+                     if ( chr == '\r') 
+                     {
+                        uint32 ch1 = 0;
+                        m_in->get( ch1 );
+                        if ( ch1 != '\n' )
+                        {
+                           m_in->unget( ch1 );
+                           m_in->unget( chr );
+                        }
+                        // else silently discard
+                     }
+                     else 
+                        m_in->unget( chr );
+                  }
+                  
+               }
+               else
+                  m_in->unget( chr );
+               
                return token;
             }
             else if ( token < 0 || m_string.length() == 3 ) {
@@ -821,7 +1021,10 @@ int SrcLexer::checkUnlimitedTokens( uint32 nextChar )
          else if ( chr == '.' && nextChar != '=' )
             return DOT;
          else if ( chr == '?' )
-            return QUESTION;
+         {
+            if ( ! parsingFtd() || nextChar != '>' )
+               return QUESTION;
+         }
          else if ( chr == '>' && nextChar != '=' && nextChar != '>' )
             return GT;
          else if ( chr == '<' && nextChar != '=' && nextChar != '<' )
@@ -921,6 +1124,11 @@ int SrcLexer::checkUnlimitedTokens( uint32 nextChar )
             m_state = e_blockComment;
          else if ( m_string == ".=" )
             return FORDOT;
+         else if ( parsingFtd() && m_string == "?>" )
+         {
+            m_mode = t_mOutscape;
+            return EOL;
+         }
       break;
 
       case 3:
@@ -1072,6 +1280,20 @@ int SrcLexer::checkLimitedTokens()
    }
 
    return 0;
+}
+
+
+void SrcLexer::parsingFtd( bool b )
+{
+   if ( b )
+   {
+      m_bParsingFtd = true;
+      m_mode = t_mOutscape;
+   }
+   else {
+      m_bParsingFtd = false;
+      m_mode = t_mNormal;
+   }
 }
 
 }

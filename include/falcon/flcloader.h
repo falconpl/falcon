@@ -66,6 +66,8 @@ class FALCON_DYN_CLASS FlcLoader: public ModuleLoader
    bool m_saveModule;
    bool m_sourceIsAssembly;
    bool m_saveMandatory;
+   bool m_detectTemplate;
+   bool m_forceTemplate;
 
    bool m_delayRaise;
    uint32 m_compileErrors;
@@ -119,6 +121,12 @@ public:
 
    void saveMandatory( bool setting ) { m_saveMandatory = setting; }
    bool saveMandatory() const { return m_saveMandatory; }
+
+   void detectTemplate( bool bDetect ) { m_detectTemplate = bDetect; }
+   bool detectTemplate() const { return m_detectTemplate; }
+
+   void compileTemplate( bool bCompTemplate ) { m_forceTemplate = bCompTemplate; }
+   bool compileTemplate() const { return m_forceTemplate; }
 
    /** return last compile errors. */
    uint32 compileErrors() const { return m_compileErrors; }

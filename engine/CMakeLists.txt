@@ -5,6 +5,35 @@ ADD_DEFINITIONS(-DFALCON_ENGINE_EXPORTS)
 INCLUDE_DIRECTORIES(BEFORE ${TARGET_DIR}/include)
 INCLUDE_DIRECTORIES(BEFORE ../include)
 
+# BISON a .ll file
+# search BISON
+MACRO(FIND_BISON)
+   IF(NOT BISON_EXECUTABLE)
+      FIND_PROGRAM(BISON_EXECUTABLE bison)
+      IF (NOT BISON_EXECUTABLE)
+         MESSAGE(FATAL_ERROR "BISON not found - aborting")
+      ENDIF (NOT BISON_EXECUTABLE)
+   ENDIF(NOT BISON_EXECUTABLE)
+ENDMACRO(FIND_BISON)
+
+MACRO( ADD_BISON_FILES _sources )
+   FIND_BISON()
+   FOREACH (_current_FILE ${ARGN})
+      GET_FILENAME_COMPONENT(_in ${_current_FILE} ABSOLUTE)
+      GET_FILENAME_COMPONENT(_basename ${_current_FILE} NAME_WE)
+      SET(_out ${CMAKE_CURRENT_SOURCE_DIR}/${_basename}.cpp)
+      SET(_out_h ${CMAKE_CURRENT_SOURCE_DIR}/${_basename}.h)
+      ADD_CUSTOM_COMMAND(
+         OUTPUT ${_out}
+         COMMAND ${BISON_EXECUTABLE}
+         ARGS -o${_out} --defines=${_out_h} ${_in}
+         DEPENDS ${_in} )
+
+      SET(${_sources} ${${_sources}} ${_out} )
+   ENDFOREACH (_current_FILE)
+ENDMACRO(ADD_BISON_FILES)
+
+
 #Specific system files
 IF(UNIX OR MAC)
    SET( SYS_SPECIFIC
@@ -26,15 +55,10 @@ IF(UNIX OR MAC)
          dll_win.cpp )
    ENDIF(UNIX)
 
-   # Make in source tree
-   # We're "hard linking" this as pregenerated, eventually re-generating them when not there.
-   ADD_CUSTOM_COMMAND( OUTPUT $ENV{FALCON_SRC_TREE}/core/engine/fasm_parser.cpp
-      COMMAND bison $ENV{FALCON_SRC_TREE}/core/engine/fasm_parser.yy -o $ENV{FALCON_SRC_TREE}/core/engine/fasm_parser.cpp
-      COMMAND mv -f $ENV{FALCON_SRC_TREE}/core/engine/fasm_parser.hpp $ENV{FALCON_SRC_TREE}/core/engine/fasm_parser.h )
-
-   ADD_CUSTOM_COMMAND( OUTPUT $ENV{FALCON_SRC_TREE}/core/engine/src_parser.cpp
-      COMMAND bison $ENV{FALCON_SRC_TREE}/core/engine/src_parser.yy -o $ENV{FALCON_SRC_TREE}/core/engine/src_parser.cpp
-      COMMAND mv -f $ENV{FALCON_SRC_TREE}/core/engine/src_parser.hpp $ENV{FALCON_SRC_TREE}/core/engine/src_parser.h )
+   ADD_BISON_FILES( bison_src
+      fasm_parser.yy
+      src_parser.yy
+   )
 
 ELSEIF(WIN32)
 
@@ -49,13 +73,19 @@ ELSEIF(WIN32)
       falcon_engine.rc
       )
 
+   SET( bison_src
+      fasm_parser.cpp
+      src_parser.cpp
+   )
+
 ENDIF(UNIX OR MAC)
 
 INCLUDE_DIRECTORIES(.)
 
+
+
 ADD_LIBRARY( falcon_engine SHARED
-   fasm_parser.cpp
-   src_parser.cpp
+   ${bison_src}
 
    autocstring.cpp
    autowstring.cpp
@@ -104,7 +134,6 @@ ADD_LIBRARY( falcon_engine SHARED
    rosstream.cpp
    runtime.cpp
    src_lexer.cpp
-   stackframe.cpp
    stream.cpp
    string.cpp
    stringstream.cpp

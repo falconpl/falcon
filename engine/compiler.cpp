@@ -551,6 +551,17 @@ void Compiler::closeFunction()
    popContextSet();
    popFunction();
 }
+
+bool Compiler::parsingFtd() const
+{
+   return m_lexer->parsingFtd();
+}
+
+void Compiler::parsingFtd( bool b )
+{
+   m_lexer->parsingFtd( b );
+}
+
 }
 
 /* end of compiler.cpp */
