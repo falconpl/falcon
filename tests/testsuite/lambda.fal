@@ -6,18 +6,21 @@
 * ID: 18a
 * Category: lambda
 * Subcategory:
-* Short: Lambda functions
+* Short: Lambda expressions
 * Description:
-* Basic test for lambda functions
+* Basic test for lambda expressions
 * [/Description]
 *
 ****************************************************************************/
 
-var = lambda( a, b )
-   return a * b
-end
+var = lambda a, b => a * b
 
 if var( 2, 3) != 6: failure( "Lambda assingment" )
+
+if 1 + ( lambda a, b => a * b )( 3, 2 ) + 2 != 9
+   failure( "Lambda in expression parsing" )
+end
+
 success()
 
 /* End of file */

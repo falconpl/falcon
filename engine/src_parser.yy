@@ -151,7 +151,7 @@ inline int flc_src_lex (void *lvalp, void *yyparam)
 %type <fal_adecl> expression_list par_expression_list
 %type <fal_adecl> symbol_list inherit_param_list inherit_call
 %type <fal_ddecl> expression_pair_list
-%type <fal_val> expression variable func_call lambda_expr iif_expr
+%type <fal_val> expression variable func_call nameless_func lambda_expr iif_expr
 %type <fal_val> switch_decl select_decl while_decl while_short_decl
 %type <fal_val> if_decl if_short_decl elif_decl
 %type <fal_val> const_atom var_atom  atomic_symbol /* atom */
@@ -322,6 +322,10 @@ assignment:
       $$ = new Falcon::StmtUnref( LINE, $1 );
    }
    | variable OP_ASSIGN expression_list EOL {
+         COMPILER->defineVal( $1 );
+         $$ = new Falcon::StmtAssignment( LINE, $1, new Falcon::Value( $3 ) );
+      }
+   | variable OP_ASSIGN nameless_func EOL {
          COMPILER->defineVal( $1 );
          $$ = new Falcon::StmtAssignment( LINE, $1, new Falcon::Value( $3 ) );
       }
@@ -2302,6 +2306,62 @@ eol_seq:
    | eol_seq EOL
 ;
 
+nameless_func:
+   FUNCDECL
+      {
+         Falcon::FuncDef *def = new Falcon::FuncDef( 0 );
+         // set the def as a lambda.
+         COMPILER->incLambdaCount();
+         int id = COMPILER->lambdaCount();
+         // find the global symbol for this.
+         char buf[48];
+         sprintf( buf, "_lambda#_id_%d", id );
+         Falcon::String *name = COMPILER->addString( buf );
+         Falcon::Symbol *sym = COMPILER->searchGlobalSymbol( name );
+
+         // Not defined?
+         fassert( sym == 0 );
+         sym = COMPILER->addGlobalSymbol( name );
+
+         // anyhow, also in case of error, destroys the previous information to allow a correct parsing
+         // of the rest.
+         sym->setFunction( def );
+
+         Falcon::StmtFunction *func = new Falcon::StmtFunction( COMPILER->lexer()->line(), sym );
+         COMPILER->addFunction( func );
+         func->setLambda( id );
+         // prepare the statement allocation context
+         COMPILER->pushContext( func );
+         COMPILER->pushFunctionContext( func );
+         COMPILER->pushContextSet( &func->statements() );
+         COMPILER->pushFunction( def );
+      }
+      nameless_func_decl_inner
+      static_block
+
+      statement_list
+
+      END {
+            Falcon::StmtFunction *func = static_cast<Falcon::StmtFunction *>(COMPILER->getContext());
+            $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_lambda ,
+               new Falcon::Value( func->symbol() ) ) );
+            COMPILER->closeFunction();
+         }
+;
+
+nameless_func_decl_inner:
+   OPENPAR opt_eol param_list opt_eol CLOSEPAR EOL
+   | OPENPAR opt_eol param_list error { COMPILER->tempLine( CURRENT_LINE ); } opt_eol CLOSEPAR EOL
+      {
+         COMPILER->raiseError(Falcon::e_syn_funcdecl );
+      }
+   | error EOL
+      {
+         COMPILER->raiseError(Falcon::e_syn_funcdecl );
+      }
+;
+
+
 lambda_expr:
    LAMBDA
       {
@@ -2332,30 +2392,28 @@ lambda_expr:
          COMPILER->pushContextSet( &func->statements() );
          COMPILER->pushFunction( def );
       }
-      lambda_decl_inner
-      static_block
-
-      statement_list
-
-      END {
+      lambda_expr_inner
+      ARROW
+      expression
+         {
             Falcon::StmtFunction *func = static_cast<Falcon::StmtFunction *>(COMPILER->getContext());
+            COMPILER->addStatement( new Falcon::StmtReturn( LINE, $5 ) );
             $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_lambda ,
                new Falcon::Value( func->symbol() ) ) );
             COMPILER->closeFunction();
          }
 ;
 
-lambda_decl_inner:
-   OPENPAR opt_eol param_list opt_eol CLOSEPAR EOL
-   | OPENPAR opt_eol param_list error { COMPILER->tempLine( CURRENT_LINE ); } opt_eol CLOSEPAR EOL
-      {
-         COMPILER->raiseError(Falcon::e_syn_lambda );
-      }
+
+lambda_expr_inner:
+   param_list
    | error EOL
       {
-         COMPILER->raiseError(Falcon::e_syn_lambda );
+         COMPILER->raiseError( Falcon::e_syn_lambda );
       }
 ;
+
+
 
 iif_expr:
    expression QUESTION expression COLON expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_iif, $1, $3, $5 ) ); }

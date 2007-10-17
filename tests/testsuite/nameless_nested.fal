@@ -1,0 +1,44 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 18d
+* Category: function
+* Subcategory: nameless
+* Short: Nested nameless functions
+* Description:
+* Nested function functions and functions returning functions
+* [/Description]
+*
+****************************************************************************/
+
+function ret_function( sel )
+   if sel
+      var = function( param )
+            var = function( a, b )
+               return a * b
+            end
+            return param * var( 2, 3 )
+      end
+   else
+      var = function( param )
+            var = function( a, b )
+               return a + b
+            end
+            return param + var( 4, 5 )
+      end
+   end
+
+   return var
+end
+
+var = ret_function( 0 )
+
+if var( 10 ) != 10 + 4 + 5: failure( "Point A" )
+
+// tests also for callable function return direct call
+// and compilation issues.
+if ret_function(1)( 5 ) !=  5 * 2 * 3: failure( "Point B" )
+
+success()
+
+/* End of file */

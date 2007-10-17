@@ -6,28 +6,18 @@
 * ID: 18b
 * Category: lambda
 * Subcategory:
-* Short: Nested lambdas
+* Short: Nested expressions
 * Description:
-* Nested lambda functions and functions returning lambdas
+* Nested lambda functions and functions returning expressions
 * [/Description]
 *
 ****************************************************************************/
 
 function ret_lambda( sel )
    if sel
-      var = lambda( param )
-            var = lambda( a, b )
-               return a * b
-            end
-            return param * var( 2, 3 )
-      end
+      var = lambda param=> param * (lambda a, b => a * b)( 2, 3 )
    else
-      var = lambda( param )
-            var = lambda( a, b )
-               return a + b
-            end
-            return param + var( 4, 5 )
-      end
+      var = lambda param=> param + (lambda a, b => a + b)( 4, 5 )
    end
 
    return var

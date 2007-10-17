@@ -1,0 +1,21 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 18c
+* Category: function
+* Subcategory: nameless
+* Short: function functions
+* Description:
+* Basic test for function functions
+* [/Description]
+*
+****************************************************************************/
+
+var = function( a, b )
+   return a * b
+end
+
+if var( 2, 3) != 6: failure( "function assingment" )
+success()
+
+/* End of file */

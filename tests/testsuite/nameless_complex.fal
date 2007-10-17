@@ -1,0 +1,52 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 18e
+* Category: function
+* Subcategory: nameless
+* Short: Complex nameless function
+* Description:
+* Testing lamdas with static blocks
+* [/Description]
+*
+****************************************************************************/
+
+function ret_function()
+   var = function( param )
+      static
+         values = [1,2,3,4]
+         val_id = 0
+      end
+
+      // prologue: use state only if != 0
+      if param = 0
+         return values[ val_id ]
+      elif param < 0
+         return -1
+      end
+
+      next = values[val_id++]
+      if val_id = len( values ): val_id = 0
+
+      return next
+   end
+   return var
+end
+
+
+var = ret_function()
+
+// check prologue
+if var(-1) != -1: failure( "Prologue execution" )
+// enter start
+var(0)
+
+var(1)
+var(1)
+var(1)
+var(1)
+if var(0) != 1: failure( "Static advancement" )
+
+success()
+
+/* End of file */
