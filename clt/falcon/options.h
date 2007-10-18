@@ -63,6 +63,8 @@ public:
 
    bool wait_after;
 
+   bool parse_ftd;
+
    HOptions():
       input( "" ),
       output( "" ),
@@ -81,7 +83,8 @@ public:
       force_recomp( false ),
       io_encoding( "" ),
       source_encoding( "" ),
-      wait_after( false )
+      wait_after( false ),
+      parse_ftd( false )
    {}
 };
 

@@ -176,6 +176,7 @@ static void usage()
    stdOut->writeString( "   -s          compile via assembly\n" );
    stdOut->writeString( "   -S          produce an assembly output\n" );
    stdOut->writeString( "   -t          generate a syntactic tree (for logic debug)\n" );
+   stdOut->writeString( "   -T          force input parsing as .ftd (template document)\n" );
    stdOut->writeString( "   -v          print copyright notice and version and exit\n" );
    stdOut->writeString( "   -w          Add an extra console wait after program exit\n" );
    stdOut->writeString( "   -x          execute a binary '.fam' module\n" );
@@ -457,6 +458,7 @@ void parseOptions( int argc, char **argv, int &script_pos )
             case 's': options.via_asm = true; break;
             case 'S': options.assemble_out = true; break;
             case 't': options.tree_out = true; break;
+            case 'T': options.parse_ftd = true; break;
             case 'x': options.run_only = true; break;
             case 'v': version(); exitNow = true; break;
             case 'w': options.wait_after = true; break;
@@ -582,6 +584,13 @@ int main( int argc, char *argv[] )
       Compiler compiler( module, input );
       compiler.errorHandler( errHand );
 
+      // is input an FTD?
+      if ( options.parse_ftd || 
+           options.input.rfind( ".ftd" ) == options.input.length() - 4 )
+      {
+         compiler.parsingFtd( true );
+      }
+
       if( ! compiler.compile() )
       {
          if ( input != stdIn )
@@ -644,6 +653,8 @@ int main( int argc, char *argv[] )
    // should be the default, but we reset it.
    modLoader->saveMandatory( false );
 
+   // should we forcefully consider input as ftd?
+   modLoader->compileTemplate( options.parse_ftd );
 
    if ( options.assemble_only )
       modLoader->sourceIsAssembly( true );
