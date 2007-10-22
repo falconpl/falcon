@@ -92,6 +92,14 @@ void CompilerIface::getProperty( const String &propName, Item &prop )
    {
       prop = new GarbageString( m_owner->origin(), m_loader.sourceEncoding() );
    }
+   else if( propName == "detectTemplate" )
+   {
+      prop = (int64) ( m_loader.saveMandatory() ? 1: 0 );
+   }
+   else if( propName == "compileTemplate" )
+   {
+      prop = (int64) ( m_loader.saveMandatory() ? 1: 0 );
+   }
 }
 
 void CompilerIface::setProperty( const String &propName, Item &prop )
@@ -123,6 +131,14 @@ void CompilerIface::setProperty( const String &propName, Item &prop )
    else if( propName == "sourceEncoding" && prop.isString() )
    {
       m_loader.sourceEncoding( *prop.asString() );
+   }
+   else if( propName == "detectTemplate" )
+   {
+      m_loader.detectTemplate( prop.isTrue() );
+   }
+   else if( propName == "compileTemplate" )
+   {
+      m_loader.compileTemplate( prop.isTrue() );
    }
 }
 

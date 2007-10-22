@@ -1,3 +1,5 @@
 
 Feathers (0.8.4)
   * Fixed compilation and build settings with MINGW
+  * Added compileTemplate and detectTemplate properties to the compiler 
+    class (reflecting FlcLoader updates)

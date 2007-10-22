@@ -50,6 +50,8 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    self->addClassProperty( c_compiler, "saveModules" );
    self->addClassProperty( c_compiler, "sourceEncoding" );
    self->addClassProperty( c_compiler, "saveMandatory" );
+   self->addClassProperty( c_compiler, "detectTemplate" );
+   self->addClassProperty( c_compiler, "compileTemplate" );
 
    self->addClassMethod( c_compiler, "compile", Falcon::Ext::Compiler_compile );
    self->addClassMethod( c_compiler, "loadByName", Falcon::Ext::Compiler_loadByName );
