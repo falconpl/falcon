@@ -1746,6 +1746,234 @@ FALCON_FUNC  PageDict( ::Falcon::VMachine *vm )
    vm->retval( cd );
 }
 
+
+//============================================
+// Fucntional extensions
+/** Functional extensions */
+
+FALCON_FUNC  core_any ( ::Falcon::VMachine *vm )
+{
+   int32 count = vm->paramCount();
+   for( int32 i = 0; i < count; i ++ )
+   {
+      if( vm->param(i)->isTrue() )
+      {
+         vm->retval( (int64) 1 );
+         return;
+      }
+   }
+
+   vm->retval( (int64) 0 );
+}
+
+FALCON_FUNC  core_all ( ::Falcon::VMachine *vm )
+{
+   int32 count = vm->paramCount();
+   if ( count > 0 )
+   {
+      vm->retval( (int64) 0 );
+      return;
+   }
+
+   for( int32 i = 0; i < count; i ++ )
+   {
+      if( ! vm->param(i)->isTrue() )
+      {
+         vm->retval( (int64) 0 );
+         return;
+      }
+   }
+
+   vm->retval( (int64) 1 );
+}
+
+FALCON_FUNC  core_min ( ::Falcon::VMachine *vm )
+{
+   if ( vm->paramCount() == 0 )
+   {
+      vm->retnil();
+      return;
+   }
+
+   Item *elem = vm->param( 0 );
+   for ( int32 i = 1; i < vm->paramCount(); i++)
+   {
+      if ( vm->compareItems( *elem, *vm->param(i) ) < 0 )
+      {
+         elem = vm->param(i);
+      }
+
+      if (vm->hadError())
+         return;
+   }
+
+   vm->retval( *elem );
+}
+
+FALCON_FUNC  core_max ( ::Falcon::VMachine *vm )
+{
+   if ( vm->paramCount() == 0 )
+   {
+      vm->retnil();
+      return;
+   }
+
+   Item *elem = vm->param( 0 );
+   int32 count = vm->paramCount();
+   for ( int32 i = 1; i < count; i++)
+   {
+      if ( vm->compareItems( *elem, *vm->param(i) ) > 0 )
+      {
+         elem = vm->param(i);
+      }
+
+      if (vm->hadError())
+         return;
+   }
+
+   vm->retval( *elem );
+}
+
+
+FALCON_FUNC  core_map ( ::Falcon::VMachine *vm )
+{
+   Item *callable = vm->param(0);
+   Item *i_origin = vm->param(1); 
+   if( callable == 0 || !callable->isCallable() ||
+       i_origin == 0 || !i_origin->isArray()
+      )
+   {
+      vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).
+         extra( "C,A" ) ) );
+      return;
+   }
+
+   CoreArray *mapped = new CoreArray( vm, vm->paramCount() - 1 );
+   CoreArray *origin = i_origin->asArray();
+   for( int32 i = 0; i < origin->length(); i ++ )
+   {
+      vm->pushParameter( origin->at(i) );
+      vm->callItem( *callable, 1 );
+      if (vm->hadError())
+         return;
+      mapped->append( vm->regA() );
+   }
+
+   vm->retval( mapped );
+}
+
+
+FALCON_FUNC  core_xmap ( ::Falcon::VMachine *vm )
+{
+   Item *callable = vm->param(0);
+   Item *i_origin = vm->param(1); 
+   if( callable == 0 || !callable->isCallable() ||
+       i_origin == 0 || !i_origin->isArray()
+      )
+   {
+      vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).
+         extra( "C,A" ) ) );
+      return;
+   }
+
+   CoreArray *mapped = new CoreArray( vm, vm->paramCount() - 1 );
+   CoreArray *origin = i_origin->asArray();
+   for( int32 i = 0; i < origin->length(); i ++ )
+   {
+      vm->pushParameter( origin->at(i) );
+      vm->callItem( *callable, 1 );
+      
+      if (vm->hadError())
+      {
+         vm->resetEvent();
+      }
+      else
+      {
+         mapped->append( vm->regA() );
+      }
+   }
+
+   vm->retval( mapped );
+}
+
+
+FALCON_FUNC  core_filter ( ::Falcon::VMachine *vm )
+{
+   Item *callable = vm->param(0);
+   Item *i_origin = vm->param(1); 
+   if( callable == 0 || !callable->isCallable() ||
+      i_origin == 0 || !i_origin->isArray()
+      )
+   {
+      vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).
+         extra( "C,..." ) ) );
+      return;
+   }
+
+   CoreArray *origin = i_origin->asArray();
+   CoreArray *mapped = new CoreArray( vm, origin->length() / 2 );
+   for( int32 i = 0; i < origin->length(); i ++ )
+   {
+      vm->pushParameter( origin->at(i) );
+      vm->callItem( *callable, 1 );
+      
+      if (vm->hadError())
+         return;
+
+      if( vm->regA().isTrue() )
+         mapped->append( origin->at(i) );
+   }
+ 
+   vm->retval( mapped );
+}
+
+FALCON_FUNC  core_reduce ( ::Falcon::VMachine *vm )
+{
+   Item *callable = vm->param(0);
+   Item *i_origin = vm->param(1);
+   Item *init = vm->param(2);
+   if( callable == 0 || !callable->isCallable()||
+      i_origin == 0 || !i_origin->isArray()
+      )
+   {
+      vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).
+         extra( "C,A,[X]" ) ) );
+      return;
+   }
+   
+   CoreArray *origin = i_origin->asArray();
+   Item accumulator;
+
+   if ( init != 0 )
+   {
+      if( origin->length() == 0 )
+      {
+         vm->retval( *init );
+         return;
+      }
+
+      vm->pushParameter( *init );
+      vm->pushParameter( origin->at(0) );
+      vm->callItem( *callable, 2 );
+      accumulator = vm->regA();
+   }
+   else {
+      accumulator = origin->at(0);
+   }
+
+   for( int32 i = 1; i < origin->length() && ! vm->hadError(); i ++ )
+   {
+      vm->pushParameter( accumulator );
+      vm->pushParameter( origin->at( i ) );
+      vm->callItem( *callable, 2 );
+      
+      accumulator = vm->regA();
+   }
+
+   // retval doesn't clear error status, so it's ok
+   vm->retval( accumulator );
+}
+
 } // end of core namespace
 
 
@@ -1920,6 +2148,18 @@ Module * core_module_init()
    core->addClassMethod( iterator_class, "clone", Falcon::core::Iterator_clone );
    core->addClassProperty( iterator_class, "origin" );
    core->addClassProperty( iterator_class, "_pos" );
+
+   // ================================================
+   // Functional extensions
+   //
+   core->addExtFunc( "all", Falcon::core::core_all );
+   core->addExtFunc( "any", Falcon::core::core_any );
+   core->addExtFunc( "min", Falcon::core::core_min );
+   core->addExtFunc( "max", Falcon::core::core_max );
+   core->addExtFunc( "map", Falcon::core::core_map );
+   core->addExtFunc( "filter", Falcon::core::core_filter );
+   core->addExtFunc( "reduce", Falcon::core::core_reduce );
+   core->addExtFunc( "xmap", Falcon::core::core_xmap );
 
    return core;
 }
