@@ -6,7 +6,7 @@
 * ID: 16k
 * Category: loops
 * Subcategory: forin
-* Short: setForInItem
+* Short: dot.assign
 * Description:
 *   Changes the content of a forin loop.
 * [/Description]

@@ -1753,6 +1753,89 @@ FALCON_FUNC  PageDict( ::Falcon::VMachine *vm )
 
 FALCON_FUNC  core_any ( ::Falcon::VMachine *vm )
 {
+   Item *i_param = vm->param(0);
+   if( i_param == 0 || !i_param->isArray() )
+   {
+      vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).
+         extra( "A" ) ) );
+      return;
+   }
+
+   CoreArray *arr = i_param->asArray();
+   int32 count = arr->length();
+   for( int32 i = 0; i < count && ! vm->hadError(); i ++ )
+   {
+      Item *itm = &arr->at(i);
+
+      if ( itm->isCallable() )
+      {
+         vm->callItem( *itm, 0 );
+         
+         if ( vm->regA().isTrue() )
+         {
+            vm->retval( (int64) 1 );
+            return;
+         }
+      }
+      else if( itm->isTrue() )
+      {
+         vm->retval( (int64) 1 );
+         return;
+      }
+   }
+
+   vm->retval( (int64) 0 );
+}
+
+
+FALCON_FUNC  core_all ( ::Falcon::VMachine *vm )
+{
+   Item *i_param = vm->param(0);
+   if( i_param == 0 || !i_param->isArray() )
+   {
+      vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).
+         extra( "A" ) ) );
+      return;
+   }
+
+   CoreArray *arr = i_param->asArray();
+   int32 count = arr->length();
+   if ( count == 0 )
+   {
+      vm->retval( (int64) 0 );
+      return;
+   }
+
+   for( int32 i = 0; i < count && ! vm->hadError(); i ++ )
+   {
+      Item *itm = &arr->at(i);
+
+      if ( itm->isCallable() )
+      {
+         vm->callItem( *itm, 0 );
+         
+         if( vm->hadError() )
+            return;
+         
+         if ( ! vm->regA().isTrue() )
+         {
+            vm->retval( (int64) 0 );
+            return;
+         }
+      }
+      else if( ! itm->isTrue() )
+      {
+         vm->retval( (int64) 0 );
+         return;
+      }
+   }
+
+   vm->retval( (int64) 1 );
+}
+
+
+FALCON_FUNC  core_anyp ( ::Falcon::VMachine *vm )
+{
    int32 count = vm->paramCount();
    for( int32 i = 0; i < count && ! vm->hadError(); i ++ )
    {
@@ -1768,21 +1851,7 @@ FALCON_FUNC  core_any ( ::Falcon::VMachine *vm )
             return;
          }
       }
-      else if( itm->isArray() )
-      {
-         CoreArray *arr = itm->asArray();
-         
-         for( uint32 pos = 0; pos < arr->length(); pos++ )
-         {
-            if ( arr->at(pos).isTrue() )
-            {
-               vm->retval( (int64) 1 );
-               return;
-            }
-         }
-      }
-
-      if( itm->isTrue() )
+      else if( itm->isTrue() )
       {
          vm->retval( (int64) 1 );
          return;
@@ -1793,16 +1862,16 @@ FALCON_FUNC  core_any ( ::Falcon::VMachine *vm )
 }
 
 
-FALCON_FUNC  core_all ( ::Falcon::VMachine *vm )
+FALCON_FUNC  core_allp ( ::Falcon::VMachine *vm )
 {
    int32 count = vm->paramCount();
-   if ( count > 0 )
+   if ( count == 0 )
    {
       vm->retval( (int64) 0 );
       return;
    }
 
-   for( int32 i = 0; i < count; i ++ )
+   for( int32 i = 0; i < count && ! vm->hadError(); i ++ )
    {
       Item *itm = vm->param(i);
 
@@ -1819,27 +1888,7 @@ FALCON_FUNC  core_all ( ::Falcon::VMachine *vm )
             return;
          }
       }
-      else if( itm->isArray() )
-      {
-         CoreArray *arr = itm->asArray();
-         
-         if ( ! arr->length() == 0 )
-         {
-            vm->retval( (int64) 0 );
-            return;
-         }
-
-         for( uint32 pos = 0; pos < arr->length(); pos++ )
-         {
-            if ( ! arr->at(pos).isTrue() )
-            {
-               vm->retval( (int64) 0 );
-               return;
-            }
-         }
-      }
-
-      if( ! itm->isTrue() )
+      else if( ! itm->isTrue() )
       {
          vm->retval( (int64) 0 );
          return;
@@ -1848,7 +1897,6 @@ FALCON_FUNC  core_all ( ::Falcon::VMachine *vm )
 
    vm->retval( (int64) 1 );
 }
-
 
 FALCON_FUNC  core_min ( ::Falcon::VMachine *vm )
 {
@@ -2076,7 +2124,72 @@ FALCON_FUNC  core_iff ( ::Falcon::VMachine *vm )
             vm->regA() = *i_ifFalse;
       }
    }
+}
 
+
+
+
+FALCON_FUNC  core_cascade ( ::Falcon::VMachine *vm )
+{
+   Item *i_callables = vm->param(0);
+   Item *i_params = vm->param(1); 
+   // reapply mode: 0 = no, 1 = after, 2 = before
+   Item *i_reapply = vm->param(2);
+
+   if( i_callables == 0 || !i_callables->isArray() ||
+       ( i_params != 0 && !i_params->isArray() ) ||
+       ( i_reapply != 0 && !i_reapply->isOrdinal() )
+
+      )
+   {
+      vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).
+         extra( "A,[A],[N]" ) ) );
+      return;
+   }
+
+   CoreArray *callables = i_callables->asArray();
+   CoreArray *params = i_params == 0 ? 0 : i_params->asArray();
+   int32 nMode = (int32) ( i_reapply == 0 ? 0 : i_reapply->forceInteger() );
+
+   // Nil A by default
+   vm->retnil();
+   bool bFirst = true;
+
+   for( uint32 i = 0; i < callables->length(); i ++ )
+   {
+      int count = 0;
+
+      if ( params != 0 && (bFirst || nMode == 2) )
+      {
+         for (uint32 j = 0; j < params->length(); j++ )
+         {
+            vm->pushParameter( params->at(j) );
+            count++;
+         }
+      }
+
+      if ( !bFirst )
+      {
+         vm->pushParameter( vm->regA() );
+         count ++;
+      }
+
+      if ( params != 0 && nMode == 1 )
+      {
+         for (uint32 j = 0; j < params->length(); j++ )
+         {
+            vm->pushParameter( params->at(j) );
+            count++;
+         }
+      }
+
+      vm->callItem( callables->at(i), count );
+      if (vm->hadError())
+         return;
+      bFirst = false;
+   }
+
+   // A is already holding the right value.
 }
 
 } // end of core namespace
@@ -2259,6 +2372,8 @@ Module * core_module_init()
    //
    core->addExtFunc( "all", Falcon::core::core_all );
    core->addExtFunc( "any", Falcon::core::core_any );
+   core->addExtFunc( "allp", Falcon::core::core_allp );
+   core->addExtFunc( "anyp", Falcon::core::core_anyp );
    core->addExtFunc( "min", Falcon::core::core_min );
    core->addExtFunc( "max", Falcon::core::core_max );
    core->addExtFunc( "map", Falcon::core::core_map );
@@ -2266,6 +2381,7 @@ Module * core_module_init()
    core->addExtFunc( "reduce", Falcon::core::core_reduce );
    core->addExtFunc( "xmap", Falcon::core::core_xmap );
    core->addExtFunc( "iff", Falcon::core::core_iff );
+   core->addExtFunc( "cascade", Falcon::core::core_cascade );
 
    return core;
 }

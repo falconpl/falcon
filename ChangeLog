@@ -18,8 +18,8 @@ Falcon (0.8.4)
   * bugfix: Fixed default load path of faltest.
   * improvement: Added a user data pointer to VM (useful for binary compatibility)
   * minor: Unclosed scoping errors now report where the scope was open.
-  * improvement: added min, max, all, any, map, xmap, filter, reduce, iff functions for
-    minimal functional support.
+  * improvement: added min, max, all, any, allp, anyp, map, xmap, filter, reduce, 
+    iff, cascade functions for minimal functional support.
   * major: callable arrays for deferred calls and functional support.
 
 Falcon (0.8.3)
