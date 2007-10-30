@@ -1770,7 +1770,7 @@ FALCON_FUNC  core_any ( ::Falcon::VMachine *vm )
       if ( itm->isCallable() )
       {
          vm->callItem( *itm, 0 );
-         
+
          if ( vm->regA().isTrue() )
          {
             vm->retval( (int64) 1 );
@@ -1813,10 +1813,10 @@ FALCON_FUNC  core_all ( ::Falcon::VMachine *vm )
       if ( itm->isCallable() )
       {
          vm->callItem( *itm, 0 );
-         
+
          if( vm->hadError() )
             return;
-         
+
          if ( ! vm->regA().isTrue() )
          {
             vm->retval( (int64) 0 );
@@ -1844,7 +1844,7 @@ FALCON_FUNC  core_anyp ( ::Falcon::VMachine *vm )
       if ( itm->isCallable() )
       {
          vm->callItem( *itm, 0 );
-         
+
          if ( vm->regA().isTrue() )
          {
             vm->retval( (int64) 1 );
@@ -1878,10 +1878,10 @@ FALCON_FUNC  core_allp ( ::Falcon::VMachine *vm )
       if ( itm->isCallable() )
       {
          vm->callItem( *itm, 0 );
-         
+
          if( vm->hadError() )
             return;
-         
+
          if ( ! vm->regA().isTrue() )
          {
             vm->retval( (int64) 0 );
@@ -1949,7 +1949,7 @@ FALCON_FUNC  core_max ( ::Falcon::VMachine *vm )
 FALCON_FUNC  core_map ( ::Falcon::VMachine *vm )
 {
    Item *callable = vm->param(0);
-   Item *i_origin = vm->param(1); 
+   Item *i_origin = vm->param(1);
    if( callable == 0 || !callable->isCallable() ||
        i_origin == 0 || !i_origin->isArray()
       )
@@ -1977,7 +1977,7 @@ FALCON_FUNC  core_map ( ::Falcon::VMachine *vm )
 FALCON_FUNC  core_xmap ( ::Falcon::VMachine *vm )
 {
    Item *callable = vm->param(0);
-   Item *i_origin = vm->param(1); 
+   Item *i_origin = vm->param(1);
    if( callable == 0 || !callable->isCallable() ||
        i_origin == 0 || !i_origin->isArray()
       )
@@ -1993,7 +1993,7 @@ FALCON_FUNC  core_xmap ( ::Falcon::VMachine *vm )
    {
       vm->pushParameter( origin->at(i) );
       vm->callItem( *callable, 1 );
-      
+
       if (vm->hadError())
       {
          vm->resetEvent();
@@ -2011,7 +2011,7 @@ FALCON_FUNC  core_xmap ( ::Falcon::VMachine *vm )
 FALCON_FUNC  core_filter ( ::Falcon::VMachine *vm )
 {
    Item *callable = vm->param(0);
-   Item *i_origin = vm->param(1); 
+   Item *i_origin = vm->param(1);
    if( callable == 0 || !callable->isCallable() ||
       i_origin == 0 || !i_origin->isArray()
       )
@@ -2027,14 +2027,14 @@ FALCON_FUNC  core_filter ( ::Falcon::VMachine *vm )
    {
       vm->pushParameter( origin->at(i) );
       vm->callItem( *callable, 1 );
-      
+
       if (vm->hadError())
          return;
 
       if( vm->regA().isTrue() )
          mapped->append( origin->at(i) );
    }
- 
+
    vm->retval( mapped );
 }
 
@@ -2051,7 +2051,7 @@ FALCON_FUNC  core_reduce ( ::Falcon::VMachine *vm )
          extra( "C,A,[X]" ) ) );
       return;
    }
-   
+
    CoreArray *origin = i_origin->asArray();
    Item accumulator;
 
@@ -2077,7 +2077,7 @@ FALCON_FUNC  core_reduce ( ::Falcon::VMachine *vm )
       vm->pushParameter( accumulator );
       vm->pushParameter( origin->at( i ) );
       vm->callItem( *callable, 2 );
-      
+
       accumulator = vm->regA();
    }
 
@@ -2108,7 +2108,7 @@ FALCON_FUNC  core_iff ( ::Falcon::VMachine *vm )
       if ( ! vm->hadError() )
       {
          if ( i_ifTrue->isCallable() )
-            vm->callItem( *i_ifTrue, 0 ); 
+            vm->callItem( *i_ifTrue, 0 );
             // regA already in place
          else
             vm->regA() = *i_ifTrue;
@@ -2118,7 +2118,7 @@ FALCON_FUNC  core_iff ( ::Falcon::VMachine *vm )
       if ( ! vm->hadError() )
       {
          if ( i_ifFalse->isCallable() )
-            vm->callItem( *i_ifFalse, 0 ); 
+            vm->callItem( *i_ifFalse, 0 );
             // regA already in place
          else
             vm->regA() = *i_ifFalse;
@@ -2132,61 +2132,48 @@ FALCON_FUNC  core_iff ( ::Falcon::VMachine *vm )
 FALCON_FUNC  core_cascade ( ::Falcon::VMachine *vm )
 {
    Item *i_callables = vm->param(0);
-   Item *i_params = vm->param(1); 
-   // reapply mode: 0 = no, 1 = after, 2 = before
-   Item *i_reapply = vm->param(2);
 
-   if( i_callables == 0 || !i_callables->isArray() ||
-       ( i_params != 0 && !i_params->isArray() ) ||
-       ( i_reapply != 0 && !i_reapply->isOrdinal() )
-
-      )
+   if( i_callables == 0 || !i_callables->isArray() )
    {
       vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).
-         extra( "A,[A],[N]" ) ) );
+         extra( "A,..." ) ) );
       return;
    }
 
+   // for the first callable...
+   vm->retnil(); // defaults to nil
    CoreArray *callables = i_callables->asArray();
-   CoreArray *params = i_params == 0 ? 0 : i_params->asArray();
-   int32 nMode = (int32) ( i_reapply == 0 ? 0 : i_reapply->forceInteger() );
-
-   // Nil A by default
-   vm->retnil();
-   bool bFirst = true;
-
-   for( uint32 i = 0; i < callables->length(); i ++ )
+   if ( callables->length() == 0 )
    {
-      int count = 0;
+      return;
+   }
 
-      if ( params != 0 && (bFirst || nMode == 2) )
+   // echo the parameter to the first call
+   for ( uint32 pi = 1; pi < vm->paramCount(); pi++ )
+   {
+      vm->pushParameter( *vm->param(pi) );
+   }
+
+   // call the first function...
+   if ( ! vm->callItem( callables->at(0), vm->paramCount() - 1 ) )
+   {
+      vm->raiseRTError( new ParamError( ErrorParam( e_param_type ).
+         extra( "uncallable" ) ) );
+   }
+
+   // ... then call the others using the return value as the sole parameter.
+   for( uint32 i = 1; i < callables->length(); i ++ )
+   {
+      vm->pushParameter( vm->regA() );
+
+      if ( ! vm->callItem( callables->at(i), 1 ) )
       {
-         for (uint32 j = 0; j < params->length(); j++ )
-         {
-            vm->pushParameter( params->at(j) );
-            count++;
-         }
+         vm->raiseRTError( new ParamError( ErrorParam( e_param_type ).
+            extra( "uncallable" ) ) );
       }
 
-      if ( !bFirst )
-      {
-         vm->pushParameter( vm->regA() );
-         count ++;
-      }
-
-      if ( params != 0 && nMode == 1 )
-      {
-         for (uint32 j = 0; j < params->length(); j++ )
-         {
-            vm->pushParameter( params->at(j) );
-            count++;
-         }
-      }
-
-      vm->callItem( callables->at(i), count );
       if (vm->hadError())
          return;
-      bFirst = false;
    }
 
    // A is already holding the right value.
