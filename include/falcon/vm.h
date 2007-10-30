@@ -1585,6 +1585,23 @@ public:
    */
    void *userData() const { return m_userData; }
 
+   /** Evaluate the item in a functional context.
+      The function return either true or false, evaluating the item
+      as a funcional token.
+      # If the item is a callable item (including callable arrayas),
+        it is called and then the return value is evaluated in a
+        non-functional context (plain evaluation).
+      # In all the other cases, the item is evaluated in a non-functional
+        context.
+      More simply, if the item is callable is called, and is result
+      is checked for Falcon truth value. If not, it's simply checked.
+
+      In case of VM error (exception raise), the function will still
+      return true or false, but the result may not be accurate.
+      Always check for hadError() after this call.
+   */
+
+   bool functionalEval( const Item &itm );
 
 //==========================================================================
 //==========================================================================

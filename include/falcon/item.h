@@ -326,12 +326,7 @@ public:
       m_base = other.m_base;
    }
 
-   bool isCallable() const {
-      return type() == FLC_ITEM_FUNC ||
-             type() == FLC_ITEM_METHOD ||
-             type() == FLC_ITEM_CLASS ||
-             type() == FLC_ITEM_FBOM;
-   }
+   bool isCallable() const;
 
    bool isOrdinal() const {
       return type() == FLC_ITEM_INT || type() == FLC_ITEM_NUM;

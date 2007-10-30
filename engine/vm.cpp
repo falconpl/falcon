@@ -1090,8 +1090,47 @@ bool VMachine::callItem( const Item &callable, int32 paramCount, e_callMode call
       }
       break;
 
+      case FLC_ITEM_ARRAY:
+      {
+         CoreArray *arr = callable.asArray();
+
+         if ( arr->length() != 0 )
+         {
+            const Item &carr = callable.asArray()->at(0);
+
+            if ( carr.isFbom() || carr.isFunction() || 
+               carr.isMethod() || carr.isClass() )
+            {
+               uint32 sizeNow = m_stack->size();
+
+               for ( uint32 i = 1; i < arr->length(); i ++ )
+               {
+                  pushParameter( arr->at(i) );
+               }
+               
+               for ( uint32 j = sizeNow - paramCount; 
+                  j < sizeNow; j ++ )
+               {
+                  pushParameter( m_stack->itemAt( j ) );
+               }
+
+               bool ret = callItem( carr, arr->length()-1 + paramCount );
+               if ( paramCount != 0 )
+                  m_stack->resize( m_stack->size() - paramCount );
+               return ret;
+            }
+         }
+
+         if ( paramCount != 0 )
+               m_stack->resize( m_stack->size() - paramCount );
+         return false;
+      }
+      break;
+
       default:
          // non callableitem
+         if ( paramCount != 0 )
+            m_stack->resize( m_stack->size() - paramCount );
          return false;
    }
 
@@ -2562,6 +2601,11 @@ void VMachine::referenceItem( Item &target, Item &source )
    }
 }
 
+bool VMachine::functionalEval( const Item &itm )
+{
+   // Callitem includes a check for callability
+   return callItem( itm, 0 ) ? m_regA.isTrue() : itm.isTrue();
+}
 
 }
 
