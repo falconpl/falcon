@@ -1994,7 +1994,7 @@ FALCON_FUNC  core_xmap ( ::Falcon::VMachine *vm )
       vm->pushParameter( origin->at(i) );
       vm->callItem( *callable, 1 );
 
-      if (vm->hadError())
+      if (vm->hadError() && vm->regB().isNil() )
       {
          vm->resetEvent();
       }
@@ -2069,7 +2069,8 @@ FALCON_FUNC  core_reduce ( ::Falcon::VMachine *vm )
       accumulator = vm->regA();
    }
    else {
-      accumulator = origin->at(0);
+      if ( origin->length() > 0 )
+         accumulator = origin->at(0);
    }
 
    for( uint32 i = 1; i < origin->length() && ! vm->hadError(); i ++ )
@@ -2127,8 +2128,6 @@ FALCON_FUNC  core_iff ( ::Falcon::VMachine *vm )
 }
 
 
-
-
 FALCON_FUNC  core_cascade ( ::Falcon::VMachine *vm )
 {
    Item *i_callables = vm->param(0);
@@ -2143,40 +2142,58 @@ FALCON_FUNC  core_cascade ( ::Falcon::VMachine *vm )
    // for the first callable...
    vm->retnil(); // defaults to nil
    CoreArray *callables = i_callables->asArray();
-   if ( callables->length() == 0 )
-   {
-      return;
-   }
 
-   // echo the parameter to the first call
-   for ( uint32 pi = 1; pi < vm->paramCount(); pi++ )
-   {
-      vm->pushParameter( *vm->param(pi) );
-   }
-
-   // call the first function...
-   if ( ! vm->callItem( callables->at(0), vm->paramCount() - 1 ) )
-   {
-      vm->raiseRTError( new ParamError( ErrorParam( e_param_type ).
-         extra( "uncallable" ) ) );
-   }
+   // will be true when the first function in the sequence accepts the parameters
+   bool bAccepted = false;
+   // holds the previous result when accepted.
+   Item prevResult;
 
    // ... then call the others using the return value as the sole parameter.
-   for( uint32 i = 1; i < callables->length(); i ++ )
+   for( uint32 i = 0; i < callables->length(); i ++ )
    {
-      vm->pushParameter( vm->regA() );
+      uint32 pcount;
 
-      if ( ! vm->callItem( callables->at(i), 1 ) )
+      if ( ! bAccepted )
+      {
+         // echo the parameters to the first call
+         pcount = vm->paramCount();
+         for ( uint32 pi = 1; pi < pcount; pi++ )
+         {
+            vm->pushParameter( *vm->param(pi) );
+         }
+         pcount--;
+      }
+      else {
+         // if we have accepted the head parameters, just use the previous result
+         pcount = 1;
+         vm->pushParameter( prevResult );
+      }
+
+      // perform the real call
+      if ( ! vm->callItem( callables->at(i), pcount ) )
       {
          vm->raiseRTError( new ParamError( ErrorParam( e_param_type ).
             extra( "uncallable" ) ) );
       }
 
       if (vm->hadError())
-         return;
+      {
+         // if the error was nil, it means the result is unaccepted; we must just
+         // proceed as usual
+         if ( vm->regB().isNil() )
+            vm->resetEvent();
+         else
+            return;
+      }
+      else {
+         // else we have accepted the parameters and we have also a valid result
+         bAccepted = true;
+         prevResult = vm->regA();
+      }
    }
 
-   // A is already holding the right value.
+   // we copy the last result as the last function may have not accepted it
+   vm->retval( prevResult );
 }
 
 } // end of core namespace
