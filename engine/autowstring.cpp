@@ -43,13 +43,13 @@ AutoWString::AutoWString( const Item &itm )
       itm.toString( tempStr );
    }
 
-   if ( (m_len = str->toWideString( m_buffer, AutoWString_BUF_SPACE ) ) >= 0 )
+   if ( (m_len = str->toWideString( m_buffer, AutoWString_BUF_SPACE ) ) != String::npos )
    {
       m_pData = m_buffer;
       return;
    }
 
-   Falcon::uint32 len = str->length() * 2;
+   Falcon::uint32 len = str->length() * 2 + 2;
    m_pData = (wchar_t *) memAlloc( len );
    m_len = str->toWideString( m_pData, len );
 }
@@ -58,13 +58,13 @@ AutoWString::AutoWString( const Item &itm )
 AutoWString::AutoWString( const String &str ):
    m_pData(0)
 {
-   if ( (m_len = str.toWideString( m_buffer, AutoWString_BUF_SPACE ) ) >= 0 )
+   if ( (m_len = str.toWideString( m_buffer, AutoWString_BUF_SPACE ) ) != String::npos )
    {
       m_pData = m_buffer;
       return;
    }
 
-   Falcon::uint32 len = str.length() * 4 + 4;
+   Falcon::uint32 len = str.length() * 2 + 2;
    m_pData = (wchar_t *) memAlloc( len );
    m_len = str.toWideString( m_pData, len );
 }
@@ -86,13 +86,13 @@ void AutoWString::init_vm_and_format( VMachine *vm, const Item &itm, const Strin
       return;
    }
 
-   if ( ( m_len = str->toWideString( m_buffer, AutoWString_BUF_SPACE ) ) >= 0 )
+   if ( ( m_len = str->toWideString( m_buffer, AutoWString_BUF_SPACE ) ) != String::npos )
    {
       m_pData = m_buffer;
       return;
    }
 
-   Falcon::uint32 len = str->length() * 4 + 4;
+   Falcon::uint32 len = str->length() * 2 + 2;
    m_pData = (wchar_t *) memAlloc( len );
    m_len = str->toWideString( m_pData, len );
 }

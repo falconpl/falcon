@@ -624,9 +624,9 @@ public:
 
       \param target the buffer where to place the C string.
       \param bufsize the size of the target buffer in bytes.
-      \return -1 if the buffer is not long enough, else returns the used size.
+      \return npos if the buffer is not long enough, else returns the used size.
    */
-   int32 toCString( char *target, uint32 bufsize ) const;
+   uint32 toCString( char *target, uint32 bufsize ) const;
 
    /** Tranforms the string into a zero-terminated wide string.
       This function returns fills a buffer that can be fed in functions accpeting
@@ -642,9 +642,9 @@ public:
 
       \param target the buffer where to place the wchar_t string.
       \param bufsize the size of the target buffer in bytes.
-      \return -1 if the buffer size is not large enough, else returns the string length in wchar_t count
+      \return npos if the buffer size is not large enough, else returns the string length in wchar_t count
    */
-   int32 toWideString( wchar_t *target, uint32 bufsize ) const;
+   uint32 toWideString( wchar_t *target, uint32 bufsize ) const;
 
    /** Reduces the size of allocated memory to fit the string size.
       Use this method to shrink the allocated buffer storing the string

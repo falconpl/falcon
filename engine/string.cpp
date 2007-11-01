@@ -1604,13 +1604,13 @@ int String::compareIgnoreCase( const String &other ) const
    return 0;
 }
 
-int32 String::toCString( char *target, uint32 bufsize ) const
+uint32 String::toCString( char *target, uint32 bufsize ) const
 {
    uint32 len = length();
 
    // we already know that the buffer is too small?
     if ( bufsize <= len )
-      return -1;
+      return npos;
 
    uint32 pos = 0;
    uint32 done = 0;
@@ -1625,16 +1625,16 @@ int32 String::toCString( char *target, uint32 bufsize ) const
       }
       else if ( chr < 0x800 )
       {
-         if ( bufsize <= pos + 2 )
-            return false;
+         if ( pos + 2 > bufsize )
+            return npos;
 
          target[ pos ++ ] = 0xC0 | ((chr >> 6 ) & 0x1f);
          target[ pos ++ ] = 0x80 | (0x3f & chr);
       }
       else if ( chr < 0x10000 )
       {
-         if ( bufsize <= pos + 3 )
-            return false;
+         if ( pos + 3 > bufsize )
+            return npos;
 
          target[ pos ++ ] = 0xE0 | ((chr >> 12) & 0x0f );
          target[ pos ++ ] = 0x80 | ((chr >> 6) & 0x3f );
@@ -1642,8 +1642,8 @@ int32 String::toCString( char *target, uint32 bufsize ) const
       }
       else
       {
-         if ( bufsize <= pos + 4 )
-            return false;
+         if ( pos + 4 > bufsize )
+            return npos;
 
          target[ pos ++ ] = 0xF0 | ((chr >> 18) & 0x7 );
          target[ pos ++ ] = 0x80 | ((chr >> 12) & 0x3f );
@@ -1654,18 +1654,18 @@ int32 String::toCString( char *target, uint32 bufsize ) const
       ++done;
    }
 
-   if ( pos == bufsize )
-      return -1;
+   if ( pos >= bufsize )
+      return npos;
 
    target[pos] = '\0';
    return pos;
 }
 
-int32 String::toWideString( wchar_t *target, uint32 bufsize ) const
+uint32 String::toWideString( wchar_t *target, uint32 bufsize ) const
 {
    uint32 len = length();
    if ( bufsize <= len * sizeof( wchar_t ) )
-      return -1;
+      return npos;
 
    if ( sizeof( wchar_t ) == 2 ) {
       for( uint32 i = 0; i < len; i ++ )

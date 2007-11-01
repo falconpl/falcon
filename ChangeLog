@@ -18,9 +18,12 @@ Falcon (0.8.4)
   * bugfix: Fixed default load path of faltest.
   * improvement: Added a user data pointer to VM (useful for binary compatibility)
   * minor: Unclosed scoping errors now report where the scope was open.
-  * improvement: added min, max, all, any, allp, anyp, map, xmap, filter, reduce, 
+  * improvement: added min, max, all, any, allp, anyp, map, xmap, filter, reduce,
     iff, cascade functions for minimal functional support.
   * major: callable arrays for deferred calls and functional support.
+  * bugfix: AutoCString and AutoWString may convert incrrectly due to sign mismsatch
+    in the return value of String::toCString()/String::toWString(). Fixed (and returing
+    uint32).
 
 Falcon (0.8.3)
   * VM optimizations of about 20-25%

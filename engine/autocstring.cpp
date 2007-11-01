@@ -44,7 +44,7 @@ AutoCString::AutoCString( const Item &itm )
    }
 
    //if the size is large, we already know we can't try the conversion
-   if ( (m_len = str->toCString( m_buffer, AutoCString_BUF_SPACE ) ) >= 0 )
+   if ( (m_len = str->toCString( m_buffer, AutoCString_BUF_SPACE ) ) != String::npos )
    {
       m_pData = m_buffer;
       return;
@@ -59,7 +59,7 @@ AutoCString::AutoCString( const Item &itm )
 AutoCString::AutoCString( const String &str ):
    m_pData(0)
 {
-   if ( (m_len = str.toCString( m_buffer, AutoCString_BUF_SPACE ) ) >= 0)
+   if ( (m_len = str.toCString( m_buffer, AutoCString_BUF_SPACE ) ) != String::npos )
    {
       m_pData = m_buffer;
       return;
@@ -87,7 +87,7 @@ void AutoCString::init_vm_and_format( VMachine *vm, const Item &itm, const Strin
       return;
    }
 
-   if ( (m_len = str->toCString( m_buffer, AutoCString_BUF_SPACE ) ) >= 0 )
+   if ( (m_len = str->toCString( m_buffer, AutoCString_BUF_SPACE ) ) != String::npos )
    {
       m_pData = m_buffer;
       return;
