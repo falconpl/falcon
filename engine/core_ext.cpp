@@ -1909,7 +1909,7 @@ FALCON_FUNC  core_min ( ::Falcon::VMachine *vm )
    Item *elem = vm->param( 0 );
    for ( int32 i = 1; i < vm->paramCount(); i++)
    {
-      if ( vm->compareItems( *elem, *vm->param(i) ) < 0 )
+      if ( vm->compareItems( *vm->param(i), *elem ) < 0 )
       {
          elem = vm->param(i);
       }
@@ -1933,7 +1933,7 @@ FALCON_FUNC  core_max ( ::Falcon::VMachine *vm )
    int32 count = vm->paramCount();
    for ( int32 i = 1; i < count; i++)
    {
-      if ( vm->compareItems( *elem, *vm->param(i) ) > 0 )
+      if ( vm->compareItems( *vm->param(i), *elem ) > 0 )
       {
          elem = vm->param(i);
       }
