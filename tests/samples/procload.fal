@@ -1,0 +1,73 @@
+#!/usr/local/bin/falcon
+/*
+   FALCON - Samples
+
+   FILE: procload.fal
+
+   $Id: procload.fal,v 1.3 2007/08/02 23:41:39 jonnymind Exp $
+
+   This samples shows minimal process execution control.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: mer nov 3 2004
+   Last modified because:
+
+   -------------------------------------------------------------------
+   (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+   In order to use this file in its compiled form, this source or
+   part of it you have to read, understand and accept the conditions
+   that are stated in the LICENSE file that comes boundled with this
+   package.
+*/
+
+load process
+
+if len( args ) < 1
+   printl( "Usage: ", scriptName, " <file> [params]" )
+   exit(1)
+end
+
+
+
+try
+   proc = Process( args, PROCESS_MERGE_AUX | PROCESS_SINK_INPUT )
+
+   procout = proc.getOutput()
+   strout = ""
+
+
+   // until the process is done, read what it has to say
+   while proc.value() = -1
+      if procout.readAvailable( 250 )
+         strout += procout.read( 1024 )
+      end
+   end
+
+   printl( "ProcValue ", proc.value() )
+
+   // read last data that the proces may have left
+   while procout.readAvailable()
+      strout += procout.read( 1024 )
+   end
+   proc.close()
+
+   if ( proc.value() != 0 )
+      printl( "Process ", args[0], " exited with error ", proc.value() )
+   else
+      printl( "Process ended correctly. Here is the result:" )
+      printl( strout )
+   end
+
+catch in err
+   printl( "Can't complete the required operation." )
+   printl( err.toString() )
+end
+
+printl()
+printl("Done.")
+
+exit(0)
+
+/* end of process.fal */
