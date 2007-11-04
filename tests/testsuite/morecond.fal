@@ -1,8 +1,6 @@
 /****************************************************************************
 * Falcon test suite
 *
-* CVS-Id: $Id: morecond.fal,v 1.1.1.1 2006/10/08 15:05:41 gian Exp $
-*
 * ID: 1b
 * Category: basic
 * Subcategory: conditionals

@@ -1,0 +1,46 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 19j
+* Category: functional
+* Subcategory: minmax
+* Short: min
+* Description:
+*   Checks for correct working of functional construct "min".
+* [/Description]
+*
+****************************************************************************/
+
+function map_func( a )
+   if a < 0: raise nil
+   return a * a
+end
+
+// empty mapping
+if min() != nil: failure( "Empty set" )
+
+if min( 1 ) != 1
+   failure( "One element" )
+end
+
+if min( 3, 1 ) != 1
+   failure( "Two elements" )
+end
+
+object test
+   function compare( a )
+      if typeOf( a ) != IntegerType: return nil
+      if a > 0: return -1
+      if a < 0: return 1
+      return 0
+   end
+end
+
+if min( 3, 2, test ) != test
+   failure( "Elements with compare overload" )
+end
+
+
+success()
+
+/* End of file */

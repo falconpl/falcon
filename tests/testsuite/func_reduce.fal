@@ -1,0 +1,32 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 19g
+* Category: functional
+* Subcategory: mappings
+* Short: reduce
+* Description:
+*   Checks for correct working of functional construct "reduce".
+* [/Description]
+*
+****************************************************************************/
+
+function reduce_func( a, b )
+   return a + b
+end
+
+// empty mapping
+if reduce( reduce_func, [] ) != nil: failure( "Empty set" )
+if reduce( reduce_func, [], 0 ) != 0: failure( "Empty set with initial value" )
+
+if reduce( reduce_func, [1,2,3,4] ) != 10
+   failure( "Full reducing without initial value" )
+end
+
+if reduce( reduce_func, [1,2,3,4],-1 ) != 9
+   failure( "Full reducing with initial value" )
+end
+
+success()
+
+/* End of file */

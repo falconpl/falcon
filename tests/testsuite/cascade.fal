@@ -1,0 +1,76 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 19c
+* Category: functional
+* Subcategory: constructs
+* Short: Cascade
+* Description:
+*   Checks for correct working of functional construct "cascade".
+* [/Description]
+*
+****************************************************************************/
+
+function square( x )
+   return x * x
+end
+
+function sqrt( x )
+   return x ** 0.5
+end
+
+// empty cascade
+if cascade([]) != nil: failure( "Empty cascade" )
+
+// straight cascade
+cfunc = [ square,  sqrt, int ]
+
+if cascade( cfunc, 2 ) != 2: failure( "Fake abs 1" )
+if cascade( cfunc, -2 ) != 2: failure( "Fake abs 2" )
+
+// reductive cascade
+function test( a, b, c )
+   return a * b - c
+end
+
+cfunc[0:0] = test
+if cascade( cfunc, 2, 1, 4 ) != 2: failure( "Fake abs 3" )
+
+// function declining processing
+saved1 = 0
+saved2 = 0
+saved3 = 0
+
+function testdecl( p1, p2, p3 )
+   global saved1, saved2, saved3
+
+   saved1 = p1
+   saved2 = p2
+   saved3 = p3
+   raise nil
+end
+
+// in the middle...
+cfunc = [ test, testdecl, square, sqrt, int ]
+if cascade( cfunc, 2, 1, 4 ) != 2: failure( "decline in the middle" )
+if saved1 != -2 or saved2 != nil or saved3 != nil
+   failure( "decline call in the middle" )
+end
+
+// at begin
+cfunc = [ testdecl, test, square, sqrt, int ]
+if cascade( cfunc, 2, 1, 4 ) != 2: failure( "decline at begin" )
+if saved1 != 2 or saved2 != 1 or saved3 != 4
+   failure( "decline call at begin" )
+end
+
+// at end
+cfunc = [ test, square, sqrt, int, testdecl ]
+if cascade( cfunc, -2, 1, -4 ) != 2: failure( "decline at end" )
+if saved1 != 2 or saved2 != nil or saved3 != nil
+   failure( "decline call at end" )
+end
+
+success()
+
+/* End of file */

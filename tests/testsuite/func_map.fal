@@ -1,0 +1,28 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 19e
+* Category: functional
+* Subcategory: mappings
+* Short: Functional mapping
+* Description:
+*   Checks for correct working of functional construct "map".
+* [/Description]
+*
+****************************************************************************/
+
+function mapping_func( f )
+   return f * f
+end
+
+// empty mapping
+if map( mapping_func, [] ).len() != 0: failure( "Empty set" )
+
+mapped = map( mapping_func, [1,2,3,4] )
+if mapped[0] != 1 or mapped[1] != 4 or mapped[2] != 9 or mapped[3] != 16
+   failure( "Full mapping" )
+end
+
+success()
+
+/* End of file */

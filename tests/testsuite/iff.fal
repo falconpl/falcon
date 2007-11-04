@@ -1,0 +1,62 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 19d
+* Category: functional
+* Subcategory: constructs
+* Short: Functional if
+* Description:
+*   Checks for correct working of functional construct "iff".
+* [/Description]
+*
+****************************************************************************/
+
+// base if
+if iff( 1, "yes" ) != "yes": failure( "Base iff positive, w/o else" )
+if iff( 1, "yes", "no" ) != "yes": failure( "Base iff positive, with else" )
+if iff( 0, "yes" ) != nil: failure( "Base iff negative, w/o else" )
+if iff( 0, "yes", "no" ) != "no": failure( "Base iff negative, with else" )
+
+// with callable check
+test_count = 0
+function test( a )
+   global test_count
+   test_count++
+   return a != 0
+end
+
+if iff( [test, 1], "yes" ) != "yes": failure( "Callable check positive, w/o else" )
+if iff( [test, 1], "yes", "no" ) != "yes": failure( "Callable check  iff positive, with else" )
+if iff( [test, 0], "yes" ) != nil: failure( "Callable check  iff negative, w/o else" )
+if iff( [test, 0], "yes", "no" ) != "no": failure( "Callable check  iff negative, with else" )
+if test_count != 4: failure( "Test function call count" )
+
+// with callable check and callable results
+yes_count = 0
+no_count = 0
+
+function ret_yes( v )
+   global yes_count, no_count
+
+   if v == "yes"
+      yes_count++
+   else
+      no_count++
+   end
+
+   return v
+end
+
+ry = [ ret_yes, "yes" ]
+rn = [ ret_yes, "no" ]
+
+if iff( [test, 1], ry ) != "yes": failure( "All callable iff positive, w/o else" )
+if iff( [test, 1], ry, rn ) != "yes": failure( "All callable iff positive, with else" )
+if iff( [test, 0], ry ) != nil: failure( "All callable iff negative, w/o else" )
+if iff( [test, 0], ry, rn ) != "no": failure( "All callable iff negative, with else" )
+if yes_count != 2: failure( "Evaluation of positive branch count" )
+if no_count != 1: failure( "Evaluation of negative branch count" )
+
+success()
+
+/* End of file */

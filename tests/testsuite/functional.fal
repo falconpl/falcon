@@ -1,0 +1,60 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 19a
+* Category: functional
+* Subcategory: execarr
+* Short: Executable arrays
+* Description:
+*   This is the base of functional programming in Falcon. This test
+*   checks correct working of functional programming basic constructs:
+*   executable arrays.
+* [/Description]
+*
+****************************************************************************/
+
+function test( a )
+   return a == 0
+end
+
+function test_3( alpha, beta, gamma )
+   return alpha = "alpha" and beta = "beta" and gamma = "gamma"
+end
+
+// first, check for correct detection of isCallable
+if isCallable( [ 1, 2, 3 ]): failure( "isCallable negative" )
+if not isCallable( [test, 2, 3] ): failure( "isCallable positive" )
+
+// immediate call
+if not [test]( 0 ): failure( "immediate call 1" )
+if [test]( 1 ): failure( "immediate call 2" )
+
+// transient call
+tc = [test]
+if not tc( 0 ): failure( "transient call 1" )
+if tc( 1 ): failure( "transient call 2" )
+
+// semideferred call
+if not [test, 0](): failure( "semideferred call 1" )
+if [test, 1](): failure( "semideferred call 2" )
+
+// deferred call
+tc  = [test, 0]
+if not tc(): failure( "deferred call 1" )
+tc  = [test, 1]
+if tc(): failure( "deferred call 2" )
+
+// mixed calls
+// semideferred mixed
+if not [test_3, "alpha", "beta"]( "gamma" ): failure( "semideferred mixed 1" )
+if [test_3, "alpha", "beta"]( "dif" ): failure( "semideferred mixed 2" )
+if [test_3, "alpha", "beta"](): failure( "semideferred mixed 3" )
+
+tc = [test_3, "alpha", "beta"]
+if not tc( "gamma" ): failure( "deferred mixed 1" )
+if tc(): failure( "deferred mixed 2" )
+if tc( "other" ): failure( "deferred mixed 3" )
+
+success()
+
+/* End of file */

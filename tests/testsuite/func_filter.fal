@@ -1,0 +1,32 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 19f
+* Category: functional
+* Subcategory: mappings
+* Short: Functional filter
+* Description:
+*   Checks for correct working of functional construct "filter".
+* [/Description]
+*
+****************************************************************************/
+
+function filter_func( f )
+   return f % 2 != 0
+end
+
+// empty mapping
+if filter( filter_func, [] ).len() != 0: failure( "Empty set" )
+
+fd = filter( filter_func, [1,2,3,4] )
+if fd.len() != 2
+   failure( "Full filtering - size" )
+end
+
+if fd[0] != 1 or fd[1] != 3
+   failure( "Full filtering - content" )
+end
+
+success()
+
+/* End of file */

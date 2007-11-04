@@ -1,0 +1,80 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 19b
+* Category: functional
+* Subcategory: constructs
+* Short: All and any
+* Description:
+*   Checks for correct working of functional constructs "all" and "any".
+* [/Description]
+*
+****************************************************************************/
+
+test_calls = 0
+test_3_calls = 0
+
+function test( a )
+   global test_calls
+   test_calls++
+   return a == 0
+end
+
+function test_3( alpha, beta, gamma )
+   global test_3_calls
+   test_3_calls++
+   return alpha = "alpha" and beta = "beta" and gamma = "gamma"
+end
+
+// basic
+if all( [] ): failure( "Empty all" )
+if any( [] ): failure( "Empty any" )
+if allp(): failure( "Empty allp" )
+if anyp(): failure( "Empty anyp" )
+
+// only immediate, positive
+if not all( [1, "test", 3.24] ): failure( "positive immediate all" )
+if not allp( 1, "test", 3.24 ): failure( "positive immediate allp" )
+if not any( [1, "test", 3.24] ): failure( "positive immediate any" )
+if not anyp( 1, "test", 3.24 ): failure( "positive immediate anyp" )
+
+// only immediate, negative
+if all( [1, "", 3.24] ): failure( "negative immediate all" )
+if allp( 1, 0, 3.24 ): failure( "negative immediate allp" )
+if any( [nil, "", 0] ): failure( "negative immediate any" )
+if anyp( nil, "", 0 ): failure( "negative immediate anyp" )
+
+// mixed, positive
+if not all( [1, [test, 0], 3.24] ): failure( "positive mixed all" )
+if not allp( 1, [test, 0], 3.24 ): failure( "positive mixed allp" )
+if not any( [0, [test, 0], 3.24] ): failure( "positive mixed any" )
+if not anyp( 0, [test, 0], nil ): failure( "positive mixed anyp" )
+
+// mixed, negative
+if all( [1, [test, 1], 3.24] ): failure( "negative mixed all" )
+if allp( 1, [test, 1], 3.24 ): failure( "negative mixed allp" )
+if any( [nil, [test, 1], 0] ): failure( "negative mixed any" )
+if anyp( nil, [test, 1], 0 ): failure( "negative mixed anyp" )
+
+// pure, positive
+if not all( [[test_3, "alpha", "beta", "gamma"], [test, 0]] ): failure( "positive pure all" )
+if not allp( [test_3, "alpha", "beta", "gamma"], [test, 0] ): failure( "positive pure allp" )
+if not any( [[test_3, "alpha", "beta", "gamma"], [test, 1]] ): failure( "positive pure any" )
+if not anyp( [test_3, "alpha", "x", "gamma"], [test, 0] ): failure( "positive pure anyp" )
+
+// pure, negative
+if all( [[test_3, "alpha", "beta", "gamma"], [test, 1]] ): failure( "negative pure all" )
+if allp( [test_3, "alpha", "x", "gamma"], [test, 0] ): failure( "negative pure allp" )
+if any( [[test_3, "alpha", "x", "gamma"], [test, 1]] ): failure( "negative pure any" )
+if anyp( [test_3, "alpha", "x", "gamma"], [test, 1] ): failure( "negative pure anyp" )
+
+// check for correct calls
+if test_3_calls != 8: failure( "test_3 call count" )
+
+// as anyp is shortcircuited, we should have 14 calls
+if test_calls != 14: failure( "test call count" )
+
+
+success()
+
+/* End of file */
