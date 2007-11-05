@@ -327,7 +327,9 @@ protected:
    uint32 m_tryFrame;
 
    /** This value indicate that there isn't any active try handler in the stack */
-   static const uint32 i_noTryFrame = 0xFFFFFFFF;
+   enum {
+		i_noTryFrame = 0xFFFFFFFF
+   };
 
    /** Currently executed code.
       It's the code from m_symbol->module()->code(),
