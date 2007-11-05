@@ -30,7 +30,7 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "Falcon Committee"
             VALUE "FileDescription", "Regular expression support feather module"
-            VALUE "FileVersion", FALCON_MAKE_VERSION_STRING( VERSION_MAJOR, VERSION_MINOR, VERSION_REVISION, 0 )
+            VALUE "FileVersion", FALCON_MAKE_VERSION_STRING( VERSION_MAJOR, VERSION_MINOR, VERSION_REVISION )
             VALUE "InternalName", "regex"
             VALUE "LegalCopyright", "The Falcon Programming Language License"
             VALUE "OriginalFilename", "regex.dll"
