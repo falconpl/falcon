@@ -1406,8 +1406,8 @@ void VMachine::reschedule( VMContext *ctx, numeric secs )
       
 	  if ( curctx == ctx )
 	  {
-	     ListElement *old = iter;
-		 iter = iter->next;
+       ListElement *old = iter;
+		 iter = iter->next();
 		 m_sleepingContexts.erase( old );
 		 continue;
 	  }
