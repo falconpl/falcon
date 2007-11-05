@@ -1,0 +1,65 @@
+/*
+   Falcon Samples.
+
+   Coroutine / wait timeout
+   
+   This sample shows how to wait for a semaphore to be
+   signaled with a given timeout. The waiter function waits
+   either to be waken up or 1 second.
+   
+   The main loop signals the semaphore every 0.5, 0.6, 0.5
+   and so on secods, up to 2.0 seconds. The first times, the
+   waiter is always woken up, but when the signal interval
+   corsses one second, it begins to signal both timeouts and
+   wakeups.
+*/
+
+//==================================================
+// Global variables
+
+
+//===============================================
+// coroutine function
+//
+function waiter( sem, done )
+   initial = seconds()
+   loop 
+      val = sem.wait( 1.0 )
+      
+      if done == -1: break
+         
+      alive = seconds() - initial
+      initial = seconds()
+      if val
+         < @"\rAwaken!   After:$(alive:4.2)s   Done:", done
+      else
+         < @"\rTIMEOUT!  After:$(alive:4.2)s   Done:", done
+      end
+   end
+   >
+end
+
+//========================================================
+// Main program
+
+// our semaphores
+sem = Semaphore()
+
+// wait for all the threads to end
+done = 0
+
+// Functions can be started normally
+launch waiter( sem, $done )
+
+wait = 0.5
+while done < 15
+   sleep( wait )
+   wait += 0.1
+   sem.post()
+   done++
+end
+
+done = -1
+sem.post()
+>
+> "Done"
