@@ -24,6 +24,7 @@
 */
 
 #include <falcon/vm.h>
+#include "vmsema.h"
 #include <falcon/vmcontext.h>
 #include <falcon/traits.h>
 #include <falcon/genericvector.h>
@@ -44,6 +45,8 @@ static void s_tryframeDestroyer( void *stry )
 
 VMContext::VMContext( VMachine *origin )
 {
+   m_sleepingOn = 0;
+
    m_schedule = 0.0;
    m_priority = 0;
 
@@ -103,6 +106,15 @@ void VMContext::restore( VMachine *origin ) const
    origin->m_regB = m_regB;
    origin->m_regS1 = m_regS1;
    origin->m_regS2 = m_regS2;
+}
+
+void VMContext::wakeup()
+{
+   if ( m_sleepingOn != 0 )
+   {
+       m_sleepingOn->unsubscribe( this );
+	   m_sleepingOn = 0; // should be done by unsubscribe, but...
+   }
 }
 
 }

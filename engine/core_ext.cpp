@@ -802,7 +802,18 @@ FALCON_FUNC  Semaphore_post ( ::Falcon::VMachine *vm )
 FALCON_FUNC  Semaphore_wait ( ::Falcon::VMachine *vm )
 {
    VMSemaphore *semaphore = static_cast< VMSemaphore *>(vm->self().asObject()->getUserData());
-   semaphore->wait( vm );
+   Item *i_wc = vm->param( 0 );
+   if ( i_wc == 0 )
+      semaphore->wait( vm );
+   else {
+      if ( ! i_wc->isOrdinal() )
+	  {
+	     vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).extra( "( N )" ) ) );
+         return;
+	  }
+	  semaphore->wait( vm, i_wc->forceNumeric() );
+   }
+
 }
 
 FALCON_FUNC vmSuspend( ::Falcon::VMachine *vm )

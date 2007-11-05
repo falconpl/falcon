@@ -299,7 +299,8 @@ void VMachine::run()
             return;
 
          case eventWait:
-            if ( m_sleepingContexts.empty() ) {
+            if ( m_sleepingContexts.empty() && !m_sleepAsRequests && m_yieldTime < 0.0 ) 
+			{
                m_error = new GenericError( ErrorParam( e_deadlock ).origin( e_orig_vm ) );
                fillErrorContext( m_error );
                m_event = eventRisen;
@@ -307,13 +308,17 @@ void VMachine::run()
                      m_errhand->handleError( m_error );
                return;
             }
-            else
-               m_pc = m_pc_next;
+            
+            m_pc = m_pc_next;
 
             m_currentContext->save( this );
-            // elect a new context without putting this one at sleep:
-            // it is sleeping on a queue.
-            electContext();
+			
+			// if wait time is > 0, put at sleep
+			if( m_yieldTime > 0.0 )
+				putAtSleep( m_currentContext, m_yieldTime );
+			
+			electContext();
+
             if ( m_event == eventSleep )
                return;
 

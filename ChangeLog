@@ -24,6 +24,7 @@ Falcon (0.8.4)
   * bugfix: AutoCString and AutoWString may convert incrrectly due to sign mismsatch
     in the return value of String::toCString()/String::toWString(). Fixed (and returing
     uint32).
+  * minor: Semaphore wait() can now be timed.
 
 Falcon (0.8.3)
   * VM optimizations of about 20-25%

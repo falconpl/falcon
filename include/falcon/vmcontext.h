@@ -38,6 +38,7 @@ class VMachine;
 class Symbol;
 class Item;
 class ItemVector;
+class VMSemaphore;
 
 /** Class representing a coroutine execution context. */
 class FALCON_DYN_CLASS VMContext: public BaseAlloc
@@ -60,6 +61,10 @@ class FALCON_DYN_CLASS VMContext: public BaseAlloc
    int32 m_priority;
 
    uint32 m_tryFrame;
+
+   VMSemaphore *m_sleepingOn;
+
+   friend class VMSemaphore;
 
 public:
    VMContext( VMachine *origin );
@@ -88,6 +93,11 @@ public:
    uint32 stackBase() const { return m_stackBase; }
 
    ItemVector *getStack() const { return m_stack; }
+
+   VMSemaphore *sleepingOn() const { return m_sleepingOn; }
+   void sleepOn( VMSemaphore *sl ) { m_sleepingOn = sl; }
+
+   void wakeup();
 };
 
 }

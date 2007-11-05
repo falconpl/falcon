@@ -442,6 +442,7 @@ protected:
 
    void yield( numeric seconds );
    void putAtSleep( VMContext *ctx, numeric secs );
+   void reschedule( VMContext *ctx, numeric secs );
    void rotateContext();
 
    numeric m_yieldTime;

@@ -31,6 +31,8 @@
 
 namespace Falcon {
 
+class VMContext;
+
 class VMSemaphore: public UserData
 {
    int32 m_count;
@@ -44,7 +46,9 @@ public:
    ~VMSemaphore() {}
 
    void post( VMachine *vm, int32 value=1 );
-   void wait( VMachine *vm );
+   void wait( VMachine *vm, double time = -1.0 );
+
+   void unsubscribe( VMContext *ctx );
 };
 
 }

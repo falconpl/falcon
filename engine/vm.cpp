@@ -1338,8 +1338,8 @@ void VMachine::yield( numeric secs )
    // be sure to allow yelding.
    m_allowYield = true;
 
-
-   if ( m_sleepingContexts.empty() ) {
+   if ( m_sleepingContexts.empty() ) 
+   {
       if( secs >= 0.0 )
       {
          // should we ask the embedding application to wait for us??
@@ -1371,8 +1371,9 @@ void VMachine::yield( numeric secs )
 
 void VMachine::putAtSleep( VMContext *ctx, numeric secs )
 {
-   if ( secs < 0.0 ) {
-      secs = 0.0;
+   if ( secs < 0.0 ) 
+   {
+	  secs = 0.0;
    }
 
    numeric tgtTime = Sys::_seconds() + secs;
@@ -1390,6 +1391,40 @@ void VMachine::putAtSleep( VMContext *ctx, numeric secs )
    // can't find it anywhere?
    m_sleepingContexts.pushBack( ctx );
 }
+
+
+void VMachine::reschedule( VMContext *ctx, numeric secs )
+{
+   numeric tgtTime = Sys::_seconds() + secs;
+   ctx->schedule( tgtTime );
+   ListElement *iter = m_sleepingContexts.begin();
+
+   bool bFound;
+   while( iter != 0 ) 
+   {
+      VMContext *curctx = (VMContext *) iter->data();
+      
+	  if ( curctx == ctx )
+	  {
+	     ListElement *old = iter;
+		 iter = iter->next;
+		 m_sleepingContexts.erase( old );
+		 continue;
+	  }
+
+	  if ( tgtTime < curctx->schedule() ) 
+	  {
+         m_sleepingContexts.insertBefore( iter, ctx );
+		 bFound = true;
+      }
+      iter = iter->next();
+   }
+
+   // can't find it anywhere?
+   if ( bFound )
+	  m_sleepingContexts.pushBack( ctx );
+}
+
 
 void VMachine::rotateContext()
 {
@@ -1409,11 +1444,22 @@ void VMachine::electContext()
    {
       VMContext *elect = (VMContext *) m_sleepingContexts.front();
       numeric tgtTime = elect->schedule() - Sys::_seconds();
-      if ( tgtTime > 0.0 )
-      {
+
+      // elect NOW the new context
+      m_sleepingContexts.popFront();
+      elect->restore( this );
+      elect->wakeup();
+	  
+      m_currentContext = elect;
+      m_opCount = 0;
+      // we must move to the next instruction after the context was swapped.
+      m_pc = m_pc_next;
+      // and restore the right globals
+      m_currentGlobals = m_globals.vpat( m_moduleId );
 
       // but eventually sleep.
-
+	  if ( tgtTime > 0.0 )
+      {
          // should we ask the embedding application to wait for us??
          if ( m_sleepAsRequests )
          {
@@ -1424,16 +1470,6 @@ void VMachine::electContext()
          else
             Sys::_sleep( tgtTime );
       }
-
-      // elect NOW the new context
-      m_sleepingContexts.popFront();
-      elect->restore( this );
-      m_currentContext = elect;
-      m_opCount = 0;
-      // we must move to the next instruction after the context was swapped.
-      m_pc = m_pc_next;
-      // and restore the right globals
-      m_currentGlobals = m_globals.vpat( m_moduleId );
    }
 }
 
