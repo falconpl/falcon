@@ -180,9 +180,9 @@ FALCON_FUNC  Stream_isOpen ( ::Falcon::VMachine *vm );
 FALCON_FUNC  Stream_writeAvailable ( ::Falcon::VMachine *vm );
 FALCON_FUNC  Stream_readAvailable ( ::Falcon::VMachine *vm );
 
-FALCON_FUNC  stdIn ( ::Falcon::VMachine *vm );
-FALCON_FUNC  stdOut ( ::Falcon::VMachine *vm );
-FALCON_FUNC  stdErr ( ::Falcon::VMachine *vm );
+FALCON_FUNC  _stdIn ( ::Falcon::VMachine *vm );
+FALCON_FUNC  _stdOut ( ::Falcon::VMachine *vm );
+FALCON_FUNC  _stdErr ( ::Falcon::VMachine *vm );
 
 FALCON_FUNC  stdInRaw ( ::Falcon::VMachine *vm );
 FALCON_FUNC  stdOutRaw ( ::Falcon::VMachine *vm );

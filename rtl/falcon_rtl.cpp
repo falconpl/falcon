@@ -314,9 +314,9 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    //=======================================================================
    // SYSTEM API
    //=======================================================================
-   self->addExtFunc( "stdIn", Falcon::Ext::stdIn );
-   self->addExtFunc( "stdOut", Falcon::Ext::stdOut );
-   self->addExtFunc( "stdErr", Falcon::Ext::stdErr );
+   self->addExtFunc( "stdIn", Falcon::Ext::_stdIn );
+   self->addExtFunc( "stdOut", Falcon::Ext::_stdOut );
+   self->addExtFunc( "stdErr", Falcon::Ext::_stdErr );
    self->addExtFunc( "stdInRaw", Falcon::Ext::stdInRaw );
    self->addExtFunc( "stdOutRaw", Falcon::Ext::stdOutRaw );
    self->addExtFunc( "stdErrRaw", Falcon::Ext::stdErrRaw );

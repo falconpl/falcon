@@ -996,19 +996,19 @@ static void internal_make_stream( VMachine *vm, UserData *clone, int userMode )
 }
 
 
-FALCON_FUNC  stdIn ( ::Falcon::VMachine *vm )
+FALCON_FUNC  _stdIn ( ::Falcon::VMachine *vm )
 {
    internal_make_stream( vm, vm->stdIn()->clone(), -1 );
 }
 
 
-FALCON_FUNC  stdOut ( ::Falcon::VMachine *vm )
+FALCON_FUNC  _stdOut ( ::Falcon::VMachine *vm )
 {
    internal_make_stream( vm, vm->stdOut()->clone(), -1 );
 }
 
 
-FALCON_FUNC  stdErr ( ::Falcon::VMachine *vm )
+FALCON_FUNC  _stdErr ( ::Falcon::VMachine *vm )
 {
    internal_make_stream( vm, vm->stdErr()->clone(), -1 );
 }
