@@ -525,16 +525,29 @@ bool Format::format( VMachine *vm, const Item &source, String &target )
          }
          else {
             double intPart, fractPart;
-            bool bNeg;
+            bool bNeg, bIntIsZero;
             fractPart = modf( num, &intPart );
             if ( intPart < 0.0 ) {
                intPart = -intPart;
                fractPart = -fractPart;
                bNeg = true;
+               bIntIsZero = false;
             }
-            else {
-               bNeg = false;
+            else 
+            {
+               bIntIsZero = intPart > 0.0 ? false : true;
+
+               if ( fractPart < 0.0 )
+               {
+                  fractPart = -fractPart;
+                  // draw neg sign only if < 0 but int
+                  bNeg = true;
+               }
+               else
+                  bNeg = false;
             }
+
+
 
             String precPart;
             int base = 10;
@@ -555,6 +568,7 @@ bool Format::format( VMachine *vm, const Item &source, String &target )
             if( m_decimals == 0 && fractPart >= 0.5 )
             {
                intPart++;
+               bIntIsZero = false;
             }
 
             uint8 decs = m_decimals;
@@ -589,6 +603,11 @@ bool Format::format( VMachine *vm, const Item &source, String &target )
                sprintf( buffer, bufFmt, fractPart );
                sBuffer.append( m_decimalSep );
                sBuffer.append( buffer + 2 );
+            }
+            else if ( bIntIsZero )
+            {
+               // do not print -0!
+               bNeg = false;
             }
 
             // we must fix the number.

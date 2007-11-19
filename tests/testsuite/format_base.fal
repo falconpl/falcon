@@ -1,0 +1,78 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 41a
+* Category: rtl
+* Subcategory: core
+* Short: Basic numeric format
+* Description:
+* Checks for format operations being correctly performed.
+* [/Description]
+*
+****************************************************************************/
+
+val = 0.45292123
+
+if @"$val:.0" != "0": failure( "Positive (0.) trim" )
+if @"$val:.2" != "0.45": failure( "Positive (0.) round down" )
+if @"$val:.3" != "0.453": failure( "Positive (0.) round up" )
+
+val = -0.45292123
+if @"$val:.0" != "0": failure( "Negative (0.) trim" )
+if @"$val:.2" != "-0.45": failure( "Negative (0.) round down" )
+if @"$val:.3" != "-0.453": failure( "Negative (0.) round up" )
+
+val = 0.9
+if @"$val:.0" != "1": failure( "Positive (0.9) trim" )
+if @"$val:.1" != "0.9": failure( "Positive (0.9) fix" )
+if @"$val:.2" != "0.90": failure( "Positive (0.9) exceed" )
+
+val = -0.9
+if @"$val:.0" != "-1": failure( "Negative (0.9) trim" )
+if @"$val:.1" != "-0.9": failure( "Negative (0.9) fix" )
+if @"$val:.2" != "-0.90": failure( "Negative (0.9) exceed" )
+   
+val = 0.009
+if @"$val:.0" != "0": failure( "Positive (0.009) trim" )
+if @"$val:.1" != "0.0": failure( "Positive (0.009) fix" )
+if @"$val:.2" != "0.01": failure( "Positive (0.009) exceed" )
+
+val = -0.009
+if @"$val:.0" != "0": failure( "Negative (0.009) trim" )
+if @"$val:.1" != "-0.0": failure( "Negative (0.009) fix" )
+if @"$val:.2" != "-0.01": failure( "Negative (0.009) exceed" )
+   
+val = 120.45292123
+
+if @"$val:.0" != "120": failure( "Positive (120.) trim" )
+if @"$val:.2" != "120.45": failure( "Positive (120.) round down" )
+if @"$val:.3" != "120.453": failure( "Positive (120.) round up" )
+
+val = -120.45292123
+if @"$val:.0" != "-120": failure( "Negative (120.) trim" )
+if @"$val:.2" != "-120.45": failure( "Negative (120.) round down" )
+if @"$val:.3" != "-120.453": failure( "Negative (120.) round up" )
+
+val = 120.9
+if @"$val:.0" != "121": failure( "Positive (120.9) trim" )
+if @"$val:.1" != "120.9": failure( "Positive (120.9) fix" )
+if @"$val:.2" != "120.90": failure( "Positive (120.9) exceed" )
+
+val = -120.9
+if @"$val:.0" != "-121": failure( "Negative (120.9) trim" )
+if @"$val:.1" != "-120.9": failure( "Negative (120.9) fix" )
+if @"$val:.2" != "-120.90": failure( "Negative (120.9) exceed" )
+   
+val = 120.009
+if @"$val:.0" != "120": failure( "Positive (120.009) trim" )
+if @"$val:.1" != "120.0": failure( "Positive (120.009) fix" )
+if @"$val:.2" != "120.01": failure( "Positive (120.009) exceed" )
+
+val = -120.009
+if @"$val:.0" != "-120": failure( "Negative (120.009) trim" )
+if @"$val:.1" != "-120.0": failure( "Negative (120.009) fix" )
+if @"$val:.2" != "-120.01": failure( "Negative (120.009) exceed" )
+   
+success()
+
+/* End of file */
