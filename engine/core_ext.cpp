@@ -2138,6 +2138,39 @@ FALCON_FUNC  core_iff ( ::Falcon::VMachine *vm )
    }
 }
 
+FALCON_FUNC  core_choice ( ::Falcon::VMachine *vm )
+{
+   Item *i_cond = vm->param(0);
+   Item *i_ifTrue = vm->param(1);
+   Item *i_ifFalse = vm->param(2);
+
+   if( i_cond == 0 || i_ifTrue == 0 )
+   {
+      vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).
+         extra( "X,X,[X]" ) ) );
+      return;
+   }
+
+   // i_ifFalse defaults to nil
+   Item temp; // created as nil
+   if ( i_ifFalse == 0 )
+      i_ifFalse = &temp;
+
+   if ( vm->functionalEval( *i_cond ) )
+   {
+      if ( ! vm->hadError() )
+      {
+         vm->regA() = *i_ifTrue;
+      }
+   }
+   else {
+      if ( ! vm->hadError() )
+      {
+         vm->regA() = *i_ifFalse;
+      }
+   }
+}
+
 
 FALCON_FUNC  core_cascade ( ::Falcon::VMachine *vm )
 {
@@ -2389,6 +2422,7 @@ Module * core_module_init()
    core->addExtFunc( "any", Falcon::core::core_any );
    core->addExtFunc( "allp", Falcon::core::core_allp );
    core->addExtFunc( "anyp", Falcon::core::core_anyp );
+   core->addExtFunc( "choice", Falcon::core::core_choice );
    core->addExtFunc( "min", Falcon::core::core_min );
    core->addExtFunc( "max", Falcon::core::core_max );
    core->addExtFunc( "map", Falcon::core::core_map );

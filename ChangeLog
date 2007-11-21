@@ -1,3 +1,7 @@
+Falcon (0.8.5)
+  * Bugfix: incorrect format of 0.x floating point numbers.
+  * Minor: added function choice (functional non-evaluating if) in core.
+  
 Falcon (0.8.4)
   * major: Old "lambda expressionss" are now "nameless functions". They are declared
     through variable = function(...) ... end  (which was the most common
