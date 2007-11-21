@@ -532,8 +532,11 @@ protected:
       return ret;
    }
 
-   /** Gets the nth parameter. */
+   /** Gets the nth parameter of an opcode. */
    Item *getOpcodeParam( register uint32 bc_pos );
+
+   /** Checks if a given function name is a functional construct. */
+   bool checkFunctional( const String &name );
 
 public:
 

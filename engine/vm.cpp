@@ -1098,7 +1098,7 @@ bool VMachine::callItem( const Item &callable, int32 paramCount, e_callMode call
          {
             const Item &carr = callable.asArray()->at(0);
 
-            if ( carr.isFbom() || carr.isFunction() || 
+            if ( carr.isFbom() || carr.isFunction() ||
                carr.isMethod() || carr.isClass() )
             {
                uint32 sizeNow = m_stack->size();
@@ -1107,8 +1107,8 @@ bool VMachine::callItem( const Item &callable, int32 paramCount, e_callMode call
                {
                   pushParameter( arr->at(i) );
                }
-               
-               for ( uint32 j = sizeNow - paramCount; 
+
+               for ( uint32 j = sizeNow - paramCount;
                   j < sizeNow; j ++ )
                {
                   pushParameter( m_stack->itemAt( j ) );
@@ -1338,7 +1338,7 @@ void VMachine::yield( numeric secs )
    // be sure to allow yelding.
    m_allowYield = true;
 
-   if ( m_sleepingContexts.empty() ) 
+   if ( m_sleepingContexts.empty() )
    {
       if( secs >= 0.0 )
       {
@@ -1371,7 +1371,7 @@ void VMachine::yield( numeric secs )
 
 void VMachine::putAtSleep( VMContext *ctx, numeric secs )
 {
-   if ( secs < 0.0 ) 
+   if ( secs < 0.0 )
    {
 	  secs = 0.0;
    }
@@ -1400,10 +1400,10 @@ void VMachine::reschedule( VMContext *ctx, numeric secs )
    ListElement *iter = m_sleepingContexts.begin();
 
    bool bFound;
-   while( iter != 0 ) 
+   while( iter != 0 )
    {
       VMContext *curctx = (VMContext *) iter->data();
-      
+
 	  if ( curctx == ctx )
 	  {
        ListElement *old = iter;
@@ -1412,7 +1412,7 @@ void VMachine::reschedule( VMContext *ctx, numeric secs )
 		 continue;
 	  }
 
-	  if ( tgtTime < curctx->schedule() ) 
+	  if ( tgtTime < curctx->schedule() )
 	  {
          m_sleepingContexts.insertBefore( iter, ctx );
 		 bFound = true;
@@ -1449,7 +1449,7 @@ void VMachine::electContext()
       m_sleepingContexts.popFront();
       elect->restore( this );
       elect->wakeup();
-	  
+
       m_currentContext = elect;
       m_opCount = 0;
       // we must move to the next instruction after the context was swapped.
@@ -2639,8 +2639,82 @@ void VMachine::referenceItem( Item &target, Item &source )
 
 bool VMachine::functionalEval( const Item &itm )
 {
-   // Callitem includes a check for callability
-   return callItem( itm, 0 ) ? m_regA.isTrue() : itm.isTrue();
+   // An array
+   if ( itm.isArray() )
+   {
+      CoreArray *arr = itm.asArray();
+      if ( arr->length() > 0 )
+      {
+         // if the first element is not a callable, push that too.
+         if ( arr->at(0).isCallable() )
+         {
+            // functional constructs take care of themselves.
+            if ( checkFunctional( arr->at( 0 ).asFunction()->name() ) )
+            {
+               callItem( itm, 0 );
+               return m_regA.isTrue();
+            }
+
+            // great. Then recursively evaluate the parameters.
+            uint32 count = arr->length();
+            for ( uint32 l = 1; l < count; l ++ )
+            {
+               functionalEval( arr->at(l) );
+               // in case of errors...
+               // ... or if someone played with our array...
+               if ( hadError() || count != arr->length() )
+               {
+                  // ... unroll the stack and bail out
+                  m_stack->resize( m_stack->size() + l - 1 );
+                  return false;
+               }
+
+               pushParameter( m_regA );
+            }
+
+            count --;
+            // perform the call for this level
+            callItem( arr->at(0), count );
+         }
+         else
+         {
+            // Generate the array
+            CoreArray *array = new CoreArray( this, arr->length() );
+            array->length( arr->length() );
+            for( uint32 i = 0; i < arr->length(); i++ )
+            {
+               functionalEval( arr->at(i) );
+               // in case of errors...
+               // ... or if someone played with our array...
+               if ( hadError()  )
+               {
+                  return false;
+               }
+               array->at(i) = m_regA;
+            }
+            m_regA.setArray( array );
+         }
+      }
+      else {
+         m_regA.setArray( new CoreArray( this ) );
+      }
+   }
+   else
+   {
+      m_regA = itm;
+   }
+
+   return m_regA.isTrue();
+}
+
+bool VMachine::checkFunctional( const String &name )
+{
+   return name == "all" || name == "any" || name == "allp" || name == "anyp" ||
+            name == "eval" ||
+            name == "choice"|| name == "iff" ||
+            name == "lit" ||
+            name == "cascade";
+
 }
 
 }
