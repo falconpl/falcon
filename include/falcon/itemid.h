@@ -36,6 +36,9 @@
 /* Some shallow callable items. */
 #define FLC_ITEM_FBOM      7
 
+/** Special VM item */
+#define FLC_ITEM_ATTRIBUTE 8
+
 /** From this point on, we have possibly deep items */
 #define FLC_ITEM_FIRST_DEEP 10
 

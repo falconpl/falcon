@@ -37,6 +37,7 @@
 #include <falcon/fassert.h>
 #include <falcon/deferrorhandler.h>
 #include <falcon/format.h>
+#include <falcon/attribute.h>
 
 #define VM_STACK_MEMORY_THRESHOLD 64
 
@@ -61,10 +62,10 @@ VMachine::VMachine( bool initItems ):
 void VMachine::internal_construct()
 {
    m_userData = 0;
+   m_attributes = 0;
    m_bOwnErrorHandler = false;
    m_bhasStandardStreams = false;
    m_errhand =0;
-   m_attributeCount = 0;
    m_error = 0;
    m_pc = 0;
    m_pc_next = 0;
@@ -251,7 +252,6 @@ void VMachine::init()
 }
 
 
-
 VMachine::~VMachine()
 {
    // destroy all the global vectors.
@@ -275,6 +275,17 @@ VMachine::~VMachine()
    // delete the owned error
    if( m_error != 0 ) {
       m_error->decref();
+   }
+
+   // delete the attributes
+   AttribHandler *h = m_attributes;
+   while( h != 0 )
+   {
+      AttribHandler *h1 = h->next();
+      // this is the only place where we destroy also the attribute.
+      delete h->attrib();
+      delete h;
+      h = h1;
    }
 
    delete m_stdErr;
@@ -339,6 +350,7 @@ bool VMachine::link( Runtime *rt )
    return true;
 }
 
+
 bool VMachine::link( Module *mod )
 {
    ItemVector *globs;
@@ -393,18 +405,22 @@ bool VMachine::link( Module *mod )
             break;
 
             case Symbol::tattribute:
-               if( m_attributeCount > FALCON_MAX_ATTRIBUTES )
                {
-                  raiseError( new CodeError( ErrorParam( e_attrib_space, sym->declaredAt() ).
-                     origin( e_orig_vm ).
-                     symbol( sym->name() ).
-                     module( sym->module()->name() ) )
-                  );
-                  return false;
-               }
-               else
-               {
-                  globs->itemAt( sym->itemId() ).setInteger( 1 << m_attributeCount++ );
+                  // create a new attribute
+                  Attribute *attrib = new Attribute( sym );
+
+                  // define the item as an attribute
+                  globs->itemAt( sym->itemId() ).setAttribute( attrib );
+
+                  // add the attribute to the list of known attributes
+                  if ( m_attributes == 0 )
+                  {
+                     m_attributes = new AttribHandler( attrib, 0 );
+                  }
+                  else {
+                     m_attributes->prev( new AttribHandler( attrib, 0, 0, m_attributes ) );
+                     m_attributes = m_attributes->prev();
+                  }
                }
             break;
 
@@ -569,6 +585,7 @@ bool VMachine::link( Module *mod )
    return true;
 }
 
+
 PropertyTable *VMachine::createClassTemplate( int modId, const Map &pt )
 {
    MapIterator iter = pt.begin();
@@ -631,11 +648,12 @@ PropertyTable *VMachine::createClassTemplate( int modId, const Map &pt )
    return table;
 }
 
+
 CoreClass *VMachine::linkClass( uint32 modId, Symbol *clssym )
 {
    Map props( &traits::t_stringptr, &traits::t_voidp ) ;
-   uint64 attribs = 0;
-   if( ! linkSubClass( modId, clssym, props, attribs ) )
+   AttribHandler *head = 0;
+   if( ! linkSubClass( modId, clssym, props, &head ) )
       return 0;
 
    CoreClass *cc = new CoreClass( this, clssym, modId, createClassTemplate( modId, props ) );
@@ -643,7 +661,8 @@ CoreClass *VMachine::linkClass( uint32 modId, Symbol *clssym )
    if ( ctor != 0 ) {
       cc->constructor().setFunction( ctor, modId );
    }
-   cc->attributes( attribs );
+
+   cc->setAttributeList( head );
 
    // destroy the temporary vardef we have created
    MapIterator iter = props.begin();
@@ -656,8 +675,9 @@ CoreClass *VMachine::linkClass( uint32 modId, Symbol *clssym )
    return cc;
 }
 
+
 bool VMachine::linkSubClass( uint32 modId, const Symbol *clssym,
-      Map &props, uint64 &attribs )
+      Map &props, AttribHandler **attribs )
 {
    // first sub-instantiates all the inheritances.
    ClassDef *cd = clssym->getClassDef();
@@ -727,13 +747,23 @@ bool VMachine::linkSubClass( uint32 modId, const Symbol *clssym,
    }
 
    // and set attributes;
+   // first has
+   AttribHandler *&head = *attribs;
    ListElement *hiter = cd->has().begin();
    while( hiter != 0 )
    {
       const Symbol *sym = (const Symbol *) hiter->data();
       Item *hitem = m_globals.vat( modId ).itemAt( sym->itemId() ).dereference();
-      if ( hitem->isInteger() ) {
-         attribs |= hitem->asInteger();
+      if ( hitem->isAttribute() ) {
+         if ( head == 0 )
+         {
+            head = new AttribHandler( hitem->asAttribute(), 0 );
+         }
+         else
+         {
+            head->prev( new AttribHandler( hitem->asAttribute(), 0, 0, head ) );
+            head = head->prev();
+         }
       }
       else {
          raiseError( new CodeError(
@@ -746,13 +776,41 @@ bool VMachine::linkSubClass( uint32 modId, const Symbol *clssym,
       hiter = hiter->next();
    }
 
+   // ... then hasnt
    hiter = cd->hasnt().begin();
    while( hiter != 0 )
    {
       const Symbol *sym = (const Symbol *) hiter->data();
       Item *hitem = m_globals.vat( modId ).itemAt( sym->itemId() ).dereference();
-      if ( hitem->isInteger() ) {
-         attribs &= ~hitem->asInteger();
+      if ( hitem->isAttribute() )
+      {
+         AttribHandler *head = *attribs;
+         Attribute *att = hitem->asAttribute();
+         if ( head != 0 )
+         {
+            if ( head->attrib() == att )
+            {
+               *attribs = head->next();
+               if ( *attribs )
+                  (*attribs)->prev(0);
+               delete head;
+            }
+            else {
+               head = head->next();
+               while( head != 0 )
+               {
+                  if ( head->attrib() == att )
+                  {
+                     head->prev()->next( head->next() );
+                     if( head->next() != 0 )
+                        head->next()->prev( head->prev() );
+                     delete head;
+                     break;
+                  }
+                  head = head->next();
+               }
+            }
+         }
       }
       else {
          raiseError( new CodeError(
@@ -2715,6 +2773,37 @@ bool VMachine::checkFunctional( const String &name )
             name == "lit" ||
             name == "cascade";
 
+}
+
+
+Attribute *VMachine::findAttribute( const String &name ) const
+{
+   AttribHandler *head = m_attributes;
+   while( head != 0 )
+   {
+      if( head->attrib()->name() == name )
+         return head->attrib();
+      head = head->next();
+   }
+
+   return 0;
+}
+
+Attribute *VMachine::findAttribute( const Symbol *sym ) const
+{
+   // if the symbol is not an attribute, it cannot have generated one.
+   if ( ! sym->isAttribute() )
+      return 0;
+
+   AttribHandler *head = m_attributes;
+   while( head != 0 )
+   {
+      if( head->attrib()->symbol() == sym )
+         return head->attrib();
+      head = head->next();
+   }
+
+   return 0;
 }
 
 }

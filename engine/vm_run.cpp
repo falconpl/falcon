@@ -39,6 +39,7 @@
 #include <falcon/cdict.h>
 #include <falcon/error.h>
 #include <falcon/stream.h>
+#include <falcon/attribute.h>
 
 #include <math.h>
 #include <errno.h>
@@ -299,7 +300,7 @@ void VMachine::run()
             return;
 
          case eventWait:
-            if ( m_sleepingContexts.empty() && !m_sleepAsRequests && m_yieldTime < 0.0 ) 
+            if ( m_sleepingContexts.empty() && !m_sleepAsRequests && m_yieldTime < 0.0 )
 			{
                m_error = new GenericError( ErrorParam( e_deadlock ).origin( e_orig_vm ) );
                fillErrorContext( m_error );
@@ -308,15 +309,15 @@ void VMachine::run()
                      m_errhand->handleError( m_error );
                return;
             }
-            
+
             m_pc = m_pc_next;
 
             m_currentContext->save( this );
-			
+
 			// if wait time is > 0, put at sleep
 			if( m_yieldTime > 0.0 )
 				putAtSleep( m_currentContext, m_yieldTime );
-			
+
 			electContext();
 
             if ( m_event == eventSleep )
@@ -2051,12 +2052,21 @@ void opcodeHandler_HAS( register VMachine *vm )
    Item *operand1 =  vm->getOpcodeParam( 1 )->dereference();
    Item *operand2 =  vm->getOpcodeParam( 2 )->dereference();
 
-   if ( operand1->type() != FLC_ITEM_OBJECT || operand2->type() != FLC_ITEM_INT  ) {
-      vm->raiseRTError( new TypeError( ErrorParam( e_invop ).extra("HAS") ) );
-      return;
+   if( operand1->isObject() )
+   {
+      if ( operand2->isAttribute() )
+      {
+         vm->regA() = (int64) ( operand1->asObject()->has( operand2->asAttribute() ) ? 1: 0 );
+         return;
+      }
+      else if ( operand2->isString() )
+      {
+         vm->regA() = (int64) ( operand1->asObject()->has( *operand2->asString() ) ? 1: 0 );
+         return;
+      }
    }
 
-   vm->m_regA.setInteger( operand1->asObject()->testAttribute(  operand2 ->asInteger() ) ? 1:0 );
+   vm->raiseRTError( new TypeError( ErrorParam( e_invop ).extra("HAS") ) );
 }
 
 //43
@@ -2065,12 +2075,21 @@ void opcodeHandler_HASN( register VMachine *vm )
    Item *operand1 =  vm->getOpcodeParam( 1 )->dereference();
    Item *operand2 =  vm->getOpcodeParam( 2 )->dereference();
 
-   if ( operand1->type() != FLC_ITEM_OBJECT || operand2->type() != FLC_ITEM_INT  ) {
-      vm->raiseRTError( new TypeError( ErrorParam( e_invop ).extra("HASN") ) );
-      return;
+   if( operand1->isObject() )
+   {
+      if ( operand2->isAttribute() )
+      {
+         vm->regA() = (int64) ( operand1->asObject()->has( operand2->asAttribute() ) ? 0: 1 );
+         return;
+      }
+      else if ( operand2->isString() )
+      {
+         vm->regA() = (int64) ( operand1->asObject()->has( *operand2->asString() ) ? 0: 1 );
+         return;
+      }
    }
 
-   vm->m_regA.setInteger( operand1->asObject()->testAttribute(  operand2 ->asInteger() ) ? 0:1 );
+   vm->raiseRTError( new TypeError( ErrorParam( e_invop ).extra("HASN") ) );
 }
 
 //44
@@ -2079,12 +2098,25 @@ void opcodeHandler_GIVE( register VMachine *vm )
    Item *operand1 =  vm->getOpcodeParam( 1 )->dereference();
    Item *operand2 =  vm->getOpcodeParam( 2 )->dereference();
 
-   if ( operand1->type() != FLC_ITEM_OBJECT || operand2->type() != FLC_ITEM_INT  ) {
-      vm->raiseRTError( new TypeError( ErrorParam( e_invop ).extra("GIVE") ) );
-      return;
+   if( operand1->isObject() )
+   {
+      if ( operand2->isAttribute() )
+      {
+         operand2->asAttribute()->giveTo( operand1->asObject() );
+         return;
+      }
+      else if ( operand2->isString() )
+      {
+         Attribute *attrib = vm->findAttribute( *operand2->asString() );
+         if ( attrib != 0 )
+         {
+            attrib->giveTo( operand1->asObject() );
+         }
+         return;
+      }
    }
 
-   operand1->asObject()->addAttributes(  operand2->asInteger() );
+   vm->raiseRTError( new TypeError( ErrorParam( e_invop ).extra("GIVE") ) );
 }
 
 //45
@@ -2093,13 +2125,25 @@ void opcodeHandler_GIVN( register VMachine *vm )
    Item *operand1 =  vm->getOpcodeParam( 1 )->dereference();
    Item *operand2 =  vm->getOpcodeParam( 2 )->dereference();
 
-   if ( operand1->type() != FLC_ITEM_OBJECT || operand2->type() != FLC_ITEM_INT  ) {
-      vm->raiseError( e_invop, "GIVN" );
-      return;
+   if( operand1->isObject() )
+   {
+      if ( operand2->isAttribute() )
+      {
+         operand2->asAttribute()->removeFrom( operand1->asObject() );
+         return;
+      }
+      else if ( operand2->isString() )
+      {
+         Attribute *attrib = vm->findAttribute( *operand2->asString() );
+         if ( attrib != 0 )
+         {
+            attrib->removeFrom( operand1->asObject() );
+         }
+         return;
+      }
    }
 
-   register CoreObject *obj = operand1->asObject();
-   obj->attributes( obj->attributes() & ~(uint64) operand2->asInteger() );
+   vm->raiseRTError( new TypeError( ErrorParam( e_invop ).extra("GIVN") ) );
 }
 
 //46

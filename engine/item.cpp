@@ -33,6 +33,7 @@
 #include <falcon/carray.h>
 #include <falcon/cdict.h>
 #include <falcon/cclass.h>
+#include <falcon/attribute.h>
 #include <cstdlib>
 #include <cstring>
 
@@ -54,6 +55,9 @@ bool Item::internal_is_equal( const Item &other ) const
 
       case FLC_ITEM_NUM:
          return asNumeric() == other.asNumeric();
+
+      case FLC_ITEM_ATTRIBUTE:
+         return asAttribute() == other.asAttribute();
 
       case FLC_ITEM_STRING:
          return *asString() == *other.asString();
@@ -120,6 +124,7 @@ bool Item::isTrue() const
       case FLC_ITEM_CLASS:
       case FLC_ITEM_METHOD:
       case FLC_ITEM_FBOM:
+      case FLC_ITEM_ATTRIBUTE:
          // methods are always filled, so they are always true.
          return true;
    }
@@ -247,6 +252,13 @@ int Item::internal_compare( const Item &other ) const
          else if ( asNumeric() > other.asNumeric() ) return 1;
          else return 0;
 
+      case FLC_ITEM_ATTRIBUTE:
+         if( asAttribute() > other.asAttribute() )
+            return 1;
+         else if ( asAttribute() > other.asAttribute() )
+            return -1;
+         return 0;
+
       case FLC_ITEM_STRING:
          return asString()->compare( *other.asString() );
 
@@ -365,13 +377,18 @@ void Item::toString( String &target ) const
       }
       break;
 
+      case FLC_ITEM_ATTRIBUTE:
+         target = "{attrib:" + asAttribute()->name() + "}";
+      break;
+
       case FLC_ITEM_STRING:
          target = *asString();
       break;
 
       case FLC_ITEM_REFERENCE:
-         target = "Reference to ";
+         target = "{Ref to ";
          dereference()->toString( target );
+         target += "}";
       break;
 
       case FLC_ITEM_OBJECT:
@@ -520,7 +537,7 @@ bool Item::isCallable() const
        return true;
 
    //a bit more complex: a callable array...
-   if( type() == FLC_ITEM_ARRAY ) 
+   if( type() == FLC_ITEM_ARRAY )
    {
       CoreArray *arr = asArray();
       if ( arr->length() > 0 )

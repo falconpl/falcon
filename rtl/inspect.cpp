@@ -26,6 +26,7 @@
 #include <falcon/carray.h>
 #include <falcon/cdict.h>
 #include <falcon/cclass.h>
+#include <falcon/attribute.h>
 #include <falcon/stream.h>
 
 namespace Falcon { namespace Ext {
@@ -99,6 +100,12 @@ void inspect_internal( VMachine *vm, const Item *elem, int32 level, bool add )
          stream->writeString( "\"" );
          stream->writeString( *elem->asString() );
          stream->writeString( "\"" );
+      break;
+
+      case FLC_ITEM_ATTRIBUTE:
+         stream->writeString( "{attrib:" );
+         stream->writeString( elem->asAttribute()->name() );
+         stream->writeString( "}" );
       break;
 
       case FLC_ITEM_ARRAY:

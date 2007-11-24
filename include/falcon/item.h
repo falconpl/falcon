@@ -43,6 +43,7 @@ class CoreClass;
 class GarbageItem;
 class VMachine;
 class Stream;
+class Attribute;
 
 /** Basic item abstraction.*/
 class FALCON_DYN_CLASS Item: public BaseAlloc
@@ -224,6 +225,17 @@ public:
       m_data.voidp = obj;
    }
 
+   /** Creates an attribute. */
+   Item( Attribute *attr )
+   {
+      setAttribute( attr );
+   }
+
+   void setAttribute( Attribute *attrib ) {
+      type( FLC_ITEM_ATTRIBUTE );
+      m_data.voidp = attrib;
+   }
+
    /** Creates a dictionary item */
    Item( CoreDict *obj )
    {
@@ -356,6 +368,7 @@ public:
    CoreObject *asMethodObject() const { return (CoreObject *) m_data.voidp; }
    Symbol *asMethodFunction() const { return (Symbol *)m_data.m_extra; }
    CoreClass *asMethodClass() const { return (CoreClass*) m_data.m_extra; }
+   Attribute *asAttribute() const { return (Attribute *) m_data.voidp; }
 
    uint16 asModuleId() const { return m_base.half; }
 
@@ -390,6 +403,7 @@ public:
    bool isClassMethod() const { return type() == FLC_ITEM_CLSMETHOD; }
    bool isClass() const { return type() == FLC_ITEM_CLASS; }
    bool isFbom() const { return type() == FLC_ITEM_FBOM; }
+   bool isAttribute() const { return type() == FLC_ITEM_ATTRIBUTE; }
 
    void getFbomItem( Item &target ) const
    {

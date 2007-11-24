@@ -37,13 +37,17 @@
 namespace Falcon {
 
 class VMachine;
+class AttribHandler;
+class Attribute;
 
 class FALCON_DYN_CLASS CoreObject: public Garbageable
 {
    PropertyTable m_properties;
-   uint64 m_attributes;
+   AttribHandler *m_attributes;
    Symbol *m_instanceOf;
    UserData *m_user_data;
+
+   friend class Attribute;
 
 public:
 
@@ -51,7 +55,7 @@ public:
       The properties must NOT be already garbage-collector managed, as they are one
       with the core object and will be eventually deleted at object descruction.
    */
-   CoreObject( VMachine *vm, const PropertyTable &original, uint64 attribs, Symbol *inst );
+   CoreObject( VMachine *vm, const PropertyTable &original, Symbol *inst );
 
    /** Creates a dummy core object.
       This is a constructor that creates a classless and propertyless core object.
@@ -64,19 +68,33 @@ public:
    */
    CoreObject( VMachine *mp, UserData *ud );
 
-   ~CoreObject()
-   {
-      delete m_user_data;
-   }
-
+   ~CoreObject();
 
    Symbol *instanceOf() const  { return m_instanceOf; }
    bool derivedFrom( const String &className ) const;
 
-   uint64 attributes() const { return m_attributes; }
-   void attributes( uint64 data ) { m_attributes = data; }
-   void addAttributes( uint64 data ) { m_attributes |= data; }
-   bool testAttribute( uint64 value ) const { return (m_attributes & value ) == value; }
+   /** Return the head of attribute lists.
+      This is used internally by Attribute class give/remove, and
+      by serialization.
+   */
+
+   AttribHandler *attributes() const { return m_attributes; }
+
+   /** Check if this item has a certain attribute.
+      To give/remove an attribute from an object, it is necessary to use
+      the Attribute instance you want to give to or remove from this object.
+      \param attrib the attribute to be searched for.
+      \return true if the object has a certain attribute.
+   */
+   bool has( const Attribute *attrib ) const;
+
+   /** Check if this item has a certain attribute.
+      To give/remove an attribute from an object, it is necessary to use
+      the Attribute instance you want to give to or remove from this object.
+      \param attrib the name of the attribute to be searched for.
+      \return true if the object has a certain attribute.
+   */
+   bool has( const String &attrib ) const;
 
    /** Size of the object.
       This is the count of properties in the object. Is it useful? Don't know...

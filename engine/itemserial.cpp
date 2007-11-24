@@ -30,6 +30,7 @@
 #include <falcon/vm.h>
 #include <falcon/stream.h>
 #include <falcon/lineardict.h>
+#include <falcon/attribute.h>
 
 namespace Falcon {
 
@@ -91,6 +92,31 @@ bool Item::serialize_object( Stream *file, const CoreObject *obj, VMachine *vm )
       if ( obj->getPropertyAt( i ).serialize( file, vm ) != sc_ok )
          return false;
    }
+
+   // and the attributes
+   AttribHandler *head = obj->attributes();
+   uint32 att_count = 0;
+   while( head != 0 )
+   {
+      att_count++;
+      head = head->next();
+   }
+
+   // write the size...
+   len = endianInt32( att_count );
+   file->write((byte *) &len, sizeof(len) );
+
+   // and then serialize...
+   head = obj->attributes();
+   while( head != 0 )
+   {
+      head->attrib()->name().serialize( file );
+      if ( ! file->good() )
+         return false;
+
+      head = head->next();
+   }
+
    return true;
 }
 
@@ -134,6 +160,15 @@ Item::e_sercode Item::serialize( Stream *file, VMachine *vm ) const
 
          numeric val = endianNum( this->asNumeric() );
          file->write( (byte *) &val, sizeof( val ) );
+      }
+      break;
+
+      case FLC_ITEM_ATTRIBUTE:
+      {
+         char type = FLC_ITEM_ATTRIBUTE;
+         file->write((byte *) &type, 1 );
+
+         this->asAttribute()->name().serialize( file );
       }
       break;
 
@@ -360,12 +395,29 @@ Item::e_sercode Item::deserialize( Stream *file, VMachine *vm )
       }
       break;
 
+      case FLC_ITEM_ATTRIBUTE:
+      {
+         String aname;
+
+         if ( ! aname.deserialize( file ) )
+         {
+            return file->bad() ? sc_ferror : sc_invformat;
+         }
+
+         Attribute *attrib = vm->findAttribute( aname );
+         if ( attrib == 0 )
+            return sc_missclass;
+
+         setAttribute( attrib );
+      }
+      break;
+
       case FLC_ITEM_STRING:
       {
          GarbageString *cs = new GarbageString( vm );
          setString( cs );
 
-         if ( !  cs->deserialize( file ) )
+         if ( ! cs->deserialize( file ) )
          {
             delete cs;
             return file->bad() ? sc_ferror : sc_invformat;
@@ -508,8 +560,8 @@ Item::e_sercode Item::deserialize( Stream *file, VMachine *vm )
 
          Item *clitem = &vm->moduleItem( modId, sym->itemId() );
 
-         // Create the core object
-         CoreObject *object = clitem->asClass()->createInstance();
+         // Create the core object, but don't fill attribs.
+         CoreObject *object = clitem->asClass()->createInstance(false);
 
          // Read the class property table.
          uint32 len;
@@ -530,6 +582,27 @@ Item::e_sercode Item::deserialize( Stream *file, VMachine *vm )
             if ( sc != sc_ok ) {
                break;
             }
+         }
+
+         // now deserialize the attributes
+         file->read( (byte *) &len, sizeof( len ) );
+         len = endianInt32( len );
+         for( uint32 j = 0; j < len; j ++ )
+         {
+            // first the string, which is the name...
+            String a_name;
+            if( ! a_name.deserialize( file ) ) {
+               return file->good() ? sc_invformat : sc_ferror;
+            }
+
+            // then the attribute
+            Attribute *attrib = vm->findAttribute( a_name );
+            if( attrib == 0 )
+            {
+               return sc_missclass;
+            }
+
+            attrib->giveTo( object );
          }
 
          if ( sc == sc_ok ) {

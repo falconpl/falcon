@@ -30,6 +30,7 @@
 #include <falcon/vm.h>
 #include <falcon/module.h>
 #include <falcon/error.h>
+#include <falcon/attribute.h>
 
 #include <falcon/format.h>
 
@@ -250,6 +251,25 @@ FALCON_FUNC BOM_serialize( VMachine *vm )
 
 }
 
+/* BOMID: 12 */
+FALCON_FUNC BOM_attribs( VMachine *vm )
+{
+   Item *source = vm->self().dereference();
+   if( source->isObject() )
+   {
+      CoreArray *array = new CoreArray( vm );
+      AttribHandler *attribs = source->asObject()->attributes();
+      while( attribs != 0 )
+      {
+         array->append( attribs->attrib() );
+         attribs = attribs->next();
+      }
+      vm->retval( array );
+   }
+   else
+      vm->retnil();
+}
+
 //====================================================//
 // THE BOM TABLE
 //====================================================//
@@ -268,7 +288,8 @@ static void (* const  BOMTable  [] ) ( Falcon::VMachine *) =
    BOM_baseClass,
    BOM_derivedFrom,
    BOM_clone,
-   BOM_serialize
+   BOM_serialize,
+   BOM_attribs
 };
 
 //====================================================//
@@ -303,6 +324,8 @@ bool Item::getBom( const String &property, Item &method ) const
       value = 10;
    else if ( property == "serialize" )
       value = 11;
+   else if ( property == "attribs" )
+      value = 12;
    else
       return false;
 

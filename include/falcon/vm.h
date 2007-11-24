@@ -53,6 +53,7 @@ class Runtime;
 class VMachine;
 class VMContext;
 class PropertyTable;
+class AttribHandler;
 
 typedef void (*tOpcodeHandler)( register VMachine *);
 
@@ -371,7 +372,6 @@ protected:
    bool m_allowYield;
 
 
-
    /** Raised error.
       If the VM receives an error (i.e. via raiseError() ), this variable gets the
       pointer to the error instance. The error is passed to the handler, and then the
@@ -440,16 +440,17 @@ protected:
    */
    SymModuleMap m_globalSyms;
 
+   numeric m_yieldTime;
+
+   /** Attributes being held in the VM.*/
+   AttribHandler *m_attributes;
+
    void yield( numeric seconds );
    void putAtSleep( VMContext *ctx, numeric secs );
    void reschedule( VMContext *ctx, numeric secs );
    void rotateContext();
 
-   numeric m_yieldTime;
-
-   bool linkSubClass( uint32 modId, const Symbol *clssym, Map &props, uint64 &attribs );
-   /** Count of the attributes during the link phase.*/
-   int32 m_attributeCount;
+   bool linkSubClass( uint32 modId, const Symbol *clssym, Map &props, AttribHandler **attribs );
 
    /** Passes current frame to the called item.
          Used by the PASS opcode, this element removes the local variables and
@@ -1608,6 +1609,20 @@ public:
    */
 
    bool functionalEval( const Item &itm );
+
+   /** Find an attribute by name.
+      Return the attribute that coresponds with the given name, if it exists.
+      \param name the name of the attribute to be searched.
+      \return the attribute instance or zero if not found.
+   */
+   Attribute *findAttribute( const String &name ) const;
+
+   /** Find an attribute by symbol.
+      Return the attribute that is generated from the given symbol, if it exists.
+      \param sym the symbol from which the attribute has been generated.
+      \return the attribute instance or zero if not found.
+   */
+   Attribute *findAttribute( const Symbol *sym ) const;
 
 //==========================================================================
 //==========================================================================

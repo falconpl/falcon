@@ -27,14 +27,15 @@
 #include <falcon/item.h>
 #include <falcon/cobject.h>
 #include <falcon/symbol.h>
+#include <falcon/attribute.h>
 
 namespace Falcon {
 
-CoreObject::CoreObject( VMachine *vm, const PropertyTable &original, uint64 attribs, Symbol *inst ):
+CoreObject::CoreObject( VMachine *vm, const PropertyTable &original, Symbol *inst ):
    Garbageable( vm, sizeof( this ) + sizeof( void * ) * 2 * original.size() ),
    m_properties( original ),
    m_instanceOf( inst ),
-   m_attributes( attribs ),
+   m_attributes( 0 ),
    m_user_data( 0 )
 {
    // duplicate the strings in the property list
@@ -49,6 +50,7 @@ CoreObject::CoreObject( VMachine *vm, const PropertyTable &original, uint64 attr
    }
 }
 
+
 CoreObject::CoreObject( VMachine *vm, UserData *ud ):
    Garbageable( vm, sizeof( this ) ),
    m_instanceOf( 0 ),
@@ -57,6 +59,19 @@ CoreObject::CoreObject( VMachine *vm, UserData *ud ):
    m_user_data( ud )
 {
 }
+
+
+CoreObject::~CoreObject()
+{
+   delete m_user_data;
+
+   while( m_attributes != 0 )
+   {
+      // removing the attribute from this will also cause m_attributes to move forward
+      m_attributes->attrib()->removeFrom( this );
+   }
+}
+
 
 bool CoreObject::derivedFrom( const String &className ) const
 {
@@ -81,6 +96,7 @@ bool CoreObject::derivedFrom( const String &className ) const
    return false;
 }
 
+
 bool CoreObject::setPropertyRef( const String &propName, Item &value )
 {
    register uint32 pos;
@@ -100,6 +116,7 @@ bool CoreObject::setPropertyRef( const String &propName, Item &value )
 
    return false;
 }
+
 
 bool CoreObject::setProperty( const String &propName, const Item &value )
 {
@@ -125,9 +142,9 @@ bool CoreObject::setProperty( const String &propName, const Item &value )
       return true;
    }
 
-
    return false;
 }
+
 
 bool CoreObject::setProperty( const String &propName, const String &value )
 {
@@ -150,6 +167,7 @@ bool CoreObject::setProperty( const String &propName, const String &value )
 
    return false;
 }
+
 
 bool CoreObject::setProperty( const String &propName, int64 value )
 {
@@ -227,6 +245,7 @@ bool CoreObject::getMethod( const String &propName, Item &method ) const
    return method.methodize( this );
 }
 
+
 Item &CoreObject::getPropertyAt( uint32 pos ) const
 {
    register Item *prop = m_properties.getValue( pos );
@@ -250,11 +269,51 @@ CoreObject *CoreObject::clone() const
          return 0;
    }
 
-   CoreObject *other = new CoreObject( origin(), this->m_properties, m_attributes, m_instanceOf );
+   CoreObject *other = new CoreObject( origin(), this->m_properties, m_instanceOf );
+
+   // copy attribute list
+   AttribHandler *head = m_attributes;
+   while( head != 0 )
+   {
+      head->attrib()->giveTo( other );
+      head = head->next();
+   }
+
    other->m_user_data = ud;
 
    return other;
 }
+
+
+bool CoreObject::has( const Attribute *attrib ) const
+{
+   AttribHandler *head = m_attributes;
+   while( head != 0 )
+   {
+      if ( head->attrib() == attrib )
+         return true;
+
+      head =  head->next();
+   }
+
+   return false;
+}
+
+
+bool CoreObject::has( const String &attrib ) const
+{
+   AttribHandler *head = m_attributes;
+   while( head != 0 )
+   {
+      if ( head->attrib()->name() == attrib )
+         return true;
+
+      head =  head->next();
+   }
+
+   return false;
+}
+
 
 }
 

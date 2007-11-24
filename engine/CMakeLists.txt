@@ -87,6 +87,7 @@ INCLUDE_DIRECTORIES(.)
 ADD_LIBRARY( falcon_engine SHARED
    ${bison_src}
 
+   attribute.cpp
    autocstring.cpp
    autowstring.cpp
    basealloc.cpp

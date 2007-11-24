@@ -40,6 +40,7 @@
 #include <falcon/memory.h>
 #include <falcon/error.h>
 #include <falcon/sys.h>
+#include <falcon/attribute.h>
 
 #include <falcon/messages.h>
 #include <falcon/engstrings.h>
@@ -1291,6 +1292,21 @@ FALCON_FUNC  Iterator_init( ::Falcon::VMachine *vm )
       }
       break;
 
+      case FLC_ITEM_ATTRIBUTE:
+      {
+         Attribute *orig = collection->asAttribute();
+         self->setProperty( "origin", *collection );
+         if( p != 0 )
+         {
+            vm->raiseRTError( new RangeError( ErrorParam( e_inv_params ) ) );
+            return;
+         }
+
+         AttribIterator *iter = orig->getIterator();
+         self->setUserData( iter );
+      }
+      break;
+
       default:
          vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ) ) );
          return;
@@ -1324,16 +1340,11 @@ FALCON_FUNC  Iterator_hasCurrent( ::Falcon::VMachine *vm )
       }
       break;
 
-      case FLC_ITEM_DICT:
-      {
-         DictIterator *iter = (DictIterator *) self->getUserData();
-         vm->retval( (int64) ( iter->isValid() ? 1: 0 ) );
-      }
-      break;
-
       default:
-         // raise an exception???
-         vm->retval( (int64) 0 );
+      {
+         CoreIterator *iter = (CoreIterator *) self->getUserData();
+         vm->retval( (int64) ( iter != 0 && iter->isValid() ? 1: 0 ) );
+      }
    }
 }
 
@@ -1364,16 +1375,11 @@ FALCON_FUNC  Iterator_hasNext( ::Falcon::VMachine *vm )
       }
       break;
 
-      case FLC_ITEM_DICT:
-      {
-         DictIterator *iter = (DictIterator *) self->getUserData();
-         vm->retval( (int64) ( iter->hasNext() ? 1: 0 ) );
-      }
-      break;
-
       default:
-         // raise an exception???
-         vm->retval( (int64) 0 );
+      {
+         CoreIterator *iter = (CoreIterator *) self->getUserData();
+         vm->retval( (int64) ( iter != 0 && iter->hasNext() ? 1: 0 ) );
+      }
    }
 }
 
@@ -1396,16 +1402,11 @@ FALCON_FUNC  Iterator_hasPrev( ::Falcon::VMachine *vm )
       }
       break;
 
-      case FLC_ITEM_DICT:
-      {
-         DictIterator *iter = (DictIterator *) self->getUserData();
-         vm->retval( (int64) ( iter->hasPrev() ? 1: 0 ) );
-      }
-      break;
-
       default:
-         // raise an exception???
-         vm->retval( (int64) 0 );
+      {
+         CoreIterator *iter = (CoreIterator *) self->getUserData();
+         vm->retval( (int64) ( iter != 0 && iter->hasPrev() ? 1: 0 ) );
+      }
    }
 }
 
@@ -1438,16 +1439,11 @@ FALCON_FUNC  Iterator_next( ::Falcon::VMachine *vm )
       }
       break;
 
-      case FLC_ITEM_DICT:
-      {
-         DictIterator *iter = (DictIterator *) self->getUserData();
-         vm->retval( (int64) ( iter->next() ? 1: 0 ) );
-      }
-      break;
-
       default:
-         // raise an exception???
-         vm->retval( (int64) 0 );
+      {
+         CoreIterator *iter = (CoreIterator *) self->getUserData();
+         vm->retval( (int64) ( iter != 0 && iter->next() ? 1: 0 ) );
+      }
    }
 }
 
@@ -1479,16 +1475,11 @@ FALCON_FUNC  Iterator_prev( ::Falcon::VMachine *vm )
       }
       break;
 
-      case FLC_ITEM_DICT:
-      {
-         DictIterator *iter = (DictIterator *) self->getUserData();
-         vm->retval( (int64) ( iter->prev() ? 1: 0 ) );
-      }
-      break;
-
       default:
-         // raise an exception???
-         vm->retval( (int64) 0 );
+      {
+         CoreIterator *iter = (CoreIterator *) self->getUserData();
+         vm->retval( (int64) ( iter != 0 && iter->prev() ? 1: 0 ) );
+      }
    }
 }
 
@@ -1557,9 +1548,9 @@ FALCON_FUNC  Iterator_value( ::Falcon::VMachine *vm )
       }
       break;
 
-      case FLC_ITEM_DICT:
+      default:
       {
-         DictIterator *iter = (DictIterator *) self->getUserData();
+         CoreIterator *iter = (CoreIterator *) self->getUserData();
          if( iter->isValid() )
          {
             vm->retval( iter->getCurrent() );
@@ -1572,7 +1563,6 @@ FALCON_FUNC  Iterator_value( ::Falcon::VMachine *vm )
             return;
          }
       }
-      break;
    }
 
    vm->raiseRTError( new RangeError( ErrorParam( e_arracc ) ) );
@@ -1639,9 +1629,10 @@ FALCON_FUNC  Iterator_equal( ::Falcon::VMachine *vm )
                break;
 
                case FLC_ITEM_DICT:
+               case FLC_ITEM_ATTRIBUTE:
                {
-                  DictIterator *iter = (DictIterator *) self->getUserData();
-                  DictIterator *other_iter = (DictIterator *) other->getUserData();
+                  CoreIterator *iter = (CoreIterator *) self->getUserData();
+                  CoreIterator *other_iter = (CoreIterator *) other->getUserData();
                   if( iter->equal( *other_iter ) )
                   {
                      vm->retval( (int64) 1 );
@@ -1663,7 +1654,7 @@ FALCON_FUNC  Iterator_clone( ::Falcon::VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
    CoreIterator *iter = (CoreIterator *) self->getUserData();
-
+   UserData *iclone;
 
    // create an instance
    Item *i_cls = vm->findGlobalItem( "Iterator" );
@@ -1672,8 +1663,19 @@ FALCON_FUNC  Iterator_clone( ::Falcon::VMachine *vm )
 
    // copy low level iterator, if we have one
    if ( iter != 0 ) {
-      other->setUserData( iter->clone() );
+      iclone = iter->clone();
+      if ( iclone == 0 )
+      {
+         // uncloneable iterator
+         vm->raiseError( new CloneError( ErrorParam( e_uncloneable, __LINE__ ).origin( e_orig_runtime ) ) );
+         return;
+      }
    }
+   else {
+      iclone = 0;
+   }
+
+   other->setUserData( iclone );
 
    // then copy properties
    Item prop;
@@ -1688,6 +1690,8 @@ FALCON_FUNC  Iterator_clone( ::Falcon::VMachine *vm )
 
 FALCON_FUNC  Iterator_remove( ::Falcon::VMachine *vm )
 {
+   // notice: attribute cannot be removed through iterator.
+
    CoreObject *self = vm->self().asObject();
    Item origin, *porigin;
    self->getProperty( "origin", origin );
@@ -1737,6 +1741,16 @@ FALCON_FUNC  Iterator_remove( ::Falcon::VMachine *vm )
          }
       }
       break;
+
+      case FLC_ITEM_ATTRIBUTE:
+      {
+         AttribIterator *iter = (AttribIterator *) self->getUserData();
+         if( iter->isValid() )
+         {
+            iter->remove();
+            return;
+         }
+      }
    }
 
    vm->raiseRTError( new RangeError( ErrorParam( e_arracc ) ) );
@@ -2216,6 +2230,30 @@ FALCON_FUNC  core_cascade ( ::Falcon::VMachine *vm )
    vm->retval( prevResult );
 }
 
+// Attribute support
+FALCON_FUNC  having( ::Falcon::VMachine *vm )
+{
+   Item *itm = vm->param( 0 );
+   if ( ! itm->isAttribute() )
+   {
+      vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).
+         extra( "a" ) ) );
+      return;
+   }
+
+   Attribute *attrib = itm->asAttribute();
+   AttribObjectHandler *head = attrib->head();
+   CoreArray *arr = new CoreArray( vm );
+   while( head != 0 )
+   {
+      arr->append( head->object() );
+      head = head->next();
+   }
+
+   vm->retval( arr );
+}
+
+
 } // end of core namespace
 
 
@@ -2256,6 +2294,8 @@ Module * core_module_init()
    core->addExtFunc( "paramIsRef", Falcon::core::paramIsRef );
    core->addExtFunc( "paramSet", Falcon::core::paramSet );
    core->addExtFunc( "PageDict", Falcon::core::PageDict );
+
+   core->addExtFunc( "having", Falcon::core::having );
 
    // Creating the TraceStep class:
    // ... first the constructor

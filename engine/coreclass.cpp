@@ -1,7 +1,6 @@
 /*
    FALCON - The Falcon Programming Language.
    FILE: coreclass.cpp
-   $Id: coreclass.cpp,v 1.9 2007/08/11 00:11:53 jonnymind Exp $
 
    Core Class implementation
    -------------------------------------------------------------------
@@ -26,6 +25,7 @@
 #include <falcon/cclass.h>
 #include <falcon/cobject.h>
 #include <falcon/vm.h>
+#include <falcon/attribute.h>
 
 namespace Falcon {
 
@@ -33,9 +33,11 @@ CoreClass::CoreClass( VMachine *origin, Symbol *sym, int modId, PropertyTable *p
    m_modId( modId ),
    m_sym( sym ),
    m_properties( pt ),
+   m_attributes( 0 ),
    Garbageable( origin, sizeof( this ) + sizeof( void * ) * 2 * pt->size() + sizeof( *pt ) )
 {
 }
+
 
 bool CoreClass::derivedFrom( const String &className ) const
 {
@@ -51,22 +53,86 @@ bool CoreClass::derivedFrom( const String &className ) const
    return false;
 }
 
+
 CoreClass::~CoreClass()
 {
    delete m_properties;
+   setAttributeList( 0 );
+
 }
 
-CoreObject *CoreClass::createInstance() const
+
+CoreObject *CoreClass::createInstance( bool applyAttributes ) const
 {
    // we must have an origin pointer.
-   return new CoreObject( origin(), *m_properties, m_attributes, symbol() );
+   CoreObject *instance = new CoreObject( origin(), *m_properties, symbol() );
+
+   // assign attributes to the instance.
+   if ( applyAttributes )
+   {
+      AttribHandler *head = m_attributes;
+      while( head != 0 )
+      {
+         head->attrib()->giveTo( instance );
+         head = head->next();
+      }
+   }
+
+   return instance;
 }
 
-CoreObject *CoreClass::createUncollectedInstance() const
+
+void CoreClass::addAttribute( Attribute *attrib )
 {
-   // we must have an origin pointer.
-   return new CoreObject( 0, *m_properties, m_attributes, symbol() );
+   m_attributes->prev( new AttribHandler( attrib, 0, 0, m_attributes ) );
+   m_attributes = m_attributes->prev();
 }
+
+
+void CoreClass::removeAttribute( Attribute *attrib )
+{
+   AttribHandler *head = m_attributes;
+   if ( head == 0 )
+      return;
+
+   if ( head->attrib() == attrib )
+   {
+      m_attributes = m_attributes->next();
+      m_attributes->prev( 0 );
+      delete head;
+      return;
+   }
+
+   head = head->next();
+   while( head != 0 )
+   {
+      if ( head->attrib() == attrib )
+      {
+         head->prev()->next( head->next() );
+         if ( head->next() != 0 )
+            head->next()->prev( head->prev() );
+         delete head;
+         return;
+      }
+
+      head = head->next();
+   }
+
+}
+
+
+void CoreClass::setAttributeList( AttribHandler *lst )
+{
+   while ( m_attributes != 0 )
+   {
+      AttribHandler *old = m_attributes;
+      m_attributes = m_attributes->next();
+      delete old;
+   }
+
+   m_attributes = lst;
+}
+
 
 }
 
