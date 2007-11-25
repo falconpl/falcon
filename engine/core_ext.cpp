@@ -101,15 +101,19 @@ FALCON_FUNC  len ( ::Falcon::VMachine *vm )
    Item *elem = vm->param(0);
    switch( elem->type() ) {
       case FLC_ITEM_STRING:
-         vm->retval( (int) elem->asString()->length() );
+         vm->retval( (int64) elem->asString()->length() );
       break;
 
       case FLC_ITEM_ARRAY:
-         vm->retval( (int) elem->asArray()->length() );
+         vm->retval( (int64) elem->asArray()->length() );
       break;
 
       case FLC_ITEM_DICT:
-         vm->retval( (int) elem->asDict()->length() );
+         vm->retval( (int64) elem->asDict()->length() );
+      break;
+
+      case FLC_ITEM_ATTRIBUTE:
+         vm->retval( (int64) elem->asAttribute()->size() );
       break;
 
       case FLC_ITEM_RANGE:
@@ -1966,6 +1970,37 @@ FALCON_FUNC  core_map ( ::Falcon::VMachine *vm )
    vm->retval( mapped );
 }
 
+FALCON_FUNC  core_dolist ( ::Falcon::VMachine *vm )
+{
+   Item *callable = vm->param(0);
+   Item *i_origin = vm->param(1);
+   if( callable == 0 || !callable->isCallable() ||
+       i_origin == 0 || !i_origin->isArray()
+      )
+   {
+      vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).
+         extra( "C,A" ) ) );
+      return;
+   }
+
+   CoreArray *origin = i_origin->asArray();
+   for( uint32 i = 0; i < origin->length(); i ++ )
+   {
+      vm->functionalEval( origin->at(i) );
+      if ( ! vm->hadError() )
+      {
+         vm->pushParameter( origin->at(i) );
+         vm->callItem( *callable, 1 );
+         if ( vm->hadError() )
+            return;
+      }
+      else
+         return;
+   }
+
+   // do not touch retuun value; let's return the last thing the eval function returned.
+}
+
 
 FALCON_FUNC  core_xmap ( ::Falcon::VMachine *vm )
 {
@@ -1984,12 +2019,15 @@ FALCON_FUNC  core_xmap ( ::Falcon::VMachine *vm )
    CoreArray *origin = i_origin->asArray();
    for( uint32 i = 0; i < origin->length(); i ++ )
    {
-      vm->pushParameter( origin->at(i) );
+      vm->pushParameter( vm->regA() );
       vm->callItem( *callable, 1 );
 
-      if (vm->hadError() && vm->regB().isNil() )
+      if (vm->hadError() )
       {
-         vm->resetEvent();
+         if ( vm->regB().isNil() )
+            vm->resetEvent();
+         else
+            return;
       }
       else
       {
@@ -2113,7 +2151,7 @@ FALCON_FUNC  core_iff ( ::Falcon::VMachine *vm )
 }
 
 
-/*FALCON_FUNC  core_choice ( ::Falcon::VMachine *vm )
+FALCON_FUNC  core_choice ( ::Falcon::VMachine *vm )
 {
    Item *i_cond = vm->param(0);
    Item *i_ifTrue = vm->param(1);
@@ -2145,7 +2183,7 @@ FALCON_FUNC  core_iff ( ::Falcon::VMachine *vm )
       }
    }
 }
-*/
+
 
 FALCON_FUNC  core_lit ( ::Falcon::VMachine *vm )
 {
@@ -2230,7 +2268,10 @@ FALCON_FUNC  core_cascade ( ::Falcon::VMachine *vm )
    vm->retval( prevResult );
 }
 
+// =================================================
 // Attribute support
+//
+
 FALCON_FUNC  having( ::Falcon::VMachine *vm )
 {
    Item *itm = vm->param( 0 );
@@ -2253,6 +2294,50 @@ FALCON_FUNC  having( ::Falcon::VMachine *vm )
    vm->retval( arr );
 }
 
+FALCON_FUNC  giveTo( ::Falcon::VMachine *vm )
+{
+   Item *i_attrib = vm->param( 0 );
+   Item *i_obj = vm->param( 1 );
+
+   if ( ! i_attrib->isAttribute() || ! i_obj->isObject() )
+   {
+      vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).
+         extra( "a,X" ) ) );
+      return;
+   }
+
+   vm->retval( (int64) (i_attrib->asAttribute()->giveTo( i_obj->asObject() ) ? 1 : 0) );
+}
+
+FALCON_FUNC  removeFrom( ::Falcon::VMachine *vm )
+{
+   Item *i_attrib = vm->param( 0 );
+   Item *i_obj = vm->param( 1 );
+
+   if ( ! i_attrib->isAttribute() || ! i_obj->isObject() )
+   {
+      vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).
+         extra( "a,X" ) ) );
+      return;
+   }
+
+   vm->retval( (int64) (i_attrib->asAttribute()->removeFrom( i_obj->asObject() ) ? 1 : 0) );
+}
+
+FALCON_FUNC  removeFromAll( ::Falcon::VMachine *vm )
+{
+   Item *i_attrib = vm->param( 0 );
+   Item *i_obj = vm->param( 1 );
+
+   if ( ! i_attrib->isAttribute() || ! i_obj->isObject() )
+   {
+      vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).
+         extra( "a,X" ) ) );
+      return;
+   }
+
+   i_attrib->asAttribute()->removeFromAll();
+}
 
 } // end of core namespace
 
@@ -2295,7 +2380,13 @@ Module * core_module_init()
    core->addExtFunc( "paramSet", Falcon::core::paramSet );
    core->addExtFunc( "PageDict", Falcon::core::PageDict );
 
+   // ===================================
+   // Attribute support
+   //
    core->addExtFunc( "having", Falcon::core::having );
+   core->addExtFunc( "giveTo", Falcon::core::giveTo );
+   core->addExtFunc( "removeFrom", Falcon::core::removeFrom );
+   core->addExtFunc( "removeFromAll", Falcon::core::removeFromAll );
 
    // Creating the TraceStep class:
    // ... first the constructor
@@ -2439,7 +2530,7 @@ Module * core_module_init()
    core->addExtFunc( "allp", Falcon::core::core_allp );
    core->addExtFunc( "anyp", Falcon::core::core_anyp );
    core->addExtFunc( "eval", Falcon::core::core_eval );
-   //core->addExtFunc( "choice", Falcon::core::core_choice );
+   core->addExtFunc( "choice", Falcon::core::core_choice );
    core->addExtFunc( "min", Falcon::core::core_min );
    core->addExtFunc( "max", Falcon::core::core_max );
    core->addExtFunc( "map", Falcon::core::core_map );
@@ -2449,6 +2540,7 @@ Module * core_module_init()
    core->addExtFunc( "iff", Falcon::core::core_iff );
    core->addExtFunc( "lit", Falcon::core::core_lit );
    core->addExtFunc( "cascade", Falcon::core::core_cascade );
+   core->addExtFunc( "dolist", Falcon::core::core_dolist );
 
    return core;
 }

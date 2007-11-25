@@ -244,7 +244,8 @@ public:
    */
    void addDirectoryFront( const String &directory )
    {
-      m_path.pushFront( new String( directory ) );
+      if ( directory != "" )
+         m_path.pushFront( new String( directory ) );
    }
 
    /** Adds a single path specification to the module loader path, with lower priority.
@@ -257,7 +258,8 @@ public:
    */
    void addDirectoryBack( const String &directory )
    {
-      m_path.pushBack( new String( directory ) );
+      if ( directory != "" )
+         m_path.pushBack( new String( directory ) );
    }
 
    /** Loads a module by its name.

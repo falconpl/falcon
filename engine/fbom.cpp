@@ -51,15 +51,19 @@ FALCON_FUNC BOM_len( VMachine *vm )
    Item *elem = &vm->self();
    switch( elem->type() ) {
       case FLC_ITEM_STRING:
-         vm->retval( (int) elem->asString()->length() );
+         vm->retval( (int64) elem->asString()->length() );
       break;
 
       case FLC_ITEM_ARRAY:
-         vm->retval( (int) elem->asArray()->length() );
+         vm->retval( (int64) elem->asArray()->length() );
       break;
 
       case FLC_ITEM_DICT:
-         vm->retval( (int) elem->asDict()->length() );
+         vm->retval( (int64) elem->asDict()->length() );
+      break;
+
+      case FLC_ITEM_ATTRIBUTE:
+         vm->retval( (int64) elem->asAttribute()->size() );
       break;
 
       case FLC_ITEM_RANGE:
@@ -80,6 +84,7 @@ FALCON_FUNC BOM_first( VMachine *vm )
       case FLC_ITEM_STRING:
       case FLC_ITEM_ARRAY:
       case FLC_ITEM_DICT:
+      case FLC_ITEM_ATTRIBUTE:
          Fbom::makeIterator( vm, self, true );
       break;
 
@@ -102,6 +107,7 @@ FALCON_FUNC BOM_last( VMachine *vm )
       case FLC_ITEM_STRING:
       case FLC_ITEM_ARRAY:
       case FLC_ITEM_DICT:
+      // attributes cannot be scanned backwards
          Fbom::makeIterator( vm, self, false );
       break;
 
@@ -454,6 +460,14 @@ void makeIterator( VMachine *vm, const Item &self, bool begin )
          else
             iter = orig->last();
          iterator->setUserData( iter );
+      }
+      break;
+
+      case FLC_ITEM_ATTRIBUTE:
+      {
+         Attribute *attrib = self.asAttribute();
+         // only from begin.
+         iterator->setUserData( attrib->getIterator() );
       }
       break;
    }

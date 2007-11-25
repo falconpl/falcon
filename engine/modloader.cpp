@@ -88,6 +88,10 @@ void ModuleLoader::addSearchPath( const String &path )
    // subdivide the path by ';'
    int32 pos = 0, pos1 = 0;
 
+   // nothing to add ?
+   if ( path == "" )
+      return;;
+
    while( true )
    {
       String *tmp;

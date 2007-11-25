@@ -1093,9 +1093,6 @@ int main( int argc, char *argv[] )
    if( opt_timings )
       appTime = Sys::_seconds();
 
-   if ( opt_libpath == "" )
-      opt_libpath = FALCON_DEFAULT_LOAD_PATH;
-
    FlcLoader *modloader = new FlcLoader( opt_libpath );
    modloader->addFalconPath();
    modloader->errorHandler( defhandler );
