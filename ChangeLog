@@ -4,7 +4,6 @@ Falcon (0.8.5)
   * Major: Improved functinal support. Added lit() and choice().
   * Bugfix: Fixed initial search path for faltest.
   * Bugfix: Fixed crash in moduleloader with empty paths.
-  * Minor: Added support functions for attributes: giveTo, removeFrom, removeFromAll
 
 Falcon (0.8.4)
   * major: Old "lambda expressionss" are now "nameless functions". They are declared
