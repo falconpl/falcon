@@ -2352,10 +2352,10 @@ FALCON_FUNC  broadcast( ::Falcon::VMachine *vm )
       return;
    }
 
-   Attribute *attrib; 
+   Attribute *attrib;
    uint32 count = 0;
 
-   while( true ) 
+   while( true )
    {
       if ( i_attrib->isAttribute() )
       {
@@ -2375,7 +2375,7 @@ FALCON_FUNC  broadcast( ::Falcon::VMachine *vm )
                extra( "not an attribute" ) ) );
             return;
          }
-         
+
          attrib = temp.asAttribute();
       }
 
@@ -2383,10 +2383,10 @@ FALCON_FUNC  broadcast( ::Falcon::VMachine *vm )
       while( head != 0 )
       {
          CoreObject *obj = head->object();
-         Item *callback = head->getProperty( attrib->name() );
+         Item *callback = obj->getProperty( attrib->name() );
          if ( callback != 0 && callback->isCallable() )
          {
-            for( uint32 pc = 1; pc < pcount; vm ++ )
+            for( uint32 pc = 1; pc < pcount; pc ++ )
             {
                vm->pushParameter( *vm->param( pc ) );
             }
@@ -2396,6 +2396,9 @@ FALCON_FUNC  broadcast( ::Falcon::VMachine *vm )
             {
                return;
             }
+            // if it's all fine but the hander return false, interrupt this loop.
+            else if ( ! vm->regA().isTrue() )
+               break;
          }
 
          head = head->next();
@@ -2403,8 +2406,6 @@ FALCON_FUNC  broadcast( ::Falcon::VMachine *vm )
 
       count++;
    }
-  
-   vm->retval( arr );
 }
 
 } // end of core namespace
