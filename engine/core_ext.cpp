@@ -972,7 +972,7 @@ FALCON_FUNC  CmdlineParser_parse( ::Falcon::VMachine *vm )
             vm->pushParameter( &currentOption );
             vm->pushParameter( i_opt );
             vm->callItem( i_method, 2 );
-            if( vm->hadError() )
+            if( vm->hadEvent() )
                return;
 
             vm->resetEvent();
@@ -993,7 +993,7 @@ FALCON_FUNC  CmdlineParser_parse( ::Falcon::VMachine *vm )
          {
             vm->pushParameter( i_opt );
             vm->callItem( i_method, 1 );
-            if( vm->hadError() )
+            if( vm->hadEvent() )
                return;
             vm->resetEvent();
 
@@ -1027,9 +1027,8 @@ FALCON_FUNC  CmdlineParser_parse( ::Falcon::VMachine *vm )
                }
 
                vm->callItem( i_method, 1 );
-               if( vm->hadError() )
+               if( vm->hadEvent() )
                   return;
-               vm->resetEvent();
                self->getProperty( "_request", _request );
                // value requested?
                if ( _request.asInteger() == 1 ) {
@@ -1060,9 +1059,8 @@ FALCON_FUNC  CmdlineParser_parse( ::Falcon::VMachine *vm )
                   {
                      vm->pushParameter( &subParam );
                      vm->callItem( i_method, 1 );
-                     if( vm->hadError() )
+                     if( vm->hadEvent() )
                         return;
-                     vm->resetEvent();
                  }
                   else
                   {
@@ -1078,9 +1076,8 @@ FALCON_FUNC  CmdlineParser_parse( ::Falcon::VMachine *vm )
                   {
                      vm->pushParameter( &subParam );
                      vm->callItem( i_method, 1 );
-                     if( vm->hadError() )
+                     if( vm->hadEvent() )
                         return;
-                     vm->resetEvent();
                   }
                   else
                   {
@@ -1792,11 +1789,11 @@ FALCON_FUNC  core_any ( ::Falcon::VMachine *vm )
 
    CoreArray *arr = i_param->asArray();
    int32 count = arr->length();
-   for( int32 i = 0; i < count && ! vm->hadError(); i ++ )
+   for( int32 i = 0; i < count && ! vm->hadEvent(); i ++ )
    {
       Item *itm = &arr->at(i);
 
-      if ( vm->functionalEval( *itm  ) || vm->hadError() )
+      if ( vm->functionalEval( *itm  ) )
       {
          vm->retval( (int64) 1 );
          return;
@@ -1825,11 +1822,11 @@ FALCON_FUNC  core_all ( ::Falcon::VMachine *vm )
       return;
    }
 
-   for( int32 i = 0; i < count && ! vm->hadError(); i ++ )
+   for( int32 i = 0; i < count && ! vm->hadEvent(); i ++ )
    {
       Item *itm = &arr->at(i);
 
-      if( ! vm->functionalEval( *itm ) || vm->hadError() )
+      if( ! vm->functionalEval( *itm ) )
       {
          vm->retval( (int64) 0 );
          return;
@@ -1843,11 +1840,11 @@ FALCON_FUNC  core_all ( ::Falcon::VMachine *vm )
 FALCON_FUNC  core_anyp ( ::Falcon::VMachine *vm )
 {
    int32 count = vm->paramCount();
-   for( int32 i = 0; i < count && ! vm->hadError(); i ++ )
+   for( int32 i = 0; i < count && ! vm->hadEvent(); i ++ )
    {
       Item *itm = vm->param(i);
 
-      if ( vm->functionalEval( *itm ) || vm->hadError() )
+      if ( vm->functionalEval( *itm ) )
       {
          vm->retval( (int64) 1 );
          return;
@@ -1867,11 +1864,11 @@ FALCON_FUNC  core_allp ( ::Falcon::VMachine *vm )
       return;
    }
 
-   for( int32 i = 0; i < count && ! vm->hadError(); i ++ )
+   for( int32 i = 0; i < count && ! vm->hadEvent(); i ++ )
    {
       Item *itm = vm->param(i);
 
-      if ( ! vm->functionalEval( *itm ) || vm->hadError() )
+      if ( ! vm->functionalEval( *itm ) )
       {
          vm->retval( (int64) 0 );
          return;
@@ -1911,7 +1908,7 @@ FALCON_FUNC  core_min ( ::Falcon::VMachine *vm )
          elem = vm->param(i);
       }
 
-      if (vm->hadError())
+      if (vm->hadEvent())
          return;
    }
 
@@ -1935,7 +1932,7 @@ FALCON_FUNC  core_max ( ::Falcon::VMachine *vm )
          elem = vm->param(i);
       }
 
-      if (vm->hadError())
+      if (vm->hadEvent())
          return;
    }
 
@@ -1962,7 +1959,7 @@ FALCON_FUNC  core_map ( ::Falcon::VMachine *vm )
    {
       vm->pushParameter( origin->at(i) );
       vm->callItem( *callable, 1 );
-      if (vm->hadError())
+      if (vm->hadEvent())
          return;
       mapped->append( vm->regA() );
    }
@@ -1984,18 +1981,14 @@ FALCON_FUNC  core_dolist ( ::Falcon::VMachine *vm )
    }
 
    CoreArray *origin = i_origin->asArray();
-   for( uint32 i = 0; i < origin->length(); i ++ )
+   for( uint32 i = 0; i < origin->length() && ! vm->hadEvent(); i ++ )
    {
       vm->functionalEval( origin->at(i) );
-      if ( ! vm->hadError() )
+      if ( ! vm->hadEvent() )
       {
          vm->pushParameter( origin->at(i) );
          vm->callItem( *callable, 1 );
-         if ( vm->hadError() )
-            return;
       }
-      else
-         return;
    }
 
    // do not touch retuun value; let's return the last thing the eval function returned.
@@ -2029,6 +2022,10 @@ FALCON_FUNC  core_xmap ( ::Falcon::VMachine *vm )
          else
             return;
       }
+      else if ( vm->hadEvent() )
+      {
+         return;
+      }
       else
       {
          mapped->append( vm->regA() );
@@ -2059,7 +2056,7 @@ FALCON_FUNC  core_filter ( ::Falcon::VMachine *vm )
       vm->pushParameter( origin->at(i) );
       vm->callItem( *callable, 1 );
 
-      if (vm->hadError())
+      if (vm->hadEvent())
          return;
 
       if( vm->regA().isTrue() )
@@ -2104,7 +2101,7 @@ FALCON_FUNC  core_reduce ( ::Falcon::VMachine *vm )
          accumulator = origin->at(0);
    }
 
-   for( uint32 i = 1; i < origin->length() && ! vm->hadError(); i ++ )
+   for( uint32 i = 1; i < origin->length() && ! vm->hadEvent(); i ++ )
    {
       vm->pushParameter( accumulator );
       vm->pushParameter( origin->at( i ) );
@@ -2137,13 +2134,13 @@ FALCON_FUNC  core_iff ( ::Falcon::VMachine *vm )
 
    if ( vm->functionalEval( *i_cond ) )
    {
-      if ( ! vm->hadError() )
+      if ( ! vm->hadEvent() )
       {
          vm->functionalEval( *i_ifTrue );
       }
    }
    else {
-      if ( ! vm->hadError() )
+      if ( ! vm->hadEvent() )
       {
          vm->functionalEval( *i_ifFalse);
       }
@@ -2171,13 +2168,13 @@ FALCON_FUNC  core_choice ( ::Falcon::VMachine *vm )
 
    if ( vm->functionalEval( *i_cond ) )
    {
-      if ( ! vm->hadError() )
+      if ( ! vm->hadEvent() )
       {
          vm->regA() = *i_ifTrue;
       }
    }
    else {
-      if ( ! vm->hadError() )
+      if ( ! vm->hadEvent() )
       {
          vm->regA() = *i_ifFalse;
       }
@@ -2256,6 +2253,10 @@ FALCON_FUNC  core_cascade ( ::Falcon::VMachine *vm )
             vm->resetEvent();
          else
             return;
+      }
+      else if ( vm->hadEvent() )
+      {
+         return;
       }
       else {
          // else we have accepted the parameters and we have also a valid result
@@ -2339,6 +2340,73 @@ FALCON_FUNC  removeFromAll( ::Falcon::VMachine *vm )
    i_attrib->asAttribute()->removeFromAll();
 }
 
+
+FALCON_FUNC  broadcast( ::Falcon::VMachine *vm )
+{
+   uint32 pcount = vm->paramCount();
+   Item *i_attrib = vm->param( 0 );
+   if ( ! i_attrib->isAttribute() && ! i_attrib->isArray() || pcount == 1 )
+   {
+      vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).
+         extra( "a|A,..." ) ) );
+      return;
+   }
+
+   Attribute *attrib; 
+   uint32 count = 0;
+
+   while( true ) 
+   {
+      if ( i_attrib->isAttribute() )
+      {
+         if ( count == 1 )
+            break;
+
+         attrib = i_attrib->asAttribute();
+      }
+      else {
+         if ( count >= i_attrib->asArray()->length() )
+            break;
+
+         const Item &temp = i_attrib->asArray()->at(count);
+         if ( ! temp.isAttribute() )
+         {
+            vm->raiseRTError( new ParamError( ErrorParam( e_param_type ).
+               extra( "not an attribute" ) ) );
+            return;
+         }
+         
+         attrib = temp.asAttribute();
+      }
+
+      AttribObjectHandler *head = attrib->head();
+      while( head != 0 )
+      {
+         CoreObject *obj = head->object();
+         Item *callback = head->getProperty( attrib->name() );
+         if ( callback != 0 && callback->isCallable() )
+         {
+            for( uint32 pc = 1; pc < pcount; vm ++ )
+            {
+               vm->pushParameter( *vm->param( pc ) );
+            }
+            callback->methodize( obj );
+            vm->callItem( *callback, pcount - 1 );
+            if( vm->hadEvent() )
+            {
+               return;
+            }
+         }
+
+         head = head->next();
+      }
+
+      count++;
+   }
+  
+   vm->retval( arr );
+}
+
 } // end of core namespace
 
 
@@ -2387,6 +2455,7 @@ Module * core_module_init()
    core->addExtFunc( "giveTo", Falcon::core::giveTo );
    core->addExtFunc( "removeFrom", Falcon::core::removeFrom );
    core->addExtFunc( "removeFromAll", Falcon::core::removeFromAll );
+   core->addExtFunc( "broadcast", Falcon::core::broadcast );
 
    // Creating the TraceStep class:
    // ... first the constructor

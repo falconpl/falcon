@@ -1361,6 +1361,21 @@ public:
    */
    bool hadError() const { return m_event == eventRisen; }
 
+   /** True if the VM exited with any event set.
+
+      The vast majority of the extension function calling the VM again,
+      as indirect calls, functional evaluation and so on, are not interested
+      int the kind of event that interrupted VM execution. As they just must
+      respect the request and pass it on the higher level (that is, the VM
+      that called them, or the embedding environment), they should just interrupt
+      iterations and return in case an event is raised at return of a 
+      callItem.
+
+      \return true if the VM has any event set.
+   */
+   bool hadEvent() const { return m_event != eventNone; }
+
+
    /** In case of VM sleeps, return to the main application.
       If a yield request has been sent to the VM, and that
       request would generate a vm sleep, the default behavior is that of

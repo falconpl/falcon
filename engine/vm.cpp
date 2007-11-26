@@ -2718,9 +2718,9 @@ bool VMachine::functionalEval( const Item &itm )
             for ( uint32 l = 1; l < count; l ++ )
             {
                functionalEval( arr->at(l) );
-               // in case of errors...
+               // in case of errors, interrupts or the like...
                // ... or if someone played with our array...
-               if ( hadError() || count != arr->length() )
+               if ( hadEvent() || count != arr->length() )
                {
                   // ... unroll the stack and bail out
                   m_stack->resize( m_stack->size() + l - 1 );
@@ -2742,9 +2742,8 @@ bool VMachine::functionalEval( const Item &itm )
             for( uint32 i = 0; i < arr->length(); i++ )
             {
                functionalEval( arr->at(i) );
-               // in case of errors...
-               // ... or if someone played with our array...
-               if ( hadError()  )
+               // in case of errors, interrupts, sleep requests...
+               if ( hadEvent() )
                {
                   return false;
                }
