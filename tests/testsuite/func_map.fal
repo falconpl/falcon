@@ -15,12 +15,23 @@ function mapping_func( f )
    return f * f
 end
 
+function mapping_func1( f )
+   if f < 0: return oob()
+   return f * f
+end
+
 // empty mapping
 if map( mapping_func, [] ).len() != 0: failure( "Empty set" )
 
 mapped = map( mapping_func, [1,2,3,4] )
 if mapped[0] != 1 or mapped[1] != 4 or mapped[2] != 9 or mapped[3] != 16
    failure( "Full mapping" )
+end
+
+mapped = map( mapping_func1, [-1,2,-3,4] )
+if mapped.len() != 2: failure( "Partial map size" )
+if mapped[0] != 4 or mapped[1] != 16
+   failure( "Partial map content" )
 end
 
 success()

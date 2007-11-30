@@ -1,0 +1,35 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 37c
+* Category: rtl
+* Subcategory: core
+* Short: Parametric OOB
+* Description:
+*   Check for item OOB across function calls,
+*   when passed as parameter.
+*   TODO: Move this as 4c when OOB operators are done.
+* [/Description]
+****************************************************************************/
+
+function deep( value, oobData )
+   if value == 0
+      return oobData
+   end
+
+   return deep( value - 1,
+                isoob( oobData ) ? deoob( oobData ) : oob( oobData ) )
+end
+
+if isoob( deep( 0, "some data" ) ): failure( "false positive immediate" )
+if not isoob( deep( 1, "some data" ) ): failure( "false negative immediate" )
+
+if isoob( deep( 2, "some data" ) ): failure( "false positive, 1 step" )
+if not isoob( deep( 3, "some data" ) ): failure( "false negative, 1 step" )
+
+if isoob( deep( 10, "some data" ) ): failure( "false positive, 5 steps" )
+if not isoob( deep( 11, "some data" ) ): failure( "false negative, 5 steps" )
+
+success()
+
+/* End of file */

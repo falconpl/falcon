@@ -61,6 +61,7 @@ class VMachine;
 class Module;
 
 typedef FALCON_DYN_SYM void ( CDECL *ext_func_t) ( VMachine *);
+typedef FALCON_DYN_SYM bool ( CDECL *ext_func_frame_t) ( VMachine * );
 typedef FALCON_DYN_SYM Module* ( CDECL  *ext_mod_init)( const EngineData &data );
 
 }

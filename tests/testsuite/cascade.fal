@@ -47,7 +47,7 @@ function testdecl( p1, p2, p3 )
    saved1 = p1
    saved2 = p2
    saved3 = p3
-   raise nil
+   return oob()
 end
 
 // in the middle...

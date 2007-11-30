@@ -312,6 +312,27 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
             Falcon::Ext::FileStat_readStats );
 
    //=======================================================================
+   // The command line parser class
+   //=======================================================================
+
+   Falcon::Symbol *cmdparser_class = self->addClass( "CmdlineParser", true );
+   self->addClassMethod( cmdparser_class, "parse", Falcon::Ext::CmdlineParser_parse );
+   self->addClassMethod( cmdparser_class, "expectValue", Falcon::Ext::CmdlineParser_expectValue );
+   self->addClassMethod( cmdparser_class, "terminate", Falcon::Ext::CmdlineParser_terminate );
+   // private property internally used to communicate between the child classes and
+   // the base parse.
+   self->addClassProperty( cmdparser_class, "_request" );
+   // Properties that will hold callbacks
+   self->addClassProperty( cmdparser_class, "onOption" );
+   self->addClassProperty( cmdparser_class, "onFree" );
+   self->addClassProperty( cmdparser_class, "onValue" );
+   self->addClassProperty( cmdparser_class, "onSwitchOff" );
+   self->addClassProperty( cmdparser_class, "passMinusMinus" );
+   self->addClassProperty( cmdparser_class, "lastParsed" );
+   self->addClassMethod( cmdparser_class, "usage", Falcon::Ext::CmdlineParser_usage );
+
+
+   //=======================================================================
    // SYSTEM API
    //=======================================================================
    self->addExtFunc( "stdIn", Falcon::Ext::_stdIn );

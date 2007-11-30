@@ -26,9 +26,9 @@ function test( a )
 end
 
 if iff( [test, 1], "yes" ) != "yes": failure( "Callable check positive, w/o else" )
-if iff( [test, 1], "yes", "no" ) != "yes": failure( "Callable check  iff positive, with else" )
-if iff( [test, 0], "yes" ) != nil: failure( "Callable check  iff negative, w/o else" )
-if iff( [test, 0], "yes", "no" ) != "no": failure( "Callable check  iff negative, with else" )
+if iff( [test, 1], "yes", "no" ) != "yes": failure( "Callable check iff positive, with else" )
+if iff( [test, 0], "yes" ) != nil: failure( "Callable check iff negative, w/o else" )
+if iff( [test, 0], "yes", "no" ) != "no": failure( "Callable check iff negative, with else" )
 if test_count != 4: failure( "Test function call count" )
 
 // with callable check and callable results

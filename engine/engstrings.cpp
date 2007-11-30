@@ -198,7 +198,8 @@ char *en_table[] =
       "Block 'forfirst' already declared",
       "Block 'forlast' already declared",
       "Block 'forall' already declared",
-      "Statement 'for.' must be inside a for/in loop",
+      "Statement '.=' must be inside a for/in loop",
+      "VM received a suspension request in an atomic operation",
 
       "Can't open file",
       "Load error",

@@ -194,12 +194,11 @@ namespace msg {
       err_catch_clash,
       err_catch_adef,
       err_fmt_convert,
-      err_fordot_outside,
-
       err_already_forfirst,
       err_already_forlast,
       err_already_forall,
-
+      err_fordot_outside,
+      err_interrupted,
 
       err_open_file,
       err_loaderror,

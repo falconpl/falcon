@@ -41,6 +41,8 @@ wchar_t *message_table[] = {
    L"needs two arrays",
    L"indexes must be numbers",
    L"start position out of range",   // << 10
+   L"parameter array contains non string elements",
+
    0
    };
 

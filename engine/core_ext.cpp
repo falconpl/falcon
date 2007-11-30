@@ -287,6 +287,16 @@ FALCON_FUNC  CloneError_init ( ::Falcon::VMachine *vm )
 }
 
 
+FALCON_FUNC  IntrruptedError_init ( ::Falcon::VMachine *vm )
+{
+   CoreObject *einst = vm->self().asObject();
+   if( einst->getUserData() == 0 )
+      einst->setUserData( new Falcon::ErrorCarrier( new Falcon::InterruptedError ) );
+
+   Error_init( vm );
+}
+
+
 /*@function int
    @param item The item to be converted
 
@@ -899,240 +909,6 @@ FALCON_FUNC  Format_toString ( ::Falcon::VMachine *vm )
    CoreObject *einst = vm->self().asObject();
    Format *fmt = (Format *) einst->getUserData();
    vm->retval( new GarbageString( vm,fmt->originalFormat()) );
-}
-
-//========================================================
-// The command line parser
-//========================================================
-
-FALCON_FUNC  CmdlineParser_parse( ::Falcon::VMachine *vm )
-{
-   CoreObject *self = vm->self().asObject();
-   Item *i_params = vm->param( 0 );
-
-   if ( i_params == 0 )
-   {
-      // get the parameters from the VM args object
-      i_params = vm->findGlobalItem( "args" );
-      if ( i_params == 0 || ! i_params->isArray() ) {
-         vm->raiseRTError( new CodeError( ErrorParam( e_undef_sym ).extra( "args" ).hard() ) );
-         return;
-      }
-   }
-   else if ( ! i_params->isArray() )
-   {
-      vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).extra( "( A )" ) ) );
-      return;
-   }
-
-   CoreArray *args = i_params->asArray();
-
-   // zero request.
-   self->setProperty( "_request", (int64) 0 );
-   self->setProperty( "lastParsed", (int64) 0 );
-
-   // status.
-   typedef enum {
-      t_none,
-      t_waitingValue,
-      t_allFree
-   } t_states;
-
-   t_states state = t_none ;
-   String currentOption;
-   Item i_method;
-   Item i_passMM;
-   self->getProperty( "passMinusMinus", i_passMM );
-   bool passMM = i_passMM.isTrue();
-   Item _request;
-   String subParam;
-   uint32 i;
-
-   for ( i = 0; i < args->length(); i++ )
-   {
-      Item &i_opt = args->at( i );
-      if ( !i_opt.isString() )
-      {
-         vm->raiseRTError(
-            new ParamError( ErrorParam( e_param_type ).
-                  extra( getMessage( msg::core_002 ) )
-               )
-            );
-
-         return;
-      }
-
-      String &opt = *i_opt.asString();
-       // if we were expecting a value, we MUST consider ANYTHING as it was a value.
-      if ( state == t_waitingValue )
-      {
-         self->getProperty( "onValue", i_method );
-         if ( i_method.methodize( self ) )
-         {
-            vm->pushParameter( &currentOption );
-            vm->pushParameter( i_opt );
-            vm->callItem( i_method, 2 );
-            if( vm->hadEvent() )
-               return;
-
-            vm->resetEvent();
-            state = t_none;
-         }
-         else
-         {
-            vm->retval( false );
-            self->setProperty( "lastParsed", (int64) i );
-            return;
-         }
-      }
-      else if( opt.length() == 0 || (opt.getCharAt( 0 ) != '-' || opt.length() == 1) || state == t_allFree )
-      {
-
-         self->getProperty( "onFree", i_method );
-         if ( i_method.methodize( self ) )
-         {
-            vm->pushParameter( i_opt );
-            vm->callItem( i_method, 1 );
-            if( vm->hadEvent() )
-               return;
-            vm->resetEvent();
-
-         }
-         else
-         {
-            vm->retval( false );
-            self->setProperty( "lastParsed", (int64) i );
-            return;
-         }
-      }
-      else if ( opt == "--" && ! passMM )
-      {
-         state = t_allFree;
-         continue; // to skip return value.
-      }
-      else {
-         // we have at least one '-', and length > 1
-         if ( opt.getCharAt( 1 ) == (uint32) '-' )
-         {
-            self->getProperty( "onOption", i_method );
-
-            if ( i_method.methodize( self ) )
-            {
-               if ( passMM && opt.size() == 2 )
-                  vm->pushParameter( i_opt );
-               else {
-                  //Minimal optimization; reuse the same string and memory
-                  subParam = opt.subString( 2 );
-                  vm->pushParameter( &subParam );
-               }
-
-               vm->callItem( i_method, 1 );
-               if( vm->hadEvent() )
-                  return;
-               self->getProperty( "_request", _request );
-               // value requested?
-               if ( _request.asInteger() == 1 ) {
-                  currentOption = subParam;
-               }
-            }
-            else
-            {
-               vm->retval( false );
-               self->setProperty( "lastParsed", (int64) i );
-               return;
-            }
-         }
-         else {
-            // we have a switch set.
-            for( uint32 chNum = 1; chNum < opt.length(); chNum++ )
-            {
-               //Minimal optimization; reuse the same string and memory
-
-               subParam.size( 0 );
-               subParam.append( opt.getCharAt( chNum ) );
-
-               if ( chNum < opt.length() -1 && opt.getCharAt( chNum +1 ) == (uint32) '-' )
-               {
-                  // switch turnoff.
-                  self->getProperty( "onSwitchOff", i_method );
-                  if ( i_method.methodize( self ) )
-                  {
-                     vm->pushParameter( &subParam );
-                     vm->callItem( i_method, 1 );
-                     if( vm->hadEvent() )
-                        return;
-                 }
-                  else
-                  {
-                     vm->retval( false );
-                     self->setProperty( "lastParsed", (int64) i );
-                     return;
-                  }
-                  chNum++;
-               }
-               else {
-                  self->getProperty( "onOption", i_method );
-                  if ( i_method.methodize( self ) )
-                  {
-                     vm->pushParameter( &subParam );
-                     vm->callItem( i_method, 1 );
-                     if( vm->hadEvent() )
-                        return;
-                  }
-                  else
-                  {
-                     vm->retval( false );
-                     self->setProperty( "lastParsed", (int64) i );
-                     return;
-                  }
-               }
-
-               self->getProperty( "_request", _request );
-               // value requested?
-               if ( _request.asInteger() == 1 ) {
-                  currentOption = subParam;
-               }
-            }
-         }
-
-         self->getProperty( "_request", _request );
-         // value requested?
-         if ( _request.asInteger() == 1 ) {
-            state = t_waitingValue;
-            self->setProperty( "_request", (int64) 0 );
-         }
-         // or request to terminate?
-         else if ( _request.asInteger() == 2 )
-         {
-            self->setProperty( "_request", (int64) 0 );
-            vm->retval( true );
-            self->setProperty( "lastParsed", (int64) i );
-            return;
-         }
-      }
-   }
-
-   self->setProperty( "lastParsed", (int64) i );
-   vm->resetEvent();
-   vm->retval( true );
-}
-
-FALCON_FUNC  CmdlineParser_expectValue( ::Falcon::VMachine *vm )
-{
-   CoreObject *self = vm->self().asObject();
-   self->setProperty( "_request", (int64) 1 );
-}
-
-FALCON_FUNC  CmdlineParser_terminate( ::Falcon::VMachine *vm )
-{
-   CoreObject *self = vm->self().asObject();
-   self->setProperty( "_request", (int64) 2 );
-}
-
-FALCON_FUNC  CmdlineParser_usage( ::Falcon::VMachine *vm )
-{
-   vm->stdErr()->writeString( "The stub for \"CmdlineParser.usage()\" has been called.\n" );
-   vm->stdErr()->writeString( "This class should be derived and the method usage() overloaded.\n" );
 }
 
 // Garbage Collector control
@@ -1775,7 +1551,38 @@ FALCON_FUNC  PageDict( ::Falcon::VMachine *vm )
 
 //============================================
 // Fucntional extensions
-/** Functional extensions */
+
+static bool core_any_next( ::Falcon::VMachine *vm )
+{
+   // was the elaboration succesful?
+   if ( vm->regA().isTrue() )
+   {
+      vm->retval( (int64) 1 );
+      return false;
+   }
+
+   // repeat checks.
+   CoreArray *arr = vm->param(0)->asArray();
+   uint32 count = (uint32) vm->local(0)->asInteger();
+   while( count < arr->length() )
+   {
+      Item *itm = &arr->at(count);
+      *vm->local(0) = (int64) count+1;
+      if ( vm->functionalEval( *itm  ) )
+      {
+         return true;
+      }
+      else if ( vm->regA().isTrue() ) {
+         vm->retval( (int64) 1 );
+         return false;
+      }
+      count++;
+   }
+
+   vm->retval( (int64) 0 );
+   return false;
+}
+
 
 FALCON_FUNC  core_any ( ::Falcon::VMachine *vm )
 {
@@ -1788,19 +1595,60 @@ FALCON_FUNC  core_any ( ::Falcon::VMachine *vm )
    }
 
    CoreArray *arr = i_param->asArray();
-   int32 count = arr->length();
-   for( int32 i = 0; i < count && ! vm->hadEvent(); i ++ )
+   uint32 count = arr->length();
+   vm->returnHandler( core_any_next );
+   vm->addLocals(1);
+
+   for( uint32 i = 0; i < count; i ++ )
    {
       Item *itm = &arr->at(i);
-
+      *vm->local(0) = (int64) i+1;
       if ( vm->functionalEval( *itm  ) )
       {
+         return;
+      }
+      else if ( vm->regA().isTrue() ) {
+         vm->returnHandler( 0 );
          vm->retval( (int64) 1 );
          return;
       }
    }
 
+   vm->returnHandler( 0 );
    vm->retval( (int64) 0 );
+}
+
+
+static bool core_all_next( ::Falcon::VMachine *vm )
+{
+   // was the elaboration succesful?
+   if ( ! vm->regA().isTrue() )
+   {
+      vm->retval( (int64) 0 );
+      return false;
+   }
+
+   // repeat checks.
+   CoreArray *arr = vm->param(0)->asArray();
+   uint32 count = (uint32) vm->local(0)->asInteger();
+   while( count < arr->length() )
+   {
+      Item *itm = &arr->at(count);
+
+      *vm->local(0) = (int64) count+1;
+      if ( vm->functionalEval( *itm  ) )
+      {
+         return true;
+      }
+      else if ( ! vm->regA().isTrue() ) {
+         vm->retval( (int64) 0 );
+         return false;
+      }
+      count++;
+   }
+
+   vm->retval( (int64) 1 );
+   return false;
 }
 
 
@@ -1815,68 +1663,159 @@ FALCON_FUNC  core_all ( ::Falcon::VMachine *vm )
    }
 
    CoreArray *arr = i_param->asArray();
-   int32 count = arr->length();
+   uint32 count = arr->length();
    if ( count == 0 )
    {
       vm->retval( (int64) 0 );
       return;
    }
 
-   for( int32 i = 0; i < count && ! vm->hadEvent(); i ++ )
+   vm->returnHandler( core_all_next );
+   vm->addLocals(1);
+
+   for( uint32 i = 0; i < count; i ++ )
    {
       Item *itm = &arr->at(i);
+      *vm->local(0) = (int64) i+1;
 
-      if( ! vm->functionalEval( *itm ) )
+      if ( vm->functionalEval( *itm  ) )
       {
+         return;
+      }
+      else if ( ! vm->regA().isTrue() ) {
+         vm->returnHandler( 0 );
          vm->retval( (int64) 0 );
          return;
       }
    }
 
+   vm->returnHandler( 0 );
    vm->retval( (int64) 1 );
+}
+
+
+static bool core_anyp_next( ::Falcon::VMachine *vm )
+{
+   // was the elaboration succesful?
+   if ( vm->regA().isTrue() )
+   {
+      vm->retval( (int64) 1 );
+      return false;
+   }
+
+   // repeat checks.
+   int32 count = (uint32) vm->local(0)->asInteger();
+   while( count < vm->paramCount() )
+   {
+      Item *itm = vm->param( count );
+      *vm->local(0) = (int64) count+1;
+
+      if ( vm->functionalEval( *itm  ) )
+      {
+         return true;
+      }
+      else if ( vm->regA().isTrue() ) {
+         vm->retval( (int64) 1 );
+         return false;
+      }
+      count++;
+   }
+
+   vm->retval( (int64) 0 );
+   return false;
 }
 
 
 FALCON_FUNC  core_anyp ( ::Falcon::VMachine *vm )
 {
-   int32 count = vm->paramCount();
-   for( int32 i = 0; i < count && ! vm->hadEvent(); i ++ )
+   uint32 count = vm->paramCount();
+   vm->returnHandler( core_anyp_next );
+   vm->addLocals(1);
+
+   for( uint32 i = 0; i < count; i ++ )
    {
       Item *itm = vm->param(i);
+      *vm->local(0) = (int64) i+1;
 
-      if ( vm->functionalEval( *itm ) )
+      if ( vm->functionalEval( *itm  ) )
       {
+         return;
+      }
+      else if ( vm->regA().isTrue() ) {
+         vm->returnHandler( 0 );
          vm->retval( (int64) 1 );
          return;
       }
    }
 
+   vm->returnHandler( 0 );
    vm->retval( (int64) 0 );
+}
+
+
+static bool core_allp_next( ::Falcon::VMachine *vm )
+{
+   // was the elaboration succesful?
+   if ( ! vm->regA().isTrue() )
+   {
+      vm->retval( (int64) 0 );
+      return false;
+   }
+
+   // repeat checks.
+   int32 count = (uint32) vm->local(0)->asInteger();
+   while( count < vm->paramCount() )
+   {
+      Item *itm = vm->param(count);
+
+      *vm->local(0) = (int64) count+1;
+      if ( vm->functionalEval( *itm  ) )
+      {
+         return true;
+      }
+      else if ( ! vm->regA().isTrue() ) {
+         vm->retval( (int64) 0 );
+         return false;
+      }
+      count++;
+   }
+
+   vm->retval( 1 );
+   return false;
 }
 
 
 FALCON_FUNC  core_allp ( ::Falcon::VMachine *vm )
 {
-   int32 count = vm->paramCount();
+   uint32 count = vm->paramCount();
+   vm->returnHandler( core_allp_next );
+   vm->addLocals(1);
+
    if ( count == 0 )
    {
-      vm->retval( (int64) 0 );
+      vm->retval(0);
       return;
    }
 
-   for( int32 i = 0; i < count && ! vm->hadEvent(); i ++ )
+   for( uint32 i = 0; i < count; i ++ )
    {
       Item *itm = vm->param(i);
-
-      if ( ! vm->functionalEval( *itm ) )
+      *vm->local(0) = (int64) i+1;
+      if ( vm->functionalEval( *itm  ) )
       {
+         return;
+      }
+      else if ( ! vm->regA().isTrue() ) {
+         vm->returnHandler( 0 );
          vm->retval( (int64) 0 );
          return;
       }
    }
 
-   vm->retval( (int64) 1 );
+   vm->returnHandler( 0 );
+   vm->retval( 1 );
 }
+
 
 FALCON_FUNC  core_eval ( ::Falcon::VMachine *vm )
 {
@@ -1939,6 +1878,27 @@ FALCON_FUNC  core_max ( ::Falcon::VMachine *vm )
    vm->retval( *elem );
 }
 
+static bool core_map_next( ::Falcon::VMachine *vm )
+{
+   // callable in first item
+   CoreArray *origin = vm->param(1)->asArray();
+   uint32 count = (uint32) vm->local(0)->asInteger();
+   CoreArray *mapped = vm->local(1)->asArray();
+
+   if ( ! vm->regA().isOob() )
+      mapped->append( vm->regA() );
+
+   if ( count < origin->length() )
+   {
+      *vm->local(0) = (int64) count + 1;
+      vm->pushParameter( origin->at(count) );
+      vm->callFrame( *vm->param(0), 1 );
+      return true;
+   }
+
+   vm->retval( mapped );
+   return false;
+}
 
 FALCON_FUNC  core_map ( ::Falcon::VMachine *vm )
 {
@@ -1953,19 +1913,54 @@ FALCON_FUNC  core_map ( ::Falcon::VMachine *vm )
       return;
    }
 
-   CoreArray *mapped = new CoreArray( vm, vm->paramCount() - 1 );
    CoreArray *origin = i_origin->asArray();
-   for( uint32 i = 0; i < origin->length(); i ++ )
+   CoreArray *mapped = new CoreArray( vm, origin->length() );
+   if ( origin->length() > 0 )
    {
-      vm->pushParameter( origin->at(i) );
-      vm->callItem( *callable, 1 );
-      if (vm->hadEvent())
-         return;
-      mapped->append( vm->regA() );
+      vm->returnHandler( core_map_next );
+      vm->addLocals( 2 );
+      *vm->local(0) = (int64)1;
+      *vm->local(1) = mapped;
+
+      vm->pushParameter( origin->at(0) );
+      // do not use pre-fetched pointer
+      vm->callFrame( *vm->param(0), 1 );
+      return;
    }
 
    vm->retval( mapped );
 }
+
+static bool core_dolist_next ( ::Falcon::VMachine *vm )
+{
+   //callable in item 0
+   Item *i_origin = vm->param(1);
+
+   CoreArray *origin = vm->param(1)->asArray();
+   uint32 count = (uint32) vm->local(0)->asInteger();
+
+   // done -- let A stay as is.
+   if ( count >= origin->length() )
+      return false;
+
+   //if we called
+   if ( vm->local(1)->asInteger() == 1 )
+   {
+      // prepare for next loop
+      *vm->local(0) = (int64) count + 1;
+      *vm->local(1) = (int64)0;
+      if ( vm->functionalEval( origin->at(count) ) )
+      {
+         return true;
+      }
+   }
+
+   *vm->local(1) = (int64) 1;
+   vm->pushParameter( vm->regA() );
+   vm->callFrame( *vm->param(0), 1 );
+   return true;
+}
+
 
 FALCON_FUNC  core_dolist ( ::Falcon::VMachine *vm )
 {
@@ -1981,19 +1976,66 @@ FALCON_FUNC  core_dolist ( ::Falcon::VMachine *vm )
    }
 
    CoreArray *origin = i_origin->asArray();
-   for( uint32 i = 0; i < origin->length() && ! vm->hadEvent(); i ++ )
+   if ( origin->length() != 0 )
    {
-      vm->functionalEval( origin->at(i) );
-      if ( ! vm->hadEvent() )
-      {
-         vm->pushParameter( origin->at(i) );
-         vm->callItem( *callable, 1 );
-      }
-   }
+      vm->returnHandler( core_dolist_next );
+      vm->addLocals( 2 );
+      // count
+      *vm->local(0) = (int64) 1;
 
-   // do not touch retuun value; let's return the last thing the eval function returned.
+      //exiting from an eval or from a call frame? -- 0 eval
+      *vm->local(1) = (int64) 0;
+
+      if ( vm->functionalEval( origin->at(0) ) )
+      {
+         return;
+      }
+
+      //exiting from an eval or from a call frame? -- 1 callframe
+      *vm->local(1) = (int64) 1;
+      vm->pushParameter( vm->regA() );
+      vm->callFrame( *vm->param(0), 1 );
+   }
 }
 
+
+static bool core_xmap_next( ::Falcon::VMachine *vm )
+{
+   // in vm->param(0) there is "callable".
+   CoreArray *origin = vm->param(1)->asArray();
+   uint32 count = (uint32) vm->local(0)->asInteger();
+   CoreArray *mapped = vm->local(1)->asArray();
+
+
+   if ( count < origin->length() )
+   {
+      if ( vm->local(2)->asInteger() == 1 )
+      {
+         if ( ! vm->regA().isOob() )
+            mapped->append( vm->regA() );
+
+         // prepare for next loop
+         *vm->local(0) = (int64) count + 1;
+         *vm->local(2) = (int64) 0;
+         if ( vm->functionalEval( origin->at(count) ) )
+         {
+            return true;
+         }
+      }
+
+      *vm->local(2) = (int64) 1;
+      vm->pushParameter( vm->regA() );
+      vm->callFrame( *vm->param(0), 1 );
+      return true;
+   }
+   else {
+      if ( ! vm->regA().isOob() )
+            mapped->append( vm->regA() );
+   }
+
+   vm->retval( mapped );
+   return false;
+}
 
 FALCON_FUNC  core_xmap ( ::Falcon::VMachine *vm )
 {
@@ -2008,33 +2050,50 @@ FALCON_FUNC  core_xmap ( ::Falcon::VMachine *vm )
       return;
    }
 
-   CoreArray *mapped = new CoreArray( vm, vm->paramCount() - 1 );
    CoreArray *origin = i_origin->asArray();
-   for( uint32 i = 0; i < origin->length(); i ++ )
+   CoreArray *mapped = new CoreArray( vm, origin->length() );
+   if ( origin->length() > 0 )
    {
-      vm->pushParameter( vm->regA() );
-      vm->callItem( *callable, 1 );
+      vm->returnHandler( core_xmap_next );
+      vm->addLocals( 3 );
+      *vm->local(0) = (int64)1;
+      *vm->local(1) = mapped;
+      *vm->local(2) = (int64) 0;
 
-      if (vm->hadError() )
-      {
-         if ( vm->regB().isNil() )
-            vm->resetEvent();
-         else
-            return;
-      }
-      else if ( vm->hadEvent() )
+      if ( vm->functionalEval( origin->at(0) ) )
       {
          return;
       }
-      else
-      {
-         mapped->append( vm->regA() );
-      }
+
+      *vm->local(2) = (int64) 1;
+      vm->pushParameter( vm->regA() );
+      vm->callFrame( *vm->param(0), 1 );
+      return;
    }
 
    vm->retval( mapped );
 }
 
+static bool core_filter_next ( ::Falcon::VMachine *vm )
+{
+   CoreArray *origin = vm->param(1)->asArray();
+   CoreArray *mapped = vm->local(0)->asArray();
+   uint32 count = (uint32) vm->local(1)->asInteger();
+
+   if ( vm->regA().isTrue() )
+      mapped->append( origin->at(count -1) );
+
+   if( count == origin->length()  )
+   {
+      vm->retval( mapped );
+      return false;
+   }
+
+   *vm->local(1) = (int64) count+1;
+   vm->pushParameter( origin->at(count) );
+   vm->callFrame( *vm->param(0), 1 );
+   return true;
+}
 
 FALCON_FUNC  core_filter ( ::Falcon::VMachine *vm )
 {
@@ -2045,26 +2104,48 @@ FALCON_FUNC  core_filter ( ::Falcon::VMachine *vm )
       )
    {
       vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).
-         extra( "C,..." ) ) );
+         extra( "C,A" ) ) );
       return;
    }
 
    CoreArray *origin = i_origin->asArray();
    CoreArray *mapped = new CoreArray( vm, origin->length() / 2 );
-   for( uint32 i = 0; i < origin->length(); i ++ )
+   if( origin->length() > 0 )
    {
-      vm->pushParameter( origin->at(i) );
-      vm->callItem( *callable, 1 );
-
-      if (vm->hadEvent())
-         return;
-
-      if( vm->regA().isTrue() )
-         mapped->append( origin->at(i) );
+      vm->returnHandler( core_filter_next );
+      vm->addLocals(2);
+      *vm->local(0) = mapped;
+      *vm->local(1) = (int64) 1;
+      vm->pushParameter( origin->at(0) );
+      vm->callFrame( *vm->param(0), 1 );
+      return;
    }
 
    vm->retval( mapped );
 }
+
+
+static bool core_reduce_next ( ::Falcon::VMachine *vm )
+{
+   // Callable in param 0
+   CoreArray *origin = vm->param(1)->asArray();
+
+   // if we had enough calls, return (the return value of the last call frame is
+   // already what we want to return).
+   uint32 count = (uint32) vm->local(0)->asInteger();
+   if( count >= origin->length() )
+      return false;
+
+   // increment count for next call
+   vm->local(0)->setInteger( count + 1 );
+
+   // call next item
+   vm->pushParameter( vm->regA() ); // last returned value
+   vm->pushParameter( origin->at(count) ); // next element
+   vm->callFrame( *vm->param(0), 2 );
+   return true;
+}
+
 
 FALCON_FUNC  core_reduce ( ::Falcon::VMachine *vm )
 {
@@ -2081,7 +2162,8 @@ FALCON_FUNC  core_reduce ( ::Falcon::VMachine *vm )
    }
 
    CoreArray *origin = i_origin->asArray();
-   Item accumulator;
+   vm->addLocals(1);
+   // local 0: array position
 
    if ( init != 0 )
    {
@@ -2091,28 +2173,61 @@ FALCON_FUNC  core_reduce ( ::Falcon::VMachine *vm )
          return;
       }
 
+      vm->returnHandler( core_reduce_next );
       vm->pushParameter( *init );
       vm->pushParameter( origin->at(0) );
-      vm->callItem( *callable, 2 );
-      accumulator = vm->regA();
-   }
-   else {
-      if ( origin->length() > 0 )
-         accumulator = origin->at(0);
+      *vm->local(0) = (int64) 1;
+
+      //WARNING: never use pre-cached item pointers after stack changes.
+      vm->callFrame( *vm->param(0), 2 );
+      return;
    }
 
-   for( uint32 i = 1; i < origin->length() && ! vm->hadEvent(); i ++ )
+   // if init == 0; if there is only one element in the array, return it.
+   if ( origin->length() == 0 )
+      vm->retnil();
+   else if ( origin->length() == 1 )
+      vm->retval( origin->at(0) );
+   else
    {
-      vm->pushParameter( accumulator );
-      vm->pushParameter( origin->at( i ) );
-      vm->callItem( *callable, 2 );
+      vm->returnHandler( core_reduce_next );
+      *vm->local(0) = (int64) 2; // we'll start from 2
 
-      accumulator = vm->regA();
+      // the first call is between the first and the second elements in the array.
+      vm->pushParameter( origin->at(0) );
+      vm->pushParameter( origin->at(1) );
+
+      //WARNING: never use pre-cached item pointers after stack changes.
+      vm->callFrame( *vm->param(0), 2 );
+   }
+}
+
+
+static bool core_iff_next( ::Falcon::VMachine *vm )
+{
+   // anyhow, we don't want to be called anymore
+   vm->returnHandler( 0 );
+
+   if ( vm->regA().isTrue() )
+   {
+      if ( vm->functionalEval( *vm->param(1) ) )
+         return true;
+   }
+   else
+   {
+      Item *i_ifFalse = vm->param(2);
+      if ( i_ifFalse != 0 )
+      {
+         if ( vm->functionalEval( *i_ifFalse ) )
+            return true;
+      }
+      else
+         vm->retnil();
    }
 
-   // retval doesn't clear error status, so it's ok
-   vm->retval( accumulator );
+   return false;
 }
+
 
 FALCON_FUNC  core_iff ( ::Falcon::VMachine *vm )
 {
@@ -2127,24 +2242,44 @@ FALCON_FUNC  core_iff ( ::Falcon::VMachine *vm )
       return;
    }
 
-   // i_ifFalse defaults to nil
-   Item temp; // created as nil
-   if ( i_ifFalse == 0 )
-      i_ifFalse = &temp;
+   // we can use pre-fetched values as we have stack unchanged on
+   // paths where we use item pointers.
 
+   vm->returnHandler( core_iff_next );
    if ( vm->functionalEval( *i_cond ) )
    {
-      if ( ! vm->hadEvent() )
-      {
-         vm->functionalEval( *i_ifTrue );
-      }
+      return;
+   }
+   vm->returnHandler( 0 );
+
+   if ( vm->regA().isTrue() )
+   {
+      vm->functionalEval( *i_ifTrue );
    }
    else {
-      if ( ! vm->hadEvent() )
-      {
-         vm->functionalEval( *i_ifFalse);
-      }
+      if ( i_ifFalse != 0 )
+         vm->functionalEval( *i_ifFalse );
+      else
+         vm->retnil();
    }
+}
+
+
+static bool core_choice_next( ::Falcon::VMachine *vm )
+{
+   if ( vm->regA().isTrue() )
+   {
+      vm->retval( *vm->param(1) );
+   }
+   else {
+      Item *i_ifFalse = vm->param(2);
+      if ( i_ifFalse != 0 )
+         vm->retval( *i_ifFalse );
+      else
+         vm->retnil();
+   }
+
+   return false;
 }
 
 
@@ -2161,23 +2296,22 @@ FALCON_FUNC  core_choice ( ::Falcon::VMachine *vm )
       return;
    }
 
-   // i_ifFalse defaults to nil
-   Item temp; // created as nil
-   if ( i_ifFalse == 0 )
-      i_ifFalse = &temp;
-
+   vm->returnHandler( core_choice_next );
    if ( vm->functionalEval( *i_cond ) )
    {
-      if ( ! vm->hadEvent() )
-      {
-         vm->regA() = *i_ifTrue;
-      }
+      return;
+   }
+   vm->returnHandler( 0 );
+
+   if ( vm->regA().isTrue() )
+   {
+      vm->retval( *i_ifTrue );
    }
    else {
-      if ( ! vm->hadEvent() )
-      {
-         vm->regA() = *i_ifFalse;
-      }
+      if ( i_ifFalse != 0 )
+         vm->retval( *i_ifFalse );
+      else
+         vm->retnil();
    }
 }
 
@@ -2197,6 +2331,74 @@ FALCON_FUNC  core_lit ( ::Falcon::VMachine *vm )
    // result already in A.
 }
 
+
+static bool core_cascade_next ( ::Falcon::VMachine *vm )
+{
+   // Param 0: callables array
+   // local 0: counter (position)
+   // local 1: last accepted result
+   CoreArray *callables = vm->param(0)->asArray();
+   uint32 count = (uint32) vm->local(0)->asInteger();
+
+   // Done?
+   if ( count >= callables->length() )
+   {
+      // if the last result is not accepted, return last accepted
+      if ( vm->regA().isOob() )
+      {
+         // reset OOB, that may be set on first unaccepted parameter.
+         vm->local(1)->resetOob();
+         vm->retval( *vm->local(1) );
+      }
+      // else, just keep
+      return false;
+   }
+
+   uint32 pc;
+
+   // still some loop to do
+   // accept result?
+   if ( vm->regA().isOob() )
+   {
+      // not accepted.
+
+      // has at least one parameter been accepted?
+      if ( vm->local(1)->isOob() )
+      {
+         // no? -- replay initial params
+         pc = vm->paramCount();
+         for ( uint32 pi = 1; pi < pc; pi++ )
+         {
+            vm->pushParameter( *vm->param(pi) );
+         }
+         pc--;  //first param is our callable
+      }
+      else {
+         // yes? -- reuse last accepted parameter
+         pc = 1;
+         vm->pushParameter( *vm->local(1) );
+      }
+   }
+   else {
+      *vm->local(1) = vm->regA();
+      pc = 1;
+      vm->pushParameter( vm->regA() );
+   }
+
+   // prepare next call
+   vm->local(0)->setInteger( count + 1 );
+
+   // perform call
+   if ( ! vm->callFrame( callables->at(count), pc ) )
+   {
+      vm->raiseRTError( new ParamError( ErrorParam( e_non_callable ) ) );
+      return false;
+   }
+
+   return true;
+}
+
+
 FALCON_FUNC  core_cascade ( ::Falcon::VMachine *vm )
 {
    Item *i_callables = vm->param(0);
@@ -2209,64 +2411,82 @@ FALCON_FUNC  core_cascade ( ::Falcon::VMachine *vm )
    }
 
    // for the first callable...
-   vm->retnil(); // defaults to nil
    CoreArray *callables = i_callables->asArray();
-
-   // will be true when the first function in the sequence accepts the parameters
-   bool bAccepted = false;
-   // holds the previous result when accepted.
-   Item prevResult;
-
-   // ... then call the others using the return value as the sole parameter.
-   for( uint32 i = 0; i < callables->length(); i ++ )
+   if( callables->length() == 0 )
    {
-      uint32 pcount;
-
-      if ( ! bAccepted )
-      {
-         // echo the parameters to the first call
-         pcount = vm->paramCount();
-         for ( uint32 pi = 1; pi < pcount; pi++ )
-         {
-            vm->pushParameter( *vm->param(pi) );
-         }
-         pcount--;
-      }
-      else {
-         // if we have accepted the head parameters, just use the previous result
-         pcount = 1;
-         vm->pushParameter( prevResult );
-      }
-
-      // perform the real call
-      if ( ! vm->callItem( callables->at(i), pcount ) )
-      {
-         vm->raiseRTError( new ParamError( ErrorParam( e_param_type ).
-            extra( "uncallable" ) ) );
-      }
-
-      if (vm->hadError())
-      {
-         // if the error was nil, it means the result is unaccepted; we must just
-         // proceed as usual
-         if ( vm->regB().isNil() )
-            vm->resetEvent();
-         else
-            return;
-      }
-      else if ( vm->hadEvent() )
-      {
-         return;
-      }
-      else {
-         // else we have accepted the parameters and we have also a valid result
-         bAccepted = true;
-         prevResult = vm->regA();
-      }
+      vm->retnil();
+      return;
    }
 
-   // we copy the last result as the last function may have not accepted it
-   vm->retval( prevResult );
+   // we have at least one callable.
+   // Prepare the local space
+   // 0: array counter
+   // 1: saved previous value
+   // saved previous value is initialized to oob until
+   // someone accepts the first parameters.
+   vm->addLocals(2);
+   vm->local(0)->setInteger( 1 );  // we'll start from 1
+   vm->local(1)->setOob();
+
+   // echo the parameters to the first call
+   uint32 pcount = vm->paramCount();
+   for ( uint32 pi = 1; pi < pcount; pi++ )
+   {
+      vm->pushParameter( *vm->param(pi) );
+   }
+   pcount--;
+
+   // install the handler
+   vm->returnHandler( core_cascade_next );
+
+   // perform the real call
+   if ( ! vm->callFrame( callables->at(0), pcount ) )
+   {
+      vm->raiseRTError( new ParamError( ErrorParam( e_non_callable ) ) );
+   }
+}
+
+
+FALCON_FUNC  core_oob( ::Falcon::VMachine *vm )
+{
+   Item *obbed = vm->param(0);
+   if ( ! obbed )
+   {
+      vm->regA().setNil();
+   }
+   else {
+      vm->regA() = *obbed;
+   }
+
+   vm->regA().setOob();
+}
+
+
+FALCON_FUNC  core_deoob( ::Falcon::VMachine *vm )
+{
+   Item *obbed = vm->param(0);
+   if ( ! obbed )
+   {
+      vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).
+         extra( "X" ) ) );
+      return;
+   }
+
+   vm->regA() = *obbed;
+   vm->regA().resetOob();
+}
+
+FALCON_FUNC  core_isoob( ::Falcon::VMachine *vm )
+{
+   Item *obbed = vm->param(0);
+   if ( ! obbed )
+   {
+      vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).
+         extra( "X" ) ) );
+      return;
+   }
+
+   vm->retval( (int64) (obbed->isOob() ? 1 : 0 ) );
 }
 
 // =================================================
@@ -2341,11 +2561,106 @@ FALCON_FUNC  removeFromAll( ::Falcon::VMachine *vm )
 }
 
 
+static bool broadcast_next_attrib( ::Falcon::VMachine *vm )
+{
+   CoreArray *attributes = vm->param(0)->asArray();
+   int64 pos = vm->local(0)->asInteger();
+
+   while( pos >= 0 && ((int64)pos) < attributes->length() )
+   {
+      // is it REALLY an attribute?
+      if ( ! attributes->at(pos).isAttribute() )
+      {
+         vm->raiseRTError( new ParamError( ErrorParam( e_param_type ).
+            extra( "not an attribute" ) ) );
+         return false;
+      }
+      Attribute *attrib = attributes->at(0).asAttribute();
+
+      // not empty ? -- we found it
+      if ( ! attrib->empty() )
+      {
+         vm->local(0)->setInteger( pos + 1 );
+         *vm->local(2) = attrib;
+         return true;
+      }
+
+      ++pos;
+   }
+
+   // we didn't find it
+   return false;
+}
+
+static bool broadcast_next( ::Falcon::VMachine *vm )
+{
+   AttribObjectHandler *aobj = (AttribObjectHandler *) vm->local(1)->asUserPointer();
+   Item *callback = 0;
+   Attribute *attrib;
+
+   // if regA is not true, break
+   if ( ! vm->regA().isTrue() )
+      return false;
+
+   while( aobj != 0 )
+   {
+      CoreObject *obj = aobj->object();
+      callback = obj->getProperty( vm->local(2)->asAttribute()->name() );
+      if ( callback != 0 && callback->isCallable() )
+      {
+         // Found!
+         break;
+      }
+      aobj = aobj->next();
+   }
+
+   while ( aobj == 0 )
+   {
+      int64 pos = vm->local(0)->asInteger();
+
+      // time to scan for a new attribute
+      if ( pos < 0 || ! broadcast_next_attrib( vm ) )
+      {
+         // we're done
+         vm->retnil();
+         return false;
+      }
+
+      // now scan for an item willing to receive the signal
+      Attribute *attrib = vm->local(2)->asAttribute();
+      aobj = attrib->head();
+      while( aobj != 0 )
+      {
+         CoreObject *obj = aobj->object();
+         callback = obj->getProperty( attrib->name() );
+         if ( callback->isCallable() )
+         {
+            // Found!
+            break;
+         }
+         aobj = aobj->next();
+      }
+   }
+
+   // prepare for next loop
+   vm->local(1)->setUserPointer( aobj->next() );
+   uint32 pcount = vm->paramCount();
+   for ( uint32 i = 1; i < pcount; i++ )
+   {
+      vm->pushParameter( *vm->param( i ) );
+   }
+   Item method = *callback;
+   method.methodize( aobj->object() );
+   vm->callFrame( method, pcount - 1 );
+   return true;
+}
+
+
 FALCON_FUNC  broadcast( ::Falcon::VMachine *vm )
 {
    uint32 pcount = vm->paramCount();
    Item *i_attrib = vm->param( 0 );
-   if ( ! i_attrib->isAttribute() && ! i_attrib->isArray() || pcount == 1 )
+   if ( ! i_attrib->isAttribute() && ! i_attrib->isArray() )
    {
       vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).
          extra( "a|A,..." ) ) );
@@ -2353,60 +2668,34 @@ FALCON_FUNC  broadcast( ::Falcon::VMachine *vm )
    }
 
    Attribute *attrib;
-   uint32 count = 0;
 
-   while( true )
+   if ( i_attrib->isAttribute() )
    {
-      if ( i_attrib->isAttribute() )
-      {
-         if ( count == 1 )
-            break;
+      attrib = i_attrib->asAttribute();
+      // nothing to broadcast?
+      if ( attrib->empty() )
+         return;
 
-         attrib = i_attrib->asAttribute();
-      }
-      else {
-         if ( count >= i_attrib->asArray()->length() )
-            break;
-
-         const Item &temp = i_attrib->asArray()->at(count);
-         if ( ! temp.isAttribute() )
-         {
-            vm->raiseRTError( new ParamError( ErrorParam( e_param_type ).
-               extra( "not an attribute" ) ) );
-            return;
-         }
-
-         attrib = temp.asAttribute();
-      }
-
-      AttribObjectHandler *head = attrib->head();
-      while( head != 0 )
-      {
-         CoreObject *obj = head->object();
-         Item *callback = obj->getProperty( attrib->name() );
-         if ( callback != 0 && callback->isCallable() )
-         {
-            for( uint32 pc = 1; pc < pcount; pc ++ )
-            {
-               vm->pushParameter( *vm->param( pc ) );
-            }
-            callback->methodize( obj );
-            vm->callItem( *callback, pcount - 1 );
-            if( vm->hadEvent() )
-            {
-               return;
-            }
-            // if it's all fine but the hander return false, interrupt this loop.
-            else if ( ! vm->regA().isTrue() )
-               break;
-         }
-
-         head = head->next();
-      }
-
-      count++;
+      // signal we'll be using an attribute
+      vm->addLocals( 3 );
+      vm->local(0)->setInteger( -1 );
+      vm->local(1)->setUserPointer( attrib->head() );
+      *vm->local(2) = attrib;
    }
+   else
+   {
+      vm->addLocals( 3 );
+      vm->local(0)->setInteger( 0 );
+      vm->local(1)->setUserPointer( 0 );
+   }
+
+   // set A to true to force first execution
+   vm->regA().setInteger(1);
+
+   vm->returnHandler( broadcast_next );
+   broadcast_next( vm );
 }
+
 
 } // end of core namespace
 
@@ -2518,6 +2807,9 @@ Module * core_module_init()
 
    Falcon::Symbol *cloneerr_cls = core->addClass( "CloneError", Falcon::core::CloneError_init );
    cloneerr_cls->getClassDef()->addInheritance(  new Falcon::InheritDef( error_class ) );
+
+   Falcon::Symbol *interr_cls = core->addClass( "InterruptedError", Falcon::core::IntrruptedError_init );
+   interr_cls->getClassDef()->addInheritance(  new Falcon::InheritDef( error_class ) );
    //=========================================
 
    // Creating the semaphore class
@@ -2528,23 +2820,6 @@ Module * core_module_init()
             core->addExtFunc( "Semaphore.post", Falcon::core::Semaphore_post ) );
    core->addClassMethod( semaphore_class, "wait",
             core->addExtFunc( "Semaphore.wait", Falcon::core::Semaphore_wait ) );
-
-   // The command line parser class
-   Symbol *cmdparser_class = core->addClass( "CmdlineParser", true );
-   core->addClassMethod( cmdparser_class, "parse", Falcon::core::CmdlineParser_parse );
-   core->addClassMethod( cmdparser_class, "expectValue", Falcon::core::CmdlineParser_expectValue );
-   core->addClassMethod( cmdparser_class, "terminate", Falcon::core::CmdlineParser_terminate );
-   // private property internally used to communicate between the child classes and
-   // the base parse.
-   core->addClassProperty( cmdparser_class, "_request" );
-   // Properties that will hold callbacks
-   core->addClassProperty( cmdparser_class, "onOption" );
-   core->addClassProperty( cmdparser_class, "onFree" );
-   core->addClassProperty( cmdparser_class, "onValue" );
-   core->addClassProperty( cmdparser_class, "onSwitchOff" );
-   core->addClassProperty( cmdparser_class, "passMinusMinus" );
-   core->addClassProperty( cmdparser_class, "lastParsed" );
-   core->addClassMethod( cmdparser_class, "usage", Falcon::core::CmdlineParser_usage );
 
    // GC support
    core->addExtFunc( "gcEnable", Falcon::core::gcEnable );
@@ -2611,6 +2886,11 @@ Module * core_module_init()
    core->addExtFunc( "lit", Falcon::core::core_lit );
    core->addExtFunc( "cascade", Falcon::core::core_cascade );
    core->addExtFunc( "dolist", Falcon::core::core_dolist );
+
+   core->addExtFunc( "oob", Falcon::core::core_oob );
+   core->addExtFunc( "deoob", Falcon::core::core_deoob );
+   core->addExtFunc( "isoob", Falcon::core::core_isoob );
+
 
    return core;
 }

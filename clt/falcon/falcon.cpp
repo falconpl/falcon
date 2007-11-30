@@ -813,10 +813,11 @@ int main( int argc, char *argv[] )
       stdOut->writeString( "Virtual machine suspended. Please enter an event:\n" );
       String ret;
       uint32 chr;
-      while( stdIn->get( chr ) && chr != '\n' );
-         ret.append( chr );
-
-      vmachine->resume( &ret );
+      while( stdIn->get( chr ) && chr != '\n' )
+         if ( chr != '\r' )
+            ret.append( chr );
+      
+      vmachine->resume( new GarbageString( vmachine, ret ) );
       // items in resume are not automatically stored in the GC, so we can destroy
       // the string here.
    }

@@ -267,8 +267,7 @@ bool AttribIterator::isValid() const
 
 bool AttribIterator::isOwner( void *collection ) const
 {
-   if ( collection == m_current )
-      return true;
+   return collection == m_current;
 }
 
 

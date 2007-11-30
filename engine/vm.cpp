@@ -87,6 +87,7 @@ void VMachine::internal_construct()
    m_symbol = 0;
    m_moduleId = 0;
    m_allowYield = true;
+   m_atomicMode = false;
    m_opCount = 0;
 
    // This vectror has also context ownership -- when we remove a context here, it's dead
@@ -1096,6 +1097,7 @@ void VMachine::fillErrorContext( Error *err, bool filltb )
 
 }
 
+
 bool VMachine::callItem( const Item &callable, int32 paramCount, e_callMode callMode )
 {
    Symbol *target;
@@ -1159,23 +1161,39 @@ bool VMachine::callItem( const Item &callable, int32 paramCount, e_callMode call
             if ( carr.isFbom() || carr.isFunction() ||
                carr.isMethod() || carr.isClass() )
             {
+               uint32 arraySize = arr->length();
                uint32 sizeNow = m_stack->size();
 
-               for ( uint32 i = 1; i < arr->length(); i ++ )
+               // prevent calling too wide arrays.
+               if ( paramCount + arraySize > 254 )
                {
-                  pushParameter( arr->at(i) );
+                  raiseError( e_too_params, "CALL" );
+                  if ( paramCount != 0 )
+                     m_stack->resize( sizeNow - paramCount );
+                  return false;
                }
 
-               for ( uint32 j = sizeNow - paramCount;
-                  j < sizeNow; j ++ )
+               // move parameters beyond array parameters
+               arraySize -- ; // first element is the callable item.
+               if ( arraySize > 0 )
                {
-                  pushParameter( m_stack->itemAt( j ) );
+                  // first array element is the called item.
+                  m_stack->resize( sizeNow + arraySize );
+
+                  sizeNow -= paramCount;
+                  for ( uint32 j = sizeNow; j < sizeNow + paramCount; j ++ )
+                  {
+                     m_stack->itemAt( j + arraySize ) = m_stack->itemAt( j );
+                  }
+
+                  // push array paramers
+                  for ( uint32 i = 0; i < arraySize; i ++ )
+                  {
+                     m_stack->itemAt( i + sizeNow ) = (*arr)[i + 1];
+                  }
                }
 
-               bool ret = callItem( carr, arr->length()-1 + paramCount );
-               if ( paramCount != 0 )
-                  m_stack->resize( m_stack->size() - paramCount );
-               return ret;
+               return callItem( carr, arraySize + paramCount, callMode );
             }
          }
 
@@ -1220,6 +1238,9 @@ bool VMachine::callItem( const Item &callable, int32 paramCount, e_callMode call
    frame->m_break = false;
    frame->m_suspend = false;
 
+   // iterative processing support
+   frame->m_endFrameFunc = 0;
+
    // now we can change the stack base
    m_stackBase = m_stack->size();
 
@@ -1259,7 +1280,8 @@ bool VMachine::callItem( const Item &callable, int32 paramCount, e_callMode call
       m_pc_next = tg_def->offset();
 
       // If the function is not called internally by the VM, another run is issued.
-      if( callMode == e_callNormal || callMode == e_callInst ) {
+      if( callMode == e_callNormal || callMode == e_callInst )
+      {
          // hitting the stack limit forces the RET code to raise a return event,
          // and this forces the machine to exit run().
 
@@ -1267,23 +1289,96 @@ bool VMachine::callItem( const Item &callable, int32 paramCount, e_callMode call
          frame->m_break = true;
          if ( m_event == eventSuspend )
             frame->m_suspend = true;
-         m_event = eventNone;
          run();
       }
    }
    else
    {
-      // extfunc:
-      // the PC may change dramatically if the extfunc uses the VM to call an item.
-      // so we save it and restore it after the call.
       m_symbol = target; // so we can have adequate tracebacks.
-      target->getExtFuncDef()->call( this );
-      if ( callable.isClass() )
-         m_regA.setObject( self );
-      callReturn();
+      // if we aren't in a frame call, call the item directly
+      if( callMode == e_callNormal || callMode == e_callInst )
+      {
+         target->getExtFuncDef()->call( this );
+         if ( callable.isClass() )
+            m_regA.setObject( self );
+         callReturn();
+      }
+      //else, ask the  VM to call it by using the fake m_pc
+      else {
+         if ( callable.isClass() )
+         {
+            m_regS1 = self;
+            m_pc_next = i_pc_call_external_ctor;
+         }
+         else  {
+            m_pc_next = i_pc_call_external;
+         }
+      }
    }
 
    return true;
+}
+
+
+void VMachine::createFrame( uint32 paramCount )
+{
+   // space for frame
+   m_stack->resize( m_stack->size() + VM_FRAME_SPACE );
+   StackFrame *frame = (StackFrame *) m_stack->at( m_stack->size() - VM_FRAME_SPACE );
+   frame->header.type( FLC_ITEM_INVALID );
+   frame->m_symbol = m_symbol;
+   frame->m_ret_pc = m_pc_next;
+   frame->m_call_pc = m_pc;
+   frame->m_modId = m_moduleId;
+   frame->m_param_count = (byte)paramCount;
+   frame->m_stack_base = m_stackBase;
+   frame->m_try_base = m_tryFrame;
+   frame->m_break = false;
+   frame->m_suspend = false;
+
+   // iterative processing support
+   frame->m_endFrameFunc = 0;
+
+   // prevent change of self and sender
+   frame->m_initFrame = true;
+
+   // prevent return
+   frame->m_break = false;
+
+   // now we can change the stack base
+   m_stackBase = m_stack->size();
+}
+
+
+bool VMachine::callItemAtomic(const Item &callable, int32 paramCount, e_callMode mode )
+{
+   bool oldAtomic = m_atomicMode;
+   m_atomicMode = true;
+   bool value = callItem( callable, paramCount, mode );
+   m_atomicMode = oldAtomic;
+   return value;
+}
+
+
+
+void VMachine::returnHandler( ext_func_frame_t callbackFunc )
+{
+   if ( m_stackBase > VM_FRAME_SPACE )
+   {
+      StackFrame *frame = (StackFrame *) m_stack->at( m_stackBase - VM_FRAME_SPACE );
+      frame->m_endFrameFunc = callbackFunc;
+   }
+}
+
+
+ext_func_frame_t VMachine::returnHandler()
+{
+   if ( m_stackBase > VM_FRAME_SPACE )
+   {
+      StackFrame *frame = (StackFrame *) m_stack->at( m_stackBase - VM_FRAME_SPACE );
+      return frame->m_endFrameFunc;
+   }
+   return 0;
 }
 
 
@@ -1362,7 +1457,6 @@ bool VMachine::callItemPass( const Item &callable  )
 
       return true;
    }
-
    else
    {
       m_stack->resize( m_stackBase );
@@ -1393,6 +1487,16 @@ bool VMachine::callItemPassIn( const Item &callable  )
 
 void VMachine::yield( numeric secs )
 {
+   if ( m_atomicMode )
+   {
+      raiseError( new InterruptedError( ErrorParam( e_interrupted ).origin( e_orig_vm ).
+            symbol( "yield" ).
+            module( "core.vm" ).
+            line( __LINE__ ).
+            hard() ) );
+      return;
+   }
+
    // be sure to allow yelding.
    m_allowYield = true;
 
@@ -1554,9 +1658,11 @@ void VMachine::itemToString( String &target, const Item *itm, const String &form
                params = 1;
             }
 
-            bool success = callItem( propString, params, e_callInst );
+            // atomically call the item
+            bool success = callItemAtomic( propString, params, e_callInst );
+
             m_regS1 = old;
-            if ( success ) {
+            if ( success && ! hadError() ) {
                // if regA is already a string, it's a quite light operation.
                regA().toString( target );
             }
@@ -1572,7 +1678,7 @@ void VMachine::itemToString( String &target, const Item *itm, const String &form
 
 void VMachine::callReturn()
 {
-   //... or we have nowhere to return.
+   // if we have nowhere to return...
    if( m_stackBase == 0 )
    {
       // do as if an end was in the code.
@@ -1583,18 +1689,28 @@ void VMachine::callReturn()
       return;
    }
 
-   // fix the self and sender
+   // Get the stack frame.
    StackFrame &frame = *(StackFrame *) m_stack->at( m_stackBase - VM_FRAME_SPACE );
+
+   // if the stack frame requires an end handler...
+   // ... but only if not unrolling a stack because of error...
+   if ( ! hadStoppingEvent() && frame.m_endFrameFunc != 0 )
+   {
+      // reset pc-next to allow re-call of this frame in case of need.
+      m_pc_next = m_pc;
+      // if the frame requires to stay here, return immediately
+      if ( frame.m_endFrameFunc( this ) )
+      {
+         return;
+      }
+   }
+
+   // fix the self and sender
    if ( ! frame.m_initFrame ) {
       m_regS1 = m_regS2;
       m_regS2 = frame.m_sender;
    }
 
-   // The caller may only be of type function; all the rest is managed before.
-   m_stack->resize( m_stackBase - frame.m_param_count - VM_FRAME_SPACE );
-
-   //get the stack frame.
-   m_stackBase = frame.m_stack_base;
    if( frame.m_break )
    {
       m_event = frame.m_suspend ? eventSuspend : eventReturn;
@@ -1616,6 +1732,12 @@ void VMachine::callReturn()
 
    // reset try frame
    m_tryFrame = frame.m_try_base;
+
+   // reset stack base and resize the stack
+   uint32 oldBase = m_stackBase -frame.m_param_count - VM_FRAME_SPACE;
+   m_stackBase = frame.m_stack_base;
+   m_stack->resize( oldBase );
+
 }
 
 
@@ -2593,7 +2715,6 @@ VMachine::returnCode  VMachine::expandString( const String &src, String &target 
                // otherwise, add the toString version (todo format)
                // append to target.
                itemToString( temp, itm );
-
             }
 
             // having an error in an itemToString ?
@@ -2641,8 +2762,8 @@ int VMachine::compareItems( const Item &first, const Item &second )
          m_regA = (int64)0;
 
          pushParameter( second );
-         callItem( comparer, 1 );
-         // if the item is nil, fallback to normal item comparation.
+         // enter atomic mode
+         callItemAtomic( comparer, 1 );
 
          if ( hadError() )
          {
@@ -2650,6 +2771,7 @@ int VMachine::compareItems( const Item &first, const Item &second )
             return 2;
          }
 
+         // if the item is nil, fallback to normal item comparation.
          if( ! m_regA.isNil() )
          {
             int val = (int) m_regA.forceInteger();
@@ -2663,7 +2785,9 @@ int VMachine::compareItems( const Item &first, const Item &second )
          Item oldA = m_regA;
 
          pushParameter( second );
-         callItem( comparer, 1 );
+         // enter atomic mode
+         callItemAtomic( comparer, 1 );
+
          if ( hadError() )
          {
             m_regA = oldA;
@@ -2695,73 +2819,113 @@ void VMachine::referenceItem( Item &target, Item &source )
    }
 }
 
+
+static bool vm_func_eval( VMachine *vm )
+{
+   CoreArray *arr = vm->local( 0 )->asArray();
+   uint32 count = (uint32) vm->local( 1 )->asInteger();
+
+   // let's push other function's return vallue
+   vm->pushParameter( vm->regA() );
+
+   // fake a call return
+   while ( count < arr->length() )
+   {
+      *vm->local( 1 ) = (int64) count+1;
+      if ( vm->functionalEval( arr->at(count) ) )
+      {
+         return true;
+      }
+      vm->pushParameter( vm->regA() );
+      ++count;
+   }
+
+   // done? -- have we to perform a last reduction call?
+
+   if( count > 0 && vm->local( 2 )->isCallable() )
+   {
+      vm->returnHandler(0);
+      vm->callFrame( *vm->local( 2 ), count - 1 );
+      return true;
+   }
+
+   // if the first element is not callable, generate an array
+   CoreArray *array = new CoreArray( vm, count );
+   Item *data = array->elements();
+   int32 base = vm->currentStack().size() - count;
+
+   for ( uint32 i = 0; i < count; i++ ) {
+      data[ i ] = vm->currentStack().itemAt(i + base);
+   }
+   array->length( count );
+   vm->regA() = array;
+   vm->currentStack().resize( base );
+
+   return false;
+}
+
+
 bool VMachine::functionalEval( const Item &itm )
 {
    // An array
    if ( itm.isArray() )
    {
+      createFrame(0);
+
       CoreArray *arr = itm.asArray();
-      if ( arr->length() > 0 )
+
+      // great. Then recursively evaluate the parameters.
+      uint32 count = arr->length();
+      if ( count > 0 )
       {
-         // if the first element is not a callable, push that too.
-         if ( arr->at(0).isCallable() )
+         // create two locals; we may need it
+         addLocals( 2 );
+         // time to install our handleres
+         returnHandler( vm_func_eval );
+         *local(0) = itm;
+         *local(1) = (int64)0;
+
+         for ( uint32 l = 0; l < count; l ++ )
          {
-            // functional constructs take care of themselves.
-            if ( checkFunctional( arr->at( 0 ).asFunction()->name() ) )
+            const Item &citem = arr->at(l);
+            *local(1) = (int64)l+1;
+            if ( functionalEval( citem ) )
             {
-               callItem( itm, 0 );
-               return m_regA.isTrue();
+               return true;
             }
 
-            // great. Then recursively evaluate the parameters.
-            uint32 count = arr->length();
-            for ( uint32 l = 1; l < count; l ++ )
-            {
-               functionalEval( arr->at(l) );
-               // in case of errors, interrupts or the like...
-               // ... or if someone played with our array...
-               if ( hadEvent() || count != arr->length() )
-               {
-                  // ... unroll the stack and bail out
-                  m_stack->resize( m_stack->size() + l - 1 );
-                  return false;
-               }
-
-               pushParameter( m_regA );
-            }
-
-            count --;
-            // perform the call for this level
-            callItem( arr->at(0), count );
+            pushParameter( m_regA );
          }
-         else
+         // we got nowere to go
+         returnHandler( 0 );
+
+         // is there anything to call? -- is the first element an atom?
+         // local 2 is the first element we have pushed
+         if( local(2)->isCallable() )
          {
-            // Generate the array
-            CoreArray *array = new CoreArray( this, arr->length() );
-            array->length( arr->length() );
-            for( uint32 i = 0; i < arr->length(); i++ )
-            {
-               functionalEval( arr->at(i) );
-               // in case of errors, interrupts, sleep requests...
-               if ( hadEvent() )
-               {
-                  return false;
-               }
-               array->at(i) = m_regA;
-            }
-            m_regA.setArray( array );
+            callFrame( *local(2), count-1 );
+            return true;
          }
       }
-      else {
-         m_regA.setArray( new CoreArray( this ) );
+
+      // if the first element is not callable, generate an array
+      CoreArray *array = new CoreArray( this, count );
+      Item *data = array->elements();
+      int32 base = m_stack->size() - count;
+
+      for ( uint32 i = 0; i < count; i++ ) {
+         data[ i ] = m_stack->itemAt(i + base);
       }
+      array->length( count );
+      m_regA = array;
+      callReturn();
    }
    else
    {
       m_regA = itm;
    }
 
-   return m_regA.isTrue();
+   return false;
 }
 
 bool VMachine::checkFunctional( const String &name )

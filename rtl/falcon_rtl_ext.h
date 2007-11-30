@@ -300,6 +300,12 @@ FALCON_FUNC  TimeStamp_fromLongFormat ( ::Falcon::VMachine *vm );
 FALCON_FUNC  TimeStamp_compare ( ::Falcon::VMachine *vm );
 FALCON_FUNC  CurrentTime ( ::Falcon::VMachine *vm );
 
+/** The command line parser */
+FALCON_FUNC  CmdlineParser_parse( ::Falcon::VMachine *vm );
+FALCON_FUNC  CmdlineParser_expectValue( ::Falcon::VMachine *vm );
+FALCON_FUNC  CmdlineParser_terminate( ::Falcon::VMachine *vm );
+FALCON_FUNC  CmdlineParser_usage( ::Falcon::VMachine *vm );
+
 /** FileStat class */
 FALCON_FUNC FileReadStats ( ::Falcon::VMachine *vm ); // factory function
 FALCON_FUNC FileStat_readStats ( ::Falcon::VMachine *vm );
@@ -308,6 +314,9 @@ FALCON_FUNC  itemCopy( ::Falcon::VMachine *vm );
 
 /** Message table **/
 extern wchar_t *message_table[];
+
+
+
 }}
 
 

@@ -12,13 +12,13 @@
 ****************************************************************************/
 
 function map_func( a )
-   if a < 0: raise nil
+   if a < 0: return oob()
    return a * a
 end
 
+
 // empty mapping
 if xmap( map_func, [] ).len() != 0: failure( "Empty set" )
-
 fp = xmap( map_func, [1,-2,3,-4] )
 
 if fp.len() != 2
@@ -29,6 +29,34 @@ if fp[0] != 1 or fp[1] != 9
    failure( "Full reducing without initial value" )
 end
 
+//===================================================
+// a bit more complex
+//
+function mapper( a )
+   if a == 3: return oob()
+   return a * 2
+end
+
+function retval( name )
+   switch name
+      case "uno"
+         return  1
+      case "due"
+         return 2
+   end
+end
+
+function join( a, b )
+   return a + b
+end
+
+arr = [ [retval, [join, "u","no"]],[retval, [join, "d","ue"]], [join, 2, 1],4 ]
+arr1 = xmap( mapper, arr )
+
+if arr1.len() != 3: failure( "Functional eval, returned array size" )
+if arr1[0] != 2: failure("Functional eval 1" )
+if arr1[1] != 4: failure("Functional eval 2" )
+if arr1[2] != 8: failure("Functional eval 3" )
 
 success()
 

@@ -34,7 +34,6 @@ namespace ext {
 
 /**
    call( callable [, arrayOfParams] )
-   call( arrayWithCallable )
 */
 
 FALCON_FUNC  call( ::Falcon::VMachine *vm )
@@ -42,57 +41,35 @@ FALCON_FUNC  call( ::Falcon::VMachine *vm )
    Item *func_x = vm->param(0);
    Item *params_x = vm->param(1);
 
-   if ( func_x == 0 || ( params_x != 0 && ! params_x->isArray() ) ) {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
+   if ( func_x == 0 || ! func_x->isCallable() ||
+       ( params_x != 0 && ! params_x->isArray() ) )
+       {
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         origin( e_orig_runtime ).
+         extra( "C,A" ) ) );
       return;
    }
 
-   // callable as first parameter
-   int start = 0;
-   int size = 0;
-   CoreArray *array;
-   Item *elements;
+   // fetch the item here, as we're going to change the vector.
+   Item func = *func_x;
 
-   if ( func_x->isArray() ) {
-      // if the first element of the array is callable...
-      array = func_x->asArray();
-      elements = array->elements();
+   uint32 count = 0;
 
-      if ( array->length() == 0 || ! elements[0].isCallable() ) {
-         vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
-         return;
-      }
-
-      func_x = elements;
-      size = array->length();
-      start = 1;
-   }
-   else if ( func_x->isCallable() ) {
-      if ( params_x != 0 ) {
-         array = params_x->asArray();
-         elements = array->elements();
-         size = array->length();
+   if ( params_x != 0 )
+   {
+      CoreArray *array = params_x->asArray();
+      count = array->length();
+      for( uint32 i = 0; i < count; i++ )
+      {
+         vm->pushParameter( (*array)[ i ] );
       }
    }
-   else {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
-      return;
-   }
 
-   int count = 0;
-   while ( start < size ) {
-      vm->pushParameter( elements[ start ++ ] );
-      count++;
-   }
-
-   vm->callItem( *func_x, count );
-
-   // do not change the return from callItem
+   vm->callFrame( func, count );
 }
 
 /**
    methodCall( object, method, [, arrayOfParams] )
-   raises 9002 if method does not exists or 9003 if is not callable.
 */
 
 FALCON_FUNC  methodCall( ::Falcon::VMachine *vm )
@@ -136,9 +113,7 @@ FALCON_FUNC  methodCall( ::Falcon::VMachine *vm )
       }
    }
 
-   vm->callItem( method, count );
-
-   // do not change the return from callItem
+   vm->callFrame( method, count );
 }
 
 }

@@ -39,6 +39,7 @@ namespace msg {
    const int rtl_need_two_arr = 8;
    const int rtl_idx_not_num = 9;
    const int rtl_start_outrange = 10;
+   const int rtl_cmdp_0 = 11;
 }
 }
 

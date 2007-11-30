@@ -1,9 +1,8 @@
 /*
    FALCON - The Falcon Programming Language.
    FILE: array.cpp
-   $Id: array.cpp,v 1.11 2007/08/11 12:16:00 jonnymind Exp $
 
-   Short description
+   Array specialized operation
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: dom nov 7 2004
@@ -20,7 +19,10 @@
 */
 
 /** \file
-   Short description
+   Array specialized operation
+   Theese operations replicate VM array management,
+   but they are more flexible and use atomic calls in
+   callbacks.
 */
 
 #include <falcon/setup.h>
@@ -359,10 +361,12 @@ FALCON_FUNC  arrayScan ( ::Falcon::VMachine *vm )
    }
 
    Item *elements = array->elements();
+   // fetching as we're going to change the stack
+   Item func = *func_x;
    for( int32 i = pos_start; i < pos_end; i++ )
    {
       vm->pushParameter( elements[i] );
-      vm->callItem( *func_x, 1 );
+      vm->callItemAtomic( func, 1 );
       if ( vm->regA().isTrue() ) {
          vm->retval( i );
          return;
@@ -428,9 +432,11 @@ FALCON_FUNC  arrayFilter( ::Falcon::VMachine *vm )
    }
 
    Item *elements = array->elements();
+   // fetching as we're going to change the stack
+   Item func = *func_x;
    for( int32 i = pos_start; i < pos_end; i++ ) {
       vm->pushParameter( elements[i] );
-      vm->callItem( *func_x, 1 );
+      vm->callItemAtomic( func, 1 );
       if ( vm->regA().isTrue() ) {
          target->append( elements[i] );
       }
@@ -439,6 +445,74 @@ FALCON_FUNC  arrayFilter( ::Falcon::VMachine *vm )
    vm->retval( target );
 }
 
+
+FALCON_FUNC  arrayMap( ::Falcon::VMachine *vm )
+{
+   Item *array_x = vm->param(0);
+   Item *func_x = vm->param(1);
+   Item *start = vm->param(2);
+   Item *end = vm->param(3);
+
+   if ( array_x == 0 || ! array_x->isArray() ) {
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         origin( e_orig_runtime ).extra( vm->moduleString( msg::rtl_array_first ) ) ) );
+      return;
+   }
+
+   if ( func_x == 0 || ! func_x->isCallable() ) {
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         origin( e_orig_runtime ).extra( vm->moduleString( msg::rtl_second_call ) ) ) );
+      return;
+   }
+
+   if ( start != 0 && ! start->isOrdinal() ) {
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         origin( e_orig_runtime ).extra( vm->moduleString( msg::rtl_arrpar2 ) ) ) );
+      return;
+   }
+
+   if ( end != 0 && ! end->isOrdinal() ) {
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         origin( e_orig_runtime ).extra( vm->moduleString( msg::rtl_arrpar3 ) ) ) );
+      return;
+   }
+
+   CoreArray *array = array_x->asArray();
+   // can find nothing in an empty array
+   if ( array->length() == 0 ) {
+      vm->retval( new CoreArray( vm ) );
+      return;
+   }
+
+   int32 pos_start = (int32) (start == 0 ? 0 : start->asInteger());
+   int32 pos_end = (int32) (end == 0 ? array->length() : end->asInteger());
+   if ( pos_start > pos_end ) {
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         origin( e_orig_runtime ).extra( vm->moduleString( msg::rtl_scan_end ) ) ) );
+      return;
+   }
+
+   CoreArray *target = new CoreArray( vm );
+
+   if ( pos_start < 0 || pos_start >= (int32) array->length() || pos_end > (int32) array->length()) {
+       vm->raiseModError( new RangeError( ErrorParam( e_arracc, __LINE__ ).
+         origin( e_orig_runtime ) ) );
+      return;
+   }
+
+   Item *elements = array->elements();
+   // fetching as we're going to change the stack
+   Item func = *func_x;
+   for( int32 i = pos_start; i < pos_end; i++ ) {
+      vm->pushParameter( elements[i] );
+      vm->callItemAtomic( func, 1 );
+      if ( !vm->regA().isOob() ) {
+         target->append( vm->regA() );
+      }
+   }
+
+   vm->retval( target );
+}
 
 #define MINMAL_QUICKSORT_THRESHOLD     4
 inline void arraySort_swap( Item *a, int i, int j)
@@ -511,19 +585,19 @@ static void arraySort_quickSort_flex( VMachine *vm, Item *comparer, Item *array,
 
       vm->pushParameter( array[l] );
       vm->pushParameter( array[i] );
-      vm->callItem( *comparer, 2 );
+      vm->callItemAtomic( *comparer, 2 );
 
       if ( vm->regA().asInteger() > 0 ) arraySort_swap( array, l , i );
 
       vm->pushParameter( array[l] );
       vm->pushParameter( array[r] );
-      vm->callItem( *comparer, 2 );
+      vm->callItemAtomic( *comparer, 2 );
 
       if ( vm->regA().asInteger() > 0 ) arraySort_swap( array , l, r );
 
       vm->pushParameter( array[i] );
       vm->pushParameter( array[r] );
-      vm->callItem( *comparer, 2 );
+      vm->callItemAtomic( *comparer, 2 );
       if ( vm->regA().asInteger() > 0 ) arraySort_swap( array, i, r );
 
       j = r - 1;
@@ -535,14 +609,14 @@ static void arraySort_quickSort_flex( VMachine *vm, Item *comparer, Item *array,
             do {
                vm->pushParameter( array[++i] );
                vm->pushParameter( v );
-               vm->callItem( *comparer, 2 );
+               vm->callItemAtomic( *comparer, 2 );
             }
             while( vm->regA().asInteger() < 0 );
 
             do {
                vm->pushParameter( array[--j] );
                vm->pushParameter( v );
-               vm->callItem( *comparer, 2 );
+               vm->callItemAtomic( *comparer, 2 );
             }
             while( vm->regA().asInteger() > 0 );
 
@@ -570,7 +644,7 @@ static void arraySort_insertionSort_flex( VMachine *vm, Item *comparer, Item *ar
       {
          vm->pushParameter( array[j-1] );
          vm->pushParameter( v );
-         vm->callItem( *comparer, 2 );
+         vm->callItemAtomic( *comparer, 2 );
 
          if ( vm->regA().asInteger() <= 0 )
             break;
@@ -614,8 +688,11 @@ FALCON_FUNC  arraySort( ::Falcon::VMachine *vm )
       arraySort_insertionSort( vm, vector, 0, array->length() -1 );
    }
    else {
-      arraySort_quickSort_flex( vm, sorter_itm, vector, 0, array->length() - 1 );
-      arraySort_insertionSort_flex( vm, sorter_itm, vector, 0, array->length() -1 );
+      // fetching as we're going to change the stack
+      Item sorter = *sorter_itm;
+
+      arraySort_quickSort_flex( vm, &sorter, vector, 0, array->length() - 1 );
+      arraySort_insertionSort_flex( vm, &sorter, vector, 0, array->length() -1 );
    }
 }
 

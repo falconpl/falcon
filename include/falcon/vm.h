@@ -235,6 +235,31 @@ class FALCON_DYN_CLASS VMachine: public ErrorHandler
 {
 
 public:
+   /** VM events.
+      This enumeration contains the list of events that the VM may receive.
+
+      They are divided in three categories: normal events, suspension events
+      and stopping events.
+
+      Stopping events requires the VM to stop or quit immediately, and they cause
+      destruction of the stack. Some of them (i.e. eventRisen that signal an error
+      risal) can be intercepted and blocked; in that case, the stack below the
+      intercept point is still valid. Stopping events are namely eventOpLimit,
+      eventQuit and eventRaise.
+      \note The stack may not actually be destroyed, i.e. because it is useless
+      to properly unroll a stack that is not going to be used anymore. However,
+      it must be considered unuseable after the VM has returned having such an
+      event set.
+
+      Suspension events are those that require a temporary suspension of the VM,
+      and they are meant to leave the VM in a coherent state for immediate resumal.
+      eventSleep, eventSuspend and eventSingleStep are suspension events.
+
+      Other events are labeled "normal", and they just require the VM to do something
+      in its current working frame without changing state. They are eventYield, eventWait
+      and event Return.
+   */
+
    typedef enum {
       eventNone,
       eventQuit,
@@ -248,6 +273,19 @@ public:
       eventSleep,
       eventInterrupt
    } tEvent;
+
+   /** This valuess indicates that the VM is in external execution mode.
+      With this value in m_pc, the VM will execute the symbol found
+      in m_symbol.
+   */
+   enum {
+      i_pc_call_request = 0xFFFFFFFF-sizeof(int32)*4,
+      i_pc_redo_request =0xFFFFFFFF-sizeof(int32)*4,
+      i_pc_call_external_ctor = 0xFFFFFFFF-sizeof(int32)*3,
+      i_pc_call_external_ctor_return = 0xFFFFFFFF-sizeof(int32)*2,
+		i_pc_call_external = 0xFFFFFFFF-sizeof(int32),
+		i_pc_call_external_return = 0xFFFFFFFF
+   };
 
 protected:
    /** Structure used to save the vardefs during class link */
@@ -370,6 +408,9 @@ protected:
    ContextList m_sleepingContexts;
    /** Wether or not to allow a VM hostile takeover of the current context. */
    bool m_allowYield;
+
+   /** In atomic mode, the VM refuses to be kindly interrupted or to rotate contexts. */
+   bool m_atomicMode;
 
 
    /** Raised error.
@@ -538,6 +579,12 @@ protected:
 
    /** Checks if a given function name is a functional construct. */
    bool checkFunctional( const String &name );
+
+   /** Creates a new stack frame.
+      // well...
+      \param paramCount number of parameters in the stack
+   */
+   void createFrame( uint32 paramCount );
 
 public:
 
@@ -906,6 +953,13 @@ public:
       As their call is handled specially, they have a special mean to
       access their stack elements (read: their parameters).
 
+      \note Fetched item pointers are valid while the stack doesn't change.
+            Pushes, addLocal(), item calls and VM operations may alter the
+            stack. Using this method again after such operations allows to
+            get a valid pointer to the desired item again. Items extracted with
+            this method can be also saved locally in an Item instance, at 
+            the cost of a a flat item copy (a few bytes).
+
       \param itemId the number of the parameter accessed, 0 based.
       \return a valid pointer to the (dereferenced) parameter or 0 if itemId is invalid.
       \note Calling this from a non-bom handler will crash.
@@ -918,19 +972,7 @@ public:
    }
 
    /** Returns the nth paramter passed to the VM.
-      The count is 0 based (0 is the first parameter).
-      If the parameter exists, a pointer to the Item holding the
-      parameter will be returned. If the item is a reference,
-      the referenced item is returned instead (i.e. the parameter
-      is dereferenced before the return).
-
-      The pointer may be modified by the caller, but this will usually
-      have no effect in the calling program unless the parameter has been
-      passed by reference.
-
-      \param itemId the number of the parameter accessed, 0 based.
-      \return a valid pointer to the (dereferenced) parameter or 0 if itemId is invalid.
-      \see isParamByRef
+      Const version of param(uint32).
    */
    const Item *param( uint32 itemId ) const
    {
@@ -953,6 +995,13 @@ public:
       have no effect in the calling program unless the parameter has been
       passed by reference.
 
+      \note Fetched item pointers are valid while the stack doesn't change.
+            Pushes, addLocal(), item calls and VM operations may alter the
+            stack. Using this method again after such operations allows to
+            get a valid pointer to the desired item. Items extracted with
+            this method can be also saved locally in an Item instance, at 
+            the cost of a a flat item copy (a few bytes).
+
       \param itemId the number of the parameter accessed, 0 based.
       \return a valid pointer to the (dereferenced) parameter or 0 if itemId is invalid.
       \see isParamByRef
@@ -967,6 +1016,12 @@ public:
 
    /** Returns the nth local item.
       The first variable in the local context is numbered 0.
+      \note Fetched item pointers are valid while the stack doesn't change.
+            Pushes, addLocal(), item calls and VM operations may alter the
+            stack. Using this method again after such operations allows to
+            get a valid pointer to the desired item again. Items extracted with
+            this method can be also saved locally in an Item instance, at 
+            the cost of a a flat item copy (a few bytes).
       \param itemId the number of the local item accessed.
       \return a valid pointer to the (dereferenced) local variable or 0 if itemId is invalid.
    */
@@ -1013,14 +1068,12 @@ public:
 
    void resume()
    {
-      m_event = eventNone;
       retnil();
       run();
    }
 
    void resume( const Item &returned )
    {
-      m_event = eventNone;
       retval( returned );
       run();
    }
@@ -1146,7 +1199,9 @@ public:
       If the called class has no constructor, the function returns true but actually
       does nothing.
 
-      Before calling this function, enough parameters must be pushed in the stack.
+      Before calling this function, enough parameters must be pushed in the stack
+      using pushParameter() method.
+
       The paramCount parameter must be smaller or equal to the size of the stack,
       or an unblockable error will be raised.
 
@@ -1157,7 +1212,76 @@ public:
       \return false if the item is not callable, true if the item is called.
    */
    bool callItem( const Item &callable, int32 paramCount, e_callMode mode=e_callNormal );
+
+   /** Shortcut for to call an item from a VM frame.
+      Extension functions and VM/core functions meant to be called from the
+      run() loop should use this function instead the callItem.
+
+      The function prepares the VM to execute the desired item at the next run loop,
+      as soon as the calling function returns.
+
+      The caller should return immediately, or after a short cleanup, in case the
+      call is succesful (and the function returns true).
+
+      If the function needs to continue or do some post-processing after calling
+      the callable item, it must install a return frame handler using returnHandler()
+   */
+   bool callFrame( const Item &callable, int32 paramCount )
+   {
+      return callItem( callable, paramCount, VMachine::e_callFrame );
+   }
+
+   /** Call an item in atomic mode.
+      This method is meant to call the vm run loop from inside another vm
+      run loop. When this is necessary, the inner call must end as soon as
+      possible. The VM becomes unprehemptible; contexts are never switched,
+      operation count limits (except for hard limits) are not accounted and
+      any explicit try to ask for the VM to suspend, wait, yield or sleep
+      raises an unblockable error.
+
+      Things to be called in atomic mode are i.e. small VM operations
+      overload methods, as the toString or the compare. All the rest should
+      be performed using the callFrame mechanism.
+   */
+   bool callItemAtomic(const Item &callable, int32 paramCount, e_callMode mode=e_callNormal );
+
+   /** Installs a post-processing return frame handler.
+      The function passed as a parmeter will receive a pointer to this VM.
+
+      The function <b>MUST</b> return true if it performs another frame item call. This will
+      tell the VM that the stack cannot be freed now, as a new call stack has been
+      prepared for immediate execution. When done, the function will be called again.
+
+      A frame handler willing to call another frame and not willing to be called anymore
+      must first unininstall itself by calling this method with parameters set at 0,
+      and then it <b>MUST return true</b>.
+
+      A frame handler not installing a new call frame <b>MUST return false</b>. This will
+      terminate the current stack frame and cause the VM to complete the return stack.
+      \param callbackFunct the return frame handler, or 0 to disinstall a previously set handler.
+   */
+   void returnHandler( ext_func_frame_t callbackFunc );
+
+   /** Returns currently installed return handler, or zero if none.
+      \return  currently installed return handler, or zero if none.
+   */
+   ext_func_frame_t returnHandler();
+
+   /** Pushes a parameter for the vm callItem and callFrame functions.
+      \see callItem
+      \see callFrame
+      \param item the item to be passes as a parameter to the next call.
+   */
    void pushParameter( const Item &item ) { m_stack->push( const_cast< Item *>(&item) ); }
+
+   /** Adds some local space
+      \param amount how many local variables must be created
+   */
+   void addLocals( uint32 space )
+   {
+      if ( m_stack->size() < m_stackBase + space )
+         m_stack->resize( m_stackBase + space );
+   }
 
    byte operandType( byte opNum ) const {
       return m_code[m_pc + 1 + opNum];
@@ -1368,13 +1492,32 @@ public:
       int the kind of event that interrupted VM execution. As they just must
       respect the request and pass it on the higher level (that is, the VM
       that called them, or the embedding environment), they should just interrupt
-      iterations and return in case an event is raised at return of a 
+      iterations and return in case an event is raised at return of a
       callItem.
-
+      \see tEvent
       \return true if the VM has any event set.
    */
    bool hadEvent() const { return m_event != eventNone; }
 
+   /** True if VM exited with a stopping event.
+      \see tEvent
+      \return true if the VM had one of the stopping events.
+   */
+   bool hadStoppingEvent() const {
+      return
+         m_event == eventQuit ||
+         m_event == eventRisen ||
+         m_event == eventOpLimit; }
+
+   /** True if VM exited with a suspension event.
+      \see tEvent
+      \return true if the VM had one of the suspension events.
+   */
+   bool hadSuspensionEvent() const {
+      return
+         m_event == eventSuspend ||
+         m_event == eventSingleStep ||
+         m_event == eventSleep; }
 
    /** In case of VM sleeps, return to the main application.
       If a yield request has been sent to the VM, and that
@@ -1610,17 +1753,26 @@ public:
    /** Evaluate the item in a functional context.
       The function return either true or false, evaluating the item
       as a funcional token.
+      # If the item is an array, it is recursively scanned.
       # If the item is a callable item (including callable arrayas),
         it is called and then the return value is evaluated in a
         non-functional context (plain evaluation).
       # In all the other cases, the item is evaluated in a non-functional
         context.
+
       More simply, if the item is callable is called, and is result
       is checked for Falcon truth value. If not, it's simply checked.
 
-      In case of VM error (exception raise), the function will still
-      return true or false, but the result may not be accurate.
-      Always check for hadError() after this call.
+      The return value will be in regA(), and it's the "reduced" list
+      of items.
+
+      The function returns true if it has to stop for frame evaluation,
+      false if the caller can loop. When the function returns true, the
+      caller must immediately return to the calling frame; in case it
+      needs to continue processing, it must install a frame return handler
+      to be called back when the frame created by functionalEval is done.
+
+      \return false if the caller can proceed, true if it must return.
    */
 
    bool functionalEval( const Item &itm );

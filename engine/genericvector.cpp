@@ -173,27 +173,27 @@ void GenericVector::resize( uint32 s )
          byte *mem = (byte *) memRealloc( m_data, (s+1) * m_itemSize );
          if ( mem != 0 )
          {
-            m_allocated = s+1;
+            m_allocated = (s+1);
             m_data = mem;
          }
       }
 
-      for( uint32 i = m_size; i < s; i ++ ) {
+      for( uint32 i = m_size; i <= s; i ++ ) {
          m_traits->init( at( i ) );
       }
    }
    else {
       if ( m_traits->owning() )
       {
-         for( uint32 i = s; i < m_size; i ++ ) {
+         for( uint32 i = s+1; i < m_size; i ++ ) {
             m_traits->destroy( at( i ) );
          }
       }
 
       if ( m_threshold_size != 0 && s + m_threshold_size < m_size )
       {
-         m_data = (byte *) memRealloc( m_data, (s+1) * m_itemSize );
-         m_allocated = s+1;
+         m_data = (byte *) memRealloc( m_data, s * m_itemSize );
+         m_allocated = s;
       }
    }
 

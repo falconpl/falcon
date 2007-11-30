@@ -1,0 +1,43 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 37a
+* Category: rtl
+* Subcategory: core
+* Short: Basic OOB
+* Description:
+*   Check for item OOB set, reset and status.
+*   TODO: Move this as 4a when OOB operators are done.
+* [/Description]
+****************************************************************************/
+
+item = oob( 100 )
+if item != 100: failure( "Oob invariancy 1" )
+if not isoob( item ): failure( "Oob status" )
+item = deoob( item  )
+if item != 100: failure( "Oob invariancy 2" )
+if isoob( item ): failure( "Oob reset" )
+
+arr = [1, 2, oob(3), 4]
+
+if arr[2] != 3: failure( "Oob deep invariancy 1" )
+if not isoob( arr[2] ): failure( "Oob deep status" )
+arr[2] = deoob( arr[2]  )
+if arr[2] != 3: failure( "Oob deep invariancy 2" )
+if isoob( arr[2] ): failure( "Oob deep reset" )
+
+arr[2] = oob(3)
+item = arr[2]
+last = item
+if last != 3: failure( "Oob transitive invariancy 1" )
+if not isoob( last ): failure( "Oob transitive status" )
+
+item = deoob( arr[2] )
+
+if last != 3: failure( "Oob self invariancy 2" )
+if not isoob( last ): failure( "Oob self status invariancy" )
+if not isoob( arr[2] ): failure( "Oob maitanin" )
+if isoob( item ): failure( "Oob remove" )
+if item != arr[2]: failure( "Equality of different oob stated data" )
+
+/* End of file */

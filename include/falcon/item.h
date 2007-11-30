@@ -119,11 +119,14 @@ private:
 #ifdef _MSC_VER
 	#if _MSC_VER < 1299
 	#define flagOpenRange 0x02
+	#define flagIsOob 0x04
 	#else
 	   static const byte flagOpenRange = 0x02;
+	   static const byte flagIsOob = 0x04;
 	#endif
 #else
 	static const byte flagOpenRange = 0x02;
+   static const byte flagIsOob = 0x04;
 #endif
 
 public:
@@ -321,9 +324,60 @@ public:
       m_base.bits.type = FLC_ITEM_FBOM;
    }
 
+   /** Defines this item as a out of band data.
+      Out of band data allow out-of-order sequencing in functional programming.
+      If an item is out of band, it's type it's still the original one, and
+      its value is preserved across function calls and returns; however, the
+      out of band data may innescate a meta-level processing of the data
+      travelling through the functions.
+
+      In example, returning an out of band NIL value from an xmap mapping
+      function will cause xmap to discard the data.
+   */
+   void setOob() { m_base.bits.flags |= flagIsOob; }
+
+   /** Clear out of band status of this item.
+      \see setOob()
+   */
+   void resetOob() { m_base.bits.flags &= ~flagIsOob; }
+
+   /** Sets or clears the out of band status status of this item.
+      \param oob true to make this item out of band.
+      \see setOob()
+   */
+   void setOob( bool oob ) {
+      if ( oob )
+         m_base.bits.flags |= flagIsOob;
+      else
+         m_base.bits.flags &= ~flagIsOob;
+   }
+
+   /** Set this item as a user-defined pointers.
+      Used for some two-step extension functions.
+      They are completely user managed, and the VM never provides any
+      help to handle them.
+   */
+   void setUserPointer( void *tpd )
+   {
+      type( FLC_ITEM_POINTER );
+      m_data.voidp = tpd;
+   }
+
+   void *asUserPointer()
+   {
+      return m_data.voidp;
+   }
+
+   bool isUserPointer() const { return m_base.bits.flags == FLC_ITEM_POINTER; }
+
+   /** Tells wether this item is out of band.
+      \return true if out of band.
+      \see oob()
+   */
+   bool isOob() const { return (m_base.bits.flags & flagIsOob )== flagIsOob; }
 
    byte type() const { return m_base.bits.type; }
-   void type( byte nt ) { m_base.bits.type = nt; }
+   void type( byte nt ) { m_base.bits.flags = 0; m_base.bits.type = nt; }
 
    /** Returns the content of the item */
    Garbageable *content() const { return m_data.content; }

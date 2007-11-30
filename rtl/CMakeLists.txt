@@ -13,6 +13,7 @@ ENDIF(WIN32)
 # Target
 ADD_LIBRARY( falcon_rtl MODULE
    array.cpp
+   cmdlineparser.cpp
    dict.cpp
    dir_ext.cpp
    envvars.cpp

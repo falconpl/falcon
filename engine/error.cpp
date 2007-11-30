@@ -196,6 +196,7 @@ const String &errorDesc( int code )
       case e_syn_def: return getMessage( msg::err_syn_def );
       case e_fmt_convert: return getMessage( msg::err_fmt_convert );
       case e_fordot_outside: return getMessage( msg::err_fordot_outside );
+      case e_interrupted: return getMessage( msg::err_interrupted );
 
       case e_already_forfirst: return getMessage( msg::err_already_forfirst );
       case e_already_forlast: return getMessage( msg::err_already_forlast );
@@ -228,7 +229,17 @@ String &TraceStep::toString( String &target ) const
    target += m_module + "." + m_symbol + ":";
    target.writeNumber( (int64) m_line );
    target += "(PC:";
-   target.writeNumber( (int64) m_pc );
+   switch( m_pc )
+   {
+      case VMachine::i_pc_call_external: target += "ext"; break;
+      case VMachine::i_pc_call_external_return: target += "ext.r"; break;
+      case VMachine::i_pc_redo_request: target += "redo"; break;
+      case VMachine::i_pc_call_external_ctor: target += "ext.c"; break;
+      case VMachine::i_pc_call_external_ctor_return: target += "ext.cr"; break;
+      default:
+         target.writeNumber( (int64) m_pc );
+   }
+
    target += ")";
 
 	return target;
@@ -377,7 +388,16 @@ String &Error::heading( String &target ) const
    if ( m_pc != 0 )
    {
       target += "(PC:";
-      target.writeNumber( (int64) m_pc );
+       switch( m_pc )
+      {
+         case VMachine::i_pc_call_external: target += "ext"; break;
+         case VMachine::i_pc_call_external_return: target += "ext.r"; break;
+         case VMachine::i_pc_redo_request: target += "redo"; break;
+         case VMachine::i_pc_call_external_ctor: target += "ext.c"; break;
+         case VMachine::i_pc_call_external_ctor_return: target += "ext.cr"; break;
+         default:
+            target.writeNumber( (int64) m_pc );
+      }
       target += ")";
    }
 

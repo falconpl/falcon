@@ -38,6 +38,9 @@
 
 /** Special VM item */
 #define FLC_ITEM_ATTRIBUTE 8
+/** Used to store pointers in temporary local items by
+   two-step VM functions. */
+#define FLC_ITEM_POINTER   9
 
 /** From this point on, we have possibly deep items */
 #define FLC_ITEM_FIRST_DEEP 10

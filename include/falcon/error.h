@@ -199,6 +199,7 @@ const int e_already_forfirst =     204;
 const int e_already_forlast =      205;
 const int e_already_forall =       206;
 const int e_fordot_outside =       207;
+const int e_interrupted =          208;
 
 
 
@@ -622,6 +623,19 @@ public:
       Error( "CloneError", params )
       {}
 };
+
+class InterruptedError: public Error
+{
+public:
+   InterruptedError():
+      Error( "InterruptedError" )
+   {}
+
+   InterruptedError( const ErrorParam &params  ):
+      Error( "InterruptedError", params )
+      {}
+};
+
 
 
 class FALCON_DYN_CLASS ErrorCarrier: public UserData
