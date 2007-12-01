@@ -5,6 +5,12 @@ Falcon (0.8.5)
   * bugfix: Fixed initial search path for faltest.
   * bugfix: Fixed crash in moduleloader with empty paths.
   * major: Added message oriented programming model.
+  * major: Flat VM model implemented.
+  * minor: Added round, ceil, floor, fint and abs math functions.
+  * minor: Fixed default representation of floating point numbers, and
+           recogninzing long integer NAN.
+  * minor: int() core function now raises a range error in case the given
+           fp number cannot be represented in an int64.
 
 Falcon (0.8.4)
   * major: Old "lambda expressionss" are now "nameless functions". They are declared
