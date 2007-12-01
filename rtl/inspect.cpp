@@ -79,7 +79,7 @@ void inspect_internal( VMachine *vm, const Item *elem, int32 level, bool add )
       break;
 
       case FLC_ITEM_NUM:
-         temp.writeNumber( elem->asNumeric() );
+         temp.writeNumber( elem->asNumeric(), "%g" );
          stream->writeString( "num(" );
          stream->writeString( temp );
          stream->writeString( ")" );

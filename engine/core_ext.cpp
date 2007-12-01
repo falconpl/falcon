@@ -316,8 +316,19 @@ FALCON_FUNC  val_int ( ::Falcon::VMachine *vm )
 
    switch( to_int->type() ) {
       case FLC_ITEM_INT:
+          vm->retval( to_int->asInteger() );
+      break;
+
       case FLC_ITEM_NUM:
-         vm->retval( (int64)to_int->forceInteger() );
+      {
+         numeric num = to_int->asNumeric();
+         if ( num > 9.223372036854775808e18 || num < -9.223372036854775808e18 )
+         {
+            vm->raiseRTError( new RangeError( ErrorParam( e_domain ) ) );
+            return;
+         }
+         vm->retval( (int64)num );
+      }
       break;
 
       case FLC_ITEM_STRING:

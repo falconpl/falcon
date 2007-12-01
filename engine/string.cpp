@@ -2173,20 +2173,27 @@ bool String::parseHex( uint64 &target, uint32 pos ) const
 void String::writeNumber( int64 number )
 {
    // prepare the buffer
+   bool neg;
    char buffer[21];
-   uint32 pos = 18;
-   buffer[19] = '\0';
+   uint32 pos = 19;
+   buffer[20] = '\0';
+
 
    if ( number == 0 )
    {
       buffer[pos] = '0';
    }
    else {
-      bool neg;
       if ( number < 0 )
       {
          neg = true;
          number = - number;
+         if ( number < 0 )
+         {
+            // is NAN
+            append( "NaN" );
+            return;
+         }
       }
       else
          neg = false;

@@ -1062,10 +1062,17 @@ void opcodeHandler_MOD( register VMachine *vm )
    Item *operand2 =  vm->getOpcodeParam( 2 )->dereference();
 
    if ( operand1->type() == FLC_ITEM_INT && operand2->type() == FLC_ITEM_INT ) {
-      if ( operand2->asInteger() <  0 )
+      if ( operand2->asInteger() == 0 )
          vm->raiseRTError( new TypeError( ErrorParam( e_invop ).extra("MOD").origin( e_orig_vm ) ) );
       else
          vm->m_regA.setInteger( operand1->asInteger() % operand2->asInteger() );
+   }
+   else if ( operand1->isOrdinal() && operand2->isOrdinal() )
+   {
+      if ( operand2->forceNumeric() == 0.0 )
+         vm->raiseRTError( new TypeError( ErrorParam( e_invop ).extra("MOD").origin( e_orig_vm ) ) );
+      else
+         vm->regA().setNumeric( fmod( operand1->forceNumeric(), operand2->forceNumeric() ) );
    }
    else
       vm->raiseRTError( new TypeError( ErrorParam( e_invop ).extra("MOD").origin( e_orig_vm ) ) );
@@ -1375,10 +1382,16 @@ void opcodeHandler_MODS( register VMachine *vm )
    Item *operand2 =  vm->getOpcodeParam( 2 )->dereference();
 
    if ( operand1->type() == FLC_ITEM_INT && operand2->type() == FLC_ITEM_INT ) {
-      if ( operand2->asInteger() <= 0 )
+      if ( operand2->asInteger() == 0 )
          vm->raiseRTError( new TypeError( ErrorParam( e_invop ).extra("MODS").origin( e_orig_vm ) ) );
       else
          operand1->setInteger( operand1->asInteger() % operand2->asInteger() );
+   }
+   else if ( operand1->isOrdinal() && operand2->isOrdinal() ) {
+      if ( operand2->forceNumeric() == 0.0 )
+         vm->raiseRTError( new TypeError( ErrorParam( e_invop ).extra("MODS").origin( e_orig_vm ) ) );
+      else
+         operand1->setNumeric( fmod( operand1->forceNumeric(), operand2->forceNumeric() ) );
    }
    else
       vm->raiseRTError( new TypeError( ErrorParam( e_invop ).extra("MODS").origin( e_orig_vm ) ) );

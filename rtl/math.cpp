@@ -292,6 +292,108 @@ FALCON_FUNC  flc_fract ( ::Falcon::VMachine *vm )
    }
 }
 
+FALCON_FUNC  flc_fint( ::Falcon::VMachine *vm )
+{
+   Item *num = vm->param( 0 );
+   if ( num->type() == FLC_ITEM_INT )
+   {
+      vm->retval( *num );
+   }
+   else if ( num->type() == FLC_ITEM_NUM )
+   {
+         numeric n = num->asNumeric();
+         numeric intpart;
+         modf(n, &intpart );
+         vm->retval( intpart );
+   }
+   else {
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
+   }
+}
+
+
+FALCON_FUNC  flc_round ( ::Falcon::VMachine *vm )
+{
+   Item *num = vm->param( 0 );
+   if ( num->type() == FLC_ITEM_INT )
+   {
+      vm->retval( *num );
+   }
+   else if ( num->type() == FLC_ITEM_NUM )
+   {
+      #ifdef _MSC_VER
+         numeric n = num->asNumeric();
+         numeric intpart;
+         numeric fractpart = modf(n, &intpart );
+
+         if ( fractpart >= 0.5 )
+            vm->retval( intpart + 1 );
+         else if ( fractpart <= -0.5 )
+            vm->retval( intpart - 1 );
+         else
+            vm->retval( intpart );
+      #else
+         vm->retval( llround( num->asNumeric() ) );
+      #endif
+   }
+   else {
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
+   }
+}
+
+FALCON_FUNC  flc_floor ( ::Falcon::VMachine *vm )
+{
+   Item *num = vm->param( 0 );
+   if ( num->type() == FLC_ITEM_INT )
+   {
+      vm->retval( *num );
+   }
+   else if ( num->type() == FLC_ITEM_NUM )
+   {
+      vm->retval( (int64) floor( num->asNumeric() ) );
+   }
+   else {
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
+   }
+}
+
+FALCON_FUNC  flc_ceil ( ::Falcon::VMachine *vm )
+{
+   Item *num = vm->param( 0 );
+   if ( num->type() == FLC_ITEM_INT )
+   {
+      vm->retval( *num );
+   }
+   else if ( num->type() == FLC_ITEM_NUM )
+   {
+      vm->retval( (int64) ceil( num->asNumeric() ) );
+   }
+   else {
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
+   }
+}
+
+FALCON_FUNC  flc_abs ( ::Falcon::VMachine *vm )
+{
+   Item *num = vm->param( 0 );
+   if ( num->type() == FLC_ITEM_INT )
+   {
+      int64 n = num->asInteger();
+      vm->retval( n < 0 ? -n : n );
+   }
+   else if ( num->type() == FLC_ITEM_NUM )
+   {
+      numeric n = num->asNumeric();
+      vm->retval( abs( n ) );
+   }
+   else {
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
+   }
+}
+
+
+
+
 }
 }
 

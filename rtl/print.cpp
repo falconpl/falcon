@@ -41,39 +41,14 @@ FALCON_FUNC  print ( ::Falcon::VMachine *vm )
       Item *elem = vm->param(i);
       String temp;
 
-      if ( elem != 0 ) {  // overkill.
-         switch( elem->type() ) {
-            case FLC_ITEM_NIL:
-               stream->writeString( "<NIL>" );
-            break;
+      switch( elem->type() ) {
+         case FLC_ITEM_STRING:
+            stream->writeString( *elem->asString() );
+         break;
 
-            case FLC_ITEM_INT:
-               temp.writeNumber( elem->asInteger() );
-               stream->writeString( temp );
-            break;
-
-            case FLC_ITEM_NUM:
-               temp.writeNumber( elem->asNumeric() );
-               stream->writeString( temp );
-            break;
-
-            case FLC_ITEM_RANGE:
-               temp = "[";
-               temp.writeNumber( (int64) elem->asRangeStart() );
-               temp += ":";
-               if ( !elem->asRangeIsOpen() )
-                  temp.writeNumber( (int64) elem->asRangeEnd() );
-               temp += "]";
-               stream->writeString( temp );
-            break;
-
-            case FLC_ITEM_STRING:
-               stream->writeString( *elem->asString() );
-            break;
-
-            default:
-               stream->writeString( "<?>" );
-         }
+         default:
+            elem->toString( temp );
+            stream->writeString( temp );
       }
    }
 

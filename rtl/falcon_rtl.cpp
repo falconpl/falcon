@@ -76,6 +76,11 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    self->addExtFunc( "rad2deg", Falcon::Ext::flc_math_rad2deg );
    self->addExtFunc( "deg2rad", Falcon::Ext::flc_math_deg2rad );
    self->addExtFunc( "fract", Falcon::Ext::flc_fract );
+   self->addExtFunc( "fint", Falcon::Ext::flc_fint );
+   self->addExtFunc( "round", Falcon::Ext::flc_round );
+   self->addExtFunc( "floor", Falcon::Ext::flc_floor );
+   self->addExtFunc( "ceil", Falcon::Ext::flc_ceil );
+   self->addExtFunc( "abs", Falcon::Ext::flc_fract );
 
    //=======================================================================
    // RTL string api
