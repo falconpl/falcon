@@ -84,7 +84,7 @@ FALCON_FUNC  CmdlineParser_parse( ::Falcon::VMachine *vm )
       {
          vm->raiseRTError(
             new ParamError( ErrorParam( e_param_type ).
-                  extra( getMessage( msg::rtl_cmdp_0 ) )
+                  extra( vm->moduleString( msg::rtl_cmdp_0 ) )
                )
             );
 

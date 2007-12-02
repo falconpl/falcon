@@ -384,7 +384,7 @@ FALCON_FUNC  flc_abs ( ::Falcon::VMachine *vm )
    else if ( num->type() == FLC_ITEM_NUM )
    {
       numeric n = num->asNumeric();
-      vm->retval( abs( n ) );
+      vm->retval( fabs( n ) );
    }
    else {
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );

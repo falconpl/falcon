@@ -2710,10 +2710,10 @@ static bool broadcast_next_attrib( ::Falcon::VMachine *vm )
    CoreArray *attributes = vm->param(0)->asArray();
    int64 pos = vm->local(0)->asInteger();
 
-   while( pos >= 0 && ((int64)pos) < attributes->length() )
+   while( pos >= 0 && ((uint32)pos) < attributes->length() )
    {
       // is it REALLY an attribute?
-      if ( ! attributes->at(pos).isAttribute() )
+      if ( ! attributes->at((uint32)pos).isAttribute() )
       {
          vm->raiseRTError( new ParamError( ErrorParam( e_param_type ).
             extra( "not an attribute" ) ) );
@@ -2740,7 +2740,6 @@ static bool broadcast_next( ::Falcon::VMachine *vm )
 {
    AttribObjectHandler *aobj = (AttribObjectHandler *) vm->local(1)->asUserPointer();
    Item *callback = 0;
-   Attribute *attrib;
 
    // if regA is not true, break
    if ( ! vm->regA().isTrue() )
