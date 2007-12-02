@@ -1650,6 +1650,7 @@ FALCON_FUNC  Iterator_insert( ::Falcon::VMachine *vm )
          if( iter->isOwner( dict ) && iter->isValid() )
          {
             dict->smartInsert( *iter, *i_key, *i_value );
+            return;
          }
       }
       break;

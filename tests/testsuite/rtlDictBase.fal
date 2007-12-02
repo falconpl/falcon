@@ -21,6 +21,22 @@ key = "d"
 dict[key] = "changed"
 if dictGet( dict, key ) != "changed": failure( "Access via dictGet" )
 
+// get the iterator
+if dictFind( dict, "none" ) != nil: failure( "Negative dictFind" )
+iter = dictFind( dict, "A" )
+if iter.value() != 1: failure( "Positive dictFind" )
+
+// Find the nearest iterator, and find one exat
+iter = dictBest( dict, "A" )
+if iter.key() != "A": failure( "Dict best hitting" )
+if isoob(iter): failure( "Dict best OOB indicator" )
+
+// Find the nearest iterator, find nearest
+iter = dictBest( dict, 5 )
+if iter.key() != "A": failure( "Dict best, near hit" )
+if not isoob(iter): failure( "Dict best near hit OOB indicator" )
+iter.insert( 5, "test" )
+inspect( iter )
 success()
 
 /* End of file */

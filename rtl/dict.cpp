@@ -214,6 +214,7 @@ FALCON_FUNC  dictFind( ::Falcon::VMachine *vm )
    {
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
          origin( e_orig_runtime ).extra( vm->moduleString( msg::rtl_iterator_not_found ) ) ) );
+      return;
    }
 
    CoreDict *dict = dict_itm->asDict();
@@ -223,7 +224,7 @@ FALCON_FUNC  dictFind( ::Falcon::VMachine *vm )
       vm->retnil();
    else {
       CoreObject *ival = i_iclass->asClass()->createInstance();
-      ival->setProperty( "origin", *dict_itm );
+      ival->setProperty( "_origin", *dict_itm );
       ival->setUserData( value );
       vm->retval( ival );
    }
@@ -246,15 +247,16 @@ FALCON_FUNC  dictBest( ::Falcon::VMachine *vm )
    {
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
          origin( e_orig_runtime ).extra( vm->moduleString( msg::rtl_iterator_not_found ) ) ) );
+      return;
    }
 
    CoreDict *dict = dict_itm->asDict();
    DictIterator *value = dict->first();
    CoreObject *ival = i_iclass->asClass()->createInstance();
-   ival->setProperty( "origin", *dict_itm );
+   ival->setProperty( "_origin", *dict_itm );
    ival->setUserData( value );
    vm->regA() = ival;
-   if ( dict->find( *key_item, *value ) )
+   if ( ! dict->find( *key_item, *value ) )
    {
       vm->regA().setOob();
    }
