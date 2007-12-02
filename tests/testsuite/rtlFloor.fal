@@ -1,0 +1,51 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 113d
+* Category: rtl
+* Subcategory: math
+* Short: floor
+* Description:
+*   Checks for correct working of floor() function.
+* [/Description]
+****************************************************************************/
+
+// Integer numbers
+if floor( 1 ) != 1: failure( "floor integer positive" )
+if floor( -1 ) != -1: failure( "floor integer negative" )
+if floor( 0 ) != 0: failure( "floor zero" )
+
+// real floors
+// positive
+if int( floor( 1.0 ) ) != 1: failure( "floor on .0 (int)" )
+if fract( floor( 1.0 ) ) != 0: failure( "floor on .0 (fract)" )
+if int( floor( 1.4999 ) ) != 1: failure( "floor positive down (int)" )
+if fract( floor( 1.49999999 ) ) != 0: failure( "floor positive down (fract)" )
+if int( floor( 1.5 ) ) != 1: failure( "floor positive edge (int)" )
+if fract( floor( 1.5 ) ) != 0: failure( "floor positive edge (fract)" )
+if int( floor( 1.99999999 ) ) != 1: failure( "floor positive up (int)" )
+if fract( floor( 1.99999999 ) ) != 0: failure( "floor positive up (fract)" )
+
+// negative
+if int( floor( -1.0 ) ) != -1: failure( "floor on .0 (int)" )
+if fract( floor( -1.0 ) ) != 0: failure( "floor on .0 (fract)" )
+if int( floor( -1.4999 ) ) != -2: failure( "floor positive down (int)" )
+if fract( floor( -1.49999999 ) ) != 0: failure( "floor positive down (fract)" )
+if int( floor( -1.5 ) ) != -2: failure( "floor positive edge (int)" )
+if fract( floor( -1.5 ) ) != 0: failure( "floor positive edge (fract)" )
+if int( floor( -1.99999999 ) ) != -2: failure( "floor positive up (int)" )
+if fract( floor( -1.99999999 ) ) != 0: failure( "floor positive up (fract)" )
+
+// zero
+if int( floor( 0.0 ) ) != 0: failure( "floor on 0.0 (int)" )
+if fract( floor( 0.0 ) ) != 0: failure( "floor on 0.0 (fract)" )
+
+// error
+try
+   floor( "alpha" )
+   failure( "Error not risen for parameters" )
+end
+
+success()
+
+/* End of file */

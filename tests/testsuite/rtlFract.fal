@@ -1,9 +1,7 @@
 /****************************************************************************
 * Falcon test suite
 *
-* CVS-Id: $Id: rtlFract.fal,v 1.1.1.1 2006/10/08 15:05:41 gian Exp $
-*
-* ID: 113
+* ID: 113a
 * Category: rtl
 * Subcategory: math
 * Short: Fractional part

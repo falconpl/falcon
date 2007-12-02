@@ -1,0 +1,51 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 113e
+* Category: rtl
+* Subcategory: math
+* Short: fint
+* Description:
+*   Checks for correct working of fint() (float integer) function.
+* [/Description]
+****************************************************************************/
+
+// Integer numbers
+if fint( 1 ) != 1: failure( "fint integer positive" )
+if fint( -1 ) != -1: failure( "fint integer negative" )
+if fint( 0 ) != 0: failure( "fint zero" )
+
+// real fints
+// positive
+if int( fint( 1.0 ) ) != 1: failure( "fint on .0 (int)" )
+if fract( fint( 1.0 ) ) != 0: failure( "fint on .0 (fract)" )
+if int( fint( 1.4999 ) ) != 1: failure( "fint positive down (int)" )
+if fract( fint( 1.49999999 ) ) != 0: failure( "fint positive down (fract)" )
+if int( fint( 1.5 ) ) != 1: failure( "fint positive edge (int)" )
+if fract( fint( 1.5 ) ) != 0: failure( "fint positive edge (fract)" )
+if int( fint( 1.99999999 ) ) != 1: failure( "fint positive up (int)" )
+if fract( fint( 1.99999999 ) ) != 0: failure( "fint positive up (fract)" )
+
+// negative
+if int( fint( -1.0 ) ) != -1: failure( "fint on .0 (int)" )
+if fract( fint( -1.0 ) ) != 0: failure( "fint on .0 (fract)" )
+if int( fint( -1.4999 ) ) != -1: failure( "fint positive down (int)" )
+if fract( fint( -1.49999999 ) ) != 0: failure( "fint positive down (fract)" )
+if int( fint( -1.5 ) ) != -1: failure( "fint positive edge (int)" )
+if fract( fint( -1.5 ) ) != 0: failure( "fint positive edge (fract)" )
+if int( fint( -1.99999999 ) ) != -1: failure( "fint positive up (int)" )
+if fract( fint( -1.99999999 ) ) != 0: failure( "fint positive up (fract)" )
+
+// zero
+if int( fint( 0.0 ) ) != 0: failure( "fint on 0.0 (int)" )
+if fract( fint( 0.0 ) ) != 0: failure( "fint on 0.0 (fract)" )
+
+// error
+try
+   fint( "alpha" )
+   failure( "Error not risen for parameters" )
+end
+
+success()
+
+/* End of file */

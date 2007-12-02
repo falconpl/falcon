@@ -1,0 +1,51 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 113b
+* Category: rtl
+* Subcategory: math
+* Short: Number rounding
+* Description:
+*   Checks for correct working of round() function.
+* [/Description]
+****************************************************************************/
+
+// Integer numbers
+if round( 1 ) != 1: failure( "round integer positive" )
+if round( -1 ) != -1: failure( "round integer negative" )
+if round( 0 ) != 0: failure( "round zero" )
+
+// real rounds
+// positive
+if int( round( 1.0 ) ) != 1: failure( "round on .0 (int)" )
+if fract( round( 1.0 ) ) != 0: failure( "round on .0 (fract)" )
+if int( round( 1.4999 ) ) != 1: failure( "round positive down (int)" )
+if fract( round( 1.49999999 ) ) != 0: failure( "round positive down (fract)" )
+if int( round( 1.5 ) ) != 2: failure( "round positive edge (int)" )
+if fract( round( 1.5 ) ) != 0: failure( "round positive edge (fract)" )
+if int( round( 1.99999999 ) ) != 2: failure( "round positive up (int)" )
+if fract( round( 1.99999999 ) ) != 0: failure( "round positive up (fract)" )
+
+// negative
+if int( round( -1.0 ) ) != -1: failure( "round on .0 (int)" )
+if fract( round( -1.0 ) ) != 0: failure( "round on .0 (fract)" )
+if int( round( -1.4999 ) ) != -1: failure( "round positive down (int)" )
+if fract( round( -1.49999999 ) ) != 0: failure( "round positive down (fract)" )
+if int( round( -1.5 ) ) != -2: failure( "round positive edge (int)" )
+if fract( round( -1.5 ) ) != 0: failure( "round positive edge (fract)" )
+if int( round( -1.99999999 ) ) != -2: failure( "round positive up (int)" )
+if fract( round( -1.99999999 ) ) != 0: failure( "round positive up (fract)" )
+
+// zero
+if int( round( 0.0 ) ) != 0: failure( "round on 0.0 (int)" )
+if fract( round( 0.0 ) ) != 0: failure( "round on 0.0 (fract)" )
+
+// error
+try
+   round( "alpha" )
+   failure( "Error not risen for parameters" )
+end
+
+success()
+
+/* End of file */
