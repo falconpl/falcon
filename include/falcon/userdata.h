@@ -1,7 +1,6 @@
 /*
    FALCON - The Falcon Programming Language.
    FILE: userdata.h
-   $Id: userdata.h,v 1.4 2007/07/21 11:59:12 jonnymind Exp $
 
    Embeddable falcon object user data.
    -------------------------------------------------------------------
@@ -27,12 +26,14 @@
 #define flc_userdata_H
 
 #include <falcon/setup.h>
+#include <falcon/types.h>
 #include <falcon/basealloc.h>
 
 namespace Falcon {
 
 class Item;
 class String;
+class MemPool;
 
 /** Embeddable falcon object user data.
    An instance of this class can be set as "user data" of Falcon scripts objects.
@@ -104,7 +105,31 @@ public:
    */
    virtual void setProperty( const String &propName, Item &prop );
 
+   /** Clone the user data.
+      If the user data cannot be cloned, the method may return 0;
+      this will cause the caller to raise an uncloneable exception.
+      \return a clone of this object or zero.
+   */
    virtual UserData *clone();
+
+   /** Marks the data for GC collection.
+      The GC collector never collects directly the user data,
+      so it is generally not necessary to overload this method.
+      If the subclass is propertary of some items that do not
+      physically reside anywhere else, then it may overload
+      the mark request and pass it down to the single items it
+      owns.
+      \param mp The mempool performing the mark
+   */
+   virtual void gcMark( MemPool *mp );
+
+   /** Tells wether this user data is a sequence.
+      Classes implementing the sequence protocol (sequence.h)
+      will return true, as this method is overloaded there.
+      \return true if this UserData can be casted to a Sequence.
+   */
+   virtual bool isSequence() const;
+
 };
 
 }

@@ -40,6 +40,9 @@ namespace msg {
    const int rtl_idx_not_num = 9;
    const int rtl_start_outrange = 10;
    const int rtl_cmdp_0 = 11;
+   const int rtl_emptyarr = 12;
+   const int rtl_iterator_not_found = 13;
+   const int rtl_invalid_iter = 14;
 }
 }
 

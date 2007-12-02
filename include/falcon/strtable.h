@@ -1,9 +1,8 @@
 /*
    FALCON - The Falcon Programming Language.
    FILE: strtable.h
-   $Id: strtable.h,v 1.6 2007/02/17 22:32:59 jonnymind Exp $
 
-   Short description
+   String table used in modules
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: Mon Feb 14 2005
@@ -20,7 +19,7 @@
 */
 
 /** \file
-   Short description
+   String table used in modules
 */
 
 #ifndef flc_strtable_H
@@ -55,7 +54,7 @@ public:
    int32 findId( const String &str ) const;
    String *find( const String &source ) const;
 
-   /** Skip the string table froma stream.
+   /** Skip the string table from a stream.
       This is useful when i.e. you have a string table embedded in a stream
       but you don't want to load it, in example because you want to use
       an external string table instead.
@@ -99,9 +98,6 @@ public:
       The function never fails, but if the output stream has a failure
       the function doesn't detect it. The output stream status must be checked
       on exit.
-
-      Don't turn on exception rising on stream error, as this may cause leaks
-      because of temporary dynamic storage not being freed at method exit.
 
       \param out the stream where to save the table.
       \return true on success, false on failure

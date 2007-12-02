@@ -23,6 +23,7 @@ ADD_LIBRARY( falcon_rtl MODULE
    input.cpp
    inspect.cpp
    itemcopy.cpp
+   list.cpp
    math.cpp
    messages.cpp
    print.cpp

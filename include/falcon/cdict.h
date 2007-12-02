@@ -63,18 +63,23 @@ public:
 
    virtual uint32 length() const =0;
    virtual Item *find( const Item &key ) = 0;
+   virtual bool find( const Item &key, DictIterator &iter ) = 0;
    virtual DictIterator *findIterator( const Item &key ) = 0;
 
-   virtual bool remove( DictIterator *iter ) = 0;
+   virtual bool remove( DictIterator &iter ) = 0;
    virtual bool remove( const Item &key ) = 0;
    virtual void insert( const Item &key, const Item &value ) = 0;
-   virtual DictIterator *begin() = 0;
+   virtual void smartInsert( DictIterator &iter, const Item &key, const Item &value ) = 0;
+
+   virtual void first( DictIterator &iter ) = 0;
+   virtual void last( DictIterator &iter ) = 0;
+   virtual DictIterator *first() = 0;
    virtual DictIterator *last() = 0;
+
    virtual bool equal( const CoreDict &other ) const = 0;
    virtual CoreDict *clone() const = 0;
    virtual void merge( const CoreDict &dict ) = 0;
    virtual void clear() = 0;
-
 
 
    /** Generic traversal interface.

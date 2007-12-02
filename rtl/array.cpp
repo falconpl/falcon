@@ -44,7 +44,9 @@ FALCON_FUNC  arrayIns ( ::Falcon::VMachine *vm )
          item_pos == 0 || ! item_pos->isOrdinal() ||
          item == 0 )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime )) );
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         origin( e_orig_runtime ).
+         extra("A,N,X") ) );
       return;
    }
 
@@ -244,6 +246,49 @@ FALCON_FUNC  arrayBuffer ( ::Falcon::VMachine *vm )
    }
    array->length( nsize );
    vm->retval( array );
+}
+
+FALCON_FUNC  arrayHead ( ::Falcon::VMachine *vm )
+{
+   Item *array_x = vm->param(0);
+   if ( array_x == 0 || ! array_x->isArray() ) {
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         origin( e_orig_runtime ).extra( "A" ) ) );
+      return;
+   }
+
+   CoreArray *array = array_x->asArray();
+   if ( array->length() == 0 )
+   {
+      vm->raiseModError( new RangeError( ErrorParam( e_inv_params, __LINE__ ).
+         origin( e_orig_runtime ).extra( vm->moduleString( msg::rtl_emptyarr ) ) ) );
+      return;
+   }
+
+   vm->retval( array->at(0) );
+   array->remove(0);
+}
+
+
+FALCON_FUNC  arrayTail ( ::Falcon::VMachine *vm )
+{
+   Item *array_x = vm->param(0);
+   if ( array_x == 0 || ! array_x->isArray() ) {
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         origin( e_orig_runtime ).extra( "A" ) ) );
+      return;
+   }
+
+   CoreArray *array = array_x->asArray();
+   if ( array->length() == 0 )
+   {
+      vm->raiseModError( new RangeError( ErrorParam( e_inv_params, __LINE__ ).
+         origin( e_orig_runtime ).extra( vm->moduleString( msg::rtl_emptyarr ) ) ) );
+      return;
+   }
+
+   vm->retval( array->at(array->length()-1) );
+   array->remove(array->length()-1);
 }
 
 

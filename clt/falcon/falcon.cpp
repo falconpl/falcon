@@ -204,6 +204,7 @@ void findModuleName( const String &filename, String &name )
    }
 }
 
+
 void findModulepath( const String &filename, String &path )
 {
    uint32 pos = filename.rfind( "/" );
@@ -211,6 +212,7 @@ void findModulepath( const String &filename, String &path )
       path = filename.subString( 0, pos );
    }
 }
+
 
 void exit_sequence( int exit_value, int errors = 0 )
 {
@@ -238,6 +240,7 @@ void exit_sequence( int exit_value, int errors = 0 )
    exit( exit_value );
 }
 
+
 String get_load_path()
 {
    String envpath;
@@ -254,6 +257,7 @@ String get_load_path()
    else
       return options.load_path;
 }
+
 
 String get_src_encoding()
 {
@@ -276,6 +280,7 @@ String get_src_encoding()
    // we failed.
    return "C";
 }
+
 
 String get_io_encoding()
 {
@@ -585,7 +590,7 @@ int main( int argc, char *argv[] )
       compiler.errorHandler( errHand );
 
       // is input an FTD?
-      if ( options.parse_ftd || 
+      if ( options.parse_ftd ||
            options.input.rfind( ".ftd" ) == options.input.length() - 4 )
       {
          compiler.parsingFtd( true );
@@ -816,7 +821,7 @@ int main( int argc, char *argv[] )
       while( stdIn->get( chr ) && chr != '\n' )
          if ( chr != '\r' )
             ret.append( chr );
-      
+
       vmachine->resume( new GarbageString( vmachine, ret ) );
       // items in resume are not automatically stored in the GC, so we can destroy
       // the string here.

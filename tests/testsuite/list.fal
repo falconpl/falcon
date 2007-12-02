@@ -1,0 +1,149 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 116a
+* Category: rtl
+* Subcategory: list
+* Short: Basic list
+* Description:
+*   We test the RTL list class basic functionalities
+*
+* [/Description]
+*
+****************************************************************************/
+
+// empty
+list = List()
+if list.size() != 0: failure( "Empty constructor size" )
+if not list.empty(): failure( "Empty constructor empty" )
+
+list.push( "a" )
+if list.size() != 1: failure( "After push size" )
+if list.empty(): failure( "After push empty" )
+if list.front() != "a": failure( "After push front" )
+if list.back() != "a": failure( "After push back" )
+
+list.pushFront( "i" )
+if list.size() != 2: failure( "After pushFront size" )
+if list.empty(): failure( "After pushFront empty" )
+if list.front() != "i": failure( "After pushFront front" )
+if list.back() != "a": failure( "After pushFront back" )
+
+list.push( "z" )
+if list.size() != 3: failure( "After push 2 size" )
+if list.empty(): failure( "After push 2 empty" )
+if list.front() != "i": failure( "After push 2 front" )
+if list.back() != "z": failure( "After push 2 back" )
+
+// let's start pops
+elem = list.pop()
+if elem != "z": failure( "After pop 1 element" )
+if list.size() != 2: failure( "After pop 1 size" )
+if list.empty(): failure( "After pop 1 empty" )
+if list.front() != "i": failure( "After pop 1 front" )
+if list.back() != "a": failure( "After pop 1 back" )
+
+elem = list.pop()
+if elem != "a": failure( "After pop 2 element" )
+if list.size() != 1: failure( "After pop 2 size" )
+if list.empty(): failure( "After pop 2 empty" )
+if list.front() != "i": failure( "After pop 2 front" )
+if list.back() != "i": failure( "After pop 2 back" )
+
+elem = list.pop()
+if elem != "i": failure( "After pop 3 element" )
+if list.size() != 0: failure( "After pop 3 size" )
+if not list.empty(): failure( "After pop 3 empty" )
+
+// test again with reverse order.
+list.push( "z" )
+list.push( "a" )
+list.push( "i" )
+
+// let's start pops
+elem = list.popFront()
+if elem != "z": failure( "After popFront 1 element" )
+if list.size() != 2: failure( "After popFront 1 size" )
+if list.empty(): failure( "After popFront 1 empty" )
+if list.front() != "a": failure( "After popFront 1 front" )
+if list.back() != "i": failure( "After popFront 1 back" )
+
+elem = list.popFront()
+if elem != "a": failure( "After popFront 2 element" )
+if list.size() != 1: failure( "After popFront 2 size" )
+if list.empty(): failure( "After popFront 2 empty" )
+if list.front() != "i": failure( "After popFront 2 front" )
+if list.back() != "i": failure( "After popFront 2 back" )
+
+elem = list.popFront()
+if elem != "i": failure( "After popFront 3 element" )
+if list.size() != 0: failure( "After popFront 3 size" )
+if not list.empty(): failure( "After popFront 3 empty" )
+
+// test again, mixed order.
+list.push( "z" )
+list.push( "a" )
+list.push( "i" )
+
+elem = list.popFront()
+if elem != "z": failure( "After pop-mix 1 element" )
+if list.size() != 2: failure( "After pop-mix 1 size" )
+if list.empty(): failure( "After pop-mix 1 empty" )
+if list.front() != "a": failure( "After pop-mix 1 front" )
+if list.back() != "i": failure( "After pop-mix 1 back" )
+
+elem = list.pop()
+if elem != "i": failure( "After pop-mix 2 element" )
+
+if list.size() != 1: failure( "After pop-mix 2 size" )
+if list.empty(): failure( "After pop-mix 2 empty" )
+if list.front() != "a": failure( "After pop-mix 2 front" )
+if list.back() != "a": failure( "After pop-mix 2 back" )
+
+elem = list.popFront()
+if elem != "a": failure( "After pop-mix 3 element" )
+if list.size() != 0: failure( "After pop-mix 3 size" )
+if not list.empty(): failure( "After pop-mix 3 empty" )
+
+
+// test again, mixed order.
+list.pushFront( "z" )
+list.pushFront( "a" )
+list.pushFront( "i" )
+
+elem = list.pop()
+if elem != "z": failure( "After pop-remix 1 element" )
+if list.size() != 2: failure( "After pop-remixremix 1 size" )
+if list.empty(): failure( "After pop-remix 1 empty" )
+if list.front() != "i": failure( "After pop-remix 1 front" )
+if list.back() != "a": failure( "After pop-remix 1 back" )
+
+elem = list.popFront()
+if elem != "i": failure( "After pop-remix 2 element" )
+
+if list.size() != 1: failure( "After pop-remix 2 size" )
+if list.empty(): failure( "After pop-remix 2 empty" )
+if list.front() != "a": failure( "After pop-remix 2 front" )
+if list.back() != "a": failure( "After pop-remix 2 back" )
+
+elem = list.pop()
+if elem != "a": failure( "After pop-remix 3 element" )
+if list.size() != 0: failure( "After pop-remix 3 size" )
+if not list.empty(): failure( "After pop-remix 3 empty" )
+
+
+// list constructor
+//list = List( 1, 2, 3, "a", "b", "c" )
+//if list.size() != 6: failure( "Nonempty constructor size" )
+
+// test for clear
+for i = 1 to 10
+   list.push(i)
+end
+list.clear()
+if list.size() != 0: failure( "After clear size" )
+if not list.empty(): failure( "After clear empty" )
+
+success()
+
+/* End of file */

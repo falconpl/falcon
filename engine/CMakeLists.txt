@@ -118,6 +118,7 @@ ADD_LIBRARY( falcon_engine SHARED
    genhasm.cpp
    gentree.cpp
    item.cpp
+   itemlist.cpp
    itemserial.cpp
    itemtraits.cpp
    labeldef.cpp

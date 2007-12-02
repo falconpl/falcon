@@ -1295,6 +1295,7 @@ bool VMachine::callItem( const Item &callable, int32 paramCount, e_callMode call
    else
    {
       m_symbol = target; // so we can have adequate tracebacks.
+      m_moduleId = targetModId;
       // if we aren't in a frame call, call the item directly
       if( callMode == e_callNormal || callMode == e_callInst )
       {

@@ -1,7 +1,6 @@
 /*
    FALCON - The Falcon Programming Language
    FILE: userdata.cpp
-   $Id: userdata.cpp,v 1.2 2007/06/23 18:32:32 jonnymind Exp $
 
    Embeddable falcon object user data.
    -------------------------------------------------------------------
@@ -46,6 +45,15 @@ void UserData::setProperty( const String &propName, Item &prop )
 UserData * UserData::clone()
 {
    return 0;
+}
+
+bool UserData::isSequence() const
+{
+   return false;
+}
+
+void UserData::gcMark( MemPool *mp )
+{
 }
 
 }

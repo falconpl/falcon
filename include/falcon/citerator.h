@@ -53,6 +53,9 @@ public:
    virtual bool isValid() const = 0;
    virtual bool isOwner( void *collection ) const = 0;
    virtual bool equal( const CoreIterator &other ) const = 0;
+   virtual bool erase() = 0;
+   virtual bool insert( const Item &item ) = 0;
+
 
 
    virtual void invalidate() = 0;

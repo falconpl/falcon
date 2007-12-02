@@ -51,14 +51,14 @@ if array[-1] != 10: failure( "Item change" )
 it = Iterator( array )
 while it.hasCurrent()
 	if it.value() == 2
-		it.remove()
+		it.erase()
    else
 		it.next()
    end
 end
 
-if array[0] != 1 and array[1] != 3: failure( "Item remove" )
-if array.len() != 3: failure( "Item remove -- len" )
+if array[0] != 1 and array[1] != 3: failure( "Item erase" )
+if array.len() != 3: failure( "Item erase -- len" )
 
 success()
 

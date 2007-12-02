@@ -1,0 +1,58 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 116f
+* Category: rtl
+* Subcategory: list
+* Short: List iterators insert
+* Description:
+*   We test the RTL List iterators; here we test for advanced operations,
+*   namely insertion at various positions.
+* [/Description]
+*
+****************************************************************************/
+
+list = List()
+
+// insertion in an empty list
+iter = list.first()
+list.insert( iter, "a" )
+if list.size() != 1 or list.front() != "a": failure( "insert in empty" )
+
+// head insertion
+list = List( "a", "b", "c" )
+iter = list.first()
+list.insert( iter, "z" )
+if list.size() != 4 or list.front() != "z": failure( "head insertion" )
+
+// tail nsertion
+iter = list.last()
+iter.next()
+list.insert( iter, "y" )
+if list.size() != 5 or list.back() != "y": failure( "head insertion" )
+
+// middle insertion
+iter = list.first()
+iter.next()
+list.insert( iter, "w" )
+list.popFront()
+if list.front() != "w": failure( "Insertion in the middle" )
+
+// iterator validity
+iter = list.first()
+iter2 = list.first()
+iter.next()
+iter2.next()
+
+// record the data that should be here.
+data = iter.value()
+
+list.insert( iter, "n" )
+// is the old data still there?
+if iter2.value() != data: failure( "Iterator consistent validity" )
+// ... and the new data under current iterator?
+if iter.value() != "n": failure( "Iterator self-validity" )
+
+success()
+
+/* End of file */

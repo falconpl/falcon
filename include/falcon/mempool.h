@@ -98,14 +98,6 @@ protected:
 
    bool gcMark();
    void gcSweep();
-   void markItem( const Item &itm );
-
-   /** Prevents calling the markitem function in case of shallow items. */
-   void markItemFast( const Item &itm )
-   {
-      if( itm.type() >= FLC_ITEM_STRING )
-         markItem( itm );
-   }
 
    byte currentMark() const { return m_status; }
    void changeMark() { m_status = m_status == 1 ? 0 : 1; }
@@ -143,6 +135,19 @@ public:
    ~MemPool();
 
    void setOwner( VMachine *owner ) { m_owner = owner; }
+
+   /** Marks an item during a GC Loop.
+      This method should be called only from inside GC mark callbacks
+      of class having some GC hook.
+   */
+   void markItem( const Item &itm );
+
+   /** Prevents calling the markitem function in case of shallow items. */
+   void markItemFast( const Item &itm )
+   {
+      if( itm.type() >= FLC_ITEM_STRING )
+         markItem( itm );
+   }
 
    /** Destroys a garbageable element.
       \note is this useful???

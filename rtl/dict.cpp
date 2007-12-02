@@ -30,6 +30,7 @@
 #include <falcon/cdict.h>
 #include <falcon/vm.h>
 #include <falcon/fassert.h>
+#include "rtl_messages.h"
 
 namespace Falcon {
 
@@ -138,7 +139,7 @@ FALCON_FUNC  dictKeys( ::Falcon::VMachine *vm )
    CoreDict *dict = dict_itm->asDict();
    CoreArray *array = new CoreArray( vm );
    array->reserve( dict->length() );
-   DictIterator *iter = dict->begin();
+   DictIterator *iter = dict->first();
 
    while( iter->isValid() )
    {
@@ -165,7 +166,7 @@ FALCON_FUNC  dictValues( ::Falcon::VMachine *vm )
    CoreDict *dict = dict_itm->asDict();
    CoreArray *array = new CoreArray( vm );
    array->reserve( dict->length() );
-   CoreIterator *iter = dict->begin();
+   CoreIterator *iter = dict->first();
 
    while( iter->isValid() )
    {
@@ -176,7 +177,6 @@ FALCON_FUNC  dictValues( ::Falcon::VMachine *vm )
 
    vm->retval( array );
 }
-
 
 
 FALCON_FUNC  dictGet( ::Falcon::VMachine *vm )
@@ -196,6 +196,70 @@ FALCON_FUNC  dictGet( ::Falcon::VMachine *vm )
    else
       vm->retval( *value );
 }
+
+
+FALCON_FUNC  dictFind( ::Falcon::VMachine *vm )
+{
+   Item *dict_itm = vm->param(0);
+   Item *key_item = vm->param(1);
+
+   if( dict_itm == 0 || ! dict_itm->isDict() || key_item == 0 ) {
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
+      return;
+   }
+
+   // find the iterator class, we'll need it
+   Item *i_iclass = vm->findGlobalItem( "Iterator" );
+   if ( i_iclass == 0 || ! i_iclass->isClass() )
+   {
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         origin( e_orig_runtime ).extra( vm->moduleString( msg::rtl_iterator_not_found ) ) ) );
+   }
+
+   CoreDict *dict = dict_itm->asDict();
+
+   DictIterator *value = dict->findIterator( *key_item );
+   if ( value == 0 )
+      vm->retnil();
+   else {
+      CoreObject *ival = i_iclass->asClass()->createInstance();
+      ival->setProperty( "origin", *dict_itm );
+      ival->setUserData( value );
+      vm->retval( ival );
+   }
+}
+
+
+FALCON_FUNC  dictBest( ::Falcon::VMachine *vm )
+{
+   Item *dict_itm = vm->param(0);
+   Item *key_item = vm->param(1);
+
+   if( dict_itm == 0 || ! dict_itm->isDict() || key_item == 0 ) {
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
+      return;
+   }
+
+   // find the iterator class, we'll need it
+   Item *i_iclass = vm->findGlobalItem( "Iterator" );
+   if ( i_iclass == 0 || ! i_iclass->isClass() )
+   {
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         origin( e_orig_runtime ).extra( vm->moduleString( msg::rtl_iterator_not_found ) ) ) );
+   }
+
+   CoreDict *dict = dict_itm->asDict();
+   DictIterator *value = dict->first();
+   CoreObject *ival = i_iclass->asClass()->createInstance();
+   ival->setProperty( "origin", *dict_itm );
+   ival->setUserData( value );
+   vm->regA() = ival;
+   if ( dict->find( *key_item, *value ) )
+   {
+      vm->regA().setOob();
+   }
+}
+
 
 /*@endgroup */
 

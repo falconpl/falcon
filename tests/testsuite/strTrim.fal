@@ -17,17 +17,17 @@ spaced = " a spaced string "
 nonspaced = "non spaced"
 
 if strTrim( spaced ) != " a spaced string": failure( "strTrim" )
-if strHeadTrim( spaced ) != "a spaced string ": failure( "strHeadTrim" )
+if strFrontTrim( spaced ) != "a spaced string ": failure( "strFrontTrim" )
 if strAllTrim( spaced ) != "a spaced string": failure( "strAllTrim" )
 
 spaced = "  \t a spaced string  \t "
 
 if strTrim( spaced ) != "  \t a spaced string": failure( "strTrim 2" )
-if strHeadTrim( spaced ) != "a spaced string  \t ": failure( "strHeadTrim 2" )
+if strFrontTrim( spaced ) != "a spaced string  \t ": failure( "strFrontTrim 2" )
 if strAllTrim( spaced ) != "a spaced string": failure( "strAllTrim 2" )
 
 if strTrim( nonspaced ) != "non spaced": failure( "strTrim nonspaced" )
-if strHeadTrim( nonspaced ) != "non spaced": failure( "strHeadTrim nonspaced" )
+if strFrontTrim( nonspaced ) != "non spaced": failure( "strFrontTrim nonspaced" )
 if strAllTrim( nonspaced ) != "non spaced": failure( "strAllTrim nonspaced" )
 
 success()

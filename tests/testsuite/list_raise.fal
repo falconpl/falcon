@@ -1,0 +1,53 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 116d
+* Category: rtl
+* Subcategory: list
+* Short: List errors
+* Description:
+*   Test for exceptions regardings lists being raised when needed.
+*
+* [/Description]
+*
+****************************************************************************/
+
+list = List()
+
+try
+   list.pop()
+   failure( "Popping empty list" )
+end
+
+try
+   list.popFront()
+   failure( "Popping front empty list" )
+end
+
+try
+   list.back()
+   failure( "Tacking back from empty list" )
+end
+
+try
+   list.front()
+   failure( "Taking front from empty list" )
+end
+
+// try insert with a non coherent iterator
+thing = [1=>2]
+iter = Iterator( thing )
+
+try
+   list.insert( iter, nil )
+   failure( "Insert with invalid iterator" )
+end
+
+try
+   list.erase( iter )
+   failure( "Erase with invalid iterator" )
+end
+
+success()
+
+/* End of file */

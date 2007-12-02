@@ -1,0 +1,75 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 116g
+* Category: rtl
+* Subcategory: list
+* Short: List iterators erase
+* Description:
+*   We test the RTL List iterators; here we test for advanced operations,
+*   namely erase at various positions.
+* [/Description]
+*
+****************************************************************************/
+
+list = List()
+
+// erase in an empty list
+iter = list.first()
+try
+   list.erase( iter )
+   failure( "Invalid exception not raised" )
+end
+
+if list.size() != 0: failure( "erase empty" )
+
+// head erase
+list = List( "a", "b", "c" )
+iter = list.first()
+list.erase( iter )
+if list.size() != 2 or list.front() != "b": failure( "head erase" )
+if iter.value() != "b": failure( "Iterator status after erase" )
+
+// tail erase
+list = List( "a", "b", "c" )
+iter = list.last()
+list.erase( iter )
+if list.size() != 2 or list.back() != "b": failure( "tail erase" )
+if iter.hasCurrent(): failure( "Invalidation of tail erase" )
+
+// middle erase
+list = List( "a", "b", "c" )
+iter = list.first()
+iter.next()
+list.erase( iter )
+if list.front() != "a": failure( "Head after erase middle" )
+if list.back() != "c": failure( "Tail after erase middle" )
+if iter.value() != "c": failure( "Tail after erase middle" )
+
+// iterator validity
+
+// we prepare a set of iterators so that
+//  a     b     c
+//  0    1+3    2
+//  Then we remove B via 1; 0 and 2 must still be valid,
+//  1 must be valid and moved to C and 3 must be invalid
+
+list = List( "a", "b", "c" )
+iter0 = list.first()
+iter1 = list.first()
+iter1.next()
+iter2 = list.last()
+iter3 = list.last()
+iter3.prev()
+
+// a first pre-check
+if iter1.value() != iter3.value(): failure( "erase invalidation pre" )
+list.erase( iter1 )
+if iter3.hasCurrent(): failure( "iter3 not invalid" )
+if iter0.value() != "a": failure( "iter0 moved" )
+if iter2.value() != "c": failure( "iter2 moved" )
+if iter1.value() != "c": failure( "iter1 not moved" )
+
+success()
+
+/* End of file */

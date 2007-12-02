@@ -1,0 +1,77 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 116c
+* Category: rtl
+* Subcategory: list
+* Short: List memory
+* Description:
+*   We test the RTL List to correctly mark, save and dispose
+*   items being stored in them.
+*
+* [/Description]
+*
+****************************************************************************/
+
+class tester( initparam )
+   name = initparam
+end
+
+base_allocMem = 0
+base_allocItems = 0
+allocItems = 0
+allocMem = 0
+liveItems = 0
+liveMem = 0
+
+// initialize references
+gcPerform( true )
+gcGetParams( $allocMem, $allocItems, $liveMem, $liveItems )
+base_allocMem = allocMem
+base_allocItems = allocItems
+
+// create a list
+list = List()
+// change gc mark
+gcPerform( true )
+
+for i = 1 to 10
+   list.push( tester( toString(i) ) )
+end
+
+// a recursive list
+list.pushFront( list )
+
+// a tester in a property
+list.erase = tester( toString(1) )
+
+// we have no reference of the original items, but they are stored deep in the list.
+// so, if we destroy them, we'll crash here:
+gcPerform( true )
+
+for i = 10 to 1
+   elem = list.pop()
+   if int( elem.name ) != i
+      failure( "coherency of stored item " + toString(i) )
+   end
+end
+
+// Now the items can be collected; verify that we clean the memory:
+list = nil
+elem = nil
+// clear the A register
+a = 2 * 1
+
+// be sure to kill both marks
+gcPerform( true )
+gcPerform( true )
+gcGetParams( $allocMem, $allocItems, $liveMem, $liveItems )
+
+if base_allocMem != allocMem: failure( "unmatching allocated memory" )
+if base_allocItems != allocItems: failure( "unmatching allocated items" )
+if allocMem != liveMem: failure( "live memory unmatching allocated memory" )
+if allocItems != liveItems: failure( "live items umatching allocated items" )
+
+success()
+
+/* End of file */

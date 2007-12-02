@@ -1,0 +1,134 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 116j
+* Category: rtl
+* Subcategory: list
+* Short: List for/in
+* Description:
+*   Test for exceptions list working in for/in loops.
+*
+* [/Description]
+*
+****************************************************************************/
+
+// Empty list
+list = List()
+count = 0
+for item in list
+   count ++
+end
+if count != 0: failure( "Empty list" )
+
+// list parse
+list = List( "a", "b", "c" )
+cfr = [ "a", "b", "c" ]
+
+count = 0
+for elem in list
+   if elem != cfr[count]
+      failure( "Traversal at " + toString( count ) )
+   end
+   ++count
+end
+if count != 3: failure( "Traverasal count" )
+
+// and again.
+count = 0
+for elem in list
+   if elem != cfr[count]
+      failure( "Re-traversal at " + toString( count ) )
+   end
+   ++count
+end
+if count != 3: failure( "Traverasal count" )
+
+
+// Traversal with forfirst/forlast
+// and again.
+count = 0
+for elem in list
+   forfirst
+      if elem != "a": failure( "ForFirst" )
+   end
+
+   ++count
+
+   forlast
+      if elem != "c": failure( "ForLast" )
+   end
+end
+if count != 3: failure( "Forfirst/forlast count" )
+
+// Traversal with forfirst/forlast/forall
+// and again.
+elements = ""
+for elem in list
+   forfirst
+      elements = ">"
+   end
+   elements += elem
+
+   forall
+      elements += ", "
+   end
+
+   forlast
+      elements += "."
+   end
+end
+
+if elements != ">a, b, c."
+   failure( "Complete for/in" )
+end
+
+// Setting an item.
+for elem in list
+   if elem == "c"
+      .= "z"
+   end
+end
+
+if list.back() != "z": failure( "Setting an item" )
+
+// deleting an item
+compose = ""
+for elem in list
+   if elem == "b"
+      continue dropping
+   end
+   compose += elem
+end
+if compose != "az": failure( "Rest of delete" )
+if list.size() != 2: failure( "Size after delete" )
+
+compose = ""
+iter = list.first()
+while iter.hasCurrent()
+   compose += iter.value()
+   iter.next()
+end
+
+if compose != "az": failure( "Rest of delete (recheck)" )
+
+compose = ""
+for elem in list
+   compose += elem
+end
+
+if compose != "az": failure( "Rest of delete (recheck 2)" )
+
+// delete of last element
+for item in list
+   if item == "z"
+      continue dropping
+   end
+end
+
+if list.front() != "a" or list.back() != "a"
+   failure( "Continue dropping on last" )
+end
+
+success()
+
+/* End of file */

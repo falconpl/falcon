@@ -15,10 +15,10 @@
 
 string = "this is a string"
 
-substr = strHead( string, 4 )
+substr = strFront( string, 4 )
 if substr != "this": failure( "strHead" )
 
-substr = strTail( string, 6 )
+substr = strBack( string, 6 )
 if substr != "string": failure( "strTail" )
 
 success()

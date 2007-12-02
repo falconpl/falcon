@@ -1,6 +1,6 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: flc_cclass.h
+   FILE: cclass.h
 
    Core Class definition
    -------------------------------------------------------------------

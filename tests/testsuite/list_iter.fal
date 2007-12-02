@@ -1,0 +1,61 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 116e
+* Category: rtl
+* Subcategory: list
+* Short: List iterators basic
+* Description:
+*   We test the RTL List iterators; here we test for basic operations,
+*   that are forward and backward scans.
+* [/Description]
+*
+****************************************************************************/
+
+list = List( "a", "b", "c" )
+
+// forward processing
+iter = list.first()
+count = 0
+while iter.hasCurrent()
+   switch count
+      case 0
+         if iter.value() != "a": failure( "forward 0" )
+      case 1
+         if iter.value() != "b": failure( "forward 1" )
+      case 2
+         if iter.value() != "c": failure( "forward 2" )
+   end
+   count ++
+   iter.next()
+end
+
+if count != 3: failure( "forward count" )
+if list.size() != 3: failure( "forward invariance size" )
+if list.front() != "a": failure( "forward invariance front" )
+if list.back() != "c": failure( "forward invariance back" )
+
+// backward processing
+iter = list.last()
+count = 0
+while iter.hasCurrent()
+   switch count
+      case 0
+         if iter.value() != "c": failure( "backward 0" )
+      case 1
+         if iter.value() != "b": failure( "backward 1" )
+      case 2
+         if iter.value() != "a": failure( "backward 2" )
+   end
+   count ++
+   iter.prev()
+end
+
+if count != 3: failure( "forward count" )
+if list.size() != 3: failure( "forward invariance size" )
+if list.front() != "a": failure( "forward invariance front" )
+if list.back() != "c": failure( "forward invariance back" )
+
+success()
+
+/* End of file */

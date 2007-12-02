@@ -216,15 +216,13 @@ public:
    virtual bool isValid() const;
    virtual bool isOwner( void *collection ) const;
    virtual bool equal( const CoreIterator &other ) const;
-
    virtual void invalidate();
+   virtual bool erase();
+   virtual bool insert( const Item &item );
+   virtual UserData *clone();
 
    AttribIterator *nextIter() const { return m_next; }
    void notifyDeletion( AttribObjectHandler *deleted );
-
-   void remove();
-
-   virtual UserData *clone();
 };
 
 }

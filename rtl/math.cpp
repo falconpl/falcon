@@ -280,7 +280,7 @@ FALCON_FUNC  flc_fract ( ::Falcon::VMachine *vm )
    Item *num = vm->param( 0 );
    if ( num->type() == FLC_ITEM_INT )
    {
-      vm->retval( 0.0 );
+      vm->retval( (int64) 0 );
    }
    else if ( num->type() == FLC_ITEM_NUM )
    {

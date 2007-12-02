@@ -448,6 +448,21 @@ while_statement:
          COMPILER->popContextSet();
          $$ = w;
       }
+   | LOOP statement {
+      Falcon::StmtWhile *w = new Falcon::StmtWhile( LINE, 0 );
+         COMPILER->pushLoop( w );
+         COMPILER->pushContext( w );
+         COMPILER->pushContextSet( &w->children() );
+         COMPILER->addStatement( $2 );
+      }
+      statement_list END EOL
+      {
+         Falcon::StmtWhile *w = static_cast<Falcon::StmtWhile *>(COMPILER->getContext());
+         COMPILER->popLoop();
+         COMPILER->popContext();
+         COMPILER->popContextSet();
+         $$ = w;
+      }
 
    | while_short_decl statement {
          Falcon::StmtWhile *w = new Falcon::StmtWhile( LINE, $1 );

@@ -1,0 +1,29 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 116h
+* Category: rtl
+* Subcategory: list
+* Short: List iterators API
+* Description:
+*  This test verifies that lists can be fully accessed through CORE
+*  iterator API.
+* [/Description]
+*
+****************************************************************************/
+
+list = List( "a", "b", "c" )
+
+iter = Iterator( list )
+if iter.value() != "a": failure( "Head iterator" )
+iter.next()
+iter.erase()
+if iter.value() != "c": failure( "Erase" )
+iter.insert( "z" )
+if iter.value() != "z": failure( "Insert" )
+iter.next()
+if iter.value() != "c": failure( "Next after insert" )
+
+success()
+
+/* End of file */

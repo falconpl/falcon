@@ -316,16 +316,23 @@ UserData *AttribIterator::clone()
    return other;
 }
 
-void AttribIterator::remove()
+bool AttribIterator::erase()
 {
    if( m_current != 0 )
    {
       AttribObjectHandler *toBeRemoved = m_current;
       m_current = m_current->next();
       m_attrib->removeFrom( toBeRemoved->object() );
+      return true;
    }
+
+   return false;
 }
 
+bool AttribIterator::insert( const Item &item )
+{
+   return false;
+}
 
 };
 

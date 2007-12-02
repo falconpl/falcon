@@ -8,9 +8,17 @@ Falcon (0.8.5)
   * major: Flat VM model implemented.
   * minor: Added round, ceil, floor, fint and abs math functions.
   * minor: Fixed default representation of floating point numbers, and
-           recogninzing long integer NAN.
+      recogninzing long integer NAN.
   * minor: int() core function now raises a range error in case the given
-           fp number cannot be represented in an int64.
+      fp number cannot be represented in an int64.
+  * minor: loop statement now accepts a statement on the same line for
+      candy grammar.
+  * minor: added arrayHead function in rtl.
+  * minor: strHead, strHeadTrim, strTail, strTailFind have been renamed
+      respectively to strFront, strFrontTrim, strBack, strBackFind for
+      coherency with nomenclature.
+  * major: Added List class with support in for/in and CORE iterator.
+  * major: Added support for generic sequence object and deep GC marking.
 
 Falcon (0.8.4)
   * major: Old "lambda expressionss" are now "nameless functions". They are declared

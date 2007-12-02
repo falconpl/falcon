@@ -456,7 +456,7 @@ void makeIterator( VMachine *vm, const Item &self, bool begin )
          CoreDict *orig = self.asDict();
          DictIterator *iter;
          if( begin )
-            iter = orig->begin();
+            iter = orig->first();
          else
             iter = orig->last();
          iterator->setUserData( iter );
@@ -472,7 +472,7 @@ void makeIterator( VMachine *vm, const Item &self, bool begin )
       break;
    }
 
-   iterator->setProperty( "origin", self );
+   iterator->setProperty( "_origin", self );
    vm->retval( iterator );
 }
 

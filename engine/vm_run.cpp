@@ -30,6 +30,7 @@
 #include <falcon/vmcontext.h>
 #include <falcon/sys.h>
 #include <falcon/core_ext.h>
+#include <falcon/sequence.h>
 
 #include <falcon/cobject.h>
 #include <falcon/lineardict.h>
@@ -639,8 +640,9 @@ void opcodeHandler_TRAL( register VMachine *vm )
       break;
 
       case FLC_ITEM_DICT:
+      case FLC_ITEM_OBJECT:
       {
-         DictIterator *iter = (DictIterator *) iterator->asObject()->getUserData();
+         CoreIterator *iter = (CoreIterator *) iterator->asObject()->getUserData();
          if ( ! iter->hasNext() )
             vm->m_pc_next = pcNext;
       }
@@ -1915,7 +1917,7 @@ void opcodeHandler_TRAN( register VMachine *vm )
             if( p3 == 1 )
             {
                CoreDict *sdict = source->asDict();
-               sdict->remove( iter );
+               sdict->remove( *iter );
                if( ! iter->hasNext() )
                {
                   vm->m_pc_next = p2;
@@ -1935,6 +1937,49 @@ void opcodeHandler_TRAN( register VMachine *vm )
                   copy( iter->getCurrentKey() );
             vm->stackItem( size -3 - 1 ).dereference()->
                   copy( *iter->getCurrent().dereference() );
+         }
+      break;
+
+
+      case FLC_ITEM_OBJECT:
+         if ( ! isIterator )
+         {
+            vm->raiseError( e_arracc, "TRAN" );
+            return;
+         }
+         else {
+            CoreIterator *iter = (CoreIterator *) iterator->asObject()->getUserData();
+
+            if( ! iter->isValid() )
+            {
+               vm->raiseError( e_arracc, "TRAN" );
+               return;
+            }
+
+            if( p3 == 1 )
+            {
+               if( ! iter->erase() )
+               {
+                  vm->raiseError( e_arracc, "TRAN" );
+                  return;
+               }
+               // had the delete invalidated this?
+               if( ! iter->isValid() )
+               {
+                  vm->m_pc_next = p2;
+                  return;
+               }
+            }
+            else {
+               if( ! iter->next() )
+               {
+                  // great, we're done -- let the code pass through.
+                  vm->m_pc_next = p2;
+                  return;
+               }
+            }
+
+            *dest->dereference() = iter->getCurrent();
          }
       break;
 
@@ -2881,7 +2926,7 @@ void opcodeHandler_TRAV( register VMachine *vm )
          }
 
          // we need an iterator...
-         DictIterator *iter = dict->begin();
+         DictIterator *iter = dict->first();
 
          // in a dummy object...
          CoreObject *obj = new CoreObject( vm, iter );
@@ -2891,6 +2936,42 @@ void opcodeHandler_TRAV( register VMachine *vm )
                copy( iter->getCurrentKey() );
          vm->stackItem( stackSize - 1 ).dereference()->
                copy( *iter->getCurrent().dereference() );
+
+         // prepare... iterator
+         vm->pushParameter( obj );
+      }
+      break;
+
+      case FLC_ITEM_OBJECT:
+      {
+         CoreObject *obj = source->asObject();
+         if( obj->getUserData() == 0 || ! obj->getUserData()->isSequence() )
+         {
+            vm->raiseError( e_invop, "TRAV" );
+            return;
+         }
+
+         Sequence *seq = static_cast< Sequence *>( obj->getUserData() );
+         if ( seq->empty() )
+         {
+            goto trav_go_away;
+         }
+
+         if( vm->operandType( 1 ) == P_PARAM_INT32 || vm->operandType( 1 ) == P_PARAM_INT64 )
+         {
+            vm->raiseRTError(
+               new RangeError( ErrorParam( e_unpack_size ).origin( e_orig_vm ).extra( "TRAV" ) ) );
+            return;
+         }
+
+         // we need an iterator...
+         CoreIterator *iter = seq->getIterator();
+
+         // in a dummy object...
+         obj = new CoreObject( vm, iter );
+
+         register int stackSize = vm->m_stack->size();
+         *dest->dereference() = iter->getCurrent();
 
          // prepare... iterator
          vm->pushParameter( obj );
@@ -3516,13 +3597,14 @@ void opcodeHandler_TRAC( register VMachine *vm )
       break;
 
       case FLC_ITEM_DICT:
+      case FLC_ITEM_OBJECT:
          if ( ! isIterator )
          {
             vm->raiseError( e_stackuf, "TRAC" );
             return;
          }
          else {
-            DictIterator *iter = (DictIterator *) iterator->asObject()->getUserData();
+            CoreIterator *iter = (CoreIterator *) iterator->asObject()->getUserData();
 
             if( ! iter->isValid() )
             {

@@ -297,7 +297,7 @@ FALCON_FUNC  strFind ( ::Falcon::VMachine *vm )
       vm->retval( -1 );
 }
 
-FALCON_FUNC  strTailFind ( ::Falcon::VMachine *vm )
+FALCON_FUNC  strBackFind ( ::Falcon::VMachine *vm )
 {
    // Parameter checking;
    Item *target = vm->param(0);
@@ -330,7 +330,7 @@ FALCON_FUNC  strTailFind ( ::Falcon::VMachine *vm )
 }
 
 
-FALCON_FUNC  strHead ( ::Falcon::VMachine *vm )
+FALCON_FUNC  strFront ( ::Falcon::VMachine *vm )
 {
    Item *target = vm->param(0);
    Item *length = vm->param(1);
@@ -357,7 +357,7 @@ FALCON_FUNC  strHead ( ::Falcon::VMachine *vm )
    }
 }
 
-FALCON_FUNC  strTail ( ::Falcon::VMachine *vm )
+FALCON_FUNC  strBack ( ::Falcon::VMachine *vm )
 {
    Item *target = vm->param(0);
    Item *length = vm->param(1);
@@ -410,7 +410,7 @@ FALCON_FUNC  strTrim ( ::Falcon::VMachine *vm )
       vm->retval( new GarbageString( vm ) );
 }
 
-FALCON_FUNC  strHeadTrim ( ::Falcon::VMachine *vm )
+FALCON_FUNC  strFrontTrim ( ::Falcon::VMachine *vm )
 {
    Item *target = vm->param(0);
 

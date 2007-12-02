@@ -197,11 +197,11 @@ FALCON_FUNC  strSplit ( ::Falcon::VMachine *vm );
 FALCON_FUNC  strSplitTrimmed ( ::Falcon::VMachine *vm );
 FALCON_FUNC  strMerge ( ::Falcon::VMachine *vm );
 FALCON_FUNC  strFind ( ::Falcon::VMachine *vm );
-FALCON_FUNC  strTailFind ( ::Falcon::VMachine *vm );
-FALCON_FUNC  strHead ( ::Falcon::VMachine *vm );
-FALCON_FUNC  strTail ( ::Falcon::VMachine *vm );
+FALCON_FUNC  strBackFind ( ::Falcon::VMachine *vm );
+FALCON_FUNC  strFront ( ::Falcon::VMachine *vm );
+FALCON_FUNC  strBack ( ::Falcon::VMachine *vm );
 FALCON_FUNC  strTrim ( ::Falcon::VMachine *vm );
-FALCON_FUNC  strHeadTrim ( ::Falcon::VMachine *vm );
+FALCON_FUNC  strFrontTrim ( ::Falcon::VMachine *vm );
 FALCON_FUNC  strAllTrim ( ::Falcon::VMachine *vm );
 FALCON_FUNC  strReplace ( ::Falcon::VMachine *vm );
 FALCON_FUNC  strReplicate ( ::Falcon::VMachine *vm );
@@ -219,10 +219,13 @@ FALCON_FUNC  arrayBuffer ( ::Falcon::VMachine *vm );
 FALCON_FUNC  arrayFind ( ::Falcon::VMachine *vm );
 FALCON_FUNC  arrayScan ( ::Falcon::VMachine *vm );
 FALCON_FUNC  arrayFilter ( ::Falcon::VMachine *vm );
+FALCON_FUNC  arrayMap( ::Falcon::VMachine *vm );
 FALCON_FUNC  arraySort( ::Falcon::VMachine *vm );
 FALCON_FUNC  arrayCopy( ::Falcon::VMachine *vm );
 FALCON_FUNC  arrayRemove( ::Falcon::VMachine *vm );
 FALCON_FUNC  arrayMerge( ::Falcon::VMachine *vm );
+FALCON_FUNC  arrayHead ( ::Falcon::VMachine *vm );
+FALCON_FUNC  arrayTail ( ::Falcon::VMachine *vm );
 
 FALCON_FUNC  call( ::Falcon::VMachine *vm );
 FALCON_FUNC  methodCall( ::Falcon::VMachine *vm );
@@ -232,6 +235,8 @@ FALCON_FUNC  dictKeys( ::Falcon::VMachine *vm );
 FALCON_FUNC  dictValues( ::Falcon::VMachine *vm );
 FALCON_FUNC  dictInsert( ::Falcon::VMachine *vm );
 FALCON_FUNC  dictGet( ::Falcon::VMachine *vm );
+FALCON_FUNC  dictFind( ::Falcon::VMachine *vm );
+FALCON_FUNC  dictBest( ::Falcon::VMachine *vm );
 FALCON_FUNC  dictRemove( ::Falcon::VMachine *vm );
 FALCON_FUNC  dictClear( ::Falcon::VMachine *vm );
 
@@ -304,6 +309,22 @@ FALCON_FUNC  TimeStamp_toLongFormat ( ::Falcon::VMachine *vm );
 FALCON_FUNC  TimeStamp_fromLongFormat ( ::Falcon::VMachine *vm );
 FALCON_FUNC  TimeStamp_compare ( ::Falcon::VMachine *vm );
 FALCON_FUNC  CurrentTime ( ::Falcon::VMachine *vm );
+
+
+FALCON_FUNC  List_init ( ::Falcon::VMachine *vm );
+FALCON_FUNC  List_push ( ::Falcon::VMachine *vm );
+FALCON_FUNC  List_pop ( ::Falcon::VMachine *vm );
+FALCON_FUNC  List_pushFront ( ::Falcon::VMachine *vm );
+FALCON_FUNC  List_popFront ( ::Falcon::VMachine *vm );
+FALCON_FUNC  List_front ( ::Falcon::VMachine *vm );
+FALCON_FUNC  List_back ( ::Falcon::VMachine *vm );
+FALCON_FUNC  List_first ( ::Falcon::VMachine *vm );
+FALCON_FUNC  List_last ( ::Falcon::VMachine *vm );
+FALCON_FUNC  List_size( ::Falcon::VMachine *vm );
+FALCON_FUNC  List_empty( ::Falcon::VMachine *vm );
+FALCON_FUNC  List_erase ( ::Falcon::VMachine *vm );
+FALCON_FUNC  List_insert ( ::Falcon::VMachine *vm );
+FALCON_FUNC  List_clear ( ::Falcon::VMachine *vm );
 
 /** The command line parser */
 FALCON_FUNC  CmdlineParser_parse( ::Falcon::VMachine *vm );

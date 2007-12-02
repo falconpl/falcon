@@ -40,7 +40,6 @@ namespace Falcon
 // Iterator
 //
 
-
 LinearDictIterator::LinearDictIterator( LinearDict *owner, uint32 pos ):
    m_dictPos( pos ),
    m_dict( owner )
@@ -54,8 +53,6 @@ bool LinearDictIterator::next()
       return false;
 
    register uint32 size = m_dict->length();
-
-
 
    if ( m_versionNumber == m_dict->version() && size != 0 && size -1 > m_dictPos )
    {
@@ -154,6 +151,20 @@ bool LinearDictIterator::equal( const CoreIterator &other ) const
    return false;
 }
 
+bool LinearDictIterator::erase()
+{
+   if ( m_dict != 0 )
+   {
+      return m_dict->remove( *this );
+   }
+   return false;
+}
+
+bool LinearDictIterator::insert( const Item &data )
+{
+   return false;
+}
+
 //=======================================================
 // Iterator
 //
@@ -188,7 +199,7 @@ uint32 LinearDict::length() const
    return m_size;
 }
 
-DictIterator *LinearDict::begin()
+DictIterator *LinearDict::first()
 {
    return new LinearDictIterator( this, 0 );
 }
@@ -197,6 +208,24 @@ DictIterator *LinearDict::last()
 {
    return new LinearDictIterator( this, m_size - 1 );
 }
+
+void LinearDict::first( DictIterator &iter )
+{
+   LinearDictIterator *lit = static_cast< LinearDictIterator *>( &iter );
+   lit->m_versionNumber = version();
+   lit->m_dictPos = 0;
+   lit->m_dict = this;
+}
+
+void LinearDict::last( DictIterator &iter )
+{
+
+   LinearDictIterator *lit = static_cast< LinearDictIterator *>( &iter );
+   lit->m_versionNumber = version();
+   lit->m_dictPos =  m_size - 1;
+   lit->m_dict = this;
+}
+
 
 
 Item *LinearDict::find( const Item &key )
@@ -211,24 +240,37 @@ Item *LinearDict::find( const Item &key )
    return 0;
 }
 
-DictIterator *LinearDict::findIterator( const Item &key )
+bool LinearDict::find( const Item &key, DictIterator &iter )
 {
    uint32 posHint;
 
    // Insert supports substitution semantics.
-   if ( findInternal( key, posHint ) ) {
+   bool val = findInternal( key, posHint );
+   LinearDictIterator *li = static_cast< LinearDictIterator *>( &iter );
+   li->m_dictPos = posHint;
+   li->m_dict = this;
+   li->m_versionNumber = version();
+   return val;
+}
+
+DictIterator *LinearDict::findIterator( const Item &key )
+{
+   uint32 posHint;
+
+   if ( findInternal( key, posHint ) )
+   {
       return new LinearDictIterator( this, posHint );
    }
 
    return 0;
 }
 
-bool LinearDict::remove( DictIterator *iter )
+bool LinearDict::remove( DictIterator &iter )
 {
-   if( ! iter->isOwner( this ) || ! iter->isValid() )
+   if( ! iter.isOwner( this ) || ! iter.isValid() )
       return false;
 
-   LinearDictIterator *ldi = static_cast<LinearDictIterator *>(iter);
+   LinearDictIterator *ldi = static_cast<LinearDictIterator *>(&iter);
 
    removeAt( ldi->m_dictPos );
    // maintain compatibility
@@ -261,6 +303,42 @@ void LinearDict::insert( const Item &key, const Item &value )
 
    // Entry not found, must be added
    addInternal( posHint, key, value );
+}
+
+void LinearDict::smartInsert( DictIterator &iter, const Item &key, const Item &value )
+{
+   if ( m_size == 0 )
+   {
+      addInternal( 0, key, value );
+      return;
+   }
+
+   if ( iter.isOwner( this ) && iter.isValid() )
+   {
+      uint32 posHint;
+      LinearDictIterator *ldi = static_cast<LinearDictIterator *>(&iter);
+      posHint = ldi->m_dictPos;
+
+      // right position?
+      if ( origin()->compareItems( key, m_data[posHint].key() ) == 0 )
+      {
+         m_data[ posHint ].value( value );
+         return;
+      }
+
+      // not right, but good for insertion?
+      if (
+         ( posHint == 0 || origin()->compareItems( key, m_data[posHint-1].key() ) > 0 ) &&
+         ( posHint == m_size || origin()->compareItems( key, m_data[posHint].key() ) < 0 ) )
+      {
+         addInternal( posHint, key, value );
+         ldi->m_versionNumber = version();
+         return;
+      }
+   }
+
+   // nothing to do, perform a full search
+   insert( key, value );
 }
 
 bool LinearDict::equal( const CoreDict &other ) const

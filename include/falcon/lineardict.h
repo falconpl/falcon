@@ -67,10 +67,9 @@ class LinearDictIterator: public DictIterator
    uint32 m_dictPos;
    LinearDict *m_dict;
    uint32 m_versionNumber;
-   LinearDictIterator( LinearDict *owner, uint32 pos );
 
 public:
-
+   LinearDictIterator( LinearDict *owner, uint32 pos );
 
    virtual bool next();
    virtual bool prev();
@@ -83,6 +82,8 @@ public:
    virtual bool isOwner( void *collection ) const;
    virtual void invalidate();
    virtual bool equal( const CoreIterator &other ) const;
+   virtual bool erase();
+   virtual bool insert( const Item &data );
 
    friend class LinearDict;
 };
@@ -115,12 +116,19 @@ public:
 
    virtual uint32 length() const;
    virtual Item *find( const Item &key );
+   virtual bool find( const Item &key, DictIterator &iter );
    virtual DictIterator *findIterator( const Item &key );
-   virtual bool remove( DictIterator *iter );
+
+   virtual bool remove( DictIterator &iter );
    virtual bool remove( const Item &key );
    virtual void insert( const Item &key, const Item &value );
-   virtual DictIterator *begin();
+   virtual void smartInsert( DictIterator &iter, const Item &key, const Item &value );
+
+   virtual void first( DictIterator &iter );
+   virtual void last( DictIterator &iter );
+   virtual DictIterator *first();
    virtual DictIterator *last();
+
    virtual bool equal( const CoreDict &other ) const;
    virtual CoreDict *clone() const;
    virtual void merge( const CoreDict &dict );

@@ -57,14 +57,14 @@ if dictionary["k"] != 10: failure( "Item change" )
 it = Iterator( dictionary )
 while it.hasCurrent()
 	if it.key() == "k"
-		it.remove()
+		it.erase()
    else
 		it.next()
    end
 end
 
-if "k" in dictionary: failure( "Item remove" )
-if dictionary.len() != 3: failure( "Item remove -- len" )
+if "k" in dictionary: failure( "Item erase" )
+if dictionary.len() != 3: failure( "Item erase -- len" )
 
 success()
 

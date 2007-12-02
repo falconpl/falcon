@@ -39,6 +39,13 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    self->version( RTL_VERSION_MAJOR, RTL_VERSION_MINOR, RTL_VERSION_REVISION );
 
    //=======================================================================
+   // Message setting
+   //=======================================================================
+   // TODO: load proper messages...
+   // ... and fallback to english:
+   self->stringTable().build( Falcon::Ext::message_table );
+
+   //=======================================================================
    // RTL basic functionality
    //=======================================================================
 
@@ -89,11 +96,11 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    self->addExtFunc( "strSplitTrimmed", Falcon::Ext::strSplitTrimmed );
    self->addExtFunc( "strMerge", Falcon::Ext::strMerge );
    self->addExtFunc( "strFind", Falcon::Ext::strFind );
-   self->addExtFunc( "strTailFind", Falcon::Ext::strTailFind );
-   self->addExtFunc( "strHead", Falcon::Ext::strHead );
-   self->addExtFunc( "strTail", Falcon::Ext::strTail );
+   self->addExtFunc( "strBackFind", Falcon::Ext::strBackFind );
+   self->addExtFunc( "strFront", Falcon::Ext::strFront );
+   self->addExtFunc( "strBack", Falcon::Ext::strBack );
    self->addExtFunc( "strTrim", Falcon::Ext::strTrim );
-   self->addExtFunc( "strHeadTrim", Falcon::Ext::strHeadTrim );
+   self->addExtFunc( "strFrontTrim", Falcon::Ext::strFrontTrim );
    self->addExtFunc( "strAllTrim", Falcon::Ext::strAllTrim );
    self->addExtFunc( "strReplace", Falcon::Ext::strReplace );
    self->addExtFunc( "strReplicate", Falcon::Ext::strReplicate );
@@ -103,7 +110,7 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    self->addExtFunc( "strCmpIgnoreCase", Falcon::Ext::strCmpIgnoreCase );
 
    //=======================================================================
-   // RTL array api
+   // RTL array API
    //=======================================================================
    self->addExtFunc( "arrayIns", Falcon::Ext::arrayIns );
    self->addExtFunc( "arrayDel", Falcon::Ext::arrayDel );
@@ -114,10 +121,13 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    self->addExtFunc( "arrayFind", Falcon::Ext::arrayFind );
    self->addExtFunc( "arrayScan", Falcon::Ext::arrayScan );
    self->addExtFunc( "arrayFilter", Falcon::Ext::arrayFilter );
+   self->addExtFunc( "arrayMap", Falcon::Ext::arrayMap );
    self->addExtFunc( "arraySort", Falcon::Ext::arraySort );
    self->addExtFunc( "arrayCopy", Falcon::Ext::arrayCopy );
    self->addExtFunc( "arrayRemove", Falcon::Ext::arrayRemove );
    self->addExtFunc( "arrayMerge", Falcon::Ext::arrayMerge );
+   self->addExtFunc( "arrayHead", Falcon::Ext::arrayHead );
+   self->addExtFunc( "arrayTail", Falcon::Ext::arrayTail );
 
    //=======================================================================
    // Indirect call
@@ -133,6 +143,8 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    self->addExtFunc( "dictValues", Falcon::Ext::dictValues );
    self->addExtFunc( "dictInsert", Falcon::Ext::dictInsert );
    self->addExtFunc( "dictGet", Falcon::Ext::dictGet );
+   self->addExtFunc( "dictFind", Falcon::Ext::dictFind );
+   self->addExtFunc( "dictBest", Falcon::Ext::dictBest );
    self->addExtFunc( "dictRemove", Falcon::Ext::dictRemove );
    self->addExtFunc( "dictClear", Falcon::Ext::dictClear );
 
@@ -317,6 +329,24 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
             Falcon::Ext::FileStat_readStats );
 
    //=======================================================================
+   // The list class
+   //=======================================================================
+   Falcon::Symbol *list_class = self->addClass( "List", Falcon::Ext::List_init );
+   self->addClassMethod( list_class, "push", Falcon::Ext::List_push );
+   self->addClassMethod( list_class, "pop", Falcon::Ext::List_pop );
+   self->addClassMethod( list_class, "pushFront", Falcon::Ext::List_pushFront );
+   self->addClassMethod( list_class, "popFront", Falcon::Ext::List_popFront );
+   self->addClassMethod( list_class, "front", Falcon::Ext::List_front );
+   self->addClassMethod( list_class, "back", Falcon::Ext::List_back );
+   self->addClassMethod( list_class, "last", Falcon::Ext::List_last );
+   self->addClassMethod( list_class, "first", Falcon::Ext::List_first );
+   self->addClassMethod( list_class, "size", Falcon::Ext::List_size );
+   self->addClassMethod( list_class, "empty", Falcon::Ext::List_empty );
+   self->addClassMethod( list_class, "erase", Falcon::Ext::List_erase );
+   self->addClassMethod( list_class, "insert", Falcon::Ext::List_insert );
+   self->addClassMethod( list_class, "clear", Falcon::Ext::List_clear );
+
+   //=======================================================================
    // The command line parser class
    //=======================================================================
 
@@ -347,14 +377,6 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    self->addExtFunc( "stdOutRaw", Falcon::Ext::stdOutRaw );
    self->addExtFunc( "stdErrRaw", Falcon::Ext::stdErrRaw );
    self->addExtFunc( "systemErrorDescription", Falcon::Ext::systemErrorDescription );
-
-
-   //=======================================================================
-   // Message setting
-   //=======================================================================
-   // TODO: load proper messages...
-   // ... and fallback to english:
-   self->stringTable().build( Falcon::Ext::message_table );
 
    return self;
 }

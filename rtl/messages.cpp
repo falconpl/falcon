@@ -40,9 +40,11 @@ wchar_t *message_table[] = {
    L"second parameter must be callable",
    L"needs two arrays",
    L"indexes must be numbers",
-   L"start position out of range",   // << 10
+   L"start position out of range",   // 10
    L"parameter array contains non string elements",
-
+   L"parameter array is empty",
+   L"Iterator class not found in VM",
+   L"Given item is not a valid iterator for the collection",
    0
    };
 

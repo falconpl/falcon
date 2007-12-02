@@ -116,6 +116,21 @@ bool PageDictIterator::equal( const CoreIterator &other ) const
    return false;
 }
 
+bool PageDictIterator::erase()
+{
+   if ( m_owner != 0 )
+   {
+      return m_owner->remove( *this );
+   }
+
+   return false;
+}
+
+bool PageDictIterator::insert( const Item & )
+{
+   return false;
+}
+
 //=======================================================
 // Iterator
 //
@@ -144,7 +159,7 @@ uint32 PageDict::length() const
    return m_map.size();
 }
 
-DictIterator *PageDict::begin()
+DictIterator *PageDict::first()
 {
    return new PageDictIterator( this, m_map.begin() );
 }
@@ -154,29 +169,53 @@ DictIterator *PageDict::last()
    return new PageDictIterator( this, m_map.end() );
 }
 
+void PageDict::first( DictIterator &iter )
+{
+   PageDictIterator *ptr = static_cast<PageDictIterator *>( &iter );
+   ptr->m_owner = this;
+   ptr->m_iter = m_map.begin();
+   ptr->m_versionNumber = version();
+}
+
+void PageDict::last( DictIterator &iter )
+{
+   PageDictIterator *ptr = static_cast<PageDictIterator *>( &iter );
+   ptr->m_owner = this;
+   ptr->m_iter = m_map.end();
+   ptr->m_versionNumber = version();
+}
 
 Item *PageDict::find( const Item &key )
 {
    return (Item *) m_map.find( &key );
 }
 
+
+bool PageDict::find( const Item &key, DictIterator &di )
+{
+   PageDictIterator *ptr = static_cast<PageDictIterator *>( &di );
+   ptr->m_versionNumber = version();
+   ptr->m_owner = this;
+
+   return m_map.find( &key, ptr->m_iter );
+}
+
 DictIterator *PageDict::findIterator( const Item &key )
 {
    MapIterator iter;
-   if( m_map.find( &key, iter ) )
+   if ( m_map.find( &key, iter ) )
    {
       return new PageDictIterator( this, iter );
    }
-
    return 0;
 }
 
-bool PageDict::remove( DictIterator *iter )
+bool PageDict::remove( DictIterator &iter )
 {
-   if( ! iter->isOwner( this ) || ! iter->isValid() )
+   if( ! iter.isOwner( this ) || ! iter.isValid() )
       return false;
 
-   PageDictIterator *pit = static_cast< PageDictIterator *>( iter );
+   PageDictIterator *pit = static_cast< PageDictIterator *>( &iter );
    m_map.erase( pit->m_iter );
 
    m_version++;
@@ -185,6 +224,7 @@ bool PageDict::remove( DictIterator *iter )
    pit->m_versionNumber = m_version;
    return true;
 }
+
 
 bool PageDict::remove( const Item &key )
 {
@@ -197,11 +237,20 @@ bool PageDict::remove( const Item &key )
    return false;
 }
 
+
 void PageDict::insert( const Item &key, const Item &value )
 {
    if( m_map.insert( &key, &value ) )
       m_version++;
 }
+
+
+void PageDict::smartInsert( DictIterator &iter, const Item &key, const Item &value )
+{
+   // todo
+   insert( key, value );
+}
+
 
 bool PageDict::equal( const CoreDict &other ) const
 {
