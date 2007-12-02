@@ -35,8 +35,7 @@ if isoob(iter): failure( "Dict best OOB indicator" )
 iter = dictBest( dict, 5 )
 if iter.key() != "A": failure( "Dict best, near hit" )
 if not isoob(iter): failure( "Dict best near hit OOB indicator" )
-iter.insert( 5, "test" )
-inspect( iter )
+
 success()
 
 /* End of file */
