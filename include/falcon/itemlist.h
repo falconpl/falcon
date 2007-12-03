@@ -45,7 +45,6 @@ class FALCON_DYN_CLASS ItemListElement: public BaseAlloc
 
    ItemListElement *m_next;
    ItemListElement *m_prev;
-   ItemListIterator *m_iters;
 
 public:
 
@@ -55,7 +54,6 @@ public:
    ItemListElement( const Item &itm, ItemListElement *p = 0, ItemListElement *n = 0 ):
       m_next( n ),
       m_prev( p ),
-      m_iters( 0 ),
       m_item( itm )
    {}
 
@@ -64,7 +62,6 @@ public:
    */
    ~ItemListElement()
    {
-      invalidateIters();
    }
 
    const Item &item() const { return m_item; }
@@ -76,9 +73,6 @@ public:
    void prev( ItemListElement *p ) { m_prev = p; }
    ItemListElement *prev() const { return m_prev; }
 
-   void add( ItemListIterator *iter );
-   void remove( ItemListIterator *iter );
-   void invalidateIters();
 };
 
 
@@ -90,7 +84,6 @@ class FALCON_DYN_CLASS ItemListIterator: public CoreIterator
    ItemListIterator *m_next;
    ItemListIterator *m_prev;
 
-   friend class ItemListElement;
    friend class ItemList;
 public:
 
@@ -133,12 +126,20 @@ private:
    ItemListElement *m_head;
    ItemListElement *m_tail;
 
+   ItemListIterator *m_iters;
+   void addIterator( ItemListIterator *iter );
+   void removeIterator( ItemListIterator *iter );
+   void notifyDeletion( ItemListElement *elem );
+
+   friend class ItemListIterator;
+
 public:
    /** Builds an empty list. */
    ItemList():
       m_size(0),
       m_head(0),
-      m_tail(0)
+      m_tail(0),
+      m_iters(0)
    {}
 
    /** Clones a list. */

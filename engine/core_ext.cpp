@@ -719,6 +719,73 @@ FALCON_FUNC  paramSet ( ::Falcon::VMachine *vm )
 
 /*@endgroup */
 
+static bool internal_eq( ::Falcon::VMachine *vm, const Item &first, const Item &second )
+{
+   if( first == second || vm->compareItems( first, second ) == 0 )
+   {
+      return true;
+   }
+
+   if( first.isArray() && second.isArray() )
+   {
+      CoreArray *arr1 = first.asArray();
+      CoreArray *arr2 = second.asArray();
+
+      if ( arr1->length() != arr2->length() )
+         return false;
+
+      for ( uint32 p = 0; p < arr1->length(); p++ )
+      {
+         if ( ! internal_eq( vm, arr1->at(p), arr2->at(p) ) )
+            return false;
+      }
+
+      return true;
+   }
+
+   if( first.isDict() && second.isDict() )
+   {
+      CoreDict *d1 = first.asDict();
+      CoreDict *d2 = second.asDict();
+
+      if ( d1->length() != d2->length() )
+         return false;
+
+      DictIterator *di1 = d1->first();
+      DictIterator *di2 = d2->first();
+      while( di1->isValid() )
+      {
+         if ( ! internal_eq( vm, di1->getCurrentKey(), di2->getCurrentKey() ) ||
+              ! internal_eq( vm, di1->getCurrent(), di2->getCurrent() ) )
+         {
+            delete d1;
+            delete d2;
+            return false;
+         }
+      }
+
+      delete d1;
+      delete d2;
+      return true;
+   }
+
+   return false;
+}
+
+
+FALCON_FUNC  eq( ::Falcon::VMachine *vm )
+{
+   Item *first = vm->param(0);
+   Item *second = vm->param(1);
+   if ( first == 0 || second == 0 )
+   {
+      vm->raiseRTError( new ParamError( ErrorParam( e_inv_params).extra( "X,X" ) ) );
+      return;
+   }
+
+   vm->retval( internal_eq( vm, *first, *second ) ? 1:0);
+}
+
 /*@begingroup coro_sup Coroutine support
    The functions in this group allows to interact with the coroutine support that is
    provided by the Virtual Machine. Most of them translate in requests to the virtual
@@ -2665,7 +2732,7 @@ FALCON_FUNC  giveTo( ::Falcon::VMachine *vm )
    Item *i_attrib = vm->param( 0 );
    Item *i_obj = vm->param( 1 );
 
-   if ( i_attrib == 0 || ! i_attrib->isAttribute() || 
+   if ( i_attrib == 0 || ! i_attrib->isAttribute() ||
         i_obj == 0 || ! i_obj->isObject() )
    {
       vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).
@@ -2681,7 +2748,7 @@ FALCON_FUNC  removeFrom( ::Falcon::VMachine *vm )
    Item *i_attrib = vm->param( 0 );
    Item *i_obj = vm->param( 1 );
 
-   if ( i_attrib == 0 || ! i_attrib->isAttribute() || 
+   if ( i_attrib == 0 || ! i_attrib->isAttribute() ||
         i_obj == 0 || ! i_obj->isObject() )
    {
       vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).
@@ -2707,97 +2774,101 @@ FALCON_FUNC  removeFromAll( ::Falcon::VMachine *vm )
 }
 
 
-static bool broadcast_next_attrib( ::Falcon::VMachine *vm )
+static bool broadcast_next_attrib_next( ::Falcon::VMachine *vm )
 {
-   CoreArray *attributes = vm->param(0)->asArray();
-   int64 pos = vm->local(0)->asInteger();
-
-   while( pos >= 0 && ((uint32)pos) < attributes->length() )
-   {
-      // is it REALLY an attribute?
-      if ( ! attributes->at((uint32)pos).isAttribute() )
-      {
-         vm->raiseRTError( new ParamError( ErrorParam( e_param_type ).
-            extra( "not an attribute" ) ) );
-         return false;
-      }
-      Attribute *attrib = attributes->at(0).asAttribute();
-
-      // not empty ? -- we found it
-      if ( ! attrib->empty() )
-      {
-         vm->local(0)->setInteger( pos + 1 );
-         *vm->local(2) = attrib;
-         return true;
-      }
-
-      ++pos;
-   }
-
-   // we didn't find it
-   return false;
-}
-
-static bool broadcast_next( ::Falcon::VMachine *vm )
-{
-   AttribObjectHandler *aobj = (AttribObjectHandler *) vm->local(1)->asUserPointer();
-   Item *callback = 0;
-
-   // if regA is not true, break
+   // break the chain if last call returned false
    if ( ! vm->regA().isTrue() )
       return false;
 
-   while( aobj != 0 )
+   AttribObjectHandler *ho= (AttribObjectHandler *) vm->local(0)->asUserPointer();
+   while ( ho != 0 )
    {
-      CoreObject *obj = aobj->object();
-      callback = obj->getProperty( vm->local(2)->asAttribute()->name() );
-      if ( callback != 0 && callback->isCallable() )
+      CoreObject *obj = ho->object();
+      // we want a copy anyhow...
+      Item callable;
+      obj->getProperty( vm->param(0)->asAttribute()->name(), callable );
+      if ( callable.isCallable() )
       {
-         // Found!
-         break;
-      }
-      aobj = aobj->next();
-   }
+         // prepare our next frame
+         vm->local(0)->setUserPointer( ho->next() );
 
-   while ( aobj == 0 )
-   {
-      int64 pos = vm->local(0)->asInteger();
-
-      // time to scan for a new attribute
-      if ( pos < 0 || ! broadcast_next_attrib( vm ) )
-      {
-         // we're done
-         vm->retnil();
-         return false;
-      }
-
-      // now scan for an item willing to receive the signal
-      Attribute *attrib = vm->local(2)->asAttribute();
-      aobj = attrib->head();
-      while( aobj != 0 )
-      {
-         CoreObject *obj = aobj->object();
-         callback = obj->getProperty( attrib->name() );
-         if ( callback->isCallable() )
+         // great, we found an object willing to be called
+         // prepare the stack;
+         uint32 pc = vm->paramCount();
+         for( uint32 i = 1; i < pc; i ++ )
          {
-            // Found!
-            break;
+            vm->pushParameter( *vm->param( i ) );
          }
-         aobj = aobj->next();
+         callable.methodize( obj );
+         vm->callFrame( callable, pc - 1 );
+         return true;
       }
+      ho = ho->next();
    }
 
-   // prepare for next loop
-   vm->local(1)->setUserPointer( aobj->next() );
-   uint32 pcount = vm->paramCount();
-   for ( uint32 i = 1; i < pcount; i++ )
+   // we're done, return false
+   return false;
+}
+
+FALCON_FUNC broadcast_next_attrib( ::Falcon::VMachine *vm )
+{
+   Attribute *attrib = vm->param(0)->asAttribute();
+
+   // prevent making the frame (and calling) if empty
+   if ( attrib->empty() )
+      return;
+
+   // signal we'll be using an attribute
+   vm->addLocals( 1 );
+   vm->local(0)->setUserPointer( attrib->head() );
+   // fake a return true
+   vm->retval( true );
+   vm->returnHandler( broadcast_next_attrib_next );
+}
+
+static bool broadcast_next_array( ::Falcon::VMachine *vm )
+{
+   if ( ! vm->regA().isTrue() )
+      return false;
+
+   // select next item in the array.
+   Item *callback = 0;
+   uint32 pos = (uint32) vm->local(0)->asInteger();
+   CoreArray *aarr = vm->param(0)->asArray();
+
+   // time to scan for a new attribute
+   if ( pos >= aarr->length() )
    {
-      vm->pushParameter( *vm->param( i ) );
+      // we're done
+      vm->retnil();
+      return false;
    }
-   Item method = *callback;
-   method.methodize( aobj->object() );
-   vm->callFrame( method, pcount - 1 );
+
+   // is it REALLY an attribute?
+   const Item &attrib = aarr->at(pos);
+   if ( ! attrib.isAttribute() )
+   {
+      vm->raiseRTError( new ParamError( ErrorParam( e_param_type ).extra( "not an attribute" ) ) );
+      return false;
+   }
+
+   // save next pos
+   vm->local(0)->setInteger( pos + 1 );
+
+   // select next item in the array
+   vm->pushParameter( attrib );
+
+   // and append our parameters
+   uint32 pc = vm->paramCount();
+   for( uint32 i = 1; i < pc; i++)
+   {
+      vm->pushParameter( *vm->param(i) );
+   }
+
+   // we pre-cached our frame initializer (broadcast_next_attrib)
+   vm->callFrame( *vm->local(1), pc );
    return true;
+
 }
 
 
@@ -2812,33 +2883,38 @@ FALCON_FUNC  broadcast( ::Falcon::VMachine *vm )
       return;
    }
 
-   Attribute *attrib;
-
    if ( i_attrib->isAttribute() )
    {
-      attrib = i_attrib->asAttribute();
+      Attribute *attrib = i_attrib->asAttribute();
       // nothing to broadcast?
       if ( attrib->empty() )
          return;
 
       // signal we'll be using an attribute
-      vm->addLocals( 3 );
-      vm->local(0)->setInteger( -1 );
-      vm->local(1)->setUserPointer( attrib->head() );
-      *vm->local(2) = attrib;
+      vm->addLocals( 1 );
+      vm->local(0)->setUserPointer( attrib->head() );
+      vm->returnHandler( broadcast_next_attrib_next );
    }
    else
    {
-      vm->addLocals( 3 );
+      // prevent overdoing for nothing
+      if ( i_attrib->asArray()->length() == 0 )
+         return;
+
+      // add space for the tracer
+      vm->addLocals( 2 );
       vm->local(0)->setInteger( 0 );
-      vm->local(1)->setUserPointer( 0 );
+      // pre-cache our service function
+      Item *bcast_func = vm->findGlobalItem( "__broadcast_next_attrib" );
+      fassert( bcast_func != 0 );
+      *vm->local(1) = *bcast_func;
+
+      // set A to true to force first execution
+      vm->returnHandler( broadcast_next_array );
    }
 
-   // set A to true to force first execution
-   vm->regA().setInteger(1);
-
-   vm->returnHandler( broadcast_next );
-   broadcast_next( vm );
+   // force vm  to be true
+   vm->retval( true );
 }
 
 
@@ -2858,6 +2934,8 @@ Module * core_module_init()
    core->addGlobal( "scriptName", true );
    core->addGlobal( "scriptPath", true );
 
+   // we leave EQ undocumented for now.
+   core->addExtFunc( "eq", Falcon::core::eq );
    core->addExtFunc( "len", Falcon::core::len );
    core->addExtFunc( "chr", Falcon::core::chr );
    core->addExtFunc( "ord", Falcon::core::ord );
@@ -2891,6 +2969,7 @@ Module * core_module_init()
    core->addExtFunc( "removeFrom", Falcon::core::removeFrom );
    core->addExtFunc( "removeFromAll", Falcon::core::removeFromAll );
    core->addExtFunc( "broadcast", Falcon::core::broadcast );
+   core->addExtFunc( "__broadcast_next_attrib", Falcon::core::broadcast_next_attrib );
 
    // Creating the TraceStep class:
    // ... first the constructor

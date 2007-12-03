@@ -1,0 +1,25 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 38f
+* Category: attributes
+* Subcategory:
+* Short: Attribute errors
+* Description:
+*   Test for raisal of attribute errors.
+* [/Description]
+*
+****************************************************************************/
+
+attributes
+   aone, atwo
+end
+
+function test()
+end
+
+try
+   broadcast( [aone, test, atwo ] )
+   failure( "Non attribute in broadcast list" )
+end
+

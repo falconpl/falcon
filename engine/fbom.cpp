@@ -470,6 +470,10 @@ void makeIterator( VMachine *vm, const Item &self, bool begin )
          iterator->setUserData( attrib->getIterator() );
       }
       break;
+
+      default:
+         vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ) ) );
+         return;
    }
 
    iterator->setProperty( "_origin", self );

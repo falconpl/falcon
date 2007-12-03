@@ -31,7 +31,7 @@ for elem in list
    end
    ++count
 end
-if count != 3: failure( "Traverasal count" )
+if count != 3: failure( "Traverasal count 1" )
 
 // and again.
 count = 0
@@ -41,7 +41,7 @@ for elem in list
    end
    ++count
 end
-if count != 3: failure( "Traverasal count" )
+if count != 3: failure( "Traverasal count 2" )
 
 
 // Traversal with forfirst/forlast

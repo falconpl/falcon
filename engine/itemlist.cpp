@@ -28,49 +28,8 @@
 
 namespace Falcon {
 
-void ItemListElement::add( ItemListIterator *iter )
-{
-   // add the iterator on top
-   iter->m_next = m_iters;
-   iter->m_prev = 0;
-   if ( m_iters != 0 )
-      m_iters->m_prev = iter;
-   m_iters = iter;
-}
-
-void ItemListElement::remove( ItemListIterator *iter )
-{
-   if ( iter->m_prev != 0 )
-   {
-      iter->m_prev->m_next = iter->m_next;
-   }
-   else {
-      m_iters = iter->m_next;
-   }
-
-   if ( iter->m_next != 0 )
-   {
-      iter->m_next->m_prev = iter->m_prev;
-      iter->m_next = 0;
-   }
-   iter->m_prev = 0;
-
-}
-
-void ItemListElement::invalidateIters()
-{
-   ItemListIterator *iter = m_iters;
-   while( iter != 0 )
-   {
-      iter->invalidate();
-      iter = iter->m_next;
-   }
-   m_iters = 0;
-}
-
-//=======================================================
-
-ItemList::ItemList( const ItemList &l )
+ItemList::ItemList( const ItemList &l ):
+   m_iters(0)
 {
    ItemListElement *h = l.m_head;
    if ( h == 0 )
@@ -215,11 +174,9 @@ bool ItemList::erase( CoreIterator *iter )
       ItemListElement *elem = li->getCurrentElement();
       if ( elem != 0 )
       {
-         elem = erase( li->getCurrentElement() );
-         // the iterator will receive an invalidate from the the delete.
-         li->m_owner = this;
-         // move on the next element (may be 0, it's ok)
-         li->setCurrentElement( elem );
+         elem = li->getCurrentElement();
+         li->setCurrentElement( elem->next() );
+         erase( elem );
          return true;
       }
    }
@@ -259,6 +216,7 @@ ItemListElement *ItemList::erase( ItemListElement *elem )
    }
 
    ItemListElement *retval = elem->next();
+   notifyDeletion( elem );
    delete elem;
    m_size--;
    return retval;
@@ -320,6 +278,48 @@ void ItemList::clear()
 }
 
 
+void ItemList::addIterator( ItemListIterator *iter )
+{
+   // add the iterator on top
+   iter->m_next = m_iters;
+   iter->m_prev = 0;
+   if ( m_iters != 0 )
+      m_iters->m_prev = iter;
+   m_iters = iter;
+}
+
+void ItemList::removeIterator( ItemListIterator *iter )
+{
+   if ( iter->m_prev != 0 )
+   {
+      iter->m_prev->m_next = iter->m_next;
+   }
+   else {
+      m_iters = iter->m_next;
+   }
+
+   if ( iter->m_next != 0 )
+   {
+      iter->m_next->m_prev = iter->m_prev;
+      iter->m_next = 0;
+   }
+   iter->m_prev = 0;
+
+}
+
+void ItemList::notifyDeletion( ItemListElement *elem )
+{
+   ItemListIterator *iter = m_iters;
+   while( iter != 0 )
+   {
+      ItemListIterator *in = iter->m_next;
+      // invalidate would disrupt the list
+      if ( elem == iter->m_element )
+         iter->invalidate();
+      iter = in;
+   }
+}
+
 void ItemList::gcMark( MemPool *mp )
 {
    // we don't have to record the mark byte, as we woudln't have been called
@@ -333,23 +333,27 @@ void ItemList::gcMark( MemPool *mp )
    }
 }
 
+
+
 //====================================================
 
 ItemListIterator::ItemListIterator( ItemList *owner, ItemListElement *elem ):
    m_owner( owner ),
-   m_element( elem )
+   m_element( elem ),
+   m_next( 0 ),
+   m_prev( 0 )
 {
-   if ( elem != 0 )
-      elem->add( this );
+   if ( m_owner != 0 )
+   {
+      m_owner->addIterator( this );
+   }
 }
 
 
 ItemListIterator::~ItemListIterator()
 {
-   if( m_element != 0 )
-   {
-      m_element->remove( this );
-   }
+   if ( m_owner != 0 )
+      m_owner->removeIterator( this );
 }
 
 
@@ -357,13 +361,8 @@ bool ItemListIterator::next()
 {
    if ( m_element )
    {
-      m_element->remove( this );
       m_element = m_element->next();
-      if ( m_element )
-      {
-         m_element->add( this );
-         return true;
-      }
+      return m_element != 0;
    }
 
    return false;
@@ -373,13 +372,8 @@ bool ItemListIterator::prev()
 {
    if ( m_element )
    {
-      m_element->remove( this );
       m_element = m_element->prev();
-      if ( m_element )
-      {
-         m_element->add( this );
-         return true;
-      }
+      return m_element != 0;
    }
 
    return false;
@@ -424,11 +418,6 @@ bool ItemListIterator::equal( const CoreIterator &other ) const
 
 void ItemListIterator::invalidate()
 {
-   if ( m_element != 0 )
-   {
-      m_element->remove( this );
-   }
-
    m_element = 0;
 }
 
@@ -443,12 +432,6 @@ UserData *ItemListIterator::clone()
 
 void ItemListIterator::setCurrentElement( ItemListElement *e )
 {
-   if ( m_element != 0 )
-      m_element->remove( this );
-
-   if ( e != 0 )
-      e->add( this );
-
    m_element = e;
 }
 
@@ -456,7 +439,7 @@ bool ItemListIterator::erase()
 {
    if ( m_owner != 0 )
    {
-      return reinterpret_cast< ItemList *>( m_owner )->erase( this );
+      return m_owner->erase( this );
    }
    return false;
 }
@@ -465,7 +448,7 @@ bool ItemListIterator::insert( const Item &item )
 {
    if ( m_owner != 0 )
    {
-      return reinterpret_cast< ItemList *>( m_owner )->insert( this, item );
+      return m_owner->insert( this, item );
    }
    return false;
 }
