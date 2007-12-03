@@ -100,6 +100,7 @@ bool Attribute::giveTo( CoreObject *tgt )
       m_head = m_head->prev();
    }
 
+   m_size++;
    return true;
 }
 
@@ -119,6 +120,7 @@ bool Attribute::removeFrom( CoreObject *tgt )
 
       removeObject( head->objHandler() );
       delete head;
+      m_size--;
       return true;
    }
 
@@ -139,6 +141,7 @@ bool Attribute::removeFrom( CoreObject *tgt )
 
          removeObject( head->objHandler() );
          delete head;
+         m_size--;
          return true;
       }
 
@@ -220,7 +223,7 @@ bool AttribIterator::next()
       return false;
 
    m_current = m_current->next();
-   return true;
+   return m_current != 0;
 }
 
 
@@ -230,7 +233,7 @@ bool AttribIterator::prev()
       return false;
 
    m_current = m_current->prev();
-   return true;
+   return m_current != 0;
 }
 
 bool AttribIterator::hasNext() const

@@ -641,6 +641,7 @@ void opcodeHandler_TRAL( register VMachine *vm )
 
       case FLC_ITEM_DICT:
       case FLC_ITEM_OBJECT:
+      case FLC_ITEM_ATTRIBUTE:
       {
          CoreIterator *iter = (CoreIterator *) iterator->asObject()->getUserData();
          if ( ! iter->hasNext() )
@@ -1940,7 +1941,7 @@ void opcodeHandler_TRAN( register VMachine *vm )
          }
       break;
 
-
+      case FLC_ITEM_ATTRIBUTE:
       case FLC_ITEM_OBJECT:
          if ( ! isIterator )
          {
@@ -2970,7 +2971,34 @@ void opcodeHandler_TRAV( register VMachine *vm )
          // in a dummy object...
          obj = new CoreObject( vm, iter );
 
-         register int stackSize = vm->m_stack->size();
+         *dest->dereference() = iter->getCurrent();
+
+         // prepare... iterator
+         vm->pushParameter( obj );
+      }
+      break;
+
+      case FLC_ITEM_ATTRIBUTE:
+      {
+         Attribute *attrib = source->asAttribute();
+         if ( attrib->empty() )
+         {
+            goto trav_go_away;
+         }
+
+         if( vm->operandType( 1 ) == P_PARAM_INT32 || vm->operandType( 1 ) == P_PARAM_INT64 )
+         {
+            vm->raiseRTError(
+               new RangeError( ErrorParam( e_unpack_size ).origin( e_orig_vm ).extra( "TRAV" ) ) );
+            return;
+         }
+
+         // we need an iterator...
+         AttribIterator *iter = attrib->getIterator();
+
+         // in a dummy object...
+         CoreObject *obj = new CoreObject( vm, iter );
+
          *dest->dereference() = iter->getCurrent();
 
          // prepare... iterator
@@ -3598,6 +3626,7 @@ void opcodeHandler_TRAC( register VMachine *vm )
 
       case FLC_ITEM_DICT:
       case FLC_ITEM_OBJECT:
+      case FLC_ITEM_ATTRIBUTE:
          if ( ! isIterator )
          {
             vm->raiseError( e_stackuf, "TRAC" );

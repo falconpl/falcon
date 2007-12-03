@@ -1,0 +1,98 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 38a
+* Category: attributes
+* Subcategory: 
+* Short: Attrib loops
+* Description:
+*  This test checks for/in loops over attributes, which must
+*  iterate over objets having a certain attribute.
+*  
+*  The test presumes that previous tests on attributes (in 21 and 
+*  22 series) have already been passed, so we won't check here for
+*  inheritance or object startup attributes.
+* [/Description]
+*
+****************************************************************************/
+
+attributes
+   a_one, a_two, a_three
+end
+
+class CObj( name, attrib )
+   name = name
+   
+   init
+      if attrib.type() == AttributeType
+         give attrib to self
+      end
+   end
+   
+end
+
+// empty attribute loop
+count = 0
+for obj in a_one
+   count++
+end
+if count != 0: failure( "empty attribute" )
+
+// create 4 objects with different attributes
+o1 = CObj( "one", a_one )
+o2 = CObj( "two", a_two )
+o3 = CObj( "three", a_three )
+o4 = CObj( "four" )  // without attribute
+  
+// ATM we have just one object in each attribute
+for obj in a_one
+   if obj.name != "one": failure( "Obj in a_one" )
+end 
+
+for obj in a_two
+   if obj.name != "two": failure( "Obj in a_two" )
+end 
+
+for obj in a_three
+   if obj.name != "three": failure( "Obj in a_three" )
+end 
+
+// give and remove mangling
+give a_one to o2
+count = 0
+for obj in a_one
+   count++
+   if obj.name notin ["one", "two"]
+      failure( "Obj in a_one, two items" )
+   end
+end
+
+if count != 2: failure( "Obj in a_one, two items (count)" )
+
+// usage of TRAC (remove current item)
+for obj in a_one
+   if obj.name == "two" 
+      continue dropping
+   end
+end
+
+if o2 has a_one: failure( "Continue dropping" )
+
+// Ingoring .=
+for obj in a_one
+   .= o4
+end
+
+if o4 has a_one: failure( ".= not ignored 1" )
+if o1 hasnt a_one: failure( ".= not ignored 2" )
+   
+// complete removal
+for obj in a_one
+   continue dropping
+end
+
+if o1 has a_one: failure( "one not removed from all" )
+
+success()
+
+/* End of file */

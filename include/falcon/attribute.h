@@ -128,7 +128,7 @@ public:
    /** Check if this attribute has some object associated.
       \return true if there is some item associated, false otherwise.
    */
-   bool empty() const { return m_head == 0; }
+   bool empty() const { return m_size == 0; }
 
    /** Gets the head of the list of stored objects.
       \return true if there is some item associated, false otherwise.

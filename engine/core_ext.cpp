@@ -2665,7 +2665,8 @@ FALCON_FUNC  giveTo( ::Falcon::VMachine *vm )
    Item *i_attrib = vm->param( 0 );
    Item *i_obj = vm->param( 1 );
 
-   if ( ! i_attrib->isAttribute() || ! i_obj->isObject() )
+   if ( i_attrib == 0 || ! i_attrib->isAttribute() || 
+        i_obj == 0 || ! i_obj->isObject() )
    {
       vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).
          extra( "a,X" ) ) );
@@ -2680,7 +2681,8 @@ FALCON_FUNC  removeFrom( ::Falcon::VMachine *vm )
    Item *i_attrib = vm->param( 0 );
    Item *i_obj = vm->param( 1 );
 
-   if ( ! i_attrib->isAttribute() || ! i_obj->isObject() )
+   if ( i_attrib == 0 || ! i_attrib->isAttribute() || 
+        i_obj == 0 || ! i_obj->isObject() )
    {
       vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).
          extra( "a,X" ) ) );
@@ -2693,12 +2695,11 @@ FALCON_FUNC  removeFrom( ::Falcon::VMachine *vm )
 FALCON_FUNC  removeFromAll( ::Falcon::VMachine *vm )
 {
    Item *i_attrib = vm->param( 0 );
-   Item *i_obj = vm->param( 1 );
 
-   if ( ! i_attrib->isAttribute() || ! i_obj->isObject() )
+   if ( i_attrib == 0 || ! i_attrib->isAttribute() )
    {
       vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).
-         extra( "a,X" ) ) );
+         extra( "a" ) ) );
       return;
    }
 

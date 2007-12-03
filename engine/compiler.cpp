@@ -473,6 +473,7 @@ void Compiler::addPredefs()
    addIntConstant( "IntegerType", FLC_ITEM_INT );
    addIntConstant( "NumericType", FLC_ITEM_NUM );
    addIntConstant( "RangeType", FLC_ITEM_RANGE );
+   addIntConstant( "AttributeType", FLC_ITEM_ATTRIBUTE );
    addIntConstant( "FunctionType", FLC_ITEM_FUNC );
    addIntConstant( "StringType", FLC_ITEM_STRING );
    addIntConstant( "ArrayType", FLC_ITEM_ARRAY );

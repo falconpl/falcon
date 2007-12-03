@@ -1,10 +1,8 @@
 /****************************************************************************
 * Falcon test suite
 *
-* CVS-Id: $Id: objattrib.fal,v 1.2 2006/11/20 21:21:52 gian Exp $
-*
 * ID: 22c
-* Category: types
+* Category: attributes
 * Subcategory: objects
 * Short: Object using attributes
 * Description:
