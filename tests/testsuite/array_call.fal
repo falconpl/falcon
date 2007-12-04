@@ -1,0 +1,79 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 60b
+* Category: functional
+* Subcategory: execarr
+* Short: Array call
+* Description:
+*   Test for callable arrays, base of falcon functional programming.
+* [/Description]
+*
+****************************************************************************/
+
+function theCall( p1, p2, p3, p4 )
+   global gp1, gp2, gp3, gp4
+   
+   gp1 = p1
+   gp2 = p2
+   gp3 = p3
+   gp4 = p4
+end
+
+function reset()
+   global gp1, gp2, gp3, gp4
+   
+   gp1 = nil
+   gp2 = nil
+   gp3 = nil
+   gp4 = nil
+end
+
+// is callable test
+if isCallable( [1,2,3] ): failure( "Callable negative" )
+if not isCallable( [theCall,2,3] ): failure( "Callable positive 1" )
+call = [theCall]
+if not isCallable( call ): failure( "Callable positive 2" )
+
+// call array pure
+reset()
+[theCall, 1, 2, 3, 4]()
+if gp1 != 1 or gp2 != 2 or gp3 != 3 or gp4 != 4
+   failure( "Direct call pure" )
+end
+reset()
+call = [theCall, 1, 2, 3, 4]
+call()
+if gp1 != 1 or gp2 != 2 or gp3 != 3 or gp4 != 4
+   failure( "Indirect call pure" )
+end
+
+// call array spurious
+reset()
+[theCall, 1, 2](3,4)
+if gp1 != 1 or gp2 != 2 or gp3 != 3 or gp4 != 4
+   failure( "Direct call spurious" )
+end
+reset()
+call = [theCall, 1, 2 ]
+call(3,4)
+if gp1 != 1 or gp2 != 2 or gp3 != 3 or gp4 != 4
+   failure( "Indirect call spurious" )
+end
+  
+// call array impure
+reset()
+[theCall](1,2,3,4)
+if gp1 != 1 or gp2 != 2 or gp3 != 3 or gp4 != 4
+   failure( "Direct call impure" )
+end
+reset()
+call = [theCall]
+call(1,2,3,4)
+if gp1 != 1 or gp2 != 2 or gp3 != 3 or gp4 != 4
+   failure( "Indirect call impure" )
+end
+  
+success()
+
+/* end of file */

@@ -1231,6 +1231,50 @@ public:
       return callItem( callable, paramCount, VMachine::e_callFrame );
    }
 
+   /** Resets the return handler and prepares to call given external handler.
+      This function prepares the VM to execute a return handler immediately
+      after the calling function returns.
+      
+      The net effect is that, when called from inside an extension function,
+      the given callback will be called by the VM as the very next operation,
+      after checks on events, timings and context switches.
+
+      The difference with callFrame is that the stack is unaffected, and
+      the called function will have the same call frame as the caller.
+      
+      The difference with returnHandler is that the VM is instructed
+      to execute the retun procedure (that will call the given call back 
+      function) immediately, while returnHandler just sets an handler
+      for a future time when the readied call frame will be unrolled.
+
+      This function can be safely called from inside the same callback
+      function, so to create loops in which each call goes through
+      VM checks for operation counts and events.
+
+      The callbackFunc should behave as specified for returnHandler(),
+      returning true if creating another frame with callFrame() or calling
+      another return handler (or even itself) using callFrameNow().
+
+      \note recallFrame() is a (more) efficient shortcut for
+      using callFrameNow on the same calling function.
+
+      \see returnHandler()
+
+      \param callbackFunc the function to be called ASAP. 
+   */
+   void callFrameNow( ext_func_frame_t callbackFunc );
+
+   /** Prepare the VM to recall current return frame.
+      Calling this method and returning true, an handler set with
+      returnFrame() can instruct the VM to call itself again after
+      having performed a loop check.
+
+      \note This method must be called only inside extension functions,
+            better if they are also return frame handlers.
+      \see callFrameNow()
+   */
+   void recallFrame() { m_pc_next = m_pc; } // reset pc advancement
+
    /** Call an item in atomic mode.
       This method is meant to call the vm run loop from inside another vm
       run loop. When this is necessary, the inner call must end as soon as

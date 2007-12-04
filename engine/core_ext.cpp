@@ -1,7 +1,6 @@
 /*
    FALCON - The Falcon Programming Language.
    FILE: core_func.cpp
-   $Id: core_ext.cpp,v 1.50 2007/08/18 11:08:07 jonnymind Exp $
 
    Falcon module manager
    -------------------------------------------------------------------

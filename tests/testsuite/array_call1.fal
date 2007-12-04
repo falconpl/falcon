@@ -1,0 +1,85 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 60c
+* Category: functional
+* Subcategory: execarr
+* Short: Array OOP call
+* Description:
+*   Test for callable arrays, base of falcon functional programming.
+*   Here we use method instead of functions.
+* [/Description]
+*
+****************************************************************************/
+
+object theObject
+   p1 = nil
+   p2 = nil
+   p3 = nil
+   p4 = nil
+   
+   function theCall( p1, p2, p3, p4 )
+      self.p1 = p1
+      self.p2 = p2
+      self.p3 = p3
+      self.p4 = p4
+   end
+   
+   function reset()
+      self.p1 = nil
+      self.p2 = nil
+      self.p3 = nil
+      self.p4 = nil
+   end
+   
+   function check()
+      if self.p1 != 1 or self.p2 != 2 or self.p3 != 3 or self.p4 != 4
+         return false
+      end
+      return true
+   end
+   
+end
+
+// call array pure
+theObject.reset()
+[theObject.theCall, 1, 2, 3, 4]()
+if not theObject.check()
+   failure( "Direct call pure" )
+end
+theObject.reset()
+call = [theObject.theCall, 1, 2, 3, 4]
+call()
+if not theObject.check()
+   failure( "Indirect call pure" )
+end
+
+// call array spurious
+theObject.reset()
+[theObject.theCall, 1, 2](3,4)
+if not theObject.check()
+   failure( "Direct call spurious" )
+end
+theObject.reset()
+call = [theObject.theCall, 1, 2 ]
+call(3,4)
+if not theObject.check()
+   failure( "Indirect call spurious" )
+end
+  
+// call array impure
+theObject.reset()
+[theObject.theCall](1,2,3,4)
+if not theObject.check()
+   failure( "Direct call impure" )
+end
+theObject.reset()
+call = [theObject.theCall]
+call(1,2,3,4)
+if not theObject.check()
+   failure( "Indirect call impure" )
+end
+
+success()
+
+/* end of file */

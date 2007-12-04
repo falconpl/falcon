@@ -1351,6 +1351,23 @@ void VMachine::createFrame( uint32 paramCount )
 }
 
 
+void VMachine::callFrameNow( ext_func_frame_t callbackFunc )
+{
+   ((StackFrame *)m_stack->at( m_stackBase - VM_FRAME_SPACE ) )->m_endFrameFunc = callbackFunc;
+   switch( m_pc )
+   {
+      case i_pc_call_external_ctor:
+         m_pc_next = i_pc_call_external_ctor_return;
+         break;
+      case i_pc_call_external:
+         m_pc_next = i_pc_call_external_return;
+         break;   
+      default:
+         m_pc_next = m_pc;
+   }
+}
+
+
 bool VMachine::callItemAtomic(const Item &callable, int32 paramCount, e_callMode mode )
 {
    bool oldAtomic = m_atomicMode;

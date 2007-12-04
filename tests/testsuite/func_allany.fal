@@ -1,7 +1,7 @@
 /****************************************************************************
 * Falcon test suite
 *
-* ID: 19b
+* ID: 62a
 * Category: functional
 * Subcategory: constructs
 * Short: All and any
@@ -73,7 +73,6 @@ if test_3_calls != 8: failure( "test_3 call count" )
 
 // as anyp is shortcircuited, we should have 14 calls
 if test_calls != 14: failure( "test call count" )
-
 
 success()
 

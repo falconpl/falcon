@@ -1,0 +1,41 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 61a
+* Category: functional
+* Subcategory: eval
+* Short: Eval function
+* Description:
+*   This test checks eval function, which starts evaluation context.
+* [/Description]
+*
+****************************************************************************/
+
+// identity eval
+if eval( 0 ) != 0: failure( "eval(0)" )
+if eval( "a" ) != "a": failure( "eval(a)" )
+if not eq( eval( [1,2,3] ), [1,2,3] ) : failure( "eval flat array" )
+
+function produce( a )
+   return a + 1
+end
+
+// single result
+if eval( [produce, 1] ) != 2: failure( "Single eval" )
+   
+// multiple result
+if not eq( eval( [[produce, 1], [produce,2] ] ), [2,3] )
+   failure( "multiple eval" )
+end
+
+// recursive result
+if not eq( eval( [\
+               [produce, [produce, 1]],\
+               [produce, [produce, 2]]\
+            ] ), [3,4] )
+   failure( "recursive eval" )
+end
+
+success()
+
+/* end of file */

@@ -1,0 +1,50 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 60d
+* Category: functional
+* Subcategory: execarr
+* Short: Array call error detection
+* Description:
+*   Test for callable arrays, base of falcon functional programming.
+*   Check for error detection while calling arrays.
+* [/Description]
+*
+****************************************************************************/
+
+try
+   [1,2,3,4]()
+   failure("Direct uncallable" )
+catch TypeError
+   // ok
+catch in error
+   failure( "Direct uncallable: " + error.toString() )
+end
+
+try
+   c = [1,2,3,4]
+   c()
+   failure("Indirect uncallable" )
+catch TypeError
+   // ok
+catch in error
+   failure( "Indirect uncallable: " + error.toString() )
+end
+
+function test()
+   raise "Something"
+end
+
+try
+   c = [test]
+   test()
+   failure("Expicit raise uncaught" )
+catch StringType
+   // ok
+catch in error
+   failure( "Expicit raise: " + error.toString() )
+end
+
+success()
+
+/* End of file */
