@@ -2,8 +2,8 @@ PROJECT(falcon_engine)
 
 #Engine specific define
 ADD_DEFINITIONS(-DFALCON_ENGINE_EXPORTS)
-INCLUDE_DIRECTORIES(BEFORE ${TARGET_DIR}/include)
-INCLUDE_DIRECTORIES(BEFORE ../include)
+#set common include directory
+FALCON_INCLUDE_SETTINGS()
 
 # BISON a .ll file
 # search BISON
@@ -82,8 +82,6 @@ ENDIF(UNIX OR MAC)
 
 INCLUDE_DIRECTORIES(.)
 
-
-
 ADD_LIBRARY( falcon_engine SHARED
    ${bison_src}
 
@@ -161,9 +159,6 @@ SET_TARGET_PROPERTIES(falcon_engine
       VERSION "${FALCON_SONAME_VERSION}.${FALCON_SONAME_REVISION}.${FALCON_SONAME_AGE}"
       SOVERSION "${FALCON_SONAME_VERSION}" )
 
-SET(CMAKE_INSTALL_PREFIX "")
-FALCON_LIB_INSTALL( falcon_engine )
-
 #In unix and mac we have to add extra libraries
 IF(UNIX OR MAC)
    TARGET_LINK_LIBRARIES(falcon_engine m)
@@ -175,3 +170,6 @@ IF(UNIX OR MAC)
    #Finally, link everything to the lib dir
 
 ENDIF(UNIX OR MAC)
+
+SET(CMAKE_INSTALL_PREFIX "")
+FALCON_LIB_INSTALL( falcon_engine )

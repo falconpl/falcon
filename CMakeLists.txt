@@ -15,6 +15,9 @@ ENDIF($ENV{FALCON_DEVEL_TREE} STREQUAL "")
 #Include falcon configuration
 INCLUDE("$ENV{FALCON_DEVEL_TREE}/config.cmake")
 
+#set common include directory
+FALCON_INCLUDE_SETTINGS()
+
 FALCON_ADD_SUBDIRECTORY(engine)
 FALCON_ADD_SUBDIRECTORY(rtl)
 FALCON_ADD_SUBDIRECTORY(clt)
