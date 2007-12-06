@@ -1,7 +1,4 @@
 
-                       RELNOTES for Falcon 0.8.4
+                       RELNOTES for Falcon 0.8.5
 
-This release has been built under the the new repository and build system.
-
-Other than that, we have better management of try now, and also some errors
-in return frames from inside VM requests have resolved.
+<TODO>

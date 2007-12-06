@@ -41,7 +41,7 @@ instruction. The priority of load paths are:
 
 - command line -L option
 - FALCON_LOAD_PATH
-- builtin directory (in defaults.h created from defaluts.h.in)
+- builtin directory (in config.h created from config.h.in)
 
 So it's always possible to redirect Falcon to load user-provided modules
 instead of system ones.
