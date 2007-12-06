@@ -68,7 +68,7 @@ void LabelDef::defineNow( Stream *os )
 
       while( os->good() && fw != 0 )
       {
-         os->seekBegin( (uint32) fw->data() );
+         os->seekBegin( fw->iData() );
          os->write( &pos, sizeof( pos ) );
          fw = fw->next();
       }
