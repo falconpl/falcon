@@ -281,18 +281,18 @@ Socket::~Socket()
 
 void Socket::terminate()
 {
-   if ( m_systemData == 0 )
+   if ( d.m_iSystemData == 0 )
       return;
 
-   int s = (int) m_systemData;
+   int s = (int) d.m_iSystemData;
    ::close( s );
-   m_systemData = 0;
+   d.m_iSystemData = 0;
 }
 
 bool Socket::readAvailable( int32 msec )
 {
    m_lastError = 0;
-   int count = s_select( (int) m_systemData, msec, 0 );
+   int count = s_select( (int) d.m_iSystemData, msec, 0 );
    if ( count < 0 ) {
       m_lastError = errno;
       return false;
@@ -303,7 +303,7 @@ bool Socket::readAvailable( int32 msec )
 bool Socket::writeAvailable( int32 msec )
 {
    m_lastError = 0;
-   int count = s_select( (int) m_systemData, msec, 1 );
+   int count = s_select( (int) d.m_iSystemData, msec, 1 );
    if ( count < 0 ) {
       m_lastError = errno;
       return false;
@@ -345,9 +345,9 @@ bool Socket::bind( Address &addr, bool packet, bool broadcast )
    }
 
    // dispose of old socket
-   if ( m_systemData != 0 ) {
-      ::close( (int) m_systemData );
-      m_systemData = 0;
+   if ( d.m_iSystemData != 0 ) {
+      ::close( (int) d.m_iSystemData );
+      d.m_iSystemData = 0;
    }
 
    // need of a broadcast semantic?
@@ -358,7 +358,7 @@ bool Socket::bind( Address &addr, bool packet, bool broadcast )
    }
 
    int res = ::bind( skt, ai->ai_addr, ai->ai_addrlen );
-   m_systemData = (void *) skt;
+   d.m_iSystemData = skt;
 
    // success!!!
    if ( res == 0 ) {
@@ -384,7 +384,7 @@ TCPSocket::TCPSocket( bool ipv6 )
    m_timeout = 0;
    m_lastError = 0;
 
-   m_systemData = 0;
+   d.m_iSystemData = 0;
 }
 
 TCPSocket::~TCPSocket()
@@ -399,7 +399,7 @@ int32 TCPSocket::recv( byte *buffer, int32 size )
       return -2; // timed out
    }
 
-   int read = ::recv( (int) m_systemData, (char *)buffer, size, 0 );
+   int read = ::recv( (int) d.m_iSystemData, (char *)buffer, size, 0 );
    if ( read < 0 ) {
       m_lastError = errno;
       return -1;
@@ -416,7 +416,7 @@ int32 TCPSocket::send( byte *buffer, int32 size )
       return -2; // timed out
    }
 
-   int sent = ::send( (int) m_systemData, (char *) buffer, size, 0 );
+   int sent = ::send( (int) d.m_iSystemData, (char *) buffer, size, 0 );
    if ( sent < 0 ) {
       m_lastError = errno;
       return -1;
@@ -427,7 +427,7 @@ int32 TCPSocket::send( byte *buffer, int32 size )
 
 bool TCPSocket::closeRead()
 {
-   if ( shutdown( (int) m_systemData, SHUT_RD ) < 0 )
+   if ( shutdown( (int) d.m_iSystemData, SHUT_RD ) < 0 )
    {
       m_lastError = errno;
       return false;
@@ -442,7 +442,7 @@ bool TCPSocket::closeRead()
 
 bool TCPSocket::closeWrite()
 {
-   if ( shutdown( (int) m_systemData, SHUT_WR ) < 0 ) {
+   if ( shutdown( (int) d.m_iSystemData, SHUT_WR ) < 0 ) {
       m_lastError = errno;
       return false;
    }
@@ -453,7 +453,7 @@ bool TCPSocket::closeWrite()
 
 bool TCPSocket::close()
 {
-   if ( shutdown( (int) m_systemData, SHUT_RDWR ) < 0 )
+   if ( shutdown( (int) d.m_iSystemData, SHUT_RDWR ) < 0 )
    {
       m_lastError = errno;
       return false;
@@ -501,9 +501,9 @@ bool TCPSocket::connect( Address &where )
    }
 
    // dispose of old socket
-   if ( m_systemData != 0 ) {
-      ::close( (int) m_systemData );
-      m_systemData = 0;
+   if ( d.m_iSystemData != 0 ) {
+      ::close( (int) d.m_iSystemData );
+      d.m_iSystemData = 0;
    }
 
    int bOptVal = 1;
@@ -523,7 +523,7 @@ bool TCPSocket::connect( Address &where )
       fcntl( skt, F_SETFL, flags );
    }
 
-   m_systemData = (void *)skt;
+   d.m_iSystemData = skt;
    m_lastError = 0;
    m_connected = false;
    int res = ::connect( skt, ai->ai_addr, ai->ai_addrlen );
@@ -579,7 +579,7 @@ bool TCPSocket::isConnected()
       return true;
    }
 
-   int status = s_select_connect( (int) m_systemData, m_timeout );
+   int status = s_select_connect( (int) d.m_iSystemData, m_timeout );
    if ( status == 1 ) {
       m_connected = true;
       return true;
@@ -609,7 +609,7 @@ ServerSocket::~ServerSocket()
 
 TCPSocket *ServerSocket::accept()
 {
-   int srv = (int) m_systemData;
+   int srv = (int) d.m_iSystemData;
 
    if ( ! m_bListening ) {
       if ( ::listen( srv, SOMAXCONN ) != 0 ) {
@@ -674,20 +674,20 @@ UDPSocket::UDPSocket( bool ipv6 ):
       m_lastError = errno;
    }
    else {
-      m_systemData = (void *) skt;
+      d.m_iSystemData = skt;
    }
 }
 
 void UDPSocket::turnBroadcast( bool mode )
 {
    int iOpt = mode ? 1:0;
-   int skt = (int) m_systemData;
+   int skt = (int) d.m_iSystemData;
    setsockopt( skt, SOL_SOCKET, SO_BROADCAST, (const char *) &iOpt, sizeof( iOpt ));
 }
 
 int32 UDPSocket::recvFrom( byte *buffer, int32 size, Address &data )
 {
-   int s = (int) m_systemData;
+   int s = (int) d.m_iSystemData;
    // sockaddr_in6 should be the longest possible structure we may receive.
    struct sockaddr_in6 addr;
    struct sockaddr *paddr = (struct sockaddr *) &addr;
@@ -728,7 +728,7 @@ int32 UDPSocket::recvFrom( byte *buffer, int32 size, Address &data )
 
 int32 UDPSocket::sendTo( byte *buffer, int32 size, Address &where )
 {
-   int s = (int) m_systemData;
+   int s = (int) d.m_iSystemData;
 
    // let's try to connect the addresses in where.
    if ( where.getResolvedCount() == 0 ) {

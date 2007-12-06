@@ -151,7 +151,10 @@ class Socket: public Falcon::UserData
 protected:
 
    Address m_address;
-   void *m_systemData;
+   union {
+      void *m_systemData;
+      int m_iSystemData;
+   }d;
    bool m_ipv6;
    int64 m_lastError;
    int32 m_timeout;
@@ -161,17 +164,19 @@ protected:
    Socket():
       m_lastError(0),
       m_timeout(0),
-      m_boundFamily(0),
-      m_systemData(0)
-   {}
+      m_boundFamily(0)
+   {
+      d.m_systemData = 0;
+   }
 
    Socket( void *systemData, bool ipv6 = false ):
       m_lastError(0),
       m_timeout(0),
       m_boundFamily(0),
-      m_ipv6(ipv6 ),
-      m_systemData( systemData )
-   {}
+      m_ipv6(ipv6 )
+   {
+      d.m_systemData = systemData;
+   }
 
 public:
    ~Socket();
