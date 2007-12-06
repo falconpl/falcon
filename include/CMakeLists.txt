@@ -11,5 +11,11 @@ INSTALL( FILES ${fasm_files}
 INSTALL( FILES ${falcon_files}
    DESTINATION ${TARGET_DIR}/include/falcon)
 
+CONFIGURE_FILE(
+         falcon/config.h.in
+         ${FALCON_BUILD_TREE}/include/falcon/config.h
+         ESCAPE_QUOTES
+         @ONLY )
+
 INSTALL( FILES ${FALCON_BUILD_TREE}/include/falcon/config.h
    DESTINATION ${TARGET_DIR}/include/falcon)

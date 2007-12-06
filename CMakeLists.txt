@@ -27,8 +27,3 @@ FALCON_ADD_SUBDIRECTORY("include")
 
 #Setting project wide include directories.
 MESSAGE( "INCLUDING TARGET DIR  ${TARGET_DIR}" )
-
-SET( CONFIG_LIST
-   include/falcon/config.h )
-
-FALCON_CONFIG( CONFIG_LIST )
