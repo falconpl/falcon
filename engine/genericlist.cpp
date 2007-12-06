@@ -109,6 +109,44 @@ void List::pushBack( const void *data )
 }
 
 
+void List::pushFront( uint32 data )
+{
+   ListElement *element = (ListElement *) memAlloc( sizeof( ListElement ) );
+   element->iData( data );
+
+   if ( m_head == 0 )
+   {
+      m_head = m_tail = element;
+      element->next(0);
+   }
+   else {
+      element->next( m_head );
+      m_head->prev( element );
+      m_head = element;
+   }
+
+   element->prev( 0 );
+}
+
+void List::pushBack( uint32 data )
+{
+   ListElement *element = (ListElement *) memAlloc( sizeof( ListElement ) );
+   element->iData( data );
+
+   if ( m_head == 0 )
+   {
+      m_head = m_tail = element;
+      element->prev(0);
+   }
+   else {
+      element->prev( m_tail );
+      m_tail->next( element );
+      m_tail = element;
+   }
+
+   element->next( 0 );
+}
+
 void List::popFront()
 {
    if ( m_head == 0 )

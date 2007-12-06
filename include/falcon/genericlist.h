@@ -39,21 +39,32 @@ class FALCON_DYN_CLASS ListElement: public BaseAlloc
 {
    ListElement *m_next;
    ListElement *m_previous;
-   const void *m_data;
+   union {
+      const void *m_data;
+      uint32 m_iData;
+   } dt;
 
-   ListElement( const void *data ):
-      m_data(data)
+   ListElement( const void *data )
    {
+      dt.m_data = data;
    }
 
-   void data( const void *data ) { m_data = data; }
+   ListElement( uint32 d )
+   {
+      dt.m_iData = d;
+   }
+
+   void data( const void *data ) { dt.m_data = data; }
    void prev( ListElement *elem ) { m_previous = elem; }
    void next( ListElement *elem ) { m_next = elem; }
 
    friend class List;
 
 public:
-   const void *data() const { return m_data; }
+   const void *data() const { return dt.m_data; }
+
+   uint32 iData() const { return dt.m_iData; }
+   void iData( uint32 d ) { dt.m_iData = d; }
 
    ListElement *next() const { return m_next; }
    ListElement *prev() const { return m_previous; }
@@ -97,6 +108,8 @@ public:
 
    void pushFront( const void *data );
    void pushBack( const void *data );
+   void pushFront( uint32 data );
+   void pushBack( uint32 data );
    void popFront();
    void popBack();
    void insertAfter( ListElement *position, const void *data );

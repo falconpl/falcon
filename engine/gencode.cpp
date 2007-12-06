@@ -50,7 +50,7 @@ uint32 GenCode::c_jmptag::addQuery( uint32 id, uint32 blocks )
    if ( m_defs[id] == JMPTAG_UNDEFINED )
    {
       uint32 pos = (uint32) m_stream->tell();
-      m_queries[id].pushBack( (void *) (pos + (blocks * 4)) );
+      m_queries[id].pushBack( pos + (blocks * 4) );
    }
 
    return m_defs[id];
@@ -74,7 +74,7 @@ uint32 GenCode::c_jmptag::addQueryElif( uint32 id, uint32 blocks )
    if ( *(uint32 *)m_elifDefs.at( id ) == JMPTAG_UNDEFINED )
    {
       uint32 pos = (uint32) m_stream->tell();
-      ((List *)m_elifQueries.at(id))->pushBack( (void *) (pos + (blocks * 4)) );
+      ((List *)m_elifQueries.at(id))->pushBack( pos + (blocks * 4) );
    }
 
    return *(uint32 *) m_elifDefs.at(id);
@@ -92,7 +92,7 @@ void GenCode::c_jmptag::define( uint32 id )
    ListElement *iter = m_queries[id].begin();
    while( iter != 0 )
    {
-      m_stream->seekBegin( (uint32) iter->data() );
+      m_stream->seekBegin( iter->iData() );
       m_stream->write( &value, sizeof( value ) );
       iter = iter->next();
    }
@@ -126,7 +126,7 @@ void GenCode::c_jmptag::defineElif( uint32 id )
    ListElement *iter = lst->begin();
    while( iter != 0 )
    {
-      m_stream->seekBegin( (uint32) iter->data() );
+      m_stream->seekBegin( iter->iData() );
       m_stream->write( reinterpret_cast< const char *>( &value ), sizeof( value ) );
       iter = iter->next();
    }

@@ -192,7 +192,10 @@ FALCON_FUNC  dictGet( ::Falcon::VMachine *vm )
    CoreDict *dict = dict_itm->asDict();
    Item *value = dict->find( *key_item );
    if ( value == 0 )
+   {
       vm->retnil();
+      vm->regA().setOob();
+   }
    else
       vm->retval( *value );
 }
