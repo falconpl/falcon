@@ -504,7 +504,7 @@ void GenHAsm::gen_statement( const Statement *stmt )
       case Statement::t_continue:
       {
          fassert( ! m_loops.empty() );
-         int target_pos = (int) m_loops.back();
+         int target_pos = (int) m_loops.end()->iData();
          // was this a for/in loop? -- in that case, the number is negative.
          bool bIsForin;
          if( target_pos < 0 )
@@ -522,7 +522,7 @@ void GenHAsm::gen_statement( const Statement *stmt )
          ListElement *trypos = m_trys.end();
          int steps = 0;
          while( trypos != 0 ) {
-            if ( ((int) trypos->data()) >= target_pos )
+            if ( ((int) trypos->iData()) >= target_pos )
                steps ++;
             trypos = trypos->prev();
          }
