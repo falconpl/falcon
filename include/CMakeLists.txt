@@ -6,7 +6,10 @@ FILE( GLOB fasm_files "fasm/*.h" )
 FILE( GLOB falcon_files "falcon/*.h" )
 
 INSTALL( FILES ${fasm_files}
-DESTINATION ${TARGET_DIR}/include/fasm)
+   DESTINATION ${TARGET_DIR}/include/fasm)
 
 INSTALL( FILES ${falcon_files}
-DESTINATION ${TARGET_DIR}/include/falcon)
+   DESTINATION ${TARGET_DIR}/include/falcon)
+
+INSTALL( FILES ${FALCON_BUILD_TREE}/include/falcon/config.h
+   DESTINATION ${TARGET_DIR}/include/falcon)
