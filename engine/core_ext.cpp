@@ -2144,9 +2144,6 @@ FALCON_FUNC  core_map ( ::Falcon::VMachine *vm )
 
 static bool core_dolist_next ( ::Falcon::VMachine *vm )
 {
-   //callable in item 0
-   Item *i_origin = vm->param(1);
-
    CoreArray *origin = vm->param(1)->asArray();
    uint32 count = (uint32) vm->local(0)->asInteger();
 
