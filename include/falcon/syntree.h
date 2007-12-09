@@ -242,7 +242,9 @@ public:
    }
 
    bool isSimple() const {
-      return isImmediate() || m_type == t_symbol || m_type == t_self || m_type == t_sender;
+      return isImmediate() ||
+             m_type == t_symbol || m_type == t_symdef ||
+             m_type == t_self || m_type == t_sender;
    }
 
    bool isTrue() const {

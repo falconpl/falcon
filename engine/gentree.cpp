@@ -169,13 +169,13 @@ void GenTree::generate( const Statement *cmp, const char *specifier, bool sameli
          m_out->writeString( "\n" );
       }
       break;
-      
+
       case Statement::t_self_print:
       {
          const StmtSelfPrint *sp = static_cast< const StmtSelfPrint *>( cmp );
 
          m_out->writeString( "FAST PRINT " );
-         
+
          gen_array( sp->toPrint() );
          m_out->writeString( "\n" );
       }
@@ -662,6 +662,7 @@ void GenTree::gen_expression( const Expression *exp )
       case Expression::t_times: type = 2; name = "*"; break;
       case Expression::t_divide: type = 2; name = "/"; break;
       case Expression::t_modulo: type = 2; name = "%"; break;
+      case Expression::t_power: type = 2; name = "**"; break;
 
       case Expression::t_gt: type = 2; name = ">"; break;
       case Expression::t_ge: type = 2; name = ">="; break;

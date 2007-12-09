@@ -448,22 +448,6 @@ while_statement:
          COMPILER->popContextSet();
          $$ = w;
       }
-   | LOOP statement {
-      Falcon::StmtWhile *w = new Falcon::StmtWhile( LINE, 0 );
-         COMPILER->pushLoop( w );
-         COMPILER->pushContext( w );
-         COMPILER->pushContextSet( &w->children() );
-         COMPILER->addStatement( $2 );
-      }
-      statement_list END EOL
-      {
-         Falcon::StmtWhile *w = static_cast<Falcon::StmtWhile *>(COMPILER->getContext());
-         COMPILER->popLoop();
-         COMPILER->popContext();
-         COMPILER->popContextSet();
-         $$ = w;
-      }
-
    | while_short_decl statement {
          Falcon::StmtWhile *w = new Falcon::StmtWhile( LINE, $1 );
          if ( $2 != 0 )
@@ -473,7 +457,7 @@ while_statement:
 
 while_decl:
    WHILE expression EOL { $$ = $2; }
-   | LOOP EOL { $$ = 0; }
+   | LOOP { $$ = 0; }
    | WHILE error EOL { COMPILER->raiseError(Falcon::e_syn_while ); $$ = 0; }
 ;
 
@@ -1837,7 +1821,6 @@ class_statement:
       if ( cls->initGiven() ) {
          COMPILER->raiseError(Falcon::e_prop_pinit );
       }
-      COMPILER->checkLocalUndefined();
       // have we got a complex property statement?
       if ( $1 != 0 )
       {
@@ -2415,6 +2398,7 @@ lambda_expr:
             COMPILER->addStatement( new Falcon::StmtReturn( LINE, $5 ) );
             $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_lambda ,
                new Falcon::Value( func->symbol() ) ) );
+            COMPILER->checkLocalUndefined();
             COMPILER->closeFunction();
          }
 ;
@@ -2431,7 +2415,25 @@ lambda_expr_inner:
 
 
 iif_expr:
-   expression QUESTION expression COLON expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_iif, $1, $3, $5 ) ); }
+   expression QUESTION expression COLON expression
+   {
+      $$ = new Falcon::Value( new
+         Falcon::Expression( Falcon::Expression::t_iif, $1, $3, $5 ) );
+   }
+   | expression QUESTION expression COLON error
+   {
+      delete $1;
+      delete $3;
+      COMPILER->raiseError(Falcon::e_syn_iif );
+      $$ = new Falcon::Value;
+   }
+   | expression QUESTION expression error
+   {
+      delete $1;
+      delete $3;
+      COMPILER->raiseError(Falcon::e_syn_iif );
+      $$ = new Falcon::Value;
+   }
    | expression QUESTION error
       {
          delete $1;

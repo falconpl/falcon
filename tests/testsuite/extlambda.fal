@@ -1,0 +1,35 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 18f
+* Category: lambda
+* Subcategory:
+* Short: Lambda with external
+* Description:
+*  Verifies that lambda expressions manage correctly undefined symbols.
+* [/Description]
+*
+****************************************************************************/
+
+function ret_lambda( sel )
+   if sel
+      var = lambda param=> sin(param)
+   else
+      var = lambda p1, p2=> p1 + (lambda a, b => a( b ) )( sin, p2 )
+   end
+
+   return var
+end
+
+// select sin(x)
+vsin = ret_lambda( true )
+if vsin( 3 ) != sin(3): failure( "Simple external" )
+
+// select f(a,b)=a + sin(b)
+// tests also for callable function return direct call
+// and compilation issues.
+if ret_lambda(false)( 5,3 ) !=  5 + sin(3): failure( "Nested external" )
+
+success()
+
+/* End of file */
