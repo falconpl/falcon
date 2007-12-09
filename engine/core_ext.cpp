@@ -2155,7 +2155,6 @@ static bool core_dolist_next ( ::Falcon::VMachine *vm )
    if ( vm->local(1)->asInteger() == 1 )
    {
       // prepare for next loop
-      *vm->local(0) = (int64) count + 1;
       *vm->local(1) = (int64)0;
       if ( vm->functionalEval( origin->at(count) ) )
       {
@@ -2163,6 +2162,7 @@ static bool core_dolist_next ( ::Falcon::VMachine *vm )
       }
    }
 
+   *vm->local(0) = (int64) count + 1;
    *vm->local(1) = (int64) 1;
    vm->pushParameter( vm->regA() );
    vm->callFrame( *vm->param(0), 1 );
@@ -2189,7 +2189,7 @@ FALCON_FUNC  core_dolist ( ::Falcon::VMachine *vm )
       vm->returnHandler( core_dolist_next );
       vm->addLocals( 2 );
       // count
-      *vm->local(0) = (int64) 1;
+      *vm->local(0) = (int64) 0;
 
       //exiting from an eval or from a call frame? -- 0 eval
       *vm->local(1) = (int64) 0;
@@ -2198,6 +2198,9 @@ FALCON_FUNC  core_dolist ( ::Falcon::VMachine *vm )
       {
          return;
       }
+
+      // count
+      *vm->local(0) = (int64) 1;
 
       //exiting from an eval or from a call frame? -- 1 callframe
       *vm->local(1) = (int64) 1;

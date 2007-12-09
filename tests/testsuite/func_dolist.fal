@@ -1,0 +1,63 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 71a
+* Category: functional
+* Subcategory: constructs
+* Short: dolist
+* Description:
+*   Checks the construct dolist.
+* [/Description]
+*
+****************************************************************************/
+
+function reset()
+   global positive, negative
+   positive = 0
+   negative = 0
+end
+
+function test( a )
+   global positive
+   if a >= 0
+      positive++
+   else
+      negative ++
+   end
+end
+
+reset()
+dolist( test, [] )
+if positive != 0 or negative != 0: failure( "empty list" )
+
+reset()
+dolist( test, [1] )
+if positive != 1 or negative != 0: failure( "one element flat list" )
+
+reset()
+dolist( test, [ [lambda a=>-a, 1] ] )
+if positive != 0 or negative != 1: failure( "one element eval list" )
+
+// first, test with empty list
+reset()
+dolist( test, [1, 2, 3, -1] )
+if positive != 3 or negative != 1: failure( "flat array" )
+
+// second, test evaluation
+reset()
+dolist( test, [1, 2, [lambda a => a + 1, 2],\
+               [lambda a=> -a, 5] ] )
+
+if positive != 3 or negative != 1: failure( "evaluation" )
+
+// third: deep evaluation
+reset()
+dolist( test, [ [lambda a=> a+2, 1],
+                2,
+                [lambda a => a + 1, 1],
+               [lambda a=> -a, 5] ] )
+if positive != 3 or negative != 1: failure( "deep evaluation" )
+
+success()
+
+/* End of file */

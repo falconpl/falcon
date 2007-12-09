@@ -1,0 +1,34 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 71b
+* Category: functional
+* Subcategory: constructs
+* Short: dolist errors
+* Description:
+*   Checks the construct dolist for error detection
+* [/Description]
+*
+****************************************************************************/
+
+function dummy()
+end
+
+try
+   dolist( 0, [dummy, "no"] )
+   failure( "noncallable filter" )
+end
+
+try
+   dolist( dummy )
+   failure( "no second param" )
+end
+
+try
+   dolist( dummy, 0 )
+   failure( "second param non-array" )
+end
+
+success()
+
+/* End of file */
