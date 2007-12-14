@@ -189,10 +189,43 @@ Symbol *Module::addClass( const String &name, Symbol *ctor_sym, bool exp )
    return sym;
 }
 
+Symbol *Module::addSingleton( const String &name, Symbol *ctor_sym, bool exp )
+{
+   String clName = "%" + name;
+
+   // symbol or class symbol already present?
+   if ( m_symtab.findByName( name ) != 0 || m_symtab.findByName( clName ) != 0 )
+      return 0;
+
+   // create the class symbol (never exported)
+   Symbol *clSym = addClass( clName, ctor_sym, false );
+
+   // create a singletone instance of the class.
+   Symbol *objSym = new Symbol( this, addString( name ) );
+   objSym->setInstance( clSym );
+   objSym->exported( exp );
+   addGlobalSymbol( objSym );
+
+   return objSym;
+}
+
+Symbol *Module::addSingleton( const String &name, ext_func_t ctor, bool exp )
+{
+   String ctor_name = name + "._init";
+   Symbol *sym = addExtFunc( ctor_name, ctor, false );
+   if ( sym == 0 )
+      return 0;
+
+   return addSingleton( name, sym, exp );
+}
+
+
 Symbol *Module::addClass( const String &name, ext_func_t ctor, bool exp )
 {
    String ctor_name = name + "._init";
    Symbol *sym = addExtFunc( ctor_name, ctor, false );
+   if ( sym == 0 )
+      return 0;
    return addClass( name, sym, exp );
 }
 

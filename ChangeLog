@@ -19,6 +19,7 @@ Falcon (0.8.5)
       coherency with nomenclature.
   * major: Added List class with support in for/in and CORE iterator.
   * major: Added support for generic sequence object and deep GC marking.
+  * minor: Added addSingleton method to Module class for easier embedding.
 
 Falcon (0.8.4)
   * major: Old "lambda expressionss" are now "nameless functions". They are declared

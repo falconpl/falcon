@@ -370,6 +370,43 @@ public:
       return addClass( name, static_cast<Symbol *>( 0 ), exp );
    }
 
+   /** Adds a singleton object to this module.
+      This method creates a singleton object, that is a private class which
+      is instantiated at link time in an unique, eventually exported object.
+      The given name is the name by which the object will be known; the private
+      class is given the special name "%[object name]", where "[object name]" is
+      the \b name parameter. 
+
+      If both the name and the "%" prefixed name are currently unassigned, a new
+      symbol containing the singletone instance declaration is returned. On failure,
+      0 is returned.
+
+      The class giving form to this singleton can be retrieved using the Symbol::instanceOf()
+      method. That symbol can then be used to add methods and properties to the singleton, or
+      to derive the private class from other classes.
+
+      \param name the name of the singleton to be created
+      \param ctor_sym the constructor of the base class, or 0 for none
+      \param exp true to export the singleton. The class is always private; to export it
+         get it with Symbol::instanceOf() and export it with Symbol::exported().
+      \return the symbol of the singleton object on success, zero on failure.
+   */
+   Symbol *addSingleton( const String &name, Symbol *ctor_sym, bool exp = true );
+
+   /** Adds a singleton object to this module.
+      This is like addSingleton( const String &, Symbol *, bool ), but this version
+      of the function takes an external function as a constructor and assigns it a name
+      that coresponds to the class name followed by "._init". If the constructor name,
+      the class name or the instance name are not free, the method returns false.
+
+      \param name the name of the singleton to be created
+      \param ctor the constructor of the base class; cannot be zero (use the other version instead)
+      \param exp true to export the singleton. The class is always private; to export it
+         get it with Symbol::instanceOf() and export it with Symbol::exported().
+      \return the symbol of the singleton object on success, zero on failure.
+   */
+   Symbol *addSingleton( const String &name, ext_func_t ctor, bool exp = true );
+
    /** Returns the line number that generated a certain code portion.
       Given a Program Counter index, this funtion returns the code
       line that originally generated the part of the code to which the
