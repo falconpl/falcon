@@ -1675,8 +1675,11 @@ void opcodeHandler_LDV( register VMachine *vm )
          {
             if ( cs->checkPosBound( rstart ) ) {
                vm->retval( new GarbageString( vm, String( *cs, rstart ) ) );
-               return;
             }
+            else {
+               vm->retval( new GarbageString( vm ) );
+            }
+            return;
          }
          else {
             int32 rend =  operand2->asRangeEnd();
@@ -1715,6 +1718,14 @@ void opcodeHandler_LDV( register VMachine *vm )
       case FLC_ITEM_ARRAY << 8 | FLC_ITEM_RANGE:
       {
          CoreArray *array =  operand1->asArray();
+
+         // open ranges?
+         if ( operand2->asRangeIsOpen() && array->length() <= operand2->asRangeStart() )
+         {
+            vm->retval( new CoreArray( vm ) );
+            return;
+         }
+
          register int32 end = operand2->asRangeIsOpen() ? array->length() : operand2->asRangeEnd();
          array = array->partition( operand2->asRangeStart(), end );
          if ( array != 0 )
@@ -1781,6 +1792,7 @@ void opcodeHandler_LDP( register VMachine *vm )
                   case FLC_ITEM_FUNC:
                      vm->m_regA.setMethod( source->asObject(), p->asFunction(), p->asModuleId() );
                   break;
+
                   case FLC_ITEM_CLASS:
                      vm->m_regA.setClassMethod( source->asObject(), p->asClass() );
                   break;

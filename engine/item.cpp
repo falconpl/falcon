@@ -440,6 +440,11 @@ bool Item::methodize( const CoreObject *self )
       case FLC_ITEM_METHOD:
          data->setMethod( const_cast< CoreObject *>(self), data->asMethodFunction(), data->asModuleId() );
       return true;
+
+      case FLC_ITEM_ARRAY:
+         if ( data->asArray()->length() > 0 )
+            return data->asArray()->at(0).methodize( self );
+      return false;
    }
 
    return false;

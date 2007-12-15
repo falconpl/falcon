@@ -1,0 +1,88 @@
+/*
+   FALCON - Samples
+
+   FILE: callbacks.fal
+
+   Show how to create event-driven callabacks.
+
+   The main loop accepts a sequence of words;
+   the first word is interpreted as an event which is
+   broadcasted through the "scope" attribute.
+
+   Three listener are instantiated, and they handle
+   scope with through marshall callback facility.
+
+   Incoming messages are then sent to the on[Message] handler.
+   This classes interpret the test, pass and remove messages.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: mer nov 3 2004
+   Last modified because:
+
+   -------------------------------------------------------------------
+   (C) Copyright 2007: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+   In order to use this file in its compiled form, this source or
+   part of it you have to read, understand and accept the conditions
+   that are stated in the LICENSE file that comes boundled with this
+   package.
+*/
+
+attributes: scope
+
+class Manager( name )
+   name = name
+   // we'll use a cached call on marshallCBX to handle scope messages
+   // the "on'" parameter means that each event should be handled by
+   // a function starting with "on" and with the next letter capitalized.
+   scope = [marshallCBX, "on'", false]
+
+   // Just say the parameter and block processing
+   function onTest( p1 )
+      > self.name, ": onTest - ", p1
+      return true
+   end
+
+   // Just say the parameter but allow broadcast over scope
+   function onPass( p1 )
+      > self.name, ": onPass - ", p1
+      return false
+   end
+
+   // say the parameter, block broadcast but remove ourself
+   function onRemove( p1 )
+      > self.name, ": onRemove - ", p1
+      give not scope to self
+      return true
+   end
+
+   has scope
+end
+
+//=====================================================
+// Main script
+//
+managers = map( Manager, [ "one", "two", "three" ] )
+
+> "Event handlers demonstration."
+>
+> "Input an event followed by an optional parameter."
+> "The event is broadcasted via the \"scope\" attribute to three objects."
+> "The marshallCB function translates the first word into a callback"
+> "in the objects. Known handled events are:"
+> "   test x - calls the onTest method on the first available handler"
+> "   pass x - calls the onPass method on all the handlers"
+> "   remove x - calls the onRemove method on the first handler, "
+> "              which removes himself and won't be called again."
+>
+
+// accepts the first line
+< "> "; line = input()
+while line
+   // splits the line in words
+   msg = strSplit( line, " " )
+   // boradcasts the message through the 'scope' parameter
+   broadcast( scope, msg )
+   < "> "; line = input()
+end

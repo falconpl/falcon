@@ -43,6 +43,8 @@ namespace msg {
    const int rtl_emptyarr = 12;
    const int rtl_iterator_not_found = 13;
    const int rtl_invalid_iter = 14;
+   const int rtl_sender_not_object = 15;
+   const int rtl_marshall_not_cb = 16;
 }
 }
 

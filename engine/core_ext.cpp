@@ -431,7 +431,11 @@ FALCON_FUNC  getProperty( ::Falcon::VMachine *vm )
    else if ( ! obj_x->asObject()->getProperty( *prop_x->asString(), vm->regA() ) )
    {
       vm->raiseRTError( new RangeError( ErrorParam( e_prop_acc ) ) );
+   }
 
+   if ( vm->regA().isCallable() )
+   {
+      vm->regA().methodize( obj_x->asObject() );
    }
 }
 
@@ -2775,8 +2779,8 @@ FALCON_FUNC  removeFromAll( ::Falcon::VMachine *vm )
 
 static bool broadcast_next_attrib_next( ::Falcon::VMachine *vm )
 {
-   // break the chain if last call returned false
-   if ( ! vm->regA().isTrue() )
+   // break the chain if last call returned true
+   if ( vm->regA().isTrue() )
       return false;
 
    AttribObjectHandler *ho= (AttribObjectHandler *) vm->local(0)->asUserPointer();
@@ -2821,13 +2825,14 @@ FALCON_FUNC broadcast_next_attrib( ::Falcon::VMachine *vm )
    vm->addLocals( 1 );
    vm->local(0)->setUserPointer( attrib->head() );
    // fake a return true
-   vm->retval( true );
+   vm->retval( false );
    vm->returnHandler( broadcast_next_attrib_next );
 }
 
 static bool broadcast_next_array( ::Falcon::VMachine *vm )
 {
-   if ( ! vm->regA().isTrue() )
+   // break chain if last call returned true
+   if ( vm->regA().isTrue() )
       return false;
 
    // select next item in the array.
@@ -2912,8 +2917,8 @@ FALCON_FUNC  broadcast( ::Falcon::VMachine *vm )
       vm->returnHandler( broadcast_next_array );
    }
 
-   // force vm  to be true
-   vm->retval( true );
+   // force vm to start first loop
+   vm->retval( false );
 }
 
 

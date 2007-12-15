@@ -45,6 +45,8 @@ wchar_t *message_table[] = {
    L"parameter array is empty",
    L"Iterator class not found in VM",
    L"Given item is not a valid iterator for the collection",
+   L"Sender is not an object",
+   L"Marshalled event name must be a string as first element in the given array",
    0
    };
 

@@ -134,6 +134,9 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    //=======================================================================
    self->addExtFunc( "call", Falcon::Ext::call );
    self->addExtFunc( "methodCall", Falcon::Ext::methodCall );
+   self->addExtFunc( "marshallCB", Falcon::Ext::marshallCB );
+   self->addExtFunc( "marshallCBX", Falcon::Ext::marshallCBX );
+   self->addExtFunc( "marshallCBR", Falcon::Ext::marshallCBR );
 
    //=======================================================================
    // RTL dictionary

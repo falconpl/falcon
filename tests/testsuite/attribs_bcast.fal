@@ -34,13 +34,13 @@ class CObj( name, attrib )
    function a_one( param )
       self.called = [1, param ]
       self.callcount = self.callcount+1
-      return true
+      return false
    end
 
    function a_two( param )
       self.called = [2, param ]
       self.callcount = self.callcount+1
-      return true
+      return false
    end
 
    function reset()
@@ -118,7 +118,7 @@ if o1.callcount != 0: failure( "Broadcast to all but cleared receiver" )
 // Test also an interrupted chain
 function interrupter()
    self.callcount ++
-   return false
+   return true
 end
 
 o1.a_one = interrupter

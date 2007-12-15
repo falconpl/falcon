@@ -229,6 +229,10 @@ FALCON_FUNC  arrayTail ( ::Falcon::VMachine *vm );
 
 FALCON_FUNC  call( ::Falcon::VMachine *vm );
 FALCON_FUNC  methodCall( ::Falcon::VMachine *vm );
+FALCON_FUNC  marshallCB( ::Falcon::VMachine *vm );
+FALCON_FUNC  marshallCBX( ::Falcon::VMachine *vm );
+FALCON_FUNC  marshallCBR( ::Falcon::VMachine *vm );
+
 
 FALCON_FUNC  dictMerge( ::Falcon::VMachine *vm );
 FALCON_FUNC  dictKeys( ::Falcon::VMachine *vm );

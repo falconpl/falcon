@@ -4,8 +4,6 @@
 
    FILE: argsParer.fal
 
-   $Id: argsParse.fal,v 1.4 2007/07/22 10:23:15 jonnymind Exp $
-
    Demonstration of the CmdlineParser facility
    Launch with the parameter -?
    -------------------------------------------------------------------
