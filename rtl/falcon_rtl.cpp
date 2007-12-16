@@ -343,7 +343,7 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    self->addClassMethod( list_class, "back", Falcon::Ext::List_back );
    self->addClassMethod( list_class, "last", Falcon::Ext::List_last );
    self->addClassMethod( list_class, "first", Falcon::Ext::List_first );
-   self->addClassMethod( list_class, "size", Falcon::Ext::List_size );
+   self->addClassMethod( list_class, "len", Falcon::Ext::List_len );
    self->addClassMethod( list_class, "empty", Falcon::Ext::List_empty );
    self->addClassMethod( list_class, "erase", Falcon::Ext::List_erase );
    self->addClassMethod( list_class, "insert", Falcon::Ext::List_insert );

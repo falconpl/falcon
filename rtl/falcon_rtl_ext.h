@@ -324,7 +324,7 @@ FALCON_FUNC  List_front ( ::Falcon::VMachine *vm );
 FALCON_FUNC  List_back ( ::Falcon::VMachine *vm );
 FALCON_FUNC  List_first ( ::Falcon::VMachine *vm );
 FALCON_FUNC  List_last ( ::Falcon::VMachine *vm );
-FALCON_FUNC  List_size( ::Falcon::VMachine *vm );
+FALCON_FUNC  List_len( ::Falcon::VMachine *vm );
 FALCON_FUNC  List_empty( ::Falcon::VMachine *vm );
 FALCON_FUNC  List_erase ( ::Falcon::VMachine *vm );
 FALCON_FUNC  List_insert ( ::Falcon::VMachine *vm );

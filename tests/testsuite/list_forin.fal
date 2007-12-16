@@ -100,7 +100,7 @@ for elem in list
    compose += elem
 end
 if compose != "az": failure( "Rest of delete" )
-if list.size() != 2: failure( "Size after delete" )
+if list.len() != 2: failure( "Size after delete" )
 
 compose = ""
 iter = list.first()

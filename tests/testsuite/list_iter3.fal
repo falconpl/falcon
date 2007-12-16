@@ -21,20 +21,20 @@ try
    failure( "Invalid exception not raised" )
 end
 
-if list.size() != 0: failure( "erase empty" )
+if list.len() != 0: failure( "erase empty" )
 
 // head erase
 list = List( "a", "b", "c" )
 iter = list.first()
 list.erase( iter )
-if list.size() != 2 or list.front() != "b": failure( "head erase" )
+if list.len() != 2 or list.front() != "b": failure( "head erase" )
 if iter.value() != "b": failure( "Iterator status after erase" )
 
 // tail erase
 list = List( "a", "b", "c" )
 iter = list.last()
 list.erase( iter )
-if list.size() != 2 or list.back() != "b": failure( "tail erase" )
+if list.len() != 2 or list.back() != "b": failure( "tail erase" )
 if iter.hasCurrent(): failure( "Invalidation of tail erase" )
 
 // middle erase

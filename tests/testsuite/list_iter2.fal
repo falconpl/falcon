@@ -17,19 +17,19 @@ list = List()
 // insertion in an empty list
 iter = list.first()
 list.insert( iter, "a" )
-if list.size() != 1 or list.front() != "a": failure( "insert in empty" )
+if list.len() != 1 or list.front() != "a": failure( "insert in empty" )
 
 // head insertion
 list = List( "a", "b", "c" )
 iter = list.first()
 list.insert( iter, "z" )
-if list.size() != 4 or list.front() != "z": failure( "head insertion" )
+if list.len() != 4 or list.front() != "z": failure( "head insertion" )
 
 // tail nsertion
 iter = list.last()
 iter.next()
 list.insert( iter, "y" )
-if list.size() != 5 or list.back() != "y": failure( "head insertion" )
+if list.len() != 5 or list.back() != "y": failure( "head insertion" )
 
 // middle insertion
 iter = list.first()

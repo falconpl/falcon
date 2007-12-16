@@ -31,7 +31,7 @@ while iter.hasCurrent()
 end
 
 if count != 3: failure( "forward count" )
-if list.size() != 3: failure( "forward invariance size" )
+if list.len() != 3: failure( "forward invariance size" )
 if list.front() != "a": failure( "forward invariance front" )
 if list.back() != "c": failure( "forward invariance back" )
 
@@ -52,7 +52,7 @@ while iter.hasCurrent()
 end
 
 if count != 3: failure( "forward count" )
-if list.size() != 3: failure( "forward invariance size" )
+if list.len() != 3: failure( "forward invariance size" )
 if list.front() != "a": failure( "forward invariance front" )
 if list.back() != "c": failure( "forward invariance back" )
 

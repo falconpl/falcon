@@ -15,7 +15,7 @@
 
 // empty
 list = List( "a", "b", "c" )
-if list.size() != 3: failure( "init size" )
+if list.len() != 3: failure( "init size" )
 if list.empty(): failure( "init empty" )
 
 if list.front() != "a": failure( "init front" )
@@ -45,7 +45,7 @@ if list.front() != "b": failure( "Remained element front" )
 if list.back() != "b": failure( "Remained element back" )
 
 list.popFront()
-if list.size() != 0: failure( "empty list size" )
+if list.len() != 0: failure( "empty list size" )
 if not list.empty(): failure( "empty list empty" )
 
 success()

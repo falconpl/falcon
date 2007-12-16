@@ -182,7 +182,7 @@ FALCON_FUNC  List_last ( ::Falcon::VMachine *vm )
 }
 
 
-FALCON_FUNC  List_size( ::Falcon::VMachine *vm )
+FALCON_FUNC  List_len( ::Falcon::VMachine *vm )
 {
    ItemList *list = static_cast<ItemList *>( vm->self().asObject()->getUserData() );
    vm->retval( (int64) list->size() );
