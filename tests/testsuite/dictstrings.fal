@@ -1,0 +1,41 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 12g
+* Category: types
+* Subcategory: dictionaries
+* Short: String copy in dictionaries
+* Description:
+* Checks if deep dictionary assignment actually copy the string by value.
+* [/Description]
+*
+****************************************************************************/
+
+// creation
+string = "0000"
+dict = [ "a" => string ]
+string[0] = "1"
+if dict["a"] != "0000": failure( "dict creation" )
+
+// write
+string = "0000"
+dict["a"] = string
+string[0] = "1"
+if dict["a"] != "0000": failure( "dict write access" )
+
+// insertion
+string = "0000"
+dict["b"] = string
+string[0] = "1"
+if dict["b"] != "0000": failure( "dict insertion" )
+
+// merge
+string = "0000"
+dict += [ "c" => string ]
+string[0] = "1"
+if dict["c"] != "0000": failure( "dict merge" )
+
+
+success()
+
+/* End of file */

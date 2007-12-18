@@ -1,0 +1,47 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 11i
+* Category: types
+* Subcategory: array
+* Short: String copy in arrays
+* Description:
+* Checks if deep array assignment actually copy the string by value.
+* [/Description]
+*
+****************************************************************************/
+
+// creation
+string = "0000"
+array = [ string ]
+string[0] = "1"
+if array[0] != "0000": failure( "Array creation" )
+
+// setting
+string = "0000"
+array[0] = string
+string[0] = "1"
+if array[0] != "0000": failure( "Array write access" )
+
+// self addition
+string = "0000"
+array += string
+string[0] = "1"
+if array[1] != "0000": failure( "array self append" )
+
+// normal addition
+string = "0000"
+array = ["0"] + string
+string[0] = "1"
+if array[1] != "0000": failure( "array + string" )
+
+// array merge
+string = "0000"
+array = ["0"] + [string]
+string[0] = "1"
+if array[1] != "0000": failure( "array merge" )
+
+
+success()
+
+/* End of file */
