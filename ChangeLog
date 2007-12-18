@@ -23,6 +23,8 @@ Falcon (0.8.5)
   * minor: Added marshallCB* series to dispatch events to handlers in objects.
   * bugfix: fixed self/sender sequence for callable arrays used as methods.
   * bugfix: array and property assignment now copies strings by value.
+  * bugfix: One line for/in statement COLON rule caused crash.
+  * minor: Changed "<" fast print into ">>".
 
 Falcon (0.8.4)
   * major: Old "lambda expressionss" are now "nameless functions". They are declared
