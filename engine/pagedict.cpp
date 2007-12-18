@@ -267,7 +267,10 @@ void PageDict::merge( const CoreDict &dict )
    Item key, value;
    while( const_cast< CoreDict *>( &dict )->traverseNext( key, value ) )
    {
-      insert( key, value );
+      if ( value.isString() )
+         insert( key, value.asString()->clone() );
+      else
+         insert( key, value );
    }
 }
 

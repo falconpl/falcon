@@ -35,6 +35,13 @@ dict += [ "c" => string ]
 string[0] = "1"
 if dict["c"] != "0000": failure( "dict merge" )
 
+// deep merge
+string = "0000"
+dict = [ "a" => string ]
+dict1 = dict + [ "b" => string ]
+dict["a"][0] = "1"
+if dict1["a"] != "0000": failure( "dict deep merge" )
+
 
 success()
 

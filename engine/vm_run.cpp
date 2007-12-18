@@ -894,6 +894,11 @@ void opcodeHandler_ADD( register VMachine *vm )
 
       if ( operand2->type() == FLC_ITEM_ARRAY ) {
          first->merge( *operand2->asArray() );
+         for ( Item *ptr = first->elements(); ptr < first->elements() + first->length(); ptr++ )
+         {
+            if ( ptr->isString() )
+               ptr->setString( ptr->asString()->clone() );
+         }
       }
       else {
          if ( operand2->isString() && operand2->asString()->garbageable() )
@@ -1218,6 +1223,12 @@ void opcodeHandler_ADDS( register VMachine *vm )
    {
       if ( operand2->type() == FLC_ITEM_ARRAY ) {
          operand1->asArray()->merge( *operand2->asArray() );
+         for ( Item *ptr =  operand1->asArray()->elements();
+               ptr < operand1->asArray()->elements() + operand1->asArray()->length(); ptr++ )
+         {
+            if ( ptr->isString() )
+               ptr->setString( ptr->asString()->clone() );
+         }
       }
       else {
          if ( operand2->isString() && operand2->asString()->garbageable() )
@@ -1731,7 +1742,7 @@ void opcodeHandler_LDV( register VMachine *vm )
          CoreArray *array =  operand1->asArray();
 
          // open ranges?
-         if ( operand2->asRangeIsOpen() && 
+         if ( operand2->asRangeIsOpen() &&
               (operand2->asRangeStart() >= 0 && (int) array->length() <= operand2->asRangeStart() ) ||
               (operand2->asRangeStart() < 0 && (int) array->length() < -operand2->asRangeStart() )
               )

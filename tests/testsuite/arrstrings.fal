@@ -35,12 +35,6 @@ array = ["0"] + string
 string[0] = "1"
 if array[1] != "0000": failure( "array + string" )
 
-// array merge
-string = "0000"
-array = ["0"] + [string]
-string[0] = "1"
-if array[1] != "0000": failure( "array merge" )
-
 // array range
 string = "0000"
 array[0:0] = string
@@ -52,6 +46,19 @@ string = "0000"
 array[0:1] = string
 string[0] = "1"
 if array[0] != "0000": failure( "array range change" )
+
+// array merge
+string = "0000"
+array = ["0"] + [string]
+string[0] = "1"
+if array[1] != "0000": failure( "array merge" )
+
+// array deep merge
+string = "0000"
+array = ["0"] + [string]
+array1 = array + [ "another string" ]
+array[1][0] = "1"
+if array1[1] != "0000": failure( "array deep merge" )
 
 success()
 
