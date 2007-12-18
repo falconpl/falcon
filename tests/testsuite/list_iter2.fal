@@ -8,7 +8,7 @@
 * Description:
 *   We test the RTL List iterators; here we test for advanced operations,
 *   namely insertion at various positions.
-* [/Description]
+* [/Description]A
 *
 ****************************************************************************/
 

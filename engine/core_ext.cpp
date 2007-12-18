@@ -1100,8 +1100,7 @@ FALCON_FUNC  Iterator_init( ::Falcon::VMachine *vm )
       {
          Item tgt;
          String *orig = collection->asString();
-         vm->referenceItem( tgt, *collection );
-         self->setProperty( "_origin", tgt );
+         self->setProperty( "_origin", orig );
 
          if( orig->checkPosBound( p ) )
          {

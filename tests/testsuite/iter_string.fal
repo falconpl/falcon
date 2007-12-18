@@ -43,10 +43,11 @@ while it.hasCurrent()
 	it.next()
 end
 
+if string.len() != 8: failure( "Item change -- len" )
 if string != "a xtring": failure( "Item change" )
 
 // test 4: item remove
-it = Iterator( string )
+it = Iterator( $string )
 while it.hasCurrent()
 	if it.value() == "x"
 		it.erase()
@@ -55,8 +56,8 @@ while it.hasCurrent()
    end
 end
 
-if string != "a tring": failure( "Item erase" )
 if string.len() != 7: failure( "Item erase -- len" )
+if string != "a tring": failure( "Item erase" )
 
 success()
 
