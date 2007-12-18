@@ -1,7 +1,6 @@
 /*
    FALCON - The Falcon Programming Language.
    FILE: vm.cpp
-   $Id: vm.cpp,v 1.71 2007/08/18 12:07:37 jonnymind Exp $
 
    Implementation of virtual - non main loop
    -------------------------------------------------------------------

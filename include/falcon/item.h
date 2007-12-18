@@ -31,6 +31,7 @@
 #include <falcon/itemid.h>
 #include <falcon/garbageable.h>
 #include <falcon/basealloc.h>
+#include <falcon/string.h>
 
 namespace Falcon {
 
@@ -388,8 +389,13 @@ public:
 
    void copy( const Item &other )
    {
-      m_data = other.m_data;
       m_base = other.m_base;
+      if ( isString() )
+      {
+         m_data.voidp = other.asString()->clone();
+      }
+      else
+         m_data = other.m_data;
    }
 
    bool isCallable() const;

@@ -792,13 +792,7 @@ void opcodeHandler_LD( register VMachine *vm )
    Item *operand1 =  vm->getOpcodeParam( 1 )->dereference();
    Item *operand2 =  vm->getOpcodeParam( 2 )->dereference();
 
-   // strings are the only deep item that the user expects to copy by value
-   if( operand2->type() == FLC_ITEM_STRING ) {
-      GarbageString *gcs = new GarbageString( vm, *operand2->asString() );
-      operand1->setString( gcs );
-   }
-   else
-      operand1->copy( *operand2 );
+   operand1->copy( *operand2 );
 }
 
 // 1F
