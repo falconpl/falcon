@@ -538,13 +538,7 @@ void opcodeHandler_PUSH( register VMachine *vm )
 {
    /** \TODO Raise a stack overflow error on VM stack boundary limit. */
    Item *data = vm->getOpcodeParam( 1 )->dereference();
-   if( data->isString() && data->asString()->garbageable() )
-   {
-      Item temp = new GarbageString( vm, *data->asString());
-      vm->m_stack->push( &temp ); // temp gets copied by value, so it's ok
-   }
-   else
-      vm->m_stack->push( data );
+   vm->m_stack->push( data );
 }
 
 // 0D
@@ -894,11 +888,6 @@ void opcodeHandler_ADD( register VMachine *vm )
 
       if ( operand2->type() == FLC_ITEM_ARRAY ) {
          first->merge( *operand2->asArray() );
-         for ( Item *ptr = first->elements(); ptr < first->elements() + first->length(); ptr++ )
-         {
-            if ( ptr->isString() )
-               ptr->setString( ptr->asString()->clone() );
-         }
       }
       else {
          if ( operand2->isString() && operand2->asString()->garbageable() )
@@ -1223,12 +1212,6 @@ void opcodeHandler_ADDS( register VMachine *vm )
    {
       if ( operand2->type() == FLC_ITEM_ARRAY ) {
          operand1->asArray()->merge( *operand2->asArray() );
-         for ( Item *ptr =  operand1->asArray()->elements();
-               ptr < operand1->asArray()->elements() + operand1->asArray()->length(); ptr++ )
-         {
-            if ( ptr->isString() )
-               ptr->setString( ptr->asString()->clone() );
-         }
       }
       else {
          if ( operand2->isString() && operand2->asString()->garbageable() )

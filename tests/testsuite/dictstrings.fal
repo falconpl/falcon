@@ -11,12 +11,7 @@
 *
 ****************************************************************************/
 
-// creation
-string = "0000"
-dict = [ "a" => string ]
-string[0] = "1"
-if dict["a"] != "0000": failure( "dict creation" )
-
+dict = [=>]
 // write
 string = "0000"
 dict["a"] = string
@@ -28,20 +23,6 @@ string = "0000"
 dict["b"] = string
 string[0] = "1"
 if dict["b"] != "0000": failure( "dict insertion" )
-
-// merge
-string = "0000"
-dict += [ "c" => string ]
-string[0] = "1"
-if dict["c"] != "0000": failure( "dict merge" )
-
-// deep merge
-string = "0000"
-dict = [ "a" => string ]
-dict1 = dict + [ "b" => string ]
-dict["a"][0] = "1"
-if dict1["a"] != "0000": failure( "dict deep merge" )
-
 
 success()
 

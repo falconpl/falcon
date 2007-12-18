@@ -34,7 +34,7 @@ end
 if strcfr != string[-1:0]: failure( "Reverse iteration" )
 
 // test 3: item change
-it = Iterator( $string )
+it = Iterator( string )
 while it.hasCurrent()
 	if it.value() == "s"
 		it.value( "x" )
@@ -47,7 +47,7 @@ if string.len() != 8: failure( "Item change -- len" )
 if string != "a xtring": failure( "Item change" )
 
 // test 4: item remove
-it = Iterator( $string )
+it = Iterator( string )
 while it.hasCurrent()
 	if it.value() == "x"
 		it.erase()

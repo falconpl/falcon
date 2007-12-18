@@ -3,7 +3,7 @@
 *
 * ID: 13o
 * Category: functions
-* Subcategory: 
+* Subcategory:
 * Short: Parameter invariance
 * Description:
 *   String parameters must be pushed by value.
@@ -12,8 +12,9 @@
 ****************************************************************************/
 
 function test( a )
-   a[0] = "X"
-   if a != "Xello": failure( "Modification" )
+   b = a
+   b[0] = "X"
+   if a == "Xello": failure( "Local modification" )
 end
 
 data = "Hello"
