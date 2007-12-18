@@ -1,0 +1,25 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 13o
+* Category: functions
+* Subcategory: 
+* Short: Parameter invariance
+* Description:
+*   String parameters must be pushed by value.
+* [/Description]
+*
+****************************************************************************/
+
+function test( a )
+   a[0] = "X"
+   if a != "Xello": failure( "Modification" )
+end
+
+data = "Hello"
+test( data )
+if data != "Hello": failure( "Invariance" )
+
+success()
+
+/* End of file */

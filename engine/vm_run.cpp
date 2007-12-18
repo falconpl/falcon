@@ -537,7 +537,14 @@ void opcodeHandler_GEND( register VMachine *vm )
 void opcodeHandler_PUSH( register VMachine *vm )
 {
    /** \TODO Raise a stack overflow error on VM stack boundary limit. */
-   vm->m_stack->push( vm->getOpcodeParam( 1 )->dereference() );
+   Item *data = vm->getOpcodeParam( 1 )->dereference();
+   if( data->isString() && data->asString()->garbageable() )
+   {
+      Item temp = new GarbageString( vm, *data->asString());
+      vm->m_stack->push( &temp ); // temp gets copied by value, so it's ok
+   }
+   else
+      vm->m_stack->push( data );
 }
 
 // 0D
@@ -792,7 +799,10 @@ void opcodeHandler_LD( register VMachine *vm )
    Item *operand1 =  vm->getOpcodeParam( 1 )->dereference();
    Item *operand2 =  vm->getOpcodeParam( 2 )->dereference();
 
-   operand1->copy( *operand2 );
+   if ( operand2->isString() )
+      operand1->setString( new GarbageString( vm, *operand2->asString() ) );
+   else
+      operand1->copy( *operand2 );
 }
 
 // 1F
@@ -886,7 +896,10 @@ void opcodeHandler_ADD( register VMachine *vm )
          first->merge( *operand2->asArray() );
       }
       else {
-         first->append( *operand2 );
+         if ( operand2->isString() && operand2->asString()->garbageable() )
+            first->append( operand2->asString()->clone() );
+         else
+            first->append( *operand2 );
       }
       vm->retval( first );
       return;
@@ -1206,8 +1219,12 @@ void opcodeHandler_ADDS( register VMachine *vm )
       if ( operand2->type() == FLC_ITEM_ARRAY ) {
          operand1->asArray()->merge( *operand2->asArray() );
       }
-      else
-         operand1->asArray()->append( *operand2 );
+      else {
+         if ( operand2->isString() && operand2->asString()->garbageable() )
+            operand1->asArray()->append( operand2->asString()->clone() );
+         else
+            operand1->asArray()->append( *operand2 );
+      }
       return;
    }
 
@@ -1714,7 +1731,10 @@ void opcodeHandler_LDV( register VMachine *vm )
          CoreArray *array =  operand1->asArray();
 
          // open ranges?
-         if ( operand2->asRangeIsOpen() && array->length() <= operand2->asRangeStart() )
+         if ( operand2->asRangeIsOpen() && 
+              (operand2->asRangeStart() >= 0 && (int) array->length() <= operand2->asRangeStart() ) ||
+              (operand2->asRangeStart() < 0 && (int) array->length() < -operand2->asRangeStart() )
+              )
          {
             vm->retval( new CoreArray( vm ) );
             return;
@@ -2559,7 +2579,10 @@ void opcodeHandler_STV( register VMachine *vm )
    // try to access a dictionary with every item
    // access addition.
    if( operand1->type() == FLC_ITEM_DICT ) {
-      operand1->asDict()->insert( *(operand2), *origin );
+      if ( origin->isString() && origin->asString()->garbageable() )
+         operand1->asDict()->insert( *(operand2), new GarbageString( vm, *origin->asString() ) );
+      else
+         operand1->asDict()->insert( *(operand2), *origin );
       return;
    }
 
@@ -2611,7 +2634,10 @@ void opcodeHandler_STV( register VMachine *vm )
          register int32 pos = (int32) operand2->forceInteger();
          CoreArray *array = operand1->asArray();
          if ( pos >= (-(int)array->length()) && pos < (int32) array->length() ) {
-            (*array)[ pos ] = *origin;
+            if ( origin->isString() && origin->asString()->garbageable() )
+               (*array)[ pos ] = origin->asString()->clone();
+            else
+               (*array)[ pos ] = *origin;
             return;
          }
       }
@@ -2623,7 +2649,7 @@ void opcodeHandler_STV( register VMachine *vm )
          register int32 end = operand2->asRangeIsOpen() ? array->length() : operand2->asRangeEnd();
          register int32 start = operand2->asRangeStart();
          if( origin->type() == FLC_ITEM_ARRAY ) {
-            if( array->change( *origin->asArray() , start, end ) )
+            if( array->change( *origin->asArray(), start, end ) )
                return;
          }
          else {
@@ -2631,8 +2657,14 @@ void opcodeHandler_STV( register VMachine *vm )
                if( ! array->remove( start, end ) )
                   break;
             }
-            if( array->insert( *origin, start ) )
-               return;
+            if ( origin->isString() && origin->asString()->garbageable() ) {
+               if( array->insert( origin->asString()->clone(), start ) )
+                  return;
+            }
+            else {
+               if( array->insert( *origin, start ) )
+                  return;
+            }
          }
       }
       break;
@@ -2692,7 +2724,7 @@ void opcodeHandler_STP( register VMachine *vm )
          temp.setFunction( source->asMethodFunction(), source->asModuleId() );
          source = &temp;
       }
-      else if ( source->isString() )
+      else if ( source->isString() && source->asString()->garbageable() )
       {
          GarbageString *gcs = new GarbageString( vm, *source->asString() );
          source->setString( gcs );

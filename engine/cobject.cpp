@@ -126,13 +126,7 @@ bool CoreObject::setProperty( const String &propName, const Item &value )
    {
       Item *prop = m_properties.getValue( pos );
 
-      if ( value.isString() )
-      {
-         String *str = new GarbageString( origin(), *value.asString() );
-         prop->dereference()->setString( str );
-      }
-      else
-         *prop->dereference() = value;
+      *prop->dereference() = value;
 
       if( m_user_data != 0 && m_user_data->isReflective() )
       {

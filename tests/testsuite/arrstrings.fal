@@ -41,6 +41,17 @@ array = ["0"] + [string]
 string[0] = "1"
 if array[1] != "0000": failure( "array merge" )
 
+// array range
+string = "0000"
+array[0:0] = string
+string[0] = "1"
+if array[0] != "0000": failure( "array range insert" )
+
+// array range
+string = "0000"
+array[0:1] = string
+string[0] = "1"
+if array[0] != "0000": failure( "array range change" )
 
 success()
 
