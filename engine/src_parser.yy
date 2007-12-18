@@ -676,9 +676,9 @@ forin_statement:
          COMPILER->popContextSet();
          $$ = f;
       }
-   | FOR symbol_list OP_IN expression COLON statement
+   | FOR symbol_list OP_IN expression COLON
       {
-         Falcon::StmtForin *f;
+          Falcon::StmtForin *f;
          Falcon::ArrayDecl *decl = $2;
          if ( decl->front() == decl->back() ) {
             f = new Falcon::StmtForin( CURRENT_LINE, (Falcon::Value *) decl->front(), $4 );
@@ -687,8 +687,20 @@ forin_statement:
          }
          else
             f = new Falcon::StmtForin( CURRENT_LINE, new Falcon::Value(decl), $4 );
-         if ( $6 != 0 )
-             f->children().push_back( $6 );
+
+         COMPILER->pushLoop( f );
+         COMPILER->pushContext( f );
+         COMPILER->pushContextSet( &f->children() );
+      }
+      statement
+      {
+         if ( $7 != 0 )
+            COMPILER->addStatement( $7 );
+         Falcon::StmtForin *f = static_cast<Falcon::StmtForin *>(COMPILER->getContext());
+         COMPILER->popLoop();
+         COMPILER->popContext();
+         COMPILER->popContextSet();
+         $$ = f;
       }
    | FOR symbol_list OP_IN error EOL
        { COMPILER->raiseError( Falcon::e_syn_forin ); }
@@ -734,11 +746,11 @@ fordot_statement:
 ;
 
 self_print_statement:
-   LT  expression_list EOL
+   SHR  expression_list EOL
       {
          $$ = new Falcon::StmtSelfPrint( LINE, $2 );
       }
-   | LT EOL
+   | SHR EOL
       {
          COMPILER->raiseError( Falcon::e_syn_self_print );
          $$ = 0;
@@ -749,6 +761,7 @@ self_print_statement:
          $2->pushBack( new Falcon::Value( COMPILER->addString( "\n" ) ) );
          $$ = new Falcon::StmtSelfPrint( LINE, $2 );
       }
+
    | GT EOL
       {
          Falcon::ArrayDecl *adecl = new Falcon::ArrayDecl();
@@ -756,7 +769,12 @@ self_print_statement:
          $$ = new Falcon::StmtSelfPrint( LINE, adecl );
       }
 
-   | LT error EOL
+   | SHR error EOL
+      {
+         COMPILER->raiseError( Falcon::e_syn_self_print );
+         $$ = 0;
+      }
+   | GT error EOL
       {
          COMPILER->raiseError( Falcon::e_syn_self_print );
          $$ = 0;
