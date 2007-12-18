@@ -22,6 +22,9 @@ Falcon (0.8.5)
   * minor: Added addSingleton method to Module class for easier embedding.
   * minor: Added marshallCB* series to dispatch events to handlers in objects.
   * bugfix: fixed self/sender sequence for callable arrays used as methods.
+  * bugfix: In case of deep copy of complex items, strings were not copied by value.
+            Not sure that was a "bug", in languages like i.e. java it is a "feature".
+            We'll put in back if needed.
 
 Falcon (0.8.4)
   * major: Old "lambda expressionss" are now "nameless functions". They are declared
