@@ -192,7 +192,7 @@ public:
       \param tail true to get the iterator to the last element in the list.
       \return a newly created iterator.
    */
-   virtual ItemListIterator *getIterator( bool tail=false );
+   virtual CoreIterator *getIterator( bool tail=false );
 
    /** Pushes a shallow copy of the item to the end of the list.
       \param itm the item to be pushed.

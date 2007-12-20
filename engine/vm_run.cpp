@@ -274,7 +274,11 @@ void VMachine::run()
                {
                   // yes, exit but of course, maintain the error status
                   m_event = eventRisen;
-                  return;
+
+				  // we must return only if the stackbase is not zero; otherwise, we return to a
+				  // base callItem, and we must manage internally that case.
+				  if ( m_stackBase != 0 )
+                      return;
                }
                // call return may raise eventQuit, but only when m_stackBase is zero,
                // so we don't consider it.

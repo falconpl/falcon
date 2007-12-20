@@ -86,7 +86,7 @@ ItemListElement *ItemList::last() const
 }
 
 
-ItemListIterator *ItemList::getIterator( bool tail )
+CoreIterator *ItemList::getIterator( bool tail )
 {
    return new ItemListIterator( this, tail ? m_tail : m_head );
 }
