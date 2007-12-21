@@ -507,7 +507,8 @@ public:
       m_type( tundef ),
       m_exported( false ),
       m_module( mod ),
-      m_lineDecl(0)
+      m_lineDecl(0),
+      m_id(0)
    {}
 
    /** Basic empty constructor.

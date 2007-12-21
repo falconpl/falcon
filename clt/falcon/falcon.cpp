@@ -75,17 +75,21 @@ static long s_allocatedMem = 0;
 static long s_outBlocks = 0;
 static long s_validAlloc = 1;
 
+#define MEMBLOCK_DATA_COUNT 2
+#define MEMBLOCK_SIZE (sizeof(long) * MEMBLOCK_DATA_COUNT)
+
+
 static void *account_alloc( size_t size )
 {
    if ( size == 0 )
       return 0;
 
-	long *mem = (long *) malloc( size + 16 );
+	long *mem = (long *) malloc( size + MEMBLOCK_SIZE );
 	mem[0] = (long) size;
 	mem[1] = 0xFEDCBA98;
 	s_allocatedMem += size;
    s_outBlocks++;
-	return mem + 4;
+	return mem + MEMBLOCK_DATA_COUNT;
 }
 
 static void account_free( void *mem )
@@ -94,7 +98,7 @@ static void account_free( void *mem )
 		return;
 
 	long *block = (long *) mem;
-	block = block - 4;
+	block = block - MEMBLOCK_DATA_COUNT;
 
 	if ( block[1] != 0xFEDCBA98 ) {
 		s_validAlloc = 0;
@@ -113,18 +117,18 @@ static void *account_realloc( void *mem, size_t size )
 
 	if ( mem != 0 )
 	{
-		block = block - 4;
+		block = block - MEMBLOCK_DATA_COUNT;
 		if ( block[1] != 0xFEDCBA98 ) {
 			s_validAlloc = 0;
-			block = (long *) malloc( size + 16 );
+			block = (long *) malloc( size + MEMBLOCK_SIZE );
 		}
 		else {
 			s_allocatedMem -= block[0];
-			block = (long *) realloc( block, size + 16 );
+			block = (long *) realloc( block, size + MEMBLOCK_SIZE );
 		}
 	}
 	else {
-		block = (long *) malloc( size + 16 );
+		block = (long *) malloc( size + MEMBLOCK_SIZE );
       s_outBlocks++;
 	}
 
@@ -138,7 +142,7 @@ static void *account_realloc( void *mem, size_t size )
 
 	block[0] = (long) size;
 	block[1] = 0xFEDCBA98;
-	return block + 4;
+	return block + MEMBLOCK_DATA_COUNT;
 }
 
 
