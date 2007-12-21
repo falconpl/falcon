@@ -1,0 +1,58 @@
+/*
+   Falcon Samples.
+
+   Process enumerator
+
+   This script lists the processes in your system.
+
+   $Id: proclist.fal,v 1.2 2006/11/04 19:21:05 gian Exp $
+*/
+
+load process
+
+//==================================================
+// Main program
+
+enum = ProcessEnum()
+
+printl( "Name               PID        Parent     Command line" )
+printl( "------------------ ---------- ---------- ------------------------------------" )
+
+while enum.next()
+   display( enum )
+end
+
+enum.close()
+
+function display( pe )
+   l = len( pe.name )
+   if l > 18
+      print( pe.name[0:13] )
+   else
+      print( pe.name )
+      while l < 18: l++ and print( " " )
+   end
+   print (" ")
+
+   pid = toString( pe.pid )
+   l = len( pid )
+   if l > 8
+      print( pid[0:8] )
+   else
+      print( pid )
+      while l < 8: l++ and print( " " )
+   end
+   print (" ")
+
+   pid = toString( pe.parentPid )
+   l = len( pid )
+   if l > 8
+      print( pid )
+   else
+      print( pid )
+      while l < 8: l++ and print( " " )
+   end
+   print (" ")
+
+   printl( pe.cmdLine )
+end
