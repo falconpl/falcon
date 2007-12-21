@@ -497,10 +497,8 @@ public:
 
    const String &className() const { return m_className; }
 
-   void incref() { m_refCount++; }
-   void decref() { 
-		if( --m_refCount == 0 ) 
-			delete this; }
+   void incref();
+   void decref();
 };
 
 

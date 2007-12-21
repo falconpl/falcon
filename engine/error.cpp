@@ -303,6 +303,20 @@ Error::~Error()
    }
 }
 
+void Error::incref()
+{ 
+   m_refCount++; 
+}
+
+void Error::decref()
+{ 
+   --m_refCount;
+	if( m_refCount == 0 )
+   {
+		delete this; 
+   }
+}
+
 String &Error::toString( String &target ) const
 {
    heading( target );
@@ -625,6 +639,7 @@ void ErrorCarrier::setProperty( const String &propName, Item &prop )
    else if ( propName == "systemError" )
       m_error->systemError( (uint32) prop.forceInteger() );
 }
+
 
 }
 

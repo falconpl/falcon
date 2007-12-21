@@ -263,20 +263,16 @@ VMachine::~VMachine()
    delete  m_memPool ;
    memFree( m_opHandlers );
 
-   // decref all the modules
-   for( uint32 mi = 0; mi < m_modules.size(); mi++ )
-   {
-      m_modules.moduleAt( mi )->decref();
+   // errors may be created by modules, so we should destroy them before
+   // having a chance to destroy modules
+   // delete the owned error
+   if( m_error != 0 ) {
+     m_error->decref();
+	  m_error = 0;
    }
 
    if ( m_bOwnErrorHandler )
       delete m_errhand;
-
-   // delete the owned error
-   if( m_error != 0 ) {
-      m_error->decref();
-	  m_error = 0;
-   }
 
    // delete the attributes
    AttribHandler *h = m_attributes;
@@ -289,6 +285,14 @@ VMachine::~VMachine()
       h = h1;
    }
 
+   // last, 
+   // decref all the modules
+   for( uint32 mi = 0; mi < m_modules.size(); mi++ )
+   {
+      m_modules.moduleAt( mi )->decref();
+   }
+
+   // and finally, the streams.
    delete m_stdErr;
    delete m_stdIn;
    delete m_stdOut;
