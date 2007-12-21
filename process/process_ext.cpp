@@ -175,7 +175,7 @@ FALCON_FUNC  falcon_systemCall ( ::Falcon::VMachine *vm )
    bool background = mode == 0 ? false : mode->isTrue();
    String **argv;
 
-   if( sys_req->type() == FLC_ITEM_STRING ) {
+   if( sys_req->isString() == FLC_ITEM_STRING ) {
       argv = ::Falcon::Mod::argvize( *sys_req->asString(), false );
    }
    else {
@@ -290,15 +290,15 @@ FALCON_FUNC  Process_init ( ::Falcon::VMachine *vm )
 
    String **argv;
    String *args[4];
-   bool delArgs;
-   bool deepDel;
+   bool delArgs = false;
+   bool deepDel = false;
    // this will also work as flag, as it is valorized only when using the static args[] vector.
    uint32 mode = mode_itm == 0 ? 0 : (uint32) mode_itm->forceInteger();
 
    //pa_viaShell
    String shellName( ::Falcon::Sys::shellName() );
    String shellParam( ::Falcon::Sys::shellParam() );
-   if ( (mode & 0x20) == 0x20 && sys_req->type() == FLC_ITEM_STRING ) {
+   if ( (mode & 0x20) == 0x20 && sys_req->isString() ) {
       delArgs = false;
       argv = args;
       argv[0] = &shellName;
@@ -306,7 +306,7 @@ FALCON_FUNC  Process_init ( ::Falcon::VMachine *vm )
       argv[2] = sys_req->asString();
       argv[3] = 0;
    }
-   else if( sys_req->type() == FLC_ITEM_STRING ) {
+   else if( sys_req->isString() ) {
       delArgs = true;
       deepDel = true;
       argv = ::Falcon::Mod::argvize( *sys_req->asString(), false );

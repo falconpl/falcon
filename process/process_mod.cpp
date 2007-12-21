@@ -44,7 +44,8 @@ static String **assignString( const String &params, String **args, uint32 &assig
    if( assigned == count ) {
       assigned += assing_block;
       String **temp = (String **) memAlloc( assigned * sizeof( String * ) );
-      memcpy( temp, args, assigned - assing_block );
+      if ( assigned > assing_block )
+         memcpy( temp, args, (assigned - assing_block) * sizeof( String * ) );
       memFree( args );
       args = temp;
    }
@@ -178,10 +179,10 @@ String **argvize( const String &params, bool addShell )
 
 void freeArgv( String **argv )
 {
-   String *p = argv[0];
-   while( p != 0 )
+   String **p = argv;
+   while( *p != 0 )
    {
-      delete p;
+      delete *p;
       ++p;
    }
    memFree( argv );

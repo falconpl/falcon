@@ -1,0 +1,59 @@
+#!/usr/bin/falcon
+/*
+   FALCON - Samples
+
+   FILE: echoproc.fal
+
+   Simple process wrapper; this is similar to procload, but doesn't
+   use the system shell to load the process.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: mer nov 3 2004
+   Last modified because:
+
+   -------------------------------------------------------------------
+   (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+   In order to use this file in its compiled form, this source or
+   part of it you have to read, understand and accept the conditions
+   that are stated in the LICENSE file that comes boundled with this
+   package.
+*/
+
+load process
+
+if args.len() == 0
+   > "Please, specify the process to be launched. Use a single string.\n"
+     "   Example: \n"
+     "            echoproc.fal \"ls -l /usr/lib\"\n"
+end
+
+try
+   > "Starting ... \"", args[0], "\""
+   > "---------------------------------------------------------------"
+
+   proc = Process( args[0], PROCESS_MERGE_AUX | PROCESS_SINK_INPUT )
+   procout = proc.getOutput()
+
+   while proc.value() = -1
+      if procout.readAvailable( 250 )
+         >> procout.read( 1024 )
+      end
+   end
+
+   > "---------------------------------------------------------------"
+   > "Exit value: ", proc.value()
+   proc.close()
+   > "Test complete"
+
+catch in error
+   > "Catched error during processing!!:\n", error
+   > "------------------------------------"
+   > "Terminating with error"
+   exit(1)
+end
+
+exit(0)
+
+/* end of echoproc.fal */

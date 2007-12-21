@@ -1,5 +1,7 @@
+Feathers (0.8.5)
+  * Bugfix: Process crashed if initialized with a single string.
 
 Feathers (0.8.4)
   * Fixed compilation and build settings with MINGW
-  * Added compileTemplate and detectTemplate properties to the compiler 
+  * Added compileTemplate and detectTemplate properties to the compiler
     class (reflecting FlcLoader updates)
