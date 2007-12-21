@@ -17,5 +17,10 @@ CONFIGURE_FILE(
          ESCAPE_QUOTES
          @ONLY )
 
-INSTALL( FILES ${FALCON_BUILD_TREE}/include/falcon/config.h
-   DESTINATION ${TARGET_DIR}/include/falcon)
+# This copy should actually be performed during install,
+# but a bug in current windows version of CMAKE (2.4.7)  prevents it.
+CONFIGURE_FILE(
+         falcon/config.h.in
+         ${TARGET_DIR}/include/falcon/config.h
+         ESCAPE_QUOTES
+         @ONLY )

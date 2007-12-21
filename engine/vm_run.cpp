@@ -303,8 +303,8 @@ void VMachine::run()
                {
                   // we'll manage the error throuhg the obj, so we release the ref.
                   m_error->decref();
-                  m_regB.setObject( obj );
                   m_error = 0;
+                  m_regB.setObject( obj );
                   popTry( true );
                   m_event = eventNone;
                   continue;

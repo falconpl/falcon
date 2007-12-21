@@ -39,7 +39,7 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "Falcon Committee"
             VALUE "FileDescription", "The Falcon command line compiler"
-            VALUE "FileVersion", FALCON_MAKE_VERSION_STRING( FCLT_VERSION_MAJOR, FCLT_VERSION_MINOR, FCLT_VERSION_REVISION, 0 )
+            VALUE "FileVersion", FALCON_MAKE_VERSION_STRING( FCLT_VERSION_MAJOR, FCLT_VERSION_MINOR, FCLT_VERSION_REVISION )
             VALUE "InternalName", "falcon"
             VALUE "LegalCopyright", "The Falcon Programming Language License"
             VALUE "OriginalFilename", "falcon.exe"

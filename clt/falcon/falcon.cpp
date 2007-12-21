@@ -695,7 +695,7 @@ int main( int argc, char *argv[] )
 
    Module *falcon_rtl = modLoader->loadName( "falcon_rtl" );
 
-  if ( falcon_rtl == 0 )
+   if ( falcon_rtl == 0 )
    {
       // mod loader has already raised the error.
       exit_sequence( 1 );

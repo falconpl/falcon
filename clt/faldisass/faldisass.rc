@@ -38,7 +38,7 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "Falcon Committee"
             VALUE "FileDescription", "The Falcon command line disassembler"
-            VALUE "FileVersion", FALCON_MAKE_VERSION_STRING( FDIS_VERSION_MAJOR, FDIS_VERSION_MINOR, FDIS_VERSION_REVISION, 0 )
+            VALUE "FileVersion", FALCON_MAKE_VERSION_STRING( FDIS_VERSION_MAJOR, FDIS_VERSION_MINOR, FDIS_VERSION_REVISION )
             VALUE "InternalName", "faldisass"
             VALUE "LegalCopyright", "The Falcon Programming Language License"
             VALUE "OriginalFilename", "faldisass.exe"

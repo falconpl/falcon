@@ -34,7 +34,7 @@ void DefaultErrorHandler::handleError( Error *err )
    String temp;
    err->toString( temp );
    m_stream->writeString( temp );
-	m_stream->flush();
+   m_stream->flush();
 }
 
 DefaultErrorHandler::~DefaultErrorHandler()

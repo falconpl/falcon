@@ -38,7 +38,7 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "Falcon Committee"
             VALUE "FileDescription", "The Falcon command line module runner"
-            VALUE "FileVersion", FALCON_MAKE_VERSION_STRING( FRUN_VERSION_MAJOR, FRUN_VERSION_MINOR, FRUN_VERSION_REVISION, 0 )
+            VALUE "FileVersion", FALCON_MAKE_VERSION_STRING( FRUN_VERSION_MAJOR, FRUN_VERSION_MINOR, FRUN_VERSION_REVISION )
             VALUE "InternalName", "falrun"
             VALUE "LegalCopyright", "The Falcon Programming Language License"
             VALUE "OriginalFilename", "falrun.exe"

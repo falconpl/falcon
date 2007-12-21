@@ -275,6 +275,7 @@ VMachine::~VMachine()
    // delete the owned error
    if( m_error != 0 ) {
       m_error->decref();
+	  m_error = 0;
    }
 
    // delete the attributes
