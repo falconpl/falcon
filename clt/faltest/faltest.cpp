@@ -53,6 +53,7 @@
 #include "fteh.h"
 
 #define DEF_PREC  5
+#define TIME_PRINT_FMT "%.3f"
 
 using namespace Falcon;
 
@@ -953,13 +954,13 @@ void executeTests( ModuleLoader *modloader, Module *rtl )
          output->writeString( "success." );
          if ( opt_timings ) {
             String temp = "(";
-            temp.writeNumber( compTime, "%.3e" );
-            temp += ",";
-            temp.writeNumber( genTime, "%.3e" );
-            temp += ",";
-            temp.writeNumber( linkTime, "%.3e" );
-            temp += ",";
-            temp.writeNumber( execTime, "%.3e" );
+            temp.writeNumber( compTime, TIME_PRINT_FMT );
+            temp += " ";
+            temp.writeNumber( genTime, TIME_PRINT_FMT );
+            temp += " ";
+            temp.writeNumber( linkTime, TIME_PRINT_FMT );
+            temp += " ";
+            temp.writeNumber( execTime, TIME_PRINT_FMT );
             temp += ")";
             output->writeString( temp );
          }
@@ -970,9 +971,9 @@ void executeTests( ModuleLoader *modloader, Module *rtl )
             if (opNum > 0.0 && tott >0.0)
             {
                String temp = " ( ";
-               temp.writeNumber( tott, "%.3f" );
+               temp.writeNumber( tott, TIME_PRINT_FMT );
                temp += " secs, ";
-               temp.writeNumber( opNum / tott, "%.3f" );
+               temp.writeNumber( opNum / tott, TIME_PRINT_FMT );
                temp += " ops/sec)";
                output->writeString( temp );
             }
@@ -1208,38 +1209,38 @@ int main( int argc, char *argv[] )
          if ( opt_verbose ) {
             output->writeString( "Recorded timings: \n" );
             String temp = "Total compilation time: ";
-            temp.writeNumber( total_time_generate, "%.3e" );
+            temp.writeNumber( total_time_generate, TIME_PRINT_FMT );
             temp += " (mean: ";
-            temp.writeNumber( total_time_generate / (passedCount + failedCount), "%.3e" );
+            temp.writeNumber( total_time_generate / (passedCount + failedCount), TIME_PRINT_FMT );
             temp += ")\n";
 
             temp += "Total generation time: ";
-            temp.writeNumber( total_time_generate, "%.3e" );
+            temp.writeNumber( total_time_generate, TIME_PRINT_FMT );
             temp += " (mean: ";
-            temp.writeNumber( total_time_generate / (passedCount + failedCount), "%.3e" );
+            temp.writeNumber( total_time_generate / (passedCount + failedCount), TIME_PRINT_FMT );
             temp += ")\n";
 
             temp += "Total link time: ";
-            temp.writeNumber( total_time_link, "%.3e" );
+            temp.writeNumber( total_time_link, TIME_PRINT_FMT );
             temp += " (mean: ";
-            temp.writeNumber( total_time_link / (passedCount + failedCount), "%.3e" );
+            temp.writeNumber( total_time_link / (passedCount + failedCount), TIME_PRINT_FMT );
             temp += ")\n";
 
             temp += "Total execution time: ";
-            temp.writeNumber( total_time_execute, "%.3e" );
+            temp.writeNumber( total_time_execute, TIME_PRINT_FMT );
             temp += " (mean: ";
-            temp.writeNumber( total_time_execute / (passedCount + failedCount), "%.3e" );
+            temp.writeNumber( total_time_execute / (passedCount + failedCount), TIME_PRINT_FMT );
             temp += ")\n";
 
             double actTime = total_time_compile + total_time_generate + total_time_link + total_time_execute;
             temp += "Total activity time: ";
-            temp.writeNumber( actTime, "%.3e" );
+            temp.writeNumber( actTime, TIME_PRINT_FMT );
             temp += " (mean: ";
-            temp.writeNumber( actTime / (passedCount + failedCount), "%.3e" );
+            temp.writeNumber( actTime / (passedCount + failedCount), TIME_PRINT_FMT );
             temp += ")\n";
 
             temp += "Total application time: ";
-            temp.writeNumber( Sys::_seconds() - appTime, "%.3e" );
+            temp.writeNumber( Sys::_seconds() - appTime, TIME_PRINT_FMT );
             temp += "\n";
 
             output->writeString( temp );
@@ -1247,19 +1248,19 @@ int main( int argc, char *argv[] )
          else {
             output->writeString( "Recorded timings: " );
             String temp;
-            temp.writeNumber( total_time_compile, "%.3e" );
-            temp += ",";
-            temp.writeNumber( total_time_generate, "%.3e" );
-            temp += ",";
-            temp.writeNumber( total_time_link, "%.3e" );
-            temp += ",";
-            temp.writeNumber( total_time_execute, "%.3e" );
+            temp.writeNumber( total_time_compile, TIME_PRINT_FMT );
+            temp += " ";
+            temp.writeNumber( total_time_generate, TIME_PRINT_FMT );
+            temp += " ";
+            temp.writeNumber( total_time_link, TIME_PRINT_FMT );
+            temp += " ";
+            temp.writeNumber( total_time_execute, TIME_PRINT_FMT );
             temp += "\n";
             output->writeString( temp );
 
             double actTime = total_time_compile + total_time_generate + total_time_link + total_time_execute;
-            temp = "";
-            temp.writeNumber( actTime, "%.3e" );
+            temp = "Total time: ";
+            temp.writeNumber( actTime, TIME_PRINT_FMT );
             temp += "\n";
             output->writeString( temp );
          }

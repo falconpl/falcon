@@ -1,7 +1,6 @@
 /*
    FALCON - The Falcon Programming Language.
    FILE: genericvector.cpp
-   $Id: genericvector.cpp,v 1.8 2007/08/18 11:08:08 jonnymind Exp $
 
    Generic vector - a generic vector of elements
    -------------------------------------------------------------------
@@ -190,12 +189,13 @@ void GenericVector::resize( uint32 s )
          }
       }
 
-      if ( m_threshold_size != 0 )
+      if ( m_threshold_size > 0 )
       {
          if ( s + m_threshold_size < m_size )
          {
-            m_data = (byte *) memRealloc( m_data, (s+1) * m_itemSize );
-            m_allocated = s+1;
+            m_allocated = ((s/m_threshold_size) + 1 ) * m_threshold_size;
+            m_data = (byte *) memRealloc( m_data, m_allocated * m_itemSize );
+            m_allocated = m_allocated;
          }
       }
       else {
