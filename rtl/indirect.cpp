@@ -119,7 +119,7 @@ FALCON_FUNC  methodCall( ::Falcon::VMachine *vm )
 }
 
 
-static void internal_marshall( VMachine *vm, Item *message, Item *prefix, Item *if_not_found,
+static void internal_marshal( VMachine *vm, Item *message, Item *prefix, Item *if_not_found,
    const char *func_format )
 {
   if ( ! vm->sender().isObject() && ! vm->self().isObject() ) {
@@ -202,30 +202,30 @@ static void internal_marshall( VMachine *vm, Item *message, Item *prefix, Item *
 }
 
 
-FALCON_FUNC  marshallCB( ::Falcon::VMachine *vm )
+FALCON_FUNC  marshalCB( ::Falcon::VMachine *vm )
 {
    Item *message = vm->param(0);
    Item *prefix = vm->param(1);
    Item *if_not_found = vm->param(2);
 
-   internal_marshall( vm, message, prefix, if_not_found, "A,[S,X]" );
+   internal_marshal( vm, message, prefix, if_not_found, "A,[S,X]" );
 }
 
-FALCON_FUNC  marshallCBX( ::Falcon::VMachine *vm )
+FALCON_FUNC  marshalCBX( ::Falcon::VMachine *vm )
 {
    Item *prefix = vm->param(0);
    Item *if_not_found = vm->param(1);
    Item *message = vm->param(2);
 
-   internal_marshall( vm, message, prefix, if_not_found, "S,X,A" );
+   internal_marshal( vm, message, prefix, if_not_found, "S,X,A" );
 }
 
-FALCON_FUNC  marshallCBR( ::Falcon::VMachine *vm )
+FALCON_FUNC  marshalCBR( ::Falcon::VMachine *vm )
 {
    Item *prefix = vm->param(0);
    Item *message = vm->param(1);
 
-   internal_marshall( vm, message, prefix, 0, "S,A" );
+   internal_marshal( vm, message, prefix, 0, "S,A" );
 }
 
 
