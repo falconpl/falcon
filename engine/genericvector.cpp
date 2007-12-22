@@ -169,12 +169,12 @@ void GenericVector::resize( uint32 s )
    {
       if ( s >= m_allocated )
       {
-
-         byte *mem = (byte *) memRealloc( m_data, (s+1) * m_itemSize );
-         if ( mem != 0 )
+         m_allocated = ((s/alloc_block) + 1) * alloc_block;
+         byte *mem = (byte *) memRealloc( m_data, m_allocated * m_itemSize );
+         m_data = mem;
+         if ( mem == 0 )
          {
-            m_allocated = (s+1);
-            m_data = mem;
+            // atm, memRealloc should take care of this.
          }
       }
 
@@ -190,10 +190,18 @@ void GenericVector::resize( uint32 s )
          }
       }
 
-      if ( m_threshold_size != 0 && s + m_threshold_size < m_size )
+      if ( m_threshold_size != 0 )
       {
-         m_data = (byte *) memRealloc( m_data, s * m_itemSize );
-         m_allocated = s;
+         if ( s + m_threshold_size < m_size )
+         {
+            m_data = (byte *) memRealloc( m_data, (s+1) * m_itemSize );
+            m_allocated = s+1;
+         }
+      }
+      else {
+         // without threshold size, always resize.
+         m_data = (byte *) memRealloc( m_data, (s+1) * m_itemSize );
+         m_allocated = s+1;
       }
    }
 

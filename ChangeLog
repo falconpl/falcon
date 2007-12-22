@@ -26,6 +26,8 @@ Falcon (0.8.5)
   * bugfix: One line for/in statement COLON rule caused crash.
   * minor: Changed "<" fast print into ">>".
   * bugfix: In case of callitem() from toplevel, errors were not managed correctly.
+  * bugfix: Generic array resize (to smaller size) was wrong, and caused VM stack
+            corruption when big arrays and recursions were performed.
 
 Falcon (0.8.4)
   * major: Old "lambda expressionss" are now "nameless functions". They are declared
