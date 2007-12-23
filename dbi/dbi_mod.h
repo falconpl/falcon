@@ -1,8 +1,8 @@
 /*
   FALCON - The Falcon Programming Language
-  FILE: sql_mod.h
+  FILE: dbi_mod.h
   
-  SQL module -- module service classes
+  DBI module -- module service classes
   -------------------------------------------------------------------
   Author: Jeremy Cowgar
   Begin: 2007-12-22 10:06
@@ -19,45 +19,45 @@
 */
 
 /** \file
-	 sql_mod.h - SQL module -- module service classes
+	 dbi_mod.h - DBI module -- module service classes
 */
 
-#ifndef flc_sql_mod_H
-#define flc_sql_mod_H
+#ifndef flc_dbi_mod_H
+#define flc_dbi_mod_H
 
 #include <falcon/string.h>
 
 namespace Falcon {
 	
 	enum {
-		SQL_OK = 0,
+		DBI_OK = 0,
 	};
 	
-	class SQLConnection;
-	class SQLRecordset;
+	class DBIConnection;
+	class DBIRecordset;
 	
-	class SQLConnection : public UserData
+	class DBIConnection : public UserData
 	{
 	public:
-		SQLConnection(const String *connString) {};
+		DBIConnection(const String *connString) {};
 
 		virtual int beginTransaction() {};
 		virtual int rollbackTransaction() {};
 		virtual int commitTransaction() {};
 
 		virtual int execute(const String *sql) {};
-		virtual SQLRecordset *query(const String *sql) {};
+		virtual DBIRecordset *query(const String *sql) {};
 
 		virtual int close() {};
 	};
 	
-	class SQLRecordset : public UserData
+	class DBIRecordset : public UserData
 	{
 	private:
-		SQLConnection *m_connClass;
+		DBIConnection *m_connClass;
 
 	public:
-		SQLRecordset(SQLConnection *connClass);
+		DBIRecordset(DBIConnection *connClass);
 
 		virtual int columnIndex(const String *columnName);
 		virtual int columnName(int columnIndex, String &name);
@@ -71,4 +71,4 @@ namespace Falcon {
 
 #endif
 
-/* end of sql_mod.h */
+/* end of dbi_mod.h */
