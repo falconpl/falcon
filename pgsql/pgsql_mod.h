@@ -47,12 +47,14 @@ namespace Falcon
          m_conn = NULL;
       }
 
+      virtual int connect( const String *connString );
+
       virtual int beginTransaction();
       virtual int rollbackTransaction();
       virtual int commitTransaction();
 
       virtual int execute( const String *sql );
-      virtual PgSQLRecordset *query( const String *sql );
+      virtual DBIRecordset *query( const String *sql );
 
       virtual int close();
    };

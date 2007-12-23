@@ -29,12 +29,33 @@ namespace Falcon
 {
 
    enum {
+      // Everything is OK
       DBI_OK = 0,
+
+      // Something returned a NULL that shouldn't have
       DBI_MEMORY_ALLOC_ERROR,
+
+      // A new connection could not be established
+      DBI_CONNECTION_ERROR,
+
+      // An operation was requested that requires a connection, but one
+      // doesn't exist
       DBI_NO_CONNECTION_ERROR,
+
+      // The SQL query failed
       DBI_QUERY_ERROR,
+
+      // An operation was requested that requiers a result set, but one
+      // doesn't exist
       DBI_NO_RESULT_ERROR,
+
+      // A column index was requested that is < 0 or > column count
+      DBI_COLUMN_INDEX_ERROR,
+
+      // A value was asked for that is NULL
       DBI_NULL_VALUE_WARNING,
+
+      // The SQL->next() has reached the end of the result set
       DBI_EOF_WARNING,
    };
 

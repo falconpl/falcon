@@ -22,6 +22,7 @@
    pgsql_mod.cpp - PgSQL DBI module -- module service classes
 */
 
+#include <falcon/memory.h>
 #include <falcon/string.h>
 #include <falcon/autocstring.h>
 
@@ -31,8 +32,13 @@ namespace Falcon
 {
    int PgSQLConnection::connect( const String *connString )
    {
-      AutoCString asConnString( connString );
-      m_conn = PQconnectdb( asConnString.c_str() );
+      char *cConnString;
+      uint32 size = connString->size() * 4 + 1;
+      cConnString = (char *) memAlloc( size );
+      connString->toCString( cConnString, size );
+
+      m_conn = PQconnectdb( cConnString );
+      memFree( cConnString );
 
       if (m_conn == NULL)
       {
@@ -50,28 +56,38 @@ namespace Falcon
 
    int PgSQLConnection::beginTransaction()
    {
-      return execute( "BEGIN" );
+      String t( "BEGIN" );
+      return execute( &t );
    }
 
    int PgSQLConnection::rollbackTransaction()
    {
-      return execute( "ROLLBACK" );
+      String t( "ROLLBACK" );
+      return execute( &t );
    }
 
    int PgSQLConnection::commitTransaction()
    {
-      return execute( "COMMIT" );
+      String t( "COMMIT" );
+      return execute( &t );
    }
 
    int PgSQLConnection::execute( const String *sql )
    {
       if ( m_conn == NULL )
       {
-         return setErrorInfo( DBI_NO_CONNECTION, "No database connection" );
+         return setErrorInfo( DBI_NO_CONNECTION_ERROR,
+                              "No database connection" );
       }
 
-      AutoCString asSql( sql );
-      PGresult *res =  PQexec( m_conn, asSql.c_str() );
+      char *cSql;
+      uint32 size = sql->size() * 4 + 1;
+      cSql = (char *) memAlloc( size );
+      sql->toCString( cSql, size );
+
+      PGresult *res =  PQexec( m_conn, cSql );
+      memFree( cSql );
+
       if ( res == NULL )
       {
          return setErrorInfo( DBI_MEMORY_ALLOC_ERROR,
@@ -82,14 +98,14 @@ namespace Falcon
       {
       case PGRES_EMPTY_QUERY:
          setErrorInfo( DBI_OK, "" );
-         m_affectedRows = 0;
+         // TODO: m_affectedRows = 0;
          PQclear( res );
 
          return m_errorCode;
 
       case PGRES_COMMAND_OK:
          setErrorInfo( DBI_OK, "" );
-         m_affectedRows = PQcmdTuples( res );
+         // TODO: m_affectedRows = PQcmdTuples( res );
          PQclear( res );
 
          return m_errorCode;
@@ -110,16 +126,22 @@ namespace Falcon
       }
    }
 
-   PgSQLRecordset *PgSQLConnection::query( const String *sql )
+   DBIRecordset *PgSQLConnection::query( const String *sql )
    {
       if ( m_conn == NULL )
       {
-         setErrorInfo( DBI_NO_CONNECTION, "No database connection" );
+         setErrorInfo( DBI_NO_CONNECTION_ERROR, "No database connection" );
          return NULL;
       }
 
-      AutoCString asSql( sql );
-      PGresult *res = PQexec( m_conn, asSql.c_str() );
+      char *cSql;
+      uint32 size = sql->size() * 4 + 1;
+      cSql = (char *) memAlloc( size );
+      sql->toCString( cSql, size );
+
+      PGresult *res =  PQexec( m_conn, cSql );
+      memFree( cSql );
+
       if ( res == NULL )
       {
          setErrorInfo( DBI_MEMORY_ALLOC_ERROR, "Memory allocation error" );
@@ -149,6 +171,7 @@ namespace Falcon
 
    PgSQLRecordset::PgSQLRecordset( PgSQLConnection *connClass,
                                    PGresult *res )
+      : DBIRecordset( connClass )
    {
       m_connClass = connClass;
       m_res = res;
@@ -167,8 +190,15 @@ namespace Falcon
          return -1;
       }
 
-      AutoCString asColumnName( columnName );
-      return PQfnumber( m_res, asColumnName.c_str() );
+      char *cColumnName;
+      uint32 size = columnName->size() * 4 + 1;
+      cColumnName = (char *) memAlloc( size );
+      columnName->toCString( cColumnName, size );
+
+      int columnIndex = PQfnumber( m_res, cColumnName );
+      memFree( cColumnName );
+
+      return columnIndex;
    }
 
    int PgSQLRecordset::columnName( const int columnIndex, String &name )

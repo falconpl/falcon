@@ -25,6 +25,7 @@
 #ifndef flc_dbi_mod_H
 #define flc_dbi_mod_H
 
+#include <falcon/userdata.h>
 #include <falcon/string.h>
 
 #include "dbi_mod.h"
