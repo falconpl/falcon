@@ -19,7 +19,7 @@
 */
 
 /** \file
-	 dbi_mod.h - DBI module -- module service classes
+ dbi_mod.h - DBI module -- module service classes
 */
 
 #ifndef flc_dbi_mod_H
@@ -27,45 +27,80 @@
 
 #include <falcon/string.h>
 
+#include "dbi_mod.h"
+
 namespace Falcon {
-	
-	enum {
-		DBI_OK = 0,
-	};
-	
-	class DBIConnection;
-	class DBIRecordset;
-	
-	class DBIConnection : public UserData
-	{
-	public:
-		DBIConnection(const String *connString) {};
 
-		virtual int beginTransaction() {};
-		virtual int rollbackTransaction() {};
-		virtual int commitTransaction() {};
+   class DBIConnection;
+   class DBIRecordset;
 
-		virtual int execute(const String *sql) {};
-		virtual DBIRecordset *query(const String *sql) {};
+   class DBIConnection : public UserData
+   {
+   protected:
+      int m_errorCode;
+      String m_errorMessage;
 
-		virtual int close() {};
-	};
-	
-	class DBIRecordset : public UserData
-	{
-	private:
-		DBIConnection *m_connClass;
+      int setErrorInfo( const int code, const char *message ) {
+         m_errorCode = code;
+         m_errorMessage = message;
+         return m_errorCode;
+      }
 
-	public:
-		DBIRecordset(DBIConnection *connClass);
+   public:
+      DBIConnection() {}
 
-		virtual int columnIndex(const String *columnName);
-		virtual int columnName(int columnIndex, String &name);
-		virtual int value(int columnIndex, String &value);
+      virtual int connect( const String *connString );
 
-		virtual int next();
-		virtual int close();
-	};
+      virtual int beginTransaction() {};
+      virtual int rollbackTransaction() {};
+      virtual int commitTransaction() {};
+
+      virtual int execute( const String *sql ) {};
+      virtual DBIRecordset *query( const String *sql ) {};
+
+      virtual int close() {};
+   };
+
+   class DBIRecordset : public UserData
+   {
+   protected:
+      int m_errorCode;
+      String m_errorMessage;
+
+      int m_affectedRows;
+      int m_rowCount;
+      int m_columnCount;
+      int m_rowIndex;
+
+      DBIConnection *m_connClass;
+
+      int setErrorInfo( const int code, const char *message,
+                        bool blank = true )
+      {
+         m_errorCode = code;
+         m_errorMessage = message;
+         if ( blank )
+         {
+            m_affectedRows = -1;
+            m_rowCount = 0;
+            m_columnCount = 0;
+            m_rowIndex = 0;
+         }
+         return m_errorCode;
+      }
+
+   public:
+      DBIRecordset( DBIConnection *connClass ) {
+         m_connClass = connClass;
+      }
+
+      virtual int columnIndex( const String *columnName ) {};
+      virtual int columnName( const int columnIndex, String &name ) {};
+      virtual int value( const int columnIndex, String &value ) {};
+
+      virtual int next() {};
+      virtual int close() {};
+   };
 
 }
 
