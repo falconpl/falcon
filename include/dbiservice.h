@@ -18,15 +18,18 @@
    package.
 */
 
-#include <falcon/setup.h>
+#ifndef DBI_SERVICE_H
+#define DBI_SERVICE_H
+
+#include <falcon/engine.h>
 #include <falcon/service.h>
-#include <falcon/userdata.h>
 
 namespace Falcon
 {
 
 class CoreArray;
 class VMachine;
+class String;
 
 /** Abstraction of transaction class.
    The transaction class is the minimal operative interface unit towards the database.
@@ -89,7 +92,7 @@ public:
       \return the last operation status
    */
    virtual dbt_status getLastError( String &description )=0;
-}
+};
 
 /** Base class for handlers.
    This class holds handle to database connections.
@@ -125,7 +128,7 @@ public:
       \return a DBITransaction instance on success,
               0 on error (use getLastError to determine what happened).
    */
-   DBTransaction *startTransaction();
+   DBITransaction *startTransaction();
 
    /** Closes a transaction.
       Once called this method, the subclasses should forget about
@@ -145,8 +148,10 @@ public:
       \param description a string where to write last error description
       \return the last operation status
    */
-   virtual dbt_status getLastError( String &description )=0;
+   virtual dbh_status getLastError( String &description )=0;
 
+
+   virtual dbh_status close()=0;
 };
 
 /** Base class for database providers.
@@ -201,7 +206,15 @@ public:
       \param description a string where to write last error description
       \return the last operation status
    */
-   virtual dbt_status getLastError( String &description )=0;
+   virtual dbi_status getLastError( String &description )=0;
+
+   /** Creates an instance of database handle for Falcon scripts.
+      This function creates a core object getting the DBI database handler subclass
+      managed by the providing module.
+
+      It can't fail.
+   */
+   virtual CoreObject *makeInstance( VMachine *vm, DBIHandle *dbh ) = 0;
 };
 
 /** Service used to load DBI modules.
@@ -211,8 +224,12 @@ public:
 */
 class DBILoader: public Service
 {
-public:
+protected:
+   DBILoader( const String &name ):
+      Service( name )
+   {}
 
+public:
    /** Loads the required provider and returns the service it provides.
       If the service is already present in the VM, that service is returned instead.
       The VM is used as the error handler of the loader that will load the modules,
@@ -224,5 +241,9 @@ public:
    virtual DBIService *loadDbProvider( VMachine *vm, const String &provName )=0;
 
 };
+
+}
+
+#endif
 
 /* end of dbiservice.h */
