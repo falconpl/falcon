@@ -138,7 +138,7 @@ public:
       return *this;
    }
 
-   ~Module();
+   virtual ~Module();
 
    void incref() { m_refcount ++; }
    void decref() {
