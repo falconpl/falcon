@@ -1,6 +1,6 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: dbi.h
+   FILE: dbiservice.h
 
    Short description
    -------------------------------------------------------------------
@@ -221,6 +221,8 @@ public:
 
       \return a DBIService instance or 0
    */
-   virtual DBIService *loadDbProvider( VMachine *vm, const String &provName );
+   virtual DBIService *loadDbProvider( VMachine *vm, const String &provName )=0;
 
 };
+
+/* end of dbiservice.h */
