@@ -54,12 +54,12 @@ Module::~Module()
    // so there is no need to check it.
 
    // destroy the services.
-   MapIterator iter = m_serviceMap.begin();
+   /*MapIterator iter = m_serviceMap.begin();
    while( iter.hasCurrent() )
    {
       delete *(Service **) iter.currentValue();
       iter.next();
-   }
+   }*/
 
    delete m_lineInfo;
 }

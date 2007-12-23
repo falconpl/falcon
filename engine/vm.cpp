@@ -285,7 +285,7 @@ VMachine::~VMachine()
       h = h1;
    }
 
-   // last, 
+   // last,
    // decref all the modules
    for( uint32 mi = 0; mi < m_modules.size(); mi++ )
    {
@@ -1365,7 +1365,7 @@ void VMachine::callFrameNow( ext_func_frame_t callbackFunc )
          break;
       case i_pc_call_external:
          m_pc_next = i_pc_call_external_return;
-         break;   
+         break;
       default:
          m_pc_next = m_pc;
    }
@@ -2953,7 +2953,7 @@ bool VMachine::functionalEval( const Item &itm )
 bool VMachine::checkFunctional( const String &name )
 {
    return name == "all" || name == "any" || name == "allp" || name == "anyp" ||
-            name == "eval" ||
+            name == "eval" || name == "dolist" ||
             name == "choice"|| name == "iff" ||
             name == "lit" ||
             name == "cascade";
