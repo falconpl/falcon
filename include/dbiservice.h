@@ -206,7 +206,21 @@ public:
 
 /** Service used to load DBI modules.
    This service is meant as an utility and is mainly used internally by the DBI module.
-   It resolves
+   It resolves the module names, checks if they are currently loaded in the VM and, if not,
+   loads and links them.
 */
 class DBILoader: public Service
+{
+public:
 
+   /** Loads the required provider and returns the service it provides.
+      If the service is already present in the VM, that service is returned instead.
+      The VM is used as the error handler of the loader that will load the modules,
+      so, in case of errors, the VM will be notified with a standard module loading
+      error.
+
+      \return a DBIService instance or 0
+   */
+   virtual DBIService *loadDbProvider( VMachine *vm, const String &provName );
+
+};
