@@ -260,7 +260,11 @@ int SrcLexer::lex_normal()
    }
 
    if ( m_done )
+   {
+      // raise error if there is some lexer context open
+      checkContexts();
       return 0;
+   }
 
    // check for shell directive
    if ( m_line == 1 && m_character == 0 )
@@ -274,7 +278,11 @@ int SrcLexer::lex_normal()
             {
                while( ch1 != '\n' )
                   if( ! m_in->get( ch1 ) )
+                  {
+                     checkContexts();
                      return 0;
+                  }
+
                m_line++;
             }
             else {
@@ -285,8 +293,10 @@ int SrcLexer::lex_normal()
          else
             m_in->unget( ch1 );
       }
-      else
+      else {
+         checkContexts();
          return 0;
+      }
    }
 
    // reset previous token
@@ -386,14 +396,14 @@ int SrcLexer::lex_normal()
                // great, we have a token
                m_lineFilled = true;
                m_state = e_line;
-               
+
                // a bit of galore: discard extra "\n" or "\r\n" in case of outer escape
                if ( m_mode == t_mOutscape )
                {
                   if ( chr != '\n' ) {
-                     
+
                      // ok, not a newline; but is it an INET newline?
-                     if ( chr == '\r') 
+                     if ( chr == '\r')
                      {
                         uint32 ch1 = 0;
                         m_in->get( ch1 );
@@ -404,14 +414,14 @@ int SrcLexer::lex_normal()
                         }
                         // else silently discard
                      }
-                     else 
+                     else
                         m_in->unget( chr );
                   }
-                  
+
                }
                else
                   m_in->unget( chr );
-               
+
                return token;
             }
             else if ( token < 0 || m_string.length() == 3 ) {
@@ -862,7 +872,16 @@ int SrcLexer::lex_normal()
       }
    }
 
+   checkContexts();
    return 0;
+}
+
+void SrcLexer::checkContexts()
+{
+   if ( m_contexts != 0 )
+      m_compiler->raiseError( e_par_unbal, m_line );
+   if ( m_squareContexts != 0 )
+      m_compiler->raiseError( e_square_unbal, m_line );
 }
 
 int SrcLexer::state_line( uint32 chr )

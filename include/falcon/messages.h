@@ -189,6 +189,8 @@ namespace msg {
       err_syn_def,
       err_syn_fordot,
       err_syn_self_print,
+      err_par_unbal,
+      err_square_unbal,
 
       err_nl_in_lit,
       err_catch_clash,

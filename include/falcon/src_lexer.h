@@ -97,6 +97,7 @@ private:
    int checkUnlimitedTokens( uint32 nextChar );
 
    int checkLimitedTokens();
+   void checkContexts();
 
    bool isWhiteSpace( uint32 chr ) {
       return chr == ' ' || chr == '\t' || chr == '\r' || chr == '\b' || chr == 0x12
