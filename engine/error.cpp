@@ -190,7 +190,8 @@ const String &errorDesc( int code )
       case e_syn_fordot: return getMessage( msg::err_syn_fordot );
       case e_syn_self_print: return getMessage( msg::err_syn_self_print );
       case e_par_unbal: return getMessage( msg::err_par_unbal );
-      case e_square_unbal: return getMessage( msg::err_par_unbal );
+      case e_square_unbal: return getMessage( msg::err_square_unbal );
+      case e_unclosed_string: return getMessage( msg::err_unclosed_string );
 
       case e_nl_in_lit: return getMessage( msg::err_nl_in_lit );
       case e_catch_clash: return getMessage( msg::err_catch_clash );

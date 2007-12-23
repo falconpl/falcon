@@ -882,6 +882,10 @@ void SrcLexer::checkContexts()
       m_compiler->raiseError( e_par_unbal, m_line );
    if ( m_squareContexts != 0 )
       m_compiler->raiseError( e_square_unbal, m_line );
+   if ( m_state == e_string || m_state == e_litString )
+      m_compiler->raiseError( e_unclosed_string, m_line );
+
+
 }
 
 int SrcLexer::state_line( uint32 chr )

@@ -192,6 +192,7 @@ char *en_table[] =
       "Syntax error in fast print statement",
       "Unbalanced parenthesis at end of file",
       "Unbalanced square parenthesis at end of file",
+      "Unclosed string at end of file",
 
       "New line in literal string",
       "Duplicate type identifier in catch selector",
