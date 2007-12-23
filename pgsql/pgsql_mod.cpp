@@ -32,13 +32,8 @@ namespace Falcon
 {
    int PgSQLConnection::connect( const String *connString )
    {
-      char *cConnString;
-      uint32 size = connString->size() * 4 + 1;
-      cConnString = (char *) memAlloc( size );
-      connString->toCString( cConnString, size );
-
-      m_conn = PQconnectdb( cConnString );
-      memFree( cConnString );
+      AutoCString asConnString( *connString );
+      m_conn = PQconnectdb( asConnString.c_str() );
 
       if (m_conn == NULL)
       {
@@ -80,13 +75,8 @@ namespace Falcon
                               "No database connection" );
       }
 
-      char *cSql;
-      uint32 size = sql->size() * 4 + 1;
-      cSql = (char *) memAlloc( size );
-      sql->toCString( cSql, size );
-
-      PGresult *res =  PQexec( m_conn, cSql );
-      memFree( cSql );
+      AutoCString asSql( *sql );
+      PGresult *res =  PQexec( m_conn, asSql.c_str() );
 
       if ( res == NULL )
       {
@@ -139,8 +129,8 @@ namespace Falcon
       cSql = (char *) memAlloc( size );
       sql->toCString( cSql, size );
 
-      PGresult *res =  PQexec( m_conn, cSql );
-      memFree( cSql );
+      AutoCString asSql( *sql );
+      PGresult *res =  PQexec( m_conn, asSql.c_str() );
 
       if ( res == NULL )
       {
@@ -190,13 +180,8 @@ namespace Falcon
          return -1;
       }
 
-      char *cColumnName;
-      uint32 size = columnName->size() * 4 + 1;
-      cColumnName = (char *) memAlloc( size );
-      columnName->toCString( cColumnName, size );
-
-      int columnIndex = PQfnumber( m_res, cColumnName );
-      memFree( cColumnName );
+      AutoCString asColumnName( *columnName );
+      int columnIndex = PQfnumber( m_res, asColumnName.c_str() );
 
       return columnIndex;
    }
