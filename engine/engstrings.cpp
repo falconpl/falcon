@@ -200,6 +200,7 @@ char *en_table[] =
       "Block 'forall' already declared",
       "Statement '.=' must be inside a for/in loop",
       "VM received a suspension request in an atomic operation",
+      "Access to private member not through 'self'",
 
       "Can't open file",
       "Load error",

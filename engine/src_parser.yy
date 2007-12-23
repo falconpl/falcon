@@ -2202,6 +2202,10 @@ variable:
 
    | variable DOT SYMBOL {
          Falcon::Expression *exp = new Falcon::Expression( Falcon::Expression::t_obj_access, $1, new Falcon::Value( $3 ) );
+         if ( $3->getCharAt(0) == '_' && ! $1->isSelf() )
+         {
+            COMPILER->raiseError(Falcon::e_priv_access, COMPILER->tempLine() );
+         }
          $$ = new Falcon::Value( exp );
       }
 
@@ -2255,6 +2259,10 @@ expression:
    | func_call
    | func_call DOT SYMBOL {
          Falcon::Expression *exp = new Falcon::Expression( Falcon::Expression::t_obj_access, $1, new Falcon::Value( $3 ) );
+         if ( $3->getCharAt(0) == '_' )
+         {
+            COMPILER->raiseError(Falcon::e_priv_access, COMPILER->tempLine() );
+         }
          $$ = new Falcon::Value( exp );
       }
    | func_call OPENSQUARE expression CLOSESQUARE {
@@ -2442,20 +2450,20 @@ iif_expr:
    {
       delete $1;
       delete $3;
-      COMPILER->raiseError(Falcon::e_syn_iif );
+      COMPILER->raiseError(Falcon::e_syn_iif, COMPILER->tempLine() );
       $$ = new Falcon::Value;
    }
    | expression QUESTION expression error
    {
       delete $1;
       delete $3;
-      COMPILER->raiseError(Falcon::e_syn_iif );
+      COMPILER->raiseError(Falcon::e_syn_iif, COMPILER->tempLine() );
       $$ = new Falcon::Value;
    }
    | expression QUESTION error
       {
          delete $1;
-         COMPILER->raiseError(Falcon::e_syn_iif );
+         COMPILER->raiseError(Falcon::e_syn_iif, COMPILER->tempLine() );
          $$ = new Falcon::Value;
       }
 ;

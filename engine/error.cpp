@@ -197,6 +197,7 @@ const String &errorDesc( int code )
       case e_fmt_convert: return getMessage( msg::err_fmt_convert );
       case e_fordot_outside: return getMessage( msg::err_fordot_outside );
       case e_interrupted: return getMessage( msg::err_interrupted );
+      case e_priv_access: return getMessage( msg::err_priv_access );
 
       case e_already_forfirst: return getMessage( msg::err_already_forfirst );
       case e_already_forlast: return getMessage( msg::err_already_forlast );
@@ -304,16 +305,16 @@ Error::~Error()
 }
 
 void Error::incref()
-{ 
-   m_refCount++; 
+{
+   m_refCount++;
 }
 
 void Error::decref()
-{ 
+{
    --m_refCount;
 	if( m_refCount == 0 )
    {
-		delete this; 
+		delete this;
    }
 }
 

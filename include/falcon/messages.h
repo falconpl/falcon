@@ -199,6 +199,7 @@ namespace msg {
       err_already_forall,
       err_fordot_outside,
       err_interrupted,
+      err_priv_access,
 
       err_open_file,
       err_loaderror,

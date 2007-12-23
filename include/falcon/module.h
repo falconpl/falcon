@@ -375,7 +375,7 @@ public:
       is instantiated at link time in an unique, eventually exported object.
       The given name is the name by which the object will be known; the private
       class is given the special name "%[object name]", where "[object name]" is
-      the \b name parameter. 
+      the \b name parameter.
 
       If both the name and the "%" prefixed name are currently unassigned, a new
       symbol containing the singletone instance declaration is returned. On failure,
