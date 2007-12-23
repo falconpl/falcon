@@ -1,0 +1,98 @@
+
+                     The Falcon Programming Language
+
+                              Falcon DBI
+
+                                  0.1
+
+
+Falcon DBI is the database abstraction layer that is part of the official
+Falcon distributions. They are granted to be present in a correct falcon
+installation.
+
+Yet, they are handled as a separate project, both for administrative reasons
+and to insolate them from the development of the core system, which may be
+erratic and cause sudden changes in the interfaces.
+
+Modules admitted in the DBI are currently:
+
+   * sql
+   * mysql
+   * pgsql
+   * sqlite3
+
+BUILDING
+========
+
+To build the Falcon DBI, you'll need a well setup Falcon Development
+Environment, as specified in the relative document at
+
+   http://www.falconpl.org/wiki/tiki-index.php?page=The+build+environment
+
+The core must be built and installed in the active tree before starting
+feathers configuration.
+
+Then,
+
+   cmake .
+   make
+   make install
+
+should do.
+
+BASIC API DESIGN
+================
+
+// Can throw a detailed error or return the connection
+c = PgSQLConnection("connstring")
+
+// Contains the errorCode (number common to all DBI classes)
+c.errorCode
+
+// Contains the errorMessage (string common to all DBI classes)
+c.errorMessage
+
+// Begin's a transaction
+c.beginTransaction()
+
+// Roll's back a transaction
+c.rollbackTransaction()
+
+// Commit's a transaction
+c.commitTransaction()
+
+// Run's a SQL query that does not expect any return results. Returns
+// the number of rows affected
+
+c.execute("INSERT INTO abc...")
+
+// Run's a SQL query that does expect results. Returns a PgSQLResult
+c.query("SELECT abc FROM def")
+
+// A few queryOne helpers, returns the first column of the first row
+// as the given type or throws a detailed error
+c.queryOneInteger("SELECT id FROM def")
+c.queryOneNumber("SELECT amount FROM def")
+c.queryOneString("SELECT name FROM def")
+
+// Closes a connection if open
+c.close()
+
+//====
+// PgSQLResult
+r.errorCode      // Integer
+r.errorMessage   // String
+r.rowCount       // Integer
+r.columnCount    // Integer
+r.rowIndex       // Integer
+
+r.columnIndex("colName") // Integer
+r.columnName(1)          // String
+r.columnType(1)          // ??? not sure yet
+r.columnType("colName")  // ??? not sure yet
+r.value(1)               // Whatever type it should be (integer, number, 
+                         // string, etc...)
+r.value("colName")       // Whatever type it should be (...)
+r.next()                 // Next row (true on more, false on all done
+r.close()                // close result
+
