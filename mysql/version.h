@@ -1,11 +1,12 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: dbi.h
+   FILE: verion.h
 
-   Short description
+   MYSQL module version informations
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
-   Begin: Sun, 23 Dec 2007 20:33:57 +0100
+   Begin: Sun, 23 Dec 2007 22:51:55 +0100
+
    Last modified because:
 
    -------------------------------------------------------------------
@@ -18,33 +19,13 @@
    package.
 */
 
-#ifndef DBI_H
-#define DBI_H
+#ifndef VERSION_H
+#define VERSION_H
 
-#include "../include/dbiservice.h"
-#include <falcon/flcloader.h>
-
-namespace Falcon
-{
-
-class DBILoaderImpl: public DBILoader
-{
-   FlcLoader m_loader;
-
-public:
-   DBILoaderImpl();
-   ~DBILoaderImpl();
-
-   virtual DBIService *loadDbProvider( VMachine *vm, const String &provName );
-
-};
-
-}
-
-// Singleton instance.
-extern Falcon::DBILoaderImpl theDBIService;
+#define VERSION_MAJOR        1
+#define VERSION_MINOR        0
+#define VERSION_REVISION     0
 
 #endif
 
-/* end of dbi.h */
-
+/* end of version.h */

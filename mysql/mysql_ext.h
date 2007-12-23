@@ -1,11 +1,11 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: dbi.h
+   FILE: mysql_ext.h
 
-   Short description
+   MYSQL Falcon extension interface
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
-   Begin: Sun, 23 Dec 2007 20:33:57 +0100
+   Begin: Sun, 23 Dec 2007 22:02:37 +0100
    Last modified because:
 
    -------------------------------------------------------------------
@@ -18,33 +18,24 @@
    package.
 */
 
-#ifndef DBI_H
-#define DBI_H
+#include <falcon/setup.h>
+#include <falcon/types.h>
 
-#include "../include/dbiservice.h"
-#include <falcon/flcloader.h>
+#ifndef DBI_MYSQL_EXT_H
+#define DBI_MYSQL_EXT_H
 
-namespace Falcon
-{
+namespace Falcon {
 
-class DBILoaderImpl: public DBILoader
-{
-   FlcLoader m_loader;
+class VMachine;
 
-public:
-   DBILoaderImpl();
-   ~DBILoaderImpl();
+namespace Ext {
 
-   virtual DBIService *loadDbProvider( VMachine *vm, const String &provName );
-
-};
+FALCON_FUNC MySQL_init( VMachine *vm );
 
 }
-
-// Singleton instance.
-extern Falcon::DBILoaderImpl theDBIService;
+}
 
 #endif
 
-/* end of dbi.h */
+/* end of mysql_ext.h */
 

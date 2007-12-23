@@ -128,7 +128,7 @@ public:
       \return a DBITransaction instance on success,
               0 on error (use getLastError to determine what happened).
    */
-   DBITransaction *startTransaction();
+   virtual DBITransaction *startTransaction()=0;
 
    /** Closes a transaction.
       Once called this method, the subclasses should forget about
@@ -138,7 +138,7 @@ public:
       \param tr the transaction to be closed.
       \return s_ok on success, an error on failure.
    */
-   dbh_status closeTransaction( DBITransaction *tr );
+   virtual dbh_status closeTransaction( DBITransaction *tr )=0;
 
 
    /** Returns last error and its description.
@@ -150,7 +150,7 @@ public:
    */
    virtual dbh_status getLastError( String &description )=0;
 
-
+   /** Disconnects this handle from the database */
    virtual dbh_status close()=0;
 };
 
@@ -196,8 +196,6 @@ public:
       \return a configured DBIHandle or 0 on error.
    */
    virtual DBIHandle *connect( const String &parameters, bool persistent, dbi_status &retval )=0;
-
-   virtual dbi_status disconnect()=0;
 
    /** Returns last error and its description.
       Internal codes and possibly their meaning are written in the description
