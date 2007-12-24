@@ -61,7 +61,7 @@ public:
    virtual dbt_status fetch( CoreArray *resultCache )=0;
 
    /** Fetch the row headers */
-   virtual dbt_status fetchColums( CoreArray *resultCache )=0;
+   virtual dbt_status fetchColumns( CoreArray *resultCache )=0;
 
    // Note: add methods to retreive single values at will.
    // the methods should accept an item to fill and the VM as parameters

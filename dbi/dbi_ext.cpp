@@ -28,16 +28,29 @@ namespace Ext {
 
 FALCON_FUNC DBIConnect( VMachine *vm )
 {
-   Item *connParams = vm->param(0);
-   // I leave to you the parameter checking and parsing for exercice... :-)
-   String provName = "mysql";
-
+   Item *paramsI = vm->param(0);
+   if (  paramsI == 0 || ! paramsI->isString() ) {
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                                         .origin( e_orig_runtime ) ) );
+      return;
+   }
+   
+   String *params = paramsI->asString();
+   String provName = *params;
+   String connString = "";
+   uint32 colonPos = params->find( ":" );
+   
+   if ( colonPos != csh::npos ) {
+      provName = params->subString( 0, colonPos - 1 );
+      connString = params->subString( colonPos + 1 );
+   }
+   
    DBIService *provider = theDBIService.loadDbProvider( vm, provName );
    if ( provider != 0 )
    {
       // if it's 0, the service has already raised an error in the vm and we have nothing to do.
       DBIService::dbi_status status;
-      DBIHandle *hand = provider->connect( *connParams->asString(), false, status ); // or use the parsed part.
+      DBIHandle *hand = provider->connect( connString, false, status ); // or use the parsed part.
       if ( hand == 0 )
       {
          // raise an error depending on status
