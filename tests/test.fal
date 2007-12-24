@@ -1,0 +1,27 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: reflexcomp_str.fal,v 1.1 2007/07/24 22:32:47 jonnymind Exp $
+*
+* ID: 1a
+* Category: dbi
+* Subcategory: pgsql
+* Short: Connect to pgsql database server
+* Description:
+* Connects to a pgsql database server using default paramaters and also
+* named parameters.
+* [/Description]
+*
+****************************************************************************/
+
+load dbi
+
+h = DBIConnect( "pgsql" )  // uses all defaults for connect string, thus connects to db jeremy
+h.close()
+
+success()
+
+h = DBIConnect( "pgsql:dbname=jeremy" )
+h.close()
+
+success()

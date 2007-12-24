@@ -18,6 +18,8 @@
    package.
 */
 
+#include <string.h>
+
 #include <falcon/engine.h>
 #include "pgsql.h"
 
@@ -83,6 +85,12 @@ DBIHandlePgSQL::dbh_status DBIHandlePgSQL::getLastError( String &description )
 
 DBIHandlePgSQL::dbh_status DBIHandlePgSQL::close()
 {
+   if ( m_conn != NULL )
+   {
+      PQfinish( m_conn );
+      m_conn = NULL;
+   }
+   
    return s_ok;
 }
 
@@ -95,9 +103,34 @@ DBIServicePgSQL::dbi_status DBIServicePgSQL::init()
    return s_ok;
 }
 
-DBIHandle *DBIServicePgSQL::connect( const String &parameters, bool persistent, dbi_status &retval )
+DBIHandle *DBIServicePgSQL::connect( const String &parameters, bool persistent, 
+                                     dbi_status &retval, String &errorMessage )
 {
-   return new DBIHandlePgSQL;
+   AutoCString connParams( parameters );
+   PGconn *conn = PQconnectdb( connParams.c_str () );
+   if ( conn == NULL ) {
+      retval = s_memory_alloc_error;
+      return NULL;
+   }
+   
+   if ( PQstatus( conn ) != CONNECTION_OK ) {
+      retval = s_connect_failed;
+      // TODO: Use append? I used append because copy and = were causing memory
+      // errors because the memory PQerrorMessage is pointing to is free'd when
+      // the later PQfinish is called. I would have thought that .copy() would
+      // have taken care of this, but I suffered the same corrupt string
+      // symptoms with copy as I did =. = with a strdup worked fine, but I was
+      // then worried about memory leaks.
+      errorMessage.append( PQerrorMessage( conn ) );
+      errorMessage.remove( errorMessage.length() - 1, 1 ); // Get rid of newline
+      
+      PQfinish( conn );
+      
+      return NULL;
+   }
+   
+   retval = s_ok;
+   return new DBIHandlePgSQL( conn );
 }
 
 DBIServicePgSQL::dbi_status DBIServicePgSQL::getLastError( String &description )

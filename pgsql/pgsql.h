@@ -21,6 +21,8 @@
 #ifndef DBI_PGSQL_H
 #define DBI_PGSQL_H
 
+#include <libpq-fe.h>
+
 #include "../include/dbiservice.h"
 
 namespace Falcon
@@ -40,8 +42,12 @@ public:
 
 class DBIHandlePgSQL : public DBIHandle
 {
+private:
+   PGconn *m_conn;
+   
 public:
-   DBIHandlePgSQL() {}
+   DBIHandlePgSQL() { m_conn = NULL; }
+   DBIHandlePgSQL( PGconn *conn ) { m_conn = conn; }
    virtual ~DBIHandlePgSQL() {}
    
    DBITransaction *startTransaction();
@@ -56,7 +62,8 @@ public:
    DBIServicePgSQL() : DBIService( "DBI_pgsql" ) {}
    
    virtual dbi_status init();
-   virtual DBIHandle *connect( const String &parameters, bool persistent, dbi_status &retval );
+   virtual DBIHandle *connect( const String &parameters, bool persistent, 
+                               dbi_status &retval, String &errorMessage );
    virtual dbi_status getLastError( String &description );
    virtual CoreObject *makeInstance( VMachine *vm, DBIHandle *dbh );
 };

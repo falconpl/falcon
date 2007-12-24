@@ -19,6 +19,8 @@
 */
 
 #include <falcon/engine.h>
+#include <falcon/error.h>
+
 #include "dbi.h"
 #include "dbi_ext.h"
 #include "../include/dbiservice.h"
@@ -41,19 +43,25 @@ FALCON_FUNC DBIConnect( VMachine *vm )
    uint32 colonPos = params->find( ":" );
    
    if ( colonPos != csh::npos ) {
-      provName = params->subString( 0, colonPos - 1 );
+      provName = params->subString( 0, colonPos );
       connString = params->subString( colonPos + 1 );
    }
    
    DBIService *provider = theDBIService.loadDbProvider( vm, provName );
-   if ( provider != 0 )
+   if ( provider != 0 ) 
    {
       // if it's 0, the service has already raised an error in the vm and we have nothing to do.
+      String connectErrorMessage;
       DBIService::dbi_status status;
-      DBIHandle *hand = provider->connect( connString, false, status ); // or use the parsed part.
-      if ( hand == 0 )
+      DBIHandle *hand = provider->connect( connString, false, status, connectErrorMessage );
+      if ( hand == 0 ) 
       {
-         // raise an error depending on status
+         if ( connectErrorMessage.length() == 0 ) 
+            connectErrorMessage = "An unknown error has occured during connect";
+         
+         vm->raiseModError( new DBIError( ErrorParam( status, __LINE__ )
+                                          .desc( connectErrorMessage ) ) );
+         
          return;
       }
 

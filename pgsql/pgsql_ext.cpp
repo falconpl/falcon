@@ -33,12 +33,18 @@ FALCON_FUNC PgSQL_init( VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
    DBIService::dbi_status status;
+   String connectErrorMessage;
    DBIHandlePgSQL *dbh =
-       static_cast<DBIHandlePgSQL *>( thePgSQLService.connect( "", false, status ) );
+       static_cast<DBIHandlePgSQL *>( thePgSQLService.connect( "", false, status, 
+                                                               connectErrorMessage ) );
    
    if ( dbh == 0 )
    {
-      // TODO: raise an error
+      if ( connectErrorMessage.length() == 0 ) 
+         connectErrorMessage = "An unknown error has occured during connect";
+      
+      vm->raiseModError( new DBIError( ErrorParam( status, __LINE__ )
+                                       .desc( connectErrorMessage ) ) );
       return ;
    }
    

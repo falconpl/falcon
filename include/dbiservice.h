@@ -50,7 +50,7 @@ class DBITransaction: public UserData
 public:
  typedef enum {
       s_ok,
-      s_error  // and other enums
+      s_error
    }
    dbt_status;
 
@@ -114,7 +114,7 @@ public:
    typedef enum {
       s_ok,
       s_single_transaction,
-      s_error  // and other enums
+      s_error
    }
    dbh_status;
 
@@ -169,7 +169,9 @@ public:
 
    typedef enum {
       s_ok,
-      s_error  // and other enums
+      s_error,
+      s_memory_alloc_error,
+      s_connect_failed
    }
    dbi_status;
 
@@ -193,9 +195,12 @@ public:
       \param parameters the connection parameters.
       \param persistent true if the DBIHandle may be one already served DBI handle,
          false if it should anyhow be created anew.
+      \param retval error code if necessary
+      \param errorMessage error description if necessary and available
       \return a configured DBIHandle or 0 on error.
    */
-   virtual DBIHandle *connect( const String &parameters, bool persistent, dbi_status &retval )=0;
+   virtual DBIHandle *connect( const String &parameters, bool persistent, 
+                               dbi_status &retval, String &errorMessage )=0;
 
    /** Returns last error and its description.
       Internal codes and possibly their meaning are written in the description
@@ -238,6 +243,18 @@ public:
    */
    virtual DBIService *loadDbProvider( VMachine *vm, const String &provName )=0;
 
+};
+
+class DBIError: public ::Falcon::Error
+{
+public:
+   DBIError():
+      Error( "DBIError" )
+   {}
+
+   DBIError( const ErrorParam &params  ):
+      Error( "DBIError", params )
+      {}
 };
 
 }
