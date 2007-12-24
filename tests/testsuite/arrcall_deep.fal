@@ -1,0 +1,37 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 60f
+* Category: functional
+* Subcategory: execarr
+* Short: Executable arrays deep
+* Description:
+*   Deep functional calls using arrays.
+* [/Description]
+*
+****************************************************************************/
+
+function f(a,b)
+   global first, second
+   first = a
+   second = b
+end
+
+function recall( func, a, b )
+   return func(a,b)
+end
+
+deep = [recall, f]
+
+// deep 1 -  calling function of function
+deep( "first", "second" )
+if first != "first" or second != "second": failure( "deep func" )
+
+// deep2 - calling an array from an array
+deep = [recall, [f]]
+deep( "first", "second" )
+if first != "first" or second != "second": failure( "deep array" )
+
+success()
+
+/* End of file */

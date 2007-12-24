@@ -17,6 +17,10 @@ function test( a )
    return a == 0
 end
 
+function test2( a, b )
+   return a == "f" and b == 10
+end
+
 function test_3( alpha, beta, gamma )
    return alpha = "alpha" and beta = "beta" and gamma = "gamma"
 end
@@ -34,6 +38,13 @@ tc = [test]
 if not tc( 0 ): failure( "transient call 1" )
 if tc( 1 ): failure( "transient call 2" )
 
+// transient 2 params
+// transient call
+tc = [test2]
+if not tc( "f", 10 ): failure( "transient 2 params call 1" )
+if tc( "f", 9 ): failure( "transient 2 params call 2" )
+if tc( "a", 10 ): failure( "transient 2 params call 3" )
+
 // semideferred call
 if not [test, 0](): failure( "semideferred call 1" )
 if [test, 1](): failure( "semideferred call 2" )
@@ -43,6 +54,10 @@ tc  = [test, 0]
 if not tc(): failure( "deferred call 1" )
 tc  = [test, 1]
 if tc(): failure( "deferred call 2" )
+
+// deferred 2 params
+tc = [test2, "f", 10]
+if not tc(): failure( "deferred 2 params call" )
 
 // mixed calls
 // semideferred mixed

@@ -1185,9 +1185,9 @@ bool VMachine::callItem( const Item &callable, int32 paramCount, e_callMode call
                   m_stack->resize( sizeNow + arraySize );
 
                   sizeNow -= paramCount;
-                  for ( uint32 j = sizeNow; j < sizeNow + paramCount; j ++ )
+                  for ( uint32 j = sizeNow + paramCount; j > sizeNow; j -- )
                   {
-                     m_stack->itemAt( j + arraySize ) = m_stack->itemAt( j );
+                     m_stack->itemAt( j-1 + arraySize ) = m_stack->itemAt( j-1 );
                   }
 
                   // push array paramers
