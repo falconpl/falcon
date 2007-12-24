@@ -446,9 +446,17 @@ public:
    } type_t;
 
 private:
+   typedef enum {
+      FLAG_EXPORTED=0x1,
+      FLAG_ETAFUNC=0x2
+   }
+   e_flags;
 
    type_t m_type;
-   bool m_exported;
+
+   /** Flags as exported or ETA func */
+   uint8 m_flags;
+
    /** Position of the item in the variable table. */
    uint16 m_itemPos;
 
@@ -487,7 +495,7 @@ public:
       m_name( name ),
       m_id( id ),
       m_type( tundef ),
-      m_exported(exp),
+      m_flags(exp ? 1: 0),
       m_module(mod),
       m_lineDecl(0)
    {}
@@ -505,7 +513,7 @@ public:
    Symbol( Module *mod, const String *name ):
       m_name( name ),
       m_type( tundef ),
-      m_exported( false ),
+      m_flags( 0 ),
       m_module( mod ),
       m_lineDecl(0),
       m_id(0)
@@ -522,7 +530,7 @@ public:
       m_name( 0 ),
       m_id( 0 ),
       m_type( tundef ),
-      m_exported( false ),
+      m_flags( 0 ),
       m_lineDecl(0)
    {}
 
@@ -545,7 +553,24 @@ public:
    /** Sets the symbol export class.
       \param exp true if the symbol must be exported, false otherwise.
    */
-   void exported( bool exp ) { m_exported = exp; }
+   void exported( bool exp ) {
+      if ( exp )
+         m_flags |= FLAG_EXPORTED;
+      else
+         m_flags &=~FLAG_EXPORTED;
+   }
+
+   /** Declares the symbol as an "eta function".
+      Eta functions are self-managed functions in Sigma-evaluation
+      (functional evaluation).
+      \param exp true if the symbol must be exported, false otherwise.
+   */
+   void setEta( bool exp ) {
+      if ( exp )
+         m_flags |= FLAG_ETAFUNC;
+      else
+         m_flags &=~FLAG_ETAFUNC;
+   }
 
    void setUndefined() { clear(); m_type = tundef; }
    void setLocalUndef() { clear(); m_type = tlocalundef; }
@@ -564,9 +589,10 @@ public:
    const String &name() const { return *m_name; }
    uint32 id() const { return m_id; }
    type_t type() const { return m_type; }
-   bool exported() const { return m_exported; }
+   bool exported() const { return (m_flags & FLAG_EXPORTED) == FLAG_EXPORTED; }
    uint16 itemId() const { return m_itemPos; }
    void itemId( uint16 ip ) { m_itemPos = ip; }
+   bool isEta() const { return (m_flags & FLAG_ETAFUNC) == FLAG_ETAFUNC; }
 
    bool isUndefined() const { return m_type == tundef; }
    bool isLocalUndef() const { return m_type == tlocalundef; }

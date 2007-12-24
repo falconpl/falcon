@@ -577,9 +577,6 @@ protected:
    /** Gets the nth parameter of an opcode. */
    Item *getOpcodeParam( register uint32 bc_pos );
 
-   /** Checks if a given function name is a functional construct. */
-   bool checkFunctional( const String &name );
-
    /** Creates a new stack frame.
       // well...
       \param paramCount number of parameters in the stack
@@ -957,7 +954,7 @@ public:
             Pushes, addLocal(), item calls and VM operations may alter the
             stack. Using this method again after such operations allows to
             get a valid pointer to the desired item again. Items extracted with
-            this method can be also saved locally in an Item instance, at 
+            this method can be also saved locally in an Item instance, at
             the cost of a a flat item copy (a few bytes).
 
       \param itemId the number of the parameter accessed, 0 based.
@@ -999,7 +996,7 @@ public:
             Pushes, addLocal(), item calls and VM operations may alter the
             stack. Using this method again after such operations allows to
             get a valid pointer to the desired item. Items extracted with
-            this method can be also saved locally in an Item instance, at 
+            this method can be also saved locally in an Item instance, at
             the cost of a a flat item copy (a few bytes).
 
       \param itemId the number of the parameter accessed, 0 based.
@@ -1020,7 +1017,7 @@ public:
             Pushes, addLocal(), item calls and VM operations may alter the
             stack. Using this method again after such operations allows to
             get a valid pointer to the desired item again. Items extracted with
-            this method can be also saved locally in an Item instance, at 
+            this method can be also saved locally in an Item instance, at
             the cost of a a flat item copy (a few bytes).
       \param itemId the number of the local item accessed.
       \return a valid pointer to the (dereferenced) local variable or 0 if itemId is invalid.
@@ -1234,16 +1231,16 @@ public:
    /** Resets the return handler and prepares to call given external handler.
       This function prepares the VM to execute a return handler immediately
       after the calling function returns.
-      
+
       The net effect is that, when called from inside an extension function,
       the given callback will be called by the VM as the very next operation,
       after checks on events, timings and context switches.
 
       The difference with callFrame is that the stack is unaffected, and
       the called function will have the same call frame as the caller.
-      
+
       The difference with returnHandler is that the VM is instructed
-      to execute the retun procedure (that will call the given call back 
+      to execute the retun procedure (that will call the given call back
       function) immediately, while returnHandler just sets an handler
       for a future time when the readied call frame will be unrolled.
 
@@ -1260,7 +1257,7 @@ public:
 
       \see returnHandler()
 
-      \param callbackFunc the function to be called ASAP. 
+      \param callbackFunc the function to be called ASAP.
    */
    void callFrameNow( ext_func_frame_t callbackFunc );
 

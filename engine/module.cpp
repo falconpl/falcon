@@ -53,13 +53,9 @@ Module::~Module()
    // The depend table points to the string table
    // so there is no need to check it.
 
-   // destroy the services.
-   /*MapIterator iter = m_serviceMap.begin();
-   while( iter.hasCurrent() )
-   {
-      delete *(Service **) iter.currentValue();
-      iter.next();
-   }*/
+   // the services in the service table are usually static,
+   // ... in case they need to be dynamic, the subclass of
+   // ... the module will take care of them.
 
    delete m_lineInfo;
 }

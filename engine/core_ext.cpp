@@ -3101,22 +3101,26 @@ Module * core_module_init()
    // ================================================
    // Functional extensions
    //
-   core->addExtFunc( "all", Falcon::core::core_all );
-   core->addExtFunc( "any", Falcon::core::core_any );
-   core->addExtFunc( "allp", Falcon::core::core_allp );
-   core->addExtFunc( "anyp", Falcon::core::core_anyp );
-   core->addExtFunc( "eval", Falcon::core::core_eval );
-   core->addExtFunc( "choice", Falcon::core::core_choice );
+
+   //ETA functions
+   core->addExtFunc( "all", Falcon::core::core_all )->setEta( true );
+   core->addExtFunc( "any", Falcon::core::core_any )->setEta( true );
+   core->addExtFunc( "allp", Falcon::core::core_allp )->setEta( true );
+   core->addExtFunc( "anyp", Falcon::core::core_anyp )->setEta( true );
+   core->addExtFunc( "eval", Falcon::core::core_eval )->setEta( true );
+   core->addExtFunc( "choice", Falcon::core::core_choice )->setEta( true );
+   core->addExtFunc( "xmap", Falcon::core::core_xmap )->setEta( true );
+   core->addExtFunc( "iff", Falcon::core::core_iff )->setEta( true );
+   core->addExtFunc( "lit", Falcon::core::core_lit )->setEta( true );
+   core->addExtFunc( "cascade", Falcon::core::core_cascade )->setEta( true );
+   core->addExtFunc( "dolist", Falcon::core::core_dolist )->setEta( true );
+
+   // other functions
    core->addExtFunc( "min", Falcon::core::core_min );
    core->addExtFunc( "max", Falcon::core::core_max );
    core->addExtFunc( "map", Falcon::core::core_map );
    core->addExtFunc( "filter", Falcon::core::core_filter );
    core->addExtFunc( "reduce", Falcon::core::core_reduce );
-   core->addExtFunc( "xmap", Falcon::core::core_xmap );
-   core->addExtFunc( "iff", Falcon::core::core_iff );
-   core->addExtFunc( "lit", Falcon::core::core_lit );
-   core->addExtFunc( "cascade", Falcon::core::core_cascade );
-   core->addExtFunc( "dolist", Falcon::core::core_dolist );
 
    core->addExtFunc( "oob", Falcon::core::core_oob );
    core->addExtFunc( "deoob", Falcon::core::core_deoob );

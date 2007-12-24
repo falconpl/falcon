@@ -2900,6 +2900,13 @@ bool VMachine::functionalEval( const Item &itm )
       uint32 count = arr->length();
       if ( count > 0 )
       {
+         // if the first element is an ETA function, just call it as frame and return.
+         if ( (*arr)[0].isFunction() && (*arr)[0].asFunction()->isEta() )
+         {
+            callFrame( arr, 0 );
+            return true;
+         }
+
          // create two locals; we may need it
          addLocals( 2 );
          // time to install our handleres
@@ -2909,7 +2916,7 @@ bool VMachine::functionalEval( const Item &itm )
 
          for ( uint32 l = 0; l < count; l ++ )
          {
-            const Item &citem = arr->at(l);
+            const Item &citem = (*arr)[l];
             *local(1) = (int64)l+1;
             if ( functionalEval( citem ) )
             {
@@ -2948,16 +2955,6 @@ bool VMachine::functionalEval( const Item &itm )
    }
 
    return false;
-}
-
-bool VMachine::checkFunctional( const String &name )
-{
-   return name == "all" || name == "any" || name == "allp" || name == "anyp" ||
-            name == "eval" || name == "dolist" ||
-            name == "choice"|| name == "iff" ||
-            name == "lit" ||
-            name == "cascade";
-
 }
 
 

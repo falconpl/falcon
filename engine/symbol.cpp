@@ -64,7 +64,7 @@ bool Symbol::load( Stream *in )
    in->read( &type, sizeof( type ) );
    byte exp;
    in->read( &exp, sizeof( exp ) );
-   m_exported = exp == 1;
+   m_flags = exp;
 
    uint16 pos;
    in->read( &pos, sizeof( pos ) );
@@ -140,11 +140,11 @@ bool Symbol::load( Stream *in )
 bool Symbol::save( Stream *out ) const
 {
    byte type = (byte) m_type;
-   byte exp = m_exported ? 1 : 0;
+   byte flags = m_flags;
    int32 line = endianInt32( m_lineDecl );
    uint16 pos = endianInt16( m_itemPos );
    out->write( &type, sizeof( type ) );
-   out->write( &exp, sizeof( exp ) );
+   out->write( &flags, sizeof( flags ) );
    out->write( &pos, sizeof( pos ) );
    out->write( &line, sizeof( line ) );
    // the ID is not serialized, as it is determined by the module
