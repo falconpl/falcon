@@ -60,19 +60,9 @@ SrcLexer::SrcLexer( Compiler *comp, Stream *in ):
    m_firstSym( true ),
    m_addEol( false ),
    m_lineFilled( false ),
-   m_mode( t_mNormal )
+   m_mode( t_mNormal ),
+   m_ctxOpenLine(0)
 {}
-
-/*
-int SrcLexer::lex()
-{
-   char buf[128];
-   int ret = lex_();
-   m_string.toCString( buf, 128 );
-   printf( "Returning token %d (%s)\n", ret, buf );
-   return ret;
-}
-*/
 
 int SrcLexer::lex()
 {
@@ -452,7 +442,7 @@ int SrcLexer::lex_normal()
                m_state = (m_state == e_eolCommentString) ? e_postString: e_line;
 
                // a real EOL has been provided here.
-               if ( m_state == e_line )
+               if ( m_state == e_line && m_contexts == 0  && m_squareContexts == 0 )
                {
                   m_firstSym = true;
                   m_firstEq = true;
@@ -880,11 +870,11 @@ int SrcLexer::lex_normal()
 void SrcLexer::checkContexts()
 {
    if ( m_contexts != 0 )
-      m_compiler->raiseError( e_par_unbal, m_line );
+      m_compiler->raiseContextError( e_par_unbal, m_line, m_ctxOpenLine );
    if ( m_squareContexts != 0 )
-      m_compiler->raiseError( e_square_unbal, m_line );
+      m_compiler->raiseContextError( e_square_unbal, m_line, m_ctxOpenLine );
    if ( m_state == e_string || m_state == e_litString )
-      m_compiler->raiseError( e_unclosed_string, m_line );
+      m_compiler->raiseContextError( e_unclosed_string, m_line, m_ctxOpenLine );
 }
 
 
@@ -902,7 +892,8 @@ int SrcLexer::state_line( uint32 chr )
       if ( m_lineFilled )
       {
          m_lineFilled = false;
-         return EOL;
+         if ( m_contexts == 0 && m_squareContexts == 0 )
+            return EOL;
       }
    }
    else if ( chr == '\\' )
@@ -944,6 +935,7 @@ int SrcLexer::state_line( uint32 chr )
    {
       // we'll begin to read a string.
       m_state = e_string;
+      m_ctxOpenLine = m_line;
       m_chrEndString = '"'; //... up to the matching "
    }
    else if ( chr == 0x201C )
@@ -1041,7 +1033,7 @@ int SrcLexer::checkUnlimitedTokens( uint32 nextChar )
             return COMMA;
          else if( chr == ';' )
             return ITOK_SEMICOMMA;
-         else if ( chr == '.' && nextChar != '=' )
+         else if ( chr == '.' && nextChar != '=' && nextChar != '[' )
             return DOT;
          else if ( chr == '?' )
          {
@@ -1064,6 +1056,9 @@ int SrcLexer::checkUnlimitedTokens( uint32 nextChar )
          else if ( chr == '(' || chr == 0xff08 )
          {
             m_contexts++;
+            if ( m_contexts == 1 )
+               m_ctxOpenLine = m_line;
+
             return OPENPAR;
          }
          else if ( chr == ')' || chr == 0xff09 )
@@ -1079,6 +1074,8 @@ int SrcLexer::checkUnlimitedTokens( uint32 nextChar )
          else if ( chr == '[' )
          {
             m_squareContexts++;
+            if ( m_squareContexts == 1 )
+               m_ctxOpenLine = m_line;
             return OPENSQUARE;
          }
          else if ( chr == ']' )
@@ -1147,6 +1144,11 @@ int SrcLexer::checkUnlimitedTokens( uint32 nextChar )
             m_state = e_blockComment;
          else if ( m_string == ".=" )
             return FORDOT;
+         else if ( m_string == ".[" )
+         {
+            m_squareContexts++;
+            return LISTPAR;
+         }
          else if ( parsingFtd() && m_string == "?>" )
          {
             m_mode = t_mOutscape;
@@ -1317,6 +1319,18 @@ void SrcLexer::parsingFtd( bool b )
       m_bParsingFtd = false;
       m_mode = t_mNormal;
    }
+}
+
+void SrcLexer::resetContexts()
+{
+   // force to generate a fake eol at next loop
+   m_addEol = true;
+
+   m_contexts = 0;
+   m_squareContexts = 0;
+   m_state = e_line;
+   m_lineFilled = false;
+   m_string = "";
 }
 
 }

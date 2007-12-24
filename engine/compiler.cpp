@@ -159,6 +159,20 @@ void Compiler::raiseError( int code, int line )
    raiseError( code, "", line );
 }
 
+void Compiler::raiseContextError( int code, int line, int startLine )
+{
+   if ( line != startLine )
+   {
+      m_lexer->resetContexts();
+      String temp = "from line ";
+      temp.writeNumber( (int64) startLine );
+      raiseError( code, temp, line );
+   }
+   else {
+      raiseError( code, line );
+   }
+}
+
 void Compiler::raiseError( int code, const String &errorp, int line )
 {
    if ( line == 0 )

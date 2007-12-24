@@ -30,6 +30,8 @@ Falcon (0.8.5)
             corruption when big arrays and recursions were performed.
   * minor: the "_" prefix for symbols is now used for private usage in classes.
   * bugfix: Lexer didn't recognize unclosed contexts at end of file.
+  * major: Added dot-square array declaration, and better management of contexts
+           /eol in array/list declarations.
 
 Falcon (0.8.4)
   * major: Old "lambda expressionss" are now "nameless functions". They are declared

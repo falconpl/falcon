@@ -189,6 +189,14 @@ public:
    bool compile();
 
    void raiseError( int errorNum, int errorLine=0);
+   /** Raises an error related to a context problem.
+      The error reports the line where the problem has been detected, and the line
+      that begun current faulty context.
+      \param code the error code.
+      \param line the line where the error is detected
+      \param startLine initial line of the context.
+   */
+   void raiseContextError( int code, int line, int startLine );
    void raiseError( int errorNum, const String &errorp, int errorLine=0);
    void addError() { m_errors++; }
 

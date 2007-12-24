@@ -44,6 +44,7 @@ private:
    int m_character;
    uint32 m_contexts;
    uint32 m_squareContexts;
+   uint32 m_ctxOpenLine;
    int m_prevStat;
    bool m_firstEq;
    bool m_done;
@@ -152,6 +153,11 @@ public:
    int previousLine() const {
       return m_previousLine;
    }
+
+   /** Returns the line where the last context has been opened. */
+   int ctxOpenLine() const { return m_ctxOpenLine; }
+
+   void resetContexts();
 
    void line( int val ) { m_line = val; }
 

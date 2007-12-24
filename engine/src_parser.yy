@@ -41,6 +41,7 @@
 #define YYFREE Falcon::memFree
 
 #define  COMPILER  ( reinterpret_cast< Falcon::Compiler *>(yyparam) )
+#define  CTX_LINE  ( COMPILER->lexer()->ctxOpenLine() )
 #define  LINE      ( COMPILER->lexer()->previousLine() )
 #define  CURRENT_LINE      ( COMPILER->lexer()->line() )
 
@@ -115,6 +116,7 @@ inline int flc_src_lex (void *lvalp, void *yyparam)
 %token COLON
 %token FUNCDECL STATIC
 %token FORDOT
+%token LISTPAR
 %token LOOP
 
 /* Special token used by the parser to generate a parse print */
@@ -148,7 +150,7 @@ inline int flc_src_lex (void *lvalp, void *yyparam)
 %right NEG BANG
 %right DOLLAR INCREMENT DECREMENT
 
-%type <fal_adecl> expression_list par_expression_list
+%type <fal_adecl> expression_list listpar_expression_list
 %type <fal_adecl> symbol_list inherit_param_list inherit_call
 %type <fal_ddecl> expression_pair_list
 %type <fal_val> expression variable func_call nameless_func lambda_expr iif_expr
@@ -185,8 +187,8 @@ inline int flc_src_lex (void *lvalp, void *yyparam)
 /*
 input:
    {yydebug = 1; } body
-;
-*/
+;*/
+
 
 input:
    body
@@ -1371,19 +1373,19 @@ func_statement:
 ;
 
 func_decl:
-   func_begin OPENPAR opt_eol param_list opt_eol CLOSEPAR EOL
-   | func_begin OPENPAR opt_eol param_list error { COMPILER->tempLine( CURRENT_LINE ); } opt_eol CLOSEPAR EOL
+   func_begin OPENPAR param_list CLOSEPAR EOL
+   | func_begin OPENPAR param_list error { COMPILER->tempLine( CURRENT_LINE ); } CLOSEPAR EOL
       {
-         COMPILER->raiseError(Falcon::e_syn_funcdecl, "", COMPILER->tempLine() );
+         COMPILER->raiseContextError(Falcon::e_syn_funcdecl, COMPILER->tempLine(), CTX_LINE );
       }
    | func_begin error EOL { COMPILER->raiseError(Falcon::e_syn_funcdecl ); }
 ;
 
 func_decl_short:
-   func_begin OPENPAR opt_eol param_list opt_eol CLOSEPAR COLON
-   | func_begin OPENPAR opt_eol error { COMPILER->tempLine( CURRENT_LINE ); } opt_eol CLOSEPAR COLON
+   func_begin OPENPAR param_list CLOSEPAR COLON
+   | func_begin OPENPAR error { COMPILER->tempLine( CURRENT_LINE ); } CLOSEPAR COLON
       {
-         COMPILER->raiseError(Falcon::e_syn_funcdecl, "", COMPILER->tempLine() );
+         COMPILER->raiseContextError(Falcon::e_syn_funcdecl, COMPILER->tempLine(), CTX_LINE );
       }
 ;
 
@@ -1445,7 +1447,7 @@ func_begin:
 param_list:
    /* nothing */
    | param_symbol
-   | param_list COMMA opt_eol param_symbol
+   | param_list COMMA param_symbol
 ;
 
 param_symbol:
@@ -1743,10 +1745,10 @@ class_def_inner:
 
 class_param_list:
    /* nothing */
-   | OPENPAR opt_eol param_list opt_eol CLOSEPAR
-   | OPENPAR opt_eol param_list error { COMPILER->tempLine( CURRENT_LINE ); } opt_eol CLOSEPAR
+   | OPENPAR param_list CLOSEPAR
+   | OPENPAR param_list error { COMPILER->tempLine( CURRENT_LINE ); } CLOSEPAR
       {
-         COMPILER->raiseError(Falcon::e_syn_class, "", COMPILER->tempLine() );
+         COMPILER->raiseContextError(Falcon::e_syn_class, COMPILER->tempLine(), CTX_LINE );
       }
 ;
 
@@ -1798,10 +1800,10 @@ inherit_call:
       { $$ = 0; }
    |
    OPENPAR
-      opt_eol inherit_param_list opt_eol /* in the constructor symbol table */
+      inherit_param_list /* in the constructor symbol table */
    CLOSEPAR
    {
-      $$ = $3;
+      $$ = $2;
    }
 ;
 
@@ -2281,10 +2283,10 @@ expression:
    | array_decl /*suqared expr*/
    | dict_decl /*suqared expr*/
    | range_decl /*suqared expr*/
-   | OPENPAR opt_eol expression opt_eol CLOSEPAR { $$ = $3; }
+   | OPENPAR expression CLOSEPAR { $$ = $2; }
 ;
 
-/*suqared expr NEED to start with an opt_eol or with a nonambiguous symbol */
+/*suqared expr NEED to start with an or with a nonambiguous symbol */
 range_decl:
    OPENSQUARE COLON CLOSESQUARE {
          $$ = new Falcon::Value( new Falcon::RangeDecl( new Falcon::Value( (Falcon::int64) 0 ) ) );
@@ -2301,33 +2303,23 @@ range_decl:
 ;
 
 func_call:
-   expression OPENPAR opt_eol par_expression_list opt_eol CLOSEPAR
+   expression OPENPAR expression_list CLOSEPAR
       {
          $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_funcall,
-                                      $1, new Falcon::Value( $4 ) ) );
+                                      $1, new Falcon::Value( $3 ) ) );
       }
 
-   | expression OPENPAR opt_eol CLOSEPAR
+   | expression OPENPAR CLOSEPAR
       {
          $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_funcall, $1, 0 ) );
       }
 
-   | expression OPENPAR opt_eol par_expression_list error { COMPILER->tempLine( CURRENT_LINE ); } opt_eol  CLOSEPAR
+   | expression OPENPAR expression_list error { COMPILER->tempLine( CURRENT_LINE ); }  CLOSEPAR
       {
-         delete $4;
-         COMPILER->raiseError(Falcon::e_syn_funcall, "", COMPILER->tempLine() );
+         delete $3;
+         COMPILER->raiseContextError(Falcon::e_syn_funcall, COMPILER->tempLine(), CTX_LINE );
          $$ = new Falcon::Value;
       }
-;
-
-opt_eol:
-   /* Nothing */
-   | eol_seq
-;
-
-eol_seq:
-   EOL
-   | eol_seq EOL
 ;
 
 nameless_func:
@@ -2374,10 +2366,10 @@ nameless_func:
 ;
 
 nameless_func_decl_inner:
-   OPENPAR opt_eol param_list opt_eol CLOSEPAR EOL
-   | OPENPAR opt_eol param_list error { COMPILER->tempLine( CURRENT_LINE ); } opt_eol CLOSEPAR EOL
+   OPENPAR param_list CLOSEPAR EOL
+   | OPENPAR param_list error
       {
-         COMPILER->raiseError(Falcon::e_syn_funcdecl );
+         COMPILER->raiseContextError(Falcon::e_syn_funcdecl, LINE, CTX_LINE );
       }
    | error EOL
       {
@@ -2450,44 +2442,57 @@ iif_expr:
    {
       delete $1;
       delete $3;
-      COMPILER->raiseError(Falcon::e_syn_iif, COMPILER->tempLine() );
+      COMPILER->raiseError(Falcon::e_syn_iif, CURRENT_LINE );
       $$ = new Falcon::Value;
    }
    | expression QUESTION expression error
    {
       delete $1;
       delete $3;
-      COMPILER->raiseError(Falcon::e_syn_iif, COMPILER->tempLine() );
+      COMPILER->raiseError(Falcon::e_syn_iif, CURRENT_LINE );
       $$ = new Falcon::Value;
    }
    | expression QUESTION error
       {
          delete $1;
-         COMPILER->raiseError(Falcon::e_syn_iif, COMPILER->tempLine() );
+         COMPILER->raiseError(Falcon::e_syn_iif, CURRENT_LINE );
          $$ = new Falcon::Value;
       }
 ;
 
 
 array_decl:
-   OPENSQUARE CLOSESQUARE {  $$ = new Falcon::Value( new Falcon::ArrayDecl() ); }
-   | OPENSQUARE par_expression_list opt_eol CLOSESQUARE
+     OPENSQUARE CLOSESQUARE {  $$ = new Falcon::Value( new Falcon::ArrayDecl() ); }
+   | OPENSQUARE expression_list CLOSESQUARE
       {
          $$ = new Falcon::Value( $2 );
       }
-   | OPENSQUARE par_expression_list error { COMPILER->tempLine( CURRENT_LINE ); } opt_eol CLOSESQUARE
+   | OPENSQUARE expression_list error
       {
-         COMPILER->raiseError(Falcon::e_syn_arraydecl, "", COMPILER->tempLine() );
+         COMPILER->raiseContextError( Falcon::e_syn_arraydecl, CURRENT_LINE, CTX_LINE );
+         $$ = new Falcon::Value( $2 );
+      }
+
+
+   | LISTPAR CLOSESQUARE {  $$ = new Falcon::Value( new Falcon::ArrayDecl() ); }
+   | LISTPAR listpar_expression_list CLOSESQUARE
+      {
+         $$ = new Falcon::Value( $2 );
+      }
+   | LISTPAR listpar_expression_list error
+      {
+         COMPILER->raiseContextError( Falcon::e_syn_arraydecl, CURRENT_LINE, CTX_LINE );
          $$ = new Falcon::Value( $2 );
       }
 ;
 
+
 dict_decl:
    OPENSQUARE ARROW CLOSESQUARE {  $$ = new Falcon::Value( new Falcon::DictDecl() ); }
-   | OPENSQUARE expression_pair_list opt_eol CLOSESQUARE { $$ = new Falcon::Value( $2 ); }
-   | OPENSQUARE expression_pair_list error { COMPILER->tempLine( CURRENT_LINE ); } opt_eol CLOSESQUARE
+   | OPENSQUARE expression_pair_list CLOSESQUARE { $$ = new Falcon::Value( $2 ); }
+   | OPENSQUARE expression_pair_list error CLOSESQUARE
       {
-         COMPILER->raiseError(Falcon::e_syn_dictdecl, "", COMPILER->tempLine() );
+         COMPILER->raiseContextError( Falcon::e_syn_dictdecl, LINE, CTX_LINE );
          $$ = new Falcon::Value( $2 );
       }
 ;
@@ -2497,9 +2502,9 @@ expression_list:
    | expression_list COMMA expression { $1->pushBack( $3 ); $$ = $1; }
 ;
 
-par_expression_list:
+listpar_expression_list:
    expression { $$ = new Falcon::ArrayDecl(); $$->pushBack( $1 ); }
-   | par_expression_list COMMA opt_eol expression { $1->pushBack( $4 ); $$ = $1; }
+   | listpar_expression_list expression { $1->pushBack( $2 ); $$ = $1; }
 ;
 
 symbol_list:
@@ -2518,7 +2523,7 @@ symbol_list:
 
 expression_pair_list:
    expression ARROW expression { $$ = new Falcon::DictDecl(); $$->pushBack( $1, $3 ); }
-   | expression_pair_list COMMA opt_eol expression ARROW expression { $1->pushBack( $4, $6 ); $$ = $1; }
+   | expression_pair_list COMMA expression ARROW expression { $1->pushBack( $3, $5 ); $$ = $1; }
 ;
 
 
