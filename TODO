@@ -1,1 +1,5 @@
-* Create a DBI Error class. See modules/feather/socket/socket_ext.h
+TODO:
+   * Tons more...
+
+COMPLETED:
+   * Create a DBI Error class. See modules/feather/socket/socket_ext.h

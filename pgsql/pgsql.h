@@ -28,12 +28,23 @@
 namespace Falcon
 {
 
+class DBIRecordsetPgSQL : public DBIRecordset
+{
+public:
+   virtual dbr_status next();
+   virtual dbr_status fetch( CoreArray *resultCache );
+   virtual dbr_status fetchColumns( CoreArray *resultCache );
+   virtual int fetchRowCount();
+   virtual int fetchColumnCount();
+   virtual void close();
+   virtual dbr_status getLastError( String &description );
+};
+
 class DBITransactionPgSQL : public DBITransaction
 {
 public:
-   virtual dbt_status query( const String &query );
-   virtual dbt_status fetch( CoreArray *resultCache );
-   virtual dbt_status fetchColumns( CoreArray *resultCache );
+   virtual DBIRecordset *query( const String &query, dbt_status &retval );
+   virtual int execute( const String &query, dbt_status &retval );
    virtual dbt_status commit();
    virtual dbt_status rollback();
    virtual void close();

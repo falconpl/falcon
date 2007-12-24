@@ -27,23 +27,46 @@ namespace Falcon
 {
 
 /******************************************************************************
- * Transaction class
+ * Recordset class
  *****************************************************************************/
 
-DBITransaction::dbt_status DBITransactionPgSQL::query( const String &query )
+DBIRecordset::dbr_status DBIRecordsetPgSQL::next()
 {
    return s_ok;
 }
 
-DBITransaction::dbt_status DBITransactionPgSQL::fetch( CoreArray *resultCache )
+DBIRecordset::dbr_status DBIRecordsetPgSQL::fetch( CoreArray *resultCache )
 {
    return s_ok;
 }
 
-DBITransaction::dbt_status DBITransactionPgSQL::fetchColumns( CoreArray *resultCache )
+DBIRecordset::dbr_status DBIRecordsetPgSQL::fetchColumns( CoreArray *resultCache )
 {
    return s_ok;
 }
+
+int DBIRecordsetPgSQL::fetchRowCount()
+{
+   return 0;
+}
+
+int DBIRecordsetPgSQL::fetchColumnCount()
+{
+   return 0;
+}
+
+void DBIRecordsetPgSQL::close()
+{
+}
+
+DBIRecordsetPgSQL::dbr_status DBIRecordsetPgSQL::getLastError( String &description )
+{
+   return s_ok;
+}
+
+/******************************************************************************
+ * Transaction class
+ *****************************************************************************/
 
 DBITransaction::dbt_status DBITransactionPgSQL::commit()
 {

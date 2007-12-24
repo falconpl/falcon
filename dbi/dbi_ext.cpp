@@ -120,11 +120,13 @@ FALCON_FUNC DBITransaction_query( VMachine *vm )
       // raise error
       return;
    }
-
+   
+   /*
    if ( dbh->query( *i_query->asString() ) != DBITransaction::s_ok )
    {
       // raise error
    }
+   */
 
    vm->retval(0); // or anything you want to return
 }
