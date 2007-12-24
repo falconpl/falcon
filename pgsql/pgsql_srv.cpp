@@ -133,11 +133,6 @@ DBIHandle *DBIServicePgSQL::connect( const String &parameters, bool persistent,
    return new DBIHandlePgSQL( conn );
 }
 
-DBIServicePgSQL::dbi_status DBIServicePgSQL::getLastError( String &description )
-{
-   return s_ok;
-}
-
 CoreObject *DBIServicePgSQL::makeInstance( VMachine *vm, DBIHandle *dbh )
 {
    Item *cl = vm->findGlobalItem( "PgSQL" );

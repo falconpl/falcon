@@ -64,7 +64,6 @@ public:
    virtual dbi_status init();
    virtual DBIHandle *connect( const String &parameters, bool persistent, 
                                dbi_status &retval, String &errorMessage );
-   virtual dbi_status getLastError( String &description );
    virtual CoreObject *makeInstance( VMachine *vm, DBIHandle *dbh );
 };
 
