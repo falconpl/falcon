@@ -68,18 +68,48 @@ DBIRecordsetPgSQL::dbr_status DBIRecordsetPgSQL::getLastError( String &descripti
  * Transaction class
  *****************************************************************************/
 
+DBITransactionPgSQL::DBITransactionPgSQL( DBIHandle *dbh ) 
+    : DBITransaction( dbh )
+{
+   m_inTransaction = false;
+}
+
+DBIRecordset *DBITransactionPgSQL::query( const String &query, dbt_status &retval )
+{
+   retval = s_not_implemented;
+   return NULL;
+}
+
+DBITransaction::dbt_status DBITransactionPgSQL::begin()
+{
+   m_inTransaction = true;
+   
+   return s_ok;
+}
+
 DBITransaction::dbt_status DBITransactionPgSQL::commit()
 {
+   m_inTransaction = false;
+   
    return s_ok;
 }
 
 DBITransaction::dbt_status DBITransactionPgSQL::rollback()
 {
+   m_inTransaction = false;
    return s_ok;
 }
 
 void DBITransactionPgSQL::close()
 {
+   if ( m_inTransaction )
+   {
+      commit();
+   }
+   
+   m_inTransaction = false;
+   
+   m_dbh->closeTransaction( this );
 }
 
 DBITransaction::dbt_status DBITransactionPgSQL::getLastError( String &description )
@@ -93,7 +123,33 @@ DBITransaction::dbt_status DBITransactionPgSQL::getLastError( String &descriptio
 
 DBITransaction *DBIHandlePgSQL::startTransaction()
 {
-   return new DBITransactionPgSQL;
+   DBITransactionPgSQL *t = new DBITransactionPgSQL( this );
+   if ( t->begin() != DBITransaction::s_ok )
+   {
+      // TODO: set error state
+      
+      delete t;
+      
+      return NULL;
+   }
+   
+   return t;
+}
+
+/******************************************************************************
+ * Transaction Handler Class
+ *****************************************************************************/
+
+DBIHandlePgSQL::DBIHandlePgSQL()
+{
+   m_conn = NULL;
+   m_connTr = NULL;
+}
+
+DBIHandlePgSQL::DBIHandlePgSQL( PGconn *conn )
+{
+   m_conn = conn;
+   m_connTr = NULL;
 }
 
 DBIHandlePgSQL::dbh_status DBIHandlePgSQL::closeTransaction( DBITransaction *tr )

@@ -31,6 +31,8 @@ class CoreArray;
 class VMachine;
 class String;
 
+class DBIHandle;
+
 /**
  * Abstraction of recordset class.
  * 
@@ -40,10 +42,16 @@ class String;
  */
 class DBIRecordset : public UserData
 {
+protected:
+   DBIHandle *m_dbh;
+   
 public:
    typedef enum {
       /** operation was OK, no error */
       s_ok,
+      
+      /** not implemented by dbi driver */
+      s_not_implemented,
       
       /** end of file (or recordset) */
       s_eof,
@@ -96,13 +104,22 @@ public:
 
 class DBITransaction: public UserData
 {
+protected:
+   DBIHandle *m_dbh;
+   
 public:
- typedef enum {
+   typedef enum {
       s_ok,
+      
+      /** not implemented by dbi driver */
+      s_not_implemented,
+      
       s_error
    }
    dbt_status;
-
+   
+   DBITransaction( DBIHandle *dbh ) { m_dbh = dbh; }
+   
    /** Launches a query 
     * \param query SQL query to execute
     * \param retval result status of operation
@@ -165,6 +182,10 @@ class DBIHandle: public UserData
 public:
    typedef enum {
       s_ok,
+      
+      /** not implemented by dbi driver */
+      s_not_implemented,
+      
       s_single_transaction,
       s_error
    }
@@ -221,6 +242,10 @@ public:
 
    typedef enum {
       s_ok,
+      
+      /** not implemented by dbi driver */
+      s_not_implemented,
+      
       s_error,
       s_memory_alloc_error,
       s_connect_failed
