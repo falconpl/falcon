@@ -1033,7 +1033,7 @@ int SrcLexer::checkUnlimitedTokens( uint32 nextChar )
             return COMMA;
          else if( chr == ';' )
             return ITOK_SEMICOMMA;
-         else if ( chr == '.' && nextChar != '=' && nextChar != '[' )
+         else if ( chr == '.' && nextChar != '=' && nextChar != '[' && nextChar != '"' )
             return DOT;
          else if ( chr == '?' )
          {
@@ -1149,6 +1149,14 @@ int SrcLexer::checkUnlimitedTokens( uint32 nextChar )
             m_squareContexts++;
             return LISTPAR;
          }
+         else if ( m_string == ".\"" )
+         {
+            // starting a string context
+            m_state = e_string;
+            m_chrEndString = '"'; //... up to the matching "
+            return 0;
+         }
+
          else if ( parsingFtd() && m_string == "?>" )
          {
             m_mode = t_mOutscape;
