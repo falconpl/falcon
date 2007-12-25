@@ -608,7 +608,7 @@ void filterScripts()
    Script testing
 *************************************************/
 bool testScript( ScriptData *script,
-         ModuleLoader *modloader, Module *core, Module *rtl, Module *testSuite,
+         FlcLoader *modloader, Module *core, Module *rtl, Module *testSuite,
          String &reason, String &trace )
 {
    reason = "";
@@ -874,6 +874,9 @@ bool testScript( ScriptData *script,
    }
    // reset the success status
    reason = TestSuite::getFailureReason();
+
+   // ensure to clean memory
+   modloader->compiler().reset();
    return TestSuite::getSuccess();
 }
 
@@ -903,7 +906,7 @@ void gauge()
    }
 }
 
-void executeTests( ModuleLoader *modloader, Module *rtl )
+void executeTests( FlcLoader *modloader, Module *rtl )
 {
    Module *core = Falcon::core_module_init();
    Module *testSuite = init_testsuite_module();

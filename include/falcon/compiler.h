@@ -152,12 +152,15 @@ class FALCON_DYN_CLASS Compiler: public BaseAlloc
        (FuncDef *)
    */
    List m_functions;
+
    /** Aliased symbols are stored here.
       List of alias maps.
    */
    List m_alias;
 
-   /** The static prefix is the name of the symbol currently declaring the static namespace. */
+   /** The static prefix is the name of the symbol currently declaring the static namespace.
+      Do not delete: we're not owners.
+   */
    const String *m_staticPrefix;
 
    int m_lambdaCount;

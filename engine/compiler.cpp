@@ -132,6 +132,13 @@ void Compiler::reset()
    }
    m_constants.clear();
 
+   m_alias.clear();
+   m_context.clear();
+   m_func_ctx.clear();
+   m_contextSet.clear();
+   m_loops.clear();
+   m_statementVals.clear();
+
    addPredefs();
 
    // reset FTD parsing mode
@@ -143,6 +150,8 @@ void Compiler::clear()
 {
    delete m_root;
    delete m_lexer;
+   m_root = 0;
+   m_lexer= 0;
 
    m_functions.clear();
 
