@@ -16,7 +16,7 @@
    This classes interpret the test, pass and remove messages.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
-   Begin: mer nov 3 2004
+   Begin: Tue, 25 Dec 2007 13:36:39 +0100
    Last modified because:
 
    -------------------------------------------------------------------
@@ -36,7 +36,7 @@ class Manager( name )
    // we'll use a cached call on marshallCBX to handle scope messages
    // the "on'" parameter means that each event should be handled by
    // a function starting with "on" and with the next letter capitalized.
-   scope = [marshallCBX, "on'", false]
+   scope = [marshalCBX, "on'", false]
 
    // Just say the parameter and block processing
    function onTest( p1 )
@@ -76,13 +76,14 @@ managers = map( Manager, [ "one", "two", "three" ] )
 > "   remove x - calls the onRemove method on the first handler, "
 > "              which removes himself and won't be called again."
 >
+> "   Write an empty linie to terminate."
 
 // accepts the first line
-< "> "; line = input()
+>> "> "; line = input()
 while line
    // splits the line in words
    msg = strSplit( line, " " )
    // boradcasts the message through the 'scope' parameter
    broadcast( scope, msg )
-   < "> "; line = input()
+   >> "> "; line = input()
 end

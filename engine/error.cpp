@@ -94,7 +94,7 @@ const String &errorDesc( int code )
       case e_modio: return getMessage( msg::err_modio);
       case e_unclosed_cs: return getMessage( msg::err_unclosed_cs);
       case e_runaway_eof: return getMessage( msg::err_runaway_eof);
-      case e_attrib_space: return getMessage( msg::err_attrib_space);
+      case e_cmp_unprep: return getMessage( msg::err_cmp_unprep);
       case e_undef_label: return getMessage( msg::err_undef_label);
       case e_prop_acc: return getMessage( msg::err_prop_acc);
       case e_deadlock: return getMessage( msg::err_deadlock);

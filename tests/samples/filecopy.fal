@@ -4,8 +4,6 @@
 
    FILE: filecopy.fal
 
-   $Id: filecopy.fal,v 1.3 2007/07/07 11:20:07 jonnymind Exp $
-
    This samples shows how to perform a file copy with Falcon.
    This sample also show the usage of the scriptName variable and
    of the args vector.

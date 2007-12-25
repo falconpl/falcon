@@ -2,16 +2,30 @@
    Falcon Samples.
 
    Coroutine / wait timeout
-   
+
    This sample shows how to wait for a semaphore to be
    signaled with a given timeout. The waiter function waits
    either to be waken up or 1 second.
-   
+
    The main loop signals the semaphore every 0.5, 0.6, 0.5
    and so on secods, up to 2.0 seconds. The first times, the
    waiter is always woken up, but when the signal interval
    corsses one second, it begins to signal both timeouts and
    wakeups.
+
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Tue, 25 Dec 2007 13:36:39 +0100
+   Last modified because:
+
+   -------------------------------------------------------------------
+   (C) Copyright 2007: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+   In order to use this file in its compiled form, this source or
+   part of it you have to read, understand and accept the conditions
+   that are stated in the LICENSE file that comes boundled with this
+   package.
 */
 
 //==================================================
@@ -23,17 +37,17 @@
 //
 function waiter( sem, done )
    initial = seconds()
-   loop 
+   loop
       val = sem.wait( 1.0 )
-      
+
       if done == -1: break
-         
+
       alive = seconds() - initial
       initial = seconds()
       if val
-         < @"\rAwaken!   After:$(alive:4.2)s   Done:", done
+         >> @"\rAwaken!   After:$(alive:4.2)s   Done:", done
       else
-         < @"\rTIMEOUT!  After:$(alive:4.2)s   Done:", done
+         >> @"\rTIMEOUT!  After:$(alive:4.2)s   Done:", done
       end
    end
    >
@@ -41,6 +55,18 @@ end
 
 //========================================================
 // Main program
+> \
+"
+   This sample shows how to wait for a semaphore to be
+   signaled with a given timeout. The waiter function waits
+   either to be waken up or 1 second.
+
+   The main loop signals the semaphore every 0.5, 0.6, 0.5
+   and so on secods, up to 2.0 seconds. The first times, the
+   waiter is always woken up, but when the signal interval
+   corsses one second, it begins to signal both timeouts and
+   wakeups.
+"
 
 // our semaphores
 sem = Semaphore()

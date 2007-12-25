@@ -14,8 +14,9 @@
 <p>You said nothing</p>
 <? end ?>
 </body>
-</html><?
+</html>
+<?
    function makeTitle( param )
-      < "<H1>", param, "</H1>"
+      >> "<H1>", param, "</H1>"
    end
 ?>

@@ -27,6 +27,8 @@
 #define FLC_FLCLOADER_H
 
 #include <falcon/modloader.h>
+#include <falcon/compiler.h>
+
 
 namespace Falcon {
 
@@ -71,6 +73,8 @@ class FALCON_DYN_CLASS FlcLoader: public ModuleLoader
 
    bool m_delayRaise;
    uint32 m_compileErrors;
+
+   Compiler m_compiler;
 
    Module *compile( const String &path );
    t_filetype searchForModule( String &final_name );
@@ -150,6 +154,18 @@ public:
        correctly transcoded.
    */
    virtual Module *loadSource( Stream *in );
+
+   /** Return the compiler used by this module loader.
+      This object can be inspected, or compiler options can be set by the caller.
+      \return a reference of the compiler used by the loader.
+   */
+   const Compiler &compiler() const { return m_compiler; }
+
+   /** Return the compiler used by this module loader (non const).
+      This object can be inspected, or compiler options can be set by the caller.
+      \return a reference of the compiler used by the loader.
+   */
+   Compiler &compiler() { return m_compiler; }
 };
 
 }

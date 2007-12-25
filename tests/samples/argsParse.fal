@@ -119,9 +119,9 @@ object MyParser from CmdlineParser
       printl( "K switch ", self.sw_k ? "ON" : "OFF" )
       printl( "N switch ", self.sw_n ? "ON" : "OFF" )
       for elem in self.freeParams
-         forfirst: < "Free options: "
-         < elem
-         forall: < ", "
+         forfirst: >> "Free options: "
+         >> elem
+         forall: >> ", "
          forlast: > "."
       end
    end

@@ -93,7 +93,7 @@ namespace msg {
       err_modio,
       err_unclosed_cs,
       err_runaway_eof,
-      err_attrib_space,
+      err_cmp_unprep,
       err_undef_label,
       err_prop_acc,
       err_deadlock,

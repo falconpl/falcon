@@ -816,7 +816,8 @@ first_loop_block:
          {
             COMPILER->raiseError( Falcon::e_already_forfirst );
          }
-         f->firstBlock().push_back( $3 );
+         if ( $3 != 0 )
+            f->firstBlock().push_back( $3 );
       }
    | FORFIRST error EOL { COMPILER->raiseError(Falcon::e_syn_forfirst ); }
 ;
@@ -841,7 +842,8 @@ last_loop_block:
          {
             COMPILER->raiseError( Falcon::e_already_forlast );
          }
-         f->lastBlock().push_back( $3 );
+         if ( $3 != 0 )
+            f->lastBlock().push_back( $3 );
       }
    | FORLAST error EOL { COMPILER->raiseError(Falcon::e_syn_forlast ); }
 ;
@@ -867,7 +869,8 @@ all_loop_block:
          {
             COMPILER->raiseError( Falcon::e_already_forall );
          }
-         f->allBlock().push_back( $3 );
+         if ( $3 != 0 )
+            f->allBlock().push_back( $3 );
       }
    | FORALL error EOL { COMPILER->raiseError(Falcon::e_syn_forall ); }
 ;

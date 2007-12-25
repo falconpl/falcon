@@ -233,8 +233,8 @@ int SrcLexer::lex_eval()
    // prepare for a normal scan
    m_mode = t_mNormal;
 
-   // returns an LT, which will be interpreted as a fast print
-   return LT;
+   // returns a SHR, which will be interpreted as a fast print
+   return SHR;
 }
 
 

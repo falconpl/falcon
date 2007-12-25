@@ -4,8 +4,6 @@
 
    FILE: gcctl.fal
 
-   $Id: gcctl.fal,v 1.2 2007/03/18 19:21:13 jonnymind Exp $
-
    Sample showing script controlled garbage collection.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai

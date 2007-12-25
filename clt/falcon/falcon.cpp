@@ -166,6 +166,7 @@ static void usage()
    stdOut->writeString( "   -a          assemble the given module (a Falcon Assembly '.fas' file)\n" );
    stdOut->writeString( "   -c          compile only the given source\n" );
    stdOut->writeString( "   -C          Check for memory allocation correctness.\n" );
+   stdOut->writeString( "   -D          Set directive (as <directive>=<value>).\n" );
    stdOut->writeString( "   -e <enc>    Set given encoding as default for VM I/O.\n" );
    stdOut->writeString( "   -E <enc>    Source files are in <enc> encoding (overrides -e)\n" );
    stdOut->writeString( "   -f          force recompilation of modules even when .fam are found\n" );
@@ -220,6 +221,7 @@ void findModulepath( const String &filename, String &path )
 
 void exit_sequence( int exit_value, int errors = 0 )
 {
+
    if ( errors > 0 )
    {
       stdErr = stdErrorStream();
@@ -240,6 +242,14 @@ void exit_sequence( int exit_value, int errors = 0 )
       Falcon::byte chr;
       stdIn->read( &chr, 1);
    }
+
+   // we must clear the rest with the memalloc functions we had at beginning
+   memAlloc = account_alloc;
+   memFree = account_free;
+   memRealloc = account_realloc;
+
+   options.preloaded.clear();
+   options.preloaded.clear();
 
    exit( exit_value );
 }
@@ -415,6 +425,12 @@ void parseOptions( int argc, char **argv, int &script_pos )
             case 'a': options.assemble_only = true; break;
             case 'c': options.compile_only = true; break;
             case 'C': options.check_memory = true; break;
+            case 'D':
+               if ( op[2] == 0 && i + 1< argc )
+                  options.directives.pushBack( new String(argv[++i]) );
+               else
+                  options.directives.pushBack( new String(op + 2) );
+            break;
 
             case 'e':
                if ( op[2] == 0 && i + 1 < argc ) {
@@ -492,6 +508,50 @@ void parseOptions( int argc, char **argv, int &script_pos )
       exit_sequence( 0 );
 }
 
+
+bool apply_directives( Compiler &compiler )
+{
+   ListElement *dliter = options.directives.begin();
+   while( dliter != 0 )
+   {
+      String &directive = * ((String *) dliter->data());
+      // find "="
+      uint32 pos = directive.find( "=" );
+      if ( pos == String::npos )
+      {
+         stdErr->writeString( "falcon: directive not in <directive>=<value> syntax'" );
+         stdErr->writeString( directive );
+         stdErr->writeString( "'\n\n" );
+         return false;
+      }
+
+      //split the directive
+      String dirname( directive, 0, pos );
+      String dirvalue( directive, pos + 1 );
+      dirname.trim();
+      dirvalue.trim();
+
+      // is the value a number?
+      int64 number;
+      bool result;
+      if( dirvalue.parseInt( number ) )
+         result = compiler.setDirective( dirname, number );
+      else
+         result = compiler.setDirective( dirname, dirvalue );
+
+      if ( ! result )
+      {
+         stdErr->writeString( "falcon: invalid directive or value '" );
+         stdErr->writeString( directive );
+         stdErr->writeString( "'\n\n" );
+         return false;
+      }
+
+      dliter = dliter->next();
+   }
+
+   return true;
+}
 
 //===========================================
 // Main Routine
@@ -591,6 +651,12 @@ int main( int argc, char *argv[] )
       Stream *input = openInputStream();
 
       Compiler compiler( module, input );
+      // apply required directives
+      if ( ! apply_directives( compiler ) )
+      {
+         exit_sequence(1);
+      }
+
       compiler.errorHandler( errHand );
 
       // is input an FTD?
@@ -639,6 +705,11 @@ int main( int argc, char *argv[] )
 
    // 1. Ready the module loader
    FlcLoader *modLoader = new FlcLoader( get_load_path() );
+
+   if ( ! apply_directives( modLoader->compiler() ) )
+   {
+      exit_sequence(1);
+   }
 
    if( options.input != "" && options.input != "-" )
    {

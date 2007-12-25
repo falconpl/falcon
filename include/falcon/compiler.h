@@ -124,8 +124,6 @@ class FALCON_DYN_CLASS Compiler: public BaseAlloc
    /** This is the module that is being formed in the meanwhile. */
    Module *m_module;
 
-   uint32 m_baseAttribId;
-   uint32 m_currentAttribId;
    uint32 m_enumId;
 
    /** Leading instruction that owns currently parsed statements */
@@ -166,13 +164,27 @@ class FALCON_DYN_CLASS Compiler: public BaseAlloc
 
    int m_tempLine;
 
-   bool m_requireDef;
-   bool m_defRequired;
+   bool m_strict;
    bool m_defContext;
+
+   bool m_bParsingFtd;
 
    /** True to raise only one exception. */
    bool m_delayRaise;
    Error *m_rootError;
+
+   /** Removes all the structures and temporary data used to compile a file.
+      This function is called automatically by the various compile() and
+      destructors.
+   */
+   void clear();
+
+   /** Initializes structures and variables used for compilation.
+      This function is called automatically by the various compile() and
+      destructors.
+   */
+   void init();
+
 
 protected:
 
@@ -183,10 +195,58 @@ protected:
    */
   void addPredefs();
 public:
+   /** Creates an empty compiler.
+      This constructor doesn't set a stream and a module for the compiler.
+      It is intended for repeated usage through compile( Module *, Stream *).
+   */
+   Compiler();
+
+   /** Creates the compiler setting a default module and input stream.
+      This configures this instance as a single-file-compilation only compiler.
+      After the compile() call, the instance may (should) be disposed.
+      However, after calling this constructor it is possible to use the
+      compiler( Module *, Stram *) as well.
+   */
    Compiler( Module *mod, Stream *input );
+   /** Destroys the compiler.
+      Internally calls clear()
+   */
    ~Compiler();
 
+   /** Reset compiler settings to defaults and prepares for a new compilation.
+      Precisely, this function:
+      # destroys tree and function information from previous run, if they exist.
+      # clears the constants and fills them with the Falcon language default constants
+      # clears the ftd compilation flag.
+
+      This function should be called before a repeated compilation; then the caller is
+      free to add specific application constants and setting, and finally call the
+      compile( Module *, Stream *) method.
+
+      Directives are automatically cleared at the end of a compilation, and they keep the value they
+      had before. This allows to set directives from outside and have scripts locally modify their
+      directives.
+   */
+   void reset();
+
+   /** Compiles the module given in the constructor.
+      This method is to be used for one-time only compilation (build the compiler, compile,
+      destroy the compiler), when the Compiler( Module *, Stream *) constructor version
+      has been used.
+
+      Otherwise, it will raise an error and exit.
+   */
    bool compile();
+
+   /** Compile a module from a stream.
+      This version of the function is suitable to be used multiple times for the same compiler.
+      The caller should call resetDefaults(), give the compiler the wished setings and then
+      call compiler.
+      \param mod a newly allocated and empty module that will be filled by the compilation
+      \param input the stream from which to read the source
+      \return false on compilation failed.
+   */
+   bool compile( Module *mod, Stream *input );
 
    void raiseError( int errorNum, int errorLine=0);
    /** Raises an error related to a context problem.
@@ -295,14 +355,6 @@ public:
       inclusion at lexer level.
    */
    //void include( const char *filename );
-
-   /*
-   void initAttribCount() { m_currentAttribId = m_baseAttribId; }
-   uint32 nextAttribCount();
-   void saveAttribCount() {  m_baseAttribId = m_currentAttribId; }
-   void restartAttribCount() {  m_currentAttribId = 0x01; }
-   */
-
    //void includePath( const Hstring &incp );
 
    /** Instruct the compiler that this value is used as a definition.
@@ -353,15 +405,12 @@ public:
    void tempLine( int line ) { m_tempLine = line; }
    int tempLine() const { return m_tempLine; }
 
-   /** Activate "require def" feature.
+   /** Activate "strict" feature.
       When turned on, the compilre will raise an undefined symbol when assigning this values
       outside a "def" statement.
    */
-   void requireDef( bool breq ) { m_requireDef = breq; }
-   bool requireDef() const { return m_requireDef; }
-
-   void defContext( bool ctx ) { m_defContext = ctx; }
-   void defRequired() { m_defRequired = true; }
+   void strictMode( bool breq ) { m_strict = breq; }
+   bool strictMode() const { return m_strict; }
 
    /** Set to true to send all the errors to a list, and have only one error raised at the end. */
    void delayRaise( bool setting ) { m_delayRaise = setting; }
@@ -373,9 +422,32 @@ public:
    bool parsingFtd() const;
    void parsingFtd( bool b );
 
-   /** Set directive. */
+   /** Set directive as string value.
+      In case the directive doesn't exist or doesnt accept the given value as valid,
+      an error may be raised. Applications setting directives externally may
+      give bRaise false to prevent error raising and manage internally directive set
+      failure.
+      \param directive the name of the directive to be set.
+      \param value the value that the given directive should be given.
+      \param bRaise true in case of invalid directive or value, also raise an error
+      \return true on success, false on failure
+   */
    bool setDirective( const String &directive, const String &value, bool bRaise = true );
+
+   /** Set directive as string value.
+      In case the directive doesn't exist or doesnt accept the given value as valid,
+      an error may be raised. Applications setting directives externally may
+      give bRaise false to prevent error raising and manage internally directive set
+      failure.
+      \param directive the name of the directive to be set.
+      \param value the value that the given directive should be given.
+      \param bRaise true in case of invalid directive or value, also raise an error
+      \return true on success, false on failure
+   */
    bool setDirective( const String &directive, int64 value, bool bRaise = true );
+
+   void defContext( bool ctx ) { m_defContext = ctx; }
+   bool defContext() const { return m_defContext; }
 
 };
 

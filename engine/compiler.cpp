@@ -41,27 +41,64 @@ AliasMap::AliasMap():
 
 Compiler::Compiler( Module *mod, Stream* in ):
    m_errhand(0),
-   m_baseAttribId(0x1),
-   m_currentAttribId(0x1),
-   m_enumId(0),
-   m_module( mod ),
+   m_module(0),
    m_stream( in ),
-   m_staticPrefix(0),
-   m_lambdaCount(0),
-   m_tempLine(0),
    m_constants( &traits::t_string, &traits::t_voidp ),
-   m_requireDef( false ),
-   m_defRequired( false ),
+   m_strict( false ),
    m_defContext( false ),
    m_delayRaise( false ),
-   m_rootError( 0 )
+   m_rootError( 0 ),
+   m_lexer(0),
+   m_bParsingFtd(false)
 {
+   // Initializing now prevents adding predefined constants to the module.
+   init();
+
+   m_module = mod;
    m_module->engineVersion( FALCON_VERSION_NUM );
 
-   m_lexer = new SrcLexer( this, in );
+   addPredefs();
+
+   // reset FTD parsing mode
+   parsingFtd(false);
+}
+
+Compiler::Compiler():
+   m_errhand(0),
+   m_module( 0 ),
+   m_stream( 0 ),
+   m_constants( &traits::t_string, &traits::t_voidp ),
+   m_strict( false ),
+   m_defContext( false ),
+   m_delayRaise( false ),
+   m_rootError( 0 ),
+   m_lexer(0),
+   m_bParsingFtd(false)
+{
+   reset();
+}
+
+Compiler::~Compiler()
+{
+   // clear doesn't clear the constants
+   MapIterator iter = m_constants.begin();
+   while( iter.hasCurrent() ) {
+      delete *(Value **) iter.currentValue();
+      iter.next();
+   }
+
+   clear();
+}
+
+
+void Compiler::init()
+{
+   m_lexer = new SrcLexer( this, m_stream );
+   if ( m_bParsingFtd )
+      m_lexer->parsingFtd( true );
+
    m_root = new SourceTree;
 
-   m_errors = 0;
    // context is empty, but the root context set must be placed.
    pushContextSet( &m_root->statements() );
 
@@ -69,19 +106,45 @@ Compiler::Compiler( Module *mod, Stream* in ):
    List *l = new List;
    m_statementVals.pushBack( l );
 
-   addPredefs();
+   m_errors = 0;
+   m_enumId = 0;
+   m_staticPrefix = 0;
+   m_lambdaCount = 0;
+   m_tempLine = 0;
+
+   // reset the require def status
+   m_defContext = false;
 }
 
-Compiler::~Compiler()
-{
-   delete m_root;
-   delete m_lexer;
 
+void Compiler::reset()
+{
+   if ( m_module != 0 )
+   {
+      clear();
+   }
+
+   // reset contants
    MapIterator iter = m_constants.begin();
    while( iter.hasCurrent() ) {
       delete *(Value **) iter.currentValue();
       iter.next();
    }
+   m_constants.clear();
+
+   addPredefs();
+
+   // reset FTD parsing mode
+   parsingFtd(false);
+}
+
+
+void Compiler::clear()
+{
+   delete m_root;
+   delete m_lexer;
+
+   m_functions.clear();
 
    ListElement *valListE = m_statementVals.begin();
    while( valListE != 0 )
@@ -89,6 +152,7 @@ Compiler::~Compiler()
       delete (List *) valListE->data();
       valListE = valListE->next();
    }
+   m_statementVals.clear();
 
    if ( m_rootError != 0 )
    {
@@ -96,20 +160,45 @@ Compiler::~Compiler()
       m_rootError = 0;
    }
 
+   m_module = 0;
+   m_stream = 0;
 }
+
+
+bool Compiler::compile( Module *mod, Stream *in )
+{
+   if ( m_module != 0 )
+   {
+      clear();
+   }
+
+   // m_stream must be configured at init time.
+   m_stream = in;
+   init();
+
+   m_module = mod;
+   m_module->engineVersion( FALCON_VERSION_NUM );
+
+   return compile();
+}
+
 
 bool Compiler::compile()
 {
-   m_baseAttribId = 0x1;
-   m_currentAttribId = 0x1;
-   m_enumId = 0;
-   m_lambdaCount = 0;
+   if ( m_module == 0 || m_stream == 0 )
+   {
+      raiseError( e_cmp_unprep );
+      return false;
+   }
 
-   // reset the require def status
-   m_defRequired = m_requireDef;
-   m_defContext = false;
+   // save directives
+   bool bSaveStrict = m_strict;
 
+   // parse
    flc_src_parse( this );
+
+   // restore directives
+   m_strict = bSaveStrict;
 
    // If the context is not empty, then we have something unclosed.
    if ( ! m_context.empty() ) {
@@ -153,10 +242,12 @@ bool Compiler::compile()
    return false;
 }
 
+
 void Compiler::raiseError( int code, int line )
 {
    raiseError( code, "", line );
 }
+
 
 void Compiler::raiseContextError( int code, int line, int startLine )
 {
@@ -171,6 +262,7 @@ void Compiler::raiseContextError( int code, int line, int startLine )
       raiseError( code, line );
    }
 }
+
 
 void Compiler::raiseError( int code, const String &errorp, int line )
 {
@@ -202,6 +294,7 @@ void Compiler::raiseError( int code, const String &errorp, int line )
    m_errors++;
 }
 
+
 void Compiler::pushFunction( FuncDef *f )
 {
    m_functions.pushBack( f );
@@ -209,6 +302,7 @@ void Compiler::pushFunction( FuncDef *f )
 
    m_alias.pushBack( new AliasMap );
 }
+
 
 void Compiler::popFunction()
 {
@@ -259,7 +353,7 @@ void Compiler::defineVal( Value *val )
             if ( sym == 0 )
             {
                // values cannot be defined in this way if def is required AND we are not in a def context
-               if ( m_defRequired && ! m_defContext )
+               if ( m_strict && ! m_defContext )
                {
                   raiseError( e_undef_sym, "", lexer()->previousLine() );
                }
@@ -279,7 +373,7 @@ void Compiler::defineVal( Value *val )
          map.insert( val->asSymdef(), gsym );
          if( gsym->isUndefined() )
          {
-            if ( m_defRequired && ! m_defContext )
+            if ( m_strict && ! m_defContext )
             {
                raiseError( e_undef_sym, "", lexer()->previousLine() - 1);
             }
@@ -303,7 +397,7 @@ Symbol *Compiler::addLocalSymbol( const String *symname, bool parameter )
    Symbol *sym = table.findByName( *symname );
    if( sym == 0 )
    {
-      if ( m_defRequired && ! m_defContext )
+      if ( m_strict && ! m_defContext )
       {
          raiseError( e_undef_sym, "", lexer()->previousLine() );
       }
@@ -339,6 +433,7 @@ bool Compiler::checkLocalUndefined()
    return true;
 }
 
+
 Symbol *Compiler::searchLocalSymbol( const String *symname )
 {
    // should not happen.
@@ -356,10 +451,12 @@ Symbol *Compiler::searchLocalSymbol( const String *symname )
    return fd->symtab().findByName( *symname );
 }
 
+
 Symbol *Compiler::searchGlobalSymbol( const String *symname )
 {
    return module()->findGlobalSymbol( *symname );
 }
+
 
 Symbol *Compiler::addGlobalSymbol( const String *symname )
 {
@@ -374,6 +471,7 @@ Symbol *Compiler::addGlobalSymbol( const String *symname )
    return sym;
 }
 
+
 Symbol *Compiler::addGlobalVar( const String *symname, VarDef *value )
 {
    Symbol *sym = addGlobalSymbol( symname );
@@ -381,6 +479,7 @@ Symbol *Compiler::addGlobalVar( const String *symname, VarDef *value )
    sym->setVar( value );
    return sym;
 }
+
 
 Symbol *Compiler::addAttribute( const String *symname )
 {
@@ -400,6 +499,7 @@ Symbol *Compiler::addAttribute( const String *symname )
 
    return sym;
 }
+
 
 Symbol *Compiler::globalize( const String *symname )
 {
@@ -431,6 +531,7 @@ Symbol *Compiler::globalize( const String *symname )
    map.insert( symname, global );
    return global;
 }
+
 
 StmtFunction *Compiler::buildCtorFor( StmtClass *cls )
 {
@@ -478,6 +579,7 @@ StmtFunction *Compiler::buildCtorFor( StmtClass *cls )
 
    return stmt_ctor;
 }
+
 
 void Compiler::addPredefs()
 {
@@ -529,7 +631,8 @@ void Compiler::addConstant( const String &name, Value *val, uint32 line )
    }
 
    // is a symbol with the same name defined ?
-   if ( m_module->findGlobalSymbol( name ) != 0 ) {
+   // Module may be zero (i.e. for pre-defined Falcon constants)
+   if ( m_module != 0 && m_module->findGlobalSymbol( name ) != 0 ) {
       raiseError( e_already_def, name, line );
       return;
    }
@@ -550,6 +653,7 @@ void Compiler::addConstant( const String &name, Value *val, uint32 line )
    String temp( name );
    m_constants.insert( &temp, val );
 }
+
 
 void Compiler::closeFunction()
 {
@@ -572,13 +676,16 @@ void Compiler::closeFunction()
 
 bool Compiler::parsingFtd() const
 {
-   return m_lexer->parsingFtd();
+   return m_bParsingFtd;
 }
 
 
 void Compiler::parsingFtd( bool b )
 {
-   m_lexer->parsingFtd( b );
+   m_bParsingFtd = b;
+
+   if ( m_lexer != 0 )
+      m_lexer->parsingFtd( b );
 }
 
 
@@ -590,14 +697,12 @@ bool Compiler::setDirective( const String &directive, const String &value, bool 
    {
       if ( value == "on" )
       {
-         m_defRequired = true;
+         m_strict = true;
          return true;
       }
       else if ( value == "off" )
       {
-         // allow to override only if not forced from outside.
-         if ( ! m_requireDef )
-            m_defRequired = false;
+         m_strict = false;
          return true;
       }
 

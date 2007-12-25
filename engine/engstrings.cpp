@@ -94,7 +94,7 @@ char *en_table[] =
       "I/O error while loading a module",
       "Unclosed control structure",
       "Parse error at end of file",
-      "Not an attribute",
+      "Compiler is unprepared (use compile(Module *, Stream *)",
       "Label declared but never defined",
       "Requested property not found in object",
       "Deadlock detected",

@@ -45,6 +45,7 @@ public:
    String io_encoding;
    String source_encoding;
    List preloaded;
+   List directives;
 
    bool compile_only;
    bool assemble_only;

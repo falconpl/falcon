@@ -3,8 +3,6 @@
 
    FILE: fib.fal
 
-   $Id: fib.fal,v 1.1.1.1 2006/10/08 15:05:21 gian Exp $
-
    A classical fibonacci example.
    Provide a command-line parameter to determine the width of the fib.
    Default is 30.
@@ -23,6 +21,8 @@
    package.
 */
 
+// Usign strict directive, we must declare variables with def.
+directive strict = on
 
 function fib( n )
    if n < 2
@@ -36,12 +36,20 @@ end
 /* args is provided by the VM */
 
 if len( args ) > 0
-   reach = int(args[0])
+   try
+      def reach = int(args[0])
+   catch
+      > "Please, give a numeric argument."
+      return 0
+   end
 else
-   reach = 30
+   def reach = 30
 end
 
-clock = seconds()
+> "Calculating FIBONACCI number for ", reach
+
+def clock = seconds()
+print( "Fib(", reach, ")=" )
 printl( fib( reach ) )
 printl( "Elapsed time: ", (seconds() - clock ) )
 

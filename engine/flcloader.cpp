@@ -168,16 +168,16 @@ Module *FlcLoader::loadSource( Stream *fin )
       module = new Module();
       bInAssembly = false;
 
-      Compiler compiler( module, fin );
+      m_compiler.reset();
 
       if ( m_forceTemplate )
-         compiler.parsingFtd( true );
+         m_compiler.parsingFtd( true );
 
-      compiler.delayRaise( m_delayRaise );
+      m_compiler.delayRaise( m_delayRaise );
 
-      compiler.errorHandler( m_errhand );
-      if( ! compiler.compile() ) {
-         m_compileErrors = (uint32) compiler.errors();
+      m_compiler.errorHandler( m_errhand );
+      if( ! m_compiler.compile( module, fin ) ) {
+         m_compileErrors = (uint32) m_compiler.errors();
          delete module;
          return 0;
       }
@@ -215,8 +215,8 @@ Module *FlcLoader::loadSource( Stream *fin )
 
          // generate.
          GenHAsm hasm( temp_binary );
-         hasm.generatePrologue( compiler.module() );
-         hasm.generate( compiler.sourceTree() );
+         hasm.generatePrologue( m_compiler.module() );
+         hasm.generate( m_compiler.sourceTree() );
 
          // the module is going to be destroyed anyhow
          // as we got to assemble it
@@ -227,7 +227,7 @@ Module *FlcLoader::loadSource( Stream *fin )
       }
       else {
          GenCode codeOut( temp_binary );
-         codeOut.generate( compiler.sourceTree() );
+         codeOut.generate( m_compiler.sourceTree() );
          module->setLineInfo( codeOut.extractLineInfo() );
       }
    }
