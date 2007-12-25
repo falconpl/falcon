@@ -49,7 +49,7 @@ AsmCompiler::AsmCompiler( Module *mod, Stream *in, Stream *out ):
       m_current( 0 ),
       m_module( mod ),
       m_errhand(0),
-      m_labels( &traits::t_stringptr_own, &traits::t_voidp ),
+      m_labels( &traits::t_stringptr, &traits::t_voidp ),
       m_switchEntriesInt( &traits::t_pseudoptr, &traits::t_pseudoptr ),
       m_switchEntriesRng( &traits::t_pseudoptr, &traits::t_pseudoptr ),
       m_switchEntriesStr( &traits::t_pseudoptr, &traits::t_pseudoptr ),

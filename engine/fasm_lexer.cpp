@@ -670,6 +670,8 @@ int AsmLexer::checkTokens()
              return I_STV;
          else if ( m_string.compareIgnoreCase( "WRT" ) == 0 )
              return I_WRT;
+         else if ( m_string.compareIgnoreCase( "MOD" ) == 0 )
+             return I_MOD;
       break;
 
      case 4:

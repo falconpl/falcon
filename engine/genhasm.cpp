@@ -1692,7 +1692,7 @@ void GenHAsm::gen_operand( const Value *stmt )
       case Value::t_imm_num:
       {
          String numStr;
-         numStr.writeNumber( stmt->asNumeric() );
+         numStr.writeNumber( stmt->asNumeric(), "%.12g" );
          m_out->writeString( numStr );
       }
       break;

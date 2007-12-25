@@ -29,12 +29,12 @@ if fract( ceil( 1.99999999 ) ) != 0: failure( "ceil positive up (fract)" )
 // negative
 if int( ceil( -1.0 ) ) != -1: failure( "ceil on .0 (int)" )
 if fract( ceil( -1.0 ) ) != 0: failure( "ceil on .0 (fract)" )
-if int( ceil( -1.4999 ) ) != -1: failure( "ceil positive down (int)" )
-if fract( ceil( -1.49999999 ) ) != 0: failure( "ceil positive down (fract)" )
-if int( ceil( -1.5 ) ) != -1: failure( "ceil positive edge (int)" )
-if fract( ceil( -1.5 ) ) != 0: failure( "ceil positive edge (fract)" )
-if int( ceil( -1.99999999 ) ) != -1: failure( "ceil positive up (int)" )
-if fract( ceil( -1.99999999 ) ) != 0: failure( "ceil positive up (fract)" )
+if int( ceil( -1.4999 ) ) != -1: failure( "ceil negative down (int)" )
+if fract( ceil( -1.49999999 ) ) != 0: failure( "ceil negative down (fract)" )
+if int( ceil( -1.5 ) ) != -1: failure( "ceil negative edge (int)" )
+if fract( ceil( -1.5 ) ) != 0: failure( "ceil negative edge (fract)" )
+if int( ceil( -1.99999999 ) ) != -1: failure( "ceil negative up (int)" )
+if fract( ceil( -1.99999999 ) ) != 0: failure( "ceil negative up (fract)" )
 
 // zero
 if int( ceil( 0.0 ) ) != 0: failure( "ceil on 0.0 (int)" )
