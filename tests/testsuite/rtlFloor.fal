@@ -27,14 +27,14 @@ if int( floor( 1.99999999 ) ) != 1: failure( "floor positive up (int)" )
 if fract( floor( 1.99999999 ) ) != 0: failure( "floor positive up (fract)" )
 
 // negative
-if int( floor( -1.0 ) ) != -1: failure( "floor on .0 (int)" )
-if fract( floor( -1.0 ) ) != 0: failure( "floor on .0 (fract)" )
-if int( floor( -1.4999 ) ) != -2: failure( "floor positive down (int)" )
-if fract( floor( -1.49999999 ) ) != 0: failure( "floor positive down (fract)" )
-if int( floor( -1.5 ) ) != -2: failure( "floor positive edge (int)" )
-if fract( floor( -1.5 ) ) != 0: failure( "floor positive edge (fract)" )
-if int( floor( -1.99999999 ) ) != -2: failure( "floor positive up (int)" )
-if fract( floor( -1.99999999 ) ) != 0: failure( "floor positive up (fract)" )
+if int( floor( -1.0 ) ) != -1: failure( "floor on negative .0 (int)" )
+if fract( floor( -1.0 ) ) != 0: failure( "floor on negative .0 (fract)" )
+if int( floor( -1.4999 ) ) != -2: failure( "floor negative down (int)" )
+if fract( floor( -1.49999999 ) ) != 0: failure( "floor negative down (fract)" )
+if int( floor( -1.5 ) ) != -2: failure( "floor negative edge (int)" )
+if fract( floor( -1.5 ) ) != 0: failure( "floor negative edge (fract)" )
+if int( floor( -1.99999999 ) ) != -2: failure( "floor negative up (int)" )
+if fract( floor( -1.99999999 ) ) != 0: failure( "floor negative up (fract)" )
 
 // zero
 if int( floor( 0.0 ) ) != 0: failure( "floor on 0.0 (int)" )

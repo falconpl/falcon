@@ -27,14 +27,14 @@ if int( fint( 1.99999999 ) ) != 1: failure( "fint positive up (int)" )
 if fract( fint( 1.99999999 ) ) != 0: failure( "fint positive up (fract)" )
 
 // negative
-if int( fint( -1.0 ) ) != -1: failure( "fint on .0 (int)" )
-if fract( fint( -1.0 ) ) != 0: failure( "fint on .0 (fract)" )
-if int( fint( -1.4999 ) ) != -1: failure( "fint positive down (int)" )
-if fract( fint( -1.49999999 ) ) != 0: failure( "fint positive down (fract)" )
-if int( fint( -1.5 ) ) != -1: failure( "fint positive edge (int)" )
-if fract( fint( -1.5 ) ) != 0: failure( "fint positive edge (fract)" )
-if int( fint( -1.99999999 ) ) != -1: failure( "fint positive up (int)" )
-if fract( fint( -1.99999999 ) ) != 0: failure( "fint positive up (fract)" )
+if int( fint( -1.0 ) ) != -1: failure( "fint on negative .0 (int)" )
+if fract( fint( -1.0 ) ) != 0: failure( "fint on negative .0 (fract)" )
+if int( fint( -1.4999 ) ) != -1: failure( "fint negative down (int)" )
+if fract( fint( -1.49999999 ) ) != 0: failure( "fint negative down (fract)" )
+if int( fint( -1.5 ) ) != -1: failure( "fint negative edge (int)" )
+if fract( fint( -1.5 ) ) != 0: failure( "fint negative edge (fract)" )
+if int( fint( -1.99999999 ) ) != -1: failure( "fint negative up (int)" )
+if fract( fint( -1.99999999 ) ) != 0: failure( "fint negative up (fract)" )
 
 // zero
 if int( fint( 0.0 ) ) != 0: failure( "fint on 0.0 (int)" )
