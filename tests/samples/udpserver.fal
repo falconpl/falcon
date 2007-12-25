@@ -10,22 +10,26 @@
 
 load socket
 
-if len( args ) != 1
-   printl( "Usage: udpserver.fal <listening-service>" )
+if len( args ) < 1
+   printl( "Usage: udpserver.fal <listening-service> [all]" )
    printl( "<listening-service> may be a numeric port." )
+   printl( "<all> listen on all interfaces." )
    exit( 0 )
 end
 
 service = args[0]
-
-// we'll listen on all the local interfaces.
-interfaces = resolveAddress( getHostName() )
-if len( interfaces ) == 0
-   printl( "Fatal: no interfaces." )
+if args.len() == 2 and args[1] == "all"
+   interfaces = ["0.0.0.0"]
+else
+   // we'll listen on all the local interfaces.
+   interfaces = resolveAddress( getHostName() )
+   if len( interfaces ) == 0
+      printl( "Fatal: no interfaces." )
+   end
 end
 
-ifdone = []
-sockets = []
+   ifdone = []
+   sockets = []
 
 for item in interfaces
    // avoid registering duplicates.
