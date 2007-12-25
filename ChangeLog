@@ -1,4 +1,4 @@
-Feathers (0.8.5)
+Feathers (0.8.6)
   * Bugfix: Process crashed if initialized with a single string.
   * Minor: Added setDirective() to compiler module.
 

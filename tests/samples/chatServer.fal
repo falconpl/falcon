@@ -199,7 +199,7 @@ function manageOutgoing()
       	for climsg in cli.messages
 				try
 					cli.send( climsg.message + "\r\n" )
-					arrayDel( cli.messages, 0 )
+               > "Sending ", climsg.message
 				catch in error
 					warn( "Error while writing to client: ", error.toString() )
 					cli.com.dispose()

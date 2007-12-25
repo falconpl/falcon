@@ -38,13 +38,10 @@ class ClientTCPSocket( address, port ) from TCPSocket( address, port )
       pos = strFind( self.data, "\r\n" )
       while pos = -1
          self.data += self.recv( 1024 )
+         pos = strFind( self.data, "\r\n" )
       end
       msg = self.data[ 0:pos ]
-      if pos = len( self.data ) - 2
-         self.data = ""
-      else
-         data = self.data[ pos + 2: ]
-      end
+      self.data = self.data[ pos + 2: ]
       return msg
    end
 end
