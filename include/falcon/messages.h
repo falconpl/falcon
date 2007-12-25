@@ -189,9 +189,7 @@ namespace msg {
       err_syn_def,
       err_syn_fordot,
       err_syn_self_print,
-      err_par_unbal,
-      err_square_unbal,
-      err_unclosed_string,
+      err_syn_directive,
 
       err_nl_in_lit,
       err_catch_clash,
@@ -203,6 +201,11 @@ namespace msg {
       err_fordot_outside,
       err_interrupted,
       err_priv_access,
+      err_par_unbal,
+      err_square_unbal,
+      err_unclosed_string,
+      err_directive_unk,
+      err_directive_value,
 
       err_open_file,
       err_loaderror,

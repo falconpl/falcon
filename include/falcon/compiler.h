@@ -372,6 +372,11 @@ public:
    /** Are we parsing a normal file or an escaped template file? */
    bool parsingFtd() const;
    void parsingFtd( bool b );
+
+   /** Set directive. */
+   bool setDirective( const String &directive, const String &value, bool bRaise = true );
+   bool setDirective( const String &directive, int64 value, bool bRaise = true );
+
 };
 
 } // end of namespace

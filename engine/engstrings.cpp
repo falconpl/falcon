@@ -190,9 +190,7 @@ char *en_table[] =
       "Syntax error in 'def' statement",
       "Syntax error in 'for.' statement",
       "Syntax error in fast print statement",
-      "Unbalanced parenthesis at end of file",
-      "Unbalanced square parenthesis at end of file",
-      "Unclosed string at end of file",
+      "Syntax error in directive",
 
       "New line in literal string",
       "Duplicate type identifier in catch selector",
@@ -204,6 +202,11 @@ char *en_table[] =
       "Statement '.=' must be inside a for/in loop",
       "VM received a suspension request in an atomic operation",
       "Access to private member not through 'self'",
+      "Unbalanced parenthesis at end of file",
+      "Unbalanced square parenthesis at end of file",
+      "Unclosed string at end of file",
+      "Unknown directive",
+      "Invalid value for directive",
 
       "Can't open file",
       "Load error",

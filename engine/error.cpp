@@ -189,9 +189,7 @@ const String &errorDesc( int code )
       case e_syn_arraydecl: return getMessage( msg::err_syn_arraydecl );
       case e_syn_fordot: return getMessage( msg::err_syn_fordot );
       case e_syn_self_print: return getMessage( msg::err_syn_self_print );
-      case e_par_unbal: return getMessage( msg::err_par_unbal );
-      case e_square_unbal: return getMessage( msg::err_square_unbal );
-      case e_unclosed_string: return getMessage( msg::err_unclosed_string );
+      case e_syn_directive: return getMessage( msg::err_syn_directive );
 
       case e_nl_in_lit: return getMessage( msg::err_nl_in_lit );
       case e_catch_clash: return getMessage( msg::err_catch_clash );
@@ -201,6 +199,11 @@ const String &errorDesc( int code )
       case e_fordot_outside: return getMessage( msg::err_fordot_outside );
       case e_interrupted: return getMessage( msg::err_interrupted );
       case e_priv_access: return getMessage( msg::err_priv_access );
+      case e_par_unbal: return getMessage( msg::err_par_unbal );
+      case e_square_unbal: return getMessage( msg::err_square_unbal );
+      case e_unclosed_string: return getMessage( msg::err_unclosed_string );
+      case e_directive_unk: return getMessage( msg::err_directive_unk );
+      case e_directive_value: return getMessage( msg::err_directive_value );
 
       case e_already_forfirst: return getMessage( msg::err_already_forfirst );
       case e_already_forlast: return getMessage( msg::err_already_forlast );

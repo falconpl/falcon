@@ -1,7 +1,6 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: falcon.ypp
-   $Id: src_parser.yy,v 1.43 2007/08/01 13:24:55 jonnymind Exp $
+   FILE: src_parser.yy
 
    Bison grammar definition for falcon.
    -------------------------------------------------------------------
@@ -113,6 +112,7 @@ inline int flc_src_lex (void *lvalp, void *yyparam)
 %token ATTRIBUTES
 %token PASS
 %token EXPORT
+%token DIRECTIVE
 %token COLON
 %token FUNCDECL STATIC
 %token FORDOT
@@ -170,7 +170,7 @@ inline int flc_src_lex (void *lvalp, void *yyparam)
 %type <fal_stat> pass_statement
 %type <fal_stat> func_statement
 %type <fal_stat> self_print_statement
-%type <fal_stat> class_decl object_decl property_decl attributes_statement export_statement
+%type <fal_stat> class_decl object_decl property_decl attributes_statement export_statement directive_statement
 %type <fal_stat> def_statement
 %type <fal_stat> outer_print_statement
 
@@ -212,6 +212,7 @@ toplevel_statement:
          if ( $1 != 0 )
             COMPILER->addLoad( *$1 );
       }
+   | directive_statement
    | func_statement
       {
          if( $1 != 0 )
@@ -271,7 +272,7 @@ statement:
 
 assignment_def_list:
    atomic_symbol OP_ASSIGN expression {
-      COMPILER->defContext( true ); COMPILER->defRequired();
+      COMPILER->defContext( true );
       COMPILER->defineVal( $1 );
       COMPILER->addStatement( new Falcon::StmtAssignment( CURRENT_LINE, $1, $3 ) );
    }
@@ -1618,6 +1619,40 @@ export_symbol_list:
          sym->exported(true);
       }
 ;
+
+/**********************************************************
+   Directive directive (no, it's not an error)
+***********************************************************/
+
+directive_statement:
+   DIRECTIVE directive_pair_list EOL
+      {
+         // no effect
+         $$=0;
+      }
+   | DIRECTIVE error EOL
+     {
+         COMPILER->raiseError(Falcon::e_syn_directive );
+         $$=0;
+     }
+;
+
+directive_pair_list:
+   directive_pair
+   | directive_pair_list COMMA directive_pair
+;
+
+directive_pair:
+   SYMBOL OP_EQ SYMBOL
+      {
+         COMPILER->setDirective( *$1, *$3 );
+      }
+   | SYMBOL OP_EQ INTNUM
+      {
+         COMPILER->setDirective( *$1, $3 );
+      }
+;
+
 
 /**********************************************************
    Attributes Statement

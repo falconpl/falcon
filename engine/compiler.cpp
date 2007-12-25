@@ -1,7 +1,6 @@
 /*
    FALCON - The Falcon Programming Language.
    FILE: compiler.cpp
-   $Id: compiler.cpp,v 1.23 2007/08/11 22:59:07 jonnymind Exp $
 
    Core language compiler.
    -------------------------------------------------------------------
@@ -570,15 +569,81 @@ void Compiler::closeFunction()
    popFunction();
 }
 
+
 bool Compiler::parsingFtd() const
 {
    return m_lexer->parsingFtd();
 }
 
+
 void Compiler::parsingFtd( bool b )
 {
    m_lexer->parsingFtd( b );
 }
+
+
+bool Compiler::setDirective( const String &directive, const String &value, bool bRaise )
+{
+   bool bWrongVal = false;
+
+   if ( directive == "strict" )
+   {
+      if ( value == "on" )
+      {
+         m_defRequired = true;
+         return true;
+      }
+      else if ( value == "off" )
+      {
+         // allow to override only if not forced from outside.
+         if ( ! m_requireDef )
+            m_defRequired = false;
+         return true;
+      }
+
+      bWrongVal = true;
+   }
+
+   // ...
+   // if we're here we have either a wrong directive or a wrong value.
+   if ( bRaise )
+   {
+      if ( bWrongVal )
+         raiseError( e_directive_value, directive + "=" + value, m_lexer->line() );
+      else
+         raiseError( e_directive_unk, directive, m_lexer->line() );
+   }
+
+   return true;
+}
+
+
+bool Compiler::setDirective( const String &directive, int64 value, bool bRaise )
+{
+   bool bWrongVal = false;
+
+   if ( directive == "strict" )
+   {
+      bWrongVal = true;
+   }
+
+   // if we're here we have either a wrong directive or a wrong value.
+   if ( bRaise )
+   {
+      if ( bWrongVal )
+      {
+         String temp = directive;
+         temp += "=";
+         temp.writeNumber( value );
+         raiseError( e_directive_value, temp, m_lexer->line() );
+      }
+      else
+         raiseError( e_directive_unk, directive, m_lexer->line() );
+   }
+
+   return true;
+}
+
 
 }
 

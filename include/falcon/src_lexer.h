@@ -1,7 +1,6 @@
 /*
    FALCON - The Falcon Programming Language.
    FILE: falcon_lexer.h
-   $Id: src_lexer.h,v 1.8 2007/08/19 07:25:53 jonnymind Exp $
 
    Lexer.
    -------------------------------------------------------------------

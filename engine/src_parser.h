@@ -81,69 +81,70 @@
      ATTRIBUTES = 297,
      PASS = 298,
      EXPORT = 299,
-     COLON = 300,
-     FUNCDECL = 301,
-     STATIC = 302,
-     FORDOT = 303,
-     LISTPAR = 304,
-     LOOP = 305,
-     OUTER_STRING = 306,
-     CLOSEPAR = 307,
-     OPENPAR = 308,
-     CLOSESQUARE = 309,
-     OPENSQUARE = 310,
-     DOT = 311,
-     ASSIGN_POW = 312,
-     ASSIGN_SHL = 313,
-     ASSIGN_SHR = 314,
-     ASSIGN_BXOR = 315,
-     ASSIGN_BOR = 316,
-     ASSIGN_BAND = 317,
-     ASSIGN_MOD = 318,
-     ASSIGN_DIV = 319,
-     ASSIGN_MUL = 320,
-     ASSIGN_SUB = 321,
-     ASSIGN_ADD = 322,
-     ARROW = 323,
-     FOR_STEP = 324,
-     OP_TO = 325,
-     COMMA = 326,
-     QUESTION = 327,
-     OR = 328,
-     AND = 329,
-     NOT = 330,
-     LET = 331,
-     LE = 332,
-     GE = 333,
-     LT = 334,
-     GT = 335,
-     NEQ = 336,
-     EEQ = 337,
-     OP_EQ = 338,
-     OP_ASSIGN = 339,
-     PROVIDES = 340,
-     OP_NOTIN = 341,
-     OP_IN = 342,
-     HASNT = 343,
-     HAS = 344,
-     DIESIS = 345,
-     ATSIGN = 346,
-     CAP = 347,
-     VBAR = 348,
-     AMPER = 349,
-     MINUS = 350,
-     PLUS = 351,
-     PERCENT = 352,
-     SLASH = 353,
-     STAR = 354,
-     POW = 355,
-     SHR = 356,
-     SHL = 357,
-     BANG = 358,
-     NEG = 359,
-     DECREMENT = 360,
-     INCREMENT = 361,
-     DOLLAR = 362
+     DIRECTIVE = 300,
+     COLON = 301,
+     FUNCDECL = 302,
+     STATIC = 303,
+     FORDOT = 304,
+     LISTPAR = 305,
+     LOOP = 306,
+     OUTER_STRING = 307,
+     CLOSEPAR = 308,
+     OPENPAR = 309,
+     CLOSESQUARE = 310,
+     OPENSQUARE = 311,
+     DOT = 312,
+     ASSIGN_POW = 313,
+     ASSIGN_SHL = 314,
+     ASSIGN_SHR = 315,
+     ASSIGN_BXOR = 316,
+     ASSIGN_BOR = 317,
+     ASSIGN_BAND = 318,
+     ASSIGN_MOD = 319,
+     ASSIGN_DIV = 320,
+     ASSIGN_MUL = 321,
+     ASSIGN_SUB = 322,
+     ASSIGN_ADD = 323,
+     ARROW = 324,
+     FOR_STEP = 325,
+     OP_TO = 326,
+     COMMA = 327,
+     QUESTION = 328,
+     OR = 329,
+     AND = 330,
+     NOT = 331,
+     LET = 332,
+     LE = 333,
+     GE = 334,
+     LT = 335,
+     GT = 336,
+     NEQ = 337,
+     EEQ = 338,
+     OP_EQ = 339,
+     OP_ASSIGN = 340,
+     PROVIDES = 341,
+     OP_NOTIN = 342,
+     OP_IN = 343,
+     HASNT = 344,
+     HAS = 345,
+     DIESIS = 346,
+     ATSIGN = 347,
+     CAP = 348,
+     VBAR = 349,
+     AMPER = 350,
+     MINUS = 351,
+     PLUS = 352,
+     PERCENT = 353,
+     SLASH = 354,
+     STAR = 355,
+     POW = 356,
+     SHR = 357,
+     SHL = 358,
+     BANG = 359,
+     NEG = 360,
+     DECREMENT = 361,
+     INCREMENT = 362,
+     DOLLAR = 363
    };
 #endif
 /* Tokens.  */
@@ -189,76 +190,77 @@
 #define ATTRIBUTES 297
 #define PASS 298
 #define EXPORT 299
-#define COLON 300
-#define FUNCDECL 301
-#define STATIC 302
-#define FORDOT 303
-#define LISTPAR 304
-#define LOOP 305
-#define OUTER_STRING 306
-#define CLOSEPAR 307
-#define OPENPAR 308
-#define CLOSESQUARE 309
-#define OPENSQUARE 310
-#define DOT 311
-#define ASSIGN_POW 312
-#define ASSIGN_SHL 313
-#define ASSIGN_SHR 314
-#define ASSIGN_BXOR 315
-#define ASSIGN_BOR 316
-#define ASSIGN_BAND 317
-#define ASSIGN_MOD 318
-#define ASSIGN_DIV 319
-#define ASSIGN_MUL 320
-#define ASSIGN_SUB 321
-#define ASSIGN_ADD 322
-#define ARROW 323
-#define FOR_STEP 324
-#define OP_TO 325
-#define COMMA 326
-#define QUESTION 327
-#define OR 328
-#define AND 329
-#define NOT 330
-#define LET 331
-#define LE 332
-#define GE 333
-#define LT 334
-#define GT 335
-#define NEQ 336
-#define EEQ 337
-#define OP_EQ 338
-#define OP_ASSIGN 339
-#define PROVIDES 340
-#define OP_NOTIN 341
-#define OP_IN 342
-#define HASNT 343
-#define HAS 344
-#define DIESIS 345
-#define ATSIGN 346
-#define CAP 347
-#define VBAR 348
-#define AMPER 349
-#define MINUS 350
-#define PLUS 351
-#define PERCENT 352
-#define SLASH 353
-#define STAR 354
-#define POW 355
-#define SHR 356
-#define SHL 357
-#define BANG 358
-#define NEG 359
-#define DECREMENT 360
-#define INCREMENT 361
-#define DOLLAR 362
+#define DIRECTIVE 300
+#define COLON 301
+#define FUNCDECL 302
+#define STATIC 303
+#define FORDOT 304
+#define LISTPAR 305
+#define LOOP 306
+#define OUTER_STRING 307
+#define CLOSEPAR 308
+#define OPENPAR 309
+#define CLOSESQUARE 310
+#define OPENSQUARE 311
+#define DOT 312
+#define ASSIGN_POW 313
+#define ASSIGN_SHL 314
+#define ASSIGN_SHR 315
+#define ASSIGN_BXOR 316
+#define ASSIGN_BOR 317
+#define ASSIGN_BAND 318
+#define ASSIGN_MOD 319
+#define ASSIGN_DIV 320
+#define ASSIGN_MUL 321
+#define ASSIGN_SUB 322
+#define ASSIGN_ADD 323
+#define ARROW 324
+#define FOR_STEP 325
+#define OP_TO 326
+#define COMMA 327
+#define QUESTION 328
+#define OR 329
+#define AND 330
+#define NOT 331
+#define LET 332
+#define LE 333
+#define GE 334
+#define LT 335
+#define GT 336
+#define NEQ 337
+#define EEQ 338
+#define OP_EQ 339
+#define OP_ASSIGN 340
+#define PROVIDES 341
+#define OP_NOTIN 342
+#define OP_IN 343
+#define HASNT 344
+#define HAS 345
+#define DIESIS 346
+#define ATSIGN 347
+#define CAP 348
+#define VBAR 349
+#define AMPER 350
+#define MINUS 351
+#define PLUS 352
+#define PERCENT 353
+#define SLASH 354
+#define STAR 355
+#define POW 356
+#define SHR 357
+#define SHL 358
+#define BANG 359
+#define NEG 360
+#define DECREMENT 361
+#define INCREMENT 362
+#define DOLLAR 363
 
 
 
 
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union
-#line 67 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+#line 66 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
 lex_value_t {
    Falcon::int64 integer;
    Falcon::numeric numeric;
@@ -273,7 +275,7 @@ lex_value_t {
    Falcon::SymbolList *fal_symlist;
 }
 /* Line 1489 of yacc.c.  */
-#line 277 "/home/gian/Progetti/falcon/core/engine/src_parser.h"
+#line 279 "/home/gian/Progetti/falcon/core/engine/src_parser.h"
 	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1

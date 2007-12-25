@@ -1306,6 +1306,15 @@ int SrcLexer::checkLimitedTokens()
             return FORFIRST;
       break;
 
+      case 9:
+         if ( m_string == "directive" )
+         {
+            // No assigments in directive.
+            m_firstEq = false;
+            return DIRECTIVE;
+         }
+      break;
+
       case 10:
          if ( m_string == "attributes" )
             return ATTRIBUTES;

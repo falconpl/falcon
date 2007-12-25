@@ -190,9 +190,7 @@ const int e_syn_give =             180;
 const int e_syn_def =              181;
 const int e_syn_fordot =           182;
 const int e_syn_self_print =       183;
-const int e_par_unbal =            184;
-const int e_square_unbal =         185;
-const int e_unclosed_string =      186;
+const int e_syn_directive =        184;
 
 const int e_nl_in_lit =            200;
 const int e_catch_adef =           201;
@@ -204,8 +202,11 @@ const int e_already_forall =       206;
 const int e_fordot_outside =       207;
 const int e_interrupted =          208;
 const int e_priv_access =          209;
-
-
+const int e_par_unbal =            210;
+const int e_square_unbal =         211;
+const int e_unclosed_string =      212;
+const int e_directive_unk =        213;
+const int e_directive_value =      214;
 
 const int e_open_file =            500;
 const int e_loaderror =            501;

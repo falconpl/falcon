@@ -32,6 +32,7 @@ Falcon (0.8.5)
   * bugfix: Lexer didn't recognize unclosed contexts at end of file.
   * major: Added dot-square array declaration, and better management of contexts
            /eol in array/list declarations.
+  * major: Added compiler directive support. Now "def" wokrs on directive.
 
 Falcon (0.8.4)
   * major: Old "lambda expressionss" are now "nameless functions". They are declared
