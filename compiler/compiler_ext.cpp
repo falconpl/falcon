@@ -187,6 +187,29 @@ FALCON_FUNC Compiler_loadModule( ::Falcon::VMachine *vm )
       internal_link( vm, mod, iface );
 }
 
+FALCON_FUNC Compiler_setDirective( ::Falcon::VMachine *vm )
+{
+   Item *i_directive = vm->param( 0 );
+   Item *i_value = vm->param( 1 );
+
+   if( i_directive == 0 || ! i_directive->isString() ||
+       i_value == 0 || ( ! i_value->isString() && ! i_value->isOrdinal() ) )
+   {
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).extra( "S,S|N" ) ) );
+      return;
+   }
+
+   CoreObject *self = vm->self().asObject();
+   CompilerIface *iface = static_cast<CompilerIface *>( self->getUserData() );
+   if ( i_value->isString() )
+      iface->loader().compiler().setDirective( *i_directive->asString(), *i_value->asString() );
+   else
+      iface->loader().compiler().setDirective( *i_directive->asString(), i_value->forceInteger() );
+
+   // in case of problems, an error is already raised.
+}
+
+
 //=========================================================
 // Module
 

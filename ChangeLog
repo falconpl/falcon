@@ -1,5 +1,6 @@
 Feathers (0.8.5)
   * Bugfix: Process crashed if initialized with a single string.
+  * Minor: Added setDirective() to compiler module.
 
 Feathers (0.8.4)
   * Fixed compilation and build settings with MINGW

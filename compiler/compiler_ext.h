@@ -37,6 +37,7 @@ FALCON_FUNC Compiler_init( ::Falcon::VMachine *vm );
 FALCON_FUNC Compiler_compile( ::Falcon::VMachine *vm );
 FALCON_FUNC Compiler_loadByName( ::Falcon::VMachine *vm );
 FALCON_FUNC Compiler_loadModule( ::Falcon::VMachine *vm );
+FALCON_FUNC Compiler_setDirective( ::Falcon::VMachine *vm );
 
 FALCON_FUNC Module_get( ::Falcon::VMachine *vm );
 FALCON_FUNC Module_set( ::Falcon::VMachine *vm );
