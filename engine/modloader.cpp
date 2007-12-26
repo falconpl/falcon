@@ -275,14 +275,20 @@ Module *ModuleLoader::loadFile( const String &module_path, t_filetype type, bool
 {
    String file_path;
 
-   if ( type == t_none )
+   if ( type == t_none || type == t_defaultSource )
    {
+      t_filetype t_orig = type;
+
       if ( scan )
          type = scanForFile( module_path, true, t_none, file_path, m_acceptSources );
       else {
          type = fileType( module_path );
          file_path = module_path;
       }
+
+      // if the type is unknown, should we default so source?
+      if ( type == t_none && t_orig == t_defaultSource )
+         type = t_source;
    }
 
    Module *mod;

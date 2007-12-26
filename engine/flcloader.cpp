@@ -111,6 +111,7 @@ Module *FlcLoader::loadSource( const String &file )
    }
 
 	// use the base load source routine
+	// ask for detection, but default to falcon source
 	Module *module = ModuleLoader::loadSource( file );
 
    // reset old forcing method

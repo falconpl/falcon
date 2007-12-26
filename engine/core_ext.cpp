@@ -2158,6 +2158,12 @@ static bool core_dolist_next ( ::Falcon::VMachine *vm )
    //if we called
    if ( vm->local(1)->asInteger() == 1 )
    {
+      // not true? -- exit
+      if ( ! vm->regA().isTrue() )
+      {
+         return false;
+      }
+
       // prepare for next loop
       *vm->local(1) = (int64)0;
       if ( vm->functionalEval( origin->at(count) ) )
@@ -2662,6 +2668,87 @@ FALCON_FUNC  core_cascade ( ::Falcon::VMachine *vm )
 }
 
 
+static bool core_floop_next ( ::Falcon::VMachine *vm )
+{
+   // Param 0: callables array
+   CoreArray *callables = vm->param(0)->asArray();
+   // local 0: counter (position)
+   uint32 count = (uint32) vm->local(0)->asInteger();
+
+   // next item.
+   ++count;
+
+   // still some loop to do
+   if ( vm->regA().isInteger() && vm->regA().isOob() )
+   {
+      if ( vm->regA().asInteger() == 0 )
+      {
+         // we're done.
+         vm->returnHandler( 0 ); // ensure we're not called after first loop
+         vm->retnil();
+         return false;
+      }
+      else if ( vm->regA().asInteger() == 1 )
+      {
+         // continue
+         count = 0;
+      }
+   }
+
+   if ( count >= callables->length() )
+   {
+      count = 0;
+   }
+
+   // save the count
+   *vm->local(0) = (int64) count;
+   // find a callable in the array
+   if ( ! vm->callFrame( (*callables)[count], 0 ) )
+   {
+      // set the item as A and recall ourself for evaluation
+      vm->regA() = (*callables)[count];
+      vm->recallFrame();
+      return true;
+   }
+
+   // else, just return true
+   return true;
+}
+
+
+FALCON_FUNC  core_floop ( ::Falcon::VMachine *vm )
+{
+   Item *i_callables = vm->param(0);
+
+   if( i_callables == 0 || !i_callables->isArray() )
+   {
+      vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).
+         extra( "A" ) ) );
+      return;
+   }
+
+   // for the first callable...
+   CoreArray *callables = i_callables->asArray();
+   if( callables->length() == 0 )
+   {
+      return;
+   }
+
+   // we have at least one callable.
+   // Prepare the local space
+   // 0: array counter
+   vm->addLocals(1);
+   vm->local(0)->setInteger( callables->length() );  // we'll start from 0 from the first loop
+
+   // install the handler
+   vm->returnHandler( core_floop_next );
+
+   // call it directly
+   vm->regA().setNil(); // zero to avoid false signals to next handler
+   vm->callFrameNow( core_floop_next );
+}
+
+
 FALCON_FUNC  core_oob( ::Falcon::VMachine *vm )
 {
    Item *obbed = vm->param(0);
@@ -3114,6 +3201,7 @@ Module * core_module_init()
    core->addExtFunc( "lit", Falcon::core::core_lit )->setEta( true );
    core->addExtFunc( "cascade", Falcon::core::core_cascade )->setEta( true );
    core->addExtFunc( "dolist", Falcon::core::core_dolist )->setEta( true );
+   core->addExtFunc( "floop", Falcon::core::core_floop )->setEta( true );
 
    // other functions
    core->addExtFunc( "min", Falcon::core::core_min );

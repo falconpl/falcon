@@ -1,7 +1,6 @@
 /*
    FALCON - The Falcon Programming Language.
    FILE: falcon.cpp
-   $Id: falcon.cpp,v 1.36 2007/08/19 07:25:53 jonnymind Exp $
 
    Falcon compiler and interpreter
    -------------------------------------------------------------------
@@ -736,12 +735,11 @@ int main( int argc, char *argv[] )
    // should we forcefully consider input as ftd?
    modLoader->compileTemplate( options.parse_ftd );
 
-   if ( options.assemble_only )
-      modLoader->sourceIsAssembly( true );
-
    // If we have to assemble or compile just a module...
    if ( options.assemble_only || options.compile_only )
    {
+      modLoader->sourceIsAssembly( true );
+
       // force not to save modules, we're saving it on our own
       modLoader->saveModules( false );
 
@@ -749,7 +747,7 @@ int main( int argc, char *argv[] )
       if ( options.input == "" || options.input == "-" )
          mod = modLoader->loadSource( stdIn );
       else
-         mod = modLoader->loadFile( options.input );
+         mod = modLoader->loadSource( options.input );
 
       // if we had a module, save it at the right place.
       if ( mod != 0 )
@@ -781,7 +779,7 @@ int main( int argc, char *argv[] )
    // the module loader has been already configured to to the job.
    if( options.input != "" && options.input != "-" )
    {
-      mainMod = modLoader->loadFile( options.input );
+      mainMod = modLoader->loadFile( options.input, FlcLoader::t_defaultSource );
    }
    else {
       if( options.run_only )

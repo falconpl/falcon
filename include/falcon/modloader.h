@@ -41,12 +41,26 @@ class Stream;
 class FALCON_DYN_CLASS ModuleLoader: public BaseAlloc
 {
 public:
+   /** File type enumeration.
+      The module loader tries to determine which type of file
+      the it is trying to load (or is told this information
+      by the loader user).
+   */
    typedef enum
    {
+      /** Undetermined / detect. */
       t_none,
+      /** The module is a source. */
       t_source,
+      /** The module is a falcon FAM module. */
       t_vmmod,
-      t_binmod
+      /** The module is a native .so/.dll. */
+      t_binmod,
+      /** Special file type.
+          Try to determine the type of the file,
+          but in case it cannot be determined, defaults to source.
+      */
+      t_defaultSource
    } t_filetype;
 
 private:

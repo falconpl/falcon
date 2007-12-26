@@ -1,4 +1,4 @@
-Falcon (0.8.5)
+Falcon (0.8.6)
   * bugfix: incorrect format of 0.x floating point numbers.
   * major: Completed attribute model.
   * major: Improved functinal support. Added lit() and choice().

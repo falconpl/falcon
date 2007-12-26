@@ -184,7 +184,7 @@ void write_operand( Stream *output, byte *instruction, int opnum, Module *mod )
                                  || opcode == P_JTRY || opcode == P_IFT || opcode == P_IFF
                                  || opcode == P_ONCE || opcode == P_TRAV || opcode == P_FORI
                                  || opcode == P_FORN || opcode == P_TRAN || opcode == P_SWCH ) ) ||
-               ( opnum == 2 && ( opcode == P_FORK || opcode == P_FORK ) )
+               ( opnum == 2 && ( opcode == P_FORK || opcode == P_TRAN ) )
                )
             {
                write_label( output, endianInt32( *((int32*) (instruction + offset ))) );
@@ -490,7 +490,7 @@ void disassembler( Module *module, Stream *out, const t_labelMap &labels, const 
       }
       out->writeString( "\t" );
 
-      char *csOpName;
+      const char *csOpName;
       switch( opcode )
       {
          case P_END : csOpName = "END "; break;
@@ -564,7 +564,8 @@ void disassembler( Module *module, Stream *out, const t_labelMap &labels, const 
          case P_TRAN: csOpName = "TRAN"; break;
          case P_UNPK: csOpName = "UNPK"; break;
          case P_UNPS: csOpName = "UNPS"; break;
-         case P_SWCH: if ( ! options.m_isomorphic ) csOpName = "SWCH"; break;
+         // when isomorphic, switch is created through directive
+         case P_SWCH: csOpName = options.m_isomorphic ? "" : "SWCH"; break;
          case P_HAS : csOpName = "HAS "; break;
          case P_HASN: csOpName = "HASN"; break;
          case P_GIVE: csOpName = "GIVE"; break;
@@ -597,7 +598,7 @@ void disassembler( Module *module, Stream *out, const t_labelMap &labels, const 
          case P_LDVR: csOpName = "LDVR"; break;
          case P_LDPR: csOpName = "LDPR"; break;
          case P_LSB : csOpName = "LSB "; break;
-         case P_SELE: if ( ! options.m_isomorphic ) csOpName = "SELE"; break;
+         case P_SELE: csOpName = options.m_isomorphic  ? "": "SELE"; break;
          case P_INDI: csOpName = "INDI"; break;
          case P_STEX: csOpName = "STEX"; break;
          case P_TRAC: csOpName = "TRAC"; break;
@@ -639,9 +640,9 @@ void disassembler( Module *module, Stream *out, const t_labelMap &labels, const 
          else
             out->writeString( ".select " );
 
-         write_operand( out, code, 1, module );
-         out->writeString( ", " );
          write_operand( out, code, 2, module );
+         out->writeString( ", " );
+         write_operand( out, code, 1, module );
          out->writeString( "\n" );
 
          uint32 advance = calc_next( code );
@@ -659,8 +660,8 @@ void disassembler( Module *module, Stream *out, const t_labelMap &labels, const 
          if ( *reinterpret_cast<int32 *>(code) != 0xffffffff )
          {
             if ( ! options.m_isomorphic )
-               out->writeString( "        " );
-            out->writeString( "\t.case NIL, " );
+               out->writeString( "\t\t" );
+            out->writeString( ".case NIL, " );
             write_label( out, endianInt32( *reinterpret_cast<int32 *>(code) ) );
             out->writeString( "\n" );
          }
@@ -671,8 +672,8 @@ void disassembler( Module *module, Stream *out, const t_labelMap &labels, const 
          while( sw_int > 0 )
          {
             if (! options.m_isomorphic )
-               out->writeString( "        " );
-            out->writeString( "\t.case " );
+               out->writeString( "\t\t" );
+            out->writeString( ".case " );
             String temp;
             temp.writeNumber( (int64)  endianInt64( *reinterpret_cast<int64 *>(code) ) );
             out->writeString( temp + ", " );
@@ -690,8 +691,8 @@ void disassembler( Module *module, Stream *out, const t_labelMap &labels, const 
          {
             if ( !options.m_isomorphic )
               if (! options.m_isomorphic )
-               out->writeString( "        " );
-            out->writeString( "\t.case " );
+               out->writeString( "\t\t" );
+            out->writeString( ".case " );
             String temp;
             temp.writeNumber(  (int64) endianInt32( *reinterpret_cast<int32 *>(code) ) );
             temp += ":";
@@ -710,8 +711,8 @@ void disassembler( Module *module, Stream *out, const t_labelMap &labels, const 
          while( sw_str > 0 )
          {
             if ( ! options.m_isomorphic )
-               out->writeString( "        " );
-            out->writeString( "\t.case " );
+               out->writeString( "\t\t" );
+            out->writeString( ".case " );
             write_string( out, endianInt32( *reinterpret_cast<int32 *>(code)), module );
             code += sizeof( int32 );
             iPos += sizeof( int32 );
@@ -727,9 +728,9 @@ void disassembler( Module *module, Stream *out, const t_labelMap &labels, const 
          while( sw_obj > 0 )
          {
             if ( !options.m_isomorphic )
-               out->writeString( "        " );
+               out->writeString( "\t\t" );
 
-            out->writeString( "\t.case " );
+            out->writeString( ".case " );
             int32 symId = endianInt32( *reinterpret_cast<int32 *>(code) );
             Symbol *sym = module->getSymbol( symId );
             if( sym == 0 )
@@ -751,7 +752,7 @@ void disassembler( Module *module, Stream *out, const t_labelMap &labels, const 
          }
 
          if ( !options.m_isomorphic )
-            out->writeString( "        " );
+            out->writeString( "\t" );
          out->writeString( ".endswitch\n\n" );
 
       }
@@ -974,7 +975,11 @@ void write_symtable( e_tabmode mode , Stream *out, const SymbolTable *st )
                case Symbol::tclass: out->writeString( ".class" ); break;
                case Symbol::tprop: out->writeString( ".prop" ); break;
                case Symbol::tvar: out->writeString( ".propdef" ); break;
-               case Symbol::tinst: out->writeString( ".inst" ); break;
+               case Symbol::tinst:
+                  out->writeString( ".instance $" );
+                  out->writeString( sym->getInstance()->name() );
+                  break;
+               case Symbol::tattribute: out->writeString( ".attrib" ); break;
             }
             out->writeString( " " + sym->name() );
             if( sym->declaredAt() != 0 ) {
