@@ -56,11 +56,18 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    // create the base class DBIRecordset for falcon
    Falcon::Symbol *rec_class = self->addClass( "%DBIRecordset" ); // private class
    self->addClassMethod( rec_class, "next", Falcon::Ext::DBIRecordset_next );
-   self->addClassMethod( rec_class, "fetch", Falcon::Ext::DBIRecordset_fetch );
-   self->addClassMethod( rec_class, "fetchColumns", Falcon::Ext::DBIRecordset_fetchColumns );
-   self->addClassMethod( rec_class, "fetchRowCount", Falcon::Ext::DBIRecordset_fetchRowCount );
-   self->addClassMethod( rec_class, "fetchColumnCount", Falcon::Ext::DBIRecordset_fetchColumnCount );
+   self->addClassMethod( rec_class, "fetchArray", Falcon::Ext::DBIRecordset_fetchArray );
+   self->addClassMethod( rec_class, "fetchDict", Falcon::Ext::DBIRecordset_fetchDict );
+   self->addClassMethod( rec_class, "asString", Falcon::Ext::DBIRecordset_asString );
+   self->addClassMethod( rec_class, "asInteger", Falcon::Ext::DBIRecordset_asInteger );
+   self->addClassMethod( rec_class, "asInteger64", Falcon::Ext::DBIRecordset_asInteger64 );
+   self->addClassMethod( rec_class, "asNumeric", Falcon::Ext::DBIRecordset_asNumeric );
+   self->addClassMethod( rec_class, "getRowCount", Falcon::Ext::DBIRecordset_getRowCount );
+   self->addClassMethod( rec_class, "getColumnCount", Falcon::Ext::DBIRecordset_getColumnCount );
+   self->addClassMethod( rec_class, "getColumnTypes", Falcon::Ext::DBIRecordset_getColumnTypes );
+   self->addClassMethod( rec_class, "getColumnNames", Falcon::Ext::DBIRecordset_getColumnNames );
    self->addClassMethod( rec_class, "getLastError", Falcon::Ext::DBIRecordset_getLastError );
+   self->addClassMethod( rec_class, "close", Falcon::Ext::DBIRecordset_close );
    
    // service pubblication
    self->publishService( &theDBIService );

@@ -23,6 +23,50 @@
 #include <falcon/engine.h>
 #include "pgsql.h"
 
+#define PG_TYPE_BOOL                    16
+#define PG_TYPE_BYTEA                   17
+#define PG_TYPE_CHAR                    18
+#define PG_TYPE_NAME                    19
+#define PG_TYPE_INT8                    20
+#define PG_TYPE_INT2                    21
+#define PG_TYPE_INT2VECTOR              22
+#define PG_TYPE_INT4                    23
+#define PG_TYPE_REGPROC                 24
+#define PG_TYPE_TEXT                    25
+#define PG_TYPE_OID                     26
+#define PG_TYPE_TID                     27
+#define PG_TYPE_XID                     28
+#define PG_TYPE_CID                     29
+#define PG_TYPE_OIDVECTOR               30
+#define PG_TYPE_SET                     32
+#define PG_TYPE_CHAR2                   409
+#define PG_TYPE_CHAR4                   410
+#define PG_TYPE_CHAR8                   411
+#define PG_TYPE_POINT                   600
+#define PG_TYPE_LSEG                    601
+#define PG_TYPE_PATH                    602
+#define PG_TYPE_BOX                     603
+#define PG_TYPE_POLYGON                 604
+#define PG_TYPE_FILENAME                605
+#define PG_TYPE_FLOAT4                  700
+#define PG_TYPE_FLOAT8                  701
+#define PG_TYPE_ABSTIME                 702
+#define PG_TYPE_RELTIME                 703
+#define PG_TYPE_TINTERVAL               704
+#define PG_TYPE_UNKNOWN                 705
+#define PG_TYPE_MONEY                   790
+#define PG_TYPE_OIDINT2                 810
+#define PG_TYPE_OIDINT4                 910
+#define PG_TYPE_OIDNAME                 911
+#define PG_TYPE_BPCHAR                  1042
+#define PG_TYPE_VARCHAR                 1043
+#define PG_TYPE_DATE                    1082
+#define PG_TYPE_TIME                    1083  /* w/o timezone */
+#define PG_TYPE_TIMETZ                  1266  /* with timezone */
+#define PG_TYPE_TIMESTAMP               1114  /* w/o timezone */
+#define PG_TYPE_TIMESTAMPTZ             1184  /* with timezone */
+#define PG_TYPE_NUMERIC                 1700
+
 namespace Falcon
 {
 
@@ -48,6 +92,28 @@ DBIRecordsetPgSQL::~DBIRecordsetPgSQL()
    }
 }
 
+dbi_type DBIRecordsetPgSQL::getFalconType( Oid pgType )
+{
+   switch ( pgType )
+   {
+   case PG_TYPE_BOOL:
+   case PG_TYPE_INT2:
+      return dbit_integer;
+      
+   case PG_TYPE_INT4: // TODO: are these right?
+   case PG_TYPE_INT8:
+      return dbit_integer64;
+      
+   case PG_TYPE_FLOAT4:
+   case PG_TYPE_FLOAT8:
+   case PG_TYPE_NUMERIC:
+      return dbit_numeric;
+      
+   default:
+      return dbit_string;
+   }
+}
+
 DBIRecordset::dbr_status DBIRecordsetPgSQL::next()
 {
    m_row++;
@@ -60,12 +126,12 @@ DBIRecordset::dbr_status DBIRecordsetPgSQL::next()
    return s_ok;
 }
 
-DBIRecordset::dbr_status DBIRecordsetPgSQL::fetch( CoreArray *resultCache )
+int DBIRecordsetPgSQL::getColumnCount()
 {
-   return s_ok;
+   return m_columnCount;
 }
 
-DBIRecordset::dbr_status DBIRecordsetPgSQL::fetchColumns( CoreArray *resultCache )
+DBIRecordset::dbr_status DBIRecordsetPgSQL::getColumnNames( CoreArray *resultCache )
 {
    for ( int cIdx = 0; cIdx < m_columnCount; cIdx++ )
    {
@@ -80,14 +146,111 @@ DBIRecordset::dbr_status DBIRecordsetPgSQL::fetchColumns( CoreArray *resultCache
    return s_ok;
 }
 
-int DBIRecordsetPgSQL::fetchRowCount()
+DBIRecordset::dbr_status DBIRecordsetPgSQL::getColumnTypes( CoreArray *resultCache )
 {
-   return m_rowCount;
+   for ( int cIdx = 0; cIdx < m_columnCount; cIdx++ )
+   {
+      dbi_type typ = getFalconType( PQftype( m_res, cIdx ) );
+      Item *i = new Item( (int64) typ );
+      
+      resultCache->append( *i );
+   }
+   
+   return s_ok;
 }
 
-int DBIRecordsetPgSQL::fetchColumnCount()
+DBIRecordset::dbr_status DBIRecordsetPgSQL::asString( const int columnIndex, String &value )
 {
-   return m_columnCount;
+   if ( columnIndex >= m_columnCount )
+   {
+      return s_column_range_error;
+   }
+   else if ( m_res == NULL )
+   {
+      return s_invalid_record_handle;
+   }
+   else if ( PQgetisnull( m_res, m_row, columnIndex ) == 1 )
+   {
+      return s_nil_value;
+   }
+   
+   const char *v = PQgetvalue( m_res, m_row, columnIndex );
+   
+   value = String( v, (int32) strlen( v ) );
+   
+   return s_ok;
+}
+
+DBIRecordset::dbr_status DBIRecordsetPgSQL::asInteger( const int columnIndex, int32 &value )
+{
+   if ( columnIndex >= m_columnCount )
+   {
+      return s_column_range_error;
+   }
+   else if ( m_res == NULL )
+   {
+      return s_invalid_record_handle;
+   }
+   else if ( PQgetisnull( m_res, m_row, columnIndex ) == 1 )
+   {
+      return s_nil_value;
+   }
+   
+   const char *v = PQgetvalue( m_res, m_row, columnIndex );
+   
+   value = atoi( v );
+   
+   return s_ok;
+}
+
+DBIRecordset::dbr_status DBIRecordsetPgSQL::asInteger64( const int columnIndex, int64 &value )
+{
+   if ( columnIndex >= m_columnCount )
+   {
+      return s_column_range_error;
+   }
+   else if ( m_res == NULL )
+   {
+      return s_invalid_record_handle;
+   }
+   else if ( PQgetisnull( m_res, m_row, columnIndex ) == 1 )
+   {
+      return s_nil_value;
+   }
+   
+   const char *v = PQgetvalue( m_res, m_row, columnIndex );
+   
+   // TODO: is this conversion correct?
+   value = atoll( v );
+   
+   return s_ok;
+}
+
+DBIRecordset::dbr_status DBIRecordsetPgSQL::asNumeric( const int columnIndex, numeric &value )
+{
+   if ( columnIndex >= m_columnCount )
+   {
+      return s_column_range_error;
+   }
+   else if ( m_res == NULL )
+   {
+      return s_invalid_record_handle;
+   }
+   else if ( PQgetisnull( m_res, m_row, columnIndex ) == 1 )
+   {
+      return s_nil_value;
+   }
+   
+   const char *v = PQgetvalue( m_res, m_row, columnIndex );
+   
+   value = atof( v );
+   
+   return s_ok;
+}
+
+int DBIRecordsetPgSQL::getRowCount()
+{
+   return m_rowCount;
 }
 
 void DBIRecordsetPgSQL::close()

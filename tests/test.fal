@@ -1,0 +1,55 @@
+load dbi
+
+dbh = DBIConnect( "pgsql" )
+inspect(dbh)
+
+> "Create table status: ", dbh.execute( "CREATE TABLE names (name VARCHAR(45), age integer)" )
+> "      Insert status: ", dbh.execute( "INSERT INTO names VALUES ('John', 20)" )
+> "      Insert status: ", dbh.execute( "INSERT INTO names VALUES ('Jane', 21)" )
+> "      Insert status: ", dbh.execute( "INSERT INTO names VALUES ('Jim', 22)" )
+
+>
+> "Performing a query"
+rs = dbh.query( "SELECT name, age FROM names" )
+> "Column count: ", rs.getColumnCount()
+> "   Row count: ", rs.getRowCount()
+inspect( rs )
+
+> "Columns: "
+for c in rs.getColumnNames()
+> "   ", c
+end
+
+> "Rows: "
+while rs.next() == 0
+> rs.asString( 0 ), ", ", rs.asInteger( 1 )
+end
+
+rs.close()
+
+> "Query fetching arrays: "
+rs = dbh.query( "SELECT name, age FROM names" )
+
+while (let p = rs.fetchArray())
+    inspect( p )
+end
+
+rs.close()
+
+/*
+> "Query fetching dict: "
+rs = dbh.query( "SELECT name, age FROM names" )
+
+while (let p = rs.fetchDict())
+    inspect( p )
+end
+
+rs.close()
+*/
+
+> "Updating database"
+> "Update mass status: ", dbh.execute( "UPDATE names SET name='Jeff'" )
+> " Drop table status: ", dbh.execute( "DROP TABLE names" )
+
+dbh.close()
+

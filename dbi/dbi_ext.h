@@ -42,11 +42,18 @@ FALCON_FUNC DBITransaction_execute( VMachine *vm );
 FALCON_FUNC DBITransaction_close( VMachine *vm );
 
 FALCON_FUNC DBIRecordset_next( VMachine *vm );
-FALCON_FUNC DBIRecordset_fetch( VMachine *vm );
-FALCON_FUNC DBIRecordset_fetchColumns( VMachine *vm );
-FALCON_FUNC DBIRecordset_fetchRowCount( VMachine *vm );
-FALCON_FUNC DBIRecordset_fetchColumnCount( VMachine *vm );
+FALCON_FUNC DBIRecordset_fetchArray( VMachine *vm );
+FALCON_FUNC DBIRecordset_fetchDict( VMachine *vm );
+FALCON_FUNC DBIRecordset_getRowCount( VMachine *vm );
+FALCON_FUNC DBIRecordset_getColumnCount( VMachine *vm );
+FALCON_FUNC DBIRecordset_getColumnNames( VMachine *vm );
+FALCON_FUNC DBIRecordset_getColumnTypes( VMachine *vm );
+FALCON_FUNC DBIRecordset_asString( VMachine *vm );
+FALCON_FUNC DBIRecordset_asInteger( VMachine *vm );
+FALCON_FUNC DBIRecordset_asInteger64( VMachine *vm );
+FALCON_FUNC DBIRecordset_asNumeric( VMachine *vm );
 FALCON_FUNC DBIRecordset_getLastError( VMachine *vm );
+FALCON_FUNC DBIRecordset_close( VMachine *vm );
 
 }
 }

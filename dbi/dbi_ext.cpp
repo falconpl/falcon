@@ -211,45 +211,418 @@ FALCON_FUNC DBITransaction_close( VMachine *vm )
 FALCON_FUNC DBIRecordset_next( VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
-   DBIRecordset *dbr = static_cast<DBIRecordset *>( self->getUserData() );
+   DBIRecordset *dbr = static_cast<DBIRecordset *>( self->getUserData() );   
    
    vm->retval( dbr->next() );
 }
 
-FALCON_FUNC DBIRecordset_fetch( VMachine *vm )
+FALCON_FUNC DBIRecordset_fetchArray( VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
    DBIRecordset *dbr = static_cast<DBIRecordset *>( self->getUserData() );
    
-   vm->retval( 0 );
-}
-
-FALCON_FUNC DBIRecordset_fetchColumns( VMachine *vm )
-{
-   CoreObject *self = vm->self().asObject();
-   DBIRecordset *dbr = static_cast<DBIRecordset *>( self->getUserData() );
+   DBIRecordset::dbr_status nextRetVal = dbr->next();   
+   switch ( nextRetVal )
+   {
+   case DBIRecordset::s_ok:
+      break;
+      
+   case DBIRecordset::s_eof:
+      vm->retnil();
+      return ;
+      
+   default:
+      // TODO: Handle error
+      break;
+   }
    
-   CoreArray *ary = new CoreArray( vm, dbr->fetchColumnCount() );
-   DBIRecordset::dbr_status retval;
-   dbr->fetchColumns( ary );
+   int cCount = dbr->getColumnCount();
+   CoreArray *ary = new CoreArray( vm, cCount );
+   CoreArray *cTypes = new CoreArray( vm, cCount );
+   dbr->getColumnTypes( cTypes );
+   
+   for ( int cIdx = 0; cIdx < cCount; cIdx++ )
+   {
+      DBIRecordset::dbr_status retval;
+      Item *i;
+      
+      switch ( cTypes->at( cIdx ).asInteger() )
+      {
+      case dbit_string:
+         {
+            // TODO: Am I handling memory correctly?
+            String *value = new String();            
+            retval = dbr->asString( cIdx, *value );
+            
+            if ( retval == DBIRecordset::s_nil_value )
+            {
+               delete value;
+               
+               i = new Item();
+               ary->append( *i );
+            }
+            else if ( retval == DBIRecordset::s_ok )
+            {
+               i = new Item( value );
+               ary->append( *i );
+            }
+            else
+            {
+               delete value;
+               
+               // TODO: handle error
+            }
+         }
+         break;
+         
+      case dbit_integer:
+         {
+            int32 value;
+            retval = dbr->asInteger( cIdx, value );
+            
+            if ( retval == DBIRecordset::s_nil_value )
+            {
+               i = new Item();
+               ary->append( *i );
+            }
+            else
+            {
+               // TODO: Is this right?
+               i = new Item( (int64) value );
+               ary->append( *i );
+            }
+         }
+         break;
+         
+      case dbit_integer64:
+         {
+            int64 value;
+            retval = dbr->asInteger64( cIdx, value );
+            
+            if ( retval == DBIRecordset::s_nil_value )
+            {
+               i = new Item();
+               ary->append( *i );
+            }
+            else
+            {
+               i = new Item( (int64) value );
+               ary->append( *i );
+            }
+         }
+         break;
+         
+      case dbit_numeric:
+         {
+            numeric value;
+            retval = dbr->asNumeric( cIdx, value );
+            
+            if ( retval == DBIRecordset::s_nil_value )
+            {
+               i = new Item();
+               ary->append( *i );
+            }
+            else
+            {
+               i = new Item( (numeric) value );
+               ary->append( *i );
+            }
+         }
+         break;
+      }
+   }
+   
+   delete cTypes;
    
    vm->retval( ary );
 }
 
-FALCON_FUNC DBIRecordset_fetchRowCount( VMachine *vm )
+FALCON_FUNC DBIRecordset_fetchDict( VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
    DBIRecordset *dbr = static_cast<DBIRecordset *>( self->getUserData() );
    
-   vm->retval( dbr->fetchRowCount() );
+   DBIRecordset::dbr_status nextRetVal = dbr->next();   
+   switch ( nextRetVal )
+   {
+   case DBIRecordset::s_ok:
+      break;
+      
+   case DBIRecordset::s_eof:
+      vm->retnil();
+      return ;
+      
+   default:
+      // TODO: Handle error
+      break;
+   }
+   
+   int cCount = dbr->getColumnCount();
+   CoreDict *dict = new PageDict( vm, cCount );
+   CoreArray *cTypes = new CoreArray( vm, cCount );
+   CoreArray *cNames = new CoreArray( vm, cCount );
+   dbr->getColumnTypes( cTypes );
+   
+   for ( int cIdx = 0; cIdx < cCount; cIdx++ )
+   {
+      DBIRecordset::dbr_status retval;
+      Item *i;
+      Item *name = new Item( cNames->at( cIdx ) );
+      
+      switch ( cTypes->at( cIdx ).asInteger() )
+      {
+      case dbit_string:
+         {
+            // TODO: Am I handling memory correctly?
+            String *value = new String();            
+            retval = dbr->asString( cIdx, *value );
+            
+            if ( retval == DBIRecordset::s_nil_value )
+            {
+               delete value;
+               
+               i = new Item();
+               dict->insert( *name, *i );
+            }
+            else if ( retval == DBIRecordset::s_ok )
+            {
+               i = new Item( value );
+               dict->insert( *name, *i );
+            }
+            else
+            {
+               delete value;
+               
+               // TODO: handle error
+            }
+         }
+         break;
+         
+      case dbit_integer:
+         {
+            int32 value;
+            retval = dbr->asInteger( cIdx, value );
+            
+            if ( retval == DBIRecordset::s_nil_value )
+            {
+               i = new Item();
+               dict->insert( *name, *i );
+            }
+            else
+            {
+               // TODO: Is this right?
+               i = new Item( (int64) value );
+               dict->insert( *name, *i );
+            }
+         }
+         break;
+         
+      case dbit_integer64:
+         {
+            int64 value;
+            retval = dbr->asInteger64( cIdx, value );
+            
+            if ( retval == DBIRecordset::s_nil_value )
+            {
+               i = new Item();
+               dict->insert( *name, *i );
+            }
+            else
+            {
+               i = new Item( (int64) value );
+               dict->insert( *name, *i );
+            }
+         }
+         break;
+         
+      case dbit_numeric:
+         {
+            numeric value;
+            retval = dbr->asNumeric( cIdx, value );
+            
+            if ( retval == DBIRecordset::s_nil_value )
+            {
+               i = new Item();
+               dict->insert( *name, *i );
+            }
+            else
+            {
+               i = new Item( (numeric) value );
+               dict->insert( *name, *i );
+            }
+         }
+         break;
+      }
+   }
+   
+   delete cTypes;
+   delete cNames;
+   
+   vm->retval( dict );
 }
 
-FALCON_FUNC DBIRecordset_fetchColumnCount( VMachine *vm )
+FALCON_FUNC DBIRecordset_getRowCount( VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
    DBIRecordset *dbr = static_cast<DBIRecordset *>( self->getUserData() );
    
-   vm->retval( dbr->fetchColumnCount() );
+   vm->retval( dbr->getRowCount() );
+}
+
+FALCON_FUNC DBIRecordset_getColumnTypes( VMachine *vm )
+{
+   CoreObject *self = vm->self().asObject();
+   DBIRecordset *dbr = static_cast<DBIRecordset *>( self->getUserData() );
+   
+   CoreArray *ary = new CoreArray( vm, dbr->getColumnCount() );
+   DBIRecordset::dbr_status retval;
+   dbr->getColumnTypes( ary );
+   
+   vm->retval( ary );
+}   
+
+FALCON_FUNC DBIRecordset_getColumnNames( VMachine *vm )
+{
+   CoreObject *self = vm->self().asObject();
+   DBIRecordset *dbr = static_cast<DBIRecordset *>( self->getUserData() );
+   
+   CoreArray *ary = new CoreArray( vm, dbr->getColumnCount() );
+   DBIRecordset::dbr_status retval;
+   dbr->getColumnNames( ary );
+   
+   vm->retval( ary );
+}
+
+FALCON_FUNC DBIRecordset_getColumnCount( VMachine *vm )
+{
+   CoreObject *self = vm->self().asObject();
+   DBIRecordset *dbr = static_cast<DBIRecordset *>( self->getUserData() );
+   
+   vm->retval( dbr->getColumnCount() );
+}
+
+FALCON_FUNC DBIRecordset_asString( VMachine *vm )
+{
+   CoreObject *self = vm->self().asObject();
+   DBIRecordset *dbr = static_cast<DBIRecordset *>( self->getUserData() );
+   
+   Item *columnIndexI = vm->param( 0 );
+   if ( columnIndexI == 0 || ! columnIndexI->isInteger() )
+   {
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                                         .origin( e_orig_runtime ) ) );
+      return;
+   }
+   
+   String value;
+   DBIRecordset::dbr_status retval = dbr->asString( columnIndexI->asInteger(), value );
+   
+   if ( retval == DBIRecordset::s_nil_value )
+   {
+      vm->retnil();
+   }
+   else if ( retval != DBIRecordset::s_ok )
+   {
+      // TODO: handle the error
+      vm->retnil ();
+   }
+   else
+   {
+      vm->retval( value );
+   }
+}
+
+FALCON_FUNC DBIRecordset_asInteger( VMachine *vm )
+{
+   CoreObject *self = vm->self().asObject();
+   DBIRecordset *dbr = static_cast<DBIRecordset *>( self->getUserData() );
+   
+   Item *columnIndexI = vm->param( 0 );
+   if ( columnIndexI == 0 || ! columnIndexI->isInteger() )
+   {
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                                         .origin( e_orig_runtime ) ) );
+      return;
+   }
+   
+   int32 value;
+   DBIRecordset::dbr_status retval = dbr->asInteger( columnIndexI->asInteger(), value );
+   
+   if ( retval == DBIRecordset::s_nil_value )
+   {
+      vm->retnil();
+   }
+   else if ( retval != DBIRecordset::s_ok )
+   {
+      // TODO: handle the error
+      vm->retnil ();
+   }
+   else
+   {
+      vm->retval( value );
+   }
+}
+
+FALCON_FUNC DBIRecordset_asInteger64( VMachine *vm )
+{
+   CoreObject *self = vm->self().asObject();
+   DBIRecordset *dbr = static_cast<DBIRecordset *>( self->getUserData() );
+   
+   Item *columnIndexI = vm->param( 0 );
+   if ( columnIndexI == 0 || ! columnIndexI->isInteger() )
+   {
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                                         .origin( e_orig_runtime ) ) );
+      return;
+   }
+   
+   int64 value;
+   DBIRecordset::dbr_status retval = dbr->asInteger64( columnIndexI->asInteger(), value );
+   
+   if ( retval == DBIRecordset::s_nil_value )
+   {
+      vm->retnil();
+   }
+   else if ( retval != DBIRecordset::s_ok )
+   {
+      // TODO: handle the error
+      vm->retnil ();
+   }
+   else
+   {
+      vm->retval( value );
+   }
+}
+
+FALCON_FUNC DBIRecordset_asNumeric( VMachine *vm )
+{
+   CoreObject *self = vm->self().asObject();
+   DBIRecordset *dbr = static_cast<DBIRecordset *>( self->getUserData() );
+   
+   Item *columnIndexI = vm->param( 0 );
+   if ( columnIndexI == 0 || ! columnIndexI->isInteger() )
+   {
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                                         .origin( e_orig_runtime ) ) );
+      return;
+   }
+   
+   numeric value;
+   DBIRecordset::dbr_status retval = dbr->asNumeric( columnIndexI->asInteger(), value );
+   
+   if ( retval == DBIRecordset::s_nil_value )
+   {
+      vm->retnil();
+   }
+   else if ( retval != DBIRecordset::s_ok )
+   {
+      // TODO: handle the error
+      vm->retnil ();
+   }
+   else
+   {
+      vm->retval( value );
+   }
 }
 
 FALCON_FUNC DBIRecordset_getLastError( VMachine *vm )
@@ -258,6 +631,14 @@ FALCON_FUNC DBIRecordset_getLastError( VMachine *vm )
    DBIRecordset *dbr = static_cast<DBIRecordset *>( self->getUserData() );
    
    vm->retval( 0 );
+}
+
+FALCON_FUNC DBIRecordset_close( VMachine *vm )
+{
+   CoreObject *self = vm->self().asObject();
+   DBIRecordset *dbr = static_cast<DBIRecordset *>( self->getUserData() );
+   
+   dbr->close();
 }
 
 }

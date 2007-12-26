@@ -37,15 +37,21 @@ protected:
    
    PGresult *m_res;
    
+   static dbi_type getFalconType( Oid pgType );
+   
 public:
    DBIRecordsetPgSQL( DBIHandle *dbh, PGresult *res );
    ~DBIRecordsetPgSQL();
    
    virtual dbr_status next();
-   virtual dbr_status fetch( CoreArray *resultCache );
-   virtual dbr_status fetchColumns( CoreArray *resultCache );
-   virtual int fetchRowCount();
-   virtual int fetchColumnCount();
+   virtual int getRowCount();
+   virtual int getColumnCount();
+   virtual dbr_status getColumnNames( CoreArray *resultCache );
+   virtual dbr_status getColumnTypes( CoreArray *resultCache );
+   virtual dbr_status asString( const int columnIndex, String &value );
+   virtual dbr_status asInteger( const int columnIndex, int32 &value );
+   virtual dbr_status asInteger64( const int columnIndex, int64 &value );
+   virtual dbr_status asNumeric( const int columnIndex, numeric &value );
    virtual void close();
    virtual dbr_status getLastError( String &description );
 };
