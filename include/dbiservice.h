@@ -61,6 +61,8 @@ public:
    }
    dbr_status;
    
+   DBIRecordset( DBIHandle *dbh ) { m_dbh = dbh; }
+   
    /** Move to the next record
     * \return s_ok on success, s_eof on end of file reached or other dbr_status error code
     */
@@ -113,6 +115,18 @@ public:
       
       /** not implemented by dbi driver */
       s_not_implemented,
+      
+      /** memory could not be allocated for result */
+      s_memory_allocation_error,
+      
+      /** an error has occurred executing the query */
+      s_execute_error,
+      
+      /** an error has occurred processing the query */
+      s_query_error,
+      
+      /** no results for a query */
+      s_no_results,
       
       s_error
    }
@@ -222,7 +236,7 @@ public:
     * \param retval result of operation
     * \return DBIRecordset to access the record information
     */
-   virtual DBIRecordset *query( const String &sql, dbh_status &retval )=0;
+   virtual DBIRecordset *query( const String &sql, DBITransaction::dbt_status &retval )=0;
    
    /**
     * Perform a SQL query that has no results.
@@ -231,8 +245,7 @@ public:
     * \param retval result of operation
     * \return number of records affected
     */
-   virtual int execute( const String &sql, dbh_status &retval )=0;
-
+   virtual int execute( const String &sql, DBITransaction::dbt_status &retval )=0;
 
    /** 
     * Returns last error and its description.

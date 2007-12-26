@@ -31,9 +31,16 @@ namespace Falcon
 class DBIRecordsetPgSQL : public DBIRecordset
 {
 protected:
+   int m_row;
+   int m_rowCount;
+   int m_columnCount;
+   
    PGresult *m_res;
    
 public:
+   DBIRecordsetPgSQL( DBIHandle *dbh, PGresult *res );
+   ~DBIRecordsetPgSQL();
+   
    virtual dbr_status next();
    virtual dbr_status fetch( CoreArray *resultCache );
    virtual dbr_status fetchColumns( CoreArray *resultCache );
@@ -72,10 +79,12 @@ public:
    DBIHandlePgSQL( PGconn *conn );
    virtual ~DBIHandlePgSQL() {}
    
+   PGconn *getPGconn() { return m_conn; }
+   
    DBITransaction *startTransaction();
    dbh_status closeTransaction( DBITransaction *tr );
-   DBIRecordset *query( const String &sql, dbh_status &retval );
-   int execute( const String &sql, dbh_status &retval );
+   DBIRecordset *query( const String &sql, DBITransaction::dbt_status &retval );
+   int execute( const String &sql, DBITransaction::dbt_status &retval );
    virtual dbh_status getLastError( String &description );
    virtual dbh_status close();
 };
