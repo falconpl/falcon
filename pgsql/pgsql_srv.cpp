@@ -80,6 +80,12 @@ DBIRecordset *DBITransactionPgSQL::query( const String &query, dbt_status &retva
    return NULL;
 }
 
+int DBITransactionPgSQL::execute( const String &query, dbt_status &retval )
+{
+   retval = s_not_implemented;
+   return 0;
+}
+
 DBITransaction::dbt_status DBITransactionPgSQL::begin()
 {
    m_inTransaction = true;
@@ -157,6 +163,20 @@ DBIHandlePgSQL::dbh_status DBIHandlePgSQL::closeTransaction( DBITransaction *tr 
    return s_ok;
 }
 
+DBIRecordset *DBIHandlePgSQL::query( const String &sql, DBIHandle::dbh_status &retval )
+{
+   retval = s_ok;
+   
+   return NULL;
+}
+
+int DBIHandlePgSQL::execute( const String &sql, DBIHandle::dbh_status &retval )
+{
+   retval = s_ok;
+   
+   return 0;
+}
+
 DBIHandlePgSQL::dbh_status DBIHandlePgSQL::getLastError( String &description )
 {
    return s_ok;
@@ -209,6 +229,7 @@ DBIHandle *DBIServicePgSQL::connect( const String &parameters, bool persistent,
    }
    
    retval = s_ok;
+   
    return new DBIHandlePgSQL( conn );
 }
 

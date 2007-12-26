@@ -97,6 +97,46 @@ FALCON_FUNC DBIHandle_startTransaction( VMachine *vm )
    vm->retval( oth );
 }
 
+FALCON_FUNC DBIHandle_query( VMachine *vm )
+{
+   CoreObject *self = vm->self().asObject();
+   DBIHandle *dbh = static_cast<DBIHandle *>( self->getUserData() );
+   
+   Item *sqlI = vm->param( 0 );
+   if ( sqlI == 0 || ! sqlI->isString() )
+   {
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                                         .origin( e_orig_runtime ) ) );
+      return;
+   }
+   
+   DBIHandle::dbh_status retval;
+   DBIRecordset *recSet = dbh->query( *sqlI->asString(), retval );
+   
+   if ( retval != DBIHandle::s_ok )
+   {
+      // TODO: supply the real error message
+      vm->raiseModError( new DBIError( ErrorParam( retval, __LINE__ )
+                                       .desc( "Error processing SQL" ) ) );
+      return;
+   }
+   
+   Item *rsclass = vm->findGlobalItem( "%DBIRecordset" );
+   fassert( rsclass != 0 && rsclass->isClass() );
+   
+   CoreObject *oth = rsclass->asClass()->createInstance();
+   oth->setUserData( recSet );
+   vm->retval( oth );
+}
+
+FALCON_FUNC DBIHandle_execute( VMachine *vm )
+{
+   CoreObject *self = vm->self().asObject();
+   DBIHandle *dbh = static_cast<DBIHandle *>( self->getUserData() );
+   
+   vm->retval( 0 );
+}
+
 FALCON_FUNC DBIHandle_close( VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
@@ -112,7 +152,7 @@ FALCON_FUNC DBIHandle_close( VMachine *vm )
 FALCON_FUNC DBITransaction_query( VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
-   DBITransaction *dbh = static_cast<DBITransaction *>( self->getUserData() );
+   DBITransaction *dbt = static_cast<DBITransaction *>( self->getUserData() );
 
    Item *i_query = vm->param(0);
    if( i_query == 0 || ! i_query->isString() )
@@ -122,7 +162,7 @@ FALCON_FUNC DBITransaction_query( VMachine *vm )
    }
    
    /*
-   if ( dbh->query( *i_query->asString() ) != DBITransaction::s_ok )
+   if ( dbt->query( *i_query->asString() ) != DBITransaction::s_ok )
    {
       // raise error
    }
@@ -131,7 +171,73 @@ FALCON_FUNC DBITransaction_query( VMachine *vm )
    vm->retval(0); // or anything you want to return
 }
 
+FALCON_FUNC DBITransaction_execute( VMachine *vm )
+{
+   CoreObject *self = vm->self().asObject();
+   DBITransaction *dbt = static_cast<DBITransaction *>( self->getUserData() );
 
+   vm->retval( 0 );
+}
+
+FALCON_FUNC DBITransaction_close( VMachine *vm )
+{
+   CoreObject *self = vm->self().asObject();
+   DBITransaction *dbt = static_cast<DBITransaction *>( self->getUserData() );
+
+   vm->retval( 0 );
+}
+
+/******************************************************************************
+ * Recordset class
+ *****************************************************************************/
+
+FALCON_FUNC DBIRecordset_next( VMachine *vm )
+{
+   CoreObject *self = vm->self().asObject();
+   DBIRecordset *dbr = static_cast<DBIRecordset *>( self->getUserData() );
+
+   vm->retval( 0 );
+}
+
+FALCON_FUNC DBIRecordset_fetch( VMachine *vm )
+{
+   CoreObject *self = vm->self().asObject();
+   DBIRecordset *dbr = static_cast<DBIRecordset *>( self->getUserData() );
+
+   vm->retval( 0 );
+}
+
+FALCON_FUNC DBIRecordset_fetchColumns( VMachine *vm )
+{
+   CoreObject *self = vm->self().asObject();
+   DBIRecordset *dbr = static_cast<DBIRecordset *>( self->getUserData() );
+
+   vm->retval( 0 );
+}
+
+FALCON_FUNC DBIRecordset_fetchRowCount( VMachine *vm )
+{
+   CoreObject *self = vm->self().asObject();
+   DBIRecordset *dbr = static_cast<DBIRecordset *>( self->getUserData() );
+
+   vm->retval( 0 );
+}
+
+FALCON_FUNC DBIRecordset_fetchColumnCount( VMachine *vm )
+{
+   CoreObject *self = vm->self().asObject();
+   DBIRecordset *dbr = static_cast<DBIRecordset *>( self->getUserData() );
+
+   vm->retval( 0 );
+}
+
+FALCON_FUNC DBIRecordset_getLastError( VMachine *vm )
+{
+   CoreObject *self = vm->self().asObject();
+   DBIRecordset *dbr = static_cast<DBIRecordset *>( self->getUserData() );
+
+   vm->retval( 0 );
+}
 
 }
 }

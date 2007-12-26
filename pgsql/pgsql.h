@@ -74,6 +74,8 @@ public:
    
    DBITransaction *startTransaction();
    dbh_status closeTransaction( DBITransaction *tr );
+   DBIRecordset *query( const String &sql, dbh_status &retval );
+   int execute( const String &sql, dbh_status &retval );
    virtual dbh_status getLastError( String &description );
    virtual dbh_status close();
 };
