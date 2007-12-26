@@ -1,0 +1,28 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 72a
+* Category: functional
+* Subcategory: constructs
+* Short: floop
+* Description:
+*   Checks the floop construct. This loop may eiter crash, loop
+*   forever or succeed.
+* [/Description]
+*
+****************************************************************************/
+
+i=0
+sum = 0
+.[floop .[
+  .[lambda x=>let x = x+1  $i]         // increase i
+  .[iff .[lambda x=>x==5 $i] oob(1) ]  // continue if i == 5
+  .[lambda x,y=>let x = x + y $sum $i] // sum every number
+  .[iff .[lambda x=>x>=10 $i] oob(0) ] // break if i >= 10
+]]()
+
+// check against sum of first 10 numbers minus 5
+if sum != 1+2+3+4+6+7+8+9+10: failure( "test" )
+success()
+
+/* End of file */

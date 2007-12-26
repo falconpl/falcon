@@ -24,6 +24,7 @@ function test( a )
    else
       negative ++
    end
+   return true
 end
 
 reset()

@@ -1,0 +1,26 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 71c
+* Category: functional
+* Subcategory: constructs
+* Short: dolist break
+* Description:
+*   Check limited dolist when returning false from test.
+* [/Description]
+*
+****************************************************************************/
+
+value = 0
+function test( a )
+   global value
+   value += a
+   if a > 3: return false
+   return true
+end
+
+dolist( test, [1,2,3,4,5,6] )
+if value != 10: failure( "not interrupted" )
+success()
+
+/* End of file */
