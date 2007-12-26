@@ -1,4 +1,17 @@
 
-                       RELNOTES for Falcon 0.8.5
+                       RELNOTES for Falcon 0.8.6
 
-<TODO>
+   This version of Falcon comes with a brand new functional support
+and with new Message Oriented programming constructs.
+
+   Although stable, this features may be reshaped and refitted as 
+they are relatively new.
+
+   This version comes with a brand new "Showdown" guide introducing
+the most intriguing features of the language at grammar level. The
+guide can be downloaded at Falcon Site
+
+    http://www.falconpl.org
+
+under the "documentation" section.
+
