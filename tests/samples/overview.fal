@@ -27,9 +27,16 @@ Dict[2]{
 */
 
 rset = dbh.query( "SELECT name, age FROM people" )
-while ( let person = rset.fetchNext() )
-   > person["name"], " ", person[0]
-   > person["age"], " ", person[1]
+while ( let person = rset.fetchArray() )
+   > person[0]
+   > person[1]
+end
+rset.close()
+
+rset = dbh.query( "SELECT name, age FROM people" )
+while ( let person = rset.fetchDict() )
+   > person["name"]
+   > person["age"]
 end
 rset.close()
 

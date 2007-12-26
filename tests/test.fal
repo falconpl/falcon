@@ -26,7 +26,7 @@ while rs.next() == 0
 end
 
 rs.close()
-
+/*
 > "Query fetching arrays: "
 rs = dbh.query( "SELECT name, age FROM names" )
 
@@ -36,7 +36,6 @@ end
 
 rs.close()
 
-/*
 > "Query fetching dict: "
 rs = dbh.query( "SELECT name, age FROM names" )
 
