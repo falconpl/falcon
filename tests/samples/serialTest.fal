@@ -87,8 +87,12 @@ else
 		end
 		stream.close()
 	catch in err
-		printl( "Error while reading!" )
-		printl( err.toString() )
+      if stream.eof()
+         > "Stream hit EOF."
+      else
+   		printl( "Error while reading!" )
+   		printl( err.toString() )
+      end
 	end
 end
 

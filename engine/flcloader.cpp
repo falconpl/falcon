@@ -137,8 +137,7 @@ Module *FlcLoader::loadSource( const String &file )
          {
             raiseError( e_file_output, target );
             delete temp_binary;
-
-            delete module;
+            module->decref();
             return 0;
          }
       }
@@ -179,7 +178,7 @@ Module *FlcLoader::loadSource( Stream *fin )
       m_compiler.errorHandler( m_errhand );
       if( ! m_compiler.compile( module, fin ) ) {
          m_compileErrors = (uint32) m_compiler.errors();
-         delete module;
+         module->decref();
          return 0;
       }
 
@@ -198,7 +197,7 @@ Module *FlcLoader::loadSource( Stream *fin )
          {
             raiseError( e_file_output, tempFileName );
             delete temp_binary;
-            delete module;
+            module->decref();
             return 0;
          }
       }
@@ -221,7 +220,7 @@ Module *FlcLoader::loadSource( Stream *fin )
 
          // the module is going to be destroyed anyhow
          // as we got to assemble it
-         delete module;
+         module->decref();
 
          // now prepare to assemble the thing.
          temp_binary->seekBegin(0);
@@ -260,9 +259,10 @@ Module *FlcLoader::loadSource( Stream *fin )
 
       AsmCompiler fasm( module, fin, temp_binary );
       fasm.errorHandler( m_errhand );
-      if ( ! fasm.compile() ) {
+      if ( ! fasm.compile() ) 
+      {
          m_compileErrors = (uint32) fasm.errors();
-         delete module;
+         module->decref();
          if( bDelFin )
             delete fin;
          delete temp_binary;

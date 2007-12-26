@@ -1174,7 +1174,7 @@ int main( int argc, char *argv[] )
    }
 
    stdOut->writeString( "\n" );
-   delete module;
+   module->decref();
 
    return 0;
 }

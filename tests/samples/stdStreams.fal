@@ -7,24 +7,33 @@
 	by reversing the input stream to the output stream (line
    by line) and then writing the number of parsed line to
 	the standard error.
-
-   $Id: stdStreams.fal,v 1.1 2007/08/13 17:45:56 jonnymind Exp $
 */
 
+> "Test for standard input stream
+Enter some text line; it will be printed in reverse order to
+confirm it has been read.
+
+After entering some line, close the stream with CTRL+D on UNIX
+and CTRL+Z (then enter) on MS-Windows. The count of read lines
+will be printed."
 
 sInput = stdIn()
 sOutput = stdOut()
 sError = stdErr()
 
 count = 0
-
 line = ""
 
 while not sInput.eof()
 
-	if sInput.readLine( line ) == 0: continue
+	if sInput.readLine( line, 512 ) == 0: continue
 
-	sOutput.write( line[-1:0] )
+   if line.len() == 1
+      sOutput.write( line )
+   else
+      sOutput.write( line[-1:0] )
+   end
+   sOutput.write( "\n" )
 	count++
 end
 

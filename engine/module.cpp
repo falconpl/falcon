@@ -41,6 +41,7 @@ Module::Module():
    m_lineInfo( 0 ),
    m_modVersion( 0 ),
    m_engineVersion( 0 ),
+   m_loader(0),
    m_serviceMap( &traits::t_string, &traits::t_voidp )
 {}
 
@@ -58,6 +59,14 @@ Module::~Module()
    // ... the module will take care of them.
 
    delete m_lineInfo;
+}
+
+DllLoader &Module::dllLoader()
+{
+   if ( m_loader == 0 )
+      m_loader = new DllLoader;
+   
+   return *m_loader;
 }
 
 bool Module::addDepend( String *dep )
@@ -503,6 +512,26 @@ void Module::getEngineVersion( int &major, int &minor, int &revision ) const
    minor = (m_engineVersion & 0xFF00 ) >> 8;
    revision = m_engineVersion & 0xFF;
 }
+
+DllLoader *Module::detachLoader()
+{
+   DllLoader *ret = m_loader;
+   m_loader = 0;
+   return ret;
+}
+
+void Module::decref()
+{
+   if( m_refcount <= 1 )
+   {
+      DllLoader *loader = detachLoader();
+      delete this;
+      delete loader;
+   }
+   else
+      --m_refcount;
+}
+
 
 }
 /* end module.cpp */

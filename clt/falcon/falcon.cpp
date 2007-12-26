@@ -694,7 +694,7 @@ int main( int argc, char *argv[] )
       if ( out != stdOut )
          delete out;
 
-      delete module;
+      module->decref();
       exit_sequence( 0 );
    }
 
@@ -822,7 +822,6 @@ int main( int argc, char *argv[] )
    //===========================================
    // Prepare the virtual machine
    //
-
    VMachine *vmachine = new VMachine;
 
    //redirect the VM streams to ours.

@@ -646,7 +646,7 @@ bool testScript( ScriptData *script,
       trace = fteh.getError();
       reason = "Compile step failed.";
       delete source;
-      delete scriptModule;
+      scriptModule->decref();
       return false;
    }
 
@@ -708,7 +708,7 @@ bool testScript( ScriptData *script,
          }
       }
 
-      delete scriptModule;
+      scriptModule->decref();
       scriptModule = new Module();
       scriptModule->name( script->filename() );
       scriptModule->path( path );
@@ -779,7 +779,7 @@ bool testScript( ScriptData *script,
 
       scriptModule->save( module_stream, false );
       module_stream->seekBegin( 0 );
-      delete scriptModule;
+      scriptModule->decref();
       scriptModule = new Module();
       scriptModule->name( script->filename() );
       scriptModule->path( path );
@@ -788,7 +788,7 @@ bool testScript( ScriptData *script,
       {
          reason = "Deserialization step failed.";
          delete module_stream;
-         delete scriptModule;
+         scriptModule->decref();
          return false;
       }
 
@@ -1039,8 +1039,8 @@ void executeTests( FlcLoader *modloader, Module *rtl )
    // clear the testname (or we'll have 1 extra block in accounts)
    TestSuite::setTestName( "" );
 
-   delete core;
-   delete testSuite;
+   core->decref();
+   testSuite->decref();
 }
 
 /************************************************

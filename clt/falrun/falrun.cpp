@@ -32,6 +32,7 @@
 #include <falcon/fstream.h>
 #include <falcon/fassert.h>
 #include <falcon/genericlist.h>
+#include <falcon/deferrorhandler.h>
 
 
 using namespace Falcon;
@@ -238,17 +239,21 @@ int main( int argc, char *argv[] )
       source_path += ";";
 
    ModuleLoader *modloader = new ModuleLoader( source_path + get_load_path() );
+   DefaultErrorHandler *errHand = new DefaultErrorHandler( stdErr );
+   modloader->errorHandler( errHand );
+   
    Module *core = core_module_init();
 
    Module *falcon_rtl = modloader->loadName( "falcon_rtl" );
    if ( falcon_rtl != 0) {
       Module *main_mod = modloader->loadModule( bincode_stream );
       if( main_mod != 0) {
-         VMachine *vmachine = new VMachine;
+         VMachine *vmachine = new VMachine(false);
          // change default machine streams.
          vmachine->stdIn( stdIn );
          vmachine->stdOut( stdOut );
          vmachine->stdErr( stdErr );
+         vmachine->init();
 
          vmachine->link( core );
          vmachine->link( falcon_rtl ); // should not fail
@@ -287,8 +292,11 @@ int main( int argc, char *argv[] )
             if ( vmachine->regA().type() == FLC_ITEM_INT )
                return (int32) vmachine->regA().asInteger();
          }
+         delete vmachine;
       }
+      
    }
+
 
    return 0;
 }

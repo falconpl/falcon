@@ -34,12 +34,12 @@ void VMSemaphore::post( VMachine *vm, int32 count )
    while( m_count > 0 && ! m_waiting.empty() ) 
    {
       VMContext *ctx = (VMContext *) m_waiting.front();
-	  ctx->sleepOn( 0 );
-	  // correctly awaken, so...
-	  ctx->m_regA = (int64) 1;
-	  
-	  // put the context in the sleeping list, but only if it was on endless wait
-	  vm->reschedule( ctx, 0.0 );
+      ctx->sleepOn( 0 );
+      // correctly awaken, so...
+      ctx->m_regA = (int64) 1;
+
+      // put the context in the sleeping list, but only if it was on endless wait
+      vm->reschedule( ctx, 0.0 );
 
       m_waiting.popFront();
       m_count --;

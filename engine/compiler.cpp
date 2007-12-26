@@ -49,6 +49,7 @@ Compiler::Compiler( Module *mod, Stream* in ):
    m_delayRaise( false ),
    m_rootError( 0 ),
    m_lexer(0),
+   m_root(0),
    m_bParsingFtd(false)
 {
    // Initializing now prevents adding predefined constants to the module.
@@ -73,6 +74,7 @@ Compiler::Compiler():
    m_delayRaise( false ),
    m_rootError( 0 ),
    m_lexer(0),
+   m_root(0),
    m_bParsingFtd(false)
 {
    reset();

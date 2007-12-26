@@ -1583,30 +1583,32 @@ void VMachine::reschedule( VMContext *ctx, numeric secs )
    ctx->schedule( tgtTime );
    ListElement *iter = m_sleepingContexts.begin();
 
-   bool bFound;
+   bool bFound = false;
    while( iter != 0 )
    {
       VMContext *curctx = (VMContext *) iter->data();
 
-	  if ( curctx == ctx )
-	  {
-       ListElement *old = iter;
-		 iter = iter->next();
-		 m_sleepingContexts.erase( old );
-		 continue;
-	  }
+      // if the rescheduled context is in sleeping context,
+      // signal we've found it.
+      if ( curctx == ctx )
+      {
+         ListElement *old = iter;
+         iter = iter->next();
+         m_sleepingContexts.erase( old );
+         continue;
+      }
 
-	  if ( tgtTime < curctx->schedule() )
-	  {
+      if ( tgtTime < curctx->schedule() )
+      {
          m_sleepingContexts.insertBefore( iter, ctx );
-		 bFound = true;
+         bFound = true;
       }
       iter = iter->next();
    }
 
    // can't find it anywhere?
-   if ( bFound )
-	  m_sleepingContexts.pushBack( ctx );
+   if ( ! bFound )
+      m_sleepingContexts.pushBack( ctx );
 }
 
 
