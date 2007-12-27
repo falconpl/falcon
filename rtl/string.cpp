@@ -393,14 +393,36 @@ FALCON_FUNC  strTrim ( ::Falcon::VMachine *vm )
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
       return;
    }
-
+   
    String *cs = target->asString();
    int32 pos = cs->length()-1;
-   while( pos >= 0 ) {
-      int chr = cs->getCharAt( pos );
-      if ( chr != ' ' && chr != '\t' && chr != '\r' && chr != '\n' )
-         break;
-      pos--;
+   
+   Item *trimChars = vm->param(1);
+   if ( trimChars == 0 ) {
+      while( pos >= 0 ) {
+         int chr = cs->getCharAt( pos );
+         if ( chr != ' ' && chr != '\t' && chr != '\r' && chr != '\n' )
+            break;
+         pos--;
+      }
+   } else if ( ! trimChars->isString() ) {
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
+      return;
+   } else {
+      String *trim = trimChars->asString();
+      int32 tLen = trim->length();
+      
+      while ( pos >= 0 ) {
+         int chr = cs->getCharAt( pos );
+         int found = 0;
+         
+         for ( int32 tIdx=0; tIdx < tLen; tIdx++ )
+            if ( chr == trim->getCharAt( tIdx ) )
+               found = 1;
+         if ( found == 0 )
+            break;
+         pos--;
+      }
    }
 
    // has something to be trimmed?
@@ -423,12 +445,36 @@ FALCON_FUNC  strFrontTrim ( ::Falcon::VMachine *vm )
    String *cs = target->asString();
    int pos = 0;
    int32 len = cs->length();
-   while( pos <= len )
-   {
-      int chr = cs->getCharAt( pos );
-      if ( chr != ' ' && chr != '\t' && chr != '\r' && chr != '\n' )
-         break;
-      pos++;
+   
+   Item *trimChars = vm->param(1);
+   if (trimChars == 0 ) {
+      while( pos <= len )
+      {
+         int chr = cs->getCharAt( pos );
+         if ( chr != ' ' && chr != '\t' && chr != '\r' && chr != '\n' )
+            break;
+         pos++;
+      }
+   } else if ( ! trimChars->isString() ) {
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
+      return;
+   } else {
+      String *trim = trimChars->asString();
+      int32 tLen = trim->length();
+      int found;
+      
+      while( pos <= len )
+      {
+         int chr = cs->getCharAt( pos );
+         int found = 0;
+         
+         for ( int32 tIdx = 0; tIdx < tLen; tIdx++ )
+            if ( chr == trim->getCharAt( tIdx ) )
+               found = 1;
+         if ( found == 0 )
+            break;
+         pos++;
+      }      
    }
 
    // has something to be trimmed?
@@ -440,7 +486,6 @@ FALCON_FUNC  strFrontTrim ( ::Falcon::VMachine *vm )
 
 FALCON_FUNC  strAllTrim ( ::Falcon::VMachine *vm )
 {
-
    Item *target = vm->param(0);
 
    if ( target == 0 || ! target->isString() ) {
@@ -450,27 +495,61 @@ FALCON_FUNC  strAllTrim ( ::Falcon::VMachine *vm )
 
    String *cs = target->asString();
    int32 len = cs->length();
-
+   
    int32 start = 0;
-   int chr;
-
-   while( start < len )
-   {
-      chr = cs->getCharAt( start );
-      if ( chr != ' ' && chr != '\t' && chr != '\r' && chr != '\n' )
-         break;
-      start++;
-   }
-
    int32 end = len;
-   while( end > start )
-   {
-      chr = cs->getCharAt( end - 1 );
-      if ( chr != ' ' && chr != '\t' && chr != '\r' && chr != '\n' )
-         break;
-      end--;
+   int chr;
+   
+   Item *trimChars = vm->param(1);
+   if ( trimChars == 0 ) {
+      while( start < len )
+      {
+         chr = cs->getCharAt( start );
+         if ( chr != ' ' && chr != '\t' && chr != '\r' && chr != '\n' )
+            break;
+         start++;
+      }
+      
+      while( end > start )
+      {
+         chr = cs->getCharAt( end - 1 );
+         if ( chr != ' ' && chr != '\t' && chr != '\r' && chr != '\n' )
+            break;
+         end--;
+      }
+   } else if ( ! trimChars->isString() ) {
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
+      return;
+   } else {
+      String *trim = trimChars->asString();
+      int32 tLen = trim->length();
+      int found = 0;
+      
+      while( start < len )
+      {
+         found = 0;
+         chr = cs->getCharAt( start );
+         for ( int32 tIdx=0; tIdx < tLen; tIdx++ )
+            if ( chr == trim->getCharAt( tIdx ) )
+               found = 1;
+         if ( found == 0 )
+            break;
+         start++;
+      }
+      
+      while( end > start )
+      {
+         found = 0;
+         chr = cs->getCharAt( end - 1 );
+         for ( int32 tIdx=0; tIdx < tLen; tIdx++ )
+            if ( chr == trim->getCharAt( tIdx ) )
+               found = 1;
+         if ( found == 0 )
+            break;
+         end--;
+      }
    }
-
+   
    // an empty string if set is empty
    vm->retval( cs->subString( start, end ) );
 }

@@ -29,6 +29,12 @@ if strAllTrim( spaced ) != "a spaced string": failure( "strAllTrim 2" )
 if strTrim( nonspaced ) != "non spaced": failure( "strTrim nonspaced" )
 if strFrontTrim( nonspaced ) != "non spaced": failure( "strFrontTrim nonspaced" )
 if strAllTrim( nonspaced ) != "non spaced": failure( "strAllTrim nonspaced" )
+    
+other = "54321 hello world 12345"
+
+if strTrim( other, "12345 " ) != "54321 hello world": failure( "strTrim other" )
+if strFrontTrim( other, "12345 ") != "hello world 12345": failure( "strFrontTrim other" )
+if strAllTrim( other, "12345 " ) != "hello world": failure( "strAllTrim other" )
 
 success()
 
