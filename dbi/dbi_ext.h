@@ -52,6 +52,9 @@ FALCON_FUNC DBIRecordset_asString( VMachine *vm );
 FALCON_FUNC DBIRecordset_asInteger( VMachine *vm );
 FALCON_FUNC DBIRecordset_asInteger64( VMachine *vm );
 FALCON_FUNC DBIRecordset_asNumeric( VMachine *vm );
+FALCON_FUNC DBIRecordset_asDate( VMachine *vm );
+FALCON_FUNC DBIRecordset_asTime( VMachine *vm );
+FALCON_FUNC DBIRecordset_asDateTime( VMachine *vm );
 FALCON_FUNC DBIRecordset_getLastError( VMachine *vm );
 FALCON_FUNC DBIRecordset_close( VMachine *vm );
 

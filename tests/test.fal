@@ -4,17 +4,17 @@ dbh = DBIConnect( "pgsql" )
 inspect(dbh)
 
 //try
-    > "Create table status: ", dbh.execute( "CREATE TABLE names (name VARCHAR(45), age integer)" )
-    > "      Insert status: ", dbh.execute( "INSERT INTO names VALUES ('John', 20)" )
-    > "      Insert status: ", dbh.execute( "INSERT INTO names VALUES ('Jane', 21)" )
-    > "      Insert status: ", dbh.execute( "INSERT INTO names VALUES ('Jim', 22)" )
+    > "Create table status: ", dbh.execute( "CREATE TABLE names (name VARCHAR(45), age integer, dob date, tob time, tsob timestamp)" )
+    > "      Insert status: ", dbh.execute( "INSERT INTO names VALUES ('John', 20, '2007-10-20', '10:20:30', '2007-10-20 10:20:30')" )
+    > "      Insert status: ", dbh.execute( "INSERT INTO names VALUES ('Jane', 21, '2006-09-19', '06:09:19', '2006-09-19 06:09:19')" )
+    > "      Insert status: ", dbh.execute( "INSERT INTO names VALUES ('Jim', 22, '2005-08-18', '05:08:18', '2005-08-18 05:08:18')" )
 //catch 
 //    > "Table could not be created, assuming it already exists"
 //end
 
 >
 > "Performing a query"
-rs = dbh.query( "SELECT name, age FROM names" )
+rs = dbh.query( "SELECT * FROM names" )
 > "Column count: ", rs.getColumnCount()
 > "   Row count: ", rs.getRowCount()
 inspect( rs )
@@ -26,13 +26,14 @@ end
 
 > "Rows: "
 while rs.next() == 0
-    > rs.asString( 0 ), ", ", rs.asInteger( 1 )
+    dob = rs.asDate( 2 )
+    > rs.asString( 0 ), ", ", rs.asInteger( 1 ), ", ", dob.month, "/", dob.day, "/", dob.year
 end
 
 rs.close()
 
 > "Query fetching arrays: "
-rs = dbh.query( "SELECT name, age FROM names" )
+rs = dbh.query( "SELECT * FROM names" )
 
 while (let p = rs.fetchArray())
     inspect( p )
@@ -41,7 +42,7 @@ end
 rs.close()
 
 > "Query fetching dict: "
-rs = dbh.query( "SELECT name, age FROM names" )
+rs = dbh.query( "SELECT * FROM names" )
 
 while (let p = rs.fetchDict())
     inspect( p )

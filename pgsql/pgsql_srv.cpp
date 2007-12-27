@@ -109,6 +109,15 @@ dbi_type DBIRecordsetPgSQL::getFalconType( Oid pgType )
    case PG_TYPE_NUMERIC:
       return dbit_numeric;
       
+   case PG_TYPE_DATE:
+      return dbit_date;
+      
+   case PG_TYPE_TIME:
+      return dbit_time;
+      
+   case PG_TYPE_TIMESTAMP:
+      return dbit_datetime;
+      
    default:
       return dbit_string;
    }
@@ -241,6 +250,111 @@ DBIRecordset::dbr_status DBIRecordsetPgSQL::asNumeric( const int columnIndex, nu
    const char *v = PQgetvalue( m_res, m_row, columnIndex );
    
    value = atof( v );
+   
+   return s_ok;
+}
+
+DBIRecordset::dbr_status DBIRecordsetPgSQL::asDate( const int columnIndex, CoreObject &value )
+{
+   if ( columnIndex >= m_columnCount )
+   {
+      return s_column_range_error;
+   }
+   else if ( m_res == NULL )
+   {
+      return s_invalid_record_handle;
+   }
+   else if ( PQgetisnull( m_res, m_row, columnIndex ) == 1 )
+   {
+      return s_nil_value;
+   }
+   
+   const char *v = PQgetvalue( m_res, m_row, columnIndex );
+   String tv( v );
+   
+   // 2007-12-27
+   // 0123456789
+   
+   int64 year, month, day;
+   tv.subString( 0, 4 ).parseInt( year );
+   tv.subString( 5, 7 ).parseInt( month );
+   tv.subString( 8, 10 ).parseInt( day );
+   
+   value.setProperty( "year",  year );
+   value.setProperty( "month", month );
+   value.setProperty( "day",   day );
+   
+   return s_ok;
+}
+
+DBIRecordset::dbr_status DBIRecordsetPgSQL::asTime( const int columnIndex, CoreObject &value )
+{
+   if ( columnIndex >= m_columnCount )
+   {
+      return s_column_range_error;
+   }
+   else if ( m_res == NULL )
+   {
+      return s_invalid_record_handle;
+   }
+   else if ( PQgetisnull( m_res, m_row, columnIndex ) == 1 )
+   {
+      return s_nil_value;
+   }
+   
+   const char *v = PQgetvalue( m_res, m_row, columnIndex );
+   String tv( v );
+   
+   // 01:02:03
+   // 01234567
+   
+   int64 hour, minute, second;
+   tv.subString( 0, 2 ).parseInt( hour );
+   tv.subString( 3, 5 ).parseInt( minute );
+   tv.subString( 6, 8 ).parseInt( second );
+   
+   value.setProperty( "hour",   hour );
+   value.setProperty( "minute", minute );
+   value.setProperty( "second", second );
+   
+   return s_ok;
+}
+
+DBIRecordset::dbr_status DBIRecordsetPgSQL::asDateTime( const int columnIndex, CoreObject &value )
+{
+   if ( columnIndex >= m_columnCount )
+   {
+      return s_column_range_error;
+   }
+   else if ( m_res == NULL )
+   {
+      return s_invalid_record_handle;
+   }
+   else if ( PQgetisnull( m_res, m_row, columnIndex ) == 1 )
+   {
+      return s_nil_value;
+   }
+   
+   const char *v = PQgetvalue( m_res, m_row, columnIndex );
+   String tv( v );
+   
+   // 2007-10-20 01:02:03
+   // 0123456789012345678
+   
+   int64 year, month, day, hour, minute, second;
+   tv.subString(  0,  4 ).parseInt( year );
+   tv.subString(  5,  7 ).parseInt( month );
+   tv.subString(  8, 10 ).parseInt( day );
+   tv.subString( 11, 13 ).parseInt( hour );
+   tv.subString( 14, 16 ).parseInt( minute );
+   tv.subString( 17, 19 ).parseInt( second );
+   
+   value.setProperty( "year",  year );
+   value.setProperty( "month", month );
+   value.setProperty( "day",   day );
+   value.setProperty( "hour",   hour );
+   value.setProperty( "minute", minute );
+   value.setProperty( "second", second );
    
    return s_ok;
 }

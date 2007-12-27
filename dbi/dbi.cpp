@@ -62,6 +62,9 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    self->addClassMethod( rec_class, "asInteger", Falcon::Ext::DBIRecordset_asInteger );
    self->addClassMethod( rec_class, "asInteger64", Falcon::Ext::DBIRecordset_asInteger64 );
    self->addClassMethod( rec_class, "asNumeric", Falcon::Ext::DBIRecordset_asNumeric );
+   self->addClassMethod( rec_class, "asDate", Falcon::Ext::DBIRecordset_asDate );
+   self->addClassMethod( rec_class, "asTime", Falcon::Ext::DBIRecordset_asTime );
+   self->addClassMethod( rec_class, "asDateTime", Falcon::Ext::DBIRecordset_asDateTime );
    self->addClassMethod( rec_class, "getRowCount", Falcon::Ext::DBIRecordset_getRowCount );
    self->addClassMethod( rec_class, "getColumnCount", Falcon::Ext::DBIRecordset_getColumnCount );
    self->addClassMethod( rec_class, "getColumnTypes", Falcon::Ext::DBIRecordset_getColumnTypes );

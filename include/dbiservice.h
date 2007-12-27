@@ -38,7 +38,10 @@ typedef enum {
    dbit_string,
    dbit_integer,
    dbit_integer64,
-   dbit_numeric
+   dbit_numeric,
+   dbit_date,
+   dbit_time,
+   dbit_datetime,
 } 
 dbi_type;
 
@@ -128,6 +131,21 @@ public:
     * Get a value from the current row as a numeric 
     */
    virtual dbr_status asNumeric( const int columnIndex, numeric &value )=0;
+   
+   /**
+    * Get a value from the current row as a date
+    */
+   virtual dbr_status asDate( const int columnIndex, CoreObject &value )=0;
+   
+   /**
+    * Get a value from the current row as a time
+    */
+   virtual dbr_status asTime( const int columnIndex, CoreObject &value )=0;
+   
+   /**
+    * Get a value from the current row as a datetime
+    */
+   virtual dbr_status asDateTime( const int columnIndex, CoreObject &value )=0;
    
    /**
     * Returns last error and its description.
