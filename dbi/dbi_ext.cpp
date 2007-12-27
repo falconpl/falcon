@@ -324,8 +324,6 @@ FALCON_FUNC DBIRecordset_fetchArray( VMachine *vm )
       }
    }
    
-   delete cTypes;
-   
    vm->retval( ary );
 }
 
@@ -365,26 +363,22 @@ FALCON_FUNC DBIRecordset_fetchDict( VMachine *vm )
       {
       case dbit_string:
          {
-            // TODO: Am I handling memory correctly?
-            String *value = new String();            
-            retval = dbr->asString( cIdx, *value );
+            String value;
+            retval = dbr->asString( cIdx, value );
             
             if ( retval == DBIRecordset::s_nil_value )
             {
-               delete value;
-               
-               i = new Item();
-               dict->insert( *name, *i );
+               Item k;
+               dict->insert( *name, k );
             }
             else if ( retval == DBIRecordset::s_ok )
             {
-               i = new Item( value );
-               dict->insert( *name, *i );
+               GarbageString *gsValue = new GarbageString( vm );
+               gsValue->bufferize( value );
+               dict->insert( *name, gsValue );
             }
             else
             {
-               delete value;
-               
                // TODO: handle error
             }
          }
@@ -397,14 +391,12 @@ FALCON_FUNC DBIRecordset_fetchDict( VMachine *vm )
             
             if ( retval == DBIRecordset::s_nil_value )
             {
-               i = new Item();
-               dict->insert( *name, *i );
+               Item k;
+               dict->insert( *name, k );
             }
             else
             {
-               // TODO: Is this right?
-               i = new Item( (int64) value );
-               dict->insert( *name, *i );
+               dict->insert( *name, (int64) value );
             }
          }
          break;
@@ -416,13 +408,12 @@ FALCON_FUNC DBIRecordset_fetchDict( VMachine *vm )
             
             if ( retval == DBIRecordset::s_nil_value )
             {
-               i = new Item();
-               dict->insert( *name, *i );
+               Item k;
+               dict->insert( *name, k );
             }
             else
             {
-               i = new Item( (int64) value );
-               dict->insert( *name, *i );
+               dict->insert( *name, (int64) value );
             }
          }
          break;
@@ -434,21 +425,17 @@ FALCON_FUNC DBIRecordset_fetchDict( VMachine *vm )
             
             if ( retval == DBIRecordset::s_nil_value )
             {
-               i = new Item();
-               dict->insert( *name, *i );
+               Item k;
+               dict->insert( *name, k );
             }
             else
             {
-               i = new Item( (numeric) value );
-               dict->insert( *name, *i );
+               dict->insert( *name, (numeric) value );
             }
          }
          break;
       }
    }
-   
-   delete cTypes;
-   delete cNames;
    
    vm->retval( dict );
 }
