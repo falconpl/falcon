@@ -332,7 +332,7 @@ void Byte::remove( String *str, uint32 pos, uint32 len ) const
 void Byte::bufferize( String *str ) const
 {
    // already buffered?
-   if ( ! str->isStatic() )
+   if ( ! str->isReadOnly() )
       return;
 
    uint32 size = str->m_size;
@@ -1193,9 +1193,13 @@ void Static32::remove( String *str, uint32 pos, uint32 len ) const
 }
 
 
-void Static::destroy( String * ) const
+void Static::destroy( String *str ) const
 {
-   // do nothing for static strings
+	if ( str->allocated() > 0 ) {
+      memFree( str->getRawStorage() );
+      str->allocated( 0 );
+      str->size(0);
+   }	   
 }
 
 
@@ -1248,7 +1252,8 @@ void Buffer::destroy( String *str ) const
 
 String::String( uint32 size ):
    m_class( &csh::handler_buffer ),
-   m_garbageable( false )
+   m_garbageable( false ),
+   m_id(String::no_id)
 {
    m_storage = (byte *) memAlloc( size );
    m_allocated = size;
@@ -1259,14 +1264,16 @@ String::String( const char *data ):
    m_class( &csh::handler_static ),
    m_garbageable( false ),
    m_allocated( 0 ),
-   m_storage( (byte*) const_cast< char *>(data) )
+   m_storage( (byte*) const_cast< char *>(data) ),
+   m_id(String::no_id)
 {
    m_size = strlen( data );
 }
 
 String::String( const char *data, int32 len ):
    m_class( &csh::handler_buffer ),
-   m_garbageable( false )
+   m_garbageable( false ),
+   m_id(String::no_id )
 {
    m_size = len >= 0 ? len : strlen( data );
    m_allocated = (( m_size / FALCON_STRING_ALLOCATION_BLOCK ) + 1 ) * FALCON_STRING_ALLOCATION_BLOCK;
@@ -1278,7 +1285,8 @@ String::String( const char *data, int32 len ):
 String::String( const wchar_t *data ):
    m_garbageable( false ),
    m_allocated( 0 ),
-   m_storage( (byte*) const_cast< wchar_t *>(data) )
+   m_storage( (byte*) const_cast< wchar_t *>(data) ),
+   m_id( String::no_id )
 {
    if ( sizeof( wchar_t ) == 2 )
       m_class = &csh::handler_static16;
@@ -1295,7 +1303,8 @@ String::String( const wchar_t *data ):
 String::String( const wchar_t *data, int32 len ):
    m_allocated( 0 ),
    m_storage( (byte *) const_cast< wchar_t *>( data ) ),
-   m_garbageable( false )
+   m_garbageable( false ),
+   m_id( String::no_id )
 {
    if ( sizeof( wchar_t ) == 2 )
       m_class = &csh::handler_buffer16;
@@ -1324,7 +1333,8 @@ String::String( const String &other, uint32 begin, uint32 end ):
    m_allocated( 0 ),
    m_size( 0 ),
    m_storage( 0 ),
-   m_garbageable( false )
+   m_garbageable( false ),
+   m_id( String::no_id )
 {
    // by default, copy manipulator
    m_class = other.m_class;
@@ -1354,6 +1364,7 @@ String::String( const String &other, uint32 begin, uint32 end ):
    else
       other.m_class->subString( &other, begin, end, this );
 }
+
 
 void String::copy( const String &other )
 {
@@ -1935,7 +1946,7 @@ void String::serialize( Stream *out ) const
 }
 
 
-bool String::deserialize( Stream *in )
+bool String::deserialize( Stream *in, bool bStatic )
 {
    uint32 size;
    uint32 oldAlloc = m_allocated;
@@ -1968,12 +1979,24 @@ bool String::deserialize( Stream *in )
       in->read( &chars, 1 );
 
       // determine the needed manipulator
-      switch( chars )
+      if ( bStatic )
       {
-         case 1: manipulator( &csh::handler_buffer ); break;
-         case 2: manipulator( &csh::handler_buffer16 ); break;
-         case 4: manipulator( &csh::handler_buffer32 ); break;
-         default: return false;
+         switch( chars )
+         {
+            case 1: manipulator( &csh::handler_static ); break;
+            case 2: manipulator( &csh::handler_static16 ); break;
+            case 4: manipulator( &csh::handler_static32 ); break;
+            default: return false;
+         }
+      }
+      else {
+         switch( chars )
+         {
+            case 1: manipulator( &csh::handler_buffer ); break;
+            case 2: manipulator( &csh::handler_buffer16 ); break;
+            case 4: manipulator( &csh::handler_buffer32 ); break;
+            default: return false;
+         }
       }
 
 

@@ -35,7 +35,7 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "Falcon Committee"
             VALUE "FileDescription", "Unit test support module"
-            VALUE "FileVersion", FALCON_MAKE_VERSION_STRING( VERSION_MAJOR, VERSION_MINOR, VERSION_REVISION, 0 )
+            VALUE "FileVersion", FALCON_MAKE_VERSION_STRING( VERSION_MAJOR, VERSION_MINOR, VERSION_REVISION )
             VALUE "InternalName", "testsuite"
             VALUE "LegalCopyright", "The Falcon Programming Language License"
             VALUE "OriginalFilename", "testsuite.dll"

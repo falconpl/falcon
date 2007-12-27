@@ -1,7 +1,6 @@
 /*
    FALCON - The Falcon Programming Language.
    FILE: flc_modloader.cpp
-   $Id: modloader.cpp,v 1.18 2007/08/11 18:26:44 jonnymind Exp $
 
    Module loader
    -------------------------------------------------------------------

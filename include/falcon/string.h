@@ -142,6 +142,7 @@ public:
 
    virtual void bufferize( String *str ) const;
    virtual void bufferize( String *str, const String *strOrig ) const;
+
    virtual void reserve( String *str, uint32 size, bool relative = false, bool block = false ) const;
    virtual const Base *bufferedManipulator() const { return this; }
 };
@@ -324,8 +325,10 @@ protected:
 public:
 
    enum constants {
-      npos = csh::npos
+      npos = csh::npos,
+	  no_id = 0xFFFFFFFF
    };
+
 
    /** Creates an empty string.
       The string is created non-zero terminated with length 0. It has also
@@ -809,9 +812,10 @@ public:
       A failure usually means a stream corruption or an incompatible format.
 
       \param in the input stream where the string must be read from
+      \param bStatic true to create a self-destroryable static string
       \return true on success, false on failure.
    */
-   bool deserialize( Stream *in );
+   bool deserialize( Stream *in, bool bStatic=false );
 
    /** Escapes a string for external representation.
       Convert special control characters to "\" prefixed characters,
@@ -1007,6 +1011,17 @@ public:
 
    */
    void trim();
+
+   /** Tells if a string is read-only.
+	   Static strings are the ones with a static manipulator or with an ID != 0.
+	   \return true if the string is read-only
+   */
+   bool isReadOnly() const {
+      return manipulator()->type() == csh::cs_static ||
+             manipulator()->type() == csh::cs_static16 ||
+             manipulator()->type() == csh::cs_static32 ||
+			 m_id != no_id;
+   }
 
    bool isStatic() const {
       return manipulator()->type() == csh::cs_static ||

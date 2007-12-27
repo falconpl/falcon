@@ -30,7 +30,7 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "Falcon Committee"
             VALUE "FileDescription", "Falcon runtime library"
-            VALUE "FileVersion", FALCON_MAKE_VERSION_STRING( RTL_VERSION_MAJOR, RTL_VERSION_MINOR, RTL_VERSION_REVISION, 0 )
+            VALUE "FileVersion", FALCON_MAKE_VERSION_STRING( RTL_VERSION_MAJOR, RTL_VERSION_MINOR, RTL_VERSION_REVISION )
             VALUE "InternalName", "RTL"
             VALUE "LegalCopyright", "The Falcon Programming Language License"
             VALUE "OriginalFilename", "falcon_rtl.dll"

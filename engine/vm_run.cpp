@@ -66,8 +66,11 @@ Item *VMachine::getOpcodeParam( register uint32 bc_pos )
       return m_imm + bc_pos;
 
       case P_PARAM_STRID:
-         m_imm[bc_pos].setString( const_cast< String *>( m_modules.moduleAt( m_moduleId )->getString( endianInt32(*reinterpret_cast<int32 *>( m_code + m_pc_next ) ) ) ));
-         m_pc_next += sizeof( int32 );
+         /*m_imm[bc_pos].setString( new GarbageString( this, 
+			 *const_cast< String *>( m_modules.moduleAt( m_moduleId )->getString( endianInt32(*reinterpret_cast<int32 *>( m_code + m_pc_next ) ) ) )
+			) );*/
+		 m_imm[bc_pos].setString( const_cast< String *>( m_modules.moduleAt( m_moduleId )->getString( endianInt32(*reinterpret_cast<int32 *>( m_code + m_pc_next ) ) ) ) );
+		 m_pc_next += sizeof( int32 );
       return m_imm + bc_pos;
 
       case P_PARAM_NUM:
@@ -1189,8 +1192,9 @@ void opcodeHandler_ADDS( register VMachine *vm )
          int64 chr = operand2->forceInteger();
          if ( chr >= 0 && chr <= (int64) 0xFFFFFFFF )
          {
-            String *str = operand1->asString();
+            String *str = new GarbageString( vm, *operand1->asString() );
             str->append( (uint32) chr );
+            operand1->setString( str );
             return;
          }
       }
@@ -1198,8 +1202,9 @@ void opcodeHandler_ADDS( register VMachine *vm )
 
       case FLC_ITEM_STRING<< 8 | FLC_ITEM_STRING:
       {
-         String *str = operand1->asString();
+         String *str = new GarbageString( vm, *operand1->asString() );
          str->append( *operand2->asString() );
+         operand1->setString( str );
       }
       return;
 
