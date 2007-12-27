@@ -352,6 +352,7 @@ FALCON_FUNC DBIRecordset_fetchDict( VMachine *vm )
    CoreArray *cTypes = new CoreArray( vm, cCount );
    CoreArray *cNames = new CoreArray( vm, cCount );
    dbr->getColumnTypes( cTypes );
+   dbr->getColumnNames( cNames );
    
    for ( int cIdx = 0; cIdx < cCount; cIdx++ )
    {
