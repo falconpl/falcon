@@ -22,9 +22,9 @@ ELSE(UNIX OR MAC)
       IF( "${MS_SDK_PATH}" STREQUAL "" )
          MESSAGE( FATAL_ERROR "Please, valorize MS_SDK_PATH CMAKE or environment variable with path to SDK" )
       ENDIF( "${MS_SDK_PATH}" STREQUAL "" )
+      INCLUDE_DIRECTORIES(${MS_SDK_PATH})
    ENDIF("${CMAKE_GENERATOR}" STREQUAL "MinGW Makefiles" )
    
-   CONFIGURE_FILE( "socket_sys_win.cpp.in" "socket/socket_sys_win.cpp" ESCAPE_QUOTES @ONLY )
    SET(SYS_SPECIFIC socket_sys_win.cpp socket.rc)
 ENDIF(UNIX OR MAC)
 

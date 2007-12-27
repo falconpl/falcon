@@ -28,7 +28,7 @@
 
 #ifdef __MINGW32__
    #define _inline __inline
-   #include "/include/Wspiapi.h" 
+   #include <include/Wspiapi.h> 
    #undef _inline
 #else
    #include <Wspiapi.h>
