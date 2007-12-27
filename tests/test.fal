@@ -26,8 +26,7 @@ end
 
 > "Rows: "
 while rs.next() == 0
-    dob = rs.asDate( 2 )
-    > rs.asString( 0 ), ", ", rs.asInteger( 1 ), ", ", dob.month, "/", dob.day, "/", dob.year
+    > rs.asString( 0 ), ", ", rs.asInteger( 1 ), ", ", rs.asDate( 2 ), ", ", rs.asTime( 3 ), ", ", rs.asDateTime( 4 )
 end
 
 rs.close()
@@ -36,7 +35,7 @@ rs.close()
 rs = dbh.query( "SELECT * FROM names" )
 
 while (let p = rs.fetchArray())
-    inspect( p )
+    > p[0], " was born on ", p[2]
 end
 
 rs.close()
@@ -45,7 +44,7 @@ rs.close()
 rs = dbh.query( "SELECT * FROM names" )
 
 while (let p = rs.fetchDict())
-    inspect( p )
+    > p["name"], " is ", p["age"], " and was born at ", p["tob"]
 end
 
 rs.close()

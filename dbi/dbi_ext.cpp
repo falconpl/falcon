@@ -325,11 +325,13 @@ FALCON_FUNC DBIRecordset_fetchArray( VMachine *vm )
       case dbit_date:
          {
             // create the timestamps
+            TimeStamp *ts = new TimeStamp();
             Item *ts_class = vm->findGlobalItem( "TimeStamp" );
             //if we wrote the std module, can't be zero.
             fassert( ts_class != 0 );
             CoreObject *value = ts_class->asClass()->createInstance();
-            DBIRecordset::dbr_status retval = dbr->asDate( cIdx, *value );
+            DBIRecordset::dbr_status retval = dbr->asDate( cIdx, *ts );
+            value->setUserData( ts );
             
             if ( retval == DBIRecordset::s_nil_value )
             {
@@ -346,11 +348,13 @@ FALCON_FUNC DBIRecordset_fetchArray( VMachine *vm )
       case dbit_time:
          {
             // create the timestamps
+            TimeStamp *ts = new TimeStamp();
             Item *ts_class = vm->findGlobalItem( "TimeStamp" );
             //if we wrote the std module, can't be zero.
             fassert( ts_class != 0 );
             CoreObject *value = ts_class->asClass()->createInstance();
-            DBIRecordset::dbr_status retval = dbr->asTime( cIdx, *value );
+            DBIRecordset::dbr_status retval = dbr->asTime( cIdx, *ts );
+            value->setUserData( ts );
             
             if ( retval == DBIRecordset::s_nil_value )
             {
@@ -367,11 +371,13 @@ FALCON_FUNC DBIRecordset_fetchArray( VMachine *vm )
       case dbit_datetime:
          {
             // create the timestamps
+            TimeStamp *ts = new TimeStamp();
             Item *ts_class = vm->findGlobalItem( "TimeStamp" );
             //if we wrote the std module, can't be zero.
             fassert( ts_class != 0 );
             CoreObject *value = ts_class->asClass()->createInstance();
-            DBIRecordset::dbr_status retval = dbr->asDateTime( cIdx, *value );
+            DBIRecordset::dbr_status retval = dbr->asDateTime( cIdx, *ts );
+            value->setUserData( ts );
             
             if ( retval == DBIRecordset::s_nil_value )
             {
@@ -506,10 +512,12 @@ FALCON_FUNC DBIRecordset_fetchDict( VMachine *vm )
          {
             // create the timestamps
             Item *ts_class = vm->findGlobalItem( "TimeStamp" );
+            TimeStamp *ts = new TimeStamp();
             //if we wrote the std module, can't be zero.
             fassert( ts_class != 0 );
             CoreObject *value = ts_class->asClass()->createInstance();
-            DBIRecordset::dbr_status retval = dbr->asDate( cIdx, *value );
+            DBIRecordset::dbr_status retval = dbr->asDate( cIdx, *ts );
+            value->setUserData( ts );
             
             if ( retval == DBIRecordset::s_nil_value )
             {
@@ -526,11 +534,13 @@ FALCON_FUNC DBIRecordset_fetchDict( VMachine *vm )
       case dbit_time:
          {
             // create the timestamps
+            TimeStamp *ts = new TimeStamp();
             Item *ts_class = vm->findGlobalItem( "TimeStamp" );
             //if we wrote the std module, can't be zero.
             fassert( ts_class != 0 );
             CoreObject *value = ts_class->asClass()->createInstance();
-            DBIRecordset::dbr_status retval = dbr->asTime( cIdx, *value );
+            DBIRecordset::dbr_status retval = dbr->asTime( cIdx, *ts );
+            value->setUserData( ts );
             
             if ( retval == DBIRecordset::s_nil_value )
             {
@@ -547,11 +557,13 @@ FALCON_FUNC DBIRecordset_fetchDict( VMachine *vm )
       case dbit_datetime:
          {
             // create the timestamps
+            TimeStamp *ts = new TimeStamp();
             Item *ts_class = vm->findGlobalItem( "TimeStamp" );
             //if we wrote the std module, can't be zero.
             fassert( ts_class != 0 );
             CoreObject *value = ts_class->asClass()->createInstance();
-            DBIRecordset::dbr_status retval = dbr->asDateTime( cIdx, *value );
+            DBIRecordset::dbr_status retval = dbr->asDateTime( cIdx, *ts );
+            value->setUserData( ts );
             
             if ( retval == DBIRecordset::s_nil_value )
             {
@@ -748,11 +760,13 @@ FALCON_FUNC DBIRecordset_asDate( VMachine *vm )
    }
    
    // create the timestamps
+   TimeStamp *ts = new TimeStamp();
    Item *ts_class = vm->findGlobalItem( "TimeStamp" );
    //if we wrote the std module, can't be zero.
    fassert( ts_class != 0 );
    CoreObject *value = ts_class->asClass()->createInstance();
-   DBIRecordset::dbr_status retval = dbr->asDate( columnIndexI->asInteger(), *value );
+   DBIRecordset::dbr_status retval = dbr->asDate( columnIndexI->asInteger(), *ts );
+   value->setUserData( ts );
    
    if ( retval == DBIRecordset::s_nil_value )
    {
@@ -783,11 +797,13 @@ FALCON_FUNC DBIRecordset_asTime( VMachine *vm )
    }
    
    // create the timestamps
+   TimeStamp *ts = new TimeStamp();
    Item *ts_class = vm->findGlobalItem( "TimeStamp" );
    //if we wrote the std module, can't be zero.
    fassert( ts_class != 0 );
    CoreObject *value = ts_class->asClass()->createInstance();
-   DBIRecordset::dbr_status retval = dbr->asTime( columnIndexI->asInteger(), *value );
+   DBIRecordset::dbr_status retval = dbr->asTime( columnIndexI->asInteger(), *ts );
+   value->setUserData( ts );
    
    if ( retval == DBIRecordset::s_nil_value )
    {
@@ -818,11 +834,13 @@ FALCON_FUNC DBIRecordset_asDateTime( VMachine *vm )
    }
    
    // create the timestamps
+   TimeStamp *ts = new TimeStamp();
    Item *ts_class = vm->findGlobalItem( "TimeStamp" );
    //if we wrote the std module, can't be zero.
    fassert( ts_class != 0 );
    CoreObject *value = ts_class->asClass()->createInstance();
-   DBIRecordset::dbr_status retval = dbr->asDateTime( columnIndexI->asInteger(), *value );
+   DBIRecordset::dbr_status retval = dbr->asDateTime( columnIndexI->asInteger(), *ts );
+   value->setUserData( ts );
    
    if ( retval == DBIRecordset::s_nil_value )
    {

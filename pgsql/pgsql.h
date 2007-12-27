@@ -52,9 +52,9 @@ public:
    virtual dbr_status asInteger( const int columnIndex, int32 &value );
    virtual dbr_status asInteger64( const int columnIndex, int64 &value );
    virtual dbr_status asNumeric( const int columnIndex, numeric &value );
-   virtual dbr_status asDate( const int columnIndex, CoreObject &value );
-   virtual dbr_status asTime( const int columnIndex, CoreObject &value );
-   virtual dbr_status asDateTime( const int columnIndex, CoreObject &value );
+   virtual dbr_status asDate( const int columnIndex, TimeStamp &value );
+   virtual dbr_status asTime( const int columnIndex, TimeStamp &value );
+   virtual dbr_status asDateTime( const int columnIndex, TimeStamp &value );
    virtual void close();
    virtual dbr_status getLastError( String &description );
 };

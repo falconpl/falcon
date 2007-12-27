@@ -254,7 +254,7 @@ DBIRecordset::dbr_status DBIRecordsetPgSQL::asNumeric( const int columnIndex, nu
    return s_ok;
 }
 
-DBIRecordset::dbr_status DBIRecordsetPgSQL::asDate( const int columnIndex, CoreObject &value )
+DBIRecordset::dbr_status DBIRecordsetPgSQL::asDate( const int columnIndex, TimeStamp &value )
 {
    if ( columnIndex >= m_columnCount )
    {
@@ -280,14 +280,23 @@ DBIRecordset::dbr_status DBIRecordsetPgSQL::asDate( const int columnIndex, CoreO
    tv.subString( 5, 7 ).parseInt( month );
    tv.subString( 8, 10 ).parseInt( day );
    
-   value.setProperty( "year",  year );
-   value.setProperty( "month", month );
-   value.setProperty( "day",   day );
+   Item yr( year );
+   Item mo( month );
+   Item da( day );
+   Item zero( (int64) 0 );
+   
+   value.setProperty( "year",   yr );
+   value.setProperty( "month",  mo );
+   value.setProperty( "day",    da );
+   value.setProperty( "hour",   zero );
+   value.setProperty( "minute", zero );
+   value.setProperty( "second", zero );
+   value.setProperty( "msec",   zero );
    
    return s_ok;
 }
 
-DBIRecordset::dbr_status DBIRecordsetPgSQL::asTime( const int columnIndex, CoreObject &value )
+DBIRecordset::dbr_status DBIRecordsetPgSQL::asTime( const int columnIndex, TimeStamp &value )
 {
    if ( columnIndex >= m_columnCount )
    {
@@ -313,14 +322,23 @@ DBIRecordset::dbr_status DBIRecordsetPgSQL::asTime( const int columnIndex, CoreO
    tv.subString( 3, 5 ).parseInt( minute );
    tv.subString( 6, 8 ).parseInt( second );
    
-   value.setProperty( "hour",   hour );
-   value.setProperty( "minute", minute );
-   value.setProperty( "second", second );
+   Item zero( (int64) 0 );
+   Item hr( hour );
+   Item mn( minute );
+   Item se( second );
+   
+   value.setProperty( "year",   zero );
+   value.setProperty( "month",  zero );
+   value.setProperty( "day",    zero );
+   value.setProperty( "hour",   hr );
+   value.setProperty( "minute", mn );
+   value.setProperty( "second", se );
+   value.setProperty( "msec",   zero );
    
    return s_ok;
 }
 
-DBIRecordset::dbr_status DBIRecordsetPgSQL::asDateTime( const int columnIndex, CoreObject &value )
+DBIRecordset::dbr_status DBIRecordsetPgSQL::asDateTime( const int columnIndex, TimeStamp &value )
 {
    if ( columnIndex >= m_columnCount )
    {
@@ -349,12 +367,21 @@ DBIRecordset::dbr_status DBIRecordsetPgSQL::asDateTime( const int columnIndex, C
    tv.subString( 14, 16 ).parseInt( minute );
    tv.subString( 17, 19 ).parseInt( second );
    
-   value.setProperty( "year",  year );
-   value.setProperty( "month", month );
-   value.setProperty( "day",   day );
-   value.setProperty( "hour",   hour );
-   value.setProperty( "minute", minute );
-   value.setProperty( "second", second );
+   Item yr( year );
+   Item mo( month );
+   Item da( day );
+   Item hr( hour );
+   Item mn( minute );
+   Item se( second );
+   Item zero( (int64) 0 );
+   
+   value.setProperty( "year",   yr );
+   value.setProperty( "month",  mo );
+   value.setProperty( "day",    da );
+   value.setProperty( "hour",   hr );
+   value.setProperty( "minute", mn );
+   value.setProperty( "second", se );
+   value.setProperty( "msec",   zero );
    
    return s_ok;
 }

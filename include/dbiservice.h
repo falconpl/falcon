@@ -24,6 +24,7 @@
 #include <falcon/engine.h>
 #include <falcon/service.h>
 #include <falcon/error.h>
+#include <falcon/timestamp.h>
 
 namespace Falcon
 {
@@ -135,17 +136,17 @@ public:
    /**
     * Get a value from the current row as a date
     */
-   virtual dbr_status asDate( const int columnIndex, CoreObject &value )=0;
+   virtual dbr_status asDate( const int columnIndex, TimeStamp &value )=0;
    
    /**
     * Get a value from the current row as a time
     */
-   virtual dbr_status asTime( const int columnIndex, CoreObject &value )=0;
+   virtual dbr_status asTime( const int columnIndex, TimeStamp &value )=0;
    
    /**
     * Get a value from the current row as a datetime
     */
-   virtual dbr_status asDateTime( const int columnIndex, CoreObject &value )=0;
+   virtual dbr_status asDateTime( const int columnIndex, TimeStamp &value )=0;
    
    /**
     * Returns last error and its description.
