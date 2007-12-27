@@ -66,9 +66,6 @@ Item *VMachine::getOpcodeParam( register uint32 bc_pos )
       return m_imm + bc_pos;
 
       case P_PARAM_STRID:
-         /*m_imm[bc_pos].setString( new GarbageString( this, 
-			 *const_cast< String *>( m_modules.moduleAt( m_moduleId )->getString( endianInt32(*reinterpret_cast<int32 *>( m_code + m_pc_next ) ) ) )
-			) );*/
 		 m_imm[bc_pos].setString( const_cast< String *>( m_modules.moduleAt( m_moduleId )->getString( endianInt32(*reinterpret_cast<int32 *>( m_code + m_pc_next ) ) ) ) );
 		 m_pc_next += sizeof( int32 );
       return m_imm + bc_pos;

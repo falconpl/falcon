@@ -332,7 +332,7 @@ void Byte::remove( String *str, uint32 pos, uint32 len ) const
 void Byte::bufferize( String *str ) const
 {
    // already buffered?
-   if ( ! str->isReadOnly() )
+   if ( ! str->isStatic() )
       return;
 
    uint32 size = str->m_size;
@@ -1195,11 +1195,11 @@ void Static32::remove( String *str, uint32 pos, uint32 len ) const
 
 void Static::destroy( String *str ) const
 {
-	if ( str->allocated() > 0 ) {
+   if ( str->allocated() > 0 ) {
       memFree( str->getRawStorage() );
       str->allocated( 0 );
       str->size(0);
-   }	   
+   }
 }
 
 
