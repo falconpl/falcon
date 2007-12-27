@@ -40,7 +40,6 @@ end
 
 rs.close()
 
-/*
 > "Query fetching dict: "
 rs = dbh.query( "SELECT name, age FROM names" )
 
@@ -49,7 +48,6 @@ while (let p = rs.fetchDict())
 end
 
 rs.close()
-*/
 
 > "Updating database"
 > "Update mass status: ", dbh.execute( "UPDATE names SET name='Jeff'" )

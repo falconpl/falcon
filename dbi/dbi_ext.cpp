@@ -356,8 +356,10 @@ FALCON_FUNC DBIRecordset_fetchDict( VMachine *vm )
    for ( int cIdx = 0; cIdx < cCount; cIdx++ )
    {
       DBIRecordset::dbr_status retval;
+      GarbageString *gsName = new GarbageString( vm );
+      gsName->bufferize( *cNames->at( cIdx ).asString() );
+      
       Item *i;
-      Item *name = new Item( cNames->at( cIdx ) );
       
       switch ( cTypes->at( cIdx ).asInteger() )
       {
@@ -369,13 +371,13 @@ FALCON_FUNC DBIRecordset_fetchDict( VMachine *vm )
             if ( retval == DBIRecordset::s_nil_value )
             {
                Item k;
-               dict->insert( *name, k );
+               dict->insert( gsName, k );
             }
             else if ( retval == DBIRecordset::s_ok )
             {
                GarbageString *gsValue = new GarbageString( vm );
                gsValue->bufferize( value );
-               dict->insert( *name, gsValue );
+               dict->insert( gsName, gsValue );
             }
             else
             {
@@ -392,11 +394,11 @@ FALCON_FUNC DBIRecordset_fetchDict( VMachine *vm )
             if ( retval == DBIRecordset::s_nil_value )
             {
                Item k;
-               dict->insert( *name, k );
+               dict->insert( gsName, k );
             }
             else
             {
-               dict->insert( *name, (int64) value );
+               dict->insert( gsName, (int64) value );
             }
          }
          break;
@@ -409,11 +411,11 @@ FALCON_FUNC DBIRecordset_fetchDict( VMachine *vm )
             if ( retval == DBIRecordset::s_nil_value )
             {
                Item k;
-               dict->insert( *name, k );
+               dict->insert( gsName, k );
             }
             else
             {
-               dict->insert( *name, (int64) value );
+               dict->insert( gsName, (int64) value );
             }
          }
          break;
@@ -426,11 +428,11 @@ FALCON_FUNC DBIRecordset_fetchDict( VMachine *vm )
             if ( retval == DBIRecordset::s_nil_value )
             {
                Item k;
-               dict->insert( *name, k );
+               dict->insert( gsName, k );
             }
             else
             {
-               dict->insert( *name, (numeric) value );
+               dict->insert( gsName, (numeric) value );
             }
          }
          break;
