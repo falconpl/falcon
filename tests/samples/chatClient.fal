@@ -32,17 +32,7 @@ class ClientTCPSocket( address, port ) from TCPSocket( address, port )
 
    function readline()
       readIn = self.recv( 1024 )
-      if not readIn: return nil
-
-      self.data += readIn
-      pos = strFind( self.data, "\r\n" )
-      while pos = -1
-         self.data += self.recv( 1024 )
-         pos = strFind( self.data, "\r\n" )
-      end
-      msg = self.data[ 0:pos ]
-      self.data = self.data[ pos + 2: ]
-      return msg
+      return readIn
    end
 end
 
