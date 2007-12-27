@@ -23,6 +23,7 @@
 
 #include <falcon/engine.h>
 #include <falcon/service.h>
+#include <falcon/error.h>
 
 namespace Falcon
 {

@@ -3,10 +3,14 @@ load dbi
 dbh = DBIConnect( "pgsql" )
 inspect(dbh)
 
-> "Create table status: ", dbh.execute( "CREATE TABLE names (name VARCHAR(45), age integer)" )
-> "      Insert status: ", dbh.execute( "INSERT INTO names VALUES ('John', 20)" )
-> "      Insert status: ", dbh.execute( "INSERT INTO names VALUES ('Jane', 21)" )
-> "      Insert status: ", dbh.execute( "INSERT INTO names VALUES ('Jim', 22)" )
+//try
+    > "Create table status: ", dbh.execute( "CREATE TABLE names (name VARCHAR(45), age integer)" )
+    > "      Insert status: ", dbh.execute( "INSERT INTO names VALUES ('John', 20)" )
+    > "      Insert status: ", dbh.execute( "INSERT INTO names VALUES ('Jane', 21)" )
+    > "      Insert status: ", dbh.execute( "INSERT INTO names VALUES ('Jim', 22)" )
+//catch 
+//    > "Table could not be created, assuming it already exists"
+//end
 
 >
 > "Performing a query"
@@ -17,16 +21,16 @@ inspect( rs )
 
 > "Columns: "
 for c in rs.getColumnNames()
-> "   ", c
+    > "   ", c
 end
 
 > "Rows: "
 while rs.next() == 0
-> rs.asString( 0 ), ", ", rs.asInteger( 1 )
+    > rs.asString( 0 ), ", ", rs.asInteger( 1 )
 end
 
 rs.close()
-/*
+
 > "Query fetching arrays: "
 rs = dbh.query( "SELECT name, age FROM names" )
 
@@ -36,6 +40,7 @@ end
 
 rs.close()
 
+/*
 > "Query fetching dict: "
 rs = dbh.query( "SELECT name, age FROM names" )
 
@@ -51,4 +56,3 @@ rs.close()
 > " Drop table status: ", dbh.execute( "DROP TABLE names" )
 
 dbh.close()
-

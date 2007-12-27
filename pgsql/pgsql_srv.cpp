@@ -135,12 +135,10 @@ DBIRecordset::dbr_status DBIRecordsetPgSQL::getColumnNames( CoreArray *resultCac
 {
    for ( int cIdx = 0; cIdx < m_columnCount; cIdx++ )
    {
-      // TODO: does this handle memory correctly? Result from PQfname will last as
-      //       long as the result is open, but will be free'ed upon a call to PQclear.
       char *fname = PQfname( m_res, cIdx );
-      Item *i = new Item( new String( fname ) );
-      
-      resultCache->append( *i );
+      GarbageString *gsFName = new GarbageString( resultCache->origin() );
+      gsFName->bufferize( fname );
+      resultCache->append( gsFName );
    }
    
    return s_ok;
@@ -151,9 +149,7 @@ DBIRecordset::dbr_status DBIRecordsetPgSQL::getColumnTypes( CoreArray *resultCac
    for ( int cIdx = 0; cIdx < m_columnCount; cIdx++ )
    {
       dbi_type typ = getFalconType( PQftype( m_res, cIdx ) );
-      Item *i = new Item( (int64) typ );
-      
-      resultCache->append( *i );
+      resultCache->append( (int64) typ );
    }
    
    return s_ok;
@@ -176,7 +172,8 @@ DBIRecordset::dbr_status DBIRecordsetPgSQL::asString( const int columnIndex, Str
    
    const char *v = PQgetvalue( m_res, m_row, columnIndex );
    
-   value = String( v, (int32) strlen( v ) );
+   value = String( v );
+   value.bufferize();
    
    return s_ok;
 }

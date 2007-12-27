@@ -1,11 +1,11 @@
 /*
    FALCON - The Falcon Programming Language.
-FILE: dbi_ext.cpp
+   FILE: dbi_ext.cpp
    
    DBI Falcon extension interface
    -------------------------------------------------------------------
-Author: Giancarlo Niccolai
-Begin: Sun, 23 Dec 2007 22:02:37 +0100
+   Author: Giancarlo Niccolai, Jeremy Cowgar
+   Begin: Sun, 23 Dec 2007 22:02:37 +0100
    Last modified because:
    
    -------------------------------------------------------------------
@@ -250,26 +250,22 @@ FALCON_FUNC DBIRecordset_fetchArray( VMachine *vm )
       {
       case dbit_string:
          {
-            // TODO: Am I handling memory correctly?
-            String *value = new String();            
-            retval = dbr->asString( cIdx, *value );
+            String value;
+            retval = dbr->asString( cIdx, value );
             
             if ( retval == DBIRecordset::s_nil_value )
             {
-               delete value;
-               
-               i = new Item();
-               ary->append( *i );
+               Item k;
+               ary->append( k );
             }
             else if ( retval == DBIRecordset::s_ok )
             {
-               i = new Item( value );
-               ary->append( *i );
+               GarbageString *gsValue = new GarbageString( vm );
+               gsValue->bufferize( value );
+               ary->append( gsValue );
             }
             else
             {
-               delete value;
-               
                // TODO: handle error
             }
          }
@@ -282,14 +278,12 @@ FALCON_FUNC DBIRecordset_fetchArray( VMachine *vm )
             
             if ( retval == DBIRecordset::s_nil_value )
             {
-               i = new Item();
-               ary->append( *i );
+               Item k;
+               ary->append( k );
             }
             else
             {
-               // TODO: Is this right?
-               i = new Item( (int64) value );
-               ary->append( *i );
+               ary->append( (int64) value );
             }
          }
          break;
@@ -301,13 +295,12 @@ FALCON_FUNC DBIRecordset_fetchArray( VMachine *vm )
             
             if ( retval == DBIRecordset::s_nil_value )
             {
-               i = new Item();
-               ary->append( *i );
+               Item k;
+               ary->append( k );
             }
             else
             {
-               i = new Item( (int64) value );
-               ary->append( *i );
+               ary->append( value );
             }
          }
          break;
@@ -319,13 +312,12 @@ FALCON_FUNC DBIRecordset_fetchArray( VMachine *vm )
             
             if ( retval == DBIRecordset::s_nil_value )
             {
-               i = new Item();
-               ary->append( *i );
+               Item k;
+               ary->append( k );
             }
             else
             {
-               i = new Item( (numeric) value );
-               ary->append( *i );
+               ary->append( value );
             }
          }
          break;
