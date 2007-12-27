@@ -413,7 +413,7 @@ FALCON_FUNC  strTrim ( ::Falcon::VMachine *vm )
       int32 tLen = trim->length();
       
       while ( pos >= 0 ) {
-         int chr = cs->getCharAt( pos );
+         uint32 chr = cs->getCharAt( pos );
          int found = 0;
          
          for ( int32 tIdx=0; tIdx < tLen; tIdx++ )
@@ -461,11 +461,10 @@ FALCON_FUNC  strFrontTrim ( ::Falcon::VMachine *vm )
    } else {
       String *trim = trimChars->asString();
       int32 tLen = trim->length();
-      int found;
       
       while( pos <= len )
       {
-         int chr = cs->getCharAt( pos );
+         uint32 chr = cs->getCharAt( pos );
          int found = 0;
          
          for ( int32 tIdx = 0; tIdx < tLen; tIdx++ )
@@ -498,7 +497,7 @@ FALCON_FUNC  strAllTrim ( ::Falcon::VMachine *vm )
    
    int32 start = 0;
    int32 end = len;
-   int chr;
+   uint32 chr;
    
    Item *trimChars = vm->param(1);
    if ( trimChars == 0 ) {
@@ -585,7 +584,7 @@ FALCON_FUNC  strReplace ( ::Falcon::VMachine *vm )
    uint32 tg_len = target->asString()->length();
 
    String *ned_str = needle->asString();
-   uint32 ned_len = needle->asString()->length();
+   int32 ned_len = (int32) needle->asString()->length();
 
    // Is the needle is empty
    if ( ned_len == 0 ) {
