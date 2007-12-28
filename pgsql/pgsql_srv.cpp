@@ -626,6 +626,28 @@ DBIHandlePgSQL::dbh_status DBIHandlePgSQL::getLastError( String &description )
    return s_ok;
 }
 
+DBIHandlePgSQL::dbh_status DBIHandlePgSQL::escapeString( const String &value, String &escaped )
+{
+   if ( value.length() == 0 )
+      return s_ok;
+   
+   AutoCString asValue( value );
+   
+   int maxLen = value.length() * 2;
+   int errorCode;
+   char *cTo = (char *) malloc( sizeof( char ) * maxLen );
+   
+   size_t convertedSize = PQescapeStringConn( m_conn, cTo, asValue.c_str(), maxLen, 
+                                              &errorCode );
+   
+   escaped = cTo;
+   escaped.bufferize();
+   
+   free( cTo );
+   
+   return s_ok;
+}
+
 DBIHandlePgSQL::dbh_status DBIHandlePgSQL::close()
 {
    if ( m_conn != NULL )

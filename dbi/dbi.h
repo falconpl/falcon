@@ -1,22 +1,22 @@
 /*
-   FALCON - The Falcon Programming Language.
-   FILE: dbi.h
-
-   Short description
-   -------------------------------------------------------------------
-   Author: Giancarlo Niccolai
-   Begin: Sun, 23 Dec 2007 20:33:57 +0100
-   Last modified because:
-
-   -------------------------------------------------------------------
-   (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
-
-   See LICENSE file for licensing details.
-   In order to use this file in its compiled form, this source or
-   part of it you have to read, understand and accept the conditions
-   that are stated in the LICENSE file that comes boundled with this
-   package.
-*/
+ * FALCON - The Falcon Programming Language.
+ * FILE: dbi.h
+ *
+ * Short description
+ * -------------------------------------------------------------------
+ * Author: Giancarlo Niccolai
+ * Begin: Sun, 23 Dec 2007 20:33:57 +0100
+ * Last modified because:
+ *
+ * -------------------------------------------------------------------
+ * (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
+ * 
+ * See LICENSE file for licensing details.
+ * In order to use this file in its compiled form, this source or
+ * part of it you have to read, understand and accept the conditions
+ * that are stated in the LICENSE file that comes boundled with this
+ * package.
+ */
 
 #ifndef DBI_H
 #define DBI_H
@@ -27,6 +27,9 @@
 namespace Falcon
 {
 
+/**
+ * Load the DBI driver.
+ */
 class DBILoaderImpl: public DBILoader
 {
    FlcLoader m_loader;

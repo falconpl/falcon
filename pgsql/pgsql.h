@@ -95,6 +95,7 @@ public:
    DBIRecordset *query( const String &sql, DBITransaction::dbt_status &retval );
    int execute( const String &sql, DBITransaction::dbt_status &retval );
    virtual dbh_status getLastError( String &description );
+   virtual dbh_status escapeString( const String &value, String &escaped );
    virtual dbh_status close();
 };
 

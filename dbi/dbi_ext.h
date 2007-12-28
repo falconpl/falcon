@@ -33,9 +33,10 @@ namespace Ext {
 FALCON_FUNC DBIConnect( VMachine *vm );
 
 FALCON_FUNC DBIHandle_startTransaction( VMachine *vm );
-FALCON_FUNC DBIHandle_close( VMachine *vm );
 FALCON_FUNC DBIHandle_query( VMachine *vm );
 FALCON_FUNC DBIHandle_execute( VMachine *vm );
+FALCON_FUNC DBIHandle_sqlExpand( VMachine *vm );
+FALCON_FUNC DBIHandle_close( VMachine *vm );
 
 FALCON_FUNC DBITransaction_query( VMachine *vm );
 FALCON_FUNC DBITransaction_execute( VMachine *vm );

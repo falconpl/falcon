@@ -1,22 +1,22 @@
 /*
-   FALCON - The Falcon Programming Language.
-   FILE: dbi.cpp
-
-   Short description
-   -------------------------------------------------------------------
-   Author: Giancarlo Niccolai
-   Begin: Sun Dec 2007 23 21:54:34 +0100
-   Last modified because:
-
-   -------------------------------------------------------------------
-   (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
-
-   See LICENSE file for licensing details.
-   In order to use this file in its compiled form, this source or
-   part of it you have to read, understand and accept the conditions
-   that are stated in the LICENSE file that comes boundled with this
-   package.
-*/
+ * FALCON - The Falcon Programming Language.
+ * FILE: dbi.cpp
+ *
+ * Short description
+ * -------------------------------------------------------------------
+ * Author: Giancarlo Niccolai
+ * Begin: Sun Dec 2007 23 21:54:34 +0100
+ * Last modified because:
+ * 
+ * -------------------------------------------------------------------
+ * (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
+ *
+ * See LICENSE file for licensing details.
+ * In order to use this file in its compiled form, this source or
+ * part of it you have to read, understand and accept the conditions
+ * that are stated in the LICENSE file that comes boundled with this
+ * package.
+ */
 
 #include "dbi.h"
 #include "version.h"
@@ -45,6 +45,7 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    self->addClassMethod( handler_class, "startTransaction", Falcon::Ext::DBIHandle_startTransaction );
    self->addClassMethod( handler_class, "query", Falcon::Ext::DBIHandle_query );
    self->addClassMethod( handler_class, "execute", Falcon::Ext::DBIHandle_execute );
+   self->addClassMethod( handler_class, "sqlExpand", Falcon::Ext::DBIHandle_sqlExpand );
    self->addClassMethod( handler_class, "close", Falcon::Ext::DBIHandle_close );
 
    // create the base class DBITransaction for falcon
@@ -79,6 +80,4 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    return self;
 }
 
-
 /* end of dbi.cpp */
-

@@ -159,7 +159,61 @@ FALCON_FUNC DBIHandle_close( VMachine *vm )
    CoreObject *self = vm->self().asObject();
    DBIHandle *dbh = static_cast<DBIHandle *>( self->getUserData() );
    dbh->close();
-   // todo: raise on error
+   // TODO: raise on error
+}
+
+FALCON_FUNC DBIHandle_sqlExpand( VMachine *vm )
+{
+   CoreObject *self = vm->self().asObject();
+   DBIHandle *dbh = static_cast<DBIHandle *>( self->getUserData() );
+   
+   Item *sqlI = vm->param( 0 );
+   String *sql = sqlI->asString();
+   
+   uint32 lastMarkPos = 0;
+   
+   for ( int paramIdx = 1; paramIdx < vm->paramCount(); paramIdx++ )
+   {
+      uint32 markPos = sql->find( "?", lastMarkPos );
+      
+      if ( markPos == csh::npos )
+         break;  // TODO: throw an error, don't exit silently
+      
+      if ( markPos < sql->length() && sql->getCharAt( markPos + 1 ) == '?' )
+      {
+         sql->remove( markPos, 1 );
+         
+         markPos++;
+         markPos = sql->find( "?", markPos );
+         if ( markPos == csh::npos )
+            break; // TODO: throw an error, don't exit silently
+      }
+      
+      // Convert based on type
+      
+      Item *i = vm->param( paramIdx );
+      String s;
+      
+      if ( i->isInteger() )
+         s.writeNumber( i->asInteger() );
+      else if ( i->isNumeric() )
+         s.writeNumber( i->asNumeric(), "%f");
+      else if ( i->isString() )
+      {
+         dbh->escapeString( *i->asString(), s );
+         s.prepend("'");
+         s.append("'");
+      }
+      
+      sql->insert( markPos, 1, s );
+      
+      lastMarkPos = markPos;
+   }
+   
+   GarbageString *gs = new GarbageString( vm );
+   gs->bufferize( *sql );
+   
+   vm->retval( gs );
 }
 
 /**********************************************************
