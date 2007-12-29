@@ -19,6 +19,7 @@
    */
 
 #include <stdio.h>
+#include <string.h>
 
 #include <falcon/engine.h>
 #include <falcon/error.h>
@@ -168,15 +169,41 @@ FALCON_FUNC DBIHandle_sqlExpand( VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
    DBIHandle *dbh = static_cast<DBIHandle *>( self->getUserData() );
-   
+
+   switch ( dbh->getQueryExpansionCapability() ) {
+   case DBIHandle::s_dollar_sign_expansion:
+      // TODO: Build array and ship off to query method
+      return;
+
+   case DBIHandle::s_question_mark_expansion:
+      // TODO: Convert $1, $2 into ?, ? and ship off to query method
+      return;
+
+   default:
+      // We will handle that below
+      break;
+   }
+
    Item *sqlI = vm->param( 0 );
+
+   if ( sqlI == 0 || ! sqlI->isString() ) {
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                                        .origin( e_orig_runtime ) ) );
+      return;
+   }
+
    String *sql = sqlI->asString();
    uint32 dollarPos = sql->find( "$", 0 );
 
    while ( dollarPos != csh::npos ) {
       int64 pIdx = -1;
 
-      if ( ( dollarPos + 1 ) < sql->length() ) {
+      if ( dollarPos == sql->length() - 1 ) {
+         vm->raiseModError( new DBIError( ErrorParam( DBIHandle::s_sql_expand_failure,
+                                                     __LINE__ )
+                                         .desc( "Stray $ charater at the end of query" ) ) );
+         return;
+      } else {
          if ( sql->getCharAt( dollarPos + 1 ) == '$' ) {
             sql->remove( dollarPos, 1 );
             dollarPos = sql->find( "$", dollarPos + 1 );
@@ -187,7 +214,13 @@ FALCON_FUNC DBIHandle_sqlExpand( VMachine *vm )
          pIdx = atoi( asTmp.c_str() );
 
          if ( pIdx == 0 ) {
-            // TODO: throw error
+            String s( sql->subString( dollarPos ) );
+            s.prepend( "Failed to parse dollar expansion starting at: " );
+
+            vm->raiseModError( new DBIError( ErrorParam( DBIHandle::s_sql_expand_failure,
+                                                        __LINE__ )
+                                            .desc( s ) ) );
+            return;
          }
       }
 
@@ -195,8 +228,22 @@ FALCON_FUNC DBIHandle_sqlExpand( VMachine *vm )
       if ( pIdx > 9 ) dollarSize++;
 
       Item *i = vm->param( pIdx );
+      if ( i == 0 ) {
+         char errorMessage[128];
+         snprintf( errorMessage, 128, "Positional argument (%i) is out of range", pIdx );
+
+         GarbageString *s = new GarbageString( vm );
+         s->bufferize( errorMessage );
+         vm->raiseModError( new DBIError( ErrorParam( DBIHandle::s_sql_expand_failure,
+                                                     __LINE__ )
+                                         .desc( *s ) ) );
+         return;
+      }
+
       String value;
 
+      // TODO: handle timestamp values
+      // TODO: handle other values via toString method
       if ( i->isInteger() )
          value.writeNumber( i->asInteger() );
       else if ( i->isNumeric() )
@@ -209,7 +256,7 @@ FALCON_FUNC DBIHandle_sqlExpand( VMachine *vm )
 
       sql->insert( dollarPos, 2, value );
 
-      dollarPos = sql->find( "$", dollarPos + dollarSize + value.length() );
+      dollarPos = sql->find( "$", dollarPos + dollarSize );
    }
    
    GarbageString *gs = new GarbageString( vm );
@@ -219,7 +266,7 @@ FALCON_FUNC DBIHandle_sqlExpand( VMachine *vm )
 }
 
 /**********************************************************
-   Transaction class
+ * Transaction class
  **********************************************************/
 
 FALCON_FUNC DBITransaction_query( VMachine *vm )

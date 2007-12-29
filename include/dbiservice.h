@@ -281,12 +281,30 @@ public:
       s_not_implemented,
       
       s_single_transaction,
+
+      /** failed to parse a sql expansion ($1, $2, ...) correctly */
+      s_sql_expand_failure,
+
       s_error
    }
    dbh_status;
 
+   typedef enum {
+      s_no_expansion,
+      s_question_mark_expansion,
+      s_dollar_sign_expansion
+   }
+   dbh_query_expansion;
+
    DBIHandle() {}
    virtual ~DBIHandle() {}
+
+   /**
+    * State what type of query expansion the driver can handle.
+    *
+    * \return dbh_query_expansion
+    */
+   virtual dbh_query_expansion getQueryExpansionCapability() { return s_no_expansion; }
 
    /** 
     * Starts a new transaction.

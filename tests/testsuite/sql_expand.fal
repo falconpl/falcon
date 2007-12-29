@@ -1,0 +1,48 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 2a
+* Category: dbi
+* Subcategory: pgsql
+* Short: Test SQL expansion (PgSQL)
+* Description:
+* Test the SQL expansion of the PgSQL driver
+* named parameters.
+* [/Description]
+*
+****************************************************************************/
+
+load dbi
+
+h = DBIConnect( "pgsql" )  // uses all defaults for connect string
+
+if h.sqlExpand( "I($1)", 10 )   != "I(10)":        failure( "Expand integer" )
+if h.sqlExpand( "N($1)", 10.5 ) != "N(10.500000)": failure( "Expand numeric" )
+if h.sqlExpand( "S($1)", "H" )  != "S('H')":       failure( "Expand string" )
+if h.sqlExpand( "E($1)", "Mc'Cain" ) != "E('Mc''Cain')": failure( "Expand string with escape" )
+if h.sqlExpand( "D($$)" ) != "D($)": failure( "Expand failed to escape $$" )
+
+h.close()
+
+success()
+
+try
+	h.sqlExpand( "INVALID $1, $2", 10 )
+   failure( "Did not catch positional out of range" )
+catch
+	success()
+end
+
+try
+ 	h.sqlExpand( "INVALID $abc" )
+   failure( "Did not catch invalid integer for $" )
+catch
+	success()
+end
+
+try
+	h.sqlExpand( "INVALID $" )
+   failure( "Did not catch stray $" )
+catch
+	success()
+end
