@@ -1,13 +1,12 @@
 TODO:
-   * Unit tests
+   * Unit tests including "dbi standard" test that will test
+     required functionality from all drivers
    * dbr.fetchObject()
    * dbh/tr.queryOne()
    * dbh/tr.insert( tableName, dict [, seq] )
    * dbh/tr.update( tableName, where, dict )
    * dbh/tr.update( tableName, where, obj )
-   * dbh.ping()
-   * dbh.serverVersion
-   * getLastError() methods (dbh, tr, rec)
+   * DBITransaction script interface
    * Check for a BOF error (rec)
    * mysql driver
    * sqlite3 driver

@@ -4,12 +4,11 @@
  *
  * Short description
  * -------------------------------------------------------------------
- * Author: Giancarlo Niccolai
+ * Author: Giancarlo Niccolai and Jeremy Cowgar
  * Begin: Sun Dec 2007 23 21:54:34 +0100
- * Last modified because:
  *
  * -------------------------------------------------------------------
- * (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
+ * (C) Copyright 2007: the FALCON developers (see list in AUTHORS file)
  *
  * See LICENSE file for licensing details.
  * In order to use this file in its compiled form, this source or
@@ -43,41 +42,41 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    // create the base class DBIHandler for falcon
    Falcon::Symbol *handler_class = self->addClass( "%DBIHandler" ); // private class
    self->addClassMethod( handler_class, "startTransaction", Falcon::Ext::DBIHandle_startTransaction );
-   self->addClassMethod( handler_class, "query", Falcon::Ext::DBIHandle_query );
-   self->addClassMethod( handler_class, "execute", Falcon::Ext::DBIHandle_execute );
-   self->addClassMethod( handler_class, "sqlExpand", Falcon::Ext::DBIHandle_sqlExpand );
-   self->addClassMethod( handler_class, "close", Falcon::Ext::DBIHandle_close );
+   self->addClassMethod( handler_class, "query",        Falcon::Ext::DBIHandle_query );
+   self->addClassMethod( handler_class, "execute",      Falcon::Ext::DBIHandle_execute );
+   self->addClassMethod( handler_class, "sqlExpand",    Falcon::Ext::DBIHandle_sqlExpand );
+   self->addClassMethod( handler_class, "getLastError", Falcon::Ext::DBIHandle_getLastError );
+   self->addClassMethod( handler_class, "close",        Falcon::Ext::DBIHandle_close );
 
    // create the base class DBITransaction for falcon
    Falcon::Symbol *trans_class = self->addClass( "%DBITransaction" ); // private class
-   self->addClassMethod( trans_class, "query", Falcon::Ext::DBITransaction_query );
+   self->addClassMethod( trans_class, "query",   Falcon::Ext::DBITransaction_query );
    self->addClassMethod( trans_class, "execute", Falcon::Ext::DBITransaction_execute );
-   self->addClassMethod( trans_class, "close", Falcon::Ext::DBITransaction_close );
+   self->addClassMethod( trans_class, "close",   Falcon::Ext::DBITransaction_close );
 
    // create the base class DBIRecordset for falcon
    Falcon::Symbol *rec_class = self->addClass( "%DBIRecordset" ); // private class
-   self->addClassMethod( rec_class, "next", Falcon::Ext::DBIRecordset_next );
-   self->addClassMethod( rec_class, "fetchArray", Falcon::Ext::DBIRecordset_fetchArray );
-   self->addClassMethod( rec_class, "fetchDict", Falcon::Ext::DBIRecordset_fetchDict );
-   self->addClassMethod( rec_class, "asString", Falcon::Ext::DBIRecordset_asString );
-   self->addClassMethod( rec_class, "asInteger", Falcon::Ext::DBIRecordset_asInteger );
-   self->addClassMethod( rec_class, "asInteger64", Falcon::Ext::DBIRecordset_asInteger64 );
-   self->addClassMethod( rec_class, "asNumeric", Falcon::Ext::DBIRecordset_asNumeric );
-   self->addClassMethod( rec_class, "asDate", Falcon::Ext::DBIRecordset_asDate );
-   self->addClassMethod( rec_class, "asTime", Falcon::Ext::DBIRecordset_asTime );
-   self->addClassMethod( rec_class, "asDateTime", Falcon::Ext::DBIRecordset_asDateTime );
-   self->addClassMethod( rec_class, "getRowCount", Falcon::Ext::DBIRecordset_getRowCount );
+   self->addClassMethod( rec_class, "next",           Falcon::Ext::DBIRecordset_next );
+   self->addClassMethod( rec_class, "fetchArray",     Falcon::Ext::DBIRecordset_fetchArray );
+   self->addClassMethod( rec_class, "fetchDict",      Falcon::Ext::DBIRecordset_fetchDict );
+   self->addClassMethod( rec_class, "asString",       Falcon::Ext::DBIRecordset_asString );
+   self->addClassMethod( rec_class, "asInteger",      Falcon::Ext::DBIRecordset_asInteger );
+   self->addClassMethod( rec_class, "asInteger64",    Falcon::Ext::DBIRecordset_asInteger64 );
+   self->addClassMethod( rec_class, "asNumeric",      Falcon::Ext::DBIRecordset_asNumeric );
+   self->addClassMethod( rec_class, "asDate",         Falcon::Ext::DBIRecordset_asDate );
+   self->addClassMethod( rec_class, "asTime",         Falcon::Ext::DBIRecordset_asTime );
+   self->addClassMethod( rec_class, "asDateTime",     Falcon::Ext::DBIRecordset_asDateTime );
+   self->addClassMethod( rec_class, "getRowCount",    Falcon::Ext::DBIRecordset_getRowCount );
    self->addClassMethod( rec_class, "getColumnCount", Falcon::Ext::DBIRecordset_getColumnCount );
    self->addClassMethod( rec_class, "getColumnTypes", Falcon::Ext::DBIRecordset_getColumnTypes );
    self->addClassMethod( rec_class, "getColumnNames", Falcon::Ext::DBIRecordset_getColumnNames );
-   self->addClassMethod( rec_class, "getLastError", Falcon::Ext::DBIRecordset_getLastError );
-   self->addClassMethod( rec_class, "close", Falcon::Ext::DBIRecordset_close );
+   self->addClassMethod( rec_class, "getLastError",   Falcon::Ext::DBIRecordset_getLastError );
+   self->addClassMethod( rec_class, "close",          Falcon::Ext::DBIRecordset_close );
 
-   // service pubblication
+   // service publication
    self->publishService( &theDBIService );
 
-   //============================================================
-   // DBIError class
+   // create the base class DBIError for falcon
    Falcon::Symbol *error_class = self->addExternalRef( "Error" ); // it's external
    Falcon::Symbol *procerr_cls = self->addClass( "DBIError", Falcon::Ext::DBIError_init );
    procerr_cls->getClassDef()->addInheritance(  new Falcon::InheritDef( error_class ) );
@@ -87,3 +86,4 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
 }
 
 /* end of dbi.cpp */
+

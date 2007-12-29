@@ -1,22 +1,21 @@
 /*
-   FALCON - The Falcon Programming Language.
-   FILE: dbi_ext.cpp
-
-   DBI Falcon extension interface
-   -------------------------------------------------------------------
-   Author: Giancarlo Niccolai, Jeremy Cowgar
-   Begin: Sun, 23 Dec 2007 22:02:37 +0100
-   Last modified because:
-
-   -------------------------------------------------------------------
-   (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
-
-   See LICENSE file for licensing details.
-   In order to use this file in its compiled form, this source or
-   part of it you have to read, understand and accept the conditions
-   that are stated in the LICENSE file that comes boundled with this
-   package.
-   */
+ * FALCON - The Falcon Programming Language.
+ * FILE: dbi_ext.cpp
+ *
+ * DBI Falcon extension interface
+ * -------------------------------------------------------------------
+ * Author: Giancarlo Niccolai and Jeremy Cowgar
+ * Begin: Sun, 23 Dec 2007 22:02:37 +0100
+ *
+ * -------------------------------------------------------------------
+ * (C) Copyright 2007: the FALCON developers (see list in AUTHORS file)
+ *
+ * See LICENSE file for licensing details.
+ * In order to use this file in its compiled form, this source or
+ * part of it you have to read, understand and accept the conditions
+ * that are stated in the LICENSE file that comes boundled with this
+ * package.
+ */
 
 #include <stdio.h>
 #include <string.h>
@@ -51,14 +50,12 @@ FALCON_FUNC DBIConnect( VMachine *vm )
    }
 
    DBIService *provider = theDBIService.loadDbProvider( vm, provName );
-   if ( provider != 0 )
-   {
+   if ( provider != 0 ) {
       // if it's 0, the service has already raised an error in the vm and we have nothing to do.
       String connectErrorMessage;
-      DBIService::dbi_status status;
+      dbi_status status;
       DBIHandle *hand = provider->connect( connString, false, status, connectErrorMessage );
-      if ( hand == 0 )
-      {
+      if ( hand == 0 ) {
          if ( connectErrorMessage.length() == 0 )
             connectErrorMessage = "An unknown error has occured during connect";
 
@@ -85,8 +82,7 @@ FALCON_FUNC DBIHandle_startTransaction( VMachine *vm )
    DBIHandle *dbh = static_cast<DBIHandle *>( self->getUserData() );
 
    DBITransaction *trans = dbh->startTransaction();
-   if ( trans == 0 )
-   {
+   if ( trans == 0 ) {
       // raise an error depending on dbh->getLastError();
       return;
    }
@@ -105,21 +101,21 @@ FALCON_FUNC DBIHandle_query( VMachine *vm )
    DBIHandle *dbh = static_cast<DBIHandle *>( self->getUserData() );
 
    Item *sqlI = vm->param( 0 );
-   if ( sqlI == 0 || ! sqlI->isString() )
-   {
+   if ( sqlI == 0 || ! sqlI->isString() ) {
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
                                          .origin( e_orig_runtime ) ) );
       return;
    }
 
-   DBITransaction::dbt_status retval;
+   dbi_status retval;
    DBIRecordset *recSet = dbh->query( *sqlI->asString(), retval );
 
-   if ( retval != DBITransaction::s_ok )
-   {
-      // TODO: supply the real error message
+   if ( retval != dbi_ok ) {
+      String errorMessage;
+      dbh->getLastError( errorMessage );
+
       vm->raiseModError( new DBIError( ErrorParam( retval, __LINE__ )
-                                       .desc( "Error processing SQL" ) ) );
+                                       .desc( errorMessage ) ) );
       return;
    }
 
@@ -144,14 +140,14 @@ FALCON_FUNC DBIHandle_execute( VMachine *vm )
       return;
    }
 
-   DBITransaction::dbt_status retval;
+   dbi_status retval;
    int affectedRows = dbh->execute( *sqlI->asString(), retval );
 
-   if ( retval != DBITransaction::s_ok )
-   {
-      // TODO: report real error here
+   if ( retval != dbi_ok ) {
+      String errorMessage;
+      dbh->getLastError( errorMessage );
       vm->raiseModError( new DBIError( ErrorParam( retval, __LINE__ )
-                                       .desc( "Error executing query" ) ) );
+                                       .desc( errorMessage ) ) );
    }
 
    vm->retval( affectedRows );
@@ -162,7 +158,25 @@ FALCON_FUNC DBIHandle_close( VMachine *vm )
    CoreObject *self = vm->self().asObject();
    DBIHandle *dbh = static_cast<DBIHandle *>( self->getUserData() );
    dbh->close();
-   // TODO: raise on error
+}
+
+FALCON_FUNC DBIHandle_getLastError( VMachine *vm )
+{
+   CoreObject *self = vm->self().asObject();
+   DBIHandle *dbh = static_cast<DBIHandle *>( self->getUserData() );
+
+   String value;
+   dbi_status retval = dbh->getLastError( value );
+   if ( retval != dbi_ok ) {
+      vm->raiseModError( new DBIError( ErrorParam( retval, __LINE__ )
+                                      .desc( "Could not get last error message " ) ) );
+      return;
+   }
+
+   GarbageString *gs = new GarbageString( vm );
+   gs->bufferize( value );
+
+   vm->retval( gs );
 }
 
 FALCON_FUNC DBIHandle_sqlExpand( VMachine *vm )
@@ -171,11 +185,11 @@ FALCON_FUNC DBIHandle_sqlExpand( VMachine *vm )
    DBIHandle *dbh = static_cast<DBIHandle *>( self->getUserData() );
 
    switch ( dbh->getQueryExpansionCapability() ) {
-   case DBIHandle::s_dollar_sign_expansion:
+   case DBIHandle::q_dollar_sign_expansion:
       // TODO: Build array and ship off to query method
       return;
 
-   case DBIHandle::s_question_mark_expansion:
+   case DBIHandle::q_question_mark_expansion:
       // TODO: Convert $1, $2 into ?, ? and ship off to query method
       return;
 
@@ -199,7 +213,7 @@ FALCON_FUNC DBIHandle_sqlExpand( VMachine *vm )
       int64 pIdx = -1;
 
       if ( dollarPos == sql->length() - 1 ) {
-         vm->raiseModError( new DBIError( ErrorParam( DBIHandle::s_sql_expand_failure,
+         vm->raiseModError( new DBIError( ErrorParam( dbi_sql_expand_error,
                                                      __LINE__ )
                                          .desc( "Stray $ charater at the end of query" ) ) );
          return;
@@ -217,7 +231,7 @@ FALCON_FUNC DBIHandle_sqlExpand( VMachine *vm )
             String s( sql->subString( dollarPos ) );
             s.prepend( "Failed to parse dollar expansion starting at: " );
 
-            vm->raiseModError( new DBIError( ErrorParam( DBIHandle::s_sql_expand_failure,
+            vm->raiseModError( new DBIError( ErrorParam( dbi_sql_expand_error,
                                                         __LINE__ )
                                             .desc( s ) ) );
             return;
@@ -234,7 +248,7 @@ FALCON_FUNC DBIHandle_sqlExpand( VMachine *vm )
 
          GarbageString *s = new GarbageString( vm );
          s->bufferize( errorMessage );
-         vm->raiseModError( new DBIError( ErrorParam( DBIHandle::s_sql_expand_failure,
+         vm->raiseModError( new DBIError( ErrorParam( dbi_sql_expand_error,
                                                      __LINE__ )
                                          .desc( *s ) ) );
          return;
@@ -272,17 +286,16 @@ FALCON_FUNC DBITransaction_query( VMachine *vm )
    DBITransaction *dbt = static_cast<DBITransaction *>( self->getUserData() );
 
    Item *i_query = vm->param(0);
-   if( i_query == 0 || ! i_query->isString() )
-   {
+   if( i_query == 0 || ! i_query->isString() ) {
       // raise error
       return;
    }
 
    /*
-      if ( dbt->query( *i_query->asString() ) != DBITransaction::s_ok )
-      {
-      // raise error
-      }
+    if ( dbt->query( *i_query->asString() ) != dbi_ok )
+    {
+        // raise error
+    }
     */
 
    vm->retval(0); // or anything you want to return
@@ -321,13 +334,13 @@ FALCON_FUNC DBIRecordset_fetchArray( VMachine *vm )
    CoreObject *self = vm->self().asObject();
    DBIRecordset *dbr = static_cast<DBIRecordset *>( self->getUserData() );
 
-   DBIRecordset::dbr_status nextRetVal = dbr->next();
+   dbi_status nextRetVal = dbr->next();
    switch ( nextRetVal )
    {
-   case DBIRecordset::s_ok:
+   case dbi_ok:
       break;
 
-   case DBIRecordset::s_eof:
+   case dbi_eof:
       vm->retnil();
       return ;
 
@@ -343,7 +356,7 @@ FALCON_FUNC DBIRecordset_fetchArray( VMachine *vm )
 
    for ( int cIdx = 0; cIdx < cCount; cIdx++ )
    {
-      DBIRecordset::dbr_status retval;
+      dbi_status retval;
       Item *i;
 
       switch ( cTypes->at( cIdx ).asInteger() )
@@ -353,19 +366,14 @@ FALCON_FUNC DBIRecordset_fetchArray( VMachine *vm )
             String value;
             retval = dbr->asString( cIdx, value );
 
-            if ( retval == DBIRecordset::s_nil_value )
-            {
+            if ( retval == dbi_nil_value ) {
                Item k;
                ary->append( k );
-            }
-            else if ( retval == DBIRecordset::s_ok )
-            {
+            } else if ( retval == dbi_ok ) {
                GarbageString *gsValue = new GarbageString( vm );
                gsValue->bufferize( value );
                ary->append( gsValue );
-            }
-            else
-            {
+            } else {
                // TODO: handle error
             }
          }
@@ -376,13 +384,10 @@ FALCON_FUNC DBIRecordset_fetchArray( VMachine *vm )
             int32 value;
             retval = dbr->asInteger( cIdx, value );
 
-            if ( retval == DBIRecordset::s_nil_value )
-            {
+            if ( retval == dbi_nil_value ) {
                Item k;
                ary->append( k );
-            }
-            else
-            {
+            } else {
                ary->append( (int64) value );
             }
          }
@@ -393,13 +398,10 @@ FALCON_FUNC DBIRecordset_fetchArray( VMachine *vm )
             int64 value;
             retval = dbr->asInteger64( cIdx, value );
 
-            if ( retval == DBIRecordset::s_nil_value )
-            {
+            if ( retval == dbi_nil_value ) {
                Item k;
                ary->append( k );
-            }
-            else
-            {
+            } else {
                ary->append( value );
             }
          }
@@ -410,13 +412,10 @@ FALCON_FUNC DBIRecordset_fetchArray( VMachine *vm )
             numeric value;
             retval = dbr->asNumeric( cIdx, value );
 
-            if ( retval == DBIRecordset::s_nil_value )
-            {
+            if ( retval == dbi_nil_value ) {
                Item k;
                ary->append( k );
-            }
-            else
-            {
+            } else {
                ary->append( value );
             }
          }
@@ -430,16 +429,13 @@ FALCON_FUNC DBIRecordset_fetchArray( VMachine *vm )
             //if we wrote the std module, can't be zero.
             fassert( ts_class != 0 );
             CoreObject *value = ts_class->asClass()->createInstance();
-            DBIRecordset::dbr_status retval = dbr->asDate( cIdx, *ts );
+            dbi_status retval = dbr->asDate( cIdx, *ts );
             value->setUserData( ts );
 
-            if ( retval == DBIRecordset::s_nil_value )
-            {
+            if ( retval == dbi_nil_value ) {
                Item k;
                ary->append( k );
-            }
-            else
-            {
+            } else {
                ary->append( value );
             }
          }
@@ -453,16 +449,13 @@ FALCON_FUNC DBIRecordset_fetchArray( VMachine *vm )
             //if we wrote the std module, can't be zero.
             fassert( ts_class != 0 );
             CoreObject *value = ts_class->asClass()->createInstance();
-            DBIRecordset::dbr_status retval = dbr->asTime( cIdx, *ts );
+            dbi_status retval = dbr->asTime( cIdx, *ts );
             value->setUserData( ts );
 
-            if ( retval == DBIRecordset::s_nil_value )
-            {
+            if ( retval == dbi_nil_value ) {
                Item k;
                ary->append( k );
-            }
-            else
-            {
+            } else {
                ary->append( value );
             }
          }
@@ -476,16 +469,13 @@ FALCON_FUNC DBIRecordset_fetchArray( VMachine *vm )
             //if we wrote the std module, can't be zero.
             fassert( ts_class != 0 );
             CoreObject *value = ts_class->asClass()->createInstance();
-            DBIRecordset::dbr_status retval = dbr->asDateTime( cIdx, *ts );
+            dbi_status retval = dbr->asDateTime( cIdx, *ts );
             value->setUserData( ts );
 
-            if ( retval == DBIRecordset::s_nil_value )
-            {
+            if ( retval == dbi_nil_value ) {
                Item k;
                ary->append( k );
-            }
-            else
-            {
+            } else {
                ary->append( value );
             }
          }
@@ -501,13 +491,13 @@ FALCON_FUNC DBIRecordset_fetchDict( VMachine *vm )
    CoreObject *self = vm->self().asObject();
    DBIRecordset *dbr = static_cast<DBIRecordset *>( self->getUserData() );
 
-   DBIRecordset::dbr_status nextRetVal = dbr->next();
+   dbi_status nextRetVal = dbr->next();
    switch ( nextRetVal )
    {
-   case DBIRecordset::s_ok:
+   case dbi_ok:
       break;
 
-   case DBIRecordset::s_eof:
+   case dbi_eof:
       vm->retnil();
       return ;
 
@@ -525,7 +515,7 @@ FALCON_FUNC DBIRecordset_fetchDict( VMachine *vm )
 
    for ( int cIdx = 0; cIdx < cCount; cIdx++ )
    {
-      DBIRecordset::dbr_status retval;
+      dbi_status retval;
       GarbageString *gsName = new GarbageString( vm );
       gsName->bufferize( *cNames->at( cIdx ).asString() );
 
@@ -538,19 +528,14 @@ FALCON_FUNC DBIRecordset_fetchDict( VMachine *vm )
             String value;
             retval = dbr->asString( cIdx, value );
 
-            if ( retval == DBIRecordset::s_nil_value )
-            {
+            if ( retval == dbi_nil_value ) {
                Item k;
                dict->insert( gsName, k );
-            }
-            else if ( retval == DBIRecordset::s_ok )
-            {
+            } else if ( retval == dbi_ok ) {
                GarbageString *gsValue = new GarbageString( vm );
                gsValue->bufferize( value );
                dict->insert( gsName, gsValue );
-            }
-            else
-            {
+            } else {
                // TODO: handle error
             }
          }
@@ -561,13 +546,10 @@ FALCON_FUNC DBIRecordset_fetchDict( VMachine *vm )
             int32 value;
             retval = dbr->asInteger( cIdx, value );
 
-            if ( retval == DBIRecordset::s_nil_value )
-            {
+            if ( retval == dbi_nil_value ) {
                Item k;
                dict->insert( gsName, k );
-            }
-            else
-            {
+            } else {
                dict->insert( gsName, (int64) value );
             }
          }
@@ -578,13 +560,10 @@ FALCON_FUNC DBIRecordset_fetchDict( VMachine *vm )
             int64 value;
             retval = dbr->asInteger64( cIdx, value );
 
-            if ( retval == DBIRecordset::s_nil_value )
-            {
+            if ( retval == dbi_nil_value ) {
                Item k;
                dict->insert( gsName, k );
-            }
-            else
-            {
+            } else {
                dict->insert( gsName, (int64) value );
             }
          }
@@ -595,13 +574,10 @@ FALCON_FUNC DBIRecordset_fetchDict( VMachine *vm )
             numeric value;
             retval = dbr->asNumeric( cIdx, value );
 
-            if ( retval == DBIRecordset::s_nil_value )
-            {
+            if ( retval == dbi_nil_value ) {
                Item k;
                dict->insert( gsName, k );
-            }
-            else
-            {
+            } else {
                dict->insert( gsName, (numeric) value );
             }
          }
@@ -616,16 +592,13 @@ FALCON_FUNC DBIRecordset_fetchDict( VMachine *vm )
             //if we wrote the std module, can't be zero.
             fassert( ts_class != 0 );
             CoreObject *value = ts_class->asClass()->createInstance();
-            DBIRecordset::dbr_status retval = dbr->asDate( cIdx, *ts );
+            dbi_status retval = dbr->asDate( cIdx, *ts );
             value->setUserData( ts );
 
-            if ( retval == DBIRecordset::s_nil_value )
-            {
+            if ( retval == dbi_nil_value ) {
                Item k;
                dict->insert( gsName, k );
-            }
-            else
-            {
+            } else {
                dict->insert( gsName, value );
             }
          }
@@ -639,16 +612,13 @@ FALCON_FUNC DBIRecordset_fetchDict( VMachine *vm )
             //if we wrote the std module, can't be zero.
             fassert( ts_class != 0 );
             CoreObject *value = ts_class->asClass()->createInstance();
-            DBIRecordset::dbr_status retval = dbr->asTime( cIdx, *ts );
+            dbi_status retval = dbr->asTime( cIdx, *ts );
             value->setUserData( ts );
 
-            if ( retval == DBIRecordset::s_nil_value )
-            {
+            if ( retval == dbi_nil_value ) {
                Item k;
                dict->insert( gsName, k );
-            }
-            else
-            {
+            } else {
                dict->insert( gsName, value );
             }
          }
@@ -662,16 +632,13 @@ FALCON_FUNC DBIRecordset_fetchDict( VMachine *vm )
             //if we wrote the std module, can't be zero.
             fassert( ts_class != 0 );
             CoreObject *value = ts_class->asClass()->createInstance();
-            DBIRecordset::dbr_status retval = dbr->asDateTime( cIdx, *ts );
+            dbi_status retval = dbr->asDateTime( cIdx, *ts );
             value->setUserData( ts );
 
-            if ( retval == DBIRecordset::s_nil_value )
-            {
+            if ( retval == dbi_nil_value ) {
                Item k;
                dict->insert( gsName, k );
-            }
-            else
-            {
+            } else {
                dict->insert( gsName, value );
             }
          }
@@ -696,7 +663,7 @@ FALCON_FUNC DBIRecordset_getColumnTypes( VMachine *vm )
    DBIRecordset *dbr = static_cast<DBIRecordset *>( self->getUserData() );
 
    CoreArray *ary = new CoreArray( vm, dbr->getColumnCount() );
-   DBIRecordset::dbr_status retval;
+   dbi_status retval;
    dbr->getColumnTypes( ary );
 
    vm->retval( ary );
@@ -708,7 +675,7 @@ FALCON_FUNC DBIRecordset_getColumnNames( VMachine *vm )
    DBIRecordset *dbr = static_cast<DBIRecordset *>( self->getUserData() );
 
    CoreArray *ary = new CoreArray( vm, dbr->getColumnCount() );
-   DBIRecordset::dbr_status retval;
+   dbi_status retval;
    dbr->getColumnNames( ary );
 
    vm->retval( ary );
@@ -728,29 +695,21 @@ FALCON_FUNC DBIRecordset_asString( VMachine *vm )
    DBIRecordset *dbr = static_cast<DBIRecordset *>( self->getUserData() );
 
    Item *columnIndexI = vm->param( 0 );
-   if ( columnIndexI == 0 || ! columnIndexI->isInteger() )
-   {
+   if ( columnIndexI == 0 || ! columnIndexI->isInteger() ) {
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
                                          .origin( e_orig_runtime ) ) );
       return;
    }
 
    String value;
-   DBIRecordset::dbr_status retval = dbr->asString( columnIndexI->asInteger(), value );
+   dbi_status retval = dbr->asString( columnIndexI->asInteger(), value );
 
-   if ( retval == DBIRecordset::s_nil_value )
-   {
+   if ( retval == dbi_nil_value )
       vm->retnil();
-   }
-   else if ( retval != DBIRecordset::s_ok )
-   {
-      // TODO: handle the error
-      vm->retnil ();
-   }
+   else if ( retval != dbi_ok )
+      vm->retnil ();        // TODO: handle the error
    else
-   {
       vm->retval( value );
-   }
 }
 
 FALCON_FUNC DBIRecordset_asInteger( VMachine *vm )
@@ -759,29 +718,21 @@ FALCON_FUNC DBIRecordset_asInteger( VMachine *vm )
    DBIRecordset *dbr = static_cast<DBIRecordset *>( self->getUserData() );
 
    Item *columnIndexI = vm->param( 0 );
-   if ( columnIndexI == 0 || ! columnIndexI->isInteger() )
-   {
+   if ( columnIndexI == 0 || ! columnIndexI->isInteger() ) {
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
                                          .origin( e_orig_runtime ) ) );
       return;
    }
 
    int32 value;
-   DBIRecordset::dbr_status retval = dbr->asInteger( columnIndexI->asInteger(), value );
+   dbi_status retval = dbr->asInteger( columnIndexI->asInteger(), value );
 
-   if ( retval == DBIRecordset::s_nil_value )
-   {
+   if ( retval == dbi_nil_value )
       vm->retnil();
-   }
-   else if ( retval != DBIRecordset::s_ok )
-   {
-      // TODO: handle the error
-      vm->retnil ();
-   }
+   else if ( retval != dbi_ok )
+      vm->retnil ();           // TODO: handle the error
    else
-   {
       vm->retval( value );
-   }
 }
 
 FALCON_FUNC DBIRecordset_asInteger64( VMachine *vm )
@@ -790,29 +741,21 @@ FALCON_FUNC DBIRecordset_asInteger64( VMachine *vm )
    DBIRecordset *dbr = static_cast<DBIRecordset *>( self->getUserData() );
 
    Item *columnIndexI = vm->param( 0 );
-   if ( columnIndexI == 0 || ! columnIndexI->isInteger() )
-   {
+   if ( columnIndexI == 0 || ! columnIndexI->isInteger() ) {
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
                                          .origin( e_orig_runtime ) ) );
       return;
    }
 
    int64 value;
-   DBIRecordset::dbr_status retval = dbr->asInteger64( columnIndexI->asInteger(), value );
+   dbi_status retval = dbr->asInteger64( columnIndexI->asInteger(), value );
 
-   if ( retval == DBIRecordset::s_nil_value )
-   {
+   if ( retval == dbi_nil_value )
       vm->retnil();
-   }
-   else if ( retval != DBIRecordset::s_ok )
-   {
-      // TODO: handle the error
-      vm->retnil ();
-   }
+   else if ( retval != dbi_ok )
+      vm->retnil (); // TODO: handle the error
    else
-   {
       vm->retval( value );
-   }
 }
 
 FALCON_FUNC DBIRecordset_asNumeric( VMachine *vm )
@@ -821,29 +764,21 @@ FALCON_FUNC DBIRecordset_asNumeric( VMachine *vm )
    DBIRecordset *dbr = static_cast<DBIRecordset *>( self->getUserData() );
 
    Item *columnIndexI = vm->param( 0 );
-   if ( columnIndexI == 0 || ! columnIndexI->isInteger() )
-   {
+   if ( columnIndexI == 0 || ! columnIndexI->isInteger() ) {
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
                                          .origin( e_orig_runtime ) ) );
       return;
    }
 
    numeric value;
-   DBIRecordset::dbr_status retval = dbr->asNumeric( columnIndexI->asInteger(), value );
+   dbi_status retval = dbr->asNumeric( columnIndexI->asInteger(), value );
 
-   if ( retval == DBIRecordset::s_nil_value )
-   {
+   if ( retval == dbi_nil_value )
       vm->retnil();
-   }
-   else if ( retval != DBIRecordset::s_ok )
-   {
-      // TODO: handle the error
-      vm->retnil ();
-   }
+   else if ( retval != dbi_ok )
+      vm->retnil(); // TODO: handle the error
    else
-   {
       vm->retval( value );
-   }
 }
 
 FALCON_FUNC DBIRecordset_asDate( VMachine *vm )
@@ -852,8 +787,7 @@ FALCON_FUNC DBIRecordset_asDate( VMachine *vm )
    DBIRecordset *dbr = static_cast<DBIRecordset *>( self->getUserData() );
 
    Item *columnIndexI = vm->param( 0 );
-   if ( columnIndexI == 0 || ! columnIndexI->isInteger() )
-   {
+   if ( columnIndexI == 0 || ! columnIndexI->isInteger() ) {
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
                                          .origin( e_orig_runtime ) ) );
       return;
@@ -865,22 +799,15 @@ FALCON_FUNC DBIRecordset_asDate( VMachine *vm )
    //if we wrote the std module, can't be zero.
    fassert( ts_class != 0 );
    CoreObject *value = ts_class->asClass()->createInstance();
-   DBIRecordset::dbr_status retval = dbr->asDate( columnIndexI->asInteger(), *ts );
+   dbi_status retval = dbr->asDate( columnIndexI->asInteger(), *ts );
    value->setUserData( ts );
 
-   if ( retval == DBIRecordset::s_nil_value )
-   {
+   if ( retval == dbi_nil_value )
       vm->retnil();
-   }
-   else if ( retval != DBIRecordset::s_ok )
-   {
-      // TODO: handle the error
-      vm->retnil ();
-   }
+   else if ( retval != dbi_ok )
+      vm->retnil(); // TODO: handle the error
    else
-   {
       vm->retval( value );
-   }
 }
 
 FALCON_FUNC DBIRecordset_asTime( VMachine *vm )
@@ -889,8 +816,7 @@ FALCON_FUNC DBIRecordset_asTime( VMachine *vm )
    DBIRecordset *dbr = static_cast<DBIRecordset *>( self->getUserData() );
 
    Item *columnIndexI = vm->param( 0 );
-   if ( columnIndexI == 0 || ! columnIndexI->isInteger() )
-   {
+   if ( columnIndexI == 0 || ! columnIndexI->isInteger() ) {
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
                                          .origin( e_orig_runtime ) ) );
       return;
@@ -902,22 +828,15 @@ FALCON_FUNC DBIRecordset_asTime( VMachine *vm )
    //if we wrote the std module, can't be zero.
    fassert( ts_class != 0 );
    CoreObject *value = ts_class->asClass()->createInstance();
-   DBIRecordset::dbr_status retval = dbr->asTime( columnIndexI->asInteger(), *ts );
+   dbi_status retval = dbr->asTime( columnIndexI->asInteger(), *ts );
    value->setUserData( ts );
 
-   if ( retval == DBIRecordset::s_nil_value )
-   {
+   if ( retval == dbi_nil_value )
       vm->retnil();
-   }
-   else if ( retval != DBIRecordset::s_ok )
-   {
-      // TODO: handle the error
-      vm->retnil ();
-   }
+   else if ( retval != dbi_ok )
+      vm->retnil(); // TODO: handle the error
    else
-   {
       vm->retval( value );
-   }
 }
 
 FALCON_FUNC DBIRecordset_asDateTime( VMachine *vm )
@@ -926,8 +845,7 @@ FALCON_FUNC DBIRecordset_asDateTime( VMachine *vm )
    DBIRecordset *dbr = static_cast<DBIRecordset *>( self->getUserData() );
 
    Item *columnIndexI = vm->param( 0 );
-   if ( columnIndexI == 0 || ! columnIndexI->isInteger() )
-   {
+   if ( columnIndexI == 0 || ! columnIndexI->isInteger() ) {
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
                                          .origin( e_orig_runtime ) ) );
       return;
@@ -939,28 +857,34 @@ FALCON_FUNC DBIRecordset_asDateTime( VMachine *vm )
    //if we wrote the std module, can't be zero.
    fassert( ts_class != 0 );
    CoreObject *value = ts_class->asClass()->createInstance();
-   DBIRecordset::dbr_status retval = dbr->asDateTime( columnIndexI->asInteger(), *ts );
+   dbi_status retval = dbr->asDateTime( columnIndexI->asInteger(), *ts );
    value->setUserData( ts );
 
-   if ( retval == DBIRecordset::s_nil_value )
-   {
+   if ( retval == dbi_nil_value )
       vm->retnil();
-   }
-   else if ( retval != DBIRecordset::s_ok )
-   {
-      // TODO: handle the error
-      vm->retnil ();
-   }
+   else if ( retval != dbi_ok )
+      vm->retnil(); // TODO: handle the error
    else
-   {
       vm->retval( value );
-   }
 }
 
 FALCON_FUNC DBIRecordset_getLastError( VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
    DBIRecordset *dbr = static_cast<DBIRecordset *>( self->getUserData() );
+
+   String value;
+   dbi_status retval = dbr->getLastError( value );
+   if ( retval != dbi_ok ) {
+      vm->raiseModError( new DBIError( ErrorParam( retval, __LINE__ )
+                                      .desc( "Could not get last error message " ) ) );
+      return;
+   }
+
+   GarbageString *gs = new GarbageString( vm );
+   gs->bufferize( value );
+
+   vm->retval( gs );
 
    vm->retval( 0 );
 }

@@ -1,22 +1,21 @@
 /*
-   FALCON - The Falcon Programming Language.
-   FILE: dbiloaderimpl.cpp
-
-   Implementation of the DBI loader service, used mainly by this module.
-   -------------------------------------------------------------------
-   Author: Giancarlo Niccolai
-   Begin: Sun, 23 Dec 2007 20:33:57 +0100
-   Last modified because:
-
-   -------------------------------------------------------------------
-   (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
-
-   See LICENSE file for licensing details.
-   In order to use this file in its compiled form, this source or
-   part of it you have to read, understand and accept the conditions
-   that are stated in the LICENSE file that comes boundled with this
-   package.
-*/
+ * FALCON - The Falcon Programming Language.
+ * FILE: dbiloaderimpl.cpp
+ *
+ * Implementation of the DBI loader service, used mainly by this module.
+ * -------------------------------------------------------------------
+ * Author: Giancarlo Niccolai
+ *  Begin: Sun, 23 Dec 2007 20:33:57 +0100
+ *
+ * -------------------------------------------------------------------
+ * (C) Copyright 2007: the FALCON developers (see list in AUTHORS file)
+ *
+ * See LICENSE file for licensing details.
+ * In order to use this file in its compiled form, this source or
+ * part of it you have to read, understand and accept the conditions
+ * that are stated in the LICENSE file that comes boundled with this
+ * package.
+ */
 
 #include "dbi.h"
 #include <falcon/module.h>
@@ -65,7 +64,7 @@ DBIService *DBILoaderImpl::loadDbProvider( VMachine *vm, const String &provName 
       // from the module
       serv = static_cast<DBIService *>( mod->getService(  "DBI_" + provName ) );
 
-      if ( serv->init() != DBIService::s_ok )
+      if ( serv->init() != dbi_ok )
       {
          // we should raise an error here...
          return 0;

@@ -1,21 +1,20 @@
 /*
-   FALCON - The Falcon Programming Language.
-   FILE: pgsql_srv.cpp
-   
-   PgSQL Falcon service/driver
-   -------------------------------------------------------------------
-   Author: Jeremy Cowgar
-   Begin: Sun Dec 23 21:54:42 2007
-   Last modified because:
-   
-   -------------------------------------------------------------------
-   (C) Copyright 2007: the FALCON developers (see list in AUTHORS file)
-   
-   See LICENSE file for licensing details.
-   In order to use this file in its compiled form, this source or
-   part of it you have to read, understand and accept the conditions
-   that are stated in the LICENSE file that comes boundled with this
-   package.
+ * FALCON - The Falcon Programming Language.
+ * FILE: pgsql_srv.cpp
+ *
+ * PgSQL Falcon service/driver
+ * -------------------------------------------------------------------
+ * Author: Jeremy Cowgar
+ * Begin: Sun Dec 23 21:54:42 2007
+ *
+ * -------------------------------------------------------------------
+ * (C) Copyright 2007: the FALCON developers (see list in AUTHORS file)
+ *
+ * See LICENSE file for licensing details.
+ * In order to use this file in its compiled form, this source or
+ * part of it you have to read, understand and accept the conditions
+ * that are stated in the LICENSE file that comes boundled with this
+ * package.
  */
 
 #include <string.h>
@@ -87,9 +86,7 @@ DBIRecordsetPgSQL::DBIRecordsetPgSQL( DBIHandle *dbh, PGresult *res )
 DBIRecordsetPgSQL::~DBIRecordsetPgSQL()
 {
    if ( m_res != NULL )
-   {
       close();
-   }
 }
 
 dbi_type DBIRecordsetPgSQL::getFalconType( Oid pgType )
@@ -123,16 +120,14 @@ dbi_type DBIRecordsetPgSQL::getFalconType( Oid pgType )
    }
 }
 
-DBIRecordset::dbr_status DBIRecordsetPgSQL::next()
+dbi_status DBIRecordsetPgSQL::next()
 {
    m_row++;
    
    if ( m_row == m_rowCount )
-   {
-      return s_eof;
-   }
+      return dbi_eof;
    
-   return s_ok;
+   return dbi_ok;
 }
 
 int DBIRecordsetPgSQL::getColumnCount()
@@ -140,134 +135,102 @@ int DBIRecordsetPgSQL::getColumnCount()
    return m_columnCount;
 }
 
-DBIRecordset::dbr_status DBIRecordsetPgSQL::getColumnNames( CoreArray *resultCache )
+dbi_status DBIRecordsetPgSQL::getColumnNames( CoreArray *resultCache )
 {
-   for ( int cIdx = 0; cIdx < m_columnCount; cIdx++ )
-   {
+   for ( int cIdx = 0; cIdx < m_columnCount; cIdx++ ) {
       char *fname = PQfname( m_res, cIdx );
       GarbageString *gsFName = new GarbageString( resultCache->origin() );
       gsFName->bufferize( fname );
       resultCache->append( gsFName );
    }
    
-   return s_ok;
+   return dbi_ok;
 }
 
-DBIRecordset::dbr_status DBIRecordsetPgSQL::getColumnTypes( CoreArray *resultCache )
+dbi_status DBIRecordsetPgSQL::getColumnTypes( CoreArray *resultCache )
 {
-   for ( int cIdx = 0; cIdx < m_columnCount; cIdx++ )
-   {
+   for ( int cIdx = 0; cIdx < m_columnCount; cIdx++ ) {
       dbi_type typ = getFalconType( PQftype( m_res, cIdx ) );
       resultCache->append( (int64) typ );
    }
    
-   return s_ok;
+   return dbi_ok;
 }
 
-DBIRecordset::dbr_status DBIRecordsetPgSQL::asString( const int columnIndex, String &value )
+dbi_status DBIRecordsetPgSQL::asString( const int columnIndex, String &value )
 {
    if ( columnIndex >= m_columnCount )
-   {
-      return s_column_range_error;
-   }
+      return dbi_column_range_error;
    else if ( m_res == NULL )
-   {
-      return s_invalid_record_handle;
-   }
+      return dbi_invalid_recordset;
    else if ( PQgetisnull( m_res, m_row, columnIndex ) == 1 )
-   {
-      return s_nil_value;
-   }
+      return dbi_nil_value;
    
    const char *v = PQgetvalue( m_res, m_row, columnIndex );
    
    value = String( v );
    value.bufferize();
    
-   return s_ok;
+   return dbi_ok;
 }
 
-DBIRecordset::dbr_status DBIRecordsetPgSQL::asInteger( const int columnIndex, int32 &value )
+dbi_status DBIRecordsetPgSQL::asInteger( const int columnIndex, int32 &value )
 {
    if ( columnIndex >= m_columnCount )
-   {
-      return s_column_range_error;
-   }
+      return dbi_column_range_error;
    else if ( m_res == NULL )
-   {
-      return s_invalid_record_handle;
-   }
+      return dbi_invalid_recordset;
    else if ( PQgetisnull( m_res, m_row, columnIndex ) == 1 )
-   {
-      return s_nil_value;
-   }
+      return dbi_nil_value;
    
    const char *v = PQgetvalue( m_res, m_row, columnIndex );
    
    value = atoi( v );
    
-   return s_ok;
+   return dbi_ok;
 }
 
-DBIRecordset::dbr_status DBIRecordsetPgSQL::asInteger64( const int columnIndex, int64 &value )
+dbi_status DBIRecordsetPgSQL::asInteger64( const int columnIndex, int64 &value )
 {
    if ( columnIndex >= m_columnCount )
-   {
-      return s_column_range_error;
-   }
+      return dbi_column_range_error;
    else if ( m_res == NULL )
-   {
-      return s_invalid_record_handle;
-   }
+      return dbi_invalid_recordset;
    else if ( PQgetisnull( m_res, m_row, columnIndex ) == 1 )
-   {
-      return s_nil_value;
-   }
+      return dbi_nil_value;
    
    const char *v = PQgetvalue( m_res, m_row, columnIndex );
    
    // TODO: is this conversion correct?
    value = atoll( v );
    
-   return s_ok;
+   return dbi_ok;
 }
 
-DBIRecordset::dbr_status DBIRecordsetPgSQL::asNumeric( const int columnIndex, numeric &value )
+dbi_status DBIRecordsetPgSQL::asNumeric( const int columnIndex, numeric &value )
 {
    if ( columnIndex >= m_columnCount )
-   {
-      return s_column_range_error;
-   }
+      return dbi_column_range_error;
    else if ( m_res == NULL )
-   {
-      return s_invalid_record_handle;
-   }
+      return dbi_invalid_recordset;
    else if ( PQgetisnull( m_res, m_row, columnIndex ) == 1 )
-   {
-      return s_nil_value;
-   }
+      return dbi_nil_value;
    
    const char *v = PQgetvalue( m_res, m_row, columnIndex );
    
    value = atof( v );
    
-   return s_ok;
+   return dbi_ok;
 }
 
-DBIRecordset::dbr_status DBIRecordsetPgSQL::asDate( const int columnIndex, TimeStamp &value )
+dbi_status DBIRecordsetPgSQL::asDate( const int columnIndex, TimeStamp &value )
 {
    if ( columnIndex >= m_columnCount )
-   {
-      return s_column_range_error;
-   }
+      return dbi_column_range_error;
    else if ( m_res == NULL )
-   {
-      return s_invalid_record_handle;
-   }
+      return dbi_invalid_recordset;
    else if ( PQgetisnull( m_res, m_row, columnIndex ) == 1 )
-   {
-      return s_nil_value;
-   }
+      return dbi_nil_value;
    
    const char *v = PQgetvalue( m_res, m_row, columnIndex );
    String tv( v );
@@ -293,23 +256,17 @@ DBIRecordset::dbr_status DBIRecordsetPgSQL::asDate( const int columnIndex, TimeS
    value.setProperty( "second", zero );
    value.setProperty( "msec",   zero );
    
-   return s_ok;
+   return dbi_ok;
 }
 
-DBIRecordset::dbr_status DBIRecordsetPgSQL::asTime( const int columnIndex, TimeStamp &value )
+dbi_status DBIRecordsetPgSQL::asTime( const int columnIndex, TimeStamp &value )
 {
    if ( columnIndex >= m_columnCount )
-   {
-      return s_column_range_error;
-   }
+      return dbi_column_range_error;
    else if ( m_res == NULL )
-   {
-      return s_invalid_record_handle;
-   }
+      return dbi_invalid_recordset;
    else if ( PQgetisnull( m_res, m_row, columnIndex ) == 1 )
-   {
-      return s_nil_value;
-   }
+      return dbi_nil_value;
    
    const char *v = PQgetvalue( m_res, m_row, columnIndex );
    String tv( v );
@@ -335,23 +292,17 @@ DBIRecordset::dbr_status DBIRecordsetPgSQL::asTime( const int columnIndex, TimeS
    value.setProperty( "second", se );
    value.setProperty( "msec",   zero );
    
-   return s_ok;
+   return dbi_ok;
 }
 
-DBIRecordset::dbr_status DBIRecordsetPgSQL::asDateTime( const int columnIndex, TimeStamp &value )
+dbi_status DBIRecordsetPgSQL::asDateTime( const int columnIndex, TimeStamp &value )
 {
    if ( columnIndex >= m_columnCount )
-   {
-      return s_column_range_error;
-   }
+      return dbi_column_range_error;
    else if ( m_res == NULL )
-   {
-      return s_invalid_record_handle;
-   }
+      return dbi_invalid_recordset;
    else if ( PQgetisnull( m_res, m_row, columnIndex ) == 1 )
-   {
-      return s_nil_value;
-   }
+      return dbi_nil_value;
    
    const char *v = PQgetvalue( m_res, m_row, columnIndex );
    String tv( v );
@@ -383,7 +334,7 @@ DBIRecordset::dbr_status DBIRecordsetPgSQL::asDateTime( const int columnIndex, T
    value.setProperty( "second", se );
    value.setProperty( "msec",   zero );
    
-   return s_ok;
+   return dbi_ok;
 }
 
 int DBIRecordsetPgSQL::getRowCount()
@@ -393,16 +344,27 @@ int DBIRecordsetPgSQL::getRowCount()
 
 void DBIRecordsetPgSQL::close()
 {
-   if ( m_res != NULL )
-   {
+   if ( m_res != NULL ) {
       PQclear( m_res );
       m_res = NULL;
    }
 }
 
-DBIRecordsetPgSQL::dbr_status DBIRecordsetPgSQL::getLastError( String &description )
+dbi_status DBIRecordsetPgSQL::getLastError( String &description )
 {
-   return s_ok;
+   PGconn *conn = ( (DBIHandlePgSQL *) m_dbh )->getPGconn();
+
+   if ( conn == NULL )
+      return dbi_invalid_connection;
+
+   char *errorMessage = PQerrorMessage( conn );
+
+   if ( errorMessage == NULL )
+      return dbi_no_error_message;
+
+   description.bufferize( errorMessage );
+
+   return dbi_ok;
 }
 
 /******************************************************************************
@@ -415,59 +377,55 @@ DBITransactionPgSQL::DBITransactionPgSQL( DBIHandle *dbh )
    m_inTransaction = false;
 }
 
-DBIRecordset *DBITransactionPgSQL::query( const String &query, dbt_status &retval )
+DBIRecordset *DBITransactionPgSQL::query( const String &query, dbi_status &retval )
 {
    AutoCString asQuery( query );
    PGconn *conn = ((DBIHandlePgSQL *) m_dbh)->getPGconn();
    PGresult *res = PQexec( conn, asQuery.c_str() );
    
-   if ( res == NULL )
-   {
-      retval = s_memory_allocation_error;
+   if ( res == NULL ) {
+      retval = dbi_memory_allocation_error;
       return NULL;
    }
-   
+
    switch ( PQresultStatus( res ) )
    {
    case PGRES_TUPLES_OK:
-      retval = s_ok;
+      retval = dbi_ok;
       break;
       
    case PGRES_EMPTY_QUERY:
    case PGRES_COMMAND_OK:
    case PGRES_COPY_OUT:
    case PGRES_COPY_IN:
-      retval = s_no_results;
+      retval = dbi_no_results;
       break;
       
    case PGRES_BAD_RESPONSE:
    case PGRES_NONFATAL_ERROR: // TODO: should this really trip an error?
    case PGRES_FATAL_ERROR:
-      retval = s_execute_error;
+      retval = dbi_execute_error;
       break;
       
    default:                  // Unknown error, this should never be reached
-      retval = s_error;
+      retval = dbi_error;
       break;
    }
    
-   if ( retval != s_ok )
-   {
+   if ( retval != dbi_ok )
       return NULL;
-   }
    
    return new DBIRecordsetPgSQL( m_dbh, res );
 }
 
-int DBITransactionPgSQL::execute( const String &query, dbt_status &retval )
+int DBITransactionPgSQL::execute( const String &query, dbi_status &retval )
 {
    AutoCString asQuery( query );
    PGconn *conn = ((DBIHandlePgSQL *) m_dbh)->getPGconn();
    PGresult *res = PQexec( conn, asQuery.c_str() );
    
-   if ( res == NULL )
-   {
-      retval = s_memory_allocation_error;
+   if ( res == NULL ) {
+      retval = dbi_memory_allocation_error;
       return 0;
    }
    
@@ -483,26 +441,22 @@ int DBITransactionPgSQL::execute( const String &query, dbt_status &retval )
       {
          char *sAffectedRows = PQcmdTuples( res );
          if ( sAffectedRows == NULL || strlen( sAffectedRows ) == 0 )
-         {
             affectedRows = 0;
-         }
          else
-         {
             affectedRows = atoi( sAffectedRows );
-         }
-         retval = s_ok;
+         retval = dbi_ok;
       }
       break;
       
    case PGRES_BAD_RESPONSE:
    case PGRES_NONFATAL_ERROR: // TODO: should this really trip an error?
    case PGRES_FATAL_ERROR:
-      retval = s_execute_error;
+      retval = dbi_execute_error;
       affectedRows = -1;
       break;
       
    default:                  // Unknown error, this should never be reached
-      retval = s_error;
+      retval = dbi_error;
       affectedRows = -1;
       break;
    }
@@ -512,23 +466,21 @@ int DBITransactionPgSQL::execute( const String &query, dbt_status &retval )
    return affectedRows;
 }
 
-DBITransaction::dbt_status DBITransactionPgSQL::begin()
+dbi_status DBITransactionPgSQL::begin()
 {
-   dbt_status retval;
+   dbi_status retval;
    
    execute( "BEGIN", retval );
    
-   if ( retval == s_ok )
-   {
+   if ( retval == dbi_ok )
       m_inTransaction = true;
-   }
    
    return retval;
 }
 
-DBITransaction::dbt_status DBITransactionPgSQL::commit()
+dbi_status DBITransactionPgSQL::commit()
 {
-   dbt_status retval;
+   dbi_status retval;
    
    execute( "COMMIT", retval );
    
@@ -537,9 +489,9 @@ DBITransaction::dbt_status DBITransactionPgSQL::commit()
    return retval;
 }
 
-DBITransaction::dbt_status DBITransactionPgSQL::rollback()
+dbi_status DBITransactionPgSQL::rollback()
 {
-   dbt_status retval;
+   dbi_status retval;
    
    execute( "ROLLBACK", retval );
    
@@ -551,18 +503,16 @@ DBITransaction::dbt_status DBITransactionPgSQL::rollback()
 void DBITransactionPgSQL::close()
 {
    if ( m_inTransaction )
-   {
       commit();
-   }
    
    m_inTransaction = false;
    
    m_dbh->closeTransaction( this );
 }
 
-DBITransaction::dbt_status DBITransactionPgSQL::getLastError( String &description )
+dbi_status DBITransactionPgSQL::getLastError( String &description )
 {
-   return s_ok;
+   return dbi_ok;
 }
 
 /******************************************************************************
@@ -572,8 +522,7 @@ DBITransaction::dbt_status DBITransactionPgSQL::getLastError( String &descriptio
 DBITransaction *DBIHandlePgSQL::startTransaction()
 {
    DBITransactionPgSQL *t = new DBITransactionPgSQL( this );
-   if ( t->begin() != DBITransaction::s_ok )
-   {
+   if ( t->begin() != dbi_ok ) {
       // TODO: set error state
       
       delete t;
@@ -596,40 +545,47 @@ DBIHandlePgSQL::DBIHandlePgSQL( PGconn *conn )
    m_connTr = NULL;
 }
 
-DBIHandlePgSQL::dbh_status DBIHandlePgSQL::closeTransaction( DBITransaction *tr )
+dbi_status DBIHandlePgSQL::closeTransaction( DBITransaction *tr )
 {
-   return s_ok;
+   return dbi_ok;
 }
 
-DBIRecordset *DBIHandlePgSQL::query( const String &sql, DBITransaction::dbt_status &retval )
+DBIRecordset *DBIHandlePgSQL::query( const String &sql, dbi_status &retval )
 {
-   if ( m_connTr == NULL )
-   {
+   if ( m_connTr == NULL ) {
       m_connTr = new DBITransactionPgSQL( this );
    }
    
    return m_connTr->query( sql, retval );
 }
 
-int DBIHandlePgSQL::execute( const String &sql, DBITransaction::dbt_status &retval )
+int DBIHandlePgSQL::execute( const String &sql, dbi_status &retval )
 {
-   if ( m_connTr == NULL )
-   {
+   if ( m_connTr == NULL ) {
       m_connTr = new DBITransactionPgSQL( this );
    }
    
    return m_connTr->execute( sql, retval );
 }
 
-DBIHandlePgSQL::dbh_status DBIHandlePgSQL::getLastError( String &description )
+dbi_status DBIHandlePgSQL::getLastError( String &description )
 {
-   return s_ok;
+   if ( m_conn == NULL )
+      return dbi_invalid_connection;
+
+   char *errorMessage = PQerrorMessage( m_conn );
+   if ( errorMessage == NULL )
+      return dbi_no_error_message;
+
+   description.bufferize( errorMessage );
+
+   return dbi_ok;
 }
 
-DBIHandlePgSQL::dbh_status DBIHandlePgSQL::escapeString( const String &value, String &escaped )
+dbi_status DBIHandlePgSQL::escapeString( const String &value, String &escaped )
 {
    if ( value.length() == 0 )
-      return s_ok;
+      return dbi_ok;
    
    AutoCString asValue( value );
    
@@ -645,27 +601,26 @@ DBIHandlePgSQL::dbh_status DBIHandlePgSQL::escapeString( const String &value, St
    
    free( cTo );
    
-   return s_ok;
+   return dbi_ok;
 }
 
-DBIHandlePgSQL::dbh_status DBIHandlePgSQL::close()
+dbi_status DBIHandlePgSQL::close()
 {
-   if ( m_conn != NULL )
-   {
+   if ( m_conn != NULL ) {
       PQfinish( m_conn );
       m_conn = NULL;
    }
    
-   return s_ok;
+   return dbi_ok;
 }
 
 /******************************************************************************
  * Main service class
  *****************************************************************************/
 
-DBIServicePgSQL::dbi_status DBIServicePgSQL::init()
+dbi_status DBIServicePgSQL::init()
 {
-   return s_ok;
+   return dbi_ok;
 }
 
 DBIHandle *DBIServicePgSQL::connect( const String &parameters, bool persistent, 
@@ -674,12 +629,12 @@ DBIHandle *DBIServicePgSQL::connect( const String &parameters, bool persistent,
    AutoCString connParams( parameters );
    PGconn *conn = PQconnectdb( connParams.c_str () );
    if ( conn == NULL ) {
-      retval = s_memory_alloc_error;
+      retval = dbi_memory_allocation_error;
       return NULL;
    }
    
    if ( PQstatus( conn ) != CONNECTION_OK ) {
-      retval = s_connect_failed;
+      retval = dbi_connect_error;
       // TODO: Use append? I used append because copy and = were causing memory
       // errors because the memory PQerrorMessage is pointing to is free'd when
       // the later PQfinish is called. I would have thought that .copy() would
@@ -694,7 +649,7 @@ DBIHandle *DBIServicePgSQL::connect( const String &parameters, bool persistent,
       return NULL;
    }
    
-   retval = s_ok;
+   retval = dbi_ok;
    
    return new DBIHandlePgSQL( conn );
 }
@@ -702,8 +657,7 @@ DBIHandle *DBIServicePgSQL::connect( const String &parameters, bool persistent,
 CoreObject *DBIServicePgSQL::makeInstance( VMachine *vm, DBIHandle *dbh )
 {
    Item *cl = vm->findGlobalItem( "PgSQL" );
-   if ( cl == 0 || ! cl->isClass() || cl->asClass()->symbol()->name() != "PgSQL" )
-   {
+   if ( cl == 0 || ! cl->isClass() || cl->asClass()->symbol()->name() != "PgSQL" ) {
       // TODO: raise an error.
       return 0;
    }

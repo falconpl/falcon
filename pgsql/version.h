@@ -1,22 +1,21 @@
 /*
-   FALCON - The Falcon Programming Language.
-   FILE: version.h
-   
-   PgSQL module version information
-   -------------------------------------------------------------------
-   Author: Jeremy Cowgar
-   Begin: Sun Dec 23 22:05:54 2007
-   Last modified because:
-
-   -------------------------------------------------------------------
-   (C) Copyright 2007: the FALCON developers (see list in AUTHORS file)
-
-   See LICENSE file for licensing details.
-   In order to use this file in its compiled form, this source or
-   part of it you have to read, understand and accept the conditions
-   that are stated in the LICENSE file that comes boundled with this
-   package.
-*/
+ * FALCON - The Falcon Programming Language.
+ * FILE: version.h
+ *
+ * PgSQL module version information
+ * -------------------------------------------------------------------
+ * Author: Jeremy Cowgar
+ * Begin: Sun Dec 23 22:05:54 2007
+ *
+ * -------------------------------------------------------------------
+ * (C) Copyright 2007: the FALCON developers (see list in AUTHORS file)
+ *
+ * See LICENSE file for licensing details.
+ * In order to use this file in its compiled form, this source or
+ * part of it you have to read, understand and accept the conditions
+ * that are stated in the LICENSE file that comes boundled with this
+ * package.
+ */
 
 #ifndef VERSION_H
 #define VERSION_H

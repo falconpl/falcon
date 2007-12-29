@@ -6,7 +6,6 @@
  * -------------------------------------------------------------------
  * Author: Giancarlo Niccolai and Jeremy Cowgar
  * Begin: Sun, 23 Dec 2007 19:22:38 +0100
- * Last modified because:
  *
  * -------------------------------------------------------------------
  * (C) Copyright 2007: the FALCON developers (see list in AUTHORS file)
@@ -46,6 +45,57 @@ typedef enum {
 } 
 dbi_type;
 
+typedef enum {
+   /** operation was OK, no error */
+   dbi_ok,
+
+   /** not implemented by dbi driver */
+   dbi_not_implemented,
+
+   /** end of file (or recordset) */
+   dbi_eof,
+
+   /** a non-existant column was requested */
+   dbi_column_range_error,
+
+   /** operation attempted while recordset is invalid, closed? */
+   dbi_invalid_recordset,
+
+   /** operation attempted while connection is invalid, closed? */
+   dbi_invalid_connection,
+
+   /** nil value in a database field */
+   dbi_nil_value,
+
+   /** an invalid type has been requested */
+   dbi_invalid_type,
+
+   /** memory could not be allocated for connection, result, transaction, etc... */
+   dbi_memory_allocation_error,
+
+   /** an error has occurred executing the query: from SQL server */
+   dbi_execute_error,
+
+   /** an error has occurred processing the query: from SQL server */
+   dbi_query_error,
+
+   /** no results for a query */
+   dbi_no_results,
+
+   /** no error exists (did you call getLastError in non-error condition?) */
+   dbi_no_error_message,
+
+   /** failed to parse a sql expansion ($1, $2, ...) correctly */
+   dbi_sql_expand_error,
+
+   /** failed to connect to SQL server */
+   dbi_connect_error,
+
+   /** an unknown or generic error has occurred */
+   dbi_error
+}
+dbi_status;
+
 /**
  * Abstraction of recordset class.
  * 
@@ -59,39 +109,12 @@ protected:
    DBIHandle *m_dbh;
    
 public:
-   typedef enum {
-      /** operation was OK, no error */
-      s_ok,
-      
-      /** not implemented by dbi driver */
-      s_not_implemented,
-      
-      /** end of file (or recordset) */
-      s_eof,
-      
-      /** a non-existant column was requested */
-      s_column_range_error,
-      
-      /** operation attempted while a recordset is invalid */
-      s_invalid_record_handle,
-      
-      /** nil value in database field */
-      s_nil_value,
-      
-      /** an invalid type has been requested */
-      s_invalid_type,
-      
-      /** an unknown error has occurred */
-      s_error
-   }
-   dbr_status;
-   
    DBIRecordset( DBIHandle *dbh ) { m_dbh = dbh; }
    
    /** Move to the next record
-    * \return s_ok on success, s_eof on end of file reached or other dbr_status error code
+    * \return dbi_ok on success, s_eof on end of file reached or other dbi_status error code
     */
-   virtual dbr_status next()=0;
+   virtual dbi_status next()=0;
 
    /** 
     * Fetch the number of rows in the recordset or -1 if unknown 
@@ -106,58 +129,58 @@ public:
    /** 
     * Fetch the column types 
     */
-   virtual dbr_status getColumnTypes( CoreArray *resultCache )=0;
+   virtual dbi_status getColumnTypes( CoreArray *resultCache )=0;
    
    /** 
     * Fetch the row headers 
     */
-   virtual dbr_status getColumnNames( CoreArray *resultCache )=0;
+   virtual dbi_status getColumnNames( CoreArray *resultCache )=0;
    
    /** 
     * Get a value from the current row as a string 
     */
-   virtual dbr_status asString( const int columnIndex, String &value )=0;
+   virtual dbi_status asString( const int columnIndex, String &value )=0;
    
    /** 
     * Get a value from the current row as an integer 
     */
-   virtual dbr_status asInteger( const int columnIndex, int32 &value )=0;
+   virtual dbi_status asInteger( const int columnIndex, int32 &value )=0;
    
    /** 
     * Get a value from the current row as a 64 bit integer 
     */
-   virtual dbr_status asInteger64( const int columnIndex, int64 &value )=0;
+   virtual dbi_status asInteger64( const int columnIndex, int64 &value )=0;
    
    /** 
     * Get a value from the current row as a numeric 
     */
-   virtual dbr_status asNumeric( const int columnIndex, numeric &value )=0;
+   virtual dbi_status asNumeric( const int columnIndex, numeric &value )=0;
    
    /**
     * Get a value from the current row as a date
     */
-   virtual dbr_status asDate( const int columnIndex, TimeStamp &value )=0;
+   virtual dbi_status asDate( const int columnIndex, TimeStamp &value )=0;
    
    /**
     * Get a value from the current row as a time
     */
-   virtual dbr_status asTime( const int columnIndex, TimeStamp &value )=0;
+   virtual dbi_status asTime( const int columnIndex, TimeStamp &value )=0;
    
    /**
     * Get a value from the current row as a datetime
     */
-   virtual dbr_status asDateTime( const int columnIndex, TimeStamp &value )=0;
+   virtual dbi_status asDateTime( const int columnIndex, TimeStamp &value )=0;
    
    /**
     * Returns last error and its description.
     * 
     * Internal codes and possibly their meaning are written in the description
-    * field, while dbr_status return the status generated by the last operation.
-    * If the last exit code was s_ok, nothing is written in description.
+    * field, while dbi_status return the status generated by the last operation.
+    * If the last exit code was dbi_ok, nothing is written in description.
     * \param description a string where to write last error description
     * \return the last operation status
     */
-   virtual dbr_status getLastError( String &description )=0;
+   virtual dbi_status getLastError( String &description )=0;
    
    /**
     * Close the recordset
@@ -187,28 +210,6 @@ protected:
    DBIHandle *m_dbh;
    
 public:
-   typedef enum {
-      s_ok,
-      
-      /** not implemented by dbi driver */
-      s_not_implemented,
-      
-      /** memory could not be allocated for result */
-      s_memory_allocation_error,
-      
-      /** an error has occurred executing the query */
-      s_execute_error,
-      
-      /** an error has occurred processing the query */
-      s_query_error,
-      
-      /** no results for a query */
-      s_no_results,
-      
-      s_error
-   }
-   dbt_status;
-   
    DBITransaction( DBIHandle *dbh ) { m_dbh = dbh; }
    
    /** Launches a query 
@@ -217,7 +218,7 @@ public:
     * \return DBIRecordset or NULL on error (check retval for reason, 
     *    getLastError for message)
     */
-   virtual DBIRecordset *query( const String &query, dbt_status &retval )=0;
+   virtual DBIRecordset *query( const String &query, dbi_status &retval )=0;
    
    /** Launches an INSERT/UPDATE query 
     * \param query SQL query to execute
@@ -225,13 +226,13 @@ public:
     * \return number of affected rows or -1 on error (check retval for reason,
     *    getLastError() for message)
     */
-   virtual int execute( const String &query, dbt_status &retval )=0;
+   virtual int execute( const String &query, dbi_status &retval )=0;
 
    /** Commits operations. */
-   virtual dbt_status commit()=0;
+   virtual dbi_status commit()=0;
 
    /** Rollback the transaction. */
-   virtual dbt_status rollback()=0;
+   virtual dbi_status rollback()=0;
 
    /**
     * Close the transaction.
@@ -248,12 +249,12 @@ public:
    /**
     * Returns last error and its description.
     * Internal codes and possibly their meaning are written in the description
-    * field, while dbt_status return the status generated by the last operation.
-    * If the last exit code was s_ok, nothing is written in description.
+    * field, while dbi_status return the status generated by the last operation.
+    * If the last exit code was dbi_ok, nothing is written in description.
     * \param description a string where to write last error description
     * \return the last operation status
     */
-   virtual dbt_status getLastError( String &description )=0;
+   virtual dbi_status getLastError( String &description )=0;
 };
 
 /** 
@@ -275,24 +276,9 @@ class DBIHandle: public UserData
 {
 public:
    typedef enum {
-      s_ok,
-      
-      /** not implemented by dbi driver */
-      s_not_implemented,
-      
-      s_single_transaction,
-
-      /** failed to parse a sql expansion ($1, $2, ...) correctly */
-      s_sql_expand_failure,
-
-      s_error
-   }
-   dbh_status;
-
-   typedef enum {
-      s_no_expansion,
-      s_question_mark_expansion,
-      s_dollar_sign_expansion
+      q_no_expansion,
+      q_question_mark_expansion,
+      q_dollar_sign_expansion
    }
    dbh_query_expansion;
 
@@ -304,7 +290,7 @@ public:
     *
     * \return dbh_query_expansion
     */
-   virtual dbh_query_expansion getQueryExpansionCapability() { return s_no_expansion; }
+   virtual dbh_query_expansion getQueryExpansionCapability() { return q_no_expansion; }
 
    /** 
     * Starts a new transaction.
@@ -324,9 +310,9 @@ public:
     * This even if the close operation wasn't succesful.
     *
     * \param tr the transaction to be closed.
-    * \return s_ok on success, an error on failure.
+    * \return dbi_ok on success, an error on failure.
     */
-   virtual dbh_status closeTransaction( DBITransaction *tr )=0;
+   virtual dbi_status closeTransaction( DBITransaction *tr )=0;
    
    /**
     * Perform a SQL query returning results.
@@ -335,7 +321,7 @@ public:
     * \param retval result of operation
     * \return DBIRecordset to access the record information
     */
-   virtual DBIRecordset *query( const String &sql, DBITransaction::dbt_status &retval )=0;
+   virtual DBIRecordset *query( const String &sql, dbi_status &retval )=0;
    
    /**
     * Perform a SQL query that has no results.
@@ -344,26 +330,26 @@ public:
     * \param retval result of operation
     * \return number of records affected
     */
-   virtual int execute( const String &sql, DBITransaction::dbt_status &retval )=0;
+   virtual int execute( const String &sql, dbi_status &retval )=0;
 
    /** 
     * Returns last error and its description.
     *
     * Internal codes and possibly their meaning are written in the description
-    * field, while dbt_status return the status generated by the last operation.
-    * If the last exit code was s_ok, nothing is written in description.
+    * field, while dbi_status return the status generated by the last operation.
+    * If the last exit code was dbi_ok, nothing is written in description.
     * \param description a string where to write last error description
     * \return the last operation status
     */
-   virtual dbh_status getLastError( String &description )=0;
+   virtual dbi_status getLastError( String &description )=0;
    
    /**
     * Escape a string making it suitable for inserting into a SQL query.
     */
-   virtual dbh_status escapeString( const String &value, String &escaped )=0;
+   virtual dbi_status escapeString( const String &value, String &escaped )=0;
 
    /** Disconnects this handle from the database */
-   virtual dbh_status close()=0;
+   virtual dbi_status close()=0;
 };
 
 /** 
@@ -380,26 +366,13 @@ protected:
    {}
 
 public:
-
-   typedef enum {
-      s_ok,
-      
-      /** not implemented by dbi driver */
-      s_not_implemented,
-      
-      s_error,
-      s_memory_alloc_error,
-      s_connect_failed
-   }
-   dbi_status;
-
    /**
     * Initialization hook.
     * 
     * It gets called as soon as the service is loaded. It may be used by the
     * module to initialize global data.
     * 
-    * \return s_ok if initialization is succesfull or error.
+    * \return dbi_ok if initialization is succesfull or error.
     */
    virtual dbi_status init()=0;
 

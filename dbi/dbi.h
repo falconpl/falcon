@@ -4,7 +4,7 @@
  *
  * Short description
  * -------------------------------------------------------------------
- * Author: Giancarlo Niccolai
+ * Author: Giancarlo Niccolai and Jeremy Cowgar
  * Begin: Sun, 23 Dec 2007 20:33:57 +0100
  * Last modified because:
  *

@@ -1,24 +1,24 @@
 /*
-   FALCON - The Falcon Programming Language.
-   FILE: pgsql.cpp
-   
-   Pgsql driver main module
-   This is BOTH a driver for the DBI interface AND a standalone
-   PGSQL module.
-   -------------------------------------------------------------------
-   Author: Jeremy Cowgar
-   Begin: Sun Dec 23 21:45:01 2007
-   Last modified because:
-
-   -------------------------------------------------------------------
-   (C) Copyright 2007: the FALCON developers (see list in AUTHORS file)
-
-   See LICENSE file for licensing details.
-   In order to use this file in its compiled form, this source or
-   part of it you have to read, understand and accept the conditions
-   that are stated in the LICENSE file that comes boundled with this
-   package.
-*/
+ * FALCON - The Falcon Programming Language.
+ * FILE: pgsql.cpp
+ *
+ * Pgsql driver main module
+ *
+ * This is BOTH a driver for the DBI interface AND a standalone
+ * PGSQL module.
+ * -------------------------------------------------------------------
+ * Author: Jeremy Cowgar
+ * Begin: Sun Dec 23 21:45:01 2007
+ *
+ * -------------------------------------------------------------------
+ * (C) Copyright 2007: the FALCON developers (see list in AUTHORS file)
+ *
+ * See LICENSE file for licensing details.
+ * In order to use this file in its compiled form, this source or
+ * part of it you have to read, understand and accept the conditions
+ * that are stated in the LICENSE file that comes boundled with this
+ * package.
+ */
 
 #include "pgsql.h"
 #include "version.h"
@@ -51,7 +51,7 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    // we don't have extra functions for the dbhandler of mysql. If whe had,
    // this would be the right place to store them.
 
-   // service pubblication
+   // service publication
    self->publishService( &thePgSQLService );
 
    // we're done

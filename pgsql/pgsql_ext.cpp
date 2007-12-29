@@ -1,22 +1,21 @@
 /*
-   FALCON - The Falcon Programming Language.
-   FILE: pgsql_ext.cpp
-   
-   PgSQL Falcon extension interface
-   -------------------------------------------------------------------
-   Author: Jeremy Cowgar
-   Begin: Sun Dec 23 21:51:18 2007
-   Last modified because:
-
-   -------------------------------------------------------------------
-   (C) Copyright 2007: the FALCON developers (see list in AUTHORS file)
-
-   See LICENSE file for licensing details.
-   In order to use this file in its compiled form, this source or
-   part of it you have to read, understand and accept the conditions
-   that are stated in the LICENSE file that comes boundled with this
-   package.
-*/
+ * FALCON - The Falcon Programming Language.
+ * FILE: pgsql_ext.cpp
+ *
+ * PgSQL Falcon extension interface
+ * -------------------------------------------------------------------
+ * Author: Jeremy Cowgar
+ * Begin: Sun Dec 23 21:51:18 2007
+ *
+ * -------------------------------------------------------------------
+ * (C) Copyright 2007: the FALCON developers (see list in AUTHORS file)
+ *
+ * See LICENSE file for licensing details.
+ * In order to use this file in its compiled form, this source or
+ * part of it you have to read, understand and accept the conditions
+ * that are stated in the LICENSE file that comes boundled with this
+ * package.
+ */
 
 #include <falcon/engine.h>
 #include <libpq-fe.h>
@@ -32,11 +31,10 @@ namespace Ext
 FALCON_FUNC PgSQL_init( VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
-   DBIService::dbi_status status;
+   dbi_status status;
    String connectErrorMessage;
-   DBIHandlePgSQL *dbh =
-       static_cast<DBIHandlePgSQL *>( thePgSQLService.connect( "", false, status, 
-                                                               connectErrorMessage ) );
+   DBIHandlePgSQL *dbh = static_cast<DBIHandlePgSQL *>(
+      thePgSQLService.connect( "", false, status, connectErrorMessage ) );
    
    if ( dbh == 0 )
    {
