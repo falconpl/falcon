@@ -192,7 +192,7 @@ FALCON_FUNC DBIHandle_sqlExpand( VMachine *vm )
       return;
    }
 
-   String *sql = sqlI->asString();
+   GarbageString *sql = new GarbageString( vm, *sqlI->asString() );
    uint32 dollarPos = sql->find( "$", 0 );
 
    while ( dollarPos != csh::npos ) {
@@ -259,10 +259,7 @@ FALCON_FUNC DBIHandle_sqlExpand( VMachine *vm )
       dollarPos = sql->find( "$", dollarPos + dollarSize );
    }
 
-   GarbageString *gs = new GarbageString( vm );
-   gs->bufferize( *sql );
-
-   vm->retval( gs );
+   vm->retval( sql );
 }
 
 /**********************************************************
