@@ -1,6 +1,16 @@
 TODO:
-   * Check for a BOF error
-   * Tons more...
-
-COMPLETED:
-   * Create a DBI Error class. See modules/feather/socket/socket_ext.h
+   * Unit tests
+   * dbr.fetchObject()
+   * dbh/tr.queryOne()
+   * dbh/tr.insert( tableName, dict [, seq] )
+   * dbh/tr.update( tableName, where, dict )
+   * dbh/tr.update( tableName, where, obj )
+   * dbh.ping()
+   * dbh.serverVersion
+   * getLastError() methods (dbh, tr, rec)
+   * Check for a BOF error (rec)
+   * mysql driver
+   * sqlite3 driver
+   * firebird/interbase driver
+   * odbc driver
+   * mssql driver
