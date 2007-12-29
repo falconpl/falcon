@@ -7,7 +7,7 @@
  * Author: Giancarlo Niccolai
  * Begin: Sun Dec 2007 23 21:54:34 +0100
  * Last modified because:
- * 
+ *
  * -------------------------------------------------------------------
  * (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
  *
@@ -53,7 +53,7 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    self->addClassMethod( trans_class, "query", Falcon::Ext::DBITransaction_query );
    self->addClassMethod( trans_class, "execute", Falcon::Ext::DBITransaction_execute );
    self->addClassMethod( trans_class, "close", Falcon::Ext::DBITransaction_close );
-   
+
    // create the base class DBIRecordset for falcon
    Falcon::Symbol *rec_class = self->addClass( "%DBIRecordset" ); // private class
    self->addClassMethod( rec_class, "next", Falcon::Ext::DBIRecordset_next );
@@ -72,9 +72,15 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    self->addClassMethod( rec_class, "getColumnNames", Falcon::Ext::DBIRecordset_getColumnNames );
    self->addClassMethod( rec_class, "getLastError", Falcon::Ext::DBIRecordset_getLastError );
    self->addClassMethod( rec_class, "close", Falcon::Ext::DBIRecordset_close );
-   
+
    // service pubblication
    self->publishService( &theDBIService );
+
+   //============================================================
+   // DBIError class
+   Falcon::Symbol *error_class = self->addExternalRef( "Error" ); // it's external
+   Falcon::Symbol *procerr_cls = self->addClass( "DBIError", Falcon::Ext::DBIError_init );
+   procerr_cls->getClassDef()->addInheritance(  new Falcon::InheritDef( error_class ) );
 
    // we're done
    return self;

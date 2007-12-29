@@ -30,7 +30,15 @@ class VMachine;
 
 namespace Ext {
 
+//=====================
+// DBI Generic
+//=====================
+
 FALCON_FUNC DBIConnect( VMachine *vm );
+
+//=====================
+// DBI Handle
+//=====================
 
 FALCON_FUNC DBIHandle_startTransaction( VMachine *vm );
 FALCON_FUNC DBIHandle_query( VMachine *vm );
@@ -38,9 +46,17 @@ FALCON_FUNC DBIHandle_execute( VMachine *vm );
 FALCON_FUNC DBIHandle_sqlExpand( VMachine *vm );
 FALCON_FUNC DBIHandle_close( VMachine *vm );
 
+//=====================
+// DBI Transaction
+//=====================
+
 FALCON_FUNC DBITransaction_query( VMachine *vm );
 FALCON_FUNC DBITransaction_execute( VMachine *vm );
 FALCON_FUNC DBITransaction_close( VMachine *vm );
+
+//=====================
+// DBI Recordset
+//=====================
 
 FALCON_FUNC DBIRecordset_next( VMachine *vm );
 FALCON_FUNC DBIRecordset_fetchArray( VMachine *vm );
@@ -58,6 +74,12 @@ FALCON_FUNC DBIRecordset_asTime( VMachine *vm );
 FALCON_FUNC DBIRecordset_asDateTime( VMachine *vm );
 FALCON_FUNC DBIRecordset_getLastError( VMachine *vm );
 FALCON_FUNC DBIRecordset_close( VMachine *vm );
+
+//=====================
+// DBI Error class
+//=====================
+
+FALCON_FUNC DBIError_init( VMachine *vm );
 
 }
 }
