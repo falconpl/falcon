@@ -61,6 +61,7 @@ FALCON_FUNC DBITransaction_close( VMachine *vm );
 FALCON_FUNC DBIRecordset_next( VMachine *vm );
 FALCON_FUNC DBIRecordset_fetchArray( VMachine *vm );
 FALCON_FUNC DBIRecordset_fetchDict( VMachine *vm );
+FALCON_FUNC DBIRecordset_fetchObject( VMachine *vm );
 FALCON_FUNC DBIRecordset_getRowCount( VMachine *vm );
 FALCON_FUNC DBIRecordset_getColumnCount( VMachine *vm );
 FALCON_FUNC DBIRecordset_getColumnNames( VMachine *vm );

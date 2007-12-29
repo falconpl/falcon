@@ -59,6 +59,7 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    self->addClassMethod( rec_class, "next",           Falcon::Ext::DBIRecordset_next );
    self->addClassMethod( rec_class, "fetchArray",     Falcon::Ext::DBIRecordset_fetchArray );
    self->addClassMethod( rec_class, "fetchDict",      Falcon::Ext::DBIRecordset_fetchDict );
+   self->addClassMethod( rec_class, "fetchObject",    Falcon::Ext::DBIRecordset_fetchObject );
    self->addClassMethod( rec_class, "asString",       Falcon::Ext::DBIRecordset_asString );
    self->addClassMethod( rec_class, "asInteger",      Falcon::Ext::DBIRecordset_asInteger );
    self->addClassMethod( rec_class, "asInteger64",    Falcon::Ext::DBIRecordset_asInteger64 );
