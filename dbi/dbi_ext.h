@@ -53,6 +53,8 @@ FALCON_FUNC DBIHandle_getLastError( VMachine *vm );
 FALCON_FUNC DBITransaction_query( VMachine *vm );
 FALCON_FUNC DBITransaction_execute( VMachine *vm );
 FALCON_FUNC DBITransaction_close( VMachine *vm );
+FALCON_FUNC DBITransaction_commit( VMachine *vm );
+FALCON_FUNC DBITransaction_rollback( VMachine *vm );
 
 //=====================
 // DBI Recordset

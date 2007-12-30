@@ -496,6 +496,7 @@ dbi_status DBITransactionPgSQL::rollback()
 
 void DBITransactionPgSQL::close()
 {
+   // TODO: return a status code here because of the potential commit
    if ( m_inTransaction )
       commit();
    

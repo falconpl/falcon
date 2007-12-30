@@ -233,7 +233,7 @@ int DBIHandle_realSqlExpand( VMachine *vm, DBIHandle *dbh, String &sql, int star
 
          sql.insert( dollarPos, dollarSize, value );
 
-         dollarPos = sql.find( "$", dollarPos + dollarSize );
+         dollarPos = sql.find( "$", dollarPos );
       }
    }
 
@@ -467,6 +467,39 @@ FALCON_FUNC DBITransaction_close( VMachine *vm )
    vm->retval( 0 );
 }
 
+FALCON_FUNC DBITransaction_commit( VMachine *vm )
+{
+   CoreObject *self = vm->self().asObject();
+   DBITransaction *dbt = static_cast<DBITransaction *>( self->getUserData() );
+
+   dbi_status retval = dbt->commit();
+   if ( retval != dbi_ok ) {
+      String errorMessage;
+      dbt->getLastError( errorMessage );
+      vm->raiseModError( new DBIError( ErrorParam( retval, __LINE__ )
+                                      .desc( errorMessage ) ) );
+      return;
+   }
+
+   vm->retval( 0 );
+}
+
+FALCON_FUNC DBITransaction_rollback( VMachine *vm )
+{
+   CoreObject *self = vm->self().asObject();
+   DBITransaction *dbt = static_cast<DBITransaction *>( self->getUserData() );
+
+   dbi_status retval = dbt->rollback();
+   if ( retval != dbi_ok ) {
+      String errorMessage;
+      dbt->getLastError( errorMessage );
+      vm->raiseModError( new DBIError( ErrorParam( retval, __LINE__ )
+                                      .desc( errorMessage ) ) );
+      return;
+   }
+
+   vm->retval( 0 );
+}
 /******************************************************************************
  * Recordset class
  *****************************************************************************/

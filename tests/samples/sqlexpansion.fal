@@ -1,0 +1,42 @@
+load dbi
+load sample_db
+
+dbh = connect()
+
+ts = TimeStamp()
+ts.currentTime()
+
+// All of these methods are available in execute and query
+
+> "Positional expansion:"
+sql = "$$, $1, $2, $3, $4"
+> "   '", sql, "', \"Mc'Cain\", 10, 10.8, timeStamp"
+> "   ", dbh.sqlExpand( sql, "Mc'Cain", 10, 10.8, ts )
+>
+
+ts.currentTime()
+
+dict = [ "aString" => "Mc'Cain", "aInteger" => 10, 
+	      "aNumeric" => 10.8, "aTimeStamp" => ts ]
+
+> "Dictionary expansion:"
+sql = "$$, $aString, $aInteger, $aNumeric, $aTimeStamp"
+> "   '", sql, "', dict"
+> "   ", dbh.sqlExpand( sql, dict )
+>
+
+ts.currentTime()
+class Test
+	aString = "Mc'Cain"
+   aInteger = 10
+   aNumeric = 10.8
+   aTimeStamp = ts
+end
+
+testObj = Test()
+> "Object expansion:"
+> "   '", sql, "', testObj"
+> "   ", dbh.sqlExpand( sql, testObj )
+>
+
+dbh.close()

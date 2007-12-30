@@ -50,9 +50,11 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
 
    // create the base class DBITransaction for falcon
    Falcon::Symbol *trans_class = self->addClass( "%DBITransaction" ); // private class
-   self->addClassMethod( trans_class, "query",   Falcon::Ext::DBITransaction_query );
-   self->addClassMethod( trans_class, "execute", Falcon::Ext::DBITransaction_execute );
-   self->addClassMethod( trans_class, "close",   Falcon::Ext::DBITransaction_close );
+   self->addClassMethod( trans_class, "query",    Falcon::Ext::DBITransaction_query );
+   self->addClassMethod( trans_class, "execute",  Falcon::Ext::DBITransaction_execute );
+   self->addClassMethod( trans_class, "commit",   Falcon::Ext::DBITransaction_commit );
+   self->addClassMethod( trans_class, "rollback", Falcon::Ext::DBITransaction_rollback );
+   self->addClassMethod( trans_class, "close",    Falcon::Ext::DBITransaction_close );
 
    // create the base class DBIRecordset for falcon
    Falcon::Symbol *rec_class = self->addClass( "%DBIRecordset" ); // private class
