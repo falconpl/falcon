@@ -517,8 +517,7 @@ DBITransaction *DBIHandlePgSQL::startTransaction()
 {
    DBITransactionPgSQL *t = new DBITransactionPgSQL( this );
    if ( t->begin() != dbi_ok ) {
-      // TODO: set error state
-      
+      // TODO: filter useful information to the script level
       delete t;
       
       return NULL;
@@ -629,14 +628,9 @@ DBIHandle *DBIServicePgSQL::connect( const String &parameters, bool persistent,
    
    if ( PQstatus( conn ) != CONNECTION_OK ) {
       retval = dbi_connect_error;
-      // TODO: Use append? I used append because copy and = were causing memory
-      // errors because the memory PQerrorMessage is pointing to is free'd when
-      // the later PQfinish is called. I would have thought that .copy() would
-      // have taken care of this, but I suffered the same corrupt string
-      // symptoms with copy as I did =. = with a strdup worked fine, but I was
-      // then worried about memory leaks.
-      errorMessage.append( PQerrorMessage( conn ) );
+      errorMessage = PQerrorMessage( conn );
       errorMessage.remove( errorMessage.length() - 1, 1 ); // Get rid of newline
+      errorMessage.bufferize();
       
       PQfinish( conn );
       
@@ -652,7 +646,8 @@ CoreObject *DBIServicePgSQL::makeInstance( VMachine *vm, DBIHandle *dbh )
 {
    Item *cl = vm->findGlobalItem( "PgSQL" );
    if ( cl == 0 || ! cl->isClass() || cl->asClass()->symbol()->name() != "PgSQL" ) {
-      // TODO: raise an error.
+      vm->raiseModError( new DBIError( ErrorParam( dbi_driver_not_found, __LINE__ )
+                                      .desc( "PgSQL DBI driver was not found" ) ) );
       return 0;
    }
    

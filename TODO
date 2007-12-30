@@ -1,6 +1,8 @@
 TODO:
    * Unit tests including "dbi standard" test that will test
      required functionality from all drivers
+   * Handle last inserted id some how
+   * Handle time stamps in sqlExpand
    * dbh/tr.queryOne()
    * dbh/tr.insert( tableName, dict [, seq] )
    * dbh/tr.update( tableName, where, dict )

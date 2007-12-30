@@ -51,6 +51,9 @@ typedef enum {
    /** operation was OK, no error */
    dbi_ok,
 
+   /** attempted to load a driver that was not found */
+   dbi_driver_not_found,
+
    /** not implemented by dbi driver */
    dbi_not_implemented,
 
