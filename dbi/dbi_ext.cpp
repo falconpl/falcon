@@ -206,94 +206,158 @@ FALCON_FUNC DBIHandle_sqlExpand( VMachine *vm )
       return;
    }
 
+   char errorMessage[256];
    GarbageString *sql = new GarbageString( vm, *sqlI->asString() );
-   uint32 dollarPos = sql->find( "$", 0 );
 
-   while ( dollarPos != csh::npos ) {
-      int64 pIdx = -1;
+   if ( vm->paramCount() > 1 )
+   {
+      // Check param 1, if a dict or object, we treat things special
+      CoreDict *dict = NULL;
+      CoreObject *obj = NULL;
 
-      if ( dollarPos == sql->length() - 1 ) {
-         vm->raiseModError( new DBIError( ErrorParam( dbi_sql_expand_error,
-                                                     __LINE__ )
-                                         .desc( "Stray $ charater at the end of query" ) ) );
-         return;
-      } else {
-         if ( sql->getCharAt( dollarPos + 1 ) == '$' ) {
-            sql->remove( dollarPos, 1 );
-            dollarPos = sql->find( "$", dollarPos + 1 );
-            continue;
-         }
+      if ( vm->param( 1 )->isDict() )
+         dict = vm->param( 1 )->asDict();
+      else if ( vm->param( 1 )->isObject() )
+         obj = vm->param( 1 )->asObject();
 
-         AutoCString asTmp( sql->subString( dollarPos + 1 ) );
-         pIdx = atoi( asTmp.c_str() );
+      uint32 dollarPos = sql->find( "$", 0 );
 
-         if ( pIdx == 0 ) {
-            String s( sql->subString( dollarPos ) );
-            s.prepend( "Failed to parse dollar expansion starting at: " );
+      while ( dollarPos != csh::npos ) {
+         Item *i = NULL;
+         int dollarSize = 1;
 
+         if ( dollarPos == sql->length() - 1 ) {
             vm->raiseModError( new DBIError( ErrorParam( dbi_sql_expand_error,
                                                         __LINE__ )
-                                            .desc( s ) ) );
+                                            .desc( "Stray $ charater at the end of query" ) ) );
             return;
+         } else {
+            if ( sql->getCharAt( dollarPos + 1 ) == '$' ) {
+               sql->remove( dollarPos, 1 );
+               dollarPos = sql->find( "$", dollarPos + 1 );
+               continue;
+            }
+
+            if ( dict != NULL || obj != NULL) {
+               uint32 commaPos = sql->find( ",", dollarPos );
+               uint32 spacePos = sql->find( " ", dollarPos );
+               uint32 ePos;
+               if ( commaPos == csh::npos && spacePos == csh::npos )
+                  ePos = sql->length();
+               else if ( commaPos < spacePos )
+                  ePos = commaPos;
+               else
+                  ePos = spacePos;
+
+               if ( ePos == csh::npos ) {
+                  String s( sql->subString( dollarPos ) );
+                  s.prepend( "Failed to parse dollar expansion starting at: " );
+
+                  vm->raiseModError( new DBIError( ErrorParam( dbi_sql_expand_error, __LINE__ )
+                                                  .desc( s ) ) );
+                  return;
+               }
+
+               String word = sql->subString( dollarPos + 1, ePos );
+               if ( dict != NULL ) {
+                  // Reading from the dict
+                  Item wordI( &word );
+                  i = dict->find( wordI );
+               } else {
+                  // Must be obj
+                  i = obj->getProperty( word );
+               }
+
+               AutoCString asWord( word );
+               if ( i == 0 ) {
+                  snprintf( errorMessage, 128, "Word argument (%s) is out of range", asWord.c_str() );
+      
+                  GarbageString *s = new GarbageString( vm );
+                  s->bufferize( errorMessage );
+                  vm->raiseModError( new DBIError( ErrorParam( dbi_sql_expand_error,
+                                                              __LINE__ )
+                                                  .desc( *s ) ) );
+                  return;
+               }
+
+               dollarSize += word.length();
+
+               // In case this fails a type check
+               snprintf( errorMessage, 128, "Word argument (%s) is an unknown type", asWord.c_str () );
+            } else {
+               AutoCString asTmp( sql->subString( dollarPos + 1 ) );
+               int pIdx = atoi( asTmp.c_str() );
+
+               if ( pIdx == 0 ) {
+                  String s( sql->subString( dollarPos ) );
+                  s.prepend( "Failed to parse dollar expansion starting at: " );
+
+                  vm->raiseModError( new DBIError( ErrorParam( dbi_sql_expand_error,
+                                                              __LINE__ )
+                                                  .desc( s ) ) );
+                  return;
+               }
+
+               if ( pIdx > 99 ) dollarSize++; // it is 3 digits !?!?
+               if ( pIdx > 9 ) dollarSize++;  // it is 2 digits
+               dollarSize++;                  // it exists
+               i = vm->param( pIdx );
+
+               if ( i == 0 ) {
+                  snprintf( errorMessage, 128, "Positional argument (%i) is out of range", pIdx );
+      
+                  GarbageString *s = new GarbageString( vm );
+                  s->bufferize( errorMessage );
+                  vm->raiseModError( new DBIError( ErrorParam( dbi_sql_expand_error,
+                                                              __LINE__ )
+                                                  .desc( *s ) ) );
+                  return;
+               }
+
+               // In case this fails a type check
+               snprintf( errorMessage, 128, "Positional argument (%i) is an unknown type", pIdx );
+            }
          }
-      }
 
-      int dollarSize = 2;
-      if ( pIdx > 9 ) dollarSize++;
+         String value;
+         int parsed = 0;
 
-      Item *i = vm->param( pIdx );
-      if ( i == 0 ) {
-         char errorMessage[128];
-         snprintf( errorMessage, 128, "Positional argument (%i) is out of range", pIdx );
-
-         GarbageString *s = new GarbageString( vm );
-         s->bufferize( errorMessage );
-         vm->raiseModError( new DBIError( ErrorParam( dbi_sql_expand_error,
-                                                     __LINE__ )
-                                         .desc( *s ) ) );
-         return;
-      }
-
-      String value;
-      int parsed = 0;
-
-      if ( i->isInteger() ) {
-         value.writeNumber( i->asInteger() );
-         parsed = 1;
-      } else if ( i->isNumeric() ) {
-         value.writeNumber( i->asNumeric(), "%f" );
-         parsed = 1;
-      } else if ( i->isString() ) {
-         dbh->escapeString( *i->asString(), value );
-         value.prepend( "'" );
-         value.append( "'" );
-         parsed = 1;
-      } else if ( i->isObject() ) {
-         CoreObject *o = i->asObject();
-         if ( o->derivedFrom( "TimeStamp" ) ) {
-            TimeStamp *ts = (TimeStamp *) o->getUserData();
-            ts->toString( value );
+         if ( i->isInteger() ) {
+            value.writeNumber( i->asInteger() );
+            parsed = 1;
+         } else if ( i->isNumeric() ) {
+            value.writeNumber( i->asNumeric(), "%f" );
+            parsed = 1;
+         } else if ( i->isString() ) {
+            dbh->escapeString( *i->asString(), value );
             value.prepend( "'" );
             value.append( "'" );
             parsed = 1;
+         } else if ( i->isObject() ) {
+            CoreObject *o = i->asObject();
+            // vm->itemToString( value, ??? )
+            if ( o->derivedFrom( "TimeStamp" ) ) {
+               TimeStamp *ts = (TimeStamp *) o->getUserData();
+               ts->toString( value );
+               value.prepend( "'" );
+               value.append( "'" );
+               parsed = 1;
+            }
          }
+
+         if ( parsed == 0 ) {
+            GarbageString *s = new GarbageString( vm );
+            s->bufferize( errorMessage );
+
+            vm->raiseModError( new DBIError( ErrorParam( dbi_sql_expand_type_error, __LINE__ )
+                                            .desc( *s ) ) );
+            return;
+         }
+
+         sql->insert( dollarPos, dollarSize, value );
+
+         dollarPos = sql->find( "$", dollarPos + dollarSize );
       }
-
-      if ( parsed == 0 ) {
-         char errorMessage[128];
-         snprintf( errorMessage, 128, "Positional argument (%i) is an unknown type", pIdx );
-
-         GarbageString *s = new GarbageString( vm );
-         s->bufferize( errorMessage );
-
-         vm->raiseModError( new DBIError( ErrorParam( dbi_sql_expand_type_error, __LINE__ )
-                                         .desc( *s ) ) );
-         return;
-      }
-
-      sql->insert( dollarPos, 2, value );
-
-      dollarPos = sql->find( "$", dollarPos + dollarSize );
    }
 
    vm->retval( sql );
