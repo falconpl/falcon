@@ -25,6 +25,8 @@
 #include <falcon/error.h>
 #include <falcon/timestamp.h>
 
+#define DBI_MAX_COLUMN_NAME_SIZE 128
+
 namespace Falcon
 {
 
@@ -129,12 +131,12 @@ public:
    /** 
     * Fetch the column types 
     */
-   virtual dbi_status getColumnTypes( CoreArray *resultCache )=0;
+   virtual dbi_status getColumnTypes( dbi_type *types )=0;
    
    /** 
     * Fetch the row headers 
     */
-   virtual dbi_status getColumnNames( CoreArray *resultCache )=0;
+   virtual dbi_status getColumnNames( char *names[] )=0;
    
    /** 
     * Get a value from the current row as a string 

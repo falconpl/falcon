@@ -135,24 +135,18 @@ int DBIRecordsetPgSQL::getColumnCount()
    return m_columnCount;
 }
 
-dbi_status DBIRecordsetPgSQL::getColumnNames( CoreArray *resultCache )
+dbi_status DBIRecordsetPgSQL::getColumnNames( char *names[] )
 {
-   for ( int cIdx = 0; cIdx < m_columnCount; cIdx++ ) {
-      char *fname = PQfname( m_res, cIdx );
-      GarbageString *gsFName = new GarbageString( resultCache->origin() );
-      gsFName->bufferize( fname );
-      resultCache->append( gsFName );
-   }
+   for ( int cIdx = 0; cIdx < m_columnCount; cIdx++ )
+      names[cIdx] = strndup( PQfname( m_res, cIdx ), DBI_MAX_COLUMN_NAME_SIZE );
    
    return dbi_ok;
 }
 
-dbi_status DBIRecordsetPgSQL::getColumnTypes( CoreArray *resultCache )
+dbi_status DBIRecordsetPgSQL::getColumnTypes( dbi_type *types )
 {
-   for ( int cIdx = 0; cIdx < m_columnCount; cIdx++ ) {
-      dbi_type typ = getFalconType( PQftype( m_res, cIdx ) );
-      resultCache->append( (int64) typ );
-   }
+   for ( int cIdx = 0; cIdx < m_columnCount; cIdx++ )
+      types[cIdx] = getFalconType( PQftype( m_res, cIdx ) );
    
    return dbi_ok;
 }

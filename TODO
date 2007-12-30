@@ -1,7 +1,6 @@
 TODO:
    * Unit tests including "dbi standard" test that will test
      required functionality from all drivers
-   * dbr.fetchObject()
    * dbh/tr.queryOne()
    * dbh/tr.insert( tableName, dict [, seq] )
    * dbh/tr.update( tableName, where, dict )
