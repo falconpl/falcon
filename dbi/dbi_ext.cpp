@@ -181,7 +181,7 @@ int DBIHandle_realSqlExpand( VMachine *vm, DBIHandle *dbh, String &sql, int star
                i = vm->param( pIdx + ( startAt - 1 ) );
 
                if ( i == 0 ) {
-                  snprintf( errorMessage, 128, "Positional argument (%i) is out of range", pIdx );
+                  snprintf( errorMessage, 128, "Positional expansion (%i) is out of range", pIdx );
       
                   GarbageString *s = new GarbageString( vm );
                   s->bufferize( errorMessage );
@@ -192,7 +192,7 @@ int DBIHandle_realSqlExpand( VMachine *vm, DBIHandle *dbh, String &sql, int star
                }
 
                // In case this fails a type check
-               snprintf( errorMessage, 128, "Positional argument (%i) is an unknown type", pIdx );
+               snprintf( errorMessage, 128, "Positional expansion (%i) is an unknown type", pIdx );
             }
          }
 
@@ -299,7 +299,6 @@ FALCON_FUNC DBIHandle_query( VMachine *vm )
 FALCON_FUNC DBIHandle_execute( VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
-   DBIHandle *dbh = static_cast<DBIHandle *>( self->getUserData() );
 
    Item *sqlI = vm->param( 0 );
    if ( sqlI == 0 || ! sqlI->isString() )
@@ -309,6 +308,7 @@ FALCON_FUNC DBIHandle_execute( VMachine *vm )
       return;
    }
 
+   DBIHandle *dbh = static_cast<DBIHandle *>( self->getUserData() );
    String sql( *sqlI->asString() );
    sql.bufferize();
 
@@ -392,36 +392,77 @@ FALCON_FUNC DBIHandle_sqlExpand( VMachine *vm )
 FALCON_FUNC DBITransaction_query( VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
-   DBITransaction *dbt = static_cast<DBITransaction *>( self->getUserData() );
 
-   Item *i_query = vm->param(0);
-   if( i_query == 0 || ! i_query->isString() ) {
-      // raise error
+   Item *sqlI = vm->param( 0 );
+   if ( sqlI == 0 || ! sqlI->isString() ) {
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                                         .origin( e_orig_runtime ) ) );
       return;
    }
 
-   /*
-    if ( dbt->query( *i_query->asString() ) != dbi_ok )
-    {
-        // raise error
-    }
-    */
+   DBITransaction *dbt = static_cast<DBITransaction *>( self->getUserData() );
+   String sql( *sqlI->asString() );
+   sql.bufferize();
 
-   vm->retval(0); // or anything you want to return
+   DBIHandle_realSqlExpand( vm, dbt->getHandle(), sql, 1 );
+
+   dbi_status retval;
+   DBIRecordset *recSet = dbt->query( sql, retval );
+
+   if ( retval != dbi_ok ) {
+      String errorMessage;
+      dbt->getLastError( errorMessage );
+
+      vm->raiseModError( new DBIError( ErrorParam( retval, __LINE__ )
+                                       .desc( errorMessage ) ) );
+      return;
+   }
+
+   Item *rsclass = vm->findGlobalItem( "%DBIRecordset" );
+   fassert( rsclass != 0 && rsclass->isClass() );
+
+   CoreObject *oth = rsclass->asClass()->createInstance();
+   oth->setUserData( recSet );
+   vm->retval( oth );
 }
 
 FALCON_FUNC DBITransaction_execute( VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
-   DBITransaction *dbt = static_cast<DBITransaction *>( self->getUserData() );
 
-   vm->retval( 0 );
+   Item *sqlI = vm->param( 0 );
+   if ( sqlI == 0 || ! sqlI->isString() )
+   {
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                                         .origin( e_orig_runtime ) ) );
+      return;
+   }
+
+   DBITransaction *dbt = static_cast<DBITransaction *>( self->getUserData() );
+   String sql( *sqlI->asString() );
+   sql.bufferize();
+
+   DBIHandle_realSqlExpand( vm, dbt->getHandle(), sql, 1 );
+
+   dbi_status retval;
+   int affectedRows = dbt->execute( sql, retval );
+
+   if ( retval != dbi_ok ) {
+      String errorMessage;
+      dbt->getLastError( errorMessage );
+      vm->raiseModError( new DBIError( ErrorParam( retval, __LINE__ )
+                                       .desc( errorMessage ) ) );
+   }
+
+   vm->retval( affectedRows );
 }
 
 FALCON_FUNC DBITransaction_close( VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
    DBITransaction *dbt = static_cast<DBITransaction *>( self->getUserData() );
+
+   dbt->close();
 
    vm->retval( 0 );
 }

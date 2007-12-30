@@ -13,7 +13,6 @@ QUERY RELATED:
    * dbh/tr.insert( tableName, dict [, seq] )
    * dbh/tr.update( tableName, where, dict )
    * dbh/tr.update( tableName, where, obj )
-   * DBITransaction script interface
    
 ERROR RELATED:
    * Check for a BOF error (DBIRecordset)

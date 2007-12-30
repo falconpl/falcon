@@ -219,6 +219,11 @@ protected:
    
 public:
    DBITransaction( DBIHandle *dbh ) { m_dbh = dbh; }
+
+   /**
+    * Get the DBIHandle associated with this transaction.
+    */
+   virtual DBIHandle *getHandle() { return m_dbh; }
    
    /** Launches a query 
     * \param query SQL query to execute
