@@ -1,14 +1,23 @@
-TODO:
+MISCELLANEOUS:
    * Unit tests including "dbi standard" test that will test
      required functionality from all drivers
+   * Organize the dbi_status listings so that they are in
+     some type of logical order. Right now I just keep
+     appending to the end as I see the need for a new one
+     thus they are in a very erradic order.
+
+QUERY RELATED:
    * Handle last inserted id some how
-   * Handle time stamps in sqlExpand
    * dbh/tr.queryOne()
    * dbh/tr.insert( tableName, dict [, seq] )
    * dbh/tr.update( tableName, where, dict )
    * dbh/tr.update( tableName, where, obj )
    * DBITransaction script interface
-   * Check for a BOF error (rec)
+   
+ERROR RELATED:
+   * Check for a BOF error (DBIRecordset)
+
+DRIVERS:
    * mysql driver
    * sqlite3 driver
    * firebird/interbase driver

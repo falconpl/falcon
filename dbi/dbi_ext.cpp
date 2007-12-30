@@ -255,17 +255,40 @@ FALCON_FUNC DBIHandle_sqlExpand( VMachine *vm )
       }
 
       String value;
+      int parsed = 0;
 
-      // TODO: handle timestamp values
-      // TODO: handle other values via toString method
-      if ( i->isInteger() )
+      if ( i->isInteger() ) {
          value.writeNumber( i->asInteger() );
-      else if ( i->isNumeric() )
+         parsed = 1;
+      } else if ( i->isNumeric() ) {
          value.writeNumber( i->asNumeric(), "%f" );
-      else if ( i->isString() ) {
+         parsed = 1;
+      } else if ( i->isString() ) {
          dbh->escapeString( *i->asString(), value );
          value.prepend( "'" );
          value.append( "'" );
+         parsed = 1;
+      } else if ( i->isObject() ) {
+         CoreObject *o = i->asObject();
+         if ( o->derivedFrom( "TimeStamp" ) ) {
+            TimeStamp *ts = (TimeStamp *) o->getUserData();
+            ts->toString( value );
+            value.prepend( "'" );
+            value.append( "'" );
+            parsed = 1;
+         }
+      }
+
+      if ( parsed == 0 ) {
+         char errorMessage[128];
+         snprintf( errorMessage, 128, "Positional argument (%i) is an unknown type", pIdx );
+
+         GarbageString *s = new GarbageString( vm );
+         s->bufferize( errorMessage );
+
+         vm->raiseModError( new DBIError( ErrorParam( dbi_sql_expand_type_error, __LINE__ )
+                                         .desc( *s ) ) );
+         return;
       }
 
       sql->insert( dollarPos, 2, value );

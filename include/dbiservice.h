@@ -93,6 +93,9 @@ typedef enum {
    /** failed to parse a sql expansion ($1, $2, ...) correctly */
    dbi_sql_expand_error,
 
+   /** failed to expand a value due to it being an unknown type */
+   dbi_sql_expand_type_error,
+
    /** failed to connect to SQL server */
    dbi_connect_error,
 
