@@ -30,52 +30,39 @@
 namespace Falcon {
 namespace Ext {
 
-FALCON_FUNC DBIConnect( VMachine *vm )
+CoreObject *dbi_defaultHandle; // Temporary until I figure how to set static class vars
+
+/******************************************************************************
+ * Local Helper Functions
+ *****************************************************************************/
+
+int DBIHandle_itemToSqlValue( DBIHandle *dbh, const Item *i, String &value )
 {
-   Item *paramsI = vm->param(0);
-   if (  paramsI == 0 || ! paramsI->isString() ) {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                                         .origin( e_orig_runtime ) ) );
-      return;
-   }
-
-   String *params = paramsI->asString();
-   String provName = *params;
-   String connString = "";
-   uint32 colonPos = params->find( ":" );
-
-   if ( colonPos != csh::npos ) {
-      provName = params->subString( 0, colonPos );
-      connString = params->subString( colonPos + 1 );
-   }
-
-   DBIService *provider = theDBIService.loadDbProvider( vm, provName );
-   if ( provider != 0 ) {
-      // if it's 0, the service has already raised an error in the vm and we have nothing to do.
-      String connectErrorMessage;
-      dbi_status status;
-      DBIHandle *hand = provider->connect( connString, false, status, connectErrorMessage );
-      if ( hand == 0 ) {
-         if ( connectErrorMessage.length() == 0 )
-            connectErrorMessage = "An unknown error has occured during connect";
-
-         vm->raiseModError( new DBIError( ErrorParam( status, __LINE__ )
-                                          .desc( connectErrorMessage ) ) );
-
-         return;
+   if ( i->isInteger() ) {
+      value.writeNumber( i->asInteger() );
+      return 1;
+   } else if ( i->isNumeric() ) {
+      value.writeNumber( i->asNumeric(), "%f" );
+      return 1;
+   } else if ( i->isString() ) {
+      dbh->escapeString( *i->asString(), value );
+      value.prepend( "'" );
+      value.append( "'" );
+      return 1;
+   } else if ( i->isObject() ) {
+      CoreObject *o = i->asObject();
+      //vm->itemToString( value, ??? )
+      if ( o->derivedFrom( "TimeStamp" ) ) {
+         TimeStamp *ts = (TimeStamp *) o->getUserData();
+         ts->toString( value );
+         value.prepend( "'" );
+         value.append( "'" );
+         return 1;
       }
-
-      // great, we have the database handler open. Now we must create a falcon object to store it.
-      CoreObject *instance = provider->makeInstance( vm, hand );
-      vm->retval( instance );
    }
 
-   // no matter what we return if we had an error.
+   return 0;
 }
-
-/**********************************************************
-   Handler class
- **********************************************************/
 
 int DBIHandle_realSqlExpand( VMachine *vm, DBIHandle *dbh, String &sql, int startAt )
 {
@@ -197,32 +184,7 @@ int DBIHandle_realSqlExpand( VMachine *vm, DBIHandle *dbh, String &sql, int star
          }
 
          String value;
-         int parsed = 0;
-
-         if ( i->isInteger() ) {
-            value.writeNumber( i->asInteger() );
-            parsed = 1;
-         } else if ( i->isNumeric() ) {
-            value.writeNumber( i->asNumeric(), "%f" );
-            parsed = 1;
-         } else if ( i->isString() ) {
-            dbh->escapeString( *i->asString(), value );
-            value.prepend( "'" );
-            value.append( "'" );
-            parsed = 1;
-         } else if ( i->isObject() ) {
-            CoreObject *o = i->asObject();
-            // vm->itemToString( value, ??? )
-            if ( o->derivedFrom( "TimeStamp" ) ) {
-               TimeStamp *ts = (TimeStamp *) o->getUserData();
-               ts->toString( value );
-               value.prepend( "'" );
-               value.append( "'" );
-               parsed = 1;
-            }
-         }
-
-         if ( parsed == 0 ) {
+         if ( DBIHandle_itemToSqlValue( dbh, i, value ) == 0 ) {
             GarbageString *s = new GarbageString( vm );
             s->bufferize( errorMessage );
 
@@ -239,6 +201,158 @@ int DBIHandle_realSqlExpand( VMachine *vm, DBIHandle *dbh, String &sql, int star
 
    return 1;
 }
+
+int DBIRecordset_getItem( VMachine *vm, DBIRecordset *dbr, dbi_type typ, int cIdx, Item &item )
+{
+   switch ( typ )
+   {
+   case dbit_string:
+      {
+         String value;
+         dbi_status retval = dbr->asString( cIdx, value );
+         switch ( retval )
+         {
+         case dbi_ok:
+            {
+               GarbageString *gsValue = new GarbageString( vm );
+               gsValue->bufferize( value );
+
+               item.setString( gsValue );
+            }
+            break;
+
+         case dbi_nil_value:
+            break;
+
+         default:
+            // TODO: handle error
+            return 0;
+         }
+      }
+      break;
+
+   case dbit_integer:
+      {
+         int32 value;
+         if ( dbr->asInteger( cIdx, value ) != dbi_nil_value )
+            item.setInteger( (int64) value );
+      }
+      break;
+   
+   case dbit_integer64:
+      {
+         int64 value;
+         if ( dbr->asInteger64( cIdx, value ) != dbi_nil_value )
+            item.setInteger( value );
+      }
+      break;
+   
+   case dbit_numeric:
+      {
+         numeric value;
+         if ( dbr->asNumeric( cIdx, value ) != dbi_nil_value )
+            item.setNumeric( value );
+      }
+      break;
+   
+   case dbit_date:
+      {
+         TimeStamp *ts = new TimeStamp();
+         if ( dbr->asDate( cIdx, *ts ) != dbi_nil_value ) {
+            Item *ts_class = vm->findGlobalItem( "TimeStamp" );
+            fassert( ts_class != 0 );
+            CoreObject *value = ts_class->asClass()->createInstance();
+            value->setUserData( ts );
+            item.setObject( value );
+         }
+      }
+      break;
+   
+   case dbit_time:
+      {
+         TimeStamp *ts = new TimeStamp();
+         if ( dbr->asTime( cIdx, *ts ) != dbi_nil_value ) {
+            Item *ts_class = vm->findGlobalItem( "TimeStamp" );
+            fassert( ts_class != 0 );
+            CoreObject *value = ts_class->asClass()->createInstance();
+            value->setUserData( ts );
+            item.setObject( value );
+         }
+      }
+      break;
+   
+   case dbit_datetime:
+      {
+         TimeStamp *ts = new TimeStamp();
+         if ( dbr->asDateTime( cIdx, *ts ) != dbi_nil_value ) {
+            Item *ts_class = vm->findGlobalItem( "TimeStamp" );
+            fassert( ts_class != 0 );
+            CoreObject *value = ts_class->asClass()->createInstance();
+            value->setUserData( ts );
+            item.setObject( value );
+         }
+      }
+      break;
+
+   default:
+      return 0;
+   }
+
+   return 1;
+}
+
+/******************************************************************************
+ * Main DBIConnect
+ *****************************************************************************/
+
+FALCON_FUNC DBIConnect( VMachine *vm )
+{
+   Item *paramsI = vm->param(0);
+   if (  paramsI == 0 || ! paramsI->isString() ) {
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                                         .origin( e_orig_runtime ) ) );
+      return;
+   }
+
+   String *params = paramsI->asString();
+   String provName = *params;
+   String connString = "";
+   uint32 colonPos = params->find( ":" );
+
+   if ( colonPos != csh::npos ) {
+      provName = params->subString( 0, colonPos );
+      connString = params->subString( colonPos + 1 );
+   }
+
+   DBIService *provider = theDBIService.loadDbProvider( vm, provName );
+   if ( provider != 0 ) {
+      // if it's 0, the service has already raised an error in the vm and we have nothing to do.
+      String connectErrorMessage;
+      dbi_status status;
+      DBIHandle *hand = provider->connect( connString, false, status, connectErrorMessage );
+      if ( hand == 0 ) {
+         if ( connectErrorMessage.length() == 0 )
+            connectErrorMessage = "An unknown error has occured during connect";
+
+         vm->raiseModError( new DBIError( ErrorParam( status, __LINE__ )
+                                          .desc( connectErrorMessage ) ) );
+
+         return;
+      }
+
+      // great, we have the database handler open. Now we must create a falcon object to store it.
+      CoreObject *instance = provider->makeInstance( vm, hand );
+      vm->retval( instance );
+
+      dbi_defaultHandle = instance;
+   }
+
+   // no matter what we return if we had an error.
+}
+
+/**********************************************************
+   Handler class
+ **********************************************************/
 
 FALCON_FUNC DBIHandle_startTransaction( VMachine *vm )
 {
@@ -510,105 +624,6 @@ FALCON_FUNC DBIRecordset_next( VMachine *vm )
    DBIRecordset *dbr = static_cast<DBIRecordset *>( self->getUserData() );
 
    vm->retval( dbr->next() );
-}
-
-int DBIRecordset_getItem( VMachine *vm, DBIRecordset *dbr, dbi_type typ, int cIdx, Item &item )
-{
-   switch ( typ )
-   {
-   case dbit_string:
-      {
-         String value;
-         dbi_status retval = dbr->asString( cIdx, value );
-         switch ( retval )
-         {
-         case dbi_ok:
-            {
-               GarbageString *gsValue = new GarbageString( vm );
-               gsValue->bufferize( value );
-
-               item.setString( gsValue );
-            }
-            break;
-
-         case dbi_nil_value:
-            break;
-
-         default:
-            // TODO: handle error
-            return 0;
-         }
-      }
-      break;
-
-   case dbit_integer:
-      {
-         int32 value;
-         if ( dbr->asInteger( cIdx, value ) != dbi_nil_value )
-            item.setInteger( (int64) value );
-      }
-      break;
-   
-   case dbit_integer64:
-      {
-         int64 value;
-         if ( dbr->asInteger64( cIdx, value ) != dbi_nil_value )
-            item.setInteger( value );
-      }
-      break;
-   
-   case dbit_numeric:
-      {
-         numeric value;
-         if ( dbr->asNumeric( cIdx, value ) != dbi_nil_value )
-            item.setNumeric( value );
-      }
-      break;
-   
-   case dbit_date:
-      {
-         TimeStamp *ts = new TimeStamp();
-         if ( dbr->asDate( cIdx, *ts ) != dbi_nil_value ) {
-            Item *ts_class = vm->findGlobalItem( "TimeStamp" );
-            fassert( ts_class != 0 );
-            CoreObject *value = ts_class->asClass()->createInstance();
-            value->setUserData( ts );
-            item.setObject( value );
-         }
-      }
-      break;
-   
-   case dbit_time:
-      {
-         TimeStamp *ts = new TimeStamp();
-         if ( dbr->asTime( cIdx, *ts ) != dbi_nil_value ) {
-            Item *ts_class = vm->findGlobalItem( "TimeStamp" );
-            fassert( ts_class != 0 );
-            CoreObject *value = ts_class->asClass()->createInstance();
-            value->setUserData( ts );
-            item.setObject( value );
-         }
-      }
-      break;
-   
-   case dbit_datetime:
-      {
-         TimeStamp *ts = new TimeStamp();
-         if ( dbr->asDateTime( cIdx, *ts ) != dbi_nil_value ) {
-            Item *ts_class = vm->findGlobalItem( "TimeStamp" );
-            fassert( ts_class != 0 );
-            CoreObject *value = ts_class->asClass()->createInstance();
-            value->setUserData( ts );
-            item.setObject( value );
-         }
-      }
-      break;
-
-   default:
-      return 0;
-   }
-
-   return 1;
 }
 
 FALCON_FUNC DBIRecordset_fetchArray( VMachine *vm )
@@ -1025,6 +1040,167 @@ FALCON_FUNC DBIRecordset_close( VMachine *vm )
    DBIRecordset *dbr = static_cast<DBIRecordset *>( self->getUserData() );
 
    dbr->close();
+}
+
+//======================================================
+// DBI Record
+//======================================================
+
+FALCON_FUNC DBIRecord_init( VMachine *vm )
+{
+   CoreObject *einst = vm->self().asObject();
+   int paramCount = vm->paramCount();
+
+   // Populate tableName, primaryKey and persist
+   if ( paramCount > 0 )
+      einst->setProperty( "tableName",  *vm->param( 0 ) );
+   if ( paramCount > 1 )
+      einst->setProperty( "primaryKey", *vm->param( 1 ) );
+   if ( paramCount > 2 )
+      einst->setProperty( "persist",    *vm->param( 2 ) );
+   einst->setProperty( "dbh", Item( dbi_defaultHandle ) );
+}
+
+FALCON_FUNC DBIRecord_insert( VMachine *vm )
+{
+   CoreObject *self = vm->self().asObject();
+   Item *tableNameI = self->getProperty( "tableName" );
+   Item *primaryKeyI = self->getProperty( "primaryKey" );
+   Item *persistI = self->getProperty( "persist" );
+   Item *dbhI = self->getProperty( "dbh" );
+
+   CoreObject *dbhO = dbhI->asObject();
+   DBIHandle *dbh = static_cast<DBIHandle *>( dbhO->getUserData() );
+
+   String *tableName = tableNameI->asString();
+   String *primaryKey = primaryKeyI->asString();
+   CoreArray *persist = persistI->asArray();
+   int cCount = persist->length();
+
+   String sql;
+   sql.append( "INSERT INTO " );
+   sql.append( *tableName );
+   sql.append( "( " );
+
+   for ( int cIdx=0; cIdx < cCount; cIdx++ ) {
+      if ( cIdx > 0 )
+         sql.append( ", " );
+      sql.append( *persist->at( cIdx ).asString() );
+   }
+
+   sql.append( " ) VALUES ( " );
+
+   for ( int cIdx=0; cIdx < cCount; cIdx++ ) {
+      if ( cIdx > 0 )
+         sql.append( ", " );
+
+      String cName = *persist->at( cIdx ).asString();
+      String value;
+      if ( DBIHandle_itemToSqlValue( dbh, self->getProperty( cName ), value ) == 0 ) {
+         String errorMessage = "Invalid type for ";
+         errorMessage.append( cName );
+
+         vm->raiseModError( new DBIError( ErrorParam( dbi_invalid_type, __LINE__ )
+                                         .desc( errorMessage ) ) );
+         return;
+      }
+
+      sql.append( value );
+   }
+
+   sql.append( " )" );
+
+   vm->retval( new GarbageString( vm, sql ) );
+}
+
+FALCON_FUNC DBIRecord_update( VMachine *vm )
+{
+   CoreObject *self = vm->self().asObject();
+   Item *tableNameI = self->getProperty( "tableName" );
+   Item *primaryKeyI = self->getProperty( "primaryKey" );
+   Item *persistI = self->getProperty( "persist" );
+   Item *dbhI = self->getProperty( "dbh" );
+
+   CoreObject *dbhO = dbhI->asObject();
+   DBIHandle *dbh = static_cast<DBIHandle *>( dbhO->getUserData() );
+
+   String *tableName = tableNameI->asString();
+   String *primaryKey = primaryKeyI->asString();
+   CoreArray *persist = persistI->asArray();
+
+   String sql;
+
+   sql.append( "UPDATE " );
+   sql.append( *tableName );
+   sql.append( " SET " );
+
+   int cCount = persist->length();
+
+   for ( int cIdx=0; cIdx < cCount; cIdx++ ) {
+      if ( cIdx > 0 )
+         sql.append( ", " );
+      String cName = *persist->at( cIdx ).asString();
+      Item *i = self->getProperty( cName );
+
+      String value;
+      if ( DBIHandle_itemToSqlValue( dbh, i, value ) == 0 ) {
+         String errorMessage = "Invalid type for ";
+         errorMessage.append( cName );
+
+         vm->raiseModError( new DBIError( ErrorParam( dbi_invalid_type, __LINE__ )
+                                         .desc( errorMessage ) ) );
+         return;
+      }
+
+      sql.append( cName );
+      sql.append( " = " );
+      sql.append( value );
+   }
+
+   Item *primaryKeyValueI = self->getProperty( *primaryKey );
+   String value;
+   if ( DBIHandle_itemToSqlValue( dbh, primaryKeyValueI, value ) == 0 ) {
+      String errorMessage = "Invalid type for primary key ";
+      errorMessage.append( *primaryKey );
+
+      vm->raiseModError( new DBIError( ErrorParam( dbi_invalid_type, __LINE__ )
+                                      .desc( errorMessage ) ) );
+      return;
+   }
+
+   sql.append( " WHERE " );
+   sql.append( *primaryKey );
+   sql.append( " = " );
+   sql.append( value );
+
+   vm->retval( new GarbageString( vm, sql ) );
+}
+
+FALCON_FUNC DBIRecord_delete( VMachine *vm )
+{
+   CoreObject *self = vm->self().asObject();
+   Item *tableNameI = self->getProperty( "tableName" );
+   Item *primaryKeyI = self->getProperty( "primaryKey" );
+   Item *dbhI = self->getProperty( "dbh" );
+
+   CoreObject *dbhO = dbhI->asObject();
+   DBIHandle *dbh = static_cast<DBIHandle *>( dbhO->getUserData() );
+
+   String *tableName = tableNameI->asString();
+   String *primaryKey = primaryKeyI->asString();
+   Item *pkValueI = self->getProperty( *primaryKey );
+   String value;
+
+   DBIHandle_itemToSqlValue( dbh, pkValueI, value );
+
+   String sql = "DELETE FROM ";
+   sql.append( *tableName );
+   sql.append( " WHERE " );
+   sql.append( *primaryKey );
+   sql.append( " = " );
+   sql.append( value );
+
+   vm->retval( new GarbageString( vm, sql ) );
 }
 
 //======================================================

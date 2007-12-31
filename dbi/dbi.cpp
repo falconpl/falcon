@@ -57,24 +57,34 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    self->addClassMethod( trans_class, "close",    Falcon::Ext::DBITransaction_close );
 
    // create the base class DBIRecordset for falcon
-   Falcon::Symbol *rec_class = self->addClass( "%DBIRecordset" ); // private class
-   self->addClassMethod( rec_class, "next",           Falcon::Ext::DBIRecordset_next );
-   self->addClassMethod( rec_class, "fetchArray",     Falcon::Ext::DBIRecordset_fetchArray );
-   self->addClassMethod( rec_class, "fetchDict",      Falcon::Ext::DBIRecordset_fetchDict );
-   self->addClassMethod( rec_class, "fetchObject",    Falcon::Ext::DBIRecordset_fetchObject );
-   self->addClassMethod( rec_class, "asString",       Falcon::Ext::DBIRecordset_asString );
-   self->addClassMethod( rec_class, "asInteger",      Falcon::Ext::DBIRecordset_asInteger );
-   self->addClassMethod( rec_class, "asInteger64",    Falcon::Ext::DBIRecordset_asInteger64 );
-   self->addClassMethod( rec_class, "asNumeric",      Falcon::Ext::DBIRecordset_asNumeric );
-   self->addClassMethod( rec_class, "asDate",         Falcon::Ext::DBIRecordset_asDate );
-   self->addClassMethod( rec_class, "asTime",         Falcon::Ext::DBIRecordset_asTime );
-   self->addClassMethod( rec_class, "asDateTime",     Falcon::Ext::DBIRecordset_asDateTime );
-   self->addClassMethod( rec_class, "getRowCount",    Falcon::Ext::DBIRecordset_getRowCount );
-   self->addClassMethod( rec_class, "getColumnCount", Falcon::Ext::DBIRecordset_getColumnCount );
-   self->addClassMethod( rec_class, "getColumnTypes", Falcon::Ext::DBIRecordset_getColumnTypes );
-   self->addClassMethod( rec_class, "getColumnNames", Falcon::Ext::DBIRecordset_getColumnNames );
-   self->addClassMethod( rec_class, "getLastError",   Falcon::Ext::DBIRecordset_getLastError );
-   self->addClassMethod( rec_class, "close",          Falcon::Ext::DBIRecordset_close );
+   Falcon::Symbol *rs_class = self->addClass( "%DBIRecordset" ); // private class
+   self->addClassMethod( rs_class, "next",           Falcon::Ext::DBIRecordset_next );
+   self->addClassMethod( rs_class, "fetchArray",     Falcon::Ext::DBIRecordset_fetchArray );
+   self->addClassMethod( rs_class, "fetchDict",      Falcon::Ext::DBIRecordset_fetchDict );
+   self->addClassMethod( rs_class, "fetchObject",    Falcon::Ext::DBIRecordset_fetchObject );
+   self->addClassMethod( rs_class, "asString",       Falcon::Ext::DBIRecordset_asString );
+   self->addClassMethod( rs_class, "asInteger",      Falcon::Ext::DBIRecordset_asInteger );
+   self->addClassMethod( rs_class, "asInteger64",    Falcon::Ext::DBIRecordset_asInteger64 );
+   self->addClassMethod( rs_class, "asNumeric",      Falcon::Ext::DBIRecordset_asNumeric );
+   self->addClassMethod( rs_class, "asDate",         Falcon::Ext::DBIRecordset_asDate );
+   self->addClassMethod( rs_class, "asTime",         Falcon::Ext::DBIRecordset_asTime );
+   self->addClassMethod( rs_class, "asDateTime",     Falcon::Ext::DBIRecordset_asDateTime );
+   self->addClassMethod( rs_class, "getRowCount",    Falcon::Ext::DBIRecordset_getRowCount );
+   self->addClassMethod( rs_class, "getColumnCount", Falcon::Ext::DBIRecordset_getColumnCount );
+   self->addClassMethod( rs_class, "getColumnTypes", Falcon::Ext::DBIRecordset_getColumnTypes );
+   self->addClassMethod( rs_class, "getColumnNames", Falcon::Ext::DBIRecordset_getColumnNames );
+   self->addClassMethod( rs_class, "getLastError",   Falcon::Ext::DBIRecordset_getLastError );
+   self->addClassMethod( rs_class, "close",          Falcon::Ext::DBIRecordset_close );
+
+   // create the base class DBIRecord for falcon
+   Falcon::Symbol *rec_class = self->addClass( "DBIRecord", Falcon::Ext::DBIRecord_init );
+   self->addClassMethod(   rec_class, "insert",      Falcon::Ext::DBIRecord_insert );
+   self->addClassMethod(   rec_class, "update",      Falcon::Ext::DBIRecord_update );
+   self->addClassMethod(   rec_class, "delete",      Falcon::Ext::DBIRecord_delete );
+   self->addClassProperty( rec_class, "dbh" );
+   self->addClassProperty( rec_class, "tableName" );
+   self->addClassProperty( rec_class, "primaryKey" );
+   self->addClassProperty( rec_class, "persist" );
 
    // service publication
    self->publishService( &theDBIService );

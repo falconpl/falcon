@@ -79,6 +79,15 @@ FALCON_FUNC DBIRecordset_getLastError( VMachine *vm );
 FALCON_FUNC DBIRecordset_close( VMachine *vm );
 
 //=====================
+// DBI Record class
+//=====================
+
+FALCON_FUNC DBIRecord_init( VMachine *vm );
+FALCON_FUNC DBIRecord_insert( VMachine *vm );
+FALCON_FUNC DBIRecord_update( VMachine *vm );
+FALCON_FUNC DBIRecord_delete( VMachine *vm );
+
+//=====================
 // DBI Error class
 //=====================
 

@@ -1,0 +1,24 @@
+load dbi
+
+d = DBIConnect( "pgsql" )
+
+class Person(nId, nName, nDob, nAge) from DBIRecord
+   tableName  = "people"
+   primaryKey = "id"
+   persist    = [ "id", "name", "dob", "age" ]
+   
+   id   = nId
+   name = nName
+   dob  = nDob
+   age  = nAge
+end
+
+ts = TimeStamp()
+ts.currentTime()
+
+t = Person( 10, "John", ts, 12 )
+> t.insert()
+> t.update()
+> t.delete()
+
+d.close()
