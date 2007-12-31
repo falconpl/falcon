@@ -1125,52 +1125,92 @@ FALCON_FUNC DBIRecord_init( VMachine *vm )
 
    // Populate tableName, primaryKey and persist
    if ( paramCount > 0 )
-      einst->setProperty( "tableName",  *vm->param( 0 ) );
+      einst->setProperty( "_tableName",  *vm->param( 0 ) );
    if ( paramCount > 1 )
-      einst->setProperty( "primaryKey", *vm->param( 1 ) );
+      einst->setProperty( "_primaryKey", *vm->param( 1 ) );
    if ( paramCount > 2 )
-      einst->setProperty( "persist",    *vm->param( 2 ) );
-   einst->setProperty( "dbh", Item( dbi_defaultHandle ) );
+      einst->setProperty( "_persist",    *vm->param( 2 ) );
+   einst->setProperty( "_dbh", Item( dbi_defaultHandle ) );
+}
+
+int DBIRecord_getPersistPropertyNames( VMachine *vm, CoreObject *self, String columnNames[], int maxColumnCount )
+{
+   Item *persistI = self->getProperty( "_persist" );
+
+   if ( persistI == 0 || persistI->isNil() ) {
+      // No _persist, loop through all public properties
+      int pCount = self->propCount();
+      int cIdx = 0;
+
+      for ( int pIdx=0; pIdx < pCount; pIdx++ ) {
+         String p = self->getPropertyName( pIdx );
+         if ( p.getCharAt( 0 ) != '_' ) {
+            Item i = self->getPropertyAt( pIdx );
+            if ( i.isInteger() || i.isNumeric() || i.isObject() || i.isString() ) {
+               columnNames[cIdx] = p;
+               cIdx++;
+            }
+         }
+      }
+
+      return cIdx;
+   } else if ( ! persistI->isArray() ) {
+      // They gave a _persist property, but it's not an array
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                                         .origin( e_orig_runtime ) ) );
+      return 0;
+   } else {
+      // They gave a _persist property, trust it
+      CoreArray *persist = persistI->asArray();
+      int cCount = persist->length();
+
+      for ( int cIdx=0; cIdx < cCount; cIdx++) {
+          columnNames[cIdx] = *persist->at( cIdx ).asString();
+      }
+
+      return cCount;
+   }
 }
 
 FALCON_FUNC DBIRecord_insert( VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
-   Item *tableNameI = self->getProperty( "tableName" );
-   Item *primaryKeyI = self->getProperty( "primaryKey" );
-   Item *persistI = self->getProperty( "persist" );
-   Item *dbhI = self->getProperty( "dbh" );
+   Item *tableNameI = self->getProperty( "_tableName" );
+   Item *primaryKeyI = self->getProperty( "_primaryKey" );
+   Item *dbhI = self->getProperty( "_dbh" );
 
    CoreObject *dbhO = dbhI->asObject();
    DBIHandle *dbh = static_cast<DBIHandle *>( dbhO->getUserData() );
 
    String *tableName = tableNameI->asString();
    String *primaryKey = primaryKeyI->asString();
-   CoreArray *persist = persistI->asArray();
-   int cCount = persist->length();
+
+   int propertyCount = self->propCount();
+   String *columnNames = new String[propertyCount];
+
+   propertyCount = DBIRecord_getPersistPropertyNames( vm, self, columnNames, propertyCount );
 
    String sql;
    sql.append( "INSERT INTO " );
    sql.append( *tableName );
    sql.append( "( " );
 
-   for ( int cIdx=0; cIdx < cCount; cIdx++ ) {
+   for ( int cIdx=0; cIdx < propertyCount; cIdx++ ) {
       if ( cIdx > 0 )
          sql.append( ", " );
-      sql.append( *persist->at( cIdx ).asString() );
+      sql.append( columnNames[cIdx] );
    }
 
    sql.append( " ) VALUES ( " );
 
-   for ( int cIdx=0; cIdx < cCount; cIdx++ ) {
+   for ( int cIdx=0; cIdx < propertyCount; cIdx++ ) {
       if ( cIdx > 0 )
          sql.append( ", " );
 
-      String cName = *persist->at( cIdx ).asString();
       String value;
-      if ( DBIHandle_itemToSqlValue( dbh, self->getProperty( cName ), value ) == 0 ) {
+      if ( DBIHandle_itemToSqlValue( dbh, self->getProperty( columnNames[cIdx] ), value ) == 0 ) {
          String errorMessage = "Invalid type for ";
-         errorMessage.append( cName );
+         errorMessage.append( columnNames[cIdx] );
 
          vm->raiseModError( new DBIError( ErrorParam( dbi_invalid_type, __LINE__ )
                                          .desc( errorMessage ) ) );
@@ -1188,17 +1228,20 @@ FALCON_FUNC DBIRecord_insert( VMachine *vm )
 FALCON_FUNC DBIRecord_update( VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
-   Item *tableNameI = self->getProperty( "tableName" );
-   Item *primaryKeyI = self->getProperty( "primaryKey" );
-   Item *persistI = self->getProperty( "persist" );
-   Item *dbhI = self->getProperty( "dbh" );
+   Item *tableNameI = self->getProperty( "_tableName" );
+   Item *primaryKeyI = self->getProperty( "_primaryKey" );
+   Item *dbhI = self->getProperty( "_dbh" );
 
    CoreObject *dbhO = dbhI->asObject();
    DBIHandle *dbh = static_cast<DBIHandle *>( dbhO->getUserData() );
 
    String *tableName = tableNameI->asString();
    String *primaryKey = primaryKeyI->asString();
-   CoreArray *persist = persistI->asArray();
+
+   int propertyCount = self->propCount();
+   String *columnNames = new String[propertyCount];
+
+   propertyCount = DBIRecord_getPersistPropertyNames( vm, self, columnNames, propertyCount );
 
    String sql;
 
@@ -1206,25 +1249,22 @@ FALCON_FUNC DBIRecord_update( VMachine *vm )
    sql.append( *tableName );
    sql.append( " SET " );
 
-   int cCount = persist->length();
-
-   for ( int cIdx=0; cIdx < cCount; cIdx++ ) {
+   for ( int cIdx=0; cIdx < propertyCount; cIdx++ ) {
       if ( cIdx > 0 )
          sql.append( ", " );
-      String cName = *persist->at( cIdx ).asString();
-      Item *i = self->getProperty( cName );
+      Item *i = self->getProperty( columnNames[cIdx] );
 
       String value;
       if ( DBIHandle_itemToSqlValue( dbh, i, value ) == 0 ) {
          String errorMessage = "Invalid type for ";
-         errorMessage.append( cName );
+         errorMessage.append( columnNames[cIdx] );
 
          vm->raiseModError( new DBIError( ErrorParam( dbi_invalid_type, __LINE__ )
                                          .desc( errorMessage ) ) );
          return;
       }
 
-      sql.append( cName );
+      sql.append( columnNames[cIdx] );
       sql.append( " = " );
       sql.append( value );
    }
@@ -1251,9 +1291,9 @@ FALCON_FUNC DBIRecord_update( VMachine *vm )
 FALCON_FUNC DBIRecord_delete( VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
-   Item *tableNameI = self->getProperty( "tableName" );
-   Item *primaryKeyI = self->getProperty( "primaryKey" );
-   Item *dbhI = self->getProperty( "dbh" );
+   Item *tableNameI = self->getProperty( "_tableName" );
+   Item *primaryKeyI = self->getProperty( "_primaryKey" );
+   Item *dbhI = self->getProperty( "_dbh" );
 
    CoreObject *dbhO = dbhI->asObject();
    DBIHandle *dbh = static_cast<DBIHandle *>( dbhO->getUserData() );

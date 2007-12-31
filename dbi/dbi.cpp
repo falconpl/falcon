@@ -82,10 +82,12 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    self->addClassMethod(   rec_class, "insert",      Falcon::Ext::DBIRecord_insert );
    self->addClassMethod(   rec_class, "update",      Falcon::Ext::DBIRecord_update );
    self->addClassMethod(   rec_class, "delete",      Falcon::Ext::DBIRecord_delete );
-   self->addClassProperty( rec_class, "dbh" );
-   self->addClassProperty( rec_class, "tableName" );
-   self->addClassProperty( rec_class, "primaryKey" );
-   self->addClassProperty( rec_class, "persist" );
+   self->addClassProperty( rec_class, "_dbh" );
+   self->addClassProperty( rec_class, "_tableName" );
+   self->addClassProperty( rec_class, "_primaryKey" );
+   self->addClassProperty( rec_class, "_persist" );
+   // TODO: actually use this
+   self->addGlobal( "DBIRecord__defaultDBH" );  // Static class variable
 
    // service publication
    self->publishService( &theDBIService );
