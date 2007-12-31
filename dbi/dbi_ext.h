@@ -41,6 +41,10 @@ FALCON_FUNC DBIConnect( VMachine *vm );
 
 FALCON_FUNC DBIHandle_startTransaction( VMachine *vm );
 FALCON_FUNC DBIHandle_query( VMachine *vm );
+FALCON_FUNC DBIHandle_queryOne( VMachine *vm );
+FALCON_FUNC DBIHandle_queryOneArray( VMachine *vm );
+FALCON_FUNC DBIHandle_queryOneDict( VMachine *vm );
+FALCON_FUNC DBIHandle_queryOneObject( VMachine *vm );
 FALCON_FUNC DBIHandle_execute( VMachine *vm );
 FALCON_FUNC DBIHandle_sqlExpand( VMachine *vm );
 FALCON_FUNC DBIHandle_close( VMachine *vm );

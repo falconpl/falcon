@@ -7,8 +7,6 @@ MISCELLANEOUS:
      thus they are in a very erradic order.
 
 QUERY RELATED:
-   * Add SQL to DBIError's that are thrown
-   * dbh/tr.queryOne()
    * dbh/tr.insert( tableName, dict [, seq] )
    * dbh/tr.update( tableName, where, dict )
 

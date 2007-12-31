@@ -43,6 +43,10 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    Falcon::Symbol *handler_class = self->addClass( "%DBIHandler" ); // private class
    self->addClassMethod( handler_class, "startTransaction",  Falcon::Ext::DBIHandle_startTransaction );
    self->addClassMethod( handler_class, "query",             Falcon::Ext::DBIHandle_query );
+   self->addClassMethod( handler_class, "queryOne",          Falcon::Ext::DBIHandle_queryOne );
+   self->addClassMethod( handler_class, "queryOneArray",     Falcon::Ext::DBIHandle_queryOneArray );
+   self->addClassMethod( handler_class, "queryOneDict",      Falcon::Ext::DBIHandle_queryOneDict );
+   self->addClassMethod( handler_class, "queryOneObject",    Falcon::Ext::DBIHandle_queryOneObject );
    self->addClassMethod( handler_class, "execute",           Falcon::Ext::DBIHandle_execute );
    self->addClassMethod( handler_class, "sqlExpand",         Falcon::Ext::DBIHandle_sqlExpand );
    self->addClassMethod( handler_class, "getLastInsertedId", Falcon::Ext::DBIHandle_getLastInsertedId );

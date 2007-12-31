@@ -64,20 +64,32 @@ int DBIHandle_itemToSqlValue( DBIHandle *dbh, const Item *i, String &value )
    return 0;
 }
 
-int DBIHandle_realSqlExpand( VMachine *vm, DBIHandle *dbh, String &sql, int startAt )
+int DBIHandle_realSqlExpand( VMachine *vm, DBIHandle *dbh, String &sql, int startAt=0 )
 {
    char errorMessage[256];
 
+   Item *sqlI = vm->param( startAt );
+   if ( sqlI == 0 || ! sqlI->isString() ) {
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                                         .origin( e_orig_runtime ) ) );
+      return 0;
+   }
+
+   sql = *sqlI->asString();
+   sql.bufferize();
+
+   startAt++;
+
    if ( vm->paramCount() > startAt )
    {
-      // Check param 1, if a dict or object, we treat things special
+      // Check param 'startAt', if a dict or object, we treat things special
       CoreDict *dict = NULL;
       CoreObject *obj = NULL;
 
-      if ( vm->param( 1 )->isDict() )
-         dict = vm->param( 1 )->asDict();
-      else if ( vm->param( 1 )->isObject() )
-         obj = vm->param( 1 )->asObject();
+      if ( vm->param( startAt )->isDict() )
+         dict = vm->param( startAt )->asDict();
+      else if ( vm->param( startAt )->isObject() )
+         obj = vm->param( startAt )->asObject();
 
       uint32 dollarPos = sql.find( "$", 0 );
 
@@ -320,6 +332,121 @@ int DBIRecordset_checkValidColumn( VMachine *vm, DBIRecordset *dbr, int cIdx )
    return 1;
 }
 
+int DBIHandle_realExecute( VMachine *vm, DBIHandle *dbh, const String &sql )
+{
+   dbi_status retval;
+   int affectedRows = dbh->execute( sql, retval );
+
+   if ( retval != dbi_ok ) {
+      String errorMessage;
+      dbh->getLastError( errorMessage );
+      vm->raiseModError( new DBIError( ErrorParam( retval, __LINE__ )
+                                      .desc( errorMessage ) ) );
+      return -1;
+   }
+
+   return affectedRows;
+}
+
+void DBIRecord_execute( VMachine *vm, DBIHandle *dbh, const String &sql )
+{
+   dbi_status retval;
+   int affectedRows;
+
+   if ( vm->paramCount() == 0 )
+      dbh->execute( sql, retval );
+   else {
+      Item *trI = vm->param( 0 );
+      if ( trI == 0 || ! trI->isObject() ) {
+         vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                                      .origin( e_orig_runtime ) ) );
+         return;
+      }
+      CoreObject *trO = trI->asObject();
+      DBITransaction *tr = static_cast<DBITransaction *>( trO->getUserData() );
+      affectedRows = tr->execute( sql, retval );
+   }
+
+   if ( retval == dbi_ok )
+      vm->retval( affectedRows );
+   else {
+      String errorMessage;
+      dbh->getLastError( errorMessage );
+      vm->raiseModError( new DBIError( ErrorParam( retval, __LINE__ )
+                                      .desc( errorMessage ) ) );
+   }
+}
+
+int DBIRecord_getPersistPropertyNames( VMachine *vm, CoreObject *self, String columnNames[], int maxColumnCount )
+{
+   Item *persistI = self->getProperty( "_persist" );
+
+   if ( persistI == 0 || persistI->isNil() ) {
+      // No _persist, loop through all public properties
+      int pCount = self->propCount();
+      int cIdx = 0;
+
+      for ( int pIdx=0; pIdx < pCount; pIdx++ ) {
+         String p = self->getPropertyName( pIdx );
+         if ( p.getCharAt( 0 ) != '_' ) {
+            Item i = self->getPropertyAt( pIdx );
+            if ( i.isInteger() || i.isNumeric() || i.isObject() || i.isString() ) {
+               columnNames[cIdx] = p;
+               cIdx++;
+            }
+         }
+      }
+
+      return cIdx;
+   } else if ( ! persistI->isArray() ) {
+      // They gave a _persist property, but it's not an array
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                                         .origin( e_orig_runtime ) ) );
+      return 0;
+   } else {
+      // They gave a _persist property, trust it
+      CoreArray *persist = persistI->asArray();
+      int cCount = persist->length();
+
+      for ( int cIdx=0; cIdx < cCount; cIdx++) {
+          columnNames[cIdx] = *persist->at( cIdx ).asString();
+      }
+
+      return cCount;
+   }
+}
+
+DBIRecordset *DBIHandle_baseQueryOne( VMachine *vm, int startAt = 0 )
+{
+   CoreObject *self = vm->self().asObject();
+   DBIHandle *dbh = static_cast<DBIHandle *>( self->getUserData() );
+
+   String sql;
+   DBIHandle_realSqlExpand( vm, dbh, sql, startAt );
+
+   dbi_status retval;
+   DBIRecordset *recSet = dbh->query( sql, retval );
+
+   if ( retval != dbi_ok ) {
+      String errorMessage;
+      dbh->getLastError( errorMessage );
+
+      vm->raiseModError( new DBIError( ErrorParam( retval, __LINE__ )
+                                       .desc( errorMessage ) ) );
+      return NULL;
+   }
+
+   dbi_status nextStatus = recSet->next();
+   if ( nextStatus != dbi_ok ) {
+      vm->raiseModError( new DBIError( ErrorParam( nextStatus, __LINE__ )
+                                      .desc( "No results returned for queryOne" ) ) );
+      recSet->close();
+      return NULL;
+   }
+
+   return recSet;
+}
+
 /******************************************************************************
  * Main DBIConnect
  *****************************************************************************/
@@ -397,17 +524,9 @@ FALCON_FUNC DBIHandle_query( VMachine *vm )
    CoreObject *self = vm->self().asObject();
    DBIHandle *dbh = static_cast<DBIHandle *>( self->getUserData() );
 
-   Item *sqlI = vm->param( 0 );
-   if ( sqlI == 0 || ! sqlI->isString() ) {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                                         .origin( e_orig_runtime ) ) );
+   String sql;
+   if ( DBIHandle_realSqlExpand( vm, dbh, sql, 0 ) == 0 )
       return;
-   }
-
-   String sql( *sqlI->asString() );
-   sql.bufferize();
-
-   DBIHandle_realSqlExpand( vm, dbh, sql, 1 );
 
    dbi_status retval;
    DBIRecordset *recSet = dbh->query( sql, retval );
@@ -429,22 +548,112 @@ FALCON_FUNC DBIHandle_query( VMachine *vm )
    vm->retval( oth );
 }
 
-FALCON_FUNC DBIHandle_execute( VMachine *vm )
+/*--
+ * @function queryOne
+ *
+ * Perform the SQL query and return the first field of the first record.
+ *
+ * @seeAlso(queryOneArray), @seeAlso(queryOneDict), @seeAlso(queryOneObject)
+ */
+FALCON_FUNC DBIHandle_queryOne( VMachine *vm )
 {
-   CoreObject *self = vm->self().asObject();
+   DBIRecordset *recSet = DBIHandle_baseQueryOne( vm );
 
-   Item *sqlI = vm->param( 0 );
-   if ( sqlI == 0 || ! sqlI->isString() ) {
+   dbi_type cTypes[recSet->getColumnCount()];
+   recSet->getColumnTypes( cTypes );
+
+   Item i;
+   int32 id;
+   recSet->asInteger( 0, id );
+   if ( DBIRecordset_getItem( vm, recSet, cTypes[0], 0, i ) )
+      vm->retval( i );
+   recSet->close();
+}
+
+FALCON_FUNC DBIHandle_queryOneArray( VMachine *vm )
+{
+   DBIRecordset *recSet = DBIHandle_baseQueryOne( vm );
+   int cCount = recSet->getColumnCount();
+   CoreArray *ary = new CoreArray( vm, cCount );
+   dbi_type cTypes[cCount];
+
+   recSet->getColumnTypes( cTypes );
+
+   for ( int cIdx=0; cIdx < cCount; cIdx++ ) {
+      Item i;
+      if ( DBIRecordset_getItem( vm, recSet, cTypes[cIdx], cIdx, i ) == 0 )
+         return;
+      ary->append( i );
+   }
+   vm->retval( ary );
+}
+
+FALCON_FUNC DBIHandle_queryOneDict( VMachine *vm )
+{
+   DBIRecordset *recSet = DBIHandle_baseQueryOne( vm );
+   int cCount = recSet->getColumnCount();
+   PageDict *dict = new PageDict( vm, cCount );
+   char **cNames = (char **) malloc( sizeof( char ) * cCount * DBI_MAX_COLUMN_NAME_SIZE );
+   dbi_type cTypes[cCount];
+   
+   recSet->getColumnTypes( cTypes );
+   recSet->getColumnNames( cNames );
+
+   for ( int cIdx=0; cIdx < cCount; cIdx++ ) {
+      Item i;
+      if ( DBIRecordset_getItem( vm, recSet, cTypes[cIdx], cIdx, i ) == 0 )
+         return;
+
+      GarbageString *gsName = new GarbageString( vm );
+      gsName->bufferize( cNames[cIdx] );
+
+      dict->insert( gsName, i );
+      free( cNames[cIdx] );
+   }
+   free( cNames );
+
+   vm->retval( dict );
+}
+
+FALCON_FUNC DBIHandle_queryOneObject( VMachine *vm )
+{
+   Item *objI = vm->param( 0 );
+   if ( objI == 0 || ! objI->isObject() ) {
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                                         .origin( e_orig_runtime ) ) );
+                                        .origin( e_orig_runtime ) ) );
       return;
    }
 
-   DBIHandle *dbh = static_cast<DBIHandle *>( self->getUserData() );
-   String sql( *sqlI->asString() );
-   sql.bufferize();
+   CoreObject *obj = objI->asObject();
+   DBIRecordset *recSet = DBIHandle_baseQueryOne( vm, 1);
+   int cCount = recSet->getColumnCount();
+   char **cNames = (char **) malloc( sizeof( char ) * cCount * DBI_MAX_COLUMN_NAME_SIZE );
+   dbi_type cTypes[cCount];
+   
+   recSet->getColumnTypes( cTypes );
+   recSet->getColumnNames( cNames );
 
-   DBIHandle_realSqlExpand( vm, dbh, sql, 1 );
+   for ( int cIdx=0; cIdx < cCount; cIdx++ ) {
+      Item i;
+      if ( DBIRecordset_getItem( vm, recSet, cTypes[cIdx], cIdx, i ) == 0 )
+         return;
+
+      obj->setProperty( cNames[cIdx], i );
+
+      free( cNames[cIdx] );
+   }
+   free( cNames );
+
+   vm->retval( obj );
+}
+
+FALCON_FUNC DBIHandle_execute( VMachine *vm )
+{
+   CoreObject *self = vm->self().asObject();
+   DBIHandle *dbh = static_cast<DBIHandle *>( self->getUserData() );
+
+   String sql;
+   DBIHandle_realSqlExpand( vm, dbh, sql );
 
    dbi_status retval;
    int affectedRows = dbh->execute( sql, retval );
@@ -523,17 +732,9 @@ FALCON_FUNC DBIHandle_sqlExpand( VMachine *vm )
       break;
    }
 
-   Item *sqlI = vm->param( 0 );
-
-   if ( sqlI == 0 || ! sqlI->isString() ) {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                                        .origin( e_orig_runtime ) ) );
-      return;
-   }
-
-   GarbageString *sql = new GarbageString( vm, *sqlI->asString() );
-   if ( DBIHandle_realSqlExpand( vm, dbh, *sql, 1 ) )
-      vm->retval( sql );
+   String sql;
+   if ( DBIHandle_realSqlExpand( vm, dbh, sql, 0 ) )
+      vm->retval( new GarbageString( vm , sql ) );
 }
 
 /**********************************************************
@@ -543,19 +744,11 @@ FALCON_FUNC DBIHandle_sqlExpand( VMachine *vm )
 FALCON_FUNC DBITransaction_query( VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
-
-   Item *sqlI = vm->param( 0 );
-   if ( sqlI == 0 || ! sqlI->isString() ) {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                                         .origin( e_orig_runtime ) ) );
-      return;
-   }
-
    DBITransaction *dbt = static_cast<DBITransaction *>( self->getUserData() );
-   String sql( *sqlI->asString() );
-   sql.bufferize();
 
-   DBIHandle_realSqlExpand( vm, dbt->getHandle(), sql, 1 );
+   String sql;
+   if ( DBIHandle_realSqlExpand( vm, dbt->getHandle(), sql ) == 0 )
+      return;
 
    dbi_status retval;
    DBIRecordset *recSet = dbt->query( sql, retval );
@@ -580,20 +773,11 @@ FALCON_FUNC DBITransaction_query( VMachine *vm )
 FALCON_FUNC DBITransaction_execute( VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
-
-   Item *sqlI = vm->param( 0 );
-   if ( sqlI == 0 || ! sqlI->isString() )
-   {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                                         .origin( e_orig_runtime ) ) );
-      return;
-   }
-
    DBITransaction *dbt = static_cast<DBITransaction *>( self->getUserData() );
-   String sql( *sqlI->asString() );
-   sql.bufferize();
 
-   DBIHandle_realSqlExpand( vm, dbt->getHandle(), sql, 1 );
+   String sql;
+   if ( DBIHandle_realSqlExpand( vm, dbt->getHandle(), sql ) == 0 )
+      return;
 
    dbi_status retval;
    int affectedRows = dbt->execute( sql, retval );
@@ -1133,45 +1317,6 @@ FALCON_FUNC DBIRecord_init( VMachine *vm )
    einst->setProperty( "_dbh", Item( dbi_defaultHandle ) );
 }
 
-int DBIRecord_getPersistPropertyNames( VMachine *vm, CoreObject *self, String columnNames[], int maxColumnCount )
-{
-   Item *persistI = self->getProperty( "_persist" );
-
-   if ( persistI == 0 || persistI->isNil() ) {
-      // No _persist, loop through all public properties
-      int pCount = self->propCount();
-      int cIdx = 0;
-
-      for ( int pIdx=0; pIdx < pCount; pIdx++ ) {
-         String p = self->getPropertyName( pIdx );
-         if ( p.getCharAt( 0 ) != '_' ) {
-            Item i = self->getPropertyAt( pIdx );
-            if ( i.isInteger() || i.isNumeric() || i.isObject() || i.isString() ) {
-               columnNames[cIdx] = p;
-               cIdx++;
-            }
-         }
-      }
-
-      return cIdx;
-   } else if ( ! persistI->isArray() ) {
-      // They gave a _persist property, but it's not an array
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                                         .origin( e_orig_runtime ) ) );
-      return 0;
-   } else {
-      // They gave a _persist property, trust it
-      CoreArray *persist = persistI->asArray();
-      int cCount = persist->length();
-
-      for ( int cIdx=0; cIdx < cCount; cIdx++) {
-          columnNames[cIdx] = *persist->at( cIdx ).asString();
-      }
-
-      return cCount;
-   }
-}
-
 FALCON_FUNC DBIRecord_insert( VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
@@ -1222,7 +1367,7 @@ FALCON_FUNC DBIRecord_insert( VMachine *vm )
 
    sql.append( " )" );
 
-   vm->retval( new GarbageString( vm, sql ) );
+   DBIRecord_execute( vm, dbh, sql );
 }
 
 FALCON_FUNC DBIRecord_update( VMachine *vm )
@@ -1285,7 +1430,7 @@ FALCON_FUNC DBIRecord_update( VMachine *vm )
    sql.append( " = " );
    sql.append( value );
 
-   vm->retval( new GarbageString( vm, sql ) );
+   DBIRecord_execute( vm, dbh, sql );
 }
 
 FALCON_FUNC DBIRecord_delete( VMachine *vm )
@@ -1312,7 +1457,7 @@ FALCON_FUNC DBIRecord_delete( VMachine *vm )
    sql.append( " = " );
    sql.append( value );
 
-   vm->retval( new GarbageString( vm, sql ) );
+   DBIRecord_execute( vm, dbh, sql );
 }
 
 //======================================================
