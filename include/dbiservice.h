@@ -60,6 +60,9 @@ typedef enum {
    /** end of file (or recordset) */
    dbi_eof,
 
+   /** currently an invalid row index while a field fetch occurred */
+   dbi_row_index_invalid,
+
    /** a non-existant column was requested */
    dbi_column_range_error,
 
@@ -124,11 +127,18 @@ public:
     */
    virtual dbi_status next()=0;
 
+   /**
+    * Get the current row number.
+    *
+    * \return row index (0 based) or -1 for invalid row
+    */
+   virtual int getRowIndex()=0;
+   
    /** 
     * Fetch the number of rows in the recordset or -1 if unknown 
     */
    virtual int getRowCount()=0;
-   
+
    /** 
     * Fetch the number of columns in the recordset 
     */
@@ -344,6 +354,21 @@ public:
     * \return number of records affected
     */
    virtual int execute( const String &sql, dbi_status &retval )=0;
+
+   /**
+    * Returns the last inserted id.
+    *
+    * \return value of the last inserted id or -1 on error
+    */
+   virtual int64 getLastInsertedId()=0;
+
+   /**
+    * Returns the last inserted id.
+    *
+    * \param sequenceName sequence name for those databases requiring it.
+    * \return value of the last inserted id or -1 on error
+    */
+   virtual int64 getLastInsertedId( const String &sequenceName )=0;
 
    /** 
     * Returns last error and its description.

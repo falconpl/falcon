@@ -301,6 +301,25 @@ int DBIRecordset_getItem( VMachine *vm, DBIRecordset *dbr, dbi_type typ, int cId
    return 1;
 }
 
+int DBIRecordset_checkValidColumn( VMachine *vm, DBIRecordset *dbr, int cIdx )
+{
+   if ( cIdx >= dbr->getColumnCount() ) {
+      char errorMessage[128];
+      snprintf( errorMessage, 128, "Column index (%i) is out of range", cIdx );
+      GarbageString *gs = new GarbageString( vm, errorMessage );
+      vm->raiseModError( new DBIError( ErrorParam( dbi_column_range_error, __LINE__ )
+                                      .desc( *gs ) ) );
+      return 0;
+   } else if ( dbr->getRowIndex() == -1 ) {
+      GarbageString *gs = new GarbageString( vm, "Invalid current row index" );
+      vm->raiseModError( new DBIError( ErrorParam( dbi_row_index_invalid, __LINE__ )
+                                      .desc( *gs ) ) );
+      return 0;
+   }
+
+   return 1;
+}
+
 /******************************************************************************
  * Main DBIConnect
  *****************************************************************************/
@@ -415,8 +434,7 @@ FALCON_FUNC DBIHandle_execute( VMachine *vm )
    CoreObject *self = vm->self().asObject();
 
    Item *sqlI = vm->param( 0 );
-   if ( sqlI == 0 || ! sqlI->isString() )
-   {
+   if ( sqlI == 0 || ! sqlI->isString() ) {
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
                                          .origin( e_orig_runtime ) ) );
       return;
@@ -446,6 +464,25 @@ FALCON_FUNC DBIHandle_close( VMachine *vm )
    CoreObject *self = vm->self().asObject();
    DBIHandle *dbh = static_cast<DBIHandle *>( self->getUserData() );
    dbh->close();
+}
+
+FALCON_FUNC DBIHandle_getLastInsertedId( VMachine *vm )
+{
+   CoreObject *self = vm->self().asObject();
+   DBIHandle *dbh = static_cast<DBIHandle *>( self->getUserData() );
+
+   if ( vm->paramCount() == 0 )
+      vm->retval( dbh->getLastInsertedId() );
+   else {
+      Item *sequenceNameI = vm->param( 0 );
+      if ( sequenceNameI == 0 || ! sequenceNameI->isString() ) {
+         vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                                           .origin( e_orig_runtime ) ) );
+         return;
+      }
+      String sequenceName = *sequenceNameI->asString();
+      vm->retval( dbh->getLastInsertedId( sequenceName ) );
+   }
 }
 
 FALCON_FUNC DBIHandle_getLastError( VMachine *vm )
@@ -847,12 +884,17 @@ FALCON_FUNC DBIRecordset_asString( VMachine *vm )
    }
 
    String value;
-   dbi_status retval = dbr->asString( columnIndexI->asInteger(), value );
+
+   int32 cIdx = columnIndexI->asInteger();
+   if ( DBIRecordset_checkValidColumn( vm, dbr, cIdx ) == 0 )
+      return; // function handles reporting error to vm
+
+   dbi_status retval = dbr->asString( cIdx, value );
 
    if ( retval == dbi_nil_value )
       vm->retnil();
    else if ( retval != dbi_ok )
-      vm->retnil ();        // TODO: handle the error
+      vm->retnil();        // TODO: handle the error
    else
       vm->retval( value );
 }
@@ -870,7 +912,12 @@ FALCON_FUNC DBIRecordset_asInteger( VMachine *vm )
    }
 
    int32 value;
-   dbi_status retval = dbr->asInteger( columnIndexI->asInteger(), value );
+
+   int32 cIdx = columnIndexI->asInteger();
+   if ( DBIRecordset_checkValidColumn( vm, dbr, cIdx ) == 0 )
+      return; // function handles reporting error to vm
+
+   dbi_status retval = dbr->asInteger( cIdx, value );
 
    if ( retval == dbi_nil_value )
       vm->retnil();
@@ -893,7 +940,12 @@ FALCON_FUNC DBIRecordset_asInteger64( VMachine *vm )
    }
 
    int64 value;
-   dbi_status retval = dbr->asInteger64( columnIndexI->asInteger(), value );
+
+   int32 cIdx = columnIndexI->asInteger();
+   if ( DBIRecordset_checkValidColumn( vm, dbr, cIdx ) == 0 )
+      return; // function handles reporting error to vm
+
+   dbi_status retval = dbr->asInteger64( cIdx, value );
 
    if ( retval == dbi_nil_value )
       vm->retnil();
@@ -916,7 +968,12 @@ FALCON_FUNC DBIRecordset_asNumeric( VMachine *vm )
    }
 
    numeric value;
-   dbi_status retval = dbr->asNumeric( columnIndexI->asInteger(), value );
+
+   int32 cIdx = columnIndexI->asInteger();
+   if ( DBIRecordset_checkValidColumn( vm, dbr, cIdx ) == 0 )
+      return; // function handles reporting error to vm
+
+   dbi_status retval = dbr->asNumeric( cIdx, value );
 
    if ( retval == dbi_nil_value )
       vm->retnil();
@@ -938,13 +995,18 @@ FALCON_FUNC DBIRecordset_asDate( VMachine *vm )
       return;
    }
 
+
+   int32 cIdx = columnIndexI->asInteger();
+   if ( DBIRecordset_checkValidColumn( vm, dbr, cIdx ) == 0 )
+      return; // function handles reporting error to vm
+
    // create the timestamps
    TimeStamp *ts = new TimeStamp();
    Item *ts_class = vm->findGlobalItem( "TimeStamp" );
    //if we wrote the std module, can't be zero.
    fassert( ts_class != 0 );
    CoreObject *value = ts_class->asClass()->createInstance();
-   dbi_status retval = dbr->asDate( columnIndexI->asInteger(), *ts );
+   dbi_status retval = dbr->asDate( cIdx, *ts );
    value->setUserData( ts );
 
    if ( retval == dbi_nil_value )
@@ -967,13 +1029,18 @@ FALCON_FUNC DBIRecordset_asTime( VMachine *vm )
       return;
    }
 
+
+   int32 cIdx = columnIndexI->asInteger();
+   if ( DBIRecordset_checkValidColumn( vm, dbr, cIdx ) == 0 )
+      return; // function handles reporting error to vm
+
    // create the timestamps
    TimeStamp *ts = new TimeStamp();
    Item *ts_class = vm->findGlobalItem( "TimeStamp" );
    //if we wrote the std module, can't be zero.
    fassert( ts_class != 0 );
    CoreObject *value = ts_class->asClass()->createInstance();
-   dbi_status retval = dbr->asTime( columnIndexI->asInteger(), *ts );
+   dbi_status retval = dbr->asTime( cIdx, *ts );
    value->setUserData( ts );
 
    if ( retval == dbi_nil_value )
@@ -996,13 +1063,18 @@ FALCON_FUNC DBIRecordset_asDateTime( VMachine *vm )
       return;
    }
 
+
+   int32 cIdx = columnIndexI->asInteger();
+   if ( DBIRecordset_checkValidColumn( vm, dbr, cIdx ) == 0 )
+      return; // function handles reporting error to vm
+
    // create the timestamps
    TimeStamp *ts = new TimeStamp();
    Item *ts_class = vm->findGlobalItem( "TimeStamp" );
    //if we wrote the std module, can't be zero.
    fassert( ts_class != 0 );
    CoreObject *value = ts_class->asClass()->createInstance();
-   dbi_status retval = dbr->asDateTime( columnIndexI->asInteger(), *ts );
+   dbi_status retval = dbr->asDateTime( cIdx, *ts );
    value->setUserData( ts );
 
    if ( retval == dbi_nil_value )

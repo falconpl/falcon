@@ -44,6 +44,7 @@ public:
    
    virtual dbi_status next();
    virtual int getRowCount();
+   virtual int getRowIndex();
    virtual int getColumnCount();
    virtual dbi_status getColumnNames( char *names[] );
    virtual dbi_status getColumnTypes( dbi_type *types );
@@ -89,10 +90,12 @@ public:
    
    PGconn *getPGconn() { return m_conn; }
    
-   DBITransaction *startTransaction();
-   dbi_status closeTransaction( DBITransaction *tr );
-   DBIRecordset *query( const String &sql, dbi_status &retval );
-   int execute( const String &sql, dbi_status &retval );
+   virtual DBITransaction *startTransaction();
+   virtual dbi_status closeTransaction( DBITransaction *tr );
+   virtual DBIRecordset *query( const String &sql, dbi_status &retval );
+   virtual int execute( const String &sql, dbi_status &retval );
+   virtual int64 getLastInsertedId();
+   virtual int64 getLastInsertedId( const String &value );
    virtual dbi_status getLastError( String &description );
    virtual dbi_status escapeString( const String &value, String &escaped );
    virtual dbi_status close();

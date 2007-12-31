@@ -44,6 +44,7 @@ FALCON_FUNC DBIHandle_query( VMachine *vm );
 FALCON_FUNC DBIHandle_execute( VMachine *vm );
 FALCON_FUNC DBIHandle_sqlExpand( VMachine *vm );
 FALCON_FUNC DBIHandle_close( VMachine *vm );
+FALCON_FUNC DBIHandle_getLastInsertedId( VMachine *vm );
 FALCON_FUNC DBIHandle_getLastError( VMachine *vm );
 
 //=====================

@@ -8,15 +8,18 @@ MISCELLANEOUS:
 
 QUERY RELATED:
    * Add SQL to DBIError's that are thrown
-   * Handle last inserted id some how
    * dbh/tr.queryOne()
    * dbh/tr.insert( tableName, dict [, seq] )
    * dbh/tr.update( tableName, where, dict )
-   * dbh/tr.update( tableName, where, obj )
-   
-ERROR RELATED:
-   * Check for a BOF error (DBIRecordset)
 
+OBJECT PERSISTENCE:
+   * Object persistence needs to be rethought. Many potential problems
+     have appeared along the way. I am going to leave it as is but
+     perform a study on how this should actually look/function.
+   * Could not determine how to store a static class variable, so I made
+     a dangerous global DBIHandle variable in C++ that needs to be
+     changed right away.
+   
 DRIVERS:
    * mysql driver
    * sqlite3 driver

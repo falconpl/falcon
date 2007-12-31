@@ -41,12 +41,13 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
 
    // create the base class DBIHandler for falcon
    Falcon::Symbol *handler_class = self->addClass( "%DBIHandler" ); // private class
-   self->addClassMethod( handler_class, "startTransaction", Falcon::Ext::DBIHandle_startTransaction );
-   self->addClassMethod( handler_class, "query",        Falcon::Ext::DBIHandle_query );
-   self->addClassMethod( handler_class, "execute",      Falcon::Ext::DBIHandle_execute );
-   self->addClassMethod( handler_class, "sqlExpand",    Falcon::Ext::DBIHandle_sqlExpand );
-   self->addClassMethod( handler_class, "getLastError", Falcon::Ext::DBIHandle_getLastError );
-   self->addClassMethod( handler_class, "close",        Falcon::Ext::DBIHandle_close );
+   self->addClassMethod( handler_class, "startTransaction",  Falcon::Ext::DBIHandle_startTransaction );
+   self->addClassMethod( handler_class, "query",             Falcon::Ext::DBIHandle_query );
+   self->addClassMethod( handler_class, "execute",           Falcon::Ext::DBIHandle_execute );
+   self->addClassMethod( handler_class, "sqlExpand",         Falcon::Ext::DBIHandle_sqlExpand );
+   self->addClassMethod( handler_class, "getLastInsertedId", Falcon::Ext::DBIHandle_getLastInsertedId );
+   self->addClassMethod( handler_class, "getLastError",      Falcon::Ext::DBIHandle_getLastError );
+   self->addClassMethod( handler_class, "close",             Falcon::Ext::DBIHandle_close );
 
    // create the base class DBITransaction for falcon
    Falcon::Symbol *trans_class = self->addClass( "%DBITransaction" ); // private class

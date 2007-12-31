@@ -336,6 +336,11 @@ int DBIRecordsetPgSQL::getRowCount()
    return m_rowCount;
 }
 
+int DBIRecordsetPgSQL::getRowIndex()
+{
+   return m_row;
+}
+
 void DBIRecordsetPgSQL::close()
 {
    if ( m_res != NULL ) {
@@ -561,6 +566,32 @@ int DBIHandlePgSQL::execute( const String &sql, dbi_status &retval )
    
    return m_connTr->execute( sql, retval );
 }
+
+int64 DBIHandlePgSQL::getLastInsertedId()
+{
+   // PostgreSQL requires a sequence name
+   return 0;
+}
+
+int64 DBIHandlePgSQL::getLastInsertedId( const String& sequenceName )
+{
+   char sql[128];
+   AutoCString asSequenceName( sequenceName );
+
+   snprintf( sql, 128, "SELECT CURRVAL('%s')", asSequenceName.c_str() );
+
+   dbi_status retval;
+   DBIRecordset *rs = query( sql, retval );
+
+   int64 insertedId = 0;
+   if ( retval == dbi_ok && rs->next() == 0 )
+      rs->asInteger64( 0, insertedId );
+
+   rs->close();
+
+   return insertedId;
+}
+
 
 dbi_status DBIHandlePgSQL::getLastError( String &description )
 {
