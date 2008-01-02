@@ -1,4 +1,5 @@
-const connectString = "pgsql:dbname=falcon_sample"
+//const connectString = "pgsql:dbname=falcon_sample"
+const connectString = "sqlite3:falcon_sample.db"
 
 class Person
 	name = nil
