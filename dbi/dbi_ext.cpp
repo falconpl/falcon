@@ -36,7 +36,7 @@ CoreObject *dbi_defaultHandle; // Temporary until I figure how to set static cla
  * Local Helper Functions
  *****************************************************************************/
 
-int DBIHandle_itemToSqlValue( DBIHandle *dbh, const Item *i, String &value )
+static int DBIHandle_itemToSqlValue( DBIHandle *dbh, const Item *i, String &value )
 {
    if ( i->isInteger() ) {
       value.writeNumber( i->asInteger() );
@@ -64,7 +64,7 @@ int DBIHandle_itemToSqlValue( DBIHandle *dbh, const Item *i, String &value )
    return 0;
 }
 
-int DBIHandle_realSqlExpand( VMachine *vm, DBIHandle *dbh, String &sql, int startAt=0 )
+static int DBIHandle_realSqlExpand( VMachine *vm, DBIHandle *dbh, String &sql, int startAt=0 )
 {
    char errorMessage[256];
 
@@ -214,7 +214,7 @@ int DBIHandle_realSqlExpand( VMachine *vm, DBIHandle *dbh, String &sql, int star
    return 1;
 }
 
-int DBIRecordset_getItem( VMachine *vm, DBIRecordset *dbr, dbi_type typ, int cIdx, Item &item )
+static int DBIRecordset_getItem( VMachine *vm, DBIRecordset *dbr, dbi_type typ, int cIdx, Item &item )
 {
    switch ( typ )
    {
@@ -313,7 +313,7 @@ int DBIRecordset_getItem( VMachine *vm, DBIRecordset *dbr, dbi_type typ, int cId
    return 1;
 }
 
-int DBIRecordset_checkValidColumn( VMachine *vm, DBIRecordset *dbr, int cIdx )
+static int DBIRecordset_checkValidColumn( VMachine *vm, DBIRecordset *dbr, int cIdx )
 {
    if ( cIdx >= dbr->getColumnCount() ) {
       char errorMessage[128];
@@ -332,7 +332,7 @@ int DBIRecordset_checkValidColumn( VMachine *vm, DBIRecordset *dbr, int cIdx )
    return 1;
 }
 
-int DBIHandle_realExecute( VMachine *vm, DBIHandle *dbh, const String &sql )
+static int DBIHandle_realExecute( VMachine *vm, DBIHandle *dbh, const String &sql )
 {
    dbi_status retval;
    int affectedRows = dbh->execute( sql, retval );
@@ -348,7 +348,7 @@ int DBIHandle_realExecute( VMachine *vm, DBIHandle *dbh, const String &sql )
    return affectedRows;
 }
 
-void DBIRecord_execute( VMachine *vm, DBIHandle *dbh, const String &sql )
+static void DBIRecord_execute( VMachine *vm, DBIHandle *dbh, const String &sql )
 {
    dbi_status retval;
    int affectedRows;
@@ -377,7 +377,7 @@ void DBIRecord_execute( VMachine *vm, DBIHandle *dbh, const String &sql )
    }
 }
 
-int DBIRecord_getPersistPropertyNames( VMachine *vm, CoreObject *self, String columnNames[], int maxColumnCount )
+static int DBIRecord_getPersistPropertyNames( VMachine *vm, CoreObject *self, String columnNames[], int maxColumnCount )
 {
    Item *persistI = self->getProperty( "_persist" );
 
@@ -416,7 +416,7 @@ int DBIRecord_getPersistPropertyNames( VMachine *vm, CoreObject *self, String co
    }
 }
 
-DBIRecordset *DBIHandle_baseQueryOne( VMachine *vm, int startAt = 0 )
+static DBIRecordset *DBIHandle_baseQueryOne( VMachine *vm, int startAt = 0 )
 {
    CoreObject *self = vm->self().asObject();
    DBIHandle *dbh = static_cast<DBIHandle *>( self->getUserData() );
@@ -608,7 +608,6 @@ FALCON_FUNC DBIHandle_queryOneDict( VMachine *vm )
       gsName->bufferize( cNames[cIdx] );
 
       dict->insert( gsName, i );
-      free( cNames[cIdx] );
    }
    free( cNames );
 
@@ -639,8 +638,6 @@ FALCON_FUNC DBIHandle_queryOneObject( VMachine *vm )
          return;
 
       obj->setProperty( cNames[cIdx], i );
-
-      free( cNames[cIdx] );
    }
    free( cNames );
 
@@ -933,8 +930,6 @@ FALCON_FUNC DBIRecordset_fetchDict( VMachine *vm )
       } else {
          // TODO: handle error
       }
-
-      free( cNames[cIdx] );
    }
 
    free( cNames );
@@ -987,8 +982,6 @@ FALCON_FUNC DBIRecordset_fetchObject( VMachine *vm )
       } else {
          // TODO: handle error
       }
-
-      free( cNames[cIdx] );
    }
 
    free( cNames );
@@ -1038,8 +1031,6 @@ FALCON_FUNC DBIRecordset_getColumnNames( VMachine *vm )
       gs->bufferize( cNames[cIdx] );
 
       ary->append( gs );
-
-      free( cNames[cIdx] );
    }
 
    free( cNames );

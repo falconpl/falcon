@@ -138,7 +138,7 @@ int DBIRecordsetPgSQL::getColumnCount()
 dbi_status DBIRecordsetPgSQL::getColumnNames( char *names[] )
 {
    for ( int cIdx = 0; cIdx < m_columnCount; cIdx++ )
-      names[cIdx] = strndup( PQfname( m_res, cIdx ), DBI_MAX_COLUMN_NAME_SIZE );
+      names[cIdx] = PQfname( m_res, cIdx );
    
    return dbi_ok;
 }
