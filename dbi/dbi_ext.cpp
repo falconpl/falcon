@@ -506,8 +506,11 @@ FALCON_FUNC DBIHandle_startTransaction( VMachine *vm )
    DBIHandle *dbh = static_cast<DBIHandle *>( self->getUserData() );
 
    DBITransaction *trans = dbh->startTransaction();
-   if ( trans == 0 ) {
-      // raise an error depending on dbh->getLastError();
+   if ( trans == NULL ) {
+      String errorMessage;
+      dbh->getLastError( errorMessage );
+      vm->raiseModError( new DBIError( ErrorParam( dbi_error, __LINE__ )
+                                      .desc( errorMessage ) ) );
       return;
    }
 

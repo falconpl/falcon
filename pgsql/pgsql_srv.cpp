@@ -614,7 +614,7 @@ dbi_status DBIHandlePgSQL::escapeString( const String &value, String &escaped )
    
    AutoCString asValue( value );
    
-   int maxLen = value.length() * 2;
+   int maxLen = ( value.length() * 2 ) + 1;
    int errorCode;
    char *cTo = (char *) malloc( sizeof( char ) * maxLen );
    

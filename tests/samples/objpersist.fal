@@ -25,12 +25,12 @@ t = Person( "Jack", ts )
 t.insert()
 showNames( "After insertion of Jack via Object Persistence", d )
 
-t.name = "Jim"
+t.dob.year = 2001
 t.update()
-showNames( "After changed name to Jim", d )
+showNames( "Changed year to 2001 via Object Persistence", d )
 
 t.delete()
-showNames( "After deleted Jim", d )
+showNames( "After deleting Jack via Object Persistence", d )
 
 dropNamesTable( d )
 d.close()
