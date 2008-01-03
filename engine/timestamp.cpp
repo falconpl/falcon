@@ -292,7 +292,7 @@ void TimeStamp::distance( const TimeStamp &ts )
       int32 baseYear;
       int32 lastYear;
       if ( m_year > ts.m_year ) {
-         days += 366 - ts.dayOfYear();
+         days -= 366 - ts.dayOfYear();
          if ( ! i_isLeapYear( ts.m_year ) )
             days--;
          // days from the start of the year
@@ -313,6 +313,10 @@ void TimeStamp::distance( const TimeStamp &ts )
          days -= i_isLeapYear( baseYear ) ? 366 : 365;
          baseYear++;
       }
+
+      // correct days for + or -
+      if ( m_year > ts.m_year )
+         days *= -1;
    }
    // different months ?
    else if ( m_month != ts.m_month )
@@ -347,7 +351,7 @@ void TimeStamp::distance( const TimeStamp &ts )
       m_minute -= ts_mins - mins;
    }
 
-   rollOver( true );
+   //rollOver( true );
    m_timezone = tz_NONE;
 }
 
