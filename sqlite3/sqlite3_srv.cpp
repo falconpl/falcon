@@ -20,7 +20,7 @@
 #include <string.h>
 
 #include <falcon/engine.h>
-#include "sqlite3.h"
+#include "sqlite3_mod.h"
 
 namespace Falcon
 {
@@ -35,7 +35,7 @@ DBIRecordsetSQLite3::DBIRecordsetSQLite3( DBIHandle *dbh, sqlite3_stmt *res )
    m_res = res;
    
    m_row = -1; // BOF
-   m_columnCount = -1;
+   m_columnCount = sqlite3_data_count( res );
 }
 
 DBIRecordsetSQLite3::~DBIRecordsetSQLite3()
@@ -68,6 +68,9 @@ dbi_status DBIRecordsetSQLite3::next()
       return dbi_eof;
 
    case SQLITE_ROW:
+      m_row++;
+      if ( m_columnCount == 0 )
+         m_columnCount = sqlite3_data_count( m_res );
       return dbi_ok;
 
    default:

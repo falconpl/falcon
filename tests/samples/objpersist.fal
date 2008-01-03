@@ -1,24 +1,36 @@
 load dbi
+load sample_db
 
-d = DBIConnect( "pgsql" )
-
-class Person(nId, nName, nDob, nAge) from DBIRecord
-   tableName  = "people"
-   primaryKey = "id"
-   persist    = [ "id", "name", "dob", "age" ]
+function showNames( message, d )
+	> message
+   > "=========================================="
    
-   id   = nId
-   name = nName
-   dob  = nDob
-   age  = nAge
+   rs = d.query( "SELECT * FROM names" )
+   while ( let p = rs.fetchObject( Person() ) )
+   	> p.name, " was born on ", p.dob
+   end
+   rs.close()
+   >
 end
+
+d = connect()
+createNamesTable( d )
 
 ts = TimeStamp()
 ts.currentTime()
 
-t = Person( 10, "John", ts, 12 )
-> t.insert()
-> t.update()
-> t.delete()
+showNames( "Before inserting Jack", d )
 
+t = Person( "Jack", ts )
+t.insert()
+showNames( "After insertion of Jack via Object Persistence", d )
+
+t.name = "Jim"
+t.update()
+showNames( "After changed name to Jim", d )
+
+t.delete()
+showNames( "After deleted Jim", d )
+
+dropNamesTable( d )
 d.close()

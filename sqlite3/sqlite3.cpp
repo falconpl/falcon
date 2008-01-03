@@ -20,7 +20,7 @@
  * package.
  */
 
-#include "sqlite3.h"
+#include "sqlite3_mod.h"
 #include "sqlite3_ext.h"
 #include "version.h"
 

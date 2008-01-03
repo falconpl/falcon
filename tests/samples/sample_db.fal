@@ -1,9 +1,13 @@
 //const connectString = "pgsql:dbname=falcon_sample"
 const connectString = "sqlite3:falcon_sample.db"
 
-class Person
-	name = nil
-   dob = nil
+class Person( nName, nDob ) from DBIRecord
+	_tableName  = "names"
+   _primaryKey = "name"
+   _persist    = [ "name", "dob" ]
+   
+	name = nName
+   dob = nDob
 end
 
 function connect()
@@ -36,4 +40,4 @@ function dropNamesTable(dbh)
 	dbh.execute( "DROP TABLE names" )
 end
 
-export connect, createNamesTable, dropNamesTable
+export connect, createNamesTable, dropNamesTable, Person

@@ -17,10 +17,10 @@
  * package.
  */
 
-#ifndef DBI_SQLITE3_MODULE_H
-#define DBI_SQLITE3_MODULE_H
+#ifndef DBI_SQLITE3_MOD_H
+#define DBI_SQLITE3_MOD_H
 
-#include "/usr/include/sqlite3.h"
+#include <sqlite3.h>
 
 #include "../include/dbiservice.h"
 
