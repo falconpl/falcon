@@ -1,3 +1,6 @@
+Feathers (0.8.7)
+  * Major: It is now possible to unload arbitrary modules.
+  
 Feathers (0.8.6)
   * Bugfix: Process crashed if initialized with a single string.
   * Minor: Added setDirective() to compiler module.

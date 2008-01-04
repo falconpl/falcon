@@ -31,6 +31,7 @@
 #include <falcon/userdata.h>
 #include <falcon/flcloader.h>
 #include <falcon/string.h>
+#include <falcon/vmmaps.h>
 
 namespace Falcon {
 
@@ -60,17 +61,17 @@ public:
 
 class ModuleCarrier: public UserData
 {
-   Module *m_module;
-   uint16 m_modId;
-
+   LiveModule *m_lmodule;
+   
 public:
-   ModuleCarrier( Module *m_module, uint16 modId );
+   ModuleCarrier( LiveModule *m_module );
    virtual ~ModuleCarrier();
 
-   Module *module() const { return m_module; }
-   uint16 moduleId() const { return m_modId; }
+   const Module *module() const { return m_lmodule->module(); }
+   LiveModule *liveModule() const { return m_lmodule; }
 
    virtual UserData *clone();
+   virtual void gcMark( MemPool *mp );
 
    // we don't provide a clone() method
 };

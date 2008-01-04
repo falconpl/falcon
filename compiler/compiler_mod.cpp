@@ -25,6 +25,7 @@
 
 #include <falcon/module.h>
 #include <falcon/cobject.h>
+#include <falcon/mempool.h>
 #include "compiler_mod.h"
 
 namespace Falcon {
@@ -147,23 +148,25 @@ void CompilerIface::setProperty( const String &propName, Item &prop )
 
 
 
-ModuleCarrier::ModuleCarrier( Module *module, uint16 modId ):
-   m_module( module ),
-   m_modId( modId )
+ModuleCarrier::ModuleCarrier( LiveModule *module ):
+   m_lmodule( module )
 {
-   module->incref();
 }
 
 ModuleCarrier::~ModuleCarrier()
 {
-   m_module->decref();
+   // the LiveModule does not belong to us, and by this time it may be already gone
 }
 
 UserData *ModuleCarrier::clone()
 {
-   return new ModuleCarrier( m_module, m_modId );
+   return new ModuleCarrier( m_lmodule );
 }
 
+void ModuleCarrier::gcMark( MemPool *mp )
+{
+   m_lmodule->mark( mp->currentMark() );
+}
 
 }
 }

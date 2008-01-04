@@ -175,7 +175,7 @@ FALCON_FUNC  falcon_systemCall ( ::Falcon::VMachine *vm )
    bool background = mode == 0 ? false : mode->isTrue();
    String **argv;
 
-   if( sys_req->isString() == FLC_ITEM_STRING ) {
+   if( sys_req->isString() ) {
       argv = ::Falcon::Mod::argvize( *sys_req->asString(), false );
    }
    else {

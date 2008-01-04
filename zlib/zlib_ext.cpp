@@ -45,7 +45,7 @@ FALCON_FUNC ZLib_compress( ::Falcon::VMachine *vm )
    }
 
    int err;
-   uLong allocLen, compLen, currLen;
+   uLong allocLen, compLen;
    Bytef *compData;
 
    AutoCString asData( dataI->asString() );
@@ -93,7 +93,7 @@ FALCON_FUNC ZLib_uncompress( ::Falcon::VMachine *vm )
    }
 
    int err;
-   uLong allocLen, compLen, currLen;
+   uLong allocLen, compLen;
    Bytef *compData;
 
    AutoCString asData( dataI->asString() );

@@ -65,10 +65,9 @@ void internal_link( ::Falcon::VMachine *vm, Module *mod, CompilerIface *iface )
 {
 
    Runtime rt( &iface->loader(), vm );
-   rt.addModule( mod );
 
    // let's try to link
-   if ( ! vm->link( &rt ) )
+   if ( ! rt.addModule( mod ) || ! vm->link( &rt ) )
    {
       // VM should have raised the errors.
       mod->decref();
@@ -81,7 +80,8 @@ void internal_link( ::Falcon::VMachine *vm, Module *mod, CompilerIface *iface )
    Item *mod_class = vm->findGlobalItem( "Module" );
    fassert( mod_class != 0 );
    CoreObject *co = mod_class->asClass()->createInstance();
-   co->setUserData( new ModuleCarrier( mod, vm->moduleListSize() - 1 ) );
+   // we know the module IS in the VM.
+   co->setUserData( new ModuleCarrier( vm->findModule( mod->name() ) ) );
 
    co->setProperty( "name", mod->name() );
    co->setProperty( "path", mod->path() );
@@ -225,19 +225,24 @@ FALCON_FUNC Module_get( ::Falcon::VMachine *vm )
 
    CoreObject *self = vm->self().asObject();
    ModuleCarrier *modc = static_cast<ModuleCarrier *>( self->getUserData() );
-   if( modc == 0 )
-      return;
 
-   Module *mod = modc->module();
-
-   Symbol *sym = mod->findGlobalSymbol( *i_name->asString() );
-   if( sym == 0 )
+   // if the module is not alive, raise an error and exit
+   if ( ! modc->liveModule()->isAlive() )
    {
-      vm->raiseModError( new RangeError( ErrorParam( e_undef_sym, __LINE__ ) ) );
+      // TODO: Find a more adequate error code.
+      vm->raiseModError( new RangeError( ErrorParam( e_modver, __LINE__ ) ) );
       return;
    }
 
-   vm->retval( vm->moduleItem( modc->moduleId(), sym->itemId() ) );
+   Item *itm = modc->liveModule()->findModuleItem( *i_name->asString() );
+   if( itm == 0 )
+   {
+      vm->raiseModError( new RangeError( ErrorParam( e_undef_sym, __LINE__ ).
+         extra(*i_name->asString()) ) );
+      return;
+   }
+
+   vm->retval( *itm );
 }
 
 FALCON_FUNC Module_set( ::Falcon::VMachine *vm )
@@ -253,19 +258,24 @@ FALCON_FUNC Module_set( ::Falcon::VMachine *vm )
 
    CoreObject *self = vm->self().asObject();
    ModuleCarrier *modc = static_cast<ModuleCarrier *>( self->getUserData() );
-   if( modc == 0 )
-      return;
 
-   Module *mod = modc->module();
-
-   Symbol *sym = mod->findGlobalSymbol( *i_name->asString() );
-   if( sym == 0 )
+   // if the module is not alive, raise an error and exit
+   if ( ! modc->liveModule()->isAlive() )
    {
-      vm->raiseModError( new RangeError( ErrorParam( e_undef_sym, __LINE__ ) ) );
+      // TODO: Find a more adequate error code.
+      vm->raiseModError( new RangeError( ErrorParam( e_modver, __LINE__ ) ) );
       return;
    }
 
-   vm->moduleItem( modc->moduleId(), sym->itemId() ) = *i_value;
+   Item *itm = modc->liveModule()->findModuleItem( *i_name->asString() );
+   if( itm == 0 )
+   {
+      vm->raiseModError( new RangeError( ErrorParam( e_undef_sym, __LINE__ ).
+         extra(*i_name->asString()) ) );
+      return;
+   }
+
+   *itm = *i_value;
 }
 
 FALCON_FUNC Module_getReference( ::Falcon::VMachine *vm )
@@ -280,56 +290,60 @@ FALCON_FUNC Module_getReference( ::Falcon::VMachine *vm )
 
    CoreObject *self = vm->self().asObject();
    ModuleCarrier *modc = static_cast<ModuleCarrier *>( self->getUserData() );
-   if( modc == 0 )
-      return;
-
-   Module *mod = modc->module();
-
-   Symbol *sym = mod->findGlobalSymbol( *i_name->asString() );
-   if( sym == 0 )
+ 
+   // if the module is not alive, raise an error and exit
+   if ( ! modc->liveModule()->isAlive() )
    {
-      vm->raiseModError( new RangeError( ErrorParam( e_undef_sym, __LINE__ ) ) );
+      // TODO: Find a more adequate error code.
+      vm->raiseModError( new RangeError( ErrorParam( e_modver, __LINE__ ) ) );
       return;
    }
 
-   vm->referenceItem( vm->regA(), vm->moduleItem( modc->moduleId(), sym->itemId() ) );
+   Item *itm = modc->liveModule()->findModuleItem( *i_name->asString() );
+   if( itm == 0 )
+   {
+      vm->raiseModError( new RangeError( ErrorParam( e_undef_sym, __LINE__ ).
+         extra(*i_name->asString()) ) );
+      return;
+   }
+
+   vm->referenceItem( vm->regA(), *itm );
 }
 
 FALCON_FUNC Module_unload( ::Falcon::VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
    ModuleCarrier *modc = static_cast<ModuleCarrier *>( self->getUserData() );
-   Module *mod = modc->module();
-
-   if ( modc->moduleId() < vm->moduleListSize() - 1)
+   
+   // if the module is not alive, raise an error and exit
+   if ( ! modc->liveModule()->isAlive() )
    {
-      vm->retval( (int64) 0 );
+      // TODO: Find a more adequate error code.
+      vm->raiseModError( new RangeError( ErrorParam( e_modver, __LINE__ ) ) );
       return;
    }
 
-   // nil all the properties, making this object unavailable
-   Item nilItem;
-   nilItem.setNil();
-   self->setProperty( "set", nilItem );
-   self->setProperty( "get", nilItem );
-   self->setProperty( "getReference", nilItem );
-   self->setProperty( "unload", nilItem );
    // unlink
-   vm->unlinkUpTo( modc->moduleId() );
+   if ( vm->unlink( modc->module() ) )
+   {
 
-   // destroy the reference
-   delete modc;
-   self->setUserData( 0 );
+      // destroy the reference
+      delete modc;
+      self->setUserData( 0 );
 
-   // report success.
-   vm->retval( (int64) 1 );
+      // report success.
+      vm->retval( (int64) 1 );
+   }
+   else {
+      vm->retval( (int64) 0 );
+   }
 }
 
 FALCON_FUNC Module_engineVersion( ::Falcon::VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
    ModuleCarrier *modc = static_cast<ModuleCarrier *>( self->getUserData() );
-   Module *mod = modc->module();
+   const Module *mod = modc->module();
 
    int major, minor, re;
    mod->getEngineVersion( major, minor, re );
@@ -344,7 +358,7 @@ FALCON_FUNC Module_moduleVersion( ::Falcon::VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
    ModuleCarrier *modc = static_cast<ModuleCarrier *>( self->getUserData() );
-   Module *mod = modc->module();
+   const Module *mod = modc->module();
 
    int major, minor, re;
    mod->getModuleVersion( major, minor, re );
