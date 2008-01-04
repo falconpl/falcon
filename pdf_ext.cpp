@@ -107,6 +107,102 @@ FALCON_FUNC PDFPage_rectangle( ::Falcon::VMachine *vm )
    vm->retval( pdfPage->rectangle( x, y, w, h ) );
 }
 
+FALCON_FUNC PDFPage_line( ::Falcon::VMachine *vm )
+{
+   CoreObject *self = vm->self().asObject();
+   PDFPage *pdfPage = static_cast<PDFPage *>( self->getUserData() );
+   Item *xI = vm->param( 0 );
+   Item *yI = vm->param( 1 );
+
+   if ( xI == 0 || ! xI->isNumeric() ||
+        yI == 0 || ! yI->isNumeric())
+   {
+      // TODO: tell them which param was an error!
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                                        .origin( e_orig_runtime ) ) );
+      return;
+   }
+
+   vm->retval( pdfPage->line( xI->asNumeric(), yI->asNumeric() ) );
+}
+
+FALCON_FUNC PDFPage_curve( ::Falcon::VMachine *vm )
+{
+   CoreObject *self = vm->self().asObject();
+   PDFPage *pdfPage = static_cast<PDFPage *>( self->getUserData() );
+   Item *x1I = vm->param( 0 );
+   Item *y1I = vm->param( 1 );
+   Item *x2I = vm->param( 2 );
+   Item *y2I = vm->param( 3 );
+   Item *x3I = vm->param( 4 );
+   Item *y3I = vm->param( 5 );
+
+   if ( x1I == 0 || ! x1I->isNumeric() ||
+       y1I == 0 || ! y1I->isNumeric() ||
+       x2I == 0 || ! x2I->isNumeric() ||
+       y2I == 0 || ! y2I->isNumeric() ||
+       x3I == 0 || ! x3I->isNumeric() ||
+       y3I == 0 || ! y3I->isNumeric())
+   {
+      // TODO: tell them which param was an error!
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                                        .origin( e_orig_runtime ) ) );
+      return;
+   }
+
+   vm->retval( pdfPage->curve( x1I->asNumeric(), y1I->asNumeric(),
+                               x2I->asNumeric(), y2I->asNumeric(),
+                               x3I->asNumeric(), y3I->asNumeric()) );
+}
+
+FALCON_FUNC PDFPage_curve2( ::Falcon::VMachine *vm )
+{
+   CoreObject *self = vm->self().asObject();
+   PDFPage *pdfPage = static_cast<PDFPage *>( self->getUserData() );
+   Item *x1I = vm->param( 0 );
+   Item *y1I = vm->param( 1 );
+   Item *x2I = vm->param( 2 );
+   Item *y2I = vm->param( 3 );
+
+   if ( x1I == 0 || ! x1I->isNumeric() ||
+       y1I == 0 || ! y1I->isNumeric() ||
+       x2I == 0 || ! x2I->isNumeric() ||
+       y2I == 0 || ! y2I->isNumeric())
+   {
+      // TODO: tell them which param was an error!
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                                        .origin( e_orig_runtime ) ) );
+      return;
+   }
+
+   vm->retval( pdfPage->curve2( x1I->asNumeric(), y1I->asNumeric(),
+                                x2I->asNumeric(), y2I->asNumeric() ) );
+}
+
+FALCON_FUNC PDFPage_curve3( ::Falcon::VMachine *vm )
+{
+   CoreObject *self = vm->self().asObject();
+   PDFPage *pdfPage = static_cast<PDFPage *>( self->getUserData() );
+   Item *x1I = vm->param( 0 );
+   Item *y1I = vm->param( 1 );
+   Item *x2I = vm->param( 2 );
+   Item *y2I = vm->param( 3 );
+
+   if ( x1I == 0 || ! x1I->isNumeric() ||
+       y1I == 0 || ! y1I->isNumeric() ||
+       x2I == 0 || ! x2I->isNumeric() ||
+       y2I == 0 || ! y2I->isNumeric())
+   {
+      // TODO: tell them which param was an error!
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                                        .origin( e_orig_runtime ) ) );
+      return;
+   }
+
+   vm->retval( pdfPage->curve3( x1I->asNumeric(), y1I->asNumeric(),
+                                x2I->asNumeric(), y2I->asNumeric() ) );
+}
+
 FALCON_FUNC PDFPage_stroke( ::Falcon::VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();

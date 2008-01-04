@@ -37,6 +37,10 @@ FALCON_FUNC PDF_saveToFile( ::Falcon::VMachine *vm );
 
 FALCON_FUNC PDFPage_init( ::Falcon::VMachine *vm );
 FALCON_FUNC PDFPage_rectangle( ::Falcon::VMachine *vm );
+FALCON_FUNC PDFPage_line( ::Falcon::VMachine *vm );
+FALCON_FUNC PDFPage_curve( ::Falcon::VMachine *vm );
+FALCON_FUNC PDFPage_curve2( ::Falcon::VMachine *vm );
+FALCON_FUNC PDFPage_curve3( ::Falcon::VMachine *vm );
 FALCON_FUNC PDFPage_stroke( ::Falcon::VMachine *vm );
 FALCON_FUNC PDFPage_textWidth( ::Falcon::VMachine *vm );
 FALCON_FUNC PDFPage_beginText( ::Falcon::VMachine *vm );

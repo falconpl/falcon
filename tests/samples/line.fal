@@ -1,0 +1,30 @@
+load pdf
+
+function drawLine( pg, x, y, label )
+    pg.beginText()
+    pg.textX = x
+    pg.textY = y - 10.0
+    pg.showText( label )
+    pg.endText()
+
+    pg.x = x
+    pg.y = y
+    pg.line( x + 220.0, y - 15.0 )
+    pg.stroke()
+end
+
+p = PDF()
+pg = p.addPage()
+pg.fontName = "Helvetica"
+pg.fontSize = 12.0
+
+drawLine( pg, 100.0, 100.0, "HELLO" )
+drawLine( pg, 200.0, 200.0, "GOODBYE" )
+
+pg.x = 100.0
+pg.y = 100.0
+pg.curve( 300.0, 50.0, 400.0, 800.0, 400.0, 150.0 )
+pg.stroke()
+
+p.saveToFile( "line.pdf" )
+

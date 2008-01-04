@@ -24,33 +24,40 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    self->engineVersion( FALCON_VERSION_NUM );
    self->version( VERSION_MAJOR, VERSION_MINOR, VERSION_REVISION );
 
-   self->addConstant( "PERMISSION_READ",     (::Falcon::int64) HPDF_ENABLE_READ );
-   self->addConstant( "PERMISSION_PRINT",    (::Falcon::int64) HPDF_ENABLE_PRINT );
-   self->addConstant( "PERMISSION_EDIT_ALL", (::Falcon::int64) HPDF_ENABLE_EDIT_ALL );
-   self->addConstant( "PERMISSION_COPY",     (::Falcon::int64) HPDF_ENABLE_COPY );
-   self->addConstant( "PERMISSION_EDIT",     (::Falcon::int64) HPDF_ENABLE_EDIT );
-   self->addConstant( "ENCRYPT_R2",          (::Falcon::int64) HPDF_ENCRYPT_R2 );
-   self->addConstant( "ENCRYPT_R3",          (::Falcon::int64) HPDF_ENCRYPT_R3 );
-   self->addConstant( "ENCRYPT_R3_128",      (::Falcon::int64) HPDF_ENCRYPT_R3 + 1 );
-   self->addConstant( "COMPRESS_NONE",       (::Falcon::int64) HPDF_COMP_NONE );
-   self->addConstant( "COMPRESS_TEXT",       (::Falcon::int64) HPDF_COMP_TEXT );
-   self->addConstant( "COMPRESS_IMAGE",      (::Falcon::int64) HPDF_COMP_IMAGE );
-   self->addConstant( "COMPRESS_METADATA",   (::Falcon::int64) HPDF_COMP_METADATA );
-   self->addConstant( "COMPRESS_ALL",        (::Falcon::int64) HPDF_COMP_ALL );
-   self->addConstant( "PAGE_SIZE_LETTER",    (::Falcon::int64) HPDF_PAGE_SIZE_LETTER );
-   self->addConstant( "PAGE_SIZE_LEGAL",     (::Falcon::int64) HPDF_PAGE_SIZE_LEGAL );
-   self->addConstant( "PAGE_SIZE_A3",        (::Falcon::int64) HPDF_PAGE_SIZE_A3 );
-   self->addConstant( "PAGE_SIZE_A4",        (::Falcon::int64) HPDF_PAGE_SIZE_A4 );
-   self->addConstant( "PAGE_SIZE_A5",        (::Falcon::int64) HPDF_PAGE_SIZE_A5 );
-   self->addConstant( "PAGE_SIZE_B4",        (::Falcon::int64) HPDF_PAGE_SIZE_B4 );
-   self->addConstant( "PAGE_SIZE_B5",        (::Falcon::int64) HPDF_PAGE_SIZE_B5 );
-   self->addConstant( "PAGE_SIZE_EXECUTIVE", (::Falcon::int64) HPDF_PAGE_SIZE_EXECUTIVE );
-   self->addConstant( "PAGE_SIZE_US4x6",     (::Falcon::int64) HPDF_PAGE_SIZE_US4x6 );
-   self->addConstant( "PAGE_SIZE_US4x8",     (::Falcon::int64) HPDF_PAGE_SIZE_US4x8 );
-   self->addConstant( "PAGE_SIZE_US5x7",     (::Falcon::int64) HPDF_PAGE_SIZE_US5x7 );
-   self->addConstant( "PAGE_SIZE_COMM10",    (::Falcon::int64) HPDF_PAGE_SIZE_COMM10 );
-   self->addConstant( "PAGE_PORTRAIT",       (::Falcon::int64) HPDF_PAGE_PORTRAIT );
-   self->addConstant( "PAGE_LANDSCAPE",      (::Falcon::int64) HPDF_PAGE_LANDSCAPE );
+   self->addConstant( "PERMISSION_READ",       (::Falcon::int64) HPDF_ENABLE_READ );
+   self->addConstant( "PERMISSION_PRINT",      (::Falcon::int64) HPDF_ENABLE_PRINT );
+   self->addConstant( "PERMISSION_EDIT_ALL",   (::Falcon::int64) HPDF_ENABLE_EDIT_ALL );
+   self->addConstant( "PERMISSION_COPY",       (::Falcon::int64) HPDF_ENABLE_COPY );
+   self->addConstant( "PERMISSION_EDIT",       (::Falcon::int64) HPDF_ENABLE_EDIT );
+   self->addConstant( "ENCRYPT_R2",            (::Falcon::int64) HPDF_ENCRYPT_R2 );
+   self->addConstant( "ENCRYPT_R3",            (::Falcon::int64) HPDF_ENCRYPT_R3 );
+   self->addConstant( "ENCRYPT_R3_128",        (::Falcon::int64) HPDF_ENCRYPT_R3 + 1 );
+   self->addConstant( "COMPRESS_NONE",         (::Falcon::int64) HPDF_COMP_NONE );
+   self->addConstant( "COMPRESS_TEXT",         (::Falcon::int64) HPDF_COMP_TEXT );
+   self->addConstant( "COMPRESS_IMAGE",        (::Falcon::int64) HPDF_COMP_IMAGE );
+   self->addConstant( "COMPRESS_METADATA",     (::Falcon::int64) HPDF_COMP_METADATA );
+   self->addConstant( "COMPRESS_ALL",          (::Falcon::int64) HPDF_COMP_ALL );
+   self->addConstant( "PAGE_SIZE_LETTER",      (::Falcon::int64) HPDF_PAGE_SIZE_LETTER );
+   self->addConstant( "PAGE_SIZE_LEGAL",       (::Falcon::int64) HPDF_PAGE_SIZE_LEGAL );
+   self->addConstant( "PAGE_SIZE_A3",          (::Falcon::int64) HPDF_PAGE_SIZE_A3 );
+   self->addConstant( "PAGE_SIZE_A4",          (::Falcon::int64) HPDF_PAGE_SIZE_A4 );
+   self->addConstant( "PAGE_SIZE_A5",          (::Falcon::int64) HPDF_PAGE_SIZE_A5 );
+   self->addConstant( "PAGE_SIZE_B4",          (::Falcon::int64) HPDF_PAGE_SIZE_B4 );
+   self->addConstant( "PAGE_SIZE_B5",          (::Falcon::int64) HPDF_PAGE_SIZE_B5 );
+   self->addConstant( "PAGE_SIZE_EXECUTIVE",   (::Falcon::int64) HPDF_PAGE_SIZE_EXECUTIVE );
+   self->addConstant( "PAGE_SIZE_US4x6",       (::Falcon::int64) HPDF_PAGE_SIZE_US4x6 );
+   self->addConstant( "PAGE_SIZE_US4x8",       (::Falcon::int64) HPDF_PAGE_SIZE_US4x8 );
+   self->addConstant( "PAGE_SIZE_US5x7",       (::Falcon::int64) HPDF_PAGE_SIZE_US5x7 );
+   self->addConstant( "PAGE_SIZE_COMM10",      (::Falcon::int64) HPDF_PAGE_SIZE_COMM10 );
+   self->addConstant( "PAGE_PORTRAIT",         (::Falcon::int64) HPDF_PAGE_PORTRAIT );
+   self->addConstant( "PAGE_LANDSCAPE",        (::Falcon::int64) HPDF_PAGE_LANDSCAPE );
+   self->addConstant( "BUTT_END",              (::Falcon::int64) HPDF_BUTT_END );
+   self->addConstant( "ROUND_END",             (::Falcon::int64) HPDF_ROUND_END );
+   self->addConstant( "PROJECTING_SCUARE_END", (::Falcon::int64) HPDF_PROJECTING_SCUARE_END );
+   self->addConstant( "PROJECTING_SQUARE_END", (::Falcon::int64) HPDF_PROJECTING_SCUARE_END );
+   self->addConstant( "MITER_JOIN",            (::Falcon::int64) HPDF_MITER_JOIN );
+   self->addConstant( "ROUND_JOIN",            (::Falcon::int64) HPDF_ROUND_JOIN );
+   self->addConstant( "BEVEL_JOIN",            (::Falcon::int64) HPDF_BEVEL_JOIN );
 
    Falcon::Symbol *c_pdf = self->addClass( "PDF", Falcon::Ext::PDF_init );
    self->addClassMethod( c_pdf, "addPage", Falcon::Ext::PDF_addPage );
@@ -68,6 +75,10 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
 
    Falcon::Symbol *c_pdfPage = self->addClass( "PDFPage", Falcon::Ext::PDFPage_init );
    self->addClassMethod( c_pdfPage, "rectangle",      Falcon::Ext::PDFPage_rectangle );
+   self->addClassMethod( c_pdfPage, "line",           Falcon::Ext::PDFPage_line );
+   self->addClassMethod( c_pdfPage, "curve",          Falcon::Ext::PDFPage_curve );
+   self->addClassMethod( c_pdfPage, "curve2",         Falcon::Ext::PDFPage_curve2 );
+   self->addClassMethod( c_pdfPage, "curve3",         Falcon::Ext::PDFPage_curve3 );
    self->addClassMethod( c_pdfPage, "stroke",         Falcon::Ext::PDFPage_stroke );
    self->addClassMethod( c_pdfPage, "textWidth",      Falcon::Ext::PDFPage_textWidth );
    self->addClassMethod( c_pdfPage, "beginText",      Falcon::Ext::PDFPage_beginText );
@@ -88,6 +99,8 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    self->addClassProperty( c_pdfPage, "lineWidth" );
    self->addClassProperty( c_pdfPage, "charSpace" );
    self->addClassProperty( c_pdfPage, "wordSpace" );
+   self->addClassProperty( c_pdfPage, "lineCap" );
+   self->addClassProperty( c_pdfPage, "lineJoin" );
 
    return self;
 }

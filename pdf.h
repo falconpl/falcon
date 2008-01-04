@@ -81,9 +81,17 @@ public:
    int charSpace( double s );
    double wordSpace();
    int wordSpace( double s );
+   int lineCap();
+   int lineCap( int cap );
+   int lineJoin();
+   int lineJoin( int join );
 
    // Graphics
    int rectangle( double x, double y, double height, double width );
+   int line( double x, double y );
+   int curve( double x1, double y1, double x2, double y2, double x3, double y3 );
+   int curve2( double x1, double y1, double x2, double y2 );
+   int curve3( double x1, double y1, double x2, double y2 );
    int stroke();
 
    // Text

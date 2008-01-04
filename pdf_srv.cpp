@@ -211,6 +211,26 @@ int PDFPage::wordSpace( double s )
    return HPDF_Page_SetWordSpace( m_page, s );
 }
 
+int PDFPage::lineCap()
+{
+   return HPDF_Page_GetLineCap( m_page );
+}
+
+int PDFPage::lineCap( int cap )
+{
+   return HPDF_Page_SetLineCap( m_page, (HPDF_LineCap) cap );
+}
+
+int PDFPage::lineJoin()
+{
+   return HPDF_Page_GetLineJoin( m_page );
+}
+
+int PDFPage::lineJoin( int join )
+{
+   return HPDF_Page_SetLineJoin( m_page, (HPDF_LineJoin) join );
+}
+
 void PDFPage::getProperty( const String &propName, Item &prop )
 {
    if ( propName == "fontName" )
@@ -239,6 +259,10 @@ void PDFPage::getProperty( const String &propName, Item &prop )
       prop = charSpace();
    else if ( propName == "wordSpace" )
       prop = wordSpace();
+   else if ( propName == "lineCap" )
+      prop = (int64) lineCap();
+   else if ( propName == "lineJoin" )
+      prop = (int64) lineJoin();
 
 }
 
@@ -272,11 +296,35 @@ void PDFPage::setProperty( const String &propName, Item &prop )
       charSpace( prop.asNumeric() );
    else if ( propName == "wordSpace" )
       wordSpace( prop.asNumeric() );
+   else if ( propName == "lineCap" )
+      lineCap( prop.asInteger() );
+   else if ( propName == "lineJoin" )
+      lineJoin( prop.asInteger() );
 }
 
 int PDFPage::rectangle( double x, double y, double height, double width )
 {
    return HPDF_Page_Rectangle( m_page, x, y, height, width );
+}
+
+int PDFPage::line( double x, double y )
+{
+   return HPDF_Page_LineTo( m_page, x, y );
+}
+
+int PDFPage::curve( double x1, double y1, double x2, double y2, double x3, double y3 )
+{
+   return HPDF_Page_CurveTo( m_page, x1, y1, x2, y2, x3, y3 );
+}
+
+int PDFPage::curve2( double x1, double y1, double x2, double y2 )
+{
+   return HPDF_Page_CurveTo2( m_page, x1, y1, x2, y2 );
+}
+
+int PDFPage::curve3( double x1, double y1, double x2, double y2 )
+{
+   return HPDF_Page_CurveTo3( m_page, x1, y1, x2, y2 );
 }
 
 int PDFPage::stroke()
