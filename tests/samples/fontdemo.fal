@@ -1,0 +1,47 @@
+load pdf
+
+pageTitle = "Font Demo"
+fontName = "Helvetica"
+
+p = PDF()
+page = p.addPage()
+w = page.getWidth()
+h = page.getHeight()
+
+page.setLineWidth( 1.0 )
+page.rectangle( 50.0, 50.0, w - 100.0, h - 100.0 );
+page.stroke()
+
+page.setFontAndSize( fontName, 24 )
+tw = page.textWidth( pageTitle )
+page.beginText()
+page.textOut( (w-tw) / 2, h-50, pageTitle)
+page.endText()
+
+page.beginText()
+page.setFontAndSize( fontName, 16 )
+page.textOut( 60.0, h - 80.0, "<Standard Type1 font samples>" )
+page.endText()
+
+page.beginText()
+page.moveTextPos( 60.0, h-105.0 )
+
+fontList = ["Courier", "Courier-Bold", "Courier-Oblique", "Courier-BoldOblique",
+   "Helvetica", "Helvetica-Bold", "Helvetica-Oblique", "Helvetica-BoldOblique",
+   "Times-Roman", "Times-Bold", "Times-Italic", "Times-BoldItalic", "Symbol",
+   "ZapfDingbats" ]
+for fn in fontList
+    sampText = "abcdefgABCDEFG12345!#$%&+-@?"
+    page.setFontAndSize( fn, 9 )
+    page.showText( fn )
+    page.moveTextPos( 0.0, -18.0 )
+
+    page.setFontAndSize( fn, 20 )
+    page.showText( sampText )
+    page.moveTextPos( 0.0, -20.0 )
+end
+
+page.endText()
+
+p.saveToFile( "hello.pdf" )
+
