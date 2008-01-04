@@ -234,11 +234,15 @@ bool MemPool::gcMark()
 
    // mark the global symbols
    // When generational gc will be on, this won't be always needed.
-   for ( uint32 i = 0; i < m_owner->moduleListSize(); i ++ ) {
-      ItemVector *current = &m_owner->globalsOfModule( i );
+   MapIterator iter = m_owner->liveModules().begin();
+   while( iter.hasCurrent() )
+   {
+      LiveModule *currentMod = *(LiveModule **) iter.currentValue();
+      ItemVector *current = &currentMod->globals();
       for( uint32 j = 0; j < current->size(); j++ ) {
          markItemFast( current->itemAt( j ) );
       }
+      iter.next();
    }
 
    // mark all the items in the coroutines.

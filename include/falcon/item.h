@@ -45,6 +45,7 @@ class GarbageItem;
 class VMachine;
 class Stream;
 class Attribute;
+class LiveModule;
 
 /** Basic item abstraction.*/
 class FALCON_DYN_CLASS Item: public BaseAlloc
@@ -103,6 +104,7 @@ private:
       struct {
          void *voidp;
          void *m_extra;
+         LiveModule *m_liveMod;
       };
 
    } m_data;
@@ -114,7 +116,7 @@ private:
    bool serialize_symbol( Stream *file, const Symbol *sym ) const;
    bool serialize_function( Stream *file, const Symbol *func, VMachine *vm ) const;
 
-   e_sercode deserialize_symbol( Stream *file, VMachine *vm, Symbol **tg_sym, int16 *modId );
+   e_sercode deserialize_symbol( Stream *file, VMachine *vm, Symbol **tg_sym, LiveModule **modId );
    e_sercode deserialize_function( Stream *file, VMachine *vm );
 
 #ifdef _MSC_VER
@@ -142,9 +144,9 @@ public:
       content( dt );
    }
 
-   Item( Symbol *func, uint32 moduleId )
+   Item( Symbol *func, LiveModule *mod )
    {
-      setFunction( func, moduleId );
+      setFunction( func, mod );
    }
 
    void setNil() { type( FLC_ITEM_NIL ); }
@@ -259,20 +261,20 @@ public:
    GarbageItem *asReference() const { return (GarbageItem *) m_data.voidp; }
 
    /** Creates a function item */
-   void setFunction( Symbol *sym, uint16 modId )
+   void setFunction( Symbol *sym, LiveModule *lmod )
    {
       type( FLC_ITEM_FUNC );
       m_data.voidp = sym;
-      m_base.half = modId;
+      m_data.m_liveMod = lmod;
    }
 
    /** Creates a method.
       The method is able to remember if it was called with
       a Function pointer or using an external function.
    */
-   Item( CoreObject *obj, Symbol *func, uint16 modId = 0 )
+   Item( CoreObject *obj, Symbol *func, LiveModule *lmod )
    {
-      setMethod( obj, func, modId );
+      setMethod( obj, func, lmod );
    }
 
 
@@ -285,11 +287,11 @@ public:
       The method is able to remember if it was called with
       a Function pointer or using an external function.
    */
-   void setMethod( CoreObject *obj, Symbol *func, uint16 modId ) {
+   void setMethod( CoreObject *obj, Symbol *func, LiveModule *lmod ) {
       type( FLC_ITEM_METHOD );
       m_data.voidp = obj;
       m_data.m_extra = func;
-      m_base.half = modId;
+      m_data.m_liveMod = lmod;
    }
 
    void setClassMethod( CoreObject *obj, CoreClass *cls ) {
@@ -425,7 +427,7 @@ public:
    CoreClass *asMethodClass() const { return (CoreClass*) m_data.m_extra; }
    Attribute *asAttribute() const { return (Attribute *) m_data.voidp; }
 
-   uint16 asModuleId() const { return m_base.half; }
+   LiveModule *asModule() const { return m_data.m_liveMod; }
 
    /** Convert current object into an integer.
       This operations is usually done on integers, numeric and strings.

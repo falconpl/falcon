@@ -448,7 +448,8 @@ public:
 private:
    typedef enum {
       FLAG_EXPORTED=0x1,
-      FLAG_ETAFUNC=0x2
+      FLAG_ETAFUNC=0x2,
+      FLAG_WELLKNOWN=0x4
    }
    e_flags;
 
@@ -552,24 +553,55 @@ public:
 
    /** Sets the symbol export class.
       \param exp true if the symbol must be exported, false otherwise.
+      \return itself
    */
-   void exported( bool exp ) {
+   Symbol &exported( bool exp ) {
       if ( exp )
          m_flags |= FLAG_EXPORTED;
       else
          m_flags &=~FLAG_EXPORTED;
+      return *this;
    }
 
    /** Declares the symbol as an "eta function".
       Eta functions are self-managed functions in Sigma-evaluation
       (functional evaluation).
       \param exp true if the symbol must be exported, false otherwise.
+      \return itself
    */
-   void setEta( bool exp ) {
+   Symbol &setEta( bool exp ) {
       if ( exp )
          m_flags |= FLAG_ETAFUNC;
       else
          m_flags &=~FLAG_ETAFUNC;
+      return *this;
+   }
+
+   /** Declares the symbol as an "well known symbol".
+
+      Normal symbols are generated in a module, and eventually exported to
+      the global namespace of the VM. Well known symbols live in a special
+      space in the VM; they are always referenced and the module declaring
+      them receives a copy of the original item, but not the original one.
+
+      Modules can i.e. change objects and can alter functions, but a copy
+      of the original well knonw items is kept by the VM and is available
+      to C++ extensions.
+
+      Well known items are meant to provide language-oriented special features,
+      or to provide special hooks for modules. Error, TimeStamp and other language
+      relevant classes are WKS (well known symbol). Modules can declare new
+      well known symbol to i.e. declare new classes and provide C++ factory functions.
+
+      \param exp true if the symbol is a Well Known Symbol.
+      \return itself
+   */
+   Symbol &setWKS( bool exp ) {
+      if ( exp )
+         m_flags |= FLAG_WELLKNOWN;
+      else
+         m_flags &=~FLAG_WELLKNOWN;
+      return *this;
    }
 
    void setUndefined() { clear(); m_type = tundef; }
@@ -593,6 +625,7 @@ public:
    uint16 itemId() const { return m_itemPos; }
    void itemId( uint16 ip ) { m_itemPos = ip; }
    bool isEta() const { return (m_flags & FLAG_ETAFUNC) == FLAG_ETAFUNC; }
+   bool isWKS() const { return (m_flags & FLAG_ETAFUNC) == FLAG_WELLKNOWN; }
 
    bool isUndefined() const { return m_type == tundef; }
    bool isLocalUndef() const { return m_type == tlocalundef; }

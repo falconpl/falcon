@@ -1,7 +1,6 @@
 /*
    FALCON - The Falcon Programming Language.
    FILE: vmsema.h
-   $Id: vmsema.h,v 1.2 2007/06/23 10:14:51 jonnymind Exp $
 
    Short description
    -------------------------------------------------------------------

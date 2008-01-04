@@ -1,7 +1,6 @@
 /*
    FALCON - The Falcon Programming Language.
    FILE: compiler.h
-   $Id: compiler.h,v 1.11 2007/07/24 22:32:47 jonnymind Exp $
 
    Main Falcon source compiler.
    -------------------------------------------------------------------

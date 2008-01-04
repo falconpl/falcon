@@ -15,7 +15,6 @@
    parameter passing and object access to test and show the
    different approaches.
 
-   $Id: coroutine.fal,v 1.4 2007/08/11 00:11:52 jonnymind Exp $
 */
 
 //==================================================

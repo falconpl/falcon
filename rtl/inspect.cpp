@@ -188,7 +188,7 @@ void inspect_internal( VMachine *vm, const Item *elem, int32 level, bool add )
          Item itemp;
          itemp.setObject( elem->asMethodObject() );
          inspect_internal( vm, &itemp, level + 1, true );
-         itemp.setFunction( elem->asMethodFunction(), elem->asModuleId() );
+         itemp.setFunction( elem->asMethodFunction(), elem->asModule() );
          inspect_internal( vm, &itemp, level + 1, true );
          for ( i = 0; i < level; i ++ )
          {
@@ -232,7 +232,7 @@ void inspect_internal( VMachine *vm, const Item *elem, int32 level, bool add )
             uint32 itemId = def->onceItemId();
             if ( itemId != FuncDef::NO_STATE )
             {
-               if ( vm->moduleItem( elem->asModuleId(), itemId ).isNil() )
+               if ( elem->asModule()->globals().itemAt( itemId ).isNil() )
                   stream->writeString( "{ not called }");
                else
                   stream->writeString( "{ called }");

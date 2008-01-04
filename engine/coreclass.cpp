@@ -29,8 +29,8 @@
 
 namespace Falcon {
 
-CoreClass::CoreClass( VMachine *origin, Symbol *sym, int modId, PropertyTable *pt ):
-   m_modId( modId ),
+CoreClass::CoreClass( VMachine *origin, Symbol *sym, LiveModule *lmod, PropertyTable *pt ):
+   m_lmod( lmod ),
    m_sym( sym ),
    m_properties( pt ),
    m_attributes( 0 ),

@@ -1,7 +1,6 @@
 /*
    FALCON - The Falcon Programming Language.
    FILE: falcon_std.h
-   $Id: falcon_rtl.cpp,v 1.15 2007/08/03 17:08:47 jonnymind Exp $
 
    Header for Falcon Realtime Library - C modules
    -------------------------------------------------------------------

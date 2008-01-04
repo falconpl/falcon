@@ -84,7 +84,9 @@ void VMachine::internal_construct()
 
    // this initialization must be performed by all vms.
    m_symbol = 0;
-   m_moduleId = 0;
+   m_currentModule = 0;
+   m_currentGlobals = 0;
+   m_mainModule = 0;
    m_allowYield = true;
    m_atomicMode = false;
    m_opCount = 0;
@@ -254,11 +256,6 @@ void VMachine::init()
 
 VMachine::~VMachine()
 {
-   // destroy all the global vectors.
-   for( uint32 i = 0; i < m_globals.size(); ++i )
-   {
-      delete m_globals.vpat( i );
-   }
 
    delete  m_memPool ;
    memFree( m_opHandlers );
@@ -285,17 +282,15 @@ VMachine::~VMachine()
       h = h1;
    }
 
-   // last,
-   // decref all the modules
-   for( uint32 mi = 0; mi < m_modules.size(); mi++ )
-   {
-      m_modules.moduleAt( mi )->decref();
-   }
-
    // and finally, the streams.
    delete m_stdErr;
    delete m_stdIn;
    delete m_stdOut;
+
+   // clear now the global maps
+   // this also decrefs the modules and destroys the globals.
+   // Notice that this would be done automatically also at destructor exit.
+   m_liveModules.clear();
 }
 
 void VMachine::errorHandler( ErrorHandler *em, bool own )
@@ -305,40 +300,6 @@ void VMachine::errorHandler( ErrorHandler *em, bool own )
 
    m_errhand = em;
    m_bOwnErrorHandler = own;
-}
-
-bool VMachine::unlinkUpTo( uint32 count )
-{
-   if ( m_modules.size() <= count )
-      return false;
-
-   uint32 i = m_modules.size() - 1;
-   while( i >= count )
-   {
-      Module *mod = m_modules.moduleAt( i );
-      // unlink all the modulue shared items;
-      MapIterator symiter = mod->symbolTable().map().begin();
-      while( symiter.hasCurrent() ) {
-         const Symbol *sym = *(const Symbol **) symiter.currentValue();
-         if ( sym->exported() ) {
-            m_globalSyms.erase( &sym->name() );
-         }
-
-         symiter.next();
-      }
-
-      delete m_globals.vpat( i );
-      mod->decref();
-      i --;
-   }
-
-   m_modules.resize( count );
-   m_globals.resize( count );
-
-   // unlink means that probably will be a re-run.
-   resetCounters();
-
-   return true;
 }
 
 
@@ -356,10 +317,9 @@ bool VMachine::link( Runtime *rt )
 }
 
 
-bool VMachine::link( Module *mod )
+bool VMachine::link( Module *mod, bool isMainModule )
 {
    ItemVector *globs;
-   int32 modId;
 
    // first of all link the exported services.
    MapIterator svmap_iter = mod->getServiceMap().begin();
@@ -378,16 +338,19 @@ bool VMachine::link( Module *mod )
    SymbolTable *symtab = &mod->symbolTable();
 
    // Ok, the module is now in.
-   // We can now increment reference count ...
-   mod->incref();
-   // and add it to ourselves
-   modId = m_modules.size();
-   m_modules.push( mod );
+   // We can now increment reference count and add it to ourselves
+   LiveModule *livemod = new LiveModule( mod );
+   m_liveModules.insert( &mod->name(), livemod );
 
-   globs = new ItemVector;
+   // by default, set the main module to the lastly linked module.
+   if ( isMainModule )
+      m_mainModule = livemod;
+
+   // A shortcut
+   globs = &livemod->globals();
+
    // resize() creates a series of NIL items.
    globs->resize( symtab->size()+1 );
-   m_globals.push( globs );
 
    bool success = true;
    // now, the symbol table must be traversed.
@@ -402,7 +365,7 @@ bool VMachine::link( Module *mod )
          {
             case Symbol::tfunc:
             case Symbol::textfunc:
-               globs->itemAt( sym->itemId() ).setFunction( sym, modId );
+               globs->itemAt( sym->itemId() ).setFunction( sym, livemod );
             break;
 
             case Symbol::tclass:
@@ -469,14 +432,14 @@ bool VMachine::link( Module *mod )
                return false;
             }
 
-            SymModule tmp( globs->itemPtrAt( sym->itemId() ), modId, sym );
+            SymModule tmp( globs->itemPtrAt( sym->itemId() ), livemod, sym );
             m_globalSyms.insert( &sym->name(), &tmp );
 
-            // export also the instancer, if it is not already exported.
+            // export also the instance, if it is not already exported.
             if ( sym->isInstance() ) {
                sym = sym->getInstance();
                if ( ! sym->exported() ) {
-                  SymModule tmp( globs->itemPtrAt( sym->itemId() ), modId, sym );
+                  SymModule tmp( globs->itemPtrAt( sym->itemId() ), livemod, sym );
                   m_globalSyms.insert( &sym->name(), &tmp );
                }
             }
@@ -519,7 +482,7 @@ bool VMachine::link( Module *mod )
    while( cls_iter != 0 )
    {
       Symbol *sym = (Symbol *) cls_iter->data();
-      CoreClass *cc = linkClass( modId, sym );
+      CoreClass *cc = linkClass( livemod, sym );
 
       // we need to add it anyhow to the GC to provoke its destruction at VM end.
       // and hey, you could always destroy symbols if your mood is so from falcon ;-)
@@ -529,7 +492,6 @@ bool VMachine::link( Module *mod )
    }
 
    // then, prepare the instances of standalone objects
-
    ListElement *obj_iter = modObjects.begin();
    while( obj_iter != 0 )
    {
@@ -553,9 +515,6 @@ bool VMachine::link( Module *mod )
    }
 
    // and eventually call their constructor
-   m_currentGlobals = globs;
-   m_moduleId = modId;
-   m_code = mod->code();
    obj_iter = modObjects.begin();
 
    // In case we have some objects to link
@@ -591,7 +550,7 @@ bool VMachine::link( Module *mod )
 }
 
 
-PropertyTable *VMachine::createClassTemplate( int modId, const Map &pt )
+PropertyTable *VMachine::createClassTemplate( LiveModule *lmod, const Map &pt )
 {
    MapIterator iter = pt.begin();
    PropertyTable *table = new PropertyTable( pt.size() );
@@ -627,7 +586,7 @@ PropertyTable *VMachine::createClassTemplate( int modId, const Map &pt )
          case VarDef::t_base:
          {
             const Symbol *sym = vd->asSymbol();
-            Item *ptr = m_globals.vat(vdmod->modId).itemPtrAt( sym->itemId() );
+            Item *ptr = vdmod->lmod->globals().itemPtrAt( sym->itemId() );
             referenceItem( itm, *ptr );
          }
          break;
@@ -639,7 +598,7 @@ PropertyTable *VMachine::createClassTemplate( int modId, const Map &pt )
             fassert( sym->isExtFunc() || sym->isFunction() );
             if ( sym->isExtFunc() || sym->isFunction() )
             {
-               itm.setFunction( sym, vdmod->modId );
+               itm.setFunction( sym, vdmod->lmod );
             }
          }
          break;
@@ -654,17 +613,17 @@ PropertyTable *VMachine::createClassTemplate( int modId, const Map &pt )
 }
 
 
-CoreClass *VMachine::linkClass( uint32 modId, Symbol *clssym )
+CoreClass *VMachine::linkClass( LiveModule *lmod, Symbol *clssym )
 {
    Map props( &traits::t_stringptr, &traits::t_voidp ) ;
    AttribHandler *head = 0;
-   if( ! linkSubClass( modId, clssym, props, &head ) )
+   if( ! linkSubClass( lmod, clssym, props, &head ) )
       return 0;
 
-   CoreClass *cc = new CoreClass( this, clssym, modId, createClassTemplate( modId, props ) );
+   CoreClass *cc = new CoreClass( this, clssym, lmod, createClassTemplate( lmod, props ) );
    Symbol *ctor = clssym->getClassDef()->constructor();
    if ( ctor != 0 ) {
-      cc->constructor().setFunction( ctor, modId );
+      cc->constructor().setFunction( ctor, lmod );
    }
 
    cc->setAttributeList( head );
@@ -681,7 +640,7 @@ CoreClass *VMachine::linkClass( uint32 modId, Symbol *clssym )
 }
 
 
-bool VMachine::linkSubClass( uint32 modId, const Symbol *clssym,
+bool VMachine::linkSubClass( LiveModule *lmod, const Symbol *clssym,
       Map &props, AttribHandler **attribs )
 {
    // first sub-instantiates all the inheritances.
@@ -699,7 +658,7 @@ bool VMachine::linkSubClass( uint32 modId, const Symbol *clssym,
       if( parent->isClass() )
       {
          // we create the item anew instead of relying on the already linked item.
-         if ( ! linkSubClass( modId, parent, props, attribs ) )
+         if ( ! linkSubClass( lmod, parent, props, attribs ) )
             return false;
       }
       else if ( parent->isUndefined() )
@@ -719,7 +678,7 @@ bool VMachine::linkSubClass( uint32 modId, const Symbol *clssym,
                   );
             return false;
          }
-         if ( ! linkSubClass( sym_mod->moduleId(), parent, props, attribs ) )
+         if ( ! linkSubClass( sym_mod->liveModule(), parent, props, attribs ) )
             return false;
       }
       else
@@ -740,7 +699,7 @@ bool VMachine::linkSubClass( uint32 modId, const Symbol *clssym,
       String *key = *(String **) iter.currentKey();
       VarDefMod *value = new VarDefMod;
       value->vd = *(VarDef **) iter.currentValue();
-      value->modId = modId;
+      value->lmod = lmod;
       // TODO: define vardefvalue traits
       VarDefMod **oldValue = (VarDefMod **) props.find( key );
       if ( oldValue != 0 )
@@ -758,7 +717,7 @@ bool VMachine::linkSubClass( uint32 modId, const Symbol *clssym,
    while( hiter != 0 )
    {
       const Symbol *sym = (const Symbol *) hiter->data();
-      Item *hitem = m_globals.vat( modId ).itemAt( sym->itemId() ).dereference();
+      Item *hitem = lmod->globals().itemAt( sym->itemId() ).dereference();
       if ( hitem->isAttribute() ) {
          if ( head == 0 )
          {
@@ -786,7 +745,7 @@ bool VMachine::linkSubClass( uint32 modId, const Symbol *clssym,
    while( hiter != 0 )
    {
       const Symbol *sym = (const Symbol *) hiter->data();
-      Item *hitem = m_globals.vat( modId ).itemAt( sym->itemId() ).dereference();
+      Item *hitem = lmod->globals().itemAt( sym->itemId() ).dereference();
       if ( hitem->isAttribute() )
       {
          AttribHandler *head = *attribs;
@@ -835,15 +794,16 @@ bool VMachine::prepare( const String &startSym, uint32 paramCount )
 {
 
    // we must have at least one module.
-   uint32 mod_id;
-   if( m_modules.empty() ) {
+   LiveModule *curMod;
+
+   if( m_mainModule == 0 ) {
       // I don't want an assertion, as it may be removed in optimized compilation
       // while the calling app must still be warned.
       m_symbol = 0;
       return false;
    }
 
-   Symbol *execSym = m_modules.moduleAt( m_modules.size() - 1 )->findGlobalSymbol( startSym );
+   Symbol *execSym = m_mainModule->module()->findGlobalSymbol( startSym );
    if ( execSym == 0 )
    {
       SymModule *it_global = (SymModule *) m_globalSyms.find( &startSym );
@@ -858,11 +818,11 @@ bool VMachine::prepare( const String &startSym, uint32 paramCount )
       }
       else {
          execSym =  it_global->symbol();
-         mod_id = it_global->moduleId();
+         curMod = it_global->liveModule();
       }
    }
    else
-      mod_id = m_modules.size()-1; // module position
+      curMod = m_mainModule; // module position
 
    /** \todo allow to call classes at startup. Something like "all-classes" a-la-java */
    if ( ! execSym->isFunction() ) {
@@ -880,9 +840,8 @@ bool VMachine::prepare( const String &startSym, uint32 paramCount )
 	FuncDef *tg_def = execSym->getFuncDef();
    m_pc = tg_def->offset();
    m_symbol = execSym;
-   fassert( mod_id < m_globals.size() );
-   m_currentGlobals = m_globals.vpat( mod_id );
-   m_moduleId = mod_id;
+   m_currentGlobals = &curMod->globals();
+   m_currentModule = curMod->module();
 
    // reset the VM to ready it for execution
    reset();
@@ -898,6 +857,7 @@ bool VMachine::prepare( const String &startSym, uint32 paramCount )
 	// space for locals
    if ( tg_def->locals() > 0 )
       m_stack->resize( tg_def->locals() );
+
    return true;
 }
 
@@ -1107,7 +1067,7 @@ bool VMachine::callItem( const Item &callable, int32 paramCount, e_callMode call
    Symbol *target;
    Item oldsender;
    CoreObject *self = 0;
-   uint16 targetModId;
+   LiveModule *targetMod;
 
    switch( callable.type() )
    {
@@ -1122,12 +1082,12 @@ bool VMachine::callItem( const Item &callable, int32 paramCount, e_callMode call
       case FLC_ITEM_METHOD:
          self = callable.asMethodObject();
          target = callable.asMethodFunction();
-         targetModId = callable.asModuleId();
+         targetMod = callable.asModule();
       break;
 
       case FLC_ITEM_FUNC:
          target = callable.asFunction();
-         targetModId = callable.asModuleId();
+         targetMod = callable.asModule();
       break;
 
       case FLC_ITEM_CLASS:
@@ -1150,7 +1110,7 @@ bool VMachine::callItem( const Item &callable, int32 paramCount, e_callMode call
          }
 
          target = cls->constructor().asFunction();
-         targetModId = cls->constructor().asModuleId();
+         targetMod = cls->constructor().asModule();
       }
       break;
 
@@ -1235,7 +1195,8 @@ bool VMachine::callItem( const Item &callable, int32 paramCount, e_callMode call
    frame->m_symbol = m_symbol;
    frame->m_ret_pc = m_pc_next;
    frame->m_call_pc = m_pc;
-   frame->m_modId = m_moduleId;
+   frame->m_module = m_currentModule;
+   frame->m_globals = m_currentGlobals;
    frame->m_param_count = (byte)paramCount;
    frame->m_stack_base = m_stackBase;
    frame->m_try_base = m_tryFrame;
@@ -1272,12 +1233,9 @@ bool VMachine::callItem( const Item &callable, int32 paramCount, e_callMode call
       if ( tg_def->locals() > 0 )
          m_stack->resize( m_stackBase + tg_def->locals() );
 
-      if( targetModId != m_moduleId )
-      {
-         m_code = target->module()->code();
-         m_moduleId = targetModId;
-         m_currentGlobals = m_globals.vpat( m_moduleId );
-      }
+      m_code = target->module()->code();
+      m_currentModule = target->module();
+      m_currentGlobals = &targetMod->globals();
       m_symbol = target;
 
       //jump
@@ -1299,7 +1257,9 @@ bool VMachine::callItem( const Item &callable, int32 paramCount, e_callMode call
    else
    {
       m_symbol = target; // so we can have adequate tracebacks.
-      m_moduleId = targetModId;
+      m_currentModule = target->module();
+      m_currentGlobals = &targetMod->globals();
+
       // if we aren't in a frame call, call the item directly
       if( callMode == e_callNormal || callMode == e_callInst )
       {
@@ -1334,7 +1294,8 @@ void VMachine::createFrame( uint32 paramCount )
    frame->m_symbol = m_symbol;
    frame->m_ret_pc = m_pc_next;
    frame->m_call_pc = m_pc;
-   frame->m_modId = m_moduleId;
+   frame->m_module = m_currentModule;
+   frame->m_globals = m_currentGlobals;
    frame->m_param_count = (byte)paramCount;
    frame->m_stack_base = m_stackBase;
    frame->m_try_base = m_tryFrame;
@@ -1409,7 +1370,7 @@ bool VMachine::callItemPass( const Item &callable  )
    Symbol *target;
    FuncDef *tg_def;
    CoreObject *self = 0;
-   uint32 targetModId;
+   LiveModule *targetMod;
 
    switch( callable.type() )
    {
@@ -1424,12 +1385,12 @@ bool VMachine::callItemPass( const Item &callable  )
       case FLC_ITEM_METHOD:
          self = callable.asMethodObject();
          target = callable.asMethodFunction();
-         targetModId = callable.asModuleId();
+         targetMod = callable.asModule();
       break;
 
       case FLC_ITEM_FUNC:
          target = callable.asFunction();
-         targetModId = callable.asModuleId();
+         targetMod = callable.asModule();
       break;
 
       default:
@@ -1466,12 +1427,10 @@ bool VMachine::callItemPass( const Item &callable  )
       // space for locals
       m_stack->resize( m_stackBase + VM_FRAME_SPACE + tg_def->locals() );
 
-      if( m_moduleId != targetModId )
-      {
-         m_code = target->module()->code();
-         m_moduleId = targetModId;
-         m_currentGlobals = m_globals.vpat( m_moduleId );
-      }
+      m_code = target->module()->code();
+      m_currentModule = target->module();
+      m_currentGlobals = &targetMod->globals();
+
       m_symbol = target;
 
       //jump
@@ -1485,7 +1444,7 @@ bool VMachine::callItemPass( const Item &callable  )
       target->getExtFuncDef()->call( this );
       m_pc_next = ((StackFrame *)m_stack->at( m_stackBase - VM_FRAME_SPACE ))->m_ret_pc;
 
-      callReturn();
+      //callReturn();
    }
    return true;
 }
@@ -1640,8 +1599,6 @@ void VMachine::electContext()
       m_opCount = 0;
       // we must move to the next instruction after the context was swapped.
       m_pc = m_pc_next;
-      // and restore the right globals
-      m_currentGlobals = m_globals.vpat( m_moduleId );
 
       // but eventually sleep.
 	  if ( tgtTime > 0.0 )
@@ -1746,13 +1703,10 @@ void VMachine::callReturn()
 
    // eventually change active module.
 
-   register int32 modId = frame.m_modId;
-   if ( modId != m_moduleId )
-   {
-      m_moduleId = modId;
-      m_code = m_modules.moduleAt( modId )->code();
-      m_currentGlobals = m_globals.vpat( modId );
-   }
+   m_currentModule = frame.m_module;
+   m_currentGlobals = frame.m_globals;
+   if ( m_currentModule != 0 )
+      m_code = m_currentModule->code();
 
    // reset try frame
    m_tryFrame = frame.m_try_base;
@@ -1878,12 +1832,11 @@ bool VMachine::seekString( const String *value, byte *base, uint16 size, uint32 
    int32 lower = 0;
    int32 point = higher / 2;
    const String *paragon;
-   const Module *mod = m_modules.moduleAt( m_moduleId );
 
    while ( lower < higher - 1 )
    {
       pos = base + point * SEEK_STEP;
-      paragon = mod->getString( endianInt32(*reinterpret_cast< int32 *>( pos )));
+      paragon = m_currentModule->getString( endianInt32(*reinterpret_cast< int32 *>( pos )));
       fassert( paragon != 0 );
       if ( paragon == 0 )
          return false;
@@ -1901,7 +1854,7 @@ bool VMachine::seekString( const String *value, byte *base, uint16 size, uint32 
    }
 
    // see if it was in the last loop
-   paragon = mod->getString( endianInt32(*reinterpret_cast< int32 *>( base + lower * SEEK_STEP )));
+   paragon = m_currentModule->getString( endianInt32(*reinterpret_cast< int32 *>( base + lower * SEEK_STEP )));
    if ( paragon != 0 && *paragon == *value )
    {
       landing =  endianInt32( *reinterpret_cast< uint32 *>( base + lower * SEEK_STEP + sizeof( int32 ) ) );
@@ -1910,7 +1863,7 @@ bool VMachine::seekString( const String *value, byte *base, uint16 size, uint32 
 
    if ( lower != higher )
    {
-      paragon = mod->getString( endianInt32(*reinterpret_cast< int32 *>( base + higher * SEEK_STEP )));
+      paragon = m_currentModule->getString( endianInt32(*reinterpret_cast< int32 *>( base + higher * SEEK_STEP )));
       if ( paragon != 0 && *paragon == *value )
       {
          // YATTA, we found it at last
@@ -1928,11 +1881,10 @@ bool VMachine::seekItem( const Item *item, byte *base, uint16 size, uint32 &land
    #define SEEK_STEP (sizeof(int32) + sizeof(int32))
 
    byte *target = base + size *SEEK_STEP;
-   const Module *mod = m_modules.moduleAt( m_moduleId );
 
    while ( base < target )
    {
-      Symbol *sym = mod->getSymbol( endianInt32( *reinterpret_cast< int32 *>( base ) ) );
+      Symbol *sym = m_currentModule->getSymbol( endianInt32( *reinterpret_cast< int32 *>( base ) ) );
 
       fassert( sym );
       if ( sym == 0 )
@@ -1971,11 +1923,10 @@ bool VMachine::seekItemClass( const Item *itm, byte *base, uint16 size, uint32 &
    #define SEEK_STEP (sizeof(int32) + sizeof(int32))
 
    byte *target = base + size *SEEK_STEP;
-   const Module *mod = m_modules.moduleAt( m_moduleId );
 
    while ( base < target )
    {
-      Symbol *sym = mod->getSymbol( endianInt32( *reinterpret_cast< int32 *>( base ) ) );
+      Symbol *sym = m_currentModule->getSymbol( endianInt32( *reinterpret_cast< int32 *>( base ) ) );
       fassert( sym );
       if ( sym == 0 )
          return false;
@@ -2068,14 +2019,6 @@ Service *VMachine::getService( const String &name )
    return *srv;
 }
 
-int16 VMachine::getModuleId( const String modName )
-{
-   for ( uint32 i = 0; i < m_modules.size(); i ++ ) {
-      if ( m_modules.moduleAt( i )->name() == modName )
-         return i;
-   }
-   return -1;
-}
 
 void VMachine::stdIn( Stream *nstream )
 {
@@ -2153,7 +2096,7 @@ void VMachine::popTry( bool moveTo )
       raiseError( new CodeError( ErrorParam( e_stackuf, m_symbol->declaredAt() ).
          origin( e_orig_vm ).
          symbol( m_symbol->name() ).
-         module( m_modules.moduleAt(m_moduleId)->name() ) )
+         module( m_currentModule->name() ) )
       );
       return;
    }
@@ -2989,6 +2932,20 @@ Attribute *VMachine::findAttribute( const Symbol *sym ) const
 
    return 0;
 }
+
+Item *VMachine::findGlobalItem( const String &name ) const
+{
+   const SymModule *sm = findGlobalSymbol( name );
+   if ( sm == 0 ) return 0;
+   return sm->liveModule()->globals().itemAt( sm->symbolId() ).dereference();
+}
+
+
+LiveModule *VMachine::findModule( const String &name )
+{
+   return *(LiveModule **) m_liveModules.find( &name );
+}
+
 
 }
 

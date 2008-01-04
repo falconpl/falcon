@@ -1,7 +1,6 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: flc_vmmaps.h
-   $Id: vmmaps.h,v 1.7 2007/08/05 22:49:46 jonnymind Exp $
+   FILE: vmmaps.hm_currentModule
 
    Map items used in VM and related stuff
    -------------------------------------------------------------------
@@ -33,55 +32,13 @@
 #include <falcon/itemtraits.h>
 #include <falcon/symbol.h>
 #include <falcon/string.h>
+#include <falcon/module.h>
 #include <falcon/basealloc.h>
 
 namespace Falcon {
 
 class Symbol;
-class Module;
 
-/** Pair of the symbol and the module it is declared in.
-   This is just a commodity class used to store the association between a certain symbol and the module
-   it came from given the VM viewpoint (that is, the ID of the source module in the VM module list.
-*/
-
-class SymModule: public BaseAlloc
-{
-   Symbol *m_symbol;
-   uint32 m_moduleId;
-   Item *m_item;
-public:
-   SymModule( Item *itm, uint32 mod, Symbol *sym ):
-      m_item( itm ),
-      m_symbol( sym ),
-      m_moduleId( mod )
-   {}
-
-   Item *item() const { return m_item; }
-   Symbol *symbol() const { return m_symbol; }
-   uint32 symbolId() const { return m_symbol->itemId(); }
-   uint32 moduleId() const { return m_moduleId; }
-};
-
-class SymModuleTraits: public ElementTraits
-{
-public:
-	virtual uint32 memSize() const;
-	virtual void init( void *itemZone ) const;
-	virtual void copy( void *targetZone, const void *sourceZone ) const;
-	virtual int compare( const void *first, const void *second ) const;
-	virtual void destroy( void *item ) const;
-   virtual bool owning() const;
-};
-
-/** Map of symbol names and module where they are located.
-   (const String *, SymModule )
-*/
-class FALCON_DYN_CLASS SymModuleMap: public Map
-{
-public:
-   SymModuleMap();
-};
 
 class FALCON_DYN_CLASS ItemVector: public GenericVector
 {
@@ -116,13 +73,112 @@ public:
 };
 
 
+/** Instance of a live module entity.
+
+   The VM sees modules as a closed, read-only entity. Mutable data in a module is actually
+   held in a per-module map in the VM.
+
+   This class helds a reference to a module known by the VM and to the variable data
+   known in the module.
+
+   A module can be entered only once in the VM, and it is uniquely identified by a name.
+*/
+
+class FALCON_DYN_CLASS LiveModule: public BaseAlloc
+{
+   Module *m_module;
+   ItemVector m_globals;
+
+public:
+   LiveModule( Module *mod );
+   ~LiveModule();
+
+   const Module *module() const { return m_module; }
+   const ItemVector &globals() const { return m_globals; }
+   ItemVector &globals() { return m_globals; }
+
+   /** Just a shortcut to the name of the module held by this LiveModule. */
+   const String &name() const { return m_module->name(); }
+
+   /** Just a shortcut to the source of the module held by this LiveModule. */
+   const byte *code() const { return m_module->code(); }
+
+};
+
+
+class LiveModulePtrTraits: public ElementTraits
+{
+public:
+	virtual uint32 memSize() const;
+	virtual void init( void *itemZone ) const;
+	virtual void copy( void *targetZone, const void *sourceZone ) const;
+	virtual int compare( const void *first, const void *second ) const;
+	virtual void destroy( void *item ) const;
+   virtual bool owning() const;
+};
+
+/** Map of active modules in this VM.
+   (const String *, LiveModule * )
+*/
+class FALCON_DYN_CLASS LiveModuleMap: public Map
+{
+public:
+   LiveModuleMap();
+};
+
+
+/** Pair of the symbol and the module it is declared in.
+   This is just a commodity class used to store the association between a certain symbol and the module
+   it came from given the VM viewpoint (that is, the ID of the source module in the VM module list.
+*/
+
+class FALCON_DYN_CLASS SymModule: public BaseAlloc
+{
+   Symbol *m_symbol;
+   LiveModule *m_lmod;
+   Item *m_item;
+
+public:
+   SymModule( Item *itm, LiveModule *mod, Symbol *sym ):
+      m_item( itm ),
+      m_symbol( sym ),
+      m_lmod( mod )
+   {}
+
+   Item *item() const { return m_item; }
+   Symbol *symbol() const { return m_symbol; }
+   uint32 symbolId() const { return m_symbol->itemId(); }
+   LiveModule *liveModule() const { return m_lmod; }
+};
+
+class SymModuleTraits: public ElementTraits
+{
+public:
+	virtual uint32 memSize() const;
+	virtual void init( void *itemZone ) const;
+	virtual void copy( void *targetZone, const void *sourceZone ) const;
+	virtual int compare( const void *first, const void *second ) const;
+	virtual void destroy( void *item ) const;
+   virtual bool owning() const;
+};
+
+
 namespace traits
 {
    extern SymModuleTraits t_SymModule;
 }
 
+/** Map of symbol names and module where they are located.
+   (const String *, SymModule )
+*/
+class FALCON_DYN_CLASS SymModuleMap: public Map
+{
+public:
+   SymModuleMap();
+};
+
 }
 
 #endif
 
-/* end of flc_vmmaps.h */
+/* end of vmmaps.h */

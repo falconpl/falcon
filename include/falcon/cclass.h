@@ -57,7 +57,7 @@ class FALCON_DYN_CLASS CoreClass: public Garbageable
 {
 
 private:
-   uint32 m_modId;
+   LiveModule *m_lmod;
    Symbol *m_sym;
    Item m_constructor;
    PropertyTable *m_properties;
@@ -72,10 +72,10 @@ public:
       recorded here prevents the need to search for the live ID in the VM at critical times.
 
    */
-   CoreClass( VMachine *mp, Symbol *sym, int modId, PropertyTable *pt );
+   CoreClass( VMachine *mp, Symbol *sym, LiveModule *lmod, PropertyTable *pt );
    ~CoreClass();
 
-   uint32 moduleId() const { return m_modId; }
+   LiveModule *liveModule() const { return m_lmod; }
    Symbol *symbol() const { return m_sym; }
 
    PropertyTable &properties() { return *m_properties; }

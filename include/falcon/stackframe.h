@@ -34,6 +34,9 @@
 
 namespace Falcon {
 
+class Module;
+class ItemVector;
+
 typedef struct tag_StackFrame
 {
    Item header;
@@ -41,7 +44,8 @@ typedef struct tag_StackFrame
    Symbol *m_symbol;
    uint32 m_ret_pc;
    uint32 m_call_pc;
-   int16 m_modId;
+   const Module *m_module;
+   ItemVector *m_globals;
    bool m_initFrame;
    bool m_break;
    bool m_suspend;

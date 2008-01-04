@@ -1,11 +1,9 @@
 /****************************************************************************
 * Falcon test suite
 *
-* CVS-Id: $Id: gcBase.fal,v 1.2 2007/06/06 13:01:54 jonnymind Exp $
-*
 * ID: 51a
 * Category: gc
-* Subcategory: 
+* Subcategory:
 * Short: Garbage collection - basic
 * Description:
 *  Test for correct accounting of garbage collection when no items are

@@ -73,16 +73,16 @@ class TryFrame
    uint32 m_pc;
    uint32 m_stackBase;
    uint32 m_frameBase;
-   uint32 m_moduleId;
+   Module *m_module;
 
    friend class VMachine;
 public:
 
-   TryFrame( int32 pc, int32 sb, int32 fb, int32 modId ):
+   TryFrame( int32 pc, int32 sb, int32 fb, Module *mod ):
       m_pc( pc ),
       m_stackBase( sb ),
       m_frameBase( fb ),
-      m_moduleId( modId )
+      m_module( mod )
       {}
 };
 
@@ -293,7 +293,7 @@ protected:
    {
    public:
       VarDef *vd;
-      int16 modId;
+      LiveModule *lmod;
    };
 
    /** Currently executed symbol.
@@ -302,8 +302,16 @@ protected:
       \todo, make always nonzeor
    */
    Symbol* m_symbol;
-   /** Position of the module that contains the current symbol in the globals vector. */
-   uint16 m_moduleId;
+
+   /** Module that contains the currently being executed symbol. */
+   const Module *m_currentModule;
+
+   /** Main module.
+      This is the last linked module, that should also be the module where to search
+      for start symbols; by default, prepare() and launch() searches symbol here,
+      and if not found, they search start symbols in globally exported symbol tables.
+   */
+   LiveModule *m_mainModule;
 
    Item m_regA;
    Item m_regB;
@@ -346,15 +354,10 @@ protected:
    /** Smaller check in op loops. */
    uint32 m_opNextCheck;
 
-   /** Variables are organized in this way
-      Each modules has a vector of varibles in which each position is occupied by
-      the item that represents the current value of a given symbol. This vector is
-      the "module globals vector". Each module is given an ID from 1 to N that
-      represents the position of the module in the module list.
-
-      m_globals is filled during the link phase.
+   /**  Map of live modules.
+      Todo: better docs.
    */
-   GlobalsVector m_globals;
+   LiveModuleMap m_liveModules;
 
    /** Stack base is the position of the current stack frame.
       As there can't be any stack frame at 0, a position of 0 means that the VM is running
@@ -400,7 +403,7 @@ protected:
    VMContext *m_currentContext;
 
    /** Modules held in this VM */
-   ModuleVector m_modules;
+   //ModuleVector m_modules;
 
    /** Ready to run contexts. */
    ContextList m_contexts;
@@ -491,7 +494,8 @@ protected:
    void reschedule( VMContext *ctx, numeric secs );
    void rotateContext();
 
-   bool linkSubClass( uint32 modId, const Symbol *clssym, Map &props, AttribHandler **attribs );
+   /** Service recursive function called by LinkClass to create a class. */
+   bool linkSubClass( LiveModule *mod , const Symbol *clssym, Map &props, AttribHandler **attribs );
 
    /** Passes current frame to the called item.
          Used by the PASS opcode, this element removes the local variables and
@@ -680,9 +684,17 @@ public:
    void init();
 
    bool link( Runtime *rt );
-   bool link( Module *module );
+   bool link( Module *module, bool isMainModule=true );
 
-   CoreClass *linkClass( uint32 modId, Symbol *clsym );
+   /** Creates a new class live item.
+      This function recursively resolves inheritences and constructor of
+      classes to generate a "CoreClass", which is a template ready
+      to create new instances.
+
+      \param lmod the live module (module + live data) where this class is generated
+      \param clsym the symbol where the class is defined.
+   */
+   CoreClass *linkClass( LiveModule *lmod, Symbol *clsym );
 
    /** Prepares a routine.
       The launch() method calls prepare() and run() in succession.
@@ -859,57 +871,28 @@ public:
 
    /** Returns a reference to the nth item in the current module global variables vector. */
    Item &moduleItem( uint32 pos ) { return currentGlobals().itemAt( pos ); }
-   /** Returns a reference to the nth item in the current module global variables vector. */
-   Item &moduleItem( int16 modId, uint32 pos ) { return m_globals.vat(modId).itemAt( pos ); }
 
    /** Returns a reference to the nth item in the current module global variables vector (const version). */
    const Item &moduleItem( uint32 pos ) const { return currentGlobals().itemAt( pos ); }
 
    /** Returns the module in which the execution is currently taking place. */
-   Module *currentModule() const { return m_modules.moduleAt( m_moduleId ); }
+   const Module *currentModule() const { return m_currentModule; }
 
-   /** Returns the globals vector of nth module. */
-   ItemVector &globalsOfModule( uint32 id ) { return m_globals.vat( id ); }
-
-   /** Returns the globals vector of nth module (const version). */
-   const ItemVector &globalsOfModule( uint32 id ) const { return m_globals.vat( id ); }
-
-   /** Returns a reference to the nth item in the superglobal vector. */
-   Item &globalItem( uint32 pos ) { return superGlobals().itemAt( pos ); }
-
-   /** Returns a reference to the nth item in the superglobal vector (const version). */
-   const Item &globalItem( uint32 pos ) const { return superGlobals().itemAt( pos ); }
-
-   /** Returns the count of linked modules */
-   uint32 moduleListSize() const { return m_globals.size(); }
-
-   /** Unlink a certain count of modules, so that the count of linked modules is reduced.
-      This function unloads from the virtual machine all the modules that have
-      been loaded after the nth one (given as parameter). The modules are decreffed,
-      and may eventually be destroyed.
-
-	  To restore the VM to a previous link status, record the return value of moduleListSize()
-	  and apply it to the unlinkUpTo() method. In example:
-
-	  \code
-	  vm->link( rtl_module );
-	  uint32 modCount = vm->moduleListSize();  // suppose 3, modules 0, 1 and 2
-
-     my_script_runtime->...  // load the script
-	  vm->link( my_script_runtime );
-     vm->launch();
-
-	  //reset the VM so that it keeps rtl
-	  vm->unlinkUpTo( modCount );  // removes everything above module 2 (from 3 to size).
-	  \endcode
-
-      \param count number of modules to be left in the VM.
+   /** Find a linked module with a given name.
+      Returns a pointer to the linked live module if the name exists, or 0 if the named module
+      doesn't exist.
    */
-   bool unlinkUpTo( uint32 count );
+   LiveModule *findModule( const String &name );
 
-   const Module *getModule( int16 modId ) const {
-      return m_modules.moduleAt( modId );
-   }
+   /** Return the map of live modules ordered by name.
+      \return the list of live (linked) modules.
+   */
+   LiveModuleMap &liveModules() { return m_liveModules; }
+
+   /** Return the map of live modules ordered by name (const version).
+      \return the list of live (linked) modules.
+   */
+   const LiveModuleMap &liveModules() const { return m_liveModules; }
 
    /** Sets the error handler.
       If there is a previously owned error handler in this VM, it is destroyed now.
@@ -1137,13 +1120,24 @@ public:
 
    const SymModule *findGlobalSymbol( const String &str ) const;
 
-   Item *findGlobalItem( const String &name ) const
-   {
-      const SymModule *sm = findGlobalSymbol( name );
-      if ( sm == 0 ) return 0;
-      return m_globals.vat( sm->moduleId() ).itemAt( sm->symbolId() ).dereference();
-   }
+   /** Returns a live global given the name of its symbol.
+      Items exported by moduels becomes associated with an item that can be
+      accessed (and then changed) by both scripts and modules extensions.
 
+      This method returns a pointer to the item that stores the current value
+      of the given global symbol, and it is exactly the item that the scripts
+      using that symbol are seeing.
+
+      The returned item is already dereferenced. Changing it will change all
+      items referred by this symbol in all the modules.
+
+      \note To create failsafe new instances of classes or to access critical
+      functions exported by modules, use findWKI().
+
+      \param name the symbol to be searched.
+      \return the global item associated with the symbol if found, or 0 if the item does not exist.
+   */
+   Item *findGlobalItem( const String &name ) const;
 
    /** Returns the value of a local variable.
       This function searces for a variable in the local context, and eventually in the
@@ -1367,11 +1361,11 @@ public:
 
 
    /** Creates the template for a core class.
-      \param modId the module id for which this class is being created.
+      \param lmod the module id for which this class is being created.
       \param pt a ClassDef wise property table containing properties definition.
       \return a newly created property table ready to be added to a core class.
    */
-   PropertyTable *createClassTemplate( int modId, const Map &pt );
+   PropertyTable *createClassTemplate( LiveModule *lmod, const Map &pt );
 
    /** Publish a service.
       Will raise an error and return false if the service is already published.
@@ -1389,13 +1383,6 @@ public:
    */
    Service *getService( const String &name );
 
-   /** Returns the module ID of a given module.
-      The function is quite inefficient now, so use sparcely.
-      Currently, is used to deserialize callable items.
-      \param modName the module name as it has been inserted in the VM
-      \return The module id if the name can be found, or -1 if not found.
-   */
-   int16 getModuleId( const String modName );
 
    /** Gets the standard input stream associated with this VM.
       VM may offer this stream to RTL and module functions wishing to

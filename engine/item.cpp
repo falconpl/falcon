@@ -433,12 +433,12 @@ bool Item::methodize( const CoreObject *self )
    {
       case FLC_ITEM_FUNC:
       {
-         data->setMethod( const_cast< CoreObject *>(self), data->asFunction(), data->asModuleId() );
+         data->setMethod( const_cast< CoreObject *>(self), data->asFunction(), data->asModule() );
       }
       return true;
 
       case FLC_ITEM_METHOD:
-         data->setMethod( const_cast< CoreObject *>(self), data->asMethodFunction(), data->asModuleId() );
+         data->setMethod( const_cast< CoreObject *>(self), data->asMethodFunction(), data->asModule() );
       return true;
 
       case FLC_ITEM_ARRAY:

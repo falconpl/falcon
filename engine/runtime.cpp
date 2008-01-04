@@ -71,7 +71,7 @@ bool Runtime::addModule( Module *mod )
          const String *moduleName = (const String *) deps->data();
 
          // if we have a provider, skip this module if already found VM
-         if( (m_provider != 0 && m_provider->getModuleId( *moduleName ) >= 0)  ||
+         if( (m_provider != 0 && m_provider->findModule( *moduleName ) >= 0)  ||
             // ... or do we have already loaded the module?
             m_modules.find( moduleName ) != 0 )
          {

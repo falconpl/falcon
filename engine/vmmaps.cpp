@@ -1,7 +1,6 @@
 /*
    FALCON - The Falcon Programming Language
    FILE: vmmaps.cpp
-   $Id: vmmaps.cpp,v 1.2 2006/11/06 21:06:04 gian Exp $
 
    Map items used in VM and related stuff.
    -------------------------------------------------------------------
@@ -48,19 +47,7 @@ void SymModuleTraits::copy( void *targetZone, const void *sourceZone ) const
 
 int SymModuleTraits::compare( const void *firstz, const void *secondz ) const
 {
-   SymModule *first = (SymModule *) firstz;
-   SymModule *second = (SymModule *) secondz;
-
-   if ( first->moduleId() < second->moduleId() )
-      return -1;
-   if ( first->moduleId() > second->moduleId() )
-      return 1;
-
-   if ( first->symbolId() < second->symbolId() )
-      return -1;
-   if ( first->symbolId() > second->symbolId() )
-      return 1;
-
+   // Never used as key
    return 0;
 }
 
@@ -82,6 +69,66 @@ namespace traits
 SymModuleMap::SymModuleMap():
    Map( &traits::t_stringptr, &traits::t_symmodule )
 {}
+
+
+
+uint32 LiveModulePtrTraits::memSize() const
+{
+   return sizeof( LiveModule * );
+}
+
+void LiveModulePtrTraits::init( void *itemZone ) const
+{
+   itemZone = 0;
+}
+
+void LiveModulePtrTraits::copy( void *targetZone, const void *sourceZone ) const
+{
+   LiveModule **target = (LiveModule **) targetZone;
+   LiveModule *source = (LiveModule *) sourceZone;
+
+   *target = source;
+}
+
+int LiveModulePtrTraits::compare( const void *firstz, const void *secondz ) const
+{
+   // never used as key
+
+   return 0;
+}
+
+void LiveModulePtrTraits::destroy( void *item ) const
+{
+   LiveModule *ptr = *(LiveModule **) item;
+   delete ptr;
+}
+
+bool LiveModulePtrTraits::owning() const
+{
+   return true;
+}
+
+namespace traits
+{
+   LiveModulePtrTraits t_livemoduleptr;
+}
+
+LiveModuleMap::LiveModuleMap():
+   Map( &traits::t_stringptr, &traits::t_livemoduleptr )
+{}
+
+
+LiveModule::LiveModule( Module *mod ):
+   m_module( mod )
+{
+   m_module->incref();
+}
+
+
+LiveModule::~LiveModule()
+{
+   m_module->decref();
+}
 
 }
 

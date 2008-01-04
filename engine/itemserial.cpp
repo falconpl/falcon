@@ -65,7 +65,7 @@ bool Item::serialize_function( Stream *file, const Symbol *func, VMachine *vm ) 
       uint32 itemId = fdef->onceItemId();
       if ( itemId != FuncDef::NO_STATE )
       {
-         byte called = vm->moduleItem( asModuleId(), itemId ).isNil() ? 0 : 1;
+         byte called = asModule()->globals().itemAt( itemId ).isNil() ? 0 : 1;
          file->write( &called, 1 );
       }
 
@@ -267,7 +267,7 @@ Item::e_sercode Item::serialize( Stream *file, VMachine *vm ) const
 }
 
 
-Item::e_sercode Item::deserialize_symbol( Stream *file, VMachine *vm, Symbol **tg_sym, int16 *modId )
+Item::e_sercode Item::deserialize_symbol( Stream *file, VMachine *vm, Symbol **tg_sym, LiveModule **livemod )
 {
    if ( vm == 0 )
       return sc_missvm;
@@ -277,12 +277,13 @@ Item::e_sercode Item::deserialize_symbol( Stream *file, VMachine *vm, Symbol **t
    if ( ! name.deserialize( file ) )
       return sc_ferror;
 
-   *modId = vm->getModuleId( name );
-   if ( *modId == -1 ) {
+   LiveModule *lmod = vm->findModule( name );
+   *livemod = lmod;
+   if ( lmod == 0 ) {
       return sc_misssym;
    }
 
-   const Module *mod = vm->getModule( *modId );
+   const Module *mod = lmod->module();
 
    // read the symbol name
    if ( ! name.deserialize( file ) )
@@ -306,9 +307,9 @@ Item::e_sercode Item::deserialize_function( Stream *file, VMachine *vm )
       return sc_missvm;
 
    Symbol *sym;
-   int16 modId;
+   LiveModule *lmod;
 
-   e_sercode sc = deserialize_symbol( file, vm, &sym, &modId );
+   e_sercode sc = deserialize_symbol( file, vm, &sym, &lmod );
    if ( sc != sc_ok  )
       return sc;
 
@@ -316,7 +317,7 @@ Item::e_sercode Item::deserialize_function( Stream *file, VMachine *vm )
 
    if ( ! sym->isFunction() ) {
       // external function
-      setFunction( sym, modId );
+      setFunction( sym, lmod );
       return sc_ok;
    }
 
@@ -330,12 +331,12 @@ Item::e_sercode Item::deserialize_function( Stream *file, VMachine *vm )
       byte called;
       file->read( &called, 1 );
       if( called )
-         vm->moduleItem( modId, itemId ).setInteger( 1 );
+         lmod->globals().itemAt( itemId ).setInteger( 1 );
       else
-         vm->moduleItem( modId, itemId ).setNil();
+         lmod->globals().itemAt( itemId ).setNil();
    }
 
-   setFunction( sym, modId );
+   setFunction( sym, lmod );
    return sc_ok;
 }
 
@@ -542,7 +543,7 @@ Item::e_sercode Item::deserialize( Stream *file, VMachine *vm )
          if ( ! func.isFunction() )
             return sc_invformat;
 
-         setMethod( obj.asObject(), func.asFunction(), func.asModuleId() );
+         setMethod( obj.asObject(), func.asFunction(), func.asModule() );
          return sc_ok;
       }
 
@@ -553,12 +554,12 @@ Item::e_sercode Item::deserialize( Stream *file, VMachine *vm )
 
          // read the module name
          Symbol *sym;
-         int16 modId;
-         e_sercode sc = deserialize_symbol( file, vm, &sym, &modId );
+         LiveModule *lmod;
+         e_sercode sc = deserialize_symbol( file, vm, &sym, &lmod );
          if ( sc != sc_ok  )
             return sc;
 
-         Item *clitem = &vm->moduleItem( modId, sym->itemId() );
+         Item *clitem = lmod->globals().itemPtrAt( sym->itemId() );
 
          // Create the core object, but don't fill attribs.
          CoreObject *object = clitem->asClass()->createInstance(false);
@@ -657,7 +658,7 @@ bool Item::clone( Item &target, VMachine *vm ) const
          if ( clone == 0 ) {
             return false;
          }
-         target.setMethod( clone, item->asMethodFunction(), item->asModuleId() );
+         target.setMethod( clone, item->asMethodFunction(), item->asModule() );
       }
       break;
 

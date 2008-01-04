@@ -66,7 +66,7 @@ Item *VMachine::getOpcodeParam( register uint32 bc_pos )
       return m_imm + bc_pos;
 
       case P_PARAM_STRID:
-		 m_imm[bc_pos].setString( const_cast< String *>( m_modules.moduleAt( m_moduleId )->getString( endianInt32(*reinterpret_cast<int32 *>( m_code + m_pc_next ) ) ) ) );
+		 m_imm[bc_pos].setString( const_cast< String *>( m_currentModule->getString( endianInt32(*reinterpret_cast<int32 *>( m_code + m_pc_next ) ) ) ) );
 		 m_pc_next += sizeof( int32 );
       return m_imm + bc_pos;
 
@@ -778,7 +778,8 @@ void opcodeHandler_FORK( register VMachine *vm )
    if ( pSize > 0 ) {
       ctx->getStack()->reserve( pSize );
       for( uint32 i = 0; i < pSize; i++ ) {
-         ctx->getStack()->push( vm->m_stack->at( vm->m_stack->size() - pSize + i ) );
+         Item temp = vm->m_stack->itemAt( vm->m_stack->size() - pSize + i );
+         ctx->getStack()->push( &temp );
       }
       vm->m_stack->resize( vm->m_stack->size() - pSize );
    }
@@ -1804,7 +1805,7 @@ void opcodeHandler_LDP( register VMachine *vm )
                Item *p = prop.dereference();
                switch( p->type() ) {
                   case FLC_ITEM_FUNC:
-                     vm->m_regA.setMethod( source->asObject(), p->asFunction(), p->asModuleId() );
+                     vm->m_regA.setMethod( source->asObject(), p->asFunction(), p->asModule() );
                   break;
 
                   case FLC_ITEM_CLASS:
@@ -1831,7 +1832,7 @@ void opcodeHandler_LDP( register VMachine *vm )
                // now, accessing a method in a class means that we want to call the base method in a
                // self item:
                if( prop->type() == FLC_ITEM_FUNC && self != 0 )
-                  vm->m_regA.setMethod( self, prop->asFunction(), prop->asModuleId() );
+                  vm->m_regA.setMethod( self, prop->asFunction(), prop->asModule() );
                else
                   vm->raiseRTError(
                      new RangeError( ErrorParam( e_prop_acc ).origin( e_orig_vm ).extra( "LDP" ) ) );
@@ -2506,7 +2507,7 @@ void opcodeHandler_STPS( register VMachine *vm )
       // Are we restoring an original item?
       if( item.isMethod() && item.asMethodObject() == target->asObject() )
       {
-         item.setFunction( item.asMethodFunction(), item.asModuleId() );
+         item.setFunction( item.asMethodFunction(), item.asModule() );
       }
       else if ( item.isString() )
       {
@@ -2721,7 +2722,7 @@ void opcodeHandler_STP( register VMachine *vm )
       // Are we restoring an original item?
       if( source->isMethod() && source->asMethodObject() == target->asObject() )
       {
-         temp.setFunction( source->asMethodFunction(), source->asModuleId() );
+         temp.setFunction( source->asMethodFunction(), source->asModule() );
          source = &temp;
       }
       else if ( source->isString() && source->asString()->garbageable() )
@@ -2873,7 +2874,7 @@ void opcodeHandler_STPR( register VMachine *vm )
             // If the source is a method, we have to put in just its function, discarding the recored object.
             if( source->type() == FLC_ITEM_METHOD ) {
                // will instantiate by value
-               Item temp( source->asMethodFunction(), source->asModuleId() );
+               Item temp( source->asMethodFunction(), source->asModule() );
                if( target->asObject()->setProperty( *operand2->asString(), temp ) )
                   return;
             }
@@ -2906,6 +2907,10 @@ void opcodeHandler_STPR( register VMachine *vm )
 //56
 void opcodeHandler_TRAV( register VMachine *vm )
 {
+   // we need some spare space. We preallocate it because if the parameters are in
+   // the stack, we need their pointers to stay valid.
+   vm->m_stack->resize( vm->m_stack->size() + 3 );
+
    // get the jump label.
    int wayout = vm->getNextNTD32();
    Item *real_dest = vm->getOpcodeParam( 2 );  // we may need it undereferenced
@@ -2937,7 +2942,7 @@ void opcodeHandler_TRAV( register VMachine *vm )
             }
 
             for ( uint32 i = 0; i < varCount; i ++ ) {
-               vm->stackItem( vm->m_stack->size() - (uint32)varCount + i ).dereference()->copy(
+               vm->stackItem( vm->m_stack->size() - (uint32)varCount + i - 3).dereference()->copy(
                         * ((* sourceItem->asArray() )[i].dereference()) );
             }
          }
@@ -2945,7 +2950,7 @@ void opcodeHandler_TRAV( register VMachine *vm )
             dest->copy( *(sourceItem->dereference()) );
 
          // prepare ... iterator
-         vm->pushParameter( (int64) 0 );
+         vm->m_stack->itemAt( vm->m_stack->size()-3 ) = ( (int64) 0 );
       }
       break;
 
@@ -2971,13 +2976,13 @@ void opcodeHandler_TRAV( register VMachine *vm )
          CoreObject *obj = new CoreObject( vm, iter );
 
          register int stackSize = vm->m_stack->size();
-         vm->stackItem( stackSize - 2 ).dereference()->
+         vm->stackItem( stackSize - 5 ).dereference()->
                copy( iter->getCurrentKey() );
-         vm->stackItem( stackSize - 1 ).dereference()->
+         vm->stackItem( stackSize - 4 ).dereference()->
                copy( *iter->getCurrent().dereference() );
 
          // prepare... iterator
-         vm->pushParameter( obj );
+         vm->m_stack->itemAt( vm->m_stack->size()-3 ) = obj;
       }
       break;
 
@@ -3012,7 +3017,7 @@ void opcodeHandler_TRAV( register VMachine *vm )
          *dest->dereference() = iter->getCurrent();
 
          // prepare... iterator
-         vm->pushParameter( obj );
+         vm->m_stack->itemAt( vm->m_stack->size()-3 ) = obj;
       }
       break;
 
@@ -3040,7 +3045,7 @@ void opcodeHandler_TRAV( register VMachine *vm )
          *dest->dereference() = iter->getCurrent();
 
          // prepare... iterator
-         vm->pushParameter( obj );
+         vm->m_stack->itemAt( vm->m_stack->size()-3 ) = obj;
       }
       break;
 
@@ -3055,7 +3060,7 @@ void opcodeHandler_TRAV( register VMachine *vm )
             return;
          }
          *dest->dereference() = new GarbageString( vm, source->asString()->subString(0,1) );
-         vm->pushParameter( (int64) 0 );
+         vm->m_stack->itemAt( vm->m_stack->size()-3 ) = ( (int64) 0 );
          break;
 
       case FLC_ITEM_RANGE:
@@ -3071,32 +3076,32 @@ void opcodeHandler_TRAV( register VMachine *vm )
             return;
          }
          *dest->dereference() = (int64) source->asRangeStart();
-         vm->pushParameter( (int64) source->asRangeStart() );
+         vm->m_stack->itemAt( vm->m_stack->size()-3 ) = ( (int64) source->asRangeStart() );
          break;
 
       case FLC_ITEM_NIL:
          // jump out
          goto trav_go_away;
-         return;
+
 
       default:
          vm->raiseError( e_invop, "TRAV" );
-         return;
+         goto trav_go_away;
    }
 
    // after the iterator/counter, push the source
    if ( vm->operandType( 1 ) == P_PARAM_INT32 || vm->operandType( 1 ) == P_PARAM_INT64 )
    {
-      vm->pushParameter( dest->asInteger() );
+      vm->m_stack->itemAt( vm->m_stack->size()-2 ) = dest->asInteger();
    }
    else {
       Item refDest;
       vm->referenceItem( refDest, *real_dest );
-      vm->pushParameter( refDest );
+      vm->m_stack->itemAt( vm->m_stack->size()-2 ) = refDest;
    }
 
    // and then the source by copy
-   vm->pushParameter( *source );
+   vm->m_stack->itemAt( vm->m_stack->size()-1 ) = *source;
 
    // we're done.
    return;
@@ -3108,12 +3113,12 @@ trav_go_away:
    if ( vm->operandType( 1 ) == P_PARAM_INT32 || vm->operandType( 1 ) == P_PARAM_INT64 )
    {
       uint64 vars = dest->asInteger();
-      if( vars > vm->m_stack->size() )
+      if( vars + 3 > vm->m_stack->size() )
       {
          vm->raiseError( e_stackuf, "TRAV" );
       }
       else {
-         vm->m_stack->resize( vm->m_stack->size() - (uint32)vars );
+         vm->m_stack->resize( vm->m_stack->size() - (uint32)vars - 3 );
       }
    }
 }

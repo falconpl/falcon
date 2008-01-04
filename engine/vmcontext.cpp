@@ -1,7 +1,6 @@
 /*
    FALCON - The Falcon Programming Language.
    FILE: vmcontext.cpp
-   $Id: vmcontext.cpp,v 1.8 2007/08/18 11:08:08 jonnymind Exp $
 
    Short description
    -------------------------------------------------------------------
@@ -61,7 +60,8 @@ VMContext::VMContext( VMachine *origin )
    m_regS2 = origin->m_regS2;
 
    m_symbol = origin->m_symbol;
-   m_moduleId = origin->m_moduleId;
+   m_currentModule = origin->m_currentModule;
+   m_currentGlobals = origin->m_currentGlobals;
    m_code = origin->m_code;
    m_pc = origin->m_pc;
    m_pc_next = origin->m_pc_next;
@@ -75,7 +75,8 @@ VMContext::~VMContext()
 void VMContext::save( const VMachine *origin )
 {
    m_symbol = origin->m_symbol;
-   m_moduleId = origin->m_moduleId;
+   m_currentModule = origin->m_currentModule;
+   m_currentGlobals = origin->m_currentGlobals;
    m_code = origin->m_code;
    m_pc = origin->m_pc;
    m_pc_next = origin->m_pc_next;
@@ -92,8 +93,8 @@ void VMContext::save( const VMachine *origin )
 void VMContext::restore( VMachine *origin ) const
 {
    origin->m_symbol = m_symbol;
-   origin->m_moduleId = m_moduleId;
-   origin->m_currentGlobals = origin->m_currentGlobals;
+   origin->m_currentModule = m_currentModule;
+   origin->m_currentGlobals = m_currentGlobals;
    origin->m_code = m_code;
    origin->m_pc = m_pc;
    origin->m_pc_next = m_pc_next;
@@ -112,8 +113,8 @@ void VMContext::wakeup()
 {
    if ( m_sleepingOn != 0 )
    {
-       m_sleepingOn->unsubscribe( this );
-	   m_sleepingOn = 0; // should be done by unsubscribe, but...
+      m_sleepingOn->unsubscribe( this );
+      m_sleepingOn = 0; // should be done by unsubscribe, but...
    }
 }
 

@@ -44,7 +44,8 @@ class VMSemaphore;
 class FALCON_DYN_CLASS VMContext: public BaseAlloc
 {
    Symbol* m_symbol;
-   uint32 m_moduleId;
+   const Module *m_currentModule;
+   ItemVector *m_currentGlobals;
 
    Item m_regA;
    Item m_regB;

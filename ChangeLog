@@ -1,3 +1,10 @@
+Falcon (0.8.7)
+  * bugfix: TRAV opcode may destroy its parameters while setting first loop
+            on rare conditions. Fixed.
+  * major: VM now has a map of modules and global variables instead of two
+           parallel arrays. This allows arbitrary module unlinking.
+  * major: Item size is now 16 bytes. This allow space for stepped ranges.
+
 Falcon (0.8.6)
   * bugfix: incorrect format of 0.x floating point numbers.
   * major: Completed attribute model.
