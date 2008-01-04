@@ -1,7 +1,6 @@
 /*
    FALCON - The Falcon Programming Language
    FILE: detmempool.cpp
-   $Id: detmempool.cpp,v 1.3 2007/08/18 11:08:07 jonnymind Exp $
 
    Deterministic memory pool
    -------------------------------------------------------------------
@@ -58,6 +57,7 @@ bool DetMemPool::gcDetMark()
    {
       LiveModule *currentMod = *(LiveModule **) iter.currentValue();
       ItemVector *current = &currentMod->globals();
+      currentMod->mark( currentMark() );
 
       for( uint32 j = 0; j < current->size(); j++ ) {
          markItemFast( current->itemAt( j ) );

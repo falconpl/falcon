@@ -339,7 +339,7 @@ bool VMachine::link( Module *mod, bool isMainModule )
 
    // Ok, the module is now in.
    // We can now increment reference count and add it to ourselves
-   LiveModule *livemod = new LiveModule( mod );
+   LiveModule *livemod = new LiveModule( this, mod );
    m_liveModules.insert( &mod->name(), livemod );
 
    // by default, set the main module to the lastly linked module.
@@ -1069,6 +1069,9 @@ bool VMachine::callItem( const Item &callable, int32 paramCount, e_callMode call
    CoreObject *self = 0;
    LiveModule *targetMod;
 
+   if ( ! callable.isCallable() )
+      return false;
+
    switch( callable.type() )
    {
       case FLC_ITEM_FBOM:
@@ -1371,6 +1374,9 @@ bool VMachine::callItemPass( const Item &callable  )
    FuncDef *tg_def;
    CoreObject *self = 0;
    LiveModule *targetMod;
+
+   if ( ! callable.isCallable() )
+      return false;
 
    switch( callable.type() )
    {
@@ -2943,9 +2949,43 @@ Item *VMachine::findGlobalItem( const String &name ) const
 
 LiveModule *VMachine::findModule( const String &name )
 {
-   return *(LiveModule **) m_liveModules.find( &name );
+   LiveModule **lm =(LiveModule **) m_liveModules.find( &name );
+   if ( lm != 0 )
+      return *lm;
+   return 0;
 }
 
+
+bool VMachine::unlink( const Runtime *rt )
+{
+   for( uint32 iter = 0; iter < rt->moduleVector()->size(); ++iter )
+   {
+      if (! unlink( rt->moduleVector()->moduleAt( iter ) ) )
+         return false;
+   }
+
+   return true;
+}
+
+
+bool VMachine::unlink( const Module *module )
+{
+   MapIterator iter;
+   if ( !m_liveModules.find( &module->name(), iter ) )
+      return false;
+   
+   // get the thing
+   LiveModule *lm = *(LiveModule **) iter.currentValue();
+
+   // delete the iterator from the map
+   m_liveModules.erase( iter );
+
+   //detach the object, so it becomes an invalid callable reference
+   lm->detachModule();
+
+   // delete the key, which will detach the module, if found.
+   return true;
+}
 
 }
 

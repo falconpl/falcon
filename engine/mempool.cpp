@@ -238,6 +238,9 @@ bool MemPool::gcMark()
    while( iter.hasCurrent() )
    {
       LiveModule *currentMod = *(LiveModule **) iter.currentValue();
+      // We must mark the current module.
+      currentMod->mark( currentMark() );
+
       ItemVector *current = &currentMod->globals();
       for( uint32 j = 0; j < current->size(); j++ ) {
          markItemFast( current->itemAt( j ) );
@@ -283,7 +286,7 @@ bool MemPool::gcMark()
    return true;
 }
 
-void MemPool::markItem( const Item &item )
+void MemPool::markItem( Item &item )
 {
    switch( item.type() )
    {
@@ -376,15 +379,24 @@ void MemPool::markItem( const Item &item )
 
       case FLC_ITEM_METHOD:
       {
-         CoreObject *co = item.asMethodObject();
-         if( co->mark() != currentMark() ) {
-            m_aliveItems++;
-            m_aliveMem += co->m_gcSize;
-            co->mark( currentMark() );
-            // mark all the property values.
-            for ( uint32 i = 0; i < co->propCount(); i ++ ) {
-               markItemFast( co->getPropertyAt( i ) );
+         // if the item isn't alive, give it the death blow.
+         if ( item.asModule()->module() == 0 )
+            item.setNil();
+         else
+         {
+            CoreObject *co = item.asMethodObject();
+            if( co->mark() != currentMark() ) {
+               m_aliveItems++;
+               m_aliveMem += co->m_gcSize;
+               co->mark( currentMark() );
+               // mark all the property values.
+               for ( uint32 i = 0; i < co->propCount(); i ++ ) {
+                  markItemFast( co->getPropertyAt( i ) );
+               }
             }
+
+            // no need to mark the live modue; 
+            // if it's alive it has been marked by the main loop
          }
       }
       break;
@@ -428,6 +440,12 @@ void MemPool::markItem( const Item &item )
             }
          }
       }
+      break;
+
+      case FLC_ITEM_FUNC:
+         // kill items referencing nothing
+         if ( item.asModule()->module() == 0 )
+            item.setNil();
       break;
 
       // all the others are shallow items; already marked

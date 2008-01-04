@@ -1,7 +1,6 @@
 /*
    FALCON - The Falcon Programming Language.
    FILE: flc_mempool.h
-   $Id: mempool.h,v 1.16 2007/08/12 17:44:43 jonnymind Exp $
 
    garbage basket class
    -------------------------------------------------------------------
@@ -49,6 +48,7 @@ public:
    {}
 
    const Item &item() const { return m_item; }
+   Item &item() { return m_item; }
 
    GarbageLock *next() const { return m_garbage_next; }
    GarbageLock *prev() const { return m_garbage_prev; }
@@ -99,7 +99,6 @@ protected:
    bool gcMark();
    void gcSweep();
 
-   byte currentMark() const { return m_status; }
    void changeMark() { m_status = m_status == 1 ? 0 : 1; }
    Garbageable *ringRoot() const { return m_garbageRoot; }
 
@@ -140,10 +139,10 @@ public:
       This method should be called only from inside GC mark callbacks
       of class having some GC hook.
    */
-   void markItem( const Item &itm );
+   void markItem( Item &itm );
 
    /** Prevents calling the markitem function in case of shallow items. */
-   void markItemFast( const Item &itm )
+   void markItemFast( Item &itm )
    {
       if( itm.type() >= FLC_ITEM_STRING )
          markItem( itm );
@@ -299,6 +298,9 @@ public:
       \param locked entity to be unlocked.
    */
    void unlock( GarbageLock *locked );
+
+   /** Return the value of the current mark. */
+   byte currentMark() const { return m_status; }
 };
 
 

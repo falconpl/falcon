@@ -1,7 +1,6 @@
 /*
    FALCON - The Falcon Programming Language.
    FILE: flc_vm.h
-   $Id: vm.h,v 1.56 2007/08/19 09:46:44 jonnymind Exp $
 
    Falcon virtual machine.
    -------------------------------------------------------------------
@@ -683,8 +682,96 @@ public:
    */
    void init();
 
+   /** Links a set of modules stored in a runtime.
+      The modules that have been loaded and pre-linked by the runtime
+      are correctly inserted in the VM. The topmost module in the
+      Runtime is set as main module.
+      
+      After the link step, the runtime is not needed anymore and can
+      be destroyed; the modules are safely referenced in the VM.
+
+      In case of link error, the error handler of the VM is signaled and the
+      function returns false, otherwise it returns true. If the VM hasn't an
+      error handler set, nothing is signaled, but the error is still available
+      after return through exitError() method.
+
+      \note The main module is the module that is preferentially searched
+            for start symbol(s) by prepare() function.
+      \param rt the runtime to be linked
+      \return false on link time error, true on success
+   */
    bool link( Runtime *rt );
+   
+   /** Links a single module.
+      The last-linked module is usually set as the main module, but it is possible
+      to link a non-main module.
+
+      After linking, the caller may release the reference if the module is needed
+      only in this VM; the VM keeps a reference to the module.
+
+      The VM holds a reference to the module also in case of errors: the module
+      may be still needed for error reports or debug. To destroy definitely the
+      module, the VM must be destroyed or the module must be unlinked.
+
+      In case of link error, the error handler of the VM is signaled and the
+      function returns false, otherwise it returns true. If the VM hasn't an
+      error handler set, nothing is signaled, but the error is still available
+      after return through exitError() method.
+
+      \note The main module is the module that is preferentially searched
+            for start symbol(s) by prepare() function.
+      \param rt the runtime to be linked
+      \param isMainModule false to prevent this module to be chosen as startup module.
+      \return false on link time error, true on success   
+   */
    bool link( Module *module, bool isMainModule=true );
+
+   /** Unlinks all the modules in the runtime.
+
+      The unlinked module(s) become unavailable, and all the callable items referencing
+      symbols in the module become uncallable. Exported global variables survive unlinking,
+      and their value can still be inspected, modified and discarded after they
+      have been unlinked.
+
+      It is not possible to unlink a module which is currently being run (that is,
+      which is the module holding the currently executed symbol).
+
+      It is possible to unlink the main module, but a new main module won't be
+      automatically elected; unless the start symbol is exported by other modules,
+      prepare() will fail if a new main module is not linked in the VM.
+
+      The function may return false either if one of the module in the runtime
+      is not present in the VM or if one of them is the "current module". However,
+      some of the modules may have got unlinked int he meanwhile, and unlinking
+      also dereferences them. 
+
+      \param rt the runtime with all the modules to be unlinked
+      \return true on success, false on error.
+   */
+   bool unlink( const Runtime *rt );
+
+   /** Unlinks a module.
+
+      The unlinked module become unavailable, and all the callable items referencing
+      symbols in the module become uncallable. Exported global variables survive unlinking,
+      and their value can still be inspected, modified and discarded after they
+      have been unlinked.
+
+      It is not possible to unlink a module which is currently being run (that is,
+      which is the module holding the currently executed symbol).
+
+      It is possible to unlink the main module, but a new main module won't be
+      automatically elected; unless the start symbol is exported by other modules,
+      prepare() will fail if a new main module is not linked in the VM.
+
+      The function may return false either if the module
+      is not present in the VM or if it is the "current module".
+
+      \param module the module to be unlinked.
+      \return true on success, false on error.
+   */
+   bool unlink( const Module *module );
+
 
    /** Creates a new class live item.
       This function recursively resolves inheritences and constructor of

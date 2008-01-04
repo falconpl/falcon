@@ -38,6 +38,7 @@
 namespace Falcon {
 
 class Symbol;
+class Item;
 
 
 class FALCON_DYN_CLASS ItemVector: public GenericVector
@@ -82,15 +83,31 @@ public:
    known in the module.
 
    A module can be entered only once in the VM, and it is uniquely identified by a name.
+
+   This class acts also as a weak reference between live callable items and modules.
+   When a live module is unlinked, the contents of this class are zeroed and 
+   every callable item referencing this module becomes a nil as isCallable() 
+   gets called.
+
+   This object is garbageable; it gets referenced when it's in the module map and by
+   items holding a callable in this module. When a module is unlinked, the LiveModule
+   may be destroyed when it is not referenced in garbage anymore, or at VM termination.
+
+   \note Although this is a Garbageable item, and as such, it resides in the memory pool,
+   there isn't any need for precise accounting of related memory, as globals are allocated
+   and destroyed when the module is linked or unlinked, and not (necessarily) when this
+   item is collected. As the memory associated with this object is separately reclaimed
+   by detachModule(), and it cannot possibly be reclaimed during a collection loop,
+   there is no meaning in accounting it.
 */
 
-class FALCON_DYN_CLASS LiveModule: public BaseAlloc
+class FALCON_DYN_CLASS LiveModule: public Garbageable
 {
    Module *m_module;
    ItemVector m_globals;
 
 public:
-   LiveModule( Module *mod );
+   LiveModule( VMachine *vm, Module *mod );
    ~LiveModule();
 
    const Module *module() const { return m_module; }
@@ -103,6 +120,22 @@ public:
    /** Just a shortcut to the source of the module held by this LiveModule. */
    const byte *code() const { return m_module->code(); }
 
+   /** Disengage a module after a module unlink. */
+   void detachModule();
+
+   /** Is this module still alive?
+       Short for this->module() != 0
+       \return true if the module is still alive.
+   */
+   bool isAlive() const { return m_module != 0; }
+
+   /** Return a module item given a global symbol name.
+      This is an utility funtion retreiving an global item declared by the
+      module that is referenced in this live data. 
+      \param symName the name of the global symbol for which this item must be found
+      \return 0 if not found or a pointer to the item which is indicated by the symbol
+   */
+   Item *findModuleItem( const String &symName ) const;
 };
 
 

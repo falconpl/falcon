@@ -1,7 +1,6 @@
 /*
    FALCON - The Falcon Programming Language.
    FILE: flc_item.h
-   $Id: item.h,v 1.21 2007/08/18 11:08:06 jonnymind Exp $
 
    Basic Item Api.
    -------------------------------------------------------------------
@@ -396,6 +395,12 @@ public:
    }
 
    bool isCallable() const;
+
+   /** Tells if this item is callable.
+      The non-const version of this function will turn this object into a nil
+      if the item referenced a dead module. 
+   */
+   bool isCallable();
 
    bool isOrdinal() const {
       return type() == FLC_ITEM_INT || type() == FLC_ITEM_NUM;

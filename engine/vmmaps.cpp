@@ -99,13 +99,16 @@ int LiveModulePtrTraits::compare( const void *firstz, const void *secondz ) cons
 
 void LiveModulePtrTraits::destroy( void *item ) const
 {
+   /* Owned by GC 
    LiveModule *ptr = *(LiveModule **) item;
    delete ptr;
+   */
 }
 
 bool LiveModulePtrTraits::owning() const
 {
-   return true;
+   /* Owned by GC */
+   return false;
 }
 
 namespace traits
@@ -118,7 +121,8 @@ LiveModuleMap::LiveModuleMap():
 {}
 
 
-LiveModule::LiveModule( Module *mod ):
+LiveModule::LiveModule( VMachine *vm, Module *mod ):
+   Garbageable( vm, sizeof( *this ) ),
    m_module( mod )
 {
    m_module->incref();
@@ -127,7 +131,32 @@ LiveModule::LiveModule( Module *mod ):
 
 LiveModule::~LiveModule()
 {
-   m_module->decref();
+   if ( m_module != 0 )
+      m_module->decref();
+}
+
+void LiveModule::detachModule()
+{
+   if ( m_module != 0 )
+   {
+      m_module->decref();
+      m_module = 0;
+      // no reason to keep globals allocated
+      m_globals.resize(0);
+   }
+}
+
+Item *LiveModule::findModuleItem( const String &symName ) const
+{
+   if ( ! isAlive() )
+      return 0;
+
+   const Symbol *sym = m_module->findGlobalSymbol( symName );
+   
+   if ( sym == 0 )
+      return 0;
+
+   return m_globals.itemPtrAt( sym->itemId() );
 }
 
 }

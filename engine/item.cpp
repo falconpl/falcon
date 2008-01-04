@@ -34,6 +34,7 @@
 #include <falcon/cdict.h>
 #include <falcon/cclass.h>
 #include <falcon/attribute.h>
+#include <falcon/vmmaps.h>
 #include <cstdlib>
 #include <cstring>
 
@@ -534,12 +535,54 @@ void Item::destroy()
 
 bool Item::isCallable() const
 {
+   if ( type() == FLC_ITEM_FBOM ||
+        type() == FLC_ITEM_CLASS )
+      return true;
+
    // simple case: normally callable item
    if( type() == FLC_ITEM_FUNC ||
           type() == FLC_ITEM_METHOD ||
-          type() == FLC_ITEM_CLASS ||
-          type() == FLC_ITEM_FBOM )
-       return true;
+          type() == FLC_ITEM_CLASS )
+   {
+      // Detached?
+      return m_data.m_liveMod->isAlive();
+   }
+
+   //a bit more complex: a callable array...
+   if( type() == FLC_ITEM_ARRAY )
+   {
+      CoreArray *arr = asArray();
+      if ( arr->length() > 0 )
+      {
+         const Item &first = arr->at(0);
+         if ( ! first.isArray() && first.isCallable() )
+            return true;
+      }
+   }
+
+   // in all the other cases, the item is not callable
+   return false;
+}
+
+
+bool Item::isCallable()
+{
+   if ( type() == FLC_ITEM_FBOM ||
+        type() == FLC_ITEM_CLASS )
+      return true;
+
+   // simple case: normally callable item
+   if( type() == FLC_ITEM_FUNC ||
+       type() == FLC_ITEM_METHOD )
+   {
+      // Detached?
+      if ( ! m_data.m_liveMod->isAlive() )
+      {
+         setNil();
+         return false;
+      }
+      return true;
+   }
 
    //a bit more complex: a callable array...
    if( type() == FLC_ITEM_ARRAY )
