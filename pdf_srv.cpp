@@ -18,6 +18,8 @@
 
 #include <stdio.h>
 
+#include <hpdf.h>
+
 #include <falcon/engine.h>
 #include "pdf.h"
 
@@ -35,25 +37,241 @@ PDFPage::PDFPage( PDF *pdf )
 {
    m_pdf = pdf;
    m_page = HPDF_AddPage( pdf->getHandle() );
+
+   // Defaults
+   m_pageSize = HPDF_PAGE_SIZE_A4;
+   m_pageDir  = HPDF_PAGE_PORTRAIT;
+   m_rotate   = 0;
 }
 
 PDFPage::~PDFPage()
 {
 }
 
-double PDFPage::getWidth()
+/********************************************************************
+ * PDF Page Properties
+ *******************************************************************/
+
+bool PDFPage::fontName( String &name )
+{
+   HPDF_Font font = HPDF_Page_GetCurrentFont( m_page );
+   name.bufferize( HPDF_Font_GetFontName( font ) );
+
+   return true;
+}
+
+int PDFPage::setFontName( const String name )
+{
+   AutoCString asName( name );
+   HPDF_Font f = HPDF_GetFont( m_pdf->getHandle(), asName.c_str(), NULL );
+   double fs = HPDF_Page_GetCurrentFontSize( m_page );
+   if ( fs == 0 )
+      fs = 12.0;
+   return HPDF_Page_SetFontAndSize( m_page, f, fs );
+}
+
+double PDFPage::fontSize()
+{
+   return HPDF_Page_GetCurrentFontSize( m_page );
+}
+
+int PDFPage::fontSize( double size )
+{
+   HPDF_Font f = HPDF_Page_GetCurrentFont( m_page );
+   return HPDF_Page_SetFontAndSize( m_page, f, size );
+}
+
+double PDFPage::width()
 {
    return HPDF_Page_GetWidth( m_page );
 }
 
-double PDFPage::getHeight()
+int PDFPage::width( double w )
+{
+   return HPDF_Page_SetWidth( m_page, w );
+}
+
+double PDFPage::height()
 {
    return HPDF_Page_GetHeight( m_page );
 }
 
-int PDFPage::setLineWidth( double width )
+int PDFPage::height( double h )
 {
-   return HPDF_Page_SetLineWidth( m_page, width );
+   return HPDF_Page_SetHeight( m_page, h );
+}
+
+int PDFPage::size()
+{
+   return m_pageSize;
+}
+
+int PDFPage::size( int s )
+{
+   m_pageSize = s;
+   return HPDF_Page_SetSize( m_page, (HPDF_PageSizes) m_pageSize, (HPDF_PageDirection) m_pageDir );
+}
+
+int PDFPage::direction()
+{
+   return m_pageDir;
+}
+
+int PDFPage::direction( int d )
+{
+   m_pageDir = d;
+   return HPDF_Page_SetSize( m_page, (HPDF_PageSizes) m_pageSize, (HPDF_PageDirection) m_pageDir );
+}
+
+int PDFPage::rotate()
+{
+   return m_rotate;
+}
+
+int PDFPage::rotate( int rotate )
+{
+   m_rotate = rotate;
+   return HPDF_Page_SetRotate( m_page, m_rotate );
+}
+
+double PDFPage::x()
+{
+   HPDF_Point p = HPDF_Page_GetCurrentPos( m_page );
+   return p.x;
+}
+
+int PDFPage::x( double x )
+{
+   HPDF_Point p = HPDF_Page_GetCurrentPos( m_page );
+   return HPDF_Page_MoveTo( m_page, x, p.y );
+}
+
+double PDFPage::y()
+{
+   HPDF_Point p = HPDF_Page_GetCurrentPos( m_page );
+   return p.y;
+}
+
+int PDFPage::y( double y )
+{
+   HPDF_Point p = HPDF_Page_GetCurrentPos( m_page );
+   return HPDF_Page_MoveTo( m_page, p.x, y );
+}
+
+double PDFPage::textX()
+{
+   HPDF_Point p = HPDF_Page_GetCurrentTextPos( m_page );
+   return p.x;
+}
+
+int PDFPage::textX( double x )
+{
+   return HPDF_Page_MoveTextPos( m_page, x, 0.0 );
+}
+
+double PDFPage::textY()
+{
+   HPDF_Point p = HPDF_Page_GetCurrentTextPos( m_page );
+   return p.y;
+}
+
+int PDFPage::textY( double y )
+{
+   HPDF_Point p = HPDF_Page_GetCurrentPos( m_page );
+   return HPDF_Page_MoveTextPos( m_page, 0.0, y );
+}
+
+double PDFPage::lineWidth()
+{
+   return HPDF_Page_GetLineWidth( m_page );
+}
+
+int PDFPage::lineWidth( double w )
+{
+   return HPDF_Page_SetLineWidth( m_page, w );
+}
+
+double PDFPage::charSpace()
+{
+   return HPDF_Page_GetCharSpace( m_page );
+}
+
+int PDFPage::charSpace( double s )
+{
+   return HPDF_Page_SetCharSpace( m_page, s );
+}
+
+double PDFPage::wordSpace()
+{
+   return HPDF_Page_GetWordSpace( m_page );
+}
+
+int PDFPage::wordSpace( double s )
+{
+   return HPDF_Page_SetWordSpace( m_page, s );
+}
+
+void PDFPage::getProperty( const String &propName, Item &prop )
+{
+   if ( propName == "fontName" )
+      prop.setString( new String( fontName() ) );
+   else if ( propName == "fontSize" )
+      prop = (int64) fontSize();
+   else if ( propName == "width" )
+      prop = width();
+   else if ( propName == "height" )
+      prop = height();
+   else if ( propName == "size" )
+      prop = (int64) size();
+   else if ( propName == "direction" )
+      prop = (int64) direction();
+   else if ( propName == "rotate" )
+      prop = (int64) rotate();
+   else if ( propName == "x" )
+      prop = x();
+   else if ( propName == "y" )
+      prop = y();
+   else if ( propName == "textX" )
+      prop = textX();
+   else if ( propName == "textY" )
+      prop = textY();
+   else if ( propName == "charSpace" )
+      prop = charSpace();
+   else if ( propName == "wordSpace" )
+      prop = wordSpace();
+
+}
+
+void PDFPage::setProperty( const String &propName, Item &prop )
+{
+   if ( propName == "fontName" )
+      setFontName( *prop.asString() );
+   else if ( propName == "fontSize" )
+      fontSize( prop.asNumeric() );
+   else if ( propName == "width" )
+      width( prop.asNumeric() );
+   else if ( propName == "height" )
+      height( prop.asNumeric() );
+   else if ( propName == "size" )
+      size( prop.asInteger() );
+   else if ( propName == "direction" )
+      direction( prop.asInteger() );
+   else if ( propName == "rotate" )
+      rotate( prop.asInteger() );
+   else if ( propName == "x" )
+      x( prop.asNumeric() );
+   else if ( propName == "y" )
+      y( prop.asNumeric() );
+   else if ( propName == "textX" )
+      textX( prop.asNumeric() );
+   else if ( propName == "textY" )
+      textY( prop.asNumeric() );
+   else if ( propName == "lineWidth" )
+      lineWidth( prop.asNumeric() );
+   else if ( propName == "charSpace" )
+      charSpace( prop.asNumeric() );
+   else if ( propName == "wordSpace" )
+      wordSpace( prop.asNumeric() );
 }
 
 int PDFPage::rectangle( double x, double y, double height, double width )
@@ -64,13 +282,6 @@ int PDFPage::rectangle( double x, double y, double height, double width )
 int PDFPage::stroke()
 {
    return HPDF_Page_Stroke( m_page );
-}
-
-int PDFPage::setFontAndSize( const String name, int size )
-{
-   AutoCString asName( name );
-   HPDF_Font f = HPDF_GetFont( m_pdf->getHandle(), asName.c_str(), NULL );
-   return HPDF_Page_SetFontAndSize( m_page, f, size );
 }
 
 double PDFPage::textWidth( const String text )
@@ -87,11 +298,6 @@ int PDFPage::beginText()
 int PDFPage::endText()
 {
    return HPDF_Page_EndText( m_page );
-}
-
-int PDFPage::moveTextPos( double x, double y )
-{
-   return HPDF_Page_MoveTextPos( m_page, x, y );
 }
 
 int PDFPage::showText( const String text )

@@ -81,39 +81,6 @@ FALCON_FUNC PDFPage_init( ::Falcon::VMachine *vm )
    vm->retval( self );
 }
 
-FALCON_FUNC PDFPage_getWidth( ::Falcon::VMachine *vm )
-{
-   CoreObject *self = vm->self().asObject();
-   PDFPage *pdfPage = static_cast<PDFPage *>( self->getUserData() );
-
-   vm->retval( pdfPage->getWidth() );
-}
-
-FALCON_FUNC PDFPage_getHeight( ::Falcon::VMachine *vm )
-{
-   CoreObject *self = vm->self().asObject();
-   PDFPage *pdfPage = static_cast<PDFPage *>( self->getUserData() );
-
-   vm->retval( pdfPage->getHeight() );
-}
-
-FALCON_FUNC PDFPage_setLineWidth( ::Falcon::VMachine *vm )
-{
-   CoreObject *self = vm->self().asObject();
-   PDFPage *pdfPage = static_cast<PDFPage *>( self->getUserData() );
-
-   Item *pI = vm->param( 0 );
-   if ( pI == 0 || ! pI->isNumeric() ) {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                                        .origin( e_orig_runtime ) ) );
-      return;
-   }
-
-   numeric n = pI->asNumeric();
-
-   vm->retval( pdfPage->setLineWidth( n ) );
-}
-
 FALCON_FUNC PDFPage_rectangle( ::Falcon::VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
@@ -148,25 +115,6 @@ FALCON_FUNC PDFPage_stroke( ::Falcon::VMachine *vm )
    vm->retval( pdfPage->stroke() );
 }
 
-FALCON_FUNC PDFPage_setFontAndSize( ::Falcon::VMachine *vm )
-{
-   CoreObject *self = vm->self().asObject();
-   PDFPage *page = static_cast<PDFPage *>( self->getUserData() );
-   Item *fI = vm->param( 0 );
-   Item *sI = vm->param( 1 );
-
-   if ( fI == 0 || ! fI->isString() ||
-       sI == 0 || ! sI->isInteger())
-   {
-      // TODO: tell them which param was an error!
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                                        .origin( e_orig_runtime ) ) );
-      return;
-   }
-
-   vm->retval( page->setFontAndSize( *fI->asString(), sI->asInteger() ) );
-}
-
 FALCON_FUNC PDFPage_textWidth( ::Falcon::VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
@@ -196,25 +144,6 @@ FALCON_FUNC PDFPage_endText( ::Falcon::VMachine *vm )
    PDFPage *page = static_cast<PDFPage *>( self->getUserData() );
 
    vm->retval( page->endText() );
-}
-
-FALCON_FUNC PDFPage_moveTextPos( ::Falcon::VMachine *vm )
-{
-   CoreObject *self = vm->self().asObject();
-   PDFPage *page = static_cast<PDFPage *>( self->getUserData() );
-   Item *xI = vm->param( 0 );
-   Item *yI = vm->param( 1 );
-
-   if ( xI == 0 || ! xI->isNumeric() ||
-        yI == 0 || ! yI->isNumeric())
-   {
-      // TODO: tell them which param was an error!
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                                        .origin( e_orig_runtime ) ) );
-      return;
-   }
-
-   vm->retval( page->moveTextPos( xI->asNumeric(), yI->asNumeric() ) );
 }
 
 FALCON_FUNC PDFPage_showText( ::Falcon::VMachine *vm )

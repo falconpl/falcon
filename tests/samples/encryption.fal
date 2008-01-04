@@ -6,11 +6,13 @@ p.userPassword  = "user"
 p.encryption    = ENCRYPT_R3_128 // ENCRYPT_R3, ENCRYPT_R2
 
 page = p.addPage()
-page.setFontAndSize( "Helvetica", 12 )
+page.fontName = "Helvetica"
+page.fontSize = 12.0
 
 page.beginText()
-page.textOut( 50.0, page.getHeight() - 50.0, "The secret word is 'mum'" )
+page.textOut( 50.0, page.height - 50.0, "Mum's the word" )
 page.endText()
 
 p.saveToFile( "encryption.pdf" )
+> "Open encryption.pdf with password 'owner' to find the secret message!"
 

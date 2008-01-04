@@ -34,28 +34,62 @@ protected:
    HPDF_Page m_page;
    PDF *m_pdf;
 
+   String m_fontName;
+   int m_fontSize;
+
+   int m_pageSize;
+   int m_pageDir;
+   int m_rotate;
+
 public:
    PDFPage( PDF *pdf );
    ~PDFPage();
 
+   bool isReflective() { return true; }
+   void getProperty( const String &propName, Item &prop );
+   void setProperty( const String &propName, Item &prop );
+
    HPDF_Page getHandle() { return m_page; }
 
-   // Read only properties
-   double getWidth();
-   double getHeight();
+   int setFontName( const String name );
+   bool fontName( String &name );
+   inline String fontName() { String temp; fontName( temp ); return temp; }
 
-   int setLineWidth( double width );
+   double fontSize();
+   int fontSize( double size );
+   double width();
+   int width( double w );
+   double height();
+   int height( double h );
+   int size();
+   int size( int size );
+   int direction();
+   int direction( int direction );
+   int rotate();
+   int rotate( int rotate );
+   double x();
+   int x( double x );
+   double y();
+   int y( double y );
+   double textX();
+   int textX( double x );
+   double textY();
+   int textY( double y );
+   double lineWidth();
+   int lineWidth( double w );
+   double charSpace();
+   int charSpace( double s );
+   double wordSpace();
+   int wordSpace( double s );
 
    // Graphics
    int rectangle( double x, double y, double height, double width );
    int stroke();
 
    // Text
-   int setFontAndSize( const String name, int size );
-   double textWidth( const String text );
    int beginText();
    int endText();
-   int moveTextPos( double x, double y );
+   double textWidth( const String text );
    int showText( const String text );
    int textOut( double x, double y, const String text );
 };
