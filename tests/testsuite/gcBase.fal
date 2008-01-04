@@ -22,6 +22,7 @@ allocItems = 0
 allocMem = 0
 liveItems = 0
 liveMem = 0
+
 // reference causes GC data to change, so let's get them here.
 gcGetParams( $allocMem, $allocItems, $liveMem, $liveItems )
 gcGetParams( $base_allocMem, $base_allocItems )

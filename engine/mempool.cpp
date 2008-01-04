@@ -240,6 +240,8 @@ bool MemPool::gcMark()
       LiveModule *currentMod = *(LiveModule **) iter.currentValue();
       // We must mark the current module.
       currentMod->mark( currentMark() );
+      m_aliveMem += sizeof( LiveModule );
+      m_aliveItems++;
 
       ItemVector *current = &currentMod->globals();
       for( uint32 j = 0; j < current->size(); j++ ) {
@@ -395,7 +397,7 @@ void MemPool::markItem( Item &item )
                }
             }
 
-            // no need to mark the live modue; 
+            // no need to mark the live modue;
             // if it's alive it has been marked by the main loop
          }
       }

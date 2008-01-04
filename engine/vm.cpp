@@ -2973,9 +2973,15 @@ bool VMachine::unlink( const Module *module )
    MapIterator iter;
    if ( !m_liveModules.find( &module->name(), iter ) )
       return false;
-   
+
    // get the thing
    LiveModule *lm = *(LiveModule **) iter.currentValue();
+
+   // ensure this module is not the active one
+   if ( m_currentModule == lm->module() )
+   {
+      return false;
+   }
 
    // delete the iterator from the map
    m_liveModules.erase( iter );

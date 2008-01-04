@@ -99,7 +99,7 @@ int LiveModulePtrTraits::compare( const void *firstz, const void *secondz ) cons
 
 void LiveModulePtrTraits::destroy( void *item ) const
 {
-   /* Owned by GC 
+   /* Owned by GC
    LiveModule *ptr = *(LiveModule **) item;
    delete ptr;
    */
@@ -152,7 +152,7 @@ Item *LiveModule::findModuleItem( const String &symName ) const
       return 0;
 
    const Symbol *sym = m_module->findGlobalSymbol( symName );
-   
+
    if ( sym == 0 )
       return 0;
 

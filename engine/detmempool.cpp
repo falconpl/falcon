@@ -58,6 +58,8 @@ bool DetMemPool::gcDetMark()
       LiveModule *currentMod = *(LiveModule **) iter.currentValue();
       ItemVector *current = &currentMod->globals();
       currentMod->mark( currentMark() );
+      m_aliveMem += sizeof( LiveModule );
+      m_aliveItems++;
 
       for( uint32 j = 0; j < current->size(); j++ ) {
          markItemFast( current->itemAt( j ) );
