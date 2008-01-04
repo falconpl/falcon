@@ -20,6 +20,7 @@
 #define PDF_H
 
 #include <hpdf.h>
+#include <falcon/timestamp.h>
 
 namespace Falcon
 {
@@ -64,16 +65,51 @@ class PDF : public UserData
 protected:
    HPDF_Doc m_pdf;
 
+   TimeStamp m_createDate;
+   TimeStamp m_modifiedDate;
+
+   String m_ownerPassword;
+   String m_userPassword;
+
 public:
    PDF();
    ~PDF();
 
    HPDF_Doc getHandle() { return m_pdf; }
 
+   bool isReflective();
+   void getProperty( const String &propName, Item &prop );
+   void setProperty( const String &propName, Item &prop );
+
+   int author( const String author );
+   const String author();
+
+   int creator( const String creator );
+   const String creator();
+
+   int title( const String title );
+   const String title();
+
+   int subject( const String subject );
+   const String subject();
+
+   int keywords( const String keywords );
+   const String keywords();
+
+   int createDate( const TimeStamp date );
+   const TimeStamp createDate();
+
+   int modifiedDate( const TimeStamp date );
+   const TimeStamp modifiedDate();
+
+   int password( const String owner, const String user );
+   int permission( int64 permission );
+   int encryption( int64 mode );
+   int compression( int64 mode );
+
    PDFPage *addPage();
 
    int saveToFile( String filename );
-
 };
 }
 

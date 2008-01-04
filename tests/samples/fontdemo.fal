@@ -4,6 +4,7 @@ pageTitle = "Font Demo"
 fontName = "Helvetica"
 
 p = PDF()
+
 page = p.addPage()
 w = page.getWidth()
 h = page.getHeight()
@@ -43,5 +44,5 @@ end
 
 page.endText()
 
-p.saveToFile( "hello.pdf" )
+p.saveToFile( "fontdemo.pdf" )
 

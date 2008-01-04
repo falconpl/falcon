@@ -1,0 +1,16 @@
+load pdf
+
+p = PDF()
+p.ownerPassword = "owner"
+p.userPassword  = "user"
+p.encryption    = ENCRYPT_R3_128 // ENCRYPT_R3, ENCRYPT_R2
+
+page = p.addPage()
+page.setFontAndSize( "Helvetica", 12 )
+
+page.beginText()
+page.textOut( 50.0, page.getHeight() - 50.0, "The secret word is 'mum'" )
+page.endText()
+
+p.saveToFile( "encryption.pdf" )
+
