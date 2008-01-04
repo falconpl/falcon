@@ -4,6 +4,9 @@ Falcon (0.8.7)
   * major: VM now has a map of modules and global variables instead of two
            parallel arrays. This allows arbitrary module unlinking.
   * major: Item size is now 16 bytes. This allow space for stepped ranges.
+  * major: Added WKS/WKI (Well Known Symbols/Items) system to obviate the need
+           to share global items with scripts and create failsafe instances of
+           classes.
 
 Falcon (0.8.6)
   * bugfix: incorrect format of 0.x floating point numbers.

@@ -244,9 +244,13 @@ bool MemPool::gcMark()
       m_aliveItems++;
 
       ItemVector *current = &currentMod->globals();
-      for( uint32 j = 0; j < current->size(); j++ ) {
+      for( uint32 j = 0; j < current->size(); j++ )
          markItemFast( current->itemAt( j ) );
-      }
+
+      current = &currentMod->wkitems();
+      for( uint32 k = 0; k < current->size(); k++ )
+         markItemFast( current->itemAt( k ) );
+
       iter.next();
    }
 

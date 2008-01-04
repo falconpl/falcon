@@ -625,7 +625,7 @@ public:
    uint16 itemId() const { return m_itemPos; }
    void itemId( uint16 ip ) { m_itemPos = ip; }
    bool isEta() const { return (m_flags & FLAG_ETAFUNC) == FLAG_ETAFUNC; }
-   bool isWKS() const { return (m_flags & FLAG_ETAFUNC) == FLAG_WELLKNOWN; }
+   bool isWKS() const { return (m_flags & FLAG_WELLKNOWN) == FLAG_WELLKNOWN; }
 
    bool isUndefined() const { return m_type == tundef; }
    bool isLocalUndef() const { return m_type == tlocalundef; }

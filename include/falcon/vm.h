@@ -458,7 +458,6 @@ protected:
       to load the modules at runtime is provided) this pointer must be removed.
    */
    ItemVector *m_currentGlobals;
-   ItemVector m_superGlobals;
 
    /** Opcode hanlder function calls. */
    tOpcodeHandler *m_opHandlers;
@@ -482,6 +481,11 @@ protected:
       Each item of the map contains a Symbol * and an ID that allows to
    */
    SymModuleMap m_globalSyms;
+
+   /** Map of well knwon symbols (and the item they are connected to).
+      Each item of the map contains a Symbol * and an ID that allows to
+   */
+   SymModuleMap m_wellKnownSyms;
 
    numeric m_yieldTime;
 
@@ -686,7 +690,7 @@ public:
       The modules that have been loaded and pre-linked by the runtime
       are correctly inserted in the VM. The topmost module in the
       Runtime is set as main module.
-      
+
       After the link step, the runtime is not needed anymore and can
       be destroyed; the modules are safely referenced in the VM.
 
@@ -701,7 +705,7 @@ public:
       \return false on link time error, true on success
    */
    bool link( Runtime *rt );
-   
+
    /** Links a single module.
       The last-linked module is usually set as the main module, but it is possible
       to link a non-main module.
@@ -722,7 +726,7 @@ public:
             for start symbol(s) by prepare() function.
       \param rt the runtime to be linked
       \param isMainModule false to prevent this module to be chosen as startup module.
-      \return false on link time error, true on success   
+      \return false on link time error, true on success
    */
    bool link( Module *module, bool isMainModule=true );
 
@@ -743,7 +747,7 @@ public:
       The function may return false either if one of the module in the runtime
       is not present in the VM or if one of them is the "current module". However,
       some of the modules may have got unlinked int he meanwhile, and unlinking
-      also dereferences them. 
+      also dereferences them.
 
       \param rt the runtime with all the modules to be unlinked
       \return true on success, false on error.
@@ -932,11 +936,6 @@ public:
    /** Fills an error with current VM execution context and traceback.
    */
    void fillErrorContext( Error *err, bool filltb = true );
-
-
-   ItemVector &superGlobals() { return m_superGlobals; }
-   const ItemVector &superGlobals() const { return m_superGlobals; }
-
 
    /** Returns the current stack as a reference. */
    ItemVector &currentStack() { return *m_stack; }
@@ -1206,6 +1205,33 @@ public:
    uint32 programCounter() const { return m_pc; }
 
    const SymModule *findGlobalSymbol( const String &str ) const;
+
+   /** Returns a well known item.
+      A well known item is an item that does not phiscally resides in any module, and is
+      at complete disposal of VM.
+
+      Usually, System relevant classes as Error, TimeStamp, Stream and so on are
+      considered WKI.
+
+      Modules can declare their own WKIs so that they can safely retreive their own original
+      live data that cannot be possibly transformed by scripts.
+
+      Modules just need to declare a symbol adding the Symbol::setWKI clause, and the VM will create
+      a proper entry on link step. WKI items are created for the module, but a safe copy is also
+      saved in another location.
+
+      WKI items have not to be exported, although they can.
+
+      \note the data is not deep-copied. WKI are prevented to be chaged in their nature,
+            but their content can still be changed. Please, notice that both flat items
+            and classes are read-only from a script standpoint, while strings, arrays, objects
+            and dictionaries can have their contents changed.
+
+      \note The returned Well Known item is never to be de/referenced.
+      \param name the WKI to be found
+      \return 0 if a WKI with that name can't be found, a valid item pointer on success.
+   */
+   Item *findWKI( const String &name ) const;
 
    /** Returns a live global given the name of its symbol.
       Items exported by moduels becomes associated with an item that can be

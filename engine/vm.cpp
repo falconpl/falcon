@@ -444,6 +444,27 @@ bool VMachine::link( Module *mod, bool isMainModule )
                }
             }
          }
+
+         // Is this symbol a well known item?
+         if ( sym->isWKS() ) {
+
+            if ( m_wellKnownSyms.find( &sym->name() ) != 0 )
+            {
+               raiseError(
+                  new CodeError( ErrorParam( e_already_def, sym->declaredAt() ).origin( e_orig_vm ).
+                        module( mod->name() ).
+                        symbol( sym->name() ).
+                        extra( "Well Known Item" ) )
+                  );
+               return false;
+            }
+
+            SymModule tmp( livemod->wkitems().size(), livemod, sym );
+            m_wellKnownSyms.insert( &sym->name(), &tmp );
+
+            // and don't forget to add a copy of the item
+            livemod->wkitems().push( globs->itemPtrAt( sym->itemId() ) );
+         }
       }
       else
       {
@@ -488,6 +509,15 @@ bool VMachine::link( Module *mod, bool isMainModule )
       // and hey, you could always destroy symbols if your mood is so from falcon ;-)
       // dereference as other classes may have referenced this item1
       globs->itemAt( cc->symbol()->itemId() ).dereference()->setClass( cc );
+
+      // if this class was a WKI, we must also set the relevant exported symbol
+      if ( sym->isWKS() )
+      {
+         SymModule *tmp = (SymModule *) m_wellKnownSyms.find( &sym->name() );
+         fassert( tmp != 0 ); // we just added it
+         tmp->liveModule()->wkitems().itemAt( tmp->wkiid() ) = cc;
+      }
+
       cls_iter = cls_iter->next();
    }
 
@@ -510,6 +540,14 @@ bool VMachine::link( Module *mod, bool isMainModule )
       else {
          CoreObject *co = clsItem->asClass()->createInstance();
          globs->itemAt( obj->itemId() ).dereference()->setObject( co );
+
+         // if this class was a WKI, we must also set the relevant exported symbol
+         if ( obj->isWKS() )
+         {
+            SymModule *tmp = (SymModule *) m_wellKnownSyms.find( &obj->name() );
+            fassert( tmp != 0 ); // we just added it
+            tmp->liveModule()->wkitems().itemAt( tmp->wkiid() ) = co;
+         }
       }
       obj_iter = obj_iter->next();
    }
@@ -2922,6 +2960,7 @@ Attribute *VMachine::findAttribute( const String &name ) const
    return 0;
 }
 
+
 Attribute *VMachine::findAttribute( const Symbol *sym ) const
 {
    // if the symbol is not an attribute, it cannot have generated one.
@@ -2939,11 +2978,12 @@ Attribute *VMachine::findAttribute( const Symbol *sym ) const
    return 0;
 }
 
+
 Item *VMachine::findGlobalItem( const String &name ) const
 {
    const SymModule *sm = findGlobalSymbol( name );
    if ( sm == 0 ) return 0;
-   return sm->liveModule()->globals().itemAt( sm->symbolId() ).dereference();
+   return sm->item()->dereference();
 }
 
 
@@ -2953,6 +2993,14 @@ LiveModule *VMachine::findModule( const String &name )
    if ( lm != 0 )
       return *lm;
    return 0;
+}
+
+
+Item *VMachine::findWKI( const String &name ) const
+{
+   const SymModule *sm = (SymModule *) m_wellKnownSyms.find( &name );
+   if ( sm == 0 ) return 0;
+   return sm->liveModule()->wkitems().itemPtrAt( sm->wkiid() );
 }
 
 
@@ -2981,6 +3029,19 @@ bool VMachine::unlink( const Module *module )
    if ( m_currentModule == lm->module() )
    {
       return false;
+   }
+
+   // delete all the exported and well known symbols
+   iter = lm->module()->symbolTable().map().begin();
+   while( iter.hasCurrent() )
+   {
+      Symbol *sym = *(Symbol **) iter.currentValue();
+      if ( sym->isWKS() )
+         m_wellKnownSyms.erase( &sym->name() );
+      else if ( sym->exported() )
+         m_globalSyms.erase( &sym->name() );
+
+      iter.next();
    }
 
    // delete the iterator from the map

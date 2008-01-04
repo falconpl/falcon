@@ -50,7 +50,7 @@ static void Stats_to_object( VMachine *vm, const FileStat &fstats, CoreObject *s
    self->setProperty( "access", (int64) fstats.m_access );
 
    // create the timestamps
-   Item *ts_class = vm->findGlobalItem( "TimeStamp" );
+   Item *ts_class = vm->findWKI( "TimeStamp" );
    //if we wrote the std module, can't be zero.
    fassert( ts_class != 0 );
    CoreObject *timestamp= ts_class->asClass()->createInstance();

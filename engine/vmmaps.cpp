@@ -143,6 +143,7 @@ void LiveModule::detachModule()
       m_module = 0;
       // no reason to keep globals allocated
       m_globals.resize(0);
+      m_wkitems.resize(0);
    }
 }
 

@@ -137,16 +137,16 @@ static void internal_add_dist( ::Falcon::VMachine *vm, int mode )
    ts1 = (TimeStamp *) self->getUserData();
    Item *date = vm->param( 0 );
 
-   if ( date->isObject() ) 
+   if ( date->isObject() )
    {
       CoreObject *other = date->asObject();
-      if( !other->derivedFrom( "TimeStamp" ) ) 
+      if( !other->derivedFrom( "TimeStamp" ) )
       {
          vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ).
                extra( "not a TimeStamp" ) ) );
          return;
       }
-      
+
 
       ts2 = (TimeStamp *) date->asObject()->getUserData();
       if ( mode == 0 )
@@ -229,13 +229,13 @@ FALCON_FUNC  TimeStamp_compare ( ::Falcon::VMachine *vm )
    ts1 = (TimeStamp *) self->getUserData();
    Item *date = vm->param( 0 );
 
-   if ( date->isObject() ) 
+   if ( date->isObject() )
    {
       CoreObject *other = date->asObject();
-      if( other->derivedFrom( "TimeStamp" ) ) 
+      if( other->derivedFrom( "TimeStamp" ) )
       {
          ts2 = (TimeStamp *) date->asObject()->getUserData();
-         vm->retval( ts1->compare( *ts2 ) );   
+         vm->retval( ts1->compare( *ts2 ) );
       }
       else {
          vm->retval( vm->self().compare( *date ) );
@@ -251,12 +251,11 @@ FALCON_FUNC  TimeStamp_compare ( ::Falcon::VMachine *vm )
 FALCON_FUNC  CurrentTime ( ::Falcon::VMachine *vm )
 {
    // create the timestamp
-   Item *ts_class = vm->findGlobalItem( "TimeStamp" );
+   Item *ts_class = vm->findWKI( "TimeStamp" );
    //if we wrote the std module, can't be zero.
    fassert( ts_class != 0 );
    CoreObject *self = ts_class->asClass()->createInstance();
    TimeStamp *ts = new TimeStamp;
-
 
    Falcon::Sys::Time::currentTime( *ts );
    self->setUserData( ts );

@@ -256,6 +256,7 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    // The TimeStamp class -- declaration functional equivalent to
    // the one used for StringStream class (there in two steps, here in one).
    Falcon::Symbol *tstamp_class = self->addClass( "TimeStamp", Falcon::Ext::TimeStamp_init );
+   tstamp_class->setWKS( true );
 
    // methods -- the first example is equivalent to the following.
    self->addClassMethod( tstamp_class, "currentTime",
