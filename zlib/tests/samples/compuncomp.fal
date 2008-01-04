@@ -1,0 +1,6 @@
+load zlib
+
+z = ZLib()
+r = z.compress( "HELLO" )
+> z.uncompress( r )
+

@@ -38,7 +38,8 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    self->version( VERSION_MAJOR, VERSION_MINOR, VERSION_REVISION );
 
    Falcon::Symbol *c_zlib = self->addClass( "ZLib", Falcon::Ext::ZLib_init );
-   //self->addClassMethod( c_zlib, "loadByName", Falcon::Ext::ZLib_loadByName );
+   self->addClassMethod( c_zlib, "compress", Falcon::Ext::ZLib_compress );
+   self->addClassMethod( c_zlib, "uncompress", Falcon::Ext::ZLib_uncompress );
    self->addClassProperty( c_zlib, "version" );
 
    return self;
