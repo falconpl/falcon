@@ -3108,18 +3108,19 @@ void opcodeHandler_TRAV( register VMachine *vm )
 
 trav_go_away:
    vm->m_pc_next = wayout;
-
+   uint32 vars = 0;
    // eventually pop referenced vars
    if ( vm->operandType( 1 ) == P_PARAM_INT32 || vm->operandType( 1 ) == P_PARAM_INT64 )
    {
-      uint64 vars = dest->asInteger();
-      if( vars + 3 > vm->m_stack->size() )
-      {
-         vm->raiseError( e_stackuf, "TRAV" );
-      }
-      else {
-         vm->m_stack->resize( vm->m_stack->size() - (uint32)vars - 3 );
-      }
+      vars = (uint32) dest->asInteger();
+   }
+
+   if( vars + 3 > vm->m_stack->size() )
+   {
+      vm->raiseError( e_stackuf, "TRAV" );
+   }
+   else {
+      vm->m_stack->resize( vm->m_stack->size() - vars - 3 );
    }
 }
 

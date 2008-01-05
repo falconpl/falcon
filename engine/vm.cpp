@@ -1457,7 +1457,11 @@ bool VMachine::callItemPass( const Item &callable  )
          uint32 oldBase = m_stackBase;
          m_stackBase += tg_def->params() - frame.m_param_count;
          frame.m_param_count = (byte)tg_def->params();
+
          m_stack->resize( m_stackBase + VM_FRAME_SPACE ); // fr no more valid
+
+         // reget old frame, it may have been changed
+         StackFrame &frame = *(StackFrame*) m_stack->at( oldBase - VM_FRAME_SPACE );
 
          // now copy the frame in the right position
          StackFrame &newPos = *(StackFrame*)m_stack->at( m_stackBase - VM_FRAME_SPACE );
@@ -1487,8 +1491,7 @@ bool VMachine::callItemPass( const Item &callable  )
       m_stack->resize( m_stackBase );
       target->getExtFuncDef()->call( this );
       m_pc_next = ((StackFrame *)m_stack->at( m_stackBase - VM_FRAME_SPACE ))->m_ret_pc;
-
-      //callReturn();
+      callReturn();
    }
    return true;
 }
