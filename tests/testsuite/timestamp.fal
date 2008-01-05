@@ -174,6 +174,23 @@ if aday.month != 0 or \
       failure( "Date distance 2" )
 end
 
+april_29 = TimeStamp()
+april_29.year, april_29.month, april_29.day , april_29.hour, april_29.minute = \
+   2006, 4, 29, 15, 45
+
+// aday is 30 april at midnight
+aday = TimeStamp( origin )
+aday.distance( april_29 )
+// the distance between 30 april 0:0 and 2 may 6:10 am
+// is 6 hours and, 10 minutes 2 full days
+if aday.month != 0 or \
+   aday.day != 0 or \
+   aday.hour != -8 or \
+   aday.minute != 15 or \
+   aday.second != 0 or \
+   aday.msec != 0
+      failure( "Date distance 3" )
+end
 
 success()
 

@@ -1,0 +1,57 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 108d
+* Category: RTL
+* Subcategory: TimeStamp
+* Short: Timestamp distance
+* Author: Jeremy Cowgar
+* Description:
+*   Verify correct date distance calculation.
+* [/Description]
+****************************************************************************/
+
+function ts(year, month, day)
+  ts = TimeStamp()
+  ts.year = year
+  ts.month = month
+  ts.day = day
+  return ts
+end
+
+
+function d(year, month, day, shouldBe)
+   ts = TimeStamp()
+   ts.year = 2008
+   ts.month = 1
+   ts.day = 5
+
+   then = TimeStamp()
+   then.year = year
+   then.month = month
+   then.day = day
+   ts.distance( then )
+
+   then2 = TimeStamp()
+   then2.year = year
+   then2.month = month
+   then2.day = day
+
+   offBy = ts.day - shouldBe
+   return offBy == 0
+end
+
+
+d( 1975,  1,  5, -12053 ) or failure( "1975/1/5" )
+d( 1982,  1,  5,  -9496 ) or failure( "1982/1/5" )
+d( 1923,  1,  5, -31046 ) or failure( "1923/1/5" )
+d( 2000,  1,  5,  -2922 ) or failure( "2000/1/5" )
+d( 2007,  5, 12,  -238 ) or failure( "2007/5/12" )
+d( 2007, 12, 12,   -24 ) or failure( "2007/12/12" )
+d( 2008,  2,  5,   31 ) or failure( "2008/2/5" )
+d( 2008, 12,  5,  335 ) or failure( "2008/12/5" )
+d( 2009, 12,  5,  700 ) or failure( "2009/12/5" )
+
+success()
+
+/* end of test */

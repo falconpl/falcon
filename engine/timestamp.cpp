@@ -282,6 +282,16 @@ void TimeStamp::add( int32 days, int32 hours, int32 mins, int32 secs, int32 msec
    rollOver();
 }
 
+inline void cplxSub( int &sub1, int sub2, int unit, int &change )
+{
+   sub1 -= sub2;
+   while( sub1 < 0 )
+   {
+      change--;
+      sub1 += unit;
+   }
+}
+
 void TimeStamp::distance( const TimeStamp &ts )
 {
    int days = 0;
@@ -324,12 +334,12 @@ void TimeStamp::distance( const TimeStamp &ts )
 
    m_year = 0;
    m_month = 0;
-   m_day = comparation < 0 ? days : -days;
 
-   m_hour = endDate->m_hour - startDate->m_hour;
-   m_minute = endDate->m_minute - startDate->m_minute;
-   m_second = endDate->m_second - startDate->m_second;
-   m_msec = endDate->m_msec - startDate->m_msec;
+   int tday = days;
+   int thour = endDate->m_hour;
+   int tminute = endDate->m_minute;
+   int tsecond = endDate->m_second;
+   int tmsec = endDate->m_msec;
 
    if ( m_timezone != ts.m_timezone && m_timezone != tz_NONE && ts.m_timezone != tz_NONE )
    {
@@ -339,17 +349,42 @@ void TimeStamp::distance( const TimeStamp &ts )
       // if ts bigger (positive distance) we must add the difference between TS timezone and us
       if ( comparation < 0 )
       {
-         m_hour += ts_hours - hours;
-         m_minute += ts_mins - mins;
+         thour += ts_hours - hours;
+         tminute += ts_mins - mins;
       }
       else {
          // else we got to subtract it
-         m_hour -= ts_hours - hours;
-         m_minute -= ts_mins - mins;
+         thour += ts_hours - hours;
+         tminute += ts_mins - mins;
       }
    }
 
-   rollOver( true );
+   cplxSub( tmsec, startDate->m_msec, 1000, tsecond );
+   cplxSub( tsecond, startDate->m_second, 60, tminute );
+   cplxSub( tminute, startDate->m_minute, 60, thour );
+   cplxSub( thour, startDate->m_hour, 24, days );
+
+   m_day = days;
+   m_hour = thour;
+   m_minute = tminute;
+   m_second = tsecond;
+   m_msec = tmsec;
+
+   if( comparation > 0 )
+   {
+      // the negative sign goes on the first non-zero unit
+      if ( m_day != 0 )
+         m_day = -m_day;
+      else if ( m_hour != 0 )
+         m_hour = -m_hour;
+      else if ( m_minute != 0 )
+         m_minute = -m_minute;
+      else if ( m_second != 0 )
+         m_second = -m_second;
+      else
+         m_msec = -m_msec;
+   }
+
    m_timezone = tz_NONE;
 }
 
@@ -403,14 +438,10 @@ void TimeStamp::rollOver( bool onlyDays )
       m_hour = m_hour % 24;
    }
 
+   m_day += adjust;
    if ( onlyDays ) {
-      // if the day is negative, and we want to know about days,
-      // a minus sign here means "less negative date"
-      m_day = m_day < 0 ? m_day - adjust: m_day + adjust;
       return;
    }
-
-   m_day += adjust;
    adjust = m_day;
 
    if ( adjust <= 0 ) {
