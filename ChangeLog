@@ -1,14 +1,16 @@
 Falcon (0.8.7)
   * bugfix: TRAV opcode may destroy its parameters while setting first loop
-            on rare conditions. Fixed.
+      on rare conditions. Fixed.
   * major: VM now has a map of modules and global variables instead of two
-           parallel arrays. This allows arbitrary module unlinking.
+      parallel arrays. This allows arbitrary module unlinking.
   * major: Item size is now 16 bytes. This allow space for stepped ranges.
   * major: Added WKS/WKI (Well Known Symbols/Items) system to obviate the need
-           to share global items with scripts and create failsafe instances of
-           classes.
+      to share global items with scripts and create failsafe instances of
+      classes.
   * bugfix: Fixed TimeStamp distance algorithm.
   * minor: List initialization is now possible also with non-atomic symbols.
+  * bugfix: Precision in printing default flotaing point number was 6; now is
+      16 (maximum precision for our number format).
 
 Falcon (0.8.6)
   * bugfix: incorrect format of 0.x floating point numbers.

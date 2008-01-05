@@ -374,7 +374,7 @@ void Item::toString( String &target ) const
 
       case FLC_ITEM_NUM:
       {
-         target.writeNumber( this->asNumeric(), "%g" );
+         target.writeNumber( this->asNumeric(), "%.16g" );
       }
       break;
 
