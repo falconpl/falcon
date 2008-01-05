@@ -340,7 +340,7 @@ void TimeStamp::distance( const TimeStamp &ts )
       m_minute -= ts_mins - mins;
    }
 
-   //rollOver( true );
+   rollOver( true );
    m_timezone = tz_NONE;
 }
 
