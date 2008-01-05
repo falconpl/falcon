@@ -80,18 +80,22 @@ static int DBIHandle_realSqlExpand( VMachine *vm, DBIHandle *dbh, String &sql, i
 
    startAt++;
 
-   if ( vm->paramCount() > startAt )
+   uint32 dollarPos = sql.find( "$", 0 );
+
+   //if ( vm->paramCount() > startAt )
+   if ( dollarPos != csh::npos )
    {
       // Check param 'startAt', if a dict or object, we treat things special
       CoreDict *dict = NULL;
       CoreObject *obj = NULL;
 
-      if ( vm->param( startAt )->isDict() )
-         dict = vm->param( startAt )->asDict();
-      else if ( vm->param( startAt )->isObject() )
-         obj = vm->param( startAt )->asObject();
-
-      uint32 dollarPos = sql.find( "$", 0 );
+      Item *psI = vm->param( startAt );
+      if ( psI != 0 ) {
+         if ( psI->isDict() )
+            dict = psI->asDict();
+         else if ( psI->isObject() )
+            obj = psI->asObject();
+      }
 
       while ( dollarPos != csh::npos ) {
          Item *i = NULL;
