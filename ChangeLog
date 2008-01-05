@@ -8,6 +8,7 @@ Falcon (0.8.7)
            to share global items with scripts and create failsafe instances of
            classes.
   * bugfix: Fixed TimeStamp distance algorithm.
+  * minor: List initialization is now possible also with non-atomic symbols.
 
 Falcon (0.8.6)
   * bugfix: incorrect format of 0.x floating point numbers.

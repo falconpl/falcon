@@ -151,7 +151,7 @@ inline int flc_src_lex (void *lvalp, void *yyparam)
 %right DOLLAR INCREMENT DECREMENT
 
 %type <fal_adecl> expression_list listpar_expression_list
-%type <fal_adecl> symbol_list inherit_param_list inherit_call
+%type <fal_adecl> symbol_list assignment_list inherit_param_list inherit_call
 %type <fal_ddecl> expression_pair_list
 %type <fal_val> expression variable func_call nameless_func lambda_expr iif_expr
 %type <fal_val> switch_decl select_decl while_decl while_short_decl
@@ -332,12 +332,12 @@ assignment:
          COMPILER->defineVal( $1 );
          $$ = new Falcon::StmtAssignment( LINE, $1, new Falcon::Value( $3 ) );
       }
-   | variable COMMA symbol_list OP_ASSIGN expression EOL {
+   | variable COMMA assignment_list OP_ASSIGN expression EOL {
          COMPILER->defineVal( $1 );
          $3->pushFront( $1 );
          $$ = new Falcon::StmtAssignment( LINE, new Falcon::Value($3), $5 );
       }
-   | variable COMMA symbol_list OP_ASSIGN expression_list EOL {
+   | variable COMMA assignment_list OP_ASSIGN expression_list EOL {
          COMPILER->defineVal( $1 );
          $3->pushFront( $1 );
          $$ = new Falcon::StmtAssignment( LINE, new Falcon::Value($3), new Falcon::Value( $5 ) );
@@ -2550,10 +2550,22 @@ symbol_list:
          COMPILER->defineVal( $1 );
          Falcon::ArrayDecl *ad = new Falcon::ArrayDecl();
          ad->pushBack( $1 );
-         COMPILER->defineVal( $1 );
          $$ = ad;
       }
    | symbol_list COMMA atomic_symbol {
+         COMPILER->defineVal( $3 );
+         $1->pushBack( $3 );
+      }
+;
+
+assignment_list:
+   variable {
+         COMPILER->defineVal( $1 );
+         Falcon::ArrayDecl *ad = new Falcon::ArrayDecl();
+         ad->pushBack( $1 );
+         $$ = ad;
+      }
+   | assignment_list COMMA variable {
          COMPILER->defineVal( $3 );
          $1->pushBack( $3 );
       }
