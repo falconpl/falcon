@@ -93,15 +93,16 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    self->addClassProperty( rec_class, "_primaryKey" );
    self->addClassProperty( rec_class, "_persist" );
    // TODO: actually use this
-   self->addGlobal( "DBIRecord__defaultDBH" );  // Static class variable
+   //self->addGlobal( "DBIRecord__defaultDBH" );  // Static class variable
 
    // service publication
    self->publishService( &theDBIService );
 
    // create the base class DBIError for falcon
    Falcon::Symbol *error_class = self->addExternalRef( "Error" ); // it's external
-   Falcon::Symbol *procerr_cls = self->addClass( "DBIError", Falcon::Ext::DBIError_init );
-   procerr_cls->getClassDef()->addInheritance(  new Falcon::InheritDef( error_class ) );
+   Falcon::Symbol *dbierr_cls = self->addClass( "DBIError", Falcon::Ext::DBIError_init );
+   dbierr_cls->setWKS( "DBIerror" );
+   dbierr_cls->getClassDef()->addInheritance(  new Falcon::InheritDef( error_class ) );
 
    // we're done
    return self;

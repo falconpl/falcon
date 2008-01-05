@@ -66,7 +66,7 @@ static int DBIHandle_itemToSqlValue( DBIHandle *dbh, const Item *i, String &valu
 
 static int DBIHandle_realSqlExpand( VMachine *vm, DBIHandle *dbh, String &sql, int startAt=0 )
 {
-   char errorMessage[256];
+   String errorMessage;
 
    Item *sqlI = vm->param( startAt );
    if ( sqlI == 0 || ! sqlI->isString() ) {
@@ -125,11 +125,11 @@ static int DBIHandle_realSqlExpand( VMachine *vm, DBIHandle *dbh, String &sql, i
                   ePos = spacePos;
 
                if ( ePos == csh::npos ) {
-                  String s( sql.subString( dollarPos ) );
-                  s.prepend( "Failed to parse dollar expansion starting at: " );
+                  String s = "starting at: " + sql.subString( dollarPos );
 
                   vm->raiseModError( new DBIError( ErrorParam( dbi_sql_expand_error, __LINE__ )
-                                                  .desc( s ) ) );
+                                                  .desc( "Failed to parse dollar expansion" )
+                                                  .extra( s ) ) );
                   return 0;
                }
 
@@ -143,38 +143,23 @@ static int DBIHandle_realSqlExpand( VMachine *vm, DBIHandle *dbh, String &sql, i
                   i = obj->getProperty( word );
                }
 
-               AutoCString asWord( word );
                if ( i == 0 ) {
-                  if ( dict != NULL )
-                     snprintf( errorMessage, 128, "Word expansion (%s) was not found in dictionary",
-                              asWord.c_str() );
-                  else
-                     snprintf( errorMessage, 128, "Word expansion (%s) was not found in object",
-                              asWord.c_str() );
-
-                  GarbageString *s = new GarbageString( vm );
-                  s->bufferize( errorMessage );
-                  vm->raiseModError( new DBIError( ErrorParam( dbi_sql_expand_error,
-                                                              __LINE__ )
-                                                  .desc( *s ) ) );
+                  vm->raiseModError( new DBIError( ErrorParam( dbi_sql_expand_error, __LINE__ )
+                                                  .desc( "Word expansion was not found in dictionary/object" )
+                                                  .extra( word ) ) );
                   return 0;
                }
 
                dollarSize += word.length();
-
-               // In case this fails a type check
-               snprintf( errorMessage, 128, "Word expansion (%s) is an unknown type", asWord.c_str () );
             } else {
                AutoCString asTmp( sql.subString( dollarPos + 1 ) );
                int pIdx = atoi( asTmp.c_str() );
 
                if ( pIdx == 0 ) {
-                  String s( sql.subString( dollarPos ) );
-                  s.prepend( "Failed to parse dollar expansion starting at: " );
-
                   vm->raiseModError( new DBIError( ErrorParam( dbi_sql_expand_error,
                                                               __LINE__ )
-                                                  .desc( s ) ) );
+                                                  .desc( "Failed to parse dollar expansion" )
+                                                  .extra( "from: " + sql.subString( dollarPos ) ) ) );
                   return 0;
                }
 
@@ -183,34 +168,26 @@ static int DBIHandle_realSqlExpand( VMachine *vm, DBIHandle *dbh, String &sql, i
                dollarSize++;                  // it exists
                i = vm->param( pIdx + ( startAt - 1 ) );
 
-               if ( i == 0 ) {
-                  snprintf( errorMessage, 128, "Positional expansion (%i) is out of range", pIdx );
+               errorMessage.writeNumber( (int64) pIdx );
 
-                  GarbageString *s = new GarbageString( vm );
-                  s->bufferize( errorMessage );
-                  vm->raiseModError( new DBIError( ErrorParam( dbi_sql_expand_error,
-                                                              __LINE__ )
-                                                  .desc( *s ) ) );
+               if ( i == 0 ) {
+                  vm->raiseModError( new DBIError( ErrorParam( dbi_sql_expand_error, __LINE__ )
+                                                  .desc("Positional expansion out of range")
+                                                  .extra( errorMessage ) ) );
                   return 0;
                }
-
-               // In case this fails a type check
-               snprintf( errorMessage, 128, "Positional expansion (%i) is an unknown type", pIdx );
             }
          }
 
          String value;
          if ( DBIHandle_itemToSqlValue( dbh, i, value ) == 0 ) {
-            GarbageString *s = new GarbageString( vm );
-            s->bufferize( errorMessage );
-
             vm->raiseModError( new DBIError( ErrorParam( dbi_sql_expand_type_error, __LINE__ )
-                                            .desc( *s ) ) );
+                     .desc( "Failed to expand a value due to it being an unknown type" )
+                     .extra( "from: " + sql.subString( dollarPos ) ) ) );
             return 0;
          }
 
          sql.insert( dollarPos, dollarSize, value );
-
          dollarPos = sql.find( "$", dollarPos );
       }
    }
@@ -320,16 +297,16 @@ static int DBIRecordset_getItem( VMachine *vm, DBIRecordset *dbr, dbi_type typ, 
 static int DBIRecordset_checkValidColumn( VMachine *vm, DBIRecordset *dbr, int cIdx )
 {
    if ( cIdx >= dbr->getColumnCount() ) {
-      char errorMessage[128];
-      snprintf( errorMessage, 128, "Column index (%i) is out of range", cIdx );
-      GarbageString *gs = new GarbageString( vm, errorMessage );
+      String errorMessage = "Column index (";
+      errorMessage.writeNumber( (int64) cIdx );
+      errorMessage += ") is out of range";
+
       vm->raiseModError( new DBIError( ErrorParam( dbi_column_range_error, __LINE__ )
-                                      .desc( *gs ) ) );
+                                      .desc( errorMessage ) ) );
       return 0;
    } else if ( dbr->getRowIndex() == -1 ) {
-      GarbageString *gs = new GarbageString( vm, "Invalid current row index" );
       vm->raiseModError( new DBIError( ErrorParam( dbi_row_index_invalid, __LINE__ )
-                                      .desc( *gs ) ) );
+                                      .desc( "Invalid current row index" ) ) );
       return 0;
    }
 
@@ -391,7 +368,7 @@ static int DBIRecord_getPersistPropertyNames( VMachine *vm, CoreObject *self, St
       int cIdx = 0;
 
       for ( int pIdx=0; pIdx < pCount; pIdx++ ) {
-         String p = self->getPropertyName( pIdx );
+         const String &p = self->getPropertyName( pIdx );
          if ( p.getCharAt( 0 ) != '_' ) {
             Item i = self->getPropertyAt( pIdx );
             if ( i.isInteger() || i.isNumeric() || i.isObject() || i.isString() ) {
@@ -413,7 +390,15 @@ static int DBIRecord_getPersistPropertyNames( VMachine *vm, CoreObject *self, St
       int cCount = persist->length();
 
       for ( int cIdx=0; cIdx < cCount; cIdx++) {
-          columnNames[cIdx] = *persist->at( cIdx ).asString();
+         const Item &pi = persist->at( cIdx );
+         if ( ! pi.isString() )
+         {
+            vm->raiseModError( new DBIError( ErrorParam( dbi_row_index_invalid, __LINE__ )
+                        .desc( "There was a non-string item in the \"_persist\" property" ) ) );
+            return 0;
+         }
+         else
+            columnNames[cIdx] = *pi.asString();
       }
 
       return cCount;
@@ -443,7 +428,8 @@ static DBIRecordset *DBIHandle_baseQueryOne( VMachine *vm, int startAt = 0 )
    dbi_status nextStatus = recSet->next();
    if ( nextStatus != dbi_ok ) {
       vm->raiseModError( new DBIError( ErrorParam( nextStatus, __LINE__ )
-                                      .desc( "No results returned for queryOne" ) ) );
+                           .desc( "Unknown error(**)" )
+                           .extra( "No results returned for queryOne" ) ) );
       recSet->close();
       return NULL;
    }
@@ -485,7 +471,8 @@ FALCON_FUNC DBIConnect( VMachine *vm )
             connectErrorMessage = "An unknown error has occured during connect";
 
          vm->raiseModError( new DBIError( ErrorParam( status, __LINE__ )
-                                          .desc( connectErrorMessage ) ) );
+                                          .desc( "Uknown error (**)" )
+                                          .extra( connectErrorMessage ) ) );
 
          return;
       }
@@ -707,7 +694,8 @@ FALCON_FUNC DBIHandle_getLastError( VMachine *vm )
    dbi_status retval = dbh->getLastError( value );
    if ( retval != dbi_ok ) {
       vm->raiseModError( new DBIError( ErrorParam( retval, __LINE__ )
-                                      .desc( "Could not get last error message " ) ) );
+                                      .desc( "Unknown error" )
+                                      .extra( "Could not get last error message " ) ) );
       return;
    }
 
@@ -1276,7 +1264,8 @@ FALCON_FUNC DBIRecordset_getLastError( VMachine *vm )
    dbi_status retval = dbr->getLastError( value );
    if ( retval != dbi_ok ) {
       vm->raiseModError( new DBIError( ErrorParam( retval, __LINE__ )
-                                      .desc( "Could not get last error message " ) ) );
+                                      .desc( "(**)" )
+                                      .extra( "Could not get last error message " ) ) );
       return;
    }
 
@@ -1388,9 +1377,7 @@ FALCON_FUNC DBIRecord_update( VMachine *vm )
 
    String sql;
 
-   sql.append( "UPDATE " );
-   sql.append( *tableName );
-   sql.append( " SET " );
+   sql = "UPDATE " + *tableName + " SET ";
 
    for ( int cIdx=0; cIdx < propertyCount; cIdx++ ) {
       if ( cIdx > 0 )
@@ -1407,19 +1394,16 @@ FALCON_FUNC DBIRecord_update( VMachine *vm )
          return;
       }
 
-      sql.append( columnNames[cIdx] );
-      sql.append( " = " );
-      sql.append( value );
+      sql += columnNames[cIdx] + " = " + value;
    }
 
    Item *primaryKeyValueI = self->getProperty( *primaryKey );
    String value;
    if ( DBIHandle_itemToSqlValue( dbh, primaryKeyValueI, value ) == 0 ) {
-      String errorMessage = "Invalid type for primary key ";
-      errorMessage.append( *primaryKey );
 
       vm->raiseModError( new DBIError( ErrorParam( dbi_invalid_type, __LINE__ )
-                                      .desc( errorMessage ) ) );
+                        .desc( "Invalid type for primary key" )
+                        .extra(*primaryKey) ) );
       return;
    }
 
@@ -1447,14 +1431,7 @@ FALCON_FUNC DBIRecord_delete( VMachine *vm )
    String value;
 
    DBIHandle_itemToSqlValue( dbh, pkValueI, value );
-
-   String sql = "DELETE FROM ";
-   sql.append( *tableName );
-   sql.append( " WHERE " );
-   sql.append( *primaryKey );
-   sql.append( " = " );
-   sql.append( value );
-
+   String sql = "DELETE FROM " + *tableName + " WHERE " + *primaryKey + " = " + value;
    DBIRecord_execute( vm, dbh, sql );
 }
 
