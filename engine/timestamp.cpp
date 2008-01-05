@@ -286,56 +286,45 @@ void TimeStamp::distance( const TimeStamp &ts )
 {
    int days = 0;
 
-   // different year ?
-   if ( m_year != ts.m_year ) {
-      // days to the end of the year of the starting year.
-      int32 baseYear;
-      int32 lastYear;
-      if ( m_year > ts.m_year ) {
-         days -= 366 - ts.dayOfYear();
-         if ( ! i_isLeapYear( ts.m_year ) )
-            days--;
-         // days from the start of the year
-         days += dayOfYear();
-         baseYear = ts.m_year + 1;
-         lastYear = m_year;
-      }
-      else {
-         days -= 366 - dayOfYear();
-         if ( ! i_isLeapYear( m_year ) )
-            days--;
-         days += ts.dayOfYear();
-         baseYear = m_year + 1;
-         lastYear = ts.m_year;
-      }
-
-      while( baseYear != lastYear ) {
-         days -= i_isLeapYear( baseYear ) ? 366 : 365;
-         baseYear++;
-      }
-
-      // correct days for + or -
-      if ( m_year > ts.m_year )
-         days *= -1;
+   // first decide which date is bigger.
+   const TimeStamp *startDate, *endDate;
+   int comparation = this->compare( ts );
+   if (comparation == 0 ) {
+      // the same date, means no distance.
+      m_msec = m_second = m_minute = m_hour = m_day = m_month = m_year = 0;
+      return;
    }
-   // different months ?
-   else if ( m_month != ts.m_month )
+
+   if ( comparation > 0 ) {
+      startDate = &ts;
+      endDate = this;
+   }
+   else {
+      startDate = this;
+      endDate = &ts;
+   }
+
+   // If year is different:
+   if( startDate->m_year != endDate->m_year )
    {
-      if ( m_month > ts.m_month )
-      {
-         days += dayOfYear() - ts.dayOfYear();
-      }
-      else {
-         days -= ts.dayOfYear() - dayOfYear();
-      }
+      // calculate the number of days in the in-between years
+      for ( int baseYear = startDate->m_year + 1; baseYear < endDate->m_year; baseYear++ )
+         days += i_isLeapYear( baseYear ) ? 366 : 365;
+
+      // calculate the number of days from start day to the end of the year.
+      int doy = ( startDate->isLeapYear() ? 366 : 365 ) - startDate->dayOfYear();
+      days += doy;
+
+      // and add the days in the year of the target date
+      days += endDate->dayOfYear();
    }
-   else if ( m_day != ts.m_day ) {
-      days = m_day - ts.m_day;
+   else {
+      days += endDate->dayOfYear() - startDate->dayOfYear();
    }
 
    m_year = 0;
    m_month = 0;
-   m_day = days;
+   m_day = comparation > 0 ? days : -days;
 
    m_hour -= ts.m_hour;
    m_minute -= ts.m_minute;
