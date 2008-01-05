@@ -10,6 +10,7 @@
 
 #include <falcon/setup.h>
 #include <falcon/module.h>
+#include <falcon/error.h>
 
 namespace Falcon {
 namespace Ext {
@@ -17,6 +18,20 @@ namespace Ext {
 FALCON_FUNC ZLib_init( ::Falcon::VMachine *vm );
 FALCON_FUNC ZLib_compress( ::Falcon::VMachine *vm );
 FALCON_FUNC ZLib_uncompress( ::Falcon::VMachine *vm );
+
+class ZlibError: public ::Falcon::Error
+{
+public:
+   ZlibError():
+      Error( "ZlibError" )
+   {}
+
+   ZlibError( const ErrorParam &params  ):
+      Error( "ZlibError", params )
+      {}
+};
+
+FALCON_FUNC  ZlibError_init ( ::Falcon::VMachine *vm );
 
 }
 }

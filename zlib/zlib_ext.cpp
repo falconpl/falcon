@@ -71,14 +71,20 @@ FALCON_FUNC ZLib_compress( ::Falcon::VMachine *vm )
          break;
       }
 
-      vm->raiseModError( new GenericError( ErrorParam( err, __LINE__ )
+      vm->raiseModError( new ZlibError( ErrorParam( -err, __LINE__ )
                                          .desc( message ) ) );
       return;
    }
 
-   String result;
-   result.adopt( (char *) compData, compLen, allocLen );
+   GarbageString *result = new GarbageString( vm );
+   // eventually shrink a bit if we're using too much memory.
+   if ( compLen < allocLen / 2 )
+   {
+      compData = (Bytef *) memRealloc( compData, compLen );
+      allocLen = compLen;
+   }
 
+   result->adopt( (char *) compData, compLen, allocLen );
    vm->retval( result );
 }
 
@@ -95,14 +101,36 @@ FALCON_FUNC ZLib_uncompress( ::Falcon::VMachine *vm )
    int err;
    uLong allocLen, compLen;
    Bytef *compData;
+   String *data = dataI->asString();
 
-   AutoCString asData( dataI->asString() );
-   compLen = sizeof(char) * ( asData.length() * 200 );
+   // preallocate a good default memory
+   compLen = sizeof(char) * ( data->size() * 4 );
+   if ( compLen < 512 )
+   {
+      compLen = 512;
+   }
+
    allocLen = compLen;
-
    compData = (Bytef *) memAlloc( compLen );
 
-   err = uncompress( compData, &compLen, (const Bytef*) asData.c_str(), asData.length() );
+   while( true )
+   {
+      err = uncompress( compData, &compLen, data->getRawStorage(), data->size() );
+
+      if ( err == Z_MEM_ERROR )
+      {
+         //TODO: break also with Z_MEM_ERROR if we're using too much memory, like i.e. 512MB
+
+         // try with a larger buffer
+         compLen += data->size() < 512 ? 512 : data->size() * 4;
+         allocLen = compLen;
+         memFree( compData );
+         compData = (Bytef *) memAlloc( compLen );
+      }
+      else
+         break;
+   }
+
    if ( err != Z_OK ) {
       String message;
       switch ( err ) {
@@ -120,17 +148,36 @@ FALCON_FUNC ZLib_uncompress( ::Falcon::VMachine *vm )
          break;
       }
 
-      vm->raiseModError( new GenericError( ErrorParam( err, __LINE__ )
+      vm->raiseModError( new ZlibError( ErrorParam( -err, __LINE__ )
                                          .desc( message ) ) );
       return;
    }
 
+   GarbageString *result = new GarbageString( vm );
+   // eventually shrink a bit if we're using too much memory.
+   if ( compLen < allocLen / 2 )
+   {
+      compData = (Bytef *) memRealloc( compData, compLen );
+      allocLen = compLen;
+   }
 
-   String result;
-   result.adopt( (char *) compData, compLen, allocLen );
-
+   result->adopt( (char *) compData, compLen, allocLen );
    vm->retval( result );
 }
+
+
+//=============================================================
+// Zlib error
+//
+FALCON_FUNC  ZlibError_init ( ::Falcon::VMachine *vm )
+{
+   CoreObject *einst = vm->self().asObject();
+   if( einst->getUserData() == 0 )
+      einst->setUserData( new Falcon::ErrorCarrier( new ZlibError ) );
+
+   ::Falcon::core::Error_init( vm );
+}
+
 
 }
 }

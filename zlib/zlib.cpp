@@ -42,6 +42,13 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    self->addClassMethod( c_zlib, "uncompress", Falcon::Ext::ZLib_uncompress );
    self->addClassProperty( c_zlib, "version" );
 
+   //============================================================
+   // ZlibError class
+   Falcon::Symbol *error_class = self->addExternalRef( "Error" ); // it's external
+   Falcon::Symbol *procerr_cls = self->addClass( "ZlibError", Falcon::Ext::ZlibError_init );
+   procerr_cls->setWKS( true );
+   procerr_cls->getClassDef()->addInheritance(  new Falcon::InheritDef( error_class ) );
+
    return self;
 }
 
