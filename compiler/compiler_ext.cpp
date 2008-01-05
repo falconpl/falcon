@@ -77,7 +77,7 @@ void internal_link( ::Falcon::VMachine *vm, Module *mod, CompilerIface *iface )
 
    // ok, the module is up and running.
    // wrap it
-   Item *mod_class = vm->findGlobalItem( "Module" );
+   Item *mod_class = vm->findWKI( "Module" );
    fassert( mod_class != 0 );
    CoreObject *co = mod_class->asClass()->createInstance();
    // we know the module IS in the VM.
@@ -290,7 +290,7 @@ FALCON_FUNC Module_getReference( ::Falcon::VMachine *vm )
 
    CoreObject *self = vm->self().asObject();
    ModuleCarrier *modc = static_cast<ModuleCarrier *>( self->getUserData() );
- 
+
    // if the module is not alive, raise an error and exit
    if ( ! modc->liveModule()->isAlive() )
    {
@@ -314,7 +314,7 @@ FALCON_FUNC Module_unload( ::Falcon::VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
    ModuleCarrier *modc = static_cast<ModuleCarrier *>( self->getUserData() );
-   
+
    // if the module is not alive, raise an error and exit
    if ( ! modc->liveModule()->isAlive() )
    {

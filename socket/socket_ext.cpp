@@ -869,7 +869,7 @@ FALCON_FUNC  TCPServer_accept( ::Falcon::VMachine *vm )
       return;
    }
 
-   Item *tcp_class = vm->findGlobalItem( "TCPSocket" );
+   Item *tcp_class = vm->findWKI( "TCPSocket" );
    fassert( tcp_class != 0 );
    CoreObject *ret_s = tcp_class->asClass()->createInstance();
    ret_s->setUserData( skt );

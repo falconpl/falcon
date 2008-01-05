@@ -424,7 +424,7 @@ FALCON_FUNC  Process_getInput ( ::Falcon::VMachine *vm )
    if (file == 0 )
       vm->retnil();
    else {
-      Item *stream_class = vm->findGlobalItem( "Stream" );
+      Item *stream_class = vm->findWKI( "Stream" );
       //if we wrote the std module, can't be zero.
       fassert( stream_class != 0 );
       CoreObject *co = stream_class->asClass()->createInstance();
@@ -443,7 +443,7 @@ FALCON_FUNC  Process_getOutput ( ::Falcon::VMachine *vm )
    if (file == 0 )
       vm->retnil();
    else{
-      Item *stream_class = vm->findGlobalItem( "Stream" );
+      Item *stream_class = vm->findWKI( "Stream" );
       //if we wrote the std module, can't be zero.
       fassert( stream_class != 0 );
       CoreObject *co = stream_class->asClass()->createInstance();
@@ -461,7 +461,7 @@ FALCON_FUNC  Process_getAux ( ::Falcon::VMachine *vm )
    if (file == 0 )
       vm->retnil();
    else {
-      Item *stream_class = vm->findGlobalItem( "Stream" );
+      Item *stream_class = vm->findWKI( "Stream" );
       //if the rtl, that already returned File service, is right, this can't be zero.
       fassert( stream_class != 0 );
       CoreObject *co = stream_class->asClass()->createInstance();

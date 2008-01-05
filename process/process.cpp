@@ -75,6 +75,7 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    // ProcessError class
    Falcon::Symbol *error_class = self->addExternalRef( "Error" ); // it's external
    Falcon::Symbol *procerr_cls = self->addClass( "ProcessError", Falcon::Ext::ProcessError_init );
+   procerr_cls->setWKS( true );
    procerr_cls->getClassDef()->addInheritance(  new Falcon::InheritDef( error_class ) );
 
    //============================================================

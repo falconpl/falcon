@@ -59,6 +59,7 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    self->addClassMethod( c_compiler, "setDirective", Falcon::Ext::Compiler_setDirective);
 
    Falcon::Symbol *c_module = self->addClass( "Module" );
+   c_module->setWKS( true );
    self->addClassProperty( c_module, "name" );
    self->addClassProperty( c_module, "path" );
 

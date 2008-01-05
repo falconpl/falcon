@@ -61,6 +61,7 @@ FALCON_MODULE_DECL(const Falcon::EngineData &data )
    self->addClassProperty( c_socket, "lastError" );
 
    Falcon::Symbol *tcpsocket = self->addClass( "TCPSocket", Falcon::Ext::TCPSocket_init );
+   tcpsocket->setWKS( true ); // needed by TCPServer
    tcpsocket->getClassDef()->addInheritance(  new Falcon::InheritDef( c_socket ) );
    self->addClassMethod( tcpsocket, "connect", Falcon::Ext::TCPSocket_connect );
    self->addClassMethod( tcpsocket, "isConnected", Falcon::Ext::TCPSocket_isConnected );
@@ -89,6 +90,7 @@ FALCON_MODULE_DECL(const Falcon::EngineData &data )
 
    Falcon::Symbol *error_class = self->addExternalRef( "IoError" ); // it's external
    Falcon::Symbol *neterr_cls = self->addClass( "NetError", Falcon::Ext::NetError_init );
+   neterr_cls->setWKS( true );
    neterr_cls->getClassDef()->addInheritance(  new Falcon::InheritDef( error_class ) );
 
 
