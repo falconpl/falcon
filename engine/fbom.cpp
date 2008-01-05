@@ -424,13 +424,9 @@ void toString( VMachine *vm, Item *elem, Item *format )
 
 void makeIterator( VMachine *vm, const Item &self, bool begin )
 {
-   // create the timestamp
-   Item *itclass = vm->findGlobalItem( "Iterator" );
-   if( itclass == 0 )
-   {
-      vm->raiseRTError( new CodeError( ErrorParam( e_undef_sym ).extra( "Iterator" ) ) );
-      return;
-   }
+   // create the iterator
+   Item *itclass = vm->findWKI( "Iterator" );
+   fassert( itclass != 0 );
 
    CoreObject *iterator = itclass->asClass()->createInstance();
    switch( self.type() )

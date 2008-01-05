@@ -731,7 +731,7 @@ FALCON_FUNC  Stream_clone ( ::Falcon::VMachine *vm )
                      vm->self().asObject()->getUserData() );
 
    // create a new stream instance.
-   Item *clstream = vm->findGlobalItem( "Stream" );
+   Item *clstream = vm->findWKI( "Stream" );
    fassert( clstream != 0 );
    CoreObject *obj = clstream->asClass()->createInstance();
 
@@ -840,7 +840,7 @@ FALCON_FUNC  InputStream_creator ( ::Falcon::VMachine *vm )
       delete stream;
    }
    else {
-      Item *stream_class = vm->findGlobalItem( "Stream" );
+      Item *stream_class = vm->findWKI( "Stream" );
       //if we wrote the std module, can't be zero.
       fassert( stream_class != 0 );
 
@@ -896,7 +896,7 @@ FALCON_FUNC  OutputStream_creator ( ::Falcon::VMachine *vm )
       delete stream;
    }
    else {
-      Item *stream_class = vm->findGlobalItem( "Stream" );
+      Item *stream_class = vm->findWKI( "Stream" );
       //if we wrote the std module, can't be zero.
       fassert( stream_class != 0 );
       ::Falcon::CoreObject *co = stream_class->asClass()->createInstance();
@@ -961,7 +961,7 @@ FALCON_FUNC  IOStream_creator ( ::Falcon::VMachine *vm )
       }
    }
 
-   Item *stream_class = vm->findGlobalItem( "Stream" );
+   Item *stream_class = vm->findWKI( "Stream" );
    //if we wrote the std module, can't be zero.
    fassert( stream_class != 0 );
    ::Falcon::CoreObject *co = stream_class->asClass()->createInstance();
@@ -981,9 +981,9 @@ static void internal_make_stream( VMachine *vm, UserData *clone, int userMode )
 
    Item *stream_class;
    if ( userMode < 0 )
-      stream_class = vm->findGlobalItem( "Stream" );
+      stream_class = vm->findWKI( "Stream" );
    else
-      stream_class = vm->findGlobalItem( "StdStream" );
+      stream_class = vm->findWKI( "StdStream" );
 
    //if we wrote the RTL module, can't be zero.
    fassert( stream_class != 0 );

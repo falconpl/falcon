@@ -86,7 +86,7 @@ FALCON_FUNC FileReadStats( ::Falcon::VMachine *vm )
    }
 
    // create the timestamps
-   Item *fs_class = vm->findGlobalItem( "FileStat" );
+   Item *fs_class = vm->findWKI( "FileStat" );
    //if we wrote the std module, can't be zero.
    fassert( fs_class != 0 );
    FileStat fstats;
@@ -450,7 +450,7 @@ FALCON_FUNC  DirectoryOpen ( ::Falcon::VMachine *vm )
    DirEntry *dir = Sys::fal_openDir( *name->asString(), fsError );
 
    if( dir != 0 ) {
-      Item *dir_class = vm->findGlobalItem( "Directory" );
+      Item *dir_class = vm->findWKI( "Directory" );
       //if we wrote the std module, can't be zero.
       fassert( dir_class != 0 );
       CoreObject *self = dir_class->asClass()->createInstance();

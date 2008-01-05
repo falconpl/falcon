@@ -200,6 +200,7 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
 
    // create the stream class (without constructor).
    Falcon::Symbol *stream_class = self->addClass( "Stream" );
+   stream_class->setWKS(true);
    self->addClassMethod( stream_class, "close", Falcon::Ext::Stream_close );
    self->addClassMethod( stream_class, "read", Falcon::Ext::Stream_read );
    self->addClassMethod( stream_class, "readLine", Falcon::Ext::Stream_readLine );
@@ -225,6 +226,7 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
 
    // Specialization of the stream class to manage the closing of process bound streams.
    Falcon::Symbol *stdstream_class = self->addClass( "StdStream" );
+   stdstream_class->setWKS(true);
    self->addClassMethod( stdstream_class, "close", Falcon::Ext::StdStream_close );
    self->addClassProperty( stdstream_class, "_stdStreamType" );
    stdstream_class->getClassDef()->addInheritance(  new Falcon::InheritDef( stream_class ) );
@@ -244,6 +246,7 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    Falcon::Symbol *sstream_ctor = self->addExtFunc( "StringStream._init",
                Falcon::Ext::StringStream_init, false );
    Falcon::Symbol *sstream_class = self->addClass( "StringStream", sstream_ctor );
+   sstream_class->setWKS(true);
 
    // inherits from stream.
    sstream_class->getClassDef()->addInheritance(  new Falcon::InheritDef( stream_class ) );
@@ -293,6 +296,7 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    self->addExtFunc( "DirectoryOpen", Falcon::Ext::DirectoryOpen );
 
    Falcon::Symbol *dir_class = self->addClass( "Directory" );
+   dir_class->setWKS(true);
    self->addClassMethod( dir_class, "read", Falcon::Ext::Directory_read );
    self->addClassMethod( dir_class, "close", Falcon::Ext::Directory_close );
    self->addClassMethod( dir_class, "error", Falcon::Ext::Directory_error );
@@ -315,6 +319,7 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
 
    // create the FileStat class (without constructor).
    Falcon::Symbol *fileStats_class = self->addClass( "FileStat" );
+   fileStats_class->setWKS( true );
 
    // properties
    self->addClassProperty( fileStats_class, "type" );
@@ -335,6 +340,7 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    // The list class
    //=======================================================================
    Falcon::Symbol *list_class = self->addClass( "List", Falcon::Ext::List_init );
+   list_class->setWKS(true);
    self->addClassMethod( list_class, "push", Falcon::Ext::List_push );
    self->addClassMethod( list_class, "pop", Falcon::Ext::List_pop );
    self->addClassMethod( list_class, "pushFront", Falcon::Ext::List_pushFront );

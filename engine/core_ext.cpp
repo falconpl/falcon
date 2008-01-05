@@ -1534,7 +1534,7 @@ FALCON_FUNC  Iterator_clone( ::Falcon::VMachine *vm )
    UserData *iclone;
 
    // create an instance
-   Item *i_cls = vm->findGlobalItem( "Iterator" );
+   Item *i_cls = vm->findWKI( "Iterator" );
    fassert( i_cls != 0 );
    CoreObject *other = i_cls->asClass()->createInstance();
 
@@ -2996,7 +2996,7 @@ FALCON_FUNC  broadcast( ::Falcon::VMachine *vm )
       vm->addLocals( 2 );
       vm->local(0)->setInteger( 0 );
       // pre-cache our service function
-      Item *bcast_func = vm->findGlobalItem( "__broadcast_next_attrib" );
+      Item *bcast_func = vm->findWKI( "%broadcast_next_attrib" );
       fassert( bcast_func != 0 );
       *vm->local(1) = *bcast_func;
 
@@ -3060,7 +3060,7 @@ Module * core_module_init()
    core->addExtFunc( "removeFrom", Falcon::core::removeFrom );
    core->addExtFunc( "removeFromAll", Falcon::core::removeFromAll );
    core->addExtFunc( "broadcast", Falcon::core::broadcast );
-   core->addExtFunc( "__broadcast_next_attrib", Falcon::core::broadcast_next_attrib );
+   core->addExtFunc( "%broadcast_next_attrib", Falcon::core::broadcast_next_attrib )->setWKS(true);
 
    // Creating the TraceStep class:
    // ... first the constructor
@@ -3081,6 +3081,8 @@ Module * core_module_init()
    // Creating the Error class class:
    Symbol *error_init = core->addExtFunc( "Error._init", Falcon::core::Error_init );
    Symbol *error_class = core->addClass( "Error", error_init );
+   error_class->setWKS( true );
+
    core->addClassMethod( error_class, "toString",
          core->addExtFunc( "Error.toString", Falcon::core::Error_toString ) );
    core->addClassProperty( error_class, "code" );
@@ -3098,33 +3100,43 @@ Module * core_module_init()
    // Other derived error classes.
    Falcon::Symbol *synerr_cls = core->addClass( "SyntaxError", Falcon::core::SyntaxError_init );
    synerr_cls->getClassDef()->addInheritance(  new Falcon::InheritDef( error_class ) );
+   synerr_cls->setWKS( true );
 
    Falcon::Symbol *codeerr_cls = core->addClass( "CodeError", Falcon::core::CodeError_init );
    codeerr_cls->getClassDef()->addInheritance(  new Falcon::InheritDef( error_class ) );
+   codeerr_cls->setWKS( true );
 
    Falcon::Symbol *rangeerr_cls = core->addClass( "RangeError", Falcon::core::RangeError_init );
    rangeerr_cls->getClassDef()->addInheritance(  new Falcon::InheritDef( error_class ) );
+   rangeerr_cls->setWKS( true );
 
    Falcon::Symbol *matherr_cls = core->addClass( "MathError", Falcon::core::MathError_init );
    matherr_cls->getClassDef()->addInheritance(  new Falcon::InheritDef( error_class ) );
+   matherr_cls->setWKS( true );
 
    Falcon::Symbol *ioerr_cls = core->addClass( "IoError", Falcon::core::IoError_init );
    ioerr_cls->getClassDef()->addInheritance(  new Falcon::InheritDef( error_class ) );
+   ioerr_cls->setWKS( true );
 
    Falcon::Symbol *typeerr_cls = core->addClass( "TypeError", Falcon::core::TypeError_init );
    typeerr_cls->getClassDef()->addInheritance(  new Falcon::InheritDef( error_class ) );
+   typeerr_cls->setWKS( true );
 
    Falcon::Symbol *paramerr_cls = core->addClass( "ParamError", Falcon::core::ParamError_init );
    paramerr_cls->getClassDef()->addInheritance(  new Falcon::InheritDef( error_class ) );
+   paramerr_cls->setWKS( true );
 
    Falcon::Symbol *parsererr_cls = core->addClass( "ParseError", Falcon::core::ParseError_init );
    parsererr_cls->getClassDef()->addInheritance(  new Falcon::InheritDef( error_class ) );
+   parsererr_cls->setWKS( true );
 
    Falcon::Symbol *cloneerr_cls = core->addClass( "CloneError", Falcon::core::CloneError_init );
    cloneerr_cls->getClassDef()->addInheritance(  new Falcon::InheritDef( error_class ) );
+   cloneerr_cls->setWKS( true );
 
    Falcon::Symbol *interr_cls = core->addClass( "InterruptedError", Falcon::core::IntrruptedError_init );
    interr_cls->getClassDef()->addInheritance(  new Falcon::InheritDef( error_class ) );
+   interr_cls->setWKS( true );
    //=========================================
 
    // Creating the semaphore class
@@ -3169,6 +3181,7 @@ Module * core_module_init()
 
    // Iterators
    Symbol *iterator_class = core->addClass( "Iterator", Falcon::core::Iterator_init );
+   iterator_class->setWKS( true );
    core->addClassMethod( iterator_class, "hasCurrent", Falcon::core::Iterator_hasCurrent );
    core->addClassMethod( iterator_class, "hasNext", Falcon::core::Iterator_hasNext );
    core->addClassMethod( iterator_class, "hasPrev", Falcon::core::Iterator_hasPrev );

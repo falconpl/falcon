@@ -146,13 +146,8 @@ FALCON_FUNC  List_first ( ::Falcon::VMachine *vm )
 {
    ItemList *list = static_cast<ItemList *>( vm->self().asObject()->getUserData() );
 
-   Item *i_iclass = vm->findGlobalItem( "Iterator" );
-   if ( i_iclass == 0 || ! i_iclass->isClass() )
-   {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         origin( e_orig_runtime ).extra( vm->moduleString( msg::rtl_iterator_not_found ) ) ) );
-      return;
-   }
+   Item *i_iclass = vm->findWKI( "Iterator" );
+   fassert( i_iclass != 0 );
 
    CoreObject *iobj = i_iclass->asClass()->createInstance();
    ItemListElement *iter = list->first();
@@ -165,13 +160,8 @@ FALCON_FUNC  List_last ( ::Falcon::VMachine *vm )
 {
    ItemList *list = static_cast<ItemList *>( vm->self().asObject()->getUserData() );
 
-   Item *i_iclass = vm->findGlobalItem( "Iterator" );
-   if ( i_iclass == 0 || ! i_iclass->isClass() )
-   {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         origin( e_orig_runtime ).extra( vm->moduleString( msg::rtl_iterator_not_found ) ) ) );
-      return;
-   }
+   Item *i_iclass = vm->findWKI( "Iterator" );
+   fassert( i_iclass != 0 );
 
    CoreObject *iobj = i_iclass->asClass()->createInstance();
    iobj->setProperty( "origin", vm->self() );

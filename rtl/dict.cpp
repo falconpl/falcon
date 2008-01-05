@@ -212,13 +212,8 @@ FALCON_FUNC  dictFind( ::Falcon::VMachine *vm )
    }
 
    // find the iterator class, we'll need it
-   Item *i_iclass = vm->findGlobalItem( "Iterator" );
-   if ( i_iclass == 0 || ! i_iclass->isClass() )
-   {
-      vm->raiseModError( new CodeError( ErrorParam( e_inv_params, __LINE__ ).
-         origin( e_orig_runtime ).extra( vm->moduleString( msg::rtl_iterator_not_found ) ) ) );
-      return;
-   }
+   Item *i_iclass = vm->findWKI( "Iterator" );
+   fassert( i_iclass != 0 );
 
    CoreDict *dict = dict_itm->asDict();
 
@@ -245,13 +240,8 @@ FALCON_FUNC  dictBest( ::Falcon::VMachine *vm )
    }
 
    // find the iterator class, we'll need it
-   Item *i_iclass = vm->findGlobalItem( "Iterator" );
-   if ( i_iclass == 0 || ! i_iclass->isClass() )
-   {
-      vm->raiseModError( new CodeError( ErrorParam( e_inv_params, __LINE__ ).
-         origin( e_orig_runtime ).extra( vm->moduleString( msg::rtl_iterator_not_found ) ) ) );
-      return;
-   }
+   Item *i_iclass = vm->findWKI( "Iterator" );
+   fassert( i_iclass != 0 );
 
    CoreDict *dict = dict_itm->asDict();
    DictIterator *value = dict->first();

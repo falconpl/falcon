@@ -490,7 +490,10 @@ void Error::rewindStep()
 
 CoreObject *Error::scriptize( VMachine *vm )
 {
-   Item *error_class = vm->findGlobalItem( m_className );
+   Item *error_class = vm->findWKI( m_className );
+   // in case of 0, try with global items
+   if ( error_class == 0 )
+      vm->findGlobalItem( m_className );
 
    if ( error_class == 0 || ! error_class->isClass() ) {
       Error *error = new GenericError(
