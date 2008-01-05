@@ -41,7 +41,7 @@ if today.compare( tomorrow ) != -1: failure( "Compare two" )
 
 result = TimeStamp( tomorrow )
 result.distance( today )
-if result.day != 1: failure( "Subtraction" )
+if result.day != -1: failure( "Subtraction" )
 
 // check for a leap year.
 someyear = TimeStamp()
@@ -132,22 +132,48 @@ end
 
 
 // and the distance?
-april_30 = TimeStamp()
-april_30.year = 2006
-april_30.month = 4
-april_30.day = 28
-april_30.hour = 21
+april_28 = TimeStamp()
+april_28.year = 2006
+april_28.month = 4
+april_28.day = 28
+april_28.hour = 21
+april_28.minute = 25
 
+// aday is 30 april at midnight
 aday = TimeStamp( origin )
-aday.distance( april_30 )
+aday.distance( april_28 )
+// the distance between 30 april and 28 april 21:25 (back in time)
+// is 2 hours, 35 minutes and one full day
 if aday.month != 0 or \
-   aday.day != 1 or \
-   aday.hour != 3 or \
-   aday.minute != 0 or \
+   aday.day != -1 or \
+   aday.hour != 2 or \
+   aday.minute != 35 or \
    aday.second != 0 or \
    aday.msec != 0
-      failure( "Date distance" )
+      failure( "Date distance 1 " )
 end
+
+may_2 = TimeStamp()
+may_2.year = 2006
+may_2.month = 5
+may_2.day = 2
+may_2.hour = 6
+may_2.minute = 10
+
+// aday is 30 april at midnight
+aday = TimeStamp( origin )
+aday.distance( may_2 )
+// the distance between 30 april 0:0 and 2 may 6:10 am
+// is 6 hours and, 10 minutes 2 full days
+if aday.month != 0 or \
+   aday.day != 2 or \
+   aday.hour != 6 or \
+   aday.minute != 10 or \
+   aday.second != 0 or \
+   aday.msec != 0
+      failure( "Date distance 2" )
+end
+
 
 success()
 

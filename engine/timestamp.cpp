@@ -324,20 +324,29 @@ void TimeStamp::distance( const TimeStamp &ts )
 
    m_year = 0;
    m_month = 0;
-   m_day = comparation > 0 ? days : -days;
+   m_day = comparation < 0 ? days : -days;
 
-   m_hour -= ts.m_hour;
-   m_minute -= ts.m_minute;
-   m_second -= ts.m_second;
-   m_msec -= ts.m_msec;
+   m_hour = endDate->m_hour - startDate->m_hour;
+   m_minute = endDate->m_minute - startDate->m_minute;
+   m_second = endDate->m_second - startDate->m_second;
+   m_msec = endDate->m_msec - startDate->m_msec;
 
    if ( m_timezone != ts.m_timezone && m_timezone != tz_NONE && ts.m_timezone != tz_NONE )
    {
       int16 hours, mins, ts_hours, ts_mins;
       ts.getTZDisplacement( ts_hours, ts_mins );
       getTZDisplacement( hours, mins );
-      m_hour -= ts_hours - hours;
-      m_minute -= ts_mins - mins;
+      // if ts bigger (positive distance) we must add the difference between TS timezone and us
+      if ( comparation < 0 )
+      {
+         m_hour += ts_hours - hours;
+         m_minute += ts_mins - mins;
+      }
+      else {
+         // else we got to subtract it
+         m_hour -= ts_hours - hours;
+         m_minute -= ts_mins - mins;
+      }
    }
 
    rollOver( true );
@@ -394,10 +403,14 @@ void TimeStamp::rollOver( bool onlyDays )
       m_hour = m_hour % 24;
    }
 
-   m_day += adjust;
    if ( onlyDays ) {
+      // if the day is negative, and we want to know about days,
+      // a minus sign here means "less negative date"
+      m_day = m_day < 0 ? m_day - adjust: m_day + adjust;
       return;
    }
+
+   m_day += adjust;
    adjust = m_day;
 
    if ( adjust <= 0 ) {
