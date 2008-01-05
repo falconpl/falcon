@@ -35,7 +35,7 @@ DBIRecordsetMySQL::DBIRecordsetMySQL( DBIHandle *dbh, MYSQL_RES *res )
     : DBIRecordset( dbh )
 {
    m_res = res;
-   
+
    m_row = -1; // BOF
    m_rowCount = -1; // Only valid when using mysql_store_result instead of use_result
    m_columnCount = mysql_num_fields( res );
@@ -77,7 +77,7 @@ dbi_type DBIRecordsetMySQL::getFalconType( int typ )
 
    case MYSQL_TYPE_DATETIME: // TODO: MYSQL_TYPE_TIMESTAMP ?!?
       return dbit_datetime;
-      
+
    default:
       return dbit_string;
    }
@@ -108,7 +108,7 @@ dbi_status DBIRecordsetMySQL::next()
    // Fetch lengths of each field so we can later deal with binary values that may contain ZERO
    // or NULL values right in the middle of a string.
    m_fieldLengths = mysql_fetch_lengths( m_res );
-   
+
    return dbi_ok;
 }
 
@@ -121,7 +121,7 @@ dbi_status DBIRecordsetMySQL::getColumnNames( char *names[] )
 {
    for ( int cIdx = 0; cIdx < m_columnCount; cIdx++ )
       names[cIdx] = m_fields[cIdx].name;
-   
+
    return dbi_ok;
 }
 
@@ -129,7 +129,7 @@ dbi_status DBIRecordsetMySQL::getColumnTypes( dbi_type *types )
 {
    for ( int cIdx = 0; cIdx < m_columnCount; cIdx++ )
       types[cIdx] = getFalconType( m_fields[cIdx].type );
-   
+
    return dbi_ok;
 }
 
@@ -144,7 +144,7 @@ dbi_status DBIRecordsetMySQL::asString( const int columnIndex, String &value )
 
    value = String( m_rowData[columnIndex] ); // TODO: could contain binary data with NULL's
    value.bufferize();
-   
+
    return dbi_ok;
 }
 
@@ -158,7 +158,7 @@ dbi_status DBIRecordsetMySQL::asInteger( const int columnIndex, int32 &value )
       return dbi_nil_value;
 
    value = atoi( m_rowData[columnIndex] );
-   
+
    return dbi_ok;
 }
 
@@ -173,7 +173,7 @@ dbi_status DBIRecordsetMySQL::asInteger64( const int columnIndex, int64 &value )
 
    // TODO: is this conversion correct?
    value = atoll( m_rowData[columnIndex] );
-   
+
    return dbi_ok;
 }
 
@@ -187,7 +187,7 @@ dbi_status DBIRecordsetMySQL::asNumeric( const int columnIndex, numeric &value )
       return dbi_nil_value;
 
    value = atof( m_rowData[columnIndex] );
-   
+
    return dbi_ok;
 }
 
@@ -201,20 +201,20 @@ dbi_status DBIRecordsetMySQL::asDate( const int columnIndex, TimeStamp &value )
       return dbi_nil_value;
 
    String tv( m_rowData[columnIndex] );
-   
+
    // 2007-12-27
    // 0123456789
-   
+
    int64 year, month, day;
    tv.subString( 0, 4 ).parseInt( year );
    tv.subString( 5, 7 ).parseInt( month );
    tv.subString( 8, 10 ).parseInt( day );
-   
+
    Item yr( year );
    Item mo( month );
    Item da( day );
    Item zero( (int64) 0 );
-   
+
    value.setProperty( "year",   yr );
    value.setProperty( "month",  mo );
    value.setProperty( "day",    da );
@@ -222,7 +222,7 @@ dbi_status DBIRecordsetMySQL::asDate( const int columnIndex, TimeStamp &value )
    value.setProperty( "minute", zero );
    value.setProperty( "second", zero );
    value.setProperty( "msec",   zero );
-   
+
    return dbi_ok;
 }
 
@@ -234,22 +234,22 @@ dbi_status DBIRecordsetMySQL::asTime( const int columnIndex, TimeStamp &value )
       return dbi_invalid_recordset;
    else if ( m_rowData[columnIndex] == NULL )
       return dbi_nil_value;
-   
+
    String tv( m_rowData[columnIndex] );
-   
+
    // 01:02:03
    // 01234567
-   
+
    int64 hour, minute, second;
    tv.subString( 0, 2 ).parseInt( hour );
    tv.subString( 3, 5 ).parseInt( minute );
    tv.subString( 6, 8 ).parseInt( second );
-   
+
    Item zero( (int64) 0 );
    Item hr( hour );
    Item mn( minute );
    Item se( second );
-   
+
    value.setProperty( "year",   zero );
    value.setProperty( "month",  zero );
    value.setProperty( "day",    zero );
@@ -257,7 +257,7 @@ dbi_status DBIRecordsetMySQL::asTime( const int columnIndex, TimeStamp &value )
    value.setProperty( "minute", mn );
    value.setProperty( "second", se );
    value.setProperty( "msec",   zero );
-   
+
    return dbi_ok;
 }
 
@@ -269,12 +269,12 @@ dbi_status DBIRecordsetMySQL::asDateTime( const int columnIndex, TimeStamp &valu
       return dbi_invalid_recordset;
    else if ( m_rowData[columnIndex] == NULL )
       return dbi_nil_value;
-   
+
    String tv( m_rowData[columnIndex] );
-   
+
    // 2007-10-20 01:02:03
    // 0123456789012345678
-   
+
    int64 year, month, day, hour, minute, second;
    tv.subString(  0,  4 ).parseInt( year );
    tv.subString(  5,  7 ).parseInt( month );
@@ -282,7 +282,7 @@ dbi_status DBIRecordsetMySQL::asDateTime( const int columnIndex, TimeStamp &valu
    tv.subString( 11, 13 ).parseInt( hour );
    tv.subString( 14, 16 ).parseInt( minute );
    tv.subString( 17, 19 ).parseInt( second );
-   
+
    Item yr( year );
    Item mo( month );
    Item da( day );
@@ -290,7 +290,7 @@ dbi_status DBIRecordsetMySQL::asDateTime( const int columnIndex, TimeStamp &valu
    Item mn( minute );
    Item se( second );
    Item zero( (int64) 0 );
-   
+
    value.setProperty( "year",   yr );
    value.setProperty( "month",  mo );
    value.setProperty( "day",    da );
@@ -298,7 +298,7 @@ dbi_status DBIRecordsetMySQL::asDateTime( const int columnIndex, TimeStamp &valu
    value.setProperty( "minute", mn );
    value.setProperty( "second", se );
    value.setProperty( "msec",   zero );
-   
+
    return dbi_ok;
 }
 
@@ -341,7 +341,7 @@ dbi_status DBIRecordsetMySQL::getLastError( String &description )
  * Transaction class
  *****************************************************************************/
 
-DBITransactionMySQL::DBITransactionMySQL( DBIHandle *dbh ) 
+DBITransactionMySQL::DBITransactionMySQL( DBIHandle *dbh )
     : DBITransaction( dbh )
 {
    m_inTransaction = false;
@@ -426,34 +426,34 @@ int DBITransactionMySQL::execute( const String &query, dbi_status &retval )
 dbi_status DBITransactionMySQL::begin()
 {
    dbi_status retval;
-   
+
    execute( "BEGIN", retval );
-   
+
    if ( retval == dbi_ok )
       m_inTransaction = true;
-   
+
    return retval;
 }
 
 dbi_status DBITransactionMySQL::commit()
 {
    dbi_status retval;
-   
+
    execute( "COMMIT", retval );
-   
+
    m_inTransaction = false;
-   
+
    return retval;
 }
 
 dbi_status DBITransactionMySQL::rollback()
 {
    dbi_status retval;
-   
+
    execute( "ROLLBACK", retval );
-   
+
    m_inTransaction = false;
-   
+
    return retval;
 }
 
@@ -462,9 +462,9 @@ void DBITransactionMySQL::close()
    // TODO: return a status code here because of the potential commit
    if ( m_inTransaction )
       commit();
-   
+
    m_inTransaction = false;
-   
+
    m_dbh->closeTransaction( this );
 }
 
@@ -483,10 +483,10 @@ DBITransaction *DBIHandleMySQL::startTransaction()
    if ( t->begin() != dbi_ok ) {
       // TODO: filter useful information to the script level
       delete t;
-      
+
       return NULL;
    }
-   
+
    return t;
 }
 
@@ -512,7 +512,7 @@ DBIRecordset *DBIHandleMySQL::query( const String &sql, dbi_status &retval )
    if ( m_connTr == NULL ) {
       m_connTr = new DBITransactionMySQL( this );
    }
-   
+
    return m_connTr->query( sql, retval );
 }
 
@@ -521,7 +521,7 @@ int DBIHandleMySQL::execute( const String &sql, dbi_status &retval )
    if ( m_connTr == NULL ) {
       m_connTr = new DBITransactionMySQL( this );
    }
-   
+
    return m_connTr->execute( sql, retval );
 }
 
@@ -553,13 +553,13 @@ dbi_status DBIHandleMySQL::escapeString( const String &value, String &escaped )
 {
    if ( value.length() == 0 )
       return dbi_ok;
-   
+
    AutoCString asValue( value );
-   
+
    int maxLen = ( value.length() * 2 ) + 1;
    int errorCode;
    char *cTo = (char *) malloc( sizeof( char ) * maxLen );
-   
+
    size_t convertedSize = mysql_real_escape_string( m_conn, cTo,
                                                    asValue.c_str(), asValue.length() );
 
@@ -567,12 +567,12 @@ dbi_status DBIHandleMySQL::escapeString( const String &value, String &escaped )
       free( cTo );
       return dbi_error;
    }
-   
+
    escaped = cTo;
    escaped.bufferize();
-   
+
    free( cTo );
-   
+
    return dbi_ok;
 }
 
@@ -582,7 +582,7 @@ dbi_status DBIHandleMySQL::close()
       mysql_close( m_conn );
       m_conn = NULL;
    }
-   
+
    return dbi_ok;
 }
 
@@ -595,7 +595,7 @@ dbi_status DBIServiceMySQL::init()
    return dbi_ok;
 }
 
-DBIHandle *DBIServiceMySQL::connect( const String &parameters, bool persistent, 
+DBIHandle *DBIServiceMySQL::connect( const String &parameters, bool persistent,
                                      dbi_status &retval, String &errorMessage )
 {
    char *host, *user, *passwd, *db, *port, *unixSocket, *clientFlags;
@@ -636,22 +636,22 @@ DBIHandle *DBIServiceMySQL::connect( const String &parameters, bool persistent,
    }
 
    retval = dbi_ok;
-   
+
    return new DBIHandleMySQL( conn );
 }
 
 CoreObject *DBIServiceMySQL::makeInstance( VMachine *vm, DBIHandle *dbh )
 {
-   Item *cl = vm->findGlobalItem( "MySQL" );
+   Item *cl = vm->findWKI( "MySQL" );
    if ( cl == 0 || ! cl->isClass() || cl->asClass()->symbol()->name() != "MySQL" ) {
       vm->raiseModError( new DBIError( ErrorParam( dbi_driver_not_found, __LINE__ )
                                       .desc( "MySQL DBI driver was not found" ) ) );
       return 0;
    }
-   
+
    CoreObject *obj = cl->asClass()->createInstance();
    obj->setUserData( dbh );
-   
+
    return obj;
 }
 

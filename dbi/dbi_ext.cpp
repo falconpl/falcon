@@ -147,7 +147,7 @@ static int DBIHandle_realSqlExpand( VMachine *vm, DBIHandle *dbh, String &sql, i
                   else
                      snprintf( errorMessage, 128, "Word expansion (%s) was not found in object",
                               asWord.c_str() );
-      
+
                   GarbageString *s = new GarbageString( vm );
                   s->bufferize( errorMessage );
                   vm->raiseModError( new DBIError( ErrorParam( dbi_sql_expand_error,
@@ -181,7 +181,7 @@ static int DBIHandle_realSqlExpand( VMachine *vm, DBIHandle *dbh, String &sql, i
 
                if ( i == 0 ) {
                   snprintf( errorMessage, 128, "Positional expansion (%i) is out of range", pIdx );
-      
+
                   GarbageString *s = new GarbageString( vm );
                   s->bufferize( errorMessage );
                   vm->raiseModError( new DBIError( ErrorParam( dbi_sql_expand_error,
@@ -250,7 +250,7 @@ static int DBIRecordset_getItem( VMachine *vm, DBIRecordset *dbr, dbi_type typ, 
             item.setInteger( (int64) value );
       }
       break;
-   
+
    case dbit_integer64:
       {
          int64 value;
@@ -258,7 +258,7 @@ static int DBIRecordset_getItem( VMachine *vm, DBIRecordset *dbr, dbi_type typ, 
             item.setInteger( value );
       }
       break;
-   
+
    case dbit_numeric:
       {
          numeric value;
@@ -266,12 +266,12 @@ static int DBIRecordset_getItem( VMachine *vm, DBIRecordset *dbr, dbi_type typ, 
             item.setNumeric( value );
       }
       break;
-   
+
    case dbit_date:
       {
          TimeStamp *ts = new TimeStamp();
          if ( dbr->asDate( cIdx, *ts ) != dbi_nil_value ) {
-            Item *ts_class = vm->findGlobalItem( "TimeStamp" );
+            Item *ts_class = vm->findWKI( "TimeStamp" );
             fassert( ts_class != 0 );
             CoreObject *value = ts_class->asClass()->createInstance();
             value->setUserData( ts );
@@ -279,12 +279,12 @@ static int DBIRecordset_getItem( VMachine *vm, DBIRecordset *dbr, dbi_type typ, 
          }
       }
       break;
-   
+
    case dbit_time:
       {
          TimeStamp *ts = new TimeStamp();
          if ( dbr->asTime( cIdx, *ts ) != dbi_nil_value ) {
-            Item *ts_class = vm->findGlobalItem( "TimeStamp" );
+            Item *ts_class = vm->findWKI( "TimeStamp" );
             fassert( ts_class != 0 );
             CoreObject *value = ts_class->asClass()->createInstance();
             value->setUserData( ts );
@@ -292,12 +292,12 @@ static int DBIRecordset_getItem( VMachine *vm, DBIRecordset *dbr, dbi_type typ, 
          }
       }
       break;
-   
+
    case dbit_datetime:
       {
          TimeStamp *ts = new TimeStamp();
          if ( dbr->asDateTime( cIdx, *ts ) != dbi_nil_value ) {
-            Item *ts_class = vm->findGlobalItem( "TimeStamp" );
+            Item *ts_class = vm->findWKI( "TimeStamp" );
             fassert( ts_class != 0 );
             CoreObject *value = ts_class->asClass()->createInstance();
             value->setUserData( ts );
@@ -514,7 +514,7 @@ FALCON_FUNC DBIHandle_startTransaction( VMachine *vm )
       return;
    }
 
-   Item *trclass = vm->findGlobalItem( "%DBITransaction" );
+   Item *trclass = vm->findWKI( "%DBITransaction" );
    fassert( trclass != 0 && trclass->isClass() );
 
    CoreObject *oth = trclass->asClass()->createInstance();
@@ -543,7 +543,7 @@ FALCON_FUNC DBIHandle_query( VMachine *vm )
       return;
    }
 
-   Item *rsclass = vm->findGlobalItem( "%DBIRecordset" );
+   Item *rsclass = vm->findWKI( "%DBIRecordset" );
    fassert( rsclass != 0 && rsclass->isClass() );
 
    CoreObject *oth = rsclass->asClass()->createInstance();
@@ -598,7 +598,7 @@ FALCON_FUNC DBIHandle_queryOneDict( VMachine *vm )
    PageDict *dict = new PageDict( vm, cCount );
    char **cNames = (char **) malloc( sizeof( char ) * cCount * DBI_MAX_COLUMN_NAME_SIZE );
    dbi_type cTypes[cCount];
-   
+
    recSet->getColumnTypes( cTypes );
    recSet->getColumnNames( cNames );
 
@@ -631,7 +631,7 @@ FALCON_FUNC DBIHandle_queryOneObject( VMachine *vm )
    int cCount = recSet->getColumnCount();
    char **cNames = (char **) malloc( sizeof( char ) * cCount * DBI_MAX_COLUMN_NAME_SIZE );
    dbi_type cTypes[cCount];
-   
+
    recSet->getColumnTypes( cTypes );
    recSet->getColumnNames( cNames );
 
@@ -762,7 +762,7 @@ FALCON_FUNC DBITransaction_query( VMachine *vm )
       return;
    }
 
-   Item *rsclass = vm->findGlobalItem( "%DBIRecordset" );
+   Item *rsclass = vm->findWKI( "%DBIRecordset" );
    fassert( rsclass != 0 && rsclass->isClass() );
 
    CoreObject *oth = rsclass->asClass()->createInstance();
@@ -876,7 +876,7 @@ FALCON_FUNC DBIRecordset_fetchArray( VMachine *vm )
    int cCount = dbr->getColumnCount();
    dbi_type cTypes[cCount];
    CoreArray *ary = new CoreArray( vm, cCount );
-   
+
    dbr->getColumnTypes( cTypes );
 
    for ( int cIdx = 0; cIdx < cCount; cIdx++ )
@@ -916,7 +916,7 @@ FALCON_FUNC DBIRecordset_fetchDict( VMachine *vm )
    CoreDict *dict = new PageDict( vm, cCount );
    char **cNames = (char **) malloc( sizeof( char ) * cCount * DBI_MAX_COLUMN_NAME_SIZE );
    dbi_type cTypes[cCount];
-   
+
    dbr->getColumnTypes( cTypes );
    dbr->getColumnNames( cNames );
 
@@ -1180,7 +1180,7 @@ FALCON_FUNC DBIRecordset_asDate( VMachine *vm )
 
    // create the timestamps
    TimeStamp *ts = new TimeStamp();
-   Item *ts_class = vm->findGlobalItem( "TimeStamp" );
+   Item *ts_class = vm->findWKI( "TimeStamp" );
    //if we wrote the std module, can't be zero.
    fassert( ts_class != 0 );
    CoreObject *value = ts_class->asClass()->createInstance();
@@ -1214,7 +1214,7 @@ FALCON_FUNC DBIRecordset_asTime( VMachine *vm )
 
    // create the timestamps
    TimeStamp *ts = new TimeStamp();
-   Item *ts_class = vm->findGlobalItem( "TimeStamp" );
+   Item *ts_class = vm->findWKI( "TimeStamp" );
    //if we wrote the std module, can't be zero.
    fassert( ts_class != 0 );
    CoreObject *value = ts_class->asClass()->createInstance();
@@ -1248,7 +1248,7 @@ FALCON_FUNC DBIRecordset_asDateTime( VMachine *vm )
 
    // create the timestamps
    TimeStamp *ts = new TimeStamp();
-   Item *ts_class = vm->findGlobalItem( "TimeStamp" );
+   Item *ts_class = vm->findWKI( "TimeStamp" );
    //if we wrote the std module, can't be zero.
    fassert( ts_class != 0 );
    CoreObject *value = ts_class->asClass()->createInstance();

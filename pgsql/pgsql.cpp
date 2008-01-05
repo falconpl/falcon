@@ -47,6 +47,7 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    Falcon::Symbol *dbh_class = self->addExternalRef( "%DBIHandler" ); // it's external
    Falcon::Symbol *pgsql_class = self->addClass( "PgSQL", Falcon::Ext::PgSQL_init );
    pgsql_class->getClassDef()->addInheritance( new Falcon::InheritDef( dbh_class ) );
+   pgsql_class->setWKS( true );
 
    // we don't have extra functions for the dbhandler of mysql. If whe had,
    // this would be the right place to store them.

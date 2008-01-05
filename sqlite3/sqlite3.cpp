@@ -47,6 +47,7 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    Falcon::Symbol *dbh_class = self->addExternalRef( "%DBIHandler" ); // it's external
    Falcon::Symbol *sqlite3_class = self->addClass( "SQLite3", Falcon::Ext::SQLite3_init );
    sqlite3_class->getClassDef()->addInheritance( new Falcon::InheritDef( dbh_class ) );
+   sqlite3_class->setWKS( true );
 
    // we don't have extra functions for the dbhandler of mysql. If whe had,
    // this would be the right place to store them.

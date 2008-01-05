@@ -54,7 +54,8 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    self->addClassMethod( handler_class, "close",             Falcon::Ext::DBIHandle_close );
 
    // create the base class DBITransaction for falcon
-   Falcon::Symbol *trans_class = self->addClass( "%DBITransaction" ); // private class
+   Falcon::Symbol *trans_class = self->addClass( "%DBITransaction", false ); // private class
+   trans_class->setWKS( true );
    self->addClassMethod( trans_class, "query",    Falcon::Ext::DBITransaction_query );
    self->addClassMethod( trans_class, "execute",  Falcon::Ext::DBITransaction_execute );
    self->addClassMethod( trans_class, "commit",   Falcon::Ext::DBITransaction_commit );
@@ -62,7 +63,8 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    self->addClassMethod( trans_class, "close",    Falcon::Ext::DBITransaction_close );
 
    // create the base class DBIRecordset for falcon
-   Falcon::Symbol *rs_class = self->addClass( "%DBIRecordset" ); // private class
+   Falcon::Symbol *rs_class = self->addClass( "%DBIRecordset", false ); // private class
+   rs_class->setWKS( true );
    self->addClassMethod( rs_class, "next",           Falcon::Ext::DBIRecordset_next );
    self->addClassMethod( rs_class, "fetchArray",     Falcon::Ext::DBIRecordset_fetchArray );
    self->addClassMethod( rs_class, "fetchDict",      Falcon::Ext::DBIRecordset_fetchDict );
