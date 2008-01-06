@@ -41,7 +41,7 @@
 #include <falcon/genericmap.h>
 #include <falcon/genericlist.h>
 #include <falcon/fassert.h>
-
+#include <falcon/bommap.h>
 
 #define FALCON_MAX_ATTRIBUTES 64
 #define FALCON_VM_DFAULT_CHECK_LOOPS 1000
@@ -459,8 +459,11 @@ protected:
    */
    ItemVector *m_currentGlobals;
 
-   /** Opcode hanlder function calls. */
+   /** Opcode handler function calls. */
    tOpcodeHandler *m_opHandlers;
+
+   /** Falcon BOM function map */
+   BomMap *m_fbom;
 
    /** Events that are required */
    tEvent m_event;

@@ -37,6 +37,7 @@
 #include <falcon/deferrorhandler.h>
 #include <falcon/format.h>
 #include <falcon/attribute.h>
+#include <falcon/bommap.h>
 
 #define VM_STACK_MEMORY_THRESHOLD 64
 
@@ -222,6 +223,24 @@ void VMachine::internal_construct()
    m_opHandlers[ P_STEX ] = opcodeHandler_STEX;
    m_opHandlers[ P_TRAC ] = opcodeHandler_TRAC;
    m_opHandlers[ P_WRT ] = opcodeHandler_WRT;
+
+   m_fbom = new BomMap();
+   m_fbom->add( "toString" );
+   m_fbom->add( "len" );
+   m_fbom->add( "first" );
+   m_fbom->add( "last" );
+   m_fbom->add( "compare" );
+   m_fbom->add( "equal" );
+   m_fbom->add( "type" );
+   m_fbom->add( "className" );
+   m_fbom->add( "baseClass" );
+   m_fbom->add( "derivedFrom" );
+   m_fbom->add( "clone" );
+   m_fbom->add( "serialize" );
+   m_fbom->add( "attribs" );
+   m_fbom->add( "trim" );
+   m_fbom->add( "frontTrim" );
+   m_fbom->add( "allTrim" );
 }
 
 
@@ -259,6 +278,7 @@ VMachine::~VMachine()
 
    delete  m_memPool ;
    memFree( m_opHandlers );
+   delete m_fbom;
 
    // errors may be created by modules, so we should destroy them before
    // having a chance to destroy modules

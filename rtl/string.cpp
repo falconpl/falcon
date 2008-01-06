@@ -394,21 +394,19 @@ FALCON_FUNC  strTrim ( ::Falcon::VMachine *vm )
       return;
    }
    
-   String *cs = target->asString();
-   int32 pos = cs->length()-1;
+   String *cs = new GarbageString( vm, *target->asString() );
    
    Item *trimChars = vm->param(1);
    if ( trimChars == 0 ) {
-      while( pos >= 0 ) {
-         int chr = cs->getCharAt( pos );
-         if ( chr != ' ' && chr != '\t' && chr != '\r' && chr != '\n' )
-            break;
-         pos--;
-      }
-   } else if ( ! trimChars->isString() ) {
+      cs->backTrim();
+      vm->retval( cs );
+   }
+   else if ( ! trimChars->isString() ) {
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
       return;
-   } else {
+   }
+   else {
+      int32 pos = cs->length()-1;
       String *trim = trimChars->asString();
       int32 tLen = trim->length();
       
@@ -423,13 +421,12 @@ FALCON_FUNC  strTrim ( ::Falcon::VMachine *vm )
             break;
          pos--;
       }
+      // has something to be trimmed?
+      if ( pos >= 0)
+         vm->retval( cs->subString( 0, pos + 1 ) );
+      else
+         vm->retval( new GarbageString( vm ) );
    }
-
-   // has something to be trimmed?
-   if ( pos >= 0)
-      vm->retval( cs->subString( 0, pos + 1 ) );
-   else
-      vm->retval( new GarbageString( vm ) );
 }
 
 FALCON_FUNC  strFrontTrim ( ::Falcon::VMachine *vm )
@@ -442,23 +439,20 @@ FALCON_FUNC  strFrontTrim ( ::Falcon::VMachine *vm )
    }
 
 
-   String *cs = target->asString();
-   int pos = 0;
-   int32 len = cs->length();
+   String *cs = new GarbageString( vm, *target->asString() );
    
    Item *trimChars = vm->param(1);
    if (trimChars == 0 ) {
-      while( pos <= len )
-      {
-         int chr = cs->getCharAt( pos );
-         if ( chr != ' ' && chr != '\t' && chr != '\r' && chr != '\n' )
-            break;
-         pos++;
-      }
-   } else if ( ! trimChars->isString() ) {
+      cs->frontTrim();
+      vm->retval( cs );
+   }
+   else if ( ! trimChars->isString() ) {
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
       return;
-   } else {
+   }
+   else {
+      int pos = 0;
+      int32 len = cs->length();
       String *trim = trimChars->asString();
       int32 tLen = trim->length();
       
@@ -474,13 +468,13 @@ FALCON_FUNC  strFrontTrim ( ::Falcon::VMachine *vm )
             break;
          pos++;
       }      
+   
+      // has something to be trimmed?
+      if ( pos < len )
+         vm->retval( cs->subString( pos, len ) );
+      else
+         vm->retval( new GarbageString( vm ) );
    }
-
-   // has something to be trimmed?
-   if ( pos < len )
-      vm->retval( cs->subString( pos, len ) );
-   else
-      vm->retval( new GarbageString( vm ) );
 }
 
 FALCON_FUNC  strAllTrim ( ::Falcon::VMachine *vm )
@@ -492,36 +486,23 @@ FALCON_FUNC  strAllTrim ( ::Falcon::VMachine *vm )
       return;
    }
 
-   String *cs = target->asString();
-   int32 len = cs->length();
-   
-   int32 start = 0;
-   int32 end = len;
-   uint32 chr;
+   String *cs = new GarbageString( vm, *target->asString() );
    
    Item *trimChars = vm->param(1);
    if ( trimChars == 0 ) {
-      while( start < len )
-      {
-         chr = cs->getCharAt( start );
-         if ( chr != ' ' && chr != '\t' && chr != '\r' && chr != '\n' )
-            break;
-         start++;
-      }
-      
-      while( end > start )
-      {
-         chr = cs->getCharAt( end - 1 );
-         if ( chr != ' ' && chr != '\t' && chr != '\r' && chr != '\n' )
-            break;
-         end--;
-      }
-   } else if ( ! trimChars->isString() ) {
+      cs->trim();
+      vm->retval( cs );
+   }
+   else if ( ! trimChars->isString() ) {
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
-      return;
-   } else {
+   }
+   else {
       String *trim = trimChars->asString();
       int32 tLen = trim->length();
+      int32 len = cs->length();
+      int32 start = 0;
+      int32 end = len;
+      uint32 chr;
       int found = 0;
       
       while( start < len )
@@ -547,10 +528,11 @@ FALCON_FUNC  strAllTrim ( ::Falcon::VMachine *vm )
             break;
          end--;
       }
+
+      // an empty string if set is empty
+      vm->retval( cs->subString( start, end ) );
    }
    
-   // an empty string if set is empty
-   vm->retval( cs->subString( start, end ) );
 }
 
 FALCON_FUNC  strReplace ( ::Falcon::VMachine *vm )
@@ -706,18 +688,11 @@ FALCON_FUNC  strUpper ( ::Falcon::VMachine *vm )
    {
       vm->retval( new GarbageString( vm ) );
    }
-
-   String *target = new GarbageString( vm, *src );
-   uint32 len = target->length();
-   for( uint32 i = 0; i < len; i++ )
-   {
-      uint32 chr = target->getCharAt( i );
-      if ( chr >= 'a' && chr <= 'z' ) {
-         target->setCharAt( i, chr & ~0x20 );
-      }
+   else {
+      String *target = new GarbageString( vm, *src );
+      target->upper();
+      vm->retval( target );
    }
-
-   vm->retval( target );
 }
 
 FALCON_FUNC  strLower ( ::Falcon::VMachine *vm )
@@ -734,18 +709,11 @@ FALCON_FUNC  strLower ( ::Falcon::VMachine *vm )
    {
       vm->retval( new GarbageString( vm ) );
    }
-
-   String *target = new GarbageString( vm, *src );
-   uint32 len = target->length();
-   for( uint32 i = 0; i < len; i++ )
-   {
-      uint32 chr = target->getCharAt( i );
-      if ( chr >= 'A' && chr <= 'Z' ) {
-         target->setCharAt( i, chr | 0x20 );
-      }
+   else {
+      String *target = new GarbageString( vm, *src );
+      target->lower();
+      vm->retval( target );
    }
-
-   vm->retval( target );
 }
 
 FALCON_FUNC  strCmpIgnoreCase ( ::Falcon::VMachine *vm )

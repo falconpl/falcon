@@ -19,16 +19,25 @@ nonspaced = "non spaced"
 if strTrim( spaced ) != " a spaced string": failure( "strTrim" )
 if strFrontTrim( spaced ) != "a spaced string ": failure( "strFrontTrim" )
 if strAllTrim( spaced ) != "a spaced string": failure( "strAllTrim" )
+if spaced.trim() != " a spaced string": failure( ".trim" )
+if spaced.frontTrim() != "a spaced string ": failure( ".frontTrim" )
+if spaced.allTrim() != "a spaced string": failure( ".allTrim" )
 
 spaced = "  \t a spaced string  \t "
 
 if strTrim( spaced ) != "  \t a spaced string": failure( "strTrim 2" )
 if strFrontTrim( spaced ) != "a spaced string  \t ": failure( "strFrontTrim 2" )
 if strAllTrim( spaced ) != "a spaced string": failure( "strAllTrim 2" )
+if spaced.trim() != "  \t a spaced string": failure( ".trim 2" )
+if spaced.frontTrim() != "a spaced string  \t ": failure( ".frontTrim 2" )
+if spaced.allTrim() != "a spaced string": failure( ".allTrim 2" )
 
 if strTrim( nonspaced ) != "non spaced": failure( "strTrim nonspaced" )
 if strFrontTrim( nonspaced ) != "non spaced": failure( "strFrontTrim nonspaced" )
 if strAllTrim( nonspaced ) != "non spaced": failure( "strAllTrim nonspaced" )
+if nonspaced.trim() != "non spaced": failure( ".trim nonspaced" )
+if nonspaced.frontTrim() != "non spaced": failure( ".frontTrim nonspaced" )
+if nonspaced.allTrim() != "non spaced": failure( ".allTrim nonspaced" )
     
 other = "54321 hello world 12345"
 

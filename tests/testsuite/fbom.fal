@@ -218,6 +218,68 @@ if not obj.derivedFrom( "mixed" ): failure( "Obj derived from mixed" )
 if not obj.derivedFrom( "second" ): failure( "Obj derived from second" )
 if not obj.derivedFrom( "first" ): failure( "Obj derived from first" )
 
+//test 10: trim
+try
+   aNil.trim()
+   failure( "Nil has trim" )
+end
+
+try
+   integer.trim()
+   failure( "Integer has trim" )
+end
+
+try
+   float.trim()
+   failure( "Float has trim" )
+end
+
+try
+   range.trim()
+   failure( "Range has trim" )
+end
+
+try
+   string.trim()
+catch
+   failure( "String does not have trim" )
+end
+
+try
+   array.trim()
+   failure( "Array has trim" )
+end
+
+try
+   dictionary.trim()
+   failure( "Dictionary has trim" )
+end
+
+try
+   printl.trim()
+   failure( "Function has trim" )
+end
+
+try
+   first.trim()
+   failure( "Class has trim" )
+end
+
+try
+   obj.trim()
+   failure( "Object has trim" )
+end
+
+try
+   inst.trim()
+   failure( "Instance has trim" )
+end
+
+try
+   method.trim()
+   failure( "Method has trim" )
+end
+
 success()
 
 /* End of file */

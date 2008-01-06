@@ -2317,38 +2317,45 @@ String &String::bufferize()
 }
 
 
-void String::trim()
+void String::trim( int mode )
 {
-   // first, trim from behind.
+   uint32 front = 0;
    uint32 len = length();
-   while( len > 0 )
-   {
-      uint32 chr = getCharAt( len - 1 );
-      if( chr != ' ' && chr != '\n' && chr != '\r' && chr != '\t' )
+
+   // modes: 0 = all, 1 = front, 2 = back
+
+   // first, trim from behind.
+   if ( mode == 0 || mode == 2 ) {
+      while( len > 0 )
       {
-         break;
+         uint32 chr = getCharAt( len - 1 );
+         if( chr != ' ' && chr != '\n' && chr != '\r' && chr != '\t' )
+         {
+            break;
+         }
+
+         len --;
       }
 
-      len --;
-   }
-
-   if ( len == 0 )
-   {
-      // string is actually empty.
-      m_size = 0;
-      return;
+      if ( len == 0 )
+      {
+         // string is actually empty.
+         m_size = 0;
+         return;
+      }
    }
 
    // front trim
-   uint32 front = 0;
-   while( front < len )
-   {
-      uint32 chr = getCharAt( front );
-      if( chr != ' ' && chr != '\n' && chr != '\r' && chr != '\t' )
+   if ( mode == 0 || mode == 1 ) {
+      while( front < len )
       {
-         break;
+         uint32 chr = getCharAt( front );
+         if( chr != ' ' && chr != '\n' && chr != '\r' && chr != '\t' )
+         {
+            break;
+         }
+         ++front;
       }
-      ++front;
    }
 
    // front can't be == to len.
@@ -2359,6 +2366,30 @@ void String::trim()
    }
    else {
       m_size = len * m_class->charSize();
+   }
+}
+
+void String::lower()
+{
+   uint32 len = length();
+   for( uint32 i = 0; i < len; i++ )
+   {
+      uint32 chr = getCharAt( i );
+      if ( chr >= 'A' && chr <= 'Z' ) {
+         setCharAt( i, chr | 0x20 );
+      }
+   }
+}
+
+void String::upper()
+{
+   uint32 len = length();
+   for( uint32 i = 0; i < len; i++ )
+   {
+      uint32 chr = getCharAt( i );
+      if ( chr >= 'a' && chr <= 'z' ) {
+         setCharAt( i, chr & ~0x20 );
+      }
    }
 }
 

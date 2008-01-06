@@ -31,6 +31,7 @@
 #include <falcon/garbageable.h>
 #include <falcon/basealloc.h>
 #include <falcon/string.h>
+#include <falcon/bommap.h>
 
 namespace Falcon {
 
@@ -608,7 +609,7 @@ public:
       \param method on success, a valorized FBOM item
       \return true if the property is a FBOM property name
    */
-   bool getBom( const String &property, Item &method ) const;
+   bool getBom( const String &property, Item &method, BomMap *bmap ) const;
 
    /** Call this item's basic object method, if the item is a FBOM
 

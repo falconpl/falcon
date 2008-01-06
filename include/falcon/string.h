@@ -282,16 +282,16 @@ extern FALCON_DYN_SYM Buffer32 handler_buffer32;
 class FALCON_DYN_CLASS String: public BaseAlloc //: public Garbageable
 {
 
-friend class csh::Base;
-friend class csh::Byte;
-friend class csh::Static;
-friend class csh::Buffer;
-friend class csh::Static16;
-friend class csh::Buffer16;
-friend class csh::Static32;
-friend class csh::Buffer32;
+   friend class csh::Base;
+   friend class csh::Byte;
+   friend class csh::Static;
+   friend class csh::Buffer;
+   friend class csh::Static16;
+   friend class csh::Buffer16;
+   friend class csh::Static32;
+   friend class csh::Buffer32;
 
-friend class GarbageString;
+   friend class GarbageString;
 
 protected:
    const csh::Base *m_class;
@@ -303,37 +303,45 @@ protected:
    /** True if this is a garbage string. */
    bool m_garbageable;
 
-   /** gcStatus used by the GarbageString subclass.
-      Placed here in the base class to help memory alignment.
-   */
+   /**
+    * gcStatus used by the GarbageString subclass.
+    *
+    * Placed here in the base class to help memory alignment.
+    */
    byte m_gcStatus;
 
-   /** Creates the core string.
-      This method is protected. It can be accessed only by subclasses.
-   */
-   String( csh::Base *cl ):
+   /**
+    * Creates the core string.
+    *
+    * This method is protected. It can be accessed only by subclasses.
+    */
+   String( csh::Base *cl ) :
       m_class( cl ),
       m_garbageable( false )
    {}
 
-   /** Eventually fix the string allocation in the garbage collector.
-      Mainly meant to be called by manipulators.
-      \param oldSize the previous allocated size
-   */
+   /**
+    * Eventually fix the string allocation in the garbage collector.
+    *
+    * Mainly meant to be called by manipulators.
+    * \param oldSize the previous allocated size
+    */
    void checkAdjustSize( uint32 oldSize );
 
 public:
 
    enum constants {
       npos = csh::npos,
-	  no_id = 0xFFFFFFFF
+      no_id = 0xFFFFFFFF
    };
 
 
-   /** Creates an empty string.
-      The string is created non-zero terminated with length 0. It has also
-      no valid internal storage at creation time.
-   */
+   /**
+    * Creates an empty string.
+    *
+    * The string is created non-zero terminated with length 0. It has also
+    * no valid internal storage at creation time.
+    */
    String():
       m_size( 0 ),
       m_storage( 0 ),
@@ -1010,17 +1018,38 @@ public:
       allocated, moving the characters back to the beginning position.
 
    */
-   void trim();
+   void trim( int mode );
+   void trim() { trim( 0 ); }
 
-   /** Tells if a string is read-only.
-	   Static strings are the ones with a static manipulator or with an ID != 0.
-	   \return true if the string is read-only
-   */
+   /**
+    * Remove efficiently 'what' at the beginning of the string.
+    *
+    * If what is empty, whitespaces are removed.
+    */
+   void frontTrim() { trim( 1 ); }
+   void backTrim() { trim( 2 ); }
+
+   /**
+    * Convert the string to all lower case.
+    */
+   void lower();
+
+   /**
+    * Convert the string to all upper case.
+    */
+   void upper();
+
+   /**
+    * Tells if a string is read-only.
+    *
+    * Static strings are the ones with a static manipulator or with an ID != 0.
+    * \return true if the string is read-only
+    */
    bool isReadOnly() const {
       return manipulator()->type() == csh::cs_static ||
              manipulator()->type() == csh::cs_static16 ||
              manipulator()->type() == csh::cs_static32 ||
-			 m_id != no_id;
+         m_id != no_id;
    }
 
    bool isStatic() const {

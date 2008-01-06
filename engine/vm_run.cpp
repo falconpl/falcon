@@ -1844,7 +1844,7 @@ void opcodeHandler_LDP( register VMachine *vm )
       }
 
       // try to find a generic method
-      if( source->getBom( *property, vm->regA() ) )
+      if( source->getBom( *property, vm->regA(), vm->m_fbom ) )
          return;
    }
 

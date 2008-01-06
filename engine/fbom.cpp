@@ -34,10 +34,12 @@
 
 #include <falcon/format.h>
 
+#include <falcon/autocstring.h>
+#include <falcon/bommap.h>
+
 #include <stdio.h>
 
 namespace Falcon {
-
 
 /* BOMID: 0 */
 FALCON_FUNC BOM_toString( VMachine *vm )
@@ -276,6 +278,45 @@ FALCON_FUNC BOM_attribs( VMachine *vm )
       vm->retnil();
 }
 
+/* BOMID: 13 */
+FALCON_FUNC BOM_backTrim( VMachine *vm )
+{
+   const Item &self = vm->self();
+   if ( self.type() == FLC_ITEM_STRING ) {
+      String s = *self.asString();
+      s.backTrim();
+      vm->retval( s );
+   } else {
+      vm->raiseRTError( new ParamError( ErrorParam( e_prop_acc ) ) );
+   }
+}
+
+/* BOMID: 14 */
+FALCON_FUNC BOM_frontTrim( VMachine *vm )
+{
+   const Item &self = vm->self();
+   if ( self.type() == FLC_ITEM_STRING ) {
+      String s = *self.asString();
+      s.frontTrim();
+      vm->retval( s );
+   } else {
+      vm->raiseRTError( new ParamError( ErrorParam( e_prop_acc ) ) );
+   }
+}
+
+/* BOMID: 15 */
+FALCON_FUNC BOM_allTrim( VMachine *vm )
+{
+   const Item &self = vm->self();
+   if ( self.type() == FLC_ITEM_STRING ) {
+      String s = *self.asString();
+      s.trim();
+      vm->retval( s );
+   } else {
+      vm->raiseRTError( new ParamError( ErrorParam( e_prop_acc ) ) );
+   }
+}
+
 //====================================================//
 // THE BOM TABLE
 //====================================================//
@@ -295,47 +336,22 @@ static void (* const  BOMTable  [] ) ( Falcon::VMachine *) =
    BOM_derivedFrom,
    BOM_clone,
    BOM_serialize,
-   BOM_attribs
+   BOM_attribs,
+   BOM_backTrim,
+   BOM_frontTrim,
+   BOM_allTrim
 };
 
 //====================================================//
 // THE BOM IMPLEMENTATION
 //====================================================//
 
-bool Item::getBom( const String &property, Item &method ) const
+bool Item::getBom( const String &property, Item &method, BomMap *bmap ) const
 {
-   //TODO: optimize via search table.
-   byte value;
-   if( property == "toString" )
-      value = 0;
-   else if ( property == "len" )
-      value = 1;
-   else if ( property == "first" )
-      value = 2;
-   else if ( property == "last" )
-      value = 3;
-   else if ( property == "compare" )
-      value = 4;
-   else if ( property == "equal" )
-      value = 5;
-   else if ( property == "type" )
-      value = 6;
-   else if ( property == "className" )
-      value = 7;
-   else if ( property == "baseClass" )
-      value = 8;
-   else if ( property == "derivedFrom" )
-      value = 9;
-   else if ( property == "clone" )
-      value = 10;
-   else if ( property == "serialize" )
-      value = 11;
-   else if ( property == "attribs" )
-      value = 12;
-   else
+   int *value = (int *) bmap->find( &property );
+   if ( value == NULL )
       return false;
-
-   method.setFbom( *this, value );
+   method.setFbom( *this, *value );
    return true;
 }
 
