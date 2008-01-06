@@ -66,7 +66,8 @@ void inspect_internal( VMachine *vm, const Item *elem, int32 level, bool add )
 
    String temp;
 
-   switch( elem->type() ) {
+   switch( elem->type() )
+   {
      case FLC_ITEM_NIL:
          stream->writeString( "Nil" );
       break;
@@ -180,21 +181,28 @@ void inspect_internal( VMachine *vm, const Item *elem, int32 level, bool add )
 
       case FLC_ITEM_METHOD:
       {
-         temp = "Method 0x";
-         temp.writeNumberHex( (uint64) elem->asMethodObject() );
-         temp += "->" + elem->asMethodFunction()->name();
-         stream->writeString( temp );
-
-         Item itemp;
-         itemp.setObject( elem->asMethodObject() );
-         inspect_internal( vm, &itemp, level + 1, true );
-         itemp.setFunction( elem->asMethodFunction(), elem->asModule() );
-         inspect_internal( vm, &itemp, level + 1, true );
-         for ( i = 0; i < level; i ++ )
+         if ( ! elem->asModule()->isAlive() )
          {
-            stream->writeString("   ");
+            stream->writeString( "Dead method" );
          }
-         stream->writeString( "}" );
+         else
+         {
+            temp = "Method 0x";
+            temp.writeNumberHex( (uint64) elem->asMethodObject() );
+            temp += "->" + elem->asMethodFunction()->name();
+            stream->writeString( temp );
+
+            Item itemp;
+            itemp.setObject( elem->asMethodObject() );
+            inspect_internal( vm, &itemp, level + 1, true );
+            itemp.setFunction( elem->asMethodFunction(), elem->asModule() );
+            inspect_internal( vm, &itemp, level + 1, true );
+            for ( i = 0; i < level; i ++ )
+            {
+               stream->writeString("   ");
+            }
+            stream->writeString( "}" );
+         }
       }
       break;
 
@@ -220,22 +228,29 @@ void inspect_internal( VMachine *vm, const Item *elem, int32 level, bool add )
 
       case FLC_ITEM_FUNC:
       {
-         Symbol *funcSym = elem->asFunction();
-         if ( funcSym->isExtFunc() )
+         if ( ! elem->asModule()->isAlive() )
          {
-            stream->writeString( "Ext. Function " + funcSym->name() );
+            stream->writeString( "Dead function" );
          }
          else {
-            stream->writeString( "Function " + funcSym->name() );
+            Symbol *funcSym = elem->asFunction();
 
-            FuncDef *def = funcSym->getFuncDef();
-            uint32 itemId = def->onceItemId();
-            if ( itemId != FuncDef::NO_STATE )
+            if ( funcSym->isExtFunc() )
             {
-               if ( elem->asModule()->globals().itemAt( itemId ).isNil() )
-                  stream->writeString( "{ not called }");
-               else
-                  stream->writeString( "{ called }");
+               stream->writeString( "Ext. Function " + funcSym->name() );
+            }
+            else {
+               stream->writeString( "Function " + funcSym->name() );
+
+               FuncDef *def = funcSym->getFuncDef();
+               uint32 itemId = def->onceItemId();
+               if ( itemId != FuncDef::NO_STATE )
+               {
+                  if ( elem->asModule()->globals().itemAt( itemId ).isNil() )
+                     stream->writeString( "{ not called }");
+                  else
+                     stream->writeString( "{ called }");
+               }
             }
          }
       }

@@ -3035,16 +3035,16 @@ bool VMachine::unlink( const Module *module )
    }
 
    // delete all the exported and well known symbols
-   iter = lm->module()->symbolTable().map().begin();
-   while( iter.hasCurrent() )
+   MapIterator stiter = lm->module()->symbolTable().map().begin();
+   while( stiter.hasCurrent() )
    {
-      Symbol *sym = *(Symbol **) iter.currentValue();
+      Symbol *sym = *(Symbol **) stiter.currentValue();
       if ( sym->isWKS() )
          m_wellKnownSyms.erase( &sym->name() );
       else if ( sym->exported() )
          m_globalSyms.erase( &sym->name() );
 
-      iter.next();
+      stiter.next();
    }
 
    // delete the iterator from the map

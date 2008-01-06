@@ -1805,6 +1805,8 @@ void opcodeHandler_LDP( register VMachine *vm )
                Item *p = prop.dereference();
                switch( p->type() ) {
                   case FLC_ITEM_FUNC:
+                     // the function may be a dead function; by so, the method will become a dead method,
+                     // and it's ok for us.
                      vm->m_regA.setMethod( source->asObject(), p->asFunction(), p->asModule() );
                   break;
 
