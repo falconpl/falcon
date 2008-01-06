@@ -47,9 +47,18 @@ end
 disk, modPath, fname, ext = fileNameSplit( scriptPath )
 comp.path = comp.path + ";" + modPath
 
+// try to unload a module loaded after another
+mod = comp.compile( "testmod", "test = 0" )
 mod1 = comp.loadByName( "reflexcomp_1" )
-mod2 = comp.loadByName( "reflexcomp_1" )
+test_func = mod1.get( "func" )
 
-if mod1.unload(): failure( "Unlink order not blocked" )
+if not mod.unload(): failure( "free unload not respected" )
+mod1.unload()
+
+// now test_func must be not callable.
+try
+   > test_func( "test" )
+   failure( "Call in unloaded module" )
+end
 
 success()

@@ -40,7 +40,6 @@ comp.saveModules = false
 
 // try once
 mod1 = comp.loadByName( "reflexcomp_1" )
-success()
 mod2 = comp.loadModule( modPath + "/reflexcomp_1.fal" )
 
 test( mod1, "Module1 - first try" )
@@ -67,7 +66,7 @@ function test( module, reason )
 
    obj = module.get( "obj" )
    if obj.func( "val1" ) != "obj val1": failure( reason + " - obj func" )
-      
+
    if obj.initData != "Initialized": failure( reason + " - init obj" )
 
    // now inject some data.
@@ -81,11 +80,11 @@ function test( module, reason )
    module.set( "global_sym", testFunc )
    res = module.get( "func_global_sym" )( "param" )
    if res != "Loader func param": failure(  reason + " - injected function" )
-   
+
    module.set( "global_sym", TestObj )
    res = module.get( "func_global_obj" )( "param" )
    if res != "Loader obj func param": failure(  reason + " - injected object" )
-   
+
    module.set( "global_sym", TestClass )
    res = module.get( "func_global_class" )( "param" )
    if res != "Loader class func param": failure(  reason + " - injected class" )
@@ -96,7 +95,7 @@ function test( module, reason )
    if obj.callRemote( "param" ) != "Loader func param"
       failure( reason + " - injected remote method" )
    end
-   
+
 end
 
 success()
