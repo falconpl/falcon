@@ -1,0 +1,24 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 10a
+* Category: zlib
+* Subcategory:
+* Short: Compress and Uncompress
+* Description:
+* Compress a string, then uncompress it and compare to the original
+* [/Description]
+*
+****************************************************************************/
+
+load zlib
+
+original = "Mary had a little lamb, it's fleece was white as snow."
+
+z = ZLib()
+compressed = z.compress( original )
+uncompressed = z.uncompress( compressed )
+
+if original != uncompressed: failure( "original != uncompressed" )
+
+success()

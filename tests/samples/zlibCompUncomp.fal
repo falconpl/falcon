@@ -1,0 +1,13 @@
+load zlib
+
+original = "Mary had a little lamb, it's fleece was white as snow."
+
+z = ZLib()
+comped = z.compress( original )
+
+> "Uncompressed: "
+> "   ", original
+>
+> "Compressed then uncompressed:"
+> "   ", z.uncompress( comped )
+

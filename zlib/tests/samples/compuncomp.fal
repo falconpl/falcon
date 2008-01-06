@@ -1,9 +1,0 @@
-load zlib
-
-z = ZLib()
-r = z.compress( "HELLO" )
-> r
-> z.uncompress( r )
-
-// test an error
-z.uncompress( "An invalid string" )
