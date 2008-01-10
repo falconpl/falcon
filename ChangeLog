@@ -2,6 +2,7 @@ Feathers (0.8.7)
   * Major: It is now possible to unload arbitrary modules.
   * Major: Added zlib module.
   * Minor: Using WKS/WKI.
+  * Minor: Added method "getMultuple()" to configParser to always get a vector
 
 Feathers (0.8.6)
   * Bugfix: Process crashed if initialized with a single string.

@@ -242,6 +242,50 @@ FALCON_FUNC  ConfParser_getOne( ::Falcon::VMachine *vm )
    vm->retval( value );
 }
 
+
+FALCON_FUNC  ConfParser_getMultiple( ::Falcon::VMachine *vm )
+{
+   CoreObject *self = vm->self().asObject();
+   ConfigFile *cfile = (ConfigFile *) self->getUserData();
+   Item *i_key = vm->param(0);
+   Item *i_section = vm->param(1);
+
+   if ( i_key == 0 || ! i_key->isString() ||
+        ( i_section != 0 && ! i_section->isString() && ! i_section->isNil() )
+      )
+   {
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ) ) );
+      return;
+   }
+
+   String value;
+   if ( i_section != 0 && ! i_section->isNil() )
+   {
+      if ( ! cfile->getValue( *i_key->asString(), *i_section->asString(), value ) )
+      {
+         vm->retnil();
+         return;
+      }
+   }
+   else {
+      if ( ! cfile->getValue( *i_key->asString(), value ) )
+      {
+         vm->retnil();
+         return;
+      }
+   }
+
+   CoreArray *array = new CoreArray( vm, 5 );
+   array->append( new GarbageString( vm, value ) );
+
+   String value1;
+   while( cfile->getNextValue( value1 ) )
+      array->append( new GarbageString( vm, value1 ) );
+
+   vm->retval( array );
+}
+
+
 FALCON_FUNC  ConfParser_getSections( ::Falcon::VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();

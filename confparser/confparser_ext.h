@@ -41,6 +41,7 @@ FALCON_FUNC  ConfParser_read( ::Falcon::VMachine *vm );
 FALCON_FUNC  ConfParser_write( ::Falcon::VMachine *vm );
 FALCON_FUNC  ConfParser_get( ::Falcon::VMachine *vm );
 FALCON_FUNC  ConfParser_getOne( ::Falcon::VMachine *vm );
+FALCON_FUNC  ConfParser_getMultiple( ::Falcon::VMachine *vm );
 FALCON_FUNC  ConfParser_getSections( ::Falcon::VMachine *vm );
 FALCON_FUNC  ConfParser_getKeys( ::Falcon::VMachine *vm );
 FALCON_FUNC  ConfParser_getCategoryKeys( ::Falcon::VMachine *vm );

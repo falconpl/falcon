@@ -44,6 +44,7 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    self->addClassMethod( c_cparser, "write", Falcon::Ext::ConfParser_write );
    self->addClassMethod( c_cparser, "get", Falcon::Ext::ConfParser_get );
    self->addClassMethod( c_cparser, "getOne", Falcon::Ext::ConfParser_getOne );
+   self->addClassMethod( c_cparser, "getMultiple", Falcon::Ext::ConfParser_getMultiple );
    self->addClassMethod( c_cparser, "getSections", Falcon::Ext::ConfParser_getSections );
    self->addClassMethod( c_cparser, "getKeys", Falcon::Ext::ConfParser_getKeys );
    self->addClassMethod( c_cparser, "getCategoryKeys", Falcon::Ext::ConfParser_getCategoryKeys );
