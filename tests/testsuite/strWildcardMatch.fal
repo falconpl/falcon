@@ -1,0 +1,23 @@
+/****************************************************************************
+* Falcon test suite
+*
+* CVS-Id: $Id: strHead.fal,v 1.1.1.1 2006/10/08 15:05:40 gian Exp $
+*
+* ID: 101n
+* Category: rtl
+* Subcategory: string
+* Short: strWildcardMatch
+* Description:
+*   Test on RTL string functions
+* [/Description]
+*
+****************************************************************************/
+
+string = "this is a string"
+
+if not strWildcardMatch( "this is*", string ): failure( "match end" )
+if not strWildcardMatch( "*a string", string ): failure( "match begining" )
+
+success()
+
+/* End of file */
