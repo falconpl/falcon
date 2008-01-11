@@ -393,9 +393,9 @@ FALCON_FUNC  strTrim ( ::Falcon::VMachine *vm )
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
       return;
    }
-   
+
    String *cs = new GarbageString( vm, *target->asString() );
-   
+
    Item *trimChars = vm->param(1);
    if ( trimChars == 0 ) {
       cs->backTrim();
@@ -409,11 +409,11 @@ FALCON_FUNC  strTrim ( ::Falcon::VMachine *vm )
       int32 pos = cs->length()-1;
       String *trim = trimChars->asString();
       int32 tLen = trim->length();
-      
+
       while ( pos >= 0 ) {
          uint32 chr = cs->getCharAt( pos );
          int found = 0;
-         
+
          for ( int32 tIdx=0; tIdx < tLen; tIdx++ )
             if ( chr == trim->getCharAt( tIdx ) )
                found = 1;
@@ -440,7 +440,7 @@ FALCON_FUNC  strFrontTrim ( ::Falcon::VMachine *vm )
 
 
    String *cs = new GarbageString( vm, *target->asString() );
-   
+
    Item *trimChars = vm->param(1);
    if (trimChars == 0 ) {
       cs->frontTrim();
@@ -455,20 +455,20 @@ FALCON_FUNC  strFrontTrim ( ::Falcon::VMachine *vm )
       int32 len = cs->length();
       String *trim = trimChars->asString();
       int32 tLen = trim->length();
-      
+
       while( pos <= len )
       {
          uint32 chr = cs->getCharAt( pos );
          int found = 0;
-         
+
          for ( int32 tIdx = 0; tIdx < tLen; tIdx++ )
             if ( chr == trim->getCharAt( tIdx ) )
                found = 1;
          if ( found == 0 )
             break;
          pos++;
-      }      
-   
+      }
+
       // has something to be trimmed?
       if ( pos < len )
          vm->retval( cs->subString( pos, len ) );
@@ -487,7 +487,7 @@ FALCON_FUNC  strAllTrim ( ::Falcon::VMachine *vm )
    }
 
    String *cs = new GarbageString( vm, *target->asString() );
-   
+
    Item *trimChars = vm->param(1);
    if ( trimChars == 0 ) {
       cs->trim();
@@ -504,7 +504,7 @@ FALCON_FUNC  strAllTrim ( ::Falcon::VMachine *vm )
       int32 end = len;
       uint32 chr;
       int found = 0;
-      
+
       while( start < len )
       {
          found = 0;
@@ -516,7 +516,7 @@ FALCON_FUNC  strAllTrim ( ::Falcon::VMachine *vm )
             break;
          start++;
       }
-      
+
       while( end > start )
       {
          found = 0;
@@ -532,7 +532,7 @@ FALCON_FUNC  strAllTrim ( ::Falcon::VMachine *vm )
       // an empty string if set is empty
       vm->retval( cs->subString( start, end ) );
    }
-   
+
 }
 
 FALCON_FUNC  strReplace ( ::Falcon::VMachine *vm )
@@ -775,10 +775,14 @@ FALCON_FUNC  strWildcardMatch ( ::Falcon::VMachine *vm )
    // Parameter checking;
    Item *s1_itm = vm->param(0);
    Item *s2_itm = vm->param(1);
+   Item *i_bIcase = vm->param(2);
    if ( s1_itm == 0 || ! s1_itm->isString() || s2_itm == 0 || !s2_itm->isString() ) {
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
       return;
    }
+
+   // Ignore case?
+   bool bIcase = i_bIcase == 0 ? false : i_bIcase->isTrue();
 
    // The first is the wildcard, the second is the matched thing.
    String *wcard = s1_itm->asString();
@@ -786,11 +790,29 @@ FALCON_FUNC  strWildcardMatch ( ::Falcon::VMachine *vm )
    uint32 wpos = 0, wlen = wcard->length();
    uint32 cpos = 0, clen = cfr->length();
 
-   while ( wpos <  wlen && cpos < clen )
+   uint32 wstarpos = 0xFFFFFFFF;
+
+
+   while ( cpos < clen )
    {
+      if( wpos == wlen )
+      {
+         // we have failed the match; but if we had a star, we
+         // may roll back to the starpos and try to match the
+         // rest of the string
+         if ( wstarpos != 0xFFFFFFFF )
+         {
+            wpos = wstarpos;
+         }
+         else {
+            // no way, we're doomed.
+            break;
+         }
+      }
+
       uint32 wchr = wcard->getCharAt( wpos );
       uint32 cchr = cfr->getCharAt( cpos );
-      
+
       switch( wchr )
       {
          case '?': // match any character
@@ -800,9 +822,12 @@ FALCON_FUNC  strWildcardMatch ( ::Falcon::VMachine *vm )
 
          case '*':
          {
+            // mark for restart in case of bad match.
+            wstarpos = wpos;
+
             // match till the next character
             wpos++;
-            // eat all * in a row 
+            // eat all * in a row
             while( wpos < wlen )
             {
                wchr = wcard->getCharAt( wpos );
@@ -818,25 +843,40 @@ FALCON_FUNC  strWildcardMatch ( ::Falcon::VMachine *vm )
                break;
             }
 
+
             //eat up to next character
-            wchr =  wcard->getCharAt( wpos );
-            cpos ++;
             while( cpos < clen && cchr != wchr )
             {
-               cchr = cfr->getCharAt( cpos++ );
+               cchr = cfr->getCharAt( cpos );
+               cpos ++;
             }
+
+            // we have eaten up the same char? --  then advance also wpos to prepare next loop
+            if ( cchr == wchr )
+               wpos++;
+            // else, everything must stay as it is, so cpos == clen but wpos != wlen causing fail.
          }
          break;
 
          default:
-            if ( cchr != wpos )
+            if ( cchr == wchr ||
+                  ( bIcase && cchr < 128 && wchr < 128 && (cchr | 32) == (wchr | 32) )
+               )
             {
-               // check failed
-               vm->retval( false );
-               return;
+               cpos++;
+               wpos++;
             }
-            cpos++;
-            wpos++;
+            else
+            {
+               // can we retry?
+               if ( wstarpos != 0xFFFFFFFF )
+                  wpos = wstarpos;
+               else {
+                  // check failed -- we're doomed
+                  vm->retval( false );
+                  return;
+               }
+            }
       }
    }
 
