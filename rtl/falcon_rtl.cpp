@@ -107,6 +107,7 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    self->addExtFunc( "strUpper", Falcon::Ext::strUpper );
    self->addExtFunc( "strLower", Falcon::Ext::strLower );
    self->addExtFunc( "strCmpIgnoreCase", Falcon::Ext::strCmpIgnoreCase );
+   self->addExtFunc( "strWildcardMatch", Falcon::Ext::strWildcardMatch );
 
    //=======================================================================
    // RTL array API

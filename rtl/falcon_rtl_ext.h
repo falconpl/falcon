@@ -209,6 +209,7 @@ FALCON_FUNC  strBuffer ( ::Falcon::VMachine *vm );
 FALCON_FUNC  strUpper ( ::Falcon::VMachine *vm );
 FALCON_FUNC  strLower ( ::Falcon::VMachine *vm );
 FALCON_FUNC  strCmpIgnoreCase ( ::Falcon::VMachine *vm );
+FALCON_FUNC  strWildcardMatch ( ::Falcon::VMachine *vm );
 
 FALCON_FUNC  arrayIns ( ::Falcon::VMachine *vm );
 FALCON_FUNC  arrayDel ( ::Falcon::VMachine *vm );

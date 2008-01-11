@@ -11,6 +11,7 @@ Falcon (0.8.7)
   * minor: List initialization is now possible also with non-atomic symbols.
   * bugfix: Precision in printing default flotaing point number was 6; now is
       16 (maximum precision for our number format).
+  * minor: Added strWildcardMatch in RTL for simle *.*-like wildcard matching
 
 Falcon (0.8.6)
   * bugfix: incorrect format of 0.x floating point numbers.

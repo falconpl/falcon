@@ -768,6 +768,82 @@ FALCON_FUNC  strCmpIgnoreCase ( ::Falcon::VMachine *vm )
    vm->retval( 0 );
 }
 
+
+
+FALCON_FUNC  strWildcardMatch ( ::Falcon::VMachine *vm )
+{
+   // Parameter checking;
+   Item *s1_itm = vm->param(0);
+   Item *s2_itm = vm->param(1);
+   if ( s1_itm == 0 || ! s1_itm->isString() || s2_itm == 0 || !s2_itm->isString() ) {
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
+      return;
+   }
+
+   // The first is the wildcard, the second is the matched thing.
+   String *wcard = s1_itm->asString();
+   String *cfr = s2_itm->asString();
+   uint32 wpos = 0, wlen = wcard->length();
+   uint32 cpos = 0, clen = cfr->length();
+
+   while ( wpos <  wlen && cpos < clen )
+   {
+      uint32 wchr = wcard->getCharAt( wpos );
+      uint32 cchr = cfr->getCharAt( cpos );
+      
+      switch( wchr )
+      {
+         case '?': // match any character
+            wpos++;
+            cpos++;
+         break;
+
+         case '*':
+         {
+            // match till the next character
+            wpos++;
+            // eat all * in a row 
+            while( wpos < wlen )
+            {
+               wchr = wcard->getCharAt( wpos );
+               if ( wchr != '*' )
+                  break;
+               wpos++;
+            }
+
+            if ( wpos == wlen )
+            {
+               // we have consumed all the chars
+               cpos = clen;
+               break;
+            }
+
+            //eat up to next character
+            wchr =  wcard->getCharAt( wpos );
+            cpos ++;
+            while( cpos < clen && cchr != wchr )
+            {
+               cchr = cfr->getCharAt( cpos++ );
+            }
+         }
+         break;
+
+         default:
+            if ( cchr != wpos )
+            {
+               // check failed
+               vm->retval( false );
+               return;
+            }
+            cpos++;
+            wpos++;
+      }
+   }
+
+   // at the end of the loop, the match is ok only if both the cpos and wpos are at the end
+   vm->retval( wpos == wlen && cpos == clen );
+}
+
 }}
 
 
