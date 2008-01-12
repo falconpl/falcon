@@ -102,12 +102,21 @@ FALCON_FUNC  ConfParser_read( ::Falcon::VMachine *vm )
 
    if ( ! bRes )
    {
-      String msg = cfile->errorMessage() + " at ";
-      msg.writeNumber( (int64) cfile->errorLine() );
-      vm->raiseModError( new ParseError( ErrorParam( 1260, __LINE__ ).
-         desc( "Error parsing the file" ).extra( msg ) ) );
-      self->setProperty( "error", cfile->errorMessage() );
-      self->setProperty( "errorLine", (int64) cfile->errorLine() );
+      // is this an I/O or a parsing error?
+      if ( cfile->fsError() != 0 )
+      {
+         vm->raiseModError( new IoError( ErrorParam( e_loaderror, __LINE__ ).
+            sysError( cfile->fsError() ).
+            extra( cfile->errorMessage() ) ) );
+      }
+      else {
+         String msg = cfile->errorMessage() + " at ";
+         msg.writeNumber( (int64) cfile->errorLine() );
+         vm->raiseModError( new ParseError( ErrorParam( 1260, __LINE__ ).
+            desc( "Error parsing the file" ).extra( msg ) ) );
+         self->setProperty( "error", cfile->errorMessage() );
+         self->setProperty( "errorLine", (int64) cfile->errorLine() );
+      }
    }
 
 }
@@ -147,10 +156,21 @@ FALCON_FUNC  ConfParser_write( ::Falcon::VMachine *vm )
 
    if ( ! bRes )
    {
-      vm->raiseModError( new IoError( ErrorParam( 1260, __LINE__ ).
-         desc( "Error parsing the file" ).extra( cfile->errorMessage() ) ) );
-      self->setProperty( "error", cfile->errorMessage() );
-      self->setProperty( "errorLine", (int64) cfile->errorLine() );
+      // is this a file error?
+      if ( cfile->fsError() )
+      {
+         vm->raiseModError( new IoError( ErrorParam( e_file_output, __LINE__ ).
+            sysError( cfile->fsError() ).
+            extra( cfile->errorMessage() ) ) );
+      }
+      else
+      {
+         // no -- it's a configuration file.d
+         vm->raiseModError( new ParseError( ErrorParam( 1260, __LINE__ ).
+            desc( "Error while storing the data" ).extra( cfile->errorMessage() ) ) );
+         self->setProperty( "error", cfile->errorMessage() );
+         self->setProperty( "errorLine", (int64) cfile->errorLine() );
+      }
    }
 }
 

@@ -162,6 +162,10 @@ class ConfigFile: public UserData
    String m_keyMask;
 
    String m_errorMsg;
+   /** FileSystem error.
+      In case of FS errors while reading the file, this member is set.
+   */
+   long m_fsError;
    String m_encoding;
 
    ListElement *m_currentValue;
@@ -189,6 +193,7 @@ public:
    bool save( Stream *output );
 
    const String &errorMessage() const { return m_errorMsg; }
+   long fsError() const { return m_fsError; }
    uint32 errorLine() const { return m_errorLine; }
 
    bool getValue( const String &key, String &value ) ;

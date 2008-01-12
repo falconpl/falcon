@@ -387,7 +387,8 @@ ConfigFile::ConfigFile( const String &filename, const String &encoding ):
    m_rootEntry( "root", 0 ),
    m_sections( &traits::t_stringptr, &traits::t_ConfigSectionPtr ),
    m_bUseUnixComments( false ),
-   m_bUseUnixSpecs( false )
+   m_bUseUnixSpecs( false ),
+   m_fsError(0)
 {
 }
 
@@ -396,6 +397,9 @@ ConfigFile::~ConfigFile()
 
 bool ConfigFile::load()
 {
+   m_fsError = 0;
+   m_errorMsg = "";
+
    Stream *input = 0;
    //===========================================
    // Initialization
@@ -403,11 +407,8 @@ bool ConfigFile::load()
    FileStream stream;
    if ( ! stream.open( m_fileName, GenericStream::e_omReadOnly, GenericStream::e_smShareRead ) )
    {
-      String description;
-      stream.errorDescription( description );
-      description += " (";
-      description.writeNumber( stream.lastError() );
-      m_errorMsg = "Can't open file " + m_fileName + ": " + description;
+      stream.errorDescription( m_errorMsg );
+      m_fsError = stream.lastError();
       return false;
    }
 
@@ -510,11 +511,8 @@ bool ConfigFile::load( Stream *input )
    // error handling
 
 error:
-   String description;
-   input->errorDescription( description );
-   description += " (";
-   description.writeNumber( input->lastError() );
-   m_errorMsg = "Can't load file " + m_fileName + ": " + description;
+   m_fsError = input->lastError();
+   input->errorDescription( m_errorMsg );
    return false;
 }
 
@@ -529,11 +527,8 @@ bool ConfigFile::save()
       FileStream::e_aUserRead | FileStream::e_aReadOnly,
       FileStream::e_smShareRead ) )
    {
-      String description;
-      stream.errorDescription( description );
-      description += " (";
-      description.writeNumber( stream.lastError() );
-      m_errorMsg = "Can't open file " + m_fileName + ": " + description;
+      m_fsError = stream.lastError();
+      stream.errorDescription( m_errorMsg );
       return false;
    }
 
@@ -558,7 +553,7 @@ bool ConfigFile::save()
 bool ConfigFile::save( Stream *output )
 {
    ListElement *element = m_lines.begin();
-   while( element != 0 )
+   while( element != 0 && output->good() )
    {
       ConfigFileLine *line = (ConfigFileLine *) element->data();
       if ( line->m_original != 0 )
@@ -608,6 +603,13 @@ bool ConfigFile::save( Stream *output )
 
       output->writeString( "\n" );
       element = element->next();
+   }
+
+   if ( !output->good() )
+   {
+      m_fsError = output->lastError();
+      output->errorDescription( m_errorMsg );
+      return false;
    }
 
    return true;

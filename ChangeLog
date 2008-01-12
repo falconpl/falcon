@@ -3,6 +3,7 @@ Feathers (0.8.7)
   * Major: Added zlib module.
   * Minor: Using WKS/WKI.
   * Minor: Added method "getMultuple()" to configParser to always get a vector
+  * Minor: ConfigParser now raises an IoError when having I/O problems.
 
 Feathers (0.8.6)
   * Bugfix: Process crashed if initialized with a single string.
