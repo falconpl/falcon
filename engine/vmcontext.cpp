@@ -28,6 +28,9 @@
 #include <falcon/traits.h>
 #include <falcon/genericvector.h>
 
+#define VM_STACK_MEMORY_THRESHOLD 64
+
+
 namespace Falcon {
 
 //==================================
@@ -50,6 +53,7 @@ VMContext::VMContext( VMachine *origin )
    m_priority = 0;
 
    m_stack = new ItemVector;
+   m_stack->threshHold( VM_STACK_MEMORY_THRESHOLD );
    m_stackBase = 0;
 
    m_tryFrame = VMachine::i_noTryFrame;

@@ -845,15 +845,20 @@ FALCON_FUNC  strWildcardMatch ( ::Falcon::VMachine *vm )
 
 
             //eat up to next character
-            while( cpos < clen && cchr != wchr )
+            while( cpos < clen )
             {
                cchr = cfr->getCharAt( cpos );
+               if ( cchr == wchr )
+                  break;
                cpos ++;
             }
 
             // we have eaten up the same char? --  then advance also wpos to prepare next loop
             if ( cchr == wchr )
+            {
                wpos++;
+               cpos++;
+            }
             // else, everything must stay as it is, so cpos == clen but wpos != wlen causing fail.
          }
          break;

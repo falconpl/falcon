@@ -57,7 +57,7 @@ void * DflMemRealloc( void *mem, size_t amount )
 
 
    if ( ret == 0 && amount != 0 ) {
-      printf( "%s\n", "Falcon: fatal allocation error" );
+      printf( "Falcon: fatal reallocation error when allocating %d bytes\n", amount );
       exit(1);
    }
    return ret;

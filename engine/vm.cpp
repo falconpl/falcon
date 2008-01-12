@@ -39,8 +39,6 @@
 #include <falcon/attribute.h>
 #include <falcon/bommap.h>
 
-#define VM_STACK_MEMORY_THRESHOLD 64
-
 namespace Falcon {
 
 VMachine::VMachine():
@@ -102,10 +100,6 @@ void VMachine::internal_construct()
 
    // saving also the first context for accounting reasons.
    m_contexts.pushBack( m_currentContext );
-
-   // After context mangling, we have a stack
-   m_stack->threshHold( VM_STACK_MEMORY_THRESHOLD );
-
 
    m_opHandlers = (tOpcodeHandler *) memAlloc( FLC_PCODE_COUNT * sizeof( tOpcodeHandler ) );
 

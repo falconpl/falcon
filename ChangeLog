@@ -13,6 +13,8 @@ Falcon (0.8.7)
       16 (maximum precision for our number format).
   * minor: Added strWildcardMatch in RTL for simle *.*-like wildcard matching.
   * minor: Added ETA function firstOf() that retruns the first non-false parameter.
+  * bugfix: When having more than one context, each stack had a different
+      treshold, possibly causing some of the stacks to crash on realloc.
 
 Falcon (0.8.6)
   * bugfix: incorrect format of 0.x floating point numbers.
