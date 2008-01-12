@@ -12,6 +12,7 @@ Falcon (0.8.7)
   * bugfix: Precision in printing default flotaing point number was 6; now is
       16 (maximum precision for our number format).
   * minor: Added strWildcardMatch in RTL for simle *.*-like wildcard matching.
+  * minor: Added ETA function firstOf() that retruns the first non-false parameter.
 
 Falcon (0.8.6)
   * bugfix: incorrect format of 0.x floating point numbers.

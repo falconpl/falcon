@@ -2749,6 +2749,24 @@ FALCON_FUNC  core_floop ( ::Falcon::VMachine *vm )
 }
 
 
+FALCON_FUNC  core_firstof ( ::Falcon::VMachine *vm )
+{
+   int count = 0;
+   Item *i_elem = vm->param(0);
+   while( i_elem != 0 )
+   {
+      if ( i_elem->isTrue() )
+      {
+         vm->retval( *i_elem );
+         return;
+      }
+      i_elem = vm->param( ++count );
+   }
+
+   vm->retnil();
+}
+
+
 FALCON_FUNC  core_oob( ::Falcon::VMachine *vm )
 {
    Item *obbed = vm->param(0);
@@ -3215,6 +3233,7 @@ Module * core_module_init()
    core->addExtFunc( "cascade", Falcon::core::core_cascade )->setEta( true );
    core->addExtFunc( "dolist", Falcon::core::core_dolist )->setEta( true );
    core->addExtFunc( "floop", Falcon::core::core_floop )->setEta( true );
+   core->addExtFunc( "firstOf", Falcon::core::core_firstof )->setEta( true );
 
    // other functions
    core->addExtFunc( "min", Falcon::core::core_min );
