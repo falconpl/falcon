@@ -410,16 +410,29 @@ FALCON_FUNC  ConfParser_getCategory( ::Falcon::VMachine *vm )
    if ( i_section != 0 && i_section->isNil() )
       i_section = 0;
 
-   String key;
+   String key, keymask;
    CoreDict *ret = new LinearDict( vm );
    CoreDict *current = ret;
    bool next;
 
+   bool stripNames;
+   keymask = *i_keyMask->asString();
+   if ( keymask.length() > 0 && keymask.getCharAt(keymask.length() - 1) == '*' )
+   {
+      stripNames = true;
+      keymask.size( keymask.size() - keymask.manipulator()->charSize() );
+   }
+   else
+      stripNames = false;
+
+   if ( keymask.length() > 0 && keymask.getCharAt(keymask.length() - 1) == '.' )
+      keymask.size( keymask.size() - keymask.manipulator()->charSize() );
+
    if ( i_section != 0  ) {
-      next = cfile->getFirstKey( *i_section->asString(), *i_keyMask->asString(), key );
+      next = cfile->getFirstKey( *i_section->asString(), keymask, key );
    }
    else {
-      next = cfile->getFirstKey( *i_keyMask->asString(), key );
+      next = cfile->getFirstKey( keymask, key );
    }
 
    while( next )
@@ -445,12 +458,16 @@ FALCON_FUNC  ConfParser_getCategory( ::Falcon::VMachine *vm )
             array->append( new GarbageString( vm, value1 ) );
 
          // we have used KEY; now what we want to save is just the non-category
-         //current->addUnique( new GarbageString( vm, key, i_keyMask->asString()->length() + 1 ), array );
-         current->insert( new GarbageString( vm, key), array );
+         if ( stripNames )
+            current->insert( new GarbageString( vm, key, keymask.length() + 1 ), array );
+         else
+            current->insert( new GarbageString( vm, key), array );
       }
       else {
-         //current->addUnique( new GarbageString( vm, key, i_keyMask->asString()->length() + 1 ), new GarbageString( vm, value ) );
-         current->insert(  new GarbageString( vm, key) , new GarbageString( vm, value ) );
+          if ( stripNames )
+            current->insert( new GarbageString( vm, key, keymask.length() + 1 ), new GarbageString( vm, value ) );
+         else
+            current->insert(  new GarbageString( vm, key) , new GarbageString( vm, value ) );
       }
 
       next = cfile->getNextKey( key );
@@ -458,6 +475,7 @@ FALCON_FUNC  ConfParser_getCategory( ::Falcon::VMachine *vm )
 
    vm->retval( ret );
 }
+
 
 FALCON_FUNC  ConfParser_getDictionary( ::Falcon::VMachine *vm )
 {
