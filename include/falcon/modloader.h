@@ -65,12 +65,17 @@ public:
 
 private:
    Module *loadModule_ver_1_0( Stream *in );
-   void getModuleName( const String &path, String &modName );
 
 protected:
    ErrorHandler *m_errhand;
 
    Module *loadModule_select_ver( Stream *in );
+
+   /** Discovers the module name given a complete file path.
+      \param path the path to a possible falcon module
+      \param modNmae the possible falcon module name
+   */
+   static void getModuleName( const String &path, String &modName );
 
    /** Tell if the subclass accepts sources or not.
       Vast part of the module loader is configured to behave the same way
@@ -386,9 +391,10 @@ public:
       name and path.
 
       \param input an opened input stream delivering the source to be parsed.
+      \param file complete path to the loaded file. Useful i.e. to be set in the compiler.
       \return 0 on failure or a newly allocated module on success.
    */
-   virtual Module *loadSource( Stream *input );
+   virtual Module *loadSource( Stream *input, const String &file );
 
 
    /** Loads a binary module by realizing a system dynamic file.

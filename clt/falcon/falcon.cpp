@@ -745,7 +745,7 @@ int main( int argc, char *argv[] )
 
       Module *mod;
       if ( options.input == "" || options.input == "-" )
-         mod = modLoader->loadSource( stdIn );
+         mod = modLoader->loadSource( stdIn, "<stdin>" );
       else
          mod = modLoader->loadSource( options.input );
 
@@ -785,7 +785,7 @@ int main( int argc, char *argv[] )
       if( options.run_only )
          mainMod = modLoader->loadModule( stdIn );
       else
-         mainMod = modLoader->loadSource( stdIn );
+         mainMod = modLoader->loadSource( stdIn, "<stdin>" );
    }
 
    if ( mainMod == 0 )

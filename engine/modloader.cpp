@@ -356,7 +356,7 @@ Module *ModuleLoader::loadSource( const String &path )
       return 0;
    }
 
-   Module *mod = loadSource( in );
+   Module *mod = loadSource( in, path );
    in->close();
    delete in;
 
@@ -373,7 +373,7 @@ Module *ModuleLoader::loadSource( const String &path )
    return mod;
 }
 
-Module *ModuleLoader::loadSource( Stream *in )
+Module *ModuleLoader::loadSource( Stream *in, const String &path )
 {
    raiseError( e_loader_unsupported, "loadSource" );
    return 0;

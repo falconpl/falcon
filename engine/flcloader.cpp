@@ -149,7 +149,7 @@ Module *FlcLoader::loadSource( const String &file )
 }
 
 
-Module *FlcLoader::loadSource( Stream *fin )
+Module *FlcLoader::loadSource( Stream *fin, const String &path )
 {
    Module *module;
    bool bInAssembly;
@@ -176,6 +176,10 @@ Module *FlcLoader::loadSource( Stream *fin )
       m_compiler.delayRaise( m_delayRaise );
 
       m_compiler.errorHandler( m_errhand );
+      String modName;
+      getModuleName( path, modName );
+      module->name( modName );
+      module->path( path );
       if( ! m_compiler.compile( module, fin ) ) {
          m_compileErrors = (uint32) m_compiler.errors();
          module->decref();
@@ -259,7 +263,7 @@ Module *FlcLoader::loadSource( Stream *fin )
 
       AsmCompiler fasm( module, fin, temp_binary );
       fasm.errorHandler( m_errhand );
-      if ( ! fasm.compile() ) 
+      if ( ! fasm.compile() )
       {
          m_compileErrors = (uint32) fasm.errors();
          module->decref();

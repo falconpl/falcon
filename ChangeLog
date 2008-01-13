@@ -15,6 +15,7 @@ Falcon (0.8.7)
   * minor: Added ETA function firstOf() that retruns the first non-false parameter.
   * bugfix: When having more than one context, each stack had a different
       treshold, possibly causing some of the stacks to crash on realloc.
+  * bugfix: Path of the offending module was not shown when reporting compiler errors.
 
 Falcon (0.8.6)
   * bugfix: incorrect format of 0.x floating point numbers.

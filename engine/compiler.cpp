@@ -282,9 +282,9 @@ void Compiler::raiseError( int code, const String &errorp, int line )
 
    if ( m_errhand != 0 )
    {
-      SyntaxError *error = new SyntaxError( ErrorParam(code, line).origin( e_orig_compiler ) );
+      SyntaxError *error = new SyntaxError( ErrorParam(code, line).origin( e_orig_compiler ));
       error->extraDescription( errorp );
-      error->module( m_module->name() );
+      error->module( m_module->path() );
 
       if ( m_delayRaise )
       {

@@ -153,7 +153,7 @@ public:
        Actually an alias for loadSource. The input stream must be already
        correctly transcoded.
    */
-   virtual Module *loadSource( Stream *in );
+   virtual Module *loadSource( Stream *in, const String &path );
 
    /** Return the compiler used by this module loader.
       This object can be inspected, or compiler options can be set by the caller.
