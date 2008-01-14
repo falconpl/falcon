@@ -108,6 +108,7 @@ FALCON_FUNC Compiler_compile( ::Falcon::VMachine *vm )
    }
 
    Stream *input;
+   String name;
    bool bDelete;
 
    // now, if data is an object it must be a stream.
@@ -123,18 +124,20 @@ FALCON_FUNC Compiler_compile( ::Falcon::VMachine *vm )
 
       // ok, get the stream
       input = (Stream *) data->getUserData();
+      name = "unknown_module";
       bDelete = false;
    }
    else {
       // if it's a string, we have to create a stream
-      input = new StringStream( *i_data->asString() );
+      name = *i_data->asString();
+      input = new StringStream( name );
       bDelete = true;
    }
 
    CoreObject *self = vm->self().asObject();
    CompilerIface *iface = static_cast<CompilerIface *>( self->getUserData() );
 
-   Module *mod = iface->loader().loadSource( input );
+   Module *mod = iface->loader().loadSource( input, name );
 
    // if mod is zero, do nothing: vm has already raised the error.
    if ( mod != 0 )
