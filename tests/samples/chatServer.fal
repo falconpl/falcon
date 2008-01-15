@@ -109,9 +109,9 @@ function manageLogins()
                      for name, tgcli in clients
                      	// tell the client about the others
                         tgcli.messages += CliMessage( nil, "[SERV]Client \"" + cliId + "\" has joined." )
-
-								forall: names += name + ","
-                     	forlast: names += name +"."
+						names += name
+						forall: names += ", "
+                     	forlast: names += "."
                      end
 
                      cli.messages += CliMessage( nil, "[SERV]Nick list: "+ names )
@@ -305,7 +305,7 @@ while true
 
    if client != nil
       printl( "New connection from ", client.getHost(), ":", client.getService() );
-      client.send( "[SERVER]: Hello from server.\r\n" );
+      client.send( "[SERV]Hello from server.\r\n" );
       clientData = Client( client )
       waitingClients += clientData
    end

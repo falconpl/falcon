@@ -4,8 +4,6 @@
 
    FILE: chatClient.fal
 
-   $Id: chatClient.fal,v 1.2 2007/03/04 17:39:03 jonnymind Exp $
-
    A simple client meant to connect to a chatServer.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
@@ -30,9 +28,14 @@ load socket
 class ClientTCPSocket( address, port ) from TCPSocket( address, port )
    data = ""
 
-   function readline()
+   function _readline()
       readIn = self.recv( 1024 )
       return readIn
+   end
+   
+   function readline()
+      readIn = self.recv( 1024 )
+	  return readIn
    end
 end
 
@@ -104,7 +107,6 @@ while true
    else
       sleep( 0.01 )
    end
-
 end
 
 
