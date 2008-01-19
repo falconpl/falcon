@@ -195,11 +195,7 @@ dbi_status DBIRecordsetPgSQL::asInteger64( const int columnIndex, int64 &value )
 
    const char *v = PQgetvalue( m_res, m_row, columnIndex );
 
-#ifdef _MSC_VER
-   value = _atoi64( v );
-#else
    value = atoll( v );
-#endif
 
    return dbi_ok;
 }
@@ -581,11 +577,8 @@ int64 DBIHandlePgSQL::getLastInsertedId( const String& sequenceName )
    char sql[128];
    AutoCString asSequenceName( sequenceName );
 
-#ifdef _MSC_VER
-   _snprintf( sql, 128, "SELECT CURRVAL('%s')", asSequenceName.c_str() );
-#else
    snprintf( sql, 128, "SELECT CURRVAL('%s')", asSequenceName.c_str() );
-#endif
+
    dbi_status retval;
    DBIRecordset *rs = query( sql, retval );
 

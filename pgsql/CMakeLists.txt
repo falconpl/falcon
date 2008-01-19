@@ -10,12 +10,13 @@ SET(PGSQL_INCLUDE_SEARCH_PATH
   ${PGSQL_INCLUDE_DIR}
   /usr/include/pgsql
   /usr/local/include/pgsql
+  /usr/include/postgresql
 )
 FIND_PATH(PGSQL_REAL_INCLUDE_DIR libpq-fe.h ${PGSQL_INCLUDE_SEARCH_PATH})
 
 # Find PgSQL Client Library
 SET(PGSQL_LIB_SEARCH_PATH ${PGSQL_LIB_DIR} /usr/lib/pgsql /usr/local/lib/pgsql)
-SET(PGSQL_LIB_NAMES libpq)
+SET(PGSQL_LIB_NAMES pq libpq)
 FIND_LIBRARY(PGSQL_LIBRARY
   NAMES ${PGSQL_LIB_NAMES}
   PATHS ${PGSQL_LIB_SEARCH_PATH}

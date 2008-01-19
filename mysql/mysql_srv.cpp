@@ -171,10 +171,7 @@ dbi_status DBIRecordsetMySQL::asInteger64( const int columnIndex, int64 &value )
    else if ( m_rowData[columnIndex] == NULL )
       return dbi_nil_value;
 
-   // TODO: is this conversion correct?
-   // value = atoll( m_rowData[columnIndex] );
-   // TODO: Microsoft
-   value = _atoi64( m_rowData[columnIndex] );
+   value = atoll( m_rowData[columnIndex] );
 
    return dbi_ok;
 }
