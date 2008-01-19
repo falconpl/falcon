@@ -99,18 +99,21 @@ void ModuleLoader::addSearchPath( const String &path )
       if ( pos1 ==  -1 )
       {
          tmp = new String( path, pos );
+         tmp->bufferize();
          m_path.pushBack( tmp );
          break;
       }
 
       if ( pos1 == -1 ) {
          tmp = new String( path, pos );
+         tmp->bufferize();
          m_path.pushBack( tmp );
          break;
       }
 
       if ( pos1 > pos ) {
          tmp = new String( path, pos, pos1 );
+         tmp->bufferize();
          m_path.pushBack( tmp );
       }
       pos = pos1+1;

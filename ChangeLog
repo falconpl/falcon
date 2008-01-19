@@ -17,6 +17,8 @@ Falcon (0.8.7)
       treshold, possibly causing some of the stacks to crash on realloc.
   * bugfix: Path of the offending module was not shown when reporting compiler errors.
   * major: Load directive can now handle dot modules "a.b"
+  * bugfix: ModLoader::addSearchPath didn't locally bufferize the path, and this may
+            have caused problems with incoming fixed strings.
 
 Falcon (0.8.6)
   * bugfix: incorrect format of 0.x floating point numbers.
