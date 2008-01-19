@@ -20,7 +20,7 @@
  * package.
  */
 
-#include "mysql.h"
+#include "mysql_mod.h"
 #include "version.h"
 #include "mysql_ext.h"
 

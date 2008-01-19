@@ -19,10 +19,10 @@
 
 #include <string.h>
 #include <stdio.h>
-#include <mysql/errmsg.h>
+#include <errmsg.h>
 
 #include <falcon/engine.h>
-#include "mysql.h"
+#include "mysql_mod.h"
 
 namespace Falcon
 {
@@ -172,7 +172,9 @@ dbi_status DBIRecordsetMySQL::asInteger64( const int columnIndex, int64 &value )
       return dbi_nil_value;
 
    // TODO: is this conversion correct?
-   value = atoll( m_rowData[columnIndex] );
+   // value = atoll( m_rowData[columnIndex] );
+   // TODO: Microsoft
+   value = _atoi64( m_rowData[columnIndex] );
 
    return dbi_ok;
 }
@@ -420,7 +422,8 @@ int DBITransactionMySQL::execute( const String &query, dbi_status &retval )
 
    retval = dbi_ok;
 
-   return mysql_affected_rows( conn );
+   // TODO: Convert this function to return an int64
+   return (int) mysql_affected_rows( conn );
 }
 
 dbi_status DBITransactionMySQL::begin()
@@ -557,7 +560,6 @@ dbi_status DBIHandleMySQL::escapeString( const String &value, String &escaped )
    AutoCString asValue( value );
 
    int maxLen = ( value.length() * 2 ) + 1;
-   int errorCode;
    char *cTo = (char *) malloc( sizeof( char ) * maxLen );
 
    size_t convertedSize = mysql_real_escape_string( m_conn, cTo,
@@ -602,7 +604,7 @@ DBIHandle *DBIServiceMySQL::connect( const String &parameters, bool persistent,
    unsigned int iPort, iClientFlag;
 
    AutoCString asConnParams( parameters );
-   char connParams[asConnParams.length() + 1];
+   char *connParams = (char *) malloc( sizeof(char) * (asConnParams.length() + 1) );
    strcpy( connParams, asConnParams.c_str() );
 
 
@@ -621,6 +623,7 @@ DBIHandle *DBIServiceMySQL::connect( const String &parameters, bool persistent,
 
    if ( conn == NULL ) {
       retval = dbi_memory_allocation_error;
+      free( connParams );
       return NULL;
    }
 
@@ -632,10 +635,13 @@ DBIHandle *DBIServiceMySQL::connect( const String &parameters, bool persistent,
       mysql_close( conn );
 
       retval = dbi_connect_error;
+      free( connParams );
       return NULL;
    }
 
    retval = dbi_ok;
+
+   free( connParams );
 
    return new DBIHandleMySQL( conn );
 }

@@ -20,9 +20,9 @@
 #ifndef DBI_MYSQL_H
 #define DBI_MYSQL_H
 
-#include <mysql/mysql.h>
-
 #include "../include/dbiservice.h"
+
+#include <mysql.h>
 
 namespace Falcon
 {

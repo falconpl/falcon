@@ -18,9 +18,8 @@
  */
 
 #include <falcon/engine.h>
-#include <mysql/mysql.h>
 
-#include "mysql.h"
+#include "mysql_mod.h"
 #include "mysql_ext.h"
 
 namespace Falcon

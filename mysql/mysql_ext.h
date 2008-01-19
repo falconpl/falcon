@@ -17,8 +17,11 @@
  * package.
  */
 
+/*
 #include <falcon/setup.h>
 #include <falcon/types.h>
+*/
+#include <falcon/module.h>
 
 #ifndef MYSQL_EXT_H
 #define MYSQL_EXT_H
