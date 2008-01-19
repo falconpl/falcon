@@ -249,6 +249,7 @@ int SrcLexer::lex_normal()
       m_firstEq = true;
       m_addEol = false;
       m_lineFilled = false;
+      m_bIsDirectiveLine = false;
       return EOL;
    }
 
@@ -456,6 +457,7 @@ int SrcLexer::lex_normal()
                {
                   m_firstSym = true;
                   m_firstEq = true;
+                  m_bIsDirectiveLine = false;
                   if ( m_lineFilled )
                   {
                      m_lineFilled = false;
@@ -903,6 +905,7 @@ int SrcLexer::state_line( uint32 chr )
       // a real EOL has been provided here.
       m_firstEq = true;
       m_firstSym = true;
+      m_bIsDirectiveLine = false;
       if ( m_lineFilled )
       {
          m_lineFilled = false;
@@ -1005,6 +1008,7 @@ int SrcLexer::checkUnlimitedTokens( uint32 nextChar )
          if ( chr == ';'  )
          {
             m_firstEq = true;
+            m_bIsDirectiveLine = false;
             // but not first sym
             if ( m_lineFilled )
             {
@@ -1174,6 +1178,7 @@ int SrcLexer::checkUnlimitedTokens( uint32 nextChar )
          else if ( parsingFtd() && m_string == "?>" )
          {
             m_mode = t_mOutscape;
+            m_bIsDirectiveLine = false;
             return EOL;
          }
       break;
@@ -1363,7 +1368,7 @@ void SrcLexer::resetContexts()
 {
    // force to generate a fake eol at next loop
    m_addEol = true;
-
+   m_bIsDirectiveLine = false;
    m_contexts = 0;
    m_squareContexts = 0;
    m_state = e_line;
