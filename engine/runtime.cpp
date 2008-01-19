@@ -81,7 +81,7 @@ bool Runtime::addModule( Module *mod )
          }
 
          Module *l;
-         if ( (l = m_loader->loadName( *moduleName )) == 0)
+         if ( (l = m_loader->loadName( *moduleName, mod->name() )) == 0)
             return false;
 
          if ( ! addModule( l ) )
@@ -101,10 +101,10 @@ bool Runtime::addModule( Module *mod )
    return true;
 }
 
-bool Runtime::loadName( const String &name )
+bool Runtime::loadName( const String &name, const String &parent )
 {
    Module *l;
-   if ( (l = m_loader->loadName( name )) == 0)
+   if ( (l = m_loader->loadName( name, parent )) == 0)
       return false;
 
    bool ret = addModule( l );

@@ -309,9 +309,10 @@ public:
       has been found.
 
       \param module_name the name of the module to search for
+      \param parent_name the name of the module that is asking for this module to be loaded
       \return 0 on failure or a newly allocated module on success.
    */
-   virtual Module *loadName( const String &module_name );
+   virtual Module *loadName( const String &module_name, const String &parent_module = "" );
 
    /** Loads a module by its path.
       This method loads directly a module. If the \b scan parameter is given \b and

@@ -61,7 +61,8 @@ SrcLexer::SrcLexer( Compiler *comp, Stream *in ):
    m_addEol( false ),
    m_lineFilled( false ),
    m_mode( t_mNormal ),
-   m_ctxOpenLine(0)
+   m_ctxOpenLine(0),
+   m_bIsDirectiveLine(false)
 {}
 
 int SrcLexer::lex()
@@ -96,6 +97,7 @@ int SrcLexer::lex_outscape()
    uint32 chr;
    state = e_normal;
    m_state = e_line;
+   m_bIsDirectiveLine = false;
 
    while( m_mode == t_mOutscape && m_in->get( chr ) )
    {
@@ -104,6 +106,7 @@ int SrcLexer::lex_outscape()
          m_previousLine = m_line;
          m_line++;
          m_character = 0;
+         m_bIsDirectiveLine = false;
       }
       else
       {
@@ -339,13 +342,19 @@ int SrcLexer::lex_normal()
             if ( isTokenLimit( chr ) )
             {
                // end of symbol
+               // unless we have a dot in a load directive
+               if ( m_bIsDirectiveLine && chr == '.' )
+               {
+                  // just ignore it
+                  m_string.append( chr );
+                  break;
+               }
 
                // push this chr back; we want to read it again in line state
                if( ! isWhiteSpace( chr ) ) // save a loop
                   m_in->unget( chr );
 
                m_state = e_line;
-
                // it may be a named token
                int token = checkLimitedTokens();
 
@@ -439,6 +448,7 @@ int SrcLexer::lex_normal()
                m_previousLine = m_line;
                m_line ++;
                m_character = 0;
+               m_bIsDirectiveLine = false;
                m_state = (m_state == e_eolCommentString) ? e_postString: e_line;
 
                // a real EOL has been provided here.
@@ -461,6 +471,7 @@ int SrcLexer::lex_normal()
             { // previous line stays the same
                m_line ++;
                m_character = 0;
+               m_bIsDirectiveLine = false;
             }
             else if ( chr == '*' )
             {
@@ -647,6 +658,7 @@ int SrcLexer::lex_normal()
                m_line++;
                m_lineFilled = false;
                m_character = 0;
+               m_bIsDirectiveLine = false;
                m_compiler->raiseError( e_nl_in_lit, m_previousLine );
                m_state = e_line;
             }
@@ -723,6 +735,7 @@ int SrcLexer::lex_normal()
                m_previousLine = m_line;
                m_line++;
                m_character = 0;
+               m_bIsDirectiveLine = false;
             }
             else if ( chr == m_chrEndString )
             {
@@ -755,6 +768,7 @@ int SrcLexer::lex_normal()
                m_line++;
                m_character = 0;
                m_addEol = true; // force to generate an EOL for the parser
+               m_bIsDirectiveLine = false;
                // end of input?
                if ( m_done ) {
                   VALUE->stringp = m_compiler->addString( m_string );
@@ -1218,7 +1232,10 @@ int SrcLexer::checkLimitedTokens()
 
       case 4:
          if ( m_string == "load" && m_firstSym )  // directive
+         {
+            m_bIsDirectiveLine = true;
             return LOAD;
+         }
          if ( m_string == "give" )
             return GIVE;
          if ( m_string == "init" )
@@ -1278,7 +1295,10 @@ int SrcLexer::checkLimitedTokens()
          if ( m_string == "return" )
             return RETURN;
          if ( m_string == "export" && m_firstSym ) // directive
+         {
+            m_bIsDirectiveLine = true;
             return EXPORT;
+         }
          if ( m_string == "static" )
             return STATIC;
          if ( m_string == "forall" )
@@ -1311,6 +1331,7 @@ int SrcLexer::checkLimitedTokens()
          {
             // No assigments in directive.
             m_firstEq = false;
+            m_bIsDirectiveLine = true;
             return DIRECTIVE;
          }
       break;

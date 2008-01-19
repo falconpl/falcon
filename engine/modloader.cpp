@@ -188,6 +188,15 @@ ModuleLoader::t_filetype
 {
    t_filetype tf = t_none;
    String path_name;
+   String expName = name;
+
+   // expand "." names into "/"
+   uint32 pos = expName.find( "." );
+   while( pos != String::npos )
+   {
+      expName.setCharAt( pos, '/' );
+      pos = expName.find( ".", pos + 1 );
+   }
 
    ListElement *path_elem = m_path.begin();
    while ( tf == t_none && path_elem != 0 )
@@ -204,25 +213,32 @@ ModuleLoader::t_filetype
       // if it's a direct path, we must not add an extension.
       if ( isPath )
       {
-         found = path_name + name;
+         found = path_name + expName;
          tf = fileType( found );
       }
       else {
          // first try to search for the DLL
-         found = path_name + name + DllLoader::dllExt();
+         found = path_name + expName + DllLoader::dllExt();
          tf = fileType( found );
 
          // then try for the source, if allowed
          if ( tf == t_none && accSrc )
          {
-            found = path_name + name + ".fal";
+            found = path_name + expName + ".fal";
+            tf = fileType( found );
+         }
+
+         // then try for the source, if allowed
+         if ( tf == t_none && accSrc )
+         {
+            found = path_name + expName + ".ftd";
             tf = fileType( found );
          }
 
          // and then for the fam
          if ( tf == t_none )
          {
-            found = path_name + name + ".fam";
+            found = path_name + expName + ".fam";
             tf = fileType( found );
          }
       }
@@ -239,10 +255,22 @@ ModuleLoader::t_filetype
    return tf;
 }
 
-Module *ModuleLoader::loadName( const String &module_name )
+Module *ModuleLoader::loadName( const String &module_name, const String &parent_name )
 {
    String file_path;
-   t_filetype type = scanForFile( module_name, false, t_none, file_path, m_acceptSources );
+   String nmodName;
+
+   if ( module_name.find( "self." ) == 0 )
+   {
+      if ( parent_name.size() == 0 )
+         nmodName = module_name;
+      else
+         nmodName = parent_name + "." + module_name.subString( 5 );
+   }
+   else
+      nmodName = module_name;
+
+   t_filetype type = scanForFile( nmodName, false, t_none, file_path, m_acceptSources );
 
    Module *mod;
    switch( type )
@@ -253,13 +281,13 @@ Module *ModuleLoader::loadName( const String &module_name )
 
    default:
       // we have not been able to find it.
-      raiseError( e_nofile, module_name );
+      raiseError( e_nofile, nmodName );
       return 0;
    }
 
    if ( mod != 0 )
 	{
-      mod->name( module_name );
+      mod->name( nmodName );
       mod->path( file_path );
       mod->addMain();
 	}

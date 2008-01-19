@@ -210,9 +210,10 @@ public:
       with a given logical name. The name is resolved by the module loader,
       and if load is succesfull, then the module is added to the runtime.
       \param name the logical name of the module to be loaded
+      \param parent the logical name of the parent module, if any
       \return true on success, false on load or dependency resolution errors.
    */
-   bool loadName( const String &name );
+   bool loadName( const String &name, const String &parent = "" );
 
    /** Loads the given module and adds it to the runtime.
       This is actually a just shortcut to load a module
