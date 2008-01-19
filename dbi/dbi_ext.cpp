@@ -8,7 +8,7 @@
  * Begin: Sun, 23 Dec 2007 22:02:37 +0100
  *
  * -------------------------------------------------------------------
- * (C) Copyright 2007: the FALCON developers (see list in AUTHORS file)
+ * (C) Copyright 2007,2008: the FALCON developers (see list in AUTHORS file)
  *
  * See LICENSE file for licensing details.
  * In order to use this file in its compiled form, this source or
@@ -542,6 +542,13 @@ FALCON_FUNC DBIHandle_query( VMachine *vm )
    vm->retval( oth );
 }
 
+dbi_type *DBIHandle_getTypes( DBIRecordset *recSet )
+{
+   dbi_type *cTypes = (dbi_type *) malloc( sizeof( dbi_type ) * recSet->getColumnCount() );
+   recSet->getColumnTypes( cTypes );
+   return cTypes;
+}
+
 /*--
  * @function queryOne
  *
@@ -553,8 +560,7 @@ FALCON_FUNC DBIHandle_queryOne( VMachine *vm )
 {
    DBIRecordset *recSet = DBIHandle_baseQueryOne( vm );
 
-   dbi_type cTypes[recSet->getColumnCount()];
-   recSet->getColumnTypes( cTypes );
+   dbi_type *cTypes = DBIHandle_getTypes( recSet );
 
    Item i;
    int32 id;
@@ -562,6 +568,8 @@ FALCON_FUNC DBIHandle_queryOne( VMachine *vm )
    if ( DBIRecordset_getItem( vm, recSet, cTypes[0], 0, i ) )
       vm->retval( i );
    recSet->close();
+
+   free( cTypes );
 }
 
 FALCON_FUNC DBIHandle_queryOneArray( VMachine *vm )
@@ -569,17 +577,18 @@ FALCON_FUNC DBIHandle_queryOneArray( VMachine *vm )
    DBIRecordset *recSet = DBIHandle_baseQueryOne( vm );
    int cCount = recSet->getColumnCount();
    CoreArray *ary = new CoreArray( vm, cCount );
-   dbi_type cTypes[cCount];
-
-   recSet->getColumnTypes( cTypes );
+   dbi_type *cTypes = DBIHandle_getTypes( recSet );
 
    for ( int cIdx=0; cIdx < cCount; cIdx++ ) {
       Item i;
-      if ( DBIRecordset_getItem( vm, recSet, cTypes[cIdx], cIdx, i ) == 0 )
+      if ( DBIRecordset_getItem( vm, recSet, cTypes[cIdx], cIdx, i ) == 0 ) {
+         free( cTypes );
          return;
+      }
       ary->append( i );
    }
    vm->retval( ary );
+   free( cTypes );
 }
 
 FALCON_FUNC DBIHandle_queryOneDict( VMachine *vm )
@@ -588,21 +597,25 @@ FALCON_FUNC DBIHandle_queryOneDict( VMachine *vm )
    int cCount = recSet->getColumnCount();
    PageDict *dict = new PageDict( vm, cCount );
    char **cNames = (char **) malloc( sizeof( char ) * cCount * DBI_MAX_COLUMN_NAME_SIZE );
-   dbi_type cTypes[cCount];
+   dbi_type *cTypes = DBIHandle_getTypes( recSet );
 
-   recSet->getColumnTypes( cTypes );
    recSet->getColumnNames( cNames );
 
    for ( int cIdx=0; cIdx < cCount; cIdx++ ) {
       Item i;
-      if ( DBIRecordset_getItem( vm, recSet, cTypes[cIdx], cIdx, i ) == 0 )
+      if ( DBIRecordset_getItem( vm, recSet, cTypes[cIdx], cIdx, i ) == 0 ) {
+         free( cTypes );
+         free( cNames );
          return;
+      }
 
       GarbageString *gsName = new GarbageString( vm );
       gsName->bufferize( cNames[cIdx] );
 
       dict->insert( gsName, i );
    }
+
+   free( cTypes );
    free( cNames );
 
    vm->retval( dict );
@@ -621,18 +634,22 @@ FALCON_FUNC DBIHandle_queryOneObject( VMachine *vm )
    DBIRecordset *recSet = DBIHandle_baseQueryOne( vm, 1);
    int cCount = recSet->getColumnCount();
    char **cNames = (char **) malloc( sizeof( char ) * cCount * DBI_MAX_COLUMN_NAME_SIZE );
-   dbi_type cTypes[cCount];
+   dbi_type *cTypes = DBIHandle_getTypes( recSet );
 
-   recSet->getColumnTypes( cTypes );
    recSet->getColumnNames( cNames );
 
    for ( int cIdx=0; cIdx < cCount; cIdx++ ) {
       Item i;
-      if ( DBIRecordset_getItem( vm, recSet, cTypes[cIdx], cIdx, i ) == 0 )
+      if ( DBIRecordset_getItem( vm, recSet, cTypes[cIdx], cIdx, i ) == 0 ) {
+         free( cTypes );
+         free( cNames );
          return;
+      }
 
       obj->setProperty( cNames[cIdx], i );
    }
+
+   free( cTypes );
    free( cNames );
 
    vm->retval( obj );
@@ -866,10 +883,8 @@ FALCON_FUNC DBIRecordset_fetchArray( VMachine *vm )
    }
 
    int cCount = dbr->getColumnCount();
-   dbi_type cTypes[cCount];
+   dbi_type *cTypes = DBIHandle_getTypes( dbr );
    CoreArray *ary = new CoreArray( vm, cCount );
-
-   dbr->getColumnTypes( cTypes );
 
    for ( int cIdx = 0; cIdx < cCount; cIdx++ )
    {
@@ -881,6 +896,7 @@ FALCON_FUNC DBIRecordset_fetchArray( VMachine *vm )
       }
    }
 
+   free( cTypes );
    vm->retval( ary );
 }
 
@@ -907,9 +923,8 @@ FALCON_FUNC DBIRecordset_fetchDict( VMachine *vm )
    int cCount = dbr->getColumnCount();
    CoreDict *dict = new PageDict( vm, cCount );
    char **cNames = (char **) malloc( sizeof( char ) * cCount * DBI_MAX_COLUMN_NAME_SIZE );
-   dbi_type cTypes[cCount];
+   dbi_type *cTypes = DBIHandle_getTypes( dbr );
 
-   dbr->getColumnTypes( cTypes );
    dbr->getColumnNames( cNames );
 
    for ( int cIdx = 0; cIdx < cCount; cIdx++ )
@@ -927,6 +942,7 @@ FALCON_FUNC DBIRecordset_fetchDict( VMachine *vm )
       }
    }
 
+   free( cTypes );
    free( cNames );
 
    vm->retval( dict );
@@ -964,9 +980,8 @@ FALCON_FUNC DBIRecordset_fetchObject( VMachine *vm )
    int cCount = dbr->getColumnCount();
    CoreDict *dict = new PageDict( vm, cCount );
    char **cNames = (char **) malloc( sizeof( char ) * cCount * DBI_MAX_COLUMN_NAME_SIZE );
-   dbi_type cTypes[cCount];
+   dbi_type *cTypes = DBIHandle_getTypes( dbr );
 
-   dbr->getColumnTypes( cTypes );
    dbr->getColumnNames( cNames );
 
    for ( int cIdx = 0; cIdx < cCount; cIdx++ ) {
@@ -979,6 +994,7 @@ FALCON_FUNC DBIRecordset_fetchObject( VMachine *vm )
       }
    }
 
+   free( cTypes );
    free( cNames );
 
    vm->retval( o );
@@ -1000,14 +1016,14 @@ FALCON_FUNC DBIRecordset_getColumnTypes( VMachine *vm )
 
    int cCount = dbr->getColumnCount();
    CoreArray *ary = new CoreArray( vm, cCount );
-   dbi_type cTypes[cCount];
-
-   dbr->getColumnTypes( cTypes );
+   dbi_type *cTypes = DBIHandle_getTypes( dbr );
 
    for (int cIdx=0; cIdx < cCount; cIdx++ )
       ary->append( (int64) cTypes[cIdx] );
 
    vm->retval( ary );
+
+   free( cTypes );
 }
 
 FALCON_FUNC DBIRecordset_getColumnNames( VMachine *vm )
