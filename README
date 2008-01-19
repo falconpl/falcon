@@ -14,8 +14,8 @@ Plese, refer to
    http://www.falconpl.org/wiki/tiki-index.php?page=The+build+environment
 
 
-FALCON MINIMAL OPERTION
-=======================
+FALCON MINIMAL OPERATION
+========================
 
 Falcon scripts can be launched through the command
 
@@ -53,11 +53,11 @@ OTHER NOTICES
 Under tests/ the testsuite/ and longtests/ contains a series of scripts that
 are meant to be used either by faltest program or by pumping in the
 testsuite module. Faltest reads the directory provided with -d command line
-option ad runs all the .fal scripts in there which provide an ID: field
+option and runs all the .fal scripts in there which provide an ID: field
 in the comments on top of the file. Valid IDs are numbers optionally followed
 by a lowercase letter. Scripts are run in numeric order, and
 a list of IDS separated by space can be provided to run one or more tests.
-Also, script may be categorized, and filtered by category/subcategory using
+Also, scripts may be categorized, and filtered by category/subcategory using
 -c and -C command line switches. The -l switch lists the selected scripts (or
 all the scripts found), and the -v switch reports verbose output errors. To
 know the path for a script ID, use
@@ -65,7 +65,7 @@ know the path for a script ID, use
   ./faltest -d <dir to scripts> -l -v <ID>
 
 (scripts path are displayed only with -v option).
-Finally, -t option gather execution time info. Other esotic/esoteric options
+Finally, -t option gathers execution time info. Other exotic/esoteric options
 are -m (NOT compile in memory), -s (compile via assembly), -S (do a
 serialization/ deserialization on the compiled module before running it,
 instead of using it as soon as it has been compiled).
@@ -73,11 +73,11 @@ instead of using it as soon as it has been compiled).
 It's a good idea to launch faltests on the testsuite to verify that your
 environment is properly set up.
 
-The longtests/ directory has the same funciton of the testsuite/ directory,
+The longtests/ directory has the same funciton as the testsuite/ directory,
 except for the fact that its tests are meant to run for longer times to check
 for stress/repetition features.
 
-The samples/ directory contains some sample and tests for those features that
+The samples/ directory contains some samples and tests for those features that
 cannot easily be tested automatically. Those are normal falcon scripts and
 can be run with the "falcon" command.
 
