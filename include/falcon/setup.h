@@ -109,6 +109,9 @@ different systems.
    			typedef unsigned short wchar_t;
    		#endif
    	#endif
+
+      #define atoll _atoi64
+      #define snprintf _snprintf
    #endif
 
    /* Specifics for Gcc/Mingw */
