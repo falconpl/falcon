@@ -1,4 +1,4 @@
-Falcon (0.8.7)
+Falcon (0.8.8)
   * bugfix: TRAV opcode may destroy its parameters while setting first loop
       on rare conditions. Fixed.
   * major: VM now has a map of modules and global variables instead of two

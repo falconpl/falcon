@@ -6,7 +6,6 @@ Missing before 0.9
     * Type reflectivity (class Type).
     * Dynamic class creation from class Type.
     * 3d party DLL support.
-    * Introduction of list type (performance update, maybe to be moved to 1.0).
     * Redesign of VM link-export model/module naming.
     * Internationalization support.
     * Virtual file system support.
@@ -14,12 +13,10 @@ Missing before 0.9
     * Advanced script debug support.
     * The screen (advanced console I/O) module.
     * The Falcon Abstract Toolkit (FAT), with GTK driver.
-    * Database modules: DBI, Interbase and MySql.
     * CGI support module.
     * XML module.
     * Internet protocols (http, ftp, smtp, imap ecc.) modules.
     * Mail module.
-    * Apache API for web integration.
     * The language reference.
     * The developer (contributor) guide with doxygen generated API reference.
- 
+
