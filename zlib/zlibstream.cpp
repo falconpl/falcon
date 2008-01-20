@@ -27,12 +27,12 @@
 namespace Falcon {
 
 ZLibStream::ZLibStream( int32 size )
-   : Stream( t_memory )
+   : Stream( t_membuf )
 {
 }
 
 ZLibStream::ZLibStream( const ZLibStream &zlibstream )
-   : Stream( t_memory )
+   : Stream( t_membuf )
 {
 }
 
