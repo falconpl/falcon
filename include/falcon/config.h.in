@@ -63,15 +63,15 @@
 // Config informations
 //
 #ifdef FALCON_SYSTEM_WIN
-   #define FALCON_DEFAULT_BIN          "@FALCON_PREFIX@\\bin"
-   #define FALCON_DEFAULT_LIB          "@FALCON_PREFIX@\\lib"
-   #define FALCON_DEFAULT_CONFIG       "@FALCON_PREFIX@\\etc"
-   #define FALCON_DEFAULT_LOAD_PATH    ".;@FALCON_PREFIX@\\bin"
+   #define FALCON_DEFAULT_BIN          "@FINAL_DESTINATION@\\bin"
+   #define FALCON_DEFAULT_LIB          "@FINAL_DESTINATION@\\@TARGET_DEST_LIB@"
+   #define FALCON_DEFAULT_CONFIG       "@FINAL_DESTINATION@\\etc"
+   #define FALCON_DEFAULT_LOAD_PATH    ".;@FINAL_DESTINATION@\\bin"
 #else
-   #define FALCON_DEFAULT_BIN          "@FALCON_PREFIX@/bin"
-   #define FALCON_DEFAULT_LIB          "@FALCON_PREFIX@/lib"
+   #define FALCON_DEFAULT_BIN          "@FINAL_DESTINATION@/bin"
+   #define FALCON_DEFAULT_LIB          "@FINAL_DESTINATION@/lib"
    #define FALCON_DEFAULT_CONFIG       "/etc"
-   #define FALCON_DEFAULT_LOAD_PATH    ".;@FALCON_PREFIX@/lib/falcon"
+   #define FALCON_DEFAULT_LOAD_PATH    ".;@FINAL_DESTINATION@/lib/falcon"
 #endif
 
 #endif
