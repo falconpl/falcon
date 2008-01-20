@@ -1069,6 +1069,17 @@ void VMachine::fillErrorTraceback( Error &error )
 }
 
 
+bool VMachine::getCaller( Symbol *&sym, const Module *&module)
+{
+   if ( m_stackBase < VM_FRAME_SPACE )
+      return false;
+
+   StackFrame &frame = *(StackFrame *) m_stack->at( m_stackBase - VM_FRAME_SPACE );
+   sym = frame.m_symbol;
+   module = frame.m_module;
+   return sym != 0 && module != 0;
+}
+
 void VMachine::handleError( Error *err )
 {
    if ( m_error )

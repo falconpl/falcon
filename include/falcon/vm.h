@@ -936,6 +936,16 @@ public:
    /** Fills an error traceback with the current VM traceback. */
    void fillErrorTraceback( Error &error );
 
+   /** Get the caller of the current symbol.
+
+      If the caller cannot be found (i.e. because the current symbol is
+      called directly by the embedding program) the method returns false.
+      \param sym on success, will hold a pointer to the symbol that called the current symbol.
+      \param module on success, will hold a pointer to the module where the caller symbol resides.
+      \return true on success, false on failure.
+   */
+   bool getCaller( Symbol *&sym, const Module *&module);
+
    /** Fills an error with current VM execution context and traceback.
    */
    void fillErrorContext( Error *err, bool filltb = true );
