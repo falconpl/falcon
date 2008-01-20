@@ -8,7 +8,7 @@ PROJECT(socket)
 # Inclusion settings
 INCLUDE_DIRECTORIES(.)
 INCLUDE_DIRECTORIES(BEFORE ${TARGET_DIR}/include)
-LINK_DIRECTORIES(BEFORE ${TARGET_DIR}/lib )
+LINK_DIRECTORIES(BEFORE ${TARGET_DIR}/${TARGET_LIB_DIR} )
 
 IF(UNIX OR MAC)
    SET(SYS_SPECIFIC socket_sys_unix.cpp)
@@ -18,13 +18,13 @@ ELSE(UNIX OR MAC)
       IF( "${MS_SDK_PATH}" STREQUAL "" )
          SET( MS_SDK_PATH "$ENV{MS_SDK_PATH}" )
       ENDIF( "${MS_SDK_PATH}" STREQUAL "" )
-      
+
       IF( "${MS_SDK_PATH}" STREQUAL "" )
          MESSAGE( FATAL_ERROR "Please, valorize MS_SDK_PATH CMAKE or environment variable with path to SDK" )
       ENDIF( "${MS_SDK_PATH}" STREQUAL "" )
       INCLUDE_DIRECTORIES(${MS_SDK_PATH})
    ENDIF("${CMAKE_GENERATOR}" STREQUAL "MinGW Makefiles" )
-   
+
    SET(SYS_SPECIFIC socket_sys_win.cpp socket.rc)
 ENDIF(UNIX OR MAC)
 
