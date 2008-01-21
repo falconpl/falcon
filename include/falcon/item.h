@@ -308,7 +308,8 @@ public:
 
    void setClass( CoreClass *cls ) {
       type( FLC_ITEM_CLASS );
-      m_data.voidp = cls;
+      // warning: class in extra to be omologue to methodClass()
+      m_data.m_extra = cls;
    }
 
    /** Sets an item as a FBOM.
@@ -395,13 +396,12 @@ public:
       m_data = other.m_data;
    }
 
-   bool isCallable() const;
-
    /** Tells if this item is callable.
-      The non-const version of this function will turn this object into a nil
-      if the item referenced a dead module. 
+      This function will turn this object into a nil
+      if the item referenced a dead module. As this is a pathological
+      situation, a const cast is forced.
    */
-   bool isCallable();
+   bool isCallable() const;
 
    bool isOrdinal() const {
       return type() == FLC_ITEM_INT || type() == FLC_ITEM_NUM;
@@ -425,7 +425,7 @@ public:
    CoreObject *asObject() const { return (CoreObject *) m_data.voidp; }
    CoreDict *asDict() const { return ( CoreDict *) m_data.voidp; }
 
-   CoreClass *asClass() const { return (CoreClass *) m_data.voidp; }
+   CoreClass *asClass() const { return (CoreClass *) m_data.m_extra; }
    Symbol *asFunction() const { return (Symbol *) m_data.voidp; }
 
    CoreObject *asMethodObject() const { return (CoreObject *) m_data.voidp; }

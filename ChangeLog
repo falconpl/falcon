@@ -1,3 +1,7 @@
+Falcon (0.8.9)
+  * minor: Now classes can be stored in object properties and called to get
+     an instance.
+
 Falcon (0.8.8)
   * bugfix: TRAV opcode may destroy its parameters while setting first loop
       on rare conditions. Fixed.

@@ -1156,6 +1156,7 @@ bool VMachine::callItem( const Item &callable, int32 paramCount, e_callMode call
          targetMod = callable.asModule();
       break;
 
+      case FLC_ITEM_CLSMETHOD:
       case FLC_ITEM_CLASS:
       {
          CoreClass *cls = callable.asClass();
@@ -1174,7 +1175,13 @@ bool VMachine::callItem( const Item &callable, int32 paramCount, e_callMode call
             m_stack->resize( m_stack->size() - paramCount );
             return true;
          }
-
+         
+         if ( ! cls->constructor().asModule()->isAlive() )
+         {
+            const_cast<Item *>(&callable)->setNil();
+            return false;
+         }
+         
          target = cls->constructor().asFunction();
          targetMod = cls->constructor().asModule();
       }
