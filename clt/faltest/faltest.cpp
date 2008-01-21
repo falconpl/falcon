@@ -1290,6 +1290,8 @@ int main( int argc, char *argv[] )
    delete stdOut;
    delete stdErr;
 
+   if ( failedCount > 0 )
+       return 2;
    return 0;
 }
 
