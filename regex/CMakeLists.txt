@@ -38,6 +38,7 @@ IF(WITH_INTERNAL_PCRE)
       pcre_version.c
       pcre_xclass.c
    )
+   SET(PCRE_LIBRARIES "")
 ELSE(WITH_INTERNAL_PCRE)
    #We'll activate this when CMAKE will offer a standard FINDPCRE macro
    #IF(NOT PCRE_FOUND AND NOT PCRE_LIBRARIES)
