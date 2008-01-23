@@ -2239,6 +2239,13 @@ Item *VMachine::findLocalSymbolItem( const String &symName ) const
    if( sym == 0 )
    {
       sym = currentModule()->findGlobalSymbol( symName );
+      // still zero? Let's try the global symbol table.
+      if( sym == 0 )
+      {
+         Item *itm = findGlobalItem( symName );
+         if ( itm != 0 )
+            return itm->dereference();
+      }
    }
 
    Item *itm = 0;
