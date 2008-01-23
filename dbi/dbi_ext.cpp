@@ -335,7 +335,7 @@ static void DBIRecord_execute( VMachine *vm, DBIHandle *dbh, const String &sql )
    int affectedRows;
 
    if ( vm->paramCount() == 0 )
-      dbh->execute( sql, retval );
+      affectedRows = dbh->execute( sql, retval );
    else {
       Item *trI = vm->param( 0 );
       if ( trI == 0 || ! trI->isObject() ) {
@@ -575,6 +575,9 @@ FALCON_FUNC DBIHandle_queryOne( VMachine *vm )
 FALCON_FUNC DBIHandle_queryOneArray( VMachine *vm )
 {
    DBIRecordset *recSet = DBIHandle_baseQueryOne( vm );
+   if ( recSet == NULL )
+      return; // TODO: thrown an error
+
    int cCount = recSet->getColumnCount();
    CoreArray *ary = new CoreArray( vm, cCount );
    dbi_type *cTypes = DBIHandle_getTypes( recSet );
@@ -594,6 +597,9 @@ FALCON_FUNC DBIHandle_queryOneArray( VMachine *vm )
 FALCON_FUNC DBIHandle_queryOneDict( VMachine *vm )
 {
    DBIRecordset *recSet = DBIHandle_baseQueryOne( vm );
+   if ( recSet == NULL )
+      return; // TODO: thrown an error
+
    int cCount = recSet->getColumnCount();
    PageDict *dict = new PageDict( vm, cCount );
    char **cNames = (char **) malloc( sizeof( char ) * cCount * DBI_MAX_COLUMN_NAME_SIZE );
@@ -632,6 +638,9 @@ FALCON_FUNC DBIHandle_queryOneObject( VMachine *vm )
 
    CoreObject *obj = objI->asObject();
    DBIRecordset *recSet = DBIHandle_baseQueryOne( vm, 1);
+   if (recSet == NULL)
+      return NULL; // TODO: Return error
+
    int cCount = recSet->getColumnCount();
    char **cNames = (char **) malloc( sizeof( char ) * cCount * DBI_MAX_COLUMN_NAME_SIZE );
    dbi_type *cTypes = DBIHandle_getTypes( recSet );
