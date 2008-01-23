@@ -639,7 +639,7 @@ FALCON_FUNC DBIHandle_queryOneObject( VMachine *vm )
    CoreObject *obj = objI->asObject();
    DBIRecordset *recSet = DBIHandle_baseQueryOne( vm, 1);
    if (recSet == NULL)
-      return NULL; // TODO: Return error
+      return; // TODO: Return error
 
    int cCount = recSet->getColumnCount();
    char **cNames = (char **) malloc( sizeof( char ) * cCount * DBI_MAX_COLUMN_NAME_SIZE );
