@@ -212,6 +212,7 @@ static void usage()
    stdOut->writeString( "   -C <subcat> only perform test in this subcategory\n" );
    stdOut->writeString( "   -d <path>   tests are in specified directory\n" );
    stdOut->writeString( "   -l          Just list available tests and exit\n" );
+   stdOut->writeString( "   -L          Changes Falcon load path.\n" );
    stdOut->writeString( "   -h/-?       Show this help\n" );
    stdOut->writeString( "   -m          do NOT compile in memory\n" );
    stdOut->writeString( "   -M          Check for memory allocation correctness.\n" );
