@@ -1,0 +1,25 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 40i
+* Category: rtl
+* Subcategory: core
+* Short: numeric() test
+* Description:
+* Test for numeric() conversion function.
+* [/Description]
+*
+****************************************************************************/
+
+if numeric( 0 ) != 0.0: failure( "numeric( 0 )" )
+if numeric( 1 ) != 1.0: failure( "numeric( 1 )" )
+if numeric( -1 ) != -1.0: failure( "numeric( -1 )" )
+if numeric( 10.3 ) != 10.3: failure( "numeric( 10.3 )" )
+if numeric( -10.3 ) != -10.3: failure( "numeric( -10.3 )" )
+if numeric( "0" ) != 0.0: failure( "numeric( \"0\" )" )
+if numeric( "10.3" ) != 10.3: failure( "numeric( \"10.3\" )")
+if numeric( "-10.3" ) != -10.3: failure( "numeric( \"-10.3\" )" )
+
+success()
+
+/* End of file */

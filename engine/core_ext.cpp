@@ -374,6 +374,92 @@ FALCON_FUNC  val_int ( ::Falcon::VMachine *vm )
    }
 }
 
+/*@function numeric
+   @param item The item to be converted
+
+   @short Transforms the parameter in a number.
+
+   If the parameter is a string, a string-to-number coversion will be attempted.
+
+*/
+FALCON_FUNC  val_numeric ( ::Falcon::VMachine *vm )
+{
+   if ( vm->paramCount() == 0 ) {
+      vm->retnil();
+      return;
+   }
+
+   Item *to_numeric = vm->param(0);
+
+   switch( to_numeric->type() ) {
+      case FLC_ITEM_NUM:
+          vm->retval( to_numeric->asNumeric() );
+      break;
+
+      case FLC_ITEM_INT:
+      {
+         int64 num = to_numeric->asInteger();
+         if ( num > 9.223372036854775808e18 || num < -9.223372036854775808e18 )
+         {
+            vm->raiseRTError( new RangeError( ErrorParam( e_domain ) ) );
+            return;
+         }
+         vm->retval( (numeric)num );
+      }
+      break;
+
+      case FLC_ITEM_STRING:
+      {
+         String *cs = to_numeric->asString();
+         if ( cs->size() == 0 )
+            vm->retval(0);
+         else {
+            int32 pos = cs->size() -1;
+            if ( pos > 18 ) {
+               vm->raiseRTError( new RangeError( ErrorParam( e_numparse_long ) ) );
+               return;
+            }
+            uint32 chr =  cs->getCharAt( pos );
+            numeric val = 0;
+            uint32 base = 1;
+            while( pos > 0 ) {
+               if ( chr == '.' ) {
+                  numeric decbase = 1 / (numeric) base;
+                  val *= decbase;
+
+                  pos--;
+                  chr = cs->getCharAt( pos );
+                  base = 1;
+                  continue;
+               }
+               else if ( chr < '0' || chr > '9' ) {
+                  vm->raiseRTError( new RangeError( ErrorParam( e_numparse ) ) );
+                  return;
+               }
+               val += ( chr -'0' ) * base;
+               pos--;
+               chr =  cs->getCharAt( pos );
+               base *= 10;
+            }
+
+            if ( chr == '-' )
+               vm->retval( -(numeric)val );
+            else {
+               if ( chr < '0' || chr > '9' ) {
+                  vm->raiseRTError( new RangeError( ErrorParam( e_numparse ) ) );
+                  return;
+               }
+
+               vm->retval( (numeric)(val + ( chr -'0' ) * base ) );
+            }
+         }
+      }
+      break;
+
+      default:
+         vm->raiseRTError( new RangeError( ErrorParam( e_numparse ) ) );
+   }
+}
 /*@function typeOf
    @param item an item of any kind.
    @short Returns an integer indicating the type of an item.
@@ -3061,6 +3147,7 @@ Module * core_module_init()
    core->addExtFunc( "suspend", Falcon::core::vmSuspend );
 
    core->addExtFunc( "int", Falcon::core::val_int );
+   core->addExtFunc( "numeric", Falcon::core::val_numeric );
    core->addExtFunc( "typeOf", Falcon::core::typeOf );
    core->addExtFunc( "exit", Falcon::core::hexit );
 

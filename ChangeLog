@@ -7,6 +7,7 @@ Falcon (0.8.9)
       existing modules was always positive.
   * bugfix: fixed ftd line count, export/load directives and reenabled \n
       after a "?>" 
+  * minor: Added numeric() function to core
 
 Falcon (0.8.8)
   * bugfix: TRAV opcode may destroy its parameters while setting first loop
