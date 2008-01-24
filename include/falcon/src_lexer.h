@@ -48,7 +48,6 @@ private:
    bool m_firstEq;
    bool m_done;
    bool m_addEol;
-   bool m_firstSym;
    bool m_lineFilled;
    bool m_bIsDirectiveLine;
    uint32 m_chrEndString;

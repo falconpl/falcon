@@ -1,7 +1,6 @@
 /*
    FALCON - The Falcon Programming Language.
    FILE: sys_time.h
-   $Id: time_sys.h,v 1.2 2007/06/22 15:14:24 jonnymind Exp $
 
    Time related system service interface.
    -------------------------------------------------------------------

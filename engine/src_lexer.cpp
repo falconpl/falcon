@@ -1,7 +1,6 @@
 /*
    FALCON - The Falcon Programming Language
    FILE: src_lexer.cpp
-   $Id: src_lexer.cpp,v 1.21 2007/08/19 07:25:53 jonnymind Exp $
 
    Short description
    -------------------------------------------------------------------
@@ -57,7 +56,6 @@ SrcLexer::SrcLexer( Compiler *comp, Stream *in ):
    m_character( 0 ),
    m_state( e_line ),
    m_done( false ),
-   m_firstSym( true ),
    m_addEol( false ),
    m_lineFilled( false ),
    m_mode( t_mNormal ),
@@ -140,9 +138,20 @@ int SrcLexer::lex_outscape()
                // and break from the loop so to return the string to print.
                break;
             }
-            else if ( chr == ' ' || chr == '\t' || chr == '\r' || chr == '\n' )
+            else if ( chr == ' ' || chr == '\t' || chr == '\r' )
             {
                // we enter now the normal mode; we start to consider a standard program.
+               m_mode = t_mNormal;
+               // and break from the loop so to return the string to print.
+               break;
+            }
+            else if ( chr == '\n' )
+            {
+               // as above, but now count theline
+               m_previousLine = m_line;
+               m_line++;
+               m_character = 0;
+               m_bIsDirectiveLine = false;
                m_mode = t_mNormal;
                // and break from the loop so to return the string to print.
                break;
@@ -190,12 +199,23 @@ int SrcLexer::lex_outscape()
          break;
 
          case e_escL:
-            if ( chr == ' ' || chr == '\t' || chr == '\r' || chr == '\n' )
+            if ( chr == ' ' || chr == '\t' || chr == '\r' )
             {
                // we enter now the normal mode; we start to consider a standard program.
                m_mode = t_mNormal;
                // and break from the loop so to return the string to print.
                break;
+            }
+            else if( chr == '\n' )
+            {
+               // as above, but now count theline
+               m_previousLine = m_line;
+               m_line++;
+               m_character = 0;
+               m_bIsDirectiveLine = false;
+               m_mode = t_mNormal;
+               // and break from the loop so to return the string to print.
+               break;               
             }
             else {
                state = e_normal;
@@ -359,9 +379,6 @@ int SrcLexer::lex_normal()
                // it may be a named token
                int token = checkLimitedTokens();
 
-               // we have a first symbol, that is, can't be a directive anymore
-               m_firstSym = false;
-
                if ( token != 0 )
                {
                   return token;
@@ -396,31 +413,7 @@ int SrcLexer::lex_normal()
                // great, we have a token
                m_lineFilled = true;
                m_state = e_line;
-
-               // a bit of galore: discard extra "\n" or "\r\n" in case of outer escape
-               if ( m_mode == t_mOutscape )
-               {
-                  if ( chr != '\n' ) {
-
-                     // ok, not a newline; but is it an INET newline?
-                     if ( chr == '\r')
-                     {
-                        uint32 ch1 = 0;
-                        m_in->get( ch1 );
-                        if ( ch1 != '\n' )
-                        {
-                           m_in->unget( ch1 );
-                           m_in->unget( chr );
-                        }
-                        // else silently discard
-                     }
-                     else
-                        m_in->unget( chr );
-                  }
-
-               }
-               else
-                  m_in->unget( chr );
+               m_in->unget( chr );
 
                return token;
             }
@@ -455,7 +448,6 @@ int SrcLexer::lex_normal()
                // a real EOL has been provided here.
                if ( m_state == e_line && m_contexts == 0  && m_squareContexts == 0 )
                {
-                  m_firstSym = true;
                   m_firstEq = true;
                   m_bIsDirectiveLine = false;
                   if ( m_lineFilled )
@@ -904,7 +896,6 @@ int SrcLexer::state_line( uint32 chr )
 
       // a real EOL has been provided here.
       m_firstEq = true;
-      m_firstSym = true;
       m_bIsDirectiveLine = false;
       if ( m_lineFilled )
       {
@@ -1236,7 +1227,7 @@ int SrcLexer::checkLimitedTokens()
       break;
 
       case 4:
-         if ( m_string == "load" && m_firstSym )  // directive
+         if ( m_string == "load" )  // directive
          {
             m_bIsDirectiveLine = true;
             return LOAD;
@@ -1299,7 +1290,7 @@ int SrcLexer::checkLimitedTokens()
             return OBJECT;
          if ( m_string == "return" )
             return RETURN;
-         if ( m_string == "export" && m_firstSym ) // directive
+         if ( m_string == "export" ) // directive
          {
             m_bIsDirectiveLine = true;
             return EXPORT;

@@ -5,6 +5,8 @@ Falcon (0.8.9)
       failed in searching the local table.
   * bugfix: When a "module provider" was given to runtime, test for already
       existing modules was always positive.
+  * bugfix: fixed ftd line count, export/load directives and reenabled \n
+      after a "?>" 
 
 Falcon (0.8.8)
   * bugfix: TRAV opcode may destroy its parameters while setting first loop
