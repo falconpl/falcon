@@ -969,14 +969,14 @@ FALCON_FUNC  IOStream_creator ( ::Falcon::VMachine *vm )
    vm->retval( co );
 }
 
-static void internal_make_stream( VMachine *vm, UserData *clone, int userMode )
+static CoreObject *internal_make_stream( VMachine *vm, UserData *clone, int userMode )
 {
    // The clone stream may be zero if the embedding application doesn't want
    // to share a virtual standard stream with us.
    if ( clone == 0 )
    {
-       vm->raiseModError( new CloneError( ErrorParam( e_uncaught ).origin( e_orig_runtime )  ) );
-      return;
+       vm->raiseModError( new CloneError( ErrorParam( e_uncloneable, __LINE__ ).origin( e_orig_runtime )  ) );
+       return 0;
    }
 
    Item *stream_class;
@@ -992,25 +992,99 @@ static void internal_make_stream( VMachine *vm, UserData *clone, int userMode )
    if ( userMode >= 0 )
       co->setProperty( "_stdStreamType", userMode );
 
-   vm->retval( co );
+   vm->retval(co);
+   return co;
 }
 
 
 FALCON_FUNC  _stdIn ( ::Falcon::VMachine *vm )
 {
-   internal_make_stream( vm, vm->stdIn()->clone(), -1 );
+   if( vm->paramCount() == 0 )
+   {
+      internal_make_stream( vm, vm->stdIn()->clone(), -1 );
+   }
+   else {
+      // verify streamability of parameter
+      Item *p1 = vm->param(0);
+      if( ! p1->isObject() || ! p1->asObject()->derivedFrom("Stream") )
+      {
+         vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
+         return;
+      }
+
+      //keep the stream
+      internal_make_stream( vm, vm->stdIn()->clone(), -1 ); // this also returns the old stream
+
+      Stream *orig = (Stream *) p1->asObject()->getUserData();
+      Stream *clone = (Stream *) orig->clone();
+      if ( clone == 0 )
+      {
+         vm->raiseModError( new CloneError( ErrorParam( e_uncloneable, __LINE__ ).origin( e_orig_runtime )  ) );
+         return;
+      }
+      // but change it
+      vm->stdIn( clone );
+   }
 }
 
 
 FALCON_FUNC  _stdOut ( ::Falcon::VMachine *vm )
 {
-   internal_make_stream( vm, vm->stdOut()->clone(), -1 );
+   if( vm->paramCount() == 0 )
+   {
+      internal_make_stream( vm, vm->stdOut()->clone(), -1 );
+   }
+   else {
+      // verify streamability of parameter
+      Item *p1 = vm->param(0);
+      if( ! p1->isObject() || ! p1->asObject()->derivedFrom("Stream") )
+      {
+         vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
+         return;
+      }
+
+      //keep the stream
+      internal_make_stream( vm, vm->stdOut()->clone(), -1 );
+      Stream *orig = (Stream *) p1->asObject()->getUserData();
+      Stream *clone = (Stream *) orig->clone();
+      if ( clone == 0 )
+      {
+         vm->raiseModError( new CloneError( ErrorParam( e_uncloneable, __LINE__ ).origin( e_orig_runtime )  ) );
+         return;
+      }
+      // but change it
+      vm->stdOut( clone );
+   }
 }
 
 
 FALCON_FUNC  _stdErr ( ::Falcon::VMachine *vm )
 {
-   internal_make_stream( vm, vm->stdErr()->clone(), -1 );
+   if( vm->paramCount() == 0 )
+   {
+      internal_make_stream( vm, vm->stdErr()->clone(), -1 );
+   }
+   else {
+      // verify streamability of parameter
+      Item *p1 = vm->param(0);
+      if( ! p1->isObject() || ! p1->asObject()->derivedFrom("Stream") )
+      {
+         vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
+         return;
+      }
+
+      //keep the stream
+      internal_make_stream( vm, vm->stdErr()->clone(), -1 );
+      Stream *orig = (Stream *) p1->asObject()->getUserData();
+      Stream *clone = (Stream *) orig->clone();
+      if ( clone == 0 )
+      {
+         vm->raiseModError( new CloneError( ErrorParam( e_uncloneable, __LINE__ ).origin( e_orig_runtime )  ) );
+         return;
+      }
+      // but change it
+      vm->stdErr( clone );
+   }
 }
 
 
