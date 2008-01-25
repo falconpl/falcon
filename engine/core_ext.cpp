@@ -81,7 +81,7 @@ FALCON_FUNC  vmVersionName( ::Falcon::VMachine *vm )
    @param item an item of any kind
    @return an integer representing the lenght of the item
 
-   @short Retreives the lenght of a collection
+   @brief Retreives the lenght of a collection
 
    The returned value represent the "size" of the item passed as a parameter.
    The number is consistent with the object type: in case of a string, it
@@ -297,10 +297,11 @@ FALCON_FUNC  IntrruptedError_init ( ::Falcon::VMachine *vm )
 }
 
 
-/*@function int
+/*#
+   @function int
    @param item The item to be converted
 
-   @short Transforms the parameter in a integer.
+   @brief Transforms the parameter in a integer.
 
    If the parameter is a string, a string-to-number coversion will be attempted.
 
@@ -324,7 +325,7 @@ FALCON_FUNC  val_int ( ::Falcon::VMachine *vm )
          numeric num = to_int->asNumeric();
          if ( num > 9.223372036854775808e18 || num < -9.223372036854775808e18 )
          {
-            vm->raiseRTError( new RangeError( ErrorParam( e_domain ) ) );
+            vm->raiseRTError( new RangeError( ErrorParam( e_domain, __LINE__ ) ) );
             return;
          }
          vm->retval( (int64)num );
@@ -339,7 +340,7 @@ FALCON_FUNC  val_int ( ::Falcon::VMachine *vm )
          else {
             int32 pos = cs->size() -1;
             if ( pos > 18 ) {
-               vm->raiseRTError( new RangeError( ErrorParam( e_numparse_long ) ) );
+               vm->raiseRTError( new RangeError( ErrorParam( e_numparse_long, __LINE__ ) ) );
                return;
             }
             uint32 chr =  cs->getCharAt( pos );
@@ -347,7 +348,7 @@ FALCON_FUNC  val_int ( ::Falcon::VMachine *vm )
             uint64 base = 1;
             while( pos > 0 ) {
                if ( chr < '0' || chr > '9' ) {
-                  vm->raiseRTError( new RangeError( ErrorParam( e_numparse ) ) );
+                  vm->raiseRTError( new RangeError( ErrorParam( e_numparse, __LINE__ ) ) );
                   return;
                }
                val += ( chr -'0') * base;
@@ -359,7 +360,7 @@ FALCON_FUNC  val_int ( ::Falcon::VMachine *vm )
                vm->retval( -(int64)val );
             else {
                if ( chr < '0' || chr > '9' ) {
-                  vm->raiseRTError( new RangeError( ErrorParam( e_numparse ) ) );
+                  vm->raiseRTError( new RangeError( ErrorParam( e_numparse, __LINE__ ) ) );
                   return;
                }
 
@@ -370,17 +371,19 @@ FALCON_FUNC  val_int ( ::Falcon::VMachine *vm )
       break;
 
       default:
-         vm->raiseRTError( new RangeError( ErrorParam( e_numparse ) ) );
+         vm->raiseRTError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).extra( "(N|S)" ) ) );
    }
 }
 
-/*@function numeric
+/*#
+   @function numeric
+   @brief Transforms the parameter in a number.
    @param item The item to be converted
+   @return A floating point numeric value.
+   @raise RangeError on numeric conversion error or integer out of range.
 
-   @short Transforms the parameter in a number.
-
-   If the parameter is a string, a string-to-number coversion will be attempted.
-
+   If the parameter is a string, a string-to-number coversion will be attempted;
+   In case of conversion failed, it raises an error.
 */
 FALCON_FUNC  val_numeric ( ::Falcon::VMachine *vm )
 {
@@ -401,7 +404,7 @@ FALCON_FUNC  val_numeric ( ::Falcon::VMachine *vm )
          int64 num = to_numeric->asInteger();
          if ( num > 9.223372036854775808e18 || num < -9.223372036854775808e18 )
          {
-            vm->raiseRTError( new RangeError( ErrorParam( e_domain ) ) );
+            vm->raiseRTError( new RangeError( ErrorParam( e_domain, __LINE__ ) ) );
             return;
          }
          vm->retval( (numeric)num );
@@ -416,7 +419,7 @@ FALCON_FUNC  val_numeric ( ::Falcon::VMachine *vm )
          else {
             int32 pos = cs->size() -1;
             if ( pos > 18 ) {
-               vm->raiseRTError( new RangeError( ErrorParam( e_numparse_long ) ) );
+               vm->raiseRTError( new RangeError( ErrorParam( e_numparse_long, __LINE__ ) ) );
                return;
             }
             uint32 chr =  cs->getCharAt( pos );
@@ -433,7 +436,7 @@ FALCON_FUNC  val_numeric ( ::Falcon::VMachine *vm )
                   continue;
                }
                else if ( chr < '0' || chr > '9' ) {
-                  vm->raiseRTError( new RangeError( ErrorParam( e_numparse ) ) );
+                  vm->raiseRTError( new RangeError( ErrorParam( e_numparse, __LINE__ ) ) );
                   return;
                }
                val += ( chr -'0' ) * base;
@@ -446,7 +449,7 @@ FALCON_FUNC  val_numeric ( ::Falcon::VMachine *vm )
                vm->retval( -(numeric)val );
             else {
                if ( chr < '0' || chr > '9' ) {
-                  vm->raiseRTError( new RangeError( ErrorParam( e_numparse ) ) );
+                  vm->raiseRTError( new RangeError( ErrorParam( e_numparse, __LINE__ ) ) );
                   return;
                }
 
@@ -457,12 +460,13 @@ FALCON_FUNC  val_numeric ( ::Falcon::VMachine *vm )
       break;
 
       default:
-         vm->raiseRTError( new RangeError( ErrorParam( e_numparse ) ) );
+         vm->raiseRTError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).extra( "(N|S)" ) ) );
    }
 }
+
 /*@function typeOf
    @param item an item of any kind.
-   @short Returns an integer indicating the type of an item.
+   @brief Returns an integer indicating the type of an item.
 
    The value returned may be one of the following:<BR>
    <UL>
@@ -512,7 +516,7 @@ FALCON_FUNC  getProperty( ::Falcon::VMachine *vm )
    Item *prop_x = vm->param(1);
 
    if ( obj_x == 0 || ! obj_x->isObject() || prop_x == 0 || ! prop_x->isString() ) {
-      vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).extra( "( 0, S)" ) ) );
+      vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).extra( "(0,S)" ) ) );
    }
    else if ( ! obj_x->asObject()->getProperty( *prop_x->asString(), vm->regA() ) )
    {
@@ -549,7 +553,7 @@ FALCON_FUNC  setProperty( ::Falcon::VMachine *vm )
 
 /*@function exit
    @param value an item representing VM exit code.
-   @short Requires immediate termination of the program.
+   @brief Requires immediate termination of the program.
 
    The program is immediately terminated and the toplevel VM loop is
    interrupted as soon as possible. In case of embedding applications,
@@ -572,7 +576,7 @@ FALCON_FUNC  hexit ( ::Falcon::VMachine *vm )
 /*@function chr
    @param code an UNICODE character ID.
    @return a single-char string.
-   @short Converts a 0-255 integer in the corresponding character.
+   @brief Converts a 0-255 integer in the corresponding character.
 
    @see ord
 */
@@ -599,7 +603,7 @@ FALCON_FUNC  chr ( ::Falcon::VMachine *vm )
 /*@function ord
    @param string a string
    @return the UNICODE value of the first element in the string.
-   @short Returns the ASCII value of the first element in the string.
+   @brief Returns the ASCII value of the first element in the string.
 
    @todo add international support. (?) move this out of core.
    @see chr
@@ -621,7 +625,7 @@ FALCON_FUNC  ord ( ::Falcon::VMachine *vm )
    @optparam deccount number of significative decimals for numeric items.
    @return the string representation of the item.
 
-   @short Returns a string representation of the item.
+   @brief Returns a string representation of the item.
 
    If the item is a number, the second parameter will determine how many
    decimals will be printed. If it is an object, and if it provides a
@@ -654,7 +658,7 @@ FALCON_FUNC  hToString ( ::Falcon::VMachine *vm )
 
 /*@function paramCount
    @return the parameter count
-   @short Returns number of parameter that have been passed to the current function or method.
+   @brief Returns number of parameter that have been passed to the current function or method.
 */
 
 FALCON_FUNC  paramCount ( ::Falcon::VMachine *vm )
@@ -676,7 +680,7 @@ FALCON_FUNC  paramCount ( ::Falcon::VMachine *vm )
 }
 
 /*@function paramNumber
-   @short get the Nth parameter
+   @brief get the Nth parameter
    @param the paremeter that must be returned, zero based
    @return the nth paramter (zero based) or NIL if the parameter is not given
 */
@@ -719,7 +723,7 @@ FALCON_FUNC  paramNumber ( ::Falcon::VMachine *vm )
 }
 
 /*@function paramIsRef
-   @short check whether the nth parameter has been passed by value or by reference
+   @brief check whether the nth parameter has been passed by value or by reference
    @param number the paramter that must be checked (zero based)
    @return true if the parameter has been passed by reference, false otherwise
 */
@@ -761,7 +765,7 @@ FALCON_FUNC  paramIsRef ( ::Falcon::VMachine *vm )
 }
 
 /*@function paramSet
-   @short Changes the nth paramter if it has been passed by reference.
+   @brief Changes the nth paramter if it has been passed by reference.
    @param number the paramter to be changed (zero based)
    @param value the new value for the parameter
 
@@ -882,7 +886,7 @@ FALCON_FUNC  eq( ::Falcon::VMachine *vm )
 */
 
 /*@function yield
-   @short gives up the rest of the coroutine time slice.
+   @brief gives up the rest of the coroutine time slice.
 
    The calling coroutine is immediately swapped out and put at the end of the
    ready coroutines waiting to be served. In case there aren't any other
@@ -895,7 +899,7 @@ FALCON_FUNC  yield ( ::Falcon::VMachine *vm )
 }
 
 /*@function yieldOut
-   @short Requires termination of the current coroutine.
+   @brief Requires termination of the current coroutine.
    @param retval a return value for the coroutine.
 
    The calling coroutine is immediately terminated
