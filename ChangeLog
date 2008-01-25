@@ -8,6 +8,8 @@ Falcon (0.8.9)
   * bugfix: fixed ftd line count, export/load directives and reenabled \n
       after a "?>" 
   * minor: Added numeric() function to core
+  * major: Removed forall and added formiddle which runs for everything
+      except the first and last elements, regardless of their presence.
 
 Falcon (0.8.8)
   * bugfix: TRAV opcode may destroy its parameters while setting first loop
