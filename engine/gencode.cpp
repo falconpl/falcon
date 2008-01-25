@@ -1156,7 +1156,7 @@ void GenCode::gen_statement( const Statement *stmt )
          //    [loop body]
          //    [If we have a forlast block  --
          //      TRAL (last)]
-         // [FORALL block]
+         // [FORMIDDLE block]
          //
          // TRAN begin
          // last:
@@ -1226,18 +1226,15 @@ void GenCode::gen_statement( const Statement *stmt )
             gen_block( &loop->children() );
          }
 
-         // if we have a last block, it must be executed after last element.
-         if( ! loop->lastBlock().empty() ) {
+         // generate the formiddle block 
+         if( ! loop->middleBlock().empty() ) {
+            // skip it for the last element
             gen_pcode( P_TRAL, c_param_fixed( tag.addQueryElif( 0 ) ) );
+
+            gen_block( &loop->middleBlock() );
          }
 
-         // generate a forall block (after tral, so it won't bexecuted for the last element)
-         if( ! loop->allBlock().empty() )
-         {
-            gen_block( &loop->allBlock() );
-         }
-
-         // after the forall block we have the next element pick
+         // after the formiddle block we have the next element pick
          tag.defineNext();
 
          // second parameter 0 --> do not delete.

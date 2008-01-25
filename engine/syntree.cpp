@@ -786,7 +786,7 @@ StmtForin::StmtForin( const StmtForin &other ):
    StmtBlock( other ),
    m_first( other.m_first ),
    m_last( other.m_last ),
-   m_all( other.m_all )
+   m_middle( other.m_middle )
 {
    m_source = other.m_source == 0 ? 0 : new Value( * other.m_source );
    m_dest = other.m_dest == 0 ? 0 : new Value( * other.m_dest );

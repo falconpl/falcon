@@ -49,8 +49,8 @@ keys_first = []
 values_first = []
 keys_last = []
 values_last = []
-keys_all = []
-values_all = []
+keys_middle = []
+values_middle = []
 
 try
    for key, value in dict
@@ -67,9 +67,9 @@ try
          keys_last += key
          values_last += value
       end
-      forall
-         keys_all += key
-         values_all += value
+      formiddle
+         keys_middle += key
+         values_middle += value
       end
    end
 catch in error
@@ -82,8 +82,8 @@ if len( keys_first ) != 1: failure( "1 element dict for first: key retrival" )
 if len( values_first ) != 1: failure( "1 element dict for first: value retrival" )
 if len( keys_last ) != 1: failure( "1 element dict for last: key retrival" )
 if len( values_last ) != 1: failure( "1 element dict for last: value retrival" )
-if len( keys_all ) != 0: failure( "1 element dict for all: key retrival" )
-if len( values_all ) != 0: failure( "1 element dict for all: value retrival" )
+if len( keys_middle ) != 0: failure( "1 element dict for middle: key retrival" )
+if len( values_middle ) != 0: failure( "1 element dict for middle: value retrival" )
 
 // 2 elements dictionary
 dict = [ 1 => "a", 2 => "b"]
@@ -93,8 +93,8 @@ keys_first = []
 values_first = []
 keys_last = []
 values_last = []
-keys_all = []
-values_all = []
+keys_middle = []
+values_middle = []
 
 try
    for key, value in dict
@@ -108,9 +108,9 @@ try
          keys_last += key
          values_last += value
       end
-      forall
-         keys_all += key
-         values_all += value
+      formiddle
+         keys_middle += key
+         values_middle += value
       end
    end
 catch in error
@@ -123,8 +123,8 @@ if len( keys_first ) != 1: failure( "2 element dict for first: key retrival" )
 if len( values_first ) != 1: failure( "2 element dict for first: value retrival" )
 if len( keys_last ) != 1: failure( "2 element dict for last: key retrival" )
 if len( values_last ) != 1: failure( "2 element dict for last: value retrival" )
-if len( keys_all ) != 1: failure( "2 element dict for all: key retrival" )
-if len( values_all ) != 1: failure( "2 element dict for all: value retrival" )
+if len( keys_middle ) != 1: failure( "2 element dict for middle: key retrival" )
+if len( values_middle ) != 1: failure( "2 element dict for middle: value retrival" )
 
 // 3 elements dictionary
 dict = [ 1 => "a", 2 => "b", 3 => "c" ]
@@ -134,8 +134,8 @@ keys_first = []
 values_first = []
 keys_last = []
 values_last = []
-keys_all = []
-values_all = []
+keys_middle = []
+values_middle = []
 
 try
    for key, value in dict
@@ -149,9 +149,9 @@ try
          keys_last += key
          values_last += value
       end
-      forall
-         keys_all += key
-         values_all += value
+      formiddle
+         keys_middle += key
+         values_middle += value
       end
    end
 catch in error
@@ -164,8 +164,8 @@ if len( keys_first ) != 1: failure( "3 element dict for first: key retrival" )
 if len( values_first ) != 1: failure( "3 element dict for first: value retrival" )
 if len( keys_last ) != 1: failure( "3 element dict for last: key retrival" )
 if len( values_last ) != 1: failure( "3 element dict for last: value retrival" )
-if len( keys_all ) != 2: failure( "3 element dict for last: key retrival" )
-if len( values_all ) != 2: failure( "3 element dict for last: value retrival" )
+if len( keys_middle ) != 2: failure( "3 element dict for last: key retrival" )
+if len( values_middle ) != 2: failure( "3 element dict for last: value retrival" )
 
 // 4 elements dictionary
 dict = [ 1 => "a", 2 => "b", 3 => "c", 4 => "d" ]
@@ -175,8 +175,8 @@ keys_first = []
 values_first = []
 keys_last = []
 values_last = []
-keys_all = []
-values_all = []
+keys_middle = []
+values_middle = []
 
 try
    for key, value in dict
@@ -190,9 +190,9 @@ try
          keys_last += key
          values_last += value
       end
-      forall
-         keys_all += key
-         values_all += value
+      formiddle
+         keys_middle += key
+         values_middle += value
       end
    end
 catch in error
@@ -205,8 +205,8 @@ if len( keys_first ) != 1: failure( "4 element dict for first: key retrival" )
 if len( values_first ) != 1: failure( "4 element dict for first: value retrival" )
 if len( keys_last ) != 1: failure( "4 element dict for last: key retrival" )
 if len( values_last ) != 1: failure( "4 element dict for last: value retrival" )
-if len( keys_all ) != 3: failure( "4 element dict for last: key retrival" )
-if len( values_all ) != 3: failure( "4 element dict for last: value retrival" )
+if len( keys_middle ) != 3: failure( "4 element dict for last: key retrival" )
+if len( values_middle ) != 3: failure( "4 element dict for last: value retrival" )
 
 success()
 

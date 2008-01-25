@@ -121,7 +121,7 @@ object MyParser from CmdlineParser
       for elem in self.freeParams
          forfirst: >> "Free options: "
          >> elem
-         forall: >> ", "
+         formiddle: >> ", "
          forlast: > "."
       end
    end

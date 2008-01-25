@@ -95,7 +95,7 @@ inline int flc_src_lex (void *lvalp, void *yyparam)
 %token WHILE BREAK CONTINUE DROPPING
 %token IF ELSE ELIF
 %token FOR
-%token FORFIRST FORLAST FORALL
+%token FORFIRST FORLAST FORMIDDLE
 %token SWITCH CASE DEFAULT
 %token SELECT
 %token SENDER SELF
@@ -724,7 +724,7 @@ forin_statement_elem:
       }
    | first_loop_block
    | last_loop_block
-   | all_loop_block
+   | middle_loop_block
 ;
 
 fordot_statement:
@@ -848,31 +848,33 @@ last_loop_block:
    | FORLAST error EOL { COMPILER->raiseError(Falcon::e_syn_forlast ); }
 ;
 
-all_loop_block:
-   FORALL EOL {
+middle_loop_block:
+   FORMIDDLE EOL {
          Falcon::StmtForin *f = static_cast<Falcon::StmtForin *>(COMPILER->getContext());
-         if( ! f->allBlock().empty() )
+         if( ! f->middleBlock().empty() )
          {
-            COMPILER->raiseError( Falcon::e_already_forall );
+            COMPILER->raiseError( Falcon::e_already_formiddle );
          }
 		 // Push anyhow an empty item, that is needed for empty last blocks
-		 f->allBlock().push_back( new Falcon::StmtNone( LINE ) );
-         COMPILER->pushContextSet( &f->allBlock() );
+		 // Apparently you get a segfault without it.
+		 // (Note that the formiddle: version below does *not* need it
+		 f->middleBlock().push_back( new Falcon::StmtNone( LINE ) );
+         COMPILER->pushContextSet( &f->middleBlock() );
       }
       statement_list
       END EOL
       { COMPILER->popContextSet(); }
 
-   | FORALL COLON statement {
+   | FORMIDDLE COLON statement {
          Falcon::StmtForin *f = static_cast<Falcon::StmtForin *>(COMPILER->getContext());
-         if( ! f->allBlock().empty() )
+         if( ! f->middleBlock().empty() )
          {
-            COMPILER->raiseError( Falcon::e_already_forall );
+            COMPILER->raiseError( Falcon::e_already_formiddle );
          }
          if ( $3 != 0 )
-            f->allBlock().push_back( $3 );
+            f->middleBlock().push_back( $3 );
       }
-   | FORALL error EOL { COMPILER->raiseError(Falcon::e_syn_forall ); }
+   | FORMIDDLE error EOL { COMPILER->raiseError(Falcon::e_syn_formiddle ); }
 ;
 
 switch_statement:

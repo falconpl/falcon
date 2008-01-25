@@ -58,17 +58,18 @@ if not tc2: failure( "Empty for/in" )
    
 //==========================
 // Now test empty forlast
-// empty forfirst and forall just do nothing
+// empty forfirst and formiddle just do nothing
 //
 
 res = ""
 for i in [1,2,3]
-   res += i.toString()
-   forall: res += ";"
    forlast; end
+   res += i.toString()
+   formiddle: res += ";"
+   forfirst; end
 end
 
-if res != "1;2;3": failure( "Empty forlast" )
+if res != "1;2;3": failure( "Empty forlast&forfirst" )
    
 
 

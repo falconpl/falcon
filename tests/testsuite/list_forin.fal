@@ -60,7 +60,7 @@ for elem in list
 end
 if count != 3: failure( "Forfirst/forlast count" )
 
-// Traversal with forfirst/forlast/forall
+// Traversal with forfirst/forlast/formiddle
 // and again.
 elements = ""
 for elem in list
@@ -69,7 +69,7 @@ for elem in list
    end
    elements += elem
 
-   forall
+   formiddle
       elements += ", "
    end
 

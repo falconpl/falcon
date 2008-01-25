@@ -1162,7 +1162,7 @@ void GenHAsm::gen_statement( const Statement *stmt )
          //    [loop body]
          //    [If we have a forlast block  --
          //      TRAL (last)]
-         // [FORALL block]
+         // [FORMIDDLE block]
          //
          // TRAN begin
          // last:
@@ -1245,16 +1245,12 @@ void GenHAsm::gen_statement( const Statement *stmt )
             gen_block( &loop->children() );
          }
 
-         // do we have a forall block?
-
-         // do we have a last block? -- in this case, skip the all block and next loop
-         if( ! loop->lastBlock().empty() ) {
+         // generate the middle block
+         if( ! loop->middleBlock().empty() ) {
+            // skip it for the last element
             m_out->writeString( "\tTRAL\t_loop_tral_" + loopStr + "\n" );
-         }
 
-         // generate the all block
-         if( ! loop->allBlock().empty() ) {
-            gen_block( &loop->allBlock() );
+            gen_block( &loop->middleBlock() );
          }
 
          m_out->writeString( "_loop_next_" + loopStr + ":\n" );

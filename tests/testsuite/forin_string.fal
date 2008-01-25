@@ -53,13 +53,14 @@ for c in string
 
    result += c
 
-   forall: result += ","
+   formiddle: result += ","
+   forlast: result += ","
 end
 
-if string.len() != 16: failure( "forall - Changed string size" )
-if string != "Here-is-a-string": failure( "forall - Changed string content" )
+if string.len() != 16: failure( "formiddle&forlast - Changed string size" )
+if string != "Here-is-a-string": failure( "formiddle&forlast - Changed string content" )
 if result != ":H,e,r,e, ,i,s, ,a, ,s,t,r,i,n,g,"
-	failure( "forall - String result" )
+	failure( "formiddle&forlast - String result" )
 end
 
 //===================================================
@@ -79,7 +80,7 @@ for c in string
 
    result += c
 
-   forall: result += ","
+   formiddle: result += ","
    forlast: result += "."
 end
 

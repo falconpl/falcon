@@ -444,7 +444,7 @@ void GenTree::generate( const Statement *cmp, const char *specifier, bool sameli
          m_out->writeString( "\n" );
          gen_block( sfor->children(), depth );
          gen_block( sfor->firstBlock(), depth, "FORFIRST" );
-         gen_block( sfor->allBlock(), depth, "FORALL" );
+         gen_block( sfor->middleBlock(), depth, "FORMIDDLE" );
          gen_block( sfor->lastBlock(), depth, "FORLAST" );
       }
       break;

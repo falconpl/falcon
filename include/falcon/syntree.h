@@ -1065,7 +1065,7 @@ class FALCON_DYN_CLASS StmtForin: public StmtBlock
 {
    StatementList m_first;
    StatementList m_last;
-   StatementList m_all;
+   StatementList m_middle;
 
    Value *m_source;
    Value *m_dest;
@@ -1085,8 +1085,8 @@ public:
    StatementList &firstBlock() { return m_first; }
    const StatementList &lastBlock() const { return m_last; }
    StatementList &lastBlock() { return m_last; }
-   const StatementList &allBlock() const { return m_all; }
-   StatementList &allBlock() { return m_all; }
+   const StatementList &middleBlock() const { return m_middle; }
+   StatementList &middleBlock() { return m_middle; }
 
    Value *source() const { return m_source; }
    Value *dest() const { return m_dest; }

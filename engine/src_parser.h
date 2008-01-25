@@ -57,7 +57,7 @@
      FOR = 273,
      FORFIRST = 274,
      FORLAST = 275,
-     FORALL = 276,
+     FORMIDDLE = 276,
      SWITCH = 277,
      CASE = 278,
      DEFAULT = 279,
@@ -166,7 +166,7 @@
 #define FOR 273
 #define FORFIRST 274
 #define FORLAST 275
-#define FORALL 276
+#define FORMIDDLE 276
 #define SWITCH 277
 #define CASE 278
 #define DEFAULT 279
@@ -260,7 +260,7 @@
 
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union
-#line 66 "/home/jeremy/Projects/falcon/core/engine/src_parser.yy"
+#line 66 "/home/swmc/programming/falcon/core/engine/src_parser.yy"
 lex_value_t {
    Falcon::int64 integer;
    Falcon::numeric numeric;
@@ -275,7 +275,7 @@ lex_value_t {
    Falcon::SymbolList *fal_symlist;
 }
 /* Line 1489 of yacc.c.  */
-#line 279 "/home/jeremy/Projects/falcon/core/engine/src_parser.h"
+#line 279 "/home/swmc/programming/falcon/core/engine/src_parser.h"
 	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1

@@ -155,7 +155,7 @@ const String &errorDesc( int code )
       case e_syn_for: return getMessage( msg::err_syn_for );
       case e_syn_forfirst: return getMessage( msg::err_syn_forfirst );
       case e_syn_forlast: return getMessage( msg::err_syn_forlast );
-      case e_syn_forall: return getMessage( msg::err_syn_forall );
+      case e_syn_formiddle: return getMessage( msg::err_syn_formiddle );
       case e_syn_give: return getMessage( msg::err_syn_give );
       case e_syn_try: return getMessage( msg::err_syn_try );
       case e_syn_catch: return getMessage( msg::err_syn_catch );
@@ -207,7 +207,7 @@ const String &errorDesc( int code )
 
       case e_already_forfirst: return getMessage( msg::err_already_forfirst );
       case e_already_forlast: return getMessage( msg::err_already_forlast );
-      case e_already_forall: return getMessage( msg::err_already_forall );
+      case e_already_formiddle: return getMessage( msg::err_already_formiddle );
 
 
       case e_open_file: return getMessage( msg::err_open_file);

@@ -1297,8 +1297,6 @@ int SrcLexer::checkLimitedTokens()
          }
          if ( m_string == "static" )
             return STATIC;
-         if ( m_string == "forall" )
-            return FORALL;
       break;
 
       case 7:
@@ -1330,6 +1328,8 @@ int SrcLexer::checkLimitedTokens()
             m_bIsDirectiveLine = true;
             return DIRECTIVE;
          }
+         if ( m_string == "formiddle" )
+            return FORMIDDLE;
       break;
 
       case 10:

@@ -45,11 +45,11 @@ array = [1]
 result = []
 result_first = []
 result_last = []
-result_all = []
+result_middle = []
 
 for var in array
    result += var
-   forall: result_all += var
+   formiddle: result_middle += var
    forfirst: result_first += var
    forlast: result_last += var
 end
@@ -57,33 +57,33 @@ end
 if len( result ) != 1: failure( "1 element set" )
 if len( result_first ) != 1: failure( "1 element set - forfirst" )
 if len( result_last ) != 1: failure( "1 element set - forlast" )
-if len( result_all ) != 0: failure( "1 element set - forall" )
+if len( result_middle ) != 0: failure( "1 element set - formiddle" )
 
 array = [ 1, 2 ]
 result = []
 result_first = []
 result_last = []
-result_all = []
+result_middle = []
 
 for var in array
    forfirst: result_first += var
    forlast: result_last += var
    result += var
-   forall
-      result_all += var
+   formiddle
+      result_middle += var
    end
 end
 
 if len( result ) != 2: failure( "2 element set" )
 if len( result_first ) != 1: failure( "2 element set - forfirst" )
 if len( result_last ) != 1: failure( "2 element set - forlast" )
-if len( result_all ) != 1: failure( "2 element set - forall" )
+if len( result_middle ) != 1: failure( "2 element set - formiddle" )
 
 array = [ 1, 2, 3 ]
 result = []
 result_first = []
 result_last = []
-result_all = []
+result_middle = []
 
 for var in array
    forfirst
@@ -91,27 +91,27 @@ for var in array
    end
    result += var
    forlast: result_last += var
-   forall: result_all += var
+   formiddle: result_middle += var
 end
 
 if len( result ) != 3: failure( "3 element set" )
 if len( result_first ) != 1: failure( "3 element set - forfirst" )
 if len( result_last ) != 1: failure( "3 element set - forlast" )
-if len( result_all ) != 2: failure( "3 element set - forall" )
+if len( result_middle ) != 2: failure( "3 element set - formiddle" )
 
 array = [ 1, 2, 3, 4 ]
 result = []
 result_first = []
 result_last = []
-result_all = []
+result_middle = []
 
 for var in array
    forfirst
       result_first += var
    end
    forlast: result_last += var
-   forall
-      result_all += var
+   formiddle
+      result_middle += var
    end
    result += var
 end
@@ -119,7 +119,7 @@ end
 if len( result ) != 4: failure( "4 element set" )
 if len( result_first ) != 1: failure( "4 element set - forfirst" )
 if len( result_last ) != 1: failure( "4 element set - forlast" )
-if len( result_all ) != 3: failure( "4 element set - forall" )
+if len( result_middle ) != 3: failure( "4 element set - formiddle" )
 
 success()
 
