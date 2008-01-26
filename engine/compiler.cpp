@@ -217,7 +217,6 @@ bool Compiler::compile()
       String temp = "from line ";
       temp.writeNumber( (int64) stmt->line() );
       raiseError( e_unclosed_cs, temp );
-      return false;
    }
 
    // leadout sequence
