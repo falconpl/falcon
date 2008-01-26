@@ -6,10 +6,10 @@ Falcon (0.8.9)
   * bugfix: When a "module provider" was given to runtime, test for already
       existing modules was always positive.
   * bugfix: fixed ftd line count, export/load directives and reenabled \n
-      after a "?>" 
+      after a "?>"
   * minor: Added numeric() function to core
-  * major: Removed forall and added formiddle which runs for everything
-      except the first and last elements, regardless of their presence.
+  * major: Removed forall and added formiddle which runs after every element
+      except the last one (even if "forlast" isn't provided).
 
 Falcon (0.8.8)
   * bugfix: TRAV opcode may destroy its parameters while setting first loop
