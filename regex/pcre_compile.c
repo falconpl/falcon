@@ -5416,12 +5416,12 @@ PCRE_EXP_DEFN pcre *
 pcre_compile(const char *pattern, int options, const char **errorptr,
   int *erroroffset, const unsigned char *tables)
 {
-return pcre_compile2(pattern, options, NULL, errorptr, erroroffset, tables);
+return FALCON_pcre_compile2(pattern, options, NULL, errorptr, erroroffset, tables);
 }
 
 
 PCRE_EXP_DEFN pcre *
-pcre_compile2(const char *pattern, int options, int *errorcodeptr,
+FALCON_pcre_compile2(const char *pattern, int options, int *errorcodeptr,
   const char **errorptr, int *erroroffset, const unsigned char *tables)
 {
 real_pcre *re;

@@ -492,7 +492,7 @@ Returns:    pointer to a pcre_extra block, with study_data filled in and the
 */
 
 PCRE_EXP_DEFN pcre_extra *
-pcre_study(const pcre *external_re, int options, const char **errorptr)
+FALCON_pcre_study(const pcre *external_re, int options, const char **errorptr)
 {
 uschar start_bits[32];
 pcre_extra *extra;

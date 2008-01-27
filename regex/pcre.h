@@ -247,7 +247,7 @@ PCRE_EXP_DECL int   pcre_callout(pcre_callout_block *);
 
 PCRE_EXP_DECL pcre *pcre_compile(const char *, int, const char **, int *,
                   const unsigned char *);
-PCRE_EXP_DECL pcre *pcre_compile2(const char *, int, int *, const char **,
+PCRE_EXP_DECL pcre *FALCON_pcre_compile2(const char *, int, int *, const char **,
                   int *, const unsigned char *);
 PCRE_EXP_DECL int  pcre_config(int, void *);
 PCRE_EXP_DECL int  pcre_copy_named_substring(const pcre *, const char *,
@@ -256,7 +256,7 @@ PCRE_EXP_DECL int  pcre_copy_substring(const char *, int *, int, int, char *,
                   int);
 PCRE_EXP_DECL int  pcre_dfa_exec(const pcre *, const pcre_extra *,
                   const char *, int, int, int, int *, int , int *, int);
-PCRE_EXP_DECL int  pcre_exec(const pcre *, const pcre_extra *, PCRE_SPTR,
+PCRE_EXP_DECL int  FALCON_pcre_exec(const pcre *, const pcre_extra *, PCRE_SPTR,
                    int, int, int, int *, int);
 PCRE_EXP_DECL void pcre_free_substring(const char *);
 PCRE_EXP_DECL void pcre_free_substring_list(const char **);
@@ -274,8 +274,8 @@ PCRE_EXP_DECL int  pcre_get_substring_list(const char *, int *, int,
 PCRE_EXP_DECL int  pcre_info(const pcre *, int *, int *);
 PCRE_EXP_DECL const unsigned char *pcre_maketables(void);
 PCRE_EXP_DECL int  pcre_refcount(pcre *, int);
-PCRE_EXP_DECL pcre_extra *pcre_study(const pcre *, int, const char **);
-PCRE_EXP_DECL const char *pcre_version(void);
+PCRE_EXP_DECL pcre_extra *FALCON_pcre_study(const pcre *, int, const char **);
+PCRE_EXP_DECL const char *FALCON_pcre_version(void);
 
 #ifdef __cplusplus
 }  /* extern "C" */

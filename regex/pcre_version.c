@@ -76,7 +76,7 @@ pre-processor time. This hack uses a standard trick for avoiding calling
 the STRING macro with an empty argument when doing the test. */
 
 PCRE_EXP_DEFN const char *
-pcre_version(void)
+FALCON_pcre_version(void)
 {
 return (XSTRING(Z PCRE_PRERELEASE)[1] == 0)?
   XSTRING(PCRE_MAJOR.PCRE_MINOR PCRE_DATE) :
