@@ -510,15 +510,50 @@ FALCON_FUNC  dirMake ( ::Falcon::VMachine *vm )
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
       return;
    }
-   String *strName = name->asString();
+   const String &strName = *name->asString();
+   bool descend = vm->param(1) == 0 ? false : vm->param(1)->isTrue();
 
-   int32 fsError;
-   if( ! Sys::fal_mkdir( *strName, fsError ) ) {
+   int32 fsError = 0;
+   if ( descend )
+   {
+      // find /.. sequences
+      uint32 pos = strName.find( "/" );
+      while( true )
+      {
+         String strPath( strName, 0, pos );
+
+         // stat the file
+         FileStat fstats;
+         // if the file exists...
+         if ( (! Sys::fal_stats( strPath, fstats )) ||
+              fstats.m_type != FileStat::t_dir )
+         {
+            // if it's not a directory, try to create the directory.
+            if ( ! Sys::fal_mkdir( strPath, fsError ) )
+               break;
+         }
+
+         // last loop?
+         if ( pos == String::npos )
+            break;
+
+         pos = strName.find( "/", pos + 1 );
+       }
+   }
+   else
+   {
+      // Just one try; succeed or fail
+      Sys::fal_mkdir( strName, fsError );
+   }
+
+   if ( fsError != 0 )
+   {
       vm->raiseModError( new IoError( ErrorParam( 1011, __LINE__ ).
-         origin( e_orig_runtime ).desc( "Cannot create directory" ).extra( *strName ).
+         origin( e_orig_runtime ).desc( "Cannot create directory" ).extra( strName ).
          sysError( (uint32) Sys::_lastError() ) ) );
    }
 }
+
 
 FALCON_FUNC  dirRemove ( ::Falcon::VMachine *vm )
 {

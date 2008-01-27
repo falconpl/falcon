@@ -10,6 +10,9 @@ Falcon (0.8.9)
   * minor: Added numeric() function to core
   * major: Removed forall and added formiddle which runs after every element
       except the last one (even if "forlast" isn't provided).
+  * minor: dirMake() has now an extra parameter; if provided and true, the
+      function works as mkdir -p; creates the whole heirarcy, and succeeds
+      also if the directory is already preseent.
 
 Falcon (0.8.8)
   * bugfix: TRAV opcode may destroy its parameters while setting first loop
