@@ -123,13 +123,16 @@ private:
 	#if _MSC_VER < 1299
 	#define flagOpenRange 0x02
 	#define flagIsOob 0x04
+   #define flagIsBooelan 0x08
 	#else
 	   static const byte flagOpenRange = 0x02;
 	   static const byte flagIsOob = 0x04;
+      static const byte flagIsBooelan = 0x08;
 	#endif
 #else
 	static const byte flagOpenRange = 0x02;
    static const byte flagIsOob = 0x04;
+   static const byte flagIsBooelan = 0x08;
 #endif
 
 public:
@@ -354,6 +357,21 @@ public:
          m_base.bits.flags |= flagIsOob;
       else
          m_base.bits.flags &= ~flagIsOob;
+   }
+
+   /** Sets or clears the out of band status status of this item.
+      \param oob true to make this item out of band.
+      \see setOob()
+   */
+   void setBoolean( bool isBoolean ) {
+      if ( isBoolean )
+         m_base.bits.flags |= flagIsBooelan;
+      else
+         m_base.bits.flags &= ~flagIsBooelan;
+   }
+
+   bool isBoolean() const {
+      return (m_base.bits.flags & flagIsBooelan)!=0;
    }
 
    /** Set this item as a user-defined pointers.
