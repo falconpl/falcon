@@ -47,6 +47,9 @@ bool Item::internal_is_equal( const Item &other ) const
    {
       case FLC_ITEM_NIL: return true;
 
+      case FLC_ITEM_BOOL:
+         return asBool() == other.asBool();
+
       case FLC_ITEM_RANGE:
          return asRangeStart() == other.asRangeStart() && asRangeEnd() == other.asRangeEnd() &&
                asRangeIsOpen() == other.asRangeIsOpen();
@@ -101,7 +104,11 @@ bool Item::internal_is_equal( const Item &other ) const
 
 bool Item::isTrue() const
 {
-   switch( dereference()->type() ) {
+   switch( dereference()->type() )
+   {
+      case FLC_ITEM_BOOL:
+         return asBool() != 0;
+
       case FLC_ITEM_INT:
          return asInteger() != 0;
 
@@ -206,6 +213,11 @@ int Item::compare( const Item &other ) const
       case FLC_ITEM_NIL<<8 | FLC_ITEM_NIL:
          return 0;
 
+      case FLC_ITEM_BOOL<<8 | FLC_ITEM_BOOL:
+         if ( other.asBool() == asBool() )
+            return 0;
+         return ( asBool() > other.asBool() ) ? 1:-1;
+
       case FLC_ITEM_INT<<8 | FLC_ITEM_INT:
          if ( asInteger() < other.asInteger() ) return -1;
          else if ( asInteger() > other.asInteger() ) return 1;
@@ -242,6 +254,11 @@ int Item::internal_compare( const Item &other ) const
    {
       case FLC_ITEM_NIL:
          return 0;
+
+      case FLC_ITEM_BOOL:
+         if ( other.asBool() == asBool() )
+            return 0;
+         return ( asBool() > other.asBool() ) ? 1:-1;
 
       case FLC_ITEM_INT:
          if ( asInteger() < other.asInteger() ) return -1;
@@ -358,6 +375,11 @@ void Item::toString( String &target ) const
       case FLC_ITEM_NIL:
          target = "Nil";
       break;
+
+      case FLC_ITEM_BOOL:
+         target = asBool() ? "true" : "false";
+      break;
+
 
       case FLC_ITEM_INT:
          target.writeNumber( this->asInteger() );

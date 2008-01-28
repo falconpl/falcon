@@ -595,6 +595,7 @@ void Compiler::addPredefs()
 {
 
    addIntConstant( "NilType", FLC_ITEM_NIL );
+   addIntConstant( "BooleanType", FLC_ITEM_BOOL );
    addIntConstant( "IntegerType", FLC_ITEM_INT );
    addIntConstant( "NumericType", FLC_ITEM_NUM );
    addIntConstant( "RangeType", FLC_ITEM_RANGE );
@@ -607,9 +608,6 @@ void Compiler::addPredefs()
    addIntConstant( "ClassType", FLC_ITEM_CLASS );
    addIntConstant( "MethodType", FLC_ITEM_METHOD );
    addIntConstant( "ClassMethodType", FLC_ITEM_CLSMETHOD );
-   // Should never be received by the applications.
-   addIntConstant( "true", 1 );
-   addIntConstant( "false", 0 );
 }
 
 void Compiler::addIntConstant( const String &name, int64 value, uint32 line )

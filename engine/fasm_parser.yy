@@ -115,7 +115,8 @@ inline int yylex (void *lvalp, void *fasm_param)
 %token NUMERIC
 %token STRING
 %token STRING_ID
-
+%token TRUE_TOKEN
+%token FALSE_TOKEN
 
 %token I_LD
 %token I_LNIL
@@ -247,7 +248,7 @@ op_variable: SYMBOL | op_register;
 op_register: REG_A | REG_B | REG_S1 | REG_S2;
 //op_imm_simm: op_immediate | SYMBOL;
 x_op_immediate: NIL | op_immediate;
-op_immediate: NUMERIC | op_scalar;
+op_immediate: NUMERIC | TRUE_TOKEN | FALSE_TOKEN | op_scalar;
 op_scalar: STRING_ID | STRING | INTEGER;
 op_string: STRING_ID | STRING;
 

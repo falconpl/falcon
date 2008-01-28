@@ -68,9 +68,14 @@ void inspect_internal( VMachine *vm, const Item *elem, int32 level, bool add )
 
    switch( elem->type() )
    {
-     case FLC_ITEM_NIL:
+      case FLC_ITEM_NIL:
          stream->writeString( "Nil" );
       break;
+
+      case FLC_ITEM_BOOL:
+         stream->writeString( elem->asBool() ? "true" : "false" );
+      break;
+
 
       case FLC_ITEM_INT:
          temp.writeNumber( elem->asInteger() );

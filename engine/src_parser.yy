@@ -118,6 +118,8 @@ inline int flc_src_lex (void *lvalp, void *yyparam)
 %token FORDOT
 %token LISTPAR
 %token LOOP
+%token TRUE_TOKEN
+%token FALSE_TOKEN
 
 /* Special token used by the parser to generate a parse print */
 %token <stringp> OUTER_STRING
@@ -2188,6 +2190,8 @@ return_statement:
 
 const_atom:
    NIL { $$ = new Falcon::Value(); }
+   | TRUE_TOKEN { $$ = new Falcon::Value( true ); }
+   | FALSE_TOKEN { $$ = new Falcon::Value( false ); }
    | INTNUM { $$ = new Falcon::Value( $1 ); }
    | DBLNUM { $$ = new Falcon::Value( $1 ); }
    | STRING { $$ = new Falcon::Value( $1 ); }

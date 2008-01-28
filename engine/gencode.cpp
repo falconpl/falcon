@@ -311,6 +311,7 @@ void GenCode::gen_operand( const Value *stmt )
       }
       break;
 
+      case Value::t_imm_bool:
       case Value::t_self:
       case Value::t_sender:
          // do nothing
@@ -333,6 +334,7 @@ byte GenCode::gen_pdef( const c_varpar &elem )
          const Value *val = elem.m_content.value;
          switch( val->type() ) {
             case Value::t_nil: return P_PARAM_NIL;
+            case Value::t_imm_bool: return val->asBool() ? P_PARAM_TRUE : P_PARAM_FALSE;
             case Value::t_imm_integer: return P_PARAM_INT64;
             case Value::t_imm_string: return P_PARAM_STRID;
             case Value::t_imm_num: return P_PARAM_NUM;
@@ -355,6 +357,7 @@ byte GenCode::gen_pdef( const c_varpar &elem )
          const VarDef *vd = elem.m_content.vd;
          switch( vd->type() ) {
             case VarDef::t_nil: return P_PARAM_NIL;
+            case VarDef::t_bool: return vd->asBool() ? P_PARAM_TRUE : P_PARAM_FALSE;
             case VarDef::t_int: return P_PARAM_INT64;
             case VarDef::t_num: return P_PARAM_NUM;
             case VarDef::t_string: return P_PARAM_STRID;
@@ -385,6 +388,8 @@ byte GenCode::gen_pdef( const c_varpar &elem )
       case e_parB: return P_PARAM_REGB;
       case e_parS1: return P_PARAM_REGS1;
       case e_parS2: return P_PARAM_REGS2;
+      case e_parTRUE: return P_PARAM_TRUE;
+      case e_parFALSE: return P_PARAM_FALSE;
       case e_parSTRID: return P_PARAM_STRID;
    }
    // should not get here
@@ -1226,7 +1231,7 @@ void GenCode::gen_statement( const Statement *stmt )
             gen_block( &loop->children() );
          }
 
-         // generate the formiddle block 
+         // generate the formiddle block
          if( ! loop->middleBlock().empty() ) {
             // skip it for the last element
             gen_pcode( P_TRAL, c_param_fixed( tag.addQueryElif( 0 ) ) );

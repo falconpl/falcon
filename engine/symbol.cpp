@@ -518,7 +518,15 @@ bool VarDef::save( Stream *out ) const
    int32 type = endianInt32((int32) m_val_type);
    out->write( &type , sizeof( type ) );
 
-   switch( m_val_type ) {
+   switch( m_val_type )
+   {
+      case t_bool:
+      {
+         int32 val = m_value.val_bool ? 1: 0;
+         out->write( &val , sizeof( val ) );
+      }
+      break;
+
       case t_int:
       {
          int64 val = endianInt64( m_value.val_int );
@@ -559,7 +567,16 @@ bool VarDef::load( Module *mod, Stream *in )
    in->read( &type , sizeof( type ) );
    m_val_type = (t_type) endianInt32(type);
 
-   switch( m_val_type ) {
+   switch( m_val_type )
+   {
+      case t_bool:
+      {
+         int32 val;
+         in->read( &val , sizeof( val ) );
+         m_value.val_bool = val != 0;
+      }
+      break;
+
       case t_int:
       {
          int64 val;

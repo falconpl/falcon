@@ -99,6 +99,14 @@ Item *VMachine::getOpcodeParam( register uint32 bc_pos )
          m_pc_next+=sizeof(int32);
       return ret;
 
+      case P_PARAM_TRUE:
+         m_imm[bc_pos].setBoolean( true );
+      return m_imm + bc_pos;
+
+      case P_PARAM_FALSE:
+         m_imm[bc_pos].setBoolean( false );
+      return m_imm + bc_pos;
+
       case P_PARAM_NTD32: m_pc_next += sizeof(int32); return 0;
       case P_PARAM_NTD64: m_pc_next += sizeof(int64); return 0;
       case P_PARAM_REGA: return &m_regA;
@@ -494,7 +502,7 @@ void opcodeHandler_RETV(register VMachine *vm)
 // 8
 void opcodeHandler_BOOL( register VMachine *vm )
 {
-   vm->m_regA.setInteger( vm->getOpcodeParam( 1 )->dereference()->isTrue() ? 1 : 0 );
+   vm->m_regA.setBoolean( vm->getOpcodeParam( 1 )->dereference()->isTrue() );
 }
 
 // 9
@@ -1507,7 +1515,7 @@ void opcodeHandler_EQ( register VMachine *vm )
    Item *operand1 =  vm->getOpcodeParam( 1 )->dereference();
    Item *operand2 =  vm->getOpcodeParam( 2 )->dereference();
 
-   vm->m_regA.setInteger( vm->compareItems( *operand1, *operand2 ) == 0 ? 1 : 0 );
+   vm->m_regA.setBoolean( vm->compareItems( *operand1, *operand2 ) == 0 );
 }
 
 //33
@@ -1516,7 +1524,7 @@ void opcodeHandler_NEQ( register VMachine *vm )
    Item *operand1 =  vm->getOpcodeParam( 1 )->dereference();
    Item *operand2 =  vm->getOpcodeParam( 2 )->dereference();
 
-   vm->m_regA.setInteger( vm->compareItems( *operand1, *operand2 ) != 0 ? 1 : 0 );
+   vm->m_regA.setBoolean( vm->compareItems( *operand1, *operand2 ) != 0 );
 }
 
 //34
@@ -1525,10 +1533,7 @@ void opcodeHandler_GT( register VMachine *vm )
    Item *operand1 =  vm->getOpcodeParam( 1 )->dereference();
    Item *operand2 =  vm->getOpcodeParam( 2 )->dereference();
 
-   if( vm->compareItems( *operand1, *operand2 ) > 0 )
-      vm->m_regA.setInteger( 1 );
-   else
-      vm->m_regA.setInteger( 0 );
+   vm->regA().setBoolean( vm->compareItems( *operand1, *operand2 ) > 0 );
 }
 
 //35
@@ -1537,10 +1542,7 @@ void opcodeHandler_GE( register VMachine *vm )
    Item *operand1 =  vm->getOpcodeParam( 1 )->dereference();
    Item *operand2 =  vm->getOpcodeParam( 2 )->dereference();
 
-   if( vm->compareItems( *operand1, *operand2 ) >= 0 )
-      vm->m_regA.setInteger( 1 );
-   else
-      vm->m_regA.setInteger( 0 );
+   vm->regA().setBoolean( vm->compareItems( *operand1, *operand2 ) >= 0 );
 }
 
 //36
@@ -1549,10 +1551,7 @@ void opcodeHandler_LT( register VMachine *vm )
    Item *operand1 =  vm->getOpcodeParam( 1 )->dereference();
    Item *operand2 =  vm->getOpcodeParam( 2 )->dereference();
 
-   if( vm->compareItems( *operand1, *operand2 ) < 0 )
-      vm->m_regA.setInteger( 1 );
-   else
-      vm->m_regA.setInteger( 0 );
+   vm->regA().setBoolean( vm->compareItems( *operand1, *operand2 ) < 0 );
 }
 
 //37
@@ -1561,10 +1560,7 @@ void opcodeHandler_LE( register VMachine *vm )
    Item *operand1 =  vm->getOpcodeParam( 1 )->dereference();
    Item *operand2 =  vm->getOpcodeParam( 2 )->dereference();
 
-   if( vm->compareItems( *operand1, *operand2 ) <= 0 )
-      vm->m_regA.setInteger( 1 );
-   else
-      vm->m_regA.setInteger( 0 );
+   vm->regA().setBoolean( vm->compareItems( *operand1, *operand2 ) <= 0 );
 }
 
 //38
@@ -2348,7 +2344,7 @@ void opcodeHandler_IN( register VMachine *vm )
 
    }
 
-   vm->m_regA.setInteger( result ? 1 : 0 );
+   vm->m_regA.setBoolean( result );
 }
 
 //47
@@ -2356,11 +2352,7 @@ void opcodeHandler_NOIN( register VMachine *vm )
 {
    // do not decode operands; IN will do it
    opcodeHandler_IN( vm );
-
-   if(  vm->m_regA.asInteger() == 0 )
-      vm->m_regA.setInteger( 1 );
-   else
-      vm->m_regA.setInteger( 0 );
+   vm->regA().setBoolean( vm->m_regA.asInteger() == 0 );
 }
 
 //48
@@ -2390,7 +2382,7 @@ void opcodeHandler_PROV( register VMachine *vm )
          result = false;
    }
 
-   vm->m_regA.setInteger( result ? 1 : 0 );
+   vm->regA().setBoolean( result );
 }
 
 
@@ -2536,10 +2528,7 @@ void opcodeHandler_AND( register VMachine *vm )
    Item *operand1 =  vm->getOpcodeParam( 1 )->dereference();
    Item *operand2 =  vm->getOpcodeParam( 2 )->dereference();
 
-   if ( operand1->isTrue() && operand2->isTrue() )
-      vm->m_regA.setInteger( 1 );
-   else
-      vm->m_regA.setInteger( 0 );
+   vm->m_regA.setBoolean( operand1->isTrue() && operand2->isTrue() );
 }
 
 //4C
@@ -2548,10 +2537,7 @@ void opcodeHandler_OR( register VMachine *vm )
    Item *operand1 =  vm->getOpcodeParam( 1 )->dereference();
    Item *operand2 =  vm->getOpcodeParam( 2 )->dereference();
 
-   if ( operand1->isTrue() || operand2->isTrue() )
-      vm->m_regA.setInteger( 1 );
-   else
-      vm->m_regA.setInteger( 0 );
+   vm->m_regA.setBoolean( operand1->isTrue() || operand2->isTrue() );
 }
 
 //4E

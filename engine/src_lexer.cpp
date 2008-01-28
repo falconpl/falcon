@@ -215,7 +215,7 @@ int SrcLexer::lex_outscape()
                m_bIsDirectiveLine = false;
                m_mode = t_mNormal;
                // and break from the loop so to return the string to print.
-               break;               
+               break;
             }
             else {
                state = e_normal;
@@ -1252,6 +1252,8 @@ int SrcLexer::checkLimitedTokens()
             return CASE;
          if ( m_string == "loop" )
             return LOOP;
+         if ( m_string == "true" )
+            return TRUE_TOKEN;
       break;
 
       case 5:
@@ -1271,6 +1273,8 @@ int SrcLexer::checkLimitedTokens()
             return CONST_KW;
          if ( m_string == "while" )
             return WHILE;
+         if ( m_string == "false" )
+            return FALSE_TOKEN;
       break;
 
       case 6:

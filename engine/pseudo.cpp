@@ -123,6 +123,8 @@ bool  Pseudo::operator <( const Pseudo &other ) const
    else if ( type() == other.type() )
       switch( type() )
       {
+         case imm_true: return false;
+         case imm_false: return false;
          case tnil: return false;
          case imm_int: return asInt() < other.asInt();
          case imm_double: return asDouble() < other.asDouble();
@@ -146,6 +148,8 @@ int PseudoPtrTraits::compare( const void *firstArea, const void *secondv ) const
       switch( first->type() )
       {
          case Pseudo::tnil: return 0;
+         case Pseudo::imm_true: return 0;
+         case Pseudo::imm_false: return 0;
 
          case Pseudo::imm_int:
             if( first->asInt() < second->asInt() )

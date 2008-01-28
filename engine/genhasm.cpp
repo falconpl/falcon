@@ -1677,6 +1677,10 @@ void GenHAsm::gen_operand( const Value *stmt )
       }
       break;
 
+      case Value::t_imm_bool:
+         m_out->writeString( stmt->asBool() ? "T" : "F" );
+      break;
+
       case Value::t_imm_integer:
       {
          String intStr;

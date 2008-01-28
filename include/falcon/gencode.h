@@ -44,6 +44,8 @@ class FALCON_DYN_CLASS GenCode: public Generator
       e_parB,
       e_parS1,
       e_parS2,
+      e_parTRUE,
+      e_parFALSE,
       e_parNTD32,
       e_parNTD64,
       e_parSTRID,
@@ -119,6 +121,10 @@ class FALCON_DYN_CLASS GenCode: public Generator
 
       c_varpar( t_paramType t ):
          m_type( t )
+      {}
+
+      explicit c_varpar( bool val ):
+         m_type( val ? e_parTRUE : e_parFALSE )
       {}
 
       c_varpar( const Value *val ):

@@ -779,6 +779,8 @@ unsigned char AsmCompiler::paramDesc( Pseudo *op1 ) const
    else {
       switch( op1->type() )
       {
+         case Pseudo::imm_true: return P_PARAM_TRUE;
+         case Pseudo::imm_false: return P_PARAM_FALSE;
          case Pseudo::imm_int: return P_PARAM_INT64;
          case Pseudo::imm_double: return P_PARAM_NUM;
          case Pseudo::imm_string: return P_PARAM_STRID;

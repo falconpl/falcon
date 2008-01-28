@@ -123,16 +123,13 @@ private:
 	#if _MSC_VER < 1299
 	#define flagOpenRange 0x02
 	#define flagIsOob 0x04
-   #define flagIsBooelan 0x08
 	#else
 	   static const byte flagOpenRange = 0x02;
 	   static const byte flagIsOob = 0x04;
-      static const byte flagIsBooelan = 0x08;
 	#endif
 #else
 	static const byte flagOpenRange = 0x02;
    static const byte flagIsOob = 0x04;
-   static const byte flagIsBooelan = 0x08;
 #endif
 
 public:
@@ -158,11 +155,25 @@ public:
       copy( other );
    }
 
+   /** Creates a boolean item. */
+   Item( bool tof )
+   {
+      setBoolean( tof );
+   }
+
+   /** Sets this item as boolean */
+   void setBoolean( bool tof )
+   {
+      type( FLC_ITEM_BOOL );
+      m_data.num.val1 = tof?1: 0;
+   }
+
    /** Creates an integer item */
    Item( int64 val )
    {
       setInteger( val );
    }
+
 
    /** Creates an integer item */
    Item( uint64 val )
@@ -359,21 +370,6 @@ public:
          m_base.bits.flags &= ~flagIsOob;
    }
 
-   /** Sets or clears the out of band status status of this item.
-      \param oob true to make this item out of band.
-      \see setOob()
-   */
-   void setBoolean( bool isBoolean ) {
-      if ( isBoolean )
-         m_base.bits.flags |= flagIsBooelan;
-      else
-         m_base.bits.flags &= ~flagIsBooelan;
-   }
-
-   bool isBoolean() const {
-      return (m_base.bits.flags & flagIsBooelan)!=0;
-   }
-
    /** Set this item as a user-defined pointers.
       Used for some two-step extension functions.
       They are completely user managed, and the VM never provides any
@@ -425,6 +421,11 @@ public:
       return type() == FLC_ITEM_INT || type() == FLC_ITEM_NUM;
    }
 
+   bool asBool() const
+   {
+      return m_data.num.val1;
+   }
+
    int64 asInteger() const { return m_data.val64; }
 
    numeric asNumeric() const { return m_data.number; }
@@ -470,6 +471,7 @@ public:
    uint32 hash() const;
 
    bool isNil() const { return type() == FLC_ITEM_NIL; }
+   bool isBool() const { return type() == FLC_ITEM_BOOL; }
    bool isInteger() const { return type() == FLC_ITEM_INT; }
    bool isNumeric() const { return type() == FLC_ITEM_NUM; }
    bool isScalar() const { return type() == FLC_ITEM_INT || type() == FLC_ITEM_NUM; }

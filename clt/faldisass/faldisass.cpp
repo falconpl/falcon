@@ -210,6 +210,8 @@ void write_operand( Stream *output, byte *instruction, int opnum, Module *mod )
          output->writeString(temp );
          break;
       case P_PARAM_NIL: output->writeString( "NIL" ); break;
+      case P_PARAM_TRUE: output->writeString( "T" ); break;
+      case P_PARAM_FALSE: output->writeString( "F" ); break;
       case P_PARAM_INT64:
          temp.writeNumber( (int64) endianInt64(*((int64*) (instruction + offset ))) );
          output->writeString(temp );
@@ -313,6 +315,7 @@ void gen_propdef( Stream *m_out, const VarDef &def )
    switch( def.type() )
    {
       case VarDef::t_nil: m_out->writeString( "NIL" ); break;
+      case VarDef::t_bool: m_out->writeString( def.asBool() ? "T": "F" ); break;
       case VarDef::t_int:
          temp.writeNumber( def.asInteger() );
          m_out->writeString( temp );

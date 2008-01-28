@@ -48,6 +48,8 @@ private:
    Pseudo m_regs2;
    Pseudo m_regs3;
    Pseudo m_nil;
+   Pseudo m_true;
+   Pseudo m_false;
 
    Module *m_module;
    AsmCompiler *m_compiler;
@@ -128,6 +130,8 @@ public:
    Pseudo *regB_Inst() { return &m_regb; }
    Pseudo *regS1_Inst() { return &m_regs1; }
    Pseudo *regS2_Inst() { return &m_regs2; }
+   Pseudo *true_Inst() { return &m_true; }
+   Pseudo *false_Inst() { return &m_false; }
    Pseudo *nil_Inst() { return &m_nil; }
 };
 

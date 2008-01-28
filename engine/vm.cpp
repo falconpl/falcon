@@ -418,6 +418,7 @@ bool VMachine::link( Module *mod, bool isMainModule )
                Item *itm = globs->itemPtrAt( sym->itemId() );
                VarDef *vd = sym->getVarDef();
                switch( vd->type() ) {
+                  case VarDef::t_bool: itm->setBoolean( vd->asBool() ); break;
                   case VarDef::t_int: itm->setInteger( vd->asInteger() ); break;
                   case VarDef::t_num: itm->setNumeric( vd->asNumeric() ); break;
                   case VarDef::t_string:
@@ -618,6 +619,10 @@ PropertyTable *VMachine::createClassTemplate( LiveModule *lmod, const Map &pt )
       {
          case VarDef::t_nil:
             itm.setNil();
+         break;
+
+         case VarDef::t_bool:
+            itm.setBoolean( vd->asBool() );
          break;
 
          case VarDef::t_int:
@@ -1175,13 +1180,13 @@ bool VMachine::callItem( const Item &callable, int32 paramCount, e_callMode call
             m_stack->resize( m_stack->size() - paramCount );
             return true;
          }
-         
+
          if ( ! cls->constructor().asModule()->isAlive() )
          {
             const_cast<Item *>(&callable)->setNil();
             return false;
          }
-         
+
          target = cls->constructor().asFunction();
          targetMod = cls->constructor().asModule();
       }
@@ -2812,7 +2817,7 @@ int VMachine::compareItems( const Item &first, const Item &second )
       if( fo->getMethod( "compare", comparer ) )
       {
          Item oldA = m_regA;
-         m_regA = (int64)0;
+         m_regA.setBoolean( false );
 
          pushParameter( second );
          // enter atomic mode

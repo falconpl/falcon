@@ -40,7 +40,7 @@ catch in e
    value = e == 154
 end
 
-if value != 1: failure( "First catch not correctly performed" )
+if not value: failure( "First catch not correctly performed" )
 
 
 // now a try/catch inside a while
@@ -55,7 +55,7 @@ while i < 10
    break
 end
 
-if value != 1: failure( "Second catch not correctly performed" )
+if not value: failure( "Second catch not correctly performed" )
 
 // now a break inside a try inside a while
 // now a try/catch inside a while
@@ -80,7 +80,7 @@ while i < 10
    end
 end
 
-if value == 1: failure( "Break didn't stop raise" )
+if value: failure( "Break didn't stop raise" )
 
 // now a break inside a catch inside a while
 // now a try/catch inside a while
@@ -96,7 +96,7 @@ while i < 10
    i++
 end
 
-if i != 5 or value != 1: failure( "Break in catch" )
+if i != 5 or value != true: failure( "Break in catch" )
 
 success()
 

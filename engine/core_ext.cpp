@@ -2872,34 +2872,6 @@ FALCON_FUNC  core_oob( ::Falcon::VMachine *vm )
 }
 
 
-FALCON_FUNC  core_boolean( ::Falcon::VMachine *vm )
-{
-   Item *boolean = vm->param(0);
-   if ( ! boolean )
-   {
-      vm->regA().setNil();
-   }
-   else {
-      vm->regA() = *boolean;
-   }
-
-   vm->regA().setBoolean( true );
-}
-
-FALCON_FUNC  core_isboolean( ::Falcon::VMachine *vm )
-{
-   Item *boolean = vm->param(0);
-   if ( ! boolean )
-   {
-      vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).
-         extra( "X" ) ) );
-      return;
-   }
-
-   vm->retval( (int64) (boolean->isBoolean() ? 1 : 0 ) );
-}
-
-
 FALCON_FUNC  core_deoob( ::Falcon::VMachine *vm )
 {
    Item *obbed = vm->param(0);
@@ -3364,9 +3336,6 @@ Module * core_module_init()
    core->addExtFunc( "oob", Falcon::core::core_oob );
    core->addExtFunc( "deoob", Falcon::core::core_deoob );
    core->addExtFunc( "isoob", Falcon::core::core_isoob );
-
-   core->addExtFunc( "boolean", Falcon::core::core_boolean );
-   core->addExtFunc( "isBoolean", Falcon::core::core_isboolean );
 
    return core;
 }

@@ -54,6 +54,7 @@ public:
    typedef enum {
       t_nil,
       t_int,
+      t_bool,
       t_num,
       t_string,
       t_symbol,
@@ -64,6 +65,7 @@ private:
    t_type m_val_type;
 
    union {
+      bool val_bool;
       uint64 val_int;
       numeric val_num;
       const String *val_str;
@@ -75,6 +77,12 @@ public:
    VarDef():
       m_val_type(t_nil)
    {}
+
+   explicit VarDef( bool val ):
+      m_val_type(t_bool)
+   {
+      m_value.val_bool = val;
+   }
 
    VarDef( int64 val ):
       m_val_type(t_int)
@@ -114,6 +122,7 @@ public:
 
    t_type type() const { return m_val_type; }
    void setNil() { m_val_type = t_nil; }
+   void setBool( bool val ) { m_val_type = t_bool; m_value.val_bool = val; }
    void setInteger( uint64 val ) { m_val_type = t_int; m_value.val_int = val; }
    void setString( const String *str ) { m_val_type = t_string; m_value.val_str = str; }
    void setSymbol( const Symbol *sym ) { m_val_type = t_symbol; m_value.val_sym = sym; }
@@ -121,12 +130,14 @@ public:
    void setBaseClass( const Symbol *sym ) { m_val_type = t_base; m_value.val_sym = sym; }
    void setReference( const Symbol *sym ) { m_val_type = t_reference; m_value.val_sym = sym; }
 
+   bool asBool() const { return m_value.val_bool; }
    int64 asInteger() const { return m_value.val_int; }
    const String *asString() const { return m_value.val_str; }
    const Symbol *asSymbol() const { return m_value.val_sym; }
    numeric asNumeric() const { return m_value.val_num; }
 
    bool isNil() const { return m_val_type == t_nil; }
+   bool isBool() const { return m_val_type == t_bool; }
    bool isInteger() const { return m_val_type == t_int; }
    bool isString() const { return m_val_type == t_string; }
    bool isNumeric() const { return m_val_type == t_num; }

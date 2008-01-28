@@ -98,6 +98,7 @@ class FALCON_DYN_CLASS Value: public BaseAlloc
 public:
    typedef enum {
       t_nil,
+      t_imm_bool,
       t_imm_integer,
       t_imm_string,
       t_imm_num,
@@ -117,6 +118,7 @@ public:
 private:
    type_t m_type;
    union {
+      bool asBool;
       int64 asInteger;
       numeric asNumeric;
       String *asString;
@@ -136,6 +138,12 @@ public:
 
    Value( const Value &other ) {
       copy( other );
+   }
+
+   explicit Value( bool val ):
+      m_type( t_imm_bool )
+   {
+      m_content.asBool = val;
    }
 
    explicit Value( int64 val ):
@@ -236,6 +244,7 @@ public:
 
    bool isImmediate() const {
       return m_type == t_nil ||
+             m_type == t_imm_bool ||
              m_type == t_imm_integer ||
              m_type == t_imm_string ||
              m_type == t_imm_num;
@@ -256,6 +265,7 @@ public:
       return false;
    }
 
+   bool asBool() const { return m_content.asBool; }
    int64 asInteger() const { return m_content.asInteger; }
    numeric asNumeric() const { return m_content.asNumeric; }
    String *asString() const { return m_content.asString; }
@@ -269,6 +279,7 @@ public:
    Expression *asExpr() const { return m_content.asExpr; }
 
    void setNil() { m_type = t_nil; }
+   void setBool( bool val ) { m_type = t_imm_bool; m_content.asBool = val; }
    void setInteger( int64 val ) { m_type = t_imm_integer; m_content.asInteger = val; }
    void setNumeric( numeric val ) { m_type = t_imm_num; m_content.asNumeric = val; }
    void setString( String *val ) { m_type = t_imm_string; m_content.asString = val; }
@@ -283,7 +294,8 @@ public:
    void setSender() { m_type = t_sender; }
 
 
-   bool isNil() const {return m_type == t_nil; }
+   bool isNil() const { return m_type == t_nil; }
+   bool isBool() const { return m_type == t_imm_bool; }
    bool isInteger() const { return m_type == t_imm_integer; }
    bool isNumeric() const { return m_type == t_imm_num; }
    bool isString() const { return m_type == t_imm_string; }

@@ -128,6 +128,16 @@ Item::e_sercode Item::serialize( Stream *file, VMachine *vm ) const
 
    switch( this->type() )
    {
+      case FLC_ITEM_BOOL:
+      {
+         char type = FLC_ITEM_BOOL;
+         file->write((byte *) &type, 1 );
+
+         char bval = this->asBool() ? 1 : 0;
+         file->write( (byte *) &bval, sizeof( bval ) );
+      }
+      break;
+
       case FLC_ITEM_INT:
       {
          char type = FLC_ITEM_INT;
@@ -353,6 +363,18 @@ Item::e_sercode Item::deserialize( Stream *file, VMachine *vm )
    {
       case FLC_ITEM_NIL:
          setNil();
+      return sc_ok;
+
+      case FLC_ITEM_BOOL:
+      {
+         char bval;
+         file->read( (byte *) &bval, sizeof( bval ) );
+         if ( file->good() ) {
+            setBoolean( bval != 0 );
+            return sc_ok;
+         }
+         return sc_ferror;
+      }
       return sc_ok;
 
       case FLC_ITEM_INT:

@@ -56,6 +56,8 @@ public:
 
    typedef enum {
       tnil = 0,
+      imm_true,
+      imm_false,
       imm_int,
       imm_double,
       imm_string,
