@@ -4274,7 +4274,7 @@ Returns:          > 0 => success; value is the number of elements filled in
 */
 
 PCRE_EXP_DEFN int
-FALCON_pcre_exec(const pcre *argument_re, const pcre_extra *extra_data,
+pcre_exec(const pcre *argument_re, const pcre_extra *extra_data,
   PCRE_SPTR subject, int length, int start_offset, int options, int *offsets,
   int offsetcount)
 {

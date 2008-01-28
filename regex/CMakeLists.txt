@@ -17,6 +17,7 @@ IF(WIN32)
 ENDIF(WIN32)
 
 IF(WITH_INTERNAL_PCRE)
+   #Compile our version of PCRE...
    SET(PCRE_SOURCE
       pcre_chartables.c
       pcre_compile.c
@@ -38,7 +39,34 @@ IF(WITH_INTERNAL_PCRE)
       pcre_version.c
       pcre_xclass.c
    )
+  
+   #But consider PCRE function as C++ local functions:
+   ADD_DEFINITIONS( -DPCRE_EXP_DECL=extern )
+   SET_SOURCE_FILES_PROPERTIES( 
+      pcre_chartables.c
+      pcre_compile.c
+      pcre_config.c
+      pcre_exec.c
+      pcre_fullinfo.c
+      pcre_get.c
+      pcre_globals.c
+      pcre_info.c
+      pcre_maketables.c
+      pcre_newline.c
+      pcre_ord2utf8.c
+      pcre_refcount.c
+      pcre_study.c
+      pcre_tables.c
+      pcre_try_flipped.c
+      pcre_ucp_searchfuncs.c
+      pcre_valid_utf8.c
+      pcre_version.c
+      pcre_xclass.c
+		LANGUAGE "CXX"
+   )
+		
    SET(PCRE_LIBRARIES "")
+   
 ELSE(WITH_INTERNAL_PCRE)
    #We'll activate this when CMAKE will offer a standard FINDPCRE macro
    #IF(NOT PCRE_FOUND AND NOT PCRE_LIBRARIES)

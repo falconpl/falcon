@@ -92,7 +92,7 @@ FALCON_FUNC Regex_init( ::Falcon::VMachine *vm )
 		char *stringData = (char *) memAlloc( source->size() + 1);
 		memcpy( stringData, source->getRawStorage(), source->size() );
 		stringData[source->size()] = '\0';
-      pattern = FALCON_pcre_compile2(
+      pattern = pcre_compile2(
          stringData,
          optVal,
          &errCode,
@@ -108,7 +108,7 @@ FALCON_FUNC Regex_init( ::Falcon::VMachine *vm )
       stringData = (char *) memAlloc( size );
       source->toCString( stringData, size );
 
-      pattern = FALCON_pcre_compile2(
+      pattern = pcre_compile2(
          stringData,
          optVal | PCRE_UTF8 | PCRE_NO_UTF8_CHECK,
          &errCode,
@@ -131,7 +131,7 @@ FALCON_FUNC Regex_init( ::Falcon::VMachine *vm )
 
    if ( bStudy )
    {
-      data->m_extra = FALCON_pcre_study( pattern, 0, &errDesc );
+      data->m_extra = pcre_study( pattern, 0, &errDesc );
       if ( data->m_extra == 0 && errDesc != 0 )
       {
          vm->raiseModError( new RegexError( ErrorParam( 1151, __LINE__ ).
@@ -157,7 +157,7 @@ FALCON_FUNC Regex_study( ::Falcon::VMachine *vm )
    }
 
    const char *errDesc;
-   data->m_extra = FALCON_pcre_study( data->m_pattern, 0, &errDesc );
+   data->m_extra = pcre_study( data->m_pattern, 0, &errDesc );
    if ( data->m_extra == 0 && errDesc != 0 )
    {
       vm->raiseModError( new RegexError( ErrorParam( 1151, __LINE__ ).
@@ -252,7 +252,7 @@ static void internal_regex_match( RegexCarrier *data, String *source, int from )
 
    if( source->manipulator()->charSize() == 1 )
    {
-      data->m_matches = FALCON_pcre_exec(
+      data->m_matches = pcre_exec(
          data->m_pattern,
          data->m_extra,
          (const char *) source->getRawStorage(),
@@ -274,7 +274,7 @@ static void internal_regex_match( RegexCarrier *data, String *source, int from )
          return;
       }
 
-      data->m_matches = FALCON_pcre_exec(
+      data->m_matches = pcre_exec(
          data->m_pattern,
          data->m_extra,
          (char *) stringData.c_str(),
@@ -733,7 +733,7 @@ FALCON_FUNC Regex_compare( Falcon::VMachine *vm )
 
       if( str->manipulator()->charSize() == 1 )
       {
-         match = 0 < FALCON_pcre_exec(
+         match = 0 < pcre_exec(
             data->m_pattern,
             data->m_extra,
             (const char *) str->getRawStorage(),
@@ -747,7 +747,7 @@ FALCON_FUNC Regex_compare( Falcon::VMachine *vm )
       {
          AutoCString src( *str );
 
-         match = 0 < FALCON_pcre_exec(
+         match = 0 < pcre_exec(
             data->m_pattern,
             data->m_extra,
             src.c_str(),
@@ -771,7 +771,7 @@ FALCON_FUNC Regex_compare( Falcon::VMachine *vm )
 
 FALCON_FUNC Regex_version( Falcon::VMachine *vm )
 {
-   const char *ver = FALCON_pcre_version();
+   const char *ver = pcre_version();
    vm->retval( new GarbageString( vm, ver, -1 ) );
 }
 
