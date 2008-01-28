@@ -62,7 +62,7 @@ IF(WITH_INTERNAL_PCRE)
       pcre_valid_utf8.c
       pcre_version.c
       pcre_xclass.c
-		LANGUAGE "CXX"
+		PROPERTIES LANGUAGE "CXX"
    )
 		
    SET(PCRE_LIBRARIES "")
