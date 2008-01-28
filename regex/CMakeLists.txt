@@ -41,28 +41,10 @@ IF(WITH_INTERNAL_PCRE)
    )
   
    #But consider PCRE function as C++ local functions:
-   ADD_DEFINITIONS( -DPCRE_EXP_DECL=extern )
+   ADD_DEFINITIONS( -DPCRE_EXP_DECL=extern -DPCRE_EXP_DEFN="" -DPCRE_EXP_DATA_DEFN="" )
    SET_SOURCE_FILES_PROPERTIES( 
-      pcre_chartables.c
-      pcre_compile.c
-      pcre_config.c
-      pcre_exec.c
-      pcre_fullinfo.c
-      pcre_get.c
-      pcre_globals.c
-      pcre_info.c
-      pcre_maketables.c
-      pcre_newline.c
-      pcre_ord2utf8.c
-      pcre_refcount.c
-      pcre_study.c
-      pcre_tables.c
-      pcre_try_flipped.c
-      pcre_ucp_searchfuncs.c
-      pcre_valid_utf8.c
-      pcre_version.c
-      pcre_xclass.c
-		PROPERTIES LANGUAGE "CXX"
+      ${PCRE_SOURCE}
+      PROPERTIES LANGUAGE "CXX"
    )
 		
    SET(PCRE_LIBRARIES "")
