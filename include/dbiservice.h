@@ -44,6 +44,7 @@ typedef enum {
    dbit_date,
    dbit_time,
    dbit_datetime,
+   dbit_boolean,
 }
 dbi_type;
 
@@ -191,6 +192,11 @@ public:
     * Get a value from the current row as a datetime
     */
    virtual dbi_status asDateTime( const int columnIndex, TimeStamp &value )=0;
+
+   /**
+    * Get value from the current row as a boolean
+    */
+   virtual dbi_status asBoolean( const int columnIndex, bool &value )=0;
 
    /**
     * Returns last error and its description.

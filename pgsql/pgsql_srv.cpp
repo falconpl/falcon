@@ -95,6 +95,8 @@ dbi_type DBIRecordsetPgSQL::getFalconType( Oid pgType )
    switch ( pgType )
    {
    case PG_TYPE_BOOL:
+       return dbit_string;
+
    case PG_TYPE_INT2:
       return dbit_integer;
 
@@ -164,6 +166,24 @@ dbi_status DBIRecordsetPgSQL::asString( const int columnIndex, String &value )
 
    value = String( v );
    value.bufferize();
+
+   return dbi_ok;
+}
+
+dbi_status DBIRecordsetPgSQL::asBoolean( const int columnIndex, bool &value )
+{
+   if ( columnIndex >= m_columnCount )
+      return dbi_column_range_error;
+   else if ( m_res == NULL )
+      return dbi_invalid_recordset;
+   else if ( PQgetisnull( m_res, m_row, columnIndex ) == 1 )
+      return dbi_nil_value;
+
+   const char *v = PQgetvalue( m_res, m_row, columnIndex );
+
+   value = false;
+   if ( v[0] == 't' || v[0] == '1' || v[0] == 'y' )
+       value = true;
 
    return dbi_ok;
 }

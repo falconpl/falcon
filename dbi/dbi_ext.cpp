@@ -39,7 +39,10 @@ CoreObject *dbi_defaultHandle; // Temporary until I figure how to set static cla
 static int DBIHandle_itemToSqlValue( DBIHandle *dbh, const Item *i, String &value )
 {
    if ( i->isInteger() ) {
-      value.writeNumber( i->asInteger() );
+      if ( i->isBoolean() )
+         value = i->asInteger() ? "t" : "f";
+      else
+         value.writeNumber( i->asInteger() );
       return 1;
    } else if ( i->isNumeric() ) {
       value.writeNumber( i->asNumeric(), "%f" );
@@ -224,71 +227,80 @@ static int DBIRecordset_getItem( VMachine *vm, DBIRecordset *dbr, dbi_type typ, 
       }
       break;
 
+   case dbit_boolean:
+       {
+          bool value;
+          if ( dbr->asBoolean( cIdx, value ) != dbi_nil_value ) {
+             item.setInteger( value ? (int64) 1 : (int64) 0 );
+             item.setBoolean( true );
+          }
+       }
+
    case dbit_integer:
-      {
-         int32 value;
-         if ( dbr->asInteger( cIdx, value ) != dbi_nil_value )
-            item.setInteger( (int64) value );
-      }
-      break;
+       {
+          int32 value;
+          if ( dbr->asInteger( cIdx, value ) != dbi_nil_value )
+             item.setInteger( (int64) value );
+       }
+       break;
 
    case dbit_integer64:
-      {
-         int64 value;
-         if ( dbr->asInteger64( cIdx, value ) != dbi_nil_value )
-            item.setInteger( value );
-      }
-      break;
+       {
+          int64 value;
+          if ( dbr->asInteger64( cIdx, value ) != dbi_nil_value )
+             item.setInteger( value );
+       }
+       break;
 
    case dbit_numeric:
-      {
-         numeric value;
-         if ( dbr->asNumeric( cIdx, value ) != dbi_nil_value )
-            item.setNumeric( value );
-      }
-      break;
+       {
+          numeric value;
+          if ( dbr->asNumeric( cIdx, value ) != dbi_nil_value )
+             item.setNumeric( value );
+       }
+       break;
 
    case dbit_date:
-      {
-         TimeStamp *ts = new TimeStamp();
-         if ( dbr->asDate( cIdx, *ts ) != dbi_nil_value ) {
-            Item *ts_class = vm->findWKI( "TimeStamp" );
-            fassert( ts_class != 0 );
-            CoreObject *value = ts_class->asClass()->createInstance();
-            value->setUserData( ts );
-            item.setObject( value );
-         }
-      }
-      break;
+       {
+          TimeStamp *ts = new TimeStamp();
+          if ( dbr->asDate( cIdx, *ts ) != dbi_nil_value ) {
+             Item *ts_class = vm->findWKI( "TimeStamp" );
+             fassert( ts_class != 0 );
+             CoreObject *value = ts_class->asClass()->createInstance();
+             value->setUserData( ts );
+             item.setObject( value );
+          }
+       }
+       break;
 
    case dbit_time:
-      {
-         TimeStamp *ts = new TimeStamp();
-         if ( dbr->asTime( cIdx, *ts ) != dbi_nil_value ) {
-            Item *ts_class = vm->findWKI( "TimeStamp" );
-            fassert( ts_class != 0 );
-            CoreObject *value = ts_class->asClass()->createInstance();
-            value->setUserData( ts );
-            item.setObject( value );
-         }
-      }
-      break;
+       {
+          TimeStamp *ts = new TimeStamp();
+          if ( dbr->asTime( cIdx, *ts ) != dbi_nil_value ) {
+             Item *ts_class = vm->findWKI( "TimeStamp" );
+             fassert( ts_class != 0 );
+             CoreObject *value = ts_class->asClass()->createInstance();
+             value->setUserData( ts );
+             item.setObject( value );
+          }
+       }
+       break;
 
    case dbit_datetime:
-      {
-         TimeStamp *ts = new TimeStamp();
-         if ( dbr->asDateTime( cIdx, *ts ) != dbi_nil_value ) {
-            Item *ts_class = vm->findWKI( "TimeStamp" );
-            fassert( ts_class != 0 );
-            CoreObject *value = ts_class->asClass()->createInstance();
-            value->setUserData( ts );
-            item.setObject( value );
-         }
-      }
-      break;
+       {
+          TimeStamp *ts = new TimeStamp();
+          if ( dbr->asDateTime( cIdx, *ts ) != dbi_nil_value ) {
+             Item *ts_class = vm->findWKI( "TimeStamp" );
+             fassert( ts_class != 0 );
+             CoreObject *value = ts_class->asClass()->createInstance();
+             value->setUserData( ts );
+             item.setObject( value );
+          }
+       }
+       break;
 
    default:
-      return 0;
+       return 0;
    }
 
    return 1;
@@ -415,6 +427,10 @@ static DBIRecordset *DBIHandle_baseQueryOne( VMachine *vm, int startAt = 0 )
 
    dbi_status retval;
    DBIRecordset *recSet = dbh->query( sql, retval );
+   if ( recSet == NULL ) {
+      vm->retnil();
+      return NULL;
+   }
 
    if ( retval != dbi_ok ) {
       String errorMessage;
@@ -427,10 +443,7 @@ static DBIRecordset *DBIHandle_baseQueryOne( VMachine *vm, int startAt = 0 )
 
    dbi_status nextStatus = recSet->next();
    if ( nextStatus != dbi_ok ) {
-      vm->raiseModError( new DBIError( ErrorParam( nextStatus, __LINE__ )
-                           .desc( "Unknown error(**)" )
-                           .extra( "No results returned for queryOne" ) ) );
-      recSet->close();
+      vm->retnil();
       return NULL;
    }
 
@@ -544,6 +557,8 @@ FALCON_FUNC DBIHandle_query( VMachine *vm )
 
 dbi_type *DBIHandle_getTypes( DBIRecordset *recSet )
 {
+   if (recSet == NULL )
+      return NULL;
    dbi_type *cTypes = (dbi_type *) malloc( sizeof( dbi_type ) * recSet->getColumnCount() );
    recSet->getColumnTypes( cTypes );
    return cTypes;
@@ -559,7 +574,10 @@ dbi_type *DBIHandle_getTypes( DBIRecordset *recSet )
 FALCON_FUNC DBIHandle_queryOne( VMachine *vm )
 {
    DBIRecordset *recSet = DBIHandle_baseQueryOne( vm );
-
+   if ( recSet == NULL ) {
+      vm->retnil();
+      return;
+   }
    dbi_type *cTypes = DBIHandle_getTypes( recSet );
 
    Item i;
@@ -638,8 +656,10 @@ FALCON_FUNC DBIHandle_queryOneObject( VMachine *vm )
 
    CoreObject *obj = objI->asObject();
    DBIRecordset *recSet = DBIHandle_baseQueryOne( vm, 1);
-   if (recSet == NULL)
+   if (recSet == NULL) {
+      vm->retnil();
       return; // TODO: Return error
+   }
 
    int cCount = recSet->getColumnCount();
    char **cNames = (char **) malloc( sizeof( char ) * cCount * DBI_MAX_COLUMN_NAME_SIZE );
@@ -650,6 +670,13 @@ FALCON_FUNC DBIHandle_queryOneObject( VMachine *vm )
    for ( int cIdx=0; cIdx < cCount; cIdx++ ) {
       Item i;
       if ( DBIRecordset_getItem( vm, recSet, cTypes[cIdx], cIdx, i ) == 0 ) {
+         String indexString;
+         indexString.writeNumber( (int64) cIdx );
+
+         vm->raiseModError( new DBIError( ErrorParam( 0, __LINE__ )
+                                         .desc( "Could not retrieve column value" )
+                                         .extra( indexString ) ) );
+
          free( cTypes );
          free( cNames );
          return;
@@ -1120,6 +1147,34 @@ FALCON_FUNC DBIRecordset_asInteger( VMachine *vm )
       vm->retnil ();           // TODO: handle the error
    else
       vm->retval( value );
+}
+
+FALCON_FUNC DBIRecordset_asBoolean( VMachine *vm )
+{
+   CoreObject *self = vm->self().asObject();
+   DBIRecordset *dbr = static_cast<DBIRecordset *>( self->getUserData() );
+
+   Item *columnIndexI = vm->param( 0 );
+   if ( columnIndexI == 0 || ! columnIndexI->isInteger() ) {
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                                         .origin( e_orig_runtime ) ) );
+      return;
+   }
+
+   bool value;
+
+   int32 cIdx = columnIndexI->asInteger();
+   if ( DBIRecordset_checkValidColumn( vm, dbr, cIdx ) == 0 )
+      return; // function handles reporting error to vm
+
+   dbi_status retval = dbr->asBoolean( cIdx, value );
+
+   if ( retval == dbi_nil_value )
+      vm->retnil();
+   else if ( retval != dbi_ok )
+      vm->retnil (); // TODO: handle the error
+   else
+      vm->retval( value ? (int64) 1 : (int64) 0 );
 }
 
 FALCON_FUNC DBIRecordset_asInteger64( VMachine *vm )

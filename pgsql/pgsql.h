@@ -49,6 +49,7 @@ public:
    virtual dbi_status getColumnNames( char *names[] );
    virtual dbi_status getColumnTypes( dbi_type *types );
    virtual dbi_status asString( const int columnIndex, String &value );
+   virtual dbi_status asBoolean( const int columnIndex, bool &value );
    virtual dbi_status asInteger( const int columnIndex, int32 &value );
    virtual dbi_status asInteger64( const int columnIndex, int64 &value );
    virtual dbi_status asNumeric( const int columnIndex, numeric &value );

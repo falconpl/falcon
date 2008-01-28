@@ -74,6 +74,7 @@ FALCON_FUNC DBIRecordset_getColumnCount( VMachine *vm );
 FALCON_FUNC DBIRecordset_getColumnNames( VMachine *vm );
 FALCON_FUNC DBIRecordset_getColumnTypes( VMachine *vm );
 FALCON_FUNC DBIRecordset_asString( VMachine *vm );
+FALCON_FUNC DBIRecordset_asBoolean( VMachine *vm );
 FALCON_FUNC DBIRecordset_asInteger( VMachine *vm );
 FALCON_FUNC DBIRecordset_asInteger64( VMachine *vm );
 FALCON_FUNC DBIRecordset_asNumeric( VMachine *vm );
