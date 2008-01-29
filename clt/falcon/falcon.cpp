@@ -939,7 +939,7 @@ int main( int argc, char *argv[] )
       delete stdOut;
    }
 
-   exit_sequence( exitSeq ? 0 : exitVal );
+   exit_sequence( exitSeq ? exitVal : 0 );
    return 0; // to make the compiler happy
 }
 

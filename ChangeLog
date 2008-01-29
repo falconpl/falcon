@@ -17,6 +17,7 @@ Falcon (0.8.9)
   * major: added boolean type. Now, true/false are special compilator tokens
       which generate a boolean item. Every VM check results in a boolean
       item being returned.
+  * bugfix: Falcon binary didn't return the VM exit code to the shell.
 
 Falcon (0.8.8)
   * bugfix: TRAV opcode may destroy its parameters while setting first loop
