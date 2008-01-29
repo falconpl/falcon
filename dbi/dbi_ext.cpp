@@ -62,6 +62,9 @@ static int DBIHandle_itemToSqlValue( DBIHandle *dbh, const Item *i, String &valu
          value.append( "'" );
          return 1;
       }
+   } else if ( i->isNil() ) {
+      value = "NULL";
+      return 1;
    }
 
    return 0;
