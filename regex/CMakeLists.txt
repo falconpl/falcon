@@ -39,16 +39,16 @@ IF(WITH_INTERNAL_PCRE)
       pcre_version.c
       pcre_xclass.c
    )
-  
+
    #But consider PCRE function as C++ local functions:
-   ADD_DEFINITIONS( -DPCRE_EXP_DECL=extern -DPCRE_EXP_DEFN="" -DPCRE_EXP_DATA_DEFN="" )
-   SET_SOURCE_FILES_PROPERTIES( 
+   ADD_DEFINITIONS( -DPCRE_EXP_DECL="extern" -DPCRE_STATIC="" -DPCRE_EXP_DEFN="" -DPCRE_EXP_DATA_DEFN="" )
+   SET_SOURCE_FILES_PROPERTIES(
       ${PCRE_SOURCE}
       PROPERTIES LANGUAGE "CXX"
    )
-		
+
    SET(PCRE_LIBRARIES "")
-   
+
 ELSE(WITH_INTERNAL_PCRE)
    #We'll activate this when CMAKE will offer a standard FINDPCRE macro
    #IF(NOT PCRE_FOUND AND NOT PCRE_LIBRARIES)

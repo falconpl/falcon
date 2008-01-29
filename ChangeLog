@@ -1,4 +1,7 @@
-Feathers (0.8.7)
+Feathers (0.8.9)
+  * minor: Added load directive support for loadXXX on reflexive compiler.
+
+Feathers (0.8.8)
   * Major: It is now possible to unload arbitrary modules.
   * Major: Added zlib module.
   * Minor: Using WKS/WKI.

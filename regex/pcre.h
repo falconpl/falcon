@@ -43,7 +43,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #define PCRE_MAJOR          7
 #define PCRE_MINOR          2
-#define PCRE_PRERELEASE     
+#define PCRE_PRERELEASE
 #define PCRE_DATE           2007-06-19
 
 /* When an application links to a PCRE DLL in Windows, the symbols that are
@@ -76,8 +76,10 @@ it is needed here for malloc. */
 
 /* Allow for C++ users */
 
+#ifndef PCRE_STATIC
 #ifdef __cplusplus
 extern "C" {
+#endif
 #endif
 
 /* Options */
@@ -277,8 +279,10 @@ PCRE_EXP_DECL int  pcre_refcount(pcre *, int);
 PCRE_EXP_DECL pcre_extra *pcre_study(const pcre *, int, const char **);
 PCRE_EXP_DECL const char *pcre_version(void);
 
+#ifndef PCRE_STATIC
 #ifdef __cplusplus
-}  /* extern "C" */
+}
+#endif
 #endif
 
 #endif /* End of pcre.h */

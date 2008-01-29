@@ -150,6 +150,7 @@ FALCON_FUNC Compiler_compile( ::Falcon::VMachine *vm )
       delete input;
 }
 
+
 FALCON_FUNC Compiler_loadByName( ::Falcon::VMachine *vm )
 {
    Item *i_name = vm->param( 0 );
@@ -176,6 +177,7 @@ FALCON_FUNC Compiler_loadByName( ::Falcon::VMachine *vm )
       internal_link( vm, mod, iface );
 }
 
+
 FALCON_FUNC Compiler_loadModule( ::Falcon::VMachine *vm )
 {
    Item *i_name = vm->param( 0 );
@@ -195,6 +197,7 @@ FALCON_FUNC Compiler_loadModule( ::Falcon::VMachine *vm )
    if ( mod != 0 )
       internal_link( vm, mod, iface );
 }
+
 
 FALCON_FUNC Compiler_setDirective( ::Falcon::VMachine *vm )
 {
@@ -254,6 +257,7 @@ FALCON_FUNC Module_get( ::Falcon::VMachine *vm )
    vm->retval( *itm );
 }
 
+
 FALCON_FUNC Module_set( ::Falcon::VMachine *vm )
 {
    Item *i_name = vm->param( 0 );
@@ -287,6 +291,7 @@ FALCON_FUNC Module_set( ::Falcon::VMachine *vm )
    *itm = *i_value;
 }
 
+
 FALCON_FUNC Module_getReference( ::Falcon::VMachine *vm )
 {
    Item *i_name = vm->param( 0 );
@@ -319,6 +324,7 @@ FALCON_FUNC Module_getReference( ::Falcon::VMachine *vm )
    vm->referenceItem( vm->regA(), *itm );
 }
 
+
 FALCON_FUNC Module_unload( ::Falcon::VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
@@ -348,6 +354,7 @@ FALCON_FUNC Module_unload( ::Falcon::VMachine *vm )
    }
 }
 
+
 FALCON_FUNC Module_engineVersion( ::Falcon::VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
@@ -362,6 +369,7 @@ FALCON_FUNC Module_engineVersion( ::Falcon::VMachine *vm )
    ca->append( (int64) re );
    vm->retval( ca );
 }
+
 
 FALCON_FUNC Module_moduleVersion( ::Falcon::VMachine *vm )
 {
