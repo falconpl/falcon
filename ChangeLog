@@ -18,6 +18,7 @@ Falcon (0.8.9)
       which generate a boolean item. Every VM check results in a boolean
       item being returned.
   * bugfix: Falcon binary didn't return the VM exit code to the shell.
+  * minor: Load now supports ".module" notation to load sibling modules.
 
 Falcon (0.8.8)
   * bugfix: TRAV opcode may destroy its parameters while setting first loop

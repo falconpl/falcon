@@ -344,6 +344,13 @@ int SrcLexer::lex_normal()
             if( ! isWhiteSpace( chr ) )
             {
                m_previousLine = m_line;
+               if ( m_bIsDirectiveLine && chr == '.' )
+               {
+                  // just ignore it
+                  m_string.append( chr );
+                  break;
+               }
+
                // whitespaces and '\n' can't follow a valid symbol,
                // as since they are token limiters, and they would be read
                // ahead after token begin, valid symbols and token has already
