@@ -1,5 +1,6 @@
 Feathers (0.8.9)
   * minor: Added load directive support for loadXXX on reflexive compiler.
+  * bugfix: Confparser didn't read 1 character long values.
 
 Feathers (0.8.8)
   * Major: It is now possible to unload arbitrary modules.

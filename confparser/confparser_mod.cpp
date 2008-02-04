@@ -103,7 +103,7 @@ bool ConfigFileLine::parseLine()
                m_type = t_section;
                state = section; // section name
             }
-            else if ( chr != ' ' || chr != '\t' )
+            else if ( chr != ' ' && chr != '\t' )
             {
                m_type = t_keyval;
                m_key = new String;
@@ -156,6 +156,7 @@ bool ConfigFileLine::parseLine()
                state = value;
                m_value = new String;
                m_value->append( chr );
+               trimValuePos = m_value->size();
             }
          break;
 
