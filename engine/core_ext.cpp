@@ -134,7 +134,18 @@ FALCON_FUNC  len ( ::Falcon::VMachine *vm )
 ****************************************/
 
 /*#
-   @class error
+   @class Error
+   @brief Internal VM and runtime error reflection class.
+
+   The Error class is used by the virtual machine and by the Falcon Feathers
+   functions to communicate to the scripts, and eventually to the embedding
+   application, about error conditions. It is also available to extension modules,
+   and to the script themselves, that can create error instances that can be
+   cached internally or returned to the embedder.
+*/
+
+/*#
+   @class Error
    Error class constructor.
    Error( code, description, extra )
 */

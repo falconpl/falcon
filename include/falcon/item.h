@@ -423,7 +423,7 @@ public:
 
    bool asBool() const
    {
-      return m_data.num.val1;
+      return m_data.num.val1 != 0;
    }
 
    int64 asInteger() const { return m_data.val64; }
