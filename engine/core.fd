@@ -1,0 +1,40 @@
+#
+# FALDOC - Falcon Documentation system
+#
+# Faldoc file for core module.
+#
+
+################################################
+# Documentation generic data
+################################################
+
+Title = Falcon - The core module
+Author = The Falcon Committee
+Version = 0.8.10
+
+################################################
+# Faldoc Input settings
+################################################
+
+Input.directory=.
+
+Input.wildcard=*..     #we use only...
+Input.recursive=true
+
+# Other files may be specified here
+Input.extra=core_ext.cpp
+
+################################################
+# Faldoc Output settings
+################################################
+
+Output.module=html
+
+################################################
+# Faldoc HTML Output settings
+# Each module can be self-configured through
+# Output.<module>.<parameters> configs
+################################################
+
+Output.html.directory=docs/core/html
+Output.html.url=.

@@ -75,9 +75,13 @@ FALCON_FUNC  vmVersionName( ::Falcon::VMachine *vm )
 ****************************************/
 
 
-/*@beginmodule core Direct support to language features and Virtual Machine interface */
+/*#
+   @main The Core Module.
+   Direct support to language features and Virtual Machine interface.
+*/
 
-/*@function len
+/*#
+   @function len
    @param item an item of any kind
    @return an integer representing the lenght of the item
 
@@ -88,7 +92,6 @@ FALCON_FUNC  vmVersionName( ::Falcon::VMachine *vm )
    represents the count of characters, in case of arrays or dictionaries it
    represents the number of elements, in all the other cases the returned
    value is 1.
-
 */
 
 FALCON_FUNC  len ( ::Falcon::VMachine *vm )
@@ -130,7 +133,9 @@ FALCON_FUNC  len ( ::Falcon::VMachine *vm )
    Error management
 ****************************************/
 
-/** Error class constructor.
+/*#
+   @class error
+   Error class constructor.
    Error( code, description, extra )
 */
 FALCON_FUNC  Error_init ( ::Falcon::VMachine *vm )
@@ -299,12 +304,16 @@ FALCON_FUNC  IntrruptedError_init ( ::Falcon::VMachine *vm )
 
 /*#
    @function int
-   @param item The item to be converted
 
+
+*/
+/*#
+   @function int
+   @param item The item to be converted
+   @raise RangeError in case the given value cannot be converted to an integer.
    @brief Transforms the parameter in a integer.
 
    If the parameter is a string, a string-to-number coversion will be attempted.
-
 */
 FALCON_FUNC  val_int ( ::Falcon::VMachine *vm )
 {
@@ -464,13 +473,15 @@ FALCON_FUNC  val_numeric ( ::Falcon::VMachine *vm )
    }
 }
 
-/*@function typeOf
+/*#
+   @function typeOf
    @param item an item of any kind.
    @brief Returns an integer indicating the type of an item.
 
    The value returned may be one of the following:<BR>
    <UL>
    <LI>NilType - the item is NIL</LI>
+   <LI>BooleanType - the item is true or false</LI>
    <LI>IntegerType - the item is an integer</LI>
    <LI>NumericType - the item is a floating point number</LI>
    <LI>RangeType - the item is a range (a pair of two integers)</LI>
@@ -492,8 +503,10 @@ FALCON_FUNC  typeOf ( ::Falcon::VMachine *vm )
       vm->retval( vm->param( 0 )->type() );
 }
 
-/*@function isCallable
+/*#
+   @function isCallable
    @param item a possibly callable item.
+   @brief determines if the given item can be called (evaluated).
    @return true if item could be called
 */
 FALCON_FUNC  isCallable ( ::Falcon::VMachine *vm )
@@ -504,11 +517,14 @@ FALCON_FUNC  isCallable ( ::Falcon::VMachine *vm )
       vm->retval( vm->param( 0 )->isCallable() ? 1 : 0 );
 }
 
-/*@function getProperty
+/*#
+   @function getProperty
    @param item an object
    @param property a string naming a property
    @return the property
    @raise e_prop_acc if the property can't be found.
+   @brief returns a property stored in an object.
+
 */
 FALCON_FUNC  getProperty( ::Falcon::VMachine *vm )
 {
@@ -551,7 +567,8 @@ FALCON_FUNC  setProperty( ::Falcon::VMachine *vm )
    }
 }
 
-/*@function exit
+/*#
+   @function exit
    @param value an item representing VM exit code.
    @brief Requires immediate termination of the program.
 
@@ -573,7 +590,8 @@ FALCON_FUNC  hexit ( ::Falcon::VMachine *vm )
 }
 
 
-/*@function chr
+/*#
+   @function chr
    @param code an UNICODE character ID.
    @return a single-char string.
    @brief Converts a 0-255 integer in the corresponding character.
@@ -600,7 +618,8 @@ FALCON_FUNC  chr ( ::Falcon::VMachine *vm )
    vm->retval( ret );
 }
 
-/*@function ord
+/*#
+   @function ord
    @param string a string
    @return the UNICODE value of the first element in the string.
    @brief Returns the ASCII value of the first element in the string.
@@ -620,7 +639,8 @@ FALCON_FUNC  ord ( ::Falcon::VMachine *vm )
    vm->retval( (int64) elem->asString()->getCharAt(0) );
 }
 
-/*@function toString
+/*#
+   @function toString
    @param item an item to be converted to string.
    @optparam deccount number of significative decimals for numeric items.
    @return the string representation of the item.
@@ -656,7 +676,8 @@ FALCON_FUNC  hToString ( ::Falcon::VMachine *vm )
 
 */
 
-/*@function paramCount
+/*#
+   @function paramCount
    @return the parameter count
    @brief Returns number of parameter that have been passed to the current function or method.
 */
@@ -679,7 +700,8 @@ FALCON_FUNC  paramCount ( ::Falcon::VMachine *vm )
    }
 }
 
-/*@function paramNumber
+/*#
+   @function paramNumber
    @brief get the Nth parameter
    @param the paremeter that must be returned, zero based
    @return the nth paramter (zero based) or NIL if the parameter is not given
@@ -722,7 +744,8 @@ FALCON_FUNC  paramNumber ( ::Falcon::VMachine *vm )
    }
 }
 
-/*@function paramIsRef
+/*#
+   @function paramIsRef
    @brief check whether the nth parameter has been passed by value or by reference
    @param number the paramter that must be checked (zero based)
    @return true if the parameter has been passed by reference, false otherwise
@@ -764,7 +787,8 @@ FALCON_FUNC  paramIsRef ( ::Falcon::VMachine *vm )
    }
 }
 
-/*@function paramSet
+/*#
+   @function paramSet
    @brief Changes the nth paramter if it has been passed by reference.
    @param number the paramter to be changed (zero based)
    @param value the new value for the parameter
@@ -885,7 +909,8 @@ FALCON_FUNC  eq( ::Falcon::VMachine *vm )
    machine.
 */
 
-/*@function yield
+/*#
+   @function yield
    @brief gives up the rest of the coroutine time slice.
 
    The calling coroutine is immediately swapped out and put at the end of the
@@ -898,7 +923,8 @@ FALCON_FUNC  yield ( ::Falcon::VMachine *vm )
    vm->yieldRequest( 0.0 );
 }
 
-/*@function yieldOut
+/*#
+   @function yieldOut
    @brief Requires termination of the current coroutine.
    @param retval a return value for the coroutine.
 
