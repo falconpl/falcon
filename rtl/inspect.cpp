@@ -73,7 +73,7 @@ void inspect_internal( VMachine *vm, const Item *elem, int32 level, bool add )
       break;
 
       case FLC_ITEM_BOOL:
-         stream->writeString( elem->asBool() ? "true" : "false" );
+         stream->writeString( elem->asBoolean() ? "true" : "false" );
       break;
 
 

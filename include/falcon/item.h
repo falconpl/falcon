@@ -421,7 +421,7 @@ public:
       return type() == FLC_ITEM_INT || type() == FLC_ITEM_NUM;
    }
 
-   bool asBool() const
+   bool asBoolean() const
    {
       return m_data.num.val1 != 0;
    }
