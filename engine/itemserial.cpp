@@ -133,7 +133,7 @@ Item::e_sercode Item::serialize( Stream *file, VMachine *vm ) const
          char type = FLC_ITEM_BOOL;
          file->write((byte *) &type, 1 );
 
-         char bval = this->asBool() ? 1 : 0;
+         char bval = this->asBoolean() ? 1 : 0;
          file->write( (byte *) &bval, sizeof( bval ) );
       }
       break;

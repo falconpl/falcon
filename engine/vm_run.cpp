@@ -2352,7 +2352,7 @@ void opcodeHandler_NOIN( register VMachine *vm )
 {
    // do not decode operands; IN will do it
    opcodeHandler_IN( vm );
-   vm->regA().setBoolean( vm->m_regA.asInteger() == 0 );
+   vm->regA().setBoolean( ! vm->regA().asBoolean() );
 }
 
 //48
