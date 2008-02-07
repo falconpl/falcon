@@ -191,6 +191,7 @@ char *en_table[] =
       "Syntax error in 'for.' statement",
       "Syntax error in fast print statement",
       "Syntax error in directive",
+      "Syntax error in import statement",
 
       "New line in literal string",
       "Duplicate type identifier in catch selector",

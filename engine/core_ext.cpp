@@ -137,6 +137,10 @@ FALCON_FUNC  len ( ::Falcon::VMachine *vm )
    @class Error
    @brief Internal VM and runtime error reflection class.
 
+   @optparam code a numeric error code.
+   @optparam description a textual description of the error code.
+   @optparam extra
+
    The Error class is used by the virtual machine and by the Falcon Feathers
    functions to communicate to the scripts, and eventually to the embedding
    application, about error conditions. It is also available to extension modules,
@@ -197,20 +201,13 @@ FALCON_FUNC  len ( ::Falcon::VMachine *vm )
                   This property stores a vector of the single sub-errors that have
                   caused operation failure.
 
-
-
-
-
 */
 
 // Separate "code" property to test for @property command
 
 /*#
    @init Error
-   @optparam code a numeric error code.
-   @optparam description a textual description of the error code.
-   @optparam extra
-
+   @brief Initializes the error.
 */
 FALCON_FUNC  Error_init ( ::Falcon::VMachine *vm )
 {
@@ -296,7 +293,16 @@ FALCON_FUNC  Error_getSysErrDesc ( ::Falcon::VMachine *vm )
 }
 
 
+/*#
+   @class SyntaxError
+   @brief Specific syntax error descriptor.
 
+   @optparam code a numeric error code.
+   @optparam description a textual description of the error code.
+   @optparam extra
+
+   @from Error code, description, extra
+*/
 FALCON_FUNC  SyntaxError_init ( ::Falcon::VMachine *vm )
 {
    CoreObject *einst = vm->self().asObject();
@@ -391,11 +397,6 @@ FALCON_FUNC  IntrruptedError_init ( ::Falcon::VMachine *vm )
 }
 
 
-/*#
-   @function int
-
-
-*/
 /*#
    @function int
    @param item The item to be converted

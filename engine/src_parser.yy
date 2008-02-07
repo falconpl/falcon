@@ -112,6 +112,7 @@ inline int flc_src_lex (void *lvalp, void *yyparam)
 %token ATTRIBUTES
 %token PASS
 %token EXPORT
+%token IMPORT
 %token DIRECTIVE
 %token COLON
 %token FUNCDECL STATIC
@@ -173,6 +174,7 @@ inline int flc_src_lex (void *lvalp, void *yyparam)
 %type <fal_stat> func_statement
 %type <fal_stat> self_print_statement
 %type <fal_stat> class_decl object_decl property_decl attributes_statement export_statement directive_statement
+%type <fal_stat> import_statement
 %type <fal_stat> def_statement
 %type <fal_stat> outer_print_statement
 
@@ -237,6 +239,7 @@ toplevel_statement:
       }
    | const_statement /* no action */
    | export_statement /* no action */
+   | import_statement /* no action */
    | attributes_statement /* no action */
 ;
 
@@ -1624,6 +1627,31 @@ export_symbol_list:
       {
          Falcon::Symbol *sym = COMPILER->addGlobalSymbol( $3 );
          sym->exported(true);
+      }
+;
+
+import_statement:
+   IMPORT import_symbol_list EOL
+      {
+         $$ = 0;
+      }
+   | IMPORT error EOL
+      {
+         COMPILER->raiseError(Falcon::e_syn_import );
+         $$ = 0;
+      }
+;
+
+import_symbol_list:
+   SYMBOL
+      {
+         Falcon::Symbol *sym = COMPILER->addGlobalSymbol( $1 );
+         sym->imported(true);
+      }
+   | export_symbol_list COMMA SYMBOL
+      {
+         Falcon::Symbol *sym = COMPILER->addGlobalSymbol( $3 );
+         sym->imported(true);
       }
 ;
 

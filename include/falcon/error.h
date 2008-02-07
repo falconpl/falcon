@@ -191,6 +191,7 @@ const int e_syn_def =              181;
 const int e_syn_fordot =           182;
 const int e_syn_self_print =       183;
 const int e_syn_directive =        184;
+const int e_syn_import =           185;
 
 const int e_nl_in_lit =            200;
 const int e_catch_adef =           201;

@@ -460,7 +460,8 @@ private:
    typedef enum {
       FLAG_EXPORTED=0x1,
       FLAG_ETAFUNC=0x2,
-      FLAG_WELLKNOWN=0x4
+      FLAG_WELLKNOWN=0x4,
+      FLAG_IMPORTED=0x8
    }
    e_flags;
 
@@ -574,10 +575,25 @@ public:
       return *this;
    }
 
+   /** Sets the symbol import class.
+      Import class is prioritary to export class; that is, if a symbol is imported,
+      exported() will always return false. Also, imported symbols report their type as unknonw,
+      no matter what local setting is provided.
+      \param exp true if the symbol must be imported, false otherwise.
+      \return itself
+   */
+   Symbol &imported( bool exp ) {
+      if ( exp )
+         m_flags |= FLAG_IMPORTED;
+      else
+         m_flags &=~FLAG_IMPORTED;
+      return *this;
+   }
+
    /** Declares the symbol as an "eta function".
       Eta functions are self-managed functions in Sigma-evaluation
       (functional evaluation).
-      \param exp true if the symbol must be exported, false otherwise.
+      \param exp true if the symbol is an ETA function, false otherwise.
       \return itself
    */
    Symbol &setEta( bool exp ) {
@@ -632,13 +648,14 @@ public:
    const String &name() const { return *m_name; }
    uint32 id() const { return m_id; }
    type_t type() const { return m_type; }
-   bool exported() const { return (m_flags & FLAG_EXPORTED) == FLAG_EXPORTED; }
+   bool exported() const { return (! imported()) && ((m_flags & FLAG_EXPORTED) == FLAG_EXPORTED); }
+   bool imported() const { return (m_flags & FLAG_IMPORTED) == FLAG_IMPORTED; }
    uint16 itemId() const { return m_itemPos; }
    void itemId( uint16 ip ) { m_itemPos = ip; }
    bool isEta() const { return (m_flags & FLAG_ETAFUNC) == FLAG_ETAFUNC; }
    bool isWKS() const { return (m_flags & FLAG_WELLKNOWN) == FLAG_WELLKNOWN; }
 
-   bool isUndefined() const { return m_type == tundef; }
+   bool isUndefined() const { return imported() || m_type == tundef; }
    bool isLocalUndef() const { return m_type == tlocalundef; }
    bool isGlobal() const { return m_type == tglobal; }
    bool isLocal() const { return m_type == tlocal; }

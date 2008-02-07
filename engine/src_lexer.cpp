@@ -1306,6 +1306,11 @@ int SrcLexer::checkLimitedTokens()
             m_bIsDirectiveLine = true;
             return EXPORT;
          }
+         if ( m_string == "import" ) // directive
+         {
+            m_bIsDirectiveLine = true;
+            return IMPORT;
+         }
          if ( m_string == "static" )
             return STATIC;
       break;
