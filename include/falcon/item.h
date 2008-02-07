@@ -471,7 +471,7 @@ public:
    uint32 hash() const;
 
    bool isNil() const { return type() == FLC_ITEM_NIL; }
-   bool isBool() const { return type() == FLC_ITEM_BOOL; }
+   bool isBoolean() const { return type() == FLC_ITEM_BOOL; }
    bool isInteger() const { return type() == FLC_ITEM_INT; }
    bool isNumeric() const { return type() == FLC_ITEM_NUM; }
    bool isScalar() const { return type() == FLC_ITEM_INT || type() == FLC_ITEM_NUM; }
