@@ -38,41 +38,44 @@ CoreObject *dbi_defaultHandle; // Temporary until I figure how to set static cla
 
 static int DBIHandle_itemToSqlValue( DBIHandle *dbh, const Item *i, String &value )
 {
-   if ( i->isBoolean() ) {
-      if ( i->asBoolean() )
-         value = "TRUE";
-      else
-         value = "FALSE";
-   } else if ( i->isInteger() ) {
-      if ( i->isBoolean() )
-         value = i->asInteger() ? "t" : "f";
-      else
+   switch( i->type() ) {
+      case FLC_ITEM_BOOL:
+         value = i->asBoolean() ? "'TRUE'" : "'FALSE'";
+         return 1;
+
+      case FLC_ITEM_INT:
          value.writeNumber( i->asInteger() );
-      return 1;
-   } else if ( i->isNumeric() ) {
-      value.writeNumber( i->asNumeric(), "%f" );
-      return 1;
-   } else if ( i->isString() ) {
-      dbh->escapeString( *i->asString(), value );
-      value.prepend( "'" );
-      value.append( "'" );
-      return 1;
-   } else if ( i->isObject() ) {
-      CoreObject *o = i->asObject();
-      //vm->itemToString( value, ??? )
-      if ( o->derivedFrom( "TimeStamp" ) ) {
-         TimeStamp *ts = (TimeStamp *) o->getUserData();
-         ts->toString( value );
+         return 1;
+
+      case FLC_ITEM_NUM:
+         value.writeNumber( i->asNumeric(), "%f" );
+         return 1;
+
+      case FLC_ITEM_STRING:
+         dbh->escapeString( *i->asString(), value );
          value.prepend( "'" );
          value.append( "'" );
          return 1;
-      }
-   } else if ( i->isNil() ) {
-      value = "NULL";
-      return 1;
-   }
 
-   return 0;
+      case FLC_ITEM_OBJECT:
+         CoreObject *o = i->asObject();
+         //vm->itemToString( value, ??? )
+         if ( o->derivedFrom( "TimeStamp" ) ) {
+            TimeStamp *ts = (TimeStamp *) o->getUserData();
+            ts->toString( value );
+            value.prepend( "'" );
+            value.append( "'" );
+            return 1;
+         }
+         return 0;
+
+      case FLC_ITEM_NIL:
+         value = "NULL";
+         return 1;
+
+      default:
+         return 0;
+   }
 }
 
 static int DBIHandle_realSqlExpand( VMachine *vm, DBIHandle *dbh, String &sql, int startAt=0 )
