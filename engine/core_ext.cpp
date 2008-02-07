@@ -149,21 +149,6 @@ FALCON_FUNC  len ( ::Falcon::VMachine *vm )
    @i message is free to be used to carry more specific informations about the error
    conditions.
 
-   The error origin is a string; when an error gets displayed through a standard
-   rendering function (as the Error.toString() method), it is indicated by two
-   letters in front of the error code for better readability. The origin code may
-   be one of the following:
-
-   <UL>
-   <LI> @b compiler - (represented in Error.toString() as CO)
-   <LI> @b assembler - (AS)
-   <LI> @b loader -  that is, the module loader (LD)
-   <LI> @b vm - the virtual machine (when not running a script, short VM)
-   <LI> @b script - (that is, a VM running a script, short SS)
-   <LI> @b runtime - (core or runtime modules, RT)
-   <LI> @b module - an extension module (MD).
-   </UL>
-
    Use the comment parameter when the error message is generic, and/or the error
    may be reported because of various reasons, or to give an hint about how to
    avoid the error.
@@ -193,10 +178,6 @@ FALCON_FUNC  len ( ::Falcon::VMachine *vm )
                      this this property contains the error code indicating the cause of the failure.
                      Otherwise, it will be 0.
 
-   @prop origin String identifying the origin of the error. This code allows to determine
-               what element of the Falcon engine has raised the error
-               (or eventually, if this error has been raised by a script or a loaded module).
-               See below for detailed description.
 
    @prop module Name of the module where the error has been generated.
    @prop symbol Symbol name (function or method) where the error has been raised.
@@ -3332,12 +3313,37 @@ Module * core_module_init()
    // separated property description to test for separate @property faldoc command
    /*#
       @property code Error
-      Error code associated with this error. See the description below.
+      @brief Error code associated with this error.
    */
+
    core->addClassProperty( error_class, "code" );
    core->addClassProperty( error_class, "description" );
    core->addClassProperty( error_class, "message" );
    core->addClassProperty( error_class, "systemError" );
+
+   /*#
+       @property origin Error
+       @brief String identifying the origin of the error.
+
+      This code allows to determine  what element of the Falcon engine has raised the error
+      (or eventually, if this error has been raised by a script or a loaded module).
+
+      The error origin is a string; when an error gets displayed through a standard
+      rendering function (as the Error.toString() method), it is indicated by two
+      letters in front of the error code for better readability. The origin code may
+      be one of the following:
+
+      <UL>
+      <LI> @b compiler - (represented in Error.toString() as CO)
+      <LI> @b assembler - (AS)
+      <LI> @b loader -  that is, the module loader (LD)
+      <LI> @b vm - the virtual machine (when not running a script, short VM)
+      <LI> @b script - (that is, a VM running a script, short SS)
+      <LI> @b runtime - (core or runtime modules, RT)
+      <LI> @b module - an extension module (MD).
+      </UL>
+   */
+
    core->addClassProperty( error_class, "origin" );
    core->addClassProperty( error_class, "module" );
    core->addClassProperty( error_class, "symbol" );
