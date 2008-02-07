@@ -148,6 +148,25 @@ dbi_status DBIRecordsetMySQL::asString( const int columnIndex, String &value )
    return dbi_ok;
 }
 
+dbi_status DBIRecordsetMySQL::asBoolean( const int columnIndex, String &value )
+{
+   if ( columnIndex >= m_columnCount )
+      return dbi_column_range_error;
+   else if ( m_res == NULL )
+      return dbi_invalid_recordset;
+   else if ( m_rowData[columnIndex] == NULL )
+      return dbi_nil_value;
+
+   char *v = m_rowData[columnIndex];
+
+   if (strncmp( v, "t", 1 ) == 0 || strncmp( v, "T", 1 ) == 0 || strncmp( v, "1", 1 ) == 0)
+      value = true;
+   else
+      value = false;
+
+   return dbi_ok;
+}
+
 dbi_status DBIRecordsetMySQL::asInteger( const int columnIndex, int32 &value )
 {
    if ( columnIndex >= m_columnCount )

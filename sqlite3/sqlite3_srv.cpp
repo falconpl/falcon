@@ -118,6 +118,27 @@ dbi_status DBIRecordsetSQLite3::asString( const int columnIndex, String &value )
    return dbi_ok;
 }
 
+dbi_status DBIRecordsetSQLite3::asBoolean( const int columnIndex, bool &value )
+{
+   if ( columnIndex >= m_columnCount )
+      return dbi_column_range_error;
+   else if ( m_res == NULL )
+      return dbi_invalid_recordset;
+
+   sqlite3_value *sv = sqlite3_column_value( m_res, columnIndex );
+   if ( sqlite3_value_type( sv ) == SQLITE_NULL )
+      return dbi_nil_value;
+
+   const char *v = (const char *) sqlite3_value_text( sv );
+
+   if (strncmp( v, "t", 1 ) == 0 || strncmp( v, "T", 1 ) == 0 || strncmp( v, "1", 1 ) == 0)
+      value = true;
+   else
+      value = false;
+
+   return dbi_ok;
+}
+
 dbi_status DBIRecordsetSQLite3::asInteger( const int columnIndex, int32 &value )
 {
    if ( columnIndex >= m_columnCount )

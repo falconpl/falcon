@@ -94,32 +94,32 @@ dbi_type DBIRecordsetPgSQL::getFalconType( Oid pgType )
 {
    switch ( pgType )
    {
-   case PG_TYPE_BOOL:
-       return dbit_string;
+      case PG_TYPE_BOOL:
+         return dbit_boolean;
 
-   case PG_TYPE_INT2:
-      return dbit_integer;
+      case PG_TYPE_INT2:
+         return dbit_integer;
 
-   case PG_TYPE_INT4: // TODO: are these right?
-   case PG_TYPE_INT8:
-      return dbit_integer64;
+      case PG_TYPE_INT4: // TODO: are these right?
+      case PG_TYPE_INT8:
+         return dbit_integer64;
 
-   case PG_TYPE_FLOAT4:
-   case PG_TYPE_FLOAT8:
-   case PG_TYPE_NUMERIC:
-      return dbit_numeric;
+      case PG_TYPE_FLOAT4:
+      case PG_TYPE_FLOAT8:
+      case PG_TYPE_NUMERIC:
+         return dbit_numeric;
 
-   case PG_TYPE_DATE:
-      return dbit_date;
+      case PG_TYPE_DATE:
+         return dbit_date;
 
-   case PG_TYPE_TIME:
-      return dbit_time;
+      case PG_TYPE_TIME:
+         return dbit_time;
 
-   case PG_TYPE_TIMESTAMP:
-      return dbit_datetime;
+      case PG_TYPE_TIMESTAMP:
+         return dbit_datetime;
 
-   default:
-      return dbit_string;
+      default:
+         return dbit_string;
    }
 }
 
@@ -181,9 +181,10 @@ dbi_status DBIRecordsetPgSQL::asBoolean( const int columnIndex, bool &value )
 
    const char *v = PQgetvalue( m_res, m_row, columnIndex );
 
-   value = false;
-   if ( v[0] == 't' || v[0] == '1' || v[0] == 'y' )
-       value = true;
+   if ( strncmp( v, "t", 1 ) == 0 || strncmp( v, "T", 1 ) == 0 || strncmp( v, "1", 1 ) == 0 )
+      value = true;
+   else
+      value = false;
 
    return dbi_ok;
 }

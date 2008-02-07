@@ -70,13 +70,13 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    self->addClassMethod( rs_class, "fetchDict",      Falcon::Ext::DBIRecordset_fetchDict );
    self->addClassMethod( rs_class, "fetchObject",    Falcon::Ext::DBIRecordset_fetchObject );
    self->addClassMethod( rs_class, "asString",       Falcon::Ext::DBIRecordset_asString );
+   self->addClassMethod( rs_class, "asBoolean",      Falcon::Ext::DBIRecordset_asBoolean );
    self->addClassMethod( rs_class, "asInteger",      Falcon::Ext::DBIRecordset_asInteger );
    self->addClassMethod( rs_class, "asInteger64",    Falcon::Ext::DBIRecordset_asInteger64 );
    self->addClassMethod( rs_class, "asNumeric",      Falcon::Ext::DBIRecordset_asNumeric );
    self->addClassMethod( rs_class, "asDate",         Falcon::Ext::DBIRecordset_asDate );
    self->addClassMethod( rs_class, "asTime",         Falcon::Ext::DBIRecordset_asTime );
    self->addClassMethod( rs_class, "asDateTime",     Falcon::Ext::DBIRecordset_asDateTime );
-   self->addClassMethod( rs_class, "asBoolean",      Falcon::Ext::DBIRecordset_asBoolean );
    self->addClassMethod( rs_class, "getRowCount",    Falcon::Ext::DBIRecordset_getRowCount );
    self->addClassMethod( rs_class, "getColumnCount", Falcon::Ext::DBIRecordset_getColumnCount );
    self->addClassMethod( rs_class, "getColumnTypes", Falcon::Ext::DBIRecordset_getColumnTypes );

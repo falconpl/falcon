@@ -16,10 +16,10 @@ ADD_LIBRARY( sqlite3 MODULE
    sqlite3.cpp
    sqlite3_ext.cpp
    sqlite3_srv.cpp
-   #sqlite.c
+   sqlite.c
 )
 
 #Link
-TARGET_LINK_LIBRARIES(sqlite3 falcon_engine libsqlite3.so)
+TARGET_LINK_LIBRARIES(sqlite3 falcon_engine)
 SET_TARGET_PROPERTIES(sqlite3 PROPERTIES PREFIX "") #Install
 FALCON_MODULE_INSTALL( sqlite3 )

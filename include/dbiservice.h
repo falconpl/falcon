@@ -164,6 +164,11 @@ public:
    virtual dbi_status asString( const int columnIndex, String &value )=0;
 
    /**
+    * Get a value from the current row as a boolean
+    */
+   virtual dbi_status asBoolean( const int columnIndex, bool &value )=0;
+
+   /**
     * Get a value from the current row as an integer
     */
    virtual dbi_status asInteger( const int columnIndex, int32 &value )=0;
@@ -192,11 +197,6 @@ public:
     * Get a value from the current row as a datetime
     */
    virtual dbi_status asDateTime( const int columnIndex, TimeStamp &value )=0;
-
-   /**
-    * Get value from the current row as a boolean
-    */
-   virtual dbi_status asBoolean( const int columnIndex, bool &value )=0;
 
    /**
     * Returns last error and its description.
