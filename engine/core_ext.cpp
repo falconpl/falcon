@@ -739,7 +739,8 @@ FALCON_FUNC  ord ( ::Falcon::VMachine *vm )
 
    If the item is a number, the second parameter will determine how many
    decimals will be printed. If it is an object, and if it provides a
-   toString method, that method will be called.
+   toString method, that method will be called. Not to be confused with
+   @a ord...
 
 */
 
