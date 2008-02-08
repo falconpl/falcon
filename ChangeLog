@@ -19,6 +19,8 @@ Falcon (0.8.9)
       item being returned.
   * bugfix: Falcon binary didn't return the VM exit code to the shell.
   * minor: Load now supports ".module" notation to load sibling modules.
+  * major: Added import directive for explicit symbol import.
+  * bugfix: Fixed deep user data GC marking in methods and classmethods.
 
 Falcon (0.8.8)
   * bugfix: TRAV opcode may destroy its parameters while setting first loop

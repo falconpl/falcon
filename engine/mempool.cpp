@@ -399,6 +399,13 @@ void MemPool::markItem( Item &item )
                for ( uint32 i = 0; i < co->propCount(); i ++ ) {
                   markItemFast( co->getPropertyAt( i ) );
                }
+               // then mark the user data
+               // TODO: have the userdata to set a flag in the object that tells
+               // if the user data wants to be marked or not.
+               if ( co->getUserData() != 0 )
+               {
+                  co->getUserData()->gcMark( this );
+               }
             }
 
             // no need to mark the live modue;
@@ -417,6 +424,14 @@ void MemPool::markItem( Item &item )
             // mark all the property values.
             for ( uint32 i = 0; i < co->propCount(); i ++ ) {
                markItemFast( co->getPropertyAt( i ) );
+            }
+
+            // then mark the user data
+            // TODO: have the userdata to set a flag in the object that tells
+            // if the user data wants to be marked or not.
+            if ( co->getUserData() != 0 )
+            {
+               co->getUserData()->gcMark( this );
             }
          }
 
