@@ -22,8 +22,6 @@
    List of Falcon Items implementation
 */
 
-#include <stdio.h>
-
 #include <falcon/setup.h>
 #include <falcon/itemlist.h>
 #include <falcon/mempool.h>
@@ -55,6 +53,7 @@ ItemList::ItemList( const ItemList &l ):
 
    m_size = l.m_size;
 }
+
 
 
 UserData *ItemList::clone() const
@@ -325,7 +324,7 @@ void ItemList::gcMark( MemPool *mp )
 {
    // we don't have to record the mark byte, as we woudln't have been called
    // if the coreobject holding us had the right mark.
-   printf( "PERFORMING GC MARK %p\n", this );
+
    ItemListElement *h = m_head;
    while( h != 0 )
    {
