@@ -131,7 +131,7 @@ protected:
       ew_end
    } e_whence;
 
-   virtual int64 seek( int64 pos, e_whence w ) = 0;
+   virtual int64 seek( int64 pos, e_whence w );
    friend class Transcoder;
 
 public:
@@ -155,14 +155,14 @@ public:
 
    virtual ~Stream();
 
-   virtual bool close() = 0;
-   virtual int32 read( void *buffer, int32 size ) = 0;
-   virtual int32 write( const void *buffer, int32 size ) = 0;
-   virtual int64 tell() = 0;
-   virtual bool truncate( int64 pos=-1 ) = 0;
+   virtual bool close();
+   virtual int32 read( void *buffer, int32 size );
+   virtual int32 write( const void *buffer, int32 size );
+   virtual int64 tell();
+   virtual bool truncate( int64 pos=-1 );
    virtual bool errorDescription( ::Falcon::String &description ) const;
-   virtual int32 readAvailable( int32 msecs_timeout ) = 0;
-   virtual int32 writeAvailable( int32 msecs_timeout ) = 0;
+   virtual int32 readAvailable( int32 msecs_timeout );
+   virtual int32 writeAvailable( int32 msecs_timeout );
 
    int64 seekBegin( int64 pos ) {
       return seek( pos, ew_begin );
@@ -176,7 +176,7 @@ public:
       return seek( pos, ew_end );
    }
 
-   virtual int64 lastError() const = 0;
+   virtual int64 lastError() const;
 
    /** Gets next character from the stream.
       Subclasses must manage both stateful transcoding and
@@ -201,7 +201,7 @@ public:
       \param chr the character to write.
       \return true success, false on stream error.
    */
-   virtual bool put( uint32 chr ) = 0;
+   virtual bool put( uint32 chr );
 
    /** Writes a string on the stream.
       Encoding range is in [begin, end), that is, the last character encoded is end - 1.

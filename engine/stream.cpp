@@ -176,10 +176,91 @@ bool Stream::writeString( const String &source, uint32 begin, uint32 end )
    return true;
 }
 
+
+
+
+//======================================
+// Overridables
+//
+
 UserData *Stream::clone()
 {
-   m_status = t_unsupported;
+   status( t_unsupported );
    return 0;
+}
+
+bool Stream::close()
+{
+   status( t_unsupported );
+   return false;
+}
+
+
+int32 Stream::read( void *, int32 )
+{
+   status( t_unsupported );
+   return -1;
+}
+
+
+int32 Stream::write( const void *, int32 )
+{
+   status( t_unsupported );
+   return -1;
+}
+
+
+int64 Stream::tell()
+{
+   status( t_unsupported );
+   return -1;
+}
+
+
+bool Stream::truncate( int64 )
+{
+   status( t_unsupported );
+   return false;
+}
+
+
+int32 Stream::readAvailable( int32  )
+{
+   status( t_unsupported );
+   return -1;
+}
+
+
+int32 Stream::writeAvailable( int32 )
+{
+   status( t_unsupported );
+   return -1;
+}
+
+bool Stream::put( uint32 chr )
+{
+   status( t_unsupported );
+   return false;
+}
+
+
+int64 Stream::seek( int64 , e_whence )
+{
+   status( t_unsupported );
+   return -1;
+}
+
+
+int64 Stream::lastError() const
+{
+   return -1;
+}
+
+
+bool Stream::get( uint32 &chr )
+{
+   status( t_unsupported );
+   return false;
 }
 
 }
