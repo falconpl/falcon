@@ -396,9 +396,17 @@ FALCON_FUNC  IntrruptedError_init ( ::Falcon::VMachine *vm )
    Error_init( vm );
 }
 
+/*#
+   @funset convfuncs Conversion functions.
+   @brief Functions needed for minimal type conversion.
+
+   The functions listed here are meant to convert strings into numbers.
+
+*/
 
 /*#
    @function int
+   @inset convfuncs
    @param item The item to be converted
    @raise RangeError in case the given value cannot be converted to an integer.
    @brief Transforms the parameter in a integer.
@@ -476,6 +484,7 @@ FALCON_FUNC  val_int ( ::Falcon::VMachine *vm )
 
 /*#
    @function numeric
+   @inset convfuncs
    @brief Transforms the parameter in a number.
    @param item The item to be converted
    @return A floating point numeric value.
@@ -682,6 +691,7 @@ FALCON_FUNC  hexit ( ::Falcon::VMachine *vm )
 
 /*#
    @function chr
+   @inset convfuncs
    @param code an UNICODE character ID.
    @return a single-char string.
    @brief Converts a 0-255 integer in the corresponding character.
@@ -710,6 +720,7 @@ FALCON_FUNC  chr ( ::Falcon::VMachine *vm )
 
 /*#
    @function ord
+   @inset convfuncs
    @param string a string
    @return the UNICODE value of the first element in the string.
    @brief Returns the ASCII value of the first element in the string.
