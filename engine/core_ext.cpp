@@ -3495,6 +3495,22 @@ Module * core_module_init()
    core->addExtFunc( "oob", Falcon::core::core_oob );
    core->addExtFunc( "deoob", Falcon::core::core_deoob );
    core->addExtFunc( "isoob", Falcon::core::core_isoob );
+   
+   /*#   
+   @object Test
+   @brief A short test object
+   
+   This is just a test object
+   @prop test A test property. Wonder what it does?
+   */
+   
+   /*#
+         @method ntest Test
+         @brief tests the test object
+         @param t1 a test parameter
+         
+         This is just a test!
+         */
 
    return core;
 }

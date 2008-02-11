@@ -1146,7 +1146,7 @@ bool VMachine::callItem( const Item &callable, int32 paramCount, e_callMode call
       {
          m_bomParams = paramCount;
          bool bomRet = callable.callBom( this );
-         //m_stack->resize( m_stack->size() - paramCount );
+         m_stack->resize( m_stack->size() - paramCount );
          return bomRet;
       }
 
@@ -1459,7 +1459,7 @@ bool VMachine::callItemPass( const Item &callable  )
       {
          m_bomParams = paramCount();
          bool bomRet = callable.callBom( this );
-         callReturn();
+         m_stack->resize( m_stack->size() - m_bomParams );
          return bomRet;
       }
 

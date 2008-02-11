@@ -21,6 +21,7 @@ Falcon (0.8.9)
   * minor: Load now supports ".module" notation to load sibling modules.
   * major: Added import directive for explicit symbol import.
   * bugfix: Fixed deep user data GC marking in methods and classmethods.
+  * bugfix: Parameters in FBOM function calls was not removed from stack.
 
 Falcon (0.8.8)
   * bugfix: TRAV opcode may destroy its parameters while setting first loop
