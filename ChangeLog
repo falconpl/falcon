@@ -22,6 +22,8 @@ Falcon (0.8.9)
   * major: Added import directive for explicit symbol import.
   * bugfix: Fixed deep user data GC marking in methods and classmethods.
   * bugfix: Parameters in FBOM function calls was not removed from stack.
+  * minor: It is now possible to call functions stored in classes; class functions
+      not referencing "self" can be safely called this way, which makes them "static".
 
 Falcon (0.8.8)
   * bugfix: TRAV opcode may destroy its parameters while setting first loop

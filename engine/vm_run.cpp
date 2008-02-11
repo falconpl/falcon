@@ -1825,15 +1825,22 @@ void opcodeHandler_LDP( register VMachine *vm )
             if ( sourceClass == 0 )
                sourceClass = source->asClass();
 
-            if( sourceClass->properties().findKey( property, pos ) ) {
+            if( sourceClass->properties().findKey( property, pos ) ) 
+            {
                Item *prop = sourceClass->properties().getValue( pos );
                // now, accessing a method in a class means that we want to call the base method in a
                // self item:
-               if( prop->type() == FLC_ITEM_FUNC && self != 0 )
-                  vm->m_regA.setMethod( self, prop->asFunction(), prop->asModule() );
+               if( prop->type() == FLC_ITEM_FUNC )
+               {
+                  if ( self != 0 )
+                     vm->m_regA.setMethod( self, prop->asFunction(), prop->asModule() );
+                  else
+                     vm->m_regA.setFunction( prop->asFunction(), prop->asModule() );
+               }
                else
-                  vm->raiseRTError(
-                     new RangeError( ErrorParam( e_prop_acc ).origin( e_orig_vm ).extra( "LDP" ) ) );
+               {
+                  vm->regA() = *prop;
+               }
                return;
             }
          break;
