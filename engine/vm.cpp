@@ -1459,7 +1459,7 @@ bool VMachine::callItemPass( const Item &callable  )
       {
          m_bomParams = paramCount();
          bool bomRet = callable.callBom( this );
-         m_stack->resize( m_stack->size() - m_bomParams );
+         callReturn();
          return bomRet;
       }
 
