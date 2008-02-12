@@ -132,10 +132,18 @@ FALCON_FUNC  len ( ::Falcon::VMachine *vm )
 /****************************************
    Error management
 ****************************************/
+/*#
+   @group errors The Falcon Error System.
+   @brief Falcon classes reflecting internal errors.
+
+   This is the list of classes used by falcon core module to report the scripts (or
+   embedding applications) about runtime errors.
+*/
 
 /*#
    @class Error
    @brief Internal VM and runtime error reflection class.
+   @ingroup errors
 
    @optparam code a numeric error code.
    @optparam description a textual description of the error code.
@@ -302,6 +310,7 @@ FALCON_FUNC  Error_getSysErrDesc ( ::Falcon::VMachine *vm )
    @optparam extra
 
    @from Error code, description, extra
+   @ingroup errors
 */
 FALCON_FUNC  SyntaxError_init ( ::Falcon::VMachine *vm )
 {
@@ -763,7 +772,9 @@ FALCON_FUNC  hToString ( ::Falcon::VMachine *vm )
    Fbom::toString( vm, elem, format );
 }
 
-/*@begingroup varparm Variable Parameter management.
+/*#
+   @group varparm Variable Parameter management.
+
    Falcon supports variable parameter calling; a function or method may access
    the items that have been used in the parameter call by counting them and
    accessing them one by one.
@@ -776,6 +787,7 @@ FALCON_FUNC  hToString ( ::Falcon::VMachine *vm )
    the number of formal parameters. So, part of the paramters may be accessible via
    paramter names, and the others may be accessed with this functions.
 
+   @begingroup varparm
 */
 
 /*#
@@ -936,7 +948,7 @@ FALCON_FUNC  paramSet ( ::Falcon::VMachine *vm )
    }
 }
 
-/*@endgroup */
+/*# @endgroup */
 
 static bool internal_eq( ::Falcon::VMachine *vm, const Item &first, const Item &second )
 {
