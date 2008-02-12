@@ -57,17 +57,18 @@ static int DBIHandle_itemToSqlValue( DBIHandle *dbh, const Item *i, String &valu
          value.append( "'" );
          return 1;
 
-      case FLC_ITEM_OBJECT:
-         CoreObject *o = i->asObject();
-         //vm->itemToString( value, ??? )
-         if ( o->derivedFrom( "TimeStamp" ) ) {
-            TimeStamp *ts = (TimeStamp *) o->getUserData();
-            ts->toString( value );
-            value.prepend( "'" );
-            value.append( "'" );
-            return 1;
+      case FLC_ITEM_OBJECT: {
+            CoreObject *o = i->asObject();
+            //vm->itemToString( value, ??? )
+            if ( o->derivedFrom( "TimeStamp" ) ) {
+               TimeStamp *ts = (TimeStamp *) o->getUserData();
+               ts->toString( value );
+               value.prepend( "'" );
+               value.append( "'" );
+               return 1;
+            }
+            return 0;
          }
-         return 0;
 
       case FLC_ITEM_NIL:
          value = "NULL";
