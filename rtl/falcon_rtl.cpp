@@ -26,6 +26,17 @@
 #include "falcon_rtl_ext.h"
 #include "version.h"
 
+/*#
+   @module falcon_rtl The Runtime Library module
+   @brief Main basic falcon module.
+   
+   This module hold minimal functions, classes and objects needed for Falcon to interact with the
+   rest of the world.
+   
+   However, this module is not strictly necessary to Falcon language; embedding applications may
+   safely ignore this if they just want to provide scripts with the ability to work on Falcon data.
+*/
+
 FALCON_MODULE_DECL( const Falcon::EngineData &data )
 {
    // setup DLL engine common data

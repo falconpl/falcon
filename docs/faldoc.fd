@@ -8,7 +8,7 @@
 # Documentation generic data
 ################################################
 
-Title = Falcon - The core module
+Title = Falcon - Base Function Reference.
 Author = The Falcon Committee
 Version = 0.8.10
 
@@ -16,13 +16,13 @@ Version = 0.8.10
 # Faldoc Input settings
 ################################################
 
-Input.directory=.
+Input.directory=../rtl
 
-Input.wildcard=*..     #we use only...
-Input.recursive=true
+Input.wildcard=*.cpp     #we use only...
+Input.recursive=false
 
 # Other files may be specified here
-Input.extra=core_ext.cpp
+Input.extra=../engine/core_ext.cpp
 
 ################################################
 # Faldoc Output settings
@@ -36,5 +36,6 @@ Output.module=html
 # Output.<module>.<parameters> configs
 ################################################
 
-Output.html.directory=docs/core/html
+Output.html.directory=html
 Output.html.url=.
+Output.html.doctitle=Falcon Function Reference

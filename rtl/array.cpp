@@ -18,11 +18,22 @@
    package.
 */
 
-/** \file
-   Array specialized operation
+/*#
+   @file array.cpp  Array specialized operation
+   
    Theese operations replicate VM array management,
    but they are more flexible and use atomic calls in
    callbacks.
+*/
+
+/*#
+   @beginmodule falcon_rtl
+*/
+
+/*#
+   @funset Arrays Array related functions.
+   @brief Array related functions.
+   @beginfunset Arrays
 */
 
 #include <falcon/setup.h>
@@ -34,6 +45,16 @@
 
 namespace Falcon { namespace Ext {
 
+/*# 
+   @function arrayIns
+   @brief Inserts an item into an array.
+   @param array The array where the item should be placed.
+   @param itempos  The position where the item should be placed.
+   @param item the item to be exchanged.
+
+    TODO: Write this text
+ */
+   
 FALCON_FUNC  arrayIns ( ::Falcon::VMachine *vm )
 {
    Item *array_x = vm->param(0);

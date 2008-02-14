@@ -74,11 +74,13 @@ FALCON_FUNC  vmVersionName( ::Falcon::VMachine *vm )
    Generic item handling
 ****************************************/
 
-
 /*#
-   @main The Core Module.
+   @module Core The Core Module.
+   
    Direct support to language features and Virtual Machine interface.
-*/
+
+   @beginmodule Core
+ */
 
 /*#
    @function len
