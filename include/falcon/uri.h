@@ -56,8 +56,12 @@ class Path: public BaseAlloc
 {
    String m_path;
 
+   // resStart is always 1
+   uint32 m_resEnd;
    uint32 m_pathStart;
+   uint32 m_pathEnd;
    uint32 m_fileStart;
+   uint32 m_fileEnd;
    uint32 m_extStart;
 
    /** Analyze the path, splitting its constituents.

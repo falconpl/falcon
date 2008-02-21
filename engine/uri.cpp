@@ -130,16 +130,26 @@ void Path::analyze( bool isWin )
          if ( lastSlash < len - 1 )
             m_fileStart = lastSlash + 1;
       }
+      // otherwise, the file starts from beginning.
+      else
+         m_fileStart = 0;
    }
    else {
+      m_resEnd = colonPos - 1;
       if ( firstSlash != String::npos )
+      {
          m_pathStart = colonPos + 1;
+         // file starts right after last slash, which may be the same as first.
+         if ( lastSlash < len - 1 )
+            m_fileStart = lastSlash + 1;
+      }
+      else
+         m_fileStart = colonPos + 1;
    }
 
    // extension is after last dot, if present.
    if( lastDot != String::npos )
    {
-      // but only if there are some non-dot chars between file and extension.
       if( lastDot < len - 1 )
          m_extStart = lastDot + 1;
    }
@@ -158,7 +168,7 @@ void Path::getWinFormat( String &str ) const
    str.reserve( m_path.size() );
 
    // if we have a resource specifier, we know we have a leading /
-   uint32 startPos = m_path.find( ":" ) > 0 ? 1 : 0;
+   uint32 startPos = (m_pathStart != String::npos && m_pathStart > 0) ? 1 : 0;
    uint32 endPos = m_path.length();
    while( startPos < endPos )
    {
@@ -172,17 +182,30 @@ void Path::getWinFormat( String &str ) const
 
 void Path::getResource( String &str ) const
 {
-   if ( m_pathStart != String::npos )
+   if ( m_pathStart != String::npos && m_pathStart > 0 )
    {
       // 0 is "/" and m_pathStart-1 is ":"
       str = m_path.subString( 1, m_pathStart - 1 );
    }
+   else if ( m_fileStart != String::npos && m_fileStart > 0 )
+   {
+      str = m_path.subString( 1, m_fileStart - 1 );
+   }
+   else
+      str.size(0);
 }
 
 
 void Path::getLocation( String &str ) const
 {
-   // have we got a ":" part?
+   if ( m_pathStart != String::npos )
+   {
+      // m_pathStart is "/" and m_fileStart is one after "/" 
+      // this is ok also if m_fileStart == npos
+      str = m_path.subString( m_pathStart, m_fileStart - 1 );
+   }
+   else
+      str.size(0);
 
 }
 
@@ -201,30 +224,42 @@ void Path::getWinLocation( String &str ) const
 
 void Path::getFilename( String &str ) const
 {
-   uint32 slashPos = m_path.rfind( "/" );
-   uint32 colonPos = m_path.find( ":" );
-   uint32 dotPos = m_path.find( "." );
-
-   // get the initial position of the file part.
-   uint32 startPos = slashPos < colonPos ? slashPos : colonPos;
-   if ( startPos == String::npos )
-      startPos = 0;
+   if ( m_filePos != String::npos )
+      str = m_path.subString( m_filePos, m_extPos - 1);
    else
-      startPos++;
-
-   // ok also if dotPos is npos
-   str = m_path.subString(
+      str.size(0);
 }
 
 
-   /** Stores the extension part in a given string. */
-   void getExtension( String &str ) const;
+void Path::getExtension( String &str ) const
+{
+   if ( m_extPos != String::npos )
+      str = m_path.subString( m_extPos );
+   else
+      str.size(0);
+}
 
-   /** Sets the resource part. */
-   void setResource( const String &res );
 
-   /** Sets the location part in RFC3986 format. */
-   void setLocation( const String &loc );
+void setResource( const String &res )
+{
+   uint32 start = m_pathStart < m_fileStart ? m_pathStart : m_fileStart;
+   if ( start != String::npos && start > 0 )
+   {
+      m_path.change( 1, start - 1, res );
+   }
+   else {
+      m_path.prepend( "/" + res );
+   }
+   analyze( false );
+}
+
+void setLocation( const String &loc )
+{
+   if ( m_pathStart != String::npos )
+      m_path.change( m_pathStart, m_fileStart-1, loc );
+   else 
+      m_path.prepend( loc );
+}
 
    /** Sets the location part in MS-Windows format. */
    void setWinLocation( const String &loc );
