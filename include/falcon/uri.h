@@ -155,6 +155,17 @@ public:
    */
    bool getFilename( String &str ) const;
 
+   /** Get the file part alone (without extension). */
+   String getFile() const { String fmt; getFile( fmt ); return fmt; }
+
+   /** Get the file part alone (without extension).
+      If the path has not a filename part, the string is also cleaned.
+      \param str the string where to store the filename part.
+      \return true if the path has a filename part.
+   */
+   bool getFile( String &str ) const;
+
+
    /** Get the extension part. */
    String getExtension() const { String fmt; getExtension( fmt ); return fmt; }
 
@@ -176,6 +187,9 @@ public:
 
    /** Sets the file part. */
    void setFile( const String &file );
+
+   /** Sets the filename part (both file and extension). */
+   void setFilename( const String &fname );
 
    /** Sets the extension part. */
    void setExtension( const String &extension );

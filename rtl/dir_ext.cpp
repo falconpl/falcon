@@ -622,8 +622,251 @@ FALCON_FUNC  fileChgroup ( ::Falcon::VMachine *vm )
    }
 }
 
-}
+//====================================================
+// (reflexive) Class path
+//
+
+/*# @class Path
+   @brief Interface to local filesystem path definition.
+   @optparam path The path that will be used as initial path.
+   @throws ParamError in case the inital path is malformed.
+
+   This class offers an object oriented interface to access
+   path elements given a complete path, or to build a path from its elements.
+*/
+
+/*# @property unit
+   @brief Unit specificator.
+   @throws ParamError if assigned to a value that makes the path invalid.
+
+   This is the unit specificator (disk name) used in some filesystems.
+   It is separated by the rest of the path via a ":". According to
+   RFC 3986 it always starts with a "/", which is automatically added
+   if absent.
+*/
+
+/*# @property location
+   @brief Location specificator.
+   @throws ParamError if assigned to a value that makes the path invalid.
+
+   This is the "path to file". It can start with a "/" or not; if
+   it starts with a "/" it is considered absolute.
+*/
+
+/*# @property file
+   @brief File part.
+   @throws ParamError if assigned to a value that makes the path invalid.
+
+   This is the part of the path that identifies an element in a directory.
+   It includes everything after the last "/" path separator.
+*/
+
+/*# @property filename
+   @brief File name part.
+   @throws ParamError if assigned to a value that makes the path invalid.
+
+   This element coresponds to the first part of the file element, if it is
+   divided into a filename and an extension by a "." dot.
+*/
+
+/*# @property extension
+   @brief File extension part.
+   @throws ParamError if assigned to a value that makes the path invalid.
+
+   This element coresponds to the first last of the file element, if it is
+   divided into a filename and an extension by a "." dot.
+*/
+
+/*# @property path
+   @brief Complete path.
+   @throws ParamError if assigned to a value that makes the path invalid.
+
+   This is the complete path referred by this object.
+*/
+
+class PathCarrier: public UserData
+{
+public:
+   Path m_path;
+
+   virtual void getProperty( VMachine *vm, const String &propName, Item &prop );
+   virtual void setProperty( VMachine *vm, const String &propName, Item &prop );
+   virtual bool isReflective();
+
+};
+
+bool PathCarrier::isReflective()
+{
+   return true;
 }
 
+void PathCarrier::setProperty( VMachine *vm, const String &propName, Item &prop )
+{
+   if( ! prop.isString() )
+   {
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params ).
+         origin( e_orig_runtime ).extra( "S" ) ) );
+      return;
+   }
+
+   if ( propName == "unit" )
+   {
+      m_path.setResource( *prop.asString() );
+   }
+   else if ( propName == "location" )
+   {
+      m_path.setLocation( *prop.asString() );
+   }
+   else if ( propName == "file" )
+   {
+      m_path.setFile( *prop.asString() );
+   }
+   else if ( propName == "filename" )
+   {
+      m_path.setFilename( *prop.asString() );
+   }
+   else if ( propName == "extension" )
+   {
+      m_path.setExtension( *prop.asString() );
+   }
+   else if ( propName == "path" )
+   {
+      m_path.set( *prop.asString() );
+   }
+
+   if ( ! m_path.isValid() )
+   {
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params ).
+         origin( e_orig_runtime ).
+         extra( vm->moduleString( msg::rtl_invalid_path ) ) ) );
+   }
+}
+
+void PathCarrier::getProperty( VMachine *vm, const String &propName, Item &prop )
+{
+   if ( ! m_path.isValid() )
+   {
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params ).
+         origin( e_orig_runtime ).
+         extra( vm->moduleString( msg::rtl_invalid_path ) ) ) );
+   }
+
+   GarbageString *item = new GarbageString( vm );
+   prop = item;
+   if ( propName == "unit" )
+   {
+      m_path.getResource( *item );
+   }
+   else if ( propName == "location" )
+   {
+      m_path.getLocation( *item );
+   }
+   else if ( propName == "file" )
+   {
+      m_path.getFile( *item );
+   }
+   else if ( propName == "filename" )
+   {
+      m_path.getFilename( *item );
+   }
+   else if ( propName == "extension" )
+   {
+      m_path.getExtension( *item );
+   }
+   else if ( propName == "path" )
+   {
+      item->copy( m_path.get() );
+   }
+}
+
+/*# @init Path
+   @brief Constructor for the Path class.
+   @throws ParamError in case the inital path is malformed.
+
+   Builds the path object, optionally using the given parameter
+   as a complete path constructor.
+
+   If the parameter is an array, it must have at least four
+   string elements, and it will be used to build the path from
+   its constituents. In example:
+
+   @code
+      unit = "C"
+      location = "/a/path/to"
+      file = "somefile"
+      ext = "anext"
+      p = Path( [ unit, location, file, ext ] )
+   @endocde
+
+   @b nil can be passed if some part of the specification is not used.
+
+   @note Use the fileNameMerge() function to simply merge elements of a path
+   specification into a string.
+   @see fileNameMerge
+*/
+
+FALCON_FUNC  Path_init ( ::Falcon::VMachine *vm )
+{
+   Item *p0 = vm->param(0);
+
+   if ( p0 == 0 || ( ! p0->isString() && ! p0->isArray() ) )
+   {
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         origin( e_orig_runtime ).extra( "S|A" ) ) );
+      return;
+   }
+
+   // we need anyhow a carrier.
+   PathCarrier *carrier = new PathCarrier;
+   CoreObject *self = vm->self().asObject();
+   self->setUserData( carrier );
+
+   if ( p0->isString() )
+   {
+      carrier->m_path.set( *p0->asString() );
+   }
+   else {
+      const String *unitspec = 0;
+      const String *fname = 0;
+      const String *fpath = 0;
+      const String *fext = 0;
+
+      String sDummy;
+
+      const CoreArray &array = *p0->asArray();
+      if( array.length() >= 0 && array[0].isString() )
+         unitspec = array[0].asString();
+      else
+         unitspec = &sDummy;
+
+      if( array.length() >= 1 && array[1].isString() )
+         fpath = array[1].asString();
+      else
+         fpath = &sDummy;
+
+      if( array.length() >= 2 && array[2].isString() )
+         fname = array[2].asString();
+      else
+         fname = &sDummy;
+
+      if( array.length() >= 3 && array[3].isString() )
+         fext = array[3].asString();
+      else
+         fext = &sDummy;
+
+      carrier->m_path.join( *unitspec, *fpath, *fname, *fext );
+   }
+
+   if ( ! carrier->m_path.isValid() )
+   {
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         origin( e_orig_runtime ).
+         extra( vm->moduleString( msg::rtl_invalid_path ) ) ) );
+   }
+
+}
+
+}
+}
 
 /* end of dir.cpp */

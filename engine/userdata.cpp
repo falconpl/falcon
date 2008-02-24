@@ -34,11 +34,11 @@ bool UserData::isReflective()
    return false;
 }
 
-void UserData::getProperty( const String &propName, Item &prop )
+void UserData::getProperty( VMachine *vm, const String &propName, Item &prop )
 {
 }
 
-void UserData::setProperty( const String &propName, Item &prop )
+void UserData::setProperty( VMachine *vm, const String &propName, Item &prop )
 {
 }
 

@@ -86,7 +86,8 @@ bool Path::analyze( bool isWin )
          // double colon -- error ?
          // error also if this was the first loop
          // also, if we had a "/" before, this is an error
-         if ( bHadColon || p == 0 || m_pathStart != String::npos )
+         if ( bHadColon || p == 0 ||
+            ( m_pathStart != String::npos && m_pathStart != 0 ) )
          {
             m_bValid = false;
             return false;
@@ -211,7 +212,7 @@ bool Path::getWinLocation( String &str ) const
 }
 
 
-bool Path::getFilename( String &str ) const
+bool Path::getFile( String &str ) const
 {
    if ( m_fileStart != String::npos )
    {
@@ -222,6 +223,19 @@ bool Path::getFilename( String &str ) const
    str.size(0);
    return false;
 }
+
+bool Path::getFilename( String &str ) const
+{
+   if ( m_fileStart != String::npos )
+   {
+      str = m_path.subString( m_fileStart );
+      return true;
+   }
+
+   str.size(0);
+   return false;
+}
+
 
 
 bool Path::getExtension( String &str ) const
@@ -239,12 +253,24 @@ bool Path::getExtension( String &str ) const
 
 void Path::setResource( const String &res )
 {
-   if ( m_resEnd != String::npos )
+   if ( res.size() )
    {
-      m_path.change( 1, m_resEnd, res );
+      if ( m_resEnd != String::npos )
+      {
+         m_path.change( 1, m_resEnd, res );
+      }
+      else {
+         m_path.prepend( "/" + res );
+      }
    }
    else {
-      m_path.prepend( "/" + res );
+      if ( m_resEnd != String::npos )
+      {
+         m_path.change( 0, m_resEnd+1, "" );
+      }
+      // else no need to do nothing
+      else
+         return;
    }
 
    analyze( false );
@@ -252,20 +278,43 @@ void Path::setResource( const String &res )
 
 void Path::setLocation( const String &in_loc )
 {
-   String loc = in_loc;
 
-   if ( loc.length() >0 && loc.getCharAt( loc.length() - 1 ) != '/' )
+
+   if ( in_loc.length() >0 )
    {
-      loc.append( '/' );
-   }
-
-   if ( m_pathStart != String::npos )
-      m_path.change( m_pathStart, m_pathEnd, loc );
-   else {
-      if ( m_resEnd != String::npos )
+      if ( m_pathStart != String::npos )
+         m_path.change( m_pathStart, m_pathEnd, in_loc );
+      else
       {
-         m_path.change( m_resEnd+1, m_resEnd+1, loc );
+         if ( m_resEnd != String::npos )
+         {
+            if( m_fileStart != String::npos && in_loc.getCharAt( in_loc.length() - 1 ) != '/' )
+            {
+               String loc = in_loc;
+               loc.append( '/' );
+               m_path.change( m_resEnd+1, m_resEnd+1, loc );
+            }
+            else
+               m_path.change( m_resEnd+1, m_resEnd+1, in_loc );
+         }
+         else
+         {
+            if ( m_fileStart != String::npos )
+            {
+               if ( in_loc.getCharAt( in_loc.length() - 1 ) != '/' )
+                  m_path.prepend( "/" );
+               m_path.prepend( in_loc );
+            }
+            else
+               m_path = in_loc;
+         }
       }
+   }
+   else {
+      if( m_pathStart != String::npos )
+         m_path.change( m_pathStart, m_pathEnd+1, "" );
+      else
+         return;
    }
 
    analyze( false );
@@ -275,18 +324,27 @@ void Path::setWinLocation( const String &in_loc )
 {
    String loc = in_loc;
 
-   if ( loc.length() >0 && loc.getCharAt( loc.length() - 1 ) != '\\' )
+   if ( loc.length() >0 )
    {
-      loc.append( '\\' );
-   }
-
-   if ( m_pathStart != String::npos )
-      m_path.change( m_pathStart, m_pathEnd, loc );
-   else {
-      if ( m_resEnd != String::npos )
+      if ( loc.getCharAt( loc.length() - 1 ) != '\\' )
       {
-         m_path.change( m_resEnd+1, m_resEnd+1, loc );
+         loc.append( '\\' );
       }
+
+      if ( m_pathStart != String::npos )
+         m_path.change( m_pathStart, m_pathEnd, loc );
+      else {
+         if ( m_resEnd != String::npos )
+         {
+            m_path.change( m_resEnd+1, m_resEnd+1, loc );
+         }
+      }
+   }
+   else {
+      if( m_pathStart != String::npos )
+         m_path.change( m_pathStart, m_pathEnd+1, "" );
+      else
+         return;
    }
 
    analyze( true );
@@ -300,11 +358,25 @@ void Path::setFile( const String &file )
       m_path.change( m_fileStart, m_fileEnd, file );
    }
    else {
+      // we may loose the extension, but it's ok
       if ( m_pathStart != String::npos )
       {
-         if ( m_path.getCharAt( m_path.length() - 1 ) != '/' )
-            m_path.append( '/' );
-         m_path.append( file );
+         if ( file.size() !=  0 )
+         {
+            if ( m_path.getCharAt( m_path.length() - 1 ) != '/' )
+               m_path.append( '/' );
+            m_path.append( file );
+         }
+         else
+            m_path.change( m_pathEnd, String::npos, "" );
+      }
+      else if ( m_resEnd != String::npos )
+      {
+         m_path.change( m_resEnd + 1, m_resEnd + 1, file );
+      }
+      else
+      {
+         m_path.prepend( file );
       }
    }
 
@@ -316,17 +388,58 @@ void Path::setExtension( const String &extension )
 {
    if ( m_extStart != String::npos )
    {
-      m_path.change( m_extStart, String::npos, extension );
+      if( extension.size() != 0 )
+         m_path.change( m_extStart, String::npos, extension );
+      else
+         m_path.change( m_extStart-1, String::npos, "" );
+
    }
    else {
-      if ( m_path.getCharAt( m_path.length() - 1 ) != '.' )
-            m_path.append( '.' );
-      m_path.append( extension );
+      if ( extension.size() != 0 )
+      {
+         if ( m_path.getCharAt( m_path.length() - 1 ) != '.' )
+               m_path.append( '.' );
+         m_path.append( extension );
+      }
+      else
+         return;
    }
 
    analyze( false );
 }
 
+
+void Path::setFilename( const String &fname )
+{
+   if( m_fileStart != String::npos )
+   {
+      m_path.change( m_fileStart, String::npos, fname );
+   }
+   else {
+      // we may loose the extension, but it's ok
+      if ( m_pathStart != String::npos )
+      {
+         if ( fname.size() !=  0 )
+         {
+            if ( m_path.getCharAt( m_path.length() - 1 ) != '/' )
+               m_path.append( '/' );
+            m_path.append( fname );
+         }
+         else
+            m_path.change( m_pathEnd, String::npos, "" );
+      }
+      else if ( m_resEnd != String::npos )
+      {
+         m_path.change( m_resEnd + 1, m_resEnd + 1, fname );
+      }
+      else
+      {
+         m_path = fname;
+      }
+   }
+
+   analyze( false );
+}
 
 bool Path::isAbsolute() const
 {

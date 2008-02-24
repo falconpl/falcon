@@ -107,7 +107,7 @@ bool CoreObject::setPropertyRef( const String &propName, Item &value )
       origin()->referenceItem( *prop, value );
       if( m_user_data != 0 && m_user_data->isReflective() )
       {
-         m_user_data->setProperty( propName, *prop );
+         m_user_data->setProperty( origin(), propName, *prop );
       }
 
       return true;
@@ -130,7 +130,7 @@ bool CoreObject::setProperty( const String &propName, const Item &value )
 
       if( m_user_data != 0 && m_user_data->isReflective() )
       {
-         m_user_data->setProperty( propName, *prop );
+         m_user_data->setProperty( origin(), propName, *prop );
       }
 
       return true;
@@ -153,7 +153,7 @@ bool CoreObject::setProperty( const String &propName, const String &value )
 
       if( m_user_data != 0 && m_user_data->isReflective() )
       {
-         m_user_data->setProperty( propName, *prop );
+         m_user_data->setProperty( origin(), propName, *prop );
       }
 
       return true;
@@ -174,7 +174,7 @@ bool CoreObject::setProperty( const String &propName, int64 value )
 
       if( m_user_data != 0 && m_user_data->isReflective() )
       {
-         m_user_data->setProperty( propName, *prop );
+         m_user_data->setProperty( origin(), propName, *prop );
       }
 
       return true;
@@ -193,7 +193,7 @@ bool CoreObject::getProperty( const String &propName, Item &ret ) const
       Item *prop = m_properties.getValue( pos );
       if( m_user_data != 0 && m_user_data->isReflective() )
       {
-         m_user_data->getProperty( propName, *prop );
+         m_user_data->getProperty( origin(), propName, *prop );
       }
 
       ret = *prop;
@@ -215,7 +215,7 @@ Item *CoreObject::getProperty( const String &propName )
 
    if( m_user_data != 0 && m_user_data->isReflective() )
    {
-      m_user_data->getProperty( propName, *prop );
+      m_user_data->getProperty( origin(), propName, *prop );
    }
 
    return prop;
@@ -232,7 +232,7 @@ bool CoreObject::getMethod( const String &propName, Item &method ) const
 
    if( m_user_data != 0 && m_user_data->isReflective() )
    {
-      m_user_data->getProperty( propName, *mth );
+      m_user_data->getProperty( origin(), propName, *mth );
    }
    method = *mth;
 
@@ -245,7 +245,7 @@ Item &CoreObject::getPropertyAt( uint32 pos ) const
    register Item *prop = m_properties.getValue( pos );
    if( m_user_data && m_user_data->isReflective() )
    {
-      m_user_data->getProperty( *m_properties.getKey( pos ), *prop );
+      m_user_data->getProperty( origin(), *m_properties.getKey( pos ), *prop );
    }
    return *prop;
 }

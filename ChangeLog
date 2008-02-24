@@ -25,6 +25,7 @@ Falcon (0.8.9)
   * minor: It is now possible to call functions stored in classes; class functions
       not referencing "self" can be safely called this way, which makes them "static".
   * bugfix: Timestamp.distance() was returning a random value instead of nil.
+  * Minor: Added Path reflexive class.
 
 Falcon (0.8.8)
   * bugfix: TRAV opcode may destroy its parameters while setting first loop

@@ -29,10 +29,10 @@
 /*#
    @module falcon_rtl The Runtime Library module
    @brief Main basic falcon module.
-   
+
    This module hold minimal functions, classes and objects needed for Falcon to interact with the
    rest of the world.
-   
+
    However, this module is not strictly necessary to Falcon language; embedding applications may
    safely ignore this if they just want to provide scripts with the ability to work on Falcon data.
 */
@@ -366,6 +366,19 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    self->addClassMethod( list_class, "erase", Falcon::Ext::List_erase );
    self->addClassMethod( list_class, "insert", Falcon::Ext::List_insert );
    self->addClassMethod( list_class, "clear", Falcon::Ext::List_clear );
+
+   //=======================================================================
+   // The path class
+   //=======================================================================
+   Falcon::Symbol *path_class = self->addClass( "Path", Falcon::Ext::Path_init );
+   path_class->setWKS(true);
+
+   self->addClassProperty( path_class, "path" );
+   self->addClassProperty( path_class, "unit" );
+   self->addClassProperty( path_class, "location" );
+   self->addClassProperty( path_class, "file" );
+   self->addClassProperty( path_class, "extension" );
+   self->addClassProperty( path_class, "filename" );
 
    //=======================================================================
    // The command line parser class

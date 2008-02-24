@@ -34,6 +34,7 @@ namespace Falcon {
 class Item;
 class String;
 class MemPool;
+class VMachine;
 
 /** Embeddable falcon object user data.
    An instance of this class can be set as "user data" of Falcon scripts objects.
@@ -91,19 +92,23 @@ public:
       When this method is called, the reflected object has already determined that
       it can access the property.
 
+      However, the UserData may raise an error using the VM pointer it receives.
+
       \param propName the name of the property to be read.
       \param prop the item that should assume the value of the property
    */
-   virtual void getProperty( const String &propName, Item &prop );
+   virtual void getProperty( VMachine *vm, const String &propName, Item &prop );
 
    /** Set given property.
       When this method is called, the reflected object has already changed the
       property in the item.
 
+      However, the UserData may raise an error using the VM pointer it receives.
+
       \param propName the name of the property to be read.
       \param prop the item that should assume the value of the property
    */
-   virtual void setProperty( const String &propName, Item &prop );
+   virtual void setProperty( VMachine *vm, const String &propName, Item &prop );
 
    /** Clone the user data.
       If the user data cannot be cloned, the method may return 0;

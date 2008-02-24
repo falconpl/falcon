@@ -343,6 +343,9 @@ FALCON_FUNC FileStat_readStats ( ::Falcon::VMachine *vm );
 
 FALCON_FUNC  itemCopy( ::Falcon::VMachine *vm );
 
+/** Path class */
+FALCON_FUNC Path_init ( ::Falcon::VMachine *vm );
+
 /** Message table **/
 extern wchar_t *message_table[];
 
