@@ -1623,7 +1623,7 @@ FALCON_FUNC  Iterator_value( ::Falcon::VMachine *vm )
                switch( subst->type() )
                {
                   case FLC_ITEM_STRING:
-                     porigin->asString()->change( p, p + 1, subst->asString() );
+                     porigin->asString()->change( p, p + 1, *subst->asString() );
                   break;
 
                   case FLC_ITEM_NUM:

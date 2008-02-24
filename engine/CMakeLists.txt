@@ -145,6 +145,7 @@ ADD_LIBRARY( falcon_engine SHARED
    traits.cpp
    transcoding.cpp
    userdata.cpp
+   uri.cpp
    vmcontext.cpp
    vm.cpp
    vmmaps.cpp

@@ -678,9 +678,11 @@ public:
    void setCharAt( uint32 pos, uint32 chr ) { m_class->setCharAt( this, pos, chr ); }
    String subString( int32 start, int32 end ) const { return String( *this, start, end ); }
    String subString( int32 start ) const { return String( *this, start, length() ); }
-   bool change( int32 start, const String *other ) { return m_class->change( this, start, csh::npos, other ); }
-   bool change( int32 start, int32 end, const String *other ) {
-      return m_class->change( this, start, end, other );
+   bool change( int32 start, const String &other ) {
+      return m_class->change( this, start, csh::npos, &other );
+   }
+   bool change( int32 start, int32 end, const String &other ) {
+      return m_class->change( this, start, end, &other );
    }
    void insert( uint32 pos, uint32 len, const String &source ) { m_class->insert( this, pos, len, &source ); }
    void remove( uint32 pos, uint32 len ) { m_class->remove( this, pos, len ); }

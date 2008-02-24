@@ -1825,7 +1825,7 @@ void opcodeHandler_LDP( register VMachine *vm )
             if ( sourceClass == 0 )
                sourceClass = source->asClass();
 
-            if( sourceClass->properties().findKey( property, pos ) ) 
+            if( sourceClass->properties().findKey( property, pos ) )
             {
                Item *prop = sourceClass->properties().getValue( pos );
                // now, accessing a method in a class means that we want to call the base method in a
@@ -2443,8 +2443,8 @@ void opcodeHandler_STVS( register VMachine *vm )
             operand1->setString( gcs );
 
             bool result = operand2->asRangeIsOpen() ?
-               gcs->change( operand2->asRangeStart(), origin.asString() ) :
-               gcs->change( operand2->asRangeStart(), operand2->asRangeEnd(), origin.asString() );
+               gcs->change( operand2->asRangeStart(), *origin.asString() ) :
+               gcs->change( operand2->asRangeStart(), operand2->asRangeEnd(), *origin.asString() );
             if ( result )
                return;
          }
@@ -2617,8 +2617,8 @@ void opcodeHandler_STV( register VMachine *vm )
             GarbageString *gcs = new GarbageString( vm, *operand1->asString() );
             operand1->setString( gcs );
             bool result = operand2->asRangeIsOpen() ?
-               gcs->change( operand2->asRangeStart(), origin->asString() ) :
-               gcs->change( operand2->asRangeStart(), operand2->asRangeEnd(), origin->asString() );
+               gcs->change( operand2->asRangeStart(), *origin->asString() ) :
+               gcs->change( operand2->asRangeStart(), operand2->asRangeEnd(), *origin->asString() );
             if ( result )
                return;
          }
@@ -3699,7 +3699,7 @@ void opcodeHandler_TRAC( register VMachine *vm )
 
             if( copied->isString() )
             {
-                  sstr->change( counter, counter + 1, copied->asString() );
+                  sstr->change( counter, counter + 1, *copied->asString() );
             }
             else if( copied->isOrdinal() )
                sstr->setCharAt( counter, (uint32) copied->forceInteger() );

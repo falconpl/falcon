@@ -33,8 +33,13 @@
 #include <falcon/dir_sys.h>
 #include <falcon/memory.h>
 #include <falcon/fassert.h>
-#include <string.h>
+#include <falcon/uri.h>
+
 #include "falcon_rtl_ext.h"
+#include "rtl_messages.h"
+
+#include <string.h>
+
 
 namespace Falcon {
 
@@ -190,7 +195,7 @@ FALCON_FUNC  fileNameSplit ( ::Falcon::VMachine *vm )
    // a filename is always in this format:
    // [DISK_SPEC or SERVER:][/path/to/file/]file.part[.ext]
 
-   // returns an array of 4 elemetns. ALWAYS.
+   // returns an array of 4 elements. ALWAYS.
    Item *name = vm->param(0);
    if ( name == 0 || ! name->isString() )
    {
@@ -198,187 +203,91 @@ FALCON_FUNC  fileNameSplit ( ::Falcon::VMachine *vm )
       return;
    }
 
+   Path path( *name->asString() );
+   if ( ! path.isValid() )
+   {
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         origin( e_orig_runtime ).
+         extra( vm->moduleString( msg::rtl_invalid_path ) ) ) );
+      return;
+   }
+
    CoreArray *parts = new CoreArray( vm, 4 );
-   String *strName = name->asString();
-
-   int32 pos = strName->length() -1;
-   int32 last = pos;
-   int state = 0; // scanning the extension.
-
-   int32 ext_begin = -1, ext_end = -1;
-   int32 fname_begin = -1, fname_end = -1;
-   int32 fpath_begin = -1, fpath_end = -1;
-   int32 unit_begin = -1, unit_end = -1;
-
-   while ( pos >= 0 ) {
-      char chr = strName->getCharAt(pos);
-      switch ( state ) {
-         case 0:  // extension?
-            if ( chr == '.' && pos > 0 ) {
-               ext_begin = pos + 1;
-               ext_end = last;
-               last = pos-1;
-               state = 1;
-            }
-            else if ( chr == '/' || chr == ':' ) {
-               fname_begin = pos + 1;
-               fname_end = last;
-               last = pos-1;
-               state = chr == '/' ? 2 : 3;
-            }
-         break;
-
-         case 1:
-            if ( chr == '/' || chr == ':' ) {
-               fname_begin = pos + 1;
-               fname_end = last;
-               // a "/.name" unix name?
-               if ( fname_begin >= fname_end && ext_begin > 0 ) {
-                  fname_begin = ext_begin-1;
-                  fname_end = ext_end;
-                  ext_begin = -1;
-               }
-               last = pos-1;
-               state = chr == '/' ? 2 : 3;
-            }
-         break;
-
-         case 2:
-            if ( chr == ':' ) {
-               fpath_begin = pos + 1;
-               fpath_end = last;
-               last = pos-1;
-               state = 3;
-            }
-         break;
-
-      }
-      pos--;
-   }
-   pos = 0;
-   switch( state ) {
-      case 0: // never a single extension.
-      case 1: fname_begin = pos; fname_end = last; break;
-      case 2: fpath_begin = pos; fpath_end = last;
-         if ( strName->getCharAt(fpath_begin) == '/' && fpath_end < fpath_begin )
-            fpath_end = fpath_begin;
-      break;
-      case 3: unit_begin = pos; unit_end = last; break;
-   }
-
-
-   if ( ext_begin >= 0 ){
-      if( ext_begin <= ext_end ) {
-         String *ret = new GarbageString( vm, strName->subString( ext_begin, ext_end + 1 ) );
-         parts->elements()[3] = ret;
-      }
-      else {
-         parts->elements()[3] = new GarbageString( vm );
-      }
-   }
-   else
-      parts->elements()[3].setNil();
-
-   if ( fname_begin >= 0 ){
-      if( fname_begin <= fname_end ) {
-         String *ret = new GarbageString( vm, strName->subString( fname_begin, fname_end + 1 ) );
-         parts->elements()[2] = ret;
-      }
-      else {
-         parts->elements()[2].setString( new GarbageString( vm ) );
-      }
-   }
-   else
-      parts->elements()[2].setNil();
-
-   if ( fpath_begin >= 0 ){
-      if( fpath_begin <= fpath_end ) {
-         String *ret = new GarbageString( vm, strName->subString( fpath_begin, fpath_end + 1 ) );
-         parts->elements()[1] = ret;
-      }
-      else {
-         parts->elements()[1].setString( new GarbageString( vm ) );
-      }
-   }
-   else
-      parts->elements()[1].setNil();
-
-   if ( unit_begin >= 0 ){
-      if( unit_begin <= unit_end ) {
-         String *ret = new GarbageString( vm, strName->subString( unit_begin, unit_end + 1 ) );
-         parts->elements()[0] = ret;
-      }
-      else {
-         parts->elements()[0].setString( new GarbageString( vm ) );
-      }
-   }
-   else
-      parts->elements()[0].setNil();
-
    parts->length( 4 );
+   String *res = new GarbageString( vm );
+   String *loc = new GarbageString( vm );
+   String *file = new GarbageString( vm );
+   String *ext = new GarbageString( vm );
+
+   path.split( *res, *loc, *file, *ext );
+   parts->at(0) = res;
+   parts->at(1) = loc;
+   parts->at(2) = file;
+   parts->at(3) = ext;
+
    vm->retval( parts );
 }
 
 FALCON_FUNC  fileNameMerge ( ::Falcon::VMachine *vm )
 {
-   Item *unitspec = vm->param(0);
-   Item *fname = 0;
-   Item *fpath = 0;
-   Item *fext = 0;
+   const String *unitspec = 0;
+   const String *fname = 0;
+   const String *fpath = 0;
+   const String *fext = 0;
 
-   if ( unitspec == 0 )
+   String sDummy;
+   Item *p0 = vm->param(0);
+
+   if ( p0 != 0 && p0->isArray() )
    {
-      vm->retval( new GarbageString( vm ) );
+      const CoreArray &array = *p0->asArray();
+      if( array.length() >= 0 && array[0].isString() ) {
+         unitspec = array[0].asString();
+      }
+      else
+         unitspec = &sDummy;
+
+      if( array.length() >= 1 && array[1].isString() ) {
+         fpath = array[1].asString();
+      }
+      else
+         fpath = &sDummy;
+
+      if( array.length() >= 2 && array[2].isString() ) {
+         fname = array[2].asString();
+      }
+      else
+         fname = &sDummy;
+
+      if( array.length() >= 3 && array[3].isString() ) {
+         fext = array[3].asString();
+      }
+      else
+         fext = &sDummy;
+
+   }
+   else {
+      Item *p1 = vm->param(1);
+      Item *p2 = vm->param(2);
+      Item *p3 = vm->param(3);
+
+      unitspec = p0 != 0 && p0->isString() ? p0->asString() : &sDummy;
+      fpath = p1 != 0 && p1->isString() ? p1->asString() : &sDummy;
+      fname = p2 != 0 && p2->isString() ? p2->asString() : &sDummy;
+      fext = p3 != 0 && p3->isString() ? p3->asString() : &sDummy;
+   }
+
+   Path p;
+   p.join( *unitspec, *fpath, *fname, *fext );
+   if ( ! p.isValid() )
+   {
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         origin( e_orig_runtime ).
+         extra( vm->moduleString( msg::rtl_invalid_path ) ) ) );
       return;
    }
 
-   if ( unitspec->isArray() )
-   {
-      CoreArray *array = unitspec->asArray();
-      if( array->length() > 0 ) {
-         unitspec = &(array->at( 0 ) );
-      }
-      if ( array->length() > 1 ) {
-         fpath = &(array->at( 1 ) );
-      }
-      if ( array->length() > 2 ) {
-         fname = &(array->at( 2 ) );
-      }
-      if ( array->length() > 3 ) {
-         fext = &(array->at( 3 ) );
-      }
-   }
-   else {
-      fpath = vm->param(1);
-      fname = vm->param(2);
-      fext = vm->param(3);
-   }
-
-   GarbageString *buffer = new GarbageString( vm );
-
-   if( unitspec != 0 && unitspec->isString() )
-   {
-      *buffer += *unitspec->asString() + ":";
-   }
-
-   if( fpath != 0 && fpath->isString() )
-   {
-      *buffer += *fpath->asString();
-      if ( buffer->getCharAt( buffer->length()-1 ) != '/' )
-         *buffer += '/';
-   }
-
-   if( fname != 0 && fname->isString() )
-   {
-      *buffer += *fname->asString();
-   }
-
-   if( fext != 0 && fext->isString() )
-   {
-      *buffer += "." + *fext->asString();
-   }
-
-   vm->retval( buffer );
+   vm->retval( new GarbageString( vm, p.get() ) );
 }
 
 

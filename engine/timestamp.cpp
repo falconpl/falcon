@@ -630,7 +630,7 @@ bool TimeStamp::toString( String &target, const String &fmt ) const
          msecs.writeNumber( (int64) m_msec );
          while( pos != String::npos )
          {
-            target.change( pos, pos + 2, &msecs );
+            target.change( pos, pos + 2, msecs );
             pos = target.find( "%q", pos + 2 );
          }
       }
@@ -648,7 +648,7 @@ bool TimeStamp::toString( String &target, const String &fmt ) const
 
          while( pos != String::npos )
          {
-            target.change( pos, pos + 2, &msecs );
+            target.change( pos, pos + 2, msecs );
             pos = target.find( "%Q", pos + 2 );
          }
       }

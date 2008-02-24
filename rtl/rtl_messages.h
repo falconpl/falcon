@@ -45,6 +45,7 @@ namespace msg {
    const int rtl_invalid_iter = 14;
    const int rtl_sender_not_object = 15;
    const int rtl_marshall_not_cb = 16;
+   const int rtl_invalid_path = 17;
 }
 }
 

@@ -131,6 +131,13 @@ public:
          pos = m_size + pos;
       return m_data[pos];
    }
+
+   const Item &operator[]( int32 pos ) const throw()
+   {
+      if ( pos < 0 )
+         pos = m_size + pos;
+      return m_data[pos];
+   }
 };
 
 }

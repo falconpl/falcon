@@ -63,11 +63,13 @@ class Path: public BaseAlloc
    uint32 m_fileStart;
    uint32 m_fileEnd;
    uint32 m_extStart;
+   bool m_bValid;
 
    /** Analyze the path, splitting its constituents.
       \param isWin true to perform also \\ -> / conversion while parsing.
+      \return false if the path is not valid.
    */
-   void analyze( bool isWin );
+   bool analyze( bool isWin );
 
 public:
 
@@ -88,7 +90,7 @@ public:
       if ( winFormat )
          setFromWinFormat( path );
       else
-         set( &path );
+         set( path );
    }
 
    /** Copy constructor.
@@ -107,40 +109,61 @@ public:
    const String &get() const { return m_path; }
 
    /** Returns a path in MS-Windows format. */
-   String &getWinFormat() const { String fmt; getWinFormat( fmt ); return fmt; }
+   String getWinFormat() const { String fmt; getWinFormat( fmt ); return fmt; }
 
    /** Stores this path in windows format in a given string. */
    void getWinFormat( String &str ) const;
 
    /** Get the resource part (usually the disk specificator). */
-   String &getResource() const { String fmt; getResource( fmt ); return fmt; }
+   String getResource() const { String fmt; getResource( fmt ); return fmt; }
 
-   /** Stores the resource part in a given string. */
-   void getResource( String &str ) const;
+   /** Stores the resource part in a given string.
+      If the path has not a resource part, the string is also cleaned.
+      \param str the string where to store the resource part.
+      \return true if the path has a resource part.
+   */
+   bool getResource( String &str ) const;
 
-   /** Get the location part (path to file) in RFC3986 format. */
-   String &getLocation() const { String fmt; getLocation( fmt ); return fmt; }
+   /** Get the location part (path to file) in RFC3986 format.
+   */
+   String getLocation() const { String fmt; getLocation( fmt ); return fmt; }
 
-   /** Stores the resource part in a given string. */
-   void getLocation( String &str ) const;
+   /** Stores the resource part in a given string.
+      If the path has not a location part, the string is also cleaned.
+      \param str the string where to store the location part.
+      \return true if the path has a location part.
+   */
+   bool getLocation( String &str ) const;
 
    /** Get the location part (path to file) in MS-Windows format. */
-   String &getWinLocation() const { String fmt; getWinLocation( fmt ); return fmt; }
+   String getWinLocation() const { String fmt; getWinLocation( fmt ); return fmt; }
 
-   /** Stores the location part in a given string in MS-Windows format. */
-   void getWinLocation( String &str ) const;
+   /** Stores the location part in a given string in MS-Windows format.
+      If the path has not a location part, the string is also cleaned.
+      \param str the string where to store the location part.
+      \return true if the path has a location part.
+   */
+   bool getWinLocation( String &str ) const;
 
    /** Get the filename part. */
-   String &getFilename() const { String fmt; getFilename( fmt ); return fmt; }
+   String getFilename() const { String fmt; getFilename( fmt ); return fmt; }
 
-   /** Stores the filename part in a given string. */
-   void getFilename( String &str ) const;
+   /** Stores the filename part in a given string.
+      If the path has not a filename part, the string is also cleaned.
+      \param str the string where to store the filename part.
+      \return true if the path has a filename part.
+   */
+   bool getFilename( String &str ) const;
 
    /** Get the extension part. */
-   String &getExtension() const { String fmt; getExtension( fmt ); return fmt; }
+   String getExtension() const { String fmt; getExtension( fmt ); return fmt; }
 
-   /** Stores the extension part in a given string. */
-   void getExtension( String &str ) const;
+   /** Stores the extension part in a given string.
+      If the path has not a extension part, the string is also cleaned.
+      \param str the string where to store the extension part.
+      \return true if the path has a extension part.
+   */
+   bool getExtension( String &str ) const;
 
    /** Sets the resource part. */
    void setResource( const String &res );
@@ -162,6 +185,11 @@ public:
 
    /** Returns true if this path defines a location without a file */
    bool isLocation() const;
+
+   /** Returns true if the path is valid.
+      Notice that an empty path is still valid.
+   */
+   bool isValid() const { return m_bValid; }
 
    /** Splits the path into its constituents.
       This version would eventually put the resource part in the first parameter.
@@ -196,23 +224,16 @@ public:
       \param name the filename.
       \param ext the file extension.
    */
-   void join( String &loc, String &name, String &ext );
+   void join( const String &loc, const String &name, const String &ext );
 
    /** Joins a path divided into its constituents into this path.
       \param res the resource locator (i.e. disk unit)
       \param loc the path location of the file.
       \param name the filename.
       \param ext the file extension.
+      \param bWin true if the location may be in MS-Windows format (backslashes).
    */
-   void join( String &res, String &loc, String &name, String &ext );
-
-   /** Joins a path divided into its constituents into this path.
-      \param res the resource locator (i.e. disk unit)
-      \param loc the path location of the file in MS-Windows format.
-      \param name the filename.
-      \param ext the file extension.
-   */
-   void joinWinFormat( String &res, String &loc, String &name, String &ext );
+   void join( const String &res, const String &loc, const String &name, const String &ext, bool bWin = false );
 };
 
 
@@ -366,7 +387,7 @@ public:
    void port( const String &h );
 
    /** Returns current path. */
-   const String &path() const { return m_path.path(); }
+   const String &path() const { return m_path.get(); }
 
    /** Returns current path as a path class. */
    const Path &pathElement() const { return m_path; }
@@ -402,10 +423,6 @@ public:
    /** Returns the fragment part. */
    const String &fragment() const { return m_fragment; }
 
-   /** Sets a different fragment for this URI.
-      This will invalidate current URI until next uri() is called.
-   */
-   void port( const String &h );
 
    //============================
    // path helpers
@@ -418,19 +435,19 @@ public:
 // Inline implementation
 //
 
-inline static bool URI::isResDelim( uint32 chr )
+inline bool URI::isResDelim( uint32 chr )
 {
    return isGenDelim( chr ) | isSubDelim( chr );
 }
 
-inline static bool URI::isGenDelim( uint32 chr )
+inline bool URI::isGenDelim( uint32 chr )
 {
    return chr == ':' | chr == '/' | chr == '?' |
           chr == '#' | chr == '[' | chr == ']' |
           chr == '@';
 }
 
-inline static bool URI::isSubDelim( uint32 chr )
+inline bool URI::isSubDelim( uint32 chr )
 {
    return chr == '!' | chr == '$' | chr == '&' |
           chr == '\'' | chr == '(' | chr == ')' |
