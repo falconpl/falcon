@@ -554,4 +554,24 @@ void Path::join( const String &res, const String &loc, const String &name, const
    analyze( bWin );
 }
 
+
+//================================================================
+// URI
+//
+
+URI::URI():
+   m_query( &traits::t_string, &traits::t_string )
+{
+}
+
+URI::URI( const String &suri ):
+   m_query( &traits::t_string, &traits::t_string )
+{
+}
+
+URI::URI( const URI &other ):
+   m_query( &traits::t_string, &traits::t_string )
+{
+}
+
 };
