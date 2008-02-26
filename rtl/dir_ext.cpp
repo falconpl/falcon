@@ -689,6 +689,12 @@ class PathCarrier: public UserData
 public:
    Path m_path;
 
+   PathCarrier() {}
+   
+   PathCarrier( const PathCarrier &other ):
+      m_path( other.m_path )
+      {}
+
    virtual void getProperty( VMachine *vm, const String &propName, Item &prop );
    virtual void setProperty( VMachine *vm, const String &propName, Item &prop );
    virtual bool isReflective() const;
@@ -698,6 +704,11 @@ public:
 bool PathCarrier::isReflective() const
 {
    return true;
+}
+
+UserData *PathCarrier::clone() const
+{
+   return new PathCarrier( *this );
 }
 
 void PathCarrier::setProperty( VMachine *vm, const String &propName, Item &prop )
