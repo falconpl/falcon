@@ -130,11 +130,11 @@ public:
 
    friend void Sys::Time::timestampFromSystemTime( const SystemTime &sys_time, TimeStamp &ts );
 
-   virtual bool isReflective();
+   virtual bool isReflective() const;
    virtual void getProperty( const String &propName, Item &prop );
    virtual void setProperty( const String &propName, Item &prop );
 
-   virtual UserData *clone();
+   virtual UserData *clone() const;
 };
 
 inline TimeStamp operator + ( const TimeStamp &ts1, const TimeStamp &ts2 )

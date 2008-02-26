@@ -29,7 +29,7 @@ namespace Falcon {
 UserData::~UserData()
 {}
 
-bool UserData::isReflective()
+bool UserData::isReflective() const
 {
    return false;
 }
@@ -42,7 +42,7 @@ void UserData::setProperty( VMachine *vm, const String &propName, Item &prop )
 {
 }
 
-UserData * UserData::clone()
+UserData * UserData::clone() const
 {
    return 0;
 }

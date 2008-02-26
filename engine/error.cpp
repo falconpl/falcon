@@ -532,8 +532,6 @@ CoreObject *Error::scriptize( VMachine *vm )
 }
 
 
-
-
 ErrorCarrier::ErrorCarrier( Error *carried ):
    m_error( carried )
 {
@@ -556,7 +554,7 @@ ErrorCarrier::~ErrorCarrier()
    m_error->decref();
 }
 
-bool ErrorCarrier::isReflective()
+bool ErrorCarrier::isReflective() const
 {
    return true;
 }

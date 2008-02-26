@@ -1063,7 +1063,7 @@ void Format::applyPad( String &target, uint32 extraSize )
    }
 }
 
-bool Format::isReflective()
+bool Format::isReflective() const
 {
    return true;
 }

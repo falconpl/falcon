@@ -68,10 +68,10 @@ public:
    FileStat( const FileStat &other );
    virtual ~FileStat();
 
-   virtual bool isReflective();
+   virtual bool isReflective() const;
    virtual void setProperty( const String &propName, Item &prop );
    virtual void getProperty( const String &propName, Item &prop );
-   virtual UserData * clone();
+   virtual UserData * clone() const;
 };
 
 }

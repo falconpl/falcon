@@ -665,7 +665,7 @@ void TimeStamp::currentTime()
 }
 
 
-bool TimeStamp::isReflective()
+bool TimeStamp::isReflective() const
 {
    return true;
 }
@@ -722,7 +722,7 @@ void TimeStamp::setProperty( const String &propName, Item &prop )
    }
 }
 
-UserData *TimeStamp::clone()
+UserData *TimeStamp::clone() const
 {
    return new TimeStamp( *this );
 }

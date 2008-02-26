@@ -67,7 +67,7 @@ FileStat::~FileStat() {
    delete m_mtime;
 }
 
-bool FileStat::isReflective()
+bool FileStat::isReflective() const
 {
    return true;
 }
@@ -104,7 +104,7 @@ void FileStat::setProperty( const String &propName, Item &prop )
       m_attribs = (uint32) prop.asInteger();
 }
 
-UserData *FileStat::clone()
+UserData *FileStat::clone() const
 {
    FileStat *other = new FileStat( *this );
    return other;

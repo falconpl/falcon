@@ -691,11 +691,11 @@ public:
 
    virtual void getProperty( VMachine *vm, const String &propName, Item &prop );
    virtual void setProperty( VMachine *vm, const String &propName, Item &prop );
-   virtual bool isReflective();
-
+   virtual bool isReflective() const;
+   virtual UserData *clone() const;
 };
 
-bool PathCarrier::isReflective()
+bool PathCarrier::isReflective() const
 {
    return true;
 }

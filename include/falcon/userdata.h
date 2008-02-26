@@ -86,7 +86,7 @@ public:
    virtual ~UserData();
 
    /** Declare if a certain subclass of UserData is reflective. */
-   virtual bool isReflective();
+   virtual bool isReflective() const;
 
    /** Get given property.
       When this method is called, the reflected object has already determined that
@@ -115,7 +115,7 @@ public:
       this will cause the caller to raise an uncloneable exception.
       \return a clone of this object or zero.
    */
-   virtual UserData *clone();
+   virtual UserData *clone() const;
 
    /** Marks the data for GC collection.
       The GC collector never collects directly the user data,
