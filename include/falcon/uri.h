@@ -52,7 +52,7 @@ namespace Falcon
    but it may get checked i.e. when insernted in a URI.
 */
 
-class Path: public BaseAlloc
+class FALCON_DYN_CLASS Path: public BaseAlloc
 {
    String m_path;
 
@@ -255,19 +255,19 @@ public:
 
    This class offer falcon engine and its users an interface to URI.
 */
-FALCON_DYN_CLASS class URI: public BaseAlloc
+class FALCON_DYN_CLASS URI: public BaseAlloc
 {
    /** A copy of the original string, for diagniostics.*/
    String m_original;
 
    /** The final normalized and encoded URI. */
    String m_encoded;
+   
+   /** False if this URI is not valid. */
+   bool m_bValid;
 
    /** URI scheme (e.g. http) */
    String m_scheme;
-
-   /** False if this URI is not valid. */
-   bool m_bValid;
 
    // Authority ----------------------
    /** User or user:password. */
@@ -299,12 +299,8 @@ FALCON_DYN_CLASS class URI: public BaseAlloc
    /** Fragment. */
    String m_fragment;
 
-   /** Parse a given string in the final elements of the uri. */
-   bool parse( const String &u );
-
    /** Encodes a prebuilt string which is then placed in the m_encoded field. */
    void encode( const String &u );
-
 
 public:
 
@@ -326,20 +322,32 @@ public:
    URI( const URI &other );
 
    /** Parses the given string into this URI.
+      The URI will be normalized and eventually decoded, so that the internal
+      format of the URI.
+
+      Normally, the method decodes any % code into it's value, and considers
+      the uri as encoded into UTF-8 sequences.
+
+      If the \b decode param is false, the input string is read as-is.
+
       \param newUri the new URI to be parsed.
+      \param decode set to false to use the given URI as is.
       \return true on success, false if the given string is not a valid URI.
    */
-   bool uri( const String &newUri );
+   bool parse( const String &newUri, bool decode = true );
 
    /** Returns the current URI.
       This method eventually builds a new URI from the internally parsed data
       and returns it.
    */
-   const String &uri();
+   const String &get();
 
    //  A bit of parsing support.
    /** Character is a reserved delimiter under RFC3986 */
    static bool isResDelim( uint32 chr );
+
+   /** Character is main section delimiter under RFC3986 */
+   static bool isMainDelim( uint32 chr );
 
    /** Character is a general delimiter under RFC3986 */
    static bool isGenDelim( uint32 chr );
@@ -437,12 +445,41 @@ public:
    /** Returns the fragment part. */
    const String &fragment() const { return m_fragment; }
 
+   /** Clears the content of this URI */
+   void clear();
 
-   //============================
-   // path helpers
+   static void URLEncode( const String &source, String &target );
+   static String URLEncode( const String &source ) 
+   { 
+      String t; 
+      URLEncode( source, t ); 
+      return t; 
+   }
 
-   bool isPathAbsolute() const ;
+   static bool URLDecode( const String &source, String &target );
+   static String URLDecode( const String &source ) 
+   { 
+      String t; 
+      URLDecode( source, t );
+      return t; 
+   }
+   
+   static unsigned char CharToHex( unsigned char ch )
+   {
+      return ch <= 9 ? '0' + ch : 'A' + (ch - 10);
+   }
 
+   static unsigned char HexToChar( unsigned char ch )
+   {
+      if ( ch >= '0' && ch <= '9' )
+         return ch - '0';
+      else if ( ch >= 'A' && ch <= 'F' )
+         return ch - 'A';
+      else if ( ch >= 'a' && ch <= 'f' )
+         return ch - 'a';
+      else
+         return 0xFF;
+   }
 };
 
 //==================================================
@@ -454,19 +491,24 @@ inline bool URI::isResDelim( uint32 chr )
    return isGenDelim( chr ) | isSubDelim( chr );
 }
 
+inline bool URI::isMainDelim( uint32 chr )
+{
+   return (chr == ':') | (chr == '?') | (chr == '#') | (chr == '@');
+}
+
 inline bool URI::isGenDelim( uint32 chr )
 {
-   return chr == ':' | chr == '/' | chr == '?' |
-          chr == '#' | chr == '[' | chr == ']' |
-          chr == '@';
+   return (chr == ':') | (chr == '/') | (chr == '?') |
+          (chr == '#') | (chr == '[') | (chr == ']') |
+          (chr == '@');
 }
 
 inline bool URI::isSubDelim( uint32 chr )
 {
-   return chr == '!' | chr == '$' | chr == '&' |
-          chr == '\'' | chr == '(' | chr == ')' |
-          chr == '*' | chr == '+' | chr == ',' |
-          chr == ';' | chr == '=';
+   return (chr == '!')  | (chr == '$') | (chr == '&') |
+          (chr == '\'') | (chr == '(') | (chr == ')') |
+          (chr == '*')  | (chr == '+') | (chr == ',') |
+          (chr == ';')  | (chr == '=');
 }
 
 } // Falcon namespace

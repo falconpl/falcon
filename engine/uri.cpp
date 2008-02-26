@@ -19,6 +19,8 @@
 */
 
 #include <falcon/uri.h>
+#include <falcon/memory.h>
+#include <falcon/autocstring.h>
 
 namespace Falcon
 {
@@ -567,11 +569,257 @@ URI::URI():
 URI::URI( const String &suri ):
    m_query( &traits::t_string, &traits::t_string )
 {
+   parse( suri );
 }
 
 URI::URI( const URI &other ):
    m_query( &traits::t_string, &traits::t_string )
 {
+   parse( other.m_original );
 }
 
-};
+#if 0
+void URI::clear()
+{
+   m_scheme = "";
+   m_userInfo = "";
+   m_host = "";
+   m_port = "";
+   m_path.set( "" );
+   m_query.clear();
+   m_fragment = "";
+   m_encoded = "";
+   m_bValid = true; // by default.
+}
+
+
+bool URI::parse( const String &newUri, bool decode )
+{
+   // had we a previous parsing?
+   if ( m_original.size() != 0 )
+   {
+      clear();
+   }
+   
+   m_original = newUri;
+
+   // We must parse before decoding each element.
+   uint32 pStart = 0;
+   uint32 pEnd = 0;
+   uint32 len = newUri.length();
+
+   typedef enum {
+      e_begin,
+      e_colon,
+      e_postScheme,
+      e_host,
+      e_port,
+      e_path,
+   } t_status;
+
+   t_status state = e_begin;
+   bool bUserGiven = false;
+   bool bPortGiven = false;
+
+   while( pEnd < newUri )
+   {
+      uint32 chr = newUri.getCharAt( pEnd );
+      switch ( chr )
+      {
+         case ':':
+            // if we don't have a scheme yet, this is our scheme.
+            if( pEnd == 0 )
+               return false;
+            
+            if ( m_scheme.size() == 0 )
+               state = e_colon;
+            // otherwise, it's just part of what's going on.
+         break;
+
+         case '/':
+            // Nothing before?
+            if ( state == e_begin )
+            {
+               // we're parsing a (relative or absolute) path and we didn't know!
+               state = e_path; 
+            }
+            // if we had a colon, we have <x>:/
+            else if ( state == e_colon )
+            {
+               if ( pStart == pEnd )  // scheme cannot be empty
+                  return false;
+
+               state = e_postScheme; // like begin, we may have a host or a path
+               m_scheme = newUri.subString( pStart, pEnd );
+               pStart = pEnd+1;
+            }
+            else if ( state == e_postScheme )
+            {
+               state = e_host;
+               // we have a host starting one next.
+               pStart = pEnd + 1;
+            }
+            else if( state == e_host )
+            {
+               // we have the full host
+               // may be empty (as in file:///path)
+               if ( pStart != pEnd )
+                  m_host = newUri.subString( pStart, pEnd );
+               // anyhow, start the path from here
+               pStart = pEnd;
+               state = e_path;
+            }
+            else if ( state == e_port )
+            {
+               // we have the port.
+               if ( pStart == pEnd ) // cannot be empty.
+                  return false;
+
+               m_port = newUri.subString( pStart, pEnd );
+               // anyhow, start the path from here
+               pStart = pEnd;
+               state = e_path;
+            }
+         break;
+
+         case '@':
+            // can be found only in host or path state. In path, it is just ignored.
+            if ( state == e_host )
+            {
+               // if we have already user info, we failed.
+               if ( bUserGiven )
+                  return false;
+               
+               m_userInfo = newUri.subString( pStart, pEnd );
+               pStart = pEnd + 1;
+               // state stays host, but signal we have already seen a @ here
+               bUserGiven = true;
+            }
+            else if ( state != e_path )
+            {
+               return false;
+            }
+         break;
+
+         case '?':
+            // can be found in postScheme state, in which case we have nothing to do
+            if ( state == e_postScheme )
+            {
+               return parseQuery( pEnd + 1 );
+            }
+            // can be found in host, port, path and begin state
+            else if ( state == e_begin || state == e_path )
+            {
+               if ( ! m_path.set( newUri.subString( pStart, pEnd ) )
+               {
+                  return false;
+               }
+               return parseQuery( pEnd + 1 );
+            }
+
+            if ( state == begin )
+            return parseQuery( 
+
+         case '#': 
+      }
+
+   }
+
+   if ( decode )
+   {
+      //if ( ! URI::URLDecode( newUri, m_original ) ;
+   }
+
+   return true;
+
+}
+#endif
+
+void URI::URLEncode( const String &source, String &target )
+{
+   target = ""; // resets manipulator
+   target.reserve( source.size() );
+
+   // encode as UTF-8
+   AutoCString sutf( source );
+   const char *cutf = sutf.c_str();
+   target.reserve( sutf.length() );
+
+   while ( *cutf != 0 )
+   {
+      unsigned char chr = (unsigned char) *cutf;
+      
+      if ( chr == 0x20 )
+      {
+         target.append( '+' );
+      }
+      else if ( chr < 0x20 || chr > 0x7F || isResDelim( chr ) )
+      {
+         target.append( '%' );
+         target.append( URI::CharToHex( chr >> 4 ) );
+         target.append( URI::CharToHex( chr & 0xF ) );
+      }
+      else {
+         target.append( chr );
+      }
+
+      ++cutf;   
+   }
+}
+
+
+bool URI::URLDecode( const String &source, String &target )
+{
+   // the target buffer can be - at worst - long as the source.
+   char *tgbuf = (char *) memAlloc( source.length() + 1 );
+   char *pos = tgbuf;
+   bool bOk = true;
+   
+   uint32 len = source.length();
+   for( uint32 i = 0; i < len; i ++ )
+   {
+      uint32 chr = source.getCharAt( i );
+      // an URL encoded string cannot have raw characters outside defined ranges.
+      if ( chr < 0x20 || chr > 0x7F )
+      {
+         bOk = false;
+         break;
+      }
+
+      if ( chr == '+' )
+         *pos = ' ';
+      else if ( chr == '%' )
+      {
+         // not enough space?
+         if ( i+3 >= len )
+         {
+            bOk = false;
+            break;
+         }
+
+         // get the characters -- check also for non-hex digits.
+         unsigned char c1, c2;
+         if (  ( c1 = HexToChar( source.getCharAt( ++i ) ) ) == 0xFF ||
+               ( c2 = HexToChar( source.getCharAt( ++i ) ) ) == 0xFF )
+         {
+            bOk = false;
+            break;
+         }
+
+         *pos = c1 << 4 | c2;
+      }
+
+      ++pos;
+   }
+
+   if ( bOk )
+   {
+      // reconvert from UTF8 to Falcon
+      target.fromUTF8( tgbuf );
+   }
+
+   memFree( tgbuf );
+   return bOk;
+}
+  
+}
