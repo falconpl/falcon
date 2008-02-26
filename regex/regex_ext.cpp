@@ -535,7 +535,7 @@ FALCON_FUNC Regex_replace( ::Falcon::VMachine *vm )
       return;
    }
 
-   source->change( data->m_ovector[0], data->m_ovector[1], dest );
+   source->change( data->m_ovector[0], data->m_ovector[1], *dest );
    vm->retval( source );
 }
 
@@ -585,7 +585,7 @@ FALCON_FUNC Regex_replaceAll( ::Falcon::VMachine *vm )
             clone = new GarbageString( vm, *source );
             source = clone;
          }
-         source->change( data->m_ovector[0], data->m_ovector[1], dest );
+         source->change( data->m_ovector[0], data->m_ovector[1], *dest );
          from = data->m_ovector[0] + destLen;
          // as we're going to exit.
       }

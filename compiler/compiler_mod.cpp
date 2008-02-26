@@ -158,7 +158,7 @@ ModuleCarrier::~ModuleCarrier()
    // the LiveModule does not belong to us, and by this time it may be already gone
 }
 
-UserData *ModuleCarrier::clone()
+UserData *ModuleCarrier::clone() const
 {
    return new ModuleCarrier( m_lmodule );
 }

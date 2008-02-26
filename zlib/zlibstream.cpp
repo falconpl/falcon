@@ -106,9 +106,11 @@ int32 ZLibStream::writeAvailable( int32 )
 }
 
 int64 ZLibStream::lastError() const
- { return (int64) m_lastError; }
+{
+   return (int64) m_lastError;
+}
 
-UserData *ZLibStream::clone()
+UserData *ZLibStream::clone() const
 {
    ZLibStream *zstr = new ZLibStream( *this );
    return zstr;

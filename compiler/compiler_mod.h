@@ -62,7 +62,7 @@ public:
 class ModuleCarrier: public UserData
 {
    LiveModule *m_lmodule;
-   
+
 public:
    ModuleCarrier( LiveModule *m_module );
    virtual ~ModuleCarrier();
@@ -70,7 +70,7 @@ public:
    const Module *module() const { return m_lmodule->module(); }
    LiveModule *liveModule() const { return m_lmodule; }
 
-   virtual UserData *clone();
+   virtual UserData *clone() const;
    virtual void gcMark( MemPool *mp );
 
    // we don't provide a clone() method

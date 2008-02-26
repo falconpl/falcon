@@ -60,7 +60,7 @@ public:
    virtual bool errorDescription( ::Falcon::String &description ) const;
    virtual int64 lastError(void) const;
 
-   virtual UserData *clone();
+   virtual UserData *clone() const;
 };
 }
 
