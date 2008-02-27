@@ -561,24 +561,28 @@ void Path::join( const String &res, const String &loc, const String &name, const
 // URI
 //
 
-URI::URI():
-   m_query( &traits::t_string, &traits::t_string )
+URI::URI()
 {
+   m_queryMap = new Map( &traits::t_string, &traits::t_string );
 }
 
-URI::URI( const String &suri ):
-   m_query( &traits::t_string, &traits::t_string )
+URI::URI( const String &suri )
 {
+   m_queryMap = new Map( &traits::t_string, &traits::t_string );
    parse( suri );
 }
 
-URI::URI( const URI &other ):
-   m_query( &traits::t_string, &traits::t_string )
+URI::URI( const URI &other )
 {
+   m_queryMap = new Map( &traits::t_string, &traits::t_string );
    parse( other.m_original );
 }
 
-#if 0
+URI::~URI()
+{
+   delete m_queryMap;
+}
+
 void URI::clear()
 {
    m_scheme = "";
@@ -586,14 +590,24 @@ void URI::clear()
    m_host = "";
    m_port = "";
    m_path.set( "" );
-   m_query.clear();
+   if ( m_queryMap != 0 )
+   {
+      delete m_queryMap;
+      m_queryMap = 0;
+   }
+   m_query = "";
    m_fragment = "";
    m_encoded = "";
    m_bValid = true; // by default.
 }
 
-
 bool URI::parse( const String &newUri, bool decode )
+{
+   m_bValid = internal_parse( newUri, decode );
+   return m_bValid;
+}
+
+bool URI::internal_parse( const String &newUri, bool decode )
 {
    // had we a previous parsing?
    if ( m_original.size() != 0 )
@@ -615,13 +629,16 @@ bool URI::parse( const String &newUri, bool decode )
       e_host,
       e_port,
       e_path,
+      e_done
    } t_status;
 
    t_status state = e_begin;
    bool bUserGiven = false;
    bool bPortGiven = false;
 
-   while( pEnd < newUri )
+   String tempPath; // we're setting the path after.
+
+   while( pEnd < len )
    {
       uint32 chr = newUri.getCharAt( pEnd );
       switch ( chr )
@@ -702,38 +719,156 @@ bool URI::parse( const String &newUri, bool decode )
          break;
 
          case '?':
-            // can be found in postScheme state, in which case we have nothing to do
-            if ( state == e_postScheme )
-            {
-               return parseQuery( pEnd + 1 );
-            }
+         case '#':
             // can be found in host, port, path and begin state
-            else if ( state == e_begin || state == e_path )
+            if ( state == e_begin || state == e_path )
             {
-               if ( ! m_path.set( newUri.subString( pStart, pEnd ) )
-               {
+               tempPath = newUri.subString( pStart, pEnd );
+            }
+            else if ( state == e_host )
+            {
+               m_host = newUri.subString( pStart, pEnd );
+            }
+            else if ( state == e_port )
+            {
+               m_port = newUri.subString( pStart, pEnd );
+            }
+            // cannot be found in e_colon, that would be an error
+            else if ( state == e_colon )
+               return false;
+
+            // can be found in postScheme state, in which case we have nothing to do
+            // in every case, parse the query (+fragment) and exit loop
+            if ( chr == '?' )
+            {
+               if ( ! parseQuery( pEnd + 1, decode ) )
                   return false;
-               }
-               return parseQuery( pEnd + 1 );
+            }
+            else {
+               if ( ! parseFragment( pEnd + 1 ) )
+                  return false;
             }
 
-            if ( state == begin )
-            return parseQuery( 
+            // complete loop
+            state = e_done;
+            pEnd = len;
+         break;
 
-         case '#': 
+         default:
+            // if we're in post scheme, a non '/' char starts a path.
+            if ( state == e_postScheme )
+               state = e_path;
       }
+   }
 
+   // what do we have to do now?
+   switch ( state )
+   {
+      case e_begin:
+      case e_path:
+      case e_colon: // colon too, as it may be i.e. C:
+         tempPath = newUri.subString( pStart, pEnd );
+      break;
+
+      case e_host:
+         m_host = newUri.subString( pStart, pEnd );
+         break;
+
+      case e_port:
+         m_port = newUri.subString( pStart, pEnd );
+         break;
+      // in all other cases, just let it through
    }
 
    if ( decode )
    {
-      //if ( ! URI::URLDecode( newUri, m_original ) ;
+      // decode each element
+      if ( m_scheme.size() ) m_scheme = URLDecode( m_scheme );
+      if ( m_host.size() ) m_host = URLDecode( m_host );
+      if ( m_port.size() ) m_port = URLDecode( m_port );
+      if ( tempPath.size() ) tempPath = URLDecode( tempPath );
+      if ( m_fragment.size() ) m_fragment = URLDecode( m_fragment );
+   }
+
+   // finally, store the path if any
+   if ( tempPath.size() )
+   {
+      m_path.set( tempPath );
+      if( m_path.isValid() )
+         return false;
    }
 
    return true;
-
 }
-#endif
+
+
+bool URI::parseQuery( uint32 pEnd, bool bDecode )
+{
+   // break & and = fields.
+   uint32 len = m_original.length();
+   uint32 pStart = pEnd;
+
+   String tempKey;
+   bool bIsValue = false;
+
+   while ( pEnd < len )
+   {
+      uint32 chr = m_original.getCharAt( pEnd );
+
+      if ( chr == '=' && ! bIsValue )
+      {
+         // we had the key; we want the value.
+         if ( pEnd == pStart )
+         {
+            // 0 lenght key not allowed
+            return false;
+         }
+         
+         if ( bDecode )
+            URLDecode( m_original.subString( pStart, pEnd ), tempKey );
+         else
+            tempKey = m_original.subString( pStart, pEnd );
+         bIsValue = true;
+
+         pStart = pEnd + 1;
+      }
+      else if ( chr  == '&' )
+      {
+         // have we got a value?
+         String val;
+         if ( bIsValue && pStart != pEnd )
+         {
+            
+            if ( bDecode )
+               URLDecode( m_original.subString( pStart, pEnd ), val );
+            else
+               val = m_original.subString( pStart, pEnd );
+         }
+
+         // save this key
+         m_queryMap->insert( &tempKey, &val );
+         bIsValue = false;
+         pStart = pEnd + 1;
+      }
+      else if ( chr == '#' )
+      {
+         return parseFragment( pEnd + 1 );
+      }
+      
+      pEnd ++;
+   }
+
+   return true;
+}
+
+bool URI::parseFragment( uint32 pos )
+{
+   // there is actually nothing to do, but getting everything left as substring
+   if ( pos < m_original.length() )
+      m_fragment = m_original.subString( pos );
+   return true;
+}
+
 
 void URI::URLEncode( const String &source, String &target )
 {

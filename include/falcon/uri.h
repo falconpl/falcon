@@ -291,10 +291,20 @@ class FALCON_DYN_CLASS URI: public BaseAlloc
    */
    Path m_path;
 
+   /** Query string, recorded as-is. */
+   String m_query;
+
    /** Query part.
-      Map of string->string
+      Map of string->string.
+
+      Will be used only if query parsing is explicitly requested.
+
+      Many things using URI may not want this to be done, i.e. becasuse
+      they want to parse the query on their own. Also, query form is free
+      and may be a per-application format, even if the key=value& list is
+      a quite eshtablished standard.
    */
-   Map m_query;
+   Map *m_queryMap;
 
    /** Fragment. */
    String m_fragment;
@@ -302,6 +312,13 @@ class FALCON_DYN_CLASS URI: public BaseAlloc
    /** Encodes a prebuilt string which is then placed in the m_encoded field. */
    void encode( const String &u );
 
+   /** Parses the query element. */
+   bool parseQuery( uint32 pos, bool bDecode );
+
+   /** Parses the fragment element. */
+   bool parseFragment( uint32 pos );
+
+   bool internal_parse( const String &newUri, bool decode = true );
 public:
 
    /** Empty constructor.
@@ -320,6 +337,8 @@ public:
       Copies everything in the other URI, including validity.
    */
    URI( const URI &other );
+
+   virtual ~URI();
 
    /** Parses the given string into this URI.
       The URI will be normalized and eventually decoded, so that the internal
