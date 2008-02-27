@@ -381,6 +381,25 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    self->addClassProperty( path_class, "filename" );
 
    //=======================================================================
+   // The path class
+   //=======================================================================
+   Falcon::Symbol *uri_class = self->addClass( "URI", Falcon::Ext::URI_init );
+   uri_class->setWKS(true);
+
+   self->addClassProperty( uri_class, "scheme" );
+   self->addClassProperty( uri_class, "userInfo" );
+   self->addClassProperty( uri_class, "host" );
+   self->addClassProperty( uri_class, "port" );
+   self->addClassProperty( uri_class, "path" );
+   self->addClassProperty( uri_class, "query" );
+   self->addClassProperty( uri_class, "fragment" );
+   self->addClassProperty( uri_class, "uri" );
+   self->addClassMethod( uri_class, "encode", Falcon::Ext::URI_encode );
+   self->addClassMethod( uri_class, "decode", Falcon::Ext::URI_decode );
+   self->addClassMethod( uri_class, "getFields", Falcon::Ext::URI_getFields );
+   self->addClassMethod( uri_class, "setFields", Falcon::Ext::URI_setFields );
+
+   //=======================================================================
    // The command line parser class
    //=======================================================================
 

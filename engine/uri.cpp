@@ -26,18 +26,21 @@ namespace Falcon
 {
 
 URI::URI():
-   m_queryMap( 0 )
+   m_queryMap( 0 ),
+   m_bValid( true )
 {
 }
 
 URI::URI( const String &suri ):
-   m_queryMap(0)
+   m_queryMap(0),
+   m_bValid( true )
 {
    parse( suri );
 }
 
 URI::URI( const URI &other ):
-   m_queryMap(0)
+   m_queryMap(0),
+   m_bValid( true )
 {
    //TODO
    parse( other.m_original );
@@ -113,8 +116,14 @@ bool URI::internal_parse( const String &newUri, bool parseQuery, bool decode )
             if( pEnd == 0 )
                return false;
 
-            if ( m_scheme.size() == 0 )
+            if ( m_scheme.size() == 0 || state == e_begin )
                state = e_colon;
+            else if ( state == e_host )
+            {
+               m_host = newUri.subString( pStart, pEnd );
+               state = e_port;
+               pStart = pEnd + 1;
+            }
             // otherwise, it's just part of what's going on.
          break;
 
@@ -132,7 +141,7 @@ bool URI::internal_parse( const String &newUri, bool parseQuery, bool decode )
                   return false;
 
                state = e_postScheme; // like begin, we may have a host or a path
-               m_scheme = newUri.subString( pStart, pEnd );
+               m_scheme = newUri.subString( pStart, pEnd-1 ); // removing extra ':'
                pStart = pEnd+1;
             }
             else if ( state == e_postScheme )
@@ -223,7 +232,16 @@ bool URI::internal_parse( const String &newUri, bool parseQuery, bool decode )
             // if we're in post scheme, a non '/' char starts a path.
             if ( state == e_postScheme )
                state = e_path;
+            else if ( state == e_colon )
+            {
+               // if we are in colon state, then previous thing (begin) is to be considered host
+               m_host = newUri.subString( pStart, pEnd - 1 );
+               pStart = pEnd;
+               state = e_port;
+            }
       }
+
+      pEnd++;
    }
 
    // what do we have to do now?
@@ -259,7 +277,7 @@ bool URI::internal_parse( const String &newUri, bool parseQuery, bool decode )
    if ( tempPath.size() )
    {
       m_path.set( tempPath );
-      if( m_path.isValid() )
+      if( ! m_path.isValid() )
          return false;
    }
 
@@ -274,7 +292,7 @@ bool URI::internal_parseQuery( const String &src, uint32 pEnd, bool parseQuery, 
       uint32 pSharp = src.find( "#", pEnd );
       if( pSharp != String::npos )
       {
-         query( src.subString( pEnd, pSharp ) );
+         query( src.subString( pEnd, pSharp-1 ) );
          return internal_parseFragment( pSharp+1 );
       }
       else {
@@ -286,6 +304,8 @@ bool URI::internal_parseQuery( const String &src, uint32 pEnd, bool parseQuery, 
       return true;
    }
 
+   delete m_queryMap;
+   m_queryMap = new Map( &traits::t_string, &traits::t_string );
 
    // break & and = fields.
    uint32 len = src.length();
@@ -308,9 +328,9 @@ bool URI::internal_parseQuery( const String &src, uint32 pEnd, bool parseQuery, 
          }
 
          if ( bDecode )
-            URLDecode( m_original.subString( pStart, pEnd ), tempKey );
+            URLDecode( src.subString( pStart, pEnd ), tempKey );
          else
-            tempKey = m_original.subString( pStart, pEnd );
+            tempKey = src.subString( pStart, pEnd );
          bIsValue = true;
 
          pStart = pEnd + 1;
@@ -323,9 +343,9 @@ bool URI::internal_parseQuery( const String &src, uint32 pEnd, bool parseQuery, 
          {
 
             if ( bDecode )
-               URLDecode( m_original.subString( pStart, pEnd ), val );
+               URLDecode( src.subString( pStart, pEnd ), val );
             else
-               val = m_original.subString( pStart, pEnd );
+               val = src.subString( pStart, pEnd );
          }
 
          // save this key
@@ -342,6 +362,12 @@ bool URI::internal_parseQuery( const String &src, uint32 pEnd, bool parseQuery, 
    }
 
    return true;
+}
+
+bool URI::parseQuery( bool mode )
+{
+   m_bValid = internal_parseQuery( m_query, 0, mode, true );
+   return m_bValid;
 }
 
 bool URI::internal_parseFragment( uint32 pos )
@@ -528,7 +554,10 @@ const String &URI::get( bool synthQuery )
          m_encoded += ":" + URLEncode( m_port );
 
       if ( m_path.get().size() != 0 )
-         m_encoded += "/";
+      {
+         if ( ! m_path.isAbsolute() )
+            m_encoded += "/";
+      }
    }
 
    if ( m_path.get().size() != 0 )
@@ -582,7 +611,7 @@ void URI::URLEncode( const String &source, String &target )
       {
          target.append( '+' );
       }
-      else if ( chr < 0x20 || chr > 0x7F || isResDelim( chr ) )
+      else if ( chr < 0x20 || chr > 0x7F || isSubDelim( chr ) )
       {
          target.append( '%' );
          target.append( URI::CharToHex( chr >> 4 ) );
@@ -621,7 +650,7 @@ bool URI::URLDecode( const String &source, String &target )
       else if ( chr == '%' )
       {
          // not enough space?
-         if ( i+3 >= len )
+         if ( i+3 > len )
          {
             bOk = false;
             break;
@@ -638,9 +667,12 @@ bool URI::URLDecode( const String &source, String &target )
 
          *pos = c1 << 4 | c2;
       }
+      else
+         *pos = chr;
 
       ++pos;
    }
+   *pos = 0;
 
    if ( bOk )
    {

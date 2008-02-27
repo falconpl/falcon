@@ -346,6 +346,13 @@ FALCON_FUNC  itemCopy( ::Falcon::VMachine *vm );
 /** Path class */
 FALCON_FUNC Path_init ( ::Falcon::VMachine *vm );
 
+/** URI class */
+FALCON_FUNC  URI_init ( ::Falcon::VMachine *vm );
+FALCON_FUNC  URI_encode ( ::Falcon::VMachine *vm ); // static
+FALCON_FUNC  URI_decode ( ::Falcon::VMachine *vm ); // static
+FALCON_FUNC  URI_getFields ( ::Falcon::VMachine *vm );
+FALCON_FUNC  URI_setFields ( ::Falcon::VMachine *vm );
+
 /** Message table **/
 extern wchar_t *message_table[];
 

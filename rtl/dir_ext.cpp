@@ -635,7 +635,7 @@ FALCON_FUNC  fileChgroup ( ::Falcon::VMachine *vm )
    path elements given a complete path, or to build a path from its elements.
 */
 
-/*# @property unit
+/*# @property unit Path
    @brief Unit specificator.
    @throws ParamError if assigned to a value that makes the path invalid.
 
@@ -645,7 +645,7 @@ FALCON_FUNC  fileChgroup ( ::Falcon::VMachine *vm )
    if absent.
 */
 
-/*# @property location
+/*# @property location Path
    @brief Location specificator.
    @throws ParamError if assigned to a value that makes the path invalid.
 
@@ -653,7 +653,7 @@ FALCON_FUNC  fileChgroup ( ::Falcon::VMachine *vm )
    it starts with a "/" it is considered absolute.
 */
 
-/*# @property file
+/*# @property file Path
    @brief File part.
    @throws ParamError if assigned to a value that makes the path invalid.
 
@@ -661,7 +661,7 @@ FALCON_FUNC  fileChgroup ( ::Falcon::VMachine *vm )
    It includes everything after the last "/" path separator.
 */
 
-/*# @property filename
+/*# @property filename Path
    @brief File name part.
    @throws ParamError if assigned to a value that makes the path invalid.
 
@@ -669,7 +669,7 @@ FALCON_FUNC  fileChgroup ( ::Falcon::VMachine *vm )
    divided into a filename and an extension by a "." dot.
 */
 
-/*# @property extension
+/*# @property extension Path
    @brief File extension part.
    @throws ParamError if assigned to a value that makes the path invalid.
 
@@ -677,7 +677,7 @@ FALCON_FUNC  fileChgroup ( ::Falcon::VMachine *vm )
    divided into a filename and an extension by a "." dot.
 */
 
-/*# @property path
+/*# @property path Path
    @brief Complete path.
    @throws ParamError if assigned to a value that makes the path invalid.
 
@@ -690,7 +690,7 @@ public:
    Path m_path;
 
    PathCarrier() {}
-   
+
    PathCarrier( const PathCarrier &other ):
       m_path( other.m_path )
       {}

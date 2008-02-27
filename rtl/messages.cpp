@@ -48,6 +48,7 @@ wchar_t *message_table[] = {
    L"Sender is not an object",
    L"Marshalled event name must be a string as first element in the given array",
    L"Invalid path",
+   L"Invalid URI",
    0
    };
 

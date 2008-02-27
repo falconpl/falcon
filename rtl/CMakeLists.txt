@@ -34,6 +34,7 @@ ADD_LIBRARY( falcon_rtl MODULE
    stringstream_ext.cpp
    time_ext.cpp
    transcode_ext.cpp
+   uri_ext.cpp
    ${SYSTEM_RC}
 )
 

@@ -364,6 +364,9 @@ public:
    /** Clears the content of this URI */
    void clear();
 
+   /** Returns true if the URI is valid. */
+   bool isValid() const { return m_bValid; }
+
    static void URLEncode( const String &source, String &target );
    static String URLEncode( const String &source )
    {
@@ -390,9 +393,9 @@ public:
       if ( ch >= '0' && ch <= '9' )
          return ch - '0';
       else if ( ch >= 'A' && ch <= 'F' )
-         return ch - 'A';
+         return ch - 'A'+ 10;
       else if ( ch >= 'a' && ch <= 'f' )
-         return ch - 'a';
+         return ch - 'a'+ 10;
       else
          return 0xFF;
    }
