@@ -23,233 +23,11 @@
 
 #include <falcon/setup.h>
 #include <falcon/string.h>
-#include <falcon/userdata.h>
+#include <falcon/path.h>
 #include <falcon/genericmap.h>
 
 namespace Falcon
 {
-
-/** Falcon path representation.
-
-   This class is actually a string wrapper which parses the path and builds it as necessary.
-
-   With respect to a string, 0 overhead is required.
-
-   However, notice that this class cannot be used as a garbage string, and must be wrapped
-   into a UserData to be part of a falcon object.
-
-   Path must be provided in Falcon format (RFC 3986): path elements must be separated by forward
-   slashes and resource identifiers must be preceded by a single "/"; in example:
-   \code
-      /C:/falcon/file.fal
-   \endcode
-   With a resource identifier, the first "/" is optional when setting the path, but the
-   internal representation will be normalized so that it is present.
-
-   Methods to transfrorm this representation to and from MS-Windows path are provided.
-
-   The path is not internally checked, by this class, so any string may be set,
-   but it may get checked i.e. when insernted in a URI.
-*/
-
-class FALCON_DYN_CLASS Path: public BaseAlloc
-{
-   String m_path;
-
-   // resStart is always 1
-   uint32 m_resEnd;
-   uint32 m_pathStart;
-   uint32 m_pathEnd;
-   uint32 m_fileStart;
-   uint32 m_fileEnd;
-   uint32 m_extStart;
-   bool m_bValid;
-
-   /** Analyze the path, splitting its constituents.
-      \param isWin true to perform also \\ -> / conversion while parsing.
-      \return false if the path is not valid.
-   */
-   bool analyze( bool isWin );
-
-public:
-
-   /** Empty constructor. */
-   Path();
-
-   /** Path constructor from strings. */
-   Path( const String &path )
-   {
-      set( path );
-   }
-
-   /** Path constructor from strings.
-      This constiuctor allows to select between MS-Windows path format or Falcon path format.
-   */
-   Path( const String &path, bool winFormat )
-   {
-      if ( winFormat )
-         setFromWinFormat( path );
-      else
-         set( path );
-   }
-
-   /** Copy constructor.
-      Copies the other path as-is.
-   */
-   Path( const Path &other );
-
-
-   /** Set a path from RFC 3986 format. */
-   void set( const String &p );
-
-   /** Set a path having MS-Windows format */
-   void setFromWinFormat( const String &p );
-
-   /** Retrurn the path in RFC 3986 format. */
-   const String &get() const { return m_path; }
-
-   /** Returns a path in MS-Windows format. */
-   String getWinFormat() const { String fmt; getWinFormat( fmt ); return fmt; }
-
-   /** Stores this path in windows format in a given string. */
-   void getWinFormat( String &str ) const;
-
-   /** Get the resource part (usually the disk specificator). */
-   String getResource() const { String fmt; getResource( fmt ); return fmt; }
-
-   /** Stores the resource part in a given string.
-      If the path has not a resource part, the string is also cleaned.
-      \param str the string where to store the resource part.
-      \return true if the path has a resource part.
-   */
-   bool getResource( String &str ) const;
-
-   /** Get the location part (path to file) in RFC3986 format.
-   */
-   String getLocation() const { String fmt; getLocation( fmt ); return fmt; }
-
-   /** Stores the resource part in a given string.
-      If the path has not a location part, the string is also cleaned.
-      \param str the string where to store the location part.
-      \return true if the path has a location part.
-   */
-   bool getLocation( String &str ) const;
-
-   /** Get the location part (path to file) in MS-Windows format. */
-   String getWinLocation() const { String fmt; getWinLocation( fmt ); return fmt; }
-
-   /** Stores the location part in a given string in MS-Windows format.
-      If the path has not a location part, the string is also cleaned.
-      \param str the string where to store the location part.
-      \return true if the path has a location part.
-   */
-   bool getWinLocation( String &str ) const;
-
-   /** Get the filename part. */
-   String getFilename() const { String fmt; getFilename( fmt ); return fmt; }
-
-   /** Stores the filename part in a given string.
-      If the path has not a filename part, the string is also cleaned.
-      \param str the string where to store the filename part.
-      \return true if the path has a filename part.
-   */
-   bool getFilename( String &str ) const;
-
-   /** Get the file part alone (without extension). */
-   String getFile() const { String fmt; getFile( fmt ); return fmt; }
-
-   /** Get the file part alone (without extension).
-      If the path has not a filename part, the string is also cleaned.
-      \param str the string where to store the filename part.
-      \return true if the path has a filename part.
-   */
-   bool getFile( String &str ) const;
-
-
-   /** Get the extension part. */
-   String getExtension() const { String fmt; getExtension( fmt ); return fmt; }
-
-   /** Stores the extension part in a given string.
-      If the path has not a extension part, the string is also cleaned.
-      \param str the string where to store the extension part.
-      \return true if the path has a extension part.
-   */
-   bool getExtension( String &str ) const;
-
-   /** Sets the resource part. */
-   void setResource( const String &res );
-
-   /** Sets the location part in RFC3986 format. */
-   void setLocation( const String &loc );
-
-   /** Sets the location part in MS-Windows format. */
-   void setWinLocation( const String &loc );
-
-   /** Sets the file part. */
-   void setFile( const String &file );
-
-   /** Sets the filename part (both file and extension). */
-   void setFilename( const String &fname );
-
-   /** Sets the extension part. */
-   void setExtension( const String &extension );
-
-   /** Returns true if this path is an absolute path. */
-   bool isAbsolute() const;
-
-   /** Returns true if this path defines a location without a file */
-   bool isLocation() const;
-
-   /** Returns true if the path is valid.
-      Notice that an empty path is still valid.
-   */
-   bool isValid() const { return m_bValid; }
-
-   /** Splits the path into its constituents.
-      This version would eventually put the resource part in the first parameter.
-      \param loc a string where the location will be placed.
-      \param name a string where the filename in this path will be placed.
-      \param ext a string where the file extension will be placed.
-   */
-   void split( String &loc, String &name, String &ext );
-
-   /** Splits the path into its constituents.
-      \param res a string where the resource locator will be placed.
-      \param loc a string where the location will be placed.
-      \param name a string where the filename in this path will be placed.
-      \param ext a string where the file extension will be placed.
-   */
-   void split( String &res, String &loc, String &name, String &ext );
-
-   /** Splits the path into its constituents.
-      This version will convert the output loc parameter in MS-Windows path format
-         (backslashes).
-      \param res a string where the resource locator will be placed.
-      \param loc a string where the location will be placed.
-      \param name a string where the filename in this path will be placed.
-      \param ext a string where the file extension will be placed.
-   */
-   void splitWinFormat( String &res, String &loc, String &name, String &ext );
-
-   /** Joins a path divided into its constituents into this path.
-      Using this version it is not possible to set a resource locator (i.e. a disk unit).
-
-      \param loc the path location of the file.
-      \param name the filename.
-      \param ext the file extension.
-   */
-   void join( const String &loc, const String &name, const String &ext );
-
-   /** Joins a path divided into its constituents into this path.
-      \param res the resource locator (i.e. disk unit)
-      \param loc the path location of the file.
-      \param name the filename.
-      \param ext the file extension.
-      \param bWin true if the location may be in MS-Windows format (backslashes).
-   */
-   void join( const String &res, const String &loc, const String &name, const String &ext, bool bWin = false );
-};
-
 
 /** RFC 3986 - Uniform Resource Identifier.
 
@@ -262,7 +40,7 @@ class FALCON_DYN_CLASS URI: public BaseAlloc
 
    /** The final normalized and encoded URI. */
    String m_encoded;
-   
+
    /** False if this URI is not valid. */
    bool m_bValid;
 
@@ -306,6 +84,9 @@ class FALCON_DYN_CLASS URI: public BaseAlloc
    */
    Map *m_queryMap;
 
+   /** Iterator used for opaque traversal of query objects */
+   MapIterator m_queryIter;
+
    /** Fragment. */
    String m_fragment;
 
@@ -313,12 +94,13 @@ class FALCON_DYN_CLASS URI: public BaseAlloc
    void encode( const String &u );
 
    /** Parses the query element. */
-   bool parseQuery( uint32 pos, bool bDecode );
+   bool internal_parseQuery( const String &str, uint32 pos, bool parseQuery , bool bDecode );
 
    /** Parses the fragment element. */
-   bool parseFragment( uint32 pos );
+   bool internal_parseFragment( uint32 pos );
 
-   bool internal_parse( const String &newUri, bool decode = true );
+   bool internal_parse( const String &newUri, bool parseQuery, bool decode = true );
+
 public:
 
    /** Empty constructor.
@@ -349,17 +131,95 @@ public:
 
       If the \b decode param is false, the input string is read as-is.
 
+      By default, the function will just store the query field for later retrival
+      with the query() accessor. The query field will be returned in its original
+      form, undecoded. If the makeQueryMap boolean field is set to true,
+      the parseQuery() method will be called upon succesful completion of URI parsing,
+      before the function returns.
+
       \param newUri the new URI to be parsed.
       \param decode set to false to use the given URI as is.
+      \param bMakeQueryMap if true, will create a string map with pre-parsed from query field, if present.
       \return true on success, false if the given string is not a valid URI.
    */
-   bool parse( const String &newUri, bool decode = true );
+   bool parse( const String &newUri, bool parseQuery = false, bool decode = true );
+
+   /** Parses the query field.
+      Taken the query field of this class, it perform a RFC3986 scan for "&" separated
+      keys and values pairs, each of which separated with a "=" sign.
+
+      The result is set in the internal map of fields, that can then be inspected or
+      changed keywise.
+
+      This method overwrites existing keys with new ones, so it is not possible to
+      use it to implement PHP-like URI arrays as in i.e.
+      \code
+         k[]=1&k[]=2
+      \endcode
+
+      \param decode true to automatically URL decode keys and values that will be stored in the map.
+      \return true on success, false if the query field cannot be decoded.
+   */
+   bool parseQuery( bool decode = true );
+
+   /** Changes query and the parses it field.
+      This method calls in sequecnce the query() accessor and then the parseQuery() method.
+
+      \param q a string that will be set as-is in the query field of this URI
+      \param decode true to automatically URL decode keys and values that will be stored in the map.
+      \return true on success, false if the query field cannot be decoded.
+   */
+   bool parseQuery( const String &q, bool decode = true )
+   {
+      query( q );
+      return parseQuery( decode );
+   }
+
+   /** Sets the query field of this URI.
+      The query field is set as-is. This destroys previously created maps of
+      keys values that should be used as query field generators.
+
+      The parameter should be URL encoded before being set into this method,
+      or the \b encode parameter may be used to have this method to perform
+      URL encoding.
+
+      \param q the query to be set.
+      \param encode if true, q is considered a plain string still to be encoded.
+   */
+   void query( const String &q, bool encode = false );
+
+   /** Returns previously set query.
+      This method returns a previously set query field as-is.
+
+      The content of the key-value map of this URI object, if any, is ignored.
+
+      \note To make a query field out of a query-map, use the makeQuery() method.
+   */
+   const String &query() const { return m_query; }
+
+   /** Synthetizes a query field out of the key-values stored in this URI object.
+
+      This call clears the content of the query field and changes it with an
+      RFC3986 encoded key-value pair list in the format
+      \code
+         k1=v1&k2=v2&...&kn=vn
+      \endcode
+
+   \return The synthetized string.
+   */
+   const String &makeQuery();
 
    /** Returns the current URI.
       This method eventually builds a new URI from the internally parsed data
       and returns it.
+
+      If a set of key-value pairs has been set in this URI, it is used to
+      synthetize a query field using makeQuery() method. If this is not desired,
+      i.e. because already done, or because the query field has been set
+      separately, the \b synthQuery parameter may be set to false, and the content
+      of the query field will be used instead.
    */
-   const String &get();
+   const String &get( bool synthQuery = true );
 
    //  A bit of parsing support.
    /** Character is a reserved delimiter under RFC3986 */
@@ -393,7 +253,7 @@ public:
       \param part the element of the URI (or the complete URI) to be normalized.
       \param result the string where the normalization is performed.
    */
-   static void normalize( const String &part, String &result );
+   //static void normalize( const String &part, String &result );
 
    /** Returns current scheme. */
    const String &scheme() const { return m_scheme; }
@@ -461,28 +321,65 @@ public:
    /** Removes a query field. */
    bool removeField( const String &key );
 
+   /** Enumerates the query fields - gets the first field.
+      Returns true if there is a first field in the query.
+      \note The query element must have been previously parsed, or fields must have
+      been explicitly inserted.
+      \param key a string where the key of the first field will be placed
+      \param value a string where the value of the first field will be placed
+         (can be an empty string).
+
+      \return true if there is a first field.
+   */
+   bool firstField( String &key, String &value );
+
+   /** Enumerates the query fields - gets the next field.
+      Returns true if there is a next field.
+      \note The query element must have been previously parsed, or fields must have
+      been explicitly inserted.
+
+      \param key a string where the key of the first field will be placed
+      \param value a string where the value of the first field will be placed
+         (can be an empty string).
+   */
+   bool nextField( String &key, String &value );
+
+   /** Enumerates the query fields - counts the fields.
+      If the query has fields, or if fields have been explicitly set throug
+      setField() method, returns the count of fields stored in this URI.
+
+      \note The query element must have been previously parsed, or fields must have
+      been explicitly inserted.
+
+      \return count of fields in this query, 0 for none.
+   */
+   uint32 fieldCount();
+
    /** Returns the fragment part. */
    const String &fragment() const { return m_fragment; }
+
+   /** Sets the fragment part. */
+   void fragment( const String &s );
 
    /** Clears the content of this URI */
    void clear();
 
    static void URLEncode( const String &source, String &target );
-   static String URLEncode( const String &source ) 
-   { 
-      String t; 
-      URLEncode( source, t ); 
-      return t; 
+   static String URLEncode( const String &source )
+   {
+      String t;
+      URLEncode( source, t );
+      return t;
    }
 
    static bool URLDecode( const String &source, String &target );
-   static String URLDecode( const String &source ) 
-   { 
-      String t; 
+   static String URLDecode( const String &source )
+   {
+      String t;
       URLDecode( source, t );
-      return t; 
+      return t;
    }
-   
+
    static unsigned char CharToHex( unsigned char ch )
    {
       return ch <= 9 ? '0' + ch : 'A' + (ch - 10);

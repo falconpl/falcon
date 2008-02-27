@@ -25,556 +25,21 @@
 namespace Falcon
 {
 
-Path::Path():
-   m_resEnd(String::npos),
-   m_pathStart(String::npos),
-   m_pathEnd(String::npos),
-   m_fileStart(String::npos),
-   m_fileEnd(String::npos),
-   m_extStart(String::npos),
-   m_bValid( true )
+URI::URI():
+   m_queryMap( 0 )
 {
 }
 
-
-Path::Path( const Path &other )
+URI::URI( const String &suri ):
+   m_queryMap(0)
 {
-   m_path = other.m_path;
-   m_bValid = other.m_bValid;
-
-   m_resEnd = other.m_resEnd;
-   m_pathStart = other.m_pathStart;
-   m_pathEnd = other.m_pathEnd;
-   m_fileStart = other.m_fileStart;
-   m_fileEnd = other.m_fileEnd;
-   m_extStart = other.m_extStart;
-}
-
-void Path::set( const String &p )
-{
-   m_path = p;
-   analyze( false );
-}
-
-bool Path::analyze( bool isWin )
-{
-   // reset counters
-   m_resEnd = String::npos;
-   m_pathStart = String::npos;
-   m_pathEnd = String::npos;
-   m_fileStart = String::npos;
-   m_fileEnd = String::npos;
-   m_extStart = String::npos;
-
-   uint32 len = m_path.length();
-
-   if ( len == 0 )
-   {
-      m_bValid = true;
-      return true;
-   }
-
-   // a single element should be considered as the file.
-   m_fileStart = 0;
-   uint32 p = 0;
-   bool bHadColon = false;
-
-   while( p < len )
-   {
-      uint32 chr = m_path.getCharAt( p );
-
-      if ( chr == ':' )
-      {
-         // double colon -- error ?
-         // error also if this was the first loop
-         // also, if we had a "/" before, this is an error
-         if ( bHadColon || p == 0 ||
-            ( m_pathStart != String::npos && m_pathStart != 0 ) )
-         {
-            m_bValid = false;
-            return false;
-         }
-
-         // shall we add a slash?
-         if ( m_path.getCharAt( 0 ) != '/' )
-         {
-            p++;
-            m_path.prepend( '/' );
-         }
-
-         m_resEnd = p;
-
-         // reset other starts, just in case.
-         m_pathStart = String::npos;
-         m_pathEnd = String::npos;
-         m_fileStart = String::npos;
-         m_fileEnd = String::npos;
-         m_extStart = String::npos;
-      }
-      else if ( (chr == '\\' && isWin) || chr == '/' )
-      {
-         m_path.setCharAt( p, '/' );
-         // first !
-         if ( m_pathStart == String::npos )
-         {
-            // path is from beginning or from after ":"
-            // (which may be also from here, but it's ok)
-            if ( m_resEnd != String::npos )
-               m_pathStart = m_resEnd + 1;
-            else
-               m_pathStart = 0;
-         }
-         m_pathEnd = p;
-
-         // make the file to start from here.
-         m_fileStart = m_pathEnd + 1;
-         m_extStart = String::npos;
-      }
-      else if ( chr == '.' )
-      {
-         // skip initial "."s, as they don't make an extension.
-         if ( m_fileStart < p && p > 0  && m_path.getCharAt( p - 1 ) != '.' )
-         {
-            m_fileEnd = p;
-            m_extStart = p + 1;
-         }
-      }
-
-      ++p;
-   }
-
-   m_bValid = true;
-   return true;
-}
-
-void Path::setFromWinFormat( const String &p )
-{
-   m_path = p;
-   analyze( true );
-}
-
-
-void Path::getWinFormat( String &str ) const
-{
-   str.size(0);
-   str.reserve( m_path.size() );
-
-   // if we have a resource specifier, we know we have a leading /
-   uint32 startPos = (m_pathStart != String::npos && m_pathStart > 0) ? 1 : 0;
-   uint32 endPos = m_path.length();
-   while( startPos < endPos )
-   {
-      uint32 chr = m_path.getCharAt( startPos );
-      if( chr != '/' )
-         str.append( chr );
-      else
-         str.append( '\\' );
-   }
-}
-
-bool Path::getResource( String &str ) const
-{
-   if ( m_resEnd != String::npos )
-   {
-      str = m_path.subString( 1, m_resEnd );
-      return true;
-   }
-
-   return false;
-}
-
-
-bool Path::getLocation( String &str ) const
-{
-   if ( m_pathStart != String::npos )
-   {
-      // m_pathStart is "/" and m_fileStart is one after "/"
-      str = m_path.subString( m_pathStart, m_pathEnd );
-      return true;
-   }
-
-   str.size(0);
-   return false;
-}
-
-
-bool Path::getWinLocation( String &str ) const
-{
-   if ( ! getLocation( str ) )
-      return false;
-
-   uint32 len = str.length();
-   for( uint32 i = 0; i < len; i ++ )
-   {
-      if ( str.getCharAt( i ) == '/' )
-         str.setCharAt( i, '\\' );
-   }
-
-   return true;
-}
-
-
-bool Path::getFile( String &str ) const
-{
-   if ( m_fileStart != String::npos )
-   {
-      str = m_path.subString( m_fileStart, m_fileEnd );
-      return true;
-   }
-
-   str.size(0);
-   return false;
-}
-
-bool Path::getFilename( String &str ) const
-{
-   if ( m_fileStart != String::npos )
-   {
-      str = m_path.subString( m_fileStart );
-      return true;
-   }
-
-   str.size(0);
-   return false;
-}
-
-
-
-bool Path::getExtension( String &str ) const
-{
-   if ( m_extStart != String::npos )
-   {
-      str = m_path.subString( m_extStart );
-      return true;
-   }
-
-   str.size(0);
-   return false;
-}
-
-
-void Path::setResource( const String &res )
-{
-   if ( res.size() )
-   {
-      if ( m_resEnd != String::npos )
-      {
-         m_path.change( 1, m_resEnd, res );
-      }
-      else {
-         m_path.prepend( "/" + res );
-      }
-   }
-   else {
-      if ( m_resEnd != String::npos )
-      {
-         m_path.change( 0, m_resEnd+1, "" );
-      }
-      // else no need to do nothing
-      else
-         return;
-   }
-
-   analyze( false );
-}
-
-void Path::setLocation( const String &in_loc )
-{
-
-
-   if ( in_loc.length() >0 )
-   {
-      if ( m_pathStart != String::npos )
-         m_path.change( m_pathStart, m_pathEnd, in_loc );
-      else
-      {
-         if ( m_resEnd != String::npos )
-         {
-            if( m_fileStart != String::npos && in_loc.getCharAt( in_loc.length() - 1 ) != '/' )
-            {
-               String loc = in_loc;
-               loc.append( '/' );
-               m_path.change( m_resEnd+1, m_resEnd+1, loc );
-            }
-            else
-               m_path.change( m_resEnd+1, m_resEnd+1, in_loc );
-         }
-         else
-         {
-            if ( m_fileStart != String::npos )
-            {
-               if ( in_loc.getCharAt( in_loc.length() - 1 ) != '/' )
-                  m_path.prepend( "/" );
-               m_path.prepend( in_loc );
-            }
-            else
-               m_path = in_loc;
-         }
-      }
-   }
-   else {
-      if( m_pathStart != String::npos )
-         m_path.change( m_pathStart, m_pathEnd+1, "" );
-      else
-         return;
-   }
-
-   analyze( false );
-}
-
-void Path::setWinLocation( const String &in_loc )
-{
-   String loc = in_loc;
-
-   if ( loc.length() >0 )
-   {
-      if ( loc.getCharAt( loc.length() - 1 ) != '\\' )
-      {
-         loc.append( '\\' );
-      }
-
-      if ( m_pathStart != String::npos )
-         m_path.change( m_pathStart, m_pathEnd, loc );
-      else {
-         if ( m_resEnd != String::npos )
-         {
-            m_path.change( m_resEnd+1, m_resEnd+1, loc );
-         }
-      }
-   }
-   else {
-      if( m_pathStart != String::npos )
-         m_path.change( m_pathStart, m_pathEnd+1, "" );
-      else
-         return;
-   }
-
-   analyze( true );
-}
-
-
-void Path::setFile( const String &file )
-{
-   if( m_fileStart != String::npos )
-   {
-      m_path.change( m_fileStart, m_fileEnd, file );
-   }
-   else {
-      // we may loose the extension, but it's ok
-      if ( m_pathStart != String::npos )
-      {
-         if ( file.size() !=  0 )
-         {
-            if ( m_path.getCharAt( m_path.length() - 1 ) != '/' )
-               m_path.append( '/' );
-            m_path.append( file );
-         }
-         else
-            m_path.change( m_pathEnd, String::npos, "" );
-      }
-      else if ( m_resEnd != String::npos )
-      {
-         m_path.change( m_resEnd + 1, m_resEnd + 1, file );
-      }
-      else
-      {
-         m_path.prepend( file );
-      }
-   }
-
-   analyze( false );
-}
-
-
-void Path::setExtension( const String &extension )
-{
-   if ( m_extStart != String::npos )
-   {
-      if( extension.size() != 0 )
-         m_path.change( m_extStart, String::npos, extension );
-      else
-         m_path.change( m_extStart-1, String::npos, "" );
-
-   }
-   else {
-      if ( extension.size() != 0 )
-      {
-         if ( m_path.getCharAt( m_path.length() - 1 ) != '.' )
-               m_path.append( '.' );
-         m_path.append( extension );
-      }
-      else
-         return;
-   }
-
-   analyze( false );
-}
-
-
-void Path::setFilename( const String &fname )
-{
-   if( m_fileStart != String::npos )
-   {
-      m_path.change( m_fileStart, String::npos, fname );
-   }
-   else {
-      // we may loose the extension, but it's ok
-      if ( m_pathStart != String::npos )
-      {
-         if ( fname.size() !=  0 )
-         {
-            if ( m_path.getCharAt( m_path.length() - 1 ) != '/' )
-               m_path.append( '/' );
-            m_path.append( fname );
-         }
-         else
-            m_path.change( m_pathEnd, String::npos, "" );
-      }
-      else if ( m_resEnd != String::npos )
-      {
-         m_path.change( m_resEnd + 1, m_resEnd + 1, fname );
-      }
-      else
-      {
-         m_path = fname;
-      }
-   }
-
-   analyze( false );
-}
-
-bool Path::isAbsolute() const
-{
-   if ( m_pathStart != String::npos )
-      return m_path.getCharAt( m_pathStart ) == '/';
-
-   return false;
-}
-
-
-bool Path::isLocation() const
-{
-   return m_fileStart == String::npos;
-}
-
-
-void Path::split( String &loc, String &name, String &ext )
-{
-   if ( m_pathStart != String::npos )
-      loc = m_path.subString( m_pathStart, m_pathEnd );
-   else
-      loc.size( 0 );
-
-   if ( m_fileStart != String::npos )
-      name = m_path.subString( m_fileStart, m_fileEnd );
-   else
-      name.size( 0 );
-
-   if ( m_extStart != String::npos )
-      ext = m_path.subString( m_extStart );
-   else
-      ext.size( 0 );
-
-}
-
-
-void Path::split( String &res, String &loc, String &name, String &ext )
-{
-   if( m_resEnd != String::npos )
-      res = m_path.subString( 1, m_resEnd );
-   else
-      res.size( 0 );
-
-   split( loc, name, ext );
-}
-
-
-void Path::splitWinFormat( String &res, String &loc, String &name, String &ext )
-{
-   split( res, loc, name, ext );
-   uint32 len = loc.length();
-   for( uint32 i = 0; i < len; i ++ )
-   {
-      if ( loc.getCharAt( i ) == '/' )
-         loc.setCharAt( i, '\\' );
-   }
-}
-
-
-void Path::join( const String &loc, const String &name, const String &ext )
-{
-   m_path = loc;
-   if( loc.length() !=  0 )
-   {
-      if( loc.getCharAt( loc.length() - 1 )  != '/' && name.length() != 0 )
-         m_path += '/';
-   }
-
-   if ( name.length() != 0 )
-   {
-      m_path += name;
-
-      if( ext.length() != 0 )
-      {
-         if( name.getCharAt( name.length() - 1 ) != '.' )
-            m_path.append( '.' );
-         m_path += ext;
-      }
-   }
-
-   analyze( false );
-}
-
-
-void Path::join( const String &res, const String &loc, const String &name, const String &ext, bool bWin )
-{
-   m_path = res;
-
-   if ( res.length() != 0 && res.getCharAt( res.length() - 1 ) != ':' )
-      m_path.append( ':' );
-
-   m_path += loc;
-
-   if( loc.length() !=  0 )
-   {
-      if( loc.getCharAt( loc.length() - 1 )  != '/' && name.length() != 0 )
-         m_path += '/';
-   }
-
-   if ( name.length() != 0 )
-   {
-      m_path += name;
-
-      if( ext.length() != 0 )
-      {
-         if( name.getCharAt( name.length() - 1 ) != '.' )
-            m_path.append( '.' );
-         m_path += ext;
-      }
-   }
-
-   analyze( bWin );
-}
-
-
-//================================================================
-// URI
-//
-
-URI::URI()
-{
-   m_queryMap = new Map( &traits::t_string, &traits::t_string );
-}
-
-URI::URI( const String &suri )
-{
-   m_queryMap = new Map( &traits::t_string, &traits::t_string );
    parse( suri );
 }
 
-URI::URI( const URI &other )
+URI::URI( const URI &other ):
+   m_queryMap(0)
 {
-   m_queryMap = new Map( &traits::t_string, &traits::t_string );
+   //TODO
    parse( other.m_original );
 }
 
@@ -601,20 +66,20 @@ void URI::clear()
    m_bValid = true; // by default.
 }
 
-bool URI::parse( const String &newUri, bool decode )
+bool URI::parse( const String &newUri, bool parseQuery, bool decode )
 {
-   m_bValid = internal_parse( newUri, decode );
+   m_bValid = internal_parse( newUri, parseQuery, decode );
    return m_bValid;
 }
 
-bool URI::internal_parse( const String &newUri, bool decode )
+bool URI::internal_parse( const String &newUri, bool parseQuery, bool decode )
 {
    // had we a previous parsing?
    if ( m_original.size() != 0 )
    {
       clear();
    }
-   
+
    m_original = newUri;
 
    // We must parse before decoding each element.
@@ -647,7 +112,7 @@ bool URI::internal_parse( const String &newUri, bool decode )
             // if we don't have a scheme yet, this is our scheme.
             if( pEnd == 0 )
                return false;
-            
+
             if ( m_scheme.size() == 0 )
                state = e_colon;
             // otherwise, it's just part of what's going on.
@@ -658,7 +123,7 @@ bool URI::internal_parse( const String &newUri, bool decode )
             if ( state == e_begin )
             {
                // we're parsing a (relative or absolute) path and we didn't know!
-               state = e_path; 
+               state = e_path;
             }
             // if we had a colon, we have <x>:/
             else if ( state == e_colon )
@@ -706,7 +171,7 @@ bool URI::internal_parse( const String &newUri, bool decode )
                // if we have already user info, we failed.
                if ( bUserGiven )
                   return false;
-               
+
                m_userInfo = newUri.subString( pStart, pEnd );
                pStart = pEnd + 1;
                // state stays host, but signal we have already seen a @ here
@@ -741,11 +206,11 @@ bool URI::internal_parse( const String &newUri, bool decode )
             // in every case, parse the query (+fragment) and exit loop
             if ( chr == '?' )
             {
-               if ( ! parseQuery( pEnd + 1, decode ) )
+               if ( ! internal_parseQuery( m_original, pEnd + 1, parseQuery, decode ) )
                   return false;
             }
             else {
-               if ( ! parseFragment( pEnd + 1 ) )
+               if ( ! internal_parseFragment( pEnd + 1 ) )
                   return false;
             }
 
@@ -802,10 +267,28 @@ bool URI::internal_parse( const String &newUri, bool decode )
 }
 
 
-bool URI::parseQuery( uint32 pEnd, bool bDecode )
+bool URI::internal_parseQuery( const String &src, uint32 pEnd, bool parseQuery, bool bDecode )
 {
+   if ( ! parseQuery )
+   {
+      uint32 pSharp = src.find( "#", pEnd );
+      if( pSharp != String::npos )
+      {
+         query( src.subString( pEnd, pSharp ) );
+         return internal_parseFragment( pSharp+1 );
+      }
+      else {
+         if ( pEnd == 0 )
+            query( src );
+         else
+            query( src.subString( pEnd ) );
+      }
+      return true;
+   }
+
+
    // break & and = fields.
-   uint32 len = m_original.length();
+   uint32 len = src.length();
    uint32 pStart = pEnd;
 
    String tempKey;
@@ -813,7 +296,7 @@ bool URI::parseQuery( uint32 pEnd, bool bDecode )
 
    while ( pEnd < len )
    {
-      uint32 chr = m_original.getCharAt( pEnd );
+      uint32 chr = src.getCharAt( pEnd );
 
       if ( chr == '=' && ! bIsValue )
       {
@@ -823,7 +306,7 @@ bool URI::parseQuery( uint32 pEnd, bool bDecode )
             // 0 lenght key not allowed
             return false;
          }
-         
+
          if ( bDecode )
             URLDecode( m_original.subString( pStart, pEnd ), tempKey );
          else
@@ -838,7 +321,7 @@ bool URI::parseQuery( uint32 pEnd, bool bDecode )
          String val;
          if ( bIsValue && pStart != pEnd )
          {
-            
+
             if ( bDecode )
                URLDecode( m_original.subString( pStart, pEnd ), val );
             else
@@ -852,16 +335,16 @@ bool URI::parseQuery( uint32 pEnd, bool bDecode )
       }
       else if ( chr == '#' )
       {
-         return parseFragment( pEnd + 1 );
+         return internal_parseFragment( pEnd + 1 );
       }
-      
+
       pEnd ++;
    }
 
    return true;
 }
 
-bool URI::parseFragment( uint32 pos )
+bool URI::internal_parseFragment( uint32 pos )
 {
    // there is actually nothing to do, but getting everything left as substring
    if ( pos < m_original.length() )
@@ -869,6 +352,217 @@ bool URI::parseFragment( uint32 pos )
    return true;
 }
 
+
+void URI::query( const String &q, bool encode )
+{
+   m_encoded = "";
+
+   // ok also if m_queryMap is 0.
+   delete m_queryMap;
+   m_queryMap = 0;
+
+   if ( encode )
+      URLEncode( q, m_query );
+   else
+      m_query = q;
+}
+
+
+
+void URI::scheme( const String &s )
+{
+   m_encoded = "";
+   m_scheme = s;
+}
+
+
+void URI::userInfo( const String &s )
+{
+   m_encoded = "";
+   m_userInfo = s;
+}
+
+
+void URI::host( const String &h )
+{
+   m_encoded = "";
+   m_host = h;
+}
+
+
+void URI::port( const String &h )
+{
+   m_encoded = "";
+   m_port = h;
+}
+
+
+void URI::path( const String &p )
+{
+   m_encoded = "";
+   m_path.set( p );
+}
+
+
+void URI::path( const Path &p )
+{
+   m_encoded = "";
+   m_path = p;
+}
+
+
+void URI::fragment( const String &s )
+{
+   m_encoded = "";
+   m_fragment = s;
+}
+
+
+bool URI::hasField( const String &f ) const
+{
+   if( m_queryMap == 0 )
+      return false;
+
+   String *res = (String *) m_queryMap->find( &f );
+   return res != 0;
+}
+
+
+bool URI::getField( const String &key, String &value ) const
+{
+   if( m_queryMap == 0 )
+      return false;
+
+   String *res = (String *) m_queryMap->find( &key );
+   if ( res != 0 )
+   {
+      value = *res;
+      return true;
+   }
+
+   return false;
+}
+
+
+void URI::setField( const String &key, const String &value )
+{
+   if( m_queryMap == 0 )
+   {
+      m_queryMap = new Map( &traits::t_string, &traits::t_string );
+   }
+
+   m_queryMap->insert( &key, &value );
+}
+
+
+bool URI::removeField( const String &key )
+{
+   if( m_queryMap == 0 )
+      return false;
+
+   m_queryMap->erase( &key );
+}
+
+
+bool URI::firstField( String &key, String &value )
+{
+   if ( m_queryMap != 0 && m_queryMap->size() > 0 )
+   {
+      m_queryIter = m_queryMap->begin();
+      key = *(String *) m_queryIter.currentKey();
+      value = *(String *) m_queryIter.currentValue();
+      return true;
+   }
+
+   return false;
+}
+
+
+bool URI::nextField( String &key, String &value )
+{
+   if ( m_queryMap != 0 && m_queryMap->size() > 0 && m_queryIter.hasNext() )
+   {
+      m_queryIter.next();
+      key = *(String *) m_queryIter.currentKey();
+      value = *(String *) m_queryIter.currentValue();
+      return true;
+   }
+
+   return false;
+}
+
+
+uint32 URI::fieldCount()
+{
+   if ( m_queryMap != 0 )
+      return m_queryMap->size();
+   return 0;
+}
+
+
+const String &URI::get( bool synthQuery )
+{
+   if ( m_encoded.size() != 0 )
+      return m_encoded;
+
+   if ( synthQuery && m_queryMap != 0 )
+      makeQuery();
+
+   if ( m_scheme.size() != 0 )
+   {
+      m_encoded = m_scheme + ":/";
+   }
+
+   if( (m_userInfo.size() != 0) || (m_host.size() != 0) || (m_port.size() != 0) )
+   {
+      if ( m_encoded.size() != 0 )
+         m_encoded += "/";
+
+      if (m_userInfo.size() != 0)
+         m_encoded += URLEncode( m_userInfo ) + "@";
+
+      if (m_host.size() != 0)
+         m_encoded += URLEncode( m_host );
+
+      if (m_port.size() != 0)
+         m_encoded += ":" + URLEncode( m_port );
+
+      if ( m_path.get().size() != 0 )
+         m_encoded += "/";
+   }
+
+   if ( m_path.get().size() != 0 )
+      m_encoded += URLEncode( m_path.get() );
+
+   if ( m_query.size() != 0 )
+      m_encoded += "?" + m_query;
+
+   if ( m_fragment.size() != 0 )
+      m_encoded += "#" + URLEncode( m_fragment );
+
+   return m_encoded;
+}
+
+const String &URI::makeQuery()
+{
+   m_query = "";
+
+   if ( m_queryMap != 0 && m_queryMap->size() > 0 )
+   {
+      MapIterator iter = m_queryMap->begin();
+      m_query += URLEncode( *(String *) iter.currentKey() ) + "=" +
+                  URLEncode( *(String *) iter.currentValue() );
+      while( iter.hasNext() )
+      {
+         iter.next();
+         m_query += "&";
+         m_query += URLEncode( *(String *) iter.currentKey() ) + "=" +
+                  URLEncode( *(String *) iter.currentValue() );
+      }
+   }
+
+   return m_query;
+}
 
 void URI::URLEncode( const String &source, String &target )
 {
@@ -883,7 +577,7 @@ void URI::URLEncode( const String &source, String &target )
    while ( *cutf != 0 )
    {
       unsigned char chr = (unsigned char) *cutf;
-      
+
       if ( chr == 0x20 )
       {
          target.append( '+' );
@@ -898,9 +592,10 @@ void URI::URLEncode( const String &source, String &target )
          target.append( chr );
       }
 
-      ++cutf;   
+      ++cutf;
    }
 }
+
 
 
 bool URI::URLDecode( const String &source, String &target )
@@ -909,7 +604,7 @@ bool URI::URLDecode( const String &source, String &target )
    char *tgbuf = (char *) memAlloc( source.length() + 1 );
    char *pos = tgbuf;
    bool bOk = true;
-   
+
    uint32 len = source.length();
    for( uint32 i = 0; i < len; i ++ )
    {
@@ -956,5 +651,5 @@ bool URI::URLDecode( const String &source, String &target )
    memFree( tgbuf );
    return bOk;
 }
-  
+
 }

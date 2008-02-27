@@ -129,6 +129,7 @@ ADD_LIBRARY( falcon_engine SHARED
    modloader.cpp
    module.cpp
    pagedict.cpp
+   path.cpp
    proptable.cpp
    pseudo.cpp
    rosstream.cpp
