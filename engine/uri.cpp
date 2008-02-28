@@ -175,7 +175,15 @@ bool URI::internal_parse( const String &newUri, bool parseQuery, bool decode )
 
          case '@':
             // can be found only in host or path state. In path, it is just ignored.
-            if ( state == e_host )
+            if ( state == e_port )
+            {
+               // ops, the host wasn't the host, and the port wasn't the port.
+               state = e_host;
+               m_userInfo = m_host + ":" + newUri.subString( pStart, pEnd );
+               m_host = "";
+               pStart = pEnd + 1;
+            }
+            else if ( state == e_host )
             {
                // if we have already user info, we failed.
                if ( bUserGiven )
