@@ -688,6 +688,11 @@ class PathCarrier: public UserData
 {
 public:
    Path m_path;
+   String m_unit;
+   String m_location;
+   String m_file;
+   String m_ext;
+   String m_filename;
 
    PathCarrier() {}
 
@@ -753,6 +758,7 @@ void PathCarrier::setProperty( VMachine *vm, const String &propName, Item &prop 
    }
 }
 
+
 void PathCarrier::getProperty( VMachine *vm, const String &propName, Item &prop )
 {
    if ( ! m_path.isValid() )
@@ -762,33 +768,40 @@ void PathCarrier::getProperty( VMachine *vm, const String &propName, Item &prop 
          extra( vm->moduleString( msg::rtl_invalid_path ) ) ) );
    }
 
-   GarbageString *item = new GarbageString( vm );
-   prop = item;
+   String *item;
    if ( propName == "unit" )
    {
-      m_path.getResource( *item );
+      m_path.getResource( m_unit );
+      item = &m_unit;
    }
    else if ( propName == "location" )
    {
-      m_path.getLocation( *item );
+      m_path.getLocation( m_location );
+      item = &m_location;
    }
    else if ( propName == "file" )
    {
-      m_path.getFile( *item );
+      m_path.getFile( m_file );
+      item = &m_file;
    }
    else if ( propName == "filename" )
    {
-      m_path.getFilename( *item );
+      m_path.getFilename( m_filename );
+      item = &m_filename;
    }
    else if ( propName == "extension" )
    {
-      m_path.getExtension( *item );
+      m_path.getExtension( m_ext );
+      item = &m_ext;
    }
    else if ( propName == "path" )
    {
-      item->copy( m_path.get() );
+      item = const_cast<String *>( &m_path.get() );
    }
+
+   prop = item;
 }
+
 
 /*# @init Path
    @brief Constructor for the Path class.
