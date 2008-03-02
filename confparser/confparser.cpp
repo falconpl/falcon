@@ -20,7 +20,7 @@
 */
 
 /** \file
-   The socket module.
+   The confparser module - main file.
 */
 #include <falcon/module.h>
 #include "confparser_ext.h"

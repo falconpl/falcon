@@ -1,7 +1,6 @@
 /*
    FALCON - The Falcon Programming Language.
    FILE: compiler_ext.h
-   $Id: compiler_ext.h,v 1.3 2007/07/25 19:10:39 jonnymind Exp $
 
    Compiler module main file - extension definitions.
    -------------------------------------------------------------------
