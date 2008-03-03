@@ -12,7 +12,7 @@
 #define MXML_ERROR_H
 
 #include <mxml_element.h>
-#include <string>
+#include <falcon/string.h>
 
 namespace MXML {
 
@@ -61,12 +61,8 @@ protected:
 
 public:
    virtual const errorType type() const = 0;
-   const std::string description();
-
-   /** Serializes the error.
-      Use this operator to display what kind of error has happened
-   */
-   friend std::ostream& operator<<( std::ostream &stream, Error &err );
+   const Falcon::String description();
+   void toString( Falcon::String &target );
 };
 
 

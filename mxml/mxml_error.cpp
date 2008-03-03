@@ -12,7 +12,7 @@
 
 namespace MXML {
 
-const std::string Error::description()
+const Falcon::String Error::description()
 {
    switch( m_code )
    {
@@ -36,26 +36,36 @@ const std::string Error::description()
    return "Undefined error code";
 }
 
-std::ostream& operator<<( std::ostream &stream, Error &err )
+void Error::toString( Falcon::String &stream )
 {
-   switch( err.type() ) {
-      case malformedError: stream << "MXML::MalformedError"; break;
-      case ioError: stream << "MXML::IOError"; break;
-      case notFoundError: stream << "MXML::NotFoundError"; break;
-      default: stream << "MXML::Unknown error";
+   switch( this->type() ) {
+      case malformedError: stream = "MXML::MalformedError"; break;
+      case ioError: stream = "MXML::IOError"; break;
+      case notFoundError: stream = "MXML::NotFoundError"; break;
+      default: stream = "MXML::Unknown error";
    }
-   stream << " (" << err.m_code << "):";
-   stream << err.description();
+   stream += " (";
+   stream.writeNumber( (Falcon::int64) this->m_code );
+   stream += "):";
 
-   if ( err.type() != notFoundError ) {
-      stream << " in line ";
-      stream << err.m_generator->beginLine() << ":" << err.m_generator->beginChar();
-      stream << "( realized in line " << err.m_generator->line() << ":";
-      stream << err.m_generator->character() << ")";
+   stream += this->description();
+
+   if ( this->type() != notFoundError ) {
+      stream += " in line ";
+      stream.writeNumber( (Falcon::int64) this->m_generator->beginLine() );
+      stream += ":";
+      stream.writeNumber( (Falcon::int64) this->m_generator->beginChar() );
+      if( this->m_generator->line() )
+      {
+         stream += " ( realized in line ";
+         stream.writeNumber( (Falcon::int64) this->m_generator->line()); 
+         stream += ":";
+         stream.writeNumber( (Falcon::int64) this->m_generator->character() ); 
+         stream += ")";
+      }
    }
 
-   stream << std::endl;
-   return stream;
+   stream.append( '\n' );
 }
 
 }

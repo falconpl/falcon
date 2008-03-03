@@ -3,9 +3,7 @@
 
    Attribute class
 
-   Author: Giancarlo Niccolai <gian@niccolai.ws>
-
-   $Id: mxml_attribute.cpp,v 1.5 2004/11/19 17:35:45 jonnymind Exp $
+   Author: Giancarlo Niccolai <gc@falconpl.org>
 */
 
 #include <mxml.h>
@@ -13,21 +11,19 @@
 #include <mxml_error.h>
 #include <mxml_utility.h>
 
-#include <ctype.h>
+#include <falcon/fassert.h>
 
-#include <cassert>
+#include <ctype.h>
 
 namespace MXML {
 
-
-Attribute::Attribute( std::istream &in, int style, int l, int p ):
+Attribute::Attribute( Falcon::Stream &in, int style, int l, int p ):
    Element( l, p )
 {
-   char chr, quotechr;
+   Falcon::uint32 chr, quotechr;
    int iStatus = 0;
-   std::string entity;
+   Falcon::String entity;
    markBegin(); // default start
-
 
    m_value = "";
    m_name = "";
@@ -41,7 +37,7 @@ Attribute::Attribute( std::istream &in, int style, int l, int p ):
          case 0:
             // no attributes found - should not happen as I have been called by
             // node only if an attribute is to be read.
-            assert( chr != '>' && chr !='/');
+            fassert( chr != '>' && chr !='/');
             switch ( chr ) {
                case MXML_LINE_TERMINATOR: nextLine(); break;
                // We repeat line terminator here for portability
@@ -171,23 +167,24 @@ Attribute::Attribute( std::istream &in, int style, int l, int p ):
          in.get( chr );
    }
 
-   if ( in.fail() ) throw IOError( Error::errIo, this );
+   if ( ! in.good() ) throw IOError( Error::errIo, this );
 
    if ( iStatus < 6 ) {
       throw MalformedError( Error::errMalformedAtt, this );
    }
 }
 
-void Attribute::write( std::ostream &out, const int style ) const
+void Attribute::write( Falcon::Stream &out, const int style ) const
 {
-   out << m_name << "=\"";
+   out.writeString( m_name );
+   out.write( "=\"", 2 );
 
    if ( style & MXML_STYLE_NOESCAPE )
-      out << m_value;
+      out.writeString( m_value );
    else
       MXML::writeEscape( out, m_value );
 
-   out << "\"";
+   out.put( '\"' );
 }
 
 }

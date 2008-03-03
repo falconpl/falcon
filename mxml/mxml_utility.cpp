@@ -8,23 +8,23 @@
    $Id: mxml_utility.cpp,v 1.3 2004/10/14 13:16:37 jonnymind Exp $
 */
 
-#include <string>
-#include <iostream>
+#include <falcon/string.h>
+#include <falcon/stream.h>
 
 namespace MXML {
 
 /** Escapes a string.
    \todo have this function to work...
 */
-std::string escape( const std::string unescaped )
+Falcon::String escape( const Falcon::String &unescaped )
 {
    return "";
 }
 
 
-char parseEntity( const std::string entity )
+Falcon::uint32 parseEntity( const Falcon::String &entity )
 {
-   char chr = 0;
+   Falcon::uint32 chr = 0;
 
    if ( entity == "amp" ) chr = '&';
    else if ( entity == "lt" ) chr = '<';
@@ -36,17 +36,17 @@ char parseEntity( const std::string entity )
 }
 
 
-std::ostream & writeEscape( std::ostream &stream, const std::string &src )
+Falcon::Stream & writeEscape( Falcon::Stream &stream, const Falcon::String &src )
 {
 
-   for( int i = 0; i < src.length(); i++ ) {
+   for( Falcon::uint32 i = 0; i < src.length(); i++ ) {
       switch ( src[i] ) {
-         case '"': stream << "&quot;"; break;
-         case '\'': stream << "&apos;"; break;
-         case '&': stream << "&amp;"; break;
-         case '<': stream << "&lt;"; break;
-         case '>': stream << "&gt;"; break;
-         default: stream << src[i];
+         case '"': stream.write( "&quot;", 6 ); break;
+         case '\'': stream.write( "&apos;", 6 ); break;
+         case '&': stream.write( "&amp;", 5 ); break;
+         case '<': stream.write( "&lt;", 4 ); break;
+         case '>': stream.write( "&gt;", 4 ); break;
+         default: stream.put( src[i] );
       }
       if ( stream.bad() ) break;
    }

@@ -11,8 +11,8 @@
 #ifndef MXML_ELEMENT_H
 #define MXML_ELEMENT_H
 
-#include <iostream>
-#include <string>
+#include <falcon/stream.h>
+#include <falcon/string.h>
 
 namespace MXML {
 
@@ -99,19 +99,9 @@ public:
       @param style the style of the serialization
       @see MXML::Document::setStyle()
    */
-   virtual void write( std::ostream &stream, const int style ) const = 0;
+   virtual void write( Falcon::Stream &stream, const int style ) const = 0;
 
-   /** Serializes the object on a stream.
-      See write() method for an in depth.
-   */
-   friend std::ostream& operator<<( std::ostream& stream, const Element& elem );
 };
-
-inline std::ostream& operator<<( std::ostream& stream, const Element& elem )
-{
-   elem.write( stream, 0 );
-   return stream;
-}
 
 } // namespace
 

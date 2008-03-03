@@ -112,8 +112,8 @@ __deep_iterator< __Node>( nd )
 }
 
 template< class __Node >
-__find_iterator<__Node>::__find_iterator( __Node *nd, std::string name, std::string attr,
-	std::string valatt, std::string data):
+__find_iterator<__Node>::__find_iterator( __Node *nd, Falcon::String name, Falcon::String attr,
+	Falcon::String valatt, Falcon::String data):
 __deep_iterator< __Node>( nd )
 {
 	m_name = name;
@@ -151,7 +151,7 @@ __iterator<__Node> &__find_iterator<__Node>::__find()
 				matches++;
 		}
 
-		if ( m_data != "" && this->m_node->data().find( m_data ) != std::string::npos )
+		if ( m_data != "" && this->m_node->data().find( m_data ) != Falcon::String::npos )
 			matches++;
 
 		if ( matches < m_maxmatch )
@@ -174,7 +174,7 @@ __iterator<__Node> &__find_iterator<__Node>::__prev()
 * Path Iterator
 *********************************************/
 template< class __Node >
-__path_iterator<__Node>::__path_iterator( __Node *nd, std::string path ):
+__path_iterator<__Node>::__path_iterator( __Node *nd, const Falcon::String &path ):
 __iterator< __Node>( nd )
 {
 	m_path = path;
@@ -185,16 +185,16 @@ template< class __Node >
 __iterator<__Node> &__path_iterator<__Node>::__next()
 {
 	__Node *ptr = this->m_node;
-	std::string name;
-	std::string::size_type pos = m_path.rfind('/');
+	Falcon::String name;
+	Falcon::uint32 pos = m_path.rfind( "/" );
 
-	if ( pos == std::string::npos ) {
+	if ( pos == Falcon::String::npos ) {
 		pos = 0;
 		name = m_path;
 	}
 	else {
 		pos++;
-		name = m_path.substr( pos );
+		name = m_path.subString( pos );
 	}
 
 	this->m_node = this->m_node->next();   
@@ -226,17 +226,17 @@ __iterator<__Node> &__path_iterator<__Node>::__prev()
 
 template< class __Node >
 __Node *__path_iterator<__Node>::subfind( __Node *parent, 
-	std::string::size_type begin )
+	Falcon::uint32 begin )
 {
-	std::string::size_type end = m_path.find( '/', begin );
-	std::string name = end == std::string::npos? m_path.substr( begin ) : m_path.substr( begin, end - begin );
+	Falcon::uint32 end = m_path.find( "/", begin );
+	Falcon::String name = end == Falcon::String::npos? m_path.subString( begin ) : m_path.subString( begin, end );
 
 	if ( name == "" ) return parent;
 
 	parent = parent->child();
 	while( parent != 0 ) {
 		if ( name == "*"  || parent->name() == name ) {
-			if ( end != std::string::npos ) {
+			if ( end != Falcon::String::npos ) {
 				parent = subfind( parent, end +1 );
 			}
 			break;
@@ -253,8 +253,8 @@ __iterator<__Node> &__path_iterator<__Node>::__find()
 	if ( this->m_node == 0 ) return *this;
 
 	__Node *rootNode = this->m_node;
-	std::string firstName;
-	std::string::size_type pos;
+	Falcon::String firstName;
+	Falcon::uint32 pos;
 	if ( rootNode->nodeType() == Node::typeDocument ) 
 	{
 		rootNode = rootNode->child();
@@ -273,27 +273,27 @@ __iterator<__Node> &__path_iterator<__Node>::__find()
 		{
 			rootNode = rootNode->parent();
 		}
-		pos = m_path.find( '/', 1 );
-		if( pos == std::string::npos ) 
-			firstName = m_path.substr( 1 );
+		pos = m_path.find( "/", 1 );
+		if( pos == Falcon::String::npos ) 
+			firstName = m_path.subString( 1 );
 		else
-			firstName = m_path.substr( 1, pos-1 );
+			firstName = m_path.subString( 1, pos );
 	}
 	else {
       // relative path, starting below us.
 		rootNode = rootNode->child();
-		pos = m_path.find( '/' );
-		if( pos == std::string::npos ) 
+		pos = m_path.find( "/" );
+		if( pos == Falcon::String::npos ) 
 			firstName = m_path;
 		else
-			firstName = m_path.substr( 0, pos );
+			firstName = m_path.subString( 0, pos );
 	}
 
 	while ( rootNode != 0 ) 
 	{
 		if ( firstName == "*" || firstName == rootNode->name() ) 
 		{
-			if ( pos == std::string::npos ) 
+			if ( pos == Falcon::String::npos ) 
 			{
 				this->m_node = rootNode;
 			}

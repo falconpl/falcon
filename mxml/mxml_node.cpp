@@ -47,14 +47,14 @@ namespace MXML
 {
 
 
-Node::Node( std::istream &in,  const int style, const int l, const int pos  )
+Node::Node( Falcon::Stream &in,  const int style, const int l, const int pos  )
    throw( MalformedError ): Element( l, pos )
 {
    // variables to optimize data node promotion in tag nodes
    bool promote_data = true;
    Node *the_data_node = 0;
-   char chr;
-   std::string entity;
+   Falcon::uint32 chr;
+   Falcon::String entity;
    int iStatus = STATUS_BEGIN;
    int iParentStatus = STATUS_BEGIN;
 
@@ -265,7 +265,7 @@ Node::Node( std::istream &in,  const int style, const int l, const int pos  )
             }
             else if ( chr == '<' && m_type == typeData ) {
                // done with data elements
-               in.putback( chr );
+               in.unget( chr );
                iStatus = STATUS_DONE;
             }
             else {
@@ -291,7 +291,7 @@ Node::Node( std::istream &in,  const int style, const int l, const int pos  )
                if ( ( chr = parseEntity( entity ) ) != 0 )
                   m_data += chr;
                else
-                  m_data = m_data + '&' + entity + ';';
+                  m_data = m_data + "&" + entity + ";";
 
                iStatus = STATUS_READ_DATA;
             }
@@ -370,7 +370,7 @@ Node::Node( std::istream &in,  const int style, const int l, const int pos  )
                   nextLine();
             }
             else {
-               in.putback( chr );
+               in.unget( chr );
                setPosition( line(), character() -1 );
                Attribute *attrib = new Attribute( in, style, line(), character() );
                m_attrib.push_back( attrib );
@@ -379,7 +379,7 @@ Node::Node( std::istream &in,  const int style, const int l, const int pos  )
          break;
 
          case STATUS_READ_SUBNODES:
-            in.putback( chr );
+            in.unget( chr );
             while ( in.good() ) {
                //std::cout << "Reading subnode" << std::endl;
                Node *child = new Node( in, style, line(), character() -1);
@@ -429,18 +429,7 @@ Node::Node( std::istream &in,  const int style, const int l, const int pos  )
    //   data member
    if ( m_type == typeData || m_type == typeComment )
    {
-      int idx = m_data.find_first_not_of("\n\r \t");
-      if( static_cast<unsigned int>(idx) != std::string::npos )
-      {
-         m_data = m_data.substr(idx);
-         idx = m_data.find_last_not_of("\n\r \t");
-         if( static_cast<unsigned int>(idx) != std::string::npos )
-            m_data = m_data.substr( 0, idx+1 );
-         else
-            m_data = "";
-      }
-      else
-         m_data = "";
+      m_data.trim();
    }
 
    if ( m_type == typeTag && promote_data && the_data_node != 0 )
@@ -493,7 +482,7 @@ Node::~Node()
 
 /* Search routines */
 
-const std::string Node::getAttribute( const std::string name ) const
+const Falcon::String Node::getAttribute( const Falcon::String &name ) const
    throw( NotFoundError )
 {
    AttribList::const_iterator iter = m_attrib.begin();
@@ -506,7 +495,7 @@ const std::string Node::getAttribute( const std::string name ) const
    throw NotFoundError( Error::errAttrNotFound, this );
 }
 
-void Node::setAttribute( const std::string name, const std::string value )
+void Node::setAttribute( const Falcon::String &name, const Falcon::String &value )
    throw( NotFoundError )
 {
    AttribList::iterator iter = m_attrib.begin();
@@ -521,7 +510,7 @@ void Node::setAttribute( const std::string name, const std::string value )
    throw NotFoundError( Error::errAttrNotFound, this );
 }
 
-bool Node::hasAttribute( const std::string name ) const
+bool Node::hasAttribute( const Falcon::String &name ) const
 {
    AttribList::const_iterator iter = m_attrib.begin();
 
@@ -688,9 +677,9 @@ int Node::depth() const
    return iDepth;
 }
 
-std::string Node::path() const
+Falcon::String Node::path() const
 {
-   std::string ret = "";
+   Falcon::String ret = "";
    const Node *parent = this;
 
    while( parent != 0 && parent->m_name != "") {
@@ -705,13 +694,13 @@ std::string Node::path() const
 * Find section
 ************************************************/
 Node::find_iterator
-   Node::find( std::string name, std::string attrib, std::string valatt, std::string data )
+   Node::find( const Falcon::String &name, const Falcon::String &attrib, const Falcon::String &valatt, const Falcon::String &data )
 {
    find_iterator iter( this, name, attrib, valatt, data);
    return iter;
 }
 
-Node::path_iterator Node::find_path( std::string path )
+Node::path_iterator Node::find_path( const Falcon::String &path )
 {
    path_iterator iter( this, path );
    return iter;
@@ -721,22 +710,22 @@ Node::path_iterator Node::find_path( std::string path )
 * Write sections
 ************************************************/
 
-void Node::nodeIndent( std::ostream &out, const int iDepth, const int style ) const
+void Node::nodeIndent( Falcon::Stream &out, const int iDepth, const int style ) const
 {
    int i;
 
    for ( i = 0; i < iDepth; i++ ) {
       if ( style & MXML_STYLE_TAB )
-         out << '\t';
+         out.put( '\t' );
       else if (  style & MXML_STYLE_THREESPACES )
-         out << "   ";
+         out.write( "   ", 3 );
       else
-         out << ' ' ;
+         out.put( ' ' );
    }
 
 }
 
-void Node::write( std::ostream &out, const int style ) const
+void Node::write( Falcon::Stream &out, const int style ) const
 {
    Node *child;
    int iDepth = 0;
@@ -751,25 +740,26 @@ void Node::write( std::ostream &out, const int style ) const
    switch( m_type ) {
       case typeTag:
 
-         out << '<' << m_name;
+         out.put( '<' );
+         out.writeString( m_name );
 
          iter = m_attrib.begin();
          while( iter != m_attrib.end() ) {
-            out << " ";
+            out.put( ' ' );
             (*iter)->write( out, style ) ;
             iter++;
          }
 
          if ( m_data == "" && m_child == 0 ) {
-            out << "/>"<< std::endl ;
+            out.writeString( "/>\n" );
          }
          else {
-            out << '>';
+            out.put( '>' );
 
             child = m_child;
             if ( child != 0 ) {
                mustIndent = 1;
-               out << std::endl;
+               out.put( '\n' );
 
                while ( child != 0 ) {
                   child->write( out, style );
@@ -782,53 +772,68 @@ void Node::write( std::ostream &out, const int style ) const
                   nodeIndent( out, iDepth+1, style );
 
                if ( style & MXML_STYLE_NOESCAPE )
-                  out << m_data;
+                  out.writeString( m_data );
                else
                   MXML::writeEscape( out, m_data );
 
-               if ( mustIndent ) out << std::endl;
+               if ( mustIndent ) out.put( '\n' );
             }
 
             if ( mustIndent && ( style & MXML_STYLE_INDENT ))
                nodeIndent( out, iDepth, style );
 
-            out << "</" << m_name << ">" << std::endl;
+            out.write( "</", 2 );
+            out.writeString(m_name);
+            out.write( ">\n", 2 );
          }
       break;
 
       case typeComment:
-            out << "<!-- " << m_data << " -->" << std::endl;
+            out.write( "<!-- ", 5 );
+            out.writeString(m_data);
+            out.write( " -->\n", 6 );
       break;
 
       case typeData:
          if ( style & MXML_STYLE_NOESCAPE )
-            out << m_data;
+            out.writeString( m_data );
          else
             MXML::writeEscape( out, m_data );
-         out << std::endl;
+         out.put( '\n' );
       break;
 
       case typeCDATA:
-         out << "<![CDATA[" << m_data << "]]>" << std::endl;
+         out.write( "<![CDATA[", 9 );
+         out.writeString( m_data );
+         out.write( "]]>\n", 4);
       break;
 
       case typeDirective:
-         out << "<!" << m_name << ' ' << m_data << ">" << std::endl;
+         out.write( "<!", 2);
+         out.writeString( m_name );
+         out.put( ' ' );
+         out.writeString( m_data ); 
+         out.write( ">\n", 2 );
       break;
 
       case typePI:
-         out << "<?" << m_name << ' ' << m_data << "?>" << std::endl;
+         out.write( "<?", 2);
+         out.writeString( m_name );
+         out.put( ' ' );
+         out.writeString( m_data ); 
+         out.write( ">\n", 2 );
       break;
 
       case typeXMLDecl:
-         out << "<?" << m_name;
+         out.write( "<?", 2 );
+         out.writeString( m_name );
          iter = m_attrib.begin();
          while( iter != m_attrib.end() ) {
-            out << " ";
+            out.put( ' ' );
             (*iter)->write( out, style );
             iter++;
          }
-         out << "?>" << std::endl;
+         out.write( "?>\n", 3 );
       break;
 
       case typeDocument:
@@ -837,7 +842,7 @@ void Node::write( std::ostream &out, const int style ) const
             child->write( out, style );
             child = child->m_next;
          }
-         out << std::endl;
+         out.put( '\n' );
       break;
    }
 

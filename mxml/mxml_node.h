@@ -11,8 +11,8 @@
 #ifndef MXML_NODE_H
 #define MXML_NODE_H
 
-#include <string>
-#include <iostream>
+#include <falcon/string.h>
+#include <falcon/stream.h>
 #include <list>
 #include <cassert>
 
@@ -94,16 +94,16 @@ public:
 template <class __Node>
 class __find_iterator:public __deep_iterator< __Node>
 {
-   std::string m_name;
-   std::string m_attr;
-   std::string m_valattr;
-   std::string m_data;
+   Falcon::String m_name;
+   Falcon::String m_attr;
+   Falcon::String m_valattr;
+   Falcon::String m_data;
    int m_maxmatch;
 
 protected:
    friend class Node;
-   __find_iterator( __Node *nd, std::string name, std::string attr,
-               std::string valatt, std::string data);
+   __find_iterator( __Node *nd, Falcon::String name, Falcon::String attr,
+               Falcon::String valatt, Falcon::String data);
    virtual inline __iterator<__Node> &__next();
    virtual inline __iterator<__Node> &__prev();
    virtual inline __iterator<__Node> &__find();
@@ -115,12 +115,12 @@ public:
 template <class __Node>
 class __path_iterator:public __iterator< __Node>
 {
-   std::string m_path;
-   virtual inline __Node *subfind( __Node *parent, std::string::size_type begin );
+   Falcon::String m_path;
+   virtual inline __Node *subfind( __Node *parent, Falcon::uint32 begin );
 
 protected:
    friend class Node;
-   __path_iterator( __Node *nd, std::string path );
+   __path_iterator( __Node *nd, const Falcon::String &path );
    virtual inline __iterator<__Node> &__next();
    virtual inline __iterator<__Node> &__prev();
    virtual inline __iterator<__Node> &__find();
@@ -192,8 +192,8 @@ public:
 
 private:
    type m_type;
-   std::string m_name;
-   std::string m_data;
+   Falcon::String m_name;
+   Falcon::String m_data;
    AttribList m_attrib;
    AttribList::iterator m_lastFound;
 
@@ -204,9 +204,8 @@ private:
    Node *m_prev;
 
 protected:
-   void nodeIndent( std::ostream &out, const int depth, const int style ) const;
-
-   void readData( std::istream in, const int iStyle );
+   void nodeIndent( Falcon::Stream &out, const int depth, const int style ) const;
+   void readData( Falcon::Stream &in, const int iStyle );
 
 public:
    /** Deserializes a node
@@ -221,7 +220,7 @@ public:
       @throws MXML::MalformedError if the node is invalid
       @throws MXML::IOError in case of hard errors on the stream
    */
-   Node( std::istream &in, const int style = 0, const int line=1, const int pos=0  )
+   Node( Falcon::Stream &in, const int style = 0, const int line=1, const int pos=0  )
       throw( MalformedError );
 
    /* Creates a new node
@@ -231,7 +230,7 @@ public:
       @param name the name of the newborn node
       @param type the value of the newborn attribute
    */
-   Node( const type tp, const std::string &name = "", const std::string &data = "" ):
+   Node( const type tp, const Falcon::String &name = "", const Falcon::String &data = "" ):
       Element()
    {
       m_type = tp;
@@ -282,25 +281,25 @@ public:
    /** Returns current name of the node.
       If the name is not defined, it returns an empty string.
    */
-   const std::string name() const { return m_name; }
+   const Falcon::String &name() const { return m_name; }
    /** Returns the data element of the node.
       If the name is not defined, it returns an empty string.
    */
-   const std::string data() const { return m_data; }
+   const Falcon::String &data() const { return m_data; }
 
    /** Change name of the node.
       If the node should not have a name (i.e. comments) this value will
       be ignored by the system.
       \todo check validity of the name and throw a malformed error if wrong.
    */
-   void name( const std::string &new_name ) { m_name = new_name; }
+   void name( const Falcon::String &new_name ) { m_name = new_name; }
 
    /** Change data of the node.
       The user can also set the data for a node that should not have it (i.e.
       an XMLdecl type), but the data will be ignored by the system.
       \todo check validity of the name and throw a malformed error if wrong.
    */
-   void data( const std::string &new_value ) { m_data = new_value; }
+   void data( const Falcon::String &new_value ) { m_data = new_value; }
 
    /** Adds a new attribute at the end of the attribute list.
    */
@@ -316,7 +315,7 @@ public:
       @return the attribute value, if it exists
       @throws MXML::NotFoundError if the attribute name can't be found.
    */
-   const std::string getAttribute( const std::string name ) const
+   const Falcon::String getAttribute( const Falcon::String &name ) const
       throw( NotFoundError );
 
    /** Sets the value of a given attribute.
@@ -326,7 +325,7 @@ public:
       @return the attribute value, if it exists
       @throws MXML::NotFoundError if the attribute name can't be found.
    */
-   void setAttribute( const std::string name, const std::string value )
+   void setAttribute( const Falcon::String &name, const Falcon::String &value )
       throw( NotFoundError );
 
    /** Returns true if the node has a given attribute.
@@ -345,7 +344,7 @@ public:
       @param name attribute to be found
       @return true if attribute with given name has been found, false otherwise
    */
-   bool hasAttribute( const std::string name ) const;
+   bool hasAttribute( const Falcon::String &name ) const;
 
    /** Detaches current node from its parent and brothers.
       The node still retain its children though.
@@ -419,7 +418,7 @@ public:
       @return the path leading to the node, or an empty string if the node
          has not a valid path.
    */
-   std::string path() const;
+   Falcon::String path() const;
 
 
    /* Clones the node and all its children.
@@ -435,7 +434,7 @@ public:
       @param stream the stream where the object will be written
       @param style the style of the serialization
    */
-   virtual void write( std::ostream &out, const int style ) const;
+   virtual void write( Falcon::Stream &out, const int style ) const;
 
 
    typedef __iterator<Node> iterator;
@@ -494,13 +493,16 @@ public:
          turn or end().
    */
 
-   find_iterator find( std::string name, std::string attrib="", std::string valatt="", std::string data="" );
+   find_iterator find( const Falcon::String &name, 
+                       const Falcon::String &attrib="", 
+                       const Falcon::String &valatt="", 
+                       const Falcon::String &data="" );
 
    /** Recursive node path find iterator.
       \note currently, it only supports complete path or path aliased with '*'; also, it supports only
          the FIRST branch that corresponds to the path and all its leaves.
     */
-   path_iterator find_path( std::string path );
+   path_iterator find_path( const Falcon::String &path );
 };
 
 #include <mxml_iterator.h>

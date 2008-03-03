@@ -48,6 +48,7 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    self->addClassMethod( c_doc, "findPath", Falcon::Ext::MXMLDocument_findPath );
    self->addClassMethod( c_doc, "save", Falcon::Ext::MXMLDocument_save );
    self->addClassMethod( c_doc, "load", Falcon::Ext::MXMLDocument_load );
+   self->addClassMethod( c_doc, "setEncoding", Falcon::Ext::MXMLDocument_setEncoding );
 
    Falcon::Symbol *c_nodetype = self->addClass( "MXMLStyle" );
    self->addClassProperty( c_nodetype, "MXML_STYLE_INDENT")->setInteger( MXML_STYLE_TAB );
@@ -64,16 +65,14 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    self->addClassMethod( c_node, "setAttribute", Falcon::Ext::MXMLNode_setAttribute );
    self->addClassMethod( c_node, "getAttribute", Falcon::Ext::MXMLNode_getAttribute );
    self->addClassMethod( c_node, "hasAttribute", Falcon::Ext::MXMLNode_hasAttribute );
-   self->addClassMethod( c_node, "unlink", Falcon::Ext::MXMLNode_hasAttribute );
-   self->addClassMethod( c_node, "unlinkComplete", Falcon::Ext::MXMLNode_hasAttribute );
+   self->addClassMethod( c_node, "unlink", Falcon::Ext::MXMLNode_unlink );
+   self->addClassMethod( c_node, "unlinkComplete", Falcon::Ext::MXMLNode_unlinkComplete );
    self->addClassMethod( c_node, "removeChild", Falcon::Ext::MXMLNode_removeChild );
    self->addClassMethod( c_node, "parent", Falcon::Ext::MXMLNode_parent );
    self->addClassMethod( c_node, "firstChild", Falcon::Ext::MXMLNode_firstChild );
    self->addClassMethod( c_node, "nextSibling", Falcon::Ext::MXMLNode_nextSibling );
    self->addClassMethod( c_node, "prevSibling", Falcon::Ext::MXMLNode_prevSibling );
    self->addClassMethod( c_node, "lastChild", Falcon::Ext::MXMLNode_lastChild );
-   self->addClassMethod( c_node, "prevSibling", Falcon::Ext::MXMLNode_prevSibling );
-   self->addClassMethod( c_node, "prevSibling", Falcon::Ext::MXMLNode_prevSibling );
    self->addClassMethod( c_node, "addBelow", Falcon::Ext::MXMLNode_addBelow );
    self->addClassMethod( c_node, "insertBelow", Falcon::Ext::MXMLNode_insertBelo );
    self->addClassMethod( c_node, "insertBefore", Falcon::Ext::MXMLNode_insertBefore );
@@ -81,8 +80,6 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    self->addClassMethod( c_node, "depth", Falcon::Ext::MXMLNode_depth );
    self->addClassMethod( c_node, "path", Falcon::Ext::MXMLNode_path );
    self->addClassMethod( c_node, "clone", Falcon::Ext::MXMLNode_clone );
-   self->addClassMethod( c_node, "serialize", Falcon::Ext::MXMLNode_serialize );
-   self->addClassMethod( c_node, "deserialize", Falcon::Ext::MXMLNode_deserialize );
 
    return self;
 }

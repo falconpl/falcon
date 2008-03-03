@@ -44,7 +44,6 @@ private:
    Node *m_root;
    int m_style;
 
-   friend std::ostream& operator>>( std::ostream& stream, Document& doc );
 public:
 
    /** Creates the document object.
@@ -71,7 +70,7 @@ public:
       \param style the mode in which the document is read/written
       \see stylemacros
    */
-   Document( std::istream &in, const int style = 0 ) throw( MalformedError );
+   Document( Falcon::Stream &in, const int style = 0 ) throw( MalformedError );
    
    /** Destroys the document.
       If you provided a stream at document creation, the stream is NOT colsed.
@@ -100,7 +99,7 @@ public:
       status of the document will be faulty.
       \see Node::write()
    */
-   virtual void write( std::ostream &stream, const int style ) const;
+   virtual void write( Falcon::Stream &stream, const int style ) const;
 
    /** Reads and parse the document.
       \todo throw an exception on error, or return a value.
@@ -141,7 +140,7 @@ public:
       \param stream the input stream used for reading the data.
       \see Node::read()
    */
-   virtual void read( std::istream &stream ) throw(MalformedError);
+   virtual void read( Falcon::Stream &stream ) throw(MalformedError);
 
 };
 

@@ -11,8 +11,8 @@
 #ifndef MXML_ATTRIBUTE_H
 #define MXML_ATTRIBUTE_H
 
-#include <string>
-#include <iostream>
+#include <falcon/string.h>
+#include <falcon/stream.h>
 #include <mxml_element.h>
 
 namespace MXML {
@@ -26,9 +26,9 @@ class Attribute: public Element
 {
 private:
    /** Name of the attribute */
-   std::string m_name;
+   Falcon::String m_name;
    /** Value of the attribute */
-   std::string m_value;
+   Falcon::String m_value;
 
 public:
    /** Deserializes an attribute
@@ -41,7 +41,7 @@ public:
       @throws MXML::MalformedError if the attribute is invalid
       @throws MXML::IOError in case of hard errors on the stream
    */
-   Attribute( std::istream &in, int style=0, int line=1, int pos=0  );
+   Attribute( Falcon::Stream &in, int style=0, int line=1, int pos=0  );
 
 
    /* Creates a new attribute
@@ -49,36 +49,36 @@ public:
       @param name the name of the newborn attribute
       @param value the value of the newborn attribute
    */
-   Attribute( const std::string &name, const std::string &value ): Element()
+   Attribute( const Falcon::String &name, const Falcon::String &value ): Element()
    {
       m_name = name;
       m_value = value;
    }
 
    /* Copies an attribute. */
-   Attribute( Attribute &src): Element( src )
+   Attribute( Attribute &src ): Element( src )
    {
       m_name= src.m_name;
       m_value = src.m_value;
    };
 
    /** Returns current name of the attribute. */
-   const std::string name() const { return m_name; }
+   const Falcon::String name() const { return m_name; }
    /** Returns the value stored in the attribute.
       Parsing the value or transforming it to a proper type (i.e. integer)
       is left to the caller.
    */
-   const std::string value() const { return m_value; }
+   const Falcon::String value() const { return m_value; }
 
    /** Change name of the attribute
       \todo check validity of the name and throw a malformed error if wrong.
    */
-   void name( const std::string &new_name ) { m_name = new_name; }
+   void name( const Falcon::String &new_name ) { m_name = new_name; }
 
    /** Change value of the attribute
       \todo check validity of the name and throw a malformed error if wrong.
    */
-   void value( const std::string &new_value ) { m_value = new_value; }
+   void value( const Falcon::String &new_value ) { m_value = new_value; }
 
    /** Writes the attribute on a stream.
       This function is usually called by MXML::Document::write(), or by
@@ -88,7 +88,7 @@ public:
       @param style the style of the serialization
 
    */
-   virtual void write( std::ostream &out, const int style ) const;
+   virtual void write( Falcon::Stream &out, const int style ) const;
 };
 
 } // namespace

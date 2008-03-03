@@ -3,9 +3,7 @@
 
    Utilities
 
-   Author: Giancarlo Niccolai <gian@niccolai.ws>
-
-   $Id: mxml_utility.h,v 1.2 2004/10/14 13:16:37 jonnymind Exp $
+   Author: Giancarlo Niccolai <gc@niccolai.cc>
 */
 
 #ifndef MXML_UTILITY_H
@@ -16,9 +14,9 @@
 
 namespace MXML {
 
-std::string escape( const std::string unescaped );
-std::ostream & writeEscape( std::ostream &stream, const std::string &src );
-char parseEntity( const std::string entity );
+Falcon::String escape( const Falcon::String &unescaped );
+Falcon::Stream & writeEscape( Falcon::Stream &stream, const Falcon::String &src );
+Falcon::uint32 parseEntity( const Falcon::String &entity );
 
 }
 
