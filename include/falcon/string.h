@@ -770,9 +770,13 @@ public:
    String & operator+=( const wchar_t *other ) { append( String( other ) ); return *this; }
 
    String & operator=( const String &other ) {
-      if ( m_allocated != 0 )
-         m_class->destroy( this );
       copy( other );
+      return *this;
+   }
+
+   String & operator=( uint32 chr ) {
+      m_size = 0;
+      append( chr );
       return *this;
    }
 
@@ -1077,6 +1081,17 @@ public:
       \return true on success, false if the sequence is invalid.
    */
    bool fromUTF8( const char *utf8 );
+
+   /** Access to a single character.
+      Please, notice that Falcon strings are polymorphic in assignment,
+      so they cannot support the following syntax:
+      \code
+         s[n] = c; // can't work with Falcon strings.
+      \endcode
+
+      This operator is provided as a candy grammar for getCharAt().
+   */
+   const uint32 operator []( uint32 pos ) const { return getCharAt( pos ); }
 };
 
 
