@@ -13,6 +13,8 @@
 
 #include <mxml_element.h>
 #include <falcon/string.h>
+#include <falcon/userdata.h>
+
 
 namespace MXML {
 
@@ -22,7 +24,7 @@ typedef enum {
    notFoundError
 } errorType;
 
-class Error
+class Error: public Falcon::UserData
 {
 private:
    int m_code;

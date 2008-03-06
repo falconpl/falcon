@@ -60,7 +60,7 @@ FALCON_FUNC MXMLNode_nextSibling( ::Falcon::VMachine *vm );
 FALCON_FUNC MXMLNode_prevSibling( ::Falcon::VMachine *vm );
 FALCON_FUNC MXMLNode_lastChild( ::Falcon::VMachine *vm );
 FALCON_FUNC MXMLNode_addBelow( ::Falcon::VMachine *vm );
-FALCON_FUNC MXMLNode_insertBelo( ::Falcon::VMachine *vm );
+FALCON_FUNC MXMLNode_insertBelow( ::Falcon::VMachine *vm );
 FALCON_FUNC MXMLNode_insertBefore( ::Falcon::VMachine *vm );
 FALCON_FUNC MXMLNode_insertAfter( ::Falcon::VMachine *vm );
 FALCON_FUNC MXMLNode_depth( ::Falcon::VMachine *vm );

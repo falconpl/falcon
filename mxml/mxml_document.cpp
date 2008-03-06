@@ -57,10 +57,11 @@ void Document::read( Falcon::Stream &stream )
 {
    if ( m_root->child() != 0 ) {
       delete m_root;
-      m_root = new Node(Node::typeDocument );
+      m_root = new Node( Node::typeDocument );
    }
 
-   while ( stream.good() ) {
+   while ( stream.good() )
+   {
       // ignore parameter style
       Node *child = new Node( stream, m_style, line(), character());
       setPosition( child->line(), child->character() );

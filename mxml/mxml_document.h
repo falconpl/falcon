@@ -71,7 +71,7 @@ public:
       \see stylemacros
    */
    Document( Falcon::Stream &in, const int style = 0 ) throw( MalformedError );
-   
+
    /** Destroys the document.
       If you provided a stream at document creation, the stream is NOT colsed.
       It's up to the caller to destroy the stream and dispose of it cleanly.

@@ -13,6 +13,7 @@
 
 #include <falcon/stream.h>
 #include <falcon/string.h>
+#include <falcon/userdata.h>
 
 namespace MXML {
 
@@ -23,7 +24,7 @@ document, and declares a pure virtual write method (that is called then
 by the << operator).
 */
 
-class Element
+class Element: public Falcon::UserData
 {
 private:
    /** Current processing line in input file */

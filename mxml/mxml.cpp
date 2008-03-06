@@ -74,7 +74,7 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    self->addClassMethod( c_node, "prevSibling", Falcon::Ext::MXMLNode_prevSibling );
    self->addClassMethod( c_node, "lastChild", Falcon::Ext::MXMLNode_lastChild );
    self->addClassMethod( c_node, "addBelow", Falcon::Ext::MXMLNode_addBelow );
-   self->addClassMethod( c_node, "insertBelow", Falcon::Ext::MXMLNode_insertBelo );
+   self->addClassMethod( c_node, "insertBelow", Falcon::Ext::MXMLNode_insertBelow );
    self->addClassMethod( c_node, "insertBefore", Falcon::Ext::MXMLNode_insertBefore );
    self->addClassMethod( c_node, "insertAfter", Falcon::Ext::MXMLNode_insertAfter );
    self->addClassMethod( c_node, "depth", Falcon::Ext::MXMLNode_depth );
