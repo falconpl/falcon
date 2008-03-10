@@ -51,7 +51,8 @@ enum codes
    errChildNotFound,
    errAttrNotFound,
    errHyerarcy,
-   errCommentInvalid
+   errCommentInvalid,
+   errMultipleXmlDecl
 };
 
 protected:

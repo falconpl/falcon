@@ -51,6 +51,7 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    self->addClassMethod( c_doc, "setEncoding", Falcon::Ext::MXMLDocument_setEncoding );
 
    Falcon::Symbol *c_nodetype = self->addClass( "MXMLStyle" );
+   c_nodetype->setWKS( true );
    self->addClassProperty( c_nodetype, "MXML_STYLE_INDENT")->setInteger( MXML_STYLE_TAB );
    self->addClassProperty( c_nodetype, "MXML_STYLE_TAB" )->setInteger( MXML_STYLE_TAB );
    self->addClassProperty( c_nodetype, "MXML_STYLE_THREESPACES" )->setInteger( MXML_STYLE_THREESPACES );
@@ -64,9 +65,7 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    self->addClassMethod( c_node, "data", Falcon::Ext::MXMLNode_data );
    self->addClassMethod( c_node, "setAttribute", Falcon::Ext::MXMLNode_setAttribute );
    self->addClassMethod( c_node, "getAttribute", Falcon::Ext::MXMLNode_getAttribute );
-   self->addClassMethod( c_node, "hasAttribute", Falcon::Ext::MXMLNode_hasAttribute );
    self->addClassMethod( c_node, "unlink", Falcon::Ext::MXMLNode_unlink );
-   self->addClassMethod( c_node, "unlinkComplete", Falcon::Ext::MXMLNode_unlinkComplete );
    self->addClassMethod( c_node, "removeChild", Falcon::Ext::MXMLNode_removeChild );
    self->addClassMethod( c_node, "parent", Falcon::Ext::MXMLNode_parent );
    self->addClassMethod( c_node, "firstChild", Falcon::Ext::MXMLNode_firstChild );

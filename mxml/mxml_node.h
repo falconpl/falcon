@@ -13,6 +13,7 @@
 
 #include <falcon/string.h>
 #include <falcon/stream.h>
+#include <falcon/cobject.h>
 #include <list>
 #include <cassert>
 
@@ -196,6 +197,7 @@ private:
    Falcon::String m_data;
    AttribList m_attrib;
    AttribList::iterator m_lastFound;
+   Falcon::CoreObject *m_objOwner;
 
    Node *m_parent;
    Node *m_child;
@@ -493,9 +495,9 @@ public:
          turn or end().
    */
 
-   find_iterator find( const Falcon::String &name, 
-                       const Falcon::String &attrib="", 
-                       const Falcon::String &valatt="", 
+   find_iterator find( const Falcon::String &name,
+                       const Falcon::String &attrib="",
+                       const Falcon::String &valatt="",
                        const Falcon::String &data="" );
 
    /** Recursive node path find iterator.
@@ -503,6 +505,24 @@ public:
          the FIRST branch that corresponds to the path and all its leaves.
     */
    path_iterator find_path( const Falcon::String &path );
+
+   Falcon::CoreObject *shell() const { return m_objOwner; }
+   void shell( Falcon::CoreObject *s ) { m_objOwner = s; }
+   Falcon::CoreObject *makeShell( Falcon::VMachine *vm );
+
+   Falcon::CoreObject *getShell( Falcon::VMachine *vm ) {
+      if ( m_objOwner != 0 )
+         return m_objOwner;
+      return makeShell( vm );
+   }
+
+   void dispose()
+   {
+      if ( m_objOwner == 0 )
+         delete this;
+      else
+         unlink();
+   }
 };
 
 #include <mxml_iterator.h>

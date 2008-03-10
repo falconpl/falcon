@@ -43,12 +43,14 @@
 
 
 
-namespace MXML 
+namespace MXML
 {
 
 
 Node::Node( Falcon::Stream &in,  const int style, const int l, const int pos  )
-   throw( MalformedError ): Element( l, pos )
+   throw( MalformedError ):
+   Element( l, pos ),
+   m_objOwner( 0 )
 {
    // variables to optimize data node promotion in tag nodes
    bool promote_data = true;
@@ -64,7 +66,7 @@ Node::Node( Falcon::Stream &in,  const int style, const int l, const int pos  )
 
    in.get( chr );
    while ( iStatus >= 0 && in.good() && ! in.eof() ) {
-      
+
       // resetting new node foundings
       nextChar();
 
@@ -136,7 +138,7 @@ Node::Node( Falcon::Stream &in,  const int style, const int l, const int pos  )
                throw MalformedError( Error::errInvalidNode, this );
             }
          break;
-         
+
          case STATUS_MAYBE_CDATA0:
             if ( chr == 'C') {
                iStatus = STATUS_MAYBE_CDATA1; // we have "<!["
@@ -145,7 +147,7 @@ Node::Node( Falcon::Stream &in,  const int style, const int l, const int pos  )
                throw MalformedError( Error::errInvalidNode, this );
             }
          break;
-         
+
          case STATUS_MAYBE_CDATA1:
             if ( chr == 'D') {
                iStatus = STATUS_MAYBE_CDATA2; // we have "<![C"
@@ -154,7 +156,7 @@ Node::Node( Falcon::Stream &in,  const int style, const int l, const int pos  )
                throw MalformedError( Error::errInvalidNode, this );
             }
          break;
-         
+
          case STATUS_MAYBE_CDATA2:
             if ( chr == 'A') {
                iStatus = STATUS_MAYBE_CDATA3; // we have "<![CD"
@@ -163,7 +165,7 @@ Node::Node( Falcon::Stream &in,  const int style, const int l, const int pos  )
                throw MalformedError( Error::errInvalidNode, this );
             }
          break;
-         
+
          case STATUS_MAYBE_CDATA3:
             if ( chr == 'T') {
                iStatus = STATUS_MAYBE_CDATA4; // we have "<![CDA"
@@ -172,7 +174,7 @@ Node::Node( Falcon::Stream &in,  const int style, const int l, const int pos  )
                throw MalformedError( Error::errInvalidNode, this );
             }
          break;
-         
+
          case STATUS_MAYBE_CDATA4:
             if ( chr == 'A') {
                iStatus = STATUS_MAYBE_CDATA5; // we have "<![CDAT"
@@ -181,7 +183,7 @@ Node::Node( Falcon::Stream &in,  const int style, const int l, const int pos  )
                throw MalformedError( Error::errInvalidNode, this );
             }
          break;
-         
+
          case STATUS_MAYBE_CDATA5:
             if ( chr == '[') {
                iStatus = STATUS_READ_CDATA; // we have "<![CDATA" +  the final "["
@@ -191,7 +193,7 @@ Node::Node( Falcon::Stream &in,  const int style, const int l, const int pos  )
                throw MalformedError( Error::errInvalidNode, this );
             }
          break;
-                  
+
          case STATUS_READ_CDATA:
             if ( chr == ']') {
                iStatus = STATUS_READ_CDATA_END0; // "]"
@@ -202,7 +204,7 @@ Node::Node( Falcon::Stream &in,  const int style, const int l, const int pos  )
                m_data += chr;
             }
          break;
-         
+
          case STATUS_READ_CDATA_END0:
             if ( chr == ']') {
                iStatus = STATUS_READ_CDATA_END1; // "]]"
@@ -417,7 +419,7 @@ Node::Node( Falcon::Stream &in,  const int style, const int l, const int pos  )
             }
          break;
       } // switch
-      
+
       if ( iStatus >= 0 )
          in.get( chr );
 
@@ -476,7 +478,7 @@ Node::~Node()
    while( child != 0 ) {
       Node *tmp = child;
       child = child->m_next;
-      delete tmp;
+      tmp->dispose();  // may delete it if no falcon object is set as owner.
    }
 }
 
@@ -574,7 +576,7 @@ Node *Node::unlinkComplete()
 
    m_child = 0;
    m_last_child = 0;
-   
+
    return old;
 }
 
@@ -812,7 +814,7 @@ void Node::write( Falcon::Stream &out, const int style ) const
          out.write( "<!", 2);
          out.writeString( m_name );
          out.put( ' ' );
-         out.writeString( m_data ); 
+         out.writeString( m_data );
          out.write( ">\n", 2 );
       break;
 
@@ -820,20 +822,8 @@ void Node::write( Falcon::Stream &out, const int style ) const
          out.write( "<?", 2);
          out.writeString( m_name );
          out.put( ' ' );
-         out.writeString( m_data ); 
+         out.writeString( m_data );
          out.write( ">\n", 2 );
-      break;
-
-      case typeXMLDecl:
-         out.write( "<?", 2 );
-         out.writeString( m_name );
-         iter = m_attrib.begin();
-         while( iter != m_attrib.end() ) {
-            out.put( ' ' );
-            (*iter)->write( out, style );
-            iter++;
-         }
-         out.write( "?>\n", 3 );
       break;
 
       case typeDocument:

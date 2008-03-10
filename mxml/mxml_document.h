@@ -43,6 +43,7 @@ class Document: public Element
 private:
    Node *m_root;
    int m_style;
+   Falcon::String m_encoding;
 
 public:
 
@@ -51,11 +52,12 @@ public:
       nothing (all defaults). Style may be changed later on with the style(int)
       method, but you need to do it before the document si read() if you want to
       set some style affects document parsing.
+      \param encoding Uses the given encoding
       \param style the mode in which the document is read/written
       \see stylemacros
       \see read
    */
-   Document( const int style = 0);
+   Document( const Falcon::String &encoding, const int style = 0 );
 
    /** Creates a deep copy of the document.
       Each node of the original document is replicated into another separated tree.
@@ -86,6 +88,17 @@ public:
    int style() const { return m_style; }
    void style( const int style ) { m_style = style; }
 
+   /** Returns the currently used encoding.
+      \note Default encoding is "C"
+   */
+   const Falcon::String encoding() const { return m_encoding; }
+
+   /** Sets the preferred encoding.
+      \note Used to create the main xml node; the actual encoder depends on the stream being used.
+      \param enc an encoding ISO code.
+   */
+   void encoding( const Falcon::String &enc ) { m_encoding = enc; }
+
    /** Returns the main node, if it exists.
       Finds the main node, that is, the first (and one) tag type node at toplevel.
       If this node does not exists, it returns NULL.
@@ -100,6 +113,11 @@ public:
       \see Node::write()
    */
    virtual void write( Falcon::Stream &stream, const int style ) const;
+
+   virtual void write( Falcon::Stream &stream ) const
+   {
+      write( stream, style() );
+   }
 
    /** Reads and parse the document.
       \todo throw an exception on error, or return a value.

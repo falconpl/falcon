@@ -31,7 +31,7 @@ const Falcon::String Error::description()
       case errAttrNotFound: return "Attribute name cannot be found";
       case errHyerarcy: return "Node is not in a hierarcy - no parent";
       case errCommentInvalid: return "Invalid comment ( -- sequence is not followed by '>')";
-
+      case errMultipleXmlDecl: return "Multiple XML top node delcarations";
    }
    return "Undefined error code";
 }
@@ -58,9 +58,9 @@ void Error::toString( Falcon::String &stream )
       if( this->m_generator->line() )
       {
          stream += " ( realized in line ";
-         stream.writeNumber( (Falcon::int64) this->m_generator->line()); 
+         stream.writeNumber( (Falcon::int64) this->m_generator->line());
          stream += ":";
-         stream.writeNumber( (Falcon::int64) this->m_generator->character() ); 
+         stream.writeNumber( (Falcon::int64) this->m_generator->character() );
          stream += ")";
       }
    }

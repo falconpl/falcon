@@ -51,8 +51,6 @@ FALCON_FUNC MXMLNode_data( ::Falcon::VMachine *vm );
 FALCON_FUNC MXMLNode_setAttribute( ::Falcon::VMachine *vm );
 FALCON_FUNC MXMLNode_getAttribute( ::Falcon::VMachine *vm );
 FALCON_FUNC MXMLNode_unlink( ::Falcon::VMachine *vm );
-FALCON_FUNC MXMLNode_unlinkComplete( ::Falcon::VMachine *vm );
-FALCON_FUNC MXMLNode_hasAttribute( ::Falcon::VMachine *vm );
 FALCON_FUNC MXMLNode_removeChild( ::Falcon::VMachine *vm );
 FALCON_FUNC MXMLNode_parent( ::Falcon::VMachine *vm );
 FALCON_FUNC MXMLNode_firstChild( ::Falcon::VMachine *vm );
