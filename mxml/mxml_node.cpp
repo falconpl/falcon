@@ -50,7 +50,8 @@ namespace MXML
 Node::Node( Falcon::Stream &in,  const int style, const int l, const int pos  )
    throw( MalformedError ):
    Element( l, pos ),
-   m_objOwner( 0 )
+   m_objOwner( 0 ),
+   m_bReserve( false )
 {
    // variables to optimize data node promotion in tag nodes
    bool promote_data = true;
@@ -451,6 +452,8 @@ Node::Node( Node &src ) :
    m_type = src.m_type;
    m_name = src.m_name;
    m_data = src.m_data;
+   m_objOwner = 0;
+   m_bReserve = false;
 
    AttribList::iterator iter = src.m_attrib.begin();
 
@@ -554,13 +557,12 @@ void Node::unlink()
       m_parent->removeChild( this );
       m_parent = 0;
    }
-   else {
-      if ( m_next != 0 )
-         m_next->m_prev = m_prev;
 
-      if ( m_prev != 0 )
-         m_prev->m_next = m_next;
-   }
+   if ( m_next != 0 )
+      m_next->m_prev = m_prev;
+
+   if ( m_prev != 0 )
+      m_prev->m_next = m_next;
 }
 
 Node *Node::unlinkComplete()
@@ -741,6 +743,7 @@ void Node::write( Falcon::Stream &out, const int style ) const
 
    switch( m_type ) {
       case typeTag:
+      case typeDocument:
 
          out.put( '<' );
          out.writeString( m_name );
@@ -826,14 +829,6 @@ void Node::write( Falcon::Stream &out, const int style ) const
          out.write( ">\n", 2 );
       break;
 
-      case typeDocument:
-         child = m_child;
-         while ( child != 0 ) {
-            child->write( out, style );
-            child = child->m_next;
-         }
-         out.put( '\n' );
-      break;
    }
 
 }

@@ -46,18 +46,27 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    self->addClassMethod( c_doc, "root", Falcon::Ext::MXMLDocument_root );
    self->addClassMethod( c_doc, "find", Falcon::Ext::MXMLDocument_find );
    self->addClassMethod( c_doc, "findPath", Falcon::Ext::MXMLDocument_findPath );
-   self->addClassMethod( c_doc, "save", Falcon::Ext::MXMLDocument_save );
-   self->addClassMethod( c_doc, "load", Falcon::Ext::MXMLDocument_load );
+   self->addClassMethod( c_doc, "write", Falcon::Ext::MXMLDocument_save );
+   self->addClassMethod( c_doc, "read", Falcon::Ext::MXMLDocument_load );
    self->addClassMethod( c_doc, "setEncoding", Falcon::Ext::MXMLDocument_setEncoding );
+   self->addClassMethod( c_doc, "getEncoding", Falcon::Ext::MXMLDocument_getEncoding );
 
-   Falcon::Symbol *c_nodetype = self->addClass( "MXMLStyle" );
-   c_nodetype->setWKS( true );
-   self->addClassProperty( c_nodetype, "MXML_STYLE_INDENT")->setInteger( MXML_STYLE_TAB );
-   self->addClassProperty( c_nodetype, "MXML_STYLE_TAB" )->setInteger( MXML_STYLE_TAB );
-   self->addClassProperty( c_nodetype, "MXML_STYLE_THREESPACES" )->setInteger( MXML_STYLE_THREESPACES );
-   self->addClassProperty( c_nodetype, "MXML_STYLE_NOESCAPE" )->setInteger( MXML_STYLE_NOESCAPE );
+   Falcon::Symbol *c_style = self->addClass( "MXMLStyle" );
+   self->addClassProperty( c_style, "MXML_STYLE_INDENT")->setInteger( MXML_STYLE_TAB );
+   self->addClassProperty( c_style, "MXML_STYLE_TAB" )->setInteger( MXML_STYLE_TAB );
+   self->addClassProperty( c_style, "MXML_STYLE_THREESPACES" )->setInteger( MXML_STYLE_THREESPACES );
+   self->addClassProperty( c_style, "MXML_STYLE_NOESCAPE" )->setInteger( MXML_STYLE_NOESCAPE );
+
+   Falcon::Symbol *c_nodetype = self->addClass( "MXMLType" );
+   self->addClassProperty( c_nodetype, "tag")->setInteger( MXML::Node::typeTag );
+   self->addClassProperty( c_nodetype, "comment" )->setInteger( MXML::Node::typeComment );
+   self->addClassProperty( c_nodetype, "PI" )->setInteger( MXML::Node::typePI );
+   self->addClassProperty( c_nodetype, "directive" )->setInteger( MXML::Node::typeDirective );
+   self->addClassProperty( c_nodetype, "typeData" )->setInteger( MXML::Node::typeData );
+   self->addClassProperty( c_nodetype, "typeCDATA" )->setInteger( MXML::Node::typeCDATA );
 
    Falcon::Symbol *c_node = self->addClass( "MXMLNode", Falcon::Ext::MXMLNode_init );
+   c_node->setWKS( true );
    self->addClassMethod( c_node, "deserialize", Falcon::Ext::MXMLNode_deserialize );
    self->addClassMethod( c_node, "serialize", Falcon::Ext::MXMLNode_serialize );
    self->addClassMethod( c_node, "nodeType", Falcon::Ext::MXMLNode_nodeType );
@@ -79,6 +88,13 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    self->addClassMethod( c_node, "depth", Falcon::Ext::MXMLNode_depth );
    self->addClassMethod( c_node, "path", Falcon::Ext::MXMLNode_path );
    self->addClassMethod( c_node, "clone", Falcon::Ext::MXMLNode_clone );
+
+   //============================================================
+   // MXML Error class
+   Falcon::Symbol *error_class = self->addExternalRef( "Error" ); // it's external
+   Falcon::Symbol *mxmlerr_cls = self->addClass( "MXMLError", Falcon::Ext::MXMLError_init );
+   mxmlerr_cls->setWKS( true );
+   mxmlerr_cls->getClassDef()->addInheritance(  new Falcon::InheritDef( error_class ) );
 
    return self;
 }

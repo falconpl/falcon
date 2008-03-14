@@ -17,6 +17,8 @@ Document::Document( const Falcon::String &encoding, const int style )
 {
    m_style = style;
    m_root = new Node(Node::typeDocument);
+   m_root->name( "Document" );
+   m_root->reserve();
 }
 
 Document::Document( Document &doc )
@@ -31,12 +33,18 @@ Document::Document( Falcon::Stream &in, const int style )
 {
    m_style = style;
    m_root = new Node( Node::typeDocument );
+   // provide a default name
+   m_root->name( "Document" );
+   m_root->reserve();
    read( in );
 }
 
 Document::~Document()
 {
-   m_root->dispose();
+   if ( m_root->shell() == 0 )
+      delete m_root;
+   else
+      m_root->unreserve();
 }
 
 Node *Document::main() const
@@ -60,13 +68,15 @@ void Document::read( Falcon::Stream &stream )
    if ( m_root->child() != 0 ) {
       m_root->dispose();
       m_root = new Node( Node::typeDocument );
+      m_root->name( "Document" );
+      m_root->reserve();
    }
 
    // load the <?xml document declaration
 
    bool xmlDecl = false;
 
-   while ( stream.good() )
+   while ( stream.good() && ! stream.eof() )
    {
       // ignore parameter style
       Node *child = new Node( stream, m_style, line(), character());

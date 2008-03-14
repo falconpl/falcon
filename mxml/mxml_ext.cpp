@@ -23,6 +23,7 @@
 */
 
 #include <falcon/vm.h>
+#include <falcon/transcoding.h>
 #include <falcon/fstream.h>
 #include "mxml_ext.h"
 
@@ -51,6 +52,21 @@ Falcon::CoreObject *Node::makeShell( Falcon::VMachine *vm )
 
 namespace Falcon {
 namespace Ext {
+
+static MXML::Node *internal_getNodeParameter( VMachine *vm, int pid )
+{
+   Item *i_child = vm->param(pid);
+
+   if ( i_child == 0 || ! i_child->isObject() || ! i_child->asObject()->derivedFrom( "MXMLNode" ) )
+   {
+      vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "MXMLNode" ) ) );
+      return 0;
+   }
+
+   return static_cast<MXML::Node *>( i_child->asObject()->getUserData() );
+}
+
 /*# @class MXMLDocument
    Class containing a logical XML file representation.
 
@@ -81,7 +97,7 @@ FALCON_FUNC MXMLDocument_init( ::Falcon::VMachine *vm )
    Item *i_encoding = vm->param(0);
    Item *i_style = vm->param(1);
 
-   if ( ( i_encoding == 0 && ! i_encoding->isString() && ! i_encoding->isNil() ) ||
+   if ( ( i_encoding != 0 && ! i_encoding->isString() && ! i_encoding->isNil() ) ||
       ( i_style != 0 && ! i_style->isInteger()) )
    {
        vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
@@ -122,7 +138,9 @@ FALCON_FUNC MXMLDocument_deserialize( ::Falcon::VMachine *vm )
    }
    catch( MXML::MalformedError &err )
    {
-      // TODO
+      vm->raiseModError( new MXMLError( ErrorParam( 9999, __LINE__ )
+         .desc( "dummy" )
+         .extra( "MXMLNode" ) ) );
    }
 }
 
@@ -149,7 +167,9 @@ FALCON_FUNC MXMLDocument_serialize( ::Falcon::VMachine *vm )
    }
    catch( MXML::MalformedError &err )
    {
-      // TODO
+      vm->raiseModError( new MXMLError( ErrorParam( 9999, __LINE__ )
+         .desc( "dummy" )
+         .extra( "MXMLNode" ) ) );
    }
 }
 
@@ -212,12 +232,16 @@ FALCON_FUNC MXMLDocument_save( ::Falcon::VMachine *vm )
       }
       catch( MXML::MalformedError &err )
       {
-         // TODO
+         vm->raiseModError( new MXMLError( ErrorParam( 9999, __LINE__ )
+         .desc( "dummy" )
+         .extra( "MXMLNode" ) ) );
       }
    }
    else
    {
-      //TODO
+      vm->raiseModError( new MXMLError( ErrorParam( 9999, __LINE__ )
+         .desc( "dummy" )
+         .extra( "load" ) ) );
    }
 
    out.close();
@@ -231,7 +255,7 @@ FALCON_FUNC MXMLDocument_load( ::Falcon::VMachine *vm )
    if ( i_uri == 0 || ! i_uri->isString() )
    {
       vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "N" ) ) );
+         extra( "S" ) ) );
       return;
    }
 
@@ -249,17 +273,54 @@ FALCON_FUNC MXMLDocument_load( ::Falcon::VMachine *vm )
       }
       catch( MXML::MalformedError &err )
       {
-         // TODO
+         vm->raiseModError( new IoError( ErrorParam( 9999, __LINE__ )
+         .desc( "dummy" )
+         .extra( "MXMLNode" ) ) );
       }
    }
    else
    {
-      //TODO
+      vm->raiseModError( new MXMLError( ErrorParam( 9999, __LINE__ )
+         .desc( "dummy" )
+         .extra( "load" ) ) );
    }
 
    in.close();
 }
 
+
+FALCON_FUNC MXMLDocument_setEncoding( ::Falcon::VMachine *vm )
+{
+   CoreObject *self = vm->self().asObject();
+   Item *i_encoding = vm->param(0);
+
+   if ( i_encoding == 0 || ! i_encoding->isString() )
+   {
+      vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "S" ) ) );
+      return;
+   }
+
+   String &encoding = *i_encoding->asString();
+   Transcoder *tr = TranscoderFactory( encoding );
+   if ( tr == 0 )
+   {
+      vm->raiseModError( new  ParamError( ErrorParam( e_param_range, __LINE__ ).
+         extra( encoding ) ) );
+      return;
+   }
+   delete tr;
+
+   MXML::Document *doc = static_cast<MXML::Document *>( self->getUserData() );
+   doc->encoding( encoding );
+}
+
+FALCON_FUNC MXMLDocument_getEncoding( ::Falcon::VMachine *vm )
+{
+   CoreObject *self = vm->self().asObject();
+   MXML::Document *doc = static_cast<MXML::Document *>( self->getUserData() );
+   vm->retval( new GarbageString( vm, doc->encoding() ) );
+}
 
 
 /*#
@@ -331,7 +392,9 @@ FALCON_FUNC MXMLNode_serialize( ::Falcon::VMachine *vm )
    }
    catch( MXML::MalformedError &err )
    {
-      // TODO
+      vm->raiseModError( new IoError( ErrorParam( 9999, __LINE__ )
+         .desc( "dummy" )
+         .extra( "MXMLNode" ) ) );
    }
 
 }
@@ -363,7 +426,9 @@ FALCON_FUNC MXMLNode_deserialize( ::Falcon::VMachine *vm )
    }
    catch( MXML::MalformedError &err )
    {
-      // TODO
+      vm->raiseModError( new MXMLError( ErrorParam( 9999, __LINE__ )
+         .desc( "dummy" )
+         .extra( "load" ) ) );
    }
 }
 
@@ -378,18 +443,43 @@ FALCON_FUNC MXMLNode_nodeType( ::Falcon::VMachine *vm )
 
 FALCON_FUNC MXMLNode_name( ::Falcon::VMachine *vm )
 {
+   Item *i_name = vm->param(0);
+
+   if ( i_name != 0 && ! i_name->isString() )
+   {
+      vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "[S]" ) ) );
+      return;
+   }
+
    CoreObject *self = vm->self().asObject();
    MXML::Node *node = static_cast<MXML::Node *>( self->getUserData() );
-   vm->retval( new GarbageString( vm, node->name() ) );
+   if ( i_name == 0 )
+      vm->retval( new GarbageString( vm, node->name() ) );
+   else
+      node->name( *i_name->asString() );
+
 }
 
 
 
 FALCON_FUNC MXMLNode_data( ::Falcon::VMachine *vm )
 {
+   Item *i_data = vm->param(0);
+
+   if ( i_data != 0 && ! i_data->isString() )
+   {
+      vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "[S]" ) ) );
+      return;
+   }
+
    CoreObject *self = vm->self().asObject();
    MXML::Node *node = static_cast<MXML::Node *>( self->getUserData() );
-   vm->retval( new GarbageString( vm, node->data() ) );
+   if ( i_data == 0 )
+      vm->retval( new GarbageString( vm, node->data() ) );
+   else
+      node->data( *i_data->asString() );
 }
 
 
@@ -410,7 +500,13 @@ FALCON_FUNC MXMLNode_setAttribute( ::Falcon::VMachine *vm )
       return;
    }
 
-   node->setAttribute( *i_attrName->asString(), *i_attrValue->asString() );
+   const String &attrName = *i_attrName->asString();
+   if( ! node->hasAttribute( attrName ) )
+   {
+      node->addAttribute( new MXML::Attribute( attrName, *i_attrValue->asString() ) );
+   }
+
+   node->setAttribute( attrName, *i_attrValue->asString() );
 }
 
 
@@ -449,84 +545,172 @@ FALCON_FUNC MXMLNode_unlink( ::Falcon::VMachine *vm )
 
 FALCON_FUNC MXMLNode_removeChild( ::Falcon::VMachine *vm )
 {
-   CoreObject *self = vm->self().asObject();
-   Item *i_child = vm->param(0);
-
-   if ( i_child == 0 || ! i_child->isObject() || ! i_child->asObject()->derivedFrom( "MXMLNode" ) )
-   {
-      vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "MXMLNode" ) ) );
+   MXML::Node *child = internal_getNodeParameter( vm, 0 );
+   if ( child == 0 )
       return;
-   }
 
+   CoreObject *self = vm->self().asObject();
    MXML::Node *node = static_cast<MXML::Node *>( self->getUserData() );
-   MXML::Node *child = static_cast<MXML::Node *>( i_child->asObject()->getUserData() );
 
+   try {
+      node->removeChild( child );
+      vm->retval(true);
+   }
+   catch( ... )
+   {
+      vm->retval( false );
+   }
 }
 
 
 FALCON_FUNC MXMLNode_parent( ::Falcon::VMachine *vm )
 {
+   CoreObject *self = vm->self().asObject();
+   MXML::Node *node = static_cast<MXML::Node *>( self->getUserData() );
+   MXML::Node *parent = node->parent();
+   if ( parent != 0 )
+      vm->retval( parent->getShell( vm ) );
+   else
+      vm->retnil();
 }
 
 
 FALCON_FUNC MXMLNode_firstChild( ::Falcon::VMachine *vm )
 {
+   CoreObject *self = vm->self().asObject();
+   MXML::Node *node = static_cast<MXML::Node *>( self->getUserData() );
+   MXML::Node *child = node->child();
+
+   if ( child != 0 )
+      vm->retval( child->getShell( vm ) );
+   else
+      vm->retnil();
 }
 
 
 FALCON_FUNC MXMLNode_nextSibling( ::Falcon::VMachine *vm )
 {
+   CoreObject *self = vm->self().asObject();
+   MXML::Node *node = static_cast<MXML::Node *>( self->getUserData() );
+   MXML::Node *sibling = node->next();
+
+   if ( sibling != 0 )
+      vm->retval( sibling->getShell( vm ) );
+   else
+      vm->retnil();
 }
 
 
 FALCON_FUNC MXMLNode_prevSibling( ::Falcon::VMachine *vm )
 {
+   CoreObject *self = vm->self().asObject();
+   MXML::Node *node = static_cast<MXML::Node *>( self->getUserData() );
+   MXML::Node *sibling = node->prev();
+
+   if ( sibling != 0 )
+      vm->retval( sibling->getShell( vm ) );
+   else
+      vm->retnil();
 }
 
 
 FALCON_FUNC MXMLNode_lastChild( ::Falcon::VMachine *vm )
 {
+   CoreObject *self = vm->self().asObject();
+   MXML::Node *node = static_cast<MXML::Node *>( self->getUserData() );
+   MXML::Node *sibling = node->lastChild();
+
+   if ( sibling != 0 )
+      vm->retval( sibling->getShell( vm ) );
+   else
+      vm->retnil();
 }
 
 
 FALCON_FUNC MXMLNode_addBelow( ::Falcon::VMachine *vm )
 {
+   MXML::Node *child = internal_getNodeParameter( vm, 0 );
+   if ( child == 0 )
+      return;
+
+   CoreObject *self = vm->self().asObject();
+   MXML::Node *node = static_cast<MXML::Node *>( self->getUserData() );
+
+   node->addBelow( child );
 }
 
 
 FALCON_FUNC MXMLNode_insertBelow( ::Falcon::VMachine *vm )
 {
+   MXML::Node *child = internal_getNodeParameter( vm, 0 );
+   if ( child == 0 )
+      return;
+
+   CoreObject *self = vm->self().asObject();
+   MXML::Node *node = static_cast<MXML::Node *>( self->getUserData() );
+
+   node->insertBelow( child );
 }
 
 
 FALCON_FUNC MXMLNode_insertBefore( ::Falcon::VMachine *vm )
 {
+   MXML::Node *child = internal_getNodeParameter( vm, 0 );
+   if ( child == 0 )
+      return;
+
+   CoreObject *self = vm->self().asObject();
+   MXML::Node *node = static_cast<MXML::Node *>( self->getUserData() );
+
+   node->insertBefore( child );
 }
 
 
 FALCON_FUNC MXMLNode_insertAfter( ::Falcon::VMachine *vm )
 {
+   MXML::Node *child = internal_getNodeParameter( vm, 0 );
+   if ( child == 0 )
+      return;
+
+   CoreObject *self = vm->self().asObject();
+   MXML::Node *node = static_cast<MXML::Node *>( self->getUserData() );
+
+   node->insertAfter( child );
 }
 
 
 FALCON_FUNC MXMLNode_depth( ::Falcon::VMachine *vm )
 {
+   CoreObject *self = vm->self().asObject();
+   MXML::Node *node = static_cast<MXML::Node *>( self->getUserData() );
+   vm->retval( (int64) node->depth() );
 }
 
 
 FALCON_FUNC MXMLNode_path( ::Falcon::VMachine *vm )
 {
+   CoreObject *self = vm->self().asObject();
+   MXML::Node *node = static_cast<MXML::Node *>( self->getUserData() );
+   vm->retval( new GarbageString( vm, node->path() ) );
 }
 
 
 FALCON_FUNC MXMLNode_clone( ::Falcon::VMachine *vm )
 {
+   CoreObject *self = vm->self().asObject();
+   MXML::Node *node = static_cast<MXML::Node *>( self->getUserData() );
+   vm->retval( node->clone() );
 }
 
 
+FALCON_FUNC  MXMLError_init ( ::Falcon::VMachine *vm )
+{
+   CoreObject *einst = vm->self().asObject();
+   if( einst->getUserData() == 0 )
+      einst->setUserData( new Falcon::ErrorCarrier( new MXMLError ) );
 
-
+   ::Falcon::core::Error_init( vm );
+}
 
 }
 }

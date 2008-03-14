@@ -193,6 +193,7 @@ public:
 
 private:
    type m_type;
+   bool m_bReserve;
    Falcon::String m_name;
    Falcon::String m_data;
    AttribList m_attrib;
@@ -510,18 +511,25 @@ public:
    void shell( Falcon::CoreObject *s ) { m_objOwner = s; }
    Falcon::CoreObject *makeShell( Falcon::VMachine *vm );
 
-   Falcon::CoreObject *getShell( Falcon::VMachine *vm ) {
+   Falcon::CoreObject *getShell( Falcon::VMachine *vm )
+   {
       if ( m_objOwner != 0 )
          return m_objOwner;
       return makeShell( vm );
    }
 
+   void reserve() { m_bReserve = true; }
+   void unreserve() { m_bReserve = false; }
+
    void dispose()
    {
-      if ( m_objOwner == 0 )
-         delete this;
-      else
-         unlink();
+      if ( ! m_bReserve )
+      {
+         if ( m_objOwner == 0 )
+            delete this;
+         else
+            unlink();
+      }
    }
 };
 

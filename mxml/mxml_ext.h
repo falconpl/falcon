@@ -27,6 +27,7 @@
 
 #include <falcon/setup.h>
 #include <falcon/module.h>
+#include <falcon/error.h>
 
 namespace Falcon {
 namespace Ext {
@@ -41,6 +42,7 @@ FALCON_FUNC MXMLDocument_findPath( ::Falcon::VMachine *vm );
 FALCON_FUNC MXMLDocument_save( ::Falcon::VMachine *vm );
 FALCON_FUNC MXMLDocument_load( ::Falcon::VMachine *vm );
 FALCON_FUNC MXMLDocument_setEncoding( ::Falcon::VMachine *vm );
+FALCON_FUNC MXMLDocument_getEncoding( ::Falcon::VMachine *vm );
 
 FALCON_FUNC MXMLNode_init( ::Falcon::VMachine *vm );
 FALCON_FUNC MXMLNode_deserialize( ::Falcon::VMachine *vm );
@@ -64,6 +66,21 @@ FALCON_FUNC MXMLNode_insertAfter( ::Falcon::VMachine *vm );
 FALCON_FUNC MXMLNode_depth( ::Falcon::VMachine *vm );
 FALCON_FUNC MXMLNode_path( ::Falcon::VMachine *vm );
 FALCON_FUNC MXMLNode_clone( ::Falcon::VMachine *vm );
+
+
+class MXMLError: public ::Falcon::Error
+{
+public:
+   MXMLError():
+      Error( "MXMLError" )
+   {}
+
+   MXMLError( const ErrorParam &params  ):
+      Error( "MXMLError", params )
+      {}
+};
+
+FALCON_FUNC  MXMLError_init ( ::Falcon::VMachine *vm );
 
 }
 }
