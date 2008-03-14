@@ -1341,6 +1341,7 @@ bool VMachine::callItem( const Item &callable, int32 paramCount, e_callMode call
       // if we aren't in a frame call, call the item directly
       if( callMode == e_callNormal || callMode == e_callInst )
       {
+         regA().setNil(); // clear return value if calling external functions
          target->getExtFuncDef()->call( this );
          if ( callable.isClass() )
             m_regA.setObject( self );
@@ -1526,6 +1527,7 @@ bool VMachine::callItemPass( const Item &callable  )
    else
    {
       m_stack->resize( m_stackBase );
+      regA().setNil(); // clear return value if calling external functions
       target->getExtFuncDef()->call( this );
       m_pc_next = ((StackFrame *)m_stack->at( m_stackBase - VM_FRAME_SPACE ))->m_ret_pc;
       callReturn();
