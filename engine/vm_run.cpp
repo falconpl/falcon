@@ -1589,6 +1589,7 @@ void opcodeHandler_CALL( register VMachine *vm )
    uint32 pNext = (uint32) vm->getNextNTD32();
    Item *operand2 =  vm->getOpcodeParam( 2 )->dereference();
 
+   vm->regA().setNil();
    if( ! vm->callItem( *operand2, pNext, VMachine::e_callFrame ) )
       vm->raiseRTError( new TypeError( ErrorParam( e_invop ).extra("CALL").origin( e_orig_vm ) ) );
 }
