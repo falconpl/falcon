@@ -12,7 +12,7 @@
 
 namespace MXML {
 
-const Falcon::String Error::description()
+const Falcon::String Error::description() const
 {
    switch( m_code )
    {
@@ -36,7 +36,12 @@ const Falcon::String Error::description()
    return "Undefined error code";
 }
 
-void Error::toString( Falcon::String &stream )
+int Error::numericCode() const
+{
+   return ((int) m_code ) + FALCON_MXML_ERROR_BASE;
+}
+
+void Error::toString( Falcon::String &stream ) const
 {
    switch( this->type() ) {
       case malformedError: stream = "MXML::MalformedError"; break;
@@ -51,21 +56,25 @@ void Error::toString( Falcon::String &stream )
    stream += this->description();
 
    if ( this->type() != notFoundError ) {
-      stream += " in line ";
-      stream.writeNumber( (Falcon::int64) this->m_generator->beginLine() );
-      stream += ":";
-      stream.writeNumber( (Falcon::int64) this->m_generator->beginChar() );
-      if( this->m_generator->line() )
-      {
-         stream += " ( realized in line ";
-         stream.writeNumber( (Falcon::int64) this->m_generator->line());
-         stream += ":";
-         stream.writeNumber( (Falcon::int64) this->m_generator->character() );
-         stream += ")";
-      }
+      describeLine( stream );
    }
-
    stream.append( '\n' );
+}
+
+void Error::describeLine( Falcon::String &stream ) const
+{
+   stream += "at ";
+   stream.writeNumber( (Falcon::int64) this->m_generator->beginLine() );
+   stream += ":";
+   stream.writeNumber( (Falcon::int64) this->m_generator->beginChar() );
+   if( this->m_generator->line() )
+   {
+      stream += " (from  ";
+      stream.writeNumber( (Falcon::int64) this->m_generator->line());
+      stream += ":";
+      stream.writeNumber( (Falcon::int64) this->m_generator->character() );
+      stream += ")";
+   }
 }
 
 }

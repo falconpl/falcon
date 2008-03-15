@@ -14,6 +14,7 @@ LINK_DIRECTORIES(BEFORE ${TARGET_DIR}/${TARGET_LIB_DIR} )
 ADD_LIBRARY( mxml MODULE
    mxml.cpp
    mxml_ext.cpp
+   mxml_mod.cpp
    mxml_attribute.cpp
    mxml_document.cpp
    mxml_error.cpp

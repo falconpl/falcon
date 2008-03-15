@@ -154,7 +154,7 @@ Attribute::Attribute( Falcon::Stream &in, int style, int l, int p ):
 
                m_value += chr;
             }
-            else if ( !isalpha( chr ) ) {
+            else if ( !isalnum( chr ) && chr != '-' && chr != '_' && chr != '#' ) {
                //error
                throw MalformedError( Error::errUnclosedEntity, this );
             }

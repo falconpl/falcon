@@ -79,13 +79,23 @@ void Document::read( Falcon::Stream &stream )
    while ( stream.good() && ! stream.eof() )
    {
       // ignore parameter style
-      Node *child = new Node( stream, m_style, line(), character());
+      Node *child = new Node();
+      try
+      {
+         child->read( stream, m_style, line(), character());
+      }
+      catch( MalformedError &err )
+      {
+         delete child;
+         throw;
+      }
+
       setPosition( child->line(), child->character() );
       if( child->nodeType() == Node::typeXMLDecl )
       {
          if ( xmlDecl )
          {
-            m_root->addBelow( child );
+            delete child;
             throw MalformedError( Error::errMultipleXmlDecl, child );
          }
          xmlDecl = true;
@@ -97,6 +107,7 @@ void Document::read( Falcon::Stream &stream )
             m_encoding = "C";
 
          delete child;
+         continue;
       }
 
       if ( child->nodeType() == Node::typeData && child->data() == "" )
@@ -108,7 +119,7 @@ void Document::read( Falcon::Stream &stream )
 
    if ( stream.bad() )
    {
-      throw MalformedError( Error::errIo, m_root );
+      throw IOError( Error::errIo, m_root );
    }
    //todo: validity checks
 }

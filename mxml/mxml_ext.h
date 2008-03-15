@@ -36,6 +36,7 @@ FALCON_FUNC MXMLDocument_init( ::Falcon::VMachine *vm );
 FALCON_FUNC MXMLDocument_deserialize( ::Falcon::VMachine *vm );
 FALCON_FUNC MXMLDocument_serialize( ::Falcon::VMachine *vm );
 FALCON_FUNC MXMLDocument_style( ::Falcon::VMachine *vm );
+FALCON_FUNC MXMLDocument_top( ::Falcon::VMachine *vm );
 FALCON_FUNC MXMLDocument_root( ::Falcon::VMachine *vm );
 FALCON_FUNC MXMLDocument_find( ::Falcon::VMachine *vm );
 FALCON_FUNC MXMLDocument_findPath( ::Falcon::VMachine *vm );

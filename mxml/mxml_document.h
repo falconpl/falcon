@@ -38,7 +38,7 @@ namespace MXML {
    write. \see stylemacros
 */
 
-class Document: public Element
+class Document: public Element, public Falcon::UserData
 {
 private:
    Node *m_root;

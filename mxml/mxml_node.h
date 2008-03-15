@@ -211,6 +211,25 @@ protected:
    void readData( Falcon::Stream &in, const int iStyle );
 
 public:
+
+   /* Creates a new node
+      Depending on the types the node could have a name, a data or both.
+      \todo chech for name validity and throw an error
+      @param tp one of the MXML::Node::type enum
+      @param name the name of the newborn node
+      @param type the value of the newborn attribute
+   */
+   Node( const type tp=typeTag, const Falcon::String &name = "", const Falcon::String &data = "" ):
+      Element()
+   {
+      m_type = tp;
+      m_name = name;
+      m_data = data;
+      m_lastFound = m_attrib.end();
+
+      m_child = m_last_child = m_prev = m_next = m_parent = 0;
+   }
+
    /** Deserializes a node
       Reads a node from an XML file at current position.
 
@@ -223,26 +242,8 @@ public:
       @throws MXML::MalformedError if the node is invalid
       @throws MXML::IOError in case of hard errors on the stream
    */
-   Node( Falcon::Stream &in, const int style = 0, const int line=1, const int pos=0  )
+   void read( Falcon::Stream &in, const int style = 0, const int line=1, const int pos=0  )
       throw( MalformedError );
-
-   /* Creates a new node
-      Depending on the types the node could have a name, a data or both.
-      \todo chech for name validity and throw an error
-      @param tp one of the MXML::Node::type enum
-      @param name the name of the newborn node
-      @param type the value of the newborn attribute
-   */
-   Node( const type tp, const Falcon::String &name = "", const Falcon::String &data = "" ):
-      Element()
-   {
-      m_type = tp;
-      m_name = name;
-      m_data = data;
-      m_lastFound = m_attrib.end();
-
-      m_child = m_last_child = m_prev = m_next = m_parent = 0;
-   }
 
    /** Copy constructor.
       See clone()
@@ -518,18 +519,16 @@ public:
       return makeShell( vm );
    }
 
+   bool isReserved() const { return m_bReserve; }
    void reserve() { m_bReserve = true; }
    void unreserve() { m_bReserve = false; }
 
    void dispose()
    {
-      if ( ! m_bReserve )
-      {
-         if ( m_objOwner == 0 )
-            delete this;
-         else
-            unlink();
-      }
+      if ( m_objOwner != 0 )
+         unlink();
+      else
+         delete this;
    }
 };
 

@@ -1,15 +1,13 @@
 /*
    FALCON - The Falcon Programming Language.
    FILE: process_ext.h
-   $Id: process_ext.h,v 1.2 2007/03/04 17:39:03 jonnymind Exp $
 
-   Short description
+   Process module -- Falcon interface functions
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: sab mar 11 2006
    Last modified because:
 
-   Process module -- Falcon interface functions
    -------------------------------------------------------------------
    (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
 

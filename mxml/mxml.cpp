@@ -44,6 +44,7 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    self->addClassMethod( c_doc, "serialize", Falcon::Ext::MXMLDocument_serialize );
    self->addClassMethod( c_doc, "style", Falcon::Ext::MXMLDocument_style );
    self->addClassMethod( c_doc, "root", Falcon::Ext::MXMLDocument_root );
+   self->addClassMethod( c_doc, "top", Falcon::Ext::MXMLDocument_top );
    self->addClassMethod( c_doc, "find", Falcon::Ext::MXMLDocument_find );
    self->addClassMethod( c_doc, "findPath", Falcon::Ext::MXMLDocument_findPath );
    self->addClassMethod( c_doc, "write", Falcon::Ext::MXMLDocument_save );

@@ -15,6 +15,7 @@
 #include <falcon/string.h>
 #include <falcon/userdata.h>
 
+#define FALCON_MXML_ERROR_BASE   1100
 
 namespace MXML {
 
@@ -64,8 +65,12 @@ protected:
 
 public:
    virtual const errorType type() const = 0;
-   const Falcon::String description();
-   void toString( Falcon::String &target );
+   int numericCode() const;
+   const Falcon::String description() const;
+   void toString( Falcon::String &target ) const;
+   void describeLine( Falcon::String &target ) const;
+
+   const Falcon::String describeLine() const { Falcon::String s; describeLine(s); return s; }
 };
 
 

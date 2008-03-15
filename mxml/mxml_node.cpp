@@ -46,13 +46,10 @@
 namespace MXML
 {
 
-
-Node::Node( Falcon::Stream &in,  const int style, const int l, const int pos  )
-   throw( MalformedError ):
-   Element( l, pos ),
-   m_objOwner( 0 ),
-   m_bReserve( false )
+void Node::read( Falcon::Stream &in, const int style, const int l, const int pos )
+   throw( MalformedError )
 {
+   setPosition( l, pos );
    // variables to optimize data node promotion in tag nodes
    bool promote_data = true;
    Node *the_data_node = 0;
@@ -298,7 +295,7 @@ Node::Node( Falcon::Stream &in,  const int style, const int l, const int pos  )
 
                iStatus = STATUS_READ_DATA;
             }
-            else if ( !isalnum( chr ) && chr != '_' && chr != '-' )
+            else if ( !isalnum( chr ) && chr != '_' && chr != '-' && chr != '#' )
                //error - we have something like &amp &amp
                throw MalformedError( Error::errUnclosedEntity, this );
             else
@@ -385,7 +382,16 @@ Node::Node( Falcon::Stream &in,  const int style, const int l, const int pos  )
             in.unget( chr );
             while ( in.good() ) {
                //std::cout << "Reading subnode" << std::endl;
-               Node *child = new Node( in, style, line(), character() -1);
+               Node *child = new Node();
+               try {
+                  child->read( in, style, line(), character() -1);
+               }
+               catch( MalformedError &err )
+               {
+                  delete child;
+                  throw;
+               }
+
                setPosition( child->line(), child->character() );
 
                if ( child->m_type == typeData )
@@ -557,12 +563,13 @@ void Node::unlink()
       m_parent->removeChild( this );
       m_parent = 0;
    }
+   else {
+      if ( m_next != 0 )
+         m_next->m_prev = m_prev;
 
-   if ( m_next != 0 )
-      m_next->m_prev = m_prev;
-
-   if ( m_prev != 0 )
-      m_prev->m_next = m_next;
+      if ( m_prev != 0 )
+         m_prev->m_next = m_next;
+   }
 }
 
 Node *Node::unlinkComplete()
@@ -611,13 +618,10 @@ void Node::insertBelow( Node *node )
 
    node->m_parent = this;
    node->m_prev = 0;
+   node->m_next = m_child;
+   if ( m_child != 0 )
+      m_child->m_prev = node;
    m_child = node;
-   while ( node->m_next != 0 ) {
-      node = m_next;
-      node->m_parent = this;
-   }
-
-   m_last_child = node;
 }
 
 void Node::insertBefore( Node *node )
@@ -743,8 +747,6 @@ void Node::write( Falcon::Stream &out, const int style ) const
 
    switch( m_type ) {
       case typeTag:
-      case typeDocument:
-
          out.put( '<' );
          out.writeString( m_name );
 
@@ -827,6 +829,15 @@ void Node::write( Falcon::Stream &out, const int style ) const
          out.put( ' ' );
          out.writeString( m_data );
          out.write( ">\n", 2 );
+      break;
+
+      case typeDocument:
+         child = m_child;
+         while ( child != 0 ) {
+            child->write( out, style );
+            child = child->m_next;
+         }
+         out.put( '\n' );
       break;
 
    }
