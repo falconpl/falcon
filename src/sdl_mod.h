@@ -27,7 +27,6 @@
 
 #include <falcon/setup.h>
 #include <falcon/userdata.h>
-#include "mxml_node.h"
 
 namespace Falcon{
 namespace Ext{
