@@ -29,11 +29,14 @@
 #include <falcon/userdata.h>
 #include <falcon/error.h>
 
+#include <SDL.h>
+
 #define FALCON_SDL_ERROR_BASE 2100
 
 namespace Falcon{
 namespace Ext{
 
+/** Automatic quit system. */
 class QuitCarrier: public UserData
 {
 public:
@@ -41,6 +44,8 @@ public:
    ~QuitCarrier();
 };
 
+
+/** Low level SDL error */
 class SDLError: public ::Falcon::Error
 {
 public:
@@ -52,6 +57,33 @@ public:
       Error( "SDLError", params )
       {}
 };
+
+/** Reflexive SDL Surface */
+class SDLSurfaceCarrier: public UserData
+{
+public:
+   SDL_Surface *m_surface;
+
+   SDLSurfaceCarrier( SDL_Surface *s ):
+      m_surface( s )
+   {}
+
+   ~SDLSurfaceCarrier();
+
+   virtual bool isReflective() const;
+   virtual void getProperty( VMachine *vm, const String &propName, Item &prop );
+   virtual void setProperty( VMachine *vm, const String &propName, Item &prop );
+   virtual UserData *clone() const;
+};
+
+//==========================================
+// Utilities
+//
+
+bool RectToObject( const ::SDL_Rect &rect, CoreObject *obj );
+bool ObjectToRect( CoreObject *obj, ::SDL_Rect &rect );
+CoreObject *MakeRectInst( VMachine *vm, const ::SDL_Rect &rect );
+
 
 }
 }

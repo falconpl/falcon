@@ -31,13 +31,22 @@
 namespace Falcon {
 namespace Ext {
 
+// Init and quit
 FALCON_FUNC sdl_Init( ::Falcon::VMachine *vm );
 FALCON_FUNC sdl_WasInit( ::Falcon::VMachine *vm );
 FALCON_FUNC sdl_InitAuto( ::Falcon::VMachine *vm );
 FALCON_FUNC sdl_Quit( ::Falcon::VMachine *vm );
 FALCON_FUNC sdl_QuitSubSystem( ::Falcon::VMachine *vm );
 
+// Generic video
+FALCON_FUNC sdl_SetVideoMode( ::Falcon::VMachine *vm );
 
+// Surface video
+FALCON_FUNC sdl_LoadBMP( ::Falcon::VMachine *vm );
+FALCON_FUNC SDLSurface_BlitSurface( ::Falcon::VMachine *vm );
+FALCON_FUNC SDLScreen_UpdateRect( ::Falcon::VMachine *vm );
+
+// Error
 FALCON_FUNC  SDLError_init ( ::Falcon::VMachine *vm );
 
 }

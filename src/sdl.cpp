@@ -54,14 +54,65 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    self->addClassProperty( c_sdl, "INIT_EVERYTHING" )->setInteger( SDL_INIT_EVERYTHING );
    self->addClassProperty( c_sdl, "INIT_NOPARACHUTE" )->setInteger( SDL_INIT_NOPARACHUTE );
 
+   self->addClassProperty( c_sdl, "SWSURFACE" )->setInteger( SDL_SWSURFACE );
+   self->addClassProperty( c_sdl, "HWSURFACE" )->setInteger( SDL_HWSURFACE );
+   self->addClassProperty( c_sdl, "ASYNCBLIT" )->setInteger( SDL_ASYNCBLIT );
+   self->addClassProperty( c_sdl, "ANYFORMAT" )->setInteger( SDL_ANYFORMAT );
+   self->addClassProperty( c_sdl, "HWPALETTE" )->setInteger( SDL_HWPALETTE );
+   self->addClassProperty( c_sdl, "DOUBLEBUF" )->setInteger( SDL_DOUBLEBUF );
+   self->addClassProperty( c_sdl, "FULLSCREEN" )->setInteger( SDL_FULLSCREEN );
+   self->addClassProperty( c_sdl, "OPENGL" )->setInteger( SDL_OPENGL );
+   self->addClassProperty( c_sdl, "OPENGLBLIT" )->setInteger( SDL_OPENGLBLIT );
+   self->addClassProperty( c_sdl, "RESIZABLE" )->setInteger( SDL_RESIZABLE );
+   self->addClassProperty( c_sdl, "NOFRAME" )->setInteger( SDL_NOFRAME );
+
+   // Init and quit
    self->addClassMethod( c_sdl, "Init", Falcon::Ext::sdl_Init );
    self->addClassMethod( c_sdl, "WasInit", Falcon::Ext::sdl_WasInit );
    self->addClassMethod( c_sdl, "InitAuto", Falcon::Ext::sdl_InitAuto );
    self->addClassMethod( c_sdl, "Quit", Falcon::Ext::sdl_Quit );
    self->addClassMethod( c_sdl, "QuitSubSystem", Falcon::Ext::sdl_QuitSubSystem );
 
+   // Generic video
+   self->addClassMethod( c_sdl, "SetVideoMode", Falcon::Ext::sdl_SetVideoMode );
+
+   // Surface
+   self->addClassMethod( c_sdl, "LoadBMP", Falcon::Ext::sdl_LoadBMP );
+
+    //============================================================
+   // SDL rectangle class
+   //
+   Falcon::Symbol *c_rect = self->addClass( "SDLRect", Falcon::Ext::sdl_Init );
+   c_rect->setWKS( true );
+   self->addClassProperty( c_rect, "w" );
+   self->addClassProperty( c_rect, "h" );
+   self->addClassProperty( c_rect, "x" );
+   self->addClassProperty( c_rect, "y" );
+
+   //============================================================
+   // SDL Surface class
+   //
+   Falcon::Symbol *c_surface = self->addClass( "SDLSurface" );
+   c_surface->setWKS( true );
+   self->addClassProperty( c_surface, "w" );
+   self->addClassProperty( c_surface, "h" );
+   self->addClassProperty( c_surface, "flags" );
+   self->addClassProperty( c_surface, "pitch" );
+   self->addClassProperty( c_surface, "clip_rect" );
+
+   self->addClassMethod( c_surface, "BlitSurface", Falcon::Ext::SDLSurface_BlitSurface );
+
+   //============================================================
+   // SDL screen class
+   //
+   Falcon::Symbol *c_screen = self->addClass( "SDLScreen" );
+   c_screen->setWKS( true );
+   c_screen->getClassDef()->addInheritance( new Falcon::InheritDef( c_surface ) );
+   self->addClassMethod( c_screen, "UpdateRect", Falcon::Ext::SDLScreen_UpdateRect );
+
    //============================================================
    // SDL Error class
+   //
    Falcon::Symbol *error_class = self->addExternalRef( "Error" ); // it's external
    Falcon::Symbol *sdlerr_cls = self->addClass( "SDLError", Falcon::Ext::SDLError_init );
    sdlerr_cls->setWKS( true );
