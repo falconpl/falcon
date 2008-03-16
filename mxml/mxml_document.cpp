@@ -54,7 +54,7 @@ Node *Document::main() const
 
 void Document::write( Falcon::Stream &stream, const int style ) const
 {
-   stream.writeString( "<?xml encoding=\"" + m_encoding + "\"?>\n");
+   stream.writeString( "<?xml version=\"1.0\" encoding=\"" + m_encoding + "\"?>\n");
    m_root->write( stream, m_style );
 }
 
