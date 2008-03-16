@@ -20,7 +20,7 @@ ADD_LIBRARY( sdl MODULE
 
 #Link
 link_libraries(`sdl-config --libs`)
-TARGET_LINK_LIBRARIES(sdl falcon_engine)
+TARGET_LINK_LIBRARIES(sdl falcon_engine SDL)
 
 SET_TARGET_PROPERTIES(sdl
    PROPERTIES PREFIX "")

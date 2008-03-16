@@ -27,10 +27,31 @@
 
 #include <falcon/setup.h>
 #include <falcon/userdata.h>
+#include <falcon/error.h>
+
+#define FALCON_SDL_ERROR_BASE 2100
 
 namespace Falcon{
 namespace Ext{
 
+class QuitCarrier: public UserData
+{
+public:
+   QuitCarrier() {}
+   ~QuitCarrier();
+};
+
+class SDLError: public ::Falcon::Error
+{
+public:
+   SDLError():
+      Error( "SDLError" )
+   {}
+
+   SDLError( const ErrorParam &params  ):
+      Error( "SDLError", params )
+      {}
+};
 
 }
 }

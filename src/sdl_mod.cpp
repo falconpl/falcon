@@ -23,9 +23,18 @@
 */
 
 #include "sdl_mod.h"
+extern "C" {
+   #include <SDL.h>
+}
+
 
 namespace Falcon {
 namespace Ext {
+
+QuitCarrier::~QuitCarrier()
+{
+   SDL_Quit();
+}
 
 }
 }

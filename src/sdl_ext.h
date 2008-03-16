@@ -31,6 +31,15 @@
 namespace Falcon {
 namespace Ext {
 
+FALCON_FUNC sdl_Init( ::Falcon::VMachine *vm );
+FALCON_FUNC sdl_WasInit( ::Falcon::VMachine *vm );
+FALCON_FUNC sdl_InitAuto( ::Falcon::VMachine *vm );
+FALCON_FUNC sdl_Quit( ::Falcon::VMachine *vm );
+FALCON_FUNC sdl_QuitSubSystem( ::Falcon::VMachine *vm );
+
+
+FALCON_FUNC  SDLError_init ( ::Falcon::VMachine *vm );
+
 }
 }
 
