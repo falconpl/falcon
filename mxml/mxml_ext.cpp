@@ -25,12 +25,14 @@
 #include <falcon/vm.h>
 #include <falcon/transcoding.h>
 #include <falcon/fstream.h>
+#include <falcon/lineardict.h>
 #include "mxml_ext.h"
 #include "mxml_mod.h"
 
 #include "mxml.h"
 
 namespace MXML {
+
 Falcon::CoreObject *Node::makeShell( Falcon::VMachine *vm )
 {
    static Falcon::Item *node_class = 0;
@@ -224,13 +226,92 @@ FALCON_FUNC MXMLDocument_root( ::Falcon::VMachine *vm )
    vm->retval( root->getShell( vm ) );
 }
 
+
 FALCON_FUNC MXMLDocument_find( ::Falcon::VMachine *vm )
 {
+   Item *i_name = vm->param(0);
+   Item *i_attrib = vm->param(1);
+   Item *i_valattr = vm->param(2);
+   Item *i_data = vm->param(3);
+   CoreObject *self = vm->self().asObject();
+
+   // parameter sanity check
+   if( ( i_name == 0 || (! i_name->isString() && ! i_name->isNil() )) ||
+       ( i_attrib != 0 && (! i_attrib->isString() && ! i_attrib->isNil() )) ||
+       ( i_valattr != 0 && (! i_valattr->isString() && ! i_valattr->isNil() )) ||
+       ( i_data != 0 && (! i_data->isString() && ! i_data->isNil() ))
+   )
+   {
+      vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "S,[S,S,S]" ) ) );
+      return;
+   }
+
+   String dummy;
+   String *sName, *sValue, *sValAttr, *sData;
+
+   sName = i_name == 0 || i_name->isNil() ? &dummy : i_name->asString();
+   sValue = i_attrib == 0 || i_attrib->isNil() ? &dummy : i_attrib->asString();
+   sValAttr = i_valattr == 0 || i_valattr->isNil() ? &dummy : i_valattr->asString();
+   sData = i_data == 0 || i_data->isNil() ? &dummy : i_data->asString();
+
+   MXML::Document *doc = static_cast<MXML::Document *>( self->getUserData() );
+   // the real find
+   MXML::Node *node = doc->find( *sName, *sValue, *sValAttr, *sData );
+   if ( node == 0 )
+      vm->retnil();
+   else
+      vm->retval( node->getShell( vm ) );
 }
+
+FALCON_FUNC MXMLDocument_findNext( ::Falcon::VMachine *vm )
+{
+   CoreObject *self = vm->self().asObject();
+   MXML::Document *doc = static_cast<MXML::Document *>( self->getUserData() );
+   // the real find
+   MXML::Node *node = doc->findNext();
+   if ( node == 0 )
+      vm->retnil();
+   else
+      vm->retval( node->getShell( vm ) );
+}
+
 
 FALCON_FUNC MXMLDocument_findPath( ::Falcon::VMachine *vm )
 {
+Item *i_name = vm->param(0);
+   CoreObject *self = vm->self().asObject();
+
+   // parameter sanity check
+   if( i_name == 0 || ! i_name->isString() )
+   {
+      vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "S" ) ) );
+      return;
+   }
+
+   MXML::Document *doc = static_cast<MXML::Document *>( self->getUserData() );
+   // the real find
+   MXML::Node *node = doc->findPath( *i_name->asString() );
+   if ( node == 0 )
+      vm->retnil();
+   else
+      vm->retval( node->getShell( vm ) );
 }
+
+
+FALCON_FUNC MXMLDocument_findPathNext( ::Falcon::VMachine *vm )
+{
+  CoreObject *self = vm->self().asObject();
+   MXML::Document *doc = static_cast<MXML::Document *>( self->getUserData() );
+   // the real find
+   MXML::Node *node = doc->findNextPath();
+   if ( node == 0 )
+      vm->retnil();
+   else
+      vm->retval( node->getShell( vm ) );
+}
+
 
 FALCON_FUNC MXMLDocument_save( ::Falcon::VMachine *vm )
 {
@@ -325,7 +406,6 @@ FALCON_FUNC MXMLDocument_load( ::Falcon::VMachine *vm )
       vm->raiseModError( new IoError( ErrorParam(
          FALCON_MXML_ERROR_BASE + (int) MXML::Error::errIo , __LINE__ )
          .desc( "I/O error" ) ) );
-
    }
 
    in.close();
@@ -587,6 +667,46 @@ FALCON_FUNC MXMLNode_getAttribute( ::Falcon::VMachine *vm )
    const String &val = node->getAttribute( *i_attrName->asString() );
    vm->retval( new GarbageString( vm, val ) );
 }
+
+
+FALCON_FUNC MXMLNode_getAttribs( ::Falcon::VMachine *vm )
+{
+   CoreObject *self = vm->self().asObject();
+   MXML::Node *node = static_cast<NodeCarrier *>( self->getUserData() )->node();
+
+   const MXML::AttribList &attribs = node->attribs();
+
+   CoreDict *dict = new LinearDict( vm, attribs.size() );
+
+   MXML::AttribList::const_iterator iter = attribs.begin();
+   while( iter != attribs.end() )
+   {
+      dict->insert( new GarbageString( vm, (*iter)->name()),
+         new GarbageString( vm, (*iter)->value()) );
+      ++iter;
+   }
+
+   vm->retval( dict );
+}
+
+
+FALCON_FUNC MXMLNode_getChildren( ::Falcon::VMachine *vm )
+{
+   CoreObject *self = vm->self().asObject();
+   MXML::Node *node = static_cast<NodeCarrier *>( self->getUserData() )->node();
+
+   CoreArray *arr = new CoreArray( vm );
+
+   node = node->child();
+   while( node != 0 )
+   {
+      arr->append( node->getShell( vm ) );
+      node = node->next();
+   }
+
+   vm->retval( arr );
+}
+
 
 
 FALCON_FUNC MXMLNode_unlink( ::Falcon::VMachine *vm )

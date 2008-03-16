@@ -63,12 +63,12 @@ public:
    };
 
    /** Returns current name of the attribute. */
-   const Falcon::String name() const { return m_name; }
+   const Falcon::String &name() const { return m_name; }
    /** Returns the value stored in the attribute.
       Parsing the value or transforming it to a proper type (i.e. integer)
       is left to the caller.
    */
-   const Falcon::String value() const { return m_value; }
+   const Falcon::String &value() const { return m_value; }
 
    /** Change name of the attribute
       \todo check validity of the name and throw a malformed error if wrong.

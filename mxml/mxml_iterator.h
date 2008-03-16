@@ -112,8 +112,9 @@ __deep_iterator< __Node>( nd )
 }
 
 template< class __Node >
-__find_iterator<__Node>::__find_iterator( __Node *nd, Falcon::String name, Falcon::String attr,
-	Falcon::String valatt, Falcon::String data):
+__find_iterator<__Node>::__find_iterator( __Node *nd, const Falcon::String &name,
+   const Falcon::String &attr,
+	const Falcon::String &valatt, const Falcon::String &data):
 __deep_iterator< __Node>( nd )
 {
 	m_name = name;
@@ -182,6 +183,12 @@ __iterator< __Node>( nd )
 }
 
 template< class __Node >
+__path_iterator<__Node>::__path_iterator( __Node *nd ):
+__iterator< __Node>( nd )
+{
+}
+
+template< class __Node >
 __iterator<__Node> &__path_iterator<__Node>::__next()
 {
 	__Node *ptr = this->m_node;
@@ -197,11 +204,11 @@ __iterator<__Node> &__path_iterator<__Node>::__next()
 		name = m_path.subString( pos );
 	}
 
-	this->m_node = this->m_node->next();   
+	this->m_node = this->m_node->next();
    // todo: this sucks, must re-do it better
 	while ( this->m_node ) {
 		if ( name == "*" || this->m_node->name() == name ) break;
-		this->m_node = this->m_node->next();   
+		this->m_node = this->m_node->next();
 	}
 
 	return *this;
@@ -225,7 +232,7 @@ __iterator<__Node> &__path_iterator<__Node>::__prev()
 
 
 template< class __Node >
-__Node *__path_iterator<__Node>::subfind( __Node *parent, 
+__Node *__path_iterator<__Node>::subfind( __Node *parent,
 	Falcon::uint32 begin )
 {
 	Falcon::uint32 end = m_path.find( "/", begin );
@@ -255,7 +262,7 @@ __iterator<__Node> &__path_iterator<__Node>::__find()
 	__Node *rootNode = this->m_node;
 	Falcon::String firstName;
 	Falcon::uint32 pos;
-	if ( rootNode->nodeType() == Node::typeDocument ) 
+	if ( rootNode->nodeType() == Node::typeDocument )
 	{
 		rootNode = rootNode->child();
 		while( rootNode && rootNode->nodeType() != Node::typeTag )
@@ -267,14 +274,14 @@ __iterator<__Node> &__path_iterator<__Node>::__find()
 		}
 	}
 
-	if ( m_path[0] == '/' ) 
-	{         
+	if ( m_path[0] == '/' )
+	{
 		while( rootNode->parent() && rootNode->parent()->nodeType() != Node::typeDocument )
 		{
 			rootNode = rootNode->parent();
 		}
 		pos = m_path.find( "/", 1 );
-		if( pos == Falcon::String::npos ) 
+		if( pos == Falcon::String::npos )
 			firstName = m_path.subString( 1 );
 		else
 			firstName = m_path.subString( 1, pos );
@@ -283,17 +290,17 @@ __iterator<__Node> &__path_iterator<__Node>::__find()
       // relative path, starting below us.
 		rootNode = rootNode->child();
 		pos = m_path.find( "/" );
-		if( pos == Falcon::String::npos ) 
+		if( pos == Falcon::String::npos )
 			firstName = m_path;
 		else
 			firstName = m_path.subString( 0, pos );
 	}
 
-	while ( rootNode != 0 ) 
+	while ( rootNode != 0 )
 	{
-		if ( firstName == "*" || firstName == rootNode->name() ) 
+		if ( firstName == "*" || firstName == rootNode->name() )
 		{
-			if ( pos == Falcon::String::npos ) 
+			if ( pos == Falcon::String::npos )
 			{
 				this->m_node = rootNode;
 			}
@@ -303,7 +310,7 @@ __iterator<__Node> &__path_iterator<__Node>::__find()
 			break;
 		}
 		rootNode = rootNode->next();
-	}         
+	}
 
 	return *this;
 }

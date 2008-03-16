@@ -103,8 +103,8 @@ class __find_iterator:public __deep_iterator< __Node>
 
 protected:
    friend class Node;
-   __find_iterator( __Node *nd, Falcon::String name, Falcon::String attr,
-               Falcon::String valatt, Falcon::String data);
+   __find_iterator( __Node *nd, const Falcon::String &name, const Falcon::String &attr,
+               const Falcon::String &valatt, const Falcon::String &data);
    virtual inline __iterator<__Node> &__next();
    virtual inline __iterator<__Node> &__prev();
    virtual inline __iterator<__Node> &__find();
@@ -519,10 +519,14 @@ public:
       return makeShell( vm );
    }
 
+   /** Falcon extension */
    bool isReserved() const { return m_bReserve; }
+   /** Falcon extension */
    void reserve() { m_bReserve = true; }
+   /** Falcon extension */
    void unreserve() { m_bReserve = false; }
 
+   /** Falcon extension */
    void dispose()
    {
       if ( m_objOwner != 0 )
@@ -530,6 +534,9 @@ public:
       else
          delete this;
    }
+
+   /** Falcon extension */
+   const AttribList &attribs() const { return m_attrib; }
 };
 
 #include <mxml_iterator.h>

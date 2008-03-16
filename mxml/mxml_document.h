@@ -45,6 +45,10 @@ private:
    int m_style;
    Falcon::String m_encoding;
 
+   // Useful just from find.
+   Node::find_iterator m_finditer;
+   Node::path_iterator m_pathiter;
+
 public:
 
    /** Creates the document object.
@@ -160,6 +164,44 @@ public:
    */
    virtual void read( Falcon::Stream &stream ) throw(MalformedError);
 
+   /** Falcon MXML extension. */
+   Node *find( const Falcon::String &name, const Falcon::String &attr,
+               const Falcon::String &va, const Falcon::String &data )
+   {
+      m_finditer = m_root->find( name, attr, va, data );
+      if( m_finditer != m_root->end() )
+         return & (*m_finditer);
+      return 0;
+   }
+
+   /** Falcon MXML extension. */
+   Node *findNext() {
+      if ( m_finditer == m_root->end() )
+         return 0;
+
+      if ( ++m_finditer != m_root->end() )
+         return &(*m_finditer);
+      return 0;
+   }
+
+   /** Falcon MXML extension. */
+   Node *findPath( const Falcon::String &path )
+   {
+      m_pathiter = m_root->find_path( path );
+      if( m_pathiter != m_root->end() )
+         return & (*m_pathiter);
+      return 0;
+   }
+
+   /** Falcon MXML extension. */
+   Node *findNextPath() {
+      if ( m_pathiter == m_root->end() )
+         return 0;
+
+      if ( ++m_pathiter != m_root->end() )
+         return &(*m_pathiter);
+      return 0;
+   }
 };
 
 }

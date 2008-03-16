@@ -17,7 +17,6 @@ Document::Document( const Falcon::String &encoding, const int style )
 {
    m_style = style;
    m_root = new Node(Node::typeDocument);
-   m_root->name( "Document" );
    m_root->reserve();
 }
 
@@ -33,8 +32,6 @@ Document::Document( Falcon::Stream &in, const int style )
 {
    m_style = style;
    m_root = new Node( Node::typeDocument );
-   // provide a default name
-   m_root->name( "Document" );
    m_root->reserve();
    read( in );
 }
