@@ -409,7 +409,7 @@ bool ConfigFile::load()
    if ( ! stream.open( m_fileName, GenericStream::e_omReadOnly, GenericStream::e_smShareRead ) )
    {
       stream.errorDescription( m_errorMsg );
-      m_fsError = stream.lastError();
+      m_fsError = (long) stream.lastError();
       return false;
    }
 
@@ -512,7 +512,7 @@ bool ConfigFile::load( Stream *input )
    // error handling
 
 error:
-   m_fsError = input->lastError();
+   m_fsError = (long) input->lastError();
    input->errorDescription( m_errorMsg );
    return false;
 }
@@ -528,7 +528,7 @@ bool ConfigFile::save()
       FileStream::e_aUserRead | FileStream::e_aReadOnly,
       FileStream::e_smShareRead ) )
    {
-      m_fsError = stream.lastError();
+      m_fsError = (long) stream.lastError();
       stream.errorDescription( m_errorMsg );
       return false;
    }
@@ -608,7 +608,7 @@ bool ConfigFile::save( Stream *output )
 
    if ( !output->good() )
    {
-      m_fsError = output->lastError();
+      m_fsError = (long) output->lastError();
       output->errorDescription( m_errorMsg );
       return false;
    }
