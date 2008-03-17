@@ -92,8 +92,9 @@ void Document::read( Falcon::Stream &stream )
       {
          if ( xmlDecl )
          {
-            child->unlink();
-            throw MalformedError( Error::errMultipleXmlDecl, child );
+            MalformedError err( Error::errMultipleXmlDecl, child );
+            delete child;
+            throw err;
          }
          xmlDecl = true;
 
