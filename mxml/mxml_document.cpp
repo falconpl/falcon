@@ -62,10 +62,10 @@ void Document::write( Falcon::Stream &stream, const int style ) const
 void Document::read( Falcon::Stream &stream )
    throw( MalformedError )
 {
+   setPosition( 1, 1);
    if ( m_root->child() != 0 ) {
       m_root->dispose();
       m_root = new Node( Node::typeDocument );
-      m_root->name( "Document" );
       m_root->reserve();
    }
 
@@ -81,7 +81,7 @@ void Document::read( Falcon::Stream &stream )
       {
          child->read( stream, m_style, line(), character());
       }
-      catch( MalformedError &err )
+      catch( MalformedError )
       {
          delete child;
          throw;
@@ -92,7 +92,7 @@ void Document::read( Falcon::Stream &stream )
       {
          if ( xmlDecl )
          {
-            delete child;
+            child->unlink();
             throw MalformedError( Error::errMultipleXmlDecl, child );
          }
          xmlDecl = true;

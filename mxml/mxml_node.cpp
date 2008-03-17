@@ -389,7 +389,7 @@ void Node::read( Falcon::Stream &in, const int style, const int l, const int pos
                catch( MalformedError &err )
                {
                   delete child;
-                  throw;
+                  throw err;
                }
 
                setPosition( child->line(), child->character() );

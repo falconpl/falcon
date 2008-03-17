@@ -29,7 +29,10 @@ class Error: public Falcon::UserData
 {
 private:
    int m_code;
-   const Element *m_generator;
+   int m_beginLine;
+   int m_beginChar;
+   int m_line;
+   int m_char;
 
 public:
 
@@ -57,13 +60,10 @@ enum codes
 };
 
 protected:
-   Error( const codes code, const Element *generator )
-   {
-      m_code = code;
-      m_generator = generator;
-   }
+   Error( const codes code, const Element *generator );
 
 public:
+   virtual ~Error();
    virtual const errorType type() const = 0;
    int numericCode() const;
    const Falcon::String description() const;
@@ -77,7 +77,7 @@ public:
 class MalformedError: public Error
 {
 public:
-   MalformedError( const codes code, const Element *generator  ):
+   MalformedError( const codes code, const Element *generator ):
       Error( code, generator ) {};
    virtual const errorType type() const  { return malformedError; }
 };
@@ -85,14 +85,16 @@ public:
 class IOError: public Error
 {
 public:
-   IOError( const codes code, const Element *generator  ): Error( code, generator ) {};
+   IOError( const codes code, const Element *generator  ): 
+      Error( code, generator ) {};
    virtual const errorType type() const { return ioError; }
 };
 
 class NotFoundError: public Error
 {
 public:
-   NotFoundError( const codes code, const Element *generator  ): Error( code, generator ) {};
+   NotFoundError( const codes code, const Element *generator ): 
+      Error( code, generator ) {};
    virtual const errorType type() const { return notFoundError; }
 };
 

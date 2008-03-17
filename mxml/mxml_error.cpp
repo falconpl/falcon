@@ -4,13 +4,24 @@
    Error class - implementation
 
    Author: Giancarlo Niccolai <gian@niccolai.ws>
-
-   $Id: mxml_error.cpp,v 1.2 2004/04/10 23:50:29 jonnymind Exp $
 */
 
 #include <mxml_error.h>
 
 namespace MXML {
+
+Error::Error( const codes code, const Element *generator ):
+   m_code( code )
+{
+   m_beginLine = generator->beginLine();   
+   m_beginChar = generator->beginChar();
+   m_line = generator->line();
+   m_char = generator->character();
+}
+
+Error::~Error()
+{
+}
 
 const Falcon::String Error::description() const
 {
@@ -63,16 +74,20 @@ void Error::toString( Falcon::String &stream ) const
 
 void Error::describeLine( Falcon::String &stream ) const
 {
-   stream += "at ";
-   stream.writeNumber( (Falcon::int64) this->m_generator->beginLine() );
-   stream += ":";
-   stream.writeNumber( (Falcon::int64) this->m_generator->beginChar() );
-   if( this->m_generator->line() )
+   if ( m_beginLine )
+   {
+      stream += "at ";
+      stream.writeNumber( (Falcon::int64) m_beginLine );
+      stream += ":";
+      stream.writeNumber( (Falcon::int64) m_beginChar );
+   }
+
+   if ( m_line )
    {
       stream += " (from  ";
-      stream.writeNumber( (Falcon::int64) this->m_generator->line());
+      stream.writeNumber( (Falcon::int64) m_line );
       stream += ":";
-      stream.writeNumber( (Falcon::int64) this->m_generator->character() );
+      stream.writeNumber( (Falcon::int64) m_char );
       stream += ")";
    }
 }

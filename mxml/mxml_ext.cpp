@@ -200,7 +200,7 @@ FALCON_FUNC MXMLDocument_style( ::Falcon::VMachine *vm )
    }
 
    MXML::Document *doc = static_cast<MXML::Document *>( self->getUserData() );
-   doc->style( i_style->asInteger() );
+   doc->style( (int) i_style->asInteger() );
 }
 
 
@@ -873,7 +873,7 @@ FALCON_FUNC MXMLNode_clone( ::Falcon::VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
    MXML::Node *node = static_cast<NodeCarrier *>( self->getUserData() )->node();
-   vm->retval( node->clone() );
+   vm->retval( node->clone()->getShell( vm ) );
 }
 
 
