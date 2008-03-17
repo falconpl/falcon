@@ -219,16 +219,7 @@ public:
       @param name the name of the newborn node
       @param type the value of the newborn attribute
    */
-   Node( const type tp=typeTag, const Falcon::String &name = "", const Falcon::String &data = "" ):
-      Element()
-   {
-      m_type = tp;
-      m_name = name;
-      m_data = data;
-      m_lastFound = m_attrib.end();
-
-      m_child = m_last_child = m_prev = m_next = m_parent = 0;
-   }
+   Node( const type tp=typeTag, const Falcon::String &name = "", const Falcon::String &data = "" );
 
    /** Deserializes a node
       Reads a node from an XML file at current position.

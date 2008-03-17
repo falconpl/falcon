@@ -2,7 +2,7 @@
    FALCON - The Falcon Programming Language.
    FILE: mxml_ext.cpp
 
-   Compiler module main file - extension implementation.
+   MXML module main file - extension implementation.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: Thu, 06 Mar 2008 19:44:41 +0100

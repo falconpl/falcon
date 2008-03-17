@@ -46,6 +46,19 @@
 namespace MXML
 {
 
+Node::Node( const type tp, const Falcon::String &name, const Falcon::String &data ):
+   Element()
+{
+   m_type = tp;
+   m_name = name;
+   m_data = data;
+   m_lastFound = m_attrib.end();
+   m_objOwner = 0;
+
+   m_child = m_last_child = m_prev = m_next = m_parent = 0;
+}
+
+
 void Node::read( Falcon::Stream &in, const int style, const int l, const int pos )
    throw( MalformedError )
 {
