@@ -41,6 +41,7 @@
 #include <falcon/sys.h>
 #include <falcon/attribute.h>
 #include <falcon/sequence.h>
+#include <falcon/membuf.h>
 
 #include <falcon/messages.h>
 #include <falcon/engstrings.h>
@@ -118,6 +119,10 @@ FALCON_FUNC  len ( ::Falcon::VMachine *vm )
 
       case FLC_ITEM_ARRAY:
          vm->retval( (int64) elem->asArray()->length() );
+      break;
+
+      case FLC_ITEM_MEMBUF:
+         vm->retval( (int64) elem->asMemBuf()->length() );
       break;
 
       case FLC_ITEM_DICT:
@@ -1991,7 +1996,7 @@ FALCON_FUNC  PageDict( ::Falcon::VMachine *vm )
 
    if( i_pageSize != 0 && ! i_pageSize->isOrdinal() )
    {
-      vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).extra( "N" ) ) );
+      vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).extra( "[N]" ) ) );
       return;
    }
 
@@ -2000,6 +2005,42 @@ FALCON_FUNC  PageDict( ::Falcon::VMachine *vm )
    vm->retval( cd );
 }
 
+//===================================================
+// Memory Buffer
+//===================================================
+
+FALCON_FUNC Make_MemBuf( ::Falcon::VMachine *vm )
+{
+   Item *i_size = vm->param(0);
+   Item *i_wordSize = vm->param(1);
+
+   if( ( i_size == 0 || ! i_size->isOrdinal() ) ||
+       ( i_wordSize != 0 && ! i_wordSize->isOrdinal() )
+      )
+   {
+      vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).extra( "N,[N]" ) ) );
+      return;
+   }
+
+   int64 wordSize = i_wordSize == 0 ? 1: i_wordSize->forceInteger();
+   int64 size = i_size->forceInteger();
+   if ( wordSize < 1 || wordSize > 4 || size <= 0 )
+   {
+      vm->raiseRTError( new ParamError( ErrorParam( e_param_range ) ) );
+      return;
+   }
+
+   MemBuf *mb = 0;
+   switch( wordSize )
+   {
+      case 1: mb = new MemBuf_1( vm, size ); break;
+      case 2: mb = new MemBuf_2( vm, size ); break;
+      case 3: mb = new MemBuf_3( vm, size ); break;
+      case 4: mb = new MemBuf_4( vm, size ); break;
+   }
+   fassert( mb != 0 );
+   vm->retval( mb );
+}
 
 //============================================
 // Fucntional extensions
@@ -3307,6 +3348,7 @@ Module * core_module_init()
    core->addExtFunc( "paramIsRef", Falcon::core::paramIsRef );
    core->addExtFunc( "paramSet", Falcon::core::paramSet );
    core->addExtFunc( "PageDict", Falcon::core::PageDict );
+   core->addExtFunc( "MemBuf", Falcon::core::Make_MemBuf );
 
    // ===================================
    // Attribute support

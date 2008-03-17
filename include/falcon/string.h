@@ -961,6 +961,8 @@ public:
     */
     void writeNumber( double number, const String &format );
 
+    void writeNumber( int64 number, const String &format );
+
     /** Checks the position to be in the string, and eventually changes it if it's negative.
       This is just a nice inline shortuct so that the string constructor for substrings
       can be called safely.

@@ -27,6 +27,7 @@ Falcon (0.8.9)
   * bugfix: Timestamp.distance() was returning a random value instead of nil.
   * Minor: Added Path reflexive class to RTL.
   * Minor: Added URI reflexive class to RTL.
+  * Major: Added MemBuf type and relative support.
 
 Falcon (0.8.8)
   * bugfix: TRAV opcode may destroy its parameters while setting first loop

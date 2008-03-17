@@ -2289,6 +2289,17 @@ void String::writeNumberOctal( uint64 number )
    append( buffer + pos );
 }
 
+void String::writeNumber( int64 number, const String &format )
+{
+   char buffer[64];
+
+   char bufFormat[32];
+   if ( format.toCString( bufFormat, 32 ) == - 1 )
+      return;
+
+   sprintf( buffer, bufFormat, number );
+   append( buffer );
+}
 
 void String::writeNumber( double number, const String &format )
 {

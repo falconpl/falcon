@@ -46,6 +46,7 @@ class VMachine;
 class Stream;
 class Attribute;
 class LiveModule;
+class MemBuf;
 
 /** Basic item abstraction.*/
 class FALCON_DYN_CLASS Item: public BaseAlloc
@@ -267,6 +268,17 @@ public:
       m_data.voidp = dict;
    }
 
+   /** Creates a memory buffer. */
+   Item( MemBuf *buf )
+   {
+      setMemBuf( buf );
+   }
+
+   void setMemBuf( MemBuf *b ) {
+      type( FLC_ITEM_MEMBUF );
+      m_data.voidp = b;
+   }
+
    /** Creates a reference to another item. */
    void setReference( GarbageItem *ref ) {
       type( FLC_ITEM_REFERENCE );
@@ -443,6 +455,7 @@ public:
    CoreArray *asArray() const { return (CoreArray *) m_data.voidp; }
    CoreObject *asObject() const { return (CoreObject *) m_data.voidp; }
    CoreDict *asDict() const { return ( CoreDict *) m_data.voidp; }
+   MemBuf *asMemBuf() const { return ( MemBuf *) m_data.voidp; }
 
    CoreClass *asClass() const { return (CoreClass *) m_data.m_extra; }
    Symbol *asFunction() const { return (Symbol *) m_data.voidp; }
@@ -479,6 +492,7 @@ public:
    bool isString() const { return type() == FLC_ITEM_STRING; }
    bool isArray() const { return type() == FLC_ITEM_ARRAY; }
    bool isDict() const { return type() == FLC_ITEM_DICT; }
+   bool isMemBuf() const { return type() == FLC_ITEM_MEMBUF; }
    bool isObject() const { return type() == FLC_ITEM_OBJECT; }
    bool isReference() const { return type() == FLC_ITEM_REFERENCE; }
    bool isFunction() const { return type() == FLC_ITEM_FUNC; }

@@ -33,6 +33,7 @@
 #include <falcon/carray.h>
 #include <falcon/cdict.h>
 #include <falcon/cclass.h>
+#include <falcon/membuf.h>
 #include <falcon/attribute.h>
 #include <falcon/vmmaps.h>
 #include <cstdlib>
@@ -78,6 +79,9 @@ bool Item::internal_is_equal( const Item &other ) const
 
       case FLC_ITEM_OBJECT:
          return asObject() == other.asObject();
+
+      case FLC_ITEM_MEMBUF:
+         return asMemBuf() == other.asMemBuf();
 
       case FLC_ITEM_METHOD:
          return asMethodObject() == other.asMethodObject() && asMethodFunction() == other.asMethodFunction();
@@ -133,6 +137,7 @@ bool Item::isTrue() const
       case FLC_ITEM_METHOD:
       case FLC_ITEM_FBOM:
       case FLC_ITEM_ATTRIBUTE:
+      case FLC_ITEM_MEMBUF:
          // methods are always filled, so they are always true.
          return true;
    }
@@ -302,6 +307,11 @@ int Item::internal_compare( const Item &other ) const
          else if ( asObject() > other.asObject() ) return 1;
          else return 0;
 
+      case FLC_ITEM_MEMBUF:
+         if ( asMemBuf() < other.asMemBuf() ) return -1;
+         else if ( asMemBuf() > other.asMemBuf() ) return 1;
+         else return 0;
+
       case FLC_ITEM_CLSMETHOD:
       case FLC_ITEM_METHOD:
          if( asMethodObject() > other.asMethodObject() )
@@ -400,6 +410,14 @@ void Item::toString( String &target ) const
       }
       break;
 
+      case FLC_ITEM_MEMBUF:
+         target = "{MemBuf of ";
+         target.writeNumber( (int64) this->asMemBuf()->length() );
+         target += " words long ";
+            target.writeNumber( (int64) this->asMemBuf()->wordSize() );
+         target += "bytes }";
+      break;
+
       case FLC_ITEM_ATTRIBUTE:
          target = "{attrib:" + asAttribute()->name() + "}";
       break;
@@ -479,6 +497,10 @@ void Item::destroy()
    {
       case FLC_ITEM_STRING:
          delete asString();
+      break;
+
+      case FLC_ITEM_MEMBUF:
+         delete asMemBuf();
       break;
 
       case FLC_ITEM_ARRAY:

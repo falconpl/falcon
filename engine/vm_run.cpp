@@ -41,6 +41,7 @@
 #include <falcon/error.h>
 #include <falcon/stream.h>
 #include <falcon/attribute.h>
+#include <falcon/membuf.h>
 
 #include <math.h>
 #include <errno.h>
@@ -1675,6 +1676,18 @@ void opcodeHandler_LDV( register VMachine *vm )
       }
       break;
 
+      case FLC_ITEM_MEMBUF << 8 | FLC_ITEM_INT:
+      case FLC_ITEM_MEMBUF << 8 | FLC_ITEM_NUM:
+      {
+         int64 pos = (int64) operand2->forceInteger();
+         MemBuf *mb = operand1->asMemBuf();
+         if ( pos >= 0 && pos < (int64) mb->length() )  {
+            vm->retval( (int64) mb->get( pos ) );
+            return;
+         }
+      }
+      break;
+
       case FLC_ITEM_STRING << 8 | FLC_ITEM_RANGE:
       {
          String *cs = operand1->asString();
@@ -2450,6 +2463,19 @@ void opcodeHandler_STVS( register VMachine *vm )
          }
       break;
 
+      case FLC_ITEM_MEMBUF << 8 | FLC_ITEM_INT:
+      case FLC_ITEM_MEMBUF << 8 | FLC_ITEM_NUM:
+      {
+         int64 pos = (int64) operand2->forceInteger();
+         MemBuf *mb = operand1->asMemBuf();
+         if ( pos >= 0 && pos < (int64) mb->length() && origin.isOrdinal() )
+         {
+            mb->set( pos, origin.forceInteger() );
+            return;
+         }
+      }
+      break;
+
       case FLC_ITEM_ARRAY << 8 | FLC_ITEM_INT:
       case FLC_ITEM_ARRAY << 8 | FLC_ITEM_NUM:
       {
@@ -2622,6 +2648,19 @@ void opcodeHandler_STV( register VMachine *vm )
             if ( result )
                return;
          }
+      break;
+
+      case FLC_ITEM_MEMBUF << 8 | FLC_ITEM_INT:
+      case FLC_ITEM_MEMBUF << 8 | FLC_ITEM_NUM:
+      {
+         int64 pos = (int64) operand2->forceInteger();
+         MemBuf *mb = operand1->asMemBuf();
+         if ( pos >= 0 && pos < (int64) mb->length() && origin->isOrdinal() )
+         {
+            mb->set( pos, origin->forceInteger() );
+            return;
+         }
+      }
       break;
 
       case FLC_ITEM_ARRAY << 8 | FLC_ITEM_INT:

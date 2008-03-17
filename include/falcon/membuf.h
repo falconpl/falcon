@@ -1,12 +1,11 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: flc_membuf.h
-   $Id: membuf.h,v 1.1.1.1 2006/10/08 15:05:40 gian Exp $
+   FILE: membuf.h
 
-   Temporary memory buffer class.
+   Core memory buffer.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
-   Begin: sab ott 9 2004
+   Begin: Mon, 17 Mar 2008 23:07:21 +0100
    Last modified because:
 
    -------------------------------------------------------------------
@@ -20,104 +19,116 @@
 */
 
 /** \file
-   This file is temporary; it will be deleted as soon as memory manager for VM
-   is fully functional.
+   Memory buffer - Pure memory for Falcon.
 */
 
-#ifndef flc_flc_membuf_H
-#define flc_flc_membuf_H
+#ifndef flc_membuf_H
+#define flc_membuf_H
 
+#include <falcon/setup.h>
 #include <falcon/types.h>
+#include <falcon/garbageable.h>
 
 namespace Falcon {
 
-typedef void (*cleanup_func)(void *data);
+class VMachine;
+class Stream;
 
-/** Temporary class used to hold memory buffer while waiting for the fully
-    page managed memory buffers.
-    This memory buffers are commonly allocated via Falcon::memAlloc(). In the final version
-    the memory buffers used by items will be directly mapped into memory pages and managed
-    by the memory pool manager.
-*/
-
-class MemBuf
+class MemBuf: public Garbageable
 {
-   MemBuf *m_prev;
-   MemBuf *m_next;
-   cleanup_func m_destroyer;
+protected:
+   byte *m_memory;
+   bool m_bOwn;
    uint32 m_size;
-   byte m_gcData;
-   /** General purpose byte.
-      This byte is left for the item contents to be used for various reasons.
-      As the GC data is a byte in this area, adding a flag byte to this area
-      causes no waste (in 16 or 32 bit allignment), while adding it to the
-      item content would cause a waste.
-   */
-   byte m_general;
+
 public:
 
-   MemBuf( uint32 size, MemBuf *prev=0, MemBuf *next=0, cleanup_func func=0 ):
-      m_size( size ),
-      m_prev( prev ),
-      m_next( next ),
-      m_destroyer( func ),
-      m_gcData(0)
+   MemBuf( VMachine *vm, uint32 size );
+   MemBuf( VMachine *vm, byte *data, uint32 size, bool bOwn = false );
+   ~MemBuf();
+
+   virtual uint8 wordSize() const = 0;
+   virtual uint32 length() const = 0;
+   virtual uint32 get( uint32 pos ) const = 0;
+   virtual void set( uint32 pos, uint32 value ) = 0;
+
+   uint32 size() const { return m_size; }
+
+   bool serialize( Stream *stream );
+   static MemBuf *deserialize( VMachine *vm, Stream *stream );
+};
+
+class MemBuf_1: public MemBuf
+{
+public:
+   MemBuf_1( VMachine *vm, uint32 size ):
+      MemBuf( vm, size )
    {}
 
-   ~MemBuf() {
-      if ( m_destroyer ) {
-         m_destroyer( dataSpace() );
-      }
-      if (m_prev != 0 )
-         m_prev->m_next = m_next;
-      if ( m_next != 0 )
-         m_next->m_prev = m_prev;
-   }
+   MemBuf_1( VMachine *vm, byte *data, uint32 size, bool bOwn = false ):
+      MemBuf( vm, data, size, bOwn )
+   {}
 
-   MemBuf *next() const  { return m_next; }
-   void next( MemBuf *n ) { m_next = n; }
-   MemBuf *prev() const  { return m_prev; }
-   void prev( MemBuf *p ) { m_prev = p; }
-
-   byte *dataSpace() { return ((byte*)this) + sizeof(MemBuf); }
-   static MemBuf *defSpace( void *mem ) { return ( ((MemBuf*)mem) - 1 ); }
-
-   void setCleanupFunction( cleanup_func func ) {
-      m_destroyer = func ;
-   }
-
-   cleanup_func getCleanupFunction() {
-      return m_destroyer;
-   }
-
-   void cleanup() {
-      if ( m_destroyer != 0 )
-         m_destroyer( this );
-   }
-
-   /** Set the current mark status. */
-   void gcMark( byte mode ) {
-      m_gcData = (m_gcData & 0xfe) | mode;
-   }
-
-   /** Return the current GC mark status. */
-   byte gcMark() const {
-      return ( m_gcData & 0x1);
-   }
-
-   uint32 size() const { return  m_size; }
-
-   /** General purpose byte.
-      This byte is left for the item contents to be used for various reasons.
-      As the GC data is a byte in this area, adding a flag byte to this area
-      causes no waste (in 16 or 32 bit allignment), while adding it to the
-      item content would cause a waste.
-   */
-   byte &general() { return m_general; }
+   virtual uint8 wordSize() const;
+   virtual uint32 length() const;
+   virtual uint32 get( uint32 pos ) const;
+   virtual void set( uint32 pos, uint32 value );
 };
+
+class MemBuf_2: public MemBuf
+{
+public:
+   MemBuf_2( VMachine *vm, uint32 size ):
+      MemBuf( vm, size )
+   {}
+
+   MemBuf_2( VMachine *vm, byte *data, uint32 size, bool bOwn = false ):
+      MemBuf( vm, data, size, bOwn )
+   {}
+
+   virtual uint8 wordSize() const;
+   virtual uint32 length() const;
+   virtual uint32 get( uint32 pos ) const;
+   virtual void set( uint32 pos, uint32 value );
+};
+
+class MemBuf_3: public MemBuf
+{
+public:
+   MemBuf_3( VMachine *vm, uint32 size ):
+      MemBuf( vm, size )
+   {}
+
+   MemBuf_3( VMachine *vm, byte *data, uint32 size, bool bOwn = false ):
+      MemBuf( vm, data, size, bOwn )
+   {}
+
+   virtual uint8 wordSize() const;
+   virtual uint32 length() const;
+   virtual uint32 get( uint32 pos ) const;
+   virtual void set( uint32 pos, uint32 value );
+};
+
+class MemBuf_4: public MemBuf
+{
+public:
+   MemBuf_4( VMachine *vm, uint32 size ):
+      MemBuf( vm, size )
+   {}
+
+   MemBuf_4( VMachine *vm, byte *data, uint32 size, bool bOwn = false ):
+      MemBuf( vm, data, size, bOwn )
+   {}
+
+   virtual uint8 wordSize() const;
+   virtual uint32 length() const;
+   virtual uint32 get( uint32 pos ) const;
+   virtual void set( uint32 pos, uint32 value );
+};
+
 
 }
 
 #endif
 
-/* end of flc_membuf.h */
+/* end of membuf.h */

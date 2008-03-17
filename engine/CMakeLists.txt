@@ -123,6 +123,7 @@ ADD_LIBRARY( falcon_engine SHARED
    lineardict.cpp
    linemap.cpp
    ltree.cpp
+   membuf.cpp
    memhash.cpp
    memory.cpp
    mempool.cpp

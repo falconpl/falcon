@@ -31,6 +31,7 @@
 #include <falcon/module.h>
 #include <falcon/error.h>
 #include <falcon/attribute.h>
+#include <falcon/membuf.h>
 
 #include <falcon/format.h>
 
@@ -58,6 +59,10 @@ FALCON_FUNC BOM_len( VMachine *vm )
 
       case FLC_ITEM_ARRAY:
          vm->retval( (int64) elem->asArray()->length() );
+      break;
+
+      case FLC_ITEM_MEMBUF:
+         vm->retval( (int64) elem->asMemBuf()->length() );
       break;
 
       case FLC_ITEM_DICT:

@@ -50,6 +50,7 @@
 #define FLC_ITEM_ARRAY     11
 #define FLC_ITEM_DICT      12
 #define FLC_ITEM_OBJECT    13
+#define FLC_ITEM_MEMBUF    14
 
 #define FLC_ITEM_REFERENCE 15
 

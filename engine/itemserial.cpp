@@ -31,6 +31,7 @@
 #include <falcon/stream.h>
 #include <falcon/lineardict.h>
 #include <falcon/attribute.h>
+#include <falcon/membuf.h>
 
 namespace Falcon {
 
@@ -186,8 +187,15 @@ Item::e_sercode Item::serialize( Stream *file, VMachine *vm ) const
       {
          char type = FLC_ITEM_STRING;
          file->write((byte *) &type, 1 );
-
          this->asString()->serialize( file );
+      }
+      break;
+
+      case FLC_ITEM_MEMBUF:
+      {
+         char type = FLC_ITEM_MEMBUF;
+         file->write((byte *) &type, 1 );
+         this->asMemBuf()->serialize( file );
       }
       break;
 
@@ -453,6 +461,20 @@ Item::e_sercode Item::deserialize( Stream *file, VMachine *vm )
          return sc_ferror;
       }
       break;
+
+      case FLC_ITEM_MEMBUF:
+      {
+         MemBuf *mb = MemBuf::deserialize( vm, file );
+         if ( file->good() && mb != 0 ) {
+            setMemBuf( mb );
+            return sc_ok;
+         }
+
+         delete mb; // may be 0, but it's ok
+         return sc_ferror;
+      }
+      break;
+
 
       case FLC_ITEM_FBOM:
       {

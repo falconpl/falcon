@@ -1,0 +1,48 @@
+/*
+   FALCON - Samples
+
+   FILE: membuf.fal
+
+   Minimal membuffer operations
+   Transforms a string given as parameter into a membuffer.
+
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Tue, 18 Mar 2008 00:34:06 +0100
+   Last modified because:
+
+   -------------------------------------------------------------------
+   (C) Copyright 2008: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+   In order to use this file in its compiled form, this source or
+   part of it you have to read, understand and accept the conditions
+   that are stated in the LICENSE file that comes boundled with this
+   package.
+*/
+
+const defString = "A default string to test memory buffers"
+
+if args.len() == 0 or args[0].len() == 0
+   > "No arguments provided, using the default string:"
+   > "'", defString, "'"
+   str = defString
+else
+   str = args[0]
+   > "Using: '", str, "'"
+end
+
+memory = MemBuf( str.len() )
+for i = 0 to str.len() - 1
+   memory[i] = str[*i]
+end
+
+> "Transfer complete; dumping the memory buffer:"
+fmt = Format( "2xp0" )
+for i in [0: memory.len()]
+   >> fmt.format( memory[i] ), ", "
+end
+inspect( memory )
+>
+> "Complete."
+

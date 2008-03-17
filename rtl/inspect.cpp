@@ -28,6 +28,7 @@
 #include <falcon/cclass.h>
 #include <falcon/attribute.h>
 #include <falcon/stream.h>
+#include <falcon/membuf.h>
 
 namespace Falcon { namespace Ext {
 
@@ -112,6 +113,42 @@ void inspect_internal( VMachine *vm, const Item *elem, int32 level, bool add )
          stream->writeString( "{attrib:" );
          stream->writeString( elem->asAttribute()->name() );
          stream->writeString( "}" );
+      break;
+
+      case FLC_ITEM_MEMBUF:
+      {
+         MemBuf *mb = elem->asMemBuf();
+         temp = "MemBuf(";
+         temp.writeNumber( (int64) mb->length() );
+         temp += ",";
+         temp.writeNumber( (int64) mb->wordSize() );
+         temp += ")[\n";
+
+         String fmt;
+         int limit = 0;
+         switch ( mb->wordSize() )
+         {
+            case 1: fmt = "%02X"; limit = 24; break;
+            case 2: fmt = "%04X"; limit = 12; break;
+            case 3: fmt = "%06X"; limit = 9; break;
+            case 4: fmt = "%08X"; limit = 6; break;
+         }
+
+         int written = 0;
+         for( count = 0; count < mb->length(); count++ )
+         {
+            temp.writeNumber( (int64)  mb->get( count ), fmt );
+            temp += " ";
+            written ++;
+            if ( written == limit )
+            {
+               temp += "\n";
+               written = 0;
+            }
+         }
+         temp += "]";
+         stream->writeString( temp );
+      }
       break;
 
       case FLC_ITEM_ARRAY:

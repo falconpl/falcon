@@ -1,0 +1,216 @@
+/*
+   FALCON - The Falcon Programming Language.
+   FILE: membuf.cpp
+
+   Core memory buffer.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Mon, 17 Mar 2008 23:07:21 +0100
+   Last modified because:
+
+   -------------------------------------------------------------------
+   (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+   In order to use this file in its compiled form, this source or
+   part of it you have to read, understand and accept the conditions
+   that are stated in the LICENSE file that comes boundled with this
+   package.
+*/
+
+/** \file
+   Memory buffer - Pure memory for Falcon.
+*/
+
+#include <falcon/membuf.h>
+#include <falcon/memory.h>
+#include <falcon/stream.h>
+#include <falcon/common.h>
+
+namespace Falcon {
+
+MemBuf::MemBuf( VMachine *vm, uint32 size ):
+   Garbageable( vm, sizeof( this ) + size )
+{
+   m_memory = (byte *) memAlloc( size );
+   m_size = size;
+   m_bOwn = true;
+}
+
+MemBuf::MemBuf( VMachine *vm, byte *data, uint32 size, bool bOwn ):
+   Garbageable( vm, sizeof( this ) + size ),
+   m_size( size ),
+   m_bOwn( bOwn ),
+   m_memory( data )
+{
+}
+
+MemBuf::~MemBuf()
+{
+   if ( m_bOwn )
+      memFree( m_memory );
+}
+
+bool MemBuf::serialize( Stream *stream )
+{
+   uint32 wSize = endianInt32( wordSize() );
+   stream->write( &wSize, sizeof( wSize ) );
+   if ( ! stream->good() ) return false;
+   wSize = endianInt32( m_size );
+   stream->write( &wSize, sizeof( wSize ) );
+   if ( ! stream->good() ) return false;
+   if ( m_size > 0 )
+   {
+      stream->write( m_memory, m_size );
+      if ( ! stream->good() ) return false;
+   }
+
+   return true;
+}
+
+MemBuf *MemBuf::deserialize( VMachine *vm, Stream *stream )
+{
+   uint32 nWordSize;
+   if ( stream->read( &nWordSize, sizeof( nWordSize ) ) != sizeof( nWordSize ) )
+      return 0;
+   nWordSize = endianInt32( nWordSize );
+   if ( nWordSize < 1 || nWordSize > 4 )
+      return 0;
+
+   uint32 nSize;
+   if ( stream->read( &nSize, sizeof( nSize ) ) != sizeof( nSize ) )
+      return 0;
+   nSize = endianInt32( nSize );
+
+   byte *mem = (byte *) memAlloc( nSize );
+   if ( mem == 0 )
+      return 0;
+
+   if ( stream->read( mem, nSize ) != nSize )
+   {
+      memFree( mem );
+      return 0;
+   }
+
+   switch( nWordSize )
+   {
+      case 1: return new MemBuf_1( vm, mem, nSize, true );
+      case 2: return new MemBuf_2( vm, mem, nSize, true );
+      case 3: return new MemBuf_3( vm, mem, nSize, true );
+      case 4: return new MemBuf_4( vm, mem, nSize, true );
+   }
+
+   return 0; // impossible
+}
+
+uint8 MemBuf_1::wordSize() const
+{
+   return 1;
+}
+
+uint32 MemBuf_1::length() const
+{
+   return m_size;
+}
+
+uint32 MemBuf_1::get( uint32 pos ) const
+{
+   return m_memory[ pos ];
+}
+
+void MemBuf_1::set( uint32 pos, uint32 value )
+{
+   m_memory[pos] = (byte) value;
+}
+
+
+
+uint8 MemBuf_2::wordSize() const
+{
+   return 2;
+}
+
+
+uint32 MemBuf_2::length() const
+{
+   return m_size / 2;
+}
+
+
+uint32 MemBuf_2::get( uint32 pos ) const
+{
+   return ((uint16 *)m_memory)[pos];
+}
+
+
+void MemBuf_2::set( uint32 pos, uint32 value )
+{
+   ((uint16 *)m_memory)[pos] = (uint16) value;
+}
+
+
+
+uint8 MemBuf_3::wordSize() const
+{
+   return 3;
+}
+
+uint32 MemBuf_3::length() const
+{
+   return m_size/3;
+}
+
+
+uint32 MemBuf_3::get( uint32 pos ) const
+{
+   byte *p = m_memory + (pos * 3);
+#if FALCON_LITTLE_ENDIAN
+   return p[0] | p[1] << 8 | p[2] << 16;
+#else
+   return p[0] << 16 | p[1] << 8 | p[2];
+#endif
+}
+
+
+void MemBuf_3::set( uint32 pos, uint32 value )
+{
+   byte *p = m_memory + (pos * 3);
+#if FALCON_LITTLE_ENDIAN
+   p[0] = value & 0xff;
+   p[1] = (value >> 8) & 0xff;
+   p[2] = (value >> 16) & 0xff;
+#else
+   p[0] = (value >> 16) & 0xff;
+   p[1] = (value >> 8) & 0xff;
+   p[2] = value & 0xff;
+#endif
+}
+
+
+
+uint8 MemBuf_4::wordSize() const
+{
+   return 4;
+}
+
+uint32 MemBuf_4::length() const
+{
+   return m_size/4;
+}
+
+
+uint32 MemBuf_4::get( uint32 pos ) const
+{
+   return ((uint32 *)m_memory)[pos];
+}
+
+
+void MemBuf_4::set( uint32 pos, uint32 value )
+{
+   ((uint32 *)m_memory)[pos] = value;
+}
+
+
+}
+
+/* end of membuf.cpp */
