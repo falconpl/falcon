@@ -97,6 +97,20 @@ UserData *SDLSurfaceCarrier::clone() const
 // Utilities
 //
 
+/*#
+   @class SDLRect
+
+   This class stores rectangular coordinates.
+   Actually, this class is just a "contract" or "interface",
+   as every function accepting an SDLRect will just accept any
+   class providing the properties listed here.
+
+   @prop x the X coordinate (left position).
+   @prop y the Y coordinate (top position).
+   @prop w width of the rectangle.
+   @prop h height of the rectangle.
+*/
+
 bool RectToObject( const ::SDL_Rect &rect, CoreObject *obj )
 {
    return obj->setProperty( "x", (int64) rect.x ) &&

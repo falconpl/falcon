@@ -40,10 +40,14 @@ FALCON_FUNC sdl_QuitSubSystem( ::Falcon::VMachine *vm );
 
 // Generic video
 FALCON_FUNC sdl_SetVideoMode( ::Falcon::VMachine *vm );
+FALCON_FUNC sdl_GetVideoSurface ( ::Falcon::VMachine *vm );
 
 // Surface video
 FALCON_FUNC sdl_LoadBMP( ::Falcon::VMachine *vm );
 FALCON_FUNC SDLSurface_BlitSurface( ::Falcon::VMachine *vm );
+FALCON_FUNC SDLSurface_SaveBMP( ::Falcon::VMachine *vm );
+
+// Screen video
 FALCON_FUNC SDLScreen_UpdateRect( ::Falcon::VMachine *vm );
 
 // Error

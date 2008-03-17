@@ -75,6 +75,7 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
 
    // Generic video
    self->addClassMethod( c_sdl, "SetVideoMode", Falcon::Ext::sdl_SetVideoMode );
+   self->addClassMethod( c_sdl, "GetVideoSurface", Falcon::Ext::sdl_GetVideoSurface );
 
    // Surface
    self->addClassMethod( c_sdl, "LoadBMP", Falcon::Ext::sdl_LoadBMP );
@@ -101,6 +102,7 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    self->addClassProperty( c_surface, "clip_rect" );
 
    self->addClassMethod( c_surface, "BlitSurface", Falcon::Ext::SDLSurface_BlitSurface );
+   self->addClassMethod( c_surface, "SaveBMP", Falcon::Ext::SDLSurface_SaveBMP );
 
    //============================================================
    // SDL screen class
