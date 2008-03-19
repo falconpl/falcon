@@ -1356,6 +1356,28 @@ FALCON_FUNC  Iterator_init( ::Falcon::VMachine *vm )
       }
       break;
 
+      case FLC_ITEM_MEMBUF:
+      {
+         Item tgt;
+         MemBuf *orig = collection->asMemBuf();
+         vm->referenceItem( tgt, *collection );
+         self->setProperty( "_origin", tgt );
+         int64 len = (int64) orig->length();
+         if( p >= 0 && p < len )
+         {
+            self->setProperty( "_pos", (int64) p );
+         }
+         else if ( p < 0 && p >= -len )
+         {
+            self->setProperty( "_pos", (int64) len - p );
+         }
+         else {
+            vm->raiseRTError( new RangeError( ErrorParam( e_inv_params ) ) );
+            return;
+         }
+      }
+      break;
+
       case FLC_ITEM_ARRAY:
       {
          CoreArray *orig = collection->asArray();
@@ -1443,6 +1465,14 @@ FALCON_FUNC  Iterator_hasCurrent( ::Falcon::VMachine *vm )
       }
       break;
 
+      case FLC_ITEM_MEMBUF:
+      {
+         Item * pos = self->getProperty( "_pos" );
+         int64 p = pos->forceInteger();
+         vm->retval( p >= 0 && ( p < porigin->asMemBuf()->length() ) );
+      }
+      break;
+
       case FLC_ITEM_ARRAY:
       {
          Item * pos = self->getProperty( "_pos" );
@@ -1476,6 +1506,14 @@ FALCON_FUNC  Iterator_hasNext( ::Falcon::VMachine *vm )
       }
       break;
 
+      case FLC_ITEM_MEMBUF:
+      {
+         Item *pos = self->getProperty( "_pos" );
+         int64 p = pos->forceInteger();
+         vm->retval( p >= 0 && (p + 1 < porigin->asMemBuf()->length() ) );
+      }
+      break;
+
       case FLC_ITEM_ARRAY:
       {
          Item *pos = self->getProperty( "_pos" );
@@ -1502,6 +1540,7 @@ FALCON_FUNC  Iterator_hasPrev( ::Falcon::VMachine *vm )
    switch( porigin->type() )
    {
       case FLC_ITEM_STRING:
+      case FLC_ITEM_MEMBUF:
       case FLC_ITEM_ARRAY:
       {
          Item pos;
@@ -1542,6 +1581,21 @@ FALCON_FUNC  Iterator_next( ::Falcon::VMachine *vm )
       }
       break;
 
+      case FLC_ITEM_MEMBUF:
+      {
+         Item * pos = self->getProperty( "_pos" );
+         uint32 p = (uint32) pos->forceInteger();
+         if ( p < porigin->asMemBuf()->length() )
+         {
+            p++;
+            vm->retval( p != porigin->asMemBuf()->length() );
+            pos->setInteger( p );
+         }
+         else
+            vm->retval( false );
+      }
+      break;
+
       case FLC_ITEM_ARRAY:
       {
          Item * pos = self->getProperty( "_pos" );
@@ -1575,6 +1629,7 @@ FALCON_FUNC  Iterator_prev( ::Falcon::VMachine *vm )
    switch( porigin->type() )
    {
       case FLC_ITEM_STRING:
+      case FLC_ITEM_MEMBUF:
       case FLC_ITEM_ARRAY:
       {
          Item *pos = self->getProperty( "_pos" );
@@ -1642,6 +1697,29 @@ FALCON_FUNC  Iterator_value( ::Falcon::VMachine *vm )
                   default:
                      vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).extra( "S/N" ) ) );
                }
+            }
+            return;
+         }
+      }
+      break;
+
+      case FLC_ITEM_MEMBUF:
+      {
+         Item pos;
+         self->getProperty( "_pos", pos );
+         if ( pos.forceInteger() < 0 )
+            break;
+         uint32 p = (uint32) pos.forceInteger();
+         if( p < porigin->asMemBuf()->length() )
+         {
+            vm->retval( (int64) porigin->asMemBuf()->get( p ) );
+            // change value
+            if( subst != 0 )
+            {
+               if ( subst->isOrdinal() )
+                  porigin->asMemBuf()->set( p, subst->forceInteger() );
+               else
+                  break; // only numbers allowed
             }
             return;
          }
@@ -1734,6 +1812,7 @@ FALCON_FUNC  Iterator_equal( ::Falcon::VMachine *vm )
             switch( origin.type() )
             {
                case FLC_ITEM_STRING:
+               case FLC_ITEM_MEMBUF:
                case FLC_ITEM_REFERENCE:
                case FLC_ITEM_ARRAY:
                {

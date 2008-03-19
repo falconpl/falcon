@@ -57,12 +57,12 @@ FALCON_FUNC BOM_len( VMachine *vm )
          vm->retval( (int64) elem->asString()->length() );
       break;
 
-      case FLC_ITEM_ARRAY:
-         vm->retval( (int64) elem->asArray()->length() );
-      break;
-
       case FLC_ITEM_MEMBUF:
          vm->retval( (int64) elem->asMemBuf()->length() );
+      break;
+
+      case FLC_ITEM_ARRAY:
+         vm->retval( (int64) elem->asArray()->length() );
       break;
 
       case FLC_ITEM_DICT:
@@ -89,6 +89,7 @@ FALCON_FUNC BOM_first( VMachine *vm )
    switch( self.type() )
    {
       case FLC_ITEM_STRING:
+      case FLC_ITEM_MEMBUF:
       case FLC_ITEM_ARRAY:
       case FLC_ITEM_DICT:
       case FLC_ITEM_ATTRIBUTE:
@@ -112,6 +113,7 @@ FALCON_FUNC BOM_last( VMachine *vm )
    switch( self.type() )
    {
       case FLC_ITEM_STRING:
+      case FLC_ITEM_MEMBUF:
       case FLC_ITEM_ARRAY:
       case FLC_ITEM_DICT:
       // attributes cannot be scanned backwards
@@ -455,6 +457,14 @@ void makeIterator( VMachine *vm, const Item &self, bool begin )
       case FLC_ITEM_STRING:
       {
          String *orig = self.asString();
+         int64 pos = begin ? 0 : (orig->size() == 0 ? 0 : orig->length() - 1);
+         iterator->setProperty( "_pos", pos );
+      }
+      break;
+
+      case FLC_ITEM_MEMBUF:
+      {
+         MemBuf *orig = self.asMemBuf();
          int64 pos = begin ? 0 : (orig->size() == 0 ? 0 : orig->length() - 1);
          iterator->setProperty( "_pos", pos );
       }

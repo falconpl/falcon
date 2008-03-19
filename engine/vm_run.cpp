@@ -668,6 +668,11 @@ void opcodeHandler_TRAL( register VMachine *vm )
             vm->m_pc_next = pcNext;
       break;
 
+      case FLC_ITEM_MEMBUF:
+         if ( iterator->asInteger() + 1 >= source->asMemBuf()->length() )
+            vm->m_pc_next = pcNext;
+      break;
+
       case FLC_ITEM_RANGE:
          if ( source->asRangeIsOpen() )
          {
@@ -2060,6 +2065,29 @@ void opcodeHandler_TRAN( register VMachine *vm )
          }
       break;
 
+      case FLC_ITEM_MEMBUF:
+         if ( isIterator || isDestStack )
+         {
+            vm->raiseRTError(
+               new RangeError( ErrorParam( e_unpack_size ).origin( e_orig_vm ).extra( "TRAN" ) ) );
+            return;
+         }
+         else {
+            uint32 counter = (uint32) iterator->asInteger();
+            MemBuf *smb = source->asMemBuf();
+
+            counter++;
+            //update counter
+            iterator->setInteger( counter );
+            
+            if( counter >= smb->length() ) {
+               vm->m_pc_next = p2;
+               return;
+            }
+
+            *dest->dereference() = (int64) smb->get(counter);
+         }
+      break;
 
       case FLC_ITEM_RANGE:
          if ( isIterator || isDestStack )
@@ -3097,6 +3125,20 @@ void opcodeHandler_TRAV( register VMachine *vm )
          vm->m_stack->itemAt( vm->m_stack->size()-3 ) = ( (int64) 0 );
          break;
 
+      case FLC_ITEM_MEMBUF:
+         if( source->asMemBuf()->length() == 0 )
+            goto trav_go_away;
+
+         if( vm->operandType( 1 ) == P_PARAM_INT32 || vm->operandType( 1 ) == P_PARAM_INT64 )
+         {
+            vm->raiseRTError(
+               new RangeError( ErrorParam( e_unpack_size ).origin( e_orig_vm ).extra( "TRAV" ) ) );
+            return;
+         }
+         *dest->dereference() = (int64) source->asMemBuf()->get(0);
+         vm->m_stack->itemAt( vm->m_stack->size()-3 ) = ( (int64) 0 );
+         break;
+
       case FLC_ITEM_RANGE:
          if( ! source->asRangeIsOpen() && source->asRangeEnd() == source->asRangeStart() )
          {
@@ -3703,6 +3745,7 @@ void opcodeHandler_TRAC( register VMachine *vm )
       break;
 
       case FLC_ITEM_DICT:
+      case FLC_ITEM_MEMBUF:
       case FLC_ITEM_OBJECT:
       case FLC_ITEM_ATTRIBUTE:
          if ( ! isIterator )

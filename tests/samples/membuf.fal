@@ -39,10 +39,28 @@ end
 
 > "Transfer complete; dumping the memory buffer:"
 fmt = Format( "2xp0" )
+>> "["
 for i in [0: memory.len()]
    >> fmt.format( memory[i] ), ", "
 end
-inspect( memory )
->
+> "]"
+> "Through for/in:"
+// again
+for byte in memory
+   forfirst: >> "["
+   >> fmt.format( byte )
+   formiddle: >> ", "
+   forlast: > "]."
+end
+
+// and again
+> "Through iterator:"
+iter = memory.first()
+>> "["
+while iter.hasCurrent()
+   >> fmt.format( byte ), ", "
+   iter.next()
+end
+> "]"
 > "Complete."
 
