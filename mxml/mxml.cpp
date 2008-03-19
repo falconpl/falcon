@@ -57,8 +57,8 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    self->addClassProperty( c_nodetype, "comment" )->setInteger( MXML::Node::typeComment );
    self->addClassProperty( c_nodetype, "PI" )->setInteger( MXML::Node::typePI );
    self->addClassProperty( c_nodetype, "directive" )->setInteger( MXML::Node::typeDirective );
-   self->addClassProperty( c_nodetype, "typeData" )->setInteger( MXML::Node::typeData );
-   self->addClassProperty( c_nodetype, "typeCDATA" )->setInteger( MXML::Node::typeCDATA );
+   self->addClassProperty( c_nodetype, "data" )->setInteger( MXML::Node::typeData );
+   self->addClassProperty( c_nodetype, "CDATA" )->setInteger( MXML::Node::typeCDATA );
 
    //=================================================================
    // Enumeration error code.
