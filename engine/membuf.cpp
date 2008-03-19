@@ -139,13 +139,13 @@ uint32 MemBuf_2::length() const
 
 uint32 MemBuf_2::get( uint32 pos ) const
 {
-   return ((uint16 *)m_memory)[pos];
+   return endian_int16(((uint16 *)m_memory)[pos]);
 }
 
 
 void MemBuf_2::set( uint32 pos, uint32 value )
 {
-   ((uint16 *)m_memory)[pos] = (uint16) value;
+   ((uint16 *)m_memory)[pos] = endian_int16((uint16) value);
 }
 
 
@@ -164,26 +164,20 @@ uint32 MemBuf_3::length() const
 uint32 MemBuf_3::get( uint32 pos ) const
 {
    byte *p = m_memory + (pos * 3);
-#if FALCON_LITTLE_ENDIAN
+
+   // always act as little endian
    return p[0] | p[1] << 8 | p[2] << 16;
-#else
-   return p[0] << 16 | p[1] << 8 | p[2];
-#endif
 }
 
 
 void MemBuf_3::set( uint32 pos, uint32 value )
 {
    byte *p = m_memory + (pos * 3);
-#if FALCON_LITTLE_ENDIAN
+
+   // always act as little endian
    p[0] = value & 0xff;
    p[1] = (value >> 8) & 0xff;
    p[2] = (value >> 16) & 0xff;
-#else
-   p[0] = (value >> 16) & 0xff;
-   p[1] = (value >> 8) & 0xff;
-   p[2] = value & 0xff;
-#endif
 }
 
 
@@ -201,13 +195,13 @@ uint32 MemBuf_4::length() const
 
 uint32 MemBuf_4::get( uint32 pos ) const
 {
-   return ((uint32 *)m_memory)[pos];
+   return endian_int32(((uint32 *)m_memory)[pos]);
 }
 
 
 void MemBuf_4::set( uint32 pos, uint32 value )
 {
-   ((uint32 *)m_memory)[pos] = value;
+   ((uint32 *)m_memory)[pos] = endian_int32( (uint32)value);
 }
 
 
