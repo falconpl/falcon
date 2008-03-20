@@ -30,7 +30,8 @@
 namespace Falcon {
 
 MemBuf::MemBuf( VMachine *vm, uint32 size ):
-   Garbageable( vm, sizeof( this ) + size )
+   Garbageable( vm, sizeof( this ) + size ),
+   m_dependant(0)
 {
    m_memory = (byte *) memAlloc( size );
    m_size = size;
@@ -41,7 +42,8 @@ MemBuf::MemBuf( VMachine *vm, byte *data, uint32 size, bool bOwn ):
    Garbageable( vm, sizeof( this ) + size ),
    m_size( size ),
    m_bOwn( bOwn ),
-   m_memory( data )
+   m_memory( data ),
+   m_dependant(0)
 {
 }
 

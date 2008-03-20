@@ -140,6 +140,7 @@ ADD_LIBRARY( falcon_engine SHARED
    string.cpp
    stringstream.cpp
    strtable.cpp
+   suserdata.cpp
    symbol.cpp
    symtab.cpp
    syntree.cpp

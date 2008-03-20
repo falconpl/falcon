@@ -33,6 +33,7 @@ namespace Falcon {
 
 class VMachine;
 class Stream;
+class UserData;
 
 class FALCON_DYN_SYM MemBuf: public Garbageable
 {
@@ -40,6 +41,7 @@ protected:
    byte *m_memory;
    bool m_bOwn;
    uint32 m_size;
+   UserData *m_dependant;
 
 public:
 
@@ -54,6 +56,9 @@ public:
 
    uint32 size() const { return m_size; }
    byte *data() const { return m_memory; }
+   UserData *dependant() const { return m_dependant; }
+   void dependant( UserData *g ) { m_dependant = g; }
+
 
    bool serialize( Stream *stream );
    static MemBuf *deserialize( VMachine *vm, Stream *stream );

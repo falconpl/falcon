@@ -34,6 +34,11 @@ bool UserData::isReflective() const
    return false;
 }
 
+bool UserData::shared() const
+{
+   return false;
+}
+
 void UserData::getProperty( VMachine *vm, const String &propName, Item &prop )
 {
 }

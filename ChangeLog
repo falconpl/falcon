@@ -32,6 +32,8 @@ Falcon (0.8.9)
   * Minor: Added MemBuf support for Stream.read(), Stream.write(), transcodeTo() and transcodeFrom().
   * Minor: Added start parameter to Stream.write()
   * Bugfix: size parameter was not correctly used in Stream.write()
+  * Minor: Added internal SharedUserData class which can be used for data shared among many
+           objects.
 
 Falcon (0.8.8)
   * bugfix: TRAV opcode may destroy its parameters while setting first loop

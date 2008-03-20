@@ -88,6 +88,19 @@ public:
    /** Declare if a certain subclass of UserData is reflective. */
    virtual bool isReflective() const;
 
+   /** Declare a shared user data.
+      Shared user data must be derived from the class SharedUserData,
+      which are derived from Garbageable and accounted for garbage
+      collection.
+
+      A SharedUserData or one of its subclasses must return true,
+      and this will prevent the data to be destroyed at obeject
+      destruction.
+      \return true if this data is shared and GC takes care of its
+         disposal
+   */
+   virtual bool shared() const;
+
    /** Get given property.
       When this method is called, the reflected object has already determined that
       it can access the property.

@@ -63,7 +63,8 @@ CoreObject::CoreObject( VMachine *vm, UserData *ud ):
 
 CoreObject::~CoreObject()
 {
-   delete m_user_data;
+   if ( m_user_data != 0 && ! m_user_data->shared() )
+      delete m_user_data;
 
    while( m_attributes != 0 )
    {

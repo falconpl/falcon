@@ -29,6 +29,7 @@
 #include <falcon/cclass.h>
 #include <falcon/vm.h>
 #include <falcon/vmcontext.h>
+#include <falcon/membuf.h>
 
 
 // By default, 1MB
@@ -467,6 +468,13 @@ void MemPool::markItem( Item &item )
          // kill items referencing nothing
          if ( item.asModule()->module() == 0 )
             item.setNil();
+      break;
+
+      case FLC_ITEM_MEMBUF:
+         m_aliveMem += item.asMemBuf()->size() + sizeof( MemBuf );
+         m_aliveItems++;
+         if( item.asMemBuf()->dependant() != 0 )
+            item.asMemBuf()->dependant()->gcMark( this );
       break;
 
       // all the others are shallow items; already marked
