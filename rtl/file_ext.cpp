@@ -33,6 +33,7 @@
 #include <falcon/sys.h>
 #include <falcon/fassert.h>
 #include <falcon/stdstreams.h>
+#include <falcon/membuf.h>
 
 namespace Falcon {
 namespace Ext {
@@ -81,10 +82,12 @@ FALCON_FUNC  StdStream_close ( ::Falcon::VMachine *vm )
 /** Reads from a file.
    read( size ) --> string
    read( string ) --> size
+   read( membuf ) --> size
    read( string, size ) --> size
 */
 FALCON_FUNC  Stream_read ( ::Falcon::VMachine *vm )
 {
+   MemBuf *membuf = 0;
    Stream *file = static_cast<Stream *>(
                      vm->self().asObject()->getUserData() );
    Item *target = vm->param(0);
@@ -119,6 +122,7 @@ FALCON_FUNC  Stream_read ( ::Falcon::VMachine *vm )
             //"Given a size, the first parameter must be a string" );
          return;
       }
+      
       returnTarget = false;
    }
    // we have only the second parameter.
@@ -136,6 +140,12 @@ FALCON_FUNC  Stream_read ( ::Falcon::VMachine *vm )
 
          cs_target->bufferize(); // force to bufferize
       }
+      returnTarget = false;
+   }
+   else if ( target->isMemBuf() )
+   {
+      cs_target = 0;
+      membuf = target->asMemBuf();
       returnTarget = false;
    }
    else if ( target->isInteger() )
@@ -157,7 +167,12 @@ FALCON_FUNC  Stream_read ( ::Falcon::VMachine *vm )
       return;
    }
 
-   if ( ( size = file->read( cs_target->getRawStorage(), size ) ) < 0 ) {
+   if ( membuf != 0 )
+      size = file->read( membuf->data(), membuf->size() );
+   else
+      size = file->read( cs_target->getRawStorage(), size );
+
+   if ( size < 0 ) {
       if ( file->unsupported() )
          vm->raiseModError( new IoError( ErrorParam( 1101 ).origin( e_orig_runtime ).
             desc( "Unsupported operation for this file type" ) ) );
@@ -172,7 +187,9 @@ FALCON_FUNC  Stream_read ( ::Falcon::VMachine *vm )
    }
 
    // valid also if size == 0
-   cs_target->size( size );
+   if ( membuf == 0 )
+      cs_target->size( size );
+
    if ( returnTarget ) {
       vm->retval( cs_target );
    }
@@ -416,7 +433,8 @@ FALCON_FUNC  Stream_readLine ( ::Falcon::VMachine *vm )
 
 /** Writes to a file.
    write( string ) --> size
-   write( string, size ) --> size
+   write( membuf, size [, start] ) --> size
+   write( string, size [, start ] ) --> size
 */
 FALCON_FUNC  Stream_write ( ::Falcon::VMachine *vm )
 {
@@ -425,25 +443,78 @@ FALCON_FUNC  Stream_write ( ::Falcon::VMachine *vm )
 
    Item *source = vm->param(0);
    Item *count = vm->param(1);
-   int32 size, ssize;
+   Item *i_start = vm->param(2);
+   uint32 size, ssize, start;
+   byte *buffer;
 
-   if ( source == 0 || source->type() != FLC_ITEM_STRING ||
-      (count != 0 && count->type() != FLC_ITEM_INT ) )
+   if ( source == 0 || 
+      ( ! source->isMemBuf() && ! source->isString() ) ||
+      ( count != 0 && ! count->isOrdinal() ) ||
+      ( i_start != 0 && ! i_start->isOrdinal() ))
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ).
+         extra( "S|M, [N, N]" ) ) );
       return;
    }
 
-   ssize = source->asString()->size();
-   if( count != 0 ) {
-      size = (int32) count->asInteger();
-      if ( size < ssize )
-         size = ssize;
-   }
+   if ( i_start == 0 )
+      start = 0;
    else
-      size = ssize;
+      start = (uint32) i_start->forceInteger();
 
-   if ( ( size = file->write( source->asString()->getRawStorage(), size ) ) < 0 )
+   if ( source->isMemBuf() )
+   {
+      MemBuf *mb = source->asMemBuf();
+      buffer = mb->data();
+      if ( count == 0 )
+      {
+         size = mb->size();
+      }
+      else {
+         size = (uint32) count->forceInteger();
+      }
+
+      if ( size + start > mb->size() )
+      {
+         size = mb->size() - start; // can overflow...
+      }
+
+      //... but we'd return here, so it's ok
+      if ( start > mb->size() || size == 0 )
+      {
+         // nothing to write
+         vm->retval( 0 );
+         return;
+      }
+   }
+   else {
+      ssize = (uint32) source->asString()->size();
+      buffer = source->asString()->getRawStorage();
+      if( count != 0 ) {
+         size = (uint32) count->forceInteger();
+         if ( size > ssize )
+            size = ssize;
+      }
+      else
+         size = ssize;
+      
+      if ( size + start > ssize )
+      {
+         size = ssize - start; // can overflow...
+      }
+
+      //... but we'd return here, so it's ok
+      if ( start > ssize || size == 0 )
+      {
+         // nothing to write
+         vm->retval( 0 );
+         return;
+      }
+
+   }
+
+   int64 written = file->write( buffer + start, size - start );
+   if ( written < 0 )
    {
       if ( file->unsupported() )
          vm->raiseModError( new IoError( ErrorParam( 1101 ).origin( e_orig_runtime ).
@@ -458,7 +529,7 @@ FALCON_FUNC  Stream_write ( ::Falcon::VMachine *vm )
       return;
    }
 
-   vm->retval( (int64) size );
+   vm->retval( written );
 }
 
 /** Writes to a file.

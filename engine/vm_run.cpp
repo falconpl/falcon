@@ -3745,7 +3745,6 @@ void opcodeHandler_TRAC( register VMachine *vm )
       break;
 
       case FLC_ITEM_DICT:
-      case FLC_ITEM_MEMBUF:
       case FLC_ITEM_OBJECT:
       case FLC_ITEM_ATTRIBUTE:
          if ( ! isIterator )
@@ -3765,6 +3764,28 @@ void opcodeHandler_TRAC( register VMachine *vm )
             dest = iter->getCurrent().dereference();
          }
       break;
+
+      case FLC_ITEM_MEMBUF:
+         if ( isIterator )
+         {
+            vm->raiseError( e_stackuf, "TRAC" );
+         }
+         else {
+            uint32 counter = (uint32) iterator->asInteger();
+            MemBuf *mb = source->asMemBuf();
+            if ( mb->length() < counter )
+            {
+               return;
+            }
+
+            if( copied->isOrdinal() )
+               mb->set( counter, (uint32) copied->forceInteger() );
+            else {
+               vm->raiseError( e_invop, "TRAC" );
+            }
+         }
+      // always return, we've managed the string.
+      return;
 
       case FLC_ITEM_STRING:
          if ( isIterator )

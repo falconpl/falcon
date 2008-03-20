@@ -26,6 +26,7 @@
 #include "falcon_rtl_ext.h"
 #include "version.h"
 
+
 /*#
    @module falcon_rtl The Runtime Library module
    @brief Main basic falcon module.
@@ -119,6 +120,8 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    self->addExtFunc( "strLower", Falcon::Ext::strLower );
    self->addExtFunc( "strCmpIgnoreCase", Falcon::Ext::strCmpIgnoreCase );
    self->addExtFunc( "strWildcardMatch", Falcon::Ext::strWildcardMatch );
+   self->addExtFunc( "strToMemBuf", Falcon::Ext::strToMemBuf );
+   self->addExtFunc( "strFromMemBuf", Falcon::Ext::strFromMemBuf );
 
    //=======================================================================
    // RTL array API

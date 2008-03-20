@@ -44,6 +44,9 @@ for i in [0: memory.len()]
    >> fmt.format( memory[i] ), ", "
 end
 > "]"
+
+// you can create the very same membuffer using strToMemBuf
+memory = strToMemBuf( str )
 > "Through for/in:"
 // again
 for byte in memory
@@ -62,5 +65,16 @@ while iter.hasCurrent()
    iter.next()
 end
 > "]"
+
+> "Changing all the chars:"
+// then you can change a character and have a string back...
+for byte in memory
+   if byte != 0x20  // unicode space
+      .= 65  // unicode 'A'
+   end
+end
+> strFromMemBuf( memory )
 > "Complete."
 
+
+/* end */

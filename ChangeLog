@@ -28,6 +28,10 @@ Falcon (0.8.9)
   * Minor: Added Path reflexive class to RTL.
   * Minor: Added URI reflexive class to RTL.
   * Major: Added MemBuf type and relative support.
+  * Minor: Added functions strToMemBuf and strFromMemBuf in RTL
+  * Minor: Added MemBuf support for Stream.read(), Stream.write(), transcodeTo() and transcodeFrom().
+  * Minor: Added start parameter to Stream.write()
+  * Bugfix: size parameter was not correctly used in Stream.write()
 
 Falcon (0.8.8)
   * bugfix: TRAV opcode may destroy its parameters while setting first loop

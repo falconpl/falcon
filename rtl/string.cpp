@@ -29,6 +29,7 @@
 #include <falcon/string.h>
 #include <falcon/carray.h>
 #include <falcon/memory.h>
+#include <falcon/membuf.h>
 
 #include <string.h>
 
@@ -769,7 +770,6 @@ FALCON_FUNC  strCmpIgnoreCase ( ::Falcon::VMachine *vm )
 }
 
 
-
 FALCON_FUNC  strWildcardMatch ( ::Falcon::VMachine *vm )
 {
    // Parameter checking;
@@ -777,7 +777,8 @@ FALCON_FUNC  strWildcardMatch ( ::Falcon::VMachine *vm )
    Item *s2_itm = vm->param(1);
    Item *i_bIcase = vm->param(2);
    if ( s1_itm == 0 || ! s1_itm->isString() || s2_itm == 0 || !s2_itm->isString() ) {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ).
+           extra("S,S") ) );
       return;
    }
 
@@ -887,6 +888,118 @@ FALCON_FUNC  strWildcardMatch ( ::Falcon::VMachine *vm )
 
    // at the end of the loop, the match is ok only if both the cpos and wpos are at the end
    vm->retval( wpos == wlen && cpos == clen );
+}
+
+/*# function strToMemBuf
+   @param string String to be converted in a membuf
+   @optparam wordWidth The memory buffer word width (defaults to string character size)
+   @brief Convets a string to a membuf
+   @return The resulting membuf
+   
+   This function creates a membuf from a string. The resulting membuf
+   has the same word width of the original string, which may be 1, 2 or 4
+   byte wide depending on the size needed to store its contents. It is possible
+   to specify a different word width; in that case the function will be much
+   less efficient (each character must be copied).
+
+   If wordWidth is set to zero, the resulting memory buffer will have 1 byte
+   long elements, but the content of the string will be copied as-is, bytewise,
+   regardless of its character size.
+*/
+
+FALCON_FUNC  strToMemBuf ( ::Falcon::VMachine *vm )
+{
+   // Parameter checking;
+   Item *i_string = vm->param(0);
+   Item *i_wordWidth = vm->param(1);
+
+   if( i_string == 0 || ! i_string->isString() ||
+      ( i_wordWidth != 0 && ! i_wordWidth->isOrdinal() )
+      )
+   {
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ).
+           extra("S,[N]") ) );
+      return;
+   }
+
+   String *string = i_string->asString();
+   int charSize = string->manipulator()->charSize();
+   int64 ww = i_wordWidth == 0 ? charSize : i_wordWidth->forceInteger();
+   MemBuf *result;
+
+   if ( ww == 0 )
+   {
+      result = new MemBuf_1( vm, string->size() );
+      memcpy( result->data(), string->getRawStorage(), string->size() );
+   }
+   else 
+   {
+      result = MemBuf::create( vm, charSize, string->length() );
+
+      if ( result == 0 )
+      {
+         vm->raiseModError( new ParamError( ErrorParam( e_param_range, __LINE__ ).origin( e_orig_runtime ).
+           extra("0-4") ) );
+         return;
+      }
+
+      if ( ww == charSize )
+      {
+         memcpy( result->data(), string->getRawStorage(), string->size() );
+      }
+      else
+      {
+         uint32 size = string->size();
+         for( uint32 p = 0; p < size; p++ )
+         {
+            result->set( p, string->getCharAt(p) );
+         }
+      }
+   }
+
+   vm->retval( result );
+}
+
+/*# function strFromMemBuf
+   @param membuf A MemBuf that will be converted to a string.
+   @brief Convets a MemBuf to a string
+   @return The resulting string
+   
+   This string takes each element of the membuf and converts it into
+   a character in the final string. The contents of the buffer are
+   not transcoded. It is appropriate to say that this function considers 
+   each element in the MemBuf as an Unicode value for the character in the
+   final string.
+
+   To create a string from a buffer that may come from an encoded source
+   (i.e. a file), use directly Transcode functions.
+*/
+
+FALCON_FUNC  strFromMemBuf ( ::Falcon::VMachine *vm )
+{
+   // Parameter checking;
+   Item *i_membuf = vm->param(0);
+
+   if( i_membuf == 0 || ! i_membuf->isMemBuf() )
+   {
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ).
+           extra("M") ) );
+      return;
+   }
+
+   MemBuf *mb = i_membuf->asMemBuf();
+
+   // preallocating size instead of len, we won't have to resize the memory even
+   // if resizing character sizes.
+   String *result = new GarbageString( vm, mb->size() );
+
+   uint32 size = mb->length();
+   for( uint32 p = 0; p < size; p++ )
+   {
+      result->append( mb->get( p ) );
+   }
+
+   vm->retval( result );
 }
 
 }}

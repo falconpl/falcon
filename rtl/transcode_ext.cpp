@@ -28,6 +28,7 @@
 #include <falcon/transcoding.h>
 #include <falcon/cobject.h>
 #include <falcon/stdstreams.h>
+#include <falcon/membuf.h>
 #include "falcon_rtl_ext.h"
 
 namespace Falcon {
@@ -96,14 +97,29 @@ FALCON_FUNC  transcodeTo ( ::Falcon::VMachine *vm )
    Item *i_source = vm->param( 0 );
    Item *i_encoding = vm->param( 1 );
 
-   if ( i_source == 0 || ! i_source->isString() || i_encoding == 0 || ! i_encoding->isString() )
+   if ( i_source == 0 || ( ! i_source->isString() && ! i_source->isMemBuf() ) || 
+        i_encoding == 0 || ! i_encoding->isString() )
    {
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
       return;
    }
 
    String *res = new GarbageString( vm );
-   if ( ! TranscodeString( *(i_source->asString()), *(i_encoding->asString()), *res ) )
+   String *source;
+   String dummy;
+
+   if ( i_source->isMemBuf() )
+   {
+      source = &dummy;
+      // using 0 as allocated, the buffer is considered static.
+      dummy.adopt( (char *) i_source->asMemBuf()->data(), i_source->asMemBuf()->size(), 0 );
+   }
+   else
+   {
+      source = i_source->asString();
+   }
+
+   if ( ! TranscodeString( *source, *(i_encoding->asString()), *res ) )
    {
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
       return;
@@ -117,14 +133,29 @@ FALCON_FUNC  transcodeFrom ( ::Falcon::VMachine *vm )
    Item *i_source = vm->param( 0 );
    Item *i_encoding = vm->param( 1 );
 
-   if ( i_source == 0 || ! i_source->isString() || i_encoding == 0 || ! i_encoding->isString() )
+   if ( i_source == 0 || ( ! i_source->isString() && !i_source->isMemBuf() ) || 
+        i_encoding == 0 || ! i_encoding->isString() )
    {
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
       return;
    }
 
    String *res = new GarbageString( vm );
-   if ( ! TranscodeFromString( *(i_source->asString()), *(i_encoding->asString()), *res ) )
+   String *source;
+   String dummy;
+
+   if ( i_source->isMemBuf() )
+   {
+      source = &dummy;
+      // using 0 as allocated, the buffer is considered static.
+      dummy.adopt( (char *) i_source->asMemBuf()->data(), i_source->asMemBuf()->size(), 0 );
+   }
+   else
+   {
+      source = i_source->asString();
+   }
+
+   if ( ! TranscodeFromString( *source, *(i_encoding->asString()), *res ) )
    {
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
       return;

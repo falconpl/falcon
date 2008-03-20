@@ -103,6 +103,20 @@ MemBuf *MemBuf::deserialize( VMachine *vm, Stream *stream )
    return 0; // impossible
 }
 
+MemBuf *MemBuf::create( VMachine *vm, int bpp, uint32 nSize )
+{
+   switch( bpp )
+   {
+      case 1: return new MemBuf_1( vm, nSize );
+      case 2: return new MemBuf_2( vm, nSize * 2);
+      case 3: return new MemBuf_3( vm, nSize * 3);
+      case 4: return new MemBuf_4( vm, nSize * 4);
+   }
+
+   return 0;
+}
+
+
 uint8 MemBuf_1::wordSize() const
 {
    return 1;
@@ -139,13 +153,13 @@ uint32 MemBuf_2::length() const
 
 uint32 MemBuf_2::get( uint32 pos ) const
 {
-   return endian_int16(((uint16 *)m_memory)[pos]);
+   return endianInt16(((uint16 *)m_memory)[pos]);
 }
 
 
 void MemBuf_2::set( uint32 pos, uint32 value )
 {
-   ((uint16 *)m_memory)[pos] = endian_int16((uint16) value);
+   ((uint16 *)m_memory)[pos] = endianInt16((uint16) value);
 }
 
 
@@ -195,13 +209,13 @@ uint32 MemBuf_4::length() const
 
 uint32 MemBuf_4::get( uint32 pos ) const
 {
-   return endian_int32(((uint32 *)m_memory)[pos]);
+   return endianInt32(((uint32 *)m_memory)[pos]);
 }
 
 
 void MemBuf_4::set( uint32 pos, uint32 value )
 {
-   ((uint32 *)m_memory)[pos] = endian_int32( (uint32)value);
+   ((uint32 *)m_memory)[pos] = endianInt32( (uint32)value);
 }
 
 

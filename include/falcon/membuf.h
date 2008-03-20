@@ -34,7 +34,7 @@ namespace Falcon {
 class VMachine;
 class Stream;
 
-class MemBuf: public Garbageable
+class FALCON_DYN_SYM MemBuf: public Garbageable
 {
 protected:
    byte *m_memory;
@@ -53,12 +53,18 @@ public:
    virtual void set( uint32 pos, uint32 value ) = 0;
 
    uint32 size() const { return m_size; }
+   byte *data() const { return m_memory; }
 
    bool serialize( Stream *stream );
    static MemBuf *deserialize( VMachine *vm, Stream *stream );
+   /** Creates a membuf with defined wordsize.
+      The length parameter is the final element count; it gets multiplied
+      by nWordSize.
+   */
+   static MemBuf *create( VMachine *vm, int nWordSize, uint32 length );
 };
 
-class MemBuf_1: public MemBuf
+class FALCON_DYN_SYM MemBuf_1: public MemBuf
 {
 public:
    MemBuf_1( VMachine *vm, uint32 size ):
@@ -75,7 +81,7 @@ public:
    virtual void set( uint32 pos, uint32 value );
 };
 
-class MemBuf_2: public MemBuf
+class FALCON_DYN_SYM MemBuf_2: public MemBuf
 {
 public:
    MemBuf_2( VMachine *vm, uint32 size ):
@@ -92,7 +98,7 @@ public:
    virtual void set( uint32 pos, uint32 value );
 };
 
-class MemBuf_3: public MemBuf
+class FALCON_DYN_SYM MemBuf_3: public MemBuf
 {
 public:
    MemBuf_3( VMachine *vm, uint32 size ):
@@ -109,7 +115,7 @@ public:
    virtual void set( uint32 pos, uint32 value );
 };
 
-class MemBuf_4: public MemBuf
+class FALCON_DYN_SYM MemBuf_4: public MemBuf
 {
 public:
    MemBuf_4( VMachine *vm, uint32 size ):
