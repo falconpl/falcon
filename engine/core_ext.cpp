@@ -2113,9 +2113,9 @@ FALCON_FUNC Make_MemBuf( ::Falcon::VMachine *vm )
    switch( wordSize )
    {
       case 1: mb = new MemBuf_1( vm, size ); break;
-      case 2: mb = new MemBuf_2( vm, size ); break;
-      case 3: mb = new MemBuf_3( vm, size ); break;
-      case 4: mb = new MemBuf_4( vm, size ); break;
+      case 2: mb = new MemBuf_2( vm, size * 2); break;
+      case 3: mb = new MemBuf_3( vm, size * 3); break;
+      case 4: mb = new MemBuf_4( vm, size * 4); break;
    }
    fassert( mb != 0 );
    vm->retval( mb );
