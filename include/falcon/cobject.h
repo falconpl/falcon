@@ -46,7 +46,7 @@ class FALCON_DYN_CLASS CoreObject: public Garbageable
    AttribHandler *m_attributes;
    Symbol *m_instanceOf;
    UserData *m_user_data;
-
+   bool m_user_data_shared;
    friend class Attribute;
 
 public:
@@ -181,7 +181,12 @@ public:
 
       \param data the user defined data.
    */
-   void setUserData( UserData *data ) { m_user_data = data; }
+   void setUserData( UserData *data ) {
+      m_user_data = data;
+      // we need to record this separately as reclaim order is not granted,
+      // so the shared data may be collected right before some of its users.
+      m_user_data_shared = data->shared();
+   }
 
    /** Creates a shallow copy of this item.
       Will return zero if this item as a user-defined data, that is,

@@ -36,7 +36,8 @@ CoreObject::CoreObject( VMachine *vm, const PropertyTable &original, Symbol *ins
    m_properties( original ),
    m_instanceOf( inst ),
    m_attributes( 0 ),
-   m_user_data( 0 )
+   m_user_data( 0 ),
+   m_user_data_shared( true )  // not true, but avoids a check in destructor
 {
    // duplicate the strings in the property list
    for ( uint32 i = 0 ; i < m_properties.size(); i ++ )
@@ -56,14 +57,15 @@ CoreObject::CoreObject( VMachine *vm, UserData *ud ):
    m_instanceOf( 0 ),
    m_properties( 0 ),
    m_attributes( 0 ),
-   m_user_data( ud )
+   m_user_data( ud ),
+   m_user_data_shared( ud->shared() )
 {
 }
 
 
 CoreObject::~CoreObject()
 {
-   if ( m_user_data != 0 && ! m_user_data->shared() )
+   if ( ! m_user_data_shared )
       delete m_user_data;
 
    while( m_attributes != 0 )
@@ -274,7 +276,7 @@ CoreObject *CoreObject::clone() const
       head = head->next();
    }
 
-   other->m_user_data = ud;
+   other->setUserData( ud );
 
    return other;
 }

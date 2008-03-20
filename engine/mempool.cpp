@@ -312,9 +312,13 @@ void MemPool::markItem( Item &item )
       case FLC_ITEM_STRING:
          if ( item.asString()->garbageable() )
          {
-            static_cast< GarbageString *>( item.asString() )->mark( currentMark() );
-            m_aliveMem += item.asString()->allocated() + sizeof( GarbageString );
-            m_aliveItems++;
+            GarbageString *gs = static_cast< GarbageString *>( item.asString() );
+            if ( gs->mark() != currentMark() )
+            {
+               gs->mark( currentMark() );
+               m_aliveMem += item.asString()->allocated() + sizeof( GarbageString );
+               m_aliveItems++;
+            }
          }
       break;
 
@@ -471,10 +475,18 @@ void MemPool::markItem( Item &item )
       break;
 
       case FLC_ITEM_MEMBUF:
-         m_aliveMem += item.asMemBuf()->size() + sizeof( MemBuf );
-         m_aliveItems++;
-         if( item.asMemBuf()->dependant() != 0 )
-            item.asMemBuf()->dependant()->gcMark( this );
+      {
+         MemBuf *mb = item.asMemBuf();
+         if ( mb->mark() != currentMark() )
+         {
+            m_aliveMem += mb->size() + sizeof( MemBuf );
+            m_aliveItems++;
+
+            mb->mark( currentMark() );
+            if( item.asMemBuf()->dependant() != 0 )
+               item.asMemBuf()->dependant()->gcMark( this );
+         }
+      }
       break;
 
       // all the others are shallow items; already marked
