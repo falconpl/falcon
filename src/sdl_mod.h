@@ -26,7 +26,7 @@
 #define FALCON_SDL_MOD
 
 #include <falcon/setup.h>
-#include <falcon/userdata.h>
+#include <falcon/suserdata.h>
 #include <falcon/error.h>
 
 #include <SDL.h>
@@ -59,12 +59,13 @@ public:
 };
 
 /** Reflexive SDL Surface */
-class SDLSurfaceCarrier: public UserData
+class SDLSurfaceCarrier: public SharedUserData
 {
 public:
    SDL_Surface *m_surface;
 
-   SDLSurfaceCarrier( SDL_Surface *s ):
+   SDLSurfaceCarrier( VMachine *vm, SDL_Surface *s ):
+      SharedUserData( vm ),
       m_surface( s )
    {}
 

@@ -213,6 +213,15 @@ FALCON_FUNC sdl_QuitSubSystem( ::Falcon::VMachine *vm )
    ::SDL_QuitSubSystem( (Uint32) i_init->forceInteger() );
 }
 
+/*#
+   @method IsBigEndian SDL
+   @brief Returns true if the host system is big endian.
+*/
+FALCON_FUNC sdl_IsBigEndian( ::Falcon::VMachine *vm )
+{
+   vm->retval( SDL_BYTEORDER == SDL_BIG_ENDIAN );
+}
+
 //==================================================================
 // Generic video mode
 //
@@ -286,7 +295,7 @@ FALCON_FUNC sdl_SetVideoMode( ::Falcon::VMachine *vm )
    Item *cls = vm->findWKI( "SDLScreen" );
    fassert( cls != 0 );
    CoreObject *obj = cls->asClass()->createInstance();
-   obj->setUserData( new SDLSurfaceCarrier( screen ) );
+   obj->setUserData( new SDLSurfaceCarrier( vm, screen ) );
 
    vm->retval( obj );
 }
@@ -335,7 +344,7 @@ FALCON_FUNC sdl_LoadBMP( ::Falcon::VMachine *vm )
    Item *cls = vm->findWKI( "SDLSurface" );
    fassert( cls != 0 );
    CoreObject *obj = cls->asClass()->createInstance();
-   obj->setUserData( new SDLSurfaceCarrier( surf ) );
+   obj->setUserData( new SDLSurfaceCarrier( vm, surf ) );
 
    vm->retval( obj );
 }
@@ -362,7 +371,7 @@ FALCON_FUNC sdl_GetVideoSurface( ::Falcon::VMachine *vm )
    Item *cls = vm->findWKI( "SDLScreen" );
    fassert( cls != 0 );
    CoreObject *obj = cls->asClass()->createInstance();
-   obj->setUserData( new SDLSurfaceCarrier( surf ) );
+   obj->setUserData( new SDLSurfaceCarrier( vm, surf ) );
 
    vm->retval( obj );
 }
@@ -502,7 +511,322 @@ FALCON_FUNC SDLSurface_BlitSurface( ::Falcon::VMachine *vm )
          .extra( SDL_GetError() ) ) );
       return;
    }
+}
 
+/*#
+   @method SetPixel SDLSurface
+   @brief Sets a single pixel to desired value
+   @param x X coordinates of the pixel to be set
+   @param y Y coordinates of the pixel to be set
+   @param value The value to be set
+   @throws ParamError if x or y are out of ranges
+
+   This functions sets the color of a pixel to the desired value.
+   The value is the palette index if this map has a palette,
+   otherwise is a truecolor value whose precision depends on the
+   mode depth.
+
+   To get a suitable value for this surface,
+   use @a SDLSurface.GetPixelValue.
+*/
+
+FALCON_FUNC SDLSurface_SetPixel( ::Falcon::VMachine *vm )
+{
+   Item *i_x = vm->param(0);
+   Item *i_y = vm->param(1);
+   Item *i_value = vm->param(2);
+
+   if ( i_x == 0 || ! i_x->isOrdinal() ||
+        i_y == 0 || ! i_y->isOrdinal() ||
+        i_value == 0 || ! i_value->isOrdinal()
+      )
+   {
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "N,N,N" ) ) );
+      return;
+   }
+
+   CoreObject *self = vm->self().asObject();
+   SDL_Surface *surface = static_cast<SDLSurfaceCarrier*>( self->getUserData() )->m_surface;
+   int x = (int) i_x->forceInteger();
+   int y = (int) i_y->forceInteger();
+
+   if ( x < 0 || x >= surface->w || y < 0 || y >= surface->h )
+   {
+      vm->raiseModError( new ParamError( ErrorParam( e_param_range, __LINE__ ) ) );
+      return;
+   }
+
+   Uint32 pixel = i_value->forceInteger();
+
+   int bpp = surface->format->BytesPerPixel;
+   /* Here p is the address to the pixel we want to set */
+   Uint8 *p = (Uint8 *) surface->pixels + y * surface->pitch + x * bpp;
+
+    switch(bpp) {
+    case 1:
+        *p = pixel;
+        break;
+
+    case 2:
+        *(Uint16 *)p = pixel;
+        break;
+
+    case 3:
+        if(SDL_BYTEORDER == SDL_BIG_ENDIAN) {
+            p[0] = (pixel >> 16) & 0xff;
+            p[1] = (pixel >> 8) & 0xff;
+            p[2] = pixel & 0xff;
+        } else {
+            p[0] = pixel & 0xff;
+            p[1] = (pixel >> 8) & 0xff;
+            p[2] = (pixel >> 16) & 0xff;
+        }
+        break;
+
+    case 4:
+        *(Uint32 *)p = pixel;
+        break;
+    }
+}
+
+/*#
+   @method GetPixel SDLSurface
+   @brief Get a single pixel value from the surface
+   @param x X coordinates of the pixel to be retreived
+   @param y Y coordinates of the pixel to be retreived
+   @throws ParamError if x or y are out of range
+
+   This functions gets the color of a pixel.
+   The value is the palette index if this map has a palette,
+   otherwise is a truecolor value whose precision depends on the
+   mode depth.
+
+   To determine the RGBA values of this pixel, use SDLSurface.GetPixelComponents.
+*/
+
+FALCON_FUNC SDLSurface_GetPixel( ::Falcon::VMachine *vm )
+{
+   Item *i_x = vm->param(0);
+   Item *i_y = vm->param(1);
+
+   if ( i_x == 0 || ! i_x->isOrdinal() ||
+        i_y == 0 || ! i_y->isOrdinal()
+      )
+   {
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "N,N" ) ) );
+      return;
+   }
+
+   CoreObject *self = vm->self().asObject();
+   SDL_Surface *surface = static_cast<SDLSurfaceCarrier*>( self->getUserData() )->m_surface;
+   int x = (int) i_x->forceInteger();
+   int y = (int) i_y->forceInteger();
+
+   if ( x < 0 || x >= surface->w || y < 0 || y >= surface->h )
+   {
+      vm->raiseModError( new ParamError( ErrorParam( e_param_range, __LINE__ ) ) );
+      return;
+   }
+
+   int bpp = surface->format->BytesPerPixel;
+   /* Here p is the address to the pixel we want to retrieve */
+   Uint8 *p = (Uint8 *)surface->pixels + y * surface->pitch + x * bpp;
+
+   switch(bpp) {
+   case 1:
+      vm->retval( (int64) *p );
+      break;
+
+   case 2:
+      vm->retval( (int64) ( *(Uint16 *)p));
+      break;
+
+   case 3:
+      if(SDL_BYTEORDER == SDL_BIG_ENDIAN)
+         vm->retval( (int64) ( p[0] << 16 | p[1] << 8 | p[2]));
+      else
+         vm->retval( (int64) ( p[0] | p[1] << 8 | p[2] << 16));
+      break;
+
+   case 4:
+      vm->retval( (int64) (*(Uint32 *)p));
+      break;
+
+   default:
+      vm->retval(0);       //
+   }
+}
+
+/*#
+   @method GetPixelIndex SDLSurface
+   @brief Return the index of a pixel in the pixels array of this class
+   @param x X coordinates of the desired pixel position
+   @param y Y coordinates of the desired pixel position
+   @throws ParamError if x or y are out of range
+
+   This is just a shortcut for the formula
+   \code
+      index = x * bpp + y * pitch
+   \endcode
+
+   Through the direct index, it is possible to change or read directly
+   a pixel in the pixels property of this class (which holds a correctly
+   sized MemBuf).
+*/
+
+FALCON_FUNC SDLSurface_GetPixelIndex( ::Falcon::VMachine *vm )
+{
+   Item *i_x = vm->param(0);
+   Item *i_y = vm->param(1);
+
+   if ( i_x == 0 || ! i_x->isOrdinal() ||
+        i_y == 0 || ! i_y->isOrdinal()
+      )
+   {
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "N,N" ) ) );
+      return;
+   }
+
+   CoreObject *self = vm->self().asObject();
+   SDL_Surface *surface = static_cast<SDLSurfaceCarrier*>( self->getUserData() )->m_surface;
+   int x = (int) i_x->forceInteger();
+   int y = (int) i_y->forceInteger();
+
+   if ( x < 0 || x >= surface->w || y < 0 || y >= surface->h )
+   {
+      vm->raiseModError( new ParamError( ErrorParam( e_param_range, __LINE__ ) ) );
+      return;
+   }
+
+   int bpp = surface->format->BytesPerPixel;
+   vm->retval( (int64) y * surface->pitch/bpp + x );
+}
+
+/*#
+   @method GetRGBA SDLSurface
+   @brief Decomposes a given pixel value to RGBA values.
+   @param color multibyte value of a color
+   @return a 4 element array (Red, Green, Blue and Alpha).
+   @throws ParamError if color is out of index in palette based images
+
+   This method is meant to determine the value of each component in a
+   palette or truecolor value that has been read on this surface.
+
+   It is just a shortcut to properly perfomed shifts and binary operations.
+*/
+FALCON_FUNC SDLSurface_GetRGBA( ::Falcon::VMachine *vm )
+{
+   Item *i_color = vm->param(0);
+
+   if ( i_color == 0 || ! i_color->isOrdinal() )
+   {
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "N" ) ) );
+      return;
+   }
+
+   CoreObject *self = vm->self().asObject();
+   SDL_Surface *surface = static_cast<SDLSurfaceCarrier*>( self->getUserData() )->m_surface;
+   SDL_PixelFormat *fmt = surface->format;
+
+   Uint32 color = (Uint32) i_color->forceInteger();
+
+   CoreArray *array = new CoreArray( vm, 4 );
+   if ( fmt->BytesPerPixel == 8 )
+   {
+      // palette
+      if ( color > fmt->palette->ncolors )
+      {
+         vm->raiseModError( new ParamError( ErrorParam( e_param_range, __LINE__ ) ) );
+         return;
+      }
+
+      SDL_Color *cidx = fmt->palette->colors + color;
+      array->append( (int64) cidx->r );
+      array->append( (int64) cidx->g );
+      array->append( (int64) cidx->b );
+      array->append( (int64) 0 );
+   }
+   else
+   {
+      Uint32 temp;
+
+      /* Get Red component */
+      temp=color&fmt->Rmask; /* Isolate red component */
+      temp=temp>>fmt->Rshift;/* Shift it down to 8-bit */
+      temp=temp<<fmt->Rloss; /* Expand to a full 8-bit number */
+      array->append( (int64) temp );
+
+      /* Get Green component */
+      temp=color&fmt->Gmask; /* Isolate green component */
+      temp=temp>>fmt->Gshift;/* Shift it down to 8-bit */
+      temp=temp<<fmt->Gloss; /* Expand to a full 8-bit number */
+      array->append( (int64) temp );
+
+      /* Get Blue component */
+      temp=color&fmt->Bmask; /* Isolate blue component */
+      temp=temp>>fmt->Bshift;/* Shift it down to 8-bit */
+      temp=temp<<fmt->Bloss; /* Expand to a full 8-bit number */
+      array->append( (int64) temp );
+
+      /* Get Alpha component */
+      temp=color&fmt->Amask; /* Isolate alpha component */
+      temp=temp>>fmt->Ashift;/* Shift it down to 8-bit */
+      temp=temp<<fmt->Aloss; /* Expand to a full 8-bit number */
+      array->append( (int64) temp );
+   }
+
+   vm->retval( array );
+}
+
+/*#
+   @method MakeColor SDLSurface
+   @brief Builds a color value from RGBA values.
+   @param red Red component of the final color
+   @param green Green component of the final color
+   @param blue Blue component of the final color
+   @param alpha Alpha component of the final color
+   @return an integer that can be directly stored as color in this image.
+   @throws ParamError if this image has a palette
+
+   It is just a shortcut to properly perfomed shifts and binary operations.
+*/
+FALCON_FUNC SDLSurface_MakeColor( ::Falcon::VMachine *vm )
+{
+   Item *i_red = vm->param(0);
+   Item *i_green = vm->param(1);
+   Item *i_blue = vm->param(2);
+   Item *i_alpha = vm->param(3);
+
+   if ( i_red == 0 || ! i_red->isOrdinal() ||
+        i_green == 0 || ! i_green->isOrdinal() ||
+        i_blue == 0 || ! i_blue->isOrdinal() ||
+        i_alpha == 0 || ! i_alpha->isOrdinal()
+      )
+   {
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "N,N,N,N" ) ) );
+      return;
+   }
+
+   CoreObject *self = vm->self().asObject();
+   SDL_Surface *surface = static_cast<SDLSurfaceCarrier*>( self->getUserData() )->m_surface;
+   SDL_PixelFormat *fmt = surface->format;
+   if ( fmt->BytesPerPixel == 8 )
+   {
+      vm->raiseModError( new ParamError( ErrorParam( e_param_range, __LINE__ ) ) );
+      return;
+   }
+
+
+   Uint32 temp = ((Uint32) i_red->forceInteger()) << fmt->Rshift;
+   temp |= ((Uint32) i_green->forceInteger()) << fmt->Gshift;
+   temp |= ((Uint32) i_blue->forceInteger()) << fmt->Bshift;
+   temp |= ((Uint32) i_alpha->forceInteger()) << fmt->Ashift;
+   vm->retval( (int64) temp );
 }
 
 /*#

@@ -23,6 +23,7 @@
 */
 
 #include <falcon/vm.h>
+#include <falcon/membuf.h>
 #include "sdl_mod.h"
 
 extern "C" {
@@ -77,6 +78,23 @@ void SDLSurfaceCarrier::getProperty( VMachine *vm, const String &propName, Item 
    else if ( propName == "clip_rect" )
    {
       prop = MakeRectInst( vm, m_surface->clip_rect );
+   }
+   else if ( propName == "pixels" )
+   {
+      if ( prop.isNil() )
+      {
+         MemBuf *mb;
+
+         switch( m_surface->format->BytesPerPixel )
+         {
+            case 1: mb = new MemBuf_1( vm, (byte*)m_surface->pixels, m_surface->h * m_surface->pitch, false );
+            case 2: mb = new MemBuf_2( vm, (byte*)m_surface->pixels, m_surface->h * m_surface->pitch, false );
+            case 3: mb = new MemBuf_3( vm, (byte*)m_surface->pixels, m_surface->h * m_surface->pitch, false );
+            case 4: mb = new MemBuf_4( vm, (byte*)m_surface->pixels, m_surface->h * m_surface->pitch, false );
+         }
+         mb->dependant( this );
+         prop = mb;
+      }
    }
 }
 

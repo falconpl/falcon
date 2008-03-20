@@ -72,6 +72,7 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    self->addClassMethod( c_sdl, "InitAuto", Falcon::Ext::sdl_InitAuto );
    self->addClassMethod( c_sdl, "Quit", Falcon::Ext::sdl_Quit );
    self->addClassMethod( c_sdl, "QuitSubSystem", Falcon::Ext::sdl_QuitSubSystem );
+   self->addClassMethod( c_sdl, "IsBigEndian", Falcon::Ext::sdl_IsBigEndian );
 
    // Generic video
    self->addClassMethod( c_sdl, "SetVideoMode", Falcon::Ext::sdl_SetVideoMode );
@@ -100,9 +101,16 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    self->addClassProperty( c_surface, "flags" );
    self->addClassProperty( c_surface, "pitch" );
    self->addClassProperty( c_surface, "clip_rect" );
+   self->addClassProperty( c_surface, "pixels" );
+   self->addClassProperty( c_surface, "bpp" );
 
    self->addClassMethod( c_surface, "BlitSurface", Falcon::Ext::SDLSurface_BlitSurface );
    self->addClassMethod( c_surface, "SaveBMP", Falcon::Ext::SDLSurface_SaveBMP );
+   self->addClassMethod( c_surface, "SetPixel", Falcon::Ext::SDLSurface_SetPixel );
+   self->addClassMethod( c_surface, "GetPixel", Falcon::Ext::SDLSurface_GetPixel );
+   self->addClassMethod( c_surface, "GetPixelIndex", Falcon::Ext::SDLSurface_GetPixelIndex );
+   self->addClassMethod( c_surface, "GetRGBA", Falcon::Ext::SDLSurface_GetRGBA );
+   self->addClassMethod( c_surface, "MakeColor", Falcon::Ext::SDLSurface_MakeColor );
 
    //============================================================
    // SDL screen class

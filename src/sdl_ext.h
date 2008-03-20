@@ -37,6 +37,7 @@ FALCON_FUNC sdl_WasInit( ::Falcon::VMachine *vm );
 FALCON_FUNC sdl_InitAuto( ::Falcon::VMachine *vm );
 FALCON_FUNC sdl_Quit( ::Falcon::VMachine *vm );
 FALCON_FUNC sdl_QuitSubSystem( ::Falcon::VMachine *vm );
+FALCON_FUNC sdl_IsBigEndian( ::Falcon::VMachine *vm );
 
 // Generic video
 FALCON_FUNC sdl_SetVideoMode( ::Falcon::VMachine *vm );
@@ -46,6 +47,11 @@ FALCON_FUNC sdl_GetVideoSurface ( ::Falcon::VMachine *vm );
 FALCON_FUNC sdl_LoadBMP( ::Falcon::VMachine *vm );
 FALCON_FUNC SDLSurface_BlitSurface( ::Falcon::VMachine *vm );
 FALCON_FUNC SDLSurface_SaveBMP( ::Falcon::VMachine *vm );
+FALCON_FUNC SDLSurface_SetPixel( ::Falcon::VMachine *vm );
+FALCON_FUNC SDLSurface_GetPixel( ::Falcon::VMachine *vm );
+FALCON_FUNC SDLSurface_GetPixelIndex( ::Falcon::VMachine *vm );
+FALCON_FUNC SDLSurface_GetRGBA( ::Falcon::VMachine *vm );
+FALCON_FUNC SDLSurface_MakeColor( ::Falcon::VMachine *vm );
 
 // Screen video
 FALCON_FUNC SDLScreen_UpdateRect( ::Falcon::VMachine *vm );
