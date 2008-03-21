@@ -90,6 +90,7 @@ FALCON_FUNC  printl ( ::Falcon::VMachine *vm );
    \see falcon_ext_print
 */
 FALCON_FUNC  inspect ( ::Falcon::VMachine *vm );
+FALCON_FUNC  inspectShort ( ::Falcon::VMachine *vm );
 
 /** Returns the time of day in seconds and microseconds.
    Retruns a float number representing current seconds.

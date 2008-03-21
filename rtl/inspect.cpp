@@ -32,9 +32,9 @@
 
 namespace Falcon { namespace Ext {
 
-void inspect_internal( VMachine *vm, const Item *elem, int32 level, bool add = true );
+void inspect_internal( VMachine *vm, bool isShort, const Item *elem, int32 level, bool add = true );
 
-void inspect_internal( VMachine *vm, const Item *elem, int32 level, bool add )
+void inspect_internal( VMachine *vm, bool isShort, const Item *elem, int32 level, bool add )
 {
    uint32 count;
    int32 i;
@@ -122,33 +122,39 @@ void inspect_internal( VMachine *vm, const Item *elem, int32 level, bool add )
          temp.writeNumber( (int64) mb->length() );
          temp += ",";
          temp.writeNumber( (int64) mb->wordSize() );
-         temp += ")[\n";
+         temp += ")";
 
-         String fmt;
-         int limit = 0;
-         switch ( mb->wordSize() )
-         {
-            case 1: fmt = "%02X"; limit = 24; break;
-            case 2: fmt = "%04X"; limit = 12; break;
-            case 3: fmt = "%06X"; limit = 9; break;
-            case 4: fmt = "%08X"; limit = 6; break;
-         }
-
-         int written = 0;
-         for( count = 0; count < mb->length(); count++ )
-         {
-            temp.writeNumber( (int64)  mb->get( count ), fmt );
-            temp += " ";
-            written ++;
-            if ( written == limit )
-            {
-               temp += "\n";
-               written = 0;
-            }
+         if ( isShort )
             stream->writeString( temp );
-            temp = "";
+         else {
+            temp += " [\n";
+
+            String fmt;
+            int limit = 0;
+            switch ( mb->wordSize() )
+            {
+               case 1: fmt = "%02X"; limit = 24; break;
+               case 2: fmt = "%04X"; limit = 12; break;
+               case 3: fmt = "%06X"; limit = 9; break;
+               case 4: fmt = "%08X"; limit = 6; break;
+            }
+
+            int written = 0;
+            for( count = 0; count < mb->length(); count++ )
+            {
+               temp.writeNumber( (int64)  mb->get( count ), fmt );
+               temp += " ";
+               written ++;
+               if ( written == limit )
+               {
+                  temp += "\n";
+                  written = 0;
+               }
+               stream->writeString( temp );
+               temp = "";
+            }
+            stream->writeString( "]" );
          }
-         stream->writeString( "]" );
       }
       break;
 
@@ -161,7 +167,7 @@ void inspect_internal( VMachine *vm, const Item *elem, int32 level, bool add )
          stream->writeString( temp );
 
          for( count = 0; count < arr->length() ; count++ ) {
-            inspect_internal( vm, & ((*arr)[count]), level + 1 );
+            inspect_internal( vm, isShort, & ((*arr)[count]), level + 1 );
          }
 
          for ( i = 0; i < level; i ++ )
@@ -184,9 +190,9 @@ void inspect_internal( VMachine *vm, const Item *elem, int32 level, bool add )
          dict->traverseBegin();
          while( dict->traverseNext( key, value ) )
          {
-            inspect_internal( vm, &key, -(level + 1) );
+            inspect_internal( vm, isShort, &key, -(level + 1) );
             stream->writeString( " => " );
-            inspect_internal( vm, &value, level + 1, false );
+            inspect_internal( vm, isShort, &value, level + 1, false );
          }
          for ( i = 0; i < level; i ++ )
          {
@@ -208,7 +214,7 @@ void inspect_internal( VMachine *vm, const Item *elem, int32 level, bool add )
                stream->writeString("   ");
             }
             stream->writeString( arr->getPropertyName( count ) + " => " );
-            inspect_internal( vm, &arr->getPropertyAt(count), level + 1, false );
+            inspect_internal( vm, isShort, &arr->getPropertyAt(count), level + 1, false );
          }
          for ( i = 0; i < level; i ++ )
          {
@@ -237,9 +243,9 @@ void inspect_internal( VMachine *vm, const Item *elem, int32 level, bool add )
 
             Item itemp;
             itemp.setObject( elem->asMethodObject() );
-            inspect_internal( vm, &itemp, level + 1, true );
+            inspect_internal( vm, isShort, &itemp, level + 1, true );
             itemp.setFunction( elem->asMethodFunction(), elem->asModule() );
-            inspect_internal( vm, &itemp, level + 1, true );
+            inspect_internal( vm, isShort, &itemp, level + 1, true );
             for ( i = 0; i < level; i ++ )
             {
                stream->writeString("   ");
@@ -257,7 +263,7 @@ void inspect_internal( VMachine *vm, const Item *elem, int32 level, bool add )
          {
             Item other;
             elem->getFbomItem( other );
-            inspect_internal( vm, &other, level, false );
+            inspect_internal( vm, isShort, &other, level, false );
          }
 
       break;
@@ -301,7 +307,7 @@ void inspect_internal( VMachine *vm, const Item *elem, int32 level, bool add )
 
       case FLC_ITEM_REFERENCE:
          stream->writeString( "Ref to " );
-         inspect_internal( vm, elem->dereference(), level, false );
+         inspect_internal( vm, isShort, elem->dereference(), level, false );
       break;
 
       default:
@@ -316,7 +322,13 @@ void inspect_internal( VMachine *vm, const Item *elem, int32 level, bool add )
 FALCON_FUNC  inspect ( ::Falcon::VMachine *vm )
 {
    for( int i = 0; i < vm->paramCount(); i ++ )
-      inspect_internal( vm, vm->param(i), 0 );
+      inspect_internal( vm, false, vm->param(i), 0 );
+}
+
+FALCON_FUNC  inspectShort ( ::Falcon::VMachine *vm )
+{
+   for( int i = 0; i < vm->paramCount(); i ++ )
+      inspect_internal( vm, true, vm->param(i), 0 );
 }
 
 

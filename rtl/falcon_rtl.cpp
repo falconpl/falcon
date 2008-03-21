@@ -62,6 +62,7 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
 
    self->addExtFunc( "print", Falcon::Ext::print );
    self->addExtFunc( "inspect", Falcon::Ext::inspect );
+   self->addExtFunc( "inspectShort", Falcon::Ext::inspectShort );
    self->addExtFunc( "input", Falcon::Ext::input );
    self->addExtFunc( "printl", Falcon::Ext::printl );
    self->addExtFunc( "seconds", Falcon::Ext::seconds );
