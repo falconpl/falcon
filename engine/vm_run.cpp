@@ -152,6 +152,7 @@ void VMachine::run()
             break;
 
             default:
+               m_regA.setNil();
                m_symbol->getExtFuncDef()->call( this );
          }
       }
@@ -2079,7 +2080,7 @@ void opcodeHandler_TRAN( register VMachine *vm )
             counter++;
             //update counter
             iterator->setInteger( counter );
-            
+
             if( counter >= smb->length() ) {
                vm->m_pc_next = p2;
                return;
@@ -2766,8 +2767,8 @@ void opcodeHandler_STV( register VMachine *vm )
       break;
    }
 
-    vm->raiseRTError(
-               new RangeError( ErrorParam( e_arracc ).origin( e_orig_vm ) ) );
+   vm->raiseRTError(
+               new RangeError( ErrorParam( e_arracc ).origin( e_orig_vm ).extra("STV") ) );
 }
 
 //51
@@ -3364,7 +3365,7 @@ void opcodeHandler_LDVR( register VMachine *vm )
          CoreArray &array = *operand1->asArray();
          if ( -pos > (int32)array.length() || pos >= (int32)array.length() )
              vm->raiseRTError(
-               new RangeError( ErrorParam( e_arracc ).origin( e_orig_vm ) ) );
+               new RangeError( ErrorParam( e_arracc ).origin( e_orig_vm ).extra("LDVR") ) );
          else {
             GarbageItem *gitem;
             Item *ref = array.elements() + pos;
@@ -3544,7 +3545,7 @@ void opcodeHandler_LSB( register VMachine *vm )
             vm->retval( (int64) cs->getCharAt( pos ) );
          else
             vm->raiseRTError(
-               new RangeError( ErrorParam( e_arracc ).origin( e_orig_vm ) ) );
+               new RangeError( ErrorParam( e_arracc ).origin( e_orig_vm ).extra( "LSB" ) ) );
       }
       return;
    }

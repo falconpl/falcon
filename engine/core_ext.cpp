@@ -1763,7 +1763,7 @@ FALCON_FUNC  Iterator_value( ::Falcon::VMachine *vm )
       }
    }
 
-   vm->raiseRTError( new RangeError( ErrorParam( e_arracc ) ) );
+   vm->raiseRTError( new RangeError( ErrorParam( e_arracc ).extra( "Iterator.value" ) ) );
 }
 
 FALCON_FUNC  Iterator_key( ::Falcon::VMachine *vm )
@@ -1940,7 +1940,7 @@ FALCON_FUNC  Iterator_erase( ::Falcon::VMachine *vm )
       }
    }
 
-   vm->raiseRTError( new RangeError( ErrorParam( e_arracc ) ) );
+   vm->raiseRTError( new RangeError( ErrorParam( e_arracc ).extra( "Iterator.erase" ) ) );
 }
 
 
@@ -1970,7 +1970,7 @@ FALCON_FUNC  Iterator_find( ::Falcon::VMachine *vm )
       }
    }
 
-   vm->raiseRTError( new RangeError( ErrorParam( e_arracc ) ) );
+   vm->raiseRTError( new RangeError( ErrorParam( e_arracc ).extra( "Iterator.find" ) ) );
 }
 
 FALCON_FUNC  Iterator_insert( ::Falcon::VMachine *vm )
@@ -2055,7 +2055,7 @@ FALCON_FUNC  Iterator_insert( ::Falcon::VMachine *vm )
       break;
    }
 
-   vm->raiseRTError( new RangeError( ErrorParam( e_arracc ) ) );
+   vm->raiseRTError( new RangeError( ErrorParam( e_arracc ).extra( "Iterator.insert" ) ) );
 }
 
 

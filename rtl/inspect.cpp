@@ -145,9 +145,10 @@ void inspect_internal( VMachine *vm, const Item *elem, int32 level, bool add )
                temp += "\n";
                written = 0;
             }
+            stream->writeString( temp );
+            temp = "";
          }
-         temp += "]";
-         stream->writeString( temp );
+         stream->writeString( "]" );
       }
       break;
 
