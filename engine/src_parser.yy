@@ -153,6 +153,7 @@ inline int flc_src_lex (void *lvalp, void *yyparam)
 %right NEG BANG
 %right DOLLAR INCREMENT DECREMENT
 
+%type <integer> INTNUM_WITH_MINUS
 %type <fal_adecl> expression_list listpar_expression_list
 %type <fal_adecl> symbol_list assignment_list inherit_param_list inherit_call
 %type <fal_ddecl> expression_pair_list
@@ -241,6 +242,11 @@ toplevel_statement:
    | export_statement /* no action */
    | import_statement /* no action */
    | attributes_statement /* no action */
+;
+
+INTNUM_WITH_MINUS:
+   INTNUM
+   | MINUS INTNUM %prec NEG { $$ = - $2; }
 ;
 
 load_statement:
@@ -1008,7 +1014,7 @@ case_element:
          stmt->nilBlock( stmt->currentBlock() );
       }
 
-   | INTNUM
+   | INTNUM_WITH_MINUS
       {
          Falcon::StmtSwitch *stmt = static_cast<Falcon::StmtSwitch *>(COMPILER->getContext());
          // todo: correct error
@@ -1031,7 +1037,7 @@ case_element:
          }
       }
 
-   | INTNUM OP_TO INTNUM
+   | INTNUM_WITH_MINUS OP_TO INTNUM_WITH_MINUS
       {
          Falcon::StmtSwitch *stmt = static_cast<Falcon::StmtSwitch *>(COMPILER->getContext());
          Falcon::Value *val = new Falcon::Value( new Falcon::RangeDecl( new Falcon::Value( $1 ), new Falcon::Value( $3 ) ) );
@@ -1682,7 +1688,7 @@ directive_pair:
       {
          COMPILER->setDirective( *$1, *$3 );
       }
-   | SYMBOL OP_EQ INTNUM
+   | SYMBOL OP_EQ INTNUM_WITH_MINUS
       {
          COMPILER->setDirective( *$1, $3 );
       }

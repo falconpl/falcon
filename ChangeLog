@@ -34,7 +34,8 @@ Falcon (0.8.9)
   * Bugfix: size parameter was not correctly used in Stream.write()
   * Minor: Added internal SharedUserData class which can be used for data shared among many
            objects.
-  * Minor: Added inspectShort() functions that provides a more compact inspect().
+  * Minor: Added inspectShort() function that provides a more compact inspect().
+  * Bugfix: Switches couldn't accept negative numbers.
 
 Falcon (0.8.8)
   * bugfix: TRAV opcode may destroy its parameters while setting first loop

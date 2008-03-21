@@ -23,6 +23,9 @@ a = 3
 */
 switch a
 
+   case -1
+      failure( "Wrong case: - one" )
+
    case 1
       failure( "Wrong case: one" )
 
