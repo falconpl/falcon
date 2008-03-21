@@ -30,7 +30,7 @@ try
    band = MemBuf( 640, 4 )
 
    for bid in [0:640]
-      band[bid] = screen.MakeColor( 150, bid%128, (bid+128)%256,  250 )
+      band[bid] = screen.MapRGBA( 150, bid%128, (bid+128)%256,  250 )
    end
 
    pixels = screen.pixels
@@ -43,6 +43,11 @@ try
    end
    screen.UnlockIfNeeded()
 
+   // make a solid rectangle
+   r = SDLRect( 280, 200, 80, 80 )
+   inspect( r )
+   screen.FillRect( r,
+         screen.MapRGBA( 255, 255, 255, 255 ) )
 
    screen.UpdateRect()
 

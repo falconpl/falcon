@@ -54,13 +54,19 @@ FALCON_FUNC SDLSurface_SaveBMP( ::Falcon::VMachine *vm );
 FALCON_FUNC SDLSurface_SetPixel( ::Falcon::VMachine *vm );
 FALCON_FUNC SDLSurface_GetPixel( ::Falcon::VMachine *vm );
 FALCON_FUNC SDLSurface_GetPixelIndex( ::Falcon::VMachine *vm );
-FALCON_FUNC SDLSurface_GetRGBA( ::Falcon::VMachine *vm );
-FALCON_FUNC SDLSurface_MakeColor( ::Falcon::VMachine *vm );
 FALCON_FUNC SDLSurface_LockSurface( ::Falcon::VMachine *vm );
 FALCON_FUNC SDLSurface_UnlockSurface( ::Falcon::VMachine *vm );
 FALCON_FUNC SDLSurface_LockIfNeeded( ::Falcon::VMachine *vm );
 FALCON_FUNC SDLSurface_UnlockIfNeeded( ::Falcon::VMachine *vm );
 FALCON_FUNC SDLSurface_IsLockNeeded( ::Falcon::VMachine *vm );
+FALCON_FUNC SDLSurface_FillRect( ::Falcon::VMachine *vm );
+
+// PixelFormat
+FALCON_FUNC SDLSurface_GetRGBA( ::Falcon::VMachine *vm );
+FALCON_FUNC SDLSurface_MapRGBA( ::Falcon::VMachine *vm );
+
+// Rectangle
+FALCON_FUNC SDLRect_init( ::Falcon::VMachine *vm );
 
 // Screen video
 FALCON_FUNC SDLScreen_UpdateRect( ::Falcon::VMachine *vm );

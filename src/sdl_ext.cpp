@@ -537,6 +537,55 @@ FALCON_FUNC sdl_GetVideoSurface( ::Falcon::VMachine *vm )
    vm->retval( obj );
 }
 
+/*#
+   @class SDLRect
+
+   This class stores rectangular coordinates.
+   Actually, this class is just a "contract" or "interface",
+   as every function accepting an SDLRect will just accept any
+   class providing the properties listed here.
+
+   @prop x the X coordinate (left position).
+   @prop y the Y coordinate (top position).
+   @prop w width of the rectangle.
+   @prop h height of the rectangle.
+*/
+
+/*#
+   @init SDLRect
+   @optparam x X cooordinate of this rectangle
+   @optparam y Y cooordinate of this rectangle
+   @optparam w width of this rectangle
+   @optparam h height of this rectangle
+
+   Fills the rectangle with initial values.
+*/
+
+FALCON_FUNC SDLRect_init( ::Falcon::VMachine *vm )
+{
+   Item *i_x = vm->param(0);
+   Item *i_y = vm->param(1);
+   Item *i_width = vm->param(2);
+   Item *i_height = vm->param(3);
+
+   if (
+        ( i_x != 0 && ! i_x->isOrdinal() ) ||
+        ( i_y != 0 && ! i_y->isOrdinal() ) ||
+        ( i_width != 0 && ! i_width->isOrdinal() ) ||
+        ( i_height != 0 && ! i_height->isOrdinal() )
+      )
+   {
+       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "[N,N,N,N]" ) ) );
+      return;
+   }
+
+   CoreObject *self = vm->self().asObject();
+   self->setProperty( "x", i_x->forceInteger() );
+   self->setProperty( "y", i_y->forceInteger() );
+   self->setProperty( "w", i_width->forceInteger() );
+   self->setProperty( "h", i_height->forceInteger() );
+}
 
 //==================================================================
 // ERROR class

@@ -93,7 +93,7 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
     //============================================================
    // SDL rectangle class
    //
-   Falcon::Symbol *c_rect = self->addClass( "SDLRect", Falcon::Ext::sdl_Init );
+   Falcon::Symbol *c_rect = self->addClass( "SDLRect", Falcon::Ext::SDLRect_init );
    c_rect->setWKS( true );
    self->addClassProperty( c_rect, "w" );
    self->addClassProperty( c_rect, "h" );
@@ -119,13 +119,14 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    self->addClassMethod( c_surface, "SetPixel", Falcon::Ext::SDLSurface_SetPixel );
    self->addClassMethod( c_surface, "GetPixel", Falcon::Ext::SDLSurface_GetPixel );
    self->addClassMethod( c_surface, "GetPixelIndex", Falcon::Ext::SDLSurface_GetPixelIndex );
-   self->addClassMethod( c_surface, "GetRGBA", Falcon::Ext::SDLSurface_GetRGBA );
-   self->addClassMethod( c_surface, "MakeColor", Falcon::Ext::SDLSurface_MakeColor );
    self->addClassMethod( c_surface, "LockSurface", Falcon::Ext::SDLSurface_LockSurface );
    self->addClassMethod( c_surface, "UnlockSurface", Falcon::Ext::SDLSurface_UnlockSurface );
    self->addClassMethod( c_surface, "LockIfNeeded", Falcon::Ext::SDLSurface_LockIfNeeded );
    self->addClassMethod( c_surface, "UnlockIfNeeded", Falcon::Ext::SDLSurface_UnlockIfNeeded );
    self->addClassMethod( c_surface, "IsLockNeeded", Falcon::Ext::SDLSurface_IsLockNeeded );
+   self->addClassMethod( c_surface, "FillRect", Falcon::Ext::SDLSurface_FillRect );
+   self->addClassMethod( c_surface, "GetRGBA", Falcon::Ext::SDLSurface_GetRGBA );
+   self->addClassMethod( c_surface, "MapRGBA", Falcon::Ext::SDLSurface_MapRGBA );
 
 
    //============================================================

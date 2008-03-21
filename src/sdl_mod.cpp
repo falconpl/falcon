@@ -133,20 +133,6 @@ UserData *SDLSurfaceCarrier::clone() const
 // Utilities
 //
 
-/*#
-   @class SDLRect
-
-   This class stores rectangular coordinates.
-   Actually, this class is just a "contract" or "interface",
-   as every function accepting an SDLRect will just accept any
-   class providing the properties listed here.
-
-   @prop x the X coordinate (left position).
-   @prop y the Y coordinate (top position).
-   @prop w width of the rectangle.
-   @prop h height of the rectangle.
-*/
-
 bool RectToObject( const ::SDL_Rect &rect, CoreObject *obj )
 {
    return obj->setProperty( "x", (int64) rect.x ) &&
@@ -161,17 +147,18 @@ bool ObjectToRect( CoreObject *obj, ::SDL_Rect &rect )
    if ( itm == 0 ) return false;
    rect.x = (Sint16) itm->forceInteger();
 
-   *itm = obj->getProperty( "y" );
+   itm = obj->getProperty( "y" );
    if ( itm == 0 ) return false;
    rect.y = (Sint16) itm->forceInteger();
 
-   *itm = obj->getProperty( "w" );
+   itm = obj->getProperty( "w" );
    if ( itm == 0 ) return false;
    rect.w = (Uint16) itm->forceInteger();
 
-   *itm = obj->getProperty( "h" );
+   itm = obj->getProperty( "h" );
    if ( itm == 0 ) return false;
    rect.h = (Uint16) itm->forceInteger();
+   return true;
 }
 
 CoreObject *MakeRectInst( VMachine *vm, const ::SDL_Rect &rect )
@@ -182,34 +169,6 @@ CoreObject *MakeRectInst( VMachine *vm, const ::SDL_Rect &rect )
    RectToObject( rect, obj );
    return obj;
 }
-
-/*#
-   @class SDLPixelFormat
-
-   This class stores the SDL_PixelFormat structure. Scripts don't usually
-   want to use this, but it may be useful to determine and set color
-   data for palette based images.
-
-   @prop BitsPerPixel Number of bits per pixel of this image.
-   @prop BytesPerPixel Number of bytes per pixel of this image.
-   @prop Rloss Red loss factor.
-   @prop Gloss Green loss factor.
-   @prop Bloss Blue loss factor.
-   @prop Aloss Alpha loss factor.
-
-   @prop Rshift Red shift factor.
-   @prop Gshift Green shift factor.
-   @prop Bshift Blue shift factor.
-   @prop Ashift Alpha shift factor.
-
-   @prop Rmask Red bitfield mask.
-   @prop Gmask Green bitfield mask.
-   @prop Bmask Blue bitfield mask.
-   @prop Amask Alpha bitfield mask.
-   @prop colorkey Pixel value of transparent pixels.
-   @prop alpha Overall image Alpha value.
-   @prop palette May be nil or may be an instance of @a SDLPalette if this surface has a palette.
-*/
 
 CoreObject *MakePixelFormatInst( VMachine *vm, SDLSurfaceCarrier *carrier, ::SDL_PixelFormat *fmt )
 {
