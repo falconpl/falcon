@@ -49,6 +49,9 @@ QuitCarrier::~QuitCarrier()
 
 SDLSurfaceCarrier::~SDLSurfaceCarrier()
 {
+   while( m_surface-- > 0 )
+      SDL_UnlockSurface( m_surface );
+
    SDL_FreeSurface( m_surface );
 }
 
@@ -75,9 +78,22 @@ void SDLSurfaceCarrier::getProperty( VMachine *vm, const String &propName, Item 
    {
       prop = (int64) m_surface->pitch;
    }
+   else if ( propName == "bpp" )
+   {
+      prop = (int64) m_surface->format->BytesPerPixel;
+   }
    else if ( propName == "clip_rect" )
    {
-      prop = MakeRectInst( vm, m_surface->clip_rect );
+      if ( prop.isNil() )
+         prop = MakeRectInst( vm, m_surface->clip_rect );
+      else
+         RectToObject( m_surface->clip_rect, prop.asObject() );
+   }
+   else if ( propName == "format" )
+   {
+      if ( prop.isNil() )
+         prop = MakePixelFormatInst( vm, this );
+
    }
    else if ( propName == "pixels" )
    {
@@ -96,6 +112,8 @@ void SDLSurfaceCarrier::getProperty( VMachine *vm, const String &propName, Item 
          prop = mb;
       }
    }
+
+
 }
 
 void SDLSurfaceCarrier::setProperty( VMachine *vm, const String &propName, Item &prop )
@@ -162,7 +180,181 @@ CoreObject *MakeRectInst( VMachine *vm, const ::SDL_Rect &rect )
    fassert( cls != 0 );
    CoreObject *obj = cls->asClass()->createInstance();
    RectToObject( rect, obj );
-   vm->retval( obj );
+   return obj;
+}
+
+/*#
+   @class SDLPixelFormat
+
+   This class stores the SDL_PixelFormat structure. Scripts don't usually
+   want to use this, but it may be useful to determine and set color
+   data for palette based images.
+
+   @prop BitsPerPixel Number of bits per pixel of this image.
+   @prop BytesPerPixel Number of bytes per pixel of this image.
+   @prop Rloss Red loss factor.
+   @prop Gloss Green loss factor.
+   @prop Bloss Blue loss factor.
+   @prop Aloss Alpha loss factor.
+
+   @prop Rshift Red shift factor.
+   @prop Gshift Green shift factor.
+   @prop Bshift Blue shift factor.
+   @prop Ashift Alpha shift factor.
+
+   @prop Rmask Red bitfield mask.
+   @prop Gmask Green bitfield mask.
+   @prop Bmask Blue bitfield mask.
+   @prop Amask Alpha bitfield mask.
+   @prop colorkey Pixel value of transparent pixels.
+   @prop alpha Overall image Alpha value.
+   @prop palette May be nil or may be an instance of @a SDLPalette if this surface has a palette.
+*/
+
+CoreObject *MakePixelFormatInst( VMachine *vm, SDLSurfaceCarrier *carrier, ::SDL_PixelFormat *fmt )
+{
+   Item *cls = vm->findWKI( "SDLPixelFormat" );
+   fassert( cls != 0 );
+   CoreObject *obj = cls->asClass()->createInstance();
+
+   if ( carrier != 0 )
+      fmt = carrier->m_surface->format;
+
+   obj->setProperty( "BitsPerPixel", (int64) fmt->BitsPerPixel );
+   obj->setProperty( "BytesPerPixel", (int64) fmt->BytesPerPixel );
+   obj->setProperty( "Rloss", (int64) fmt->Rloss );
+   obj->setProperty( "Gloss", (int64) fmt->Gloss );
+   obj->setProperty( "Bloss", (int64) fmt->Bloss );
+   obj->setProperty( "Aloss", (int64) fmt->Aloss );
+
+   obj->setProperty( "Rshift", (int64) fmt->Rshift );
+   obj->setProperty( "Gshift", (int64) fmt->Gshift );
+   obj->setProperty( "Bshift", (int64) fmt->Bshift );
+   obj->setProperty( "Ashift", (int64) fmt->Ashift );
+
+   obj->setProperty( "Rmask", (int64) fmt->Rmask );
+   obj->setProperty( "Gmask", (int64) fmt->Gmask );
+   obj->setProperty( "Bmask", (int64) fmt->Bmask );
+   obj->setProperty( "Amask", (int64) fmt->Amask );
+   obj->setProperty( "colorkey", (int64) fmt->colorkey );
+   obj->setProperty( "alpha", (int64) fmt->alpha );
+
+   // If we have a palette, creaete an object of class palette and stuff it in.
+   if( fmt->palette != 0 )
+   {
+      Item *clspal = vm->findWKI( "SDLPalette" );
+      fassert( clspal != 0 );
+      CoreObject *objpal = clspal->asClass()->createInstance();
+      // create the MemBuf we need; it refers the surface inside the carrier.
+      MemBuf *colors = new MemBuf_4( vm,
+         (byte *) fmt->palette->colors, fmt->palette->ncolors, false );
+
+      if ( carrier != 0 )
+         colors->dependant( carrier );
+
+      objpal->setProperty( "colors", colors );
+      objpal->setProperty( "ncolors", fmt->palette->ncolors );
+
+      obj->setProperty( "palette", objpal );
+   }
+
+   return obj;
+}
+
+bool ObjectToPixelFormat( CoreObject *obj, ::SDL_PixelFormat *fmt )
+{
+   Item BitsPerPixel, BytesPerPixel;
+   Item Rloss, Gloss, Bloss, Aloss;
+   Item Rshift, Gshift, Bshift, Ashift;
+   Item Rmask, Gmask, Bmask, Amask;
+   Item colorkey, alpha;
+
+   if ( !(
+      obj->getProperty( "BitsPerPixel", BitsPerPixel ) &&
+      obj->getProperty( "BytesPerPixel", BytesPerPixel ) &&
+      obj->getProperty( "Rloss", Rloss ) &&
+      obj->getProperty( "Gloss", Gloss ) &&
+      obj->getProperty( "Bloss", Bloss ) &&
+      obj->getProperty( "Aloss", Aloss ) &&
+
+      obj->getProperty( "Rshift", Rshift ) &&
+      obj->getProperty( "Gshift", Gshift ) &&
+      obj->getProperty( "Bshift", Bshift ) &&
+      obj->getProperty( "Ashift", Ashift ) &&
+
+      obj->getProperty( "Rmask", Rmask ) &&
+      obj->getProperty( "Gmask", Gmask ) &&
+      obj->getProperty( "Bmask", Bmask ) &&
+      obj->getProperty( "Amask", Amask ) &&
+      obj->getProperty( "colorkey", colorkey ) &&
+      obj->getProperty( "alpha", alpha ))
+   )
+      return false;
+
+   fmt->BitsPerPixel = BitsPerPixel.forceInteger();
+   fmt->BytesPerPixel = BytesPerPixel.forceInteger();
+   fmt->Rloss = Rloss.forceInteger();
+   fmt->Gloss = Gloss.forceInteger();
+   fmt->Bloss = Bloss.forceInteger();
+   fmt->Aloss = Aloss.forceInteger();
+
+   fmt->Rshift = Rshift.forceInteger();
+   fmt->Gshift = Gshift.forceInteger();
+   fmt->Bshift = Bshift.forceInteger();
+   fmt->Ashift = Ashift.forceInteger();
+
+   fmt->Rmask = Rmask.forceInteger();
+   fmt->Gmask = Gmask.forceInteger();
+   fmt->Bmask = Bmask.forceInteger();
+   fmt->Amask = Amask.forceInteger();
+   fmt->colorkey = colorkey.forceInteger();
+   fmt->alpha = alpha.forceInteger();
+}
+
+/*#
+   @class SDLVideoInfo
+   @brief Encapsulate a video info.
+
+   This class is returned from SDL.GetVideoInfo() and just stores some
+   informations about the video.
+
+   Consider its data as read only.
+
+   @prop hw_available  Is it possible to create hardware surfaces?
+   @prop wm_available  Is there a window manager available
+   @prop blit_hw  Are hardware to hardware blits accelerated?
+   @prop blit_hw_CC  Are hardware to hardware colorkey blits accelerated?
+   @prop blit_hw_A  Are hardware to hardware alpha blits accelerated?
+   @prop blit_sw  Are software to hardware blits accelerated?
+   @prop blit_sw_CC  Are software to hardware colorkey blits accelerated?
+   @prop blit_sw_A  Are software to hardware alpha blits accelerated?
+   @prop blit_fill  Are color fills accelerated?
+   @prop video_mem  Total amount of video memory in Kilobytes
+   @prop vfmt  Pixel format of the video device stored in @a SDLPixelFormat instance
+*/
+
+CoreObject *MakeVideoInfo( VMachine *vm, const ::SDL_VideoInfo *info )
+{
+
+   Item *cls = vm->findWKI( "SDLVideoInfo" );
+   fassert( cls != 0 );
+   CoreObject *obj = cls->asClass()->createInstance();
+
+   obj->setProperty( "hw_available", Item( info->hw_available ? true : false) );
+   obj->setProperty( "wm_available", Item( info->wm_available ? true : false) );
+   obj->setProperty( "blit_hw", Item( info->blit_hw ? true : false) );
+   obj->setProperty( "blit_hw_CC", Item( info->blit_hw_CC ? true : false) );
+   obj->setProperty( "blit_hw_A", Item( info->blit_hw_A ? true : false) );
+   obj->setProperty( "blit_sw", Item( info->blit_sw ? true : false) );
+   obj->setProperty( "blit_sw_CC", Item( info->blit_sw_CC ? true : false) );
+   obj->setProperty( "blit_sw_A", Item( info->blit_sw_A ? true : false) );
+   obj->setProperty( "blit_fill", Item( info->blit_fill ? true : false) );
+   obj->setProperty( "video_mem", (int64) info->video_mem );
+   // as video format info is stored in SDL, we shouldn't care about referencing it
+   obj->setProperty( "vfmt",
+       MakePixelFormatInst( vm, 0, info->vfmt ) );
+
+   return obj;
 }
 
 

@@ -63,10 +63,12 @@ class SDLSurfaceCarrier: public SharedUserData
 {
 public:
    SDL_Surface *m_surface;
+   uint32 m_lockCount;
 
    SDLSurfaceCarrier( VMachine *vm, SDL_Surface *s ):
       SharedUserData( vm ),
-      m_surface( s )
+      m_surface( s ),
+      m_lockCount(0)
    {}
 
    ~SDLSurfaceCarrier();
@@ -84,7 +86,9 @@ public:
 bool RectToObject( const ::SDL_Rect &rect, CoreObject *obj );
 bool ObjectToRect( CoreObject *obj, ::SDL_Rect &rect );
 CoreObject *MakeRectInst( VMachine *vm, const ::SDL_Rect &rect );
-
+CoreObject *MakePixelFormatInst( VMachine *vm, SDLSurfaceCarrier *carrier, ::SDL_PixelFormat *fmt = 0 );
+bool ObjectToPixelFormat( CoreObject *obj, ::SDL_PixelFormat *fmt );
+CoreObject *MakeVideoInfo( VMachine *vm, const ::SDL_VideoInfo *info );
 
 }
 }

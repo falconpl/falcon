@@ -41,7 +41,11 @@ FALCON_FUNC sdl_IsBigEndian( ::Falcon::VMachine *vm );
 
 // Generic video
 FALCON_FUNC sdl_SetVideoMode( ::Falcon::VMachine *vm );
+FALCON_FUNC sdl_GetVideoInfo( ::Falcon::VMachine *vm );
+FALCON_FUNC sdl_VideoDriverName( ::Falcon::VMachine *vm );
 FALCON_FUNC sdl_GetVideoSurface ( ::Falcon::VMachine *vm );
+FALCON_FUNC sdl_ListModes ( ::Falcon::VMachine *vm );
+FALCON_FUNC sdl_VideoModeOK ( ::Falcon::VMachine *vm );
 
 // Surface video
 FALCON_FUNC sdl_LoadBMP( ::Falcon::VMachine *vm );
@@ -52,9 +56,18 @@ FALCON_FUNC SDLSurface_GetPixel( ::Falcon::VMachine *vm );
 FALCON_FUNC SDLSurface_GetPixelIndex( ::Falcon::VMachine *vm );
 FALCON_FUNC SDLSurface_GetRGBA( ::Falcon::VMachine *vm );
 FALCON_FUNC SDLSurface_MakeColor( ::Falcon::VMachine *vm );
+FALCON_FUNC SDLSurface_LockSurface( ::Falcon::VMachine *vm );
+FALCON_FUNC SDLSurface_UnlockSurface( ::Falcon::VMachine *vm );
+FALCON_FUNC SDLSurface_LockIfNeeded( ::Falcon::VMachine *vm );
+FALCON_FUNC SDLSurface_UnlockIfNeeded( ::Falcon::VMachine *vm );
+FALCON_FUNC SDLSurface_IsLockNeeded( ::Falcon::VMachine *vm );
 
 // Screen video
 FALCON_FUNC SDLScreen_UpdateRect( ::Falcon::VMachine *vm );
+
+// Palette
+FALCON_FUNC SDLPalette_getColor( ::Falcon::VMachine *vm );
+FALCON_FUNC SDLPalette_setColor( ::Falcon::VMachine *vm );
 
 // Error
 FALCON_FUNC  SDLError_init ( ::Falcon::VMachine *vm );

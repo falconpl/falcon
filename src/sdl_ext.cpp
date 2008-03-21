@@ -27,6 +27,7 @@
 #include <falcon/fstream.h>
 #include <falcon/lineardict.h>
 #include <falcon/autocstring.h>
+#include <falcon/membuf.h>
 
 #include "sdl_ext.h"
 #include "sdl_mod.h"
@@ -216,10 +217,127 @@ FALCON_FUNC sdl_QuitSubSystem( ::Falcon::VMachine *vm )
 /*#
    @method IsBigEndian SDL
    @brief Returns true if the host system is big endian.
+   @return true if the host system is big endian.
 */
 FALCON_FUNC sdl_IsBigEndian( ::Falcon::VMachine *vm )
 {
    vm->retval( SDL_BYTEORDER == SDL_BIG_ENDIAN );
+}
+
+/*#
+   @method GetVideoInfo SDL
+   @brief Returns details about underlying video system.
+   @return An instance of a @a SDLVideoInfo
+   @throws SDLError on error.
+
+   This function returns a read-only SDLVideoInfo instance containing informations about
+   the video hardware.
+
+   If this is called before SDL_SetVideoMode, the vfmt member of the returned
+   structure will contain the pixel format of the "best" video mode.
+*/
+FALCON_FUNC sdl_GetVideoInfo( ::Falcon::VMachine *vm )
+{
+   const SDL_VideoInfo *vi = SDL_GetVideoInfo();
+   if ( vi == 0 )
+   {
+      vm->raiseModError( new SDLError( ErrorParam( FALCON_SDL_ERROR_BASE + 6, __LINE__ )
+         .desc( "SDL Video Info error" )
+         .extra( SDL_GetError() ) ) );
+      return;
+   }
+
+   vm->retval( MakeVideoInfo( vm, vi ) );
+}
+
+/*#
+   @method VideoDriverName SDL
+   @brief Returns the name of the used video driver.
+   @return A simple description of the video driver being used.
+   @throws SDLError if the system is not initialized.
+*/
+FALCON_FUNC sdl_VideoDriverName( ::Falcon::VMachine *vm )
+{
+   char name[1024];
+
+   if ( SDL_VideoDriverName( name, 1023) == 0 )
+   {
+      vm->raiseModError( new SDLError( ErrorParam( FALCON_SDL_ERROR_BASE, __LINE__ )
+         .desc( "SDL Init error" )
+         .extra( SDL_GetError() ) ) );
+      return;
+   }
+
+   vm->retval( new GarbageString( vm, name ) );
+}
+
+/*#
+   @method ListModes SDL
+   @brief Returns a list of possible modes.
+   @return An array of x,y pairs containing the sizes of
+      the available modes, nil or -1.
+   @optparam format An SDLPixelFormat structure to filter modes or nil.
+   @optparam flags Initialization flags that must be supported by
+             returned mode.
+   @throws SDLError if the system is not initialized.
+
+   The function mimics the workings of SDL_ListModes, returning an array
+   of pairs (2 element arrays) with x, y items, if a set of mode was found,
+   nil if no mode is available and -1 if SDL says "all the modes" are
+   available.
+
+   If passing nil as the desired pixel format, then the default screen
+   pixel format will be used.
+*/
+
+FALCON_FUNC sdl_ListModes( ::Falcon::VMachine *vm )
+{
+   Item *i_format = vm->param(0);
+   Item *i_flags = vm->param(1);
+
+   if ( (i_format != 0 &&
+        (! i_format->isNil() &&
+        ( ! i_format->isObject() || ! i_format->asObject()->derivedFrom( "SDLPixelFormat") ))) ||
+      ( i_flags != 0 && ! i_flags->isOrdinal() ) )
+   {
+      vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "[SDLPixelFormat, N]" ) ) );
+      return;
+   }
+
+   SDL_PixelFormat fmt, *pFmt;
+   if( i_format != 0 && ! i_format->isNil() )
+   {
+      pFmt = &fmt;
+      ObjectToPixelFormat( i_format->asObject(), pFmt );
+   }
+   else
+      pFmt = 0;
+
+   Uint32 flags = i_flags == 0 ? 0 : (Uint32) i_flags->forceInteger();
+
+   SDL_Rect **list = SDL_ListModes( pFmt, flags );
+   if ( list == 0 )
+   {
+      vm->retnil();
+   }
+   else if ( list == (SDL_Rect**) - 1)
+   {
+      vm->retval( (int64) -1 );
+   }
+   else {
+      CoreArray *array = new CoreArray( vm );
+      int pos = 0;
+      while( list[pos] != 0 )
+      {
+         CoreArray *res = new CoreArray( vm, 2 );
+         array->append( res );
+         res->append( (int64) list[pos]->w );
+         res->append( (int64) list[pos]->h );
+         ++pos;
+      }
+      vm->retval( array );
+   }
 }
 
 //==================================================================
@@ -227,10 +345,53 @@ FALCON_FUNC sdl_IsBigEndian( ::Falcon::VMachine *vm )
 //
 
 /*#
+   @method VideoModeOK SDL
+   @brief Verifies if a given video mode is ok
+   @param width - desired width.
+   @param height - desired height.
+   @optparam bpp - byte per pixel in the desired modesired heightde (defaults to automatic).
+   @optparam flags - flags to be eventually specified.
+   @return 0 if the mode isn't available, or a bit per pixel value for the given mode.
+
+   The function can be used to checked if a video mode can be used prior to starting it.
+   If the mode is available, a preferred bit per pixel value is returned, otherwise
+   the function returns zero.
+*/
+
+FALCON_FUNC sdl_VideoModeOK( ::Falcon::VMachine *vm )
+{
+   Item *i_width = vm->param(0);
+   Item *i_height = vm->param(1);
+   Item *i_bpp = vm->param(2);
+   Item *i_flags = vm->param(3);
+
+   if ( ( i_width == 0 || ! i_width->isOrdinal() ) ||
+        ( i_height == 0 || ! i_height->isOrdinal() ) ||
+        ( i_bpp != 0 && ! i_height->isOrdinal() ) ||
+        ( i_flags != 0 && ! i_flags->isOrdinal() )
+      )
+   {
+       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "N,N,[N,N]" ) ) );
+      return;
+   }
+
+   int width = (int) i_width->forceInteger();
+   int height = (int) i_height->forceInteger();
+   int bpp = i_bpp == 0 ? 0 : (int) i_bpp->asInteger();
+   int flags = i_flags == 0 ? 0 : (int) i_flags->asInteger();
+
+   int dbpp = ::SDL_VideoModeOK( width, height, bpp, flags );
+
+   vm->retval( (int64) dbpp );
+}
+
+/*#
    @method SetVideoMode SDL
    @brief Changes the video mode and/or starts SDL context window.
-   @param width - desired width
-   @optparam bpp - byte per pixel in the desired modesired heightde (defaults to automatic)
+   @param width - desired width.
+   @param height - desired height.
+   @optparam bpp - byte per pixel in the desired modesired heightde (defaults to automatic).
    @optparam flags - flags to be eventually specified.
    @return a SDLScreen instance representing the SDL output device.
    @throws SDLError on initialization failure
@@ -376,527 +537,6 @@ FALCON_FUNC sdl_GetVideoSurface( ::Falcon::VMachine *vm )
    vm->retval( obj );
 }
 
-
-/*#
-   @class SDLSurface
-   @brief Encapsulates SDL_Surface structures and provides related services.
-
-   This class is used to store SDL_Surface C structure that is widely used by SDL
-   graphics engine. This class also provides the vast majority of the functions
-   that operates on SDL surfaces as methods.
-
-   Falcon provides a subclass called @a SDLScreen that provides also screen oriented
-   functions; SDL do not differentiates between surfaces being used to handle image
-   buffers and surfaces used as screen handles, but Falcon embedding provides a
-   differentiation both for OOP cleanness and to minimize memory usage (i.e. to store method
-   pointers unneeded by the vast majority of surfaces).
-*/
-
-/*#
-   @method SaveBMP SDLSurface
-   @brief Saves a BMP files to disk.
-   @param filename the file where to store this BMP.
-   @throws SDLError on failure.
-
-   Save a memory image (or even a screenshot, if this surface is also a screen)
-   to a disk BMP file.
-
-   The filename is totally subject to SDL rules, as it is simply passed
-   to SDL engine. No Falcon URI parsing is perfomred before invoking SDL;
-   as such, it is advisable to use this function only in simple applications.
-
-   @see SDL.LoadBMP
-*/
-FALCON_FUNC SDLSurface_SaveBMP( ::Falcon::VMachine *vm )
-{
-   Item *i_file = vm->param(0);
-   if ( i_file == 0 || ! i_file->isString() )
-   {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "S" ) ) );
-      return;
-   }
-
-   AutoCString fname( *i_file->asString() );
-
-   CoreObject *self = vm->self().asObject();
-   SDL_Surface *source = static_cast<SDLSurfaceCarrier*>( self->getUserData() )->m_surface;
-
-   if ( ::SDL_SaveBMP( source, fname.c_str() ) < 0 )
-   {
-      vm->raiseModError( new SDLError( ErrorParam( FALCON_SDL_ERROR_BASE + 5, __LINE__ )
-         .desc( "SDL SaveBMP" )
-         .extra( SDL_GetError() ) ) );
-      return;
-   }
-   vm->retnil();
-}
-
-/*#
-   @method BlitSurface SDLSurface
-   @brief Copies a surface of part of it onto another surface.
-   @param srcRect a @a SDLRect containing the source coordinates or nil.
-   @param dest the destionation SDLSurface.
-   @optparam dstRect a @a SDLRect containing destination coordinates or nil.
-   @throws SDLError on copy failure.
-
-   This functions copies a part of an image into another. The srcRect parameter determines
-   which portion of the source image is copied; if nil, the whole image will be used.
-   Only x and y coordinates from dstRect are used; if not provided, the image is copied
-   starting at 0,0 (upper left corner).
-
-*/
-
-FALCON_FUNC SDLSurface_BlitSurface( ::Falcon::VMachine *vm )
-{
-   // rects can be nil, in which case we must set them to null
-   Item *i_srcrect = vm->param(0);
-   Item *i_dest = vm->param(1);
-   Item *i_dstrect = vm->param(2);
-
-   bool paramOk = true;
-   SDL_Rect srcRect, dstRect, *pSrcRect, *pDstRect;
-
-   if ( ( i_srcrect == 0 || ( ! i_srcrect->isNil() && ! i_srcrect->isObject() )) ||
-        ( i_dest == 0 || ! i_dest->isObject() || ! i_dest->asObject()->derivedFrom( "SDLSurface" )) ||
-        ( i_dstrect != 0 && ! i_dstrect->isNil() && ! i_dstrect->isObject() )
-      )
-   {
-      paramOk = false;
-   }
-   else
-   {
-      // are rects exposing the right interface?
-      if( i_srcrect != 0 && i_srcrect->isObject() )
-      {
-         if ( ! ObjectToRect( i_srcrect->asObject(), srcRect ) )
-            paramOk = false;
-         else
-            pSrcRect = &srcRect;
-      }
-      else
-         pSrcRect = 0;
-
-      if ( paramOk )
-      {
-         if( i_dstrect != 0 && i_dstrect->isObject() )
-         {
-            if ( ! ObjectToRect( i_dstrect->asObject(), dstRect ) )
-               paramOk = false;
-            else
-               pDstRect = &dstRect;
-         }
-         else
-            pDstRect = 0;
-      }
-   }
-
-   // are our parameter ok?
-   if ( ! paramOk )
-   {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "SDLRect|Nil, SDLSurface [, SDLRect|Nil]" ) ) );
-      return;
-   }
-
-   CoreObject *self = vm->self().asObject();
-   SDL_Surface *source = static_cast<SDLSurfaceCarrier*>( self->getUserData() )->m_surface;
-   SDL_Surface *dest = static_cast<SDLSurfaceCarrier*>( i_dest->asObject()->getUserData() )->m_surface;
-
-   int res = ::SDL_BlitSurface( source, pSrcRect, dest, pDstRect );
-   if( res < 0 )
-   {
-      vm->raiseModError( new SDLError( ErrorParam( FALCON_SDL_ERROR_BASE + 4, __LINE__ )
-         .desc( "SDL BlitSurface" )
-         .extra( SDL_GetError() ) ) );
-      return;
-   }
-}
-
-/*#
-   @method SetPixel SDLSurface
-   @brief Sets a single pixel to desired value
-   @param x X coordinates of the pixel to be set
-   @param y Y coordinates of the pixel to be set
-   @param value The value to be set
-   @throws ParamError if x or y are out of ranges
-
-   This functions sets the color of a pixel to the desired value.
-   The value is the palette index if this map has a palette,
-   otherwise is a truecolor value whose precision depends on the
-   mode depth.
-
-   To get a suitable value for this surface,
-   use @a SDLSurface.GetPixelValue.
-*/
-
-FALCON_FUNC SDLSurface_SetPixel( ::Falcon::VMachine *vm )
-{
-   Item *i_x = vm->param(0);
-   Item *i_y = vm->param(1);
-   Item *i_value = vm->param(2);
-
-   if ( i_x == 0 || ! i_x->isOrdinal() ||
-        i_y == 0 || ! i_y->isOrdinal() ||
-        i_value == 0 || ! i_value->isOrdinal()
-      )
-   {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "N,N,N" ) ) );
-      return;
-   }
-
-   CoreObject *self = vm->self().asObject();
-   SDL_Surface *surface = static_cast<SDLSurfaceCarrier*>( self->getUserData() )->m_surface;
-   int x = (int) i_x->forceInteger();
-   int y = (int) i_y->forceInteger();
-
-   if ( x < 0 || x >= surface->w || y < 0 || y >= surface->h )
-   {
-      vm->raiseModError( new ParamError( ErrorParam( e_param_range, __LINE__ ) ) );
-      return;
-   }
-
-   Uint32 pixel = i_value->forceInteger();
-
-   int bpp = surface->format->BytesPerPixel;
-   /* Here p is the address to the pixel we want to set */
-   Uint8 *p = (Uint8 *) surface->pixels + y * surface->pitch + x * bpp;
-
-    switch(bpp) {
-    case 1:
-        *p = pixel;
-        break;
-
-    case 2:
-        *(Uint16 *)p = pixel;
-        break;
-
-    case 3:
-        if(SDL_BYTEORDER == SDL_BIG_ENDIAN) {
-            p[0] = (pixel >> 16) & 0xff;
-            p[1] = (pixel >> 8) & 0xff;
-            p[2] = pixel & 0xff;
-        } else {
-            p[0] = pixel & 0xff;
-            p[1] = (pixel >> 8) & 0xff;
-            p[2] = (pixel >> 16) & 0xff;
-        }
-        break;
-
-    case 4:
-        *(Uint32 *)p = pixel;
-        break;
-    }
-}
-
-/*#
-   @method GetPixel SDLSurface
-   @brief Get a single pixel value from the surface
-   @param x X coordinates of the pixel to be retreived
-   @param y Y coordinates of the pixel to be retreived
-   @throws ParamError if x or y are out of range
-
-   This functions gets the color of a pixel.
-   The value is the palette index if this map has a palette,
-   otherwise is a truecolor value whose precision depends on the
-   mode depth.
-
-   To determine the RGBA values of this pixel, use SDLSurface.GetPixelComponents.
-*/
-
-FALCON_FUNC SDLSurface_GetPixel( ::Falcon::VMachine *vm )
-{
-   Item *i_x = vm->param(0);
-   Item *i_y = vm->param(1);
-
-   if ( i_x == 0 || ! i_x->isOrdinal() ||
-        i_y == 0 || ! i_y->isOrdinal()
-      )
-   {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "N,N" ) ) );
-      return;
-   }
-
-   CoreObject *self = vm->self().asObject();
-   SDL_Surface *surface = static_cast<SDLSurfaceCarrier*>( self->getUserData() )->m_surface;
-   int x = (int) i_x->forceInteger();
-   int y = (int) i_y->forceInteger();
-
-   if ( x < 0 || x >= surface->w || y < 0 || y >= surface->h )
-   {
-      vm->raiseModError( new ParamError( ErrorParam( e_param_range, __LINE__ ) ) );
-      return;
-   }
-
-   int bpp = surface->format->BytesPerPixel;
-   /* Here p is the address to the pixel we want to retrieve */
-   Uint8 *p = (Uint8 *)surface->pixels + y * surface->pitch + x * bpp;
-
-   switch(bpp) {
-   case 1:
-      vm->retval( (int64) *p );
-      break;
-
-   case 2:
-      vm->retval( (int64) ( *(Uint16 *)p));
-      break;
-
-   case 3:
-      if(SDL_BYTEORDER == SDL_BIG_ENDIAN)
-         vm->retval( (int64) ( p[0] << 16 | p[1] << 8 | p[2]));
-      else
-         vm->retval( (int64) ( p[0] | p[1] << 8 | p[2] << 16));
-      break;
-
-   case 4:
-      vm->retval( (int64) (*(Uint32 *)p));
-      break;
-
-   default:
-      vm->retval(0);       //
-   }
-}
-
-/*#
-   @method GetPixelIndex SDLSurface
-   @brief Return the index of a pixel in the pixels array of this class
-   @param x X coordinates of the desired pixel position
-   @param y Y coordinates of the desired pixel position
-   @throws ParamError if x or y are out of range
-
-   This is just a shortcut for the formula
-   \code
-      index = x * bpp + y * pitch
-   \endcode
-
-   Through the direct index, it is possible to change or read directly
-   a pixel in the pixels property of this class (which holds a correctly
-   sized MemBuf).
-*/
-
-FALCON_FUNC SDLSurface_GetPixelIndex( ::Falcon::VMachine *vm )
-{
-   Item *i_x = vm->param(0);
-   Item *i_y = vm->param(1);
-
-   if ( i_x == 0 || ! i_x->isOrdinal() ||
-        i_y == 0 || ! i_y->isOrdinal()
-      )
-   {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "N,N" ) ) );
-      return;
-   }
-
-   CoreObject *self = vm->self().asObject();
-   SDL_Surface *surface = static_cast<SDLSurfaceCarrier*>( self->getUserData() )->m_surface;
-   int x = (int) i_x->forceInteger();
-   int y = (int) i_y->forceInteger();
-
-   if ( x < 0 || x >= surface->w || y < 0 || y >= surface->h )
-   {
-      vm->raiseModError( new ParamError( ErrorParam( e_param_range, __LINE__ ) ) );
-      return;
-   }
-
-   int bpp = surface->format->BytesPerPixel;
-   vm->retval( (int64) y * surface->pitch/bpp + x );
-}
-
-/*#
-   @method GetRGBA SDLSurface
-   @brief Decomposes a given pixel value to RGBA values.
-   @param color multibyte value of a color
-   @return a 4 element array (Red, Green, Blue and Alpha).
-   @throws ParamError if color is out of index in palette based images
-
-   This method is meant to determine the value of each component in a
-   palette or truecolor value that has been read on this surface.
-
-   It is just a shortcut to properly perfomed shifts and binary operations.
-*/
-FALCON_FUNC SDLSurface_GetRGBA( ::Falcon::VMachine *vm )
-{
-   Item *i_color = vm->param(0);
-
-   if ( i_color == 0 || ! i_color->isOrdinal() )
-   {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "N" ) ) );
-      return;
-   }
-
-   CoreObject *self = vm->self().asObject();
-   SDL_Surface *surface = static_cast<SDLSurfaceCarrier*>( self->getUserData() )->m_surface;
-   SDL_PixelFormat *fmt = surface->format;
-
-   Uint32 color = (Uint32) i_color->forceInteger();
-
-   CoreArray *array = new CoreArray( vm, 4 );
-   if ( fmt->BytesPerPixel == 8 )
-   {
-      // palette
-      if ( color > fmt->palette->ncolors )
-      {
-         vm->raiseModError( new ParamError( ErrorParam( e_param_range, __LINE__ ) ) );
-         return;
-      }
-
-      SDL_Color *cidx = fmt->palette->colors + color;
-      array->append( (int64) cidx->r );
-      array->append( (int64) cidx->g );
-      array->append( (int64) cidx->b );
-      array->append( (int64) 0 );
-   }
-   else
-   {
-      Uint32 temp;
-
-      /* Get Red component */
-      temp=color&fmt->Rmask; /* Isolate red component */
-      temp=temp>>fmt->Rshift;/* Shift it down to 8-bit */
-      temp=temp<<fmt->Rloss; /* Expand to a full 8-bit number */
-      array->append( (int64) temp );
-
-      /* Get Green component */
-      temp=color&fmt->Gmask; /* Isolate green component */
-      temp=temp>>fmt->Gshift;/* Shift it down to 8-bit */
-      temp=temp<<fmt->Gloss; /* Expand to a full 8-bit number */
-      array->append( (int64) temp );
-
-      /* Get Blue component */
-      temp=color&fmt->Bmask; /* Isolate blue component */
-      temp=temp>>fmt->Bshift;/* Shift it down to 8-bit */
-      temp=temp<<fmt->Bloss; /* Expand to a full 8-bit number */
-      array->append( (int64) temp );
-
-      /* Get Alpha component */
-      temp=color&fmt->Amask; /* Isolate alpha component */
-      temp=temp>>fmt->Ashift;/* Shift it down to 8-bit */
-      temp=temp<<fmt->Aloss; /* Expand to a full 8-bit number */
-      array->append( (int64) temp );
-   }
-
-   vm->retval( array );
-}
-
-/*#
-   @method MakeColor SDLSurface
-   @brief Builds a color value from RGBA values.
-   @param red Red component of the final color
-   @param green Green component of the final color
-   @param blue Blue component of the final color
-   @param alpha Alpha component of the final color
-   @return an integer that can be directly stored as color in this image.
-   @throws ParamError if this image has a palette
-
-   It is just a shortcut to properly perfomed shifts and binary operations.
-*/
-FALCON_FUNC SDLSurface_MakeColor( ::Falcon::VMachine *vm )
-{
-   Item *i_red = vm->param(0);
-   Item *i_green = vm->param(1);
-   Item *i_blue = vm->param(2);
-   Item *i_alpha = vm->param(3);
-
-   if ( i_red == 0 || ! i_red->isOrdinal() ||
-        i_green == 0 || ! i_green->isOrdinal() ||
-        i_blue == 0 || ! i_blue->isOrdinal() ||
-        i_alpha == 0 || ! i_alpha->isOrdinal()
-      )
-   {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "N,N,N,N" ) ) );
-      return;
-   }
-
-   CoreObject *self = vm->self().asObject();
-   SDL_Surface *surface = static_cast<SDLSurfaceCarrier*>( self->getUserData() )->m_surface;
-   SDL_PixelFormat *fmt = surface->format;
-   if ( fmt->BytesPerPixel == 8 )
-   {
-      vm->raiseModError( new ParamError( ErrorParam( e_param_range, __LINE__ ) ) );
-      return;
-   }
-
-
-   Uint32 temp = ((Uint32) i_red->forceInteger()) << fmt->Rshift;
-   temp |= ((Uint32) i_green->forceInteger()) << fmt->Gshift;
-   temp |= ((Uint32) i_blue->forceInteger()) << fmt->Bshift;
-   temp |= ((Uint32) i_alpha->forceInteger()) << fmt->Ashift;
-   vm->retval( (int64) temp );
-}
-
-/*#
-   @class SDLScreen
-   @from SDLSurface
-   @brief Screen oriented SDL surface.
-
-   This class is a specialization of the SDLSurface class, providing methods
-   meant to be used only on surfaces that should refer to SDL graphic devices.
-*/
-
-/*#
-   @method UpdateRect SDLScreen
-   @brief Refreshes an SDL screen surface or a part of it.
-   @optparam xOrRect an X coordinate or a @a SDLRect containing refresh coordinates.
-   @optparam y coordinate of the refresh rectangle.
-   @optparam width width of the refresh rectangle.
-   @optparam height height of the refresh rectangle.
-
-   If no parameter is specified, the whole screen is refreshed. A refresh area can
-   be specified either passing a single @a SDLRect instance as parameter or specifying
-   the four coordinates as numbers.
-*/
-
-FALCON_FUNC SDLScreen_UpdateRect( ::Falcon::VMachine *vm )
-{
-   // accept a rect as first parameter, or even no parameter.
-   CoreObject *self = vm->self().asObject();
-   SDL_Surface *screen = static_cast<SDLSurfaceCarrier*>( self->getUserData() )->m_surface;
-
-   if( vm->paramCount() == 0 )
-   {
-      ::SDL_UpdateRect( screen, 0, 0, 0, 0);
-   }
-   else if ( vm->paramCount() == 1 )
-   {
-      Item *i_rect = vm->param(1);
-      SDL_Rect r;
-
-      if( ! i_rect->isObject() || ! ObjectToRect( i_rect->asObject(), r ) )
-      {
-         vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-            extra( "SDLRect|N,[N,N,N]" ) ) );
-         return;
-      }
-
-      ::SDL_UpdateRect( screen, r.x, r.y, r.w, r.w );
-   }
-   else
-   {
-      Item *i_x = vm->param(0);
-      Item *i_y = vm->param(1);
-      Item *i_w = vm->param(2);
-      Item *i_h = vm->param(3);
-
-      if( i_x == 0  || ! i_x->isOrdinal() ||
-          i_y == 0  || ! i_y->isOrdinal() ||
-          i_w == 0  || ! i_w->isOrdinal() ||
-          i_h == 0  || ! i_h->isOrdinal()
-        )
-      {
-         vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-            extra( "SDLRect|N,[N,N,N]" ) ) );
-         return;
-      }
-
-      ::SDL_UpdateRect( screen, i_x->forceInteger(), i_y->forceInteger(),
-                                i_w->forceInteger(), i_h->forceInteger() );
-   }
-}
 
 //==================================================================
 // ERROR class

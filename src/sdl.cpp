@@ -65,6 +65,11 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    self->addClassProperty( c_sdl, "OPENGLBLIT" )->setInteger( SDL_OPENGLBLIT );
    self->addClassProperty( c_sdl, "RESIZABLE" )->setInteger( SDL_RESIZABLE );
    self->addClassProperty( c_sdl, "NOFRAME" )->setInteger( SDL_NOFRAME );
+   self->addClassProperty( c_sdl, "HWACCEL" )->setInteger( SDL_HWACCEL );
+   self->addClassProperty( c_sdl, "SRCCOLORKEY" )->setInteger( SDL_SRCCOLORKEY );
+   self->addClassProperty( c_sdl, "RLEACCEL" )->setInteger( SDL_RLEACCEL );
+   self->addClassProperty( c_sdl, "SRCALPHA" )->setInteger( SDL_SRCALPHA );
+   self->addClassProperty( c_sdl, "PREALLOC" )->setInteger( SDL_PREALLOC );
 
    // Init and quit
    self->addClassMethod( c_sdl, "Init", Falcon::Ext::sdl_Init );
@@ -76,7 +81,11 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
 
    // Generic video
    self->addClassMethod( c_sdl, "SetVideoMode", Falcon::Ext::sdl_SetVideoMode );
+   self->addClassMethod( c_sdl, "GetVideoInfo", Falcon::Ext::sdl_GetVideoInfo );
    self->addClassMethod( c_sdl, "GetVideoSurface", Falcon::Ext::sdl_GetVideoSurface );
+   self->addClassMethod( c_sdl, "VideoDriverName", Falcon::Ext::sdl_VideoDriverName );
+   self->addClassMethod( c_sdl, "ListModes", Falcon::Ext::sdl_ListModes );
+   self->addClassMethod( c_sdl, "VideoModeOK", Falcon::Ext::sdl_VideoModeOK );
 
    // Surface
    self->addClassMethod( c_sdl, "LoadBMP", Falcon::Ext::sdl_LoadBMP );
@@ -103,6 +112,7 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    self->addClassProperty( c_surface, "clip_rect" );
    self->addClassProperty( c_surface, "pixels" );
    self->addClassProperty( c_surface, "bpp" );
+   self->addClassProperty( c_surface, "format" );
 
    self->addClassMethod( c_surface, "BlitSurface", Falcon::Ext::SDLSurface_BlitSurface );
    self->addClassMethod( c_surface, "SaveBMP", Falcon::Ext::SDLSurface_SaveBMP );
@@ -111,6 +121,64 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    self->addClassMethod( c_surface, "GetPixelIndex", Falcon::Ext::SDLSurface_GetPixelIndex );
    self->addClassMethod( c_surface, "GetRGBA", Falcon::Ext::SDLSurface_GetRGBA );
    self->addClassMethod( c_surface, "MakeColor", Falcon::Ext::SDLSurface_MakeColor );
+   self->addClassMethod( c_surface, "LockSurface", Falcon::Ext::SDLSurface_LockSurface );
+   self->addClassMethod( c_surface, "UnlockSurface", Falcon::Ext::SDLSurface_UnlockSurface );
+   self->addClassMethod( c_surface, "LockIfNeeded", Falcon::Ext::SDLSurface_LockIfNeeded );
+   self->addClassMethod( c_surface, "UnlockIfNeeded", Falcon::Ext::SDLSurface_UnlockIfNeeded );
+   self->addClassMethod( c_surface, "IsLockNeeded", Falcon::Ext::SDLSurface_IsLockNeeded );
+
+
+   //============================================================
+   // SDL Pixel Format
+   //
+   Falcon::Symbol *c_pixf = self->addClass( "SDLPixelFormat" );
+   c_pixf->setWKS( true );
+   self->addClassProperty( c_pixf, "palette" );
+   self->addClassProperty( c_pixf, "BitsPerPixel" );
+   self->addClassProperty( c_pixf, "BytesPerPixel" );
+   self->addClassProperty( c_pixf, "Rloss" );
+   self->addClassProperty( c_pixf, "Gloss" );
+   self->addClassProperty( c_pixf, "Bloss" );
+   self->addClassProperty( c_pixf, "Aloss" );
+   self->addClassProperty( c_pixf, "Rshift" );
+   self->addClassProperty( c_pixf, "Gshift" );
+   self->addClassProperty( c_pixf, "Bshift" );
+   self->addClassProperty( c_pixf, "Ashift" );
+   self->addClassProperty( c_pixf, "Rmask" );
+   self->addClassProperty( c_pixf, "Gmask" );
+   self->addClassProperty( c_pixf, "Bmask" );
+   self->addClassProperty( c_pixf, "Amask" );
+   self->addClassProperty( c_pixf, "colorkey" );
+   self->addClassProperty( c_pixf, "alpha" );
+
+   //============================================================
+   // SDL Video Info
+   //
+   Falcon::Symbol *c_vi = self->addClass( "SDLVideoInfo" );
+   c_vi->setWKS( true );
+   self->addClassProperty( c_vi, "hw_available" );
+   self->addClassProperty( c_vi, "wm_available" );
+   self->addClassProperty( c_vi, "blit_hw" );
+   self->addClassProperty( c_vi, "blit_hw_CC" );
+   self->addClassProperty( c_vi, "blit_hw_A" );
+   self->addClassProperty( c_vi, "blit_sw" );
+   self->addClassProperty( c_vi, "blit_sw_CC" );
+   self->addClassProperty( c_vi, "blit_sw_A" );
+   self->addClassProperty( c_vi, "blit_fill" );
+   self->addClassProperty( c_vi, "video_mem" );
+   self->addClassProperty( c_vi, "vfmt" );
+
+
+   //============================================================
+   // SDL Palette Format
+   //
+   Falcon::Symbol *c_palette = self->addClass( "SDLPalette" );
+   c_palette->setWKS( true );
+   self->addClassProperty( c_palette, "ncolors" );
+   self->addClassProperty( c_palette, "colors" );
+   self->addClassMethod( c_palette, "GetColor", Falcon::Ext::SDLPalette_getColor );
+   self->addClassMethod( c_palette, "SetColor", Falcon::Ext::SDLPalette_setColor );
+
 
    //============================================================
    // SDL screen class

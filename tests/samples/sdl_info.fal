@@ -2,9 +2,9 @@
 /*
    FALCON - SDL MODULE Samples
 
-   FILE: sdl_paint.fal
+   FILE: sdl_info.fal
 
-   Shows direct painting on SDL surfaces.
+   Reads and displays video infos.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: Sun, 16 Mar 2008 21:15:18 +0100
@@ -24,33 +24,34 @@ load sdl
 
 try
    a = SDL.InitAuto( SDL.INIT_VIDEO )
-   screen = SDL.SetVideoMode( 640, 480 )
+   vi = SDL.GetVideoInfo()
+   > "Video informations:"
+   inspectShort( vi )
+   > "==============================="
+   > "Using driver: ", SDL.VideoDriverName()
+   >> "Available modes: "
+   ListModes( SDL.ListModes( nil, SDL.FULLSCREEN|SDL.HWSURFACE ) )
+   > "Preferred bit per pixels at 640x480: ", \
+      SDL.VideoModeOK( 640, 480, 8  )
+   > "==============================="
 
-   // draw a cloured band
-   band = MemBuf( 640, 4 )
-
-   for bid in [0:640]
-      band[bid] = screen.MakeColor( 150, bid%128, (bid+128)%256,  250 )
-   end
-
-   pixels = screen.pixels
-   screen.LockIfNeeded()
-   for y = 0 to 479
-      for x = 0 to 639
-         n = x + y * 640
-         pixels[ n ] = band[x]
-      end
-   end
-   screen.UnlockIfNeeded()
-
-
-   screen.UpdateRect()
-
-   > "Success! - press enter"
-   input()
 catch in e
    > "Test failed: "
    > e
 end
 
+function ListModes( modes )
+   switch modes
+      case nil
+          > "none."
+      case -1
+         > "all."
+      default
+         for item in modes
+            >> item[0], "x", item[1]
+            formiddle: >> ", "
+            forlast: > "."
+         end
+   end
+end
 /* end of file */
