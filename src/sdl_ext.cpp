@@ -433,7 +433,7 @@ FALCON_FUNC sdl_SetVideoMode( ::Falcon::VMachine *vm )
         ( i_flags != 0 && ! i_flags->isOrdinal() )
       )
    {
-       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
          extra( "N,N,[N,N]" ) ) );
       return;
    }
@@ -536,6 +536,402 @@ FALCON_FUNC sdl_GetVideoSurface( ::Falcon::VMachine *vm )
 
    vm->retval( obj );
 }
+
+/*#
+   @method SetGamma SDL
+   @brief Sets the gamma function values for the active SDL output.
+   @param red Red gamma correction value.
+   @param green Green gamma correction value.
+   @param blue Blue gamma correction value.
+   @throws SDLError if the hardware doesn't support gamma
+*/
+FALCON_FUNC sdl_SetGamma ( ::Falcon::VMachine *vm )
+{
+   Item *i_red;
+   Item *i_green;
+   Item *i_blue;
+
+   if( vm->paramCount() < 3 ||
+      ! ( i_red = vm->param(0) )->isOrdinal() ||
+      ! ( i_green = vm->param(1) )->isOrdinal() ||
+      ! ( i_blue = vm->param(2) )->isOrdinal()
+   )
+   {
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "N,N,N" ) ) );
+      return;
+   }
+
+   int res = ::SDL_SetGamma( i_red->forceNumeric(), i_green->forceNumeric(), i_blue->forceNumeric() );
+
+   if ( res == -1 )
+   {
+      vm->raiseModError( new SDLError( ErrorParam( FALCON_SDL_ERROR_BASE + 8, __LINE__ )
+         .desc( "SDL Set Gamma" )
+         .extra( SDL_GetError() ) ) );
+      return;
+   }
+}
+
+/*#
+   @method GetGammaRamp SDL
+   @brief Get Gamma ramps for this hardware.
+   @optparam aRet An array that will contain the gamma memory buffers on exit.
+   @return An array containing the three MemBufs
+   @throws SDLError if the hardware doesn't support gamma.
+
+   This functions returns three membuf that maps directly the gamma correction
+   table for the red, green and blue value.
+
+   Each membuf is a 2 bytes memory vector of 256 binary values.
+*/
+
+FALCON_FUNC sdl_GetGammaRamp ( ::Falcon::VMachine *vm )
+{
+   Item *i_arr = vm->param(0);
+
+   if( i_arr != 0 && ! i_arr->isArray() )
+   {
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "N,N,N" ) ) );
+      return;
+   }
+
+   CoreArray *arr = i_arr == 0 ? new CoreArray( vm, 3 ) : i_arr->asArray();
+   arr->length(0);
+
+   MemBuf *red_buf = new MemBuf_2( vm, 256 );
+   MemBuf *green_buf = new MemBuf_2( vm, 256 );
+   MemBuf *blue_buf = new MemBuf_2( vm, 256 );
+
+   int res = ::SDL_GetGammaRamp(
+      (Uint16 *) red_buf->data(),
+      (Uint16 *) green_buf->data(),
+      (Uint16 *) blue_buf->data()
+      );
+
+   if ( res == -1 )
+   {
+      vm->raiseModError( new SDLError( ErrorParam( FALCON_SDL_ERROR_BASE + 8, __LINE__ )
+         .desc( "SDL Get Gamma Ramp" )
+         .extra( SDL_GetError() ) ) );
+      return;
+   }
+
+   arr->append( red_buf );
+   arr->append( green_buf );
+   arr->append( blue_buf );
+
+   vm->retval( arr );
+}
+
+/*#
+   @method SetGammaRamp SDL
+   @brief Set Gamma ramps for this hardware.
+   @param redbuf A 2 bytes 256 elements memory buffer for the red channel, or nil.
+   @param greenbuf A 2 bytes 256 elements memory buffer for the blue channel, or nil.
+   @param bluebuf A 2 bytes 256 elements memory buffer for the green channel, or nil.
+   @throws SDLError if the hardware doesn't support gamma.
+
+   Each membuf is a 2 bytes memory vector of 256 binary values. If one of the channels
+   needs not to be changed, nil can be placed instead.
+
+*/
+FALCON_FUNC sdl_SetGammaRamp ( ::Falcon::VMachine *vm )
+{
+   Item *i_redmb = vm->param(0);
+   Item *i_greenmb = vm->param(1);
+   Item *i_bluemb = vm->param(2);
+
+   if( i_redmb == 0 || ( ! i_redmb->isMemBuf() && ! i_redmb->isNil() ) ||
+       i_greenmb == 0 || ( ! i_greenmb->isMemBuf() && ! i_greenmb->isNil() ) ||
+       i_bluemb == 0 || ( ! i_bluemb->isMemBuf() && ! i_bluemb->isNil() )
+   )
+   {
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "M|Nil,M|nil,M|Nil" ) ) );
+      return;
+   }
+
+   Uint16 *red, *green, *blue;
+   bool valid = true;
+   // non-nil membuf must be 2 bytes wide 256 elements
+   if( i_redmb->isNil() )
+   {
+      red = 0;
+   }
+   else {
+      MemBuf *mb = i_redmb->asMemBuf();
+      if( mb->length() != 256 || mb->wordSize() != 2 )
+         valid = false;
+      else
+         red = (Uint16 *) mb->data();
+   }
+
+   if( i_greenmb->isNil() )
+   {
+      green = 0;
+   }
+   else {
+      MemBuf *mb = i_greenmb->asMemBuf();
+      if( mb->length() != 256 || mb->wordSize() != 2 )
+         valid = false;
+      else
+         green = (Uint16 *) mb->data();
+   }
+
+   if( i_bluemb->isNil() )
+   {
+      blue = 0;
+   }
+   else {
+      MemBuf *mb = i_bluemb->asMemBuf();
+      if( mb->length() != 256 || mb->wordSize() != 2 )
+         valid = false;
+      else
+         blue = (Uint16 *) mb->data();
+   }
+
+   if( ! valid )
+   {
+      vm->raiseModError( new ParamError( ErrorParam( e_param_range, __LINE__ ) ) );
+      return;
+   }
+
+   int res = ::SDL_SetGammaRamp( red, green, blue );
+
+   if ( res == -1 )
+   {
+      vm->raiseModError( new SDLError( ErrorParam( FALCON_SDL_ERROR_BASE + 8, __LINE__ )
+         .desc( "SDL Get Gamma Ramp" )
+         .extra( SDL_GetError() ) ) );
+      return;
+   }
+}
+
+
+static void sdl_CreateRGBSurface_internal ( ::Falcon::VMachine *vm, MemBuf *mb, int flags )
+{
+   Item *i_width = 0;
+   Item *i_height = 0;
+   Item *i_depth = 0;
+
+   Uint32 redMask;
+   Uint32 greenMask;
+   Uint32 blueMask;
+   Uint32 alphaMask;
+   int depth;
+
+   int pcount = vm->paramCount();
+   bool bValid = true;
+   if ( ( pcount == 4 ) || (pcount == 8 ) )
+   {
+      if(
+         ! (i_width = vm->param(1) )->isOrdinal() ||
+         ! (i_height = vm->param(2) )->isOrdinal() ||
+         ! (i_depth = vm->param(3) )->isOrdinal()
+      )
+      {
+         bValid = false;
+      }
+      else {
+         // do we have to calculate the bitmaps?
+         depth = i_depth->forceInteger();
+
+         // check on depth
+         if ( mb != 0 && (
+              depth/8 != mb->wordSize() ||
+              mb->length() != (i_width->forceInteger() * i_height->forceInteger() ) )
+            )
+         {
+            vm->raiseModError( new ParamError( ErrorParam( e_param_range, __LINE__ ).
+               extra( "Membuf not matching sizes" ) ) );
+            return;
+         }
+         else if( pcount == 8  )
+         {
+            Item *i_red, *i_green, *i_blue, *i_alpha;
+
+            if(
+               ! (i_red = vm->param(4) )->isInteger() ||
+               ! (i_green = vm->param(5) )->isInteger() ||
+               ! (i_blue = vm->param(6) )->isInteger() ||
+               ! (i_alpha = vm->param(7) )->isInteger()
+               )
+            {
+               bValid = false;
+            }
+            else {
+               // get our data.
+               redMask = (Uint32) i_red->asInteger();
+               greenMask = (Uint32) i_green->asInteger();
+               blueMask = (Uint32) i_blue->asInteger();
+               alphaMask = (Uint32) i_alpha->asInteger();
+            }
+         }
+         else {
+            // we have to calculate the value on our own
+            uint32 base = 0;
+            uint32 colorSize = depth/4;
+            for ( int i = 0; i < colorSize; i ++ )
+            {
+               base |= 1 << i;
+            }
+
+            #if SDL_BYTEORDER == SDL_BIG_ENDIAN
+               redMask = base << (depth - colorSize);
+               blueMask = base << (depth - colorSize *2);
+               greenMask = base << (depth - colorSize *3);
+               alphaMask = base;
+            #else
+               alphaMask = base << (depth - colorSize);
+               blueMask = base << (depth - colorSize *2);
+               greenMask = base << (depth - colorSize *3);
+               redMask = base;
+            #endif
+         }
+      }
+   }
+   else {
+      bValid = false;
+   }
+
+   // invalid parameters?
+   if( ! bValid )
+   {
+      const char *extra = mb == 0 ? "I,N,N,N,[I,I,I,I]" : "M,N,N,N,[I,I,I,I]";
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( extra ) ) );
+      return;
+   }
+
+   SDL_Surface *surf;
+   if ( mb == 0 )
+      surf = SDL_CreateRGBSurface(
+            flags,
+            i_width->forceInteger(), i_height->forceInteger(), depth,
+            redMask, greenMask, blueMask, alphaMask
+         );
+   else
+      surf = SDL_CreateRGBSurfaceFrom( mb->data(),
+            i_width->forceInteger(), i_height->forceInteger(),
+            depth, mb->wordSize(),
+            redMask, greenMask, blueMask, alphaMask
+         );
+
+   // Success?
+   if ( surf == 0 )
+   {
+      vm->raiseModError( new SDLError( ErrorParam( FALCON_SDL_ERROR_BASE + 9, __LINE__ )
+         .desc( "SDL Create RGB Surface error" )
+         .extra( SDL_GetError() ) ) );
+      return;
+   }
+
+   Item *cls = vm->findWKI( "SDLSurface" );
+   fassert( cls != 0 );
+   CoreObject *obj = cls->asClass()->createInstance();
+   // if we have a membuf, store it in the right property so it stays alive
+   if ( mb != 0 )
+   {
+      obj->setProperty( "pixels", mb );
+   }
+   // set the user data AFTER, so reflectivity starts after.
+   obj->setUserData( new SDLSurfaceCarrier( vm, surf ) );
+
+   vm->retval( obj );
+}
+
+/*#
+   @method CreateRGBSurface SDL
+   @brief Creates a paintable surface
+   @param flags Creation flags.
+   @param width Width of the created buffer.
+   @param height Height of the created buffer.
+   @param depth Bit per pixel depth of the image - can be 8, 16, 24 or 32.
+   @optparam rMask Red bitmask - defaults to low address bits.
+   @optparam gMask Green bitmask - defaults to second low address bits.
+   @optparam bMask Blue bitmask - defaults to third low address bits.
+   @optparam aMask Alpha bitmask - defaults to hihest address bits.
+   @return The newly created surface.
+   @throws SDLError on creation error.
+
+   The function can be called either with 4 or 8 parameters. 8 bits per pixel modes
+   don't require bit masks, and they are ignored if provided; other modes require
+   a bitmask. If the values are not provided, this function calculates them using
+   a R,G,B,A evenly spaced bitmap, which will place the bits stored in the lowest
+   address in the red space. On big endian machines, red will be placed in the most
+   signficant bits, on little endian it will be place on the least significant bits.
+
+   You should provide your own bitmap values if you don't want alpha surfaces.
+
+   The flags can be a combination of the following:
+
+   - SDL.SWSURFACE - SDL will create the surface in system memory.
+                    This improves the performance of pixel level access,
+                    however you may not be able to take advantage of some
+                    types of hardware blitting.
+   - SDL.HWSURFACE - SDL will attempt to create the surface in video memory.
+                    This will allow SDL to take advantage of Video->Video blits
+                    (which are often accelerated).
+   - SDL.SRCCOLORKEY - This flag turns on colourkeying for blits from this surface.
+                     If SDL_HWSURFACE is also specified and colourkeyed blits are
+                     hardware-accelerated, then SDL will attempt to place the surface
+                     in video memory. Use SDL_SetColorKey to set or clear this flag
+                     after surface creation.
+   - SDL.SRCALPHA - This flag turns on alpha-blending for blits from this surface. If
+                    SDL_HWSURFACE is also specified and alpha-blending blits are
+                    hardware-accelerated, then the surface will be placed in video memory
+                    if possible. Use SDL_SetAlpha to set or clear this flag after
+                    surface creation.
+*/
+FALCON_FUNC sdl_CreateRGBSurface ( ::Falcon::VMachine *vm )
+{
+   Item *i_flags = vm->param(0);
+   if( ! i_flags->isInteger() )
+   {
+      vm->raiseModError( new ParamError( ErrorParam( e_param_range, __LINE__ ).
+         extra( "I,N,N,N,[I,I,I,I]") ) );
+   }
+   else
+   {
+      sdl_CreateRGBSurface_internal( vm, 0 , i_flags->asInteger() );
+   }
+}
+
+/*#
+   @method CreateRGBSurfaceFrom SDL
+   @brief Creates a paintable surface using existing data.
+   @param pixels Original pixels in a membuf.
+   @param width Width of the created buffer
+   @param height Height of the created buffer.
+   @param depth Bit per pixel depth of the image -- must match pixel membuf word length.
+   @optparam rMask Red bitmask - defaults to low address bits.
+   @optparam gMask Green bitmask - defaults to second low address bits.
+   @optparam bMask Blue bitmask - defaults to third low address bits.
+   @optparam aMask Alpha bitmask - defaults to hihest address bits.
+   @return The newly created surface.
+   @throws SDLError on creation error.
+
+   @see SDL.CreateRGBSurface
+*/
+FALCON_FUNC sdl_CreateRGBSurfaceFrom ( ::Falcon::VMachine *vm )
+{
+   Item *i_pixels = vm->param(0);
+   if( ! i_pixels->isMemBuf() )
+   {
+      vm->raiseModError( new ParamError( ErrorParam( e_param_range, __LINE__ ).
+         extra( "M,N,N,N,[I,I,I,I]") ) );
+   }
+   else
+   {
+      sdl_CreateRGBSurface_internal( vm, i_pixels->asMemBuf(), 0 );
+   }
+}
+
+//==================================================================
+// SDLRect class
+//
 
 /*#
    @class SDLRect

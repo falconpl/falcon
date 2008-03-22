@@ -70,6 +70,11 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    self->addClassProperty( c_sdl, "RLEACCEL" )->setInteger( SDL_RLEACCEL );
    self->addClassProperty( c_sdl, "SRCALPHA" )->setInteger( SDL_SRCALPHA );
    self->addClassProperty( c_sdl, "PREALLOC" )->setInteger( SDL_PREALLOC );
+   self->addClassProperty( c_sdl, "LOGPAL" )->setInteger( SDL_LOGPAL );
+   self->addClassProperty( c_sdl, "PHYSPAL" )->setInteger( SDL_PHYSPAL );
+   self->addClassProperty( c_sdl, "GRAB_QUERY" )->setInteger( SDL_GRAB_QUERY );
+   self->addClassProperty( c_sdl, "GRAB_OFF" )->setInteger( SDL_GRAB_OFF );
+   self->addClassProperty( c_sdl, "GRAB_ON" )->setInteger( SDL_GRAB_ON );
 
    // Init and quit
    self->addClassMethod( c_sdl, "Init", Falcon::Ext::sdl_Init );
@@ -86,6 +91,17 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    self->addClassMethod( c_sdl, "VideoDriverName", Falcon::Ext::sdl_VideoDriverName );
    self->addClassMethod( c_sdl, "ListModes", Falcon::Ext::sdl_ListModes );
    self->addClassMethod( c_sdl, "VideoModeOK", Falcon::Ext::sdl_VideoModeOK );
+   self->addClassMethod( c_sdl, "SetGamma", Falcon::Ext::sdl_SetGamma );
+   self->addClassMethod( c_sdl, "GetGammaRamp", Falcon::Ext::sdl_GetGammaRamp );
+   self->addClassMethod( c_sdl, "SetGammaRamp", Falcon::Ext::sdl_SetGammaRamp );
+   self->addClassMethod( c_sdl, "CreateRGBSurface", Falcon::Ext::sdl_CreateRGBSurface );
+   self->addClassMethod( c_sdl, "CreateRGBSurfaceFrom", Falcon::Ext::sdl_CreateRGBSurfaceFrom );
+
+   // WM
+   self->addClassMethod( c_sdl, "WM_SetCaption", Falcon::Ext::sdl_WM_SetCaption );
+   self->addClassMethod( c_sdl, "WM_GetCaption", Falcon::Ext::sdl_WM_GetCaption );
+   self->addClassMethod( c_sdl, "WM_IconifyWindow", Falcon::Ext::sdl_WM_IconifyWindow );
+   self->addClassMethod( c_sdl, "WM_GrabInput", Falcon::Ext::sdl_WM_GrabInput );
 
    // Surface
    self->addClassMethod( c_sdl, "LoadBMP", Falcon::Ext::sdl_LoadBMP );
@@ -127,7 +143,8 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    self->addClassMethod( c_surface, "FillRect", Falcon::Ext::SDLSurface_FillRect );
    self->addClassMethod( c_surface, "GetRGBA", Falcon::Ext::SDLSurface_GetRGBA );
    self->addClassMethod( c_surface, "MapRGBA", Falcon::Ext::SDLSurface_MapRGBA );
-
+   self->addClassMethod( c_surface, "SetColors", Falcon::Ext::SDLSurface_SetColors );
+   self->addClassMethod( c_surface, "SetIcon", Falcon::Ext::SDLSurface_SetIcon );
 
    //============================================================
    // SDL Pixel Format
@@ -188,6 +205,11 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    c_screen->setWKS( true );
    c_screen->getClassDef()->addInheritance( new Falcon::InheritDef( c_surface ) );
    self->addClassMethod( c_screen, "UpdateRect", Falcon::Ext::SDLScreen_UpdateRect );
+   self->addClassMethod( c_screen, "UpdateRects", Falcon::Ext::SDLScreen_UpdateRects );
+   self->addClassMethod( c_screen, "Flip", Falcon::Ext::SDLScreen_Flip );
+   self->addClassMethod( c_screen, "SetPalette", Falcon::Ext::SDLScreen_SetPalette );
+   self->addClassMethod( c_screen, "ToggleFullScreen", Falcon::Ext::SDLScreen_ToggleFullScreen );
+
 
    //============================================================
    // SDL Error class

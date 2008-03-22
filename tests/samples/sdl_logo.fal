@@ -24,6 +24,8 @@ load sdl
 
 try
    a = SDL.InitAuto( SDL.INIT_VIDEO )
+   SDL.LoadBMP("falcon-ico.bmp").SetIcon()
+   SDL.SetCaption( "Falcon logo!" )
    screen = SDL.SetVideoMode( 640, 480 )
    img = SDL.LoadBMP( "FalconLogo1.bmp" )
    img.BlitSurface( nil, screen, nil )

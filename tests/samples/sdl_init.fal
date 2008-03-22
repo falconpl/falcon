@@ -24,8 +24,9 @@ load sdl
 
 try
    a = SDL.InitAuto( SDL.INIT_VIDEO )
+   SDL.WM_SetCaption( "Falcon SDL window", "Falcon and SDL" );
    screen = SDL.SetVideoMode( 640, 480 )
-   inspect( screen )
+
    > "Success! - press enter"
    input()
 catch in e

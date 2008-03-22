@@ -24,11 +24,12 @@ load sdl
 
 try
    a = SDL.InitAuto( SDL.INIT_VIDEO )
+   SDL.WM_SetCaption( "Falcon SDL paint test - 3" )
+   SDL.LoadBMP("falcon-ico.bmp").SetIcon()
    screen = SDL.SetVideoMode( 640, 480 )
 
    // draw a cloured band
-   band = MemBuf( 640, 4 )
-
+   band = MemBuf( 640, screen.format.BytesPerPixel )
    for bid in [0:640]
       band[bid] = screen.MapRGBA( 150, bid%128, (bid+128)%256,  250 )
    end
@@ -45,7 +46,6 @@ try
 
    // make a solid rectangle
    r = SDLRect( 280, 200, 80, 80 )
-   inspect( r )
    screen.FillRect( r,
          screen.MapRGBA( 255, 255, 255, 255 ) )
 
