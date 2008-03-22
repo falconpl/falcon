@@ -2,9 +2,9 @@
 /*
    FALCON - SDL MODULE Samples
 
-   FILE: sdl_init.fal
+   FILE: sdl_logo.fal
 
-   Minimal initialization and quit test.
+   Test for minimal imaging functions.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: Sun, 16 Mar 2008 21:15:18 +0100
@@ -26,7 +26,9 @@ try
    a = SDL.InitAuto( SDL.INIT_VIDEO )
    SDL.LoadBMP("falcon-ico.bmp").SetIcon()
    SDL.SetCaption( "Falcon logo!" )
+
    screen = SDL.SetVideoMode( 640, 480 )
+
    img = SDL.LoadBMP( "FalconLogo1.bmp" )
    img.BlitSurface( nil, screen, nil )
    screen.UpdateRect()

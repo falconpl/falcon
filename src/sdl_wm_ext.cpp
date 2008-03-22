@@ -1,6 +1,6 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: sdl_ext.cpp
+   FILE: sdl_wm_ext.cpp
 
    The SDL binding support module.
    -------------------------------------------------------------------

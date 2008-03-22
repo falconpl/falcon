@@ -75,6 +75,9 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    self->addClassProperty( c_sdl, "GRAB_QUERY" )->setInteger( SDL_GRAB_QUERY );
    self->addClassProperty( c_sdl, "GRAB_OFF" )->setInteger( SDL_GRAB_OFF );
    self->addClassProperty( c_sdl, "GRAB_ON" )->setInteger( SDL_GRAB_ON );
+   self->addClassProperty( c_sdl, "ENABLE" )->setInteger( SDL_ENABLE );
+   self->addClassProperty( c_sdl, "DISABLE" )->setInteger( SDL_DISABLE);
+   self->addClassProperty( c_sdl, "QUERY" )->setInteger( SDL_QUERY );
 
    // Init and quit
    self->addClassMethod( c_sdl, "Init", Falcon::Ext::sdl_Init );
@@ -102,6 +105,12 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    self->addClassMethod( c_sdl, "WM_GetCaption", Falcon::Ext::sdl_WM_GetCaption );
    self->addClassMethod( c_sdl, "WM_IconifyWindow", Falcon::Ext::sdl_WM_IconifyWindow );
    self->addClassMethod( c_sdl, "WM_GrabInput", Falcon::Ext::sdl_WM_GrabInput );
+
+   // Cursor
+   self->addClassMethod( c_sdl, "GetCursor", Falcon::Ext::sdl_GetCursor );
+   self->addClassMethod( c_sdl, "ShowCursor", Falcon::Ext::sdl_ShowCursor );
+   self->addClassMethod( c_sdl, "MakeCursor", Falcon::Ext::sdl_MakeCursor );
+   self->addClassMethod( c_sdl, "CreateCursor", Falcon::Ext::sdl_CreateCursor );
 
    // Surface
    self->addClassMethod( c_sdl, "LoadBMP", Falcon::Ext::sdl_LoadBMP );
@@ -186,7 +195,6 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    self->addClassProperty( c_vi, "video_mem" );
    self->addClassProperty( c_vi, "vfmt" );
 
-
    //============================================================
    // SDL Palette Format
    //
@@ -197,6 +205,12 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    self->addClassMethod( c_palette, "GetColor", Falcon::Ext::SDLPalette_getColor );
    self->addClassMethod( c_palette, "SetColor", Falcon::Ext::SDLPalette_setColor );
 
+   //============================================================
+   // SDL Cursor
+   //
+   Falcon::Symbol *c_cursor = self->addClass( "SDLCursor", false ); // not instantiable
+   c_cursor->setWKS( true );
+   self->addClassMethod( c_cursor, "SetCursor", Falcon::Ext::SDLCursor_SetCursor );
 
    //============================================================
    // SDL screen class

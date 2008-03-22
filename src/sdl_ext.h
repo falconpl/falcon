@@ -89,6 +89,14 @@ FALCON_FUNC SDLScreen_Flip( ::Falcon::VMachine *vm );
 FALCON_FUNC SDLScreen_SetPalette( ::Falcon::VMachine *vm );
 FALCON_FUNC SDLScreen_ToggleFullScreen( ::Falcon::VMachine *vm );
 
+// Cursor
+FALCON_FUNC sdl_GetCursor( ::Falcon::VMachine *vm );
+FALCON_FUNC sdl_ShowCursor( ::Falcon::VMachine *vm );
+FALCON_FUNC sdl_MakeCursor( ::Falcon::VMachine *vm );
+FALCON_FUNC sdl_CreateCursor( ::Falcon::VMachine *vm );
+
+FALCON_FUNC SDLCursor_SetCursor( ::Falcon::VMachine *vm );
+
 // Palette
 FALCON_FUNC SDLPalette_getColor( ::Falcon::VMachine *vm );
 FALCON_FUNC SDLPalette_setColor( ::Falcon::VMachine *vm );

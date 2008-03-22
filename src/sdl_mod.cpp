@@ -130,6 +130,16 @@ UserData *SDLSurfaceCarrier::clone() const
 }
 
 //==========================================
+// Cusror carrier
+//
+
+SDLCursorCarrier::~SDLCursorCarrier()
+{
+   if ( m_bCreated )
+      SDL_FreeCursor( m_cursor );
+}
+
+//==========================================
 // Utilities
 //
 

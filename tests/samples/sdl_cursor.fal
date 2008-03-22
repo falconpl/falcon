@@ -1,0 +1,69 @@
+#!/usr/bin/falcon
+/*
+   FALCON - SDL MODULE Samples
+
+   FILE: sdl_cursor.fal
+
+   Test for cursor functions
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Sun, 16 Mar 2008 21:15:18 +0100
+   Last modified because:
+
+   -------------------------------------------------------------------
+   (C) Copyright 2008: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+   In order to use this file in its compiled form, this source or
+   part of it you have to read, understand and accept the conditions
+   that are stated in the LICENSE file that comes boundled with this
+   package.
+*/
+
+load sdl
+
+try
+   a = SDL.InitAuto( SDL.INIT_VIDEO )
+   SDL.LoadBMP("falcon-ico.bmp").SetIcon()
+   SDL.WM_SetCaption( "Falcon SDL - Changing your cursor." )
+   screen = SDL.SetVideoMode( 640, 480 )
+
+   oldCursor = SDL.GetCursor()
+
+   strImage = [
+         "         @XXX@          ",
+         "         @XXX@          ",
+         "         @XXX@          ",
+         "         @XXX@          ",
+         "         @XXX@          ",
+         "         @X.X@          ",
+         "  @@@@@@@@X.X@@@@@@@@   ",
+         "  XXXXXXXXX.XXXXXXXXX.  ",
+         "  XXXXXX.......XXXXXX.  ",
+         "  XXXXXXXXX.XXXXXXXXX.  ",
+         "  @@@@@@@@X.X@@@@@@@@.  ",
+         "         @X.X@........  ",
+         "         @XXX@.         ",
+         "         @XXX@.         ",
+         "         @XXX@.         ",
+         "         @XXX@.         ",
+         "         @XXX@.         ",
+         "          ....          " ]
+
+   SDL.MakeCursor( strImage, 12, 7 ).SetCursor()
+
+   // draw something to see how's cool.
+   r = SDLRect( 100, 80, 440, 300 )
+   screen.FillRect( r, screen.MapRGBA( 80, 50, 230, 255 ) )
+   screen.UpdateRect()
+
+   > "Success! - press enter"
+   input()
+
+   oldCursor.SetCursor()
+catch in e
+   > "Test failed: "
+   > e
+end
+
+/* end of file */

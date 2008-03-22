@@ -1,0 +1,67 @@
+#!/usr/bin/falcon
+/*
+   FALCON - SDL MODULE Samples
+
+   FILE: sdl_paint.fal
+
+   Shows direct painting on SDL surfaces.
+   Does the same things as paint, but it uses a software surface to blit
+   repeatedly the same buffer.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Sun, 16 Mar 2008 21:15:18 +0100
+   Last modified because:
+
+   -------------------------------------------------------------------
+   (C) Copyright 2008: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+   In order to use this file in its compiled form, this source or
+   part of it you have to read, understand and accept the conditions
+   that are stated in the LICENSE file that comes boundled with this
+   package.
+*/
+
+load sdl
+
+try
+   a = SDL.InitAuto( SDL.INIT_VIDEO )
+   SDL.LoadBMP("falcon-ico.bmp").SetIcon()
+   SDL.WM_SetCaption( "Falcon SDL paint test - 2" )
+   screen = SDL.SetVideoMode( 640, 480 )
+
+   // draw a cloured band - first hardware
+   try
+      band = SDL.CreateRGBSurface( SDL.HWSURFACE, 640, 1, 32 )
+   catch SDLError
+      > "Hardware surface creation failed, try with software creation."
+      // then software -- let it fail if it fails
+      band = SDL.CreateRGBSurface( SDL.SWSURFACE, 640, 1, 32 )
+   end
+
+   pixels = band.pixels
+   for bid in [0:640]
+      pixels[bid] = band.MapRGBA( 150, bid%128, (bid+128)%256,  250 )
+   end
+
+   rect = SDLRect( 0,0,640,1)
+   for y = 0 to 479
+      rect.y = y
+      band.BlitSurface( nil, screen, rect )
+   end
+
+   // make a solid rectangle
+   r = SDLRect( 280, 200, 80, 80 )
+   screen.FillRect( r,
+         screen.MapRGBA( 255, 255, 255, 255 ) )
+
+   screen.UpdateRect()
+
+   > "Success! - press enter"
+   input()
+catch in e
+   > "Test failed: "
+   > e
+end
+
+/* end of file */

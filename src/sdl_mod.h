@@ -79,6 +79,21 @@ public:
    virtual UserData *clone() const;
 };
 
+/** Opaque Cursor structure carrier */
+class SDLCursorCarrier: public UserData
+{
+public:
+   SDL_Cursor *m_cursor;
+   bool m_bCreated;
+
+   SDLCursorCarrier( SDL_Cursor *cursor, bool bCreated = true ):
+      m_cursor( cursor ),
+      m_bCreated( bCreated )
+   {}
+
+   ~SDLCursorCarrier();
+};
+
 //==========================================
 // Utilities
 //
