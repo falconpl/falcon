@@ -381,6 +381,19 @@ public:
       else
          m_base.bits.flags &= ~flagIsOob;
    }
+   /** Set this item as a lightweight pointer.
+
+      Lightweight pointers are used in "perfect reflection".
+      They point to a certain data memory, which exists beyond
+      their scope, and once queried they can create adequate
+      items either directly or through a builder function.
+
+      This version of the function sets the target type to be of a certain size,
+      the target data is turned into a
+   */
+   void setLightPointer( void *memory, uint8 size )
+   {
+   }
 
    /** Set this item as a user-defined pointers.
       Used for some two-step extension functions.

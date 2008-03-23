@@ -559,7 +559,7 @@ bool ErrorCarrier::isReflective() const
    return true;
 }
 
-void ErrorCarrier::getProperty( const String &propName, Item &prop )
+void ErrorCarrier::getProperty( VMachine *, const String &propName, Item &prop )
 {
    if ( m_error == 0 )
       return;
@@ -587,7 +587,7 @@ void ErrorCarrier::getProperty( const String &propName, Item &prop )
 
 }
 
-void ErrorCarrier::setProperty( const String &propName, Item &prop )
+void ErrorCarrier::setProperty( VMachine *, const String &propName, Item &prop )
 {
    if ( m_error == 0 )
       return;

@@ -97,6 +97,7 @@ bool Path::analyze( bool isWin )
          if ( m_path.getCharAt( 0 ) != '/' )
          {
             p++;
+            len++;
             m_path.prepend( '/' );
          }
 
@@ -105,8 +106,8 @@ bool Path::analyze( bool isWin )
          // reset other starts, just in case.
          m_pathStart = String::npos;
          m_pathEnd = String::npos;
-         m_fileStart = String::npos;
-         m_fileEnd = String::npos;
+         m_fileStart = p+1; // file may actually start here...
+         m_fileEnd = String::npos; // but with this we ensure it's not used if not needed
          m_extStart = String::npos;
       }
       else if ( (chr == '\\' && isWin) || chr == '/' )
@@ -504,7 +505,7 @@ void Path::join( const String &loc, const String &name, const String &ext )
    m_path = loc;
    if( loc.length() !=  0 )
    {
-      if( loc.getCharAt( loc.length() - 1 )  != '/' && name.length() != 0 )
+      if( loc.getCharAt( loc.length() - 1 )  != '/' )
          m_path += '/';
    }
 
@@ -535,7 +536,7 @@ void Path::join( const String &res, const String &loc, const String &name, const
 
    if( loc.length() !=  0 )
    {
-      if( loc.getCharAt( loc.length() - 1 )  != '/' && name.length() != 0 )
+      if( loc.getCharAt( loc.length() - 1 )  != '/' )
          m_path += '/';
    }
 

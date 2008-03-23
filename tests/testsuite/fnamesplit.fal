@@ -21,11 +21,12 @@ if ext != "ext": failure( "Extension spec" )
 
 // mount it back
 complete = fileNameMerge( disk, path, file, ext )
-if complete != "C:/a/path/to/a/file.ext": failure( "Mouting back" )
+if complete != "/C:/a/path/to/a/file.ext": failure( "Mouting back" )
 
 // several combi
 disk, path, file, ext = fileNameSplit( "/a/path/to/a/file.ext" )
-if disk != nil: failure( "Disk or server spec - 2" )
+
+if disk != "": failure( "Disk or server spec - 2" )
 if path != "/a/path/to/a": failure( "Path spec - 2" )
 if file != "file": failure( "File spec - 2" )
 if ext != "ext": failure( "Extension spec - 2" )
@@ -34,8 +35,8 @@ complete = fileNameMerge( disk, path, file, ext )
 if complete != "/a/path/to/a/file.ext": failure( "Mouting back - 2" )
 
 disk, path, file, ext = fileNameSplit( "file.ext" )
-if disk != nil: failure( "Disk or server spec - 3" )
-if path != nil: failure( "Path spec - 3" )
+if disk != "": failure( "Disk or server spec - 3" )
+if path != "": failure( "Path spec - 3" )
 if file != "file": failure( "File spec - 3" )
 if ext != "ext": failure( "Extension spec - 3" )
 
@@ -43,20 +44,21 @@ complete = fileNameMerge( disk, path, file, ext )
 if complete != "file.ext": failure( "Mouting back - 3" )
 
 disk, path, file, ext = fileNameSplit( "C:file.ext" )
+
 if disk != "C": failure( "Disk or server spec - 4" )
-if path != nil: failure( "Path spec - 4" )
+if path != "": failure( "Path spec - 4" )
 if file != "file": failure( "File spec - 4" )
 if ext != "ext": failure( "Extension spec - 4" )
 
 complete = fileNameMerge( disk, path, file, ext )
-if complete != "C:file.ext": failure( "Mouting back - 4" )
+if complete != "/C:file.ext": failure( "Mouting back - 4" )
 
 disk, path, file, ext = fileNameSplit( "C:/a/path/" )
 if disk != "C": failure( "Disk or server spec - 5" )
 if path != "/a/path": failure( "Path spec - 5" )
 
 complete = fileNameMerge( disk, path )
-if complete != "C:/a/path/": failure( "Mouting back - 5" )
+if complete != "/C:/a/path/": failure( "Mouting back - 5" )
 
 complete = fileNameMerge( nil, path )
 if complete != "/a/path/": failure( "Mouting back - 6" )

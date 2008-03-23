@@ -185,7 +185,7 @@ public:
       m_user_data = data;
       // we need to record this separately as reclaim order is not granted,
       // so the shared data may be collected right before some of its users.
-      m_user_data_shared = data->shared();
+      m_user_data_shared = data != 0 ? data->shared() : false;
    }
 
    /** Creates a shallow copy of this item.

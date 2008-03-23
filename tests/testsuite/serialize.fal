@@ -34,7 +34,6 @@ try
    while item != "last"
       item = deserialize( stream )
       count ++
-      inspect( item )
       if count == 1 and item != "Hello world": failure( "first item" )
       if count == 2 and item != 1: failure( "second item" )
       if count == 3 and item != nil: failure( "third item" )

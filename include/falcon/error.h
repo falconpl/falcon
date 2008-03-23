@@ -654,8 +654,8 @@ public:
 
    virtual ~ErrorCarrier();
    virtual bool isReflective() const;
-   virtual void getProperty( const String &propName, Item &prop );
-   virtual void setProperty( const String &propName, Item &prop );
+   virtual void getProperty( VMachine *vm, const String &propName, Item &prop );
+   virtual void setProperty( VMachine *vm, const String &propName, Item &prop );
 
    Error *error() const { return m_error; }
 };

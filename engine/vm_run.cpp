@@ -589,8 +589,8 @@ void opcodeHandler_INC( register VMachine *vm )
 
    switch( operand->type() )
    {
-      case FLC_ITEM_INT: operand->setInteger( operand->asInteger() + 1 ); break;
-      case FLC_ITEM_NUM: operand->setNumeric( operand->asNumeric() + 1.0 ); break;
+      case FLC_ITEM_INT: *operand = operand->asInteger() + 1; break;
+      case FLC_ITEM_NUM: *operand = operand->asNumeric() + 1.0; break;
       default:
          vm->raiseError( e_invop, "INC" );
    }
@@ -603,8 +603,8 @@ void opcodeHandler_DEC( register VMachine *vm )
 
    switch( operand->type() )
    {
-      case FLC_ITEM_INT: operand->setInteger( operand->asInteger() - 1 ); break;
-      case FLC_ITEM_NUM: operand->setNumeric( operand->asNumeric() - 1.0 ); break;
+      case FLC_ITEM_INT: *operand = operand->asInteger() - 1; break;
+      case FLC_ITEM_NUM: *operand = operand->asNumeric() - 1.0; break;
       default:
          vm->raiseError( e_invop, "DEC" );
    }

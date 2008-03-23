@@ -131,8 +131,8 @@ public:
    friend void Sys::Time::timestampFromSystemTime( const SystemTime &sys_time, TimeStamp &ts );
 
    virtual bool isReflective() const;
-   virtual void getProperty( const String &propName, Item &prop );
-   virtual void setProperty( const String &propName, Item &prop );
+   virtual void getProperty( VMachine *, const String &propName, Item &prop );
+   virtual void setProperty( VMachine *, const String &propName, Item &prop );
 
    virtual UserData *clone() const;
 };

@@ -670,7 +670,7 @@ bool TimeStamp::isReflective() const
    return true;
 }
 
-void TimeStamp::getProperty( const String &propName, Item &prop )
+void TimeStamp::getProperty( VMachine *, const String &propName, Item &prop )
 {
    if( propName == "year" )
    {
@@ -696,7 +696,7 @@ void TimeStamp::getProperty( const String &propName, Item &prop )
    }
 }
 
-void TimeStamp::setProperty( const String &propName, Item &prop )
+void TimeStamp::setProperty( VMachine *, const String &propName, Item &prop )
 {
    if( propName == "year" )
    {
