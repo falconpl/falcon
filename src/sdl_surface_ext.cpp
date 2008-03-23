@@ -709,7 +709,7 @@ FALCON_FUNC SDLScreen_UpdateRect( ::Falcon::VMachine *vm )
    }
    else if ( vm->paramCount() == 1 )
    {
-      Item *i_rect = vm->param(1);
+      Item *i_rect = vm->param(0);
       SDL_Rect r;
 
       if( ! i_rect->isObject() || ! ObjectToRect( i_rect->asObject(), r ) )

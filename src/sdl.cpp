@@ -79,6 +79,26 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    self->addClassProperty( c_sdl, "DISABLE" )->setInteger( SDL_DISABLE);
    self->addClassProperty( c_sdl, "QUERY" )->setInteger( SDL_QUERY );
 
+   self->addClassProperty( c_sdl, "APPMOUSEFOCUS" )->setInteger( SDL_APPMOUSEFOCUS );
+   self->addClassProperty( c_sdl, "APPINPUTFOCUS" )->setInteger( SDL_APPINPUTFOCUS );
+   self->addClassProperty( c_sdl, "APPACTIVE" )->setInteger( SDL_APPACTIVE );
+
+   self->addClassProperty( c_sdl, "PRESSED" )->setInteger( SDL_PRESSED );
+   self->addClassProperty( c_sdl, "RELEASED" )->setInteger( SDL_RELEASED );
+   self->addClassProperty( c_sdl, "HAT_CENTERED" )->setInteger( SDL_HAT_CENTERED );
+   self->addClassProperty( c_sdl, "HAT_UP" )->setInteger( SDL_HAT_UP );
+   self->addClassProperty( c_sdl, "HAT_RIGHT" )->setInteger( SDL_HAT_RIGHT );
+   self->addClassProperty( c_sdl, "HAT_DOWN" )->setInteger( SDL_HAT_DOWN );
+   self->addClassProperty( c_sdl, "HAT_LEFT" )->setInteger( SDL_HAT_LEFT );
+   self->addClassProperty( c_sdl, "HAT_RIGHTUP" )->setInteger( SDL_HAT_RIGHTUP );
+   self->addClassProperty( c_sdl, "HAT_RIGHTDOWN" )->setInteger( SDL_HAT_RIGHTDOWN );
+   self->addClassProperty( c_sdl, "HAT_LEFTUP" )->setInteger( SDL_HAT_LEFTUP );
+   self->addClassProperty( c_sdl, "HAT_LEFTDOWN" )->setInteger( SDL_HAT_LEFTDOWN );
+
+   self->addClassProperty( c_sdl, "BUTTON_LEFT" )->setInteger( SDL_BUTTON_LEFT );
+   self->addClassProperty( c_sdl, "BUTTON_MIDDLE" )->setInteger( SDL_BUTTON_MIDDLE );
+   self->addClassProperty( c_sdl, "BUTTON_RIGHT" )->setInteger( SDL_BUTTON_RIGHT );
+
    // Init and quit
    self->addClassMethod( c_sdl, "Init", Falcon::Ext::sdl_Init );
    self->addClassMethod( c_sdl, "WasInit", Falcon::Ext::sdl_WasInit );
@@ -114,6 +134,9 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
 
    // Surface
    self->addClassMethod( c_sdl, "LoadBMP", Falcon::Ext::sdl_LoadBMP );
+
+   // Events
+   self->addClassMethod( c_sdl, "PushUserEvent", Falcon::Ext::SDLEventHandler_PushUserEvent );
 
     //============================================================
    // SDL rectangle class

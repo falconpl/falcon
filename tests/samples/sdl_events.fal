@@ -1,0 +1,121 @@
+#!/usr/bin/falcon
+/*
+   FALCON - SDL MODULE Samples
+
+   FILE: sdl_events.fal
+
+   Show minimal management of events.
+   This small program also shows how Falcon coroutines and SDL events
+   can interact.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Sun, 16 Mar 2008 21:15:18 +0100
+   Last modified because:
+
+   -------------------------------------------------------------------
+   (C) Copyright 2008: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+   In order to use this file in its compiled form, this source or
+   part of it you have to read, understand and accept the conditions
+   that are stated in the LICENSE file that comes boundled with this
+   package.
+*/
+
+load sdl
+
+object MyEventManager from SDLEventHandler
+   quitRequest = false
+
+   function onMouseMotion( state, x, y, xrel, yrel )
+      >> "X=",x, " Y=",y, " Xrel=", xrel, " YRel=",yrel, "       \r"
+   end
+
+   function onQuit( state, x, y, xrel, yrel )
+      global quitRequest
+      > strReplicate( " ", 60 )
+      > "== Quit! =="
+      self.quitRequest = true
+   end
+
+   function onExpose()
+      global screen
+      screen.UpdateRect()
+   end
+
+   function onUserEvent( code, item )
+      > item, strReplicate( " ", 60 )
+   end
+end
+
+
+//==============================================
+// Coroutine to display a blinking cursor
+//
+
+function blinker( screen )
+   r = SDLRect( 280, 200, 80, 80 )
+   black = screen.MapRGBA( 0, 0, 0, 0 )
+   white = screen.MapRGBA( 255, 255, 255, 255 )
+   color = white
+
+   time = 0
+   while not MyEventManager.quitRequest
+      sleep( 0.8 )
+      color = (color = white ? black : white )
+      screen.FillRect( r, color )
+      screen.UpdateRect( r )
+      time ++
+      if time > 8
+         time = 0
+         SDLEventHandler.PushUserEvent( 0, "Reset..." )
+      end
+   end
+end
+
+//==============================================
+// Main program
+//
+
+try
+   a = SDL.InitAuto( SDL.INIT_VIDEO )
+   SDL.LoadBMP("falcon-ico.bmp").SetIcon()
+   SDL.WM_SetCaption( "Falcon SDL Event Handler Test" )
+   screen = SDL.SetVideoMode( 640, 480 )
+
+   // draw a cloured band - first hardware
+   try
+      band = SDL.CreateRGBSurface( SDL.HWSURFACE, 640, 1, 32 )
+   catch SDLError
+      > "Hardware surface creation failed, try with software creation."
+      // then software -- let it fail if it fails
+      band = SDL.CreateRGBSurface( SDL.SWSURFACE, 640, 1, 32 )
+   end
+
+   pixels = band.pixels
+   for bid in [0:640]
+      pixels[bid] = band.MapRGBA( 150, bid%128, (bid+128)%256,  250 )
+   end
+
+   rect = SDLRect( 0,0,640,1)
+   for y = 0 to 479
+      rect.y = y
+      band.BlitSurface( nil, screen, rect )
+   end
+   screen.UpdateRect()
+
+   // make a solid rectangle
+   launch blinker( screen )
+   > "Success! - Now start moving the mouse."
+   > "Click the X on the bar to quit the app."
+
+   while not MyEventManager.quitRequest
+      MyEventManager.WaitEvent()
+   end
+
+catch in e
+   > "Test failed: "
+   > e
+end
+
+/* end of file */

@@ -85,6 +85,10 @@ namespace Ext {
    - SDL.INIT_JOYSTICK: Open joystick device.
    - SDL.INIT_EVERYTHING: ... initialize everything...
    - SDL.INIT_NOPARACHUTE: Do not intercept application critical signals (forced shutdowns).
+
+   As Falcon strings and character manipulation is mainly unicode, this init method automatically
+   enables SDL unicode in event generation. If this is not desired, it is possible to call
+   @a SDL.EnableUNICODE to disable it after init.
 */
 FALCON_FUNC sdl_Init( ::Falcon::VMachine *vm )
 {
@@ -104,6 +108,9 @@ FALCON_FUNC sdl_Init( ::Falcon::VMachine *vm )
          .desc( "SDL Error" )
          .extra( SDL_GetError() ) ) );
    }
+
+   // Falcon is all about unicode.
+   SDL_EnableUNICODE( 1 );
 }
 
 /*#
