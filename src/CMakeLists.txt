@@ -16,6 +16,7 @@ ADD_LIBRARY( sdl MODULE
    sdl.cpp
    sdl_ext.cpp
    sdl_cursor_ext.cpp
+   sdl_events_ext.cpp
    sdl_wm_ext.cpp
    sdl_surface_ext.cpp
    sdl_mod.cpp

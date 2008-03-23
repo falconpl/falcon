@@ -224,6 +224,10 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    self->addClassMethod( c_screen, "SetPalette", Falcon::Ext::SDLScreen_SetPalette );
    self->addClassMethod( c_screen, "ToggleFullScreen", Falcon::Ext::SDLScreen_ToggleFullScreen );
 
+   //============================================================
+   // Event subsystem
+   //
+   Falcon::Ext::declare_events( self );
 
    //============================================================
    // SDL Error class
