@@ -138,6 +138,53 @@ public:
    void setBaseClass( const Symbol *sym ) { m_val_type = t_base; m_value.val_sym = sym; }
    void setReference( const Symbol *sym ) { m_val_type = t_reference; m_value.val_sym = sym; }
 
+   /** Declares this vardef to be reflective.
+      This means this vardef is relative to a C or C++ structure that
+      can be directly filled, or that can fill directly, data from
+      and to CoreObjects instances.
+
+      VarDefs may represent class properties. When the class defined
+      by the vardefs is istantiated, the reflectivity information
+      passes to the properties in the final core object, and they
+      can be used to transfer automatically data to and from
+      C structures through CoreObject::configureFrom() and
+      CoreObject::configureTo().
+
+      Example:
+
+      \code
+         Symbol *someClass = self->addClass( "SomeClass" );
+         someClass->setWKS( true );
+         some_c_structure cstruct;
+
+         self->addClassProperty( someClass, "field1" )->
+            setReflective( (uint16)(&cstruct.field1 - &cstruct), // offset of the field
+            sizeof( cstruct.field1 ), // size of the field; 1,2,4 or 8 bytes
+            true ); //signed or unsigned data.
+
+         // ... later on, in the program...
+         // when the application wants to pass the data to a falcon program:
+
+         CoreObject *BuildFalconObjectFromStruct( VMachine *vm, const some_c_structure &cstruct )
+         {
+            CoreClass *cls = vm->findWKI( "SomeClass" );
+            CoreObject *myobject = cls->createInstance();
+            myobject->configureFrom( &cstruct );
+            return myobject;
+         }
+
+         // And when we want to read back the data...
+
+         void ReadBackData( some_c_structure &cstruct, CoreObject *co );
+         {
+            co->configureTo( &cstruct );
+         }
+      \endcode
+
+      \param offset distance from base data of the reflective data
+      \param size size of reflective binary data
+      \param is True is signed, false if signed.
+   */
    void setReflective( uint16 offset, uint16 size, bool is = false ) {
       m_val_type = t_reflective;
       m_value.val_reflect.offset = offset;
@@ -145,6 +192,30 @@ public:
       m_value.val_reflect.isSigned = is;
    }
 
+   /** Declares this vardef to be reflective.
+      This is just a shortcut that calculates the offset distance between
+      the data (base address) and the dest (field address).
+
+      So, it actually calls setReflective( uint16, uint16, bool ),
+      passing (dest - data) as offset.
+      Example:
+      \code
+         Symbol *someClass = self->addClass( "SomeClass" );
+
+         some_c_structure cstruct;
+
+         self->addClassProperty( someClass, "field1" )->
+            setReflective( &cstruct,         // base address of a structure
+                           &cstruct.field1,  // position of the field in that structure
+                           sizeof( cstruct.field1 ), // size of the field; 1,2,4 or 8 bytes
+                           true ); //signed or unsigned data.
+      \endcode
+
+      \param data base data address for the reflective field
+      \param dest address of a field in the structure
+      \param size size of reflective binary data
+      \param is true is signed, false if signed.
+   */
    void setReflective( void *data, void *dest, uint16 size, bool is = false )
    {
       byte *p1 = (byte *) data;
