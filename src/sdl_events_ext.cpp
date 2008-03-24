@@ -932,8 +932,8 @@ FALCON_FUNC SDLEventHandler_WaitEvent( VMachine *vm )
    @optparam ... Other parameters that vary depending on the event type
    @return true on success, false if the event queue is full
 
-   This is a static method.
-   @todo
+   @note Not yet implemented.
+
 */
 
 FALCON_FUNC SDLEventHandler_PushEvent( VMachine *vm )
@@ -1342,7 +1342,7 @@ FALCON_FUNC SDLMouseState_Refresh( VMachine *vm )
 }
 
 /*#
-   @method Refresh SDLMouseState
+   @method PumpAndRefresh SDLMouseState
    @brief Peeks incoming events into SDL and then refresh current mouse position and status.
 
    This method internally performs a @a SDL.PumpEvents call before
