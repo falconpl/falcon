@@ -111,8 +111,21 @@ FALCON_FUNC SDLEventHandler_WaitEvent( VMachine *vm );
 FALCON_FUNC SDLEventHandler_PushEvent( VMachine *vm );
 FALCON_FUNC SDLEventHandler_PushUserEvent( VMachine *vm );
 
-FALCON_FUNC SDL_EventState( VMachine *vm );
+FALCON_FUNC sdl_PumpEvents( VMachine *vm );
+FALCON_FUNC sdl_EventState( VMachine *vm );
+FALCON_FUNC sdl_GetKeyState( VMachine *vm );
+FALCON_FUNC sdl_GetModState( VMachine *vm );
+FALCON_FUNC sdl_SetModState( VMachine *vm );
+FALCON_FUNC sdl_GetKeyName( VMachine *vm );
+FALCON_FUNC sdl_EnableUNICODE( VMachine *vm );
+FALCON_FUNC sdl_EnableKeyRepeat( VMachine *vm );
+FALCON_FUNC sdl_GetAppState( VMachine *vm );
+FALCON_FUNC sdl_JoystickEventState( VMachine *vm );
+FALCON_FUNC sdl_JoystickUpdate( VMachine *vm );
 
+// class SDLMouseState
+FALCON_FUNC SDLMouseState_Refresh( VMachine *vm );
+FALCON_FUNC SDLMouseState_PumpAndRefresh( VMachine *vm );
 
 }
 }

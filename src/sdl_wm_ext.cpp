@@ -95,7 +95,7 @@ FALCON_FUNC sdl_WM_GetCaption ( ::Falcon::VMachine *vm )
 /*#
    @method WM_IconifyWindow SDL
    @brief Get Caption for SDL window and for window icon.
-   @throw SDLError if the window cannot be iconified.
+   @raise SDLError if the window cannot be iconified.
 */
 FALCON_FUNC sdl_WM_IconifyWindow ( ::Falcon::VMachine *vm )
 {
@@ -108,7 +108,7 @@ FALCON_FUNC sdl_WM_IconifyWindow ( ::Falcon::VMachine *vm )
 }
 
 /*#
-   @method WM_IconifyWindow SDL
+   @method WM_GrabInput SDL
    @optparam grab Grab request.
    @brief Grabs window and mouse input.
    @return Current grab status.

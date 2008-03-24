@@ -99,6 +99,8 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    self->addClassProperty( c_sdl, "BUTTON_LEFT" )->setInteger( SDL_BUTTON_LEFT );
    self->addClassProperty( c_sdl, "BUTTON_MIDDLE" )->setInteger( SDL_BUTTON_MIDDLE );
    self->addClassProperty( c_sdl, "BUTTON_RIGHT" )->setInteger( SDL_BUTTON_RIGHT );
+   self->addClassProperty( c_sdl, "DEFAULT_REPEAT_DELAY" )->setInteger( SDL_DEFAULT_REPEAT_DELAY );
+   self->addClassProperty( c_sdl, "DEFAULT_REPEAT_INTERVAL" )->setInteger( SDL_DEFAULT_REPEAT_INTERVAL );
 
    // Init and quit
    self->addClassMethod( c_sdl, "Init", Falcon::Ext::sdl_Init );
@@ -139,7 +141,17 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    // Events
    self->addClassMethod( c_sdl, "PushEvent", Falcon::Ext::SDLEventHandler_PushEvent );
    self->addClassMethod( c_sdl, "PushUserEvent", Falcon::Ext::SDLEventHandler_PushUserEvent );
-   self->addClassMethod( c_sdl, "EventState", Falcon::Ext::SDL_EventState);
+   self->addClassMethod( c_sdl, "PumpEvents", Falcon::Ext::sdl_PumpEvents);
+   self->addClassMethod( c_sdl, "EventState", Falcon::Ext::sdl_EventState);
+   self->addClassMethod( c_sdl, "GetKeyState", Falcon::Ext::sdl_GetKeyState);
+   self->addClassMethod( c_sdl, "GetModState", Falcon::Ext::sdl_GetModState);
+   self->addClassMethod( c_sdl, "SetModState", Falcon::Ext::sdl_SetModState);
+   self->addClassMethod( c_sdl, "GetKeyName", Falcon::Ext::sdl_GetKeyName);
+   self->addClassMethod( c_sdl, "EnableUNICODE", Falcon::Ext::sdl_EnableUNICODE);
+   self->addClassMethod( c_sdl, "EnableKeyRepeat", Falcon::Ext::sdl_EnableKeyRepeat);
+   self->addClassMethod( c_sdl, "GetAppState", Falcon::Ext::sdl_GetAppState);
+   self->addClassMethod( c_sdl, "JoystickEventState", Falcon::Ext::sdl_JoystickEventState);
+   self->addClassMethod( c_sdl, "JoystickUpdate", Falcon::Ext::sdl_JoystickUpdate);
 
     //============================================================
    // SDL rectangle class

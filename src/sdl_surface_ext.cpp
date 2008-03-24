@@ -530,7 +530,7 @@ FALCON_FUNC SDLSurface_FillRect( ::Falcon::VMachine *vm )
    @method GetRGBA SDLSurface
    @brief Decomposes a given pixel value to RGBA values.
    @param color multibyte value of a color
-   @optparm retArray An array that is used to store the desired values.
+   @optparam retArray An array that is used to store the desired values.
    @return a 4 element array (Red, Green, Blue and Alpha).
    @raise ParamError if color is out of index in palette based images
 
@@ -912,7 +912,7 @@ FALCON_FUNC SDLScreen_ToggleFullScreen ( ::Falcon::VMachine *vm )
 */
 
 /*#
-   @method SetColor SDLPalette
+   @method GetColor SDLPalette
    @brief Gets a color in the image palette.
    @param colorIndex Index of the color in the palette.
    @optparam colArray Array of that will hold red, green and blue values.

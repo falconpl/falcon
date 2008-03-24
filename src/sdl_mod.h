@@ -105,6 +105,13 @@ CoreObject *MakePixelFormatInst( VMachine *vm, SDLSurfaceCarrier *carrier, ::SDL
 bool ObjectToPixelFormat( CoreObject *obj, ::SDL_PixelFormat *fmt );
 CoreObject *MakeVideoInfo( VMachine *vm, const ::SDL_VideoInfo *info );
 
+typedef struct tag_sdl_mouse_state
+{
+   int state;
+   int x, y;
+   int xrel, yrel;
+} sdl_mouse_state;
+
 }
 }
 #endif

@@ -350,8 +350,6 @@ FALCON_FUNC sdl_CreateCursor( ::Falcon::VMachine *vm )
    vm->retval( obj );
 }
 
-
-
 /*#
    @class SDLCursor
    @brief Cursor representation for SDL.

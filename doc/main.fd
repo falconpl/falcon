@@ -2,6 +2,32 @@
    @main Falcon SDL module
 
    This is the Falcon SDL module reference.
+
+   SDL (Simple DirectMedia Layer) is one of the most known and used libraries
+   for graphic application development.
+
+   The SDL library can be found at <a target="_new" href="http://www.libsdl.org/">http://www.libsdl.org</a>.
+   Falcon SDL binding provides an extremely fast interface to the SDL library for Falcon
+   programs.
+
+   @section Forewords
+
+   The SDL Falcon module tries to stick with SDL interface and conventions
+   whenever possible. However, in some cases where Falcon programming language
+   provides structures and solutions that are better suited to perform certain
+   tasks, the interface may diverge from the original one.
+
+   The most significative case is the @a SDLSurface class and its derived classes
+   that encapsulate many of the SDL operations that are menat to be performed
+   on surfaces and screens.
+
+   Also, event structures are not directly exposed to the Falcon programs; instead,
+   they are reported through callbacks. In fact, callbacks and parameter expansion
+   is several time faster than the creation of a Falcon object that should be then
+   inspected and eventually marshalled.
+
+   @section Setup
+
    A minimal setup for this module may be something like the
    following:
    @code
@@ -19,4 +45,5 @@
       > e
    end
    @endcode
+
 */
