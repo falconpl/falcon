@@ -32,6 +32,31 @@ extern "C" {
 #include "version.h"
 #include "sdl_ext.h"
 
+/*#
+   @module sdl The SDL Falcon Module.
+   @brief Main module for the Falcon SDL module suite.
+
+   This is the base of the falcon SDL subsystem.
+   The SDL library can be found at <a target="_new" href="http://www.libsdl.org/">http://www.libsdl.org</a>.
+
+   @section Forewords
+
+   The SDL Falcon module tries to stick with SDL interface and conventions
+   whenever possible. However, in some cases where Falcon programming language
+   provides structures and solutions that are better suited to perform certain
+   tasks, the interface may diverge from the original one.
+
+   The most significative case is the @a SDLSurface class and its derived classes
+   that encapsulate many of the SDL operations that are menat to be performed
+   on surfaces and screens.
+
+   Also, event structures are not directly exposed to the Falcon programs; instead,
+   they are reported through callbacks. In fact, callbacks and parameter expansion
+   is several time faster than the creation of a Falcon object that should be then
+   inspected and eventually marshalled.
+*/
+
+
 FALCON_MODULE_DECL( const Falcon::EngineData &data )
 {
    // setup DLL engine common data
