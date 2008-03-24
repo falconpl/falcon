@@ -36,7 +36,7 @@ namespace Ext {
 /*# @class URI
    @brief Interface to RFC3986 Universal Resource Indicator.
    @optparam path The URI that will be used as initial data.
-   @throws ParamError in case the inital URI is malformed.
+   @raise ParamError in case the inital URI is malformed.
 
    This class offers an object oriented interface to access
    URI elements.
@@ -200,7 +200,7 @@ void URICarrier::getProperty( VMachine *vm, const String &propName, Item &prop )
 
 /*# @init URI
    @brief Constructor for the URI class.
-   @throws ParamError in case the inital URI is malformed.
+   @raise ParamError in case the inital URI is malformed.
 
    Builds the URI object, optionally using the given parameter
    as a complete URI constructor.
@@ -253,7 +253,7 @@ FALCON_FUNC  URI_encode ( ::Falcon::VMachine *vm )
    @brief Decode a string to from URL encoding (static).
    @param enc_string The URI/URL encoded string.
    @return The decoded string.
-   @throws ParamError if the string is not a valid URI/URL encoded string.
+   @raise ParamError if the string is not a valid URI/URL encoded string.
 */
 FALCON_FUNC  URI_decode ( ::Falcon::VMachine *vm )
 {
@@ -281,7 +281,7 @@ FALCON_FUNC  URI_decode ( ::Falcon::VMachine *vm )
 /*# @method getFields URI
    @brief Returns fields contained in the query element into a dictionary.
    @return The fields as a dictionary of nil if the query part contains no element.
-   @throws ParamError if the string is not a valid URI/URL encoded string.
+   @raise ParamError if the string is not a valid URI/URL encoded string.
 */
 FALCON_FUNC  URI_getFields ( ::Falcon::VMachine *vm )
 {
@@ -337,7 +337,7 @@ FALCON_FUNC  URI_getFields ( ::Falcon::VMachine *vm )
 /*# @method setFields URI
    @brief Sets query fields for this uri.
    @param fields A dictionary of fields or nil to clear the query.
-   @throws ParamError if the input dictionary contains non-string values.
+   @raise ParamError if the input dictionary contains non-string values.
 */
 FALCON_FUNC  URI_setFields ( ::Falcon::VMachine *vm )
 {

@@ -528,9 +528,10 @@ bool VarDef::save( Stream *out ) const
       break;
 
       case t_int:
+      case t_reflective:
       {
          int64 val = endianInt64( m_value.val_int );
-         out->write(   &val , sizeof( val ) );
+         out->write( &val , sizeof( val ) );
       }
       break;
 
@@ -544,7 +545,7 @@ bool VarDef::save( Stream *out ) const
       case t_string:
       {
          uint32 val = endianInt32( asString()->id() );
-         out->write(   &val , sizeof( val ) );
+         out->write(  &val , sizeof( val ) );
       }
       break;
 
@@ -553,7 +554,7 @@ bool VarDef::save( Stream *out ) const
       case t_base:
       {
          uint32 val = endianInt32( asSymbol()->id() );
-         out->write(   &val , sizeof( val ) );
+         out->write( &val , sizeof( val ) );
       }
    }
    return true;
@@ -578,6 +579,7 @@ bool VarDef::load( Module *mod, Stream *in )
       break;
 
       case t_int:
+      case t_reflective:
       {
          int64 val;
          in->read(   &val , sizeof( val ) );

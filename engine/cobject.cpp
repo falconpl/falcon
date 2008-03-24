@@ -312,6 +312,71 @@ bool CoreObject::has( const String &attrib ) const
 }
 
 
+bool CoreObject::configureTo( void *data )
+{
+   if ( ! m_properties.hasConfig() )
+      return false;
+
+   byte *pData = (byte *) data;
+   for ( uint32 i = 0; i < m_properties.added(); i ++ )
+   {
+      const PropertyTable::config &cfg = m_properties.getConfig( i );
+      switch( cfg.m_size )
+      {
+         case 1:
+            pData[ cfg.m_offset ] = (byte) m_properties.getValue( i )->forceInteger();
+            break;
+
+         case 2:
+            *((uint16 *) (pData + cfg.m_offset) ) = (uint16) m_properties.getValue( i )->forceInteger();
+            break;
+
+         case 4:
+            *((uint32 *) (pData + cfg.m_offset) ) = (uint32) m_properties.getValue( i )->forceInteger();
+            break;
+
+         case 8:
+            *((uint64 *) (pData + cfg.m_offset) ) = m_properties.getValue( i )->forceInteger();
+            break;
+      }
+   }
+
+   return true;
+}
+
+
+bool CoreObject::configureFrom( void *data )
+{
+   if ( ! m_properties.hasConfig() )
+      return false;
+
+   byte *pData = (byte *) data;
+   for ( uint32 i = 0; i < m_properties.added(); i ++ )
+   {
+      const PropertyTable::config &cfg = m_properties.getConfig( i );
+      switch( cfg.m_size )
+      {
+         case 1:
+            m_properties.getValue( i )->setInteger( pData[ cfg.m_offset ] );
+            break;
+
+         case 2:
+            m_properties.getValue( i )->setInteger( *((uint16 *) (pData + cfg.m_offset) ) );
+            break;
+
+         case 4:
+            m_properties.getValue( i )->setInteger( *((uint32 *) (pData + cfg.m_offset) ) );
+            break;
+
+         case 8:
+            m_properties.getValue( i )->setInteger( *((uint64 *) (pData + cfg.m_offset) ) );
+            break;
+      }
+   }
+
+   return true;
+}
+
 }
 
 /* end of cobject.cpp */

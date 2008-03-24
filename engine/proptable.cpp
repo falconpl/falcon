@@ -34,24 +34,36 @@ PropertyTable::PropertyTable( uint32 size )
 {
    m_size = size;
    m_added = 0;
-   m_keys = (const String **) memAlloc( sizeof( char * ) * size );
+   m_keys = (const String **) memAlloc( sizeof( String * ) * size );
    m_values = (Item *) memAlloc( sizeof( Item ) * size );
+   m_configs = 0;
 }
 
 PropertyTable::PropertyTable( const PropertyTable &other )
 {
    m_size = other.m_size;
    m_added = other.m_added;
-   m_keys = (const String **) memAlloc( sizeof( char * ) * m_size );
-   memcpy( m_keys, other.m_keys, m_added * sizeof( char * ) );
+   m_keys = (const String **) memAlloc( sizeof( String * ) * m_size );
+   memcpy( m_keys, other.m_keys, m_added * sizeof( String * ) );
    m_values = (Item *) memAlloc( sizeof( Item ) * m_size );
    memcpy( m_values, other.m_values, m_added * sizeof( Item ) );
+
+   if ( other.m_configs != 0 )
+   {
+      m_configs = (config*) memAlloc( sizeof( config ) * m_size );
+      memcpy( m_configs, other.m_configs, m_added * sizeof( config ) );
+   }
+   else {
+      m_configs = 0;
+   }
 }
 
 PropertyTable::~PropertyTable()
 {
    memFree( m_keys );
    memFree( m_values );
+   if ( m_configs != 0 )
+      memFree( m_configs );
 }
 
 bool PropertyTable::findKey( const String *key, uint32 &pos ) const
@@ -125,24 +137,75 @@ bool PropertyTable::findKey( const String *key, uint32 &pos ) const
 
 bool PropertyTable::append( const String *key, const Item &itm )
 {
-
    if( m_added >= m_size ) return false;
 
-   if ( m_added == 0 ) {
+   if ( m_added != 0 ) {
       uint32 pos;
       if ( !findKey( key, pos ) ) {
-         memmove( m_keys + pos, m_keys + pos + 1, sizeof( char * ) * (m_added - pos) );
+         memmove( m_keys + pos, m_keys + pos + 1, sizeof( String * ) * (m_added - pos) );
          m_keys[pos] = key;
          memmove( m_values + pos, m_values + pos + 1, sizeof( Item ) * (m_added - pos) );
+         if( m_configs != 0 )
+         {
+            memmove( m_configs + pos, m_configs + pos + 1, sizeof( config ) * (m_added - pos) );
+            m_configs[pos].m_offset = 0;
+            m_configs[pos].m_size = 0;
+         }
       }
       *getValue( pos ) = itm;
    }
-   else
+   else {
+      m_keys[0] = key;
       *getValue( 0 ) = itm;
+   }
 
    m_added++;
 
    return true;
+}
+
+bool PropertyTable::append( const String *key, const Item &itm, const PropertyTable::config &cfg )
+{
+   if( m_added >= m_size ) return false;
+
+   if ( m_configs== 0 )
+   {
+      m_configs = (config*) memAlloc( sizeof( config ) * m_size );
+      memset( m_configs, 0, m_size * sizeof( config ) );
+   }
+
+   if ( m_added != 0 ) {
+      uint32 pos;
+      if ( !findKey( key, pos ) ) {
+         memmove( m_keys + pos, m_keys + pos + 1, sizeof( String * ) * (m_added - pos) );
+         m_keys[pos] = key;
+         memmove( m_values + pos, m_values + pos + 1, sizeof( Item ) * (m_added - pos) );
+
+         memmove( m_configs + pos, m_configs + pos + 1, sizeof( config ) * (m_added - pos) );
+         m_configs[pos] = cfg;
+      }
+      *getValue( pos ) = itm;
+   }
+   else {
+      m_keys[0] = key;
+      *getValue(0) = itm;
+      m_configs[0] = cfg;
+   }
+
+   m_added++;
+
+   return true;
+}
+
+void PropertyTable::appendSafe( const String *key, const Item &itm, const PropertyTable::config &cfg )
+{
+   if ( m_configs == 0 )
+   {
+      m_configs = (config*) memAlloc( sizeof( config ) * m_size );
+      memset( m_configs, 0, m_size * sizeof( config ) );
+   }
+   appendSafe( key, itm );
+   m_configs[m_added -1] = cfg;
 }
 
 }

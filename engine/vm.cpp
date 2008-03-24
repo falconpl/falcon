@@ -662,7 +662,14 @@ PropertyTable *VMachine::createClassTemplate( LiveModule *lmod, const Map &pt )
       }
 
       String *key = *(String **) iter.currentKey();
-      table->appendSafe( key, itm );
+      if( ! vd->isReflective() )
+         table->appendSafe( key, itm );
+      else {
+         PropertyTable::config conf;
+         conf.m_offset = vd->asReflectiveOffset();
+         conf.m_size = vd->asReflectiveSize();
+         table->appendSafe( key, itm, conf );
+      }
       iter.next();
    }
 

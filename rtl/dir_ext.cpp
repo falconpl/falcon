@@ -629,7 +629,7 @@ FALCON_FUNC  fileChgroup ( ::Falcon::VMachine *vm )
 /*# @class Path
    @brief Interface to local filesystem path definition.
    @optparam path The path that will be used as initial path.
-   @throws ParamError in case the inital path is malformed.
+   @raise ParamError in case the inital path is malformed.
 
    This class offers an object oriented interface to access
    path elements given a complete path, or to build a path from its elements.
@@ -637,7 +637,7 @@ FALCON_FUNC  fileChgroup ( ::Falcon::VMachine *vm )
 
 /*# @property unit Path
    @brief Unit specificator.
-   @throws ParamError if assigned to a value that makes the path invalid.
+   @raise ParamError if assigned to a value that makes the path invalid.
 
    This is the unit specificator (disk name) used in some filesystems.
    It is separated by the rest of the path via a ":". According to
@@ -647,7 +647,7 @@ FALCON_FUNC  fileChgroup ( ::Falcon::VMachine *vm )
 
 /*# @property location Path
    @brief Location specificator.
-   @throws ParamError if assigned to a value that makes the path invalid.
+   @raise ParamError if assigned to a value that makes the path invalid.
 
    This is the "path to file". It can start with a "/" or not; if
    it starts with a "/" it is considered absolute.
@@ -655,7 +655,7 @@ FALCON_FUNC  fileChgroup ( ::Falcon::VMachine *vm )
 
 /*# @property file Path
    @brief File part.
-   @throws ParamError if assigned to a value that makes the path invalid.
+   @raise ParamError if assigned to a value that makes the path invalid.
 
    This is the part of the path that identifies an element in a directory.
    It includes everything after the last "/" path separator.
@@ -663,7 +663,7 @@ FALCON_FUNC  fileChgroup ( ::Falcon::VMachine *vm )
 
 /*# @property filename Path
    @brief File name part.
-   @throws ParamError if assigned to a value that makes the path invalid.
+   @raise ParamError if assigned to a value that makes the path invalid.
 
    This element coresponds to the first part of the file element, if it is
    divided into a filename and an extension by a "." dot.
@@ -671,7 +671,7 @@ FALCON_FUNC  fileChgroup ( ::Falcon::VMachine *vm )
 
 /*# @property extension Path
    @brief File extension part.
-   @throws ParamError if assigned to a value that makes the path invalid.
+   @raise ParamError if assigned to a value that makes the path invalid.
 
    This element coresponds to the first last of the file element, if it is
    divided into a filename and an extension by a "." dot.
@@ -679,7 +679,7 @@ FALCON_FUNC  fileChgroup ( ::Falcon::VMachine *vm )
 
 /*# @property path Path
    @brief Complete path.
-   @throws ParamError if assigned to a value that makes the path invalid.
+   @raise ParamError if assigned to a value that makes the path invalid.
 
    This is the complete path referred by this object.
 */
@@ -805,7 +805,7 @@ void PathCarrier::getProperty( VMachine *vm, const String &propName, Item &prop 
 
 /*# @init Path
    @brief Constructor for the Path class.
-   @throws ParamError in case the inital path is malformed.
+   @raise ParamError in case the inital path is malformed.
 
    Builds the path object, optionally using the given parameter
    as a complete path constructor.

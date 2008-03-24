@@ -32,8 +32,6 @@
 #define FLC_ITEM_NUM       2
 #define FLC_ITEM_RANGE     3
 #define FLC_ITEM_BOOL      4
-/* Ligth pointers! */
-#define FLC_ITEM_LP        5
 
 #define FLC_ITEM_FUNC      6
 /* Some shallow callable items. */

@@ -59,14 +59,21 @@ public:
       t_string,
       t_symbol,
       t_base,
-      t_reference
+      t_reference,
+      t_reflective
    } t_type;
 private:
    t_type m_val_type;
 
+   struct t_reflect {
+      int16 offset;
+      int16 size;
+   };
+
    union {
       bool val_bool;
       uint64 val_int;
+      struct t_reflect val_reflect;
       numeric val_num;
       const String *val_str;
       const Symbol *val_sym;
@@ -130,11 +137,27 @@ public:
    void setBaseClass( const Symbol *sym ) { m_val_type = t_base; m_value.val_sym = sym; }
    void setReference( const Symbol *sym ) { m_val_type = t_reference; m_value.val_sym = sym; }
 
+   void setReflective( uint16 offset, uint16 size ) {
+      m_val_type = t_reflective;
+      m_value.val_reflect.offset = offset;
+      m_value.val_reflect.size = size;
+   }
+
+   void setReflective( void *data, void *dest, uint16 size )
+   {
+      byte *p1 = (byte *) data;
+      byte *p2 = (byte *) dest;
+      setReflective( (uint16) (p2 - p1), size );
+   }
+
+
    bool asBool() const { return m_value.val_bool; }
    int64 asInteger() const { return m_value.val_int; }
    const String *asString() const { return m_value.val_str; }
    const Symbol *asSymbol() const { return m_value.val_sym; }
    numeric asNumeric() const { return m_value.val_num; }
+   int16 asReflectiveOffset() { return m_value.val_reflect.offset; }
+   int16 asReflectiveSize() { return m_value.val_reflect.size; }
 
    bool isNil() const { return m_val_type == t_nil; }
    bool isBool() const { return m_val_type == t_bool; }
@@ -144,6 +167,7 @@ public:
    bool isSymbol() const { return m_val_type == t_symbol || m_val_type == t_base; }
    bool isBaseClass() const { return m_val_type == t_base; }
    bool isReference() const { return m_val_type == t_reference; }
+   bool isReflective() const { return m_val_type == t_reflective; }
 
    bool save( Stream *out ) const;
    bool load( Module *mod, Stream *in );

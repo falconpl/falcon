@@ -196,7 +196,23 @@ public:
       is that to raise an error in case an uncloneable object is cloned.
       \return a shallow copy of this item.
    */
-   CoreObject *clone() const ;
+   CoreObject *clone() const;
+
+   /** Automatically transforms the incoming data into this object.
+      If the property table has reflective properties, the data
+      is used to store integer binary values into the properties.
+      \param data the structure that is set into reflection patterns.
+      \return true if the property table is reflective, false otherwise.
+   */
+   bool configureFrom( void *data );
+
+   /** Automatically transforms the data inside this object into external data.
+      If the property table has reflective properties, the data
+      configured after the values of the properties in the table.
+      \param data the structure that is set into reflection patterns.
+      \return true if the property table is reflective, false otherwise.
+   */
+   bool configureTo( void *data );
 };
 
 }

@@ -48,10 +48,17 @@ namespace Falcon
 */
 class FALCON_DYN_CLASS PropertyTable: public BaseAlloc
 {
+public:
+   typedef struct t_config {
+      uint16 m_offset;
+      uint16 m_size;
+   } config;
+
    uint32 m_size;
    uint32 m_added;
    const String **m_keys;
    Item *m_values;
+   config *m_configs;
 
 public:
 
@@ -65,8 +72,12 @@ public:
    bool findKey( const String *key, uint32 &pos ) const;
    Item *getValue( uint32 pos ) const { return m_values + pos; }
    const String *getKey( uint32 pos ) const { return m_keys[pos]; }
+   bool hasConfig() const { return m_configs != 0; }
+   const config &getConfig( uint32 pos ) const { return m_configs[pos]; }
 
    bool append( const String *key, const Item &itm );
+   bool append( const String *key, const Item &itm, const config &cfg );
+
    void appendSafe( const String *key, const Item &itm )
    {
       m_keys[m_added] = key;
@@ -81,6 +92,7 @@ public:
       m_added++;
    }
 
+   void appendSafe( const String *key, const Item &itm, const config &cfg );
 };
 
 }
