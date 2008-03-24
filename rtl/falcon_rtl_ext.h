@@ -269,6 +269,7 @@ FALCON_FUNC  filePath ( ::Falcon::VMachine *vm );
 FALCON_FUNC  fileChmod ( ::Falcon::VMachine *vm );
 FALCON_FUNC  fileChown ( ::Falcon::VMachine *vm );
 FALCON_FUNC  fileChgroup ( ::Falcon::VMachine *vm );
+FALCON_FUNC  fileCopy ( ::Falcon::VMachine *vm );
 
 FALCON_FUNC  flc_random ( ::Falcon::VMachine *vm );
 FALCON_FUNC  flc_randomChoice ( ::Falcon::VMachine *vm );

@@ -345,7 +345,6 @@ FALCON_FUNC  filePath ( ::Falcon::VMachine *vm )
       vm->retval( new GarbageString( vm ) );
 }
 
-
 FALCON_FUNC  DirectoryOpen ( ::Falcon::VMachine *vm )
 {
    Item *name = vm->param(0);

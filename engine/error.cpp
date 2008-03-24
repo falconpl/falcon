@@ -216,7 +216,7 @@ const String &errorDesc( int code )
       case e_nofile: return getMessage( msg::err_nofile);
       case e_invformat: return getMessage( msg::err_invformat );
       case e_loader_unsupported: return getMessage( msg::err_loader_unsupported );
-
+      case e_io_error: return getMessage( msg::err_io_error );
 
       case e_inv_params: return getMessage( msg::err_inv_params );
       case e_missing_params: return getMessage( msg::err_missing_params );

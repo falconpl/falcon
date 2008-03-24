@@ -176,6 +176,7 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    self->addExtFunc( "fileChown", Falcon::Ext::fileChown );
    self->addExtFunc( "fileChmod", Falcon::Ext::fileChmod );
    self->addExtFunc( "fileChgroup", Falcon::Ext::fileChgroup );
+   self->addExtFunc( "fileCopy", Falcon::Ext::fileCopy );
 
    self->addExtFunc( "dirMake", Falcon::Ext::dirMake );
    self->addExtFunc( "dirChange", Falcon::Ext::dirChange );

@@ -58,6 +58,7 @@ Falcon (0.8.8)
   * major: Load directive can now handle dot modules "a.b"
   * bugfix: ModLoader::addSearchPath didn't locally bufferize the path, and this may
             have caused problems with incoming fixed strings.
+  * minor: Added fileCopy() function in rtl (file_ext).
 
 Falcon (0.8.6)
   * bugfix: incorrect format of 0.x floating point numbers.

@@ -214,6 +214,7 @@ char *en_table[] =
       "File not found",
       "Invalid or damaged Falcon VM file",
       "Operation not supported by the module loader",
+      "Generic I/O Error",
 
       "Invalid parameters",
       "Mandatory parameter missing",
