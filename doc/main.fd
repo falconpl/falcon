@@ -1,0 +1,22 @@
+/*#
+   @main Falcon SDL module
+
+   This is the Falcon SDL module reference.
+   A minimal setup for this module may be something like the
+   following:
+   @code
+   load sdl
+
+   try
+      a = SDL.InitAuto( SDL.INIT_VIDEO )
+      SDL.WM_SetCaption( "Falcon SDL window", "Falcon and SDL" );
+      screen = SDL.SetVideoMode( 640, 480 )
+
+      > "Success! - press enter"
+      input()
+   catch SDLError in e
+      > "Test failed: "
+      > e
+   end
+   @endcode
+*/

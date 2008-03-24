@@ -78,6 +78,7 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    self->addClassProperty( c_sdl, "ENABLE" )->setInteger( SDL_ENABLE );
    self->addClassProperty( c_sdl, "DISABLE" )->setInteger( SDL_DISABLE);
    self->addClassProperty( c_sdl, "QUERY" )->setInteger( SDL_QUERY );
+   self->addClassProperty( c_sdl, "IGNORE" )->setInteger( SDL_IGNORE );
 
    self->addClassProperty( c_sdl, "APPMOUSEFOCUS" )->setInteger( SDL_APPMOUSEFOCUS );
    self->addClassProperty( c_sdl, "APPINPUTFOCUS" )->setInteger( SDL_APPINPUTFOCUS );
@@ -136,7 +137,9 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    self->addClassMethod( c_sdl, "LoadBMP", Falcon::Ext::sdl_LoadBMP );
 
    // Events
+   self->addClassMethod( c_sdl, "PushEvent", Falcon::Ext::SDLEventHandler_PushEvent );
    self->addClassMethod( c_sdl, "PushUserEvent", Falcon::Ext::SDLEventHandler_PushUserEvent );
+   self->addClassMethod( c_sdl, "EventState", Falcon::Ext::SDL_EventState);
 
     //============================================================
    // SDL rectangle class

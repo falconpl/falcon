@@ -125,7 +125,7 @@ FALCON_FUNC sdl_ShowCursor( ::Falcon::VMachine *vm )
 
    In example, the following code generates a small cross with white borders, a reverse
    inner part and a small black shadow:
-   \code
+   @code
       strImage = [
          "         @XXX@          ",
          "         @XXX@          ",
@@ -142,7 +142,7 @@ FALCON_FUNC sdl_ShowCursor( ::Falcon::VMachine *vm )
          "          ....          " ]
 
       SDL.MakeCursor( strImage, 12, 7 ).SetCursor()
-   \endcode
+   @endcode
 */
 FALCON_FUNC sdl_MakeCursor( ::Falcon::VMachine *vm )
 {
@@ -271,7 +271,7 @@ FALCON_FUNC sdl_MakeCursor( ::Falcon::VMachine *vm )
    @param height Height of the cursor.
    @param Xspot X position of the cursor hotspot.
    @param Yspot Y position of the cursor hotspot.
-   @throws SDLError if the cursor couldn't be created.
+   @raise SDLError if the cursor couldn't be created.
 
    See SDL_CreateCursor documentation. Method @a SDL.MakeCursor is
    probably simpler to use.

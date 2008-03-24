@@ -111,6 +111,9 @@ FALCON_FUNC SDLEventHandler_WaitEvent( VMachine *vm );
 FALCON_FUNC SDLEventHandler_PushEvent( VMachine *vm );
 FALCON_FUNC SDLEventHandler_PushUserEvent( VMachine *vm );
 
+FALCON_FUNC SDL_EventState( VMachine *vm );
+
+
 }
 }
 

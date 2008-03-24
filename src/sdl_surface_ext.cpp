@@ -104,7 +104,7 @@ namespace Ext {
    @method SaveBMP SDLSurface
    @brief Saves a BMP files to disk.
    @param filename the file where to store this BMP.
-   @throws SDLError on failure.
+   @raise SDLError on failure.
 
    Save a memory image (or even a screenshot, if this surface is also a screen)
    to a disk BMP file.
@@ -146,7 +146,7 @@ FALCON_FUNC SDLSurface_SaveBMP( ::Falcon::VMachine *vm )
    @param srcRect a @a SDLRect containing the source coordinates or nil.
    @param dest the destionation SDLSurface.
    @optparam dstRect a @a SDLRect containing destination coordinates or nil.
-   @throws SDLError on copy failure.
+   @raise SDLError on copy failure.
 
    This functions copies a part of an image into another. The srcRect parameter determines
    which portion of the source image is copied; if nil, the whole image will be used.
@@ -227,7 +227,7 @@ FALCON_FUNC SDLSurface_BlitSurface( ::Falcon::VMachine *vm )
    @param x X coordinates of the pixel to be set
    @param y Y coordinates of the pixel to be set
    @param value The value to be set
-   @throws ParamError if x or y are out of ranges
+   @raise ParamError if x or y are out of ranges
 
    This functions sets the color of a pixel to the desired value.
    The value is the palette index if this map has a palette,
@@ -303,7 +303,7 @@ FALCON_FUNC SDLSurface_SetPixel( ::Falcon::VMachine *vm )
    @brief Get a single pixel value from the surface
    @param x X coordinates of the pixel to be retreived
    @param y Y coordinates of the pixel to be retreived
-   @throws ParamError if x or y are out of range
+   @raise ParamError if x or y are out of range
 
    This functions gets the color of a pixel.
    The value is the palette index if this map has a palette,
@@ -372,7 +372,7 @@ FALCON_FUNC SDLSurface_GetPixel( ::Falcon::VMachine *vm )
    @brief Return the index of a pixel in the pixels array of this class
    @param x X coordinates of the desired pixel position
    @param y Y coordinates of the desired pixel position
-   @throws ParamError if x or y are out of range
+   @raise ParamError if x or y are out of range
 
    This is just a shortcut for the formula
    \code
@@ -496,7 +496,7 @@ FALCON_FUNC SDLSurface_IsLockNeeded( ::Falcon::VMachine *vm )
    @brief Fills a rectangle with a given color.
    @param rect an SDLRect instance containing the coordinates to fill, or nil to fill all
    @param color a color value to be used in fills.
-   @throws SDLError on error
+   @raise SDLError on error
 */
 FALCON_FUNC SDLSurface_FillRect( ::Falcon::VMachine *vm )
 {
@@ -532,7 +532,7 @@ FALCON_FUNC SDLSurface_FillRect( ::Falcon::VMachine *vm )
    @param color multibyte value of a color
    @optparm retArray An array that is used to store the desired values.
    @return a 4 element array (Red, Green, Blue and Alpha).
-   @throws ParamError if color is out of index in palette based images
+   @raise ParamError if color is out of index in palette based images
 
    This method is meant to determine the value of each component in a
    palette or truecolor value that has been read on a surface with
@@ -849,7 +849,7 @@ FALCON_FUNC SDLScreen_SetPalette( ::Falcon::VMachine *vm )
 /*#
    @method ToggleFullScreen SDLScreen
    @brief Toggles the application between windowed and fullscreen mode
-   @throws SDLError if not supported.
+   @raise SDLError if not supported.
 
    Toggles the application between windowed and fullscreen mode, if supported.
 */
@@ -917,7 +917,7 @@ FALCON_FUNC SDLScreen_ToggleFullScreen ( ::Falcon::VMachine *vm )
    @param colorIndex Index of the color in the palette.
    @optparam colArray Array of that will hold red, green and blue values.
    @return an array containing red, green and blue elements.
-   @throws RangeError if color index is out of range.
+   @raise RangeError if color index is out of range.
 
    An array can be provided as parameter to prevent re-allocation of the returned value.
 */
@@ -970,7 +970,7 @@ FALCON_FUNC  SDLPalette_getColor( ::Falcon::VMachine *vm )
       array with the three color values.
    @optparam green Green value of the element (not needed if red was an array).
    @optparam blue Blue value of the element (not needed if red was an array).
-   @throws RangeError if color index is out of range.
+   @raise RangeError if color index is out of range.
 
    Changes a value in the image palette
 */

@@ -67,7 +67,7 @@ namespace Ext {
    @method Init SDL
    @brief Initialize SDL system.
    @param flags SDL initialziation flags
-   @throws SDLError on initialization failure
+   @raise SDLError on initialization failure
 
    This method initializes SDL. After initialization, it is necessary to call
    SDL.Quit() to clear the application state on exit; to avoid this need, it
@@ -118,7 +118,7 @@ FALCON_FUNC sdl_Init( ::Falcon::VMachine *vm )
    @brief Initialize SDL system and provide automatic cleanup.
    @param flags SDL initialziation flags
    @return handle for SDL termination.
-   @throws SDLError on initialization failure
+   @raise SDLError on initialization failure
 
    This method initializes SDL, and sets up an handle for SDL cleanup.
    The returned handle has a Quit() method that can be called autonomously
@@ -235,7 +235,7 @@ FALCON_FUNC sdl_IsBigEndian( ::Falcon::VMachine *vm )
    @method GetVideoInfo SDL
    @brief Returns details about underlying video system.
    @return An instance of a @a SDLVideoInfo
-   @throws SDLError on error.
+   @raise SDLError on error.
 
    This function returns a read-only SDLVideoInfo instance containing informations about
    the video hardware.
@@ -261,7 +261,7 @@ FALCON_FUNC sdl_GetVideoInfo( ::Falcon::VMachine *vm )
    @method VideoDriverName SDL
    @brief Returns the name of the used video driver.
    @return A simple description of the video driver being used.
-   @throws SDLError if the system is not initialized.
+   @raise SDLError if the system is not initialized.
 */
 FALCON_FUNC sdl_VideoDriverName( ::Falcon::VMachine *vm )
 {
@@ -286,7 +286,7 @@ FALCON_FUNC sdl_VideoDriverName( ::Falcon::VMachine *vm )
    @optparam format An SDLPixelFormat structure to filter modes or nil.
    @optparam flags Initialization flags that must be supported by
              returned mode.
-   @throws SDLError if the system is not initialized.
+   @raise SDLError if the system is not initialized.
 
    The function mimics the workings of SDL_ListModes, returning an array
    of pairs (2 element arrays) with x, y items, if a set of mode was found,
@@ -401,7 +401,7 @@ FALCON_FUNC sdl_VideoModeOK( ::Falcon::VMachine *vm )
    @optparam bpp - byte per pixel in the desired modesired heightde (defaults to automatic).
    @optparam flags - flags to be eventually specified.
    @return a SDLScreen instance representing the SDL output device.
-   @throws SDLError on initialization failure
+   @raise SDLError on initialization failure
 
    This function starts a graphic video mode and, on success, returns a @a SDLScreen
    class instance. This class is a Falcon object which encapsulate SDL_Surface structures,
@@ -477,7 +477,7 @@ FALCON_FUNC sdl_SetVideoMode( ::Falcon::VMachine *vm )
    @brief Loads an image from a BMP file.
    @param filename a filename to load.
    @return a @a SDLSurface instance containing the loaded image.
-   @throws SDLError on load failure
+   @raise SDLError on load failure
 
    Loads an image from a BMP file and returns a new SDLSurface instance
    that can be manipulated through blit and similar functions.
@@ -521,7 +521,7 @@ FALCON_FUNC sdl_LoadBMP( ::Falcon::VMachine *vm )
    @method GetVideoSurface SDL
    @brief Retreives the current video surface.
    @return a @a SDLScreen instance representing the current video device.
-   @throws SDLError on failure
+   @raise SDLError on failure
 
    @see SDLScreen
 */
@@ -550,7 +550,7 @@ FALCON_FUNC sdl_GetVideoSurface( ::Falcon::VMachine *vm )
    @param red Red gamma correction value.
    @param green Green gamma correction value.
    @param blue Blue gamma correction value.
-   @throws SDLError if the hardware doesn't support gamma
+   @raise SDLError if the hardware doesn't support gamma
 */
 FALCON_FUNC sdl_SetGamma ( ::Falcon::VMachine *vm )
 {
@@ -585,7 +585,7 @@ FALCON_FUNC sdl_SetGamma ( ::Falcon::VMachine *vm )
    @brief Get Gamma ramps for this hardware.
    @optparam aRet An array that will contain the gamma memory buffers on exit.
    @return An array containing the three MemBufs
-   @throws SDLError if the hardware doesn't support gamma.
+   @raise SDLError if the hardware doesn't support gamma.
 
    This functions returns three membuf that maps directly the gamma correction
    table for the red, green and blue value.
@@ -638,7 +638,7 @@ FALCON_FUNC sdl_GetGammaRamp ( ::Falcon::VMachine *vm )
    @param redbuf A 2 bytes 256 elements memory buffer for the red channel, or nil.
    @param greenbuf A 2 bytes 256 elements memory buffer for the blue channel, or nil.
    @param bluebuf A 2 bytes 256 elements memory buffer for the green channel, or nil.
-   @throws SDLError if the hardware doesn't support gamma.
+   @raise SDLError if the hardware doesn't support gamma.
 
    Each membuf is a 2 bytes memory vector of 256 binary values. If one of the channels
    needs not to be changed, nil can be placed instead.
@@ -861,7 +861,7 @@ static void sdl_CreateRGBSurface_internal ( ::Falcon::VMachine *vm, MemBuf *mb, 
    @optparam bMask Blue bitmask - defaults to third low address bits.
    @optparam aMask Alpha bitmask - defaults to hihest address bits.
    @return The newly created surface.
-   @throws SDLError on creation error.
+   @raise SDLError on creation error.
 
    The function can be called either with 4 or 8 parameters. 8 bits per pixel modes
    don't require bit masks, and they are ignored if provided; other modes require
@@ -918,7 +918,7 @@ FALCON_FUNC sdl_CreateRGBSurface ( ::Falcon::VMachine *vm )
    @optparam bMask Blue bitmask - defaults to third low address bits.
    @optparam aMask Alpha bitmask - defaults to hihest address bits.
    @return The newly created surface.
-   @throws SDLError on creation error.
+   @raise SDLError on creation error.
 
    @see SDL.CreateRGBSurface
 */
@@ -942,7 +942,7 @@ FALCON_FUNC sdl_CreateRGBSurfaceFrom ( ::Falcon::VMachine *vm )
 
 /*#
    @class SDLRect
-
+   @Brief Storage for rectangular coordinates.
    This class stores rectangular coordinates.
    Actually, this class is just a "contract" or "interface",
    as every function accepting an SDLRect will just accept any
@@ -956,6 +956,7 @@ FALCON_FUNC sdl_CreateRGBSurfaceFrom ( ::Falcon::VMachine *vm )
 
 /*#
    @init SDLRect
+   @brief Initializes the rectangle.
    @optparam x X cooordinate of this rectangle
    @optparam y Y cooordinate of this rectangle
    @optparam w width of this rectangle
