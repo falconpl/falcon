@@ -668,6 +668,7 @@ PropertyTable *VMachine::createClassTemplate( LiveModule *lmod, const Map &pt )
          PropertyTable::config conf;
          conf.m_offset = vd->asReflectiveOffset();
          conf.m_size = vd->asReflectiveSize();
+         conf.m_isSigned = vd->asReflectiveIsSigned();
          table->appendSafe( key, itm, conf );
       }
       iter.next();

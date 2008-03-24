@@ -68,6 +68,7 @@ private:
    struct t_reflect {
       int16 offset;
       int16 size;
+      bool isSigned;
    };
 
    union {
@@ -137,17 +138,18 @@ public:
    void setBaseClass( const Symbol *sym ) { m_val_type = t_base; m_value.val_sym = sym; }
    void setReference( const Symbol *sym ) { m_val_type = t_reference; m_value.val_sym = sym; }
 
-   void setReflective( uint16 offset, uint16 size ) {
+   void setReflective( uint16 offset, uint16 size, bool is = false ) {
       m_val_type = t_reflective;
       m_value.val_reflect.offset = offset;
       m_value.val_reflect.size = size;
+      m_value.val_reflect.isSigned = is;
    }
 
-   void setReflective( void *data, void *dest, uint16 size )
+   void setReflective( void *data, void *dest, uint16 size, bool is = false )
    {
       byte *p1 = (byte *) data;
       byte *p2 = (byte *) dest;
-      setReflective( (uint16) (p2 - p1), size );
+      setReflective( (uint16) (p2 - p1), size, is );
    }
 
 
@@ -158,6 +160,7 @@ public:
    numeric asNumeric() const { return m_value.val_num; }
    int16 asReflectiveOffset() { return m_value.val_reflect.offset; }
    int16 asReflectiveSize() { return m_value.val_reflect.size; }
+   bool asReflectiveIsSigned() { return m_value.val_reflect.isSigned; }
 
    bool isNil() const { return m_val_type == t_nil; }
    bool isBool() const { return m_val_type == t_bool; }

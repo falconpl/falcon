@@ -52,6 +52,7 @@ public:
    typedef struct t_config {
       uint16 m_offset;
       uint16 m_size;
+      bool m_isSigned;
    } config;
 
    uint32 m_size;

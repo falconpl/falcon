@@ -321,22 +321,32 @@ bool CoreObject::configureTo( void *data )
    for ( uint32 i = 0; i < m_properties.added(); i ++ )
    {
       const PropertyTable::config &cfg = m_properties.getConfig( i );
+      int64 value = m_properties.getValue( i )->forceInteger();
       switch( cfg.m_size )
       {
          case 1:
-            pData[ cfg.m_offset ] = (byte) m_properties.getValue( i )->forceInteger();
+            pData[ cfg.m_offset ] = (byte) value;
             break;
 
          case 2:
-            *((uint16 *) (pData + cfg.m_offset) ) = (uint16) m_properties.getValue( i )->forceInteger();
+            if ( cfg.m_isSigned )
+               *((int16 *) (pData + cfg.m_offset) ) = (int16) value;
+            else
+               *((uint16 *) (pData + cfg.m_offset) ) = (uint16) value;
             break;
 
          case 4:
-            *((uint32 *) (pData + cfg.m_offset) ) = (uint32) m_properties.getValue( i )->forceInteger();
-            break;
+            if ( cfg.m_isSigned )
+               *((int32 *) (pData + cfg.m_offset) ) = (int32) value;
+            else
+               *((uint32 *) (pData + cfg.m_offset) ) = (uint32) value;
+           break;
 
          case 8:
-            *((uint64 *) (pData + cfg.m_offset) ) = m_properties.getValue( i )->forceInteger();
+            if ( cfg.m_isSigned )
+               *((int64 *) (pData + cfg.m_offset) ) = value;
+            else
+               *((uint64 *) (pData + cfg.m_offset) ) = m_properties.getValue( i )->forceInteger();
             break;
       }
    }
@@ -361,15 +371,24 @@ bool CoreObject::configureFrom( void *data )
             break;
 
          case 2:
-            m_properties.getValue( i )->setInteger( *((uint16 *) (pData + cfg.m_offset) ) );
+            if ( cfg.m_isSigned )
+               m_properties.getValue( i )->setInteger( *((int16 *) (pData + cfg.m_offset) ) );
+            else
+               m_properties.getValue( i )->setInteger( *((uint16 *) (pData + cfg.m_offset) ) );
             break;
 
          case 4:
-            m_properties.getValue( i )->setInteger( *((uint32 *) (pData + cfg.m_offset) ) );
+            if ( cfg.m_isSigned )
+               m_properties.getValue( i )->setInteger( *((int32 *) (pData + cfg.m_offset) ) );
+            else
+               m_properties.getValue( i )->setInteger( *((uint32 *) (pData + cfg.m_offset) ) );
             break;
 
          case 8:
-            m_properties.getValue( i )->setInteger( *((uint64 *) (pData + cfg.m_offset) ) );
+            if ( cfg.m_isSigned )
+               m_properties.getValue( i )->setInteger( *((int64 *) (pData + cfg.m_offset) ) );
+            else
+               m_properties.getValue( i )->setInteger( *((uint64 *) (pData + cfg.m_offset) ) );
             break;
       }
    }
