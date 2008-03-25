@@ -17,6 +17,7 @@ Version = 1.0.0
 ################################################
 
 Input.directory=../src
+Input.directory=../ttf
 
 Input.wildcard=*.cpp     #we use only...
 Input.recursive=false

@@ -127,6 +127,9 @@ FALCON_FUNC sdl_JoystickUpdate( VMachine *vm );
 FALCON_FUNC SDLMouseState_Refresh( VMachine *vm );
 FALCON_FUNC SDLMouseState_PumpAndRefresh( VMachine *vm );
 
+// class SDLColor
+FALCON_FUNC SDLColor_init( VMachine *vm );
+
 }
 }
 

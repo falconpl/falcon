@@ -54,6 +54,8 @@ extern "C" {
    they are reported through callbacks. In fact, callbacks and parameter expansion
    is several time faster than the creation of a Falcon object that should be then
    inspected and eventually marshalled.
+
+   @beginmodule sdl
 */
 
 
@@ -267,6 +269,28 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    self->addClassProperty( c_palette, "colors" );
    self->addClassMethod( c_palette, "GetColor", Falcon::Ext::SDLPalette_getColor );
    self->addClassMethod( c_palette, "SetColor", Falcon::Ext::SDLPalette_setColor );
+
+   //============================================================
+   // SDL Palette Format
+   //
+   /*#
+      @class SDLColor
+      @brief Storage for RGB values
+
+      @prop r red value
+      @prop g green value
+      @prop b blue value
+   */
+
+   Falcon::Symbol *c_sdlcolor = self->addClass( "SDLColor", Falcon::Ext::SDLColor_init );
+   c_sdlcolor->setWKS( true );
+   SDL_Color sdl_color;
+   self->addClassProperty( c_sdlcolor, "r" )
+         ->setReflective( &sdl_color, &sdl_color.r, sizeof( sdl_color.r ) );
+   self->addClassProperty( c_sdlcolor, "g" )
+         ->setReflective( &sdl_color, &sdl_color.g, sizeof( sdl_color.g ) );
+   self->addClassProperty( c_sdlcolor, "b" )
+         ->setReflective( &sdl_color, &sdl_color.b, sizeof( sdl_color.b ) );
 
    //============================================================
    // SDL Cursor

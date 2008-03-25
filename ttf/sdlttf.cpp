@@ -61,7 +61,7 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    //
 
    /*#
-      @class SDLTTF
+      @class TTF
       @brief Main SDL TTF encapsulation class.
 
       This class is the namespace for TTF functions of the SDL module.
@@ -69,7 +69,11 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
       module.
    */
 
-   Falcon::Symbol *c_sdlttf = self->addClass( "SDLTTF" );
+   Falcon::Symbol *c_sdlttf = self->addClass( "TTF" );
+   self->addClassProperty( c_sdlttf, "STYLE_BOLD" )->setInteger( TTF_STYLE_BOLD );
+   self->addClassProperty( c_sdlttf, "STYLE_ITALIC" )->setInteger( TTF_STYLE_ITALIC );
+   self->addClassProperty( c_sdlttf, "STYLE_UNDERLINE" )->setInteger( TTF_STYLE_UNDERLINE );
+   self->addClassProperty( c_sdlttf, "STYLE_NORMAL" )->setInteger( TTF_STYLE_NORMAL );
 
    // Init and quit
    self->addClassMethod( c_sdlttf, "Init", Falcon::Ext::ttf_Init );
@@ -78,6 +82,75 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    self->addClassMethod( c_sdlttf, "Quit", Falcon::Ext::ttf_Quit );
    self->addClassMethod( c_sdlttf, "Compiled_Version", Falcon::Ext::ttf_Compiled_Version );
    self->addClassMethod( c_sdlttf, "Linked_Version", Falcon::Ext::ttf_Linked_Version );
+   self->addClassMethod( c_sdlttf, "OpenFont", Falcon::Ext::ttf_OpenFont );
+   self->addClassMethod( c_sdlttf, "ByteSwappedUNICODE", Falcon::Ext::ttf_ByteSwappedUNICODE );
+
+
+   //=================================================================
+   // TTFFont class
+   //
+
+   /*#
+      @class TTFFont
+      @brief Font representation of SDL TTF Class.
+
+      This class encapsulates all the font-specific methods and
+      accessros that are provided by th SDL_ttf library.
+
+      @note This class is private; it cannot be directly instantiated,
+         it must be created through @a TTF.OpenFont
+   */
+
+   Falcon::Symbol *c_ttffont = self->addClass( "TTFFont" );
+   c_ttffont->setWKS( true );
+   c_ttffont->exported( false ); // It's private.
+
+   self->addClassMethod( c_ttffont, "GetFontStyle", Falcon::Ext::ttf_GetFontStyle );
+   self->addClassMethod( c_ttffont, "SetFontStyle", Falcon::Ext::ttf_SetFontStyle );
+   self->addClassMethod( c_ttffont, "FontHeight", Falcon::Ext::ttf_FontHeight );
+   self->addClassMethod( c_ttffont, "FontAscent", Falcon::Ext::ttf_FontAscent );
+   self->addClassMethod( c_ttffont, "FontDescent", Falcon::Ext::ttf_FontDescent );
+   self->addClassMethod( c_ttffont, "FontLineSkip", Falcon::Ext::ttf_FontLineSkip );
+   self->addClassMethod( c_ttffont, "FontFaces", Falcon::Ext::ttf_FontFaces );
+   self->addClassMethod( c_ttffont, "FontFaceIsFixedWidth", Falcon::Ext::ttf_FontFaceIsFixedWidth );
+   self->addClassMethod( c_ttffont, "FontFaceFamilyName", Falcon::Ext::ttf_FontFaceFamilyName );
+   self->addClassMethod( c_ttffont, "FontFaceStyleName", Falcon::Ext::ttf_FontFaceStyleName );
+   self->addClassMethod( c_ttffont, "GlyphMetrics", Falcon::Ext::ttf_GlyphMetrics );
+   self->addClassMethod( c_ttffont, "SizeText", Falcon::Ext::ttf_SizeText );
+   self->addClassMethod( c_ttffont, "Render_Solid", Falcon::Ext::ttf_Render_Solid );
+   self->addClassMethod( c_ttffont, "Render_Shaded", Falcon::Ext::ttf_Render_Shaded );
+   self->addClassMethod( c_ttffont, "Render_Blended", Falcon::Ext::ttf_Render_Blended );
+
+   /*#
+      @class TTFMetrics
+      @brief Metrics for glyphs and rendered strings.
+
+      This class stores porperties that are used by font metrics
+      related functions and metods to report sizes of font
+      renderings.
+
+      Those functions doesn't use directly this class; instead,
+      they check the interface of the objects that they receive,
+      so any class providing the required properties can be used.
+
+      @prop minx minimum x value for a glyph
+      @prop miny minimum y value for a glyph
+      @prop maxx maximum x value for a glyph
+      @prop maxy maximum y value for a glyph
+      @prop ascent Asccent value for a glyph
+      @prop w width of a glyph or string rendering
+      @prop h height of a glyph or string rendering
+   */
+
+   Falcon::Symbol *c_ttfmetrics = self->addClass( "TTFMetrics" );
+   c_ttffont->setWKS( true );
+   self->addClassProperty( c_ttfmetrics, "minx" );
+   self->addClassProperty( c_ttfmetrics, "miny" );
+   self->addClassProperty( c_ttfmetrics, "maxx" );
+   self->addClassProperty( c_ttfmetrics, "maxy" );
+   self->addClassProperty( c_ttfmetrics, "ascent" );
+   self->addClassProperty( c_ttfmetrics, "w" );
+   self->addClassProperty( c_ttfmetrics, "h" );
 
    //=================================================================
    // Auto quit feature

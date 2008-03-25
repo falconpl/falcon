@@ -31,7 +31,7 @@
 
 #include <SDL_ttf.h>
 
-#define FALCON_SDLTTF_ERROR_BASE 2120
+#define FALCON_TTF_ERROR_BASE 2120
 
 namespace Falcon{
 namespace Ext{
@@ -44,6 +44,17 @@ public:
    ~TTFQuitCarrier();
 };
 
+class TTFFontCarrier: public UserData
+{
+public:
+   TTF_Font *m_font;
+
+   TTFFontCarrier( TTF_Font *font ):
+      m_font( font )
+   {}
+
+   ~TTFFontCarrier();
+};
 
 }
 }

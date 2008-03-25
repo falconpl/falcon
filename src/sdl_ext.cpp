@@ -98,7 +98,7 @@ FALCON_FUNC sdl_Init( ::Falcon::VMachine *vm )
 
    if ( i_init == 0 || ! i_init->isOrdinal() )
    {
-       vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
+      vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
          extra( "N" ) ) );
       return;
    }
@@ -992,6 +992,40 @@ FALCON_FUNC SDLRect_init( ::Falcon::VMachine *vm )
    self->setProperty( "w", i_width->forceInteger() );
    self->setProperty( "h", i_height->forceInteger() );
 }
+
+//==================================================================
+// COLOR class
+//
+
+/*#
+   @init SDLColor
+   @brief Set initial values for this color.
+   @param r Red value
+   @param g Green value
+   @param b Blue value
+
+*/
+FALCON_FUNC SDLColor_init( VMachine *vm )
+{
+   Item *i_r, *i_g, *i_b;
+
+   if ( vm->paramCount() < 3 ||
+       ! ( i_r = vm->param(0) )->isOrdinal() ||
+       ! ( i_g = vm->param(1) )->isOrdinal() ||
+       ! ( i_b = vm->param(2) )->isOrdinal()
+      )
+   {
+      vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "N,N,N" ) ) );
+      return;
+   }
+
+   CoreObject *self = vm->self().asObject();
+   self->setProperty( "r", i_r->forceInteger() );
+   self->setProperty( "g", i_g->forceInteger() );
+   self->setProperty( "b", i_b->forceInteger() );
+}
+
 
 //==================================================================
 // ERROR class

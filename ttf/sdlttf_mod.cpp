@@ -42,6 +42,10 @@ TTFQuitCarrier::~TTFQuitCarrier()
    TTF_Quit();
 }
 
+TTFFontCarrier::~TTFFontCarrier()
+{
+   TTF_CloseFont( m_font );
+}
 
 }
 }
