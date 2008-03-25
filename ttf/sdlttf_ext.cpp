@@ -32,12 +32,17 @@
 #include "sdlttf_ext.h"
 #include "sdlttf_mod.h"
 #include "../src/sdl_mod.h"  // for SDLError class
+#include "../src/sdl_service.h"  // for the reset
 
 #include <SDL_ttf.h>
+
 
 /*# @beginmodule sdlttf */
 
 namespace Falcon {
+
+static SDLService *s_service = 0;
+
 namespace Ext {
 
 /*#
@@ -56,6 +61,15 @@ FALCON_FUNC ttf_Init( VMachine *vm )
       vm->raiseModError( new SDLError( ErrorParam( FALCON_TTF_ERROR_BASE, __LINE__ )
          .desc( "TTF Error" )
          .extra( TTF_GetError() ) ) );
+      return;
+   }
+
+   // we can be reasonabily certain that our service is ready here.
+   s_service = (SDLService *) vm->getService( "SDLService" );
+   if ( s_service == 0 )
+   {
+      vm->raiseModError( new SDLError( ErrorParam( FALCON_TTF_ERROR_BASE+2, __LINE__ )
+         .desc( "SDL service not in the target VM" ) ) );
    }
 }
 
@@ -95,11 +109,21 @@ FALCON_FUNC ttf_InitAuto( VMachine *vm )
       return;
    }
 
+   // we can be reasonabily certain that our service is ready here.
+   s_service = (SDLService *) vm->getService( "SDLService" );
+   if ( s_service == 0 )
+   {
+      vm->raiseModError( new SDLError( ErrorParam( FALCON_TTF_ERROR_BASE+2, __LINE__ )
+         .desc( "SDL service not in the target VM" ) ) );
+   }
+
    // also create an object for auto quit.
    Item *c_auto = vm->findWKI( "_TTF_AutoQuit" );
+   fassert( c_auto != 0 );
    CoreObject *obj = c_auto->asClass()->createInstance();
    obj->setUserData( new TTFQuitCarrier );
    vm->retval( obj );
+
 }
 
 /*#
@@ -194,7 +218,7 @@ FALCON_FUNC ttf_OpenFont( VMachine *vm )
    Item *i_index = vm->param(2);
 
    if( i_filename == 0 || ! i_filename->isString() ||
-       i_ptsize == 0 || ! i_ptsize->isString() ||
+       i_ptsize == 0 || ! i_ptsize->isOrdinal() ||
        ( i_index != 0 && ! i_index->isOrdinal() )
       )
    {
@@ -526,7 +550,7 @@ static void internal_render( VMachine *vm, int mode )
 
    if( i_string == 0 || ( ! i_string->isString() && ! i_string->isOrdinal() ) ||
        i_color == 0 && !i_color->isObject() ||
-       (mode == 1 && i_colorbg == 0 || ! i_colorbg->isObject() )
+       (mode == 1 && (i_colorbg == 0 || ! i_colorbg->isObject() ))
       )
    {
       vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
@@ -546,6 +570,12 @@ static void internal_render( VMachine *vm, int mode )
       vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
          extra( "Object is not a color" ) ) );
       return;
+   }
+   // we need the service here
+   if ( s_service == 0 )
+   {
+       vm->raiseModError( new SDLError( ErrorParam( FALCON_TTF_ERROR_BASE+2, __LINE__ )
+         .desc( "Service not initialized" ) ) );
    }
 
    ::TTF_Font *font = static_cast<TTFFontCarrier *>(vm->self().asObject()->getUserData())->m_font;
@@ -590,12 +620,8 @@ static void internal_render( VMachine *vm, int mode )
          .extra( TTF_GetError() ) ) );
    }
 
-   Item *c_surface = vm->findWKI( "SDLSurface" );
-   fassert( c_surface != 0 );
-   CoreObject *obj = c_surface->asClass()->createInstance();
-   obj->setUserData( new SDLSurfaceCarrier( vm, text_surface ) );
-   vm->retval( obj );
-
+   // we need the service here
+   vm->retval( s_service->createSurfaceInstance(vm, text_surface ) );
 }
 
 /*#

@@ -1,0 +1,72 @@
+#!/usr/bin/falcon
+/*
+   FALCON - SDL MODULE Samples
+
+   FILE: sdl_fontinfo.fal
+
+   Shows loading and displaying of informations about fonts.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Tue, 25 Mar 2008 02:43:47 +0100
+   Last modified because:
+
+   -------------------------------------------------------------------
+   (C) Copyright 2008: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+   In order to use this file in its compiled form, this source or
+   part of it you have to read, understand and accept the conditions
+   that are stated in the LICENSE file that comes boundled with this
+   package.
+*/
+
+load sdlttf
+
+try
+   a = TTF.InitAuto()
+   font = TTF.OpenFont( "Vera.ttf", 24)
+   > "Success - in loading font"
+
+   b = SDL.Init( SDL.INIT_VIDEO )
+   SDL.WM_SetCaption( "Falcon SDL paint test - 3" )
+   SDL.LoadBMP("falcon-ico.bmp").SetIcon()
+   screen = SDL.SetVideoMode( 640, 480 )
+
+   // draw a cloured band - first hardware
+   try
+      band = SDL.CreateRGBSurface( SDL.HWSURFACE, 640, 1, 32 )
+   catch SDLError
+      > "Hardware surface creation failed, try with software creation."
+      // then software -- let it fail if it fails
+      band = SDL.CreateRGBSurface( SDL.SWSURFACE, 640, 1, 32 )
+   end
+
+   pixels = band.pixels
+   for bid in [0:640]
+      pixels[bid] = band.MapRGBA( 150, bid%128, (bid+128)%256,  250 )
+   end
+
+   rect = SDLRect( 0,0,640,1)
+   for y = 0 to 479
+      rect.y = y
+      band.BlitSurface( nil, screen, rect )
+   end
+
+   // Now draw our font...
+   color = SDLColor( 20, 240, 240)
+   font.SetFontStyle( TTF.STYLE_BOLD | TTF.STYLE_ITALIC )
+
+   dataImage = font.Render_Blended( "<<== Hello world! ==>", color );
+   dataImage.BlitSurface( nil, screen, SDLRect( 0,200,640,300) )
+
+   screen.UpdateRect()
+
+   > "Success! - press enter"
+   input()
+
+catch in e
+   > "Test failed: "
+   > e
+end
+
+/* end of file */

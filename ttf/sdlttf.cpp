@@ -155,7 +155,7 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    //=================================================================
    // Auto quit feature
    //
-   Falcon::Symbol *c_sdl_aq = self->addClass( "_SDLTTF_AutoQuit" );
+   Falcon::Symbol *c_sdl_aq = self->addClass( "_TTF_AutoQuit" );
    c_sdl_aq->setWKS( true );
    c_sdl_aq->exported( false );
    self->addClassMethod( c_sdl_aq, "Quit", Falcon::Ext::ttf_Quit );

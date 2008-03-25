@@ -31,6 +31,7 @@ extern "C" {
 #include <falcon/module.h>
 #include "version.h"
 #include "sdl_ext.h"
+#include "sdl_service.h"
 
 /*#
    @module sdl The SDL Falcon Module.
@@ -58,6 +59,8 @@ extern "C" {
    @beginmodule sdl
 */
 
+
+Falcon::SDLService the_service;
 
 FALCON_MODULE_DECL( const Falcon::EngineData &data )
 {
@@ -331,6 +334,11 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    c_sdl_aq->setWKS( true );
    c_sdl_aq->exported( false );
    self->addClassMethod( c_sdl_aq, "Quit", Falcon::Ext::sdl_Quit );
+
+   //==================================================================
+   // Service feature.
+   //
+   self->publishService( &the_service );
 
    return self;
 }
