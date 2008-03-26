@@ -1,26 +1,32 @@
 /****************************************************************************
 * Falcon direct benchmarks
 *
-* ID: 5c
-* Category: array
-* Subcategory:
-* Short: Array change range
+* ID: 2j
+* Category: calls
+* Subcategory: deep
+* Short: Benchmark on deep calls (10000)
 * Description:
-*   Performance test on 1000000 Array change range (no array resize).
+*    Performing repeated function calls and returns, lengthening the
+*    vm stack. This test performs 100 deep calls.
 * [/Description]
 ****************************************************************************/
 
-loops = 1000000 * timeFactor()
+const depth = 10000
+loops = (10000000/depth) * timeFactor()
 each = int(loops/10)
 
-array = ["a string", ["an", "array"], 10, 11, 12.5, [13:15], 18]
-range = [2:5]
-arrins = [ 20, 30, 40 ]
-// getting time
+function deepCall( counter, a, b, c, d )
+   if counter < depth
+      deepCall( counter + 1 )
+   end
+end
 
+// getting time
 time = seconds()
 for i = 1 to loops
-   array[range] = arrins
+
+   // perform the call
+   deepCall( 0 )
 
    if i % each == 0
       alive( i/loops*100 )
@@ -39,6 +45,6 @@ end
 timeAlive = seconds() - timeAlive
 time -= timeAlive
 
-timings( time, loops )
+timings( time, loops * depth )
 
 /* end of file */

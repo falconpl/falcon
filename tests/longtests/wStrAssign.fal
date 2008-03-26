@@ -1,11 +1,9 @@
 /****************************************************************************
 * Falcon direct benchmarks
 *
-* CVS-Id: $Id: wStrAssign.fal,v 1.3 2007/01/06 16:04:19 jonnymind Exp $
-*
 * ID: 4a
-* Category: benchmark
-* Subcategory: strings
+* Category: strings
+* Subcategory:
 * Short: Wide String assign
 * Description:
 *   Performance test on 10000000 string assignments.

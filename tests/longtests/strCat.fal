@@ -1,11 +1,9 @@
 /****************************************************************************
 * Falcon direct benchmarks
 *
-* CVS-Id: $Id: strCat.fal,v 1.2 2007/01/06 16:04:19 jonnymind Exp $
-*
 * ID: 3b
-* Category: benchmark
-* Subcategory: strings
+* Category: strings
+* Subcategory:
 * Short: String concatenation
 * Description:
 *   Performance test on 10000000 string concatenations.

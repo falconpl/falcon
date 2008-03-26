@@ -1,11 +1,9 @@
 /****************************************************************************
 * Falcon direct benchmarks
 *
-* CVS-Id: $Id: vmloop.fal,v 1.2 2007/01/06 16:04:19 jonnymind Exp $
-*
 * ID: 1a
-* Category: benchmark
-* Subcategory: vm
+* Category: vm
+* Subcategory:
 * Short: Benchmark on pure VM loop
 * Description:
 *    Performing a repeated set of mean operations in a tight loop

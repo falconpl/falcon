@@ -1,11 +1,9 @@
 /****************************************************************************
 * Falcon test suite - benchmarks / lengthy tests
 *
-* CVS-Id: $Id: gc.fal,v 1.4 2007/01/06 16:04:19 jonnymind Exp $
-*
 * ID: 100
-* Category: stress
-* Subcategory: GC
+* Category: GC
+* Subcategory:
 * Short: Basic garbage collecting.
 * Description:
 *    This test performs one million loops in which an array filled with strings

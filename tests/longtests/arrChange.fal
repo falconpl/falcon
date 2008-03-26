@@ -1,11 +1,9 @@
 /****************************************************************************
 * Falcon direct benchmarks
 *
-* CVS-Id: $Id: arrChange.fal,v 1.1 2007/01/06 16:04:19 jonnymind Exp $
-*
 * ID: 5b
-* Category: benchmark
-* Subcategory: array
+* Category: array
+* Subcategory:
 * Short: Array change single item
 * Description:
 *   Performance test on 1000000 Array acesses.

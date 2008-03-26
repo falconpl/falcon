@@ -1,11 +1,9 @@
 /****************************************************************************
 * Falcon direct benchmarks
 *
-* CVS-Id: $Id: methodCallPar.fal,v 1.2 2007/01/06 16:04:19 jonnymind Exp $
-*
 * ID: 2d
-* Category: benchmark
-* Subcategory: calls
+* Category: calls
+* Subcategory:
 * Short: Benchmark on method calls with params
 * Description:
 *    Performing repeated method calls and returns.
