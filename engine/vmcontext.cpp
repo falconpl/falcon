@@ -28,7 +28,7 @@
 #include <falcon/traits.h>
 #include <falcon/genericvector.h>
 
-#define VM_STACK_MEMORY_THRESHOLD 64
+#define VM_STACK_MEMORY_THRESHOLD 128
 
 
 namespace Falcon {
@@ -38,11 +38,6 @@ namespace Falcon {
 static void s_frameDestroyer( void *sframe )
 {
    delete (StackFrame *) sframe;
-}
-
-static void s_tryframeDestroyer( void *stry )
-{
-   delete (TryFrame *) stry;
 }
 
 VMContext::VMContext( VMachine *origin )

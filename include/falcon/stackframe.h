@@ -49,7 +49,7 @@ typedef struct tag_StackFrame
    bool m_initFrame;
    bool m_break;
    bool m_suspend;
-   byte m_param_count;
+   uint16 m_param_count;
    uint32 m_stack_base;
    uint32 m_try_base;
    Item m_sender;

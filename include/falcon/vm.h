@@ -67,24 +67,6 @@ public:
    {}
 };
 
-class TryFrame
-{
-   uint32 m_pc;
-   uint32 m_stackBase;
-   uint32 m_frameBase;
-   Module *m_module;
-
-   friend class VMachine;
-public:
-
-   TryFrame( int32 pc, int32 sb, int32 fb, Module *mod ):
-      m_pc( pc ),
-      m_stackBase( sb ),
-      m_frameBase( fb ),
-      m_module( mod )
-      {}
-};
-
 
 void opcodeHandler_END ( register VMachine *vm );
 void opcodeHandler_NOP ( register VMachine *vm );
