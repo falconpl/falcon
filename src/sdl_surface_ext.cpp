@@ -660,7 +660,7 @@ FALCON_FUNC SDLSurface_SetColors( ::Falcon::VMachine *vm )
    @brief Sets this surface as the icon for the SDL window.
    @todo Add the mask parameter and use it.
 
-   This function must be called before the first call to SDL_SetVideoMode.
+   This function must be called before the first call to @a SDL.SetVideoMode.
 */
 FALCON_FUNC SDLSurface_SetIcon ( ::Falcon::VMachine *vm )
 {

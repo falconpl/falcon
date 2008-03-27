@@ -874,7 +874,7 @@ FALCON_FUNC SDLEventHandler_PollEvent( VMachine *vm )
 
    In example, the following is a minimal responsive SDL Falcon application.
 
-   \code
+   @code
       object handler from SDLEventHandler
          shouldQuit = false
 
@@ -889,7 +889,7 @@ FALCON_FUNC SDLEventHandler_PollEvent( VMachine *vm )
       while not handler.shouldQuit
          handler.WaitEvent()
       end
-   \endcode
+   @endcode
 */
 bool SDLEventHandler_WaitEvent_next( VMachine *vm )
 {
