@@ -157,7 +157,7 @@ public:
    }
 
    /** Creates a boolean item. */
-   Item( bool tof )
+   explicit Item( bool tof )
    {
       setBoolean( tof );
    }
