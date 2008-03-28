@@ -1,7 +1,6 @@
 /*
    FALCON - The Falcon Programming Language.
    FILE: vm_run.cpp
-   $Id: vm_run.cpp,v 1.60 2007/08/18 12:07:37 jonnymind Exp $
 
    Implementation of virtual machine - main loop
    -------------------------------------------------------------------
@@ -2142,7 +2141,7 @@ void opcodeHandler_TRAN( register VMachine *vm )
             }
             else {
                counter += increment == 0 ? -1 : increment;
-               if ( counter - 1 <= source->asRangeEnd() ) {
+               if ( counter < source->asRangeEnd() ) {
                   vm->m_pc_next = p2;
                   return;
                }
