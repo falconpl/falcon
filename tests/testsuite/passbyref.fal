@@ -19,7 +19,7 @@ function test_fixed( param1, param2 )
 end
 
 function test_variable()
-   for i = 1 to paramCount()
+   for i in [0: paramCount()]
       if paramIsRef( i )
          paramSet( i, "changed" )
       end

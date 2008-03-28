@@ -36,7 +36,7 @@ try
 
    res1 = item2[ "elem1" ]
    if len( array1 ) != len( res1 ): failure( "Basic" )
-   for i = 0 to len( array1 ) - 1
+   for i in [ 0 : len( array1 ) ]
       if array1[i] != res1[i]: failure( "Deep item retrival" )
    end
 

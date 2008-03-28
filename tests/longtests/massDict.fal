@@ -25,7 +25,7 @@ function makeKey()
       key = "               "
    end
 
-   for num = 0 to key.len() - 1
+   for num in [ 0 : key.len() ]
       key[num] = random( 0, 25 ) + letter_a
    end
 
@@ -33,7 +33,7 @@ function makeKey()
 end
 
 // looping for insertion
-for i = 1 to loops
+for i in [ 0 : loops ]
    key = makeKey()
    dict[ key ] = random()
 
@@ -47,7 +47,7 @@ time = seconds() - time
 
 // subtract alive time
 timeAlive = seconds()
-for i = 1 to loops
+for i in [ 0 : loops ]
    makeKey( key ); random()
 
    if i % each == 0

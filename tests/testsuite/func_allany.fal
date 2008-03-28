@@ -23,7 +23,7 @@ end
 function test_3( alpha, beta, gamma )
    global test_3_calls
    test_3_calls++
-   return alpha = "alpha" and beta = "beta" and gamma = "gamma"
+   return alpha == "alpha" and beta == "beta" and gamma == "gamma"
 end
 
 // basic

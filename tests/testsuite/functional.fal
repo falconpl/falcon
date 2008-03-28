@@ -22,7 +22,7 @@ function test2( a, b )
 end
 
 function test_3( alpha, beta, gamma )
-   return alpha = "alpha" and beta = "beta" and gamma = "gamma"
+   return alpha == "alpha" and beta == "beta" and gamma == "gamma"
 end
 
 // first, check for correct detection of isCallable

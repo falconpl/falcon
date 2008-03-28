@@ -97,19 +97,19 @@
      CLOSESQUARE = 313,
      OPENSQUARE = 314,
      DOT = 315,
-     ASSIGN_POW = 316,
-     ASSIGN_SHL = 317,
-     ASSIGN_SHR = 318,
-     ASSIGN_BXOR = 319,
-     ASSIGN_BOR = 320,
-     ASSIGN_BAND = 321,
-     ASSIGN_MOD = 322,
-     ASSIGN_DIV = 323,
-     ASSIGN_MUL = 324,
-     ASSIGN_SUB = 325,
-     ASSIGN_ADD = 326,
-     OP_EQ = 327,
-     ARROW = 328,
+     ARROW = 316,
+     ASSIGN_POW = 317,
+     ASSIGN_SHL = 318,
+     ASSIGN_SHR = 319,
+     ASSIGN_BXOR = 320,
+     ASSIGN_BOR = 321,
+     ASSIGN_BAND = 322,
+     ASSIGN_MOD = 323,
+     ASSIGN_DIV = 324,
+     ASSIGN_MUL = 325,
+     ASSIGN_SUB = 326,
+     ASSIGN_ADD = 327,
+     OP_EQ = 328,
      OP_TO = 329,
      COMMA = 330,
      QUESTION = 331,
@@ -206,19 +206,19 @@
 #define CLOSESQUARE 313
 #define OPENSQUARE 314
 #define DOT 315
-#define ASSIGN_POW 316
-#define ASSIGN_SHL 317
-#define ASSIGN_SHR 318
-#define ASSIGN_BXOR 319
-#define ASSIGN_BOR 320
-#define ASSIGN_BAND 321
-#define ASSIGN_MOD 322
-#define ASSIGN_DIV 323
-#define ASSIGN_MUL 324
-#define ASSIGN_SUB 325
-#define ASSIGN_ADD 326
-#define OP_EQ 327
-#define ARROW 328
+#define ARROW 316
+#define ASSIGN_POW 317
+#define ASSIGN_SHL 318
+#define ASSIGN_SHR 319
+#define ASSIGN_BXOR 320
+#define ASSIGN_BOR 321
+#define ASSIGN_BAND 322
+#define ASSIGN_MOD 323
+#define ASSIGN_DIV 324
+#define ASSIGN_MUL 325
+#define ASSIGN_SUB 326
+#define ASSIGN_ADD 327
+#define OP_EQ 328
 #define OP_TO 329
 #define COMMA 330
 #define QUESTION 331

@@ -28,7 +28,7 @@ try
 
    item1 = stream.readItem()
    if len( array1 ) != len( item1 ): failure( "Basic" )
-   for i = 0 to len( array1 ) - 1
+   for i in [ 0 : len( array1 ) ]
       if array1[i] != item1[i]: failure( "Deep item retrival" )
    end
 
@@ -36,7 +36,7 @@ try
    if len( array2 ) != len( item2 ): failure( "Second deserialization" )
    item3 = item2[2]
    if len( array1 ) != len( item3 ): failure( "Deep deserialization" )
-   for i = 0 to len( array1 ) - 1
+   for i in [ 0 : len( array1 ) ]
       if array1[i] != item3[i]: failure( "Deep item retrival 2" )
    end
 

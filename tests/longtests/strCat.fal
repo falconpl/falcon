@@ -18,7 +18,7 @@ str = "first "
 // getting time
 
 time = seconds()
-for i = 1 to loops
+for i in [ 0 : loops ]
    result = str + part
 
    if i % each == 0
@@ -30,7 +30,7 @@ time = seconds() - time
 
 // subtract alive time
 timeAlive = seconds()
-for i = 1 to loops
+for i in [ 0 : loops ]
    if i % each == 0
       alive( i/loops*100 )
    end

@@ -22,9 +22,9 @@ object alpha
 
    init
       // Reading first.list via the accessor
-      for i = len( center.getList() ) to 1 step -1
+      for i in [ len( center.getList() )-1 : 0 : -1]
           // we have called the accessor, so the list is initalized
-          self.sum += center.list[i - 1]
+          self.sum += center.list[i]
       end
    end
 end

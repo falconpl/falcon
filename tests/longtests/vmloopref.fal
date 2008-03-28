@@ -22,7 +22,7 @@ each = int(loops/10)
 
 // getting time
 time = seconds()
-for i = 1 to loops
+for i in [ 0 : loops ]
    // setting a variable
    loopVar1 = $i
    // multiplying a variable
@@ -36,7 +36,7 @@ end
 time = seconds() - time
 
 timeAlive = seconds()
-for i = 1 to loops/each
+for i in [ 0 : loops/each ]
    alive( i )
 end
 timeAlive = seconds() - timeAlive

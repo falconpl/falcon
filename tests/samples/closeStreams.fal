@@ -47,7 +47,7 @@ stream.close()
 > "Closing the standard output proxy won't close the process stream."
 // sleep to show we're still inside the pipe.
 errStream.writeText( "I just closed a standard stream proxy; piped apps should be still alive.\n" )
-for i = 3 to 0
+for i in [3 : 0]
    sleep( 1 )
    errStream.writeText( @ "Sleeping for $i seconds more...\n" )
 end
@@ -61,7 +61,7 @@ stream.writeText( "Sent through standard output physical stream.\r\n" )
 errStream.writeText( "Now I close the stream; piped apps shoudld exit now:\n"
                      "====================================================\n" )
 stream.close()
-for i = 3 to 0
+for i in [3 : 0]
    sleep( 1 )
    errStream.writeText( @ "Sleeping for $i seconds more...\n" )
 end

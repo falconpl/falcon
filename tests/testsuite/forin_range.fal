@@ -19,13 +19,14 @@
 result = 0
 count = 0
 
+// must never enter
 for c in [10:]
 	result += c
 	count++
 end
 
-if result != 10: failure( "Open range - value" )
-if count != 1: failure( "Open range - times" )
+if result != 0: failure( "Open range - value" )
+if count != 0: failure( "Open range - times" )
 
 //===================================================
 // Test for empty range, positive

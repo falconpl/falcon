@@ -34,7 +34,7 @@ function proxied_two( param1, param2 )
    val = param1 + param2
 
    // RELEVANT: force to be upfold
-   for i = 2 to paramCount() - 1 step 1
+   for i in [ 2 : paramCount() : 1 ]
       val += paramNumber( i )
    end
 

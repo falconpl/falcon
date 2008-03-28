@@ -61,7 +61,7 @@ class coroutine( param, su, se )
    // Thread method
    // (could have any name)
    function run( param )
-      for i = 1 to 100
+      for i in [1 : 101]
          self.value = i
          sleep( 0.01 * self.id )
          self.sem_updates.post()
@@ -85,7 +85,7 @@ upd_semaphore = Semaphore()
 // we save the coroutine objects here
 coro_array = []
 
-for i = 1 to 8
+for i in [0 : 8]
    coro = coroutine( i, upd_semaphore, end_semaphore )
    coro_array += coro
 

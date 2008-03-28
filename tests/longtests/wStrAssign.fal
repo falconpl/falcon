@@ -20,7 +20,7 @@ str7= "abc" // we'll change three chars
 // getting time
 
 time = seconds()
-for i = 1 to loops
+for i in [ 0 : loops ]
    str[5] = str7
 
    if i % each == 0
@@ -32,7 +32,7 @@ time = seconds() - time
 
 // subtract alive time
 timeAlive = seconds()
-for i = 1 to loops
+for i in [ 0 : loops ]
    if i % each == 0
       alive( i/loops*100 )
    end

@@ -19,13 +19,13 @@ tc1 = false
 tc2 = false
 
 function testCall1()
-   global tc1 
+   global tc1
    tc1 = true
    return false
 end
 
 function testCall2()
-   global tc2 
+   global tc2
    tc2 = true
    return [1,2,3]
 end
@@ -40,14 +40,6 @@ end
 if not tc1: failure( "Empty while" )
 
 
-//=========================
-// test for an empty for
-//
-for i = 1 to 10
-end
-
-if i != 10: failure( "Empty for" )
-
 //==========================
 // test for an empty for/in
 //
@@ -55,7 +47,7 @@ for i in testCall2()
 end
 
 if not tc2: failure( "Empty for/in" )
-   
+
 //==========================
 // Now test empty forlast
 // empty forfirst and formiddle just do nothing
@@ -70,7 +62,7 @@ for i in [1,2,3]
 end
 
 if res != "1;2;3": failure( "Empty forlast&forfirst" )
-   
+
 
 
 /* End of file */

@@ -353,16 +353,36 @@ void Compiler::defineVal( Value *val )
       else {
          Expression *expr = val->asExpr();
          defineVal( expr->first() );
-         if( expr->second() != 0 &&
-             expr->second()->isExpr() &&
-             expr->second()->asExpr()->type() == Expression::t_assign )
+         if( expr->second() != 0 )
          {
-            defineVal( expr->second() );
+            if ( expr->second()->isExpr() &&
+                 expr->second()->asExpr()->type() == Expression::t_assign
+                 )
+            {
+               defineVal( expr->second() );
+            }
+            else if ( expr->isBinaryOperator() )
+            {
+               raiseError( e_assign_const, lexer()->previousLine() );
+            }
          }
       }
    }
-
-   if ( val->isSymdef() )
+   else if ( val->isArray() )
+   {
+      ListElement *it_s = val->asArray()->begin();
+      while( it_s != 0 )
+      {
+         Value *t = (Value *) it_s->data();
+         defineVal( t );
+         it_s = it_s->next();
+      }
+   }
+   else if ( val->isImmediate() )
+   {
+      raiseError( e_assign_const, lexer()->previousLine() );
+   }
+   else if ( val->isSymdef() )
    {
       if ( staticPrefix() == 0 ) {
          Symbol *sym;

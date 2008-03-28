@@ -24,10 +24,10 @@ allocMem = 0
 liveItems = 0
 liveMem = 0
 
-/* Now forin creates an extra reference, but I don't know why
+/* Now forin creates an extra reference, will be fixed in 0.9 */
 for i in [1 : 11]
 end
-*/
+
 // initialize references
 gcPerform( true )
 gcGetParams( $allocMem, $allocItems, $liveMem, $liveItems )

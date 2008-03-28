@@ -460,6 +460,42 @@ public:
 
    Value *third() const { return m_third; }
    void third( Value *t ) { delete m_third; m_third = t; }
+
+   bool isBinaryOperator() const
+   {
+      switch( m_operator )
+      {
+         case t_bin_and:
+         case t_bin_or:
+         case t_bin_xor:
+         case t_shift_left:
+         case t_shift_right:
+         case t_and:
+         case t_or:
+
+         case t_plus:
+         case t_minus:
+         case t_times:
+         case t_divide:
+         case t_modulo:
+         case t_power:
+
+         case t_gt:
+         case t_ge:
+         case t_lt:
+         case t_le:
+         case t_eq:
+         case t_neq:
+
+         case t_has:
+         case t_hasnt:
+         case t_in:
+         case t_notin:
+         case t_provides:
+            return true;
+      }
+      return false;
+   }
 };
 
 

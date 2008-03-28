@@ -33,7 +33,7 @@ else
 end
 
 memory = MemBuf( str.len() )
-for i = 0 to str.len() - 1
+for i in [0 : str.len()]
    memory[i] = str[*i]
 end
 

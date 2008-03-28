@@ -23,7 +23,7 @@ end
 
 // getting time
 time = seconds()
-for i = 1 to loops
+for i in [ 0 : loops ]
 
    // perform the call
    deepCall( 0 )
@@ -37,7 +37,7 @@ time = seconds() - time
 
 // subtract alive time
 timeAlive = seconds()
-for i = 1 to loops
+for i in [0 : loops]
    if i % each == 0
       alive( i/loops*100 )
    end

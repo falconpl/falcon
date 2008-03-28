@@ -16,14 +16,14 @@ each = int(loops/10)
 
 function testInsert()
    dict = [ => ]
-   for i = 1 to 20
+   for i in [ 0 : 20 ]
       dict[ makeKey() ] = random()
    end
 end
 
 function testEmpty()
    dict = [ => ]
-   for i = 1 to 20
+   for i in [ 0 : 20 ]
       makeKey(); random()
    end
 end
@@ -35,7 +35,7 @@ function makeKey()
       key = "               "
    end
 
-   for num = 0 to key.len() - 1
+   for num in [ 0 : key.len() ]
       key[num] = random( 0, 25 ) + letter_a
    end
 
@@ -48,7 +48,7 @@ end
 time = seconds()
 
 // looping for insertion
-for i = 1 to loops
+for i in [ 0 : loops ]
    testInsert()
 
    if i % each == 0
@@ -61,7 +61,7 @@ time = seconds() - time
 
 // subtract alive time
 timeAlive = seconds()
-for i = 1 to loops
+for i in [ 0 : loops ]
    testEmpty()
 
    if i % each == 0

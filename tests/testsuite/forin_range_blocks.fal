@@ -23,6 +23,7 @@ vals_first = []
 vals_last = []
 vals_middle = []
 
+// Must never enter
 for c in [10:]
 	forfirst: vals_first += c
 	result += c
@@ -31,11 +32,11 @@ for c in [10:]
 	forlast: vals_last += c
 end
 
-if result != 10: failure( "Open range - value" )
-if count != 1: failure( "Open range - times" )
-if vals_first.len() != 1: failure( "Open range - forfirst" )
+if result != 0: failure( "Open range - value" )
+if count != 0: failure( "Open range - times" )
+if vals_first.len() != 0: failure( "Open range - forfirst" )
 if vals_middle.len() != 0: failure( "Open range - formiddle" )
-if vals_last.len() != 1: failure( "Open range - forlast" )
+if vals_last.len() != 0: failure( "Open range - forlast" )
 
 //===================================================
 // Test for empty range, positive

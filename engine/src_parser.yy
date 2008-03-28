@@ -132,9 +132,9 @@ inline int flc_src_lex (void *lvalp, void *yyparam)
    assignment request where ambiguity arises).
 */
 
+%left ARROW
 %right ASSIGN_ADD ASSIGN_SUB ASSIGN_MUL ASSIGN_DIV ASSIGN_MOD ASSIGN_BAND ASSIGN_BOR ASSIGN_BXOR ASSIGN_SHR ASSIGN_SHL ASSIGN_POW
 %right OP_EQ
-%left ARROW
 %right COMMA OP_TO
 %left QUESTION
 %right COLON
@@ -279,6 +279,28 @@ statement:
 
 base_statement:
    expression EOL { $$ = new Falcon::StmtAutoexpr( LINE, $1 ); }
+
+   | expression_list OP_EQ expression EOL {
+      Falcon::Value *first = new Falcon::Value( $1 );
+      COMPILER->defineVal( first );
+      $$ = new Falcon::StmtAutoexpr( LINE,
+         new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_assign, first, $3 ) ) );
+   }
+   | expression_list OP_EQ expression COMMA expression_list EOL {
+      if ( $1->size() != $5->size() + 1 )
+      {
+         COMPILER->raiseError(Falcon::e_unpack_size );
+      }
+      Falcon::Value *first = new Falcon::Value( $1 );
+
+      COMPILER->defineVal( first );
+      $5->pushFront( $3 );
+      Falcon::Value *second = new Falcon::Value( $5 );
+      $$ = new Falcon::StmtAutoexpr( LINE,
+         new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_assign, first, second ) ) );
+   }
+
+
    | def_statement /* no action  -- at the moment def_statement always returns 0*/
    | while_statement
    | forin_statement
@@ -2120,7 +2142,8 @@ expression:
    | expression OP_IN expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_in, $1, $3 ) ); }
    | expression OP_NOTIN expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_notin, $1, $3 ) ); }
    | expression PROVIDES SYMBOL { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_provides, $1, new Falcon::Value( $3 ) ) ); }
-   | DOLLAR expression { $$ = new Falcon::Value( $2 ); }
+   | DOLLAR atomic_symbol { $$ = new Falcon::Value( $2 ); }
+   | DOLLAR DOLLAR { $$ = new Falcon::Value( (Falcon::Value *) 0 ); }
    | ATSIGN expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_strexpand, $2 ) ); }
    | DIESIS expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_indirect, $2 ) ); }
    | lambda_expr
@@ -2173,7 +2196,15 @@ expression:
 
    | expression OP_EQ expression {
       COMPILER->defineVal( $1 );
-      $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_assign, $1, $3 ) ); }
+      $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_assign, $1, $3 ) );
+   }
+
+   | expression OP_EQ expression COMMA expression_list {
+      COMPILER->defineVal( $1 );
+      $5->pushFront( $3 );
+      Falcon::Value *second = new Falcon::Value( $5 );
+      $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_assign, $1, second ) );
+   }
 
    | expression ASSIGN_ADD expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_aadd, $1, $3 ) ); }
    | expression ASSIGN_SUB expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_asub, $1, $3 ) ); }
@@ -2187,6 +2218,20 @@ expression:
    | expression ASSIGN_SHL expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_ashl, $1, $3 ) ); }
    | expression ASSIGN_SHR expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_ashr, $1, $3 ) ); }
    | OPENPAR expression CLOSEPAR {$$=$2;}
+/*
+   | expression COMMA expression {
+      if ( $3->isArray() ) {
+         $3->asArray()->pushFront( $1 );
+         $$ = $3;
+      }
+      else
+      {
+         Falcon::ArrayDecl *arr = new Falcon::ArrayDecl;
+         arr->pushBack( $1 );
+         arr->pushBack( $3 );
+         $$ = new Falcon::Value( arr );
+      }
+   }*/
 ;
 
 /*suqared expr NEED to start with an or with a nonambiguous symbol */
@@ -2426,21 +2471,6 @@ symbol_list:
          $1->pushBack( $3 );
       }
 ;
-
-/*
-assignment_list:
-   expression {
-         COMPILER->defineVal( $1 );
-         Falcon::ArrayDecl *ad = new Falcon::ArrayDecl();
-         ad->pushBack( $1 );
-         $$ = ad;
-      }
-   | assignment_list COMMA expression {
-         COMPILER->defineVal( $3 );
-         $1->pushBack( $3 );
-      }
-;
-*/
 
 expression_pair_list:
    expression ARROW expression { $$ = new Falcon::DictDecl(); $$->pushBack( $1, $3 ); }

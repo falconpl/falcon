@@ -20,7 +20,7 @@ function makeKey()
       key = "               "
    end
 
-   for num = 0 to key.len() - 1
+   for num in [ 0 : key.len() ]
       key[num] = random( 0, 25 ) + letter_a
    end
 
@@ -30,7 +30,7 @@ end
 
 // creating the base dictionary
 dict = [=>]
-for i = 1 to 100
+for i in [ 0 : 100 ]
    dict[ makeKey() ] = random()
 end
 
@@ -38,7 +38,7 @@ end
 time = seconds()
 
 // looping for insertion
-for i = 1 to loops
+for i in [ 0 : loops ]
    // repeating the findings
    v = makeKey() in dict
 
@@ -52,7 +52,7 @@ time = seconds() - time
 
 // subtract alive time
 timeAlive = seconds()
-for i = 1 to loops
+for i in [ 0 : loops ]
    makeKey()
 
    if i % each == 0
