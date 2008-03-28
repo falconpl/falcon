@@ -3233,100 +3233,10 @@ trav_go_away:
 
 
 //57
-void opcodeHandler_FORI( register VMachine *vm )
-{
-   uint32 pNext = (uint32) vm->getNextNTD32();
-   Item *operand2 = vm->getOpcodeParam( 2 )->dereference();
-   Item *operand3 = vm->getOpcodeParam( 3 )->dereference();
-
-   // get the third operand.
-   register int size = vm->m_stack->size();
-   if ( size < 2 )  {
-      vm->raiseError( e_stackuf, "FORI" );
-      return;
-   }
-
-   // check parameters
-   if ( ! vm->m_stack->itemAt( size - 1 ).isScalar() )
-   {
-      vm->raiseRTError(
-               new TypeError( ErrorParam( e_for_user_error ).origin( e_orig_vm ).extra("FORI step") ) );
-      return;
-   }
-
-   if ( ! vm->m_stack->itemAt( size - 2 ).isScalar() )
-   {
-      vm->raiseRTError(
-               new TypeError( ErrorParam( e_for_user_error ).origin( e_orig_vm ).extra("FORI target") ) );
-      return;
-   }
-
-   if ( ! operand3->isScalar() )
-   {
-      vm->raiseRTError(
-               new TypeError( ErrorParam( e_for_user_error ).origin( e_orig_vm ).extra("FORI start") ) );
-      return;
-   }
-
-   // check step
-   int64 target = vm->m_stack->itemAt( size - 2 ).forceInteger();
-   int64 step = vm->m_stack->itemAt( size - 1 ).forceInteger();
-   int64 begin =  operand3->forceInteger();
-
-   if( step == 0 )
-   {
-      // define step
-      step = begin > target ? -1:1;
-      vm->m_stack->itemAt( size - 1 ) = step;
-   }
-   else {
-      if ( step > 0 && begin > target || step < 0 && begin < target ) {
-         // immediate exit
-         vm->m_stack->resize( size - 2 );
-         vm->m_pc_next = pNext;
-         return;
-      }
-   }
-
-   // initialize the counter
-   operand2->setInteger( begin );
-}
-
+//void opcodeHandler_FORI( register VMachine *vm )
 
 //58
-void opcodeHandler_FORN( register VMachine *vm )
-{
-   uint32 pNext = (uint32) vm->getNextNTD32();
-   Item *operand2 = vm->getOpcodeParam( 2 )->dereference();
-
-   // get the third operand.
-   register int size = vm->m_stack->size();
-   if ( size < 2 )  {
-      vm->raiseError( e_stackuf, "FORN" );
-      return;
-   }
-   // let's suppose the most important controls have been performed by forn
-   if ( ! operand2->isScalar() )
-   {
-      vm->raiseRTError(
-               new TypeError( ErrorParam( e_for_user_error ).origin( e_orig_vm ).extra("FORN variable") ) );
-      return;
-   }
-
-   int64 target = vm->m_stack->itemAt( size - 2 ).forceInteger();
-   int64 step = vm->m_stack->itemAt( size - 1 ).forceInteger();
-   int64 current =  operand2->forceInteger();
-   current += step;
-
-   if ( step > 0 && current > target || step < 0 && current < target ) {
-      // end of loop
-      vm->m_stack->resize( size - 2 );
-   }
-   else {
-      operand2->setInteger( current );
-      vm->m_pc_next = pNext;
-   }
-}
+//void opcodeHandler_FORN( register VMachine *vm )
 
 //59
 void opcodeHandler_SHL( register VMachine *vm )

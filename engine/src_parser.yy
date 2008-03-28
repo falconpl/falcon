@@ -2161,20 +2161,10 @@ expression:
       $$ = new Falcon::Value( $1 );
    }
 
-   | expression array_decl {
-         if ( $2->size() == 1 )
-         {
-            Falcon::Value *accessor = (Falcon::Value *) $2->front();
-            Falcon::Expression *exp = new Falcon::Expression( Falcon::Expression::t_array_access, $1,
-               new Falcon::Value( *accessor ) );
-            delete $2;
-            $$ = new Falcon::Value( exp );
-         }
-         else {
-            COMPILER->raiseContextError( Falcon::e_syn_arraydecl, CURRENT_LINE, CTX_LINE );
-            $$ = new Falcon::Value($2);
-         }
-      }
+   | expression OPENSQUARE expression CLOSESQUARE {
+      Falcon::Expression *exp = new Falcon::Expression( Falcon::Expression::t_array_access, $1, $3 );
+      $$ = new Falcon::Value( exp );
+   }
 
    | expression OPENSQUARE STAR expression CLOSESQUARE {
          Falcon::Expression *exp = new Falcon::Expression( Falcon::Expression::t_array_byte_access, $1, $4 );

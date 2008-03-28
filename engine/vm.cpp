@@ -201,8 +201,8 @@ void VMachine::internal_construct()
    m_opHandlers[ P_STVR] = opcodeHandler_STVR;
    m_opHandlers[ P_TRAV] = opcodeHandler_TRAV;
 
-   m_opHandlers[ P_FORI] = opcodeHandler_FORI;
-   m_opHandlers[ P_FORN] = opcodeHandler_FORN;
+   //m_opHandlers[ P_FORI] = opcodeHandler_FORI;
+   //m_opHandlers[ P_FORN] = opcodeHandler_FORN;
 
    m_opHandlers[ P_SHL ] = opcodeHandler_SHL;
    m_opHandlers[ P_SHR ] = opcodeHandler_SHR;
