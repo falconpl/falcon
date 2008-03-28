@@ -133,15 +133,15 @@ inline int flc_src_lex (void *lvalp, void *yyparam)
 */
 
 %right ASSIGN_ADD ASSIGN_SUB ASSIGN_MUL ASSIGN_DIV ASSIGN_MOD ASSIGN_BAND ASSIGN_BOR ASSIGN_BXOR ASSIGN_SHR ASSIGN_SHL ASSIGN_POW
+%right OP_EQ
 %left ARROW
-%right COMMA OP_TO FOR_STEP
+%right COMMA OP_TO
 %left QUESTION
 %right COLON
 %left OR
 %left AND
 %right NOT
-%right LET
-%left OP_ASSIGN OP_EQ EEQ NEQ GT LT GE LE
+%left EEQ NEQ GT LT GE LE
 %left HAS HASNT OP_IN OP_NOTIN PROVIDES
 %right ATSIGN DIESIS
 %left VBAR CAP
@@ -154,19 +154,19 @@ inline int flc_src_lex (void *lvalp, void *yyparam)
 %right DOLLAR INCREMENT DECREMENT
 
 %type <integer> INTNUM_WITH_MINUS
-%type <fal_adecl> expression_list listpar_expression_list
-%type <fal_adecl> symbol_list assignment_list inherit_param_list inherit_call
+%type <fal_adecl> expression_list listpar_expression_list array_decl
+%type <fal_adecl> symbol_list inherit_param_list inherit_call
 %type <fal_ddecl> expression_pair_list
-%type <fal_val> expression variable func_call nameless_func lambda_expr iif_expr
+%type <fal_val> expression func_call nameless_func lambda_expr iif_expr
 %type <fal_val> switch_decl select_decl while_decl while_short_decl
 %type <fal_val> if_decl if_short_decl elif_decl
 %type <fal_val> const_atom var_atom  atomic_symbol /* atom */
 %type <stringp> load_statement
-%type <fal_val> array_decl dict_decl
+%type <fal_val> dotarray_decl dict_decl
 %type <fal_val> inherit_param_token
 %type <fal_stat> break_statement continue_statement
-%type <fal_stat> toplevel_statement statement assignment while_statement if_statement
-%type <fal_stat> for_statement for_decl for_decl_short forin_statement switch_statement fordot_statement
+%type <fal_stat> toplevel_statement statement while_statement if_statement
+%type <fal_stat> forin_statement switch_statement fordot_statement
 %type <fal_stat> select_statement
 %type <fal_stat> give_statement try_statement raise_statement return_statement global_statement
 %type <fal_stat> base_statement
@@ -179,8 +179,7 @@ inline int flc_src_lex (void *lvalp, void *yyparam)
 %type <fal_stat> def_statement
 %type <fal_stat> outer_print_statement
 
-%type <fal_stat> op_assignment autoadd autosub automul autodiv automod autoband autobor autobxor autopow const_statement
-%type <fal_stat> autoshl autoshr
+%type <fal_stat> const_statement
 %type <fal_val>  range_decl
 
 %%
@@ -208,7 +207,6 @@ line:
    toplevel_statement
    | END EOL { COMPILER->raiseError(Falcon::e_lone_end ); }
    | CASE error EOL { COMPILER->raiseError(Falcon::e_case_outside ); }
-
 ;
 
 toplevel_statement:
@@ -272,34 +270,17 @@ load_statement:
 statement:
    base_statement { COMPILER->checkLocalUndefined(); $$ = $1; }
    | EOL { $$ = 0; }
-
-   /* Some errors, at this level: */
    | FUNCDECL error EOL { COMPILER->raiseError(Falcon::e_toplevel_func ); $$ = 0; }
    | OBJECT error EOL { COMPILER->raiseError(Falcon::e_toplevel_obj ); $$ = 0; }
    | CLASS error EOL { COMPILER->raiseError(Falcon::e_toplevel_class ); $$ = 0; }
    | error EOL { COMPILER->raiseError(Falcon::e_syntax ); $$ = 0;}
-
 ;
 
-assignment_def_list:
-   atomic_symbol OP_ASSIGN expression {
-      COMPILER->defContext( true );
-      COMPILER->defineVal( $1 );
-      COMPILER->addStatement( new Falcon::StmtAssignment( CURRENT_LINE, $1, $3 ) );
-   }
-   | assignment_def_list COMMA atomic_symbol OP_ASSIGN expression {
-      COMPILER->defineVal( $3 );
-      COMPILER->addStatement( new Falcon::StmtAssignment( CURRENT_LINE, $3, $5 ) );
-   }
-;
 
 base_statement:
    expression EOL { $$ = new Falcon::StmtAutoexpr( LINE, $1 ); }
    | def_statement /* no action  -- at the moment def_statement always returns 0*/
-   | assignment
-   | op_assignment
    | while_statement
-   | for_statement
    | forin_statement
    | switch_statement
    | select_statement
@@ -318,134 +299,26 @@ base_statement:
    | outer_print_statement
 ;
 
+assignment_def_list:
+   atomic_symbol OP_EQ expression {
+      COMPILER->defContext( true );
+      COMPILER->defineVal( $1 );
+      COMPILER->addStatement( new Falcon::StmtAutoexpr( CURRENT_LINE, new Falcon::Value(
+         new Falcon::Expression( Falcon::Expression::t_assign, $1, $3 ) ) ) );
+   }
+   | assignment_def_list COMMA atomic_symbol OP_EQ expression {
+      COMPILER->defineVal( $3 );
+      COMPILER->addStatement( new Falcon::StmtAutoexpr(CURRENT_LINE, new Falcon::Value(
+         new Falcon::Expression( Falcon::Expression::t_assign, $3, $5 ) ) ) );
+   }
+;
+
 def_statement:
    DEF assignment_def_list EOL
       { COMPILER->defContext( false );  $$=0; }
    | DEF error EOL
       { COMPILER->raiseError( Falcon::e_syn_def ); }
 ;
-
-
-assignment:
-   variable OP_ASSIGN expression EOL {
-      COMPILER->defineVal( $1 );
-      $$ = new Falcon::StmtAssignment( LINE, $1, $3 );
-   }
-   | variable OP_ASSIGN DOLLAR DOLLAR EOL {
-      COMPILER->defineVal( $1 );
-      $$ = new Falcon::StmtUnref( LINE, $1 );
-   }
-   | variable OP_ASSIGN expression_list EOL {
-         COMPILER->defineVal( $1 );
-         $$ = new Falcon::StmtAssignment( LINE, $1, new Falcon::Value( $3 ) );
-      }
-   | variable OP_ASSIGN nameless_func EOL {
-         COMPILER->defineVal( $1 );
-         $$ = new Falcon::StmtAssignment( LINE, $1, new Falcon::Value( $3 ) );
-      }
-   | variable COMMA assignment_list OP_ASSIGN expression EOL {
-         COMPILER->defineVal( $1 );
-         $3->pushFront( $1 );
-         $$ = new Falcon::StmtAssignment( LINE, new Falcon::Value($3), $5 );
-      }
-   | variable COMMA assignment_list OP_ASSIGN expression_list EOL {
-         COMPILER->defineVal( $1 );
-         $3->pushFront( $1 );
-         $$ = new Falcon::StmtAssignment( LINE, new Falcon::Value($3), new Falcon::Value( $5 ) );
-      }
-;
-
-
-
-op_assignment:
-   autoadd
-   | autosub
-   | automul
-   | autodiv
-   | automod
-   | autopow
-   | autoband
-   | autobor
-   | autobxor
-   | autoshl
-   | autoshr
-;
-
-autoadd:
-   expression ASSIGN_ADD expression EOL {
-      COMPILER->defineVal( $1 );
-      $$ = new Falcon::StmtAutoAdd( LINE, $1, $3 );
-   }
-;
-
-autosub:
-   variable ASSIGN_SUB expression EOL {
-      COMPILER->defineVal( $1 );
-      $$ = new Falcon::StmtAutoSub( LINE, $1, $3 );
-   }
-;
-
-automul:
-   variable ASSIGN_MUL expression EOL {
-      COMPILER->defineVal( $1 );
-      $$ = new Falcon::StmtAutoMul( LINE, $1, $3 );
-   }
-;
-
-autodiv:
-   variable ASSIGN_DIV expression EOL {
-      COMPILER->defineVal( $1 );
-      $$ = new Falcon::StmtAutoDiv( LINE, $1, $3 );
-   }
-;
-
-automod:
-   variable ASSIGN_MOD expression EOL {
-      COMPILER->defineVal( $1 );
-      $$ = new Falcon::StmtAutoMod( LINE, $1, $3 );
-   }
-;
-
-autopow:
-   variable ASSIGN_POW expression EOL {
-      COMPILER->defineVal( $1 );
-      $$ = new Falcon::StmtAutoPow( LINE, $1, $3 );
-   }
-;
-
-autoband:
-   variable ASSIGN_BAND expression EOL {
-      COMPILER->defineVal( $1 );
-      $$ = new Falcon::StmtAutoBAND( LINE, $1, $3 );
-   }
-;
-
-autobor:
-   variable ASSIGN_BOR expression EOL {
-      COMPILER->defineVal( $1 );
-      $$ = new Falcon::StmtAutoBOR( LINE, $1, $3 );
-   }
-;
-
-autobxor:
-   variable ASSIGN_BXOR expression EOL {
-      COMPILER->defineVal( $1 );
-      $$ = new Falcon::StmtAutoBXOR( LINE, $1, $3 );
-   }
-;
-autoshl:
-   variable ASSIGN_SHL expression EOL {
-      COMPILER->defineVal( $1 );
-      $$ = new Falcon::StmtAutoSHL( LINE, $1, $3 );
-   }
-;
-autoshr:
-   variable ASSIGN_SHR expression EOL {
-      COMPILER->defineVal( $1 );
-      $$ = new Falcon::StmtAutoSHR( LINE, $1, $3 );
-   }
-;
-
 
 while_statement:
    while_decl {
@@ -602,68 +475,6 @@ continue_statement:
       }
 ;
 
-for_statement:
-   for_decl {
-         Falcon::StmtFor *f = static_cast<Falcon::StmtFor *>( $1 );
-         COMPILER->pushLoop( f );
-         COMPILER->pushContext( f );
-         COMPILER->pushContextSet( &f->children() );
-      }
-      statement_list END EOL
-      {
-         Falcon::StmtFor *f = static_cast<Falcon::StmtFor *>(COMPILER->getContext());
-         COMPILER->popLoop();
-         COMPILER->popContext();
-         COMPILER->popContextSet();
-         $$ = f;
-      }
-   | for_decl_short statement
-      {
-         if ( $1 != 0 )
-         {
-            Falcon::StmtFor *f = static_cast<Falcon::StmtFor *>($1);
-            if ( $2 != 0 )
-                f->children().push_back( $2 );
-            $$ = f;
-         }
-         else
-            delete $2;
-      }
-;
-
-
-for_decl:
-   FOR variable OP_ASSIGN expression OP_TO expression EOL{
-         COMPILER->defineVal( $2 );
-         $$ = new Falcon::StmtFor( LINE, $2, $4, $6 );
-      }
-   | FOR variable OP_ASSIGN expression OP_TO expression FOR_STEP expression EOL{
-         COMPILER->defineVal( $2 );
-         $$ = new Falcon::StmtFor( LINE, $2, $4, $6, $8 );
-      }
-   | FOR error EOL
-      {
-         COMPILER->raiseError(Falcon::e_syn_for );
-         $$ = new Falcon::StmtFor( LINE, 0, 0, 0 );
-      }
-;
-
-for_decl_short:
-   FOR variable OP_ASSIGN expression OP_TO expression COLON{
-         COMPILER->defineVal( $2 );
-         $$ = new Falcon::StmtFor( CURRENT_LINE, $2, $4, $6 );
-      }
-   | FOR variable OP_ASSIGN expression OP_TO expression FOR_STEP expression COLON{
-         COMPILER->defineVal( $2 );
-         $$ = new Falcon::StmtFor( CURRENT_LINE, $2, $4, $6, $8 );
-      }
-   | FOR error COLON
-      {
-         COMPILER->raiseError(Falcon::e_syn_for, "", CURRENT_LINE );
-         $$ = new Falcon::StmtFor( CURRENT_LINE, 0, 0, 0 );
-      }
-;
-
 
 forin_statement:
    FOR symbol_list OP_IN expression EOL
@@ -717,7 +528,15 @@ forin_statement:
          $$ = f;
       }
    | FOR symbol_list OP_IN error EOL
-       { COMPILER->raiseError( Falcon::e_syn_forin ); }
+      { delete $2;
+         COMPILER->raiseError( Falcon::e_syn_forin );
+         $$ = 0;
+      }
+   | FOR error EOL
+      {
+         COMPILER->raiseError( Falcon::e_syn_forin );
+         $$ = 0;
+      }
 ;
 
 forin_statement_list:
@@ -1548,12 +1367,17 @@ pass_statement:
    | PASS expression OP_IN expression EOL
       {
          // define the expression anyhow so we don't have fake errors below
-         COMPILER->defineVal( $4 );
-
          if ( COMPILER->getFunction() == 0 )
+         {
             COMPILER->raiseError(Falcon::e_pass_outside );
-         else
+            /*delete $2;
+            delete $4;*/
+            $$ = 0;
+         }
+         else {
+            COMPILER->defineVal( $4 );
             $$ = new Falcon::StmtPass( LINE, $2, $4 );
+         }
       }
    | PASS expression OP_IN error EOL
       {
@@ -1573,7 +1397,7 @@ pass_statement:
 ***********************************************************/
 
 const_statement:
-   CONST_KW SYMBOL OP_ASSIGN const_atom EOL
+   CONST_KW SYMBOL OP_EQ const_atom EOL
       {
          // TODO: evalute const expressions on the fly.
          Falcon::Value *val = $4; //COMPILER->exprSimplify( $4 );
@@ -1583,7 +1407,7 @@ const_statement:
          // no other action:
          $$ = 0;
       }
-   | CONST_KW SYMBOL OP_ASSIGN error EOL
+   | CONST_KW SYMBOL OP_EQ error EOL
       {
          COMPILER->raiseError(Falcon::e_inv_const_val );
          $$ = 0;
@@ -1968,7 +1792,7 @@ init_decl:
 ;
 
 property_decl:
-   STATIC SYMBOL OP_ASSIGN expression EOL
+   STATIC SYMBOL OP_EQ expression EOL
    {
       COMPILER->checkLocalUndefined();
       Falcon::StmtClass *cls = static_cast<Falcon::StmtClass *>( COMPILER->getContext() );
@@ -1990,7 +1814,7 @@ property_decl:
       $$ = 0; // we don't add any statement
    }
 
-   | SYMBOL OP_ASSIGN expression EOL
+   | SYMBOL OP_EQ expression EOL
    {
       COMPILER->checkLocalUndefined();
       Falcon::StmtClass *cls = static_cast<Falcon::StmtClass *>( COMPILER->getContext() );
@@ -2109,7 +1933,7 @@ object_decl:
          if( cls->ctorFunction() == 0  )
          {
             Falcon::ClassDef *cd = cls->symbol()->getClassDef();
-            if ( cd->inheritance().size() != 0 )
+            if ( !cd->inheritance().empty() )
             {
                Falcon::StmtFunction *func = func = COMPILER->buildCtorFor( cls );
                // COMPILER->addStatement( func ); should be done in buildCtorFor
@@ -2262,41 +2086,11 @@ atom:
 ;
 */
 
-variable:
-   var_atom
-   | variable range_decl{
-         Falcon::Expression *exp = new Falcon::Expression( Falcon::Expression::t_array_access, $1, $2 );
-         $$ = new Falcon::Value( exp );
-      }
-
-   | variable OPENSQUARE expression CLOSESQUARE {
-         Falcon::Expression *exp = new Falcon::Expression( Falcon::Expression::t_array_access, $1, $3 );
-         $$ = new Falcon::Value( exp );
-      }
-
-   | variable OPENSQUARE STAR expression CLOSESQUARE {
-         Falcon::Expression *exp = new Falcon::Expression( Falcon::Expression::t_array_byte_access, $1, $4 );
-         $$ = new Falcon::Value( exp );
-      }
-
-
-   | variable DOT SYMBOL {
-         Falcon::Expression *exp = new Falcon::Expression( Falcon::Expression::t_obj_access, $1, new Falcon::Value( $3 ) );
-         if ( $3->getCharAt(0) == '_' && ! $1->isSelf() )
-         {
-            COMPILER->raiseError(Falcon::e_priv_access, COMPILER->tempLine() );
-         }
-         $$ = new Falcon::Value( exp );
-      }
-
-;
-
-
 expression:
      const_atom
-   | variable
-   | expression PLUS expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_plus, $1, $3 ) ); }
+   | var_atom
    | MINUS expression %prec NEG { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_neg, $2 ) ); }
+   | expression PLUS expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_plus, $1, $3 ) ); }
    | expression MINUS expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_minus, $1, $3 ) ); }
    | expression STAR expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_times, $1, $3 ) ); }
    | expression SLASH expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_divide, $1, $3 ) ); }
@@ -2308,18 +2102,12 @@ expression:
    | expression SHL expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_shift_left, $1, $3 ) ); }
    | expression SHR expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_shift_right, $1, $3 ) ); }
    | BANG expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_bin_not, $2 ) ); }
-   | LET variable OP_EQ expression { COMPILER->defineVal( $2 ); $$ =
-        new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_let, $2, $4 ) ); }
-   | LET variable OP_ASSIGN expression { COMPILER->defineVal( $2 ); $$ =
-        new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_let, $2, $4 ) ); }
    | expression NEQ expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_neq, $1, $3 ) ); }
    | expression INCREMENT { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_post_inc, $1 ) ); }
    | INCREMENT expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_pre_inc, $2 ) ); }
    | expression DECREMENT { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_post_dec, $1 ) ); }
    | DECREMENT expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_pre_dec, $2 ) ); }
    | expression EEQ expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_eq, $1, $3 ) ); }
-   | expression OP_EQ expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_eq, $1, $3 ) ); }
-   | expression OP_ASSIGN expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_eq, $1, $3 ) ); }
    | expression GT expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_gt, $1, $3 ) ); }
    | expression LT expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_lt, $1, $3 ) ); }
    | expression GE expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_ge, $1, $3 ) ); }
@@ -2336,32 +2124,69 @@ expression:
    | ATSIGN expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_strexpand, $2 ) ); }
    | DIESIS expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_indirect, $2 ) ); }
    | lambda_expr
+   | nameless_func
    | func_call
-   | func_call DOT SYMBOL {
+   | iif_expr
+   | dotarray_decl
+
+   | expression range_decl {
+         Falcon::Expression *exp = new Falcon::Expression( Falcon::Expression::t_array_access, $1, $2 );
+         $$ = new Falcon::Value( exp );
+      }
+
+   | array_decl {
+      $$ = new Falcon::Value( $1 );
+   }
+
+   | expression array_decl {
+         if ( $2->size() == 1 )
+         {
+            Falcon::Value *accessor = (Falcon::Value *) $2->front();
+            Falcon::Expression *exp = new Falcon::Expression( Falcon::Expression::t_array_access, $1,
+               new Falcon::Value( *accessor ) );
+            delete $2;
+            $$ = new Falcon::Value( exp );
+         }
+         else {
+            COMPILER->raiseContextError( Falcon::e_syn_arraydecl, CURRENT_LINE, CTX_LINE );
+            $$ = new Falcon::Value($2);
+         }
+      }
+
+   | expression OPENSQUARE STAR expression CLOSESQUARE {
+         Falcon::Expression *exp = new Falcon::Expression( Falcon::Expression::t_array_byte_access, $1, $4 );
+         $$ = new Falcon::Value( exp );
+      }
+
+
+   | expression DOT SYMBOL {
          Falcon::Expression *exp = new Falcon::Expression( Falcon::Expression::t_obj_access, $1, new Falcon::Value( $3 ) );
-         if ( $3->getCharAt(0) == '_' )
+         if ( $3->getCharAt(0) == '_' && ! $1->isSelf() )
          {
             COMPILER->raiseError(Falcon::e_priv_access, COMPILER->tempLine() );
          }
          $$ = new Falcon::Value( exp );
       }
-   | func_call OPENSQUARE expression CLOSESQUARE {
-         Falcon::Expression *exp = new Falcon::Expression( Falcon::Expression::t_array_access, $1, $3 );
-         $$ = new Falcon::Value( exp );
-      }
-   | func_call OPENSQUARE STAR expression CLOSESQUARE {
-         Falcon::Expression *exp = new Falcon::Expression( Falcon::Expression::t_array_byte_access, $1, $4 );
-         $$ = new Falcon::Value( exp );
-      }
-   | func_call range_decl{
-         Falcon::Expression *exp = new Falcon::Expression( Falcon::Expression::t_array_access, $1, $2 );
-         $$ = new Falcon::Value( exp );
-      }
-   | iif_expr
-   | array_decl /*suqared expr*/
+
    | dict_decl /*suqared expr*/
    | range_decl /*suqared expr*/
-   | OPENPAR expression CLOSEPAR { $$ = $2; }
+
+   | expression OP_EQ expression {
+      COMPILER->defineVal( $1 );
+      $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_assign, $1, $3 ) ); }
+
+   | expression ASSIGN_ADD expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_aadd, $1, $3 ) ); }
+   | expression ASSIGN_SUB expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_asub, $1, $3 ) ); }
+   | expression ASSIGN_MUL expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_amul, $1, $3 ) ); }
+   | expression ASSIGN_DIV expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_adiv, $1, $3 ) ); }
+   | expression ASSIGN_MOD expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_amod, $1, $3 ) ); }
+   | expression ASSIGN_POW expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_apow, $1, $3 ) ); }
+   | expression ASSIGN_BAND expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_aband, $1, $3 ) ); }
+   | expression ASSIGN_BOR expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_abor, $1, $3 ) ); }
+   | expression ASSIGN_BXOR expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_abxor, $1, $3 ) ); }
+   | expression ASSIGN_SHL expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_ashl, $1, $3 ) ); }
+   | expression ASSIGN_SHR expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_ashr, $1, $3 ) ); }
+   | OPENPAR expression CLOSEPAR {$$=$2;}
 ;
 
 /*suqared expr NEED to start with an or with a nonambiguous symbol */
@@ -2377,6 +2202,9 @@ range_decl:
       }
    | OPENSQUARE expression COLON expression CLOSESQUARE {
          $$ = new Falcon::Value( new Falcon::RangeDecl( $2, $4 ) );
+      }
+   | OPENSQUARE expression COLON expression COLON expression CLOSESQUARE {
+         $$ = new Falcon::Value( new Falcon::RangeDecl( $2, $4, $6 ) );
       }
 ;
 
@@ -2540,19 +2368,20 @@ iif_expr:
 
 
 array_decl:
-     OPENSQUARE CLOSESQUARE {  $$ = new Falcon::Value( new Falcon::ArrayDecl() ); }
+     OPENSQUARE CLOSESQUARE { $$ = new Falcon::ArrayDecl(); }
    | OPENSQUARE expression_list CLOSESQUARE
       {
-         $$ = new Falcon::Value( $2 );
+         $$ = $2;
       }
    | OPENSQUARE expression_list error
       {
          COMPILER->raiseContextError( Falcon::e_syn_arraydecl, CURRENT_LINE, CTX_LINE );
-         $$ = new Falcon::Value( $2 );
+         $$ = $2;
       }
+;
 
-
-   | LISTPAR CLOSESQUARE {  $$ = new Falcon::Value( new Falcon::ArrayDecl() ); }
+dotarray_decl:
+   LISTPAR CLOSESQUARE {  $$ = new Falcon::Value( new Falcon::ArrayDecl() ); }
    | LISTPAR listpar_expression_list CLOSESQUARE
       {
          $$ = new Falcon::Value( $2 );
@@ -2598,18 +2427,20 @@ symbol_list:
       }
 ;
 
+/*
 assignment_list:
-   variable {
+   expression {
          COMPILER->defineVal( $1 );
          Falcon::ArrayDecl *ad = new Falcon::ArrayDecl();
          ad->pushBack( $1 );
          $$ = ad;
       }
-   | assignment_list COMMA variable {
+   | assignment_list COMMA expression {
          COMPILER->defineVal( $3 );
          $1->pushBack( $3 );
       }
 ;
+*/
 
 expression_pair_list:
    expression ARROW expression { $$ = new Falcon::DictDecl(); $$->pushBack( $1, $3 ); }

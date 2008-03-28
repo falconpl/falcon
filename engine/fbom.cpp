@@ -74,7 +74,7 @@ FALCON_FUNC BOM_len( VMachine *vm )
       break;
 
       case FLC_ITEM_RANGE:
-         vm->retval( 2 );
+         vm->retval( 3 );
       break;
 
       default:

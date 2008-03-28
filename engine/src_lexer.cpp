@@ -52,7 +52,6 @@ SrcLexer::SrcLexer( Compiler *comp, Stream *in ):
    m_compiler( comp ),
    m_contexts(0),
    m_squareContexts(0),
-   m_firstEq( true ),
    m_character( 0 ),
    m_state( e_line ),
    m_done( false ),
@@ -266,7 +265,6 @@ int SrcLexer::lex_normal()
    // generate an extra eol?
    if ( m_addEol )
    {
-      m_firstEq = true;
       m_addEol = false;
       m_lineFilled = false;
       m_bIsDirectiveLine = false;
@@ -455,7 +453,6 @@ int SrcLexer::lex_normal()
                // a real EOL has been provided here.
                if ( m_state == e_line && m_contexts == 0  && m_squareContexts == 0 )
                {
-                  m_firstEq = true;
                   m_bIsDirectiveLine = false;
                   if ( m_lineFilled )
                   {
@@ -902,7 +899,6 @@ int SrcLexer::state_line( uint32 chr )
       m_character = 0;
 
       // a real EOL has been provided here.
-      m_firstEq = true;
       m_bIsDirectiveLine = false;
       if ( m_lineFilled )
       {
@@ -1005,7 +1001,6 @@ int SrcLexer::checkUnlimitedTokens( uint32 nextChar )
          uint32 chr = m_string.getCharAt( 0 );
          if ( chr == ';'  )
          {
-            m_firstEq = true;
             m_bIsDirectiveLine = false;
             // but not first sym
             if ( m_lineFilled )
@@ -1039,9 +1034,6 @@ int SrcLexer::checkUnlimitedTokens( uint32 nextChar )
          }
          else if ( chr == ':' )
          {
-            // expressions after : are reassigned, but only out of contexts
-            if( m_contexts == 0 && m_squareContexts == 0 )
-               m_firstEq = true;
                // but they don't reset first sym
             return COLON;
          }
@@ -1062,12 +1054,7 @@ int SrcLexer::checkUnlimitedTokens( uint32 nextChar )
             return LT;
          else if ( chr == '=' && nextChar != '=' && nextChar != '>' )
          {
-            if ( m_firstEq ) {
-               m_firstEq = false;
-               return OP_ASSIGN;
-            }
-            else
-               return OP_EQ;
+            return OP_EQ;
          }
          else if ( chr == '(' || chr == 0xff08 )
          {
@@ -1218,8 +1205,6 @@ int SrcLexer::checkLimitedTokens()
             return NIL;
          else if ( m_string == "for" )
             return FOR;
-         else if ( m_string == "let" )
-            return LET;
          else if ( m_string == "has" )
             return HAS;
          else if ( m_string == "and" )
@@ -1253,8 +1238,6 @@ int SrcLexer::checkLimitedTokens()
             return SELF;
          if ( m_string == "pass" )
             return PASS;
-         if ( m_string == "step" )
-            return FOR_STEP;
          if ( m_string == "case" )
             return CASE;
          if ( m_string == "loop" )
@@ -1340,7 +1323,6 @@ int SrcLexer::checkLimitedTokens()
          if ( m_string == "directive" )
          {
             // No assigments in directive.
-            m_firstEq = false;
             m_bIsDirectiveLine = true;
             return DIRECTIVE;
          }

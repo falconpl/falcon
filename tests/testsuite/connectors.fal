@@ -18,16 +18,16 @@
 a = 1
 b = 0
 // expected b = 1
-(a = 1) and let b = b + 1 or failure("A point")
+(a == 1) and ( b = b + 1 ) or failure("A point")
 // expected b = 2
-a == 2 or let b = b + 1
+a == 2 or ( b = b + 1)
 // expected b = 3
-(a = 1 and let b = b + 1)
+(a == 1 and (b = b + 1))
 // expected, everything as it is now
 a == 1 and a != 2 or failure( "B point" )
 // b = 4
 
-not a = 2 and let b = b + 1 or failure( "C point" )
+not a == 2 and (b = b + 1) or failure( "C point" )
 
 // a true
 a = (1 or 0) and (0 or 1)
@@ -37,14 +37,13 @@ elif b != 4
    failure( "E point" )
 end
 
-// let is an expression...
 a = 0
-if not (let a = 1 + 1 )
+if not (a = 1 + 1 )
    failure( "F point" )
 end
 
 a = 1
-if let a = 0
+if (a = 0)
    failure( "G point" )
 end
 

@@ -16,11 +16,11 @@
 
 // basic expr
 a = 1
-a = a = 2
+a = a == 2
 if a: failure( "Assignment disambiguation 1" )
 
 a = 1
-a = a = 2 or 0
+a = a == 2 or 0
 if a: failure( "Assignment disambiguation" )
 
 // basic math
@@ -29,7 +29,7 @@ if a != 2: failure( "Math priortiy" )
 b = 1 and 0 or 1 and 2
 if not b: failure( "Connector expression 1" )
 b = 0
-b or 1 and 0 or let b = 2
+b or 1 and 0 or (b = 2)
 if b != 2: failure( "Connector expression 2")
 b = 0 or 1 and not 3 or 1
 if not b: failure( "Connector expression 3")

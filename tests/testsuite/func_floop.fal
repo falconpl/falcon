@@ -15,9 +15,9 @@
 i=0
 sum = 0
 .[floop .[
-  .[lambda x=>let x = x+1  $i]         // increase i
+  .[lambda x=> x = x+1  $i]         // increase i
   .[iff .[lambda x=>x==5 $i] oob(1) ]  // continue if i == 5
-  .[lambda x,y=>let x = x + y $sum $i] // sum every number
+  .[lambda x,y=> x = x + y $sum $i] // sum every number
   .[iff .[lambda x=>x>=10 $i] oob(0) ] // break if i >= 10
 ]]()
 

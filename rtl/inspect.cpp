@@ -93,13 +93,7 @@ void inspect_internal( VMachine *vm, bool isShort, const Item *elem, int32 level
       break;
 
       case FLC_ITEM_RANGE:
-         temp = "[";
-         temp.writeNumber( (int64) elem->asRangeStart() );
-         temp += ":";
-         if( ! elem->asRangeIsOpen() ) {
-            temp.writeNumber( (int64) elem->asRangeEnd() );
-         }
-         temp += "]";
+         elem->toString(temp);
          stream->writeString( temp );
       break;
 

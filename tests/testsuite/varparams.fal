@@ -14,7 +14,7 @@
 ****************************************************************************/
 
 function test_call_two( param1, param2, param3 )
-   if param1 = nil or param2 = nil or param3 != nil
+   if param1 == nil or param2 == nil or param3 != nil
       failure( "parameter assigment convention (fill less)" )
    end
 end
@@ -27,11 +27,11 @@ end
 
 function test_call_var( param1, param2 )
    for i = 0 to paramCount()
-      if i = 0 and paramNumber( i ) != param1
+      if i == 0 and paramNumber( i ) != param1
          failure( "Parameter access via paramNumber() and symbol -- 1" )
       end
 
-      if i = 1 and paramNumber( i ) != param2
+      if i == 1 and paramNumber( i ) != param2
          failure( "Parameter access via paramNumber() and symbol -- 2" )
       end
    end

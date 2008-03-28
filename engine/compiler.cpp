@@ -343,10 +343,23 @@ void Compiler::defineVal( ArrayDecl *val )
 void Compiler::defineVal( Value *val )
 {
    // raise error for read-only expressions
-   if ( val->isExpr() && val->asExpr()->type() == Expression::t_array_byte_access )
+   if ( val->isExpr() )
    {
-      raiseError( e_byte_access, lexer()->previousLine() );
-      // but proceed
+      if ( val->asExpr()->type() == Expression::t_array_byte_access )
+      {
+         raiseError( e_byte_access, lexer()->previousLine() );
+         // but proceed
+      }
+      else {
+         Expression *expr = val->asExpr();
+         defineVal( expr->first() );
+         if( expr->second() != 0 &&
+             expr->second()->isExpr() &&
+             expr->second()->asExpr()->type() == Expression::t_assign )
+         {
+            defineVal( expr->second() );
+         }
+      }
    }
 
    if ( val->isSymdef() )

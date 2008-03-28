@@ -19,17 +19,17 @@
 i = 0
 while i < 10
    try
-      if i = 2
+      if i == 2
          i++
          continue
          failure( "Continue in try/catchs" )
       end
 
-      if i = 8 or i = 9
+      if i == 8 or i == 9
          a = nil + 1
       end
    catch
-      if i = 8
+      if i == 8
          ++i
          continue
       else

@@ -14,14 +14,14 @@
 ****************************************************************************/
 
 function func( element )
-   if element = "alpha"
+   if element == "alpha"
       return 1
    end
    return 0
 end
 
 function func1( element )
-   if element = "000000"
+   if element == "000000"
       return 1
    end
    return 0

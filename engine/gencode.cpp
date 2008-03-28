@@ -732,12 +732,6 @@ void GenCode::gen_statement( const Statement *stmt )
       }
       break;
 
-      case Statement::t_assignment:
-      {
-         const StmtAssignment *ass = static_cast<const StmtAssignment *>(stmt);
-         gen_load( ass->destination(), ass->value() );
-      }
-      break;
 
       case Statement::t_unref:
       {
@@ -752,80 +746,6 @@ void GenCode::gen_statement( const Statement *stmt )
       }
       break;
 
-      case Statement::t_autoadd:
-      {
-         const StmtAssignment *assign = static_cast<const StmtAssignment *>(stmt);
-         gen_autoassign( P_ADDS, assign->destination(), assign->value() );
-      }
-      break;
-      case Statement::t_autosub:
-      {
-         const StmtAssignment *assign = static_cast<const StmtAssignment *>(stmt);
-         gen_autoassign( P_SUBS, assign->destination(), assign->value() );
-      }
-      break;
-
-      case Statement::t_automul:
-      {
-         const StmtAssignment *assign = static_cast<const StmtAssignment *>(stmt);
-         gen_autoassign( P_MULS, assign->destination(), assign->value() );
-      }
-      break;
-
-      case Statement::t_autodiv:
-      {
-         const StmtAssignment *assign = static_cast<const StmtAssignment *>(stmt);
-         gen_autoassign( P_DIVS, assign->destination(), assign->value() );
-      }
-      break;
-
-      case Statement::t_automod:
-      {
-         const StmtAssignment *assign = static_cast<const StmtAssignment *>(stmt);
-         gen_autoassign( P_MODS, assign->destination(), assign->value() );
-      }
-      break;
-
-      case Statement::t_autoband:
-      {
-         const StmtAssignment *assign = static_cast<const StmtAssignment *>(stmt);
-         gen_autoassign( P_ANDS, assign->destination(), assign->value() );
-      }
-      break;
-
-      case Statement::t_autobor:
-      {
-         const StmtAssignment *assign = static_cast<const StmtAssignment *>(stmt);
-         gen_autoassign( P_ORS, assign->destination(), assign->value() );
-      }
-      break;
-      case Statement::t_autobxor:
-      {
-         const StmtAssignment *assign = static_cast<const StmtAssignment *>(stmt);
-         gen_autoassign( P_XORS, assign->destination(), assign->value() );
-      }
-      break;
-
-      case Statement::t_autopow:
-      {
-         const StmtAssignment *assign = static_cast<const StmtAssignment *>(stmt);
-         gen_autoassign( P_POWS, assign->destination(), assign->value() );
-      }
-      break;
-
-      case Statement::t_autoshl:
-      {
-         const StmtAssignment *assign = static_cast<const StmtAssignment *>(stmt);
-         gen_autoassign( P_SHLS, assign->destination(), assign->value() );
-      }
-      break;
-
-      case Statement::t_autoshr:
-      {
-         const StmtAssignment *assign = static_cast<const StmtAssignment *>(stmt);
-         gen_autoassign( P_SHRS, assign->destination(), assign->value() );
-      }
-      break;
 
       case Statement::t_if:
       {
@@ -1491,12 +1411,16 @@ void GenCode::gen_autoassign( byte opcode, const Value *target, const Value *sou
 {
    if( target->isSimple() && source->isSimple() ) {
       gen_pcode( opcode, target, source );
+
+      // TODO: avoid this when at toplevel
+      gen_pcode( P_LD, e_parA, target );
    }
    else if ( target->isSimple() )
    {
       gen_complex_value( source );
       gen_pcode( opcode, target, e_parA );
-
+      // TODO: avoid this when at toplevel
+      gen_pcode( P_LD, e_parA, target );
    }
    else if ( source->isSimple() )
    {
@@ -1756,7 +1680,7 @@ void GenCode::gen_expression( const Expression *exp, bool assign )
       }
       return;
 
-      case Expression::t_let:
+      case Expression::t_assign:
          // handle it as a load...
          gen_load( exp->first(), exp->second() );
          // and eventually store the assignand to A...
@@ -1765,6 +1689,50 @@ void GenCode::gen_expression( const Expression *exp, bool assign )
             gen_pcode( P_LD, e_parA, exp->second() );
          }
          // else already in a
+      return;
+
+      case Expression::t_aadd:
+         gen_autoassign( P_ADDS, exp->first(), exp->second() );
+      return;
+
+      case Expression::t_asub:
+         gen_autoassign( P_SUBS, exp->first(), exp->second() );
+      return;
+
+      case Expression::t_amul:
+         gen_autoassign( P_MULS, exp->first(), exp->second() );
+      return;
+
+      case Expression::t_adiv:
+         gen_autoassign( P_DIVS, exp->first(), exp->second() );
+      return;
+
+      case Expression::t_amod:
+         gen_autoassign( P_MODS, exp->first(), exp->second() );
+      return;
+
+      case Expression::t_aband:
+         gen_autoassign( P_ANDS, exp->first(), exp->second() );
+      return;
+
+      case Expression::t_abor:
+         gen_autoassign( P_ORS, exp->first(), exp->second() );
+      return;
+
+      case Expression::t_abxor:
+         gen_autoassign( P_XORS, exp->first(), exp->second() );
+      return;
+
+      case Expression::t_apow:
+         gen_autoassign( P_POWS, exp->first(), exp->second() );
+      return;
+
+      case Expression::t_ashl:
+         gen_autoassign( P_SHLS, exp->first(), exp->second() );
+      return;
+
+      case Expression::t_ashr:
+         gen_autoassign( P_SHRS, exp->first(), exp->second() );
       return;
 
       case Expression::t_pre_inc: gen_inc_prefix( exp->first(), true ); return;
@@ -1881,19 +1849,38 @@ void GenCode::gen_range_decl( const RangeDecl *dcl )
    }
    else
    {
+      Value dummy; // defaults to nil
+      Value *rangeStep;
+      if ( dcl->rangeStep() == 0 )
+      {
+         dummy.setInteger( 0 );
+         rangeStep = &dummy;
+      }
+      else if ( dcl->rangeStep()->isSimple() )
+      {
+         rangeStep = dcl->rangeStep();
+      }
+      else
+      {
+         gen_complex_value( dcl->rangeStep() );
+         gen_pcode( P_PUSH, e_parA );
+         // we'll instruct GENR to get it via NIL as parameter
+         rangeStep = &dummy;
+      }
+
       if ( dcl->rangeStart()->isSimple() && dcl->rangeEnd()->isSimple() )
       {
-         gen_pcode( P_GENR, dcl->rangeStart(), dcl->rangeEnd() );
+         gen_pcode( P_GENR, dcl->rangeStart(), dcl->rangeEnd(), rangeStep );
       }
       else if ( dcl->rangeStart()->isSimple() )
       {
          gen_complex_value( dcl->rangeEnd() );
-         gen_pcode( P_GENR, dcl->rangeStart(), e_parA );
+         gen_pcode( P_GENR, dcl->rangeStart(), e_parA, rangeStep );
       }
       else if ( dcl->rangeEnd()->isSimple() )
       {
          gen_complex_value( dcl->rangeStart() );
-         gen_pcode( P_GENR, e_parA, dcl->rangeEnd() );
+         gen_pcode( P_GENR, e_parA, dcl->rangeEnd(), rangeStep );
 
       }
       else {
@@ -1901,7 +1888,7 @@ void GenCode::gen_range_decl( const RangeDecl *dcl )
          gen_pcode( P_PUSH, e_parA );
          gen_complex_value( dcl->rangeEnd() );
          gen_pcode( P_POP, e_parB );
-         gen_pcode( P_GENR, e_parB, e_parA );
+         gen_pcode( P_GENR, e_parB, e_parA, rangeStep );
       }
    }
 }

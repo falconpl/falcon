@@ -108,6 +108,12 @@ private:
          LiveModule *m_liveMod;
       };
 
+      struct {
+         int32 rstart;
+         int32 rend;
+         int32 rstep;
+      };
+
    } m_data;
 
 
@@ -207,8 +213,18 @@ public:
    void setRange( int32 val1, int32 val2, bool open )
    {
       type( FLC_ITEM_RANGE );
-      m_data.num.val1 = val1;
-      m_data.num.val2 = val2;
+      m_data.rstart = val1;
+      m_data.rend = val2;
+      m_data.rstep = 0;
+      m_base.bits.flags = open? flagOpenRange : 0;
+   }
+
+   void setRange( int32 val1, int32 val2, int32 step, bool open )
+   {
+      type( FLC_ITEM_RANGE );
+      m_data.rstart = val1;
+      m_data.rend = val2;
+      m_data.rstep = step;
       m_base.bits.flags = open? flagOpenRange : 0;
    }
 
@@ -442,8 +458,9 @@ public:
 
    numeric asNumeric() const { return m_data.number; }
 
-   int32 asRangeStart() const { return m_data.num.val1; }
-   int32 asRangeEnd()  const { return m_data.num.val2; }
+   int32 asRangeStart() const { return m_data.rstart; }
+   int32 asRangeEnd()  const { return m_data.rend; }
+   int32 asRangeStep()  const { return m_data.rstep; }
    bool asRangeIsOpen()  const { return (m_base.bits.flags & flagOpenRange) != 0; }
 
    String *asString() const { return (String *) m_data.voidp; }

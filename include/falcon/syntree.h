@@ -73,11 +73,14 @@ class FALCON_DYN_CLASS RangeDecl: public BaseAlloc
 {
    Value *m_rstart;
    Value *m_rend;
+   Value *m_step;
+
 
 public:
-   RangeDecl( Value *start, Value *end = 0 ):
+   RangeDecl( Value *start, Value *end = 0, Value *step = 0 ):
       m_rstart( start ),
-      m_rend( end )
+      m_rend( end ),
+      m_step( step )
    {}
 
    RangeDecl( const RangeDecl &other );
@@ -87,6 +90,7 @@ public:
    bool isOpen() const { return m_rend == 0; }
    Value *rangeStart() const { return m_rstart; }
    Value *rangeEnd() const { return m_rend; }
+   Value *rangeStep() const { return m_step; }
    RangeDecl *clone() const { return new RangeDecl( *this ); }
 };
 
@@ -401,7 +405,6 @@ public:
       t_provides,
 
       t_iif,
-      t_let,
       t_lambda,
 
       t_obj_access,
@@ -412,6 +415,21 @@ public:
       t_array_byte_access,
       t_strexpand,
       t_indirect,
+
+      t_assign,
+
+      t_aadd,
+      t_asub,
+      t_amul,
+      t_adiv,
+      t_amod,
+      t_apow,
+      t_aband,
+      t_abor,
+      t_abxor,
+      t_ashl,
+      t_ashr,
+
       /** An optimized expression is like an unary operator */
       t_optimized,
    } operator_t;
@@ -463,18 +481,6 @@ public:
       t_raise,
       t_give,
       t_unref,
-      t_assignment,
-      t_autoadd,
-      t_autosub,
-      t_automul,
-      t_autodiv,
-      t_automod,
-      t_autopow,
-      t_autoband,
-      t_autobor,
-      t_autobxor,
-      t_autoshl,
-      t_autoshr,
       t_if,
       t_elif,
       t_while,
@@ -739,198 +745,6 @@ public:
 
    Value *object() const { return m_object; }
    ArrayDecl *attributes() const { return m_attribs; }
-
-   virtual Statement *clone() const;
-};
-
-class FALCON_DYN_CLASS StmtBaseAssign: public StmtExpression
-{
-   Value *m_dest;
-
-public:
-   StmtBaseAssign( uint32 line, type_t t, Value *target, Value *expr ):
-      StmtExpression( line, t, expr ),
-      m_dest( target )
-   {}
-
-   StmtBaseAssign( const StmtBaseAssign &other );
-
-   virtual ~StmtBaseAssign();
-
-   Value *destination() const { return m_dest; }
-
-   // base assign is a pure virtual class; no implementation for clone().
-};
-
-
-class FALCON_DYN_CLASS StmtAssignment: public StmtBaseAssign
-{
-
-public:
-   StmtAssignment( uint32 line, Value *target, Value *expr ):
-      StmtBaseAssign( line, t_assignment, target, expr )
-   {}
-
-   StmtAssignment( const StmtAssignment &other ):
-      StmtBaseAssign( other )
-   {}
-
-   virtual Statement *clone() const;
-};
-
-class FALCON_DYN_CLASS StmtAutoAdd: public StmtBaseAssign
-{
-public:
-   StmtAutoAdd( uint32 line, Value *target, Value *expr ):
-      StmtBaseAssign( line, t_autoadd, target, expr )
-   {}
-
-   StmtAutoAdd( const StmtAutoAdd &other ):
-      StmtBaseAssign( other )
-   {}
-
-   virtual Statement *clone() const;
-};
-
-class FALCON_DYN_CLASS StmtAutoSub: public StmtBaseAssign
-{
-public:
-   StmtAutoSub( uint32 line, Value *target, Value *expr ):
-      StmtBaseAssign( line, t_autosub, target, expr )
-   {}
-
-   StmtAutoSub( const StmtAutoSub &other ):
-      StmtBaseAssign( other )
-   {}
-
-   virtual Statement *clone() const;
-};
-
-class FALCON_DYN_CLASS StmtAutoMul: public StmtBaseAssign
-{
-public:
-   StmtAutoMul( uint32 line, Value *target, Value *expr ):
-      StmtBaseAssign( line, t_automul, target, expr )
-   {}
-
-   StmtAutoMul( const StmtAutoMul &other ):
-      StmtBaseAssign( other )
-   {}
-
-   virtual Statement *clone() const;
-};
-
-class FALCON_DYN_CLASS StmtAutoDiv: public StmtBaseAssign
-{
-public:
-   StmtAutoDiv( uint32 line, Value *target, Value *expr ):
-      StmtBaseAssign( line, t_autodiv, target, expr )
-   {}
-
-   StmtAutoDiv( const StmtAutoDiv &other ):
-      StmtBaseAssign( other )
-   {}
-
-   virtual Statement *clone() const;
-};
-
-
-class FALCON_DYN_CLASS StmtAutoMod: public StmtBaseAssign
-{
-public:
-   StmtAutoMod( uint32 line, Value *target, Value *expr ):
-      StmtBaseAssign( line, t_automod, target, expr )
-   {}
-
-   StmtAutoMod( const StmtAutoMod &other ):
-      StmtBaseAssign( other )
-   {}
-
-   virtual Statement *clone() const;
-};
-
-class FALCON_DYN_CLASS StmtAutoPow: public StmtBaseAssign
-{
-public:
-   StmtAutoPow( uint32 line, Value *target, Value *expr ):
-      StmtBaseAssign( line, t_autopow, target, expr )
-   {}
-
-   StmtAutoPow( const StmtAutoPow &other ):
-      StmtBaseAssign( other )
-   {}
-
-   virtual Statement *clone() const;
-};
-
-class FALCON_DYN_CLASS StmtAutoBAND: public StmtBaseAssign
-{
-public:
-   StmtAutoBAND( uint32 line, Value *target, Value *expr ):
-      StmtBaseAssign( line, t_autoband, target, expr )
-   {}
-
-   StmtAutoBAND( const StmtAutoBAND &other ):
-      StmtBaseAssign( other )
-   {}
-
-   virtual Statement *clone() const;
-};
-
-
-class FALCON_DYN_CLASS StmtAutoBOR: public StmtBaseAssign
-{
-public:
-   StmtAutoBOR( uint32 line, Value *target, Value *expr ):
-      StmtBaseAssign( line, t_autobor, target, expr )
-   {}
-
-   StmtAutoBOR( const StmtAutoBOR &other ):
-      StmtBaseAssign( other )
-   {}
-
-   virtual Statement *clone() const;
-};
-
-
-class FALCON_DYN_CLASS StmtAutoBXOR: public StmtBaseAssign
-{
-public:
-   StmtAutoBXOR( uint32 line, Value *target, Value *expr ):
-      StmtBaseAssign( line, t_autobxor, target, expr )
-   {}
-
-   StmtAutoBXOR( const StmtAutoBXOR &other ):
-      StmtBaseAssign( other )
-   {}
-
-   virtual Statement *clone() const;
-};
-
-class FALCON_DYN_CLASS StmtAutoSHL: public StmtBaseAssign
-{
-public:
-   StmtAutoSHL( uint32 line, Value *target, Value *expr ):
-      StmtBaseAssign( line, t_autoshl, target, expr )
-   {}
-
-   StmtAutoSHL( const StmtAutoSHL &other ):
-      StmtBaseAssign( other )
-   {}
-
-   virtual Statement *clone() const;
-};
-
-class FALCON_DYN_CLASS StmtAutoSHR: public StmtBaseAssign
-{
-public:
-   StmtAutoSHR( uint32 line, Value *target, Value *expr ):
-      StmtBaseAssign( line, t_autoshr, target, expr )
-   {}
-
-   StmtAutoSHR( const StmtAutoSHR &other ):
-      StmtBaseAssign( other )
-   {}
 
    virtual Statement *clone() const;
 };

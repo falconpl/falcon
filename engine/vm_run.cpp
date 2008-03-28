@@ -675,19 +675,29 @@ void opcodeHandler_TRAL( register VMachine *vm )
       break;
 
       case FLC_ITEM_RANGE:
+      {
          if ( source->asRangeIsOpen() )
          {
             vm->m_pc_next = pcNext;
          }
+
+         int32 increment = source->asRangeStep();
          if ( source->asRangeStart() < source->asRangeEnd() )
          {
-            if ( iterator->asInteger() + 1 >= source->asRangeEnd() )
+            if ( increment == 0 )
+               increment = 1;
+
+            if ( iterator->asInteger() + increment >= source->asRangeEnd() )
                vm->m_pc_next = pcNext;
          }
          else {
-            if ( iterator->asInteger() <= source->asRangeEnd() )
+            if ( increment == 0 )
+               increment = -1;
+
+            if ( iterator->asInteger() + increment < source->asRangeEnd() )
                vm->m_pc_next = pcNext;
          }
+      }
       break;
 
       default:
@@ -1510,10 +1520,23 @@ void opcodeHandler_GENR( register VMachine *vm )
 {
    Item *operand1 =  vm->getOpcodeParam( 1 )->dereference();
    Item *operand2 =  vm->getOpcodeParam( 2 )->dereference();
+   Item *operand3 =  vm->getOpcodeParam( 3 )->dereference();
 
-   vm->m_regA.setRange(
+   if ( operand3->isNil() )
+   {
+      vm->m_regA.setRange(
+            (int32) operand1->forceInteger(),
+            (int32) operand2->forceInteger(),
+            (int32) vm->m_stack->itemAt( vm->m_stack->size() - 1).forceInteger(),
+            false );
+      vm->m_stack->pop();
+   }
+   else
+      vm->m_regA.setRange(
          (int32) operand1->forceInteger(),
-         (int32) operand2->forceInteger(), false );
+         (int32) operand2->forceInteger(),
+         (int32) operand3->forceInteger(),
+         false );
 }
 
 //32
@@ -1772,13 +1795,20 @@ void opcodeHandler_LDV( register VMachine *vm )
          int32 pos = (int32) operand2->forceInteger();
          switch( pos )
          {
-            case 0: vm->retval( operand1->asRangeStart() ); return;
+            case -3: case 0: vm->retval( operand1->asRangeStart() ); return;
 
-            case 1: case -1:
+            case 1: case -2:
                if( operand1->asRangeIsOpen() )
                   vm->retnil();
                else
                   vm->retval( operand1->asRangeEnd() );
+            return;
+
+            case 2: case -1:
+               if( operand1->asRangeIsOpen() )
+                  vm->retnil();
+               else
+                  vm->retval( operand1->asRangeStep() );
             return;
          }
       }
@@ -2099,23 +2129,20 @@ void opcodeHandler_TRAN( register VMachine *vm )
          }
          else {
             int32 counter = (int32) iterator->asInteger();
-
-            if ( source->asRangeIsOpen() ) {
-               vm->m_pc_next = p2;
-               return;
-            }
-
+            int32 increment = source->asRangeStep();
             // if( p3 == 1 ) -- we Ignore this case, and let continue dropping to act as continue.
 
             if( source->asRangeStart() < source->asRangeEnd() )
             {
-               if ( ++counter == source->asRangeEnd() ) {
+               counter += increment == 0 ? 1 : increment;
+               if ( counter >= source->asRangeEnd() ) {
                   vm->m_pc_next = p2;
                   return;
                }
             }
             else {
-               if ( counter-- == source->asRangeEnd() ) {
+               counter += increment == 0 ? -1 : increment;
+               if ( counter - 1 <= source->asRangeEnd() ) {
                   vm->m_pc_next = p2;
                   return;
                }
@@ -3141,7 +3168,11 @@ void opcodeHandler_TRAV( register VMachine *vm )
          break;
 
       case FLC_ITEM_RANGE:
-         if( ! source->asRangeIsOpen() && source->asRangeEnd() == source->asRangeStart() )
+         if( source->asRangeIsOpen() ||
+             source->asRangeEnd() == source->asRangeStart() ||
+             ( source->asRangeStep() > 0 && source->asRangeStart() > source->asRangeEnd() ) ||
+             ( source->asRangeStep() < 0 && source->asRangeStart() < source->asRangeEnd() )
+            )
          {
             goto trav_go_away;
          }
@@ -3815,7 +3846,7 @@ void opcodeHandler_TRAC( register VMachine *vm )
       return;
 
       case FLC_ITEM_RANGE:
-         // we don't need anything here.
+         //
          return;
 
       default:

@@ -59,7 +59,7 @@ try
          failure( "Can't retrieve stats for " + element )
       end
 
-      if element = "." or element = ".."
+      if element == "." or element == ".."
          if fileType( element ) != FILE_TYPE_DIR
             failure( "Filed to recognize a directory" )
          end

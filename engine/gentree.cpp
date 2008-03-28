@@ -181,47 +181,6 @@ void GenTree::generate( const Statement *cmp, const char *specifier, bool sameli
       }
       break;
 
-      case Statement::t_assignment:
-         m_out->writeString( "ASSIGN " );
-         gen_value( static_cast< const StmtAssignment *>( cmp )->destination() );
-         m_out->writeString( " = " );
-         gen_value( static_cast< const StmtAssignment *>( cmp )->value() );
-         m_out->writeString( "\n" );
-      break;
-
-
-      case Statement::t_autoadd:
-      case Statement::t_autosub:
-      case Statement::t_automul:
-      case Statement::t_autodiv:
-      case Statement::t_automod:
-      case Statement::t_autoband:
-      case Statement::t_autobor:
-      case Statement::t_autobxor:
-      case Statement::t_autoshl:
-      case Statement::t_autoshr:
-      {
-         const char *op;
-         switch (  cmp->type() ) {
-            case Statement::t_autoadd: op = " += "; break;
-            case Statement::t_autosub: op = " -= "; break;
-            case Statement::t_automul: op = " *= "; break;
-            case Statement::t_autodiv: op = " /= "; break;
-            case Statement::t_automod: op = " %= "; break;
-            case Statement::t_autoband: op = " &= "; break;
-            case Statement::t_autobor: op = " |= "; break;
-            case Statement::t_autobxor: op = " ^= "; break;
-            case Statement::t_autoshl: op = " <<= "; break;
-            case Statement::t_autoshr: op = " >>= "; break;
-         }
-         m_out->writeString( "AUTO_ASSIGN " );
-         gen_value( static_cast< const StmtAssignment *>( cmp )->destination() );
-         m_out->writeString( op);
-         gen_value( static_cast< const StmtAssignment *>( cmp )->value() );
-         m_out->writeString( "\n" );
-      }
-      break;
-
       case Statement::t_if:
       {
          m_out->writeString( "IF " );
@@ -605,6 +564,12 @@ void GenTree::gen_value( const Value *val )
          if ( ! val->asRange()->isOpen() )
          {
             gen_value(  val->asRange()->rangeEnd() ) ;
+            if ( val->asRange()->rangeStep() != 0 )
+            {
+               m_out->writeString( ":" );
+               gen_value(  val->asRange()->rangeStep() );
+            }
+
          }
          m_out->writeString( "]" );
       break;
@@ -684,7 +649,20 @@ void GenTree::gen_expression( const Expression *exp )
       case Expression::t_and: type = 2; name = "and"; break;
 
       case Expression::t_iif: type = 3; break;
-      case Expression::t_let: type = 4; break;
+
+      case Expression::t_assign: type = 4; name = " = "; break;
+      case Expression::t_aadd: type = 4; name = " += "; break;
+      case Expression::t_asub: type = 4; name = " -= "; break;
+      case Expression::t_amul: type = 4; name = " *= "; break;
+      case Expression::t_adiv: type = 4; name = " /= "; break;
+      case Expression::t_amod: type = 4; name = " %= "; break;
+      case Expression::t_apow: type = 4; name = " *= "; break;
+      case Expression::t_aband: type = 4; name = " &= "; break;
+      case Expression::t_abor: type = 4; name = " |= "; break;
+      case Expression::t_abxor: type = 4; name = " ^= "; break;
+      case Expression::t_ashl: type = 4; name = " <<= "; break;
+      case Expression::t_ashr: type = 4; name = " >>= "; break;
+
       case Expression::t_array_access: type = 5; break;
       case Expression::t_array_byte_access: type = 10; break;
       case Expression::t_obj_access: type = 6; break;
@@ -724,9 +702,9 @@ void GenTree::gen_expression( const Expression *exp )
       break;
 
       case 4:
-         m_out->writeString( "let(" );
+         m_out->writeString( "( " );
          gen_value( exp->first() );
-         m_out->writeString( " = " );
+         m_out->writeString( name );
          gen_value( exp->second() );
          m_out->writeString( " )" );
       break;

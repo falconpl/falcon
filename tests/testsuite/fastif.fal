@@ -18,7 +18,7 @@
 a = 1
 b = (a == 1 and a != 0) ? 4 : 5
 if b != 4: failure( "First sequence (positive) failed" )
-if b = 4:  c = a = 0 ? 10 : 11
+if b == 4:  c = a == 0 ? 10 : 11
 
 if c == 11
    success()

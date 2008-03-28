@@ -19,8 +19,8 @@
 function try_catch( param )
 
    try
-      if param = 1: return 5
-      if param = 2: raise 10
+      if param == 1: return 5
+      if param == 2: raise 10
    catch in e
       return e
    end

@@ -36,6 +36,13 @@ Falcon (0.8.9)
            objects.
   * Minor: Added inspectShort() function that provides a more compact inspect().
   * Bugfix: Switches couldn't accept negative numbers.
+  * Major: Now "=" always assigns, and "==" is used for comparisons.
+  * Major: Remove assignment statement(s). All assignments are now expressions.
+  * Major: Anonymous function declaration is now an expression.
+  * Major: Anything may be place left of an assignment.
+  * Major: Removed for/to loop and added a step parameter to ranges. For/in loop on steps
+           have now the same functionalities as the old for/to loop. "step" is not anymore
+           a reserved word.
 
 Falcon (0.8.8)
   * bugfix: TRAV opcode may destroy its parameters while setting first loop

@@ -18,7 +18,7 @@ dict = [ "A"=>1, "B" => 2, "C" => 3, "D" => 4 ]
 
 for key, value in dict
 	try
-		if key = "C"
+		if key == "C"
 			// focefully generate an exception
 			printl( "first param", "second", "third", "test" * value )
 		end
@@ -33,7 +33,7 @@ if dict.len() != 3: failure( "third element removal - size" )
 dict = [ "A"=>1, "B" => 2, "C" => 3, "D" => 4 ]
 for key, value in dict
 	try
-		if key = "D"
+		if key == "D"
 			// focefully generate an exception
 			printl( "first param", "second", "third", "test" * value )
 		end
@@ -47,7 +47,7 @@ if dict.len() != 3: failure( "last element removal - size" )
 dict = [ "A"=>1 ]
 for key, value in dict
 	try
-		if key = "A"
+		if key == "A"
 			// focefully generate an exception
 			printl( "first param", "second", "third", "test" * value )
 		end

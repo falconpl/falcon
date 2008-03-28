@@ -19,14 +19,14 @@ function ret_function()
       end
 
       // prologue: use state only if != 0
-      if param = 0
+      if param == 0
          return values[ val_id ]
       elif param < 0
          return -1
       end
 
       next = values[val_id++]
-      if val_id = len( values ): val_id = 0
+      if val_id == len( values ): val_id = 0
 
       return next
    end

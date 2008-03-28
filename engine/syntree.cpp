@@ -109,12 +109,18 @@ RangeDecl::RangeDecl( const RangeDecl &other )
    else
       m_rend = new Value( *other.m_rend );
 
+   if ( other.m_step == 0 )
+      m_step = 0;
+   else
+      m_step = new Value( *other.m_step );
+
 }
 
 RangeDecl::~RangeDecl()
 {
    delete m_rstart;
    delete m_rend;
+   delete m_step;
 }
 
 //================================================
@@ -631,80 +637,6 @@ StmtGive::~StmtGive()
 Statement *StmtGive::clone() const
 {
    return new StmtGive( *this );
-}
-
-// StmtBaseAssign statement
-//
-
-StmtBaseAssign::StmtBaseAssign( const StmtBaseAssign &other ):
-   StmtExpression( other )
-{
-   m_dest = other.m_dest == 0 ? 0 : new Value( *other.m_dest );
-}
-
-StmtBaseAssign::~StmtBaseAssign()
-{
-   delete m_dest;
-}
-
-Statement *StmtAssignment::clone() const
-{
-   return new StmtAssignment( *this );
-}
-
-Statement *StmtAutoAdd::clone() const
-{
-   return new StmtAutoAdd( *this );
-}
-
-Statement *StmtAutoSub::clone() const
-{
-   return new StmtAutoSub( *this );
-}
-
-Statement *StmtAutoMul::clone() const
-{
-   return new StmtAutoMul( *this );
-}
-
-Statement *StmtAutoDiv::clone() const
-{
-   return new StmtAutoDiv( *this );
-}
-
-Statement *StmtAutoMod::clone() const
-{
-   return new StmtAutoMod( *this );
-}
-
-Statement *StmtAutoPow::clone() const
-{
-   return new StmtAutoPow( *this );
-}
-
-Statement *StmtAutoBAND::clone() const
-{
-   return new StmtAutoBAND( *this );
-}
-
-Statement *StmtAutoBOR::clone() const
-{
-   return new StmtAutoBOR( *this );
-}
-
-Statement *StmtAutoBXOR::clone() const
-{
-   return new StmtAutoBXOR( *this );
-}
-
-Statement *StmtAutoSHL::clone() const
-{
-   return new StmtAutoSHL( *this );
-}
-
-Statement *StmtAutoSHR::clone() const
-{
-   return new StmtAutoSHR( *this );
 }
 
 // Loop ctrl

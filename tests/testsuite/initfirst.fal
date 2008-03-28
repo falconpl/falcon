@@ -40,7 +40,7 @@ object center
    // accessor...
    function getList()
      // ... using init on first use idiom.
-     if self.list = nil: self.list = ["a", "b", "c"]
+     if self.list == nil: self.list = ["a", "b", "c"]
      return self.list
    end
 end

@@ -768,12 +768,6 @@ void GenHAsm::gen_statement( const Statement *stmt )
       }
       break;
 
-      case Statement::t_assignment:
-      {
-         const StmtAssignment *ass = static_cast<const StmtAssignment *>(stmt);
-         gen_load( ass->destination(), ass->value() );
-      }
-      break;
 
       case Statement::t_unref:
       {
@@ -787,81 +781,6 @@ void GenHAsm::gen_statement( const Statement *stmt )
             gen_complex_value( ass->symbol() );
             m_out->writeString( "\tLDRF\tA, 0\n" );
          }
-      }
-      break;
-
-      case Statement::t_autoadd:
-      {
-         const StmtAssignment *assign = static_cast<const StmtAssignment *>(stmt);
-         gen_autoassign( "ADDS", assign->destination(), assign->value() );
-      }
-      break;
-      case Statement::t_autosub:
-      {
-         const StmtAssignment *assign = static_cast<const StmtAssignment *>(stmt);
-         gen_autoassign( "SUBS", assign->destination(), assign->value() );
-      }
-      break;
-
-      case Statement::t_automul:
-      {
-         const StmtAssignment *assign = static_cast<const StmtAssignment *>(stmt);
-         gen_autoassign( "MULS", assign->destination(), assign->value() );
-      }
-      break;
-
-      case Statement::t_autodiv:
-      {
-         const StmtAssignment *assign = static_cast<const StmtAssignment *>(stmt);
-         gen_autoassign( "DIVS", assign->destination(), assign->value() );
-      }
-      break;
-
-      case Statement::t_automod:
-      {
-         const StmtAssignment *assign = static_cast<const StmtAssignment *>(stmt);
-         gen_autoassign( "MODS", assign->destination(), assign->value() );
-      }
-      break;
-
-      case Statement::t_autopow:
-      {
-         const StmtAssignment *assign = static_cast<const StmtAssignment *>(stmt);
-         gen_autoassign( "POWS", assign->destination(), assign->value() );
-      }
-      break;
-
-      case Statement::t_autoband:
-      {
-         const StmtAssignment *assign = static_cast<const StmtAssignment *>(stmt);
-         gen_autoassign( "ANDS", assign->destination(), assign->value() );
-      }
-      break;
-
-      case Statement::t_autobor:
-      {
-         const StmtAssignment *assign = static_cast<const StmtAssignment *>(stmt);
-         gen_autoassign( "ORS", assign->destination(), assign->value() );
-      }
-      break;
-      case Statement::t_autobxor:
-      {
-         const StmtAssignment *assign = static_cast<const StmtAssignment *>(stmt);
-         gen_autoassign( "XORS", assign->destination(), assign->value() );
-      }
-      break;
-
-      case Statement::t_autoshl:
-      {
-         const StmtAssignment *assign = static_cast<const StmtAssignment *>(stmt);
-         gen_autoassign( "SHLS", assign->destination(), assign->value() );
-      }
-      break;
-
-      case Statement::t_autoshr:
-      {
-         const StmtAssignment *assign = static_cast<const StmtAssignment *>(stmt);
-         gen_autoassign( "SHRS", assign->destination(), assign->value() );
       }
       break;
 
@@ -1526,6 +1445,11 @@ void GenHAsm::gen_autoassign( const char *op, const Value *target, const Value *
       m_out->writeString( ", " );
       gen_operand( source );
       m_out->writeString( "\n" );
+
+      // load simple in A (todo, avoid it if at topmost level)
+      m_out->writeString( "LD A, " );
+      gen_operand( target );
+      m_out->writeString( "\n" );
    }
    else if ( target->isSimple() )
    {
@@ -1533,6 +1457,11 @@ void GenHAsm::gen_autoassign( const char *op, const Value *target, const Value *
       m_out->writeString( "\t" + opstr + "\t" );
       gen_operand( target );
       m_out->writeString( ", A\n" );
+
+      // load simple in A (todo, avoid it if at topmost level)
+      m_out->writeString( "LD A, " );
+      gen_operand( target );
+      m_out->writeString( "\n" );
    }
    else if ( source->isSimple() )
    {
@@ -1547,6 +1476,7 @@ void GenHAsm::gen_autoassign( const char *op, const Value *target, const Value *
       gen_complex_value( target, true );
       m_out->writeString( "\tPOP \tB\n" );
       m_out->writeString( "\t" + opstr + "\tA, B\n" );
+
    }
 }
 
@@ -1884,7 +1814,7 @@ void GenHAsm::gen_expression( const Expression *exp, bool assign )
       }
       return;
 
-      case Expression::t_let:
+      case Expression::t_assign:
          // handle it as a load...
          gen_load( exp->first(), exp->second() );
          // and eventually store the assignand to a...
@@ -1897,7 +1827,50 @@ void GenHAsm::gen_expression( const Expression *exp, bool assign )
          }
          // else already in A
          return;
-      break;
+
+      case Expression::t_aadd:
+         gen_autoassign( "ADDS", exp->first(), exp->second() );
+         return;
+
+      case Expression::t_asub:
+         gen_autoassign( "SUBS", exp->first(), exp->second() );
+         return;
+
+      case Expression::t_amul:
+         gen_autoassign( "MULS", exp->first(), exp->second() );
+         return;
+
+      case Expression::t_adiv:
+         gen_autoassign( "DIVS", exp->first(), exp->second() );
+         return;
+
+      case Expression::t_amod:
+         gen_autoassign( "MODS", exp->first(), exp->second() );
+         return;
+
+      case Expression::t_apow:
+         gen_autoassign( "POWS", exp->first(), exp->second() );
+         return;
+
+      case Expression::t_aband:
+         gen_autoassign( "ANDS", exp->first(), exp->second() );
+         return;
+
+      case Expression::t_abor:
+         gen_autoassign( "ORS", exp->first(), exp->second() );
+         return;
+
+      case Expression::t_abxor:
+         gen_autoassign( "XORS", exp->first(), exp->second() );
+         return;
+
+      case Expression::t_ashl:
+         gen_autoassign( "SHLS", exp->first(), exp->second() );
+         return;
+
+      case Expression::t_ashr:
+         gen_autoassign( "SHRS", exp->first(), exp->second() );
+         return;
 
       case Expression::t_pre_inc: gen_inc_prefix( exp->first(), true ); return;
       case Expression::t_pre_dec: gen_dec_prefix( exp->first(), true ); return;
@@ -2046,12 +2019,33 @@ void GenHAsm::gen_range_decl( const RangeDecl *dcl )
    }
    else
    {
+      Value dummy; // defaults to nil
+      Value *rangeStep;
+      if ( dcl->rangeStep() == 0 )
+      {
+         dummy.setInteger( 0 );
+         rangeStep = &dummy;
+      }
+      else if ( dcl->rangeStep()->isSimple() )
+      {
+         rangeStep = dcl->rangeStep();
+      }
+      else
+      {
+         gen_complex_value( dcl->rangeStep() );
+         m_out->writeString( "\tPUSH\tA\n" );
+         // we'll instruct GENR to get it via NIL as parameter
+         rangeStep = &dummy;
+      }
+
       if ( dcl->rangeStart()->isSimple() && dcl->rangeEnd()->isSimple() )
       {
          m_out->writeString( "\tGENR\t" );
          gen_operand( dcl->rangeStart() );
          m_out->writeString( ", " );
          gen_operand( dcl->rangeEnd() );
+         m_out->writeString( ", " );
+         gen_operand( rangeStep );
          m_out->writeString( "\n" );
       }
       else if ( dcl->rangeStart()->isSimple() )
@@ -2059,13 +2053,17 @@ void GenHAsm::gen_range_decl( const RangeDecl *dcl )
          gen_complex_value( dcl->rangeEnd() );
          m_out->writeString( "\tGENR\t" );
          gen_operand( dcl->rangeStart() );
-         m_out->writeString( ", A\n" );
+         m_out->writeString( ", A, " );
+         gen_operand( rangeStep );
+         m_out->writeString( "\n" );
       }
       else if ( dcl->rangeEnd()->isSimple() )
       {
          gen_complex_value( dcl->rangeStart() );
          m_out->writeString( "\tGENR\tA, " );
          gen_operand( dcl->rangeEnd() );
+         m_out->writeString( ", " );
+         gen_operand( rangeStep );
          m_out->writeString( "\n" );
       }
       else {
@@ -2073,7 +2071,9 @@ void GenHAsm::gen_range_decl( const RangeDecl *dcl )
          m_out->writeString( "\tPUSH\tA\n" );
          gen_complex_value( dcl->rangeEnd() );
          m_out->writeString( "\tPOP \tB\n" );
-         m_out->writeString( "\tGENR\tB, A\n" );
+         m_out->writeString( "\tGENR\tB, A, ");
+         gen_operand( rangeStep );
+         m_out->writeString( "\n" );
       }
    }
 }

@@ -20,7 +20,7 @@ if a != 0: failure( "Minimal while" )
 
 a = 10
 while a > 0
-   if a = 3
+   if a == 3
       break
    end
    --a
@@ -30,7 +30,7 @@ if a != 3: failure( "break" )
 
 a = 10
 while a > 0
-   if a = 3
+   if a == 3
       --a
       continue
       failure( "continue" )

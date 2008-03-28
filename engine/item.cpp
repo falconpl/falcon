@@ -53,6 +53,7 @@ bool Item::internal_is_equal( const Item &other ) const
 
       case FLC_ITEM_RANGE:
          return asRangeStart() == other.asRangeStart() && asRangeEnd() == other.asRangeEnd() &&
+               asRangeStep() == other.asRangeStep() &&
                asRangeIsOpen() == other.asRangeIsOpen();
 
       case FLC_ITEM_INT:
@@ -286,6 +287,22 @@ int Item::internal_compare( const Item &other ) const
          return asString()->compare( *other.asString() );
 
       case FLC_ITEM_RANGE:
+         if ( asRangeStart() < other.asRangeStart() ) return -1;
+         if ( asRangeStart() > other.asRangeStart() ) return 1;
+         if ( asRangeIsOpen() )
+         {
+            if ( other.asRangeIsOpen() ) return 0;
+            return 1;
+         }
+
+         if ( other.asRangeIsOpen() )
+            return -1;
+
+         if ( asRangeEnd() < other.asRangeEnd() ) return -1;
+         if ( asRangeEnd() > other.asRangeEnd() ) return 1;
+         if ( asRangeStep() < other.asRangeStep() ) return -1;
+         if ( asRangeStep() > other.asRangeStep() ) return 1;
+         return 0;
 
       case FLC_ITEM_ARRAY:
          if ( asArray() < other.asArray() ) return -1;
@@ -400,7 +417,14 @@ void Item::toString( String &target ) const
          target.writeNumber( (int64) this->asRangeStart() );
          target += ":";
          if ( ! this->asRangeIsOpen() )
+         {
             target.writeNumber( (int64) this->asRangeEnd() );
+            if ( this->asRangeStep() !=  0 )
+            {
+               target += ":";
+               target.writeNumber( (int64) this->asRangeStep() );
+            }
+         }
          target += "]";
       break;
 

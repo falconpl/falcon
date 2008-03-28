@@ -108,46 +108,43 @@
      ASSIGN_MUL = 324,
      ASSIGN_SUB = 325,
      ASSIGN_ADD = 326,
-     ARROW = 327,
-     FOR_STEP = 328,
+     OP_EQ = 327,
+     ARROW = 328,
      OP_TO = 329,
      COMMA = 330,
      QUESTION = 331,
      OR = 332,
      AND = 333,
      NOT = 334,
-     LET = 335,
-     LE = 336,
-     GE = 337,
-     LT = 338,
-     GT = 339,
-     NEQ = 340,
-     EEQ = 341,
-     OP_EQ = 342,
-     OP_ASSIGN = 343,
-     PROVIDES = 344,
-     OP_NOTIN = 345,
-     OP_IN = 346,
-     HASNT = 347,
-     HAS = 348,
-     DIESIS = 349,
-     ATSIGN = 350,
-     CAP = 351,
-     VBAR = 352,
-     AMPER = 353,
-     MINUS = 354,
-     PLUS = 355,
-     PERCENT = 356,
-     SLASH = 357,
-     STAR = 358,
-     POW = 359,
-     SHR = 360,
-     SHL = 361,
-     BANG = 362,
-     NEG = 363,
-     DECREMENT = 364,
-     INCREMENT = 365,
-     DOLLAR = 366
+     LE = 335,
+     GE = 336,
+     LT = 337,
+     GT = 338,
+     NEQ = 339,
+     EEQ = 340,
+     PROVIDES = 341,
+     OP_NOTIN = 342,
+     OP_IN = 343,
+     HASNT = 344,
+     HAS = 345,
+     DIESIS = 346,
+     ATSIGN = 347,
+     CAP = 348,
+     VBAR = 349,
+     AMPER = 350,
+     MINUS = 351,
+     PLUS = 352,
+     PERCENT = 353,
+     SLASH = 354,
+     STAR = 355,
+     POW = 356,
+     SHR = 357,
+     SHL = 358,
+     BANG = 359,
+     NEG = 360,
+     DECREMENT = 361,
+     INCREMENT = 362,
+     DOLLAR = 363
    };
 #endif
 /* Tokens.  */
@@ -220,46 +217,43 @@
 #define ASSIGN_MUL 324
 #define ASSIGN_SUB 325
 #define ASSIGN_ADD 326
-#define ARROW 327
-#define FOR_STEP 328
+#define OP_EQ 327
+#define ARROW 328
 #define OP_TO 329
 #define COMMA 330
 #define QUESTION 331
 #define OR 332
 #define AND 333
 #define NOT 334
-#define LET 335
-#define LE 336
-#define GE 337
-#define LT 338
-#define GT 339
-#define NEQ 340
-#define EEQ 341
-#define OP_EQ 342
-#define OP_ASSIGN 343
-#define PROVIDES 344
-#define OP_NOTIN 345
-#define OP_IN 346
-#define HASNT 347
-#define HAS 348
-#define DIESIS 349
-#define ATSIGN 350
-#define CAP 351
-#define VBAR 352
-#define AMPER 353
-#define MINUS 354
-#define PLUS 355
-#define PERCENT 356
-#define SLASH 357
-#define STAR 358
-#define POW 359
-#define SHR 360
-#define SHL 361
-#define BANG 362
-#define NEG 363
-#define DECREMENT 364
-#define INCREMENT 365
-#define DOLLAR 366
+#define LE 335
+#define GE 336
+#define LT 337
+#define GT 338
+#define NEQ 339
+#define EEQ 340
+#define PROVIDES 341
+#define OP_NOTIN 342
+#define OP_IN 343
+#define HASNT 344
+#define HAS 345
+#define DIESIS 346
+#define ATSIGN 347
+#define CAP 348
+#define VBAR 349
+#define AMPER 350
+#define MINUS 351
+#define PLUS 352
+#define PERCENT 353
+#define SLASH 354
+#define STAR 355
+#define POW 356
+#define SHR 357
+#define SHL 358
+#define BANG 359
+#define NEG 360
+#define DECREMENT 361
+#define INCREMENT 362
+#define DOLLAR 363
 
 
 
@@ -281,7 +275,7 @@ lex_value_t {
    Falcon::SymbolList *fal_symlist;
 }
 /* Line 1489 of yacc.c.  */
-#line 285 "/home/gian/Progetti/falcon/core/engine/src_parser.h"
+#line 279 "/home/gian/Progetti/falcon/core/engine/src_parser.h"
 	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1

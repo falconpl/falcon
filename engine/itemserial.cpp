@@ -156,10 +156,12 @@ Item::e_sercode Item::serialize( Stream *file, VMachine *vm ) const
 
          int32 val1 = endianInt32(this->asRangeStart());
          int32 val2 = endianInt32(this->asRangeEnd());
+         int32 val3 = endianInt32(this->asRangeStep());
          byte isOpen = this->asRangeIsOpen() ? 1 : 0;
 
          file->write( (byte *) &val1, sizeof( val1 ) );
          file->write( (byte *) &val2, sizeof( val2 ) );
+         file->write( (byte *) &val3, sizeof( val3 ) );
          file->write( (byte *) &isOpen, sizeof( isOpen ) );
       }
       break;
@@ -401,13 +403,15 @@ Item::e_sercode Item::deserialize( Stream *file, VMachine *vm )
       {
          int32 val1;
          int32 val2;
+         int32 val3;
          byte isOpen;
 
          file->read( (byte *) &val1, sizeof( val1 ) );
          file->read( (byte *) &val2, sizeof( val2 ) );
+         file->read( (byte *) &val3, sizeof( val3 ) );
          file->read( (byte *) &isOpen, sizeof( isOpen ) );
          if ( file->good() ) {
-            setRange( val1, val2, isOpen != 0 );
+            setRange( val1, val2, val3, isOpen != 0 );
             return sc_ok;
          }
          return sc_ferror;

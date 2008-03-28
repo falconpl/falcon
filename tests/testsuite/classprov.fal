@@ -50,7 +50,7 @@ class derived(  pname ) from base( pname )
    function dset( param, set )
       if param provides setSender
          param.setSender( set )
-         if self.prop = set
+         if self.prop == set
             return true
          end
       end

@@ -27,7 +27,7 @@ class derived1( var1, var2 ) from base
 end
 
 function generate( param )
-   if param = 0
+   if param == 0
       return derived
    else
       return derived1

@@ -8,7 +8,7 @@
 * Subcategory: class
 * Short: Class properties across modules, base module
 * Description:
-*    This is a slave module to be loaded by module_class_main (ID 52a). 
+*    This is a slave module to be loaded by module_class_main (ID 52a).
 *    It is never directly executed.
 * [/Description]
 *
@@ -20,14 +20,14 @@ class Base( gamma, beta, alpha )
    alpha = alpha
    static lastId = 0
    id = nil
-   
+
    init
-      if alpha = nil
+      if alpha == nil
          alpha = "Nilled"
       end
       self.id = ++self.lastId
    end
-   
+
    function overload()
       return "Base"
    end

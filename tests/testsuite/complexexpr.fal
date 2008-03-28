@@ -20,15 +20,15 @@
 
 // basic expr
 a = 1
-a = a = testReflect( 2 )
+a = a == testReflect( 2 )
 if a: failure( "Assignment disambiguation 1 - simple/complex" )
 
 a = 1
-a = testReflect( a ) = 2
+a = testReflect( a ) == 2
 if a: failure( "Assignment disambiguation 2 - complex/simple" )
 
 a = 1
-a = testReflect( a ) = testReflect( 2 )
+a = testReflect( a ) == testReflect( 2 )
 if a: failure( "Assignment disambiguation 3 - complex/complex" )
 
 
@@ -48,7 +48,7 @@ b = testReflect( 1 ) and testReflect( 0 ) or testReflect( 1 ) and testReflect( 2
 if not b: failure( "Connector expression 3 all complex" )
 
 b = 0
-testReflect( b ) or testReflect( 1 ) and testReflect( 0 ) or let b = testReflect( 2 )
+testReflect( b ) or testReflect( 1 ) and testReflect( 0 ) or (b = testReflect( 2 ))
 if b != 2: failure( "Connector expression 4: connectors and let, all complex")
 b = testReflect( 0 ) or testReflect( 1 ) and not testReflect( 3 ) or testReflect( 1 )
 if not b: failure( "Connector expression 5: not operator")
