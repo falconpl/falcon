@@ -182,7 +182,7 @@ void write_operand( Stream *output, byte *instruction, int opnum, Module *mod )
             if (
                ( opnum == 1 && ( opcode == P_JMP || opcode == P_TRAL || opcode == P_TRY
                                  || opcode == P_JTRY || opcode == P_IFT || opcode == P_IFF
-                                 || opcode == P_ONCE || opcode == P_TRAV || opcode == P_FORI
+                                 || opcode == P_ONCE || opcode == P_TRAV
                                  || opcode == P_FORN || opcode == P_TRAN || opcode == P_SWCH ) ) ||
                ( opnum == 2 && ( opcode == P_FORK || opcode == P_TRAN ) )
                )
@@ -592,8 +592,6 @@ void disassembler( Module *module, Stream *out, const t_labelMap &labels, const 
          case P_PASS: csOpName = "PASS"; break;
          case P_PSIN: csOpName = "PSIN"; break;
 
-         case P_FORI: csOpName = "FORI"; break;
-         case P_FORN: csOpName = "FORN"; break;
          case P_SHR : csOpName = "SHR "; break;
          case P_SHL : csOpName = "SHL "; break;
          case P_SHRS: csOpName = "SHRS"; break;
@@ -819,8 +817,6 @@ void Analizer( Module *module, t_labelMap &labels  )
          case P_IFF :
          case P_ONCE:
          case P_TRAV:
-         case P_FORI:
-         case P_FORN:
             labels[ endianInt32( *(uint32 *)(code + sizeof(int32)) ) ] = 0;
          break;
       }
