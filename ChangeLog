@@ -43,6 +43,9 @@ Falcon (0.8.9)
   * Major: Removed for/to loop and added a step parameter to ranges. For/in loop on steps
            have now the same functionalities as the old for/to loop. "step" is not anymore
            a reserved word.
+  * Major: Now nameless functions and lambda are "closures".
+  * Minor: Added statement "innerfunc" creating a non-closure function.
+  * Minor: Added "enum" statement which can create a set of constants.
 
 Falcon (0.8.8)
   * bugfix: TRAV opcode may destroy its parameters while setting first loop
