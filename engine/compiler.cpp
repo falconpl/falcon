@@ -936,6 +936,52 @@ Value *Compiler::closeClosure()
 }
 
 
+void Compiler::addEnumerator( const String &str, Value *val )
+{
+   StmtClass *stmt = static_cast< StmtClass *>( getContext() );
+   ClassDef *cd = stmt->symbol()->getClassDef();
+
+   if ( cd->hasProperty( str ) )
+   {
+      raiseError( e_already_def, str, lexer()->previousLine() );
+   }
+   else
+   {
+      VarDef *vd = m_module->addClassProperty( stmt->symbol(), str );
+      switch( val->type() )
+      {
+         case Value::t_nil :
+            // nothing to do
+            break;
+
+         case Value::t_imm_integer:
+            vd->setInteger( val->asInteger() );
+            m_enumId = val->asInteger() + 1;
+            break;
+
+         case Value::t_imm_num:
+            vd->setNumeric( val->asNumeric() );
+            m_enumId = int( val->asNumeric() ) + 1;
+            break;
+
+         case Value::t_imm_string:
+            vd->setString( m_module->addString( *val->asString() ) );
+            break;
+
+         case Value::t_imm_bool:
+            vd->setBool( val->asBool() );
+            break;
+      }
+   }
+}
+
+
+void Compiler::addEnumerator( const String &str )
+{
+   Value dummy( (int64) m_enumId );
+   addEnumerator( str, &dummy );
+}
+
 }
 
 /* end of compiler.cpp */

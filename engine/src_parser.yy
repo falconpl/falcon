@@ -120,6 +120,7 @@ inline int flc_src_lex (void *lvalp, void *yyparam)
 %token FORDOT
 %token LISTPAR
 %token LOOP
+%token ENUM
 %token TRUE_TOKEN
 %token FALSE_TOKEN
 
@@ -175,6 +176,7 @@ inline int flc_src_lex (void *lvalp, void *yyparam)
 %type <fal_stat> pass_statement
 %type <fal_stat> func_statement
 %type <fal_stat> self_print_statement
+%type <fal_stat> enum_statement
 %type <fal_stat> class_decl object_decl property_decl attributes_statement export_statement directive_statement
 %type <fal_stat> import_statement
 %type <fal_stat> def_statement
@@ -282,25 +284,24 @@ base_statement:
    expression EOL { $$ = new Falcon::StmtAutoexpr( LINE, $1 ); }
 
    | expression_list OP_EQ expression EOL {
-      Falcon::Value *first = new Falcon::Value( $1 );
-      COMPILER->defineVal( first );
-      $$ = new Falcon::StmtAutoexpr( LINE,
-         new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_assign, first, $3 ) ) );
-   }
-   | expression_list OP_EQ expression COMMA expression_list EOL {
-      if ( $1->size() != $5->size() + 1 )
-      {
-         COMPILER->raiseError(Falcon::e_unpack_size );
+         Falcon::Value *first = new Falcon::Value( $1 );
+         COMPILER->defineVal( first );
+         $$ = new Falcon::StmtAutoexpr( LINE,
+            new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_assign, first, $3 ) ) );
       }
-      Falcon::Value *first = new Falcon::Value( $1 );
+   | expression_list OP_EQ expression COMMA expression_list EOL {
+         if ( $1->size() != $5->size() + 1 )
+         {
+            COMPILER->raiseError(Falcon::e_unpack_size );
+         }
+         Falcon::Value *first = new Falcon::Value( $1 );
 
-      COMPILER->defineVal( first );
-      $5->pushFront( $3 );
-      Falcon::Value *second = new Falcon::Value( $5 );
-      $$ = new Falcon::StmtAutoexpr( LINE,
-         new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_assign, first, second ) ) );
-   }
-
+         COMPILER->defineVal( first );
+         $5->pushFront( $3 );
+         Falcon::Value *second = new Falcon::Value( $5 );
+         $$ = new Falcon::StmtAutoexpr( LINE,
+            new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_assign, first, second ) ) );
+      }
 
    | def_statement /* no action  -- at the moment def_statement always returns 0*/
    | while_statement
@@ -320,6 +321,7 @@ base_statement:
    | fordot_statement
    | self_print_statement
    | outer_print_statement
+   | enum_statement
 ;
 
 assignment_def_list:
@@ -1900,6 +1902,77 @@ has_clause_list:
          Falcon::ClassDef *clsdef = cls->symbol()->getClassDef();
          clsdef->hasnt().pushBack( COMPILER->addGlobalSymbol( $4 ) );
       }
+;
+
+/*****************************************************
+   ENUM declaration
+******************************************************/
+
+enum_statement:
+      ENUM SYMBOL
+      {
+         Falcon::ClassDef *def = new Falcon::ClassDef( 0, 0 );
+         // the SYMBOL which names the function goes in the old symbol table, while the parameters
+         // will go in the new symbol table.
+
+         // find the global symbol for this.
+         Falcon::Symbol *sym = COMPILER->searchGlobalSymbol( $2 );
+
+         // Not defined?
+         if( sym == 0 ) {
+            sym = COMPILER->addGlobalSymbol( $2 );
+            sym->setEnum( true );
+         }
+         else if ( sym->isFunction() || sym->isClass() ) {
+            COMPILER->raiseError(Falcon::e_already_def,  sym->name() );
+         }
+
+         // anyhow, also in case of error, destroys the previous information to allow a correct parsing
+         // of the rest.
+         sym->setClass( def );
+
+         Falcon::StmtClass *cls = new Falcon::StmtClass( COMPILER->lexer()->line(), sym );
+         // prepare the statement allocation context
+         COMPILER->pushContext( cls );
+
+         // We don't have a context set here
+         COMPILER->pushFunction( def );
+
+         COMPILER->resetEnum();
+      }
+      EOL
+
+      enum_statement_list
+
+      END EOL {
+         $$ = COMPILER->getContext();
+
+         COMPILER->popContext();
+         //We didn't pushed a context set
+         COMPILER->popFunction();
+      }
+;
+
+enum_statement_list:
+   /* nothing */
+   | enum_statement_list enum_item_decl
+;
+
+enum_item_decl:
+   EOL
+   | SYMBOL OP_EQ const_atom enum_item_terminator
+      {
+         COMPILER->addEnumerator( *$1, $3 );
+      }
+
+   | SYMBOL enum_item_terminator
+      {
+         COMPILER->addEnumerator( *$1 );
+      }
+;
+
+enum_item_terminator:
+   EOL | COMMA
 ;
 
 /*****************************************************

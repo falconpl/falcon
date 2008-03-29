@@ -208,6 +208,7 @@ char *en_table[] =
       "Unclosed string at end of file",
       "Unknown directive",
       "Invalid value for directive",
+      "Target class cannot be instantiated",
 
       "Can't open file",
       "Load error",

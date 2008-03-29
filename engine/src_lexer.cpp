@@ -1244,6 +1244,8 @@ int SrcLexer::checkLimitedTokens()
             return LOOP;
          if ( m_string == "true" )
             return TRUE_TOKEN;
+         if ( m_string == "enum" )
+            return ENUM;
       break;
 
       case 5:

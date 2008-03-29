@@ -58,12 +58,18 @@ CoreClass::~CoreClass()
 {
    delete m_properties;
    setAttributeList( 0 );
-
 }
 
 
 CoreObject *CoreClass::createInstance( bool applyAttributes ) const
 {
+   if ( m_sym->isEnum() )
+   {
+      origin()->raiseError( new CodeError( ErrorParam( e_noninst_cls, __LINE__ ).
+         extra( m_sym->name() ) ) );
+      // anyhow, flow through to allow user to see the object
+   }
+
    // we must have an origin pointer.
    CoreObject *instance = new CoreObject( origin(), *m_properties, symbol() );
 

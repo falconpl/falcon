@@ -567,7 +567,8 @@ private:
       FLAG_EXPORTED=0x1,
       FLAG_ETAFUNC=0x2,
       FLAG_WELLKNOWN=0x4,
-      FLAG_IMPORTED=0x8
+      FLAG_IMPORTED=0x8,
+      FLAG_ENUM=0x16
    }
    e_flags;
 
@@ -737,6 +738,22 @@ public:
       return *this;
    }
 
+
+   /** Declares the symbol as an "enum class".
+      Enum classes are classes that only store constant values, or serve
+      otherwise as namespaces.
+      They cannot be instantiated.
+      \param exp true if the symbol is an enumeration.
+      \return itself
+   */
+   Symbol &setEnum( bool exp ) {
+      if ( exp )
+         m_flags |= FLAG_ENUM;
+      else
+         m_flags &=~FLAG_ENUM;
+      return *this;
+   }
+
    void setUndefined() { clear(); m_type = tundef; }
    void setLocalUndef() { clear(); m_type = tlocalundef; }
    void setGlobal() { clear(); m_type = tglobal; }
@@ -760,6 +777,7 @@ public:
    void itemId( uint16 ip ) { m_itemPos = ip; }
    bool isEta() const { return (m_flags & FLAG_ETAFUNC) == FLAG_ETAFUNC; }
    bool isWKS() const { return (m_flags & FLAG_WELLKNOWN) == FLAG_WELLKNOWN; }
+   bool isEnum() const { return (m_flags & FLAG_ENUM) == FLAG_ENUM; }
 
    bool isUndefined() const { return imported() || m_type == tundef; }
    bool isLocalUndef() const { return m_type == tlocalundef; }

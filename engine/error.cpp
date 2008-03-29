@@ -205,6 +205,7 @@ const String &errorDesc( int code )
       case e_unclosed_string: return getMessage( msg::err_unclosed_string );
       case e_directive_unk: return getMessage( msg::err_directive_unk );
       case e_directive_value: return getMessage( msg::err_directive_value );
+      case e_noninst_cls: return getMessage( msg::err_noninst_cls );
 
       case e_already_forfirst: return getMessage( msg::err_already_forfirst );
       case e_already_forlast: return getMessage( msg::err_already_forlast );

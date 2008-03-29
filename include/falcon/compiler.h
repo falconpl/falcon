@@ -457,6 +457,15 @@ public:
    void incClosureContext() { m_closureContexts++; }
    void decClosureContext() { m_closureContexts--; }
 
+   /** Add an enumeration item to current enumeration. */
+   void addEnumerator( const String &name, Value *value );
+
+   /** Add an enumeration item to current enumeration.
+      This version assigns the enumerated value a progressive integer.
+   */
+   void addEnumerator( const String &name );
+
+   void resetEnum() { m_enumId = 0; }
 };
 
 } // end of namespace
