@@ -791,10 +791,6 @@ int AsmLexer::checkTokens()
              return I_PSIN;
          if ( m_string.compareIgnoreCase( "PASS" ) == 0 )
              return I_PASS;
-         if ( m_string.compareIgnoreCase( "FORI" ) == 0 )
-             return I_FORI;
-         if ( m_string.compareIgnoreCase( "FORN" ) == 0 )
-             return I_FORN;
          if ( m_string.compareIgnoreCase( "SHLS" ) == 0 )
              return I_SHLS;
          if ( m_string.compareIgnoreCase( "SHRS" ) == 0 )

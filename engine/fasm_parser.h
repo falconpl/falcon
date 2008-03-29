@@ -178,19 +178,17 @@
      I_PEEK = 394,
      I_PSIN = 395,
      I_PASS = 396,
-     I_FORI = 397,
-     I_FORN = 398,
-     I_SHR = 399,
-     I_SHL = 400,
-     I_SHRS = 401,
-     I_SHLS = 402,
-     I_LDVR = 403,
-     I_LDPR = 404,
-     I_LSB = 405,
-     I_INDI = 406,
-     I_STEX = 407,
-     I_TRAC = 408,
-     I_WRT = 409
+     I_SHR = 397,
+     I_SHL = 398,
+     I_SHRS = 399,
+     I_SHLS = 400,
+     I_LDVR = 401,
+     I_LDPR = 402,
+     I_LSB = 403,
+     I_INDI = 404,
+     I_STEX = 405,
+     I_TRAC = 406,
+     I_WRT = 407
    };
 #endif
 /* Tokens.  */
@@ -333,19 +331,17 @@
 #define I_PEEK 394
 #define I_PSIN 395
 #define I_PASS 396
-#define I_FORI 397
-#define I_FORN 398
-#define I_SHR 399
-#define I_SHL 400
-#define I_SHRS 401
-#define I_SHLS 402
-#define I_LDVR 403
-#define I_LDPR 404
-#define I_LSB 405
-#define I_INDI 406
-#define I_STEX 407
-#define I_TRAC 408
-#define I_WRT 409
+#define I_SHR 397
+#define I_SHL 398
+#define I_SHRS 399
+#define I_SHLS 400
+#define I_LDVR 401
+#define I_LDPR 402
+#define I_LSB 403
+#define I_INDI 404
+#define I_STEX 405
+#define I_TRAC 406
+#define I_WRT 407
 
 
 

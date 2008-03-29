@@ -17,6 +17,7 @@ function closing( a, b )
    c = a * b
    return \
       (function ( s );
+         c; // import C
          return lambda n => gl + s + c + n;
       end )(a)
 end

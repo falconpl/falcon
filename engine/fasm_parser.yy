@@ -208,8 +208,6 @@ inline int yylex (void *lvalp, void *fasm_param)
 %token I_PEEK
 %token I_PSIN
 %token I_PASS
-%token I_FORI
-%token I_FORN
 %token I_SHR
 %token I_SHL
 %token I_SHRS
@@ -429,8 +427,6 @@ instruction:
    | inst_peek
    | inst_psin
    | inst_pass
-   | inst_fori
-   | inst_forn
    | inst_shr
    | inst_shl
    | inst_shrs
@@ -713,7 +709,7 @@ inst_gend:
 ;
 
 inst_genr:
-       I_GENR operand COMMA operand { COMPILER->addInstr( P_GENR, $2, $4); }
+       I_GENR operand COMMA operand COMMA x_op_immediate { COMPILER->addInstr( P_GENR, $2, $4, $6); }
      | I_GENR error               { COMPILER->raiseError(Falcon::e_invop, "GENR" ); }
 ;
 
@@ -945,18 +941,6 @@ inst_psin:
 inst_pass:
        I_PASS op_variable        { COMPILER->addInstr( P_PASS, $2 ); }
      | I_PASS error              { COMPILER->raiseError(Falcon::e_invop, "PASS" ); }
-;
-
-inst_fori:
-       I_FORI NAME COMMA SYMBOL COMMA xoperand    { $2->fixed( true ); COMPILER->addInstr( P_FORI, $2, $4, $6 ); }
-     | I_FORI INTEGER COMMA SYMBOL COMMA xoperand { $2->fixed( true ); COMPILER->addInstr( P_FORI, $2, $4, $6 ); }
-     | I_FORI error              { COMPILER->raiseError(Falcon::e_invop, "FORI" ); }
-;
-
-inst_forn:
-       I_FORN NAME COMMA SYMBOL    { $2->fixed( true ); COMPILER->addInstr( P_FORN, $2, $4 ); }
-     | I_FORN INTEGER COMMA SYMBOL { $2->fixed( true ); COMPILER->addInstr( P_FORN, $2, $4 ); }
-     | I_FORN error              { COMPILER->raiseError(Falcon::e_invop, "FORN" ); }
 ;
 
 inst_shr:
