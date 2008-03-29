@@ -29,7 +29,6 @@
 namespace Falcon
 {
 
-
 void Symbol::clear()
 {
    switch( m_type )
@@ -171,6 +170,7 @@ FuncDef::FuncDef( uint32 offset ):
    m_offset( offset ),
    m_params( 0 ),
    m_locals( 0 ),
+   m_undefined( 0 ),
    m_onceItemId( NO_STATE )
 {
 }
@@ -192,6 +192,15 @@ Symbol *FuncDef::addLocal( Symbol *sym )
 {
    sym->itemId( m_locals++ );
    sym->setLocal();
+   m_symtab.add( sym );
+   return sym;
+}
+
+
+Symbol *FuncDef::addUndefined( Symbol *sym )
+{
+   sym->itemId( m_undefined++ );
+   sym->setLocalUndef();
    m_symtab.add( sym );
    return sym;
 }

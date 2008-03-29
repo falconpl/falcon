@@ -75,6 +75,7 @@ Compiler::Compiler():
    m_rootError( 0 ),
    m_lexer(0),
    m_root(0),
+   m_lambdaCount(0),
    m_bParsingFtd(false)
 {
    reset();
@@ -112,6 +113,7 @@ void Compiler::init()
    m_enumId = 0;
    m_staticPrefix = 0;
    m_lambdaCount = 0;
+   m_closureContexts = 0;
    m_tempLine = 0;
 
    // reset the require def status
@@ -142,6 +144,13 @@ void Compiler::reset()
    m_statementVals.clear();
 
    addPredefs();
+
+   m_errors = 0;
+   m_enumId = 0;
+   m_staticPrefix = 0;
+   m_lambdaCount = 0;
+   m_closureContexts = 0;
+   m_tempLine = 0;
 
    // reset FTD parsing mode
    parsingFtd(false);
@@ -384,7 +393,8 @@ void Compiler::defineVal( Value *val )
    }
    else if ( val->isSymdef() )
    {
-      if ( staticPrefix() == 0 ) {
+      if ( staticPrefix() == 0 )
+      {
          Symbol *sym;
          if ( getFunction() != 0 ) {
             // addlocal must also define the symbol
@@ -465,10 +475,37 @@ Symbol *Compiler::addLocalSymbol( const String *symname, bool parameter )
 bool Compiler::checkLocalUndefined()
 {
    List *l = (List *) m_statementVals.back();
-   while( ! l->empty() ) {
+   while( ! l->empty() )
+   {
       Value *val = (Value *) l->front();
-      if ( val->isSymdef() ) {
-         Symbol *sym = addGlobalSymbol( val->asSymdef() );
+      if ( val->isSymdef() )
+      {
+         Symbol *sym = 0;
+         if ( m_closureContexts > 0 )
+         {
+            // try to find the symbol in the previous symbol table
+            if( m_closureContexts )
+            {
+               fassert( m_functions.end() );
+               const FuncDef *fd_parent = reinterpret_cast<const FuncDef *>
+                  ( m_functions.end()->prev()->data() );
+
+               if( fd_parent != 0 )
+               {
+                  if( fd_parent->symtab().findByName( *val->asSymdef() ) != 0 )
+                  {
+                     sym = getFunction()->addUndefined(
+                        m_module->addSymbol(*val->asSymdef()) );
+                  }
+               }
+            }
+         }
+
+         // still nothing?
+         if (sym == 0)
+         {
+            sym = addGlobalSymbol( val->asSymdef() );
+         }
          val->setSymbol( sym );
       }
       l->popFront();
@@ -479,7 +516,6 @@ bool Compiler::checkLocalUndefined()
 
 Symbol *Compiler::searchLocalSymbol( const String *symname )
 {
-   // should not happen.
    if( m_functions.empty() )
       return searchGlobalSymbol( symname );
 
@@ -492,6 +528,33 @@ Symbol *Compiler::searchLocalSymbol( const String *symname )
    // then try in the local symtab or just return 0.
    FuncDef *fd = (FuncDef *) m_functions.back();
    return fd->symtab().findByName( *symname );
+}
+
+Symbol *Compiler::searchOuterSymbol( const String *symname )
+{
+   ListElement *aliasIter = m_alias.end();
+   ListElement *funcIter = m_functions.end();
+
+   while( aliasIter != 0 && funcIter != 0 )
+   {
+      AliasMap *map = (AliasMap *) aliasIter->data();
+
+      // first search the local symbol aliases
+      Symbol **sympp = (Symbol **) map->find( symname );
+      if ( sympp != 0 )
+         return *sympp;
+
+      // then try in the local symtab or just return 0.
+      FuncDef *fd = (FuncDef *) funcIter->data();
+      Symbol *sym = fd->symtab().findByName( *symname );
+      if ( sym != 0 )
+         return sym;
+
+      aliasIter = aliasIter->prev();
+      funcIter = funcIter->prev();
+   }
+
+   return searchGlobalSymbol( symname );
 }
 
 
@@ -789,6 +852,87 @@ bool Compiler::setDirective( const String &directive, int64 value, bool bRaise )
    }
 
    return true;
+}
+
+Value *Compiler::closeClosure()
+{
+   // first, close it as a normal function, but without mangling with the
+   // local function table.
+   StmtFunction *func = static_cast<Falcon::StmtFunction *>( getContext() );
+   FuncDef *fd = func->symbol()->getFuncDef();
+
+   // has this function a static block?
+   if ( func->hasStatic() )
+   {
+      fd->onceItemId( m_module->addGlobal( "_once_" + func->symbol()->name(), false )->itemId() );
+   }
+
+   popContext();
+   popFunctionContext();
+   popContextSet();
+   popFunction();
+   decClosureContext();
+
+   // we're going to need a lambda call
+   Value *lambda_call = new Value( new Falcon::Expression( Expression::t_lambda , new Value( func->symbol() ) ) );
+
+   // Is there some undefined?
+   if( fd->undefined() > 0 )
+   {
+      // we have to find all the local variables that exist in the upper context and
+      // transform them in parameters.
+      SymbolTable &funcTable = fd->symtab();
+      ArrayDecl *closureDecl = new ArrayDecl;
+
+      //First; put parameters away, so that we can reorder them.
+      const Map &symbols = funcTable.map();
+      MapIterator iter = symbols.begin();
+      int moved = 0;
+
+      while( iter.hasCurrent() )
+      {
+         Symbol *sym = *(Symbol **) iter.currentValue();
+         if ( sym->isLocalUndef() )
+         {
+            // ok, this must become a parameter...
+            sym->setParam();
+            sym->itemId( moved );
+            moved ++;
+
+            Symbol *parentSym;
+            if ( (parentSym = searchLocalSymbol( &sym->name() )) != 0 )
+            {
+               //... and the parent symbol must be stored in parametric array...
+               closureDecl->pushBack( new Value( parentSym ) );
+            }
+            else {
+               // closures can't have undefs.
+               raiseError( e_undef_sym, "", sym->declaredAt() );
+            }
+         }
+         else if ( sym->isParam() )
+         {
+            // push forward all parameters
+            sym->itemId( fd->undefined() + sym->itemId() );
+         }
+
+         iter.next();
+      }
+
+      // no more undefs -- now they are params
+      fd->params( fd->params() + fd->undefined() );
+      fd->undefined( 0 );
+
+      // ... put it in front of our array and return it.
+      closureDecl->pushFront( lambda_call );
+      return new Value( closureDecl );
+   }
+   else
+   {
+      // just create create a lambda call for this function
+      return lambda_call;
+   }
+
 }
 
 

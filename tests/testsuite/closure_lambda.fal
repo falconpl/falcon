@@ -1,0 +1,36 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 18h
+* Category: lambda
+* Subcategory: closure
+* Short: Closures lambda
+* Description:
+* Basic test for closures (functions referencing outer vars)
+* [/Description]
+*
+****************************************************************************/
+
+
+function closing( a, b )
+   c = a * b
+   return lambda n => c *n
+end
+
+function closing_nest( a, b )
+   c = a * b
+   return \
+      function( n )
+         return c * (lambda k => k *n )(2)
+      end
+end
+
+func = closing( 5, 2 )
+if func( 5 ) != 50: failure( "Simple closure" )
+func = closing_nest( 3, 2 )
+
+if func( 5 ) != 60: failure( "Nested closure" )
+
+success()
+
+/* End of file */

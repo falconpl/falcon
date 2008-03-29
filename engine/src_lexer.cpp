@@ -1326,11 +1326,14 @@ int SrcLexer::checkLimitedTokens()
             m_bIsDirectiveLine = true;
             return DIRECTIVE;
          }
+         if ( m_string == "innerfunc" )
+            return INNERFUNC;
          if ( m_string == "formiddle" )
             return FORMIDDLE;
       break;
 
       case 10:
+
          if ( m_string == "attributes" )
             return ATTRIBUTES;
       break;

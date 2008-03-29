@@ -1,0 +1,33 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 18j
+* Category: function
+* Subcategory: closure
+* Short: Outer closures
+* Description:
+* Test for closures referencing deeper/outer values.
+* [/Description]
+*
+****************************************************************************/
+
+gl = 10
+
+function closing( a, b )
+   c = a * b
+   return \
+      (function ( s );
+         return lambda n => gl + s + c + n;
+      end )(a)
+end
+
+func = closing( 2, 2 )
+if func( 1 ) != 17: failure( "Closing with 10" )
+gl = 20
+func = closing( 2, 2 )
+
+if func( 1 ) != 27: failure( "Closing with 10" )
+
+success()
+
+/* End of file */

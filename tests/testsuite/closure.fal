@@ -1,0 +1,40 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 18g
+* Category: function
+* Subcategory: closure
+* Short: Closures expressions
+* Description:
+* Basic test for closures (functions referencing outer vars)
+* [/Description]
+*
+****************************************************************************/
+
+
+function closing( a, b )
+   c = a * b
+   return \
+      function( n )
+         return c * n
+      end
+end
+
+function closing_nest( a, b )
+   c = a * b
+   return \
+      function( n )
+         return c * \
+            (function ( k ); return k * n; end)(2)
+      end
+end
+
+func = closing( 5, 2 )
+if func( 5 ) != 50: failure( "Simple closure" )
+func = closing_nest( 3, 2 )
+
+if func( 5 ) != 60: failure( "Nested closure" )
+
+success()
+
+/* End of file */

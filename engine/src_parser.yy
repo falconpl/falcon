@@ -116,6 +116,7 @@ inline int flc_src_lex (void *lvalp, void *yyparam)
 %token DIRECTIVE
 %token COLON
 %token FUNCDECL STATIC
+%token INNERFUNC
 %token FORDOT
 %token LISTPAR
 %token LOOP
@@ -157,7 +158,7 @@ inline int flc_src_lex (void *lvalp, void *yyparam)
 %type <fal_adecl> expression_list listpar_expression_list array_decl
 %type <fal_adecl> symbol_list inherit_param_list inherit_call
 %type <fal_ddecl> expression_pair_list
-%type <fal_val> expression func_call nameless_func lambda_expr iif_expr
+%type <fal_val> expression func_call nameless_func nameless_closure lambda_expr iif_expr
 %type <fal_val> switch_decl select_decl while_decl while_short_decl
 %type <fal_val> if_decl if_short_decl elif_decl
 %type <fal_val> const_atom var_atom  atomic_symbol /* atom */
@@ -2148,6 +2149,7 @@ expression:
    | DIESIS expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_indirect, $2 ) ); }
    | lambda_expr
    | nameless_func
+   | nameless_closure
    | func_call
    | iif_expr
    | dotarray_decl
@@ -2208,20 +2210,6 @@ expression:
    | expression ASSIGN_SHL expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_ashl, $1, $3 ) ); }
    | expression ASSIGN_SHR expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_ashr, $1, $3 ) ); }
    | OPENPAR expression CLOSEPAR {$$=$2;}
-/*
-   | expression COMMA expression {
-      if ( $3->isArray() ) {
-         $3->asArray()->pushFront( $1 );
-         $$ = $3;
-      }
-      else
-      {
-         Falcon::ArrayDecl *arr = new Falcon::ArrayDecl;
-         arr->pushBack( $1 );
-         arr->pushBack( $3 );
-         $$ = new Falcon::Value( arr );
-      }
-   }*/
 ;
 
 /*suqared expr NEED to start with an or with a nonambiguous symbol */
@@ -2269,6 +2257,59 @@ nameless_func:
          Falcon::FuncDef *def = new Falcon::FuncDef( 0 );
          // set the def as a lambda.
          COMPILER->incLambdaCount();
+         COMPILER->incClosureContext();
+         int id = COMPILER->lambdaCount();
+         // find the global symbol for this.
+         char buf[48];
+         sprintf( buf, "_lambda#_id_%d", id );
+         Falcon::String *name = COMPILER->addString( buf );
+         Falcon::Symbol *sym = COMPILER->searchGlobalSymbol( name );
+
+         // Not defined?
+         fassert( sym == 0 );
+         sym = COMPILER->addGlobalSymbol( name );
+
+         // anyhow, also in case of error, destroys the previous information to allow a correct parsing
+         // of the rest.
+         sym->setFunction( def );
+
+         Falcon::StmtFunction *func = new Falcon::StmtFunction( COMPILER->lexer()->line(), sym );
+         COMPILER->addFunction( func );
+         func->setLambda( id );
+         // prepare the statement allocation context
+         COMPILER->pushContext( func );
+         COMPILER->pushFunctionContext( func );
+         COMPILER->pushContextSet( &func->statements() );
+         COMPILER->pushFunction( def );
+      }
+      nameless_func_decl_inner
+      static_block
+
+      statement_list
+
+      END {
+            $$ = COMPILER->closeClosure();
+         }
+;
+
+nameless_func_decl_inner:
+   OPENPAR param_list CLOSEPAR EOL
+   | OPENPAR param_list error
+      {
+         COMPILER->raiseContextError(Falcon::e_syn_funcdecl, LINE, CTX_LINE );
+      }
+   | error EOL
+      {
+         COMPILER->raiseError(Falcon::e_syn_funcdecl );
+      }
+;
+
+nameless_closure:
+   INNERFUNC
+      {
+         Falcon::FuncDef *def = new Falcon::FuncDef( 0 );
+         // set the def as a lambda.
+         COMPILER->incLambdaCount();
          int id = COMPILER->lambdaCount();
          // find the global symbol for this.
          char buf[48];
@@ -2302,20 +2343,9 @@ nameless_func:
             Falcon::StmtFunction *func = static_cast<Falcon::StmtFunction *>(COMPILER->getContext());
             $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_lambda ,
                new Falcon::Value( func->symbol() ) ) );
+            // analyze func in previous context.
             COMPILER->closeFunction();
          }
-;
-
-nameless_func_decl_inner:
-   OPENPAR param_list CLOSEPAR EOL
-   | OPENPAR param_list error
-      {
-         COMPILER->raiseContextError(Falcon::e_syn_funcdecl, LINE, CTX_LINE );
-      }
-   | error EOL
-      {
-         COMPILER->raiseError(Falcon::e_syn_funcdecl );
-      }
 ;
 
 
@@ -2325,6 +2355,7 @@ lambda_expr:
          Falcon::FuncDef *def = new Falcon::FuncDef( 0 );
          // set the def as a lambda.
          COMPILER->incLambdaCount();
+         COMPILER->incClosureContext();
          int id = COMPILER->lambdaCount();
          // find the global symbol for this.
          char buf[48];
@@ -2355,10 +2386,8 @@ lambda_expr:
          {
             Falcon::StmtFunction *func = static_cast<Falcon::StmtFunction *>(COMPILER->getContext());
             COMPILER->addStatement( new Falcon::StmtReturn( LINE, $5 ) );
-            $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_lambda ,
-               new Falcon::Value( func->symbol() ) ) );
             COMPILER->checkLocalUndefined();
-            COMPILER->closeFunction();
+            $$ = COMPILER->closeClosure();
          }
 ;
 

@@ -287,14 +287,16 @@ class FALCON_DYN_CLASS FuncDef: public BaseAlloc
    /** Count of local variables */
    uint16 m_locals;
 
+   /** Count of local variables - still undefined */
+   uint16 m_undefined;
+
    /** Cache item for functions with static elements.
       If the function is not static, it will be NO_STATE.
    */
    uint32 m_onceItemId;
 
 public:
-
-	enum {
+   enum {
 		NO_STATE = 0xFFFFFFFF
 	} enum_NO_STATE;
 
@@ -306,11 +308,17 @@ public:
 
    Symbol *addParameter( Symbol *sym );
    Symbol *addLocal( Symbol *sym );
+   Symbol *addUndefined( Symbol *sym );
 
    uint32 offset() const { return m_offset; }
    void offset( uint32 o ) { m_offset = o; }
    uint16 params() const { return m_params; }
    uint16 locals() const { return m_locals; }
+   uint16 undefined() const { return m_undefined; }
+   void params( uint16 p ) { m_params = p; }
+   void locals( uint16 l ) { m_locals = l; }
+   void undefined( uint16 u ) { m_undefined = u; }
+
    /** Counts the parameters and the local variables that this funcdef has in its symtab.
       Useful when the function object is created by the compiler, that won't use addParameter()
       and addLocal(). Those two metods are for API implementors and extensions, while the

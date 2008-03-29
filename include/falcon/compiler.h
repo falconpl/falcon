@@ -163,7 +163,7 @@ class FALCON_DYN_CLASS Compiler: public BaseAlloc
    const String *m_staticPrefix;
 
    int m_lambdaCount;
-
+   int m_closureContexts;
    int m_tempLine;
 
    bool m_strict;
@@ -266,6 +266,7 @@ public:
    Symbol *searchGlobalSymbol( const String *symname );
    Symbol *addLocalSymbol( const String *symname, bool parameter );
    Symbol *addGlobalSymbol( const String *symname );
+   Symbol *searchOuterSymbol( const String *symname );
    Symbol *addAttribute( const String *symname );
 
    /** Creates a symbol that will be an initially defined global variable.
@@ -450,6 +451,11 @@ public:
 
    void defContext( bool ctx ) { m_defContext = ctx; }
    bool defContext() const { return m_defContext; }
+
+   /** Closes the currently worked on closure */
+   Value *closeClosure();
+   void incClosureContext() { m_closureContexts++; }
+   void decClosureContext() { m_closureContexts--; }
 
 };
 
