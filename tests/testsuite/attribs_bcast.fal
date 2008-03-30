@@ -99,10 +99,7 @@ broadcast( a_three )
 if o1.callcount != 0: failure( "Broadcast to none" )
 
 // and to existing attributes, but at unexhisting handlers
-give a_three to o1
-give a_three to o2
-give a_three to o3
-give a_three to o4
+give a_three to o1, o2, o3, o4
 
 broadcast( a_three, "some", "random", "parameter" )
 if o1.callcount != 0: failure( "Broadcast to all but no receiver" )
