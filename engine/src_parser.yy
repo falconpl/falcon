@@ -1038,7 +1038,7 @@ selcase_element:
 ******************************************************/
 
 give_statement:
-   GIVE expression_list OP_TO expression EOL
+   GIVE expression_list OP_TO expression_list EOL
       {
          $$ = new Falcon::StmtGive( LINE, $4, $2 );
       }

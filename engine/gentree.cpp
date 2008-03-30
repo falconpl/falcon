@@ -161,11 +161,10 @@ void GenTree::generate( const Statement *cmp, const char *specifier, bool sameli
       case Statement::t_give:
       {
          const StmtGive *give = static_cast< const StmtGive *>( cmp );
-
          m_out->writeString( "GIVE " );
-         gen_value( give->object() );
-         m_out->writeString( " " );
          gen_array( give->attributes() );
+         m_out->writeString( " to " );
+         gen_array( give->objects() );
          m_out->writeString( "\n" );
       }
       break;

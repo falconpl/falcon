@@ -656,79 +656,87 @@ void GenCode::gen_statement( const Statement *stmt )
       case Statement::t_give:
       {
          const StmtGive *give = static_cast<const StmtGive *>( stmt );
+         const ArrayDecl *give_to = give->objects();
 
-         if ( ! give->object()->isSimple() )
+         const ListElement *elem = give_to->begin();
+         while( elem != 0 )
          {
-            gen_complex_value( give->object() );
-         }
+            const Value *object = (const Value *) elem->data();
 
-         const ArrayDecl *attribs = give->attributes();
-         ListElement *iter = attribs->begin();
-         bool pushed = false;
-         bool peek = false;
-
-         while( iter != 0 )
-         {
-            const Value *val = (const Value *) iter->data();
-            byte mode;
-            ListElement *iter_next = iter->next();
-
-            if ( val->isExpr() && val->asExpr()->type() == Expression::t_not ) {
-               val = val->asExpr()->first();
-               mode = P_GIVN;
-            }
-            else
-               mode = P_GIVE;
-
-
-            if( val->isSimple() )
+            if ( ! object->isSimple() )
             {
-               if ( give->object()->isSimple() ) {
-                  gen_pcode( mode, give->object(), val );
-               }
-               else {
-                  if ( peek ) {
-                     if ( iter_next != 0 )
-                        gen_pcode( P_PEEK, e_parA );
-                     else {
-                        gen_pcode( P_POP, e_parA );
-                        pushed = false;
-                     }
-                     peek = false;
-                  }
-                  gen_pcode( mode, e_parA, val );
-               }
-            }
-            else {
-               if ( give->object()->isSimple() ) {
-                  gen_value( val );
-                  gen_pcode( mode, give->object(), e_parA );
-               }
-               else {
-                  if ( ! pushed ) {
-                     gen_pcode( P_PUSH, e_parA );
-                     pushed = true;
-                  }
-
-                  gen_value( val );
-                     if ( iter_next != 0 )
-                        gen_pcode( P_PEEK, e_parB );
-                     else {
-                        gen_pcode( P_POP, e_parB );
-                        pushed = false;
-                     }
-                  peek = true;
-
-                  gen_pcode( mode, e_parB, e_parA );
-               }
+               gen_complex_value( object );
             }
 
-            iter = iter_next;
-         }
-         if ( pushed ) {
-            gen_pcode( P_IPOP, c_param_fixed( 1 ) );
-         }
+            const ArrayDecl *attribs = give->attributes();
+            ListElement *iter = attribs->begin();
+            bool pushed = false;
+            bool peek = false;
 
+            while( iter != 0 )
+            {
+               const Value *val = (const Value *) iter->data();
+               byte mode;
+               ListElement *iter_next = iter->next();
+
+               if ( val->isExpr() && val->asExpr()->type() == Expression::t_not ) {
+                  val = val->asExpr()->first();
+                  mode = P_GIVN;
+               }
+               else
+                  mode = P_GIVE;
+
+
+               if( val->isSimple() )
+               {
+                  if ( object->isSimple() ) {
+                     gen_pcode( mode, object, val );
+                  }
+                  else {
+                     if ( peek ) {
+                        if ( iter_next != 0 )
+                           gen_pcode( P_PEEK, e_parA );
+                        else {
+                           gen_pcode( P_POP, e_parA );
+                           pushed = false;
+                        }
+                        peek = false;
+                     }
+                     gen_pcode( mode, e_parA, val );
+                  }
+               }
+               else {
+                  if ( object->isSimple() ) {
+                     gen_value( val );
+                     gen_pcode( mode, object, e_parA );
+                  }
+                  else {
+                     if ( ! pushed ) {
+                        gen_pcode( P_PUSH, e_parA );
+                        pushed = true;
+                     }
+
+                     gen_value( val );
+                        if ( iter_next != 0 )
+                           gen_pcode( P_PEEK, e_parB );
+                        else {
+                           gen_pcode( P_POP, e_parB );
+                           pushed = false;
+                        }
+                     peek = true;
+
+                     gen_pcode( mode, e_parB, e_parA );
+                  }
+               }
+
+               iter = iter_next;
+            }
+            if ( pushed ) {
+               gen_pcode( P_IPOP, c_param_fixed( 1 ) );
+            }
+
+            elem = elem->next();
+         }
       }
       break;
 

@@ -685,86 +685,94 @@ void GenHAsm::gen_statement( const Statement *stmt )
       case Statement::t_give:
       {
          const StmtGive *give = static_cast<const StmtGive *>( stmt );
+         const ArrayDecl *give_to = give->objects();
+         const ListElement *elem = give_to->begin();
 
-         if ( ! give->object()->isSimple() )
+         while( elem != 0 )
          {
-            gen_complex_value( give->object() );
-         }
+            const Value *object = (const Value *) elem->data();
 
-         const ArrayDecl *attribs = give->attributes();
-         ListElement *iter = attribs->begin();
-         bool pushed = false;
-         bool peek = false;
-
-         while( iter != 0 )
-         {
-            const Value *val = (const Value *) iter->data();
-            String mode;
-            ListElement *iter_next = iter->next();
-
-            if ( val->isExpr() && val->asExpr()->type() == Expression::t_not ) {
-               val = val->asExpr()->first();
-               mode = "\tGIVN\t";
-            }
-            else
-               mode = "\tGIVE\t";
-
-
-            if( val->isSimple() )
+            if ( ! object->isSimple() )
             {
-               if ( give->object()->isSimple() ) {
-                  m_out->writeString( mode );
-                  gen_operand( give->object() );
-                  m_out->writeString( ", " );
-                  gen_operand( val );
+               gen_complex_value( object );
+            }
+
+            const ArrayDecl *attribs = give->attributes();
+            ListElement *iter = attribs->begin();
+            bool pushed = false;
+            bool peek = false;
+
+            while( iter != 0 )
+            {
+               const Value *val = (const Value *) iter->data();
+               String mode;
+               ListElement *iter_next = iter->next();
+
+               if ( val->isExpr() && val->asExpr()->type() == Expression::t_not ) {
+                  val = val->asExpr()->first();
+                  mode = "\tGIVN\t";
+               }
+               else
+                  mode = "\tGIVE\t";
+
+
+               if( val->isSimple() )
+               {
+                  if ( object->isSimple() ) {
+                     m_out->writeString( mode );
+                     gen_operand( object );
+                     m_out->writeString( ", " );
+                     gen_operand( val );
+                  }
+                  else {
+                     if ( peek ) {
+                        if ( iter_next != 0 )
+                           m_out->writeString( "\tPEEK\tA\n" );
+                        else {
+                           m_out->writeString( "\tPOP\tA\n" );
+                           pushed = false;
+                        }
+                        peek = false;
+                     }
+                     m_out->writeString( mode + "A, " );
+                     gen_operand( val );
+                  }
                }
                else {
-                  if ( peek ) {
+                  if ( object->isSimple() ) {
+                     gen_value( val );
+                     m_out->writeString( mode );
+                     gen_operand( object );
+                     m_out->writeString( ", A" );
+                  }
+                  else {
+                     if ( ! pushed ) {
+                        m_out->writeString( "\tPUSH A\n" );
+                        pushed = true;
+                     }
+
+                     gen_value( val );
                      if ( iter_next != 0 )
-                        m_out->writeString( "\tPEEK\tA\n" );
+                        m_out->writeString( "\tPEEK\tB\n" );
                      else {
-                        m_out->writeString( "\tPOP\tA\n" );
+                        m_out->writeString( "\tPOP\tB\n" );
                         pushed = false;
                      }
-                     peek = false;
+                     peek = true;
+
+                     m_out->writeString( mode + "B, A" );
                   }
-                  m_out->writeString( mode + "A, " );
-                  gen_operand( val );
                }
+
+               m_out->writeString( "\n" );
+               iter = iter_next;
             }
-            else {
-               if ( give->object()->isSimple() ) {
-                  gen_value( val );
-                  m_out->writeString( mode );
-                  gen_operand( give->object() );
-                  m_out->writeString( ", A" );
-               }
-               else {
-                  if ( ! pushed ) {
-                     m_out->writeString( "\tPUSH A\n" );
-                     pushed = true;
-                  }
-
-                  gen_value( val );
-                  if ( iter_next != 0 )
-                     m_out->writeString( "\tPEEK\tB\n" );
-                  else {
-                     m_out->writeString( "\tPOP\tB\n" );
-                     pushed = false;
-                  }
-                  peek = true;
-
-                  m_out->writeString( mode + "B, A" );
-               }
+            if ( pushed ) {
+               m_out->writeString( "\tIPOP\t1\n" );
             }
 
-            m_out->writeString( "\n" );
-            iter = iter_next;
+            elem = elem->next();
          }
-         if ( pushed ) {
-            m_out->writeString( "\tIPOP\t1\n" );
-         }
-
       }
       break;
 

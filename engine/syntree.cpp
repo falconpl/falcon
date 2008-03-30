@@ -624,13 +624,13 @@ Statement *StmtPass::clone() const
 StmtGive::StmtGive( const StmtGive &other ):
    Statement( other )
 {
-   m_object = other.m_object == 0 ? 0 : new Value( *other.m_object );
+   m_objects = other.m_objects == 0 ? 0 : new ArrayDecl( *other.m_objects );
    m_attribs = other.m_attribs == 0 ? 0 : new ArrayDecl( *other.m_attribs );
 }
 
 StmtGive::~StmtGive()
 {
-   delete m_object;
+   delete m_objects;
    delete m_attribs;
 }
 

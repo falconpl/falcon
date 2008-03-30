@@ -765,13 +765,13 @@ public:
 
 class FALCON_DYN_CLASS StmtGive: public Statement
 {
-   Value *m_object;
+   ArrayDecl *m_objects;
    ArrayDecl *m_attribs;
 
 public:
-   StmtGive( uint32 line, Value *object, ArrayDecl *attribs ):
+   StmtGive( uint32 line, ArrayDecl *objects, ArrayDecl *attribs ):
       Statement( line, t_give ),
-      m_object( object ),
+      m_objects( objects ),
       m_attribs( attribs )
    {}
 
@@ -779,7 +779,7 @@ public:
 
    virtual ~StmtGive();
 
-   Value *object() const { return m_object; }
+   ArrayDecl *objects() const { return m_objects; }
    ArrayDecl *attributes() const { return m_attribs; }
 
    virtual Statement *clone() const;
