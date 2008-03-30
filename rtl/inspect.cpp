@@ -1,7 +1,6 @@
 /*
    FALCON - The Falcon Programming Language.
    FILE: print.cpp
-   $Id: inspect.cpp,v 1.15 2007/08/11 10:22:36 jonnymind Exp $
 
    Basic module
    -------------------------------------------------------------------
@@ -157,8 +156,16 @@ void inspect_internal( VMachine *vm, bool isShort, const Item *elem, int32 level
          CoreArray *arr = elem->asArray();
          temp = "Array[";
          temp.writeNumber( (int64) arr->length() );
-         temp += "]{\n";
+         temp += "]";
          stream->writeString( temp );
+
+         if ( isShort && level > 1 )
+         {
+            stream->writeString( "{...}" );
+            break;
+         }
+
+         stream->writeString( "{\n" );
 
          for( count = 0; count < arr->length() ; count++ ) {
             inspect_internal( vm, isShort, & ((*arr)[count]), level + 1 );
@@ -177,8 +184,16 @@ void inspect_internal( VMachine *vm, bool isShort, const Item *elem, int32 level
          CoreDict *dict = elem->asDict();
          temp = "Dict[";
          temp.writeNumber( (int64) dict->length() );
-         temp += "]{\n";
+         temp += "]";
          stream->writeString( temp );
+
+         if ( isShort && level > 1 )
+         {
+            stream->writeString( "{...}" );
+            break;
+         }
+
+         stream->writeString( "{\n" );
 
          Item key, value;
          dict->traverseBegin();
@@ -200,6 +215,12 @@ void inspect_internal( VMachine *vm, bool isShort, const Item *elem, int32 level
       {
          CoreObject *arr = elem->asObject();
          stream->writeString( "Object of class " + arr->instanceOf()->name() );
+         if ( isShort && level > 1 )
+         {
+            stream->writeString( "{...}" );
+            break;
+         }
+
          stream->writeString( " {\n" );
 
          for( count = 0; count < arr->propCount() ; count++ ) {
