@@ -60,8 +60,7 @@
    "This application is written in Falcon". In example, if You use Falcon
    to drive a web site, and You don't want Your site visitors to ever see
    Your scripts, You have to put somewhere a reading like "Powered with
-   Falcon"; doesn't have to be a n-inch banner on Your home page, You may
-   also have just a small reading in a secondary page.
+   Falcon";.
 
      What You cannot do is to claim that any thing You learnt from Falcon
    is Yours: especially, You are forbidden to patent any element that is
@@ -87,17 +86,13 @@
 
 ==============================================================================
 
+                  Falcon Programming Language License
+                       Version 1.1, March 2008
+              http://www.falconpl.org/?page_id=license_1_1
 
-                       Falcon Programming Language License
-                           Version 1.0, February 2005
-                     http://www.falconpl.org/?page_id=license
+     TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
 
-   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
-
-   1. Definitions.
-
-      "License" shall mean the terms and conditions for use, reproduction,
-      and distribution as defined by Sections 1 through 9 of this document.
+   1.Definitions.
 
       "Licensor" shall mean the copyright owner or entity authorized by
       the copyright owner that is granting the License.
@@ -138,8 +133,9 @@
       that links (or binds by name) to the interface of the Work and Derivative
       Works.
 
-      "Scripts" shall mean any work, weather in Source or Object form, that
-      is expressed through the grammar rules which are known by the Work.
+      "Applications of the Work" shall mean any work, whether in Source or
+      Object form, that is expressed through the grammar rules which are known
+      by the Work and that require the Work to perform its execution.
 
       "Users" shall mean any person that uses, directly or indirectly, all or
       any of the Work, the Derivative Works, the Embedding Works or the
@@ -214,35 +210,31 @@
           License, or under terms that do not cause infringement of this
           License.
 
-   5. Distribution of Embedding Works and Scripts. You may produce and
-      distribute any Embedding Work or Scripts thereof in any medium, in
-      Source or Object form, provided You meet the following conditions:
+   5. Distribution of Embedding Works and Applications of the Work. You may
+      produce and distribute any Embedding Work or Applications of the Work
+      thereof in any  medium, in Source or Object form, provided You meet
+      the following conditions:
 
-       (a) The Embedding Works and Scripts are distributed under the term
-           of this License, or the application of another License is
-           explicitly stated in the documentation of the Embedding Works
-           and Scripts or included in the Source form of the Embedding
-           Works and Scripts; and
+      (a) The Embedding Works and Applications of the Work are distributed
+          under the term of this License, or the application of another
+          License is explicitly stated in the documentation of the Embedding
+          Works and Applications of the Work or included in the Source form
+          of the Embedding Works and Applications of the Work; and
 
-       (b) The Embedding Works carry a prominent notice in their
-           documentation, or when not applicable, in any place that the
-           Users are exposed to, about the fact that the Work is embedded,
-           along with a general statement about the task that the Work is
-           performing in the Embedding Works; and
+      (b) If the Source form of Embedding Works is not distributed nor made
+          available to the Users in any form, the Embedding Works carry a
+          prominent notice in their documentation, or when not applicable,
+          in any place that the Users are exposed to, about the fact that the
+          Work is embedded, along with a general statement about the task that
+          the Work is performing in the Embedding Works; and
 
-       (c) If the Source form of Embedding Works is distributed or made
-           available to the Users in any medium and by any means, the
-           portions of the Source form that causes the Work to be embedded
-           must carry a prominent notice about this fact, along with a general
-           statement about the task that the Work is performing in the
-           Embedded Works; and
+      (c) If the Source form of Applications of the Work is not distributed
+          nor made available to the Users in any form, the Applications of the
+          Work carry a prominent notice in their documentation, or when not
+          applicable, in any place that the Users are exposed to, about the
+          fact that the Work is used by the Application of the Work.
 
-       (d) If the Source form of Scripts is not distributed nor made
-           available by any mean to the Users, a prominent notice about the
-           fact that the Scripts have been written in the Language must be
-           presented in a place which the Users are exposed to.
-
-   6. Submission of Contributions. Unless You explicitly state otherwise,
+6. Submission of Contributions. Unless You explicitly state otherwise,
       any Contribution intentionally submitted for inclusion in the Work
       by You to the Licensor shall be under the terms and conditions of
       this License, without any additional terms or conditions.
@@ -291,3 +283,30 @@
    END OF TERMS AND CONDITIONS
 
 
+APPENDIX: How to apply the Falcon Programming Language License to your work
+
+   To apply the Falcon Programming Language License to your work, attach the
+   following boilerplate notice, with the fields enclosed by brackets "[]"
+   replaced with your own identifying information. (Don't include the
+   brackets!)
+
+   The text should be enclosed in the appropriate comment syntax for the file
+   format. We also recommend that a file or class name and description of
+   purpose be included on the same "printed page" as the copyright notice for
+   easier identification within third-party archives.
+
+   =========================================================================
+   Copyright [yyyy] [name of copyright owner]
+
+   Licensed under the Falcon Programming Language License, Version 1.1
+   (the "License"); you may not use this file except in compliance with
+   the License. You may obtain a copy of the License at
+
+      http://www.falconpl.org/?page_id=license_1_1
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+   implied. See the License for the specific language governing
+   permissions and limitations under the License.
+   ==========================================================================
