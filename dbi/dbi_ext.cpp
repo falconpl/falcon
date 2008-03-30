@@ -456,16 +456,14 @@ static DBIRecordset *DBIHandle_baseQueryOne( VMachine *vm, int startAt = 0 )
  *****************************************************************************/
 
 /*#
- @method DBIConnect DBI
+ @function DBIConnect
  @brief Connect to a database server.
- @return an instance of %DBIHandle.
+ @return an instance of @a DBIHandle.
 
  Known connection strings are:
- <ul>
- <li><code>pgsql:normal postgresql connection string</code></li>
- <li><code>sqlite3:sqlite_db_filename.db</code></li>
- <li><code>mysql:normal mysql connection string</code></li>
- </ul>
+  - <code>pgsql:normal postgresql connection string</code>
+  - <code>sqlite3:sqlite_db_filename.db</code>
+  - <code>mysql:normal mysql connection string</code>
  */
 
 FALCON_FUNC DBIConnect( VMachine *vm )
@@ -519,9 +517,9 @@ FALCON_FUNC DBIConnect( VMachine *vm )
  **********************************************************/
 
 /*#
- @method startTransaction %DBIHandle
+ @method startTransaction DBIHandle
  @brief Start a transaction
- @return an instance of %DBITransaction
+ @return an instance of DBITransaction
 
  This method returns a new transaction.
  */
@@ -549,9 +547,9 @@ FALCON_FUNC DBIHandle_startTransaction( VMachine *vm )
 }
 
 /*#
- @method query %DBIHandle
+ @method query DBIHandle
  @brief Execute a SQL query that expects to have data as a result
- @return an instance of %DBIRecordset
+ @return an instance of DBIRecordset
  */
 
 FALCON_FUNC DBIHandle_query( VMachine *vm )
@@ -592,12 +590,14 @@ dbi_type *DBIHandle_getTypes( DBIRecordset *recSet )
    return cTypes;
 }
 
-/*--
- * @function queryOne
+/*#
+ * @method queryOne DBIHandle
  *
  * Perform the SQL query and return the first field of the first record.
  *
- * @seeAlso(queryOneArray), @seeAlso(queryOneDict), @seeAlso(queryOneObject)
+ * @see DBIHandle.queryOneArray
+ * @see DBIHandle.queryOneDict
+ * @see DBIHandle.queryOneObject
  */
 FALCON_FUNC DBIHandle_queryOne( VMachine *vm )
 {

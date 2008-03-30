@@ -44,7 +44,7 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
 
    // also, we declare a MySQL class, which derives from DBIHandler which
    // is in the DBI module.
-   Falcon::Symbol *dbh_class = self->addExternalRef( "%DBIHandler" ); // it's external
+   Falcon::Symbol *dbh_class = self->addExternalRef( "%DBIHandle" ); // it's external
    Falcon::Symbol *pgsql_class = self->addClass( "PgSQL", Falcon::Ext::PgSQL_init );
    pgsql_class->getClassDef()->addInheritance( new Falcon::InheritDef( dbh_class ) );
    pgsql_class->setWKS( true );

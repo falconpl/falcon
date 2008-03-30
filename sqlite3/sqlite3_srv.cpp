@@ -209,18 +209,13 @@ dbi_status DBIRecordsetSQLite3::asDate( const int columnIndex, TimeStamp &value 
    tv.subString( 5, 7 ).parseInt( month );
    tv.subString( 8, 10 ).parseInt( day );
 
-   Item yr( year );
-   Item mo( month );
-   Item da( day );
-   Item zero( (int64) 0 );
-
-   value.setProperty( "year",   yr );
-   value.setProperty( "month",  mo );
-   value.setProperty( "day",    da );
-   value.setProperty( "hour",   zero );
-   value.setProperty( "minute", zero );
-   value.setProperty( "second", zero );
-   value.setProperty( "msec",   zero );
+   value.m_year = year;
+   value.m_month = month;
+   value.m_day = day;
+   value.m_hour = 0;
+   value.m_minute = 0;
+   value.m_second = 0;
+   value.m_msec = 0;
 
    return dbi_ok;
 }
@@ -247,18 +242,13 @@ dbi_status DBIRecordsetSQLite3::asTime( const int columnIndex, TimeStamp &value 
    tv.subString( 3, 5 ).parseInt( minute );
    tv.subString( 6, 8 ).parseInt( second );
 
-   Item zero( (int64) 0 );
-   Item hr( hour );
-   Item mn( minute );
-   Item se( second );
-
-   value.setProperty( "year",   zero );
-   value.setProperty( "month",  zero );
-   value.setProperty( "day",    zero );
-   value.setProperty( "hour",   hr );
-   value.setProperty( "minute", mn );
-   value.setProperty( "second", se );
-   value.setProperty( "msec",   zero );
+   value.m_year = 0;
+   value.m_month = 0;
+   value.m_day = 0;
+   value.m_hour = hour;
+   value.m_minute = minute;
+   value.m_second = second;
+   value.m_msec = 0;
 
    return dbi_ok;
 }
@@ -288,21 +278,13 @@ dbi_status DBIRecordsetSQLite3::asDateTime( const int columnIndex, TimeStamp &va
    tv.subString( 14, 16 ).parseInt( minute );
    tv.subString( 17, 19 ).parseInt( second );
 
-   Item yr( year );
-   Item mo( month );
-   Item da( day );
-   Item hr( hour );
-   Item mn( minute );
-   Item se( second );
-   Item zero( (int64) 0 );
-
-   value.setProperty( "year",   yr );
-   value.setProperty( "month",  mo );
-   value.setProperty( "day",    da );
-   value.setProperty( "hour",   hr );
-   value.setProperty( "minute", mn );
-   value.setProperty( "second", se );
-   value.setProperty( "msec",   zero );
+   value.m_year = year;
+   value.m_month = month;
+   value.m_day = day;
+   value.m_hour = hour;
+   value.m_minute = minute;
+   value.m_second = second;
+   value.m_msec = 0;
 
    return dbi_ok;
 }

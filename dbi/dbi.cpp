@@ -56,14 +56,14 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    self->addExtFunc( "DBIConnect", Falcon::Ext::DBIConnect );
 
    /*#
-    @class %DBIHandler
+    @class DBIHandle
     @brief DBI connection handle returned by @a DBIConnect
 
     You will not instantiate this class directly, instead, you must use @a DBIConnect.
     */
 
    // create the base class DBIHandler for falcon
-   Falcon::Symbol *handler_class = self->addClass( "%DBIHandler" ); // private class
+   Falcon::Symbol *handler_class = self->addClass( "%DBIHandle" ); // private class
    self->addClassMethod( handler_class, "startTransaction",  Falcon::Ext::DBIHandle_startTransaction );
    self->addClassMethod( handler_class, "query",             Falcon::Ext::DBIHandle_query );
    self->addClassMethod( handler_class, "queryOne",          Falcon::Ext::DBIHandle_queryOne );
@@ -77,11 +77,11 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    self->addClassMethod( handler_class, "close",             Falcon::Ext::DBIHandle_close );
 
    /*#
-    @class %DBITransaction
+    @class DBITransaction
     @brief Represents one transaction in the underlying database server.
 
     You will not instantiate this class directly, instead, you must use
-    the startTransaction method of your @a %DBIHandler.
+    the startTransaction method of your @a DBIHandle.
     */
 
    // create the base class DBITransaction for falcon
@@ -94,10 +94,10 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    self->addClassMethod( trans_class, "close",    Falcon::Ext::DBITransaction_close );
 
    /*#
-    @class %DBIRecordset
-    @brief Represent a collection of database records as required from @a %DBIHandle.query.
+    @class DBIRecordset
+    @brief Represent a collection of database records as required from @a DBIHandle.query.
 
-    You will not instantiate this class directly, instead, you must use @a %DBIHandle.query.
+    You will not instantiate this class directly, instead, you must use @a DBIHandle.query.
     */
 
    // create the base class DBIRecordset for falcon
