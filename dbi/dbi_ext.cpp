@@ -455,6 +455,19 @@ static DBIRecordset *DBIHandle_baseQueryOne( VMachine *vm, int startAt = 0 )
  * Main DBIConnect
  *****************************************************************************/
 
+/*#
+ @method DBIConnect DBI
+ @brief Connect to a database server.
+ @return an instance of %DBIHandle.
+
+ Known connection strings are:
+ <ul>
+ <li><code>pgsql:normal postgresql connection string</code></li>
+ <li><code>sqlite3:sqlite_db_filename.db</code></li>
+ <li><code>mysql:normal mysql connection string</code></li>
+ </ul>
+ */
+
 FALCON_FUNC DBIConnect( VMachine *vm )
 {
    Item *paramsI = vm->param(0);
@@ -505,6 +518,14 @@ FALCON_FUNC DBIConnect( VMachine *vm )
    Handler class
  **********************************************************/
 
+/*#
+ @method startTransaction %DBIHandle
+ @brief Start a transaction
+ @return an instance of %DBITransaction
+
+ This method returns a new transaction.
+ */
+
 FALCON_FUNC DBIHandle_startTransaction( VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
@@ -526,6 +547,12 @@ FALCON_FUNC DBIHandle_startTransaction( VMachine *vm )
    oth->setUserData( trans );
    vm->retval( oth );
 }
+
+/*#
+ @method query %DBIHandle
+ @brief Execute a SQL query that expects to have data as a result
+ @return an instance of %DBIRecordset
+ */
 
 FALCON_FUNC DBIHandle_query( VMachine *vm )
 {

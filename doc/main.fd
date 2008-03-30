@@ -1,0 +1,32 @@
+/*#
+   @main Falcon DBI module suite.
+
+   This is the Falcon DBI module (and related modules) reference.
+
+   The DBI module provides an abstract interface to many database servers.
+   Falcon handles making the methods and data appear to Falcon scripts to
+   be identical, thus making it possible to change only your connect string
+   when a new database server type is to be used.
+
+   @section Setup
+
+   A minimal setup for this module may be something like the
+   following:
+   @code
+   load dbi
+
+   try
+      db = DBIConnect( "sqlite3:sample.db" )
+      r = db.query("SELECT name, dob FROM names")
+      while r.next() == 0
+         > name, " was born on ", dob
+      end
+      r.close()
+      db.close()
+   catch DBIError in e
+      > "DBI failed: "
+      > e
+   end
+   @endcode
+
+*/

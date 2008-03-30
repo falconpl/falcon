@@ -21,6 +21,22 @@
 #include "version.h"
 #include "dbi_ext.h"
 
+/*#
+ @module dbi The DBI Falcon Module.
+ @brief Main module for the Falcon DBI module suite.
+
+ This is the base of the Falcon DBI subsystem.
+ This DBI module relies optionally on several database access libraries including:
+ <ul>
+ <li><a target="_new" href="http://postgresql.org/">PostgreSQL</a></li>
+ <li><a target="_new" href="http://mysql.com/">MySQL</a></li>
+ <li><a target="_new" href="http://sqlite.org/">SQLite</a></li>
+ </ul>
+ One or more database libraries are required to make DBI useful.
+
+ @beginmodule dbi
+ */
+
 // Instantiate the loader service
 Falcon::DBILoaderImpl theDBIService;
 
@@ -39,6 +55,13 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    // main factory function
    self->addExtFunc( "DBIConnect", Falcon::Ext::DBIConnect );
 
+   /*#
+    @class %DBIHandler
+    @brief DBI connection handle returned by @a DBIConnect
+
+    You will not instantiate this class directly, instead, you must use @a DBIConnect.
+    */
+
    // create the base class DBIHandler for falcon
    Falcon::Symbol *handler_class = self->addClass( "%DBIHandler" ); // private class
    self->addClassMethod( handler_class, "startTransaction",  Falcon::Ext::DBIHandle_startTransaction );
@@ -53,6 +76,14 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    self->addClassMethod( handler_class, "getLastError",      Falcon::Ext::DBIHandle_getLastError );
    self->addClassMethod( handler_class, "close",             Falcon::Ext::DBIHandle_close );
 
+   /*#
+    @class %DBITransaction
+    @brief Represents one transaction in the underlying database server.
+
+    You will not instantiate this class directly, instead, you must use
+    the startTransaction method of your @a %DBIHandler.
+    */
+
    // create the base class DBITransaction for falcon
    Falcon::Symbol *trans_class = self->addClass( "%DBITransaction", false ); // private class
    trans_class->setWKS( true );
@@ -61,6 +92,13 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    self->addClassMethod( trans_class, "commit",   Falcon::Ext::DBITransaction_commit );
    self->addClassMethod( trans_class, "rollback", Falcon::Ext::DBITransaction_rollback );
    self->addClassMethod( trans_class, "close",    Falcon::Ext::DBITransaction_close );
+
+   /*#
+    @class %DBIRecordset
+    @brief Represent a collection of database records as required from @a %DBIHandle.query.
+
+    You will not instantiate this class directly, instead, you must use @a %DBIHandle.query.
+    */
 
    // create the base class DBIRecordset for falcon
    Falcon::Symbol *rs_class = self->addClass( "%DBIRecordset", false ); // private class
@@ -84,6 +122,16 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    self->addClassMethod( rs_class, "getLastError",   Falcon::Ext::DBIRecordset_getLastError );
    self->addClassMethod( rs_class, "close",          Falcon::Ext::DBIRecordset_close );
 
+   /*#
+    @class DBIRecord
+    @brief Base class for object oriented database access.
+
+    @prop _dbh database handle used for this instance
+    @prop _tableName database table name this instance should read from and write to
+    @prop _primaryKey primary key used during get and update data
+    @prop _persist an optional array of class properties to read/write from/to database
+    */
+
    // create the base class DBIRecord for falcon
    Falcon::Symbol *rec_class = self->addClass( "DBIRecord", Falcon::Ext::DBIRecord_init );
    self->addClassMethod(   rec_class, "insert",      Falcon::Ext::DBIRecord_insert );
@@ -98,6 +146,11 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
 
    // service publication
    self->publishService( &theDBIService );
+
+   /*#
+    @class DBIError
+    @brief Inherits from Error
+    */
 
    // create the base class DBIError for falcon
    Falcon::Symbol *error_class = self->addExternalRef( "Error" ); // it's external
