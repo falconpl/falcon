@@ -458,6 +458,7 @@ static DBIRecordset *DBIHandle_baseQueryOne( VMachine *vm, int startAt = 0 )
 /*#
  @function DBIConnect
  @brief Connect to a database server.
+ @param String SQL connection string.
  @return an instance of @a DBIHandle.
 
  Known connection strings are:
@@ -519,7 +520,7 @@ FALCON_FUNC DBIConnect( VMachine *vm )
 /*#
  @method startTransaction DBIHandle
  @brief Start a transaction
- @return an instance of DBITransaction
+ @return an instance of @a DBITransaction
 
  This method returns a new transaction.
  */
@@ -549,7 +550,8 @@ FALCON_FUNC DBIHandle_startTransaction( VMachine *vm )
 /*#
  @method query DBIHandle
  @brief Execute a SQL query that expects to have data as a result
- @return an instance of DBIRecordset
+ @param String SQL query
+ @return an instance of @a DBIRecordset
  */
 
 FALCON_FUNC DBIHandle_query( VMachine *vm )
@@ -593,6 +595,8 @@ dbi_type *DBIHandle_getTypes( DBIRecordset *recSet )
 /*#
  @method queryOne DBIHandle
  @brief Perform the SQL query and return the first field of the first record.
+ @param String SQL query
+ @return value or nil if no results found.
 
  @see DBIHandle.queryOneArray
  @see DBIHandle.queryOneDict
@@ -621,6 +625,8 @@ FALCON_FUNC DBIHandle_queryOne( VMachine *vm )
 /*#
  @method queryOneArray DBIHandle
  @brief Perform the SQL query and return only the first record as an array.
+ @param String SQL query
+ @return Array populated array on nil on no results found.
 
  @see DBIHandle.queryOne
  @see DBIHandle.queryOneDict
@@ -652,6 +658,8 @@ FALCON_FUNC DBIHandle_queryOneArray( VMachine *vm )
 /*#
  @method queryOneDict DBIHandle
  @brief Perform the SQL query and return only the first record as a Dictionary.
+ @param String SQL query
+ @return Dictionary populated with result or nil on no results found.
 
  @see DBIHandle.queryOne
  @see DBIHandle.queryOneArray
@@ -694,6 +702,12 @@ FALCON_FUNC DBIHandle_queryOneDict( VMachine *vm )
 /*#
  @method queryOneObject DBIHandle
  @brief Perform the SQL query and return only the first record as an Object.
+ @param Object object to populate
+ @param String SQL query
+ @return populated object on success, or nil on no results found.
+
+ Refer to documentation on @a DBIRecord for more information on using the DBI object
+ query system.
 
  @see DBIHandle.queryOne
  @see DBIHandle.queryOneArray
@@ -749,6 +763,8 @@ FALCON_FUNC DBIHandle_queryOneObject( VMachine *vm )
 /*#
  @method execute DBIHandle
  @brief Execute the SQL statement.
+ @param String SQL statment
+ @return number of affected rows
 
  Used for SQL queries that do not expect a resultset in return.
 
@@ -791,6 +807,7 @@ FALCON_FUNC DBIHandle_close( VMachine *vm )
 /*#
  @method getLastInsertedId DBIHandle
  @brief Get the ID of the last record inserted.
+ @return Integer
 
  This is database dependent but so widely used, it is included in the DBI module. Some
  databases such as MySQL only support getting the last inserted ID globally in the
@@ -822,6 +839,7 @@ FALCON_FUNC DBIHandle_getLastInsertedId( VMachine *vm )
 /*#
  @method getLastError DBIHandle
  @brief Get the last error string from the database server.
+ @return String
 
  This string is database server dependent. It is provided to get detailed information
  as to the error.
@@ -878,6 +896,8 @@ FALCON_FUNC DBIHandle_sqlExpand( VMachine *vm )
 /*#
  @method query DBITransaction
  @brief Perform a query that returns row data as part of the transaction.
+ @param String SQL query
+ @return @a DBIRecordset instance
 
  A failed query will cause the transaction to fail as well.
  */
@@ -915,6 +935,8 @@ FALCON_FUNC DBITransaction_query( VMachine *vm )
  @method execute DBITransaction
  @brief Perform a query that does not expect row data as a result, as part of this
  transaction.
+ @param String SQL execute statement
+ @return number of affected rows
 
  A failed execute will cause the transaction to fail as well.
  */
@@ -944,6 +966,7 @@ FALCON_FUNC DBITransaction_execute( VMachine *vm )
 /*#
  @method close DBITransaction
  @brief Close the transaction automatically committing or rolling back the transaction.
+ @return 1 on success
 
  As to a commit or rollback, it depends on the current transaction status.
  */
@@ -961,6 +984,7 @@ FALCON_FUNC DBITransaction_close( VMachine *vm )
 /*#
  @method commit DBITransaction
  @brief Commit the transaction to the database.
+ @return 1 on success
 
  This does not close the transaction. You can perform a commit at safe steps within
  the transaction if necessary.
@@ -980,12 +1004,13 @@ FALCON_FUNC DBITransaction_commit( VMachine *vm )
       return;
    }
 
-   vm->retval( 0 );
+   vm->retval( 1 );
 }
 
 /*#
  @method rollback DBITransaction
  @brief Rollback the transaction (undo) to last commit point.
+ @return 1 on success
 
  This does not close the transaction. You can rollback and try another operation
  within the same transaction as many times as you wish.
@@ -1005,7 +1030,7 @@ FALCON_FUNC DBITransaction_rollback( VMachine *vm )
       return;
    }
 
-   vm->retval( 0 );
+   vm->retval( 1 );
 }
 /******************************************************************************
  * Recordset class
@@ -1014,6 +1039,8 @@ FALCON_FUNC DBITransaction_rollback( VMachine *vm )
 /*#
  @method next DBIRecordset
  @brief Advanced the record pointer to the next record.
+ @return 1 if successful, 0 if not successful, usually meaning the EOF has been
+   hit.
 
  All new queries are positioned before the first record, meaning, next should be
  called before accessing any values.
@@ -1034,6 +1061,7 @@ FALCON_FUNC DBIRecordset_next( VMachine *vm )
 /*#
  @method fetchArray DBIRecordset
  @brief Get the next record as an Array.
+ @return populated array or nil on EOF.
 
  @see DBIRecordset.next
  @see DBIRecordset.fetchDict
@@ -1087,6 +1115,7 @@ FALCON_FUNC DBIRecordset_fetchArray( VMachine *vm )
 /*#
  @method fetchDict DBIRecordset
  @brief Get the next record as a Dictionary.
+ @return populated dictionary or nil on EOF.
 
  @see DBIRecordset.next
  @see DBIRecordset.fetchArray
@@ -1143,10 +1172,16 @@ FALCON_FUNC DBIRecordset_fetchDict( VMachine *vm )
 /*#
  @method fetchObject DBIRecordset
  @brief Get the next record as an Object.
+ @param obj Object to populate with row data.
+ @return populated object or nil on EOF
+
+ Please refer to the documentation of @a DBIRecord for more information on using
+ the DBIRecord class.
 
  @see DBIRecordset.next
  @see DBIRecordset.fetchArray
  @see DBIRecordset.fetchDict
+ @see DBIRecord
  */
 
 FALCON_FUNC DBIRecordset_fetchObject( VMachine *vm )
@@ -1204,6 +1239,7 @@ FALCON_FUNC DBIRecordset_fetchObject( VMachine *vm )
 /*#
  @method getRowCount DBIRecordset
  @brief Get the number of rows in the recordset.
+ @return Integer
  */
 
 FALCON_FUNC DBIRecordset_getRowCount( VMachine *vm )
@@ -1217,6 +1253,7 @@ FALCON_FUNC DBIRecordset_getRowCount( VMachine *vm )
 /*#
  @method getColumnTypes DBIRecordset
  @brief Get the column types as an array.
+ @return Integer array of column types
  */
 
 FALCON_FUNC DBIRecordset_getColumnTypes( VMachine *vm )
@@ -1239,6 +1276,7 @@ FALCON_FUNC DBIRecordset_getColumnTypes( VMachine *vm )
 /*#
  @method getColumnNames DBIRecordset
  @brief Get the column names as an array.
+ @return String array of column names
  */
 
 FALCON_FUNC DBIRecordset_getColumnNames( VMachine *vm )
@@ -1267,6 +1305,7 @@ FALCON_FUNC DBIRecordset_getColumnNames( VMachine *vm )
 /*#
  @method getColumnCount DBIRecordset
  @brief Return the number of columns in the recordset.
+ @return Integer
  */
 
 FALCON_FUNC DBIRecordset_getColumnCount( VMachine *vm )
@@ -1280,6 +1319,8 @@ FALCON_FUNC DBIRecordset_getColumnCount( VMachine *vm )
 /*#
  @method asString DBIRecordset
  @brief Get a field value as a String.
+ @param idx field index
+ @return String representation of database field contents or nil if field content is nil
  */
 
 FALCON_FUNC DBIRecordset_asString( VMachine *vm )
@@ -1313,6 +1354,8 @@ FALCON_FUNC DBIRecordset_asString( VMachine *vm )
 /*#
  @method asBoolean DBIRecordset
  @brief Get a field value as a Boolean.
+ @param idx field index
+ @return Boolean representation of database field contents or nil if field content is nil
  */
 
 FALCON_FUNC DBIRecordset_asBoolean( VMachine *vm )
@@ -1348,6 +1391,8 @@ FALCON_FUNC DBIRecordset_asBoolean( VMachine *vm )
 /*#
  @method asInteger DBIRecordset
  @brief Get a field value as an Integer.
+ @param idx field index
+ @return Integer representation of database field contents or nil if field content is nil
  */
 
 FALCON_FUNC DBIRecordset_asInteger( VMachine *vm )
@@ -1381,6 +1426,8 @@ FALCON_FUNC DBIRecordset_asInteger( VMachine *vm )
 /*#
  @method asInteger64 DBIRecordset
  @brief Get a field value as an Integer64.
+ @param idx field index
+ @return Integer64 representation of database field contents or nil if field content is nil
  */
 
 FALCON_FUNC DBIRecordset_asInteger64( VMachine *vm )
@@ -1414,6 +1461,8 @@ FALCON_FUNC DBIRecordset_asInteger64( VMachine *vm )
 /*#
  @method asNumeric DBIRecordset
  @brief Get a field value as a Numeric.
+ @param idx field index
+ @return Numeric representation of database field contents or nil if field content is nil
  */
 
 FALCON_FUNC DBIRecordset_asNumeric( VMachine *vm )
@@ -1448,6 +1497,8 @@ FALCON_FUNC DBIRecordset_asNumeric( VMachine *vm )
  @method asDate DBIRecordset
  @brief Get a field value as a TimeStamp object with the date populated and the time
  zeroed.
+ @param idx field index
+ @return TimeStamp representation of database field contents or nil if field content is nil
  */
 
 FALCON_FUNC DBIRecordset_asDate( VMachine *vm )
@@ -1487,6 +1538,8 @@ FALCON_FUNC DBIRecordset_asDate( VMachine *vm )
 /*#
  @method asTime DBIRecordset
  @brief Get a field value as a TimeStamp object with time populated and date zeroed.
+ @param idx field index
+ @return TimeStamp representation of database field contents or nil if field content is nil
  */
 
 FALCON_FUNC DBIRecordset_asTime( VMachine *vm )
@@ -1526,6 +1579,8 @@ FALCON_FUNC DBIRecordset_asTime( VMachine *vm )
 /*#
  @method asDateTime DBIRecordset
  @brief Get a field value as a TimeStamp object.
+ @param idx field index
+ @return TimeStamp representation of database field contents or nil if field content is nil
  */
 
 FALCON_FUNC DBIRecordset_asDateTime( VMachine *vm )
@@ -1565,6 +1620,7 @@ FALCON_FUNC DBIRecordset_asDateTime( VMachine *vm )
 /*#
  @method getLastError DBIRecordset
  @brief Get the last error that occurred in this recordset from the database server.
+ @return String containing error message
 
  This error message is specific to the database server type currently in use.
  */

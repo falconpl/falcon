@@ -57,9 +57,9 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
 
    /*#
     @class DBIHandle
+    @brief DBI connection handle returned by @a DBIConnect.
 
-    DBI connection handle returned by @a DBIConnect. You will not instantiate this
-    class directly, instead, you must use @a DBIConnect.
+    You will not instantiate this class directly, instead, you must use @a DBIConnect.
     */
 
    // create the base class DBIHandler for falcon
@@ -95,9 +95,8 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
 
    /*#
     @class DBIRecordset
-
-    Represent a collection of database records as required from @a DBIHandle.query. You
-    will not instantiate this class directly, instead, you must use @a DBIHandle.query.
+    @brief Represent a collection of database records as required from @a DBIHandle.query.
+    You will not instantiate this class directly, instead, you must use @a DBIHandle.query.
     */
 
    // create the base class DBIRecordset for falcon
@@ -124,8 +123,7 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
 
    /*#
     @class DBIRecord
-
-    Base class for object oriented database access.
+    @brief Base class for object oriented database access.
 
     @prop _dbh database handle used for this instance
     @prop _tableName database table name this instance should read from and write to
@@ -196,6 +194,7 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
 
    /*#
     @class DBIError
+    @brief DBI error exception
 
     Inherited class from Error to distinguish from a standard Falcon error. In many
     cases, @a DBIError.extra will contain the SQL query that caused the problem.
