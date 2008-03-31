@@ -27,11 +27,11 @@
 
  This is the base of the Falcon DBI subsystem.
  This DBI module relies optionally on several database access libraries including:
- <ul>
- <li><a target="_new" href="http://postgresql.org/">PostgreSQL</a></li>
- <li><a target="_new" href="http://mysql.com/">MySQL</a></li>
- <li><a target="_new" href="http://sqlite.org/">SQLite</a></li>
- </ul>
+
+ - <a target="_new" href="http://postgresql.org/">PostgreSQL</a>
+ - <a target="_new" href="http://mysql.com/">MySQL</a>
+ - <a target="_new" href="http://sqlite.org/">SQLite</a>
+
  One or more database libraries are required to make DBI useful.
 
  @beginmodule dbi
@@ -197,7 +197,7 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
     @brief DBI error exception
 
     Inherited class from Error to distinguish from a standard Falcon error. In many
-    cases, @a DBIError.extra will contain the SQL query that caused the problem.
+    cases, DBIError.extra will contain the SQL query that caused the problem.
     */
 
    // create the base class DBIError for falcon

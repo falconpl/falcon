@@ -27,6 +27,10 @@
 #include "dbi_ext.h"
 #include "../include/dbiservice.h"
 
+/*#
+   @beginmodule dbi
+*/
+
 namespace Falcon {
 namespace Ext {
 
