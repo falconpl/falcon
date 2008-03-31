@@ -19,6 +19,8 @@
       db = DBIConnect( "sqlite3:sample.db" )
       r = db.query("SELECT name, dob FROM names")
       while r.next() == 0
+         name = r.asString( 0 )
+         dob = r.asDate( 1 )
          > name, " was born on ", dob
       end
       r.close()
@@ -29,4 +31,6 @@
    end
    @endcode
 
+   More advanced fetch methods exist such as @a DBIRecordset.fetchArray,
+   @a DBIRecordset.fetchDict and @a DBIRecordset.fetchObject.
 */

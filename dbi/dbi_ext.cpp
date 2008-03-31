@@ -591,14 +591,14 @@ dbi_type *DBIHandle_getTypes( DBIRecordset *recSet )
 }
 
 /*#
- * @method queryOne DBIHandle
- *
- * Perform the SQL query and return the first field of the first record.
- *
- * @see DBIHandle.queryOneArray
- * @see DBIHandle.queryOneDict
- * @see DBIHandle.queryOneObject
+ @method queryOne DBIHandle
+ @brief Perform the SQL query and return the first field of the first record.
+
+ @see DBIHandle.queryOneArray
+ @see DBIHandle.queryOneDict
+ @see DBIHandle.queryOneObject
  */
+
 FALCON_FUNC DBIHandle_queryOne( VMachine *vm )
 {
    DBIRecordset *recSet = DBIHandle_baseQueryOne( vm );
@@ -617,6 +617,15 @@ FALCON_FUNC DBIHandle_queryOne( VMachine *vm )
 
    free( cTypes );
 }
+
+/*#
+ @method queryOneArray DBIHandle
+ @brief Perform the SQL query and return only the first record as an array.
+
+ @see DBIHandle.queryOne
+ @see DBIHandle.queryOneDict
+ @see DBIHandle.queryOneObject
+ */
 
 FALCON_FUNC DBIHandle_queryOneArray( VMachine *vm )
 {
@@ -639,6 +648,15 @@ FALCON_FUNC DBIHandle_queryOneArray( VMachine *vm )
    vm->retval( ary );
    free( cTypes );
 }
+
+/*#
+ @method queryOneDict DBIHandle
+ @brief Perform the SQL query and return only the first record as a Dictionary.
+
+ @see DBIHandle.queryOne
+ @see DBIHandle.queryOneArray
+ @see DBIHandle.queryOneObject
+ */
 
 FALCON_FUNC DBIHandle_queryOneDict( VMachine *vm )
 {
@@ -672,6 +690,15 @@ FALCON_FUNC DBIHandle_queryOneDict( VMachine *vm )
 
    vm->retval( dict );
 }
+
+/*#
+ @method queryOneObject DBIHandle
+ @brief Perform the SQL query and return only the first record as an Object.
+
+ @see DBIHandle.queryOne
+ @see DBIHandle.queryOneArray
+ @see DBIHandle.queryOneDict
+ */
 
 FALCON_FUNC DBIHandle_queryOneObject( VMachine *vm )
 {
@@ -719,6 +746,15 @@ FALCON_FUNC DBIHandle_queryOneObject( VMachine *vm )
    vm->retval( obj );
 }
 
+/*#
+ @method execute DBIHandle
+ @brief Execute the SQL statement.
+
+ Used for SQL queries that do not expect a resultset in return.
+
+ @see DBIHandle.query
+ */
+
 FALCON_FUNC DBIHandle_execute( VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
@@ -740,12 +776,29 @@ FALCON_FUNC DBIHandle_execute( VMachine *vm )
    vm->retval( affectedRows );
 }
 
+/*#
+ @method close DBIHandle
+ @brief Close the database handle.
+ */
+
 FALCON_FUNC DBIHandle_close( VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
    DBIHandle *dbh = static_cast<DBIHandle *>( self->getUserData() );
    dbh->close();
 }
+
+/*#
+ @method getLastInsertedId DBIHandle
+ @brief Get the ID of the last record inserted.
+
+ This is database dependent but so widely used, it is included in the DBI module. Some
+ databases such as MySQL only support getting the last inserted ID globally in the
+ database server while others like PostgreSQL allow you to get the last inserted ID of
+ any table. Thus, it is suggested that you always supply the sequence id as which to
+ query. DBI drivers such as MySQL are programmed to ignore the extra information and
+ return simply the last ID inserted into the database.
+ */
 
 FALCON_FUNC DBIHandle_getLastInsertedId( VMachine *vm )
 {
@@ -765,6 +818,14 @@ FALCON_FUNC DBIHandle_getLastInsertedId( VMachine *vm )
       vm->retval( dbh->getLastInsertedId( sequenceName ) );
    }
 }
+
+/*#
+ @method getLastError DBIHandle
+ @brief Get the last error string from the database server.
+
+ This string is database server dependent. It is provided to get detailed information
+ as to the error.
+ */
 
 FALCON_FUNC DBIHandle_getLastError( VMachine *vm )
 {
@@ -814,6 +875,13 @@ FALCON_FUNC DBIHandle_sqlExpand( VMachine *vm )
  * Transaction class
  **********************************************************/
 
+/*#
+ @method query DBITransaction
+ @brief Perform a query that returns row data as part of the transaction.
+
+ A failed query will cause the transaction to fail as well.
+ */
+
 FALCON_FUNC DBITransaction_query( VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
@@ -843,6 +911,14 @@ FALCON_FUNC DBITransaction_query( VMachine *vm )
    vm->retval( oth );
 }
 
+/*#
+ @method execute DBITransaction
+ @brief Perform a query that does not expect row data as a result, as part of this
+ transaction.
+
+ A failed execute will cause the transaction to fail as well.
+ */
+
 FALCON_FUNC DBITransaction_execute( VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
@@ -865,6 +941,13 @@ FALCON_FUNC DBITransaction_execute( VMachine *vm )
    vm->retval( affectedRows );
 }
 
+/*#
+ @method close DBITransaction
+ @brief Close the transaction automatically committing or rolling back the transaction.
+
+ As to a commit or rollback, it depends on the current transaction status.
+ */
+
 FALCON_FUNC DBITransaction_close( VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
@@ -874,6 +957,14 @@ FALCON_FUNC DBITransaction_close( VMachine *vm )
 
    vm->retval( 0 );
 }
+
+/*#
+ @method commit DBITransaction
+ @brief Commit the transaction to the database.
+
+ This does not close the transaction. You can perform a commit at safe steps within
+ the transaction if necessary.
+ */
 
 FALCON_FUNC DBITransaction_commit( VMachine *vm )
 {
@@ -891,6 +982,14 @@ FALCON_FUNC DBITransaction_commit( VMachine *vm )
 
    vm->retval( 0 );
 }
+
+/*#
+ @method rollback DBITransaction
+ @brief Rollback the transaction (undo) to last commit point.
+
+ This does not close the transaction. You can rollback and try another operation
+ within the same transaction as many times as you wish.
+ */
 
 FALCON_FUNC DBITransaction_rollback( VMachine *vm )
 {
@@ -912,6 +1011,18 @@ FALCON_FUNC DBITransaction_rollback( VMachine *vm )
  * Recordset class
  *****************************************************************************/
 
+/*#
+ @method next DBIRecordset
+ @brief Advanced the record pointer to the next record.
+
+ All new queries are positioned before the first record, meaning, next should be
+ called before accessing any values.
+
+ @see DBIRecordset.fetchArray
+ @see DBIRecordset.fetchDict
+ @see DBIRecordset.fetchObject
+ */
+
 FALCON_FUNC DBIRecordset_next( VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
@@ -919,6 +1030,15 @@ FALCON_FUNC DBIRecordset_next( VMachine *vm )
 
    vm->retval( dbr->next() );
 }
+
+/*#
+ @method fetchArray DBIRecordset
+ @brief Get the next record as an Array.
+
+ @see DBIRecordset.next
+ @see DBIRecordset.fetchDict
+ @see DBIRecordset.fetchObject
+*/
 
 FALCON_FUNC DBIRecordset_fetchArray( VMachine *vm )
 {
@@ -964,6 +1084,14 @@ FALCON_FUNC DBIRecordset_fetchArray( VMachine *vm )
    vm->retval( ary );
 }
 
+/*#
+ @method fetchDict DBIRecordset
+ @brief Get the next record as a Dictionary.
+
+ @see DBIRecordset.next
+ @see DBIRecordset.fetchArray
+ @see DBIRecordset.fetchObject
+ */
 FALCON_FUNC DBIRecordset_fetchDict( VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
@@ -1011,6 +1139,15 @@ FALCON_FUNC DBIRecordset_fetchDict( VMachine *vm )
 
    vm->retval( dict );
 }
+
+/*#
+ @method fetchObject DBIRecordset
+ @brief Get the next record as an Object.
+
+ @see DBIRecordset.next
+ @see DBIRecordset.fetchArray
+ @see DBIRecordset.fetchDict
+ */
 
 FALCON_FUNC DBIRecordset_fetchObject( VMachine *vm )
 {
@@ -1064,6 +1201,10 @@ FALCON_FUNC DBIRecordset_fetchObject( VMachine *vm )
    vm->retval( o );
 }
 
+/*#
+ @method getRowCount DBIRecordset
+ @brief Get the number of rows in the recordset.
+ */
 
 FALCON_FUNC DBIRecordset_getRowCount( VMachine *vm )
 {
@@ -1072,6 +1213,11 @@ FALCON_FUNC DBIRecordset_getRowCount( VMachine *vm )
 
    vm->retval( dbr->getRowCount() );
 }
+
+/*#
+ @method getColumnTypes DBIRecordset
+ @brief Get the column types as an array.
+ */
 
 FALCON_FUNC DBIRecordset_getColumnTypes( VMachine *vm )
 {
@@ -1089,6 +1235,11 @@ FALCON_FUNC DBIRecordset_getColumnTypes( VMachine *vm )
 
    free( cTypes );
 }
+
+/*#
+ @method getColumnNames DBIRecordset
+ @brief Get the column names as an array.
+ */
 
 FALCON_FUNC DBIRecordset_getColumnNames( VMachine *vm )
 {
@@ -1113,6 +1264,11 @@ FALCON_FUNC DBIRecordset_getColumnNames( VMachine *vm )
    vm->retval( ary );
 }
 
+/*#
+ @method getColumnCount DBIRecordset
+ @brief Return the number of columns in the recordset.
+ */
+
 FALCON_FUNC DBIRecordset_getColumnCount( VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
@@ -1120,6 +1276,11 @@ FALCON_FUNC DBIRecordset_getColumnCount( VMachine *vm )
 
    vm->retval( dbr->getColumnCount() );
 }
+
+/*#
+ @method asString DBIRecordset
+ @brief Get a field value as a String.
+ */
 
 FALCON_FUNC DBIRecordset_asString( VMachine *vm )
 {
@@ -1148,6 +1309,11 @@ FALCON_FUNC DBIRecordset_asString( VMachine *vm )
    else
       vm->retval( value );
 }
+
+/*#
+ @method asBoolean DBIRecordset
+ @brief Get a field value as a Boolean.
+ */
 
 FALCON_FUNC DBIRecordset_asBoolean( VMachine *vm )
 {
@@ -1179,6 +1345,11 @@ FALCON_FUNC DBIRecordset_asBoolean( VMachine *vm )
    }
 }
 
+/*#
+ @method asInteger DBIRecordset
+ @brief Get a field value as an Integer.
+ */
+
 FALCON_FUNC DBIRecordset_asInteger( VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
@@ -1206,6 +1377,11 @@ FALCON_FUNC DBIRecordset_asInteger( VMachine *vm )
    else
       vm->retval( value );
 }
+
+/*#
+ @method asInteger64 DBIRecordset
+ @brief Get a field value as an Integer64.
+ */
 
 FALCON_FUNC DBIRecordset_asInteger64( VMachine *vm )
 {
@@ -1235,6 +1411,11 @@ FALCON_FUNC DBIRecordset_asInteger64( VMachine *vm )
       vm->retval( value );
 }
 
+/*#
+ @method asNumeric DBIRecordset
+ @brief Get a field value as a Numeric.
+ */
+
 FALCON_FUNC DBIRecordset_asNumeric( VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
@@ -1262,6 +1443,12 @@ FALCON_FUNC DBIRecordset_asNumeric( VMachine *vm )
    else
       vm->retval( value );
 }
+
+/*#
+ @method asDate DBIRecordset
+ @brief Get a field value as a TimeStamp object with the date populated and the time
+ zeroed.
+ */
 
 FALCON_FUNC DBIRecordset_asDate( VMachine *vm )
 {
@@ -1297,6 +1484,11 @@ FALCON_FUNC DBIRecordset_asDate( VMachine *vm )
       vm->retval( value );
 }
 
+/*#
+ @method asTime DBIRecordset
+ @brief Get a field value as a TimeStamp object with time populated and date zeroed.
+ */
+
 FALCON_FUNC DBIRecordset_asTime( VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
@@ -1330,6 +1522,11 @@ FALCON_FUNC DBIRecordset_asTime( VMachine *vm )
    else
       vm->retval( value );
 }
+
+/*#
+ @method asDateTime DBIRecordset
+ @brief Get a field value as a TimeStamp object.
+ */
 
 FALCON_FUNC DBIRecordset_asDateTime( VMachine *vm )
 {
@@ -1365,6 +1562,13 @@ FALCON_FUNC DBIRecordset_asDateTime( VMachine *vm )
       vm->retval( value );
 }
 
+/*#
+ @method getLastError DBIRecordset
+ @brief Get the last error that occurred in this recordset from the database server.
+
+ This error message is specific to the database server type currently in use.
+ */
+
 FALCON_FUNC DBIRecordset_getLastError( VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
@@ -1386,6 +1590,11 @@ FALCON_FUNC DBIRecordset_getLastError( VMachine *vm )
 
    vm->retval( 0 );
 }
+
+/*#
+ @method close DBIRecordset
+ @brief Close a recordset
+ */
 
 FALCON_FUNC DBIRecordset_close( VMachine *vm )
 {
@@ -1413,6 +1622,11 @@ FALCON_FUNC DBIRecord_init( VMachine *vm )
       einst->setProperty( "_persist",    *vm->param( 2 ) );
    einst->setProperty( "_dbh", Item( dbi_defaultHandle ) );
 }
+
+/*#
+ @method insert DBIRecord
+ @brief Insert a new object into the database
+ */
 
 FALCON_FUNC DBIRecord_insert( VMachine *vm )
 {
@@ -1466,6 +1680,11 @@ FALCON_FUNC DBIRecord_insert( VMachine *vm )
 
    DBIRecord_execute( vm, dbh, sql );
 }
+
+/*#
+ @method update DBIRecord
+ @brief Update an existing object in the database.
+ */
 
 FALCON_FUNC DBIRecord_update( VMachine *vm )
 {
@@ -1525,6 +1744,11 @@ FALCON_FUNC DBIRecord_update( VMachine *vm )
    DBIRecord_execute( vm, dbh, sql );
 }
 
+/*#
+ @method delete DBIRecord
+ @brief Delete an object from the database.
+ */
+
 FALCON_FUNC DBIRecord_delete( VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
@@ -1563,4 +1787,3 @@ FALCON_FUNC DBIError_init( VMachine *vm )
 }
 
 /* end of dbi_ext.cpp */
-

@@ -57,9 +57,9 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
 
    /*#
     @class DBIHandle
-    @brief DBI connection handle returned by @a DBIConnect
 
-    You will not instantiate this class directly, instead, you must use @a DBIConnect.
+    DBI connection handle returned by @a DBIConnect. You will not instantiate this
+    class directly, instead, you must use @a DBIConnect.
     */
 
    // create the base class DBIHandler for falcon
@@ -95,9 +95,9 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
 
    /*#
     @class DBIRecordset
-    @brief Represent a collection of database records as required from @a DBIHandle.query.
 
-    You will not instantiate this class directly, instead, you must use @a DBIHandle.query.
+    Represent a collection of database records as required from @a DBIHandle.query. You
+    will not instantiate this class directly, instead, you must use @a DBIHandle.query.
     */
 
    // create the base class DBIRecordset for falcon
@@ -124,12 +124,59 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
 
    /*#
     @class DBIRecord
-    @brief Base class for object oriented database access.
+
+    Base class for object oriented database access.
 
     @prop _dbh database handle used for this instance
     @prop _tableName database table name this instance should read from and write to
     @prop _primaryKey primary key used during get and update data
-    @prop _persist an optional array of class properties to read/write from/to database
+    @prop _persist an optional array of class properties to read from and write to
+    the database.
+
+    @section Persistence Rules
+
+    All properties begining with an underscore (_) will be ignored. All other
+    properties will be persisted during a @a DBIRecord.insert or @a DBIRecord.update
+    unless the property _persist is defined. If _persist
+    is defined, then all properties will be ignored except those in the
+    _persist array.
+
+    In the below example, the class Person, does not need to define the
+    _persist property as it has no special attributes. It was included
+    as an example of how to define the _persist property.
+
+    @section Example
+
+    @code
+    load dbi
+
+    class Person( nName, nDob ) from DBIRecord
+       _tableName = "names"
+       _primaryKey = "name"
+       _persist = ["name", "dob"]
+
+       name = nName
+       dob = nDob
+    end
+
+    db = DBIConnect( "sqlite3:example.db" )
+    Person( "John Doe", TimeStamp() ).insert()
+    Person( "Jane Doe", TimeStamp() ).insert()
+
+    r = db.query( "SELECT * FROM names" )
+    while (let n = r.fetchObject( Person() )
+      > n.name, " was born on ", n.dob
+      n.name = n.name + "ey"
+      n.update()
+    end
+    r.close()
+    db.close()
+    @endcode
+
+    You can of course expand the Person class with more properties and also methods
+    which are not persisted, such as a method to calculate the age of the person,
+    or to determine if today is their birthday which in turn would show the real
+    power of using the DBIRecord object method.
     */
 
    // create the base class DBIRecord for falcon
@@ -149,7 +196,9 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
 
    /*#
     @class DBIError
-    @brief Inherits from Error
+
+    Inherited class from Error to distinguish from a standard Falcon error. In many
+    cases, @a DBIError.extra will contain the SQL query that caused the problem.
     */
 
    // create the base class DBIError for falcon
