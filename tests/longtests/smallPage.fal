@@ -16,14 +16,14 @@ each = int(loops/10)
 
 function testInsert()
    dict = PageDict()
-   for i = i in [ 0 : 20 ]
+   for i in [ 0 : 20 ]
       dict[ makeKey() ] = random()
    end
 end
 
 function testEmpty()
    dict = PageDict()
-   for i = i in [ 0 : 20 ]
+   for i in [ 0 : 20 ]
       makeKey(); random()
    end
 end
@@ -35,7 +35,7 @@ function makeKey()
       key = "               "
    end
 
-   for num [ 0 : key.len() ]
+   for num in [ 0 : key.len() ]
       key[num] = random( 0, 25 ) + letter_a
    end
 
