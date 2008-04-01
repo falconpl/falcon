@@ -2761,29 +2761,40 @@ void opcodeHandler_STV( register VMachine *vm )
 
       case FLC_ITEM_RANGE << 8 | FLC_ITEM_INT:
       case FLC_ITEM_RANGE << 8 | FLC_ITEM_NUM:
+      case FLC_ITEM_RANGE << 8 | FLC_ITEM_NIL:
       {
-          int32 pos = (int32) operand2->forceInteger();
+         int32 pos = (int32) operand2->forceInteger();
          if ( origin->isOrdinal() )
          {
 
             switch( pos )
             {
-               case 0:
+               case 0: case -3:
                   operand1->setRange( (int32) origin->forceInteger(),
-                        (int32) operand1->asRangeEnd(),
+                        operand1->asRangeEnd(),
+                        operand1->asRangeStep(),
                         operand1->asRangeIsOpen() );
                return;
 
-               case 1: case -1:
+               case 1: case -2:
                   operand1->setRange( operand1->asRangeStart(),
+                        (int32) origin->forceInteger(),
+                        (int32) operand1->asRangeStep(), 
+                        false );
+               return;
+
+               case 2: case -1:
+                  operand1->setRange( operand1->asRangeStart(),
+                        operand1->asRangeEnd(),
                         (int32) origin->forceInteger(),
                         false );
                return;
             }
          }
-         else if ( origin->isNil() && ( pos == -1 || pos == 1 ) )
+         else if ( origin->isNil() && ( pos == -1 || pos == 1 || pos == -2 || pos == 2 ) )
          {
             operand1->setRange( operand1->asRangeStart(),
+                  0,
                   0,
                   true );
             return;
