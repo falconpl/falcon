@@ -24,7 +24,11 @@ document, and declares a pure virtual write method (that is called then
 by the << operator).
 */
 
+#if defined( _MSC_VER) && _MSC_VER <= 1300
+class Element
+#else
 class Element: public Falcon::BaseAlloc
+#endif
 {
 private:
    /** Current processing line in input file */

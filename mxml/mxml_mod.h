@@ -48,7 +48,7 @@ public:
    ~NodeCarrier();
 
    MXML::Node *node() const { return m_node; }
-   NodeCarrier *clone() const;
+   UserData *clone() const;
    // just a proxy
    CoreObject *shell() const { return m_node->shell(); }
 };
