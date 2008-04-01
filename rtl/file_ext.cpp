@@ -1216,7 +1216,7 @@ FALCON_FUNC  fileCopy ( ::Falcon::VMachine *vm )
    {
       vm->raiseModError( new IoError( ErrorParam( e_io_error, __LINE__ ).
          extra( source ).
-         sysError( instream.lastError() ) ) );
+         sysError( (uint32) instream.lastError() ) ) );
       return;
    }
 
@@ -1226,7 +1226,7 @@ FALCON_FUNC  fileCopy ( ::Falcon::VMachine *vm )
       instream.close();
       vm->raiseModError( new IoError( ErrorParam( e_io_error, __LINE__ ).
          extra( dest ).
-         sysError( outstream.lastError() ) ) );
+         sysError( (uint32) outstream.lastError() ) ) );
       return;
    }
 
@@ -1237,7 +1237,7 @@ FALCON_FUNC  fileCopy ( ::Falcon::VMachine *vm )
       if ( outstream.write( buffer, count ) < 0 )
       {
          vm->raiseModError( new IoError( ErrorParam( e_io_error, __LINE__ ).
-            sysError( outstream.lastError() ) ) );
+            sysError( (uint32) outstream.lastError() ) ) );
          instream.close();
          outstream.close();
          return;
@@ -1247,7 +1247,7 @@ FALCON_FUNC  fileCopy ( ::Falcon::VMachine *vm )
    if ( count < 0 )
    {
       vm->raiseModError( new IoError( ErrorParam( e_io_error, __LINE__ ).
-            sysError( instream.lastError() ) ) );
+            sysError( (uint32) instream.lastError() ) ) );
    }
 
    instream.close();

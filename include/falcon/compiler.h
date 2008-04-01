@@ -123,7 +123,7 @@ class FALCON_DYN_CLASS Compiler: public BaseAlloc
    /** This is the module that is being formed in the meanwhile. */
    Module *m_module;
 
-   uint32 m_enumId;
+   int64 m_enumId;
 
    /** Leading instruction that owns currently parsed statements */
    List m_context;

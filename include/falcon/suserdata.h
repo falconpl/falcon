@@ -28,6 +28,8 @@
 #include <falcon/userdata.h>
 #include <falcon/garbageable.h>
 
+#include <new>
+
 namespace Falcon {
 
 /** Embeddable falcon object user data - shared version.
@@ -42,13 +44,22 @@ namespace Falcon {
    may reference it.
 */
 
-class FALCON_DYN_CLASS SharedUserData: public UserData, public Garbageable
+class FALCON_DYN_CLASS SharedUserData: virtual public UserData, virtual public Garbageable
 {
 
 public:
    SharedUserData( VMachine *vm );
+   virtual ~SharedUserData();
    virtual bool shared() const;
    virtual void gcMark( MemPool *mp );
+
+#if defined( _MSC_VER) && _MSC_VER <= 1300
+   void operator delete( void* p )
+   { 
+      UserData::operator delete( p, 0 ); 
+      Garbageable::operator delete( p, 0 ); 
+   }
+#endif
 };
 
 }

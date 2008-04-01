@@ -495,6 +495,7 @@ bool URI::removeField( const String &key )
       return false;
 
    m_queryMap->erase( &key );
+   return true;
 }
 
 

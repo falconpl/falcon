@@ -31,6 +31,9 @@ SharedUserData::SharedUserData( VMachine *vm ):
    Garbageable( vm )
 {}
 
+SharedUserData::~SharedUserData()
+{}
+
 bool SharedUserData::shared() const
 {
    return true;
