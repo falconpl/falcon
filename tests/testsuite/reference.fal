@@ -1,10 +1,8 @@
 /****************************************************************************
 * Falcon test suite
 *
-* CVS-Id: $Id: reference.fal,v 1.1.1.1 2006/10/08 15:05:41 gian Exp $
-*
-* ID: 3
-* Category:
+* ID: 3a
+* Category: reference
 * Subcategory:
 * Short: References
 * Description:
@@ -17,7 +15,7 @@ var = 0
 ref = $var
 ref = 2
 if var != 2: failure( "Reference assign" )
-ref = $$
+ref = $0
 ref = 1
 if var != 2: failure( "Reference unlink" )
 

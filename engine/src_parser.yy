@@ -2217,7 +2217,7 @@ expression:
    | expression OP_NOTIN expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_notin, $1, $3 ) ); }
    | expression PROVIDES SYMBOL { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_provides, $1, new Falcon::Value( $3 ) ) ); }
    | DOLLAR atomic_symbol { $$ = new Falcon::Value( $2 ); }
-   | DOLLAR DOLLAR { $$ = new Falcon::Value( (Falcon::Value *) 0 ); }
+   | DOLLAR INTNUM { $$ = new Falcon::Value( (Falcon::Value *) 0 ); }
    | ATSIGN expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_strexpand, $2 ) ); }
    | DIESIS expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_indirect, $2 ) ); }
    | lambda_expr
