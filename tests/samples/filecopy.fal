@@ -77,12 +77,12 @@ function gauge( max, current )
       lastRatio = -1
    end
 
-   if max = 0: return
+   if max == 0: return
    ratio = 60 * (current/max)
-   if lastRatio = int(ratio)
+   if lastRatio == int(ratio)
       return
    else
-      lastRatio = int(ratio)
+      lastRatio == int(ratio)
    end
 
 	gauge = strReplicate( "#", ratio )
