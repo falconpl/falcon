@@ -409,7 +409,6 @@ public:
 
       t_obj_access,
       t_funcall,
-      t_funval,
       t_inherit,
       t_array_access,
       t_array_byte_access,
@@ -521,7 +520,6 @@ public:
       t_elif,
       t_while,
       t_forin,
-      t_for,
       t_try,
       t_catch,
       t_switch,
@@ -956,34 +954,6 @@ public:
    virtual Statement *clone() const;
 };
 
-
-class FALCON_DYN_CLASS StmtFor: public StmtBlock
-{
-   Value *m_counter;
-   Value *m_from;
-   Value *m_to;
-   Value *m_step;
-
-public:
-   StmtFor( uint32 line, Value *counter, Value *from, Value *to, Value *step = 0 ):
-      StmtBlock( line, t_for ),
-      m_counter( counter ),
-      m_from( from ),
-      m_to( to ),
-      m_step( step )
-   {}
-
-   StmtFor( const StmtFor &other );
-
-   virtual ~StmtFor();
-
-   Value *counter() const { return m_counter; }
-   Value *from() const { return m_from; }
-   Value *to() const { return m_to; }
-   Value *step() const { return m_step; }
-
-   virtual Statement *clone() const;
-};
 
 class FALCON_DYN_CLASS StmtCaseBlock: public StmtBlock
 {

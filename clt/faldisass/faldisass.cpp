@@ -183,7 +183,7 @@ void write_operand( Stream *output, byte *instruction, int opnum, Module *mod )
                ( opnum == 1 && ( opcode == P_JMP || opcode == P_TRAL || opcode == P_TRY
                                  || opcode == P_JTRY || opcode == P_IFT || opcode == P_IFF
                                  || opcode == P_ONCE || opcode == P_TRAV
-                                 || opcode == P_FORN || opcode == P_TRAN || opcode == P_SWCH ) ) ||
+                                 || opcode == P_TRAN || opcode == P_SWCH ) ) ||
                ( opnum == 2 && ( opcode == P_FORK || opcode == P_TRAN ) )
                )
             {
@@ -589,6 +589,8 @@ void disassembler( Module *module, Stream *out, const t_labelMap &labels, const 
          case P_STPR: csOpName = "STPR"; break;
          case P_STVR: csOpName = "STVR"; break;
          case P_TRAV: csOpName = "TRAV"; break;
+         case P_INCP: csOpName = "INCP"; break;
+         case P_DECP: csOpName = "DECP"; break;
          case P_PASS: csOpName = "PASS"; break;
          case P_PSIN: csOpName = "PSIN"; break;
 
@@ -603,7 +605,8 @@ void disassembler( Module *module, Stream *out, const t_labelMap &labels, const 
          case P_INDI: csOpName = "INDI"; break;
          case P_STEX: csOpName = "STEX"; break;
          case P_TRAC: csOpName = "TRAC"; break;
-         case P_WRT: csOpName = "WRT"; break;
+         case P_WRT : csOpName = "WRT "; break;
+         case P_STO : csOpName = "STO "; break;
 
          default:
             csOpName = "????";

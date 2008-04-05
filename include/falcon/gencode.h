@@ -246,10 +246,10 @@ class FALCON_DYN_CLASS GenCode: public Generator
    void gen_load( const Value *target, const Value *source );
    void gen_store_to_deep( byte type, const Value *source, const Value *first, const Value *second );
 
-   void gen_inc_prefix( const Value *target, bool asExpr = false );
-   void gen_dec_prefix( const Value *target, bool asExpr = false );
-   void gen_inc_postfix( const Value *target, bool asExpr = false );
-   void gen_dec_postfix( const Value *target, bool asExpr = false );
+   void gen_inc_prefix( const Value *target );
+   void gen_dec_prefix( const Value *target );
+   void gen_inc_postfix( const Value *target );
+   void gen_dec_postfix( const Value *target );
    void gen_autoassign( byte opcode, const Value *target, const Value *source );
    void gen_store_to_deep_A( byte type, const Value *first, const Value *second );
    void gen_store_to_deep_reg( byte type, const Value *first, const Value *second, t_paramType reg );

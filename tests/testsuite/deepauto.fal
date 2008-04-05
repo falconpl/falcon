@@ -1,0 +1,35 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 31d
+* Category: expression
+* Subcategory: deep
+* Short: Deep released expression
+* Description:
+*   This test is meant to check for correct release of the expression context
+*   in case of expressions that require LD[P|V]R opcode ( load property or
+*   vector by reference). This reference value is teporary stored in A, but
+*   it must be reset at expression end or next assignment to A may actually cause
+*   the referenced value to change.
+* [/Description]
+*
+****************************************************************************/
+
+object zero
+   prop_array = []
+end
+
+zero.prop_array += 1
+a_variable1 = "name"
+if zero.prop_array.type() != ArrayType: failure( "Property conformance")
+
+vector = [[0]]
+vector[0][0] += 1
+a_variable2 = "name"
+if vector[0][0] != 1: failure( "Array conformance")
+
+if a_variable1 != a_variable2: failure( "Assignment conformance" )
+
+success()
+
+/* End of file */

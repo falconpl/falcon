@@ -975,74 +975,6 @@ void GenHAsm::gen_statement( const Statement *stmt )
       }
       break;
 
-      case Statement::t_for:
-      {
-         const StmtFor *elem = static_cast<const StmtFor *>( stmt );
-
-         int branch = m_loop_id++;
-         m_loops.pushBack( (void *) branch );
-         String branchStr;
-         branchStr.writeNumber( (int64) branch );
-
-         if( elem->to()->isSimple() ) {
-            m_out->writeString( "\tPUSH\t" );
-            gen_operand( elem->to() );
-            m_out->writeString( "\n" );
-         }
-         else {
-            gen_complex_value( elem->to() );
-            m_out->writeString( "\tPUSH\tA\n" );
-         }
-
-         // save the step value
-         if( elem->step() != 0 )
-         {
-            if( elem->step()->isSimple() ) {
-               m_out->writeString( "\tPUSH\t" );
-               gen_operand( elem->step() );
-               m_out->writeString( "\n" );
-            }
-            else {
-               gen_complex_value( elem->step() );
-               m_out->writeString( "\tPUSH\tA\n" );
-            }
-         }
-         else
-            m_out->writeString( "\tPUSH\t0\n" );
-
-         // create the from value
-         if( elem->from()->isSimple() ) {
-            m_out->writeString( "\tFORI\t_loop_end_" + branchStr + ", " );
-            gen_operand( elem->counter() );
-            m_out->writeString( ", " );
-            gen_operand( elem->from() );
-            m_out->writeString( "\n" );
-         }
-         else
-         {
-            gen_value( elem->from() );
-            m_out->writeString( "\tFORI\t_loop_end_" + branchStr + ", " );
-            gen_operand( elem->counter() );
-            m_out->writeString( ", A\n" );
-         }
-
-         m_out->writeString( "_loop_begin_" + branchStr + ":\n" );
-
-         if( ! elem->children().empty() ) {
-            gen_block( &elem->children() );
-         }
-
-         m_out->writeString( "_loop_next_" + branchStr + ":\n" );
-
-         m_out->writeString( "\tFORN\t_loop_begin_" + branchStr + ", " );
-         gen_operand( elem->counter() );
-         m_out->writeString( "\n" );
-         m_out->writeString( "_loop_end_" + branchStr + ":\n" );
-
-         // FORI and FORN will pop themselves if they are activated
-         m_loops.popBack();
-      }
-      break;
 
       case Statement::t_propdef:
       {
@@ -1356,17 +1288,12 @@ void GenHAsm::dump_cases( int branch, const MapIterator &begin1 )
 }
 
 
-void GenHAsm::gen_inc_prefix( const Value *val, bool asExpr )
+void GenHAsm::gen_inc_prefix( const Value *val )
 {
    if ( val->isSimple() ) {
       m_out->writeString( "\tINC \t" );
       gen_operand( val );
       m_out->writeString( "\n" );
-      if( asExpr ) {
-         m_out->writeString( "\tLD  \tA, " );
-         gen_operand( val );
-         m_out->writeString( "\n" );
-      }
    }
    else {
       gen_complex_value( val, true );
@@ -1374,43 +1301,25 @@ void GenHAsm::gen_inc_prefix( const Value *val, bool asExpr )
    }
 }
 
-void GenHAsm::gen_inc_postfix( const Value *val, bool asExpr )
+void GenHAsm::gen_inc_postfix( const Value *val )
 {
    if ( val->isSimple() ) {
-      if ( asExpr ) {
-         m_out->writeString( "\tLD  \tA, " );
-         gen_operand( val );
-         m_out->writeString( "\n" );
-      }
-      m_out->writeString( "\tINC \t" );
+      m_out->writeString( "\tINCP\t" );
       gen_operand( val );
       m_out->writeString( "\n" );
    }
    else {
       gen_complex_value( val, true );
-      if ( asExpr ) {
-         m_out->writeString( "\tLD \tB, A\n" );
-         m_out->writeString( "\tPUSH\tB\n" );
-      }
-
-      m_out->writeString( "\tINC \tA\n" );
-
-      if ( asExpr )
-         m_out->writeString( "\tPOP \tA\n" );
+      m_out->writeString( "\tINCP\tA\n" );
    }
 }
 
-void GenHAsm::gen_dec_prefix( const Value *val, bool asExpr )
+void GenHAsm::gen_dec_prefix( const Value *val )
 {
    if ( val->isSimple() ) {
       m_out->writeString( "\tDEC \t" );
       gen_operand( val );
       m_out->writeString( "\n" );
-      if ( asExpr ) {
-         m_out->writeString( "\tLD  \tA, " );
-         gen_operand( val );
-         m_out->writeString( "\n" );
-      }
    }
    else {
       gen_complex_value( val, true );
@@ -1418,29 +1327,16 @@ void GenHAsm::gen_dec_prefix( const Value *val, bool asExpr )
    }
 }
 
-void GenHAsm::gen_dec_postfix( const Value *val, bool asExpr )
+void GenHAsm::gen_dec_postfix( const Value *val )
 {
    if ( val->isSimple() ) {
-      if ( asExpr ) {
-         m_out->writeString( "\tLD  \tA, " );
-         gen_operand( val );
-         m_out->writeString( "\n" );
-      }
-      m_out->writeString( "\tDEC \t" );
+      m_out->writeString( "\tDECP\t" );
       gen_operand( val );
       m_out->writeString( "\n" );
    }
    else {
       gen_complex_value( val, true );
-      if ( asExpr ) {
-         m_out->writeString( "\tLD  \tB, A\n" );
-         m_out->writeString( "\tPUSH\tB\n" );
-      }
-
-      m_out->writeString( "\tDEC \tA\n" );
-
-      if ( asExpr )
-         m_out->writeString( "\tPOP \tA\n" );
+      m_out->writeString( "\tDECP\tA\n" );
    }
 }
 
@@ -1453,11 +1349,6 @@ void GenHAsm::gen_autoassign( const char *op, const Value *target, const Value *
       m_out->writeString( ", " );
       gen_operand( source );
       m_out->writeString( "\n" );
-
-      // load simple in A (todo, avoid it if at topmost level)
-      m_out->writeString( "LD A, " );
-      gen_operand( target );
-      m_out->writeString( "\n" );
    }
    else if ( target->isSimple() )
    {
@@ -1465,11 +1356,6 @@ void GenHAsm::gen_autoassign( const char *op, const Value *target, const Value *
       m_out->writeString( "\t" + opstr + "\t" );
       gen_operand( target );
       m_out->writeString( ", A\n" );
-
-      // load simple in A (todo, avoid it if at topmost level)
-      m_out->writeString( "LD A, " );
-      gen_operand( target );
-      m_out->writeString( "\n" );
    }
    else if ( source->isSimple() )
    {
@@ -1484,7 +1370,6 @@ void GenHAsm::gen_autoassign( const char *op, const Value *target, const Value *
       gen_complex_value( target, true );
       m_out->writeString( "\tPOP \tB\n" );
       m_out->writeString( "\t" + opstr + "\tA, B\n" );
-
    }
 }
 
@@ -1587,7 +1472,7 @@ void GenHAsm::gen_push( const Value *val )
          m_out->writeString( "\tPSHR\t$" + val->asReference()->asSymbol()->name() );
       else {
          gen_value( val->asReference() );
-         m_out->writeString( "\tPSHR\t$A" );
+         m_out->writeString( "\tPSHR\tA" );
       }
    }
    else {
@@ -1700,7 +1585,7 @@ void GenHAsm::gen_expression( const Expression *exp, bool assign )
             String branchStr;
             branchStr.writeNumber( (int64) branch );
 
-            m_out->writeString( "\tLD  \tA, " );
+            m_out->writeString( "\tSTO \tA, " );
             gen_operand(  exp->first() );
             m_out->writeString( "\n" );
             m_out->writeString( "\t" + ifmode + "\t_branch_orand_" );
@@ -1717,7 +1602,7 @@ void GenHAsm::gen_expression( const Expression *exp, bool assign )
             gen_value(  exp->first() );
             m_out->writeString( "\t" + ifmode + "\t_branch_orand_" + branchStr + ", A" + "\n" );
             // else we have to load the second in A
-            m_out->writeString( "\tLD  \tA, " );
+            m_out->writeString( "\tSTO \tA, " );
             gen_operand(  exp->second() );
             m_out->writeString( "\n" );
             m_out->writeString( "_branch_orand_" + branchStr + ":\n" );
@@ -1792,7 +1677,7 @@ void GenHAsm::gen_expression( const Expression *exp, bool assign )
          // success case
          if( exp->second()->isSimple() )
          {
-            m_out->writeString( "\tLD  \tA, " );
+            m_out->writeString( "\tSTO  \tA, " );
             gen_operand( exp->second() );
             m_out->writeString( "\n" );
          }
@@ -1808,7 +1693,7 @@ void GenHAsm::gen_expression( const Expression *exp, bool assign )
          // success case
          if( exp->third()->isSimple() )
          {
-            m_out->writeString( "\tLD  \tA, " );
+            m_out->writeString( "\tSTO  \tA, " );
             gen_operand( exp->third() );
             m_out->writeString( "\n" );
          }
@@ -1825,15 +1710,6 @@ void GenHAsm::gen_expression( const Expression *exp, bool assign )
       case Expression::t_assign:
          // handle it as a load...
          gen_load( exp->first(), exp->second() );
-         // and eventually store the assignand to a...
-         // first cannot be A, as A cannot be expressly used in let.
-         if ( exp->second()->isSimple() ) {
-            mode = 3; // unary for A...
-            m_out->writeString( "\tLD  \tA, " );
-            gen_operand( exp->second() );
-            m_out->writeString( "\n" );
-         }
-         // else already in A
          return;
 
       case Expression::t_aadd:
@@ -1880,10 +1756,10 @@ void GenHAsm::gen_expression( const Expression *exp, bool assign )
          gen_autoassign( "SHRS", exp->first(), exp->second() );
          return;
 
-      case Expression::t_pre_inc: gen_inc_prefix( exp->first(), true ); return;
-      case Expression::t_pre_dec: gen_dec_prefix( exp->first(), true ); return;
-      case Expression::t_post_inc: gen_inc_postfix( exp->first(), true ); return;
-      case Expression::t_post_dec: gen_dec_postfix( exp->first(), true ); return;
+      case Expression::t_pre_inc: gen_inc_prefix( exp->first() ); return;
+      case Expression::t_pre_dec: gen_dec_prefix( exp->first() ); return;
+      case Expression::t_post_inc: gen_inc_postfix( exp->first() ); return;
+      case Expression::t_post_dec: gen_dec_postfix( exp->first() ); return;
 
       case Expression::t_obj_access:
          gen_load_from_deep( assign ? "LDPR" : "LDP ", exp->first(), exp->second() );
@@ -1905,24 +1781,9 @@ void GenHAsm::gen_expression( const Expression *exp, bool assign )
       // funcall is complete here
       return;
 
-      case Expression::t_funval:
-      {
-         if ( exp->first()->isSimple() )
-         {
-            m_out->writeString( "\tLVAL\t" );
-            gen_operand( exp->first() );
-            m_out->writeString( ", A\n" );
-         }
-         else {
-            gen_complex_value( exp->first() );
-            m_out->writeString( "\tLVAL\tA, A\n" );
-         }
-      }
-      return;
-
       case Expression::t_lambda:
       {
-         m_out->writeString( "\tLD  \tA, $" + exp->first()->asSymbol()->name() + "\n" );
+         m_out->writeString( "\tSTO \tA, $" + exp->first()->asSymbol()->name() + "\n" );
       }
       return;
 

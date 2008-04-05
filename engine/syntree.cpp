@@ -736,36 +736,6 @@ Statement *StmtForin::clone() const
 }
 
 
-// StmtFor statement
-//
-
-StmtFor::StmtFor( const StmtFor &other ):
-   StmtBlock( other )
-{
-  Value *m_counter;
-   Value *m_from;
-   Value *m_to;
-   Value *m_step;
-
-   m_counter = other.m_counter == 0 ? 0 : new Value( * other.m_counter );
-   m_from = other.m_from == 0 ? 0 : new Value( * other.m_from );
-   m_to = other.m_to == 0 ? 0 : new Value( * other.m_to );
-   m_step = other.m_step == 0 ? 0 : new Value( * other.m_step );
-}
-
-StmtFor::~StmtFor()
-{
-   delete m_counter;
-   delete m_from;
-   delete m_to;
-   delete m_step;
-}
-
-Statement *StmtFor::clone() const
-{
-   return new StmtFor( *this );
-}
-
 // StmtCaseBlock statement
 //
 

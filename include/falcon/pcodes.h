@@ -127,9 +127,13 @@ while it will fill OP2 with an integer item containing 15H.
 #define P_PSHR        0x0D
 /** POP: pops OP1 from the stack. */
 #define P_POP         0x0E
-/** INC: increments OP1, OP1 + 1 -> OP1. */
+/** INC: Inc prefix
+   INC OP1: OP1 + 1 -> OP1, OP1-> A
+*/
 #define P_INC         0x0F
-/** DEC: decrements OP1, OP1 - 1 -> OP1. */
+/** DEC: Dec prefix
+   DEC OP1: OP1 - 1 -> OP1, OP1-> A
+*/
 #define P_DEC         0x10
 /** NEG: Negates OP1, - OP1 -> OP1. */
 #define P_NEG         0x11
@@ -322,40 +326,16 @@ while it will fill OP2 with an integer item containing 15H.
 */
 #define P_TRAV        0x55
 
-/** FORI  - initlization of a for cycle..
-   Ternary opcode plus parameters in stack
-   PUSH target_value
-   PUSH step
-   FORI jump_out, $counter, initial_value
-
-   The initial value is matched against the target value.
-   - if step is not zero, and the sign doesn't match,
-     jump_out->pc
-   - if step is zero, 1 or -1 is assigned to it depending on
-     the loop direction. If initial and target values are
-     the same, 1 is given (only one loop will be performed).
-
-   then the counter is assigned the initial value.
-
-   In case of jumping out, the two pushed values are popped.
+/** INC postfix
+   INCP V : V->A, V := V +
 */
 
-#define P_FORI        0x56
+#define P_INCP        0x56
 
-/** FORN - next for loop.
-   PUSH target_value
-   PUSH step
-   (fori)....
-   ...code...
-
-   FORN loop_begin_target, $counter
-
-   the step is added to the counter. If the counter exceeds the
-   target value (sign depending on the step value), then
-   the two values are popped from the stack and the execution
-   continues, else loop_begin_target->coutner
+/** DEC Postfix
+   DECP V :  V->A, V := V - 1
 */
-#define P_FORN        0x57
+#define P_DECP        0x57
 
 /** Shift left op1 of op2 positions and place the result in A*/
 #define P_SHL         0x58
@@ -396,7 +376,13 @@ while it will fill OP2 with an integer item containing 15H.
 /** WRT: Write on standard output (TODO: also other vm streams using parameters) */
 #define P_WRT         0x65
 
-#define FLC_PCODE_COUNT 0x66
+/** STO:
+   STO OP1, OP2 -> OP1 := OP2.
+   Works as LD, but it overwrites target value even if it's a reference.
+*/
+#define P_STO         0x66
+
+#define FLC_PCODE_COUNT 0x67
 
 #endif
 

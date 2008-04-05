@@ -593,6 +593,8 @@ void opcodeHandler_INC( register VMachine *vm )
       default:
          vm->raiseError( e_invop, "INC" );
    }
+
+   vm->regA() = *operand;
 }
 
 // 10
@@ -607,6 +609,8 @@ void opcodeHandler_DEC( register VMachine *vm )
       default:
          vm->raiseError( e_invop, "DEC" );
    }
+
+   vm->regA() = *operand;
 }
 
 
@@ -826,6 +830,8 @@ void opcodeHandler_LD( register VMachine *vm )
       operand1->setString( new GarbageString( vm, *operand2->asString() ) );
    else
       operand1->copy( *operand2 );
+
+   vm->regA() =  *operand2;
 }
 
 // 1F
@@ -1194,19 +1200,19 @@ void opcodeHandler_ADDS( register VMachine *vm )
    {
       case FLC_ITEM_INT << 8 | FLC_ITEM_INT:
          operand1->setInteger(operand1->asInteger() + operand2->asInteger() );
-      return;
+      break;
 
       case FLC_ITEM_INT << 8 | FLC_ITEM_NUM:
          operand1->setNumeric(operand1->asInteger() + operand2->asNumeric() );
-      return;
+      break;
 
       case FLC_ITEM_NUM<< 8 | FLC_ITEM_INT:
          operand1->setNumeric(operand1->asNumeric() + operand2->asInteger() );
-      return;
+      break;
 
       case FLC_ITEM_NUM<< 8 | FLC_ITEM_NUM:
          operand1->setNumeric(operand1->asNumeric() + operand2->asNumeric() );
-      return;
+      break;
 
       case FLC_ITEM_STRING<< 8 | FLC_ITEM_INT:
       case FLC_ITEM_STRING<< 8 | FLC_ITEM_NUM:
@@ -1217,7 +1223,7 @@ void opcodeHandler_ADDS( register VMachine *vm )
             String *str = new GarbageString( vm, *operand1->asString() );
             str->append( (uint32) chr );
             operand1->setString( str );
-            return;
+            break;
          }
       }
       break;
@@ -1228,32 +1234,35 @@ void opcodeHandler_ADDS( register VMachine *vm )
          str->append( *operand2->asString() );
          operand1->setString( str );
       }
-      return;
+      break;
 
       case FLC_ITEM_DICT<< 8 | FLC_ITEM_DICT:
       {
          operand1->asDict()->merge( *operand2->asDict() );
       }
-      return;
+      break;
 
+      default:
+         // add any item to the end of an array.
+         if( operand1->type() == FLC_ITEM_ARRAY )
+         {
+            if ( operand2->type() == FLC_ITEM_ARRAY ) {
+               operand1->asArray()->merge( *operand2->asArray() );
+            }
+            else {
+               if ( operand2->isString() && operand2->asString()->garbageable() )
+                  operand1->asArray()->append( operand2->asString()->clone() );
+               else
+                  operand1->asArray()->append( *operand2 );
+            }
+            break;
+         }
+
+         vm->raiseRTError( new TypeError( ErrorParam( e_invop ).extra("ADDS").origin( e_orig_vm ) ) );
+         return;
    }
 
-   // add any item to the end of an array.
-   if( operand1->type() == FLC_ITEM_ARRAY )
-   {
-      if ( operand2->type() == FLC_ITEM_ARRAY ) {
-         operand1->asArray()->merge( *operand2->asArray() );
-      }
-      else {
-         if ( operand2->isString() && operand2->asString()->garbageable() )
-            operand1->asArray()->append( operand2->asString()->clone() );
-         else
-            operand1->asArray()->append( *operand2 );
-      }
-      return;
-   }
-
-   vm->raiseRTError( new TypeError( ErrorParam( e_invop ).extra("ADDS").origin( e_orig_vm ) ) );
+   vm->regA() = *operand1; // valid also if A
 }
 
 //27
@@ -1266,71 +1275,74 @@ void opcodeHandler_SUBS( register VMachine *vm )
    {
       case FLC_ITEM_INT << 8 | FLC_ITEM_INT:
          operand1->setInteger(operand1->asInteger() - operand2->asInteger() );
-      return;
+      break;
 
       case FLC_ITEM_INT << 8 | FLC_ITEM_NUM:
          operand1->setNumeric(operand1->asInteger() - operand2->asNumeric() );
-      return;
+      break;
 
       case FLC_ITEM_NUM<< 8 | FLC_ITEM_INT:
          operand1->setNumeric(operand1->asNumeric() - operand2->asInteger() );
-      return;
+      break;
 
       case FLC_ITEM_NUM<< 8 | FLC_ITEM_NUM:
          operand1->setNumeric(operand1->asNumeric() - operand2->asNumeric() );
-      return;
-   }
+      break;
 
-
-   // remove any element from an array
-   if ( operand1->isArray() )
-   {
-      CoreArray *source = operand1->asArray();
-
-      // if we have an array, remove all of it
-      if( operand2->isArray() )
-      {
-         CoreArray *removed = operand2->asArray();
-         for( uint32 i = 0; i < removed->length(); i ++ )
+      default:
+         // remove any element from an array
+         if ( operand1->isArray() )
          {
-            int32 rem = source->find( removed->at(i) );
-            if( rem >= 0 )
-               source->remove( rem );
+            CoreArray *source = operand1->asArray();
+
+            // if we have an array, remove all of it
+            if( operand2->isArray() )
+            {
+               CoreArray *removed = operand2->asArray();
+               for( uint32 i = 0; i < removed->length(); i ++ )
+               {
+                  int32 rem = source->find( removed->at(i) );
+                  if( rem >= 0 )
+                     source->remove( rem );
+               }
+            }
+            else {
+               int32 rem = source->find( *operand2 );
+               if( rem >= 0 )
+                  source->remove( rem );
+            }
+
+            // never raise.
+            break;
          }
-      }
-      else {
-         int32 rem = source->find( *operand2 );
-         if( rem >= 0 )
-            source->remove( rem );
-      }
-
-      // never raise.
-      return;
-   }
-   // remove various keys from arrays
-   else if( operand1->isDict() )
-   {
-      CoreDict *source = operand1->asDict();
-
-      // if we have an array, remove all of it
-      if( operand2->isArray() )
-      {
-         CoreArray *removed = operand2->asArray();
-         for( uint32 i = 0; i < removed->length(); i ++ )
+         // remove various keys from arrays
+         else if( operand1->isDict() )
          {
-            source->remove( removed->at(i) );
-         }
-      }
-      else {
-         source->remove( *operand2 );
-      }
+            CoreDict *source = operand1->asDict();
 
-      // never raise.
-      vm->m_regA = source;
-      return;
+            // if we have an array, remove all of it
+            if( operand2->isArray() )
+            {
+               CoreArray *removed = operand2->asArray();
+               for( uint32 i = 0; i < removed->length(); i ++ )
+               {
+                  source->remove( removed->at(i) );
+               }
+            }
+            else {
+               source->remove( *operand2 );
+            }
+
+            // never raise.
+            vm->m_regA = source;
+            break;
+         }
+
+         vm->raiseRTError( new TypeError( ErrorParam( e_invop ).extra("SUBS").origin( e_orig_vm ) ) );
+         return;
    }
 
-   vm->raiseRTError( new TypeError( ErrorParam( e_invop ).extra("SUBS").origin( e_orig_vm ) ) );
+   vm->regA() = *operand1;
 }
 
 
@@ -1345,22 +1357,26 @@ void opcodeHandler_MULS( register VMachine *vm )
    {
       case FLC_ITEM_INT << 8 | FLC_ITEM_INT:
          operand1->setInteger(operand1->asInteger() * operand2->asInteger() );
-      return;
+      break;
 
       case FLC_ITEM_INT << 8 | FLC_ITEM_NUM:
          operand1->setNumeric(operand1->asInteger() * operand2->asNumeric() );
-      return;
+      break;
 
       case FLC_ITEM_NUM<< 8 | FLC_ITEM_INT:
          operand1->setNumeric(operand1->asNumeric() * operand2->asInteger() );
-      return;
+      break;
 
       case FLC_ITEM_NUM<< 8 | FLC_ITEM_NUM:
          operand1->setNumeric(operand1->asNumeric() * operand2->asNumeric() );
-      return;
+      break;
+
+      default:
+         vm->raiseRTError( new TypeError( ErrorParam( e_invop ).extra("MULS").origin( e_orig_vm ) ) );
+         return;
    }
 
-   vm->raiseRTError( new TypeError( ErrorParam( e_invop ).extra("MULS").origin( e_orig_vm ) ) );
+   vm->regA() = *operand1;
 }
 
 //29
@@ -1382,9 +1398,11 @@ void opcodeHandler_DIVS( register VMachine *vm )
          switch( operand1->type() ) {
             case FLC_ITEM_INT:
                operand1->setNumeric( operand1->asInteger() / (numeric)val2 );
+               vm->regA() = *operand1;
             return;
             case FLC_ITEM_NUM:
                operand1->setNumeric( operand1->asNumeric() / (numeric)val2 );
+               vm->regA() = *operand1;
             return;
          }
       }
@@ -1401,9 +1419,11 @@ void opcodeHandler_DIVS( register VMachine *vm )
          switch( operand1->type() ) {
             case FLC_ITEM_INT:
                operand1->setNumeric( operand1->asInteger() / (numeric)val2 );
+               vm->regA() = *operand1;
             return;
             case FLC_ITEM_NUM:
                operand1->setNumeric( operand1->asNumeric() / (numeric)val2 );
+               vm->regA() = *operand1;
             return;
          }
       }
@@ -1423,14 +1443,18 @@ void opcodeHandler_MODS( register VMachine *vm )
    if ( operand1->type() == FLC_ITEM_INT && operand2->type() == FLC_ITEM_INT ) {
       if ( operand2->asInteger() == 0 )
          vm->raiseRTError( new TypeError( ErrorParam( e_invop ).extra("MODS").origin( e_orig_vm ) ) );
-      else
+      else {
          operand1->setInteger( operand1->asInteger() % operand2->asInteger() );
+         vm->regA() = *operand1;
+      }
    }
    else if ( operand1->isOrdinal() && operand2->isOrdinal() ) {
       if ( operand2->forceNumeric() == 0.0 )
          vm->raiseRTError( new TypeError( ErrorParam( e_invop ).extra("MODS").origin( e_orig_vm ) ) );
-      else
+      else {
          operand1->setNumeric( fmod( operand1->forceNumeric(), operand2->forceNumeric() ) );
+         vm->regA() = *operand1;
+      }
    }
    else
       vm->raiseRTError( new TypeError( ErrorParam( e_invop ).extra("MODS").origin( e_orig_vm ) ) );
@@ -2779,7 +2803,7 @@ void opcodeHandler_STV( register VMachine *vm )
                case 1: case -2:
                   operand1->setRange( operand1->asRangeStart(),
                         (int32) origin->forceInteger(),
-                        (int32) operand1->asRangeStep(), 
+                        (int32) operand1->asRangeStep(),
                         false );
                return;
 
@@ -3244,10 +3268,39 @@ trav_go_away:
 
 
 //57
-//void opcodeHandler_FORI( register VMachine *vm )
+void opcodeHandler_INCP( register VMachine *vm )
+{
+   Item *operand =  vm->getOpcodeParam( 1 )->dereference();
+   Item temp = *operand;
+
+   switch( operand->type() )
+   {
+      case FLC_ITEM_INT: *operand = operand->asInteger() + 1; break;
+      case FLC_ITEM_NUM: *operand = operand->asNumeric() + 1.0; break;
+      default:
+         vm->raiseError( e_invop, "INCP" );
+   }
+
+   vm->regA() = temp; // valid also if it's A or a reference in A
+}
+
 
 //58
-//void opcodeHandler_FORN( register VMachine *vm )
+void opcodeHandler_DECP( register VMachine *vm )
+{
+   Item *operand =  vm->getOpcodeParam( 1 )->dereference();
+   Item temp = *operand;
+
+   switch( operand->type() )
+   {
+      case FLC_ITEM_INT: *operand = operand->asInteger() - 1; break;
+      case FLC_ITEM_NUM: *operand = operand->asNumeric() - 1.0; break;
+      default:
+         vm->raiseError( e_invop, "DECP" );
+   }
+
+   vm->regA() = temp; // valid also if it's A or a reference in A
+}
 
 //59
 void opcodeHandler_SHL( register VMachine *vm )
@@ -3365,8 +3418,6 @@ void opcodeHandler_LDPR( register VMachine *vm )
    Item *operand2 = vm->getOpcodeParam( 2 )->dereference();
 
    Item *source = operand1;
-   CoreObject *self = vm->m_regS1.type() == FLC_ITEM_NIL? 0: vm->m_regS1.asObject();
-   CoreClass *sourceClass=0;
 
    switch( source->type() )
    {
@@ -3476,6 +3527,7 @@ void opcodeHandler_POWS( register VMachine *vm )
    }
    else {
       operand1->setNumeric( powval );
+      vm->regA().setNumeric( powval );
    }
 }
 
@@ -3806,6 +3858,22 @@ void opcodeHandler_WRT( register VMachine *vm )
       }
    }
 }
+
+
+void opcodeHandler_STO( register VMachine *vm )
+{
+   // STO is like LD, but it doesn't dereference param 1.
+   Item *operand1 =  vm->getOpcodeParam( 1 );
+   Item *operand2 =  vm->getOpcodeParam( 2 )->dereference();
+
+   if ( operand2->isString() )
+      operand1->setString( new GarbageString( vm, *operand2->asString() ) );
+   else
+      operand1->copy( *operand2 );
+
+   vm->regA() = *operand2;
+}
+
 
 }
 

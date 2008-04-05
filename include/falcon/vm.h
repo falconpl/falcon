@@ -166,8 +166,8 @@ void opcodeHandler_STVR( register VMachine *vm );
 void opcodeHandler_TRAV( register VMachine *vm );
 
 void opcodeHandler_SJMP( register VMachine *vm );
-void opcodeHandler_FORI( register VMachine *vm );
-void opcodeHandler_FORN( register VMachine *vm );
+void opcodeHandler_INCP( register VMachine *vm );
+void opcodeHandler_DECP( register VMachine *vm );
 
 void opcodeHandler_SHL( register VMachine *vm );
 void opcodeHandler_SHR( register VMachine *vm );
@@ -183,7 +183,7 @@ void opcodeHandler_INDI( register VMachine *vm );
 void opcodeHandler_STEX( register VMachine *vm );
 void opcodeHandler_TRAC( register VMachine *vm );
 void opcodeHandler_WRT( register VMachine *vm );
-
+void opcodeHandler_STO( register VMachine *vm );
 
 /** The Falcon virtual machine.
 
@@ -2032,9 +2032,8 @@ public:
    friend void opcodeHandler_STVR( register VMachine *vm );
    friend void opcodeHandler_TRAV( register VMachine *vm );
 
-   friend void opcodeHandler_SJMP( register VMachine *vm );
-   friend void opcodeHandler_FORI( register VMachine *vm );
-   friend void opcodeHandler_FORN( register VMachine *vm );
+   friend void opcodeHandler_INCP( register VMachine *vm );
+   friend void opcodeHandler_DECP( register VMachine *vm );
 
    friend void opcodeHandler_SHL( register VMachine *vm );
    friend void opcodeHandler_SHR( register VMachine *vm );
@@ -2050,6 +2049,7 @@ public:
    friend void opcodeHandler_STEX( register VMachine *vm );
    friend void opcodeHandler_TRAC( register VMachine *vm );
    friend void opcodeHandler_WRT( register VMachine *vm );
+   friend void opcodeHandler_STO( register VMachine *vm );
 };
 
 }

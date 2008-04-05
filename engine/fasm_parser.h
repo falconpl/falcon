@@ -104,91 +104,94 @@
      I_POWS = 320,
      I_INC = 321,
      I_DEC = 322,
-     I_NEG = 323,
-     I_NOT = 324,
-     I_RET = 325,
-     I_RETV = 326,
-     I_RETA = 327,
-     I_FORK = 328,
-     I_PUSH = 329,
-     I_PSHR = 330,
-     I_PSHN = 331,
-     I_POP = 332,
-     I_LDV = 333,
-     I_LDVT = 334,
-     I_STV = 335,
-     I_STVR = 336,
-     I_STVS = 337,
-     I_LDP = 338,
-     I_LDPT = 339,
-     I_STP = 340,
-     I_STPR = 341,
-     I_STPS = 342,
-     I_TRAV = 343,
-     I_TRAN = 344,
-     I_TRAL = 345,
-     I_IPOP = 346,
-     I_XPOP = 347,
-     I_GENA = 348,
-     I_GEND = 349,
-     I_GENR = 350,
-     I_GEOR = 351,
-     I_JMP = 352,
-     I_IFT = 353,
-     I_IFF = 354,
-     I_BOOL = 355,
-     I_EQ = 356,
-     I_NEQ = 357,
-     I_GT = 358,
-     I_GE = 359,
-     I_LT = 360,
-     I_LE = 361,
-     I_UNPK = 362,
-     I_UNPS = 363,
-     I_CALL = 364,
-     I_INST = 365,
-     I_SWCH = 366,
-     I_SELE = 367,
-     I_NOP = 368,
-     I_TRY = 369,
-     I_JTRY = 370,
-     I_PTRY = 371,
-     I_RIS = 372,
-     I_LDRF = 373,
-     I_ONCE = 374,
-     I_BAND = 375,
-     I_BOR = 376,
-     I_BXOR = 377,
-     I_BNOT = 378,
-     I_MODS = 379,
-     I_AND = 380,
-     I_OR = 381,
-     I_ANDS = 382,
-     I_ORS = 383,
-     I_XORS = 384,
-     I_NOTS = 385,
-     I_HAS = 386,
-     I_HASN = 387,
-     I_GIVE = 388,
-     I_GIVN = 389,
-     I_IN = 390,
-     I_NOIN = 391,
-     I_PROV = 392,
-     I_END = 393,
-     I_PEEK = 394,
-     I_PSIN = 395,
-     I_PASS = 396,
-     I_SHR = 397,
-     I_SHL = 398,
-     I_SHRS = 399,
-     I_SHLS = 400,
-     I_LDVR = 401,
-     I_LDPR = 402,
-     I_LSB = 403,
-     I_INDI = 404,
-     I_STEX = 405,
-     I_TRAC = 406,
-     I_WRT = 407
+     I_INCP = 323,
+     I_DECP = 324,
+     I_NEG = 325,
+     I_NOT = 326,
+     I_RET = 327,
+     I_RETV = 328,
+     I_RETA = 329,
+     I_FORK = 330,
+     I_PUSH = 331,
+     I_PSHR = 332,
+     I_PSHN = 333,
+     I_POP = 334,
+     I_LDV = 335,
+     I_LDVT = 336,
+     I_STV = 337,
+     I_STVR = 338,
+     I_STVS = 339,
+     I_LDP = 340,
+     I_LDPT = 341,
+     I_STP = 342,
+     I_STPR = 343,
+     I_STPS = 344,
+     I_TRAV = 345,
+     I_TRAN = 346,
+     I_TRAL = 347,
+     I_IPOP = 348,
+     I_XPOP = 349,
+     I_GENA = 350,
+     I_GEND = 351,
+     I_GENR = 352,
+     I_GEOR = 353,
+     I_JMP = 354,
+     I_IFT = 355,
+     I_IFF = 356,
+     I_BOOL = 357,
+     I_EQ = 358,
+     I_NEQ = 359,
+     I_GT = 360,
+     I_GE = 361,
+     I_LT = 362,
+     I_LE = 363,
+     I_UNPK = 364,
+     I_UNPS = 365,
+     I_CALL = 366,
+     I_INST = 367,
+     I_SWCH = 368,
+     I_SELE = 369,
+     I_NOP = 370,
+     I_TRY = 371,
+     I_JTRY = 372,
+     I_PTRY = 373,
+     I_RIS = 374,
+     I_LDRF = 375,
+     I_ONCE = 376,
+     I_BAND = 377,
+     I_BOR = 378,
+     I_BXOR = 379,
+     I_BNOT = 380,
+     I_MODS = 381,
+     I_AND = 382,
+     I_OR = 383,
+     I_ANDS = 384,
+     I_ORS = 385,
+     I_XORS = 386,
+     I_NOTS = 387,
+     I_HAS = 388,
+     I_HASN = 389,
+     I_GIVE = 390,
+     I_GIVN = 391,
+     I_IN = 392,
+     I_NOIN = 393,
+     I_PROV = 394,
+     I_END = 395,
+     I_PEEK = 396,
+     I_PSIN = 397,
+     I_PASS = 398,
+     I_SHR = 399,
+     I_SHL = 400,
+     I_SHRS = 401,
+     I_SHLS = 402,
+     I_LDVR = 403,
+     I_LDPR = 404,
+     I_LSB = 405,
+     I_INDI = 406,
+     I_STEX = 407,
+     I_TRAC = 408,
+     I_WRT = 409,
+     I_STO = 410
    };
 #endif
 /* Tokens.  */
@@ -257,91 +260,94 @@
 #define I_POWS 320
 #define I_INC 321
 #define I_DEC 322
-#define I_NEG 323
-#define I_NOT 324
-#define I_RET 325
-#define I_RETV 326
-#define I_RETA 327
-#define I_FORK 328
-#define I_PUSH 329
-#define I_PSHR 330
-#define I_PSHN 331
-#define I_POP 332
-#define I_LDV 333
-#define I_LDVT 334
-#define I_STV 335
-#define I_STVR 336
-#define I_STVS 337
-#define I_LDP 338
-#define I_LDPT 339
-#define I_STP 340
-#define I_STPR 341
-#define I_STPS 342
-#define I_TRAV 343
-#define I_TRAN 344
-#define I_TRAL 345
-#define I_IPOP 346
-#define I_XPOP 347
-#define I_GENA 348
-#define I_GEND 349
-#define I_GENR 350
-#define I_GEOR 351
-#define I_JMP 352
-#define I_IFT 353
-#define I_IFF 354
-#define I_BOOL 355
-#define I_EQ 356
-#define I_NEQ 357
-#define I_GT 358
-#define I_GE 359
-#define I_LT 360
-#define I_LE 361
-#define I_UNPK 362
-#define I_UNPS 363
-#define I_CALL 364
-#define I_INST 365
-#define I_SWCH 366
-#define I_SELE 367
-#define I_NOP 368
-#define I_TRY 369
-#define I_JTRY 370
-#define I_PTRY 371
-#define I_RIS 372
-#define I_LDRF 373
-#define I_ONCE 374
-#define I_BAND 375
-#define I_BOR 376
-#define I_BXOR 377
-#define I_BNOT 378
-#define I_MODS 379
-#define I_AND 380
-#define I_OR 381
-#define I_ANDS 382
-#define I_ORS 383
-#define I_XORS 384
-#define I_NOTS 385
-#define I_HAS 386
-#define I_HASN 387
-#define I_GIVE 388
-#define I_GIVN 389
-#define I_IN 390
-#define I_NOIN 391
-#define I_PROV 392
-#define I_END 393
-#define I_PEEK 394
-#define I_PSIN 395
-#define I_PASS 396
-#define I_SHR 397
-#define I_SHL 398
-#define I_SHRS 399
-#define I_SHLS 400
-#define I_LDVR 401
-#define I_LDPR 402
-#define I_LSB 403
-#define I_INDI 404
-#define I_STEX 405
-#define I_TRAC 406
-#define I_WRT 407
+#define I_INCP 323
+#define I_DECP 324
+#define I_NEG 325
+#define I_NOT 326
+#define I_RET 327
+#define I_RETV 328
+#define I_RETA 329
+#define I_FORK 330
+#define I_PUSH 331
+#define I_PSHR 332
+#define I_PSHN 333
+#define I_POP 334
+#define I_LDV 335
+#define I_LDVT 336
+#define I_STV 337
+#define I_STVR 338
+#define I_STVS 339
+#define I_LDP 340
+#define I_LDPT 341
+#define I_STP 342
+#define I_STPR 343
+#define I_STPS 344
+#define I_TRAV 345
+#define I_TRAN 346
+#define I_TRAL 347
+#define I_IPOP 348
+#define I_XPOP 349
+#define I_GENA 350
+#define I_GEND 351
+#define I_GENR 352
+#define I_GEOR 353
+#define I_JMP 354
+#define I_IFT 355
+#define I_IFF 356
+#define I_BOOL 357
+#define I_EQ 358
+#define I_NEQ 359
+#define I_GT 360
+#define I_GE 361
+#define I_LT 362
+#define I_LE 363
+#define I_UNPK 364
+#define I_UNPS 365
+#define I_CALL 366
+#define I_INST 367
+#define I_SWCH 368
+#define I_SELE 369
+#define I_NOP 370
+#define I_TRY 371
+#define I_JTRY 372
+#define I_PTRY 373
+#define I_RIS 374
+#define I_LDRF 375
+#define I_ONCE 376
+#define I_BAND 377
+#define I_BOR 378
+#define I_BXOR 379
+#define I_BNOT 380
+#define I_MODS 381
+#define I_AND 382
+#define I_OR 383
+#define I_ANDS 384
+#define I_ORS 385
+#define I_XORS 386
+#define I_NOTS 387
+#define I_HAS 388
+#define I_HASN 389
+#define I_GIVE 390
+#define I_GIVN 391
+#define I_IN 392
+#define I_NOIN 393
+#define I_PROV 394
+#define I_END 395
+#define I_PEEK 396
+#define I_PSIN 397
+#define I_PASS 398
+#define I_SHR 399
+#define I_SHL 400
+#define I_SHRS 401
+#define I_SHLS 402
+#define I_LDVR 403
+#define I_LDPR 404
+#define I_LSB 405
+#define I_INDI 406
+#define I_STEX 407
+#define I_TRAC 408
+#define I_WRT 409
+#define I_STO 410
 
 
 

@@ -201,8 +201,8 @@ void VMachine::internal_construct()
    m_opHandlers[ P_STVR] = opcodeHandler_STVR;
    m_opHandlers[ P_TRAV] = opcodeHandler_TRAV;
 
-   //m_opHandlers[ P_FORI] = opcodeHandler_FORI;
-   //m_opHandlers[ P_FORN] = opcodeHandler_FORN;
+   m_opHandlers[ P_INCP] = opcodeHandler_INCP;
+   m_opHandlers[ P_DECP] = opcodeHandler_DECP;
 
    m_opHandlers[ P_SHL ] = opcodeHandler_SHL;
    m_opHandlers[ P_SHR ] = opcodeHandler_SHR;
@@ -217,6 +217,7 @@ void VMachine::internal_construct()
    m_opHandlers[ P_STEX ] = opcodeHandler_STEX;
    m_opHandlers[ P_TRAC ] = opcodeHandler_TRAC;
    m_opHandlers[ P_WRT ] = opcodeHandler_WRT;
+   m_opHandlers[ P_STO ] = opcodeHandler_STO;
 
    m_fbom = new BomMap();
    m_fbom->add( "toString" );

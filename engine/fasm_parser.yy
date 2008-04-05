@@ -134,6 +134,8 @@ inline int yylex (void *lvalp, void *fasm_param)
 %token I_POWS
 %token I_INC
 %token I_DEC
+%token I_INCP
+%token I_DECP
 %token I_NEG
 %token I_NOT
 %token I_RET
@@ -219,6 +221,7 @@ inline int yylex (void *lvalp, void *fasm_param)
 %token I_STEX
 %token I_TRAC
 %token I_WRT
+%token I_STO
 %%
 
 /****************************************************
@@ -353,6 +356,8 @@ instruction:
    | inst_divs
    | inst_inc
    | inst_dec
+   | inst_incp
+   | inst_decp
    | inst_eq
    | inst_ne
    | inst_ge
@@ -438,6 +443,7 @@ instruction:
    | inst_stex
    | inst_trac
    | inst_wrt
+   | inst_sto
 ;
 
 inst_ld:
@@ -553,6 +559,18 @@ inst_dec:
        I_DEC op_variable           { COMPILER->addInstr( P_DEC, $2  ); }
      | I_DEC error                 { COMPILER->raiseError(Falcon::e_invop, "DEC" ); }
 ;
+
+
+inst_incp:
+       I_INCP op_variable           { COMPILER->addInstr( P_INCP, $2 ); }
+     | I_INCP error                 { COMPILER->raiseError(Falcon::e_invop, "INCP" ); }
+;
+
+inst_decp:
+       I_DECP op_variable           { COMPILER->addInstr( P_DECP, $2  ); }
+     | I_DECP error                 { COMPILER->raiseError(Falcon::e_invop, "DECP" ); }
+;
+
 
 inst_neg:
        I_NEG xoperand              { COMPILER->addInstr( P_NEG, $2  ); }
@@ -999,6 +1017,13 @@ inst_wrt:
        I_WRT xoperand           { COMPILER->addInstr( P_WRT, $2 ); }
      | I_WRT error              { COMPILER->raiseError( Falcon::e_invop, "WRT" ); }
 ;
+
+
+inst_sto:
+       I_STO op_variable COMMA xoperand    { COMPILER->addInstr( P_STO, $2, $4 ); }
+     | I_STO error              { COMPILER->raiseError(Falcon::e_invop, "STO" ); }
+;
+
 
 %% /* c code */
 

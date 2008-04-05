@@ -65,10 +65,10 @@ class FALCON_DYN_CLASS GenHAsm: public Generator
    //void gen_load( const Value *target, const char *source );
    void gen_store_to_deep( const char *type, const Value *source, const Value *first, const Value *second );
 
-   void gen_inc_prefix( const Value *target, bool asExpr = false );
-   void gen_dec_prefix( const Value *target, bool asExpr = false );
-   void gen_inc_postfix( const Value *target, bool asExpr = false );
-   void gen_dec_postfix( const Value *target, bool asExpr = false );
+   void gen_inc_prefix( const Value *target );
+   void gen_dec_prefix( const Value *target );
+   void gen_inc_postfix( const Value *target );
+   void gen_dec_postfix( const Value *target );
    void gen_autoassign( const char *op, const Value *target, const Value *source );
    void gen_store_to_deep_A( const char *type, const Value *first, const Value *second );
    void gen_store_to_deep_reg( const char *type, const Value *first, const Value *second, const char *reg );

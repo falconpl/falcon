@@ -362,22 +362,6 @@ void GenTree::generate( const Statement *cmp, const char *specifier, bool sameli
       }
       break;
 
-      case Statement::t_for:
-      {
-         m_out->writeString( "FOR " );
-         const StmtFor *sfor = static_cast< const StmtFor *>( cmp );
-         gen_value( sfor->counter() );
-         m_out->writeString( " = " );
-         gen_value( sfor->from() );
-         m_out->writeString( " TO " );
-         gen_value( sfor->to() );
-         m_out->writeString( " STEP " );
-         gen_value( sfor->step() );
-         m_out->writeString( "\n" );
-         gen_block( sfor->children(), depth );
-      }
-      break;
-
       case Statement::t_global:
       {
          m_out->writeString( "GLOBAL " );
@@ -667,7 +651,6 @@ void GenTree::gen_expression( const Expression *exp )
       case Expression::t_obj_access: type = 6; break;
       case Expression::t_funcall: type = 7; break;
       case Expression::t_lambda: type = 8; break;
-      case Expression::t_funval: type = 9; break;
    }
 
    switch( type )
@@ -731,11 +714,6 @@ void GenTree::gen_expression( const Expression *exp )
 
       case 8:
          m_out->writeString( exp->first()->asSymbol()->name() );
-      break;
-
-      case 9:
-         m_out->writeString( "VALUE OF " );
-         gen_value( exp->first() );
       break;
 
       case 10:

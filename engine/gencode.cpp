@@ -996,59 +996,6 @@ void GenCode::gen_statement( const Statement *stmt )
       }
       break;
 
-      case Statement::t_for:
-      {
-         const StmtFor *elem = static_cast<const StmtFor *>( stmt );
-
-         c_jmptag tag( m_out );
-         m_labels_loop.pushBack( &tag );
-
-         if( elem->to()->isSimple() ) {
-            gen_pcode( P_PUSH, elem->to() );
-         }
-         else {
-            gen_value( elem->to() );
-            gen_pcode( P_PUSH, e_parA );
-         }
-
-         // save the step value
-         if( elem->step() != 0 )
-         {
-            if( elem->step()->isSimple() ) {
-               gen_pcode( P_PUSH, elem->step() );
-            }
-            else {
-               gen_value( elem->step() );
-               gen_pcode( P_PUSH, e_parA );
-            }
-         }
-         else
-            gen_pcode( P_PUSH, 0 );
-
-         // create the from value
-         if( elem->from()->isSimple() ) {
-            gen_pcode( P_FORI, c_param_fixed( tag.addQueryEnd() ), elem->counter(), elem->from() );
-         }
-         else
-         {
-            gen_value( elem->from() );
-            gen_pcode( P_FORI, c_param_fixed( tag.addQueryEnd() ), elem->counter(), e_parA );
-         }
-
-         tag.defineBegin();
-
-         if( ! elem->children().empty() ) {
-            gen_block( &elem->children() );
-         }
-
-         tag.defineNext();
-         gen_pcode( P_FORN, c_param_fixed( tag.addQueryBegin() ), elem->counter() );
-         tag.defineEnd();
-
-         m_labels_loop.popBack();
-      }
-      break;
-
       case Statement::t_propdef:
       {
          const StmtVarDef *pdef = static_cast<const StmtVarDef *>( stmt );
@@ -1346,12 +1293,10 @@ void GenCode::gen_statement( const Statement *stmt )
 }
 
 
-void GenCode::gen_inc_prefix( const Value *val, bool asExpr )
+void GenCode::gen_inc_prefix( const Value *val )
 {
    if ( val->isSimple() ) {
       gen_pcode( P_INC, val );
-      if( asExpr )
-         gen_pcode( P_LD, e_parA, val );
    }
    else {
       gen_complex_value( val,true );
@@ -1359,34 +1304,21 @@ void GenCode::gen_inc_prefix( const Value *val, bool asExpr )
    }
 }
 
-void GenCode::gen_inc_postfix( const Value *val, bool asExpr )
+void GenCode::gen_inc_postfix( const Value *val )
 {
    if ( val->isSimple() ) {
-      if ( asExpr ) {
-         gen_pcode( P_LD, e_parA, val );
-      }
-      gen_pcode( P_INC, val );
+      gen_pcode( P_INCP, val );
    }
    else {
       gen_complex_value( val, true );
-      if ( asExpr ) {
-         gen_pcode( P_LD, e_parB, e_parA );
-         gen_pcode( P_PUSH, e_parB );
-      }
-
-      gen_pcode( P_INC, e_parA );
-
-      if ( asExpr )
-         gen_pcode( P_POP, e_parA );
+      gen_pcode( P_INCP, e_parA );
    }
 }
 
-void GenCode::gen_dec_prefix( const Value *val, bool asExpr )
+void GenCode::gen_dec_prefix( const Value *val )
 {
    if ( val->isSimple() ) {
       gen_pcode( P_DEC, val );
-      if( asExpr )
-         gen_pcode( P_LD, e_parA, val );
    }
    else {
       gen_complex_value( val, true );
@@ -1394,24 +1326,14 @@ void GenCode::gen_dec_prefix( const Value *val, bool asExpr )
    }
 }
 
-void GenCode::gen_dec_postfix( const Value *val, bool asExpr )
+void GenCode::gen_dec_postfix( const Value *val )
 {
    if ( val->isSimple() ) {
-      if ( asExpr ) {
-         gen_pcode( P_LD, e_parA, val );
-      }
-      gen_pcode( P_DEC, val );
+      gen_pcode( P_DECP, val );
    }
    else {
       gen_complex_value( val, true );
-      if ( asExpr ) {
-         gen_pcode( P_LD, e_parB, e_parA );
-         gen_pcode( P_PUSH, e_parB );
-      }
-
-      gen_pcode( P_DEC, e_parA );
-      if ( asExpr )
-         gen_pcode( P_POP, e_parA );
+      gen_pcode( P_DECP, e_parA );
    }
 }
 
@@ -1419,16 +1341,11 @@ void GenCode::gen_autoassign( byte opcode, const Value *target, const Value *sou
 {
    if( target->isSimple() && source->isSimple() ) {
       gen_pcode( opcode, target, source );
-
-      // TODO: avoid this when at toplevel
-      gen_pcode( P_LD, e_parA, target );
    }
    else if ( target->isSimple() )
    {
       gen_complex_value( source );
       gen_pcode( opcode, target, e_parA );
-      // TODO: avoid this when at toplevel
-      gen_pcode( P_LD, e_parA, target );
    }
    else if ( source->isSimple() )
    {
@@ -1471,7 +1388,7 @@ void GenCode::gen_condition( const Value *stmt, int mode )
 void GenCode::gen_value( const Value *stmt )
 {
    if ( stmt->isSimple() ) {
-      gen_pcode( P_LD, e_parA, stmt );
+      gen_pcode( P_STO, e_parA, stmt );
    }
    else {
       gen_complex_value( stmt );
@@ -1661,7 +1578,7 @@ void GenCode::gen_expression( const Expression *exp, bool assign )
          // success case
          if( exp->second()->isSimple() )
          {
-            gen_pcode( P_LD, e_parA, exp->second() );
+            gen_pcode( P_STO, e_parA, exp->second() );
          }
          else
          {
@@ -1676,7 +1593,7 @@ void GenCode::gen_expression( const Expression *exp, bool assign )
          // success case
          if( exp->third()->isSimple() )
          {
-            gen_pcode( P_LD, e_parA, exp->third() );
+            gen_pcode( P_STO, e_parA, exp->third() );
          }
          else
          {
@@ -1691,12 +1608,6 @@ void GenCode::gen_expression( const Expression *exp, bool assign )
       case Expression::t_assign:
          // handle it as a load...
          gen_load( exp->first(), exp->second() );
-         // and eventually store the assignand to A...
-         // first cannot be A, as A cannot be expressly used in let.
-         if ( exp->second()->isSimple() ) {
-            gen_pcode( P_LD, e_parA, exp->second() );
-         }
-         // else already in a
       return;
 
       case Expression::t_aadd:
@@ -1743,10 +1654,10 @@ void GenCode::gen_expression( const Expression *exp, bool assign )
          gen_autoassign( P_SHRS, exp->first(), exp->second() );
       return;
 
-      case Expression::t_pre_inc: gen_inc_prefix( exp->first(), true ); return;
-      case Expression::t_pre_dec: gen_dec_prefix( exp->first(), true ); return;
-      case Expression::t_post_inc: gen_inc_postfix( exp->first(), true ); return;
-      case Expression::t_post_dec: gen_dec_postfix( exp->first(), true ); return;
+      case Expression::t_pre_inc: gen_inc_prefix( exp->first() ); return;
+      case Expression::t_pre_dec: gen_dec_prefix( exp->first() ); return;
+      case Expression::t_post_inc: gen_inc_postfix( exp->first() ); return;
+      case Expression::t_post_dec: gen_dec_postfix( exp->first() ); return;
 
       case Expression::t_obj_access:
          gen_load_from_deep( assign? P_LDPR: P_LDP, exp->first(), exp->second() );
@@ -1769,7 +1680,7 @@ void GenCode::gen_expression( const Expression *exp, bool assign )
       return;
 
       case Expression::t_lambda:
-         gen_pcode( P_LD, e_parA, exp->first()->asSymbol() );
+         gen_pcode( P_STO, e_parA, exp->first()->asSymbol() );
       return;
 
    }

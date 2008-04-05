@@ -92,4 +92,4 @@ function gauge( max, current )
 
 end
 
-/* end of filecopy.flc */
+/* end of filecopy.fal */

@@ -1,7 +1,6 @@
 /*
    FALCON - The Falcon Programming Language
    FILE: garbageable.cpp
-   $Id: garbageable.cpp,v 1.5 2007/08/11 00:11:54 jonnymind Exp $
 
    Garbageable objects, declaration.
    -------------------------------------------------------------------

@@ -47,6 +47,7 @@ Falcon (0.8.9)
   * Minor: Added "enum" statement which can create a set of constants.
   * Minor: Statement give/to can now give attributes to (or remove them from) a list of
            objects.
+  * Minor: Better management of INC/DEC; added INCP/DECP opcodes to allow faster inc/dec.
 
 Falcon (0.8.8)
   * bugfix: TRAV opcode may destroy its parameters while setting first loop

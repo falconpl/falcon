@@ -684,6 +684,8 @@ int AsmLexer::checkTokens()
              return I_WRT;
          else if ( m_string.compareIgnoreCase( "MOD" ) == 0 )
              return I_MOD;
+         else if ( m_string.compareIgnoreCase( "STO" ) == 0 )
+             return I_STO;
       break;
 
      case 4:
@@ -725,6 +727,10 @@ int AsmLexer::checkTokens()
              return I_STPS;
          if ( m_string.compareIgnoreCase( "TRAV" ) == 0 )
              return I_TRAV;
+         if ( m_string.compareIgnoreCase( "INCP" ) == 0 )
+             return I_INCP;
+         if ( m_string.compareIgnoreCase( "DECP" ) == 0 )
+             return I_DECP;
          if ( m_string.compareIgnoreCase( "TRAN" ) == 0 )
              return I_TRAN;
          if ( m_string.compareIgnoreCase( "TRAL" ) == 0 )
