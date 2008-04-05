@@ -94,7 +94,7 @@ FALCON_FUNC Regex_init( ::Falcon::VMachine *vm )
 		stringData[source->size()] = '\0';
       pattern = pcre_compile2(
          stringData,
-         optVal,
+         optVal | PCRE_UTF8 | PCRE_NO_UTF8_CHECK,
          &errCode,
          &errDesc,
          &errOffset,

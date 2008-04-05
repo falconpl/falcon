@@ -2,6 +2,13 @@ Feathers (0.8.9)
   * minor: Added load directive support for loadXXX on reflexive compiler.
   * bugfix: Confparser didn't read 1 character long values.
   * Major: Added MXML module
+  * bugfix: REGEX module was taking locally stored PCRE headers even when
+            compilation was required against system PCRE.
+  * bugfix: Pattern was not compiled with  UTF8 support when the string
+            hadn't high UNICODE characters; I.e. matching "." against a
+            Japanese character didn't work unless the pattern had some
+            Japanese characters too.
+  * minor: REGEX using now PCRE 7.6
 
 Feathers (0.8.8)
   * Major: It is now possible to unload arbitrary modules.

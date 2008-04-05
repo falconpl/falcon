@@ -9,12 +9,23 @@ it to run on SunOS4 and other "close to standard" systems.
 
 If you are going to build PCRE "by hand" on a system without "configure" you
 should copy the distributed config.h.generic to config.h, and then set up the
-macros the way you need them. Alternatively, you can avoid editing by using -D
-on the compiler command line to set the macro values.
+macro definitions the way you need them. You must then add -DHAVE_CONFIG_H to
+all of your compile commands, so that config.h is included at the start of
+every source.
+
+Alternatively, you can avoid editing by using -D on the compiler command line
+to set the macro values. In this case, you do not have to set -DHAVE_CONFIG_H.
 
 PCRE uses memmove() if HAVE_MEMMOVE is set to 1; otherwise it uses bcopy() if
 HAVE_BCOPY is set to 1. If your system has neither bcopy() nor memmove(), set
 them both to 0; an emulation function will be used. */
+
+/* By default, the \R escape sequence matches any Unicode line ending
+   character or sequence of characters. If BSR_ANYCRLF is defined, this is
+   changed so that backslash-R matches only CR, LF, or CRLF. The build- time
+   default can be overridden by the user of PCRE at runtime. On systems that
+   support it, "configure" can be used to override the default. */
+/* #undef BSR_ANYCRLF */
 
 /* If you are compiling for a system that uses EBCDIC instead of ASCII
    character codes, define this macro as 1. On systems that can use
@@ -26,6 +37,9 @@ them both to 0; an emulation function will be used. */
 
 /* Define to 1 if you have the <bits/type_traits.h> header file. */
 /* #undef HAVE_BITS_TYPE_TRAITS_H */
+
+/* Define to 1 if you have the <bzlib.h> header file. */
+#define HAVE_BZLIB_H 1
 
 /* Define to 1 if you have the <dirent.h> header file. */
 #define HAVE_DIRENT_H 1
@@ -48,6 +62,12 @@ them both to 0; an emulation function will be used. */
 /* Define to 1 if you have the <memory.h> header file. */
 #define HAVE_MEMORY_H 1
 
+/* Define to 1 if you have the <readline/history.h> header file. */
+#define HAVE_READLINE_HISTORY_H 1
+
+/* Define to 1 if you have the <readline/readline.h> header file. */
+#define HAVE_READLINE_READLINE_H 1
+
 /* Define to 1 if you have the <stdint.h> header file. */
 #define HAVE_STDINT_H 1
 
@@ -58,7 +78,7 @@ them both to 0; an emulation function will be used. */
 #define HAVE_STRERROR 1
 
 /* Define to 1 if you have the <string> header file. */
-#define HAVE_STRING 1
+/* #undef HAVE_STRING */
 
 /* Define to 1 if you have the <strings.h> header file. */
 #define HAVE_STRINGS_H 1
@@ -89,6 +109,12 @@ them both to 0; an emulation function will be used. */
 
 /* Define to 1 if you have the <windows.h> header file. */
 /* #undef HAVE_WINDOWS_H */
+
+/* Define to 1 if you have the <zlib.h> header file. */
+#define HAVE_ZLIB_H 1
+
+/* Define to 1 if you have the `_strtoi64' function. */
+/* #undef HAVE__STRTOI64 */
 
 /* The value of LINK_SIZE determines the number of bytes used to store links
    as offsets within the compiled regex. The default is 2, which allows for
@@ -121,11 +147,6 @@ them both to 0; an emulation function will be used. */
 /* This limit is parameterized just in case anybody ever wants to change it.
    Care must be taken if it is increased, because it guards against integer
    overflow caused by enormously large patterns. */
-#define MAX_DUPLENGTH 30000
-
-/* This limit is parameterized just in case anybody ever wants to change it.
-   Care must be taken if it is increased, because it guards against integer
-   overflow caused by enormously large patterns. */
 #define MAX_NAME_COUNT 10000
 
 /* This limit is parameterized just in case anybody ever wants to change it.
@@ -133,11 +154,11 @@ them both to 0; an emulation function will be used. */
    overflow caused by enormously large patterns. */
 #define MAX_NAME_SIZE 32
 
-/* The value of NEWLINE determines the newline character sequence. On
-   Unix-like systems, "configure" can be used to override the default, which
-   is 10. The possible values are 10 (LF), 13 (CR), 3338 (CRLF), -1 (ANY), or
-   -2 (ANYCRLF). */
-#define NEWLINE -2
+/* The value of NEWLINE determines the newline character sequence. On systems
+   that support it, "configure" can be used to override the default, which is
+   10. The possible values are 10 (LF), 13 (CR), 3338 (CRLF), -1 (ANY), or -2
+   (ANYCRLF). */
+#define NEWLINE -1
 
 /* PCRE uses recursive function calls to handle backtracking while matching.
    This can sometimes be a problem on systems that have stacks of limited
@@ -149,7 +170,6 @@ them both to 0; an emulation function will be used. */
    --disable-stack-for-recursion). */
 /* #undef NO_RECURSE */
 
-#if 0
 /* Name of package */
 #define PACKAGE "pcre"
 
@@ -160,14 +180,14 @@ them both to 0; an emulation function will be used. */
 #define PACKAGE_NAME "PCRE"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "PCRE 7.2"
+#define PACKAGE_STRING "PCRE 7.6"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "pcre"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "7.2"
-#endif
+#define PACKAGE_VERSION "7.6"
+
 
 /* If you are compiling for a system other than a Unix-like system or
    Win32, and it needs some magic to be inserted before the definition
@@ -196,12 +216,25 @@ them both to 0; an emulation function will be used. */
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
 
+/* Define to allow pcregrep to be linked with libbz2, so that it is able to
+   handle .bz2 files. */
+/* #undef SUPPORT_LIBBZ2 */
+
+/* Define to allow pcretest to be linked with libreadline. */
+/* #undef SUPPORT_LIBREADLINE */
+
+/* Define to allow pcregrep to be linked with libz, so that it is able to
+   handle .gz files. */
+/* #undef SUPPORT_LIBZ */
+
 /* Define to enable support for Unicode properties */
-#define SUPPORT_UCP
+#define SUPPORT_UCP 
 
 /* Define to enable support for the UTF-8 Unicode encoding. */
-#define SUPPORT_UTF8
+#define SUPPORT_UTF8 
 
+/* Version number of package */
+#define VERSION "7.6"
 
 /* Define to empty if `const' does not conform to ANSI C. */
 /* #undef const */

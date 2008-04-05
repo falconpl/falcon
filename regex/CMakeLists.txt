@@ -8,7 +8,6 @@ PROJECT(regex)
 OPTION(WITH_INTERNAL_PCRE "Use internal pcre library" OFF)
 
 # Inclusion settings
-INCLUDE_DIRECTORIES(.)
 INCLUDE_DIRECTORIES(BEFORE ${TARGET_DIR}/include)
 LINK_DIRECTORIES(BEFORE ${TARGET_DIR}/${TARGET_LIB_DIR} )
 
@@ -17,6 +16,9 @@ IF(WIN32)
 ENDIF(WIN32)
 
 IF(WITH_INTERNAL_PCRE)
+   #include local headers BEFORE
+   INCLUDE_DIRECTORIES( BEFORE .)
+
    #Compile our version of PCRE...
    SET(PCRE_SOURCE
       pcre_chartables.c
