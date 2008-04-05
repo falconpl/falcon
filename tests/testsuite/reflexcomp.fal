@@ -33,7 +33,7 @@ end
 
 comp = Compiler()
 disk, modPath, fname, ext = fileNameSplit( scriptPath )
-comp.path = comp.path + ";" + modPath
+comp.path = modPath
 comp.saveModules = false
 
 // try once

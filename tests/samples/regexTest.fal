@@ -36,7 +36,7 @@ try
 		printl( "Pattern matches!" )
 		printl( "Matched substring: ",
 				args[1][ re.captured(0) ] )
-		for i = 1 to re.capturedCount() -1 step 1
+		for i in [ 1 : re.capturedCount() ]
 			printl( "Captured ", i,": ",
 				args[1][ re.captured(i) ]
          )

@@ -1,8 +1,6 @@
 /****************************************************************************
 * Falcon test suite
 *
-* CVS-Id: $Id: reflexcomp_1.fal,v 1.2 2007/07/24 18:28:56 jonnymind Exp $
-*
 * ID: --
 * Category: reflexive
 * Subcategory:
@@ -23,20 +21,20 @@ global_sym = nil
 object obj
    initData = nil
    remote = nil
-   
+
    init
       // this code must be executed at module loading
       self.initData = "Initialized"
    end
-   
+
    function func( param )
       return "obj " + param.toString()
    end
-   
+
    function callRemote( param )
       return self.remote( param )
    end
-   
+
 end
 
 // The functions that will be called by the loader
@@ -62,12 +60,12 @@ end
 function func_global_class( param )
    // now global_sym should be a class. Instance it...
    instance = global_sym()
-   
+
    // and call a method
    return instance.func( param )
 end
-   
-   
+
+
 //==================================
 // main code -- must return "main"
 

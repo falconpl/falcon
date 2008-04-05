@@ -32,7 +32,7 @@ socket.setTimeout( 100 )
 data = ""
 count = 0
 
-while count < 50 and data = ""
+while count < 50 and data == ""
    socket.recv( data, 1600 )
    print( "." )
    ++count

@@ -220,7 +220,7 @@ function dumpArray( array )
 	for elem in array
 		print( elem )
 
-      forall: print( "," )
+      formiddle: print( "," )
       forlast
 		end
    end

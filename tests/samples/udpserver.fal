@@ -50,7 +50,7 @@ if len( sockets ) == 0
 end
 
 while true
-   for i = 0 to len( sockets ) - 1
+   for i in [ 0 : len( sockets ) ]
       socket = sockets[i]
       if socket.readAvailable( 10 )
          data = socket.recv(1600)
@@ -61,7 +61,7 @@ while true
 end
 
 function parseMessage( message, socket )
-   if strFind( message, "WAY" ) = 0
+   if strFind( message, "WAY" ) == 0
       printl( "Received a where are you request from ", socket.remote, ":", socket.remoteService )
       // we must send a message telling where we are.
       socket.sendTo( socket.remote, socket.remoteService, "IAM:" + socket.getHost() )

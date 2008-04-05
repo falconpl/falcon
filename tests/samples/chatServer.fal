@@ -4,8 +4,6 @@
 
    FILE: chatServer.fal
 
-   $Id: chatServer.fal,v 1.3 2007/07/07 11:20:07 jonnymind Exp $
-
    A simple server for chatClient.fal samples.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
@@ -71,7 +69,7 @@ end
 function messageReceived( idFrom, idTo )
    print( "MSG ", idFrom, "->", idTo, ": " )
    params = []
-   for i = 2 to paramCount() step 1
+   for i in [2 : paramCount()]
       print( paramNumber(i) )
    end
    printl()
@@ -96,7 +94,7 @@ function manageLogins()
                cli.com.dispose()
                continue dropping
             else
-               if cliData[0:6] = "[IAM_]"
+               if cliData[0:6] == "[IAM_]"
                   cliId = cliData[6:-3]
                   if cliId in clients
                      cli.messages += CliMessage( nil, "[SERV]ID Already present." )
@@ -109,8 +107,8 @@ function manageLogins()
                      for name, tgcli in clients
                      	// tell the client about the others
                         tgcli.messages += CliMessage( nil, "[SERV]Client \"" + cliId + "\" has joined." )
-						names += name
-						forall: names += ", "
+                        names += name
+                        formiddle: names += ", "
                      	forlast: names += "."
                      end
 
@@ -150,7 +148,7 @@ function manageIncoming()
       try
          if com.readAvailable(0)
             size = com.recv( cliData )
-            if size = 0
+            if size == 0
                // he's gone
                warn( "Client ", name, " closed connection" )
                gone += name
@@ -227,13 +225,13 @@ function parseMessage( cli )
    message = cli.msgIn
    pos = strFind( message, "\r\n" )
    // still nothing
-   if pos = -1
+   if pos == -1
       if len( message ) > 10000: return false
       return true
    end
 
    // ok, we have a complete line.
-   if pos = len(message) - 2
+   if pos == len(message) - 2
       cli.msgIn = ""
    else
       cli.msgIn = message[pos + 2:]

@@ -32,7 +32,7 @@ class ClientTCPSocket( address, port ) from TCPSocket( address, port )
       readIn = self.recv( 1024 )
       return readIn
    end
-   
+
    function readline()
       readIn = self.recv( 1024 )
 	  return readIn
@@ -55,13 +55,13 @@ try
    socket.connect( args[0], args[1] )
    // get Server hailing
    data = socket.readline()
-   if data = nil: raise Error( 0, "Timeout in server response" )
+   if data == nil: raise Error( 0, "Timeout in server response" )
    printl( "Server reply: ", data )
    printl( "Sending your nickname." )
    socket.send( "[IAM_]" + args[2] +"\r\n" )
 
    data = socket.readline()
-   if data = nil: raise Error( 0, "Timeout in server response" )
+   if data == nil: raise Error( 0, "Timeout in server response" )
    printl( "Server reply: ", data )
    if "accepted" notin data
       exit( 1 )

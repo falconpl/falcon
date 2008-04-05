@@ -13,16 +13,16 @@ load process
 //==================================================
 // Main program
 
-enum = ProcessEnum()
+penum = ProcessEnum()
 
 printl( "Name               PID        Parent     Command line" )
 printl( "------------------ ---------- ---------- ------------------------------------" )
 
-while enum.next()
-   display( enum )
+while penum.next()
+   display( penum )
 end
 
-enum.close()
+penum.close()
 
 function display( pe )
    l = len( pe.name )

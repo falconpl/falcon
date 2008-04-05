@@ -10,12 +10,12 @@ load mxml
 
 // creating some sample nodes.
 // you can create them also without documents
-nodeComment = MXMLNode( MXMLType.comment, "-no name-", 
+nodeComment = MXMLNode( MXMLType.comment, "-no name-",
    "A comment that we'll place on top of XML" )
-  
+
 // let's create some items
 nodes = []
-for i = 1 to 10
+for i in [1: 11]
    node = MXMLNode( MXMLType.tag, "Item" )
    node.setAttribute( "id", toString( i ) )
    nodes += node

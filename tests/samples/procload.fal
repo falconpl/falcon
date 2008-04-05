@@ -39,7 +39,7 @@ try
 
 
    // until the process is done, read what it has to say
-   while proc.value() = -1
+   while proc.value() == -1
       if procout.readAvailable( 250 )
          strout += procout.read( 1024 )
       end
