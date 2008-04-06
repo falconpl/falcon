@@ -41,18 +41,13 @@ namespace Sys {
 
 bool fal_fileType( const String &fname, FileStat::e_fileType &st )
 {
-   char *filename = (char *) memAlloc( fname.size() * 4 + 1);
-   fname.toCString( filename, fname.size() * 4 );
+   AutoCString filename(fname );
    struct stat fs;
 
-
-   if ( lstat( filename, &fs ) != 0 ) {
+   if ( lstat( filename.c_str(), &fs ) != 0 ) {
       st = FileStat::t_notFound;
-      memFree( filename );
       return false;
    }
-
-   memFree( filename );
 
    if( S_ISREG( fs.st_mode ) )
       st = FileStat::t_normal;
@@ -74,18 +69,14 @@ bool fal_fileType( const String &fname, FileStat::e_fileType &st )
 
 bool fal_stats( const String &f, FileStat &sts )
 {
-   char *filename = (char *) memAlloc( f.size() * 4 + 1 );
-   f.toCString( filename, f.size() * 4 );
+   AutoCString filename( f );
 
    struct stat fs;
 
-   if ( lstat( filename, &fs ) != 0 )
+   if ( lstat( filename.c_str(), &fs ) != 0 )
    {
-      memFree( filename );
       return false;
    }
-
-   memFree( filename );
 
    sts.m_size = fs.st_size;
    if( S_ISREG( fs.st_mode ) )
@@ -124,46 +115,37 @@ bool fal_stats( const String &f, FileStat &sts )
 
 bool fal_mkdir( const String &f, int32 &fsStatus )
 {
-   char *filename = (char *) memAlloc( f.size() * 4 + 1 );
-   f.toCString( filename, f.size() * 4 );
+   AutoCString filename( f );
 
-   if ( ::mkdir( filename, 0777 ) == 0 ) {
+   if ( ::mkdir( filename.c_str(), 0777 ) == 0 ) {
       fsStatus = 0;
-      memFree( filename );
       return true;
    }
    fsStatus = errno;
-   memFree( filename );
    return false;
 }
 
 bool fal_rmdir( const String &f, int32 &fsStatus )
 {
-   char *filename = (char *) memAlloc( f.size() * 4 + 1 );
-   f.toCString( filename, f.size() * 4 );
+   AutoCString filename( f );
 
-   if ( ::rmdir( filename ) == 0 ) {
+   if ( ::rmdir( filename.c_str() ) == 0 ) {
       fsStatus = 0;
-      memFree( filename );
       return true;
    }
-   memFree( filename );
    fsStatus = errno;
    return false;
 }
 
 bool fal_unlink( const String &f, int32 &fsStatus )
 {
-   char *filename = (char *) memAlloc( f.size() * 4 + 1 );
-   f.toCString( filename, f.size() * 4 );
+   AutoCString filename( f );
 
-   if ( ::unlink( filename ) == 0 ) {
+   if ( ::unlink( filename.c_str() ) == 0 ) {
       fsStatus = 0;
-      memFree( filename );
       return true;
    }
 
-   memFree( filename );
    fsStatus = errno;
    return false;
 }
@@ -184,15 +166,12 @@ bool fal_move( const String &f, const String &d, int32 &fsStatus )
 
 bool fal_chdir( const String &f, int32 &fsStatus )
 {
-   char *filename = (char *) memAlloc( f.size() * 4 + 1 );
-   f.toCString( filename, f.size() * 4 );
+   AutoCString filename( f );
 
-   if ( ::chdir( filename ) == 0 ) {
+   if ( ::chdir( filename.c_str() ) == 0 ) {
       fsStatus = 0;
-      memFree( filename );
       return true;
    }
-   memFree( filename );
    fsStatus = errno;
    return false;
 }
@@ -205,7 +184,6 @@ bool fal_getcwd( String &fname, int32 &fsError )
    char *bufret;
 
    while ( (bufret = ::getcwd( buffer, pwdSize )) == 0 && errno == ERANGE ) {
-      memFree( buffer );
       pwdSize += 64;
       buffer = ( char * ) memAlloc( pwdSize );
    }
@@ -224,77 +202,59 @@ bool fal_getcwd( String &fname, int32 &fsError )
 
 bool fal_chmod( const String &fname, uint32 mode )
 {
-   char *filename = (char *) memAlloc( fname.size() * 4 + 1);
-   fname.toCString( filename, fname.size() * 4 );
-   bool ret = ::chmod( filename, mode ) == 0;
-   memFree( filename );
+   AutoCString filename( fname );
+   bool ret = ::chmod( filename.c_str(), mode ) == 0;
 }
 
 bool fal_chown( const String &fname, int32 owner )
 {
-   char *filename = (char *) memAlloc( fname.size() * 4 + 1 );
-   fname.toCString( filename, fname.size() * 4 );
-   bool ret = ::chown( filename, owner , -1 ) == 0;
-   memFree( filename );
+   AutoCString filename( fname );
+   bool ret = ::chown( filename.c_str(), owner , -1 ) == 0;
 }
 
 bool fal_readlink( const String &fname, String &link )
 {
    char buf[1024];
    int len;
-   char *filename = (char *) memAlloc( fname.size() * 4 + 1 );
-   fname.toCString( filename, fname.size() * 4 );
+   AutoCString filename( fname );
 
-   if ( ( len = readlink( filename, buf, sizeof(buf) - 1 ) ) != -1) {
+   if ( ( len = readlink( filename.c_str(), buf, sizeof(buf) - 1 ) ) != -1) {
       buf[len] = '\0';
       link.bufferize( buf );
-      memFree( filename );
       return true;
    }
-   memFree( filename );
    return false;
 }
 
 bool fal_writelink( const String &fname, const String &link )
 {
-   char *filename = (char *) memAlloc( fname.size() * 4 + 1);
-   fname.toCString( filename, fname.size() * 4 );
-   char *linkname = (char *) memAlloc( link.size() * 4 + 1);
-   link.toCString( linkname, link.size() * 4 );
+   AutoCString filename( fname );
+   AutoCString linkname( link );
 
-   if ( ! symlink( filename, linkname ) )
+   if ( ! symlink( filename.c_str(), linkname.c_str() ) )
    {
-      memFree( filename );
-      memFree( linkname );
       return false;
    }
-   memFree( filename );
-   memFree( linkname );
 
    return true;
 }
 
 bool fal_chgrp( const String &fname, int32 owner )
 {
-   char *filename = (char *) memAlloc( fname.size() * 4 + 1 );
-   fname.toCString( filename, fname.size() * 4 );
-   bool ret = ::chown( filename, -1, owner ) == 0;
-   memFree( filename );
+   AutoCString filename( fname );
+   bool ret = ::chown( filename.c_str(), -1, owner ) == 0;
    return ret;
 }
 
 ::Falcon::DirEntry *fal_openDir( const String &p, int32 &fsStatus )
 {
-   char *filename = (char *) memAlloc( p.size() * 4 + 1 );
-   p.toCString( filename, p.size() * 4 );
+   AutoCString filename( p );
 
-   DIR *dir = ::opendir( filename );
+   DIR *dir = ::opendir( filename.c_str() );
    if ( dir == 0 ) {
-      memFree( filename );
       fsStatus = errno;
       return 0;
    }
-   memFree( filename );
 
    return new DirEntry_unix( dir );
 }
