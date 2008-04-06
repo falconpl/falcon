@@ -9,16 +9,11 @@
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: Tue, 18 Mar 2008 00:34:06 +0100
-   Last modified because:
 
    -------------------------------------------------------------------
    (C) Copyright 2008: the FALCON developers (see list in AUTHORS file)
 
    See LICENSE file for licensing details.
-   In order to use this file in its compiled form, this source or
-   part of it you have to read, understand and accept the conditions
-   that are stated in the LICENSE file that comes boundled with this
-   package.
 */
 
 const defString = "A default string to test memory buffers"

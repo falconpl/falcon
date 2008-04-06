@@ -1,22 +1,16 @@
 /*
    FALCON - The Falcon Programming Language.
    FILE: genhasm.h
-   $Id: genhasm.h,v 1.7 2007/07/10 20:40:18 jonnymind Exp $
 
    Short description
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: sab giu 5 2004
-   Last modified because:
 
    -------------------------------------------------------------------
    (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
 
    See LICENSE file for licensing details.
-   In order to use this file in its compiled form, this source or
-   part of it you have to read, understand and accept the conditions
-   that are stated in the LICENSE file that comes boundled with this
-   package.
 */
 
 #ifndef FALCON_GENHSAM_H

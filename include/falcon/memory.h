@@ -1,22 +1,16 @@
 /*
    FALCON - The Falcon Programming Language.
    FILE: flc_memory.h
-   $Id: memory.h,v 1.4 2006/12/05 15:28:47 gian Exp $
 
    User overridable basic memory allocation
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: mar ago 3 2004
-   Last modified because:
 
    -------------------------------------------------------------------
    (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
 
    See LICENSE file for licensing details.
-   In order to use this file in its compiled form, this source or
-   part of it you have to read, understand and accept the conditions
-   that are stated in the LICENSE file that comes boundled with this
-   package.
 */
 
 #ifndef flc_MEMORY_H

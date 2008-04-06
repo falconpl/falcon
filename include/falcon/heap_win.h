@@ -1,22 +1,16 @@
 /*
    FALCON - The Falcon Programming Language.
    FILE: flc_heap_win.h
-   $Id: heap_win.h,v 1.2 2006/11/04 20:42:40 gian Exp $
 
    Windows specific class for Dynamic load system
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: 2004-11-1 02:34+0200UTC
-   Last modified because:
 
    -------------------------------------------------------------------
    (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
 
    See LICENSE file for licensing details.
-   In order to use this file in its compiled form, this source or
-   part of it you have to read, understand and accept the conditions
-   that are stated in the LICENSE file that comes boundled with this
-   package.
 */
 
 

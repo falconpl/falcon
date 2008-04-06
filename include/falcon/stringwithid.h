@@ -1,22 +1,16 @@
 /*
    FALCON - The Falcon Programming Language.
    FILE: stringwithid.h
-   $Id: stringwithid.h,v 1.1.1.1 2006/10/08 15:05:34 gian Exp $
 
    An extenson of the Falcon::String that saves also the module string ID.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: gio lug 21 2005
-   Last modified because:
 
    -------------------------------------------------------------------
    (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
 
    See LICENSE file for licensing details.
-   In order to use this file in its compiled form, this source or
-   part of it you have to read, understand and accept the conditions
-   that are stated in the LICENSE file that comes boundled with this
-   package.
 */
 
 /** \file

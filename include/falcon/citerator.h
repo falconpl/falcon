@@ -1,22 +1,16 @@
 /*
    FALCON - The Falcon Programming Language.
    FILE: citerator.h
-   $Id: citerator.h,v 1.3 2007/06/30 10:58:07 jonnymind Exp $
 
    Base abstract class for generic collection iterators.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: dom giu 24 2007
-   Last modified because:
 
    -------------------------------------------------------------------
    (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
 
    See LICENSE file for licensing details.
-   In order to use this file in its compiled form, this source or
-   part of it you have to read, understand and accept the conditions
-   that are stated in the LICENSE file that comes boundled with this
-   package.
 */
 
 /** \file

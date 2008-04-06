@@ -1,22 +1,16 @@
 /*
    FALCON - The Falcon Programming Language.
    FILE: testsuite.h
-   $Id: testsuite.h,v 1.4 2007/08/19 09:46:44 jonnymind Exp $
 
    Helper functions allowing the application to inteact with the testsuite module.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: lun feb 13 2006
-   Last modified because:
 
    -------------------------------------------------------------------
    (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
 
    See LICENSE file for licensing details.
-   In order to use this file in its compiled form, this source or
-   part of it you have to read, understand and accept the conditions
-   that are stated in the LICENSE file that comes boundled with this
-   package.
 */
 
 /** \file

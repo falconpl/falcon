@@ -264,7 +264,7 @@
 
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union
-#line 66 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+#line 61 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
 lex_value_t {
    Falcon::int64 integer;
    Falcon::numeric numeric;

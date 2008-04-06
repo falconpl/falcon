@@ -1,22 +1,16 @@
 /*
    FALCON - The Falcon Programming Language.
    FILE: fstream_sys_win.h
-   $Id: fstream_sys_win.h,v 1.3 2007/08/03 15:10:22 jonnymind Exp $
 
    MS-Windows system specific data used by FILE service.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: dom mar 12 2006
-   Last modified because:
 
    -------------------------------------------------------------------
    (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
 
    See LICENSE file for licensing details.
-   In order to use this file in its compiled form, this source or
-   part of it you have to read, understand and accept the conditions
-   that are stated in the LICENSE file that comes boundled with this
-   package.
 */
 
 /** \file

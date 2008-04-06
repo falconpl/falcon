@@ -1,22 +1,16 @@
 /*
    FALCON - The Falcon Programming Language.
    FILE: flc_cdict.h
-   $Id: cdict.h,v 1.8 2007/08/11 00:11:51 jonnymind Exp $
 
    Core dictionary -- base abstract class for dictionary interfaces.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: sab dic 4 2004
-   Last modified because:
 
    -------------------------------------------------------------------
    (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
 
    See LICENSE file for licensing details.
-   In order to use this file in its compiled form, this source or
-   part of it you have to read, understand and accept the conditions
-   that are stated in the LICENSE file that comes boundled with this
-   package.
 */
 
 /** \file

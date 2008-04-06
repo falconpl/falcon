@@ -1,22 +1,16 @@
 /*
    FALCON - The Falcon Programming Language.
    FILE: autocstring.h
-   $Id: autocstring.h,v 1.4 2007/08/18 13:23:53 jonnymind Exp $
 
    SUtility to convert falcon items and strings into C Strings.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: sab ago 4 2007
-   Last modified because:
 
    -------------------------------------------------------------------
    (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
 
    See LICENSE file for licensing details.
-   In order to use this file in its compiled form, this source or
-   part of it you have to read, understand and accept the conditions
-   that are stated in the LICENSE file that comes boundled with this
-   package.
 */
 
 /** \file

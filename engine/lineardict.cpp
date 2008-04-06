@@ -1,8 +1,8 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: dict.cpp
+   FILE: lineardict.cpp
 
-   Short description
+   Linear dictionary
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: lun ago 23 21:55:38 CEST 2004

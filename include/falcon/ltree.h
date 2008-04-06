@@ -1,22 +1,16 @@
 /*
    FALCON - The Falcon Programming Language.
    FILE: ltree.h
-   $Id: ltree.h,v 1.3 2006/12/05 15:28:47 gian Exp $
 
    Inlined tree linked list templates.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: Sat Feb 26 08:45:59 CET 2005
-   Last modified because:
 
    -------------------------------------------------------------------
    (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
 
    See LICENSE file for licensing details.
-   In order to use this file in its compiled form, this source or
-   part of it you have to read, understand and accept the conditions
-   that are stated in the LICENSE file that comes boundled with this
-   package.
 */
 
 /** \file

@@ -1,22 +1,16 @@
 /*
    FALCON - The Falcon Programming Language.
    FILE: genlist.h
-   $Id: genericlist.h,v 1.7 2007/04/02 00:24:00 jonnymind Exp $
 
    Generic list - a list holding generic values.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: dom ott 15 2006
-   Last modified because:
 
    -------------------------------------------------------------------
    (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
 
    See LICENSE file for licensing details.
-   In order to use this file in its compiled form, this source or
-   part of it you have to read, understand and accept the conditions
-   that are stated in the LICENSE file that comes boundled with this
-   package.
 */
 
 /** \file

@@ -1,22 +1,16 @@
 /*
    FALCON - The Falcon Programming Language.
    FILE: messages.h
-   $Id: messages.h,v 1.15 2007/08/03 13:17:05 jonnymind Exp $
 
    Standard engine and basic module messages
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: mar feb 13 2007
-   Last modified because:
 
    -------------------------------------------------------------------
    (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
 
    See LICENSE file for licensing details.
-   In order to use this file in its compiled form, this source or
-   part of it you have to read, understand and accept the conditions
-   that are stated in the LICENSE file that comes boundled with this
-   package.
 */
 
 /** \file

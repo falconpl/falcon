@@ -1,22 +1,16 @@
 /*
    FALCON - The Falcon Programming Language.
    FILE: vm_stdstreams.h
-   $Id: stdstreams.h,v 1.2 2006/12/12 00:14:43 gian Exp $
 
    System dependant default I/O streams.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: ven ago 25 2006
-   Last modified because:
 
    -------------------------------------------------------------------
    (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
 
    See LICENSE file for licensing details.
-   In order to use this file in its compiled form, this source or
-   part of it you have to read, understand and accept the conditions
-   that are stated in the LICENSE file that comes boundled with this
-   package.
 */
 
 /** \file

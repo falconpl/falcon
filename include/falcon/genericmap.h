@@ -1,23 +1,17 @@
 /*
    FALCON - The Falcon Programming Language.
    FILE: genericmap.h
-   $Id: genericmap.h,v 1.15 2007/07/05 21:40:27 jonnymind Exp $
 
    Generic map - a map holding generic values.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: lun ago 23 21:55:38 CEST 2004
 
-   Last modified because:
 
    -------------------------------------------------------------------
    (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
 
    See LICENSE file for licensing details.
-   In order to use this file in its compiled form, this source or
-   part of it you have to read, understand and accept the conditions
-   that are stated in the LICENSE file that comes boundled with this
-   package.
 */
 
 #ifndef flc_genericmap_h

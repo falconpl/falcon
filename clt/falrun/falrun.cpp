@@ -1,22 +1,16 @@
 /*
    FALCON - The Falcon Programming Language.
    FILE: falrun.cpp
-   $Id: falrun.cpp,v 1.11 2007/08/11 00:11:55 jonnymind Exp $
 
    A simple program that uses Falcon VM to execute falcon compiled codes.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: dom ago  8 20:30:13 CEST 2004
-   Last modified because:
 
    -------------------------------------------------------------------
    (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
 
    See LICENSE file for licensing details.
-   In order to use this file in its compiled form, this source or
-   part of it you have to read, understand and accept the conditions
-   that are stated in the LICENSE file that comes boundled with this
-   package.
 */
 
 #include <falcon/vm.h>

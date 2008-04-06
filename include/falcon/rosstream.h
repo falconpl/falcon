@@ -1,22 +1,16 @@
 /*
    FALCON - The Falcon Programming Language.
    FILE: rosstream.h
-   $Id: rosstream.h,v 1.3 2007/08/18 20:10:18 jonnymind Exp $
 
    Definition of read only string stream.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: sab ago 19 2006
-   Last modified because:
 
    -------------------------------------------------------------------
    (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
 
    See LICENSE file for licensing details.
-   In order to use this file in its compiled form, this source or
-   part of it you have to read, understand and accept the conditions
-   that are stated in the LICENSE file that comes boundled with this
-   package.
 */
 
 /** \file

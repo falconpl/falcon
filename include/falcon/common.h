@@ -1,22 +1,16 @@
 /*
    FALCON - The Falcon Programming Language.
    FILE: flc_common.h
-   $Id: common.h,v 1.4 2007/06/08 18:20:08 jonnymind Exp $
 
    Definition for falcon common library.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: dom giu 20 2004
-   Last modified because:
 
    -------------------------------------------------------------------
    (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
 
    See LICENSE file for licensing details.
-   In order to use this file in its compiled form, this source or
-   part of it you have to read, understand and accept the conditions
-   that are stated in the LICENSE file that comes boundled with this
-   package.
 */
 
 

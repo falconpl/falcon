@@ -4,7 +4,6 @@
 
    FILE: serialTest.fal
 
-   $Id: serialTest.fal,v 1.2 2007/06/09 10:32:55 jonnymind Exp $
 
    Serializer and deserializer for file streams.
 	Use parameter -o to write an output serialized file
@@ -12,16 +11,11 @@
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: mer nov 3 2004
-   Last modified because:
 
    -------------------------------------------------------------------
    (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
 
    See LICENSE file for licensing details.
-   In order to use this file in its compiled form, this source or
-   part of it you have to read, understand and accept the conditions
-   that are stated in the LICENSE file that comes boundled with this
-   package.
 */
 
 object obj

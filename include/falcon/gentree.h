@@ -1,22 +1,16 @@
 /*
    FALCON - The Falcon Programming Language.
    FILE: $FILE$.h
-   $Id: gentree.h,v 1.3 2007/04/02 00:24:00 jonnymind Exp $
 
    Generates a compiler-debug oriented representation of the input symtree.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: sab giu 5 2004
-   Last modified because:
 
    -------------------------------------------------------------------
    (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
 
    See LICENSE file for licensing details.
-   In order to use this file in its compiled form, this source or
-   part of it you have to read, understand and accept the conditions
-   that are stated in the LICENSE file that comes boundled with this
-   package.
 */
 #ifndef FALCON_GENTREE_H
 #define FALCON_GENTREE_H

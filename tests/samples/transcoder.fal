@@ -3,23 +3,17 @@
 
    FILE: transcoder.fal
 
-   $Id: transcoder.fal,v 1.2 2007/03/04 17:39:03 jonnymind Exp $
 
    Transcodes an input file from a certain encoding to another.
    This code is currently highly experimental.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin:
-   Last modified because:
 
    -------------------------------------------------------------------
    (C) Copyright 2006: the FALCON developers (see list in AUTHORS file)
 
    See LICENSE file for licensing details.
-   In order to use this file in its compiled form, this source or
-   part of it you have to read, understand and accept the conditions
-   that are stated in the LICENSE file that comes boundled with this
-   package.
 */
 
 if len( args ) != 4
