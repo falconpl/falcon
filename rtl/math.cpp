@@ -1,22 +1,16 @@
 /*
    FALCON - The Falcon Programming Language
    FILE: math.cpp
-   $Id: math.cpp,v 1.3 2007/03/04 17:39:03 jonnymind Exp $
 
    Mathematical basic function for basic rtl.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: dom apr 16 2006
-   Last modified because:
 
    -------------------------------------------------------------------
    (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
 
    See LICENSE file for licensing details.
-   In order to use this file in its compiled form, this source or
-   part of it you have to read, understand and accept the conditions
-   that are stated in the LICENSE file that comes boundled with this
-   package.
 */
 
 /** \file

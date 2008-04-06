@@ -1,22 +1,16 @@
 /*
    FALCON - The Falcon Programming Language.
    FILE: serialize.cpp
-   $Id: serialize.cpp,v 1.8 2007/08/03 13:17:07 jonnymind Exp $
 
    Serialization support
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: sab nov 13 2004
-   Last modified because:
 
    -------------------------------------------------------------------
    (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
 
    See LICENSE file for licensing details.
-   In order to use this file in its compiled form, this source or
-   part of it you have to read, understand and accept the conditions
-   that are stated in the LICENSE file that comes boundled with this
-   package.
 */
 
 /** \file

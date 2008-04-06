@@ -1,22 +1,16 @@
 /*
    FALCON - The Falcon Programming Language.
    FILE: time_ext.cpp
-   $Id: time_ext.cpp,v 1.10 2007/08/11 00:11:57 jonnymind Exp $
 
    Date and time support for RTL
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: ven nov 12 2004
-   Last modified because:
 
    -------------------------------------------------------------------
    (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
 
    See LICENSE file for licensing details.
-   In order to use this file in its compiled form, this source or
-   part of it you have to read, understand and accept the conditions
-   that are stated in the LICENSE file that comes boundled with this
-   package.
 */
 
 /** \file

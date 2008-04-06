@@ -1,22 +1,16 @@
 /*
    FALCON - The Falcon Programming Language.
    FILE: random.cpp
-   $Id: random.cpp,v 1.5 2007/08/11 21:21:57 jonnymind Exp $
 
    Random number related functions.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: lun nov 8 2004
-   Last modified because:
 
    -------------------------------------------------------------------
    (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
 
    See LICENSE file for licensing details.
-   In order to use this file in its compiled form, this source or
-   part of it you have to read, understand and accept the conditions
-   that are stated in the LICENSE file that comes boundled with this
-   package.
 */
 
 /** \file

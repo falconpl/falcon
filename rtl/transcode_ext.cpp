@@ -1,22 +1,16 @@
 /*
    FALCON - The Falcon Programming Language
    FILE: transcode_ext.cpp
-   $Id: transcode_ext.cpp,v 1.6 2007/08/11 00:11:57 jonnymind Exp $
 
    Transcoder api for rtl.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: lun ott 2 2006
-   Last modified because:
 
    -------------------------------------------------------------------
    (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
 
    See LICENSE file for licensing details.
-   In order to use this file in its compiled form, this source or
-   part of it you have to read, understand and accept the conditions
-   that are stated in the LICENSE file that comes boundled with this
-   package.
 */
 
 /** \file
