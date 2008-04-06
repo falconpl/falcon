@@ -706,9 +706,16 @@ public:
             for start symbol(s) by prepare() function.
       \param rt the runtime to be linked
       \param isMainModule false to prevent this module to be chosen as startup module.
-      \return false on link time error, true on success
+      \return 0 time error, the internally built LiveModule instance on success.
    */
-   bool link( Module *module, bool isMainModule=true );
+   LiveModule *link( Module *module, bool isMainModule=true );
+
+   /** Returns the main module, if it exists.
+      Returns an instance of the LiveModule class, that is the local representation
+      of a module linked in the VM, that holds informations about the "main" module
+      in this virtual machine.
+   */
+   LiveModule *mainModule() const { return m_mainModule; }
 
    /** Unlinks all the modules in the runtime.
 

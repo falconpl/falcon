@@ -339,6 +339,7 @@ void VMachine::run()
 
          case eventYield:
             m_pc = m_pc_next;
+            m_event = eventNone;
             yield( m_yieldTime );
             if ( m_event == eventSleep )
                return;

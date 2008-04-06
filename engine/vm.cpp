@@ -327,7 +327,7 @@ bool VMachine::link( Runtime *rt )
 }
 
 
-bool VMachine::link( Module *mod, bool isMainModule )
+LiveModule *VMachine::link( Module *mod, bool isMainModule )
 {
    ItemVector *globs;
 
@@ -507,7 +507,7 @@ bool VMachine::link( Module *mod, bool isMainModule )
 
    // exit if link failed.
    if ( ! success )
-      return false;
+      return 0;
 
    // now that the symbols in the module have been linked, link the classes.
    ListElement *cls_iter = modClasses.begin();
@@ -546,7 +546,7 @@ bool VMachine::link( Module *mod, bool isMainModule )
                symbol( obj->name() ).
                module( obj->module()->name() ) )
          );
-         return false;
+         return 0;
       }
       else {
          CoreObject *co = clsItem->asClass()->createInstance();
@@ -584,7 +584,7 @@ bool VMachine::link( Module *mod, bool isMainModule )
             m_event = eventNone;
             callItem( *clsItem, 0, e_callInst );
             if ( m_event == eventRisen )
-               return false;
+               return 0;
          }
          obj_iter = obj_iter->next();
       }
@@ -595,7 +595,7 @@ bool VMachine::link( Module *mod, bool isMainModule )
       m_regS2 = oldS2;
    }
 
-   return true;
+   return livemod;
 }
 
 
@@ -1691,7 +1691,7 @@ void VMachine::electContext()
       m_pc = m_pc_next;
 
       // but eventually sleep.
-	  if ( tgtTime > 0.0 )
+      if ( tgtTime > 0.0 )
       {
          // should we ask the embedding application to wait for us??
          if ( m_sleepAsRequests )
