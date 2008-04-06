@@ -1,22 +1,16 @@
 /*
    FALCON - The Falcon Programming Language.
    FILE: strtable.cpp
-   $Id: strtable.cpp,v 1.8 2007/03/18 19:21:13 jonnymind Exp $
 
    String table implementation
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: Mon Feb 14 2005
-   Last modified because:
 
    -------------------------------------------------------------------
    (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
 
    See LICENSE file for licensing details.
-   In order to use this file in its compiled form, this source or
-   part of it you have to read, understand and accept the conditions
-   that are stated in the LICENSE file that comes boundled with this
-   package.
 */
 
 /** \file

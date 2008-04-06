@@ -1,22 +1,16 @@
 /*
    FALCON - The Falcon Programming Language
    FILE: List.cpp
-   $Id: genericlist.cpp,v 1.6 2007/03/08 14:31:44 jonnymind Exp $
 
    a list holding generic values.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: dom ott 15 2006
-   Last modified because:
 
    -------------------------------------------------------------------
    (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
 
    See LICENSE file for licensing details.
-   In order to use this file in its compiled form, this source or
-   part of it you have to read, understand and accept the conditions
-   that are stated in the LICENSE file that comes boundled with this
-   package.
 */
 
 /** \file

@@ -1,22 +1,16 @@
 /*
    FALCON - The Falcon Programming Language.
    FILE: dll_win.cpp
-   $Id: dll_dl.cpp,v 1.2 2007/08/11 10:24:40 jonnymind Exp $
 
    Implementation of windows specific DLL system
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: mar ago 3 2004
-   Last modified because:
 
    -------------------------------------------------------------------
    (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
 
    See LICENSE file for licensing details.
-   In order to use this file in its compiled form, this source or
-   part of it you have to read, understand and accept the conditions
-   that are stated in the LICENSE file that comes boundled with this
-   package.
 */
 
 #include <falcon/dll_dl.h>

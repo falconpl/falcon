@@ -1,22 +1,16 @@
 /*
    FALCON - The Falcon Programming Language.
    FILE: flc_runtime.cpp
-   $Id: runtime.cpp,v 1.11 2007/08/11 19:02:32 jonnymind Exp $
 
    Short description
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: mer ago 18 2004
-   Last modified because:
 
    -------------------------------------------------------------------
    (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
 
    See LICENSE file for licensing details.
-   In order to use this file in its compiled form, this source or
-   part of it you have to read, understand and accept the conditions
-   that are stated in the LICENSE file that comes boundled with this
-   package.
 */
 
 #include <falcon/module.h>

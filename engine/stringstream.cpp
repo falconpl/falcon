@@ -1,22 +1,16 @@
 /*
    FALCON - The Falcon Programming Language.
    FILE: file_StringStream.cpp
-   $Id: stringstream.cpp,v 1.5 2007/08/11 12:21:16 jonnymind Exp $
 
    Implementation of StringStream oriented streams.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: sab nov 13 2004
-   Last modified because:
 
    -------------------------------------------------------------------
    (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
 
    See LICENSE file for licensing details.
-   In order to use this file in its compiled form, this source or
-   part of it you have to read, understand and accept the conditions
-   that are stated in the LICENSE file that comes boundled with this
-   package.
 */
 
 /** \file

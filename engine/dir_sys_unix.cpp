@@ -1,22 +1,16 @@
 /*
    FALCON - The Falcon Programming Language.
    FILE: dir_unix.cpp
-   $Id: dir_sys_unix.cpp,v 1.1 2007/06/21 21:54:26 jonnymind Exp $
 
    Implementation of directory system support for unix.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: dom nov 7 2004
-   Last modified because:
 
    -------------------------------------------------------------------
    (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
 
    See LICENSE file for licensing details.
-   In order to use this file in its compiled form, this source or
-   part of it you have to read, understand and accept the conditions
-   that are stated in the LICENSE file that comes boundled with this
-   package.
 */
 
 /** \file
@@ -27,6 +21,7 @@
 #include <falcon/mempool.h>
 #include <falcon/string.h>
 #include <falcon/memory.h>
+#include <falcon/autocstring.h>
 
 #include <falcon/dir_sys_unix.h>
 #include <falcon/time_sys_unix.h>
@@ -175,20 +170,14 @@ bool fal_unlink( const String &f, int32 &fsStatus )
 
 bool fal_move( const String &f, const String &d, int32 &fsStatus )
 {
-   char *filename = (char *) memAlloc( f.size() * 4 + 1);
-   f.toCString( filename, f.size() * 4 );
+   AutoCString filename( f );
+   AutoCString dest( d );
 
-   char *dest = (char *) memAlloc( d.size() * 4  + 1);
-   d.toCString( filename, d.size() * 4 );
-
-   if ( ::rename( filename, dest ) == 0 ) {
+   if ( ::rename( filename.c_str(), dest.c_str() ) == 0 )
+   {
       fsStatus = 0;
-      memFree( filename );
-      memFree( dest );
       return true;
    }
-   memFree( filename );
-   memFree( dest );
    fsStatus = errno;
    return false;
 }

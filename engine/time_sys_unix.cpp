@@ -1,22 +1,16 @@
 /*
    FALCON - The Falcon Programming Language.
    FILE: time_sys_unix.cpp
-   $Id: time_sys_unix.cpp,v 1.1 2007/06/21 21:54:26 jonnymind Exp $
 
    Unix system implementation for time related service
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: lun mar 6 2006
-   Last modified because:
 
    -------------------------------------------------------------------
    (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
 
    See LICENSE file for licensing details.
-   In order to use this file in its compiled form, this source or
-   part of it you have to read, understand and accept the conditions
-   that are stated in the LICENSE file that comes boundled with this
-   package.
 */
 
 /** \file

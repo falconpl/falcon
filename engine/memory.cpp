@@ -1,22 +1,16 @@
 /*
    FALCON - The Falcon Programming Language.
    FILE: flc_memory.cpp
-   $Id: memory.cpp,v 1.3 2007/01/24 21:49:55 jonnymind Exp $
 
    Basic memory manager functions and function pointers.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: 2004-08-01
-   Last modified because:
 
    -------------------------------------------------------------------
    (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
 
    See LICENSE file for licensing details.
-   In order to use this file in its compiled form, this source or
-   part of it you have to read, understand and accept the conditions
-   that are stated in the LICENSE file that comes boundled with this
-   package.
 */
 
 #include <falcon/memory.h>

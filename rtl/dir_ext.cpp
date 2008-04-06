@@ -556,7 +556,7 @@ FALCON_FUNC  fileMove ( ::Falcon::VMachine *vm )
    int32 fsError;
    if( ! Sys::fal_move( *strName, *strDest, fsError ) ) {
       vm->raiseModError( new IoError( ErrorParam( 1016, __LINE__ ).
-         origin( e_orig_runtime ).desc( "Cannot move target file" ).extra( *strName + "->" + *strDest ).
+         origin( e_orig_runtime ).desc( "Cannot move target file" ).extra( *strName + " -> " + *strDest ).
          sysError( (uint32) Sys::_lastError() ) ) );
    }
 }

@@ -1,7 +1,6 @@
 /*
    FALCON - The Falcon Programming Language.
    FILE: gentree.cpp
-   $Id: gentree.cpp,v 1.16 2007/08/01 13:18:01 jonnymind Exp $
 
    Short description
    -------------------------------------------------------------------
@@ -13,10 +12,6 @@
    (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
 
    See LICENSE file for licensing details.
-   In order to use this file in its compiled form, this source or
-   part of it you have to read, understand and accept the conditions
-   that are stated in the LICENSE file that comes boundled with this
-   package.
 */
 
 #include <falcon/gentree.h>

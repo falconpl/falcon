@@ -1,22 +1,16 @@
 /*
    FALCON - The Falcon Programming Language.
    FILE: cstring.cpp
-   $Id: string.cpp,v 1.25 2007/08/16 13:46:40 jonnymind Exp $
 
    Implementation of Core Strings.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: mer nov 24 2004
-   Last modified because:
 
    -------------------------------------------------------------------
    (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
 
    See LICENSE file for licensing details.
-   In order to use this file in its compiled form, this source or
-   part of it you have to read, understand and accept the conditions
-   that are stated in the LICENSE file that comes boundled with this
-   package.
 */
 
 /** \file

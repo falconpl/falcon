@@ -1,22 +1,16 @@
 /*
    FALCON - The Falcon Programming Language.
    FILE: labeldef.cpp
-   $Id: labeldef.cpp,v 1.2 2006/10/15 20:21:50 gian Exp $
 
    Definition for assembly oriented labels.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: sab ago 27 2005
-   Last modified because:
 
    -------------------------------------------------------------------
    (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
 
    See LICENSE file for licensing details.
-   In order to use this file in its compiled form, this source or
-   part of it you have to read, understand and accept the conditions
-   that are stated in the LICENSE file that comes boundled with this
-   package.
 */
 
 /** \file

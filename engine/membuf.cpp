@@ -6,16 +6,11 @@
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: Mon, 17 Mar 2008 23:07:21 +0100
-   Last modified because:
 
    -------------------------------------------------------------------
    (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
 
    See LICENSE file for licensing details.
-   In order to use this file in its compiled form, this source or
-   part of it you have to read, understand and accept the conditions
-   that are stated in the LICENSE file that comes boundled with this
-   package.
 */
 
 /** \file

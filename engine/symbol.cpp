@@ -1,22 +1,16 @@
 /*
    FALCON - The Falcon Programming Language.
    FILE: symbol.cpp
-   $Id: symbol.cpp,v 1.10 2007/08/02 23:41:40 jonnymind Exp $
 
    Provide non-inlineizable symbol definitions
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: 2004-9-11
-   Last modified because:
 
    -------------------------------------------------------------------
    (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
 
    See LICENSE file for licensing details.
-   In order to use this file in its compiled form, this source or
-   part of it you have to read, understand and accept the conditions
-   that are stated in the LICENSE file that comes boundled with this
-   package.
 */
 
 #include <falcon/setup.h>

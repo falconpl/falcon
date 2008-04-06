@@ -1,22 +1,16 @@
 /*
    FALCON - Falcon advanced simple text evaluator.
    FILE: time_sys_win.cpp
-   $Id: time_sys_win.cpp,v 1.2 2007/06/22 15:14:24 jonnymind Exp $
 
    Win system implementation for time related service
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: lun mar 6 2006
-   Last modified because:
 
    -------------------------------------------------------------------
    (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
 
    See LICENSE file for licensing details.
-   In order to use this file in its compiled form, this source or
-   part of it you have to read, understand and accept the conditions
-   that are stated in the LICENSE file that comes boundled with this
-   package.
 */
 
 /** \file

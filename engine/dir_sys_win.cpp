@@ -1,22 +1,16 @@
 /*
    FALCON - Falcon advanced simple text evaluator.
    FILE: dir_win.cpp
-   $Id: dir_sys_win.cpp,v 1.3 2007/08/11 12:15:59 jonnymind Exp $
 
    Implementation of directory system support for unix.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: dom nov 7 2004
-   Last modified because:
 
    -------------------------------------------------------------------
    (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
 
    See LICENSE file for licensing details.
-   In order to use this file in its compiled form, this source or
-   part of it you have to read, understand and accept the conditions
-   that are stated in the LICENSE file that comes boundled with this
-   package.
 */
 
 /** \file

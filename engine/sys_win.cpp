@@ -1,22 +1,16 @@
 /*
    FALCON - Falcon advanced simple text evaluator.
    FILE: sys_win.cpp
-   $Id: sys_win.cpp,v 1.10 2007/07/27 01:33:55 jonnymind Exp $
 
    System specific (win) support for VM and other Falcon parts.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: mar nov 9 2004
-   Last modified because:
 
    -------------------------------------------------------------------
    (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
 
    See LICENSE file for licensing details.
-   In order to use this file in its compiled form, this source or
-   part of it you have to read, understand and accept the conditions
-   that are stated in the LICENSE file that comes boundled with this
-   package.
 */
 
 /** \file
