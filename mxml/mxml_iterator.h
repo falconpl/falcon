@@ -5,7 +5,6 @@
 
    Author: Giancarlo Niccolai <gian@niccolai.ws>
 
-   $Id: mxml_iterator.h,v 1.6 2005/02/24 13:39:22 jonnymind Exp $
 */
 
 //TO BE INCLUDED IN NODE.H

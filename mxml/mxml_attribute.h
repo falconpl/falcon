@@ -5,7 +5,6 @@
 
    Author: Giancarlo Niccolai <gian@niccolai.ws>
 
-   $Id: mxml_attribute.h,v 1.2 2004/01/11 13:32:17 jonnymind Exp $
 */
 
 #ifndef MXML_ATTRIBUTE_H

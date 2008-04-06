@@ -5,7 +5,6 @@
 
    Author: Giancarlo Niccolai <gian@niccolai.ws>
 
-   $Id: mxml_node.h,v 1.12 2005/09/20 20:08:57 jonnymind Exp $
 */
 
 #ifndef MXML_NODE_H

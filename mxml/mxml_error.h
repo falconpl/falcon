@@ -5,7 +5,6 @@
 
    Author: Giancarlo Niccolai <gian@niccolai.ws>
 
-   $Id: mxml_error.h,v 1.1.1.1 2003/08/13 00:13:29 jonnymind Exp $
 */
 
 #ifndef MXML_ERROR_H

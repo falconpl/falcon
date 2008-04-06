@@ -1,22 +1,16 @@
 /*
    FALCON - Falcon advanced simple text evaluator.
    FILE: process_sys_win.cpp
-   $Id: process_sys_win.cpp,v 1.3 2006/11/19 11:25:39 gian Exp $
 
    MS-Windows specific implementation of openProcess
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: Sun Jan 30 2005
-   Last modified because:
 
    -------------------------------------------------------------------
    (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
 
    See LICENSE file for licensing details.
-   In order to use this file in its compiled form, this source or
-   part of it you have to read, understand and accept the conditions
-   that are stated in the LICENSE file that comes boundled with this
-   package.
 */
 
 /** \file

@@ -6,7 +6,6 @@
    This script accepts a pattern and a string to match,
    and it prints the matches it is able to perform.
 
-   $Id: regexTest.fal,v 1.3 2007/08/18 13:23:53 jonnymind Exp $
 */
 
 load regex

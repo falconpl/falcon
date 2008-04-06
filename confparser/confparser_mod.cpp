@@ -1,22 +1,16 @@
 /*
    AFALCON - The Falcon Programming Language
    FILE: confparser_mod.cpp
-   $Id: confparser_mod.cpp,v 1.7 2007/01/02 09:14:28 gian Exp $
 
    Configuration parser module -- module service classes
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: sab nov 25 2006
-   Last modified because:
 
    -------------------------------------------------------------------
    (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
 
    See LICENSE file for licensing details.
-   In order to use this file in its compiled form, this source or
-   part of it you have to read, understand and accept the conditions
-   that are stated in the LICENSE file that comes boundled with this
-   package.
 */
 
 /** \file

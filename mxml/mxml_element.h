@@ -5,7 +5,6 @@
 
    Author: Giancarlo Niccolai <gian@niccolai.ws>
 
-   $Id: mxml_element.h,v 1.2 2004/10/14 13:16:37 jonnymind Exp $
 */
 
 #ifndef MXML_ELEMENT_H

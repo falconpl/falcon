@@ -1,22 +1,16 @@
 /*
    FALCON - The Falcon Programming Language
    FILE: compiler_mod.cpp
-   $Id: compiler_mod.cpp,v 1.6 2007/08/11 19:02:32 jonnymind Exp $
 
    Compiler interface modules
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: sab lug 21 2007
-   Last modified because:
 
    -------------------------------------------------------------------
    (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
 
    See LICENSE file for licensing details.
-   In order to use this file in its compiled form, this source or
-   part of it you have to read, understand and accept the conditions
-   that are stated in the LICENSE file that comes boundled with this
-   package.
 */
 
 /** \file

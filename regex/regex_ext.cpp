@@ -1,22 +1,16 @@
 /*
    FALCON - The Falcon Programming Language.
    FILE: regex_ext.cpp
-   $Id: regex_ext.cpp,v 1.14 2007/08/18 13:23:53 jonnymind Exp $
 
    Regular expression module.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: sab mar 11 2006
-   Last modified because:
 
    -------------------------------------------------------------------
    (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
 
    See LICENSE file for licensing details.
-   In order to use this file in its compiled form, this source or
-   part of it you have to read, understand and accept the conditions
-   that are stated in the LICENSE file that comes boundled with this
-   package.
 */
 
 /** \file

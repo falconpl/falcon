@@ -5,7 +5,6 @@
 
    Author: Giancarlo Niccolai <gian@niccolai.ws>
 
-   $Id: mxml_node.cpp,v 1.9 2005/09/20 20:08:57 jonnymind Exp $
 */
 
 #include <mxml.h>

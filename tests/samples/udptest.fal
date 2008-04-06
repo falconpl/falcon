@@ -6,7 +6,6 @@
    This script broadcast a request for the "udpserver.fal", and once found
    it sends the messages you type to the server.
 
-   $Id: udptest.fal,v 1.1.1.1 2006/10/08 15:05:21 gian Exp $
 */
 
 load socket

@@ -1,22 +1,16 @@
 /*
    FALCON - The Falcon Programming Language.
    FILE: socket_sys_win.cpp
-   $Id: socket_sys_unix.cpp,v 1.1.1.1 2006/10/08 15:05:09 gian Exp $
 
    UNIX/BSD system specific interface to sockets.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: 2006-05-09 15:50
-   Last modified because:
 
    -------------------------------------------------------------------
    (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
 
    See LICENSE file for licensing details.
-   In order to use this file in its compiled form, this source or
-   part of it you have to read, understand and accept the conditions
-   that are stated in the LICENSE file that comes boundled with this
-   package.
 */
 
 /** \file

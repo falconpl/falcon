@@ -5,7 +5,6 @@
 
    Author: Giancarlo Niccolai <gian@niccolai.ws>
 
-   $Id: mxml_utility.cpp,v 1.3 2004/10/14 13:16:37 jonnymind Exp $
 */
 
 #include <falcon/string.h>

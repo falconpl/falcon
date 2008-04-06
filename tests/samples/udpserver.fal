@@ -5,7 +5,6 @@
 
    This scripts just waits for UDP packets from clients.
 
-   $Id: udpserver.fal,v 1.2 2007/03/04 17:39:03 jonnymind Exp $
 */
 
 load socket

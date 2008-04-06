@@ -5,7 +5,6 @@
 
    Author: Giancarlo Niccolai <gian@niccolai.ws>
 
-   $Id: mxml_document.h,v 1.4 2004/02/03 23:12:40 jonnymind Exp $
 */
 
 /** \file
