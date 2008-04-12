@@ -378,9 +378,6 @@ protected:
    /** Context currently being executed. */
    VMContext *m_currentContext;
 
-   /** Modules held in this VM */
-   //ModuleVector m_modules;
-
    /** Ready to run contexts. */
    ContextList m_contexts;
    /** Contexts willing to sleep for a while */

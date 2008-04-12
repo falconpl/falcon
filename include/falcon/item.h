@@ -114,7 +114,7 @@ private:
 
    bool internal_is_equal( const Item &other ) const;
    int internal_compare( const Item &other ) const;
-   bool serialize_object( Stream *file, const CoreObject *obj, VMachine *vm ) const;
+   bool serialize_object( Stream *file, const CoreObject *obj, VMachine *vm, bool bLive ) const;
    bool serialize_symbol( Stream *file, const Symbol *sym ) const;
    bool serialize_function( Stream *file, const Symbol *func, VMachine *vm ) const;
 
@@ -606,7 +606,7 @@ public:
       \param vm the virtual machine that can be used for object serialization
       \return an error code in case of error (\see e_sercode).
    */
-   e_sercode serialize( Stream *out, VMachine *vm = 0 ) const;
+   e_sercode serialize( Stream *out, VMachine *vm = 0, bool bLive = false ) const;
 
 
    /** Loads a serialized item from a stream.

@@ -32,12 +32,14 @@ ModuleVector::ModuleVector():
 
 Runtime::Runtime():
    m_loader( 0 ),
-   m_provider( 0 )
+   m_provider( 0 ),
+   m_modPending( &traits::t_stringptr, &traits::t_int )
 {}
 
 Runtime::Runtime( ModuleLoader *loader, VMachine *prov ):
    m_loader( loader ),
-   m_provider( prov )
+   m_provider( prov ),
+   m_modPending( &traits::t_stringptr, &traits::t_int )
 {}
 
 /** Declared here to avoid inlining of destructor. */
@@ -87,9 +89,40 @@ bool Runtime::addModule( Module *mod )
 
          deps = deps->next();
       }
+
+      m_modvect.push( mod );
+   }
+   else
+   {
+      int insertAt = m_modvect.size();
+
+      // re-sort the array if we had some previous dependency.
+      int *pending = (int *) m_modPending.find( &mod->name() );
+      if ( pending != 0 )
+      {
+         insertAt = *pending;
+         m_modvect.insert( mod, (uint32) insertAt );
+      }
+      else
+         m_modvect.push( mod );
+
+      // then, record pending modules for THIS module, if any.
+      ListElement *deps = mod->dependencies().begin();
+      while( deps != 0 )
+      {
+         const String *moduleName = (const String *) deps->data();
+
+         // if the module is missing both from our module list and dependency list
+         // add a dependency here
+         if ( m_modules.find( moduleName ) == 0 && m_modPending.find( moduleName ) == 0 )
+         {
+            m_modPending.insert( moduleName, &insertAt );
+         }
+         deps = deps->next();
+      }
    }
 
-   m_modvect.push( mod );
+
    mod->incref();
 
    return true;

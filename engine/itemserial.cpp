@@ -71,9 +71,19 @@ bool Item::serialize_function( Stream *file, const Symbol *func, VMachine *vm ) 
    return true;
 }
 
-bool Item::serialize_object( Stream *file, const CoreObject *obj, VMachine *vm ) const
+bool Item::serialize_object( Stream *file, const CoreObject *obj, VMachine *vm, bool bLive ) const
 {
+   // if we're not live, we can't have user data
+   if ( ! bLive && obj->getUserData() != 0 )
+   {
+      vm->raiseError( e_unserializable, "Item::serialize" );
+      return false;
+   }
+
    byte type = FLC_ITEM_OBJECT;
+   if ( bLive )
+      type |= 0x80;
+
    file->write( &type, 1 );
 
    // write the class symbol so that it can be rebuilt back.
@@ -112,11 +122,35 @@ bool Item::serialize_object( Stream *file, const CoreObject *obj, VMachine *vm )
       head = head->next();
    }
 
+   // finally, clone if live
+   if ( bLive )
+   {
+      if ( obj->getUserData() != 0 )
+      {
+         UserData *cloned = obj->getUserData()->clone();
+         if ( cloned == 0 )
+         {
+            vm->raiseError( e_uncloneable, "Item::serialize" );
+            return false;
+         }
+         file->write( (byte *) &cloned, sizeof( cloned ) );
+      }
+      else {
+         void *data = 0;
+         file->write( (byte *) &data, sizeof( data ) );
+      }
+
+      if ( ! file->good() )
+      {
+         return false;
+      }
+   }
+
    return true;
 }
 
 
-Item::e_sercode Item::serialize( Stream *file, VMachine *vm ) const
+Item::e_sercode Item::serialize( Stream *file, VMachine *vm, bool bLive ) const
 {
    if( file->bad() )
       return sc_ferror;
@@ -257,13 +291,13 @@ Item::e_sercode Item::serialize( Stream *file, VMachine *vm ) const
          byte type = FLC_ITEM_METHOD;
          file->write( &type, 1 );
 
-         serialize_object( file, this->asMethodObject(), vm );
+         serialize_object( file, this->asMethodObject(), vm, bLive );
          serialize_function( file, this->asMethodFunction(), vm );
       }
       break;
 
       case FLC_ITEM_OBJECT:
-         serialize_object( file, this->asObject(), vm );
+         serialize_object( file, this->asObject(), vm, bLive );
       break;
 
       case FLC_ITEM_REFERENCE:
@@ -589,8 +623,11 @@ Item::e_sercode Item::deserialize( Stream *file, VMachine *vm )
          return sc_ok;
       }
 
+      case FLC_ITEM_OBJECT | 0x80:
       case FLC_ITEM_OBJECT:
       {
+         bool bLive = type != FLC_ITEM_OBJECT;
+
          if( vm == 0 )
             return sc_missvm;
 
@@ -649,6 +686,15 @@ Item::e_sercode Item::deserialize( Stream *file, VMachine *vm )
          }
 
          if ( sc == sc_ok ) {
+            // if the object was serialized live, get the user data.
+            if( bLive )
+            {
+               UserData *data;
+               if ( file->read( (byte *) &data, sizeof( data ) ) != sizeof( data ) )
+                  return sc_ferror;
+               object->setUserData( data );
+            }
+
             setObject( object );
             return sc_ok;
          }

@@ -74,6 +74,7 @@ disk, so that it may become a somewhat complete linker.
 class FALCON_DYN_CLASS Runtime: public BaseAlloc
 {
    ModuleMap m_modules;
+   Map m_modPending;
    ModuleVector m_modvect;
    ModuleLoader *m_loader;
    VMachine *m_provider;
@@ -218,6 +219,12 @@ public:
       \return true on success, false on load or dependency resolution errors.
    */
    bool loadFile( const String &file );
+
+   /** Returns true if there are still some pending modules.
+      This means that the module list may not be completed in case the runtime
+      is not using a loader to resolve dependencies.
+   */
+   bool hasPendingModules() const { return ! m_modPending.empty(); }
 };
 
 

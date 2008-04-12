@@ -202,6 +202,7 @@ namespace msg {
       err_directive_unk,
       err_directive_value,
       err_noninst_cls,
+      err_unserializable,
 
       err_open_file,
       err_loaderror,

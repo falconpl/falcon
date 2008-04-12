@@ -203,6 +203,7 @@ char *en_table[] =
       "Unknown directive",
       "Invalid value for directive",
       "Target class cannot be instantiated",
+      "Object cannot be serialized (because of inner native data)",
 
       "Can't open file",
       "Load error",
