@@ -74,7 +74,6 @@ void GenericVector::insert( void *data, uint32 pos )
       return;
    }
 
-   m_traits->copy( m_data + ( m_itemSize * pos ), data );
    m_size ++;
 
    if ( m_size >= m_allocated )
@@ -88,8 +87,10 @@ void GenericVector::insert( void *data, uint32 pos )
    }
    else {
       if ( pos < m_size )
-         memmove( m_data + ( m_itemSize * (pos+1) ), m_data + ( m_itemSize * pos ), ( m_size - pos * m_itemSize ) );
+         memmove( m_data + ( m_itemSize * (pos+1) ), m_data + ( m_itemSize * pos ), ( (m_size - pos) * m_itemSize ) );
    }
+
+   m_traits->copy( m_data + ( m_itemSize * pos ), data );
 }
 
 void GenericVector::remove( void *data, uint32 pos )
