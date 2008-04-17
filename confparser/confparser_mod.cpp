@@ -1,5 +1,5 @@
 /*
-   AFALCON - The Falcon Programming Language
+   FALCON - The Falcon Programming Language
    FILE: confparser_mod.cpp
 
    Configuration parser module -- module service classes
