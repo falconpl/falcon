@@ -117,9 +117,11 @@ private:
    bool serialize_object( Stream *file, const CoreObject *obj, VMachine *vm, bool bLive ) const;
    bool serialize_symbol( Stream *file, const Symbol *sym ) const;
    bool serialize_function( Stream *file, const Symbol *func, VMachine *vm ) const;
+   bool serialize_class( Stream *file, const CoreClass *cls, VMachine *vm ) const;
 
    e_sercode deserialize_symbol( Stream *file, VMachine *vm, Symbol **tg_sym, LiveModule **modId );
    e_sercode deserialize_function( Stream *file, VMachine *vm );
+   e_sercode deserialize_class( Stream *file, VMachine *vm );
 
 #ifdef _MSC_VER
 	#if _MSC_VER < 1299

@@ -94,7 +94,7 @@ bool Item::serialize_object( Stream *file, const CoreObject *obj, VMachine *vm, 
    file->write((byte *) &len, sizeof(len) );
 
    for( uint32 i = 0; i < len; i ++ ) {
-      if ( obj->getPropertyAt( i ).serialize( file, vm ) != sc_ok )
+      if ( obj->getPropertyAt( i ).serialize( file, vm, bLive ) != sc_ok )
          return false;
    }
 
@@ -145,6 +145,27 @@ bool Item::serialize_object( Stream *file, const CoreObject *obj, VMachine *vm, 
          return false;
       }
    }
+
+   return true;
+}
+
+
+bool Item::serialize_class( Stream *file, const CoreClass *cls, VMachine *vm ) const
+{
+   byte type = FLC_ITEM_CLASS;
+   file->write( &type, 1 );
+
+   LiveModule *lmod = cls->liveModule();
+
+   // Write the live module name
+   lmod->name().serialize( file );
+   if ( ! file->good() )
+         return false;
+
+   // and the class name
+   cls->symbol()->name().serialize( file );
+   if ( ! file->good() )
+         return false;
 
    return true;
 }
@@ -304,6 +325,15 @@ Item::e_sercode Item::serialize( Stream *file, VMachine *vm, bool bLive ) const
          asReference()->origin().serialize( file, vm );
       break;
 
+      case FLC_ITEM_CLASS:
+         serialize_class( file, this->asClass(), vm );
+      break;
+
+       case FLC_ITEM_CLSMETHOD:
+         serialize_class( file, this->asMethodClass(), vm );
+         serialize_function( file, this->asMethodFunction(), vm );
+      break;
+
       default:
       {
          char type = FLC_ITEM_NIL;
@@ -388,6 +418,38 @@ Item::e_sercode Item::deserialize_function( Stream *file, VMachine *vm )
    return sc_ok;
 }
 
+Item::e_sercode Item::deserialize_class( Stream *file, VMachine *vm )
+{
+   if ( vm == 0 )
+      return sc_missvm;
+
+   String modName, className;
+   if ( ! modName.deserialize( file ) || ! className.deserialize( file ) )
+      return file->bad() ? sc_ferror : sc_invformat;
+
+   // find the module in the vm
+   LiveModule *origMod = vm->findModule( modName );
+   if( origMod == 0 )
+   {
+      return sc_misssym;
+   }
+
+   // find the class item in the module
+   Item *clitem = origMod->findModuleItem( className );
+   if ( clitem == 0 )
+      return sc_misssym;
+
+   if ( clitem->isReference() )
+   {
+      if( ! clitem->dereference()->isClass() )
+         return sc_misssym;
+   }
+   else if ( ! clitem->isClass() )
+      return sc_misssym;
+
+   *this = *clitem;
+   return sc_ok;
+}
 
 Item::e_sercode Item::deserialize( Stream *file, VMachine *vm )
 {
@@ -700,6 +762,19 @@ Item::e_sercode Item::deserialize( Stream *file, VMachine *vm )
          }
 
          return sc;
+      }
+      break;
+
+      case FLC_ITEM_CLASS:
+         return deserialize_class( file, vm );
+
+
+       case FLC_ITEM_CLSMETHOD:
+       {
+         e_sercode sc = deserialize_class( file, vm );
+         if ( sc != sc_ok )
+            return sc;
+         return deserialize_function( file, vm );
       }
       break;
 
