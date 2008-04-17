@@ -356,6 +356,19 @@ bool StringStream::closeToString( String &target )
    return true;
 }
 
+byte * StringStream::closeToBuffer()
+{
+   if ( m_membuf == 0 || m_length == 0)
+      return 0;
+
+   byte *data = m_membuf;
+
+   m_membuf = 0;
+   m_length = 0;
+   m_allocated = 0;
+   return data;
+}
+
 UserData *StringStream::clone()
 {
    StringStream *sstr = new StringStream( *this );

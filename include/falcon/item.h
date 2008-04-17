@@ -114,10 +114,10 @@ private:
 
    bool internal_is_equal( const Item &other ) const;
    int internal_compare( const Item &other ) const;
-   bool serialize_object( Stream *file, const CoreObject *obj, VMachine *vm, bool bLive ) const;
+   bool serialize_object( Stream *file, const CoreObject *obj, bool bLive ) const;
    bool serialize_symbol( Stream *file, const Symbol *sym ) const;
-   bool serialize_function( Stream *file, const Symbol *func, VMachine *vm ) const;
-   bool serialize_class( Stream *file, const CoreClass *cls, VMachine *vm ) const;
+   bool serialize_function( Stream *file, const Symbol *func ) const;
+   bool serialize_class( Stream *file, const CoreClass *cls ) const;
 
    e_sercode deserialize_symbol( Stream *file, VMachine *vm, Symbol **tg_sym, LiveModule **modId );
    e_sercode deserialize_function( Stream *file, VMachine *vm );
@@ -587,15 +587,7 @@ public:
 
 
    /** Serialize this item.
-      This method stores an item on a stream for later retrival. Providing a virtual
-      machine that is optional; if not provided, items requiring the VM for serialization
-      won't be correctly serialized. In example, objects may provide a serialize() method;
-      if that method exists, the VM would call it in order to provide the object with its own
-      personalized serialization.
-
-      Unless certain that the given object is not an object with a serialized method,
-      or does not references one at any level, this function should always be called with
-      a VM ready.
+      This method stores an item on a stream for later retrival.
 
       The function can return true if the serialization succeded. It will return false if
       the serialization failed; in that case, if there is an error on the stream, it can
@@ -604,11 +596,12 @@ public:
       have been called on the target object, or in any referenced object, or because the
       VM received an error during the method call.
 
+      In
       \param out the output stream
-      \param vm the virtual machine that can be used for object serialization
+      \param bLive true
       \return an error code in case of error (\see e_sercode).
    */
-   e_sercode serialize( Stream *out, VMachine *vm = 0, bool bLive = false ) const;
+   e_sercode serialize( Stream *out, bool bLive = false ) const;
 
 
    /** Loads a serialized item from a stream.

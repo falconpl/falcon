@@ -45,7 +45,7 @@ bool Item::serialize_symbol( Stream *file, const Symbol *sym ) const
 }
 
 
-bool Item::serialize_function( Stream *file, const Symbol *func, VMachine *vm ) const
+bool Item::serialize_function( Stream *file, const Symbol *func ) const
 {
    byte type = FLC_ITEM_FUNC;
    file->write( &type, 1 );
@@ -71,12 +71,12 @@ bool Item::serialize_function( Stream *file, const Symbol *func, VMachine *vm ) 
    return true;
 }
 
-bool Item::serialize_object( Stream *file, const CoreObject *obj, VMachine *vm, bool bLive ) const
+bool Item::serialize_object( Stream *file, const CoreObject *obj, bool bLive ) const
 {
    // if we're not live, we can't have user data
    if ( ! bLive && obj->getUserData() != 0 )
    {
-      vm->raiseError( e_unserializable, "Item::serialize" );
+      obj->origin()->raiseError( e_unserializable, "Item::serialize" );
       return false;
    }
 
@@ -94,7 +94,7 @@ bool Item::serialize_object( Stream *file, const CoreObject *obj, VMachine *vm, 
    file->write((byte *) &len, sizeof(len) );
 
    for( uint32 i = 0; i < len; i ++ ) {
-      if ( obj->getPropertyAt( i ).serialize( file, vm, bLive ) != sc_ok )
+      if ( obj->getPropertyAt( i ).serialize( file, bLive ) != sc_ok )
          return false;
    }
 
@@ -130,7 +130,7 @@ bool Item::serialize_object( Stream *file, const CoreObject *obj, VMachine *vm, 
          UserData *cloned = obj->getUserData()->clone();
          if ( cloned == 0 )
          {
-            vm->raiseError( e_uncloneable, "Item::serialize" );
+            obj->origin()->raiseError( e_uncloneable, "Item::serialize" );
             return false;
          }
          file->write( (byte *) &cloned, sizeof( cloned ) );
@@ -150,7 +150,7 @@ bool Item::serialize_object( Stream *file, const CoreObject *obj, VMachine *vm, 
 }
 
 
-bool Item::serialize_class( Stream *file, const CoreClass *cls, VMachine *vm ) const
+bool Item::serialize_class( Stream *file, const CoreClass *cls ) const
 {
    byte type = FLC_ITEM_CLASS;
    file->write( &type, 1 );
@@ -171,7 +171,7 @@ bool Item::serialize_class( Stream *file, const CoreClass *cls, VMachine *vm ) c
 }
 
 
-Item::e_sercode Item::serialize( Stream *file, VMachine *vm, bool bLive ) const
+Item::e_sercode Item::serialize( Stream *file, bool bLive ) const
 {
    if( file->bad() )
       return sc_ferror;
@@ -260,7 +260,7 @@ Item::e_sercode Item::serialize( Stream *file, VMachine *vm, bool bLive ) const
 
          Item ifbom;
          getFbomItem( ifbom );
-         ifbom.serialize( file, vm );
+         ifbom.serialize( file, bLive );
       }
       break;
 
@@ -273,7 +273,7 @@ Item::e_sercode Item::serialize( Stream *file, VMachine *vm, bool bLive ) const
          int32 len = endianInt32( array->length() );
          file->write( (byte *) &len, sizeof( len ) );
          for( uint32 i = 0; i < array->length(); i ++ ) {
-            array->elements()[i].serialize( file, vm );
+            array->elements()[i].serialize( file, bLive );
             if( ! file->good() )
                return sc_ferror;
          }
@@ -293,10 +293,10 @@ Item::e_sercode Item::serialize( Stream *file, VMachine *vm, bool bLive ) const
          dict->traverseBegin();
          while( dict->traverseNext( key, value ) )
          {
-            key.serialize( file, vm );
+            key.serialize( file, bLive );
             if( ! file->good() )
                return sc_ferror;
-            value.serialize( file, vm );
+            value.serialize( file, bLive );
             if( ! file->good() )
                return sc_ferror;
          }
@@ -304,7 +304,7 @@ Item::e_sercode Item::serialize( Stream *file, VMachine *vm, bool bLive ) const
       break;
 
       case FLC_ITEM_FUNC:
-         serialize_function( file, this->asFunction(), vm );
+         serialize_function( file, this->asFunction() );
       break;
 
       case FLC_ITEM_METHOD:
@@ -312,26 +312,26 @@ Item::e_sercode Item::serialize( Stream *file, VMachine *vm, bool bLive ) const
          byte type = FLC_ITEM_METHOD;
          file->write( &type, 1 );
 
-         serialize_object( file, this->asMethodObject(), vm, bLive );
-         serialize_function( file, this->asMethodFunction(), vm );
+         serialize_object( file, this->asMethodObject(), bLive );
+         serialize_function( file, this->asMethodFunction() );
       }
       break;
 
       case FLC_ITEM_OBJECT:
-         serialize_object( file, this->asObject(), vm, bLive );
+         serialize_object( file, this->asObject(), bLive );
       break;
 
       case FLC_ITEM_REFERENCE:
-         asReference()->origin().serialize( file, vm );
+         asReference()->origin().serialize( file, bLive );
       break;
 
       case FLC_ITEM_CLASS:
-         serialize_class( file, this->asClass(), vm );
+         serialize_class( file, this->asClass() );
       break;
 
        case FLC_ITEM_CLSMETHOD:
-         serialize_class( file, this->asMethodClass(), vm );
-         serialize_function( file, this->asMethodFunction(), vm );
+         serialize_class( file, this->asMethodClass() );
+         serialize_function( file, this->asMethodFunction() );
       break;
 
       default:

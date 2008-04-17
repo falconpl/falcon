@@ -89,6 +89,16 @@ public:
    */
    bool closeToString( String &target );
 
+   /** Gets the phisical memory created by this object.
+      This version of the method retreives the internally allocated buffer and
+      empties this StringStream.
+
+      The returned buffer must be de-allocated using Falcon::memFree()
+
+      \return a byte * that will receive the internally created data.
+   */
+   byte  *closeToBuffer();
+
    virtual int64 lastError() const { return (int64) m_lastError; }
 
    virtual UserData *clone();
