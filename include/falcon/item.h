@@ -596,7 +596,6 @@ public:
       have been called on the target object, or in any referenced object, or because the
       VM received an error during the method call.
 
-      In
       \param out the output stream
       \param bLive true
       \return an error code in case of error (\see e_sercode).

@@ -180,17 +180,17 @@ Item::e_sercode Item::serialize( Stream *file, bool bLive ) const
    {
       case FLC_ITEM_BOOL:
       {
-         char type = FLC_ITEM_BOOL;
+         byte type = FLC_ITEM_BOOL;
          file->write((byte *) &type, 1 );
 
-         char bval = this->asBoolean() ? 1 : 0;
+         byte bval = this->asBoolean() ? 1 : 0;
          file->write( (byte *) &bval, sizeof( bval ) );
       }
       break;
 
       case FLC_ITEM_INT:
       {
-         char type = FLC_ITEM_INT;
+         byte type = FLC_ITEM_INT;
          file->write((byte *) &type, 1 );
 
          int64 val = endianInt64( this->asInteger() );
@@ -200,7 +200,7 @@ Item::e_sercode Item::serialize( Stream *file, bool bLive ) const
 
       case FLC_ITEM_RANGE:
       {
-         char type = FLC_ITEM_RANGE;
+         byte type = FLC_ITEM_RANGE;
          file->write((byte *) &type, 1 );
 
          int32 val1 = endianInt32(this->asRangeStart());
@@ -217,7 +217,7 @@ Item::e_sercode Item::serialize( Stream *file, bool bLive ) const
 
       case FLC_ITEM_NUM:
       {
-         char type = FLC_ITEM_NUM;
+         byte type = FLC_ITEM_NUM;
          file->write((byte *) &type, 1 );
 
          numeric val = endianNum( this->asNumeric() );
@@ -227,8 +227,8 @@ Item::e_sercode Item::serialize( Stream *file, bool bLive ) const
 
       case FLC_ITEM_ATTRIBUTE:
       {
-         char type = FLC_ITEM_ATTRIBUTE;
-         file->write((byte *) &type, 1 );
+         byte type = FLC_ITEM_ATTRIBUTE;
+         file->write( &type, 1 );
 
          this->asAttribute()->name().serialize( file );
       }
@@ -236,7 +236,7 @@ Item::e_sercode Item::serialize( Stream *file, bool bLive ) const
 
       case FLC_ITEM_STRING:
       {
-         char type = FLC_ITEM_STRING;
+         byte type = FLC_ITEM_STRING;
          file->write((byte *) &type, 1 );
          this->asString()->serialize( file );
       }
@@ -244,15 +244,15 @@ Item::e_sercode Item::serialize( Stream *file, bool bLive ) const
 
       case FLC_ITEM_MEMBUF:
       {
-         char type = FLC_ITEM_MEMBUF;
-         file->write((byte *) &type, 1 );
+         byte type = FLC_ITEM_MEMBUF;
+         file->write( &type, 1 );
          this->asMemBuf()->serialize( file );
       }
       break;
 
       case FLC_ITEM_FBOM:
       {
-         char type = FLC_ITEM_FBOM;
+         byte type = FLC_ITEM_FBOM;
          file->write((byte *) &type, 1 );
 
          type = this->getFbomMethod();
@@ -266,7 +266,7 @@ Item::e_sercode Item::serialize( Stream *file, bool bLive ) const
 
       case FLC_ITEM_ARRAY:
       {
-         char type = FLC_ITEM_ARRAY;
+         byte type = FLC_ITEM_ARRAY;
          file->write((byte *) &type, 1 );
 
          CoreArray *array = this->asArray();
@@ -282,8 +282,8 @@ Item::e_sercode Item::serialize( Stream *file, bool bLive ) const
 
       case FLC_ITEM_DICT:
       {
-         char type = FLC_ITEM_DICT;
-         file->write((byte *) &type, 1 );
+         byte type = FLC_ITEM_DICT;
+         file->write( &type, 1 );
 
          CoreDict *dict = this->asDict();
          int32 len = endianInt32( dict->length() );
@@ -336,7 +336,7 @@ Item::e_sercode Item::serialize( Stream *file, bool bLive ) const
 
       default:
       {
-         char type = FLC_ITEM_NIL;
+         byte type = FLC_ITEM_NIL;
          file->write((byte *) &type, 1 );
       }
    }
@@ -453,7 +453,7 @@ Item::e_sercode Item::deserialize_class( Stream *file, VMachine *vm )
 
 Item::e_sercode Item::deserialize( Stream *file, VMachine *vm )
 {
-   char type;
+   byte type;
    file->read((byte *) &type, 1 );
 
    if( ! file->good() )
@@ -467,7 +467,7 @@ Item::e_sercode Item::deserialize( Stream *file, VMachine *vm )
 
       case FLC_ITEM_BOOL:
       {
-         char bval;
+         byte bval;
          file->read( (byte *) &bval, sizeof( bval ) );
          if ( file->good() ) {
             setBoolean( bval != 0 );
