@@ -269,11 +269,11 @@ Item::e_sercode Item::serialize( Stream *file, bool bLive ) const
          byte type = FLC_ITEM_ARRAY;
          file->write((byte *) &type, 1 );
 
-         CoreArray *array = this->asArray();
-         int32 len = endianInt32( array->length() );
+         CoreArray &array = *this->asArray();
+         int32 len = endianInt32( array.length() );
          file->write( (byte *) &len, sizeof( len ) );
-         for( uint32 i = 0; i < array->length(); i ++ ) {
-            array->elements()[i].serialize( file, bLive );
+         for( uint32 i = 0; i < array.length(); i ++ ) {
+            array[i].serialize( file, bLive );
             if( ! file->good() )
                return sc_ferror;
          }
@@ -310,9 +310,17 @@ Item::e_sercode Item::serialize( Stream *file, bool bLive ) const
       case FLC_ITEM_METHOD:
       {
          byte type = FLC_ITEM_METHOD;
-         file->write( &type, 1 );
-
-         serialize_object( file, this->asMethodObject(), bLive );
+         if ( bLive )
+         {
+            type |= 0x80;
+            file->write( &type, 1 );
+            void *obj = this->asMethodObject();
+            file->write( &obj, sizeof( obj ) );
+         }
+         else {
+            // TODO
+            serialize_object( file, this->asMethodObject(), bLive );
+         }
          serialize_function( file, this->asMethodFunction() );
       }
       break;
@@ -663,17 +671,29 @@ Item::e_sercode Item::deserialize( Stream *file, VMachine *vm )
          return deserialize_function( file, vm );
       break;
 
+      case FLC_ITEM_METHOD | 0x80:
       case FLC_ITEM_METHOD:
       {
          if( vm == 0 )
             return sc_missvm;
 
-         Item obj, func;
-         e_sercode sc = obj.deserialize( file, vm );
-         if ( sc != sc_ok )
-            return sc;
-         if ( ! obj.isObject() )
-            return sc_invformat;
+         Item obj;
+         Item func;
+         e_sercode sc;
+         if( type == FLC_ITEM_METHOD )
+         {
+            // TODO
+            sc = obj.deserialize( file, vm );
+            if ( sc != sc_ok )
+               return sc;
+            if ( ! obj.isObject() )
+               return sc_invformat;
+         }
+         else {
+            CoreObject *memObj;
+            file->read( &memObj, sizeof( memObj ) );
+            obj = memObj;
+         }
 
          sc = func.deserialize( file, vm );
          if ( sc != sc_ok )

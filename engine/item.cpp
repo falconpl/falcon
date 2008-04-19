@@ -502,7 +502,19 @@ bool Item::methodize( const CoreObject *self )
 
       case FLC_ITEM_ARRAY:
          if ( data->asArray()->length() > 0 )
-            return data->asArray()->at(0).methodize( self );
+         {
+            Item *citem = &data->asArray()->at(0);
+            if ( citem->isMethod() && citem->asMethodObject() == self )
+            {
+               return true;
+            }
+            else if ( citem->isCallable() )
+            {
+               *data = data->asArray()->clone();
+               data->asArray()->at(0).methodize( self );
+               return true;
+            }
+         }
       return false;
    }
 
