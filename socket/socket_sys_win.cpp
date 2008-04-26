@@ -22,7 +22,7 @@
 
 #ifdef __MINGW32__
    #define _inline __inline
-   #include <include/Wspiapi.h> 
+   #include <include/Wspiapi.h>
    #undef _inline
 #else
    #include <Wspiapi.h>
@@ -88,7 +88,7 @@ bool isIPV6( const String &ipv6__ )
    //toCString is guaranteed to stay as long as the string exists.
 	char addrBuff[256];
    ipv6.toCString( addrBuff, 255 );
-   int error = getaddrinfo( addrBuff, 0, &hints, &res );   
+   int error = getaddrinfo( addrBuff, 0, &hints, &res );
 	if ( error == EAI_NONAME )
       return false;
 
@@ -341,7 +341,7 @@ void Socket::terminate()
    d.m_iSystemData = 0;
 }
 
-bool Socket::readAvailable( int32 msec )
+bool Socket::readAvailable( int32 msec, const Sys::SystemData *sysData )
 {
    m_lastError = 0;
    int count = s_select( (SOCKET) d.m_iSystemData, msec, 0 );
@@ -352,7 +352,7 @@ bool Socket::readAvailable( int32 msec )
    return count > 0;
 }
 
-bool Socket::writeAvailable( int32 msec )
+bool Socket::writeAvailable( int32 msec, const Sys::SystemData *sysData )
 {
    m_lastError = 0;
    int count = s_select( (SOCKET) d.m_iSystemData, msec, 1 );

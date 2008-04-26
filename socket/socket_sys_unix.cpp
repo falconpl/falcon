@@ -21,7 +21,9 @@
 #include <arpa/inet.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/poll.h>
 #include <unistd.h>
+#include <falcon/vm_sys_posix.h>
 
 #include <netdb.h>
 #include <errno.h>
@@ -283,26 +285,93 @@ void Socket::terminate()
    d.m_iSystemData = 0;
 }
 
-bool Socket::readAvailable( int32 msec )
+int Socket::readAvailable( int32 msec, const Sys::SystemData *sysData )
 {
    m_lastError = 0;
-   int count = s_select( (int) d.m_iSystemData, msec, 0 );
-   if ( count < 0 ) {
-      m_lastError = errno;
-      return false;
+   struct timeval tv, *tvp;
+   fd_set set;
+   int last;
+
+   FD_ZERO( &set );
+   FD_SET( d.m_iSystemData, &set );
+   if( sysData != 0 )
+   {
+      last = sysData->m_sysData->interruptPipe[0];
+      FD_SET( last, &set );
+      if( last < d.m_iSystemData )
+         last = d.m_iSystemData;
    }
-   return count > 0;
+   else
+      last = d.m_iSystemData;
+
+   if ( msec >= 0 ) {
+      tvp = &tv;
+      tv.tv_sec = msec / 1000;
+      tv.tv_usec = (msec % 1000 ) * 1000;
+   }
+   else
+      tvp = 0;
+
+   switch( select( last + 1, &set, 0, 0, tvp ) )
+   {
+      case 1:
+      case 2:
+         if ( sysData != 0 && FD_ISSET( sysData->m_sysData->interruptPipe[0], &set ) )
+         {
+            return -2;
+         }
+
+      return 1;
+
+      case -1:
+         if( errno == EINPROGRESS ) {
+            m_lastError = 0;
+            return 0;
+         }
+         m_lastError = errno;
+      return -1;
+   }
+
+   return 0;
 }
 
-bool Socket::writeAvailable( int32 msec )
+int Socket::writeAvailable( int32 msec, const Sys::SystemData *sysData )
 {
    m_lastError = 0;
-   int count = s_select( (int) d.m_iSystemData, msec, 1 );
-   if ( count < 0 ) {
-      m_lastError = errno;
-      return false;
+   struct pollfd poller[2];
+   int fds;
+
+   poller[0].fd = (int) d.m_iSystemData;
+   poller[0].events = POLLOUT;
+
+   if ( sysData != 0 )
+   {
+      fds = 2;
+      poller[1].fd = sysData->m_sysData->interruptPipe[0];
+      poller[1].events = POLLIN;
    }
-   return count > 0;
+   else
+      fds = 1;
+
+   int res;
+   while( ( res = poll( poller, fds, msec ) ) == EAGAIN );
+
+   if ( res > 0 )
+   {
+      if( sysData != 0 && (poller[1].revents & POLLIN) != 0 )
+      {
+         return -2;
+      }
+
+      if( (poller[0].revents & ( POLLOUT | POLLHUP ) ) != 0 )
+         return 1;
+   }
+   else {
+      m_lastError = errno;
+      return -1;
+   }
+
+   return 0;
 }
 
 bool Socket::bind( Address &addr, bool packet, bool broadcast )

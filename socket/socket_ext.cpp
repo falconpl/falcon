@@ -145,13 +145,21 @@ FALCON_FUNC  Socket_readAvailable( ::Falcon::VMachine *vm )
       return;
    }
 
-   int64 timeout = to == 0 ? 0 : to->forceInteger();
+   int64 timeout = to == 0 ? -1 : int64(to->forceNumeric() * 1000.0);
 
    CoreObject *self = vm->self().asObject();
    Sys::Socket *tcps = (Sys::Socket *) self->getUserData();
+   int res;
 
-   if ( ! tcps->readAvailable( (int32)timeout ) )
+   if ( (res = tcps->readAvailable( (int32)timeout, &vm->systemData() ) ) <= 0 )
    {
+      // interrupted?
+      if ( res == -2 )
+      {
+         vm->interrupted( true, true, true );
+         return;
+      }
+
       if ( tcps->lastError() == 0 ) {
          self->setProperty( "timedOut", (int64) 1 );
          vm->retval( (int64) 0 );
@@ -180,13 +188,21 @@ FALCON_FUNC  Socket_writeAvailable( ::Falcon::VMachine *vm )
       return;
    }
 
-   int64 timeout = to == 0 ? 0 : to->forceInteger();
+   int64 timeout = to == 0 ? -1 : int64(to->forceNumeric() * 1000.0);
 
    CoreObject *self = vm->self().asObject();
    Sys::Socket *tcps = (Sys::Socket *) self->getUserData();
+   int res;
 
-   if ( ! tcps->writeAvailable( (int32)timeout ) )
+   if ( ( res = tcps->writeAvailable( (int32)timeout, &vm->systemData() ) ) <= 0 )
    {
+      // interrupted?
+      if ( res == -2 )
+      {
+         vm->interrupted( true, true, true );
+         return;
+      }
+
       if ( tcps->lastError() == 0 ) {
          self->setProperty( "timedOut", (int64) 1 );
          vm->retval( (int64) 0 );

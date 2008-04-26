@@ -90,7 +90,7 @@ while true
       catch in error
          printl( "Error while sending message: ", error.toString() )
       end
-   elif socket.readAvailable( 0 )
+   elif socket.readAvailable(0)
       inline = socket.readline()
       if not inline
          printl( "Server died" )

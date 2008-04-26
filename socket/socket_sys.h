@@ -23,6 +23,7 @@
 
 #include <falcon/string.h>
 #include <falcon/userdata.h>
+#include <falcon/vm_sys.h>
 
 namespace Falcon {
 namespace Sys {
@@ -148,7 +149,7 @@ protected:
    union {
       void *m_systemData;
       int m_iSystemData;
-   }d;
+   } d;
    bool m_ipv6;
    int64 m_lastError;
    int32 m_timeout;
@@ -179,8 +180,8 @@ public:
    int32 timeout() const { return m_timeout; }
    void timeout( int32 t ) { m_timeout = t; }
 
-   bool readAvailable( int32 msec );
-   bool writeAvailable( int32 msec );
+   int readAvailable( int32 msec, const Sys::SystemData *sysData = 0 );
+   int writeAvailable( int32 msec, const Sys::SystemData *sysData = 0 );
 
    /** Bind creates also the low-level socket.
       So we have to tell it if the socket to be created must be stream
