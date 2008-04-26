@@ -152,12 +152,12 @@ public:
       return m_stream->errorDescription( description );
    }
 
-   virtual int32 readAvailable( int32 msecs_timeout ) {
-      return m_stream->readAvailable( msecs_timeout );
+   virtual int32 readAvailable( int32 msecs_timeout, const Sys::SystemData *sysData = 0 ) {
+      return m_stream->readAvailable( msecs_timeout, sysData );
    }
 
-   virtual int32 writeAvailable( int32 msecs_timeout ) {
-      return m_stream->writeAvailable( msecs_timeout );
+   virtual int32 writeAvailable( int32 msecs_timeout, const Sys::SystemData *sysData ) {
+      return m_stream->writeAvailable( msecs_timeout, sysData );
    }
 
    virtual int64 lastError() const

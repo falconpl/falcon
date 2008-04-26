@@ -751,11 +751,17 @@ FALCON_FUNC  Stream_readAvailable ( ::Falcon::VMachine *vm )
    Stream *file = static_cast<Stream *>(
                      vm->self().asObject()->getUserData() );
 
-   Item *msecs_item = vm->param(0);
-   int32 msecs = msecs_item == 0 ? 0 : (int32) msecs_item->forceInteger();
+   Item *secs_item = vm->param(0);
+   int32 msecs = secs_item == 0 ? -1 : (int32) (secs_item->forceNumeric()*1000);
 
 
-   int32 avail = file->readAvailable( msecs );
+   int32 avail = file->readAvailable( msecs, &vm->systemData() );
+   if ( file->interrupted() )
+   {
+      vm->interrupted( true, true, true );
+      return;
+   }
+
    if ( avail > 0 )
       vm->retval( 1 );
    else if ( avail == 0 )
@@ -775,10 +781,17 @@ FALCON_FUNC  Stream_writeAvailable ( ::Falcon::VMachine *vm )
    Stream *file = static_cast<Stream *>(
                      vm->self().asObject()->getUserData() );
 
-   Item *msecs_item = vm->param(0);
-   int32 msecs = msecs_item == 0 ? 0 : (int32) msecs_item->forceInteger();
+   Item *secs_item = vm->param(0);
+   int32 msecs = secs_item == 0 ? -1 : (int32) (secs_item->forceNumeric()*1000);
 
-   if ( ! file->writeAvailable( msecs ) ) {
+   if ( file->writeAvailable( msecs, &vm->systemData() ) <= 0 )
+   {
+      if ( file->interrupted() )
+      {
+         vm->interrupted( true, true, true );
+         return;
+      }
+
       if ( file->lastError() != 0 ) {
          vm->raiseModError( new IoError( ErrorParam( 1108 ).origin( e_orig_runtime ).
             desc( "Query on the stream failed" ).sysError( (uint32) file->lastError() ) ) );
@@ -786,8 +799,9 @@ FALCON_FUNC  Stream_writeAvailable ( ::Falcon::VMachine *vm )
       }
       vm->retval( 0 );
    }
-   else
+   else {
       vm->retval( 1 );
+   }
 }
 
 FALCON_FUNC  Stream_clone ( ::Falcon::VMachine *vm )

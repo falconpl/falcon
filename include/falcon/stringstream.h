@@ -49,8 +49,8 @@ public:
    virtual bool writeString( const String &source, uint32 begin = 0, uint32 end = csh::npos );
    virtual bool put( uint32 chr );
    virtual bool get( uint32 &chr );
-   virtual int32 readAvailable( int32 msecs );
-   virtual int32 writeAvailable( int32 msecs );
+   virtual int32 readAvailable( int32 msecs, const Sys::SystemData *sysData = 0 );
+   virtual int32 writeAvailable( int32 msecs, const Sys::SystemData *sysData = 0 );
 
    virtual int64 tell();
    virtual bool truncate( int64 pos=-1 );

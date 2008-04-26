@@ -27,6 +27,7 @@
 #include <falcon/types.h>
 #include <falcon/userdata.h>
 #include <falcon/string.h>
+#include <falcon/vm_sys.h>
 
 #define FALCON_READAHEAD_BUFFER_BLOCK  32
 
@@ -100,7 +101,9 @@ public:
       t_eof = 0x2,
       t_error = 0x4,
       t_unsupported = 0x8,
-      t_invalid = 0x10
+      t_invalid = 0x10,
+      t_interrupted = 0x20,
+
    } t_status ;
 
 
@@ -146,17 +149,37 @@ public:
    bool unsupported() const;
    bool invalid() const;
    bool error() const;
+   bool interrupted() const;
 
    virtual ~Stream();
 
-   virtual bool close();
+   /** Reads from target stream.
+
+      \param buffer the buffer where read data will be stored.
+      \param size the amount of bytes to read
+   */
    virtual int32 read( void *buffer, int32 size );
+
+   /** Write to the target stream.
+   */
    virtual int32 write( const void *buffer, int32 size );
+
+   /** Close target stream.
+   */
+   virtual bool close();
    virtual int64 tell();
    virtual bool truncate( int64 pos=-1 );
    virtual bool errorDescription( ::Falcon::String &description ) const;
-   virtual int32 readAvailable( int32 msecs_timeout );
-   virtual int32 writeAvailable( int32 msecs_timeout );
+
+   /** Determines if the stream can be read, possibly with a given timeout.
+      If sysData is not zero, it will be used to honor concurrent interrupt requests.
+   */
+   virtual int32 readAvailable( int32 msecs_timeout, const Sys::SystemData *sysData = 0 );
+
+   /** Determines if the stream can be written, possibly with a given timeout.
+      If sysData is not zero, it will be used to honor concurrent interrupt requests.
+   */
+   virtual int32 writeAvailable( int32 msecs_timeout, const Sys::SystemData *sysData = 0 );
 
    int64 seekBegin( int64 pos ) {
       return seek( pos, ew_begin );
@@ -358,6 +381,8 @@ inline bool Stream::invalid() const
    { return (status() & t_invalid ) != 0; }
 inline bool Stream::error() const
    { return ( status() & t_error ) != 0; }
+inline bool Stream::interrupted() const
+   { return ( status() & t_interrupted ) != 0; }
 
 } //end of Falcon namespace
 

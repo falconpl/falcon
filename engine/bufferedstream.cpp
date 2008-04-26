@@ -237,20 +237,20 @@ bool BufferedStream::truncate( int64 pos )
    return FileStream::truncate( pos );
 }
 
-int32 BufferedStream::readAvailable( int32 msecs_timeout )
+int32 BufferedStream::readAvailable( int32 msecs_timeout, const Sys::SystemData *sysData )
 {
    if ( m_bufPos < m_bufLen )
       return true;
 
-   return msecs_timeout;
+   return FileStream::readAvailable( msecs_timeout, sysData );
 }
 
-int32 BufferedStream::writeAvailable( int32 msecs_timeout )
+int32 BufferedStream::writeAvailable( int32 msecs_timeout, const Sys::SystemData *sysData )
 {
    if ( m_bufPos < m_bufSize )
       return true;
 
-   return FileStream::writeAvailable( msecs_timeout );
+   return FileStream::writeAvailable( msecs_timeout, sysData );
 }
 
 int64 BufferedStream::seek( int64 pos, e_whence whence )

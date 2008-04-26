@@ -195,7 +195,7 @@ char *en_table[] =
       "Block 'forlast' already declared",
       "Block 'formiddle' already declared",
       "Statement '.=' must be inside a for/in loop",
-      "VM received a suspension request in an atomic operation",
+      "Asynchronous wait interruption",
       "Access to private member not through 'self'",
       "Unbalanced parenthesis at end of file",
       "Unbalanced square parenthesis at end of file",
@@ -204,6 +204,7 @@ char *en_table[] =
       "Invalid value for directive",
       "Target class cannot be instantiated",
       "Object cannot be serialized (because of inner native data)",
+      "VM received a suspension request in an atomic operation",
 
       "Can't open file",
       "Load error",

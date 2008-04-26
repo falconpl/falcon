@@ -201,6 +201,8 @@ const String &errorDesc( int code )
       case e_directive_value: return getMessage( msg::err_directive_value );
       case e_noninst_cls: return getMessage( msg::err_noninst_cls );
       case e_unserializable: return getMessage( msg::err_unserializable );
+      case e_wait_in_atomic: return getMessage( msg::err_wait_in_atomic );
+
 
       case e_already_forfirst: return getMessage( msg::err_already_forfirst );
       case e_already_forlast: return getMessage( msg::err_already_forlast );
@@ -555,7 +557,7 @@ bool ErrorCarrier::isReflective() const
    return true;
 }
 
-void ErrorCarrier::getProperty( VMachine *, const String &propName, Item &prop )
+void ErrorCarrier::getProperty( VMachine *vm, const String &propName, Item &prop )
 {
    if ( m_error == 0 )
       return;
@@ -563,7 +565,15 @@ void ErrorCarrier::getProperty( VMachine *, const String &propName, Item &prop )
    if ( propName == "code" )
       prop = (int64) m_error->errorCode();
    else if ( propName == "description" )
-      prop = const_cast<String *>(&m_error->errorDescription());
+   {
+      const String &desc = m_error->errorDescription();
+      if ( desc.size() == 0 && prop.isNil() )
+      {
+         prop = new GarbageString( vm, errorDesc( m_error->errorCode() ) );
+      }
+      else
+         prop = const_cast<String *>(&m_error->errorDescription());
+   }
    else if ( propName == "message" )
       prop = const_cast<String *>( &m_error->extraDescription() );
    else if ( propName == "systemError" )

@@ -42,6 +42,7 @@ IF(UNIX OR MAC)
          stdstreams_unix.cpp
          sys_unix.cpp
          time_sys_unix.cpp
+         vm_sys_posix.cpp
     )
 
    #DL is different for unix and mac

@@ -299,12 +299,12 @@ bool StringStream::truncate( int64 pos )
    return true;
 }
 
-int32 StringStream::readAvailable( int32 )
+int32 StringStream::readAvailable( int32, const Sys::SystemData * )
 {
    return 1;
 }
 
-int32 StringStream::writeAvailable( int32 )
+int32 StringStream::writeAvailable( int32, const Sys::SystemData * )
 {
    return 1;
 }

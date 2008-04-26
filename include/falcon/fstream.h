@@ -126,9 +126,9 @@ public:
    /**
       Return 1 if read available, 0 if not available, -1 on error;
    */
-   virtual int32 readAvailable( int32 msecs_timeout );
+   virtual int32 readAvailable( int32 msecs_timeout, const Sys::SystemData *sysData = 0 );
 
-   virtual int32 writeAvailable( int32 msecs_timeout );
+   virtual int32 writeAvailable( int32 msecs_timeout, const Sys::SystemData *sysData = 0 );
 
    virtual bool writeString( const String &source, uint32 begin = 0, uint32 end = csh::npos );
    virtual bool readString( String &content, uint32 size );

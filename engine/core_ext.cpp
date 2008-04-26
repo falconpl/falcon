@@ -283,6 +283,28 @@ FALCON_FUNC  Error_toString ( ::Falcon::VMachine *vm )
 }
 
 /*#
+   @method toString Error
+   @brief Creates a short textual representation of the error.
+
+   This won't print the stack trace.
+*/
+FALCON_FUNC  Error_heading ( ::Falcon::VMachine *vm )
+{
+   CoreObject *einst = vm->self().asObject();
+   Falcon::ErrorCarrier *car = (Falcon::ErrorCarrier *) einst->getUserData();
+   Falcon::Error *err = car->error();
+
+   if ( err != 0 )
+   {
+      String *cs = new GarbageString( vm );
+      err->heading( *cs );
+      vm->retval( cs );
+   }
+   else
+      vm->retnil();
+}
+
+/*#
    @method getSysErrDesc Error
    @brief returns system specific error description.
    @return System specific error description or nil if not available.
@@ -3457,6 +3479,7 @@ Module * core_module_init()
 
    core->addClassMethod( error_class, "toString",
          core->addExtFunc( "Error.toString", Falcon::core::Error_toString ) );
+   core->addClassMethod( error_class, "heading", Falcon::core::Error_heading );
 
    // separated property description to test for separate @property faldoc command
    /*#

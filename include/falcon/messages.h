@@ -203,6 +203,7 @@ namespace msg {
       err_directive_value,
       err_noninst_cls,
       err_unserializable,
+      err_wait_in_atomic,
 
       err_open_file,
       err_loaderror,

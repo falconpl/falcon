@@ -204,6 +204,7 @@ const int e_directive_unk =        213;
 const int e_directive_value =      214;
 const int e_noninst_cls =          215;
 const int e_unserializable =       216;
+const int e_wait_in_atomic =       217;
 
 const int e_open_file =            500;
 const int e_loaderror =            501;

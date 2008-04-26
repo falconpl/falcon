@@ -25,6 +25,7 @@
 #include <fcntl.h>
 #include <cstring>
 
+#include <falcon/vm_sys_posix.h>
 #include <falcon/fstream_sys_unix.h>
 #include <falcon/memory.h>
 
@@ -277,55 +278,10 @@ bool GenericStream::readString( String &content, uint32 size )
 
    setError( errno );
    return false;
-
-
-   /*
-
-   char *input;
-   if ( content.allocated() < size )
-   {
-      input = (char *) memAlloc( size );
-      if ( input == 0 ) {
-         data->m_lastError = -1;
-         return false;
-      }
-   }
-   else {
-      input = (char *) content.getRawStorage();
-   }
-
-
-
-   int in = ::read( data->m_handle, input, size );
-
-   if ( in < 0 )
-   {
-      memFree( input );
-      data->m_lastError = errno;
-      m_lastMoved = 0;
-      m_status = t_error;
-      return false;
-   }
-
-   if ( in == 0 ) {
-      m_status = m_status | Stream::t_eof;
-      m_lastMoved = 0;
-      return true;
-   }
-
-   if( input != (char *) content.getRawStorage() )
-   {
-      content.adopt( input, in );
-   }
-
-   data->m_lastError = 0;
-   m_lastMoved = in;
-   return true;
-   */
 }
 
 
-int32 GenericStream::readAvailable( int32 msec )
+int32 GenericStream::readAvailable( int32 msec, const Sys::SystemData *sysData )
 {
    UnixFileSysData *data = static_cast< UnixFileSysData *>( m_fsData );
    /* Temporarily turned off because a darwin flaw
@@ -350,11 +306,23 @@ int32 GenericStream::readAvailable( int32 msec )
 
    return 0;
    */
+
    struct timeval tv, *tvp;
    fd_set set;
+   int last;
 
    FD_ZERO( &set );
    FD_SET( data->m_handle, &set );
+   if( sysData != 0 )
+   {
+      last = sysData->m_sysData->interruptPipe[0];
+      FD_SET( last, &set );
+      if( last < data->m_handle )
+         last = data->m_handle;
+   }
+   else
+      last = data->m_handle;
+
    if ( msec >= 0 ) {
       tvp = &tv;
       tv.tv_sec = msec / 1000;
@@ -363,9 +331,18 @@ int32 GenericStream::readAvailable( int32 msec )
    else
       tvp = 0;
 
-   switch( select( data->m_handle + 1, &set, 0, 0, tvp ) )
+   switch( select( last + 1, &set, 0, 0, tvp ) )
    {
-      case 1: return 1;
+      case 1:
+      case 2:
+         if ( sysData != 0 && FD_ISSET( sysData->m_sysData->interruptPipe[0], &set ) )
+         {
+            m_status = t_interrupted;
+            return -1;
+         }
+
+      return 1;
+
       case -1:
          if( errno == EINPROGRESS ) {
             setError( 0 );
@@ -378,23 +355,41 @@ int32 GenericStream::readAvailable( int32 msec )
    return 0;
 }
 
-int32 GenericStream::writeAvailable( int32 msec )
+int32 GenericStream::writeAvailable( int32 msec, const Sys::SystemData *sysData )
 {
    UnixFileSysData *data = static_cast< UnixFileSysData *>( m_fsData );
-   struct pollfd poller;
-   poller.fd = data->m_handle;
-   poller.events = POLLOUT ;
+   struct pollfd poller[2];
+   int fds;
 
-   if ( poll( &poller, 1, 0) == 1 ) {
+   poller[0].fd = data->m_handle;
+   poller[0].events = POLLOUT;
+
+   if ( sysData != 0 )
+   {
+      fds = 2;
+      poller[1].fd = sysData->m_sysData->interruptPipe[0];
+      poller[1].events = POLLIN;
+   }
+   else
+      fds = 1;
+
+
+   int res;
+   while( ( res = poll( poller, fds, msec ) ) == EAGAIN );
+
+   if ( res > 0 )
+   {
       setError( 0 );
-      if( (poller.revents & ( POLLOUT | POLLHUP ) ) != 0 )
+      if( sysData != 0 && (poller[1].revents & POLLIN) != 0 )
+      {
+         m_status = t_interrupted;
+         return -1;
+      }
+
+      if( (poller[0].revents & ( POLLOUT | POLLHUP ) ) != 0 )
          return 1;
    }
    else {
-      if ( errno == EINPROGRESS ) {
-         setError( 0 );
-         return 0;
-      }
       setError( errno );
       return -1;
    }

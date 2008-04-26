@@ -2,7 +2,7 @@
    FALCON - The Falcon Programming Language.
    FILE: vm.cpp
 
-   Implementation of virtual - non main loop
+   Implementation of virtual machine - non main loop
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: 2004-09-08
@@ -33,6 +33,7 @@
 #include <falcon/format.h>
 #include <falcon/attribute.h>
 #include <falcon/bommap.h>
+#include <falcon/vm_sys.h>
 
 namespace Falcon {
 
@@ -1560,7 +1561,7 @@ void VMachine::yield( numeric secs )
 {
    if ( m_atomicMode )
    {
-      raiseError( new InterruptedError( ErrorParam( e_interrupted ).origin( e_orig_vm ).
+      raiseError( new InterruptedError( ErrorParam( e_wait_in_atomic ).origin( e_orig_vm ).
             symbol( "yield" ).
             module( "core.vm" ).
             line( __LINE__ ).
@@ -1700,8 +1701,20 @@ void VMachine::electContext()
             m_yieldTime = tgtTime;
             return;
          }
-         else
-            Sys::_sleep( tgtTime );
+         else {
+            // raise an interrupted error on need.
+            if ( ! m_systemData.sleep( tgtTime ) )
+            {
+               m_systemData.resetInterrupt();
+
+               raiseError( new InterruptedError(
+                  ErrorParam( e_interrupted ).origin( e_orig_vm ).
+                     symbol( m_symbol->name() ).
+                     module( m_currentModule->name() ).
+                     line( m_currentModule->getLineAt( m_pc ) )
+                  ) );
+            }
+         }
       }
    }
 }
@@ -3106,6 +3119,29 @@ bool VMachine::unlink( const Module *module )
    // delete the key, which will detach the module, if found.
    return true;
 }
+
+
+bool VMachine::interrupted( bool raise, bool reset, bool dontCheck )
+{
+   if( dontCheck || m_systemData.interrupted() )
+   {
+      if( reset )
+         m_systemData.resetInterrupt();
+
+      if ( raise )
+         raiseError( new InterruptedError(
+            ErrorParam( e_interrupted ).origin( e_orig_vm ).
+               symbol( m_symbol->name() ).
+               module( m_currentModule->name() ).
+               line( m_currentModule->getLineAt( m_pc ) )
+            ) );
+
+      return true;
+   }
+
+   return false;
+}
+
 
 }
 

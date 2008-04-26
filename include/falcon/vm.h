@@ -37,6 +37,7 @@
 #include <falcon/genericlist.h>
 #include <falcon/fassert.h>
 #include <falcon/bommap.h>
+#include <falcon/vm_sys.h>
 
 #define FALCON_MAX_ATTRIBUTES 64
 #define FALCON_VM_DFAULT_CHECK_LOOPS 1000
@@ -511,6 +512,11 @@ protected:
       \see userData( void * );
    */
    void *m_userData;
+
+   /** System specific data.
+      \see systemData();
+   */
+   Sys::SystemData m_systemData;
 
    /** Utility for switch opcode.
       Just pretend it's not here.
@@ -1925,6 +1931,43 @@ public:
       \return the attribute instance or zero if not found.
    */
    Attribute *findAttribute( const Symbol *sym ) const;
+
+   /** Interrupts pending I/O on this machine from a separate thread.
+      Interrupts compliant streams I/O and wait operations. The next I/O or
+      the next wait, or the next compliant system blocking operation
+      will cause an Interrupted exception to be raised.
+
+      This method does not generate an "interrupt request" on the VM, that will
+      keep on running until a blocking operation is encountered.
+
+      This method can be safely called from other threads in the same application
+      where the is currently executed, as well as from inside the same thread.
+   */
+   void interrupt() { m_systemData.interrupt(); }
+
+   /** Returns true if the VM has been interrupted.
+      If an asynchronous interrupt has been generated, this method will return true.
+
+      This is meant to be called from those compliant operations that require polling,
+      or just before starting waiting on interruptable code to avoid useless calculations,
+      or right after to know if the VM has been interrupted during the computation.
+      \param raise if true, prepare an Interrupted exception in the VM context if the VM has been
+                   interrupted.
+      \param reset if true, reset interrupted status now.
+      \param dontCheck suppse interruption test is already done, and just raise the error and reset.
+      \return true if the machine has been interrupted through interrupt() request.
+   */
+   bool interrupted( bool raise = false, bool reset = false, bool dontCheck = false );
+
+   /** Get System Specific data.
+      \returns system specific data bound with this machine.
+   */
+   const Sys::SystemData &systemData() const { return m_systemData; }
+
+   /** Get System Specific data (non const).
+      \returns system specific data bound with this machine.
+   */
+   Sys::SystemData &systemData() { return m_systemData; }
 
 //==========================================================================
 //==========================================================================

@@ -48,6 +48,11 @@ Falcon (0.8.9)
   * Minor: Statement give/to can now give attributes to (or remove them from) a list of
            objects.
   * Minor: Better management of INC/DEC; added INCP/DECP opcodes to allow faster inc/dec.
+  * Bugfix: Error.description wasn't correctly reflected.
+  * Minor: Added method Error.heading() to access the heading of an error without the stack trace.
+  * Major: VM can now be interrupted in compliant waiting operations. ATM, stream and socket
+           readAvailable & writeAvailable have been instrumented. Interruption will raise
+           an InterruptedError, can be catched and operations can be resumed.
 
 Falcon (0.8.8)
   * bugfix: TRAV opcode may destroy its parameters while setting first loop

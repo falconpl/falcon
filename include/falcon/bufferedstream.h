@@ -55,8 +55,8 @@ public:
    virtual int64 tell();
    virtual bool truncate( int64 pos = - 1 );
 
-   virtual int32 readAvailable( int32 msecs_timeout );
-   virtual int32 writeAvailable( int32 msecs_timeout );
+   virtual int32 readAvailable( int32 msecs_timeout, const Sys::SystemData *data = 0 );
+   virtual int32 writeAvailable( int32 msecs_timeout, const Sys::SystemData *data = 0 );
 
    virtual bool writeString( const String &content, uint32 begin = 0, uint32 end = csh::npos );
    virtual bool readString( String &content, uint32 size );

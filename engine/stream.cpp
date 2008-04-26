@@ -218,14 +218,14 @@ bool Stream::truncate( int64 )
 }
 
 
-int32 Stream::readAvailable( int32  )
+int32 Stream::readAvailable( int32, const Sys::SystemData *sysData )
 {
    status( t_unsupported );
    return -1;
 }
 
 
-int32 Stream::writeAvailable( int32 )
+int32 Stream::writeAvailable( int32, const Sys::SystemData *sysData )
 {
    status( t_unsupported );
    return -1;

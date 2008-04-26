@@ -31,7 +31,7 @@ FileSysData *WinFileSysData::dup()
 {
    HANDLE dupped;
    HANDLE curProc = GetCurrentProcess();
-   
+
    if (! DuplicateHandle(
         curProc,  // handle to the source process
         m_handle,         // handle to duplicate
@@ -257,7 +257,7 @@ int64 GenericStream::lastError() const
 }
 
 
-int GenericStream::readAvailable( int32 msec )
+int GenericStream::readAvailable( int32 msec, const Sys::SystemData *sysData )
 {
    WinFileSysData *data = static_cast< WinFileSysData *>( m_fsData );
 
