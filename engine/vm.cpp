@@ -1585,7 +1585,17 @@ void VMachine::yield( numeric secs )
          else
          {
             // else just ask the system to sleep.
-            Sys::_sleep( secs );
+            if ( ! m_systemData.sleep( secs ) )
+            {
+               m_systemData.resetInterrupt();
+
+               raiseError( new InterruptedError(
+                  ErrorParam( e_interrupted ).origin( e_orig_vm ).
+                     symbol( m_symbol->name() ).
+                     module( m_currentModule->name() ).
+                     line( m_currentModule->getLineAt( m_pc ) )
+                  ) );
+            }
          }
       }
    }

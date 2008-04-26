@@ -54,15 +54,6 @@ TimeZone getLocalTimeZone()
    return tz_local;
 }
 
-bool sleep( numeric seconds )
-{
-   struct timespec tw;
-   tw.tv_nsec = ((long) (seconds * 1000.0) % 1000 ) * 1000000;
-   tw.tv_sec = (time_t) seconds;
-   if( nanosleep( &tw, 0 ) == -1 )
-      return false;
-}
-
 numeric seconds()
 {
    struct timeval time;

@@ -35,13 +35,6 @@
 namespace Falcon {
 namespace Sys {
 
-void _sleep( numeric time )
-{
-   struct timespec tw;
-   tw.tv_nsec = ((long) (time * 1000.0) % 1000 ) * 1000000;
-   tw.tv_sec = (time_t) time;
-   nanosleep( &tw, 0 );
-}
 
 numeric _seconds()
 {

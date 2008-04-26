@@ -85,7 +85,6 @@ void FALCON_DYN_SYM currentTime( ::Falcon::TimeStamp &ts );
 
 TimeZone FALCON_DYN_SYM getLocalTimeZone();
 
-bool FALCON_DYN_SYM sleep( numeric seconds );
 numeric FALCON_DYN_SYM seconds();
 bool FALCON_DYN_SYM absoluteWait( const TimeStamp &ts );
 bool FALCON_DYN_SYM relativeWait( const TimeStamp &ts );

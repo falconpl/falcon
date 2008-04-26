@@ -30,10 +30,6 @@ class String;
 
 namespace Sys {
 
-/** Sleeps a determined number of seconds.
-   The decimals are up to milliseconds.
-*/
-FALCON_DYN_SYM void _sleep( numeric time );
 
 /** Gives current second count from Epoch.
    The number of seconds is generally returned in GMT, if this
