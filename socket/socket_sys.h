@@ -180,7 +180,7 @@ public:
    int32 timeout() const { return m_timeout; }
    void timeout( int32 t ) { m_timeout = t; }
 
-   int readAvailable( int32 msec, const Sys::SystemData *sysData = 0 );
+   int readAvailable( int32 msec,const Sys::SystemData *sysData = 0 );
    int writeAvailable( int32 msec, const Sys::SystemData *sysData = 0 );
 
    /** Bind creates also the low-level socket.

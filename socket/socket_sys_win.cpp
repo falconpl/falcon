@@ -341,7 +341,7 @@ void Socket::terminate()
    d.m_iSystemData = 0;
 }
 
-bool Socket::readAvailable( int32 msec, const Sys::SystemData *sysData )
+int Socket::readAvailable( int32 msec, const Sys::SystemData *sysData )
 {
    m_lastError = 0;
    int count = s_select( (SOCKET) d.m_iSystemData, msec, 0 );
@@ -352,7 +352,7 @@ bool Socket::readAvailable( int32 msec, const Sys::SystemData *sysData )
    return count > 0;
 }
 
-bool Socket::writeAvailable( int32 msec, const Sys::SystemData *sysData )
+int Socket::writeAvailable( int32 msec, const Sys::SystemData *sysData )
 {
    m_lastError = 0;
    int count = s_select( (SOCKET) d.m_iSystemData, msec, 1 );
