@@ -71,6 +71,7 @@ ELSEIF(WIN32)
       stdstreams_win.cpp
       sys_win.cpp
       time_sys_win.cpp
+      vm_sys_win.cpp
       falcon_engine.rc
       )
 

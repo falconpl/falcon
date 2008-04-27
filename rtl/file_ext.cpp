@@ -853,7 +853,7 @@ FALCON_FUNC  Stream_writeItem ( ::Falcon::VMachine *vm )
    }
 
    Stream *file = static_cast<Stream *>( fileObj->getUserData() );
-   Item::e_sercode sc = source->serialize( file, vm );
+   Item::e_sercode sc = source->serialize( file );
    switch( sc )
    {
       case Item::sc_ok: vm->retval( 1 ); break;

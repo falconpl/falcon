@@ -34,7 +34,7 @@ struct VM_SYS_DATA;
    applications and modules (i.e. for threading support).
 */
 
-class SystemData
+class FALCON_DYN_CLASS SystemData
 {
 public:
    struct VM_SYS_DATA *m_sysData;
@@ -52,7 +52,7 @@ public:
    /** Checks wether the VM has been interrupted in a blocking wait or I/O.
       \return true if interrupted.
    */
-   bool interrupted();
+   bool interrupted() const;
 
    /** Safe interthread VM interruption request on blocking I/O.
       Will work only on compliant I/O and waits.
@@ -66,7 +66,7 @@ public:
    /** Wait for a given count of seconds.
       \return false if interrupted.
    */
-   bool sleep( numeric seconds );
+   bool sleep( numeric seconds ) const;
 
    /** Returns overall underlying system architecture type.
       It may be something as WIN or POSIX. More detailed informations about underlying systems

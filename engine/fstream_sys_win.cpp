@@ -20,6 +20,7 @@
 #include <falcon/fstream_sys_win.h>
 #include <falcon/memory.h>
 #include <falcon/sys.h>
+#include <falcon/vm_sys_win.h>
 
 #ifndef INVALID_SET_FILE_POINTER
    #define INVALID_SET_FILE_POINTER ((DWORD)-1)
@@ -134,14 +135,12 @@ int64 GenericStream::seek( int64 pos, e_whence whence )
 {
    WinFileSysData *data = static_cast< WinFileSysData *>( m_fsData );
 
-
    DWORD from;
    switch(whence) {
       case 0: from = FILE_BEGIN; break;
       case 1: from = FILE_CURRENT; break;
       case 2: from = FILE_END; break;
    }
-
 
    LONG posLow = (LONG)(pos & 0xFFFFFFFF);
    LONG posHI = (LONG) (pos >> 32);
@@ -168,7 +167,6 @@ int64 GenericStream::seek( int64 pos, e_whence whence )
 int64 GenericStream::tell()
 {
    WinFileSysData *data = static_cast< WinFileSysData *>( m_fsData );
-
 
    LONG posHI = 0;
 
@@ -287,9 +285,13 @@ int GenericStream::readAvailable( int32 msec, const Sys::SystemData *sysData )
             waitTime = (DWORD) msec;
 
             DWORD result = PeekNamedPipe( data->m_handle, NULL, 0,  NULL, &size, NULL );
-            while ( result && size == 0 && waitTime > 0 ) {
-               Sleep(10);
-               waitTime -= 10;
+            while ( result && size == 0 && waitTime > 0 ) 
+            {
+               // Interrupted?
+               if( WaitForSingleObject( sysData->m_sysData->evtInterrupt, 1 ) == WAIT_OBJECT_0 )
+                  return -2;
+
+               waitTime -= 1;
                result = PeekNamedPipe( data->m_handle, NULL, 0,  NULL, &size, NULL );
             }
             if ( ! result )
@@ -297,12 +299,20 @@ int GenericStream::readAvailable( int32 msec, const Sys::SystemData *sysData )
             return (size > 0) ? 1 : 0;
          }
       }
-      else {
-
+      else 
+      {
          waitTime = msec < 0 ? INFINITE : msec;
-         if ( WaitForSingleObject( data->m_handle, waitTime ) == WAIT_OBJECT_0 ) {
+         HANDLE waiting[2];
+         waiting[0] = data->m_handle;
+         waiting[1] = sysData->m_sysData->evtInterrupt;
+         DWORD res = WaitForMultipleObjects( 2, waiting, FALSE,waitTime );
+
+         if ( res == WAIT_OBJECT_0 )
             return 1;
-         }
+
+         // Interrupted?
+         if ( res == WAIT_OBJECT_0 + 1 )
+            return -2;
       }
 
       return 0;
@@ -312,7 +322,7 @@ int GenericStream::readAvailable( int32 msec, const Sys::SystemData *sysData )
    return 1;
 }
 
-int32 GenericStream::writeAvailable( int32 msec )
+int32 GenericStream::writeAvailable( int32 msec, const Sys::SystemData *sysData )
 {
    WinFileSysData *data = static_cast< WinFileSysData *>( m_fsData );
 
@@ -321,8 +331,11 @@ int32 GenericStream::writeAvailable( int32 msec )
       if ( data->m_direction == WinFileSysData::e_dirIn )
       {
          if (msec > 0 )
-            ::Sleep( msec );
-         return 0;
+         {
+            if ( sysData->sleep( msec ) )
+               return 0;
+            return -2; // interrupted
+         }
       }
 
       //DWORD waitTime;
@@ -339,6 +352,9 @@ int32 GenericStream::writeAvailable( int32 msec )
             return 1;
          }*/
       }
+
+      if ( sysData->interrupted() )
+         return -2;
 
       return 1;
    }
