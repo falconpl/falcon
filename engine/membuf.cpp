@@ -48,8 +48,15 @@ MemBuf::~MemBuf()
       memFree( m_memory );
 }
 
-bool MemBuf::serialize( Stream *stream )
+bool MemBuf::serialize( Stream *stream, bool bLive )
 {
+   if ( bLive )
+   {
+      // write the live serializer
+      MemBuf *(*funcptr)( VMachine *vm, Stream *stream ) = MemBuf::deserialize;
+      stream->write( &funcptr, sizeof( funcptr ) );
+   }
+
    uint32 wSize = endianInt32( wordSize() );
    stream->write( &wSize, sizeof( wSize ) );
    if ( ! stream->good() ) return false;

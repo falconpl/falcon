@@ -42,7 +42,7 @@ public:
 
    MemBuf( VMachine *vm, uint32 size );
    MemBuf( VMachine *vm, byte *data, uint32 size, bool bOwn = false );
-   ~MemBuf();
+   virtual ~MemBuf();
 
    virtual uint8 wordSize() const = 0;
    virtual uint32 length() const = 0;
@@ -55,7 +55,7 @@ public:
    void dependant( UserData *g ) { m_dependant = g; }
 
 
-   bool serialize( Stream *stream );
+   virtual bool serialize( Stream *stream, bool bLive = false );
    static MemBuf *deserialize( VMachine *vm, Stream *stream );
    /** Creates a membuf with defined wordsize.
       The length parameter is the final element count; it gets multiplied
