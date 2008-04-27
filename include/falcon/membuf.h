@@ -64,7 +64,7 @@ public:
    static MemBuf *create( VMachine *vm, int nWordSize, uint32 length );
 };
 
-class FALCON_DYN_SYM MemBuf_1: public MemBuf
+class FALCON_DYN_SYM MemBuf_1: public virtual MemBuf
 {
 public:
    MemBuf_1( VMachine *vm, uint32 size ):
@@ -81,7 +81,7 @@ public:
    virtual void set( uint32 pos, uint32 value );
 };
 
-class FALCON_DYN_SYM MemBuf_2: public MemBuf
+class FALCON_DYN_SYM MemBuf_2: public virtual MemBuf
 {
 public:
    MemBuf_2( VMachine *vm, uint32 size ):
@@ -98,7 +98,7 @@ public:
    virtual void set( uint32 pos, uint32 value );
 };
 
-class FALCON_DYN_SYM MemBuf_3: public MemBuf
+class FALCON_DYN_SYM MemBuf_3: public virtual MemBuf
 {
 public:
    MemBuf_3( VMachine *vm, uint32 size ):
@@ -115,7 +115,7 @@ public:
    virtual void set( uint32 pos, uint32 value );
 };
 
-class FALCON_DYN_SYM MemBuf_4: public MemBuf
+class FALCON_DYN_SYM MemBuf_4: public virtual MemBuf
 {
 public:
    MemBuf_4( VMachine *vm, uint32 size ):
