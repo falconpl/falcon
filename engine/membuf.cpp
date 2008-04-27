@@ -48,7 +48,7 @@ MemBuf::~MemBuf()
       memFree( m_memory );
 }
 
-bool MemBuf::serialize( Stream *stream, bool bLive )
+bool MemBuf::serialize( Stream *stream, bool bLive ) const
 {
    if ( bLive )
    {

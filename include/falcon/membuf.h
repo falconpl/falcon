@@ -55,7 +55,7 @@ public:
    void dependant( UserData *g ) { m_dependant = g; }
 
 
-   virtual bool serialize( Stream *stream, bool bLive = false );
+   virtual bool serialize( Stream *stream, bool bLive = false ) const;
    static MemBuf *deserialize( VMachine *vm, Stream *stream );
    /** Creates a membuf with defined wordsize.
       The length parameter is the final element count; it gets multiplied
