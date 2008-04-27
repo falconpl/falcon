@@ -45,7 +45,7 @@ SystemData::~SystemData()
 }
 
 
-bool SystemData::interrupted()
+bool SystemData::interrupted() const
 {
    int res;
    struct pollfd fds[1];
@@ -84,9 +84,9 @@ void SystemData::resetInterrupt()
 }
 
 
-bool SystemData::sleep( numeric seconds )
+bool SystemData::sleep( numeric seconds ) const
 {
-   int ms = (int) seconds * 1000;
+   int ms = (int) (seconds * 1000.0);
    struct pollfd fds[1];
    fds[0].events = POLLIN;
    fds[0].fd = m_sysData->interruptPipe[0];
