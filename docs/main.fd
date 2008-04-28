@@ -1,0 +1,78 @@
+/*#
+@main The Falcon Core Function Reference
+
+Falcon provides an ever growing set of modules which interacts with the host system.
+Also, there are many function meant to operate on the standard types, or to interact
+with the Virtual Machine itself.
+
+This manual contains those functions, classes and objects that are included in the
+fundamental modules usually available at scripts. This includes a very limited
+subset of functions, which are published through the @b core and the @b RTL modules.
+
+*/
+
+/*#
+@page interrupt_protocol Falcon Virtual Machine Preemptibility
+
+Falcon Virtual Machine supports bidirectional communication
+with the embedding applications and with extension modules that
+allows external code to ask for the VM to suspend or terminate
+its execution, and allows the VM to request for the embedding
+application to perform idle operations.
+
+Namely, this communication is currently supported through
+three mechanisms:
+   - Wait Interruption Protocol
+   - Suspension on sleep request
+   - Synchronous periodic callback
+
+@section Wait Interruption Protocol
+
+Blocking operations performed by the Virtual Machine can be
+asynchronously interrupted from another thread of the application
+where the virtual machine runs. Whenever an interruption request
+is issued, if the VM is already engaged in or is approaches a compliant
+blocking operation, it will raise an @a InterruptedError. Scripts may
+intercept this error to for provide some cleanup, or just let it unfiltered.
+
+@note Unfiltered errors doesn't reach the script layer and cause immediate
+termination of the signaled VM. Also, a full Falcon error instance is not
+created for them, and embedding application can access the exception that
+terminated the execution through a standard Falcon::Error C++ interface.
+
+Not all the blocking waits are instrumented to respect interrupt requets and raise this error, as some
+waiting operations may be caused by external module that are not required
+to adopt the vm interruption protocol.
+
+Compliant waiting functions are mainly @a sleep, @a Stream.readAvailable,
+@a Stream.writeAvailable and a few others. Compliancy to interruption protocol
+is specified in the item descriptions.
+
+@section Suspension on sleep request.
+
+Embedding applications may also require the VM to suspend its execution on sleep
+requests coming from the scripts or from extension modules. It is usefull to have
+the VM instruct the embedding application on how much sleep time has been required,
+and let the embedding application manage this idle time.
+
+The Embedding application may also decide to ignore the request, to reset the VM
+and start a new execution or to destroy it. After a return in sleep request state,
+the VM is clear for inspection, modification, concurrent execution and termination.
+
+@section Synchronous periodic callback.
+
+The VM provides a callback hook that will be periodically called. This hook can
+be used by embedding applications to check for program status change, and it may
+inject in the VM quit or suspension requests.
+
+In example, a Falcon VM may run in a thread of an embedding application; an
+asynchronous request to stop the VM may be posted to the runner thread, and the
+VM may peek this request through the periodic callback. This hook may also be
+used to dequeue incoming interthread requests that may then be safely injected
+in the VM and possibly dispatched to coroutines that may handle them without
+alter the state of the running VM.
+
+Frequency of the periodic callback is expressed in count of virtual instructions
+executed, and can be regulated and changed live.
+
+*/

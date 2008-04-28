@@ -84,7 +84,21 @@ namespace core {
 /****************************************
    VM Interface.
 ****************************************/
+/*#
+   @funset vminfo Generic informations on the Virtual Machine.
 
+   This functions are meant to provide minimal informations about the
+   virtual machine and its configuration. In example, they provide
+   the VM version number and target architectures.
+*/
+
+/*#
+   @function vmVersionInfo
+   @ingroup general_puroise
+   @inset vminfo
+   @brief Returns an array containing VM version informations.
+   @return Major, minor and revision numbers of the VM in a 3 elements array.
+*/
 FALCON_FUNC  vmVersionInfo( ::Falcon::VMachine *vm )
 {
    CoreArray *ca = new CoreArray( vm, 3 );
@@ -94,11 +108,35 @@ FALCON_FUNC  vmVersionInfo( ::Falcon::VMachine *vm )
    vm->retval( ca );
 }
 
+/*#
+   @function vmVersionName
+   @ingroup general_puroise
+   @inset vminfo
+   @brief Returns the nickname for this VM version.
+   @return A string containing the symbolic name of this VM version.
+*/
 FALCON_FUNC  vmVersionName( ::Falcon::VMachine *vm )
 {
    String *str = new GarbageString( vm, FALCON_VERSION " (" FALCON_VERSION_NAME ")" );
    vm->retval( str );
 }
+
+/*#
+   @function vmSystemType
+   @ingroup general_puroise
+   @inset vminfo
+   @brief Returns a descriptive name of the overall system architecture.
+   @return A string containing a small descriptiuon of the system architecture.
+
+   Currently, it can be "WIN" on the various MS-Windows flavours and POSIX on
+   Linux, BSD, Solaris, Mac-OSX and other *nix based systems.
+*/
+FALCON_FUNC  vmSystemType( ::Falcon::VMachine *vm )
+{
+   String *str = new GarbageString( vm, Sys::SystemData::getSystemType() );
+   vm->retval( str );
+}
+
 
 /****************************************
    Generic item handling
@@ -172,6 +210,7 @@ FALCON_FUNC  len ( ::Falcon::VMachine *vm )
    @class Error
    @brief Internal VM and runtime error reflection class.
    @ingroup errors
+   @ingroup general_purpose
 
    @optparam code A numeric error code.
    @optparam description A textual description of the error code.
@@ -374,6 +413,7 @@ FALCON_FUNC  Error_getSysErrDesc ( ::Falcon::VMachine *vm )
    @brief Syntax error descriptor.
 
    @ingroup errors
+   @ingroup general_purpose
 
    @optparam code A numeric error code.
    @optparam description A textual description of the error code.
@@ -398,6 +438,7 @@ FALCON_FUNC  SyntaxError_init ( ::Falcon::VMachine *vm )
    @class CodeError
    @brief VM and internal coded related error descriptor.
    @ingroup errors
+   @ingroup general_purpose
    @optparam code A numeric error code.
    @optparam description A textual description of the error code.
    @optparam extra A descriptive message explaining the error conditions.
@@ -421,6 +462,7 @@ FALCON_FUNC  CodeError_init ( ::Falcon::VMachine *vm )
    @class IoError
    @brief Error on I/O operations.
    @ingroup errors
+   @ingroup general_purpose
    @optparam code A numeric error code.
    @optparam description A textual description of the error code.
    @optparam extra A descriptive message explaining the error conditions.
@@ -440,6 +482,20 @@ FALCON_FUNC  IoError_init ( ::Falcon::VMachine *vm )
    Error_init( vm );
 }
 
+/*#
+   @class TypeError
+   @brief Type mismatch in a typed operation.
+   @ingroup errors
+   @ingroup general_purpose
+   @optparam code A numeric error code.
+   @optparam description A textual description of the error code.
+   @optparam extra A descriptive message explaining the error conditions.
+   @from Error code, description, extra
+
+   This error is generated when some operations requiring items of a
+   certain type fail because of type mismatch.
+*/
+
 FALCON_FUNC  TypeError_init ( ::Falcon::VMachine *vm )
 {
    CoreObject *einst = vm->self().asObject();
@@ -453,6 +509,7 @@ FALCON_FUNC  TypeError_init ( ::Falcon::VMachine *vm )
    @class AccessError
    @brief Error accessing an indexed item.
    @ingroup errors
+   @ingroup general_purpose
    @optparam code A numeric error code.
    @optparam description A textual description of the error code.
    @optparam extra A descriptive message explaining the error conditions.
@@ -479,6 +536,7 @@ FALCON_FUNC  AccessError_init ( ::Falcon::VMachine *vm )
    @class MathError
    @brief Mathematical calculation error.
    @ingroup errors
+   @ingroup general_purpose
    @optparam code A numeric error code.
    @optparam description A textual description of the error code.
    @optparam extra A descriptive message explaining the error conditions.
@@ -502,6 +560,7 @@ FALCON_FUNC  MathError_init ( ::Falcon::VMachine *vm )
    @class ParamError
    @brief Incongruent paremeter error.
    @ingroup errors
+   @ingroup general_purpose
    @optparam code A numeric error code.
    @optparam description A textual description of the error code.
    @optparam extra A descriptive message explaining the error conditions.
@@ -529,6 +588,7 @@ FALCON_FUNC  ParamError_init ( ::Falcon::VMachine *vm )
    @class ParseError
    @brief Generic input parsing error.
    @ingroup errors
+   @ingroup general_purpose
    @optparam code A numeric error code.
    @optparam description A textual description of the error code.
    @optparam extra A descriptive message explaining the error conditions.
@@ -558,6 +618,7 @@ FALCON_FUNC  ParseError_init ( ::Falcon::VMachine *vm )
    @class CloneError
    @brief Item cannot be cloned.
    @ingroup errors
+   @ingroup general_purpose
    @optparam code A numeric error code.
    @optparam description A textual description of the error code.
    @optparam extra A descriptive message explaining the error conditions.
@@ -588,6 +649,7 @@ FALCON_FUNC  CloneError_init ( ::Falcon::VMachine *vm )
    @class InterruptedError
    @brief Wait operation interrupted.
    @ingroup errors
+   @ingroup general_purpose
    @optparam code A numeric error code.
    @optparam description A textual description of the error code.
    @optparam extra A descriptive message explaining the error conditions.
@@ -870,15 +932,19 @@ FALCON_FUNC  setProperty( ::Falcon::VMachine *vm )
 
 /*#
    @function exit
+   @ingroup general_purpose
    @param value an item representing VM exit code.
    @brief Requires immediate termination of the program.
 
-   The program is immediately terminated and the toplevel VM loop is
-   interrupted as soon as possible. In case of embedding applications,
-   the exit value may be retreived by the embedder and interpreted as
-   the "script return value"; in case of falcon command line compiler,
-   the item is translated into an integer and provided as the exit
-   value of the script.
+   The VM execution will be interrupted, with normal state, and the item will be
+   passed in the A register of the VM, where embedding application expects to receive
+   the exit value. Semantic of the exit value will vary depending on the embedding
+   application. The Falcon command line tools (and so, stand alone scripts) will pass
+   this return value to the system if it is an integer, else they will terminate
+   passing 0 to the system.
+
+   This function terminates the VM also when there are more coroutines running.
+
 */
 
 FALCON_FUNC  hexit ( ::Falcon::VMachine *vm )
@@ -1341,7 +1407,150 @@ FALCON_FUNC vmSuspend( ::Falcon::VMachine *vm )
 /****************************************
    The Format class.
 ****************************************/
+/*#
+   @class Format
+   @brief Controls the rendering of items into strings.
+   @ingroup general_purpose
+   @optparam fmtspec If provided, must be a valid format specifier
+      which is immediately parsed. In case of invalid format,
+      a ParseError is raised.
 
+   Format class is meant to provide an efficient way to format variables into
+   strings that can then be sent to output streams. Internally, the format class
+   is used in string expansion (the '@' operator), but while string expansion causes
+   a string parsing to be initiated and an internal temporary Format object to be
+   instantiated each time an expansion is performed, using a prebuilt Format object
+   allows to optimize repeated formatting operations. Also, Format class instances may
+   be used as other objects properties, applied directly to strings being written on streams,
+   modified after being created and are generally more flexible than the string expansion.
+
+   The format specifier is a string that may contain various elements indicating how the target
+   variable should be rendered as a string.
+
+   @subsection Format specification
+
+      @b Size: The minimum field length; it can be just expressed by a number.
+      if the formatted output is wide as or wider than the allocated size, the output
+      will not be truncated, and the resulting string may be just too wide to be displayed
+      where it was intended to be. The size can be mandatory by adding '*' after it.
+      In this case, the format() method will return false (and eventually raise an error)
+      if the conversion caused the output to be wider than allowed.
+
+      @b Padding: the padding character is appended after the formatted size, or it is put in
+      front of it if alignment is to the right. To define padding character, use 'p' followed
+      by the character. In example, p0 to fill the field with zeros. Of course, the character
+      may be any Unicode character (the format string accepts standard Falcon character escapes).
+      In the special case of p0, front sign indicators are placed at the beginning of the field;
+      in example "4p0+" will produce "+001" "-002" and so on, while "4px+" will produce "xx+1", "xx-2" etc.
+
+      @b Numeric @b base: the way an integer should be rendered. It may be:
+         - Decimal: as it's the default translation, no command is needed; a 'N' character may
+           be added to the format to specify that we are actually expecting a number.
+         - Hexadecimal: Command may be 'x' (lowercase hex), 'X' (uppercase Hex), 'c'
+           (0x prefixed lowercase hex) or 'C' (0x prefixed uppercase hex). Binary: 'b' to
+           convert to binary, and 'B' to convert to binary and add a "b" after the number.
+
+         - Octal: 'o' to display an octal number, or '0' to display an octal with "0" prefix.
+         - Scientific: 'e' to display a number in scientific notation W.D+/-eM. Format of numbers in
+           scientific notation is fixed, so thousand separator and decimal digit separator cannot be set,
+           but decimals cipher setting will still work.
+
+      @bDecimals: a dot '.' followed by a number indicates the number of decimal to be displayed. If no
+          decimal is specified, floating point numbers will be displayed with all significant digits digits,
+          while if it's set to zero, decimal numbers will be rounded.
+
+      @b Decimal @b separator: a 'd' followed by any non-cipher character will be interpreted as decimal
+      separator setting. In example, to use central European standard for decimal nubmers and limit the
+      output to 3 decimals, write ".3d,", or "d,.3". The default value is '.'.
+
+      @b (Thousands) @b Grouping: actually it's the integer part group separator, as it will be displayed
+      also for hexadecimal, octal and binary conversions. It is set using 'g' followed by the separator
+      character, it defaults to ','. Normally, it is not displayed; to activate it set also the integer
+      grouping digit count; normally is 3, but it's 4 in Japanaese and Chinese locales, while it may be
+      useful to set it to 2 or 4 for hexadecimal, 3 for octal and 4 or 8 for binary. In example 'g4-'
+      would group digits 4 by 4, grouping them with a "-". Zero would disable grouping.
+
+      @b Grouping @b Character: If willing to change only the grouping character and not the default
+      grouping count, use 'G'.
+
+      @b Alignment: by default the field is aligned to the left; to align the field to
+         the right use 'r'.
+      @b Negative @b display @b format: By default, a '-' sign is appended in front of the number if it's
+         negative. If the '+' character is added to the format, then in case the number is positive, '+'
+         will be appended in front. '--' will postpend a '-' if the number is negative, while '++'
+         will postpend either '+' or '-' depending on the sign of the number. To display a parenthesis around
+         negative numbers, use '[', or use ']' to display a parenthesis for negative numbers and use the padding
+         character in front and after positive numbers. Using parenthesis will prevent using '+', '++' or '--'
+         formats. Format '-^' will add a - in front of padding space if the number is negative, while '+^'
+         will add plus or minus depending on number sign. In example, "5+" would render -12 as "  -12", while "5+^"
+          will render as "-  12". If alignment is to the right, the sign will be added at the other side of the
+          padding: "5+^r" would render -12 as "12  -". If size is not mandatory, parenthesis will be wrapped
+          around the formatted field, while if size is mandatory they will be wrapped around the whole field,
+          included padding. In example "5[r" on -4 would render
+          as "  (4)", while "5*[r" would render as "(  4)".
+
+      @b Nil @n format: How to represent a nil. It may be one of the following:
+         - 'nn': nil is not represented (mute).
+         - 'nN': nil is represented by "N"
+         - 'nl': nil is rendered with "nil"
+         - 'nL': nil is rendered with "Nil". This is also the default.
+         - 'nu': nil is rendered with "Null"
+         - 'nU': nil is rendered with "NULL"
+         - 'no': nil is rendered with "None"
+         - 'nA': nil is rendered with "NA"
+
+      @b Action @b on @b error: Normally, if trying to format something different from
+      what is expected, the method format() will simply return false. In example, to format
+      a string in a number, a string using the date formatter, a number in a simple
+      pad-and-size formatter etc. To change this behavior, use '/' followed by one of
+      the following:
+         - 'n': act as the wrong item was nil (and uses the defined nil formatter).
+         - '0': act as if the given item was 0, the empty string or an invalid date,
+                or anyhow the neuter item of the expected type.
+         - 'r': raise a type error.
+
+      A 'c' letter may be added after the '/' and before the specifier to try a
+      basic conversion into the expected type before triggering the requested effect.
+      In example, if the formatted item is an object and the conversion type is string
+      (that is, no numeric related options are set), this will cause the toString()
+      method of the target object to be called, or if not available, the toString()
+      function to be applied on the target object. In example “6/cr” tries to convert the
+      item to a 6 character long string, and if it fails (i.e. because toString() method
+      returns nil) an TypeError is raised.
+
+      @b Object @b specific @b format: Objects may accept an object specific formatting as
+      parameter of the standard toString() method. A pipe separator '|' will cause all the
+      following format to be passed unparsed to the toString() method of objects eventually
+      being formatted. If the object does not provides a toString() method, or if it's not
+      an object at all, an error will be raised. The object is the sole responsible for
+      parsing and applying its specific format.
+
+      @note Ranges will be represented as [n1:n2:n3] or [n1:] if they are open. Size, alignment and padding
+      will work on the whole range, while numeric formatting will be applied to each end of the range.
+
+      Example: the format specifier "8*Xs-g2" means to format variables in a field
+      of 8 characters, size mandatory (i.e. truncated if wider), Hexadecimal uppercase, grouped 2 by 2
+      with '-' characters. A result may be "0A-F1-DA".
+
+      Another example: "12.3'0r+/r" means to format a number in 12 ciphers, of which 3 are
+      fixed decimals, 0 padded, right aligned; a '+' is always added in front of positive
+      numbers. In case the formatted item is not a number, a type error is raised.
+
+      Format class instances may be applied on several variables; in example, a currency value
+      oriented numeric format may be applied on all the currency values of a program, and changing
+      the default format would just be a matter of changing just one format object.
+*/
+
+
+/*#
+   @method parse Format
+   @brief Initializes the Format instance with an optional value.
+   @param fmtspec Format specifier
+   @raise ParseError if the format specifier is not correct.
+
+   Sets or changes the format specifier for this Format instance.
+   If the format string is not correct, a ParseError is raised.
+*/
 FALCON_FUNC  Format_parse ( ::Falcon::VMachine *vm )
 {
 
@@ -1365,6 +1574,13 @@ FALCON_FUNC  Format_parse ( ::Falcon::VMachine *vm )
    }
 }
 
+/*#
+   @init Format
+   @brief Initializes the Format instance with an optional value.
+
+   If an initialization format is provided, the @a Format.parse method is called.
+   Otherwise, it is necessary to call it at least once before performing a formatting.
+*/
 FALCON_FUNC  Format_init ( ::Falcon::VMachine *vm )
 {
    CoreObject *einst = vm->self().asObject();
@@ -1375,7 +1591,27 @@ FALCON_FUNC  Format_init ( ::Falcon::VMachine *vm )
    Format_parse( vm );
 }
 
+/*#
+   @method format Format
+   @param item The item to be formatted
+   @optparam dest A string where to store the formatted data.
+   @return A formatted string
+   @raise ParamError if a format specifier has not been set yet.
+   @raise TypeError if the format specifier can't be applied the item because of
+         incompatible type.
 
+   Formats the variable as per the given format descriptor. If the class has been
+   instantiated without format, and the parse() method has not been called yet,
+   a ParamError is raised. If the type of the variable is incompatible with the
+   format descriptor, the method returns nil; a particular format specifier allows
+   to throw a TypeError in this case.
+
+   On success, the method returns a string containing a valid formatted representation
+   of the variable.
+
+   It is possible to provide a pre-allocated string where to store the formatted
+   result to improve performace and spare memory.
+*/
 FALCON_FUNC  Format_format ( ::Falcon::VMachine *vm )
 {
    CoreObject *einst = vm->self().asObject();
@@ -1405,6 +1641,14 @@ FALCON_FUNC  Format_format ( ::Falcon::VMachine *vm )
          vm->retval( tgt );
    }
 }
+
+
+/*#
+   @method toString Format
+   @return The format specifier.
+
+   Returns a string representation of the format instance.
+*/
 
 FALCON_FUNC  Format_toString ( ::Falcon::VMachine *vm )
 {
@@ -1503,6 +1747,45 @@ FALCON_FUNC  gcGetParams( ::Falcon::VMachine *vm )
 /****************************************
    The iterator class
 ****************************************/
+/*#
+   @class Iterator
+   @brief Indirect pointer to sequences.
+   @ingroup general_purpose
+   @param collection The collection on which to iterate.
+   @optparam position Indicator for start position.
+
+   An iterator is an object meant to point to a certain position in a collection
+   (array, dictionary, string, or eventually user defined types), and to access
+   iteratively the elements in that collection.
+
+   Iterators may be used to alter a collection by removing the item they are pointing
+   to, or by changing its value. They can be stored to be used at a later moment, or
+   they can be passed as parameters. Most notably, they hide the nature of the underlying
+   collection, so that they can be used as an abstraction layer to access underlying data,
+   one item at a time.
+
+   Altering the collection may cause an iterator to become invalid; only performing write
+   operations through an iterator it is possible to guarantee that it will stay valid
+   after the modify. A test for iterator validity is performed on each operation, and in
+   case the iterator is not found valid anymore, an error is raised.
+
+   Iterators supports equality tests and provide an equal() method. Two iterators pointing
+   to the same element in the same collection are considered equal; so it is possible to
+   iterate through all the items between a start and an end.
+*/
+
+/*#
+   @init Iterator
+   @brief Initialize the iterator
+
+   The iterator is normally created at the begin of the sequence.
+   If items in the collection can be directly accessed
+      (i.e. if the collection is an array or a string), the @b position
+      parameter can be any valid index.
+
+   Otherwise, @b position can be 0 (the default) or -1. If it's -1,
+   an iterator pointing to the last element of the collection will be returned.
+*/
 
 FALCON_FUNC  Iterator_init( ::Falcon::VMachine *vm )
 {
@@ -1630,6 +1913,15 @@ FALCON_FUNC  Iterator_init( ::Falcon::VMachine *vm )
    }
 }
 
+
+/*#
+   @method hasCurrent Iterator
+   @brief Check if the iterator is valid and can be used to
+          access the underlying collection.
+   @return true if the iterator is valid and can be used to
+          access a current item.
+*/
+
 FALCON_FUNC  Iterator_hasCurrent( ::Falcon::VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
@@ -1670,6 +1962,13 @@ FALCON_FUNC  Iterator_hasCurrent( ::Falcon::VMachine *vm )
       }
    }
 }
+
+/*#
+   @method hasNext Iterator
+   @brief Check if the iterator is valid and a @a Iterator.next operation would
+          still leave it valid.
+   @return true if there is an item past to the current one.
+*/
 
 FALCON_FUNC  Iterator_hasNext( ::Falcon::VMachine *vm )
 {
@@ -1712,6 +2011,12 @@ FALCON_FUNC  Iterator_hasNext( ::Falcon::VMachine *vm )
    }
 }
 
+/*#
+   @method hasPrev Iterator
+   @brief Check if the iterator is valid and a @a Iterator.prev operation would
+          still leave it valid.
+   @return true if there is an item before to the current one.
+*/
 FALCON_FUNC  Iterator_hasPrev( ::Falcon::VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
@@ -1739,6 +2044,16 @@ FALCON_FUNC  Iterator_hasPrev( ::Falcon::VMachine *vm )
    }
 }
 
+/*#
+   @method next Iterator
+   @brief Advance the iterator.
+   @return true if the iterator is still valid after next() has been completed.
+
+   Moves the iterator to the next item in the collection.
+   If the iterator is not valid anymore, or if the current element was the last
+   in the collection, the method returns false.
+   If the iterator has successfully moved, it returns true.
+*/
 FALCON_FUNC  Iterator_next( ::Falcon::VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
@@ -1801,6 +2116,17 @@ FALCON_FUNC  Iterator_next( ::Falcon::VMachine *vm )
    }
 }
 
+
+/*#
+   @method prev Iterator
+   @brief Move the iterator back.
+   @return true if the iterator is still valid after prev() has been completed.
+
+   Moves the iterator to the previous item in the collection.
+   If the iterator is not valid anymore, or if the current element was the
+   first in the collection, the method returns false. If the iterator has
+   successfully moved, it returns true.
+*/
 FALCON_FUNC  Iterator_prev( ::Falcon::VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
@@ -1834,6 +2160,15 @@ FALCON_FUNC  Iterator_prev( ::Falcon::VMachine *vm )
    }
 }
 
+/*#
+   @method value Iterator
+   @brief Retreives the current item in the collection.
+   @return The current item.
+   @raise AccessError if the iterator is not valid.
+
+   If the iterator is valid, the method returns the value of
+   the item being currently pointed by the iterator.
+*/
 FALCON_FUNC  Iterator_value( ::Falcon::VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
@@ -1948,6 +2283,17 @@ FALCON_FUNC  Iterator_value( ::Falcon::VMachine *vm )
    vm->raiseRTError( new AccessError( ErrorParam( e_arracc ).extra( "Iterator.value" ) ) );
 }
 
+/*#
+   @method key Iterator
+   @brief Retreives the current key in the collection.
+   @return The current key.
+   @raise AccessError if the iterator is not valid, or if the collection has not keys.
+
+   If this iterator is valid and is pointing to a collection that provides key
+   ordering (i.e. a dictionary),  it returns the current key; otherwise,
+   it raises an AccessError.
+*/
+
 FALCON_FUNC  Iterator_key( ::Falcon::VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
@@ -1967,6 +2313,17 @@ FALCON_FUNC  Iterator_key( ::Falcon::VMachine *vm )
 
    vm->raiseRTError( new AccessError( ErrorParam( e_arracc ).extra( "missing key" ) ) );
 }
+
+
+/*#
+   @method equal Iterator
+   @param item The item to which this iterator must be compared.
+   @brief Check if this iterator is equal to the provided item.
+   @return True if the item matches this iterator.
+
+   This method overrides the FBOM equal method, and overloads
+   the equality check of the VM.
+*/
 
 FALCON_FUNC  Iterator_equal( ::Falcon::VMachine *vm )
 {
@@ -2029,6 +2386,17 @@ FALCON_FUNC  Iterator_equal( ::Falcon::VMachine *vm )
    vm->retval( (int64) 0 );
 }
 
+/*#
+   @method clone Iterator
+   @brief Returns an instance of this iterator pointing to the same item.
+   @return A new copy of this iterator.
+
+   Creates an iterator equivalent to this one. In this way, it is possible
+   to record a previous position and use it later. Using a normal assignment
+   wouldn't work, as the assignand would just be given the same iterator, and
+   its value would change accordingly with the other image of the iterator.
+
+*/
 
 FALCON_FUNC  Iterator_clone( ::Falcon::VMachine *vm )
 {
@@ -2068,6 +2436,18 @@ FALCON_FUNC  Iterator_clone( ::Falcon::VMachine *vm )
    vm->retval( other );
 }
 
+/*#
+   @method erase Iterator
+   @brief Erase current item in the underlying sequence.
+   @raise AccessError if the iterator is invalid.
+
+   If the iterator is valid, this method removes current item. The iterator
+   is moved to the very next item in the collection, and this may invalidate
+   it if the removed element was the last one. To remove element while performing
+   a scanning from the last element to the first one, remember to call the prev()
+   method after every remove(); in forward scans, a successful remove() implies
+   that the caller must not call next() to continue the scan.
+*/
 FALCON_FUNC  Iterator_erase( ::Falcon::VMachine *vm )
 {
    // notice: attribute cannot be removed through iterator.
@@ -2125,7 +2505,43 @@ FALCON_FUNC  Iterator_erase( ::Falcon::VMachine *vm )
    vm->raiseRTError( new AccessError( ErrorParam( e_arracc ).extra( "Iterator.erase" ) ) );
 }
 
+/*#
+   @method find Iterator
+   @param key the key to be searched.
+   @brief Moves this iterator on the searched item.
+   @return true if the key was found, false otheriwse.
+   @raise AccessError if the iterator is invalid or if the sequence doesn't provide keys.
 
+   This method searches for an key in the underlying sequence, provided it offers search
+   keys support. This is the case of the various dictionaries.
+
+   This search is optimizied so that the subtree below the current position of the iterator
+   is searched first. If the iterator is pointing to an item that matches the required
+   key, this method returns immediately.
+
+   After a succesful search, the iterator is moved to the position of the searched item.
+
+   After a failed search, the iterator is moved to the smallest item in the sequence
+   greater than the desired key; it's the best position for an insertion of the searched
+   key.
+
+   In example, to traverse all the items in a dictionary starting with 'C',
+   the following code can be used:
+
+   @code
+   dict = [ "Alpha" => 1, "Beta" => 2, "Charlie" => 3, "Columbus" => 4, "Delta" => 5 ]
+   iter = Iterator( dict )
+
+   iter.find( "C" )  // we don't care if it succeeds
+   while iter.hasCurrent() and iter.key()[0] == "C"
+      > iter.key(), " => ", iter.value()
+      iter.next()
+   end
+   @endcode
+
+   Also, a failed search gives anyhow a useful hint position for a subsequent
+   insertion, which may avoid performing the search again.
+*/
 FALCON_FUNC  Iterator_find( ::Falcon::VMachine *vm )
 {
    Item *i_key = vm->param(0);
@@ -2149,11 +2565,29 @@ FALCON_FUNC  Iterator_find( ::Falcon::VMachine *vm )
       if( iter->isOwner( dict ) )
       {
          vm->retval( dict->find( *i_key, *iter ) );
+         return;
       }
    }
 
    vm->raiseRTError( new AccessError( ErrorParam( e_arracc ).extra( "Iterator.find" ) ) );
 }
+
+/*#
+   @method find Iterator
+   @param key Item to be inserted (or key, if the underlying sequence is keyed).
+   @optparam value A value associated with the key.
+   @brief Insert an item, or a pair of key values, in an underlying sequence.
+   @raise AccessError if the iterator is invalid.
+
+   Inserts an item at current position. In case the underlying sequence is an
+   ordered sequence of key-value pairs, a correct position for insertion is first
+   searched, and then the iterator is moved to the position of the inserted key.
+
+   In this second case, if the iterator already points to a valid position for
+   insertion of the given key, the search step is skipped.
+
+   @see Iterator.find
+*/
 
 FALCON_FUNC  Iterator_insert( ::Falcon::VMachine *vm )
 {
@@ -2241,6 +2675,11 @@ FALCON_FUNC  Iterator_insert( ::Falcon::VMachine *vm )
 }
 
 
+/*#
+   @method getOrigin Iterator
+   @brief Returns the underlying sequence.
+   @return The sequence being pointed by this iterator.
+*/
 FALCON_FUNC  Iterator_getOrigin( ::Falcon::VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
@@ -2251,6 +2690,35 @@ FALCON_FUNC  Iterator_getOrigin( ::Falcon::VMachine *vm )
 // Page dict
 //===================================================
 
+/*#
+   @function PageDict
+   @ingroup general_purpose
+   @brief Creates a paged dictionary (which is internally represented as a B-Tree).
+   @param pageSize size of pages expressed in maximum items.
+   @return A new dictionary.
+
+   The function returns a Falcon dictionary that can be handled exactly as a normal
+   dictionary. The difference is only in the internal management of memory allocation
+   and tree balance. Default Falcon dictionaries (the ones created with the “[=>]”
+   operator) are internally represented as paired linear vectors of ordered entries.
+   They are extremely efficient to store a relatively small set of data, whose size,
+   and possibly key order, is known in advance. As this is exactly the condition under
+   which source level dictionary are created, this way to store dictionary is the
+   default in Falcon. The drawback is that if the data grows beyond a critical mass
+   linear dictionary may become sluggishly slow and hang down the whole VM processing.
+
+   This function, which is actually a class factory function (this is the reason why
+   its name begins in uppercase), returns an empty Falcon dictionary that is internally
+   organized as a B-Tree structure. At a marginal cost in term of memory with respect
+   to the mere storage of falcon items, which is used as spare and growth area, this
+   structure offer high performances on medium to large amount of data to be ordered
+   and searched. Empirical tests in Falcon language showed that this structure can
+   scale up easily to several millions items.
+
+   In general, if a Falcon dictionary is meant to store large data, above five to ten
+   thousands elements, or if the size of stored data is not known in advance, using
+   this structure instead of the default Falcon dictionaries is highly advisable.
+*/
 FALCON_FUNC  PageDict( ::Falcon::VMachine *vm )
 {
    Item *i_pageSize = vm->param(0);
@@ -3879,6 +4347,7 @@ Module * core_module_init()
    // VM support
    core->addExtFunc( "vmVersionInfo", Falcon::core::vmVersionInfo );
    core->addExtFunc( "vmVersionName", Falcon::core::vmVersionName );
+   core->addExtFunc( "vmSystemType", Falcon::core::vmSystemType );
 
    // Format
    Symbol *format_class = core->addClass( "Format", Falcon::core::Format_init );

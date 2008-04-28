@@ -55,6 +55,7 @@ Falcon (0.8.9)
            an InterruptedError, can be catched and operations can be resumed.
   * Minor: RangeError renamed into AccessError.
   * Major: Added broadcast replies (returning from broadcast with an OOB item).
+  * Minor: Added function vmSystemType() to access underlying target compilation system.
 
 Falcon (0.8.8)
   * bugfix: TRAV opcode may destroy its parameters while setting first loop
