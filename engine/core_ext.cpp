@@ -76,6 +76,88 @@
 */
 
 
+/*#
+   @funset attrib_model Attribute model support
+   @brief Functions supporting attributes.
+
+   Attributes define dynamic boolean characteristics that instances may have at a certain moment.
+   An attributed can be given or removed from a certain object, or automatically given to new
+   instances through class declaration has statement. The VM keeps track of instances having attributes,
+   so it is possible to iterate on, or send a message to, all the objects having a certain attribute.
+   In this section, the functions that allow to access this functionalities are explained.
+
+   Attribute can be treated as collections in for/in loops and iterators can be extracted from
+   them with the first() BOM method and with the Iterator class constructor.
+*/
+
+/*#
+   @funset functional_support Functional programming support
+   @brief ETA functions and functional constructs.
+
+   Falcon provides some special functional programming constructs that is known
+   to the VM to have special significance. The vast majority of them starts a
+   “functional evaluation” chain on their parameters before their value is evaluated.
+   A functional evaluation is a recursive evaluation (reduction) of list structures into
+   atoms. At the moment, the only list structure that can be evaluated this way is the array.
+   A parameter being evaluated in functional context means that the given parameter will be
+   recursively scanned for callable arrays or symbols that can be reduced to atoms. A callable
+   array is reduced by calling the function and substituting it with its return value.
+   When all the contents of the list are reduced, the higher level is evaluated.
+
+   Consider this example:
+   @code
+   function func0( p0, p1 ): ...
+   function func1( p0 ): ...
+
+   list = [func0, [func1, param1], param2]
+   @endcode
+
+   Calling list as a callable array, func0 will be called with the array [func1, param1] as
+   the first parameter, and param2 as the second parameter. On the other hand, evaluating
+   the above list in a functional context, first func1 will be called with param1, then
+   func0 will be called with the return value of the previous evaluation as the first parameter,
+   and with param2 as the second parameter.
+
+   The functions in this section are considered “special constructs” as the VM knows them and
+   treats them specially. Their definition overrides the definition of a functional evaluation,
+   so that when the VM finds a special construct in its evaluation process, it ceases using the
+   default evaluation algorithm and passes evaluation control to the construct.
+
+   In example, the iff construct selects one of its branches to be evaluated only if the first
+   parameter evaluates to true:
+   @code
+   list = [iff, someValueIsTrue, [func0, [func1, param1]], [func1, param2] ]
+   @endcode
+
+   If this list had to be evaluated in a functional context, then before iff had a chance to
+   decide what to do, the two arrays [func0, ...] and [func1,...] would have been evaluated.
+   As iff is a special construct, the VM doesn't evaluate its parameters and lets iff perform
+   its operations as it prefer. In the case o iff, it first evaluates the first parameter,
+   then evaluates in functional context the second on the third parameter, leaving unevaluated
+   the other one.
+
+   Not all constructs evaluates everything it is passed to them in a functional context. Some of
+   them are meant exactly to treat even a callable array (or anything else that should be reduced)
+   as-is, stopping the evaluation process as the VM meets them. The description of each construct
+   explains its working principles, and whether if its parameters are  evaluated or not.
+
+   Please, notice that “callable” doesn't necessarily mean “evaluable”. To evaluate in functional
+   context a callable symbol without parameter, it must be transformed into a single-element array.
+   In example:
+   @code
+   function func0(): ...
+
+   result = [iff, shouldEval, [func0], func0]
+   @endcode
+
+   This places in result the value returned by func0 if shouldEval is true, while it returns exactly
+   the function object func0 as-is if shouldEval is false.
+*/
+
+/*#
+   @funset type_mangling Type mangling
+   @brief Functions managing item conversions and type detection.
+*/
 
 namespace Falcon {
 
@@ -85,7 +167,8 @@ namespace core {
    VM Interface.
 ****************************************/
 /*#
-   @funset vminfo Generic informations on the Virtual Machine.
+   @funset vminfo Virtual Machine Informations
+   @brief Generic informations on the Virtual Machine.
 
    This functions are meant to provide minimal informations about the
    virtual machine and its configuration. In example, they provide
@@ -144,16 +227,16 @@ FALCON_FUNC  vmSystemType( ::Falcon::VMachine *vm )
 
 /*#
    @function len
-   @param item an item of any kind
-   @return an integer representing the lenght of the item
-
+   @inset type_mangling
    @brief Retreives the lenght of a collection
+   @param item an item of any kind
+   @return the count of items in the sequence, or 0.
 
    The returned value represent the "size" of the item passed as a parameter.
    The number is consistent with the object type: in case of a string, it
    represents the count of characters, in case of arrays or dictionaries it
    represents the number of elements, in all the other cases the returned
-   value is 1.
+   value is 0.
 */
 
 FALCON_FUNC  len ( ::Falcon::VMachine *vm )
@@ -186,7 +269,7 @@ FALCON_FUNC  len ( ::Falcon::VMachine *vm )
       break;
 
       case FLC_ITEM_RANGE:
-         vm->retval( 2 );
+         vm->retval( 3 );
       break;
 
       default:
@@ -672,12 +755,17 @@ FALCON_FUNC  IntrruptedError_init ( ::Falcon::VMachine *vm )
 
 /*#
    @function int
-   @inset convfuncs
+   @brief Converts the given parameter to integer.
+   @inset type_mangling
    @param item The item to be converted
-   @raise AccessError in case the given value cannot be converted to an integer.
-   @brief Transforms the parameter in a integer.
+   @return An integer value.
+   @raise ParseError in case the given string cannot be converted to an integer.
+   @raise MathError if a given floating point value is too large to be converted to an integer.
 
-   If the parameter is a string, a string-to-number coversion will be attempted.
+   Integer values are just copied. Floating point values are converted to long integer;
+   in case they are too big to be prepresented a RangeError is raised.
+   Strings are converted from base 10. If the string cannot be converted,
+   or if the value is anything else, a MathError instance is raised.
 */
 FALCON_FUNC  val_int ( ::Falcon::VMachine *vm )
 {
@@ -698,7 +786,7 @@ FALCON_FUNC  val_int ( ::Falcon::VMachine *vm )
          numeric num = to_int->asNumeric();
          if ( num > 9.223372036854775808e18 || num < -9.223372036854775808e18 )
          {
-            vm->raiseRTError( new AccessError( ErrorParam( e_domain, __LINE__ ) ) );
+            vm->raiseRTError( new MathError( ErrorParam( e_domain, __LINE__ ) ) );
             return;
          }
          vm->retval( (int64)num );
@@ -713,7 +801,7 @@ FALCON_FUNC  val_int ( ::Falcon::VMachine *vm )
          else {
             int32 pos = cs->size() -1;
             if ( pos > 18 ) {
-               vm->raiseRTError( new AccessError( ErrorParam( e_numparse_long, __LINE__ ) ) );
+               vm->raiseRTError( new ParseError( ErrorParam( e_numparse_long, __LINE__ ) ) );
                return;
             }
             uint32 chr =  cs->getCharAt( pos );
@@ -721,7 +809,7 @@ FALCON_FUNC  val_int ( ::Falcon::VMachine *vm )
             uint64 base = 1;
             while( pos > 0 ) {
                if ( chr < '0' || chr > '9' ) {
-                  vm->raiseRTError( new AccessError( ErrorParam( e_numparse, __LINE__ ) ) );
+                  vm->raiseRTError( new ParseError( ErrorParam( e_numparse, __LINE__ ) ) );
                   return;
                }
                val += ( chr -'0') * base;
@@ -733,7 +821,7 @@ FALCON_FUNC  val_int ( ::Falcon::VMachine *vm )
                vm->retval( -(int64)val );
             else {
                if ( chr < '0' || chr > '9' ) {
-                  vm->raiseRTError( new AccessError( ErrorParam( e_numparse, __LINE__ ) ) );
+                  vm->raiseRTError( new ParseError( ErrorParam( e_numparse, __LINE__ ) ) );
                   return;
                }
 
@@ -750,14 +838,17 @@ FALCON_FUNC  val_int ( ::Falcon::VMachine *vm )
 
 /*#
    @function numeric
-   @inset convfuncs
-   @brief Transforms the parameter in a number.
+   @brief Converts the given parameter to numeric.
+   @inset type_mangling
    @param item The item to be converted
-   @return A floating point numeric value.
-   @raise AccessError on numeric conversion error or integer out of range.
+   @return A numeric value.
+   @raise ParseError in case the given string cannot be converted to an integer.
+   @raise MathError if a given floating point value is too large to be converted to an integer.
 
-   If the parameter is a string, a string-to-number coversion will be attempted;
-   In case of conversion failed, it raises an error.
+   Floating point values are just copied. Integer values are converted to floating point;
+   in case of very large integers, precision may be lost.
+   Strings are converted from base 10. If the string cannot be converted,
+   or if the value is anything else, a MathError instance is raised.
 */
 FALCON_FUNC  val_numeric ( ::Falcon::VMachine *vm )
 {
@@ -778,7 +869,7 @@ FALCON_FUNC  val_numeric ( ::Falcon::VMachine *vm )
          int64 num = to_numeric->asInteger();
          if ( num > 9.223372036854775808e18 || num < -9.223372036854775808e18 )
          {
-            vm->raiseRTError( new AccessError( ErrorParam( e_domain, __LINE__ ) ) );
+            vm->raiseRTError( new MathError( ErrorParam( e_domain, __LINE__ ) ) );
             return;
          }
          vm->retval( (numeric)num );
@@ -793,7 +884,7 @@ FALCON_FUNC  val_numeric ( ::Falcon::VMachine *vm )
          else {
             int32 pos = cs->size() -1;
             if ( pos > 18 ) {
-               vm->raiseRTError( new AccessError( ErrorParam( e_numparse_long, __LINE__ ) ) );
+               vm->raiseRTError( new MathError( ErrorParam( e_numparse_long, __LINE__ ) ) );
                return;
             }
             uint32 chr =  cs->getCharAt( pos );
@@ -810,7 +901,7 @@ FALCON_FUNC  val_numeric ( ::Falcon::VMachine *vm )
                   continue;
                }
                else if ( chr < '0' || chr > '9' ) {
-                  vm->raiseRTError( new AccessError( ErrorParam( e_numparse, __LINE__ ) ) );
+                  vm->raiseRTError( new MathError( ErrorParam( e_numparse, __LINE__ ) ) );
                   return;
                }
                val += ( chr -'0' ) * base;
@@ -823,7 +914,7 @@ FALCON_FUNC  val_numeric ( ::Falcon::VMachine *vm )
                vm->retval( -(numeric)val );
             else {
                if ( chr < '0' || chr > '9' ) {
-                  vm->raiseRTError( new AccessError( ErrorParam( e_numparse, __LINE__ ) ) );
+                  vm->raiseRTError( new MathError( ErrorParam( e_numparse, __LINE__ ) ) );
                   return;
                }
 
@@ -840,8 +931,17 @@ FALCON_FUNC  val_numeric ( ::Falcon::VMachine *vm )
 
 /*#
    @function typeOf
-   @param item an item of any kind.
+   @inset type_mangling
+   @param item An item of any kind.
    @brief Returns an integer indicating the type of an item.
+   @return A constant indicating the type of the item.
+
+   The typeId returned is an integer; the Falcon compiler is fed with a set of
+   compile time constants that can be used to determine the type of an item.
+   Those constants are always available at Falcon sources.
+
+ the item is a user-defined opaque type
+
 
    The value returned may be one of the following:
    - @b NilType - the item is NIL
@@ -851,6 +951,7 @@ FALCON_FUNC  val_numeric ( ::Falcon::VMachine *vm )
    - @b RangeType - the item is a range (a pair of two integers)
    - @b FunctionType - the item is a function
    - @b StringType - the item is a string
+   - @b MemBufType - the item is a Memory Buffer Table
    - @b ArrayType - the item is an array
    - @b DictionaryType - the item is a dictionary
    - @b ObjectType - the item is an object
@@ -868,10 +969,16 @@ FALCON_FUNC  typeOf ( ::Falcon::VMachine *vm )
 
 /*#
    @function isCallable
-   @param item a possibly callable item.
-   @brief determines if the given item can be called (evaluated).
-   @return true if item could be called
+   @brief Determines if an item is callable.
+   @inset type_mangling
+   @param item The item to be converted
+   @return true if the item is callable, false otheriwse.
+
+   If the function returns true, then the call operator can be applied.
+   If it returns false, the item is not a callable one, and trying to call
+   it would cause an error.
 */
+
 FALCON_FUNC  isCallable ( ::Falcon::VMachine *vm )
 {
    if ( vm->paramCount() == 0 )
@@ -882,12 +989,18 @@ FALCON_FUNC  isCallable ( ::Falcon::VMachine *vm )
 
 /*#
    @function getProperty
-   @param item an object
-   @param property a string naming a property
+   @brief Returns the value of a property in an object.
+   @param obj the source object
+   @param propName A string representing the name of a property or a method inside the object.
    @return the property
-   @raise e_prop_acc if the property can't be found.
-   @brief returns a property stored in an object.
+   @raise AccessError if the property can't be found.
 
+   An item representing the property is returned. The returned value is
+   actually a copy of the property; assigning a new value to it won't have any
+   effect on the original object.
+
+   If the property is a method, a callable method item is returned.
+   If the property is not found, an error of class RangeError is raised.
 */
 FALCON_FUNC  getProperty( ::Falcon::VMachine *vm )
 {
@@ -908,12 +1021,16 @@ FALCON_FUNC  getProperty( ::Falcon::VMachine *vm )
    }
 }
 
-/*@function setProperty
-   @param item an object
-   @param property a string naming a property
-   @param value an item that sets a new value
-   @return the property
-   @raise e_prop_acc if the property can't be found.
+/*#
+   @function setProperty
+   @param obj The source object.
+   @param propName A string representing the name of a property or a method inside the object.
+   @param value The property new value.
+   @raise AccessError If the property can't be found.
+
+   Alters the value of the property in the given object. If the required property is not present,
+   an AccessError is raised.
+
 */
 FALCON_FUNC  setProperty( ::Falcon::VMachine *vm )
 {
@@ -959,12 +1076,14 @@ FALCON_FUNC  hexit ( ::Falcon::VMachine *vm )
 
 /*#
    @function chr
-   @inset convfuncs
-   @param code an UNICODE character ID.
+   @brief Returns a string containing a single character that corresponds to the given number.
+   @inset type_mangling
+   @param number Numeric code of the desired character
    @return a single-char string.
-   @brief Converts a 0-255 integer in the corresponding character.
 
-   @see ord
+   This function returns a single character string whose only character is the UNICODE
+   equivalent for the given number. The number must be a valid UNICODE character,
+   so it must be in range 0-0xFFFFFFFF.
 */
 
 FALCON_FUNC  chr ( ::Falcon::VMachine *vm )
@@ -988,12 +1107,13 @@ FALCON_FUNC  chr ( ::Falcon::VMachine *vm )
 
 /*#
    @function ord
-   @inset convfuncs
-   @param string a string
+   @brief Returns the numeric UNICODE ID of a given character.
+   @inset type_mangling
+   @param string The character for which the ID is requested.
    @return the UNICODE value of the first element in the string.
-   @brief Returns the ASCII value of the first element in the string.
 
-   @todo add international support. (?) move this out of core.
+   The first character in string is taken, and it's numeric ID is returned.
+
    @see chr
 */
 FALCON_FUNC  ord ( ::Falcon::VMachine *vm )
@@ -1010,17 +1130,25 @@ FALCON_FUNC  ord ( ::Falcon::VMachine *vm )
 
 /*#
    @function toString
-   @param item an item to be converted to string.
-   @optparam deccount number of significative decimals for numeric items.
+   @brief Returns a string representation of the item.
+   @param item The item to be converted to string.
+   @optparam numprec Number of significative decimals for numeric items.
    @return the string representation of the item.
 
-   @brief Returns a string representation of the item.
+   This function is useful to convert an unknown value in a string. The item may be any kind of Falcon
+   item; the following rules apply:
+      - Nil items are represented as “<NIL>”
+      - Integers are converted in base 10.
+      - Floating point values are converted in base 10 with a default precision of 6;
+        numprec may be specified to change the default precision.
+      - Array and dictionaries are represented as “Array of 'n' elements” or “Dictionary of 'n' elements”.
+      - Strings are copied.
+      - Objects are represented as “Object 'name of class'”, but if a toString() method is provided by the object,
+        that one is called instead.
+      - Classes and other kind of opaque items are rendered with their names.
 
-   If the item is a number, the second parameter will determine how many
-   decimals will be printed. If it is an object, and if it provides a
-   toString method, that method will be called. Not to be confused with
-   @a ord...
-
+   This function is not meant to provide complex applications with pretty-print facilities, but just to provide
+   simple scripts with a simple and consistent output facility.
 */
 
 FALCON_FUNC  hToString ( ::Falcon::VMachine *vm )
@@ -1047,12 +1175,12 @@ FALCON_FUNC  hToString ( ::Falcon::VMachine *vm )
    the number of formal parameters. So, part of the paramters may be accessible via
    paramter names, and the others may be accessed with this functions.
 
-   @begingset varparm
 */
 
 /*#
    @function paramCount
    @return the parameter count
+   @inset varparm
    @brief Returns number of parameter that have been passed to the current function or method.
 */
 
@@ -1077,6 +1205,7 @@ FALCON_FUNC  paramCount ( ::Falcon::VMachine *vm )
 /*#
    @function paramNumber
    @brief get the Nth parameter
+   @inset varparm
    @param the paremeter that must be returned, zero based
    @return the nth paramter (zero based) or NIL if the parameter is not given
 */
@@ -1120,6 +1249,7 @@ FALCON_FUNC  paramNumber ( ::Falcon::VMachine *vm )
 
 /*#
    @function paramIsRef
+   @inset varparm
    @brief check whether the nth parameter has been passed by value or by reference
    @param number the paramter that must be checked (zero based)
    @return true if the parameter has been passed by reference, false otherwise
@@ -1163,6 +1293,7 @@ FALCON_FUNC  paramIsRef ( ::Falcon::VMachine *vm )
 
 /*#
    @function paramSet
+   @inset varparm
    @brief Changes the nth paramter if it has been passed by reference.
    @param number the paramter to be changed (zero based)
    @param value the new value for the parameter
@@ -1207,8 +1338,6 @@ FALCON_FUNC  paramSet ( ::Falcon::VMachine *vm )
       }
    }
 }
-
-/*# @endgroup */
 
 static bool internal_eq( ::Falcon::VMachine *vm, const Item &first, const Item &second )
 {
@@ -1455,7 +1584,7 @@ FALCON_FUNC vmSuspend( ::Falcon::VMachine *vm )
            scientific notation is fixed, so thousand separator and decimal digit separator cannot be set,
            but decimals cipher setting will still work.
 
-      @bDecimals: a dot '.' followed by a number indicates the number of decimal to be displayed. If no
+      @b Decimals: a dot '.' followed by a number indicates the number of decimal to be displayed. If no
           decimal is specified, floating point numbers will be displayed with all significant digits digits,
           while if it's set to zero, decimal numbers will be rounded.
 
@@ -1489,7 +1618,7 @@ FALCON_FUNC vmSuspend( ::Falcon::VMachine *vm )
           included padding. In example "5[r" on -4 would render
           as "  (4)", while "5*[r" would render as "(  4)".
 
-      @b Nil @n format: How to represent a nil. It may be one of the following:
+      @b Nil @b format: How to represent a nil. It may be one of the following:
          - 'nn': nil is not represented (mute).
          - 'nN': nil is represented by "N"
          - 'nl': nil is rendered with "nil"
@@ -2573,7 +2702,7 @@ FALCON_FUNC  Iterator_find( ::Falcon::VMachine *vm )
 }
 
 /*#
-   @method find Iterator
+   @method insert Iterator
    @param key Item to be inserted (or key, if the underlying sequence is keyed).
    @optparam value A value associated with the key.
    @brief Insert an item, or a pair of key values, in an underlying sequence.
@@ -2806,6 +2935,22 @@ static bool core_any_next( ::Falcon::VMachine *vm )
 }
 
 
+/*#
+   @function any
+   @inset functional_support
+   @brief Returns true if any of the items in a given collection evaluate to true.
+   @param collection An array of arbitrary items.
+   @return true at least one item in the collection is true, false otherwise.
+
+   If the items in the collection are callable items, they get called and their return
+   value is evaluated, otherwise they are evaluated as true or false using the standard
+   Falcon truth check (nil is false, numerics are true if not zero, strings and collections
+   are true if not empty, object and classes are always true). Check is short circuited;
+   this means that elements are evaluated until the first element considered to be true
+   (or returning true) is found.
+
+   If the collection is empty, this function returns false.
+*/
 FALCON_FUNC  core_any ( ::Falcon::VMachine *vm )
 {
    Item *i_param = vm->param(0);
@@ -2873,6 +3018,22 @@ static bool core_all_next( ::Falcon::VMachine *vm )
    return false;
 }
 
+/*#
+   @function all
+   @inset functional_support
+   @brief Returns true if all the items in a given collection evaluate to true.
+   @param collection An array of arbitrary items.
+   @return true if all the items are true, false otherwise
+
+   If the items in the collection are callable items, they get called and their return value
+   is evaluated, otherwise they are evaluated as true or false using the standard Falcon truth
+   check (nil is false, numerics are true if not zero, strings and collections are true if not
+   empty, object and classes are always true).
+
+   Check is short circuited. This means that the check is interrupted as the first element is
+   evaluated in false.
+   If the collection is empty it returns false.
+*/
 
 FALCON_FUNC  core_all ( ::Falcon::VMachine *vm )
 {
@@ -2947,7 +3108,25 @@ static bool core_anyp_next( ::Falcon::VMachine *vm )
    return false;
 }
 
+/*#
+   @function anyp
+   @inset functional_support
+   @brief Returns true if any one of the parameters evaluate to true.
+   @param ... A list of arbitrary items.
+   @return true at least one parameter is true, false otherwise.
 
+   This function works like any(), but the collection may be specified directly
+   in the parameters rather being given in a separate array. This make easier to write
+   anyp in callable arrays. In example, one may write
+   @code
+      [anyp, 1, k, n ...]
+   @endcode
+   while using any one should write
+   @code
+      [any, [1, k, n ...]]
+   @endcode
+   If called without parameters, this function returns false.
+*/
 FALCON_FUNC  core_anyp ( ::Falcon::VMachine *vm )
 {
    uint32 count = vm->paramCount();
@@ -3006,7 +3185,25 @@ static bool core_allp_next( ::Falcon::VMachine *vm )
    return false;
 }
 
+/*#
+   @function allp
+   @inset functional_support
+   @brief Returns true if all the parameters evaluate to true.
+   @param ... An arbitrary list of items.
+   @return true if all the items are true, false otherwise
 
+   This function works like all(), but the collection may be specified directly
+   in the parameters rather being given in a separate array. This make easier to
+   write allp in callable arrays. In example, one may write
+   @code
+      [allp, 1, k, n ...]
+   @endcode
+   while using all one should write
+   @code
+      [all, [1, k, n ...]]
+   @endcode
+   If called without parameters, this function returns false.
+*/
 FALCON_FUNC  core_allp ( ::Falcon::VMachine *vm )
 {
    uint32 count = vm->paramCount();
@@ -3038,6 +3235,21 @@ FALCON_FUNC  core_allp ( ::Falcon::VMachine *vm )
    vm->retval( 1 );
 }
 
+
+/*#
+   @function eval
+   @inset functional_support
+   @brief Evaluates an array in functional context.
+   @param sequence A sequence to be evaluated.
+   @return The sigma-reduction (evaluation) result.
+
+   The array is evaluated in functional context; this means that if the array
+   is a callable item, it gets called and the result is returned; otherwise,
+   a functionally reduced array is returned.
+
+   The description of the functional evaluation algorithm is included in the heading
+   of this section.
+*/
 
 FALCON_FUNC  core_eval ( ::Falcon::VMachine *vm )
 {
@@ -3099,6 +3311,34 @@ FALCON_FUNC  core_max ( ::Falcon::VMachine *vm )
 
    vm->retval( *elem );
 }
+
+/*#
+   @function map
+   @inset functional_support
+   @brief Creates a new vector of items transforming each item in the original array through the mapping function.
+   @param mfunc A function or sigma used to map the array.
+   @param sequence A sequence of arbitrary items.
+   @return The parameter unevaluated.
+
+   mfunc is called iteratively for every item in the collection; its return value is added to the
+   mapped array. In this way it is possible to apply an uniform transformation to all the item
+   in a collection.
+
+   If mfunc returns an out of band nil item, map skips the given position in the target array,
+   actually acting also as a filter function.
+
+   In example:
+   @code
+      function mapper( item )
+         if item < 0: return oob(nil)  // discard negative items
+         return item ** 0.5            // perform square root
+      end
+
+   inspect( map( mapper, [ 100, 4, -12, 9 ]) )    // returns [10, 2, 3]
+   @endcode
+
+   @see oob
+*/
 
 static bool core_map_next( ::Falcon::VMachine *vm )
 {
@@ -3186,7 +3426,25 @@ static bool core_dolist_next ( ::Falcon::VMachine *vm )
    return true;
 }
 
+/*#
+   @function dolist
+   @inset functional_support
+   @brief Repeats an operation on a list of parameters.
+   @param processor A callable item that will receive data coming from the sequence.
+   @param sequence A list of items that will be fed in the processor one at a time.
+   @optparam ... Optional parameters to be passed to the first callable item.
+   @return The return value of the last callable item.
 
+   Every item in array is passed as parameter to the processor, which must be a callable
+   item. Items are also functionally evaluated, one by one. The parameter array is not
+   functionally evaluated as a whole; to do that, use the explicit evaluation idiom:
+   @code
+      dolist( processor, eval(array) )
+   @code
+   This method is equivalent to @a xmap, but it has the advantage that it doesn't create an array
+   of evaluated results. So, when it is not necessary to transform an array in another through a
+   mapping function, but just to run repeatedly over a collection, this function is to be preferred.
+*/
 FALCON_FUNC  core_dolist ( ::Falcon::VMachine *vm )
 {
    Item *callable = vm->param(0);
@@ -3265,6 +3523,32 @@ static bool core_xmap_next( ::Falcon::VMachine *vm )
    return false;
 }
 
+/*#
+   @function xmap
+   @inset functional_support
+   @brief Creates a new vector of items transforming each item in the original array through the mapping function, applying also filtering on undesired items.
+   @param mfunc A function or sigma used to map the array.
+   @param sequence A sequence to be mapped.
+   @return The mapped sequence.
+
+   mfunc is called iteratively for every item in the collection;  its return value is added to
+   the mapped array. Moreover, each item in the collection is functionally evaluated before
+   being passed to mfunc.
+
+   The filter function may return an out of band nil item to signal that the current item should
+   not be added to the final collection.
+
+   @code
+      In example:
+      mapper = lambda item => (item < 0 ? oob(nil) : item ** 0.5)
+      add = lambda a, b => a+b         // a lambda that will be evaluated
+
+      inspect( xmap( mapper, [ [add, 99, 1], 4, -12, 9 ]) )    // returns [10, 2, 3]
+   @endcode
+
+   @see oob
+*/
+
 FALCON_FUNC  core_xmap ( ::Falcon::VMachine *vm )
 {
    Item *callable = vm->param(0);
@@ -3323,6 +3607,22 @@ static bool core_filter_next ( ::Falcon::VMachine *vm )
    return true;
 }
 
+
+/*#
+   @function filter
+   @inset functional_support
+   @brief Filters sequence using a filter function.
+   @param ffunc A callable item used to filter the array.
+   @param sequence A sequence of arbitrary items.
+   @return The filtered sequence.
+
+   ffunc is called iteratively for every item in the collection, which is passed as a parameter to it.
+   If the call returns true, the item is added to the returned array; if it returns false,
+   the item is not added.
+
+   Items in the collection are treated literally (not evaluated).
+*/
+
 FALCON_FUNC  core_filter ( ::Falcon::VMachine *vm )
 {
    Item *callable = vm->param(0);
@@ -3374,7 +3674,34 @@ static bool core_reduce_next ( ::Falcon::VMachine *vm )
    return true;
 }
 
+/*#
+   @function reduce
+   @inset functional_support
+   @brief Uses the values in a given sequence and iteratively calls a reductor function to extract a single result.
+   @param reductor A function or Sigma to reduce the array.
+   @param sequence A sequence of arbitrary items.
+   @optparam initial_value Optional startup value for the reduction.
+   @return The reduced result.
 
+   The reductor is a function receiving two values as parameters. The first value is the
+   previous value returned by the reductor, while the second one is an item iteratively
+   taken from the origin array. If a startup value is given, the first time the reductor
+   is called that value is provided as its first parameter, otherwise the first two items
+   from the array are used in the first call. If the collection is empty, the initial_value
+   is returned instead, and if is not given, nil is returned. If a startup value is not given
+   and the collection contains only one element, that element is returned.
+
+   Some examples:
+   @code
+   > reduce( lambda a,b=> a+b, [1,2,3,4])       // sums 1 + 2 + 3 + 4 = 10
+   > reduce( lambda a,b=> a+b, [1,2,3,4], -1 )  // sums -1 + 1 + 2 + 3 + 4 = 9
+   > reduce( lambda a,b=> a+b, [1] )            // never calls lambda, returns 1
+   > reduce( lambda a,b=> a+b, [], 0 )          // never calls lambda, returns 0
+   > reduce( lambda a,b=> a+b, [] )             // never calls lambda, returns Nil
+   @endcode
+
+   Items in the collection are treated literally (not evaluated).
+*/
 FALCON_FUNC  core_reduce ( ::Falcon::VMachine *vm )
 {
    Item *callable = vm->param(0);
@@ -3457,6 +3784,34 @@ static bool core_iff_next( ::Falcon::VMachine *vm )
 }
 
 
+/*#
+   @function iff
+   @inset functional_support
+   @brief Performs a functional if; if the first parameter evaluates to true, the second parameter is evaluated and then returned, else the third one is evaluated and returned.
+   @param cfr A condition or a callable item.
+   @param whenTrue Value to be called and/or returned in case cfr evaluates to true.
+   @optparam whenFalse Value to be called and/or returned in case cfr evaluates to false.
+   @return The evaluation result of one of the two branches (or nil).
+
+   Basically, this function is meant to return the second parameter or the third (or nil if not given),
+   depending on the value of the first parameter; however, every item is evaluated in a functional
+   context. This means that cfr may be a callable item, in which case its return value will be evaluated
+   for truthfulness, and also the other parameters may. In example:
+   @code
+      > iff( 0, "was true", "was false" )           // will print “was false”
+      iff( [lambda a=>a*2, 1] , [printl, "ok!"] )   // will print “ok!” and return nil
+   @endcode
+
+   In the last example, we are not interested in the return value (printl returns nil), but in executing
+   that item only in case the first item is true. The first item is a callable item too, so iff will first
+   execute the given lambda, finding a result of 2 (true), and then will decide which element to pick, and
+   eventually execute. Notice that:
+   @code
+      iff( 1 , printl( "ok!" ), printl( "no" ) )
+   @code
+   In would have forced falcon to execute the two printl calls before entering the iff functions;
+   still, iff would have returned printl return values (which is nil in both cases).
+*/
 FALCON_FUNC  core_iff ( ::Falcon::VMachine *vm )
 {
    Item *i_cond = vm->param(0);
@@ -3510,7 +3865,28 @@ static bool core_choice_next( ::Falcon::VMachine *vm )
    return false;
 }
 
+/*#
+   @function choice
+   @inset functional_support
+   @brief Selects one of two alternatives depending on the evaluation of the first parameter.
+   @param selector The item to be evaluated.
+   @param whenTrue The item to return if selector evaluates to true.
+   @optparam whenFalse The item to be returned if selector evaluates to false
+   @optparam ... Optional parameters to be passed to the first callable item.
+   @return The return value of the last callable item.
 
+   The selector parameter is evaluated in functional context. If it's a true atom or if it's a
+   callable array which returns a true value, the ifTrue parameter is returned as-is, else the
+   ifFalse parameter is returned. If the ifFalse parameter is not given and the selector evaluates
+   to false, nil is returned.
+
+   The choice function is equivalent to iff where each branch is passed through the @a lit function:
+   @code
+      choice( selector, a, b ) == iff( selector, [lit, a], [lit, b] )
+   @endcode
+   In case a literal value is needed, choice is more efficient than using iff and applying lit on
+   the parameters.
+*/
 FALCON_FUNC  core_choice ( ::Falcon::VMachine *vm )
 {
    Item *i_cond = vm->param(0);
@@ -3543,6 +3919,25 @@ FALCON_FUNC  core_choice ( ::Falcon::VMachine *vm )
    }
 }
 
+/*#
+   @function lit
+   @inset functional_support
+   @brief Return its parameter as-is
+   @param item A condition or a callable item.
+   @return The parameter unevaluated.
+
+   This function is meant to interrupt functional evaluation of lists. It has
+   the same meaning of the single quote literal ' operator of the LISP language.
+
+   In example, the following code will return either a callable instance of printl,
+   which prints a “prompt” before the parameter, or a callable instance of inspect:
+   @code
+      iff( a > 0, [lit, [printl, "val: "] ], inspect)( param )
+   @endcode
+   as inspect is a callable token, but not an evaluable one, it is already returned literally;
+   however, [printl, “val:”] would be considered an evaluable item. To take its literal
+   value and prevent evaluation in functional context, the lit construct must be used.
+*/
 
 FALCON_FUNC  core_lit ( ::Falcon::VMachine *vm )
 {
@@ -3626,7 +4021,82 @@ static bool core_cascade_next ( ::Falcon::VMachine *vm )
    return true;
 }
 
+/*#
+   @function cascade
+   @inset functional_support
+   @brief Concatenate a set of callable items so to form a single execution unit.
+   @param callList Sequence of callable items.
+   @optparam ... Optional parameters to be passed to the first callable item.
+   @return The return value of the last callable item.
 
+   This function executes a set of callable items passing the parameters it receives
+   beyond the first one to the first  item in the list; from there on, the return value
+   of the previous call is fed as the sole parameter of the next call. In other words,
+   @code
+      cascade( [F1, F2, ..., FN], p1, p2, ..., pn )
+   @endcode
+   is equivalent to
+   @code
+      FN( ... F2( F1( p1, p2, ..., pn ) ) ... )
+   @endcode
+
+   A function may declare itself “uninterested” to insert its value in the cascade
+   by raising nil. In that case, the return value is ignored and the same parameter
+   it received is passed on to the next calls and eventually returned.
+
+   Notice that the call list is not evaluated in functional context; it is just a list
+   of callable items. To evaluate the list, or part of it, in functional context, use
+   the eval() function.
+
+   A simple example usage is the following:
+   @code
+      function square( a )
+         return a * a
+      end
+
+      function sqrt( a )
+         return a ** 0.5
+      end
+
+      cascade_abs = [cascade, [square, sqrt] ]
+      > cascade_abs( 2 )      // 2
+      > cascade_abs( -4 )     // 4
+   @endcode
+
+   Thanks to the possibility to prevent insertion of the return value in the function call sequence,
+   t is possible to program “interceptors” that will catch the progress of the sequence without
+   interfering:
+
+   @code
+      function showprog( v )
+         > "Result currently ", v
+         raise nil
+      end
+
+      // define sqrt and square as before...
+      cascade_abs = [cascade, [square, showprog, sqrt, showprog] ]
+      > "First process: ", cascade_abs( 2 )
+      > "Second process: ", cascade_abs( -4 )
+   @endcode
+
+   If the first function of the list declines processing by raising nil, the initial parameters
+   are all passed to the second function, and so on till the last call.
+
+   In example:
+
+   @code
+      function whichparams( a, b )
+         > "Called with ", a, " and ", b
+         raise nil
+      end
+
+      csq = [cascade, [ whichparams, lambda a,b=> a*b] ]
+      > csq( 3, 4 )
+   @endcode
+
+   Here, the first function in the list intercepts the parameters, but as it doesn't
+   accepts them they are both passed to the second in the list.
+*/
 FALCON_FUNC  core_cascade ( ::Falcon::VMachine *vm )
 {
    Item *i_callables = vm->param(0);
@@ -3722,6 +4192,20 @@ static bool core_floop_next ( ::Falcon::VMachine *vm )
    return true;
 }
 
+/*#
+   @function floop
+   @inset functional_support
+   @brief Repeats indefinitely a list of operations.
+   @param sequence A sequence of callable items that gets called one after another.
+
+   Every item in @b sequence gets executed, one after another. When the last element is executed,
+   the first one is called again, looping indefinitely.
+   Any function in the sequence may interrupt the loop by returning an out-of-band 0;
+   if a function returns an out of band 1, all the remaining items in the list are ignored
+   and the loop starts again from the first item.
+
+   Items in the array are not functionally evaluated.
+*/
 
 FALCON_FUNC  core_floop ( ::Falcon::VMachine *vm )
 {
@@ -3755,7 +4239,21 @@ FALCON_FUNC  core_floop ( ::Falcon::VMachine *vm )
    vm->callFrameNow( core_floop_next );
 }
 
+/*#
+   @function firstOf
+   @inset functional_support
+   @brief Returns the first non-false of its parameters.
+   @param ... Any number of arbitrary parameters.
+   @return The first non-false item.
 
+   This function scans the paraters one at a time. Sigma evaluation is stopped,
+   or in other words, every parameters is considered as-is, as if @a lit was used on each of them.
+   The function returns the first parameter being non-false in a standard Falcon truth check.
+   Nonzero numeric values, non empty strings, arrays and dictionaries and any object is considered true.
+
+   If none of the parameters is true, of is none of the parameter is given, the function returns nil
+   (which is considered  false).
+*/
 FALCON_FUNC  core_firstof ( ::Falcon::VMachine *vm )
 {
    int count = 0;
@@ -3905,6 +4403,37 @@ FALCON_FUNC  core_isoob( ::Falcon::VMachine *vm )
 // Attribute support
 //
 
+
+/*#
+   @function having
+   @inset attrib_model
+   @brief Returns an array containing all the items having a certain attribute.
+   @param attrib The attribute that will be inspected
+   @return An array with all the items currently having that attribute.
+
+   If the attribute isn't currently given to any item, this function will return an
+   empty array. Notice that it is not strictly necessary to call having function
+   just to iterate over the items i.e. in a for/in loop, as attributes
+   can be directly iterated:
+
+   @code
+   attributes: opened
+   //....
+   for item in opened
+      > "Item ", item.name, " has opened"
+   end
+   @endcode
+
+   Also, attributes support iterators; an Iterator instance can be built passing an attribute
+   as the parameter of the constructor, and first() BOM method can be called on an
+   attribute to create an iterator which can be used to inspect all the objects having
+   a certain attribute.
+
+   However, having function is still useful when a snapshot of the items currently having
+   a certain attribute is needed. In example, it is possible to save in a variable the array,
+   change the status of some objects by removing the attribute from them and finally re-giving
+   the attribute.
+*/
 FALCON_FUNC  having( ::Falcon::VMachine *vm )
 {
    Item *itm = vm->param( 0 );
@@ -3927,6 +4456,25 @@ FALCON_FUNC  having( ::Falcon::VMachine *vm )
    vm->retval( arr );
 }
 
+/*#
+   @function giveTo
+   @inset attrib_model
+   @brief Gives a certain attribute to a certain object.
+   @param attrib The attribute to be given
+   @param obj The object that will receive the attribute
+
+   This function is equivalent to the @b give statement, and is provided to allow
+   functional processing of attributes. In example:
+
+   @code
+   attributes: opened
+   dolist( [giveTo, opened], [obj1, obj2, obj3] )
+   @endcode
+
+   If the target object had already the attribute, nothing is done.
+   If the first parameter is not an attribute or the second parameter is not an
+   object, a ParamError is rasied.
+*/
 FALCON_FUNC  giveTo( ::Falcon::VMachine *vm )
 {
    Item *i_attrib = vm->param( 0 );
@@ -3943,6 +4491,28 @@ FALCON_FUNC  giveTo( ::Falcon::VMachine *vm )
    vm->retval( (int64) (i_attrib->asAttribute()->giveTo( i_obj->asObject() ) ? 1 : 0) );
 }
 
+
+/*#
+   @function removeFrom
+   @inset attrib_model
+   @brief Removes a certain attribute from a certain object.
+   @param attrib The attribute to be removed
+   @param obj The object from which the attribute must be removed
+
+   This function is equivalent to the give statement using to remove
+   an attribute, and is provided to allow functional processing of
+   attributes. In example:
+
+   @code
+   attributes: opened
+   dolist( [removeFrom, opened], [obj1, obj2, obj3] )
+   @endcode
+
+   If the target object didn't have the attribute, nothing is done.
+   If the first parameter is not an attribute or the second parameter
+   is not an object, a ParamError is rasied.
+*/
+
 FALCON_FUNC  removeFrom( ::Falcon::VMachine *vm )
 {
    Item *i_attrib = vm->param( 0 );
@@ -3958,6 +4528,16 @@ FALCON_FUNC  removeFrom( ::Falcon::VMachine *vm )
 
    vm->retval( (int64) (i_attrib->asAttribute()->removeFrom( i_obj->asObject() ) ? 1 : 0) );
 }
+
+/*#
+   @function removeFromAll
+   @inset attrib_model
+   @brief Removes a certain attribute from all the objects currently having it.
+   @param attrib The attribute to be removed
+
+   After this function is called, the target attribute will not be
+   found in any object anymore.
+*/
 
 FALCON_FUNC  removeFromAll( ::Falcon::VMachine *vm )
 {
@@ -4088,6 +4668,59 @@ static bool broadcast_next_array( ::Falcon::VMachine *vm )
 
 }
 
+/*#
+   @function broadcast
+   @inset attrib_model
+   @param signaling An attribute or an array of attributes to be broadcast.
+   @param ... Zero or more data to be broadcaset.
+   @return Value returned by a message handler or nil.
+   @brief Send a message to every object having an attribute.
+
+   This function iterates over all the items having a certain attribute; if those objects provide a method
+   named exactly as the attribute, then that method is called. A method can declare that it has “consumed”
+   the message (i.e. done what is expected to be done) by returning true. In this case, the call chain is
+   interrupted and broadcast returns. A method not wishing to prevent other methods to receive the incoming
+   message must return false. Returning true means “yes, I have handled this message,
+   no further processing is needed”.
+
+   It is also possible to have the caller of broadcast to receive a return value created by the handler;
+   If the handler returns an out of band item (using @a oob) propagation of the message is stopped and
+   the value is returned directly to the caller of the @b broadcast function.
+
+   The order in which the objects receive the message is random; there isn't any priority across a single
+   attribute message. For this reason, the second form of broadcast function is provided. To implement
+   priority processing, it is possible to broadcast a sequence of attributes. In that case, all the
+   objects having the first attribute will receive the message, and will have a chance to stop
+   further processing, before any item having the second attribute is called and so on.
+
+   The broadcast function can receive other parameters; in that case the remaining parameters are passed
+   as-is to the handlers.
+
+   Items having a certain attribute and receiving a broadcast over it need not to implement an handler.
+   If they don't provide a method having the same name of the broadcast attribute, they are simply
+   skipped. The same happens if they provide a property which is not callable; setting an handler to
+   a non-callable item is a valid operation to disable temporarily message processing.
+
+   An item may be called more than once in a single chained broadcast call if it has more than one of
+   the attributes being broadcast and if it provides methods to handle the messages.
+
+   It is possible to receive more than one broadcast in the same handler using the “same handler idiom”:
+   setting a property to a method of the same item in the init block or in the property initialization.
+   In example:
+
+   @code
+      attributes: attr_one, attr_two
+
+      object handler
+         attr_two = attr_one
+         function attr_one( param )
+            // do something
+            return false
+         end
+         has attr_one, attr_two
+      end
+   @endcode
+*/
 
 FALCON_FUNC  broadcast( ::Falcon::VMachine *vm )
 {
