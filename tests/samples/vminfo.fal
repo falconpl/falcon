@@ -1,0 +1,23 @@
+/*
+   FALCON - Samples
+
+   FILE: vminfo.fal
+
+   Reports VM and eventually module informations.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: mer nov 3 2004
+
+   -------------------------------------------------------------------
+   (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+> "VM Info - Prints Falcon Virtual Machine informations."
+>
+
+major, minor, revision = vmVersionInfo()
+> @ "Falcon Virtual Machine $(major).$(minor).$(revision)."
+> "Version description: ", vmVersionName()
+> "System type: ", vmSystemType()
