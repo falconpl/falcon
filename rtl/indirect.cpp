@@ -176,7 +176,7 @@ static void internal_marshal( VMachine *vm, Item *message, Item *prefix, Item *i
       // if not, call the item
       if ( if_not_found == 0 )
       {
-         vm->raiseModError( new RangeError( ErrorParam( e_non_callable, __LINE__ ).
+         vm->raiseModError( new AccessError( ErrorParam( e_non_callable, __LINE__ ).
             origin(e_orig_runtime) ) );
          return;
       }

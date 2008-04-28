@@ -65,7 +65,7 @@ FALCON_FUNC  List_pop ( ::Falcon::VMachine *vm )
 
    if( list->size() == 0 )  //empty() is virtual
    {
-      vm->raiseModError( new RangeError( ErrorParam( e_arracc, __LINE__ ).
+      vm->raiseModError( new AccessError( ErrorParam( e_arracc, __LINE__ ).
          origin( e_orig_runtime ) ) );
       return;
    }
@@ -98,7 +98,7 @@ FALCON_FUNC  List_popFront ( ::Falcon::VMachine *vm )
 
    if( list->size() == 0 )  //empty() is virtual
    {
-      vm->raiseModError( new RangeError( ErrorParam( e_arracc, __LINE__ ).
+      vm->raiseModError( new AccessError( ErrorParam( e_arracc, __LINE__ ).
          origin( e_orig_runtime ) ) );
       return;
    }
@@ -114,7 +114,7 @@ FALCON_FUNC  List_front ( ::Falcon::VMachine *vm )
 
    if( list->size() == 0 ) // empty() is virtual
    {
-      vm->raiseModError( new RangeError( ErrorParam( e_arracc, __LINE__ ).
+      vm->raiseModError( new AccessError( ErrorParam( e_arracc, __LINE__ ).
          origin( e_orig_runtime ) ) );
       return;
    }
@@ -128,7 +128,7 @@ FALCON_FUNC  List_back ( ::Falcon::VMachine *vm )
 
    if( list->size() == 0 )  // empty() is virtual
    {
-      vm->raiseModError( new RangeError( ErrorParam( e_arracc, __LINE__ ).
+      vm->raiseModError( new AccessError( ErrorParam( e_arracc, __LINE__ ).
          origin( e_orig_runtime ) ) );
       return;
    }

@@ -543,15 +543,15 @@ public:
       {}
 };
 
-class RangeError: public Error
+class AccessError: public Error
 {
 public:
-   RangeError():
-      Error( "RangeError" )
+   AccessError():
+      Error( "AccessError" )
    {}
 
-   RangeError( const ErrorParam &params  ):
-      Error( "RangeError", params )
+   AccessError( const ErrorParam &params  ):
+      Error( "AccessError", params )
       {}
 };
 
@@ -668,7 +668,7 @@ FALCON_FUNC_DYN_SYM Error_init ( ::Falcon::VMachine *vm );
 FALCON_FUNC_DYN_SYM SyntaxError_init ( ::Falcon::VMachine *vm );
 FALCON_FUNC_DYN_SYM CodeError_init ( ::Falcon::VMachine *vm );
 FALCON_FUNC_DYN_SYM IoError_init ( ::Falcon::VMachine *vm );
-FALCON_FUNC_DYN_SYM RangeError_init ( ::Falcon::VMachine *vm );
+FALCON_FUNC_DYN_SYM AccessError_init ( ::Falcon::VMachine *vm );
 FALCON_FUNC_DYN_SYM MathError_init ( ::Falcon::VMachine *vm );
 FALCON_FUNC_DYN_SYM ParamError_init ( ::Falcon::VMachine *vm );
 FALCON_FUNC_DYN_SYM ParseError_init ( ::Falcon::VMachine *vm );

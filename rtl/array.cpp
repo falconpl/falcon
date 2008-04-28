@@ -71,7 +71,7 @@ FALCON_FUNC  arrayIns ( ::Falcon::VMachine *vm )
 
    if ( ! array->insert( *item, pos ) ) {
       // array access error
-      vm->raiseModError( new RangeError( ErrorParam( e_arracc, __LINE__ ).
+      vm->raiseModError( new AccessError( ErrorParam( e_arracc, __LINE__ ).
          origin( e_orig_runtime ) )
          );
    }
@@ -206,7 +206,7 @@ FALCON_FUNC  arrayRemove( ::Falcon::VMachine *vm )
       res = array->remove( pos );
 
    if ( ! res ) {
-      vm->raiseModError( new RangeError( ErrorParam( e_arracc, __LINE__ ).
+      vm->raiseModError( new AccessError( ErrorParam( e_arracc, __LINE__ ).
          origin( e_orig_runtime ) ) );
    }
 }
@@ -276,7 +276,7 @@ FALCON_FUNC  arrayHead ( ::Falcon::VMachine *vm )
    CoreArray *array = array_x->asArray();
    if ( array->length() == 0 )
    {
-      vm->raiseModError( new RangeError( ErrorParam( e_inv_params, __LINE__ ).
+      vm->raiseModError( new AccessError( ErrorParam( e_inv_params, __LINE__ ).
          origin( e_orig_runtime ).extra( vm->moduleString( msg::rtl_emptyarr ) ) ) );
       return;
    }
@@ -298,7 +298,7 @@ FALCON_FUNC  arrayTail ( ::Falcon::VMachine *vm )
    CoreArray *array = array_x->asArray();
    if ( array->length() == 0 )
    {
-      vm->raiseModError( new RangeError( ErrorParam( e_inv_params, __LINE__ ).
+      vm->raiseModError( new AccessError( ErrorParam( e_inv_params, __LINE__ ).
          origin( e_orig_runtime ).extra( vm->moduleString( msg::rtl_emptyarr ) ) ) );
       return;
    }
@@ -349,7 +349,7 @@ FALCON_FUNC  arrayFind ( ::Falcon::VMachine *vm )
    }
 
    if ( pos_start < 0 || pos_start >= (int32) array->length() || pos_end > (int32) array->length()) {
-      vm->raiseModError( new RangeError( ErrorParam( e_arracc, __LINE__ ).
+      vm->raiseModError( new AccessError( ErrorParam( e_arracc, __LINE__ ).
          origin( e_orig_runtime ) ) );
       return;
    }
@@ -416,7 +416,7 @@ FALCON_FUNC  arrayScan ( ::Falcon::VMachine *vm )
 
    if ( pos_start < 0 || pos_start >= (int32) array->length() ||
          pos_end > (int32) array->length()) {
-       vm->raiseModError( new RangeError( ErrorParam( e_arracc, __LINE__ ).
+       vm->raiseModError( new AccessError( ErrorParam( e_arracc, __LINE__ ).
          origin( e_orig_runtime ) ) );
       return;
    }
@@ -487,7 +487,7 @@ FALCON_FUNC  arrayFilter( ::Falcon::VMachine *vm )
    CoreArray *target = new CoreArray( vm );
 
    if ( pos_start < 0 || pos_start >= (int32) array->length() || pos_end > (int32) array->length()) {
-       vm->raiseModError( new RangeError( ErrorParam( e_arracc, __LINE__ ).
+       vm->raiseModError( new AccessError( ErrorParam( e_arracc, __LINE__ ).
          origin( e_orig_runtime ) ) );
       return;
    }
@@ -556,7 +556,7 @@ FALCON_FUNC  arrayMap( ::Falcon::VMachine *vm )
    CoreArray *target = new CoreArray( vm );
 
    if ( pos_start < 0 || pos_start >= (int32) array->length() || pos_end > (int32) array->length()) {
-       vm->raiseModError( new RangeError( ErrorParam( e_arracc, __LINE__ ).
+       vm->raiseModError( new AccessError( ErrorParam( e_arracc, __LINE__ ).
          origin( e_orig_runtime ) ) );
       return;
    }
@@ -805,7 +805,7 @@ FALCON_FUNC  arrayMerge( ::Falcon::VMachine *vm )
    }
 
    if ( ! val ) {
-       vm->raiseModError( new RangeError( ErrorParam( e_arracc, __LINE__ ).
+       vm->raiseModError( new AccessError( ErrorParam( e_arracc, __LINE__ ).
          origin( e_orig_runtime ).extra( vm->moduleString( msg::rtl_start_outrange ) ) ) );
       return;
    }

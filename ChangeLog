@@ -53,6 +53,7 @@ Falcon (0.8.9)
   * Major: VM can now be interrupted in compliant waiting operations. ATM, stream and socket
            readAvailable & writeAvailable have been instrumented. Interruption will raise
            an InterruptedError, can be catched and operations can be resumed.
+  * Minor: RangeError renamed into AccessError.
 
 Falcon (0.8.8)
   * bugfix: TRAV opcode may destroy its parameters while setting first loop

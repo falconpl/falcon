@@ -1843,7 +1843,7 @@ void opcodeHandler_LDV( register VMachine *vm )
    }
 
    vm->raiseRTError(
-            new RangeError( ErrorParam( e_arracc ).origin( e_orig_vm ).extra( "LDV" ) ) );
+            new AccessError( ErrorParam( e_arracc ).origin( e_orig_vm ).extra( "LDV" ) ) );
 }
 
 //3E
@@ -1921,7 +1921,7 @@ void opcodeHandler_LDP( register VMachine *vm )
    }
 
    vm->raiseRTError(
-      new RangeError( ErrorParam( e_prop_acc ).origin( e_orig_vm ) .
+      new AccessError( ErrorParam( e_prop_acc ).origin( e_orig_vm ) .
          extra( operand2->isString() ? *operand2->asString() : "?" ) ) );
 }
 
@@ -1985,7 +1985,7 @@ void opcodeHandler_TRAN( register VMachine *vm )
             uint32 vars = (uint32) dest->asInteger();
             if ( ! source->isArray() || vars != source->asArray()->length() ) {
                vm->raiseRTError(
-                  new RangeError( ErrorParam( e_unpack_size ).origin( e_orig_vm ).extra( "TRAN" ) ) );
+                  new AccessError( ErrorParam( e_unpack_size ).origin( e_orig_vm ).extra( "TRAN" ) ) );
                return;
             }
 
@@ -2004,7 +2004,7 @@ void opcodeHandler_TRAN( register VMachine *vm )
          if ( ! isIterator || ! isDestStack )
          {
             vm->raiseRTError(
-               new RangeError( ErrorParam( e_unpack_size ).origin( e_orig_vm ).extra( "TRAN" ) ) );
+               new AccessError( ErrorParam( e_unpack_size ).origin( e_orig_vm ).extra( "TRAN" ) ) );
             return;
          }
          else {
@@ -2089,7 +2089,7 @@ void opcodeHandler_TRAN( register VMachine *vm )
          if ( isIterator || isDestStack )
          {
             vm->raiseRTError(
-               new RangeError( ErrorParam( e_unpack_size ).origin( e_orig_vm ).extra( "TRAN" ) ) );
+               new AccessError( ErrorParam( e_unpack_size ).origin( e_orig_vm ).extra( "TRAN" ) ) );
             return;
          }
          else {
@@ -2120,7 +2120,7 @@ void opcodeHandler_TRAN( register VMachine *vm )
          if ( isIterator || isDestStack )
          {
             vm->raiseRTError(
-               new RangeError( ErrorParam( e_unpack_size ).origin( e_orig_vm ).extra( "TRAN" ) ) );
+               new AccessError( ErrorParam( e_unpack_size ).origin( e_orig_vm ).extra( "TRAN" ) ) );
             return;
          }
          else {
@@ -2144,7 +2144,7 @@ void opcodeHandler_TRAN( register VMachine *vm )
          if ( isIterator || isDestStack )
          {
             vm->raiseRTError(
-               new RangeError( ErrorParam( e_unpack_size ).origin( e_orig_vm ).extra( "TRAN" ) ) );
+               new AccessError( ErrorParam( e_unpack_size ).origin( e_orig_vm ).extra( "TRAN" ) ) );
             return;
          }
          else {
@@ -2203,7 +2203,7 @@ void opcodeHandler_UNPK( register VMachine *vm )
    if( len != dest->length() )
    {
       vm->raiseRTError(
-         new RangeError( ErrorParam( e_unpack_size ).origin( e_orig_vm ) ) );
+         new AccessError( ErrorParam( e_unpack_size ).origin( e_orig_vm ) ) );
       return;
    }
 
@@ -2589,7 +2589,7 @@ void opcodeHandler_STVS( register VMachine *vm )
       break;
    }
 
-    vm->raiseRTError( new RangeError( ErrorParam( e_arracc ).origin( e_orig_vm ) ) );
+    vm->raiseRTError( new AccessError( ErrorParam( e_arracc ).origin( e_orig_vm ) ) );
 }
 
 //4A
@@ -2626,7 +2626,7 @@ void opcodeHandler_STPS( register VMachine *vm )
          return;
 
       vm->raiseRTError(
-         new RangeError( ErrorParam( e_prop_acc ).origin( e_orig_vm ) .
+         new AccessError( ErrorParam( e_prop_acc ).origin( e_orig_vm ) .
             extra( *method->asString() ) ) );
 
       return;
@@ -2834,7 +2834,7 @@ void opcodeHandler_STV( register VMachine *vm )
    }
 
    vm->raiseRTError(
-               new RangeError( ErrorParam( e_arracc ).origin( e_orig_vm ).extra("STV") ) );
+               new AccessError( ErrorParam( e_arracc ).origin( e_orig_vm ).extra("STV") ) );
 }
 
 //51
@@ -2864,7 +2864,7 @@ void opcodeHandler_STP( register VMachine *vm )
             return;
 
       vm->raiseRTError(
-         new RangeError( ErrorParam( e_prop_acc ).origin( e_orig_vm ) .
+         new AccessError( ErrorParam( e_prop_acc ).origin( e_orig_vm ) .
             extra( *method->asString() ) ) );
 
       return;
@@ -2984,7 +2984,7 @@ void opcodeHandler_STVR( register VMachine *vm )
    }
 
     vm->raiseRTError(
-            new RangeError( ErrorParam( e_arracc ).origin( e_orig_vm ).extra("STVR") ) );
+            new AccessError( ErrorParam( e_arracc ).origin( e_orig_vm ).extra("STVR") ) );
 }
 
 //55
@@ -3018,7 +3018,7 @@ void opcodeHandler_STPR( register VMachine *vm )
             }
 
             vm->raiseRTError(
-               new RangeError( ErrorParam( e_prop_acc ).origin( e_orig_vm ) .
+               new AccessError( ErrorParam( e_prop_acc ).origin( e_orig_vm ) .
                   extra( *operand2->asString() ) ) );
             return;
 
@@ -3029,7 +3029,7 @@ void opcodeHandler_STPR( register VMachine *vm )
    }
 
    vm->raiseRTError(
-               new RangeError( ErrorParam( e_prop_acc ).origin( e_orig_vm ).extra("STPR") ) );
+               new AccessError( ErrorParam( e_prop_acc ).origin( e_orig_vm ).extra("STPR") ) );
 
 }
 
@@ -3066,7 +3066,7 @@ void opcodeHandler_TRAV( register VMachine *vm )
                varCount != sourceItem->asArray()->length() )
             {
                vm->raiseRTError(
-                  new RangeError( ErrorParam( e_unpack_size ).origin( e_orig_vm ).extra( "TRAV" ) ) );
+                  new AccessError( ErrorParam( e_unpack_size ).origin( e_orig_vm ).extra( "TRAV" ) ) );
                return;
             }
 
@@ -3094,7 +3094,7 @@ void opcodeHandler_TRAV( register VMachine *vm )
               dest->asInteger() != 2 )
          {
             vm->raiseRTError(
-               new RangeError( ErrorParam( e_unpack_size ).origin( e_orig_vm ).extra( "TRAV" ) ) );
+               new AccessError( ErrorParam( e_unpack_size ).origin( e_orig_vm ).extra( "TRAV" ) ) );
             return;
          }
 
@@ -3133,7 +3133,7 @@ void opcodeHandler_TRAV( register VMachine *vm )
          if( vm->operandType( 1 ) == P_PARAM_INT32 || vm->operandType( 1 ) == P_PARAM_INT64 )
          {
             vm->raiseRTError(
-               new RangeError( ErrorParam( e_unpack_size ).origin( e_orig_vm ).extra( "TRAV" ) ) );
+               new AccessError( ErrorParam( e_unpack_size ).origin( e_orig_vm ).extra( "TRAV" ) ) );
             return;
          }
 
@@ -3161,7 +3161,7 @@ void opcodeHandler_TRAV( register VMachine *vm )
          if( vm->operandType( 1 ) == P_PARAM_INT32 || vm->operandType( 1 ) == P_PARAM_INT64 )
          {
             vm->raiseRTError(
-               new RangeError( ErrorParam( e_unpack_size ).origin( e_orig_vm ).extra( "TRAV" ) ) );
+               new AccessError( ErrorParam( e_unpack_size ).origin( e_orig_vm ).extra( "TRAV" ) ) );
             return;
          }
 
@@ -3185,7 +3185,7 @@ void opcodeHandler_TRAV( register VMachine *vm )
          if( vm->operandType( 1 ) == P_PARAM_INT32 || vm->operandType( 1 ) == P_PARAM_INT64 )
          {
             vm->raiseRTError(
-               new RangeError( ErrorParam( e_unpack_size ).origin( e_orig_vm ).extra( "TRAV" ) ) );
+               new AccessError( ErrorParam( e_unpack_size ).origin( e_orig_vm ).extra( "TRAV" ) ) );
             return;
          }
          *dest->dereference() = new GarbageString( vm, source->asString()->subString(0,1) );
@@ -3199,7 +3199,7 @@ void opcodeHandler_TRAV( register VMachine *vm )
          if( vm->operandType( 1 ) == P_PARAM_INT32 || vm->operandType( 1 ) == P_PARAM_INT64 )
          {
             vm->raiseRTError(
-               new RangeError( ErrorParam( e_unpack_size ).origin( e_orig_vm ).extra( "TRAV" ) ) );
+               new AccessError( ErrorParam( e_unpack_size ).origin( e_orig_vm ).extra( "TRAV" ) ) );
             return;
          }
          *dest->dereference() = (int64) source->asMemBuf()->get(0);
@@ -3219,7 +3219,7 @@ void opcodeHandler_TRAV( register VMachine *vm )
          if( vm->operandType( 1 ) == P_PARAM_INT32 || vm->operandType( 1 ) == P_PARAM_INT64 )
          {
             vm->raiseRTError(
-               new RangeError( ErrorParam( e_unpack_size ).origin( e_orig_vm ).extra( "TRAV" ) ) );
+               new AccessError( ErrorParam( e_unpack_size ).origin( e_orig_vm ).extra( "TRAV" ) ) );
             return;
          }
          *dest->dereference() = (int64) source->asRangeStart();
@@ -3374,7 +3374,7 @@ void opcodeHandler_LDVR( register VMachine *vm )
          CoreArray &array = *operand1->asArray();
          if ( -pos > (int32)array.length() || pos >= (int32)array.length() )
              vm->raiseRTError(
-               new RangeError( ErrorParam( e_arracc ).origin( e_orig_vm ).extra("LDVR") ) );
+               new AccessError( ErrorParam( e_arracc ).origin( e_orig_vm ).extra("LDVR") ) );
          else {
             GarbageItem *gitem;
             Item *ref = array.elements() + pos;
@@ -3413,7 +3413,7 @@ void opcodeHandler_LDVR( register VMachine *vm )
    }
 
    vm->raiseRTError(
-               new RangeError( ErrorParam( e_arracc ).origin( e_orig_vm ).extra( "LDVR" ) ) );
+               new AccessError( ErrorParam( e_arracc ).origin( e_orig_vm ).extra( "LDVR" ) ) );
 }
 
 //5F
@@ -3448,7 +3448,7 @@ void opcodeHandler_LDPR( register VMachine *vm )
             }
 
             vm->raiseRTError(
-               new RangeError( ErrorParam( e_prop_acc ).origin( e_orig_vm ) .
+               new AccessError( ErrorParam( e_prop_acc ).origin( e_orig_vm ) .
                   extra( *operand2->asString() ) ) );
             return;
          }
@@ -3456,7 +3456,7 @@ void opcodeHandler_LDPR( register VMachine *vm )
    }
 
    vm->raiseRTError(
-               new RangeError( ErrorParam( e_prop_acc ).origin( e_orig_vm ).extra( "LDPR" ) ) );
+               new AccessError( ErrorParam( e_prop_acc ).origin( e_orig_vm ).extra( "LDPR" ) ) );
 }
 
 // 60
@@ -3553,7 +3553,7 @@ void opcodeHandler_LSB( register VMachine *vm )
             vm->retval( (int64) cs->getCharAt( pos ) );
          else
             vm->raiseRTError(
-               new RangeError( ErrorParam( e_arracc ).origin( e_orig_vm ).extra( "LSB" ) ) );
+               new AccessError( ErrorParam( e_arracc ).origin( e_orig_vm ).extra( "LSB" ) ) );
       }
       return;
    }
@@ -3591,7 +3591,7 @@ void opcodeHandler_UNPS( register VMachine *vm )
 	if ( len != source->length() )
 	{
       vm->raiseRTError(
-         new RangeError( ErrorParam( e_unpack_size ).origin( e_orig_vm ).extra( "UNPS" ) ) );
+         new AccessError( ErrorParam( e_unpack_size ).origin( e_orig_vm ).extra( "UNPS" ) ) );
       return;
    }
 

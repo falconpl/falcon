@@ -23,6 +23,7 @@ Input.recursive=false
 
 # Other files may be specified here
 Input.extra=../engine/core_ext.cpp
+Input.extra=main.fd
 
 ################################################
 # Faldoc Output settings
