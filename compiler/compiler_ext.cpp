@@ -236,14 +236,14 @@ FALCON_FUNC Module_get( ::Falcon::VMachine *vm )
    if ( ! modc->liveModule()->isAlive() )
    {
       // TODO: Find a more adequate error code.
-      vm->raiseModError( new RangeError( ErrorParam( e_modver, __LINE__ ) ) );
+      vm->raiseModError( new AccessError( ErrorParam( e_modver, __LINE__ ) ) );
       return;
    }
 
    Item *itm = modc->liveModule()->findModuleItem( *i_name->asString() );
    if( itm == 0 )
    {
-      vm->raiseModError( new RangeError( ErrorParam( e_undef_sym, __LINE__ ).
+      vm->raiseModError( new AccessError( ErrorParam( e_undef_sym, __LINE__ ).
          extra(*i_name->asString()) ) );
       return;
    }
@@ -270,14 +270,14 @@ FALCON_FUNC Module_set( ::Falcon::VMachine *vm )
    if ( ! modc->liveModule()->isAlive() )
    {
       // TODO: Find a more adequate error code.
-      vm->raiseModError( new RangeError( ErrorParam( e_modver, __LINE__ ) ) );
+      vm->raiseModError( new AccessError( ErrorParam( e_modver, __LINE__ ) ) );
       return;
    }
 
    Item *itm = modc->liveModule()->findModuleItem( *i_name->asString() );
    if( itm == 0 )
    {
-      vm->raiseModError( new RangeError( ErrorParam( e_undef_sym, __LINE__ ).
+      vm->raiseModError( new AccessError( ErrorParam( e_undef_sym, __LINE__ ).
          extra(*i_name->asString()) ) );
       return;
    }
@@ -303,14 +303,14 @@ FALCON_FUNC Module_getReference( ::Falcon::VMachine *vm )
    if ( ! modc->liveModule()->isAlive() )
    {
       // TODO: Find a more adequate error code.
-      vm->raiseModError( new RangeError( ErrorParam( e_modver, __LINE__ ) ) );
+      vm->raiseModError( new AccessError( ErrorParam( e_modver, __LINE__ ) ) );
       return;
    }
 
    Item *itm = modc->liveModule()->findModuleItem( *i_name->asString() );
    if( itm == 0 )
    {
-      vm->raiseModError( new RangeError( ErrorParam( e_undef_sym, __LINE__ ).
+      vm->raiseModError( new AccessError( ErrorParam( e_undef_sym, __LINE__ ).
          extra(*i_name->asString()) ) );
       return;
    }
@@ -328,7 +328,7 @@ FALCON_FUNC Module_unload( ::Falcon::VMachine *vm )
    if ( ! modc->liveModule()->isAlive() )
    {
       // TODO: Find a more adequate error code.
-      vm->raiseModError( new RangeError( ErrorParam( e_modver, __LINE__ ) ) );
+      vm->raiseModError( new AccessError( ErrorParam( e_modver, __LINE__ ) ) );
       return;
    }
 
