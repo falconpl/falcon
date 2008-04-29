@@ -51,7 +51,7 @@
 */
 
 /*#
-   @module core The core module
+   @module core The Core Module
    @brief Main VM support module
 
    The core module interacts with the virtual machine, to the point that, at times,
@@ -157,6 +157,67 @@
 /*#
    @funset type_mangling Type mangling
    @brief Functions managing item conversions and type detection.
+*/
+
+/*#
+   @group coroutine_support Coroutine support
+   @brief Functions that support quasi-parallel routine execution.
+
+   The functions in this group allow to interact with the coroutine support that
+   is provided by the Virtual Machine. Most of them translate directly into requests
+   to the Virtual Machine.
+*/
+
+/*#
+   @funset varparams_support Variable parameters support
+   @brief Functions giving informations on variable parameters.
+
+   Falcon supports variable parameter calling; a function or method may
+   access the items that have been used in the parameter call by counting
+   them and accessing them one by one.
+
+   Parameter passed by reference may be modified with the appropriate function.
+
+   This functions may be used whether the calling function provides a list of
+   formal parameters or not. The first formal parameter will be treated as the
+   variable parameter number zero, and the parameter count may be the same as,
+   more than or less than the number of formal parameters.
+   So, part of the parameters may be accessible via parameter names,
+   and the others may be accessed with the functions in this group.
+*/
+
+/*#
+   @funset gc_control Garbage collecting control
+   @brief Support for script-based garbage collection strategies.
+
+   The standard collector strategy (be it set up by the Falcon interpreter or
+   by embedding applications) is adequate for average scripts.
+
+   However, some script meant to start from command line and dealing with time
+   critical data may find the action of the garbage collector too intrusive. In example
+   the GC may occuur at the wrong time. Other times, calculation intensive programs
+   may generate a lot of data that they know in advance can be never garbaged
+   during some period. In those case, having GC to scan periodically the
+   allocated memory for released blocks is evidently a useless waste of time.
+
+   Finally, some complex scripts may even provide their own collection strategy,
+   based on memory pattern usage that they know in advance. Starting the collection
+   loop at time intervals, provided the memory allocation has grown at a certain rate,
+   or hasn't grown for a certain time, may be a fitting strategy for some scripts.
+
+   A sensible usage of the garbage collection feature may boost performance of
+   calculation and memory intensive scripts by order of degrees, and may be
+   essential in time critical applications where some part of the process has to
+   be performed as fast as possible.
+
+   Consider that some of the functions listed in this section may not be always available.
+   Some embedding application may decide to turn some or all of them off for security
+   reasons, as a malevolent script may crash an application very fast by turning
+   off automatic GC check-and-reclaim feature and then creating a great amount
+   of garbage. Also, the loop maximum execution time control is not present by
+   default in Falcon command line, as the time-deterministic version of the
+   garbage collector is sensibly slower, and it would be useless to the
+   vast majority of the scripts.
 */
 
 namespace Falcon {
@@ -1179,9 +1240,14 @@ FALCON_FUNC  hToString ( ::Falcon::VMachine *vm )
 
 /*#
    @function paramCount
-   @return the parameter count
-   @inset varparm
+   @return The parameter count.
+   @inset varparms_support
    @brief Returns number of parameter that have been passed to the current function or method.
+
+   The return value is the minimum value between the formal parameters declared
+   for the current function and the number of actual parameters the caller passed.
+   Formal parameters which are declared in the function header, but for which the
+   caller didn't provide actual parameters, are filled with nil.
 */
 
 FALCON_FUNC  paramCount ( ::Falcon::VMachine *vm )
@@ -1203,14 +1269,25 @@ FALCON_FUNC  paramCount ( ::Falcon::VMachine *vm )
 }
 
 /*#
-   @function paramNumber
-   @brief get the Nth parameter
-   @inset varparm
-   @param the paremeter that must be returned, zero based
-   @return the nth paramter (zero based) or NIL if the parameter is not given
+   @function parameter
+   @brief Gets the Nth parameter
+   @inset varparms_support
+   @param pnum The ordinal number of the paremeter, zero based
+   @return The nth paramter (zero based) or NIL if the parameter is not given.
+   @raise AccessError if @b pnum is out of range.
+
+   This function returns the required parameter, being the first one passed to
+   the function indicated as 0, the second as 1 and so on. Both formally declared
+   parameters and optional parameters can be accessed this way.
+
+   If the given parameter number cannot be accessed, a AccessError is raised.
+
+   @note This function used to be called "paramNumber", and has been renamed in
+      version 0.8.10. The function is still aliased throught the old function name
+      for compatibility reason, but its usage is deprecated. Use @b parameter instead.
 */
 
-FALCON_FUNC  paramNumber ( ::Falcon::VMachine *vm )
+FALCON_FUNC  _parameter ( ::Falcon::VMachine *vm )
 {
    Item *number = vm->param(0);
    if ( number == 0 || ! number->isOrdinal() ) {
@@ -1249,10 +1326,19 @@ FALCON_FUNC  paramNumber ( ::Falcon::VMachine *vm )
 
 /*#
    @function paramIsRef
-   @inset varparm
-   @brief check whether the nth parameter has been passed by value or by reference
-   @param number the paramter that must be checked (zero based)
-   @return true if the parameter has been passed by reference, false otherwise
+   @inset varparms_support
+   @brief Checks whether the nth parameter has been passed by reference or not.
+   @param number The paramter that must be checked (zero based)
+   @return true if the parameter has been passed by reference, false otherwise.
+   @raise AccessError if @b number is out of range.
+
+   Both assigning a value to a certain parameter and using the paramSet()
+   function will change locally the value of the parameter, b
+   ut this value won't be reflected in the actual parameter that was used to
+   call the function, unless the parameter was explicitly passed by reference.
+   In some contexts, it may be useful to know if this is the case.
+
+   If the given parameter number cannot be accessed, a AccessError is raised.
 */
 
 FALCON_FUNC  paramIsRef ( ::Falcon::VMachine *vm )
@@ -1293,16 +1379,18 @@ FALCON_FUNC  paramIsRef ( ::Falcon::VMachine *vm )
 
 /*#
    @function paramSet
-   @inset varparm
+   @inset varparms_support
    @brief Changes the nth paramter if it has been passed by reference.
    @param number the paramter to be changed (zero based)
    @param value the new value for the parameter
+   @raise AccessError if @number is out of range.
 
-   In case of explicit parameter list, it is possible to change a paramter that
-   has been passed by reference by just assigning a new value to it; but when
-   the list is not explicit, that is, when variable paramters are provided to the
-   called item, this function allows to provide the caller with a changed paramter
-   value.
+   The function is equivalent to assigning the value directly to the required
+   parameter; of course, in this way also optional parameter may be accessed.
+   If the required parameter was passed by reference, also the original value
+   in the caller is changed.
+
+   If the given parameter number cannot be accessed, an AccessError is raised.
 */
 FALCON_FUNC  paramSet ( ::Falcon::VMachine *vm )
 {
@@ -1414,12 +1502,12 @@ FALCON_FUNC  eq( ::Falcon::VMachine *vm )
 
 /*#
    @function yield
+   @ingroup coroutine_support
    @brief gives up the rest of the coroutine time slice.
 
-   The calling coroutine is immediately swapped out and put at the end of the
-   ready coroutines waiting to be served. In case there aren't any other
-   coroutines ready to be executed, the function does nothing.
-
+   This signals the VM that the current coroutine is temporarily done, and that another
+   coroutine may be executed. If no other coroutines can be executed, current coroutine
+   is resumed immediately (actually, it is never swapped out).
 */
 FALCON_FUNC  yield ( ::Falcon::VMachine *vm )
 {
@@ -1428,10 +1516,16 @@ FALCON_FUNC  yield ( ::Falcon::VMachine *vm )
 
 /*#
    @function yieldOut
-   @brief Requires termination of the current coroutine.
+   @brief Terminates current coroutine.
+   @ingroup coroutine_support
    @param retval a return value for the coroutine.
 
-   The calling coroutine is immediately terminated
+   The current coroutine is terminated. If this is the last coroutine,
+   the VM exits. Calling this function has the same effect of the END
+   virtual machine PCODE.
+
+   In multithreading context, exiting from the last coroutine causes
+   a clean termination of the current thread.
 
    @see exit
 */
@@ -1445,6 +1539,42 @@ FALCON_FUNC  yieldOut ( ::Falcon::VMachine *vm )
       vm->retnil();
 }
 
+
+/*#
+   @function sleep
+   @brief Put the current coroutine at sleep for some time.
+   @param time Time, in seconds and fractions, that the coroutine wishes to sleep.
+   @return an item posted by the embedding application.
+   @ingroup coroutine_support
+   @raise InterruptedError in case of asynchronous interruption.
+
+   This function declares that the current coroutines is not willing to proceed at
+   least for the given time. The VM will swap out the coroutine until the time has
+   elapsed, and will make it eligible to run again after the given time lapse.
+
+   The parameter may be a floating point number if a pause shorter than a second is
+   required.
+
+   The @b sleep() function can be called also when the VM has not started any coroutine;
+   this will make it to be idle for the required time.
+
+   In embedding applications, the Virtual Machine can be instructed to detect needed idle
+   time and return to the calling application instead of performing a system request to
+   sleep. In this way, embedding applications can use the idle time of the virtual machine
+   to perform background operations. Single threaded applications may continue their execution
+   and schedule continuation of the Virtual Machine at a later time, and multi-threaded
+   applications can perform background message processing.
+
+   This function complies with the interrupt protocol. The Virtual Machine may be
+   asynchronously interrupted from the outside (i.e. from another thread). In this case,
+   @b sleep will immediately raise an @a InterruptedError instance. The script may just
+   ignore this exception and let the VM to terminate immediately, or it may honor the
+   request after a cleanup it provides in a @b catch block, or it may simply ignore the
+   request and continue the execution by discarding the error through an appropriate
+   @b catch block.
+
+   @see interrupt_protocol
+*/
 
 FALCON_FUNC  _f_sleep ( ::Falcon::VMachine *vm )
 {
@@ -1461,16 +1591,83 @@ FALCON_FUNC  _f_sleep ( ::Falcon::VMachine *vm )
    vm->yieldRequest( pause );
 }
 
+/*#
+   @function beginCritical
+   @brief Signals the VM that this coroutine must not be interrupted.
+   @ingroup coroutine_support
+
+   After this call the VM will abstain from swapping this coroutine out
+   of the execution context. The coroutine can then alter a set of data that
+   must be prepare and readied for other coroutines, and then call @a endCritical
+   or @a yield to pass the control back to the other coroutines.
+
+   This function is not recursive. Successive calls to @b beginCritical are not
+   counted, and have actually no effect. The first call to @a yield will swap
+   out the coroutine, and the first call to @a endCritical will signal the
+   availability of the routine to be swapped out, no matter how many
+   times @a beginCritical has been called.
+*/
+
 FALCON_FUNC  beginCritical ( ::Falcon::VMachine *vm )
 {
    vm->allowYield( false );
 }
+
+/*#
+   @function endCritical
+   @brief Signals the VM that this coroutine can be interrupted.
+   @ingroup coroutine_support
+
+   After this call, the coroutine may be swapped. This will happen
+   only if/when the timeslice for this coroutine is over.
+
+   This function is not recursive. Successive calls to @a beginCritical
+   are not counted, and have actually no effect.
+   The first call to @a yield will swap out the coroutine, and the first
+   call to @a endCritical will signal the availability of the routine to be
+   swapped out, no matter how many times @a beginCritical has been called.
+*/
 
 FALCON_FUNC  endCritical ( ::Falcon::VMachine *vm )
 {
    vm->allowYield( true );
 }
 
+/*#
+   @class Semaphore
+   @brief Simple coroutine synchronization device.
+   @ingroup coroutine_support
+   @optparam initValue Initial value for the semaphore; if not given, 0 will be assumed.
+
+   The semaphore is a simple synchronization object that is used by coroutines to
+   communicate each others about relevant changes in the status of the application.
+
+   Decrements the value of the semaphore, and eventually waits for the value to be > 0.
+   When a @a Semaphore.wait method is called on a semaphore, two things may happen:
+   if the value of the semaphore is greater than zero, the value is decremented and the
+   coroutine can proceed. If it's zero, the coroutine is swapped out until the
+   semaphore gets greater than zero again. When this happens, the coroutine
+   decrements the value of the semaphore and proceeds. If a timeout parameter is given,
+   in case the semaphore wasn't posted before the given timeout the function will return
+   false.
+
+   The order by which coroutines are resumed is the same by which they asked
+   to wait on a semaphore. In this sense, @a Semaphore.wait method is implemented as a fair
+   wait routine.
+
+   The @a Semaphore.post method will raise the count of the semaphore by the given parameter
+   (1 is the default if the parameter is not given). However, the calling coroutine
+   won't necessarily be swapped out until a @a yield is called.
+*/
+
+/*#
+   @init Semaphore
+   @brief Initializes the semaphore.
+
+   By default, the semaphore is initialized to zero; this means that the
+   first wait will block the waiting coroutine, unless a @a Semaphore.post
+   is issued first.
+*/
 FALCON_FUNC  Semaphore_init ( ::Falcon::VMachine *vm )
 {
    Item *qty = vm->param(0);
@@ -1490,6 +1687,16 @@ FALCON_FUNC  Semaphore_init ( ::Falcon::VMachine *vm )
    vm->self().asObject()->setUserData( sem );
 }
 
+/*#
+   @method post Semaphore
+   @brief Increments the count of the semaphore.
+   @optparam count The amount by which the semaphore will be incremented (1 by default).
+
+   This method will increment the count of the semaphore by 1 or by a specified amount,
+   allowing the same number of waiting coroutines to proceed.
+
+   However, the calling coroutine won't necessarily be swapped out until a @a yield is called.
+*/
 FALCON_FUNC  Semaphore_post ( ::Falcon::VMachine *vm )
 {
    VMSemaphore *semaphore = static_cast< VMSemaphore *>(vm->self().asObject()->getUserData());
@@ -1511,6 +1718,14 @@ FALCON_FUNC  Semaphore_post ( ::Falcon::VMachine *vm )
    semaphore->post( vm, value );
 }
 
+/*#
+   @method wait Semaphore
+   @brief Waits on a semaphore.
+   @optparam timeout Optional maximum wait in seconds.
+
+   Decrements the value of the semaphore, and eventually waits for the value to be greater
+   than zero.
+*/
 FALCON_FUNC  Semaphore_wait ( ::Falcon::VMachine *vm )
 {
    VMSemaphore *semaphore = static_cast< VMSemaphore *>(vm->self().asObject()->getUserData());
@@ -1527,6 +1742,56 @@ FALCON_FUNC  Semaphore_wait ( ::Falcon::VMachine *vm )
    }
 
 }
+
+/*#
+   @function suspend
+   @brief Temporarily suspends the execution of the Virtual Machine.
+   @optparam timeout Optional maximum wait in seconds.
+   @return an item posted by the embedding application.
+   @ingroup coroutine_support
+
+   This function is meant to provide a very simple means of communication
+   with the embedding application. Other means are provided as well; they all
+   require less work on the script side, but more integration work on the embedding
+   application side. So, this communcation mean may be interesting for very simple
+   embedding applications, or in the early stage of the integration process.
+
+   This function hasn't any utility for stand-alone applications, and should not
+   be used by them, except than for testing.
+
+   After this call, the VM exits immediately and the control is given back to the
+   embedder. The embedder can check for the VM to have exited because of a suspend
+   call, and in this case, it may call the VM method Falcon::VMachine::resume()
+   to make the script to proceed from the point it was suspended.
+
+   The resume method of the virtual machine may accept an item that is then passed
+   to the suspended script as the return value of the suspend call. In this way,
+   the script may receive a callback notification of events happening in the main
+   application, and manage them. This is an example:
+
+   @code
+   lastEvent = “none”
+
+   while lastEvent != “quit”
+
+      lastEvent = suspend()
+
+      switch lastEvent
+         case “this”
+            doThis()
+         case “that”
+            doThat()
+      end
+   end
+   @endcode
+
+   The kind of item that is returned by suspend() call is a convention between the
+   script and the embedding application, and may be a complex item as well as an
+   instance of an embedder specific class.
+
+   While in suspended state, the VM may be also destroyed, or the calling module may
+   be unlinked from it, or the execution may be restarted instead of resumed.
+*/
 
 FALCON_FUNC vmSuspend( ::Falcon::VMachine *vm )
 {
@@ -1786,7 +2051,28 @@ FALCON_FUNC  Format_toString ( ::Falcon::VMachine *vm )
    vm->retval( new GarbageString( vm,fmt->originalFormat()) );
 }
 
-// Garbage Collector control
+
+/*#
+   @function gcEnable
+   @inset gc_control
+   @brief Turns automatic GC feature on or off.
+   @param mode true to turn automatic GC on, false to turn it off.
+
+   Virtual machines and some heavy garbage generating functions call
+   periodically a function that checks for the level of allocated
+   memory to have reached a critical point. When there is too much allocated
+   memory of uncertain status, a garbage collecting loop is started.
+
+   By setting gcEnable to off, this automatic control is skipped, and allocated
+   memory can grow up to physical process limits (or VM memory limit
+   constraints, if provided). Setting this value to true will cause VM to
+   perform memory control checks again with the usual strategy.
+
+   In case the script is sure to have generated a wide amount of garbage, it
+   is advisable to call explicitly gcPerform() before turning automatic GC on,
+   as the “natural” collection loop may start at any later moment, also after
+   several VM loops.
+*/
 
 FALCON_FUNC  gcEnable( ::Falcon::VMachine *vm )
 {
@@ -1795,6 +2081,44 @@ FALCON_FUNC  gcEnable( ::Falcon::VMachine *vm )
    else
       vm->memPool()->autoCleanMode( vm->param(0)->isTrue() );
 }
+
+/*#
+   @function gcSetThreshold
+   @inset gc_control
+   @brief Turns automatic GC feature on or off.
+   @optparam scanTh Amount of memory (in Kb) that triggers garbage scan.
+   @optparam collectTh Amount of memory (in Kb) that triggers garbage collection.
+
+   This function sets the garbage collection threshold levels that start automatic
+   GC loop. They are both optional; if nil is provided in place of one of them,
+   that value is ignored (and stays at it was before).
+
+   The scanTh parameter determines when the automatic check the VM performs triggers
+   a collection loop. When the allocated memory is below the scanTh level,
+   nothing happens; when it is above, a collection loop is started.
+
+   When the VM determines how much memory is garbage, it checks that value against
+   the collectTh level. A reclaim loop is started only if the detected free memory
+   is more than collectTh bytes.
+
+   While scanTh value is not used if @a gcEnable() is turned to off, collectTh
+   level will still determine if the claim loop is worth to be taken also in case
+   of explicit @a gcPerform() calls from scripts.
+
+   The GC level does not take into consideration the real amount of memory that the
+   objects are using, but the memory they report to the VM when they are created or
+   modified.
+
+   After a GC is performed, the threshold levels are automatically adjusted so that GC
+   collection checks and reclaims are not performed too often. The adjustment may
+   change on a per VM basis; the default is to set the scanTh to the double of the
+   memory that was found actually used, without changing the collectTh.
+
+   Default scanTh is very strict (1MB in this version); this level has the advantage
+   to scale up fast in case of huge scripts while still being big enough to let the
+   vast majority of control/embedded scripts to run without GC hindrance for their
+   whole life.
+*/
 
 FALCON_FUNC  gcSetThreshold( ::Falcon::VMachine *vm )
 {
@@ -1818,6 +2142,51 @@ FALCON_FUNC  gcSetThreshold( ::Falcon::VMachine *vm )
    }
 }
 
+/*#
+   @function gcSetTimeout
+   @inset gc_control
+   @brief Turns automatic GC feature on or off.
+   @param msTimeout Amount of memory (in Kb) that triggers garbage scan.
+
+   This function sets the maximum time a collection loop may take, expressed
+   in milliseconds. A timeout of 0 means "infinite".
+
+   This functionality is turned off by default. It must be explicitly activated
+   by requesting it at the Falcon command line interpreter, or in case of
+   embedding applications, it must be explicitly provided to the VM that
+   is hosting the script.
+
+   This is for two reasons: mainly, checking for time constraints is itself
+   a time consuming operation, especially when compared to the atomic operations
+   that a GC loop usually performs. Secondly, a script using this feature
+   may crash the host application very soon once environmental condition changes.
+
+   Considering the fact that without a complete GC loop used memory will never
+   decrease, it's easy to see that a strict time constraint may prevent a full
+   GC loop to ever take place. Even if the time is wide enough under normal
+   circumstances (i.e. 100ms), if the script is to run ONCE on a heavy used
+   CPU it may end up to be unable to perform the GC loop in the specified
+   time, causing the next loops to be penalized, and possibly to never
+   be able again to complete the collection under the given constraints.
+
+   If a script and the hosting program are willing to use this feature, the
+   time constraints must be used only when it is really needed; they must
+   be periodically turned off (by setting the timeout to 0) or possibly not used at all.
+
+   Of course, this is valid only for the time-constraint aware default GC provided by
+   the Falcon API. Embedders are free to implement progressive GCs that may
+   actually perform partial scanning in given time constraints. The "three-colors"
+   garbage collector is a classical example. As all the GC strategies providing
+   this feature are intrinsically less efficient than a monolithic all-or-nothing
+   approach, and as they turn to be useful only in a very small category of
+   applications (usually not delegated to scripting languages), Falcon does not
+   provide any of them (for now).
+
+   However, as the embedders may find this hook useful, it is provided here in
+   the core module, where it interfaces directly with a property on the base
+   class handling memory and garbage: MemPool.
+*/
+
 FALCON_FUNC  gcSetTimeout( ::Falcon::VMachine *vm )
 {
    Item *p0 = vm->param( 0 );
@@ -1831,6 +2200,28 @@ FALCON_FUNC  gcSetTimeout( ::Falcon::VMachine *vm )
       vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).extra( "( N )" ) ) );
    }
 }
+
+/*#
+   @function gcPerform
+   @inset gc_control
+   @brief Requests immediate check of garbage.
+   @optparam bForce If true, force collection of unused memory.
+   @return true if the gc has been actually performed, false otherwise.
+
+   Performs immediately a garbage collection loop. All the items the script
+   is managing are checked, and the memory they occupy is stored for
+   later reference; the findings of the perform loop may be retrieved
+   by the gcGetParams function. If the memory that is found unreferenced
+   is below the memory reclaim threshold level, the function returns immediately false.
+   Otherwise, a reclaim loop is performed and some memory gets cleared,
+   and the function returns true.
+
+   If @b bForce is set to true, all the unused memory is immediately reclaimed,
+   without taking into consideration the reclaim threshold.
+
+   See @a gcSetThreshold function for a in-depth of thresholds and memory
+   constraints.
+*/
 
 FALCON_FUNC  gcPerform( ::Falcon::VMachine *vm )
 {
@@ -1846,6 +2237,45 @@ FALCON_FUNC  gcPerform( ::Falcon::VMachine *vm )
 
    vm->retval( vm->memPool()->performGC( bRec ) ? 1 : 0 );
 }
+
+/*#
+   @function gcGetParams
+   @inset gc_control
+   @brief Requests immediate check of garbage.
+   @optparam amem Amount of allocated memory.
+   @optparam aitm Amount of allocated items.
+   @optparam lmem Amount of alive memory.
+   @optparam litm Amount of alive items.
+   @optparam sth Currently set scan threshold.
+   @optparam cth Currently set collect threshold.
+   @optparam to Currently set collection timeout.
+
+   This function retreives several statistical data and settings from the
+   virtual machine memory manager. To retreive a parameter, pass a variable
+   by reference, and pass nil in place of uninteresting parameters; in example,
+   if wishing to recover the amount of alive memory and items:
+   @code
+   aliveItems = 0
+   aliveMemory = 0
+   gcGetParams( nil, nil, $aliveMemory, $aliveItems )
+   @endcode
+
+   Extra unneeded informations may just be ignored.
+
+   The value of the alive memory and items is reliable only after (actually, soon after)
+   a gcPerform() call. The data is also stored by automatic GC loops invoked
+   by the VM, but the scripts have no mean to know when they are performed.
+   It is reasonable to suppose that the information is still not available if
+   the values returned are both 0.
+
+   Both alive and allocated item count refers to those items that are actually stored
+   in the memory manager. In fact, not every falcon item being available to the program
+   will require garbage collection; only complex and deep items are accounted
+   (mainly objects, strings, arrays and dictionaries).
+
+   The informations returned by this function may be used by scripts both for
+   debugging purpose and to build their own collection strategy.
+*/
 
 FALCON_FUNC  gcGetParams( ::Falcon::VMachine *vm )
 {
@@ -4276,7 +4706,7 @@ FALCON_FUNC  core_firstof ( ::Falcon::VMachine *vm )
    @brief Handle out of band items.
 
    Out-of-band items are normal items which can be tested for the out-of-band quality
-   through the @a isoob function to perform special tasks. Some core and RTL function can
+   through the @a isoob function to perform special tasks. Some core and RTL functions can
    check for the item being out-of-band to take special decisions about the item, or to
    modify their behavior. In example, the @a map function drops the item (acting like @a filter ),
    if it is out-of-band.
@@ -4557,14 +4987,8 @@ FALCON_FUNC  removeFromAll( ::Falcon::VMachine *vm )
 static bool broadcast_next_attrib_next( ::Falcon::VMachine *vm )
 {
    // break the chain if last call returned true or an OOB item
-   if ( vm->regA().isOob() )
+   if ( vm->regA().isOob() || vm->regA().isTrue() )
    {
-      vm->regA().setOob( false );
-      return false;
-   }
-   else if ( vm->regA().isTrue() )
-   {
-      vm->retnil();
       return false;
    }
 
@@ -4617,14 +5041,8 @@ FALCON_FUNC broadcast_next_attrib( ::Falcon::VMachine *vm )
 static bool broadcast_next_array( ::Falcon::VMachine *vm )
 {
    // break chain if last call returned true
-   if ( vm->regA().isOob() )
+   if ( vm->regA().isOob() || vm->regA().isTrue() )
    {
-      vm->regA().setOob( false );
-      return false;
-   }
-   else if ( vm->regA().isTrue() )
-   {
-      vm->retnil();
       return false;
    }
 
@@ -4837,7 +5255,8 @@ Module * core_module_init()
    core->addExtFunc( "exit", Falcon::core::hexit );
 
    core->addExtFunc( "paramCount", Falcon::core::paramCount );
-   core->addExtFunc( "paramNumber", Falcon::core::paramNumber );
+   core->addExtFunc( "paramNumber", Falcon::core::_parameter );
+   core->addExtFunc( "parameter", Falcon::core::_parameter );
    core->addExtFunc( "paramIsRef", Falcon::core::paramIsRef );
    core->addExtFunc( "paramSet", Falcon::core::paramSet );
    core->addExtFunc( "PageDict", Falcon::core::PageDict );
@@ -5050,36 +5469,6 @@ Module * core_module_init()
    core->addExtFunc( "oob", Falcon::core::core_oob );
    core->addExtFunc( "deoob", Falcon::core::core_deoob );
    core->addExtFunc( "isoob", Falcon::core::core_isoob );
-
-   /*#
-   @object Test
-   @brief A short test object
-
-   This is just a test object
-   @prop test A test property. Wonder what it does?
-   */
-
-   /*#
-         @method ntest Test
-         @brief tests the test object
-         @param t1 a test parameter
-
-         This is just a test!
-         */
-
-   /*#
-      @attribute isAnAttribute
-      @brief A demo attribute
-
-      This is a demo attribute.
-   */
-
-      /*#
-      @const aConstant
-      @brief A demo constant
-
-      This is a demo constant.
-      */
 
    return core;
 }

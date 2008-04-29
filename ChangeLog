@@ -56,6 +56,9 @@ Falcon (0.8.9)
   * Minor: RangeError renamed into AccessError.
   * Major: Added broadcast replies (returning from broadcast with an OOB item).
   * Minor: Added function vmSystemType() to access underlying target compilation system.
+  * Minor: Aliased the function paramNumber() to parameter(). The function paramNumber() is
+           still available but deprecated.
+  * Minor: Added first and last BOM methods.
 
 Falcon (0.8.8)
   * bugfix: TRAV opcode may destroy its parameters while setting first loop

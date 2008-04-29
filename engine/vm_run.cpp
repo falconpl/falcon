@@ -1729,7 +1729,7 @@ void opcodeHandler_LDV( register VMachine *vm )
       {
          int64 pos = (int64) operand2->forceInteger();
          MemBuf *mb = operand1->asMemBuf();
-         uint32 uPos = (uint32) (pos >= 0 ? pos : mb->length() - pos);
+         uint32 uPos = (uint32) (pos >= 0 ? pos : mb->length() + pos);
          if ( uPos < mb->length() )  {
             vm->retval( (int64) mb->get( uPos ) );
             return;
@@ -2546,7 +2546,7 @@ void opcodeHandler_STVS( register VMachine *vm )
          {
             int64 pos = (int64) operand2->forceInteger();
             MemBuf *mb = operand1->asMemBuf();
-            uint32 uPos = (uint32) (pos >= 0 ? pos : mb->length() - pos);
+            uint32 uPos = (uint32) (pos >= 0 ? pos : mb->length() + pos);
             if ( uPos < mb->length() )
             {
                mb->set( uPos, (uint32) origin.forceInteger() );
@@ -2737,7 +2737,7 @@ void opcodeHandler_STV( register VMachine *vm )
          {
             int64 pos = (int64) operand2->forceInteger();
             MemBuf *mb = operand1->asMemBuf();
-            uint32 uPos = (uint32) (pos >= 0 ? pos : mb->length() - pos);
+            uint32 uPos = (uint32) (pos >= 0 ? pos : mb->length() + pos);
             if ( uPos <  mb->length() )
             {
                mb->set( uPos, (uint32) origin->forceInteger() );

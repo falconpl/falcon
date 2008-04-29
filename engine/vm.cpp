@@ -232,6 +232,8 @@ void VMachine::internal_construct()
    m_fbom->add( "trim" );
    m_fbom->add( "frontTrim" );
    m_fbom->add( "allTrim" );
+   m_fbom->add( "front" );
+   m_fbom->add( "back" );
 }
 
 

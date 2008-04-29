@@ -4,14 +4,9 @@
 * ID: 38e
 * Category: attributes
 * Subcategory:
-* Short: Attrib loops
+* Short: Attribute broadcasts
 * Description:
-*  This test checks for/in loops over attributes, which must
-*  iterate over objets having a certain attribute.
-*
-*  The test presumes that previous tests on attributes (in 21 and
-*  22 series) have already been passed, so we won't check here for
-*  inheritance or object startup attributes.
+*  This test verifies broadcast semantics.
 * [/Description]
 *
 ****************************************************************************/
@@ -123,6 +118,7 @@ o2.a_one = interrupter
 o3.a_one = interrupter
 o4.a_one = interrupter
 
+o1.callcount = 0
 broadcast( [a_one, a_one] )
 if o1.callcount != 1: failure( "Broadcast interruption" )
 

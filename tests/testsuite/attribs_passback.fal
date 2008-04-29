@@ -1,0 +1,39 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 38g
+* Category: attributes
+* Subcategory:
+* Short: Attrib passback
+* Description:
+*   This test verifies that OOB items are passed back to the broadcast
+*   caller.
+* [/Description]
+*
+****************************************************************************/
+
+attributes
+   a_one, a_two
+end
+
+class CObj( name, attrib )
+
+   function a_one( param )
+      return oob( "Value passed" )
+   end
+
+   function a_two( param )
+      return oob( false )
+   end
+
+   has a_one, a_two
+end
+
+// create 4 objects with different attributes
+o1 = CObj( "one", a_one )
+
+if broadcast( a_one ) != "Value passed": failure( "True value not passed" )
+if broadcast( a_two ) != false: failure( "False value not passed" )
+success()
+
+/* End of file */
