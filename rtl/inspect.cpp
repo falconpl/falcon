@@ -24,6 +24,10 @@
 #include <falcon/stream.h>
 #include <falcon/membuf.h>
 
+/*#
+   @beginmodule falcon_rtl
+*/
+
 namespace Falcon { namespace Ext {
 
 void inspect_internal( VMachine *vm, bool isShort, const Item *elem, int32 level, bool add = true );
@@ -329,12 +333,46 @@ void inspect_internal( VMachine *vm, bool isShort, const Item *elem, int32 level
    stream->flush();
 }
 
+
+/*#
+   @function inspect
+   @inset rtl_basic_io
+   @param ... An arbitrary list of items.
+   @brief Displays the deep contents of an item.
+
+   This is mainly a debugging function that prints all the available
+   informations on the item on the standard output stream. This function
+   should not be used except for testing scripts and checking what
+   they put in arrays, dictionaries, objects, classes or simple items.
+
+   Output is sent to the VM auxiliary stream; for stand-alone scripts,
+   this translates into the "standard error stream". Embedders may provide
+   simple debugging facilities by overloading and interceptiong the VM
+   auxiliary stream and provide separate output for that.
+
+   This function traverse arrays and items deeply; there isn't any protection
+   against circular references, which may cause endless loop. If the inspected
+   items can be subject to circular references, use the @a inspectShort function
+   instead.
+*/
+
 FALCON_FUNC  inspect ( ::Falcon::VMachine *vm )
 {
    for( int i = 0; i < vm->paramCount(); i ++ )
       inspect_internal( vm, false, vm->param(i), 0 );
 }
 
+/*#
+   @function inspectShort
+   @inset rtl_basic_io
+   @param ... An arbitrary list of items.
+   @brief Displays the deep contents of an item (short version).
+
+   This function works as @a inspect, but it provides a shorter output
+   and scans items only three level deep. This is generally enough to
+   know exactly the nature of items and of their immediate contents,
+   and prevents endless loops when the items have circular relations.
+*/
 FALCON_FUNC  inspectShort ( ::Falcon::VMachine *vm )
 {
    for( int i = 0; i < vm->paramCount(); i ++ )

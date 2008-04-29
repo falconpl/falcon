@@ -29,6 +29,10 @@
 #include <falcon/stdstreams.h>
 #include <falcon/membuf.h>
 
+/*#
+   @beginmodule falcon_rtl
+*/
+
 namespace Falcon {
 namespace Ext {
 
@@ -1182,6 +1186,18 @@ FALCON_FUNC  stdErrRaw ( ::Falcon::VMachine *vm )
    internal_make_stream( vm, new RawStdErrStream(), 2 );
 }
 
+/*#
+   @function systemErrorDescription
+   @inset rtl_general_purpose
+   @brief Returns a system dependent message explaining an integer error code.
+   @param errorCode A (possibly) numeric error code that some system function has returned.
+   @return A system-specific error description.
+
+   This function is meant to provide the users (and the developers) with a
+   minimal support to get an hint on why some system function failed, without
+   having to consult the system manual pages. The fsError field of the Error class
+   can be fed directly inside this function.
+*/
 
 FALCON_FUNC  systemErrorDescription ( ::Falcon::VMachine *vm )
 {

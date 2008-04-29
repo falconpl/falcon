@@ -35,8 +35,27 @@
    #endif
 #endif
 
+/*#
+   @beginmodule falcon_rtl
+*/
+
 namespace Falcon { namespace Ext {
 
+/*#
+   @function input
+   @inset rtl_basic_io
+   @brief Get some text from the user (standard input stream).
+
+   Reads a line from the standard input stream and returns a string
+   containing the read data. This is mainly meant as a test/debugging
+   function to provide the scripts with minimal console based user input
+   support. When in need of reading lines from the standard input, prefer the
+   readLine() method of the input stream object.
+
+   This function may also be overloaded by embedders to provide the scripts
+   with a common general purpose input function, that returns a string that
+   the user is queried for.
+*/
 FALCON_FUNC  input ( ::Falcon::VMachine *vm )
 {
    char mem[512];

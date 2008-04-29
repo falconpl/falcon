@@ -25,12 +25,24 @@
 #include <falcon/cobject.h>
 #include <falcon/vm.h>
 
+/*#
+   @beginmodule falcon_rtl
+*/
+
 namespace Falcon {
 
 namespace Ext {
 
-/**
-   itemCopy( item ) --> shallow copy
+/*#
+   @function itemCopy
+   @inset rtl_general_purpose
+   @brief Performs a shallow copy of one item.
+   @param item The item to be copied.
+   @return A copy of the item.
+   @raise CloneError if the item is not cloneable.
+
+   This function works as the FBOM method @a BOM.clone.
+   @note Deprecated; used the BOM method instead.
 */
 FALCON_FUNC  itemCopy( ::Falcon::VMachine *vm )
 {

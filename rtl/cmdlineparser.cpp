@@ -519,7 +519,7 @@ FALCON_FUNC  CmdlineParser_usage( ::Falcon::VMachine *vm )
 */
 
 /*#
-   @method onSwitchOff CmdlineParser
+   @method onValue CmdlineParser
    @brief Called when the parser finds a value for a given option.
    @param opt The option being parsed.
    @param value The given value for that option.

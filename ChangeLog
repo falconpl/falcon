@@ -59,6 +59,7 @@ Falcon (0.8.9)
   * Minor: Aliased the function paramNumber() to parameter(). The function paramNumber() is
            still available but deprecated.
   * Minor: Added first and last BOM methods.
+  * Minor: Added RTL function randomDice
 
 Falcon (0.8.8)
   * bugfix: TRAV opcode may destroy its parameters while setting first loop

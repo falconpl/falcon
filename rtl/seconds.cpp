@@ -22,7 +22,24 @@
 #include <windows.h>
 #endif
 
+/*#
+   @beginmodule falcon_rtl
+*/
+
 namespace Falcon { namespace Ext {
+
+
+/*#
+   @function seconds
+   @inset rtl_general_purpose
+   @brief Returns the number of seconds since the “epoch” as reported by the system.
+   @return The number of seconds and fractions of seconds in a floating point value.
+
+   Actually, this function returns a floating point number which represents seconds
+   and fraction of seconds elapse since a conventional time. This function is mainly
+   meant to be used to take intervals of time inside the script,
+   with a millisecond precision.
+*/
 
 
 FALCON_FUNC  seconds ( ::Falcon::VMachine *vm )

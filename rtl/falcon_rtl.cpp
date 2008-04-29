@@ -24,13 +24,54 @@
 
 /*#
    @module falcon_rtl The Runtime Library module
-   @brief Main basic falcon module.
+   @brief Main Falcon module.
 
-   This module hold minimal functions, classes and objects needed for Falcon to interact with the
-   rest of the world.
+   The runtime library represents the set of standard commonly
+   available functionalities that the Falcon users are usually
+   expecting to be always loaded in the virtual machine. It includes
+   important functions that manipulates types, as the array sorting
+   function, or the dictionary traversal functions. Also, it provides basic
+   I/O support, as file and directory manipulation.
 
-   However, this module is not strictly necessary to Falcon language; embedding applications may
-   safely ignore this if they just want to provide scripts with the ability to work on Falcon data.
+   Some of the functions that are provided in the RTL, as printl, are a common
+   hook for embedders. In the case of printl, which provides a common and comfortable
+   simple output for scripts, embedders usually redirect it to their own functions to
+   intercept script output request and redirect them. In some cases, embedders may
+   may find useful to disable some functionalities, i.e. removing file/directory functions.
+
+   RTL also provides many functions that duplicate operator functionalities.
+   Array partitioning and string concatenations are some example. Those duplicate
+   functions are meant both because they are usually more flexible than the pre-defined
+   operators, and because, being Falcon a second order language, it is then possible to
+   pass those functions as function parameters, or to save those functions in variables;
+   of course, operators cannot be used that way.
+
+   However, operators are faster than function calls, so, when possible, use the
+   operators rather than the functions. Functions duplicating operators are mean to be
+   used when operators cannot possibly be employed, or when the limited functionalities
+   of the operators are not enough.
+
+   As Falcon grows, some of this functions may be moved in more specific locations;
+   in example, serialization, or system I/O functions, or mathematic functions, may
+   be moved in other more specific modules. This depends on the decisions of the community
+   for the best usage patterns.
+*/
+
+/*#
+   @beginModule falcon_rtl
+*/
+
+/*#
+   @funset rtl_basic_io Basic I/O
+   @brief Functions providing basic interface.
+
+   RTL Basic I/O functions are mainly meant to provide scripts with a
+   very basic interface to interact with the outside world.
+*/
+
+/*#
+   @funset rtl_general_purpose General purpose
+   @brief Generic functions
 */
 
 FALCON_MODULE_DECL( const Falcon::EngineData &data )
@@ -72,6 +113,7 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    self->addExtFunc( "randomWalk", Falcon::Ext::flc_randomWalk );
    self->addExtFunc( "randomGrab", Falcon::Ext::flc_randomGrab );
    self->addExtFunc( "randomSeed", Falcon::Ext::flc_randomSeed );
+   self->addExtFunc( "randomDice", Falcon::Ext::flc_randomDice );
 
    //=======================================================================
    // RTL math

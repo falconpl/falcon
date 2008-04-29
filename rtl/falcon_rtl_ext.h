@@ -269,6 +269,7 @@ FALCON_FUNC  flc_random ( ::Falcon::VMachine *vm );
 FALCON_FUNC  flc_randomChoice ( ::Falcon::VMachine *vm );
 FALCON_FUNC  flc_randomPick ( ::Falcon::VMachine *vm );
 FALCON_FUNC  flc_randomWalk ( ::Falcon::VMachine *vm );
+FALCON_FUNC  flc_randomDice ( ::Falcon::VMachine *vm );
 FALCON_FUNC  flc_randomSeed ( ::Falcon::VMachine *vm );
 FALCON_FUNC  flc_randomGrab ( ::Falcon::VMachine *vm );
 FALCON_FUNC  flc_fract ( ::Falcon::VMachine *vm );

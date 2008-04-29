@@ -23,9 +23,33 @@
 #include <math.h>
 #include <errno.h>
 
+/*#
+   @beginmodule falcon_rtl
+*/
+
+/*#
+   @funset rtl_math Math functions.
+   @brief Functions providing math support to Falcon.
+
+   This group includes mathematical, trigonometrical and floating point conversion
+   functions.
+
+   @beginset rtl_math
+*/
+
 namespace Falcon {
 namespace Ext {
 
+/*#
+   @function log
+   @brief Returns the natural logarithm of the argument.
+   @param x Argument.
+   @return The natural logarithm of the argument.
+   @raise MathError If the argument is out of domain.
+
+   The function may raise an error if the value cannot be
+   computed because of domain or overflow errors.
+*/
 FALCON_FUNC flc_math_log( ::Falcon::VMachine *vm )
 {
    Item *num1 = vm->param( 0 );
@@ -40,13 +64,23 @@ FALCON_FUNC flc_math_log( ::Falcon::VMachine *vm )
    numeric res = log( num1->forceNumeric() );
    if ( errno != 0 )
    {
-      vm->raiseError( e_domain, "log()" );
+      vm->raiseModError( new MathError( ErrorParam( e_domain, __LINE__).extra( "log()" ) ) );
    }
    else {
       vm->retval( res );
    }
 }
 
+/*#
+   @function exp
+   @brief Returns exponential (e^x) of the argument.
+   @param x Argument.
+   @return The exponential of the argument.
+   @raise MathError If the argument is out of domain.
+
+   The function may raise an error if the value cannot be
+   computed because of domain or overflow errors.
+*/
 FALCON_FUNC flc_math_exp( ::Falcon::VMachine *vm )
 {
    Item *num1 = vm->param( 0 );
@@ -61,13 +95,24 @@ FALCON_FUNC flc_math_exp( ::Falcon::VMachine *vm )
    numeric res = exp( num1->forceNumeric() );
    if ( errno != 0 )
    {
-      vm->raiseError( e_domain, "exp()" );
+      vm->raiseModError( new MathError( ErrorParam( e_domain, __LINE__).extra( "exp()" ) ) );
    }
    else {
       vm->retval( res );
    }
 }
 
+/*#
+   @function pow
+   @brief Returns the first argument elevated to the second one (x^y)
+   @param x Base.
+   @param y Exponent.
+   @return x^y
+   @raise MathError If the argument is out of domain.
+
+   The function may raise an error if the value cannot be
+   computed because of domain or overflow errors.
+*/
 FALCON_FUNC flc_math_pow( ::Falcon::VMachine *vm )
 {
    Item *num1 = vm->param( 0 );
@@ -83,14 +128,25 @@ FALCON_FUNC flc_math_pow( ::Falcon::VMachine *vm )
    numeric res = pow( num1->forceNumeric(), num2->forceNumeric() );
    if ( errno != 0 )
    {
-      vm->raiseError( e_domain, "pow()" );
+      vm->raiseModError( new MathError( ErrorParam( e_domain, __LINE__).extra( "pow()" ) ) );
    }
    else {
       vm->retval( res );
    }
 }
 
+/*#
+   @function sin
+   @brief Returns the sine of the argument.
+   @param x Argument.
+   @return The sine of the argument.
+   @raise MathError If the argument is out of domain.
 
+   The return value is expressed in radians.
+
+   The function may raise an error if the value cannot be computed
+   because of domain or overflow errors.
+*/
 FALCON_FUNC flc_math_sin( ::Falcon::VMachine *vm )
 {
    Item *num1 = vm->param( 0 );
@@ -105,14 +161,25 @@ FALCON_FUNC flc_math_sin( ::Falcon::VMachine *vm )
    numeric res = sin( num1->forceNumeric() );
    if ( errno != 0 )
    {
-      vm->raiseError( e_domain, "pow()" );
+      vm->raiseModError( new MathError( ErrorParam( e_domain, __LINE__).extra( "sin()" ) ) );
    }
    else {
       vm->retval( res );
    }
 }
 
+/*#
+   @function cos
+   @brief Returns the cosine of the argument.
+   @param x Argument.
+   @return The cosine of the argument.
+   @raise MathError If the argument is out of domain.
 
+   The return value is expressed in radians.
+
+   The function may raise an error if the value cannot be computed
+   because of domain or overflow errors.
+*/
 FALCON_FUNC flc_math_cos( ::Falcon::VMachine *vm )
 {
    Item *num1 = vm->param( 0 );
@@ -127,13 +194,25 @@ FALCON_FUNC flc_math_cos( ::Falcon::VMachine *vm )
    numeric res = cos( num1->forceNumeric() );
    if ( errno != 0 )
    {
-      vm->raiseError( e_domain, "cos()" );
+      vm->raiseModError( new MathError( ErrorParam( e_domain, __LINE__).extra( "acos()" ) ) );
    }
    else {
       vm->retval( res );
    }
 }
 
+/*#
+   @function tan
+   @brief Returns the tangent of the argument.
+   @param x Argument.
+   @return The tangent of the argument.
+   @raise MathError If the argument is out of domain.
+
+   The return value is expressed in radians.
+
+   The function may raise an error if the value cannot be computed
+   because of domain or overflow errors.
+*/
 FALCON_FUNC flc_math_tan( ::Falcon::VMachine *vm )
 {
    Item *num1 = vm->param( 0 );
@@ -148,12 +227,25 @@ FALCON_FUNC flc_math_tan( ::Falcon::VMachine *vm )
    numeric res = tan( num1->forceNumeric() );
    if ( errno != 0 )
    {
-      vm->raiseError( e_domain, "tan()" );
+      vm->raiseModError( new MathError( ErrorParam( e_domain, __LINE__).extra( "tan()" ) ) );
    }
    else {
       vm->retval( res );
    }
 }
+
+/*#
+   @function asin
+   @brief Returns the arc sine of the argument.
+   @param x Argument.
+   @return The arc sine of the argument.
+   @raise MathError If the argument is out of domain.
+
+   The return value is expressed in radians.
+
+   The function may raise an error if the value cannot be
+   computed because of domain or overflow errors.
+*/
 
 FALCON_FUNC flc_math_asin( ::Falcon::VMachine *vm )
 {
@@ -169,12 +261,28 @@ FALCON_FUNC flc_math_asin( ::Falcon::VMachine *vm )
    numeric res = asin( num1->forceNumeric() );
    if ( errno != 0 )
    {
-      vm->raiseError( e_domain, "asin()" );
+      vm->raiseModError( new MathError( ErrorParam( e_domain, __LINE__).extra( "asin()" ) ) );
    }
    else {
       vm->retval( res );
    }
 }
+
+/*#
+   @function acos
+   @brief Returns the arc cosine of the argument.
+   @param x Argument.
+   @return The arc cosine of the argument.
+   @raise MathError If the argument is out of domain.
+
+   This function computes the principal value of the arc cosine
+   of its argument x. The value of x should be in the range [-1,1].
+
+   The return value is expressed in radians.
+
+   The function may raise a Math error if the value cannot
+   be computed because of domain or overflow errors.
+*/
 
 FALCON_FUNC flc_math_acos( ::Falcon::VMachine *vm )
 {
@@ -190,13 +298,28 @@ FALCON_FUNC flc_math_acos( ::Falcon::VMachine *vm )
    numeric res = acos( num1->forceNumeric() );
    if ( errno != 0 )
    {
-      vm->raiseError( e_domain, "acos()" );
+      vm->raiseModError( new MathError( ErrorParam( e_domain, __LINE__).extra( "acos()" ) ) );
    }
    else {
       vm->retval( res );
    }
 }
 
+/*#
+   @function atan
+   @brief Returns the arc tangent of the argument.
+   @param x Argument.
+   @return The arc tangent of the argument.
+   @raise MathError If the argument is out of domain.
+
+   This function computes the principal value of the arc tangent
+   of its argument x. The value of x should be in the range [-1,1].
+
+   The return value is expressed in radians.
+
+   The function may raise a Math error if the value cannot
+   be computed because of domain or overflow errors.
+*/
 FALCON_FUNC flc_math_atan( ::Falcon::VMachine *vm )
 {
    Item *num1 = vm->param( 0 );
@@ -211,13 +334,30 @@ FALCON_FUNC flc_math_atan( ::Falcon::VMachine *vm )
    numeric res = atan( num1->forceNumeric() );
    if ( errno != 0 )
    {
-      vm->raiseError( e_domain, "atan()" );
+      vm->raiseModError( new MathError( ErrorParam( e_domain, __LINE__).extra( "atan()" ) ) );
    }
    else {
       vm->retval( res );
    }
 }
 
+/*#
+   @function atan2
+   @brief Returns the arc tangent of x / y.
+   @param x First argument.
+   @param y Second argument.
+   @return The arc tangent of the x / y.
+   @raise MathError If the argument is out of domain.
+
+   This function computes the principal value of the arc
+   tangent of x/y, using the signs of both arguments to
+   determine the quadrant of the return value.
+
+   The return value is expressed in radians.
+
+   The function may raise a Math error if the value cannot
+   be computed because of domain or overflow errors.
+*/
 FALCON_FUNC flc_math_atan2( ::Falcon::VMachine *vm )
 {
    Item *num1 = vm->param( 0 );
@@ -233,7 +373,7 @@ FALCON_FUNC flc_math_atan2( ::Falcon::VMachine *vm )
    numeric res = atan2( num1->forceNumeric(), num2->forceNumeric() );
    if ( errno != 0 )
    {
-      vm->raiseError( e_domain, "atan2()" );
+      vm->raiseModError( new MathError( ErrorParam( e_domain, __LINE__).extra( "atan2()" ) ) );
    }
    else {
       vm->retval( res );
@@ -241,7 +381,12 @@ FALCON_FUNC flc_math_atan2( ::Falcon::VMachine *vm )
 }
 
 #define PI 3.1415926535897932384626433832795
-
+/*#
+   @function rad2deg
+   @brief Converts an angle expressed in radians into degrees.
+   @param x An angle expressed in radians.
+   @return The angle converted in degrees.
+*/
 FALCON_FUNC flc_math_rad2deg( ::Falcon::VMachine *vm )
 {
    Item *num1 = vm->param( 0 );
@@ -255,6 +400,12 @@ FALCON_FUNC flc_math_rad2deg( ::Falcon::VMachine *vm )
    vm->retval( 180.0 / ( PI * num1->forceNumeric() ) );
 }
 
+/*#
+   @function deg2rad
+   @brief Converts an angle expressed in degrees into radians.
+   @param x An angle expressed in degrees.
+   @return The angle converted in radians.
+*/
 FALCON_FUNC flc_math_deg2rad( ::Falcon::VMachine *vm )
 {
    Item *num1 = vm->param( 0 );
@@ -268,6 +419,21 @@ FALCON_FUNC flc_math_deg2rad( ::Falcon::VMachine *vm )
    vm->retval( num1->forceNumeric() * PI / 180.0 );
 }
 
+
+/*#
+   @function fract
+   @brief Returns the fractional part of a number.
+   @param x Argument.
+   @return The fractional part of a number.
+
+   This function returns the non-integer part of a number.
+   In example,
+   @code
+     > fract( 1.234 )
+   @endcode
+
+   would print 0.234.
+*/
 
 FALCON_FUNC  flc_fract ( ::Falcon::VMachine *vm )
 {
@@ -286,6 +452,20 @@ FALCON_FUNC  flc_fract ( ::Falcon::VMachine *vm )
    }
 }
 
+/*#
+   @function fint
+   @brief Returns the integer part of a floating point number as a floating point number.
+   @param x Argument.
+   @return A floating point number with fractional part zeroed.
+
+   Fint function works like the core @a int function,
+   but it returns a floating point number. In example,
+   @b fint applied on 3.58e200 will return the same number,
+   while @a int would raise a math error, as the number
+   cannot be represented in a integer
+   number that can store numbers up to +-2^63.
+
+*/
 FALCON_FUNC  flc_fint( ::Falcon::VMachine *vm )
 {
    Item *num = vm->param( 0 );
@@ -305,6 +485,20 @@ FALCON_FUNC  flc_fint( ::Falcon::VMachine *vm )
    }
 }
 
+/*#
+   @function round
+   @brief Rounds a floating point to the nearest integer.
+   @param x Argument.
+   @return Nearest integer to x.
+
+   Round returns the nearest integer value of a given
+   floating point number. If the fractional part of the number
+   is greater or equal to 0.5, the number is rounded up to the nearest
+   biggest integer in absolute value, while if it's less than 0.5
+   the number is rounded down to the mere integer part. In example, 1.6
+   is rounded to 2, -1.6 is rounded to -2, 1.2 is rounded to 1
+   and -1.2 is rounded to -1.
+*/
 
 FALCON_FUNC  flc_round ( ::Falcon::VMachine *vm )
 {
@@ -335,6 +529,18 @@ FALCON_FUNC  flc_round ( ::Falcon::VMachine *vm )
    }
 }
 
+/*#
+   @function floor
+   @brief Returns the smallest integer near to the given value.
+   @param x Argument.
+   @return The smallest integer near to the given value.
+
+   Floor function returns the smallest integer near to a given floating
+   point number. In example, floor of 1.9 is 1, and floor of -1.9 is -2.
+   If an integer number is given, then the function returns the same number.
+   This is similar to fint(), but in case of negative numbers @a fint would
+   return the integer part; in case of -1.9 it would return -1.
+*/
 FALCON_FUNC  flc_floor ( ::Falcon::VMachine *vm )
 {
    Item *num = vm->param( 0 );
@@ -351,6 +557,17 @@ FALCON_FUNC  flc_floor ( ::Falcon::VMachine *vm )
    }
 }
 
+/*#
+   @function ceil
+   @brief Returns the greatest integer near to the given value.
+   @param x Argument.
+   @return The ceil value.
+
+   Ceil function returns the highest integer near to a given floating point
+   number. In example, ceil of 1.1 is 2, and ceil of -1.1 is -1. If an
+   integer number is given, then the function returns the same number.
+*/
+
 FALCON_FUNC  flc_ceil ( ::Falcon::VMachine *vm )
 {
    Item *num = vm->param( 0 );
@@ -366,6 +583,16 @@ FALCON_FUNC  flc_ceil ( ::Falcon::VMachine *vm )
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
    }
 }
+
+/*#
+   @function abs
+   @brief Returns the absolute value of a number.
+   @param x A number.
+   @return The absolute value of the parameter.
+
+   If the argument is an integer, then an integer is returned,
+   otherwise the return value will be a floating point number.
+*/
 
 FALCON_FUNC  flc_abs ( ::Falcon::VMachine *vm )
 {
