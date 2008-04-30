@@ -15,7 +15,7 @@
 
 /*#
    @file array.cpp  Array specialized operation
-   
+
    Theese operations replicate VM array management,
    but they are more flexible and use atomic calls in
    callbacks.
@@ -26,9 +26,9 @@
 */
 
 /*#
-   @funset Arrays Array related functions.
+   @funset rtl_array_funcs Array support
    @brief Array related functions.
-   @beginfunset Arrays
+   @beginset rtl_array_funcs
 */
 
 #include <falcon/setup.h>
@@ -40,16 +40,18 @@
 
 namespace Falcon { namespace Ext {
 
-/*# 
+/*#
    @function arrayIns
    @brief Inserts an item into an array.
    @param array The array where the item should be placed.
    @param itempos  The position where the item should be placed.
-   @param item the item to be exchanged.
+   @param item The item to be inserted.
 
-    TODO: Write this text
- */
-   
+   The item is inserted before the given position. If pos is 0, the item is
+   inserted in the very first position, while if it's equal to the array length, it
+   is appended at the array tail.
+*/
+
 FALCON_FUNC  arrayIns ( ::Falcon::VMachine *vm )
 {
    Item *array_x = vm->param(0);
@@ -77,8 +79,18 @@ FALCON_FUNC  arrayIns ( ::Falcon::VMachine *vm )
    }
 }
 
-/**
-   arrayDel( array, element_to_be_deleted )
+/*#
+   @function arrayDel
+   @brief Deletes the first element matching a given item.
+   @param array The array that is to be changed.
+   @param item The item that must be deleted.
+   @return true if at least one item has been removed, false otherwise.
+
+   The function scans the array searching for an item that is considered
+   equal to the given one. If such an item can be found, it is removed and
+   the function returns true. If the item cannot be found, false is returned.
+
+   Only the first item matching the given one will be deleted.
 */
 FALCON_FUNC  arrayDel ( ::Falcon::VMachine *vm )
 {
@@ -99,16 +111,25 @@ FALCON_FUNC  arrayDel ( ::Falcon::VMachine *vm )
    for( uint32 i = 0; i < array->length(); i++ ) {
       if ( elements[i] == *item_rem ) {
          array->remove( i );
-         vm->retval(1);
+         vm->regA().setBoolean(true);
          return;
       }
    }
 
-   vm->retval(0);
+   vm->regA().setBoolean(false);
 }
 
-/**
-   arrayDelAll( array, element_to_be_deleted )
+/*#
+   @function arrayDelAll
+   @brief Deletes all the occurrences of a given item in an array.
+   @param array The array that is to be changed.
+   @param item The item that must be deleted.
+   @return true if at least one item has been removed, false otherwise.
+
+   This function removes all the elements of the given array that are
+   considered equivalent to the given item. If one or more elements have
+   been found and deleted, the function will return true, else it will
+   return false.
 */
 FALCON_FUNC  arrayDelAll ( ::Falcon::VMachine *vm )
 {
@@ -138,10 +159,18 @@ FALCON_FUNC  arrayDelAll ( ::Falcon::VMachine *vm )
          i++;
    }
 
-   vm->retval( done ? 1 : 0 );
+   vm->regA().setBoolean( done );
 }
 
+/*#
+   @function arrayAdd
+   @brief Adds an element to an array.
+   @param array The array where to add the new item.
+   @param element The item to be added.
 
+   The element will be added at the end of the array,
+   and its size will be increased by one.
+*/
 FALCON_FUNC  arrayAdd ( ::Falcon::VMachine *vm )
 {
    Item *array_x = vm->param(0);
@@ -157,6 +186,17 @@ FALCON_FUNC  arrayAdd ( ::Falcon::VMachine *vm )
    CoreArray *array = array_x->asArray();
    array->append( *item );
 }
+
+/*#
+   @function arrayResize
+   @brief Changes the size of the array.
+   @param array The array that will be resize.
+   @param newSize The new size for the array.
+
+   If the given size is smaller than the current size, the array is
+   shortened. If it's larger, the array is grown up to the desired size,
+   and the missing elements are filled by adding nil values.
+*/
 
 FALCON_FUNC  arrayResize ( ::Falcon::VMachine *vm )
 {
@@ -175,10 +215,16 @@ FALCON_FUNC  arrayResize ( ::Falcon::VMachine *vm )
    array->resize( (int32) item_size->forceInteger() );
 }
 
-/**
-   arrayRemove( array, start, end )  [remove in place]
-   arrayRemove( array, itemPos )  [remove in place]
+/*#
+   @function arrayRemove
+   @brief Removes one or more elements in the array.
+   @param array The array from which items must be removed.
+   @param itemPos The position of the item to be removed, or the first of the items to be removed.
+   @optparam lastItemPos The last item to be removed + 1
+
+   Remove one item or a range of items. The size of the array is shortened accordingly.
 */
+
 FALCON_FUNC  arrayRemove( ::Falcon::VMachine *vm )
 {
    Item *array_x = vm->param(0);
@@ -211,9 +257,30 @@ FALCON_FUNC  arrayRemove( ::Falcon::VMachine *vm )
    }
 }
 
-/**
-   arrayCopy( array, [start, end] ) --> copy  (equivalent to array[start:end] )
+/*#
+   @function arrayCopy
+   @brief Adds an element to an array.
+   @param array The original array.
+   @optparam start If given, the first element from where to copy.
+   @optparam end If given, one-past-last element to be copied.
+   @return A shallow copy of the array or of part of it.
+
+   Actually, this function calls the range-access operator with a complete
+   interval ([:]) if neither start or end are given, an open interval ([start:]) if
+   only start is given and a full range if both start and end are given. This means
+   that the range operation rules apply 1:1 to this function. If end is smaller
+   than start, the copy order is reversed, and if they are the same, an empty array
+   is created. The end parameter, if given, must be one past the last element to be
+   copied; so:
+
+   @code
+   ret = arrayCopy( source, 5, 6 )
+   @endcode
+
+   will create an array containing only the element at position 5 in the source
+   array.
 */
+
 FALCON_FUNC  arrayCopy( ::Falcon::VMachine *vm )
 {
    Item *array_x = vm->param(0);
@@ -241,7 +308,16 @@ FALCON_FUNC  arrayCopy( ::Falcon::VMachine *vm )
    vm->retval( arr1 );
 }
 
+/*#
+   @function arrayBuffer
+   @brief Creates an array filled with nil items.
+   @param size The length of the returned array.
+   @return An array filled with @b size nil elements.
 
+   This function is useful when the caller knows the number of needed items. In
+   this way, it is just necessary to set the various elements to their values,
+   rather than adding them to the array. This will result in faster operations
+*/
 FALCON_FUNC  arrayBuffer ( ::Falcon::VMachine *vm )
 {
    Item *item_size = vm->param(0);
@@ -264,6 +340,15 @@ FALCON_FUNC  arrayBuffer ( ::Falcon::VMachine *vm )
    vm->retval( array );
 }
 
+/*#
+   @function arrayHead
+   @brief Extracts the first element of an array and returns it.
+   @param array The array that will be modified.
+   @return The extracted item.
+
+   This function removes the first item of the array and returns it.
+   If the original array is empty, AccessError is raised.
+*/
 FALCON_FUNC  arrayHead ( ::Falcon::VMachine *vm )
 {
    Item *array_x = vm->param(0);
@@ -284,6 +369,16 @@ FALCON_FUNC  arrayHead ( ::Falcon::VMachine *vm )
    vm->retval( array->at(0) );
    array->remove(0);
 }
+
+/*#
+   @function arrayTail
+   @brief Extracts the last element of an array and returns it.
+   @param array The array that will be modified.
+   @return The extracted item.
+
+   This function removes the last item of the array and returns it.
+   If the original array is empty, AccessError is raised.
+*/
 
 
 FALCON_FUNC  arrayTail ( ::Falcon::VMachine *vm )
@@ -307,7 +402,22 @@ FALCON_FUNC  arrayTail ( ::Falcon::VMachine *vm )
    array->remove(array->length()-1);
 }
 
+/*#
+   @function arrayFind
+   @brief Searches for a given item in an array.
+   @param array The array that will be searched.
+   @param item The array that will be searched.
+   @optparam start Optional first element to be searched.
+   @optparam end Optional last element +1 to be searched.
+   @return The position of the searched item in the array, or -1 if not found.
 
+   This function searches the array for a given item (or for an item considered
+   equivalent to the given one). If that item is found, the item position is
+   returned, else -1 is returned.
+
+   An optional range may be specified to limit the search in the interval start
+   included, end excluded.
+*/
 FALCON_FUNC  arrayFind ( ::Falcon::VMachine *vm )
 {
    Item *array_x = vm->param(0);
@@ -367,7 +477,30 @@ FALCON_FUNC  arrayFind ( ::Falcon::VMachine *vm )
    vm->retval(-1);
 }
 
+/*#
+   @function arrayScan
+   @brief Searches an array for an item satisfying arbitrary criteria.
+   @param array The array that will be searched.
+   @param scanFunc Function that verifies the criterion.
+   @optparam start Optional first element to be searched.
+   @optparam end Optional upper end of the range..
+   @return The position of the searched item in the array, or -1 if not found.
 
+   With this function, it is possible to specify an arbitrary search criterion.
+   The items in the array are fed one after another as the single parameter to the
+   provided scanFunc, which may be any Falcon callable item, including a method. If
+   the scanFunc returns true, the scan is interrupted and the index of the item is
+   returned. If the search is unsuccesful, -1 is returned.
+
+   An optional start parameter may be provided to begin searching from a certain
+   point on. If also an end parameter is given, the search is taken between start
+   included and end excluded (that is, the search terminates when at the element
+   before the position indicated by end).
+
+   Scan function is called in atomic mode. The called function cannot be
+   interrupted by external kind requests, and it cannot sleep or yield the
+   execution to other coroutines.
+*/
 FALCON_FUNC  arrayScan ( ::Falcon::VMachine *vm )
 {
    Item *array_x = vm->param(0);
@@ -438,6 +571,36 @@ FALCON_FUNC  arrayScan ( ::Falcon::VMachine *vm )
 }
 
 
+/*#
+   @function arrayFilter
+   @brief Filters an array using a given function.
+   @param array The array to be filtered.
+   @param filterFunc A function to filter the array
+   @optparam start Optional first element to be filtered.
+   @optparam end Optional last element +1 to be filtered.
+   @return an array with some of the items removed.
+
+   This function perform what is usually defined a “filtering” of the source structure
+   into a target array. The filterFunc parameter is a user-provide callable item
+   that will be called once for each item in the specified array range;
+   if the function returns a true value, the item is copied in the returned array,
+   otherwise it is ignored. The filter function may actually be any kind of
+   callable, including methods, Sigmas and external functions.
+
+   In case the function never returns true, an empty array is returned.
+
+   A start-end range may optionally be specified to limit the filtering to a
+   part of the array. As for other functions in this module, the range will
+   cause filtering for the items from start to end-1.
+
+   The filter function is called in atomic mode. The called function cannot be
+   interrupted by external kind requests, and it cannot sleep or yield the
+   execution to other coroutines.
+
+   @note This function is superseeded by @a filter and may be removed
+   in future versions.
+*/
+
 FALCON_FUNC  arrayFilter( ::Falcon::VMachine *vm )
 {
    Item *array_x = vm->param(0);
@@ -506,7 +669,31 @@ FALCON_FUNC  arrayFilter( ::Falcon::VMachine *vm )
    vm->retval( target );
 }
 
+/*#
+   @function arrayMap
+   @brief Maps an array using a given function.
+   @param array The array to be mapped.
+   @param mapFunc A function to map the array
+   @optparam start Optional first element to be filtered.
+   @optparam end Optional last element +1 to be filtered.
+   @return An array built mapping each item in @b array.
 
+   This function perform what is usually defined a “mapping” of the source array.
+   The @b mapFunc parameter is a user-provide callable item
+   that will be called once for each item in the specified array range;
+   The value returned by the function will be appended in the returned array.
+
+   A start-end range may optionally be specified to limit the mapping to a
+   part of the array. As for other functions in this module, the range will
+   cause mapping for the items from start to end-1.
+
+   The mapping function is called in atomic mode. The called function cannot be
+   interrupted by external kind requests, and it cannot sleep or yield the
+   execution to other coroutines.
+
+   @note This function is superseeded by @a map and may be removed
+   in future versions.
+*/
 FALCON_FUNC  arrayMap( ::Falcon::VMachine *vm )
 {
    Item *array_x = vm->param(0);
@@ -718,10 +905,27 @@ static void arraySort_insertionSort_flex( VMachine *vm, Item *comparer, Item *ar
 }
 
 
-/**
-   arraySort( array ) -- > nil (in place)
-   arraySort( array, callable ) -- > nil (in place)
+/*#
+   @function arraySort
+   @brief Sorts an array, possibly using an arbitrary ordering criterion.
+   @param array The array that will be searched.
+   @optparam sortingFunc A function used to compare two items.
+   @optparam start Optional first element to be searched.
+   @optparam end Optional upper end of the range..
+
+   The function sorts the contents of the array so that the first element is the
+   smaller one, and the last element is the bigger one. String sorting is performed
+   lexicographically. To sort the data based on an arbitrary criterion, or to sort
+   complex items, or objects, based on some of their contents, the caller may
+   provide a sortFunc that will receive two parameters. The sortFunc must return -1
+   if the first parameter is to be considered smaller than the second, 0 if they
+   are the same and 1 if the second parameter is considered greater.
+
+   Sort function is called in atomic mode. The called function cannot be
+   interrupted by external kind requests, and it cannot sleep or yield the
+   execution to other coroutines.
 */
+
 FALCON_FUNC  arraySort( ::Falcon::VMachine *vm )
 {
    Item *array_itm = vm->param( 0 );
@@ -756,6 +960,28 @@ FALCON_FUNC  arraySort( ::Falcon::VMachine *vm )
       arraySort_insertionSort_flex( vm, &sorter, vector, 0, array->length() -1 );
    }
 }
+
+/*#
+   @function arrayMerge
+   @brief Inserts an item at a given position in the array.
+   @param array1 Array containing the first half of the merge, that will be modified.
+   @param array2 Array containing the second half of the merge, read-only
+   @optparam insertPos Optional position of array 1 at which to place array2
+   @optparam start First element of array2 to merge in array1
+   @optparam end Last element – 1 of array2 to merge in array1
+
+   The items in array2 are appended to the end of array1, or in case an mergePos
+   is specified, they are inserted at the given position. If mergePos is 0, they
+   are inserted at beginning of array1, while if it's equal to array1 size they are
+   appended at the end. An optional start parameter may be used to specify the
+   first element in the array2 that must be copied in array1; if given, the
+   parameter end will specify the last element that must be copied plus 1; that is
+   elements are copied from array2 in array1 from start to end excluded.
+
+   The items are copied shallowly. This means that if an object is in array2 and
+   it's modified thereafter, both array2 and array1 will grant access to the
+   modified objec
+*/
 
 FALCON_FUNC  arrayMerge( ::Falcon::VMachine *vm )
 {

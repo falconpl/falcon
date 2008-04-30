@@ -25,6 +25,10 @@
 #include "falcon_rtl_ext.h"
 #include "rtl_messages.h"
 
+/*#
+   @beginmodule falcon_rtl
+*/
+
 namespace Falcon {
 namespace Ext {
 
@@ -35,38 +39,23 @@ namespace Ext {
 
    This class offers an object oriented interface to access
    URI elements.
-*/
 
-/*# @property scheme URI
-   @brief URI scheme.
-*/
+   Setting the properties in this class immediately reflects on the
+   related fields; in example setting the value of the @b uri
+   property causes a complete re-parse of the item; setting a field
+   as the query string will cause the uri to change.
 
-/*# @property userInfo URI
-   @brief User, password or account specification preceding '@' host.
-*/
+   Each update is subject to RFC3986 compliance checks, and will raise
+   a ParseError if conformance of the URI object is broken.
 
-/*# @property host URI
-   @brief Host specificator.
-*/
-
-/*# @property port URI
-   @brief Optional port specificator (following the host after a ':').
-*/
-
-/*# @property path URI
-   @brief Path specificator.
-*/
-
-/*# @property query URI
-   @brief Query string in the URI.
-*/
-
-/*# @property fragment URI
-   @brief Fragment string in the uri (following path and query after a '#').
-*/
-
-/*# @property uri URI
-   @brief Complete URI.
+   @prop scheme URI scheme.
+   @prop userInfo User, password or account specification preceding '@' host.
+   @prop host Host specificator.
+   @prop port Optional port specificator (following the host after a ':').
+   @prop path Path specificator.
+   @prop query Query string in the URI.
+   @prop fragment Fragment string in the uri (following path and query after a '#').
+   @prop uri Complete URI.
 */
 
 class URICarrier: public UserData
@@ -199,7 +188,6 @@ void URICarrier::getProperty( VMachine *vm, const String &propName, Item &prop )
 
    Builds the URI object, optionally using the given parameter
    as a complete URI constructor.
-
 */
 
 FALCON_FUNC  URI_init ( ::Falcon::VMachine *vm )

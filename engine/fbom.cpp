@@ -274,7 +274,7 @@ FALCON_FUNC BOM_equal( VMachine *vm )
 }
 
 /*#
-   @method equal BOM
+   @method type BOM
    @brief Returns an integer representing the type of the item.
    @return The type of the item.
 

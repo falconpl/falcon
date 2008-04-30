@@ -74,6 +74,14 @@
    @brief Generic functions
 */
 
+/*#
+   @group rtl_syssupport System Support
+   @brief Function and classes supporting OS and environment.
+
+   This group of functions and classes is meant to provide OS and
+   enviromental basic support to Falcon scripts.
+*/
+
 FALCON_MODULE_DECL( const Falcon::EngineData &data )
 {
    // setup DLL engine common data
@@ -363,6 +371,7 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    self->addConstant( "FILE_TYPE_DEVICE", (Falcon::int64) Falcon::FileStat::t_device );
    self->addConstant( "FILE_TYPE_SOCKET", (Falcon::int64) Falcon::FileStat::t_socket );
    self->addConstant( "FILE_TYPE_UNKNOWN", (Falcon::int64) Falcon::FileStat::t_unknown );
+   self->addConstant( "FILE_TYPE_NOTFOUND", (Falcon::int64) Falcon::FileStat::t_notFound );
 
    //=======================================================================
    // FileStat class

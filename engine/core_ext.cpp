@@ -2101,9 +2101,9 @@ FALCON_FUNC  gcEnable( ::Falcon::VMachine *vm )
    the collectTh level. A reclaim loop is started only if the detected free memory
    is more than collectTh bytes.
 
-   While scanTh value is not used if @a gcEnable() is turned to off, collectTh
+   While scanTh value is not used if @a gcEnable is turned to off, collectTh
    level will still determine if the claim loop is worth to be taken also in case
-   of explicit @a gcPerform() calls from scripts.
+   of explicit @a gcPerform calls from scripts.
 
    The GC level does not take into consideration the real amount of memory that the
    objects are using, but the memory they report to the VM when they are created or

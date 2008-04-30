@@ -34,6 +34,29 @@
 
 #include <string.h>
 
+/*#
+   @beginmodule falcon_rtl
+*/
+
+/*#
+   @begingroup rtl_syssupport
+*/
+
+/*#
+   @funset rtl_dir_funcs Directory functions
+   @brief Directory and file names functions.
+
+   Directory functions are currently under development. The general principle is
+   that they should be, where possible, multiplatform and portable, with some
+   extensions working only on specific OSes.  Also, the general idea on failure is
+   that they should raise an error when success is expected, and return an error
+   value when failure is likely. However, the behavior of the function listed in
+   this section is subject to sudden change, as the contribution of the community
+   (even if just in form of suggestion) is vital.
+
+   @beginset rtl_dir_funcs
+*/
+
 
 namespace Falcon {
 
@@ -70,6 +93,15 @@ static void Stats_to_object( VMachine *vm, const FileStat &fstats, CoreObject *s
    self->setProperty( "atime", timestamp );
 }
 
+
+/*#
+   @function FileReadStats
+   @param filename Relative or absolute path to a file for which stats must be read
+   @return A new @a FileStat instance or nil.
+
+   On success, retunrs a new instance of the FileStat class; on failure, nil is returned.
+*/
+
 FALCON_FUNC FileReadStats( ::Falcon::VMachine *vm )
 {
    Item *name = vm->param(0);
@@ -103,6 +135,53 @@ FALCON_FUNC FileReadStats( ::Falcon::VMachine *vm )
    vm->retval( self );
 }
 
+/*#
+   @class FileStat
+   @brief Class holding informations on system files.
+
+   The FileStat class holds informations on a single directory entry. It is
+   returned by the @a FileReadStats factory function, but it can be also instantiated
+   directly. Then the @a FileStat.readStats method can be used to fill the contents of
+   the instance with actual data from the file system.
+
+   @prop access POSIX access mode
+   @prop atime Last access time, expressed as a @a TimeStamp instance.
+   @prop attribs DOS Attributes
+   @prop ctime Creation time or last attribute change time, expressed as a @a TimeStamp instance.
+   @prop group Group ID of the given file.
+   @prop mtime Last modify time, expressed as a @a TimeStamp instance.
+   @prop owner Owner ID of the given file.
+   @prop size File size.
+   @prop type File type; can be one of the following:
+      - FILE_TYPE_NORMAL
+      - FILE_TYPE_DIR
+      - FILE_TYPE_PIPE
+      - FILE_TYPE_LINK
+      - FILE_TYPE_DEVICE
+      - FILE_TYPE_SOCKET
+      - FILE_TYPE_UNKNOWN
+
+   Both access and attribs properties are given a value respectively only on
+   POSIX or MS-Windows systems; their value is the underlying numeric
+   value the system provides. The ctime property has a different meaning
+   in MS-Windows and POSIX system. In the former, is the time at which the
+   file has been created; in the latter is the time when the file ownership flags
+   have been last changed, which may or may not be the same as file creation time.
+
+   Times are returned as a @a TimeStamp class instance; the time is always expressed
+   as local system time.
+*/
+
+/*#
+   @method readStats FileStat
+   @brief Fills the data in this instance reading them from a system file.
+   @param filename Relative or absolute path to a file for which stats must be read
+   @return True on success, false if the file cannot be queried.
+
+   Fills the contents of this object with informations on the given file.
+   If the stats of the required file can be read, the function returns true.
+*/
+
 FALCON_FUNC FileStat_readStats ( ::Falcon::VMachine *vm )
 {
    Item *name = vm->param(0);
@@ -117,15 +196,36 @@ FALCON_FUNC FileStat_readStats ( ::Falcon::VMachine *vm )
    CoreObject *self = vm->self().asObject();
    if ( ! Sys::fal_stats( *name->asString(), fstats ) )
    {
-      vm->retval( 0 );
+      vm->regA().setBoolean( false );
    }
    else
    {
       Stats_to_object( vm, fstats, self );
-      vm->retval( 1 );
+      vm->regA().setBoolean( true );
    }
 }
 
+/*#
+   @function fileType
+   @brief Deterimnes the type of a file.
+   @param filename Relative or absolute path to a file.
+   @return A valid file type or FILE_TYPE_NOTFOUND if not found.
+
+   This function is useful to know what of what kind of system entry
+   is a certain file, or if it exists at all, without paying the overhead
+   for a full FileStat object being instantiated.
+
+   Returned values may be:
+      - FILE_TYPE_NORMAL
+      - FILE_TYPE_DIR
+      - FILE_TYPE_PIPE
+      - FILE_TYPE_LINK
+      - FILE_TYPE_DEVICE
+      - FILE_TYPE_SOCKET
+      - FILE_TYPE_UNKNOWN
+
+   or FILE_TYPE_NOTFOUND if the file doesn't exist.
+*/
 FALCON_FUNC  fileType( ::Falcon::VMachine *vm )
 {
    Item *name = vm->param(0);
@@ -143,7 +243,16 @@ FALCON_FUNC  fileType( ::Falcon::VMachine *vm )
    vm->retval( type );
 }
 
+/*#
+   @function dirReadLink
+   @brief On systems supporting symbolic links, returns the linked file.
+   @param linkPath A path to a symbolic link.
 
+   If the target file in the linkPath parameter is a symbolic link and can
+   be read, the return value will be a string containing the file the link
+   is pointing to. Otherwise, the function will return nil. Function will
+   return nil also on system where symbolic links are not supported.
+*/
 FALCON_FUNC  dirReadLink( ::Falcon::VMachine *vm )
 {
    Item *name = vm->param(0);
@@ -165,6 +274,24 @@ FALCON_FUNC  dirReadLink( ::Falcon::VMachine *vm )
    }
 }
 
+/*#
+   @function dirMakeLink
+   @brief Creates a soft link to a file.
+   @param source The original file path.
+   @param dest The path to the link file.
+
+   The path of both source and dest parameter is to be expressed in Falcon
+   convention (forward slashes), and can be both relative to the working directory
+   or absolute.
+
+   Currently, the function works only on UNIX systems; Windows platforms have
+   recently added this functionality, but they are still not supported by this
+   function at the moment.
+
+   On success, the function returns true. On failure, it returns false. In case the
+   function is not supported, it just returns false. (Comments are welcome).
+*/
+
 FALCON_FUNC  dirMakeLink( ::Falcon::VMachine *vm )
 {
    Item *name = vm->param(0);
@@ -177,12 +304,29 @@ FALCON_FUNC  dirMakeLink( ::Falcon::VMachine *vm )
    }
 
    if ( ! Sys::fal_readlink( *name->asString(), *dest->asString() ) ) {
-      vm->retval( 0 );
+      vm->regA().setBoolean( false );
    }
    else {
-      vm->retval( 1 );
+      vm->regA().setBoolean( true );
    }
 }
+
+/*
+   @function fileNameSplit
+   @brief Splits a filename in four elements.
+   @param path A string containing a path.
+   @return An array of four elements containing the splitted string.
+
+   This function analyzes the given filename and separates it in disk/server
+   specification, path, file name and extension, returning them in a 4 string
+   element array. If one of the elements is not present in the filename, the
+   corresponding location is set to nil.
+
+   The extension dot, the disk/server specification colon and the last slash of the
+   path are removed from the returned strings.
+
+   @note This function is an interal shortcut to the @a Path class.
+*/
 
 FALCON_FUNC  fileNameSplit ( ::Falcon::VMachine *vm )
 {
@@ -222,6 +366,25 @@ FALCON_FUNC  fileNameSplit ( ::Falcon::VMachine *vm )
    vm->retval( parts );
 }
 
+
+/*
+   @function fileNameMerge
+   @brief Merges a filename split up in four elements.
+   @param spec The disk or server specification, an array containing all the
+      elements of the file path, or nil.
+   @param path Path to the file, or nil.
+   @param filename Filename, or nil.
+   @param ext extension, or nil.
+   @return A complete absolute path.
+
+   The final path is composed by adding a colon after the disk/server
+   specification, a slash after the path and a dot before the extension.
+
+   It is also possible to pass all the four elements in an array, in place
+   of the @b spec parameter.
+
+   @note This function is an interal shortcut to the @a Path class.
+*/
 FALCON_FUNC  fileNameMerge ( ::Falcon::VMachine *vm )
 {
    const String *unitspec = 0;
@@ -284,6 +447,17 @@ FALCON_FUNC  fileNameMerge ( ::Falcon::VMachine *vm )
    vm->retval( new GarbageString( vm, p.get() ) );
 }
 
+/*
+   @function fileName
+   @brief Determines the name of a file in a complete path.
+   @param path A string containing a path.
+   @return The filename part in the path.
+
+   The function determines the filename part of a complete path name. The returned
+   filename includes the extension, if present. The filename does not need to
+   represent a file actually existing in the system.
+   If the filename part cannot be determined, an empty string is returned.
+*/
 
 FALCON_FUNC  fileName ( ::Falcon::VMachine *vm )
 {
@@ -310,6 +484,20 @@ FALCON_FUNC  fileName ( ::Falcon::VMachine *vm )
    // shallow copy
    vm->retval( *filename );
 }
+
+
+/*
+   @function filePath
+   @brief Return the path specification part in a complete filename.
+   @param fullpath A string containing a path.
+   @return The path part.
+
+   The function determines the filename part of a complete path name. The
+   returned filename includes the host or disk specification, if present. The
+   filename does not need to represent a file actually existing in the system.
+
+   @note This function is an interal shortcut to the @a Path class.
+*/
 
 FALCON_FUNC  filePath ( ::Falcon::VMachine *vm )
 {
@@ -339,6 +527,20 @@ FALCON_FUNC  filePath ( ::Falcon::VMachine *vm )
       vm->retval( new GarbageString( vm ) );
 }
 
+/*
+   @function DirectoryOpen
+   @brief Opens a directory and returns a directory object.
+   @param dirname A relative or absolute path to a directory
+   @return An instance of the @a Directory class.
+   @raise IoError on failure.
+
+   If the function is successful, an instance of the Directory
+   class is returned. The instance can be used to retrieve the
+   directory entries one at a time.
+
+   On failure, an IoError instance with code 1010 is raised.
+*/
+
 FALCON_FUNC  DirectoryOpen ( ::Falcon::VMachine *vm )
 {
    Item *name = vm->param(0);
@@ -366,6 +568,28 @@ FALCON_FUNC  DirectoryOpen ( ::Falcon::VMachine *vm )
    }
 }
 
+/*#
+   @class Directory
+   @brief Special iterator to access directory listings.
+
+   The Directory class is used by DirectoryOpen() function to return an
+   object that the user can iterate upon. It should not be created directly,
+   but only through @a DirectoryOpen .
+
+   The caller should repeatedly call the read() method until nil is returned. In
+   case an error is raised, the error() method may be called to get informations on
+   the cause that raised the error.
+
+   After the read is complete, the caller should call close() to free the resources
+   associated with the object. The garbage collector will eventually take care of
+   it, but it is better to close the object as soon as possible.
+*/
+
+/*#
+   @method read Directory
+   @brief Returns the next entry in the directory.
+   @return A string representing the next entry, or nil when no new entries are left.
+*/
 FALCON_FUNC  Directory_read ( ::Falcon::VMachine *vm )
 {
    DirEntry *dir = static_cast<DirEntry *>(vm->self().asObject()->getUserData());
@@ -386,6 +610,15 @@ FALCON_FUNC  Directory_read ( ::Falcon::VMachine *vm )
    }
 }
 
+/*#
+   @method close Directory
+   @brief Closes the directory object.
+
+   This method should be called when the item is not needed anymore to free
+   system resources.
+
+   However, the directory listing is closed at garbage collecting.
+*/
 FALCON_FUNC  Directory_close ( ::Falcon::VMachine *vm )
 {
    DirEntry *dir = static_cast<DirEntry *>(vm->self().asObject()->getUserData());
@@ -397,12 +630,44 @@ FALCON_FUNC  Directory_close ( ::Falcon::VMachine *vm )
    }
 }
 
+/*#
+   @method error Directory
+   @brief Returns the last system error code that the directory operation causes.
+   @return A system error code.
+
+   The error code may be rendered into a string using the @a systemErrorDescription function.
+*/
+
 FALCON_FUNC  Directory_error( ::Falcon::VMachine *vm )
 {
    DirEntry *dir = static_cast<DirEntry *>(vm->self().asObject()->getUserData());
    vm->retval( (int)dir->lastError() );
 }
 
+/*#
+   @function dirMake
+   @brief Creates a directory.
+   @param dirname The name of the directory to be created.
+   @optparam bFull Create also the full pat to the given directory.
+   @raise IoError on system error.
+
+   On success, this function creates the given directory with normal
+   attributes.
+
+   It is possible to specify both a relative or absolute path; both
+   the relative and absolute path can contain a subtree specification,
+   that is, a set of directories separated by forward slashes, which
+   lead to the directory that should be created. In example:
+
+   @code
+      dirMake( "top/middle/bottom" )
+   @endocde
+
+   instructs @b dirMake to create the directory bottom in a subdirectory
+   "middle", which should already exist. Passing @b true as second parameter,
+   dirMake will also try to create directories leading to the final destination,
+   if they are missing.
+*/
 
 FALCON_FUNC  dirMake ( ::Falcon::VMachine *vm )
 {
@@ -456,7 +721,15 @@ FALCON_FUNC  dirMake ( ::Falcon::VMachine *vm )
    }
 }
 
+/*#
+   @function dirRemove
+   @brief Removes an empty directory.
+   @param dir The path to the directory to be removed.
+   @raise IoError on system error.
 
+   The function removes an empty directory.
+   On failure an IoError with code 1012 will be raised.
+*/
 FALCON_FUNC  dirRemove ( ::Falcon::VMachine *vm )
 {
    Item *name = vm->param(0);
@@ -475,6 +748,16 @@ FALCON_FUNC  dirRemove ( ::Falcon::VMachine *vm )
    }
 }
 
+/*#
+   @function dirChange
+   @brief Changes the current working directory.
+   @param newDir The new working directory.
+   @raise IoError on system error.
+
+   On success, the working directory is changed to the specified one. The path
+   must be indicated in Falcon conventions (forward slashes separating
+   directories). On failure, an IoError is raised.
+*/
 
 FALCON_FUNC  dirChange ( ::Falcon::VMachine *vm )
 {
@@ -496,6 +779,17 @@ FALCON_FUNC  dirChange ( ::Falcon::VMachine *vm )
       vm->retnil();
 }
 
+/*#
+   @function dirCurrent
+   @brief Returns the current working directory.
+   @return A string representing the current working directory.
+   @raise IoError on system error.
+
+   On success, a string containing the current working directory
+   is returned. The path is in Falcon convention (forward slashes).
+   If any system error occurs, an IoError is raised.
+*/
+
 FALCON_FUNC  dirCurrent ( ::Falcon::VMachine *vm )
 {
    int32 fsError;
@@ -511,6 +805,15 @@ FALCON_FUNC  dirCurrent ( ::Falcon::VMachine *vm )
 }
 
 
+/*#
+   @function fileRemove
+   @brief Removes a file from the system.
+   @param filename The name, relative or absolute path of the file to be removed.
+   @raise IoError on system error.
+
+   This function tries to remove a file from the filesystem. If unsuccessful, an
+   error with code 1015 is raised.
+*/
 
 FALCON_FUNC  fileRemove ( ::Falcon::VMachine *vm )
 {
@@ -531,6 +834,18 @@ FALCON_FUNC  fileRemove ( ::Falcon::VMachine *vm )
    }
 }
 
+/*#
+   @function fileMove
+   @brief Renames a file locally.
+   @param sourcePath The path of the file to be moved.
+   @param destPath The path of the destination file.
+   @raise IoError on system error.
+
+   This function actually renames a file. Usually, it will file if the
+   caller tries to move the file across filesystems (i.e. on different discs).
+
+   On failure, an IoError is raised.
+*/
 
 FALCON_FUNC  fileMove ( ::Falcon::VMachine *vm )
 {
@@ -555,6 +870,18 @@ FALCON_FUNC  fileMove ( ::Falcon::VMachine *vm )
    }
 }
 
+
+/*#
+   @function fileChmod
+   @brief Changes UNIX access right to a directory entry.
+   @param path A file or otherwise valid directory entry.
+   @param mode The new access mode.
+   @raise IoError on system error.
+
+   This function will work only on POSIX systems. The file access mode will be
+   set along the octal access right defined by POSIX. See man 3 chmod for details.
+*/
+
 FALCON_FUNC  fileChmod ( ::Falcon::VMachine *vm )
 {
    Item *name = vm->param(0);
@@ -575,6 +902,17 @@ FALCON_FUNC  fileChmod ( ::Falcon::VMachine *vm )
    }
 }
 
+
+/*#
+   @function fileChown
+   @brief Changes UNIX owner to a directory entry.
+   @param path A file or otherwise valid directory entry.
+   @param ownerId The new ownerId.
+   @raise IoError on system error.
+
+   This function changes the user ownership of the given file on POSIX systems.
+*/
+
 FALCON_FUNC  fileChown ( ::Falcon::VMachine *vm )
 {
    Item *name = vm->param(0);
@@ -594,6 +932,16 @@ FALCON_FUNC  fileChown ( ::Falcon::VMachine *vm )
          sysError( (uint32) Sys::_lastError() ) ) );
    }
 }
+
+/*#
+   @function fileChgroup
+   @brief Changes UNIX group to a directory entry.
+   @param path A file or otherwise valid directory entry.
+   @param groupId The new group id.
+   @raise IoError on system error.
+
+   This function changes the group ownership of the given file on POSIX systems.
+*/
 
 FALCON_FUNC  fileChgroup ( ::Falcon::VMachine *vm )
 {
@@ -796,7 +1144,8 @@ void PathCarrier::getProperty( VMachine *vm, const String &propName, Item &prop 
 }
 
 
-/*# @init Path
+/*#
+   @init Path
    @brief Constructor for the Path class.
    @raise ParamError in case the inital path is malformed.
 

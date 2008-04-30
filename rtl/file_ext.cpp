@@ -36,7 +36,39 @@
 namespace Falcon {
 namespace Ext {
 
-/** Closes a file. */
+/*#
+   @class Stream
+   @brief Stream oriented I/O class.
+   @ingroup rtl_syssupport
+
+   Stream class is a common interface for I/O operations. The class itself is to be
+   considered “abstract”. It should never be directly instantiated, as factory
+   functions, subclasses and embedding applications will provide fully readied
+   stream objects.
+
+   Stream I/O is synchronous, but it's possible to wait for the operation to be
+   nonblocking with the readAvailable() and writeAvailable() methods.
+
+   Generally, all the methods in the stream class raise an error in case of I/O
+   failure.
+
+   Streams provide also a character encoding layer; readText() and writeText() are
+   meant to decode and encode falcon strings based on character encoding set with
+   setEncoding(). Method as read() and write() are not affected, and seek
+   operations works bytewise regardless the character conversion being used.
+
+   @prop encoding Name of the set encoding, if given, for text operations
+   @prop eolMode Mode of EOL conversion in text operations.
+*/
+
+/*#
+   @method close Stream
+   @brief Closes the stream.
+
+   All the operations are flushes and system resources are freed.
+   This method is also called automatically at garbage collection,
+   if it has not been called before.
+*/
 FALCON_FUNC  Stream_close ( ::Falcon::VMachine *vm )
 {
    Stream *file = static_cast<Stream *>(
@@ -77,11 +109,26 @@ FALCON_FUNC  StdStream_close ( ::Falcon::VMachine *vm )
    }
 }
 
-/** Reads from a file.
-   read( size ) --> string
-   read( string ) --> size
-   read( membuf ) --> size
-   read( string, size ) --> size
+/*#
+   @method read Stream
+   @brief Reads binary data from the stream.
+   @param buffer A string or MemBuf that will be filled with read data.
+   @optparam size Optionally, a maximum size to be read.
+   @return Amount of data actually read (or a new string).
+   @raise IoError on system errors.
+
+   Read at maximum size bytes and returns the count of bytes that have
+   been actually read. This version uses an already existing string
+   as the destination buffer. If the string has not enough internal
+   storage, it is reallocated to fit the required size. If the size
+   parameter is not given, the internal storage size of the string is used
+   as maximum read size; this is usually equal to len(buffer),
+   but functions as @a strBuffer can create strings that have an internal
+   storage wider than their length.
+
+   The @b buffer parameter may be omitted; in that case, it is necessary to
+   pass the @b size parameter. This method will then create a string wide
+   enough to store the incoming data.
 */
 FALCON_FUNC  Stream_read ( ::Falcon::VMachine *vm )
 {
@@ -196,11 +243,37 @@ FALCON_FUNC  Stream_read ( ::Falcon::VMachine *vm )
    }
 }
 
-/** Reads from a file.
-   readText( size ) --> string
-   readText( string ) --> size
-   readText( string, size ) --> size
+/*#
+   @method readText Stream
+   @brief Reads text encoded data from the stream.
+   @param buffer A string that will be filled with read data.
+   @optparam size Optionally, a maximum size to be read.
+   @return Amount of data actually read (or a new string).
+   @raise IoError on system errors.
+
+   This method reads a string from a stream, eventually parsing the input
+   data through the given character encoding set by the @a Stream.setEncodng method.
+   The number of bytes actually read may vary depending on the decoding rules.
+
+   If the size parameter is given, the function will try to read at maximum @b size
+   characters, enlarging the buffer if there isn't enough room for the operation.
+   If it is not given, the current allocated memory of buffer will be used instead.
+
+   The @b buffer parameter may be omitted; in that case, it is necessary to
+   pass the @b size parameter. This method will then create a string wide
+   enough to store the incoming data.
+
+   If the function is successful, the buffer may contain size characters or less
+   if the stream hadn't enough characters to read.
+
+   In case of failure, an IoError is raised.
+
+   Notice that this function is meant to be used on streams that are known to have
+   available all the required data. For streams that may perform partial
+   updates (i.e. network streams), a combination of binary reads and
+   @a transcodeFrom calls should be used instead.
 */
+
 FALCON_FUNC  Stream_readText ( ::Falcon::VMachine *vm )
 {
    Stream *file = static_cast<Stream *>(
@@ -296,11 +369,20 @@ FALCON_FUNC  Stream_readText ( ::Falcon::VMachine *vm )
    }
 }
 
+/*#
+   @method readLine Stream
+   @brief Reads a line of text encoded data.
+   @param buffer A string that will be filled with read data.
+   @optparam size Maximum count of characters to be read before to return anyway.
+   @return Amount of data actually read (or a new string).
+   @raise IoError on system errors.
 
-/** Reads a line from a file.
-   readLine( size(=512) ) --> string
-   readLine( string ) --> size
-   readLine( string, size ) --> size
+   This function works as @a Stream.readText, but if a new line is encountered,
+   the read terminates. Returned string does not contain the EOL sequence.
+
+   As for readText, this function may accept a numeric size as first parameter;
+   in that case it will autonomously create a string wide enough to store
+   the incoming data.
 */
 FALCON_FUNC  Stream_readLine ( ::Falcon::VMachine *vm )
 {
@@ -429,11 +511,27 @@ FALCON_FUNC  Stream_readLine ( ::Falcon::VMachine *vm )
    }
 }
 
-/** Writes to a file.
-   write( string ) --> size
-   write( membuf, size [, start] ) --> size
-   write( string, size [, start ] ) --> size
+/*#
+   @method write Stream
+   @brief Write binary data to a stream.
+   @param buffer A string or a MemBuf containing the data to be written.
+   @optparam size Number of bytes to be written.
+   @optparam start A position from where to start writing.
+   @return Amout of data actually written.
+   @raise IoError on system errors.
+
+   Writes bytes from a buffer on the stream. The write operation is synchronous,
+   and will block the VM until the stream has completed the write; however, the
+   stream may complete only partially the operation. The number of bytes actually
+   written on the stream is returned.
+
+   If a size parameter is not given, it defaults to len( buffer ).
+
+   A start position may optionally be given too; this allows to iterate through
+   writes and send part of the data that couldent be send previously without
+   extracting substrings or copying the memory buffers.
 */
+
 FALCON_FUNC  Stream_write ( ::Falcon::VMachine *vm )
 {
    Stream *file = static_cast<Stream *>(
@@ -530,10 +628,21 @@ FALCON_FUNC  Stream_write ( ::Falcon::VMachine *vm )
    vm->retval( written );
 }
 
-/** Writes to a file.
-   writeText( string )
-   writeText( string, begin )
-   writeText( string, begin, end )
+/*#
+   @method writeText Stream
+   @brief Write text data to a stream.
+   @param buffer A string containing the text to be written.
+   @optparam start The character count from which to start writing data.
+   @optparam end The position of the last character to write.
+   @return Amout of characters actually written.
+   @raise IoError on system errors.
+
+   Writes a string to a stream using the character encoding set with
+   @a Stream.setEncoding method. The begin and end optional parameters
+   can be provided to write a part of a wide string without having to
+   create a temporary substring.
+
+   In case of failure, an IoError is raised.
 */
 FALCON_FUNC  Stream_writeText ( ::Falcon::VMachine *vm )
 {
@@ -575,7 +684,20 @@ FALCON_FUNC  Stream_writeText ( ::Falcon::VMachine *vm )
 }
 
 
-/** Seeks a position from the beginning of a file. */
+/*#
+   @method seek Stream
+   @brief Moves the file pointer on seekable streams.
+   @param position Position in the stream to seek.
+   @return Position in the stream after seek.
+   @raise IoError on system errors.
+
+   Changes the position in the stream from which the next read/write operation
+   will be performed. The position is relative from the start of the stream. If the
+   stream does not support seeking, an IoError is raised; if the position is
+   greater than the stream size, the pointer is set to the end of the file. On
+   success, it returns the actual position in the file.
+*/
+
 FALCON_FUNC  Stream_seek ( ::Falcon::VMachine *vm )
 {
    Stream *file = static_cast<Stream *>(
@@ -604,7 +726,21 @@ FALCON_FUNC  Stream_seek ( ::Falcon::VMachine *vm )
    vm->retval( pos );
 }
 
-/** Seeks a position in a file. */
+/*#
+   @method seekCur Stream
+   @brief Moves the file pointer on seekable streams relative to current position.
+   @param position Position in the stream to seek.
+   @return Position in the stream after seek.
+   @raise IoError on system errors.
+
+   Changes the position in the stream from which the next read/write operation will
+   be performed. The position is relative from the current position in the stream,
+   a negative number meaning “backward”, and a positive meaning “forward”. If the
+   stream does not support seeking, an IoError is raised. If the operation would
+   move the pointer past the end of the file size, the pointer is set to the end;
+   if it would move the pointer before the beginning, it is moved to the beginning.
+   On success, the function returns the position where the pointer has been moved.
+*/
 FALCON_FUNC  Stream_seekCur ( ::Falcon::VMachine *vm )
 {
    Stream *file = static_cast<Stream *>(
@@ -634,7 +770,23 @@ FALCON_FUNC  Stream_seekCur ( ::Falcon::VMachine *vm )
 }
 
 
-/** Seeks a position in a file. */
+/*#
+   @method seekEnd Stream
+   @brief Moves the file pointer on seekable streams relative to end of file.
+   @param position Position in the stream to seek.
+   @return Position in the stream after seek.
+   @raise IoError on system errors.
+
+   Changes the position in the stream from which the next read/write operation will
+   be performed. The position is relative from the end of the stream. If the stream
+   does not support seeking, an error is raised. If the operation would move the
+   pointer before the beginning, the pointer is set to the file begin. On success,
+   the function returns the position where the pointer has been moved. Use seekEnd(
+   0 ) to move the pointer to the end of the stream.
+
+   On success, the function returns the position where the pointer has been
+   moved.
+*/
 FALCON_FUNC  Stream_seekEnd ( ::Falcon::VMachine *vm )
 {
    Stream *file = static_cast<Stream *>(
@@ -663,7 +815,15 @@ FALCON_FUNC  Stream_seekEnd ( ::Falcon::VMachine *vm )
    vm->retval( pos );
 }
 
-/** Return current position in a file. */
+/*#
+   @method tell Stream
+   @brief Return the current position in a stream.
+   @return Position in the stream.
+   @raise IoError on system errors.
+
+   Returns the current read/write position in the stream. If the underlying
+   stream does not support seeking, the operation raises an IoError.
+*/
 FALCON_FUNC  Stream_tell ( ::Falcon::VMachine *vm )
 {
    Stream *file = static_cast<Stream *>(
@@ -684,9 +844,19 @@ FALCON_FUNC  Stream_tell ( ::Falcon::VMachine *vm )
    vm->retval( pos );
 }
 
-/** Truncate a file.
-   truncate(); truncate at current position
-   truncate( pos );  truncate at a given position
+/*#
+   @method truncate Stream
+   @brief Resizes a file.
+   @optparam position If given, truncate at given position.
+   @return Position in the stream.
+   @raise IoError on system errors.
+
+   Truncate stream at current position, or if a position parameter is given,
+   truncate the file at given position relative from file start. To empty a file,
+   open it and then truncate it, or pass 0 as parameter.
+
+   If the underlying stream does not support seek operation, this function will
+   raise an error.
 */
 FALCON_FUNC  Stream_truncate ( ::Falcon::VMachine *vm )
 {
@@ -717,7 +887,14 @@ FALCON_FUNC  Stream_truncate ( ::Falcon::VMachine *vm )
    }
 }
 
-/** Return last hard-error on the file. */
+/*#
+   @method lastError Stream
+   @brief Return the last system error.
+   @return An error code.
+
+   Returns a system specific low level error code for last failed I/O
+   operation on this stream, or zero if the last operation was succesful.
+*/
 FALCON_FUNC  Stream_lastError ( ::Falcon::VMachine *vm )
 {
    Stream *file = static_cast<Stream *>(
@@ -725,7 +902,15 @@ FALCON_FUNC  Stream_lastError ( ::Falcon::VMachine *vm )
    vm->retval( (int64) file->lastError() );
 }
 
-/** Return last hard-error on the file. */
+/*#
+   @method lastMoved Stream
+   @brief Return the amount of data moved by the last operation.
+   @return An amount of bytes.
+
+   Returns the amount of bytes moved by the last write or read operation, in bytes.
+   This may differ from the count of characters written or read by text-oriented
+   functions.
+*/
 FALCON_FUNC  Stream_lastMoved ( ::Falcon::VMachine *vm )
 {
    Stream *file = static_cast<Stream *>(
@@ -733,7 +918,14 @@ FALCON_FUNC  Stream_lastMoved ( ::Falcon::VMachine *vm )
    vm->retval( (int64) file->lastMoved() );
 }
 
-/** Return true if at eof */
+/*#
+   @method eof Stream
+   @brief Checks if the last read operation hit the end of the file.
+   @return True if file pointer is at EOF.
+
+   Returns true if the last read operation hit the end of file.
+
+*/
 FALCON_FUNC  Stream_eof ( ::Falcon::VMachine *vm )
 {
    Stream *file = static_cast<Stream *>(
@@ -741,7 +933,13 @@ FALCON_FUNC  Stream_eof ( ::Falcon::VMachine *vm )
    vm->retval( file->eof() ? 1 : 0 );
 }
 
-/** Return true if open */
+/*#
+   @method isOpen Stream
+   @brief Checks if the stream is currently open.
+   @return True if the file is open.
+
+   Return true if the stream is currently open.
+*/
 FALCON_FUNC  Stream_isOpen ( ::Falcon::VMachine *vm )
 {
    Stream *file = static_cast<Stream *>(
@@ -749,7 +947,27 @@ FALCON_FUNC  Stream_isOpen ( ::Falcon::VMachine *vm )
    vm->retval( file->open() ? 1 : 0 );
 }
 
-/** Return true if can read */
+/*#
+   @method readAvailable Stream
+   @brief Checks if data can be read, or wait for available data.
+   @optparam seconds Maximum wait in seconds and fraction (defaults to infinite).
+   @return True if data is available, false otherwise.
+   @raise IoError On stream error.
+   @raise InterruptedError if the Virtual Machine is asynchronously interrupted.
+
+   This function checks if data is available on a stream to be read immediately,
+   or if it becomes available during a determined time period. The @b seconds
+   parameter may be set to zero to perform just a check, or to a positive value
+   to wait for incoming data. If the parameter is not given, or if it's set to
+   a negative value, the wait will be infinite.
+
+   A read after readAvailable has returned succesfully is granted not to be
+   blocking (unless another coroutine or thread reads data from the same stream
+   in the meanwhile). Performing a read after that readAvailable has returned
+   false will probably block for an undefined amount of time.
+
+   This method complies with the @a interrupt_protocol of the Virtual Machine.
+*/
 FALCON_FUNC  Stream_readAvailable ( ::Falcon::VMachine *vm )
 {
    Stream *file = static_cast<Stream *>(
@@ -767,19 +985,39 @@ FALCON_FUNC  Stream_readAvailable ( ::Falcon::VMachine *vm )
    }
 
    if ( avail > 0 )
-      vm->retval( 1 );
+      vm->regA().setBoolean( true );
    else if ( avail == 0 )
-      vm->retval( 0 );
+      vm->regA().setBoolean( false );
    else if ( file->lastError() != 0 ) {
       vm->raiseModError( new IoError( ErrorParam( 1108 ).origin( e_orig_runtime ).
          desc( "Query on the stream failed" ).sysError( (uint32) file->lastError() ) ) );
       return;
    }
    else
-      vm->retval( 0 );
+      vm->regA().setBoolean( false );
 }
 
-/** Return true if can write */
+/*#
+   @method writeAvailable Stream
+   @brief Checks if data can be written, or wait until it's possible to write.
+   @optparam seconds Maximum wait in seconds and fraction (defaults to infinite).
+   @return True if data can be written, false otherwise.
+   @raise IoError On stream error.
+   @raise InterruptedError if the Virtual Machine is asynchronously interrupted.
+
+   This function checks if the stream is available for immediate write,
+   or if it becomes available during a determined time period. The @b seconds
+   parameter may be set to zero to perform just a check, or to a positive value
+   to wait for the line being cleared. If the @b seconds is not given, or if it's set to
+   a negative value, the wait will be infinite.
+
+   A write operation after writeAvailable has returned succesfully is granted not to be
+   blocking (unless another coroutine or thread writes data to the same stream
+   in the meanwhile). Performing a read after that readAvailable has returned
+   false will probably block for an undefined amount of time.
+
+   This method complies with the @a interrupt_protocol of the Virtual Machine.
+*/
 FALCON_FUNC  Stream_writeAvailable ( ::Falcon::VMachine *vm )
 {
    Stream *file = static_cast<Stream *>(
@@ -808,6 +1046,21 @@ FALCON_FUNC  Stream_writeAvailable ( ::Falcon::VMachine *vm )
    }
 }
 
+/*#
+   @method clone Stream
+   @brief Clone the stream handle.
+   @return A new copy of the stream handle.
+   @raise IoError On stream error.
+
+   The resulting stream is interchangeable with the original one. From this point
+   on, write and read operations are not reflected on the cloned object, so two
+   stream objects can be effectively used to read and write at different places in
+   the same resource, unless the underlying stream is not seekable (in which case,
+   reads are destructive).
+
+   The underlying resource remains open until all the instances of the streams are
+   closed.
+*/
 FALCON_FUNC  Stream_clone ( ::Falcon::VMachine *vm )
 {
    Stream *file = static_cast<Stream *>(
@@ -833,7 +1086,13 @@ FALCON_FUNC  Stream_clone ( ::Falcon::VMachine *vm )
 }
 
 
-/** Return a representation of the last error */
+/*#
+   @method errorDescription Stream
+   @brief Returns a system specific textual description of the last error.
+   @return A string describing the system error.
+
+   Returns a system specific textual description of the last error occurred on the stream.
+*/
 FALCON_FUNC  Stream_errorDescription ( ::Falcon::VMachine *vm )
 {
    Stream *file = static_cast<Stream *>(
@@ -843,7 +1102,16 @@ FALCON_FUNC  Stream_errorDescription ( ::Falcon::VMachine *vm )
    vm->retval( str );
 }
 
-/** Return a representation of the last error */
+/*#
+   @method writeItem Stream
+   @brief Serializes an item to the stream.
+   @param item The item to be serialized.
+   @raise IoError On stream error.
+
+   Serializes an item to the given stream. This method works as @b serialize, but
+   it works as a method of this stream instead of being considered a function.
+*/
+
 FALCON_FUNC  Stream_writeItem ( ::Falcon::VMachine *vm )
 {
    CoreObject *fileObj = vm->self().asObject();
@@ -867,7 +1135,18 @@ FALCON_FUNC  Stream_writeItem ( ::Falcon::VMachine *vm )
    }
 }
 
-/** Return a representation of the last error */
+/*#
+   @method readItem Stream
+   @brief Deserializes an item from the stream.
+   @return The deserialized item.
+   @raise IoError on underlying stream error.
+   @raise GenericError If the data is correctly de-serialized, but it refers to
+         external symbols non defined by this script.
+   @raise ParseError if the format of the input data is invalid.
+
+   Deerializes an item from the given stream. This method works as @b deserialize, but
+   it works as a method of this stream instead of being considered a function.
+*/
 FALCON_FUNC  Stream_readItem ( ::Falcon::VMachine *vm )
 {
    // deserialize rises it's error if it belives it should.
@@ -879,7 +1158,7 @@ FALCON_FUNC  Stream_readItem ( ::Falcon::VMachine *vm )
       case Item::sc_ferror: vm->raiseModError( new IoError( ErrorParam( e_modio, __LINE__ ).origin( e_orig_runtime ) ) );
       case Item::sc_misssym: vm->raiseModError( new GenericError( ErrorParam( e_undef_sym, __LINE__ ).origin( e_orig_runtime ) ) );
       case Item::sc_missclass: vm->raiseModError( new GenericError( ErrorParam( e_undef_sym, __LINE__ ).origin( e_orig_runtime ) ) );
-      case Item::sc_invformat: vm->raiseModError( new GenericError( ErrorParam( e_invformat, __LINE__ ).origin( e_orig_runtime ) ) );
+      case Item::sc_invformat: vm->raiseModError( new ParseError( ErrorParam( e_invformat, __LINE__ ).origin( e_orig_runtime ) ) );
 
       case Item::sc_vmerror:
       default:
@@ -888,13 +1167,53 @@ FALCON_FUNC  Stream_readItem ( ::Falcon::VMachine *vm )
    }
 }
 
-/** Opens a file.
-   On success returns a stream;
-   on failure throws an exception.
-   Format: InputStream( name )
-   Mode:
+/*#
+   @funset rtl_stream_factory Stream factory functions
+   @brief Function creating or opening file and system streams.
+
+   Stream factory functions create a stream object bound to a system file.
+   As the open or create operation may fail, using a factory function is
+   more appropriate, as they can avoid creating the underlying stream object
+   when not needed. Also, they can setup the proper stream subclass to manage
+   special files.
+
+   Stream factory function often accept a parameter to determine the sharing mode.
+   Only some systems implements correctly this functionality, so use with caution.
+   Predefined constant that can be used as share mode are:
+
+   - @b FILE_EXCLUSIVE: The calling scripts own the shared file; other processes
+        trying to open the file, or even the same process, should receive an error.
+   - @b FILE_SHARE_READ: A file opened in this way can be opened by other processes,
+         but only for read operations.
+   - @b FILE_SHARE: Any process may open and overwrite the file.
+
+   Function creating files, as IOStream() and OutputStream()
+   accepts also a creation ownership mode. This is actually an octal
+   number that is directly passed to the POSIX systems for directory ownership
+   creation. It has currently no meaning for MS-Windows systems.
+
+   @beginset rtl_stream_factory
 */
 
+/*#
+   @function InputStream
+   @brief Open a system file for reading.
+   @ingroup rtl_syssupport
+   @param fileName A relative or absolute path to a file to be opened for input
+   @optparam shareMode If given, the share mode.
+   @return A new valid @a Stream instance on success.
+
+   If the function is successful, it opens the given fileName and returns a
+   valid stream object by which the underlying file may be read. Calling write
+   methods on the returned object will fail, raising an error.
+
+   If the optional share parameter is not given, the maximum share publicity
+   available on the system will be used.
+
+   If the file cannot be open, an error containing a valid fsError code is raised.
+
+   See @a rtl_stream_factory for a description of the shared modes.
+*/
 FALCON_FUNC  InputStream_creator ( ::Falcon::VMachine *vm )
 {
    Item *fileName = vm->param(0);
@@ -933,7 +1252,29 @@ FALCON_FUNC  InputStream_creator ( ::Falcon::VMachine *vm )
    }
 }
 
+/*#
+   @function OutputStream
+   @brief Creates a stream for output only.
+   @ingroup rtl_syssupport
+   @param fileName A relative or absolute path to a file to be opened for input
+   @optparam createMode If given, the ownership of the created file.
+   @optparam shareMode If given, the share mode.
+   @return A new valid @a Stream instance on success.
 
+   If the function is successful, it creates the given fileName and returns a valid
+   stream object by which the underlying file may be read. If an already existing
+   file name is given, then the file is truncated and its access right are updated.
+   Calling read methods on the returned object will fail, raising an error.
+
+   If the file can be created, its sharing mode can be controlled by providing a
+   shareMode parameter. In case the shareMode is not given, then the maximum
+   publicity is used.
+
+   If the file cannot be created, an error containing a valid fsError code is
+   raised.
+
+   See @a rtl_stream_factory for a description of the shared modes.
+*/
 FALCON_FUNC  OutputStream_creator ( ::Falcon::VMachine *vm )
 {
    Item *fileName = vm->param(0);
@@ -988,12 +1329,28 @@ FALCON_FUNC  OutputStream_creator ( ::Falcon::VMachine *vm )
    }
 }
 
-/** Opens or create a file.
-   If the file doesn't exist, the function tries to create it.
-   On success returns a stream;
-   on failure throws an exception.
-   Format: OutputStream( name, [os_mode] )
-   Mode:
+/*#
+   @function IOStream
+   @brief Creates a stream for input and output.
+   @ingroup rtl_syssupport
+   @param fileName A relative or absolute path to a file to be opened for input
+   @optparam createMode If given, the ownership of the created file.
+   @optparam shareMode If given, the share mode.
+   @return A new valid @a Stream instance on success.
+
+   If the function is successful, it creates the given fileName and returns a valid
+   stream object by which the underlying file may be read. If an already existing
+   file name is given, then the file is truncated and its access right are updated.
+   Calling read methods on the returned object will fail, raising an error.
+
+   If the file can be created, its sharing mode can be controlled by providing a
+   shareMode parameter. In case the shareMode is not given, then the maximum
+   publicity is used.
+
+   If the file cannot be created, an error containing a valid fsError code is
+   raised.
+
+   See @a rtl_stream_factory for a description of the shared modes.
 */
 FALCON_FUNC  IOStream_creator ( ::Falcon::VMachine *vm )
 {
@@ -1079,7 +1436,29 @@ static CoreObject *internal_make_stream( VMachine *vm, UserData *clone, int user
    return co;
 }
 
+/*#
+   @function stdIn
+   @brief Creates an object mapped to the standard input of the Virtual Machine.
+   @ingroup rtl_syssupport
+   @return A new valid @a Stream instance on success.
 
+   The returned read-only stream is mapped to the standard input of the virtual
+   machine hosting the script. Read operations will return the characters from the
+   input stream as they are available. The readAvailable() method of the returned
+   stream will indicate if read operations may block. Calling the read() method
+   will block until some character can be read, or will fill the given buffer up
+   the amount of currently available characters.
+
+   The returned stream is a clone of the stream used by the Virtual Machine as
+   standard input stream. This means that every transcoding applied by the VM is
+   also available to the script, and that, when running in embedding applications,
+   the stream will be handled by the embedder.
+
+   As a clone of this stream is held in the VM, closing it will have actually no
+   effect, except that of invalidating the instance returned by this function.
+
+   Read operations will fail raising an I/O error.
+*/
 FALCON_FUNC  _stdIn ( ::Falcon::VMachine *vm )
 {
    if( vm->paramCount() == 0 )
@@ -1110,6 +1489,25 @@ FALCON_FUNC  _stdIn ( ::Falcon::VMachine *vm )
    }
 }
 
+/*#
+   @function stdOut
+   @brief Creates an object mapped to the standard output of the Virtual Machine.
+   @ingroup rtl_syssupport
+   @return A new valid @a Stream instance on success.
+
+   The returned stream maps output operations on the standard output stream of
+   the process hosting the script.
+
+   The returned stream is a clone of the stream used by the Virtual Machine as
+   standard output stream. This means that every transcoding applied by the VM is
+   also available to the script, and that, when running in embedding applications,
+   the stream will be handled by the embedder.
+
+   As a clone of this stream is held in the VM, closing it will have actually no
+   effect, except that of invalidating the instance returned by this function.
+
+   Read operations will fail raising an I/O error.
+*/
 
 FALCON_FUNC  _stdOut ( ::Falcon::VMachine *vm )
 {
@@ -1140,7 +1538,25 @@ FALCON_FUNC  _stdOut ( ::Falcon::VMachine *vm )
    }
 }
 
+/*#
+   @function stdErr
+   @brief Creates an object mapped to the standard error of the Virtual Machine.
+   @ingroup rtl_syssupport
+   @return A new valid @a Stream instance on success.
 
+   The returned stream maps output operations on the standard error stream of
+   the virtual machine hosting the script.
+
+   The returned stream is a clone of the stream used by the Virtual Machine as
+   standard error stream. This means that every transcoding applied by the VM is
+   also available to the script, and that, when running in embedding applications,
+   the stream will be handled by the embedder.
+
+   As a clone of this stream is held in the VM, closing it will have actually no
+   effect, except that of invalidating the instance returned by this function.
+
+   Read operations will fail raising an I/O error.
+*/
 FALCON_FUNC  _stdErr ( ::Falcon::VMachine *vm )
 {
    if( vm->paramCount() == 0 )
@@ -1170,17 +1586,82 @@ FALCON_FUNC  _stdErr ( ::Falcon::VMachine *vm )
    }
 }
 
+/*#
+   @function stdInRaw
+   @brief Creates a stream that interfaces the standard input stream of the host process.
+   @ingroup rtl_syssupport
+   @return A new valid @a Stream instance on success.
 
+   The returned stream maps input operations on the standard input of the
+   process hosting the script. The returned stream is bound directly with the
+   process input stream, without any automatic transcoding applied.
+   @a Stream.readText will read the text as stream of binary data coming from the
+   stream, unless @a Stream.setEncoding is explicitly called on the returned
+   instance.
+
+   Closing this stream has the effect to close the standard input stream of the
+   process running the script (if the operation is allowed by the embedding
+   application).  Applications trying to write data to the script process will be
+   notified that the script has closed the stream and is not willing to receive
+   data anymore.
+
+   The stream is read only. Write operations will cause an I/O to be raised.
+*/
 FALCON_FUNC  stdInRaw ( ::Falcon::VMachine *vm )
 {
    internal_make_stream( vm, new RawStdInStream(), 0 );
 }
+
+/*#
+   @function stdOutRaw
+   @brief Creates a stream that interfaces the standard output stream of the host process.
+   @ingroup rtl_syssupport
+   @return A new valid @a Stream instance on success.
+
+   The returned stream maps output operations on the standard output stream of the
+   process hosting the script. The returned stream is bound directly with the
+   process output, without any automatic transcoding applied. @a Stream.writeText
+   will write the text as stream of bytes to the stream, unless
+   @a Stream.setEncoding is explicitly called on the returned instance.
+
+   Closing this stream has the effect to close the standard output of the process
+   running the script (if the operation is allowed by the embedding application).
+   Print functions, fast print operations, default error reporting and so on will
+   be unavailable from this point on.
+
+   Applications reading from the output stream of the process running the scripts,
+   in example, piped applications, will recognize that the script has completed
+   its output, and will disconnect immediately, while the script may continue to run.
+
+   The stream is write only. Write operations will cause an I/O to be raised.
+*/
 
 FALCON_FUNC  stdOutRaw ( ::Falcon::VMachine *vm )
 {
    internal_make_stream( vm, new RawStdOutStream(), 1 );
 }
 
+/*#
+   @function stdErrRaw
+   @brief Creates a stream that interfaces the standard error stream of the host process.
+   @ingroup rtl_syssupport
+   @return A new valid @a Stream instance on success.
+
+   The returned stream maps output operations on the standard error stream of the
+   process hosting the script. The returned stream is bound directly with the
+   process error stream, without any automatic transcoding applied.
+   @a Stream.writeText will write the text as stream of bytes to the stream,
+   unless @a Stream.setEncoding is explicitly called on the returned
+   instance.
+
+   Closing this stream has the effect to close the standard error stream of the
+   process running the script (if the operation is allowed by the embedding
+   application).  Applications reading from the error stream of the script will be
+   notified that the stream has been closed, and won't be left pending in reading
+   this stream.
+
+   The stream is write only. Read operations will cause an I/O to be raised.
+*/
 FALCON_FUNC  stdErrRaw ( ::Falcon::VMachine *vm )
 {
    internal_make_stream( vm, new RawStdErrStream(), 2 );
@@ -1213,7 +1694,19 @@ FALCON_FUNC  systemErrorDescription ( ::Falcon::VMachine *vm )
    vm->retval( str );
 }
 
+/*#
+   @function fileCopy
+   @ingroup rtl_syssupport
+   @param source Source file to be copied
+   @param dest Destination file.
+   @brief Copies a whole file from one position to another.
+   @raise IoError on system error.
 
+   This function performs a file copy. The function is still
+   experimental and needs addition of VM interruption protocol
+   compliancy, as well as the possibility to preserve or change
+   the system attributes in the target copy.
+*/
 FALCON_FUNC  fileCopy ( ::Falcon::VMachine *vm )
 {
    Item *filename = vm->param(0);

@@ -72,7 +72,7 @@ namespace Falcon {
    parameters it not a number, one of the parameter is picked at random
    and then returned.
 
-   The function @randomChoice returns unambiguously one of the parameters
+   The function @a randomChoice returns unambiguously one of the parameters
    picked at random.
 
 */
@@ -298,13 +298,13 @@ FALCON_FUNC  flc_randomGrab ( ::Falcon::VMachine *vm )
    This function generates a series of successive @b dices throws,
    each one being integer value in the range [1, @b sides].
 
-   If @sides is not given, 6 is assumed.
+   If @b sides is not given, 6 is assumed.
 
    It would be easy to obtain the same result with simple instructions
    in Falcon, but this function spares several wasted VM cycles.
 
-   The @dices parameter must be greater than zero, and the
-   and @sides parameter must be greater than one.
+   The @b dices parameter must be greater than zero, and the
+   and @b sides parameter must be greater than one.
 */
 
 FALCON_FUNC  flc_randomDice( ::Falcon::VMachine *vm )
