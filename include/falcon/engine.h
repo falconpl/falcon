@@ -45,6 +45,7 @@
 
 // Falcon stream helpers
 #include <falcon/stdstreams.h>
+#include <falcon/uri.h>
 
 // error system
 #include <falcon/deferrorhandler.h>
@@ -60,7 +61,7 @@
 
 // Environmental support
 #include <falcon/core_ext.h>
-#include <falcon/error.h>
+// #include <falcon/error.h>
 #include <falcon/stream.h>
 #include <falcon/stringstream.h>
 #include <falcon/rosstream.h>

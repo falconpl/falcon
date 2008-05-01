@@ -431,7 +431,8 @@ LiveModule *VMachine::link( Module *mod, bool isMainModule )
          }
 
          // Is this symbol exported?
-         if ( sym->exported() ) {
+         if ( sym->exported() && sym->name().getCharAt(0) != '_' )
+         {
             // as long as the module is referenced, the symbols are alive, and as we
             // hold a reference to the module, we are sure that symbols are alive here.
             // also, in case an entry already exists, the previous item is just overwritten.
