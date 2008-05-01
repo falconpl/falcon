@@ -20,11 +20,16 @@
 #include <falcon/timestamp.h>
 #include <falcon/memory.h>
 #include <falcon/time_sys.h>
-#include <falcon/string.h>
+#include <falcon/autocstring.h>
 #include <falcon/item.h>
 
 #include <stdio.h>
 #include <time.h>
+
+static char *RFC_2822_days[] = { "Mon","Tue", "Wed","Thu","Fri","Sat","Sun" };
+
+static char *RFC_2822_months[] = {
+   "Jan","Feb","Mar","Apr","May","Jun","Jul","Aug", "Sep","Oct","Nov","Dec" };
 
 namespace Falcon {
 
@@ -52,10 +57,291 @@ void TimeStamp::copy( const TimeStamp &ts )
    m_msec = ts.m_msec;
 }
 
+const char *TimeStamp::getRFC2822_ZoneName( TimeZone tz, bool bSemantic, bool bSaving )
+{
+   switch( tz )
+   {
+      case tz_NONE: case tz_UTC: if ( bSemantic ) return "GMT"; return "+0000";
+      case tz_UTC_E_1: return "+0100";
+      case tz_UTC_E_2: return "+0200";
+      case tz_UTC_E_3: return "+0300";
+      case tz_UTC_E_4: return "+0400";
+      case tz_UTC_E_5: return "+0500";
+      case tz_UTC_E_6: return "+0600";
+      case tz_UTC_E_7: return "+0700";
+      case tz_UTC_E_8: return "+0800";
+      case tz_UTC_E_9: return "+0900";
+      case tz_UTC_E_10: return "+1000";
+      case tz_UTC_E_11: return "+1100";
+      case tz_UTC_E_12: return "+1200";
+
+      case tz_UTC_W_1: return "-0100";
+      case tz_UTC_W_2: return "-0200";
+      case tz_UTC_W_3: return "-0300";
+      case tz_UTC_W_4: if ( bSemantic ) return "EDT"; return "-0400";
+      case tz_UTC_W_5: if ( bSemantic ) return bSaving ? "EST":"CDT"; return "-0500";
+      case tz_UTC_W_6: if ( bSemantic ) return bSaving ? "CST":"MDT"; return "-0600";
+      case tz_UTC_W_7: if ( bSemantic ) return bSaving ? "MST":"PDT"; return "-0700";
+      case tz_UTC_W_8: if ( bSemantic ) return "PST"; return "-0800";
+      case tz_UTC_W_9: return "-0900";
+      case tz_UTC_W_10: return "-1000";
+      case tz_UTC_W_11: return "-1100";
+      case tz_UTC_W_12: return "-1200";
+
+      case tz_NFT: return "+1130";
+      case tz_ACDT: return "+1030";
+      case tz_ACST: return "+0930";
+      case tz_HAT: return "-0230";
+      case tz_NST: return "-0330";
+   }
+}
+
+
+TimeZone TimeStamp::getRFC2822_Zone( const char *csZoneName )
+{
+   if( strncmp( "UT", csZoneName, 2 ) == 0 ||
+      strncmp( "GMT", csZoneName, 3 ) == 0 ||
+      strncmp( "+0000", csZoneName, 5 ) == 0 )
+   {
+      return tz_UTC;
+   }
+
+   if ( csZoneName[0] == '+' )
+   {
+      int zone = atoi( csZoneName + 1 );
+      switch( zone )
+      {
+         case 100: return tz_UTC_E_1;
+         case 200: return tz_UTC_E_2;
+         case 300: return tz_UTC_E_3;
+         case 400: return tz_UTC_E_4;
+         case 500: return tz_UTC_E_5;
+         case 600: return tz_UTC_E_6;
+         case 700: return tz_UTC_E_7;
+         case 800: return tz_UTC_E_8;
+         case 900: return tz_UTC_E_9;
+         case 1000: return tz_UTC_E_10;
+         case 1100: return tz_UTC_E_11;
+         case 1200: return tz_UTC_E_12;
+
+         case 1130: return tz_NFT;
+         case 1030: return tz_ACDT;
+         case 930: return tz_ACST;
+      }
+      return tz_NONE;
+   }
+   else if ( csZoneName[0] == '-' )
+   {
+      int zone = atoi( csZoneName + 1 );
+      switch( zone )
+      {
+         case 100: return tz_UTC_W_1;
+         case 200: return tz_UTC_W_2;
+         case 300: return tz_UTC_W_3;
+         case 400: return tz_UTC_W_4;
+         case 500: return tz_UTC_W_5;
+         case 600: return tz_UTC_W_6;
+         case 700: return tz_UTC_W_7;
+         case 800: return tz_UTC_W_8;
+         case 900: return tz_UTC_W_9;
+         case 1000: return tz_UTC_W_10;
+         case 1100: return tz_UTC_W_11;
+         case 1200: return tz_UTC_W_12;
+         case 230: return tz_HAT;
+         case 330: return tz_NST;
+      }
+      return tz_NONE;
+   }
+
+   if( strncmp( "EDT", csZoneName, 3 ) == 0 )
+   {
+      return tz_UTC_W_4;
+   }
+
+   if( strncmp( "EST", csZoneName, 3 ) == 0 ||
+      strncmp( "CDT", csZoneName, 3 ) == 0 )
+   {
+      return tz_UTC_W_4;
+   }
+
+   if( strncmp( "CST", csZoneName, 3 ) == 0 ||
+      strncmp( "MDT", csZoneName, 3 ) == 0 )
+   {
+      return tz_UTC_W_4;
+   }
+
+   if( strncmp( "MST", csZoneName, 3 ) == 0 ||
+      strncmp( "PDT", csZoneName, 3 ) == 0 )
+   {
+      return tz_UTC_W_4;
+   }
+
+   // failure
+   return tz_NONE;
+}
+
+const char *TimeStamp::getRFC2822_WeekDayName( int16 wd )
+{
+   if ( wd >=0 && wd < 7 )
+   {
+      return RFC_2822_days[wd];
+   }
+   return "???";
+}
+
+const char *TimeStamp::getRFC2822_MonthName( int16 month )
+{
+   if ( month >= 1 && month <= 12 )
+   {
+      return RFC_2822_months[ month - 1 ];
+   }
+   return "???";
+}
+
+
+int16 TimeStamp::getRFC2822_WeekDay( const char *name )
+{
+   for ( int16 i = 0; i < sizeof( RFC_2822_days ) / sizeof( char *); i ++ )
+   {
+      if ( strncmp( RFC_2822_days[i], name, 3) == 0 )
+         return i;
+   }
+   return -1;
+}
+
+int16 TimeStamp::getRFC2822_Month( const char *name )
+{
+   for ( int16 i = 0; i < sizeof( RFC_2822_months ) / sizeof( char *); i ++ )
+   {
+      if ( strncmp( RFC_2822_months[i], name, 3) == 0 )
+         return i+1;
+   }
+   return -1;
+}
+
 TimeStamp &TimeStamp::operator = ( const TimeStamp &ts )
 {
    copy(ts);
    return *this;
+}
+
+
+bool TimeStamp::toRFC2822( String &target, bool bSemantic, bool bDst ) const
+{
+   if ( ! isValid() )
+   {
+      target = "?";
+      return false;
+   }
+
+   target.append( getRFC2822_WeekDayName( dayOfWeek() ) );
+   target.append( ',' );
+   target.append( ' ' );
+
+   target.writeNumber( (int64) m_day, "%02d" );
+
+   target.append( ' ' );
+   target.append( getRFC2822_MonthName( m_month ) );
+   target.append( ' ' );
+   if ( m_year < 0 )
+      target.append( "0000" );
+   else {
+      target.writeNumber( (int64) m_year, "%04d" );
+   }
+
+   target.append( ' ' );
+   target.writeNumber( (int64) m_hour, "%02d" );
+   target.append( ':' );
+   target.writeNumber( (int64) m_minute, "%02d" );
+   target.append( ':' );
+   target.writeNumber( (int64) m_second, "%02d" );
+
+   target.append( ' ' );
+   TimeZone tz = m_timezone;
+
+   if  ( tz == tz_local )
+   {
+      tz = Sys::Time::getLocalTimeZone();
+   }
+
+   target.append( getRFC2822_ZoneName( tz, bSemantic, bDst ) );
+
+   return true;
+}
+
+
+bool TimeStamp::fromRFC2822( TimeStamp &target, const String &source )
+{
+   AutoCString cstr( source );
+   return fromRFC2822( target, cstr.c_str() );
+}
+
+bool TimeStamp::fromRFC2822( TimeStamp &target, const char *source )
+{
+   const char *pos = source;
+
+   // Find the comma
+   while ( *pos != 0 && *pos != ',' ) pos++;
+   if ( *pos == 0 || (pos-source)!= 3 )
+      return false;
+
+   // is this a valid day?
+   if( getRFC2822_WeekDay( source ) < 0 )
+      return false;
+
+   pos++;
+   if ( *pos == 0 )
+      return false;
+   pos++;
+   const char *mon = pos;
+   while( *mon != 0 && *mon != ' ' ) mon++;
+   if ( *mon == 0 || (mon - pos) != 2)
+      return false;
+   target.m_day = atoi( pos );
+
+   mon++;
+   pos = mon;
+   while( *mon != 0 && *mon != ' ' ) mon++;
+   if ( *mon == 0 || (mon - pos) != 3)
+      return false;
+   target.m_month = getRFC2822_Month( pos );
+
+   mon++;
+   pos = mon;
+   while( *mon != 0 && *mon != ' ' ) mon++;
+   if ( *mon == 0 || (mon - pos) != 4)
+      return false;
+   target.m_year = atoi( pos );
+
+   mon++;
+   pos = mon;
+   while( *mon != 0 && *mon != ':' ) mon++;
+   if ( *mon == 0 || (mon - pos) != 2 )
+      return false;
+   target.m_hour = atoi( pos );
+
+   mon++;
+   pos = mon;
+   while( *mon != 0 && *mon != ':' ) mon++;
+   if ( *mon == 0 || (mon - pos) != 2 )
+      return false;
+   target.m_minute = atoi( pos );
+
+   mon++;
+   pos = mon;
+   while( *mon != 0 && *mon != ' ' ) mon++;
+   if ( *mon == 0 || (mon - pos) != 2 )
+      return false;
+   target.m_second = atoi( pos );
+
+   mon++;
+   target.m_timezone = getRFC2822_Zone( mon );
+   if( target.m_timezone == tz_NONE )
+      return false;
+
+   target.m_msec = 0;
+
+   return target.isValid();
 }
 
 bool TimeStamp::isValid() const
@@ -547,6 +833,12 @@ void TimeStamp::getTZDisplacement( int16 &hours, int16 &minutes ) const
       tz = Sys::Time::getLocalTimeZone();
    }
 
+   getTZDisplacement( tz, hours, minutes );
+}
+
+
+void TimeStamp::getTZDisplacement( TimeZone tz, int16 &hours, int16 &minutes )
+{
    switch( tz )
    {
       case tz_NONE: case tz_UTC: hours = 0; minutes = 0; break;
@@ -617,7 +909,19 @@ bool TimeStamp::toString( String &target, const String &fmt ) const
    {
       target.bufferize( timeTgt );
 
-      uint32 pos = target.find( "%q" );
+      uint32 pos = target.find( "%i" );
+      if( pos !=  String::npos )
+      {
+         String rfc;
+         toRFC2822( rfc );
+         while( pos != String::npos )
+         {
+            target.change( pos, pos + 2, rfc );
+            pos = target.find( "%i", pos + 2 );
+         }
+      }
+
+      pos = target.find( "%q" );
       if( pos !=  String::npos )
       {
          String msecs;

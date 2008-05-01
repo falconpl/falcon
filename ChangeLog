@@ -61,6 +61,7 @@ Falcon (0.8.9)
   * Minor: Added first and last BOM methods.
   * Minor: Added RTL function randomDice
   * Minor: Added Stream.flush method in RTL (ops...)
+  * Minor: Added RFC2822 date management.
 
 Falcon (0.8.8)
   * bugfix: TRAV opcode may destroy its parameters while setting first loop

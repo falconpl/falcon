@@ -313,7 +313,10 @@ FALCON_FUNC  TimeStamp_isLeapYear ( ::Falcon::VMachine *vm );
 FALCON_FUNC  TimeStamp_toLongFormat ( ::Falcon::VMachine *vm );
 FALCON_FUNC  TimeStamp_fromLongFormat ( ::Falcon::VMachine *vm );
 FALCON_FUNC  TimeStamp_compare ( ::Falcon::VMachine *vm );
+FALCON_FUNC  TimeStamp_toRFC2822 ( ::Falcon::VMachine *vm );
+FALCON_FUNC  TimeStamp_fromRFC2822 ( ::Falcon::VMachine *vm );
 FALCON_FUNC  CurrentTime ( ::Falcon::VMachine *vm );
+FALCON_FUNC  ParseRFC2822 ( ::Falcon::VMachine *vm );
 
 
 FALCON_FUNC  List_init ( ::Falcon::VMachine *vm );

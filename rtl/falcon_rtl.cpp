@@ -264,7 +264,7 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    Falcon::Symbol *stream_class = self->addClass( "Stream" );
    stream_class->setWKS(true);
    self->addClassMethod( stream_class, "close", Falcon::Ext::Stream_close );
-   self->addClassMethod( stream_class, "FLUSH", Falcon::Ext::Stream_flush );
+   self->addClassMethod( stream_class, "flush", Falcon::Ext::Stream_flush );
    self->addClassMethod( stream_class, "read", Falcon::Ext::Stream_read );
    self->addClassMethod( stream_class, "readLine", Falcon::Ext::Stream_readLine );
    self->addClassMethod( stream_class, "write", Falcon::Ext::Stream_write );
@@ -338,6 +338,8 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    self->addClassMethod( tstamp_class, "toLongFormat", Falcon::Ext::TimeStamp_toLongFormat );
    self->addClassMethod( tstamp_class, "fromLongFormat", Falcon::Ext::TimeStamp_fromLongFormat );
    self->addClassMethod( tstamp_class, "compare", Falcon::Ext::TimeStamp_compare );
+   self->addClassMethod( tstamp_class, "fromRFC2822", Falcon::Ext::TimeStamp_fromRFC2822 );
+   self->addClassMethod( tstamp_class, "toRFC2822", Falcon::Ext::TimeStamp_toRFC2822 );
 
    // properties // setting to default 0
    self->addClassProperty( tstamp_class, "year" )->setInteger( 0 );
@@ -350,6 +352,7 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
 
    // A factory function that creates a timestamp already initialized to the current time:
    self->addExtFunc( "CurrentTime", Falcon::Ext::CurrentTime );
+   self->addExtFunc( "ParseRFC2822", Falcon::Ext::ParseRFC2822 );
 
    //=======================================================================
    // Directory class

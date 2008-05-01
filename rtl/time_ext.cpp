@@ -143,6 +143,10 @@ FALCON_FUNC  TimeStamp_currentTime ( ::Falcon::VMachine *vm )
    An internal re-implementation of the method will be available
    in the next versions; it will be granted to be compatible with strftime()
    and will offer falcon-specific formattings.
+
+   @note Some specific extra formats available in 0.8.x:
+   %q (milliseconds), %Q (zero-padded milliseconds) and
+      %i (Internet format, RFC-2822).
 */
 FALCON_FUNC  TimeStamp_toString ( ::Falcon::VMachine *vm )
 {
@@ -339,9 +343,9 @@ FALCON_FUNC  TimeStamp_fromLongFormat ( ::Falcon::VMachine *vm )
 }
 
 /*#
-   @method fromLongFormat TimeStamp
-   @brief Sets this date using a compressed opaque "long format" data.
-   @param timestamp The timestamp from which to calculate the distance.
+   @method compare TimeStamp
+   @brief Compare another TimeStamp against this one.
+   @param timestamp The TimeStamp to be compared.
    @return -1, 0 or 1.
 
    The given timestamp is compared to this object. If this object is greater than
@@ -373,6 +377,70 @@ FALCON_FUNC  TimeStamp_compare ( ::Falcon::VMachine *vm )
 }
 
 /*#
+   @method fromRFC2822 TimeStamp
+   @brief Sets this date from a RFC 2822 string.
+   @param sTimestamp A string containing a date in RFC 2822 format.
+   @return True on success, false on failure.
+
+   RFC 2822 format is the textual descriptive format used in Internet
+   transactions. It's composed with:
+   - Day of the week signature
+   - Month signature
+   - Day in the current month
+   - 4 digits year
+   - Time in HH:MM:SS format
+   - Timezone name or displacement.
+
+   A sample looks like:
+   @code
+      Thu, 01 May 2008 23:52:34 +0200
+   @endcode
+
+   If the given string is not a valid timestamp in the RFC 2822 format, the function
+   will return false.
+
+   @note Part of this timestamp may be corrupted after a faulty try; be sure to save
+   this TimeStamp before trying the conversion, if it is needed.
+*/
+FALCON_FUNC  TimeStamp_fromRFC2822 ( ::Falcon::VMachine *vm )
+{
+   CoreObject *self = vm->self().asObject();
+   Item *i_string = vm->param(0);
+   if( i_string == 0 || ! i_string->isString() )
+   {
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ).
+         extra( "S" ) ) );
+      return;
+   }
+
+   TimeStamp *ts1 = (TimeStamp *) self->getUserData();
+   vm->regA().setBoolean( TimeStamp::fromRFC2822( *ts1, *i_string->asString() ) );
+}
+
+
+/*#
+   @method toRFC2822 TimeStamp
+   @brief Format this TimeStamp in RFC 2822 format.
+   @return A string with this timestamp converted, or nil if this TimeStamp is not valid.
+
+   @see fromRFC2822
+*/
+FALCON_FUNC  TimeStamp_toRFC2822 ( ::Falcon::VMachine *vm )
+{
+   CoreObject *self = vm->self().asObject();
+   TimeStamp *ts1 = (TimeStamp *) self->getUserData();
+   if ( ts1->isValid() )
+   {
+      GarbageString *str = new GarbageString( vm, 32 );
+      ts1->toRFC2822( *str );
+      vm->retval( str );
+   }
+   else
+      vm->retnil();
+}
+
+
+/*#
    @function CurrentTime
    @brief Returns the current system local time as a TimeStamp instance.
    @return A new TimeStamp instance.
@@ -392,6 +460,41 @@ FALCON_FUNC  CurrentTime ( ::Falcon::VMachine *vm )
 
    Falcon::Sys::Time::currentTime( *ts );
    self->setUserData( ts );
+   vm->retval( self );
+}
+
+/*#
+   @fucntion ParseRFC2822
+   @brief Parses a RFC2822 formatted date and returns a timestamp instance.
+   @return A valid @a TimeStamp instance or nil if the format is invalid.
+
+   @see TimeStamp.fromRFC2822
+*/
+FALCON_FUNC  ParseRFC2822 ( ::Falcon::VMachine *vm )
+{
+   // verify that the string is valid
+   Item *i_string = vm->param(0);
+   if( i_string == 0 || ! i_string->isString() )
+   {
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ).
+         extra( "S" ) ) );
+      return;
+   }
+
+   TimeStamp *ts1 = new TimeStamp;
+   if( ! TimeStamp::fromRFC2822( *ts1, *i_string->asString() ) )
+   {
+      delete ts1;
+      vm->retnil();
+      return;
+   }
+
+   // create the timestamp
+   Item *ts_class = vm->findWKI( "TimeStamp" );
+   //if we wrote the std module, can't be zero.
+   fassert( ts_class != 0 );
+   CoreObject *self = ts_class->asClass()->createInstance();
+   self->setUserData( ts1 );
    vm->retval( self );
 }
 
