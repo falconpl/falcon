@@ -177,9 +177,8 @@ bool Stream::writeString( const String &source, uint32 begin, uint32 end )
 // Overridables
 //
 
-UserData *Stream::clone()
+UserData *Stream::clone() const
 {
-   status( t_unsupported );
    return 0;
 }
 

@@ -85,6 +85,28 @@ FALCON_FUNC  Stream_close ( ::Falcon::VMachine *vm )
    }
 }
 
+/*#
+   @method flush Stream
+   @brief Flushes a stream.
+
+   Ensures that the operations on the stream are correctly flushed.
+*/
+FALCON_FUNC  Stream_flush ( ::Falcon::VMachine *vm )
+{
+   Stream *file = static_cast<Stream *>(
+      vm->self().asObject()->getUserData() );
+
+   if ( ! file->flush() ) {
+      if ( file->unsupported() )
+         vm->raiseModError( new IoError( ErrorParam( 1101 ).origin( e_orig_runtime ).
+            desc( "Unsupported operation for this file type" ) ) );
+      else {
+         vm->raiseModError( new IoError(  ErrorParam( 1110 ).origin( e_orig_runtime ).
+            desc( "File error while flushing the stream" ).sysError( (uint32) file->lastError()) ) );
+      }
+   }
+}
+
 /** Close a standard stream. */
 FALCON_FUNC  StdStream_close ( ::Falcon::VMachine *vm )
 {

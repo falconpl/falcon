@@ -318,7 +318,7 @@ public:
       This version returns 0 and sets error to unsupported;
       subclasses must properly clone the stream.
    */
-   virtual UserData *clone();
+   virtual UserData *clone() const;
 };
 
 

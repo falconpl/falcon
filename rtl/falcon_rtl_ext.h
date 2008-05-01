@@ -121,6 +121,7 @@ FALCON_FUNC  systemErrorDescription ( ::Falcon::VMachine *vm );
 
 /** Closes a file. */
 FALCON_FUNC  Stream_close ( ::Falcon::VMachine *vm );
+FALCON_FUNC  Stream_flush ( ::Falcon::VMachine *vm );
 FALCON_FUNC  StdStream_close ( ::Falcon::VMachine *vm );
 
 /** Reads from a file. */

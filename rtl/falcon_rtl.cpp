@@ -264,6 +264,7 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    Falcon::Symbol *stream_class = self->addClass( "Stream" );
    stream_class->setWKS(true);
    self->addClassMethod( stream_class, "close", Falcon::Ext::Stream_close );
+   self->addClassMethod( stream_class, "FLUSH", Falcon::Ext::Stream_flush );
    self->addClassMethod( stream_class, "read", Falcon::Ext::Stream_read );
    self->addClassMethod( stream_class, "readLine", Falcon::Ext::Stream_readLine );
    self->addClassMethod( stream_class, "write", Falcon::Ext::Stream_write );
