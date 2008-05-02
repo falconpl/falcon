@@ -108,6 +108,8 @@ Item *VMachine::getOpcodeParam( register uint32 bc_pos )
       case P_PARAM_REGB: return &m_regB;
       case P_PARAM_REGS1: return &m_regS1;
       case P_PARAM_REGS2: return &m_regS2;
+      case P_PARAM_REGL1: return &m_regL1;
+      case P_PARAM_REGL2: return &m_regL2;
    }
 
    // we should not be here.
@@ -1698,6 +1700,8 @@ void opcodeHandler_LDV( register VMachine *vm )
 {
    Item *operand1 =  vm->getOpcodeParam( 1 )->dereference();
    Item *operand2 =  vm->getOpcodeParam( 2 )->dereference();
+   vm->latch() = *operand1;
+   vm->latcher() = *operand2;
 
    switch( operand1->type() << 8 | operand2->type() )
    {
@@ -1851,6 +1855,8 @@ void opcodeHandler_LDP( register VMachine *vm )
 {
    Item *operand1 =  vm->getOpcodeParam( 1 )->dereference();
    Item *operand2 =  vm->getOpcodeParam( 2 )->dereference();
+   vm->latch() = *operand1;
+   vm->latcher() = *operand2;
 
    if( operand2->isString() )
    {
@@ -1868,6 +1874,7 @@ void opcodeHandler_LDP( register VMachine *vm )
             if( source->asObject()->getProperty( *property, prop ) ) {
                // we must create a method if the property is a function.
                Item *p = prop.dereference();
+
                switch( p->type() ) {
                   case FLC_ITEM_FUNC:
                      // the function may be a dead function; by so, the method will become a dead method,
@@ -1897,6 +1904,7 @@ void opcodeHandler_LDP( register VMachine *vm )
             if( sourceClass->properties().findKey( property, pos ) )
             {
                Item *prop = sourceClass->properties().getValue( pos );
+
                // now, accessing a method in a class means that we want to call the base method in a
                // self item:
                if( prop->type() == FLC_ITEM_FUNC )
@@ -1917,7 +1925,9 @@ void opcodeHandler_LDP( register VMachine *vm )
 
       // try to find a generic method
       if( source->getBom( *property, vm->regA(), vm->m_fbom ) )
+      {
          return;
+      }
    }
 
    vm->raiseRTError(
@@ -3285,7 +3295,7 @@ void opcodeHandler_INCP( register VMachine *vm )
       default:
          vm->raiseError( e_invop, "INCP" );
    }
-
+   vm->regB() = *operand;
    vm->regA() = temp; // valid also if it's A or a reference in A
 }
 
@@ -3303,7 +3313,7 @@ void opcodeHandler_DECP( register VMachine *vm )
       default:
          vm->raiseError( e_invop, "DECP" );
    }
-
+   vm->regB() = *operand;
    vm->regA() = temp; // valid also if it's A or a reference in A
 }
 
@@ -3361,6 +3371,7 @@ void opcodeHandler_SHRS( register VMachine *vm )
 }
 
 //5E
+/* Disabled; possibly removed.
 void opcodeHandler_LDVR( register VMachine *vm )
 {
    Item *operand1 = vm->getOpcodeParam( 1 )->dereference();
@@ -3415,8 +3426,9 @@ void opcodeHandler_LDVR( register VMachine *vm )
    vm->raiseRTError(
                new AccessError( ErrorParam( e_arracc ).origin( e_orig_vm ).extra( "LDVR" ) ) );
 }
-
+*/
 //5F
+/*
 void opcodeHandler_LDPR( register VMachine *vm )
 {
    Item *operand1 = vm->getOpcodeParam( 1 )->dereference();
@@ -3458,7 +3470,7 @@ void opcodeHandler_LDPR( register VMachine *vm )
    vm->raiseRTError(
                new AccessError( ErrorParam( e_prop_acc ).origin( e_orig_vm ).extra( "LDPR" ) ) );
 }
-
+*/
 // 60
 void opcodeHandler_POWS( register VMachine *vm )
 {

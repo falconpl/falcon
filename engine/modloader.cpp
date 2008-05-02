@@ -20,6 +20,7 @@
 #include <falcon/dll.h>
 #include <falcon/fstream.h>
 #include <falcon/sys.h>
+#include <falcon/pcodes.h>
 
 namespace Falcon {
 
@@ -158,18 +159,22 @@ ModuleLoader::t_filetype ModuleLoader::fileType( const String &path )
    else if ( ext == DllLoader::dllExt() || ext == ".fam" )
    {
       in.open( path, FileStream::e_omReadOnly );
-      char ch1, ch2;
+      char ch1, ch2, ch3, ch4;
       if ( ! in.good() )
          return t_none;
       in.read( &ch1, 1 );
       in.read( &ch2, 1 );
+      in.read( &ch3, 1 );
+      in.read( &ch4, 1 );
       in.close();
       if ( ext == DllLoader::dllExt() ) {
          return DllLoader::isDllMark( ch1, ch2 ) ? t_binmod : t_none;
       }
       else {
          if(ch1 =='F' && ch2 =='M') {
-            return t_vmmod;
+            // verify if version/subversion is accepted.
+            if( ch3 == FALCON_PCODE_VERSION && ch4 == FALCON_PCODE_MINOR )
+               return t_vmmod;
          }
          return t_none;
       }
@@ -497,9 +502,9 @@ Module *ModuleLoader::loadModule_select_ver( Stream *in )
    in->read( &c2, 1 );
 
    // C1 and c2 now contain the version.
-   // for now we can load only format 1.0
+   // for now we can load only format PCODE
 
-   if( c1 == 1 && c2 == 0 ) {
+   if( c1 == FALCON_PCODE_VERSION && c2 == FALCON_PCODE_MINOR ) {
       return  loadModule_ver_1_0( in );
    }
 

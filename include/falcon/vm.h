@@ -169,8 +169,8 @@ void opcodeHandler_SHL( register VMachine *vm );
 void opcodeHandler_SHR( register VMachine *vm );
 void opcodeHandler_SHLS( register VMachine *vm );
 void opcodeHandler_SHRS( register VMachine *vm );
-void opcodeHandler_LDVR( register VMachine *vm );
-void opcodeHandler_LDPR( register VMachine *vm );
+//void opcodeHandler_LDVR( register VMachine *vm );
+//void opcodeHandler_LDPR( register VMachine *vm );
 void opcodeHandler_POWS( register VMachine *vm );
 void opcodeHandler_LSB( register VMachine *vm );
 void opcodeHandler_UNPS( register VMachine *vm );
@@ -294,6 +294,8 @@ protected:
    Item m_regB;
    Item m_regS1;
    Item m_regS2;
+   Item m_regL1;
+   Item m_regL2;
 
    /** Space for immediate operands. */
    Item m_imm[4];
@@ -1127,6 +1129,24 @@ public:
    Item &self() { return m_regS1; }
    const Item &sender() const { return m_regS2; }
    Item &sender() { return m_regS2; }
+
+   /** Latch item.
+      Generated on load property/vector instructions, it stores the accessed object.
+   */
+   const Item &latch() const { return m_regL1; }
+   /** Latch item.
+      Generated on load property/vector instructions, it stores the accessed object.
+   */
+   Item &latch() { return m_regL1; }
+
+   /** Latcher item.
+      Generated on load property/vector instructions, it stores the accessor item.
+   */
+   const Item &latcher() const { return m_regL2; }
+   /** Latcher item.
+      Generated on load property/vector instructions, it stores the accessor item.
+   */
+   Item &latcher() { return m_regL2; }
 
    void requestQuit() { m_event = eventQuit; }
    void requestSuspend() { m_event = eventSuspend; }
@@ -2081,8 +2101,8 @@ public:
    friend void opcodeHandler_SHR( register VMachine *vm );
    friend void opcodeHandler_SHLS( register VMachine *vm );
    friend void opcodeHandler_SHRS( register VMachine *vm );
-   friend void opcodeHandler_LDVR( register VMachine *vm );
-   friend void opcodeHandler_LDPR( register VMachine *vm );
+//   friend void opcodeHandler_LDVR( register VMachine *vm );
+//   friend void opcodeHandler_LDPR( register VMachine *vm );
    friend void opcodeHandler_POWS( register VMachine *vm );
    friend void opcodeHandler_LSB( register VMachine *vm );
    friend void opcodeHandler_UNPS( register VMachine *vm );

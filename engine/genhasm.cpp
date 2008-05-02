@@ -1290,8 +1290,13 @@ void GenHAsm::gen_inc_prefix( const Value *val )
       m_out->writeString( "\n" );
    }
    else {
-      gen_complex_value( val, true );
+      t_valType xValue = l_value;
+      gen_complex_value( val, xValue );
       m_out->writeString( "\tINC \tA\n" );
+      if ( xValue == p_value )
+         m_out->writeString( "\tSTP \tL1, L2, A\n" );
+      else if ( xValue == v_value )
+         m_out->writeString( "\tSTV \tL1, L2, A\n" );
    }
 }
 
@@ -1303,8 +1308,14 @@ void GenHAsm::gen_inc_postfix( const Value *val )
       m_out->writeString( "\n" );
    }
    else {
-      gen_complex_value( val, true );
+      t_valType xValue = l_value;
+      gen_complex_value( val, xValue );
       m_out->writeString( "\tINCP\tA\n" );
+
+      if ( xValue == p_value )
+         m_out->writeString( "\tSTP \tL1, L2, B\n" );
+      else if ( xValue == v_value )
+         m_out->writeString( "\tSTV \tL1, L2, B\n" );
    }
 }
 
@@ -1316,8 +1327,15 @@ void GenHAsm::gen_dec_prefix( const Value *val )
       m_out->writeString( "\n" );
    }
    else {
-      gen_complex_value( val, true );
+      t_valType xValue = l_value;
+      gen_complex_value( val, xValue );
+
       m_out->writeString( "\tDEC \tA\n" );
+
+      if ( xValue == p_value )
+         m_out->writeString( "\tSTP \tL1, L2, A\n" );
+      else if ( xValue == v_value )
+         m_out->writeString( "\tSTV \tL1, L2, A\n" );
    }
 }
 
@@ -1329,8 +1347,15 @@ void GenHAsm::gen_dec_postfix( const Value *val )
       m_out->writeString( "\n" );
    }
    else {
-      gen_complex_value( val, true );
+      t_valType xValue = l_value;
+      gen_complex_value( val, xValue );
+
       m_out->writeString( "\tDECP\tA\n" );
+
+      if ( xValue == p_value )
+         m_out->writeString( "\tSTP \tL1, L2, B\n" );
+      else if ( xValue == v_value )
+         m_out->writeString( "\tSTV \tL1, L2, B\n" );
    }
 }
 
@@ -1353,17 +1378,32 @@ void GenHAsm::gen_autoassign( const char *op, const Value *target, const Value *
    }
    else if ( source->isSimple() )
    {
-      gen_complex_value( target, true );
+      t_valType xValue = l_value;
+      gen_complex_value( target, xValue );
+
       m_out->writeString( "\t" + opstr + "\tA, " );
       gen_operand( source );
       m_out->writeString( "\n" );
+
+      if ( xValue == p_value )
+         m_out->writeString( "\tSTP \tL1, L2, A\n" );
+      else if ( xValue == v_value )
+         m_out->writeString( "\tSTV \tL1, L2, A\n" );
    }
    else {
       gen_complex_value( source );
       m_out->writeString( "\tPUSH\tA\n" );
-      gen_complex_value( target, true );
+
+      t_valType xValue = l_value;
+      gen_complex_value( target, xValue );
+
       m_out->writeString( "\tPOP \tB\n" );
       m_out->writeString( "\t" + opstr + "\tA, B\n" );
+
+      if ( xValue == p_value )
+         m_out->writeString( "\tSTP \tL1, L2, A\n" );
+      else if ( xValue == v_value )
+         m_out->writeString( "\tSTV \tL1, L2, A\n" );
    }
 }
 
@@ -1416,8 +1456,7 @@ void GenHAsm::gen_value( const Value *stmt, const char *prefix, const char *cpl_
 }
 
 
-
-void GenHAsm::gen_complex_value( const Value *stmt, bool assign )
+void GenHAsm::gen_complex_value( const Value *stmt, t_valType &xValue )
 {
    switch( stmt->type() )
    {
@@ -1442,7 +1481,7 @@ void GenHAsm::gen_complex_value( const Value *stmt, bool assign )
       break;
 
       case Value::t_expression:
-         gen_expression( stmt->asExpr(), assign );
+         gen_expression( stmt->asExpr(), xValue );
       break;
 
       case Value::t_range_decl:
@@ -1535,7 +1574,7 @@ void GenHAsm::gen_operand( const Value *stmt )
    }
 }
 
-void GenHAsm::gen_expression( const Expression *exp, bool assign )
+void GenHAsm::gen_expression( const Expression *exp, t_valType &xValue )
 {
 
    String opname;
@@ -1554,6 +1593,8 @@ void GenHAsm::gen_expression( const Expression *exp, bool assign )
       case Expression::t_and:
       case Expression::t_or:
       {
+         xValue = l_value;
+
          String opname, ifmode;
          if ( exp->type() == Expression::t_or )
          {
@@ -1653,6 +1694,8 @@ void GenHAsm::gen_expression( const Expression *exp, bool assign )
       // it is better to handle the rest directly here.
       case Expression::t_iif:
       {
+         xValue = l_value;
+
          int32 branch = m_branch_id++;
          String branchStr;
          branchStr.writeNumber( (int64) branch );
@@ -1703,50 +1746,62 @@ void GenHAsm::gen_expression( const Expression *exp, bool assign )
 
       case Expression::t_assign:
          // handle it as a load...
+         // don't change x-value
          gen_load( exp->first(), exp->second() );
          return;
 
       case Expression::t_aadd:
+         xValue = l_value;
          gen_autoassign( "ADDS", exp->first(), exp->second() );
          return;
 
       case Expression::t_asub:
+         xValue = l_value;
          gen_autoassign( "SUBS", exp->first(), exp->second() );
          return;
 
       case Expression::t_amul:
+         xValue = l_value;
          gen_autoassign( "MULS", exp->first(), exp->second() );
          return;
 
       case Expression::t_adiv:
+         xValue = l_value;
          gen_autoassign( "DIVS", exp->first(), exp->second() );
          return;
 
       case Expression::t_amod:
+         xValue = l_value;
          gen_autoassign( "MODS", exp->first(), exp->second() );
          return;
 
       case Expression::t_apow:
+         xValue = l_value;
          gen_autoassign( "POWS", exp->first(), exp->second() );
          return;
 
       case Expression::t_aband:
+         xValue = l_value;
          gen_autoassign( "ANDS", exp->first(), exp->second() );
          return;
 
       case Expression::t_abor:
+         xValue = l_value;
          gen_autoassign( "ORS", exp->first(), exp->second() );
          return;
 
       case Expression::t_abxor:
+         xValue = l_value;
          gen_autoassign( "XORS", exp->first(), exp->second() );
          return;
 
       case Expression::t_ashl:
+         xValue = l_value;
          gen_autoassign( "SHLS", exp->first(), exp->second() );
          return;
 
       case Expression::t_ashr:
+         xValue = l_value;
          gen_autoassign( "SHRS", exp->first(), exp->second() );
          return;
 
@@ -1756,20 +1811,24 @@ void GenHAsm::gen_expression( const Expression *exp, bool assign )
       case Expression::t_post_dec: gen_dec_postfix( exp->first() ); return;
 
       case Expression::t_obj_access:
-         gen_load_from_deep( assign ? "LDPR" : "LDP ", exp->first(), exp->second() );
+         xValue = p_value;
+         gen_load_from_deep( "LDP ", exp->first(), exp->second() );
       return;
 
       case Expression::t_array_access:
-         gen_load_from_deep( assign ? "LDVR" : "LDV ", exp->first(), exp->second() );
+         xValue = v_value;
+         gen_load_from_deep( "LDV ", exp->first(), exp->second() );
       return;
 
       case Expression::t_array_byte_access:
+         xValue = l_value;
          gen_load_from_deep( "LSB ", exp->first(), exp->second() );
       return;
 
       case Expression::t_funcall:
       case Expression::t_inherit:
       {
+         xValue = l_value;
          gen_funcall( exp, false );
       }
       // funcall is complete here
@@ -1777,11 +1836,15 @@ void GenHAsm::gen_expression( const Expression *exp, bool assign )
 
       case Expression::t_lambda:
       {
+         xValue = l_value;
          m_out->writeString( "\tSTO \tA, $" + exp->first()->asSymbol()->name() + "\n" );
       }
       return;
-
    }
+
+   // post-processing unary and binary operators.
+   // ++, -- and accessors are gone; safely change the l-value status.
+   xValue = l_value;
 
    // then, if there is still something to do, put the operands in place.
    if ( mode == 1 ) {  // unary?
@@ -1822,7 +1885,6 @@ void GenHAsm::gen_expression( const Expression *exp, bool assign )
    }
 
    m_out->writeString( "\n" );
-
 }
 
 void GenHAsm::gen_dict_decl( const DictDecl *dcl )

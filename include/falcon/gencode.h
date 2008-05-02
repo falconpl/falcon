@@ -38,6 +38,8 @@ class FALCON_DYN_CLASS GenCode: public Generator
       e_parB,
       e_parS1,
       e_parS2,
+      e_parL1,
+      e_parL2,
       e_parTRUE,
       e_parFALSE,
       e_parNTD32,
@@ -219,8 +221,89 @@ class FALCON_DYN_CLASS GenCode: public Generator
    void gen_statement( const Statement *stmt );
    void gen_condition( const Value *stmt, int mode=-1 );
    void gen_value( const Value *stmt );
-   void gen_complex_value( const Value *stmt, bool assign = false );
-   void gen_expression( const Expression *stmt, bool assign = false );
+
+   typedef enum {
+      l_value,
+      p_value,
+      v_value
+   } t_valType;
+
+   /** Generates a complex value.
+      Complex values are divided in two classes; expressions and structure constructions.
+
+      Structure construction are namely:
+      - range generations
+      - array generation
+      - dictionary generation
+      - symbol reference generation
+
+      Expresions are themselves divided into two kind; the ones that returns a "volatile"
+      value, called l-value, and the ones that refer to an assignable, persistent location,
+      called x-value. Namely, x-values are divided into p-values (expressions
+      terminating with a property accesor) or v-value ( expression terminating with a
+      sequence accessor).
+
+      Some l-values:
+      \code
+         (a+1)
+         functionCall()
+         (a + b * c)
+         var[ accessor ]()
+         obj.property()
+         obj.property[5].otherProp[2] + 1
+      \endcode
+
+      Some p-values:
+      \code
+         obj.property
+         ( #"indirect"() ).property
+         obj.property++    // we still refer to obj.property
+      \endcode
+
+      Some v-values:
+      \code
+         var[ accessorGenerator() ]
+         obj.property[ x ]
+         --var[5]          // we still refer to var[5]
+      \endcode
+
+      This distintion must be known, as assignments to l-values should be taken with care;
+      for now, we do that and we assign to the A register. Conversely, assignment and auto-expressions
+      on x-values is common.
+
+      Instead of analyzing the structure of the expression, we let the underlying calls to the
+      expression generators to determine if they are unrolling an l-value or an x-value.
+
+      The parameter x_value is initially false; it gets changed to true if the last expanded
+      expression element is an accessor. Operators ++ and -- don't change the character of the
+      value, and all the others reset the character to l-value.
+
+      \param value The value to be generated.
+      \param x_value At exit, returns characteristic of the value.
+   */
+
+   void gen_complex_value( const Value *value, t_valType &x_value );
+
+   /** Non l-value sensible version of complex value generator.
+      Some operations do not require to know if the value generated is an l-value expression or not.
+      They may use this version instead.
+      \param value The value to be generated.
+   */
+   void gen_complex_value( const Value *value ) { t_valType dummy; gen_complex_value( value, dummy ); }
+
+   /** Generate an expression.
+      Expressions are the most common complex value. See gen_complex_value for a description.
+      \param expr The expression to be generated.
+      \param x_value On exit, characteristic value type of the expression.
+      \see gen_complex_value
+   */
+   void gen_expression( const Expression *expr, t_valType &x_value );
+
+   /** Generate an expression without taking its l-value characteristics.
+      \param expr The expression to be generated.
+   */
+   void gen_expression( const Expression *expr ) { t_valType dummy; gen_expression( expr, dummy ); }
+
    void gen_dict_decl( const DictDecl *stmt );
    void gen_array_decl( const ArrayDecl *stmt );
    void gen_range_decl( const RangeDecl *stmt );
@@ -269,7 +352,7 @@ public:
 
    virtual void generate( const SourceTree *st );
    /** Extracts the generated line map and removes it from this object.
-      While generating the code, this generators also records line informations about
+      While generating the code, this generator also records line informations about
       PC of generated instructions and source lines where they come from.
 
       This method removes the line map from this object; after this call that map

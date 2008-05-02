@@ -64,7 +64,8 @@ public:
       tregB,
       tregS1,
       tregS2,
-      tregS3
+      tregL1,
+      tregL2
    } type_t;
 
 

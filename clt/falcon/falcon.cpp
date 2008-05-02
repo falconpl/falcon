@@ -733,7 +733,8 @@ int main( int argc, char *argv[] )
    // If we have to assemble or compile just a module...
    if ( options.assemble_only || options.compile_only )
    {
-      modLoader->sourceIsAssembly( true );
+      if( options.assemble_only )
+         modLoader->sourceIsAssembly( true );
 
       // force not to save modules, we're saving it on our own
       modLoader->saveModules( false );

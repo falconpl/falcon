@@ -225,6 +225,8 @@ void write_operand( Stream *output, byte *instruction, int opnum, Module *mod )
       case P_PARAM_REGB: output->writeString( "B" ); break;
       case P_PARAM_REGS1: output->writeString( "S1" ); break;
       case P_PARAM_REGS2: output->writeString( "S2" ); break;
+      case P_PARAM_REGL1: output->writeString( "L1" ); break;
+      case P_PARAM_REGL2: output->writeString( "L2" ); break;
    }
 
 }

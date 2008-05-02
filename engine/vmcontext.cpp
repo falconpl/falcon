@@ -52,6 +52,8 @@ VMContext::VMContext( VMachine *origin )
    m_regB = origin->m_regB;
    m_regS1 = origin->m_regS1;
    m_regS2 = origin->m_regS2;
+   m_regL1 = origin->m_regL1;
+   m_regL2 = origin->m_regL2;
 
    m_symbol = origin->m_symbol;
    m_currentModule = origin->m_currentModule;
@@ -79,6 +81,8 @@ void VMContext::save( const VMachine *origin )
    m_regB = origin->m_regB;
    m_regS1 = origin->m_regS1;
    m_regS2 = origin->m_regS2;
+   m_regL1 = origin->m_regL1;
+   m_regL2 = origin->m_regL2;
 
    m_stackBase = origin->m_stackBase;
    m_tryFrame = origin->m_tryFrame;
@@ -101,6 +105,8 @@ void VMContext::restore( VMachine *origin ) const
    origin->m_regB = m_regB;
    origin->m_regS1 = m_regS1;
    origin->m_regS2 = m_regS2;
+   origin->m_regL1 = m_regL1;
+   origin->m_regL2 = m_regL2;
 }
 
 void VMContext::wakeup()

@@ -45,6 +45,8 @@ class FALCON_DYN_CLASS VMContext: public BaseAlloc
    Item m_regB;
    Item m_regS1;
    Item m_regS2;
+   Item m_regL1;
+   Item m_regL2;
 
    ItemVector *m_stack;
    uint32 m_stackBase;
@@ -83,6 +85,11 @@ public:
    const Item &self() const { return m_regS1; }
    Item &sender() { return m_regS2; }
    const Item &sender() const { return m_regS2; }
+
+   Item &latch() { return m_regL1; }
+   const Item &latch() const { return m_regL1; }
+   Item &latcher() { return m_regL2; }
+   const Item &latcher() const { return m_regL2; }
 
    void stackBase( uint32 pos ) { m_stackBase = pos; }
    uint32 stackBase() const { return m_stackBase; }

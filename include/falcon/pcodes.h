@@ -16,6 +16,8 @@
 #ifndef flc_PCODES_H
 #define flc_PCODES_H
 
+#define FALCON_PCODE_VERSION  2
+#define FALCON_PCODE_MINOR  0
 
 /** \page opcode_format Virtual machine opcode format
 
@@ -37,11 +39,12 @@ three bytes are the operator type an can be:
    - \b 0CH - False
    - \b 0EH - 32 bit not to be decoded
    - \b 0FH - 64 bit not to be decoded
-   - \b 10H - register A
-   - \b 11H - register B
-   - \b 12H - register S1
-   - \b 13H - register S2
-   - \b 14H - register S3
+   - \b 10H - register A - Accumulator
+   - \b 11H - register B - Extra
+   - \b 12H - register S1 - self
+   - \b 13H - register S2 - sender (to be removed)
+   - \b 14H - register L1 - first latch (accessed item)
+   - \b 15H - register L2 - second latch (accessor item)
 
 The paramters immediately follow the opcode and are stored in little endian order,
 if being integer, or directly in float format if being double. If the relative
@@ -85,6 +88,8 @@ while it will fill OP2 with an integer item containing 15H.
 #define P_PARAM_REGB    0x11
 #define P_PARAM_REGS1   0x12
 #define P_PARAM_REGS2   0x13
+#define P_PARAM_REGL1   0x14
+#define P_PARAM_REGL2   0x15
 
 // Range 1: parameterless ops
 /** END: terminate. */
@@ -321,13 +326,13 @@ while it will fill OP2 with an integer item containing 15H.
 #define P_TRAV        0x55
 
 /** INC postfix
-   INCP V : V->A, V := V +
+   INCP V : V->A, V := V + 1 -> B
 */
 
 #define P_INCP        0x56
 
 /** DEC Postfix
-   DECP V :  V->A, V := V - 1
+   DECP V :  V->A, V := V - 1 -> B
 */
 #define P_DECP        0x57
 

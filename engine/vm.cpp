@@ -204,8 +204,8 @@ void VMachine::internal_construct()
    m_opHandlers[ P_SHR ] = opcodeHandler_SHR;
    m_opHandlers[ P_SHLS] = opcodeHandler_SHLS;
    m_opHandlers[ P_SHRS] = opcodeHandler_SHRS;
-   m_opHandlers[ P_LDVR] = opcodeHandler_LDVR;
-   m_opHandlers[ P_LDPR] = opcodeHandler_LDPR;
+//   m_opHandlers[ P_LDVR] = opcodeHandler_LDVR;
+//   m_opHandlers[ P_LDPR] = opcodeHandler_LDPR;
    m_opHandlers[ P_LSB ] = opcodeHandler_LSB;
    m_opHandlers[ P_UNPS ] = opcodeHandler_UNPS;
    m_opHandlers[ P_SELE ] = opcodeHandler_SELE;

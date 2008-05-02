@@ -44,7 +44,8 @@ AsmLexer::AsmLexer( Module *mod, AsmCompiler *cmp, Stream *in ):
       m_regb( Pseudo::tregB, false ),
       m_regs1( Pseudo::tregS1, false ),
       m_regs2( Pseudo::tregS2, false ),
-      m_regs3( Pseudo::tregS3, false ),
+      m_regl1( Pseudo::tregL1, false ),
+      m_regl2( Pseudo::tregL2, false ),
       m_nil( Pseudo::tnil, false ),
       m_true( Pseudo::imm_true, false ),
       m_false( Pseudo::imm_false, false )
@@ -607,6 +608,16 @@ int AsmLexer::checkTokens()
          {
             *VALUE = regS2_Inst();
             return REG_S2;
+         }
+         else if ( m_string.compareIgnoreCase( "L1" ) == 0 )
+         {
+            *VALUE = regL1_Inst();
+            return REG_L1;
+         }
+         else if ( m_string.compareIgnoreCase( "L2" ) == 0 )
+         {
+            *VALUE = regL2_Inst();
+            return REG_L2;
          }
       break;
 

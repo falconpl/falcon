@@ -380,6 +380,8 @@ byte GenCode::gen_pdef( const c_varpar &elem )
       case e_parNTD64: return P_PARAM_NTD64;
       case e_parA: return P_PARAM_REGA;
       case e_parB: return P_PARAM_REGB;
+      case e_parL1: return P_PARAM_REGL1;
+      case e_parL2: return P_PARAM_REGL2;
       case e_parS1: return P_PARAM_REGS1;
       case e_parS2: return P_PARAM_REGS2;
       case e_parTRUE: return P_PARAM_TRUE;
@@ -1293,8 +1295,14 @@ void GenCode::gen_inc_prefix( const Value *val )
       gen_pcode( P_INC, val );
    }
    else {
-      gen_complex_value( val,true );
+      t_valType xValue = l_value;
+      gen_complex_value( val, xValue );
       gen_pcode( P_INC, e_parA );
+
+      if ( xValue == p_value )
+         gen_pcode( P_STP, e_parL1, e_parL2, e_parA );
+      else if ( xValue == v_value )
+         gen_pcode( P_STV, e_parL1, e_parL2, e_parA );
    }
 }
 
@@ -1304,8 +1312,14 @@ void GenCode::gen_inc_postfix( const Value *val )
       gen_pcode( P_INCP, val );
    }
    else {
-      gen_complex_value( val, true );
+      t_valType xValue = l_value;
+      gen_complex_value( val, xValue );
       gen_pcode( P_INCP, e_parA );
+
+      if ( xValue == p_value )
+         gen_pcode( P_STP, e_parL1, e_parL2, e_parB );
+      else if ( xValue == v_value )
+         gen_pcode( P_STV, e_parL1, e_parL2, e_parB );
    }
 }
 
@@ -1315,8 +1329,14 @@ void GenCode::gen_dec_prefix( const Value *val )
       gen_pcode( P_DEC, val );
    }
    else {
-      gen_complex_value( val, true );
+      t_valType xValue = l_value;
+      gen_complex_value( val, xValue );
       gen_pcode( P_DEC, e_parA );
+
+      if ( xValue == p_value )
+         gen_pcode( P_STP, e_parL1, e_parL2, e_parA );
+      else if ( xValue == v_value )
+         gen_pcode( P_STV, e_parL1, e_parL2, e_parA );
    }
 }
 
@@ -1326,8 +1346,14 @@ void GenCode::gen_dec_postfix( const Value *val )
       gen_pcode( P_DECP, val );
    }
    else {
-      gen_complex_value( val, true );
+      t_valType xValue = l_value;
+      gen_complex_value( val, xValue );
       gen_pcode( P_DECP, e_parA );
+
+      if ( xValue == p_value )
+         gen_pcode( P_STP, e_parL1, e_parL2, e_parB );
+      else if ( xValue == v_value )
+         gen_pcode( P_STV, e_parL1, e_parL2, e_parB );
    }
 }
 
@@ -1343,15 +1369,30 @@ void GenCode::gen_autoassign( byte opcode, const Value *target, const Value *sou
    }
    else if ( source->isSimple() )
    {
-      gen_complex_value( target, true );
+      t_valType xValue = l_value;
+      gen_complex_value( target, xValue );
+
       gen_pcode( opcode, e_parA, source );
+
+      if ( xValue == p_value )
+         gen_pcode( P_STP, e_parL1, e_parL2, e_parA );
+      else if ( xValue == v_value )
+         gen_pcode( P_STV, e_parL1, e_parL2, e_parA );
    }
    else {
       gen_complex_value( source );
       gen_pcode( P_PUSH, e_parA );
-      gen_complex_value( target, true );
+
+      t_valType xValue = l_value;
+      gen_complex_value( target, xValue );
+
       gen_pcode( P_POP, e_parB );
       gen_pcode( opcode, e_parA, e_parB );
+
+      if ( xValue == p_value )
+         gen_pcode( P_STP, e_parL1, e_parL2, e_parA );
+      else if ( xValue == v_value )
+         gen_pcode( P_STV, e_parL1, e_parL2, e_parA );
    }
 }
 
@@ -1391,7 +1432,7 @@ void GenCode::gen_value( const Value *stmt )
 
 
 
-void GenCode::gen_complex_value( const Value *stmt, bool assign )
+void GenCode::gen_complex_value( const Value *stmt, t_valType &xValue )
 {
    switch( stmt->type() )
    {
@@ -1417,7 +1458,7 @@ void GenCode::gen_complex_value( const Value *stmt, bool assign )
       break;
 
       case Value::t_expression:
-         gen_expression( stmt->asExpr(), assign );
+         gen_expression( stmt->asExpr(), xValue );
       break;
 
       case Value::t_range_decl:
@@ -1451,7 +1492,7 @@ void GenCode::gen_push( const Value *val )
 }
 
 
-void GenCode::gen_expression( const Expression *exp, bool assign )
+void GenCode::gen_expression( const Expression *exp, t_valType &xValue )
 {
 
    byte opname;
@@ -1470,6 +1511,7 @@ void GenCode::gen_expression( const Expression *exp, bool assign )
       case Expression::t_and:
       case Expression::t_or:
       {
+         xValue = l_value;
          char ifmode;
 
          if ( exp->type() == Expression::t_or )
@@ -1554,6 +1596,7 @@ void GenCode::gen_expression( const Expression *exp, bool assign )
       // it is better to handle the rest directly here.
       case Expression::t_iif:
       {
+         xValue = l_value;
          c_jmptag tag( m_out );
          m_labels.pushBack( &tag );
 
@@ -1601,50 +1644,62 @@ void GenCode::gen_expression( const Expression *exp, bool assign )
 
       case Expression::t_assign:
          // handle it as a load...
+         // don't change x-value
          gen_load( exp->first(), exp->second() );
       return;
 
       case Expression::t_aadd:
+         xValue = l_value;
          gen_autoassign( P_ADDS, exp->first(), exp->second() );
       return;
 
       case Expression::t_asub:
+         xValue = l_value;
          gen_autoassign( P_SUBS, exp->first(), exp->second() );
       return;
 
       case Expression::t_amul:
+         xValue = l_value;
          gen_autoassign( P_MULS, exp->first(), exp->second() );
       return;
 
       case Expression::t_adiv:
+         xValue = l_value;
          gen_autoassign( P_DIVS, exp->first(), exp->second() );
       return;
 
       case Expression::t_amod:
+         xValue = l_value;
          gen_autoassign( P_MODS, exp->first(), exp->second() );
       return;
 
       case Expression::t_aband:
+         xValue = l_value;
          gen_autoassign( P_ANDS, exp->first(), exp->second() );
       return;
 
       case Expression::t_abor:
+         xValue = l_value;
          gen_autoassign( P_ORS, exp->first(), exp->second() );
       return;
 
       case Expression::t_abxor:
+         xValue = l_value;
          gen_autoassign( P_XORS, exp->first(), exp->second() );
       return;
 
       case Expression::t_apow:
+         xValue = l_value;
          gen_autoassign( P_POWS, exp->first(), exp->second() );
       return;
 
       case Expression::t_ashl:
+         xValue = l_value;
          gen_autoassign( P_SHLS, exp->first(), exp->second() );
       return;
 
       case Expression::t_ashr:
+         xValue = l_value;
          gen_autoassign( P_SHRS, exp->first(), exp->second() );
       return;
 
@@ -1654,30 +1709,38 @@ void GenCode::gen_expression( const Expression *exp, bool assign )
       case Expression::t_post_dec: gen_dec_postfix( exp->first() ); return;
 
       case Expression::t_obj_access:
-         gen_load_from_deep( assign? P_LDPR: P_LDP, exp->first(), exp->second() );
+         xValue = p_value;
+         gen_load_from_deep( P_LDP, exp->first(), exp->second() );
       return;
 
       case Expression::t_array_access:
-         gen_load_from_deep( assign ? P_LDVR : P_LDV, exp->first(), exp->second() );
+         xValue = v_value;
+         gen_load_from_deep( P_LDV, exp->first(), exp->second() );
       return;
 
       case Expression::t_array_byte_access:
+         xValue = l_value;
          gen_load_from_deep( P_LSB, exp->first(), exp->second() );
       return;
 
       case Expression::t_funcall:
       case Expression::t_inherit:
       {
+         xValue = l_value;
          gen_funcall( exp, false );
       }
       // funcall is complete here
       return;
 
       case Expression::t_lambda:
+         xValue = l_value;
          gen_pcode( P_STO, e_parA, exp->first()->asSymbol() );
       return;
-
    }
+
+   // post-processing unary and binary operators.
+   // ++, -- and accessors are gone; safely change the l-value status.
+   xValue = l_value;
 
    // then, if there is still something to do, put the operands in place.
    if ( mode == 1 ) {  // unary?

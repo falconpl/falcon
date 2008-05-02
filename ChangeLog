@@ -62,6 +62,10 @@ Falcon (0.8.9)
   * Minor: Added RTL function randomDice
   * Minor: Added Stream.flush method in RTL (ops...)
   * Minor: Added RFC2822 date management.
+  * Minor: Fixed unspotted bug in "-c" option for falcon.
+  * Major: PCODE version moved to 2.0
+  * Major: Added register Latch and Latcher in VM, working for LDP/LDV
+  * Minor: Automatically disregarding outdated .fam when trying to load source modules.
 
 Falcon (0.8.8)
   * bugfix: TRAV opcode may destroy its parameters while setting first loop

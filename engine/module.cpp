@@ -22,6 +22,7 @@
 #include <falcon/stream.h>
 #include <falcon/string.h>
 #include <falcon/traits.h>
+#include <falcon/pcodes.h>
 
 namespace Falcon {
 
@@ -59,7 +60,7 @@ DllLoader &Module::dllLoader()
 {
    if ( m_loader == 0 )
       m_loader = new DllLoader;
-   
+
    return *m_loader;
 }
 
@@ -285,9 +286,9 @@ bool Module::save( Stream *out, bool skipCode ) const
    char *sign = "FM";
    out->write( sign, 2 );
 
-   char ver = version();
+   char ver = pcodeVersion();
    out->write( &ver, 1 );
-   ver = subVersion();
+   ver = pcodeSubVersion();
    out->write( &ver, 1 );
 
    // serializing module and engine versions
@@ -356,10 +357,10 @@ bool Module::load( Stream *is, bool skipHeader )
       if( c != 'M' )
          return false;
       is->read( &c, 1 );
-      if ( c != version() )
+      if ( c != pcodeVersion() )
          return false;
       is->read( &c, 1 );
-      if ( c != subVersion() )
+      if ( c != pcodeSubVersion() )
          return false;
    }
 
@@ -483,14 +484,14 @@ bool Module::publishService( Service *sp )
 }
 
 
-char Module::version() const
+char Module::pcodeVersion() const
 {
-   return 1;
+   return FALCON_PCODE_VERSION;
 }
 
-char Module::subVersion() const
+char Module::pcodeSubVersion() const
 {
-   return 0;
+   return FALCON_PCODE_MINOR;
 }
 
 void Module::getModuleVersion( int &major, int &minor, int &revision ) const

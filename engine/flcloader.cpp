@@ -90,7 +90,13 @@ Module *FlcLoader::loadSource( const String &file )
       {
          if ( fs_module.m_mtime->compare( *fs_source.m_mtime ) > 0 )
          {
-            return loadModule( mod_name );
+            ErrorHandler *temp = m_errhand;
+            m_errhand = 0;
+            Module *bin = loadModule( mod_name );
+            m_errhand = temp;
+            if( bin != 0 )
+               return bin;
+               // else try with the source module
          }
       }
    }

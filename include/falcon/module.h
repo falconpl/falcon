@@ -104,7 +104,7 @@ class FALCON_DYN_CLASS Module: public BaseAlloc
       binary Falcon objects.
    */
    DllLoader *m_loader;
-   
+
    /** Detach the loader for decref.
       If the module has been loaded through a DLL, decreffing it to death
       should unload the module. If this was the last instance of the module
@@ -117,7 +117,7 @@ class FALCON_DYN_CLASS Module: public BaseAlloc
    DllLoader *detachLoader();
 
    Map m_serviceMap;
-   
+
    virtual ~Module();
 
 public:
@@ -146,8 +146,11 @@ public:
       return *this;
    }
 
+   virtual char pcodeVersion() const;
+   virtual char pcodeSubVersion() const;
+
    void incref() { m_refcount ++; }
-   void decref(); 
+   void decref();
 
    Symbol *findGlobalSymbol( const String &name ) const
    {
@@ -507,9 +510,6 @@ public:
       \param skipHeader wheter to skip or read the first 4 module bytes.
    */
    virtual bool load( Stream *is, bool skipHeader=true );
-
-   virtual char version() const;
-   virtual char subVersion() const;
 
    const StringTable &stringTable() const { return m_strTab; }
    StringTable &stringTable() { return m_strTab; }
