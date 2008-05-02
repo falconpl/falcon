@@ -540,7 +540,7 @@ void TimeStamp::fromSeconds( numeric seconds )
 
 void TimeStamp::add( const TimeStamp &ts )
 {
-   m_day = ts.m_day + dayOfYear();
+   m_day += ts.m_day;
    m_hour += ts.m_hour;
    m_minute += ts.m_minute;
    m_second += ts.m_second;
@@ -731,56 +731,36 @@ void TimeStamp::rollOver( bool onlyDays )
    if ( onlyDays ) {
       return;
    }
-   adjust = m_day;
 
-   if ( adjust <= 0 ) {
-      while ( adjust < -366 ) {
-         m_year--;
-         adjust += 365;
-         if ( i_isLeapYear( m_year ) )
-            adjust++;
-      }
+   if ( m_day > 0 )
+   {
+      int16 mdays;
+      while( m_day > (mdays = getDaysOfMonth( m_month )) )
+      {
+         m_day -= mdays;
 
-      if ( adjust == -365 && ! i_isLeapYear( m_year ) ) {
-         adjust = 0;
-         m_year--;
-      }
-
-      while( adjust <= 0 ) {
-         m_month --;
-         if ( m_month == 0 ) {
-            m_month = 12;
-            m_year--;
-         }
-         int mdays = getDaysOfMonth( m_month );
-         adjust += mdays;
-      }
-   }
-   else {
-      while ( adjust > 366 ) {
-         m_year++;
-         adjust -= 365;
-         if ( i_isLeapYear( m_year ) )
-            adjust--;
-      }
-
-      if ( adjust == 365 && ! i_isLeapYear( m_year ) ) {
-         adjust = 1;
-         m_year ++;
-      }
-
-      int16 mdays = getDaysOfMonth( m_month );
-      while( adjust > mdays ) {
-         m_month ++;
-         adjust -= mdays;
-         mdays = getDaysOfMonth( m_month );
-         if ( m_month > 12 ) {
+         if( m_month == 12 )
+         {
             m_month = 1;
             m_year++;
          }
+         else
+            m_month++;
       }
    }
-   m_day = adjust;
+   else {
+      while( m_day < 1 )
+      {
+         if ( m_month == 1 )
+         {
+            m_month = 12;
+            m_year--;
+         }
+         else
+            m_month --;
+         m_day += getDaysOfMonth( m_month );
+      }
+   }
 }
 
 int32 TimeStamp::compare( const TimeStamp &ts ) const
@@ -1037,25 +1017,25 @@ void TimeStamp::setProperty( VMachine *, const String &propName, Item &prop )
 {
    if( propName == "year" )
    {
-      m_year = (uint16) prop.forceInteger();
+      m_year = (int16) prop.forceInteger();
    }
    else if( propName == "month" ) {
-      m_month = (uint16) prop.forceInteger();
+      m_month = (int16) prop.forceInteger();
    }
    else if( propName == "day" ) {
-      m_day = (uint16) prop.forceInteger();
+      m_day = (int16) prop.forceInteger();
    }
    else if( propName == "hour" ) {
-      m_hour = (uint16) prop.forceInteger();
+      m_hour = (int16) prop.forceInteger();
    }
    else if( propName == "minute" ) {
-      m_minute = (uint16) prop.forceInteger();
+      m_minute = (int16) prop.forceInteger();
    }
    else if( propName == "second" ) {
-      m_second = (uint16) prop.forceInteger();
+      m_second = (int16) prop.forceInteger();
    }
    else if( propName == "msec" ) {
-      m_msec = (uint16) prop.forceInteger();
+      m_msec = (int16) prop.forceInteger();
    }
    else if( propName == "timezone" ) {
       m_timezone = (TimeZone)( prop.forceInteger()%32);
