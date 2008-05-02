@@ -51,6 +51,8 @@ bool TimeStamp_copy( const CoreObject *origin, CoreObject *dateObj )
    dateObj->setProperty( "second", data );
    origin->getProperty( "msec", data );
    dateObj->setProperty( "msec", data );
+   origin->getProperty( "timezone", data );
+   dateObj->setProperty( "timezone", data );
    return true;
 }
 
@@ -70,6 +72,7 @@ bool TimeStamp_copy( const CoreObject *origin, CoreObject *dateObj )
    @prop minute Minute in range 0 - 59.
    @prop second Second in range 0 - 59.
    @prop msec Millisecond in range 0 - 999.
+   @prop timezone A timezone code (see @a TimeZone class).
 */
 
 /*#
@@ -439,6 +442,65 @@ FALCON_FUNC  TimeStamp_toRFC2822 ( ::Falcon::VMachine *vm )
       vm->retnil();
 }
 
+/*#
+   @method changeZone TimeStamp
+   @brief Change the time zone in this timestamp, maintaing the same absolute value.
+   @param zone The new time zone.
+
+   This methods shifts forward or backward this timestamp according with the relative
+   shift between the @a TimeStamp.timezone member and the @b zone parameter. After the
+   shift is performed, the new zone is set in the timezone property of this object.
+
+   In example, to convert the local time in GMT:
+   @code
+      now = CurrentTime()
+      > "Local time: ", now
+      now.changeZone( TimeZone.GMT )
+      > "GMT: ", now
+   @endcode
+
+   As assigning a new time zone to the @b timezone property is not subject to any control,
+   it is possible to set an arbitrary time and timezone by normal assignment, and then
+   convert it to another time zone using this method.
+
+   In example:
+   @code
+      a_gmt_time = decodeTime( "..." )
+      // let's say we know the timestamp is GMT.
+      a_gmt_time.timezone = TimeZone.GMT
+
+      // to convert in local time:
+      localTime = a_gmt_time
+      localTime.changeZone( TimeZone.local )
+   @endcode
+
+   The "local" zone is a special zone which is automatically converted in the system
+   timezone; it can also be directly assigned to a timestamp, but it's preferable to
+   determine the system timezone through @a TimeZone.getLocal()
+
+   @see TimeZone
+*/
+FALCON_FUNC  TimeStamp_changeZone ( ::Falcon::VMachine *vm )
+{
+   Item *i_tz = vm->param(0);
+   if( i_tz == 0 || ! i_tz->isOrdinal() )
+   {
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ).
+         extra( "N" ) ) );
+      return;
+   }
+   int tz = i_tz->forceInteger();
+   if ( tz < 0 || tz >= 32 )
+   {
+      vm->raiseModError( new ParamError( ErrorParam( e_param_range, __LINE__ ).origin( e_orig_runtime ).
+         extra( "Invalid timezone" ) ) );
+      return;
+   }
+   CoreObject *self = vm->self().asObject();
+   TimeStamp *ts1 = (TimeStamp *) self->getUserData();
+
+   ts1->changeTimezone( (TimeZone) tz );
+}
 
 /*#
    @function CurrentTime
@@ -496,6 +558,123 @@ FALCON_FUNC  ParseRFC2822 ( ::Falcon::VMachine *vm )
    CoreObject *self = ts_class->asClass()->createInstance();
    self->setUserData( ts1 );
    vm->retval( self );
+}
+
+//==================================================================
+// Timezone
+
+/*#
+   @class TimeZone
+   @brief TimeZone enumeration and services.
+
+   This class proves the list of managed timezones and various services
+   needed to handle them.
+
+   The enumerative part contains the following constants, representing west,
+   east and some named timezones:
+
+   - local: Special local zone (unassigned, but relative to current location).
+   - UTC or GMT
+   - E1 to E12 (+1h to +12h)
+
+   - W1 to W12 (-1h to -12h)
+   - EDT
+   - EST
+   - CDT
+   - CST
+   - MDT
+   - MST
+   - PDT
+   - PST
+
+   - NFT
+   - ACDT
+   - ACST
+   - HAT
+   - NST
+
+   - NONE: No/neutral/unknown timezone.
+*/
+
+/*#
+   @method getDisplacement TimeZone
+   @brief Returns the distance in minutes from the GMT time of a given timezone
+   @param tz A time zone code.
+   @return A relative time distance in minutes.
+
+   This static method, callable directly on the TimeZone class, returns the
+   time displacement of a determined time zone with respect to GMT.
+*/
+
+FALCON_FUNC  TimeZone_getDisplacement ( ::Falcon::VMachine *vm )
+{
+   // verify that the string is valid
+   Item *i_tz = vm->param(0);
+   if( i_tz == 0 || ! i_tz->isOrdinal() )
+   {
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ).
+         extra( "N" ) ) );
+      return;
+   }
+   int tz = i_tz->forceInteger();
+   if ( tz < 0 || tz >= 32 )
+   {
+      vm->raiseModError( new ParamError( ErrorParam( e_param_range, __LINE__ ).origin( e_orig_runtime ).
+         extra( "Invalid timezone" ) ) );
+      return;
+   }
+
+   int16 hours, minutes;
+   TimeStamp::getTZDisplacement( (TimeZone) tz, hours, minutes );
+   vm->retval( (int64) (hours *60 + minutes) );
+}
+
+/*#
+   @method describe TimeZone
+   @brief Returns a descriptive string naming the required timezone.
+   @param tz A time zone code.
+   @return A timezone name.
+
+   This static method, callable directly on the TimeZone class, returns a
+   RFC 2822 compliant timezone name, given a timezone code. The "name" is
+   in the format "+/-hhmm".
+*/
+
+FALCON_FUNC  TimeZone_describe ( ::Falcon::VMachine *vm )
+{
+   Item *i_tz = vm->param(0);
+   if( i_tz == 0 || ! i_tz->isOrdinal() )
+   {
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ).
+         extra( "N" ) ) );
+      return;
+   }
+   int tz = i_tz->forceInteger();
+   if ( tz < 0 || tz >= 32 )
+   {
+      vm->raiseModError( new ParamError( ErrorParam( e_param_range, __LINE__ ).origin( e_orig_runtime ).
+         extra( "Invalid timezone" ) ) );
+      return;
+   }
+
+   vm->retval( new GarbageString( vm, TimeStamp::getRFC2822_ZoneName( (TimeZone) tz ) ) );
+}
+
+/*#
+   @method getLocal TimeZone
+   @brief Return local time zone code.
+   @return A time zone code coresponding to the system local timezone.
+
+   To get a descriptive name of local timezone, use:
+
+   @code
+      TimeZone.describe( TimeZone.getLocal() )
+   @endcode
+*/
+
+FALCON_FUNC  TimeZone_getLocal ( ::Falcon::VMachine *vm )
+{
+   vm->retval( (int64) Sys::Time::getLocalTimeZone() );
 }
 
 }}

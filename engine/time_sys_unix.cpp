@@ -27,6 +27,8 @@ namespace Falcon {
 namespace Sys {
 namespace Time {
 
+static TimeZone s_cached_timezone = tz_local; // which is also 0
+
 void currentTime( ::Falcon::TimeStamp &ts )
 {
    struct timeval current;
@@ -51,7 +53,101 @@ void currentTime( ::Falcon::TimeStamp &ts )
 
 TimeZone getLocalTimeZone()
 {
-   return tz_local;
+   // infer timezone by checking gmtime/localtime
+   if( s_cached_timezone == tz_local )
+   {
+      struct tm gmt;
+      struct tm loc;
+      time_t now;
+      time( &now );
+      localtime_r( &now, &loc );
+      gmtime_r( &now, &gmt );
+
+      // great, let's determine the time shift
+      int64 tgmt = mktime( &gmt );
+      int64 tloc = mktime( &loc );
+      long shift = (long) (tloc - tgmt);
+
+      long hours = shift / 3600;
+      long minutes = (shift/60) % 60;
+      if ( loc.tm_isdst )
+      {
+         if ( hours > 0 )
+         {
+            hours ++;
+            if( hours > 12 )
+               hours = 0;
+         }
+         else if( hours < 0 ) {
+            hours -= 1;
+            if ( hours < -12 )
+               hours = 0;
+         }
+      }
+
+      // and now, let's see if we have one of our zones:
+      switch( hours )
+      {
+         case 1: s_cached_timezone = tz_UTC_E_1; break;
+         case 2: s_cached_timezone = tz_UTC_E_2; break;
+         case 3: s_cached_timezone = tz_UTC_E_3; break;
+         case 4: s_cached_timezone = tz_UTC_E_4; break;
+         case 5: s_cached_timezone = tz_UTC_E_5; break;
+         case 6: s_cached_timezone = tz_UTC_E_6; break;
+         case 7: s_cached_timezone = tz_UTC_E_7; break;
+         case 8: s_cached_timezone = tz_UTC_E_8; break;
+         case 9:
+            if( minutes == 30 )
+                  s_cached_timezone = tz_ACST;
+               else
+                  s_cached_timezone = tz_UTC_E_9;
+            break;
+
+         case 10:
+            if( minutes == 30 )
+               s_cached_timezone = tz_ACDT;
+            else
+               s_cached_timezone = tz_UTC_E_10;
+         break;
+
+         case 11:
+            if( minutes == 30 )
+               s_cached_timezone = tz_NFT;
+            else
+               s_cached_timezone = tz_UTC_E_11;
+         break;
+
+         case 12: s_cached_timezone = tz_UTC_E_11; break;
+
+         case -1: s_cached_timezone = tz_UTC_W_1;
+         case -2:
+            if( minutes == 30 )
+               s_cached_timezone = tz_HAT;
+            else
+               s_cached_timezone = tz_UTC_W_2;
+            break;
+         case -3:
+            if( minutes == 30 )
+               s_cached_timezone = tz_NST;
+            else
+               s_cached_timezone = tz_UTC_W_3;
+            break;
+         case -4: s_cached_timezone = tz_UTC_W_4; break;
+         case -5: s_cached_timezone = tz_UTC_W_5; break;
+         case -6: s_cached_timezone = tz_UTC_W_6; break;
+         case -7: s_cached_timezone = tz_UTC_W_7; break;
+         case -8: s_cached_timezone = tz_UTC_W_8; break;
+         case -9: s_cached_timezone = tz_UTC_W_9; break;
+         case -10: s_cached_timezone = tz_UTC_W_10; break;
+         case -11: s_cached_timezone = tz_UTC_W_11; break;
+         case -12: s_cached_timezone = tz_UTC_W_12; break;
+
+         default:
+            s_cached_timezone = tz_NONE;
+      }
+   }
+
+   return s_cached_timezone;
 }
 
 numeric seconds()

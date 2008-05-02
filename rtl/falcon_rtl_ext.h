@@ -315,9 +315,13 @@ FALCON_FUNC  TimeStamp_fromLongFormat ( ::Falcon::VMachine *vm );
 FALCON_FUNC  TimeStamp_compare ( ::Falcon::VMachine *vm );
 FALCON_FUNC  TimeStamp_toRFC2822 ( ::Falcon::VMachine *vm );
 FALCON_FUNC  TimeStamp_fromRFC2822 ( ::Falcon::VMachine *vm );
+FALCON_FUNC  TimeStamp_changeZone ( ::Falcon::VMachine *vm );
 FALCON_FUNC  CurrentTime ( ::Falcon::VMachine *vm );
 FALCON_FUNC  ParseRFC2822 ( ::Falcon::VMachine *vm );
 
+FALCON_FUNC  TimeZone_getDisplacement ( ::Falcon::VMachine *vm );
+FALCON_FUNC  TimeZone_describe ( ::Falcon::VMachine *vm );
+FALCON_FUNC  TimeZone_getLocal ( ::Falcon::VMachine *vm );
 
 FALCON_FUNC  List_init ( ::Falcon::VMachine *vm );
 FALCON_FUNC  List_push ( ::Falcon::VMachine *vm );

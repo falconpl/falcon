@@ -156,6 +156,9 @@ public:
    /** Parse a RFC2822 date format and configure the given timestamp. */
    static bool fromRFC2822( TimeStamp &target, const char *source );
 
+   /** Shifts this timestamp moving the old timezone into the new one. */
+   void changeTimezone( TimeZone tz );
+
    void copy( const TimeStamp &ts );
    void currentTime();
    bool isValid() const;

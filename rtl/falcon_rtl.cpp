@@ -20,7 +20,9 @@
 
 #include "falcon_rtl_ext.h"
 #include "version.h"
+#include <falcon/time_sys.h>
 
+using namespace Falcon;
 
 /*#
    @module falcon_rtl The Runtime Library module
@@ -340,6 +342,7 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    self->addClassMethod( tstamp_class, "compare", Falcon::Ext::TimeStamp_compare );
    self->addClassMethod( tstamp_class, "fromRFC2822", Falcon::Ext::TimeStamp_fromRFC2822 );
    self->addClassMethod( tstamp_class, "toRFC2822", Falcon::Ext::TimeStamp_toRFC2822 );
+   self->addClassMethod( tstamp_class, "changeZone", Falcon::Ext::TimeStamp_changeZone );
 
    // properties // setting to default 0
    self->addClassProperty( tstamp_class, "year" )->setInteger( 0 );
@@ -349,6 +352,56 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    self->addClassProperty( tstamp_class, "minute" )->setInteger( 0 );
    self->addClassProperty( tstamp_class, "second" )->setInteger( 0 );
    self->addClassProperty( tstamp_class, "msec" )->setInteger( 0 );
+   self->addClassProperty( tstamp_class, "timezone" )->setInteger( 0 );
+
+   Falcon::Symbol *c_timezone = self->addClass( "TimeZone" );
+   self->addClassMethod( c_timezone, "getDisplacement", Falcon::Ext::TimeZone_getDisplacement );
+   self->addClassMethod( c_timezone, "describe", Falcon::Ext::TimeZone_describe );
+   self->addClassMethod( c_timezone, "getLocal", Falcon::Ext::TimeZone_getLocal );
+   self->addClassProperty( c_timezone, "local" )->setInteger( Falcon::tz_local );
+   self->addClassProperty( c_timezone, "UTC" )->setInteger( Falcon::tz_UTC );
+   self->addClassProperty( c_timezone, "GMT" )->setInteger( Falcon::tz_UTC );
+   self->addClassProperty( c_timezone, "E1" )->setInteger( Falcon::tz_UTC_E_1 );
+   self->addClassProperty( c_timezone, "E2" )->setInteger( Falcon::tz_UTC_E_2 );
+   self->addClassProperty( c_timezone, "E3" )->setInteger( Falcon::tz_UTC_E_3 );
+   self->addClassProperty( c_timezone, "E4" )->setInteger( Falcon::tz_UTC_E_4 );
+   self->addClassProperty( c_timezone, "E5" )->setInteger( Falcon::tz_UTC_E_5 );
+   self->addClassProperty( c_timezone, "E6" )->setInteger( Falcon::tz_UTC_E_6 );
+   self->addClassProperty( c_timezone, "E7" )->setInteger( Falcon::tz_UTC_E_7 );
+   self->addClassProperty( c_timezone, "E8" )->setInteger( Falcon::tz_UTC_E_8 );
+   self->addClassProperty( c_timezone, "E9" )->setInteger( Falcon::tz_UTC_E_9 );
+   self->addClassProperty( c_timezone, "E10" )->setInteger( Falcon::tz_UTC_E_10 );
+   self->addClassProperty( c_timezone, "E11" )->setInteger( Falcon::tz_UTC_E_11 );
+   self->addClassProperty( c_timezone, "E12" )->setInteger( Falcon::tz_UTC_E_12 );
+
+   self->addClassProperty( c_timezone, "W1" )->setInteger( Falcon::tz_UTC_W_1 );
+   self->addClassProperty( c_timezone, "W2" )->setInteger( Falcon::tz_UTC_W_2 );
+   self->addClassProperty( c_timezone, "W3" )->setInteger( Falcon::tz_UTC_W_3 );
+   self->addClassProperty( c_timezone, "W4" )->setInteger( Falcon::tz_UTC_W_4 );
+   self->addClassProperty( c_timezone, "EDT" )->setInteger( Falcon::tz_UTC_W_4 );
+   self->addClassProperty( c_timezone, "W5" )->setInteger( Falcon::tz_UTC_W_5 );
+   self->addClassProperty( c_timezone, "EST" )->setInteger( Falcon::tz_UTC_W_5 );
+   self->addClassProperty( c_timezone, "CDT" )->setInteger( Falcon::tz_UTC_W_5 );
+   self->addClassProperty( c_timezone, "W6" )->setInteger( Falcon::tz_UTC_W_6 );
+   self->addClassProperty( c_timezone, "CST" )->setInteger( Falcon::tz_UTC_W_6 );
+   self->addClassProperty( c_timezone, "MDT" )->setInteger( Falcon::tz_UTC_W_6 );
+   self->addClassProperty( c_timezone, "W7" )->setInteger( Falcon::tz_UTC_W_7 );
+   self->addClassProperty( c_timezone, "MST" )->setInteger( Falcon::tz_UTC_W_7 );
+   self->addClassProperty( c_timezone, "PDT" )->setInteger( Falcon::tz_UTC_W_7 );
+   self->addClassProperty( c_timezone, "W8" )->setInteger( Falcon::tz_UTC_W_8 );
+   self->addClassProperty( c_timezone, "PST" )->setInteger( Falcon::tz_UTC_W_8 );
+   self->addClassProperty( c_timezone, "W9" )->setInteger( Falcon::tz_UTC_W_9 );
+   self->addClassProperty( c_timezone, "W10" )->setInteger( Falcon::tz_UTC_W_10 );
+   self->addClassProperty( c_timezone, "W11" )->setInteger( Falcon::tz_UTC_W_11 );
+   self->addClassProperty( c_timezone, "W12" )->setInteger( Falcon::tz_UTC_W_12 );
+
+   self->addClassProperty( c_timezone, "NFT" )->setInteger( Falcon::tz_NFT );
+   self->addClassProperty( c_timezone, "ACDT" )->setInteger( Falcon::tz_ACDT );
+   self->addClassProperty( c_timezone, "ACST" )->setInteger( Falcon::tz_ACST );
+   self->addClassProperty( c_timezone, "HAT" )->setInteger( Falcon::tz_HAT );
+   self->addClassProperty( c_timezone, "NST" )->setInteger( Falcon::tz_NST );
+
+   self->addClassProperty( c_timezone, "NONE" )->setInteger( Falcon::tz_NST );
 
    // A factory function that creates a timestamp already initialized to the current time:
    self->addExtFunc( "CurrentTime", Falcon::Ext::CurrentTime );

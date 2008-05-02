@@ -59,8 +59,12 @@ void TimeStamp::copy( const TimeStamp &ts )
 
 const char *TimeStamp::getRFC2822_ZoneName( TimeZone tz, bool bSemantic, bool bSaving )
 {
+   if ( tz == tz_local )
+      tz = Sys::Time::getLocalTimeZone();
+
    switch( tz )
    {
+      case tz_local: return "+????";
       case tz_NONE: case tz_UTC: if ( bSemantic ) return "GMT"; return "+0000";
       case tz_UTC_E_1: return "+0100";
       case tz_UTC_E_2: return "+0200";
@@ -161,19 +165,24 @@ TimeZone TimeStamp::getRFC2822_Zone( const char *csZoneName )
    if( strncmp( "EST", csZoneName, 3 ) == 0 ||
       strncmp( "CDT", csZoneName, 3 ) == 0 )
    {
-      return tz_UTC_W_4;
+      return tz_UTC_W_5;
    }
 
    if( strncmp( "CST", csZoneName, 3 ) == 0 ||
       strncmp( "MDT", csZoneName, 3 ) == 0 )
    {
-      return tz_UTC_W_4;
+      return tz_UTC_W_6;
    }
 
    if( strncmp( "MST", csZoneName, 3 ) == 0 ||
       strncmp( "PDT", csZoneName, 3 ) == 0 )
    {
-      return tz_UTC_W_4;
+      return tz_UTC_W_7;
+   }
+
+   if( strncmp( "PST", csZoneName, 3 ) == 0 )
+   {
+      return tz_UTC_W_8;
    }
 
    // failure
@@ -725,12 +734,11 @@ void TimeStamp::rollOver( bool onlyDays )
    adjust = m_day;
 
    if ( adjust <= 0 ) {
-      m_year --;
       while ( adjust < -366 ) {
+         m_year--;
          adjust += 365;
          if ( i_isLeapYear( m_year ) )
             adjust++;
-         m_year--;
       }
 
       if ( adjust == -365 && ! i_isLeapYear( m_year ) ) {
@@ -738,25 +746,22 @@ void TimeStamp::rollOver( bool onlyDays )
          m_year--;
       }
 
-      m_month = 12;
-      int16 mdays = getDaysOfMonth( m_month );
-      adjust += mdays;
       while( adjust <= 0 ) {
          m_month --;
          if ( m_month == 0 ) {
             m_month = 12;
             m_year--;
          }
-         mdays = getDaysOfMonth( m_month );
+         int mdays = getDaysOfMonth( m_month );
          adjust += mdays;
       }
    }
    else {
       while ( adjust > 366 ) {
+         m_year++;
          adjust -= 365;
          if ( i_isLeapYear( m_year ) )
             adjust--;
-         m_year++;
       }
 
       if ( adjust == 365 && ! i_isLeapYear( m_year ) ) {
@@ -764,7 +769,6 @@ void TimeStamp::rollOver( bool onlyDays )
          m_year ++;
       }
 
-      m_month = 1;
       int16 mdays = getDaysOfMonth( m_month );
       while( adjust > mdays ) {
          m_month ++;
@@ -827,21 +831,20 @@ int32 TimeStamp::compare( const TimeStamp &ts ) const
 void TimeStamp::getTZDisplacement( int16 &hours, int16 &minutes ) const
 {
    TimeZone tz = m_timezone;
-
-   if  ( tz == tz_local )
-   {
-      tz = Sys::Time::getLocalTimeZone();
-   }
-
    getTZDisplacement( tz, hours, minutes );
 }
 
 
 void TimeStamp::getTZDisplacement( TimeZone tz, int16 &hours, int16 &minutes )
 {
+   if  ( tz == tz_local )
+   {
+      tz = Sys::Time::getLocalTimeZone();
+   }
+
    switch( tz )
    {
-      case tz_NONE: case tz_UTC: hours = 0; minutes = 0; break;
+      case tz_local: tz_NONE: case tz_UTC: hours = 0; minutes = 0; break;
       case tz_UTC_E_1: hours = 1; minutes = 0; break;
       case tz_UTC_E_2: hours = 2; minutes = 0; break;
       case tz_UTC_E_3: hours = 3; minutes = 0; break;
@@ -960,8 +963,41 @@ bool TimeStamp::toString( String &target, const String &fmt ) const
 void TimeStamp::currentTime()
 {
    Sys::Time::currentTime( *this );
+   if  ( m_timezone == tz_local )
+   {
+      m_timezone = Sys::Time::getLocalTimeZone();
+   }
 }
 
+void TimeStamp::changeTimezone( TimeZone tz )
+{
+   if  ( m_timezone == tz_local )
+   {
+      m_timezone = Sys::Time::getLocalTimeZone();
+
+      if (tz == tz_local ) // no shift...
+         return;
+   }
+
+   if ( tz == tz_local )
+      tz = Sys::Time::getLocalTimeZone();
+
+   // no shift
+   if ( tz == m_timezone )
+      return;
+
+   // get the relative total shift.
+   int16 currentHour, currentMin, newHour, newMin;
+   getTZDisplacement( tz, newHour, newMin );
+   getTZDisplacement( m_timezone, currentHour, currentMin );
+
+   m_hour -= currentHour;
+   m_hour += newHour;
+   m_minute -= currentMin;
+   m_minute += newMin;
+   rollOver( false );
+   m_timezone = tz;
+}
 
 bool TimeStamp::isReflective() const
 {
@@ -992,6 +1028,9 @@ void TimeStamp::getProperty( VMachine *, const String &propName, Item &prop )
    else if( propName == "msec" ) {
       prop = (int64) m_msec;
    }
+   else if( propName == "timezone" ) {
+      prop = (int64) m_timezone;
+   }
 }
 
 void TimeStamp::setProperty( VMachine *, const String &propName, Item &prop )
@@ -1017,6 +1056,9 @@ void TimeStamp::setProperty( VMachine *, const String &propName, Item &prop )
    }
    else if( propName == "msec" ) {
       m_msec = (uint16) prop.forceInteger();
+   }
+   else if( propName == "timezone" ) {
+      m_timezone = (TimeZone)( prop.forceInteger()%32);
    }
 }
 
