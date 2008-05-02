@@ -142,10 +142,6 @@ int SrcLexer::lex_outscape()
             else if ( chr == '\n' )
             {
                // as above, but now count theline
-               m_previousLine = m_line;
-               m_line++;
-               m_character = 0;
-               m_bIsDirectiveLine = false;
                m_mode = t_mNormal;
                // and break from the loop so to return the string to print.
                break;
