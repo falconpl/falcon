@@ -161,6 +161,8 @@ public:
    Pseudo *regB_Inst();
    Pseudo *regS1_Inst();
    Pseudo *regS2_Inst();
+   Pseudo *regL1_Inst();
+   Pseudo *regL2_Inst();
    Pseudo *nil_Inst();
 };
 

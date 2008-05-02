@@ -36,6 +36,8 @@ Pseudo *AsmCompiler::regA_Inst() { return m_lexer->regA_Inst(); }
 Pseudo *AsmCompiler::regB_Inst() { return m_lexer->regB_Inst(); }
 Pseudo *AsmCompiler::regS1_Inst() { return m_lexer->regS1_Inst(); }
 Pseudo *AsmCompiler::regS2_Inst() { return m_lexer->regS2_Inst(); }
+Pseudo *AsmCompiler::regL1_Inst() { return m_lexer->regL1_Inst(); }
+Pseudo *AsmCompiler::regL2_Inst() { return m_lexer->regL2_Inst(); }
 Pseudo *AsmCompiler::nil_Inst() { return m_lexer->nil_Inst(); }
 
 AsmCompiler::AsmCompiler( Module *mod, Stream *in, Stream *out ):
@@ -788,6 +790,8 @@ unsigned char AsmCompiler::paramDesc( Pseudo *op1 ) const
          case Pseudo::tregB: return P_PARAM_REGB;
          case Pseudo::tregS1: return P_PARAM_REGS1;
          case Pseudo::tregS2: return P_PARAM_REGS2;
+         case Pseudo::tregL1: return P_PARAM_REGL1;
+         case Pseudo::tregL2: return P_PARAM_REGL2;
          case Pseudo::tnil: return P_PARAM_NIL;
       }
    }
