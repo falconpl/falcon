@@ -1,0 +1,108 @@
+/*
+   FALCON - Samples
+
+   FILE: eventFilling.fal
+
+   Display how to fill delayed event execution lists.
+
+   See the instructions in the print statements.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Sun, 13 Apr 2008 23:26:44 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+//======================================
+// Generic listener
+attributes: listening
+
+class Listener
+   listening = [marshalCBX, "on'", false]
+   has listening
+end
+
+function shout( event )
+   if event.type() == ArrayType
+      return broadcast( listening, event )
+   else
+      message = [event]
+      for param in [1:paramCount()]: arrayAdd(message, paramNumber(param))
+      return broadcast( listening, message )
+   end
+end
+
+//==================================================
+// Our command subscriber
+
+// id: ordinal number
+// cmd: command to activate us.
+class CmdManager( id, cmd ) from Listener
+   id = id
+   cmd = cmd
+
+   function activation( extra )
+      >> "Manager ", self.id, " activated on '", self.cmd, "'"
+      if extra
+         >> " (on ", extra, " params)"
+      end
+      >
+   end
+
+   // commands is the required commands.
+   // sublist is the subscription list.
+   // extra is just an extra parameter that we'll play back in case of activation.
+   function onSubscribe( commands, sublist, extra )
+      // should we react?
+      if self.cmd in commands
+         sublist.push( [self.activation, extra] )
+      end
+      // allow passthrough
+      return false
+   end
+end
+
+//==================================================
+
+commands = [ "red", "blue", "green", "white", "black", "orange" ]
+
+> "=================== ***** ========================"
+> "Falcon delayed event reply test"
+> "=================== ***** ========================"
+>
+> "This test shows how lists of delayed activies can be built through "
+> "message programming."
+> "Write some \"commands\" on the command line."
+> "They can be one or more of the following:"
+for c in commands: >> c, " "
+>
+> "Those command will summon some repliers, that will activate a delayed"
+> "routine when a \"subscription phase\" is complete."
+
+if args.len() == 0
+   >
+   >"No arguments provided; please, write some 'command' on the command line."
+   return 1
+end
+
+id = 0
+// warning; in real life you should store them somewhere.
+for c in commands
+   CmdManager( id++, c )
+end
+
+//ok, we can transmit
+sublist = List()
+shout( "subscribe", args, sublist, args.len() )
+
+> "Activations: "
+> "============="
+for delayedActivation in sublist
+   delayedActivation()
+end
+
+>"================================="
+>"Done."
