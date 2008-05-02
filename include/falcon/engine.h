@@ -70,6 +70,7 @@
 #include <falcon/genericvector.h>
 #include <falcon/genericlist.h>
 #include <falcon/genericmap.h>
+#include <falcon/timestamp.h>
 
 // Engine dll and initialization
 #include <falcon/enginedata.h>
