@@ -70,7 +70,7 @@ void GenHAsm::generate( const SourceTree *st )
       m_out->writeString( ".entry\n" );
 
       gen_block( &st->statements() );
-      m_out->writeString( "\tEND\n" );
+      m_out->writeString( "\tRET\n" );
    }
 
    // generate functions

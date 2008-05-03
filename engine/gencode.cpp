@@ -151,7 +151,7 @@ void GenCode::generate( const SourceTree *st  )
    {
       // entry point
       gen_block( &st->statements() );
-      gen_pcode( P_END );
+      gen_pcode( P_RET );
    }
 
    // No need to generate the classes, as they are just definitions in the
