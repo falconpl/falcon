@@ -42,22 +42,7 @@
    configure, alter, and execute arbitrary parts of the loaded module as if it were
    coded internally to the loader script.
 
-   @note To make the entities delcared in this module available to falcon scripts
-      use the command:
-      @code
-         load compiler
-      @endcode
-
-   @beginmodule feathers_compiler
-*/
-
-#include <falcon/module.h>
-#include "compiler_ext.h"
-
-#include "version.h"
-
-/*#
-   @page process_samples Example usages
+   @section Example usages
 
    The following script shows how a source module may be compiled and executed on the fly.
 
@@ -177,7 +162,15 @@
    $ ./falcon alphaload.fal
    Parameter is: Called internally from self.
    @endcode
+
+   @beginmodule feathers_compiler
 */
+
+#include <falcon/module.h>
+#include "compiler_ext.h"
+
+#include "version.h"
+
 
 FALCON_MODULE_DECL( const Falcon::EngineData &data )
 {

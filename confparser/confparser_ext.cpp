@@ -33,8 +33,156 @@ namespace Ext {
 // Class ConfParser
 // ==============================================
 
-/**
+/*#
+   @class ConfParser
+   @brief Interface to configuration files.
+   @optparam filename The name of the ini file to be parsed, if it exists.
+   @optparam encoding An optional non default encoding which is used for that file.
 
+   @section Adding, setting or removing keys
+
+   The most direct way to add a new key in an ini configuration file is to use the
+   @a ConfParser.add method.
+
+   If the key had not any previous value, a new key is added. If a specified
+   section was not previously present it is added.
+
+   If one or more entries with the same key was already present, the entry will be
+   physically placed as the last one, and if queried at a later moment, the value
+   will be returned as the last value of the value arrays associated with the given
+   key.
+
+   The value parameter may also be an array of strings, in which case all the
+   values contained in the array will be added, one after another as specified for
+   the single value case. If the caller wants to be sure that only the values in
+   the given value or value array are set, it should call the @a ConfParser.remove method
+   before calling @a ConfParser.add.
+
+   To set a single value, eventually getting rid of other previously existing
+   values, use the set method: @a ConfParser.set, which sets a key/value pair in the main section,
+   or if section parameter is given and not nil, in the specified section.
+   Using this method, any previous value or value set associated with the given key
+   is removed. If the key had not any previous value, a new key is added. If a
+   specified section was not previously present, it is added. If the given key was
+   already present in a parsed configuration file, it's position and the comments
+   that were eventually associated with the key are left unchanged.
+
+   To remove completely a key, use the @a ConfParser.remove method. To remove
+   completely a section, use the removeSection( section ) method. This method can't
+   be used to remove the main section; in fact, even if empty, that section always
+   exists. To clear every key in that, use the clearMain() method.
+
+   @section Categorized keys
+
+   Categories are separated from the keys by dots "."; a complete categorized key
+   may contain any amount of dots, or in other words, the categories can have an
+   arbitrary depth.
+
+   The getCategoryKeys method returns a list of all the keys belonging to a certain
+   category. Categories are separated from the keys by dots "."; a complete
+   categorized key may contain any amount of dots, or in other words, the
+   categories can have an arbitrary depth.
+
+   The category (first) parameter of this method may indicate the first level
+   category only, or it can be arbitrarily deep. Only the keys in deeper categories
+   will be returned.
+
+   In example; if the configuration file contains the following entries:
+
+   @code
+   Key.cat1 = 1
+   Key.cat1.k1 = 101
+   Key.cat1.k2 = 102
+   Key.cat1.k3 = 103
+   Key.cat1.subcat1.k1 = 105
+   Key.cat1.subcat1.k2 = 106
+   @endcode
+
+   if the category parameter is set to "Key", all the entries will be returned. If
+   it's set to "cat1", the first entry won't be returned, as it's considered a key
+   cat1 in category Key. If category is set to "key.cat1.subcat1", the last two
+   entries will be returned.
+
+   The strings in the returned array represent the complete key name, including the
+   complete categorization. In this way it is directly possible to retrieve the
+   value of a given key, or to alter their values, by simply iterating on the
+   returned array, like in the following example:
+
+   @code
+   category = "Key.cat1.subcat1"
+   trimming = [len(category)+1:]
+
+   keys = parser.getCategoryKeys( category )
+   printl( "Keys in category ", category, ": " )
+   for key in keys
+      printl( key[ trimming ], "=", parser.get( key ) )
+   end
+   @endcode
+
+   The result will be:
+
+   @code
+   Keys in category Key.cat1.subcat1:
+   k1=105
+   k2=106
+   @endcode
+
+   If the category cannot be found, or if it doesn't contain any entry, or if a
+   section parameter is provided but the given section cannot be found, this method
+   returns an empty array. It is necessary to ascertain that the requested values
+   are present (of if not, that their missing actually means that the category is
+   "empty") by other means.
+
+   Other than just enumerating categorized keys, that can then be read with the
+   ordinary get() or getOne() methods, a whole category tree can be imported with
+   the method getCategory().
+
+   In example, consider the same configuration structure we have used before. If
+   the category parameter  of getCategory() is set to "Key", all the entries will
+   be returned. If it's set to "cat1", the first entry won't be returned, as it's
+   consider a key cat1 in category Key. If category is set to "key.cat1.subcat1",
+   the last two entries will be returned.
+
+   The strings returned in the dictionary keys are the complete key, including the
+   category part. It is possible to obtain a dictionary where the keys are already
+   stripped of their category part by adding an asterisk at the end of the first
+   parameter.
+
+   In example:
+
+   @code
+   category = "Key.cat1"
+   valueDict = parser.getCategory( category+"*" )
+
+   printl( "Keys in category ", category, ": " )
+   for key, value in valueDict
+      printl( key, "=", value )
+   end
+   @endcode
+
+   The result will be:
+
+   @code
+   Keys in category Key.cat1:
+   k1=101
+   k2=102
+   k3=103
+   subcat1.k1=105
+   subcat1.k2=106
+   @endcode
+
+   If a key has multiple values, it's value element will be set to an array
+   containing all the values.
+*/
+
+/*#
+   @init ConfParser
+
+   The constructor of this class allows to set up a filename for the
+   configuration file that is going to be read and/or written. If the name is not
+   given, @a ConfParser.read and ConfParser.write methods will require a valid Falcon
+   Stream, otherwise, if the stream is not provided, the given file will be opened
+   or written as needed.
 */
 FALCON_FUNC  ConfParser_init( ::Falcon::VMachine *vm )
 {
@@ -61,6 +209,19 @@ FALCON_FUNC  ConfParser_init( ::Falcon::VMachine *vm )
    self->setUserData( cfile );
 }
 
+
+/*#
+   @method read ConfParser
+   @brief Read the ini file.
+   @optparam stream An optional input stream from where to read the file.
+
+   Parses a configuration file and prepares the object data that may be retrieved
+   with other methods. The @b read method may be provided with an opened and
+   readable Falcon stream. If not, the file name provided to the ConfParser
+   constructor will be opened and read. In case the name has not been given in the
+   constructor, the method raises an error. The method may also raise ParseError,
+   IoError or ParamError, with the “message” field set to a relevant explanation.
+*/
 
 FALCON_FUNC  ConfParser_read( ::Falcon::VMachine *vm )
 {
