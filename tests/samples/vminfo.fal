@@ -24,6 +24,7 @@ load compiler
 major, minor, revision = vmVersionInfo()
 > @ "Falcon Virtual Machine $(major).$(minor).$(revision)."
 > "Version description: ", vmVersionName()
+> "System type: ", vmSystemType()
 
 if args.len() != 0
 	comp = Compiler()

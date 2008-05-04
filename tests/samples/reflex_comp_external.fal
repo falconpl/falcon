@@ -1,0 +1,6 @@
+function func( a )
+   > 'Hello from compiled source: ', a
+end
+
+> 'The main part of the module'
+

@@ -1,0 +1,47 @@
+/*
+   FALCON - Samples
+
+   FILE: reflex_comp.fal
+
+   Simple reflexive compiler test.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: 2006-05-11 12:35
+
+   -------------------------------------------------------------------
+   (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+load compiler
+
+// create the compiler
+c = Compiler()
+
+// try to compile a source string
+str = "
+   function func( a )
+      > 'Hello from compiled source: ', a
+   end
+
+   > 'The main part of the module'
+"
+
+try
+   // First param is the module logical name.
+   sourceMod = c.compile( "aString", str )
+
+   // in case of compilation error, we had an error and we bailed out
+
+   // load the symbol func from our module...
+   func = sourceMod.get( "func" )
+   // and execute it...
+   func( "test param" )
+
+   // execute directly the main module, notice the () at eol
+   sourceMod.get( "__main__" )()
+
+catch CodeError in e
+   > "Had an error: ", e
+end

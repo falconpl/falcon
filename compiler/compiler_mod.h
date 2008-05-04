@@ -46,9 +46,9 @@ public:
    const FlcLoader &loader() const { return m_loader; }
    FlcLoader &loader() { return m_loader; }
 
-   virtual bool isReflective();
-   virtual void getProperty( const String &propName, Item &prop );
-   virtual void setProperty( const String &propName, Item &prop );
+   virtual bool isReflective() const;
+   virtual void getProperty( VMachine *vm, const String &propName, Item &prop );
+   virtual void setProperty( VMachine *vm, const String &propName, Item &prop );
 
    // we don't provide a clone() method
 };

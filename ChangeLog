@@ -10,6 +10,7 @@ Feathers (0.8.9)
             Japanese characters too.
   * minor: REGEX using now PCRE 7.6
   * minor: Sockets and partially process compliant with interruption protocol
+  * bugfix: Compiler class wasn't correctly reflecting user-data.
 
 Feathers (0.8.8)
   * Major: It is now possible to unload arbitrary modules.

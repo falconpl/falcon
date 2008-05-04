@@ -51,12 +51,12 @@ CompilerIface::CompilerIface( CoreObject *owner, const String &path ):
 CompilerIface::~CompilerIface()
 {}
 
-bool CompilerIface::isReflective()
+bool CompilerIface::isReflective() const
 {
    return true;
 }
 
-void CompilerIface::getProperty( const String &propName, Item &prop )
+void CompilerIface::getProperty( VMachine *, const String &propName, Item &prop )
 {
    if( propName == "path" )
    {
@@ -97,7 +97,7 @@ void CompilerIface::getProperty( const String &propName, Item &prop )
    }
 }
 
-void CompilerIface::setProperty( const String &propName, Item &prop )
+void CompilerIface::setProperty( VMachine *, const String &propName, Item &prop )
 {
    if( propName == "path" && prop.isString() )
    {
