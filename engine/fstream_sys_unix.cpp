@@ -397,7 +397,7 @@ int32 GenericStream::writeAvailable( int32 msec, const Sys::SystemData *sysData 
    return 0;
 }
 
-UserData *GenericStream::clone()
+UserData *GenericStream::clone() const
 {
    GenericStream *ge = new GenericStream( *this );
    if ( ge->m_fsData == 0 )

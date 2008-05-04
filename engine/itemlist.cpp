@@ -417,7 +417,7 @@ void ItemListIterator::invalidate()
 }
 
 
-UserData *ItemListIterator::clone()
+UserData *ItemListIterator::clone() const
 {
    if ( m_element == 0 )
       return 0;

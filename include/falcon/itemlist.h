@@ -100,7 +100,7 @@ public:
 
    virtual void invalidate();
 
-   virtual UserData *clone();
+   virtual UserData *clone() const;
 
    // specific interface
    ItemListElement *getCurrentElement() const { return m_element; }

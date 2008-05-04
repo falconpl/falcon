@@ -198,7 +198,7 @@ bool TranscoderByte::put( uint32 chr )
    return ( m_stream->write( &b, 1 ) == 1 );
 }
 
-UserData *TranscoderByte::clone()
+UserData *TranscoderByte::clone() const
 {
    return new TranscoderByte( *this );
 }
@@ -249,7 +249,7 @@ bool TranscoderEOL::put( uint32 chr )
    return m_stream->put( chr );
 }
 
-UserData *TranscoderEOL::clone()
+UserData *TranscoderEOL::clone() const
 {
    return new TranscoderEOL( *this );
 }
@@ -370,7 +370,7 @@ bool TranscoderUTF8::put( uint32 chr )
    return ( m_stream->write( res, resCount ) == (int32) resCount);
 }
 
-UserData *TranscoderUTF8::clone()
+UserData *TranscoderUTF8::clone() const
 {
    return new TranscoderUTF8( *this );
 }
@@ -568,7 +568,7 @@ bool TranscoderUTF16::put( uint32 chr )
    return true;
 }
 
-UserData *TranscoderUTF16::clone()
+UserData *TranscoderUTF16::clone() const
 {
    return new TranscoderUTF16( *this );
 }
@@ -685,7 +685,7 @@ TranscoderCP1252::TranscoderCP1252( Stream *s, bool bOwn ):
    m_revTabSize = sizeof( s_rtable_cp1252 ) / sizeof( CP_ISO_UINT_TABLE );
 }
 
-UserData *TranscoderCP1252::clone()
+UserData *TranscoderCP1252::clone() const
 {
    return new TranscoderCP1252( *this );
 }
@@ -699,7 +699,7 @@ TranscoderISO8859_1::TranscoderISO8859_1( Stream *s, bool bOwn ):
    m_revTabSize = sizeof( s_rtable_iso8859_1 ) / sizeof( CP_ISO_UINT_TABLE );
 }
 
-UserData *TranscoderISO8859_1::clone()
+UserData *TranscoderISO8859_1::clone() const
 {
    return new TranscoderISO8859_1( *this );
 }
@@ -713,7 +713,7 @@ TranscoderISO8859_2::TranscoderISO8859_2( Stream *s, bool bOwn ):
    m_revTabSize = sizeof( s_rtable_iso8859_2 ) / sizeof( CP_ISO_UINT_TABLE );
 }
 
-UserData *TranscoderISO8859_2::clone()
+UserData *TranscoderISO8859_2::clone() const
 {
    return new TranscoderISO8859_2( *this );
 }
@@ -727,7 +727,7 @@ TranscoderISO8859_3::TranscoderISO8859_3( Stream *s, bool bOwn ):
    m_revTabSize = sizeof( s_rtable_iso8859_3 ) / sizeof( CP_ISO_UINT_TABLE );
 }
 
-UserData *TranscoderISO8859_3::clone()
+UserData *TranscoderISO8859_3::clone() const
 {
    return new TranscoderISO8859_3( *this );
 }
@@ -742,7 +742,7 @@ TranscoderISO8859_4::TranscoderISO8859_4( Stream *s, bool bOwn ):
    m_revTabSize = sizeof( s_rtable_iso8859_4 ) / sizeof( CP_ISO_UINT_TABLE );
 }
 
-UserData *TranscoderISO8859_4::clone()
+UserData *TranscoderISO8859_4::clone() const
 {
    return new TranscoderISO8859_4( *this );
 }
@@ -757,7 +757,7 @@ TranscoderISO8859_5::TranscoderISO8859_5( Stream *s, bool bOwn ):
    m_revTabSize = sizeof( s_rtable_iso8859_5 ) / sizeof( CP_ISO_UINT_TABLE );
 }
 
-UserData *TranscoderISO8859_5::clone()
+UserData *TranscoderISO8859_5::clone() const
 {
    return new TranscoderISO8859_5( *this );
 }
@@ -772,7 +772,7 @@ TranscoderISO8859_6::TranscoderISO8859_6( Stream *s, bool bOwn ):
    m_revTabSize = sizeof( s_rtable_iso8859_6 ) / sizeof( CP_ISO_UINT_TABLE );
 }
 
-UserData *TranscoderISO8859_6::clone()
+UserData *TranscoderISO8859_6::clone() const
 {
    return new TranscoderISO8859_6( *this );
 }
@@ -786,7 +786,7 @@ TranscoderISO8859_7::TranscoderISO8859_7( Stream *s, bool bOwn ):
    m_revTabSize = sizeof( s_rtable_iso8859_7 ) / sizeof( CP_ISO_UINT_TABLE );
 }
 
-UserData *TranscoderISO8859_7::clone()
+UserData *TranscoderISO8859_7::clone() const
 {
    return new TranscoderISO8859_7( *this );
 }
@@ -800,7 +800,7 @@ TranscoderISO8859_8::TranscoderISO8859_8( Stream *s, bool bOwn ):
    m_revTabSize = sizeof( s_rtable_iso8859_8 ) / sizeof( CP_ISO_UINT_TABLE );
 }
 
-UserData *TranscoderISO8859_8::clone()
+UserData *TranscoderISO8859_8::clone() const
 {
    return new TranscoderISO8859_8( *this );
 }
@@ -814,7 +814,7 @@ TranscoderISO8859_9::TranscoderISO8859_9( Stream *s, bool bOwn ):
    m_revTabSize = sizeof( s_rtable_iso8859_9 ) / sizeof( CP_ISO_UINT_TABLE );
 }
 
-UserData *TranscoderISO8859_9::clone()
+UserData *TranscoderISO8859_9::clone() const
 {
    return new TranscoderISO8859_9( *this );
 }
@@ -829,7 +829,7 @@ TranscoderISO8859_10::TranscoderISO8859_10( Stream *s, bool bOwn ):
    m_revTabSize = sizeof( s_rtable_iso8859_10 ) / sizeof( CP_ISO_UINT_TABLE );
 }
 
-UserData *TranscoderISO8859_10::clone()
+UserData *TranscoderISO8859_10::clone() const
 {
    return new TranscoderISO8859_10( *this );
 }
@@ -843,7 +843,7 @@ TranscoderISO8859_11::TranscoderISO8859_11( Stream *s, bool bOwn ):
    m_revTabSize = sizeof( s_rtable_iso8859_11 ) / sizeof( CP_ISO_UINT_TABLE );
 }
 
-UserData *TranscoderISO8859_11::clone()
+UserData *TranscoderISO8859_11::clone() const
 {
    return new TranscoderISO8859_11( *this );
 }
@@ -857,7 +857,7 @@ TranscoderISO8859_13::TranscoderISO8859_13( Stream *s, bool bOwn ):
    m_revTabSize = sizeof( s_rtable_iso8859_13 ) / sizeof( CP_ISO_UINT_TABLE );
 }
 
-UserData *TranscoderISO8859_13::clone()
+UserData *TranscoderISO8859_13::clone() const
 {
    return new TranscoderISO8859_13( *this );
 }
@@ -871,7 +871,7 @@ TranscoderISO8859_14::TranscoderISO8859_14( Stream *s, bool bOwn ):
    m_revTabSize = sizeof( s_rtable_iso8859_14 ) / sizeof( CP_ISO_UINT_TABLE );
 }
 
-UserData *TranscoderISO8859_14::clone()
+UserData *TranscoderISO8859_14::clone() const
 {
    return new TranscoderISO8859_14( *this );
 }
@@ -885,7 +885,7 @@ TranscoderISO8859_15::TranscoderISO8859_15( Stream *s, bool bOwn ):
    m_revTabSize = sizeof( s_rtable_iso8859_15 ) / sizeof( CP_ISO_UINT_TABLE );
 }
 
-UserData *TranscoderISO8859_15::clone()
+UserData *TranscoderISO8859_15::clone() const
 {
    return new TranscoderISO8859_15( *this );
 }
