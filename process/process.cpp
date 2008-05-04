@@ -24,7 +24,7 @@
 #include "version.h"
 
 /*#
-   @module process_module The Process Module.
+   @module process_module The Process Module
 
    The process module provides several functions to manage processes in the system
    and to manage interprocess communication. Child processes can be created and
@@ -54,8 +54,16 @@
    or method in this module may raise this error in case of unexpected system
    behavior.
 
+   @note To make the entities delcared in this module available to falcon scripts
+      use the command:
+      @code
+         load process
+      @endcode
+
+
    @beginmodule process_module
 */
+
 
 FALCON_MODULE_DECL( const Falcon::EngineData &data )
 {

@@ -1,0 +1,47 @@
+#
+# FALDOC - Falcon Documentation system
+#
+# Faldoc file for Feathers modules.
+#
+
+################################################
+# Documentation generic data
+################################################
+
+Title = Falcon Feathers - The Standard Modules Reference.
+Author = The Falcon Committee
+Version = 0.8.10
+
+################################################
+# Faldoc Input settings
+################################################
+
+Input.directory=../compiler
+Input.directory=../confparser
+Input.directory=../process
+Input.directory=../mxml
+Input.directory=../regex
+Input.directory=../socket
+Input.directory=../zlib
+
+Input.wildcard=*.cpp     #we use only...
+Input.recursive=false
+
+# Other files may be specified here
+Input.extra=main.fd
+
+################################################
+# Faldoc Output settings
+################################################
+
+Output.module=html
+
+################################################
+# Faldoc HTML Output settings
+# Each module can be self-configured through
+# Output.<module>.<parameters> configs
+################################################
+
+Output.html.directory=html
+Output.html.url=.
+Output.html.doctitle=Falcon Feathers Function Reference

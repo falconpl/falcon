@@ -651,7 +651,7 @@ FALCON_FUNC  Process_getInput ( ::Falcon::VMachine *vm )
 }
 
 /*#
-   @method Process_getOutput Process
+   @method getOutput Process
    @brief Returns the process output stream.
    @return The child process output stream (read-only)
 
