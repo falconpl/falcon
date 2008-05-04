@@ -38,7 +38,7 @@ FALCON_FUNC  falcon_processKill ( ::Falcon::VMachine *vm );
 */
 FALCON_FUNC  Process_init ( ::Falcon::VMachine *vm );
 FALCON_FUNC  Process_wait ( ::Falcon::VMachine *vm );
-FALCON_FUNC  Process_close ( ::Falcon::VMachine *vm );
+FALCON_FUNC  Process_terminate ( ::Falcon::VMachine *vm );
 FALCON_FUNC  Process_value ( ::Falcon::VMachine *vm );
 FALCON_FUNC  Process_getInput ( ::Falcon::VMachine *vm );
 FALCON_FUNC  Process_getOutput ( ::Falcon::VMachine *vm );

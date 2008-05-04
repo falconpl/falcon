@@ -11,6 +11,9 @@ Feathers (0.8.9)
   * minor: REGEX using now PCRE 7.6
   * minor: Sockets and partially process compliant with interruption protocol
   * bugfix: Compiler class wasn't correctly reflecting user-data.
+  * major: Renamed Process.close into Process.terminate, and changed its semantics;
+           Now it doesn't wait anymore for the process to be complete, it is
+           necessary to wait through Process.Value().
 
 Feathers (0.8.8)
   * Major: It is now possible to unload arbitrary modules.

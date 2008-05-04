@@ -31,24 +31,15 @@ try
    procout = proc.getOutput()
    strout = ""
 
-
    // until the process is done, read what it has to say
-   while proc.value() == -1
-      if procout.readAvailable( 250 )
+   while (result = proc.value() ) == -1
+      if procout.readAvailable( 0.1 )
          strout += procout.read( 1024 )
       end
    end
 
-   printl( "ProcValue ", proc.value() )
-
-   // read last data that the proces may have left
-   while procout.readAvailable()
-      strout += procout.read( 1024 )
-   end
-   proc.close()
-
-   if ( proc.value() != 0 )
-      printl( "Process ", args[0], " exited with error ", proc.value() )
+   if result
+      printl( "Process ", args[0], " exited with error ", result )
    else
       printl( "Process ended correctly. Here is the result:" )
       printl( strout )

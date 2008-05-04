@@ -23,6 +23,40 @@
 
 #include "version.h"
 
+/*#
+   @module process_module The Process Module.
+
+   The process module provides several functions to manage processes in the system
+   and to manage interprocess communication. Child processes can be created and
+   managed via the Process class, which provides a set of streams that can be read
+   and written synchronously and polled for activity.
+
+   To provide this functionality, the Process class requires the service called
+   “Stream” normally provided by the RTL library. Embedders that wish to allow the
+   scripts to load this module should provide RTL to scripts, or provide otherwise
+   the “Stream” service in the Virtual Machines that will run those scripts.
+   Failing to do so will cause the stream oriented methods of the Process class to
+   raise an error. The generic process management functions in the module, and also
+   the generic child-process management methods in the Process class do not require
+   this service, so embedders not willing to provide RTL may just turn overload the
+   sensible Process methods or mask the Process class right away (or just ignore
+   this fact letting the error to be raised in case of mis-usage).
+
+   As the Falcon command line automatically loads the RTL, this remark does not
+   apply to stand-alone scripts.
+
+   The Process module declares a ProcessError class, derived from core Error class,
+   which doesn't change any of its property or method. The ProcessError class is
+   used to mark errors raised by this module.
+
+   While the OS typically ensures that none of the functions declared in this
+   module may actually fail, unless system conditions are critical, every function
+   or method in this module may raise this error in case of unexpected system
+   behavior.
+
+   @beginmodule process_module
+*/
+
 FALCON_MODULE_DECL( const Falcon::EngineData &data )
 {
    // set the static engine data
@@ -59,7 +93,7 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    // Process class
    Falcon::Symbol *proc_class = self->addClass( "Process", Falcon::Ext::Process_init );
    self->addClassMethod( proc_class, "wait", Falcon::Ext::Process_wait );
-   self->addClassMethod( proc_class, "close", Falcon::Ext::Process_close );
+   self->addClassMethod( proc_class, "terminate", Falcon::Ext::Process_terminate );
    self->addClassMethod( proc_class, "value", Falcon::Ext::Process_value );
    self->addClassMethod( proc_class, "getInput", Falcon::Ext::Process_getInput );
    self->addClassMethod( proc_class, "getOutput", Falcon::Ext::Process_getOutput );
