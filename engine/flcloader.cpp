@@ -60,6 +60,10 @@ Stream *FlcLoader::openResource( const String &path, t_filetype type )
       Stream *inputStream = TranscoderFactory( m_srcEncoding, in, true );
       if( inputStream != 0 )
          return inputStream;
+
+
+      raiseError( e_unknown_encoding, "loadSource" );
+      return 0;
    }
 
    return in;

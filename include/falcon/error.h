@@ -212,6 +212,7 @@ const int e_nofile =               503;
 const int e_invformat =            504;
 const int e_loader_unsupported =   505;
 const int e_io_error =             506;
+const int e_unknown_encoding =     507;
 
 const int e_inv_params =           900;
 const int e_missing_params =       901;

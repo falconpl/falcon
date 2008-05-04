@@ -211,6 +211,7 @@ namespace msg {
       err_invformat,
       err_loader_unsupported,
       err_io_error,
+      err_unknown_encoding,
 
 
       err_inv_params,

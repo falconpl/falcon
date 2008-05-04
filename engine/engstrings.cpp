@@ -212,6 +212,7 @@ char *en_table[] =
       "Invalid or damaged Falcon VM file",
       "Operation not supported by the module loader",
       "Generic I/O Error",
+      "Unknown encoding name",
 
       "Invalid parameters",
       "Mandatory parameter missing",
