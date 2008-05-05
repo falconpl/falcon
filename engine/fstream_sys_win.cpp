@@ -423,7 +423,7 @@ void GenericStream::setError( int64 errorCode )
       status( (t_status) (((int)status()) & ~(int)Stream::t_error ));
 }
 
-UserData *GenericStream::clone()
+UserData *GenericStream::clone() const
 {
    GenericStream *gs = new GenericStream( *this );
    if ( gs->m_fsData == 0 )

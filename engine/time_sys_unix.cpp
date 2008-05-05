@@ -53,6 +53,10 @@ void currentTime( ::Falcon::TimeStamp &ts )
 
 TimeZone getLocalTimeZone()
 {
+   // this function is not reentrant, but it's ok, as
+   // the worst thing that may happen in MT or multiprocess
+   // is double calculation of the cached value.
+
    // infer timezone by checking gmtime/localtime
    if( s_cached_timezone == tz_local )
    {

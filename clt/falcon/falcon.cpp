@@ -834,12 +834,12 @@ int main( int argc, char *argv[] )
 
    // push the core module
    Module *core = core_module_init();
-   bool res = vmachine->link( core );
-   fassert( res );  // should not fail
+   LiveModule *res = vmachine->link( core );
+   fassert( res != 0 );  // should not fail
    core->decref();
 
    res = vmachine->link( falcon_rtl );
-   fassert( res ); // should not fail
+   fassert( res != 0 ); // should not fail
    // abandon our reference to the rtl.
    falcon_rtl->decref();
 
