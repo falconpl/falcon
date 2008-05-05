@@ -86,7 +86,7 @@ static int DBIHandle_realSqlExpand( VMachine *vm, DBIHandle *dbh, String &sql, i
    Item *sqlI = vm->param( startAt );
    if ( sqlI == 0 || ! sqlI->isString() ) {
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                                         .origin( e_orig_runtime ) ) );
+                  .extra("S") ) );
       return 0;
    }
 
@@ -351,9 +351,10 @@ static void DBIRecord_execute( VMachine *vm, DBIHandle *dbh, const String &sql )
       affectedRows = dbh->execute( sql, retval );
    else {
       Item *trI = vm->param( 0 );
-      if ( trI == 0 || ! trI->isObject() ) {
+      if ( trI == 0 || ! trI->isObject() || ! trI->asObject()->derivedFrom( "DBITransaction" ) )
+      {
          vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                                      .origin( e_orig_runtime ) ) );
+               .extra( "DBITransaction" ) ) );
          return;
       }
       CoreObject *trO = trI->asObject();
@@ -367,7 +368,7 @@ static void DBIRecord_execute( VMachine *vm, DBIHandle *dbh, const String &sql )
       String errorMessage;
       dbh->getLastError( errorMessage );
       vm->raiseModError( new DBIError( ErrorParam( retval, __LINE__ )
-                                      .desc( errorMessage ) ) );
+               .desc( errorMessage ) ) );
    }
 }
 
@@ -395,7 +396,7 @@ static int DBIRecord_getPersistPropertyNames( VMachine *vm, CoreObject *self, St
    } else if ( ! persistI->isArray() ) {
       // They gave a _persist property, but it's not an array
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                                         .origin( e_orig_runtime ) ) );
+                                         .extra( "_persist.type()!=A" ) ) );
       return 0;
    } else {
       // They gave a _persist property, trust it
@@ -472,7 +473,7 @@ FALCON_FUNC DBIConnect( VMachine *vm )
    Item *paramsI = vm->param(0);
    if (  paramsI == 0 || ! paramsI->isString() ) {
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                                         .origin( e_orig_runtime ) ) );
+                                         .extra( "S" ) ) );
       return;
    }
 
@@ -719,7 +720,7 @@ FALCON_FUNC DBIHandle_queryOneObject( VMachine *vm )
    Item *objI = vm->param( 0 );
    if ( objI == 0 || ! objI->isObject() ) {
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                                        .origin( e_orig_runtime ) ) );
+                                        .extra( "O" ) ) );
       return;
    }
 
@@ -731,6 +732,7 @@ FALCON_FUNC DBIHandle_queryOneObject( VMachine *vm )
    }
 
    int cCount = recSet->getColumnCount();
+   //TODO: Bufferize this things.
    char **cNames = (char **) malloc( sizeof( char ) * cCount * DBI_MAX_COLUMN_NAME_SIZE );
    dbi_type *cTypes = DBIHandle_getTypes( recSet );
 
@@ -828,7 +830,7 @@ FALCON_FUNC DBIHandle_getLastInsertedId( VMachine *vm )
       Item *sequenceNameI = vm->param( 0 );
       if ( sequenceNameI == 0 || ! sequenceNameI->isString() ) {
          vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                                           .origin( e_orig_runtime ) ) );
+                                           .extra( "S" ) ) );
          return;
       }
       String sequenceName = *sequenceNameI->asString();
@@ -977,8 +979,6 @@ FALCON_FUNC DBITransaction_close( VMachine *vm )
    DBITransaction *dbt = static_cast<DBITransaction *>( self->getUserData() );
 
    dbt->close();
-
-   vm->retval( 0 );
 }
 
 /*#
@@ -1003,8 +1003,6 @@ FALCON_FUNC DBITransaction_commit( VMachine *vm )
                                       .desc( errorMessage ) ) );
       return;
    }
-
-   vm->retval( 1 );
 }
 
 /*#
@@ -1029,8 +1027,6 @@ FALCON_FUNC DBITransaction_rollback( VMachine *vm )
                                       .desc( errorMessage ) ) );
       return;
    }
-
-   vm->retval( 1 );
 }
 
 /*#
@@ -1053,6 +1049,36 @@ FALCON_FUNC DBITransaction_rollback( VMachine *vm )
 */
 FALCON_FUNC DBITransaction_openBlob( VMachine *vm )
 {
+   CoreObject *self = vm->self().asObject();
+   DBITransaction *dbt = static_cast<DBITransaction *>( self->getUserData() );
+
+   Item *i_blobID = vm->param( 0 );
+   if ( i_blobID == 0 || ! i_blobID->isString() ) {
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                  .extra("S") ) );
+      return;
+   }
+
+   dbi_status retval;
+   DBIBlobStream *stream = dbt->openBlob( *i_blobID->asString(), retval );
+   if ( stream == 0 ) {
+      String errorMessage;
+      dbt->getLastError( errorMessage );
+      vm->raiseModError( new DBIError( ErrorParam( retval, __LINE__ )
+                                      .desc( errorMessage ) ) );
+      return;
+   }
+
+   // create the class suggested by the stream itself
+   Item *blobstream_class = vm->findWKI( stream->getFalconClassName() );
+   // if the driver did his things, the blob stream subclass should exist.
+   fassert( blobstream_class != 0 );
+
+   CoreObject *objStream = blobstream_class->asClass()->createInstance();
+   // then apply the class to its own stream
+   objStream->setUserData( stream );
+   // and return it
+   vm->retval( objStream );
 }
 
 /*#
@@ -1293,7 +1319,7 @@ FALCON_FUNC DBIRecordset_fetchObject( VMachine *vm )
    Item *oI = vm->param( 0 );
    if ( oI == 0 || ! oI->isObject() ) {
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                                        .origin( e_orig_runtime ) ) );
+                                        .extra( "0" ) ) );
       return;
    }
 
@@ -1431,7 +1457,6 @@ static void internal_asString_or_BlobID( VMachine *vm, int mode )
       )
    {
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
-            .origin( e_orig_runtime )
             .extra( "N,[S]") ) );
       return;
    }
@@ -1494,7 +1519,6 @@ FALCON_FUNC DBIRecordset_asBoolean( VMachine *vm )
    Item *columnIndexI = vm->param( 0 );
    if ( columnIndexI == 0 || ! columnIndexI->isInteger() ) {
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
-            .origin( e_orig_runtime )
             .extra( "N" ) ) );
       return;
    }
@@ -1532,7 +1556,6 @@ FALCON_FUNC DBIRecordset_asInteger( VMachine *vm )
    Item *columnIndexI = vm->param( 0 );
    if ( columnIndexI == 0 || ! columnIndexI->isInteger() ) {
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
-            .origin( e_orig_runtime )
             .extra("N") ) );
       return;
    }
@@ -1568,7 +1591,6 @@ FALCON_FUNC DBIRecordset_asInteger64( VMachine *vm )
    Item *columnIndexI = vm->param( 0 );
    if ( columnIndexI == 0 || ! columnIndexI->isInteger() ) {
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
-            .origin( e_orig_runtime )
             .extra("N") ) );
       return;
    }
@@ -1604,7 +1626,6 @@ FALCON_FUNC DBIRecordset_asNumeric( VMachine *vm )
    Item *columnIndexI = vm->param( 0 );
    if ( columnIndexI == 0 || ! columnIndexI->isInteger() ) {
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
-            .origin( e_orig_runtime )
             .extra("N") ) );
       return;
    }
@@ -1645,7 +1666,6 @@ static void internal_asDate_or_time( VMachine *vm, int mode )
       )
    {
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
-            .origin( e_orig_runtime )
             .extra( "N,[TimeStamp]" ) ) );
       return;
    }
@@ -1673,7 +1693,6 @@ static void internal_asDate_or_time( VMachine *vm, int mode )
       case 3:
          retval = dbr->asDateTime( cIdx, *ts );
       break;
-
    }
 
    if ( retval == dbi_nil_value )
@@ -1811,10 +1830,7 @@ FALCON_FUNC DBIRecordset_getLastError( VMachine *vm )
 
    GarbageString *gs = new GarbageString( vm );
    gs->bufferize( value );
-
    vm->retval( gs );
-
-   vm->retval( 0 );
 }
 
 /*#
