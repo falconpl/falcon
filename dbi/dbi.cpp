@@ -83,11 +83,15 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    // create the base class DBITransaction for falcon
    Falcon::Symbol *trans_class = self->addClass( "%DBITransaction", false ); // private class
    trans_class->setWKS( true );
-   self->addClassMethod( trans_class, "query",    Falcon::Ext::DBITransaction_query );
-   self->addClassMethod( trans_class, "execute",  Falcon::Ext::DBITransaction_execute );
-   self->addClassMethod( trans_class, "commit",   Falcon::Ext::DBITransaction_commit );
-   self->addClassMethod( trans_class, "rollback", Falcon::Ext::DBITransaction_rollback );
-   self->addClassMethod( trans_class, "close",    Falcon::Ext::DBITransaction_close );
+   self->addClassMethod( trans_class, "query",       Falcon::Ext::DBITransaction_query );
+   self->addClassMethod( trans_class, "execute",     Falcon::Ext::DBITransaction_execute );
+   self->addClassMethod( trans_class, "commit",      Falcon::Ext::DBITransaction_commit );
+   self->addClassMethod( trans_class, "rollback",    Falcon::Ext::DBITransaction_rollback );
+   self->addClassMethod( trans_class, "close",       Falcon::Ext::DBITransaction_close );
+   self->addClassMethod( trans_class, "openBlob",    Falcon::Ext::DBITransaction_openBlob );
+   self->addClassMethod( trans_class, "createBlob",  Falcon::Ext::DBITransaction_createBlob );
+   self->addClassMethod( trans_class, "readBlob",    Falcon::Ext::DBITransaction_readBlob );
+   self->addClassMethod( trans_class, "writeBlob",   Falcon::Ext::DBITransaction_writeBlob );
 
    /*#
     @class DBIRecordset
@@ -110,6 +114,7 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    self->addClassMethod( rs_class, "asDate",         Falcon::Ext::DBIRecordset_asDate );
    self->addClassMethod( rs_class, "asTime",         Falcon::Ext::DBIRecordset_asTime );
    self->addClassMethod( rs_class, "asDateTime",     Falcon::Ext::DBIRecordset_asDateTime );
+   self->addClassMethod( rs_class, "asBlobID",       Falcon::Ext::DBIRecordset_asBlobID );
    self->addClassMethod( rs_class, "getRowCount",    Falcon::Ext::DBIRecordset_getRowCount );
    self->addClassMethod( rs_class, "getColumnCount", Falcon::Ext::DBIRecordset_getColumnCount );
    self->addClassMethod( rs_class, "getColumnTypes", Falcon::Ext::DBIRecordset_getColumnTypes );
@@ -190,7 +195,7 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
 
    /*#
     @class DBIError
-    @brief DBI error exception
+    @brief DBI specific error.
 
     Inherited class from Error to distinguish from a standard Falcon error. In many
     cases, DBIError.extra will contain the SQL query that caused the problem.
@@ -199,8 +204,23 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    // create the base class DBIError for falcon
    Falcon::Symbol *error_class = self->addExternalRef( "Error" ); // it's external
    Falcon::Symbol *dbierr_cls = self->addClass( "DBIError", Falcon::Ext::DBIError_init );
-   dbierr_cls->setWKS( "DBIerror" );
+   dbierr_cls->setWKS( true );
    dbierr_cls->getClassDef()->addInheritance(  new Falcon::InheritDef( error_class ) );
+
+   /*#
+    @class DBIBlobStream
+    @brief Specific DBI stream used to read and write to and from blobs.
+
+    Inherits from the Stream class in the RTL. This is actually an abstract class;
+    instances of it can be returned by some blob-related methods in the DBI class.
+   */
+
+   Falcon::Symbol *stream_class = self->addExternalRef( "Stream" ); // it's external
+   Falcon::Symbol *blobstream_cls = self->addClass( "DBIBlobStream" );
+   blobstream_cls->setWKS( true ); // can be created by the VM but...
+   blobstream_cls->exported( false ); // ... not instantiable by the scripts
+   blobstream_cls->getClassDef()->addInheritance( new Falcon::InheritDef( stream_class ) );
+   self->addClassMethod( blobstream_cls, "getBlobID", Falcon::Ext::DBIBlobStream_getBlobID );
 
    // we're done
    return self;

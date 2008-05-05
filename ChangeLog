@@ -1,0 +1,4 @@
+Version 1.0.0
+  * Major: added BLOB support (still to be finalized).
+  * Performance: Added optional re-useable parameters for strings and
+                 timestamps.

@@ -369,6 +369,11 @@ dbi_status DBIRecordsetPgSQL::getLastError( String &description )
    return dbi_ok;
 }
 
+dbi_status DBIRecordsetPgSQL::asBlobID( const int columnIndex, String &value )
+{
+   return dbi_not_implemented;
+}
+
 /******************************************************************************
  * Transaction class
  *****************************************************************************/
@@ -517,6 +522,20 @@ dbi_status DBITransactionPgSQL::getLastError( String &description )
 {
    return dbi_ok;
 }
+
+DBIBlobStream *DBITransactionPgSQL::openBlob( const String &blobId, dbi_status &status )
+{
+   status = dbi_not_implemented;
+   return 0;
+}
+
+DBIBlobStream *DBITransactionPgSQL::createBlob( dbi_status &status, const String &params,
+      bool bBinary )
+{
+   status = dbi_not_implemented;
+   return 0;
+}
+
 
 /******************************************************************************
  * DB Handler class

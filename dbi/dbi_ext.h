@@ -56,6 +56,11 @@ FALCON_FUNC DBITransaction_execute( VMachine *vm );
 FALCON_FUNC DBITransaction_close( VMachine *vm );
 FALCON_FUNC DBITransaction_commit( VMachine *vm );
 FALCON_FUNC DBITransaction_rollback( VMachine *vm );
+FALCON_FUNC DBITransaction_openBlob( VMachine *vm );
+FALCON_FUNC DBITransaction_createBlob( VMachine *vm );
+FALCON_FUNC DBITransaction_readBlob( VMachine *vm );
+FALCON_FUNC DBITransaction_writeBlob( VMachine *vm );
+
 
 //=====================
 // DBI Recordset
@@ -77,6 +82,7 @@ FALCON_FUNC DBIRecordset_asNumeric( VMachine *vm );
 FALCON_FUNC DBIRecordset_asDate( VMachine *vm );
 FALCON_FUNC DBIRecordset_asTime( VMachine *vm );
 FALCON_FUNC DBIRecordset_asDateTime( VMachine *vm );
+FALCON_FUNC DBIRecordset_asBlobID( VMachine *vm );
 FALCON_FUNC DBIRecordset_getLastError( VMachine *vm );
 FALCON_FUNC DBIRecordset_close( VMachine *vm );
 
@@ -88,6 +94,11 @@ FALCON_FUNC DBIRecord_init( VMachine *vm );
 FALCON_FUNC DBIRecord_insert( VMachine *vm );
 FALCON_FUNC DBIRecord_update( VMachine *vm );
 FALCON_FUNC DBIRecord_delete( VMachine *vm );
+
+//=====================
+// DBI Blob Stream
+//=====================
+FALCON_FUNC DBIBlobStream_getBlobID( VMachine *vm );
 
 //=====================
 // DBI Error class

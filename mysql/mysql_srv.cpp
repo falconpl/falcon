@@ -144,6 +144,11 @@ dbi_status DBIRecordsetMySQL::asString( const int columnIndex, String &value )
    return dbi_ok;
 }
 
+dbi_status DBIRecordsetMySQL::asBlobID( const int columnIndex, String &value )
+{
+   return dbi_not_implemented;
+}
+
 dbi_status DBIRecordsetMySQL::asBoolean( const int columnIndex, bool &value )
 {
    if ( columnIndex >= m_columnCount )
@@ -468,6 +473,20 @@ void DBITransactionMySQL::close()
 dbi_status DBITransactionMySQL::getLastError( String &description )
 {
    return dbi_ok;
+}
+
+
+DBIBlobStream *DBITransactionMySQL::openBlob( const String &blobId, dbi_status &status )
+{
+   status = dbi_not_implemented;
+   return 0;
+}
+
+DBIBlobStream *DBITransactionMySQL::createBlob( dbi_status &status, const String &params,
+      bool bBinary )
+{
+   status = dbi_not_implemented;
+   return 0;
 }
 
 /******************************************************************************

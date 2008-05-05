@@ -20,6 +20,6 @@ ADD_LIBRARY( sqlite3 MODULE
 )
 
 #Link
-TARGET_LINK_LIBRARIES(sqlite3 falcon_engine)
+TARGET_LINK_LIBRARIES(sqlite3 falcon_engine pthread)
 SET_TARGET_PROPERTIES(sqlite3 PROPERTIES PREFIX "") #Install
 FALCON_MODULE_INSTALL( sqlite3 )

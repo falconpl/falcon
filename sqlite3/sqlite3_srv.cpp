@@ -285,6 +285,11 @@ dbi_status DBIRecordsetSQLite3::asDateTime( const int columnIndex, TimeStamp &va
    return dbi_ok;
 }
 
+dbi_status DBIRecordsetSQLite3::asBlobID( const int columnIndex, String &value )
+{
+   return dbi_not_implemented;
+}
+
 int DBIRecordsetSQLite3::getRowCount()
 {
    return -1; // SQLite3 will not tell us how many rows in a result set
@@ -446,6 +451,19 @@ void DBITransactionSQLite3::close()
 dbi_status DBITransactionSQLite3::getLastError( String &description )
 {
    return dbi_ok;
+}
+
+DBIBlobStream *DBITransactionSQLite3::openBlob( const String &blobId, dbi_status &status )
+{
+   status = dbi_not_implemented;
+   return 0;
+}
+
+DBIBlobStream *DBITransactionSQLite3::createBlob( dbi_status &status, const String &params,
+      bool bBinary )
+{
+   status = dbi_not_implemented;
+   return 0;
 }
 
 /******************************************************************************

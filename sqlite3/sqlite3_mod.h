@@ -28,15 +28,15 @@ class DBIRecordsetSQLite3 : public DBIRecordset
 protected:
    int m_row;
    int m_columnCount;
-   
+
    sqlite3_stmt *m_res;
-   
+
    static dbi_type getFalconType( int typ );
-   
+
 public:
    DBIRecordsetSQLite3( DBIHandle *dbh, sqlite3_stmt *res );
    ~DBIRecordsetSQLite3();
-   
+
    virtual dbi_status next();
    virtual int getRowCount();
    virtual int getRowIndex();
@@ -51,6 +51,7 @@ public:
    virtual dbi_status asDate( const int columnIndex, TimeStamp &value );
    virtual dbi_status asTime( const int columnIndex, TimeStamp &value );
    virtual dbi_status asDateTime( const int columnIndex, TimeStamp &value );
+   virtual dbi_status asBlobID( const int columnIndex, String &value );
    virtual void close();
    virtual dbi_status getLastError( String &description );
 };
@@ -59,10 +60,10 @@ class DBITransactionSQLite3 : public DBITransaction
 {
 protected:
    bool m_inTransaction;
-   
+
 public:
    DBITransactionSQLite3( DBIHandle *dbh );
-   
+
    virtual DBIRecordset *query( const String &query, dbi_status &retval );
    virtual int execute( const String &query, dbi_status &retval );
    virtual dbi_status begin();
@@ -70,22 +71,25 @@ public:
    virtual dbi_status rollback();
    virtual void close();
    virtual dbi_status getLastError( String &description );
+   virtual DBIBlobStream *openBlob( const String &blobId, dbi_status &status );
+   virtual DBIBlobStream *createBlob( dbi_status &status, const String &params= "",
+      bool bBinary = false );
 };
 
 class DBIHandleSQLite3 : public DBIHandle
 {
 protected:
    sqlite3 *m_conn;
-   
+
    DBITransactionSQLite3 *m_connTr;
-   
+
 public:
    DBIHandleSQLite3();
    DBIHandleSQLite3( sqlite3 *conn );
    virtual ~DBIHandleSQLite3() {}
-   
+
    sqlite3 *getConn() { return m_conn; }
-   
+
    virtual DBITransaction *startTransaction();
    virtual dbi_status closeTransaction( DBITransaction *tr );
    virtual DBIRecordset *query( const String &sql, dbi_status &retval );
@@ -101,9 +105,9 @@ class DBIServiceSQLite3 : public DBIService
 {
 public:
    DBIServiceSQLite3() : DBIService( "DBI_sqlite3" ) {}
-   
+
    virtual dbi_status init();
-   virtual DBIHandle *connect( const String &parameters, bool persistent, 
+   virtual DBIHandle *connect( const String &parameters, bool persistent,
                                dbi_status &retval, String &errorMessage );
    virtual CoreObject *makeInstance( VMachine *vm, DBIHandle *dbh );
 };

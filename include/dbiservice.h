@@ -41,6 +41,7 @@ typedef enum {
    dbit_time,
    dbit_datetime,
    dbit_boolean,
+   dbit_blob,
 }
 dbi_type;
 
@@ -102,10 +103,71 @@ typedef enum {
    /** There was a non-string item in the "_persist" property. */
    dbi_persist_has_no_string = 17,
 
+   /** The blob ID is invalid or doesn't exist. */
+   dbi_blob_id_invalid = 18,
+
+   /** The blob cannot be opened. */
+   dbi_blob_open_failure = 19,
+
+   /** The blob cannot be written. */
+   dbi_blob_write_failure = 20,
+
+   /** The blob cannot be read. */
+   dbi_blob_read_failure = 21,
+
+   /** The blob cannot be closed/commited. */
+   dbi_blob_close_failure = 22,
+
    /** an unknown or generic error has occurred */
    dbi_error=99
 }
 dbi_status;
+
+/**
+ * Abstraction of blob stream class.
+ *
+ * The DBIBlobStream class holds a stream specialized in blob writing.
+ * It just provides an extra BlobID entry and driver specific setting
+ * parser that will be hooked by the drivers.
+ */
+class DBIBlobStream : public Stream
+{
+   String m_blobID;
+   String m_falconClassName;
+
+protected:
+   DBIBlobStream():
+      m_falconClassName( "DBIBlobStream"),
+      Stream( t_membuf )
+   {}
+
+   /**
+      Sets a falcon specific class name that should wrap this subclass.
+   */
+   DBIBlobStream( const String &className ):
+      m_falconClassName( className ),
+      Stream( t_membuf )
+   {}
+
+public:
+
+   void setBlobID( const String &blobID ) { m_blobID = blobID; }
+   const String &getBlobID() { return m_blobID; }
+
+   /** Retiurns the Falcon class name that encapsulates this stream.
+      If drivers don't want to bother creating a new Stream class for
+      their own blobs, they can just use the default DBIBlobStream class
+      declared in the base DBI.
+
+      However, submodules may be willing to provide more funcionalities
+      on open blobs, in example, they may return informations about the
+      blob size, fragments, type and so on. In that case, specific per-module
+      blob class name may be returned; In case an encapsulation is needed
+      by the script, the DBI module will ask the VM to instance the required
+      blob class, and will use that to the Falcon::DBIBlobStream instance.
+   */
+   virtual const String &getFalconClassName() const { return m_falconClassName; }
+};
 
 /**
  * Abstraction of recordset class.
@@ -193,6 +255,13 @@ public:
     * Get a value from the current row as a datetime
     */
    virtual dbi_status asDateTime( const int columnIndex, TimeStamp &value )=0;
+
+   /**
+    * Return the content of a column as a driver-specific Blob ID.
+    * The ID should be created so that it is meaningful for the openBlob method.
+    */
+   virtual dbi_status asBlobID( const int columnIndex, String &value )=0;
+
 
    /**
     * Returns last error and its description.
@@ -283,6 +352,32 @@ public:
     * \return the last operation status
     */
    virtual dbi_status getLastError( String &description )=0;
+
+   /**
+    * Open a blob entity.
+    * \param blobId the ID through which the field is known.
+    * \param stauts a DBI error code (on error).
+    * \return On success, an open stream to the blob, or 0 on failure.
+    * The BlobID database-specific, and may also be a fully binary value (i.e. a 64 bit numeric ID).
+    * It's responsibility of the driver to correctly decode the contents of the blob.
+    */
+   virtual DBIBlobStream *openBlob( const String &blobId, dbi_status &status )=0;
+
+   /**
+    * Create a new blob entity.
+    * \param stauts a DBI error code (on error).
+    * \param params Driver specific settings (i.e. blob subtype).
+    * \param bBinary The caller will set this to true to override generic parameters.
+    * \return On success, an open stream to the blob, or 0 on failure.
+    *
+    * The BlobID database-specific, and may also be a fully binary value (i.e. a 64 bit numeric ID).
+    * It's responsibility of the driver to correctly decode the contents of the blob.
+    *
+    * If bBinary is true, the drivers should try to create a binary-oriented blob, while
+    * if its false, they should use a text-oriented blob. Driver specific parameters must
+    * override this setting, which must be ignored in case a specific setting is provided.
+    */
+   virtual DBIBlobStream *createBlob( dbi_status &status, const String &params= "", bool bBinary = false )=0;
 };
 
 /**

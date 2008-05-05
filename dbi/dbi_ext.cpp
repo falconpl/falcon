@@ -1032,6 +1032,107 @@ FALCON_FUNC DBITransaction_rollback( VMachine *vm )
 
    vm->retval( 1 );
 }
+
+/*#
+   @method openBlob DBITransaction
+   @param Opens an existing blob entity.
+   @param blobID A string containing the blob ID to be opened.
+   @return On success, a DBIBlobStream that can be used to read or write from/to the blob.
+   @raise DBIError on error.
+
+   This method allows to open a stream towards a blob object. The returned stream
+   can be manipulated as any other stream; it can be seeked, it can be truncated,
+   it can be read and written both binary and text oriented.
+
+   If the amount of data to be written or read is limited, or if many blobs must
+   be read or written in row, prefer the @a DBITransaction.readBlob and
+   @a DBITransaction.createBlob methods.
+
+   Drivers may return instances of the DBIBlobStream class, or provide their own
+   specific sublcasses instead.
+*/
+FALCON_FUNC DBITransaction_openBlob( VMachine *vm )
+{
+}
+
+/*#
+   @method createBlob DBITransaction
+   @brief Creates a new blob entity.
+   @optparam data A string or a membuffer to be written.
+   @optparam options A string containing driver specific blob creation parameters.
+   @return A stream that can be used to read or write from/to the blob,
+           or just the blob ID.
+   @raise DBIError on error.
+
+   This method creates a Blob entity in the database. If a data member is not given,
+   then a @a DBIBlobStream class is returned; the returned instance can be used to
+   fill the blob with data and to retreive informations about the blob entity.
+
+   If @b data member is given, it must be either a string or a membuf, and it will be
+   used to fill the blob entity. If a string is given, it will be written through the
+   string oriented Stream.writeText method, while if it's a membuf, it will be written
+   through the byte oriented Stream.write method (although the underlying driver may
+   just treat them the same, or rather use the @b options parameter to decide how
+   to write the data). After the data is written, the created blob is closed and its
+   ID is returned instead of the blob stream.
+
+   The @b options parameter can be used to send driver specific options that may control
+   the type and creation parameters of the blog entity. Please, refer to the specific
+   DBI driver documentation for details.
+
+   Drivers may return instances of the DBIBlobStream class, or provide their own
+   specific sublcasses instead.
+*/
+FALCON_FUNC DBITransaction_createBlob( VMachine *vm )
+{
+}
+
+/*#
+   @method readBlob DBITransaction
+   @brief Reads a whole blob entity.
+   @param blobId The ID of the blob entity to be read.
+   @optparam data A string or a MemBuf to be read.
+   @optparam maxlen Maximum length read from the blob.
+   @return A string (or a MemBuf, if that was used as a parmeter) containing the whole blob data.
+   @raise DBIError on error or if the ID is invalid.
+
+   This method reads a whole blob in memory. If the parameter @b data is not given, then a new
+   string, long enough to store all the blob, will be created. If it's given and it's a string,
+   then the string buffer will be used, and it will be eventually expanded if needed. If it's
+   a MemBuf, then the method will read at maximum the size of the MemBuffer in bytes.
+
+   The maximum size of the input may be also limited by the @b maxlen parameter. If both
+   @b maxlen and @b data (as a MemBuf) are provided, the maximum size actually read will be
+   the minimum of @b maxlen, the @b data MemBuf size and the blob entity size.
+
+   @note It is possible to give a maximum length to be read and create dynamically the needed
+   space by setting @b data to nil and passing @b maxlen.
+*/
+FALCON_FUNC DBITransaction_readBlob( VMachine *vm )
+{
+}
+
+/*#
+   @method write DBITransaction
+   @brief Overwrites an existing blob entity.
+   @param blobId The ID of the blob entity to be overwritten.
+   @param data A string or a MemBuf to be written.
+   @optparam start Character (if data is string) or byte (if data is MemBuf) from which to
+      start writing.
+   @optparam length Maximum count of  Characters (if @b data is a string) or bytes (if @b data a is MemBuf)
+         to be written.
+   @return A string (or a MemBuf, if that was used as a parmeter) containing the whole blob data.
+   @raise DBIError on error or if the ID is invalid.
+
+   This method overwrites a whole existing blob entity. The selection range allows to
+   write a portion of the existing data obviating the need to extract a subpart of it.
+*/
+FALCON_FUNC DBITransaction_writeBlob( VMachine *vm )
+{
+}
+
+
+
 /******************************************************************************
  * Recordset class
  *****************************************************************************/
@@ -1316,39 +1417,66 @@ FALCON_FUNC DBIRecordset_getColumnCount( VMachine *vm )
    vm->retval( dbr->getColumnCount() );
 }
 
-/*#
- @method asString DBIRecordset
- @brief Get a field value as a String.
- @param idx field index
- @return String representation of database field contents or nil if field content is nil
- */
 
-FALCON_FUNC DBIRecordset_asString( VMachine *vm )
+static void internal_asString_or_BlobID( VMachine *vm, int mode )
 {
    CoreObject *self = vm->self().asObject();
    DBIRecordset *dbr = static_cast<DBIRecordset *>( self->getUserData() );
 
    Item *columnIndexI = vm->param( 0 );
-   if ( columnIndexI == 0 || ! columnIndexI->isInteger() ) {
+   Item *stringBuf = vm->param( 1 );
+
+   if ( columnIndexI == 0 || ! columnIndexI->isInteger() ||
+        ( stringBuf != 0 && ! stringBuf->isString() )
+      )
+   {
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                                         .origin( e_orig_runtime ) ) );
+            .origin( e_orig_runtime )
+            .extra( "N,[S]") ) );
       return;
    }
 
-   String value;
 
    int32 cIdx = columnIndexI->asInteger();
    if ( DBIRecordset_checkValidColumn( vm, dbr, cIdx ) == 0 )
       return; // function handles reporting error to vm
 
-   dbi_status retval = dbr->asString( cIdx, value );
+   String *value = stringBuf == 0 ?
+            new GarbageString( vm ) :
+            stringBuf->asString();
+
+   dbi_status retval;
+   if( mode == 0 )
+      retval = dbr->asString( cIdx, *value );
+   else
+      retval = dbr->asBlobID( cIdx, *value );
 
    if ( retval == dbi_nil_value )
       vm->retnil();
    else if ( retval != dbi_ok )
       vm->retnil();        // TODO: handle the error
    else
-      vm->retval( value );
+      vm->retval( (GarbageString *) value ); // we know it's a garbage string
+}
+
+/*#
+ @method asString DBIRecordset
+ @brief Get a field value as a String.
+ @param idx field index
+ @optparam string A pre-allocated string buffer that will be filled with the content of the field.
+ @return String representation of database field contents or nil if field content is nil.
+
+ If the @b string parameter is not provided, the function will create a new string
+ and then return it; if it is provided, then the given string buffer will be
+ filled with the contents of the field and also returned on succesful completion.
+
+ Reusing the same item and filling it with new fetched values
+ can be more efficient by several orders of magnitude.
+ */
+
+FALCON_FUNC DBIRecordset_asString( VMachine *vm )
+{
+   internal_asString_or_BlobID( vm, 0 );
 }
 
 /*#
@@ -1366,7 +1494,8 @@ FALCON_FUNC DBIRecordset_asBoolean( VMachine *vm )
    Item *columnIndexI = vm->param( 0 );
    if ( columnIndexI == 0 || ! columnIndexI->isInteger() ) {
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                                         .origin( e_orig_runtime ) ) );
+            .origin( e_orig_runtime )
+            .extra( "N" ) ) );
       return;
    }
 
@@ -1403,7 +1532,8 @@ FALCON_FUNC DBIRecordset_asInteger( VMachine *vm )
    Item *columnIndexI = vm->param( 0 );
    if ( columnIndexI == 0 || ! columnIndexI->isInteger() ) {
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                                         .origin( e_orig_runtime ) ) );
+            .origin( e_orig_runtime )
+            .extra("N") ) );
       return;
    }
 
@@ -1438,7 +1568,8 @@ FALCON_FUNC DBIRecordset_asInteger64( VMachine *vm )
    Item *columnIndexI = vm->param( 0 );
    if ( columnIndexI == 0 || ! columnIndexI->isInteger() ) {
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                                         .origin( e_orig_runtime ) ) );
+            .origin( e_orig_runtime )
+            .extra("N") ) );
       return;
    }
 
@@ -1461,7 +1592,7 @@ FALCON_FUNC DBIRecordset_asInteger64( VMachine *vm )
 /*#
  @method asNumeric DBIRecordset
  @brief Get a field value as a Numeric.
- @param idx field index
+ @param idx Field index.
  @return Numeric representation of database field contents or nil if field content is nil
  */
 
@@ -1473,7 +1604,8 @@ FALCON_FUNC DBIRecordset_asNumeric( VMachine *vm )
    Item *columnIndexI = vm->param( 0 );
    if ( columnIndexI == 0 || ! columnIndexI->isInteger() ) {
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                                         .origin( e_orig_runtime ) ) );
+            .origin( e_orig_runtime )
+            .extra("N") ) );
       return;
    }
 
@@ -1493,129 +1625,168 @@ FALCON_FUNC DBIRecordset_asNumeric( VMachine *vm )
       vm->retval( value );
 }
 
-/*#
- @method asDate DBIRecordset
- @brief Get a field value as a TimeStamp object with the date populated and the time
- zeroed.
- @param idx field index
- @return TimeStamp representation of database field contents or nil if field content is nil
- */
 
-FALCON_FUNC DBIRecordset_asDate( VMachine *vm )
+// This is a little trick. A function mimicinzg three different date based functions
+static void internal_asDate_or_time( VMachine *vm, int mode )
 {
    CoreObject *self = vm->self().asObject();
    DBIRecordset *dbr = static_cast<DBIRecordset *>( self->getUserData() );
 
    Item *columnIndexI = vm->param( 0 );
-   if ( columnIndexI == 0 || ! columnIndexI->isInteger() ) {
+   Item *i_timestamp = vm->param( 1 );
+   CoreObject *timestamp;
+
+   if ( columnIndexI == 0 || ! columnIndexI->isInteger() ||
+        ( i_timestamp != 0 &&
+           ( ! i_timestamp->isObject() ||
+             ! (timestamp = i_timestamp->asObject() )->derivedFrom( "TimeStamp" )
+           )
+        )
+      )
+   {
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                                         .origin( e_orig_runtime ) ) );
+            .origin( e_orig_runtime )
+            .extra( "N,[TimeStamp]" ) ) );
       return;
    }
-
 
    int32 cIdx = columnIndexI->asInteger();
    if ( DBIRecordset_checkValidColumn( vm, dbr, cIdx ) == 0 )
       return; // function handles reporting error to vm
 
-   // create the timestamps
-   TimeStamp *ts = new TimeStamp();
-   Item *ts_class = vm->findWKI( "TimeStamp" );
-   //if we wrote the std module, can't be zero.
-   fassert( ts_class != 0 );
-   CoreObject *value = ts_class->asClass()->createInstance();
-   dbi_status retval = dbr->asDate( cIdx, *ts );
-   value->setUserData( ts );
+   // create the timestamp -- or use the provided buffer?
+
+   TimeStamp *ts = i_timestamp == 0 ?  new TimeStamp :
+                   (TimeStamp *) timestamp->getUserData();
+
+   dbi_status retval;
+   switch( mode )
+   {
+      case 1:
+         retval = dbr->asDate( cIdx, *ts );
+      break;
+
+      case 2:
+         retval = dbr->asTime( cIdx, *ts );
+      break;
+
+      case 3:
+         retval = dbr->asDateTime( cIdx, *ts );
+      break;
+
+   }
 
    if ( retval == dbi_nil_value )
+   {
+      if( i_timestamp == 0 ) delete ts;
       vm->retnil();
+   }
    else if ( retval != dbi_ok )
-      vm->retnil(); // TODO: handle the error
-   else
-      vm->retval( value );
+   {
+      // TODO: handle the error
+      if( i_timestamp == 0 ) delete ts;
+      vm->retnil();
+   }
+   else {
+      if( i_timestamp == 0 )
+      {
+         // create falcon instance of the timestamp
+         Item *ts_class = vm->findWKI( "TimeStamp" );
+         fassert( ts_class != 0 );
+         timestamp = ts_class->asClass()->createInstance();
+         timestamp->setUserData( ts );
+      }
+      // else, our timestamp is already in place.
+
+      vm->retval( timestamp );
+   }
+}
+
+/*#
+ @method asDate DBIRecordset
+ @brief Get a field value as a TimeStamp object with the date populated and the time
+      zeroed.
+ @param idx field index
+ @optparam timestamp A TimeStamp object that will be filled with the data in the field.
+ @return TimeStamp representation of database field contents or nil if field content is nil
+
+ If the @b timestamp parameter is not provided, the function will create a new instance
+ of the TimeStamp class and then return it; if it is provided, then that object will be
+ filled and also returned on succesful completion.
+
+ Reusing the same object and filling it with new fetched values
+ can be more efficient by several orders of magnitude.
+*/
+
+FALCON_FUNC DBIRecordset_asDate( VMachine *vm )
+{
+   internal_asDate_or_time( vm, 1 ); // get the date
 }
 
 /*#
  @method asTime DBIRecordset
  @brief Get a field value as a TimeStamp object with time populated and date zeroed.
- @param idx field index
+ @param idx Field index.
+ @optparam timestamp A TimeStamp object that will be filled with the data in the field.
  @return TimeStamp representation of database field contents or nil if field content is nil
- */
+
+ If the @b timestamp parameter is not provided, the function will create a new instance
+ of the TimeStamp class and then return it; if it is provided, then that object will be
+ filled and also returned on succesful completion.
+
+ Reusing the same object and filling it with new fetched values
+ can be more efficient by several orders of magnitude.
+*/
 
 FALCON_FUNC DBIRecordset_asTime( VMachine *vm )
 {
-   CoreObject *self = vm->self().asObject();
-   DBIRecordset *dbr = static_cast<DBIRecordset *>( self->getUserData() );
-
-   Item *columnIndexI = vm->param( 0 );
-   if ( columnIndexI == 0 || ! columnIndexI->isInteger() ) {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                                         .origin( e_orig_runtime ) ) );
-      return;
-   }
-
-
-   int32 cIdx = columnIndexI->asInteger();
-   if ( DBIRecordset_checkValidColumn( vm, dbr, cIdx ) == 0 )
-      return; // function handles reporting error to vm
-
-   // create the timestamps
-   TimeStamp *ts = new TimeStamp();
-   Item *ts_class = vm->findWKI( "TimeStamp" );
-   //if we wrote the std module, can't be zero.
-   fassert( ts_class != 0 );
-   CoreObject *value = ts_class->asClass()->createInstance();
-   dbi_status retval = dbr->asTime( cIdx, *ts );
-   value->setUserData( ts );
-
-   if ( retval == dbi_nil_value )
-      vm->retnil();
-   else if ( retval != dbi_ok )
-      vm->retnil(); // TODO: handle the error
-   else
-      vm->retval( value );
+   internal_asDate_or_time( vm, 2 ); // get the time
 }
 
 /*#
  @method asDateTime DBIRecordset
  @brief Get a field value as a TimeStamp object.
  @param idx field index
+ @optparam timestamp A TimeStamp object that will be filled with the data in the field.
  @return TimeStamp representation of database field contents or nil if field content is nil
- */
+
+  If the @b timestamp parameter is not provided, the function will create a new instance
+ of the TimeStamp class and then return it; if it is provided, then that object will be
+ filled and also returned on succesful completion.
+
+ Reusing the same object and filling it with new fetched values
+ can be more efficient by several orders of magnitude.
+
+*/
 
 FALCON_FUNC DBIRecordset_asDateTime( VMachine *vm )
 {
-   CoreObject *self = vm->self().asObject();
-   DBIRecordset *dbr = static_cast<DBIRecordset *>( self->getUserData() );
-
-   Item *columnIndexI = vm->param( 0 );
-   if ( columnIndexI == 0 || ! columnIndexI->isInteger() ) {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                                         .origin( e_orig_runtime ) ) );
-      return;
-   }
-
-
-   int32 cIdx = columnIndexI->asInteger();
-   if ( DBIRecordset_checkValidColumn( vm, dbr, cIdx ) == 0 )
-      return; // function handles reporting error to vm
-
-   // create the timestamps
-   TimeStamp *ts = new TimeStamp();
-   Item *ts_class = vm->findWKI( "TimeStamp" );
-   //if we wrote the std module, can't be zero.
-   fassert( ts_class != 0 );
-   CoreObject *value = ts_class->asClass()->createInstance();
-   dbi_status retval = dbr->asDateTime( cIdx, *ts );
-   value->setUserData( ts );
-
-   if ( retval == dbi_nil_value )
-      vm->retnil();
-   else if ( retval != dbi_ok )
-      vm->retnil(); // TODO: handle the error
-   else
-      vm->retval( value );
+   internal_asDate_or_time( vm, 3 ); // get the date and the time
 }
+
+/*#
+ @method asBlobID DBIRecordset
+ @brief Get a field value as a blob ID string.
+ @param idx field index
+ @optparam bID A pre-allocated string buffer that will be filled with blob ID.
+ @return A string value that can be used to retreive the content of a blob field.
+
+ The value returned by this function can be then feed into blob related methods
+ in the @a DBITransaction class, as the @a DBITransaction.readBlob method.
+
+ If the @b bID parameter is not provided, the function will create a new string
+ and then return it; if it is provided, then the given string buffer will be
+ filled with the blob ID data, and eventually returned on success.
+
+ Reusing the same item and filling it with new fetched values
+ can be more efficient by several orders of magnitude.
+*/
+
+FALCON_FUNC DBIRecordset_asBlobID( VMachine *vm )
+{
+   internal_asString_or_BlobID( vm, 1 ); // specify it's a blob id
+}
+
 
 /*#
  @method getLastError DBIRecordset
@@ -1634,8 +1805,7 @@ FALCON_FUNC DBIRecordset_getLastError( VMachine *vm )
    dbi_status retval = dbr->getLastError( value );
    if ( retval != dbi_ok ) {
       vm->raiseModError( new DBIError( ErrorParam( retval, __LINE__ )
-                                      .desc( "(**)" )
-                                      .extra( "Could not get last error message " ) ) );
+            .desc( "Could not get last error message" ) ) );
       return;
    }
 
@@ -1823,6 +1993,22 @@ FALCON_FUNC DBIRecord_delete( VMachine *vm )
    DBIHandle_itemToSqlValue( dbh, pkValueI, value );
    String sql = "DELETE FROM " + *tableName + " WHERE " + *primaryKey + " = " + value;
    DBIRecord_execute( vm, dbh, sql );
+}
+
+//======================================================
+// DBI Blob Stream
+//======================================================
+
+/*#
+ @method getBlobID DBIBlobStream
+ @brief Returns the blob ID associated with this stream.
+ @return A string containing the blob ID in this stream.
+*/
+FALCON_FUNC DBIBlobStream_getBlobID( VMachine *vm )
+{
+   CoreObject *self = vm->self().asObject();
+   DBIBlobStream *bs = static_cast<DBIBlobStream *>( self->getUserData() );
+   vm->retval( bs->getBlobID() );
 }
 
 //======================================================
