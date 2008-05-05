@@ -17,6 +17,18 @@ while r.next() == 0
 end
 r.close()
 
+// Again, but this time using pre-built items
+> "Simple query again, but using pre-built items."
+dob = TimeStamp()
+name = ""
+r = d.query( "SELECT name,dob FROM names WHERE name LIKE $1 ORDER BY dob", nameFilter )
+while r.next() == 0
+   r.asString( 0, name )
+   r.asDate( 1, dob )
+   > name, " was born on ", dob
+end
+r.close()
+
 dropNamesTable(d)
 
 d.close()
