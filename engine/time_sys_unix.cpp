@@ -71,23 +71,14 @@ TimeZone getLocalTimeZone()
       int64 tgmt = mktime( &gmt );
       int64 tloc = mktime( &loc );
       long shift = (long) (tloc - tgmt);
+      if ( loc.tm_isdst )
+      {
+         shift += 3600;
+      }
 
       long hours = shift / 3600;
       long minutes = (shift/60) % 60;
-      if ( loc.tm_isdst )
-      {
-         if ( hours > 0 )
-         {
-            hours ++;
-            if( hours > 12 )
-               hours = 0;
-         }
-         else if( hours < 0 ) {
-            hours -= 1;
-            if ( hours < -12 )
-               hours = 0;
-         }
-      }
+
 
       // and now, let's see if we have one of our zones:
       switch( hours )
