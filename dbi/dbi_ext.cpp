@@ -318,7 +318,7 @@ static int DBIRecordset_checkValidColumn( VMachine *vm, DBIRecordset *dbr, int c
                                       .desc( errorMessage ) ) );
       return 0;
    } else if ( dbr->getRowIndex() == -1 ) {
-      vm->raiseModError( new DBIError( ErrorParam( dDBI_ERROR_BASE + bi_row_index_invalid, __LINE__ )
+      vm->raiseModError( new DBIError( ErrorParam( DBI_ERROR_BASE + dbi_row_index_invalid, __LINE__ )
                                       .desc( "Invalid current row index" ) ) );
       return 0;
    }
@@ -1114,9 +1114,9 @@ FALCON_FUNC DBITransaction_createBlob( VMachine *vm )
 {
    Item *i_data = vm->param( 0 );
    Item *i_options = vm->param( 1 );
-   if ( 
+   if (
       ( i_data != 0 && ! (i_data->isString() || i_data->isMemBuf() || i_data->isNil() )) ||
-      ( i_options != 0 && ! i_options->isString() ) 
+      ( i_options != 0 && ! i_options->isString() )
       )
    {
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
@@ -1129,12 +1129,12 @@ FALCON_FUNC DBITransaction_createBlob( VMachine *vm )
 
    // are we willng to send a binary file?
    bool bBinary = i_data != 0 && i_data->isMemBuf();
-   DBI::dbi_status status;
-   DBIBlobStream *dbstream = dbt->createBlob( 
-      status, 
+   dbi_status status;
+   DBIBlobStream *dbstream = dbt->createBlob(
+      status,
       i_options == 0 ? "" : *i_options->asString(),
       bBinary );
-   
+
    if ( dbstream == 0 )
    {
       String errorMessage;
@@ -1144,7 +1144,7 @@ FALCON_FUNC DBITransaction_createBlob( VMachine *vm )
       return;
    }
 
-   // if we have no data to write, we're done. 
+   // if we have no data to write, we're done.
    // Return an instance of the desired class
    if ( i_data == 0 || i_data->isNil() )
    {
@@ -1174,7 +1174,7 @@ FALCON_FUNC DBITransaction_createBlob( VMachine *vm )
       {
          String errorMessage;
          dbt->getLastError( errorMessage );
-         vm->raiseModError( new DBIError( 
+         vm->raiseModError( new DBIError(
                ErrorParam( DBI_ERROR_BASE + dbstream->lastError(), __LINE__ )
                   .desc( errorMessage ) ) );
       }
@@ -1191,17 +1191,21 @@ FALCON_FUNC DBITransaction_createBlob( VMachine *vm )
    @param blobId The ID of the blob entity to be read.
    @optparam data A string or a MemBuf to be read.
    @optparam maxlen Maximum length read from the blob.
-   @return A string (or a MemBuf, if that was used as a parmeter) containing the whole blob data.
+   @return A string containing the whole blob data, or read length if reading a MemBuf.
    @raise DBIError on error or if the ID is invalid.
 
    This method reads a whole blob in memory. If the parameter @b data is not given, then a new
    string, long enough to store all the blob, will be created. If it's given and it's a string,
    then the string buffer will be used, and it will be eventually expanded if needed. If it's
-   a MemBuf, then the method will read at maximum the size of the MemBuffer in bytes.
+   a MemBuf, then the method will read at maximum the size of the MemBuf in bytes.
 
    The maximum size of the input may be also limited by the @b maxlen parameter. If both
    @b maxlen and @b data (as a MemBuf) are provided, the maximum size actually read will be
    the minimum of @b maxlen, the @b data MemBuf size and the blob entity size.
+
+   When a MemBuf is read, then the method returns the amout of data actually imported. If the
+   size of the MemBuf is not enough to contain the whole blob, it will be read as far as
+   possible.
 
    @note It is possible to give a maximum length to be read and create dynamically the needed
    space by setting @b data to nil and passing @b maxlen.
@@ -1211,7 +1215,7 @@ FALCON_FUNC DBITransaction_readBlob( VMachine *vm )
    Item *i_blobID = vm->param( 0 );
    Item *i_data = vm->param( 1 );
    Item *i_maxlen = vm->param( 2 );
-   if ( 
+   if (
       ( i_blobID == 0 || ! i_blobID->isString() ) ||
       ( i_data != 0 && ! (i_data->isString() || i_data->isMemBuf() || i_data->isNil() ) ) ||
       ( i_maxlen != 0 && ! i_maxlen->isOrdinal() )
@@ -1236,8 +1240,51 @@ FALCON_FUNC DBITransaction_readBlob( VMachine *vm )
       return;
    }
 
-   // Todo: finish.
-   
+   int64 absmax = i_maxlen != 0 ? i_maxlen->forceInteger() : -1;
+   // eventually reduce the maximum if using a membuf
+   if ( i_data != 0 && i_data->isMemBuf() )
+   {
+      MemBuf *readBuf = i_data->asMemBuf();
+
+      if ( readBuf->size() < absmax || absmax == 0 )
+      {
+         absmax = readBuf->size();
+      }
+
+      int64 readIn = stream->read( readBuf, absmax );
+      vm->retval( readIn );
+   }
+   else {
+      // we must return a string.
+      GarbageString *str = i_data == 0 || i_data->isNil() || ! i_data->asString()->garbageable() ?
+            new GarbageString( vm ) :
+            (GarbageString *) i_data->asString();
+
+      // now we have our string. If absmax is 0, we must read till all is read.
+      String temp(1024);
+      str->size( 0 ); // be sure we are not appending.
+
+      while( stream->readString( temp, 1024 ) > 0 )
+      {
+         *str += temp;
+      }
+
+      // error on read?
+      vm->retval( str );
+   }
+
+   // raise also if retval is done; there's no problem with that.
+   if ( ! stream->good() )
+   {
+      String errorMessage;
+      dbt->getLastError( errorMessage );
+      vm->raiseModError( new DBIError(
+            ErrorParam( DBI_ERROR_BASE + stream->lastError(), __LINE__ )
+               .desc( errorMessage ) ) );
+   }
+
+   stream->close();
+   delete stream;
 }
 
 /*#
@@ -1249,7 +1296,6 @@ FALCON_FUNC DBITransaction_readBlob( VMachine *vm )
       start writing.
    @optparam length Maximum count of  Characters (if @b data is a string) or bytes (if @b data a is MemBuf)
          to be written.
-   @return A string (or a MemBuf, if that was used as a parmeter) containing the whole blob data.
    @raise DBIError on error or if the ID is invalid.
 
    This method overwrites a whole existing blob entity. The selection range allows to
@@ -1257,8 +1303,74 @@ FALCON_FUNC DBITransaction_readBlob( VMachine *vm )
 */
 FALCON_FUNC DBITransaction_writeBlob( VMachine *vm )
 {
-      // Todo: finish.
+   Item *i_blobID = vm->param( 0 );
+   Item *i_data = vm->param( 1 );
+   Item *i_startFrom = vm->param( 2 );
+   Item *i_maxlen = vm->param( 3 );
 
+   if (
+      ( i_blobID == 0 || ! i_blobID->isString() ) ||
+      ( i_data == 0 || ! (i_data->isString() || i_data->isMemBuf()) ) ||
+      ( i_startFrom != 0 && ! i_startFrom->isOrdinal() ) ||
+      ( i_maxlen != 0 && ! i_maxlen->isOrdinal() )
+      )
+   {
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                  .extra("S,[S|M],[N]") ) );
+      return;
+   }
+
+   CoreObject *self = vm->self().asObject();
+   DBITransaction *dbt = static_cast<DBITransaction *>( self->getUserData() );
+
+   int64 startFrom = i_startFrom == 0 ? 0 : i_startFrom->forceInteger();
+   int64 maxlen = i_maxlen == 0 ? String::npos : i_maxlen->forceInteger();
+   if ( i_startFrom < 0 || maxlen <= 0 )
+   {
+      // nothing to write?
+      vm->raiseModError( new AccessError( ErrorParam( e_charRange, __LINE__ ) ) );
+      return;
+   }
+
+    // open the blob
+   dbi_status retval;
+   DBIBlobStream *stream = dbt->openBlob( *i_blobID->asString(), retval );
+   if ( stream == 0 ) {
+      String errorMessage;
+      dbt->getLastError( errorMessage );
+      vm->raiseModError( new DBIError( ErrorParam( DBI_ERROR_BASE + retval, __LINE__ )
+                                      .desc( errorMessage ) ) );
+      return;
+   }
+
+   if ( i_data->isString() )
+   {
+      stream->writeString( *i_data->asString(), startFrom, maxlen );
+   }
+   else {
+      MemBuf *mb = i_data->asMemBuf();
+      if ( mb->size() < startFrom + maxlen )
+      {
+         stream->close();
+         delete stream;
+         // nothing to write?
+         vm->raiseModError( new AccessError( ErrorParam( e_charRange, __LINE__ ) ) );
+         return;
+      }
+
+      stream->write( mb->data() + startFrom, maxlen );
+   }
+
+   if ( ! stream->good() )
+   {
+      String errorMessage;
+      dbt->getLastError( errorMessage );
+      vm->raiseModError( new DBIError( ErrorParam( DBI_ERROR_BASE + retval, __LINE__ )
+                                      .desc( errorMessage ) ) );
+   }
+
+   stream->close();
+   delete stream;
 }
 
 
@@ -1570,9 +1682,9 @@ static void internal_asString_or_BlobID( VMachine *vm, int mode )
    if ( DBIRecordset_checkValidColumn( vm, dbr, cIdx ) == 0 )
       return; // function handles reporting error to vm
 
-   String *value = stringBuf == 0 ?
+   GarbageString *value = stringBuf == 0 || ! stringBuf->asString()->garbageable() ?
             new GarbageString( vm ) :
-            stringBuf->asString();
+            (GarbageString *) stringBuf->asString();
 
    dbi_status retval;
    if( mode == 0 )
@@ -1585,7 +1697,7 @@ static void internal_asString_or_BlobID( VMachine *vm, int mode )
    else if ( retval != dbi_ok )
       vm->retnil();        // TODO: handle the error
    else
-      vm->retval( (GarbageString *) value ); // we know it's a garbage string
+      vm->retval( value ); // we know it's a garbage string
 }
 
 /*#
@@ -2014,7 +2126,7 @@ FALCON_FUNC DBIRecord_insert( VMachine *vm )
          String errorMessage = "Invalid type for ";
          errorMessage.append( columnNames[cIdx] );
 
-         vm->raiseModError( new DBIError( 
+         vm->raiseModError( new DBIError(
             ErrorParam( DBI_ERROR_BASE +dbi_invalid_type, __LINE__ )
                                          .desc( errorMessage ) ) );
          return;
@@ -2065,7 +2177,7 @@ FALCON_FUNC DBIRecord_update( VMachine *vm )
          String errorMessage = "Invalid type for ";
          errorMessage.append( columnNames[cIdx] );
 
-         vm->raiseModError( new DBIError( 
+         vm->raiseModError( new DBIError(
                ErrorParam( DBI_ERROR_BASE + dbi_invalid_type, __LINE__ )
                                          .desc( errorMessage ) ) );
          return;
@@ -2078,7 +2190,7 @@ FALCON_FUNC DBIRecord_update( VMachine *vm )
    String value;
    if ( DBIHandle_itemToSqlValue( dbh, primaryKeyValueI, value ) == 0 ) {
 
-      vm->raiseModError( new DBIError( 
+      vm->raiseModError( new DBIError(
             ErrorParam( DBI_ERROR_BASE + dbi_invalid_type, __LINE__ )
                         .desc( "Invalid type for primary key" )
                         .extra(*primaryKey) ) );
