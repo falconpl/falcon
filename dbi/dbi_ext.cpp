@@ -116,7 +116,7 @@ static int DBIHandle_realSqlExpand( VMachine *vm, DBIHandle *dbh, String &sql, i
          int dollarSize = 1;
 
          if ( dollarPos == sql.length() - 1 ) {
-            vm->raiseModError( new DBIError( ErrorParam( dbi_sql_expand_error,
+            vm->raiseModError( new DBIError( ErrorParam( DBI_ERROR_BASE + dbi_sql_expand_error,
                                                         __LINE__ )
                                             .desc( "Stray $ charater at the end of query" ) ) );
             return 0;
@@ -141,7 +141,7 @@ static int DBIHandle_realSqlExpand( VMachine *vm, DBIHandle *dbh, String &sql, i
                if ( ePos == csh::npos ) {
                   String s = "starting at: " + sql.subString( dollarPos );
 
-                  vm->raiseModError( new DBIError( ErrorParam( dbi_sql_expand_error, __LINE__ )
+                  vm->raiseModError( new DBIError( ErrorParam( DBI_ERROR_BASE + dbi_sql_expand_error, __LINE__ )
                                                   .desc( "Failed to parse dollar expansion" )
                                                   .extra( s ) ) );
                   return 0;
@@ -158,7 +158,7 @@ static int DBIHandle_realSqlExpand( VMachine *vm, DBIHandle *dbh, String &sql, i
                }
 
                if ( i == 0 ) {
-                  vm->raiseModError( new DBIError( ErrorParam( dbi_sql_expand_error, __LINE__ )
+                  vm->raiseModError( new DBIError( ErrorParam( DBI_ERROR_BASE + dbi_sql_expand_error, __LINE__ )
                                                   .desc( "Word expansion was not found in dictionary/object" )
                                                   .extra( word ) ) );
                   return 0;
@@ -170,7 +170,7 @@ static int DBIHandle_realSqlExpand( VMachine *vm, DBIHandle *dbh, String &sql, i
                int pIdx = atoi( asTmp.c_str() );
 
                if ( pIdx == 0 ) {
-                  vm->raiseModError( new DBIError( ErrorParam( dbi_sql_expand_error,
+                  vm->raiseModError( new DBIError( ErrorParam( DBI_ERROR_BASE + dbi_sql_expand_error,
                                                               __LINE__ )
                                                   .desc( "Failed to parse dollar expansion" )
                                                   .extra( "from: " + sql.subString( dollarPos ) ) ) );
@@ -185,7 +185,7 @@ static int DBIHandle_realSqlExpand( VMachine *vm, DBIHandle *dbh, String &sql, i
                errorMessage.writeNumber( (int64) pIdx );
 
                if ( i == 0 ) {
-                  vm->raiseModError( new DBIError( ErrorParam( dbi_sql_expand_error, __LINE__ )
+                  vm->raiseModError( new DBIError( ErrorParam( DBI_ERROR_BASE + dbi_sql_expand_error, __LINE__ )
                                                   .desc("Positional expansion out of range")
                                                   .extra( errorMessage ) ) );
                   return 0;
@@ -195,7 +195,7 @@ static int DBIHandle_realSqlExpand( VMachine *vm, DBIHandle *dbh, String &sql, i
 
          String value;
          if ( DBIHandle_itemToSqlValue( dbh, i, value ) == 0 ) {
-            vm->raiseModError( new DBIError( ErrorParam( dbi_sql_expand_type_error, __LINE__ )
+            vm->raiseModError( new DBIError( ErrorParam( DBI_ERROR_BASE + dbi_sql_expand_type_error, __LINE__ )
                      .desc( "Failed to expand a value due to it being an unknown type" )
                      .extra( "from: " + sql.subString( dollarPos ) ) ) );
             return 0;
@@ -314,11 +314,11 @@ static int DBIRecordset_checkValidColumn( VMachine *vm, DBIRecordset *dbr, int c
       errorMessage.writeNumber( (int64) cIdx );
       errorMessage += ") is out of range";
 
-      vm->raiseModError( new DBIError( ErrorParam( dbi_column_range_error, __LINE__ )
+      vm->raiseModError( new DBIError( ErrorParam( DBI_ERROR_BASE + dbi_column_range_error, __LINE__ )
                                       .desc( errorMessage ) ) );
       return 0;
    } else if ( dbr->getRowIndex() == -1 ) {
-      vm->raiseModError( new DBIError( ErrorParam( dbi_row_index_invalid, __LINE__ )
+      vm->raiseModError( new DBIError( ErrorParam( dDBI_ERROR_BASE + bi_row_index_invalid, __LINE__ )
                                       .desc( "Invalid current row index" ) ) );
       return 0;
    }
@@ -334,7 +334,7 @@ static int DBIHandle_realExecute( VMachine *vm, DBIHandle *dbh, const String &sq
    if ( retval != dbi_ok ) {
       String errorMessage;
       dbh->getLastError( errorMessage );
-      vm->raiseModError( new DBIError( ErrorParam( retval, __LINE__ )
+      vm->raiseModError( new DBIError( ErrorParam( DBI_ERROR_BASE + retval, __LINE__ )
                                       .desc( errorMessage ) ) );
       return -1;
    }
@@ -367,7 +367,7 @@ static void DBIRecord_execute( VMachine *vm, DBIHandle *dbh, const String &sql )
    else {
       String errorMessage;
       dbh->getLastError( errorMessage );
-      vm->raiseModError( new DBIError( ErrorParam( retval, __LINE__ )
+      vm->raiseModError( new DBIError( ErrorParam( DBI_ERROR_BASE + retval, __LINE__ )
                .desc( errorMessage ) ) );
    }
 }
@@ -407,7 +407,7 @@ static int DBIRecord_getPersistPropertyNames( VMachine *vm, CoreObject *self, St
          const Item &pi = persist->at( cIdx );
          if ( ! pi.isString() )
          {
-            vm->raiseModError( new DBIError( ErrorParam( dbi_row_index_invalid, __LINE__ )
+            vm->raiseModError( new DBIError( ErrorParam( DBI_ERROR_BASE + dbi_row_index_invalid, __LINE__ )
                                             .desc( "There was a non-string item in the \"_persist\" property" ) ) );
             return 0;
          }
@@ -438,7 +438,7 @@ static DBIRecordset *DBIHandle_baseQueryOne( VMachine *vm, int startAt = 0 )
       String errorMessage;
       dbh->getLastError( errorMessage );
 
-      vm->raiseModError( new DBIError( ErrorParam( retval, __LINE__ )
+      vm->raiseModError( new DBIError( ErrorParam( DBI_ERROR_BASE + retval, __LINE__ )
                                        .desc( errorMessage ) ) );
       return NULL;
    }
@@ -497,7 +497,7 @@ FALCON_FUNC DBIConnect( VMachine *vm )
          if ( connectErrorMessage.length() == 0 )
             connectErrorMessage = "An unknown error has occured during connect";
 
-         vm->raiseModError( new DBIError( ErrorParam( status, __LINE__ )
+         vm->raiseModError( new DBIError( ErrorParam( DBI_ERROR_BASE + status, __LINE__ )
                                           .desc( "Uknown error (**)" )
                                           .extra( connectErrorMessage ) ) );
 
@@ -535,7 +535,7 @@ FALCON_FUNC DBIHandle_startTransaction( VMachine *vm )
    if ( trans == NULL ) {
       String errorMessage;
       dbh->getLastError( errorMessage );
-      vm->raiseModError( new DBIError( ErrorParam( dbi_error, __LINE__ )
+      vm->raiseModError( new DBIError( ErrorParam( DBI_ERROR_BASE + dbi_error, __LINE__ )
                                       .desc( errorMessage ) ) );
       return;
    }
@@ -571,7 +571,7 @@ FALCON_FUNC DBIHandle_query( VMachine *vm )
       String errorMessage;
       dbh->getLastError( errorMessage );
 
-      vm->raiseModError( new DBIError( ErrorParam( retval, __LINE__ )
+      vm->raiseModError( new DBIError( ErrorParam( DBI_ERROR_BASE + retval, __LINE__ )
                                        .desc( errorMessage ) ) );
       return;
    }
@@ -744,7 +744,8 @@ FALCON_FUNC DBIHandle_queryOneObject( VMachine *vm )
          String indexString;
          indexString.writeNumber( (int64) cIdx );
 
-         vm->raiseModError( new DBIError( ErrorParam( 0, __LINE__ )
+
+         vm->raiseModError( new DBIError( ErrorParam( DBI_ERROR_BASE, __LINE__ )
                                          .desc( "Could not retrieve column value" )
                                          .extra( indexString ) ) );
 
@@ -787,7 +788,7 @@ FALCON_FUNC DBIHandle_execute( VMachine *vm )
    if ( retval != dbi_ok ) {
       String errorMessage;
       dbh->getLastError( errorMessage );
-      vm->raiseModError( new DBIError( ErrorParam( retval, __LINE__ )
+      vm->raiseModError( new DBIError( ErrorParam( DBI_ERROR_BASE + retval, __LINE__ )
                                        .desc( errorMessage ) ) );
    }
 
@@ -855,7 +856,7 @@ FALCON_FUNC DBIHandle_getLastError( VMachine *vm )
    String value;
    dbi_status retval = dbh->getLastError( value );
    if ( retval != dbi_ok ) {
-      vm->raiseModError( new DBIError( ErrorParam( retval, __LINE__ )
+      vm->raiseModError( new DBIError( ErrorParam( DBI_ERROR_BASE + retval, __LINE__ )
                                       .desc( "Unknown error" )
                                       .extra( "Could not get last error message " ) ) );
       return;
@@ -920,7 +921,7 @@ FALCON_FUNC DBITransaction_query( VMachine *vm )
       String errorMessage;
       dbt->getLastError( errorMessage );
 
-      vm->raiseModError( new DBIError( ErrorParam( retval, __LINE__ )
+      vm->raiseModError( new DBIError( ErrorParam( DBI_ERROR_BASE + retval, __LINE__ )
                                        .desc( errorMessage ) ) );
       return;
    }
@@ -958,7 +959,7 @@ FALCON_FUNC DBITransaction_execute( VMachine *vm )
    if ( retval != dbi_ok ) {
       String errorMessage;
       dbt->getLastError( errorMessage );
-      vm->raiseModError( new DBIError( ErrorParam( retval, __LINE__ )
+      vm->raiseModError( new DBIError( ErrorParam( DBI_ERROR_BASE + retval, __LINE__ )
                                        .desc( errorMessage ) ) );
    }
 
@@ -999,7 +1000,7 @@ FALCON_FUNC DBITransaction_commit( VMachine *vm )
    if ( retval != dbi_ok ) {
       String errorMessage;
       dbt->getLastError( errorMessage );
-      vm->raiseModError( new DBIError( ErrorParam( retval, __LINE__ )
+      vm->raiseModError( new DBIError( ErrorParam( DBI_ERROR_BASE + retval, __LINE__ )
                                       .desc( errorMessage ) ) );
       return;
    }
@@ -1023,7 +1024,7 @@ FALCON_FUNC DBITransaction_rollback( VMachine *vm )
    if ( retval != dbi_ok ) {
       String errorMessage;
       dbt->getLastError( errorMessage );
-      vm->raiseModError( new DBIError( ErrorParam( retval, __LINE__ )
+      vm->raiseModError( new DBIError( ErrorParam( DBI_ERROR_BASE + retval, __LINE__ )
                                       .desc( errorMessage ) ) );
       return;
    }
@@ -1064,7 +1065,7 @@ FALCON_FUNC DBITransaction_openBlob( VMachine *vm )
    if ( stream == 0 ) {
       String errorMessage;
       dbt->getLastError( errorMessage );
-      vm->raiseModError( new DBIError( ErrorParam( retval, __LINE__ )
+      vm->raiseModError( new DBIError( ErrorParam( DBI_ERROR_BASE + retval, __LINE__ )
                                       .desc( errorMessage ) ) );
       return;
    }
@@ -1111,6 +1112,77 @@ FALCON_FUNC DBITransaction_openBlob( VMachine *vm )
 */
 FALCON_FUNC DBITransaction_createBlob( VMachine *vm )
 {
+   Item *i_data = vm->param( 0 );
+   Item *i_options = vm->param( 1 );
+   if ( 
+      ( i_data != 0 && ! (i_data->isString() || i_data->isMemBuf() || i_data->isNil() )) ||
+      ( i_options != 0 && ! i_options->isString() ) 
+      )
+   {
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                  .extra("[S|M],[S]") ) );
+      return;
+   }
+
+   CoreObject *self = vm->self().asObject();
+   DBITransaction *dbt = static_cast<DBITransaction *>( self->getUserData() );
+
+   // are we willng to send a binary file?
+   bool bBinary = i_data != 0 && i_data->isMemBuf();
+   DBI::dbi_status status;
+   DBIBlobStream *dbstream = dbt->createBlob( 
+      status, 
+      i_options == 0 ? "" : *i_options->asString(),
+      bBinary );
+   
+   if ( dbstream == 0 )
+   {
+      String errorMessage;
+      dbt->getLastError( errorMessage );
+      vm->raiseModError( new DBIError( ErrorParam( DBI_ERROR_BASE + status, __LINE__ )
+                                      .desc( errorMessage ) ) );
+      return;
+   }
+
+   // if we have no data to write, we're done. 
+   // Return an instance of the desired class
+   if ( i_data == 0 || i_data->isNil() )
+   {
+      Item *i_instcls = vm->findWKI( dbstream->getFalconClassName() );
+      // We suppose it's correctly set by the driver
+      fassert( i_instcls != 0 );
+      CoreObject *streamInst = i_instcls->asClass()->createInstance();
+      streamInst->setUserData( dbstream );
+      vm->retval( streamInst );
+   }
+   else {
+      // we just have to write all the data and then close the stream.
+      // If we have a string, write text...
+      if( i_data->isString() )
+      {
+         dbstream->writeString( *i_data->asString() );
+      }
+      else {
+         //... else write the stream binary
+         MemBuf *mb = i_data->asMemBuf();
+         // write bytewise... sorry, endianity will be lost
+         dbstream->write( mb->data(), mb->size() );
+      }
+
+      // if we had an error, report it; but don't return, we must close.
+      if( ! dbstream->good() )
+      {
+         String errorMessage;
+         dbt->getLastError( errorMessage );
+         vm->raiseModError( new DBIError( 
+               ErrorParam( DBI_ERROR_BASE + dbstream->lastError(), __LINE__ )
+                  .desc( errorMessage ) ) );
+      }
+
+      // anyhow close and delete
+      dbstream->close();
+      delete dbstream;
+   }
 }
 
 /*#
@@ -1136,6 +1208,36 @@ FALCON_FUNC DBITransaction_createBlob( VMachine *vm )
 */
 FALCON_FUNC DBITransaction_readBlob( VMachine *vm )
 {
+   Item *i_blobID = vm->param( 0 );
+   Item *i_data = vm->param( 1 );
+   Item *i_maxlen = vm->param( 2 );
+   if ( 
+      ( i_blobID == 0 || ! i_blobID->isString() ) ||
+      ( i_data != 0 && ! (i_data->isString() || i_data->isMemBuf() || i_data->isNil() ) ) ||
+      ( i_maxlen != 0 && ! i_maxlen->isOrdinal() )
+      )
+   {
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                  .extra("S,[S|M],[N]") ) );
+      return;
+   }
+
+   CoreObject *self = vm->self().asObject();
+   DBITransaction *dbt = static_cast<DBITransaction *>( self->getUserData() );
+
+   // open the blob
+   dbi_status retval;
+   DBIBlobStream *stream = dbt->openBlob( *i_blobID->asString(), retval );
+   if ( stream == 0 ) {
+      String errorMessage;
+      dbt->getLastError( errorMessage );
+      vm->raiseModError( new DBIError( ErrorParam( DBI_ERROR_BASE + retval, __LINE__ )
+                                      .desc( errorMessage ) ) );
+      return;
+   }
+
+   // Todo: finish.
+   
 }
 
 /*#
@@ -1155,6 +1257,8 @@ FALCON_FUNC DBITransaction_readBlob( VMachine *vm )
 */
 FALCON_FUNC DBITransaction_writeBlob( VMachine *vm )
 {
+      // Todo: finish.
+
 }
 
 
@@ -1215,7 +1319,7 @@ FALCON_FUNC DBIRecordset_fetchArray( VMachine *vm )
          String errorMessage;
          dbr->getLastError( errorMessage );
 
-         vm->raiseModError( new DBIError( ErrorParam( nextRetVal, __LINE__ )
+         vm->raiseModError( new DBIError( ErrorParam( DBI_ERROR_BASE + nextRetVal, __LINE__ )
                                          .desc( errorMessage ) ) );
          return ;
       }
@@ -1823,7 +1927,7 @@ FALCON_FUNC DBIRecordset_getLastError( VMachine *vm )
    String value;
    dbi_status retval = dbr->getLastError( value );
    if ( retval != dbi_ok ) {
-      vm->raiseModError( new DBIError( ErrorParam( retval, __LINE__ )
+      vm->raiseModError( new DBIError( ErrorParam( DBI_ERROR_BASE + retval, __LINE__ )
             .desc( "Could not get last error message" ) ) );
       return;
    }
@@ -1910,7 +2014,8 @@ FALCON_FUNC DBIRecord_insert( VMachine *vm )
          String errorMessage = "Invalid type for ";
          errorMessage.append( columnNames[cIdx] );
 
-         vm->raiseModError( new DBIError( ErrorParam( dbi_invalid_type, __LINE__ )
+         vm->raiseModError( new DBIError( 
+            ErrorParam( DBI_ERROR_BASE +dbi_invalid_type, __LINE__ )
                                          .desc( errorMessage ) ) );
          return;
       }
@@ -1960,7 +2065,8 @@ FALCON_FUNC DBIRecord_update( VMachine *vm )
          String errorMessage = "Invalid type for ";
          errorMessage.append( columnNames[cIdx] );
 
-         vm->raiseModError( new DBIError( ErrorParam( dbi_invalid_type, __LINE__ )
+         vm->raiseModError( new DBIError( 
+               ErrorParam( DBI_ERROR_BASE + dbi_invalid_type, __LINE__ )
                                          .desc( errorMessage ) ) );
          return;
       }
@@ -1972,7 +2078,8 @@ FALCON_FUNC DBIRecord_update( VMachine *vm )
    String value;
    if ( DBIHandle_itemToSqlValue( dbh, primaryKeyValueI, value ) == 0 ) {
 
-      vm->raiseModError( new DBIError( ErrorParam( dbi_invalid_type, __LINE__ )
+      vm->raiseModError( new DBIError( 
+            ErrorParam( DBI_ERROR_BASE + dbi_invalid_type, __LINE__ )
                         .desc( "Invalid type for primary key" )
                         .extra(*primaryKey) ) );
       return;
