@@ -1462,7 +1462,7 @@ static void internal_asString_or_BlobID( VMachine *vm, int mode )
    }
 
 
-   int32 cIdx = columnIndexI->asInteger();
+   int32 cIdx = (int32) columnIndexI->asInteger();
    if ( DBIRecordset_checkValidColumn( vm, dbr, cIdx ) == 0 )
       return; // function handles reporting error to vm
 
@@ -1525,7 +1525,7 @@ FALCON_FUNC DBIRecordset_asBoolean( VMachine *vm )
 
    bool value;
 
-   int32 cIdx = columnIndexI->asInteger();
+   int32 cIdx = (int32) columnIndexI->asInteger();
    if ( DBIRecordset_checkValidColumn( vm, dbr, cIdx ) == 0 )
       return; // function handles reporting error to vm
 
@@ -1562,7 +1562,7 @@ FALCON_FUNC DBIRecordset_asInteger( VMachine *vm )
 
    int32 value;
 
-   int32 cIdx = columnIndexI->asInteger();
+   int32 cIdx = (int32) columnIndexI->asInteger();
    if ( DBIRecordset_checkValidColumn( vm, dbr, cIdx ) == 0 )
       return; // function handles reporting error to vm
 
@@ -1597,7 +1597,7 @@ FALCON_FUNC DBIRecordset_asInteger64( VMachine *vm )
 
    int64 value;
 
-   int32 cIdx = columnIndexI->asInteger();
+   int32 cIdx = (int32) columnIndexI->asInteger();
    if ( DBIRecordset_checkValidColumn( vm, dbr, cIdx ) == 0 )
       return; // function handles reporting error to vm
 
@@ -1632,7 +1632,7 @@ FALCON_FUNC DBIRecordset_asNumeric( VMachine *vm )
 
    numeric value;
 
-   int32 cIdx = columnIndexI->asInteger();
+   int32 cIdx = (int32) columnIndexI->asInteger();
    if ( DBIRecordset_checkValidColumn( vm, dbr, cIdx ) == 0 )
       return; // function handles reporting error to vm
 
@@ -1670,7 +1670,7 @@ static void internal_asDate_or_time( VMachine *vm, int mode )
       return;
    }
 
-   int32 cIdx = columnIndexI->asInteger();
+   int32 cIdx = (int32) columnIndexI->asInteger();
    if ( DBIRecordset_checkValidColumn( vm, dbr, cIdx ) == 0 )
       return; // function handles reporting error to vm
 
@@ -1813,7 +1813,7 @@ FALCON_FUNC DBIRecordset_asBlobID( VMachine *vm )
  @return String containing error message
 
  This error message is specific to the database server type currently in use.
- */
+*/
 
 FALCON_FUNC DBIRecordset_getLastError( VMachine *vm )
 {
