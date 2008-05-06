@@ -38,6 +38,7 @@
 #include <falcon/cobject.h>
 #include <falcon/lineardict.h>
 #include <falcon/pagedict.h>
+#include <falcon/membuf.h>
 
 // Falcon String helpers
 #include <falcon/autocstring.h>
