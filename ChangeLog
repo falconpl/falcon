@@ -66,6 +66,8 @@ Falcon (0.8.9)
   * Major: PCODE version moved to 2.0
   * Major: Added register Latch and Latcher in VM, working for LDP/LDV
   * Minor: Automatically disregarding outdated .fam when trying to load source modules.
+  * Minor: Added "times" functional construct (ETA function). It's a kind of functional
+		   for/in loop.
 
 Falcon (0.8.8)
   * bugfix: TRAV opcode may destroy its parameters while setting first loop
