@@ -3870,7 +3870,7 @@ static bool core_dolist_next ( ::Falcon::VMachine *vm )
    functionally evaluated as a whole; to do that, use the explicit evaluation idiom:
    @code
       dolist( processor, eval(array) )
-   @code
+   @endcode
    This method is equivalent to @a xmap, but it has the advantage that it doesn't create an array
    of evaluated results. So, when it is not necessary to transform an array in another through a
    mapping function, but just to run repeatedly over a collection, this function is to be preferred.
@@ -3914,6 +3914,287 @@ FALCON_FUNC  core_dolist ( ::Falcon::VMachine *vm )
    }
 }
 
+
+static bool core_times_next ( ::Falcon::VMachine *vm )
+{
+   // we may mangle with the parameters -- be careful.
+   Item var = *vm->param(1);
+   CoreArray *sequence = vm->param(2)->asArray();
+   Item &range = *vm->local(0); // temporary reference, we won't hold for long.
+   int32 start = range.asRangeStart();
+   uint32 currentItemID = (uint32) vm->local(1)->asInteger();
+
+   // Continue or items terminated?
+   if( currentItemID == sequence->length() || 
+      ( vm->regA().isOob() && vm->regA().isInteger() && vm->regA().asInteger() == 1 )
+      )
+   {
+      currentItemID = 0;
+      // here it is safe to change the reference
+      start += range.asRangeStep();
+      if ( vm->isParamByRef( 1 ) )
+         vm->param(1)->setInteger( start );
+
+      // we won't need the range past this point.
+      range.setRange( start, range.asRangeEnd(), range.asRangeStep(), false );
+   }
+
+   // Break or loop terminated?
+   if( ( range.asRangeStep() > 0 && start >= range.asRangeEnd()) || 
+       ( range.asRangeStep() < 0 && start < range.asRangeEnd()) ||
+      ( vm->regA().isOob() && vm->regA().isInteger() && vm->regA().asInteger() == 0 )
+      )
+   {
+      vm->regA().setInteger( (int64) range.asRangeStart() );
+      return false;
+   }
+
+   // get the current item.
+   Item &current = sequence->at( currentItemID );
+
+   // prepare the next current item ID
+   vm->local(1)->setInteger( currentItemID + 1 );
+
+   // Is the current item callable? -- if not, raise an error
+   if ( ! current.isCallable() )
+   {
+      vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).
+         extra( "uncallable" ) ) );
+      return false;   // don't call me anymore
+   }
+
+   // how should we call the item?
+   if ( ! vm->isParamByRef( 1 ) )
+   {
+      // we must alter its parameters.
+      if ( current.isArray() )
+      {
+         CoreArray *curArray = current.asArray();
+         // append? -- explode the call (callFrame would do it anyhow)
+         int64 varID = var.forceInteger();
+         if ( varID <= 0 )
+         {
+            for ( uint32 i = 1; i < curArray->length(); i++ )
+            {
+               vm->pushParameter( curArray->at(i) );
+            }
+            vm->pushParameter( (int64) start);
+            // queue the call ( + 1 parameter - 1 because first item is callable)
+            vm->callFrame( curArray->at(0), curArray->length() );  
+         }
+         // otherwise, mangle the item ID
+         else {
+            // for now, let's ignore too short arrays.
+            if ( curArray->length() > (uint32) varID )
+            {
+               curArray->at( (uint32) varID ) = (int64) start;
+            }
+            // just perform the call as-is.
+            vm->callFrame( curArray, 0 );  
+         }
+      }
+      // if it's not an array, just push the parameter and call
+      else {
+         vm->pushParameter( (int64) start);
+         vm->callFrame( current, 1 );
+      }
+   }
+   else {
+      // we need just to call the item.
+      vm->callFrame( current, 0 );
+   }
+
+   // prepare the next current item ID
+   vm->local(1)->setInteger( currentItemID + 1 );
+
+   return true;
+}
+
+/*#
+   @function times
+   @inset functional_support
+   @brief Repeats a sequence a determined number of times.
+   @param count Count of times to be repeated or non-open range.
+   @param var A reference to a variable that will receive the current count, nil or a number.
+   @param sequence A list of callable items that can be called one at a time.
+   @return Last index processed.
+
+   This function is very similar to a functional for/in loop. It repeats a sequence
+   of callable items in the @b sequence parameter a determined number of
+   times, eventually filling a variable with the current loop index, or mangling the
+   parameters of the given callable items so that they receive the index as a parameter.
+
+   @note The paramters of @b time are not functionally evaluated. 
+
+   The loop index count will be given values from 0 to the required index-1 if @count is numeric,
+   or it will act as the for/in loop if @b count is a range.
+
+   The way the current index loop is sent to the items depends on the type of @b var. 
+   If it's nil, then it is only kept internally; Sigma functions in @b sequence may not need it, or
+   they may use an internal counter. In example:
+   @code
+      function printTimes()
+         static: i = 0
+         > "Called ", ++i, " times."
+      end
+
+      times( 10, nil, [ printTimes ] )
+   @endcode
+
+   If @b val is a reference to a variable, then that variable is
+   updated to the current loop value. The Sigmas in @b sequence may receive it as a parameter 
+   passed by reference or may accesses it from the outer (global) scope. In example:
+   @code
+      // module scope
+      sent = nil
+
+      function printSent()
+         global sent
+         > "Called ", sent, " times."
+      end
+
+      function printParam( var )
+         > "Parameter is... ", var
+      end
+
+      times( 10, $sent, [ printSent, [printParam, $sent] ] )
+   @endcode
+
+   In the above example, printSent "fishes" the global value of @b sent, while printParam
+   uses a reference to it in its parameters and sees its paramter list changed at each call.
+
+   Finally, @b var may be a number. If the number is zero or less, the loop variable is just
+   appended to the parameters in the call. The following example prints a list of pair numbers
+   between 2 and 10:
+
+   @code
+      times( [2:11:2],     // range 2 to 10+1, with step 2
+         0,                // instruct times to add the loop index to the calls
+         .[ .[ printl "Index is now..." ] ]      // the calls (just 1).
+         )
+   @endcode
+   
+   If it's a positive number, then the nth element of the Sigmas in the list will be
+   changed. In this last case, the items in @b sequence need not just to be callable; they
+   must be Sigmas (lists starting with a callable item) having at least enough items for
+   the @b var ID to be meaningful. The next example alters the parameter element #2 in the
+   Sigmas array it calls:
+   
+   @code
+      times( [2:11:2], 2,
+         .[ .[ printl "Index is now... " 
+                 nil 
+                 " ..." ] ]
+         )
+   @endcode
+   
+   Notice the "nil" at position 2 in the Sigma call of printl. It may actually be any item, as it will be
+   changed each time before the sigma is called.
+   
+   In this case, if the callable items in @b sequence are not sigmas, or if they are to short for the
+   @b var ID to be useful, they get called without the addition of the loop index parameter.
+   
+   @note The original sigmas are not restored after times is executed in this modality. This means that the
+   arrays in @b sequence will be altered, and they will hold the last number set by times before exit.
+
+   Exactly like @a floop, the flow of calls in @b times can be altered by the functions in sequence returning
+   an out-of-band 0 or 1. If any function in the sequence returns an out-of-band 0, @b times terminates and
+   return immediately (performing an operation similar to "break"). If a function returns an out-of-band 1, 
+   the rest of the items in @b sequence are ignored, and the loop is restarted with the index updated; this
+   is equivalent to a functional "continue". In example:
+
+   @code
+   times( 10, 0, 
+      .[ (function(x); if x < 5: return oob(1); end)   // skip numbers less than 5
+         printl // print the others
+       ]
+    )
+   @endcode
+
+   The @b times function return the last generated value for the index. A natural termination of @b times
+   can be detected thanks to the fact that the index is equal to the upper bound of the range, while
+   an anticipated termination causes @b times to return a different index. In example, if @b count is 
+   10, the generated index (possibly received by the items in @b sequence) will range from 0 to 9 included,
+   and if the function terminates correctly, it will return 10. If a function in @b sequence returns an 
+   out-of-band 0, causing a premature termination of the loop, the value returned by times will be the loop
+   index at which the out-of-band 0 was returned.
+   
+   @note Ranges [m:n] where m > n (down-ranges) terminate at n included; in that case, a succesful 
+   completion of @b times return one-past n.
+*/
+FALCON_FUNC  core_times ( ::Falcon::VMachine *vm )
+{
+   Item *i_count = vm->param(0);
+   Item *i_var = vm->param(1);
+   Item *i_sequence = vm->param(2);
+
+   if( i_count == 0 || ! ( i_count->isRange() || i_count->isOrdinal() ) ||
+       i_var == 0 || ! ( vm->isParamByRef( 1 ) || i_var->isNil() || i_var->isOrdinal() ) ||
+       i_sequence == 0 || ! i_sequence->isArray() 
+      )
+   {
+      vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).
+         extra( "N|R, $|Nil|N, A" ) ) );
+      return;
+   }
+
+   CoreArray *origin = i_sequence->asArray();
+   int32 start, end, step;
+   if( i_count->isRange() )
+   {
+      if ( i_count->asRangeIsOpen() )
+      {
+         vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).
+            extra( "open range" ) ) );
+         return;
+      }
+
+      start = i_count->asRangeStart();
+      end = i_count->asRangeEnd();
+      step = i_count->asRangeStep();
+      if ( step == 0 ) step = start > end ? -1 : 1;
+   }
+   else {
+      start = 0;
+      end = (int32) i_count->forceInteger();
+      step = end < 0 ? -1 : 1;
+   }
+   
+   CoreArray *sequence = i_sequence->asArray();
+
+   // check ranges and steps.
+   if ( start == end || 
+        ( start < end && ( step < 0 || start + step > end ) ) ||
+        ( start > end && ( step > 0 || start + step < end ) ) ||
+        sequence->length() == 0
+    )
+   {
+      // no loop to be done.
+      vm->retval( (int64) start );
+      return;
+   }
+
+   // ok, we must do at least a loop
+   vm->returnHandler( core_times_next );
+
+   // 1: shifting range
+   // 2: position in the sequence calls.
+   vm->addLocals( 2 );
+   // count
+   vm->local(0)->setRange( start, end, step, false);
+   *vm->local(1) = (int64) 0;
+
+   // prevent dirty A to mess our break/continue system.
+   vm->regA().setNil();
+
+   // eventually, set the initial count
+   if ( vm->isParamByRef( 1 ) )
+   {
+      *i_var = (int64) start;
+   }
+
+   // ready; now the VM will call core_times_next
+}
 
 static bool core_xmap_next( ::Falcon::VMachine *vm )
 {
@@ -5458,6 +5739,7 @@ Module * core_module_init()
    core->addExtFunc( "dolist", Falcon::core::core_dolist )->setEta( true );
    core->addExtFunc( "floop", Falcon::core::core_floop )->setEta( true );
    core->addExtFunc( "firstOf", Falcon::core::core_firstof )->setEta( true );
+   core->addExtFunc( "times", Falcon::core::core_times )->setEta( true );
 
    // other functions
    core->addExtFunc( "min", Falcon::core::core_min );
