@@ -478,10 +478,9 @@ bool Compiler::checkLocalUndefined()
          Symbol *sym = 0;
          if ( m_closureContexts > 0 )
          {
-            // try to find the symbol in the previous symbol table
-            if( m_closureContexts )
+            fassert( m_functions.end() );
+            if ( m_functions.begin() != m_functions.end() )
             {
-               fassert( m_functions.end() );
                const FuncDef *fd_parent = reinterpret_cast<const FuncDef *>
                   ( m_functions.end()->prev()->data() );
 

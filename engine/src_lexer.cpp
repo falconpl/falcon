@@ -258,8 +258,11 @@ int SrcLexer::lex_normal()
    {
       m_addEol = false;
       m_lineFilled = false;
-      m_bIsDirectiveLine = false;
-      return EOL;
+      if ( m_contexts == 0 && m_squareContexts == 0 )
+      {
+         m_bIsDirectiveLine = false;
+         return EOL;
+      }
    }
 
    if ( m_done )
@@ -891,11 +894,10 @@ int SrcLexer::state_line( uint32 chr )
 
       // a real EOL has been provided here.
       m_bIsDirectiveLine = false;
-      if ( m_lineFilled )
+      if ( m_lineFilled && m_contexts == 0 && m_squareContexts == 0 )
       {
          m_lineFilled = false;
-         if ( m_contexts == 0 && m_squareContexts == 0 )
-            return EOL;
+         return EOL;
       }
    }
    else if ( chr == '\\' )
@@ -1141,6 +1143,8 @@ int SrcLexer::checkUnlimitedTokens( uint32 nextChar )
          else if ( m_string == ".[" )
          {
             m_squareContexts++;
+            if ( m_squareContexts == 1 )
+               m_ctxOpenLine = m_line;
             return LISTPAR;
          }
          else if ( m_string == ".\"" )
