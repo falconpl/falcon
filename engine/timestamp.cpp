@@ -98,6 +98,7 @@ const char *TimeStamp::getRFC2822_ZoneName( TimeZone tz, bool bSemantic, bool bS
       case tz_HAT: return "-0230";
       case tz_NST: return "-0330";
    }
+   return "+????";
 }
 
 
@@ -824,7 +825,7 @@ void TimeStamp::getTZDisplacement( TimeZone tz, int16 &hours, int16 &minutes )
 
    switch( tz )
    {
-      case tz_local: tz_NONE: case tz_UTC: hours = 0; minutes = 0; break;
+      case tz_local: case tz_NONE: case tz_UTC: hours = 0; minutes = 0; break;
       case tz_UTC_E_1: hours = 1; minutes = 0; break;
       case tz_UTC_E_2: hours = 2; minutes = 0; break;
       case tz_UTC_E_3: hours = 3; minutes = 0; break;
