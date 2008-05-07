@@ -400,7 +400,10 @@ bool LinearDict::removeAt( uint32 pos )
    if ( pos >= m_size )
       return false;
 
-   memmove( m_data + pos, m_data + pos + 1, esize( m_size - pos ) );
+   if ( pos < m_size - 1 )
+      memmove( m_data + pos, m_data + pos + 1, esize( m_size - pos ) );
+   // otherwise, there's nothing to move...
+
    length( m_size - 1 );
 
    // for now, do not reallocate.
