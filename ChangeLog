@@ -68,6 +68,8 @@ Falcon (0.8.9)
   * Minor: Automatically disregarding outdated .fam when trying to load source modules.
   * Minor: Added "times" functional construct (ETA function). It's a kind of functional
 		   for/in loop.
+  * Minor: Added pluggable support for multithreading locking scheme and atomic operation
+           providers (rudimental, but working).
 
 Falcon (0.8.8)
   * bugfix: TRAV opcode may destroy its parameters while setting first loop

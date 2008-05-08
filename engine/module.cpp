@@ -23,6 +23,7 @@
 #include <falcon/string.h>
 #include <falcon/traits.h>
 #include <falcon/pcodes.h>
+#include <falcon/enginedata.h>
 
 namespace Falcon {
 
@@ -515,16 +516,20 @@ DllLoader *Module::detachLoader()
    return ret;
 }
 
+
+void Module::incref()
+{
+   Engine::atomicInc( m_refcount );
+}
+
 void Module::decref()
 {
-   if( m_refcount <= 1 )
+   if( Engine::atomicDec( m_refcount ) <= 0 )
    {
       DllLoader *loader = detachLoader();
       delete this;
       delete loader;
    }
-   else
-      --m_refcount;
 }
 
 

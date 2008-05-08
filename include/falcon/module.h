@@ -55,6 +55,7 @@ class Stream;
 */
 class FALCON_DYN_CLASS Module: public BaseAlloc
 {
+   volatile long m_refcount;
 
    /******************************
    * Anagraphic section
@@ -63,7 +64,6 @@ class FALCON_DYN_CLASS Module: public BaseAlloc
    char m_subversion;
    String m_name;
    String m_path;
-   uint32 m_refcount;
    uint32 m_modVersion;
    uint32 m_engineVersion;
 
@@ -149,7 +149,7 @@ public:
    virtual char pcodeVersion() const;
    virtual char pcodeSubVersion() const;
 
-   void incref() { m_refcount ++; }
+   void incref();
    void decref();
 
    Symbol *findGlobalSymbol( const String &name ) const

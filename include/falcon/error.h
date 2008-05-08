@@ -359,6 +359,8 @@ private:
 class FALCON_DYN_CLASS Error: public BaseAlloc
 {
 protected:
+   volatile long m_refCount;
+   
    int m_errorCode;
    String m_description;
    String m_extra;
@@ -370,8 +372,6 @@ protected:
    uint32 m_character;
    uint32 m_pc;
    uint32 m_sysError;
-
-   uint32 m_refCount;
 
    t_origin m_origin;
    bool m_catchable;

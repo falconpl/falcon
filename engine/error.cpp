@@ -24,6 +24,7 @@
 #include <falcon/sys.h>
 #include <falcon/vm.h>
 #include <falcon/cobject.h>
+#include <falcon/enginedata.h>
 
 namespace Falcon {
 
@@ -312,13 +313,12 @@ Error::~Error()
 
 void Error::incref()
 {
-   m_refCount++;
+   Engine::atomicInc( m_refCount );
 }
 
 void Error::decref()
 {
-   --m_refCount;
-	if( m_refCount == 0 )
+   if( Engine::atomicDec( m_refCount ) <= 0 )
    {
 		delete this;
    }

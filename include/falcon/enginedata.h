@@ -1,6 +1,6 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: staticdata.h
+   FILE: enginedata.h
 
    Definition of engine static data used by falcon engine.
    -------------------------------------------------------------------
@@ -30,7 +30,65 @@
 
 namespace Falcon {
 
-/** Class holding Falcon engine data.
+namespace Engine {
+/** Engine data that is available for modules to be changed.
+
+   This class holds atomic and mutex-lock pointer functions, as well as the
+   string declaring the standard engine language (and in future, the engine
+   locale).
+
+   Each module holds a pointer to a singletone instance of this structure, which
+   is created at engine initialization. Is then possible for
+   each module, even if loaded after the initialization of the engine,
+   to change the fields in this structure, and have this reflected into all
+*/
+class RWData
+{
+public:
+   volatile long (*atomicInc)( volatile long &data );
+   volatile long (*atomicDec)( volatile long &data );
+   void (*lockEngine)();
+   void (*unlockEngine)();
+   String language;
+};
+
+extern FALCON_DYN_SYM RWData *rwdata;
+
+/** Shortcut function */
+inline volatile long atomicInc( volatile long &data )
+{
+   return rwdata->atomicInc( data );   
+}
+
+inline volatile long atomicDec( volatile long &data )
+{
+   return rwdata->atomicDec( data );   
+}
+
+inline void lockEngine()
+{
+   rwdata->lockEngine();   
+}
+
+inline void unlockEngine()
+{
+   rwdata->unlockEngine();   
+}
+
+inline const String &language()
+{
+   return rwdata->language;
+}
+
+inline void language( const String &lang )
+{
+   rwdata->language = lang;
+}
+
+}
+
+
+/** Class used to transport automatically engine data into modules.
 
    An instance of this class must be created in the main program using the Falcon Engine
    after configuring the Falcon engine global variables:
@@ -39,6 +97,7 @@ namespace Falcon {
    - memFree: pointer to the function deallocating memory
    - memRealloc: pointer to the function changing memory allocation
    - engineStrings: pointer to the global engine string table
+   - rwdata: Pointer to the RW data (actually, created in the engine)
 
    The main program should set this variables as it prefers; then the Falcon::Init() function
    should be called to ensure that the DLL holding the engine is updated. As an instance
@@ -51,6 +110,7 @@ class FALCON_DYN_CLASS EngineData
    void (*m_memFree) ( void * );
    void * (*m_memRealloc) ( void *,  size_t );
    StringTable *m_engineStrings;
+   Engine::RWData *m_rwData;
 
 public:
 
@@ -63,6 +123,7 @@ public:
    */
    EngineData()
    {
+      initRWData();
       get();
    }
 
@@ -82,6 +143,7 @@ public:
       m_memFree = ::Falcon::memFree;
       m_memRealloc = ::Falcon::memRealloc;
       m_engineStrings = ::Falcon::engineStrings;
+      m_rwData = ::Falcon::Engine::rwdata;
    }
 
    /** Sets global engine variables.
@@ -90,10 +152,15 @@ public:
       in the main program.
    */
    void set() const;
+
+   /** Create the initial. */
+   void initRWData();
 };
 
 
-/** Initialize the main engine DLL using global data prepared by the main program. */
+/** Initialize the main engine DLL using global data prepared by the main program. 
+ 
+*/
 extern "C" FALCON_DYN_SYM void Init( const EngineData &data );
 
 }
