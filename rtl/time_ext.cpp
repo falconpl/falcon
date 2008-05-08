@@ -489,7 +489,7 @@ FALCON_FUNC  TimeStamp_changeZone ( ::Falcon::VMachine *vm )
          extra( "N" ) ) );
       return;
    }
-   int tz = i_tz->forceInteger();
+   int tz = (int) i_tz->forceInteger();
    if ( tz < 0 || tz >= 32 )
    {
       vm->raiseModError( new ParamError( ErrorParam( e_param_range, __LINE__ ).origin( e_orig_runtime ).
@@ -616,7 +616,7 @@ FALCON_FUNC  TimeZone_getDisplacement ( ::Falcon::VMachine *vm )
          extra( "N" ) ) );
       return;
    }
-   int tz = i_tz->forceInteger();
+   int tz = (int) i_tz->forceInteger();
    if ( tz < 0 || tz >= 32 )
    {
       vm->raiseModError( new ParamError( ErrorParam( e_param_range, __LINE__ ).origin( e_orig_runtime ).
@@ -649,7 +649,7 @@ FALCON_FUNC  TimeZone_describe ( ::Falcon::VMachine *vm )
          extra( "N" ) ) );
       return;
    }
-   int tz = i_tz->forceInteger();
+   int tz = (int) i_tz->forceInteger();
    if ( tz < 0 || tz >= 32 )
    {
       vm->raiseModError( new ParamError( ErrorParam( e_param_range, __LINE__ ).origin( e_orig_runtime ).
