@@ -22,6 +22,8 @@
 #include <falcon/sys.h>
 #include <falcon/vm_sys_win.h>
 
+#include <Wincon.h>
+
 #ifndef INVALID_SET_FILE_POINTER
    #define INVALID_SET_FILE_POINTER ((DWORD)-1)
 #endif
@@ -618,6 +620,12 @@ StdInStream::StdInStream():
       )
    {
       dupped = (HANDLE) -1;
+   }
+   else {
+	   // remove the readline mode, as it breaks the WaitForXX functions.
+	   SetConsoleMode( dupped,
+			ENABLE_ECHO_INPUT |
+			ENABLE_PROCESSED_INPUT );
    }
 
    m_fsData = new WinFileSysData( dupped, 0, true, WinFileSysData::e_dirIn );
