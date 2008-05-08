@@ -100,7 +100,7 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    //=======================================================================
    // TODO: load proper messages...
    // ... and fallback to english:
-   self->stringTable().build( Falcon::Ext::message_table );
+   self->stringTable().build( (wchar_t**)Falcon::Ext::message_table );
 
    //=======================================================================
    // RTL basic functionality

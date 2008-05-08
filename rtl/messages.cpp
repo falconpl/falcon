@@ -23,7 +23,7 @@
 namespace Falcon {
 namespace Ext {
 
-wchar_t *message_table[] = {
+const wchar_t *message_table[] = {
    L"required an array, a start and an end position",
    L"invalid start/end positions",
    L"requres an array and another parameter",

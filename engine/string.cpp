@@ -1902,6 +1902,9 @@ void String::unescape()
 void String::serialize( Stream *out ) const
 {
    uint32 size = endianInt32(m_size);
+   if( m_bExported )
+      size |= 0x80000000;
+      
    out->write( (byte *) &size, sizeof(size) );
    if ( m_size != 0 && out->good() )
    {
@@ -1925,7 +1928,7 @@ void String::serialize( Stream *out ) const
                return;
          }
       }
-      else if ( chars == 2 )
+      else if ( chars == 4 )
       {
          for( int i = 0; i < m_size/4; i ++ )
          {
@@ -1947,7 +1950,9 @@ bool String::deserialize( Stream *in, bool bStatic )
 
    in->read( (byte *) &size, sizeof( size ) );
    m_size = endianInt32(size);
-
+   m_bExported = m_size & 0x80000000 == 0x80000000;
+   m_size = 0x7FFFFFFF;
+   
    // if the size of the deserialized string is 0, we have an empty string.
    if ( m_size == 0 )
    {
@@ -2021,7 +2026,7 @@ bool String::deserialize( Stream *in, bool bStatic )
                return;
          }
       }
-      else if ( chars == 2 )
+      else if ( chars == 4 )
       {
          for( int i = 0; i < m_size/4; i ++ )
          {

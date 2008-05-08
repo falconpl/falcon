@@ -34,9 +34,9 @@ class FALCON_DYN_CLASS StringTable: public BaseAlloc
 {
    GenericVector m_vector;
    Map m_map;
-
    char *m_tableStorage;
-
+   uint32 m_internatCount;
+   
 public:
    StringTable();
    ~StringTable();
@@ -109,11 +109,22 @@ public:
 
    /** Saves a template file out of this string table.
       Template files are needed for internationalization.
+      The template file will be written in an XML format. This function
+      doesn't write the ?xml header of the xml file, as that
+      requires the caller to know the encoding of the output stream.
+
+      The caller should do it instead.
+
+      \TODO Add encoding ID to common Stream interface.
+      
       A template file contains all the strings of the table
       so that the compiler of a translation set can
       associate them with translation.
+      \param out A Falcon::Stream for output.
+      \param modName The name of the moule to be written in the template file.
+      \param origLangCode the language code of this symbol table.
    */
-   bool saveTemplate( Stream *out );
+   bool saveTemplate( Stream *out, const String &modName, const String &origLangCode );
 
    /** Builds the table from a source file initialization.
       Useful to build static string tables in modules and
@@ -136,6 +147,12 @@ public:
       \param table a vector of wchar_t * terminated by zero.
    */
    void build( wchar_t **table );
+
+   /** Returns the count of international strings added to this symbol table.
+      \note if this is zero, then the module writers shouldn't even create
+      the template for the given module.
+   */
+   uint32 internatCount() const { return m_internatCount; }
 };
 
 }

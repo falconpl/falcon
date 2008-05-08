@@ -305,6 +305,14 @@ protected:
    byte m_gcStatus;
 
    /**
+    * True if this string is exportable - importable in GC context.
+    */
+   bool m_bExported;
+
+   // Reserved for future usage.
+   byte m_bFlags;
+
+   /**
     * Creates the core string.
     *
     * This method is protected. It can be accessed only by subclasses.
@@ -340,6 +348,7 @@ public:
       m_size( 0 ),
       m_storage( 0 ),
       m_allocated( 0 ),
+      m_bExported( false ),
       m_class( &csh::handler_static ),
       m_garbageable( false )
    {}
@@ -1088,6 +1097,14 @@ public:
       This operator is provided as a candy grammar for getCharAt().
    */
    const uint32 operator []( uint32 pos ) const { return getCharAt( pos ); }
+
+   /** Return wether this exact string instance should be internationalized.
+      \note exported() attribute is not copied across string copies.
+   */
+   bool exported() const { return m_bExported; }
+   /** Sets wether this string should be exported in international context or not.
+   */
+   void exported( bool e ) { m_bExported = e; }
 };
 
 

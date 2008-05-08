@@ -38,6 +38,7 @@ Module::Module():
    m_modVersion( 0 ),
    m_engineVersion( 0 ),
    m_loader(0),
+   m_language( "C" ),
    m_serviceMap( &traits::t_string, &traits::t_voidp )
 {}
 

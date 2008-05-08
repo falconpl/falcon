@@ -54,7 +54,8 @@ SrcLexer::SrcLexer( Compiler *comp, Stream *in ):
    m_lineFilled( false ),
    m_mode( t_mNormal ),
    m_ctxOpenLine(0),
-   m_bIsDirectiveLine(false)
+   m_bIsDirectiveLine(false),
+   m_bExportingString( false )
 {}
 
 int SrcLexer::lex()
@@ -362,6 +363,22 @@ int SrcLexer::lex_normal()
             if ( isTokenLimit( chr ) )
             {
                // end of symbol
+               // special x" notation?
+               if( m_string.size() == 1 && (chr == '"' || chr == '\''))
+               {
+                  // recognize only the i" for now
+                  if ( m_string[0] == 'i' )
+                  {
+                     // starting a string context
+                     m_string.size(0); // remove first char.
+                     m_state = chr == '"' ? e_string : e_litString;;
+                     m_bExportingString = true;
+                     m_chrEndString = chr; //... up to the matching "
+                     break;
+                  }
+                  // else, just let it through.
+               }
+               
                // unless we have a dot in a load directive
                if ( m_bIsDirectiveLine && chr == '.' )
                {
@@ -764,6 +781,8 @@ int SrcLexer::lex_normal()
                // end of input?
                if ( m_done ) {
                   VALUE->stringp = m_compiler->addString( m_string );
+                  VALUE->stringp->exported( m_bExportingString );
+                  m_bExportingString = false;
                   m_state = e_line;
                   return STRING;
                }
@@ -798,6 +817,8 @@ int SrcLexer::lex_normal()
                   // end of input.
                   m_done = true;
                   VALUE->stringp = m_compiler->addString( m_string );
+                  VALUE->stringp->exported( m_bExportingString );
+                  m_bExportingString = false;
                   return STRING;
                }
 
@@ -807,6 +828,8 @@ int SrcLexer::lex_normal()
                }
                else if ( chr1 == '/' ) {
                   VALUE->stringp = m_compiler->addString( m_string );
+                  VALUE->stringp->exported( m_bExportingString );
+                  m_bExportingString = false;
                   m_state = e_eolComment;
                   return STRING;
                }
@@ -815,6 +838,8 @@ int SrcLexer::lex_normal()
                   m_in->unget( chr1 );
                   m_in->unget( chr );
                   VALUE->stringp = m_compiler->addString( m_string );
+                  VALUE->stringp->exported( m_bExportingString );
+                  m_bExportingString = false;
                   m_state = e_line;
                   return STRING;
                }
@@ -824,6 +849,8 @@ int SrcLexer::lex_normal()
 
                m_in->unget( chr );
                VALUE->stringp = m_compiler->addString( m_string );
+               VALUE->stringp->exported( m_bExportingString );
+               m_bExportingString = false;
                m_state = e_line;
                return STRING;
             }
@@ -1018,7 +1045,7 @@ int SrcLexer::checkUnlimitedTokens( uint32 nextChar )
             return VBAR;
          else if ( chr == '^' && nextChar != '=' )
             return CAP;
-         else if ( chr == '!' && nextChar != '=' )
+         else if ( chr == '!' && nextChar != '=' && nextChar != '"' )
                return BANG;
 
          else if ( chr == '$' )
@@ -1154,7 +1181,6 @@ int SrcLexer::checkUnlimitedTokens( uint32 nextChar )
             m_chrEndString = '"'; //... up to the matching "
             return 0;
          }
-
          else if ( parsingFtd() && m_string == "?>" )
          {
             m_mode = t_mOutscape;

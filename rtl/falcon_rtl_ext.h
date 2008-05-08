@@ -361,7 +361,7 @@ FALCON_FUNC  URI_getFields ( ::Falcon::VMachine *vm );
 FALCON_FUNC  URI_setFields ( ::Falcon::VMachine *vm );
 
 /** Message table **/
-extern wchar_t *message_table[];
+extern const wchar_t *message_table[];
 
 
 

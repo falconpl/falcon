@@ -64,6 +64,7 @@ class FALCON_DYN_CLASS Module: public BaseAlloc
    char m_subversion;
    String m_name;
    String m_path;
+   String m_language;
    uint32 m_modVersion;
    uint32 m_engineVersion;
 
@@ -133,6 +134,8 @@ public:
    Module &code( byte *code ) { m_code = code; return *this; }
    Module &codeSize( uint32 cs ) { m_codeSize = cs; return *this; }
    Module &entry( uint32 entry ) { m_entry = entry; return *this; }
+   Module &language( const String &lang ) { m_language = lang; return *this; }
+
 
    Module &version( uint32 version ) { m_modVersion = version; return *this; }
    Module &version( int major, int minor, int revision ) {
@@ -159,6 +162,7 @@ public:
 
    const String &name() const { return m_name; }
    const String &path() const { return m_path; }
+   const String &language() const { return m_language;}
 
    byte *code() const { return m_code; }
    uint32 codeSize() const { return m_codeSize; }
@@ -559,8 +563,14 @@ public:
    */
    Symbol *addConstant( const String &name, const String &value, bool exp = true );
 
+   /** Get the version declared by this module */
    void getModuleVersion( int &major, int &minor, int &revision ) const;
+   
+   /** Get the version of the engine libraries under which this module has been compiled. */
    void getEngineVersion( int &major, int &minor, int &revision ) const;
+
+   /** Save internationalization infos on required file. */
+   bool saveTableTemplates( const String &filename ) const;
 };
 
 }

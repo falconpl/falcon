@@ -25,7 +25,7 @@ namespace Falcon {
 
 StringTable *engineStrings = 0;
 
-char *en_table[] =
+const char *en_table[] =
    {
       "The Falcon Programming Language",
       "Generic syntax error",
@@ -256,14 +256,14 @@ bool setEngineLanguage( const String &language )
    {
       delete engineStrings;
       engineStrings = new StringTable;
-      engineStrings->build( en_table );
+      engineStrings->build( (char **)en_table );
       return true;
    }
 
    // residual criterion: using english but...
    delete engineStrings;
    engineStrings = new StringTable;
-   engineStrings->build( en_table );
+   engineStrings->build( (char **)en_table );
 
    // ... signal that we didn't found the language.
    return false;

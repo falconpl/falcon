@@ -62,6 +62,7 @@ private:
 
 protected:
    ErrorHandler *m_errhand;
+   bool m_bSaveIntTemplate;
 
    Module *loadModule_select_ver( Stream *in );
 
@@ -436,8 +437,24 @@ public:
       return temp;
    }
 
+   /** Sets the error handler.
+      The module loader never owns the handler; it must be disposed separately.
+   */
    void errorHandler( ErrorHandler *h ) { m_errhand = h; }
+
+   /** Returns the error handler.
+   */
    ErrorHandler *errorHandler() const { return m_errhand; }
+
+   /** Save international templates for loaded modules.
+      If this option is set to true, and if the loaded modules
+      have international strings, then a template for the
+      internationalization file will be saved.
+   */
+   void saveIntTemplates( bool mode /*, bool force=false */ )
+   {
+      m_bSaveIntTemplate = mode;
+   }
 };
 
 }

@@ -29,7 +29,8 @@ namespace Falcon {
 StringTable::StringTable():
    m_vector( &traits::t_stringptr_own ),
    m_map( &traits::t_stringptr, &traits::t_int ),
-   m_tableStorage(0)
+   m_tableStorage(0),
+   m_internatCount(0)
 {}
 
 StringTable::~StringTable()
@@ -49,6 +50,10 @@ int32 StringTable::add( String *str )
    m_vector.push( str );
    str->id( id );
    m_map.insert( str, &id );
+   // is this an international string
+   if ( str->exported() )
+      m_internatCount++;
+      
    return id;
 }
 
@@ -150,23 +155,44 @@ bool StringTable::skip( Stream *in ) const
    return true;
 }
 
-bool StringTable::saveTemplate( Stream *out )
+bool StringTable::saveTemplate( Stream *out, const String &moduleName, const String &origLang )
 {
+   // we shouldn't even have been called if we have no interational strings.
+   if( m_internatCount == 0 )
+      return true;
+   
+   // write the XML template
+   // -- the caller should prepend the XML header if relevant
+   String temp = "<translation module=\"" + moduleName + "\" from=\"" + origLang +
+         "\" into=\"Your language code here\">\n";
+
+   if ( ! out->writeString( temp ) )
+      return false;
+         
    for ( int i = 0; i < size(); i++ )
    {
-      String temp;
-      temp += "/* ";
-      temp.writeNumber( (int64)i );
-      temp +=" */\n";
+      const String &current = *get(i);
+      if( ! current.exported() )
+         continue;
+
+      //====== an international string.
+      
+      String temp = "<string id=\"";
+      temp.writeNumber( (int64) i);
+      temp+=">\n<original>";
+      
       if ( ! out->writeString( temp ) )
          return false;
-
-      if ( ! out->writeString( *get( i ) ) )
+      
+      if ( ! out->writeString( current ) )
          return false;
 
-      if ( ! out->writeString( "\n//=\n//==\n\n" ) )
+      if ( ! out->writeString( "</original>\n<translated></translated>\n</string>\n" ) )
          return false;
    }
+
+   if ( ! out->writeString( "</translation>\n" ) )
+      return false;
 
    return true;
 }
