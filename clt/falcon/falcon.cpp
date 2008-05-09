@@ -179,6 +179,8 @@ static void usage()
    stdOut->writeString( "   -v          print copyright notice and version and exit\n" );
    stdOut->writeString( "   -w          Add an extra console wait after program exit\n" );
    stdOut->writeString( "   -x          execute a binary '.fam' module\n" );
+   stdOut->writeString( "   -y          write string translation table for the module\n" );
+
    stdOut->writeString( "\n" );
    stdOut->writeString( "Paths must be in falcon file name format: directory separatros must be slashes [/] and\n" );
    stdOut->writeString( "multiple entries must be entered separed by a semicomma (';')\n" );
@@ -481,6 +483,7 @@ void parseOptions( int argc, char **argv, int &script_pos )
             case 'x': options.run_only = true; break;
             case 'v': version(); exitNow = true; break;
             case 'w': options.wait_after = true; break;
+            case 'y': options.compile_tltable = true; break;
 
             default:
                stdErr->writeString( "falcon: unrecognized option '" );
@@ -748,7 +751,13 @@ int main( int argc, char *argv[] )
       // if we had a module, save it at the right place.
       if ( mod != 0 )
       {
-         mod->save( openOutputStream( "fam" ) );
+         // should we save the module ?
+         if ( options.assemble_only || options.compile_only )
+         {
+            Stream *modstream = openOutputStream( "fam" );
+            mod->save( modstream );
+            modstream->close();
+         }
       }
 
       // whatever happened, we go to exit now.
@@ -759,16 +768,6 @@ int main( int argc, char *argv[] )
    // with ignore source option, the flcLoader will bypass loadSource and use loadModule.
    modLoader->ignoreSources( options.run_only );
 
-   // Create the runtime using the given module loader.
-   Runtime *runtime = new Runtime( modLoader );
-
-   Module *falcon_rtl = modLoader->loadName( "falcon_rtl" );
-
-   if ( falcon_rtl == 0 )
-   {
-      // mod loader has already raised the error.
-      exit_sequence( 1 );
-   }
    // Load the modules
    Module *mainMod;
 
@@ -787,6 +786,39 @@ int main( int argc, char *argv[] )
    if ( mainMod == 0 )
    {
       exit_sequence( 1, modLoader->compileErrors() );
+   }
+
+   // should we just write the string table?
+   if( options.compile_tltable )
+   {
+      if( mainMod->stringTable().internatCount() > 0 )
+      {
+         Stream *tplstream = openOutputStream( "temp.ftt" );
+         if( tplstream )
+         {
+            // Wrap using default encoding
+            if ( options.source_encoding != "" && options.source_encoding != "C" )
+               tplstream = TranscoderFactory( options.source_encoding, tplstream, false );
+            mainMod->saveTableTemplate( tplstream, options.source_encoding );
+            tplstream->close();
+         }
+         else
+            exit_sequence( 1, 0 );
+      }
+
+      exit_sequence( 0 , 0 );
+   }
+
+   // Create the runtime using the given module loader.
+   Runtime *runtime = new Runtime( modLoader );
+
+   // But before proceding, load the rtl.
+   Module *falcon_rtl = modLoader->loadName( "falcon_rtl" );
+
+   if ( falcon_rtl == 0 )
+   {
+      // mod loader has already raised the error.
+      exit_sequence( 1 );
    }
 
    // now that we have the main module, inject other requested modules

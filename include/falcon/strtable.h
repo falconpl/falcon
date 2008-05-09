@@ -34,9 +34,10 @@ class FALCON_DYN_CLASS StringTable: public BaseAlloc
 {
    GenericVector m_vector;
    Map m_map;
+   Map m_intMap;
    char *m_tableStorage;
    uint32 m_internatCount;
-   
+
 public:
    StringTable();
    ~StringTable();
@@ -116,7 +117,7 @@ public:
       The caller should do it instead.
 
       \TODO Add encoding ID to common Stream interface.
-      
+
       A template file contains all the strings of the table
       so that the compiler of a translation set can
       associate them with translation.
@@ -124,7 +125,7 @@ public:
       \param modName The name of the moule to be written in the template file.
       \param origLangCode the language code of this symbol table.
    */
-   bool saveTemplate( Stream *out, const String &modName, const String &origLangCode );
+   bool saveTemplate( Stream *out, const String &modName, const String &origLangCode ) const;
 
    /** Builds the table from a source file initialization.
       Useful to build static string tables in modules and
@@ -134,8 +135,9 @@ public:
       module string table where the first string in the
       array has id 0, the second has id 1 and so on.
       \param table a vector of char * terminated by zero.
+      \param bInternational the string table contains items to be internationalized.
    */
-   void build( char **table );
+   void build( char **table, bool bInternational );
 
    /** Builds the table from a source file initialization.
       Useful to build static string tables in modules and
@@ -145,8 +147,9 @@ public:
       module string table where the first string in the
       array has id 0, the second has id 1 and so on.
       \param table a vector of wchar_t * terminated by zero.
+      \param bInternational the string table contains items to be internationalized.
    */
-   void build( wchar_t **table );
+   void build( wchar_t **table, bool bInternational );
 
    /** Returns the count of international strings added to this symbol table.
       \note if this is zero, then the module writers shouldn't even create

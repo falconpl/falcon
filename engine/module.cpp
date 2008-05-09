@@ -274,7 +274,7 @@ String *Module::addString( const String &st )
    if ( ret == 0 ) {
       ret = new String( st );
       ret->bufferize();
-      ret->id( m_strTab.size());
+      ret->exported( st.exported() );
 		m_strTab.add( ret );
    }
 
@@ -285,7 +285,7 @@ String *Module::addString( const String &st )
 bool Module::save( Stream *out, bool skipCode ) const
 {
    // save header informations:
-   char *sign = "FM";
+   const char *sign = "FM";
    out->write( sign, 2 );
 
    char ver = pcodeVersion();
@@ -533,6 +533,13 @@ void Module::decref()
    }
 }
 
+bool Module::saveTableTemplate( Stream *stream, const String &encoding ) const
+{
+   stream->writeString( "<?xml version=\"1.0\" encoding=\"" );
+   stream->writeString( encoding );
+   stream->writeString( "\"?>\n" );
+   return m_strTab.saveTemplate( stream, name(), language() );
+}
 
 }
 /* end module.cpp */

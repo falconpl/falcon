@@ -60,6 +60,8 @@ public:
 
    bool parse_ftd;
 
+   bool compile_tltable;
+
    HOptions():
       input( "" ),
       output( "" ),
@@ -79,7 +81,8 @@ public:
       io_encoding( "" ),
       source_encoding( "" ),
       wait_after( false ),
-      parse_ftd( false )
+      parse_ftd( false ),
+      compile_tltable( false )
    {}
 };
 

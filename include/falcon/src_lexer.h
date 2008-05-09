@@ -46,7 +46,6 @@ private:
    bool m_lineFilled;
    bool m_bIsDirectiveLine;
    uint32 m_chrEndString;
-   bool m_bExportingString;
 
    Stream *m_in;
    Compiler *m_compiler;

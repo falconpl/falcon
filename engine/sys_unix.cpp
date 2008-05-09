@@ -75,7 +75,7 @@ uint32 _milliseconds()
 void _tempName( String &res )
 {
    static bool first = true;
-   char *temp_dir;
+   const char *temp_dir;
    char *fname;
    struct stat st;
 

@@ -1532,6 +1532,10 @@ directive_pair:
       {
          COMPILER->setDirective( *$1, *$3 );
       }
+   | SYMBOL OP_EQ STRING
+      {
+         COMPILER->setDirective( *$1, *$3 );
+      }
    | SYMBOL OP_EQ INTNUM_WITH_MINUS
       {
          COMPILER->setDirective( *$1, $3 );

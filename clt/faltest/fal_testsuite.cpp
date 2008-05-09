@@ -113,7 +113,7 @@ FALCON_FUNC  flc_failure ( ::Falcon::VMachine *vm )
 FALCON_FUNC  flc_alive ( ::Falcon::VMachine *vm )
 {
    static int pos = 0;
-   static char *frullo = { "-\\|/" };
+   static const char *frullo = { "-\\|/" };
    ::Falcon::Stream &out = *vm->stdOut();
 
    ::Falcon::int64 percent = 0;

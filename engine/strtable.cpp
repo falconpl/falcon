@@ -29,6 +29,7 @@ namespace Falcon {
 StringTable::StringTable():
    m_vector( &traits::t_stringptr_own ),
    m_map( &traits::t_stringptr, &traits::t_int ),
+   m_intMap( &traits::t_stringptr, &traits::t_int ),
    m_tableStorage(0),
    m_internatCount(0)
 {}
@@ -41,35 +42,63 @@ StringTable::~StringTable()
 
 int32 StringTable::add( String *str )
 {
-   int32 *pos = (int32 *) m_map.find( str );
-
-   if ( pos != 0 )
-      return *pos;
-
-   int32 id = m_vector.size();
-   m_vector.push( str );
-   str->id( id );
-   m_map.insert( str, &id );
-   // is this an international string
    if ( str->exported() )
+   {
+      int32 *pos = (int32 *) m_intMap.find( str );
+
+      if ( pos != 0 )
+         return *pos;
+
+      int32 id = m_vector.size();
+      str->id( id );
+      m_vector.push( str );
+      m_intMap.insert( str, &id );
       m_internatCount++;
-      
-   return id;
+      return id;
+   }
+   else
+   {
+      int32 *pos = (int32 *) m_map.find( str );
+
+      if ( pos != 0 )
+         return *pos;
+
+      int32 id = m_vector.size();
+      str->id( id );
+      m_vector.push( str );
+      m_map.insert( str, &id );
+      return id;
+   }
 }
 
 String *StringTable::find( const String &source ) const
 {
    MapIterator pos;
-   if ( m_map.find( &source, pos ) )
-      return *(String **) pos.currentKey();
+   if ( source.exported() )
+   {
+      if ( m_intMap.find( &source, pos ) )
+         return *(String **) pos.currentKey();
+   }
+   else {
+      if ( m_map.find( &source, pos ) )
+         return *(String **) pos.currentKey();
+   }
    return 0;
 }
 
-int32 StringTable::findId( const String &str ) const
+int32 StringTable::findId( const String &source ) const
 {
    MapIterator pos;
-   if ( m_map.find( &str, pos ) )
-      return *(int32 *) pos.currentValue();
+   if ( source.exported() )
+   {
+      if ( m_intMap.find( &source, pos ) )
+         return *(int32 *) pos.currentValue();
+   }
+   else {
+      if ( m_map.find( &source, pos ) )
+         return *(int32 *) pos.currentValue();
+   }
+
    return -1;
 }
 
@@ -155,12 +184,12 @@ bool StringTable::skip( Stream *in ) const
    return true;
 }
 
-bool StringTable::saveTemplate( Stream *out, const String &moduleName, const String &origLang )
+bool StringTable::saveTemplate( Stream *out, const String &moduleName, const String &origLang ) const
 {
    // we shouldn't even have been called if we have no interational strings.
    if( m_internatCount == 0 )
       return true;
-   
+
    // write the XML template
    // -- the caller should prepend the XML header if relevant
    String temp = "<translation module=\"" + moduleName + "\" from=\"" + origLang +
@@ -168,7 +197,7 @@ bool StringTable::saveTemplate( Stream *out, const String &moduleName, const Str
 
    if ( ! out->writeString( temp ) )
       return false;
-         
+
    for ( int i = 0; i < size(); i++ )
    {
       const String &current = *get(i);
@@ -176,14 +205,14 @@ bool StringTable::saveTemplate( Stream *out, const String &moduleName, const Str
          continue;
 
       //====== an international string.
-      
+
       String temp = "<string id=\"";
       temp.writeNumber( (int64) i);
-      temp+=">\n<original>";
-      
+      temp+="\">\n<original>";
+
       if ( ! out->writeString( temp ) )
          return false;
-      
+
       if ( ! out->writeString( current ) )
          return false;
 
@@ -197,23 +226,26 @@ bool StringTable::saveTemplate( Stream *out, const String &moduleName, const Str
    return true;
 }
 
-void StringTable::build( char **table )
+void StringTable::build( char **table, bool bInternational )
 {
    char **ptr = table;
    while( *ptr != 0 )
    {
       String *s = new String( *ptr );
+      s->exported( bInternational );
       add( s );
       ptr++;
    }
 }
 
-void StringTable::build( wchar_t **table )
+void StringTable::build( wchar_t **table, bool bInternational )
 {
    wchar_t **ptr = table;
    while( *ptr != 0 )
    {
-      add( new String( *ptr ) );
+      String *s = new String( *ptr );
+      s->exported( bInternational );
+      add( s );
       ptr++;
    }
 }

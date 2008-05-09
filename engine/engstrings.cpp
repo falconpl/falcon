@@ -256,14 +256,14 @@ bool setEngineLanguage( const String &language )
    {
       delete engineStrings;
       engineStrings = new StringTable;
-      engineStrings->build( (char **)en_table );
+      engineStrings->build( (char **)en_table, true );
       return true;
    }
 
    // residual criterion: using english but...
    delete engineStrings;
    engineStrings = new StringTable;
-   engineStrings->build( (char **)en_table );
+   engineStrings->build( (char **)en_table, true );
 
    // ... signal that we didn't found the language.
    return false;

@@ -161,7 +161,12 @@ class FALCON_DYN_CLASS Compiler: public BaseAlloc
    int m_closureContexts;
    int m_tempLine;
 
+   /** Directive strict. */
    bool m_strict;
+
+   /** Directive language. */
+   String m_language;
+
    bool m_defContext;
 
    bool m_bParsingFtd;

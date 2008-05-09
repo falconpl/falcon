@@ -26,9 +26,9 @@
 #include <stdio.h>
 #include <time.h>
 
-static char *RFC_2822_days[] = { "Mon","Tue", "Wed","Thu","Fri","Sat","Sun" };
+static const char *RFC_2822_days[] = { "Mon","Tue", "Wed","Thu","Fri","Sat","Sun" };
 
-static char *RFC_2822_months[] = {
+static const char *RFC_2822_months[] = {
    "Jan","Feb","Mar","Apr","May","Jun","Jul","Aug", "Sep","Oct","Nov","Dec" };
 
 namespace Falcon {

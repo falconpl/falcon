@@ -565,12 +565,15 @@ public:
 
    /** Get the version declared by this module */
    void getModuleVersion( int &major, int &minor, int &revision ) const;
-   
+
    /** Get the version of the engine libraries under which this module has been compiled. */
    void getEngineVersion( int &major, int &minor, int &revision ) const;
 
-   /** Save internationalization infos on required file. */
-   bool saveTableTemplates( const String &filename ) const;
+   /** Save internationalization infos on required file.
+      Creates an XML file staring with ?xml tag.
+      Shouldn't be called if it's table has no international strintgs.
+   */
+   bool saveTableTemplate( Stream *stream, const String &encoding ) const;
 };
 
 }

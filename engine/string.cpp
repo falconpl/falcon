@@ -1247,7 +1247,8 @@ void Buffer::destroy( String *str ) const
 String::String( uint32 size ):
    m_class( &csh::handler_buffer ),
    m_garbageable( false ),
-   m_id(String::no_id)
+   m_id(String::no_id),
+   m_bExported( false )
 {
    m_storage = (byte *) memAlloc( size );
    m_allocated = size;
@@ -1259,7 +1260,8 @@ String::String( const char *data ):
    m_garbageable( false ),
    m_allocated( 0 ),
    m_storage( (byte*) const_cast< char *>(data) ),
-   m_id(String::no_id)
+   m_id(String::no_id),
+   m_bExported( false )
 {
    m_size = strlen( data );
 }
@@ -1267,7 +1269,8 @@ String::String( const char *data ):
 String::String( const char *data, int32 len ):
    m_class( &csh::handler_buffer ),
    m_garbageable( false ),
-   m_id(String::no_id )
+   m_id(String::no_id ),
+   m_bExported( false )
 {
    m_size = len >= 0 ? len : strlen( data );
    m_allocated = (( m_size / FALCON_STRING_ALLOCATION_BLOCK ) + 1 ) * FALCON_STRING_ALLOCATION_BLOCK;
@@ -1280,7 +1283,8 @@ String::String( const wchar_t *data ):
    m_garbageable( false ),
    m_allocated( 0 ),
    m_storage( (byte*) const_cast< wchar_t *>(data) ),
-   m_id( String::no_id )
+   m_id( String::no_id ),
+   m_bExported( false )
 {
    if ( sizeof( wchar_t ) == 2 )
       m_class = &csh::handler_static16;
@@ -1298,7 +1302,8 @@ String::String( const wchar_t *data, int32 len ):
    m_allocated( 0 ),
    m_storage( (byte *) const_cast< wchar_t *>( data ) ),
    m_garbageable( false ),
-   m_id( String::no_id )
+   m_id( String::no_id ),
+   m_bExported( false )
 {
    if ( sizeof( wchar_t ) == 2 )
       m_class = &csh::handler_buffer16;
@@ -1328,7 +1333,8 @@ String::String( const String &other, uint32 begin, uint32 end ):
    m_size( 0 ),
    m_storage( 0 ),
    m_garbageable( false ),
-   m_id( String::no_id )
+   m_id( String::no_id ),
+   m_bExported( false )
 {
    // by default, copy manipulator
    m_class = other.m_class;
@@ -1901,10 +1907,8 @@ void String::unescape()
 
 void String::serialize( Stream *out ) const
 {
-   uint32 size = endianInt32(m_size);
-   if( m_bExported )
-      size |= 0x80000000;
-      
+   uint32 size = endianInt32( m_bExported ? m_size | 0x80000000 : m_size );
+
    out->write( (byte *) &size, sizeof(size) );
    if ( m_size != 0 && out->good() )
    {
@@ -1950,9 +1954,9 @@ bool String::deserialize( Stream *in, bool bStatic )
 
    in->read( (byte *) &size, sizeof( size ) );
    m_size = endianInt32(size);
-   m_bExported = m_size & 0x80000000 == 0x80000000;
-   m_size = 0x7FFFFFFF;
-   
+   m_bExported = (m_size & 0x80000000) == 0x80000000;
+   m_size = m_size & 0x7FFFFFFF;
+
    // if the size of the deserialized string is 0, we have an empty string.
    if ( m_size == 0 )
    {

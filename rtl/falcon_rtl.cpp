@@ -92,6 +92,7 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    // Module declaration
    Falcon::Module *self = new Falcon::Module();
    self->name( "falcon_rtl" );
+   self->language( "en_US" );
    self->engineVersion( FALCON_VERSION_NUM );
    self->version( RTL_VERSION_MAJOR, RTL_VERSION_MINOR, RTL_VERSION_REVISION );
 
@@ -100,7 +101,7 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    //=======================================================================
    // TODO: load proper messages...
    // ... and fallback to english:
-   self->stringTable().build( (wchar_t**)Falcon::Ext::message_table );
+   self->stringTable().build( (wchar_t**)Falcon::Ext::message_table, true );
 
    //=======================================================================
    // RTL basic functionality
