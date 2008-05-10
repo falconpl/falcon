@@ -265,10 +265,8 @@ void VMachine::run()
                   // else incapsulate the item in an error.
                   err = new GenericError( ErrorParam( e_uncaught ).origin( e_orig_vm ) );
                   err->raised( m_regB );
+                  fillErrorContext( err );
                }
-
-               fillErrorContext( err );
-
                m_error = err;
             }
 
@@ -281,9 +279,9 @@ void VMachine::run()
                   // yes, exit but of course, maintain the error status
                   m_event = eventRisen;
 
-				  // we must return only if the stackbase is not zero; otherwise, we return to a
-				  // base callItem, and we must manage internally that case.
-				  if ( m_stackBase != 0 )
+                  // we must return only if the stackbase is not zero; otherwise, we return to a
+                  // base callItem, and we must manage internally that case.
+                  if ( m_stackBase != 0 )
                       return;
                }
                // call return may raise eventQuit, but only when m_stackBase is zero,

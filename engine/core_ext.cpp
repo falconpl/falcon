@@ -2752,11 +2752,15 @@ FALCON_FUNC  Iterator_prev( ::Falcon::VMachine *vm )
 /*#
    @method value Iterator
    @brief Retreives the current item in the collection.
+   @optparam subst New value for the current item.
    @return The current item.
    @raise AccessError if the iterator is not valid.
 
    If the iterator is valid, the method returns the value of
    the item being currently pointed by the iterator.
+
+   If a parameter @b subst is given, the current value in the sequence
+   is changed to @b substs.
 */
 FALCON_FUNC  Iterator_value( ::Falcon::VMachine *vm )
 {
