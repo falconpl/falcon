@@ -70,6 +70,8 @@ Falcon (0.8.9)
 		   for/in loop.
   * Minor: Added pluggable support for multithreading locking scheme and atomic operation
            providers (rudimental, but working).
+  * Minor: Added directive "version"=number (0x[VVV]VMMmm) and the function vmModuleVersionInfo()
+           to store and access script and .fam version informations.
 
 Falcon (0.8.8)
   * bugfix: TRAV opcode may destroy its parameters while setting first loop

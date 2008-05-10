@@ -167,6 +167,9 @@ class FALCON_DYN_CLASS Compiler: public BaseAlloc
    /** Directive language. */
    String m_language;
 
+   /** Directive version. */
+   int64 m_modVersion;
+
    bool m_defContext;
 
    bool m_bParsingFtd;

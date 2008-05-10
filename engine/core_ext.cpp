@@ -238,23 +238,46 @@ namespace core {
 
 /*#
    @function vmVersionInfo
-   @ingroup general_puroise
+   @ingroup vminfo
    @inset vminfo
    @brief Returns an array containing VM version informations.
-   @return Major, minor and revision numbers of the VM in a 3 elements array.
+   @return Major, minor and revision numbers of the running virtual machine in a 3 elements array.
 */
 FALCON_FUNC  vmVersionInfo( ::Falcon::VMachine *vm )
 {
    CoreArray *ca = new CoreArray( vm, 3 );
-   ca->append( (int64) ((FALCON_VERSION_NUM >> 16) & 0xFF) );
+   ca->append( (int64) ((FALCON_VERSION_NUM >> 16)) );
    ca->append( (int64) ((FALCON_VERSION_NUM >> 8) & 0xFF) );
    ca->append( (int64) ((FALCON_VERSION_NUM ) & 0xFF) );
    vm->retval( ca );
 }
 
 /*#
+   @function vmModuleVersionInfo
+   @ingroup vminfo
+   @inset vminfo
+   @brief Returns an array containing current module version informations.
+   @return Major, minor and revision numbers of the curerntly being executed module,
+      in a 3 elements array.
+*/
+FALCON_FUNC  vmModuleVersionInfo( ::Falcon::VMachine *vm )
+{
+   CoreArray *ca = new CoreArray( vm, 3 );
+   int major=0, minor=0, revision=0;
+   if ( vm->currentModule() != 0 )
+   {
+      vm->currentModule()->getModuleVersion( major, minor, revision );
+   }
+
+   ca->append( (int64) major );
+   ca->append( (int64) minor );
+   ca->append( (int64) revision );
+   vm->retval( ca );
+}
+
+/*#
    @function vmVersionName
-   @ingroup general_puroise
+   @ingroup vminfo
    @inset vminfo
    @brief Returns the nickname for this VM version.
    @return A string containing the symbolic name of this VM version.
@@ -267,7 +290,7 @@ FALCON_FUNC  vmVersionName( ::Falcon::VMachine *vm )
 
 /*#
    @function vmSystemType
-   @ingroup general_puroise
+   @ingroup vminfo
    @inset vminfo
    @brief Returns a descriptive name of the overall system architecture.
    @return A string containing a small descriptiuon of the system architecture.
@@ -3925,7 +3948,7 @@ static bool core_times_next ( ::Falcon::VMachine *vm )
    uint32 currentItemID = (uint32) vm->local(1)->asInteger();
 
    // Continue or items terminated?
-   if( currentItemID == sequence->length() || 
+   if( currentItemID == sequence->length() ||
       ( vm->regA().isOob() && vm->regA().isInteger() && vm->regA().asInteger() == 1 )
       )
    {
@@ -3940,7 +3963,7 @@ static bool core_times_next ( ::Falcon::VMachine *vm )
    }
 
    // Break or loop terminated?
-   if( ( range.asRangeStep() > 0 && start >= range.asRangeEnd()) || 
+   if( ( range.asRangeStep() > 0 && start >= range.asRangeEnd()) ||
        ( range.asRangeStep() < 0 && start < range.asRangeEnd()) ||
       ( vm->regA().isOob() && vm->regA().isInteger() && vm->regA().asInteger() == 0 )
       )
@@ -3980,7 +4003,7 @@ static bool core_times_next ( ::Falcon::VMachine *vm )
             }
             vm->pushParameter( (int64) start);
             // queue the call ( + 1 parameter - 1 because first item is callable)
-            vm->callFrame( curArray->at(0), curArray->length() );  
+            vm->callFrame( curArray->at(0), curArray->length() );
          }
          // otherwise, mangle the item ID
          else {
@@ -3990,7 +4013,7 @@ static bool core_times_next ( ::Falcon::VMachine *vm )
                curArray->at( (uint32) varID ) = (int64) start;
             }
             // just perform the call as-is.
-            vm->callFrame( curArray, 0 );  
+            vm->callFrame( curArray, 0 );
          }
       }
       // if it's not an array, just push the parameter and call
@@ -4024,12 +4047,12 @@ static bool core_times_next ( ::Falcon::VMachine *vm )
    times, eventually filling a variable with the current loop index, or mangling the
    parameters of the given callable items so that they receive the index as a parameter.
 
-   @note The paramters of @b time are not functionally evaluated. 
+   @note The paramters of @b time are not functionally evaluated.
 
    The loop index count will be given values from 0 to the required index-1 if @count is numeric,
    or it will act as the for/in loop if @b count is a range.
 
-   The way the current index loop is sent to the items depends on the type of @b var. 
+   The way the current index loop is sent to the items depends on the type of @b var.
    If it's nil, then it is only kept internally; Sigma functions in @b sequence may not need it, or
    they may use an internal counter. In example:
    @code
@@ -4042,7 +4065,7 @@ static bool core_times_next ( ::Falcon::VMachine *vm )
    @endcode
 
    If @b val is a reference to a variable, then that variable is
-   updated to the current loop value. The Sigmas in @b sequence may receive it as a parameter 
+   updated to the current loop value. The Sigmas in @b sequence may receive it as a parameter
    passed by reference or may accesses it from the outer (global) scope. In example:
    @code
       // module scope
@@ -4073,38 +4096,38 @@ static bool core_times_next ( ::Falcon::VMachine *vm )
          .[ .[ printl "Index is now..." ] ]      // the calls (just 1).
          )
    @endcode
-   
+
    If it's a positive number, then the nth element of the Sigmas in the list will be
    changed. In this last case, the items in @b sequence need not just to be callable; they
    must be Sigmas (lists starting with a callable item) having at least enough items for
    the @b var ID to be meaningful. The next example alters the parameter element #2 in the
    Sigmas array it calls:
-   
+
    @code
       times( [2:11:2], 2,
-         .[ .[ printl "Index is now... " 
-                 nil 
+         .[ .[ printl "Index is now... "
+                 nil
                  " ..." ] ]
          )
    @endcode
-   
+
    Notice the "nil" at position 2 in the Sigma call of printl. It may actually be any item, as it will be
    changed each time before the sigma is called.
-   
+
    In this case, if the callable items in @b sequence are not sigmas, or if they are to short for the
    @b var ID to be useful, they get called without the addition of the loop index parameter.
-   
+
    @note The original sigmas are not restored after times is executed in this modality. This means that the
    arrays in @b sequence will be altered, and they will hold the last number set by times before exit.
 
    Exactly like @a floop, the flow of calls in @b times can be altered by the functions in sequence returning
    an out-of-band 0 or 1. If any function in the sequence returns an out-of-band 0, @b times terminates and
-   return immediately (performing an operation similar to "break"). If a function returns an out-of-band 1, 
+   return immediately (performing an operation similar to "break"). If a function returns an out-of-band 1,
    the rest of the items in @b sequence are ignored, and the loop is restarted with the index updated; this
    is equivalent to a functional "continue". In example:
 
    @code
-   times( 10, 0, 
+   times( 10, 0,
       .[ (function(x); if x < 5: return oob(1); end)   // skip numbers less than 5
          printl // print the others
        ]
@@ -4113,13 +4136,13 @@ static bool core_times_next ( ::Falcon::VMachine *vm )
 
    The @b times function return the last generated value for the index. A natural termination of @b times
    can be detected thanks to the fact that the index is equal to the upper bound of the range, while
-   an anticipated termination causes @b times to return a different index. In example, if @b count is 
+   an anticipated termination causes @b times to return a different index. In example, if @b count is
    10, the generated index (possibly received by the items in @b sequence) will range from 0 to 9 included,
-   and if the function terminates correctly, it will return 10. If a function in @b sequence returns an 
+   and if the function terminates correctly, it will return 10. If a function in @b sequence returns an
    out-of-band 0, causing a premature termination of the loop, the value returned by times will be the loop
    index at which the out-of-band 0 was returned.
-   
-   @note Ranges [m:n] where m > n (down-ranges) terminate at n included; in that case, a succesful 
+
+   @note Ranges [m:n] where m > n (down-ranges) terminate at n included; in that case, a succesful
    completion of @b times return one-past n.
 */
 FALCON_FUNC  core_times ( ::Falcon::VMachine *vm )
@@ -4130,7 +4153,7 @@ FALCON_FUNC  core_times ( ::Falcon::VMachine *vm )
 
    if( i_count == 0 || ! ( i_count->isRange() || i_count->isOrdinal() ) ||
        i_var == 0 || ! ( vm->isParamByRef( 1 ) || i_var->isNil() || i_var->isOrdinal() ) ||
-       i_sequence == 0 || ! i_sequence->isArray() 
+       i_sequence == 0 || ! i_sequence->isArray()
       )
    {
       vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).
@@ -4159,11 +4182,11 @@ FALCON_FUNC  core_times ( ::Falcon::VMachine *vm )
       end = (int32) i_count->forceInteger();
       step = end < 0 ? -1 : 1;
    }
-   
+
    CoreArray *sequence = i_sequence->asArray();
 
    // check ranges and steps.
-   if ( start == end || 
+   if ( start == end ||
         ( start < end && ( step < 0 || start + step > end ) ) ||
         ( start > end && ( step > 0 || start + step < end ) ) ||
         sequence->length() == 0
@@ -5681,6 +5704,7 @@ Module * core_module_init()
    core->addExtFunc( "vmVersionInfo", Falcon::core::vmVersionInfo );
    core->addExtFunc( "vmVersionName", Falcon::core::vmVersionName );
    core->addExtFunc( "vmSystemType", Falcon::core::vmSystemType );
+   core->addExtFunc( "vmModuleVersionInfo", Falcon::core::vmModuleVersionInfo );
 
    // Format
    Symbol *format_class = core->addClass( "Format", Falcon::core::Format_init );

@@ -724,6 +724,11 @@ int main( int argc, char *argv[] )
 
    // save the main module also if compile only option is set
    modLoader->saveModules( options.save_modules || options.compile_only );
+
+   //... but disable if compiling tltables.
+   if ( options.compile_tltable )
+      modLoader->saveModules( false );
+
    modLoader->alwaysRecomp( options.compile_only || options.force_recomp );
    modLoader->sourceEncoding( get_src_encoding() );
    // normally, save is not mandatory, unless we compile them our own

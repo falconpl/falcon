@@ -41,6 +41,7 @@ Compiler::Compiler( Module *mod, Stream* in ):
    m_constants( &traits::t_string, &traits::t_voidp ),
    m_strict( false ),
    m_language( "C" ),
+   m_modVersion( 0 ),
    m_defContext( false ),
    m_delayRaise( false ),
    m_rootError( 0 ),
@@ -67,6 +68,7 @@ Compiler::Compiler():
    m_constants( &traits::t_string, &traits::t_voidp ),
    m_strict( false ),
    m_language( "C" ),
+   m_modVersion( 0 ),
    m_defContext( false ),
    m_delayRaise( false ),
    m_rootError( 0 ),
@@ -195,7 +197,6 @@ bool Compiler::compile( Module *mod, Stream *in )
 
    m_module = mod;
    m_module->engineVersion( FALCON_VERSION_NUM );
-   m_module->language( m_language );
 
    return compile();
 }
@@ -212,13 +213,17 @@ bool Compiler::compile()
    // save directives
    bool bSaveStrict = m_strict;
    String savedLanguage = m_language;
+   int64 modver = m_modVersion;
 
    // parse
    flc_src_parse( this );
+   m_module->language( m_language );
+   m_module->version( (uint32) m_modVersion );
 
    // restore directives
    m_strict = bSaveStrict;
    m_language = savedLanguage;
+   m_modVersion = modver;
 
    // If the context is not empty, then we have something unclosed.
    if ( ! m_context.empty() ) {
@@ -241,9 +246,6 @@ bool Compiler::compile()
       {
          m_module->entry( 0 );
       }
-
-      m_module->language( m_language );
-
       return true;
    }
 
@@ -814,8 +816,7 @@ bool Compiler::setDirective( const String &directive, const String &value, bool 
 
       bWrongVal = true;
    }
-
-   if ( directive == "lang" )
+   else if ( directive == "lang" )
    {
       m_language = value;
       return true;
@@ -839,9 +840,14 @@ bool Compiler::setDirective( const String &directive, int64 value, bool bRaise )
 {
    bool bWrongVal = false;
 
-   if ( directive == "strict" )
+   if ( directive == "strict" || directive == "lang" )
    {
       bWrongVal = true;
+   }
+   else if ( directive == "version" )
+   {
+      m_modVersion = value;
+      return true;
    }
 
    // if we're here we have either a wrong directive or a wrong value.
