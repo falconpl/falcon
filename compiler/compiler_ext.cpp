@@ -556,8 +556,10 @@ FALCON_FUNC Module_engineVersion( ::Falcon::VMachine *vm )
 
    Returns the module version information in a three element array.
    The numbers represent the development status of the module as its developers
-   advertise it. At the moment, only binary modules provide version informations;
-   for scripts compiled on the fly and .fam modules three zeros are returned.
+   advertise it.
+
+   Version informations for scripts compiled on the fly and for .fam modules
+   are provided through the "version" directive.
 */
 FALCON_FUNC Module_moduleVersion( ::Falcon::VMachine *vm )
 {

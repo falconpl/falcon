@@ -218,7 +218,7 @@ bool spawn( String **args, bool overlay, bool background, int *returnValue )
 
 const char *shellName()
 {
-   char *shname = getenv("SHELL");
+   const char *shname = getenv("SHELL");
    if ( shname == 0 )
       shname = "/bin/sh";
    return shname;
