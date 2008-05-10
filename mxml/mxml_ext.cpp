@@ -327,9 +327,23 @@ FALCON_FUNC MXMLDocument_save( ::Falcon::VMachine *vm )
    FileStream out;
    if ( out.create( uri, GenericStream::e_aUserRead | GenericStream::e_aUserWrite | GenericStream::e_aGroupRead | GenericStream::e_aOtherRead  ) )
    {
+
+      Stream *output = &out;
+
+      if ( doc->encoding() != "C" )
+      {
+         output = TranscoderFactory( doc->encoding(), &out, false );
+         if ( output == 0 )
+         {
+            vm->raiseModError( new MXMLError( ErrorParam( e_inv_params, __LINE__ )
+               .extra( "Invalid encoding " + doc->encoding() ) ) );
+            return;
+         }
+      }
+
       try
       {
-         doc->write( out, doc->style() );
+         doc->write( *output, doc->style() );
          vm->retval( true );
       }
       catch( MXML::MalformedError &err )
@@ -374,9 +388,23 @@ FALCON_FUNC MXMLDocument_load( ::Falcon::VMachine *vm )
    FileStream in;
    if ( in.open( uri ) )
    {
+      Stream *input = &in;
+
+      if ( doc->encoding() != "C" )
+      {
+         input = TranscoderFactory( doc->encoding(), &in, false );
+         if ( input == 0 )
+         {
+            vm->raiseModError( new MXMLError( ErrorParam( e_inv_params, __LINE__ )
+            .extra( "Invalid encoding " + doc->encoding() ) ) );
+            return;
+         }
+
+      }
+
       try
       {
-         doc->read( in );
+         doc->read( *input );
          vm->retval( true );
       }
       catch( MXML::MalformedError &err )
