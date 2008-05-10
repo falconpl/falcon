@@ -498,14 +498,14 @@ char Module::pcodeSubVersion() const
 
 void Module::getModuleVersion( int &major, int &minor, int &revision ) const
 {
-   major = (m_modVersion & 0xFF0000 ) >> 16;
+   major = (m_modVersion ) >> 16;
    minor = (m_modVersion & 0xFF00 ) >> 8;
    revision = m_modVersion & 0xFF;
 }
 
 void Module::getEngineVersion( int &major, int &minor, int &revision ) const
 {
-   major = (m_engineVersion & 0xFF0000 ) >> 16;
+   major = (m_engineVersion ) >> 16;
    minor = (m_engineVersion & 0xFF00 ) >> 8;
    revision = m_engineVersion & 0xFF;
 }

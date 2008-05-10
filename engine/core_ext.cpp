@@ -264,9 +264,16 @@ FALCON_FUNC  vmModuleVersionInfo( ::Falcon::VMachine *vm )
 {
    CoreArray *ca = new CoreArray( vm, 3 );
    int major=0, minor=0, revision=0;
-   if ( vm->currentModule() != 0 )
+
+   // we don't want our current (core) module version info...
+   StackFrame *thisFrame = (StackFrame *) &vm->stackItem( vm->stackBase() - VM_FRAME_SPACE );
+   if( thisFrame->m_stack_base != 0 )
    {
-      vm->currentModule()->getModuleVersion( major, minor, revision );
+      StackFrame *prevFrame = (StackFrame *) &vm->stackItem( thisFrame->m_stack_base - VM_FRAME_SPACE );
+      if ( prevFrame->m_module != 0 )
+      {
+         prevFrame->m_module->getModuleVersion( major, minor, revision );
+      }
    }
 
    ca->append( (int64) major );
