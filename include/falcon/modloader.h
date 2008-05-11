@@ -480,11 +480,11 @@ public:
 
       \param langname the name of the language that should be loaded.
    */
-   void setLoadLanguage( const String &langname ) { m_language = langname; }
+   void setLanguage( const String &langname ) { m_language = langname; }
 
    /** Returns the translation language that is searched by this module loader.
    */
-   const String &getLoadLanguage() const { return m_language; }
+   const String &getLanguage() const { return m_language; }
 
    /** Load a determined language table directly into the module.
       On success, the language table of the module and it's declared language
