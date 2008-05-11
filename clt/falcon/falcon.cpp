@@ -165,6 +165,7 @@ static void usage()
    stdOut->writeString( "   -E <enc>    Source files are in <enc> encoding (overrides -e)\n" );
    stdOut->writeString( "   -f          force recompilation of modules even when .fam are found\n" );
    stdOut->writeString( "   -h/-?       this help\n" );
+   stdOut->writeString( "   -l <lang>   Set preferential language of loaded modules\n" );
    stdOut->writeString( "   -L <path>   set path for 'load' directive\n" );
    stdOut->writeString( "   -m          do NOT compile in memory (use temporary files)\n" );
    stdOut->writeString( "   -M          do NOT save the compiled modules in '.fam' files\n" );
@@ -456,6 +457,13 @@ void parseOptions( int argc, char **argv, int &script_pos )
                   options.load_path = op + 2;
             break;
 
+            case 'l':
+               if ( op[2] == 0 && i + 1 < argc )
+                  options.module_language = argv[++i];
+               else
+                  options.module_language = op + 2;
+            break;
+
             case 'm': options.comp_memory = false; break;
             case 'M': options.save_modules = false; break;
 
@@ -702,6 +710,9 @@ int main( int argc, char *argv[] )
 
    // 1. Ready the module loader
    FlcLoader *modLoader = new FlcLoader( get_load_path() );
+
+   // set the module preferred language; ok also if default ("") is used
+   modLoader->setLoadLanguage( options.module_language );
 
    if ( ! apply_directives( modLoader->compiler() ) )
    {

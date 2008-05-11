@@ -29,6 +29,7 @@
 namespace Falcon {
 
 class Stream;
+class ModuleLoader;
 
 class FALCON_DYN_CLASS StringTable: public BaseAlloc
 {
@@ -37,6 +38,16 @@ class FALCON_DYN_CLASS StringTable: public BaseAlloc
    Map m_intMap;
    char *m_tableStorage;
    uint32 m_internatCount;
+
+   friend class ModuleLoader;
+
+   // Non-const version of get is private
+   String *getNonConst( uint32 id )
+   {
+      if ( id < m_vector.size() )
+         return *(String **) m_vector.at( id );
+      return 0;
+   }
 
 public:
    StringTable();

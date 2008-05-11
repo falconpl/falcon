@@ -312,13 +312,157 @@ Module *ModuleLoader::loadName( const String &module_name, const String &parent_
       mod->name( nmodName );
       mod->path( file_path );
       mod->addMain();
+
+      // should we set a language table?
+      if ( m_language != "" && mod->language() != m_language )
+      {
+         loadLanguageTable( mod, m_language );
+      }
 	}
 
 	// if the mod is 0, the load function has already raised the right error.
-
    return mod;
 }
 
+bool ModuleLoader::loadLanguageTable( Module *module, const String &language )
+{
+   String langFileName;
+
+   // try to find the .ftr file
+   uint32 posDot = module->path().rfind( "." );
+   uint32 posSlash = module->path().rfind( "/" );
+   if ( posDot == String::npos || ( posSlash != String::npos && posDot < posSlash ) )
+   {
+      langFileName = module->path() + ".ftr";
+   }
+   else {
+      langFileName = module->path().subString(0, posDot );
+      langFileName += ".ftr";
+   }
+
+   if( applyLangTable( module, langFileName ) )
+   {
+      module->language( language );
+      return true;
+   }
+}
+
+inline int32 xendianity( bool sameEndianity, int32 val )
+{
+   return sameEndianity ? val :
+      (val >> 24) |
+      ((val & 0xFF0000) >> 8) |
+      ((val & 0xFF00 ) << 8) |
+      (val << 24);
+}
+
+//TODO: add some diags.
+bool ModuleLoader::applyLangTable( Module *mod, const String &file_path )
+{
+   // try to open the required file table.
+   FileStream fsin;
+   if ( ! fsin.open( file_path, FileStream::e_omReadOnly, FileStream::e_smShareRead ) )
+      return false;
+
+   // check if this is a regular tab file.
+   char buf[16];
+   buf[6] = 0;
+   if ( fsin.read( buf, 5 ) != 5 || String( "TLTAB" ) != buf )
+   {
+      return false;
+   }
+
+   uint16 endianity;
+   if( fsin.read( &endianity, 2 ) != 2 )
+      return false;
+
+   bool sameEndianity = endianity == 0xFBFC;
+
+   // read the language table index.
+   int32 sizeField;
+   if( fsin.read( &sizeField, 4 ) != 4 )
+      return false;
+
+   int32 tableSize = xendianity( sameEndianity, sizeField );
+   int32 tablePos = -1;
+   for( int32 i = 0; i < tableSize; i++ )
+   {
+      // read language code and position in file
+      if( fsin.read( buf, 5 ) != 5 ||
+          fsin.read( &sizeField, 4 ) != 4 )
+         return false;
+
+      // is this our language code?
+      if( m_language == buf )
+      {
+         tablePos = xendianity( sameEndianity, sizeField );
+         break;
+      }
+   }
+
+   // entry not found?
+   if( tablePos < 0 )
+      return false;
+
+   fsin.seekBegin( tableSize * 9 + 5 + 2 + 4  + tablePos );
+
+   // read the number of strings to be decoded.
+   if( fsin.read( &sizeField, 4 ) != 4 )
+      return false;
+
+   int32 stringCount = xendianity( sameEndianity, sizeField );
+
+   // read table and alter module.
+   int32 allocated = 256;
+   char *memBuf = (char *) memAlloc( allocated );
+
+   // the most intelligent thing is that to modify the strings as they are in memory.
+   // In this way, we don't have to alter already allocated string structures, and
+   // we don't have to scan the map for the correct string entry.
+
+   while ( stringCount > 0 )
+   {
+      // read ID
+      if( fsin.read( &sizeField, 4 ) != 4 )
+         break;
+      int32 stringID = xendianity( sameEndianity, sizeField );
+      if ( stringID < 0 || stringID >= mod->stringTable().size() )
+         break;
+
+      // read the string size
+      if( fsin.read( &sizeField, 4 ) != 4 )
+         break;
+      int32 stringSize = xendianity( sameEndianity, sizeField );
+      if ( stringSize < 0 )
+         break;
+      if ( stringSize == 0 )
+         continue;
+
+      // if the string size exeeds the allocated amount, fix it.
+      if( stringSize >= allocated )
+      {
+         memFree( memBuf );
+         allocated = stringSize + 1;
+         memBuf = (char *) memAlloc( allocated );
+      }
+
+      // read the string
+      if( fsin.read( memBuf, stringSize ) != stringSize )
+         break;
+
+      // zero the end so we have an utf8 string
+      memBuf[ stringSize ] = 0;
+
+      // finally, place it in the right place
+      if ( ! mod->stringTable().getNonConst( stringID )->fromUTF8( memBuf ) )
+         break;
+
+      stringCount --;
+   }
+
+   memFree( memBuf );
+   return stringCount == 0;
+}
 
 Module *ModuleLoader::loadFile( const String &module_path, t_filetype type, bool scan )
 {
@@ -360,6 +504,10 @@ Module *ModuleLoader::loadFile( const String &module_path, t_filetype type, bool
       mod->name( modName );
       mod->path( file_path );
       mod->addMain();
+      if ( m_language != "" && mod->language() != m_language )
+      {
+         loadLanguageTable( mod, m_language );
+      }
 	}
 
 	// if the mod is 0, the load function has already raised the right error.
@@ -390,6 +538,10 @@ Module *ModuleLoader::loadModule( const String &path )
       mod->name( modName );
       mod->path( path );
       mod->addMain();
+      if ( m_language != "" && mod->language() != m_language )
+      {
+         loadLanguageTable( mod, m_language );
+      }
    }
 
    return mod;
@@ -418,6 +570,10 @@ Module *ModuleLoader::loadSource( const String &path )
       mod->name( modName );
       mod->path( path );
       mod->addMain();
+      if ( m_language != "" && mod->language() != m_language )
+      {
+         loadLanguageTable( mod, m_language );
+      }
    }
 
    return mod;

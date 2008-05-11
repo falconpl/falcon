@@ -38,6 +38,7 @@ public:
    String load_path;
    String io_encoding;
    String source_encoding;
+   String module_language;
    List preloaded;
    List directives;
 

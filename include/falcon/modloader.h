@@ -64,6 +64,9 @@ protected:
    ErrorHandler *m_errhand;
    bool m_bSaveIntTemplate;
 
+   /** Required language during load. */
+   String m_language;
+
    Module *loadModule_select_ver( Stream *in );
 
    /** Discovers the module name given a complete file path.
@@ -160,6 +163,9 @@ protected:
    */
 
    virtual t_filetype fileType( const String &path );
+
+   /** Try to load the language table for the given module. */
+   bool applyLangTable( Module *mod, const String &file_path );
 
 public:
 
@@ -455,9 +461,40 @@ public:
    {
       m_bSaveIntTemplate = mode;
    }
+
+   /** Sets the language required to modules during load.
+      This informs the module loader that the owner wishes the string table
+      of the loaded module configured for the given language.
+
+      If the loaded module doesn't declare itself to be written in the
+      desired language, the module loader will try to load \b modulename.ftr
+      binary file, get the table for the desired language and change the
+      strings according to the translation table before returning it to
+      the caller.
+
+      In case of failure, the original string table will be left untouched.
+
+      Language names are the ISO language names in 5 characters: xx_YY.
+
+      Setting the language to "" disables this feature.
+
+      \param langname the name of the language that should be loaded.
+   */
+   void setLoadLanguage( const String &langname ) { m_language = langname; }
+
+   /** Returns the translation language that is searched by this module loader.
+   */
+   const String &getLoadLanguage() const { return m_language; }
+
+   /** Load a determined language table directly into the module.
+      On success, the language table of the module and it's declared language
+      are changed.
+      \return true on success.
+   */
+   bool loadLanguageTable( Module *module, const String &language );
 };
 
 }
 
 #endif
-/* end of flc_modloader.h */
+/* end of modloader.h */
