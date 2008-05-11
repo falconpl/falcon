@@ -712,7 +712,7 @@ int main( int argc, char *argv[] )
    FlcLoader *modLoader = new FlcLoader( get_load_path() );
 
    // set the module preferred language; ok also if default ("") is used
-   modLoader->setLoadLanguage( options.module_language );
+   modLoader->setLanguage( options.module_language );
 
    if ( ! apply_directives( modLoader->compiler() ) )
    {
