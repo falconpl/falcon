@@ -366,7 +366,7 @@ bool ModuleLoader::applyLangTable( Module *mod, const String &file_path )
 
    // check if this is a regular tab file.
    char buf[16];
-   buf[6] = 0;
+   buf[5] = 0;
    if ( fsin.read( buf, 5 ) != 5 || String( "TLTAB" ) != buf )
    {
       return false;
