@@ -214,6 +214,7 @@ FALCON_FUNC  ConfParser_init( ::Falcon::VMachine *vm )
    @method read ConfParser
    @brief Read the ini file.
    @optparam stream An optional input stream from where to read the file.
+   @raise IoError on read error.
 
    Parses a configuration file and prepares the object data that may be retrieved
    with other methods. The @b read method may be provided with an opened and
@@ -276,6 +277,19 @@ FALCON_FUNC  ConfParser_read( ::Falcon::VMachine *vm )
 
 }
 
+/*#
+   @method write ConfParser
+   @brief Write the INI file.
+   @optparam stream An optional output stream on which to write the configuration file.
+   @raise IoError on write error.
+
+   Writes the content of a modified or entirely generated configuration file on the
+   given stream, that must be a valid Falcon stream opened for output. If a stream
+   is not given, then the file name provided to the ConfParser constructor is
+   opened for writing. In case the name has not been given in the constructor, the
+   method raises an error.
+
+*/
 FALCON_FUNC  ConfParser_write( ::Falcon::VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
@@ -329,6 +343,28 @@ FALCON_FUNC  ConfParser_write( ::Falcon::VMachine *vm )
    }
 }
 
+/*#
+   @method get ConfParser
+   @brief Retreives the value associated with a key.
+   @param key The key of which the value is to be read.
+   @optparam section If provided, the section where the key is found.
+   @return The value (or values) of associated to the key, or nil if not found.
+   
+   The method retrieves the value associated with a given key. If section parameter
+   is not provided, or if it's nil, the key is searched in the main section, else
+   it is searched in the given section.
+   
+   If the section does not exist, or if the key is not present in the given
+   section, the method returns nil. If the key exist but has no value associated
+   with it, an empty string is returned. If there is only one instance of the key,
+   a single string containing the value is returned. If multiple entries for the
+   given key are found, all the values are returned as strings in an array.
+   The caller should verify the if the returned value is a string or an array using
+   typeOf() function. Alternatively, it is possible to use @a ConfParser.getOne to be sure to
+   retrieve only strings.
+
+   Categorized keys can be retrieved with this method by providing their full name.
+*/
 FALCON_FUNC  ConfParser_get( ::Falcon::VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
@@ -380,7 +416,17 @@ FALCON_FUNC  ConfParser_get( ::Falcon::VMachine *vm )
    }
 }
 
+/*#
+   @method getOne ConfParser
+   @brief Retreives the value associated with a key.
+   @param key The key of which the value is to be read.
+   @optparam section If provided, the section where the key is found.
+   @return The value (or values) of associated to the key, or nil if not found.
 
+   This method is equivalent to the @a ConfParser.get method, except for the fact that if more
+   than one value has been given for the determined key in the configuration file,
+   only the last one among them is returned.
+*/
 FALCON_FUNC  ConfParser_getOne( ::Falcon::VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
@@ -417,7 +463,17 @@ FALCON_FUNC  ConfParser_getOne( ::Falcon::VMachine *vm )
    vm->retval( value );
 }
 
+/*#
+   @method getMultiple ConfParser
+   @brief Retreives the value associated with a key.
+   @param key The key of which the value is to be read.
+   @optparam section If provided, the section where the key is found.
+   @return All the values of associated to the key, or nil if not found.
 
+   This method is equivalent to @a ConfParser.get method, except for the fact that an array of
+   values is always returned even if only one key is found. If there is no entry in
+   the configuration file coresponding to the given key, nil is returned.
+*/
 FALCON_FUNC  ConfParser_getMultiple( ::Falcon::VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
@@ -461,6 +517,13 @@ FALCON_FUNC  ConfParser_getMultiple( ::Falcon::VMachine *vm )
 }
 
 
+/*#
+   @method getSections ConfParser
+   @brief Enumerates the sections that are declared in the file managed by this object.
+   @return All the values of associated to the key, or nil if not found.
+   
+   If the object doesn't declare any section, the method returns an empty array.
+*/
 FALCON_FUNC  ConfParser_getSections( ::Falcon::VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
@@ -479,7 +542,19 @@ FALCON_FUNC  ConfParser_getSections( ::Falcon::VMachine *vm )
    vm->retval( ret );
 }
 
+/*#
+   @method getKeys ConfParser
+   @brief Retreives the value associated with a key.
+   @optparam section An optional section on which to operate.
+   @return All the keys listed in the given section, or in the main part.
 
+   This method returns an array of strings containing all the keys in the main
+   section, or if a section parameter is given and not nil, it returns all the keys
+   in the given section.
+
+   If the given section exists but it doesn't contain any key, an empty array is
+   returned. If the section doesn't exist, the method returns nil.
+*/
 FALCON_FUNC  ConfParser_getKeys( ::Falcon::VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
@@ -512,6 +587,17 @@ FALCON_FUNC  ConfParser_getKeys( ::Falcon::VMachine *vm )
    vm->retval( ret );
 }
 
+/*#
+   @method getCategoryKeys ConfParser
+   @brief Get the keys filed under a given category.
+   @param category The category of which the key list is required
+   @optparam section If provided, the section where the category is defined.
+   @return All the keys listed in the given category.
+
+   This method returns a list of all the keys belonging to a certain category. 
+
+   See the "Categorized keys" section in @a ConfParser.
+*/
 FALCON_FUNC  ConfParser_getCategoryKeys( ::Falcon::VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
@@ -547,6 +633,19 @@ FALCON_FUNC  ConfParser_getCategoryKeys( ::Falcon::VMachine *vm )
    vm->retval( ret );
 }
 
+
+/*#
+   @method getCategory ConfParser
+   @brief Retreives keys and values given under a certain category.
+   @param category The category of which the values are required
+   @optparam section If provided, the section where the category is defined.
+   @return A dictionary containing a pair of key-values in the given category.
+
+   This method returns a dictionary of key-value pairs containing all the keys
+   and values in a certain category.
+
+   See the "Categorized keys" section in @a ConfParser.
+*/
 FALCON_FUNC  ConfParser_getCategory( ::Falcon::VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
@@ -632,6 +731,18 @@ FALCON_FUNC  ConfParser_getCategory( ::Falcon::VMachine *vm )
 }
 
 
+/*#
+   @method getDictionary ConfParser
+   @brief Retreives keys and values given under a certain category.
+   @optparam section If given, the section from which to extract the dictionary.
+   @return A dictionary containing a pair of key-values in the given section.
+
+   This method retrieves all the pairs of key and values in the main section, or if
+   a non-nil section parameter is provided, from the given section. If the
+   requested section cannot be found, or if it doesn't contain any entry, an empty
+   dictionary is returned. If a key has multiple values, its element is set to an
+   array containing all the values.
+*/
 FALCON_FUNC  ConfParser_getDictionary( ::Falcon::VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
@@ -689,11 +800,17 @@ FALCON_FUNC  ConfParser_getDictionary( ::Falcon::VMachine *vm )
    vm->retval( ret );
 }
 
-/**
-   ConfParser.add( key, value )
-   ConfParser.add( section, key, value )
+/*#
+   @method add ConfParser
+   @brief Adds a key/value pairs to the INI file.
+   @param key The key to which add the given value.
+   @param value The value, or value array, to be added.
+   @optparam section If provided, the section where to add the entry
 
-   Value may be anything, but it gets to-stringed.
+   This function adds a key/value pair to the main section, or if section parameter
+   is given and not @b nil, to the specified section.
+
+   If the key is already present, a multiple value is set.
 */
 FALCON_FUNC  ConfParser_add( ::Falcon::VMachine *vm )
 {
@@ -733,6 +850,16 @@ FALCON_FUNC  ConfParser_add( ::Falcon::VMachine *vm )
       delete value;
 }
 
+/*#
+   @method set ConfParser
+   @brief Sets the value of a certain key key.
+   @param key The key to which add the given value.
+   @param value The value, or value array, to be added.
+   @optparam section If provided, the section where to add the entry
+
+   Sets a key/value pair in the main section, or if section parameter is
+   given and not nil, in the specified section.
+*/
 FALCON_FUNC  ConfParser_set( ::Falcon::VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
@@ -820,11 +947,20 @@ FALCON_FUNC  ConfParser_set( ::Falcon::VMachine *vm )
       delete value;
 }
 
-/**
-   ConfParser.remove( key )
-   ConfParser.remove( key, section )
-*/
+/*#
+   @method remove ConfParser
+   @brief Remove a key from the configuration file..
+   @param key The key to be removed.
+   @optparam section If provided, the section where to remove the entry.
+   @return True if the key is removed, false if the given key is not found.
 
+   Remove all the instances of a given key from the main section,
+   or if @b section parameter is given and not nil, from the specified section.
+
+   The method returns true if the section (when provided) and keys were found,
+   and false if nothing has actually been deleted.
+
+*/
 FALCON_FUNC  ConfParser_remove( ::Falcon::VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
@@ -850,9 +986,15 @@ FALCON_FUNC  ConfParser_remove( ::Falcon::VMachine *vm )
    }
 }
 
-/**
-   ConfParser.removeCategory( key )
-   ConfParser.removeCategory( key, section )
+/*#
+   @method removeCategory ConfParser
+   @brief Remove a whole category from the configuration file..
+   @param category The category to be removed.
+   @optparam section If provided, the section where to remove the entry.
+
+   This method removes all the entries that would be returned by getCategory
+   if provided with the same parameters. The function silently returns doing
+   nothing if given category, or given section, cannot be found.
 */
 
 FALCON_FUNC  ConfParser_removeCategory( ::Falcon::VMachine *vm )
@@ -881,6 +1023,15 @@ FALCON_FUNC  ConfParser_removeCategory( ::Falcon::VMachine *vm )
 
 }
 
+/*#
+   @method addSection ConfParser
+   @brief Adds an empty section to the configuration file.
+   @param section The name of the section to be added.
+   @return True if the key is removed, false if the given key is not found.
+
+   Adds an empty section to the configuration file, if it was not already present.
+   If a section with the given name is present, nothing is done.
+*/
 FALCON_FUNC  ConfParser_addSection( ::Falcon::VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
@@ -895,6 +1046,19 @@ FALCON_FUNC  ConfParser_addSection( ::Falcon::VMachine *vm )
 
    vm->retval( (int64) ( cfile->addSection( *i_section->asString() ) == 0 ? 0: 1) );
 }
+
+
+/*#
+   @method removeSection ConfParser
+   @brief Removes a whole section from the configuration file.
+   @param section The name of the section to be removed.
+   @return True if the section is removed, false if the given section is not found.
+
+   This method removes the given section from the configuration file. All the keys
+   contained in the section, comments below the section declaration and the section
+   declaration itself are removed. The function returns true if the given section
+   can be found, and false otherwise.
+*/
 
 FALCON_FUNC  ConfParser_removeSection( ::Falcon::VMachine *vm )
 {
@@ -911,6 +1075,14 @@ FALCON_FUNC  ConfParser_removeSection( ::Falcon::VMachine *vm )
    vm->retval( (int64) ( cfile->removeSection( *i_section->asString() ) ? 1: 0) );
 }
 
+
+/*#
+   @method clearMain ConfParser
+   @brief Clears the main section.
+
+   Removes all the entries from the main section.
+   Of course, the section itself is not removed.
+*/
 FALCON_FUNC  ConfParser_clearMain( ::Falcon::VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();

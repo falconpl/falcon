@@ -81,37 +81,14 @@ FALCON_FUNC Regex_init( ::Falcon::VMachine *vm )
    const char *errDesc;
    int errOffset;
 
-   if( source->manipulator()->charSize() == 1 )
-   {
-		char *stringData = (char *) memAlloc( source->size() + 1);
-		memcpy( stringData, source->getRawStorage(), source->size() );
-		stringData[source->size()] = '\0';
-      pattern = pcre_compile2(
-         stringData,
-         optVal | PCRE_UTF8 | PCRE_NO_UTF8_CHECK,
-         &errCode,
-         &errDesc,
-         &errOffset,
-         0 );
-		 memFree( stringData );
-   }
-   else
-   {
-      char *stringData;
-      uint32 size = source->size() * 4 + 1;
-      stringData = (char *) memAlloc( size );
-      source->toCString( stringData, size );
-
-      pattern = pcre_compile2(
-         stringData,
-         optVal | PCRE_UTF8 | PCRE_NO_UTF8_CHECK,
-         &errCode,
-         &errDesc,
-         &errOffset,
-         0 );
-
-      memFree( stringData );
-   }
+   AutoCString cstr( *source );
+   pattern = pcre_compile2(
+      cstr.c_str(),
+      optVal | PCRE_UTF8 | PCRE_NO_UTF8_CHECK,
+      &errCode,
+      &errDesc,
+      &errOffset,
+      0 );
 
    if ( pattern == 0 )
    {
@@ -243,46 +220,30 @@ static int utf8_back_displacement( const char *stringData, int pos )
 
 static void internal_regex_match( RegexCarrier *data, String *source, int from )
 {
+   AutoCString cstr( *source );
 
-   if( source->manipulator()->charSize() == 1 )
+   // displace the from indicator to match utf-8
+   from = utf8_fwd_displacement( cstr, from );
+   if ( from == -1 )
    {
-      data->m_matches = pcre_exec(
-         data->m_pattern,
-         data->m_extra,
-         (const char *) source->getRawStorage(),
-         source->size(),
-         from,
-         0,
-         data->m_ovector,
-         data->m_ovectorSize );
+      data->m_matches = PCRE_ERROR_BADUTF8;
+      return;
    }
-   else
+
+   data->m_matches = pcre_exec(
+      data->m_pattern,
+      data->m_extra,
+      cstr.c_str(),
+      cstr.length(),
+      from,
+      PCRE_NO_UTF8_CHECK,
+      data->m_ovector,
+      data->m_ovectorSize );
+
+   for( int i = 0; i < data->m_matches; i++ )
    {
-      AutoCString stringData( *source );
-
-      // displace the from indicator to match utf-8
-      from = utf8_fwd_displacement( stringData.c_str(), from );
-      if ( from == -1 )
-      {
-         data->m_matches = PCRE_ERROR_BADUTF8;
-         return;
-      }
-
-      data->m_matches = pcre_exec(
-         data->m_pattern,
-         data->m_extra,
-         (char *) stringData.c_str(),
-         stringData.length(),
-         from,
-         PCRE_NO_UTF8_CHECK,
-         data->m_ovector,
-         data->m_ovectorSize );
-
-      for( int i = 0; i < data->m_matches; i++ )
-      {
-         data->m_ovector[ i * 2 ] = utf8_back_displacement( stringData, data->m_ovector[ i * 2 ] );
-         data->m_ovector[ i * 2 + 1 ] = utf8_back_displacement( stringData, data->m_ovector[ i * 2 + 1] );
-      }
+      data->m_ovector[ i * 2 ] = utf8_back_displacement( cstr, data->m_ovector[ i * 2 ] );
+      data->m_ovector[ i * 2 + 1 ] = utf8_back_displacement( cstr, data->m_ovector[ i * 2 + 1] );
    }
 }
 
@@ -599,7 +560,7 @@ FALCON_FUNC Regex_replaceAll( ::Falcon::VMachine *vm )
    if ( clone != 0 )
       vm->retval( clone );
    else
-      vm->retnil();
+      vm->retval( *source_i );
 }
 
 
@@ -724,33 +685,17 @@ FALCON_FUNC Regex_compare( Falcon::VMachine *vm )
    {
       bool match;
       String *str = source->asString();
+      AutoCString src( *str );
 
-      if( str->manipulator()->charSize() == 1 )
-      {
-         match = 0 < pcre_exec(
-            data->m_pattern,
-            data->m_extra,
-            (const char *) str->getRawStorage(),
-            str->size(),
-            0,
-            0,
-            ovector,
-            3 );
-      }
-      else
-      {
-         AutoCString src( *str );
-
-         match = 0 < pcre_exec(
-            data->m_pattern,
-            data->m_extra,
-            src.c_str(),
-            src.length(),
-            0,
-            PCRE_NO_UTF8_CHECK,
-            ovector,
-            3 );
-      }
+      match = 0 < pcre_exec(
+         data->m_pattern,
+         data->m_extra,
+         src.c_str(),
+         src.length(),
+         0,
+         PCRE_NO_UTF8_CHECK,
+         ovector,
+         3 );
 
       if ( match )
          vm->retval( (int64) 0 ); // zero means compare ==

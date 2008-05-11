@@ -16,6 +16,7 @@ Feathers (0.8.9)
            necessary to wait through Process.Value().
   * minor: Added method addFalconPath() to the compiler.
   * minor: Added support for language files with property Compiler.language
+  * bugfix: Regex module was not correctly checking 8bit only utf-8 sequences.
 
 Feathers (0.8.8)
   * Major: It is now possible to unload arbitrary modules.
