@@ -192,11 +192,14 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    self->addClassProperty( c_compiler, "saveMandatory" );
    self->addClassProperty( c_compiler, "detectTemplate" );
    self->addClassProperty( c_compiler, "compileTemplate" );
+   self->addClassProperty( c_compiler, "language" );
 
    self->addClassMethod( c_compiler, "compile", Falcon::Ext::Compiler_compile );
    self->addClassMethod( c_compiler, "loadByName", Falcon::Ext::Compiler_loadByName );
    self->addClassMethod( c_compiler, "loadModule", Falcon::Ext::Compiler_loadModule);
    self->addClassMethod( c_compiler, "setDirective", Falcon::Ext::Compiler_setDirective);
+   self->addClassMethod( c_compiler, "addFalconPath", Falcon::Ext::Compiler_addFalconPath);
+
 
    Falcon::Symbol *c_module = self->addClass( "Module" );
    c_module->setWKS( true );

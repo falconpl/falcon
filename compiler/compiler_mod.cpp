@@ -60,7 +60,8 @@ void CompilerIface::getProperty( VMachine *, const String &propName, Item &prop 
 {
    if( propName == "path" )
    {
-      prop = new GarbageString( m_owner->origin() );
+      if ( ! prop.isString() )
+         prop = new GarbageString( m_owner->origin() );
       m_loader.getSearchPath( *prop.asString() );
    }
    else if( propName == "alwaysRecomp" )
@@ -95,6 +96,12 @@ void CompilerIface::getProperty( VMachine *, const String &propName, Item &prop 
    {
       prop = (int64) ( m_loader.saveMandatory() ? 1: 0 );
    }
+   else if( propName == "langauge" )
+   {
+      if ( ! prop.isString() )
+         prop = new GarbageString( m_owner->origin() );
+      *prop.asString() = m_loader.getLanguage();
+   }
 }
 
 void CompilerIface::setProperty( VMachine *, const String &propName, Item &prop )
@@ -102,6 +109,10 @@ void CompilerIface::setProperty( VMachine *, const String &propName, Item &prop 
    if( propName == "path" && prop.isString() )
    {
       m_loader.setSearchPath( *prop.asString() );
+   }
+   else if( propName == "language" && prop.isString() )
+   {
+      m_loader.setLanguage( *prop.asString() );
    }
    else if( propName == "alwaysRecomp" )
    {

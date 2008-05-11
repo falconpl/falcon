@@ -14,6 +14,8 @@ Feathers (0.8.9)
   * major: Renamed Process.close into Process.terminate, and changed its semantics;
            Now it doesn't wait anymore for the process to be complete, it is
            necessary to wait through Process.Value().
+  * minor: Added method addFalconPath() to the compiler.
+  * minor: Added support for language files with property Compiler.language
 
 Feathers (0.8.8)
   * Major: It is now possible to unload arbitrary modules.

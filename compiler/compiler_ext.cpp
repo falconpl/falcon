@@ -78,6 +78,14 @@ namespace Ext {
    @prop sourceEncoding The encoding of the source file. It defaults to
       default system encoding that Falcon is able to detect. Use one of the
       encoding names known by the Transcoder class.
+
+   @prop language Language code used to load language-specific string tables.
+      When this entry is valorized to a valid international language code, as i.e.
+      "en_US", the compiler tries to use .ftr files found besides their modules to
+      alter their string tables, changing the original strings with their
+      translation for the desired language. If the language table file or the
+      required translation is not available, the operation silently fails and
+      the module is loaded with the string untranslated.
 */
 
 /*#
@@ -111,6 +119,30 @@ FALCON_FUNC Compiler_init( ::Falcon::VMachine *vm )
    vm->self().asObject()->setUserData( iface );
 }
 
+
+/*#
+   @method addFalconPath Compiler
+   @brief Adds the default system paths to the path searched by this compiler.
+
+   This method instructs the compiler that the default search path used by
+   Falcon engine should be also searched when loading modules. This means
+   that the directory in which official Falcon modules are stored, or
+   those set in the FALCON_LOAD_PATH environment variables, or compiled
+   in for a particular installation of Falcon, will be searched whenever
+   loading a module.
+
+   The paths are inserted at the beginning; so, they will be the first
+   searched. It is possible then to alter the search path by changing
+   the @a Compiler.path property and i.e. prepending a desired local
+   search path to it.
+*/
+FALCON_FUNC Compiler_addFalconPath( ::Falcon::VMachine *vm )
+{
+   CoreObject *self = vm->self().asObject();
+   CompilerIface *iface = static_cast<CompilerIface *>( self->getUserData() );
+   iface->loader().addFalconPath();
+
+}
 
 void internal_link( ::Falcon::VMachine *vm, Module *mod, CompilerIface *iface )
 {
