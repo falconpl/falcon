@@ -75,7 +75,7 @@ private:
       uint32 posval;
       numeric dblval;
       LabelDef *ldval;
-      const String *strval;
+      String *strval;
       String *dispstring;
       Symbol *symval;
       List *child;
@@ -103,7 +103,7 @@ public:
          m_value.child = new List;
    }
 
-   Pseudo( int l, type_t opt, const String *str, bool disp=true  ):
+   explicit Pseudo( int l, type_t opt, String *str, bool disp=true  ):
       m_line( l ),
       m_type( opt ),
       m_disp( disp ),
@@ -123,7 +123,7 @@ public:
       m_value.intval = intval;
    }
 
-   Pseudo( int l, type_t opt, int64 intval, bool disp=true  ):
+   explicit Pseudo( int l, type_t opt, int64 intval, bool disp=true  ):
       m_line( l ),
       m_type( opt ),
       m_disp( disp ),
@@ -159,7 +159,7 @@ public:
       m_value.ldval = def;
    }
 
-   Pseudo( int l, int32 start, int32 end, bool disp=true  ):
+   explicit Pseudo( int l, int32 start, int32 end, bool disp=true  ):
       m_line( l ),
       m_type( imm_range ),
       m_disp( disp ),
@@ -181,6 +181,7 @@ public:
    numeric asDouble() const { return m_value.dblval; }
    uint32 asPosition() const { return m_value.posval; }
    const String &asString() const { return *m_value.strval; }
+   String &asString() { return *m_value.strval; }
    Symbol *asSymbol() const { return m_value.symval; }
    LabelDef *asLabel() const { return m_value.ldval; }
    List *asList() { return m_value.child; }

@@ -91,6 +91,7 @@ inline int yylex (void *lvalp, void *fasm_param)
 %token DENDSWITCH
 %token DLINE
 %token DSTRING
+%token DISTRING
 %token DCSTRING
 %token DHAS
 %token DHASNT
@@ -299,6 +300,12 @@ directive:
    | DSTRING STRING
       {
          // string already added to the module by the lexer
+         delete $2;
+      }
+   | DISTRING STRING
+      {
+         // string already added to the module by the lexer
+         $2->asString().exported( true );
          delete $2;
       }
    | DCSTRING STRING

@@ -274,7 +274,12 @@ void GenHAsm::gen_stringTable( const Module *mod )
       // for now all cstrings.
       String temp;
       str->escape( temp );
-      m_out->writeString( ".string \"" + temp + "\"\n" );
+      if ( str->exported() )
+         m_out->writeString( ".istring \"" );
+      else
+         m_out->writeString( ".string \"" );
+
+      m_out->writeString( temp + "\"\n" );
       ++count;
       str = mod->getString( count);
    }

@@ -907,7 +907,7 @@ void write_strtable( e_tabmode mode , Stream *out, Module *mod )
             temp.size(0);
          break;
          case e_mode_table:
-            out->writeString( ".string " );
+            out->writeString( str->exported() ? ".istring " : ".string " );
          break;
       }
 
@@ -1049,6 +1049,10 @@ using namespace Falcon;
 
 int main( int argc, char *argv[] )
 {
+   // initialize the engine
+   EngineData data;
+   Init( data );
+
    Stream *stdErr = stdErrorStream();
 
    // option decoding

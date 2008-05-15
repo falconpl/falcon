@@ -15,10 +15,10 @@
 a = 0xFF00
 b = 0x0FF0
 
-if a & b != 0x0F00: failure( "AND" )
-if a | b != 0xFFF0: failure( "OR" )
-if a ^ b != 0xF0F0: failure( "XOR" )
-if !a != 0xFFFFFFFFFFFF00FF: failure( "NOT" )
+if a && b != 0x0F00: failure( "AND" )
+if a || b != 0xFFF0: failure( "OR" )
+if a ^^ b != 0xF0F0: failure( "XOR" )
+if ~a != 0xFFFFFFFFFFFF00FF: failure( "NOT" )
 
 if a << 1 != 0x1FE00: failure( "SHL 1" )
 if a >> 1 != 0x7F80: failure( "SHR 1" )

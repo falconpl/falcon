@@ -131,9 +131,9 @@
      HAS = 347,
      DIESIS = 348,
      ATSIGN = 349,
-     CAP = 350,
-     VBAR = 351,
-     AMPER = 352,
+     CAP_CAP = 350,
+     VBAR_VBAR = 351,
+     AMPER_AMPER = 352,
      MINUS = 353,
      PLUS = 354,
      PERCENT = 355,
@@ -142,11 +142,13 @@
      POW = 358,
      SHR = 359,
      SHL = 360,
-     BANG = 361,
+     TILDE = 361,
      NEG = 362,
-     DECREMENT = 363,
-     INCREMENT = 364,
-     DOLLAR = 365
+     AMPER = 363,
+     BANG = 364,
+     DECREMENT = 365,
+     INCREMENT = 366,
+     DOLLAR = 367
    };
 #endif
 /* Tokens.  */
@@ -242,9 +244,9 @@
 #define HAS 347
 #define DIESIS 348
 #define ATSIGN 349
-#define CAP 350
-#define VBAR 351
-#define AMPER 352
+#define CAP_CAP 350
+#define VBAR_VBAR 351
+#define AMPER_AMPER 352
 #define MINUS 353
 #define PLUS 354
 #define PERCENT 355
@@ -253,11 +255,13 @@
 #define POW 358
 #define SHR 359
 #define SHL 360
-#define BANG 361
+#define TILDE 361
 #define NEG 362
-#define DECREMENT 363
-#define INCREMENT 364
-#define DOLLAR 365
+#define AMPER 363
+#define BANG 364
+#define DECREMENT 365
+#define INCREMENT 366
+#define DOLLAR 367
 
 
 
@@ -279,7 +283,7 @@ lex_value_t {
    Falcon::SymbolList *fal_symlist;
 }
 /* Line 1489 of yacc.c.  */
-#line 283 "/home/gian/Progetti/falcon/core/engine/src_parser.h"
+#line 287 "/home/gian/Progetti/falcon/core/engine/src_parser.h"
 	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1

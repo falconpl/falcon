@@ -75,6 +75,9 @@ Falcon (0.8.9)
   * Bugfix: fixed traceback corruption in error reporting when uncatching-retrhowing from a
             in-between try-frame.
   * Major: Added support for 0 overhead string internationalization.
+  * Major: Binary operators grammar changed. Binary and is now &&, binary or is || and binary xor is ^^;
+           Auto assigment stays &=, |= and ^=. Binary not is now ~.
+           (This is because we need some of those symbols for other things in the next releases).
 
 Falcon (0.8.8)
   * bugfix: TRAV opcode may destroy its parameters while setting first loop

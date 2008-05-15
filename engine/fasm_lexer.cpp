@@ -342,7 +342,7 @@ int AsmLexer::lex()
             else if ( chr == '"' )
             {
                // closed string
-               const Falcon::String *str = m_module->addString( m_string );
+               Falcon::String *str = m_module->addString( m_string );
                *VALUE = new Falcon::Pseudo( m_line, Falcon::Pseudo::imm_string, str );
                m_state = e_line;
                return STRING;
@@ -457,7 +457,7 @@ int AsmLexer::lex()
                // else, it's a name
                if ( m_bDirective )
                {
-                  *VALUE = new Falcon::Pseudo( m_line, Falcon::Pseudo::imm_string, m_compiler->addString( m_string ) );
+                  *VALUE = new Falcon::Pseudo( m_line, Falcon::Pseudo::imm_string, (String *) m_compiler->addString( m_string ) );
                   return NAME;
                }
 
@@ -911,6 +911,8 @@ int AsmLexer::checkDirectives()
             return DENDFUNC;
          if ( m_string == "inherit" )
             return DINHERIT;
+         if ( m_string == "istring" )
+            return DISTRING;
       break;
 
       case 8:
