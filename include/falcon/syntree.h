@@ -104,6 +104,7 @@ public:
       t_symdef,
       t_self,
       t_sender,
+      t_funcvar,  //!< Inner functional variable.
 
       t_byref,
       t_array_decl,

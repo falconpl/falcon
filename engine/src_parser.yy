@@ -141,14 +141,14 @@ inline int flc_src_lex (void *lvalp, void *yyparam)
 %left EEQ NEQ GT LT GE LE
 %left HAS HASNT OP_IN OP_NOTIN PROVIDES
 %right ATSIGN DIESIS
-%left VBAR CAP
-%left AMPER
+%left VBAR_VBAR CAP_CAP
+%left AMPER_AMPER
 %left PLUS MINUS
 %left STAR SLASH PERCENT
 %left POW
 %left SHL SHR
-%right NEG BANG
-%right DOLLAR INCREMENT DECREMENT
+%right NEG TILDE
+%right DOLLAR INCREMENT DECREMENT BANG AMPER
 
 %type <integer> INTNUM_WITH_MINUS
 %type <fal_adecl> expression_list listpar_expression_list array_decl
@@ -2191,12 +2191,12 @@ expression:
    | expression SLASH expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_divide, $1, $3 ) ); }
    | expression PERCENT expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_modulo, $1, $3 ) ); }
    | expression POW expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_power, $1, $3 ) ); }
-   | expression AMPER expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_bin_and, $1, $3 ) ); }
-   | expression VBAR expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_bin_or, $1, $3 ) ); }
-   | expression CAP expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_bin_xor, $1, $3 ) ); }
+   | expression AMPER_AMPER expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_bin_and, $1, $3 ) ); }
+   | expression VBAR_VBAR expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_bin_or, $1, $3 ) ); }
+   | expression CAP_CAP expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_bin_xor, $1, $3 ) ); }
    | expression SHL expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_shift_left, $1, $3 ) ); }
    | expression SHR expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_shift_right, $1, $3 ) ); }
-   | BANG expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_bin_not, $2 ) ); }
+   | TILDE expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_bin_not, $2 ) ); }
    | expression NEQ expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_neq, $1, $3 ) ); }
    | expression INCREMENT { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_post_inc, $1 ) ); }
    | INCREMENT expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_pre_inc, $2 ) ); }

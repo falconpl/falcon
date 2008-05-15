@@ -1034,14 +1034,18 @@ int SrcLexer::checkUnlimitedTokens( uint32 nextChar )
             return SLASH;
          else if ( chr == '%' && nextChar != '=' )
             return PERCENT;
-         else if ( chr == '&' && nextChar != '=' )
+         else if ( chr == '&' && nextChar != '=' && nextChar != '&' )
             return AMPER;
-         else if ( chr == '|' && nextChar != '=' )
+         else if ( chr == '~' && nextChar != '=' )
+               return TILDE;
+         /*
+            This may come useful in future.
+         else if ( chr == '|' && nextChar != '=' && nextChar != '|' )
             return VBAR;
-         else if ( chr == '^' && nextChar != '=' )
+         else if ( chr == '^' && nextChar != '=' && nextChar != '^' )
             return CAP;
-         else if ( chr == '!' && nextChar != '=' && nextChar != '"' )
-               return BANG;
+         else if ( chr == '!' && nextChar != '=' )
+               return BANG;*/
 
          else if ( chr == '$' )
          {
@@ -1146,6 +1150,12 @@ int SrcLexer::checkUnlimitedTokens( uint32 nextChar )
             return ASSIGN_BOR;
          else if ( m_string == "^=" )
             return ASSIGN_BXOR;
+         else if ( m_string == "&&" )
+            return AMPER_AMPER;
+         else if ( m_string == "^^" )
+            return CAP_CAP;
+         else if ( m_string == "||" )
+            return VBAR_VBAR;
          else if ( m_string == ">>" && nextChar != '=' )
             return SHR;
          else if ( m_string == "<<" && nextChar != '=' )
