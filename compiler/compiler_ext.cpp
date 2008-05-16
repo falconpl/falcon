@@ -172,8 +172,8 @@ void internal_link( ::Falcon::VMachine *vm, Module *mod, CompilerIface *iface )
    // return the object
    vm->retval( co );
 
-   // we can drop our reference to the module
-   mod->decref();
+   // we can remove our reference
+   //mod->decref();
 }
 
 /*#
@@ -403,7 +403,7 @@ FALCON_FUNC Module_get( ::Falcon::VMachine *vm )
    ModuleCarrier *modc = static_cast<ModuleCarrier *>( self->getUserData() );
 
    // if the module is not alive, raise an error and exit
-   if ( ! modc->liveModule()->isAlive() )
+   if ( modc == 0 || ! modc->liveModule()->isAlive() )
    {
       // TODO: Find a more adequate error code.
       vm->raiseModError( new AccessError( ErrorParam( e_modver, __LINE__ ) ) );
@@ -449,7 +449,7 @@ FALCON_FUNC Module_set( ::Falcon::VMachine *vm )
    ModuleCarrier *modc = static_cast<ModuleCarrier *>( self->getUserData() );
 
    // if the module is not alive, raise an error and exit
-   if ( ! modc->liveModule()->isAlive() )
+   if ( modc == 0|| ! modc->liveModule()->isAlive() )
    {
       // TODO: Find a more adequate error code.
       vm->raiseModError( new AccessError( ErrorParam( e_modver, __LINE__ ) ) );
@@ -495,7 +495,7 @@ FALCON_FUNC Module_getReference( ::Falcon::VMachine *vm )
    ModuleCarrier *modc = static_cast<ModuleCarrier *>( self->getUserData() );
 
    // if the module is not alive, raise an error and exit
-   if ( ! modc->liveModule()->isAlive() )
+   if ( modc == 0 || ! modc->liveModule()->isAlive() )
    {
       // TODO: Find a more adequate error code.
       vm->raiseModError( new AccessError( ErrorParam( e_modver, __LINE__ ) ) );
@@ -570,6 +570,13 @@ FALCON_FUNC Module_engineVersion( ::Falcon::VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
    ModuleCarrier *modc = static_cast<ModuleCarrier *>( self->getUserData() );
+   if ( modc == 0 )
+   {
+      // TODO: Find a more adequate error code.
+      vm->raiseModError( new AccessError( ErrorParam( e_modver, __LINE__ ) ) );
+      return;
+   }
+
    const Module *mod = modc->module();
 
    int major, minor, re;
