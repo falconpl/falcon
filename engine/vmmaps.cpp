@@ -112,7 +112,7 @@ namespace traits
 }
 
 LiveModuleMap::LiveModuleMap():
-   Map( &traits::t_stringptr, &traits::t_livemoduleptr )
+   Map( &traits::t_string, &traits::t_livemoduleptr )
 {}
 
 
