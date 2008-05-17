@@ -25,6 +25,7 @@
 #include <fcntl.h>
 #include <cstring>
 
+#include <falcon/autocstring.h>
 #include <falcon/vm_sys_posix.h>
 #include <falcon/fstream_sys_unix.h>
 #include <falcon/memory.h>
@@ -435,15 +436,10 @@ bool FileStream::open( const String &filename, t_openMode mode, t_shareMode shar
       omode = O_WRONLY;
 
    // todo: do something about share mode
-   char *buffer = ( char *) memAlloc( filename.length() * 4 );
-   if (buffer == 0) {
-      setError( -2 );
-      return false;
-   }
+   AutoCString cfilename( filename );
 
-   filename.toCString( buffer, filename.length() * 4 );
-   int handle = ::open( buffer, omode );
-   memFree( buffer );
+   int handle;
+   handle = ::open( cfilename.c_str(), omode );
 
    data->m_handle = handle;
    if ( handle < 0 ) {
@@ -465,17 +461,8 @@ bool FileStream::create( const String &filename, t_attributes mode, t_shareMode 
       ::close( data->m_handle );
 
    //TODO: something about sharing
-   char *buffer = ( char *) memAlloc( filename.length() * 4 );
-   if (buffer == 0) {
-      data->m_lastError = -2;
-      status( t_error );
-      return false;
-   }
-
-   filename.toCString( buffer, filename.length() * 4 );
-   data->m_handle = ::open( buffer, O_CREAT | O_RDWR | O_TRUNC, static_cast<uint32>( mode ) );
-
-   memFree( buffer );
+   AutoCString cfilename( filename );
+   data->m_handle = ::open( cfilename.c_str(), O_CREAT | O_RDWR | O_TRUNC, static_cast<uint32>( mode ) );
 
    if ( data->m_handle < 0 ) {
       data->m_lastError = errno;

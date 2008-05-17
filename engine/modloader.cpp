@@ -136,6 +136,10 @@ Stream *ModuleLoader::openResource( const String &path, t_filetype )
    FileStream *in = new FileStream;
    if ( ! in->open( path, FileStream::e_omReadOnly ) )
    {
+      String error = "on "+ path + "(";
+      error.writeNumber( in->lastError() );
+      error += "): ";
+      in->errorDescription( error );
       raiseError( e_open_file, path );
       delete in;
       return 0;
