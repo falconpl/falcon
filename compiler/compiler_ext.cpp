@@ -173,7 +173,7 @@ void internal_link( ::Falcon::VMachine *vm, Module *mod, CompilerIface *iface )
    vm->retval( co );
 
    // we can remove our reference
-   //mod->decref();
+   mod->decref();
 }
 
 /*#
