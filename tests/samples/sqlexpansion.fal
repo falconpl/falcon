@@ -9,18 +9,18 @@ ts.currentTime()
 // All of these methods are available in execute and query
 
 > "Positional expansion:"
-sql = "$$, $1, $2, $3, $4"
-> "   '", sql, "', \"Mc'Cain\", 10, 10.8, timeStamp"
-> "   ", dbh.sqlExpand( sql, "Mc'Cain", 10, 10.8, ts )
+sql = "::, :1, :2, :3, :4"
+> "   '", sql, "' with \"Mc'Cain\", 10, 10.8, timeStamp"
+> " => ", dbh.sqlExpand( sql, "Mc'Cain", 10, 10.8, ts )
 >
 
 ts.currentTime()
 
-dict = [ "aString" => "Mc'Cain", "aInteger" => 10, 
+dict = [ "aString" => "Mc'Cain", "aInteger" => 10,
 	      "aNumeric" => 10.8, "aTimeStamp" => ts ]
 
 > "Dictionary expansion:"
-sql = "$$, $aString, $aInteger, $aNumeric, $aTimeStamp"
+sql = "::, :aString, :aInteger, :aNumeric, :aTimeStamp"
 > "   '", sql, "', dict"
 > "   ", dbh.sqlExpand( sql, dict )
 >

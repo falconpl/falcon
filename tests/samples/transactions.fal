@@ -18,13 +18,13 @@ createNamesTable(d)
 showNames("Before any alteration", d)
 
 tr = d.startTransaction()
-tr.execute( "INSERT INTO names (name, dob) VALUES ($1, $2)", "Jim", "2007-12-25" )
+tr.execute( "INSERT INTO names (name, dob) VALUES (:1, :2)", "Jim", "2007-12-25" )
 tr.close() // automatically commits()
 
 showNames( "After insertion of Jim", d)
 
 tr = d.startTransaction()
-tr.execute( "INSERT INTO names (name, dob) VALUES ($1, $2)", "Jack", "2007-12-25" )
+tr.execute( "INSERT INTO names (name, dob) VALUES (:1, :2)", "Jack", "2007-12-25" )
 tr.rollback()
 tr.close()
 
@@ -32,7 +32,7 @@ showNames( "After insertion of Jack but with rollback", d)
 
 tr = d.startTransaction()
 try
-	tr.execute( "INSERT INTO names (name, dob VALUES ($1, $2)", "Julie", "1982-01-03" )
+	tr.execute( "INSERT INTO names (name, dob VALUES (:1, :2)", "Julie", "1982-01-03" )
 catch DBIError in err
 	tr.rollback()
 end

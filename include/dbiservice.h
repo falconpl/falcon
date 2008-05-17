@@ -401,7 +401,8 @@ public:
    typedef enum {
       q_no_expansion,
       q_question_mark_expansion,
-      q_dollar_sign_expansion
+      q_dollar_sign_expansion,
+      q_colon_sign_expansion
    }
    dbh_query_expansion;
 

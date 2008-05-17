@@ -79,7 +79,7 @@ static int DBIHandle_itemToSqlValue( DBIHandle *dbh, const Item *i, String &valu
    }
 }
 
-static int DBIHandle_realSqlExpand( VMachine *vm, DBIHandle *dbh, String &sql, int startAt=0 )
+static int s_realSqlExpand( VMachine *vm, DBIHandle *dbh, String &sql, int startAt=0 )
 {
    String errorMessage;
 
@@ -95,9 +95,9 @@ static int DBIHandle_realSqlExpand( VMachine *vm, DBIHandle *dbh, String &sql, i
 
    startAt++;
 
-   uint32 dollarPos = sql.find( "$", 0 );
+   uint32 colonPos = sql.find( ":", 0 );
 
-   if ( dollarPos != csh::npos )
+   if ( colonPos != csh::npos )
    {
       // Check param 'startAt', if a dict or object, we treat things special
       CoreDict *dict = NULL;
@@ -111,43 +111,33 @@ static int DBIHandle_realSqlExpand( VMachine *vm, DBIHandle *dbh, String &sql, i
             obj = psI->asObject();
       }
 
-      while ( dollarPos != csh::npos ) {
+      while ( colonPos != csh::npos )
+      {
          Item *i = NULL;
-         int dollarSize = 1;
+         int colonSize = 1;
 
-         if ( dollarPos == sql.length() - 1 ) {
+         if ( colonPos == sql.length() - 1 )
+         {
             vm->raiseModError( new DBIError( ErrorParam( DBI_ERROR_BASE + dbi_sql_expand_error,
                                                         __LINE__ )
-                                            .desc( "Stray $ charater at the end of query" ) ) );
+                                            .desc( "Stray : charater at the end of query" ) ) );
             return 0;
-         } else {
-            if ( sql.getCharAt( dollarPos + 1 ) == '$' ) {
-               sql.remove( dollarPos, 1 );
-               dollarPos = sql.find( "$", dollarPos + 1 );
+         }
+         else
+         {
+            if ( sql.getCharAt( colonPos + 1 ) == ':' ) {
+               sql.remove( colonPos, 1 );
+               colonPos = sql.find( ":", colonPos + 1 );
                continue;
             }
 
-            if ( dict != NULL || obj != NULL) {
-               uint32 commaPos = sql.find( ",", dollarPos );
-               uint32 spacePos = sql.find( " ", dollarPos );
-               uint32 ePos;
-               if ( commaPos == csh::npos && spacePos == csh::npos )
-                  ePos = sql.length();
-               else if ( commaPos < spacePos )
-                  ePos = commaPos;
-               else
-                  ePos = spacePos;
+            uint32 commaPos = sql.find( ",", colonPos );
+            uint32 spacePos = sql.find( " ", colonPos );
+            uint32 ePos = commaPos < spacePos ? commaPos : spacePos;
 
-               if ( ePos == csh::npos ) {
-                  String s = "starting at: " + sql.subString( dollarPos );
-
-                  vm->raiseModError( new DBIError( ErrorParam( DBI_ERROR_BASE + dbi_sql_expand_error, __LINE__ )
-                                                  .desc( "Failed to parse dollar expansion" )
-                                                  .extra( s ) ) );
-                  return 0;
-               }
-
-               String word = sql.subString( dollarPos + 1, ePos );
+            if ( dict != NULL || obj != NULL )
+            {
+               String word = sql.subString( colonPos + 1, ePos );
                if ( dict != NULL ) {
                   // Reading from the dict
                   Item wordI( &word );
@@ -164,27 +154,29 @@ static int DBIHandle_realSqlExpand( VMachine *vm, DBIHandle *dbh, String &sql, i
                   return 0;
                }
 
-               dollarSize += word.length();
-            } else {
-               AutoCString asTmp( sql.subString( dollarPos + 1 ) );
+               colonSize += word.length();
+            }
+            else
+            {
+               AutoCString asTmp( sql.subString( colonPos + 1, ePos ) );
                int pIdx = atoi( asTmp.c_str() );
 
                if ( pIdx == 0 ) {
                   vm->raiseModError( new DBIError( ErrorParam( DBI_ERROR_BASE + dbi_sql_expand_error,
                                                               __LINE__ )
-                                                  .desc( "Failed to parse dollar expansion" )
-                                                  .extra( "from: " + sql.subString( dollarPos ) ) ) );
+                                                  .desc( "Failed to parse colon expansion" )
+                                                  .extra( "from: " + sql.subString( colonPos ) ) ) );
                   return 0;
                }
 
-               if ( pIdx > 99 ) dollarSize++; // it is 3 digits !?!?
-               if ( pIdx > 9 ) dollarSize++;  // it is 2 digits
-               dollarSize++;                  // it exists
+               if ( pIdx > 99 ) colonSize++; // it is 3 digits !?!?
+               if ( pIdx > 9 ) colonSize++;  // it is 2 digits
+               colonSize++;                  // it exists
                i = vm->param( pIdx + ( startAt - 1 ) );
 
-               errorMessage.writeNumber( (int64) pIdx );
-
-               if ( i == 0 ) {
+               if ( i == 0 )
+               {
+                  errorMessage.writeNumber( (int64) pIdx );
                   vm->raiseModError( new DBIError( ErrorParam( DBI_ERROR_BASE + dbi_sql_expand_error, __LINE__ )
                                                   .desc("Positional expansion out of range")
                                                   .extra( errorMessage ) ) );
@@ -194,15 +186,17 @@ static int DBIHandle_realSqlExpand( VMachine *vm, DBIHandle *dbh, String &sql, i
          }
 
          String value;
-         if ( DBIHandle_itemToSqlValue( dbh, i, value ) == 0 ) {
+         if ( DBIHandle_itemToSqlValue( dbh, i, value ) == 0 )
+         {
             vm->raiseModError( new DBIError( ErrorParam( DBI_ERROR_BASE + dbi_sql_expand_type_error, __LINE__ )
                      .desc( "Failed to expand a value due to it being an unknown type" )
-                     .extra( "from: " + sql.subString( dollarPos ) ) ) );
+                     .extra( "from: " + sql.subString( colonPos ) ) ) );
             return 0;
          }
 
-         sql.insert( dollarPos, dollarSize, value );
-         dollarPos = sql.find( "$", dollarPos );
+         sql.insert( colonPos, colonSize, value );
+         colonPos += value.length();
+         colonPos = sql.find( ":", colonPos );
       }
    }
 
@@ -419,13 +413,13 @@ static int DBIRecord_getPersistPropertyNames( VMachine *vm, CoreObject *self, St
    }
 }
 
-static DBIRecordset *DBIHandle_baseQueryOne( VMachine *vm, int startAt = 0 )
+static DBIRecordset *s_baseQueryOne( VMachine *vm, int startAt = 0 )
 {
    CoreObject *self = vm->self().asObject();
    DBIHandle *dbh = static_cast<DBIHandle *>( self->getUserData() );
 
    String sql;
-   DBIHandle_realSqlExpand( vm, dbh, sql, startAt );
+   s_realSqlExpand( vm, dbh, sql, startAt );
 
    dbi_status retval;
    DBIRecordset *recSet = dbh->query( sql, retval );
@@ -561,7 +555,7 @@ FALCON_FUNC DBIHandle_query( VMachine *vm )
    DBIHandle *dbh = static_cast<DBIHandle *>( self->getUserData() );
 
    String sql;
-   if ( DBIHandle_realSqlExpand( vm, dbh, sql, 0 ) == 0 )
+   if ( s_realSqlExpand( vm, dbh, sql, 0 ) == 0 )
       return;
 
    dbi_status retval;
@@ -606,7 +600,7 @@ dbi_type *DBIHandle_getTypes( DBIRecordset *recSet )
 
 FALCON_FUNC DBIHandle_queryOne( VMachine *vm )
 {
-   DBIRecordset *recSet = DBIHandle_baseQueryOne( vm );
+   DBIRecordset *recSet = s_baseQueryOne( vm );
    if ( recSet == NULL ) {
       vm->retnil();
       return;
@@ -636,7 +630,7 @@ FALCON_FUNC DBIHandle_queryOne( VMachine *vm )
 
 FALCON_FUNC DBIHandle_queryOneArray( VMachine *vm )
 {
-   DBIRecordset *recSet = DBIHandle_baseQueryOne( vm );
+   DBIRecordset *recSet = s_baseQueryOne( vm );
    if ( recSet == NULL )
       return; // TODO: thrown an error
 
@@ -669,7 +663,7 @@ FALCON_FUNC DBIHandle_queryOneArray( VMachine *vm )
 
 FALCON_FUNC DBIHandle_queryOneDict( VMachine *vm )
 {
-   DBIRecordset *recSet = DBIHandle_baseQueryOne( vm );
+   DBIRecordset *recSet = s_baseQueryOne( vm );
    if ( recSet == NULL )
       return; // TODO: thrown an error
 
@@ -725,7 +719,7 @@ FALCON_FUNC DBIHandle_queryOneObject( VMachine *vm )
    }
 
    CoreObject *obj = objI->asObject();
-   DBIRecordset *recSet = DBIHandle_baseQueryOne( vm, 1);
+   DBIRecordset *recSet = s_baseQueryOne( vm, 1);
    if (recSet == NULL) {
       vm->retnil();
       return; // TODO: Return error
@@ -780,7 +774,7 @@ FALCON_FUNC DBIHandle_execute( VMachine *vm )
    DBIHandle *dbh = static_cast<DBIHandle *>( self->getUserData() );
 
    String sql;
-   DBIHandle_realSqlExpand( vm, dbh, sql );
+   s_realSqlExpand( vm, dbh, sql );
 
    dbi_status retval;
    int affectedRows = dbh->execute( sql, retval );
@@ -873,22 +867,25 @@ FALCON_FUNC DBIHandle_sqlExpand( VMachine *vm )
    CoreObject *self = vm->self().asObject();
    DBIHandle *dbh = static_cast<DBIHandle *>( self->getUserData() );
 
-   switch ( dbh->getQueryExpansionCapability() ) {
+   switch ( dbh->getQueryExpansionCapability() )
+   {
+      case DBIHandle::q_colon_sign_expansion:
+         // Great, we have nothing to do; this are OK as they are.
+         return;
+
       case DBIHandle::q_dollar_sign_expansion:
          // TODO: Build array and ship off to query method
          return;
 
       case DBIHandle::q_question_mark_expansion:
-         // TODO: Convert $1, $2 into ?, ? and ship off to query method
+         // TODO: Convert :1, :2 into ?, ? and ship off to query method
          return;
 
-      default:
-         // We will handle that below
-         break;
+      // We will handle default below
    }
 
    String sql;
-   if ( DBIHandle_realSqlExpand( vm, dbh, sql, 0 ) )
+   if ( s_realSqlExpand( vm, dbh, sql, 0 ) )
       vm->retval( new GarbageString( vm , sql ) );
 }
 
@@ -911,7 +908,7 @@ FALCON_FUNC DBITransaction_query( VMachine *vm )
    DBITransaction *dbt = static_cast<DBITransaction *>( self->getUserData() );
 
    String sql;
-   if ( DBIHandle_realSqlExpand( vm, dbt->getHandle(), sql ) == 0 )
+   if ( s_realSqlExpand( vm, dbt->getHandle(), sql ) == 0 )
       return;
 
    dbi_status retval;
@@ -950,7 +947,7 @@ FALCON_FUNC DBITransaction_execute( VMachine *vm )
    DBITransaction *dbt = static_cast<DBITransaction *>( self->getUserData() );
 
    String sql;
-   if ( DBIHandle_realSqlExpand( vm, dbt->getHandle(), sql ) == 0 )
+   if ( s_realSqlExpand( vm, dbt->getHandle(), sql ) == 0 )
       return;
 
    dbi_status retval;
@@ -1382,7 +1379,7 @@ FALCON_FUNC DBITransaction_writeBlob( VMachine *vm )
 /*#
  @method next DBIRecordset
  @brief Advanced the record pointer to the next record.
- @return 1 if successful, 0 if not successful, usually meaning the EOF has been
+ @return true if successful, 0 if not successful, usually meaning the EOF has been
    hit.
 
  All new queries are positioned before the first record, meaning, next should be
@@ -1398,7 +1395,7 @@ FALCON_FUNC DBIRecordset_next( VMachine *vm )
    CoreObject *self = vm->self().asObject();
    DBIRecordset *dbr = static_cast<DBIRecordset *>( self->getUserData() );
 
-   vm->retval( dbr->next() );
+   vm->regA().setBoolean( dbr->next() == dbi_ok );
 }
 
 /*#
@@ -1430,7 +1427,6 @@ FALCON_FUNC DBIRecordset_fetchArray( VMachine *vm )
       {
          String errorMessage;
          dbr->getLastError( errorMessage );
-
          vm->raiseModError( new DBIError( ErrorParam( DBI_ERROR_BASE + nextRetVal, __LINE__ )
                                          .desc( errorMessage ) ) );
          return ;
@@ -1480,8 +1476,13 @@ FALCON_FUNC DBIRecordset_fetchDict( VMachine *vm )
       return ;
 
    default:
-      // TODO: Handle error
-      break;
+      {
+      String errorMessage;
+      dbr->getLastError( errorMessage );
+      vm->raiseModError( new DBIError( ErrorParam( DBI_ERROR_BASE + nextRetVal, __LINE__ )
+                                    .desc( errorMessage ) ) );
+      return;
+      }
    }
 
    int cCount = dbr->getColumnCount();

@@ -472,6 +472,18 @@ void DBITransactionMySQL::close()
 
 dbi_status DBITransactionMySQL::getLastError( String &description )
 {
+   MYSQL *conn = static_cast<DBIHandleMySQL *>( m_dbh )->getConn();
+
+   if ( conn == NULL )
+      return dbi_invalid_connection;
+
+   const char *errorMessage = mysql_error( conn );
+
+   if ( errorMessage == NULL )
+      return dbi_no_error_message;
+
+   description.bufferize( errorMessage );
+
    return dbi_ok;
 }
 

@@ -163,7 +163,7 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
     Person( "Jane Doe", TimeStamp() ).insert()
 
     r = db.query( "SELECT * FROM names" )
-    while (let n = r.fetchObject( Person() )
+    while (n = r.fetchObject( Person() ))
       > n.name, " was born on ", n.dob
       n.name = n.name + "ey"
       n.update()

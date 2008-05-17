@@ -14,7 +14,7 @@ createNamesTable(d)
 nameFilter = "%"
 if len( args ) > 0: nameFilter = args[0]
 
-r = d.query( "SELECT name,dob FROM names WHERE name LIKE $1 ORDER BY dob", nameFilter )
+r = d.query( "SELECT name,dob FROM names WHERE name LIKE :1 ORDER BY dob", nameFilter )
 while (let n = r.fetchObject( Person() ) )
 	> n.name, " was born on ", n.dob
 end
