@@ -470,6 +470,11 @@ DBIBlobStream *DBITransactionSQLite3::createBlob( dbi_status &status, const Stri
  * DB Handler class
  *****************************************************************************/
 
+DBIHandleSQLite3::~DBIHandleSQLite3()
+{
+   close();
+}
+
 DBITransaction *DBIHandleSQLite3::startTransaction()
 {
    DBITransactionSQLite3 *t = new DBITransactionSQLite3( this );

@@ -504,6 +504,10 @@ DBIBlobStream *DBITransactionMySQL::createBlob( dbi_status &status, const String
 /******************************************************************************
  * DB Handler class
  *****************************************************************************/
+DBIHandleMySQL::~DBIHandleMySQL()
+{
+   DBIHandleMySQL::close();
+}
 
 DBITransaction *DBIHandleMySQL::startTransaction()
 {

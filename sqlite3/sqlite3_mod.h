@@ -86,7 +86,7 @@ protected:
 public:
    DBIHandleSQLite3();
    DBIHandleSQLite3( sqlite3 *conn );
-   virtual ~DBIHandleSQLite3() {}
+   virtual ~DBIHandleSQLite3();
 
    sqlite3 *getConn() { return m_conn; }
 

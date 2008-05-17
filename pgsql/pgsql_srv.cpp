@@ -541,6 +541,11 @@ DBIBlobStream *DBITransactionPgSQL::createBlob( dbi_status &status, const String
  * DB Handler class
  *****************************************************************************/
 
+DBIServicePgSQL::~DBIHandlePgSQL()
+{
+   close();
+}
+
 DBITransaction *DBIHandlePgSQL::startTransaction()
 {
    DBITransactionPgSQL *t = new DBITransactionPgSQL( this );

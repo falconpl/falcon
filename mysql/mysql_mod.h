@@ -92,7 +92,7 @@ protected:
 public:
    DBIHandleMySQL();
    DBIHandleMySQL( MYSQL *conn );
-   virtual ~DBIHandleMySQL() {}
+   virtual ~DBIHandleMySQL();
 
    MYSQL *getConn() { return m_conn; }
 

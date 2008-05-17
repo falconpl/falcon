@@ -87,7 +87,7 @@ protected:
 public:
    DBIHandlePgSQL();
    DBIHandlePgSQL( PGconn *conn );
-   virtual ~DBIHandlePgSQL() {}
+   virtual ~DBIHandlePgSQL();
 
    PGconn *getPGconn() { return m_conn; }
 
