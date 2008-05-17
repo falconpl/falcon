@@ -388,6 +388,22 @@ FALCON_FUNC  strFind ( ::Falcon::VMachine *vm )
 
    int32 start = start_item == 0 ? 0 : (int32) start_item->forceInteger();
    int32 end = end_item == 0 ? csh::npos : (int32) end_item->forceInteger();
+   String *sTarget = target->asString();
+
+   // out of range?
+   if ( start >= sTarget->length() )
+   {
+      vm->retval( -1 );
+      return;
+   }
+
+   if ( end < 0 ) end = sTarget->length() + end;
+   // again < than 0? -- it's out of range.
+   if ( end < 0 )
+   {
+      vm->retval( -1 );
+      return;
+   }
 
    uint32 pos = target->asString()->find( *needle->asString(), start, end );
    if ( pos != csh::npos )
@@ -433,6 +449,23 @@ FALCON_FUNC  strBackFind ( ::Falcon::VMachine *vm )
 
    int32 start = start_item == 0 ? 0 : (int32) start_item->forceInteger();
    int32 end = end_item == 0 ? csh::npos : (int32) end_item->forceInteger();
+   String *sTarget = target->asString();
+
+   // out of range?
+   if ( start >= sTarget->length() )
+   {
+      vm->retval( -1 );
+      return;
+   }
+
+   if ( end < 0 ) end = sTarget->length() + end;
+   // again < than 0? -- it's out of range.
+   if ( end < 0 )
+   {
+      vm->retval( -1 );
+      return;
+   }
+
    uint32 pos = target->asString()->rfind( *needle->asString(), start, end );
    if ( pos != csh::npos )
       vm->retval( (int)pos );
