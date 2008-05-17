@@ -386,18 +386,21 @@ FALCON_FUNC  strFind ( ::Falcon::VMachine *vm )
       return;
    }
 
-   int32 start = start_item == 0 ? 0 : (int32) start_item->forceInteger();
-   int32 end = end_item == 0 ? csh::npos : (int32) end_item->forceInteger();
+   int64 start = start_item == 0 ? 0 : start_item->forceInteger();
+   int64 end = end_item == 0 ? csh::npos : end_item->forceInteger();
    String *sTarget = target->asString();
 
+   // negative? -- fix
+   if ( start < 0 ) end = sTarget->length() + start +1;
+
    // out of range?
-   if ( start >= sTarget->length() )
+   if ( start < 0 || start >= sTarget->length() )
    {
       vm->retval( -1 );
       return;
    }
 
-   if ( end < 0 ) end = sTarget->length() + end;
+   if ( end < 0 ) end = sTarget->length() + end+1;
    // again < than 0? -- it's out of range.
    if ( end < 0 )
    {
@@ -407,7 +410,7 @@ FALCON_FUNC  strFind ( ::Falcon::VMachine *vm )
 
    uint32 pos = target->asString()->find( *needle->asString(), start, end );
    if ( pos != csh::npos )
-      vm->retval( (int)pos );
+      vm->retval( (int64)pos );
    else
       vm->retval( -1 );
 }
@@ -447,18 +450,21 @@ FALCON_FUNC  strBackFind ( ::Falcon::VMachine *vm )
       return;
    }
 
-   int32 start = start_item == 0 ? 0 : (int32) start_item->forceInteger();
-   int32 end = end_item == 0 ? csh::npos : (int32) end_item->forceInteger();
+   int64 start = start_item == 0 ? 0 : (int64) start_item->forceInteger();
+   int64 end = end_item == 0 ? csh::npos : (int64) end_item->forceInteger();
    String *sTarget = target->asString();
 
+   // negative? -- fix
+   if ( start < 0 ) end = sTarget->length() + start +1;
+
    // out of range?
-   if ( start >= sTarget->length() )
+   if ( start < 0 || start >= sTarget->length() )
    {
       vm->retval( -1 );
       return;
    }
 
-   if ( end < 0 ) end = sTarget->length() + end;
+   if ( end < 0 ) end = sTarget->length() + end+1;
    // again < than 0? -- it's out of range.
    if ( end < 0 )
    {

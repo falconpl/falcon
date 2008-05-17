@@ -237,7 +237,8 @@ uint32 Byte::find( const String *str, const String *element, uint32 start, uint3
    uint32 elemLen = element->length();
 
    while( pos + elemLen <= end ) {
-      if ( str->getCharAt( pos ) == keyStart ) {
+      if ( str->getCharAt( pos ) == keyStart )
+      {
          uint32 len = 1;
          while( pos + len < end && len < elemLen && element->getCharAt(len) == str->getCharAt( pos + len ) )
             len++;
