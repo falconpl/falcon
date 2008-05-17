@@ -139,8 +139,10 @@ Stream *ModuleLoader::openResource( const String &path, t_filetype )
       String error = "on "+ path + "(";
       error.writeNumber( in->lastError() );
       error += "): ";
-      in->errorDescription( error );
-      raiseError( e_open_file, path );
+      String temp;
+      in->errorDescription( temp );
+      error += temp;
+      raiseError( e_open_file, error );
       delete in;
       return 0;
    }
@@ -154,30 +156,29 @@ ModuleLoader::t_filetype ModuleLoader::fileType( const String &path )
 
    FileStream in;
 
-   if ( ext == ".fal" || ext == ".ftd" ) {
-      in.open( path, FileStream::e_omReadOnly );
-      if ( ! in.good() )
-         return t_none;
-      return t_source;
+   if ( ext == ".fal" || ext == ".ftd" )
+   {
+      if ( in.open( path, FileStream::e_omReadOnly ) )
+      {
+         in.close();
+         return t_source;
+      }
+      return t_none;
    }
    else if ( ext == DllLoader::dllExt() || ext == ".fam" )
    {
-      in.open( path, FileStream::e_omReadOnly );
-      char ch1, ch2, ch3, ch4;
-      if ( ! in.good() )
+      char ch[4];
+      if ( ! in.open( path, FileStream::e_omReadOnly ) )
          return t_none;
-      in.read( &ch1, 1 );
-      in.read( &ch2, 1 );
-      in.read( &ch3, 1 );
-      in.read( &ch4, 1 );
+      in.read( ch, 4 );
       in.close();
       if ( ext == DllLoader::dllExt() ) {
-         return DllLoader::isDllMark( ch1, ch2 ) ? t_binmod : t_none;
+         return DllLoader::isDllMark( ch[0], ch[1] ) ? t_binmod : t_none;
       }
       else {
-         if(ch1 =='F' && ch2 =='M') {
+         if( ch[0] =='F' && ch[1] =='M') {
             // verify if version/subversion is accepted.
-            if( ch3 == FALCON_PCODE_VERSION && ch4 == FALCON_PCODE_MINOR )
+            if( ch[2] == FALCON_PCODE_VERSION && ch[3] == FALCON_PCODE_MINOR )
                return t_vmmod;
          }
          return t_none;

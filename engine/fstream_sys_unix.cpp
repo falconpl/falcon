@@ -423,7 +423,7 @@ FileStream::FileStream():
 bool FileStream::open( const String &filename, t_openMode mode, t_shareMode share )
 {
    UnixFileSysData *data = static_cast< UnixFileSysData * >( m_fsData );
-   uint32 omode = 0;
+   int omode = 0;
 
    if ( data->m_handle > 0 )
       ::close( data->m_handle );
@@ -439,6 +439,7 @@ bool FileStream::open( const String &filename, t_openMode mode, t_shareMode shar
    AutoCString cfilename( filename );
 
    int handle;
+   errno = 0;
    handle = ::open( cfilename.c_str(), omode );
 
    data->m_handle = handle;
@@ -462,6 +463,7 @@ bool FileStream::create( const String &filename, t_attributes mode, t_shareMode 
 
    //TODO: something about sharing
    AutoCString cfilename( filename );
+   errno=0;
    data->m_handle = ::open( cfilename.c_str(), O_CREAT | O_RDWR | O_TRUNC, static_cast<uint32>( mode ) );
 
    if ( data->m_handle < 0 ) {
