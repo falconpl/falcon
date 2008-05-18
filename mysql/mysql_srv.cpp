@@ -350,10 +350,13 @@ DBITransactionMySQL::DBITransactionMySQL( DBIHandle *dbh )
 
 DBIRecordset *DBITransactionMySQL::query( const String &query, dbi_status &retval )
 {
+   retval = dbi_ok;
+
    AutoCString asQuery( query );
    MYSQL *conn = ((DBIHandleMySQL *) m_dbh)->getConn();
 
-   if ( mysql_query( conn, asQuery.c_str() ) != 0 ) {
+   if ( mysql_real_query( conn, asQuery.c_str(), asQuery.length() ) != 0 )
+   {
       switch ( mysql_errno( conn ) )
       {
       case CR_COMMANDS_OUT_OF_SYNC:
@@ -367,21 +370,24 @@ DBIRecordset *DBITransactionMySQL::query( const String &query, dbi_status &retva
 
       default:
          retval = dbi_error;
-         break;
       }
       return NULL;
    }
 
-   MYSQL_RES* res = mysql_store_result( conn );
+   if ( mysql_field_count( conn ) > 0 )
+   {
+      MYSQL_RES* res = mysql_store_result( conn );
 
-   if ( res == NULL ) {
-      retval = dbi_memory_allocation_error;
-      return NULL;
+      if ( res == NULL ) {
+         retval = dbi_memory_allocation_error;
+         return NULL;
+      }
+
+      return new DBIRecordsetMySQL( m_dbh, res );
    }
 
-   retval = dbi_ok;
-
-   return new DBIRecordsetMySQL( m_dbh, res );
+   // query without recordset
+   return NULL;
 }
 
 int DBITransactionMySQL::execute( const String &query, dbi_status &retval )
@@ -389,7 +395,7 @@ int DBITransactionMySQL::execute( const String &query, dbi_status &retval )
    AutoCString asQuery( query );
    MYSQL *conn = ((DBIHandleMySQL *) m_dbh)->getConn();
 
-   if ( mysql_query( conn, asQuery.c_str() ) != 0 ) {
+   if ( mysql_real_query( conn, asQuery.c_str(), asQuery.length() ) != 0 ) {
       switch ( mysql_errno( conn ) )
       {
       case CR_COMMANDS_OUT_OF_SYNC:
@@ -403,7 +409,6 @@ int DBITransactionMySQL::execute( const String &query, dbi_status &retval )
 
       default:
          retval = dbi_error;
-         break;
       }
       return -1;
    }

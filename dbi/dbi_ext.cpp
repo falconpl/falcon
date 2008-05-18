@@ -544,10 +544,14 @@ FALCON_FUNC DBIHandle_startTransaction( VMachine *vm )
 
 /*#
  @method query DBIHandle
- @brief Execute a SQL query that expects to have data as a result
+ @brief Execute a SQL query.
  @param String SQL query
  @return an instance of @a DBIRecordset
- */
+
+ If the performed query doesn't generate a recordset, it
+ returns nil.
+
+*/
 
 FALCON_FUNC DBIHandle_query( VMachine *vm )
 {
@@ -570,6 +574,14 @@ FALCON_FUNC DBIHandle_query( VMachine *vm )
       return;
    }
 
+   // recordset-less query?
+   if ( recSet == 0 )
+   {
+      vm->retnil();
+      return;
+   }
+
+   // creturn the recordset.
    Item *rsclass = vm->findWKI( "%DBIRecordset" );
    fassert( rsclass != 0 && rsclass->isClass() );
 
