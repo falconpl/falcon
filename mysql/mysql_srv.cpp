@@ -138,9 +138,8 @@ dbi_status DBIRecordsetMySQL::asString( const int columnIndex, String &value )
    else if ( m_rowData[columnIndex] == NULL )
       return dbi_nil_value;
 
-   value = String( m_rowData[columnIndex] ); // TODO: could contain binary data with NULL's
-   value.bufferize();
-
+   // TODO: check proper field encoding and transcode.
+   value.fromUTF8( m_rowData[columnIndex] );
    return dbi_ok;
 }
 
