@@ -34,6 +34,7 @@ using namespace Falcon;
 List preloaded;
 
 String load_path;
+String module_language;
 Stream *stdIn;
 Stream *stdOut;
 Stream *stdErr;
@@ -56,6 +57,7 @@ static void usage()
    stdOut->writeString( "   -e <enc>    select default encoding for VM streams\n" );
    stdOut->writeString( "   -h          this help\n" );
    stdOut->writeString( "   -p mod      pump one or more module in the virtual machine\n" );
+   stdOut->writeString( "   -l <lang>   Set preferential language of loaded modules\n" );
    stdOut->writeString( "   -L<path>    set path for 'load' directive\n" );
    stdOut->writeString( "   -v          print copyright notice and version and exit\n" );
    stdOut->writeString( "\n" );
@@ -154,6 +156,13 @@ int main( int argc, char *argv[] )
                else
                   load_path = op + 2; break;
             break;
+            
+            case 'l':
+               if ( op[2] == 0 && i + 1 < argc )
+                  module_language = argv[++i];
+               else
+                  module_language = op + 2;
+            break;
 
             case 'p':
                if ( op[2] == 0 && i < argc + 1)
@@ -233,6 +242,10 @@ int main( int argc, char *argv[] )
       source_path += ";";
 
    ModuleLoader *modloader = new ModuleLoader( source_path + get_load_path() );
+   
+   // set the module preferred language; ok also if default ("") is used
+   modloader->setLanguage( module_language );
+   
    DefaultErrorHandler *errHand = new DefaultErrorHandler( stdErr );
    modloader->errorHandler( errHand );
    
