@@ -20,7 +20,7 @@
 // Print the current directory
 
 printl( "Current directory: ", dirCurrent() )
-dir = len( args ) = 0 ? "." : args[0]
+dir = len( args ) == 0 ? "." : args[0]
 printl( "Directory list for: ", dir )
 
 try
@@ -44,8 +44,8 @@ try
    dirHandle.close()
 
 catch in error
-   printl( "Error: ", error.toString() )
-   printl( error.getSysErrDesc() )
+   > "Error: =============  "
+   > error
 end
 
 
