@@ -350,6 +350,8 @@ bool ModuleLoader::loadLanguageTable( Module *module, const String &language )
       module->language( language );
       return true;
    }
+
+   return false;
 }
 
 inline int32 xendianity( bool sameEndianity, int32 val )
