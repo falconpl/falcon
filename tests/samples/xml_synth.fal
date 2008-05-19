@@ -45,7 +45,7 @@ node.addBelow( MXMLNode( MXMLType.data, "", "Other normal data." ) )
 // Time to show.
 > "XML Test -- writing a document"
 > "======================================================"
-doc.style( MXMLStyle.INDENT | MXMLStyle.TAB )
+doc.style( MXMLStyle.INDENT || MXMLStyle.TAB )
 doc.serialize( stdOut() )
 > "======================================================"
 > "Done"

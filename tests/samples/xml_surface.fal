@@ -32,7 +32,7 @@ try
       
       > strReplicate( "-", 60 )
       >> "Topmost node: "
-      top.write( stdout, MXMLStyle.INDENT | MXMLStyle.TAB )
+      top.write( stdout, MXMLStyle.INDENT || MXMLStyle.TAB )
       >
       top = top.nextSibling()
    end

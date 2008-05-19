@@ -29,7 +29,7 @@ try
    > "Starting ... \"", args[0], "\""
    > "---------------------------------------------------------------"
 
-   proc = Process( args[0], PROCESS_MERGE_AUX | PROCESS_SINK_INPUT )
+   proc = Process( args[0], PROCESS_MERGE_AUX || PROCESS_SINK_INPUT )
    procout = proc.getOutput()
 
    while (result = proc.value())

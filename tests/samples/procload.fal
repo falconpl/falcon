@@ -26,7 +26,7 @@ end
 
 
 try
-   proc = Process( args, PROCESS_MERGE_AUX | PROCESS_SINK_INPUT )
+   proc = Process( args, PROCESS_MERGE_AUX || PROCESS_SINK_INPUT )
 
    procout = proc.getOutput()
    strout = ""
