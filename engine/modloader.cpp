@@ -158,31 +158,25 @@ ModuleLoader::t_filetype ModuleLoader::fileType( const String &path )
 
    if ( ext == ".fal" || ext == ".ftd" )
    {
-      if ( in.open( path, FileStream::e_omReadOnly ) )
-      {
-         in.close();
-         return t_source;
-      }
-      return t_none;
+      return t_source;
    }
-   else if ( ext == DllLoader::dllExt() || ext == ".fam" )
+   else if ( ext == DllLoader::dllExt() )
+   {
+      return t_binmod;
+   }
+   else if ( ext == ".fam" )
    {
       char ch[4];
       if ( ! in.open( path, FileStream::e_omReadOnly ) )
          return t_none;
       in.read( ch, 4 );
       in.close();
-      if ( ext == DllLoader::dllExt() ) {
-         return DllLoader::isDllMark( ch[0], ch[1] ) ? t_binmod : t_none;
+      if( ch[0] =='F' && ch[1] =='M') {
+         // verify if version/subversion is accepted.
+         if( ch[2] == FALCON_PCODE_VERSION && ch[3] == FALCON_PCODE_MINOR )
+            return t_vmmod;
       }
-      else {
-         if( ch[0] =='F' && ch[1] =='M') {
-            // verify if version/subversion is accepted.
-            if( ch[2] == FALCON_PCODE_VERSION && ch[3] == FALCON_PCODE_MINOR )
-               return t_vmmod;
-         }
-         return t_none;
-      }
+      return t_none;
    }
 
    return t_none;
