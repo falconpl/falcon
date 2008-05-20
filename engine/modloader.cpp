@@ -21,6 +21,7 @@
 #include <falcon/fstream.h>
 #include <falcon/sys.h>
 #include <falcon/pcodes.h>
+#include <falcon/timestamp.h>
 
 namespace Falcon {
 
@@ -188,7 +189,9 @@ ModuleLoader::t_filetype
       ModuleLoader::scanForFile( const String &name, bool isPath,
       ModuleLoader::t_filetype scanForType, String &found, bool accSrc )
 {
-   t_filetype tf = t_none;
+   const char *exts[] = { DllLoader::dllExt(), ".fam", ".fal", ".ftd", 0 };
+   const t_filetype ftypes[] = { t_binmod, t_vmmod, t_source, t_source, t_none };
+
    String path_name;
    String expName = name;
 
@@ -199,6 +202,8 @@ ModuleLoader::t_filetype
       expName.setCharAt( pos, '/' );
       pos = expName.find( ".", pos + 1 );
    }
+
+   t_filetype tf = t_none;
 
    ListElement *path_elem = m_path.begin();
    while ( tf == t_none && path_elem != 0 )
@@ -218,36 +223,76 @@ ModuleLoader::t_filetype
          found = path_name + expName;
          tf = fileType( found );
       }
-      else {
-         // first try to search for the DLL
-         found = path_name + expName + DllLoader::dllExt();
-         tf = fileType( found );
+      else
+      {
+         // loop over the possible extensions and pick the newest.
+         TimeStamp tsNewest;
+         tf = t_none;
+         const char **ext = exts;
+         const t_filetype *ptf = ftypes;
 
-         // then try for the source, if allowed
-         if ( tf == t_none && accSrc )
+         while( *ext != 0 )
          {
-            found = path_name + expName + ".fal";
-            tf = fileType( found );
-         }
+            // are we accepting sources?
+            if ( *ptf == t_source && ! accSrc )
+            {
+               // if not, skip
+               ext++;
+               ptf++;
+               continue;
+            }
 
-         // then try for the source, if allowed
-         if ( tf == t_none && accSrc )
-         {
-            found = path_name + expName + ".ftd";
-            tf = fileType( found );
-         }
-
-         // and then for the fam
-         if ( tf == t_none )
-         {
-            found = path_name + expName + ".fam";
-            tf = fileType( found );
+            String temp = path_name + expName + *ext;
+            FileStat stats;
+            // do the file exist?
+            if ( Sys::fal_stats( temp, stats ) )
+            {
+               // is it a regular file and ...
+               // is this file newest than the higher priority file?
+               if ( (stats.m_type == FileStat::t_normal || stats.m_type == FileStat::t_link) &&
+                    stats.m_mtime->compare( tsNewest ) > 0
+                    )
+               {
+                  // we found a candidate.
+                  tsNewest = *stats.m_mtime;
+                  found = temp;
+                  tf = *ptf;
+               }
+            }
+            // get next extension and file type
+            ext++;
+            ptf++;
          }
       }
 
       // if the path is not the one we want, reject it.
       if( scanForType != t_none && tf != scanForType )
          tf = t_none;
+      else
+      {
+         // great, we found it; but we should ignore binary modules if they are
+         // not our VM/Pcode versions.
+         if ( tf == t_vmmod )
+         {
+            FileStream in;
+            if ( in.open( found, FileStream::e_omReadOnly ) )
+            {
+               char ch[4];
+               in.read( ch, 4 );
+               in.close();
+               if( ch[0] !='F' || ch[1] !='M' ||
+                  ch[2] != FALCON_PCODE_VERSION || ch[3] != FALCON_PCODE_MINOR )
+               {
+                  // try again;
+                  tf = t_none;
+               }
+            }
+            else {
+               // In the end, we were not even to open it.
+               tf = t_none;
+            }
+         }
+      }
 
       // try again.
       path_elem = path_elem->next();

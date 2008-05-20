@@ -100,8 +100,6 @@ bool fal_stats( const String &f, FileStat &sts )
 
 
    UnixSystemTime mtime( fs.st_mtime );
-   sts.m_mtime = new TimeStamp();
-   sts.m_mtime->fromSystemTime( mtime );
 
    sts.m_atime = new TimeStamp();
    mtime.m_time_t = fs.st_atime;
@@ -110,6 +108,11 @@ bool fal_stats( const String &f, FileStat &sts )
    sts.m_ctime = new TimeStamp();
    mtime.m_time_t = fs.st_ctime;
    sts.m_ctime->fromSystemTime( mtime );     /* time of last change */
+
+   // copy last change time to last modify time
+   sts.m_mtime = new TimeStamp();
+   sts.m_mtime->fromSystemTime( mtime );
+
    return true;
 }
 
