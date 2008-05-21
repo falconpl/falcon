@@ -28,11 +28,28 @@
 #include "socket_sys.h"
 #include "socket_ext.h"
 
+/*#
+   @beginmodule feather_socket
+*/
+
 namespace Falcon {
 namespace Ext {
 
-/**
-   Return the machine name
+/*#
+   @function getHostName
+   @brief Retreives the host name of the local machine.
+   @return A string containing the local machine name.
+   @raise @a NetError if the host name can't be determined.
+   
+   Returns the network name under which the machine is known to itself. By
+   calling @a resolveAddress on this host name, it is possible to determine all
+   the addressess of the interfaces that are available for networking.
+
+   If the system cannot provide an host name for the local machine, a NetError
+   is raised.
+
+   @note If the function fails, it is possible to retreive local addresses using
+      through @a resolveAddress using the the name "localhost".
 */
 
 FALCON_FUNC  falcon_getHostName( ::Falcon::VMachine *vm )
@@ -47,6 +64,41 @@ FALCON_FUNC  falcon_getHostName( ::Falcon::VMachine *vm )
    }
 }
 
+/*#
+   @function resolveAddress
+   @brief Resolve a network address in a list of numeric IP fields.
+   @param address An host name, quad dot IP address or IPV6 address.
+   @return An array of IPv4 or IPv6 addresses.
+   @raise @a NetError if the name resolution service is not available.
+
+   This function tries to resolve an address or an host name into a list of
+   addresses that can be used to connect directly via the protocols that are
+   available on the machine. The way in which the function can resolve the
+   addresses depends on the string that has been given, on the underlying system
+   and on the name resolution services that the system can access. Also, the time
+   by which a positive or negative result can be returned varies greatly between
+   different systems. The caller must consider this function as potentially
+   blocking the VM for a long time.
+
+   The other members of the Socket module do not need to be provided with already
+   resolved addresses. In example, the connect method of the TCPSocket class can be
+   provided with a host name or with an IP address; in the first case, the connect
+   method will resolve the target address on its own.
+
+   This function can be used on the value returned by @a getHostName, or using
+   "localhost" as the @a address parameter, to receive a
+   list of the interfaces that are available under the network name of the host the
+   VM is running on. This is useful to i.e. bind some services only to one of the
+   available interfaces.
+
+   The values in the returned array are the ones provided by the underlying name
+   resolution system. They are not necessarily unique, and their order may change
+   across different calls.
+
+   If the function cannot find any host with the given name, an empty array is
+   returned; if the name resolution service is not accessible, or if accessing it
+   causes a system error, the function will raise a @a NetError.
+*/
 FALCON_FUNC  resolveAddress( ::Falcon::VMachine *vm )
 {
    Item *address = vm->param( 0 );
@@ -78,6 +130,19 @@ FALCON_FUNC  resolveAddress( ::Falcon::VMachine *vm )
    vm->retval( ret );
 }
 
+/*#
+   @function socketErrorDesc
+   @brief Describe the meaning of a networking related system error code.
+   @param code The error code to be described.
+   @return A string with a textual description of the error.
+
+   This function invokes the system code-to-meaning translation for
+   networking errors. The language in which the error code is described
+   depends on the underlying system,
+
+   The function can be applied to the fsError field of the @a NetError class
+   to get a descriptive reason of why some operation failed, or on @a Socket.lastError.
+*/
 FALCON_FUNC  socketErrorDesc( ::Falcon::VMachine *vm )
 {
    Item *code = vm->param( 0 );
@@ -98,11 +163,48 @@ FALCON_FUNC  socketErrorDesc( ::Falcon::VMachine *vm )
 // Class Socket
 // ==============================================
 
+/*#
+   @class Socket
+   @brief TCP/IP networking base class,
+   The Socket class is the base class for both UDP and TCP socket.
+   It provides common methods and properties,
+   and so it should not be directly instantiated. 
+
+   @prop timedout True if the last operation has timed out. See @a Socket,setTimeout..
+   
+   @prop lastError Numeric value of system level error that has occoured on the socket.
+      @a getErrorDescription may be used to get a human-readable description of the error.
+      The error is usually also written in the fsError field of the exceptions,
+      if case they are caught.
+*/
+
+
 FALCON_FUNC  Socket_init( ::Falcon::VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
    self->setProperty( "timedOut", (int64) 0 );
 }
+
+/*#
+   @method setTimeout Socket
+   @param timeout Timeout in seconds and fractions.
+
+   This function sets a default timeout for the read/write operations, or for other
+   lengthy operations as connect. If -1 is set (the default at socket creation),
+   blocking operation will wait forever, until some data is ready. In this case,
+   readAvailable and writeAvailable methods can be used to peek for incoming data.
+
+   If 0 is set, read/write operations will never block, returning immediately if
+   data is not available. If a value greater than zero is set, blocking functions
+   will wait the specified amount of seconds for their action to complete.
+
+   Whenever an operation times out, the @a Socket,timedout member property
+   is set to 1. This allows to distinguish between faulty operations and
+   timed out ones.
+   
+   @a Socket.readAvailable and @a Socket,writeAvailable methods do not use
+   this setting.
+*/
 
 FALCON_FUNC  Socket_setTimeout( ::Falcon::VMachine *vm )
 {
@@ -120,12 +222,30 @@ FALCON_FUNC  Socket_setTimeout( ::Falcon::VMachine *vm )
    tcps->timeout( (int32) i_to->forceInteger() );
 }
 
+
+/*#
+   @method getTimeout Socket
+   @brief Returns the default timeout for this socket.
+   @return A numeric value (seconds or seconds fractions).
+
+   @see Socket.setTimeout
+*/
+
 FALCON_FUNC  Socket_getTimeout( ::Falcon::VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
    Sys::Socket *tcps = (Sys::Socket *) self->getUserData();
    vm->retval( tcps->timeout() );
 }
+
+/*#
+   @method dispose Socket
+   @brief Closes a socket and frees system resources associated with it.
+
+   Sockets are automatically disposed by garbage collector, but the
+   calling program may find useful to free them immediately i.e. in
+   tight loops while accepting and serving sockets.
+*/
 
 FALCON_FUNC  Socket_dispose( ::Falcon::VMachine *vm )
 {
@@ -134,6 +254,36 @@ FALCON_FUNC  Socket_dispose( ::Falcon::VMachine *vm )
    tcps->terminate();
    vm->retnil();
 }
+
+
+/*#
+   @method readAvailable Socket
+   @brief Checks if there is available data to be read on this socket.
+   @optparam timeout Wait for a specified time in seconds or fractions.
+   @return True if the next read operation would not block.
+   @raise InterruptedError In case of asynchronous interruption.
+    
+   This method can be used to wait for incoming data on the socket.
+   If there are some data available for immediate read, the function returns
+   immediately true, otherwise it returns false.
+
+   If @b timeout is not given, the function will return immediately,
+   peeking for current read availability status. If it is given, the function
+   will wait for a specified amount of seconds, or for some data to become
+   available for read, whichever comes first.
+
+   If the timeout value is negative, the function will wait forever,
+   until some data is available.
+
+   This wait will block the VM and all the coroutines.
+
+   @note On Unix, this function respects the VirtualMachine interruption
+   protocol, and can be asynchronously interrupted from other threads. This
+   functionality is not implemented on MS-Windows systems yet, and will be
+   provided in version 0.8.12.
+
+   @see Socket.writeAvailable
+*/
 
 FALCON_FUNC  Socket_readAvailable( ::Falcon::VMachine *vm )
 {
@@ -178,6 +328,39 @@ FALCON_FUNC  Socket_readAvailable( ::Falcon::VMachine *vm )
    }
 }
 
+
+/*#
+   @method writeAvailable Socket
+   @brief Waits for the socket to be ready to write data.
+   @optparam timeout Optional wait in seconds.
+   @return True if the socket is writeable or becomes writeable during the wait.
+   @raise InterruptedError in case of asynchronous interruption.
+
+   This method checks for the socket to be ready for immediate writing. A socket
+   may not be ready for writing if the OS system stack is full, which usually means
+   that the other side has not been able to forward the received messages to the
+   listening application.
+
+   The method will return true in case the socket is available for write, false
+   otherwise.
+
+   An optional @b timeout may be specified; in this case, the function will return true
+   if the socket is immediately available or if it becomse available before the
+   wait expires, false otherwise. The wait blocks the VM, preventing other
+   coroutines to be processed as well.
+
+   This function does not take into consideration overall timeout set by
+   @a Socket.setTimeout.
+
+   @note On Unix, this function respects the VirtualMachine interruption
+   protocol, and can be asynchronously interrupted from other threads. This
+   functionality is not implemented on MS-Windows systems yet, and will be
+   provided in version 0.8.12.
+
+   @see Socket.readAvailable
+
+*/
+
 FALCON_FUNC  Socket_writeAvailable( ::Falcon::VMachine *vm )
 {
    Item *to = vm->param( 0 );
@@ -221,6 +404,15 @@ FALCON_FUNC  Socket_writeAvailable( ::Falcon::VMachine *vm )
    }
 }
 
+/*#
+   @method getHost Socket
+   @brief Gets the host associated with this socket.
+   @return The host address.
+   
+   For TCP sockets, this method will always return the address of the remote host,
+   while in UDP sockets it will be the local address where the socket has been bound.
+*/
+
 FALCON_FUNC  Socket_getHost( ::Falcon::VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
@@ -233,6 +425,20 @@ FALCON_FUNC  Socket_getHost( ::Falcon::VMachine *vm )
    delete s;
    vm->retnil();
 }
+
+/*#
+   @method getService Socket
+   @brief Returns the service name (port description) associated with this socket
+   @return A string containing the service name.
+   
+   For TCP sockets, returns the name of the service to which the socket is connected.
+   For UDP sockets, returns the local service from which the messages
+   sent through this socket are generated, if an explicit bound request
+   has been issued. Returned values are a system-specific 1:1 mapping of numeric
+   ports to service names. If the port has not an associated service name,
+   the port number is returned as a string value (I.e. port 80 is
+   returned as the string “80”).
+*/
 
 FALCON_FUNC  Socket_getService( ::Falcon::VMachine *vm )
 {
@@ -247,6 +453,17 @@ FALCON_FUNC  Socket_getService( ::Falcon::VMachine *vm )
    vm->retnil();
 }
 
+
+/*#
+   @method getPort Socket
+   @brief Gets the port associated with this socket.
+   @return The port address.
+
+   For TCP sockets, returns a numeric representation of the port to which the socket
+   is connected. For UDP sockets, returns the local port from which the messages
+   sent through this socket are generated, if an explicit bound request has been issued.
+*/
+
 FALCON_FUNC  Socket_getPort( ::Falcon::VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
@@ -257,6 +474,24 @@ FALCON_FUNC  Socket_getPort( ::Falcon::VMachine *vm )
 // ==============================================
 // Class TCPSocket
 // ==============================================
+
+/*#
+   @class TCPSocket
+   @from Socket
+   @brief Provides full TCP connectivity.
+
+   This class is derived from the @a Socket class, but it also provides methods that can be
+   used to open connection towards remote hosts.
+*/
+
+/*#
+   @init TCPSocket
+   @brief Allocate system resources for TCP/IP Connectivity.
+   @raise NetError on underlying network error.
+   
+   The constructor reserves system resources for the socket.
+   If the needed system resources are not available, a NetError is Raised.
+*/
 
 FALCON_FUNC  TCPSocket_init( ::Falcon::VMachine *vm )
 {
@@ -275,6 +510,28 @@ FALCON_FUNC  TCPSocket_init( ::Falcon::VMachine *vm )
 }
 
 
+/*#
+   @method connect TCPSocket
+   @brief Connects this socket to a remote host.
+   @param host Remote host to be connected to.
+   @param service Port or service name to be connected to.
+   @return False if timed out, true if succesful
+   @raise NetError in case of underlying connection error during the closing phase.
+
+   Connects with a remote listening TCP host. The operation may fail for a
+   system error, in which case a NetError is raised.
+
+   The connection attempt may timeout if it takes more than the time specified
+   in @a Socket.setTimeout method. In that case, the @a TCPSocket.isConnected method may check if the
+   connection has been established at a later moment. So, it is possible to set the
+   socket timeout to 0, and then check periodically for connection success without
+   never blocking the VM.
+
+   The host name may be a name to be resolved by the system resoluter or it may
+   be an already resolved dot-quad IP, or it may be an IPV6 address.
+
+   @see Socket.setTimeout
+*/
 FALCON_FUNC  TCPSocket_connect( ::Falcon::VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
@@ -324,6 +581,15 @@ FALCON_FUNC  TCPSocket_connect( ::Falcon::VMachine *vm )
    }
 }
 
+/*#
+   @method isConnected TCPSocket
+   @brief Check if this TCPSocket is currently connected with a remote host.
+   @return True if the socket is currently connected, false otherwise.
+
+   This method checks if this TCPSocket is currently connected with a remote host.
+   
+   @see TCPSocket.connect
+*/
 FALCON_FUNC  TCPSocket_isConnected( ::Falcon::VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
@@ -350,6 +616,39 @@ FALCON_FUNC  TCPSocket_isConnected( ::Falcon::VMachine *vm )
    self->setProperty( "timedOut", (int64) 0 );
 }
 
+
+/*#
+   @method send TCPSocket
+   @brief Send data on the network connection.
+   @param buffer The buffer containing the data to be sent.
+   @optparam size Amount of bytes to be sent.
+   @optparam start Begin position in the buffer (in bytes).
+   @return Number of bytes actually sent through the network layer.
+   @raise NetError on network error,
+   
+   Sends data to the remote host. The @b buffer may be a byte-only string or a
+   byte-wide MemBuf; it is possible to send also multibyte strings (i.e. strings
+   containing international characters) or multi-byte memory buffers, but in that
+   case the sent data may get corrupted as a transmission may deliver only part
+   of a character or of a number stored in a memory buffer.
+
+   If a size parameter is not specified, the method will try to send the whole
+   content of the buffer, otherwise it will send at maximum size bytes. If a
+   start parameter is specified, then the data sent will be taken starting
+   from that position in the buffer (counting in bytes from the start).
+
+   This is useful when sending big buffers in several steps, so that
+   it is not necessary to create substrings for each send, sparing both
+   CPU and memory.
+
+   The returned value may be 0 in case of timeout, otherwise it will be a
+   number between 1 and the requested size. Programs should never assume
+   that a succesful @b send has sent all the data.
+   
+   In case of error, a @a NetError is raised.
+
+   @see Socket.setTimeout
+*/
 FALCON_FUNC  TCPSocket_send( ::Falcon::VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
@@ -392,6 +691,40 @@ FALCON_FUNC  TCPSocket_send( ::Falcon::VMachine *vm )
    vm->retval( (int64) res );
 }
 
+/*#
+   @method recv TCPSocket
+   @brief Reads incoming data.
+   @param bufOrSize A pre-allocated buffer to fill, or a maximum size in bytes to be read.
+   @optParam size Maximum size in bytes to be read.
+   @return If @b bufOrSize is a size, returns a filled string buffer, otherwise it returns
+      the amount of bytes actually read.
+
+   When the @b bufOrSize parameter is a buffer to be filled
+   (i.e. a @b MemBuf or a string created with @b strBuffer), the buffer may be repeatedly used,
+   sparing memory and allocation time. If the size parameter is not provided,
+   the maximum amount of bytes that can be stored in the buffer will be used as read size limit,
+
+   This size won't change between call, even if the actual length of the data stored in the
+   buffer changes.
+
+   If the size parameter is provided, it is used to define the maximum possible
+   size of data stored in the buffer. If it is not great enough to store the data,
+   it is resized.
+
+   When a target buffer is specified in the @b bufOrSize parameter, the method returns
+   number of bytes that has been
+   actually read. The size may be zero if the opposite side closed the connection,
+   or if the timeout has elapsed. The returned
+   size will presumably be smaller than the maximum, and it will be at maximum the
+   size of a TCP packet that can travel on the current connection.
+
+   When a maximum size is specified in the @b bufOrSize parameter, the method
+   returns a newly allocated buffer on success, and nil on failure.
+
+   In case of system error, a NetError is raised.
+
+   @see Socket.setTimeout
+*/
 FALCON_FUNC  TCPSocket_recv( ::Falcon::VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
@@ -500,6 +833,27 @@ FALCON_FUNC  TCPSocket_recv( ::Falcon::VMachine *vm )
    }
 }
 
+/*#
+   @method closeRead TCPSocket
+   @brief Closes a socket read side.
+   @return False if timed out, true if succesful
+   @raise NetError in case of underlying connection error during the closing phase.
+   
+   Closes the socket read side, discarding incominig messages and notifying
+   the remote side about the event. The close message must be acknowledged
+   by the remote host, so the function may actually fail,
+   block and/or timeout.
+   
+   After the call, the socket can still be used to write (i.e. to finish writing
+   pending data). This informs the remote side we're not going to read anymore,
+   and so if the application on the remote host tries to write,
+   it will receive an error.
+
+   In case of error, a NetError is raised, while in case of timeout @b false is returned.
+   On successful completion, true is returned.
+
+   @see Socket.setTimeout
+*/
 FALCON_FUNC  TCPSocket_closeRead( ::Falcon::VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
@@ -524,6 +878,27 @@ FALCON_FUNC  TCPSocket_closeRead( ::Falcon::VMachine *vm )
    vm->retval( (int64) 1 );
 }
 
+
+/*#
+   @method closeWrite TCPSocket
+   @brief Closes a socket write side.
+   @return False if timed out, true if succesful
+   @raise NetError in case of underlying connection error during the closing phase.
+   
+   Closes the socket write side, discarding incoming messages and notifying the
+   remote side about the event. The close message must be acknowledged by the
+   remote host, so the function may actually fail, block and/or timeout.
+
+   After the call, the socket can still be used to read (i.e. to finish reading
+   informations incoming from the remote host). This informs the remote side we're
+   not going to write anymore, and so if the application on the remote host tries
+   to read, it will receive an error.
+
+   In case of error, a NetError is raised, while in case of timeout @b false is returned.
+   On successful completion, true is returned.
+
+   @see Socket.setTimeout
+*/
 FALCON_FUNC  TCPSocket_closeWrite( ::Falcon::VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
@@ -542,6 +917,22 @@ FALCON_FUNC  TCPSocket_closeWrite( ::Falcon::VMachine *vm )
    }
 }
 
+
+/*#
+   @method close TCPSocket
+   @brief Closes the socket.
+   @return False if timed out, true if succesful
+   @raise NetError in case of underlying connection error during the closing phase.
+   
+   Closes the socket, discarding incoming messages and notifying the remote side
+   about the event. The close message must be acknowledged by the remote host, so
+   the function may actually fail, block and/or timeout - see setTimeout() .
+
+   In case of error, a NetError is raised, while in case of timeout @b false is returned.
+   On successful completion @b true is returned.
+
+   @see Socket.setTimeout
+*/
 FALCON_FUNC  TCPSocket_close( ::Falcon::VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
