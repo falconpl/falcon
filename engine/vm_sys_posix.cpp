@@ -19,7 +19,10 @@
 #include <falcon/memory.h>
 #include <unistd.h>
 #include <poll.h>
-#include <stropts.h>
+// if poll.h does not define POLLIN, then it's in stropts.
+#ifndef POLLIN
+   #include <stropts.h>
+#endif
 #include <errno.h>
 
 namespace Falcon {
