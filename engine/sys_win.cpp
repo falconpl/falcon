@@ -302,11 +302,31 @@ void falconToWin_fname( const String &path, const String &extra, String &result 
 void falconToWin_fname( String &result )
 {
 	result.bufferize();
+   bool bRem = false;
 
-   for( unsigned int i = 0; i < result.length(); i ++ ) {
+   for( unsigned int i = 0; i < result.length(); i ++ ) 
+   {
       int chr = result.getCharAt( i );
       if( chr == '/' )
+      {
+         // "/C:" disk specificator?
+         if ( i == 0 )
+            bRem = true;
+         else
+            bRem = false;
+
          result.setCharAt( i, '\\' );
+      }
+      else if ( chr == ':' )
+      {
+         // was the first "/" to be removed?
+         if ( bRem )
+         {
+            result.remove(0,1);
+            // get I back.
+            i--;
+         }
+      }
    }
 
 }

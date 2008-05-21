@@ -17,6 +17,8 @@
    Implementation of directory system support for unix.
 */
 
+#include <falcon/autowstring.h>
+#include <falcon/autocstring.h>
 #include <falcon/dir_sys_win.h>
 #include <falcon/time_sys_win.h>
 #include <falcon/timestamp.h>
@@ -37,20 +39,14 @@ bool fal_fileType( const String &filename, FileStat::e_fileType &st )
    String fname = filename;
    Sys::falconToWin_fname( fname );
 
-	uint32 bufSize = fname.length() * sizeof( wchar_t ) + sizeof( wchar_t );
-	wchar_t *bufname = (wchar_t *) memAlloc( bufSize );
-	fname.toWideString( bufname, bufSize );
-
-	DWORD attribs = GetFileAttributesW( bufname );
+   AutoWString wstrBufName( fname );
+	DWORD attribs = GetFileAttributesW( wstrBufName.w_str() );
 
 	if( attribs == INVALID_FILE_ATTRIBUTES && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED )
 	{
-		char *bufname_c = (char *) bufname;
-		if( fname.toCString( bufname_c, bufSize ) > 0 )
-			attribs = GetFileAttributes( bufname_c );
+		AutoCString cstrBufName( fname );
+		attribs = GetFileAttributes( cstrBufName.c_str() );
 	}
-
-	memFree( bufname );
 
    if( attribs == INVALID_FILE_ATTRIBUTES ) {
       return false;
@@ -69,11 +65,9 @@ bool fal_stats( const String &filename, FileStat &sts )
    String fname = filename;
    Sys::falconToWin_fname( fname );
 
-	uint32 bufSize = fname.length() * sizeof( wchar_t ) + sizeof( wchar_t );
-	wchar_t *bufname = (wchar_t *) memAlloc( bufSize );
-	fname.toWideString( bufname, bufSize );
+	AutoWString wBuffer( fname );
 
-   HANDLE temp = CreateFileW( bufname,
+   HANDLE temp = CreateFileW( wBuffer.w_str(),
       GENERIC_READ,
       FILE_SHARE_READ,
       NULL,
@@ -83,10 +77,9 @@ bool fal_stats( const String &filename, FileStat &sts )
 
 	if( (temp == INVALID_HANDLE_VALUE || temp == 0) && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED )
 	{
-		char *bufname_c = (char *) bufname;
-		if( fname.toCString( bufname_c, bufSize ) > 0 )
-			temp = CreateFile( bufname_c,
-				GENERIC_READ,
+      AutoCString cBuffer( fname );
+      temp = CreateFile( cBuffer.c_str(),
+	   		GENERIC_READ,
 				FILE_SHARE_READ,
 				NULL,
 				OPEN_EXISTING,
@@ -94,22 +87,16 @@ bool fal_stats( const String &filename, FileStat &sts )
 				NULL );
 	}
 
-   if( temp == INVALID_HANDLE_VALUE ) {
+   if( temp == INVALID_HANDLE_VALUE ) 
+   {
       // on win 95/98, we can't normally access directory data.
-		uint32 bufSize = (fname.length()+1) * sizeof( wchar_t );
-		wchar_t *bufname = (wchar_t *) memAlloc( bufSize );
-		filename.toWideString( bufname, bufSize );
-
-
-      DWORD attribs = GetFileAttributesW( bufname );
+		
+      DWORD attribs = GetFileAttributesW( wBuffer.w_str() );
 		if(  attribs == INVALID_FILE_ATTRIBUTES && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED )
 		{
-			char *bufname_c = (char *) bufname;
-			if( fname.toCString( bufname_c, bufSize ) > 0 )
-				attribs = GetFileAttributes( bufname_c );
+         AutoCString cBuffer( fname );
+			attribs = GetFileAttributes( cBuffer.c_str() );
 		}
-
-		memFree( bufname );
 
       if( attribs == INVALID_FILE_ATTRIBUTES ) {
          return false;
@@ -128,8 +115,6 @@ bool fal_stats( const String &filename, FileStat &sts )
       }
       return false;
    }
-
-	memFree( bufname );
 
    BY_HANDLE_FILE_INFORMATION info;
    memset( &info, 0, sizeof( info ) );
@@ -176,20 +161,14 @@ bool fal_mkdir( const String &filename, int32 &fsStatus )
    String fname = filename;
    Sys::falconToWin_fname( fname );
 
-	uint32 bufSize = fname.length() * sizeof( wchar_t ) + sizeof( wchar_t );
-	wchar_t *bufname = (wchar_t *) memAlloc( bufSize );
-	fname.toWideString( bufname, bufSize );
-
-   BOOL res = CreateDirectoryW( bufname, NULL );
+   AutoWString wBuffer( fname );
+   BOOL res = CreateDirectoryW( wBuffer.w_str(), NULL );
 
 	if( ! res && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED )
 	{
-		char *bufname_c = (char *) bufname;
-		if( fname.toCString( bufname_c, bufSize ) > 0 )
-			res = CreateDirectory( bufname_c, NULL );
+		AutoCString cBuffer( fname );
+      res = CreateDirectory( cBuffer.c_str(), NULL );
 	}
-
-	memFree( bufname );
 
    if ( res == TRUE ) {
       return true;
@@ -203,19 +182,13 @@ bool fal_rmdir( const String &filename, int32 &fsStatus )
    String fname = filename;
    Sys::falconToWin_fname( fname );
 
-	uint32 bufSize = fname.length() * sizeof( wchar_t ) + sizeof( wchar_t );
-	wchar_t *bufname = (wchar_t *) memAlloc( bufSize );
-	fname.toWideString( bufname, bufSize );
-
-   BOOL res = RemoveDirectoryW( bufname );
+   AutoWString wBuffer( fname );
+   BOOL res = RemoveDirectoryW( wBuffer.w_str() );
 	if( ! res && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED )
 	{
-		char *bufname_c = (char *) bufname;
-		if( fname.toCString( bufname_c, bufSize ) > 0 )
-			res = RemoveDirectory( bufname_c );
+      AutoCString cBuffer( fname );
+		res = RemoveDirectory( cBuffer.c_str() );
 	}
-
-	memFree( bufname );
 
    if ( res == TRUE ) {
       return true;
@@ -229,19 +202,13 @@ bool fal_unlink( const String &filename, int32 &fsStatus )
    String fname = filename;
    Sys::falconToWin_fname( fname );
 
-	uint32 bufSize = fname.length() * sizeof( wchar_t ) + sizeof( wchar_t );
-	wchar_t *bufname = (wchar_t *) memAlloc( bufSize );
-	fname.toWideString( bufname, bufSize );
-
-   BOOL res = DeleteFileW( bufname );
+   AutoWString wBuffer( fname );
+   BOOL res = DeleteFileW( wBuffer.w_str() );
 	if( ! res && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED )
 	{
-		char *bufname_c = (char *) bufname;
-		if( fname.toCString( bufname_c, bufSize ) > 0 )
-			res = DeleteFile( bufname_c );
+      AutoCString cBuffer( fname );
+      res = DeleteFile( cBuffer.c_str() );
 	}
-
-	memFree( bufname );
 
    if ( res == TRUE ) {
       return true;
@@ -257,30 +224,16 @@ bool fal_move( const String &filename, const String &dest, int32 &fsStatus )
    String fname2 = dest;
    Sys::falconToWin_fname( fname2 );
 
-	uint32 bufSize1 = fname1.length() * sizeof( wchar_t ) + sizeof( wchar_t );
-	wchar_t *bufname1 = (wchar_t *) memAlloc( bufSize1 );
-	fname1.toWideString( bufname1, bufSize1 );
-
-	uint32 bufSize2 = fname2.length() * sizeof( wchar_t ) + sizeof( wchar_t );
-	wchar_t *bufname2 = (wchar_t *) memAlloc( bufSize2 );
-	fname2.toWideString( bufname2, bufSize2 );
-
-   BOOL res = MoveFileW( bufname1, bufname2 );
+   AutoWString wBuffer1( fname1 );
+   AutoWString wBuffer2( fname2 );
+   BOOL res = MoveFileW( wBuffer1.w_str(), wBuffer2.w_str() );
 
 	if( ! res && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED )
 	{
-		char *bufname_c1 = (char *) bufname1;
-		if( fname1.toCString( bufname_c1, bufSize1 ) > 0 )
-		{
-			char *bufname_c2 = (char *) bufname2;
-			if( fname2.toCString( bufname_c2, bufSize2 ) > 0 )
-				res = MoveFile( bufname_c1, bufname_c2 );
-		}
+      AutoCString cBuffer1( fname1 );
+      AutoCString cBuffer2( fname2 );
+      res = MoveFile( cBuffer1.c_str(), cBuffer2.c_str() );
 	}
-
-
-	memFree( bufname1 );
-	memFree( bufname2 );
 
    if ( res == TRUE ) {
       return true;
@@ -293,20 +246,15 @@ bool fal_chdir( const String &filename, int32 &fsStatus )
 {
    String fname = filename;
    Sys::falconToWin_fname( fname );
+   
+   AutoWString wBuffer( fname );
 
-	uint32 bufSize = fname.length() * sizeof( wchar_t ) + sizeof( wchar_t );
-	wchar_t *bufname = (wchar_t *) memAlloc( bufSize );
-	fname.toWideString( bufname, bufSize );
-
-   BOOL res = SetCurrentDirectoryW( bufname );
+   BOOL res = SetCurrentDirectoryW( wBuffer.w_str() );
 	if( ! res && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED )
 	{
-		char *bufname_c = (char *) bufname;
-		if( fname.toCString( bufname_c, bufSize ) > 0 )
-			res = SetCurrentDirectory( bufname_c );
+      AutoCString cBuffer( fname );
+      res = SetCurrentDirectory( cBuffer.c_str() );
 	}
-
-	memFree( bufname );
 
    if ( res == TRUE ) {
       return true;
@@ -387,20 +335,15 @@ bool fal_writelink( const String &fname, String &link )
    String fname;
    Sys::falconToWin_fname( path, "\\*", fname );
 
-	uint32 bufSize = fname.length() * sizeof( wchar_t ) + sizeof( wchar_t );
-	wchar_t *bufname = (wchar_t *) memAlloc( bufSize );
-	fname.toWideString( bufname, bufSize );
+   AutoWString wBuffer( fname );
 
    WIN32_FIND_DATAW dir_data;
-   HANDLE handle = FindFirstFileW( bufname, &dir_data );
+   HANDLE handle = FindFirstFileW( wBuffer.w_str(), &dir_data );
 	if( handle == INVALID_HANDLE_VALUE && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED )
 	{
-		char *bufname_c = (char *) bufname;
-		if( fname.toCString( bufname_c, bufSize ) > 0 )
-			handle = FindFirstFile( bufname_c, (WIN32_FIND_DATA*) &dir_data );
+		AutoCString cBuffer( fname );
+      handle = FindFirstFile( cBuffer.c_str(), (WIN32_FIND_DATA*) &dir_data );
 	}
-
-	memFree( bufname );
 
    if ( handle != INVALID_HANDLE_VALUE )
       return new DirEntry_win( handle, dir_data );
