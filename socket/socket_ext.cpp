@@ -8,7 +8,7 @@
    Begin: 2006-05-09 15:50
 
    -------------------------------------------------------------------
-   (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
+   (C) Copyright 2004-2008: the FALCON developers (see list in AUTHORS file)
 
    See LICENSE file for licensing details.
 */
@@ -626,15 +626,15 @@ FALCON_FUNC  TCPSocket_isConnected( ::Falcon::VMachine *vm )
    @return Number of bytes actually sent through the network layer.
    @raise NetError on network error,
    
-   Sends data to the remote host. The @b buffer may be a byte-only string or a
+   The @b buffer may be a byte-only string or a
    byte-wide MemBuf; it is possible to send also multibyte strings (i.e. strings
    containing international characters) or multi-byte memory buffers, but in that
    case the sent data may get corrupted as a transmission may deliver only part
    of a character or of a number stored in a memory buffer.
 
-   If a size parameter is not specified, the method will try to send the whole
+   If a @a size parameter is not specified, the method will try to send the whole
    content of the buffer, otherwise it will send at maximum size bytes. If a
-   start parameter is specified, then the data sent will be taken starting
+   @a start parameter is specified, then the data sent will be taken starting
    from that position in the buffer (counting in bytes from the start).
 
    This is useful when sending big buffers in several steps, so that
@@ -698,7 +698,8 @@ FALCON_FUNC  TCPSocket_send( ::Falcon::VMachine *vm )
    @optParam size Maximum size in bytes to be read.
    @return If @b bufOrSize is a size, returns a filled string buffer, otherwise it returns
       the amount of bytes actually read.
-
+   @raise NetError on network error.
+   
    When the @b bufOrSize parameter is a buffer to be filled
    (i.e. a @b MemBuf or a string created with @b strBuffer), the buffer may be repeatedly used,
    sparing memory and allocation time. If the size parameter is not provided,
@@ -961,11 +962,22 @@ FALCON_FUNC  TCPSocket_close( ::Falcon::VMachine *vm )
 // Class UDPSocket
 // ==============================================
 
-/**
-   UDPSocket() --> send only socket
-   UDPSocket( ADDRESS, [SERVICE] ) --> named socket
-*/
+/*#
+   @class UDPSocket
+   @brief UDP (datagram) manager.
+   @from Socket
+   @param addrOrService Address at which this server will be listening.
+   @optparam service If an address is given, service or port number (as a string) where to listen.
+   @raise NetError on system error.
+   
+   The UDPSocket class provides support for UDP transmissions (datagrams).
 
+   The constructor reserves the needed system resources and return an
+   UDPSocket object that can be used to send and receive datagrams.
+
+   @prop remote Contains the origin address of the last datagram received with the @a UDPSocket.recv method.
+   @prop remoteService Contains the origin port of the last datagram received with the @a UDPSocket.recv method.
+*/
 FALCON_FUNC  UDPSocket_init( ::Falcon::VMachine *vm )
 {
    Item *address_i = vm->param( 0 );
@@ -1003,7 +1015,51 @@ FALCON_FUNC  UDPSocket_init( ::Falcon::VMachine *vm )
 }
 
 
+/*#
+   @method sendTo UDPSocket
+   @param host Remote host where to send the datagram.
+   @param service Remote service or port number where to send the datagram.
+   @param buffer The buffer to be sent.
+   @optparam size Amount of bytes from the buffer to be sent.
+   @optparam start Begin position in the buffer.
+   @raise NetError on network error.
 
+   This method works as the TCPSocket.send method, with the 
+   main difference that the outgoing datagram can be directed towards a 
+   specified @b host, and that a whole datagram is always completely 
+   filled before being sent, provided that the specified size 
+   does not exceed datagram size limits.
+   
+   The @a host parameter may be an host name to be resolved or an address; 
+   if the @a UDPSocket.broadcast method has been successfully called, 
+   it may be also a multicast or broadcast address.
+   
+   The @a service parameter is a string containing either a service name
+   (i.e. "http") or  a numeric port number (i.e. "80", as a string).
+   
+   The @b buffer may be a byte-only string or a
+   byte-wide MemBuf; it is possible to send also multibyte strings (i.e. strings
+   containing international characters) or multi-byte memory buffers, but in that
+   case the sent data may get corrupted as a transmission may deliver only part
+   of a character or of a number stored in a memory buffer.
+
+   If a @b size parameter is not specified, the method will try to send the whole
+   content of the buffer, otherwise it will send at maximum size bytes. If a
+   @b start parameter is specified, then the data sent will be taken starting
+   from that position in the buffer (counting in bytes from the start).
+
+   This is useful when sending big buffers in several steps, so that
+   it is not necessary to create substrings for each send, sparing both
+   CPU and memory.
+
+   The returned value may be 0 in case of timeout, otherwise it will be a
+   number between 1 and the requested size. Programs should never assume
+   that a succesful @b sendTo has sent all the data.
+   
+   In case of error, a @a NetError is raised.
+
+   @see Socket.setTimeout
+*/
 FALCON_FUNC  UDPSocket_sendTo( ::Falcon::VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
@@ -1052,6 +1108,50 @@ FALCON_FUNC  UDPSocket_sendTo( ::Falcon::VMachine *vm )
    vm->retval( (int64) res );
 }
 
+
+/*#
+   @method recv UDPSocket
+   @brief Reads incoming data.
+   @param bufOrSize A pre-allocated buffer to fill, or a maximum size in bytes to be read.
+   @optParam size Maximum size in bytes to be read.
+   @return If @b bufOrSize is a size, returns a filled string buffer, otherwise it returns
+      the amount of bytes actually read.
+   @raise NetError on network error.
+   
+   This method works as the @a TCPSocket.recv method, with the only 
+   difference that the incoming datagram is always completely read, 
+   provided that the specified size is enough to store the data. 
+   
+   Also, the @a UDPSocket.remote and @a UDPSocket.remoteService properties 
+   of the receiving object are filled with the address and port of the host 
+   sending the packet.
+
+   When the @b bufOrSize parameter is a buffer to be filled
+   (i.e. a @b MemBuf or a string created with @b strBuffer), the buffer may be repeatedly used,
+   sparing memory and allocation time. If the size parameter is not provided,
+   the maximum amount of bytes that can be stored in the buffer will be used as read size limit,
+
+   This size won't change between call, even if the actual length of the data stored in the
+   buffer changes.
+
+   If the size parameter is provided, it is used to define the maximum possible
+   size of data stored in the buffer. If it is not great enough to store the data,
+   it is resized.
+
+   When a target buffer is specified in the @b bufOrSize parameter, the method returns
+   number of bytes that has been
+   actually read. The size may be zero if the opposite side closed the connection,
+   or if the timeout has elapsed. The returned
+   size will presumably be smaller than the maximum, and it will be at maximum the
+   size of a TCP packet that can travel on the current connection.
+
+   When a maximum size is specified in the @b bufOrSize parameter, the method
+   returns a newly allocated buffer on success, and nil on failure.
+
+   In case of system error, a NetError is raised.
+
+   @see Socket.setTimeout
+*/
 FALCON_FUNC  UDPSocket_recv( ::Falcon::VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
@@ -1161,6 +1261,15 @@ FALCON_FUNC  UDPSocket_recv( ::Falcon::VMachine *vm )
    }
 }
 
+
+/*#
+   @method broadcast UDPSocket
+   @brief Activates broadcasting and multicasting abilities on this UDP socket.
+   @raise NetError on system error.
+   
+   This is provided as a method separated from the socket constructor as, 
+   on some systems, this call  requires administrator privileges to be successful.
+*/
 FALCON_FUNC  UDPSocket_broadcast( ::Falcon::VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
@@ -1346,6 +1455,22 @@ FALCON_FUNC  TCPServer_accept( ::Falcon::VMachine *vm )
    vm->retval( ret_s );
 }
 
+
+/*#
+   @class NetError
+   @brief Error generated by network related system failures.
+   @optparam code A numeric error code.
+   @optparam description A textual description of the error code.
+   @optparam extra A descriptive message explaining the error conditions.
+   @from Error code, description, extra
+
+   See the Error class in the core module.
+*/
+
+/*#
+   @init NetError
+   @brief Initializes the network error.
+*/
 FALCON_FUNC  NetError_init ( ::Falcon::VMachine *vm )
 {
    CoreObject *einst = vm->self().asObject();
