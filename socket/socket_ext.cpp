@@ -182,7 +182,7 @@ FALCON_FUNC  socketErrorDesc( ::Falcon::VMachine *vm )
 FALCON_FUNC  Socket_init( ::Falcon::VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
-   self->setProperty( "timedOut", (int64) 0 );
+   self->getProperty( "timedOut")->setBoolean( false );
 }
 
 /*#
@@ -311,20 +311,20 @@ FALCON_FUNC  Socket_readAvailable( ::Falcon::VMachine *vm )
       }
 
       if ( tcps->lastError() == 0 ) {
-         self->setProperty( "timedOut", (int64) 1 );
-         vm->retval( (int64) 0 );
+         self->getProperty( "timedOut" )->setBoolean(  true  );
+         vm->regA().setBoolean( false );
       }
       else {
          // error
          vm->raiseModError(  new NetError( ErrorParam( 1139, __LINE__ ).
             desc( "Generic socket error" ).sysError( (uint32) tcps->lastError() ) ) );
          self->setProperty( "lastError", tcps->lastError() );
-         self->setProperty( "timedOut", (int64) 0 );
+         self->getProperty( "timedOut" )->setBoolean( false );
       }
    }
    else {
-      self->setProperty( "timedOut", (int64) 0 );
-      vm->retval( (int64) 1 );
+      self->getProperty( "timedOut")->setBoolean(  false  );
+      vm->regA().setBoolean( true );
    }
 }
 
@@ -387,20 +387,20 @@ FALCON_FUNC  Socket_writeAvailable( ::Falcon::VMachine *vm )
       }
 
       if ( tcps->lastError() == 0 ) {
-         self->setProperty( "timedOut", (int64) 1 );
-         vm->retval( (int64) 0 );
+         self->getProperty( "timedOut")->setBoolean(  true  );
+         vm->regA().setBoolean( false );
       }
       else {
          // error
          vm->raiseModError(  new NetError( ErrorParam( 1139, __LINE__ ).
             desc( "Generic socket error" ).sysError( (uint32) tcps->lastError() ) ) );
          self->setProperty( "lastError", tcps->lastError() );
-         self->setProperty( "timedOut", (int64) 0 );
+         self->getProperty( "timedOut")->setBoolean(  false  );
       }
    }
    else {
-      self->setProperty( "timedOut", (int64) 0 );
-      vm->retval( (int64) 1 );
+      self->getProperty( "timedOut" )->setBoolean(  false  );
+      vm->regA().setBoolean( true );
    }
 }
 
@@ -498,7 +498,7 @@ FALCON_FUNC  TCPSocket_init( ::Falcon::VMachine *vm )
    Sys::TCPSocket *skt = new Sys::TCPSocket( true );
    CoreObject *self = vm->self().asObject();
 
-   self->setProperty( "timedOut", (int64) 0 );
+   self->getProperty( "timedOut" )->setBoolean( false );
 
    self->setUserData( skt );
 
@@ -562,20 +562,20 @@ FALCON_FUNC  TCPSocket_connect( ::Falcon::VMachine *vm )
 
    // connection
    if ( tcps->connect( addr ) ) {
-      vm->retval( (int64) 1 );
-      self->setProperty( "timedOut", (int64)0 );
+      vm->regA().setBoolean( true );
+      self->getProperty( "timedOut" )->setBoolean(  false  );
       return;
    }
 
    // connection not complete
    if ( tcps->lastError() == 0 ) {
       // timed out
-      self->setProperty( "timedOut", (int64) 1 );
-      vm->retval( (int64) 0 );
+      self->getProperty( "timedOut")->setBoolean( true );
+      vm->regA().setBoolean( false );
    }
    else {
       self->setProperty( "lastError", tcps->lastError() );
-      self->setProperty( "timedOut", (int64) 0 );
+      self->getProperty( "timedOut" )->setBoolean( false );
       vm->raiseModError(  new NetError( ErrorParam( 1134, __LINE__ ).
          desc( "Error during connection" ).sysError( (uint32) tcps->lastError() ) ) );
    }
@@ -598,8 +598,8 @@ FALCON_FUNC  TCPSocket_isConnected( ::Falcon::VMachine *vm )
    if ( ! tcps->isConnected() ) {
       // timed out?
       if ( tcps->lastError() == 0 ) {
-         self->setProperty( "timedOut", (int64) 1 );
-         vm->retval( (int64) 0 );
+         self->getProperty( "timedOut" )->setBoolean( true );
+         vm->regA().setBoolean( false );
          return;
       }
 
@@ -610,10 +610,10 @@ FALCON_FUNC  TCPSocket_isConnected( ::Falcon::VMachine *vm )
    }
    else {
       // success
-      vm->retval( (int64) 1 );
+      vm->regA().setBoolean( true );
    }
 
-   self->setProperty( "timedOut", (int64) 0 );
+   self->getProperty( "timedOut" )->setBoolean( false );
 }
 
 
@@ -684,9 +684,9 @@ FALCON_FUNC  TCPSocket_send( ::Falcon::VMachine *vm )
       return;
    }
    else if ( res == -2 )
-      self->setProperty( "timedOut", (int64) 1 );
+      self->getProperty( "timedOut" )->setBoolean( true );
    else
-      self->setProperty( "timedOut", (int64) 0 );
+      self->getProperty( "timedOut" )->setBoolean( false );
 
    vm->retval( (int64) res );
 }
@@ -816,11 +816,11 @@ FALCON_FUNC  TCPSocket_recv( ::Falcon::VMachine *vm )
       return;
    }
    else if ( size == -2 ) {
-      self->setProperty( "timedOut", (int64) 1 ) ;
+      self->getProperty( "timedOut" )->setBoolean(  true  ) ;
       size = -1;
    }
    else
-      self->setProperty( "timedOut", (int64) 0 ) ;
+      self->getProperty( "timedOut" )->setBoolean(  false  ) ;
 
    if ( size > 0 )
       cs_target->size( size );
@@ -862,20 +862,20 @@ FALCON_FUNC  TCPSocket_closeRead( ::Falcon::VMachine *vm )
    if ( ! tcps->closeRead() ) {
       // may time out
       if ( tcps->lastError() == 0 ) {
-         self->setProperty( "timedOut", (int64) 1 );
-         vm->retval( (int64) 0 );
+         self->getProperty( "timedOut" )->setBoolean(  true  );
+         vm->regA().setBoolean( false );
          return;
       }
 
       // an error!
       self->setProperty( "lastError", tcps->lastError() );
-      self->setProperty( "timedOut", (int64) 0 );
+      self->getProperty( "timedOut" )->setBoolean(  false  );
       vm->raiseModError(  new NetError( ErrorParam( 1138, __LINE__ ).
          desc( "Error in closing socket" ).sysError( (uint32) tcps->lastError() ) ) );
       return;
    }
 
-   vm->retval( (int64) 1 );
+   vm->regA().setBoolean( true );
 }
 
 
@@ -904,10 +904,10 @@ FALCON_FUNC  TCPSocket_closeWrite( ::Falcon::VMachine *vm )
    CoreObject *self = vm->self().asObject();
    Sys::TCPSocket *tcps = (Sys::TCPSocket *) self->getUserData();
 
-   self->setProperty( "timedOut", (int64) 0 );
+   self->getProperty( "timedOut" )->setBoolean(  false  );
 
    if ( tcps->closeWrite() ) {
-      vm->retval( (int64) 1 );
+      vm->regA().setBoolean( true );
    }
    else {
       // an error!
@@ -941,20 +941,20 @@ FALCON_FUNC  TCPSocket_close( ::Falcon::VMachine *vm )
    if ( ! tcps->close() ) {
       // may time out
       if ( tcps->lastError() == 0 ) {
-         self->setProperty( "timedOut", (int64) 1 );
-         vm->retval( (int64) 0 );
+         self->getProperty( "timedOut" )->setBoolean(  true  );
+         vm->regA().setBoolean( false );
          return;
       }
 
       // an error!
       self->setProperty( "lastError", tcps->lastError() );
-      self->setProperty( "timedOut", (int64) 0 );
+      self->getProperty( "timedOut" )->setBoolean(  false  );
       vm->raiseModError(  new NetError( ErrorParam( 1138, __LINE__ ).
          desc( "Error in closing socket" ).sysError( (uint32) tcps->lastError() ) ) );
       return;
    }
 
-   vm->retval( (int64) 1 );
+   vm->regA().setBoolean( true );
 }
 
 // ==============================================
@@ -1045,9 +1045,9 @@ FALCON_FUNC  UDPSocket_sendTo( ::Falcon::VMachine *vm )
       return;
    }
    else if ( res == -2 )
-      self->setProperty( "timedOut", (int64) 1 );
+      self->getProperty( "timedOut" )->setBoolean( true );
    else
-      self->setProperty( "timedOut", (int64) 0 );
+      self->getProperty( "timedOut" )->setBoolean( false );
 
    vm->retval( (int64) res );
 }
@@ -1138,11 +1138,11 @@ FALCON_FUNC  UDPSocket_recv( ::Falcon::VMachine *vm )
       return;
    }
    else if ( size == -2 ) {
-      self->setProperty( "timedOut", (int64) 1 ) ;
+      self->getProperty( "timedOut" )->setBoolean( true ) ;
       size = -1;
    }
    else {
-      self->setProperty( "timedOut", (int64) 0 ) ;
+      self->getProperty( "timedOut" )->setBoolean( false ) ;
       String temp;
       from.getAddress( temp );
       self->setProperty( "remote", temp );
@@ -1174,6 +1174,30 @@ FALCON_FUNC  UDPSocket_broadcast( ::Falcon::VMachine *vm )
 // Class Server socket
 // ==============================================
 
+/*#
+   @class TCPServer
+   @brief Encapsulates a TCP network service provider.
+  
+   This class is actually a factory of TCPSockets, that are created as incoming
+   connections are received. As such, it is not derived from the Socket class.
+
+   @prop lastError Numeric value of system level error that has occoured on the socket.
+      @a socketErrorDesc may be used to get a human-readable description of the error.
+      The error is usually also written in the fsError field of the exceptions,
+      if case they are caught.
+*/
+/*#
+   @init TCPServer
+   @brief Sets up the server.
+   @raise NetError on system error.
+   
+   The constructor reserves system resources needed to create
+   sockets and return a TPCServer object that can be used to
+   accept incoming TCP connections.
+  
+   If the needed system resources are not available, a NetError is raised.
+*/
+
 FALCON_FUNC  TCPServer_init( ::Falcon::VMachine *vm )
 {
    Sys::ServerSocket *skt = new Sys::ServerSocket( true );
@@ -1188,6 +1212,15 @@ FALCON_FUNC  TCPServer_init( ::Falcon::VMachine *vm )
    }
 }
 
+/*#
+   @method dispose TCPServer
+   @brief Closes the service and disposes the resources,
+   
+   Collects immediately this object and frees the related
+   system resources.
+   Using this object after this call causes undefined results.
+*/
+
 FALCON_FUNC  TCPServer_dispose( ::Falcon::VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
@@ -1197,9 +1230,26 @@ FALCON_FUNC  TCPServer_dispose( ::Falcon::VMachine *vm )
 
 }
 
-/**
-   server.bind( address, service )
-   server.bind( service )
+/*#
+   @method bind TCPServer
+   @brief Specify the address and port at which this server will be listening.
+   @param addrOrService Address at which this server will be listening.
+   @optparam service If an address is given, service or port number (as a string) where to listen.
+   @raise NetError on system error.
+
+   This method binds the server port and start listening for incoming connections.
+   If passing two parameters, the first one is considered to be one of the address
+   that are available on local interfaces; the second one is the port or service
+   name where the server will open a listening port.
+
+   If an address is not provided, that is, if only one parameter is passed,
+   the server will listen on all the local interfaces. It is possible to
+   specify jolly IPv4 or IPv6 addresses (i.e. "0.0.0.0") to listen on
+   all the interfaces.
+
+   In case the system cannot bind the required address, a NetError is raised.
+   After a succesful @b bind call, @a TCPServer.accept may be called to create TCPSocket that
+   can serve incoming connections.
 */
 FALCON_FUNC  TCPServer_bind( ::Falcon::VMachine *vm )
 {
@@ -1213,7 +1263,7 @@ FALCON_FUNC  TCPServer_bind( ::Falcon::VMachine *vm )
    if ( i_first == 0 || ! i_first->isString() || ( i_second != 0 && ! i_second->isString() ) )
    {
          vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
-            extra( "S, [N]" ) ) );
+            extra( "S, [S]" ) ) );
       return;
    }
 
@@ -1233,8 +1283,26 @@ FALCON_FUNC  TCPServer_bind( ::Falcon::VMachine *vm )
    vm->retnil();
 }
 
-/**
-   server.accept( [timeout] ) --> socket/nil
+/*#
+   @method accept TCPServer
+   @brief Waits for incoming connections.
+   @optparam timeout Optional wait time.
+   @return A new TCPSocket after a succesful connection.
+   @raise NetError on system error.
+   
+   This method accepts incoming connection and creates a TCPSocket object that
+   can be used to communicate with the remote host. Before calling accept(), it is
+   necessary to have succesfully called bind() to bind the listening application to
+   a certain local address.
+
+   If a timeout is not specified, the function will block until a TCP connection is
+   received. If it is specificed, is a number of millisecond that will be waited
+   before returning a nil. Setting the timeout to zero will cause accept to return
+   immediately, providing a valid TCPSocket as return value only if an incoming
+   connection was already pending.
+
+   The wait blocks the VM, and thus, also the other coroutines.
+   If a system error occours during the wait, a NetError is raised.
 */
 FALCON_FUNC  TCPServer_accept( ::Falcon::VMachine *vm )
 {
