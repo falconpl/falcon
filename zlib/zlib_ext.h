@@ -15,7 +15,7 @@
 namespace Falcon {
 namespace Ext {
 
-FALCON_FUNC ZLib_init( ::Falcon::VMachine *vm );
+FALCON_FUNC ZLib_getVersion( ::Falcon::VMachine *vm );
 FALCON_FUNC ZLib_compress( ::Falcon::VMachine *vm );
 FALCON_FUNC ZLib_uncompress( ::Falcon::VMachine *vm );
 

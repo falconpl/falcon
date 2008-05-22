@@ -10,10 +10,6 @@
  * (C) Copyright 2008: the FALCON developers (see list in AUTHORS file)
  *
  * See LICENSE file for licensing details.
- * In order to use this file in it's compiled form, this source or
- * part of it you have to read, understand and accept the conditions
- * that are stated in the LICENSE file that comes bundled with this
- * package.
  */
 
 #include <stdio.h>
@@ -23,51 +19,100 @@
 #include "zlib.h"
 #include "zlib_ext.h"
 
+/*#
+   @beginmodule feather_zlib
+*/
+
 namespace Falcon {
 namespace Ext {
 
-FALCON_FUNC ZLib_init( ::Falcon::VMachine *vm )
-{
-   CoreObject *self = vm->self().asObject();
-   GarbageString *gsVersion = new GarbageString( vm, zlibVersion() );
-   self->setProperty( "version", gsVersion );
+/*#
+   @class ZLib
+   @brief ZLib encapsulation interface.
 
-   vm->retval( self );
+   Actually, this is a encapsulation class which is used to insolate  ZLib functions. 
+   Methods in this encapsulation are class-static methods of the ZLib class, and it
+   is not necessary to create an instance of this class to use its methods.
+*/
+
+FALCON_FUNC ZLib_getVersion( ::Falcon::VMachine *vm )
+{
+   GarbageString *gsVersion = new GarbageString( vm, zlibVersion() );
+   gsVersion->bufferize();
+   vm->retval( gsVersion );
 }
 
+/*#
+   @method compress ZLib
+   @brief Compress a buffer (classwide method).
+   @param buffer A string or a MemBuf to be compressed.
+   @return A compressed buffer (in a byte-wide MemBuf).
+   @raise @a ZLibError on compression error.
+
+   This method will compress the data considering its raw memory value.
+   This is suitable for bytewise strings loaded from binary streams 
+   and byte-wide memory buffers.
+
+   Strings containing multi-byte characters can be compressed through
+   this method, but the decompression process must know their original
+   size and perform an adequate trancoding. 
+
+   For text strings, it is preferrable to use the @a ZLib.compressText
+   function.
+*/
 FALCON_FUNC ZLib_compress( ::Falcon::VMachine *vm )
 {
-   CoreObject *self = vm->self().asObject();
    Item *dataI = vm->param( 0 );
-   if ( dataI == 0 || ! dataI->isString() ) {
+   if ( dataI == 0 || ( ! dataI->isString() && ! dataI->isMemBuf() ) ) 
+   {
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                                        .origin( e_orig_runtime ) ) );
+                                        .extra( "S|M" ) ) );
+      return;
    }
 
    int err;
-   uLong allocLen, compLen;
+   uLong allocLen, compLen, dataLen;
    Bytef *compData;
+   const byte *data;
+   
+   if ( dataI->isString() )
+   {
+      data = dataI->asString()->getRawStorage();
+      dataLen = dataI->asString()->size();
+   }
+   else {
+      data = dataI->asMemBuf()->data();
+      dataLen = dataI->asMemBuf()->size();
+   }
 
-   AutoCString asData( dataI->asString() );
+   // for safety, reserve a bit more.
+   compLen = dataLen < 512 ? dataLen *2 + 12: dataLen + 512;
 
-   compLen = sizeof(char) * asData.length();
-   compLen += (int) (asData.length() * 0.3);
-   compLen += 12;
-
-   allocLen = compLen;
-
+   allocLen = compLen; // and keep a copy.
    compData = (Bytef *) memAlloc( compLen );
 
-   err = compress( compData, &compLen, (const Bytef*) asData.c_str(), asData.length() );
-   if ( err != Z_OK ) {
+   do {
+      err = compress( compData, &compLen, data, dataLen );
+      
+      // Buffer too small? -- try to enlarge it.
+      if ( err == Z_BUF_ERROR )
+      {
+         memFree( compData );
+         compLen += dataLen/2;
+         allocLen = compLen;
+         compData = (Bytef *) memAlloc( compLen );
+      }
+      else
+         break;
+   }
+   while( true );
+
+   if ( err != Z_OK ) 
+   {
       String message;
       switch ( err ) {
       case Z_MEM_ERROR:
          message = "Not enough memory";
-         break;
-
-      case Z_BUF_ERROR:
-         message = "Not enough room in the output buffer";
          break;
       }
 
@@ -76,35 +121,146 @@ FALCON_FUNC ZLib_compress( ::Falcon::VMachine *vm )
       return;
    }
 
-   GarbageString *result = new GarbageString( vm );
+
    // eventually shrink a bit if we're using too much memory.
-   if ( compLen < allocLen / 2 )
+   if ( compLen < allocLen * 0.8 )
    {
       compData = (Bytef *) memRealloc( compData, compLen );
       allocLen = compLen;
    }
 
-   result->adopt( (char *) compData, compLen, allocLen );
+   MemBuf *result = new MemBuf_1( vm, compData, allocLen, true );
    vm->retval( result );
 }
 
 
+/*#
+   @method compressText ZLib
+   @brief Compress a text string (classwide method).
+   @param text A string containing a text be compressed.
+   @return A compressed buffer (in a byte-wide MemBuf).
+   @raise @a ZLibError on compression error.
+
+   This method will compress the a text so that an @a ZLib.uncompressText
+   re-creates the original string.
+*/
+FALCON_FUNC ZLib_compressText( ::Falcon::VMachine *vm )
+{
+   Item *dataI = vm->param( 0 );
+   if ( dataI == 0 || ! dataI->isString() ) 
+   {
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                                        .extra( "S" ) ) );
+      return;
+   }
+
+   int err;
+   uLong allocLen, compLen, dataLen;
+   Bytef *compData;
+   const byte *data;
+   data = dataI->asString()->getRawStorage();
+   dataLen = dataI->asString()->size();
+
+   // for safety, reserve a bit more.
+   compLen = dataLen < 512 ? dataLen *2 + 16: dataLen + 512;
+
+   allocLen = compLen; // and keep a copy.
+   compData = (Bytef *) memAlloc( compLen );
+   compData[0] = dataI->asString()->manipulator()->charSize();
+   compData[1] = dataLen >> 24;
+   compData[2] = (dataLen >> 16) & 0xff;
+   compData[3] = (dataLen >> 8) & 0xff;
+   compData[4] = (dataLen) & 0xff;
+   compLen-=5;
+
+   do {
+      err = compress( compData+5, &compLen, data, dataLen );
+      
+      // Buffer too small? -- try to enlarge it.
+      if ( err == Z_BUF_ERROR )
+      {
+         memFree( compData );
+         compLen += dataLen/2;
+         allocLen = compLen;
+         compData[0] = dataI->asString()->manipulator()->charSize();
+         compData[1] = dataLen >> 24;
+         compData[2] = (dataLen >> 16) & 0xff;
+         compData[3] = (dataLen >> 8) & 0xff;
+         compData[4] = (dataLen) & 0xff;
+         compLen-=5;
+
+         compData = (Bytef *) memAlloc( compLen );
+      }
+      else
+         break;
+   }
+   while( true );
+
+   if ( err != Z_OK ) 
+   {
+      String message;
+      switch ( err ) {
+      case Z_MEM_ERROR:
+         message = "Not enough memory";
+         break;
+      }
+
+      vm->raiseModError( new ZlibError( ErrorParam( -err, __LINE__ )
+                                         .desc( message ) ) );
+      return;
+   }
+
+
+   // eventually shrink a bit if we're using too much memory.
+   if ( compLen < allocLen * 0.8 )
+   {
+      compData = (Bytef *) memRealloc( compData, compLen + 5 );
+      allocLen = compLen + 5;
+   }
+
+   MemBuf *result = new MemBuf_1( vm, compData, allocLen, true );
+   vm->retval( result );
+}
+
+/*#
+   @method uncompress ZLib
+   @brief Uncompress a buffer (classwide method).
+   @param buffer A string or MemBuf containing previusly compressed data.
+   @return A MemBuf containing the uncompressed data.
+   @raise @a ZLibError on compression error.
+
+*/
 FALCON_FUNC ZLib_uncompress( ::Falcon::VMachine *vm )
 {
-   CoreObject *self = vm->self().asObject();
    Item *dataI = vm->param( 0 );
-   if ( dataI == 0 || ! dataI->isString() ) {
+
+   if ( dataI == 0 || ( ! dataI->isString() && ! dataI->isMemBuf() ) ) 
+   {
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                                        .origin( e_orig_runtime ) ) );
+                                        .extra( "S|M" ) ) );
+      return;
    }
 
    int err;
    uLong allocLen, compLen;
    Bytef *compData;
-   String *data = dataI->asString();
+   const byte *dataIn;
+   uint32 dataInSize;
+
+   if ( dataI->isString() )
+   {
+      String *data = dataI->asString();
+      dataIn = data->getRawStorage();
+      dataInSize = data->size();
+   }
+   else {
+      MemBuf *data = dataI->asMemBuf();
+      dataIn = data->data();
+      dataInSize = data->size();
+   }
 
    // preallocate a good default memory
-   compLen = sizeof(char) * ( data->size() * 4 );
+   compLen = sizeof(char) * ( dataInSize * 4 );
    if ( compLen < 512 )
    {
       compLen = 512;
@@ -115,14 +271,14 @@ FALCON_FUNC ZLib_uncompress( ::Falcon::VMachine *vm )
 
    while( true )
    {
-      err = uncompress( compData, &compLen, data->getRawStorage(), data->size() );
+      err = uncompress( compData, &compLen, dataIn, dataInSize );
 
       if ( err == Z_MEM_ERROR )
       {
          //TODO: break also with Z_MEM_ERROR if we're using too much memory, like i.e. 512MB
 
          // try with a larger buffer
-         compLen += data->size() < 512 ? 512 : data->size() * 4;
+         compLen += dataInSize < 512 ? 512 : dataInSize * 4;
          allocLen = compLen;
          memFree( compData );
          compData = (Bytef *) memAlloc( compLen );
@@ -131,7 +287,8 @@ FALCON_FUNC ZLib_uncompress( ::Falcon::VMachine *vm )
          break;
    }
 
-   if ( err != Z_OK ) {
+   if ( err != Z_OK ) 
+   {
       String message;
       switch ( err ) {
       case Z_MEM_ERROR:
@@ -152,7 +309,17 @@ FALCON_FUNC ZLib_uncompress( ::Falcon::VMachine *vm )
                                          .desc( message ) ) );
       return;
    }
+   
+   if ( compLen < allocLen / 2 )
+   {
+      compData = (Bytef *) memRealloc( compData, compLen );
+      allocLen = compLen;
+   }
+   
+   MemBuf *result = new MemBuf_1( vm, compData, allocLen, true );
+   vm->retval( result );
 
+   /*
    GarbageString *result = new GarbageString( vm );
    // eventually shrink a bit if we're using too much memory.
    if ( compLen < allocLen / 2 )
@@ -163,6 +330,7 @@ FALCON_FUNC ZLib_uncompress( ::Falcon::VMachine *vm )
 
    result->adopt( (char *) compData, compLen, allocLen );
    vm->retval( result );
+   */
 }
 
 
@@ -178,7 +346,5 @@ FALCON_FUNC  ZlibError_init ( ::Falcon::VMachine *vm )
    ::Falcon::core::Error_init( vm );
 }
 
-
 }
 }
-
