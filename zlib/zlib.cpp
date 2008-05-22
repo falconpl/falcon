@@ -43,9 +43,9 @@
    original = "Mary had a little lamb, it's fleece was white as snow."
    > "Uncompressed: ", original
 
-   comped = ZLib.compress( original )
+   comped = ZLib.compressText( original )
    > "Compressed then uncompressed:"
-   > "   ", ZLib.uncompress( comped )
+   > "   ", ZLib.uncompressText( comped )
 
    @endcode
 
@@ -67,12 +67,14 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    Falcon::Symbol *c_zlib = self->addClass( "ZLib" );
    self->addClassMethod( c_zlib, "compress", Falcon::Ext::ZLib_compress );
    self->addClassMethod( c_zlib, "uncompress", Falcon::Ext::ZLib_uncompress );
+   self->addClassMethod( c_zlib, "compressText", Falcon::Ext::ZLib_compressText );
+   self->addClassMethod( c_zlib, "uncompressText", Falcon::Ext::ZLib_uncompressText );
    self->addClassMethod( c_zlib, "getVersion", Falcon::Ext::ZLib_getVersion );
 
    //============================================================
    // ZlibError class
    Falcon::Symbol *error_class = self->addExternalRef( "Error" ); // it's external
-   Falcon::Symbol *procerr_cls = self->addClass( "ZLibError", Falcon::Ext::ZlibError_init );
+   Falcon::Symbol *procerr_cls = self->addClass( "ZLibError", Falcon::Ext::ZLibError_init );
    procerr_cls->setWKS( true );
    procerr_cls->getClassDef()->addInheritance(  new Falcon::InheritDef( error_class ) );
 

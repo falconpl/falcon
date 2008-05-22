@@ -18,20 +18,22 @@ namespace Ext {
 FALCON_FUNC ZLib_getVersion( ::Falcon::VMachine *vm );
 FALCON_FUNC ZLib_compress( ::Falcon::VMachine *vm );
 FALCON_FUNC ZLib_uncompress( ::Falcon::VMachine *vm );
+FALCON_FUNC ZLib_compressText( ::Falcon::VMachine *vm );
+FALCON_FUNC ZLib_uncompressText( ::Falcon::VMachine *vm );
 
-class ZlibError: public ::Falcon::Error
+class ZLibError: public ::Falcon::Error
 {
 public:
-   ZlibError():
+   ZLibError():
       Error( "ZlibError" )
    {}
 
-   ZlibError( const ErrorParam &params  ):
+   ZLibError( const ErrorParam &params  ):
       Error( "ZlibError", params )
       {}
 };
 
-FALCON_FUNC  ZlibError_init ( ::Falcon::VMachine *vm );
+FALCON_FUNC  ZLibError_init ( ::Falcon::VMachine *vm );
 
 }
 }

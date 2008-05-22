@@ -16,3 +16,8 @@ comped = ZLib.compress( original )
 > "   ", strFromMemBuf( ZLib.uncompress( comped ) )
 
 // Use string specific functions.
+
+comped = ZLib.compressText( original )
+> "Compressed then uncompressed (text oriented):"
+> "   ", ZLib.uncompressText( comped )
+

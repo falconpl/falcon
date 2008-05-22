@@ -17,6 +17,8 @@ Feathers (0.8.9)
   * minor: Added method addFalconPath() to the compiler.
   * minor: Added support for language files with property Compiler.language
   * bugfix: Regex module was not correctly checking 8bit only utf-8 sequences.
+  * minor: Added compressText and uncompressText to ZLib; compress/uncompress now
+           work with membufs and are more adequate to handle binary data.
 
 Feathers (0.8.8)
   * Major: It is now possible to unload arbitrary modules.
