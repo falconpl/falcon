@@ -1,0 +1,16 @@
+load zlib
+
+> "Using zlib version: ", ZLib.getVersion()
+
+original = "これは国際のストリングだよ！！！"
+
+
+> "Uncompressed: "
+> "   ", original
+
+comped = ZLib.compressText( original )
+
+// Retreiving the string in the uncompressed string
+> "Compressed then uncompressed:"
+> "   ", ZLib.uncompressText( comped )
+
