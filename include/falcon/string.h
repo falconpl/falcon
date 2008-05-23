@@ -1156,7 +1156,7 @@ public:
 
    This forces the garbage collector to have two chains of garbageable items,
    the normal items and the strings, but as a great deal of strings in a falcon based
-   applications are not menant to be garbage collected, the differentiation between
+   applications are not meant to be garbage collected, the differentiation between
    garbageable strings and program strings pays back the extra complexity of this
    management.
 
