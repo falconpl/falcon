@@ -23,6 +23,46 @@
 #include "mxml.h"
 #include "mxml_ext.h"
 
+/*#
+   @module feather_mxml The MXML module
+   @brief Minimal XML support.
+
+   This module is a very simple, fast and powerful XML parser
+   and generator. It's not designed to be DOM compliant;
+   W3C DOM compliancy requires some constraints that slows down
+   the implementation and burden the interface. We'll provide
+   a DOM compliant XML parser module in future, but for now
+   we thought that a minimal, efficient and effective interface
+   to handle XML documents was more important (and more helpful
+   for our users) than compliancy with standard interfaces.
+
+   In this version, the module has one important limitation:
+   it is not able to self-detect the encoding of the XML document.
+   It must be fed with a stream already instructed to use the
+   proper encoding. Self-detection of document encoding will be
+   added in the next release.
+
+   MXML has also two major design limitations: it doesn't handle
+   XML namespaces and it doesn't provide schema validation. This
+   module is meant to be a very simple and slim interface to
+   XML documents, and those features are rarely, if ever, needed in
+   the application domain which this module is aimed to cover.
+
+   @note In case of need, it is possible to set namespaced node name
+      by including ":" in their definition. Just, MXML doesn't provide
+      a separate and specific management of namespaces, while it allows
+      to define and maitnain namespaces at application level.
+
+   Apart from this limitations, the support for XML files is complete and
+   features as advanced search patterns, node retrival through XML paths, and
+   comment node management are provided.
+
+   To access the functionalities of this module, load it with the instruction
+   @code
+      load mxml
+   @endcode
+*/
+
 FALCON_MODULE_DECL( const Falcon::EngineData &data )
 {
    // setup DLL engine common data
@@ -37,8 +77,25 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    // Enumeration Style.
    //
 
+   /*#
+      @enum MXMLStyle
+      @brief Document serialization options.
+
+      This enumeration contains fields that can be combined through
+      the OR bitwise operator (||) and that define the style that
+      is used in document serialization.
+
+      - INDENT: indent each node with a single space.
+      - TAB: indent each node with a tab character (\\t).
+      - THREESPACES: indents the nodes with three spaces.
+      - NOESCAPE: Doesn't escape the XML characters while reading
+         or writing. This is useful if the application wants to process
+         escapeable sequences on its own, or if it knows that the code
+         that is going to be written is not containing any escapeable
+         sequence.
+   */
    Falcon::Symbol *c_style = self->addClass( "MXMLStyle" );
-   self->addClassProperty( c_style, "INDENT")->setInteger( MXML_STYLE_TAB );
+   self->addClassProperty( c_style, "INDENT")->setInteger( MXML_STYLE_INDENT );
    self->addClassProperty( c_style, "TAB" )->setInteger( MXML_STYLE_TAB );
    self->addClassProperty( c_style, "THREESPACES" )->setInteger( MXML_STYLE_THREESPACES );
    self->addClassProperty( c_style, "NOESCAPE" )->setInteger( MXML_STYLE_NOESCAPE );
@@ -47,6 +104,26 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    // Enumeration Node type.
    //
 
+   /*#
+      @enum MXMLType
+      @brief Node types.
+
+      This enumeration contains the types used to determine the
+      apparence and significance of XML nodes.
+
+      - tag: This node is a "standard" tag node. It's one of the declarative
+         nodes which define the content of the document.
+      - comment: The node contains a comment.
+      - PI: The node is a "processing instruction"; a node starting with a
+         question mark defines an istruction for the processor (i.e. escape
+         to another language). The PI "?xml" is reserved and is not passed
+         to the document parser.
+      - directive: The node is a directive as i.e. DOCTYPE. Directive nodes
+         start with a bang.
+      - data: The node is an anonymous node containing only textual data.
+      - CDATA: The node is an anonymous contains binary data
+         (properly escaped as textual elements when serialized).
+   */
    Falcon::Symbol *c_nodetype = self->addClass( "MXMLType" );
    self->addClassProperty( c_nodetype, "tag")->setInteger( MXML::Node::typeTag );
    self->addClassProperty( c_nodetype, "comment" )->setInteger( MXML::Node::typeComment );
@@ -58,6 +135,31 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    //=================================================================
    // Enumeration error code.
    //
+
+   /*#
+      @enum MXMLErrorCode
+      @brief Enumeartion listing the possible numeric error codes raised by MXML.
+
+      This enumeration contains error codes which are set as values for the
+      code field of the MXMLError raised in case of processing or I/O error.
+
+      - @b Io: the operation couldn't be completed because of a physical error
+         on the underlying stream.
+      - @b Nomem: MXML couldn't allocate enough memory to complete the operation.
+      - @b OutChar: Invalid characters found between tags.
+      - @b InvalidNode: The node name contains invalid characters.
+      - @b InvalidAtt: The attribute name contains invalid characters.
+      - @b MalformedAtt: The attribute declaration doesn't conform XML standard.
+      - @b InvalidChar: Character invalid in a certain context.
+      - @b Unclosed: A node was open but not closed.
+      - @b UnclosedEntity: The '&' entity escape was not balanced by a ';' closing it.
+      - @b WrongEntity: Invalid entity name.
+      - @b AttrNotFound: Searched attribute was not found.
+      - @b ChildNotFound: Searched child node was not found.
+      - @b Hyerarcy: Broken hierarcy; given node is not in a valid tree.
+      - @b CommentInvalid: The comment node is not correctly closed by a --> sequence.
+      - @b MultipleXmlDecl: the PI ?xml is declared more than once, or after another node.
+   */
 
    Falcon::Symbol *c_errcode = self->addClass( "MXMLErrorCode" );
    self->addClassProperty( c_errcode, "Io")->
@@ -80,8 +182,6 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
       setInteger( FALCON_MXML_ERROR_BASE + (Falcon::int64) MXML::Error::errUnclosedEntity );
    self->addClassProperty( c_errcode, "WrongEntity" )->
       setInteger( FALCON_MXML_ERROR_BASE + (Falcon::int64) MXML::Error::errWrongEntity );
-   self->addClassProperty( c_errcode, "MalformedAtt" )->
-      setInteger( FALCON_MXML_ERROR_BASE + (Falcon::int64) MXML::Error::errMalformedAtt );
    self->addClassProperty( c_errcode, "ChildNotFound" )->
       setInteger( FALCON_MXML_ERROR_BASE + (Falcon::int64) MXML::Error::errChildNotFound );
    self->addClassProperty( c_errcode, "AttrNotFound" )->
