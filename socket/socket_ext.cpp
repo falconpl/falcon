@@ -174,7 +174,7 @@ FALCON_FUNC  socketErrorDesc( ::Falcon::VMachine *vm )
    It provides common methods and properties,
    and so it should not be directly instantiated.
 
-   @prop timedout True if the last operation has timed out. See @a Socket,setTimeout..
+   @prop timedout True if the last operation has timed out. See @a Socket.setTimeout..
 
    @prop lastError Numeric value of system level error that has occoured on the socket.
       @a getErrorDescription may be used to get a human-readable description of the error.
@@ -202,11 +202,11 @@ FALCON_FUNC  Socket_init( ::Falcon::VMachine *vm )
    data is not available. If a value greater than zero is set, blocking functions
    will wait the specified amount of seconds for their action to complete.
 
-   Whenever an operation times out, the @a Socket,timedout member property
+   Whenever an operation times out, the @a Socket.timedout member property
    is set to 1. This allows to distinguish between faulty operations and
    timed out ones.
 
-   @a Socket.readAvailable and @a Socket,writeAvailable methods do not use
+   @a Socket.readAvailable and @a Socket.writeAvailable methods do not use
    this setting.
 */
 

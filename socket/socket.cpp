@@ -44,6 +44,8 @@
       @code
       load socket
       @endcode
+
+   @beginmodule feather_socket
 */
 
 FALCON_MODULE_DECL(const Falcon::EngineData &data )

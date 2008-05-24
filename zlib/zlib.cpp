@@ -52,6 +52,8 @@
 
    The module declares also a @b ZLibError that is raised in case of
    failure in compression/decompression operations.
+
+   @beginmodule feather_zlib
 */
 
 

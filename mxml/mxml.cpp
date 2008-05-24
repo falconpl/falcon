@@ -61,6 +61,8 @@
    @code
       load mxml
    @endcode
+
+   @beginmodule feather_mxml
 */
 
 FALCON_MODULE_DECL( const Falcon::EngineData &data )
