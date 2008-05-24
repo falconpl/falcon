@@ -65,13 +65,20 @@
 
 FALCON_MODULE_DECL( const Falcon::EngineData &data )
 {
+   #define FALCON_DECLARE_MODULE self
+
    // setup DLL engine common data
    data.set();
 
    Falcon::Module *self = new Falcon::Module();
    self->name( "mxml" );
+   self->language( "en_US" );
    self->engineVersion( FALCON_VERSION_NUM );
    self->version( VERSION_MAJOR, VERSION_MINOR, VERSION_REVISION );
+
+   //====================================
+   // Message setting
+   #include "mxml_st.h"
 
    //=================================================================
    // Enumeration Style.

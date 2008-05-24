@@ -24,6 +24,7 @@
 
 #include "compiler_ext.h"
 #include "compiler_mod.h"
+#include "compiler_st.h"
 
 /*#
    @beginmodule feathers_compiler
@@ -200,7 +201,7 @@ FALCON_FUNC Compiler_compile( ::Falcon::VMachine *vm )
    if( i_name == 0 || ! i_name->isString() ||
       i_data == 0 || (! i_data->isString() && ! i_data->isObject()) )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).extra( "S, S|O" ) ) );
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).extra( "S, S|Stream" ) ) );
       return;
    }
 
@@ -215,7 +216,7 @@ FALCON_FUNC Compiler_compile( ::Falcon::VMachine *vm )
       if ( ! data->derivedFrom( "Stream" ) )
       {
          vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-            extra( "Object must be a stream" ) ) );
+            extra( "S, S|Stream" ) ) );
          return;
       }
 
@@ -405,8 +406,8 @@ FALCON_FUNC Module_get( ::Falcon::VMachine *vm )
    // if the module is not alive, raise an error and exit
    if ( modc == 0 || ! modc->liveModule()->isAlive() )
    {
-      // TODO: Find a more adequate error code.
-      vm->raiseModError( new AccessError( ErrorParam( e_modver, __LINE__ ) ) );
+      vm->raiseModError( new AccessError( ErrorParam( FALCOMP_ERR_UNLOADED, __LINE__ ).
+         desc( FAL_STR( cmp_msg_unloaded ) ) ) );
       return;
    }
 
@@ -451,8 +452,8 @@ FALCON_FUNC Module_set( ::Falcon::VMachine *vm )
    // if the module is not alive, raise an error and exit
    if ( modc == 0|| ! modc->liveModule()->isAlive() )
    {
-      // TODO: Find a more adequate error code.
-      vm->raiseModError( new AccessError( ErrorParam( e_modver, __LINE__ ) ) );
+      vm->raiseModError( new AccessError( ErrorParam( FALCOMP_ERR_UNLOADED, __LINE__ ).
+         desc( FAL_STR( cmp_msg_unloaded ) ) ) );
       return;
    }
 
@@ -497,8 +498,8 @@ FALCON_FUNC Module_getReference( ::Falcon::VMachine *vm )
    // if the module is not alive, raise an error and exit
    if ( modc == 0 || ! modc->liveModule()->isAlive() )
    {
-      // TODO: Find a more adequate error code.
-      vm->raiseModError( new AccessError( ErrorParam( e_modver, __LINE__ ) ) );
+      vm->raiseModError( new AccessError( ErrorParam( FALCOMP_ERR_UNLOADED, __LINE__ ).
+         desc( FAL_STR( cmp_msg_unloaded ) ) ) );
       return;
    }
 
@@ -535,8 +536,8 @@ FALCON_FUNC Module_unload( ::Falcon::VMachine *vm )
    // if the module is not alive, raise an error and exit
    if ( ! modc->liveModule()->isAlive() )
    {
-      // TODO: Find a more adequate error code.
-      vm->raiseModError( new AccessError( ErrorParam( e_modver, __LINE__ ) ) );
+      vm->raiseModError( new AccessError( ErrorParam( FALCOMP_ERR_UNLOADED, __LINE__ ).
+         desc( FAL_STR( cmp_msg_unloaded ) ) ) );
       return;
    }
 
@@ -570,10 +571,10 @@ FALCON_FUNC Module_engineVersion( ::Falcon::VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
    ModuleCarrier *modc = static_cast<ModuleCarrier *>( self->getUserData() );
-   if ( modc == 0 )
+   if ( modc == 0 || ! modc->liveModule()->isAlive() )
    {
-      // TODO: Find a more adequate error code.
-      vm->raiseModError( new AccessError( ErrorParam( e_modver, __LINE__ ) ) );
+      vm->raiseModError( new AccessError( ErrorParam( FALCOMP_ERR_UNLOADED, __LINE__ ).
+         desc( FAL_STR( cmp_msg_unloaded ) ) ) );
       return;
    }
 

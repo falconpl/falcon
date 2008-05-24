@@ -23,6 +23,11 @@
 #include <falcon/setup.h>
 #include <falcon/module.h>
 #include <falcon/error.h>
+#include <falcon/error_base.h>
+
+#ifndef FALCON_MXML_ERROR_BASE
+   #define FALCON_MXML_ERROR_BASE            1120
+#endif
 
 namespace Falcon {
 namespace Ext {

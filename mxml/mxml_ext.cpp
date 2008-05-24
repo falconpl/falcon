@@ -23,6 +23,7 @@
 #include <falcon/lineardict.h>
 #include "mxml_ext.h"
 #include "mxml_mod.h"
+#include "mxml_st.h"
 
 #include "mxml.h"
 
@@ -219,13 +220,13 @@ FALCON_FUNC MXMLDocument_deserialize( ::Falcon::VMachine *vm )
    }
    catch( MXML::MalformedError &err )
    {
-      vm->raiseModError( new MXMLError( ErrorParam( err.numericCode(), __LINE__ )
+      vm->raiseModError( new MXMLError( ErrorParam( FALCON_MXML_ERROR_BASE + err.numericCode(), __LINE__ )
       .desc( err.description() )
       .extra( err.describeLine() ) ) );
    }
    catch( MXML::IOError &err )
    {
-      vm->raiseModError( new IoError( ErrorParam( err.numericCode(), __LINE__ )
+      vm->raiseModError( new IoError( ErrorParam( FALCON_MXML_ERROR_BASE + err.numericCode(), __LINE__ )
       .desc( err.description() )
       .extra( err.describeLine() ) ) );
    }
@@ -264,13 +265,13 @@ FALCON_FUNC MXMLDocument_serialize( ::Falcon::VMachine *vm )
    }
    catch( MXML::MalformedError &err )
    {
-      vm->raiseModError( new MXMLError( ErrorParam( err.numericCode(), __LINE__ )
+      vm->raiseModError( new MXMLError( ErrorParam( FALCON_MXML_ERROR_BASE + err.numericCode(), __LINE__ )
       .desc( err.description() )
       .extra( err.describeLine() ) ) );
    }
    catch( MXML::IOError &err )
    {
-      vm->raiseModError( new IoError( ErrorParam( err.numericCode(), __LINE__ )
+      vm->raiseModError( new IoError( ErrorParam( FALCON_MXML_ERROR_BASE + err.numericCode(), __LINE__ )
       .desc( err.description() )
       .extra( err.describeLine() ) ) );
    }
@@ -624,13 +625,13 @@ FALCON_FUNC MXMLDocument_save( ::Falcon::VMachine *vm )
       }
       catch( MXML::MalformedError &err )
       {
-         vm->raiseModError( new MXMLError( ErrorParam( err.numericCode(), __LINE__ )
+         vm->raiseModError( new MXMLError( ErrorParam( FALCON_MXML_ERROR_BASE + err.numericCode(), __LINE__ )
          .desc( err.description() )
          .extra( err.describeLine() ) ) );
       }
       catch( MXML::IOError &err )
       {
-         vm->raiseModError( new IoError( ErrorParam( err.numericCode(), __LINE__ )
+         vm->raiseModError( new IoError( ErrorParam( FALCON_MXML_ERROR_BASE + err.numericCode(), __LINE__ )
          .desc( err.description() )
          .extra( err.describeLine() ) ) );
       }
@@ -639,7 +640,7 @@ FALCON_FUNC MXMLDocument_save( ::Falcon::VMachine *vm )
    {
       vm->raiseModError( new IoError( ErrorParam(
          FALCON_MXML_ERROR_BASE + (int) MXML::Error::errIo , __LINE__ )
-         .desc( "I/O error" ) ) );
+         .desc( FAL_STR( MXML_ERR_IO ) ) ) );
    }
 
    out.close();
@@ -687,7 +688,7 @@ FALCON_FUNC MXMLDocument_load( ::Falcon::VMachine *vm )
          if ( input == 0 )
          {
             vm->raiseModError( new MXMLError( ErrorParam( e_inv_params, __LINE__ )
-            .extra( "Invalid encoding " + doc->encoding() ) ) );
+            .extra( FAL_STR( MXML_ERR_INVENC ) + doc->encoding() ) ) );
             return;
          }
 
@@ -700,15 +701,17 @@ FALCON_FUNC MXMLDocument_load( ::Falcon::VMachine *vm )
       }
       catch( MXML::MalformedError &err )
       {
-         vm->raiseModError( new MXMLError( ErrorParam( err.numericCode(), __LINE__ )
-         .desc( err.description() )
-         .extra( err.describeLine() ) ) );
+         vm->raiseModError( new MXMLError(
+            ErrorParam( FALCON_MXML_ERROR_BASE + err.numericCode(), __LINE__ )
+            .desc( err.description() )
+            .extra( err.describeLine() ) ) );
       }
       catch( MXML::IOError &err )
       {
-         vm->raiseModError( new IoError( ErrorParam( err.numericCode(), __LINE__ )
-         .desc( err.description() )
-         .extra( err.describeLine() ) ) );
+         vm->raiseModError( new IoError(
+            ErrorParam( FALCON_MXML_ERROR_BASE + err.numericCode(), __LINE__ )
+            .desc( err.description() )
+            .extra( err.describeLine() ) ) );
       }
 
       in.close();
@@ -719,7 +722,7 @@ FALCON_FUNC MXMLDocument_load( ::Falcon::VMachine *vm )
    {
       vm->raiseModError( new IoError( ErrorParam(
          FALCON_MXML_ERROR_BASE + (int) MXML::Error::errIo , __LINE__ )
-         .desc( "I/O error" ) ) );
+         .desc( FAL_STR( MXML_ERR_IO )  ) ) );
    }
 
    in.close();
@@ -888,15 +891,17 @@ FALCON_FUNC MXMLNode_serialize( ::Falcon::VMachine *vm )
    }
    catch( MXML::MalformedError &err )
    {
-      vm->raiseModError( new MXMLError( ErrorParam( err.numericCode(), __LINE__ )
-      .desc( err.description() )
-      .extra( err.describeLine() ) ) );
+      vm->raiseModError( new MXMLError(
+      ErrorParam( FALCON_MXML_ERROR_BASE + err.numericCode(), __LINE__ )
+         .desc( err.description() )
+         .extra( err.describeLine() ) ) );
    }
    catch( MXML::IOError &err )
    {
-      vm->raiseModError( new MXMLError( ErrorParam( err.numericCode(), __LINE__ )
-      .desc( err.description() )
-      .extra( err.describeLine() ) ) );
+      vm->raiseModError( new MXMLError(
+         ErrorParam( FALCON_MXML_ERROR_BASE + err.numericCode(), __LINE__ )
+         .desc( err.description() )
+         .extra( err.describeLine() ) ) );
    }
 
 }
@@ -936,16 +941,18 @@ FALCON_FUNC MXMLNode_deserialize( ::Falcon::VMachine *vm )
    }
    catch( MXML::MalformedError &err )
    {
-      vm->raiseModError( new MXMLError( ErrorParam( err.numericCode(), __LINE__ )
-      .desc( err.description() )
-      .extra( err.describeLine() ) ) );
+      vm->raiseModError( new MXMLError(
+         ErrorParam( FALCON_MXML_ERROR_BASE + err.numericCode(), __LINE__ )
+         .desc( err.description() )
+         .extra( err.describeLine() ) ) );
       delete node;
    }
    catch( MXML::IOError &err )
    {
-      vm->raiseModError( new MXMLError( ErrorParam( err.numericCode(), __LINE__ )
-      .desc( err.description() )
-      .extra( err.describeLine() ) ) );
+      vm->raiseModError( new MXMLError(
+         ErrorParam( FALCON_MXML_ERROR_BASE + err.numericCode(), __LINE__ )
+         .desc( err.description() )
+         .extra( err.describeLine() ) ) );
       delete node;
    }
 }
@@ -973,7 +980,7 @@ FALCON_FUNC MXMLNode_nodeType( ::Falcon::VMachine *vm )
    A name can be assigned to any node, but it will be meaningful only
    for tag and PI nodes.
 */
-FALCON_FUNC MXMLNode_getname( ::Falcon::VMachine *vm )
+FALCON_FUNC MXMLNode_name( ::Falcon::VMachine *vm )
 {
    Item *i_name = vm->param(0);
 

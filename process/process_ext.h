@@ -23,6 +23,18 @@
 
 #include <falcon/module.h>
 #include <falcon/error.h>
+#include <falcon/error_base.h>
+
+#ifndef FALCON_PROCESS_ERROR_BASE
+   #define FALCON_PROCESS_ERROR_BASE        1140
+#endif
+
+#define FALPROC_ERR_READLIST  (FALCON_PROCESS_ERROR_BASE + 0)
+#define FALPROC_ERR_CLOSELIST  (FALCON_PROCESS_ERROR_BASE + 1)
+#define FALPROC_ERR_CREATLIST  (FALCON_PROCESS_ERROR_BASE + 2)
+#define FALPROC_ERR_CREATPROC  (FALCON_PROCESS_ERROR_BASE + 3)
+#define FALPROC_ERR_WAIT      (FALCON_PROCESS_ERROR_BASE + 4)
+#define FALPROC_ERR_TERM      (FALCON_PROCESS_ERROR_BASE + 5)
 
 namespace Falcon {
 namespace Ext {

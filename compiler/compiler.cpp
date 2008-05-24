@@ -174,13 +174,19 @@
 
 FALCON_MODULE_DECL( const Falcon::EngineData &data )
 {
-   // setup DLL engine common data
+   #define FALCON_DECLARE_MODULE self
+
    data.set();
 
    Falcon::Module *self = new Falcon::Module();
    self->name( "compiler" );
+   self->language( "en_US" );
    self->engineVersion( FALCON_VERSION_NUM );
    self->version( VERSION_MAJOR, VERSION_MINOR, VERSION_REVISION );
+
+   //====================================
+   // Message setting
+   #include "compiler_st.h"
 
    Falcon::Symbol *c_compiler = self->addClass( "Compiler", Falcon::Ext::Compiler_init );
    self->addClassProperty( c_compiler, "path" );

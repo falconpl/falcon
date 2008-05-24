@@ -19,6 +19,7 @@ ADD_LIBRARY( compiler MODULE
    compiler.cpp
    compiler_ext.cpp
    compiler_mod.cpp
+   compiler_st.cpp
 
    ${SYS_RC}
 )

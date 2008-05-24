@@ -21,6 +21,7 @@ ADD_LIBRARY( process MODULE
    process.cpp
    process_ext.cpp
    process_mod.cpp
+   process_st.cpp
    ${SYS_SPECIFIC}
 )
 

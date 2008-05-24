@@ -24,6 +24,15 @@
 #include <falcon/setup.h>
 #include <falcon/module.h>
 
+#include <falcon/error_base.h>
+
+#ifndef FALCON_CONFPARSER_ERROR_BASE
+   #define FALCON_CONFPARSER_ERROR_BASE        1110
+#endif
+
+#define FALCP_ERR_INVFORMAT  (FALCON_CONFPARSER_ERROR_BASE + 0)
+#define FALCP_ERR_STORE      (FALCON_CONFPARSER_ERROR_BASE + 1)
+
 namespace Falcon {
 namespace Ext {
 

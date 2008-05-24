@@ -64,17 +64,23 @@
    @beginmodule process_module
 */
 
-
 FALCON_MODULE_DECL( const Falcon::EngineData &data )
 {
+   #define FALCON_DECLARE_MODULE self
+
    // set the static engine data
    data.set();
 
    // initialize the module
    Falcon::Module *self = new Falcon::Module();
    self->name( "process" );
+   self->language( "en_US" );
    self->engineVersion( FALCON_VERSION_NUM );
    self->version( VERSION_MAJOR, VERSION_MINOR, VERSION_REVISION );
+
+   //====================================
+   // Message setting
+   #include "process_st.h"
 
    //============================================================
    // Minimal system api

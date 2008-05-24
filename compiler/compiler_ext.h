@@ -22,6 +22,13 @@
 
 #include <falcon/setup.h>
 #include <falcon/module.h>
+#include <falcon/error_base.h>
+
+#ifndef FALCON_COMPILER_ERROR_BASE
+   #define FALCON_COMPILER_ERROR_BASE        1000
+#endif
+
+#define FALCOMP_ERR_UNLOADED   (FALCON_COMPILER_ERROR_BASE + 0)
 
 namespace Falcon {
 

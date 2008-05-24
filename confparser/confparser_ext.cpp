@@ -1,6 +1,6 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: socket_ext.cpp
+   FILE: confparser_ext.cpp
 
    Falcon VM interface to confparser module.
    -------------------------------------------------------------------
@@ -14,8 +14,9 @@
 */
 
 /** \file
-   Falcon VM interface to socket module.
+   Falcon VM interface to configuration parser module.
 */
+
 
 #include <falcon/fassert.h>
 #include <falcon/vm.h>
@@ -25,7 +26,10 @@
 #include <falcon/stream.h>
 #include <falcon/memory.h>
 
+#include "confparser_ext.h"
 #include "confparser_mod.h"
+#include "confparser_st.h"
+
 namespace Falcon {
 namespace Ext {
 
@@ -268,8 +272,9 @@ FALCON_FUNC  ConfParser_read( ::Falcon::VMachine *vm )
       else {
          String msg = cfile->errorMessage() + " at ";
          msg.writeNumber( (int64) cfile->errorLine() );
-         vm->raiseModError( new ParseError( ErrorParam( 1260, __LINE__ ).
-            desc( "Error parsing the file" ).extra( msg ) ) );
+         vm->raiseModError( new ParseError( ErrorParam( FALCP_ERR_INVFORMAT, __LINE__ )
+            .desc( FAL_STR(cp_msg_invformat) )
+            .extra( msg ) ) );
          self->setProperty( "error", cfile->errorMessage() );
          self->setProperty( "errorLine", (int64) cfile->errorLine() );
       }
@@ -335,8 +340,8 @@ FALCON_FUNC  ConfParser_write( ::Falcon::VMachine *vm )
       else
       {
          // no -- it's a configuration file.d
-         vm->raiseModError( new ParseError( ErrorParam( 1260, __LINE__ ).
-            desc( "Error while storing the data" ).extra( cfile->errorMessage() ) ) );
+         vm->raiseModError( new ParseError( ErrorParam( FALCP_ERR_STORE, __LINE__ ).
+            desc( FAL_STR(cp_msg_errstore)  ).extra( cfile->errorMessage() ) ) );
          self->setProperty( "error", cfile->errorMessage() );
          self->setProperty( "errorLine", (int64) cfile->errorLine() );
       }
@@ -349,11 +354,11 @@ FALCON_FUNC  ConfParser_write( ::Falcon::VMachine *vm )
    @param key The key of which the value is to be read.
    @optparam section If provided, the section where the key is found.
    @return The value (or values) of associated to the key, or nil if not found.
-   
+
    The method retrieves the value associated with a given key. If section parameter
    is not provided, or if it's nil, the key is searched in the main section, else
    it is searched in the given section.
-   
+
    If the section does not exist, or if the key is not present in the given
    section, the method returns nil. If the key exist but has no value associated
    with it, an empty string is returned. If there is only one instance of the key,
@@ -521,7 +526,7 @@ FALCON_FUNC  ConfParser_getMultiple( ::Falcon::VMachine *vm )
    @method getSections ConfParser
    @brief Enumerates the sections that are declared in the file managed by this object.
    @return All the values of associated to the key, or nil if not found.
-   
+
    If the object doesn't declare any section, the method returns an empty array.
 */
 FALCON_FUNC  ConfParser_getSections( ::Falcon::VMachine *vm )
@@ -594,7 +599,7 @@ FALCON_FUNC  ConfParser_getKeys( ::Falcon::VMachine *vm )
    @optparam section If provided, the section where the category is defined.
    @return All the keys listed in the given category.
 
-   This method returns a list of all the keys belonging to a certain category. 
+   This method returns a list of all the keys belonging to a certain category.
 
    See the "Categorized keys" section in @a ConfParser.
 */
@@ -1093,4 +1098,4 @@ FALCON_FUNC  ConfParser_clearMain( ::Falcon::VMachine *vm )
 }
 }
 
-/* end of socket_ext.cpp */
+/* end of confparser_ext.cpp */

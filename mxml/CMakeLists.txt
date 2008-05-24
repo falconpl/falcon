@@ -20,6 +20,7 @@ ADD_LIBRARY( mxml MODULE
    mxml_error.cpp
    mxml_node.cpp
    mxml_utility.cpp
+   mxml_st.cpp
 )
 
 #Link

@@ -28,6 +28,7 @@
 #include "process_sys.h"
 #include "process_mod.h"
 #include "process_ext.h"
+#include "process_st.h"
 
 /*#
     @beginmodule process_module
@@ -151,8 +152,8 @@ FALCON_FUNC  ProcessEnum_next  ( ::Falcon::VMachine *vm )
 
       if ( res == -1 )
       {
-         vm->raiseModError( new ProcessError( ErrorParam( 1021, __LINE__ ).
-            extra( "Error while reading the process list" ) ) );
+         vm->raiseModError( new ProcessError( ErrorParam( FALPROC_ERR_READLIST, __LINE__ )
+            .desc( FAL_STR(proc_msg_errlist) ) ) );
          return;
       }
    }
@@ -179,8 +180,8 @@ FALCON_FUNC  ProcessEnum_close  ( ::Falcon::VMachine *vm )
    CoreObject *self = vm->self().asObject();
    Sys::ProcessEnum *pe = (Sys::ProcessEnum *)self->getUserData();
    if ( ! pe->close() ) {
-         vm->raiseModError( new ProcessError( ErrorParam( 1022, __LINE__ ).
-            extra( "Error while closing the process list" ) ) );
+         vm->raiseModError( new ProcessError( ErrorParam( FALPROC_ERR_CLOSELIST, __LINE__ )
+            .desc( FAL_STR( proc_msg_errlist2 ) ) ) );
       return;
    }
 }
@@ -236,8 +237,9 @@ FALCON_FUNC  falcon_system ( ::Falcon::VMachine *vm )
    if( ::Falcon::Sys::spawn( argv, false, background, &retval ) )
       vm->retval( retval );
    else {
-      vm->raiseModError( new ProcessError( ErrorParam( 1022, __LINE__ ).
-         extra( "Error while creating the process list" ).sysError( retval ) ) );
+      vm->raiseModError( new ProcessError( ErrorParam( FALPROC_ERR_CREATLIST, __LINE__ )
+         .desc( FAL_STR(proc_msg_errlist3) )
+         .sysError( retval ) ) );
    }
 }
 
@@ -292,7 +294,7 @@ FALCON_FUNC  falcon_systemCall ( ::Falcon::VMachine *vm )
       for( count = 0; count < array->length(); count ++ )
          if ( array->at( count ).type() != FLC_ITEM_STRING ) {
             vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-               extra( "All the elements in the first parameter must be strings" ) ) );
+               extra( FAL_STR( proc_msg_allstr ) ) ) );
             return;
          }
 
@@ -308,8 +310,9 @@ FALCON_FUNC  falcon_systemCall ( ::Falcon::VMachine *vm )
    if( ::Falcon::Sys::spawn( argv, false, background, &retval ) )
       vm->retval( retval );
    else {
-      vm->raiseModError( new ProcessError( ErrorParam( 1020, __LINE__ ).
-         desc( "Can't open the process" ).sysError( retval ) ) );
+      vm->raiseModError( new ProcessError( ErrorParam( FALPROC_ERR_CREATPROC, __LINE__ )
+         .desc( FAL_STR( proc_msg_prccreate ) )
+         .sysError( retval ) ) );
    }
 
    if( sys_req->type() == FLC_ITEM_STRING )
@@ -363,7 +366,7 @@ FALCON_FUNC  falcon_exec ( ::Falcon::VMachine *vm )
       for( count = 0; count < array->length(); count ++ )
          if ( array->at( count ).type() != FLC_ITEM_STRING ) {
             vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-               extra( "All the elements in the first parameter must be strings" ) ) );
+               extra( FAL_STR( proc_msg_allstr ) ) ) );
             return;
          }
 
@@ -380,8 +383,8 @@ FALCON_FUNC  falcon_exec ( ::Falcon::VMachine *vm )
    if( ::Falcon::Sys::spawn( argv, true, false, &retval ) )
       vm->retval( retval );
    else {
-      vm->raiseModError( new ProcessError( ErrorParam( 1020, __LINE__ ).
-         desc( "Can't open the process" ).sysError( retval ) ) );
+      vm->raiseModError( new ProcessError( ErrorParam( FALPROC_ERR_CREATPROC, __LINE__ ).
+         desc( FAL_STR( proc_msg_prccreate ) ).sysError( retval ) ) );
    }
 
    if( sys_req->type() == FLC_ITEM_STRING )
@@ -469,7 +472,7 @@ FALCON_FUNC  Process_init ( ::Falcon::VMachine *vm )
       for( count = 0; count < array->length(); count ++ )
          if ( array->at( count ).type() != FLC_ITEM_STRING ) {
             vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
-               .extra( "All the elements in the first parameter must be strings" ) ) );
+               .extra( FAL_STR( proc_msg_allstr ) ) ) );
             return;
          }
       argv = (String **) memAlloc( (array->length()+1) * sizeof( String * ) );
@@ -490,8 +493,9 @@ FALCON_FUNC  Process_init ( ::Falcon::VMachine *vm )
    if ( handle->lastError() == 0 )
       vm->self().asObject()->setUserData( handle );
    else {
-      vm->raiseModError( new ProcessError( ErrorParam( 1020, __LINE__ ).
-         desc( "Can't open the process" ).sysError( handle->lastError() ) ) );
+      vm->raiseModError( new ProcessError( ErrorParam( FALPROC_ERR_CREATPROC, __LINE__ )
+         .desc( FAL_STR(proc_msg_prccreate) )
+         .sysError( handle->lastError() ) ) );
       delete handle;
    }
 
@@ -530,8 +534,9 @@ FALCON_FUNC  Process_wait ( ::Falcon::VMachine *vm )
    ::Falcon::Sys::ProcessHandle *handle = (::Falcon::Sys::ProcessHandle *)
       vm->self().asObject()->getUserData();
    if( ! handle->wait( true ) ) {
-      vm->raiseModError( new ProcessError( ErrorParam( 1121, __LINE__ ).
-         desc( "Wait failed" ).sysError( handle->lastError() ) ) );
+      vm->raiseModError( new ProcessError( ErrorParam( FALPROC_ERR_WAIT, __LINE__ )
+         .desc( FAL_STR( proc_msg_waitfail ) )
+         .sysError( handle->lastError() ) ) );
    }
    else {
       handle->close();
@@ -564,8 +569,8 @@ FALCON_FUNC  Process_terminate ( ::Falcon::VMachine *vm )
    {
       bool sev = severe == 0 ? false : severe->isTrue();
       if( ! handle->terminate( sev ) ) {
-         vm->raiseModError( new ProcessError( ErrorParam( 1122, __LINE__ ).
-            desc( "Terminate failed" ).sysError( handle->lastError() ) ) );
+         vm->raiseModError( new ProcessError( ErrorParam( FALPROC_ERR_TERM, __LINE__ ).
+            desc( FAL_STR( proc_msg_termfail ) ).sysError( handle->lastError() ) ) );
       }
    }
 }
@@ -597,15 +602,17 @@ FALCON_FUNC  Process_value ( ::Falcon::VMachine *vm )
    bool wait = h_wait == 0 ? false : h_wait->isTrue();
    if ( wait && ! handle->done() ) {
       if( ! handle->wait( true ) ) {
-         vm->raiseModError( new ProcessError( ErrorParam( 1123, __LINE__ ).
-            desc( "Wait failed" ).sysError( handle->lastError() ) ) );
+         vm->raiseModError( new ProcessError( ErrorParam( FALPROC_ERR_WAIT, __LINE__ )
+            .desc( FAL_STR( proc_msg_waitfail ) )
+            .sysError( handle->lastError() ) ) );
       }
    }
    // give a test to see if the process is terminated in the meanwhile
    else if ( ! handle->done() ) {
       if( ! handle->wait( false ) ) {
-         vm->raiseModError( new ProcessError( ErrorParam( 1123, __LINE__ ).
-            desc( "Wait failed" ).sysError( handle->lastError() ) ) );
+         vm->raiseModError( new ProcessError( ErrorParam( FALPROC_ERR_WAIT, __LINE__ )
+            .desc( FAL_STR( proc_msg_waitfail ) )
+            .sysError( handle->lastError() ) ) );
       }
    }
 
