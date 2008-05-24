@@ -18,6 +18,7 @@
 
 #include "zlib.h"
 #include "zlib_ext.h"
+#include "zlib_st.h"
 
 /*#
    @beginmodule feather_zlib
@@ -26,11 +27,31 @@
 namespace Falcon {
 namespace Ext {
 
+
+static const String &internal_getErrorMsg( VMachine *vm, int error_code )
+{
+   switch ( error_code ) {
+      case Z_MEM_ERROR:
+         return FAL_STR(zl_msg_nomem);
+
+      case Z_BUF_ERROR:
+         return  FAL_STR(zl_msg_noroom);
+
+      case Z_DATA_ERROR:
+         return  FAL_STR( zl_msg_invformat );
+
+      case Z_VERSION_ERROR:
+         return  FAL_STR( zl_msg_vererr );
+   }
+
+   return  FAL_STR(zl_msg_generic);
+}
+
 /*#
    @class ZLib
    @brief ZLib encapsulation interface.
 
-   Actually, this is a encapsulation class which is used to insolate  ZLib functions. 
+   Actually, this is a encapsulation class which is used to insolate  ZLib functions.
    Methods in this encapsulation are class-static methods of the ZLib class, and it
    is not necessary to create an instance of this class to use its methods.
 */
@@ -50,12 +71,12 @@ FALCON_FUNC ZLib_getVersion( ::Falcon::VMachine *vm )
    @raise @a ZLibError on compression error.
 
    This method will compress the data considering its raw memory value.
-   This is suitable for bytewise strings loaded from binary streams 
+   This is suitable for bytewise strings loaded from binary streams
    and byte-wide memory buffers.
 
    Strings containing multi-byte characters can be compressed through
    this method, but the decompression process must know their original
-   size and perform an adequate trancoding. 
+   size and perform an adequate trancoding.
 
    For text strings, it is preferrable to use the @a ZLib.compressText
    function.
@@ -63,7 +84,7 @@ FALCON_FUNC ZLib_getVersion( ::Falcon::VMachine *vm )
 FALCON_FUNC ZLib_compress( ::Falcon::VMachine *vm )
 {
    Item *dataI = vm->param( 0 );
-   if ( dataI == 0 || ( ! dataI->isString() && ! dataI->isMemBuf() ) ) 
+   if ( dataI == 0 || ( ! dataI->isString() && ! dataI->isMemBuf() ) )
    {
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
                                         .extra( "S|M" ) ) );
@@ -74,7 +95,7 @@ FALCON_FUNC ZLib_compress( ::Falcon::VMachine *vm )
    uLong allocLen, compLen, dataLen;
    Bytef *compData;
    const byte *data;
-   
+
    if ( dataI->isString() )
    {
       data = dataI->asString()->getRawStorage();
@@ -93,7 +114,7 @@ FALCON_FUNC ZLib_compress( ::Falcon::VMachine *vm )
 
    do {
       err = compress( compData, &compLen, data, dataLen );
-      
+
       // Buffer too small? -- try to enlarge it.
       if ( err == Z_BUF_ERROR )
       {
@@ -107,17 +128,12 @@ FALCON_FUNC ZLib_compress( ::Falcon::VMachine *vm )
    }
    while( true );
 
-   if ( err != Z_OK ) 
+   if ( err != Z_OK )
    {
-      String message;
-      switch ( err ) {
-      case Z_MEM_ERROR:
-         message = "Not enough memory";
-         break;
-      }
-
-      vm->raiseModError( new ZLibError( ErrorParam( -err, __LINE__ )
-                                         .desc( message ) ) );
+      // as err is < 0, we reverse it.
+      vm->raiseModError( new ZLibError(
+            ErrorParam( FALCON_ZLIB_ERROR_BASE - err, __LINE__ )
+            .desc( internal_getErrorMsg( vm, err ) ) ) );
       return;
    }
 
@@ -147,10 +163,10 @@ FALCON_FUNC ZLib_compress( ::Falcon::VMachine *vm )
 FALCON_FUNC ZLib_compressText( ::Falcon::VMachine *vm )
 {
    Item *dataI = vm->param( 0 );
-   if ( dataI == 0 || ! dataI->isString() ) 
+   if ( dataI == 0 || ! dataI->isString() )
    {
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                                        .extra( "S" ) ) );
+                  .extra( "S" ) ) );
       return;
    }
 
@@ -175,7 +191,7 @@ FALCON_FUNC ZLib_compressText( ::Falcon::VMachine *vm )
 
    do {
       err = compress( compData+5, &compLen, data, dataLen );
-      
+
       // Buffer too small? -- try to enlarge it.
       if ( err == Z_BUF_ERROR )
       {
@@ -196,17 +212,10 @@ FALCON_FUNC ZLib_compressText( ::Falcon::VMachine *vm )
    }
    while( true );
 
-   if ( err != Z_OK ) 
+   if ( err != Z_OK )
    {
-      String message;
-      switch ( err ) {
-      case Z_MEM_ERROR:
-         message = "Not enough memory";
-         break;
-      }
-
-      vm->raiseModError( new ZLibError( ErrorParam( -err, __LINE__ )
-                                         .desc( message ) ) );
+      vm->raiseModError( new ZLibError( ErrorParam( FALCON_ZLIB_ERROR_BASE -err, __LINE__ )
+               .desc( internal_getErrorMsg( vm, err ) ) ) );
       return;
    }
 
@@ -234,10 +243,10 @@ FALCON_FUNC ZLib_uncompress( ::Falcon::VMachine *vm )
 {
    Item *dataI = vm->param( 0 );
 
-   if ( dataI == 0 || ( ! dataI->isString() && ! dataI->isMemBuf() ) ) 
+   if ( dataI == 0 || ( ! dataI->isString() && ! dataI->isMemBuf() ) )
    {
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                                        .extra( "S|M" ) ) );
+               .extra( "S|M" ) ) );
       return;
    }
 
@@ -287,35 +296,20 @@ FALCON_FUNC ZLib_uncompress( ::Falcon::VMachine *vm )
          break;
    }
 
-   if ( err != Z_OK ) 
+   if ( err != Z_OK )
    {
-      String message;
-      switch ( err ) {
-      case Z_MEM_ERROR:
-         message = "Not enough memory to uncompress";
-         break;
-      case Z_BUF_ERROR:
-         message = "Not enough room in output buffer to decompress";
-         break;
-      case Z_DATA_ERROR:
-         message = "Data supplied is not in compressed format";
-         break;
-      default:
-         message = "An unknown uncompress error has occurred";
-         break;
-      }
-
-      vm->raiseModError( new ZLibError( ErrorParam( -err, __LINE__ )
-                                         .desc( message ) ) );
+      vm->raiseModError( new ZLibError(
+               ErrorParam( FALCON_ZLIB_ERROR_BASE-err, __LINE__ )
+               .desc( internal_getErrorMsg( vm, err ) ) ) );
       return;
    }
-   
+
    if ( compLen < allocLen )
    {
       compData = (Bytef *) memRealloc( compData, compLen );
       allocLen = compLen;
    }
-   
+
    MemBuf *result = new MemBuf_1( vm, compData, allocLen, true );
    vm->retval( result );
 }
@@ -334,7 +328,7 @@ FALCON_FUNC ZLib_uncompressText( ::Falcon::VMachine *vm )
 {
    Item *dataI = vm->param( 0 );
 
-   if ( dataI == 0 || ( ! dataI->isString() && ! dataI->isMemBuf() ) ) 
+   if ( dataI == 0 || ( ! dataI->isString() && ! dataI->isMemBuf() ) )
    {
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
                                         .extra( "S|M" ) ) );
@@ -363,39 +357,24 @@ FALCON_FUNC ZLib_uncompressText( ::Falcon::VMachine *vm )
    if ( dataIn[0] != 1 && dataIn[0] != 2 && dataIn[0] != 4 )
    {
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
-               .extra( "Data was not compressed with ZLib.compressText" ) ) );
+               .extra( FAL_STR(zl_msg_notct) ) ) );
       return;
    }
-   
+
    // get length
    compLen = dataIn[1] << 24 | dataIn[2] << 16 | dataIn[3] << 8 | dataIn[4];
    compData = (Bytef *) memAlloc( compLen );
 
    err = uncompress( compData, &compLen, dataIn+5, dataInSize-5 );
 
-   if ( err != Z_OK ) 
+   if ( err != Z_OK )
    {
-      String message;
-      switch ( err ) {
-      case Z_MEM_ERROR:
-         message = "Not enough memory to uncompress";
-         break;
-      case Z_BUF_ERROR:
-         message = "Not enough room in output buffer to decompress";
-         break;
-      case Z_DATA_ERROR:
-         message = "Data supplied is not in compressed format";
-         break;
-      default:
-         message = "An unknown uncompress error has occurred";
-         break;
-      }
-
-      vm->raiseModError( new ZLibError( ErrorParam( -err, __LINE__ )
-                                         .desc( message ) ) );
+      vm->raiseModError( new ZLibError(
+               ErrorParam( FALCON_ZLIB_ERROR_BASE-err, __LINE__ )
+               .desc( internal_getErrorMsg( vm, err ) ) ) );
       return;
    }
-   
+
    GarbageString *result = new GarbageString( vm );
    result->adopt( (char *) compData, compLen, compLen );
    // set correct manipulator
@@ -403,7 +382,7 @@ FALCON_FUNC ZLib_uncompressText( ::Falcon::VMachine *vm )
       result->manipulator( &csh::handler_buffer16 );
    else if( dataIn[0] == 4 )
       result->manipulator( &csh::handler_buffer32 );
-      
+
    vm->retval( result );
 }
 
@@ -419,6 +398,9 @@ FALCON_FUNC ZLib_uncompressText( ::Falcon::VMachine *vm )
    @optparam description A textual description of the error code.
    @optparam extra A descriptive message explaining the error conditions.
    @from Error code, description, extra
+
+   The value of the @b code property is set to one of the @a ZLibErrorCode
+   values.
 
    See the Error class in the core module.
 */

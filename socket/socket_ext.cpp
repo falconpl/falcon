@@ -27,6 +27,7 @@
 
 #include "socket_sys.h"
 #include "socket_ext.h"
+#include "socket_st.h"
 
 /*#
    @beginmodule feather_socket
@@ -40,7 +41,7 @@ namespace Ext {
    @brief Retreives the host name of the local machine.
    @return A string containing the local machine name.
    @raise @a NetError if the host name can't be determined.
-   
+
    Returns the network name under which the machine is known to itself. By
    calling @a resolveAddress on this host name, it is possible to determine all
    the addressess of the interfaces that are available for networking.
@@ -59,8 +60,9 @@ FALCON_FUNC  falcon_getHostName( ::Falcon::VMachine *vm )
       vm->retval( s );
    else {
       delete s;
-      vm->raiseModError(  new NetError( ErrorParam( 1130, __LINE__ ).
-         desc( "Generic network error" ).sysError( (uint32) errno ) ) );
+      vm->raiseModError(  new NetError( ErrorParam( FALSOCK_ERR_GENERIC, __LINE__ )
+         .desc( FAL_STR( sk_msg_generic ) )
+         .sysError( (uint32) errno ) ) );
    }
 }
 
@@ -112,8 +114,10 @@ FALCON_FUNC  resolveAddress( ::Falcon::VMachine *vm )
    Sys::Address addr;
    addr.set( *address->asString() );
    if ( ! addr.resolve() ) {
-      vm->raiseModError(  new NetError( ErrorParam( 1132, __LINE__ ).
-         desc( "System error in resolving address" ).sysError( (uint32) addr.lastError() ) ) );
+      vm->raiseModError(  new NetError( ErrorParam( FALSOCK_ERR_RESOLV, __LINE__ )
+         .desc( FAL_STR( sk_msg_errresolv ) )
+         .sysError( (uint32) addr.lastError() ) ) );
+      return;
    }
 
    CoreArray *ret = new CoreArray( vm, addr.getResolvedCount() );
@@ -168,10 +172,10 @@ FALCON_FUNC  socketErrorDesc( ::Falcon::VMachine *vm )
    @brief TCP/IP networking base class,
    The Socket class is the base class for both UDP and TCP socket.
    It provides common methods and properties,
-   and so it should not be directly instantiated. 
+   and so it should not be directly instantiated.
 
    @prop timedout True if the last operation has timed out. See @a Socket,setTimeout..
-   
+
    @prop lastError Numeric value of system level error that has occoured on the socket.
       @a getErrorDescription may be used to get a human-readable description of the error.
       The error is usually also written in the fsError field of the exceptions,
@@ -201,7 +205,7 @@ FALCON_FUNC  Socket_init( ::Falcon::VMachine *vm )
    Whenever an operation times out, the @a Socket,timedout member property
    is set to 1. This allows to distinguish between faulty operations and
    timed out ones.
-   
+
    @a Socket.readAvailable and @a Socket,writeAvailable methods do not use
    this setting.
 */
@@ -262,7 +266,7 @@ FALCON_FUNC  Socket_dispose( ::Falcon::VMachine *vm )
    @optparam timeout Wait for a specified time in seconds or fractions.
    @return True if the next read operation would not block.
    @raise InterruptedError In case of asynchronous interruption.
-    
+
    This method can be used to wait for incoming data on the socket.
    If there are some data available for immediate read, the function returns
    immediately true, otherwise it returns false.
@@ -315,9 +319,9 @@ FALCON_FUNC  Socket_readAvailable( ::Falcon::VMachine *vm )
          vm->regA().setBoolean( false );
       }
       else {
-         // error
-         vm->raiseModError(  new NetError( ErrorParam( 1139, __LINE__ ).
-            desc( "Generic socket error" ).sysError( (uint32) tcps->lastError() ) ) );
+         vm->raiseModError(  new NetError( ErrorParam( FALSOCK_ERR_GENERIC, __LINE__ )
+            .desc( FAL_STR( sk_msg_generic ) )
+            .sysError( (uint32) tcps->lastError() ) ) );
          self->setProperty( "lastError", tcps->lastError() );
          self->getProperty( "timedOut" )->setBoolean( false );
       }
@@ -392,8 +396,9 @@ FALCON_FUNC  Socket_writeAvailable( ::Falcon::VMachine *vm )
       }
       else {
          // error
-         vm->raiseModError(  new NetError( ErrorParam( 1139, __LINE__ ).
-            desc( "Generic socket error" ).sysError( (uint32) tcps->lastError() ) ) );
+         vm->raiseModError(  new NetError( ErrorParam( FALSOCK_ERR_GENERIC, __LINE__ )
+            .desc( FAL_STR( sk_msg_generic ) )
+            .sysError( (uint32) tcps->lastError() ) ) );
          self->setProperty( "lastError", tcps->lastError() );
          self->getProperty( "timedOut")->setBoolean(  false  );
       }
@@ -408,7 +413,7 @@ FALCON_FUNC  Socket_writeAvailable( ::Falcon::VMachine *vm )
    @method getHost Socket
    @brief Gets the host associated with this socket.
    @return The host address.
-   
+
    For TCP sockets, this method will always return the address of the remote host,
    while in UDP sockets it will be the local address where the socket has been bound.
 */
@@ -430,7 +435,7 @@ FALCON_FUNC  Socket_getHost( ::Falcon::VMachine *vm )
    @method getService Socket
    @brief Returns the service name (port description) associated with this socket
    @return A string containing the service name.
-   
+
    For TCP sockets, returns the name of the service to which the socket is connected.
    For UDP sockets, returns the local service from which the messages
    sent through this socket are generated, if an explicit bound request
@@ -488,7 +493,7 @@ FALCON_FUNC  Socket_getPort( ::Falcon::VMachine *vm )
    @init TCPSocket
    @brief Allocate system resources for TCP/IP Connectivity.
    @raise NetError on underlying network error.
-   
+
    The constructor reserves system resources for the socket.
    If the needed system resources are not available, a NetError is Raised.
 */
@@ -504,8 +509,9 @@ FALCON_FUNC  TCPSocket_init( ::Falcon::VMachine *vm )
 
    if ( skt->lastError() != 0 ) {
       self->setProperty( "lastError", (int64) skt->lastError() );
-      vm->raiseModError(  new NetError( ErrorParam( 1131, __LINE__ ).
-         desc( "Socket creation failed" ).sysError( (uint32) skt->lastError() ) ) );
+      vm->raiseModError(  new NetError( ErrorParam( FALSOCK_ERR_CREATE, __LINE__ )
+         .desc( FAL_STR( sk_msg_errcreate ) )
+         .sysError( (uint32) skt->lastError() ) ) );
    }
 }
 
@@ -555,8 +561,9 @@ FALCON_FUNC  TCPSocket_connect( ::Falcon::VMachine *vm )
    //in case of failed resolution, raise an error.
    if ( ! addr.resolve() ) {
       self->setProperty( "lastError", addr.lastError() );
-      vm->raiseModError(  new NetError( ErrorParam( 1133, __LINE__ ).
-         desc( "resolution failure" ).sysError( (uint32) addr.lastError() ) ) );
+      vm->raiseModError(  new NetError( ErrorParam( FALSOCK_ERR_RESOLV, __LINE__ )
+         .desc( FAL_STR( sk_msg_errcreate ) )
+         .sysError( (uint32) addr.lastError() ) ) );
       return;
    }
 
@@ -576,8 +583,10 @@ FALCON_FUNC  TCPSocket_connect( ::Falcon::VMachine *vm )
    else {
       self->setProperty( "lastError", tcps->lastError() );
       self->getProperty( "timedOut" )->setBoolean( false );
-      vm->raiseModError(  new NetError( ErrorParam( 1134, __LINE__ ).
-         desc( "Error during connection" ).sysError( (uint32) tcps->lastError() ) ) );
+
+      vm->raiseModError(  new NetError( ErrorParam( FALSOCK_ERR_CONNECT, __LINE__ )
+         .desc( FAL_STR( sk_msg_errconnect ) )
+         .sysError( (uint32) tcps->lastError() ) ) );
    }
 }
 
@@ -587,7 +596,7 @@ FALCON_FUNC  TCPSocket_connect( ::Falcon::VMachine *vm )
    @return True if the socket is currently connected, false otherwise.
 
    This method checks if this TCPSocket is currently connected with a remote host.
-   
+
    @see TCPSocket.connect
 */
 FALCON_FUNC  TCPSocket_isConnected( ::Falcon::VMachine *vm )
@@ -605,8 +614,9 @@ FALCON_FUNC  TCPSocket_isConnected( ::Falcon::VMachine *vm )
 
       // an error!
       self->setProperty( "lastError", tcps->lastError() );
-      vm->raiseModError(  new NetError( ErrorParam( 1134, __LINE__ ).
-         desc( "Error during connection" ).sysError( (uint32) tcps->lastError() ) ) );
+      vm->raiseModError( new NetError( ErrorParam( FALSOCK_ERR_CONNECT, __LINE__ )
+         .desc( FAL_STR( sk_msg_errconnect ) )
+         .sysError( (uint32) tcps->lastError() ) ) );
    }
    else {
       // success
@@ -625,7 +635,7 @@ FALCON_FUNC  TCPSocket_isConnected( ::Falcon::VMachine *vm )
    @optparam start Begin position in the buffer (in bytes).
    @return Number of bytes actually sent through the network layer.
    @raise NetError on network error,
-   
+
    The @b buffer may be a byte-only string or a
    byte-wide MemBuf; it is possible to send also multibyte strings (i.e. strings
    containing international characters) or multi-byte memory buffers, but in that
@@ -644,7 +654,7 @@ FALCON_FUNC  TCPSocket_isConnected( ::Falcon::VMachine *vm )
    The returned value may be 0 in case of timeout, otherwise it will be a
    number between 1 and the requested size. Programs should never assume
    that a succesful @b send has sent all the data.
-   
+
    In case of error, a @a NetError is raised.
 
    @see Socket.setTimeout
@@ -678,9 +688,10 @@ FALCON_FUNC  TCPSocket_send( ::Falcon::VMachine *vm )
 
    int32 res = tcps->send( dataStr->getRawStorage() + start_pos, count );
    if( res == -1 ) {
-      self->setProperty( "Error in sending", tcps->lastError() );
-      vm->raiseModError(  new NetError( ErrorParam( 1136, __LINE__ ).
-         desc( "Error in sending" ).sysError( (uint32) tcps->lastError() ) ) );
+      self->setProperty( "lastError", tcps->lastError() );
+      vm->raiseModError(  new NetError( ErrorParam( FALSOCK_ERR_SEND, __LINE__ )
+         .desc( FAL_STR( sk_msg_errsend ) )
+         .sysError( (uint32) tcps->lastError() ) ) );
       return;
    }
    else if ( res == -2 )
@@ -699,7 +710,7 @@ FALCON_FUNC  TCPSocket_send( ::Falcon::VMachine *vm )
    @return If @b bufOrSize is a size, returns a filled string buffer, otherwise it returns
       the amount of bytes actually read.
    @raise NetError on network error.
-   
+
    When the @b bufOrSize parameter is a buffer to be filled
    (i.e. a @b MemBuf or a string created with @b strBuffer), the buffer may be repeatedly used,
    sparing memory and allocation time. If the size parameter is not provided,
@@ -751,7 +762,7 @@ FALCON_FUNC  TCPSocket_recv( ::Falcon::VMachine *vm )
       size = (int32) last->forceInteger();
       if ( size <= 0 ) {
          vm->raiseModError(  new ParamError( ErrorParam( e_param_range, __LINE__ ).
-            extra( "size less than 0" ) ) );
+            extra( FAL_STR( sk_msg_lesszero) ) ) );
          return;
       }
 
@@ -763,7 +774,7 @@ FALCON_FUNC  TCPSocket_recv( ::Falcon::VMachine *vm )
       }
       else {
          vm->raiseModError(  new ParamError( ErrorParam( e_param_type, __LINE__ ).
-            extra( "Given a size, the first parameter must be a string" ) ) );
+            extra( FAL_STR( sk_msg_firstnostring ) ) ) );
          return;
       }
       returnTarget = false;
@@ -779,7 +790,7 @@ FALCON_FUNC  TCPSocket_recv( ::Falcon::VMachine *vm )
          size = cs_target->size();
          if ( size <= 0 ) {
             vm->raiseModError(  new ParamError( ErrorParam( e_param_range, __LINE__ ).
-               extra( "Passed String must have space" ) ) );
+               extra( FAL_STR( sk_msg_stringnospace ) ) ) );
             return;
          }
 
@@ -793,7 +804,7 @@ FALCON_FUNC  TCPSocket_recv( ::Falcon::VMachine *vm )
       size = (int32) target->forceInteger();
       if ( size <= 0 ) {
          vm->raiseModError(  new ParamError( ErrorParam( e_param_range, __LINE__ ).
-            extra( "size less than 0" ) ) );
+            extra( FAL_STR( sk_msg_lesszero) ) ) );
          return;
       }
       cs_target = new GarbageString( vm );
@@ -812,8 +823,9 @@ FALCON_FUNC  TCPSocket_recv( ::Falcon::VMachine *vm )
    size = tcps->recv( cs_target->getRawStorage(), size );
    if( size == -1 ) {
       self->setProperty( "lastError", tcps->lastError() ) ;
-      vm->raiseModError(  new NetError( ErrorParam( 1137, __LINE__ ).
-         desc( "Error in receiving" ).sysError( (uint32) tcps->lastError() ) ) );
+      vm->raiseModError(  new NetError( ErrorParam( FALSOCK_ERR_RECV, __LINE__ )
+         .desc( FAL_STR( sk_msg_errrecv ) )
+         .sysError( (uint32) tcps->lastError() ) ) );
       return;
    }
    else if ( size == -2 ) {
@@ -839,12 +851,12 @@ FALCON_FUNC  TCPSocket_recv( ::Falcon::VMachine *vm )
    @brief Closes a socket read side.
    @return False if timed out, true if succesful
    @raise NetError in case of underlying connection error during the closing phase.
-   
+
    Closes the socket read side, discarding incominig messages and notifying
    the remote side about the event. The close message must be acknowledged
    by the remote host, so the function may actually fail,
    block and/or timeout.
-   
+
    After the call, the socket can still be used to write (i.e. to finish writing
    pending data). This informs the remote side we're not going to read anymore,
    and so if the application on the remote host tries to write,
@@ -871,8 +883,9 @@ FALCON_FUNC  TCPSocket_closeRead( ::Falcon::VMachine *vm )
       // an error!
       self->setProperty( "lastError", tcps->lastError() );
       self->getProperty( "timedOut" )->setBoolean(  false  );
-      vm->raiseModError(  new NetError( ErrorParam( 1138, __LINE__ ).
-         desc( "Error in closing socket" ).sysError( (uint32) tcps->lastError() ) ) );
+      vm->raiseModError(  new NetError( ErrorParam( FALSOCK_ERR_CLOSE, __LINE__ )
+         .desc( FAL_STR( sk_msg_errclose ) )
+         .sysError( (uint32) tcps->lastError() ) ) );
       return;
    }
 
@@ -885,7 +898,7 @@ FALCON_FUNC  TCPSocket_closeRead( ::Falcon::VMachine *vm )
    @brief Closes a socket write side.
    @return False if timed out, true if succesful
    @raise NetError in case of underlying connection error during the closing phase.
-   
+
    Closes the socket write side, discarding incoming messages and notifying the
    remote side about the event. The close message must be acknowledged by the
    remote host, so the function may actually fail, block and/or timeout.
@@ -913,8 +926,9 @@ FALCON_FUNC  TCPSocket_closeWrite( ::Falcon::VMachine *vm )
    else {
       // an error!
       self->setProperty( "lastError", tcps->lastError() );
-      vm->raiseModError(  new NetError( ErrorParam( 1138, __LINE__ ).
-         desc( "Error in closing socket" ).sysError( (uint32) tcps->lastError() ) ) );
+      vm->raiseModError(  new NetError( ErrorParam( FALSOCK_ERR_CLOSE, __LINE__ )
+         .desc( FAL_STR( sk_msg_errclose ) )
+         .sysError( (uint32) tcps->lastError() ) ) );
    }
 }
 
@@ -924,7 +938,7 @@ FALCON_FUNC  TCPSocket_closeWrite( ::Falcon::VMachine *vm )
    @brief Closes the socket.
    @return False if timed out, true if succesful
    @raise NetError in case of underlying connection error during the closing phase.
-   
+
    Closes the socket, discarding incoming messages and notifying the remote side
    about the event. The close message must be acknowledged by the remote host, so
    the function may actually fail, block and/or timeout - see setTimeout() .
@@ -950,8 +964,9 @@ FALCON_FUNC  TCPSocket_close( ::Falcon::VMachine *vm )
       // an error!
       self->setProperty( "lastError", tcps->lastError() );
       self->getProperty( "timedOut" )->setBoolean(  false  );
-      vm->raiseModError(  new NetError( ErrorParam( 1138, __LINE__ ).
-         desc( "Error in closing socket" ).sysError( (uint32) tcps->lastError() ) ) );
+      vm->raiseModError(  new NetError( ErrorParam( FALSOCK_ERR_CLOSE, __LINE__ )
+         .desc( FAL_STR( sk_msg_errclose ) )
+         .sysError( (uint32) tcps->lastError() ) ) );
       return;
    }
 
@@ -969,7 +984,7 @@ FALCON_FUNC  TCPSocket_close( ::Falcon::VMachine *vm )
    @param addrOrService Address at which this server will be listening.
    @optparam service If an address is given, service or port number (as a string) where to listen.
    @raise NetError on system error.
-   
+
    The UDPSocket class provides support for UDP transmissions (datagrams).
 
    The constructor reserves the needed system resources and return an
@@ -1009,8 +1024,9 @@ FALCON_FUNC  UDPSocket_init( ::Falcon::VMachine *vm )
 
    if ( skt->lastError() != 0 ) {
       self->setProperty( "lastError", (int64) skt->lastError() );
-      vm->raiseModError(  new NetError( ErrorParam( 1131, __LINE__ ).
-         desc( "Socket creation error" ).sysError( (uint32) skt->lastError() ) ) );
+      vm->raiseModError(  new NetError( ErrorParam( FALSOCK_ERR_CREATE, __LINE__ )
+         .desc( FAL_STR( sk_msg_errcreate ) )
+         .sysError( (uint32) skt->lastError() ) ) );
    }
 }
 
@@ -1024,19 +1040,19 @@ FALCON_FUNC  UDPSocket_init( ::Falcon::VMachine *vm )
    @optparam start Begin position in the buffer.
    @raise NetError on network error.
 
-   This method works as the TCPSocket.send method, with the 
-   main difference that the outgoing datagram can be directed towards a 
-   specified @b host, and that a whole datagram is always completely 
-   filled before being sent, provided that the specified size 
+   This method works as the TCPSocket.send method, with the
+   main difference that the outgoing datagram can be directed towards a
+   specified @b host, and that a whole datagram is always completely
+   filled before being sent, provided that the specified size
    does not exceed datagram size limits.
-   
-   The @a host parameter may be an host name to be resolved or an address; 
-   if the @a UDPSocket.broadcast method has been successfully called, 
+
+   The @a host parameter may be an host name to be resolved or an address;
+   if the @a UDPSocket.broadcast method has been successfully called,
    it may be also a multicast or broadcast address.
-   
+
    The @a service parameter is a string containing either a service name
    (i.e. "http") or  a numeric port number (i.e. "80", as a string).
-   
+
    The @b buffer may be a byte-only string or a
    byte-wide MemBuf; it is possible to send also multibyte strings (i.e. strings
    containing international characters) or multi-byte memory buffers, but in that
@@ -1055,7 +1071,7 @@ FALCON_FUNC  UDPSocket_init( ::Falcon::VMachine *vm )
    The returned value may be 0 in case of timeout, otherwise it will be a
    number between 1 and the requested size. Programs should never assume
    that a succesful @b sendTo has sent all the data.
-   
+
    In case of error, a @a NetError is raised.
 
    @see Socket.setTimeout
@@ -1096,8 +1112,9 @@ FALCON_FUNC  UDPSocket_sendTo( ::Falcon::VMachine *vm )
    int32 res = udps->sendTo( dataStr->getRawStorage() + start_pos, count, target );
    if( res == -1 ) {
       self->setProperty( "lastError", udps->lastError() );
-      vm->raiseModError(  new NetError( ErrorParam( 1136, __LINE__ ).
-         desc( "Error in sending" ).sysError( (uint32) udps->lastError() ) ) );
+      vm->raiseModError(  new NetError( ErrorParam( FALSOCK_ERR_SEND, __LINE__ )
+         .desc( FAL_STR( sk_msg_errsend ) )
+         .sysError( (uint32) udps->lastError() ) ) );
       return;
    }
    else if ( res == -2 )
@@ -1117,13 +1134,13 @@ FALCON_FUNC  UDPSocket_sendTo( ::Falcon::VMachine *vm )
    @return If @b bufOrSize is a size, returns a filled string buffer, otherwise it returns
       the amount of bytes actually read.
    @raise NetError on network error.
-   
-   This method works as the @a TCPSocket.recv method, with the only 
-   difference that the incoming datagram is always completely read, 
-   provided that the specified size is enough to store the data. 
-   
-   Also, the @a UDPSocket.remote and @a UDPSocket.remoteService properties 
-   of the receiving object are filled with the address and port of the host 
+
+   This method works as the @a TCPSocket.recv method, with the only
+   difference that the incoming datagram is always completely read,
+   provided that the specified size is enough to store the data.
+
+   Also, the @a UDPSocket.remote and @a UDPSocket.remoteService properties
+   of the receiving object are filled with the address and port of the host
    sending the packet.
 
    When the @b bufOrSize parameter is a buffer to be filled
@@ -1176,7 +1193,7 @@ FALCON_FUNC  UDPSocket_recv( ::Falcon::VMachine *vm )
       size = (int32) last->forceInteger();
       if ( size <= 0 ) {
          vm->raiseModError(  new ParamError( ErrorParam( e_param_range, __LINE__ ).
-            extra( "size less than 0" ) ) );
+            extra( FAL_STR( sk_msg_lesszero) ) ) );
          return;
       }
 
@@ -1188,8 +1205,8 @@ FALCON_FUNC  UDPSocket_recv( ::Falcon::VMachine *vm )
       }
       else {
          vm->raiseModError(  new ParamError( ErrorParam( e_param_type, __LINE__ ).
-            extra( "Given a size, the first parameter must be a string" ) ) );
-         return;
+            extra( FAL_STR( sk_msg_firstnostring ) ) ) );
+            return;
       }
       returnTarget = false;
    }
@@ -1202,7 +1219,7 @@ FALCON_FUNC  UDPSocket_recv( ::Falcon::VMachine *vm )
 
       if ( size <= 0 ) {
          vm->raiseModError(  new ParamError( ErrorParam( e_param_range, __LINE__ ).
-            extra( "Passed String must have space" ) ) );
+            extra( FAL_STR( sk_msg_stringnospace ) ) ) );
          return;
       }
 
@@ -1213,8 +1230,8 @@ FALCON_FUNC  UDPSocket_recv( ::Falcon::VMachine *vm )
    {
       size = (int32) target->forceInteger();
       if ( size <= 0 ) {
-         vm->raiseModError( new  ParamError( ErrorParam( e_param_range, __LINE__ ).
-            extra( "size less than 0" ) ) );
+         vm->raiseModError(  new ParamError( ErrorParam( e_param_range, __LINE__ ).
+            extra( FAL_STR( sk_msg_lesszero) ) ) );
          return;
       }
       cs_target = new GarbageString( vm );
@@ -1233,8 +1250,9 @@ FALCON_FUNC  UDPSocket_recv( ::Falcon::VMachine *vm )
    size = udps->recvFrom( cs_target->getRawStorage(), size, from );
    if( size == -1 ) {
       self->setProperty( "lastError", udps->lastError() ) ;
-      vm->raiseModError(  new  NetError( ErrorParam( 1137, __LINE__ ).
-         desc( "Error in sending" ).sysError( (uint32) udps->lastError() ) ) );
+      vm->raiseModError(  new NetError( ErrorParam( FALSOCK_ERR_SEND, __LINE__ )
+         .desc( FAL_STR( sk_msg_errsend ) )
+         .sysError( (uint32) udps->lastError() ) ) );
       return;
    }
    else if ( size == -2 ) {
@@ -1266,8 +1284,8 @@ FALCON_FUNC  UDPSocket_recv( ::Falcon::VMachine *vm )
    @method broadcast UDPSocket
    @brief Activates broadcasting and multicasting abilities on this UDP socket.
    @raise NetError on system error.
-   
-   This is provided as a method separated from the socket constructor as, 
+
+   This is provided as a method separated from the socket constructor as,
    on some systems, this call  requires administrator privileges to be successful.
 */
 FALCON_FUNC  UDPSocket_broadcast( ::Falcon::VMachine *vm )
@@ -1286,7 +1304,7 @@ FALCON_FUNC  UDPSocket_broadcast( ::Falcon::VMachine *vm )
 /*#
    @class TCPServer
    @brief Encapsulates a TCP network service provider.
-  
+
    This class is actually a factory of TCPSockets, that are created as incoming
    connections are received. As such, it is not derived from the Socket class.
 
@@ -1299,11 +1317,11 @@ FALCON_FUNC  UDPSocket_broadcast( ::Falcon::VMachine *vm )
    @init TCPServer
    @brief Sets up the server.
    @raise NetError on system error.
-   
+
    The constructor reserves system resources needed to create
    sockets and return a TPCServer object that can be used to
    accept incoming TCP connections.
-  
+
    If the needed system resources are not available, a NetError is raised.
 */
 
@@ -1316,15 +1334,16 @@ FALCON_FUNC  TCPServer_init( ::Falcon::VMachine *vm )
 
    if ( skt->lastError() != 0 ) {
       self->setProperty( "lastError", (int64) skt->lastError() );
-      vm->raiseModError(  new  NetError( ErrorParam( 1139, __LINE__ ).
-         desc( "Server Socket creation" ).sysError( (uint32) skt->lastError() ) ) );
+      vm->raiseModError(  new NetError( ErrorParam( FALSOCK_ERR_CREATE, __LINE__ )
+         .desc( FAL_STR( sk_msg_errcreate ) )
+         .sysError( (uint32) skt->lastError() ) ) );
    }
 }
 
 /*#
    @method dispose TCPServer
    @brief Closes the service and disposes the resources,
-   
+
    Collects immediately this object and frees the related
    system resources.
    Using this object after this call causes undefined results.
@@ -1385,8 +1404,9 @@ FALCON_FUNC  TCPServer_bind( ::Falcon::VMachine *vm )
    if ( ! srvs->bind( addr ) )
    {
       self->setProperty( "lastError", srvs->lastError() );
-      vm->raiseModError(  new  NetError( ErrorParam( 1140, __LINE__ ).
-         desc( "Can't bind socket to address" ).sysError( (uint32) srvs->lastError() ) ) );
+      vm->raiseModError(  new  NetError( ErrorParam( FALSOCK_ERR_BIND, __LINE__ )
+         .desc( FAL_STR(sk_msg_errbind) )
+         .sysError( (uint32) srvs->lastError() ) ) );
    }
 
    vm->retnil();
@@ -1398,7 +1418,7 @@ FALCON_FUNC  TCPServer_bind( ::Falcon::VMachine *vm )
    @optparam timeout Optional wait time.
    @return A new TCPSocket after a succesful connection.
    @raise NetError on system error.
-   
+
    This method accepts incoming connection and creates a TCPSocket object that
    can be used to communicate with the remote host. Before calling accept(), it is
    necessary to have succesfully called bind() to bind the listening application to
@@ -1437,8 +1457,8 @@ FALCON_FUNC  TCPServer_accept( ::Falcon::VMachine *vm )
    if ( srvs->lastError() != 0 )
    {
       self->setProperty( "lastError", srvs->lastError() );
-      vm->raiseModError(  new  NetError( ErrorParam( 1141, __LINE__ ).
-         desc( "Error while accepting connections" ).sysError( (uint32) srvs->lastError() ) ) );
+      vm->raiseModError( new  NetError( ErrorParam( FALSOCK_ERR_ACCEPT, __LINE__ ).
+         desc( FAL_STR( sk_msg_erraccept ) ).sysError( (uint32) srvs->lastError() ) ) );
       return;
    }
 
@@ -1464,6 +1484,7 @@ FALCON_FUNC  TCPServer_accept( ::Falcon::VMachine *vm )
    @optparam extra A descriptive message explaining the error conditions.
    @from Error code, description, extra
 
+   The error code can be one of the codes declared in the @a NetErrorCode enumeration.
    See the Error class in the core module.
 */
 

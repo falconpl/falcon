@@ -48,6 +48,8 @@
 
 FALCON_MODULE_DECL(const Falcon::EngineData &data )
 {
+   #define FALCON_DECLARE_MODULE self
+
    data.set();
 
    if ( ! Falcon::Sys::init_system() )
@@ -57,8 +59,58 @@ FALCON_MODULE_DECL(const Falcon::EngineData &data )
 
    Falcon::Module *self = new Falcon::Module();
    self->name( "socket" );
+   self->language( "en_US" );
    self->engineVersion( FALCON_VERSION_NUM );
    self->version( VERSION_MAJOR, VERSION_MINOR, VERSION_REVISION );
+
+   //====================================
+   // Message setting
+   #include "socket_st.h"
+
+   //====================================
+   // Net error code enumeration
+
+   /*#
+      @enum NetErrorCode
+      @brief Network failure error categories.
+
+      This error codes define macro-categories of network errors that
+      have appened. Details are available by reading the system specific
+      net-error.
+
+      The @a NetError.code property assumes one of this values:
+
+      - @b generic: A generic failure prevented the network layer to work
+                     altogether. I.e. it was not possible to initialize
+                     the network layer
+      - @b resolv: An error happened while trying to resolve a network
+                  address; possibly, the name resolution service was
+                  not available or failed altogether.
+      - @b create: It was impossible to create the socket.
+      - @b send: The network had an error while trying to send data.
+      - @b receive: The network had an error while receiving data from a remote host.
+      - @b close: An error was detected while closing the socket. Either the socket
+                  could not be closed (i.e. because it was already invalid) or the
+                  close sequence was disrupted by a network failure.
+      - @b bind: The required address could not be allocated by the calling process.
+                 Either the address is already busy or the bind operation required
+                 privileges not owned by the process.
+      - @b accept: The network system failed while accepting an incoming connection.
+                 This usually means that the accepting thread has become unavailable.
+   */
+   Falcon::Symbol *c_errcode = self->addClass( "NetErrorCode" );
+   self->addClassProperty( c_errcode, "generic")->setInteger( FALSOCK_ERR_GENERIC );
+   self->addClassProperty( c_errcode, "resolv")->setInteger( FALSOCK_ERR_RESOLV );
+   self->addClassProperty( c_errcode, "create")->setInteger( FALSOCK_ERR_CREATE );
+   self->addClassProperty( c_errcode, "send")->setInteger( FALSOCK_ERR_SEND );
+   self->addClassProperty( c_errcode, "receive")->setInteger( FALSOCK_ERR_RECV );
+   self->addClassProperty( c_errcode, "close")->setInteger( FALSOCK_ERR_CLOSE );
+   self->addClassProperty( c_errcode, "bind")->setInteger( FALSOCK_ERR_BIND );
+   self->addClassProperty( c_errcode, "accept")->setInteger( FALSOCK_ERR_ACCEPT );
+
+
+   //====================================
+   // Generic functions
 
    self->addExtFunc( "getHostName", Falcon::Ext::falcon_getHostName );
    self->addExtFunc( "resolveAddress", Falcon::Ext::resolveAddress );

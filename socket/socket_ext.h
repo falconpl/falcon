@@ -24,6 +24,21 @@
 #include <falcon/setup.h>
 #include <falcon/module.h>
 #include <falcon/error.h>
+#include <falcon/error_base.h>
+
+#ifndef FALCON_SOCKET_ERROR_BASE
+   #define FALCON_SOCKET_ERROR_BASE        1170
+#endif
+
+#define FALSOCK_ERR_GENERIC  (FALCON_SOCKET_ERROR_BASE + 0)
+#define FALSOCK_ERR_RESOLV  (FALCON_SOCKET_ERROR_BASE + 1)
+#define FALSOCK_ERR_CREATE  (FALCON_SOCKET_ERROR_BASE + 2)
+#define FALSOCK_ERR_CONNECT  (FALCON_SOCKET_ERROR_BASE + 3)
+#define FALSOCK_ERR_SEND  (FALCON_SOCKET_ERROR_BASE + 4)
+#define FALSOCK_ERR_RECV  (FALCON_SOCKET_ERROR_BASE + 5)
+#define FALSOCK_ERR_CLOSE  (FALCON_SOCKET_ERROR_BASE + 6)
+#define FALSOCK_ERR_BIND  (FALCON_SOCKET_ERROR_BASE + 7)
+#define FALSOCK_ERR_ACCEPT  (FALCON_SOCKET_ERROR_BASE + 8)
 
 namespace Falcon {
 namespace Ext {

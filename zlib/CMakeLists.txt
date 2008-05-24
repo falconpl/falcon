@@ -78,6 +78,7 @@ ADD_LIBRARY( zlib MODULE
    # ZLib module source
    zlib.cpp
    zlib_ext.cpp
+   zlib_st.cpp
    #zlibstream.cpp
 )
 

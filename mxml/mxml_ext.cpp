@@ -71,6 +71,7 @@ static MXML::Node *internal_getNodeParameter( VMachine *vm, int pid )
 
 /*#
    @class MXMLDocument
+   @brief Encapsulates a complete XML document.
    @optparam encoding Encoding suggested for document load or required for document write.
    @optparam style Style required in document write.
    Class containing a logical XML file representation.
@@ -195,7 +196,7 @@ FALCON_FUNC MXMLDocument_init( ::Falcon::VMachine *vm )
    Loads a document from a Falcon Stream. After a succesful call,
    the document is ready for inspection and can be modified.
 
-   @see MXMLNode.save
+   @see MXMLDocument.read
 */
 
 FALCON_FUNC MXMLDocument_deserialize( ::Falcon::VMachine *vm )
@@ -387,7 +388,7 @@ FALCON_FUNC MXMLDocument_root( ::Falcon::VMachine *vm )
    value) and specified data portion. All the paramters are optional, and
    can be substituted with a nil or not given to match "everything".
 
-   The @ MXMLDocument.findNext method will repeat the search starting from
+   The @a MXMLDocument.findNext method will repeat the search starting from
    the last matching node; direction of the search is down towards the leaves
    of the tree, then forward towards the next siblings. When the nodes matching
    the criterion are exhausted, the two methods return nil.
@@ -460,7 +461,7 @@ FALCON_FUNC MXMLDocument_find( ::Falcon::VMachine *vm )
 
 
 /*#
-   @method find MXMLDocument
+   @method findNext MXMLDocument
    @brief Finds the next (tag) node matching a certain criterion.
    @return The next node matching the given criterion or nil if not found.
 
@@ -512,7 +513,7 @@ FALCON_FUNC MXMLDocument_findNext( ::Falcon::VMachine *vm )
 
    If the path cannot match any node in the three, the method returns nil. It is possible to iterate
    through all the nodes having the same path (or matching wildcard paths) in a tree by using the
-   @a XMLDocument.findPathNext method. In example, the following code would find all the nodes
+   @a MXMLDocument.findPathNext method. In example, the following code would find all the nodes
    which have exactly two parents:
 
    @code

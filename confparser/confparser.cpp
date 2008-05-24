@@ -134,7 +134,7 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    // Message setting
    #include "confparser_st.h"
 
-   // private class socket.
+
    Falcon::Symbol *c_cparser = self->addClass( "ConfParser", Falcon::Ext::ConfParser_init );
    self->addClassMethod( c_cparser, "read", Falcon::Ext::ConfParser_read );
    self->addClassMethod( c_cparser, "write", Falcon::Ext::ConfParser_write );

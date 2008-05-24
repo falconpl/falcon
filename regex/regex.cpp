@@ -117,10 +117,12 @@ A minimal example would look like the following:
 
 FALCON_MODULE_DECL( const Falcon::EngineData &data )
 {
+   #define FALCON_DECLARE_MODULE self
    data.set();
 
    Falcon::Module *self = new Falcon::Module();
    self->name( "regex" );
+   self->language( "en_US" );
    self->engineVersion( FALCON_VERSION_NUM );
    self->version( VERSION_MAJOR, VERSION_MINOR, VERSION_REVISION );
 
@@ -130,8 +132,12 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
 	pcre_stack_malloc = Falcon::memAlloc;
    pcre_stack_free = Falcon::memFree;
 
+   //====================================
+   // Message setting
+   #include "regex_st.h"
+
    //============================================================
-   // Stub
+   // Regex class
    //
    Falcon::Symbol *regex_c = self->addClass( "Regex", Falcon::Ext::Regex_init );
    self->addClassMethod( regex_c, "study", Falcon::Ext::Regex_study );

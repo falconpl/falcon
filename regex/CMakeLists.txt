@@ -101,6 +101,8 @@ ${PCRE_SOURCE}
 regex.cpp
 regex_ext.cpp
 regex_mod.cpp
+regex_st.cpp
+
 ${SYS_RC}
 )
 

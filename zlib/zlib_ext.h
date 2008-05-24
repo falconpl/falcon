@@ -11,6 +11,12 @@
 #include <falcon/setup.h>
 #include <falcon/module.h>
 #include <falcon/error.h>
+#include <falcon/error_base.h>
+
+#ifndef FALCON_ZLIB_ERROR_BASE
+   #define FALCON_ZLIB_ERROR_BASE        1190
+#endif
+
 
 namespace Falcon {
 namespace Ext {

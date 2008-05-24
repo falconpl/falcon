@@ -31,6 +31,7 @@
 
 #include "regex_ext.h"
 #include "regex_mod.h"
+#include "regex_st.h"
 
 namespace Falcon {
 namespace Ext {
@@ -47,11 +48,11 @@ namespace Ext {
    @init Regex
    @brief Compiles the regular expression patterns and initializes the instance.
    @raise @a RegexError if the pattern is invalid.
-   
-   The class constructor creates a Regex instance that can be then used to match, find, 
-   extract  and substitute strings. Compilation of regular expressions can be an heavy step, 
-   so it's better to do it once and for all. In a program using repeatedly a set of well 
-   defined patterns, an option worth being considered is that of creating object instances 
+
+   The class constructor creates a Regex instance that can be then used to match, find,
+   extract  and substitute strings. Compilation of regular expressions can be an heavy step,
+   so it's better to do it once and for all. In a program using repeatedly a set of well
+   defined patterns, an option worth being considered is that of creating object instances
    that will have the VM to compile the pattern in the link step:
 
    @code
@@ -69,10 +70,10 @@ namespace Ext {
       ...
    end
    @endcode
-   
+
    In case of regular expression pattern error, a RegexError instance will be raised.
-   The option parameter can be provided to pass pattern compilation options to the 
-   constructor. It generally follows the PERL regular expression parameter 
+   The option parameter can be provided to pass pattern compilation options to the
+   constructor. It generally follows the PERL regular expression parameter
    specification, so  that:
    @code
    PERL: /a pattern/i
@@ -80,39 +81,39 @@ namespace Ext {
    @endcode
 
    The recognized options are (case sensitive):
-   - @b a: anchored pattern. Usually, if only part of a pattern matches, a new search is 
-      attempted in the rest of the string. When this option is set, the pattern must either match 
-      completely or be rejected as the first match begins. So, the pattern "abc" will usually 
-      match "abdabc" starting from character 3, but if anchored option is set it won't match, as 
+   - @b a: anchored pattern. Usually, if only part of a pattern matches, a new search is
+      attempted in the rest of the string. When this option is set, the pattern must either match
+      completely or be rejected as the first match begins. So, the pattern "abc" will usually
+      match "abdabc" starting from character 3, but if anchored option is set it won't match, as
       "abc" will start to match at the beginning of string, but then will fail when "d" is met.
-   - @b i: ignore case while matching. Case ignoring is currently supported only for Unicode 
-      characters below 128; this means that accented latin case ignoring is not supported. In 
-      example, "è" and "È" won't match even if "i" option is set.
-   - @b m: multiline match. Usually, the special characters "^" and "$" matches respectively 
-      the begin and the end of the string, so that "^pattern$" will match only "pattern", and not 
-      "this is a pattern". With "m" option, "^" and "$" matches the begin and the end of a line, 
+   - @b i: ignore case while matching. Case ignoring is currently supported only for Unicode
+      characters below 128; this means that accented latin case ignoring is not supported. In
+      example, "ï¿½" and "ï¿½" won't match even if "i" option is set.
+   - @b m: multiline match. Usually, the special characters "^" and "$" matches respectively
+      the begin and the end of the string, so that "^pattern$" will match only "pattern", and not
+      "this is a pattern". With "m" option, "^" and "$" matches the begin and the end of a line,
       being lines separated by Falcon newline characters ("\n").
 
-   - @b s: dot match all. Usually, the line separator "\n" is not captured in wide 
-      parenthesized expressions as (.*), and the generic "any character" wildcard (the dot ".") 
-      doesn't matches it. With "s" option, "\n" is considered as a normal character and included 
-      in matches (although this doesn't alter the behavior of "^" and "$" which are controlled by 
+   - @b s: dot match all. Usually, the line separator "\n" is not captured in wide
+      parenthesized expressions as (.*), and the generic "any character" wildcard (the dot ".")
+      doesn't matches it. With "s" option, "\n" is considered as a normal character and included
+      in matches (although this doesn't alter the behavior of "^" and "$" which are controlled by
       the "m" option).
    - @b f: first line. Match must start before or at the first "\n", or else it will fail.
-   - @b g: ungreedy match. Repetition patterns behave normally in a way that is defined 
-      "greedy", unless followed by a question mark. Greedy matching will force quantifiers to 
-      match as many characters as possible in the target string. In example, normally 
-      'field:\s*(.*);', if applied to a string with two ";" after "field" will return the longest 
-      possible match. If applied to "field: a; b; c; and the rest" would return "a; b; c" as first 
-      submatch. Using a question mark would force to match the shortest alternative: 
-      'field:\s*(.*?);' would return only "a" as first submatch. The "g" option inverts this 
-      behavior, so that repetition quantifiers are ungreedy by default, and "?" will make them 
+   - @b g: ungreedy match. Repetition patterns behave normally in a way that is defined
+      "greedy", unless followed by a question mark. Greedy matching will force quantifiers to
+      match as many characters as possible in the target string. In example, normally
+      'field:\s*(.*);', if applied to a string with two ";" after "field" will return the longest
+      possible match. If applied to "field: a; b; c; and the rest" would return "a; b; c" as first
+      submatch. Using a question mark would force to match the shortest alternative:
+      'field:\s*(.*?);' would return only "a" as first submatch. The "g" option inverts this
+      behavior, so that repetition quantifiers are ungreedy by default, and "?" will make them
       greedy.
-   - @b S: study the pattern. Tells Regex constructor to perform also a study step after 
-      compilation. According to PCRE documentation, this has currently little utility except for 
+   - @b S: study the pattern. Tells Regex constructor to perform also a study step after
+      compilation. According to PCRE documentation, this has currently little utility except for
       some very complex pattern involving recursive searches.
 
-   In case of error in compilation of the pattern (or eventually in the study step, if 
+   In case of error in compilation of the pattern (or eventually in the study step, if
    required), the constructor will raise an error of class @a RegexError.
 */
 
@@ -150,7 +151,7 @@ FALCON_FUNC Regex_init( ::Falcon::VMachine *vm )
             case 'S': bStudy = true; break;
             default:
                vm->raiseModError( new ParamError( ErrorParam( e_param_range, __LINE__ ).
-                  extra( "Unrecognized option in pattern options" ) ) );
+                  extra( FAL_STR( re_msg_optunknown ) ) ) );
          }
       }
    }
@@ -173,8 +174,9 @@ FALCON_FUNC Regex_init( ::Falcon::VMachine *vm )
 
    if ( pattern == 0 )
    {
-      vm->raiseModError( new RegexError( ErrorParam( 1150, __LINE__ ).
-         desc( "Invalid regular expression" ).extra( errDesc ) ) );
+      vm->raiseModError( new RegexError( ErrorParam( FALRE_ERR_INVALID, __LINE__ )
+         .desc( FAL_STR( re_msg_invalid ) )
+         .extra( errDesc ) ) );
       return;
    }
 
@@ -186,8 +188,9 @@ FALCON_FUNC Regex_init( ::Falcon::VMachine *vm )
       data->m_extra = pcre_study( pattern, 0, &errDesc );
       if ( data->m_extra == 0 && errDesc != 0 )
       {
-         vm->raiseModError( new RegexError( ErrorParam( 1151, __LINE__ ).
-            desc( "Error while studing the regular expression" ).extra( errDesc ) ) );
+         vm->raiseModError( new RegexError( ErrorParam( FALRE_ERR_STUDY, __LINE__ )
+            .desc( FAL_STR( re_msg_errstudy ) )
+            .extra( errDesc ) ) );
          return;
       }
    }
@@ -196,7 +199,7 @@ FALCON_FUNC Regex_init( ::Falcon::VMachine *vm )
 /*#
    @method study Regex
    @brief Study the pattern after compilation.
-   
+
    It perform an extra compilation step; PCRE 7.6 manual suggests that this is
    useful only with recursive pattern.
 */
@@ -215,8 +218,9 @@ FALCON_FUNC Regex_study( ::Falcon::VMachine *vm )
    data->m_extra = pcre_study( data->m_pattern, 0, &errDesc );
    if ( data->m_extra == 0 && errDesc != 0 )
    {
-      vm->raiseModError( new RegexError( ErrorParam( 1151, __LINE__ ).
-         desc( "Error while studing the regular expression" ).extra( errDesc ) ) );
+      vm->raiseModError( new RegexError( ErrorParam( FALRE_ERR_STUDY, __LINE__ )
+            .desc( FAL_STR( re_msg_errstudy ) )
+            .extra( errDesc ) ) );
    }
 }
 
@@ -336,8 +340,8 @@ static void internal_regex_match( RegexCarrier *data, String *source, int from )
    @param string String where to scan for the pattern.
    @return True if the string is matched by the pattern, false otherwise.
 
-   This method searches for the pattern in the string given as parameter. 
-   If the match is successful, the method returns true. 
+   This method searches for the pattern in the string given as parameter.
+   If the match is successful, the method returns true.
    The match point can then be retrieved using the captured(0) method.
 */
 FALCON_FUNC Regex_match( ::Falcon::VMachine *vm )
@@ -364,10 +368,11 @@ FALCON_FUNC Regex_match( ::Falcon::VMachine *vm )
 
    if ( data->m_matches < 0 )
    {
-      String errVal = "Internal error: ";
+      String errVal = FAL_STR( re_msg_internal );
       errVal.writeNumber( (int64) data->m_matches );
-      vm->raiseModError( new RegexError( ErrorParam( 1152, __LINE__ ).
-         desc( "Error while matching the regular expression" ).extra( errVal ) ) );
+      vm->raiseModError( new RegexError( ErrorParam( FALRE_ERR_ERRMATCH, __LINE__ )
+         .desc( FAL_STR( re_msg_errmatch ) )
+         .extra( errVal ) ) );
       return;
    }
 
@@ -379,12 +384,12 @@ FALCON_FUNC Regex_match( ::Falcon::VMachine *vm )
    @param string A string in which the pattern has to be found.
    @optparam start  An optional starting point in the string.
    @return A range where the pattern matches, or nil.
-   
-   This function works as the method match(), but on success it immediately returns the range 
-   containing the area in the string parameter where the pattern has matched. 
+
+   This function works as the method match(), but on success it immediately returns the range
+   containing the area in the string parameter where the pattern has matched.
    Also, this function can be provided with an optional start parameter that
-   can be used to begin the search for the pattern from an arbitrary point in the string. 
-   
+   can be used to begin the search for the pattern from an arbitrary point in the string.
+
    Finds the first occourence of the pattern in the string. The returned ranged
    may be applied to the string in order to extract the desired substring.
 
@@ -427,10 +432,11 @@ FALCON_FUNC Regex_find( ::Falcon::VMachine *vm )
    }
    else
    {
-      String errVal = "Internal error: ";
+      String errVal = FAL_STR( re_msg_internal );
       errVal.writeNumber( (int64) data->m_matches );
-      vm->raiseModError( new RegexError( ErrorParam( 1152, __LINE__ ).
-         desc( "Error while matching the regular expression" ).extra( errVal ) ) );
+      vm->raiseModError( new RegexError( ErrorParam( FALRE_ERR_ERRMATCH, __LINE__ )
+         .desc( FAL_STR( re_msg_errmatch ) )
+         .extra( errVal ) ) );
    }
 }
 
@@ -488,10 +494,11 @@ static void internal_findAll( Falcon::VMachine *vm, bool overlapped )
 
    if ( data->m_matches < 0 && data->m_matches != PCRE_ERROR_NOMATCH )
    {
-      String errVal = "Internal error: ";
+      String errVal = FAL_STR( re_msg_internal );
       errVal.writeNumber( (int64) data->m_matches );
-      vm->raiseModError( new RegexError( ErrorParam( 1152, __LINE__ ).
-         desc( "Error while matching the regular expression" ).extra( errVal ) ) );
+      vm->raiseModError( new RegexError( ErrorParam( FALRE_ERR_ERRMATCH, __LINE__ )
+         .desc( FAL_STR( re_msg_errmatch ) )
+         .extra( errVal ) ) );
       return;
    }
 
@@ -513,7 +520,7 @@ static void internal_findAll( Falcon::VMachine *vm, bool overlapped )
    This method only returns the whole match, ignoring parenthesized
    expressions.
 */
-   
+
 FALCON_FUNC Regex_findAll( ::Falcon::VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
@@ -528,7 +535,7 @@ FALCON_FUNC Regex_findAll( ::Falcon::VMachine *vm )
    @optparam start Optional start position in the string.
    @optparam maxcount Optional maximum matches allowed .
    @return A vector of ranges where the pattern matches, or nil.
-   
+
    This function returns an array containing all the ranges where
    the pattern has matched; if the pattern could not match the string,
    an empty array is returned.
@@ -595,10 +602,11 @@ FALCON_FUNC Regex_replace( ::Falcon::VMachine *vm )
 
    if ( data->m_matches < 0 )
    {
-      String errVal = "Internal error: ";
+      String errVal = FAL_STR( re_msg_internal );
       errVal.writeNumber( (int64) data->m_matches );
-      vm->raiseModError( new RegexError( ErrorParam( 1152, __LINE__ ).
-         desc( "Error while matching the regular expression" ).extra( errVal ) ) );
+      vm->raiseModError( new RegexError( ErrorParam( FALRE_ERR_ERRMATCH, __LINE__ )
+         .desc( FAL_STR( re_msg_errmatch ) )
+         .extra( errVal ) ) );
       return;
    }
 
@@ -672,10 +680,11 @@ FALCON_FUNC Regex_replaceAll( ::Falcon::VMachine *vm )
 
    if ( data->m_matches < 0 && data->m_matches != PCRE_ERROR_NOMATCH )
    {
-      String errVal = "Internal error: ";
+      String errVal = FAL_STR( re_msg_internal );
       errVal.writeNumber( (int64) data->m_matches );
-      vm->raiseModError( new RegexError( ErrorParam( 1152, __LINE__ ).
-         desc( "Error while matching the regular expression" ).extra( errVal ) ) );
+      vm->raiseModError( new RegexError( ErrorParam( FALRE_ERR_ERRMATCH, __LINE__ )
+         .desc( FAL_STR( re_msg_errmatch ) )
+         .extra( errVal ) ) );
       return;
    }
 
@@ -689,11 +698,11 @@ FALCON_FUNC Regex_replaceAll( ::Falcon::VMachine *vm )
 /*#
    @method capturedCount Regex
    @return Count of captured subranges.
-   
+
    This method returns available number of captured ranges after a
    successful match. This number is the amount of parenthesized
    expressions in the regular expression plus one.
-   
+
    @see Regex.captured
 */
 
@@ -712,7 +721,7 @@ FALCON_FUNC Regex_capturedCount( ::Falcon::VMachine *vm )
    @method captured Regex
    @param count Id of the captured substring, starting from 1; 0 represents all the matched string.
    @return A range defining a captured match.
-      
+
    This method returns one of the match ranges that has been determined by
    the last match, find or replace operation. If 0 is passed as count parameter,
    the whole match range is returned; each parenthesized expression match
@@ -741,8 +750,8 @@ FALCON_FUNC Regex_captured( ::Falcon::VMachine *vm )
 
    if ( count < 0 ||  count >= maxCount )
    {
-      vm->raiseModError( new  ParamError( ErrorParam( e_param_range, __LINE__ ).
-         extra( "Captured ID out of range." ) ) );
+      vm->raiseModError( new  ParamError( ErrorParam( e_param_range, __LINE__ )
+         .extra( FAL_STR( re_msg_outofrange ) ) ) );
       return;
    }
 
@@ -768,8 +777,8 @@ FALCON_FUNC Regex_grab( Falcon::VMachine *vm )
 
    if( source == 0 || ! source->isString() )
    {
-      vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "S" ) ) );
+      vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ )
+         .extra( "S" ) ) );
       return;
    }
 
@@ -783,10 +792,11 @@ FALCON_FUNC Regex_grab( Falcon::VMachine *vm )
 
    if ( data->m_matches < 0 )
    {
-      String errVal = "Internal error: ";
+      String errVal = FAL_STR( re_msg_internal );
       errVal.writeNumber( (int64) data->m_matches );
-      vm->raiseModError( new RegexError( ErrorParam( 1152, __LINE__ ).
-         desc( "Error while matching the regular expression" ).extra( errVal ) ) );
+      vm->raiseModError( new RegexError( ErrorParam( FALRE_ERR_ERRMATCH, __LINE__ )
+         .desc( FAL_STR( re_msg_errmatch ) )
+         .extra( errVal ) ) );
       return;
    }
 
@@ -862,7 +872,7 @@ FALCON_FUNC Regex_compare( Falcon::VMachine *vm )
 /*#
    @method version Regex
    @return A string containing a descriptive PCRE version message.
-   
+
    This function can be used to retreive the PCRE version that is currently
    used by the REGEX module.
 */

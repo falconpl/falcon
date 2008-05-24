@@ -33,6 +33,7 @@ ADD_LIBRARY( socket MODULE
    socket.cpp
    socket_ext.cpp
    socket_srv.cpp
+   socket_st.cpp
    ${SYS_SPECIFIC}
 )
 

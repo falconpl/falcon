@@ -25,6 +25,15 @@
 #include <falcon/setup.h>
 #include <falcon/module.h>
 #include <falcon/error.h>
+#include <falcon/error_base.h>
+
+#ifndef FALCON_REGEX_ERROR_BASE
+   #define FALCON_REGEX_ERROR_BASE        1160
+#endif
+
+#define FALRE_ERR_INVALID    (FALCON_REGEX_ERROR_BASE + 0)
+#define FALRE_ERR_STUDY      (FALCON_REGEX_ERROR_BASE + 1)
+#define FALRE_ERR_ERRMATCH   (FALCON_REGEX_ERROR_BASE + 2)
 
 namespace Falcon {
 namespace Ext {
