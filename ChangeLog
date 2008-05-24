@@ -79,6 +79,7 @@ Falcon (0.8.9)
            Auto assigment stays &=, |= and ^=. Binary not is now ~.
            (This is because we need some of those symbols for other things in the next releases).
   * Bugfix: strFind and strBackFind didn't work correctly and may crash when receiving wrong values.
+  * Major: Provided FAL_MODSTR macro (family) to create module specific string tables.
 
 Falcon (0.8.8)
   * bugfix: TRAV opcode may destroy its parameters while setting first loop

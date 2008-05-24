@@ -86,6 +86,8 @@ using namespace Falcon;
 
 FALCON_MODULE_DECL( const Falcon::EngineData &data )
 {
+   #define FALCON_DECLARE_MODULE self
+
    // setup DLL engine common data
    data.set();
 
@@ -96,12 +98,12 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    self->engineVersion( FALCON_VERSION_NUM );
    self->version( RTL_VERSION_MAJOR, RTL_VERSION_MINOR, RTL_VERSION_REVISION );
 
+
    //=======================================================================
    // Message setting
    //=======================================================================
-   // TODO: load proper messages...
-   // ... and fallback to english:
-   self->stringTable().build( (wchar_t**)Falcon::Ext::message_table, true );
+
+   #include "rtl_messages.h"
 
    //=======================================================================
    // RTL basic functionality

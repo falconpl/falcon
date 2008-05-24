@@ -2,47 +2,45 @@
    FALCON - The Falcon Programming Language.
    FILE: rtl_messages.h
 
-   Short description
+   String table used for RTL messages.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: sab feb 24 2007
 
    -------------------------------------------------------------------
-   (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
+   (C) Copyright 2004-2008: the FALCON developers (see list in AUTHORS file)
 
    See LICENSE file for licensing details.
 */
 
 /** \file
-   Short description
+   String table used for RTL messages.
 */
 
 #ifndef flc_rtl_messages_H
 #define flc_rtl_messages_H
 
-namespace Falcon {
-namespace msg {
-   const int rtl_array_missing = 0;
-   const int rtl_inv_startend = 1;
-   const int rtl_arrpar1 = 2;
-   const int rtl_arrpar2 = 3;
-   const int rtl_arrpar3 = 4;
-   const int rtl_scan_end = 5;
-   const int rtl_array_first = 6;
-   const int rtl_second_call = 7;
-   const int rtl_need_two_arr = 8;
-   const int rtl_idx_not_num = 9;
-   const int rtl_start_outrange = 10;
-   const int rtl_cmdp_0 = 11;
-   const int rtl_emptyarr = 12;
-   const int rtl_iterator_not_found = 13;
-   const int rtl_invalid_iter = 14;
-   const int rtl_sender_not_object = 15;
-   const int rtl_marshall_not_cb = 16;
-   const int rtl_invalid_path = 17;
-   const int rtl_invalid_uri = 18;
-}
-}
+#include <falcon/module.h>
+
+FAL_MODSTR( rtl_array_missing, L"required an array, a start and an end position" );
+FAL_MODSTR( rtl_inv_startend, L"invalid start/end positions" );
+FAL_MODSTR( rtl_arrpar1, L"requres an array and another parameter" );
+FAL_MODSTR( rtl_arrpar2, L"optional third parameter must be a number" );
+FAL_MODSTR( rtl_arrpar3, L"optional fourth parameter must be a number" );
+FAL_MODSTR( rtl_scan_end, L"scan end is greater than start" );
+FAL_MODSTR( rtl_array_first, L"requires an array as first parameter" );
+FAL_MODSTR( rtl_second_call, L"second parameter must be callable" );
+FAL_MODSTR( rtl_need_two_arr, L"needs two arrays" );
+FAL_MODSTR( rtl_idx_not_num, L"indexes must be numbers" );
+FAL_MODSTR( rtl_start_outrange, L"start position out of range" );
+FAL_MODSTR( rtl_cmdp_0, L"parameter array contains non string elements" );
+FAL_MODSTR( rtl_emptyarr, L"parameter array is empty" );
+FAL_MODSTR( rtl_iterator_not_found, L"\"Iterator\" class not found in VM" );
+FAL_MODSTR( rtl_invalid_iter, L"Given item is not a valid iterator for the collection" );
+FAL_MODSTR( rtl_sender_not_object, L"Sender is not an object" );
+FAL_MODSTR( rtl_marshall_not_cb, L"Marshalled event name must be a string as first element in the given array" );
+FAL_MODSTR( rtl_invalid_path, L"Invalid path" );
+FAL_MODSTR( rtl_invalid_uri, L"Invalid URI" );
 
 #endif
 

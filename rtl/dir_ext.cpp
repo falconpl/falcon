@@ -346,7 +346,7 @@ FALCON_FUNC  fileNameSplit ( ::Falcon::VMachine *vm )
    {
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
          origin( e_orig_runtime ).
-         extra( vm->moduleString( msg::rtl_invalid_path ) ) ) );
+         extra( vm->moduleString( rtl_invalid_path ) ) ) );
       return;
    }
 
@@ -440,7 +440,7 @@ FALCON_FUNC  fileNameMerge ( ::Falcon::VMachine *vm )
    {
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
          origin( e_orig_runtime ).
-         extra( vm->moduleString( msg::rtl_invalid_path ) ) ) );
+         extra( vm->moduleString( rtl_invalid_path ) ) ) );
       return;
    }
 
@@ -1095,7 +1095,7 @@ void PathCarrier::setProperty( VMachine *vm, const String &propName, Item &prop 
    {
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params ).
          origin( e_orig_runtime ).
-         extra( vm->moduleString( msg::rtl_invalid_path ) ) ) );
+         extra( vm->moduleString( rtl_invalid_path ) ) ) );
    }
 }
 
@@ -1106,7 +1106,7 @@ void PathCarrier::getProperty( VMachine *vm, const String &propName, Item &prop 
    {
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params ).
          origin( e_orig_runtime ).
-         extra( vm->moduleString( msg::rtl_invalid_path ) ) ) );
+         extra( vm->moduleString( rtl_invalid_path ) ) ) );
    }
 
    String *item;
@@ -1227,7 +1227,7 @@ FALCON_FUNC  Path_init ( ::Falcon::VMachine *vm )
    {
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
          origin( e_orig_runtime ).
-         extra( vm->moduleString( msg::rtl_invalid_path ) ) ) );
+         extra( vm->moduleString( rtl_invalid_path ) ) ) );
    }
 
 }

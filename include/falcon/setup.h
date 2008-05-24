@@ -165,11 +165,16 @@ different systems.
 
 #endif
 
-#define DEFALUT_FALCON_MODULE_INIT falcon_module_init
+//===================================
+// Helper STR / _STR / #x converter
+//
+#ifndef _STR
+   #define _STR(x) #x
+#endif
 
-#define FALCON_MODULE_DECL \
-   FALCON_MODULE_TYPE DEFALUT_FALCON_MODULE_INIT
-
+#ifndef STR
+   #define STR(x) _STR(x)
+#endif
 
 #endif
 

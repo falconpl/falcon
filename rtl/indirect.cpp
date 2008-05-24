@@ -176,7 +176,7 @@ static void internal_marshal( VMachine *vm, Item *message, Item *prefix,
   if ( ! vm->sender().isObject() && ! vm->self().isObject() ) {
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
          origin( e_orig_runtime ).
-         extra( vm->moduleString(msg::rtl_sender_not_object ) ) ) );
+         extra( vm->moduleString(rtl_sender_not_object ) ) ) );
       return;
    }
 
@@ -194,7 +194,7 @@ static void internal_marshal( VMachine *vm, Item *message, Item *prefix,
    {
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
          origin( e_orig_runtime ).
-         extra( vm->moduleString( msg::rtl_marshall_not_cb ) ) ) );
+         extra( vm->moduleString( rtl_marshall_not_cb ) ) ) );
       return;
    }
 

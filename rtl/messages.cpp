@@ -2,7 +2,7 @@
    FALCON - The Falcon Programming Language
    FILE: messages.cpp
 
-   Short description
+   Messages in the RTL
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: sab feb 24 2007
@@ -14,39 +14,10 @@
 */
 
 /** \file
-   Short description
+   Messages in the RTL.
 */
 
-#include <falcon/setup.h>
-#include "falcon_rtl_ext.h"
-
-namespace Falcon {
-namespace Ext {
-
-const wchar_t *message_table[] = {
-   L"required an array, a start and an end position",
-   L"invalid start/end positions",
-   L"requres an array and another parameter",
-   L"optional third parameter must be a number",
-   L"optional fourth parameter must be a number",
-   L"scan end is greater than start",
-   L"requires an array as first parameter",
-   L"second parameter must be callable",
-   L"needs two arrays",
-   L"indexes must be numbers",
-   L"start position out of range",   // 10
-   L"parameter array contains non string elements",
-   L"parameter array is empty",
-   L"Iterator class not found in VM",
-   L"Given item is not a valid iterator for the collection",
-   L"Sender is not an object",
-   L"Marshalled event name must be a string as first element in the given array",
-   L"Invalid path",
-   L"Invalid URI",
-   0
-   };
-
-}}
-
+#define FALCON_REALIZE_STRTAB
+#include "rtl_messages.h"
 
 /* end of messages.cpp */

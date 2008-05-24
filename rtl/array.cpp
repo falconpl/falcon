@@ -292,7 +292,7 @@ FALCON_FUNC  arrayCopy( ::Falcon::VMachine *vm )
          (item_end != 0 && !item_end->isOrdinal()) )
    {
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         origin( e_orig_runtime ).extra( vm->moduleString( msg::rtl_array_missing ) ) ) );
+         origin( e_orig_runtime ).extra( vm->moduleString( rtl_array_missing ) ) ) );
       return;
    }
 
@@ -302,7 +302,7 @@ FALCON_FUNC  arrayCopy( ::Falcon::VMachine *vm )
    CoreArray *arr1 = array->partition( (int32) start, (int32) end );
    if ( arr1 == 0 ) {
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         origin( e_orig_runtime ).extra( vm->moduleString( msg::rtl_array_missing ) ) ) );
+         origin( e_orig_runtime ).extra( vm->moduleString( rtl_array_missing ) ) ) );
       return;
    }
    vm->retval( arr1 );
@@ -362,7 +362,7 @@ FALCON_FUNC  arrayHead ( ::Falcon::VMachine *vm )
    if ( array->length() == 0 )
    {
       vm->raiseModError( new AccessError( ErrorParam( e_inv_params, __LINE__ ).
-         origin( e_orig_runtime ).extra( vm->moduleString( msg::rtl_emptyarr ) ) ) );
+         origin( e_orig_runtime ).extra( vm->moduleString( rtl_emptyarr ) ) ) );
       return;
    }
 
@@ -394,7 +394,7 @@ FALCON_FUNC  arrayTail ( ::Falcon::VMachine *vm )
    if ( array->length() == 0 )
    {
       vm->raiseModError( new AccessError( ErrorParam( e_inv_params, __LINE__ ).
-         origin( e_orig_runtime ).extra( vm->moduleString( msg::rtl_emptyarr ) ) ) );
+         origin( e_orig_runtime ).extra( vm->moduleString( rtl_emptyarr ) ) ) );
       return;
    }
 
@@ -427,19 +427,19 @@ FALCON_FUNC  arrayFind ( ::Falcon::VMachine *vm )
 
    if ( array_x == 0 || ! array_x->isArray() || item == 0 ) {
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         origin( e_orig_runtime ).extra( vm->moduleString( msg::rtl_arrpar1 ) ) ) );
+         origin( e_orig_runtime ).extra( vm->moduleString( rtl_arrpar1 ) ) ) );
       return;
    }
 
    if ( start != 0 && ! start->isOrdinal() ) {
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         origin( e_orig_runtime ).extra( vm->moduleString( msg::rtl_arrpar2 ) ) ) );
+         origin( e_orig_runtime ).extra( vm->moduleString( rtl_arrpar2 ) ) ) );
       return;
    }
 
    if ( end != 0 && ! end->isOrdinal() ) {
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         origin( e_orig_runtime ).extra( vm->moduleString( msg::rtl_arrpar3 ) ) ) );
+         origin( e_orig_runtime ).extra( vm->moduleString( rtl_arrpar3 ) ) ) );
       return;
    }
 
@@ -454,7 +454,7 @@ FALCON_FUNC  arrayFind ( ::Falcon::VMachine *vm )
    int32 pos_end = (int32) (end == 0 ? array->length() : end->asInteger());
    if ( pos_start > pos_end ) {
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         origin( e_orig_runtime ).extra( vm->moduleString( msg::rtl_scan_end ) ) ) );
+         origin( e_orig_runtime ).extra( vm->moduleString( rtl_scan_end ) ) ) );
       return;
    }
 
@@ -510,25 +510,25 @@ FALCON_FUNC  arrayScan ( ::Falcon::VMachine *vm )
 
    if ( array_x == 0 || ! array_x->isArray() ) {
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         origin( e_orig_runtime ).extra( vm->moduleString( msg::rtl_array_first ) ) ) );
+         origin( e_orig_runtime ).extra( vm->moduleString( rtl_array_first ) ) ) );
       return;
    }
 
    if ( func_x == 0 || ! func_x->isCallable() ) {
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         origin( e_orig_runtime ).extra( vm->moduleString( msg::rtl_second_call ) ) ) );
+         origin( e_orig_runtime ).extra( vm->moduleString( rtl_second_call ) ) ) );
       return;
    }
 
    if ( start != 0 && ! start->isOrdinal() ) {
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         origin( e_orig_runtime ).extra( vm->moduleString( msg::rtl_arrpar2 ) ) ) );
+         origin( e_orig_runtime ).extra( vm->moduleString( rtl_arrpar2 ) ) ) );
       return;
    }
 
    if ( end != 0 && ! end->isOrdinal() ) {
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         origin( e_orig_runtime ).extra( vm->moduleString( msg::rtl_arrpar3 ) ) ) );
+         origin( e_orig_runtime ).extra( vm->moduleString( rtl_arrpar3 ) ) ) );
       return;
    }
 
@@ -543,7 +543,7 @@ FALCON_FUNC  arrayScan ( ::Falcon::VMachine *vm )
    int32 pos_end = (int32) (end == 0 ? array->length() : end->asInteger());
    if ( pos_start > pos_end ) {
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         origin( e_orig_runtime ).extra( vm->moduleString( msg::rtl_scan_end ) ) ) );
+         origin( e_orig_runtime ).extra( vm->moduleString( rtl_scan_end ) ) ) );
       return;
    }
 
@@ -610,25 +610,25 @@ FALCON_FUNC  arrayFilter( ::Falcon::VMachine *vm )
 
    if ( array_x == 0 || ! array_x->isArray() ) {
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         origin( e_orig_runtime ).extra( vm->moduleString( msg::rtl_array_first ) ) ) );
+         origin( e_orig_runtime ).extra( vm->moduleString( rtl_array_first ) ) ) );
       return;
    }
 
    if ( func_x == 0 || ! func_x->isCallable() ) {
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         origin( e_orig_runtime ).extra( vm->moduleString( msg::rtl_second_call ) ) ) );
+         origin( e_orig_runtime ).extra( vm->moduleString( rtl_second_call ) ) ) );
       return;
    }
 
    if ( start != 0 && ! start->isOrdinal() ) {
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         origin( e_orig_runtime ).extra( vm->moduleString( msg::rtl_arrpar2 ) ) ) );
+         origin( e_orig_runtime ).extra( vm->moduleString( rtl_arrpar2 ) ) ) );
       return;
    }
 
    if ( end != 0 && ! end->isOrdinal() ) {
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         origin( e_orig_runtime ).extra( vm->moduleString( msg::rtl_arrpar3 ) ) ) );
+         origin( e_orig_runtime ).extra( vm->moduleString( rtl_arrpar3 ) ) ) );
       return;
    }
 
@@ -643,7 +643,7 @@ FALCON_FUNC  arrayFilter( ::Falcon::VMachine *vm )
    int32 pos_end = (int32) (end == 0 ? array->length() : end->asInteger());
    if ( pos_start > pos_end ) {
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         origin( e_orig_runtime ).extra( vm->moduleString( msg::rtl_scan_end ) ) ) );
+         origin( e_orig_runtime ).extra( vm->moduleString( rtl_scan_end ) ) ) );
       return;
    }
 
@@ -703,25 +703,25 @@ FALCON_FUNC  arrayMap( ::Falcon::VMachine *vm )
 
    if ( array_x == 0 || ! array_x->isArray() ) {
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         origin( e_orig_runtime ).extra( vm->moduleString( msg::rtl_array_first ) ) ) );
+         origin( e_orig_runtime ).extra( vm->moduleString( rtl_array_first ) ) ) );
       return;
    }
 
    if ( func_x == 0 || ! func_x->isCallable() ) {
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         origin( e_orig_runtime ).extra( vm->moduleString( msg::rtl_second_call ) ) ) );
+         origin( e_orig_runtime ).extra( vm->moduleString( rtl_second_call ) ) ) );
       return;
    }
 
    if ( start != 0 && ! start->isOrdinal() ) {
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         origin( e_orig_runtime ).extra( vm->moduleString( msg::rtl_arrpar2 ) ) ) );
+         origin( e_orig_runtime ).extra( vm->moduleString( rtl_arrpar2 ) ) ) );
       return;
    }
 
    if ( end != 0 && ! end->isOrdinal() ) {
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         origin( e_orig_runtime ).extra( vm->moduleString( msg::rtl_arrpar3 ) ) ) );
+         origin( e_orig_runtime ).extra( vm->moduleString( rtl_arrpar3 ) ) ) );
       return;
    }
 
@@ -736,7 +736,7 @@ FALCON_FUNC  arrayMap( ::Falcon::VMachine *vm )
    int32 pos_end = (int32) (end == 0 ? array->length() : end->asInteger());
    if ( pos_start > pos_end ) {
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         origin( e_orig_runtime ).extra( vm->moduleString( msg::rtl_scan_end ) ) ) );
+         origin( e_orig_runtime ).extra( vm->moduleString( rtl_scan_end ) ) ) );
       return;
    }
 
@@ -934,14 +934,14 @@ FALCON_FUNC  arraySort( ::Falcon::VMachine *vm )
    if ( array_itm == 0 || ! array_itm->isArray() ) {
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
          origin( e_orig_runtime ).
-         extra( vm->moduleString( msg::rtl_array_first ) ) ) );
+         extra( vm->moduleString( rtl_array_first ) ) ) );
       return;
    }
 
    if ( sorter_itm != 0 && ! sorter_itm->isCallable() ) {
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
          origin( e_orig_runtime ).
-         extra( vm->moduleString( msg::rtl_second_call ) ) ) );
+         extra( vm->moduleString( rtl_second_call ) ) ) );
       return;
    }
 
@@ -963,7 +963,7 @@ FALCON_FUNC  arraySort( ::Falcon::VMachine *vm )
 
 /*#
    @function arrayMerge
-   @brief Inserts an item at a given position in the array.
+   @brief Merges two arrays.
    @param array1 Array containing the first half of the merge, that will be modified.
    @param array2 Array containing the second half of the merge, read-only
    @optparam insertPos Optional position of array 1 at which to place array2
@@ -995,7 +995,7 @@ FALCON_FUNC  arrayMerge( ::Falcon::VMachine *vm )
    if( first_i == 0 || ! first_i->isArray() || second_i == 0 || ! second_i->isArray() )
    {
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         origin( e_orig_runtime ).extra( vm->moduleString( msg::rtl_need_two_arr ) ) ) );
+         origin( e_orig_runtime ).extra( vm->moduleString( rtl_need_two_arr ) ) ) );
       return;
    }
 
@@ -1004,7 +1004,7 @@ FALCON_FUNC  arrayMerge( ::Falcon::VMachine *vm )
         ( end_i != 0 && ! end_i->isOrdinal() )  )
    {
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         origin( e_orig_runtime ).extra( vm->moduleString( msg::rtl_idx_not_num ) ) ) );
+         origin( e_orig_runtime ).extra( vm->moduleString( rtl_idx_not_num ) ) ) );
       return;
    }
 
@@ -1032,7 +1032,7 @@ FALCON_FUNC  arrayMerge( ::Falcon::VMachine *vm )
 
    if ( ! val ) {
        vm->raiseModError( new AccessError( ErrorParam( e_arracc, __LINE__ ).
-         origin( e_orig_runtime ).extra( vm->moduleString( msg::rtl_start_outrange ) ) ) );
+         origin( e_orig_runtime ).extra( FAL_STR( rtl_start_outrange ) ) ) );
       return;
    }
 }

@@ -31,12 +31,13 @@
 #ifndef flc_error_base_H
 #define flc_error_base_H
 
-#define FALCON_COMPILER_ERROR_BASE        1000
-#define FALCON_CONFPARSER_ERROR_BASE      1010
-#define FALCON_MXML_ERROR_BASE            1020
-#define FALCON_PROCESS_ERROR_BASE         1040
-#define FALCON_SOCKET_ERROR_BASE          1060
-#define FALCON_ZLIB_ERROR_BASE            1100
+#define FALCON_RTL_ERROR_BASE             1000
+#define FALCON_COMPILER_ERROR_BASE        1100
+#define FALCON_CONFPARSER_ERROR_BASE      1110
+#define FALCON_MXML_ERROR_BASE            1120
+#define FALCON_PROCESS_ERROR_BASE         1140
+#define FALCON_SOCKET_ERROR_BASE          1160
+#define FALCON_ZLIB_ERROR_BASE            1200
 
 #define FALCON_DBI_ERROR_BASE             2000
 #define FALCON_THREADING_ERROR_BASE       2050

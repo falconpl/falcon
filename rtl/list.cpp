@@ -318,7 +318,7 @@ FALCON_FUNC  List_erase ( ::Falcon::VMachine *vm )
    if ( i_iter == 0 || ! i_iter->isOfClass( "Iterator" ) )
    {
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         origin( e_orig_runtime ).extra( vm->moduleString( msg::rtl_invalid_iter ) ) ) );
+         origin( e_orig_runtime ).extra( vm->moduleString( rtl_invalid_iter ) ) ) );
       return;
    }
 
@@ -328,7 +328,7 @@ FALCON_FUNC  List_erase ( ::Falcon::VMachine *vm )
    if ( ! list->erase( iter ) )
    {
       vm->raiseModError( new AccessError( ErrorParam( e_inv_params, __LINE__ ).
-         origin( e_orig_runtime ).extra( vm->moduleString( msg::rtl_invalid_iter ) ) ) );
+         origin( e_orig_runtime ).extra( vm->moduleString( rtl_invalid_iter ) ) ) );
    }
 }
 
@@ -368,7 +368,7 @@ FALCON_FUNC  List_insert ( ::Falcon::VMachine *vm )
    if ( ! i_iter->isOfClass( "Iterator" ) )
    {
       vm->raiseModError( new AccessError( ErrorParam( e_inv_params, __LINE__ ).
-         origin( e_orig_runtime ).extra( vm->moduleString( msg::rtl_invalid_iter ) ) ) );
+         origin( e_orig_runtime ).extra( vm->moduleString( rtl_invalid_iter ) ) ) );
       return;
    }
 
@@ -379,7 +379,7 @@ FALCON_FUNC  List_insert ( ::Falcon::VMachine *vm )
    if ( ! list->insert( iter, *i_item ) )
    {
       vm->raiseModError( new AccessError( ErrorParam( e_inv_params, __LINE__ ).
-         origin( e_orig_runtime ).extra( vm->moduleString( msg::rtl_invalid_iter ) ) ) );
+         origin( e_orig_runtime ).extra( vm->moduleString( rtl_invalid_iter ) ) ) );
    }
 }
 

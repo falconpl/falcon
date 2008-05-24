@@ -132,7 +132,7 @@ void URICarrier::setProperty( VMachine *vm, const String &propName, Item &prop )
    {
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params ).
          origin( e_orig_runtime ).
-         extra( vm->moduleString( msg::rtl_invalid_uri ) ) ) );
+         extra( vm->moduleString( rtl_invalid_uri ) ) ) );
    }
 }
 
@@ -142,7 +142,7 @@ void URICarrier::getProperty( VMachine *vm, const String &propName, Item &prop )
    {
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params ).
          origin( e_orig_runtime ).
-         extra( vm->moduleString( msg::rtl_invalid_uri ) ) ) );
+         extra( vm->moduleString( rtl_invalid_uri ) ) ) );
    }
 
    if ( propName == "scheme" )
@@ -253,7 +253,7 @@ FALCON_FUNC  URI_decode ( ::Falcon::VMachine *vm )
    if ( ! URI::URLDecode( *p0->asString(), *str ) )
    {
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         origin( e_orig_runtime ).extra( vm->moduleString( msg::rtl_invalid_uri ) ) ) );
+         origin( e_orig_runtime ).extra( vm->moduleString( rtl_invalid_uri ) ) ) );
       return;
    }
 
@@ -285,7 +285,7 @@ FALCON_FUNC  URI_getFields ( ::Falcon::VMachine *vm )
       {
          // todo: better signalation
          vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-            origin( e_orig_runtime ).extra( vm->moduleString( msg::rtl_invalid_uri ) ) ) );
+            origin( e_orig_runtime ).extra( vm->moduleString( rtl_invalid_uri ) ) ) );
          return;
       }
 

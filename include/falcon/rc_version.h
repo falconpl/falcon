@@ -14,14 +14,13 @@
    See LICENSE file for licensing details.
 */
 
-/** \file 
+/** \file
    RC versioning helper.
    This small header is used in RC files, or by C programs, create version strings
    from version numbers stored in #define directive as numeric values.
 */
 
-#define _STR(x) #x
-#define STR(x) _STR(x)
+#include <falcon/setup.h>
 
 #define FALCON_MAKE_VERSION_NUMBER(v1,v2,v3,v4)    v1, v2, v3, v4
 
