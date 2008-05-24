@@ -211,7 +211,7 @@ ModuleLoader::t_filetype
       String *pathp = (String *) path_elem->data();
 
       // scanning this path:
-      if ( pathp->getCharAt( pathp->length() ) != '/' )
+      if ( pathp->getCharAt( pathp->length()-1 ) != '/' )
          path_name = *pathp + "/";
       else
          path_name = *pathp;
