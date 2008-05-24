@@ -5,10 +5,10 @@
    Base error codes for well known modules.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
-   Begin: dom feb 18 2007
+   Begin: Sat, 24 May 2008 13:55:23 +0200
 
    -------------------------------------------------------------------
-   (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
+   (C) Copyright 2008: the FALCON developers (see list in AUTHORS file)
 
    See LICENSE file for licensing details.
 */
@@ -41,5 +41,11 @@
 #define FALCON_DBI_ERROR_BASE             2000
 #define FALCON_THREADING_ERROR_BASE       2050
 #define FALCON_SDL_ERROR_BASE             2100
+#define FALCON_PDF_ERROR_BASE             2200
+
 
 #define FALCON_USER_ERROR_BASE   10000
+
+#endif
+
+/* end of error_base.h */
