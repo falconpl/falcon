@@ -771,7 +771,7 @@ FALCON_FUNC Regex_captured( ::Falcon::VMachine *vm )
 
 /*#
    @method grab Regex
-   @param Returns the part of a target string matched by this regular expression.
+   @brief Returns the part of a target string matched by this regular expression.
    @param string String where to scan for the pattern.
    @return The matching substring, or nil if the pattern doesn't match the string.
 
