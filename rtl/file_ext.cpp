@@ -577,8 +577,15 @@ FALCON_FUNC  Stream_write ( ::Falcon::VMachine *vm )
 
    if ( i_start == 0 )
       start = 0;
-   else
+   else {
       start = (uint32) i_start->forceInteger();
+
+      // minimal sanitization -- should we raise instead?
+      if ( start < 0 )
+      {
+         start = 0;
+      }
+   }
 
    if ( source->isMemBuf() )
    {
@@ -592,13 +599,14 @@ FALCON_FUNC  Stream_write ( ::Falcon::VMachine *vm )
          size = (uint32) count->forceInteger();
       }
 
+
       if ( size + start > mb->size() )
       {
          size = mb->size() - start; // can overflow...
       }
 
       //... but we'd return here, so it's ok
-      if ( start > mb->size() || size == 0 )
+      if ( start >= mb->size() || size == 0 )
       {
          // nothing to write
          vm->retval( 0 );
