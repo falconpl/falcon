@@ -31,7 +31,7 @@
 #include "process_st.h"
 
 /*#
-    @beginmodule process_module
+    @beginmodule feather_process
 */
 
 namespace Falcon {

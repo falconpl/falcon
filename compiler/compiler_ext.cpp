@@ -27,7 +27,7 @@
 #include "compiler_st.h"
 
 /*#
-   @beginmodule feathers_compiler
+   @beginmodule feather_compiler
 */
 
 namespace Falcon {

@@ -22,7 +22,8 @@
 
 #include "version.h"
 /*#
-   @module feather_configparser The Configuration Parser Module
+   @module feather_configparser Configuration Parser
+   @brief Advanced configuration file parser (with sections and key categorization support).
 
    The ConfParser module is meant as a simple but powerful interface to .INI
    like configuration files, with some extra features that allows to bring a bit

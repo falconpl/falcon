@@ -28,8 +28,8 @@
 
 #include "version.h"
 /*#
-   @module feather_zlib The ZLib module
-   @brief Minimal compress/uncompress functions.
+   @module feather_zlib ZLib
+   @brief Compress/uncompress functions (zlib binding).
 
    This module provides an essential interface to the Zlib compression routines.
 

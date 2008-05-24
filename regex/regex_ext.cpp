@@ -18,7 +18,7 @@
 */
 
 /*#
-   @beginmodule regex_module
+   @beginmodule feather_regex
 */
 
 #include <falcon/vm.h>
@@ -337,6 +337,7 @@ static void internal_regex_match( RegexCarrier *data, String *source, int from )
 
 /*#
    @method match Regex
+   @brief Matches this regular expression against a string.
    @param string String where to scan for the pattern.
    @return True if the string is matched by the pattern, false otherwise.
 
@@ -381,6 +382,7 @@ FALCON_FUNC Regex_match( ::Falcon::VMachine *vm )
 
 /*#
    @method find Regex
+   @brief Finds a range matching this regular expression in a string.
    @param string A string in which the pattern has to be found.
    @optparam start  An optional starting point in the string.
    @return A range where the pattern matches, or nil.
@@ -508,6 +510,7 @@ static void internal_findAll( Falcon::VMachine *vm, bool overlapped )
 
 /*#
    @method findAll Regex
+   @brief Find all ranges where this regular expression can mach the string.
    @param string String where to scan for the pattern.
    @optparam start Optional start position in the string.
    @optparam maxcount Optional maximum matches allowed .
@@ -531,6 +534,7 @@ FALCON_FUNC Regex_findAll( ::Falcon::VMachine *vm )
 
 /*#
    @method findAllOverlapped Regex
+   @brief Find all ranges where this regular expression can mach the string, with possibly overlapped matches.
    @param string String where to scan for the pattern.
    @optparam start Optional start position in the string.
    @optparam maxcount Optional maximum matches allowed .
@@ -551,6 +555,7 @@ FALCON_FUNC Regex_findAllOverlapped( ::Falcon::VMachine *vm )
 
 /*#
    @method replace Regex
+   @brief Replace a substring matching this regular expression with another string.
    @param string String where to scan for the pattern.
    @param replacer The string to replace the matched pattern with.
    @optparam start Optional initial scan position.
@@ -617,6 +622,7 @@ FALCON_FUNC Regex_replace( ::Falcon::VMachine *vm )
 
 /*#
    @method replaceAll Regex
+   @brief Replaces all the possible matches of this regular expression in a target with a given string.
    @param string String where to scan for the pattern.
    @param replacer The string to replace the matched pattern with.
    @optparam start Optional initial scan position.
@@ -697,6 +703,7 @@ FALCON_FUNC Regex_replaceAll( ::Falcon::VMachine *vm )
 
 /*#
    @method capturedCount Regex
+   @brief Return the count of captured (parenthesized) expressions.
    @return Count of captured subranges.
 
    This method returns available number of captured ranges after a
@@ -719,6 +726,7 @@ FALCON_FUNC Regex_capturedCount( ::Falcon::VMachine *vm )
 
 /*#
    @method captured Regex
+   @brief Return one of the captured (parenthesized) expressions.
    @param count Id of the captured substring, starting from 1; 0 represents all the matched string.
    @return A range defining a captured match.
 
@@ -763,6 +771,7 @@ FALCON_FUNC Regex_captured( ::Falcon::VMachine *vm )
 
 /*#
    @method grab Regex
+   @param Returns the part of a target string matched by this regular expression.
    @param string String where to scan for the pattern.
    @return The matching substring, or nil if the pattern doesn't match the string.
 
@@ -818,7 +827,8 @@ FALCON_FUNC Regex_grab( Falcon::VMachine *vm )
 
 /*#
    @method compare Regex
-   @param string A string .
+   @brief Checks if a given strings can be matched by this expression.
+   @param string A string.
    @return 0 if the string is matched by the regex pattern.
 
    This method overloads the BOM compare method, so that this Regex instance can be
@@ -871,6 +881,7 @@ FALCON_FUNC Regex_compare( Falcon::VMachine *vm )
 
 /*#
    @method version Regex
+   @brief Returns the PCRE version used by this binding.
    @return A string containing a descriptive PCRE version message.
 
    This function can be used to retreive the PCRE version that is currently

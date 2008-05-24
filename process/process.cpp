@@ -24,7 +24,8 @@
 #include "version.h"
 
 /*#
-   @module process_module The Process Module
+   @module feather_process Process
+   @brief Process enumeration and subprocess control.
 
    The process module provides several functions to manage processes in the system
    and to manage interprocess communication. Child processes can be created and
@@ -61,7 +62,7 @@
       @endcode
 
 
-   @beginmodule process_module
+   @beginmodule feather_process
 */
 
 FALCON_MODULE_DECL( const Falcon::EngineData &data )

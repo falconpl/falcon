@@ -24,7 +24,7 @@
 #include "mxml_ext.h"
 
 /*#
-   @module feather_mxml The MXML module
+   @module feather_mxml MXLM
    @brief Minimal XML support.
 
    This module is a very simple, fast and powerful XML parser
@@ -94,10 +94,10 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
       the OR bitwise operator (||) and that define the style that
       is used in document serialization.
 
-      - INDENT: indent each node with a single space.
-      - TAB: indent each node with a tab character (\\t).
-      - THREESPACES: indents the nodes with three spaces.
-      - NOESCAPE: Doesn't escape the XML characters while reading
+      - @b INDENT: indent each node with a single space.
+      - @b TAB: indent each node with a tab character (\\t).
+      - @b THREESPACES: indents the nodes with three spaces.
+      - @b NOESCAPE: Doesn't escape the XML characters while reading
          or writing. This is useful if the application wants to process
          escapeable sequences on its own, or if it knows that the code
          that is going to be written is not containing any escapeable
