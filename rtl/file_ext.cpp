@@ -274,7 +274,7 @@ FALCON_FUNC  Stream_read ( ::Falcon::VMachine *vm )
    @raise IoError on system errors.
 
    This method reads a string from a stream, eventually parsing the input
-   data through the given character encoding set by the @a Stream.setEncodng method.
+   data through the given character encoding set by the @a Stream.setEncoding method.
    The number of bytes actually read may vary depending on the decoding rules.
 
    If the size parameter is given, the function will try to read at maximum @b size

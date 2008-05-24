@@ -4060,7 +4060,7 @@ static bool core_times_next ( ::Falcon::VMachine *vm )
 
    @note The paramters of @b time are not functionally evaluated.
 
-   The loop index count will be given values from 0 to the required index-1 if @count is numeric,
+   The loop index count will be given values from 0 to the required index-1 if @b count is numeric,
    or it will act as the for/in loop if @b count is a range.
 
    The way the current index loop is sent to the items depends on the type of @b var.
