@@ -14,8 +14,6 @@
 #include <falcon/string.h>
 #include <falcon/userdata.h>
 
-#define FALCON_MXML_ERROR_BASE   1100
-
 namespace MXML {
 
 typedef enum {

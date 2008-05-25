@@ -49,7 +49,7 @@ const Falcon::String Error::description() const
 
 int Error::numericCode() const
 {
-   return ((int) m_code ) + FALCON_MXML_ERROR_BASE;
+   return ((int) m_code );
 }
 
 void Error::toString( Falcon::String &stream ) const

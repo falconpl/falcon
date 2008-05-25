@@ -1552,7 +1552,9 @@ FALCON_FUNC MXMLNode_path( ::Falcon::VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
    MXML::Node *node = static_cast<NodeCarrier *>( self->getUserData() )->node();
-   vm->retval( new GarbageString( vm, node->path(), -1 ) );
+   GarbageString *gs = new GarbageString( vm, node->path() );
+   gs->bufferize();
+   vm->retval( gs );
 }
 
 /*#
