@@ -268,8 +268,7 @@ void VMachine::init()
 
 VMachine::~VMachine()
 {
-
-   delete  m_memPool ;
+   // Free generic tables (quite safe)
    memFree( m_opHandlers );
    delete m_fbom;
 
@@ -300,10 +299,12 @@ VMachine::~VMachine()
    delete m_stdIn;
    delete m_stdOut;
 
+   delete  m_memPool;
    // clear now the global maps
    // this also decrefs the modules and destroys the globals.
    // Notice that this would be done automatically also at destructor exit.
    m_liveModules.clear();
+
 }
 
 void VMachine::errorHandler( ErrorHandler *em, bool own )
