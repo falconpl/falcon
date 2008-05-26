@@ -8,7 +8,7 @@
    Begin: sab feb 24 2007
 
    -------------------------------------------------------------------
-   (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
+   (C) Copyright 2008: the FALCON developers (see list in AUTHORS file)
 
    See LICENSE file for licensing details.
 */

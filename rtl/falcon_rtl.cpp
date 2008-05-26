@@ -21,6 +21,7 @@
 #include "falcon_rtl_ext.h"
 #include "version.h"
 #include <falcon/time_sys.h>
+#include "rtl_messages.h"
 
 using namespace Falcon;
 

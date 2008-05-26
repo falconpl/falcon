@@ -50,7 +50,7 @@ different systems.
       #define FALCON_MODULE_TYPE \
          extern "C"  ::Falcon::Module * __export __stdcall
 
-		#ifdef FALCON_ENGINE_EXPORTS
+		#if defined(FALCON_ENGINE_EXPORTS)
 			#define FALCON_DYN_CLASS __declspec(dllexport)
 			#define FALCON_DYN_SYM __declspec(dllexport)
 			#define EXTERN_TEMPLATE
@@ -69,7 +69,7 @@ different systems.
          extern "C" void CDECL
 
 		#ifndef FALCON_ENGINE_STATIC
-			#ifdef FALCON_ENGINE_EXPORTS
+			#if defined(FALCON_ENGINE_EXPORTS)
 				#define FALCON_DYN_CLASS __declspec(dllexport)
 				#define FALCON_DYN_SYM __declspec(dllexport)
 				#define EXTERN_TEMPLATE

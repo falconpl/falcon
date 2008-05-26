@@ -16,11 +16,7 @@
 /** \file
    String table used for RTL messages.
 */
-
-#ifndef flc_rtl_messages_H
-#define flc_rtl_messages_H
-
-#include <falcon/module.h>
+#include <falcon/message_defs.h>
 
 FAL_MODSTR( rtl_array_missing, L"required an array, a start and an end position" );
 FAL_MODSTR( rtl_inv_startend, L"invalid start/end positions" );
@@ -41,7 +37,5 @@ FAL_MODSTR( rtl_sender_not_object, L"Sender is not an object" );
 FAL_MODSTR( rtl_marshall_not_cb, L"Marshalled event name must be a string as first element in the given array" );
 FAL_MODSTR( rtl_invalid_path, L"Invalid path" );
 FAL_MODSTR( rtl_invalid_uri, L"Invalid URI" );
-
-#endif
 
 /* end of rtl_messages.h */
