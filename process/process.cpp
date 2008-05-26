@@ -20,6 +20,7 @@
 #include <falcon/module.h>
 #include "process_mod.h"
 #include "process_ext.h"
+#include "process_st.h"
 
 #include "version.h"
 

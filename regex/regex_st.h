@@ -17,10 +17,7 @@
    Regular expression module - String table.
 */
 
-#ifndef FLC_REGEX_ST_H
-#define FLC_REGEX_ST_H
-
-#include <falcon/module.h>
+#include <falcon/message_defs.h>
 
 FAL_MODSTR( re_msg_optunknown, "Unrecognized option in pattern options" );
 FAL_MODSTR( re_msg_invalid, "Invalid regular expression" );
@@ -28,8 +25,5 @@ FAL_MODSTR( re_msg_errstudy, "Error while studing the regular expression" );
 FAL_MODSTR( re_msg_errmatch, "Error while matching the regular expression" );
 FAL_MODSTR( re_msg_internal, "Internal error: " );
 FAL_MODSTR( re_msg_outofrange, "Captured ID out of range." );
-
-
-#endif
 
 /* regex_st.h */

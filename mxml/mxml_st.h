@@ -17,14 +17,10 @@
    MXML string table .
 */
 
-#ifndef flc_mxml_st_H
-#define flc_mxml_st_H
-
-#include <falcon/module.h>
+#include <falcon/message_defs.h>
 
 FAL_MODSTR( MXML_ERR_IO, "I/O error" );
 FAL_MODSTR( MXML_ERR_INVENC, "Invalid encoding:" );
 
-#endif
 
 /* end of mxml_st.h */

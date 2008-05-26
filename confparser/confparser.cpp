@@ -19,6 +19,7 @@
 #include <falcon/module.h>
 #include "confparser_ext.h"
 #include "confparser_mod.h"
+#include "confparser_st.h"
 
 #include "version.h"
 /*#

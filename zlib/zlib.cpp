@@ -25,6 +25,7 @@
 #include <falcon/module.h>
 #include "zlib_ext.h"
 #include "zlib.h"
+#include "zlib_st.h"
 
 #include "version.h"
 /*#

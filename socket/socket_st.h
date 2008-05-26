@@ -17,10 +17,7 @@
    Socket module - String table.
 */
 
-#ifndef FLC_SOCKET_ST_H
-#define FLC_SOCKET_ST_H
-
-#include <falcon/module.h>
+#include <falcon/message_defs.h>
 
 FAL_MODSTR( sk_msg_generic, "Generic network error" );
 FAL_MODSTR( sk_msg_errresolv, "System error in resolving address" );
@@ -34,7 +31,5 @@ FAL_MODSTR( sk_msg_errrecv, "Network error while receiving data" );
 FAL_MODSTR( sk_msg_errclose, "Network error while closing socket" );
 FAL_MODSTR( sk_msg_errbind, "Can't bind socket to address" );
 FAL_MODSTR( sk_msg_erraccept, "Error while accepting connections" );
-
-#endif
 
 /* socket_st.h */

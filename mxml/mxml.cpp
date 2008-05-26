@@ -22,6 +22,7 @@
 
 #include "mxml.h"
 #include "mxml_ext.h"
+#include "mxml_st.h"
 
 /*#
    @module feather_mxml MXLM

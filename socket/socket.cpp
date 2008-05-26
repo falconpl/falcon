@@ -20,6 +20,7 @@
 #include <falcon/module.h>
 #include "socket_ext.h"
 #include "socket_sys.h"
+#include "socket_st.h"
 
 #include "version.h"
 

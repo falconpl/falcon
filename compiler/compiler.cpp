@@ -169,6 +169,7 @@
 
 #include <falcon/module.h>
 #include "compiler_ext.h"
+#include "compiler_st.h"
 
 #include "version.h"
 

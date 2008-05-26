@@ -17,14 +17,9 @@
    Configuration parser module - String table.
 */
 
-#ifndef FLC_CONFPARSER_ST_H
-#define FLC_CONFPARSER_ST_H
-
-#include <falcon/module.h>
+#include <falcon/message_defs.h>
 
 FAL_MODSTR( cp_msg_invformat, "Invalid configuration file format" );
 FAL_MODSTR( cp_msg_errstore, "Error while storing the data" );
-
-#endif
 
 /* confparser_st.h */
