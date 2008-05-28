@@ -10,6 +10,12 @@ INCLUDE_DIRECTORIES(.)
 INCLUDE_DIRECTORIES(BEFORE ${TARGET_DIR}/include)
 LINK_DIRECTORIES(BEFORE ${TARGET_DIR}/${TARGET_LIB_DIR} )
 
+IF(UNIX)
+ELSE(UNIX)
+   SET(SYS_SPECIFIC  mxml.rc)
+ENDIF(UNIX)
+
+
 # Target
 ADD_LIBRARY( mxml MODULE
    mxml.cpp
@@ -21,6 +27,7 @@ ADD_LIBRARY( mxml MODULE
    mxml_node.cpp
    mxml_utility.cpp
    mxml_st.cpp
+   ${SYS_SPECIFIC}
 )
 
 #Link
