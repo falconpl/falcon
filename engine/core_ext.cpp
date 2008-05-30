@@ -1254,27 +1254,9 @@ FALCON_FUNC  hToString ( ::Falcon::VMachine *vm )
 }
 
 /*#
-   @funset varparm Variable Parameter management
-   @brief Functions used to manage parameters
-
-   Falcon supports variable parameter calling; a function or method may access
-   the items that have been used in the parameter call by counting them and
-   accessing them one by one.
-
-   Parameter passed by reference may be modified with the appropriate function.
-
-   This functions may be used wether the calling function provides a list of formal
-   paramters or not. The first formal parameter will be treated as the variable
-   parameter number zero, and the paramter count may be the same as, more than or less than
-   the number of formal parameters. So, part of the paramters may be accessible via
-   paramter names, and the others may be accessed with this functions.
-
-*/
-
-/*#
    @function paramCount
    @return The parameter count.
-   @inset varparms_support
+   @inset varparams_support
    @brief Returns number of parameter that have been passed to the current function or method.
 
    The return value is the minimum value between the formal parameters declared
@@ -1304,7 +1286,7 @@ FALCON_FUNC  paramCount ( ::Falcon::VMachine *vm )
 /*#
    @function parameter
    @brief Gets the Nth parameter
-   @inset varparms_support
+   @inset varparams_support
    @param pnum The ordinal number of the paremeter, zero based
    @return The nth paramter (zero based) or NIL if the parameter is not given.
    @raise AccessError if @b pnum is out of range.
@@ -1359,7 +1341,7 @@ FALCON_FUNC  _parameter ( ::Falcon::VMachine *vm )
 
 /*#
    @function paramIsRef
-   @inset varparms_support
+   @inset varparams_support
    @brief Checks whether the nth parameter has been passed by reference or not.
    @param number The paramter that must be checked (zero based)
    @return true if the parameter has been passed by reference, false otherwise.
@@ -1412,7 +1394,7 @@ FALCON_FUNC  paramIsRef ( ::Falcon::VMachine *vm )
 
 /*#
    @function paramSet
-   @inset varparms_support
+   @inset varparams_support
    @brief Changes the nth paramter if it has been passed by reference.
    @param number the paramter to be changed (zero based)
    @param value the new value for the parameter
