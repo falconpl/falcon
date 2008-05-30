@@ -94,12 +94,12 @@
    @funset functional_support Functional programming support
    @brief ETA functions and functional constructs.
 
-   Falcon provides some special functional programming constructs that is known
+   Falcon provides some special functional programming constructs that are known
    to the VM to have special significance. The vast majority of them starts a
    “functional evaluation” chain on their parameters before their value is evaluated.
    A functional evaluation is a recursive evaluation (reduction) of list structures into
    atoms. At the moment, the only list structure that can be evaluated this way is the array.
-   A parameter being evaluated in functional context means that the given parameter will be
+   Evaluating a parameter in functional context means that the given parameter will be
    recursively scanned for callable arrays or symbols that can be reduced to atoms. A callable
    array is reduced by calling the function and substituting it with its return value.
    When all the contents of the list are reduced, the higher level is evaluated.
@@ -112,7 +112,7 @@
    list = [func0, [func1, param1], param2]
    @endcode
 
-   Calling list as a callable array, func0 will be called with the array [func1, param1] as
+   Calling @b list as a callable array, func0 will be called with the array [func1, param1] as
    the first parameter, and param2 as the second parameter. On the other hand, evaluating
    the above list in a functional context, first func1 will be called with param1, then
    func0 will be called with the return value of the previous evaluation as the first parameter,
@@ -133,8 +133,8 @@
    decide what to do, the two arrays [func0, ...] and [func1,...] would have been evaluated.
    As iff is a special construct, the VM doesn't evaluate its parameters and lets iff perform
    its operations as it prefer. In the case o iff, it first evaluates the first parameter,
-   then evaluates in functional context the second on the third parameter, leaving unevaluated
-   the other one.
+   then evaluates in functional context the second on the third parameter, 
+   leaving unevaluated the other one.
 
    Not all constructs evaluates everything it is passed to them in a functional context. Some of
    them are meant exactly to treat even a callable array (or anything else that should be reduced)
@@ -152,6 +152,9 @@
 
    This places in result the value returned by func0 if shouldEval is true, while it returns exactly
    the function object func0 as-is if shouldEval is false.
+   
+   A more formal definition of the funcional programming support  in Falcon is provided in the
+   Survival Guide.
 */
 
 /*#
@@ -3703,13 +3706,15 @@ FALCON_FUNC  core_allp ( ::Falcon::VMachine *vm )
 /*#
    @function eval
    @inset functional_support
-   @brief Evaluates an array in functional context.
+   @brief Evaluates a sequence in functional context.
    @param sequence A sequence to be evaluated.
    @return The sigma-reduction (evaluation) result.
 
-   The array is evaluated in functional context; this means that if the array
-   is a callable item, it gets called and the result is returned; otherwise,
-   a functionally reduced array is returned.
+   The parameter is evaluated in functional context; this means that if the parameter
+   is a sequence starting with a callable item, that item gets called with the rest of the
+   sequence passed as parameters, and the result it returns is considered the
+   "evaluation result". This is performed recursively, inner-to-outer, on every element
+   of the sequence before the call to the first element is actually performed.
 
    The description of the functional evaluation algorithm is included in the heading
    of this section.
@@ -3899,14 +3904,14 @@ static bool core_dolist_next ( ::Falcon::VMachine *vm )
    @optparam ... Optional parameters to be passed to the first callable item.
    @return The return value of the last callable item.
 
-   Every item in array is passed as parameter to the processor, which must be a callable
-   item. Items are also functionally evaluated, one by one. The parameter array is not
-   functionally evaluated as a whole; to do that, use the explicit evaluation idiom:
+   Every item in @b sequence is passed as parameter to the processor, which must be a callable
+   item. Items are also functionally evaluated, one by one, but the parameter @b sequence is not
+   functionally evaluated as a whole; to do that, use the explicit evaluation:
    @code
       dolist( processor, eval(array) )
    @endcode
    This method is equivalent to @a xmap, but it has the advantage that it doesn't create an array
-   of evaluated results. So, when it is not necessary to transform an array in another through a
+   of evaluated results. So, when it is not necessary to transform a sequence in another through a
    mapping function, but just to run repeatedly over a collection, this function is to be preferred.
 */
 FALCON_FUNC  core_dolist ( ::Falcon::VMachine *vm )
@@ -4058,7 +4063,7 @@ static bool core_times_next ( ::Falcon::VMachine *vm )
    times, eventually filling a variable with the current loop index, or mangling the
    parameters of the given callable items so that they receive the index as a parameter.
 
-   @note The paramters of @b time are not functionally evaluated.
+   @note The paramters of @b times are not functionally evaluated.
 
    The loop index count will be given values from 0 to the required index-1 if @b count is numeric,
    or it will act as the for/in loop if @b count is a range.
@@ -4276,15 +4281,16 @@ static bool core_xmap_next( ::Falcon::VMachine *vm )
    @param sequence A sequence to be mapped.
    @return The mapped sequence.
 
-   mfunc is called iteratively for every item in the collection;  its return value is added to
+   @b mfunc is called iteratively for every item in the collection;  its return value is added to
    the mapped array. Moreover, each item in the collection is functionally evaluated before
    being passed to mfunc.
 
    The filter function may return an out of band nil item to signal that the current item should
    not be added to the final collection.
 
+    In example:
    @code
-      In example:
+      
       mapper = lambda item => (item < 0 ? oob(nil) : item ** 0.5)
       add = lambda a, b => a+b         // a lambda that will be evaluated
 
@@ -4292,6 +4298,7 @@ static bool core_xmap_next( ::Falcon::VMachine *vm )
    @endcode
 
    @see oob
+   @see dolist
 */
 
 FALCON_FUNC  core_xmap ( ::Falcon::VMachine *vm )
@@ -5219,6 +5226,8 @@ FALCON_FUNC  having( ::Falcon::VMachine *vm )
    If the target object had already the attribute, nothing is done.
    If the first parameter is not an attribute or the second parameter is not an
    object, a ParamError is rasied.
+   
+   @see dolist
 */
 FALCON_FUNC  giveTo( ::Falcon::VMachine *vm )
 {
