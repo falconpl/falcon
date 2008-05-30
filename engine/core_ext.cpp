@@ -3406,15 +3406,19 @@ static bool core_any_next( ::Falcon::VMachine *vm )
    @function any
    @inset functional_support
    @brief Returns true if any of the items in a given collection evaluate to true.
-   @param collection An array of arbitrary items.
+   @param sequence A sequence of arbitrary items.
    @return true at least one item in the collection is true, false otherwise.
 
-   If the items in the collection are callable items, they get called and their return
-   value is evaluated, otherwise they are evaluated as true or false using the standard
-   Falcon truth check (nil is false, numerics are true if not zero, strings and collections
-   are true if not empty, object and classes are always true). Check is short circuited;
-   this means that elements are evaluated until the first element considered to be true
-   (or returning true) is found.
+   Items in @b sequence are evaluated in functional context for truth value. This means that,
+   if they are sigmas, they get sigma-reduced and their return value is evaluated,
+   otheriwise they are evaluated directly.
+
+   Truth value is determined using the standard Falcon truth
+   check (nil is false, numerics are true if not zero, strings and collections are true if not
+   empty, object and classes are always true).
+   
+   The check is short circuited. This means that elements are evaluated until 
+   an element considered to be true (or sigma-reduced to a true value) is found.
 
    If the collection is empty, this function returns false.
 */
@@ -3489,17 +3493,21 @@ static bool core_all_next( ::Falcon::VMachine *vm )
    @function all
    @inset functional_support
    @brief Returns true if all the items in a given collection evaluate to true.
-   @param collection An array of arbitrary items.
+   @param sequence A sequence of arbitrary items.
    @return true if all the items are true, false otherwise
 
-   If the items in the collection are callable items, they get called and their return value
-   is evaluated, otherwise they are evaluated as true or false using the standard Falcon truth
+   Items in @b sequence are evaluated in functional context for truth value. This means that,
+   if they are sigmas, they get sigma-reduced and their return value is evaluated,
+   otheriwise they are evaluated directly.
+
+   Truth value is determined using the standard Falcon truth
    check (nil is false, numerics are true if not zero, strings and collections are true if not
    empty, object and classes are always true).
 
-   Check is short circuited. This means that the check is interrupted as the first element is
-   evaluated in false.
-   If the collection is empty it returns false.
+   The check is short circuited. This means that the processing of parameters 
+   is interrupted as an element is evaluated into false.
+   
+   If the collection is empty, this function returns false.
 */
 
 FALCON_FUNC  core_all ( ::Falcon::VMachine *vm )
@@ -3581,8 +3589,8 @@ static bool core_anyp_next( ::Falcon::VMachine *vm )
    @brief Returns true if any one of the parameters evaluate to true.
    @param ... A list of arbitrary items.
    @return true at least one parameter is true, false otherwise.
-
-   This function works like any(), but the collection may be specified directly
+   
+   This function works like @a any, but the sequence may be specified directly
    in the parameters rather being given in a separate array. This make easier to write
    anyp in callable arrays. In example, one may write
    @code
@@ -3591,7 +3599,16 @@ static bool core_anyp_next( ::Falcon::VMachine *vm )
    while using any one should write
    @code
       [any, [1, k, n ...]]
-   @endcode
+   @endcode   
+   
+   Parameters are evaluated in functional context. This means that,
+   if they are sigmas, they get sigma-reduced and their return value is evaluated,
+   otheriwise they are evaluated directly.
+
+   Truth value is determined using the standard Falcon truth
+   check (nil is false, numerics are true if not zero, strings and collections are true if not
+   empty, object and classes are always true).
+
    If called without parameters, this function returns false.
 */
 FALCON_FUNC  core_anyp ( ::Falcon::VMachine *vm )
@@ -3659,7 +3676,7 @@ static bool core_allp_next( ::Falcon::VMachine *vm )
    @param ... An arbitrary list of items.
    @return true if all the items are true, false otherwise
 
-   This function works like all(), but the collection may be specified directly
+   This function works like @a all, but the collection may be specified directly
    in the parameters rather being given in a separate array. This make easier to
    write allp in callable arrays. In example, one may write
    @code
@@ -3669,6 +3686,15 @@ static bool core_allp_next( ::Falcon::VMachine *vm )
    @code
       [all, [1, k, n ...]]
    @endcode
+   
+   Parameters are evaluated in functional context. This means that,
+   if they are sigmas, they get sigma-reduced and their return value is evaluated,
+   otheriwise they are evaluated directly.
+
+   Truth value is determined using the standard Falcon truth
+   check (nil is false, numerics are true if not zero, strings and collections are true if not
+   empty, object and classes are always true).
+   
    If called without parameters, this function returns false.
 */
 FALCON_FUNC  core_allp ( ::Falcon::VMachine *vm )
@@ -4069,7 +4095,7 @@ static bool core_times_next ( ::Falcon::VMachine *vm )
    or it will act as the for/in loop if @b count is a range.
 
    The way the current index loop is sent to the items depends on the type of @b var.
-   If it's nil, then it is only kept internally; Sigma functions in @b sequence may not need it, or
+   If it's nil, then the count is only kept internally; Sigma functions in @b sequence may not need it, or
    they may use an internal counter. In example:
    @code
       function printTimes()
@@ -4133,8 +4159,8 @@ static bool core_times_next ( ::Falcon::VMachine *vm )
    In this case, if the callable items in @b sequence are not sigmas, or if they are to short for the
    @b var ID to be useful, they get called without the addition of the loop index parameter.
 
-   @note The original sigmas are not restored after times is executed in this modality. This means that the
-   arrays in @b sequence will be altered, and they will hold the last number set by times before exit.
+   @note The original sigmas are not restored after @b times is executed in this modality. This means that the
+   arrays in @b sequence will be altered, and they will hold the last number set by @b times before exit.
 
    Exactly like @a floop, the flow of calls in @b times can be altered by the functions in sequence returning
    an out-of-band 0 or 1. If any function in the sequence returns an out-of-band 0, @b times terminates and
