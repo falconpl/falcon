@@ -4560,8 +4560,9 @@ static bool core_iff_next( ::Falcon::VMachine *vm )
    eventually execute. Notice that:
    @code
       iff( 1 , printl( "ok!" ), printl( "no" ) )
-   @code
-   In would have forced falcon to execute the two printl calls before entering the iff functions;
+   @endcode
+   
+   This would have forced Falcon to execute the two printl calls before entering the iff function;
    still, iff would have returned printl return values (which is nil in both cases).
 */
 FALCON_FUNC  core_iff ( ::Falcon::VMachine *vm )
