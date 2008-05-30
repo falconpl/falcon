@@ -4794,7 +4794,7 @@ static bool core_cascade_next ( ::Falcon::VMachine *vm )
    @endcode
 
    A function may declare itself “uninterested” to insert its value in the cascade
-   by raising nil. In that case, the return value is ignored and the same parameter
+   by returning an out-of-band item. In that case, the return value is ignored and the same parameter
    it received is passed on to the next calls and eventually returned.
 
    Notice that the call list is not evaluated in functional context; it is just a list
@@ -4817,13 +4817,13 @@ static bool core_cascade_next ( ::Falcon::VMachine *vm )
    @endcode
 
    Thanks to the possibility to prevent insertion of the return value in the function call sequence,
-   t is possible to program “interceptors” that will catch the progress of the sequence without
+   it is possible to program “interceptors” that will catch the progress of the sequence without
    interfering:
 
    @code
       function showprog( v )
          > "Result currently ", v
-         raise nil
+        return oob(nil)
       end
 
       // define sqrt and square as before...
@@ -4832,7 +4832,7 @@ static bool core_cascade_next ( ::Falcon::VMachine *vm )
       > "Second process: ", cascade_abs( -4 )
    @endcode
 
-   If the first function of the list declines processing by raising nil, the initial parameters
+   If the first function of the list declines processing by returning an oob item, the initial parameters
    are all passed to the second function, and so on till the last call.
 
    In example:
@@ -4840,15 +4840,17 @@ static bool core_cascade_next ( ::Falcon::VMachine *vm )
    @code
       function whichparams( a, b )
          > "Called with ", a, " and ", b
-         raise nil
+         return oob(nil)
       end
 
       csq = [cascade, [ whichparams, lambda a,b=> a*b] ]
       > csq( 3, 4 )
    @endcode
 
-   Here, the first function in the list intercepts the parameters, but as it doesn't
-   accepts them they are both passed to the second in the list.
+   Here, the first function in the list intercepts the parameters but, as it doesn't
+   accepts them, they are both passed to the second in the list.
+   
+   @see oob
 */
 FALCON_FUNC  core_cascade ( ::Falcon::VMachine *vm )
 {
