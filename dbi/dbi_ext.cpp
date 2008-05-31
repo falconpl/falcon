@@ -40,7 +40,7 @@ static int DBIHandle_itemToSqlValue( DBIHandle *dbh, const Item *i, String &valu
 {
    switch( i->type() ) {
       case FLC_ITEM_BOOL:
-         value = i->asBoolean() ? "'TRUE'" : "'FALSE'";
+         value = i->asBoolean() ? "TRUE" : "FALSE";
          return 1;
 
       case FLC_ITEM_INT:
