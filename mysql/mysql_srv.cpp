@@ -33,7 +33,7 @@ DBIRecordsetMySQL::DBIRecordsetMySQL( DBIHandle *dbh, MYSQL_RES *res )
    m_res = res;
 
    m_row = -1; // BOF
-   m_rowCount = mysql_num_fields( res ); // Only valid when using mysql_store_result instead of use_result
+   m_rowCount = mysql_num_rows( res ); // Only valid when using mysql_store_result instead of use_result
    m_columnCount = mysql_num_fields( res );
    m_fields = mysql_fetch_fields( res );
 }
