@@ -1,4 +1,4 @@
-Falcon (0.8.9)
+Falcon (0.8.10)
   * minor: Now classes can be stored in object properties and called to get
       an instance.
   * bugfix: Indirect operator wasn't peeking the global table after having
