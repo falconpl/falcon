@@ -1,10 +1,9 @@
 
-                       RELNOTES for Falcon 0.8.8
+                       RELNOTES for Falcon 0.8.10
 
-   This is a bugfix version of Falcon 0.8.6; also, the limitation of the VM
-in unloading modules in arbitrary order has been removed, and the ability to
-load modules using virtual partitioned names (as i.e. load a.b.c) has been
-added.
+  This release presents some major breakthrough with respect to the past
+releases.
 
-   The version has been also given some functions that are useful for the
-completion of the 0.8 series.
+  Paradigms are now more formalized and the overall stability of the engine
+and of the language has sensibly grown. Be sure to read carefully the
+ChangeLog in this version, as many aspects of the grammar has been changed.
