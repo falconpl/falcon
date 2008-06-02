@@ -24,13 +24,9 @@ Modules admitted in the DBI are currently:
 BUILDING
 ========
 
-To build the Falcon DBI, you'll need a well setup Falcon Development
-Environment, as specified in the relative document at
-
-   http://www.falconpl.org/wiki/tiki-index.php?page=The+build+environment
-
-The core must be built and installed in the active tree before starting
-feathers configuration.
+To build the Falcon DBI module, you just need to have Falcon
+development files (or a complete Falcon development environment)
+setup on your machine.
 
 Then,
 

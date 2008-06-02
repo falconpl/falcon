@@ -4,7 +4,6 @@
 # DBI - Macros and utilities for Falcon modules
 ####################################################################
 
-#Set the default buid type to RelWithDebInfo
 IF(NOT CMAKE_BUILD_TYPE)
   SET(CMAKE_BUILD_TYPE Debug CACHE STRING
       "Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel."
@@ -38,9 +37,15 @@ ELSE("$ENV{FALCON_INC_PATH}" STREQUAL "" )
    #or similar environment to obviate the need for FALCON-CONF
    MESSAGE( "Configuring FALCON from environmental settings" )
 
-   SET( FALCON_INC_PATH $ENV{FALCON_INC_PATH} CACHE )
-   SET( FALCON_LIB_PATH $ENV{FALCON_LIB_PATH} CACHE )
-   SET( FALCON_MOD_INSTALL $ENV{FALCON_BIN_PATH} CACHE )
+   IF ("$ENV{FALCON_ACTIVE_TREE}" STREQUAL "")
+      SET( FALCON_INC_DIR "$ENV{FALCON_INC_PATH}" )
+      SET( FALCON_LIB_DIR "$ENV{FALCON_LIB_PATH}" )
+      SET( FALCON_MOD_INSTALL "$ENV{FALCON_BIN_PATH}" )
+   ELSE ("$ENV{FALCON_ACTIVE_TREE}" STREQUAL "")
+      SET( FALCON_INC_DIR "$ENV{FALCON_ACTIVE_TREE}/include" )
+      SET( FALCON_LIB_DIR "$ENV{FALCON_ACTIVE_TREE}/lib" )
+      SET( FALCON_MOD_INSTALL "$ENV{FALCON_ACTIVE_TREE}/bin" )
+   ENDIF ("$ENV{FALCON_ACTIVE_TREE}" STREQUAL "")
 
 ENDIF("$ENV{FALCON_INC_PATH}" STREQUAL "" )
 
