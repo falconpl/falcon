@@ -169,8 +169,36 @@ public:
    uint32 entry() const { return m_entry; }
 
    String *addCString( const char *pos, uint32 size );
+
+   /** Add a string to the module string table.
+      If the string already exists, the previous entry is returned.
+      \note If the string isn't found in the string table and is
+         created on the spod, its exported status
+         (international string) is copied from \b st.
+
+      \param st the string to be added.
+      \return A pointer to the string in the module string table.
+   */
    String *addString( const String &st );
 
+   /** Add a string to the module string table and eventually exports it.
+      If the string already exists, the previous entry is returned.
+      This method also set the "exported" bit of the returned string,
+      so that the string can be directly used in exported intenrationalization
+      tables.
+      \param st the string to be added.
+      \param exported set to true to make this string subject to
+                      internationalization table exports.
+      \return A pointer to the string in the module string table.
+   */
+   String *addString( const String &st, bool exported );
+
+   /** Return a string given an ID in the string table.
+      This function doesn't check for out-of-bounds access, so be careful.
+
+      \param id the ID of the string in the string table (insertion order).
+      \return A pointer to the string.
+   */
    const String *getString( uint32 id ) const { return m_strTab.get(id); }
 
    Symbol *getSymbol( uint32 id ) const

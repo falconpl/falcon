@@ -277,10 +277,24 @@ String *Module::addString( const String &st )
       ret->exported( st.exported() );
 		m_strTab.add( ret );
    }
-
    return ret;
 }
 
+String *Module::addString( const String &st, bool exported )
+{
+   String *ret = m_strTab.find( st );
+   if ( ret == 0 ) {
+      ret = new String( st );
+      ret->exported( exported );
+      ret->bufferize();
+		m_strTab.add( ret );
+   }
+   else {
+      ret->exported( exported );
+   }
+
+   return ret;
+}
 
 bool Module::save( Stream *out, bool skipCode ) const
 {

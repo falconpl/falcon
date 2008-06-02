@@ -5,7 +5,7 @@
    Definitions for messages.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
-   Begin: 
+   Begin:
 
    -------------------------------------------------------------------
    (C) Copyright 2008: the FALCON developers (see list in AUTHORS file)
@@ -121,7 +121,7 @@
 #undef FAL_MODSTR
 #ifdef FALCON_DECLARE_MODULE
    #define FAL_MODSTR( str_id, text ) \
-      str_id = FALCON_DECLARE_MODULE->addString( text )->id();
+      str_id = FALCON_DECLARE_MODULE->addString( text, true )->id();
 #else
    #ifdef FALCON_REALIZE_STRTAB
       #define FAL_MODSTR( id, text )   unsigned int id;
