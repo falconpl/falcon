@@ -3,7 +3,6 @@
 #
 # CMake configuration file for module mysql
 ####################################################################
-PROJECT(mysql)
 
 # Find MYSQL
 SET(MYSQL_INCLUDE_SEARCH_PATH
@@ -42,8 +41,9 @@ MESSAGE(STATUS "Found mysql client library, ${MYSQL_LIBRARY}")
 # Inclusion settings
 INCLUDE_DIRECTORIES(.)
 INCLUDE_DIRECTORIES(../include)
-INCLUDE_DIRECTORIES(BEFORE ${TARGET_DIR}/include)
-LINK_DIRECTORIES(BEFORE ${TARGET_DIR}/${TARGET_LIB_DIR} )
+
+INCLUDE_DIRECTORIES(BEFORE "${FALCON_INC_DIR}")
+LINK_DIRECTORIES(BEFORE "${FALCON_LIB_DIR}")
 
 # Target
 ADD_LIBRARY( mysql MODULE
@@ -58,9 +58,5 @@ IF(MSVC)
   SET_TARGET_PROPERTIES(mysql PROPERTIES LINK_FLAGS "/NODEFAULTLIB:library")
 ENDIF(MSVC)
 
-TARGET_LINK_LIBRARIES(mysql falcon_engine ${MYSQL_OPT_LIBS} ${MYSQL_LIBRARY})
-SET_TARGET_PROPERTIES(mysql
-   PROPERTIES PREFIX "")
-
-# Install
-FALCON_MODULE_INSTALL( mysql )
+TARGET_LINK_LIBRARIES( mysql falcon_engine ${MYSQL_OPT_LIBS} ${MYSQL_LIBRARY})
+FALCON_INSTALL_MODULE( mysql )

@@ -3,7 +3,6 @@
 #
 # CMake configuration file for module sqlite3
 ####################################################################
-PROJECT(sqlite3)
 
 # Inclusion settings
 INCLUDE_DIRECTORIES(.)
@@ -28,5 +27,4 @@ ELSE(WIN32)
    TARGET_LINK_LIBRARIES(sqlite3 falcon_engine pthread)
 ENDIF(WIN32)
 
-SET_TARGET_PROPERTIES(sqlite3 PROPERTIES PREFIX "") #Install
-FALCON_MODULE_INSTALL( sqlite3 )
+FALCON_INSTALL_MODULE( sqlite3 )
