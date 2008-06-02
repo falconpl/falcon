@@ -1,0 +1,23 @@
+This directory contains the memory/cpu intensive
+regression tests for this Falcon version.
+
+The scripts here are not stand-alone, and can't be normally
+called with "falcon", as they integrate with some utility
+provided by "faltest".
+
+A complete and working installation of falcon can be tested
+by entering in this directory and launching "faltest" from
+the command line.
+
+If the bottom line reports an error, then something is
+broken. The faltest manual in the "Command Line Tools"
+guide (available with "man faltest" on Linux and
+downloadable from http://falconpl.org) illustrates how
+to use faltest to have more accurate error reports.
+
+In case of this preliminary test failing, please send
+a complete report generated with "faltest -v" applied
+on the failing tests to the Committe through our
+"contacts" page at
+
+   http://falconpl.org/index.ftd?page_id=contacts
