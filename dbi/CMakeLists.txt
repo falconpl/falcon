@@ -3,7 +3,6 @@
 #
 # CMake configuration file for module DBI - database interface
 ####################################################################
-PROJECT(dbi)
 
 # Inclusion settings
 INCLUDE_DIRECTORIES(.)
