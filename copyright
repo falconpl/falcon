@@ -1,7 +1,11 @@
              The Falcon Programming Language
-                http://www.falconpl.org
 
-Falcon is currently distributed under a dual licensing scheme GPL/FPLL.
+                 DBI - Database Interface 
+
+                 http://www.falconpl.org
+
+Falcon and featured modules are currently distributed under a 
+dual licensing scheme GPL/FPLL.
 
 The GPL licensing scheme is provided to ensure compatibilty with
 Open Source and Free Software products. It's a relative strict license
