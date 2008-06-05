@@ -40,7 +40,7 @@ namespace Ext {
    @function getHostName
    @brief Retreives the host name of the local machine.
    @return A string containing the local machine name.
-   @raise @a NetError if the host name can't be determined.
+   @raise NetError if the host name can't be determined.
 
    Returns the network name under which the machine is known to itself. By
    calling @a resolveAddress on this host name, it is possible to determine all
@@ -71,7 +71,7 @@ FALCON_FUNC  falcon_getHostName( ::Falcon::VMachine *vm )
    @brief Resolve a network address in a list of numeric IP fields.
    @param address An host name, quad dot IP address or IPV6 address.
    @return An array of IPv4 or IPv6 addresses.
-   @raise @a NetError if the name resolution service is not available.
+   @raise NetError if the name resolution service is not available.
 
    This function tries to resolve an address or an host name into a list of
    addresses that can be used to connect directly via the protocols that are

@@ -68,7 +68,7 @@ FALCON_FUNC ZLib_getVersion( ::Falcon::VMachine *vm )
    @brief Compress a buffer (classwide method).
    @param buffer A string or a MemBuf to be compressed.
    @return A compressed buffer (in a byte-wide MemBuf).
-   @raise @a ZLibError on compression error.
+   @raise ZLibError on compression error.
 
    This method will compress the data considering its raw memory value.
    This is suitable for bytewise strings loaded from binary streams
@@ -155,7 +155,7 @@ FALCON_FUNC ZLib_compress( ::Falcon::VMachine *vm )
    @brief Compress a text string (classwide method).
    @param text A string containing a text be compressed.
    @return A compressed buffer (in a byte-wide MemBuf).
-   @raise @a ZLibError on compression error.
+   @raise ZLibError on compression error.
 
    This method will compress the a text so that an @a ZLib.uncompressText
    re-creates the original string.
@@ -236,7 +236,7 @@ FALCON_FUNC ZLib_compressText( ::Falcon::VMachine *vm )
    @brief Uncompress a buffer (classwide method).
    @param buffer A string or MemBuf containing previusly compressed data.
    @return A MemBuf containing the uncompressed data.
-   @raise @a ZLibError on decompression error.
+   @raise ZLibError on decompression error.
 
 */
 FALCON_FUNC ZLib_uncompress( ::Falcon::VMachine *vm )
@@ -319,7 +319,7 @@ FALCON_FUNC ZLib_uncompress( ::Falcon::VMachine *vm )
    @brief Uncompress a buffer into a text (classwide method).
    @param buffer A MemBuf or string containing previusly compressed text data.
    @return A uncompressed string.
-   @raise @a ZLibError on decompression error.
+   @raise ZLibError on decompression error.
 
    The input @b buffer must be a string previously compressed
    with the @a ZLib.compressText method, or the function will fail.

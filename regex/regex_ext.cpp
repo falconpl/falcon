@@ -47,7 +47,7 @@ namespace Ext {
 /*#
    @init Regex
    @brief Compiles the regular expression patterns and initializes the instance.
-   @raise @a RegexError if the pattern is invalid.
+   @raise RegexError if the pattern is invalid.
 
    The class constructor creates a Regex instance that can be then used to match, find,
    extract  and substitute strings. Compilation of regular expressions can be an heavy step,

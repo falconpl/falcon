@@ -3,7 +3,6 @@
 #
 # CMake configuration file for module Regex
 ####################################################################
-PROJECT(regex)
 
 OPTION(WITH_INTERNAL_PCRE "Use internal pcre library" OFF)
 
@@ -108,7 +107,6 @@ ${SYS_RC}
 
 #Link
 TARGET_LINK_LIBRARIES(regex falcon_engine ${PCRE_LIBRARIES})
-SET_TARGET_PROPERTIES(regex
-   PROPERTIES PREFIX "")
+
 #Install
-FALCON_MODULE_INSTALL( regex )
+FALCON_INSTALL_MODULE( regex )

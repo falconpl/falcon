@@ -3,12 +3,9 @@
 #
 # CMake configuration file for module Process
 ####################################################################
-PROJECT(process)
 
 # Inclusion settings
 INCLUDE_DIRECTORIES(.)
-INCLUDE_DIRECTORIES(BEFORE ${TARGET_DIR}/include)
-LINK_DIRECTORIES(BEFORE ${TARGET_DIR}/${TARGET_LIB_DIR} )
 
 IF(UNIX)
    SET(SYS_SPECIFIC process_sys_unix.cpp)
@@ -26,8 +23,4 @@ ADD_LIBRARY( process MODULE
 )
 
 #Link
-TARGET_LINK_LIBRARIES(process falcon_engine)
-SET_TARGET_PROPERTIES(process
-   PROPERTIES PREFIX "")
-#Install
-FALCON_MODULE_INSTALL( process )
+FALCON_LINK_MODULE( process )

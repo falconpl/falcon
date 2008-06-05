@@ -3,12 +3,9 @@
 #
 # CMake configuration file for module Mxml
 ####################################################################
-PROJECT(mxml)
 
 # Inclusion settings
 INCLUDE_DIRECTORIES(.)
-INCLUDE_DIRECTORIES(BEFORE ${TARGET_DIR}/include)
-LINK_DIRECTORIES(BEFORE ${TARGET_DIR}/${TARGET_LIB_DIR} )
 
 IF(UNIX)
 ELSE(UNIX)
@@ -31,8 +28,4 @@ ADD_LIBRARY( mxml MODULE
 )
 
 #Link
-TARGET_LINK_LIBRARIES(mxml falcon_engine)
-SET_TARGET_PROPERTIES(mxml
-   PROPERTIES PREFIX "")
-#Install
-FALCON_MODULE_INSTALL( mxml )
+FALCON_LINK_MODULE( mxml )

@@ -3,7 +3,6 @@
 #
 # CMake configuration file for module Process
 ####################################################################
-PROJECT(zlib)
 
 INCLUDE(FindZLIB)
 
@@ -90,7 +89,6 @@ ADD_LIBRARY( zlib MODULE
 
 #Link
 TARGET_LINK_LIBRARIES(zlib falcon_engine ${ZLIB_LIBRARIES})
-SET_TARGET_PROPERTIES(zlib
-   PROPERTIES PREFIX "")
+
 #Install
-FALCON_MODULE_INSTALL( zlib )
+FALCON_INSTALL_MODULE( zlib )

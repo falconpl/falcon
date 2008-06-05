@@ -3,7 +3,6 @@
 #
 # CMake configuration file for module Socket
 ####################################################################
-PROJECT(socket)
 
 # Inclusion settings
 INCLUDE_DIRECTORIES(.)
@@ -43,8 +42,5 @@ IF(WIN32)
    TARGET_LINK_LIBRARIES(socket ws2_32)
 ENDIF(WIN32)
 
-SET_TARGET_PROPERTIES(socket
-   PROPERTIES PREFIX "")
-
 #Install
-FALCON_MODULE_INSTALL( socket )
+FALCON_INSTALL_MODULE( socket )
