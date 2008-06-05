@@ -1,11 +1,11 @@
-PROJECT(faldisass)
+##################################################
+# Falcon Programming Language
+#
+# Faldisass
+##################################################
 
 # Inclusion settings
 INCLUDE_DIRECTORIES(.)
-INCLUDE_DIRECTORIES(BEFORE ${TARGET_DIR}/include)
-INCLUDE_DIRECTORIES(BEFORE ../../include)
-LINK_DIRECTORIES(BEFORE ${TARGET_DIR}/${TARGET_LIB_DIR} )
-
 
 IF(WIN32)
    SET(SYS_RC faldisass.rc)
@@ -21,4 +21,5 @@ ADD_EXECUTABLE( faldisass
 TARGET_LINK_LIBRARIES(faldisass falcon_engine)
 
 #Install
-FALCON_INSTALL( faldisass bin )
+INSTALL( TARGETS faldisass
+      DESTINATION ${FALCON_BIN_DIR} )

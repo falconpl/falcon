@@ -1,11 +1,11 @@
-PROJECT(faltest)
+##################################################
+# Falcon Programming Language
+#
+# Faltest
+##################################################
 
 # Inclusion settings
 INCLUDE_DIRECTORIES(.)
-INCLUDE_DIRECTORIES(BEFORE ${TARGET_DIR}/include)
-INCLUDE_DIRECTORIES(BEFORE ../../include)
-LINK_DIRECTORIES(BEFORE ${TARGET_DIR}/${TARGET_LIB_DIR} )
-
 
 IF(WIN32)
    SET(SYS_RC faltest.rc)
@@ -39,5 +39,8 @@ SET_TARGET_PROPERTIES( testsuite
    PROPERTIES PREFIX "")
 
 #Install
-FALCON_INSTALL( faltest bin )
-FALCON_MODULE_INSTALL( testsuite )
+INSTALL( TARGETS faltest
+      DESTINATION ${FALCON_BIN_DIR} )
+
+INSTALL( TARGETS testsuite
+      DESTINATION ${FALCON_MOD_INSTALL} )

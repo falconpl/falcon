@@ -1,10 +1,10 @@
-PROJECT(falcon_rtl)
+##################################################
+# Falcon Programming Language
+#
+# Falcon RTL
+##################################################
 
 INCLUDE_DIRECTORIES(.)
-INCLUDE_DIRECTORIES(BEFORE ${TARGET_DIR}/include)
-INCLUDE_DIRECTORIES(BEFORE ../include)
-LINK_DIRECTORIES(BEFORE ${TARGET_DIR}/${TARGET_LIB_DIR} )
-
 
 IF(WIN32)
 	SET(SYSTEM_RC  falcon_rtl.rc)
@@ -49,4 +49,5 @@ IF(UNIX OR MAC)
 ENDIF(UNIX OR MAC)
 
 #Install
-FALCON_MODULE_INSTALL( falcon_rtl )
+INSTALL( TARGETS falcon_rtl
+   DESTINATION "${FALCON_MOD_INSTALL}" )

@@ -1,0 +1,260 @@
+#!@FINAL_DESTINATION@/bin/falcon
+/*
+   FALCON - The Falcon Programming Language.
+   FILE: falconeer.fal
+
+   Script that configures module skeleton.
+   -------------------------------------------------------------------
+
+   Copyright 2008 Giancarlo Niccolai
+
+   Licensed under the Falcon Programming Language License,
+   Version 1.1 (the "License") or GPLv2.0 or following,
+   at your choice; you may not use this file except in
+   compliance with on of the Licenses. You may obtain
+   a copy of the Licenses at
+
+      http://www.falconpl.org/?page_id=license_1_1
+      http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
+
+   Unless required by applicable law or agreed to in writing,
+   software distributed under the License is distributed on
+   an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+   KIND, either express or implied. See the License for the
+   specific language governing permissions and limitations
+   under the License.
+*/
+
+load regex
+
+//==========================================
+// Global definitions
+//
+
+// name used for skeleton files
+const skelname = "fmodskel"
+
+// using falcon string concatenation to prevent cmake
+// to mangle with this values.
+const var_prjname = "@" "PROJECT_NAME@"
+const var_desc    = "@" "DESCRIPTION@"
+const var_author  = "@" "AUTHOR@"
+const var_date    = "@" "DATE@"
+const var_year    = "@" "YEAR@"
+const var_copy    = "@" "COPYRIGHT@"
+const var_license = "@" "LICENSE@"
+const var_mainprj = "@" "MAIN_PRJ@"
+
+const default_license = \
+   "   Licensed under the Falcon Programming Language License,\n"
+   "   Version 1.1 (the \"License\"); you may not use this file\n"
+   "   except in compliance with the License. You may obtain\n"
+   "   a copy of the License at\n"
+   "\n"
+   "      http://www.falconpl.org/?page_id=license_1_1\n"
+   "\n"
+   "   Unless required by applicable law or agreed to in writing,\n"
+   "   software distributed under the License is distributed on\n"
+   "   an \"AS IS\" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY\n"
+   "   KIND, either express or implied. See the License for the\n"
+   "   specific language governing permissions and limitations\n"
+   "   under the License.\n"
+
+const default_prj = "FALCON - The Falcon Programming Language."
+
+files = [\
+   "src/" + skelname + ".cpp",
+   "src/" + skelname + "_ext.cpp",
+   "src/" + skelname + "_ext.h",
+   "src/" + skelname + "_st.cpp",
+   "src/" + skelname + "_st.h",
+   "src/" + skelname + "_mod.cpp",
+   "src/" + skelname + "_mod.h",
+   "src/" + skelname + "_srv.cpp",
+   "src/" + skelname + "_srv.h",
+   "src/" + skelname + "_CMakeLists.txt:src/CMakeLists.txt",
+   "templates/"+ skelname + "_cpp_template",
+   "templates/" + skelname + "_h_template",
+   "docs/" + skelname + "_faldoc.fd:docs/faldoc.fd",
+   skelname + "_CMakeLists.txt:CMakeLists.txt",
+   skelname + "_build.sh:build.sh",
+   skelname + "_falmod.cmake:falmod.cmake",
+   skelname + ".sln",
+   skelname + ".vcproj",
+   skelname + "_Makefile.gnu",
+   skelname + "_Makefile.mac"
+]
+
+chgRegex = Regex( skelname )
+
+variables = [=>]
+
+//==========================================
+// Configuration options parser
+//
+
+object MyParser from CmdlineParser
+   prj_name = nil
+   author = "Unknown author"
+   description = ""
+   date = CurrentTime()
+   copyright = "The above AUTHOR"
+   licplate = default_license
+   mainprj = default_prj
+
+   function onOption( option )
+      switch option
+         case "?", "help": self.usage()
+         case "a", "author", "n", "name", "d", "description", \
+              "l", "license", "c", "copyright", "p", "project"
+            self.expectValue()
+         default
+            self.unrecognized( option )
+      end
+   end
+
+   function onValue( option, value )
+      switch option
+         case "a", "author": self.author = value
+         case "n", "name": self.prj_name = value
+         case "d", "description": self.description = value
+         case "l", "license": self.loadLicense( value )
+         case "c", "copyright": self.copyright = value
+         case "p", "project": self.mainprj = value
+      end
+   end
+
+   function onFree( param )
+      self.unrecognized( param )
+   end
+
+   function loadLicense( param )
+      try
+         inf = InputStream( param )
+         self.licplate=""
+         while ( data = inf.read(2048) )
+            self.licplate +=data
+         end
+         inf.close()
+      catch IoError in e
+         > "falconeer.fal: FATAL: cannot load license plate file ", param
+         > e
+         exit(1)
+      end
+   end
+
+   function unrecognized( option )
+      printl( "Unrecognized option \"", option, "\"\n\n" );
+      self.usage()
+      exit(1)
+   end
+
+   function usage()
+      >  "Falconeer -- the skeleton module configurator.\n"
+         "  Enter a directory where the Falcon Skeleton Module has been unpacked\n"
+         "  and load this script setting the '-n' option.\n"
+         "  Relevant the files in the skeleton directory will be renamed accordingly\n"
+         "  to your settings, and configurable placeholder variables in each file\n"
+         "  will be overwritten.\n"
+
+      >  "  Options:\n"
+         "     -?,--help               \tPrints this help\n"
+         "     -n/--name <value>       \tName of the project (will affect filenames)\n"
+         "     -a/--author <value>     \tAuthor(s) of the project\n"
+         "     -c/--copyright <value>  \tCopyright owner\n"
+         "     -d/--description <value>\tDescription for the project\n"
+         "     -l/--license <file>     \tPointer to a license plate\n"
+         "     -p/--project <value>    \tMain project to which this module belongs\n\n"
+         "  -n option is mandatory.\n"
+   end
+end
+
+//==========================================
+// Function that does the job
+//
+function parse_file( fileName, destName )
+   global variables
+
+   fin = InputStream( fileName )
+   // convert the name
+   if not destName
+      foutName = fileName
+      chgRegex.replace( foutName, MyParser.prj_name )
+   else
+      foutName = destName
+   end
+   if foutName == fileName: foutName += "_new"
+
+   try
+      // open the output file name
+      fout = OutputStream( foutName )
+      line = ""
+
+      // read the line
+      loop
+         fin.readLine( line, 512 )
+         if fin.eof(): break
+
+         // scan and substitute the variables
+         for key, value in variables
+            pos = strFind( line, key )
+            // can be more than one per line
+            while pos >= 0
+               line[pos : pos + key.len()] = value
+               pos = strFind( line, key )
+            end
+         end
+         // now we can write the line
+         fout.write( line + "\n" )
+      end
+
+      fin.close()
+      fout.close()
+   catch in error
+      > @"Error while performing change $fileName -> $foutName"
+      > error
+      return
+   end
+
+   // remove the old file
+   // TODO: set an option to prevent this
+   try
+      fileRemove( fileName )
+   catch in error
+      > @"Error removing $fileName"
+      > error
+   end
+end
+
+//==========================================
+// Main program
+//
+
+MyParser.parse()
+if not MyParser.prj_name
+   MyParser.usage()
+   exit( 1 )
+end
+
+// create the variables
+variables[var_prjname] = MyParser.prj_name
+variables[var_desc   ] = MyParser.description
+variables[var_author ] = MyParser.author
+variables[var_date   ] = MyParser.date.toRFC2822()
+variables[var_year   ] = MyParser.date.year.toString()
+variables[var_copy   ] = MyParser.copyright
+variables[var_license] = MyParser.licplate
+variables[var_mainprj] = MyParser.mainprj
+
+for file in files
+   if ":" in file
+      file, dest = strSplit( file, ":", 2 )
+   else
+      dest = nil
+   end
+
+   > "Examining ", file, "..."
+   parse_file( file, dest )
+end
+
+/* End of falconeer.fal */

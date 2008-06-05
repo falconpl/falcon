@@ -1,11 +1,11 @@
-PROJECT(falrun)
+##################################################
+# Falcon Programming Language
+#
+# Falrun
+##################################################
 
 # Inclusion settings
 INCLUDE_DIRECTORIES(.)
-INCLUDE_DIRECTORIES(BEFORE ${TARGET_DIR}/include)
-INCLUDE_DIRECTORIES(BEFORE ../../include)
-LINK_DIRECTORIES(BEFORE ${TARGET_DIR}/${TARGET_LIB_DIR} )
-
 
 IF(WIN32)
    SET(SYS_RC falrun.rc)
@@ -21,4 +21,5 @@ ADD_EXECUTABLE( falrun
 TARGET_LINK_LIBRARIES(falrun falcon_engine)
 
 #Install
-FALCON_INSTALL( falrun bin )
+INSTALL( TARGETS falrun
+      DESTINATION ${FALCON_BIN_DIR} )

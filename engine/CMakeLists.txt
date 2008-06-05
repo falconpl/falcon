@@ -1,37 +1,11 @@
-PROJECT(falcon_engine)
+##################################################
+# Falcon Programming Language
+#
+# Faltest
+##################################################
 
 #Engine specific define
 ADD_DEFINITIONS(-DFALCON_ENGINE_EXPORTS)
-#set common include directory
-FALCON_INCLUDE_SETTINGS()
-
-# BISON a .ll file
-# search BISON
-MACRO(FIND_BISON)
-   IF(NOT BISON_EXECUTABLE)
-      FIND_PROGRAM(BISON_EXECUTABLE bison)
-      IF (NOT BISON_EXECUTABLE)
-         MESSAGE(FATAL_ERROR "BISON not found - aborting")
-      ENDIF (NOT BISON_EXECUTABLE)
-   ENDIF(NOT BISON_EXECUTABLE)
-ENDMACRO(FIND_BISON)
-
-MACRO( ADD_BISON_FILES _sources )
-   FIND_BISON()
-   FOREACH (_current_FILE ${ARGN})
-      GET_FILENAME_COMPONENT(_in ${_current_FILE} ABSOLUTE)
-      GET_FILENAME_COMPONENT(_basename ${_current_FILE} NAME_WE)
-      SET(_out ${CMAKE_CURRENT_SOURCE_DIR}/${_basename}.cpp)
-      SET(_out_h ${CMAKE_CURRENT_SOURCE_DIR}/${_basename}.h)
-      ADD_CUSTOM_COMMAND(
-         OUTPUT ${_out}
-         COMMAND ${BISON_EXECUTABLE}
-         ARGS -o${_out} --defines=${_out_h} ${_in}
-         DEPENDS ${_in} )
-
-      SET(${_sources} ${${_sources}} ${_out} )
-   ENDFOREACH (_current_FILE)
-ENDMACRO(ADD_BISON_FILES)
 
 
 #Specific system files
@@ -53,13 +27,37 @@ IF(UNIX OR MAC)
    ELSE(UNIX)
       SET( SYS_SPECIFIC
          ${SYS_SPECIFIC}
-         dll_win.cpp )
+         dll_mac.cpp )
    ENDIF(UNIX)
 
-   ADD_BISON_FILES( bison_src
-      fasm_parser.yy
-      src_parser.yy
-   )
+   #We need bison.
+   IF(NOT BISON_EXECUTABLE)
+      FIND_PROGRAM(BISON_EXECUTABLE bison)
+      IF (NOT BISON_EXECUTABLE)
+         MESSAGE(FATAL_ERROR "BISON not found - aborting")
+      ENDIF (NOT BISON_EXECUTABLE)
+   ENDIF(NOT BISON_EXECUTABLE)
+
+   # Adding bison parsers.
+   ADD_CUSTOM_TARGET(SrcParser echo "Creating src_parser.cpp")
+   ADD_CUSTOM_TARGET(FasmParser echo "Creating fasm_parser.cpp")
+
+   #builds in-source always; we want it in svn.
+   ADD_CUSTOM_COMMAND(
+      SOURCE ${FALCON_SRC_TREE}/core/engine/src_parser.yy
+      COMMAND ${BISON_EXECUTABLE}
+      ARGS -y ${FALCON_SRC_TREE}/core/engine/src_parser.yy -o ${FALCON_SRC_TREE}/core/engine/src_parser.cpp
+      TARGET SrcParser
+      DEPENDS ${FALCON_SRC_TREE}/core/include/falcon/syntree.h
+      OUTPUTS ${FALCON_SRC_TREE}/core/engine/src_parser.cpp )
+
+   #builds in-source always; we want it in svn.
+   ADD_CUSTOM_COMMAND(
+      SOURCE ${FALCON_SRC_TREE}/core/engine/src_parser.yy
+      COMMAND ${BISON_EXECUTABLE}
+      ARGS -y ${FALCON_SRC_TREE}/core/engine/fasm_parser.yy -o ${FALCON_SRC_TREE}/core/engine/fasm_parser.cpp
+      TARGET FasmParser
+      OUTPUTS ${FALCON_SRC_TREE}/core/engine/fasm_parser.cpp )
 
 ELSEIF(WIN32)
 
@@ -75,17 +73,13 @@ ELSEIF(WIN32)
       falcon_engine.rc
       )
 
-   SET( bison_src
-      fasm_parser.cpp
-      src_parser.cpp
-   )
-
 ENDIF(UNIX OR MAC)
 
 INCLUDE_DIRECTORIES(.)
 
 ADD_LIBRARY( falcon_engine SHARED
-   ${bison_src}
+   fasm_parser.cpp
+   src_parser.cpp
 
    attribute.cpp
    autocstring.cpp
@@ -160,6 +154,10 @@ ADD_LIBRARY( falcon_engine SHARED
    ${SYS_SPECIFIC}
    )
 
+IF(BISON_EXECUTABLE)
+   ADD_DEPENDENCIES( falcon_engine SrcParser FasmParser )
+ENDIF(BISON_EXECUTABLE)
+
 SET_TARGET_PROPERTIES(falcon_engine
    PROPERTIES
       VERSION "${FALCON_SONAME_VERSION}.${FALCON_SONAME_REVISION}.${FALCON_SONAME_AGE}"
@@ -177,5 +175,5 @@ IF(UNIX OR MAC)
 
 ENDIF(UNIX OR MAC)
 
-SET(CMAKE_INSTALL_PREFIX "")
-FALCON_LIB_INSTALL( falcon_engine )
+INSTALL( TARGETS falcon_engine
+         DESTINATION "${FALCON_LIB_DIR}" )

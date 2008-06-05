@@ -1,0 +1,88 @@
+#!/bin/sh
+#
+# Falcon configuration script
+# $Id: falcon-conf.in,v 1.2 2007/08/01 22:08:41 jonnymind Exp $
+#
+# Useful tool to compile falcon modules and embedding applications.
+#
+# (C) Giancarlo Niccolai 2003
+
+SYSTEM=""
+
+usage()
+{
+   echo "The Falcon Programming Language"
+   echo ""
+   echo "Build configuration tool for Falcon @FALCON_VERSION@"
+   echo "Usage: $0 params"
+   echo "   -c, --cflags         writes CFLAGS for modules"
+   echo "   -e, --embed-flags    writes CFLAGS for embedding applications"
+   echo "   --cflags-only-I      writes only the include part of CFLAGS"
+   echo "   -i, --include        writes the FALCON inlcude directory"
+   echo "   -l, --libs           write library flags for linking modules"
+   echo "   -L, --embed-libs     library flags and libraries for embedding apps"
+   echo "   --libs-only-l        write the libraries that must be linked"
+   echo "   --libs-only-L        write the directory where library is installed"
+   echo "   --moddir             write the module installation directory"
+   echo "   -p, --ldpath         Path for LD_LIBRARY_PATH"
+   echo "   -h, --help           this help"
+   echo ""
+   echo "Include this script in your makefiles with \$( $0 <params> )"
+}
+
+detectSystem()
+{
+	 uname | grep Mac && SYSTEM='mac' || SYSTEM='unix'
+}
+
+if [ -z "$*" ]; then
+   usage
+   exit
+fi
+
+FALCONLIB="-lfalcon_engine"
+
+detectSystem
+
+if [ "$SYSTEM" = "mac" ]; then
+	CFLAGS="-fPIC -dynamiclib -fno-common"
+	LDFLAGS="-module -dload -dynamiclib"
+else
+	CFLAGS="-fPIC -shared"
+	LDFLAGS="-module -dload -shared"
+fi
+
+#configure for in-build tree
+if [ "x$FALCON_ACTIVE_TREE" = "x" ]; then
+   INC_PATH="@FALCON_FINAL_DESTINATION@/include"
+   LIB_PATH="@FALCON_FINAL_DESTINATION@/@FALCON_FINAL_DESTINATION_LIB@"
+   LIB_LD_PATH="@FINAL_DESTINATION@/@FALCON_FINAL_DESTINATION_LIB@"
+else
+   INC_PATH="$FALCON_ACTIVE_TREE/include"
+   LIB_PATH="$FALCON_ACTIVE_TREE/@FALCON_INSTALL_TREE_LIB@"
+   LIB_LD_PATH="$FALCON_ACTIVE_TREE/@FALCON_INSTALL_TREE_LIB@"
+fi
+
+INC_FLAGS="-I$INC_PATH"
+LIB_FLAGS="-L$LIB_PATH"
+MODDIR="$LIB_PATH/falcon"
+
+while [ -n "$*" ]; do
+   case "$1" in
+      "-c"| "--cflags") echo "$INC_FLAGS $CFLAGS" ;;
+      "-e"| "--embed-flags") echo "$INC_FLAGS" ;;
+      "--cflags-only-I") echo "$INC_FLAGS" ;;
+      "--cflags-only-other") echo "$CFLAGS" ;;
+      "-i"|"--include") echo "$INC_PATH";;
+      "-l"| "--libs") echo "$LIB_FLAGS $LDFLAGS $FALCONLIB" ;;
+      "-L"| "--embed-libs") echo "$LIB_FLAGS $FALCONLIB" ;;
+      "--libs-only-L") echo "$LIB_PATH" ;;
+      "-p" | "--ldpath") echo "$LIB_LD_PATH" ;;
+      "--libs-only-l") echo "$FALCONLIB" ;;
+      "--moddir") echo "$MODDIR";;
+      "-h" | "--help" | *)
+         usage
+         exit;;
+   esac
+   shift
+done
