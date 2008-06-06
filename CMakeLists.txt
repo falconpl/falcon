@@ -32,11 +32,11 @@ IF( "${FALCON_INSTALL_TREE_LIB}" STREQUAL "" )
    SET( FALCON_INSTALL_TREE_LIB  "lib" )
 ENDIF( "${FALCON_INSTALL_TREE_LIB}" STREQUAL "" )
 
-#sets default installation target dirs.
-SET( FALCON_INC_DIR "$ENV{FALCON_ACTIVE_TREE}/include" )
+
 #This is needed only when we don't install the core before starting feathers.
 #This usually happens in external builds (i.e. build.sh for core and feathers)
-SET( FALCON_INC_DIR "$ENV{FALCON_SRC_TREE}/core/include" )
+SET( FALCON_INC_DIR "$ENV{FALCON_BUILD_TREE}/core/include" ) # < for config.h
+SET( FALCON_INC_DIR "$ENV{FALCON_SRC_TREE}/core/include" ) # < for non config stuff
 
 SET( FALCON_BIN_DIR "${FALCON_INSTALL_TREE}/bin" )
 SET( FALCON_LIB_DIR "${FALCON_INSTALL_TREE}/${FALCON_INSTALL_TREE_LIB}" )
