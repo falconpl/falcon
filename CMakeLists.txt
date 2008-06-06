@@ -3,7 +3,7 @@
 #
 # CMake configuration file for Feather modules
 ####################################################################
-
+cmake_minimum_required(VERSION 2.4)
 PROJECT(Falcon_Feathers)
 
 #Check for environment
@@ -22,10 +22,6 @@ IF(NOT CMAKE_BUILD_TYPE)
       FORCE)
    ENDIF(NOT CMAKE_BUILD_TYPE)
 ENDIF(NOT CMAKE_BUILD_TYPE)
-
-
-SET( FALCON_LIB_DIR "$ENV{FALCON_ACTIVE_TREE}/lib" )
-
 
 #install will happen in FALCON_INSTALL_TREE (With optional FALCON_INSTALL_TREE_LIB)
 IF( "${FALCON_INSTALL_TREE}" STREQUAL "" )
@@ -61,6 +57,10 @@ MACRO(FALCON_INSTALL_MODULE tgt )
             DESTINATION ${FALCON_MOD_INSTALL} )
 
 ENDMACRO(FALCON_INSTALL_MODULE)
+
+#Projects settings
+INCLUDE_DIRECTORIES(BEFORE "${FALCON_INC_DIR}")
+LINK_DIRECTORIES("$ENV{FALCON_ACTIVE_TREE}/lib")
 
 #Project directories
 
