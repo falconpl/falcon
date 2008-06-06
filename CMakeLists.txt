@@ -35,7 +35,6 @@ ENDIF( "${FALCON_INSTALL_TREE_LIB}" STREQUAL "" )
 
 #This is needed only when we don't install the core before starting feathers.
 #This usually happens in external builds (i.e. build.sh for core and feathers)
-SET( FALCON_INC_DIR "$ENV{FALCON_BUILD_TREE}/core/include" ) # < for config.h
 SET( FALCON_INC_DIR "$ENV{FALCON_SRC_TREE}/core/include" ) # < for non config stuff
 
 SET( FALCON_BIN_DIR "${FALCON_INSTALL_TREE}/bin" )
@@ -63,6 +62,8 @@ ENDMACRO(FALCON_INSTALL_MODULE)
 
 #Projects settings
 INCLUDE_DIRECTORIES(BEFORE "${FALCON_INC_DIR}")
+INCLUDE_DIRECTORIES(BEFORE "$ENV{FALCON_BUILD_TREE}/core/include") # < for config stuff
+
 LINK_DIRECTORIES("$ENV{FALCON_ACTIVE_TREE}/lib")
 
 #Project directories
