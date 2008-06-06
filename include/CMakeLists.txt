@@ -17,6 +17,11 @@ INSTALL( FILES ${fasm_files}
 INSTALL( FILES ${falcon_files}
    DESTINATION "${FALCON_INC_DIR}/falcon")
 
+#Fixes a small bug of CMAKE in FILES install rule.
+IF(WIN32)
+   STRING(REPLACE "\\" "/" FALCON_BUILD_TREE "${FALCON_BUILD_TREE}" )
+ENDIF(WIN32)
+
 INSTALL( FILES "${FALCON_BUILD_TREE}/core/include/falcon/config.h"
    DESTINATION "${FALCON_INC_DIR}/falcon")
 

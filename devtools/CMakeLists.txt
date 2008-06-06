@@ -7,6 +7,10 @@ IF(UNIX)
    SET( sys_inst_spec "${FALCON_BUILD_TREE}/core/devtools/falcon-conf" )
 ENDIF(UNIX)
 
+#Fixes a small bug of CMAKE in FILES install rule.
+IF(WIN32)
+   STRING(REPLACE "\\" "/" FALCON_BUILD_TREE "${FALCON_BUILD_TREE}" )
+ENDIF(WIN32)
 
 SET( in_files
    falconeer.fal

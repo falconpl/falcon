@@ -3,6 +3,7 @@
 #
 # CMake configuration file for Core falcon
 ####################################################################
+cmake_minimum_required(VERSION 2.4)
 PROJECT(Falcon_Core)
 
 IF("$ENV{FALCON_DEVEL_TREE}" STREQUAL "")
@@ -153,7 +154,7 @@ ENDMACRO(FALCON_CONFIG)
 
 #include also from-source builds to allow compilation from source
 INCLUDE_DIRECTORIES(BEFORE ${FALCON_SRC_TREE}/core/include)
-INCLUDE_DIRECTORIES( BEFORE ${FALCON_BUILD_TREE}/include)
+INCLUDE_DIRECTORIES( BEFORE ${FALCON_BUILD_TREE}/core/include)
 LINK_DIRECTORIES( ${FALCON_BUILD_TREE}/core/engine )
 
 #We'll take cares of prefixes
