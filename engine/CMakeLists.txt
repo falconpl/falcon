@@ -172,8 +172,10 @@ IF(UNIX OR MAC)
    ENDIF(UNIX)
 
    #Finally, link everything to the lib dir
-
-ENDIF(UNIX OR MAC)
-
 INSTALL( TARGETS falcon_engine
          DESTINATION "${FALCON_LIB_DIR}" )
+
+ELSE(UNIX OR MAC)
+INSTALL( TARGETS falcon_engine
+         DESTINATION "${FALCON_MOD_INSTALL}" )
+ENDIF(UNIX OR MAC)
