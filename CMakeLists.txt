@@ -101,8 +101,6 @@ ENDIF(falcon_big_endian)
 
 
 #IMPORT final destination - the default install directory.
-SET( FALCON_FINAL_DESTINATION "$ENV{FALCON_FINAL_DESTINATION}" )
-
 IF("${FALCON_FINAL_DESTINATION}" STREQUAL "" )
    #In windows, we normally install in c:\falcon
    IF(WIN32)
