@@ -146,8 +146,7 @@ bool _setEnv( const String &var, const String &value )
    // in unix system, we have at worst UTF-8 var names.
    String sVarValue = var + "=" + value;
    AutoCString buffer( sVarValue );
-
-   bool result = putenv( (char*) buffer.c_str() );
+   bool result = putenv( (char*) buffer.c_str() ) == 0;
    return result;
 }
 
@@ -156,7 +155,7 @@ bool _unsetEnv( const String &var )
    // in unix system, we have at worst UTF-8 var names.
    String sVarValue = var + "=";
    AutoCString buffer( sVarValue );
-   bool result = putenv( (char*) buffer.c_str());
+   bool result = putenv( (char*) buffer.c_str()) == 0;
    return result;
 }
 
