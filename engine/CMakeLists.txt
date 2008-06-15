@@ -14,10 +14,22 @@ IF(UNIX OR MAC)
          dir_sys_unix.cpp
          fstream_sys_unix.cpp
          stdstreams_unix.cpp
-         sys_unix.cpp
          time_sys_unix.cpp
          vm_sys_posix.cpp
     )
+
+   #for solaris system flavor, add sys_solaris.cpp
+   IF( ${FALCON_UNIX_FLAVOR} STREQUAL "SOLARIS" )
+      SET( SYS_SPECIFIC
+         ${SYS_SPECIFIC}
+         sys_solaris.cpp
+      )
+   ELSE( ${FALCON_UNIX_FLAVOR} STREQUAL "SOLARIS" )
+      SET( SYS_SPECIFIC
+         ${SYS_SPECIFIC}
+         sys_unix.cpp
+      )
+   ENDIF( ${FALCON_UNIX_FLAVOR} STREQUAL "SOLARIS" )
 
    #DL is different for unix and mac
    IF(UNIX)
@@ -61,7 +73,6 @@ IF(UNIX OR MAC)
 
 ELSEIF(WIN32)
 
-   #todo: add prebuilt
    SET( SYS_SPECIFIC
       dir_sys_win.cpp
       dll_win.cpp
@@ -166,9 +177,15 @@ SET_TARGET_PROPERTIES(falcon_engine
 #In unix and mac we have to add extra libraries
 IF(UNIX OR MAC)
    TARGET_LINK_LIBRARIES(falcon_engine m)
-   #also dl for linux
+
+   #also dl for linux and solaris
    IF(UNIX)
-      TARGET_LINK_LIBRARIES(falcon_engine dl)
+      # and RT only for solaris
+      IF( ${FALCON_UNIX_FLAVOR} STREQUAL "SOLARIS" )
+         TARGET_LINK_LIBRARIES(falcon_engine dl rt)
+      ELSE( ${FALCON_UNIX_FLAVOR} STREQUAL "SOLARIS" )
+         TARGET_LINK_LIBRARIES(falcon_engine dl)
+      ENDIF( ${FALCON_UNIX_FLAVOR} STREQUAL "SOLARIS" )
    ENDIF(UNIX)
 
    #Finally, link everything to the lib dir

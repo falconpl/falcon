@@ -23,6 +23,8 @@
 #include <math.h>
 #include <errno.h>
 
+
+
 /*#
    @beginmodule falcon_rtl
 */
@@ -509,7 +511,8 @@ FALCON_FUNC  flc_round ( ::Falcon::VMachine *vm )
    }
    else if ( num->type() == FLC_ITEM_NUM )
    {
-      #ifdef _MSC_VER
+      // Or windows or solaris, use a simple round trick.
+      #if defined(_MSC_VER) || ( defined (__SVR4) && defined (__sun) )
          numeric n = num->asNumeric();
          numeric intpart;
          numeric fractpart = modf(n, &intpart );
@@ -611,9 +614,6 @@ FALCON_FUNC  flc_abs ( ::Falcon::VMachine *vm )
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
    }
 }
-
-
-
 
 }
 }
