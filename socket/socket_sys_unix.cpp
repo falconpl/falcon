@@ -31,6 +31,16 @@
 #include <string.h>
 #include "socket_sys.h"
 
+// Sun doesn't provide strerror_r
+#if ( defined (__SVR4) && defined (__sun) )
+static int strerror_r(int errnum, char * buf, unsigned n)
+{
+   ::strncpy(buf, strerror(errnum), n);
+   buf[n-1] = '\0'; // just in case...
+   return 0;
+}
+#endif
+
 namespace Falcon {
 namespace Sys {
 
