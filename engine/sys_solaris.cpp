@@ -141,13 +141,38 @@ bool _getEnv( const String &var, String &result )
    return false;
 }
 
+int setenv (const char * name, const char * value, int overwrite) {
+  size_t namelen = strlen(name);
+  size_t valuelen = (value==NULL ? 0 : strlen(value));
+  char* buffer = (char*)malloc(namelen+1+valuelen+1);
+  if (!buffer)
+    return -1; /* no need to set errno = ENOMEM */
+  memcpy(buffer,name,namelen);
+  if (value != NULL) {
+    buffer[namelen] = '=';
+    memcpy(buffer+namelen+1,value,valuelen);
+    buffer[namelen+1+valuelen] = 0;
+  } else
+    buffer[namelen] = 0;
+  return putenv(buffer);
+}
+
 bool _setEnv( const String &var, const String &value )
 {
    // in unix system, we have at worst UTF-8 var names.
-   String sVarValue = var + "=" + value;
-   AutoCString buffer( sVarValue );
-   bool result = putenv( (char*) buffer.c_str() ) == 0;
+   uint32 varLen = var.length() * 4 + 2;
+   uint32 valueLen = value.length() * 4 + 2;
+   char *varBuf = (char *) memAlloc( varLen );
+   char *valueBuf = (char *) memAlloc( valueLen );
+
+   var.toCString( varBuf, varLen );
+   value.toCString( valueBuf, valueLen );
+
+   bool result = setenv( varBuf, valueBuf, 1 ) == 0;
+   memFree( varBuf );
+   memFree( valueBuf );
    return result;
+
 }
 
 bool _unsetEnv( const String &var )
