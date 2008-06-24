@@ -19,7 +19,7 @@
 
 #include <falcon/rosstream.h>
 #include <cstring>
-
+#include <string.h>
 namespace Falcon {
 
 ROStringStream::ROStringStream( const String &source ):

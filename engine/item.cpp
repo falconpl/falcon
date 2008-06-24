@@ -617,7 +617,7 @@ bool Item::isCallable() const
    if( isFunction() || isMethod() )
    {
       // Detached?
-      if ( ! m_data.m_liveMod->isAlive() )
+      if ( ! m_data.ptr.m_liveMod->isAlive() )
       {
          const_cast<Item *>(this)->setNil();
          return false;

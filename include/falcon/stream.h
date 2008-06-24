@@ -102,7 +102,7 @@ public:
       t_error = 0x4,
       t_unsupported = 0x8,
       t_invalid = 0x10,
-      t_interrupted = 0x20,
+      t_interrupted = 0x20
 
    } t_status ;
 

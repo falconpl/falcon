@@ -24,6 +24,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <cstring>
+#include <string.h>
 
 #include <falcon/autocstring.h>
 #include <falcon/vm_sys_posix.h>

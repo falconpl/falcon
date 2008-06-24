@@ -17,7 +17,7 @@
    Unix system implementation for time related service
 */
 
-
+#define _REENTRANT
 #include <sys/time.h>
 #include <falcon/timestamp.h>
 #include <falcon/time_sys_unix.h>

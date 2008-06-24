@@ -14,7 +14,9 @@
 */
 
 #include <falcon/memory.h>
-#if defined(__BORLANDC__)
+#if defined(__SUNPRO_CC)
+   #include <stdio.h>
+#elif defined(__BORLANDC__)
    #include <stdio.h>
    #include <stdlib.h>
 #else

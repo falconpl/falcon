@@ -2325,7 +2325,7 @@ Item *VMachine::findLocalVariable( const String &name ) const
       singleQuote,
       doubleQuote,
       strEscapeSingle,
-      strEscapeDouble,
+      strEscapeDouble
    } t_state;
 
    t_state state = initial;

@@ -425,7 +425,7 @@ public:
       t_ashr,
 
       /** An optimized expression is like an unary operator */
-      t_optimized,
+      t_optimized
    } operator_t;
 
 private:

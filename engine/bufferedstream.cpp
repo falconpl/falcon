@@ -20,6 +20,7 @@
 #include <falcon/memory.h>
 #include <falcon/bufferedstream.h>
 #include <cstring>
+#include <string.h>
 
 namespace Falcon {
 

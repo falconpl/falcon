@@ -90,7 +90,7 @@ public:
 
       e_aAll = 0777,
       e_aReadOnly = 0444,
-      e_aHidden = 0600,
+      e_aHidden = 0600
    } t_attributes;
 
 protected:

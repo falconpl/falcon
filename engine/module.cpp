@@ -24,7 +24,7 @@
 #include <falcon/traits.h>
 #include <falcon/pcodes.h>
 #include <falcon/enginedata.h>
-
+#include <string.h>
 namespace Falcon {
 
 const uint32 Module::c_noEntry = 0xFFffFFff;

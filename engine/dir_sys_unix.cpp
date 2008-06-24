@@ -207,12 +207,14 @@ bool fal_chmod( const String &fname, uint32 mode )
 {
    AutoCString filename( fname );
    bool ret = ::chmod( filename.c_str(), mode ) == 0;
+   return ret;
 }
 
 bool fal_chown( const String &fname, int32 owner )
 {
    AutoCString filename( fname );
    bool ret = ::chown( filename.c_str(), owner , -1 ) == 0;
+   return ret;
 }
 
 bool fal_readlink( const String &fname, String &link )

@@ -73,7 +73,7 @@ private:
       e_floatNumber_e1,
       e_operator,
       e_symbol,
-      e_litString,
+      e_litString
    } t_state;
 
    t_state m_state;

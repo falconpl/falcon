@@ -41,7 +41,7 @@ public:
       t_pipe = 3,
       t_link = 4,
       t_device = 5,
-      t_socket = 6,
+      t_socket = 6
    } e_fileType;
 
    e_fileType m_type;

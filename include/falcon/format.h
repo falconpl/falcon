@@ -357,7 +357,7 @@ public:
       \return true on success, false on error.
    */
    bool format( const Item &source, String &target ) {
-      format( 0, source, target );
+      return format( 0, source, target );
    }
 
    /** Formats given item into the target string.

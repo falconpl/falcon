@@ -20,7 +20,7 @@
 #include <falcon/stringstream.h>
 #include <falcon/memory.h>
 #include <cstring>
-
+#include <string.h>
 namespace Falcon {
 
 StringStream::StringStream( int32 size ):

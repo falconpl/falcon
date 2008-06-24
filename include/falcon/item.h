@@ -101,13 +101,13 @@ private:
          void *voidp;
          void *m_extra;
          LiveModule *m_liveMod;
-      };
+      } ptr;
 
       struct {
          int32 rstart;
          int32 rend;
          int32 rstep;
-      };
+      } rng;
 
    } m_data;
 
@@ -210,18 +210,18 @@ public:
    void setRange( int32 val1, int32 val2, bool open )
    {
       type( FLC_ITEM_RANGE );
-      m_data.rstart = val1;
-      m_data.rend = val2;
-      m_data.rstep = 0;
+      m_data.rng.rstart = val1;
+      m_data.rng.rend = val2;
+      m_data.rng.rstep = 0;
       m_base.bits.flags = open? flagOpenRange : 0;
    }
 
    void setRange( int32 val1, int32 val2, int32 step, bool open )
    {
       type( FLC_ITEM_RANGE );
-      m_data.rstart = val1;
-      m_data.rend = val2;
-      m_data.rstep = step;
+      m_data.rng.rstart = val1;
+      m_data.rng.rend = val2;
+      m_data.rng.rstep = step;
       m_base.bits.flags = open? flagOpenRange : 0;
    }
 
@@ -234,7 +234,7 @@ public:
 
    void setString( String *str ) {
       type( FLC_ITEM_STRING );
-      m_data.voidp = str;
+      m_data.ptr.voidp = str;
    }
 
    /** Creates an array item */
@@ -245,7 +245,7 @@ public:
 
    void setArray( CoreArray *array ) {
       type( FLC_ITEM_ARRAY );
-      m_data.voidp = array;
+      m_data.ptr.voidp = array;
    }
 
    /** Creates an object item */
@@ -256,7 +256,7 @@ public:
 
    void setObject( CoreObject *obj ) {
       type( FLC_ITEM_OBJECT );
-      m_data.voidp = obj;
+      m_data.ptr.voidp = obj;
    }
 
    /** Creates an attribute. */
@@ -267,7 +267,7 @@ public:
 
    void setAttribute( Attribute *attrib ) {
       type( FLC_ITEM_ATTRIBUTE );
-      m_data.voidp = attrib;
+      m_data.ptr.voidp = attrib;
    }
 
    /** Creates a dictionary item */
@@ -278,7 +278,7 @@ public:
 
    void setDict( CoreDict *dict ) {
       type( FLC_ITEM_DICT );
-      m_data.voidp = dict;
+      m_data.ptr.voidp = dict;
    }
 
    /** Creates a memory buffer. */
@@ -289,22 +289,22 @@ public:
 
    void setMemBuf( MemBuf *b ) {
       type( FLC_ITEM_MEMBUF );
-      m_data.voidp = b;
+      m_data.ptr.voidp = b;
    }
 
    /** Creates a reference to another item. */
    void setReference( GarbageItem *ref ) {
       type( FLC_ITEM_REFERENCE );
-      m_data.voidp = ref;
+      m_data.ptr.voidp = ref;
    }
-   GarbageItem *asReference() const { return (GarbageItem *) m_data.voidp; }
+   GarbageItem *asReference() const { return (GarbageItem *) m_data.ptr.voidp; }
 
    /** Creates a function item */
    void setFunction( Symbol *sym, LiveModule *lmod )
    {
       type( FLC_ITEM_FUNC );
-      m_data.voidp = sym;
-      m_data.m_liveMod = lmod;
+      m_data.ptr.voidp = sym;
+      m_data.ptr.m_liveMod = lmod;
    }
 
    /** Creates a method.
@@ -328,15 +328,15 @@ public:
    */
    void setMethod( CoreObject *obj, Symbol *func, LiveModule *lmod ) {
       type( FLC_ITEM_METHOD );
-      m_data.voidp = obj;
-      m_data.m_extra = func;
-      m_data.m_liveMod = lmod;
+      m_data.ptr.voidp = obj;
+      m_data.ptr.m_extra = func;
+      m_data.ptr.m_liveMod = lmod;
    }
 
    void setClassMethod( CoreObject *obj, CoreClass *cls ) {
       type( FLC_ITEM_CLSMETHOD );
-      m_data.voidp = obj;
-      m_data.m_extra = cls;
+      m_data.ptr.voidp = obj;
+      m_data.ptr.m_extra = cls;
    }
 
    /** Creates a class item */
@@ -348,7 +348,7 @@ public:
    void setClass( CoreClass *cls ) {
       type( FLC_ITEM_CLASS );
       // warning: class in extra to be omologue to methodClass()
-      m_data.m_extra = cls;
+      m_data.ptr.m_extra = cls;
    }
 
    /** Sets an item as a FBOM.
@@ -403,12 +403,12 @@ public:
    void setUserPointer( void *tpd )
    {
       type( FLC_ITEM_POINTER );
-      m_data.voidp = tpd;
+      m_data.ptr.voidp = tpd;
    }
 
    void *asUserPointer()
    {
-      return m_data.voidp;
+      return m_data.ptr.voidp;
    }
 
    bool isUserPointer() const { return m_base.bits.flags == FLC_ITEM_POINTER; }
@@ -455,31 +455,31 @@ public:
 
    numeric asNumeric() const { return m_data.number; }
 
-   int32 asRangeStart() const { return m_data.rstart; }
-   int32 asRangeEnd()  const { return m_data.rend; }
-   int32 asRangeStep()  const { return m_data.rstep; }
+   int32 asRangeStart() const { return m_data.rng.rstart; }
+   int32 asRangeEnd()  const { return m_data.rng.rend; }
+   int32 asRangeStep()  const { return m_data.rng.rstep; }
    bool asRangeIsOpen()  const { return (m_base.bits.flags & flagOpenRange) != 0; }
 
-   String *asString() const { return (String *) m_data.voidp; }
+   String *asString() const { return (String *) m_data.ptr.voidp; }
    /** Provides a basic string representation of the item.
       Use Falcon::Format for a finer control of item representation.
       \param target a string where the item string representation will be placed.
    */
    void toString( String &target ) const;
-   CoreArray *asArray() const { return (CoreArray *) m_data.voidp; }
-   CoreObject *asObject() const { return (CoreObject *) m_data.voidp; }
-   CoreDict *asDict() const { return ( CoreDict *) m_data.voidp; }
-   MemBuf *asMemBuf() const { return ( MemBuf *) m_data.voidp; }
+   CoreArray *asArray() const { return (CoreArray *) m_data.ptr.voidp; }
+   CoreObject *asObject() const { return (CoreObject *) m_data.ptr.voidp; }
+   CoreDict *asDict() const { return ( CoreDict *) m_data.ptr.voidp; }
+   MemBuf *asMemBuf() const { return ( MemBuf *) m_data.ptr.voidp; }
 
-   CoreClass *asClass() const { return (CoreClass *) m_data.m_extra; }
-   Symbol *asFunction() const { return (Symbol *) m_data.voidp; }
+   CoreClass *asClass() const { return (CoreClass *) m_data.ptr.m_extra; }
+   Symbol *asFunction() const { return (Symbol *) m_data.ptr.voidp; }
 
-   CoreObject *asMethodObject() const { return (CoreObject *) m_data.voidp; }
-   Symbol *asMethodFunction() const { return (Symbol *)m_data.m_extra; }
-   CoreClass *asMethodClass() const { return (CoreClass*) m_data.m_extra; }
-   Attribute *asAttribute() const { return (Attribute *) m_data.voidp; }
+   CoreObject *asMethodObject() const { return (CoreObject *) m_data.ptr.voidp; }
+   Symbol *asMethodFunction() const { return (Symbol *)m_data.ptr.m_extra; }
+   CoreClass *asMethodClass() const { return (CoreClass*) m_data.ptr.m_extra; }
+   Attribute *asAttribute() const { return (Attribute *) m_data.ptr.voidp; }
 
-   LiveModule *asModule() const { return m_data.m_liveMod; }
+   LiveModule *asModule() const { return m_data.ptr.m_liveMod; }
 
    /** Convert current object into an integer.
       This operations is usually done on integers, numeric and strings.

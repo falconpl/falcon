@@ -17,9 +17,10 @@
    Short description
 */
 
-#include <unistd.h>
-#include <time.h>
+#define _REENTRANT
 #include <sys/time.h>
+
+#include <unistd.h>
 #include <sys/stat.h>
 #include <errno.h>
 #include <stdlib.h>
@@ -189,3 +190,4 @@ bool _unsetEnv( const String &var )
 
 
 /* end of sys_solaris.cpp */
+
