@@ -19,7 +19,7 @@
 
 #include <falcon/module.h>
 #include <falcon/memory.h>
-#include <pcre.h>
+#include "pcre.h"
 #include "regex_ext.h"
 #include "regex_st.h"
 #include "version.h"
