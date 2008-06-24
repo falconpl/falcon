@@ -24,12 +24,12 @@ IF(UNIX OR MAC)
          ${SYS_SPECIFIC}
          sys_solaris.cpp
       )
-   ELSE()
+   ELSE( "${FALCON_UNIX_FLAVOR}" STREQUAL "SOLARIS" )
       SET( SYS_SPECIFIC
          ${SYS_SPECIFIC}
          sys_unix.cpp
       )
-   ENDIF()
+   ENDIF( "${FALCON_UNIX_FLAVOR}" STREQUAL "SOLARIS" )
 
    #DL is different for unix and mac
    IF(UNIX)
@@ -183,9 +183,9 @@ IF(UNIX OR MAC)
       # and RT only for solaris
       IF( "${FALCON_UNIX_FLAVOR}" STREQUAL "SOLARIS" )
          TARGET_LINK_LIBRARIES(falcon_engine dl rt)
-      ELSE()
+      ELSE( "${FALCON_UNIX_FLAVOR}" STREQUAL "SOLARIS" )
          TARGET_LINK_LIBRARIES(falcon_engine dl)
-      ENDIF()
+      ENDIF( "${FALCON_UNIX_FLAVOR}" STREQUAL "SOLARIS" )
    ENDIF(UNIX)
 
    #Finally, link everything to the lib dir
