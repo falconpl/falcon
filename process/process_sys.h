@@ -20,7 +20,7 @@
 #ifndef flc_process_sys_H
 #define flc_process_sys_H
 
-#include <falcon/userdata.h>
+#include <falcon/falcondata.h>
 
 namespace Falcon {
 
@@ -31,7 +31,7 @@ class String;
 
 namespace Sys {
 
-class ProcessHandle: public UserData
+class ProcessHandle: public FalconData
 {
    int m_procVal;
    int m_lastError;
@@ -58,9 +58,12 @@ public:
    void done( bool d ) { m_done = d; }
    int lastError() const { return m_lastError; }
    void lastError( int val ) { m_lastError = val; }
+
+   virtual void gcMark( VMachine *mp ) {};
+   virtual FalconData *clone() const {return 0;}
 };
 
-class ProcessEnum: public UserData
+class ProcessEnum: public FalconData
 {
    void *m_sysdata;
 
@@ -73,6 +76,9 @@ public:
    */
    int next( String &name, uint64 &pid, uint64 &ppid, String &path );
    bool close();
+
+   virtual void gcMark( VMachine *mp ) {};
+   virtual FalconData *clone() const {return 0;}
 };
 
 bool spawn( String **args, bool overlay, bool background, int *result );

@@ -21,7 +21,7 @@
 #define FALCON_MXML_MOD
 
 #include <falcon/setup.h>
-#include <falcon/userdata.h>
+#include <falcon/falcondata.h>
 #include "mxml_node.h"
 
 namespace Falcon{
@@ -29,7 +29,7 @@ class CoreObject;
 
 namespace Ext{
 
-class NodeCarrier: public Falcon::UserData
+class NodeCarrier: public Falcon::FalconData
 {
    MXML::Node *m_node;
 
@@ -43,7 +43,9 @@ public:
    ~NodeCarrier();
 
    MXML::Node *node() const { return m_node; }
-   UserData *clone() const;
+   virtual FalconData *clone() const;
+   virtual void gcMark( VMachine *mp ){};
+
    // just a proxy
    CoreObject *shell() const { return m_node->shell(); }
 };

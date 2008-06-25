@@ -102,14 +102,14 @@ FALCON_MODULE_DECL(const Falcon::EngineData &data )
                  This usually means that the accepting thread has become unavailable.
    */
    Falcon::Symbol *c_errcode = self->addClass( "NetErrorCode" );
-   self->addClassProperty( c_errcode, "generic")->setInteger( FALSOCK_ERR_GENERIC );
-   self->addClassProperty( c_errcode, "resolv")->setInteger( FALSOCK_ERR_RESOLV );
-   self->addClassProperty( c_errcode, "create")->setInteger( FALSOCK_ERR_CREATE );
-   self->addClassProperty( c_errcode, "send")->setInteger( FALSOCK_ERR_SEND );
-   self->addClassProperty( c_errcode, "receive")->setInteger( FALSOCK_ERR_RECV );
-   self->addClassProperty( c_errcode, "close")->setInteger( FALSOCK_ERR_CLOSE );
-   self->addClassProperty( c_errcode, "bind")->setInteger( FALSOCK_ERR_BIND );
-   self->addClassProperty( c_errcode, "accept")->setInteger( FALSOCK_ERR_ACCEPT );
+   self->addClassProperty( c_errcode, "generic").setInteger( FALSOCK_ERR_GENERIC );
+   self->addClassProperty( c_errcode, "resolv").setInteger( FALSOCK_ERR_RESOLV );
+   self->addClassProperty( c_errcode, "create").setInteger( FALSOCK_ERR_CREATE );
+   self->addClassProperty( c_errcode, "send").setInteger( FALSOCK_ERR_SEND );
+   self->addClassProperty( c_errcode, "receive").setInteger( FALSOCK_ERR_RECV );
+   self->addClassProperty( c_errcode, "close").setInteger( FALSOCK_ERR_CLOSE );
+   self->addClassProperty( c_errcode, "bind").setInteger( FALSOCK_ERR_BIND );
+   self->addClassProperty( c_errcode, "accept").setInteger( FALSOCK_ERR_ACCEPT );
 
 
    //====================================
@@ -121,6 +121,7 @@ FALCON_MODULE_DECL(const Falcon::EngineData &data )
 
    // private class socket.
    Falcon::Symbol *c_socket = self->addClass( "Socket", Falcon::Ext::Socket_init, false );
+   c_socket->getClassDef()->setObjectManager( &Falcon::core_falcon_data_manager );
    self->addClassMethod( c_socket, "getTimeout", Falcon::Ext::Socket_getTimeout );
    self->addClassMethod( c_socket, "setTimeout", Falcon::Ext::Socket_setTimeout );
    self->addClassMethod( c_socket, "dispose", Falcon::Ext::Socket_dispose );

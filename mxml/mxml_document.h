@@ -19,6 +19,10 @@
 #include <mxml_node.h>
 #include <mxml_element.h>
 
+namespace Falcon {
+   class VMachine;
+}
+
 namespace MXML {
 
 /** Class containing a logical XML file representation.
@@ -37,7 +41,7 @@ namespace MXML {
    write. \see stylemacros
 */
 
-class Document: public Element, public Falcon::UserData
+class Document: public Element, public Falcon::FalconData
 {
 private:
    Node *m_root;
@@ -49,6 +53,8 @@ private:
    Node::path_iterator m_pathiter;
 
 public:
+   virtual void gcMark( Falcon::VMachine *mp )  {};
+   virtual FalconData *clone() const { return 0; }
 
    /** Creates the document object.
       This constructor does not load any document, and sets the style parameter to

@@ -46,14 +46,14 @@ public:
    const FlcLoader &loader() const { return m_loader; }
    FlcLoader &loader() { return m_loader; }
 
-   virtual bool isReflective() const;
    virtual void getProperty( VMachine *vm, const String &propName, Item &prop );
-   virtual void setProperty( VMachine *vm, const String &propName, Item &prop );
+   virtual void setProperty( VMachine *vm, const String &propName, const Item &prop );
 
    // we don't provide a clone() method
+   virtual UserData *clone() const { return 0; }
 };
 
-class ModuleCarrier: public UserData
+class ModuleCarrier: public FalconData
 {
    LiveModule *m_lmodule;
 
@@ -64,8 +64,8 @@ public:
    const Module *module() const { return m_lmodule->module(); }
    LiveModule *liveModule() const { return m_lmodule; }
 
-   virtual UserData *clone() const;
-   virtual void gcMark( MemPool *mp );
+   virtual FalconData *clone() const;
+   virtual void gcMark( VMachine *vm );
 
    // we don't provide a clone() method
 };

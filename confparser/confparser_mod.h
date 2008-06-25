@@ -134,7 +134,7 @@ public:
 };
 
 
-class ConfigFile: public UserData
+class ConfigFile: public FalconData
 {
    String m_fileName;
 
@@ -224,6 +224,9 @@ public:
 
    bool removeSection( const String &key );
    void clearMainSection();
+
+   virtual void gcMark( VMachine *mp ) {}
+   virtual FalconData *clone() const { return 0; }
 };
 
 }

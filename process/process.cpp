@@ -97,6 +97,8 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    // Process Enumerator class
    //
    Falcon::Symbol *pe_class = self->addClass( "ProcessEnum", Falcon::Ext::ProcessEnum_init );
+   pe_class->getClassDef()->setObjectManager( &Falcon::core_falcon_data_manager );
+
    self->addClassProperty( pe_class, "name" );
    self->addClassProperty( pe_class, "pid" );
    self->addClassProperty( pe_class, "parentPid" );
@@ -108,6 +110,7 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    //============================================================
    // Process class
    Falcon::Symbol *proc_class = self->addClass( "Process", Falcon::Ext::Process_init );
+   proc_class->getClassDef()->setObjectManager( &Falcon::core_falcon_data_manager );
    self->addClassMethod( proc_class, "wait", Falcon::Ext::Process_wait );
    self->addClassMethod( proc_class, "terminate", Falcon::Ext::Process_terminate );
    self->addClassMethod( proc_class, "value", Falcon::Ext::Process_value );

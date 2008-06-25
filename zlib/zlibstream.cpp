@@ -106,7 +106,7 @@ int64 ZLibStream::lastError() const
    return (int64) m_lastError;
 }
 
-UserData *ZLibStream::clone() const
+FalconData *ZLibStream::clone() const
 {
    ZLibStream *zstr = new ZLibStream( *this );
    return zstr;

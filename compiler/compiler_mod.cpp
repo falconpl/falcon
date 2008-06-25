@@ -19,7 +19,7 @@
 
 #include <falcon/module.h>
 #include <falcon/cobject.h>
-#include <falcon/mempool.h>
+#include <falcon/vm.h>
 #include "compiler_mod.h"
 
 namespace Falcon {
@@ -50,11 +50,6 @@ CompilerIface::CompilerIface( CoreObject *owner, const String &path ):
 // Implemented here to reduce inline overhead
 CompilerIface::~CompilerIface()
 {}
-
-bool CompilerIface::isReflective() const
-{
-   return true;
-}
 
 void CompilerIface::getProperty( VMachine *, const String &propName, Item &prop )
 {
@@ -104,7 +99,7 @@ void CompilerIface::getProperty( VMachine *, const String &propName, Item &prop 
    }
 }
 
-void CompilerIface::setProperty( VMachine *, const String &propName, Item &prop )
+void CompilerIface::setProperty( VMachine *, const String &propName, const Item &prop )
 {
    if( propName == "path" && prop.isString() )
    {
@@ -163,14 +158,14 @@ ModuleCarrier::~ModuleCarrier()
    // the LiveModule does not belong to us, and by this time it may be already gone
 }
 
-UserData *ModuleCarrier::clone() const
+FalconData *ModuleCarrier::clone() const
 {
    return new ModuleCarrier( m_lmodule );
 }
 
-void ModuleCarrier::gcMark( MemPool *mp )
+void ModuleCarrier::gcMark( VMachine *vm )
 {
-   m_lmodule->mark( mp->currentMark() );
+   m_lmodule->mark( vm->memPool()->currentMark() );
 }
 
 }

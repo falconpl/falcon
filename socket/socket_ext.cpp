@@ -186,7 +186,7 @@ FALCON_FUNC  socketErrorDesc( ::Falcon::VMachine *vm )
 FALCON_FUNC  Socket_init( ::Falcon::VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
-   self->getProperty( "timedOut")->setBoolean( false );
+   self->setProperty( "timedOut", Item(false) );
 }
 
 /*#
@@ -315,7 +315,7 @@ FALCON_FUNC  Socket_readAvailable( ::Falcon::VMachine *vm )
       }
 
       if ( tcps->lastError() == 0 ) {
-         self->getProperty( "timedOut" )->setBoolean(  true  );
+         self->setProperty( "timedOut", Item( false ) );
          vm->regA().setBoolean( false );
       }
       else {
@@ -323,11 +323,11 @@ FALCON_FUNC  Socket_readAvailable( ::Falcon::VMachine *vm )
             .desc( FAL_STR( sk_msg_generic ) )
             .sysError( (uint32) tcps->lastError() ) ) );
          self->setProperty( "lastError", tcps->lastError() );
-         self->getProperty( "timedOut" )->setBoolean( false );
+         self->setProperty( "timedOut", Item( false ) );
       }
    }
    else {
-      self->getProperty( "timedOut")->setBoolean(  false  );
+      self->setProperty( "timedOut", Item( false ) );
       vm->regA().setBoolean( true );
    }
 }
@@ -391,7 +391,7 @@ FALCON_FUNC  Socket_writeAvailable( ::Falcon::VMachine *vm )
       }
 
       if ( tcps->lastError() == 0 ) {
-         self->getProperty( "timedOut")->setBoolean(  true  );
+         self->setProperty( "timedOut", Item( false ) );
          vm->regA().setBoolean( false );
       }
       else {
@@ -400,11 +400,11 @@ FALCON_FUNC  Socket_writeAvailable( ::Falcon::VMachine *vm )
             .desc( FAL_STR( sk_msg_generic ) )
             .sysError( (uint32) tcps->lastError() ) ) );
          self->setProperty( "lastError", tcps->lastError() );
-         self->getProperty( "timedOut")->setBoolean(  false  );
+         self->setProperty( "timedOut", Item( false ) );
       }
    }
    else {
-      self->getProperty( "timedOut" )->setBoolean(  false  );
+      self->setProperty( "timedOut", Item( false ) );
       vm->regA().setBoolean( true );
    }
 }
@@ -503,7 +503,7 @@ FALCON_FUNC  TCPSocket_init( ::Falcon::VMachine *vm )
    Sys::TCPSocket *skt = new Sys::TCPSocket( true );
    CoreObject *self = vm->self().asObject();
 
-   self->getProperty( "timedOut" )->setBoolean( false );
+   self->setProperty( "timedOut", Item( false ) );
 
    self->setUserData( skt );
 
@@ -570,19 +570,19 @@ FALCON_FUNC  TCPSocket_connect( ::Falcon::VMachine *vm )
    // connection
    if ( tcps->connect( addr ) ) {
       vm->regA().setBoolean( true );
-      self->getProperty( "timedOut" )->setBoolean(  false  );
+      self->setProperty( "timedOut", Item( false ) );
       return;
    }
 
    // connection not complete
    if ( tcps->lastError() == 0 ) {
       // timed out
-      self->getProperty( "timedOut")->setBoolean( true );
+      self->setProperty( "timedOut", Item( true ) );
       vm->regA().setBoolean( false );
    }
    else {
       self->setProperty( "lastError", tcps->lastError() );
-      self->getProperty( "timedOut" )->setBoolean( false );
+      self->setProperty( "timedOut", Item( false ) );
 
       vm->raiseModError(  new NetError( ErrorParam( FALSOCK_ERR_CONNECT, __LINE__ )
          .desc( FAL_STR( sk_msg_errconnect ) )
@@ -607,7 +607,7 @@ FALCON_FUNC  TCPSocket_isConnected( ::Falcon::VMachine *vm )
    if ( ! tcps->isConnected() ) {
       // timed out?
       if ( tcps->lastError() == 0 ) {
-         self->getProperty( "timedOut" )->setBoolean( true );
+         self->setProperty( "timedOut", Item( false ) );
          vm->regA().setBoolean( false );
          return;
       }
@@ -623,7 +623,7 @@ FALCON_FUNC  TCPSocket_isConnected( ::Falcon::VMachine *vm )
       vm->regA().setBoolean( true );
    }
 
-   self->getProperty( "timedOut" )->setBoolean( false );
+   self->setProperty( "timedOut", Item( false ) );
 }
 
 
@@ -695,9 +695,9 @@ FALCON_FUNC  TCPSocket_send( ::Falcon::VMachine *vm )
       return;
    }
    else if ( res == -2 )
-      self->getProperty( "timedOut" )->setBoolean( true );
+      self->setProperty( "timedOut", Item( true ) );
    else
-      self->getProperty( "timedOut" )->setBoolean( false );
+      self->setProperty( "timedOut", Item( false ) );
 
    vm->retval( (int64) res );
 }
@@ -829,11 +829,11 @@ FALCON_FUNC  TCPSocket_recv( ::Falcon::VMachine *vm )
       return;
    }
    else if ( size == -2 ) {
-      self->getProperty( "timedOut" )->setBoolean(  true  ) ;
+      self->setProperty( "timedOut", Item( true ) );
       size = -1;
    }
    else
-      self->getProperty( "timedOut" )->setBoolean(  false  ) ;
+      self->setProperty( "timedOut", Item( false ) );
 
    if ( size > 0 )
       cs_target->size( size );
@@ -875,14 +875,14 @@ FALCON_FUNC  TCPSocket_closeRead( ::Falcon::VMachine *vm )
    if ( ! tcps->closeRead() ) {
       // may time out
       if ( tcps->lastError() == 0 ) {
-         self->getProperty( "timedOut" )->setBoolean(  true  );
+         self->setProperty( "timedOut", Item( true ) );
          vm->regA().setBoolean( false );
          return;
       }
 
       // an error!
       self->setProperty( "lastError", tcps->lastError() );
-      self->getProperty( "timedOut" )->setBoolean(  false  );
+      self->setProperty( "timedOut", Item( false ) );
       vm->raiseModError(  new NetError( ErrorParam( FALSOCK_ERR_CLOSE, __LINE__ )
          .desc( FAL_STR( sk_msg_errclose ) )
          .sysError( (uint32) tcps->lastError() ) ) );
@@ -918,7 +918,7 @@ FALCON_FUNC  TCPSocket_closeWrite( ::Falcon::VMachine *vm )
    CoreObject *self = vm->self().asObject();
    Sys::TCPSocket *tcps = (Sys::TCPSocket *) self->getUserData();
 
-   self->getProperty( "timedOut" )->setBoolean(  false  );
+   self->setProperty( "timedOut", Item( false ) );
 
    if ( tcps->closeWrite() ) {
       vm->regA().setBoolean( true );
@@ -956,14 +956,14 @@ FALCON_FUNC  TCPSocket_close( ::Falcon::VMachine *vm )
    if ( ! tcps->close() ) {
       // may time out
       if ( tcps->lastError() == 0 ) {
-         self->getProperty( "timedOut" )->setBoolean(  true  );
+         self->setProperty( "timedOut", Item( true ) );
          vm->regA().setBoolean( false );
          return;
       }
 
       // an error!
       self->setProperty( "lastError", tcps->lastError() );
-      self->getProperty( "timedOut" )->setBoolean(  false  );
+      self->setProperty( "timedOut", Item( false ) );
       vm->raiseModError(  new NetError( ErrorParam( FALSOCK_ERR_CLOSE, __LINE__ )
          .desc( FAL_STR( sk_msg_errclose ) )
          .sysError( (uint32) tcps->lastError() ) ) );
@@ -1118,9 +1118,9 @@ FALCON_FUNC  UDPSocket_sendTo( ::Falcon::VMachine *vm )
       return;
    }
    else if ( res == -2 )
-      self->getProperty( "timedOut" )->setBoolean( true );
+      self->setProperty( "timedOut", Item( true ) );
    else
-      self->getProperty( "timedOut" )->setBoolean( false );
+      self->setProperty( "timedOut", Item( false ) );
 
    vm->retval( (int64) res );
 }
@@ -1256,11 +1256,11 @@ FALCON_FUNC  UDPSocket_recv( ::Falcon::VMachine *vm )
       return;
    }
    else if ( size == -2 ) {
-      self->getProperty( "timedOut" )->setBoolean( true ) ;
+      self->setProperty( "timedOut", Item( true ) );
       size = -1;
    }
    else {
-      self->getProperty( "timedOut" )->setBoolean( false ) ;
+      self->setProperty( "timedOut", Item( false ) );
       String temp;
       from.getAddress( temp );
       self->setProperty( "remote", temp );
@@ -1496,7 +1496,7 @@ FALCON_FUNC  NetError_init ( ::Falcon::VMachine *vm )
 {
    CoreObject *einst = vm->self().asObject();
    if( einst->getUserData() == 0 )
-      einst->setUserData( new Falcon::ErrorCarrier( new NetError ) );
+      einst->setUserData( new NetError );
 
    ::Falcon::core::Error_init( vm );
 }

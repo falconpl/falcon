@@ -12,7 +12,7 @@
 
 #include <mxml_element.h>
 #include <falcon/string.h>
-#include <falcon/userdata.h>
+#include <falcon/falcondata.h>
 
 namespace MXML {
 
@@ -22,7 +22,7 @@ typedef enum {
    notFoundError
 } errorType;
 
-class Error: public Falcon::UserData
+class Error: public Falcon::FalconData
 {
 private:
    int m_code;
@@ -68,6 +68,9 @@ public:
    void describeLine( Falcon::String &target ) const;
 
    const Falcon::String describeLine() const { Falcon::String s; describeLine(s); return s; }
+
+   virtual void gcMark( Falcon::VMachine *mp ) {};
+   virtual FalconData *clone() const { return 0; }
 };
 
 
@@ -82,7 +85,7 @@ public:
 class IOError: public Error
 {
 public:
-   IOError( const codes code, const Element *generator  ): 
+   IOError( const codes code, const Element *generator  ):
       Error( code, generator ) {};
    virtual const errorType type() const { return ioError; }
 };
@@ -90,7 +93,7 @@ public:
 class NotFoundError: public Error
 {
 public:
-   NotFoundError( const codes code, const Element *generator ): 
+   NotFoundError( const codes code, const Element *generator ):
       Error( code, generator ) {};
    virtual const errorType type() const { return notFoundError; }
 };

@@ -19,6 +19,6 @@ z = ZLib()
 compressed = z.compress( original )
 uncompressed = z.uncompress( compressed )
 
-if original != uncompressed: failure( "original != uncompressed" )
+if original != strFromMemBuf( uncompressed ): failure( "original != uncompressed" )
 
 success()

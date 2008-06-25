@@ -105,10 +105,10 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
          sequence.
    */
    Falcon::Symbol *c_style = self->addClass( "MXMLStyle" );
-   self->addClassProperty( c_style, "INDENT")->setInteger( MXML_STYLE_INDENT );
-   self->addClassProperty( c_style, "TAB" )->setInteger( MXML_STYLE_TAB );
-   self->addClassProperty( c_style, "THREESPACES" )->setInteger( MXML_STYLE_THREESPACES );
-   self->addClassProperty( c_style, "NOESCAPE" )->setInteger( MXML_STYLE_NOESCAPE );
+   self->addClassProperty( c_style, "INDENT").setInteger( MXML_STYLE_INDENT ).setReadOnly( true );
+   self->addClassProperty( c_style, "TAB" ).setInteger( MXML_STYLE_TAB ).setReadOnly( true );
+   self->addClassProperty( c_style, "THREESPACES" ).setInteger( MXML_STYLE_THREESPACES ).setReadOnly( true );
+   self->addClassProperty( c_style, "NOESCAPE" ).setInteger( MXML_STYLE_NOESCAPE ).setReadOnly( true );
 
    //=================================================================
    // Enumeration Node type.
@@ -135,12 +135,12 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
          (properly escaped as textual elements when serialized).
    */
    Falcon::Symbol *c_nodetype = self->addClass( "MXMLType" );
-   self->addClassProperty( c_nodetype, "tag")->setInteger( MXML::Node::typeTag );
-   self->addClassProperty( c_nodetype, "comment" )->setInteger( MXML::Node::typeComment );
-   self->addClassProperty( c_nodetype, "PI" )->setInteger( MXML::Node::typePI );
-   self->addClassProperty( c_nodetype, "directive" )->setInteger( MXML::Node::typeDirective );
-   self->addClassProperty( c_nodetype, "data" )->setInteger( MXML::Node::typeData );
-   self->addClassProperty( c_nodetype, "CDATA" )->setInteger( MXML::Node::typeCDATA );
+   self->addClassProperty( c_nodetype, "tag").setInteger( MXML::Node::typeTag ).setReadOnly( true );
+   self->addClassProperty( c_nodetype, "comment" ).setInteger( MXML::Node::typeComment ).setReadOnly( true );
+   self->addClassProperty( c_nodetype, "PI" ).setInteger( MXML::Node::typePI ).setReadOnly( true );
+   self->addClassProperty( c_nodetype, "directive" ).setInteger( MXML::Node::typeDirective ).setReadOnly( true );
+   self->addClassProperty( c_nodetype, "data" ).setInteger( MXML::Node::typeData ).setReadOnly( true );
+   self->addClassProperty( c_nodetype, "CDATA" ).setInteger( MXML::Node::typeCDATA ).setReadOnly( true );
 
    //=================================================================
    // Enumeration error code.
@@ -172,41 +172,42 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    */
 
    Falcon::Symbol *c_errcode = self->addClass( "MXMLErrorCode" );
-   self->addClassProperty( c_errcode, "Io")->
+   self->addClassProperty( c_errcode, "Io").
       setInteger( FALCON_MXML_ERROR_BASE + (Falcon::int64) MXML::Error::errIo );
-   self->addClassProperty( c_errcode, "Nomem" )->
+   self->addClassProperty( c_errcode, "Nomem" ).
       setInteger( FALCON_MXML_ERROR_BASE + (Falcon::int64) MXML::Error::errNomem );
-   self->addClassProperty( c_errcode, "OutChar" )->
+   self->addClassProperty( c_errcode, "OutChar" ).
       setInteger( FALCON_MXML_ERROR_BASE + (Falcon::int64) MXML::Error::errOutChar );
-   self->addClassProperty( c_errcode, "InvalidNode" )->
+   self->addClassProperty( c_errcode, "InvalidNode" ).
       setInteger( FALCON_MXML_ERROR_BASE + (Falcon::int64) MXML::Error::errInvalidNode );
-   self->addClassProperty( c_errcode, "InvalidAtt" )->
+   self->addClassProperty( c_errcode, "InvalidAtt" ).
       setInteger( FALCON_MXML_ERROR_BASE + (Falcon::int64) MXML::Error::errInvalidAtt );
-   self->addClassProperty( c_errcode, "MalformedAtt" )->
+   self->addClassProperty( c_errcode, "MalformedAtt" ).
       setInteger( FALCON_MXML_ERROR_BASE + (Falcon::int64) MXML::Error::errMalformedAtt );
-   self->addClassProperty( c_errcode, "InvalidChar" )->
+   self->addClassProperty( c_errcode, "InvalidChar" ).
       setInteger( FALCON_MXML_ERROR_BASE + (Falcon::int64) MXML::Error::errInvalidChar );
-   self->addClassProperty( c_errcode, "Unclosed" )->
+   self->addClassProperty( c_errcode, "Unclosed" ).
       setInteger( FALCON_MXML_ERROR_BASE + (Falcon::int64) MXML::Error::errUnclosed );
-   self->addClassProperty( c_errcode, "UnclosedEntity" )->
+   self->addClassProperty( c_errcode, "UnclosedEntity" ).
       setInteger( FALCON_MXML_ERROR_BASE + (Falcon::int64) MXML::Error::errUnclosedEntity );
-   self->addClassProperty( c_errcode, "WrongEntity" )->
+   self->addClassProperty( c_errcode, "WrongEntity" ).
       setInteger( FALCON_MXML_ERROR_BASE + (Falcon::int64) MXML::Error::errWrongEntity );
-   self->addClassProperty( c_errcode, "ChildNotFound" )->
+   self->addClassProperty( c_errcode, "ChildNotFound" ).
       setInteger( FALCON_MXML_ERROR_BASE + (Falcon::int64) MXML::Error::errChildNotFound );
-   self->addClassProperty( c_errcode, "AttrNotFound" )->
+   self->addClassProperty( c_errcode, "AttrNotFound" ).
       setInteger( FALCON_MXML_ERROR_BASE + (Falcon::int64) MXML::Error::errAttrNotFound );
-   self->addClassProperty( c_errcode, "Hyerarcy" )->
+   self->addClassProperty( c_errcode, "Hyerarcy" ).
       setInteger( FALCON_MXML_ERROR_BASE + (Falcon::int64) MXML::Error::errHyerarcy );
-   self->addClassProperty( c_errcode, "CommentInvalid" )->
+   self->addClassProperty( c_errcode, "CommentInvalid" ).
       setInteger( FALCON_MXML_ERROR_BASE + (Falcon::int64) MXML::Error::errCommentInvalid );
-   self->addClassProperty( c_errcode, "MultipleXmlDecl" )->
+   self->addClassProperty( c_errcode, "MultipleXmlDecl" ).
       setInteger( FALCON_MXML_ERROR_BASE + (Falcon::int64) MXML::Error::errMultipleXmlDecl );
 
    //=================================================================
    // Class document.
    //
    Falcon::Symbol *c_doc = self->addClass( "MXMLDocument", Falcon::Ext::MXMLDocument_init );
+   c_doc->getClassDef()->setObjectManager( &Falcon::core_falcon_data_manager );
    self->addClassMethod( c_doc, "deserialize", Falcon::Ext::MXMLDocument_deserialize );
    self->addClassMethod( c_doc, "serialize", Falcon::Ext::MXMLDocument_serialize );
    self->addClassMethod( c_doc, "style", Falcon::Ext::MXMLDocument_style );
@@ -227,6 +228,7 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
 
    Falcon::Symbol *c_node = self->addClass( "MXMLNode", Falcon::Ext::MXMLNode_init );
    c_node->setWKS( true );
+   c_node->getClassDef()->setObjectManager( &Falcon::core_falcon_data_manager );
    self->addClassMethod( c_node, "deserialize", Falcon::Ext::MXMLNode_deserialize );
    self->addClassMethod( c_node, "serialize", Falcon::Ext::MXMLNode_serialize );
    self->addClassMethod( c_node, "nodeType", Falcon::Ext::MXMLNode_nodeType );

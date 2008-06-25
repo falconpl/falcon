@@ -22,7 +22,7 @@
 #define FLC_SOCKET_SYS_H
 
 #include <falcon/string.h>
-#include <falcon/userdata.h>
+#include <falcon/falcondata.h>
 #include <falcon/vm_sys.h>
 
 namespace Falcon {
@@ -141,7 +141,7 @@ public:
 };
 
 /** Base class for system dependant socket implementation. */
-class Socket: public Falcon::UserData
+class Socket: public Falcon::FalconData
 {
 protected:
 
@@ -195,6 +195,9 @@ public:
       Clears the socket internal data without disconnecting.
    */
    void terminate();
+
+   virtual void gcMark( VMachine *mp ) {};
+   virtual FalconData *clone() const { return 0; }
 };
 
 class UDPSocket: public Socket

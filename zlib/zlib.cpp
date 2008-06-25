@@ -95,15 +95,15 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    */
    Falcon::Symbol *c_errcode = self->addClass( "ZLibErrorCode" );
    self->addClassProperty( c_errcode, "errno")
-      ->setInteger( FALCON_ZLIB_ERROR_BASE - Z_ERRNO );
+      .setInteger( FALCON_ZLIB_ERROR_BASE - Z_ERRNO );
    self->addClassProperty( c_errcode, "stream")
-      ->setInteger( FALCON_ZLIB_ERROR_BASE - Z_STREAM_ERROR );
+      .setInteger( FALCON_ZLIB_ERROR_BASE - Z_STREAM_ERROR );
    self->addClassProperty( c_errcode, "data")
-      ->setInteger( FALCON_ZLIB_ERROR_BASE - Z_DATA_ERROR );
+      .setInteger( FALCON_ZLIB_ERROR_BASE - Z_DATA_ERROR );
    self->addClassProperty( c_errcode, "memory")
-      ->setInteger( FALCON_ZLIB_ERROR_BASE - Z_BUF_ERROR );
+      .setInteger( FALCON_ZLIB_ERROR_BASE - Z_BUF_ERROR );
    self->addClassProperty( c_errcode, "version")
-      ->setInteger( FALCON_ZLIB_ERROR_BASE - Z_VERSION_ERROR );
+      .setInteger( FALCON_ZLIB_ERROR_BASE - Z_VERSION_ERROR );
 
 
    //====================================

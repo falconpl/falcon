@@ -38,7 +38,7 @@ NodeCarrier::~NodeCarrier()
       delete m_node;
 }
 
-UserData *NodeCarrier::clone() const
+FalconData *NodeCarrier::clone() const
 {
    MXML::Node *node = m_node->clone();
    return new NodeCarrier( node, 0 );

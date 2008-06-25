@@ -1594,7 +1594,7 @@ FALCON_FUNC  MXMLError_init ( ::Falcon::VMachine *vm )
 {
    CoreObject *einst = vm->self().asObject();
    if( einst->getUserData() == 0 )
-      einst->setUserData( new Falcon::ErrorCarrier( new MXMLError ) );
+      einst->setUserData( new MXMLError );
 
    ::Falcon::core::Error_init( vm );
 }

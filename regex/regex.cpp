@@ -144,6 +144,7 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    // Regex class
    //
    Falcon::Symbol *regex_c = self->addClass( "Regex", Falcon::Ext::Regex_init );
+   regex_c->getClassDef()->setObjectManager( &Falcon::core_falcon_data_manager );
    self->addClassMethod( regex_c, "study", Falcon::Ext::Regex_study );
    self->addClassMethod( regex_c, "match", Falcon::Ext::Regex_match );
    self->addClassMethod( regex_c, "grab", Falcon::Ext::Regex_grab );

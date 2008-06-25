@@ -138,6 +138,8 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
 
 
    Falcon::Symbol *c_cparser = self->addClass( "ConfParser", Falcon::Ext::ConfParser_init );
+   c_cparser->getClassDef()->setObjectManager( &Falcon::core_falcon_data_manager );
+
    self->addClassMethod( c_cparser, "read", Falcon::Ext::ConfParser_read );
    self->addClassMethod( c_cparser, "write", Falcon::Ext::ConfParser_write );
    self->addClassMethod( c_cparser, "get", Falcon::Ext::ConfParser_get );
