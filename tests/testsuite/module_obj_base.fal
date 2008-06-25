@@ -14,8 +14,6 @@
 ****************************************************************************/
 load module_obj_middle
 
-// For now we import, but this must work without import.
-import MyObject
 
 MyObject.alpha = 500
 if MyObject.beta != "Original string": failure( "invariancy" )

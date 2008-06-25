@@ -358,12 +358,18 @@ void Compiler::defineVal( Value *val )
    // raise error for read-only expressions
    if ( val->isExpr() )
    {
+      // byte accessors cannot receive values
       if ( val->asExpr()->type() == Expression::t_array_byte_access )
       {
          raiseError( e_byte_access, lexer()->previousLine() );
          // but proceed
       }
-      else {
+      // assignments to accessors and  function returns doesn't define anything.
+      else if ( ! (val->asExpr()->type() == Expression::t_obj_access ||
+                   val->asExpr()->type() == Expression::t_array_access ||
+                   val->asExpr()->type() == Expression::t_funcall )
+              )
+      {
          Expression *expr = val->asExpr();
          defineVal( expr->first() );
          if( expr->second() != 0 )
