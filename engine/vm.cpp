@@ -430,7 +430,7 @@ LiveModule *VMachine::link( Module *mod, bool isMainModule )
    // return zero and dispose of the module if not succesful.
    if ( ! success )
    {
-      delete livemod;
+      // LiveModule is garbageable, cannot be destroyed.
       return 0;
    }
 
