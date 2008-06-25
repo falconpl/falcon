@@ -1,0 +1,25 @@
+/****************************************************************************
+* Falcon test suite
+*
+*
+* ID: 52b
+* Category: modloader
+* Subcategory: object
+* Short: Checking correct implicit import of objects.
+* Description:
+*   This test assigns a property to an object imported from a module
+*   and checks if the other property is invariant.
+* [/Description]
+*
+****************************************************************************/
+load module_obj_middle
+
+// For now we import, but this must work without import.
+import MyObject
+
+MyObject.alpha = 500
+if MyObject.beta != "Original string": failure( "invariancy" )
+
+success()
+
+/* End of file */

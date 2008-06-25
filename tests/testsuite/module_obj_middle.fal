@@ -1,0 +1,22 @@
+/****************************************************************************
+* Falcon test suite
+*
+*
+* ID: ---
+* Category: modloader
+* Subcategory: object
+* Short: Checking correct implicit import of objects.
+* Description:
+*   Central part of test 52b
+* [/Description]
+*
+****************************************************************************/
+
+object MyObject
+   alpha = 0
+   beta = "Original string"
+end
+
+export MyObject
+
+/* End of file */
