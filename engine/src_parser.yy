@@ -1601,7 +1601,7 @@ attribute_vert_list:
 class_decl:
       CLASS SYMBOL
       {
-         Falcon::ClassDef *def = new Falcon::ClassDef( 0, 0 );
+         Falcon::ClassDef *def = new Falcon::ClassDef;
          // the SYMBOL which names the function goes in the old symbol table, while the parameters
          // will go in the new symbol table.
 
@@ -1910,7 +1910,7 @@ has_clause_list:
 enum_statement:
       ENUM SYMBOL
       {
-         Falcon::ClassDef *def = new Falcon::ClassDef( 0, 0 );
+         Falcon::ClassDef *def = new Falcon::ClassDef;
          // the SYMBOL which names the function goes in the old symbol table, while the parameters
          // will go in the new symbol table.
 
@@ -1981,7 +1981,7 @@ enum_item_terminator:
 object_decl:
    OBJECT SYMBOL
       {
-         Falcon::ClassDef *def = new Falcon::ClassDef( 0, 0 );
+         Falcon::ClassDef *def = new Falcon::ClassDef;
          // the SYMBOL which names the function goes in the old symbol table, while the parameters
          // will go in the new symbol table.
 

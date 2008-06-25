@@ -59,11 +59,11 @@ try
       end
 
       if element == "." or element == ".."
-         if fileType( element ) != FILE_TYPE_DIR
+         if fileType( element ) != FileStat.DIR
             failure( "Filed to recognize a directory" )
          end
       else
-         if fileType( element ) != FILE_TYPE_NORMAL
+         if fileType( element ) != FileStat.NORMAL
             failure( "Filed to recognize a file" )
          end
       end

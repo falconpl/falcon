@@ -71,7 +71,7 @@ bool Item::serialize_function( Stream *file, const Symbol *func ) const
    return true;
 }
 
-bool Item::serialize_object( Stream *file, const CoreObject *obj, bool bLive ) const
+bool Item::serialize_object( Stream *file, CoreObject *obj, bool bLive ) const
 {
    // if we're not live, we can't have user data
    if ( ! bLive && obj->getUserData() != 0 )
@@ -94,7 +94,9 @@ bool Item::serialize_object( Stream *file, const CoreObject *obj, bool bLive ) c
    file->write((byte *) &len, sizeof(len) );
 
    for( uint32 i = 0; i < len; i ++ ) {
-      if ( obj->getPropertyAt( i ).serialize( file, bLive ) != sc_ok )
+      Item temp;
+      obj->getPropertyAt( i, temp );
+      if ( temp.serialize( file, bLive ) != sc_ok )
          return false;
    }
 
@@ -127,7 +129,7 @@ bool Item::serialize_object( Stream *file, const CoreObject *obj, bool bLive ) c
    {
       if ( obj->getUserData() != 0 )
       {
-         UserData *cloned = obj->getUserData()->clone();
+         void *cloned = obj->getObjectManager()->onClone( obj->origin(), obj->getUserData() );
          if ( cloned == 0 )
          {
             obj->origin()->raiseError( e_uncloneable, "Item::serialize" );
@@ -745,7 +747,7 @@ Item::e_sercode Item::deserialize( Stream *file, VMachine *vm )
          Item *clitem = lmod->globals().itemPtrAt( sym->itemId() );
 
          // Create the core object, but don't fill attribs.
-         CoreObject *object = clitem->asClass()->createInstance(false);
+         CoreObject *object = clitem->asClass()->createInstance(0, false);
 
          // Read the class property table.
          uint32 len;
@@ -762,7 +764,9 @@ Item::e_sercode Item::deserialize( Stream *file, VMachine *vm )
                break;
             }
 
-            sc = object->getPropertyAt( i ).deserialize( file, vm );
+            Item temp;
+            sc = temp.deserialize( file, vm );
+            object->setPropertyAt( i, temp );
             if ( sc != sc_ok ) {
                break;
             }
@@ -793,7 +797,7 @@ Item::e_sercode Item::deserialize( Stream *file, VMachine *vm )
             // if the object was serialized live, get the user data.
             if( bLive )
             {
-               UserData *data;
+               void *data;
                if ( file->read( (byte *) &data, sizeof( data ) ) != sizeof( data ) )
                   return sc_ferror;
                object->setUserData( data );

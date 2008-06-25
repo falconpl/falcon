@@ -134,11 +134,13 @@ void LiveModule::detachModule()
 {
    if ( m_module != 0 )
    {
-      m_module->decref();
+      Module *m = m_module;
       m_module = 0;
       // no reason to keep globals allocated
       m_globals.resize(0);
       m_wkitems.resize(0);
+
+      m->decref();
    }
 }
 

@@ -205,6 +205,8 @@ const char *en_table[] =
       "Target class cannot be instantiated",
       "Object cannot be serialized (because of inner native data)",
       "VM received a suspension request in an atomic operation",
+      "Inheritance from more than one subtree of reflected classes.",
+      "Tried to write a read-only property.",
 
       "Can't open file",
       "Load error",

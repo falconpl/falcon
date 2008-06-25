@@ -52,6 +52,10 @@ bool PageDictIterator::prev()
    return m_iter.prev();
 }
 
+FalconData *PageDictIterator::clone() const
+{
+   return new PageDictIterator( *this );
+}
 
 bool PageDictIterator::isValid() const
 {
@@ -162,6 +166,7 @@ DictIterator *PageDict::last()
 {
    return new PageDictIterator( this, m_map.end() );
 }
+
 
 void PageDict::first( DictIterator &iter )
 {

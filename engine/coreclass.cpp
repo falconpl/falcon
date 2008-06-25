@@ -38,7 +38,7 @@ bool CoreClass::derivedFrom( const String &className ) const
 {
    // else search the base class name in the inheritance properties.
    uint32 pos;
-   if ( m_properties->findKey( &className, pos ) )
+   if ( m_properties->findKey( className, pos ) )
    {
       Item *itm =  m_properties->getValue( pos )->dereference();
       if ( itm->isClass() )
@@ -56,7 +56,7 @@ CoreClass::~CoreClass()
 }
 
 
-CoreObject *CoreClass::createInstance( bool applyAttributes ) const
+CoreObject *CoreClass::createInstance( void *userdata, bool applyAttributes ) const
 {
    if ( m_sym->isEnum() )
    {
@@ -65,8 +65,12 @@ CoreObject *CoreClass::createInstance( bool applyAttributes ) const
       // anyhow, flow through to allow user to see the object
    }
 
-   // we must have an origin pointer.
-   CoreObject *instance = new CoreObject( origin(), *m_properties, symbol() );
+   if ( userdata == 0 && m_manager )
+      userdata = m_manager->onInit( origin() );
+
+   // The core object will self configure,
+   // eventually calling the user data constructor and creating the property vector.
+   CoreObject *instance = new CoreObject( this, userdata );
 
    // assign attributes to the instance.
    if ( applyAttributes )

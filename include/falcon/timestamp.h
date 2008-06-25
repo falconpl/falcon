@@ -22,7 +22,7 @@
 
 #include <falcon/setup.h>
 #include <falcon/types.h>
-#include <falcon/userdata.h>
+#include <falcon/falcondata.h>
 #include <falcon/time_sys.h>
 #include <falcon/string.h>
 
@@ -35,7 +35,7 @@ class String;
    object and as a internal object for the TimeStamp falcon core
    object.
 */
-class FALCON_DYN_CLASS TimeStamp: public UserData
+class FALCON_DYN_CLASS TimeStamp: public FalconData
 {
 private:
    void rollOver(  bool onlyDays = false);
@@ -76,6 +76,8 @@ public:
    }
 
    ~TimeStamp() {}
+
+   virtual void gcMark( VMachine *mp ) {}
 
    TimeStamp &operator = ( const TimeStamp &ts );
    TimeStamp &operator += ( const TimeStamp &ts )
@@ -196,11 +198,7 @@ public:
 
    friend void Sys::Time::timestampFromSystemTime( const SystemTime &sys_time, TimeStamp &ts );
 
-   virtual bool isReflective() const;
-   virtual void getProperty( VMachine *, const String &propName, Item &prop );
-   virtual void setProperty( VMachine *, const String &propName, Item &prop );
-
-   virtual UserData *clone() const;
+   virtual FalconData *clone() const;
 };
 
 inline TimeStamp operator + ( const TimeStamp &ts1, const TimeStamp &ts2 )

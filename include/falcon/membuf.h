@@ -28,15 +28,15 @@ namespace Falcon {
 
 class VMachine;
 class Stream;
-class UserData;
+class CoreObject;
 
 class FALCON_DYN_SYM MemBuf: public Garbageable
 {
 protected:
    byte *m_memory;
-   bool m_bOwn;
    uint32 m_size;
-   UserData *m_dependant;
+   CoreObject *m_dependant;
+   bool m_bOwn;
 
 public:
 
@@ -51,12 +51,26 @@ public:
 
    uint32 size() const { return m_size; }
    byte *data() const { return m_memory; }
-   UserData *dependant() const { return m_dependant; }
-   void dependant( UserData *g ) { m_dependant = g; }
+   /** Return the CoreObject that stores vital data for this mempool.
+      \see void dependant( CoreObject *g )
+   */
+   CoreObject *dependant() const { return m_dependant; }
 
+   /** Links this data to a CoreObject.
+      Some object may provide MemBuf properties to access data or data portion
+      stored in some part of the user_data they reflect.
+
+      To make this possible and easy, the MemBuf can be given
+      a back reference to the object that created it. In this way,
+      the object will be granted to stay alive as long as the MemPool is
+      alive.
+   */
+   void dependant( CoreObject *g ) { m_dependant = g; }
 
    virtual bool serialize( Stream *stream, bool bLive = false ) const;
+
    static MemBuf *deserialize( VMachine *vm, Stream *stream );
+
    /** Creates a membuf with defined wordsize.
       The length parameter is the final element count; it gets multiplied
       by nWordSize.

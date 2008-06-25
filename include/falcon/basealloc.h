@@ -2,7 +2,7 @@
    FALCON - The Falcon Programming Language.
    FILE: basealloc.h
 
-    Base allocation declaration for engine classes
+   Base allocation declaration for engine classes
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: mar dic 5 2006

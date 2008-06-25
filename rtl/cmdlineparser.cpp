@@ -234,8 +234,8 @@ FALCON_FUNC  CmdlineParser_parse( ::Falcon::VMachine *vm )
    CoreArray *args = i_params->asArray();
 
    // zero request.
-   self->setProperty( "_request", (int64) 0 );
-   self->setProperty( "lastParsed", (int64) 0 );
+   self->setProperty( "_request", Item((int64) 0) );
+   self->setProperty( "lastParsed", Item((int64) 0) );
 
    // status.
    typedef enum {
@@ -405,12 +405,12 @@ FALCON_FUNC  CmdlineParser_parse( ::Falcon::VMachine *vm )
          // value requested?
          if ( _request.asInteger() == 1 ) {
             state = t_waitingValue;
-            self->setProperty( "_request", (int64) 0 );
+            self->setProperty( "_request", 0 );
          }
          // or request to terminate?
          else if ( _request.asInteger() == 2 )
          {
-            self->setProperty( "_request", (int64) 0 );
+            self->setProperty( "_request",  0 );
             vm->retval( true );
             self->setProperty( "lastParsed", (int64) i );
             return;

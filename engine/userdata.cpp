@@ -1,62 +1,56 @@
 /*
-   FALCON - The Falcon Programming Language
+   FALCON - The Falcon Programming Language.
    FILE: userdata.cpp
 
-   Embeddable falcon object user data.
+   Falcon user simplified reflection architecture.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
-   Begin: sab giu 23 2007
+   Begin: Sun, 22 Jun 2008 11:09:16 +0200
 
    -------------------------------------------------------------------
-   (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
+   (C) Copyright 2008: the FALCON developers (see list in AUTHORS file)
 
    See LICENSE file for licensing details.
 */
 
 /** \file
-   Embeddable falcon object user data.
+   Falcon user simplified reflection architecture.
 */
 
 #include <falcon/userdata.h>
+#include <falcon/cobject.h>
 
 namespace Falcon {
 
-UserData::~UserData()
+UserDataManager::UserDataManager( bool bNeedCache, UserData *model ):
+   FalconDataManager( model ),
+   m_bNeedCache(bNeedCache)
 {}
 
-bool UserData::isReflective() const
+UserDataManager::~UserDataManager()
+{}
+
+void UserDataManager::onSetProperty( CoreObject *owner, void *user_data, const String &propname, const Item &property )
 {
-   return false;
+   if( user_data != 0 )
+   {
+      UserData *ud = (UserData *)user_data;
+      ud->setProperty( owner->origin(), propname, property );
+   }
 }
 
-bool UserData::shared() const
+void UserDataManager::onGetProperty( CoreObject *owner, void *user_data, const String &propname, Item &property )
 {
-   return false;
+   if ( user_data != 0 )
+   {
+      UserData *ud = (UserData *)user_data;
+      ud->getProperty( owner->origin(), propname, property );
+   }
 }
 
-void UserData::getProperty( VMachine *vm, const String &propName, Item &prop )
-{
-}
-
-void UserData::setProperty( VMachine *vm, const String &propName, Item &prop )
-{
-}
-
-UserData * UserData::clone() const
-{
-   return 0;
-}
-
-bool UserData::isSequence() const
-{
-   return false;
-}
-
-void UserData::gcMark( MemPool *mp )
-{
-}
+UserDataManager core_user_data_manager_cacheful( true );
+UserDataManager core_user_data_manager_cacheless( false );
 
 }
-
 
 /* end of userdata.cpp */

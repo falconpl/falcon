@@ -19,48 +19,60 @@
 
 #include <falcon/proptable.h>
 #include <falcon/memory.h>
+#include <falcon/fassert.h>
 #include <string.h>
 
 namespace Falcon
 {
 
-PropertyTable::PropertyTable( uint32 size )
+PropertyTable::PropertyTable( uint32 size ):
+   m_bReflective( false ),
+   m_bStatic( true )
 {
    m_size = size;
    m_added = 0;
-   m_keys = (const String **) memAlloc( sizeof( String * ) * size );
-   m_values = (Item *) memAlloc( sizeof( Item ) * size );
-   m_configs = 0;
+   m_entries = (Entry *) memAlloc( sizeof( Entry ) * size );
+   // Luckily, 0 is the neuter value for all our representations.
+   memset( m_entries, 0, sizeof( Entry ) * size );
 }
 
-PropertyTable::PropertyTable( const PropertyTable &other )
+PropertyTable::PropertyTable( const PropertyTable &other ):
+   m_bReflective( other.m_bReflective ),
+   m_bStatic( other.m_bStatic )
 {
    m_size = other.m_size;
    m_added = other.m_added;
-   m_keys = (const String **) memAlloc( sizeof( String * ) * m_size );
-   memcpy( m_keys, other.m_keys, m_added * sizeof( String * ) );
-   m_values = (Item *) memAlloc( sizeof( Item ) * m_size );
-   memcpy( m_values, other.m_values, m_added * sizeof( Item ) );
-
-   if ( other.m_configs != 0 )
-   {
-      m_configs = (config*) memAlloc( sizeof( config ) * m_size );
-      memcpy( m_configs, other.m_configs, m_added * sizeof( config ) );
-   }
-   else {
-      m_configs = 0;
-   }
+   m_entries = (Entry *) memAlloc( sizeof( Entry ) * m_size );
+   memcpy( m_entries, other.m_entries, sizeof( Entry ) * m_size );
 }
+
 
 PropertyTable::~PropertyTable()
 {
-   memFree( m_keys );
-   memFree( m_values );
-   if ( m_configs != 0 )
-      memFree( m_configs );
+   memFree( m_entries );
 }
 
-bool PropertyTable::findKey( const String *key, uint32 &pos ) const
+
+void PropertyTable::checkProperties()
+{
+   m_bStatic = true;
+   m_bReflective = false;
+
+   for( uint32 i = 0; i < m_added; i++ )
+   {
+      const Entry &e = m_entries[i];
+
+      if ( e.m_eReflectMode != e_reflectNone ) {
+         m_bReflective = true;
+      }
+      else if ( ! e.m_bReadOnly ) {
+         m_bStatic = false;
+      }
+   }
+}
+
+
+bool PropertyTable::findKey( const String &key, uint32 &pos ) const
 {
    uint32 lower = 0, higher, point;
    higher = m_size;
@@ -77,9 +89,9 @@ bool PropertyTable::findKey( const String *key, uint32 &pos ) const
    while ( true )
    {
       // get the table row
-      current = m_keys[point];
+      current = m_entries[point].m_key;
 
-      if( *current == *key ) {
+      if( *current == key ) {
          pos = point;
          return true;
       }
@@ -88,7 +100,7 @@ bool PropertyTable::findKey( const String *key, uint32 &pos ) const
          if ( lower == higher -1 )
          {
             // key is EVEN less than the lower one
-            if ( *key < *current )
+            if ( key < *current )
             {
                pos = lower;
                return false;
@@ -96,7 +108,7 @@ bool PropertyTable::findKey( const String *key, uint32 &pos ) const
 
             // being integer math, ulPoint is rounded by defect and has
             // already looked at the ulLower position
-            if ( *key == *m_keys[higher] ) {
+            if ( key == *m_entries[higher].m_key ) {
                pos = higher;
                return true;
             }
@@ -110,7 +122,7 @@ bool PropertyTable::findKey( const String *key, uint32 &pos ) const
             break;
          }
 
-         if ( *key > *current )
+         if ( key > *current )
          {
             lower = point;
          }
@@ -123,86 +135,165 @@ bool PropertyTable::findKey( const String *key, uint32 &pos ) const
    }
 
    // entry not found, but signal the best match anyway
-   pos =  *key > *current ? higher + 1 : higher;
+   pos =  key > *current ? higher + 1 : higher;
 
    return false;
 }
 
 
-bool PropertyTable::append( const String *key, const Item &itm )
+PropertyTable::Entry &PropertyTable::append( const String *key )
 {
-   if( m_added >= m_size ) return false;
+   if( m_added >= m_size ) return m_entries[0];
 
-   if ( m_added != 0 ) {
-      uint32 pos;
-      if ( !findKey( key, pos ) ) {
-         memmove( m_keys + pos, m_keys + pos + 1, sizeof( String * ) * (m_added - pos) );
-         m_keys[pos] = key;
-         memmove( m_values + pos, m_values + pos + 1, sizeof( Item ) * (m_added - pos) );
-         if( m_configs != 0 )
-         {
-            memmove( m_configs + pos, m_configs + pos + 1, sizeof( config ) * (m_added - pos) );
-            m_configs[pos].m_offset = 0;
-            m_configs[pos].m_size = 0;
-         }
-      }
-      *getValue( pos ) = itm;
-   }
-   else {
-      m_keys[0] = key;
-      *getValue( 0 ) = itm;
-   }
-
-   m_added++;
-
-   return true;
-}
-
-bool PropertyTable::append( const String *key, const Item &itm, const PropertyTable::config &cfg )
-{
-   if( m_added >= m_size ) return false;
-
-   if ( m_configs== 0 )
+   if ( m_added != 0 )
    {
-      m_configs = (config*) memAlloc( sizeof( config ) * m_size );
-      memset( m_configs, 0, m_size * sizeof( config ) );
-   }
-
-   if ( m_added != 0 ) {
       uint32 pos;
-      if ( !findKey( key, pos ) ) {
-         memmove( m_keys + pos, m_keys + pos + 1, sizeof( String * ) * (m_added - pos) );
-         m_keys[pos] = key;
-         memmove( m_values + pos, m_values + pos + 1, sizeof( Item ) * (m_added - pos) );
-
-         memmove( m_configs + pos, m_configs + pos + 1, sizeof( config ) * (m_added - pos) );
-         m_configs[pos] = cfg;
+      if ( !findKey( *key, pos ) )
+      {
+         memmove( m_entries + pos, m_entries + pos + 1, sizeof( Entry ) * (m_added - pos) );
+         m_entries[pos].m_key = key;
       }
-      *getValue( pos ) = itm;
+
+      m_added++;
+      return m_entries[pos];
    }
-   else {
-      m_keys[0] = key;
-      *getValue(0) = itm;
-      m_configs[0] = cfg;
-   }
-
-   m_added++;
-
-   return true;
-}
-
-void PropertyTable::appendSafe( const String *key, const Item &itm, const PropertyTable::config &cfg )
-{
-   if ( m_configs == 0 )
+   else
    {
-      m_configs = (config*) memAlloc( sizeof( config ) * m_size );
-      memset( m_configs, 0, m_size * sizeof( config ) );
+      return appendSafe( key );
    }
-   appendSafe( key, itm );
-   m_configs[m_added -1] = cfg;
+}
+
+
+void PropertyTable::Entry::reflectTo( CoreObject *instance, const Item &prop, void *user_data ) const
+{
+   byte *ud = (byte *) user_data;
+
+   switch( m_eReflectMode )
+   {
+      case e_reflectBool:
+         ((bool *) user_data)[ m_reflection.offset ] = prop.isTrue();
+         break;
+
+      case e_reflectByte:
+         ud[ m_reflection.offset ] = (byte) prop.forceInteger();
+         break;
+
+      case e_reflectChar:
+         ((char *) user_data)[ m_reflection.offset ] = (char) prop.forceInteger();
+         break;
+
+      case e_reflectShort:
+         *(int16 *) (ud + m_reflection.offset) = (int16) prop.forceInteger();
+         break;
+
+      case e_reflectUShort:
+         *(uint16 *)(ud + m_reflection.offset) = (uint16) prop.forceInteger();
+         break;
+
+      case e_reflectInt:
+         *(int32 *) (ud + m_reflection.offset) = (int32) prop.forceInteger();
+         break;
+
+      case e_reflectUInt:
+         *(uint32 *)(ud + m_reflection.offset) = (uint32) prop.forceInteger();
+         break;
+
+      case e_reflectLong:
+         *(long *)(ud + m_reflection.offset) = (long) prop.forceInteger();
+         break;
+
+      case e_reflectULong:
+         *(unsigned long *)(ud + m_reflection.offset) = (unsigned long) prop.forceInteger();
+         break;
+
+      case e_reflectLL:
+         *(int64 *)(ud + m_reflection.offset) =  prop.forceInteger();
+         break;
+
+      case e_reflectULL:
+         *(uint64 *)(ud + m_reflection.offset) =  (uint64) prop.forceInteger();
+         break;
+
+      case e_reflectFloat:
+         *(float *)(ud + m_reflection.offset) =  (float) prop.forceNumeric();
+         break;
+
+      case e_reflectDouble:
+         *(double *)(ud + m_reflection.offset) =  (double) prop.forceNumeric();
+         break;
+
+      case e_reflectFunc:
+         // We should not have been called if "to" was zero; we're read only.
+         fassert( m_reflection.rfunc.to != 0 );
+         m_reflection.rfunc.to( instance, user_data, *const_cast<Item *>(&prop) );
+         break;
+   }
+}
+
+void PropertyTable::Entry::reflectFrom( CoreObject *instance, void *user_data, Item &prop ) const
+{
+   byte *ud = (byte *) user_data;
+
+   switch( m_eReflectMode )
+   {
+      case e_reflectBool:
+         prop.setBoolean( ((bool *) user_data)[ m_reflection.offset ] );
+         break;
+
+      case e_reflectByte:
+         prop = (int64) ud[ m_reflection.offset ];
+         break;
+
+      case e_reflectChar:
+         prop = (int64) ((char *) user_data)[ m_reflection.offset ];
+         break;
+
+      case e_reflectShort:
+         prop = (int64) *(int16 *)(ud + m_reflection.offset);
+         break;
+
+      case e_reflectUShort:
+         prop = (int64) *(uint16 *)(ud + m_reflection.offset);
+         break;
+
+      case e_reflectInt:
+         prop = (int64) *(int32 *)(ud + m_reflection.offset);
+         break;
+
+      case e_reflectUInt:
+         prop = (int64) *(uint32 *)(ud + m_reflection.offset);
+         break;
+
+      case e_reflectLong:
+         prop = (int64) *(long *)(ud + m_reflection.offset);
+         break;
+
+      case e_reflectULong:
+         prop = (int64) *(unsigned long *)(ud + m_reflection.offset);
+         break;
+
+      case e_reflectLL:
+         prop = *(int64 *)(ud + m_reflection.offset);
+         break;
+
+      case e_reflectULL:
+         prop = (int64) *(uint64 *)(ud + m_reflection.offset);
+         break;
+
+      case e_reflectFloat:
+         prop = (numeric) *(float *)(ud + m_reflection.offset);
+         break;
+
+      case e_reflectDouble:
+         prop = (numeric) *(double *)(ud + m_reflection.offset);
+         break;
+
+      case e_reflectFunc:
+         m_reflection.rfunc.from( instance, user_data, prop );
+         break;
+   }
 }
 
 }
-
 
 /* end of proptable.cpp */

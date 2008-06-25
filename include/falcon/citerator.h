@@ -22,7 +22,7 @@
 
 #include <falcon/setup.h>
 #include <falcon/types.h>
-#include <falcon/userdata.h>
+#include <falcon/falcondata.h>
 
 namespace Falcon {
 
@@ -30,7 +30,7 @@ namespace Falcon {
    Base abstract class for generic collection iterators.
    This is also used as internal object for iterators.
 */
-class FALCON_DYN_CLASS CoreIterator: public UserData
+class FALCON_DYN_CLASS CoreIterator: public FalconData
 {
 protected:
    CoreIterator() {}
@@ -50,11 +50,9 @@ public:
    virtual bool erase() = 0;
    virtual bool insert( const Item &item ) = 0;
 
-
-
    virtual void invalidate() = 0;
 
-
+   virtual void gcMark( VMachine *mp ) {}
 };
 
 }

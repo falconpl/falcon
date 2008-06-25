@@ -61,44 +61,11 @@ FileStat::~FileStat() {
    delete m_mtime;
 }
 
-bool FileStat::isReflective() const
-{
-   return true;
-}
+//===================================
+// Reflection
+//
 
-void FileStat::getProperty( const String &propName, Item &prop )
-{
-   if( propName == "type" )
-      prop = (int64) m_type;
-   else if( propName == "size" )
-      prop = m_size;
-   else if( propName == "owner" )
-      prop = (int64) m_owner;
-   else if( propName == "group" )
-      prop = (int64) m_group;
-   else if( propName == "access" )
-      prop = (int64) m_access;
-   else if( propName == "attribs" )
-      prop = (int64) m_attribs;
-}
-
-void FileStat::setProperty( const String &propName, Item &prop )
-{
-  if( propName == "type" )
-      m_type = (e_fileType) prop.asInteger();
-   else if( propName == "size" )
-      m_size = prop.asInteger();
-   else if( propName == "owner" )
-      m_owner = (uint32) prop.asInteger();
-   else if( propName == "group" )
-      m_group = (uint32) prop.asInteger();
-   else if( propName == "access" )
-      m_access = (uint32) prop.asInteger();
-   else if( propName == "attribs" )
-      m_attribs = (uint32) prop.asInteger();
-}
-
-UserData *FileStat::clone() const
+FalconData *FileStat::clone() const
 {
    FileStat *other = new FileStat( *this );
    return other;

@@ -960,7 +960,7 @@ void Compiler::addEnumerator( const String &str, Value *val )
    }
    else
    {
-      VarDef *vd = m_module->addClassProperty( stmt->symbol(), str );
+      VarDef *vd = &m_module->addClassProperty( stmt->symbol(), str );
       switch( val->type() )
       {
          case Value::t_nil :

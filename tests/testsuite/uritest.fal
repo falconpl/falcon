@@ -1,0 +1,111 @@
+/****************************************************************************
+* Falcon test suite
+*
+*
+* ID: 117a
+* Category: rtl
+* Subcategory: URI
+* Short: URI support.
+* Description:
+*   This test verifies conformity of URI class to standards.
+* [/Description]
+*
+****************************************************************************/
+
+uri = URI( "http://me:pwd@www.falconpl.org:80/path/to/index.ftd?field=value#frag" )
+
+if uri.scheme != "http": failure( "Initial scheme" )
+if uri.userInfo != "me:pwd": failure( "Initial userinfo" )
+if uri.host != "www.falconpl.org": failure( "Initial host" )
+if uri.port != "80": failure( "Initial port" )
+if uri.path != "/path/to/index.ftd": failure( "Initial path" )
+if uri.query != "field=value": failure( "Initial query" )
+if uri.fragment != "frag": failure( "Initial fragment" )
+if uri.uri != "http://me:pwd@www.falconpl.org:80/path/to/index.ftd?field=value#frag"
+   failure( "Initial complete uri" )
+end
+
+// Change the whole uri
+uri.uri = "http1://me:pwd1@www.falconpl.org1:801/path/to/index.ftd1?field=value1#frag1"
+
+if uri.scheme != "http1": failure( "Changed scheme" )
+if uri.userInfo != "me:pwd1": failure( "Changed userinfo" )
+if uri.host != "www.falconpl.org1": failure( "Changed host" )
+if uri.port != "801": failure( "Changed port" )
+if uri.path != "/path/to/index.ftd1": failure( "Changed path" )
+if uri.query != "field=value1": failure( "Changed query" )
+if uri.fragment != "frag1": failure( "Changed fragment" )
+if uri.uri != "http1://me:pwd1@www.falconpl.org1:801/path/to/index.ftd1?field=value1#frag1"
+   failure( "Changed complete uri" )
+end
+
+uri.scheme = "http"
+
+if uri.uri != "http://me:pwd1@www.falconpl.org1:801/path/to/index.ftd1?field=value1#frag1"
+   failure( "Scheme change" )
+end
+
+uri.userInfo = "me:pwd"
+if uri.uri != "http://me:pwd@www.falconpl.org1:801/path/to/index.ftd1?field=value1#frag1"
+   failure( "Userinfo change" )
+end
+
+uri.host = "www.falconpl.org"
+if uri.uri != "http://me:pwd@www.falconpl.org:801/path/to/index.ftd1?field=value1#frag1"
+   failure( "Host change" )
+end
+
+uri.port = "80"
+if uri.uri != "http://me:pwd@www.falconpl.org:80/path/to/index.ftd1?field=value1#frag1"
+   failure( "Port change" )
+end
+
+uri.path = "/path/to/index.ftd"
+if uri.uri != "http://me:pwd@www.falconpl.org:80/path/to/index.ftd?field=value1#frag1"
+   failure( "Path change" )
+end
+
+uri.query = "field=value"
+if uri.uri != "http://me:pwd@www.falconpl.org:80/path/to/index.ftd?field=value#frag1"
+   failure( "Query change" )
+end
+
+uri.fragment = "frag"
+if uri.uri != "http://me:pwd@www.falconpl.org:80/path/to/index.ftd?field=value#frag"
+   failure( "Fragment change" )
+end
+
+uri.fragment = ""
+if uri.uri != "http://me:pwd@www.falconpl.org:80/path/to/index.ftd?field=value"
+   failure( "Fragment nilling" )
+end
+
+uri.path = ""
+if uri.uri != "http://me:pwd@www.falconpl.org:80?field=value"
+   failure( "Path nilling" )
+end
+
+uri.scheme = ""
+if uri.uri != "me:pwd@www.falconpl.org:80?field=value"
+   failure( "Scheme nilling" )
+end
+
+uri.userInfo = ""
+if uri.uri != "www.falconpl.org:80?field=value"
+   failure( "Userinfo nilling" )
+end
+
+uri.port = ""
+if uri.uri != "www.falconpl.org?field=value"
+   failure( "Port nilling" )
+end
+
+uri.query = ""
+if uri.uri != "www.falconpl.org"
+   failure( "Query nilling" )
+end
+
+// TODO: check fields and encoding.
+success()
+
+/* end of uritest.fal */

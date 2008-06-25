@@ -20,6 +20,9 @@
 #include <falcon/stream.h>
 #include <falcon/traits.h>
 
+#include <falcon/falcondata.h>
+#include <falcon/userdata.h>
+
 namespace Falcon
 {
 
@@ -83,7 +86,7 @@ bool Symbol::load( Stream *in )
       return getFuncDef()->load( m_module, in );
 
       case tclass:
-         setClass( new ClassDef( 0, 0 ) );
+         setClass( new ClassDef );
       return getClassDef()->load( m_module, in );
 
       case tvar:
@@ -293,12 +296,31 @@ bool InheritDef::load( Module *mod, Stream *in )
    return true;
 }
 
+//=================================================================
+//
 
-ClassDef::ClassDef( uint32 offset, Symbol *ext_ctor ):
+ClassDef::ClassDef( ObjectManager *manager ):
+   FuncDef( 0 ),
+   m_constructor( 0 ),
+   m_manager( manager ),
+   m_properties( &traits::t_stringptr, &traits::t_voidp )
+
+{}
+
+ClassDef::ClassDef( uint32 offset, ObjectManager *manager ):
    FuncDef( offset ),
-   m_constructor( ext_ctor ),
+   m_constructor( 0 ),
+   m_manager( manager ),
    m_properties( &traits::t_stringptr, &traits::t_voidp )
 {}
+
+ClassDef::ClassDef( Symbol *ext_ctor, ObjectManager *manager ):
+   FuncDef( 0 ),
+   m_constructor( ext_ctor ),
+   m_manager( manager ),
+   m_properties( &traits::t_stringptr, &traits::t_voidp )
+{}
+
 
 ClassDef::~ClassDef()
 {
@@ -516,6 +538,23 @@ bool ClassDef::load( Module *mod, Stream *in )
    return true;
 }
 
+
+void ClassDef::carryUserData() {
+   setObjectManager( &core_user_data_manager_cacheful );
+}
+
+void ClassDef::carryUserDataCacheless() {
+   setObjectManager( &core_user_data_manager_cacheless );
+}
+
+
+void ClassDef::carryFalconData(){
+   setObjectManager( &core_falcon_data_manager );
+}
+
+//===================================================================
+// vardef
+
 bool VarDef::save( Stream *out ) const
 {
    int32 type = endianInt32((int32) m_val_type);
@@ -531,7 +570,6 @@ bool VarDef::save( Stream *out ) const
       break;
 
       case t_int:
-      case t_reflective:
       {
          int64 val = endianInt64( m_value.val_int );
          out->write( &val , sizeof( val ) );
@@ -582,7 +620,6 @@ bool VarDef::load( Module *mod, Stream *in )
       break;
 
       case t_int:
-      case t_reflective:
       {
          int64 val;
          in->read(   &val , sizeof( val ) );

@@ -34,6 +34,7 @@
 #include <falcon/attribute.h>
 #include <falcon/bommap.h>
 #include <falcon/vm_sys.h>
+#include <falcon/flexymodule.h>
 
 namespace Falcon {
 
@@ -333,8 +334,6 @@ bool VMachine::link( Runtime *rt )
 
 LiveModule *VMachine::link( Module *mod, bool isMainModule )
 {
-   ItemVector *globs;
-
    // first of all link the exported services.
    MapIterator svmap_iter = mod->getServiceMap().begin();
    while( svmap_iter.hasCurrent() )
@@ -354,14 +353,9 @@ LiveModule *VMachine::link( Module *mod, bool isMainModule )
    // Ok, the module is now in.
    // We can now increment reference count and add it to ourselves
    LiveModule *livemod = new LiveModule( this, mod );
-   m_liveModules.insert( &mod->name(), livemod );
-
-   // by default, set the main module to the lastly linked module.
-   if ( isMainModule )
-      m_mainModule = livemod;
 
    // A shortcut
-   globs = &livemod->globals();
+   ItemVector *globs = &livemod->globals();
 
    // resize() creates a series of NIL items.
    globs->resize( symtab->size()+1 );
@@ -372,167 +366,34 @@ LiveModule *VMachine::link( Module *mod, bool isMainModule )
    while( iter.hasCurrent() )
    {
       Symbol *sym = *(Symbol **) iter.currentValue();
-      if ( ! sym->isUndefined() )
+
+      if ( linkSymbol( sym, livemod ) )
       {
-         // create an appropriate item here.
-         switch( sym->type() )
-         {
-            case Symbol::tfunc:
-            case Symbol::textfunc:
-               globs->itemAt( sym->itemId() ).setFunction( sym, livemod );
-            break;
-
-            case Symbol::tclass:
-               modClasses.pushBack( sym );
-            break;
-
-            case Symbol::tattribute:
-               {
-                  // create a new attribute
-                  Attribute *attrib = new Attribute( sym );
-
-                  // define the item as an attribute
-                  globs->itemAt( sym->itemId() ).setAttribute( attrib );
-
-                  // add the attribute to the list of known attributes
-                  if ( m_attributes == 0 )
-                  {
-                     m_attributes = new AttribHandler( attrib, 0 );
-                  }
-                  else {
-                     m_attributes->prev( new AttribHandler( attrib, 0, 0, m_attributes ) );
-                     m_attributes = m_attributes->prev();
-                  }
-               }
-            break;
-
-            case Symbol::tinst:
-            {
-               modObjects.pushBack( sym );
-            }
-            break;
-
-            case Symbol::tvar:
-            case Symbol::tconst:
-            {
-               Item *itm = globs->itemPtrAt( sym->itemId() );
-               VarDef *vd = sym->getVarDef();
-               switch( vd->type() ) {
-                  case VarDef::t_bool: itm->setBoolean( vd->asBool() ); break;
-                  case VarDef::t_int: itm->setInteger( vd->asInteger() ); break;
-                  case VarDef::t_num: itm->setNumeric( vd->asNumeric() ); break;
-                  case VarDef::t_string:
-                  {
-                     itm->setString( new GarbageString( this, *vd->asString() ) );
-                  }
-                  break;
-               }
-            }
-            break;
-         }
-
-         // Is this symbol exported?
-         if ( sym->exported() && sym->name().getCharAt(0) != '_' )
-         {
-            // as long as the module is referenced, the symbols are alive, and as we
-            // hold a reference to the module, we are sure that symbols are alive here.
-            // also, in case an entry already exists, the previous item is just overwritten.
-
-            if ( m_globalSyms.find( &sym->name() ) != 0 ) {
-
-               raiseError(
-                  new CodeError( ErrorParam( e_already_def, sym->declaredAt() ).origin( e_orig_vm ).
-                        module( mod->name() ).
-                        symbol( sym->name() ) )
-                  );
-               return false;
-            }
-
-            SymModule tmp( globs->itemPtrAt( sym->itemId() ), livemod, sym );
-            m_globalSyms.insert( &sym->name(), &tmp );
-
-            // export also the instance, if it is not already exported.
-            if ( sym->isInstance() ) {
-               sym = sym->getInstance();
-               if ( ! sym->exported() ) {
-                  SymModule tmp( globs->itemPtrAt( sym->itemId() ), livemod, sym );
-                  m_globalSyms.insert( &sym->name(), &tmp );
-               }
-            }
-         }
-
-         // Is this symbol a well known item?
-         if ( sym->isWKS() ) {
-
-            if ( m_wellKnownSyms.find( &sym->name() ) != 0 )
-            {
-               raiseError(
-                  new CodeError( ErrorParam( e_already_def, sym->declaredAt() ).origin( e_orig_vm ).
-                        module( mod->name() ).
-                        symbol( sym->name() ).
-                        extra( "Well Known Item" ) )
-                  );
-               return false;
-            }
-
-            SymModule tmp( livemod->wkitems().size(), livemod, sym );
-            m_wellKnownSyms.insert( &sym->name(), &tmp );
-
-            // and don't forget to add a copy of the item
-            livemod->wkitems().push( globs->itemPtrAt( sym->itemId() ) );
-         }
+         // save classes and objects for later linking.
+         if( sym->type() == Symbol::tclass )
+            modClasses.pushBack( sym );
+         else if ( sym->type() == Symbol::tinst )
+            modObjects.pushBack( sym );
       }
-      else
-      {
-         // try to find the imported symbol.
-         SymModule *sm = (SymModule *) m_globalSyms.find( &sym->name() );
-         if( sm != 0 )
-         {
-            // link successful, we must set the current item as a reference of the original
-            Symbol *sym2 = sm->symbol();
-            referenceItem( globs->itemAt( sym->itemId() ), *sm->item() );
-         }
-         else {
-            // raise undefined symbol.
-            Error *error = new CodeError(
-                  ErrorParam( e_undef_sym, sym->declaredAt() ).origin( e_orig_vm ).
-                  module( mod->name() ).
-                  extra( sym->name() )
-                  );
-
-            raiseError( error );
-            // we're doomed to fail
-            success = false;
-         }
+      else {
+         // but continue to expose other errors as well.
+         success = false;
       }
 
       // next symbol
       iter.next();
    }
 
-   // exit if link failed.
-   if ( ! success )
-      return 0;
-
    // now that the symbols in the module have been linked, link the classes.
    ListElement *cls_iter = modClasses.begin();
    while( cls_iter != 0 )
    {
       Symbol *sym = (Symbol *) cls_iter->data();
-      CoreClass *cc = linkClass( livemod, sym );
+      fassert( sym->isClass() );
 
-      // we need to add it anyhow to the GC to provoke its destruction at VM end.
-      // and hey, you could always destroy symbols if your mood is so from falcon ;-)
-      // dereference as other classes may have referenced this item1
-      globs->itemAt( cc->symbol()->itemId() ).dereference()->setClass( cc );
-
-      // if this class was a WKI, we must also set the relevant exported symbol
-      if ( sym->isWKS() )
-      {
-         SymModule *tmp = (SymModule *) m_wellKnownSyms.find( &sym->name() );
-         fassert( tmp != 0 ); // we just added it
-         tmp->liveModule()->wkitems().itemAt( tmp->wkiid() ) = cc;
-      }
+      // on error, report failure but proceed.
+      if ( ! linkClassSymbol( sym, livemod ) )
+         success = false;
 
       cls_iter = cls_iter->next();
    }
@@ -543,66 +404,366 @@ LiveModule *VMachine::link( Module *mod, bool isMainModule )
    {
       Symbol *obj = (Symbol *) obj_iter->data();
       fassert( obj->isInstance() );
-      Symbol *cls = obj->getInstance();
-      Item *clsItem = globs->itemAt( cls->itemId() ).dereference();
-      if ( ! clsItem->isClass() ) {
-         raiseError(
-            new CodeError( ErrorParam( e_no_cls_inst, obj->declaredAt() ).origin( e_orig_vm ).
-               symbol( obj->name() ).
-               module( obj->module()->name() ) )
-         );
-         return 0;
-      }
-      else {
-         CoreObject *co = clsItem->asClass()->createInstance();
-         globs->itemAt( obj->itemId() ).dereference()->setObject( co );
 
-         // if this class was a WKI, we must also set the relevant exported symbol
-         if ( obj->isWKS() )
-         {
-            SymModule *tmp = (SymModule *) m_wellKnownSyms.find( &obj->name() );
-            fassert( tmp != 0 ); // we just added it
-            tmp->liveModule()->wkitems().itemAt( tmp->wkiid() ) = co;
-         }
-      }
+      // on error, report failure but proceed.
+      if ( ! linkInstanceSymbol( obj, livemod ) )
+         success = false;
+
       obj_iter = obj_iter->next();
    }
 
-   // and eventually call their constructor
+   // eventually, call the constructors declared by the instances
    obj_iter = modObjects.begin();
 
-   // In case we have some objects to link
-   if( obj_iter !=  0 )
+   // In case we have some objects to link - and while we have no errors,
+   // -- we can't afford calling constructors if everything is not ok.
+   while( success && obj_iter != 0 )
+   {
+      Symbol *obj = (Symbol *) obj_iter->data();
+
+      if( ! initializeInstance( obj, livemod ) )
+         success = false;
+
+      obj_iter = obj_iter->next();
+   }
+
+   // return zero and dispose of the module if not succesful.
+   if ( ! success )
+   {
+      delete livemod;
+      return 0;
+   }
+
+   // We can now add the module to our list of available modules.
+   m_liveModules.insert( &mod->name(), livemod );
+
+   // by default, set the main module to the lastly linked module.
+   if ( isMainModule )
+      m_mainModule = livemod;
+
+   return livemod;
+}
+
+
+// Link a single symbol
+bool VMachine::linkSymbol( Symbol *sym, LiveModule *livemod )
+{
+   // A shortcut
+   ItemVector *globs = &livemod->globals();
+   const Module *mod = livemod->module();
+
+   if ( sym->isUndefined() )
+   {
+      // try to find the imported symbol.
+      SymModule *sm = (SymModule *) m_globalSyms.find( &sym->name() );
+
+      if( sm != 0 )
+      {
+         // link successful, we must set the current item as a reference of the original
+         referenceItem( globs->itemAt( sym->itemId() ), *sm->item() );
+         return true;
+      }
+
+      // try to dynamically load the symbol from flexy modules.
+      SymModule symmod;
+      if ( linkSymbolDynamic( sym->name(), symmod ) )
+      {
+         referenceItem( globs->itemAt( sym->itemId() ), *symmod.item() );
+         return true;
+      }
+
+      // We failed every try; raise undefined symbol.
+      Error *error = new CodeError(
+            ErrorParam( e_undef_sym, sym->declaredAt() ).origin( e_orig_vm ).
+            module( mod->name() ).
+            extra( sym->name() )
+            );
+
+      raiseError( error );
+      return false;
+   }
+
+   // Ok, the symbol is defined here. Link (record) it.
+
+   // create an appropriate item here.
+   // NOTE: Classes and instances are handled separately.
+   switch( sym->type() )
+   {
+      case Symbol::tfunc:
+      case Symbol::textfunc:
+         globs->itemAt( sym->itemId() ).setFunction( sym, livemod );
+      break;
+
+      case Symbol::tattribute:
+         {
+            // create a new attribute
+            Attribute *attrib = new Attribute( sym );
+
+            // define the item as an attribute
+            globs->itemAt( sym->itemId() ).setAttribute( attrib );
+
+            // add the attribute to the list of known attributes
+            if ( m_attributes == 0 )
+            {
+               m_attributes = new AttribHandler( attrib, 0 );
+            }
+            else {
+               m_attributes->prev( new AttribHandler( attrib, 0, 0, m_attributes ) );
+               m_attributes = m_attributes->prev();
+            }
+         }
+      break;
+
+      case Symbol::tvar:
+      case Symbol::tconst:
+      {
+         Item *itm = globs->itemPtrAt( sym->itemId() );
+         VarDef *vd = sym->getVarDef();
+         switch( vd->type() ) {
+            case VarDef::t_bool: itm->setBoolean( vd->asBool() ); break;
+            case VarDef::t_int: itm->setInteger( vd->asInteger() ); break;
+            case VarDef::t_num: itm->setNumeric( vd->asNumeric() ); break;
+            case VarDef::t_string:
+            {
+               itm->setString( new GarbageString( this, *vd->asString() ) );
+            }
+            break;
+         }
+      }
+      break;
+   }
+
+   // Is this symbol exported?
+   if ( sym->exported() && sym->name().getCharAt(0) != '_' )
+   {
+      // as long as the module is referenced, the symbols are alive, and as we
+      // hold a reference to the module, we are sure that symbols are alive here.
+      // also, in case an entry already exists, the previous item is just overwritten.
+
+      if ( m_globalSyms.find( &sym->name() ) != 0 )
+      {
+         raiseError(
+            new CodeError( ErrorParam( e_already_def, sym->declaredAt() ).origin( e_orig_vm ).
+                  module( mod->name() ).
+                  symbol( sym->name() ) )
+            );
+         return false;
+      }
+
+      SymModule tmp( globs->itemPtrAt( sym->itemId() ), livemod, sym );
+      m_globalSyms.insert( &sym->name(), &tmp );
+
+      // export also the instance, if it is not already exported.
+      if ( sym->isInstance() )
+      {
+         sym = sym->getInstance();
+         if ( ! sym->exported() ) {
+            SymModule tmp( globs->itemPtrAt( sym->itemId() ), livemod, sym );
+            m_globalSyms.insert( &sym->name(), &tmp );
+         }
+      }
+   }
+
+   // Is this symbol a well known item?
+   if ( sym->isWKS() )
+   {
+      if ( m_wellKnownSyms.find( &sym->name() ) != 0 )
+      {
+         raiseError(
+            new CodeError( ErrorParam( e_already_def, sym->declaredAt() ).origin( e_orig_vm ).
+                  module( mod->name() ).
+                  symbol( sym->name() ).
+                  extra( "Well Known Item" ) )
+            );
+         return false;
+      }
+
+      SymModule tmp( livemod->wkitems().size(), livemod, sym );
+      m_wellKnownSyms.insert( &sym->name(), &tmp );
+
+      // and don't forget to add a copy of the item
+      livemod->wkitems().push( globs->itemPtrAt( sym->itemId() ) );
+   }
+
+   return true;
+}
+
+
+bool VMachine::linkSymbolDynamic( const String &name, SymModule &symdata )
+{
+   // For now, the thing is very unoptimized; we'll traverse all the live modules,
+   // and see which of them is flexy.
+   MapIterator iter = m_liveModules.begin();
+   while( iter.hasCurrent() )
+   {
+      LiveModule *lmod = *(LiveModule **)(iter.currentValue());
+
+      if( lmod->module()->isFlexy() )
+      {
+         // Destroy also constness; flexy modules love to be abused.
+         FlexyModule *fmod = (FlexyModule *)( lmod->module() );
+         Symbol *newsym = fmod->onSymbolRequest( name );
+
+         // Found -- great, link it and if all it's fine, link again this symbol.
+         if ( newsym != 0 )
+         {
+            // be sure to allocate enough space in the module global table.
+            if ( newsym->itemId() >= lmod->globals().size() )
+            {
+               lmod->globals().resize( newsym->itemId() );
+            }
+
+            // now we have space to link it.
+            if ( linkCompleteSymbol( newsym, lmod ) )
+            {
+               symdata = SymModule( lmod->globals().itemPtrAt( newsym->itemId() ), lmod, newsym );
+               return true;
+            }
+            else {
+               // we found the symbol, but it was flacky. We must have raised an error,
+               // and so we should return now.
+               // Notice that there is no need to free the symbol.
+               return false;
+            }
+         }
+         // otherwise, go on
+      }
+
+      iter.next();
+   }
+
+   // sorry, not found.
+   return false;
+}
+
+bool VMachine::linkClassSymbol( Symbol *sym, LiveModule *livemod )
+{
+   // shortcut
+   ItemVector *globs = &livemod->globals();
+
+   CoreClass *cc = linkClass( livemod, sym );
+   if ( cc == 0 )
+      return false;
+
+   // we need to add it anyhow to the GC to provoke its destruction at VM end.
+   // and hey, you could always destroy symbols if your mood is so from falcon ;-)
+   // dereference as other classes may have referenced this item1
+   globs->itemAt( cc->symbol()->itemId() ).dereference()->setClass( cc );
+
+   // if this class was a WKI, we must also set the relevant exported symbol
+   if ( sym->isWKS() )
+   {
+      SymModule *tmp = (SymModule *) m_wellKnownSyms.find( &sym->name() );
+      fassert( tmp != 0 ); // we just added it
+      tmp->liveModule()->wkitems().itemAt( tmp->wkiid() ) = cc;
+   }
+
+   return true;
+}
+
+
+bool VMachine::linkInstanceSymbol( Symbol *obj, LiveModule *livemod )
+{
+   // shortcut
+   ItemVector *globs = &livemod->globals();
+   Symbol *cls = obj->getInstance();
+   Item *clsItem = globs->itemAt( cls->itemId() ).dereference();
+
+   if ( clsItem == 0 || ! clsItem->isClass() ) {
+      raiseError(
+         new CodeError( ErrorParam( e_no_cls_inst, obj->declaredAt() ).origin( e_orig_vm ).
+            symbol( obj->name() ).
+            module( obj->module()->name() ) )
+      );
+      return false;
+   }
+   else {
+      CoreObject *co = clsItem->asClass()->createInstance();
+      globs->itemAt( obj->itemId() ).dereference()->setObject( co );
+
+      // if this class was a WKI, we must also set the relevant exported symbol
+      if ( obj->isWKS() )
+      {
+         SymModule *tmp = (SymModule *) m_wellKnownSyms.find( &obj->name() );
+         fassert( tmp != 0 ); // we just added it
+         tmp->liveModule()->wkitems().itemAt( tmp->wkiid() ) = co;
+      }
+   }
+
+   return true;
+}
+
+bool VMachine::initializeInstance( Symbol *obj, LiveModule *livemod )
+{
+   ItemVector *globs = &livemod->globals();
+   bool bSuccess = true;
+
+
+
+   Symbol *cls = obj->getInstance();
+   if ( cls->getClassDef()->constructor() != 0 )
    {
       // save S1 and S2, or we won't be able to link in scripts
       Item oldS1 = m_regS1;
       Item oldS2 = m_regS2;
 
-      while( obj_iter != 0 )
+      Item *clsItem = globs->itemAt( cls->itemId() ).dereference();
+      m_regS1 = globs->itemAt( obj->itemId() ) ;
+      m_event = eventNone;
+
+      // If we can't call, we have a wrong init.
+      if ( ! callItem( *clsItem, 0, e_callInst ) )
       {
-         Symbol *obj = (Symbol *) obj_iter->data();
-         Symbol *cls = obj->getInstance();
-         if ( cls->getClassDef()->constructor() != 0 )
-         {
-            Item *clsItem = globs->itemAt( cls->itemId() ).dereference();
-            m_regS1 = globs->itemAt( obj->itemId() ) ;
-            m_event = eventNone;
-            callItem( *clsItem, 0, e_callInst );
-            if ( m_event == eventRisen )
-               return 0;
-         }
-         obj_iter = obj_iter->next();
+         raiseError(
+            new CodeError( ErrorParam( e_non_callable, __LINE__ ).origin( e_orig_vm ).
+                  module( livemod->module()->name() ).
+                  symbol( obj->name() ).
+                  extra( "_init" ) )
+            );
+      }
+      // eventually report an initialization error.
+      else if ( m_event == eventRisen )
+      {
+        bSuccess = false;
       }
 
       // clear S1
       m_regS1 = oldS1;
       // and s2 for safety
       m_regS2 = oldS2;
+
    }
 
-   return livemod;
+
+   return true;
 }
 
+bool VMachine::linkCompleteSymbol( Symbol *sym, LiveModule *livemod )
+{
+   // try a pre-link
+   bool bSuccess = linkSymbol( sym, livemod );
+
+   // Proceed anyhow, even on failure, for classes and instance symbols
+   if( sym->type() == Symbol::tclass )
+   {
+      if ( ! linkClassSymbol( sym, livemod ) )
+         bSuccess = false;
+   }
+   else if ( sym->type() == Symbol::tinst )
+   {
+      // we can't try to call the initialization method
+      // if the creation of the symbol fails.
+      if ( linkInstanceSymbol( sym, livemod ) )
+      {
+         if ( ! initializeInstance( sym, livemod ) )
+            bSuccess = false;
+      }
+      else
+         bSuccess = false;
+   }
+
+   return bSuccess;
+}
 
 PropertyTable *VMachine::createClassTemplate( LiveModule *lmod, const Map &pt )
 {
@@ -613,39 +774,62 @@ PropertyTable *VMachine::createClassTemplate( LiveModule *lmod, const Map &pt )
    {
       VarDefMod *vdmod = *(VarDefMod **) iter.currentValue();
       VarDef *vd = vdmod->vd;
-      Item itm;
+
+      String *key = *(String **) iter.currentKey();
+      PropertyTable::Entry &e = table->appendSafe( key );
+
+      e.m_bReadOnly = vd->isReadOnly();
+
+      // configure the element
+      if ( vd->isReflective() )
+      {
+         e.m_eReflectMode = vd->asReflecMode();
+         e.m_reflection.offset = vd->asReflecOffset();
+      }
+      else if ( vd->isReflectFunc() )
+      {
+         e.m_eReflectMode = e_reflectFunc;
+         e.m_reflection.rfunc.to = vd->asReflectFuncTo();
+         e.m_reflection.rfunc.from = vd->asReflectFuncFrom();
+
+         // just to be paranoid
+         if( e.m_reflection.rfunc.to == 0 )
+            e.m_bReadOnly = true;
+      }
 
       // create the instance
       switch( vd->type() )
       {
          case VarDef::t_nil:
-            itm.setNil();
+            e.m_value.setNil();
          break;
 
          case VarDef::t_bool:
-            itm.setBoolean( vd->asBool() );
+            e.m_value.setBoolean( vd->asBool() );
          break;
 
          case VarDef::t_int:
-            itm.setInteger( vd->asInteger() );
+            e.m_value.setInteger( vd->asInteger() );
          break;
 
          case VarDef::t_num:
-            itm.setNumeric( vd->asNumeric() );
+            e.m_value.setNumeric( vd->asNumeric() );
          break;
 
          case VarDef::t_string:
          {
-            itm.setString( new GarbageString( this, *vd->asString() ) );
+            e.m_value.setString( new GarbageString( this, *vd->asString() ) );
          }
          break;
 
-         case VarDef::t_reference:
          case VarDef::t_base:
+            e.m_bReadOnly = true;
+         case VarDef::t_reference:
          {
             const Symbol *sym = vd->asSymbol();
             Item *ptr = vdmod->lmod->globals().itemPtrAt( sym->itemId() );
-            referenceItem( itm, *ptr );
+            referenceItem( e.m_value, *ptr );
+
          }
          break;
 
@@ -656,24 +840,16 @@ PropertyTable *VMachine::createClassTemplate( LiveModule *lmod, const Map &pt )
             fassert( sym->isExtFunc() || sym->isFunction() );
             if ( sym->isExtFunc() || sym->isFunction() )
             {
-               itm.setFunction( sym, vdmod->lmod );
+               e.m_value.setFunction( sym, vdmod->lmod );
             }
          }
          break;
       }
 
-      String *key = *(String **) iter.currentKey();
-      if( ! vd->isReflective() )
-         table->appendSafe( key, itm );
-      else {
-         PropertyTable::config conf;
-         conf.m_offset = vd->asReflectiveOffset();
-         conf.m_size = vd->asReflectiveSize();
-         conf.m_isSigned = vd->asReflectiveIsSigned();
-         table->appendSafe( key, itm, conf );
-      }
       iter.next();
    }
+
+   table->checkProperties();
 
    return table;
 }
@@ -683,10 +859,13 @@ CoreClass *VMachine::linkClass( LiveModule *lmod, Symbol *clssym )
 {
    Map props( &traits::t_stringptr, &traits::t_voidp ) ;
    AttribHandler *head = 0;
-   if( ! linkSubClass( lmod, clssym, props, &head ) )
+   ObjectManager *manager = 0;
+
+   if( ! linkSubClass( lmod, clssym, props, &head, &manager ) )
       return 0;
 
    CoreClass *cc = new CoreClass( this, clssym, lmod, createClassTemplate( lmod, props ) );
+   cc->setObjectManager( manager );
    Symbol *ctor = clssym->getClassDef()->constructor();
    if ( ctor != 0 ) {
       cc->constructor().setFunction( ctor, lmod );
@@ -707,12 +886,25 @@ CoreClass *VMachine::linkClass( LiveModule *lmod, Symbol *clssym )
 
 
 bool VMachine::linkSubClass( LiveModule *lmod, const Symbol *clssym,
-      Map &props, AttribHandler **attribs )
+      Map &props, AttribHandler **attribs, ObjectManager **manager )
 {
    // first sub-instantiates all the inheritances.
    ClassDef *cd = clssym->getClassDef();
    ListElement *from_iter = cd->inheritance().begin();
    const Module *class_module = clssym->module();
+
+   if( *manager != 0 && cd->getObjectManager() != 0 )
+   {
+      // raise an error for duplicated object manager.
+      raiseError(
+         new CodeError( ErrorParam( e_inv_inherit2, clssym->declaredAt() ).origin( e_orig_vm ).
+            symbol( clssym->name() ).
+            module( class_module->name() ) )
+            );
+      return false;
+   }
+
+   ObjectManager *subManager = 0;
 
    while( from_iter != 0 )
    {
@@ -724,7 +916,7 @@ bool VMachine::linkSubClass( LiveModule *lmod, const Symbol *clssym,
       if( parent->isClass() )
       {
          // we create the item anew instead of relying on the already linked item.
-         if ( ! linkSubClass( lmod, parent, props, attribs ) )
+         if ( ! linkSubClass( lmod, parent, props, attribs, &subManager ) )
             return false;
       }
       else if ( parent->isUndefined() )
@@ -744,7 +936,7 @@ bool VMachine::linkSubClass( LiveModule *lmod, const Symbol *clssym,
                   );
             return false;
          }
-         if ( ! linkSubClass( sym_mod->liveModule(), parent, props, attribs ) )
+         if ( ! linkSubClass( sym_mod->liveModule(), parent, props, attribs, &subManager ) )
             return false;
       }
       else
@@ -757,6 +949,12 @@ bool VMachine::linkSubClass( LiveModule *lmod, const Symbol *clssym,
       }
       from_iter = from_iter->next();
    }
+
+   // assign our manager
+   if ( cd->getObjectManager() != 0 )
+      *manager = cd->getObjectManager();
+   else
+      *manager = subManager;
 
    // then copies the vardefs declared in this class.
    MapIterator iter = cd->properties().begin();
@@ -1179,6 +1377,8 @@ bool VMachine::callItem( const Item &callable, int32 paramCount, e_callMode call
          }
          else {
             self = cls->createInstance();
+            if ( self == 0 )
+               return false;
          }
 
          // if the class has not a constructor, we just set the item in A
@@ -2307,10 +2507,9 @@ Item *VMachine::findLocalSymbolItem( const String &symName ) const
 }
 
 
-Item *VMachine::findLocalVariable( const String &name ) const
+bool VMachine::findLocalVariable( const String &name, Item &itm ) const
 {
    // item to be returned.
-   Item *itm = 0;
    String sItemName;
    uint32 squareLevel = 0;
    uint32 len = name.length();
@@ -2349,7 +2548,7 @@ Item *VMachine::findLocalVariable( const String &name ) const
                continue;
             }
             if( chr < 'A' )
-               return 0;
+               return false;
 
             state = firstToken;
             sItemName.append( chr );
@@ -2360,12 +2559,13 @@ Item *VMachine::findLocalVariable( const String &name ) const
          case firstToken:
             if ( vmIsWhiteSpace( chr ) || chr == '.' || chr == '[' )
             {
-               itm = findLocalSymbolItem( sItemName );
+               Item *lsi = findLocalSymbolItem( sItemName );
 
                // item not found?
-               if( itm == 0 )
-                  return 0;
+               if( lsi == 0 )
+                  return false;
 
+               itm = *lsi;
                // set state accordingly to chr.
                goto resetState;
             }
@@ -2375,7 +2575,7 @@ Item *VMachine::findLocalVariable( const String &name ) const
             }
             else {
                // invalid format
-               return 0;
+               return false;
             }
          break;
 
@@ -2392,9 +2592,9 @@ Item *VMachine::findLocalVariable( const String &name ) const
                   break;
 
                // access the item. We know it's an object or we wouldn't be in this state.
-               itm = itm->asObject()->getProperty( sItemName );
-               if ( itm == 0 )
-                  return 0;
+               // also, notice that we change the item itself.
+               if ( !itm.asObject()->getProperty( sItemName, itm ) )
+                  return false;
 
                // set state accordingly to chr.
                goto resetState;
@@ -2404,7 +2604,7 @@ Item *VMachine::findLocalVariable( const String &name ) const
                sItemName.append( chr );
             }
             else
-               return 0;
+               return false;
          break;
 
          //===================================================
@@ -2422,9 +2622,10 @@ Item *VMachine::findLocalVariable( const String &name ) const
                case ']':
                   if( --squareLevel == 0 )
                   {
-                     itm = parseSquareAccessor( *itm, sItemName );
-                     if( itm == 0 )
-                        return 0;
+                     Item *lsi = parseSquareAccessor( itm, sItemName );
+                     if( lsi == 0 )
+                        return false;
+                     itm = *lsi;
 
                      goto resetState;
                   }
@@ -2453,9 +2654,10 @@ Item *VMachine::findLocalVariable( const String &name ) const
             {
                if( --squareLevel == 0 )
                {
-                  itm = parseSquareAccessor( *itm, sItemName );
-                  if( itm == 0 )
-                     return 0;
+                  Item *lsi = parseSquareAccessor( itm, sItemName );
+                  if( lsi == 0 )
+                     return false;
+                  itm = *lsi;
 
                   goto resetState;
                }
@@ -2464,7 +2666,7 @@ Item *VMachine::findLocalVariable( const String &name ) const
             }
             else if( ! vmIsWhiteSpace( chr ) )
             {
-               return 0;
+               return false;
             }
          break;
 
@@ -2512,14 +2714,14 @@ Item *VMachine::findLocalVariable( const String &name ) const
          case interToken:
             switch( chr ) {
                case '.':
-                  if( ! itm->isObject() )
-                     return 0;
+                  if( ! itm.isObject() )
+                     return false;
                   state = dotAccessor;
                break;
 
                case '[':
-                  if( ! itm->isDict() && ! itm->isArray() )
-                     return 0;
+                  if( ! itm.isDict() && ! itm.isArray() )
+                     return false;
 
                   state = squareAccessor;
                   squareLevel = 1;
@@ -2527,7 +2729,7 @@ Item *VMachine::findLocalVariable( const String &name ) const
 
                default:
                   if( ! vmIsWhiteSpace( chr ) )
-                     return 0;
+                     return false;
             }
          break;
       }
@@ -2543,14 +2745,14 @@ resetState:
 
       switch( chr ) {
          case '.':
-            if( ! itm->isObject() )
-               return 0;
+            if( ! itm.isObject() )
+               return false;
             state = dotAccessor;
          break;
 
          case '[':
-            if( ! itm->isDict() && ! itm->isArray() )
-               return 0;
+            if( ! itm.isDict() && ! itm.isArray() )
+               return false;
 
             state = squareAccessor;
             squareLevel = 1;
@@ -2566,10 +2768,10 @@ resetState:
 
    // if the state is not "interToken" we have an incomplete parse
    if( state != interToken )
-      return 0;
+      return false;
 
    // Success
-   return itm;
+   return true;
 }
 
 
@@ -2607,10 +2809,8 @@ Item *VMachine::parseSquareAccessor( const Item &accessed, String &accessor ) co
    }
    else {
       // reparse the accessor as a token
-      Item *parsed = findLocalVariable( accessor );
-      if( parsed == 0 )
+      if( ! findLocalVariable( accessor, acc ) )
          return 0;
-      acc = *parsed;
    }
 
    // what's the accessed item?
@@ -2761,21 +2961,21 @@ VMachine::returnCode  VMachine::expandString( const String &src, String &target 
             // todo: record this while scanning
             uint32 posColon = src.find( ":", pos0, pos2 );
             uint32 posPipe = src.find( "|", pos0, pos2 );
-            Item *itm;
+            uint32 posEnd;
+            Item itm;
 
             if( posColon != String::npos ) {
-               itm = findLocalVariable( src.subString( pos0, posColon ) );
+               posEnd = posColon;
             }
             else if( posPipe != String::npos )
             {
-               // parse the format
-               itm = findLocalVariable( src.subString( pos0, posPipe ) );
+               posEnd = posPipe;
             }
             else {
-               itm = findLocalVariable( src.subString( pos0, pos2 ) );
+               posEnd = pos2;
             }
 
-            if ( itm == 0 )
+            if ( ! findLocalVariable( src.subString( pos0, posEnd ), itm )  )
             {
                return return_error_parse;
             }
@@ -2790,7 +2990,7 @@ VMachine::returnCode  VMachine::expandString( const String &src, String &target 
                   return return_error_parse_fmt;
                }
 
-               if( ! fmt.format( this, *itm->dereference(), temp ) ) {
+               if( ! fmt.format( this, *itm.dereference(), temp ) ) {
                   if( hadError() ) {
                      return return_error_internal;
                   }
@@ -2800,12 +3000,12 @@ VMachine::returnCode  VMachine::expandString( const String &src, String &target 
             // do we have a toString parameter?
             else if( posPipe != String::npos )
             {
-               itemToString( temp, itm, src.subString( posPipe+1, pos2 ) );
+               itemToString( temp, &itm, src.subString( posPipe+1, pos2 ) );
             }
             else {
                // otherwise, add the toString version (todo format)
                // append to target.
-               itemToString( temp, itm );
+               itemToString( temp, &itm );
             }
 
             // having an error in an itemToString ?

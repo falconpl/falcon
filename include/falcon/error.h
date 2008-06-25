@@ -18,8 +18,8 @@
    (this file contains also the TraceStep class).
 */
 
-#ifndef flc_error_H
-#define flc_error_H
+#ifndef FALCON_ERROR_H
+#define FALCON_ERROR_H
 
 #include <falcon/setup.h>
 #include <falcon/types.h>
@@ -27,7 +27,8 @@
 #include <falcon/item.h>
 #include <falcon/genericlist.h>
 #include <falcon/string.h>
-#include <falcon/userdata.h>
+#include <falcon/falcondata.h>
+#include <falcon/reflectfunc.h>
 
 namespace Falcon {
 
@@ -205,6 +206,9 @@ const int e_directive_value =      214;
 const int e_noninst_cls =          215;
 const int e_unserializable =       216;
 const int e_wait_in_atomic =       217;
+const int e_inv_inherit2 =         218;
+const int e_prop_ro =              219;
+
 
 const int e_open_file =            500;
 const int e_loaderror =            501;
@@ -360,7 +364,7 @@ class FALCON_DYN_CLASS Error: public BaseAlloc
 {
 protected:
    volatile long m_refCount;
-   
+
    int m_errorCode;
    String m_description;
    String m_extra;
@@ -504,6 +508,8 @@ public:
 
    void incref();
    void decref();
+
+   virtual Error *clone() const;
 };
 
 
@@ -512,11 +518,11 @@ class GenericError: public Error
 {
 public:
    GenericError():
-      Error( "Error" )
+      Error( "GenericError" )
    {}
 
    GenericError( const ErrorParam &params  ):
-      Error( "Error", params )
+      Error( "GenericError", params )
       {}
 };
 
@@ -642,23 +648,6 @@ public:
 };
 
 
-
-class FALCON_DYN_CLASS ErrorCarrier: public UserData
-{
-   Error *m_error;
-   String m_origin;
-
-public:
-   ErrorCarrier( Error *carried );
-
-   virtual ~ErrorCarrier();
-   virtual bool isReflective() const;
-   virtual void getProperty( VMachine *vm, const String &propName, Item &prop );
-   virtual void setProperty( VMachine *vm, const String &propName, Item &prop );
-
-   Error *error() const { return m_error; }
-};
-
 /** Returns the description of a falcon error.
    In case the error ID is not found, a sensible message will be returned.
 */
@@ -673,7 +662,38 @@ FALCON_FUNC_DYN_SYM AccessError_init ( ::Falcon::VMachine *vm );
 FALCON_FUNC_DYN_SYM MathError_init ( ::Falcon::VMachine *vm );
 FALCON_FUNC_DYN_SYM ParamError_init ( ::Falcon::VMachine *vm );
 FALCON_FUNC_DYN_SYM ParseError_init ( ::Falcon::VMachine *vm );
+
+/** Reflective function to support error property: code */
+extern reflectionFuncDecl Error_code_rfrom;
+extern reflectionFuncDecl Error_description_rfrom;
+extern reflectionFuncDecl Error_message_rfrom;
+extern reflectionFuncDecl Error_systemError_rfrom;
+extern reflectionFuncDecl Error_origin_rfrom;
+extern reflectionFuncDecl Error_module_rfrom;
+extern reflectionFuncDecl Error_symbol_rfrom;
+extern reflectionFuncDecl Error_line_rfrom;
+extern reflectionFuncDecl Error_pc_rfrom;
+
+extern reflectionFuncDecl Error_code_rto;
+extern reflectionFuncDecl Error_description_rto;
+extern reflectionFuncDecl Error_message_rto;
+extern reflectionFuncDecl Error_systemError_rto;
+extern reflectionFuncDecl Error_origin_rto;
+extern reflectionFuncDecl Error_module_rto;
+extern reflectionFuncDecl Error_symbol_rto;
+extern reflectionFuncDecl Error_line_rto;
+extern reflectionFuncDecl Error_pc_rto;
 }
+
+/** Error manager.
+   This manager takes care of decreffing the error on object destruction.
+   ATM it doesn't create an initial error.
+*/
+class ErrorManager: public ObjectManager {
+   virtual void *onInit( VMachine *vm );
+   virtual void onDestroy( VMachine *vm, void *user_data );
+   virtual void *onClone( VMachine *vm, void *user_data );
+};
 
 }
 

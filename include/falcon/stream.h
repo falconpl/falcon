@@ -25,7 +25,7 @@
 
 #include <falcon/setup.h>
 #include <falcon/types.h>
-#include <falcon/userdata.h>
+#include <falcon/falcondata.h>
 #include <falcon/string.h>
 #include <falcon/vm_sys.h>
 
@@ -47,7 +47,7 @@ namespace Falcon {
    system-specific or system independent implementations.
 */
 
-class FALCON_DYN_CLASS Stream: public UserData
+class FALCON_DYN_CLASS Stream: public FalconData
 {
 protected:
    uint32 *m_rhBuffer;
@@ -152,6 +152,9 @@ public:
    bool interrupted() const;
 
    virtual ~Stream();
+
+   virtual void gcMark( VMachine *mp ) {}
+
 
    /** Reads from target stream.
 
@@ -318,7 +321,7 @@ public:
       This version returns 0 and sets error to unsupported;
       subclasses must properly clone the stream.
    */
-   virtual UserData *clone() const;
+   virtual FalconData *clone() const;
 };
 
 

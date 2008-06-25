@@ -24,7 +24,7 @@
 #include <falcon/vm.h>
 #include <falcon/vmcontext.h>
 #include <falcon/membuf.h>
-
+#include <falcon/garbagepointer.h>
 
 // By default, 1MB
 #define TEMP_MEM_THRESHOLD 1000000
@@ -316,6 +316,9 @@ void MemPool::markItem( Item &item )
          }
       break;
 
+      case FLC_ITEM_POINTER:
+         item.asGCPointerShell()->mark( currentMark() );
+         break;
 
       case FLC_ITEM_ARRAY:
       {
@@ -338,17 +341,7 @@ void MemPool::markItem( Item &item )
             co->mark( currentMark() );
             m_aliveItems++;
             m_aliveMem += co->m_gcSize;
-            // mark all the property values.
-            for (uint32 i = 0; i < co->propCount(); i ++ ) {
-               markItemFast( co->getPropertyAt( i ) );
-            }
-            // then mark the user data
-            // TODO: have the userdata to set a flag in the object that tells
-            // if the user data wants to be marked or not.
-            if ( co->getUserData() != 0 )
-            {
-               co->getUserData()->gcMark( this );
-            }
+            co->gcMarkData( currentMark() );
          }
 
       }
@@ -394,17 +387,7 @@ void MemPool::markItem( Item &item )
                m_aliveItems++;
                m_aliveMem += co->m_gcSize;
                co->mark( currentMark() );
-               // mark all the property values.
-               for ( uint32 i = 0; i < co->propCount(); i ++ ) {
-                  markItemFast( co->getPropertyAt( i ) );
-               }
-               // then mark the user data
-               // TODO: have the userdata to set a flag in the object that tells
-               // if the user data wants to be marked or not.
-               if ( co->getUserData() != 0 )
-               {
-                  co->getUserData()->gcMark( this );
-               }
+               co->gcMarkData( currentMark() );
             }
 
             // no need to mark the live modue;
@@ -421,17 +404,7 @@ void MemPool::markItem( Item &item )
             m_aliveMem += co->m_gcSize;
             co->mark( currentMark() );
             // mark all the property values.
-            for ( uint32 i = 0; i < co->propCount(); i ++ ) {
-               markItemFast( co->getPropertyAt( i ) );
-            }
-
-            // then mark the user data
-            // TODO: have the userdata to set a flag in the object that tells
-            // if the user data wants to be marked or not.
-            if ( co->getUserData() != 0 )
-            {
-               co->getUserData()->gcMark( this );
-            }
+            co->gcMarkData( currentMark() );
          }
 
          CoreClass *cls = item.asMethodClass();
@@ -477,8 +450,15 @@ void MemPool::markItem( Item &item )
             m_aliveItems++;
 
             mb->mark( currentMark() );
-            if( item.asMemBuf()->dependant() != 0 )
-               item.asMemBuf()->dependant()->gcMark( this );
+            CoreObject *co = item.asMemBuf()->dependant();
+            // small optimization; resolve the problem here instead of looping again.
+            if( co != 0 && co->mark() != currentMark() )
+            {
+               co->mark( currentMark() );
+               m_aliveItems++;
+               m_aliveMem += co->m_gcSize;
+               co->gcMarkData( currentMark() );
+            }
          }
       }
       break;

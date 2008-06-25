@@ -159,6 +159,12 @@ bool LinearDictIterator::insert( const Item &data )
    return false;
 }
 
+FalconData *LinearDictIterator::clone() const
+{
+   return new LinearDictIterator( *this );
+}
+
+
 //=======================================================
 // Iterator
 //

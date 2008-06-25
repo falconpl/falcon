@@ -25,7 +25,7 @@ void VMSemaphore::post( VMachine *vm, int32 count )
 {
    m_count += count;
 
-   while( m_count > 0 && ! m_waiting.empty() ) 
+   while( m_count > 0 && ! m_waiting.empty() )
    {
       VMContext *ctx = (VMContext *) m_waiting.front();
       ctx->sleepOn( 0 );
@@ -37,7 +37,7 @@ void VMSemaphore::post( VMachine *vm, int32 count )
 
       m_waiting.popFront();
       m_count --;
-   }   
+   }
 }
 
 void VMSemaphore::wait( VMachine *vm, numeric to )
@@ -58,7 +58,7 @@ void VMSemaphore::wait( VMachine *vm, numeric to )
 void VMSemaphore::unsubscribe( VMContext *ctx )
 {
    ListElement *elem = m_waiting.begin();
-   while( elem != 0 ) 
+   while( elem != 0 )
    {
       VMContext *cty = (VMContext *) elem->data();
 	  if ( ctx == cty )
@@ -70,6 +70,12 @@ void VMSemaphore::unsubscribe( VMContext *ctx )
 	  }
 	  elem = elem->next();
    }
+}
+
+FalconData *VMSemaphore::clone() const
+{
+   // ! not supported.
+   return 0;
 }
 
 }

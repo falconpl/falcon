@@ -55,7 +55,7 @@ public:
    virtual int32 write( const String &source );
    virtual int32 writeAvailable( int32 msecs );
    virtual bool truncate( int64 pos=-1 );
-   virtual UserData *clone() const;
+   virtual FalconData *clone() const;
 };
 
 }

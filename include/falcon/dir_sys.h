@@ -23,7 +23,7 @@
 #define flc_dir_sys_H
 
 #include <falcon/filestat.h>
-#include <falcon/userdata.h>
+#include <falcon/falcondata.h>
 
 namespace Falcon {
 
@@ -34,7 +34,7 @@ namespace Falcon {
 
    It has methods to read the next entry and to close the search.
 */
-class DirEntry: public UserData
+class DirEntry: public FalconData
 {
 
 protected:
@@ -48,6 +48,10 @@ public:
    virtual bool read( String &fname ) = 0;
    virtual void close() = 0;
    uint32 lastError() const { return m_lastError; }
+
+   // unsupported (for now)
+   virtual FalconData *clone() const { return 0; }
+   virtual void gcMark( VMachine *mp ) {}
 };
 
 namespace Sys {

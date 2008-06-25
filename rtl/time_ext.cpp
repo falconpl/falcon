@@ -34,28 +34,6 @@
 
 namespace Falcon { namespace Ext {
 
-bool TimeStamp_copy( const CoreObject *origin, CoreObject *dateObj )
-{
-   Item data;
-   origin->getProperty( "year", data );
-   dateObj->setProperty( "year", data );
-   origin->getProperty( "month", data );
-   dateObj->setProperty( "month", data );
-   origin->getProperty( "day", data );
-   dateObj->setProperty( "day", data );
-   origin->getProperty( "hour", data );
-   dateObj->setProperty( "hour", data );
-   origin->getProperty( "minute", data );
-   dateObj->setProperty( "minute", data );
-   origin->getProperty( "second", data );
-   dateObj->setProperty( "second", data );
-   origin->getProperty( "msec", data );
-   dateObj->setProperty( "msec", data );
-   origin->getProperty( "timezone", data );
-   dateObj->setProperty( "timezone", data );
-   return true;
-}
-
 /*#
    @class TimeStamp
    @brief Representation of times in the system.
@@ -102,9 +80,9 @@ FALCON_FUNC  TimeStamp_init ( ::Falcon::VMachine *vm )
             vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ).
                extra( "Parameter is not a TimeStamp" ) ) );
          }
-         self->setUserData( new TimeStamp );
 
-         TimeStamp_copy( other, self );
+         self->setUserData( new TimeStamp( * static_cast<TimeStamp *>( other->getUserData() ) ) );
+
       }
       else {
          vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ).
@@ -675,6 +653,21 @@ FALCON_FUNC  TimeZone_describe ( ::Falcon::VMachine *vm )
 FALCON_FUNC  TimeZone_getLocal ( ::Falcon::VMachine *vm )
 {
    vm->retval( (int64) Sys::Time::getLocalTimeZone() );
+}
+
+//================================================
+// Reflection
+//
+void TimeStamp_timezone_rfrom(CoreObject *instance, void *user_data, Item &property )
+{
+   TimeStamp *ts = static_cast<TimeStamp *>(user_data);
+   property = (int64) ts->m_timezone;
+}
+
+void TimeStamp_timezone_rto(CoreObject *instance, void *user_data, Item &property )
+{
+   TimeStamp *ts = static_cast<TimeStamp *>(user_data);
+   ts->m_timezone = (TimeZone)(property.forceInteger()%32);
 }
 
 }}

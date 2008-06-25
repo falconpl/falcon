@@ -108,6 +108,7 @@ ADD_LIBRARY( falcon_engine SHARED
    enginedata.cpp
    engstrings.cpp
    error.cpp
+   falcondata.cpp
    fasm_comp.cpp
    fasm_lexer.cpp
    fassert.cpp
@@ -147,15 +148,14 @@ ADD_LIBRARY( falcon_engine SHARED
    string.cpp
    stringstream.cpp
    strtable.cpp
-   suserdata.cpp
    symbol.cpp
    symtab.cpp
    syntree.cpp
    timestamp.cpp
    traits.cpp
    transcoding.cpp
-   userdata.cpp
    uri.cpp
+   userdata.cpp
    vmcontext.cpp
    vm.cpp
    vmmaps.cpp

@@ -27,6 +27,7 @@
 #define FLC_ITEM_RANGE     3
 #define FLC_ITEM_BOOL      4
 
+
 #define FLC_ITEM_FUNC      6
 /* Some shallow callable items. */
 #define FLC_ITEM_FBOM      7
@@ -47,6 +48,9 @@
 #define FLC_ITEM_MEMBUF    14
 
 #define FLC_ITEM_REFERENCE 15
+
+/** Used to store long lasting garbage pointers */
+#define FLC_ITEM_GCPTR     16
 
 #define FLC_ITEM_CLSMETHOD 20
 #define FLC_ITEM_METHOD    22

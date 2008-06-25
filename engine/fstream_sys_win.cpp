@@ -287,7 +287,7 @@ int GenericStream::readAvailable( int32 msec, const Sys::SystemData *sysData )
             waitTime = (DWORD) msec;
 
             DWORD result = PeekNamedPipe( data->m_handle, NULL, 0,  NULL, &size, NULL );
-            while ( result && size == 0 && waitTime > 0 ) 
+            while ( result && size == 0 && waitTime > 0 )
             {
                // Interrupted?
                if( WaitForSingleObject( sysData->m_sysData->evtInterrupt, 1 ) == WAIT_OBJECT_0 )
@@ -301,7 +301,7 @@ int GenericStream::readAvailable( int32 msec, const Sys::SystemData *sysData )
             return (size > 0) ? 1 : 0;
          }
       }
-      else 
+      else
       {
          waitTime = msec < 0 ? INFINITE : msec;
          HANDLE waiting[2];
@@ -425,7 +425,7 @@ void GenericStream::setError( int64 errorCode )
       status( (t_status) (((int)status()) & ~(int)Stream::t_error ));
 }
 
-UserData *GenericStream::clone() const
+FalconData *GenericStream::clone() const
 {
    GenericStream *gs = new GenericStream( *this );
    if ( gs->m_fsData == 0 )

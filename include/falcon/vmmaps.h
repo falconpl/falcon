@@ -176,6 +176,13 @@ class FALCON_DYN_CLASS SymModule: public BaseAlloc
    int32 m_wkiid;
 
 public:
+   SymModule():
+      m_symbol(0),
+      m_lmod(0),
+      m_item(0),
+      m_wkiid( -1 )
+   {}
+
    /** Creates an exported Global Item. */
    SymModule( Item *itm, LiveModule *mod, Symbol *sym ):
       m_item( itm ),

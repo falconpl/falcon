@@ -25,6 +25,7 @@
 #include <falcon/symbol.h>
 #include <falcon/cobject.h>
 #include <falcon/carray.h>
+#include <falcon/garbagepointer.h>
 #include <falcon/cdict.h>
 #include <falcon/cclass.h>
 #include <falcon/membuf.h>
@@ -34,6 +35,26 @@
 #include <cstring>
 
 namespace Falcon {
+
+void Item::setGCPointer( VMachine *vm, FalconData *ptr, uint32 sig )
+{
+   type( FLC_ITEM_POINTER );
+   m_data.gptr.signature = sig;
+   m_data.gptr.gcptr = new GarbagePointer( vm, ptr );
+}
+
+void Item::setGCPointer( GarbagePointer *shell, uint32 sig )
+{
+   type( FLC_ITEM_POINTER );
+   m_data.gptr.signature = sig;
+   m_data.gptr.gcptr = shell;
+}
+
+FalconData *Item::asGCPointer() const
+{
+   return m_data.gptr.gcptr->ptr();
+}
+
 
 // This function is called solely if other and this have the same type.
 bool Item::internal_is_equal( const Item &other ) const
@@ -560,7 +581,11 @@ void Item::destroy()
       {
          CoreObject *obj = asObject();
          for( uint32 i = 0; i < obj->propCount(); i++ )
-            obj->getPropertyAt(i).destroy();
+         {
+            Item tmp;
+            obj->getPropertyAt(i, tmp);
+            tmp.destroy();
+         }
          delete obj;
       }
       break;

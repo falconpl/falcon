@@ -5046,7 +5046,7 @@ yyreduce:
   case 257:
 #line 1603 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
     {
-         Falcon::ClassDef *def = new Falcon::ClassDef( 0, 0 );
+         Falcon::ClassDef *def = new Falcon::ClassDef;
          // the SYMBOL which names the function goes in the old symbol table, while the parameters
          // will go in the new symbol table.
 
@@ -5352,7 +5352,7 @@ yyreduce:
   case 294:
 #line 1912 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
     {
-         Falcon::ClassDef *def = new Falcon::ClassDef( 0, 0 );
+         Falcon::ClassDef *def = new Falcon::ClassDef;
          // the SYMBOL which names the function goes in the old symbol table, while the parameters
          // will go in the new symbol table.
 
@@ -5411,7 +5411,7 @@ yyreduce:
   case 303:
 #line 1983 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
     {
-         Falcon::ClassDef *def = new Falcon::ClassDef( 0, 0 );
+         Falcon::ClassDef *def = new Falcon::ClassDef;
          // the SYMBOL which names the function goes in the old symbol table, while the parameters
          // will go in the new symbol table.
 

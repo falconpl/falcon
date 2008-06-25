@@ -88,7 +88,7 @@ bool ROStringStream::truncate( int64 pos )
    return false;
 }
 
-UserData *ROStringStream::clone() const
+FalconData *ROStringStream::clone() const
 {
    return new ROStringStream( *this );
 }

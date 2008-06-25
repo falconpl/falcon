@@ -153,10 +153,10 @@ Symbol *Module::addConstant( const String &name, const String &value, bool exp )
 }
 
 
-Symbol *Module::addExtFunc( const String &name, ext_func_t func, bool exp )
+Symbol *Module::addExtFunc( const String &name, ext_func_t func, void *extra, bool exp )
 {
    Symbol *sym = addGlobalSymbol( addSymbol(name) );
-   sym->setExtFunc( new ExtFuncDef( func ) );
+   sym->setExtFunc( new ExtFuncDef( func, extra ) );
    sym->exported( exp );
    return sym;
 }
@@ -182,7 +182,7 @@ Symbol *Module::addClass( const String &name, Symbol *ctor_sym, bool exp )
    }
 
    Symbol *sym = new Symbol( this, m_symbols.size(), symName, exp );
-   sym->setClass( new ClassDef( 0, ctor_sym ) );
+   sym->setClass( new ClassDef( ctor_sym ) );
    m_symbols.push( sym );
 
    sym->itemId( m_symtab.size() );
@@ -231,23 +231,23 @@ Symbol *Module::addClass( const String &name, ext_func_t ctor, bool exp )
    return addClass( name, sym, exp );
 }
 
-VarDef *Module::addClassProperty( Symbol *cls, const String &prop )
+VarDef& Module::addClassProperty( Symbol *cls, const String &prop )
 {
    ClassDef *cd = cls->getClassDef();
    VarDef *vd = new VarDef();
    cd->addProperty( addString( prop ), vd );
-   return vd;
+   return *vd;
 }
 
-VarDef *Module::addClassMethod( Symbol *cls, const String &prop, Symbol *method )
+VarDef& Module::addClassMethod( Symbol *cls, const String &prop, Symbol *method )
 {
    ClassDef *cd = cls->getClassDef();
    VarDef *vd = new VarDef( method );
    cd->addProperty( addString( prop ), vd );
-   return vd;
+   return *vd;
 }
 
-VarDef *Module::addClassMethod( Symbol *cls, const String &prop, ext_func_t method_func )
+VarDef& Module::addClassMethod( Symbol *cls, const String &prop, ext_func_t method_func )
 {
    String name = cls->name() + "." + prop;
    Symbol *method = addExtFunc( name, method_func, false );

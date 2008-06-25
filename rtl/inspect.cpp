@@ -228,7 +228,9 @@ void inspect_internal( VMachine *vm, bool isShort, const Item *elem, int32 level
                stream->writeString("   ");
             }
             stream->writeString( arr->getPropertyName( count ) + " => " );
-            inspect_internal( vm, isShort, &arr->getPropertyAt(count), level + 1, false );
+            Item dummy;
+            arr->getPropertyAt(count, dummy);
+            inspect_internal( vm, isShort, &dummy, level + 1, false );
          }
          for ( i = 0; i < level; i ++ )
          {

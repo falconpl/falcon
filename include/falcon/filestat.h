@@ -22,7 +22,7 @@
 
 #include <falcon/setup.h>
 #include <falcon/types.h>
-#include <falcon/userdata.h>
+#include <falcon/falcondata.h>
 
 namespace Falcon {
 
@@ -30,7 +30,7 @@ class String;
 class TimeStamp;
 
 /** Multiplatform statistics on files. */
-class FALCON_DYN_CLASS FileStat: public UserData
+class FALCON_DYN_CLASS FileStat: public FalconData
 {
 public:
    typedef enum {
@@ -62,10 +62,8 @@ public:
    FileStat( const FileStat &other );
    virtual ~FileStat();
 
-   virtual bool isReflective() const;
-   virtual void setProperty( const String &propName, Item &prop );
-   virtual void getProperty( const String &propName, Item &prop );
-   virtual UserData * clone() const;
+   virtual FalconData * clone() const;
+   virtual void gcMark( VMachine *mp ) {}
 };
 
 }

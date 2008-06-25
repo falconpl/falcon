@@ -980,70 +980,7 @@ void TimeStamp::changeTimezone( TimeZone tz )
    m_timezone = tz;
 }
 
-bool TimeStamp::isReflective() const
-{
-   return true;
-}
-
-void TimeStamp::getProperty( VMachine *, const String &propName, Item &prop )
-{
-   if( propName == "year" )
-   {
-      prop = (int64) m_year;
-   }
-   else if( propName == "month" ) {
-      prop = (int64) m_month;
-   }
-   else if( propName == "day" ) {
-      prop = (int64) m_day;
-   }
-   else if( propName == "hour" ) {
-      prop = (int64) m_hour;
-   }
-   else if( propName == "minute" ) {
-      prop = (int64) m_minute;
-   }
-   else if( propName == "second" ) {
-      prop = (int64) m_second;
-   }
-   else if( propName == "msec" ) {
-      prop = (int64) m_msec;
-   }
-   else if( propName == "timezone" ) {
-      prop = (int64) m_timezone;
-   }
-}
-
-void TimeStamp::setProperty( VMachine *, const String &propName, Item &prop )
-{
-   if( propName == "year" )
-   {
-      m_year = (int16) prop.forceInteger();
-   }
-   else if( propName == "month" ) {
-      m_month = (int16) prop.forceInteger();
-   }
-   else if( propName == "day" ) {
-      m_day = (int16) prop.forceInteger();
-   }
-   else if( propName == "hour" ) {
-      m_hour = (int16) prop.forceInteger();
-   }
-   else if( propName == "minute" ) {
-      m_minute = (int16) prop.forceInteger();
-   }
-   else if( propName == "second" ) {
-      m_second = (int16) prop.forceInteger();
-   }
-   else if( propName == "msec" ) {
-      m_msec = (int16) prop.forceInteger();
-   }
-   else if( propName == "timezone" ) {
-      m_timezone = (TimeZone)( prop.forceInteger()%32);
-   }
-}
-
-UserData *TimeStamp::clone() const
+FalconData *TimeStamp::clone() const
 {
    return new TimeStamp( *this );
 }

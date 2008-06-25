@@ -527,7 +527,7 @@ bool Format::format( VMachine *vm, const Item &source, String &target )
                bNeg = true;
                bIntIsZero = false;
             }
-            else 
+            else
             {
                bIntIsZero = intPart > 0.0 ? false : true;
 
@@ -1057,10 +1057,7 @@ void Format::applyPad( String &target, uint32 extraSize )
    }
 }
 
-bool Format::isReflective() const
-{
-   return true;
-}
+/*
 
 void Format::getProperty( const String &propName, Item &prop )
 {
@@ -1113,6 +1110,12 @@ void Format::getProperty( const String &propName, Item &prop )
 void Format::setProperty( const String &propName, Item &prop )
 {
    // read only
+}
+*/
+
+FalconData *Format::clone() const
+{
+   return new Format( this->originalFormat() );
 }
 
 }

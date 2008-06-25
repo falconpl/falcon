@@ -203,6 +203,8 @@ const String &errorDesc( int code )
       case e_noninst_cls: return getMessage( msg::err_noninst_cls );
       case e_unserializable: return getMessage( msg::err_unserializable );
       case e_wait_in_atomic: return getMessage( msg::err_wait_in_atomic );
+      case e_inv_inherit2: return getMessage( msg::err_inv_inherit2 );
+      case e_prop_ro: return getMessage( msg::err_prop_ro );
 
 
       case e_already_forfirst: return getMessage( msg::err_already_forfirst );
@@ -504,9 +506,9 @@ CoreObject *Error::scriptize( VMachine *vm )
       return 0;
    }
 
-   ErrorCarrier *carrier = new ErrorCarrier( this );
    CoreObject *cobject = error_class->asClass()->createInstance();
-   cobject->setUserData( carrier );
+   incref();
+   cobject->setUserData( this );
 
    // scriptize sub-errors
    if (m_nextError != 0)
@@ -516,10 +518,9 @@ CoreObject *Error::scriptize( VMachine *vm )
       Error *ptr = m_nextError;
       while( ptr != 0 )
       {
-         ErrorCarrier *subcarrier = new ErrorCarrier( ptr );
-
          CoreObject *subobject = error_class->asClass()->createInstance();
-         subobject->setUserData( subcarrier );
+         subobject->setUserData( ptr );
+         ptr->incref();
 
          errorList->append( subobject );
          ptr = ptr->m_nextError;
@@ -530,132 +531,199 @@ CoreObject *Error::scriptize( VMachine *vm )
    return cobject;
 }
 
-
-ErrorCarrier::ErrorCarrier( Error *carried ):
-   m_error( carried )
+Error *Error::clone() const
 {
-   carried->incref();
-   switch( m_error->origin() )
+   return new Error( *this );
+}
+
+//==============================================================================
+// Reflections
+
+namespace core {
+
+void Error_code_rfrom( CoreObject *instance, void *userData, Item &property )
+{
+   Error *error = static_cast<Error *>(userData);
+   FALCON_REFLECT_INTEGER_FROM( error, errorCode );
+}
+
+void Error_description_rfrom(CoreObject *instance, void *userData, Item &property )
+{
+   Error *error = static_cast<Error *>(userData);
+   FALCON_REFLECT_STRING_FROM( error, errorDescription );
+}
+
+void Error_message_rfrom(CoreObject *instance, void *userData, Item &property )
+{
+   Error *error = static_cast<Error *>(userData);
+   FALCON_REFLECT_STRING_FROM( error, extraDescription );
+}
+
+void Error_systemError_rfrom(CoreObject *instance, void *userData, Item &property )
+{
+   Error *error = static_cast<Error *>(userData);
+   FALCON_REFLECT_INTEGER_FROM( error, systemError );
+}
+
+void Error_origin_rfrom(CoreObject *instance, void *userData, Item &property )
+{
+   Error *error = static_cast<Error *>(userData);
+
+   String origin;
+
+   switch( error->origin() )
    {
-      case e_orig_compiler: m_origin = "compiler"; break;
-      case e_orig_assembler: m_origin = "assembler"; break;
-      case e_orig_loader: m_origin = "loader"; break;
-      case e_orig_vm: m_origin = "vm"; break;
-      case e_orig_script: m_origin = "script"; break;
-      case e_orig_runtime: m_origin = "runtime"; break;
-      case e_orig_mod: m_origin = "module"; break;
+      case e_orig_compiler: origin = "compiler"; break;
+      case e_orig_assembler: origin = "assembler"; break;
+      case e_orig_loader: origin = "loader"; break;
+      case e_orig_vm: origin = "vm"; break;
+      case e_orig_script: origin = "script"; break;
+      case e_orig_runtime: origin = "runtime"; break;
+      case e_orig_mod: origin = "module"; break;
+   }
+
+   if ( !property.isString() || origin != *property.asString() )
+   {
+      property = new GarbageString( instance->origin(), origin );
    }
 }
 
-
-ErrorCarrier::~ErrorCarrier()
+void Error_module_rfrom(CoreObject *instance, void *userData, Item &property )
 {
-   m_error->decref();
+   Error *error = static_cast<Error *>(userData);
+   FALCON_REFLECT_STRING_FROM( error, module );
 }
 
-bool ErrorCarrier::isReflective() const
+void Error_symbol_rfrom(CoreObject *instance, void *userData, Item &property )
 {
-   return true;
+   Error *error = static_cast<Error *>(userData);
+   FALCON_REFLECT_STRING_FROM( error, symbol );
 }
 
-void ErrorCarrier::getProperty( VMachine *vm, const String &propName, Item &prop )
+void Error_line_rfrom(CoreObject *instance, void *userData, Item &property )
 {
-   if ( m_error == 0 )
-      return;
+   Error *error = static_cast<Error *>(userData);
+   FALCON_REFLECT_INTEGER_FROM( error, line );
+}
 
-   if ( propName == "code" )
-      prop = (int64) m_error->errorCode();
-   else if ( propName == "description" )
+void Error_pc_rfrom(CoreObject *instance, void *userData, Item &property )
+{
+   Error *error = static_cast<Error *>(userData);
+   FALCON_REFLECT_INTEGER_FROM( error, pcounter );
+}
+
+
+void Error_code_rto( CoreObject *instance, void *userData, Item &property )
+{
+   Error *error = static_cast<Error *>(userData);
+   FALCON_REFLECT_INTEGER_TO( error, errorCode );
+}
+
+void Error_description_rto(CoreObject *instance, void *userData, Item &property )
+{
+   Error *error = static_cast<Error *>(userData);
+   FALCON_REFLECT_STRING_TO( error, errorDescription );
+}
+
+void Error_message_rto(CoreObject *instance, void *userData, Item &property )
+{
+   Error *error = static_cast<Error *>(userData);
+   FALCON_REFLECT_STRING_TO( error, extraDescription );
+}
+
+void Error_systemError_rto(CoreObject *instance, void *userData, Item &property )
+{
+   Error *error = static_cast<Error *>(userData);
+   FALCON_REFLECT_INTEGER_TO( error, systemError );
+}
+
+void Error_origin_rto(CoreObject *instance, void *userData, Item &property )
+{
+   Error *error = static_cast<Error *>(userData);
+
+   if ( property.isString() )
    {
-      const String &desc = m_error->errorDescription();
-      if ( desc.size() == 0 && prop.isNil() )
-      {
-         prop = new GarbageString( vm, errorDesc( m_error->errorCode() ) );
-      }
-      else
-         prop = const_cast<String *>(&m_error->errorDescription());
-   }
-   else if ( propName == "message" )
-      prop = const_cast<String *>( &m_error->extraDescription() );
-   else if ( propName == "systemError" )
-      prop = (int64) m_error->systemError();
-   else if ( propName == "origin" )
-      prop = const_cast<String *>( &m_origin );
-   else if ( propName == "module" )
-      prop = const_cast<String *>( &m_error->module() );
-   else if ( propName == "symbol" )
-      prop = const_cast<String *>( &m_error->symbol() );
-   else if ( propName == "line" )
-      prop = (int64) m_error->line();
-   else if ( propName == "pc" )
-      prop = (int64) m_error->pcounter();
-   else if ( propName == "fsError" )
-      prop = (int64) m_error->systemError();
-
-}
-
-void ErrorCarrier::setProperty( VMachine *, const String &propName, Item &prop )
-{
-   if ( m_error == 0 )
-      return;
-
-   if ( propName == "code" )
-      m_error->errorCode( (int) prop.forceInteger() );
-   else if ( propName == "description" && prop.isString() )
-      m_error->errorDescription( *prop.asString() );
-   else if ( propName == "message" && prop.isString() )
-      m_error->extraDescription( *prop.asString() );
-   else if ( propName == "origin" && prop.isString() )
-   {
-      String &origin = *prop.asString();
+      String &origin = *property.asString();
       if( origin == "compiler" )
       {
-         m_origin = origin;
-         m_error->origin( e_orig_compiler );
+         error->origin( e_orig_compiler );
       }
       else if( origin == "assembler" )
       {
-         m_origin = origin;
-         m_error->origin( e_orig_assembler );
+         error->origin( e_orig_assembler );
       }
       else if( origin == "loader" )
       {
-         m_origin = origin;
-         m_error->origin( e_orig_loader );
+         error->origin( e_orig_loader );
       }
       else if( origin == "vm" )
       {
-         m_origin = origin;
-         m_error->origin( e_orig_vm );
+         error->origin( e_orig_vm );
       }
       else if( origin == "script" )
       {
-         m_origin = origin;
-         m_error->origin( e_orig_script );
+         error->origin( e_orig_script );
       }
       else if( origin == "runtime" )
       {
-         m_origin = origin;
-         m_error->origin( e_orig_runtime );
+         error->origin( e_orig_runtime );
       }
       else if( origin == "module" )
       {
-         m_origin = origin;
-         m_error->origin( e_orig_mod);
+         error->origin( e_orig_mod);
       }
+      else {
+         instance->origin()->raiseRTError( new ParamError( ErrorParam( e_param_outside ) ) );
+      }
+
+      return;
    }
-   else if ( propName == "module" && prop.isString() )
-      m_error->module( *prop.asString() );
-   else if ( propName == "symbol" && prop.isString() )
-      m_error->symbol( *prop.asString() );
-   else if ( propName == "line" )
-      m_error->line( (uint32) prop.forceInteger() );
-   else if ( propName == "pc" )
-      m_error->pcounter( (uint32) prop.forceInteger() );
-   else if ( propName == "systemError" )
-      m_error->systemError( (uint32) prop.forceInteger() );
+
+   instance->origin()->raiseRTError( new ParamError( ErrorParam( e_inv_params ).extra( "S" ) ) );
 }
 
+void Error_module_rto(CoreObject *instance, void *userData, Item &property )
+{
+   Error *error = static_cast<Error *>(userData);
+   FALCON_REFLECT_STRING_TO( error, module );
+}
+
+void Error_symbol_rto(CoreObject *instance, void *userData, Item &property )
+{
+   Error *error = static_cast<Error *>(userData);
+   FALCON_REFLECT_STRING_TO( error, symbol );
+}
+
+void Error_line_rto(CoreObject *instance, void *userData, Item &property )
+{
+   Error *error = static_cast<Error *>(userData);
+   FALCON_REFLECT_INTEGER_TO( error, line );
+}
+
+void Error_pc_rto(CoreObject *instance, void *userData, Item &property )
+{
+   Error *error = static_cast<Error *>(userData);
+   FALCON_REFLECT_INTEGER_TO( error, pcounter );
+}
+
+}
+
+void *ErrorManager::onInit( VMachine *vm )
+{
+   return 0;
+}
+
+void ErrorManager::onDestroy( VMachine *vm, void *user_data )
+{
+   Error *error = static_cast<Error *>( user_data );
+   error->decref();
+}
+
+void *ErrorManager::onClone( VMachine *vm, void *user_data )
+{
+   Error *error = static_cast<Error *>( user_data );
+   return error->clone();
+}
 
 }
 

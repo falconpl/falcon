@@ -317,7 +317,7 @@ protected:
     *
     * This method is protected. It can be accessed only by subclasses.
     */
-   String( csh::Base *cl ) :
+   explicit String( csh::Base *cl ) :
       m_class( cl ),
       m_garbageable( false )
    {}
@@ -1183,7 +1183,7 @@ public:
 
       \see String()
    */
-   GarbageString( VMachine *vm );
+   explicit GarbageString( VMachine *vm );
 
    /** Preallocator constructor
       Creates an empty garbage string with preallocation support.
@@ -1218,7 +1218,7 @@ public:
       provided, which must stay valid for the whole lifetime of this string.
       \see String( const char* )
    */
-   GarbageString( VMachine *vm, const char *other );
+   explicit GarbageString( VMachine *vm, const char *other );
 
     /** Adopt a static buffer and creates a static string.
 
@@ -1227,22 +1227,22 @@ public:
       This is the wide char version.
       \see String( const wchar_t* )
    */
-   GarbageString( VMachine *vm, const wchar_t *other );
+   explicit GarbageString( VMachine *vm, const wchar_t *other );
 
    /** Copies the static data in this string.
       \see String( const char*, int32 )
    */
-   GarbageString( VMachine *vm, const char *other, int32 len );
+   explicit GarbageString( VMachine *vm, const char *other, int32 len );
 
    /**  Copies the static data in this string.
       \see String( const wchar_t*, int32 )
    */
-   GarbageString( VMachine *vm, const wchar_t *other, int32 len );
+   explicit GarbageString( VMachine *vm, const wchar_t *other, int32 len );
 
    /** Copy constructor.
 
    */
-   GarbageString( const GarbageString &other );
+   explicit GarbageString( const GarbageString &other );
 
    ~GarbageString() {}
 

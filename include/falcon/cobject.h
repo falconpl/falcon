@@ -26,7 +26,8 @@
 #include <falcon/item.h>
 #include <falcon/common.h>
 #include <falcon/proptable.h>
-#include <falcon/userdata.h>
+#include <falcon/objectmanager.h>
+#include <falcon/cclass.h>
 
 namespace Falcon {
 
@@ -36,35 +37,35 @@ class Attribute;
 
 class FALCON_DYN_CLASS CoreObject: public Garbageable
 {
-   PropertyTable m_properties;
    AttribHandler *m_attributes;
-   Symbol *m_instanceOf;
-   UserData *m_user_data;
-   bool m_user_data_shared;
-   friend class Attribute;
+   const CoreClass *m_generatedBy;
+   void *m_user_data;
+   Item *m_cache;
 
+   friend class Attribute;
 public:
 
-   /** Accepts a pre-existing set of properties as base for this constructor.
-      The properties must NOT be already garbage-collector managed, as they are one
-      with the core object and will be eventually deleted at object descruction.
-   */
-   CoreObject( VMachine *vm, const PropertyTable &original, Symbol *inst );
+   /** Creates an object deriving it from a certain class.
+      The constructor also creates the needed space to store
+      the user_data needed by each subclass of the class.
 
-   /** Creates a dummy core object.
-      This is a constructor that creates a classless and propertyless core object.
-      It is useful to stuff some user data in a variable or in the stack, and let GC
-      to mark and dispose it as if it were an object.
+      A user_data matching with the reflective properties and
+      with the class ObjectManager can be provided. If not provided,
+      and if the class provides an object manager, the object
+      manager init method will be called.
 
-      I know we must find a better way (i.e. a garbageable dummy), but at the time
-      I did this it was the best compromise in term of efficiency, spanwidth of code touched
-      and urgent needs.
+      If an already created user_data is provided and if it's possible
+      to cache its data, reflectFrom() method will be called to
+      grab user data values into the local item cahce.
+
+      \param cls The core class that instances this object.
+      \param user_data Pre created user data or 0.
    */
-   CoreObject( VMachine *mp, UserData *ud );
+   CoreObject( const CoreClass *cls, void *user_data = 0);
 
    ~CoreObject();
 
-   Symbol *instanceOf() const  { return m_instanceOf; }
+   Symbol *instanceOf() const  { return m_generatedBy->symbol(); }
    bool derivedFrom( const String &className ) const;
 
    /** Return the head of attribute lists.
@@ -90,20 +91,26 @@ public:
    */
    bool has( const String &attrib ) const;
 
-   /** Size of the object.
-      This is the count of properties in the object. Is it useful? Don't know...
+   /** Sets a property in the object.
+      If the property is found, the value in the item is copied, otherwise the
+      object is untouched and false is returned.
+
+      In case of reflected objects, it may be impossible to set the property. In that case,
+      the owning vm gets an error, and false is returned.
+
+      \param prop The property to be set.
+      \param value The item to be set in the property.
+      \return ture if the property can be set, false otherwise.
    */
-   uint32 size() { return static_cast<uint32>( m_properties.size() ); }
-
    bool setProperty( const String &prop, const Item &value );
-   bool setPropertyRef( const String &prop, Item &value );
-   bool setProperty( const String &prop, const String &value );
-   bool setProperty( const String &prop, int64 value );
-   bool setProperty( const String &prop, int32 value )
-   {
-      return setProperty( prop, (int64) value );
-   }
 
+   /** Stores an arbitrary string in a property.
+      The string is copied in a garbageable string created by the object itself.
+   */
+   bool setProperty( const String &prop, const String &value );
+
+   /** Disambiguates String( char*) and Item(0) */
+   bool setProperty( const String &prop, int value ) { return setProperty( prop, Item(value) ); }
 
    /** Returns the a shallow item copy of required property.
       The copy is shallow; strings, arrays and complex data inside
@@ -113,15 +120,8 @@ public:
       \param ret an item containing the object proerty copy.
       \return true if the property can be found, false otherwise
    */
-   bool getProperty( const String &key, Item &ret ) const;
+   bool getProperty( const String &key, Item &ret );
 
-   /** Returns the pointer to the physical item position.
-      Use with care.
-
-      \param key the property to be found
-      \return the property poitner if the object provides the property, 0 otherwise.
-   */
-   Item *getProperty( const String &key );
 
    /** Returns a method from an object.
        This function searches for the required property; if it's found,
@@ -136,77 +136,156 @@ public:
        \param method an item where the method will be stored
        \return true if the property exists and is a callable item.
    */
-   bool getMethod( const String &key, Item &method ) const;
+   bool getMethod( const String &propName, Item &method )
+   {
+      if ( getProperty( propName, method ) )
+         return method.methodize( this );
+      return false;
+   }
+
 
    bool hasProperty( const String &key ) const
    {
       register uint32 pos;
-      return m_properties.findKey( &key, pos );
+      return m_generatedBy->properties().findKey( key, pos );
    }
 
-   Item &getPropertyAt( uint32 pos ) const;
 
    const String &getPropertyName( uint32 pos ) const {
-      return *m_properties.getKey( pos );
+      return *m_generatedBy->properties().getKey( pos );
    }
 
-   uint32 propCount() const { return  m_properties.added(); }
+   /** Return the class item that generated this class */
 
-   /** Returns the user data if set.
-      \see setUserData()
-      \return The user data, if set, or zero.
+   /** Gets the count of the properties of this object.
+      This is useful when iterating on an object properties.
+      \return count of properties stored in this instance (can be 0).
    */
-   UserData *getUserData() const { return m_user_data; }
+   uint32 propCount() const { return m_generatedBy->properties().added(); }
 
-   /** Set the user data for this object.
-      Extension libraries wishing to provide their own opaque structures
-      to scripts via objects can use this feature.
-      They must derive their structure from "destroyable", which simply
-      provides a virtual destructor (thus, sparing the cost of an extra
-      pointer per object to store the user-defined data de-allocator).
+   /** Gets a property at a given position in the property table.
+      This is useful when iterating on an object properties.
+      The property is also reflected, if necessary, from the underlying
+      native user_data.
 
-      Methods for this object can access directly the user data; the
-      methods are granted that the VM will feed them with a correct
-      object, so in this way the overhead of chekcing the vailidity
-      of the data is avoided.
-
-      The data gets destroyed via the standard destroy operator
-      when the host object is garbage-collected.
-
-      \param data the user defined data.
+      \note passing a \b pos param out of range will assert in debug and
+            crash in runtime.
+      \param pos the property ID to be retreived.
+      \param ret An item where to store the value of the property.
+      \see propCount()
    */
-   void setUserData( UserData *data ) {
-      m_user_data = data;
-      // we need to record this separately as reclaim order is not granted,
-      // so the shared data may be collected right before some of its users.
-      m_user_data_shared = data != 0 ? data->shared() : false;
-   }
+   void getPropertyAt( uint32 pos, Item &ret );
+
+   /** Sets a property at a given position in the property table.
+      This is useful when iterating on an object properties.
+      The property is also reflected, if necessary, into the underlying
+      native user_data.
+
+      \note passing a \b pos param out of range will assert in debug and
+            crash in runtime.
+      \param pos the property ID to be set.
+      \param ret The valued to be stored.
+      \see propCount()
+   */
+   void setPropertyAt( uint32 pos, const Item &ret );
 
    /** Creates a shallow copy of this item.
-      Will return zero if this item as a user-defined data, that is,
-      it's not fully disposeable by the language.
-      In future, the user data may be garbageable or may offer a clone
-      function, so thintgs may be different, but for now the suggestion
-      is that to raise an error in case an uncloneable object is cloned.
+      Will return zero if this item has a non-cloneable user-defined data,
+      that is, it's not fully manageable by the language.
+
+      Clone operation requests the class ObjectManager to clone the user_data
+      stored in this object, if any. In turn, the ObjectManager may ask the
+      user_data, properly cast, to clone itself. If one of this operation
+      fails or is not possible, then the method returns 0. The VM will eventually
+      raise a CloneError to signal that the operation tried to clone a non
+      manageable user-data object.
+
+      If this object has not a user_data, then the cloneing will automatically
+      succeed.
+
       \return a shallow copy of this item.
    */
    CoreObject *clone() const;
 
-   /** Automatically transforms the incoming data into this object.
-      If the property table has reflective properties, the data
-      is used to store integer binary values into the properties.
-      \param data the structure that is set into reflection patterns.
-      \return true if the property table is reflective, false otherwise.
-   */
-   bool configureFrom( void *data );
+   /** Reflect an external data into this object.
+      This method uses the reflection informations in the generator class property table
+      to load the data stored in the user_data parameter into the local item vector cache.
 
-   /** Automatically transforms the data inside this object into external data.
-      If the property table has reflective properties, the data
-      configured after the values of the properties in the table.
-      \param data the structure that is set into reflection patterns.
-      \return true if the property table is reflective, false otherwise.
+      If the object has not a cache, the method returns immediately doing nothing.
    */
-   bool configureTo( void *data );
+   void reflectFrom( void *user_data );
+
+   /** Reflect this object into external data.
+      This method uses the reflection informations in the generator class property table
+      to store a C/C++ copy of the data stored in the local cache of this object into
+      an external data.
+
+      If the object has not a cache, the method returns immediately doing nothing.
+   */
+   void reflectTo( void *user_data );
+
+   /** Returns the user data. */
+   void *getUserData() const { return m_user_data; }
+
+   /** Sets the user data.
+      Using this method is generally a bad idea. Be sure to know what you're doing.
+   */
+   void setUserData( void *ud ) { m_user_data = ud; }
+
+   /** Shortcut to checking if the class is a reflective sequence. */
+   bool isSequence() const;
+
+   /** Shortcut to access object manager (if the class is reflective). */
+   ObjectManager *getObjectManager() const { return m_generatedBy->getObjectManager(); }
+
+   /** Performs GC marking of the inner object data */
+   void gcMarkData( byte mark );
+
+   /** Get a pointer to a cached property.
+      Will return zero if the pointer ID is out of range or if this object doesen't provide a
+      cache.
+      \param pos the property ID.
+      \return A pointer to the item that caches the given property or zero.
+   */
+   Item *cachedProperty( const String &name ) const
+   {
+      if( m_cache == 0 )
+         return 0;
+
+      register uint32 pos;
+      if ( ! m_generatedBy->properties().findKey( name, pos ) )
+         return 0;
+
+      return m_cache + pos;
+   }
+
+   /** Get a pointer to a cached item.
+      Will return zero if the pointer ID is out of range or if this object doesen't provide a
+      cache.
+      \param pos the property ID.
+      \return A pointer to the item that caches the given property or zero.
+   */
+   Item *cachedPropertyAt( uint32 pos ) const {
+      if ( m_cache == 0 || pos > m_generatedBy->properties().added() )
+         return 0;
+      return m_cache + pos;
+   }
+
+   /** Get the class that generated this object.
+      This is the phisical core object instance that generated this object.
+      The symbol in the returned class is the value returend by instanceOf().
+      \return the CoreClass that were used to generate this object.
+   */
+   const CoreClass *generator() const { return m_generatedBy; }
+
+   /** Small utility to cache string properties.
+      If the object has a cache and the data to be stored is a string coming from
+      an external source, then this method can be used to efficiently store a copy
+      of the external string in the cache.
+
+      The method creates a new GarbageString only if necessary.
+   */
+   void cacheStringProperty( const String& propName, const String &value );
 };
 
 }

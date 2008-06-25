@@ -62,35 +62,117 @@ namespace Falcon {
 
 namespace Ext {
 
-static void Stats_to_object( VMachine *vm, const FileStat &fstats, CoreObject *self )
+FileStatManager::InnerData::InnerData()
 {
-   self->setProperty( "size", fstats.m_size );
-   self->setProperty( "type", (int64) fstats.m_type );
-   self->setProperty( "owner", (int64) fstats.m_owner );
-   self->setProperty( "group", (int64) fstats.m_group );
-   self->setProperty( "attribs", (int64) fstats.m_attribs );
-   self->setProperty( "access", (int64) fstats.m_access );
+   // we'll fill them on request.
+   m_cache_mtime.setNil();
+   m_cache_atime.setNil();
+   m_cache_mtime.setNil();
+}
 
-   // create the timestamps
-   Item *ts_class = vm->findWKI( "TimeStamp" );
-   //if we wrote the std module, can't be zero.
-   fassert( ts_class != 0 );
-   CoreObject *timestamp= ts_class->asClass()->createInstance();
+FileStatManager::InnerData::InnerData( const InnerData &other ):
+   m_fsdata( other.m_fsdata )
+{
+   // we'll fill them on request.
+   m_cache_mtime.setNil();
+   m_cache_atime.setNil();
+   m_cache_mtime.setNil();
+}
 
-   fassert( timestamp != 0 ); // as it should be declared around here...
-   timestamp->setUserData( new TimeStamp );
-   static_cast<TimeStamp *>(timestamp->getUserData())->copy( *fstats.m_mtime );
-   self->setProperty( "mtime", timestamp );
+FileStatManager::InnerData::~InnerData()
+{
+}
 
-   timestamp= ts_class->asClass()->createInstance();
-   timestamp->setUserData( new TimeStamp );
-   static_cast<TimeStamp *>(timestamp->getUserData())->copy( *fstats.m_ctime );
-   self->setProperty( "ctime", timestamp );
+void *FileStatManager::onInit( VMachine *vm )
+{
+   return new InnerData;
+}
 
-   timestamp= ts_class->asClass()->createInstance();
-   timestamp->setUserData( new TimeStamp );
-   static_cast<TimeStamp *>(timestamp->getUserData())->copy( *fstats.m_atime );
-   self->setProperty( "atime", timestamp );
+void FileStatManager::onGarbageMark( VMachine *vm, void *data )
+{
+   InnerData *id = static_cast<InnerData *>(data);
+   vm->memPool()->markItemFast( id->m_cache_mtime );
+   vm->memPool()->markItemFast( id->m_cache_atime );
+   vm->memPool()->markItemFast( id->m_cache_ctime );
+}
+
+void FileStatManager::onDestroy( VMachine *vm, void *user_data )
+{
+   InnerData *id = static_cast<InnerData *>(user_data);
+   delete id;
+}
+
+
+void* FileStatManager::onClone( VMachine *vm, void *user_data )
+{
+   InnerData *id = static_cast<InnerData *>(user_data);
+   InnerData *clone = new InnerData( *id );
+
+   // don't clone the timestamps now; let them lazy
+   return clone;
+}
+
+
+void FileStats_type_rfrom(CoreObject *instance, void *user_data, Item &property )
+{
+   FileStatManager::InnerData *id = static_cast<FileStatManager::InnerData *>(user_data);
+   property = (int64) id->m_fsdata.m_type;
+}
+
+void FileStats_ctime_rfrom(CoreObject *instance, void *user_data, Item &property )
+{
+   FileStatManager::InnerData *id = static_cast<FileStatManager::InnerData *>(user_data);
+
+   // is read only
+   if ( id->m_cache_ctime.isNil() ) {
+      Item *ts_class = instance->origin()->findWKI( "TimeStamp" );
+      //if we wrote the std module, can't be zero.
+      fassert( ts_class != 0 );
+      id->m_cache_ctime = ts_class->asClass()->createInstance( new TimeStamp(*id->m_fsdata.m_ctime) );
+   }
+   else {
+      TimeStamp *ts = static_cast<TimeStamp *>( id->m_cache_ctime.asObject()->getUserData());
+      *ts = *id->m_fsdata.m_ctime;
+   }
+
+   property = id->m_cache_ctime;
+}
+
+void FileStats_mtime_rfrom(CoreObject *instance, void *user_data, Item &property )
+{
+   FileStatManager::InnerData *id = static_cast<FileStatManager::InnerData *>(user_data);
+
+   // is read only
+   if ( id->m_cache_mtime.isNil() ) {
+      Item *ts_class = instance->origin()->findWKI( "TimeStamp" );
+      //if we wrote the std module, can't be zero.
+      fassert( ts_class != 0 );
+      id->m_cache_mtime = ts_class->asClass()->createInstance( new TimeStamp(*id->m_fsdata.m_mtime) );
+   }
+   else {
+      TimeStamp *ts = static_cast<TimeStamp *>( id->m_cache_mtime.asObject()->getUserData());
+      *ts = *id->m_fsdata.m_mtime;
+   }
+
+   property = id->m_cache_mtime;
+}
+
+void FileStats_atime_rfrom(CoreObject *instance, void *user_data, Item &property )
+{
+   FileStatManager::InnerData *id = static_cast<FileStatManager::InnerData *>(user_data);
+   // is read only
+   if ( id->m_cache_atime.isNil() ) {
+      Item *ts_class = instance->origin()->findWKI( "TimeStamp" );
+      //if we wrote the std module, can't be zero.
+      fassert( ts_class != 0 );
+      id->m_cache_atime = ts_class->asClass()->createInstance( new TimeStamp(*id->m_fsdata.m_atime) );
+   }
+   else {
+      TimeStamp *ts = static_cast<TimeStamp *>( id->m_cache_atime.asObject()->getUserData());
+      *ts = *id->m_fsdata.m_atime;
+   }
+
+   property = id->m_cache_atime;
 }
 
 
@@ -120,9 +202,13 @@ FALCON_FUNC FileReadStats( ::Falcon::VMachine *vm )
    Item *fs_class = vm->findWKI( "FileStat" );
    //if we wrote the std module, can't be zero.
    fassert( fs_class != 0 );
-   FileStat fstats;
+
    CoreObject *self = fs_class->asClass()->createInstance();
-   if ( ! Sys::fal_stats( *name->asString(), fstats ) )
+
+   // CreateInstance will prepare our inner data.
+   FileStatManager::InnerData *id = static_cast<FileStatManager::InnerData *>( self->getUserData() );
+
+   if ( ! Sys::fal_stats( *name->asString(), id->m_fsdata ) )
    {
       String fname =  *name->asString();
       vm->raiseModError( new IoError( ErrorParam( 1001, __LINE__ ).
@@ -131,7 +217,6 @@ FALCON_FUNC FileReadStats( ::Falcon::VMachine *vm )
       return;
    }
 
-   Stats_to_object( vm, fstats, self );
    vm->retval( self );
 }
 
@@ -152,14 +237,14 @@ FALCON_FUNC FileReadStats( ::Falcon::VMachine *vm )
    @prop mtime Last modify time, expressed as a @a TimeStamp instance.
    @prop owner Owner ID of the given file.
    @prop size File size.
-   @prop type File type; can be one of the following:
-      - FILE_TYPE_NORMAL
-      - FILE_TYPE_DIR
-      - FILE_TYPE_PIPE
-      - FILE_TYPE_LINK
-      - FILE_TYPE_DEVICE
-      - FILE_TYPE_SOCKET
-      - FILE_TYPE_UNKNOWN
+   @prop ftype File type; can be one of the following constants (declared in this class):
+      - NORMAL
+      - DIR
+      - PIPE
+      - LINK
+      - DEVICE
+      - SOCKET
+      - UNKNOWN
 
    Both access and attribs properties are given a value respectively only on
    POSIX or MS-Windows systems; their value is the underlying numeric
@@ -194,15 +279,8 @@ FALCON_FUNC FileStat_readStats ( ::Falcon::VMachine *vm )
 
    FileStat fstats;
    CoreObject *self = vm->self().asObject();
-   if ( ! Sys::fal_stats( *name->asString(), fstats ) )
-   {
-      vm->regA().setBoolean( false );
-   }
-   else
-   {
-      Stats_to_object( vm, fstats, self );
-      vm->regA().setBoolean( true );
-   }
+   FileStatManager::InnerData *id = static_cast<FileStatManager::InnerData *>( self->getUserData() );
+   vm->regA().setBoolean( Sys::fal_stats( *name->asString(), id->m_fsdata ) );
 }
 
 /*#
@@ -1025,124 +1103,178 @@ FALCON_FUNC  fileChgroup ( ::Falcon::VMachine *vm )
    This is the complete path referred by this object.
 */
 
-class PathCarrier: public UserData
+void* PathManager::onInit( VMachine *vm )
 {
-public:
-   Path m_path;
-   String m_unit;
-   String m_location;
-   String m_file;
-   String m_ext;
-   String m_filename;
+   return 0;
+}
 
-   PathCarrier() {}
-
-   PathCarrier( const PathCarrier &other ):
-      m_path( other.m_path )
-      {}
-
-   virtual void getProperty( VMachine *vm, const String &propName, Item &prop );
-   virtual void setProperty( VMachine *vm, const String &propName, Item &prop );
-   virtual bool isReflective() const;
-   virtual UserData *clone() const;
-};
-
-bool PathCarrier::isReflective() const
+void  PathManager::onDestroy( VMachine *vm, void *user_data )
 {
+   delete static_cast<Path* >( user_data );
+}
+
+void* PathManager::onClone( VMachine *vm, void *user_data )
+{
+   return new Path( *static_cast<Path* >( user_data ) );
+}
+
+bool PathManager::onObjectReflectTo( CoreObject *reflector, void *user_data )
+{
+   Path &path = *static_cast<Path *>( user_data );
+
+   Item *property = reflector->cachedProperty( "unit" );
+   if ( ! property->isString() )
+      goto complain;
+
+   path.setResource( *property->asString() );
+
+   property = reflector->cachedProperty( "location" );
+   if ( ! property->isString() )
+      goto complain;
+
+   path.setLocation( *property->asString() );
+
+   property = reflector->cachedProperty( "file" );
+   if ( ! property->isString() )
+      goto complain;
+
+   path.setFile( *property->asString() );
+
+   property = reflector->cachedProperty( "extension" );
+   if ( ! property->isString() )
+      goto complain;
+
+   path.setExtension( *property->asString() );
+
+   if ( ! path.isValid() )
+   {
+      reflector->origin()->raiseModError( new ParamError( ErrorParam( e_inv_params ).
+         origin( e_orig_runtime ).
+         extra( reflector->origin()->moduleString( rtl_invalid_path ) ) ) );
+   }
+
+   return true;
+
+complain:
+   reflector->origin()->raiseModError( new ParamError( ErrorParam( e_inv_params ).
+      origin( e_orig_runtime ).extra( "S" ) ) );
    return true;
 }
 
-UserData *PathCarrier::clone() const
+bool PathManager::onObjectReflectFrom( CoreObject *reflector, void *user_data )
 {
-   return new PathCarrier( *this );
+   Path &path = *static_cast<Path *>( user_data );
+
+   reflector->cacheStringProperty( "unit", path.getResource() );
+   reflector->cacheStringProperty( "location", path.getLocation() );
+   reflector->cacheStringProperty( "file", path.getFile() );
+   reflector->cacheStringProperty( "extension", path.getExtension() );
+   reflector->cacheStringProperty( "filename", path.getFilename() );
+
+   // TODO: reflect URI
+   return true;
 }
 
-void PathCarrier::setProperty( VMachine *vm, const String &propName, Item &prop )
+// Reflective URI method
+void Path_path_rfrom(CoreObject *instance, void *user_data, Item &property )
 {
-   if( ! prop.isString() )
-   {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params ).
-         origin( e_orig_runtime ).extra( "S" ) ) );
-      return;
-   }
+   Path &path = *static_cast<Path *>( user_data );
 
-   if ( propName == "unit" )
-   {
-      m_path.setResource( *prop.asString() );
-   }
-   else if ( propName == "location" )
-   {
-      m_path.setLocation( *prop.asString() );
-   }
-   else if ( propName == "file" )
-   {
-      m_path.setFile( *prop.asString() );
-   }
-   else if ( propName == "filename" )
-   {
-      m_path.setFilename( *prop.asString() );
-   }
-   else if ( propName == "extension" )
-   {
-      m_path.setExtension( *prop.asString() );
-   }
-   else if ( propName == "path" )
-   {
-      m_path.set( *prop.asString() );
-   }
+   instance->reflectTo( user_data );
 
-   if ( ! m_path.isValid() )
+   if ( ! path.isValid() )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params ).
+      instance->origin()->raiseModError( new ParamError( ErrorParam( e_inv_params ).
          origin( e_orig_runtime ).
-         extra( vm->moduleString( rtl_invalid_path ) ) ) );
+         extra( instance->origin()->moduleString( rtl_invalid_path ) ) ) );
    }
+
+   // And now set the property
+   if ( property.isString() )
+      property.asString()->bufferize( path.get() );
+   else
+      property = new GarbageString( instance->origin(), path.get() );
 }
 
-
-void PathCarrier::getProperty( VMachine *vm, const String &propName, Item &prop )
+void Path_path_rto(CoreObject *instance, void *user_data, Item &property )
 {
-   if ( ! m_path.isValid() )
+   Path &path = *static_cast<Path *>( user_data );
+
+   // We're setting the URI, that is, the property has been written.
+   FALCON_REFLECT_STRING_TO( (&path), set );
+   instance->reflectFrom( user_data );
+
+   if ( ! path.isValid() )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params ).
+      instance->origin()->raiseModError( new ParamError( ErrorParam( e_inv_params ).
          origin( e_orig_runtime ).
-         extra( vm->moduleString( rtl_invalid_path ) ) ) );
+         extra( instance->origin()->moduleString( rtl_invalid_path ) ) ) );
    }
-
-   String *item;
-   if ( propName == "unit" )
-   {
-      m_path.getResource( m_unit );
-      item = &m_unit;
-   }
-   else if ( propName == "location" )
-   {
-      m_path.getLocation( m_location );
-      item = &m_location;
-   }
-   else if ( propName == "file" )
-   {
-      m_path.getFile( m_file );
-      item = &m_file;
-   }
-   else if ( propName == "filename" )
-   {
-      m_path.getFilename( m_filename );
-      item = &m_filename;
-   }
-   else if ( propName == "extension" )
-   {
-      m_path.getExtension( m_ext );
-      item = &m_ext;
-   }
-   else if ( propName == "path" )
-   {
-      item = const_cast<String *>( &m_path.get() );
-   }
-
-   prop = item;
 }
 
+// Reflective URI method
+void Path_filename_rfrom(CoreObject *instance, void *user_data, Item &property )
+{
+   Path &path = *static_cast<Path *>( user_data );
+   FALCON_REFLECT_STRING_FROM( (&path), getFilename );
+}
+
+void Path_filename_rto(CoreObject *instance, void *user_data, Item &property )
+{
+   Path &path = *static_cast<Path *>( user_data );
+
+   // We're setting the path, that is, the property has been written.
+   FALCON_REFLECT_STRING_TO( (&path), setFilename );
+
+   if ( ! path.isValid() )
+   {
+      instance->origin()->raiseModError( new ParamError( ErrorParam( e_inv_params ).
+         origin( e_orig_runtime ).
+         extra( instance->origin()->moduleString( rtl_invalid_path ) ) ) );
+   }
+}
+
+// Reflective path method
+void Path_file_rfrom(CoreObject *instance, void *user_data, Item &property )
+{
+   Path &path = *static_cast<Path *>( user_data );
+   FALCON_REFLECT_STRING_FROM( (&path), getFile );
+}
+
+void Path_file_rto(CoreObject *instance, void *user_data, Item &property )
+{
+   Path &path = *static_cast<Path *>( user_data );
+   // We're setting the path, that is, the property has been written.
+   FALCON_REFLECT_STRING_TO( (&path), setFile );
+
+   if ( ! path.isValid() )
+   {
+      instance->origin()->raiseModError( new ParamError( ErrorParam( e_inv_params ).
+         origin( e_orig_runtime ).
+         extra( instance->origin()->moduleString( rtl_invalid_path ) ) ) );
+   }
+}
+
+// Reflective path method
+void Path_extension_rfrom(CoreObject *instance, void *user_data, Item &property )
+{
+   Path &path = *static_cast<Path *>( user_data );
+   FALCON_REFLECT_STRING_FROM( (&path), getExtension );
+}
+
+void Path_extension_rto(CoreObject *instance, void *user_data, Item &property )
+{
+   Path &path = *static_cast<Path *>( user_data );
+   // We're setting the path, that is, the property has been written.
+   FALCON_REFLECT_STRING_TO( (&path), setExtension );
+
+   if ( ! path.isValid() )
+   {
+      instance->origin()->raiseModError( new ParamError( ErrorParam( e_inv_params ).
+         origin( e_orig_runtime ).
+         extra( instance->origin()->moduleString( rtl_invalid_path ) ) ) );
+   }
+}
 
 /*#
    @init Path
@@ -1174,6 +1306,10 @@ void PathCarrier::getProperty( VMachine *vm, const String &propName, Item &prop 
 FALCON_FUNC  Path_init ( ::Falcon::VMachine *vm )
 {
    Item *p0 = vm->param(0);
+   // we need anyhow a carrier.
+   CoreObject *self = vm->self().asObject();
+   Path *path = new Path;
+   self->setUserData( path );
 
    if ( p0 == 0 || ( ! p0->isString() && ! p0->isArray() ) )
    {
@@ -1182,14 +1318,9 @@ FALCON_FUNC  Path_init ( ::Falcon::VMachine *vm )
       return;
    }
 
-   // we need anyhow a carrier.
-   PathCarrier *carrier = new PathCarrier;
-   CoreObject *self = vm->self().asObject();
-   self->setUserData( carrier );
-
    if ( p0->isString() )
    {
-      carrier->m_path.set( *p0->asString() );
+      path->set( *p0->asString() );
    }
    else {
       const String *unitspec = 0;
@@ -1220,16 +1351,17 @@ FALCON_FUNC  Path_init ( ::Falcon::VMachine *vm )
       else
          fext = &sDummy;
 
-      carrier->m_path.join( *unitspec, *fpath, *fname, *fext );
+      path->join( *unitspec, *fpath, *fname, *fext );
    }
 
-   if ( ! carrier->m_path.isValid() )
+   self->reflectFrom( path );
+
+   if ( ! path->isValid() )
    {
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
          origin( e_orig_runtime ).
          extra( vm->moduleString( rtl_invalid_path ) ) ) );
    }
-
 }
 
 }

@@ -58,6 +58,8 @@ public:
    virtual bool erase();
    virtual bool insert( const Item &item );
 
+   virtual FalconData *clone() const;
+
    friend class PageDict;
 };
 

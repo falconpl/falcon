@@ -1,0 +1,51 @@
+/****************************************************************************
+* Falcon test suite
+*
+*
+* ID: 117b
+* Category: rtl
+* Subcategory: Path
+* Short: Test for path parsing.
+* Description:
+*   This test checks the functionalities of path class.
+* [/Description]
+*
+****************************************************************************/
+
+path = Path( ["C:", "/path/to/", "myfile", "ext"]  )
+
+if path.path != "/C:/path/to/myfile.ext": failure( "Initial setup" )
+
+if path.unit != "C": failure( "Initial unit" )
+if path.location != "/path/to": failure( "Location" )
+if path.file != "myfile": failure( "Initial file" )
+if path.extension != "ext": failure( "Initial extension" )
+if path.filename != "myfile.ext": failure( "Initial filename" )
+
+// Change the whole path
+path.path = "C1:/path/to1/myfile1.ext1"
+
+if path.unit != "C1": failure( "Chagned unit" )
+if path.location != "/path/to1": failure( "Chagned Location" )
+if path.file != "myfile1": failure( "Chagned file" )
+if path.extension != "ext1": failure( "Chagned extension" )
+if path.filename != "myfile1.ext1": failure( "Chagned filename" )
+
+path.path = "C:/path/to/myfile.ext"
+
+path.unit = ""
+if path.path != "/path/to/myfile.ext": failure( "Nilled unit" )
+
+path.location = ""
+if path.path != "myfile.ext": failure( "Nilled location" )
+
+path.extension = ""
+if path.path != "myfile": failure( "Nilled extension" )
+
+path.filename = "Test.txt"
+if path.file != "Test": failure( "Filename into file" )
+if path.extension != "txt": failure( "Filename into extension" )
+
+success()
+
+/* end of uritest.fal */

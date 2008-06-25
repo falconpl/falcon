@@ -15,6 +15,7 @@
 
 
 #include <falcon/module.h>
+#include <falcon/falcondata.h>
 #include <falcon/runtime.h>
 #include <falcon/item.h>
 #include <falcon/types.h>
@@ -133,7 +134,7 @@
    decide what to do, the two arrays [func0, ...] and [func1,...] would have been evaluated.
    As iff is a special construct, the VM doesn't evaluate its parameters and lets iff perform
    its operations as it prefer. In the case o iff, it first evaluates the first parameter,
-   then evaluates in functional context the second on the third parameter, 
+   then evaluates in functional context the second on the third parameter,
    leaving unevaluated the other one.
 
    Not all constructs evaluates everything it is passed to them in a functional context. Some of
@@ -152,7 +153,7 @@
 
    This places in result the value returned by func0 if shouldEval is true, while it returns exactly
    the function object func0 as-is if shouldEval is false.
-   
+
    A more formal definition of the funcional programming support  in Falcon is provided in the
    Survival Guide.
 */
@@ -476,10 +477,10 @@ FALCON_FUNC  Error_init ( ::Falcon::VMachine *vm )
    Falcon::Error *err;
    if( einst->getUserData() == 0 )
    {
-      err = new GenericError;
+      err = new Falcon::GenericError;
    }
    else {
-      err = reinterpret_cast<ErrorCarrier *>(einst->getUserData())->error();
+      err = reinterpret_cast<Falcon::Error *>(einst->getUserData());
    }
 
    // declare that the script has created it
@@ -499,7 +500,7 @@ FALCON_FUNC  Error_init ( ::Falcon::VMachine *vm )
    if ( param != 0 && param->isString() )
       err->extraDescription( *param->asString() );
 
-   einst->setUserData( new ErrorCarrier( err ) );
+   einst->setUserData( err );
 
    vm->retval( einst );
 }
@@ -518,8 +519,7 @@ FALCON_FUNC  Error_init ( ::Falcon::VMachine *vm )
 FALCON_FUNC  Error_toString ( ::Falcon::VMachine *vm )
 {
    CoreObject *einst = vm->self().asObject();
-   Falcon::ErrorCarrier *car = (Falcon::ErrorCarrier *) einst->getUserData();
-   Falcon::Error *err = car->error();
+   Falcon::Error *err = static_cast<Falcon::Error *>( einst->getUserData() );
 
    if ( err != 0 )
    {
@@ -544,8 +544,7 @@ FALCON_FUNC  Error_toString ( ::Falcon::VMachine *vm )
 FALCON_FUNC  Error_heading ( ::Falcon::VMachine *vm )
 {
    CoreObject *einst = vm->self().asObject();
-   Falcon::ErrorCarrier *car = (Falcon::ErrorCarrier *) einst->getUserData();
-   Falcon::Error *err = car->error();
+   Falcon::Error *err = static_cast<Falcon::Error *>(einst->getUserData());
 
    if ( err != 0 )
    {
@@ -571,8 +570,7 @@ FALCON_FUNC  Error_heading ( ::Falcon::VMachine *vm )
 FALCON_FUNC  Error_getSysErrDesc ( ::Falcon::VMachine *vm )
 {
    CoreObject *einst = vm->self().asObject();
-   Falcon::ErrorCarrier *car = (Falcon::ErrorCarrier *) einst->getUserData();
-   Falcon::Error *err = car->error();
+   Falcon::Error *err = static_cast<Falcon::Error *>(einst->getUserData());
 
    if ( err != 0 )
    {
@@ -606,7 +604,7 @@ FALCON_FUNC  SyntaxError_init ( ::Falcon::VMachine *vm )
 {
    CoreObject *einst = vm->self().asObject();
    if( einst->getUserData() == 0 )
-      einst->setUserData( new Falcon::ErrorCarrier( new Falcon::SyntaxError ) );
+      einst->setUserData( new Falcon::SyntaxError );
 
    Error_init( vm );
 }
@@ -630,7 +628,7 @@ FALCON_FUNC  CodeError_init ( ::Falcon::VMachine *vm )
 {
    CoreObject *einst = vm->self().asObject();
    if( einst->getUserData() == 0 )
-      einst->setUserData( new Falcon::ErrorCarrier( new Falcon::CodeError ) );
+      einst->setUserData( new Falcon::CodeError );
 
    Error_init( vm );
 }
@@ -654,7 +652,7 @@ FALCON_FUNC  IoError_init ( ::Falcon::VMachine *vm )
 {
    CoreObject *einst = vm->self().asObject();
    if( einst->getUserData() == 0 )
-      einst->setUserData( new Falcon::ErrorCarrier( new Falcon::IoError ) );
+      einst->setUserData( new Falcon::IoError );
 
    Error_init( vm );
 }
@@ -677,7 +675,7 @@ FALCON_FUNC  TypeError_init ( ::Falcon::VMachine *vm )
 {
    CoreObject *einst = vm->self().asObject();
    if( einst->getUserData() == 0 )
-      einst->setUserData( new Falcon::ErrorCarrier( new Falcon::TypeError ) );
+      einst->setUserData( new Falcon::TypeError );
 
    Error_init( vm );
 }
@@ -704,7 +702,7 @@ FALCON_FUNC  AccessError_init ( ::Falcon::VMachine *vm )
 {
    CoreObject *einst = vm->self().asObject();
    if( einst->getUserData() == 0 )
-      einst->setUserData( new Falcon::ErrorCarrier( new Falcon::AccessError ) );
+      einst->setUserData( new Falcon::AccessError );
 
    Error_init( vm );
 }
@@ -728,7 +726,7 @@ FALCON_FUNC  MathError_init ( ::Falcon::VMachine *vm )
 {
    CoreObject *einst = vm->self().asObject();
    if( einst->getUserData() == 0 )
-      einst->setUserData( new Falcon::ErrorCarrier( new Falcon::MathError ) );
+      einst->setUserData( new Falcon::MathError );
 
    Error_init( vm );
 }
@@ -756,7 +754,7 @@ FALCON_FUNC  ParamError_init ( ::Falcon::VMachine *vm )
 {
    CoreObject *einst = vm->self().asObject();
    if( einst->getUserData() == 0 )
-      einst->setUserData( new Falcon::ErrorCarrier( new Falcon::ParamError ) );
+      einst->setUserData( new Falcon::ParamError );
 
    Error_init( vm );
 }
@@ -786,7 +784,7 @@ FALCON_FUNC  ParseError_init ( ::Falcon::VMachine *vm )
 {
    CoreObject *einst = vm->self().asObject();
    if( einst->getUserData() == 0 )
-      einst->setUserData( new Falcon::ErrorCarrier( new Falcon::ParseError ) );
+      einst->setUserData( new Falcon::ParseError );
 
    Error_init( vm );
 }
@@ -817,7 +815,7 @@ FALCON_FUNC  CloneError_init ( ::Falcon::VMachine *vm )
 {
    CoreObject *einst = vm->self().asObject();
    if( einst->getUserData() == 0 )
-      einst->setUserData( new Falcon::ErrorCarrier( new Falcon::CloneError ) );
+      einst->setUserData( new Falcon::CloneError);
 
    Error_init( vm );
 }
@@ -841,7 +839,7 @@ FALCON_FUNC  IntrruptedError_init ( ::Falcon::VMachine *vm )
 {
    CoreObject *einst = vm->self().asObject();
    if( einst->getUserData() == 0 )
-      einst->setUserData( new Falcon::ErrorCarrier( new Falcon::InterruptedError ) );
+      einst->setUserData( new Falcon::InterruptedError );
 
    Error_init( vm );
 }
@@ -2469,10 +2467,11 @@ FALCON_FUNC  Iterator_init( ::Falcon::VMachine *vm )
       {
          // Objects can have iterators if they have sequence extensions.
          CoreObject *obj = collection->asObject();
-         UserData *ud = obj->getUserData();
-         if ( ud != 0 && ud->isSequence() )
+
+         if ( obj->isSequence() )
          {
-            Sequence *seq = static_cast<Sequence *>( ud );
+            Sequence *seq = static_cast<Sequence *>( obj->getUserData() );
+
             self->setProperty( "_origin", *collection );
             CoreIterator *iter = seq->getIterator( p != 0 );
             self->setUserData( iter );
@@ -2507,24 +2506,27 @@ FALCON_FUNC  Iterator_hasCurrent( ::Falcon::VMachine *vm )
    {
       case FLC_ITEM_STRING:
       {
-         Item * pos = self->getProperty( "_pos" );
-         int64 p = pos->forceInteger();
+         Item pos;
+         self->getProperty( "_pos", pos );
+         int64 p = pos.forceInteger();
          vm->retval( p >= 0 && ( p < porigin->asString()->length() ) );
       }
       break;
 
       case FLC_ITEM_MEMBUF:
       {
-         Item * pos = self->getProperty( "_pos" );
-         int64 p = pos->forceInteger();
+         Item pos;
+         self->getProperty( "_pos", pos );
+         int64 p = pos.forceInteger();
          vm->retval( p >= 0 && ( p < porigin->asMemBuf()->length() ) );
       }
       break;
 
       case FLC_ITEM_ARRAY:
       {
-         Item * pos = self->getProperty( "_pos" );
-         int64 p = pos->forceInteger();
+         Item pos;
+         self->getProperty( "_pos", pos );
+         int64 p = pos.forceInteger();
          vm->retval( p >= 0 && ( p < porigin->asArray()->length() ) );
       }
       break;
@@ -2555,24 +2557,27 @@ FALCON_FUNC  Iterator_hasNext( ::Falcon::VMachine *vm )
    {
       case FLC_ITEM_STRING:
       {
-         Item *pos = self->getProperty( "_pos" );
-         int64 p = pos->forceInteger();
+         Item pos;
+         self->getProperty( "_pos", pos );
+         int64 p = pos.forceInteger();
          vm->retval( p >= 0 && (p + 1 < porigin->asString()->length() ) );
       }
       break;
 
       case FLC_ITEM_MEMBUF:
       {
-         Item *pos = self->getProperty( "_pos" );
-         int64 p = pos->forceInteger();
+         Item pos;
+         self->getProperty( "_pos", pos );
+         int64 p = pos.forceInteger();
          vm->retval( p >= 0 && (p + 1 < porigin->asMemBuf()->length() ) );
       }
       break;
 
       case FLC_ITEM_ARRAY:
       {
-         Item *pos = self->getProperty( "_pos" );
-         int64 p = pos->forceInteger();
+         Item pos;
+         self->getProperty( "_pos", pos );
+         int64 p = pos.forceInteger();
          vm->retval( p >= 0 && (p + 1 < porigin->asArray()->length() ) );
       }
       break;
@@ -2639,13 +2644,14 @@ FALCON_FUNC  Iterator_next( ::Falcon::VMachine *vm )
    {
       case FLC_ITEM_STRING:
       {
-         Item * pos = self->getProperty( "_pos" );
-         uint32 p = (uint32) pos->forceInteger();
+         Item pos;
+         self->getProperty( "_pos", pos );
+         uint32 p = (uint32) pos.forceInteger();
          if ( p < porigin->asString()->length() )
          {
             p++;
             vm->retval( p != porigin->asString()->length() );
-            pos->setInteger( p );
+            self->setProperty( "_pos", (int64) p );
          }
          else
             vm->retval( false );
@@ -2654,13 +2660,14 @@ FALCON_FUNC  Iterator_next( ::Falcon::VMachine *vm )
 
       case FLC_ITEM_MEMBUF:
       {
-         Item * pos = self->getProperty( "_pos" );
-         uint32 p = (uint32) pos->forceInteger();
+         Item pos;
+         self->getProperty( "_pos", pos );
+         uint32 p = (uint32) pos.forceInteger();
          if ( p < porigin->asMemBuf()->length() )
          {
             p++;
             vm->retval( p != porigin->asMemBuf()->length() );
-            pos->setInteger( p );
+            self->setProperty( "_pos", (int64) p );
          }
          else
             vm->retval( false );
@@ -2669,13 +2676,14 @@ FALCON_FUNC  Iterator_next( ::Falcon::VMachine *vm )
 
       case FLC_ITEM_ARRAY:
       {
-         Item * pos = self->getProperty( "_pos" );
-         uint32 p = (uint32) pos->forceInteger();
+         Item pos;
+         self->getProperty( "_pos", pos );
+         uint32 p = (uint32) pos.forceInteger();
          if ( p < porigin->asArray()->length() )
          {
             p++;
             vm->retval( p != porigin->asArray()->length() );
-            pos->setInteger( p );
+            self->setProperty( "_pos", (int64) p );
          }
          else
             vm->retval( false );
@@ -2714,11 +2722,12 @@ FALCON_FUNC  Iterator_prev( ::Falcon::VMachine *vm )
       case FLC_ITEM_MEMBUF:
       case FLC_ITEM_ARRAY:
       {
-         Item *pos = self->getProperty( "_pos" );
-         int64 p = pos->forceInteger();
+         Item pos;
+         self->getProperty( "_pos", pos );
+         int64 p = pos.forceInteger();
          if ( p >= 0 )
          {
-            pos->setInteger( p - 1 );
+            self->setProperty( "_pos", p - 1 );
             vm->retval( p != 0 );
          }
          else
@@ -2980,7 +2989,7 @@ FALCON_FUNC  Iterator_clone( ::Falcon::VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
    CoreIterator *iter = (CoreIterator *) self->getUserData();
-   UserData *iclone;
+   CoreIterator *iclone;
 
    // create an instance
    Item *i_cls = vm->findWKI( "Iterator" );
@@ -2989,7 +2998,7 @@ FALCON_FUNC  Iterator_clone( ::Falcon::VMachine *vm )
 
    // copy low level iterator, if we have one
    if ( iter != 0 ) {
-      iclone = iter->clone();
+      iclone = static_cast<CoreIterator *>(iter->clone());
       if ( iclone == 0 )
       {
          // uncloneable iterator
@@ -3398,8 +3407,8 @@ static bool core_any_next( ::Falcon::VMachine *vm )
    Truth value is determined using the standard Falcon truth
    check (nil is false, numerics are true if not zero, strings and collections are true if not
    empty, object and classes are always true).
-   
-   The check is short circuited. This means that elements are evaluated until 
+
+   The check is short circuited. This means that elements are evaluated until
    an element considered to be true (or sigma-reduced to a true value) is found.
 
    If the collection is empty, this function returns false.
@@ -3486,9 +3495,9 @@ static bool core_all_next( ::Falcon::VMachine *vm )
    check (nil is false, numerics are true if not zero, strings and collections are true if not
    empty, object and classes are always true).
 
-   The check is short circuited. This means that the processing of parameters 
+   The check is short circuited. This means that the processing of parameters
    is interrupted as an element is evaluated into false.
-   
+
    If the collection is empty, this function returns false.
 */
 
@@ -3571,7 +3580,7 @@ static bool core_anyp_next( ::Falcon::VMachine *vm )
    @brief Returns true if any one of the parameters evaluate to true.
    @param ... A list of arbitrary items.
    @return true at least one parameter is true, false otherwise.
-   
+
    This function works like @a any, but the sequence may be specified directly
    in the parameters rather being given in a separate array. This make easier to write
    anyp in callable arrays. In example, one may write
@@ -3581,8 +3590,8 @@ static bool core_anyp_next( ::Falcon::VMachine *vm )
    while using any one should write
    @code
       [any, [1, k, n ...]]
-   @endcode   
-   
+   @endcode
+
    Parameters are evaluated in functional context. This means that,
    if they are sigmas, they get sigma-reduced and their return value is evaluated,
    otheriwise they are evaluated directly.
@@ -3668,7 +3677,7 @@ static bool core_allp_next( ::Falcon::VMachine *vm )
    @code
       [all, [1, k, n ...]]
    @endcode
-   
+
    Parameters are evaluated in functional context. This means that,
    if they are sigmas, they get sigma-reduced and their return value is evaluated,
    otheriwise they are evaluated directly.
@@ -3676,7 +3685,7 @@ static bool core_allp_next( ::Falcon::VMachine *vm )
    Truth value is determined using the standard Falcon truth
    check (nil is false, numerics are true if not zero, strings and collections are true if not
    empty, object and classes are always true).
-   
+
    If called without parameters, this function returns false.
 */
 FALCON_FUNC  core_allp ( ::Falcon::VMachine *vm )
@@ -4298,7 +4307,7 @@ static bool core_xmap_next( ::Falcon::VMachine *vm )
 
     In example:
    @code
-      
+
       mapper = lambda item => (item < 0 ? oob(nil) : item ** 0.5)
       add = lambda a, b => a+b         // a lambda that will be evaluated
 
@@ -4569,7 +4578,7 @@ static bool core_iff_next( ::Falcon::VMachine *vm )
    @code
       iff( 1 , printl( "ok!" ), printl( "no" ) )
    @endcode
-   
+
    This would have forced Falcon to execute the two printl calls before entering the iff function;
    still, iff would have returned printl return values (which is nil in both cases).
 */
@@ -4857,7 +4866,7 @@ static bool core_cascade_next ( ::Falcon::VMachine *vm )
 
    Here, the first function in the list intercepts the parameters but, as it doesn't
    accepts them, they are both passed to the second in the list.
-   
+
    @see oob
 */
 FALCON_FUNC  core_cascade ( ::Falcon::VMachine *vm )
@@ -5237,7 +5246,7 @@ FALCON_FUNC  having( ::Falcon::VMachine *vm )
    If the target object had already the attribute, nothing is done.
    If the first parameter is not an attribute or the second parameter is not an
    object, a ParamError is rasied.
-   
+
    @see dolist
 */
 FALCON_FUNC  giveTo( ::Falcon::VMachine *vm )
@@ -5523,6 +5532,8 @@ FALCON_FUNC  broadcast( ::Falcon::VMachine *vm )
 
 } // end of core namespace
 
+// we won't let the error manager to get out.
+static ErrorManager core_error_manager;
 
 /****************************************
    Module initializer
@@ -5623,9 +5634,10 @@ Module * core_module_init()
    core->addClassMethod( ts_class, "toString",
       core->addExtFunc( "TraceStep.toString", Falcon::core::TraceStep_toString ) );*/
 
-   // Creating the Error class class:
+   // Creating the Error class class
    Symbol *error_init = core->addExtFunc( "Error._init", Falcon::core::Error_init );
    Symbol *error_class = core->addClass( "Error", error_init );
+   error_class->getClassDef()->setObjectManager( &core_error_manager );
    error_class->setWKS( true );
 
    core->addClassMethod( error_class, "toString",
@@ -5637,11 +5649,14 @@ Module * core_module_init()
       @property code Error
       @brief Error code associated with this error.
    */
-
-   core->addClassProperty( error_class, "code" );
-   core->addClassProperty( error_class, "description" );
-   core->addClassProperty( error_class, "message" );
-   core->addClassProperty( error_class, "systemError" );
+   core->addClassProperty( error_class, "code" ).
+      setReflectFunc( Falcon::core::Error_code_rfrom, Falcon::core::Error_code_rto );
+   core->addClassProperty( error_class, "description" ).
+      setReflectFunc( Falcon::core::Error_description_rfrom, Falcon::core::Error_description_rto );
+   core->addClassProperty( error_class, "message" ).
+      setReflectFunc( Falcon::core::Error_message_rfrom, Falcon::core::Error_message_rto );
+   core->addClassProperty( error_class, "systemError" ).
+      setReflectFunc( Falcon::core::Error_systemError_rfrom, Falcon::core::Error_systemError_rto );
 
    /*#
        @property origin Error
@@ -5665,11 +5680,16 @@ Module * core_module_init()
       -
    */
 
-   core->addClassProperty( error_class, "origin" );
-   core->addClassProperty( error_class, "module" );
-   core->addClassProperty( error_class, "symbol" );
-   core->addClassProperty( error_class, "line" );
-   core->addClassProperty( error_class, "pc" );
+   core->addClassProperty( error_class, "origin" ).
+         setReflectFunc( Falcon::core::Error_origin_rfrom, Falcon::core::Error_origin_rto );
+   core->addClassProperty( error_class, "module" ).
+         setReflectFunc( Falcon::core::Error_module_rfrom, Falcon::core::Error_module_rto );
+   core->addClassProperty( error_class, "symbol" ).
+         setReflectFunc( Falcon::core::Error_symbol_rfrom, Falcon::core::Error_symbol_rto );
+   core->addClassProperty( error_class, "line" ).
+         setReflectFunc( Falcon::core::Error_line_rfrom, Falcon::core::Error_line_rto );
+   core->addClassProperty( error_class, "pc" ).
+         setReflectFunc( Falcon::core::Error_pc_rfrom, Falcon::core::Error_pc_rto );
    core->addClassProperty( error_class, "subErrors" );
    core->addClassMethod( error_class, "getSysErrorDesc", Falcon::core::Error_getSysErrDesc );
 
@@ -5718,6 +5738,7 @@ Module * core_module_init()
    // Creating the semaphore class
    Symbol *semaphore_init = core->addExtFunc( "Semaphore._init", Falcon::core::Semaphore_init );
    Symbol *semaphore_class = core->addClass( "Semaphore", semaphore_init );
+   semaphore_class->getClassDef()->setObjectManager( &core_falcon_data_manager );
 
    core->addClassMethod( semaphore_class, "post",
             core->addExtFunc( "Semaphore.post", Falcon::core::Semaphore_post ) );
@@ -5739,6 +5760,7 @@ Module * core_module_init()
 
    // Format
    Symbol *format_class = core->addClass( "Format", Falcon::core::Format_init );
+   format_class->getClassDef()->setObjectManager( &core_falcon_data_manager );
    core->addClassMethod( format_class, "format", Falcon::core::Format_format );
    core->addClassMethod( format_class, "parse", Falcon::core::Format_parse );
    core->addClassMethod( format_class, "toString", Falcon::core::Format_toString );
@@ -5760,6 +5782,7 @@ Module * core_module_init()
    // Iterators
    Symbol *iterator_class = core->addClass( "Iterator", Falcon::core::Iterator_init );
    iterator_class->setWKS( true );
+   iterator_class->getClassDef()->setObjectManager( &core_falcon_data_manager );
    core->addClassMethod( iterator_class, "hasCurrent", Falcon::core::Iterator_hasCurrent );
    core->addClassMethod( iterator_class, "hasNext", Falcon::core::Iterator_hasNext );
    core->addClassMethod( iterator_class, "hasPrev", Falcon::core::Iterator_hasPrev );

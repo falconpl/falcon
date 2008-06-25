@@ -1,152 +1,96 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: userdata.h
+   FILE: UserData.h
 
-   Embeddable falcon object user data.
+   Falcon user simplified reflection architecture.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
-   Begin: sab giu 23 2007
+   Begin: Sun, 22 Jun 2008 11:09:16 +0200
 
    -------------------------------------------------------------------
-   (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
+   (C) Copyright 2008: the FALCON developers (see list in AUTHORS file)
 
    See LICENSE file for licensing details.
 */
 
 /** \file
-   Embeddable falcon object user data.
+   Falcon user simplified reflection architecture.
 */
 
-#ifndef flc_userdata_H
-#define flc_userdata_H
+#ifndef FALCON_USER_DATA_H
+#define FALCON_USER_DATA_H
 
 #include <falcon/setup.h>
-#include <falcon/types.h>
-#include <falcon/basealloc.h>
+#include <falcon/memory.h>
+#include <falcon/falcondata.h>
 
 namespace Falcon {
 
-class Item;
-class String;
-class MemPool;
-class VMachine;
+/** Common falcon inner object data infrastructure for simple reflective applications.
 
-/** Embeddable falcon object user data.
-   An instance of this class can be set as "user data" of Falcon scripts objects.
+   This simplified reflection scheme allows to declare two methods in the data
+   carried by falcon objects which perform reflection from and to the final
+   object.
 
-   This class defines minimal a interface that is used by Falcon objects to
-   automatically synchronize the status of the objects and the status of UserData
-   instances.
+   UserData can be used both to carry directly needed data or to provide a "shell"
+   managed by falcon to carry around data that is reflected through their interface.
 
-   Most of the times, this relflection is not needed: when the Falcon objects are mainly
-   manipulated by scripts, the application will just read the values in the properties,
-   and set them properly to update system status; conversely, when the application uses
-   the carried object heavily, and the scripts need just to check some of their values
-   from now and then, the module interfaces can just provide some accessors to read the
-   desired data.
+   UserData interface is a relatively simple, but inefficient, way to reflect program
+   data. Direct reflection through the programming of a specific ObjectManager for the
+   reflected object is preferrable when performance are at stake.
 
-   Also, being Falcon objects much more flexible than C++ objects, the modules and
-   applications are often willing to provide Falcon objects with more featrures and
-   abilities than the ones merely provided by the user data. It's the case of the
-   Falcon RTL Stream class, which uses a C++ Falcon::Stream as core data but relies on
-   that only for some operations. The vast majority of features are directly provided
-   to the scripts by the module, and the internal instance of Falcon::Stream is used
-   merely as an utility to access the file system.
-
-   Nevertheless, reflection comes handy when the load balance of object usage between
-   application and scripts is even, and when the application C++ object, or a subset
-   of its interface, is meaningfull to the scripts as-is.
-
-   Subclasses willing to use reflection should overload isReflective() method so that
-   it returns true. In this case, CoreObject instances shared by the scripts will
-   call the getProperty() and setProperty() methods of UserData to update their internal
-   property table each time an access to a certain member is performed.
-
-   The reflection model doesn't need to be complete: the
-   Falcon object may provide properties that the the UserData subclass is not willing
-   to reflect, and the UserData subclasses may have properties and methods that won't
-   be visible by scripts. If a UserData subclass is not willing to manage a property,
-   it may just return ignore it in the handler method.
-
-   Applications may not be willing to derive their internal data from UserData to share
-   it with a script. In that case, they can provide a "carrier", which is just a subclass
-   of UserData owning a reference of the internal application data (or just pointing at
-   it, if it's known that the application data will survive script execution time).
+   \note Remember to overload the base class method clone() (it is ok to return always
+         zero if the semantic of the class doesn't allow cloning).
 */
 
-class FALCON_DYN_CLASS UserData: public BaseAlloc
+class FALCON_DYN_CLASS UserData: public FalconData
 {
 public:
-   UserData() {}
-   virtual ~UserData();
+   virtual ~UserData() {}
 
-   /** Declare if a certain subclass of UserData is reflective. */
-   virtual bool isReflective() const;
+   virtual void getProperty( VMachine *vm, const String &propName, Item &prop ) = 0;
+   virtual void setProperty( VMachine *vm, const String &propName, const Item &prop ) = 0;
 
-   /** Declare a shared user data.
-      Shared user data must be derived from the class SharedUserData,
-      which are derived from Garbageable and accounted for garbage
-      collection.
-
-      A SharedUserData or one of its subclasses must return true,
-      and this will prevent the data to be destroyed at obeject
-      destruction.
-      \return true if this data is shared and GC takes care of its
-         disposal
-   */
-   virtual bool shared() const;
-
-   /** Get given property.
-      When this method is called, the reflected object has already determined that
-      it can access the property.
-
-      However, the UserData may raise an error using the VM pointer it receives.
-
-      \param propName the name of the property to be read.
-      \param prop the item that should assume the value of the property
-   */
-   virtual void getProperty( VMachine *vm, const String &propName, Item &prop );
-
-   /** Set given property.
-      When this method is called, the reflected object has already changed the
-      property in the item.
-
-      However, the UserData may raise an error using the VM pointer it receives.
-
-      \param propName the name of the property to be read.
-      \param prop the item that should assume the value of the property
-   */
-   virtual void setProperty( VMachine *vm, const String &propName, Item &prop );
-
-   /** Clone the user data.
-      If the user data cannot be cloned, the method may return 0;
-      this will cause the caller to raise an uncloneable exception.
-      \return a clone of this object or zero.
-   */
-   virtual UserData *clone() const;
-
-   /** Marks the data for GC collection.
-      The GC collector never collects directly the user data,
-      so it is generally not necessary to overload this method.
-      If the subclass is propertary of some items that do not
-      physically reside anywhere else, then it may overload
-      the mark request and pass it down to the single items it
-      owns.
-      \param mp The mempool performing the mark
-   */
-   virtual void gcMark( MemPool *mp );
-
-   /** Tells wether this user data is a sequence.
-      Classes implementing the sequence protocol (sequence.h)
-      will return true, as this method is overloaded there.
-      \return true if this UserData can be casted to a Sequence.
-   */
-   virtual bool isSequence() const;
-
+   /** Defaulting GcMarking to none. */
+   virtual void gcMark( VMachine *mp ) {}
 };
+
+
+/** Object manager for User data.
+   This object manager can be given to classes that will handle user data.
+*/
+
+class UserDataManager: public FalconDataManager
+{
+   bool m_bNeedCache;
+
+public:
+   /** Creates the instance, eventually providing a stamp model.
+      If a stamp model is given, the onInit() method will use it's
+      clone() virtual method to create a new instance of the needed
+      classes. To configure it it's then necessary to have the
+      object "_init" method called, or to configure it by hand.
+
+      If the model is left to 0, onInit does nothing.
+
+      The model is destroyed (via virtual destructor) when the manager
+      is destroyed.
+   */
+   UserDataManager( bool bNeedCache=true, UserData *model=0 );
+   virtual ~UserDataManager();
+
+   virtual bool needCacheData() const { return m_bNeedCache; }
+   virtual bool hasClassReflection() const { return true; }
+
+   virtual void onSetProperty( CoreObject *owner, void *user_data, const String &propname, const Item &property );
+   virtual void onGetProperty( CoreObject *owner, void *user_data, const String &propname, Item &property );
+};
+
+extern FALCON_DYN_SYM UserDataManager core_user_data_manager_cacheful;
+extern FALCON_DYN_SYM UserDataManager core_user_data_manager_cacheless;
 
 }
 
 #endif
 
-/* end of userdata.h */
+/* end of UserData.h */

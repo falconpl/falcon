@@ -21,7 +21,7 @@
 #define flc_sequence_H
 
 #include <falcon/setup.h>
-#include <falcon/userdata.h>
+#include <falcon/falcondata.h>
 #include <falcon/citerator.h>
 
 namespace Falcon {
@@ -37,7 +37,7 @@ namespace Falcon {
    given to the script.
 */
 
-class FALCON_DYN_CLASS Sequence: public UserData
+class FALCON_DYN_CLASS Sequence: public FalconData
 {
 public:
    /** Mark this class as a sequence. */

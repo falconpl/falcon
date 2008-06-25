@@ -295,7 +295,7 @@ bool URI::internal_parseQuery( const String &src, uint32 pEnd, bool parseQuery, 
       uint32 pSharp = src.find( "#", pEnd );
       if( pSharp != String::npos )
       {
-         query( src.subString( pEnd, pSharp-1 ) );
+         query( src.subString( pEnd, pSharp ) );
          return internal_parseFragment( pSharp+1 );
       }
       else {

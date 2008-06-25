@@ -23,7 +23,7 @@
 #include <falcon/setup.h>
 #include <falcon/types.h>
 #include <falcon/string.h>
-#include <falcon/userdata.h>
+#include <falcon/falcondata.h>
 
 /* To be added to docs in the next version.
 convType
@@ -31,7 +31,7 @@ Type of conversion; determines what type of variable is expected when formatting
 decimalChr
 Unicode character used to separate decimal parts of numbers. Defaults to '.'.
 decimals
-Number of decimals that should be represented. Zero means to represent only integer numbers. 
+Number of decimals that should be represented. Zero means to represent only integer numbers.
 fixedSize
 If true, the 'size' field is mandatory, and representation of this variable is truncated to a maximum of 'size' characters.
 grouping
@@ -50,7 +50,7 @@ class Item;
 
 /** Item to string format class. */
 
-class Format: public UserData
+class Format: public FalconData
 {
 
 public:
@@ -419,11 +419,9 @@ public:
    void fixedSize( bool f ) { m_fixedSize = f; }
 
    //=================================================
-   // Reflection settings
-   //
-   virtual bool isReflective() const;
-   virtual void getProperty( const String &propName, Item &prop );
-   virtual void setProperty( const String &propName, Item &prop );
+
+   virtual FalconData *clone() const;
+   virtual void gcMark( VMachine *mp ) {}
 };
 
 }

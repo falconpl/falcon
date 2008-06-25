@@ -19,7 +19,7 @@
 
 #include <falcon/setup.h>
 #include <falcon/itemlist.h>
-#include <falcon/mempool.h>
+#include <falcon/vm.h>
 
 namespace Falcon {
 
@@ -51,7 +51,7 @@ ItemList::ItemList( const ItemList &l ):
 
 
 
-UserData *ItemList::clone() const
+FalconData *ItemList::clone() const
 {
    return new ItemList( *this );
 }
@@ -315,7 +315,7 @@ void ItemList::notifyDeletion( ItemListElement *elem )
    }
 }
 
-void ItemList::gcMark( MemPool *mp )
+void ItemList::gcMark( VMachine *vm )
 {
    // we don't have to record the mark byte, as we woudln't have been called
    // if the coreobject holding us had the right mark.
@@ -323,7 +323,7 @@ void ItemList::gcMark( MemPool *mp )
    ItemListElement *h = m_head;
    while( h != 0 )
    {
-      mp->markItem( h->item() );
+      vm->memPool()->markItem( h->item() );
       h = h->next();
    }
 }
@@ -417,7 +417,7 @@ void ItemListIterator::invalidate()
 }
 
 
-UserData *ItemListIterator::clone() const
+FalconData *ItemListIterator::clone() const
 {
    if ( m_element == 0 )
       return 0;

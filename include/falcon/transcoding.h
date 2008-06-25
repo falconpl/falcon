@@ -24,6 +24,7 @@
 #include <falcon/types.h>
 #include <falcon/string.h>
 #include <falcon/stream.h>
+#include <falcon/falcondata.h>
 
 namespace Falcon {
 
@@ -193,7 +194,7 @@ public:
    virtual bool get( uint32 &chr );
    virtual bool put( uint32 chr );
    virtual const String encoding() const { return "EOL"; }
-   virtual UserData *clone() const;
+   virtual FalconData *clone() const;
 };
 
 /** Transparent byte oriented encoder.
@@ -230,7 +231,7 @@ public:
    virtual bool get( uint32 &chr );
    virtual bool put( uint32 chr );
    virtual const String encoding() const { return "byte"; }
-   virtual UserData *clone() const;
+   virtual FalconData *clone() const;
 };
 
 
@@ -247,7 +248,7 @@ public:
    virtual bool get( uint32 &chr );
    virtual bool put( uint32 chr );
    virtual const String encoding() const { return "utf-8"; }
-   virtual UserData *clone() const;
+   virtual FalconData *clone() const;
 };
 
 /** UTF-16 encoding transcoder. */
@@ -306,7 +307,7 @@ public:
    virtual bool put( uint32 chr );
    virtual const String encoding() const { return "utf-16"; }
    t_endianity endianity() const { return m_streamEndian; }
-   virtual UserData *clone() const;
+   virtual FalconData *clone() const;
 };
 
 /** UTF-16LE encoding transcoder. */
@@ -365,7 +366,7 @@ public:
 
    TranscoderCP1252( Stream *s, bool bOwn=false );
    virtual const String encoding() const { return "cp1252"; }
-   virtual UserData *clone() const;
+   virtual FalconData *clone() const;
 };
 
 /** Latin-1 (ISO8859_1) transcoder. */
@@ -378,7 +379,7 @@ public:
 
    TranscoderISO8859_1( Stream *s, bool bOwn=false );
    virtual const String encoding() const { return "iso8859-1"; }
-   virtual UserData *clone() const;
+   virtual FalconData *clone() const;
 };
 
 class FALCON_DYN_CLASS TranscoderISO8859_2: public TranscoderISO_CP
@@ -390,7 +391,7 @@ public:
 
    TranscoderISO8859_2( Stream *s, bool bOwn=false );
    virtual const String encoding() const { return "iso8859-2"; }
-   virtual UserData *clone() const;
+   virtual FalconData *clone() const;
 };
 
 class FALCON_DYN_CLASS TranscoderISO8859_3: public TranscoderISO_CP
@@ -402,7 +403,7 @@ public:
 
    TranscoderISO8859_3( Stream *s, bool bOwn=false );
    virtual const String encoding() const { return "iso8859-3"; }
-   virtual UserData *clone() const;
+   virtual FalconData *clone() const;
 };
 
 
@@ -415,7 +416,7 @@ public:
 
    TranscoderISO8859_4( Stream *s, bool bOwn=false );
    virtual const String encoding() const { return "iso8859-4"; }
-   virtual UserData *clone() const;
+   virtual FalconData *clone() const;
 };
 
 class FALCON_DYN_CLASS TranscoderISO8859_5: public TranscoderISO_CP
@@ -427,7 +428,7 @@ public:
 
    TranscoderISO8859_5( Stream *s, bool bOwn=false );
    virtual const String encoding() const { return "iso8859-5"; }
-   virtual UserData *clone() const;
+   virtual FalconData *clone() const;
 };
 
 class FALCON_DYN_CLASS TranscoderISO8859_6: public TranscoderISO_CP
@@ -439,7 +440,7 @@ public:
 
    TranscoderISO8859_6( Stream *s, bool bOwn=false );
    virtual const String encoding() const { return "iso8859-6"; }
-   virtual UserData *clone() const;
+   virtual FalconData *clone() const;
 };
 
 class FALCON_DYN_CLASS TranscoderISO8859_7: public TranscoderISO_CP
@@ -451,7 +452,7 @@ public:
 
    TranscoderISO8859_7( Stream *s, bool bOwn=false );
    virtual const String encoding() const { return "iso8859-7"; }
-   virtual UserData *clone() const;
+   virtual FalconData *clone() const;
 };
 
 class FALCON_DYN_CLASS TranscoderISO8859_8: public TranscoderISO_CP
@@ -463,7 +464,7 @@ public:
 
    TranscoderISO8859_8( Stream *s, bool bOwn=false );
    virtual const String encoding() const { return "iso8859-8"; }
-   virtual UserData *clone() const;
+   virtual FalconData *clone() const;
 };
 
 class FALCON_DYN_CLASS TranscoderISO8859_9: public TranscoderISO_CP
@@ -475,7 +476,7 @@ public:
 
    TranscoderISO8859_9( Stream *s, bool bOwn=false );
    virtual const String encoding() const { return "iso8859-9"; }
-   virtual UserData *clone() const;
+   virtual FalconData *clone() const;
 };
 
 class FALCON_DYN_CLASS TranscoderISO8859_10: public TranscoderISO_CP
@@ -487,7 +488,7 @@ public:
 
    TranscoderISO8859_10( Stream *s, bool bOwn=false );
    virtual const String encoding() const { return "iso8859-10"; }
-   virtual UserData *clone() const;
+   virtual FalconData *clone() const;
 };
 
 class FALCON_DYN_CLASS TranscoderISO8859_11: public TranscoderISO_CP
@@ -499,7 +500,7 @@ public:
 
    TranscoderISO8859_11( Stream *s, bool bOwn=false );
    virtual const String encoding() const { return "iso8859-11"; }
-   virtual UserData *clone() const;
+   virtual FalconData *clone() const;
 };
 
 class FALCON_DYN_CLASS TranscoderISO8859_13: public TranscoderISO_CP
@@ -511,7 +512,7 @@ public:
 
    TranscoderISO8859_13( Stream *s, bool bOwn=false );
    virtual const String encoding() const { return "iso8859-13"; }
-   virtual UserData *clone() const;
+   virtual FalconData *clone() const;
 };
 
 class FALCON_DYN_CLASS TranscoderISO8859_14: public TranscoderISO_CP
@@ -523,7 +524,7 @@ public:
 
    TranscoderISO8859_14( Stream *s, bool bOwn=false );
    virtual const String encoding() const { return "iso8859-14"; }
-   virtual UserData *clone() const;
+   virtual FalconData *clone() const;
 };
 
 class FALCON_DYN_CLASS TranscoderISO8859_15: public TranscoderISO_CP
@@ -535,7 +536,7 @@ public:
 
    TranscoderISO8859_15( Stream *s, bool bOwn=false );
    virtual const String encoding() const { return "iso8859-15"; }
-   virtual UserData *clone() const;
+   virtual FalconData *clone() const;
 };
 
 

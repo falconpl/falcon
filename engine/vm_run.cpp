@@ -257,8 +257,7 @@ void VMachine::run()
                if ( m_regB.isOfClass( "Error" ) )
                {
                   // in case of an error of class Error, we have already a good error inside of it.
-                  ErrorCarrier *car = (ErrorCarrier *)m_regB.asObject()->getUserData();
-                  err = car->error();
+                  err = static_cast<Error *>(m_regB.asObject()->getUserData());
                   err->incref();
                }
                else {
@@ -657,7 +656,7 @@ void opcodeHandler_TRAL( register VMachine *vm )
       case FLC_ITEM_OBJECT:
       case FLC_ITEM_ATTRIBUTE:
       {
-         CoreIterator *iter = (CoreIterator *) iterator->asObject()->getUserData();
+         CoreIterator *iter = (CoreIterator *) iterator->asGCPointer();
          if ( ! iter->hasNext() )
             vm->m_pc_next = pcNext;
       }
@@ -1899,7 +1898,7 @@ void opcodeHandler_LDP( register VMachine *vm )
             if ( sourceClass == 0 )
                sourceClass = source->asClass();
 
-            if( sourceClass->properties().findKey( property, pos ) )
+            if( sourceClass->properties().findKey( *property, pos ) )
             {
                Item *prop = sourceClass->properties().getValue( pos );
 
@@ -2016,7 +2015,7 @@ void opcodeHandler_TRAN( register VMachine *vm )
             return;
          }
          else {
-            DictIterator *iter = (DictIterator *) iterator->asObject()->getUserData();
+            DictIterator *iter = (DictIterator *) iterator->asGCPointer();
 
             if( ! iter->isValid() )
             {
@@ -2058,7 +2057,7 @@ void opcodeHandler_TRAN( register VMachine *vm )
             return;
          }
          else {
-            CoreIterator *iter = (CoreIterator *) iterator->asObject()->getUserData();
+            CoreIterator *iter = (CoreIterator *) iterator->asGCPointer();
 
             if( ! iter->isValid() )
             {
@@ -2437,7 +2436,7 @@ void opcodeHandler_IN( register VMachine *vm )
          if( operand1->type() == FLC_ITEM_STRING )
          {
             uint32 pos;
-            result = operand2->asClass()->properties().findKey( operand1->asString(), pos ) != 0;
+            result = operand2->asClass()->properties().findKey( *operand1->asString(), pos ) != 0;
          }
       }
       break;
@@ -2474,7 +2473,7 @@ void opcodeHandler_PROV( register VMachine *vm )
    uint32 pos;
    switch ( operand1->type() ) {
       case FLC_ITEM_CLASS:
-         result = operand1->asClass()->properties().findKey( operand2->asString(), pos ) != 0;
+         result = operand1->asClass()->properties().findKey( *operand2->asString(), pos ) != 0;
       break;
 
       case FLC_ITEM_OBJECT:
@@ -3109,9 +3108,6 @@ void opcodeHandler_TRAV( register VMachine *vm )
          // we need an iterator...
          DictIterator *iter = dict->first();
 
-         // in a dummy object...
-         CoreObject *obj = new CoreObject( vm, iter );
-
          register int stackSize = vm->m_stack->size();
          vm->stackItem( stackSize - 5 ).dereference()->
                copy( iter->getCurrentKey() );
@@ -3119,14 +3115,14 @@ void opcodeHandler_TRAV( register VMachine *vm )
                copy( *iter->getCurrent().dereference() );
 
          // prepare... iterator
-         vm->m_stack->itemAt( vm->m_stack->size()-3 ) = obj;
+         vm->m_stack->itemAt( vm->m_stack->size()-3 ).setGCPointer( vm, iter );
       }
       break;
 
       case FLC_ITEM_OBJECT:
       {
          CoreObject *obj = source->asObject();
-         if( obj->getUserData() == 0 || ! obj->getUserData()->isSequence() )
+         if( ! obj->isSequence() )
          {
             vm->raiseError( e_invop, "TRAV" );
             return;
@@ -3148,13 +3144,10 @@ void opcodeHandler_TRAV( register VMachine *vm )
          // we need an iterator...
          CoreIterator *iter = seq->getIterator();
 
-         // in a dummy object...
-         obj = new CoreObject( vm, iter );
-
          *dest->dereference() = iter->getCurrent();
 
          // prepare... iterator
-         vm->m_stack->itemAt( vm->m_stack->size()-3 ) = obj;
+         vm->m_stack->itemAt( vm->m_stack->size()-3 ).setGCPointer( vm, iter );
       }
       break;
 
@@ -3176,13 +3169,10 @@ void opcodeHandler_TRAV( register VMachine *vm )
          // we need an iterator...
          AttribIterator *iter = attrib->getIterator();
 
-         // in a dummy object...
-         CoreObject *obj = new CoreObject( vm, iter );
-
          *dest->dereference() = iter->getCurrent();
 
          // prepare... iterator
-         vm->m_stack->itemAt( vm->m_stack->size()-3 ) = obj;
+         vm->m_stack->itemAt( vm->m_stack->size()-3 ).setGCPointer( vm, iter );
       }
       break;
 
@@ -3672,14 +3662,10 @@ void opcodeHandler_INDI( register VMachine *vm )
       return;
    }
 
-   Item *itm = vm->findLocalVariable( *operand1->asString() );
-   if ( itm == 0 )
+   if ( ! vm->findLocalVariable( *operand1->asString(), vm->m_regA ) )
    {
        vm->raiseRTError(
             new ParamError( ErrorParam( e_param_indir_code ).origin( e_orig_vm ).extra( "INDI" ) ) );
-   }
-   else {
-      vm->m_regA = *itm;
    }
 }
 
@@ -3772,7 +3758,7 @@ void opcodeHandler_TRAC( register VMachine *vm )
             return;
          }
          else {
-            CoreIterator *iter = (CoreIterator *) iterator->asObject()->getUserData();
+            CoreIterator *iter = (CoreIterator *) iterator->asGCPointer();
 
             if( ! iter->isValid() )
             {

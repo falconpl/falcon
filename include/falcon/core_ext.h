@@ -16,6 +16,10 @@
 #ifndef flc_COREFUNC_H
 #define flc_COREFUNC_H
 
+#include <falcon/setup.h>
+#include <falcon/module.h>
+#include <falcon/falcondata.h>
+
 namespace Falcon {
 
 class VMachine;

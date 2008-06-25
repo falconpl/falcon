@@ -22,7 +22,7 @@
 
 #include <falcon/setup.h>
 #include <falcon/basealloc.h>
-#include <falcon/userdata.h>
+#include <falcon/falcondata.h>
 #include <falcon/sequence.h>
 #include <falcon/item.h>
 #include <falcon/citerator.h>
@@ -100,7 +100,7 @@ public:
 
    virtual void invalidate();
 
-   virtual UserData *clone() const;
+   virtual FalconData *clone() const;
 
    // specific interface
    ItemListElement *getCurrentElement() const { return m_element; }
@@ -147,7 +147,7 @@ public:
    /** Deletes the list.
       Items are shallowly destroyed.
    */
-   virtual UserData *clone() const;
+   virtual FalconData *clone() const;
 
    /** Gets the first item in the list.
       If the list is empty, you will crash, so use this only when the list is
@@ -249,7 +249,7 @@ public:
 
    /** Perform marking of items stored in the list.
    */
-   virtual void gcMark( MemPool *mp );
+   virtual void gcMark( VMachine * );
 };
 
 

@@ -42,6 +42,9 @@ class Stream;
 class Attribute;
 class LiveModule;
 class MemBuf;
+class GarbagePointer;
+class FalconData;
+
 
 /** Basic item abstraction.*/
 class FALCON_DYN_CLASS Item: public BaseAlloc
@@ -109,12 +112,18 @@ private:
          int32 rstep;
       } rng;
 
+      struct {
+         GarbagePointer *gcptr;
+         int32 signature;
+      } gptr;
+
+
    } m_data;
 
 
    bool internal_is_equal( const Item &other ) const;
    int internal_compare( const Item &other ) const;
-   bool serialize_object( Stream *file, const CoreObject *obj, bool bLive ) const;
+   bool serialize_object( Stream *file, CoreObject *obj, bool bLive ) const;
    bool serialize_symbol( Stream *file, const Symbol *sym ) const;
    bool serialize_function( Stream *file, const Symbol *func ) const;
    bool serialize_class( Stream *file, const CoreClass *cls ) const;
@@ -171,6 +180,13 @@ public:
       type( FLC_ITEM_BOOL );
       m_data.num.val1 = tof?1: 0;
    }
+
+   /** Creates an integer item */
+   Item( int val )
+   {
+      setInteger( (int64) val );
+   }
+
 
    /** Creates an integer item */
    Item( int64 val )
@@ -406,12 +422,24 @@ public:
       m_data.ptr.voidp = tpd;
    }
 
-   void *asUserPointer()
+   void *asUserPointer() const
    {
       return m_data.ptr.voidp;
    }
 
    bool isUserPointer() const { return m_base.bits.flags == FLC_ITEM_POINTER; }
+
+   /** Set this item as a user-defined Garbage pointers.
+       VM provides GC-control over them.
+   */
+   void setGCPointer( VMachine *vm, FalconData *ptr, uint32 sig = 0 );
+   void setGCPointer( GarbagePointer *shell, uint32 sig = 0 );
+
+   FalconData *asGCPointer() const;
+   GarbagePointer *asGCPointerShell() const { return m_data.gptr.gcptr; }
+   uint32 asGCPointerSignature()  const { return m_data.gptr.signature; }
+
+   bool isGCPointer() const { return m_base.bits.flags == FLC_ITEM_GCPTR; }
 
    /** Tells wether this item is out of band.
       \return true if out of band.

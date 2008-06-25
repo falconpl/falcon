@@ -117,10 +117,10 @@ FALCON_FUNC  StdStream_close ( ::Falcon::VMachine *vm )
    {
       if ( vm->hasProcessStreams() )
       {
-         Item *mode = self->getProperty( "_stdStreamType" );
-         if( mode != 0 && mode->isInteger() )
+         Item mode;
+         if( self->getProperty( "_stdStreamType", mode ) && mode.isInteger() )
          {
-            switch( mode->asInteger() )
+            switch( mode.asInteger() )
             {
                case 0: vm->stdIn()->close(); break;
                case 1: vm->stdOut()->close(); break;
@@ -1439,7 +1439,7 @@ FALCON_FUNC  IOStream_creator ( ::Falcon::VMachine *vm )
    vm->retval( co );
 }
 
-static CoreObject *internal_make_stream( VMachine *vm, UserData *clone, int userMode )
+static CoreObject *internal_make_stream( VMachine *vm, FalconData *clone, int userMode )
 {
    // The clone stream may be zero if the embedding application doesn't want
    // to share a virtual standard stream with us.

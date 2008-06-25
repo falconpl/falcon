@@ -214,7 +214,7 @@ public:
    virtual void invalidate();
    virtual bool erase();
    virtual bool insert( const Item &item );
-   virtual UserData *clone() const;
+   virtual FalconData *clone() const;
 
    AttribIterator *nextIter() const { return m_next; }
    void notifyDeletion( AttribObjectHandler *deleted );

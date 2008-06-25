@@ -101,7 +101,7 @@ public:
 
    virtual int64 lastError() const { return (int64) m_lastError; }
 
-   virtual UserData *clone() const;
+   virtual FalconData *clone() const;
 };
 
 }

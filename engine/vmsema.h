@@ -21,13 +21,13 @@
 #define flc_vmsema_H
 
 #include <falcon/vm.h>
-#include <falcon/userdata.h>
+#include <falcon/falcondata.h>
 
 namespace Falcon {
 
 class VMContext;
 
-class VMSemaphore: public UserData
+class VMSemaphore: public FalconData
 {
    int32 m_count;
    ContextList m_waiting;
@@ -43,6 +43,8 @@ public:
    void wait( VMachine *vm, double time = -1.0 );
 
    void unsubscribe( VMContext *ctx );
+   virtual FalconData *clone() const;
+   virtual void gcMark( VMachine *mp ) {}
 };
 
 }

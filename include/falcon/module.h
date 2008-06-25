@@ -55,6 +55,8 @@ class Stream;
 */
 class FALCON_DYN_CLASS Module: public BaseAlloc
 {
+protected:
+
    volatile long m_refcount;
 
    /******************************
@@ -154,6 +156,15 @@ public:
 
    void incref();
    void decref();
+
+   /** Determine this to be a flexy module.
+      Flexy modules can be queried for unknown symbols at runtime;
+      they declare themselves as sticking only with this VM (or otherwise
+      providing a VM-sensible local environment), and are available
+      for late-lazy binding of symbols.
+   */
+   virtual bool isFlexy() const { return false; }
+
 
    Symbol *findGlobalSymbol( const String &name ) const
    {
@@ -287,7 +298,23 @@ public:
       \param exp true if the symbol myst be exported (true by default)
       \return the newly created symbol
    */
-   Symbol *addExtFunc( const String &name, ext_func_t func, bool exp = true );
+   Symbol *addExtFunc( const String &name, ext_func_t func, bool exp = true )
+   {
+      return addExtFunc( name, func, 0, exp );
+   }
+
+   /** Shortcut to create a symbol as an external function.
+
+      This also sets extra data for the callable symbol.
+      \see ExtFuncDef
+
+      \param name the name of the symbol that must be created.
+      \param func a function pointer to the external function.
+      \param extra extra data for this function definition.
+      \param exp true if the symbol myst be exported (true by default)
+      \return the newly created symbol
+   */
+   Symbol *addExtFunc( const String &name, ext_func_t func, void *extra, bool exp = true );
 
 
    /** Shortcut to create a symbol and store it in the module symbol list.
@@ -319,9 +346,9 @@ public:
             one of the symbols held by this module.
       \param cls the symbol holding the ClassDef that must be operated on.
       \param prop the property name.
-      \return the newly added VarDef (just for reference).
+      \return the newly added VarDef; it can be used to set default values or vardef properties.
    */
-   VarDef *addClassProperty( Symbol *cls, const String &prop );
+   VarDef& addClassProperty( Symbol *cls, const String &prop );
 
    /** Adds methods to ClassDefs in symbols held by this module.
 
@@ -332,9 +359,9 @@ public:
       \param cls the symbol holding the ClassDef that must be operated on
       \param prop the property name
       \param method the symbol that will be used as a method
-      \return the newly added VarDef (just for reference)
+      \return the newly added VarDef; it can be used to set default values or vardef properties.
    */
-   VarDef *addClassMethod( Symbol *cls, const String &prop, Symbol *method );
+   VarDef& addClassMethod( Symbol *cls, const String &prop, Symbol *method );
 
    /** Shortcut to add external function methods to Classes in this module.
 
@@ -347,9 +374,9 @@ public:
       \param cls the symbol holding the ClassDef that must be operated on
       \param prop the property name
       \param func the function that will be used as a method
-      \return the newly added VarDef (just for reference)
+      \return the newly added VarDef; it can be used to set default values or vardef properties.
    */
-   VarDef *addClassMethod( Symbol *cls, const String &prop, ext_func_t func );
+   VarDef& addClassMethod( Symbol *cls, const String &prop, ext_func_t func );
 
 
    /** Adds an internal function to the module.

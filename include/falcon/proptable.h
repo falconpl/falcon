@@ -25,35 +25,84 @@
 #include <falcon/string.h>
 #include <falcon/item.h>
 #include <falcon/basealloc.h>
-
+#include <falcon/reflectfunc.h>
 
 namespace Falcon
 {
 
+class ObjectManager;
+class CoreObject;
+
 /** Very simple double entry table for pure properties.
+
    Property tables are a convenient way to store efficiently and search at the fastest possible
-   speed a set of pre-defined pure C strings stored as ascii values in a safe memory area
+   speed a set of pre-defined pure Falcon strings stored in a safe memory area
    that does not need procetion, collecting or reference counting.
 
    Unluckily, this is a quite rare situation. Luckily, this is exactly the situation of
-   Falcon objects (and classes), whose property table is fixed and allocated as C strings in
-   the module string table (where each property is guaranteed to be a zero terminated
-   sequence of single-byte chars).
+   Falcon objects (and classes), whose property names are allocated as Falcon Strings
+   in the same Module that declares them.
+
+   The property table stores also informations about the class that declared the property.
+   In fact, in case of inheritance, the property may come from an inner class, that needs
+   to be managed through a different handler.
+
+   The needed information is the ID of the class in the inheritance list, which is used to
+   pick the correct user_data in the object instance, and the user_data handler (ObjectHandler).
+
+   Actually, the ObjectHandler information would not be needed, but it is kept here for caching.
+   There is only one property table per class in each program, so it's an affordable cost.
+
+   Read-only properties that doesn't need reflection (generally fixed-methods and properties storing
+   the directly inherited classes that can be accessed through class instances) can be stored with
+   the ObjectManager field equal to zero. This makes the VM and every get() request on the
+   instances to return the template value stored in the property table, while every set() request
+   will raise a read-only access error.
+
+   Once created, the m_value field of each entry is read-only. It stores enumeration and constant
+   initialization values for properties and method/class entries for methods/class accessors.
+
+   A property table has two characteristics that are accounted at its creation:
+   - It's reflective if it has at least a reflective property.
+   - It's static if all of its properties are either reflective or read-only.
+
 */
 class FALCON_DYN_CLASS PropertyTable: public BaseAlloc
 {
 public:
-   typedef struct t_config {
-      uint16 m_offset;
-      uint16 m_size;
-      bool m_isSigned;
-   } config;
-
    uint32 m_size;
    uint32 m_added;
-   const String **m_keys;
-   Item *m_values;
-   config *m_configs;
+   bool m_bReflective;
+   bool m_bStatic;
+
+   class Entry {
+   public:
+      const String *m_key;
+      Item m_value;
+
+      bool m_bReadOnly;
+      t_reflection m_eReflectMode;
+
+      union {
+         uint32 offset;
+         struct {
+            reflectionFunc to;
+            reflectionFunc from;
+         } rfunc;
+      } m_reflection;
+
+      /** Reflects a single property
+         Item -> user_data
+      */
+      void reflectTo( CoreObject *instance, const Item &prop, void *user_data ) const;
+
+      /** Reflects a single property.
+         user_data -> Item
+      */
+      void  reflectFrom( CoreObject *instance, void *user_data, Item &prop ) const;
+   };
+
+   Entry *m_entries;
 
 public:
 
@@ -64,30 +113,103 @@ public:
    uint32 size() const { return m_size; }
    uint32 added() const { return m_added; }
 
-   bool findKey( const String *key, uint32 &pos ) const;
-   Item *getValue( uint32 pos ) const { return m_values + pos; }
-   const String *getKey( uint32 pos ) const { return m_keys[pos]; }
-   bool hasConfig() const { return m_configs != 0; }
-   const config &getConfig( uint32 pos ) const { return m_configs[pos]; }
+   bool isReflective() const { return m_bReflective; }
+   bool isStatic() const { return m_bStatic; }
 
-   bool append( const String *key, const Item &itm );
-   bool append( const String *key, const Item &itm, const config &cfg );
+   /** Analyzes the table and sets its properties. */
+   void checkProperties();
 
-   void appendSafe( const String *key, const Item &itm )
+   bool findKey( const String &key, uint32 &pos ) const;
+
+   Entry &getEntry( uint32 pos ) { return m_entries[pos]; }
+   const Entry &getEntry( uint32 pos ) const { return m_entries[pos]; }
+
+   Item *getValue( uint32 pos ) { return &m_entries[ pos ].m_value; }
+   const Item *getValue( uint32 pos ) const { return &m_entries[ pos ].m_value; }
+   const String *getKey( uint32 pos ) const { return m_entries[pos].m_key; }
+
+   Entry &append( const String *key );
+
+   bool append( const String *key, const Item &itm, bool bReadOnly = false )
    {
-      m_keys[m_added] = key;
-      m_values[m_added] = itm;
+      if ( m_added <= m_size ) {
+         Entry e = append( key );
+         e.m_value = itm;
+         e.m_bReadOnly = bReadOnly;
+         e.m_eReflectMode = e_reflectNone;
+         return true;
+      }
+
+      return false;
+   }
+
+   bool append( const String *key, const Item &itm, t_reflection mode, uint32 offset, bool bReadOnly = false )
+   {
+      if ( m_added <= m_size ) {
+         Entry e = append( key );
+         e.m_value = itm;
+         e.m_bReadOnly = bReadOnly;
+         e.m_eReflectMode = mode;
+         e.m_reflection.offset = offset;
+         return true;
+      }
+
+      return false;
+   }
+
+   bool append( const String *key, const Item &itm, reflectionFunc func_from, reflectionFunc func_to = 0 )
+   {
+      if ( m_added <= m_size ) {
+         Entry e = append( key );
+         e.m_value = itm;
+         e.m_bReadOnly = func_to == 0;
+         e.m_eReflectMode = e_reflectFunc;
+         e.m_reflection.rfunc.from = func_from;
+         e.m_reflection.rfunc.to = func_to;
+         return true;
+      }
+
+      return false;
+   }
+
+
+   Entry &appendSafe( const String *key  )
+   {
+      m_entries[m_added].m_key = key;
+      Entry *ret = m_entries + m_added;
+      m_added++;
+      return *ret;
+   }
+
+   void appendSafe( const String *key, const Item &itm, bool bReadOnly = false  )
+   {
+      m_entries[m_added].m_key = key;
+      m_entries[m_added].m_value = itm;
+      m_entries[m_added].m_bReadOnly = bReadOnly;
+      m_entries[m_added].m_eReflectMode = e_reflectNone;
       m_added++;
    }
 
-   void appendSafe( const String *key )
+   void appendSafe( const String *key, const Item &itm, t_reflection mode, uint32 offset, bool bReadOnly = false  )
    {
-      m_keys[m_added] = key;
-      m_values[m_added].setNil();
+      m_entries[m_added].m_key = key;
+      m_entries[m_added].m_value = itm;
+      m_entries[m_added].m_bReadOnly = bReadOnly;
+      m_entries[m_added].m_eReflectMode = mode;
+      m_entries[m_added].m_reflection.offset = offset;
       m_added++;
    }
 
-   void appendSafe( const String *key, const Item &itm, const config &cfg );
+   void appendSafe( const String *key, const Item &itm, reflectionFunc func_from, reflectionFunc func_to = 0  )
+   {
+      m_entries[m_added].m_key = key;
+      m_entries[m_added].m_value = itm;
+      m_entries[m_added].m_bReadOnly = func_to == 0;
+      m_entries[m_added].m_eReflectMode = e_reflectFunc;
+      m_entries[m_added].m_reflection.rfunc.from = func_from;
+      m_entries[m_added].m_reflection.rfunc.to = func_to;
+      m_added++;
+   }
 };
 
 }

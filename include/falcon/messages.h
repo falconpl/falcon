@@ -204,6 +204,8 @@ namespace msg {
       err_noninst_cls,
       err_unserializable,
       err_wait_in_atomic,
+      err_inv_inherit2,
+      err_prop_ro,
 
       err_open_file,
       err_loaderror,

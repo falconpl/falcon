@@ -25,42 +25,46 @@
 
 namespace Falcon {
 
-CoreObject::CoreObject( VMachine *vm, const PropertyTable &original, Symbol *inst ):
-   Garbageable( vm, sizeof( this ) + sizeof( void * ) * 2 * original.size() ),
-   m_properties( original ),
-   m_instanceOf( inst ),
+CoreObject::CoreObject( const CoreClass *generator,  void *user_data ):
+   Garbageable( generator->origin(), sizeof( this ) ),
    m_attributes( 0 ),
-   m_user_data( 0 ),
-   m_user_data_shared( true )  // not true, but avoids a check in destructor
+   m_generatedBy( generator ),
+   m_cache( 0 ),
+   m_user_data( user_data )
 {
-   // duplicate the strings in the property list
-   for ( uint32 i = 0 ; i < m_properties.size(); i ++ )
+   ObjectManager *om = m_generatedBy->getObjectManager();
+   const PropertyTable &pt = m_generatedBy->properties();
+
+   // do we need to create a local cache?
+   // if pt is not static and we have not class reflection we need it
+   // we need it also if we ask explicitly for it (needCacheData)
+   if( om != 0 && ( (! om->hasClassReflection() && ! pt.isStatic()) || om->needCacheData() ) ||
+      (! pt.isStatic()) )
    {
-      Item *itm = m_properties.getValue( i );
-      if( itm->isString() )
+      m_cache = (Item *) memAlloc( sizeof( Item ) * pt.added() );
+      for ( uint32 i = 0; i < pt.added(); i ++ )
       {
-         String *s = new GarbageString( vm, *itm->asString() );
-         itm->setString( s );
+         const Item &itm = *pt.getValue(i);
+         m_cache[i] = itm.isString() ? new GarbageString( origin(), *itm.asString() ) :
+                      itm;
       }
    }
 }
 
-
-CoreObject::CoreObject( VMachine *vm, UserData *ud ):
-   Garbageable( vm, sizeof( this ) ),
-   m_instanceOf( 0 ),
-   m_properties( 0 ),
-   m_attributes( 0 ),
-   m_user_data( ud ),
-   m_user_data_shared( ud->shared() )
-{
-}
-
-
 CoreObject::~CoreObject()
 {
-   if ( ! m_user_data_shared )
-      delete m_user_data;
+   if( m_user_data != 0 )
+   {
+      fassert( m_generatedBy != 0 );
+
+      if ( m_generatedBy->getObjectManager() != 0 )
+      {
+         m_generatedBy->getObjectManager()->onDestroy( origin(), m_user_data );
+      }
+   }
+
+   if ( m_cache != 0 )
+      memFree( m_cache );
 
    while( m_attributes != 0 )
    {
@@ -72,87 +76,74 @@ CoreObject::~CoreObject()
 
 bool CoreObject::derivedFrom( const String &className ) const
 {
-   if ( m_instanceOf == 0 )
-      return false;
-
-   if ( m_instanceOf->name() == className )
-   {
-      return true;
-   }
-
-   // else search the base class name in the inheritance properties.
-   Item temp;
-   if ( getProperty( className, temp ) )
-   {
-      Item *itm = temp.dereference();
-
-      if ( itm->isClass() )
-         return true;
-   }
-
-   return false;
-}
-
-
-bool CoreObject::setPropertyRef( const String &propName, Item &value )
-{
-   register uint32 pos;
-
-   if ( m_properties.findKey( &propName, pos ) )
-   {
-      Item *prop = m_properties.getValue( pos );
-      origin()->referenceItem( *prop, value );
-      if( m_user_data != 0 && m_user_data->isReflective() )
-      {
-         m_user_data->setProperty( origin(), propName, *prop );
-      }
-
-      return true;
-   }
-   // no reflection for property by reference.
-
-   return false;
+   Symbol *clssym = m_generatedBy->symbol();
+   return (clssym->name() == className || m_generatedBy->derivedFrom( className ));
 }
 
 
 bool CoreObject::setProperty( const String &propName, const Item &value )
 {
    register uint32 pos;
+   const PropertyTable &pt = m_generatedBy->properties();
 
-   if ( m_properties.findKey( &propName, pos ) )
+   if ( pt.findKey( propName, pos ) )
    {
-      Item *prop = m_properties.getValue( pos );
-
-      *prop->dereference() = value;
-
-      if( m_user_data != 0 && m_user_data->isReflective() )
-      {
-         m_user_data->setProperty( origin(), propName, *prop );
-      }
-
+      // to be optimized
+      setPropertyAt( pos, value );
       return true;
    }
 
    return false;
+}
+
+void CoreObject::setPropertyAt( uint32 pos, const Item &value )
+{
+   const PropertyTable &pt = m_generatedBy->properties();
+
+   //Ok, we found the property, but what should we do with that?
+   const PropertyTable::Entry &entry = pt.getEntry( pos );
+   ObjectManager *mngr = m_generatedBy->getObjectManager();
+
+   // can we write it?
+   if ( entry.m_bReadOnly ) {
+      origin()->raiseRTError( new AccessError( ErrorParam( e_prop_ro, __LINE__ ) ) );
+   }
+
+   if ( entry.m_eReflectMode != e_reflectNone && mngr != 0 && ! mngr->isDeferred() )
+   {
+      fassert( m_user_data != 0 );
+
+      entry.reflectTo( this, value, m_user_data );
+      // remember to cache the value.
+   }
+   else if ( mngr != 0 && mngr->hasClassReflection() )
+   {
+      mngr->onSetProperty( this, m_user_data, *entry.m_key, value );
+   }
+
+   if ( m_cache != 0 ) {
+      *m_cache[ pos ].dereference() = value;
+   }
 }
 
 
 bool CoreObject::setProperty( const String &propName, const String &value )
 {
+   return setProperty( propName, new GarbageString( origin(), value ) );
+}
+
+
+bool CoreObject::getProperty( const String &propName, Item &ret )
+{
    register uint32 pos;
+   const PropertyTable &pt = m_generatedBy->properties();
 
-   if ( m_properties.findKey( &propName, pos ) )
+   if ( pt.findKey( propName, pos ) )
    {
-      Item *prop = m_properties.getValue( pos );
+      // to be optimized.
+      getPropertyAt( pos, ret );
 
-      String *str = new GarbageString( origin(), value );
-      prop->dereference()->setString( str );
-
-      if( m_user_data != 0 && m_user_data->isReflective() )
-      {
-         m_user_data->setProperty( origin(), propName, *prop );
-      }
-
+      // already assigned, if possible
       return true;
    }
 
@@ -160,107 +151,64 @@ bool CoreObject::setProperty( const String &propName, const String &value )
 }
 
 
-bool CoreObject::setProperty( const String &propName, int64 value )
+void CoreObject::getPropertyAt( uint32 pos, Item &ret )
 {
-   register uint32 pos;
+   const PropertyTable &pt = m_generatedBy->properties();
 
-   if ( m_properties.findKey( &propName, pos ) )
+   // small debug time security
+   fassert( pos < pt.added() );
+
+   //Ok, we found the property, but what should we do with that?
+   const PropertyTable::Entry &entry = pt.getEntry( pos );
+   ObjectManager *mngr = m_generatedBy->getObjectManager();
+
+   if ( m_cache != 0 )
    {
-      Item *prop = m_properties.getValue( pos );
-      prop->dereference()->setInteger( value );
+      Item &cached = *m_cache[pos].dereference();
 
-      if( m_user_data != 0 && m_user_data->isReflective() )
+      if ( entry.m_eReflectMode != e_reflectNone && mngr != 0 && ! mngr->isDeferred() )
       {
-         m_user_data->setProperty( origin(), propName, *prop );
+         fassert( m_user_data != 0 );
+         // this code allows to modify our cached value.
+         entry.reflectFrom( this, m_user_data, cached );
+      }
+      else if ( mngr != 0 && mngr->hasClassReflection() )
+      {
+         mngr->onGetProperty( this, m_user_data, *entry.m_key, cached );
       }
 
-      return true;
+      ret = cached;
    }
+   else {
+      ret = *pt.getValue(pos);
 
-   return false;
-}
-
-
-bool CoreObject::getProperty( const String &propName, Item &ret ) const
-{
-   register uint32 pos;
-
-   if( m_properties.findKey( &propName, pos ) )
-   {
-      Item *prop = m_properties.getValue( pos );
-      if( m_user_data != 0 && m_user_data->isReflective() )
+      if ( entry.m_eReflectMode != e_reflectNone && mngr != 0 && ! mngr->isDeferred() )
       {
-         m_user_data->getProperty( origin(), propName, *prop );
+         fassert( m_user_data != 0 );
+         entry.reflectFrom( this, m_user_data, ret );
       }
-
-      ret = *prop;
-      return true;
+      else if ( mngr != 0 && mngr->hasClassReflection() )
+      {
+         mngr->onGetProperty( this, m_user_data, *entry.m_key, ret );
+      }
    }
 
-
-   return false;
-}
-
-
-Item *CoreObject::getProperty( const String &propName )
-{
-   register uint32 pos;
-   if( ! m_properties.findKey( &propName, pos ) )
-      return 0;
-
-   Item *prop = m_properties.getValue( pos );
-
-   if( m_user_data != 0 && m_user_data->isReflective() )
-   {
-      m_user_data->getProperty( origin(), propName, *prop );
-   }
-
-   return prop;
-}
-
-
-bool CoreObject::getMethod( const String &propName, Item &method ) const
-{
-   register uint32 pos;
-   if( ! m_properties.findKey( &propName, pos ) )
-      return false;
-
-   Item *mth = m_properties.getValue( pos );
-
-   if( m_user_data != 0 && m_user_data->isReflective() )
-   {
-      m_user_data->getProperty( origin(), propName, *mth );
-   }
-   method = *mth;
-
-   return method.methodize( this );
-}
-
-
-Item &CoreObject::getPropertyAt( uint32 pos ) const
-{
-   register Item *prop = m_properties.getValue( pos );
-   if( m_user_data && m_user_data->isReflective() )
-   {
-      m_user_data->getProperty( origin(), *m_properties.getKey( pos ), *prop );
-   }
-   return *prop;
 }
 
 
 CoreObject *CoreObject::clone() const
 {
-   UserData *ud = 0;
+   void *ud = 0;
 
    // if we can't clone the user data, we should just forbid cloning this object.
    if ( m_user_data != 0 )
    {
-      ud = m_user_data->clone();
+      ud = m_generatedBy->getObjectManager()->onClone( origin(), m_user_data );
       if( ud == 0 )
          return 0;
    }
 
-   CoreObject *other = new CoreObject( origin(), this->m_properties, m_instanceOf );
+   CoreObject *other = new CoreObject( m_generatedBy, ud );
 
    // copy attribute list
    AttribHandler *head = m_attributes;
@@ -269,8 +217,6 @@ CoreObject *CoreObject::clone() const
       head->attrib()->giveTo( other );
       head = head->next();
    }
-
-   other->setUserData( ud );
 
    return other;
 }
@@ -306,89 +252,93 @@ bool CoreObject::has( const String &attrib ) const
 }
 
 
-bool CoreObject::configureTo( void *data )
+void CoreObject::reflectFrom( void *user_data )
 {
-   if ( ! m_properties.hasConfig() )
-      return false;
+   if ( m_cache == 0 )
+      return;
 
-   byte *pData = (byte *) data;
-   for ( uint32 i = 0; i < m_properties.added(); i ++ )
+   ObjectManager *mgr = m_generatedBy->getObjectManager();
+   if( mgr != 0 && mgr->onObjectReflectFrom( this, user_data ) )
+      return;
+
+   const PropertyTable &pt = m_generatedBy->properties();
+
+   for ( uint32 i = 0; i < pt.added(); i ++ )
    {
-      const PropertyTable::config &cfg = m_properties.getConfig( i );
-      int64 value = m_properties.getValue( i )->forceInteger();
-      switch( cfg.m_size )
+      const PropertyTable::Entry &entry = pt.getEntry(i);
+      if( entry.m_eReflectMode != e_reflectNone )
       {
-         case 1:
-            pData[ cfg.m_offset ] = (byte) value;
-            break;
-
-         case 2:
-            if ( cfg.m_isSigned )
-               *((int16 *) (pData + cfg.m_offset) ) = (int16) value;
-            else
-               *((uint16 *) (pData + cfg.m_offset) ) = (uint16) value;
-            break;
-
-         case 4:
-            if ( cfg.m_isSigned )
-               *((int32 *) (pData + cfg.m_offset) ) = (int32) value;
-            else
-               *((uint32 *) (pData + cfg.m_offset) ) = (uint32) value;
-           break;
-
-         case 8:
-            if ( cfg.m_isSigned )
-               *((int64 *) (pData + cfg.m_offset) ) = value;
-            else
-               *((uint64 *) (pData + cfg.m_offset) ) = m_properties.getValue( i )->forceInteger();
-            break;
+         entry.reflectFrom( this, user_data, m_cache[i] );
       }
    }
-
-   return true;
 }
 
 
-bool CoreObject::configureFrom( void *data )
+void CoreObject::reflectTo( void *user_data )
 {
-   if ( ! m_properties.hasConfig() )
-      return false;
+   if ( m_cache == 0 )
+      return;
 
-   byte *pData = (byte *) data;
-   for ( uint32 i = 0; i < m_properties.added(); i ++ )
+   ObjectManager *mgr = m_generatedBy->getObjectManager();
+   if( mgr != 0 && mgr->onObjectReflectTo( this, user_data ) )
+      return;
+
+   const PropertyTable &pt = m_generatedBy->properties();
+
+   for ( uint32 i = 0; i < pt.added(); i ++ )
    {
-      const PropertyTable::config &cfg = m_properties.getConfig( i );
-      switch( cfg.m_size )
+      const PropertyTable::Entry &entry = pt.getEntry(i);
+      if( entry.m_eReflectMode != e_reflectNone )
       {
-         case 1:
-            m_properties.getValue( i )->setInteger( pData[ cfg.m_offset ] );
-            break;
+         entry.reflectTo( this, m_cache[i], user_data );
+      }
+   }
+}
 
-         case 2:
-            if ( cfg.m_isSigned )
-               m_properties.getValue( i )->setInteger( *((int16 *) (pData + cfg.m_offset) ) );
-            else
-               m_properties.getValue( i )->setInteger( *((uint16 *) (pData + cfg.m_offset) ) );
-            break;
 
-         case 4:
-            if ( cfg.m_isSigned )
-               m_properties.getValue( i )->setInteger( *((int32 *) (pData + cfg.m_offset) ) );
-            else
-               m_properties.getValue( i )->setInteger( *((uint32 *) (pData + cfg.m_offset) ) );
-            break;
-
-         case 8:
-            if ( cfg.m_isSigned )
-               m_properties.getValue( i )->setInteger( *((int64 *) (pData + cfg.m_offset) ) );
-            else
-               m_properties.getValue( i )->setInteger( *((uint64 *) (pData + cfg.m_offset) ) );
-            break;
+void CoreObject::gcMarkData( byte mark )
+{
+   if ( m_cache != 0 )
+   {
+      const PropertyTable &props = m_generatedBy->properties();
+      for ( uint32 i = 0; i < props.added(); i ++ )
+      {
+         origin()->memPool()->markItemFast( m_cache[i] );
       }
    }
 
-   return true;
+   if( m_user_data != 0 )
+   {
+      m_generatedBy->getObjectManager()->onGarbageMark( origin(), m_user_data );
+   }
 }
+
+
+bool CoreObject::isSequence() const
+{
+   if(  m_generatedBy->getObjectManager() != 0
+        && m_generatedBy->getObjectManager()->isFalconData() )
+      return static_cast< FalconData *>( m_user_data )->isSequence();
+   return false;
+}
+
+void CoreObject::cacheStringProperty( const String& propName, const String &value )
+{
+   fassert( m_cache != 0 );
+   uint32 pos;
+
+   const PropertyTable &pt = m_generatedBy->properties();
+   bool found = pt.findKey( propName, pos );
+   fassert( found );
+
+   Item &itm = m_cache[pos];
+   if( itm.isString() )
+      itm.asString()->bufferize( value );
+   else
+      itm = new GarbageString( origin(), value );
+}
+
+
 
 }
 

@@ -8,7 +8,7 @@
 * Short: String expansion
 * Description:
 *    Test for basic string expansion.
-*    Internally, string expansion uses indirect access; so what we do here 
+*    Internally, string expansion uses indirect access; so what we do here
 *    is just checking that parsing and expansion works.
 * [/Description]
 *
@@ -47,7 +47,7 @@ if @ "$( test. prop [ 2 ] )" != "three": failure( "Strex parenthethized object +
 if @ ">$( test. prop [ 0 ] )<>$( test. prop [ 2 ] )<" != ">one<>three<": failure( "Double Strex parenthethized object + array access" )
 
 item = [ 0, test, 1 ]
-if @ "$( item[ 1 ]. prop [0] )" != "one": failure( "Strex array access + object indirect" ) 
+if @ "$( item[ 1 ]. prop [0] )" != "one": failure( "Strex array access + object indirect" )
 
 success()
 

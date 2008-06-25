@@ -58,6 +58,23 @@ private:
    PropertyTable *m_properties;
    AttribHandler *m_attributes;
 
+   /** Cached object manager */
+   ObjectManager *m_manager;
+
+   /** Configures a newborn instance.
+      This method is called by createInstance on this class and all the subclasses,
+      provided they have non-default object managers.
+
+      If a class has the default object manager (0), then it shares the common property
+      array that makes up the object structure through the PropertyManager class, and no
+      extra configuration is needed.
+
+      This method may call reflected classes constructor to configure their user data, but
+      it won't call the "init" sequence of the object. That is left to the VM or to the
+      user, and should be done after the object is configured.
+   */
+   void configInstance( CoreObject *co );
+
 public:
 
    /** Creates an item representation of a live class.
@@ -65,7 +82,6 @@ public:
       virtual machine, other than the symbol that generated this item.
       The module id is useful as this object often refers to its module in the VM. Having the ID
       recorded here prevents the need to search for the live ID in the VM at critical times.
-
    */
    CoreClass( VMachine *mp, Symbol *sym, LiveModule *lmod, PropertyTable *pt );
    ~CoreClass();
@@ -83,15 +99,22 @@ public:
       On a multithreading application, this method can only be called from inside the
       thread that is running the VM.
 
+      The instance may be created with some pre-configured user-data (which must be
+      manageable by the ObjectManager declared by this class); if a user data is not
+      provided, or if it's zero, the class will create a user data using it's own
+      ObjectManager.
+
       In some cases (e.g. de-serialization) the caller may wish not to have
       the object initialized and filled with attributes. The optional
       appedAtribs parameter may be passed false to have the caller to
       fill the instance with startup data.
 
       \note This function never calls the constructor of the object.
-      \param appendAttribs false to prevent initialization of default data.
+      \param user_data pre-allocated user data.
+      \param appendAttribs false to prevent initialization of default attributes.
+      \return The new instance of the Core Object.
    */
-   CoreObject *createInstance( bool appendAttribs = true ) const;
+   CoreObject *createInstance( void *user_data=0, bool appendAttribs = true ) const;
 
    const Item &constructor() const { return m_constructor; }
    Item &constructor() { return m_constructor; }
@@ -130,6 +153,16 @@ public:
    */
    void setAttributeList( AttribHandler *lst );
 
+   /** Returns the object manager used by this class.
+      Shortcut that gets the manager declared by the topmost reflective class.
+      \return the ObjectManager used for this class.
+   */
+   ObjectManager* getObjectManager() const { return m_manager; }
+
+   /** Sets  the object manager used by this class.
+      Used directly by the VM during the link phase.
+   */
+   void setObjectManager( ObjectManager *om ) { m_manager = om; }
 };
 
 }

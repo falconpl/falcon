@@ -19,6 +19,7 @@
 
 #include <falcon/module.h>
 #include <falcon/timestamp.h>
+#include <falcon/filestat.h>
 
 namespace Falcon {
 
@@ -323,6 +324,10 @@ FALCON_FUNC  TimeZone_getDisplacement ( ::Falcon::VMachine *vm );
 FALCON_FUNC  TimeZone_describe ( ::Falcon::VMachine *vm );
 FALCON_FUNC  TimeZone_getLocal ( ::Falcon::VMachine *vm );
 
+extern reflectionFuncDecl TimeStamp_timezone_rfrom;
+extern reflectionFuncDecl TimeStamp_timezone_rto;
+
+
 FALCON_FUNC  List_init ( ::Falcon::VMachine *vm );
 FALCON_FUNC  List_push ( ::Falcon::VMachine *vm );
 FALCON_FUNC  List_pop ( ::Falcon::VMachine *vm );
@@ -347,11 +352,25 @@ FALCON_FUNC  CmdlineParser_usage( ::Falcon::VMachine *vm );
 /** FileStat class */
 FALCON_FUNC FileReadStats ( ::Falcon::VMachine *vm ); // factory function
 FALCON_FUNC FileStat_readStats ( ::Falcon::VMachine *vm );
+// this thing is read only.
+extern reflectionFuncDecl FileStats_type_rfrom;
+extern reflectionFuncDecl FileStats_mtime_rfrom;
+extern reflectionFuncDecl FileStats_ctime_rfrom;
+extern reflectionFuncDecl FileStats_atime_rfrom;
 
 FALCON_FUNC  itemCopy( ::Falcon::VMachine *vm );
 
 /** Path class */
 FALCON_FUNC Path_init ( ::Falcon::VMachine *vm );
+extern reflectionFuncDecl Path_path_rfrom;
+extern reflectionFuncDecl Path_filename_rfrom;
+extern reflectionFuncDecl Path_file_rfrom;
+extern reflectionFuncDecl Path_extension_rfrom;
+
+extern reflectionFuncDecl Path_path_rto;
+extern reflectionFuncDecl Path_filename_rto;
+extern reflectionFuncDecl Path_file_rto;
+extern reflectionFuncDecl Path_extension_rto;
 
 /** URI class */
 FALCON_FUNC  URI_init ( ::Falcon::VMachine *vm );
@@ -359,10 +378,92 @@ FALCON_FUNC  URI_encode ( ::Falcon::VMachine *vm ); // static
 FALCON_FUNC  URI_decode ( ::Falcon::VMachine *vm ); // static
 FALCON_FUNC  URI_getFields ( ::Falcon::VMachine *vm );
 FALCON_FUNC  URI_setFields ( ::Falcon::VMachine *vm );
+extern reflectionFuncDecl URI_uri_rfrom;
+extern reflectionFuncDecl URI_uri_rto;
+
 
 /** Message table **/
 extern const wchar_t *message_table[];
 
+/** Class used to manage the file stats.
+   The FileStat reflection object provides three reflected timestamps
+   in its object body.
+
+   Although it is perfectly legal to:
+
+   # Create an instance of TimeStamp falcon core object each time a
+     reflected timestamp property is read; or
+
+   # Derive the manager from FalconManager setting needCacheData() to return true, and then
+     creating a TimeStamp reflected falcon object instance only the first time a TimeStamp
+     property is asked for; or
+
+   # Use the above method, but instead of reflecting the TimeStamp properties, setting them
+     read only and creating the cached items at object creation.
+
+   Those methods are sub-optimal, as they waste space. This object manager creates a class
+   meant to store the fsdata and the cached TimeStamp instances that will be served on request.
+
+   The cached TimeStamp items will hold a copy of Falcon::TimeStamp in them, so the FileStat
+   instance can be destroyed and its TimeStamp will be destroyed with it. Notice that it
+   would be possible to create object managers to use that instances directly, and keep alive
+   their owner, but TimeStamp is too small to bother about this.
+*/
+class FileStatManager: public ObjectManager
+{
+
+public:
+
+   class InnerData
+   {
+   public:
+      FileStat m_fsdata;
+      Item m_cache_atime;
+      Item m_cache_mtime;
+      Item m_cache_ctime;
+
+      InnerData();
+      InnerData( const InnerData &other );
+      ~InnerData();
+   };
+
+   FileStatManager() {}
+   virtual void *onInit( VMachine *vm );
+   virtual void onGarbageMark( VMachine *vm, void *data );
+   virtual void onDestroy( VMachine *vm, void *user_data );
+   virtual void *onClone( VMachine *vm, void *user_data );
+};
+
+
+/** Special manager for URI reflection. */
+class FALCON_DYN_CLASS URIManager: public ObjectManager
+{
+public:
+
+   // cache data is needed (not really needed, as we have non-read-only properties)
+   virtual bool needCacheData() const { return true; }
+
+   virtual void *onInit( VMachine *vm );
+   virtual void onDestroy( VMachine *vm, void *user_data );
+   virtual void *onClone( VMachine *vm, void *user_data );
+   virtual bool onObjectReflectTo( CoreObject *reflector, void *user_data );
+   virtual bool onObjectReflectFrom( CoreObject *reflector, void *user_data );
+};
+
+/** Special manager for URI reflection. */
+class FALCON_DYN_CLASS PathManager: public ObjectManager
+{
+public:
+
+   // cache data is needed (not really needed, as we have non-read-only properties)
+   virtual bool needCacheData() const { return true; }
+
+   virtual void *onInit( VMachine *vm );
+   virtual void onDestroy( VMachine *vm, void *user_data );
+   virtual void *onClone( VMachine *vm, void *user_data );
+   virtual bool onObjectReflectTo( CoreObject *reflector, void *user_data );
+   virtual bool onObjectReflectFrom( CoreObject *reflector, void *user_data );
+};
 
 
 }}

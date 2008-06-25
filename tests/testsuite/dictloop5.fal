@@ -25,7 +25,6 @@ for key, value in dict
 		continue dropping
 	end
 end
-success()
 
 if dict.len() != 3: failure( "third element removal - size" )
 

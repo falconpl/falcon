@@ -478,7 +478,8 @@ protected:
    void rotateContext();
 
    /** Service recursive function called by LinkClass to create a class. */
-   bool linkSubClass( LiveModule *mod , const Symbol *clssym, Map &props, AttribHandler **attribs );
+   bool linkSubClass( LiveModule *mod , const Symbol *clssym, Map &props,
+      AttribHandler **attribs, ObjectManager **manager );
 
    /** Passes current frame to the called item.
          Used by the PASS opcode, this element removes the local variables and
@@ -714,6 +715,115 @@ public:
       \return 0 time error, the internally built LiveModule instance on success.
    */
    LiveModule *link( Module *module, bool isMainModule=true );
+
+   /** Links a single symbol on an already existing live module.
+      This won't actually link instances and classes which must be post-processed.
+      \param sym The symbol to be linked.
+      \param lmod The live module where the symbol must go.
+      \return false if the link fails, true on success.
+   */
+   bool linkSymbol( Symbol *sym, LiveModule *lmod );
+
+   /** Try to link a dynamic symbol.
+
+      This method asks the modules that can provide dynamic symbols if they
+      are interested to serve us with a symbol for the given name. If so,
+      the symbol is linked, and a complete reference to its position (SymModule) is
+      returned.
+
+      The symbol needs not to be global to be exported this way. The providers may
+      return private symbols that will be used just in this occasion and won't enter
+      the global symbol map.
+
+      The method may raise any error that linkSymbolComplete may raise. The same
+      cares used for LinkSymbolComplete should be used.
+
+      \param name The symbol to be searched for.
+      \param symdata Coordinates of the linked symbol, on success.
+      \return true on success, false if the symbol is not found or if it was found
+         but couldn't be linked.
+   */
+   bool linkSymbolDynamic( const String &name, SymModule &symdata );
+
+   /** Links a class symbol.
+
+      Class symbols must be specially post-processed after all the other symbols
+      (including themselves) are pre-linked, so that cross references can be resolved.
+
+      This method preforms the creation of a CoreClass that will reside in the live
+      module passed as parameter.
+
+      In debug, an assert checks that the incoming symbol is a class. If dynamically
+      called, the caller should check that \b sym is a real class symbol.
+
+      \param sym The class symbol to be linked.
+      \param lmod The live module where the symbol must go.
+      \return false if the link fails, true on success.
+   */
+   bool linkClassSymbol( Symbol *sym, LiveModule *livemod );
+
+   /** Links a class instance.
+
+      Class instances are what is commonly called "Singleton objects", declared through
+      the "object" Falcon keyword.
+
+      Class instances must be specially post-processed after all the other symbols
+      and class declarations are pre-linked, so that cross references can be resolved.
+
+      This method preforms the creation of a CoreClass that will reside in the live
+      module passed as parameter.
+
+      In debug, an assert checks that the incoming symbol is a class. If dynamically
+      called, the caller should check that \b sym is a real class symbol.
+
+      \param sym The instance symbol to be linked.
+      \param lmod The live module where the symbol must go.
+      \return false if the link fails, true on success.
+   */
+   bool linkInstanceSymbol( Symbol *sym, LiveModule *livemod );
+
+   /** Constructs an instance calling its _init method if necessary.
+
+      Instance construction must be performed after all the items are pre-linked,
+      all the classes are formed and all the instances are set-up; in this way,
+      it is possible for object _init method to refer to other objects, even if
+      not yet initialized, as their structure is complete and coherent in the VM.
+
+      The VM may call either its own VM bytecode or external functions; calls are
+      performed in non-atomic mode. This means that this method should not be called
+      from functions executed by the VM, normally. If this is necessary, then
+      the call of this method must be surrounded by setting and resetting the
+      atomic mode.
+
+      \note Running in atomic mode doesn't mean "locking the VM"; the atomic mode is just a mode
+      in which the VM runs without switching coroutines, accepting sleep requests or
+      fulfilling suspension requests. Trying to suspend or prehempt the VM in atomic
+      mode raises an unblockable exception, terminating the current script (and leaving it
+      in a non-resumable status).
+
+      \param sym The class instance to be initialized.
+      \param lmod The live module where the symbol must go.
+      \return false if the link fails, true on success.
+   */
+   bool initializeInstance( Symbol *sym, LiveModule *livemod );
+
+   /** Links a symbol eventually performing class and instances initializations.
+
+      This method should be called when incrementally adding symbol once is knonw
+      that the classes and objects they refer to are (or should) be already linked
+      in the VM, in already existing live modules.
+
+      This is the case of dynamic symbol creation in flexy modules, where
+      the running scripts can create new symbols or invoke module actions that will
+      create symbols; this is perfectly legal, but in that case the created instance
+      will need to have everything prepared; cross references won't be resolved.
+
+      This also means that the caller willing to link completely a new instance symbol
+      must first link it's referenced class.
+
+      This method should run in atomic mode (see initializeInstance() ).
+   */
+   bool linkCompleteSymbol( Symbol *sym, LiveModule *livemod );
 
    /** Returns the main module, if it exists.
       Returns an instance of the LiveModule class, that is the local representation
@@ -1278,13 +1388,15 @@ public:
       The function also parses accessors as the "." dot operator or the [] array access
       operator, but it doesn't support range accessors or function calls.
 
-      The returned pointer is the place where the variable is physically stored.
+      As the value of object accessor may be synthezized on the fly, the method cannot
+      return a physical pointer; the value of the variable is flat-copied in the data
+      parameter.
 
-      If the variable cannot be found, 0 is returned.
-      \param name the variable to be found
-      \return the physical pointer to the variable storage, or 0 on failure.
+      \param name the variable to be found.
+      \param data where to store the value if found.
+      \return true if the value can be found, false otherwise.
    */
-   Item *findLocalVariable( const String &name ) const;
+   bool findLocalVariable( const String &name, Item &data ) const;
 
    /** Returns the value of a local variable.
       Similar to findLocalVariable(), but will return only the item coresponding to the

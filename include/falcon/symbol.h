@@ -21,11 +21,15 @@
 #include <falcon/symlist.h>
 #include <falcon/genericmap.h>
 #include <falcon/basealloc.h>
+#include <falcon/reflectfunc.h>
+#include <falcon/objectmanager.h>
+#include <falcon/fassert.h>
 
 namespace Falcon {
 
 class Symbol;
 class Stream;
+class ObjectManager;
 
 /** Variable initiqal value definition definition.
    This class holds the immediate values of properties of classes and objects,
@@ -54,22 +58,28 @@ public:
       t_symbol,
       t_base,
       t_reference,
-      t_reflective
+      t_reflective,
+      t_reflectFunc,
    } t_type;
 private:
    t_type m_val_type;
-
-   struct t_reflect {
-      int16 offset;
-      int16 size;
-      bool isSigned;
-   };
+   bool m_bReadOnly;
 
    union {
       bool val_bool;
       uint64 val_int;
-      struct t_reflect val_reflect;
       numeric val_num;
+
+      struct {
+         t_reflection mode;
+         uint32 offset;
+      } val_reflect;
+
+      struct {
+         reflectionFunc from;
+         reflectionFunc to;
+      } val_rfunc;
+
       const String *val_str;
       const Symbol *val_sym;
    } m_value;
@@ -77,144 +87,127 @@ private:
 public:
 
    VarDef():
-      m_val_type(t_nil)
+      m_val_type(t_nil),
+      m_bReadOnly( false )
    {}
 
    explicit VarDef( bool val ):
-      m_val_type(t_bool)
+      m_val_type(t_bool),
+      m_bReadOnly( false )
    {
       m_value.val_bool = val;
    }
 
    VarDef( int64 val ):
-      m_val_type(t_int)
+      m_val_type(t_int),
+      m_bReadOnly( false )
    {
       m_value.val_int = val;
    }
 
    VarDef( numeric val ):
-      m_val_type(t_num)
+      m_val_type(t_num),
+      m_bReadOnly( false )
    {
       m_value.val_num = val;
    }
 
    VarDef( const String *str ):
-      m_val_type(t_string)
+      m_val_type(t_string),
+      m_bReadOnly( false )
    {
       m_value.val_str = str;
    }
 
    VarDef( const Symbol *sym ):
-      m_val_type( t_symbol )
+      m_val_type( t_symbol ),
+      m_bReadOnly( false )
    {
       m_value.val_sym = sym;
    }
 
    VarDef( t_type t, const Symbol *sym ):
-      m_val_type( t )
+      m_val_type( t ),
+      m_bReadOnly( false )
    {
       m_value.val_sym = sym;
    }
 
    VarDef( t_type t, int64 iv ):
-      m_val_type(t)
+      m_val_type(t),
+      m_bReadOnly( false )
    {
       m_value.val_int = iv;
    }
 
-   t_type type() const { return m_val_type; }
-   void setNil() { m_val_type = t_nil; }
-   void setBool( bool val ) { m_val_type = t_bool; m_value.val_bool = val; }
-   void setInteger( uint64 val ) { m_val_type = t_int; m_value.val_int = val; }
-   void setString( const String *str ) { m_val_type = t_string; m_value.val_str = str; }
-   void setSymbol( const Symbol *sym ) { m_val_type = t_symbol; m_value.val_sym = sym; }
-   void setNumeric( numeric val ) { m_val_type = t_num; m_value.val_num = val; }
-   void setBaseClass( const Symbol *sym ) { m_val_type = t_base; m_value.val_sym = sym; }
-   void setReference( const Symbol *sym ) { m_val_type = t_reference; m_value.val_sym = sym; }
-
-   /** Declares this vardef to be reflective.
-      This means this vardef is relative to a C or C++ structure that
-      can be directly filled, or that can fill directly, data from
-      and to CoreObjects instances.
-
-      VarDefs may represent class properties. When the class defined
-      by the vardefs is istantiated, the reflectivity information
-      passes to the properties in the final core object, and they
-      can be used to transfer automatically data to and from
-      C structures through CoreObject::configureFrom() and
-      CoreObject::configureTo().
-
-      Example:
-
-      \code
-         Symbol *someClass = self->addClass( "SomeClass" );
-         someClass->setWKS( true );
-         some_c_structure cstruct;
-
-         self->addClassProperty( someClass, "field1" )->
-            setReflective( (uint16)(&cstruct.field1 - &cstruct), // offset of the field
-            sizeof( cstruct.field1 ), // size of the field; 1,2,4 or 8 bytes
-            true ); //signed or unsigned data.
-
-         // ... later on, in the program...
-         // when the application wants to pass the data to a falcon program:
-
-         CoreObject *BuildFalconObjectFromStruct( VMachine *vm, const some_c_structure &cstruct )
-         {
-            CoreClass *cls = vm->findWKI( "SomeClass" );
-            CoreObject *myobject = cls->createInstance();
-            myobject->configureFrom( &cstruct );
-            return myobject;
-         }
-
-         // And when we want to read back the data...
-
-         void ReadBackData( some_c_structure &cstruct, CoreObject *co );
-         {
-            co->configureTo( &cstruct );
-         }
-      \endcode
-
-      \param offset distance from base data of the reflective data
-      \param size size of reflective binary data
-      \param is True is signed, false if signed.
-   */
-   void setReflective( uint16 offset, uint16 size, bool is = false ) {
-      m_val_type = t_reflective;
-      m_value.val_reflect.offset = offset;
-      m_value.val_reflect.size = size;
-      m_value.val_reflect.isSigned = is;
+   VarDef( reflectionFunc rfrom, reflectionFunc rto=0 ):
+      m_val_type( t_reflectFunc ),
+      m_bReadOnly( rto==0 )
+   {
+      m_value.val_rfunc.from = rfrom;
+      m_value.val_rfunc.to = rto;
    }
 
-   /** Declares this vardef to be reflective.
-      This is just a shortcut that calculates the offset distance between
-      the data (base address) and the dest (field address).
-
-      So, it actually calls setReflective( uint16, uint16, bool ),
-      passing (dest - data) as offset.
-      Example:
-      \code
-         Symbol *someClass = self->addClass( "SomeClass" );
-
-         some_c_structure cstruct;
-
-         self->addClassProperty( someClass, "field1" )->
-            setReflective( &cstruct,         // base address of a structure
-                           &cstruct.field1,  // position of the field in that structure
-                           sizeof( cstruct.field1 ), // size of the field; 1,2,4 or 8 bytes
-                           true ); //signed or unsigned data.
-      \endcode
-
-      \param data base data address for the reflective field
-      \param dest address of a field in the structure
-      \param size size of reflective binary data
-      \param is true is signed, false if signed.
-   */
-   void setReflective( void *data, void *dest, uint16 size, bool is = false )
+   VarDef( t_reflection mode, uint32 offset ):
+      m_val_type( t_reflective ),
+      m_bReadOnly( false )
    {
-      byte *p1 = (byte *) data;
-      byte *p2 = (byte *) dest;
-      setReflective( (uint16) (p2 - p1), size, is );
+      m_value.val_reflect.mode = mode;
+      m_value.val_reflect.offset = offset;
+   }
+
+   t_type type() const { return m_val_type; }
+
+   /** Describes this property as nil.
+      \return a reference to this instance, for variable parameter initialization idiom.
+   */
+   VarDef& setNil() { m_val_type = t_nil; return *this; }
+   VarDef& setBool( bool val ) { m_val_type = t_bool; m_value.val_bool = val; return *this;}
+   VarDef& setInteger( uint64 val ) { m_val_type = t_int; m_value.val_int = val; return *this;}
+   VarDef& setString( const String *str ) { m_val_type = t_string; m_value.val_str = str; return *this; }
+   VarDef& setSymbol( const Symbol *sym ) { m_val_type = t_symbol; m_value.val_sym = sym; return *this;}
+   VarDef& setNumeric( numeric val ) { m_val_type = t_num; m_value.val_num = val; return *this;}
+   VarDef& setBaseClass( const Symbol *sym ) { m_val_type = t_base; m_value.val_sym = sym; return *this;}
+   VarDef& setReference( const Symbol *sym ) { m_val_type = t_reference; m_value.val_sym = sym; return *this;}
+
+   /** Describes this property as reflective.
+      \return a reference to this instance, for variable parameter initialization idiom.
+   */
+   VarDef &setReflectFunc( reflectionFunc rfrom, reflectionFunc rto=0 ) {
+      m_val_type = t_reflectFunc;
+      m_bReadOnly = rto == 0;
+      m_value.val_rfunc.from = rfrom;
+      m_value.val_rfunc.to = rto;
+      return *this;
+   }
+
+   /** Describes this property as reflective.
+      \return a reference to this instance, for variable parameter initialization idiom.
+   */
+   VarDef &setReflective( t_reflection mode, uint32 offset )
+   {
+      m_val_type = t_reflective;
+      m_value.val_reflect.mode = mode;
+      m_value.val_reflect.offset = offset;
+      return *this;
+   }
+
+   /** Describes this property as reflective.
+      Shortcut calculating the offset given a sample structure and a field in that.
+      \return a reference to this instance, for variable parameter initialization idiom.
+   */
+   VarDef& setReflective( t_reflection mode, void *base, void *position )
+   {
+      return setReflective( mode, static_cast<uint32>(
+         static_cast<char *>(position) - static_cast<char *>(base)) );
+   }
+
+   /** Describes this property as reflective.
+      \return a reference to this instance, for variable parameter initialization idiom.
+   */
+   VarDef& setReadOnly( bool ro ) {
+      m_bReadOnly = ro;
+      return *this;
    }
 
 
@@ -223,9 +216,10 @@ public:
    const String *asString() const { return m_value.val_str; }
    const Symbol *asSymbol() const { return m_value.val_sym; }
    numeric asNumeric() const { return m_value.val_num; }
-   int16 asReflectiveOffset() { return m_value.val_reflect.offset; }
-   int16 asReflectiveSize() { return m_value.val_reflect.size; }
-   bool asReflectiveIsSigned() { return m_value.val_reflect.isSigned; }
+   reflectionFunc asReflectFuncFrom() const { return m_value.val_rfunc.from; }
+   reflectionFunc asReflectFuncTo() const { return m_value.val_rfunc.to; }
+   t_reflection asReflecMode() const { return m_value.val_reflect.mode; }
+   uint32 asReflecOffset() const { return m_value.val_reflect.offset; }
 
    bool isNil() const { return m_val_type == t_nil; }
    bool isBool() const { return m_val_type == t_bool; }
@@ -236,6 +230,8 @@ public:
    bool isBaseClass() const { return m_val_type == t_base; }
    bool isReference() const { return m_val_type == t_reference; }
    bool isReflective() const { return m_val_type == t_reflective; }
+   bool isReflectFunc() const { return m_val_type == t_reflectFunc; }
+   bool isReadOnly() const { return m_bReadOnly; }
 
    bool save( Stream *out ) const;
    bool load( Module *mod, Stream *in );
@@ -250,16 +246,56 @@ class FALCON_DYN_CLASS ExtFuncDef: public BaseAlloc
    /** Function. */
    ext_func_t m_func;
 
+   /** Extra data.
+      \see extra()
+   */
+   void *m_extra;
+
 public:
    ExtFuncDef( ext_func_t func ):
-      m_func( func )
+      m_func( func ),
+      m_extra( 0 )
+   {}
+
+   /** Crates this definition setting extra data.
+      \see extra()
+   */
+   ExtFuncDef( ext_func_t func, void *extra ):
+      m_func( func ),
+      m_extra( extra )
    {}
 
    /** Call this function.
       Will crash if function is not an external function.
    */
    void call( VMachine *vm ) const { m_func( vm ); }
+
+    /** Call this function.
+   */
    void operator()( VMachine *vm ) const { call( vm ); }
+
+   /** Gets extra data.
+      \see void extra( void *)
+   */
+   void *extra() const { return m_extra; }
+
+   /** Sets extra data for this function call.
+
+      This extra data is useful to create flexible reflected calls.
+      The ext_func_t gets called with the VM data; it can then
+      decode the VM data and prepare it accordingly to m_extra,
+      and finally call mextra. This allows to reuse a single
+      ext_func_t in m_func to call different bound function.
+
+      This item doesn't own m_extra; the data must be held
+      in the same module in which this function exists (or in the
+      application where this module is run), and
+      must stay valid for all the time this function stays valid.
+
+      Extra data will be available to m_func through VMachine::symbol(),
+      which will return the symbol containig this funcdef.
+   */
+   void extra( void *e )  { m_extra = e; }
 };
 
 /** Implements a callable symbol.
@@ -386,6 +422,7 @@ public:
 };
 
 /** Class symbol abstraction.
+
    A class symbol has multiple lives: it looks like a function, and if used
    as a function it has the effect to create an object instance. The class
    constructor is in fact the "function" held by the symbol. Other than
@@ -393,6 +430,12 @@ public:
    and functions (methods), other than the local + params symbol table as
    any other callable. Finally, the ClassSymbol holds a vector of direct
    parent pointers, each of which being a ClassSymbol.
+
+   Class symbols can be "reflective". They can be linked with a "user data manager" or
+   "ObjectManager" which creates, destroys and manages externally provided data for the objects.
+
+   As reflection status cannot be properly serialized (atm), only user-provided and binary
+   modules can declare reflective classes.
 */
 class FALCON_DYN_CLASS ClassDef: public FuncDef
 {
@@ -438,9 +481,59 @@ private:
    /** Startup hasnt */
    SymbolList m_hasnt;
 
+   /** Object manager used by this class.
+      If this class is reflective it NEEDS to set up an object manager that
+      will handle the reflective data provided by the external program.
+
+      Reflective class cannot be extended from more than another reflective
+      class. It's impossible to link two different reflective classes in the
+      same subclass.
+   */
+   ObjectManager *m_manager;
+
 public:
-   ClassDef( uint32 offset=0, Symbol *ext_ctor=0 );
+   /** Creates a class definition without a constructor.
+      This constructor creates a class definition for those classes which doesn't
+      require an "init" method declared at Falcon level, nor an external C method
+      used to provide an "init" feature.
+
+      \param manager The object manager used to manipulate externally provided user_data of this class;
+         if not provided, this class will be fully non-reflexive (and providing some vardef
+         with reflexivity enabled will lead to undefined results).
+   */
+   ClassDef( ObjectManager *manager=0 );
+
+   /** Creates the definition of this class with a Falcon constructor.
+
+      This constructor creates a class that has an init method in Falcon code.
+      The offset is the position of the init method in the module code.
+
+      \param offset the start offset of the constructor, if this class as a Falcon code constructor.
+      \param manager The object manager used to manipulate externally provided user_data of this class;
+         if not provided, this class will be fully non-reflexive (and providing some vardef
+         with reflexivity enabled will lead to undefined results).
+   */
+   ClassDef( uint32 offset, ObjectManager *manager=0 );
+
+   /** Creates the definition of this class an external constructor.
+
+      This constructor creates a class that has an init method provided by an
+      external symbol (a C function).
+
+      \param offset the start offset of the constructor, if this class as a Falcon code constructor.
+      \param manager The object manager used to manipulate externally provided user_data of this class;
+         if not provided, this class will be fully non-reflexive (and providing some vardef
+         with reflexivity enabled will lead to undefined results).
+   */
+   ClassDef( Symbol *ext_ctor, ObjectManager *manager=0 );
    ~ClassDef();
+
+   /** Declares an object manager for this class.
+      The instance of the object manager should be allocated in the user
+      application or in the binary modules. The classes never dispose
+      them.
+   */
+   void setObjectManager( ObjectManager *om ) { m_manager = om; }
 
    const Map &properties() const { return m_properties; }
    /** Return a updateable version of the property map. */
@@ -528,6 +621,59 @@ public:
 
    /** Returns true if one of the base classes of this one has the given name. */
    bool inheritsFrom( const String &find_name ) const;
+
+   /** Returns the object manager used by this class.
+      If this class has an object manager, then is a "reflective class", and can
+      handle dynamically objects (create and destroy them).
+
+      See the object manager for further details.
+   */
+   ObjectManager *getObjectManager() const { return m_manager; }
+
+   /** Set this ClassDef as using a UserData reflection model.
+      This method sets int this class definition the UserData ObjectManager,
+      which is meant to provide set/get properties callbacks.
+
+      This means that all the instances of this class should receive a
+      UserData in the user-provided init method. It is legal to give or
+      set 0 as the user data at any point in the lifetime of the class.
+
+      \see UserData
+      \see UserDataManager
+
+      \note This is a shortcut to setting Falcon::core_user_data_cacheful as the
+         object manager for this class.
+   */
+   void carryUserData();
+
+   /** Set this ClassDef as using a UserData (without cache) reflection model.
+      This method sets int this class definition the UserData ObjectManager,
+      which is meant to provide set/get properties callbacks.
+
+      This means that all the instances of this class should receive a
+      UserData in the user-provided init method. It is legal to give or
+      set 0 as the user data at any point in the lifetime of the class.
+
+      \see UserData
+      \see UserDataManager
+
+      \note This is a shortcut to setting Falcon::core_user_data_cacheless as the
+         object manager for this class.
+
+      This version of the method prevents the final class to have a local cache.
+      This means that 1) either the class don't need a location where to store
+      temporarily created Falcon items or 2) the class provides a cache for some
+      property internally.
+   */
+   void carryUserDataCacheless();
+
+   /** Sets this class as carrying falcon data.
+      FalconData reflective model is lighter than UserData model, and is
+      used internally by the engine to reflect classes more precisely.
+      \see FalconData
+      \see FalconDataManager
+   */
+   void carryFalconData();
 };
 
 /** Representation of a VM symbol
@@ -813,6 +959,26 @@ public:
 
    void declaredAt( int32 line ) { m_lineDecl = line; }
    int32 declaredAt() const { return m_lineDecl; }
+
+   /** Shortcut to ClassDef::carryUserData. */
+   void carryUserData() {
+      fassert( isClass() );
+      getClassDef()->carryUserData();
+   }
+
+   /** Shortcut to ClassDef::carryUserDataCacheless
+   */
+   void carryUserDataCacheless() {
+      fassert( isClass() );
+      getClassDef()->carryUserDataCacheless();
+   }
+
+   /** Shortcut to ClassDef::carryFalconData
+   */
+   void carryFalconData(){
+      fassert( isClass() );
+      getClassDef()->carryFalconData();
+   }
 };
 
 

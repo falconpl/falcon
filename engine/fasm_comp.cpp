@@ -546,7 +546,7 @@ void AsmCompiler::addClass( Pseudo *val, Pseudo *line, bool exp )
    else {
       Symbol *sym = m_module->addSymbol( val->asString() );
       // function is not yet defined.
-      sym->setClass( new ClassDef( 0, 0 ) );
+      sym->setClass( new ClassDef );
       sym->exported( exp );
       m_module->addGlobalSymbol( sym )->declaredAt( (int32) line->asInt() );
    }
@@ -617,7 +617,7 @@ void AsmCompiler::addClassDef( Pseudo *val, bool exp )
    else {
       // pseudo strings for symbols are already defined in the module.
       sym = m_module->addSymbol( val->asString() );
-      sym->setClass( new ClassDef( (uint32) m_out->tell(), 0 ) );
+      sym->setClass( new ClassDef( (uint32) m_out->tell() ) );
       sym->exported( exp );
       m_module->addGlobalSymbol( sym );
    }

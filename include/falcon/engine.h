@@ -58,6 +58,7 @@
 
 // main VM and helpers
 #include <falcon/module.h>
+#include <falcon/flexymodule.h>
 #include <falcon/vm.h>
 
 // Environmental support
@@ -75,6 +76,10 @@
 
 // Engine dll and initialization
 #include <falcon/enginedata.h>
+
+// Falcon specific object user_data
+#include <falcon/falcondata.h>
+#include <falcon/userdata.h>
 
 #endif
 

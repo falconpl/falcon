@@ -302,7 +302,7 @@ void AttribIterator::notifyDeletion( AttribObjectHandler *deleted )
 }
 
 
-UserData *AttribIterator::clone() const
+FalconData *AttribIterator::clone() const
 {
    if ( m_attrib == 0 )
    {

@@ -139,7 +139,7 @@ public:
    */
    void setError( int64 errorCode );
 
-   virtual UserData *clone() const;
+   virtual FalconData *clone() const;
 };
 
 class FALCON_DYN_CLASS FileStream: public GenericStream
