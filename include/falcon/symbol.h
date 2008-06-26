@@ -78,6 +78,7 @@ private:
       struct {
          reflectionFunc from;
          reflectionFunc to;
+         void *data;
       } val_rfunc;
 
       const String *val_str;
@@ -171,13 +172,26 @@ public:
    VarDef& setReference( const Symbol *sym ) { m_val_type = t_reference; m_value.val_sym = sym; return *this;}
 
    /** Describes this property as reflective.
+      This ValDef defines a property that will have user functions called when the VM wants
+      to set or get a property.
+
+      It is also possible to define an extra reflective data, that should be alive during the
+      lifespan of the module defining it, that will be passed back to the property set/get callback
+      functions as the \a PropEntry::reflect_data property of the "entry" parameter.
+
+      \param rfrom Function that gets called when the property is \b set \b from an external source.
+      \param rto Function that gets called when the property is \b read and then stored \b to the external
+         source; set to 0 to have a read-only reflective property.
+      \param reflect_data a pointer that will be passed as a part of the entry structure in the callback
+             method.
       \return a reference to this instance, for variable parameter initialization idiom.
    */
-   VarDef &setReflectFunc( reflectionFunc rfrom, reflectionFunc rto=0 ) {
+   VarDef &setReflectFunc( reflectionFunc rfrom, reflectionFunc rto=0, void *reflect_data = 0 ) {
       m_val_type = t_reflectFunc;
       m_bReadOnly = rto == 0;
       m_value.val_rfunc.from = rfrom;
       m_value.val_rfunc.to = rto;
+      m_value.val_rfunc.data = reflect_data;
       return *this;
    }
 
@@ -218,6 +232,7 @@ public:
    numeric asNumeric() const { return m_value.val_num; }
    reflectionFunc asReflectFuncFrom() const { return m_value.val_rfunc.from; }
    reflectionFunc asReflectFuncTo() const { return m_value.val_rfunc.to; }
+   void* asReflectFuncData() const { return m_value.val_rfunc.data; }
    t_reflection asReflecMode() const { return m_value.val_reflect.mode; }
    uint32 asReflecOffset() const { return m_value.val_reflect.offset; }
 

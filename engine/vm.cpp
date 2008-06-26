@@ -791,6 +791,7 @@ PropertyTable *VMachine::createClassTemplate( LiveModule *lmod, const Map &pt )
          e.m_eReflectMode = e_reflectFunc;
          e.m_reflection.rfunc.to = vd->asReflectFuncTo();
          e.m_reflection.rfunc.from = vd->asReflectFuncFrom();
+         e.reflect_data = vd->asReflectFuncData();
 
          // just to be paranoid
          if( e.m_reflection.rfunc.to == 0 )
