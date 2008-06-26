@@ -27,11 +27,53 @@
 #include <falcon/basealloc.h>
 #include <falcon/reflectfunc.h>
 
+
 namespace Falcon
 {
 
 class ObjectManager;
 class CoreObject;
+
+/** Descriptor of single property.
+* This structure descrbes the contents of a single property;
+* It also stores all the data needed for reflection.
+*/
+struct PropEntry
+{
+   /** Name of this property */
+   const String *m_name;
+
+   /** True if this property is read-only */
+   bool m_bReadOnly;
+
+   /** Reflection mode. */
+   t_reflection m_eReflectMode;
+
+   /** Module-specific property reflection data */
+   void *reflect_data;
+
+   /** Default value of the property */
+   Item m_value;
+
+   union {
+      uint32 offset;
+      struct {
+         reflectionFunc to;
+         reflectionFunc from;
+      } rfunc;
+   } m_reflection;
+
+   /** Reflects a single property
+      Item -> user_data
+   */
+   void reflectTo( CoreObject *instance, void *user_data, const Item &prop ) const;
+
+   /** Reflects a single property.
+      user_data -> Item
+   */
+   void  reflectFrom( CoreObject *instance, void *user_data, Item &prop ) const;
+};
+
 
 /** Very simple double entry table for pure properties.
 
@@ -74,35 +116,7 @@ public:
    uint32 m_added;
    bool m_bReflective;
    bool m_bStatic;
-
-   class Entry {
-   public:
-      const String *m_key;
-      Item m_value;
-
-      bool m_bReadOnly;
-      t_reflection m_eReflectMode;
-
-      union {
-         uint32 offset;
-         struct {
-            reflectionFunc to;
-            reflectionFunc from;
-         } rfunc;
-      } m_reflection;
-
-      /** Reflects a single property
-         Item -> user_data
-      */
-      void reflectTo( CoreObject *instance, const Item &prop, void *user_data ) const;
-
-      /** Reflects a single property.
-         user_data -> Item
-      */
-      void  reflectFrom( CoreObject *instance, void *user_data, Item &prop ) const;
-   };
-
-   Entry *m_entries;
+   PropEntry *m_entries;
 
 public:
 
@@ -121,19 +135,19 @@ public:
 
    bool findKey( const String &key, uint32 &pos ) const;
 
-   Entry &getEntry( uint32 pos ) { return m_entries[pos]; }
-   const Entry &getEntry( uint32 pos ) const { return m_entries[pos]; }
+   PropEntry &getEntry( uint32 pos ) { return m_entries[pos]; }
+   const PropEntry &getEntry( uint32 pos ) const { return m_entries[pos]; }
 
    Item *getValue( uint32 pos ) { return &m_entries[ pos ].m_value; }
    const Item *getValue( uint32 pos ) const { return &m_entries[ pos ].m_value; }
-   const String *getKey( uint32 pos ) const { return m_entries[pos].m_key; }
+   const String *getKey( uint32 pos ) const { return m_entries[pos].m_name; }
 
-   Entry &append( const String *key );
+   PropEntry &append( const String *name );
 
    bool append( const String *key, const Item &itm, bool bReadOnly = false )
    {
       if ( m_added <= m_size ) {
-         Entry e = append( key );
+         PropEntry e = append( key );
          e.m_value = itm;
          e.m_bReadOnly = bReadOnly;
          e.m_eReflectMode = e_reflectNone;
@@ -146,7 +160,7 @@ public:
    bool append( const String *key, const Item &itm, t_reflection mode, uint32 offset, bool bReadOnly = false )
    {
       if ( m_added <= m_size ) {
-         Entry e = append( key );
+         PropEntry e = append( key );
          e.m_value = itm;
          e.m_bReadOnly = bReadOnly;
          e.m_eReflectMode = mode;
@@ -160,7 +174,7 @@ public:
    bool append( const String *key, const Item &itm, reflectionFunc func_from, reflectionFunc func_to = 0 )
    {
       if ( m_added <= m_size ) {
-         Entry e = append( key );
+         PropEntry e = append( key );
          e.m_value = itm;
          e.m_bReadOnly = func_to == 0;
          e.m_eReflectMode = e_reflectFunc;
@@ -173,17 +187,17 @@ public:
    }
 
 
-   Entry &appendSafe( const String *key  )
+   PropEntry &appendSafe( const String *key  )
    {
-      m_entries[m_added].m_key = key;
-      Entry *ret = m_entries + m_added;
+      m_entries[m_added].m_name = key;
+      PropEntry *ret = m_entries + m_added;
       m_added++;
       return *ret;
    }
 
    void appendSafe( const String *key, const Item &itm, bool bReadOnly = false  )
    {
-      m_entries[m_added].m_key = key;
+      m_entries[m_added].m_name = key;
       m_entries[m_added].m_value = itm;
       m_entries[m_added].m_bReadOnly = bReadOnly;
       m_entries[m_added].m_eReflectMode = e_reflectNone;
@@ -192,7 +206,7 @@ public:
 
    void appendSafe( const String *key, const Item &itm, t_reflection mode, uint32 offset, bool bReadOnly = false  )
    {
-      m_entries[m_added].m_key = key;
+      m_entries[m_added].m_name = key;
       m_entries[m_added].m_value = itm;
       m_entries[m_added].m_bReadOnly = bReadOnly;
       m_entries[m_added].m_eReflectMode = mode;
@@ -202,7 +216,7 @@ public:
 
    void appendSafe( const String *key, const Item &itm, reflectionFunc func_from, reflectionFunc func_to = 0  )
    {
-      m_entries[m_added].m_key = key;
+      m_entries[m_added].m_name = key;
       m_entries[m_added].m_value = itm;
       m_entries[m_added].m_bReadOnly = func_to == 0;
       m_entries[m_added].m_eReflectMode = e_reflectFunc;

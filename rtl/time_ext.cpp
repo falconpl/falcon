@@ -658,13 +658,13 @@ FALCON_FUNC  TimeZone_getLocal ( ::Falcon::VMachine *vm )
 //================================================
 // Reflection
 //
-void TimeStamp_timezone_rfrom(CoreObject *instance, void *user_data, Item &property )
+void TimeStamp_timezone_rfrom(CoreObject *instance, void *user_data, Item &property, const PropEntry& )
 {
    TimeStamp *ts = static_cast<TimeStamp *>(user_data);
    property = (int64) ts->m_timezone;
 }
 
-void TimeStamp_timezone_rto(CoreObject *instance, void *user_data, Item &property )
+void TimeStamp_timezone_rto(CoreObject *instance, void *user_data, Item &property, const PropEntry& )
 {
    TimeStamp *ts = static_cast<TimeStamp *>(user_data);
    ts->m_timezone = (TimeZone)(property.forceInteger()%32);

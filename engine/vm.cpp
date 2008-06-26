@@ -776,7 +776,7 @@ PropertyTable *VMachine::createClassTemplate( LiveModule *lmod, const Map &pt )
       VarDef *vd = vdmod->vd;
 
       String *key = *(String **) iter.currentKey();
-      PropertyTable::Entry &e = table->appendSafe( key );
+      PropEntry &e = table->appendSafe( key );
 
       e.m_bReadOnly = vd->isReadOnly();
 

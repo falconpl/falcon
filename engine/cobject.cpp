@@ -101,7 +101,7 @@ void CoreObject::setPropertyAt( uint32 pos, const Item &value )
    const PropertyTable &pt = m_generatedBy->properties();
 
    //Ok, we found the property, but what should we do with that?
-   const PropertyTable::Entry &entry = pt.getEntry( pos );
+   const PropEntry &entry = pt.getEntry( pos );
    ObjectManager *mngr = m_generatedBy->getObjectManager();
 
    // can we write it?
@@ -113,12 +113,12 @@ void CoreObject::setPropertyAt( uint32 pos, const Item &value )
    {
       fassert( m_user_data != 0 );
 
-      entry.reflectTo( this, value, m_user_data );
+      entry.reflectTo( this, m_user_data, value );
       // remember to cache the value.
    }
    else if ( mngr != 0 && mngr->hasClassReflection() )
    {
-      mngr->onSetProperty( this, m_user_data, *entry.m_key, value );
+      mngr->onSetProperty( this, m_user_data, *entry.m_name, value );
    }
 
    if ( m_cache != 0 ) {
@@ -159,7 +159,7 @@ void CoreObject::getPropertyAt( uint32 pos, Item &ret )
    fassert( pos < pt.added() );
 
    //Ok, we found the property, but what should we do with that?
-   const PropertyTable::Entry &entry = pt.getEntry( pos );
+   const PropEntry &entry = pt.getEntry( pos );
    ObjectManager *mngr = m_generatedBy->getObjectManager();
 
    if ( m_cache != 0 )
@@ -174,7 +174,7 @@ void CoreObject::getPropertyAt( uint32 pos, Item &ret )
       }
       else if ( mngr != 0 && mngr->hasClassReflection() )
       {
-         mngr->onGetProperty( this, m_user_data, *entry.m_key, cached );
+         mngr->onGetProperty( this, m_user_data, *entry.m_name, cached );
       }
 
       ret = cached;
@@ -189,7 +189,7 @@ void CoreObject::getPropertyAt( uint32 pos, Item &ret )
       }
       else if ( mngr != 0 && mngr->hasClassReflection() )
       {
-         mngr->onGetProperty( this, m_user_data, *entry.m_key, ret );
+         mngr->onGetProperty( this, m_user_data, *entry.m_name, ret );
       }
    }
 
@@ -265,7 +265,7 @@ void CoreObject::reflectFrom( void *user_data )
 
    for ( uint32 i = 0; i < pt.added(); i ++ )
    {
-      const PropertyTable::Entry &entry = pt.getEntry(i);
+      const PropEntry &entry = pt.getEntry(i);
       if( entry.m_eReflectMode != e_reflectNone )
       {
          entry.reflectFrom( this, user_data, m_cache[i] );
@@ -287,10 +287,10 @@ void CoreObject::reflectTo( void *user_data )
 
    for ( uint32 i = 0; i < pt.added(); i ++ )
    {
-      const PropertyTable::Entry &entry = pt.getEntry(i);
+      const PropEntry &entry = pt.getEntry(i);
       if( entry.m_eReflectMode != e_reflectNone )
       {
-         entry.reflectTo( this, m_cache[i], user_data );
+         entry.reflectTo( this, user_data, m_cache[i] );
       }
    }
 }

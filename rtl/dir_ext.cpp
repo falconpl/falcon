@@ -1196,7 +1196,7 @@ void Path_path_rfrom(CoreObject *instance, void *user_data, Item &property )
       property = new GarbageString( instance->origin(), path.get() );
 }
 
-void Path_path_rto(CoreObject *instance, void *user_data, Item &property )
+void Path_path_rto(CoreObject *instance, void *user_data, Item &property, const PropEntry& )
 {
    Path &path = *static_cast<Path *>( user_data );
 
@@ -1213,7 +1213,7 @@ void Path_path_rto(CoreObject *instance, void *user_data, Item &property )
 }
 
 // Reflective URI method
-void Path_filename_rfrom(CoreObject *instance, void *user_data, Item &property )
+void Path_filename_rfrom(CoreObject *instance, void *user_data, Item &property, const PropEntry& )
 {
    Path &path = *static_cast<Path *>( user_data );
    FALCON_REFLECT_STRING_FROM( (&path), getFilename );
@@ -1235,13 +1235,13 @@ void Path_filename_rto(CoreObject *instance, void *user_data, Item &property )
 }
 
 // Reflective path method
-void Path_file_rfrom(CoreObject *instance, void *user_data, Item &property )
+void Path_file_rfrom(CoreObject *instance, void *user_data, Item &property, const PropEntry& )
 {
    Path &path = *static_cast<Path *>( user_data );
    FALCON_REFLECT_STRING_FROM( (&path), getFile );
 }
 
-void Path_file_rto(CoreObject *instance, void *user_data, Item &property )
+void Path_file_rto(CoreObject *instance, void *user_data, Item &property, const PropEntry& )
 {
    Path &path = *static_cast<Path *>( user_data );
    // We're setting the path, that is, the property has been written.
@@ -1256,13 +1256,13 @@ void Path_file_rto(CoreObject *instance, void *user_data, Item &property )
 }
 
 // Reflective path method
-void Path_extension_rfrom(CoreObject *instance, void *user_data, Item &property )
+void Path_extension_rfrom(CoreObject *instance, void *user_data, Item &property, const PropEntry& )
 {
    Path &path = *static_cast<Path *>( user_data );
    FALCON_REFLECT_STRING_FROM( (&path), getExtension );
 }
 
-void Path_extension_rto(CoreObject *instance, void *user_data, Item &property )
+void Path_extension_rto(CoreObject *instance, void *user_data, Item &property, const PropEntry& )
 {
    Path &path = *static_cast<Path *>( user_data );
    // We're setting the path, that is, the property has been written.

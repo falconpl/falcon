@@ -151,7 +151,7 @@ bool URIManager::onObjectReflectFrom( CoreObject *reflector, void *user_data )
 }
 
 // Reflective URI method
-void URI_uri_rfrom(CoreObject *instance, void *user_data, Item &property )
+void URI_uri_rfrom(CoreObject *instance, void *user_data, Item &property, const PropEntry& )
 {
    URI &uri = *static_cast<URI *>( user_data );
    instance->reflectTo( user_data );
@@ -161,7 +161,7 @@ void URI_uri_rfrom(CoreObject *instance, void *user_data, Item &property )
 
 
 // Reflective URI method
-void URI_uri_rto(CoreObject *instance, void *user_data, Item &property )
+void URI_uri_rto(CoreObject *instance, void *user_data, Item &property, const PropEntry& )
 {
    URI &uri = *static_cast<URI *>( user_data );
 

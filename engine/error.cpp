@@ -541,31 +541,31 @@ Error *Error::clone() const
 
 namespace core {
 
-void Error_code_rfrom( CoreObject *instance, void *userData, Item &property )
+void Error_code_rfrom( CoreObject *instance, void *userData, Item &property, const PropEntry& )
 {
    Error *error = static_cast<Error *>(userData);
    FALCON_REFLECT_INTEGER_FROM( error, errorCode );
 }
 
-void Error_description_rfrom(CoreObject *instance, void *userData, Item &property )
+void Error_description_rfrom(CoreObject *instance, void *userData, Item &property, const PropEntry& )
 {
    Error *error = static_cast<Error *>(userData);
    FALCON_REFLECT_STRING_FROM( error, errorDescription );
 }
 
-void Error_message_rfrom(CoreObject *instance, void *userData, Item &property )
+void Error_message_rfrom(CoreObject *instance, void *userData, Item &property, const PropEntry& )
 {
    Error *error = static_cast<Error *>(userData);
    FALCON_REFLECT_STRING_FROM( error, extraDescription );
 }
 
-void Error_systemError_rfrom(CoreObject *instance, void *userData, Item &property )
+void Error_systemError_rfrom(CoreObject *instance, void *userData, Item &property, const PropEntry& )
 {
    Error *error = static_cast<Error *>(userData);
    FALCON_REFLECT_INTEGER_FROM( error, systemError );
 }
 
-void Error_origin_rfrom(CoreObject *instance, void *userData, Item &property )
+void Error_origin_rfrom(CoreObject *instance, void *userData, Item &property, const PropEntry& )
 {
    Error *error = static_cast<Error *>(userData);
 
@@ -588,56 +588,56 @@ void Error_origin_rfrom(CoreObject *instance, void *userData, Item &property )
    }
 }
 
-void Error_module_rfrom(CoreObject *instance, void *userData, Item &property )
+void Error_module_rfrom(CoreObject *instance, void *userData, Item &property, const PropEntry& )
 {
    Error *error = static_cast<Error *>(userData);
    FALCON_REFLECT_STRING_FROM( error, module );
 }
 
-void Error_symbol_rfrom(CoreObject *instance, void *userData, Item &property )
+void Error_symbol_rfrom(CoreObject *instance, void *userData, Item &property, const PropEntry& )
 {
    Error *error = static_cast<Error *>(userData);
    FALCON_REFLECT_STRING_FROM( error, symbol );
 }
 
-void Error_line_rfrom(CoreObject *instance, void *userData, Item &property )
+void Error_line_rfrom(CoreObject *instance, void *userData, Item &property, const PropEntry& )
 {
    Error *error = static_cast<Error *>(userData);
    FALCON_REFLECT_INTEGER_FROM( error, line );
 }
 
-void Error_pc_rfrom(CoreObject *instance, void *userData, Item &property )
+void Error_pc_rfrom(CoreObject *instance, void *userData, Item &property, const PropEntry& )
 {
    Error *error = static_cast<Error *>(userData);
    FALCON_REFLECT_INTEGER_FROM( error, pcounter );
 }
 
 
-void Error_code_rto( CoreObject *instance, void *userData, Item &property )
+void Error_code_rto( CoreObject *instance, void *userData, Item &property, const PropEntry& )
 {
    Error *error = static_cast<Error *>(userData);
    FALCON_REFLECT_INTEGER_TO( error, errorCode );
 }
 
-void Error_description_rto(CoreObject *instance, void *userData, Item &property )
+void Error_description_rto(CoreObject *instance, void *userData, Item &property, const PropEntry& )
 {
    Error *error = static_cast<Error *>(userData);
    FALCON_REFLECT_STRING_TO( error, errorDescription );
 }
 
-void Error_message_rto(CoreObject *instance, void *userData, Item &property )
+void Error_message_rto(CoreObject *instance, void *userData, Item &property, const PropEntry& )
 {
    Error *error = static_cast<Error *>(userData);
    FALCON_REFLECT_STRING_TO( error, extraDescription );
 }
 
-void Error_systemError_rto(CoreObject *instance, void *userData, Item &property )
+void Error_systemError_rto(CoreObject *instance, void *userData, Item &property, const PropEntry& )
 {
    Error *error = static_cast<Error *>(userData);
    FALCON_REFLECT_INTEGER_TO( error, systemError );
 }
 
-void Error_origin_rto(CoreObject *instance, void *userData, Item &property )
+void Error_origin_rto(CoreObject *instance, void *userData, Item &property, const PropEntry& )
 {
    Error *error = static_cast<Error *>(userData);
 
@@ -682,25 +682,25 @@ void Error_origin_rto(CoreObject *instance, void *userData, Item &property )
    instance->origin()->raiseRTError( new ParamError( ErrorParam( e_inv_params ).extra( "S" ) ) );
 }
 
-void Error_module_rto(CoreObject *instance, void *userData, Item &property )
+void Error_module_rto(CoreObject *instance, void *userData, Item &property, const PropEntry& )
 {
    Error *error = static_cast<Error *>(userData);
    FALCON_REFLECT_STRING_TO( error, module );
 }
 
-void Error_symbol_rto(CoreObject *instance, void *userData, Item &property )
+void Error_symbol_rto(CoreObject *instance, void *userData, Item &property, const PropEntry& )
 {
    Error *error = static_cast<Error *>(userData);
    FALCON_REFLECT_STRING_TO( error, symbol );
 }
 
-void Error_line_rto(CoreObject *instance, void *userData, Item &property )
+void Error_line_rto(CoreObject *instance, void *userData, Item &property, const PropEntry& )
 {
    Error *error = static_cast<Error *>(userData);
    FALCON_REFLECT_INTEGER_TO( error, line );
 }
 
-void Error_pc_rto(CoreObject *instance, void *userData, Item &property )
+void Error_pc_rto(CoreObject *instance, void *userData, Item &property, const PropEntry& )
 {
    Error *error = static_cast<Error *>(userData);
    FALCON_REFLECT_INTEGER_TO( error, pcounter );

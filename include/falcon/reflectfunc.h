@@ -28,6 +28,8 @@ namespace Falcon
 class CoreObject;
 class Item;
 
+struct PropEntry;
+
 /** Reflection type enumeration.
    Determines how reflective properties are accounted for.
 */
@@ -69,13 +71,14 @@ typedef enum {
       the property is the original item that will be copied in the final property
       on success. When setting, it's the phisical property in the object to be
       set by this method.
+   \param entry The entry descriptor indicating the property that has been called.
    \return When setting the value, should return false if the value is incompatible with
       the final object data structure (that is, if a parameter error should have been
       raised on the virtual machine).
 */
 
-typedef void (*reflectionFunc)(CoreObject *instance, void *user_data, Item &property );
-typedef void reflectionFuncDecl(CoreObject *instance, void *user_data, Item &property );
+typedef void (*reflectionFunc)(CoreObject *instance, void *user_data, Item &property, const PropEntry& entry );
+typedef void reflectionFuncDecl(CoreObject *instance, void *user_data, Item &property, const PropEntry& entry );
 
 }
 

@@ -31,9 +31,9 @@ PropertyTable::PropertyTable( uint32 size ):
 {
    m_size = size;
    m_added = 0;
-   m_entries = (Entry *) memAlloc( sizeof( Entry ) * size );
+   m_entries = (PropEntry *) memAlloc( sizeof( PropEntry ) * size );
    // Luckily, 0 is the neuter value for all our representations.
-   memset( m_entries, 0, sizeof( Entry ) * size );
+   memset( m_entries, 0, sizeof( PropEntry ) * size );
 }
 
 PropertyTable::PropertyTable( const PropertyTable &other ):
@@ -42,8 +42,8 @@ PropertyTable::PropertyTable( const PropertyTable &other ):
 {
    m_size = other.m_size;
    m_added = other.m_added;
-   m_entries = (Entry *) memAlloc( sizeof( Entry ) * m_size );
-   memcpy( m_entries, other.m_entries, sizeof( Entry ) * m_size );
+   m_entries = (PropEntry *) memAlloc( sizeof( PropEntry ) * m_size );
+   memcpy( m_entries, other.m_entries, sizeof( PropEntry ) * m_size );
 }
 
 
@@ -60,7 +60,7 @@ void PropertyTable::checkProperties()
 
    for( uint32 i = 0; i < m_added; i++ )
    {
-      const Entry &e = m_entries[i];
+      const PropEntry &e = m_entries[i];
 
       if ( e.m_eReflectMode != e_reflectNone ) {
          m_bReflective = true;
@@ -89,7 +89,7 @@ bool PropertyTable::findKey( const String &key, uint32 &pos ) const
    while ( true )
    {
       // get the table row
-      current = m_entries[point].m_key;
+      current = m_entries[point].m_name;
 
       if( *current == key ) {
          pos = point;
@@ -108,7 +108,7 @@ bool PropertyTable::findKey( const String &key, uint32 &pos ) const
 
             // being integer math, ulPoint is rounded by defect and has
             // already looked at the ulLower position
-            if ( key == *m_entries[higher].m_key ) {
+            if ( key == *m_entries[higher].m_name ) {
                pos = higher;
                return true;
             }
@@ -141,7 +141,7 @@ bool PropertyTable::findKey( const String &key, uint32 &pos ) const
 }
 
 
-PropertyTable::Entry &PropertyTable::append( const String *key )
+PropEntry &PropertyTable::append( const String *key )
 {
    if( m_added >= m_size ) return m_entries[0];
 
@@ -150,8 +150,8 @@ PropertyTable::Entry &PropertyTable::append( const String *key )
       uint32 pos;
       if ( !findKey( *key, pos ) )
       {
-         memmove( m_entries + pos, m_entries + pos + 1, sizeof( Entry ) * (m_added - pos) );
-         m_entries[pos].m_key = key;
+         memmove( m_entries + pos, m_entries + pos + 1, sizeof( PropEntry ) * (m_added - pos) );
+         m_entries[pos].m_name = key;
       }
 
       m_added++;
@@ -164,7 +164,7 @@ PropertyTable::Entry &PropertyTable::append( const String *key )
 }
 
 
-void PropertyTable::Entry::reflectTo( CoreObject *instance, const Item &prop, void *user_data ) const
+void PropEntry::reflectTo( CoreObject *instance, void *user_data, const Item &prop ) const
 {
    byte *ud = (byte *) user_data;
 
@@ -225,12 +225,12 @@ void PropertyTable::Entry::reflectTo( CoreObject *instance, const Item &prop, vo
       case e_reflectFunc:
          // We should not have been called if "to" was zero; we're read only.
          fassert( m_reflection.rfunc.to != 0 );
-         m_reflection.rfunc.to( instance, user_data, *const_cast<Item *>(&prop) );
+         m_reflection.rfunc.to( instance, user_data, *const_cast<Item *>(&prop), *this );
          break;
    }
 }
 
-void PropertyTable::Entry::reflectFrom( CoreObject *instance, void *user_data, Item &prop ) const
+void PropEntry::reflectFrom( CoreObject *instance, void *user_data, Item &prop ) const
 {
    byte *ud = (byte *) user_data;
 
@@ -289,7 +289,7 @@ void PropertyTable::Entry::reflectFrom( CoreObject *instance, void *user_data, I
          break;
 
       case e_reflectFunc:
-         m_reflection.rfunc.from( instance, user_data, prop );
+         m_reflection.rfunc.from( instance, user_data, prop, *this );
          break;
    }
 }
