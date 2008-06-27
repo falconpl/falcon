@@ -287,7 +287,7 @@ FALCON_FUNC  CmdlineParser_parse( ::Falcon::VMachine *vm )
          else
          {
             vm->retval( false );
-            self->setProperty( "lastParsed", (int64) i );
+            self->setProperty( "lastParsed", i );
             return;
          }
       }
@@ -307,7 +307,7 @@ FALCON_FUNC  CmdlineParser_parse( ::Falcon::VMachine *vm )
          else
          {
             vm->retval( false );
-            self->setProperty( "lastParsed", (int64) i );
+            self->setProperty( "lastParsed", i );
             return;
          }
       }
@@ -344,7 +344,7 @@ FALCON_FUNC  CmdlineParser_parse( ::Falcon::VMachine *vm )
             else
             {
                vm->retval( false );
-               self->setProperty( "lastParsed", (int64) i );
+               self->setProperty( "lastParsed", i );
                return;
             }
          }

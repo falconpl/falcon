@@ -182,11 +182,29 @@ public:
    }
 
    /** Creates an integer item */
-   Item( int val )
+   Item( int16 val )
    {
       setInteger( (int64) val );
    }
 
+   /** Creates an integer item */
+   Item( uint16 val )
+   {
+      setInteger( (int64) val );
+   }
+
+   /** Creates an integer item */
+   Item( int32 val )
+   {
+      setInteger( (int64) val );
+   }
+
+   /** Creates an integer item */
+   Item( uint32 val )
+   {
+      setInteger( (int64) val );
+   }
+   
 
    /** Creates an integer item */
    Item( int64 val )

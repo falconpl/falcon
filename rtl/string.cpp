@@ -408,7 +408,7 @@ FALCON_FUNC  strFind ( ::Falcon::VMachine *vm )
       return;
    }
 
-   uint32 pos = target->asString()->find( *needle->asString(), start, end );
+   uint32 pos = target->asString()->find( *needle->asString(), (uint32) start, (uint32) end );
    if ( pos != csh::npos )
       vm->retval( (int64)pos );
    else
@@ -472,7 +472,7 @@ FALCON_FUNC  strBackFind ( ::Falcon::VMachine *vm )
       return;
    }
 
-   uint32 pos = target->asString()->rfind( *needle->asString(), start, end );
+   uint32 pos = target->asString()->rfind( *needle->asString(), (uint32) start, (uint32) end );
    if ( pos != csh::npos )
       vm->retval( (int)pos );
    else

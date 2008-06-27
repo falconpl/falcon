@@ -109,8 +109,6 @@ public:
    */
    bool setProperty( const String &prop, const String &value );
 
-   /** Disambiguates String( char*) and Item(0) */
-   bool setProperty( const String &prop, int value ) { return setProperty( prop, Item(value) ); }
 
    /** Returns the a shallow item copy of required property.
       The copy is shallow; strings, arrays and complex data inside

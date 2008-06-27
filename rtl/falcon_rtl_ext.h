@@ -353,24 +353,24 @@ FALCON_FUNC  CmdlineParser_usage( ::Falcon::VMachine *vm );
 FALCON_FUNC FileReadStats ( ::Falcon::VMachine *vm ); // factory function
 FALCON_FUNC FileStat_readStats ( ::Falcon::VMachine *vm );
 // this thing is read only.
-extern reflectionFuncDecl FileStats_type_rfrom;
-extern reflectionFuncDecl FileStats_mtime_rfrom;
-extern reflectionFuncDecl FileStats_ctime_rfrom;
-extern reflectionFuncDecl FileStats_atime_rfrom;
+reflectionFuncDecl FileStats_type_rfrom;
+reflectionFuncDecl FileStats_mtime_rfrom;
+reflectionFuncDecl FileStats_ctime_rfrom;
+reflectionFuncDecl FileStats_atime_rfrom;
 
 FALCON_FUNC  itemCopy( ::Falcon::VMachine *vm );
 
 /** Path class */
 FALCON_FUNC Path_init ( ::Falcon::VMachine *vm );
-extern reflectionFuncDecl Path_path_rfrom;
-extern reflectionFuncDecl Path_filename_rfrom;
-extern reflectionFuncDecl Path_file_rfrom;
-extern reflectionFuncDecl Path_extension_rfrom;
+reflectionFuncDecl Path_path_rfrom;
+reflectionFuncDecl Path_filename_rfrom;
+reflectionFuncDecl Path_file_rfrom;
+reflectionFuncDecl Path_extension_rfrom;
 
-extern reflectionFuncDecl Path_path_rto;
-extern reflectionFuncDecl Path_filename_rto;
-extern reflectionFuncDecl Path_file_rto;
-extern reflectionFuncDecl Path_extension_rto;
+reflectionFuncDecl Path_path_rto;
+reflectionFuncDecl Path_filename_rto;
+reflectionFuncDecl Path_file_rto;
+reflectionFuncDecl Path_extension_rto;
 
 /** URI class */
 FALCON_FUNC  URI_init ( ::Falcon::VMachine *vm );
@@ -378,8 +378,8 @@ FALCON_FUNC  URI_encode ( ::Falcon::VMachine *vm ); // static
 FALCON_FUNC  URI_decode ( ::Falcon::VMachine *vm ); // static
 FALCON_FUNC  URI_getFields ( ::Falcon::VMachine *vm );
 FALCON_FUNC  URI_setFields ( ::Falcon::VMachine *vm );
-extern reflectionFuncDecl URI_uri_rfrom;
-extern reflectionFuncDecl URI_uri_rto;
+reflectionFuncDecl URI_uri_rfrom;
+reflectionFuncDecl URI_uri_rto;
 
 
 /** Message table **/
@@ -436,7 +436,7 @@ public:
 
 
 /** Special manager for URI reflection. */
-class FALCON_DYN_CLASS URIManager: public ObjectManager
+class URIManager: public ObjectManager
 {
 public:
 
@@ -451,7 +451,7 @@ public:
 };
 
 /** Special manager for URI reflection. */
-class FALCON_DYN_CLASS PathManager: public ObjectManager
+class PathManager: public ObjectManager
 {
 public:
 

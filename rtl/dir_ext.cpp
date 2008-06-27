@@ -113,13 +113,13 @@ void* FileStatManager::onClone( VMachine *vm, void *user_data )
 }
 
 
-void FileStats_type_rfrom(CoreObject *instance, void *user_data, Item &property )
+void FileStats_type_rfrom(CoreObject *instance, void *user_data, Item &property, const PropEntry& )
 {
    FileStatManager::InnerData *id = static_cast<FileStatManager::InnerData *>(user_data);
    property = (int64) id->m_fsdata.m_type;
 }
 
-void FileStats_ctime_rfrom(CoreObject *instance, void *user_data, Item &property )
+void FileStats_ctime_rfrom(CoreObject *instance, void *user_data, Item &property, const PropEntry& )
 {
    FileStatManager::InnerData *id = static_cast<FileStatManager::InnerData *>(user_data);
 
@@ -138,7 +138,7 @@ void FileStats_ctime_rfrom(CoreObject *instance, void *user_data, Item &property
    property = id->m_cache_ctime;
 }
 
-void FileStats_mtime_rfrom(CoreObject *instance, void *user_data, Item &property )
+void FileStats_mtime_rfrom(CoreObject *instance, void *user_data, Item &property, const PropEntry& )
 {
    FileStatManager::InnerData *id = static_cast<FileStatManager::InnerData *>(user_data);
 
@@ -157,7 +157,7 @@ void FileStats_mtime_rfrom(CoreObject *instance, void *user_data, Item &property
    property = id->m_cache_mtime;
 }
 
-void FileStats_atime_rfrom(CoreObject *instance, void *user_data, Item &property )
+void FileStats_atime_rfrom(CoreObject *instance, void *user_data, Item &property, const PropEntry& )
 {
    FileStatManager::InnerData *id = static_cast<FileStatManager::InnerData *>(user_data);
    // is read only
@@ -1176,7 +1176,7 @@ bool PathManager::onObjectReflectFrom( CoreObject *reflector, void *user_data )
 }
 
 // Reflective URI method
-void Path_path_rfrom(CoreObject *instance, void *user_data, Item &property )
+void Path_path_rfrom(CoreObject *instance, void *user_data, Item &property, const PropEntry& )
 {
    Path &path = *static_cast<Path *>( user_data );
 
@@ -1219,7 +1219,7 @@ void Path_filename_rfrom(CoreObject *instance, void *user_data, Item &property, 
    FALCON_REFLECT_STRING_FROM( (&path), getFilename );
 }
 
-void Path_filename_rto(CoreObject *instance, void *user_data, Item &property )
+void Path_filename_rto(CoreObject *instance, void *user_data, Item &property, const PropEntry& )
 {
    Path &path = *static_cast<Path *>( user_data );
 
