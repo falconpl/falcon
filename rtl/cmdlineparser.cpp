@@ -405,12 +405,12 @@ FALCON_FUNC  CmdlineParser_parse( ::Falcon::VMachine *vm )
          // value requested?
          if ( _request.asInteger() == 1 ) {
             state = t_waitingValue;
-            self->setProperty( "_request", 0 );
+            self->setProperty( "_request", Item(0) );
          }
          // or request to terminate?
          else if ( _request.asInteger() == 2 )
          {
-            self->setProperty( "_request",  0 );
+            self->setProperty( "_request",  Item(0) );
             vm->retval( true );
             self->setProperty( "lastParsed", (int64) i );
             return;
