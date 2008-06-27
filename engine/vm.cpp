@@ -751,9 +751,13 @@ bool VMachine::linkCompleteSymbol( Symbol *sym, LiveModule *livemod )
    }
    else if ( sym->type() == Symbol::tinst )
    {
+      fassert( sym->getInstance() != 0 );
+
       // we can't try to call the initialization method
       // if the creation of the symbol fails.
-      if ( linkInstanceSymbol( sym, livemod ) )
+      if ( linkClassSymbol( sym->getInstance(), livemod ) &&
+           linkInstanceSymbol( sym, livemod )
+      )
       {
          if ( ! initializeInstance( sym, livemod ) )
             bSuccess = false;
