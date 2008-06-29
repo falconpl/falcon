@@ -693,6 +693,7 @@ bool VMachine::linkInstanceSymbol( Symbol *obj, LiveModule *livemod )
    return true;
 }
 
+
 bool VMachine::initializeInstance( Symbol *obj, LiveModule *livemod )
 {
    ItemVector *globs = &livemod->globals();
@@ -738,6 +739,7 @@ bool VMachine::initializeInstance( Symbol *obj, LiveModule *livemod )
    return true;
 }
 
+
 bool VMachine::linkCompleteSymbol( Symbol *sym, LiveModule *livemod )
 {
    // try a pre-link
@@ -768,6 +770,17 @@ bool VMachine::linkCompleteSymbol( Symbol *sym, LiveModule *livemod )
 
    return bSuccess;
 }
+
+
+bool VMachine::linkCompleteSymbol( Symbol *sym, const String &moduleName )
+{
+   LiveModule *lm = findModule( moduleName );
+   if ( lm != 0 )
+      return linkCompleteSymbol( sym, lm );
+
+   return false;
+}
+
 
 PropertyTable *VMachine::createClassTemplate( LiveModule *lmod, const Map &pt )
 {

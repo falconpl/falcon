@@ -738,12 +738,20 @@ public:
       The method may raise any error that linkSymbolComplete may raise. The same
       cares used for LinkSymbolComplete should be used.
 
+      The method is virtual, so subclasses are able to create symbols dynamically
+      by providing them directly. However, subclasses creating directly symbols
+      must still create them inside a FlexyModule and use linkCompleteSymbol
+      to bless the symbol in the VM.
+
+      It is advisable to call the base class version of the method on subclass
+      default.
+
       \param name The symbol to be searched for.
       \param symdata Coordinates of the linked symbol, on success.
       \return true on success, false if the symbol is not found or if it was found
          but couldn't be linked.
    */
-   bool linkSymbolDynamic( const String &name, SymModule &symdata );
+   virtual bool linkSymbolDynamic( const String &name, SymModule &symdata );
 
    /** Links a class symbol.
 
@@ -824,6 +832,25 @@ public:
       This method should run in atomic mode (see initializeInstance() ).
    */
    bool linkCompleteSymbol( Symbol *sym, LiveModule *livemod );
+
+   /** Links a symbol eventually performing class and instances initializations.
+
+      This method resoves the module name into its liveMod before performing
+      complete linking. This allows external elements (i.e. FALCON_FUNC methods)
+      to create new symbols on the fly, declaring just into which module they
+      should be created.
+
+      If the target module is not found the method returns false, otherwise it calls directly
+      linkCompleteSymbol( Symbol *, LiveModule * ) with the appropriate instance
+      of the LiveModule.
+
+      This method should run in atomic mode (see initializeInstance() ).
+
+      \param sym Symbol created dynamically.
+      \param moduleName name of the module that has created it and wants it to be
+                        inserted in the VM.
+   */
+   bool linkCompleteSymbol( Symbol *sym, const String &moduleName );
 
    /** Returns the main module, if it exists.
       Returns an instance of the LiveModule class, that is the local representation
