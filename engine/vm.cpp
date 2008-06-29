@@ -360,6 +360,10 @@ LiveModule *VMachine::link( Module *mod, bool isMainModule )
    // resize() creates a series of NIL items.
    globs->resize( symtab->size()+1 );
 
+   // we won't be preemptible during link
+   bool atomic = m_atomicMode;
+   m_atomicMode = true;
+
    bool success = true;
    // now, the symbol table must be traversed.
    MapIterator iter = symtab->map().begin();
@@ -426,6 +430,9 @@ LiveModule *VMachine::link( Module *mod, bool isMainModule )
 
       obj_iter = obj_iter->next();
    }
+
+   // Initializations of module objects is complete; return to non-atomic mode
+   m_atomicMode = atomic;
 
    // return zero and dispose of the module if not succesful.
    if ( ! success )
