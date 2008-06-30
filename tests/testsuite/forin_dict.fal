@@ -1,0 +1,48 @@
+/****************************************************************************
+* Falcon test suite
+*
+*
+* ID: 16q
+* Category: loops
+* Subcategory: forin
+* Short: Forin dictionary complete
+* Description:
+*   Tests forfirst, forlast, formiddle, continue dropping and assignments 
+*   in dictionaries all in one step.
+* [/Description]
+*
+****************************************************************************/
+
+dict = [ "alpha" => 1,
+         "beta" => 2,
+         "gamma" => 3,
+         "delta" => 4,
+         "eta" => 5 ]
+         
+         
+result = ""
+
+for key, value in dict
+   forfirst: result += "f:"
+   
+   if value % 2 == 1
+      continue dropping
+   end
+
+   result += key + "=" + value.toString()
+   
+   .= "Changed"
+   
+   formiddle: result += ","
+   forlast: result += "."
+end
+
+if result != "f:beta=2,delta=4,.": failure( "In looping" )
+
+if dict.len() != 2: failure( "In dropping" )
+
+for key, value in dict
+   if value != "Changed": failure( "In touching key: " + key )
+end
+
+/* end of file */

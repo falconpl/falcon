@@ -6,6 +6,7 @@ Falcon (0.8.11)
       - FILE_TYPE_* constants are now static properties of FileStat.
   * major: Added support for module dynamic symbol creation on script request.
   * bugfix: Assigments shouldn't define symbols accessed or called.
+  * bugfix: continue dropping wasn't working for last elements in dictionaries.
 
 Falcon (0.8.10)
   * minor: Now classes can be stored in object properties and called to get

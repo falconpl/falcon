@@ -2027,7 +2027,7 @@ void opcodeHandler_TRAN( register VMachine *vm )
             {
                CoreDict *sdict = source->asDict();
                sdict->remove( *iter );
-               if( ! iter->hasNext() )
+               if( ! iter->isValid() )
                {
                   vm->m_pc_next = p2;
                   return;
