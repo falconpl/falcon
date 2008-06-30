@@ -586,7 +586,9 @@ void opcodeHandler_INC( register VMachine *vm )
       case FLC_ITEM_INT: *operand = operand->asInteger() + 1; break;
       case FLC_ITEM_NUM: *operand = operand->asNumeric() + 1.0; break;
       default:
-         vm->raiseError( e_invop, "INC" );
+         vm->raiseRTError( new TypeError( ErrorParam( e_invop ).extra("INC").origin( e_orig_vm ) ) );
+         return;
+
    }
 
    vm->regA() = *operand;
@@ -602,7 +604,9 @@ void opcodeHandler_DEC( register VMachine *vm )
       case FLC_ITEM_INT: *operand = operand->asInteger() - 1; break;
       case FLC_ITEM_NUM: *operand = operand->asNumeric() - 1.0; break;
       default:
-         vm->raiseError( e_invop, "DEC" );
+         vm->raiseRTError( new TypeError( ErrorParam( e_invop ).extra("DEC").origin( e_orig_vm ) ) );
+         return;
+
    }
 
    vm->regA() = *operand;
@@ -619,7 +623,8 @@ void opcodeHandler_NEG( register VMachine *vm )
       case FLC_ITEM_INT: vm->m_regA.setInteger( -operand->asInteger() ); break;
       case FLC_ITEM_NUM: vm->m_regA.setNumeric( -operand->asNumeric() ); break;
       default:
-         vm->raiseError( e_invop, "NEG" );
+         vm->raiseRTError( new TypeError( ErrorParam( e_invop ).extra("NEG").origin( e_orig_vm ) ) );
+         return;
    }
 }
 
@@ -699,7 +704,7 @@ void opcodeHandler_TRAL( register VMachine *vm )
       break;
 
       default:
-         vm->raiseError( e_invop, "TRAL" );
+         vm->raiseRTError( new TypeError( ErrorParam( e_invop ).extra("TRAL").origin( e_orig_vm ) ) );
          return;
    }
 }
@@ -764,7 +769,7 @@ void opcodeHandler_BNOT( register VMachine *vm )
       vm->m_regA.setInteger( ~operand->asInteger() );
    }
    else
-      vm->raiseError( e_bitwise_op, "BNOT" );
+      vm->raiseRTError( new TypeError( ErrorParam( e_bitwise_op ).extra("BNOT").origin( e_orig_vm ) ) );
 }
 
 //1B
@@ -775,7 +780,7 @@ void opcodeHandler_NOTS( register VMachine *vm )
    if ( operand1->isOrdinal() )
       operand1->setInteger( ~operand1->forceInteger() );
    else
-      vm->raiseError( e_bitwise_op, "NOTS" );
+      vm->raiseRTError( new TypeError( ErrorParam( e_bitwise_op ).extra("NOTS").origin( e_orig_vm ) ) );
 }
 
 //1c
@@ -1649,7 +1654,7 @@ void opcodeHandler_INST( register VMachine *vm )
 
    if( operand2->type() != FLC_ITEM_CLASS )
    {
-      vm->raiseError( e_invop, "INST" );
+      vm->raiseRTError( new TypeError( ErrorParam( e_invop ).extra("INST").origin( e_orig_vm ) ) );
       return;
    }
 
@@ -1657,7 +1662,7 @@ void opcodeHandler_INST( register VMachine *vm )
    Symbol *ctor = cls->getClassDef()->constructor();
    if ( ctor != 0 ) {
       if( ! vm->callItem( *operand2, pNext, VMachine::e_callInstFrame ) )
-         vm->raiseError( e_invop, "INST" );
+         vm->raiseRTError( new TypeError( ErrorParam( e_invop ).extra("INST").origin( e_orig_vm ) ) );
    }
 }
 
@@ -2616,30 +2621,64 @@ void opcodeHandler_STPS( register VMachine *vm )
    Item item = vm->m_stack->topItem();
    vm->m_stack->pop();
 
-   if ( method->isString() && target->isObject() )
+   if ( method->isString() )
    {
-      // Are we restoring an original item?
-      if( item.isMethod() && item.asMethodObject() == target->asObject() )
+      if ( target->isObject() )
       {
-         item.setFunction( item.asMethodFunction(), item.asModule() );
-      }
-      else if ( item.isString() )
-      {
-         GarbageString *gcs = new GarbageString( vm, *item.asString() );
-         item.setString( gcs );
-      }
+         // Are we restoring an original item?
+         if( item.isMethod() && item.asMethodObject() == target->asObject() )
+         {
+            item.setFunction( item.asMethodFunction(), item.asModule() );
+         }
+         else if ( item.isString() )
+         {
+            GarbageString *gcs = new GarbageString( vm, *item.asString() );
+            item.setString( gcs );
+         }
 
-      if( target->asObject()->setProperty( *method->asString(), item ) )
+         if( target->asObject()->setProperty( *method->asString(), item ) )
+            return;
+
+         vm->raiseRTError(
+            new AccessError( ErrorParam( e_prop_acc ).origin( e_orig_vm ) .
+               extra( *method->asString() ) ) );
+
          return;
+      }
+      else if ( target->isClass() )
+      {
+         // is the target property a static property -- it must be a reference.
+         PropertyTable &pt = target->asClass()->properties();
+         uint32 propId;
+         if ( pt.findKey( *method->asString(), propId ) )
+         {
+            Item *prop = pt.getValue( propId );
+            if ( prop->isReference() )
+            {
+               if ( item.isString() )
+               {
+                  GarbageString *gcs = new GarbageString( vm, *item.asString() );
+                  item.setString( gcs );
+               }
+               *prop->dereference() = item;
+               return;
+            }
+            else {
+               vm->raiseRTError(
+                  new AccessError( ErrorParam( e_prop_ro ).origin( e_orig_vm ) .
+                  extra( *method->asString() ) ) );
+               return;
+            }
+         }
 
-      vm->raiseRTError(
-         new AccessError( ErrorParam( e_prop_acc ).origin( e_orig_vm ) .
-            extra( *method->asString() ) ) );
-
-      return;
+         vm->raiseRTError(
+            new AccessError( ErrorParam( e_prop_acc ).origin( e_orig_vm ) .
+               extra( *method->asString() ) ) );
+      }
    }
 
-    vm->raiseError( e_prop_acc, "STPS" );
+   vm->raiseRTError( new TypeError( ErrorParam( e_prop_acc ).extra("STPS").origin( e_orig_vm ) ) );
+   return;
 }
 
 //4B
@@ -2666,7 +2705,7 @@ void opcodeHandler_PASS( register VMachine *vm )
    Item *operand1 =  vm->getOpcodeParam( 1 )->dereference();
 
    if( ! vm->callItemPass( *operand1 ) )
-      vm->raiseError( e_invop, "PASS" );
+      vm->raiseRTError( new TypeError( ErrorParam( e_invop ).extra("PASS").origin( e_orig_vm ) ) );
 }
 
 //4F
@@ -2675,7 +2714,8 @@ void opcodeHandler_PSIN( register VMachine *vm )
    Item *operand1 =  vm->getOpcodeParam( 1 )->dereference();
 
    if( ! vm->callItemPassIn( *operand1 ) )
-      vm->raiseError( e_invop, "PSIN" );
+      vm->raiseRTError( new TypeError( ErrorParam( e_invop ).extra("PSIN").origin( e_orig_vm ) ) );
+
 }
 
 //50
@@ -2876,8 +2916,39 @@ void opcodeHandler_STP( register VMachine *vm )
 
       return;
    }
+   else if ( target->isClass() )
+   {
+      // is the target property a static property -- it must be a reference.
+      PropertyTable &pt = target->asClass()->properties();
+      uint32 propId;
+      if ( pt.findKey( *method->asString(), propId ) )
+      {
+         Item *prop = pt.getValue( propId );
+         if ( prop->isReference() )
+         {
+            if ( source->isString() )
+            {
+               GarbageString *gcs = new GarbageString( vm, *source->asString() );
+               source->setString( gcs );
+            }
+            *prop->dereference() = *source;
+            return;
+         }
+         else {
+            vm->raiseRTError(
+               new AccessError( ErrorParam( e_prop_ro ).origin( e_orig_vm ) .
+                  extra( *method->asString() ) ) );
+            return;
+         }
+      }
 
-   vm->raiseError( e_prop_acc, "STP" );
+      vm->raiseRTError(
+         new AccessError( ErrorParam( e_prop_acc ).origin( e_orig_vm ) .
+            extra( *method->asString() ) ) );
+   }
+
+   vm->raiseRTError( new TypeError( ErrorParam( e_invop ).extra("STP").origin( e_orig_vm ) ) );
+
 /**
    \todo check this code
    This code originally allowed to load a method of an object into a method
@@ -3124,8 +3195,8 @@ void opcodeHandler_TRAV( register VMachine *vm )
          CoreObject *obj = source->asObject();
          if( ! obj->isSequence() )
          {
-            vm->raiseError( e_invop, "TRAV" );
-            return;
+            vm->raiseRTError( new TypeError( ErrorParam( e_invop ).extra("TRAV").origin( e_orig_vm ) ) );
+            goto trav_go_away;
          }
 
          Sequence *seq = static_cast< Sequence *>( obj->getUserData() );
@@ -3230,7 +3301,7 @@ void opcodeHandler_TRAV( register VMachine *vm )
 
 
       default:
-         vm->raiseError( e_invop, "TRAV" );
+         vm->raiseRTError( new TypeError( ErrorParam( e_invop ).extra("TRAV").origin( e_orig_vm ) ) );
          goto trav_go_away;
    }
 
@@ -3281,7 +3352,8 @@ void opcodeHandler_INCP( register VMachine *vm )
       case FLC_ITEM_INT: *operand = operand->asInteger() + 1; break;
       case FLC_ITEM_NUM: *operand = operand->asNumeric() + 1.0; break;
       default:
-         vm->raiseError( e_invop, "INCP" );
+         vm->raiseRTError( new TypeError( ErrorParam( e_invop ).extra("INCP").origin( e_orig_vm ) ) );
+         return;
    }
    vm->regB() = *operand;
    vm->regA() = temp; // valid also if it's A or a reference in A
@@ -3299,7 +3371,8 @@ void opcodeHandler_DECP( register VMachine *vm )
       case FLC_ITEM_INT: *operand = operand->asInteger() - 1; break;
       case FLC_ITEM_NUM: *operand = operand->asNumeric() - 1.0; break;
       default:
-         vm->raiseError( e_invop, "DECP" );
+         vm->raiseRTError( new TypeError( ErrorParam( e_invop ).extra("DECP").origin( e_orig_vm ) ) );
+         return;
    }
    vm->regB() = *operand;
    vm->regA() = temp; // valid also if it's A or a reference in A

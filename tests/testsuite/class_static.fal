@@ -1,0 +1,48 @@
+/****************************************************************************
+* Falcon test suite
+*
+*
+* ID: 21l
+* Category: types
+* Subcategory: classes
+* Short: Class static property access.
+* Description:
+*   Strings in class templates are shared among all the objects
+*   generated from that class. Changes in one object must alter
+*   only the local string, leaving the template string alone.
+* [/Description]
+*
+****************************************************************************/
+
+class test
+   // A static property
+   static property = 0
+
+   function stc_func()
+      test.property++
+   end
+end
+
+// smoke
+if test.property != 0: failure( "Basic static access" )
+
+test.stc_func()
+test.stc_func()
+test.stc_func()
+test.stc_func()
+
+if test.property != 4: failure( "Repeated call" )
+
+test.property = "Hello world"
+
+try
+   test.stc_func()
+   failure( "Autoincrement of strings..." )
+catch
+end
+
+if test.property != "Hello world"
+   failure( "String assignment" )
+end
+
+/* End of file */

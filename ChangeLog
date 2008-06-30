@@ -7,6 +7,8 @@ Falcon (0.8.11)
   * major: Added support for module dynamic symbol creation on script request.
   * bugfix: Assigments shouldn't define symbols accessed or called.
   * bugfix: continue dropping wasn't working for last elements in dictionaries.
+  * minor: Now it is possible to alter static properties by their class name.
+  * bugfix: Some type error in VM should have been catchable, but was raised hard.
 
 Falcon (0.8.10)
   * minor: Now classes can be stored in object properties and called to get
