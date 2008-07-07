@@ -191,6 +191,16 @@ public:
       m_wkiid( -1 )
    {}
 
+   /** Creates an exported Global Item.
+      This shortcut initializes the item pointer atonomously.
+   */
+   SymModule( LiveModule *mod, Symbol *sym ):
+      m_item( mod->globals().itemPtrAt( sym->itemId() ) ),
+      m_symbol( sym ),
+      m_lmod( mod ),
+      m_wkiid( -1 )
+   {}
+
    /** Creates an exported Well Known Item. */
    SymModule( int32 wiid, LiveModule *mod, Symbol *sym ):
       m_item( 0 ),

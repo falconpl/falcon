@@ -62,7 +62,7 @@ public:
 
       To make this possible and easy, the MemBuf can be given
       a back reference to the object that created it. In this way,
-      the object will be granted to stay alive as long as the MemPool is
+      the object will be granted to stay alive as long as the MemBuf is
       alive.
    */
    void dependant( CoreObject *g ) { m_dependant = g; }
