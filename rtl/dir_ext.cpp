@@ -739,7 +739,7 @@ FALCON_FUNC  Directory_error( ::Falcon::VMachine *vm )
 
    @code
       dirMake( "top/middle/bottom" )
-   @endocde
+   @endcode
 
    instructs @b dirMake to create the directory bottom in a subdirectory
    "middle", which should already exist. Passing @b true as second parameter,
