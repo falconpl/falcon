@@ -184,7 +184,7 @@ FALCON_FUNC MXMLDocument_init( ::Falcon::VMachine *vm )
    else
       doc = new MXML::Document( *i_encoding->asString(), style );
 
-   self->setUserData( doc );
+   self->setUserData( new MXML::DocumentCarrier( doc ) );
 }
 
 /*#
@@ -212,7 +212,7 @@ FALCON_FUNC MXMLDocument_deserialize( ::Falcon::VMachine *vm )
    }
 
    Stream *stream = static_cast<Stream *>( i_stream->asObject()->getUserData() );
-   MXML::Document *doc = static_cast<MXML::Document *>( self->getUserData() );
+   MXML::Document *doc = static_cast<MXML::DocumentCarrier *>( self->getUserData() )->document();
 
    try
    {
@@ -257,7 +257,7 @@ FALCON_FUNC MXMLDocument_serialize( ::Falcon::VMachine *vm )
    }
 
    Stream *stream = static_cast<Stream *>( i_stream->asObject()->getUserData() );
-   MXML::Document *doc = static_cast<MXML::Document *>( self->getUserData() );
+   MXML::Document *doc = static_cast<MXML::DocumentCarrier *>( self->getUserData() )->document();
 
    try
    {
@@ -298,7 +298,7 @@ FALCON_FUNC MXMLDocument_serialize( ::Falcon::VMachine *vm )
 FALCON_FUNC MXMLDocument_style( ::Falcon::VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
-   MXML::Document *doc = static_cast<MXML::Document *>( self->getUserData() );
+   MXML::Document *doc = static_cast<MXML::DocumentCarrier *>( self->getUserData() )->document();
    Item *i_style = vm->param(0);
 
    // read immediately the style, we always return it
@@ -334,7 +334,7 @@ FALCON_FUNC MXMLDocument_style( ::Falcon::VMachine *vm )
 FALCON_FUNC MXMLDocument_top( ::Falcon::VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
-   MXML::Document *doc = static_cast<MXML::Document *>( self->getUserData() );
+   MXML::Document *doc = static_cast<MXML::DocumentCarrier *>( self->getUserData() )->document();
    MXML::Node *root = doc->root();
    vm->retval( root->getShell( vm ) );
 }
@@ -362,7 +362,7 @@ FALCON_FUNC MXMLDocument_top( ::Falcon::VMachine *vm )
 FALCON_FUNC MXMLDocument_root( ::Falcon::VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
-   MXML::Document *doc = static_cast<MXML::Document *>( self->getUserData() );
+   MXML::Document *doc = static_cast<MXML::DocumentCarrier *>( self->getUserData() )->document();
    MXML::Node *root = doc->main();
    // if we don't have a root (main) node, create it.
    if ( root == 0 ) {
@@ -450,7 +450,7 @@ FALCON_FUNC MXMLDocument_find( ::Falcon::VMachine *vm )
    sValAttr = i_valattr == 0 || i_valattr->isNil() ? &dummy : i_valattr->asString();
    sData = i_data == 0 || i_data->isNil() ? &dummy : i_data->asString();
 
-   MXML::Document *doc = static_cast<MXML::Document *>( self->getUserData() );
+   MXML::Document *doc = static_cast<MXML::DocumentCarrier *>( self->getUserData() )->document();
    // the real find
    MXML::Node *node = doc->find( *sName, *sValue, *sValAttr, *sData );
    if ( node == 0 )
@@ -473,7 +473,7 @@ FALCON_FUNC MXMLDocument_find( ::Falcon::VMachine *vm )
 FALCON_FUNC MXMLDocument_findNext( ::Falcon::VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
-   MXML::Document *doc = static_cast<MXML::Document *>( self->getUserData() );
+   MXML::Document *doc = static_cast<MXML::DocumentCarrier *>( self->getUserData() )->document();
    // the real find
    MXML::Node *node = doc->findNext();
    if ( node == 0 )
@@ -540,7 +540,7 @@ Item *i_name = vm->param(0);
       return;
    }
 
-   MXML::Document *doc = static_cast<MXML::Document *>( self->getUserData() );
+   MXML::Document *doc = static_cast<MXML::DocumentCarrier *>( self->getUserData() )->document();
    // the real find
    MXML::Node *node = doc->findPath( *i_name->asString() );
    if ( node == 0 )
@@ -562,7 +562,7 @@ Item *i_name = vm->param(0);
 FALCON_FUNC MXMLDocument_findPathNext( ::Falcon::VMachine *vm )
 {
   CoreObject *self = vm->self().asObject();
-   MXML::Document *doc = static_cast<MXML::Document *>( self->getUserData() );
+   MXML::Document *doc = static_cast<MXML::DocumentCarrier *>( self->getUserData() )->document();
    // the real find
    MXML::Node *node = doc->findNextPath();
    if ( node == 0 )
@@ -599,7 +599,7 @@ FALCON_FUNC MXMLDocument_save( ::Falcon::VMachine *vm )
    }
 
    String &uri = *i_uri->asString();
-   MXML::Document *doc = static_cast<MXML::Document *>( self->getUserData() );
+   MXML::Document *doc = static_cast<MXML::DocumentCarrier *>( self->getUserData() )->document();
 
    //TODO: use parsing uri
    FileStream out;
@@ -675,7 +675,7 @@ FALCON_FUNC MXMLDocument_load( ::Falcon::VMachine *vm )
    }
 
    String &uri = *i_uri->asString();
-   MXML::Document *doc = static_cast<MXML::Document *>( self->getUserData() );
+   MXML::Document *doc = static_cast<MXML::DocumentCarrier *>( self->getUserData() )->document();
 
    //TODO: use parsing uri
    FileStream in;
@@ -764,7 +764,7 @@ FALCON_FUNC MXMLDocument_setEncoding( ::Falcon::VMachine *vm )
    }
    delete tr;
 
-   MXML::Document *doc = static_cast<MXML::Document *>( self->getUserData() );
+   MXML::Document *doc = static_cast<MXML::DocumentCarrier *>( self->getUserData() )->document();
    doc->encoding( encoding );
 }
 
@@ -788,7 +788,7 @@ FALCON_FUNC MXMLDocument_setEncoding( ::Falcon::VMachine *vm )
 FALCON_FUNC MXMLDocument_getEncoding( ::Falcon::VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
-   MXML::Document *doc = static_cast<MXML::Document *>( self->getUserData() );
+   MXML::Document *doc = static_cast<MXML::DocumentCarrier *>( self->getUserData() )->document();
    vm->retval( new GarbageString( vm, doc->encoding() ) );
 }
 

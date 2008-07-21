@@ -41,7 +41,7 @@ namespace MXML {
    write. \see stylemacros
 */
 
-class Document: public Element, public Falcon::FalconData
+class Document: public Element
 {
 private:
    Node *m_root;
@@ -53,8 +53,6 @@ private:
    Node::path_iterator m_pathiter;
 
 public:
-   virtual void gcMark( Falcon::VMachine *mp )  {};
-   virtual FalconData *clone() const { return 0; }
 
    /** Creates the document object.
       This constructor does not load any document, and sets the style parameter to
@@ -207,6 +205,27 @@ public:
          return &(*m_pathiter);
       return 0;
    }
+};
+
+class DocumentCarrier: public Falcon::FalconData
+{
+   Document *m_doc;
+public:
+
+   DocumentCarrier( Document *doc ):
+      m_doc( doc )
+   {
+   }
+
+   virtual ~DocumentCarrier()
+   {
+      delete m_doc;
+   }
+
+   virtual void gcMark( Falcon::VMachine *mp )  {};
+   virtual FalconData *clone() const { return 0; }
+
+   Document *document() const { return m_doc; }
 };
 
 }

@@ -26,7 +26,7 @@ by the << operator).
 #if defined( _MSC_VER) && _MSC_VER <= 1300
 class Element
 #else
-class Element: public Falcon::BaseAlloc
+class Element: virtual public Falcon::BaseAlloc
 #endif
 {
 private:
@@ -64,6 +64,9 @@ protected:
    }
 
 public:
+
+   virtual ~Element() {}
+
    /** Increments current processing line and set current position in line to 0 */
    void nextLine() { m_line++; m_char = 0; }
    /** Increments current position in line by one. */
