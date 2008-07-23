@@ -39,6 +39,7 @@ Compiler::Compiler( Module *mod, Stream* in ):
    m_module(0),
    m_stream( in ),
    m_constants( &traits::t_string, &traits::t_voidp ),
+   m_namespaces( &traits::t_string, &traits::t_voidp ),
    m_strict( false ),
    m_language( "C" ),
    m_modVersion( 0 ),
@@ -66,6 +67,7 @@ Compiler::Compiler():
    m_module( 0 ),
    m_stream( 0 ),
    m_constants( &traits::t_string, &traits::t_voidp ),
+   m_namespaces( &traits::t_string, &traits::t_voidp ),
    m_strict( false ),
    m_language( "C" ),
    m_modVersion( 0 ),
@@ -134,6 +136,7 @@ void Compiler::reset()
       iter.next();
    }
    m_constants.clear();
+   m_namespaces.clear();
 
    m_alias.clear();
    m_context.clear();
@@ -999,6 +1002,18 @@ void Compiler::addEnumerator( const String &str )
 {
    Value dummy( (int64) m_enumId );
    addEnumerator( str, &dummy );
+}
+
+
+bool Compiler::isNamespace( const String &symName )
+{
+   return m_namespaces.find( &symName ) != 0;
+}
+
+
+void Compiler::addNamespace( const String &nspace )
+{
+   m_namespaces.insert( &nspace, 0 );
 }
 
 }

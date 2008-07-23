@@ -116,9 +116,10 @@ LiveModuleMap::LiveModuleMap():
 {}
 
 
-LiveModule::LiveModule( VMachine *vm, Module *mod ):
+LiveModule::LiveModule( VMachine *vm, Module *mod, bool bPrivate ):
    Garbageable( vm, sizeof( *this ) ),
-   m_module( mod )
+   m_module( mod ),
+   m_bPrivate( bPrivate )
 {
    m_module->incref();
 }

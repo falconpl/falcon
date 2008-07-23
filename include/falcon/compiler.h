@@ -96,6 +96,11 @@ class FALCON_DYN_CLASS Compiler: public BaseAlloc
    */
    Map m_constants;
 
+   /** Map of namespaces.
+      (String &, void)
+   */
+   Map m_namespaces;
+
    SourceTree *m_root;
 
    int m_errors;
@@ -469,6 +474,20 @@ public:
    void addEnumerator( const String &name );
 
    void resetEnum() { m_enumId = 0; }
+
+   /** Return true if the current symbol is actually a namespace.
+      Checks if sym was previosly declared as a namespace with
+      addNamspace().
+      \note Namespaces can contain dots.
+      \param symName the name that may be possibly a namespace.
+   */
+   bool isNamespace( const String &symName );
+
+   /** Adds a known namespace.
+      \param nspace The namespace to be added.
+   */
+   void addNamespace( const String &nspace );
+
 };
 
 } // end of namespace

@@ -28,6 +28,23 @@ namespace Falcon {
 class Module;
 class Stream;
 
+/** Class storing dependency data. */
+class ModuleDepData: public BaseAlloc
+{
+   const String *m_modName;
+   bool m_bPrivate;
+
+public:
+   ModuleDepData( const String *modName, bool bPrivate = false ):
+      m_modName( modName ),
+      m_bPrivate( bPrivate )
+   {}
+
+   const String *moduleName() const { return m_modName; }
+   bool isPrivate() const { return m_bPrivate; }
+   void setPrivate( bool mode ) { m_bPrivate = mode; }
+};
+
 /** Module dependency table.
    Actually it's just a string list supporting module-aware serialization.
    The strings are actually held in the module string table.
@@ -36,6 +53,7 @@ class FALCON_DYN_CLASS DependTable: public List
 {
 public:
    DependTable() {}
+   ~DependTable();
 
    bool save( Stream *out ) const ;
    bool load( Module *mod, Stream *in );

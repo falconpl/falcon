@@ -337,7 +337,7 @@ int SrcLexer::lex_normal()
             if( ! isWhiteSpace( chr ) )
             {
                m_previousLine = m_line;
-               if ( m_bIsDirectiveLine && chr == '.' )
+               if( m_bIsDirectiveLine && chr == '.' )
                {
                   // just ignore it
                   m_string.append( chr );
@@ -379,13 +379,19 @@ int SrcLexer::lex_normal()
                   // else, just let it through.
                }
 
-               // unless we have a dot in a load directive
-               if ( m_bIsDirectiveLine && chr == '.' )
+               // unless we have a dot in a load directive or namespace
+               if( chr == '.' )
                {
-                  // just ignore it
-                  m_string.append( chr );
-                  break;
+                  if ( m_bIsDirectiveLine ||
+                     ( m_string.size() != 0 && m_compiler->isNamespace( m_string ))
+                  )
+                  {
+                     // just ignore it
+                     m_string.append( chr );
+                     break;
+                  }
                }
+
 
                // push this chr back; we want to read it again in line state
                if( ! isWhiteSpace( chr ) ) // save a loop

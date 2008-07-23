@@ -1498,7 +1498,7 @@ import_symbol_list:
          Falcon::Symbol *sym = COMPILER->addGlobalSymbol( $1 );
          sym->imported(true);
       }
-   | export_symbol_list COMMA SYMBOL
+   | import_symbol_list COMMA SYMBOL
       {
          Falcon::Symbol *sym = COMPILER->addGlobalSymbol( $3 );
          sym->imported(true);

@@ -26,6 +26,14 @@
 
 namespace Falcon {
 
+DependTable::~DependTable()
+{
+   ListElement *iter = begin();
+   while( iter != 0 ) {
+      delete (ModuleDepData *) iter->data();
+      iter = iter->next();
+   }
+}
 
 bool DependTable::save( Stream *out ) const
 {
@@ -34,9 +42,10 @@ bool DependTable::save( Stream *out ) const
 
    ListElement *iter = begin();
    while( iter != 0 ) {
-      const String *str = (const String *) iter->data();
-      s = endianInt32( str->id() );
+      const ModuleDepData *data = (const ModuleDepData *) iter->data();
+      s = endianInt32( data->moduleName()->id() );
       out->write( &s, sizeof( s ) );
+      s = endianInt32( data->isPrivate() ? 1 : 0 );
       iter = iter->next();
    }
    return true;
@@ -55,7 +64,10 @@ bool DependTable::load( Module *mod, Stream *in )
       const String *str = mod->getString( endianInt32( id ) );
       if( str == 0 )
          return false;
-      pushBack( str );
+
+      in->read( &id, sizeof( id ) );
+      bool isPrivate = endianInt32(id) != 0;
+      pushBack( new ModuleDepData( str, isPrivate ) );
       --s;
    }
 

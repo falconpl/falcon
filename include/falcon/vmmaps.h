@@ -101,9 +101,10 @@ class FALCON_DYN_CLASS LiveModule: public Garbageable
    Module *m_module;
    ItemVector m_globals;
    ItemVector m_wkitems;
+   bool m_bPrivate;
 
 public:
-   LiveModule( VMachine *vm, Module *mod );
+   LiveModule( VMachine *vm, Module *mod, bool bPrivate=false );
    ~LiveModule();
 
    const Module *module() const { return m_module; }
@@ -135,6 +136,22 @@ public:
       \return 0 if not found or a pointer to the item which is indicated by the symbol
    */
    Item *findModuleItem( const String &symName ) const;
+
+   /** Returns the privacy status of this module.
+
+      If the module is not private, the VM will export all the exported symbol
+      to the global namespace at link time.
+
+      \return true if this module is private, and so, if didn't export any symbol.
+   */
+   bool isPrivate() const { return m_bPrivate; }
+
+   /** Changes the privacy status of this module.
+
+      If changing private to public, the VM funcrion exporting public symbols
+      must be separately called.
+   */
+   void setPrivate( bool mode ) { m_bPrivate = mode; }
 };
 
 

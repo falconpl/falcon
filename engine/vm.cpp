@@ -322,9 +322,11 @@ bool VMachine::link( Runtime *rt )
 {
    // link all the modules in the runtime from first to last.
    // FIFO order is important.
-   for( uint32 iter = 0; iter < rt->moduleVector()->size(); ++iter )
+   uint32 listSize = rt->moduleVector()->size();
+   for( uint32 iter = 0; iter < listSize; ++iter )
    {
-      if (! link( rt->moduleVector()->moduleAt( iter ) ) )
+      ModuleDep *md = rt->moduleVector()->moduleDepAt( iter );
+      if ( link( md->module(), iter + 1 == listSize, md->isPrivate() ) == 0 )
          return false;
    }
 
@@ -332,8 +334,27 @@ bool VMachine::link( Runtime *rt )
 }
 
 
-LiveModule *VMachine::link( Module *mod, bool isMainModule )
+LiveModule *VMachine::link( Module *mod, bool isMainModule, bool bPrivate )
 {
+   // See if we have a module with the same name
+   LiveModule *oldMod = findModule( mod->name() );
+   if ( oldMod != 0 )
+   {
+      // if the publish policy is changed, allow this
+      if( oldMod->isPrivate() && ! bPrivate )
+      {
+         // try to export all
+         if ( ! exportAllSymbols( oldMod ) )
+         {
+            return 0;
+         }
+         // success; change official policy and return the livemod
+         oldMod->setPrivate( true );
+      }
+
+      return oldMod;
+   }
+
    // first of all link the exported services.
    MapIterator svmap_iter = mod->getServiceMap().begin();
    while( svmap_iter.hasCurrent() )
@@ -352,7 +373,7 @@ LiveModule *VMachine::link( Module *mod, bool isMainModule )
 
    // Ok, the module is now in.
    // We can now increment reference count and add it to ourselves
-   LiveModule *livemod = new LiveModule( this, mod );
+   LiveModule *livemod = new LiveModule( this, mod, bPrivate );
 
    // A shortcut
    ItemVector *globs = &livemod->globals();
@@ -461,14 +482,38 @@ bool VMachine::linkSymbol( Symbol *sym, LiveModule *livemod )
 
    if ( sym->isUndefined() )
    {
-      // try to find the imported symbol.
-      SymModule *sm = (SymModule *) m_globalSyms.find( &sym->name() );
-
-      if( sm != 0 )
+      // is the symbol name-spaced?
+      uint32 dotPos;
+      if ( ( dotPos = sym->name().rfind( "." ) ) != String::npos )
       {
-         // link successful, we must set the current item as a reference of the original
-         referenceItem( globs->itemAt( sym->itemId() ), *sm->item() );
-         return true;
+         String nameSpace = sym->name().subString( 0, dotPos );
+         LiveModule *lmod = findModule( nameSpace );
+         // If we find it...
+         if ( lmod != 0 )
+         {
+            // ... then find the module in the item
+            String localSymName = sym->name().subString( dotPos + 1 );
+            Symbol *localSym = lmod->module()->findGlobalSymbol( localSymName );
+
+            if ( localSym != 0 )
+            {
+               referenceItem( globs->itemAt( sym->itemId() ),
+                  lmod->globals().itemAt( localSym->itemId() ) );
+               return true;
+            }
+            // otherwise, the symbol is undefined.
+         }
+      }
+      else {
+         // try to find the imported symbol.
+         SymModule *sm = (SymModule *) m_globalSyms.find( &sym->name() );
+
+         if( sm != 0 )
+         {
+            // link successful, we must set the current item as a reference of the original
+            referenceItem( globs->itemAt( sym->itemId() ), *sm->item() );
+            return true;
+         }
       }
 
       // try to dynamically load the symbol from flexy modules.
@@ -540,8 +585,47 @@ bool VMachine::linkSymbol( Symbol *sym, LiveModule *livemod )
       break;
    }
 
-   // Is this symbol exported?
-   if ( sym->exported() && sym->name().getCharAt(0) != '_' )
+   // see if the symbol needs exportation and eventually do that.
+   if ( ! exportSymbol( sym, livemod ) )
+      return false;
+
+   return true;
+}
+
+
+bool VMachine::exportAllSymbols( LiveModule *livemod )
+{
+   bool success = true;
+
+   // now, the symbol table must be traversed.
+   const SymbolTable *symtab = &livemod->module()->symbolTable();
+   MapIterator iter = symtab->map().begin();
+   while( iter.hasCurrent() )
+   {
+      Symbol *sym = *(Symbol **) iter.currentValue();
+
+      if ( ! exportSymbol( sym, livemod ) )
+      {
+         // but continue to expose other errors as well.
+         success = false;
+      }
+
+      // next symbol
+      iter.next();
+   }
+
+   return success;
+}
+
+
+bool VMachine::exportSymbol( Symbol *sym, LiveModule *livemod )
+{
+   // A shortcut
+   ItemVector *globs = &livemod->globals();
+   const Module *mod = livemod->module();
+
+      // Is this symbol exported?
+   if ( ! livemod->isPrivate() && sym->exported() && sym->name().getCharAt(0) != '_' )
    {
       // as long as the module is referenced, the symbols are alive, and as we
       // hold a reference to the module, we are sure that symbols are alive here.
@@ -946,16 +1030,10 @@ bool VMachine::linkSubClass( LiveModule *lmod, const Symbol *clssym,
       }
       else if ( parent->isUndefined() )
       {
-         const SymModule *sym_mod = findGlobalSymbol( parent->name() );
-         // the symbol may be zero, as we tried to link classes
-         // even on symbol failure.
-         // As the error has been already raised, we just need to
-         // return false.
-         if ( sym_mod == 0)
-            return false;
+         // we have already linked the symbol for sure.
+         Item *icls = lmod->globals().itemAt( parent->itemId() ).dereference();
 
-         parent = sym_mod->symbol();
-         if ( ! parent->isClass() )
+         if ( ! icls->isClass() )
          {
             raiseError(
                new CodeError( ErrorParam( e_inv_inherit, clssym->declaredAt() ).origin( e_orig_vm ).
@@ -964,7 +1042,10 @@ bool VMachine::linkSubClass( LiveModule *lmod, const Symbol *clssym,
                   );
             return false;
          }
-         if ( ! linkSubClass( sym_mod->liveModule(), parent, props, attribs, &subManager ) )
+
+         parent = icls->asClass()->symbol();
+         LiveModule *parmod = findModule( parent->module()->name() );
+         if ( ! linkSubClass( parmod, parent, props, attribs, &subManager ) )
             return false;
       }
       else

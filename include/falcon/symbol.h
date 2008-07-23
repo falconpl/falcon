@@ -753,6 +753,7 @@ private:
       ClassDef *v_class;
       VarDef *v_prop;
       Symbol *v_symbol;
+      const String *m_extModName;
    } m_value;
 
    void clear();

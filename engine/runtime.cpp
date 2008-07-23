@@ -47,42 +47,69 @@ Runtime::~Runtime()
 {
    for ( uint32 i = 0; i < m_modvect.size(); i++ )
    {
-      m_modvect.moduleAt( i )->decref();
+      delete m_modvect.moduleDepAt( i );
    }
 }
 
 
-bool Runtime::addModule( Module *mod )
+bool Runtime::addModule( Module *mod, bool isPrivate )
 {
    if ( m_modules.find( &mod->name() ) != 0 )
       return true;  // already in..
 
-   m_modules.insert( &mod->name(), mod );
+   ModuleDep *dep = new ModuleDep( mod, isPrivate );
+
+   m_modules.insert( &mod->name(), dep );
 
    if ( m_loader != 0 && ! mod->dependencies().empty() )
    {
       ListElement *deps = mod->dependencies().begin();
       while( deps != 0 )
       {
-         const String *moduleName = (const String *) deps->data();
+         const ModuleDepData *depdata = (const ModuleDepData *) deps->data();
+         const String *moduleName = depdata->moduleName();
 
          // if we have a provider, skip this module if already found VM
-         if( (m_provider != 0 && m_provider->findModule( *moduleName ) != 0)  ||
-            // ... or do we have already loaded the module?
-            m_modules.find( moduleName ) != 0 )
+         LiveModule *livemod;
+         ModuleDep **olddep;
+         if( m_provider != 0 && (livemod = m_provider->findModule( *moduleName )) != 0 )
          {
-            // already in
+            if ( livemod->isPrivate() && ! depdata->isPrivate() )
+            {
+               // just insert the module with the request to extend its privacy.
+               m_modvect.push( new ModuleDep( const_cast<Module *>(livemod->module()), true ) );
+            }
+
+            // anyhow, we don't need to perform another load.
             deps = deps->next();
             continue;
+         }
+         else {
+            // ... or do we have already loaded the module?
+            if( (olddep = (ModuleDep **) m_modules.find( moduleName )) != 0 )
+            {
+               // already in? -- should we broaden the publishing?
+               if( (*olddep)->isPrivate() && ! depdata->isPrivate() )
+               {
+                  (*olddep)->setPrivate( false );
+               }
+               // anyhow, we don't need to perform another load.
+               deps = deps->next();
+               continue;
+            }
          }
 
          Module *l;
          if ( (l = m_loader->loadName( *moduleName, mod->name() )) == 0)
+         {
+            delete dep;
             return false;
+         }
 
-         if ( ! addModule( l ) )
+         if ( ! addModule( l, depdata->isPrivate() ) )
          {
             l->decref();
+            delete dep;
             return false;
          }
          l->decref();
@@ -90,7 +117,7 @@ bool Runtime::addModule( Module *mod )
          deps = deps->next();
       }
 
-      m_modvect.push( mod );
+      m_modvect.push( dep );
    }
    else
    {
@@ -101,10 +128,10 @@ bool Runtime::addModule( Module *mod )
       if ( pending != 0 )
       {
          insertAt = *pending;
-         m_modvect.insert( mod, (uint32) insertAt );
+         m_modvect.insert( dep, (uint32) insertAt );
       }
       else
-         m_modvect.push( mod );
+         m_modvect.push( dep );
 
       // then, record pending modules for THIS module, if any.
       ListElement *deps = mod->dependencies().begin();
@@ -122,30 +149,27 @@ bool Runtime::addModule( Module *mod )
       }
    }
 
-
-   mod->incref();
-
    return true;
 }
 
-bool Runtime::loadName( const String &name, const String &parent )
+bool Runtime::loadName( const String &name, const String &parent, bool bIsPrivate )
 {
    Module *l;
    if ( (l = m_loader->loadName( name, parent )) == 0)
       return false;
 
-   bool ret = addModule( l );
+   bool ret = addModule( l, bIsPrivate );
    l->decref();
    return ret;
 }
 
-bool Runtime::loadFile( const String &file )
+bool Runtime::loadFile( const String &file, bool bIsPrivate )
 {
    Module *l;
    if ( (l = m_loader->loadFile( file )) == 0)
       return false;
 
-   bool ret = addModule( l );
+   bool ret = addModule( l, bIsPrivate );
    l->decref();
    return ret;
 }

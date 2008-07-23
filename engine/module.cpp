@@ -66,9 +66,9 @@ DllLoader &Module::dllLoader()
    return *m_loader;
 }
 
-bool Module::addDepend( String *dep )
+bool Module::addDepend( String *dep, bool bPrivate )
 {
-   m_depend.pushBack( dep );
+   m_depend.pushBack( new ModuleDepData( dep, bPrivate ) );
    return true;
 }
 

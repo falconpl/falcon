@@ -257,7 +257,11 @@ public:
       return m_depend;
    }
 
-   bool addDepend( String *dep );
+   /** Add a dependency to an external module.
+      \param dep The name of the module from which this module depends.
+      \param bPrivate if true import the module only locally.
+   */
+   bool addDepend( String *dep, bool bPrivate = false );
 
    /** Adds a generic symbol to the module */
    void addSymbol( Symbol *sym );

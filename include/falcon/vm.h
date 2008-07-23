@@ -712,9 +712,11 @@ public:
             for start symbol(s) by prepare() function.
       \param rt the runtime to be linked
       \param isMainModule false to prevent this module to be chosen as startup module.
+      \param bPrivate false to allow this module to export the exported symbols, true
+               to make the module private (and prevent exports).
       \return 0 time error, the internally built LiveModule instance on success.
    */
-   LiveModule *link( Module *module, bool isMainModule=true );
+   LiveModule *link( Module *module, bool isMainModule=true, bool bPrivate = false );
 
    /** Links a single symbol on an already existing live module.
       This won't actually link instances and classes which must be post-processed.
@@ -2127,6 +2129,20 @@ public:
       \returns system specific data bound with this machine.
    */
    Sys::SystemData &systemData() { return m_systemData; }
+
+   /** Exports a single symbol.
+      This publishes a symbol on the global symbol map,
+      and/or eventually to the WKS map.
+
+      The function checks for the symbol to be exported and/or Well Known before
+      actually performing the final export.
+   */
+   bool exportSymbol( Symbol *sym, LiveModule *mod );
+
+   /** Exports all symbols in a module.
+      To be called when changing the module publicity policy.
+   */
+   bool exportAllSymbols( LiveModule *mod );
 
 //==========================================================================
 //==========================================================================

@@ -28,8 +28,35 @@ namespace Falcon {
 
 class VMachine;
 
+/** Structure holding live dependency informations.
+*
+* Modules loaded through "load" directive will export their exported symbols
+* to the VM. Modules referenced through "import" will be linked but won't export
+* symbols, and they will be referenced as "private".
+*/
+
+class ModuleDep: public BaseAlloc
+{
+   Module *m_module;
+   bool m_bIsPrivate;
+public:
+
+   ModuleDep( Module *mod, bool priv = false ):
+      m_module( mod ),
+      m_bIsPrivate( priv )
+   {
+      mod->incref();
+   }
+
+   ~ModuleDep() { m_module->decref(); }
+
+   Module *module() const { return m_module; }
+   bool isPrivate() const { return m_bIsPrivate; }
+   void setPrivate( bool mode ) { m_bIsPrivate = mode; }
+};
+
 /** Map of module names-> modules.
-    ( const String *, Module * )
+    ( const String *, ModuleDep * )
 */
 class FALCON_DYN_CLASS ModuleMap: public Map
 {
@@ -37,11 +64,17 @@ public:
    ModuleMap();
 };
 
+/** Vector of ModuleDep objects.
+*
+* Ownership is in not in the vector, the owner class must destroy ModuleDep items at
+* when required.
+*/
 class FALCON_DYN_CLASS ModuleVector: public GenericVector
 {
 public:
    ModuleVector();
-   Module *moduleAt( uint32 pos ) const { return *(Module**) at(pos); }
+   Module *moduleAt( uint32 pos ) const { return (*(ModuleDep**) at(pos))->module(); }
+   ModuleDep *moduleDepAt( uint32 pos ) const { return *(ModuleDep**) at(pos); }
 };
 
 /** Runtime code representation.
@@ -161,8 +194,12 @@ public:
       will have global variable vector number N, module K will refer to variables in the K vector
       and so on).
 
+      \param mod The module to be added.
+      \param bIsPrivate false (default) when linking requires exported symbols to be published
+                        globally in the VM.
+      \return true if the module have been added, false on module resolution error.
    */
-   bool addModule( Module *mod );
+   bool addModule( Module *mod, bool bIsPrivate = false );
 
    /** Return the symbol tably containing the global symbols.
       As a symbol table is just a symbol map that self-deletes owned symbol,
@@ -185,9 +222,9 @@ public:
    */
    Module *findModule( const String &name )
    {
-      Module **modp = (Module **) m_modules.find( &name );
+      ModuleDep **modp = (ModuleDep **) m_modules.find( &name );
       if ( modp != 0 )
-         return *modp;
+         return (*modp)->module();
       return 0;
    }
 
@@ -206,9 +243,11 @@ public:
       and if load is succesfull, then the module is added to the runtime.
       \param name the logical name of the module to be loaded
       \param parent the logical name of the parent module, if any
+      \param bIsPrivate false (default) to allow the module to export its
+            symbols to the VM, true otherwise.
       \return true on success, false on load or dependency resolution errors.
    */
-   bool loadName( const String &name, const String &parent = "" );
+   bool loadName( const String &name, const String &parent = "", bool bIsPrivate=false );
 
    /** Loads the given module and adds it to the runtime.
       This is actually a just shortcut to load a module
@@ -216,9 +255,11 @@ public:
       and if load is succesfull, then the module is added to the runtime.
 
       \param file the file name of the module to be loaded
+      \param bIsPrivate false (default) to allow the module to export its
+            symbols to the VM, true otherwise.
       \return true on success, false on load or dependency resolution errors.
    */
-   bool loadFile( const String &file );
+   bool loadFile( const String &file, bool bIsPrivate=false );
 
    /** Returns true if there are still some pending modules.
       This means that the module list may not be completed in case the runtime
