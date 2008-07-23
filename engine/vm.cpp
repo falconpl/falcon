@@ -947,9 +947,12 @@ bool VMachine::linkSubClass( LiveModule *lmod, const Symbol *clssym,
       else if ( parent->isUndefined() )
       {
          const SymModule *sym_mod = findGlobalSymbol( parent->name() );
-         // Can't be 0, because we have already linked all the external
-         // symbols
-         fassert( sym_mod != 0 );
+         // the symbol may be zero, as we tried to link classes
+         // even on symbol failure.
+         // As the error has been already raised, we just need to
+         // return false.
+         if ( sym_mod == 0)
+            return false;
 
          parent = sym_mod->symbol();
          if ( ! parent->isClass() )
