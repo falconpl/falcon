@@ -485,8 +485,9 @@ public:
 
    /** Adds a known namespace.
       \param nspace The namespace to be added.
+      \param full If true, import all symbols.
    */
-   void addNamespace( const String &nspace );
+   void addNamespace( const String &nspace, bool full=false );
 
    /** Import the symbols named in a List.
       The \b lst parameter contains a list of String*

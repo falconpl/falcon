@@ -4953,7 +4953,7 @@ yyreduce:
   case 237:
 #line 1512 "/home/user/Progetti/falcon/core/engine/src_parser.yy"
     {
-         COMPILER->addNamespace( *(yyvsp[(3) - (4)].stringp) );
+         COMPILER->addNamespace( *(yyvsp[(3) - (4)].stringp), true );
          (yyval.fal_stat) = 0;
       }
     break;

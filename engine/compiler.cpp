@@ -582,6 +582,25 @@ Symbol *Compiler::addGlobalSymbol( const String *symname )
    Symbol *sym = m_module->findGlobalSymbol( *symname );
    if( sym == 0 )
    {
+      // check if it is authorized.
+      // Unauthorized symbols are namespaced symbol not declared in import all clauses
+      uint32 dotpos;
+      if( (dotpos = symname->rfind ( "." ) ) != String::npos )
+      {
+         // Namespaced symbol
+         String nspace = symname->subString( 0, dotpos );
+         void **mode = (void **) m_namespaces.find( &nspace );
+         // we wouldn't have a namespaced symbol if the lexer didn't find it was already in
+         fassert( mode != 0 );
+         if( *mode == 0 )
+         {
+            // if we were authorized, the symbol would have been created by
+            // the clauses itself.
+            raiseError( e_undef_sym, *symname );
+            // but add it anyhow.
+         }
+      }
+
       sym = new Symbol( m_module, m_module->addString( *symname ) );
       m_module->addGlobalSymbol( sym );
       sym->declaredAt( lexer()->line() );
@@ -1011,10 +1030,20 @@ bool Compiler::isNamespace( const String &symName )
 }
 
 
-void Compiler::addNamespace( const String &nspace )
+void Compiler::addNamespace( const String &nspace, bool full )
 {
-   m_namespaces.insert( &nspace, 0 );
-   m_module->addDepend( m_module->addString( nspace ), true );
+   // Already added?
+   void **res = (void **) m_namespaces.find( &nspace );
+
+   if ( res == 0 )
+   {
+      // yes? -- add it
+      m_namespaces.insert( &nspace, full ? (void *)1 : (void *) 0 );
+      m_module->addDepend( m_module->addString( nspace ), true );
+   }
+   // no? -- eventually change to load all.
+   else if ( *res == 0 && full )
+      *res = (void *) 1;
 }
 
 
@@ -1033,8 +1062,11 @@ void Compiler::importSymbols( List *lst, const String *prefix )
          *symName = *prefix + "." + *symName;
       }
 
-      Falcon::Symbol *sym = this->addGlobalSymbol( symName );
+      Falcon::Symbol *sym = new Symbol( m_module, m_module->addString( *symName ) );
+      m_module->addGlobalSymbol( sym );
+      sym->declaredAt( lexer()->previousLine() );
       sym->imported(true);
+
       delete symName;
 
       li = li->next();

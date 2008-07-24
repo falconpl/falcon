@@ -1510,7 +1510,7 @@ import_statement:
       }
    | IMPORT FROM symbol_or_string EOL
       {
-         COMPILER->addNamespace( *$3 );
+         COMPILER->addNamespace( *$3, true );
          $$ = 0;
       }
    | IMPORT error EOL
