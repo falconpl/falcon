@@ -46,6 +46,7 @@ bool DependTable::save( Stream *out ) const
       s = endianInt32( data->moduleName()->id() );
       out->write( &s, sizeof( s ) );
       s = endianInt32( data->isPrivate() ? 1 : 0 );
+      out->write( &s, sizeof( s ) );
       iter = iter->next();
    }
    return true;
