@@ -70,6 +70,7 @@ inline int flc_src_lex (void *lvalp, void *yyparam)
    Falcon::ArrayDecl *fal_adecl;
    Falcon::DictDecl *fal_ddecl;
    Falcon::SymbolList *fal_symlist;
+   Falcon::List *fal_genericList;
 }
 
 /*%debug*/
@@ -154,6 +155,7 @@ inline int flc_src_lex (void *lvalp, void *yyparam)
 %type <fal_adecl> expression_list listpar_expression_list array_decl
 %type <fal_adecl> symbol_list inherit_param_list inherit_call
 %type <fal_ddecl> expression_pair_list
+%type <fal_genericList> import_symbol_list
 %type <fal_val> expression func_call nameless_func nameless_closure lambda_expr iif_expr
 %type <fal_val> switch_decl select_decl while_decl while_short_decl
 %type <fal_val> if_decl if_short_decl elif_decl
@@ -179,6 +181,7 @@ inline int flc_src_lex (void *lvalp, void *yyparam)
 
 %type <fal_stat> const_statement
 %type <fal_val>  range_decl
+%type <stringp> symbol_or_string
 
 %%
 
@@ -1483,6 +1486,31 @@ export_symbol_list:
 import_statement:
    IMPORT import_symbol_list EOL
       {
+         COMPILER->importSymbols( $2, 0 );
+         $$ = 0;
+      }
+   | IMPORT import_symbol_list FROM symbol_or_string EOL
+      {
+         COMPILER->importSymbols( $2, $4 );
+         $$ = 0;
+      }
+   | IMPORT import_symbol_list error EOL
+      {
+         // destroy the list to avoid leak
+         Falcon::ListElement *li = $2->begin();
+         while( li != 0 ) {
+            Falcon::String *symName = (Falcon::String *) li->data();
+            delete symName;
+            li = li->next();
+         }
+         delete $2;
+
+         COMPILER->raiseError(Falcon::e_syn_import );
+         $$ = 0;
+      }
+   | IMPORT FROM symbol_or_string EOL
+      {
+         COMPILER->addNamespace( *$3 );
          $$ = 0;
       }
    | IMPORT error EOL
@@ -1492,16 +1520,22 @@ import_statement:
       }
 ;
 
+symbol_or_string:
+   SYMBOL
+   | STRING
+;
+
 import_symbol_list:
    SYMBOL
       {
-         Falcon::Symbol *sym = COMPILER->addGlobalSymbol( $1 );
-         sym->imported(true);
+         Falcon::List *lst = new Falcon::List;
+         lst->pushBack( new Falcon::String( *$1 ) );
+         $$ = lst;
       }
    | import_symbol_list COMMA SYMBOL
       {
-         Falcon::Symbol *sym = COMPILER->addGlobalSymbol( $3 );
-         sym->imported(true);
+         $1->pushBack( new Falcon::String( *$3 ) );
+         $$ = $1;
       }
 ;
 

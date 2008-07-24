@@ -433,8 +433,8 @@ void Compiler::defineVal( Value *val )
          val->setSymbol( sym );
       }
       else {
-         String *symname = m_module->addString( *staticPrefix() + "#" + *val->asSymdef() );
-         Symbol *gsym = addGlobalSymbol( symname );
+         String symname = *staticPrefix() + "#" + *val->asSymdef();
+         Symbol *gsym = addGlobalSymbol( &symname );
          AliasMap &map = *(AliasMap*)m_alias.back();
          map.insert( val->asSymdef(), gsym );
          if( gsym->isUndefined() )
@@ -582,7 +582,7 @@ Symbol *Compiler::addGlobalSymbol( const String *symname )
    Symbol *sym = m_module->findGlobalSymbol( *symname );
    if( sym == 0 )
    {
-      sym = new Symbol( m_module, symname );
+      sym = new Symbol( m_module, m_module->addString( *symname ) );
       m_module->addGlobalSymbol( sym );
       sym->declaredAt( lexer()->line() );
    }
@@ -664,7 +664,7 @@ StmtFunction *Compiler::buildCtorFor( StmtClass *cls )
    String cname = sym->name() + "._init";
 
    // creates an empty symbol
-   Symbol *funcsym = addGlobalSymbol(  addString( cname ) );
+   Symbol *funcsym = addGlobalSymbol( &cname );
    //def->addProperty( addString( "_init" ) , new VarDef( funcsym ) );
 
    // creates the syntree entry for the symbol; we are using the same line as the class.
@@ -1014,6 +1014,32 @@ bool Compiler::isNamespace( const String &symName )
 void Compiler::addNamespace( const String &nspace )
 {
    m_namespaces.insert( &nspace, 0 );
+   m_module->addDepend( m_module->addString( nspace ), true );
+}
+
+
+void Compiler::importSymbols( List *lst, const String *prefix )
+{
+   // add the namespace if not previously known
+   if ( prefix != 0 )
+   {
+      addNamespace( *prefix );
+   }
+
+   Falcon::ListElement *li = lst->begin();
+   while( li != 0 ) {
+      Falcon::String *symName = (String *) li->data();
+      if( prefix != 0 ) {
+         *symName = *prefix + "." + *symName;
+      }
+
+      Falcon::Symbol *sym = this->addGlobalSymbol( symName );
+      sym->imported(true);
+      delete symName;
+
+      li = li->next();
+   }
+   delete lst;
 }
 
 }

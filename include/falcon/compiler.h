@@ -488,6 +488,22 @@ public:
    */
    void addNamespace( const String &nspace );
 
+   /** Import the symbols named in a List.
+      The \b lst parameter contains a list of String*
+      which will be imported. If a prefix is given, then
+      the prefix is added to the list of known namespaces,
+      and it is added in front of the symbol to be imported.
+
+      This will force the VM to search the symbol only in
+      the specified namespace (that is, in the module named
+      after the prefix).
+
+      The function is meant to be used in the conjunction
+      with the parser, and will destroy both the string
+      in \b lst and \b lst itself.
+   */
+   void importSymbols( List *lst, const String *prefix );
+
 };
 
 } // end of namespace
