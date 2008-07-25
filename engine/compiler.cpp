@@ -22,9 +22,6 @@
 #include <falcon/itemid.h>
 #include <falcon/fassert.h>
 
-#include <falcon/autocstring.h>
-#include <stdio.h>
-
 namespace Falcon
 {
 
@@ -1035,16 +1032,13 @@ bool Compiler::isNamespace( const String &symName )
 }
 
 
-void Compiler::addNamespace( const String &nspace, bool full )
+void Compiler::addNamespace( const String &nspace, const String &alias, bool full )
 {
-   // Already added?
-   void **res = (void **) m_namespaces.find( &nspace );
+   // Purge special namespace names
+   String nselfed;
 
-   if ( res == 0 )
+   if ( alias.size() == 0 )
    {
-      // yes? -- add it
-      String nselfed;
-
       // if the namespace starts with self, add also the namespace
       // with the same name of the module
       if ( nspace.getCharAt(0) == '.' ) {
@@ -1056,6 +1050,17 @@ void Compiler::addNamespace( const String &nspace, bool full )
       else {
          nselfed = nspace;
       }
+   }
+   else {
+      nselfed = alias;
+   }
+
+   // Already added?
+   void **res = (void **) m_namespaces.find( &nselfed );
+
+   if ( res == 0 )
+   {
+      // yes? -- add it
       m_namespaces.insert( &nselfed, full ? (void *)1 : (void *) 0 );
 
       // we have to insert in the namespaces all the sub-namespaces.
@@ -1075,7 +1080,7 @@ void Compiler::addNamespace( const String &nspace, bool full )
          dotpos = nselfed.find( ".", dotpos+1 );
       }
 
-      m_module->addDepend( m_module->addString( nspace ), true );
+      m_module->addDepend( nselfed, nspace, true );
    }
    // no? -- eventually change to load all.
    else if ( *res == 0 && full )
@@ -1083,12 +1088,19 @@ void Compiler::addNamespace( const String &nspace, bool full )
 }
 
 
-void Compiler::importSymbols( List *lst, const String *prefix )
+void Compiler::importSymbols( List *lst, const String *prefix, const String *alias )
 {
    // add the namespace if not previously known
    if ( prefix != 0 )
    {
-      addNamespace( *prefix );
+      if( alias != 0 )
+      {
+         addNamespace( *prefix, *alias );
+         prefix = alias;
+      }
+      else {
+         addNamespace( *prefix, "" );
+      }
    }
 
    Falcon::ListElement *li = lst->begin();

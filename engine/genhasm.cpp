@@ -256,13 +256,13 @@ void GenHAsm::gen_propdef( const VarDef &def )
 void GenHAsm::gen_depTable( const Module *mod )
 {
    uint32 count = 0;
-   ListElement *iter = mod->dependencies().begin();
+   MapIterator iter = mod->dependencies().begin();
 
-   while( iter != 0 )
+   while( iter.hasCurrent() )
    {
-      const String *val = (const String *) iter->data();
+      const String *val = (const String *) iter.currentKey();
       m_out->writeString( ".load " + *val + "\n" );
-      iter = iter->next();
+      iter.next();
    }
 }
 

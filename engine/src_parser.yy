@@ -1486,12 +1486,17 @@ export_symbol_list:
 import_statement:
    IMPORT import_symbol_list EOL
       {
-         COMPILER->importSymbols( $2, 0 );
+         COMPILER->importSymbols( $2 );
          $$ = 0;
       }
    | IMPORT import_symbol_list FROM symbol_or_string EOL
       {
          COMPILER->importSymbols( $2, $4 );
+         $$ = 0;
+      }
+   | IMPORT import_symbol_list FROM symbol_or_string OP_EQ SYMBOL EOL
+      {
+         COMPILER->importSymbols( $2, $4, $6 );
          $$ = 0;
       }
    | IMPORT import_symbol_list error EOL
@@ -1510,7 +1515,12 @@ import_statement:
       }
    | IMPORT FROM symbol_or_string EOL
       {
-         COMPILER->addNamespace( *$3, true );
+         COMPILER->addNamespace( *$3, "", true );
+         $$ = 0;
+      }
+   | IMPORT FROM symbol_or_string OP_EQ SYMBOL EOL
+      {
+         COMPILER->addNamespace( *$3, *$5, true );
          $$ = 0;
       }
    | IMPORT error EOL

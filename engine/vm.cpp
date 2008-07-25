@@ -487,7 +487,15 @@ bool VMachine::linkSymbol( Symbol *sym, LiveModule *livemod )
       if ( ( dotPos = sym->name().rfind( "." ) ) != String::npos )
       {
          String nameSpace = sym->name().subString( 0, dotPos );
-         LiveModule *lmod = findModule( nameSpace );
+         // get the module name for the given module
+         ModuleDepData *depData = livemod->module()->dependencies().findModule( nameSpace );
+         // if we linked it, it must exist
+         fassert( depData != 0 );
+
+         // we must convert the name if it contains self or if it starts with "."
+
+         LiveModule *lmod = findModule( Module::relativizeName(
+            *depData->moduleName(), livemod->module()->name() ));
          // If we find it...
          if ( lmod != 0 )
          {

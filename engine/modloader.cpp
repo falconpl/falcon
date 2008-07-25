@@ -311,30 +311,7 @@ Module *ModuleLoader::loadName( const String &module_name, const String &parent_
    if ( module_name.length() == 0 )
       return 0;
 
-   if ( module_name.getCharAt(0) == '.' )
-   {
-      // notation .name
-      if ( parent_name.size() == 0 )
-         nmodName = module_name.subString( 1 );
-      else {
-         // remove last part of parent name
-         uint32 posDot = parent_name.rfind( "." );
-         // are there no dot? -- we're at root elements
-         if ( posDot == String::npos )
-            nmodName = module_name.subString( 1 );
-         else
-            nmodName = parent_name.subString( 0, posDot ) + module_name; // "." is included.
-      }
-   }
-   else if ( module_name.find( "self." ) == 0 )
-   {
-      if ( parent_name.size() == 0 )
-         nmodName = module_name.subString( 5 );
-      else
-         nmodName = parent_name + "." + module_name.subString( 5 );
-   }
-   else
-      nmodName = module_name;
+   nmodName = Module::relativizeName( module_name, parent_name );
 
    t_filetype type = scanForFile( nmodName, false, t_none, file_path, m_acceptSources );
 

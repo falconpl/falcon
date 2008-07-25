@@ -63,10 +63,10 @@ bool Runtime::addModule( Module *mod, bool isPrivate )
 
    if ( m_loader != 0 && ! mod->dependencies().empty() )
    {
-      ListElement *deps = mod->dependencies().begin();
-      while( deps != 0 )
+      MapIterator deps = mod->dependencies().begin();
+      while( deps.hasCurrent() )
       {
-         const ModuleDepData *depdata = (const ModuleDepData *) deps->data();
+         const ModuleDepData *depdata = *(const ModuleDepData **) deps.currentValue();
          const String *moduleName = depdata->moduleName();
 
          // if we have a provider, skip this module if already found VM
@@ -81,7 +81,7 @@ bool Runtime::addModule( Module *mod, bool isPrivate )
             }
 
             // anyhow, we don't need to perform another load.
-            deps = deps->next();
+            deps.next();
             continue;
          }
          else {
@@ -94,7 +94,7 @@ bool Runtime::addModule( Module *mod, bool isPrivate )
                   (*olddep)->setPrivate( false );
                }
                // anyhow, we don't need to perform another load.
-               deps = deps->next();
+               deps.next();
                continue;
             }
          }
@@ -114,7 +114,7 @@ bool Runtime::addModule( Module *mod, bool isPrivate )
          }
          l->decref();
 
-         deps = deps->next();
+         deps.next();
       }
 
       m_modvect.push( dep );
@@ -134,10 +134,11 @@ bool Runtime::addModule( Module *mod, bool isPrivate )
          m_modvect.push( dep );
 
       // then, record pending modules for THIS module, if any.
-      ListElement *deps = mod->dependencies().begin();
-      while( deps != 0 )
+      MapIterator deps = mod->dependencies().begin();
+      while( deps.hasCurrent() )
       {
-         const String *moduleName = (const String *) deps->data();
+         const ModuleDepData *depdata = *(const ModuleDepData **) deps.currentValue();
+         const String *moduleName = depdata->moduleName();
 
          // if the module is missing both from our module list and dependency list
          // add a dependency here
@@ -145,7 +146,7 @@ bool Runtime::addModule( Module *mod, bool isPrivate )
          {
             m_modPending.insert( moduleName, &insertAt );
          }
-         deps = deps->next();
+         deps.next();
       }
    }
 

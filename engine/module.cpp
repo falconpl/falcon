@@ -66,11 +66,17 @@ DllLoader &Module::dllLoader()
    return *m_loader;
 }
 
-bool Module::addDepend( String *dep, bool bPrivate )
+void Module::addDepend( const String &name, const String &module, bool bPrivate )
 {
-   m_depend.pushBack( new ModuleDepData( dep, bPrivate ) );
-   return true;
+   m_depend.insert( addString( name ), new ModuleDepData( addString(module) , bPrivate ) );
 }
+
+void Module::addDepend( const String &name, bool bPrivate )
+{
+   String *nptr = addString( name );
+   m_depend.insert( nptr, new ModuleDepData( nptr , bPrivate ) );
+}
+
 
 Symbol *Module::addGlobal( const String &name, bool exp )
 {
@@ -553,6 +559,35 @@ bool Module::saveTableTemplate( Stream *stream, const String &encoding ) const
    stream->writeString( encoding );
    stream->writeString( "\"?>\n" );
    return m_strTab.saveTemplate( stream, name(), language() );
+}
+
+
+String Module::relativizeName( const String &module_name, const String &parent_name )
+{
+   if ( module_name.getCharAt(0) == '.' )
+   {
+      // notation .name
+      if ( parent_name.size() == 0 )
+         return module_name.subString( 1 );
+      else {
+         // remove last part of parent name
+         uint32 posDot = parent_name.rfind( "." );
+         // are there no dot? -- we're at root elements
+         if ( posDot == String::npos )
+            return module_name.subString( 1 );
+         else
+            return parent_name.subString( 0, posDot ) + module_name; // "." is included.
+      }
+   }
+   else if ( module_name.find( "self." ) == 0 )
+   {
+      if ( parent_name.size() == 0 )
+         return module_name.subString( 5 );
+      else
+         return parent_name + "." + module_name.subString( 5 );
+   }
+   else
+      return module_name;
 }
 
 }

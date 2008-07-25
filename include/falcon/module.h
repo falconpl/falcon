@@ -258,10 +258,18 @@ public:
    }
 
    /** Add a dependency to an external module.
-      \param dep The name of the module from which this module depends.
+      \param name The name of the module from which this module depends.
       \param bPrivate if true import the module only locally.
    */
-   bool addDepend( String *dep, bool bPrivate = false );
+   void addDepend( const String &name, bool bPrivate = false  );
+
+   /** Add a dependency to an external module.
+      \param alias The local alias under which the module is known.
+      \param module The name of the module from which this module depends.
+      \param bPrivate if true import the module only locally.
+   */
+   void addDepend( const String &alias, const String &module, bool bPrivate=false );
+
 
    /** Adds a generic symbol to the module */
    void addSymbol( Symbol *sym );
@@ -633,6 +641,9 @@ public:
       Shouldn't be called if it's table has no international strintgs.
    */
    bool saveTableTemplate( Stream *stream, const String &encoding ) const;
+
+   /** Extract the full logical module name from current module name and parent loader. */
+   static String relativizeName( const String &module_name, const String &parent_name );
 };
 
 }

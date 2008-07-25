@@ -1007,11 +1007,15 @@ void write_deptable( e_tabmode mode , Stream *out, Module *mod )
    out->writeString( ";--------------------------------------------\n" );
    out->writeString( "; Dependencies table\n" );
    out->writeString( ";--------------------------------------------\n" );
-   ListElement *iter = deps->begin();
-   while( iter != 0 )
+
+   MapIterator iter = deps->begin();
+
+   while( iter.hasCurrent() )
    {
-      const ModuleDepData *data = (const ModuleDepData *) iter->data();
+      const String *alias = *(const String **) iter.currentKey();
+      const ModuleDepData *data = *(const ModuleDepData **) iter.currentValue();
       str = data->moduleName();
+
       switch( mode )
       {
          case e_mode_comment:
@@ -1023,10 +1027,14 @@ void write_deptable( e_tabmode mode , Stream *out, Module *mod )
       }
 
       out->writeString( " " + *str );
+      if ( *str != *alias )
+      out->writeString( " -> " + *alias );
+
       if ( data->isPrivate() )
          out->writeString( " (private)" );
+
       out->writeString( "\n" );
-      iter = iter->next();
+      iter.next();
    }
 
    out->writeString( "; ------  End of depend table -----------\n" );

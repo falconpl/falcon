@@ -270,7 +270,7 @@ void AsmCompiler::addExport( Pseudo *val )
 
 void AsmCompiler::addLoad( Pseudo *val )
 {
-   m_module->addDepend( m_module->addString( val->asString() ) );
+   m_module->addDepend( val->asString() );
    delete val;
 }
 

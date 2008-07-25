@@ -80,7 +80,14 @@ public:
       addDependency( name, name, bPrivate );
    }
 
-   ModuleDepData *findModule( const String *name );
+   ModuleDepData *findModule( const String &name ) const
+   {
+      ModuleDepData **data = (ModuleDepData **) find( &name );
+      if( data == 0 )
+         return 0;
+
+      return *data;
+   }
 };
 
 }

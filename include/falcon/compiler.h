@@ -302,7 +302,7 @@ public:
    }
 
    void addLoad( const String &name ) {
-      m_module->addDepend( m_module->addString( name ) );
+      m_module->addDepend( name );
    }
 
    // Inlines
@@ -484,10 +484,11 @@ public:
    bool isNamespace( const String &symName );
 
    /** Adds a known namespace.
-      \param nspace The namespace to be added.
+      \param nspace The namespace to be added (as module name).
+      \param alias If not empty, will be the alias under which the module will be locally known.
       \param full If true, import all symbols.
    */
-   void addNamespace( const String &nspace, bool full=false );
+   void addNamespace( const String &nspace, const String &alias, bool full=false );
 
    /** Import the symbols named in a List.
       The \b lst parameter contains a list of String*
@@ -503,7 +504,7 @@ public:
       with the parser, and will destroy both the string
       in \b lst and \b lst itself.
    */
-   void importSymbols( List *lst, const String *prefix );
+   void importSymbols( List *lst, const String *prefix=0, const String *alias=0 );
 
 };
 

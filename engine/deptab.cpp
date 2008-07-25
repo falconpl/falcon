@@ -34,7 +34,7 @@ DependTable::~DependTable()
 {
    MapIterator iter = begin();
    while( iter.hasCurrent() ) {
-      delete (ModuleDepData *) iter->currentValue();
+      delete *(ModuleDepData **) iter.currentValue();
       iter.next();
    }
 }
@@ -46,12 +46,15 @@ bool DependTable::save( Stream *out ) const
 
    MapIterator iter = begin();
    while( iter.hasCurrent() ) {
-      const String *name = (const String *) iter.currentKey();
-      const ModuleDepData *data = (const ModuleDepData *) iter.currentValue();
+      const String *name = *(const String **) iter.currentKey();
+      const ModuleDepData *data = *(const ModuleDepData **) iter.currentValue();
+
       s = endianInt32( name->id() );
       out->write( &s, sizeof( s ) );
+
       s = endianInt32( data->moduleName()->id() );
       out->write( &s, sizeof( s ) );
+
       s = endianInt32( data->isPrivate() ? 1 : 0 );
       out->write( &s, sizeof( s ) );
       iter.next();
@@ -68,14 +71,21 @@ bool DependTable::load( Module *mod, Stream *in )
    while( s > 0 )
    {
       uint32 id;
-      in->read(  &id, sizeof( id ) );
-      const String *str = mod->getString( endianInt32( id ) );
-      if( str == 0 )
+
+      in->read( &id, sizeof( id ) );
+      const String *alias = mod->getString( endianInt32( id ) );
+      if( alias == 0 )
+         return false;
+
+      in->read( &id, sizeof( id ) );
+      const String *modname = mod->getString( endianInt32( id ) );
+      if( modname == 0 )
          return false;
 
       in->read( &id, sizeof( id ) );
       bool isPrivate = endianInt32(id) != 0;
-      pushBack( new ModuleDepData( str, isPrivate ) );
+
+      insert( alias, new ModuleDepData( modname, isPrivate ) );
       --s;
    }
 
@@ -85,13 +95,9 @@ bool DependTable::load( Module *mod, Stream *in )
 
 void DependTable::addDependency( const String *alias, const String *name, bool bPrivate )
 {
+   insert( alias, new ModuleDepData( name, bPrivate ) );
 }
 
-
-ModuleDepData *DependTable::findModule( const String *name )
-{
-   return (ModuleDepData *) find( name );
-}
 
 }
 
