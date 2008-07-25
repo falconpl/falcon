@@ -23,15 +23,19 @@
 #include <falcon/common.h>
 #include <falcon/module.h>
 
-
 namespace Falcon {
+
+DependTable::DependTable():
+   Map( &traits::t_stringptr, &traits::t_voidp )
+{
+}
 
 DependTable::~DependTable()
 {
-   ListElement *iter = begin();
-   while( iter != 0 ) {
-      delete (ModuleDepData *) iter->data();
-      iter = iter->next();
+   MapIterator iter = begin();
+   while( iter.hasCurrent() ) {
+      delete (ModuleDepData *) iter->currentValue();
+      iter.next();
    }
 }
 
@@ -40,14 +44,17 @@ bool DependTable::save( Stream *out ) const
    uint32 s = endianInt32(size());
    out->write( &s, sizeof( s ) );
 
-   ListElement *iter = begin();
-   while( iter != 0 ) {
-      const ModuleDepData *data = (const ModuleDepData *) iter->data();
+   MapIterator iter = begin();
+   while( iter.hasCurrent() ) {
+      const String *name = (const String *) iter.currentKey();
+      const ModuleDepData *data = (const ModuleDepData *) iter.currentValue();
+      s = endianInt32( name->id() );
+      out->write( &s, sizeof( s ) );
       s = endianInt32( data->moduleName()->id() );
       out->write( &s, sizeof( s ) );
       s = endianInt32( data->isPrivate() ? 1 : 0 );
       out->write( &s, sizeof( s ) );
-      iter = iter->next();
+      iter.next();
    }
    return true;
 }
@@ -75,7 +82,17 @@ bool DependTable::load( Module *mod, Stream *in )
    return true;
 }
 
+
+void DependTable::addDependency( const String *alias, const String *name, bool bPrivate )
+{
 }
 
+
+ModuleDepData *DependTable::findModule( const String *name )
+{
+   return (ModuleDepData *) find( name );
+}
+
+}
 
 /* end of deptab.cpp */

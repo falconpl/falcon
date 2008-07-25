@@ -22,6 +22,9 @@
 #include <falcon/itemid.h>
 #include <falcon/fassert.h>
 
+#include <falcon/autocstring.h>
+#include <stdio.h>
+
 namespace Falcon
 {
 
@@ -589,6 +592,8 @@ Symbol *Compiler::addGlobalSymbol( const String *symname )
       {
          // Namespaced symbol
          String nspace = symname->subString( 0, dotpos );
+         // change self into our name
+
          void **mode = (void **) m_namespaces.find( &nspace );
          // we wouldn't have a namespaced symbol if the lexer didn't find it was already in
          fassert( mode != 0 );
@@ -1038,7 +1043,38 @@ void Compiler::addNamespace( const String &nspace, bool full )
    if ( res == 0 )
    {
       // yes? -- add it
-      m_namespaces.insert( &nspace, full ? (void *)1 : (void *) 0 );
+      String nselfed;
+
+      // if the namespace starts with self, add also the namespace
+      // with the same name of the module
+      if ( nspace.getCharAt(0) == '.' ) {
+         nselfed = nspace.subString( 1 );
+      }
+      else if ( nspace.find( "self." ) == 0 ) {
+         nselfed = /*m_module->name() + nspace.subString( 4 );*/ nspace.subString(5);
+      }
+      else {
+         nselfed = nspace;
+      }
+      m_namespaces.insert( &nselfed, full ? (void *)1 : (void *) 0 );
+
+      // we have to insert in the namespaces all the sub-namespaces.
+      uint32 dotpos = nselfed.find( "." );
+      while( dotpos != String::npos )
+      {
+         String subSpace = nselfed.subString( 0, dotpos );
+
+         // don't overwrite in case we already imported something from it.
+         void *oldNs = m_namespaces.find( &subSpace );
+         if ( oldNs == 0 )
+         {
+            // we set a default of 0 for them as we normally import nothing.
+            m_namespaces.insert( &subSpace, 0 );
+         }
+
+         dotpos = nselfed.find( ".", dotpos+1 );
+      }
+
       m_module->addDepend( m_module->addString( nspace ), true );
    }
    // no? -- eventually change to load all.
@@ -1058,8 +1094,16 @@ void Compiler::importSymbols( List *lst, const String *prefix )
    Falcon::ListElement *li = lst->begin();
    while( li != 0 ) {
       Falcon::String *symName = (String *) li->data();
-      if( prefix != 0 ) {
-         *symName = *prefix + "." + *symName;
+      if( prefix != 0 )
+      {
+         if ( prefix->getCharAt(0) == '.' ) {
+            *symName = prefix->subString( 1 ) + "." + *symName;
+         }
+         else if ( prefix->find( "self." ) == 0 ) {
+            *symName = prefix->subString(5) + "." + *symName;
+         }
+         else
+            *symName = *prefix + "." + *symName;
       }
 
       Falcon::Symbol *sym = new Symbol( m_module, m_module->addString( *symName ) );

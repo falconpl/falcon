@@ -17,7 +17,7 @@
 #define flc_DEPTAB_H
 
 #include <falcon/string.h>
-#include <falcon/genericlist.h>
+#include <falcon/genericmap.h>
 
 /** \file
    Dependency table support for modules - header - .
@@ -46,18 +46,41 @@ public:
 };
 
 /** Module dependency table.
-   Actually it's just a string list supporting module-aware serialization.
+   Actually it's just a string map supporting module-aware serialization.
    The strings are actually held in the module string table.
 */
-class FALCON_DYN_CLASS DependTable: public List
+class FALCON_DYN_CLASS DependTable: public Map
 {
 public:
-   DependTable() {}
+   DependTable();
    ~DependTable();
 
    bool save( Stream *out ) const ;
    bool load( Module *mod, Stream *in );
 
+   /** Adds a dependency to the table.
+      This method creates a new dependency entry with a given
+      dependency local alias, a physical or logical module name
+      and a privacy setting.
+
+      \note Strings must be pointers to Strings held in the module
+      string table.
+
+      \param alias The local module alias.
+      \param name The logical or physical module name.
+      \param bPrivate true if the module is private, false to honor its exports.
+   */
+   void addDependency( const String *alias, const String *name, bool bPrivate );
+
+   /** Adds a dependency to the table.
+      This version of the function adds a dependency with the same physical
+      or logical name as the local alias.
+   */
+   void addDependency( const String *name, bool bPrivate = false ) {
+      addDependency( name, name, bPrivate );
+   }
+
+   ModuleDepData *findModule( const String *name );
 };
 
 }

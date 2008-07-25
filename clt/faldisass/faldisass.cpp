@@ -1010,7 +1010,8 @@ void write_deptable( e_tabmode mode , Stream *out, Module *mod )
    ListElement *iter = deps->begin();
    while( iter != 0 )
    {
-      str = (const String *) iter->data();
+      const ModuleDepData *data = (const ModuleDepData *) iter->data();
+      str = data->moduleName();
       switch( mode )
       {
          case e_mode_comment:
@@ -1021,7 +1022,10 @@ void write_deptable( e_tabmode mode , Stream *out, Module *mod )
          break;
       }
 
-      out->writeString(  " " + *str + "\n" );
+      out->writeString( " " + *str );
+      if ( data->isPrivate() )
+         out->writeString( " (private)" );
+      out->writeString( "\n" );
       iter = iter->next();
    }
 
