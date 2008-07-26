@@ -130,6 +130,7 @@ public:
    void defineLabel( LabelDef *def );
    void addExtern( Pseudo *val, Pseudo *line );
    void addLoad( Pseudo *val );
+   void addImport( Pseudo *val, Pseudo *line, Pseudo *mod=0, Pseudo *alias=0 );
    void addDLine( Pseudo *line );
 
    void addInstr( unsigned char opCode, Pseudo *op1=0, Pseudo *op2=0, Pseudo *op3=0 );

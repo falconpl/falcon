@@ -260,8 +260,12 @@ void GenHAsm::gen_depTable( const Module *mod )
 
    while( iter.hasCurrent() )
    {
-      const String *val = (const String *) iter.currentKey();
-      m_out->writeString( ".load " + *val + "\n" );
+      const ModuleDepData *depdata = *(const ModuleDepData **) iter.currentValue();
+
+      // only generate non-private data
+      if ( ! depdata->isPrivate() )
+         m_out->writeString( ".load " + *depdata->moduleName() + "\n" );
+
       iter.next();
    }
 }
@@ -297,8 +301,38 @@ void GenHAsm::gen_symbolTable( const Module *mod )
 
       switch( sym->type() ) {
          case Symbol::tundef:
-            temp =  ".extern " + sym->name() + " ";
-            temp.writeNumber( (int64) sym->declaredAt() );
+            // see if it's imported
+            if ( sym->imported() )
+            {
+               // see if we have an alias from where to import it
+               uint32 dotpos = sym->name().rfind( "." );
+               if( dotpos != String::npos )
+               {
+                  String modname = sym->name().subString( 0, dotpos );
+                  String symname = sym->name().subString( dotpos + 1 );
+
+                  temp =  ".import " + symname + " ";
+                  temp.writeNumber( (int64) sym->declaredAt() );
+
+                  ModuleDepData *depdata = mod->dependencies().findModule( modname );
+                  // We have created the module, the entry must be there.
+                  fassert( depdata != 0 );
+
+                  if( *depdata->moduleName() == modname )
+                     temp += " " + modname;
+                  else
+                     temp += " " + *depdata->moduleName() +" "+ modname;
+
+               }
+               else {
+                  temp =  ".import " + sym->name() + " ";
+                  temp.writeNumber( (int64) sym->declaredAt() );
+               }
+            }
+            else {
+               temp =  ".extern " + sym->name() + " ";
+               temp.writeNumber( (int64) sym->declaredAt() );
+            }
             m_out->writeString( temp );
          break;
 

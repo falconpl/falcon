@@ -281,9 +281,10 @@ lex_value_t {
    Falcon::ArrayDecl *fal_adecl;
    Falcon::DictDecl *fal_ddecl;
    Falcon::SymbolList *fal_symlist;
+   Falcon::List *fal_genericList;
 }
 /* Line 1489 of yacc.c.  */
-#line 287 "/home/gian/Progetti/falcon/core/engine/src_parser.h"
+#line 288 "/home/gian/Progetti/falcon/core/engine/src_parser.hpp"
 	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1

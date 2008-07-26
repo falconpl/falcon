@@ -509,6 +509,37 @@ bool VMachine::linkSymbol( Symbol *sym, LiveModule *livemod )
                   lmod->globals().itemAt( localSym->itemId() ) );
                return true;
             }
+
+            // last chance: if the module is flexy, we may ask it do dynload it.
+            if( lmod->module()->isFlexy() )
+            {
+               // Destroy also constness; flexy modules love to be abused.
+               FlexyModule *fmod = (FlexyModule *)( lmod->module() );
+               Symbol *newsym = fmod->onSymbolRequest( localSymName );
+
+               // Found -- great, link it and if all it's fine, link again this symbol.
+               if ( newsym != 0 )
+               {
+                  // be sure to allocate enough space in the module global table.
+                  if ( newsym->itemId() >= lmod->globals().size() )
+                  {
+                     lmod->globals().resize( newsym->itemId() );
+                  }
+
+                  // now we have space to link it.
+                  if ( linkCompleteSymbol( newsym, lmod ) )
+                  {
+                     referenceItem( globs->itemAt( sym->itemId() ), *lmod->globals().itemPtrAt( newsym->itemId() ) );
+                     return true;
+                  }
+                  else {
+                     // we found the symbol, but it was flacky. We must have raised an error,
+                     // and so we should return now.
+                     // Notice that there is no need to free the symbol.
+                     return false;
+                  }
+               }
+            }
             // otherwise, the symbol is undefined.
          }
       }

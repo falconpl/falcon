@@ -85,6 +85,7 @@ inline int yylex (void *lvalp, void *fasm_param)
 %token DEXTERN
 %token DMODULE
 %token DLOAD
+%token DIMPORT
 %token DSWITCH
 %token DSELECT
 %token DCASE
@@ -249,6 +250,8 @@ x_op_immediate: NIL | op_immediate;
 op_immediate: NUMERIC | TRUE_TOKEN | FALSE_TOKEN | op_scalar;
 op_scalar: STRING_ID | STRING | INTEGER;
 op_string: STRING_ID | STRING;
+string_or_name: STRING | NAME;
+
 
 directive:
      DENTRY { COMPILER->addEntry(); }
@@ -269,6 +272,11 @@ directive:
    | DFUNC NAME def_line EXPORT {  COMPILER->addFunction( $2, $3, true ); }
    | DENDFUNC { COMPILER->addFuncEnd(); }
    | DLOAD NAME {  COMPILER->addLoad( $2 ); }
+   | DIMPORT NAME def_line { COMPILER->addImport( $2, $3 ); }
+   | DIMPORT NAME def_line string_or_name { COMPILER->addImport( $2, $3, $4 ); }
+   | DIMPORT NAME def_line string_or_name string_or_name {
+      COMPILER->addImport( $2, $3, $4, $5 );
+   }
    | DSWITCH op_variable COMMA NAME { COMPILER->addDSwitch( $2, $4 ); }
    | DSWITCH op_variable COMMA INTEGER { COMPILER->addDSwitch( $2, $4 ); }
    | DSELECT op_variable COMMA NAME { COMPILER->addDSwitch( $2, $4, true ); }

@@ -53,6 +53,8 @@ IF(UNIX OR MAC)
    # Adding bison parsers.
    ADD_CUSTOM_TARGET(SrcParser echo "Creating src_parser.cpp")
    ADD_CUSTOM_TARGET(FasmParser echo "Creating fasm_parser.cpp")
+   ADD_CUSTOM_TARGET(SrcParser_h echo "Creating src_parser.h")
+   ADD_CUSTOM_TARGET(FasmParser_h echo "Creating fasm_parser.h")
 
    #builds in-source always; we want it in svn.
    ADD_CUSTOM_COMMAND(
@@ -61,15 +63,35 @@ IF(UNIX OR MAC)
       ARGS -y ${FALCON_SRC_TREE}/core/engine/src_parser.yy -o ${FALCON_SRC_TREE}/core/engine/src_parser.cpp
       TARGET SrcParser
       DEPENDS ${FALCON_SRC_TREE}/core/include/falcon/syntree.h
-      OUTPUTS ${FALCON_SRC_TREE}/core/engine/src_parser.cpp )
+      OUTPUTS
+         ${FALCON_SRC_TREE}/core/engine/src_parser.cpp
+         ${FALCON_SRC_TREE}/core/engine/src_parser.hpp)
 
    #builds in-source always; we want it in svn.
    ADD_CUSTOM_COMMAND(
-      SOURCE ${FALCON_SRC_TREE}/core/engine/src_parser.yy
+      SOURCE ${FALCON_SRC_TREE}/core/engine/fasm_parser.yy
       COMMAND ${BISON_EXECUTABLE}
       ARGS -y ${FALCON_SRC_TREE}/core/engine/fasm_parser.yy -o ${FALCON_SRC_TREE}/core/engine/fasm_parser.cpp
       TARGET FasmParser
-      OUTPUTS ${FALCON_SRC_TREE}/core/engine/fasm_parser.cpp )
+      OUTPUTS
+         ${FALCON_SRC_TREE}/core/engine/fasm_parser.cpp
+         ${FALCON_SRC_TREE}/core/engine/fasm_parser.hpp )
+
+   ADD_CUSTOM_COMMAND(
+      SOURCE ${FALCON_SRC_TREE}/core/engine/src_parser.hpp
+      COMMAND cp
+      ARGS ${FALCON_SRC_TREE}/core/engine/src_parser.hpp ${FALCON_SRC_TREE}/core/engine/src_parser.h
+      TARGET SrcParser_h
+      OUTPUTS
+         ${FALCON_SRC_TREE}/core/engine/src_parser.h )
+
+   ADD_CUSTOM_COMMAND(
+      SOURCE ${FALCON_SRC_TREE}/core/engine/fasm_parser.hpp
+      COMMAND cp
+      ARGS ${FALCON_SRC_TREE}/core/engine/fasm_parser.hpp ${FALCON_SRC_TREE}/core/engine/fasm_parser.h
+      TARGET FasmParser_h
+      OUTPUTS
+         ${FALCON_SRC_TREE}/core/engine/fasm_parser.h )
 
 ELSEIF(WIN32)
 
@@ -166,7 +188,7 @@ ADD_LIBRARY( falcon_engine SHARED
    )
 
 IF(BISON_EXECUTABLE)
-   ADD_DEPENDENCIES( falcon_engine SrcParser FasmParser )
+   ADD_DEPENDENCIES( falcon_engine SrcParser FasmParser SrcParser_h FasmParser_h )
 ENDIF(BISON_EXECUTABLE)
 
 SET_TARGET_PROPERTIES(falcon_engine

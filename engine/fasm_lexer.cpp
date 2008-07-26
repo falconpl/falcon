@@ -878,6 +878,8 @@ int AsmLexer::checkDirectives()
       case 6:
          if ( m_string == "global" )
             return DGLOBAL;
+         if ( m_string == "import" )
+            return DIMPORT;
          if ( m_string == "attrib" )
             return DATTRIB;
          if ( m_string == "method" )

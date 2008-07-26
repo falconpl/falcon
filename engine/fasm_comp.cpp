@@ -274,6 +274,45 @@ void AsmCompiler::addLoad( Pseudo *val )
    delete val;
 }
 
+void AsmCompiler::addImport( Pseudo *val, Pseudo *line, Pseudo *mod, Pseudo *alias )
+{
+
+   String symname = val->asString();
+
+   // prefix the name
+   if ( alias != 0 )
+      symname = alias->asString() + "." + symname;
+   else if ( mod != 0 )
+      symname = mod->asString() + "." + symname;
+
+   if ( defined( symname ) )
+   {
+      raiseError( e_already_def, symname );
+   }
+   else
+   {
+      Symbol *sym = m_module->addSymbol( symname );
+      // sym is undef (extern) by default.
+      m_module->addGlobalSymbol( sym )->declaredAt( (int32) line->asInt() );
+      // specify explicit import
+      sym->imported(true);
+   }
+
+   // add the module dependency, if required
+   if( mod != 0 )
+   {
+      if ( alias != 0 )
+         m_module->addDepend( alias->asString(), mod->asString(), true ); // private
+      else
+         m_module->addDepend( mod->asString(), true ); // private
+   }
+
+   delete val;
+   delete line;
+   delete mod;
+   delete alias;
+}
+
 void AsmCompiler::addLocal( Pseudo *val, Pseudo *line )
 {
    if ( m_current == 0 || ! m_current->isFunction() )
@@ -288,7 +327,7 @@ void AsmCompiler::addLocal( Pseudo *val, Pseudo *line )
          raiseError( e_already_def, val->asString() );
       }
       else {
-         if ( func->locals() == 255 )
+         if ( func->locals() == 65530 )
             raiseError( e_too_locals  );
          Symbol *sym = m_module->addSymbol( val->asString() );
          sym->declaredAt( (int32) line->asInt() );
@@ -315,7 +354,7 @@ void AsmCompiler::addParam( Pseudo *val, Pseudo *line )
          raiseError( e_already_def, val->asString() );
       }
       else {
-         if ( func->params() == 255 )
+         if ( func->params() == 65530 )
             raiseError( e_too_locals  );
          Symbol *sym = m_module->addSymbol( val->asString() );
          sym->declaredAt( (int32) line->asInt() );
@@ -329,7 +368,7 @@ void AsmCompiler::addParam( Pseudo *val, Pseudo *line )
          raiseError( e_already_def, val->asString() );
       }
       else {
-         if ( cd->params() == 255 )
+         if ( cd->params() == 65530 )
             raiseError( e_too_locals  );
          Symbol *sym = m_module->addSymbol( val->asString() );
          sym->declaredAt( (int32) line->asInt() );
@@ -512,6 +551,7 @@ void AsmCompiler::addExtern( Pseudo *val, Pseudo *line )
       Symbol *sym = m_module->addSymbol( val->asString() );
       // sym is undef (extern) by default.
       m_module->addGlobalSymbol( sym )->declaredAt( (int32) line->asInt() );
+      // don't add imported; that is for import
    }
    delete line;
    delete val;
