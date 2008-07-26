@@ -1,6 +1,7 @@
 Feathers (0.8.11)
   * bugfix: Double inheritance in MXML::Document may have caused some compilers
             to mess up the virtual table. Fixed (using a carrier).
+  * major: The compiler link mode is now "private".
 
 Feathers (0.8.10)
   * minor: Added load directive support for loadXXX on reflexive compiler.

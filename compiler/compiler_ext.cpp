@@ -151,7 +151,7 @@ void internal_link( ::Falcon::VMachine *vm, Module *mod, CompilerIface *iface )
    Runtime rt( &iface->loader(), vm );
 
    // let's try to link
-   if ( ! rt.addModule( mod ) || ! vm->link( &rt ) )
+   if ( ! rt.addModule( mod, true ) || ! vm->link( &rt ) )
    {
       // VM should have raised the errors.
       mod->decref();
