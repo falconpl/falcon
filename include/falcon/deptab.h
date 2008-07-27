@@ -33,15 +33,18 @@ class ModuleDepData: public BaseAlloc
 {
    const String *m_modName;
    bool m_bPrivate;
+   bool m_bFile;
 
 public:
-   ModuleDepData( const String *modName, bool bPrivate = false ):
+   ModuleDepData( const String *modName, bool bPrivate = false, bool bFile = false ):
       m_modName( modName ),
-      m_bPrivate( bPrivate )
+      m_bPrivate( bPrivate ),
+      m_bFile( bFile )
    {}
 
    const String *moduleName() const { return m_modName; }
    bool isPrivate() const { return m_bPrivate; }
+   bool isFile() const { return m_bFile; }
    void setPrivate( bool mode ) { m_bPrivate = mode; }
 };
 

@@ -21,6 +21,7 @@
 #include <falcon/stdstreams.h>
 #include <falcon/itemid.h>
 #include <falcon/fassert.h>
+#include <falcon/path.h>
 
 namespace Falcon
 {
@@ -580,6 +581,7 @@ Symbol *Compiler::addGlobalSymbol( const String *symname )
 {
    // is the symbol already defined?
    Symbol *sym = m_module->findGlobalSymbol( *symname );
+   bool imported = false;
    if( sym == 0 )
    {
       // check if it is authorized.
@@ -592,20 +594,28 @@ Symbol *Compiler::addGlobalSymbol( const String *symname )
          // change self into our name
 
          void **mode = (void **) m_namespaces.find( &nspace );
-         // we wouldn't have a namespaced symbol if the lexer didn't find it was already in
-         fassert( mode != 0 );
-         if( *mode == 0 )
+
+         // if it's not a namespace, then it's an hard-built symbol as i.e. class._init
+         if ( mode != 0 )
          {
-            // if we were authorized, the symbol would have been created by
-            // the clauses itself.
-            raiseError( e_undef_sym, *symname );
-            // but add it anyhow.
+            // we wouldn't have a namespaced symbol if the lexer didn't find it was already in
+            if( *mode == 0 )
+            {
+               // if we were authorized, the symbol would have been created by
+               // the clauses itself.
+               raiseError( e_undef_sym, *symname );
+               // but add it anyhow.
+            }
+
+            // namespaced symbols are always imported
+            imported = true;
          }
       }
 
       sym = new Symbol( m_module, m_module->addString( *symname ) );
       m_module->addGlobalSymbol( sym );
       sym->declaredAt( lexer()->line() );
+      sym->imported( imported );
    }
    return sym;
 }
@@ -1032,7 +1042,7 @@ bool Compiler::isNamespace( const String &symName )
 }
 
 
-void Compiler::addNamespace( const String &nspace, const String &alias, bool full )
+void Compiler::addNamespace( const String &nspace, const String &alias, bool full, bool isFilename )
 {
    // Purge special namespace names
    String nselfed;
@@ -1041,18 +1051,32 @@ void Compiler::addNamespace( const String &nspace, const String &alias, bool ful
    {
       // if the namespace starts with self, add also the namespace
       // with the same name of the module
-      if ( nspace.getCharAt(0) == '.' ) {
+      if( isFilename )
+      {
+         // we got to convert "/" into "."
+         Path fconv( nspace );
+         nselfed = fconv.getLocation() + "." + fconv.getFile();
+         uint32 pos = 0;
+
+         if ( nselfed.getCharAt(0) == '/' )
+            nselfed = nselfed.subString( 1 );
+
+         while( (pos = nselfed.find( "/", pos ) ) != String::npos ) {
+            nselfed.setCharAt( pos, '.' );
+         }
+      }
+      else if ( nspace.getCharAt(0) == '.' ) {
          nselfed = nspace.subString( 1 );
       }
       else if ( nspace.find( "self." ) == 0 ) {
-         nselfed = /*m_module->name() + nspace.subString( 4 );*/ nspace.subString(5);
+         nselfed = nspace.subString(5);
       }
       else {
          nselfed = nspace;
       }
    }
    else {
-      nselfed = alias;
+         nselfed = alias;
    }
 
    // Already added?
@@ -1080,7 +1104,7 @@ void Compiler::addNamespace( const String &nspace, const String &alias, bool ful
          dotpos = nselfed.find( ".", dotpos+1 );
       }
 
-      m_module->addDepend( nselfed, nspace, true );
+      m_module->addDepend( nselfed, nspace, true, isFilename );
    }
    // no? -- eventually change to load all.
    else if ( *res == 0 && full )
@@ -1088,27 +1112,49 @@ void Compiler::addNamespace( const String &nspace, const String &alias, bool ful
 }
 
 
-void Compiler::importSymbols( List *lst, const String *prefix, const String *alias )
+void Compiler::importSymbols( List *lst, const String *prefix, const String *alias, bool isFilename )
 {
    // add the namespace if not previously known
    if ( prefix != 0 )
    {
       if( alias != 0 )
       {
-         addNamespace( *prefix, *alias );
+         addNamespace( *prefix, *alias, false, isFilename );
          prefix = alias;
       }
       else {
-         addNamespace( *prefix, "" );
+         addNamespace( *prefix, "", false, isFilename );
       }
    }
 
+   String fprefix;
+   if( isFilename && alias == 0 && prefix != 0 )
+   {
+      // we got to convert "/" into "."
+      Path fconv( *prefix );
+      fprefix = fconv.getLocation() + "." + fconv.getFile();
+
+      uint32 pos = 0;
+      if ( fprefix.getCharAt(0) == '/' )
+         fprefix = fprefix.subString(1);
+
+      while( (pos = fprefix.find( "/", pos ) ) != String::npos ) {
+         fprefix.setCharAt( pos, '.' );
+      }
+
+   }
+
    Falcon::ListElement *li = lst->begin();
+
    while( li != 0 ) {
       Falcon::String *symName = (String *) li->data();
+
       if( prefix != 0 )
       {
-         if ( prefix->getCharAt(0) == '.' ) {
+         if( isFilename && alias == 0 ) {
+            *symName = fprefix + "." + *symName;
+         }
+         else if ( prefix->getCharAt(0) == '.' ) {
             *symName = prefix->subString( 1 ) + "." + *symName;
          }
          else if ( prefix->find( "self." ) == 0 ) {

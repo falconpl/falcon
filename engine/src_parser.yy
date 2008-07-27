@@ -160,7 +160,6 @@ inline int flc_src_lex (void *lvalp, void *yyparam)
 %type <fal_val> switch_decl select_decl while_decl while_short_decl
 %type <fal_val> if_decl if_short_decl elif_decl
 %type <fal_val> const_atom var_atom  atomic_symbol /* atom */
-%type <stringp> load_statement
 %type <fal_val> dotarray_decl dict_decl
 %type <fal_val> inherit_param_token
 %type <fal_stat> break_statement continue_statement
@@ -179,9 +178,10 @@ inline int flc_src_lex (void *lvalp, void *yyparam)
 %type <fal_stat> def_statement
 %type <fal_stat> outer_print_statement
 
+
+
 %type <fal_stat> const_statement
 %type <fal_val>  range_decl
-%type <stringp> symbol_or_string
 
 %%
 
@@ -211,11 +211,7 @@ line:
 ;
 
 toplevel_statement:
-   load_statement
-      {
-         if ( $1 != 0 )
-            COMPILER->addLoad( *$1 );
-      }
+   load_statement { $$=0; }
    | directive_statement
    | func_statement
       {
@@ -253,18 +249,17 @@ load_statement:
       {
          if ( COMPILER->getContext() != 0 )
             COMPILER->raiseError(Falcon::e_toplevel_load );
-         $$ = $2;
+         COMPILER->addLoad( *$2, false );
       }
    | LOAD STRING EOL
       {
          if ( COMPILER->getContext() != 0 )
             COMPILER->raiseError(Falcon::e_toplevel_load );
-         $$ = $2;
+         COMPILER->addLoad( *$2, true );
       }
    | LOAD error EOL
       {
          COMPILER->raiseError(Falcon::e_syn_load );
-         $$ = 0;
       }
 ;
 
@@ -1489,14 +1484,24 @@ import_statement:
          COMPILER->importSymbols( $2 );
          $$ = 0;
       }
-   | IMPORT import_symbol_list FROM symbol_or_string EOL
+   | IMPORT import_symbol_list FROM SYMBOL EOL
       {
-         COMPILER->importSymbols( $2, $4 );
+         COMPILER->importSymbols( $2, $4, 0, false );
          $$ = 0;
       }
-   | IMPORT import_symbol_list FROM symbol_or_string OP_EQ SYMBOL EOL
+   | IMPORT import_symbol_list FROM STRING EOL
       {
-         COMPILER->importSymbols( $2, $4, $6 );
+         COMPILER->importSymbols( $2, $4, 0, true );
+         $$ = 0;
+      }
+   | IMPORT import_symbol_list FROM SYMBOL OP_EQ SYMBOL EOL
+      {
+         COMPILER->importSymbols( $2, $4, $6, false );
+         $$ = 0;
+      }
+   | IMPORT import_symbol_list FROM STRING OP_EQ SYMBOL EOL
+      {
+         COMPILER->importSymbols( $2, $4, $6, true );
          $$ = 0;
       }
    | IMPORT import_symbol_list error EOL
@@ -1513,14 +1518,24 @@ import_statement:
          COMPILER->raiseError(Falcon::e_syn_import );
          $$ = 0;
       }
-   | IMPORT FROM symbol_or_string EOL
+   | IMPORT FROM SYMBOL EOL
       {
-         COMPILER->addNamespace( *$3, "", true );
+         COMPILER->addNamespace( *$3, "", true, false );
          $$ = 0;
       }
-   | IMPORT FROM symbol_or_string OP_EQ SYMBOL EOL
+   | IMPORT FROM STRING EOL
       {
-         COMPILER->addNamespace( *$3, *$5, true );
+         COMPILER->addNamespace( *$3, "", true, true );
+         $$ = 0;
+      }
+   | IMPORT FROM SYMBOL OP_EQ SYMBOL EOL
+      {
+         COMPILER->addNamespace( *$3, *$5, true, false );
+         $$ = 0;
+      }
+   | IMPORT FROM STRING OP_EQ SYMBOL EOL
+      {
+         COMPILER->addNamespace( *$3, *$5, true, true );
          $$ = 0;
       }
    | IMPORT error EOL
@@ -1528,11 +1543,6 @@ import_statement:
          COMPILER->raiseError(Falcon::e_syn_import );
          $$ = 0;
       }
-;
-
-symbol_or_string:
-   SYMBOL
-   | STRING
 ;
 
 import_symbol_list:

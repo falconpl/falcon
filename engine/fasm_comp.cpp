@@ -268,13 +268,13 @@ void AsmCompiler::addExport( Pseudo *val )
    delete val;
 }
 
-void AsmCompiler::addLoad( Pseudo *val )
+void AsmCompiler::addLoad( Pseudo *val, bool isFile )
 {
-   m_module->addDepend( val->asString() );
+   m_module->addDepend( val->asString(), false, isFile );
    delete val;
 }
 
-void AsmCompiler::addImport( Pseudo *val, Pseudo *line, Pseudo *mod, Pseudo *alias )
+void AsmCompiler::addImport( Pseudo *val, Pseudo *line, Pseudo *mod, Pseudo *alias, bool isFile )
 {
 
    String symname = val->asString();
@@ -302,9 +302,9 @@ void AsmCompiler::addImport( Pseudo *val, Pseudo *line, Pseudo *mod, Pseudo *ali
    if( mod != 0 )
    {
       if ( alias != 0 )
-         m_module->addDepend( alias->asString(), mod->asString(), true ); // private
+         m_module->addDepend( alias->asString(), mod->asString(), true, isFile ); // private
       else
-         m_module->addDepend( mod->asString(), true ); // private
+         m_module->addDepend( mod->asString(), true, isFile ); // private
    }
 
    delete val;

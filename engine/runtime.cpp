@@ -100,11 +100,18 @@ bool Runtime::addModule( Module *mod, bool isPrivate )
          }
 
          Module *l;
-         if ( (l = m_loader->loadName( *moduleName, mod->name() )) == 0)
+         if( depdata->isFile() )
+            l = m_loader->loadFile( *moduleName );
+         else
+            l = m_loader->loadName( *moduleName, mod->name() );
+
+         if ( l == 0 )
          {
             delete dep;
             return false;
          }
+         // force the name to be what we expect it to be
+         l->name( *moduleName );
 
          if ( ! addModule( l, depdata->isPrivate() ) )
          {

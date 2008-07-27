@@ -271,11 +271,16 @@ directive:
    | DFUNC NAME def_line {  COMPILER->addFunction( $2, $3 ); }
    | DFUNC NAME def_line EXPORT {  COMPILER->addFunction( $2, $3, true ); }
    | DENDFUNC { COMPILER->addFuncEnd(); }
-   | DLOAD NAME {  COMPILER->addLoad( $2 ); }
+   | DLOAD NAME {  COMPILER->addLoad( $2, false ); }
+   | DLOAD STRING {  COMPILER->addLoad( $2, true ); }
    | DIMPORT NAME def_line { COMPILER->addImport( $2, $3 ); }
-   | DIMPORT NAME def_line string_or_name { COMPILER->addImport( $2, $3, $4 ); }
-   | DIMPORT NAME def_line string_or_name string_or_name {
-      COMPILER->addImport( $2, $3, $4, $5 );
+   | DIMPORT NAME def_line NAME { COMPILER->addImport( $2, $3, $4, 0, false ); }
+   | DIMPORT NAME def_line STRING { COMPILER->addImport( $2, $3, $4, 0, true ); }
+   | DIMPORT NAME def_line NAME string_or_name {
+      COMPILER->addImport( $2, $3, $4, $5, false );
+   }
+   | DIMPORT NAME def_line STRING string_or_name {
+      COMPILER->addImport( $2, $3, $4, $5, true );
    }
    | DSWITCH op_variable COMMA NAME { COMPILER->addDSwitch( $2, $4 ); }
    | DSWITCH op_variable COMMA INTEGER { COMPILER->addDSwitch( $2, $4 ); }

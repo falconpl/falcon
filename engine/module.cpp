@@ -66,15 +66,15 @@ DllLoader &Module::dllLoader()
    return *m_loader;
 }
 
-void Module::addDepend( const String &name, const String &module, bool bPrivate )
+void Module::addDepend( const String &name, const String &module, bool bPrivate, bool bFile )
 {
-   m_depend.insert( addString( name ), new ModuleDepData( addString(module) , bPrivate ) );
+   m_depend.insert( addString( name ), new ModuleDepData( addString(module) , bPrivate, bFile ) );
 }
 
-void Module::addDepend( const String &name, bool bPrivate )
+void Module::addDepend( const String &name, bool bPrivate, bool bFile )
 {
    String *nptr = addString( name );
-   m_depend.insert( nptr, new ModuleDepData( nptr , bPrivate ) );
+   m_depend.insert( nptr, new ModuleDepData( nptr , bPrivate, bFile ) );
 }
 
 

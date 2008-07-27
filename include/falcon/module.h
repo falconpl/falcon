@@ -260,15 +260,17 @@ public:
    /** Add a dependency to an external module.
       \param name The name of the module from which this module depends.
       \param bPrivate if true import the module only locally.
+      \param bIsFilename if true the load name is a filename.
    */
-   void addDepend( const String &name, bool bPrivate = false  );
+   void addDepend( const String &name, bool bPrivate = false, bool bIsFilename = false  );
 
    /** Add a dependency to an external module.
       \param alias The local alias under which the module is known.
       \param module The name of the module from which this module depends.
       \param bPrivate if true import the module only locally.
+      \param bIsFilename if true the load name is a filename.
    */
-   void addDepend( const String &alias, const String &module, bool bPrivate=false );
+   void addDepend( const String &alias, const String &module, bool bPrivate=false, bool bIsFilename = false );
 
 
    /** Adds a generic symbol to the module */

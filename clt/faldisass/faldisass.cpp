@@ -920,9 +920,10 @@ void write_strtable( e_tabmode mode , Stream *out, Module *mod )
 }
 
 
-void write_symtable( e_tabmode mode , Stream *out, const SymbolTable *st )
+void write_symtable( e_tabmode mode , Stream *out, Module *mod )
 {
    const Symbol *sym;
+   const SymbolTable *st = &mod->symbolTable();
 
    out->writeString( ";--------------------------------------------\n" );
    out->writeString( "; Symbol table\n" );
@@ -963,9 +964,56 @@ void write_symtable( e_tabmode mode , Stream *out, const SymbolTable *st )
          break;
 
          case e_mode_table:
+            // see if it's imported
+            if ( sym->type() == Symbol::tundef )
+            {
+               if ( sym->imported() )
+               {
+                  // see if we have an alias from where to import it
+                  uint32 dotpos = sym->name().rfind( "." );
+                  if( dotpos != String::npos )
+                  {
+                     String modname = sym->name().subString( 0, dotpos );
+                     String symname = sym->name().subString( dotpos + 1 );
+
+                     temp =  ".import " + symname + " ";
+                     temp.writeNumber( (int64) sym->declaredAt() );
+
+                     ModuleDepData *depdata = mod->dependencies().findModule( modname );
+                     // We have created the module, the entry must be there.
+                     fassert( depdata != 0 );
+                     if ( depdata->isFile() )
+                     {
+                        if( *depdata->moduleName() == modname )
+                           temp += " \"" + modname+"\"";
+                        else
+                           temp += " \"" + *depdata->moduleName() +"\" "+ modname;
+                     }
+                     else
+                     {
+                        if( *depdata->moduleName() == modname )
+                           temp += " " + modname;
+                        else
+                           temp += " " + *depdata->moduleName() +" "+ modname;
+                     }
+                  }
+                  else {
+                     temp =  ".import " + sym->name() + " ";
+                     temp.writeNumber( (int64) sym->declaredAt() );
+                  }
+               }
+               else {
+                  temp =  ".extern " + sym->name() + " ";
+                  temp.writeNumber( (int64) sym->declaredAt() );
+               }
+
+               out->writeString( temp );
+               break;
+            }
+
             switch( sym->type() )
             {
-               case Symbol::tundef: out->writeString( ".extern" ); break;
+
                case Symbol::tglobal: out->writeString( ".global" ); break;
                case Symbol::tlocal: out->writeString( ".local" ); break;
                case Symbol::tparam: out->writeString( ".param" ); break;
@@ -1016,22 +1064,39 @@ void write_deptable( e_tabmode mode , Stream *out, Module *mod )
       const ModuleDepData *data = *(const ModuleDepData **) iter.currentValue();
       str = data->moduleName();
 
-      switch( mode )
-      {
-         case e_mode_comment:
-            out->writeString( ";" );
-         break;
-         case e_mode_table:
-            out->writeString( ".load" );
-         break;
-      }
-
-      out->writeString( " " + *str );
-      if ( *str != *alias )
-      out->writeString( " -> " + *alias );
-
       if ( data->isPrivate() )
-         out->writeString( " (private)" );
+      {
+         if ( mode == e_mode_comment )
+         {
+            out->writeString( ";" );
+
+            if ( data->isFile() )
+               out->writeString( " \"" + *str + "\"" );
+            else
+               out->writeString( " " + *str );
+
+            if ( *str != *alias )
+               out->writeString( " -> " + *alias );
+
+            out->writeString( " (private)" );
+         }
+      }
+      else {
+         switch( mode )
+         {
+            case e_mode_comment:
+               out->writeString( ";" );
+            break;
+            case e_mode_table:
+               out->writeString( ".load" );
+            break;
+         }
+
+         if ( data->isFile() )
+            out->writeString( " \"" + *str + "\"" );
+         else
+            out->writeString( " " + *str );
+      }
 
       out->writeString( "\n" );
       iter.next();
@@ -1155,7 +1220,7 @@ int main( int argc, char *argv[] )
       write_deptable( e_mode_table, stdOut, module );
 
       // and the symbol table.
-      write_symtable( e_mode_table, stdOut, &module->symbolTable() );
+      write_symtable( e_mode_table, stdOut, module );
 
       // also fetch the function map.
       MapIterator iter = module->symbolTable().map().begin();
@@ -1181,7 +1246,7 @@ int main( int argc, char *argv[] )
       write_strtable( e_mode_comment, stdOut, module );
    }
    if ( options.m_dump_sym ) {
-      write_symtable( e_mode_comment, stdOut, &module->symbolTable() );
+      write_symtable( e_mode_comment, stdOut, module );
    }
    if ( options.m_dump_dep ) {
       write_deptable( e_mode_comment, stdOut, module );

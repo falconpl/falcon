@@ -301,8 +301,8 @@ public:
       return 0;
    }
 
-   void addLoad( const String &name ) {
-      m_module->addDepend( name );
+   void addLoad( const String &name, bool isFilename ) {
+      m_module->addDepend( name, false, isFilename );
    }
 
    // Inlines
@@ -487,8 +487,9 @@ public:
       \param nspace The namespace to be added (as module name).
       \param alias If not empty, will be the alias under which the module will be locally known.
       \param full If true, import all symbols.
+      \param filename If true, the load request was for a direct filename.
    */
-   void addNamespace( const String &nspace, const String &alias, bool full=false );
+   void addNamespace( const String &nspace, const String &alias, bool full=false, bool filename=false );
 
    /** Import the symbols named in a List.
       The \b lst parameter contains a list of String*
@@ -503,8 +504,12 @@ public:
       The function is meant to be used in the conjunction
       with the parser, and will destroy both the string
       in \b lst and \b lst itself.
+      \param lst The list of symbols (disposeable strings) to be loaded
+      \param prefix The module name or path
+      \param alias The namespace. If not given, will be the name of the module.
+      \param filename if true the module load request is for a direct file name
    */
-   void importSymbols( List *lst, const String *prefix=0, const String *alias=0 );
+   void importSymbols( List *lst, const String *prefix=0, const String *alias=0, bool filename=false );
 
 };
 

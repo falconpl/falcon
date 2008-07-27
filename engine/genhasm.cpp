@@ -317,12 +317,20 @@ void GenHAsm::gen_symbolTable( const Module *mod )
                   ModuleDepData *depdata = mod->dependencies().findModule( modname );
                   // We have created the module, the entry must be there.
                   fassert( depdata != 0 );
-
-                  if( *depdata->moduleName() == modname )
-                     temp += " " + modname;
+                  if ( depdata->isFile() )
+                  {
+                     if( *depdata->moduleName() == modname )
+                        temp += " \"" + modname+"\"";
+                     else
+                        temp += " \"" + *depdata->moduleName() +"\" "+ modname;
+                  }
                   else
-                     temp += " " + *depdata->moduleName() +" "+ modname;
-
+                  {
+                     if( *depdata->moduleName() == modname )
+                        temp += " " + modname;
+                     else
+                        temp += " " + *depdata->moduleName() +" "+ modname;
+                  }
                }
                else {
                   temp =  ".import " + sym->name() + " ";

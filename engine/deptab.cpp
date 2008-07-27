@@ -57,6 +57,10 @@ bool DependTable::save( Stream *out ) const
 
       s = endianInt32( data->isPrivate() ? 1 : 0 );
       out->write( &s, sizeof( s ) );
+
+      s = endianInt32( data->isFile() ? 1 : 0 );
+      out->write( &s, sizeof( s ) );
+
       iter.next();
    }
    return true;
@@ -85,7 +89,10 @@ bool DependTable::load( Module *mod, Stream *in )
       in->read( &id, sizeof( id ) );
       bool isPrivate = endianInt32(id) != 0;
 
-      insert( alias, new ModuleDepData( modname, isPrivate ) );
+      in->read( &id, sizeof( id ) );
+      bool isFile = endianInt32(id) != 0;
+
+      insert( alias, new ModuleDepData( modname, isPrivate, isFile ) );
       --s;
    }
 
