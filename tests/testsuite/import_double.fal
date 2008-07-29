@@ -1,0 +1,31 @@
+/****************************************************************************
+* Falcon test suite
+*
+*
+* ID: 53c
+* Category: modloader
+* Subcategory: import
+* Short: Export discarding import/from test
+* Description:
+*   Testing export request discarding. This program imports the same
+*   exported symbol from import_sub_2 and import_sub_3.
+* [/Description]
+*
+****************************************************************************/
+// named import 
+import test1 from import_sub_2 = first
+
+// aliased import
+import test1 from import_sub_3 = second
+
+if first.test1() != "From sub2"
+   failure( "import test1 from import_sub_2 = first" )
+end
+
+if second.test1() != "From sub3"
+   failure( "import test1 from import_sub_3 = second" )
+end
+
+success()
+
+/* End of file */

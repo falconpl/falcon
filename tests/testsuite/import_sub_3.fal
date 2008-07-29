@@ -1,0 +1,21 @@
+/****************************************************************************
+* Falcon test suite
+*
+*
+* ID: --
+* Category: modloader
+* Subcategory: import
+* Short: Basic import/from test (component)
+* Description:
+*   Submodule used by import_* test.
+* [/Description]
+*
+****************************************************************************/
+
+function test1()
+   return "From sub3"
+end
+
+export
+
+/* End of file */

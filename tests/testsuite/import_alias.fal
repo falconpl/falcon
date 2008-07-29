@@ -1,0 +1,30 @@
+/****************************************************************************
+* Falcon test suite
+*
+*
+* ID: 53b
+* Category: modloader
+* Subcategory: import
+* Short: Mixed import/from test
+* Description:
+*   Test for importin the same symbol from a normal sub test with alias.
+* [/Description]
+*
+****************************************************************************/
+// named import
+import test1 from import_sub_1
+
+// aliased import
+import test1 from import_sub_1 = alias
+
+if import_sub_1.test1() != "Hello world"
+   failure( "Non aliased test" )
+end
+
+if alias.test1() != "Hello world"
+   failure( "Aliased test" )
+end
+
+success()
+
+/* End of file */

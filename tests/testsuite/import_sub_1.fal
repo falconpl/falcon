@@ -1,0 +1,19 @@
+/****************************************************************************
+* Falcon test suite
+*
+*
+* ID: --
+* Category: modloader
+* Subcategory: import
+* Short: Basic import/from test (component)
+* Description:
+*   Submodule used by import_simple and other tests.
+* [/Description]
+*
+****************************************************************************/
+
+function test1()
+   return "Hello world"
+end
+
+/* End of file */

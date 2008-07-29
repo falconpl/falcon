@@ -1,0 +1,23 @@
+/****************************************************************************
+* Falcon test suite
+*
+*
+* ID: 53a
+* Category: modloader
+* Subcategory: import
+* Short: Basic import/from test
+* Description:
+*   This is a minimal test trying to import symbols by name from a submodule.
+* [/Description]
+*
+****************************************************************************/
+// named import
+import test1 from import_sub_1
+
+if import_sub_1.test1() != "Hello world"
+   failure( "Module import failed" )
+end
+
+success()
+
+/* End of file */
