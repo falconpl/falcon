@@ -110,8 +110,6 @@ bool Runtime::addModule( Module *mod, bool isPrivate )
             delete dep;
             return false;
          }
-         // force the name to be what we expect it to be
-         l->name( *moduleName );
 
          if ( ! addModule( l, depdata->isPrivate() ) )
          {

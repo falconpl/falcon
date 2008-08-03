@@ -42,6 +42,7 @@
 #include <falcon/stdstreams.h>
 #include <falcon/deferrorhandler.h>
 #include <falcon/transcoding.h>
+#include <falcon/path.h>
 
 #include "scriptdata.h"
 #include "fteh.h"
@@ -627,7 +628,8 @@ bool testScript( ScriptData *script,
 
    FTErrorHandler fteh;
    scriptModule = new Module();
-   scriptModule->name( script->filename() );
+   Path scriptPath( script->filename() );
+   scriptModule->name( scriptPath.getFile() );
    scriptModule->path( path );
 
    Compiler compiler( scriptModule, source );
