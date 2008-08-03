@@ -13,7 +13,7 @@ Falcon (0.8.11)
   * bugfix: The compiler didn't always add module strings as symbol names.
   * bugfix: Broadcast may have broadcast double in case of a single receiver not
             returning true.
-
+  * minor: Added attributeByName function
 
 Falcon (0.8.10)
   * minor: Now classes can be stored in object properties and called to get

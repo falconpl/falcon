@@ -5175,6 +5175,50 @@ FALCON_FUNC  core_isoob( ::Falcon::VMachine *vm )
 // Attribute support
 //
 
+/*#
+   @function attributeByName
+   @inset attrib_model
+   @brief Returns an attribute registered with the VM as by symbolic name.
+   @param name The attribute name that has been registered with the VM.
+   @optParam raiseIfNotFound if given and true, the function will raise an error in case
+             the attribute with the given name is not found.
+   @return The attribute having the given name, if found, or nil.
+   @raise AccessError if the attribute is not found and the raise is required.
+
+   Attributes registered with the VM through a local export are made available in a special
+   index which can be accessed by name. In example the \b give statement can refer symbols
+   containing attributes or globally visible attribute names.
+
+   This function returns an attribute which is globally visible. In this way it is possible
+   to query the VM for attributes to be fed in the other core functions working with
+   attributes.
+*/
+FALCON_FUNC  attributeByName( ::Falcon::VMachine *vm )
+{
+   Item *itm = vm->param( 0 );
+   if ( ! itm->isString() )
+   {
+      vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).
+         extra( "S" ) ) );
+      return;
+   }
+
+   Attribute *attrib = vm->findAttribute( *itm->asString() );
+   if ( attrib == 0 ) {
+      if ( vm->param(1) != 0 && vm->param(1)->isTrue() )
+      {
+         vm->raiseRTError( new AccessError( ErrorParam( e_undef_sym ).
+            extra( *vm->param(0)->asString() ) ) );
+         return;
+      }
+
+      vm->retnil();
+   }
+   else {
+      vm->retval( attrib );
+   }
+}
+
 
 /*#
    @function having
@@ -5399,7 +5443,6 @@ static bool broadcast_next_array( ::Falcon::VMachine *vm )
    if ( pos >= aarr->length() )
    {
       // we're done
-      vm->retnil();
       return false;
    }
 
@@ -5611,6 +5654,7 @@ Module * core_module_init()
    // ===================================
    // Attribute support
    //
+   core->addExtFunc( "attributeByName", Falcon::core::attributeByName );
    core->addExtFunc( "having", Falcon::core::having );
    core->addExtFunc( "giveTo", Falcon::core::giveTo );
    core->addExtFunc( "removeFrom", Falcon::core::removeFrom );
