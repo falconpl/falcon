@@ -57,30 +57,34 @@ void Attribute::removeFromAll()
 
 bool Attribute::giveTo( CoreObject *tgt )
 {
-   // first, create a handler that will be stored in the object
-   AttribObjectHandler *handler = new AttribObjectHandler( tgt );
+   AttribObjectHandler *handler = 0;
 
    // then see if we can store the handler in the object
    AttribHandler *head = tgt->attributes();
    if ( head == 0 )
    {
+      // first, create a handler that will be stored in the object
+      handler = new AttribObjectHandler( tgt );
+
       // the object had no attribute, so we are sure we can do this
       tgt->m_attributes = new AttribHandler( this, handler );
    }
    else
    {
 
-      while( head->next() != 0 )
+      while( head != 0 )
       {
          if ( head->attrib() == this )
          {
             // arrg, we were already given.
-            delete handler;
             return false;
          }
 
          head = head->next();
       }
+
+      // first, create a handler that will be stored in the object
+      handler = new AttribObjectHandler( tgt );
 
       // we have the pointer to the last attribute of the object in head
       head->next( new AttribHandler( this, handler, head, 0 ) );
