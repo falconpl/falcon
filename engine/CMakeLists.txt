@@ -109,6 +109,35 @@ ELSEIF(WIN32)
 ENDIF(UNIX OR MAC)
 
 INCLUDE_DIRECTORIES(.)
+INCLUDE_DIRECTORIES(core_module)
+
+SET( CORE_MODULE_SOURCES
+   core_module/array.cpp
+   core_module/cmdlineparser.cpp
+   core_module/core_module.cpp
+   core_module/dict.cpp
+   core_module/dir_ext.cpp
+   core_module/envvars.cpp
+   core_module/file_ext.cpp
+   core_module/indirect.cpp
+   core_module/input.cpp
+   core_module/inspect.cpp
+   core_module/itemcopy.cpp
+   core_module/iterator_ext.cpp
+   core_module/list.cpp
+   core_module/math.cpp
+   core_module/messages.cpp
+   core_module/print.cpp
+   core_module/random.cpp
+   core_module/seconds.cpp
+   core_module/serialize.cpp
+   core_module/string.cpp
+   core_module/stringstream_ext.cpp
+   core_module/time_ext.cpp
+   core_module/transcode_ext.cpp
+   core_module/uri_ext.cpp
+   core_module/vminfo_ext.cpp
+)
 
 ADD_LIBRARY( falcon_engine SHARED
    fasm_parser.cpp
@@ -183,6 +212,8 @@ ADD_LIBRARY( falcon_engine SHARED
    vmmaps.cpp
    vm_run.cpp
    vmsema.cpp
+
+   ${CORE_MODULE_SOURCES}
 
    ${SYS_SPECIFIC}
    )

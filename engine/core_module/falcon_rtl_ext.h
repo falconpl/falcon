@@ -1,12 +1,11 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: falcon_rtl.h
+   FILE: core_module.h
 
-   Header for Falcon Realtime Library - C modules
+   Header for Falcon Core Module
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
-   Begin: lun ago  9 22:23:51 CEST 2004
-
+   Begin: Thu, 14 Aug 2008 00:37:13 +0200
 
    -------------------------------------------------------------------
    (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
@@ -14,12 +13,10 @@
    See LICENSE file for licensing details.
 */
 
-#ifndef FALCON_STD_H
-#define FALCON_STD_H
+#ifndef FALCON_CORE_MODULE_H
+#define FALCON_CORE_MODULE_H
 
-#include <falcon/module.h>
-#include <falcon/timestamp.h>
-#include <falcon/filestat.h>
+#include <falcon/engine.h>
 
 namespace Falcon {
 
@@ -29,111 +26,52 @@ class Error;
 /* Utility function to generate RTL oriented errors */
 Error *rtlError( int t, const String &desc );
 
-namespace Ext {
+namespace core {
 
-/**\file
-   Falcon realtime library header file.
+// Iterator class
+FALCON_FUNC  Iterator_init( ::Falcon::VMachine *vm );
+FALCON_FUNC  Iterator_hasCurrent( ::Falcon::VMachine *vm );
+FALCON_FUNC  Iterator_hasNext( ::Falcon::VMachine *vm );
+FALCON_FUNC  Iterator_hasNext( ::Falcon::VMachine *vm );
+FALCON_FUNC  Iterator_hasPrev( ::Falcon::VMachine *vm );
+FALCON_FUNC  Iterator_next( ::Falcon::VMachine *vm );
+FALCON_FUNC  Iterator_prev( ::Falcon::VMachine *vm );
+FALCON_FUNC  Iterator_value( ::Falcon::VMachine *vm );
+FALCON_FUNC  Iterator_key( ::Falcon::VMachine *vm );
+FALCON_FUNC  Iterator_equal( ::Falcon::VMachine *vm );
+FALCON_FUNC  Iterator_clone( ::Falcon::VMachine *vm );
+FALCON_FUNC  Iterator_erase( ::Falcon::VMachine *vm );
+FALCON_FUNC  Iterator_find( ::Falcon::VMachine *vm );
+FALCON_FUNC  Iterator_insert( ::Falcon::VMachine *vm );
+FALCON_FUNC  Iterator_getOrigin( ::Falcon::VMachine *vm );
 
-   Actually, falcon doesn't really need this file. The RTL library is both
-   hard-linked in the stand alone falcon software (compiler, runner), or
-   used as a plugin by embedding applications. Anyhow, embedding applications
-   may wish to create hard-linked internal modules using already existing
-   falcon RTL functions, so to include the source files or link against the shared
-   object and provide just a part of the interface.
-
-   It is possible to create a new module and add the prototypes that are listed
-   here to reduce the functionality of falcon scripts, finetuining the ability of
-   a script to change an environment. In example, an embedding application may
-   wish to forbid the scripts the ability to write to disk, or to filter this
-   ability through a self-provided criteria set. With the prototypes in this
-   header it is possible to reduce, extend or warp RTL functionalities for an
-   embedding application or a special implementation.
-
-   Also, the RTL contains many functions that manages the Falcon items directly,
-   an that may be useful also if used by an embedding application.
-*/
+FALCON_FUNC  vmVersionInfo( ::Falcon::VMachine *vm );
+FALCON_FUNC  vmModuleVersionInfo( ::Falcon::VMachine *vm );
+FALCON_FUNC  vmVersionName( ::Falcon::VMachine *vm );
+FALCON_FUNC  vmSystemType( ::Falcon::VMachine *vm );
 
 
-/** Prints a list of items in the most simple format.
-
-   Each item passed as a parameter is written on the standard output stream
-   using its simplest representation form; every item is separated by the
-   following with a space (ASCII 0x20). This function is quite simple, yet is
-   quite powerful as it can be seen as a primitive to manage terminals in a
-   very fast fashon.
-
-   The output buffer is flushed at every write.
-
-   So, this function can be quite useful both for fast raw output and
-   debugging.
-
-   \see printl
-*/
 FALCON_FUNC  print ( ::Falcon::VMachine *vm );
-
-/** Prints a list of items and sends a newline.
-   Work as print(), but sends an appropriate newline after all the items are written.
-
-   \see falcon_ext_print
-*/
 FALCON_FUNC  printl ( ::Falcon::VMachine *vm );
-
-
-/** Prints details on a signle object.
-   Inspects an item and displays its internal status and data.
-
-   \see falcon_ext_print
-*/
 FALCON_FUNC  inspect ( ::Falcon::VMachine *vm );
 FALCON_FUNC  inspectShort ( ::Falcon::VMachine *vm );
-
-/** Returns the time of day in seconds and microseconds.
-   Retruns a float number representing current seconds.
-*/
 FALCON_FUNC  seconds ( ::Falcon::VMachine *vm );
-
-/** Reads a string from the console.
-   VERY basic. Use only for testing.
-*/
 FALCON_FUNC  input ( ::Falcon::VMachine *vm );
-
-/** Reads an environment variable
-
-*/
 FALCON_FUNC  falcon_getenv( ::Falcon::VMachine *vm );
-
-/** Sets environment variables.
-
-*/
 FALCON_FUNC  falcon_setenv( ::Falcon::VMachine *vm );
-/** Reads an environment variable
-
-*/
 FALCON_FUNC  falcon_unsetenv( ::Falcon::VMachine *vm );
-
-
-/** Opens a file for reading.
-   Format: InputStream( name )
-*/
 FALCON_FUNC  InputStream_creator ( ::Falcon::VMachine *vm );
 FALCON_FUNC  OutputStream_creator ( ::Falcon::VMachine *vm );
 FALCON_FUNC  IOStream_creator ( ::Falcon::VMachine *vm );
 FALCON_FUNC  systemErrorDescription ( ::Falcon::VMachine *vm );
-
-/** Closes a file. */
 FALCON_FUNC  Stream_close ( ::Falcon::VMachine *vm );
 FALCON_FUNC  Stream_flush ( ::Falcon::VMachine *vm );
 FALCON_FUNC  StdStream_close ( ::Falcon::VMachine *vm );
-
-/** Reads from a file. */
 FALCON_FUNC  Stream_read ( ::Falcon::VMachine *vm );
 FALCON_FUNC  Stream_readLine ( ::Falcon::VMachine *vm );
 FALCON_FUNC  Stream_readText ( ::Falcon::VMachine *vm );
-
-/** Writes to a file. */
 FALCON_FUNC  Stream_write ( ::Falcon::VMachine *vm );
 FALCON_FUNC  Stream_writeText ( ::Falcon::VMachine *vm );
-
 FALCON_FUNC  Stream_setEncoding ( ::Falcon::VMachine *vm );
 FALCON_FUNC  Stream_clone ( ::Falcon::VMachine *vm );
 FALCON_FUNC  Stream_readItem ( ::Falcon::VMachine *vm );
@@ -143,37 +81,16 @@ FALCON_FUNC  Stream_writeItem ( ::Falcon::VMachine *vm );
 #define   CR_TO_CRLF 1
 #define   SYSTEM_DETECT -1
 
-
-/** Seeks a position in a file. */
 FALCON_FUNC  Stream_seek ( ::Falcon::VMachine *vm );
-
-/** Seeks a position in a file. */
 FALCON_FUNC  Stream_seekEnd ( ::Falcon::VMachine *vm );
-
-/** Seeks a position in a file. */
 FALCON_FUNC  Stream_seekCur ( ::Falcon::VMachine *vm );
-
-/** Return current position in a file. */
 FALCON_FUNC  Stream_tell ( ::Falcon::VMachine *vm );
-
-/** Truncate a file. */
 FALCON_FUNC  Stream_truncate ( ::Falcon::VMachine *vm );
-
-/** Return last hard-error on the file. */
 FALCON_FUNC  Stream_lastError ( ::Falcon::VMachine *vm );
-
-/** Return last quantity of sucessfully moved data. */
 FALCON_FUNC  Stream_lastMoved ( ::Falcon::VMachine *vm );
-
-/** Return a system dependent description of last error.. */
 FALCON_FUNC  Stream_errorDescription ( ::Falcon::VMachine *vm );
-
-/** Return true if at eof */
 FALCON_FUNC  Stream_eof ( ::Falcon::VMachine *vm );
-
-/** Return true if the file is open (ready to run) */
 FALCON_FUNC  Stream_isOpen ( ::Falcon::VMachine *vm );
-
 FALCON_FUNC  Stream_writeAvailable ( ::Falcon::VMachine *vm );
 FALCON_FUNC  Stream_readAvailable ( ::Falcon::VMachine *vm );
 
@@ -301,7 +218,7 @@ FALCON_FUNC  transcodeTo ( ::Falcon::VMachine *vm );
 FALCON_FUNC  transcodeFrom ( ::Falcon::VMachine *vm );
 FALCON_FUNC  getSystemEncoding ( ::Falcon::VMachine *vm );
 
-/** Timestamp class */
+/* Timestamp class */
 FALCON_FUNC  TimeStamp_init ( ::Falcon::VMachine *vm );
 FALCON_FUNC  TimeStamp_currentTime ( ::Falcon::VMachine *vm );
 FALCON_FUNC  TimeStamp_dayOfYear ( ::Falcon::VMachine *vm );
@@ -327,7 +244,6 @@ FALCON_FUNC  TimeZone_getLocal ( ::Falcon::VMachine *vm );
 extern reflectionFuncDecl TimeStamp_timezone_rfrom;
 extern reflectionFuncDecl TimeStamp_timezone_rto;
 
-
 FALCON_FUNC  List_init ( ::Falcon::VMachine *vm );
 FALCON_FUNC  List_push ( ::Falcon::VMachine *vm );
 FALCON_FUNC  List_pop ( ::Falcon::VMachine *vm );
@@ -343,16 +259,14 @@ FALCON_FUNC  List_erase ( ::Falcon::VMachine *vm );
 FALCON_FUNC  List_insert ( ::Falcon::VMachine *vm );
 FALCON_FUNC  List_clear ( ::Falcon::VMachine *vm );
 
-/** The command line parser */
 FALCON_FUNC  CmdlineParser_parse( ::Falcon::VMachine *vm );
 FALCON_FUNC  CmdlineParser_expectValue( ::Falcon::VMachine *vm );
 FALCON_FUNC  CmdlineParser_terminate( ::Falcon::VMachine *vm );
 FALCON_FUNC  CmdlineParser_usage( ::Falcon::VMachine *vm );
 
-/** FileStat class */
 FALCON_FUNC FileReadStats ( ::Falcon::VMachine *vm ); // factory function
 FALCON_FUNC FileStat_readStats ( ::Falcon::VMachine *vm );
-// this thing is read only.
+
 reflectionFuncDecl FileStats_type_rfrom;
 reflectionFuncDecl FileStats_mtime_rfrom;
 reflectionFuncDecl FileStats_ctime_rfrom;
@@ -468,8 +382,6 @@ public:
 
 }}
 
-
-
 #endif
 
-/* end of falcon_rtl.h */
+/* end of core_module.h */
