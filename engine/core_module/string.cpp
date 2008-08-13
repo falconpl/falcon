@@ -28,17 +28,17 @@
 #include <string.h>
 
 /*#
-   @beginmodule falcon_rtl
+   @beginmodule core_module
 */
 
 /*#
    @funset rtl_string_functions String functions
    @brief Functions manipulating strings
 
-   @beginset rtl_string_functions
+   @beginset core_string_functions
 */
 namespace Falcon {
-namespace Ext {
+namespace core {
 
 /*#
    @function strSplitTrimmed

@@ -26,7 +26,7 @@
 
 
 /*#
-   @beginmodule falcon_rtl
+   @beginmodule core_module
 */
 
 /*#
@@ -36,11 +36,11 @@
    This group includes mathematical, trigonometrical and floating point conversion
    functions.
 
-   @beginset rtl_math
+   @beginset core_math
 */
 
 namespace Falcon {
-namespace Ext {
+namespace core {
 
 /*#
    @function log

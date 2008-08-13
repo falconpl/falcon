@@ -26,16 +26,16 @@
 #include <falcon/vm.h>
 
 /*#
-   @beginmodule falcon_rtl
+   @beginmodule core_module
 */
 
 namespace Falcon {
 
-namespace Ext {
+namespace core {
 
 /*#
    @function itemCopy
-   @inset rtl_general_purpose
+   @inset core_general_purpose
    @brief Performs a shallow copy of one item.
    @param item The item to be copied.
    @return A copy of the item.

@@ -30,16 +30,16 @@
 #include <falcon/membuf.h>
 
 /*#
-   @beginmodule falcon_rtl
+   @beginmodule core_module
 */
 
 namespace Falcon {
-namespace Ext {
+namespace core {
 
 /*#
    @class Stream
    @brief Stream oriented I/O class.
-   @ingroup rtl_syssupport
+   @ingroup core_syssupport
 
    Stream class is a common interface for I/O operations. The class itself is to be
    considered “abstract”. It should never be directly instantiated, as factory
@@ -1222,13 +1222,13 @@ FALCON_FUNC  Stream_readItem ( ::Falcon::VMachine *vm )
    number that is directly passed to the POSIX systems for directory ownership
    creation. It has currently no meaning for MS-Windows systems.
 
-   @beginset rtl_stream_factory
+   @beginset core_stream_factory
 */
 
 /*#
    @function InputStream
    @brief Open a system file for reading.
-   @ingroup rtl_syssupport
+   @ingroup core_syssupport
    @param fileName A relative or absolute path to a file to be opened for input
    @optparam shareMode If given, the share mode.
    @return A new valid @a Stream instance on success.
@@ -1285,7 +1285,7 @@ FALCON_FUNC  InputStream_creator ( ::Falcon::VMachine *vm )
 /*#
    @function OutputStream
    @brief Creates a stream for output only.
-   @ingroup rtl_syssupport
+   @ingroup core_syssupport
    @param fileName A relative or absolute path to a file to be opened for input
    @optparam createMode If given, the ownership of the created file.
    @optparam shareMode If given, the share mode.
@@ -1362,7 +1362,7 @@ FALCON_FUNC  OutputStream_creator ( ::Falcon::VMachine *vm )
 /*#
    @function IOStream
    @brief Creates a stream for input and output.
-   @ingroup rtl_syssupport
+   @ingroup core_syssupport
    @param fileName A relative or absolute path to a file to be opened for input
    @optparam createMode If given, the ownership of the created file.
    @optparam shareMode If given, the share mode.
@@ -1469,7 +1469,7 @@ static CoreObject *internal_make_stream( VMachine *vm, FalconData *clone, int us
 /*#
    @function stdIn
    @brief Creates an object mapped to the standard input of the Virtual Machine.
-   @ingroup rtl_syssupport
+   @ingroup core_syssupport
    @return A new valid @a Stream instance on success.
 
    The returned read-only stream is mapped to the standard input of the virtual
@@ -1522,7 +1522,7 @@ FALCON_FUNC  _stdIn ( ::Falcon::VMachine *vm )
 /*#
    @function stdOut
    @brief Creates an object mapped to the standard output of the Virtual Machine.
-   @ingroup rtl_syssupport
+   @ingroup core_syssupport
    @return A new valid @a Stream instance on success.
 
    The returned stream maps output operations on the standard output stream of
@@ -1571,7 +1571,7 @@ FALCON_FUNC  _stdOut ( ::Falcon::VMachine *vm )
 /*#
    @function stdErr
    @brief Creates an object mapped to the standard error of the Virtual Machine.
-   @ingroup rtl_syssupport
+   @ingroup core_syssupport
    @return A new valid @a Stream instance on success.
 
    The returned stream maps output operations on the standard error stream of
@@ -1619,7 +1619,7 @@ FALCON_FUNC  _stdErr ( ::Falcon::VMachine *vm )
 /*#
    @function stdInRaw
    @brief Creates a stream that interfaces the standard input stream of the host process.
-   @ingroup rtl_syssupport
+   @ingroup core_syssupport
    @return A new valid @a Stream instance on success.
 
    The returned stream maps input operations on the standard input of the
@@ -1645,7 +1645,7 @@ FALCON_FUNC  stdInRaw ( ::Falcon::VMachine *vm )
 /*#
    @function stdOutRaw
    @brief Creates a stream that interfaces the standard output stream of the host process.
-   @ingroup rtl_syssupport
+   @ingroup core_syssupport
    @return A new valid @a Stream instance on success.
 
    The returned stream maps output operations on the standard output stream of the
@@ -1674,7 +1674,7 @@ FALCON_FUNC  stdOutRaw ( ::Falcon::VMachine *vm )
 /*#
    @function stdErrRaw
    @brief Creates a stream that interfaces the standard error stream of the host process.
-   @ingroup rtl_syssupport
+   @ingroup core_syssupport
    @return A new valid @a Stream instance on success.
 
    The returned stream maps output operations on the standard error stream of the
@@ -1699,7 +1699,7 @@ FALCON_FUNC  stdErrRaw ( ::Falcon::VMachine *vm )
 
 /*#
    @function systemErrorDescription
-   @inset rtl_general_purpose
+   @inset core_general_purpose
    @brief Returns a system dependent message explaining an integer error code.
    @param errorCode A (possibly) numeric error code that some system function has returned.
    @return A system-specific error description.
@@ -1726,7 +1726,7 @@ FALCON_FUNC  systemErrorDescription ( ::Falcon::VMachine *vm )
 
 /*#
    @function fileCopy
-   @ingroup rtl_syssupport
+   @ingroup core_syssupport
    @param source Source file to be copied
    @param dest Destination file.
    @brief Copies a whole file from one position to another.

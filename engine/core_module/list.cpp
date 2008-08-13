@@ -23,15 +23,15 @@
 #include <falcon/itemlist.h>
 #include <falcon/citerator.h>
 #include <falcon/vm.h>
-#include "falcon_rtl_ext.h"
-#include "rtl_messages.h"
+#include "core_module.h"
+#include "core_messages.h"
 
 /*#
-   @beginmodule falcon_rtl
+   @beginmodule core_module
 */
 
 namespace Falcon {
-namespace Ext {
+namespace core {
 
 /*#
    @class List

@@ -23,11 +23,11 @@
 #include <falcon/carray.h>
 #include <falcon/vm.h>
 #include <falcon/stream.h>
-#include "falcon_rtl_ext.h"
-#include "rtl_messages.h"
+#include "core_module.h"
+#include "core_messages.h"
 
 /*#
-   @beginmodule falcon_rtl
+   @beginmodule core_module
 */
 
 /*#
@@ -197,7 +197,7 @@
 */
 
 namespace Falcon{
-namespace Ext {
+namespace core {
 
 /*#
    @method parse CmdlineParser

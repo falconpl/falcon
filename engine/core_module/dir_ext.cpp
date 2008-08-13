@@ -29,17 +29,17 @@
 #include <falcon/fassert.h>
 #include <falcon/uri.h>
 
-#include "falcon_rtl_ext.h"
-#include "rtl_messages.h"
+#include "core_module.h"
+#include "core_messages.h"
 
 #include <string.h>
 
 /*#
-   @beginmodule falcon_rtl
+   @beginmodule core_module
 */
 
 /*#
-   @begingroup rtl_syssupport
+   @begingroup core_syssupport
 */
 
 /*#
@@ -54,13 +54,13 @@
    this section is subject to sudden change, as the contribution of the community
    (even if just in form of suggestion) is vital.
 
-   @beginset rtl_dir_funcs
+   @beginset core_dir_funcs
 */
 
 
 namespace Falcon {
 
-namespace Ext {
+namespace core {
 
 FileStatManager::InnerData::InnerData()
 {

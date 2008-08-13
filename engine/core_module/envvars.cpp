@@ -21,14 +21,14 @@
 #include <falcon/module.h>
 #include <falcon/sys.h>
 #include <falcon/vm.h>
-#include "falcon_rtl_ext.h"
+#include "core_module.h"
 
 /*#
-   @beginmodule falcon_rtl
+   @beginmodule core_module
 */
 
 /*#
-   @begingroup rtl_syssupport
+   @begingroup core_syssupport
 */
 
 /*#
@@ -42,11 +42,11 @@
    Variables set with "setenv()" will be available to child processes in case
    they are launched with the utilities in the Process module.
 
-   @beginset rtl_environ
+   @beginset core_environ
 */
 
 namespace Falcon {
-namespace Ext {
+namespace core {
 
 /*#
    @function getenv

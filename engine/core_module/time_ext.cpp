@@ -29,10 +29,11 @@
 #include <falcon/time_sys.h>
 
 /*#
-   @beginmodule falcon_rtl
+   @beginmodule core_module
 */
 
-namespace Falcon { namespace Ext {
+namespace Falcon {
+namespace core {
 
 /*#
    @class TimeStamp

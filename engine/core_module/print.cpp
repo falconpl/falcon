@@ -20,14 +20,15 @@
 #include <falcon/stream.h>
 
 /*#
-   @beginmodule falcon_rtl
+   @beginmodule core_module
 */
 
-namespace Falcon { namespace Ext {
+namespace Falcon {
+namespace core {
 
 /*#
    @function print
-   @inset rtl_basic_io
+   @inset core_basic_io
    @param ... An arbitrary list of parameters.
    @brief Prints the contents of various items to the standard output stream.
 
@@ -78,7 +79,7 @@ FALCON_FUNC  print ( ::Falcon::VMachine *vm )
 
 /*#
    @function printl
-   @inset rtl_basic_io
+   @inset core_basic_io
    @param ... An arbitrary list of parameters.
    @brief Prints the contents of various items to the VM standard output stream, and adds a newline.
 

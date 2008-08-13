@@ -828,15 +828,6 @@ int main( int argc, char *argv[] )
    // Create the runtime using the given module loader.
    Runtime *runtime = new Runtime( modLoader );
 
-   // But before proceding, load the rtl.
-   Module *falcon_rtl = modLoader->loadName( "falcon_rtl" );
-
-   if ( falcon_rtl == 0 )
-   {
-      // mod loader has already raised the error.
-      exit_sequence( 1 );
-   }
-
    // now that we have the main module, inject other requested modules
    ListElement *pliter = options.preloaded.begin();
    while( pliter != 0 )
@@ -885,11 +876,6 @@ int main( int argc, char *argv[] )
    LiveModule *res = vmachine->link( core );
    fassert( res != 0 );  // should not fail
    core->decref();
-
-   res = vmachine->link( falcon_rtl );
-   fassert( res != 0 ); // should not fail
-   // abandon our reference to the rtl.
-   falcon_rtl->decref();
 
    // prepare environment
    Item *item_args = vmachine->findGlobalItem( "args" );

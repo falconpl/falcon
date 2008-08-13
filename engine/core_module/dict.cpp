@@ -24,21 +24,20 @@
 #include <falcon/cdict.h>
 #include <falcon/vm.h>
 #include <falcon/fassert.h>
-#include "rtl_messages.h"
+#include "core_messages.h"
 
 /*#
-   @beginmodule falcon_rtl
+   @beginmodule core_module
 */
 
 /*#
    @funset rtl_dict_funcs Dictionary support
    @brief Dictionary related functions.
-   @beginset rtl_dict_funcs
+   @beginset core_dict_funcs
 */
 
 namespace Falcon {
-
-namespace Ext {
+namespace core {
 
 /****************************************
    Support for dictionaries

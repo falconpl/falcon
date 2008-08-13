@@ -29,7 +29,7 @@
 #include <falcon/stream.h>
 
 /*#
-   @beginmodule falcon_rtl
+   @beginmodule core_module
 */
 
 /*#
@@ -57,11 +57,11 @@
    Also, static block is not re-executed in case the function is re-entered
    after a de-serialization.
 
-   @beginset rtl_serialization
+   @beginset core_serialization
 */
 
 namespace Falcon {
-namespace Ext {
+namespace core {
 
 /*#
    @function serialize

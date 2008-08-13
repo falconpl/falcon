@@ -225,10 +225,7 @@ namespace msg {
       err_param_fmt_code,
 
       /* Generic messages */
-      unrecognized_err,
-
-      core_001,
-      core_002
+      unrecognized_err
    };
 }
 

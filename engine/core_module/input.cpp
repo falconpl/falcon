@@ -36,14 +36,15 @@
 #endif
 
 /*#
-   @beginmodule falcon_rtl
+   @beginmodule core_module
 */
 
-namespace Falcon { namespace Ext {
+namespace Falcon {
+namespace core {
 
 /*#
    @function input
-   @inset rtl_basic_io
+   @inset core_basic_io
    @brief Get some text from the user (standard input stream).
 
    Reads a line from the standard input stream and returns a string

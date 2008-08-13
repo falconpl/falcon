@@ -18,10 +18,10 @@
 #include <falcon/filestat.h>
 #include <falcon/fstream.h>
 
-#include "falcon_rtl_ext.h"
+#include "core_module.h"
 #include "version.h"
 #include <falcon/time_sys.h>
-#include "rtl_messages.h"
+#include "core_messages.h"
 
 using namespace Falcon;
 
@@ -30,7 +30,6 @@ static Ext::URIManager uri_manager;
 static Ext::PathManager path_manager;
 
 /*#
-   @module falcon_rtl The Runtime Library module
    @brief Main Falcon module.
 
    The runtime library represents the set of standard commonly
@@ -68,26 +67,6 @@ static Ext::PathManager path_manager;
    @beginModule falcon_rtl
 */
 
-/*#
-   @funset rtl_basic_io Basic I/O
-   @brief Functions providing basic interface.
-
-   RTL Basic I/O functions are mainly meant to provide scripts with a
-   very basic interface to interact with the outside world.
-*/
-
-/*#
-   @funset rtl_general_purpose General purpose
-   @brief Generic functions
-*/
-
-/*#
-   @group rtl_syssupport System Support
-   @brief Function and classes supporting OS and environment.
-
-   This group of functions and classes is meant to provide OS and
-   enviromental basic support to Falcon scripts.
-*/
 
 
 FALCON_MODULE_DECL( const Falcon::EngineData &data )
@@ -109,7 +88,7 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    // Message setting
    //=======================================================================
 
-   #include "rtl_messages.h"
+   #include "core_messages.h"
 
    //=======================================================================
    // RTL basic functionality

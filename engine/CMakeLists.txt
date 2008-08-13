@@ -152,7 +152,6 @@ ADD_LIBRARY( falcon_engine SHARED
    compiler.cpp
    corearray.cpp
    coreclass.cpp
-   core_ext.cpp
    deferrorhandler.cpp
    deptab.cpp
    detmempool.cpp

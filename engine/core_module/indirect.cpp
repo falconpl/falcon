@@ -18,7 +18,7 @@
 #include <falcon/vm.h>
 #include <falcon/string.h>
 #include <falcon/carray.h>
-#include "rtl_messages.h"
+#include "core_messages.h"
 
 /** \file
    Indirect function calling and symbol access.
@@ -28,12 +28,12 @@
    @funset rtl_indirect Indirect call support
    @brief Functions meant to provide indirect symbol call facilities.
 
-   @beginmodule falcon_rtl
-   @beginset rtl_indirect
+   @beginmodule core_module
+   @beginset core_indirect
 */
 
 namespace Falcon {
-namespace ext {
+namespace core {
 
 /*#
    @function call

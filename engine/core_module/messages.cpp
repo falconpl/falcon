@@ -18,6 +18,6 @@
 */
 
 #define FALCON_REALIZE_STRTAB
-#include "rtl_messages.h"
+#include "core_messages.h"
 
 /* end of messages.cpp */

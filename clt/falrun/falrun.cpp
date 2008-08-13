@@ -122,6 +122,9 @@ String get_io_encoding()
 
 int main( int argc, char *argv[] )
 {
+   EngineData data1;
+   Init( data1 );
+
    int script_pos = argc;
    char *input_file = 0;
    FileStream *bincode_stream;
@@ -156,7 +159,7 @@ int main( int argc, char *argv[] )
                else
                   load_path = op + 2; break;
             break;
-            
+
             case 'l':
                if ( op[2] == 0 && i + 1 < argc )
                   module_language = argv[++i];
@@ -242,66 +245,61 @@ int main( int argc, char *argv[] )
       source_path += ";";
 
    ModuleLoader *modloader = new ModuleLoader( source_path + get_load_path() );
-   
+
    // set the module preferred language; ok also if default ("") is used
    modloader->setLanguage( module_language );
-   
+
    DefaultErrorHandler *errHand = new DefaultErrorHandler( stdErr );
    modloader->errorHandler( errHand );
-   
+
    Module *core = core_module_init();
 
-   Module *falcon_rtl = modloader->loadName( "falcon_rtl" );
-   if ( falcon_rtl != 0) {
-      Module *main_mod = modloader->loadModule( bincode_stream );
-      if( main_mod != 0) {
-         VMachine *vmachine = new VMachine(false);
-         // change default machine streams.
-         vmachine->stdIn( stdIn );
-         vmachine->stdOut( stdOut );
-         vmachine->stdErr( stdErr );
-         vmachine->init();
+   Module *main_mod = modloader->loadModule( bincode_stream );
+   if( main_mod != 0) {
+      VMachine *vmachine = new VMachine(false);
+      // change default machine streams.
+      vmachine->stdIn( stdIn );
+      vmachine->stdOut( stdOut );
+      vmachine->stdErr( stdErr );
+      vmachine->init();
 
-         vmachine->link( core );
-         vmachine->link( falcon_rtl ); // should not fail
-         Runtime *runtime = new Runtime( modloader );
+      vmachine->link( core );
+      Runtime *runtime = new Runtime( modloader );
 
-         // preload required modules
-		   ListElement *pliter = preloaded.begin();
-		   while( pliter != 0 )
-		   {
-		     Module *module = modloader->loadName( * ((String *) pliter->data()) );
-		     if ( ! module )
-			    return 1;
-		     if ( ! runtime->addModule( module ) )
-			    return 1;
-		     pliter = pliter->next();
-		   }
-
-         Item *item_args = vmachine->findGlobalItem( "args" );
-         fassert( item_args != 0 );
-         CoreArray *args = new CoreArray( vmachine, argc - script_pos );
-         for ( int ap = script_pos; ap < argc; ap ++ ) {
-            args->append( new GarbageString( vmachine, argv[ap] ) );
-         }
-         item_args->setArray( args );
-
-         Item *script_name = vmachine->findGlobalItem( "scriptName" );
-         fassert( script_name != 0 );
-         script_name->setString( new GarbageString( vmachine, module_name ) );
-
-         // the runtime will try to load the references.
-         main_mod->addMain();
-         runtime->addModule( main_mod );
-
-         if( vmachine->link( runtime ) ) {
-            vmachine->launch();
-            if ( vmachine->regA().type() == FLC_ITEM_INT )
-               return (int32) vmachine->regA().asInteger();
-         }
-         delete vmachine;
+      // preload required modules
+      ListElement *pliter = preloaded.begin();
+      while( pliter != 0 )
+      {
+         Module *module = modloader->loadName( * ((String *) pliter->data()) );
+         if ( ! module )
+            return 1;
+         if ( ! runtime->addModule( module ) )
+            return 1;
+         pliter = pliter->next();
       }
-      
+
+      Item *item_args = vmachine->findGlobalItem( "args" );
+      fassert( item_args != 0 );
+      CoreArray *args = new CoreArray( vmachine, argc - script_pos );
+      for ( int ap = script_pos; ap < argc; ap ++ ) {
+         args->append( new GarbageString( vmachine, argv[ap] ) );
+      }
+      item_args->setArray( args );
+
+      Item *script_name = vmachine->findGlobalItem( "scriptName" );
+      fassert( script_name != 0 );
+      script_name->setString( new GarbageString( vmachine, module_name ) );
+
+      // the runtime will try to load the references.
+      main_mod->addMain();
+      runtime->addModule( main_mod );
+
+      if( vmachine->link( runtime ) ) {
+         vmachine->launch();
+         if ( vmachine->regA().type() == FLC_ITEM_INT )
+            return (int32) vmachine->regA().asInteger();
+      }
+      delete vmachine;
    }
 
 

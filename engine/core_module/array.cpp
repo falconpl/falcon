@@ -22,13 +22,13 @@
 */
 
 /*#
-   @beginmodule falcon_rtl
+   @beginmodule core_module
 */
 
 /*#
    @funset rtl_array_funcs Array support
    @brief Array related functions.
-   @beginset rtl_array_funcs
+   @beginset core_array_funcs
 */
 
 #include <falcon/setup.h>
@@ -36,9 +36,10 @@
 #include <falcon/item.h>
 #include <falcon/carray.h>
 #include <falcon/vm.h>
-#include "rtl_messages.h"
+#include "core_messages.h"
 
-namespace Falcon { namespace Ext {
+namespace Falcon {
+namespace core {
 
 /*#
    @function arrayIns

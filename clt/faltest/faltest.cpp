@@ -604,7 +604,7 @@ void filterScripts()
    Script testing
 *************************************************/
 bool testScript( ScriptData *script,
-         FlcLoader *modloader, Module *core, Module *rtl, Module *testSuite,
+         FlcLoader *modloader, Module *core, Module *testSuite,
          String &reason, String &trace )
 {
    reason = "";
@@ -799,12 +799,10 @@ bool testScript( ScriptData *script,
    // we want to keep our own copies of the modules.
    testSuite->incref();
    core->incref();
-   rtl->incref();
 
 
    // so we can link them
    vmachine.link( core );
-   vmachine.link( rtl );
    vmachine.link( testSuite );
    vmachine.errorHandler( &fteh );
 
@@ -903,7 +901,7 @@ void gauge()
    }
 }
 
-void executeTests( FlcLoader *modloader, Module *rtl )
+void executeTests( FlcLoader *modloader )
 {
    Module *core = Falcon::core_module_init();
    Module *testSuite = init_testsuite_module();
@@ -946,7 +944,7 @@ void executeTests( FlcLoader *modloader, Module *rtl )
          s_validAlloc = 1;
       }
 
-      bool success = testScript( script, modloader, core, rtl, testSuite, reason, trace );
+      bool success = testScript( script, modloader, core, testSuite, reason, trace );
 
       if ( success )
       {
@@ -1046,6 +1044,9 @@ void executeTests( FlcLoader *modloader, Module *rtl )
 
 int main( int argc, char *argv[] )
 {
+   EngineData data1;
+   Init( data1 );
+
    stdOut = stdOutputStream();
    stdErr = stdErrorStream();
 
@@ -1102,13 +1103,6 @@ int main( int argc, char *argv[] )
    modloader->compileInMemory( opt_compmem );
    modloader->compileViaAssembly( opt_compasm );
    modloader->sourceEncoding( "utf-8" );
-
-   Module *falcon_rtl = modloader->loadName( "falcon_rtl" );
-   if ( falcon_rtl == 0 )
-   {
-      stdErr->writeString( "faltest: FATAL - can't find falcon_rtl module.\n" );
-      exit(1);
-   }
 
    int32 error;
    if ( opt_path == "" )
@@ -1180,7 +1174,7 @@ int main( int argc, char *argv[] )
 
    s_totalMem = 0;
    s_totalOutBlocks = 0;
-   executeTests( modloader, falcon_rtl );
+   executeTests( modloader );
 
 
    // in context to have it destroyed on exit

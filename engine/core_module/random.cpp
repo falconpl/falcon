@@ -30,13 +30,13 @@
 #include <math.h>
 
 /*#
-   @beginmodule falcon_rtl
+   @beginmodule core_module
 */
 
 /*#
    @funset rtl_random Random functions
    @brief Functions providing random numbers and sequences.
-   @beginset rtl_random
+   @beginset core_random
 */
 
 namespace Falcon {

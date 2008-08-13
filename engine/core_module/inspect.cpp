@@ -25,10 +25,11 @@
 #include <falcon/membuf.h>
 
 /*#
-   @beginmodule falcon_rtl
+   @beginmodule core_module
 */
 
-namespace Falcon { namespace Ext {
+namespace Falcon {
+namespace core {
 
 void inspect_internal( VMachine *vm, bool isShort, const Item *elem, int32 level, bool add = true );
 
@@ -338,7 +339,7 @@ void inspect_internal( VMachine *vm, bool isShort, const Item *elem, int32 level
 
 /*#
    @function inspect
-   @inset rtl_basic_io
+   @inset core_basic_io
    @param ... An arbitrary list of items.
    @brief Displays the deep contents of an item.
 
@@ -366,7 +367,7 @@ FALCON_FUNC  inspect ( ::Falcon::VMachine *vm )
 
 /*#
    @function inspectShort
-   @inset rtl_basic_io
+   @inset core_basic_io
    @param ... An arbitrary list of items.
    @brief Displays the deep contents of an item (short version).
 

@@ -23,10 +23,10 @@
 #include <falcon/cobject.h>
 #include <falcon/stdstreams.h>
 #include <falcon/membuf.h>
-#include "falcon_rtl_ext.h"
+#include "core_module.h"
 
 /*#
-   @beginmodule falcon_rtl
+   @beginmodule core_module
 */
 
 namespace Falcon {
@@ -118,7 +118,7 @@ FALCON_FUNC  Stream_setEncoding ( ::Falcon::VMachine *vm )
    is more efficient, as it doesn't need a temporary buffer to store the binary read
    data, or the binary data that has to be written.
 
-   @beginset rtl_transcoding_functions
+   @beginset core_transcoding_functions
 
 */
 

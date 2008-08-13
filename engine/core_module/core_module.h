@@ -17,6 +17,7 @@
 #define FALCON_CORE_MODULE_H
 
 #include <falcon/engine.h>
+#include <falcon/filestat.h>
 
 namespace Falcon {
 

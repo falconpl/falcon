@@ -72,7 +72,7 @@ bool Attribute::giveTo( CoreObject *tgt )
    else
    {
 
-      while( head != 0 )
+      while( head->next() != 0 )
       {
          if ( head->attrib() == this )
          {
@@ -81,6 +81,11 @@ bool Attribute::giveTo( CoreObject *tgt )
          }
 
          head = head->next();
+      }
+
+      // check the last element (that was excluded from loop check)
+      if ( head->attrib() == this )  {
+         return false;
       }
 
       // first, create a handler that will be stored in the object

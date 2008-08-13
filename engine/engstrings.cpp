@@ -225,9 +225,6 @@ const char *en_table[] =
       "Parse error in format specifier",
 
       "Unrecognized error code",
-
-      "requres an object and a string representing a property, plus the new value",
-      "parameter array contains non string elements" ,
       0
    };
 

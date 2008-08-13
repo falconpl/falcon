@@ -39,7 +39,6 @@
 #include <falcon/bommap.h>
 #include <falcon/vm_sys.h>
 
-#define FALCON_MAX_ATTRIBUTES 64
 #define FALCON_VM_DFAULT_CHECK_LOOPS 1000
 
 namespace Falcon {

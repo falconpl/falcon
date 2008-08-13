@@ -22,15 +22,15 @@
 #include <falcon/uri.h>
 #include <falcon/lineardict.h>
 
-#include "falcon_rtl_ext.h"
-#include "rtl_messages.h"
+#include "core_module.h"
+#include "core_messages.h"
 
 /*#
-   @beginmodule falcon_rtl
+   @beginmodule core_module
 */
 
 namespace Falcon {
-namespace Ext {
+namespace core {
 
 /*# @class URI
    @brief Interface to RFC3986 Universal Resource Indicator.

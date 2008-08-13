@@ -1,11 +1,11 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: rtl_messages.h
+   FILE: core_messages.h
 
-   String table used for RTL messages.
+   String table used for core module messages.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
-   Begin: sab feb 24 2007
+   Begin: Thu, 14 Aug 2008 00:52:21 +0200
 
    -------------------------------------------------------------------
    (C) Copyright 2004-2008: the FALCON developers (see list in AUTHORS file)
@@ -14,7 +14,7 @@
 */
 
 /** \file
-   String table used for RTL messages.
+   String table used for core module messages.
 */
 #include <falcon/message_defs.h>
 
@@ -37,5 +37,6 @@ FAL_MODSTR( rtl_sender_not_object, L"Sender is not an object" );
 FAL_MODSTR( rtl_marshall_not_cb, L"Marshalled event name must be a string as first element in the given array" );
 FAL_MODSTR( rtl_invalid_path, L"Invalid path" );
 FAL_MODSTR( rtl_invalid_uri, L"Invalid URI" );
+FAL_MODSTR( rtl_array_with_no_strings, L"parameter array contains non string elements" );
 
-/* end of rtl_messages.h */
+/* end of core_messages.h */
