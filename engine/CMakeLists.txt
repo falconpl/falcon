@@ -113,26 +113,39 @@ INCLUDE_DIRECTORIES(core_module)
 
 SET( CORE_MODULE_SOURCES
    core_module/array.cpp
+   core_module/attribute_ext.cpp
    core_module/cmdlineparser.cpp
    core_module/core_module.cpp
+   core_module/coroutine_ext.cpp
    core_module/dict.cpp
    core_module/dir_ext.cpp
    core_module/envvars.cpp
+   core_module/error_ext.cpp
+   core_module/fbom.cpp
    core_module/file_ext.cpp
+   core_module/format_ext.cpp
+   core_module/functional_ext.cpp
+   core_module/gc_ext.cpp
    core_module/indirect.cpp
    core_module/input.cpp
    core_module/inspect.cpp
+   core_module/item_ext.cpp
    core_module/itemcopy.cpp
    core_module/iterator_ext.cpp
    core_module/list.cpp
    core_module/math.cpp
+   core_module/membuf_ext.cpp
    core_module/messages.cpp
+   core_module/oob_ext.cpp
+   core_module/pagedict_ext.cpp
+   core_module/param_ext.cpp
    core_module/print.cpp
    core_module/random.cpp
    core_module/seconds.cpp
    core_module/serialize.cpp
    core_module/string.cpp
    core_module/stringstream_ext.cpp
+   core_module/sys_ext.cpp
    core_module/time_ext.cpp
    core_module/transcode_ext.cpp
    core_module/uri_ext.cpp
@@ -162,7 +175,6 @@ ADD_LIBRARY( falcon_engine SHARED
    fasm_comp.cpp
    fasm_lexer.cpp
    fassert.cpp
-   fbom.cpp
    filestat.cpp
    flcloader.cpp
    format.cpp

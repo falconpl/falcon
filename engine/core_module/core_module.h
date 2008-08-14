@@ -46,11 +46,99 @@ FALCON_FUNC  Iterator_find( ::Falcon::VMachine *vm );
 FALCON_FUNC  Iterator_insert( ::Falcon::VMachine *vm );
 FALCON_FUNC  Iterator_getOrigin( ::Falcon::VMachine *vm );
 
+FALCON_FUNC  Error_init ( ::Falcon::VMachine *vm );
+FALCON_FUNC  Error_toString ( ::Falcon::VMachine *vm );
+FALCON_FUNC  Error_heading ( ::Falcon::VMachine *vm );
+FALCON_FUNC  Error_getSysErrDesc ( ::Falcon::VMachine *vm );
+FALCON_FUNC  SyntaxError_init ( ::Falcon::VMachine *vm );
+FALCON_FUNC  CodeError_init ( ::Falcon::VMachine *vm );
+FALCON_FUNC  IoError_init ( ::Falcon::VMachine *vm );
+FALCON_FUNC  TypeError_init ( ::Falcon::VMachine *vm );
+FALCON_FUNC  AccessError_init ( ::Falcon::VMachine *vm );
+FALCON_FUNC  MathError_init ( ::Falcon::VMachine *vm );
+FALCON_FUNC  ParamError_init ( ::Falcon::VMachine *vm );
+FALCON_FUNC  ParseError_init ( ::Falcon::VMachine *vm );
+FALCON_FUNC  CloneError_init ( ::Falcon::VMachine *vm );
+FALCON_FUNC  IntrruptedError_init ( ::Falcon::VMachine *vm );
+
+FALCON_FUNC  len ( ::Falcon::VMachine *vm );
+FALCON_FUNC  val_int ( ::Falcon::VMachine *vm );
+FALCON_FUNC  val_numeric ( ::Falcon::VMachine *vm );
+FALCON_FUNC  typeOf ( ::Falcon::VMachine *vm );
+FALCON_FUNC  isCallable ( ::Falcon::VMachine *vm );
+FALCON_FUNC  getProperty( ::Falcon::VMachine *vm );
+FALCON_FUNC  setProperty( ::Falcon::VMachine *vm );
+FALCON_FUNC  chr ( ::Falcon::VMachine *vm );
+FALCON_FUNC  ord ( ::Falcon::VMachine *vm );
+FALCON_FUNC  hToString ( ::Falcon::VMachine *vm );
+
+FALCON_FUNC  paramCount ( ::Falcon::VMachine *vm );
+FALCON_FUNC  _parameter ( ::Falcon::VMachine *vm );
+FALCON_FUNC  paramIsRef ( ::Falcon::VMachine *vm );
+FALCON_FUNC  paramSet ( ::Falcon::VMachine *vm );
+
+FALCON_FUNC  yield ( ::Falcon::VMachine *vm );
+FALCON_FUNC  yieldOut ( ::Falcon::VMachine *vm );
+FALCON_FUNC  _f_sleep ( ::Falcon::VMachine *vm );
+FALCON_FUNC  beginCritical ( ::Falcon::VMachine *vm );
+FALCON_FUNC  endCritical ( ::Falcon::VMachine *vm );
+FALCON_FUNC  Semaphore_init ( ::Falcon::VMachine *vm );
+FALCON_FUNC  Semaphore_post ( ::Falcon::VMachine *vm );
+FALCON_FUNC  Semaphore_wait ( ::Falcon::VMachine *vm );
+FALCON_FUNC vmSuspend( ::Falcon::VMachine *vm );
+
+FALCON_FUNC  Format_parse ( ::Falcon::VMachine *vm );
+FALCON_FUNC  Format_init ( ::Falcon::VMachine *vm );
+FALCON_FUNC  Format_format ( ::Falcon::VMachine *vm );
+FALCON_FUNC  Format_toString ( ::Falcon::VMachine *vm );
+
+FALCON_FUNC  attributeByName( ::Falcon::VMachine *vm );
+FALCON_FUNC  having( ::Falcon::VMachine *vm );
+FALCON_FUNC  giveTo( ::Falcon::VMachine *vm );
+FALCON_FUNC  removeFrom( ::Falcon::VMachine *vm );
+FALCON_FUNC  removeFromAll( ::Falcon::VMachine *vm );
+FALCON_FUNC broadcast_next_attrib( ::Falcon::VMachine *vm );
+FALCON_FUNC  broadcast( ::Falcon::VMachine *vm );
+
+FALCON_FUNC  core_exit ( ::Falcon::VMachine *vm );
+FALCON_FUNC  PageDict( ::Falcon::VMachine *vm );
+FALCON_FUNC Make_MemBuf( ::Falcon::VMachine *vm );
+
+FALCON_FUNC  core_eq( ::Falcon::VMachine *vm );
+FALCON_FUNC  core_any ( ::Falcon::VMachine *vm );
+FALCON_FUNC  core_all ( ::Falcon::VMachine *vm );
+FALCON_FUNC  core_anyp ( ::Falcon::VMachine *vm );
+FALCON_FUNC  core_allp ( ::Falcon::VMachine *vm );
+FALCON_FUNC  core_eval ( ::Falcon::VMachine *vm );
+FALCON_FUNC  core_min ( ::Falcon::VMachine *vm );
+FALCON_FUNC  core_max ( ::Falcon::VMachine *vm );
+FALCON_FUNC  core_map ( ::Falcon::VMachine *vm );
+FALCON_FUNC  core_dolist ( ::Falcon::VMachine *vm );
+FALCON_FUNC  core_times ( ::Falcon::VMachine *vm );
+FALCON_FUNC  core_xmap ( ::Falcon::VMachine *vm );
+FALCON_FUNC  core_filter ( ::Falcon::VMachine *vm );
+FALCON_FUNC  core_reduce ( ::Falcon::VMachine *vm );
+FALCON_FUNC  core_iff ( ::Falcon::VMachine *vm );
+FALCON_FUNC  core_choice ( ::Falcon::VMachine *vm );
+FALCON_FUNC  core_lit ( ::Falcon::VMachine *vm );
+FALCON_FUNC  core_cascade ( ::Falcon::VMachine *vm );
+FALCON_FUNC  core_floop ( ::Falcon::VMachine *vm );
+FALCON_FUNC  core_firstof ( ::Falcon::VMachine *vm );
+
+FALCON_FUNC  core_oob( ::Falcon::VMachine *vm );
+FALCON_FUNC  core_deoob( ::Falcon::VMachine *vm );
+FALCON_FUNC  core_isoob( ::Falcon::VMachine *vm );
+
+FALCON_FUNC  gcEnable( ::Falcon::VMachine *vm );
+FALCON_FUNC  gcSetThreshold( ::Falcon::VMachine *vm );
+FALCON_FUNC  gcSetTimeout( ::Falcon::VMachine *vm );
+FALCON_FUNC  gcPerform( ::Falcon::VMachine *vm );
+FALCON_FUNC  gcGetParams( ::Falcon::VMachine *vm );
+
 FALCON_FUNC  vmVersionInfo( ::Falcon::VMachine *vm );
 FALCON_FUNC  vmModuleVersionInfo( ::Falcon::VMachine *vm );
 FALCON_FUNC  vmVersionName( ::Falcon::VMachine *vm );
 FALCON_FUNC  vmSystemType( ::Falcon::VMachine *vm );
-
 
 FALCON_FUNC  print ( ::Falcon::VMachine *vm );
 FALCON_FUNC  printl ( ::Falcon::VMachine *vm );
