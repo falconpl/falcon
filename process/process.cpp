@@ -34,17 +34,17 @@
    and written synchronously and polled for activity.
 
    To provide this functionality, the Process class requires the service called
-   “Stream” normally provided by the RTL library. Embedders that wish to allow the
-   scripts to load this module should provide RTL to scripts, or provide otherwise
+   “Stream” normally provided by the core module. Embedders that wish to allow the
+   scripts to load this module should provide core to scripts, or provide otherwise
    the “Stream” service in the Virtual Machines that will run those scripts.
    Failing to do so will cause the stream oriented methods of the Process class to
    raise an error. The generic process management functions in the module, and also
    the generic child-process management methods in the Process class do not require
-   this service, so embedders not willing to provide RTL may just turn overload the
+   this service, so embedders not willing to provide core may just turn overload the
    sensible Process methods or mask the Process class right away (or just ignore
    this fact letting the error to be raised in case of mis-usage).
 
-   As the Falcon command line automatically loads the RTL, this remark does not
+   As the Falcon command line automatically loads the core module, this remark does not
    apply to stand-alone scripts.
 
    The Process module declares a ProcessError class, derived from core Error class,
