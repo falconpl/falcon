@@ -16,11 +16,23 @@
 #include "core_module.h"
 #include <falcon/attribute.h>
 
-/*#
-   @beginmodule core
-*/
 namespace Falcon {
 namespace core {
+
+/*#
+   @funset attrib_model Attribute model support
+   @brief Functions supporting attributes.
+
+   Attributes define dynamic boolean characteristics that instances may have at a certain moment.
+   An attributed can be given or removed from a certain object, or automatically given to new
+   instances through class declaration has statement. The VM keeps track of instances having attributes,
+   so it is possible to iterate on, or send a message to, all the objects having a certain attribute.
+   In this section, the functions that allow to access this functionalities are explained.
+
+   Attribute can be treated as collections in for/in loops and iterators can be extracted from
+   them with the first() BOM method and with the Iterator class constructor.
+*/
+
 
 /*#
    @function attributeByName

@@ -28,7 +28,7 @@
 #include <string.h>
 
 /*#
-   @beginmodule core_module
+   
 */
 
 /*#

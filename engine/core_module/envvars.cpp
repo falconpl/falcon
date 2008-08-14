@@ -24,7 +24,7 @@
 #include "core_module.h"
 
 /*#
-   @beginmodule core_module
+   
 */
 
 /*#

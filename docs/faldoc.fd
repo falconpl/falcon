@@ -16,14 +16,12 @@ Version = 0.8.10
 # Faldoc Input settings
 ################################################
 
-Input.directory=../rtl
+Input.directory=../engine/core_module
 
 Input.wildcard=*.cpp     #we use only...
-Input.recursive=false
+Input.recursive=true
 
 # Other files may be specified here
-Input.extra=../engine/core_ext.cpp
-Input.extra=../engine/fbom.cpp
 Input.extra=main.fd
 
 ################################################

@@ -18,7 +18,7 @@
 #include <falcon/fbom.h>
 
 /*#
-   @beginmodule core
+
 */
 
 namespace Falcon {

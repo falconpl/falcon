@@ -29,7 +29,7 @@
 #include <falcon/time_sys.h>
 
 /*#
-   @beginmodule core_module
+   
 */
 
 namespace Falcon {

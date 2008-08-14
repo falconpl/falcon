@@ -17,7 +17,7 @@
 #include "../vmsema.h"
 
 /*#
-   @beginmodule core
+
 */
 
 namespace Falcon {

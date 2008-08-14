@@ -29,7 +29,7 @@
 #include <falcon/stream.h>
 
 /*#
-   @beginmodule core_module
+   
 */
 
 /*#

@@ -36,7 +36,7 @@
 #endif
 
 /*#
-   @beginmodule core_module
+   
 */
 
 namespace Falcon {

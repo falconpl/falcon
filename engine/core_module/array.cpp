@@ -22,7 +22,7 @@
 */
 
 /*#
-   @beginmodule core_module
+   
 */
 
 /*#

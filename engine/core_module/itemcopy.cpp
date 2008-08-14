@@ -26,7 +26,7 @@
 #include <falcon/vm.h>
 
 /*#
-   @beginmodule core_module
+   
 */
 
 namespace Falcon {

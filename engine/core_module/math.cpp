@@ -26,7 +26,7 @@
 
 
 /*#
-   @beginmodule core_module
+   
 */
 
 /*#

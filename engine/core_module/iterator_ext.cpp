@@ -21,7 +21,7 @@ namespace Falcon {
 namespace core {
 
 /*#
-   @beginmodule core
+   
 */
 
 /*#

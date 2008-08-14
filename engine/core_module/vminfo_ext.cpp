@@ -20,10 +20,6 @@ namespace Falcon {
 namespace core {
 
 /*#
-   @beginmodule core
-*/
-
-/*#
    @funset vminfo Virtual Machine Informations
    @brief Generic informations on the Virtual Machine.
 

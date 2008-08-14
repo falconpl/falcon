@@ -28,7 +28,7 @@
    @funset rtl_indirect Indirect call support
    @brief Functions meant to provide indirect symbol call facilities.
 
-   @beginmodule core_module
+   
    @beginset core_indirect
 */
 

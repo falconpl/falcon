@@ -25,7 +25,7 @@
 #include <falcon/membuf.h>
 
 /*#
-   @beginmodule core_module
+   
 */
 
 namespace Falcon {

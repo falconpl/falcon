@@ -24,7 +24,7 @@
 #include <falcon/stringstream.h>
 
 /*#
-   @beginmodule core_module
+   
 */
 
 namespace Falcon {

@@ -26,7 +26,7 @@
 #include "core_messages.h"
 
 /*#
-   @beginmodule core_module
+   
 */
 
 namespace Falcon {

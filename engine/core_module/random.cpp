@@ -30,7 +30,7 @@
 #include <math.h>
 
 /*#
-   @beginmodule core_module
+   
 */
 
 /*#
