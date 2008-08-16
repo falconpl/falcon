@@ -75,6 +75,7 @@ void VMachine::internal_construct()
    m_stdOut = 0;
    m_stdErr = 0;
    m_tryFrame = i_noTryFrame;
+   m_launchAtLink = true;
 
    resetCounters();
 
@@ -469,6 +470,18 @@ LiveModule *VMachine::link( Module *mod, bool isMainModule, bool bPrivate )
    if ( isMainModule )
       m_mainModule = livemod;
 
+   // execute the main code, if we have one
+   if ( m_launchAtLink )
+   {
+      Item *mainItem = livemod->findModuleItem( "__main__" );
+      if( mainItem != 0 )
+      {
+         callItem( *mainItem, 0 );
+         if ( m_event == eventRisen )
+            return 0;
+      }
+   }
+
    return livemod;
 }
 
@@ -828,8 +841,6 @@ bool VMachine::initializeInstance( Symbol *obj, LiveModule *livemod )
 {
    ItemVector *globs = &livemod->globals();
    bool bSuccess = true;
-
-
 
    Symbol *cls = obj->getInstance();
    if ( cls->getClassDef()->constructor() != 0 )

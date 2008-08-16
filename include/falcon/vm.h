@@ -390,6 +390,8 @@ protected:
    /** In atomic mode, the VM refuses to be kindly interrupted or to rotate contexts. */
    bool m_atomicMode;
 
+   /** Execute at link time? */
+   bool m_launchAtLink;
 
    /** Raised error.
       If the VM receives an error (i.e. via raiseError() ), this variable gets the
@@ -2143,6 +2145,14 @@ public:
    */
    bool exportAllSymbols( LiveModule *mod );
 
+   /** Changes the status of launch-at-link mode */
+   void launchAtLink( bool mode ) { m_launchAtLink = mode; }
+
+   /** Returns the launch-at-link mode.
+      This method returns true if the VM will launch the __main__ symbol of modules
+      as soon as they are linked in the vm, or false otherwise.
+   */
+   bool launchAtLink() const { return m_launchAtLink; }
 //==========================================================================
 //==========================================================================
 //==========================================================================

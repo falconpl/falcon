@@ -139,6 +139,7 @@ FALCON_FUNC  vmVersionInfo( ::Falcon::VMachine *vm );
 FALCON_FUNC  vmModuleVersionInfo( ::Falcon::VMachine *vm );
 FALCON_FUNC  vmVersionName( ::Falcon::VMachine *vm );
 FALCON_FUNC  vmSystemType( ::Falcon::VMachine *vm );
+FALCON_FUNC  vmIsMain( ::Falcon::VMachine *vm );
 
 FALCON_FUNC  print ( ::Falcon::VMachine *vm );
 FALCON_FUNC  printl ( ::Falcon::VMachine *vm );

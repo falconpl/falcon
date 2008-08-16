@@ -42,6 +42,7 @@ public:
    List preloaded;
    List directives;
 
+   bool interactive;
    bool compile_only;
    bool assemble_only;
    bool run_only;
@@ -83,7 +84,8 @@ public:
       source_encoding( "" ),
       wait_after( false ),
       parse_ftd( false ),
-      compile_tltable( false )
+      compile_tltable( false ),
+      interactive( false )
    {}
 };
 

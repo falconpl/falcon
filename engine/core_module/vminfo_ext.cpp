@@ -13,8 +13,8 @@
    See LICENSE file for licensing details.
 */
 
-#include <falcon/engine.h>
 #include "core_module.h"
+#include <falcon/stackframe.h>
 
 namespace Falcon {
 namespace core {
@@ -101,6 +101,53 @@ FALCON_FUNC  vmSystemType( ::Falcon::VMachine *vm )
 {
    String *str = new GarbageString( vm, Sys::SystemData::getSystemType() );
    vm->retval( str );
+}
+
+/*#
+   @function vmIsMain
+   @ingroup vminfo
+   @inset vminfo
+   @brief Returns true if the calling module is the main module of the application.
+   @return True if the calling module is the main module.
+
+   This function checks if the current module has been added as the last one right
+   before starting an explicit execution of the virtual machine from the outside.
+
+   This function is useful for those modules that have a main code which is meant
+   to be executed at link time and a part that is menat to be executed only if the
+   module is directly loaded and executed.
+
+   In example:
+   @code
+      // executes this at link time
+      prtcode = printl
+
+      // executes this from another module on request
+      function testPrint()
+         prtcode( "Success." )
+      end
+      export testPrint
+
+      // performs a test if directly loaded
+      if vmIsMain()
+         > "Testing the testPrint function"
+         testPrint()
+      end
+   @endcode
+
+*/
+FALCON_FUNC vmIsMain( ::Falcon::VMachine *vm )
+{
+   if ( vm->stackBase() == 0 )
+   {
+      vm->raiseRTError( new GenericError( ErrorParam( e_stackuf ) ) );
+   }
+   else {
+      // get the calling symbol module
+      StackFrame *thisFrame = (StackFrame *) vm->currentStack().at( vm->stackBase() - VM_FRAME_SPACE );
+      const Module *callerMod = thisFrame->m_module;
+      vm->retval( (bool) (callerMod == vm->mainModule()->module() ) );
+   }
 }
 
 }

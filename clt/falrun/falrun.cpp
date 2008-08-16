@@ -294,8 +294,8 @@ int main( int argc, char *argv[] )
       main_mod->addMain();
       runtime->addModule( main_mod );
 
-      if( vmachine->link( runtime ) ) {
-         vmachine->launch();
+      if( vmachine->link( runtime ) )
+      {
          if ( vmachine->regA().type() == FLC_ITEM_INT )
             return (int32) vmachine->regA().asInteger();
       }

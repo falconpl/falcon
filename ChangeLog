@@ -13,7 +13,11 @@ Falcon (0.8.11)
   * bugfix: The compiler didn't always add module strings as symbol names.
   * bugfix: Broadcast may have broadcast double in case of a single receiver not
             returning true.
-  * minor: Added attributeByName function
+  * minor: Added attributeByName function.
+  * major: RTL module is removed (merged with core).
+  * major: Now main code of modules is always executed. Added vmIsMain() function
+           in core to be able to check if the current module is meant as main module
+           or not.
 
 Falcon (0.8.10)
   * minor: Now classes can be stored in object properties and called to get

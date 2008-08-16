@@ -281,6 +281,7 @@ Module * core_module_init()
    self->addExtFunc( "vmVersionName", Falcon::core::vmVersionName );
    self->addExtFunc( "vmSystemType", Falcon::core::vmSystemType );
    self->addExtFunc( "vmModuleVersionInfo", Falcon::core::vmModuleVersionInfo );
+   self->addExtFunc( "vmIsMain", Falcon::core::vmIsMain );
 
    // Format
    Symbol *format_class = self->addClass( "Format", Falcon::core::Format_init );

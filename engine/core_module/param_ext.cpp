@@ -56,7 +56,7 @@ FALCON_FUNC  paramCount ( ::Falcon::VMachine *vm )
 {
    // temporarily save the call environment.
    if ( vm->stackBase() == 0 ) {
-      vm->raiseRTError( new GenericError( ErrorParam( e_param_outside ) ) );
+      vm->raiseRTError( new GenericError( ErrorParam( e_stackuf ) ) );
    }
    else {
       StackFrame *thisFrame = (StackFrame *) &vm->stackItem( vm->stackBase() - VM_FRAME_SPACE );
@@ -99,7 +99,7 @@ FALCON_FUNC  _parameter ( ::Falcon::VMachine *vm )
 
    if ( vm->stackBase() == 0 )
    {
-      vm->raiseRTError( new GenericError( ErrorParam( e_param_outside ) ) );
+      vm->raiseRTError( new GenericError( ErrorParam( e_stackuf ) ) );
    }
    else {
       int32 val = (int32) number->forceInteger();
@@ -147,13 +147,13 @@ FALCON_FUNC  paramIsRef ( ::Falcon::VMachine *vm )
 {
    Item *number = vm->param(0);
    if ( number == 0 || ! number->isOrdinal() ) {
-      vm->raiseRTError( new ParamError( ErrorParam( e_param_outside ).extra( "(N)" ) ) );
+      vm->raiseRTError( new ParamError( ErrorParam( e_param_outside ).extra( "N" ) ) );
       return;
    }
 
    if ( vm->stackBase() == 0 )
    {
-      vm->raiseRTError( new GenericError( ErrorParam( e_param_outside ) ) );
+      vm->raiseRTError( new GenericError( ErrorParam( e_stackuf ) ) );
    }
    else
    {
@@ -200,13 +200,13 @@ FALCON_FUNC  paramSet ( ::Falcon::VMachine *vm )
    Item *number = vm->param(0);
    Item *value = vm->param(1);
    if ( number == 0 || ! number->isOrdinal() || value == 0) {
-      vm->raiseRTError( new ParamError( ErrorParam( e_param_outside ).extra( "( N, ? )" ) ) );
+      vm->raiseRTError( new ParamError( ErrorParam( e_param_outside ).extra( "N,X" ) ) );
       return;
    }
 
    if ( vm->stackBase() == 0 )
    {
-      vm->raiseRTError( new GenericError( ErrorParam( e_param_outside ) ) );
+      vm->raiseRTError( new GenericError( ErrorParam( e_stackuf ) ) );
    }
    else
    {

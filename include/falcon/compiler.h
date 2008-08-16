@@ -301,6 +301,10 @@ public:
       return 0;
    }
 
+   /** Adds a direct load request to the module being compiled.
+      \param name The name of the module to be loaded
+      \param isFilename True if the name to be loaded is actually a filename path.
+   */
    void addLoad( const String &name, bool isFilename ) {
       m_module->addDepend( name, false, isFilename );
    }
