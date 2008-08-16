@@ -94,6 +94,7 @@ FALCON_FUNC  Format_toString ( ::Falcon::VMachine *vm );
 
 FALCON_FUNC  attributeByName( ::Falcon::VMachine *vm );
 FALCON_FUNC  having( ::Falcon::VMachine *vm );
+FALCON_FUNC  testAttribute( ::Falcon::VMachine *vm );
 FALCON_FUNC  giveTo( ::Falcon::VMachine *vm );
 FALCON_FUNC  removeFrom( ::Falcon::VMachine *vm );
 FALCON_FUNC  removeFromAll( ::Falcon::VMachine *vm );

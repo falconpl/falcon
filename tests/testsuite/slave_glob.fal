@@ -12,15 +12,7 @@
 *
 ****************************************************************************/
 
-glob = nil
-
-object initializer
-   init
-      global glob
-      glob = "From Slave"
-   end
-end
-
+glob = "From Slave"
 
 function TestGlob()
    if glob != "Changed": failure( "Global change not reflected" )

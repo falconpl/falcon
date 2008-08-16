@@ -136,6 +136,7 @@ Module * core_module_init()
    //
    self->addExtFunc( "attributeByName", Falcon::core::attributeByName );
    self->addExtFunc( "having", Falcon::core::having );
+   self->addExtFunc( "testAttribute", Falcon::core::testAttribute );
    self->addExtFunc( "giveTo", Falcon::core::giveTo );
    self->addExtFunc( "removeFrom", Falcon::core::removeFrom );
    self->addExtFunc( "removeFromAll", Falcon::core::removeFromAll );

@@ -132,6 +132,31 @@ FALCON_FUNC  having( ::Falcon::VMachine *vm )
 }
 
 /*#
+   @function testAttribute
+   @inset attrib_model
+   @brief Checks if an object is currently given a certain attribute.
+   @param item An object that may have an attribute.
+   @param attrib The attribute to be tested.
+   @return true if the attribute has been given to the object.
+
+
+*/
+FALCON_FUNC  testAttribute( ::Falcon::VMachine *vm )
+{
+   Item *itm = vm->param( 0 );
+   Item *attr = vm->param( 1 );
+
+   if ( !itm->isObject() || ! attr->isAttribute() )
+   {
+      vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).
+         extra( "O,a" ) ) );
+      return;
+   }
+
+   vm->regA().setBoolean( (itm->asObject()->has( attr->asAttribute() )) );
+}
+
+/*#
    @function giveTo
    @inset attrib_model
    @brief Gives a certain attribute to a certain object.

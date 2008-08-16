@@ -824,13 +824,14 @@ bool testScript( ScriptData *script,
    if ( opt_timings )
       linkTime = Sys::_seconds();
 
+   /*
    if ( ! vmachine.link( &runtime ) )
    {
       trace = fteh.getError();
       reason = "VM Link step failed.";
       return false;
    }
-
+   */
 
    if ( opt_timings )
          linkTime = Sys::_seconds() - linkTime;
@@ -848,8 +849,14 @@ bool testScript( ScriptData *script,
    sname = vmachine.findGlobalItem( "scriptPath" );
    *sname = new GarbageString( &vmachine, scriptModule->path() );
 
+   if ( ! vmachine.link( &runtime ) )
+   {
+      trace = fteh.getError();
+      reason = "VM Link step failed.";
+      return false;
+   }
 
-   vmachine.launch();
+   //vmachine.launch();
 
    if ( opt_timings )
          execTime = Sys::_seconds() - execTime;

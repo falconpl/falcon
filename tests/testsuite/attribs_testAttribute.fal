@@ -1,0 +1,27 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 38k
+* Category: attributes
+* Subcategory: functions
+* Short: Attribute check (testAttribute)
+* Description:
+*  Checks the attribute-by-name function.
+* [/Description]
+*
+****************************************************************************/
+
+attributes: test
+
+object obj
+   has test
+end
+
+// test positive
+if obj hasnt test: failure( "obj has not test at begin" )
+if not testAttribute( obj, test ): failure( "False negative" )
+give not test to obj
+if obj has test: failure( "obj has still test" )
+if testAttribute( obj, test ): failure( "False positive" )
+
+success()

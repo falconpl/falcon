@@ -18,6 +18,7 @@ Falcon (0.8.11)
   * major: Now main code of modules is always executed. Added vmIsMain() function
            in core to be able to check if the current module is meant as main module
            or not.
+  * minor: Added testAttribute() function to test for attributes.
 
 Falcon (0.8.10)
   * minor: Now classes can be stored in object properties and called to get
