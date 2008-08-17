@@ -71,13 +71,6 @@ protected:
    uint32 m_engineVersion;
 
    /******************************
-   * Code section
-   *******************************/
-   byte *m_code;
-   uint32 m_codeSize;
-   uint32 m_entry;
-
-   /******************************
    * Tables section
    *******************************/
    StringTable m_strTab;
@@ -133,9 +126,6 @@ public:
    Module();
    Module &name( const String &n ) { m_name.bufferize( n ); return *this; }
    Module &path( const String &p ) { m_path.bufferize( p ); return *this; }
-   Module &code( byte *code ) { m_code = code; return *this; }
-   Module &codeSize( uint32 cs ) { m_codeSize = cs; return *this; }
-   Module &entry( uint32 entry ) { m_entry = entry; return *this; }
    Module &language( const String &lang ) { m_language = lang; return *this; }
 
 
@@ -174,10 +164,6 @@ public:
    const String &name() const { return m_name; }
    const String &path() const { return m_path; }
    const String &language() const { return m_language;}
-
-   byte *code() const { return m_code; }
-   uint32 codeSize() const { return m_codeSize; }
-   uint32 entry() const { return m_entry; }
 
    String *addCString( const char *pos, uint32 size );
 
@@ -404,11 +390,13 @@ public:
       table. If the string already exists, that instance will be used as the symbol name.
 
       @param name the name of the symbol
-      @param offset the position in the module code where the function is defined.
+      @param code the code of the function to be executed. The data will be destroyed
+         with memFree at symbol destruction.
+      @param size size of the function code in bytes.
       @param exp true if the symbol is to be exported
       @return a pointer to the created symbol
    */
-    Symbol *addFunction( const String &name, uint32 offset, bool exp=true );
+    Symbol *addFunction( const String &name, byte *code, uint32 size, bool exp=true );
 
    /** Adds a class definition to this module.
       This method creates a class which is pertinent to this modules and
@@ -586,10 +574,6 @@ public:
 
    const StringTable &stringTable() const { return m_strTab; }
    StringTable &stringTable() { return m_strTab; }
-
-   /** Adds a Main symbol as a function in the entry point if possbile.
-   */
-   void addMain();
 
    /** Creates an istance for a certain service.
       Returns 0 if the module does not provide the required service.

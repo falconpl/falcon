@@ -746,22 +746,14 @@ bool testScript( ScriptData *script,
          }
       }
 
-      GenCode gc( bytecode_stream );
+      GenCode gc( compiler.module(), bytecode_stream );
       if ( opt_timings )
          genTime = Sys::_seconds();
       gc.generate( compiler.sourceTree() );
-      compiler.module()->setLineInfo( gc.extractLineInfo() );
+
       if ( opt_timings )
          genTime = Sys::_seconds() - genTime;
    }
-
-   // and load the bytecode
-   int64 len = bytecode_stream->seekEnd( 0 );
-   Falcon::byte *code = (Falcon::byte *) memAlloc( (uint32) len );
-   scriptModule->code( code );
-   scriptModule->codeSize( (uint32) len );
-   bytecode_stream->seekBegin( 0 );
-   bytecode_stream->read( (char *) code, (int)len );
 
    // we can get rid of the bytecode stream
    delete bytecode_stream;
@@ -806,7 +798,6 @@ bool testScript( ScriptData *script,
    vmachine.link( testSuite );
    vmachine.errorHandler( &fteh );
 
-   scriptModule->addMain();
    // use a runtime to load the module, so that it can load some modules too
    modloader->errorHandler( &fteh );
 

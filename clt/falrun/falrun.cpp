@@ -291,7 +291,6 @@ int main( int argc, char *argv[] )
       script_name->setString( new GarbageString( vmachine, module_name ) );
 
       // the runtime will try to load the references.
-      main_mod->addMain();
       runtime->addModule( main_mod );
 
       if( vmachine->link( runtime ) )

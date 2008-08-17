@@ -82,7 +82,7 @@ bool Symbol::load( Stream *in )
 
    switch( type_t( type ) ) {
       case tfunc:
-         setFunction( new FuncDef( 0 ) );
+         setFunction( new FuncDef( 0, 0 ) );
       return getFuncDef()->load( m_module, in );
 
       case tclass:
@@ -163,17 +163,20 @@ bool Symbol::save( Stream *out ) const
 }
 
 
-FuncDef::FuncDef( uint32 offset ):
-   m_offset( offset ),
+FuncDef::FuncDef( byte *code, uint32 codeSize ):
+   m_code( code ),
+   m_codeSize( codeSize ),
    m_params( 0 ),
    m_locals( 0 ),
    m_undefined( 0 ),
-   m_onceItemId( NO_STATE )
+   m_onceItemId( NO_STATE ),
+   m_basePC(0)
 {
 }
 
 FuncDef::~FuncDef()
 {
+   delete m_code;
 }
 
 Symbol *FuncDef::addParameter( Symbol *sym )
@@ -205,15 +208,23 @@ Symbol *FuncDef::addUndefined( Symbol *sym )
 
 bool FuncDef::save( Stream *out ) const
 {
-   uint32 offset = endianInt32(m_offset);
-   out->write( &offset, sizeof( offset ) );
    uint16 locs = endianInt16( m_locals );
    uint16 params = endianInt16( m_params );
    out->write( &locs, sizeof( locs ) );
    out->write( &params, sizeof( params ) );
 
-   offset = endianInt32(m_onceItemId);
-   out->write( &offset, sizeof( offset ) );
+   uint32 onceId = endianInt32(m_onceItemId);
+   out->write( &onceId, sizeof( onceId ) );
+
+   uint32 basePC = endianInt32(m_basePC);
+   out->write( &basePC, sizeof( basePC ) );
+
+   uint32 codeSize = endianInt32(m_codeSize);
+   out->write( &codeSize, sizeof( codeSize ) );
+   if ( m_codeSize > 0 )
+   {
+      out->write( m_code, m_codeSize );
+   }
 
    return m_symtab.save( out );
 }
@@ -221,17 +232,37 @@ bool FuncDef::save( Stream *out ) const
 
 bool FuncDef::load( Module *mod, Stream *in )
 {
-   uint32 offset;
-   in->read( &offset, sizeof( offset ) );
-   m_offset = endianInt32( offset );
    uint16 loc;
    in->read( &loc, sizeof( loc ) );
    m_locals = endianInt16( loc );
    in->read( &loc, sizeof( loc ) );
    m_params = endianInt16( loc );
 
-   in->read( &offset, sizeof( offset ) );
-   m_onceItemId = endianInt32( offset );
+   uint32 onceItem = 0;
+   in->read( &onceItem, sizeof( onceItem ) );
+   m_onceItemId = endianInt32( onceItem );
+
+   uint32 basePC = 0;
+   in->read( &basePC, sizeof( basePC ) );
+   m_basePC = endianInt32( basePC );
+
+   int32 codeSize = 0;
+   in->read( &codeSize, sizeof( codeSize ) );
+   m_codeSize = endianInt32( codeSize );
+   m_code = 0;
+
+   // it's essential to check for errors now.
+   if ( ! in->good() )
+      return false;
+
+   if ( m_codeSize > 0 )
+   {
+      m_code = (byte *) memAlloc( m_codeSize );
+      in->read( m_code, m_codeSize );
+      // it's essential to check for errors now.
+      if ( ! in->good() )
+         return false;
+   }
 
    return m_symtab.load( mod, in );
 }
@@ -300,22 +331,15 @@ bool InheritDef::load( Module *mod, Stream *in )
 //
 
 ClassDef::ClassDef( ObjectManager *manager ):
-   FuncDef( 0 ),
+   FuncDef( 0, 0 ),
    m_constructor( 0 ),
    m_manager( manager ),
    m_properties( &traits::t_stringptr, &traits::t_voidp )
 
-{}
-
-ClassDef::ClassDef( uint32 offset, ObjectManager *manager ):
-   FuncDef( offset ),
-   m_constructor( 0 ),
-   m_manager( manager ),
-   m_properties( &traits::t_stringptr, &traits::t_voidp )
 {}
 
 ClassDef::ClassDef( Symbol *ext_ctor, ObjectManager *manager ):
-   FuncDef( 0 ),
+   FuncDef( 0, 0 ),
    m_constructor( ext_ctor ),
    m_manager( manager ),
    m_properties( &traits::t_stringptr, &traits::t_voidp )

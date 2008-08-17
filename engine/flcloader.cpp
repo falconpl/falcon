@@ -234,9 +234,8 @@ Module *FlcLoader::loadSource( Stream *fin, const String &path )
          temp_binary->seekBegin(0);
       }
       else {
-         GenCode codeOut( temp_binary );
+         GenCode codeOut( module, temp_binary );
          codeOut.generate( m_compiler.sourceTree() );
-         module->setLineInfo( codeOut.extractLineInfo() );
       }
    }
 
@@ -280,19 +279,10 @@ Module *FlcLoader::loadSource( Stream *fin, const String &path )
 
 
    // import the binary stream in the module;
-   uint64 len = temp_binary->seekEnd( 0 );
-   Falcon::byte *code = (Falcon::byte *) memAlloc( (uint32) len );
-   module->code( code );
-   module->codeSize( (uint32) len );
-   temp_binary->seekBegin( 0 );
-   temp_binary->read( code, (int32) len );
 
    delete temp_binary;
    if( bDelFin )
       delete fin;
-
-   if ( module != 0 )
-      module->addMain();
 
    return module;
 }

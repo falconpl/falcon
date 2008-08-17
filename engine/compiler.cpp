@@ -245,11 +245,6 @@ bool Compiler::compile()
          m_module->symbolTable().exportUndefined();
       }
 
-      // a correctly compiled module has an entry point starting at 0.
-      if ( ! m_root->statements().empty() )
-      {
-         m_module->entry( 0 );
-      }
       return true;
    }
 
@@ -614,7 +609,7 @@ Symbol *Compiler::addGlobalSymbol( const String *symname )
 
       sym = new Symbol( m_module, m_module->addString( *symname ) );
       m_module->addGlobalSymbol( sym );
-      sym->declaredAt( lexer()->line() );
+      sym->declaredAt( lexer()->previousLine() );
       sym->imported( imported );
    }
    return sym;
@@ -703,7 +698,7 @@ StmtFunction *Compiler::buildCtorFor( StmtClass *cls )
    addFunction( stmt_ctor );
 
    // fills the symbol to be a valid constructor
-   FuncDef *fdef = new FuncDef( 0 );
+   FuncDef *fdef = new FuncDef( 0, 0 );
    funcsym->setFunction( fdef );
    def->constructor( funcsym );
 

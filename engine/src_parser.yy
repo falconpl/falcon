@@ -1246,7 +1246,7 @@ func_decl_short:
 func_begin:
    FUNCDECL SYMBOL
       {
-         Falcon::FuncDef *def = new Falcon::FuncDef( 0 );
+         Falcon::FuncDef *def = new Falcon::FuncDef( 0, 0 );
          // the SYMBOL which names the function goes in the old symbol table, while the parameters
          // will go in the new symbol table.
 
@@ -2380,7 +2380,7 @@ func_call:
 nameless_func:
    FUNCDECL
       {
-         Falcon::FuncDef *def = new Falcon::FuncDef( 0 );
+         Falcon::FuncDef *def = new Falcon::FuncDef( 0, 0 );
          // set the def as a lambda.
          COMPILER->incLambdaCount();
          COMPILER->incClosureContext();
@@ -2433,7 +2433,7 @@ nameless_func_decl_inner:
 nameless_closure:
    INNERFUNC
       {
-         Falcon::FuncDef *def = new Falcon::FuncDef( 0 );
+         Falcon::FuncDef *def = new Falcon::FuncDef( 0, 0 );
          // set the def as a lambda.
          COMPILER->incLambdaCount();
          int id = COMPILER->lambdaCount();
@@ -2478,7 +2478,7 @@ nameless_closure:
 lambda_expr:
    LAMBDA
       {
-         Falcon::FuncDef *def = new Falcon::FuncDef( 0 );
+         Falcon::FuncDef *def = new Falcon::FuncDef( 0, 0 );
          // set the def as a lambda.
          COMPILER->incLambdaCount();
          COMPILER->incClosureContext();

@@ -117,9 +117,6 @@ public:
    /** Just a shortcut to the name of the module held by this LiveModule. */
    const String &name() const { return m_module->name(); }
 
-   /** Just a shortcut to the source of the module held by this LiveModule. */
-   const byte *code() const { return m_module->code(); }
-
    /** Disengage a module after a module unlink. */
    void detachModule();
 

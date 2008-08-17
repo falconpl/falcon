@@ -323,8 +323,15 @@ class FALCON_DYN_CLASS FuncDef: public BaseAlloc
    /** Private sub-symbol table. Used in classes & callables */
    SymbolTable m_symtab;
 
-   /** Position in the file where the symbol can be called. */
-   uint32 m_offset;
+   /** Function code.
+      Owned by the symbol and destroyed on exit.
+   */
+   byte *m_code;
+
+   /** Function size of the code.
+      Owned by the symbol and destroyed on exit.
+   */
+   uint32 m_codeSize;
 
    /** Minimal default parameters */
    uint16 m_params;
@@ -340,12 +347,17 @@ class FALCON_DYN_CLASS FuncDef: public BaseAlloc
    */
    uint32 m_onceItemId;
 
+   uint32 m_basePC;
 public:
    enum {
 		NO_STATE = 0xFFFFFFFF
 	} enum_NO_STATE;
 
-   FuncDef( uint32 offset );
+   /** Constructor for external generators.
+      Requires that the funcdef is provided with a previously allocated code.
+      The code is owned by the FuncDef and destroyed with this instance.
+   */
+   FuncDef( byte *code, uint32 codeSize );
    ~FuncDef();
 
    const SymbolTable &symtab() const { return m_symtab; }
@@ -355,14 +367,27 @@ public:
    Symbol *addLocal( Symbol *sym );
    Symbol *addUndefined( Symbol *sym );
 
-   uint32 offset() const { return m_offset; }
-   void offset( uint32 o ) { m_offset = o; }
+   uint32 codeSize() const { return m_codeSize; }
+   void codeSize( uint32 p ) { m_codeSize = p; }
+   byte *code() const { return m_code; }
+   void code( byte *b ) { m_code = b; }
    uint16 params() const { return m_params; }
    uint16 locals() const { return m_locals; }
    uint16 undefined() const { return m_undefined; }
    void params( uint16 p ) { m_params = p; }
    void locals( uint16 l ) { m_locals = l; }
    void undefined( uint16 u ) { m_undefined = u; }
+
+   void basePC( uint32 pc ) { m_basePC = pc; }
+
+   /** BasePC at which this symbol was declared.
+      This is useful only to find lines in the code of this function
+      in the global line table.
+
+      The line that generated a certain function is found through
+      basepc + VM->pc.
+   */
+   uint32 basePC() const { return m_basePC; }
 
    /** Counts the parameters and the local variables that this funcdef has in its symtab.
       Useful when the function object is created by the compiler, that won't use addParameter()
@@ -517,18 +542,6 @@ public:
          with reflexivity enabled will lead to undefined results).
    */
    ClassDef( ObjectManager *manager=0 );
-
-   /** Creates the definition of this class with a Falcon constructor.
-
-      This constructor creates a class that has an init method in Falcon code.
-      The offset is the position of the init method in the module code.
-
-      \param offset the start offset of the constructor, if this class as a Falcon code constructor.
-      \param manager The object manager used to manipulate externally provided user_data of this class;
-         if not provided, this class will be fully non-reflexive (and providing some vardef
-         with reflexivity enabled will lead to undefined results).
-   */
-   ClassDef( uint32 offset, ObjectManager *manager=0 );
 
    /** Creates the definition of this class an external constructor.
 

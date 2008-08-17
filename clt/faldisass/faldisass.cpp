@@ -443,7 +443,7 @@ void disassembler( Module *module, Stream *out, const t_labelMap &labels, const 
    byte *code;
    byte opcode;
    int oldline = -1;
-
+#if 0
    code = module->code();
    current_symtab = &module->symbolTable();
    global_symtab = current_symtab;
@@ -776,7 +776,7 @@ void disassembler( Module *module, Stream *out, const t_labelMap &labels, const 
       }
       out->writeString( "\n" );
    }
-
+#endif
 }
 
 
@@ -789,7 +789,7 @@ void Analizer( Module *module, t_labelMap &labels  )
 {
    byte *code, *end;
    byte opcode;
-
+#if 0
    code = module->code();
    end = code + module->codeSize();
    while( code < end )
@@ -881,6 +881,7 @@ void Analizer( Module *module, t_labelMap &labels  )
          }
       }
    }
+   #endif
 }
 
 /********************************************************
@@ -1227,7 +1228,9 @@ int main( int argc, char *argv[] )
       while( iter.hasCurrent() ) {
          const Symbol *sym = *(const Symbol **) iter.currentValue();
          if ( sym->isFunction() ) {
+            #if 0
             functions[ sym->getFuncDef()->offset() ] = sym;
+            #endif
          }
          else if ( sym->isClass() ) {
             // we can generate the classess now, as the symbols have been

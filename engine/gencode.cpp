@@ -134,14 +134,15 @@ void GenCode::c_jmptag::defineElif( uint32 id )
 // Code generator implementation
 //===============================================================
 
-GenCode::GenCode( Stream *out ):
+GenCode::GenCode( Module *mod, Stream *out ):
    Generator( out ),
-   m_lineMap( 0 )
+   m_pc(0),
+   m_outTemp( new StringStream ),
+   m_module( mod )
 {}
 
 GenCode::~GenCode()
 {
-   delete m_lineMap;
 }
 
 void GenCode::generate( const SourceTree *st  )
@@ -152,6 +153,13 @@ void GenCode::generate( const SourceTree *st  )
       // entry point
       gen_block( &st->statements() );
       gen_pcode( P_RET );
+      uint32 codeSize = m_outTemp->length();
+
+      // create the main function.
+      m_module->addFunction( "__main__", m_outTemp->closeToBuffer(), codeSize, false );
+      m_pc += codeSize;
+      delete m_outTemp;
+      m_outTemp = new StringStream;
    }
 
    // No need to generate the classes, as they are just definitions in the
@@ -171,7 +179,7 @@ void GenCode::generate( const SourceTree *st  )
       // generate at least an valid VM stub
       if ( st->statements().empty() )
       {
-         gen_pcode( P_END );
+         gen_pcode( P_RET );
       }
    }
 }
@@ -223,7 +231,7 @@ void GenCode::gen_pcode( byte pcode,
    pdefs[1] = gen_pdef( f1 );
    pdefs[2] = gen_pdef( s1 );
    pdefs[3] = gen_pdef( third );
-   m_out->write( reinterpret_cast< const char * >( pdefs ), 4 );
+   m_outTemp->write( reinterpret_cast< const char * >( pdefs ), 4 );
 
    // now write the contents.
    f1.generate( this );
@@ -246,7 +254,7 @@ void GenCode::c_varpar::generate( GenCode *owner ) const
       case e_parSYM:
       {
          uint32 out = endianInt32( m_content.sym->itemId() );
-         owner->m_out->write( &out, sizeof(out) );
+         owner->m_outTemp->write( &out, sizeof(out) );
       }
       break;
 
@@ -255,14 +263,14 @@ void GenCode::c_varpar::generate( GenCode *owner ) const
       case e_parINT32:
       {
          uint32 out = endianInt32( m_content.immediate );
-         owner->m_out->write( &out, sizeof(out) );
+         owner->m_outTemp->write( &out, sizeof(out) );
       }
       break;
 
       case e_parNTD64:
       {
          uint64 out = endianInt64( m_content.immediate64 );
-         owner->m_out->write( &out, sizeof(out) );
+         owner->m_outTemp->write( &out, sizeof(out) );
       }
       break;
    }
@@ -280,28 +288,28 @@ void GenCode::gen_operand( const Value *stmt )
          uint32 symid;
          const Symbol *sym = stmt->asSymbol();
          symid = endianInt32( sym->itemId() );
-         m_out->write( &symid, sizeof( symid ) );
+         m_outTemp->write( &symid, sizeof( symid ) );
       }
       break;
 
       case Value::t_imm_integer:
       {
          int64 ival = endianInt64( stmt->asInteger() );
-         m_out->write( &ival, sizeof( ival ) );
+         m_outTemp->write( &ival, sizeof( ival ) );
       }
       break;
 
       case Value::t_imm_num:
       {
          numeric dval = endianNum( stmt->asNumeric() );
-         m_out->write( &dval, sizeof( dval ) );
+         m_outTemp->write( &dval, sizeof( dval ) );
       }
       break;
 
       case Value::t_imm_string:
       {
          uint32 strid = (uint32) endianInt32( stmt->asString()->id() );
-         m_out->write( &strid, sizeof( strid ) );
+         m_outTemp->write( &strid, sizeof( strid ) );
       }
       break;
 
@@ -400,21 +408,21 @@ void GenCode::gen_var( const VarDef &def )
       case VarDef::t_int:
       {
          int64 ival = endianInt64( def.asInteger() );
-         m_out->write( reinterpret_cast< const char *>( &ival ), sizeof( ival ) );
+         m_outTemp->write( reinterpret_cast< const char *>( &ival ), sizeof( ival ) );
       }
       break;
 
       case VarDef::t_num:
       {
          numeric num = endianNum( def.asNumeric() );
-         m_out->write( reinterpret_cast< const char *>( &num ), sizeof( num ) );
+         m_outTemp->write( reinterpret_cast< const char *>( &num ), sizeof( num ) );
       }
       break;
 
       case VarDef::t_string:
       {
          int32 id = endianInt32( def.asString()->id() );
-         m_out->write( reinterpret_cast< const char *>( &id ), sizeof( id ) );
+         m_outTemp->write( reinterpret_cast< const char *>( &id ), sizeof( id ) );
       }
       break;
       case VarDef::t_reference:
@@ -422,7 +430,7 @@ void GenCode::gen_var( const VarDef &def )
       {
          const Symbol *sym = def.asSymbol();
          int32 ival = endianInt32( sym->itemId() );
-         m_out->write( reinterpret_cast< const char *>( &ival ), sizeof( ival ) );
+         m_outTemp->write( reinterpret_cast< const char *>( &ival ), sizeof( ival ) );
       }
       break;
    }
@@ -438,7 +446,7 @@ void GenCode::gen_function( const StmtFunction *func )
 
    // get the offset of the function
    const Symbol *funcsym = func->symbol();
-   funcsym->getFuncDef()->offset( static_cast<uint32>( m_out->tell() ) );
+
    // generates INST for constructors
    if ( ctorFor != 0 )
    {
@@ -470,7 +478,7 @@ void GenCode::gen_function( const StmtFunction *func )
    if ( ! func->staticBlock().empty() )
    {
       // push a label that is needed for the static block
-      c_jmptag tag( m_out ); // tag is destroed after pop
+      c_jmptag tag( m_outTemp ); // tag is destroed after pop
       m_labels.pushBack( &tag );
 
       gen_pcode( P_ONCE, c_param_fixed( tag.addQueryBegin() ), func->symbol() );
@@ -493,6 +501,14 @@ void GenCode::gen_function( const StmtFunction *func )
          gen_pcode( end_type );
    }
 
+   uint32 codeSize = m_outTemp->length();
+   funcsym->getFuncDef()->codeSize( codeSize );
+   funcsym->getFuncDef()->code( m_outTemp->closeToBuffer() );
+   funcsym->getFuncDef()->basePC( m_pc );
+   m_pc += codeSize;
+   delete m_outTemp;
+   m_outTemp = new StringStream;
+
    m_functions.popBack();
 }
 
@@ -512,10 +528,7 @@ void GenCode::gen_statement( const Statement *stmt )
    if ( stmt->line() != last_line )
    {
       last_line = stmt->line();
-      if ( m_lineMap == 0 )
-         m_lineMap = new LineMap;
-
-      m_lineMap->addEntry( (uint32) m_out->tell(), last_line );
+      m_module->addLineInfo( m_pc + (uint32) m_outTemp->tell(), last_line );
    }
 
    switch( stmt->type() )
@@ -763,7 +776,7 @@ void GenCode::gen_statement( const Statement *stmt )
          }
 
          // create a new label
-         c_jmptag tag( m_out );
+         c_jmptag tag( m_outTemp );
          m_labels.pushBack( &tag );
 
          gen_condition( elem->condition() );
@@ -844,7 +857,7 @@ void GenCode::gen_statement( const Statement *stmt )
                   sizeInt << 48 | sizeRng << 32 | sizeStr << 16 | sizeObj;
 
          // prepare the jump out of the switch
-         c_jmptag tag( m_out );
+         c_jmptag tag( m_outTemp );
          m_labels.pushBack( &tag );
 
          // gencode for the switch
@@ -864,7 +877,7 @@ void GenCode::gen_statement( const Statement *stmt )
          int32 dummy = 0xFFFFFFFF;
          if ( elem->nilBlock() != -1 )
             tag.addQuerySwitchBlock( elem->nilBlock(),0 );
-         m_out->write( &dummy, sizeof( dummy ) );
+         m_outTemp->write( &dummy, sizeof( dummy ) );
 
          // write the int cases map
          MapIterator iter = elem->intCases().begin();
@@ -873,9 +886,9 @@ void GenCode::gen_statement( const Statement *stmt )
             Value *first = *(Value **) iter.currentKey();
             uint32 second = *(int32 *) iter.currentValue();
             int64 value = endianInt64( first->asInteger() );
-            m_out->write( &value, sizeof(value ) );
+            m_outTemp->write( &value, sizeof(value ) );
             tag.addQuerySwitchBlock( second, 0 );
-            m_out->write( &dummy, sizeof( dummy ) );
+            m_outTemp->write( &dummy, sizeof( dummy ) );
             iter.next();
          }
 
@@ -887,10 +900,10 @@ void GenCode::gen_statement( const Statement *stmt )
             uint32 second = *(int32 *) iter.currentValue();
             int32 start = endianInt32( (uint32) first->asRange()->rangeStart()->asInteger() );
             int32 end = endianInt32( (uint32) first->asRange()->rangeEnd()->asInteger() );
-            m_out->write( &start, sizeof( start ) );
-            m_out->write( &end, sizeof( end ) );
+            m_outTemp->write( &start, sizeof( start ) );
+            m_outTemp->write( &end, sizeof( end ) );
             tag.addQuerySwitchBlock( second, 0 );
-            m_out->write( &dummy, sizeof( dummy ) );
+            m_outTemp->write( &dummy, sizeof( dummy ) );
             iter.next();
          }
 
@@ -901,9 +914,9 @@ void GenCode::gen_statement( const Statement *stmt )
             Value *first = *(Value **) iter.currentKey();
             uint32 second = *(int32 *) iter.currentValue();
             int32 strid = endianInt32( first->asString()->id() );
-            m_out->write( &strid, sizeof( strid ) );
+            m_outTemp->write( &strid, sizeof( strid ) );
             tag.addQuerySwitchBlock( second, 0 );
-            m_out->write( &dummy, sizeof( dummy ) );
+            m_outTemp->write( &dummy, sizeof( dummy ) );
             iter.next();
          }
 
@@ -917,9 +930,9 @@ void GenCode::gen_statement( const Statement *stmt )
                uint32 second = *(int32 *) iter.currentValue();
                Symbol *sym = val->asSymbol();
                int32 objid = endianInt32( sym->id() );
-               m_out->write( &objid, sizeof( objid ) );
+               m_outTemp->write( &objid, sizeof( objid ) );
                tag.addQuerySwitchBlock( second, 0 );
-               m_out->write( &dummy, sizeof( dummy ) );
+               m_outTemp->write( &dummy, sizeof( dummy ) );
             }
             else {
                fassert( false );
@@ -965,7 +978,7 @@ void GenCode::gen_statement( const Statement *stmt )
       {
          const StmtWhile *elem = static_cast<const StmtWhile *>( stmt );
 
-         c_jmptag tag( m_out );
+         c_jmptag tag( m_outTemp );
          m_labels_loop.pushBack( &tag );
 
          // this is the place for next and begin
@@ -1011,7 +1024,7 @@ void GenCode::gen_statement( const Statement *stmt )
          int neededVars = 0;  // vars pushed by reference for target expansion
 
          // begin a new loop
-         c_jmptag tag( m_out );
+         c_jmptag tag( m_outTemp );
          tag.setForIn( true );
          m_labels_loop.pushBack( &tag );
 
@@ -1145,7 +1158,7 @@ void GenCode::gen_statement( const Statement *stmt )
          ((c_jmptag *) m_labels_loop.back())->addTry();
 
          // we internally manage try landings, as they can be referenced only here.
-         uint32 tryRefPos = ((uint32)m_out->tell()) + 4;
+         uint32 tryRefPos = ((uint32)m_outTemp->tell()) + 4;
          gen_pcode( P_TRY, c_param_fixed( 0xFFFFFFFF ) );
 
          // MUST maintain the current branch level to allow inner breaks.
@@ -1163,19 +1176,19 @@ void GenCode::gen_statement( const Statement *stmt )
             gen_pcode( P_PTRY, c_param_fixed( 1 ) );
          }
          else {
-            tryEndRefPos = ((uint32)m_out->tell()) + 4;
+            tryEndRefPos = ((uint32)m_outTemp->tell()) + 4;
             gen_pcode( P_JTRY, c_param_fixed( 0xFFFFFFFF ) );
          }
 
          // the landing is here
-         uint32 curpos = (uint32) m_out->tell();
-         m_out->seekBegin( tryRefPos );
+         uint32 curpos = (uint32) m_outTemp->tell();
+         m_outTemp->seekBegin( tryRefPos );
          tryRefPos = endianInt32( curpos );
-         m_out->write( reinterpret_cast< const char *>(&tryRefPos), sizeof( tryRefPos ) );
-         m_out->seekBegin( curpos );
+         m_outTemp->write( reinterpret_cast< const char *>(&tryRefPos), sizeof( tryRefPos ) );
+         m_outTemp->seekBegin( curpos );
 
          // prepare the jump out of the switch, ok also if not used.
-         c_jmptag tag( m_out );
+         c_jmptag tag( m_outTemp );
          m_labels.pushBack( &tag );
 
          if ( ! op->handlers().empty() || op->defaultGiven() )
@@ -1198,7 +1211,7 @@ void GenCode::gen_statement( const Statement *stmt )
 
                // prepare the nil block -- used in select B to determine if we should re-raise
                int32 dummy = op->defaultGiven() ? 1:0;
-               m_out->write( &dummy, sizeof( dummy ) );
+               m_outTemp->write( &dummy, sizeof( dummy ) );
 
                // write the int cases map
                MapIterator iter = op->intCases().begin();
@@ -1207,9 +1220,9 @@ void GenCode::gen_statement( const Statement *stmt )
                   Value *first = *(Value **) iter.currentKey();
                   uint32 second = *(int32 *) iter.currentValue();
                   int64 value = endianInt64( first->asInteger() );
-                  m_out->write( &value, sizeof(value ) );
+                  m_outTemp->write( &value, sizeof(value ) );
                   tag.addQuerySwitchBlock( second, 0 );
-                  m_out->write( &dummy, sizeof( dummy ) );
+                  m_outTemp->write( &dummy, sizeof( dummy ) );
                   iter.next();
                }
 
@@ -1223,9 +1236,9 @@ void GenCode::gen_statement( const Statement *stmt )
                      uint32 second = *(int32 *) iter.currentValue();
                      Symbol *sym = val->asSymbol();
                      int32 objid = endianInt32( sym->id() );
-                     m_out->write( &objid, sizeof( objid ) );
+                     m_outTemp->write( &objid, sizeof( objid ) );
                      tag.addQuerySwitchBlock( second, 0 );
-                     m_out->write( &dummy, sizeof( dummy ) );
+                     m_outTemp->write( &dummy, sizeof( dummy ) );
                   }
                   else {
                      fassert( false );
@@ -1277,11 +1290,11 @@ void GenCode::gen_statement( const Statement *stmt )
             m_labels.popBack();
 
             // tell the TRY jumper where to jump when we are out of TRY
-            curpos = (uint32) m_out->tell();
-            m_out->seekBegin( tryEndRefPos );
+            curpos = (uint32) m_outTemp->tell();
+            m_outTemp->seekBegin( tryEndRefPos );
             tryEndRefPos = endianInt32( curpos );
-            m_out->write( reinterpret_cast< const char *>(&tryEndRefPos), sizeof( tryEndRefPos ) );
-            m_out->seekBegin( curpos );
+            m_outTemp->write( reinterpret_cast< const char *>(&tryEndRefPos), sizeof( tryEndRefPos ) );
+            m_outTemp->seekBegin( curpos );
          }
       }
       break;
@@ -1530,7 +1543,7 @@ void GenCode::gen_expression( const Expression *exp, t_valType &xValue )
          }
          else
          {
-            c_jmptag tag( m_out );
+            c_jmptag tag( m_outTemp );
             m_labels.pushBack( &tag );
 
             if( exp->first()->isSimple() )
@@ -1597,7 +1610,7 @@ void GenCode::gen_expression( const Expression *exp, t_valType &xValue )
       case Expression::t_iif:
       {
          xValue = l_value;
-         c_jmptag tag( m_out );
+         c_jmptag tag( m_outTemp );
          m_labels.pushBack( &tag );
 
          // condition
@@ -2193,7 +2206,7 @@ void GenCode::gen_funcall( const Expression *exp, bool fork )
          gen_complex_value( exp->first() );
          gen_pcode( P_PUSH, e_parA );
       }
-      fork_pos = ((uint32)m_out->tell()) + 8;
+      fork_pos = ((uint32)m_outTemp->tell()) + 8;
       gen_pcode( P_FORK, c_param_fixed( size + 1 ), e_parNTD32 );
       // call the topmost stack item.
       gen_pcode( P_POP, e_parA );
@@ -2201,11 +2214,11 @@ void GenCode::gen_funcall( const Expression *exp, bool fork )
 
       gen_pcode( P_END );
       // landing for fork
-      uint32 curpos = (uint32) m_out->tell();
-      m_out->seekBegin( fork_pos );
+      uint32 curpos = (uint32) m_outTemp->tell();
+      m_outTemp->seekBegin( fork_pos );
       fork_pos = endianInt32( curpos );
-      m_out->write( &fork_pos, sizeof( fork_pos ) );
-      m_out->seekBegin( curpos );
+      m_outTemp->write( &fork_pos, sizeof( fork_pos ) );
+      m_outTemp->seekBegin( curpos );
    }
    else {
       if( exp->first()->isSimple() ) {
@@ -2216,14 +2229,6 @@ void GenCode::gen_funcall( const Expression *exp, bool fork )
          gen_pcode( functor, c_param_fixed( size ), e_parA );
       }
    }
-}
-
-
-LineMap *GenCode::extractLineInfo()
-{
-   LineMap *ret = m_lineMap;
-   m_lineMap = 0;
-   return ret;
 }
 
 }

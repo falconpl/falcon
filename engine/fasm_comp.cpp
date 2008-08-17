@@ -45,6 +45,9 @@ AsmCompiler::AsmCompiler( Module *mod, Stream *in, Stream *out ):
       m_current( 0 ),
       m_module( mod ),
       m_errhand(0),
+      m_pc(0),
+      m_currentLine( 1 ),
+      m_outTemp( new StringStream ),
       m_labels( &traits::t_stringptr, &traits::t_voidp ),
       m_switchEntriesInt( &traits::t_pseudoptr, &traits::t_pseudoptr ),
       m_switchEntriesRng( &traits::t_pseudoptr, &traits::t_pseudoptr ),
@@ -75,6 +78,7 @@ AsmCompiler::~AsmCompiler()
    clearSwitch();
 
    delete m_lexer;
+   delete m_outTemp;
 }
 
 bool AsmCompiler::compile()
@@ -157,16 +161,14 @@ const String *AsmCompiler::addString( const String &data )
 
 void AsmCompiler::addDLine( Pseudo *line )
 {
-   m_module->addLineInfo( (uint32) m_out->tell(), static_cast<uint32>(line->asInt()) );
+   m_currentLine = line->asInt();
+   m_module->addLineInfo( m_pc + (uint32) m_outTemp->tell(), static_cast<uint32>(line->asInt()) );
    delete line;
 }
 
 void AsmCompiler::addEntry()
 {
-   if ( m_module->entry() == Module::c_noEntry )
-      m_module->entry( (uint32) m_out->tell() );
-   else
-      raiseError( e_too_entry );
+   // not used anymore
 }
 
 void AsmCompiler::addGlobal( Pseudo *val, Pseudo *line, bool exp )
@@ -567,7 +569,7 @@ void AsmCompiler::addFunction( Pseudo *val, Pseudo *line, bool exp )
    else {
       Symbol *sym = m_module->addSymbol( val->asString() );
       // function is not yet defined.
-      sym->setFunction( new FuncDef( 0 ) );
+      sym->setFunction( new FuncDef( 0, 0 ) );
       sym->exported( exp );
       m_module->addGlobalSymbol( sym )->declaredAt( (int32) line->asInt() );
    }
@@ -597,6 +599,9 @@ void AsmCompiler::addClass( Pseudo *val, Pseudo *line, bool exp )
 
 void AsmCompiler::addFuncDef( Pseudo *val, bool exp )
 {
+   // close the main symbol
+   closeMain();
+
    // see if there is a forward reference.
    Symbol *sym = m_module->findGlobalSymbol( val->asString() );
    if ( sym != 0 )
@@ -608,11 +613,9 @@ void AsmCompiler::addFuncDef( Pseudo *val, bool exp )
          FuncDef *fd = sym->getFuncDef();
          if ( exp )
             sym->exported( true );
-         if ( fd->offset() != 0 ) {
+
+         if ( fd->codeSize() != 0 ) {
             raiseError( e_already_def, val->asString() );
-         }
-         else {
-            fd->offset( (uint32) m_out->tell() );
          }
       }
    }
@@ -621,7 +624,7 @@ void AsmCompiler::addFuncDef( Pseudo *val, bool exp )
    else {
       // pseudo strings for symbols are already in module
       sym = m_module->addSymbol( val->asString() );
-      sym->setFunction( new FuncDef( (uint32) m_out->tell() ) );
+      sym->setFunction( new FuncDef( 0, 0 ) );
       sym->exported( exp );
       m_module->addGlobalSymbol( sym );
    }
@@ -634,6 +637,9 @@ void AsmCompiler::addFuncDef( Pseudo *val, bool exp )
 
 void AsmCompiler::addClassDef( Pseudo *val, bool exp )
 {
+   // close the main symbol
+   closeMain();
+
    // see if there is a forward reference.
    Symbol *sym = m_module->findGlobalSymbol( val->asString() );
    if ( sym != 0 )
@@ -645,11 +651,9 @@ void AsmCompiler::addClassDef( Pseudo *val, bool exp )
          if ( exp )
             sym->exported( true );
          ClassDef *fd = sym->getClassDef();
-         if ( fd->offset() != 0 ) {
+
+         if ( fd != 0 ) {
             raiseError( e_already_def, val->asString() );
-         }
-         else {
-            fd->offset( (uint32) m_out->tell() );
          }
       }
    }
@@ -657,7 +661,7 @@ void AsmCompiler::addClassDef( Pseudo *val, bool exp )
    else {
       // pseudo strings for symbols are already defined in the module.
       sym = m_module->addSymbol( val->asString() );
-      sym->setClass( new ClassDef( (uint32) m_out->tell() ) );
+      sym->setClass( new ClassDef );
       sym->exported( exp );
       m_module->addGlobalSymbol( sym );
    }
@@ -667,6 +671,27 @@ void AsmCompiler::addClassDef( Pseudo *val, bool exp )
    delete val;
 }
 
+
+void AsmCompiler::closeMain()
+{
+   uint32 codeSize = m_outTemp->length();
+   if ( codeSize > 0 )
+   {
+      Symbol *sym = m_module->findGlobalSymbol( "__main__" );
+      if ( sym != 0 )
+      {
+         raiseError( e_already_def, "__main__" );
+      }
+      else {
+         // pseudo strings for symbols are already defined in the module.
+         sym = m_module->addSymbol( *m_module->addString("__main__") );
+         sym->setFunction( new FuncDef( m_outTemp->closeToBuffer(), codeSize ) );
+         sym->exported( false );
+         m_module->addGlobalSymbol( sym );
+      }
+   }
+   m_pc += codeSize;
+}
 
 void AsmCompiler::addInherit( Pseudo *baseclass )
 {
@@ -684,6 +709,7 @@ void AsmCompiler::addInherit( Pseudo *baseclass )
    }
    delete baseclass;
 }
+
 
 void AsmCompiler::addInheritParam( Pseudo *param )
 {
@@ -727,6 +753,9 @@ void AsmCompiler::addFuncEnd()
    if ( m_current == 0 )
       raiseError( e_end_no_loc );
    else {
+      m_pc += m_outTemp->length();
+      m_current->getFuncDef()->codeSize( m_outTemp->length() );
+      m_current->getFuncDef()->code( m_outTemp->closeToBuffer() );
       m_current = 0;
    }
 }
@@ -943,13 +972,13 @@ void AsmCompiler::addDEndSwitch()
    {
       // prepare the opcode
       byte opcode = m_switchIsSelect ? P_SELE : P_SWCH;
-      m_out->write( reinterpret_cast<char *>(&opcode), 1 );
+      m_outTemp->write( reinterpret_cast<char *>(&opcode), 1 );
       opcode =  P_PARAM_NTD32;
-      m_out->write( reinterpret_cast<char *>(&opcode), 1 );
+      m_outTemp->write( reinterpret_cast<char *>(&opcode), 1 );
       opcode = paramDesc( m_switchItem ) ;
-      m_out->write( reinterpret_cast<char *>(&opcode), 1 );
+      m_outTemp->write( reinterpret_cast<char *>(&opcode), 1 );
       opcode = P_PARAM_NTD64;
-      m_out->write( reinterpret_cast<char *>(&opcode), 1 );
+      m_outTemp->write( reinterpret_cast<char *>(&opcode), 1 );
 
       // prepare end of switch position
       m_switchJump->write( m_out );
@@ -964,14 +993,14 @@ void AsmCompiler::addDEndSwitch()
       int64 sizeObj = (int16) m_switchEntriesObj.size();
 
       int64 sizes = endianInt64( sizeInt << 48 | sizeRng << 32 | sizeStr << 16 | sizeObj );
-      m_out->write( reinterpret_cast<char *>( &sizes ), sizeof( sizes ) );
+      m_outTemp->write( reinterpret_cast<char *>( &sizes ), sizeof( sizes ) );
 
       // write the nil entry
       if ( m_switchEntryNil != 0 )
          m_switchEntryNil->write( m_out );
       else {
          int32 dummy = 0xFFFFFFFF;
-         m_out->write( reinterpret_cast<char *>( &dummy ), sizeof( dummy ) );
+         m_outTemp->write( reinterpret_cast<char *>( &dummy ), sizeof( dummy ) );
       }
 
       //write the single entries.
@@ -1059,14 +1088,14 @@ bool AsmCompiler::isExtern( Pseudo *op1 ) const
 
 void AsmCompiler::addInstr( unsigned char opcode, Pseudo *op1, Pseudo *op2, Pseudo *op3 )
 {
-   m_out->write( reinterpret_cast<char *>(&opcode), 1 );
+   m_outTemp->write( reinterpret_cast<char *>(&opcode), 1 );
 
    unsigned char opsp = paramDesc( op1 );
-   m_out->write( reinterpret_cast<char *>(&opsp), 1 );
+   m_outTemp->write( reinterpret_cast<char *>(&opsp), 1 );
    opsp = paramDesc( op2 );
-   m_out->write( reinterpret_cast<char *>(&opsp), 1 );
+   m_outTemp->write( reinterpret_cast<char *>(&opsp), 1 );
    opsp = paramDesc( op3 );
-   m_out->write( reinterpret_cast<char *>(&opsp), 1 );
+   m_outTemp->write( reinterpret_cast<char *>(&opsp), 1 );
 
    if ( op1 != 0 )
    {

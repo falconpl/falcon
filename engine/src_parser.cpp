@@ -4670,7 +4670,7 @@ yyreduce:
   case 206:
 #line 1248 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
     {
-         Falcon::FuncDef *def = new Falcon::FuncDef( 0 );
+         Falcon::FuncDef *def = new Falcon::FuncDef( 0, 0 );
          // the SYMBOL which names the function goes in the old symbol table, while the parameters
          // will go in the new symbol table.
 
@@ -6052,7 +6052,7 @@ yyreduce:
   case 414:
 #line 2382 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
     {
-         Falcon::FuncDef *def = new Falcon::FuncDef( 0 );
+         Falcon::FuncDef *def = new Falcon::FuncDef( 0, 0 );
          // set the def as a lambda.
          COMPILER->incLambdaCount();
          COMPILER->incClosureContext();
@@ -6106,7 +6106,7 @@ yyreduce:
   case 419:
 #line 2435 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
     {
-         Falcon::FuncDef *def = new Falcon::FuncDef( 0 );
+         Falcon::FuncDef *def = new Falcon::FuncDef( 0, 0 );
          // set the def as a lambda.
          COMPILER->incLambdaCount();
          int id = COMPILER->lambdaCount();
@@ -6149,7 +6149,7 @@ yyreduce:
   case 421:
 #line 2480 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
     {
-         Falcon::FuncDef *def = new Falcon::FuncDef( 0 );
+         Falcon::FuncDef *def = new Falcon::FuncDef( 0, 0 );
          // set the def as a lambda.
          COMPILER->incLambdaCount();
          COMPILER->incClosureContext();

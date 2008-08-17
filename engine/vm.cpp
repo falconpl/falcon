@@ -1259,9 +1259,9 @@ bool VMachine::prepare( const String &startSym, uint32 paramCount )
 
    // ok, let's setup execution environment.
    const Module *mod = execSym->module();
-   m_code = mod->code();
 	FuncDef *tg_def = execSym->getFuncDef();
-   m_pc = tg_def->offset();
+	m_code = tg_def->code();
+   m_pc = 0;
    m_symbol = execSym;
    m_currentGlobals = &curMod->globals();
    m_currentModule = curMod->module();
@@ -1418,8 +1418,18 @@ void VMachine::fillErrorTraceback( Error &error )
    const Symbol *csym = currentSymbol();
    if ( csym != 0 )
    {
+      uint32 curLine;
+      if( csym->isFunction() )
+      {
+         curLine = csym->module()->getLineAt( csym->getFuncDef()->basePC() + programCounter() );
+      }
+      else {
+         // should have been filled by raise
+         curLine = error.line();
+      }
+
       error.addTrace( csym->module()->name(), csym->name(),
-         csym->module()->getLineAt( programCounter() ),
+         curLine,
          programCounter() );
    }
 
@@ -1431,7 +1441,12 @@ void VMachine::fillErrorTraceback( Error &error )
       Symbol *sym = frame.m_symbol;
       if ( sym != 0 )
       { // possible when VM has not been initiated from main
-         uint32 line = sym->module()->getLineAt( frame.m_call_pc );
+         uint32 line;
+         if( sym->isFunction() )
+            line = sym->module()->getLineAt( sym->getFuncDef()->basePC() + frame.m_call_pc );
+         else
+            line = 0;
+
          error.addTrace( sym->module()->name(), sym->name(), line, frame.m_call_pc );
       }
 
@@ -1486,7 +1501,9 @@ void VMachine::fillErrorContext( Error *err, bool filltb )
    {
       err->module( currentModule()->name() );
       err->symbol( currentSymbol()->name() );
-      err->line( currentModule()->getLineAt( programCounter() ) );
+      if( m_symbol->isFunction() )
+         err->line( currentModule()->getLineAt( m_symbol->getFuncDef()->basePC() + programCounter() ) );
+
       err->pcounter( programCounter() );
    }
 
@@ -1679,13 +1696,13 @@ bool VMachine::callItem( const Item &callable, int32 paramCount, e_callMode call
       if ( tg_def->locals() > 0 )
          m_stack->resize( m_stackBase + tg_def->locals() );
 
-      m_code = target->module()->code();
+      m_code = tg_def->code();
       m_currentModule = target->module();
       m_currentGlobals = &targetMod->globals();
       m_symbol = target;
 
       //jump
-      m_pc_next = tg_def->offset();
+      m_pc_next = 0;
 
       // If the function is not called internally by the VM, another run is issued.
       if( callMode == e_callNormal || callMode == e_callInst )
@@ -1881,14 +1898,14 @@ bool VMachine::callItemPass( const Item &callable  )
       // space for locals
       m_stack->resize( m_stackBase + VM_FRAME_SPACE + tg_def->locals() );
 
-      m_code = target->module()->code();
+      m_code = tg_def->code();
       m_currentModule = target->module();
       m_currentGlobals = &targetMod->globals();
 
       m_symbol = target;
 
       //jump
-      m_pc_next = tg_def->offset();
+      m_pc_next = 0;
 
       return true;
    }
@@ -1952,11 +1969,13 @@ void VMachine::yield( numeric secs )
             {
                m_systemData.resetInterrupt();
 
+               fassert( m_symbol->isFunction() );
+
                raiseError( new InterruptedError(
                   ErrorParam( e_interrupted ).origin( e_orig_vm ).
                      symbol( m_symbol->name() ).
                      module( m_currentModule->name() ).
-                     line( m_currentModule->getLineAt( m_pc ) )
+                     line( m_currentModule->getLineAt( m_symbol->getFuncDef()->basePC() + m_pc ) )
                   ) );
             }
          }
@@ -2080,11 +2099,12 @@ void VMachine::electContext()
             {
                m_systemData.resetInterrupt();
 
+               fassert( m_symbol->isFunction() );
                raiseError( new InterruptedError(
                   ErrorParam( e_interrupted ).origin( e_orig_vm ).
                      symbol( m_symbol->name() ).
                      module( m_currentModule->name() ).
-                     line( m_currentModule->getLineAt( m_pc ) )
+                     line( m_currentModule->getLineAt( m_symbol->getFuncDef()->basePC() + m_pc ) )
                   ) );
             }
          }
@@ -2181,8 +2201,8 @@ void VMachine::callReturn()
 
    m_currentModule = frame.m_module;
    m_currentGlobals = frame.m_globals;
-   if ( m_currentModule != 0 )
-      m_code = m_currentModule->code();
+   if ( m_symbol != 0 && m_symbol->isFunction() )
+      m_code = m_symbol->getFuncDef()->code();
 
    // reset try frame
    m_tryFrame = frame.m_try_base;
@@ -3502,12 +3522,18 @@ bool VMachine::interrupted( bool raise, bool reset, bool dontCheck )
          m_systemData.resetInterrupt();
 
       if ( raise )
+      {
+         uint32 line = m_symbol->isFunction() ?
+            m_currentModule->getLineAt( m_symbol->getFuncDef()->basePC() + m_pc )
+            : 0;
+
          raiseError( new InterruptedError(
             ErrorParam( e_interrupted ).origin( e_orig_vm ).
                symbol( m_symbol->name() ).
                module( m_currentModule->name() ).
-               line( m_currentModule->getLineAt( m_pc ) )
+               line( line )
             ) );
+      }
 
       return true;
    }

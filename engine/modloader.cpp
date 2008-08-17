@@ -332,7 +332,6 @@ Module *ModuleLoader::loadName( const String &module_name, const String &parent_
 	{
       mod->name( nmodName );
       mod->path( file_path );
-      mod->addMain();
 
       // should we set a language table?
       if ( m_language != "" && mod->language() != m_language )
@@ -526,7 +525,7 @@ Module *ModuleLoader::loadFile( const String &module_path, t_filetype type, bool
       getModuleName( file_path, modName );
       mod->name( modName );
       mod->path( file_path );
-      mod->addMain();
+
       if ( m_language != "" && mod->language() != m_language )
       {
          loadLanguageTable( mod, m_language );
@@ -560,7 +559,7 @@ Module *ModuleLoader::loadModule( const String &path )
       getModuleName( path, modName );
       mod->name( modName );
       mod->path( path );
-      mod->addMain();
+
       if ( m_language != "" && mod->language() != m_language )
       {
          loadLanguageTable( mod, m_language );
@@ -592,7 +591,7 @@ Module *ModuleLoader::loadSource( const String &path )
       getModuleName( path, modName );
       mod->name( modName );
       mod->path( path );
-      mod->addMain();
+
       if ( m_language != "" && mod->language() != m_language )
       {
          loadLanguageTable( mod, m_language );

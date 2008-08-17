@@ -25,6 +25,7 @@
 #include <falcon/genericlist.h>
 #include <fasm/pseudo.h>
 #include <falcon/basealloc.h>
+#include <falcon/stringstream.h>
 
 #include <stdlib.h>
 
@@ -72,6 +73,9 @@ class FALCON_DYN_CLASS AsmCompiler: public BaseAlloc
    ErrorHandler *m_errhand;
 
    Module *m_module;
+   StringStream *m_outTemp;
+   uint32 m_currentLine;
+   uint32 m_pc;
 
    void clearSwitch();
 public:
@@ -157,6 +161,7 @@ public:
    bool isParam( Pseudo *op1 ) const;
    bool isLocal( Pseudo *op1 ) const ;
    bool isExtern( Pseudo *op1 ) const ;
+   void closeMain();
 
    Pseudo *regA_Inst();
    Pseudo *regB_Inst();

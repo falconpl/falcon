@@ -318,18 +318,6 @@ String get_io_encoding()
 }
 
 
-int32 readCode ( Stream *io, Module *module )
-{
-	int64 len = io->seekEnd ( 0 );
-	Falcon::byte *code = ( Falcon::byte * ) memAlloc ( ( uint32 ) len );
-	io->seekBegin ( 0 );
-	io->read ( code, ( int32 ) len );
-	module->code ( code );
-	module->codeSize ( ( uint32 ) len );
-
-	return ( int32 ) len;
-}
-
 Stream *openInputStream ( bool bBinary = false )
 {
 	if ( options.input == "" || options.input == "-" )

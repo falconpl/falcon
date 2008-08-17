@@ -19,6 +19,7 @@
 #include <falcon/syntree.h>
 #include <falcon/genericlist.h>
 #include <falcon/genericvector.h>
+#include <falcon/stringstream.h>
 
 namespace Falcon
 {
@@ -343,26 +344,16 @@ class FALCON_DYN_CLASS GenCode: public Generator
 
    /** Current context of functions, needed i.e. for states. */
    List m_functions;
-   LineMap *m_lineMap;
+
+   uint32 m_pc;
+   StringStream *m_outTemp;
+   Module *m_module;
 
 public:
-   GenCode( Stream *out );
-
+   GenCode( Module *mod, Stream *out=0 );
    virtual ~GenCode();
 
    virtual void generate( const SourceTree *st );
-   /** Extracts the generated line map and removes it from this object.
-      While generating the code, this generator also records line informations about
-      PC of generated instructions and source lines where they come from.
-
-      This method removes the line map from this object; after this call that map
-      can be inserted in the target module. The ownership of the map is also surrended,
-      so the destruction of this object won't affect the generated map.
-
-      \return the line information map that was compiled during code generation.
-   */
-
-   LineMap *extractLineInfo();
 };
 
 }

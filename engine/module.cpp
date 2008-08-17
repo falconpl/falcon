@@ -30,9 +30,6 @@ namespace Falcon {
 const uint32 Module::c_noEntry = 0xFFffFFff;
 
 Module::Module():
-   m_code( 0 ),
-   m_codeSize( 0 ),
-   m_entry( c_noEntry ),
    m_refcount(1),
    m_lineInfo( 0 ),
    m_modVersion( 0 ),
@@ -45,9 +42,6 @@ Module::Module():
 
 Module::~Module()
 {
-   if ( m_code != 0 )
-      memFree( m_code );
-
    // The depend table points to the string table
    // so there is no need to check it.
 
@@ -167,10 +161,10 @@ Symbol *Module::addExtFunc( const String &name, ext_func_t func, void *extra, bo
    return sym;
 }
 
-Symbol *Module::addFunction( const String &name, uint32 offset, bool exp )
+Symbol *Module::addFunction( const String &name, byte *code, uint32 size, bool exp )
 {
    Symbol *sym = addGlobalSymbol( addSymbol(name) );
-   sym->setFunction( new FuncDef( offset ) );
+   sym->setFunction( new FuncDef( code, size ) );
    sym->exported( exp );
    return sym;
 }
@@ -347,22 +341,6 @@ bool Module::save( Stream *out, bool skipCode ) const
       out->write( &infoInd, sizeof( infoInd ) );
    }
 
-   uint32 entry = endianInt32( m_entry );
-   out->write( &entry, sizeof( entry ) );
-
-   // save the code
-   // later on, the system may rewrite the code size field.
-   // this may be useful to use the file that is being created to compile
-   // on the fly the bytecode.
-   if ( ! skipCode )
-   {
-      uint32 cs = endianInt32( m_codeSize );
-      out->write( &cs, sizeof( cs ) );
-
-      if ( m_codeSize !=  0 )
-         out->write( m_code, m_codeSize );
-   }
-
    return out->good();
 }
 
@@ -421,33 +399,9 @@ bool Module::load( Stream *is, bool skipHeader )
    else
       m_lineInfo = 0;
 
-   // Read the entry point
-   uint32 cs;
-   is->read( &cs, sizeof( cs ) );
-   m_entry = endianInt32( cs );
-
-   // read the code
-   is->read( &cs, sizeof( cs ) );
-   m_codeSize = endianInt32( cs );
-   if ( m_codeSize !=  0 ) {
-      m_code = (byte *) memAlloc( m_codeSize );
-      is->read(  m_code, m_codeSize );
-   }
-
    return is->good();
 }
 
-void Module::addMain()
-{
-   if( code() != 0 && entry() != 0xFFffFFff )
-   {
-      Symbol *sym = findGlobalSymbol( "__main__" );
-      if ( sym == 0 ) {
-         sym = addFunction( "__main__", entry() );
-         sym->exported(false);
-      }
-   }
-}
 
 uint32 Module::getLineAt( uint32 pc ) const
 {
