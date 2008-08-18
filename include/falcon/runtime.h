@@ -111,6 +111,7 @@ class FALCON_DYN_CLASS Runtime: public BaseAlloc
    ModuleVector m_modvect;
    ModuleLoader *m_loader;
    VMachine *m_provider;
+   bool m_hasMainModule;
 
 public:
 
@@ -266,6 +267,24 @@ public:
       is not using a loader to resolve dependencies.
    */
    bool hasPendingModules() const { return ! m_modPending.empty(); }
+
+   /** Returns true if this loader top module is the main module for a final application.
+      By default, this is true unless changed with hasMainModule(bool).
+   */
+   bool hasMainModule() const { return m_hasMainModule; }
+
+   /** Changes the relevance of this runtime.
+      If the runtime "has the main module", then the topmost module will be added as
+      main when the runtime is linked to the target vm.
+
+      This is the default behavior.
+
+      As some runtime may be used to link sub-components which are not meant to
+      build a complete application, this method is provided to inhibit this behavior.
+      \param b true if this runtime will provide the main module to the
+               VM at link time, false otherwise.
+   */
+   void hasMainModule( bool b ) { m_hasMainModule = b; }
 };
 
 

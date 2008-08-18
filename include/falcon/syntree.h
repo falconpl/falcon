@@ -524,7 +524,6 @@ public:
       t_global,
       t_pass,
 
-      t_object,
       t_class,
       t_function,
       t_propdef,
@@ -1155,13 +1154,15 @@ class FALCON_DYN_CLASS StmtClass: public StmtCallable
    /** if this class is a clone it must delete it's constructor statement. */
    bool m_bDeleteCtor;
 
+   Symbol *m_singleton;
 public:
 
    StmtClass( uint32 line, Symbol *name ):
       StmtCallable( line, t_class, name ),
       m_initGiven( false ),
       m_bDeleteCtor( false ),
-      m_ctor(0)
+      m_ctor(0),
+      m_singleton(0)
    {}
 
    StmtClass( const StmtClass &other );
@@ -1181,6 +1182,9 @@ public:
    bool initGiven() const { return m_initGiven; }
    void initGiven( bool val ) { m_initGiven = val; }
 
+   /** Singleton associated to this class, if any. */
+   Symbol *singleton() const { return m_singleton; }
+   void singleton( Symbol *s ) { m_singleton = s; }
    virtual Statement *clone() const;
 };
 

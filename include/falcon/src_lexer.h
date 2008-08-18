@@ -45,6 +45,8 @@ private:
    bool m_addEol;
    bool m_lineFilled;
    bool m_bIsDirectiveLine;
+   bool m_incremental;
+   bool m_lineContContext;
    uint32 m_chrEndString;
 
    Stream *m_in;
@@ -132,7 +134,7 @@ private:
    int lex_eval();
 
 public:
-   SrcLexer( Compiler *comp, Stream *in );
+   SrcLexer( Compiler *comp );
 
    /** Return current line in file (starting from 1). */
    int line() const {
@@ -170,12 +172,18 @@ public:
    void *value() const { return m_value; }
    int lex();
 
+   void input( Stream *i );
    Stream *input() const { return m_in; }
+
+   /** Resets the lexer, preparing it for another compilation. */
+   void reset();
 
    bool parsingFtd() const { return m_bParsingFtd; }
    void parsingFtd( bool b );
 
-
+   bool hasOpenContexts() { return m_contexts != 0 || m_squareContexts != 0 || m_lineContContext != 0; }
+   bool incremental() const { return m_incremental; }
+   void incremental( bool b ) { m_incremental = b; }
 };
 
 }

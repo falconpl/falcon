@@ -160,7 +160,6 @@ bool SymbolVector::load( Module *owner, Stream *in )
       set( sym, i );
    }
 
-
    for( uint32 iter = 0; iter < size(); iter++ )
    {
       if ( ! symbolAt( iter )->load( in ) )

@@ -276,11 +276,30 @@ InteractiveCompiler::t_ret_type InteractiveCompiler::compileNext( Stream *input 
    return e_nothing;
 }
 
+void InteractiveCompiler::addNamespace( const String &nspace, const String &alias,
+   bool full, bool filename )
+{
+   loadNow( nspace, filename );
+
+   // create also the standard namespace.
+   if ( m_errors == 0 )
+   {
+      Compiler::addNamespace( nspace, alias, full, filename );
+   }
+}
+
 void InteractiveCompiler::addLoad( const String &name, bool isFilename )
 {
-   m_loader->errorHandler( errorHandler() );
+   loadNow( name, isFilename );
 
-   // try to load the module.
+   if ( m_errors == 0 )
+   {
+      Compiler::addLoad( name, isFilename );
+   }
+}
+
+void InteractiveCompiler::loadNow( const String &name, bool isFilename )
+{
    Module *mod;
    if ( isFilename )
       mod = m_loader->loadFile( name );
@@ -293,8 +312,6 @@ void InteractiveCompiler::addLoad( const String &name, bool isFilename )
       m_errors++;
       return;
    }
-
-   Compiler::addLoad( name, isFilename );
 
    // perform a complete linking
    Runtime rt( m_loader, m_vm );

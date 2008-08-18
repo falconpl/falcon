@@ -19,6 +19,7 @@ Falcon (0.8.11)
            in core to be able to check if the current module is meant as main module
            or not.
   * minor: Added testAttribute() function to test for attributes.
+  * major: Added interactive mode to Falcon command line tool.
 
 Falcon (0.8.10)
   * minor: Now classes can be stored in object properties and called to get

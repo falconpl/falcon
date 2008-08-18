@@ -77,6 +77,7 @@ public:
 */
 class FALCON_DYN_CLASS Compiler: public BaseAlloc
 {
+protected:
    /** Declaration context.
       Depending on where a variable is initialized, or how a symbol is declared,
       the final symbol added to the module may be different. This enumeration is
@@ -195,9 +196,6 @@ class FALCON_DYN_CLASS Compiler: public BaseAlloc
    */
    void init();
 
-
-protected:
-
    /** Add predefined symbols and constants.
       This method prepares the compiler so that it has basic constant symbols
       set and in place; embeding apps may wish to provide different base
@@ -305,7 +303,7 @@ public:
       \param name The name of the module to be loaded
       \param isFilename True if the name to be loaded is actually a filename path.
    */
-   void addLoad( const String &name, bool isFilename ) {
+   virtual void addLoad( const String &name, bool isFilename ) {
       m_module->addDepend( name, false, isFilename );
    }
 
@@ -493,7 +491,7 @@ public:
       \param full If true, import all symbols.
       \param filename If true, the load request was for a direct filename.
    */
-   void addNamespace( const String &nspace, const String &alias, bool full=false, bool filename=false );
+   virtual void addNamespace( const String &nspace, const String &alias, bool full=false, bool filename=false );
 
    /** Import the symbols named in a List.
       The \b lst parameter contains a list of String*
@@ -513,7 +511,7 @@ public:
       \param alias The namespace. If not given, will be the name of the module.
       \param filename if true the module load request is for a direct file name
    */
-   void importSymbols( List *lst, const String *prefix=0, const String *alias=0, bool filename=false );
+   virtual void importSymbols( List *lst, const String *prefix=0, const String *alias=0, bool filename=false );
 
 };
 
