@@ -350,7 +350,7 @@ class FALCON_DYN_CLASS GenCode: public Generator
    Module *m_module;
 
 public:
-   GenCode( Module *mod, Stream *out=0 );
+   GenCode( Module *mod );
    virtual ~GenCode();
 
    virtual void generate( const SourceTree *st );

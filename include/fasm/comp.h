@@ -49,7 +49,6 @@ class  Module;
 class FALCON_DYN_CLASS AsmCompiler: public BaseAlloc
 {
    AsmLexer *m_lexer;
-   Stream *m_out;
    int m_errors;
 
    /** Map of label definitions.
@@ -99,9 +98,8 @@ public:
 
       \param mod the module object.
       \param in the stream where the assembly is found.
-      \param out the stream where the code will be placed.
    */
-   AsmCompiler( Module *mod, Stream *in, Stream *out );
+   AsmCompiler( Module *mod, Stream *in );
 
    virtual ~AsmCompiler();
 

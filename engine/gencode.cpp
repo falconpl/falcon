@@ -134,8 +134,8 @@ void GenCode::c_jmptag::defineElif( uint32 id )
 // Code generator implementation
 //===============================================================
 
-GenCode::GenCode( Module *mod, Stream *out ):
-   Generator( out ),
+GenCode::GenCode( Module *mod ):
+   Generator( 0 ),
    m_pc(0),
    m_outTemp( new StringStream ),
    m_module( mod )

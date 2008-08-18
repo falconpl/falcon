@@ -512,7 +512,7 @@ void GenHAsm::gen_function( const StmtFunction *func )
       }
    }
 
-
+   m_out->writeString( ".endfunc\n\n" );
    m_functions.popBack();
 }
 

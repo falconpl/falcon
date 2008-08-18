@@ -234,7 +234,7 @@ Module *FlcLoader::loadSource( Stream *fin, const String &path )
          temp_binary->seekBegin(0);
       }
       else {
-         GenCode codeOut( module, temp_binary );
+         GenCode codeOut( module );
          codeOut.generate( m_compiler.sourceTree() );
       }
    }
@@ -264,7 +264,7 @@ Module *FlcLoader::loadSource( Stream *fin, const String &path )
 
       module = new Module();
 
-      AsmCompiler fasm( module, fin, temp_binary );
+      AsmCompiler fasm( module, fin );
       fasm.errorHandler( m_errhand );
       if ( ! fasm.compile() )
       {

@@ -28,6 +28,8 @@
 namespace Falcon
 {
 
+void gen_code( Module *mod, const FuncDef *fd, Stream *out, const t_labelMap &labels );
+
 SymbolTable *global_symtab;
 SymbolTable *current_symtab;
 
@@ -262,14 +264,17 @@ uint32 calc_next( byte *instruction )
    Isomorphic symbol generators.
 */
 
-void gen_function( Stream *m_out, const Symbol *func )
+void gen_function( Module *module, const Symbol *func, Stream *m_out, t_labelMap labels )
 {
    m_out->writeString( "; ---------------------------------------------\n" );
    m_out->writeString( "; Function " + func->name() + "\n" );
+   String tempOff;
+   tempOff.writeNumberHex( func->getFuncDef()->basePC() );
+   m_out->writeString( "; Declared at offset 0x" + tempOff + "\n" );
    m_out->writeString( "; ---------------------------------------------\n\n" );
    m_out->writeString( ".funcdef " + func->name() );
-   /*if ( func->symbol()->exported() )
-      *m_out << " export";*/
+   if ( func->exported() )
+      m_out->writeString( " export" );
    m_out->writeString( "\n" );
 
    // generate the local symbol table.
@@ -300,7 +305,11 @@ void gen_function( Stream *m_out, const Symbol *func )
          m_out->writeString( ".param " + sym->name() + "\n" );
    }
 
-   m_out->writeString( "; ---------------------------------------------\n" );
+   m_out->writeString( "; ---\n" );
+
+   gen_code( module, fd, m_out, labels );
+   m_out->writeString( ".endfunc\n\n" );
+
 }
 
 
@@ -437,40 +446,29 @@ void gen_class( Stream *m_out, const Symbol *sym )
 /**************************************************
    Symbols
 */
-void disassembler( Module *module, Stream *out, const t_labelMap &labels, const t_funcMap &functions )
+void gen_code( Module *module, const FuncDef *fd, Stream *out, const t_labelMap &labels )
 {
    uint32 iPos =0;
-   byte *code;
+   byte *code = fd->code();
    byte opcode;
    int oldline = -1;
-#if 0
-   code = module->code();
-   current_symtab = &module->symbolTable();
-   global_symtab = current_symtab;
 
-   while( iPos < module->codeSize() )
+   // get the main code
+
+   while( iPos < fd->codeSize() )
    {
       opcode = code[ 0 ];
 
       if ( options.m_isomorphic )
       {
-         if ( iPos == module->entry() )
-            out->writeString( ".entry\n" );
 
-         int l = module->getLineAt( iPos );
+         int l = module->getLineAt( fd->basePC() + iPos );
          if ( l != oldline ) {
             String temp;
             out->writeString( ".line " );
             temp.writeNumber( (int64) l );
             out->writeString( temp + "\n" );
             oldline = l;
-         }
-
-         t_funcMap::const_iterator tfunc = functions.find( iPos );
-         if ( tfunc != functions.end() ) {
-            FuncDef *fd = tfunc->second->getFuncDef();
-            current_symtab = &fd->symtab();
-            gen_function( out, tfunc->second );
          }
 
          t_labelMap::const_iterator target = labels.find( iPos );
@@ -631,6 +629,19 @@ void disassembler( Module *module, Stream *out, const t_labelMap &labels, const 
          }
       }
 
+      // Line marker in non-ismoprphic mode
+      if ( options.m_lineinfo && ! options.m_isomorphic )
+      {
+         int l = module->getLineAt( fd->basePC() + iPos );
+         if ( l != oldline ) {
+            out->writeString( " ; LINE " );
+            String temp;
+            temp.writeNumber( (int64) l );
+            out->writeString( temp );
+            oldline = l;
+         }
+      }
+
       //special swch handling
       if ( opcode == P_SWCH || opcode == P_SELE )
       {
@@ -763,20 +774,8 @@ void disassembler( Module *module, Stream *out, const t_labelMap &labels, const 
 
       }
 
-      if ( options.m_lineinfo && ! options.m_isomorphic )
-      {
-         int l = module->getLineAt( iPos );
-         if ( l != oldline ) {
-            out->writeString( " ; LINE " );
-            String temp;
-            temp.writeNumber( (int64) l );
-            out->writeString( temp );
-            oldline = l;
-         }
-      }
       out->writeString( "\n" );
    }
-#endif
 }
 
 
@@ -785,13 +784,13 @@ void disassembler( Module *module, Stream *out, const t_labelMap &labels, const 
    instructions.
 *********************************************************/
 
-void Analizer( Module *module, t_labelMap &labels  )
+void Analizer( FuncDef *fd, t_labelMap &labels )
 {
    byte *code, *end;
    byte opcode;
-#if 0
-   code = module->code();
-   end = code + module->codeSize();
+
+   code = fd->code();
+   end = code + fd->codeSize();
    while( code < end )
    {
       opcode = code[ 0 ];
@@ -881,7 +880,6 @@ void Analizer( Module *module, t_labelMap &labels  )
          }
       }
    }
-   #endif
 }
 
 /********************************************************
@@ -934,6 +932,12 @@ void write_symtable( e_tabmode mode , Stream *out, Module *mod )
    while( iter.hasCurrent() )
    {
       sym = *(const Symbol **) iter.currentValue();
+      if ( sym->name() == "__main__" )
+      {
+         iter.next();
+         continue;
+      }
+
       String temp;
       switch( mode )
       {
@@ -946,12 +950,19 @@ void write_symtable( e_tabmode mode , Stream *out, Module *mod )
                case Symbol::tlocal: out->writeString( "LOCAL" ); break;
                case Symbol::tparam: out->writeString( "PARAM" ); break;
                case Symbol::tlocalundef: out->writeString( "LU" ); break;
-               case Symbol::tfunc: out->writeString( "FUNC" ); break;
+               case Symbol::tfunc:
+               {
+                  String temp;
+                  temp.writeNumberHex( sym->getFuncDef()->basePC(), true );
+                  out->writeString( "FUNC(0x" + temp + ")" );
+                  break;
+               }
                case Symbol::textfunc: out->writeString( "EXTFUNC" ); break;
                case Symbol::tclass: out->writeString( "CLASS" ); break;
                case Symbol::tprop: out->writeString( "PROP" ); break;
                case Symbol::tvar: out->writeString( "VDEF" ); break;
                case Symbol::tinst: out->writeString( "INST" ); break;
+               case Symbol::tattribute: out->writeString( "ATTR" ); break;
             }
             out->writeString( " " + sym->name() + ": " );
             temp.writeNumber( (int64) sym->id() );
@@ -1149,7 +1160,7 @@ int main( int argc, char *argv[] )
          {
             switch ( option[ pos ] )
             {
-               case 'i': options.m_isomorphic = true; break;
+               case 'i': options.m_isomorphic = true; options.m_inline_str = true; break;
                case 's': options.m_dump_str = true; break;
                case 'l': options.m_lineinfo = true; break;
                case 'S': options.m_inline_str = true; break;
@@ -1206,13 +1217,12 @@ int main( int argc, char *argv[] )
       return 1;
    }
 
+   global_symtab = &module->symbolTable();
+
    // for isomorphic we need the analysis.
    Stream *stdOut = DefaultTextTranscoder( new StdOutStream );
    t_labelMap labels;
-   t_funcMap functions;
    if ( options.m_isomorphic ) {
-      Analizer( module, labels );
-
 
       // print immediately the string table.
       write_strtable( e_mode_table, stdOut, module );
@@ -1222,28 +1232,61 @@ int main( int argc, char *argv[] )
 
       // and the symbol table.
       write_symtable( e_mode_table, stdOut, module );
-
-      // also fetch the function map.
-      MapIterator iter = module->symbolTable().map().begin();
-      while( iter.hasCurrent() ) {
-         const Symbol *sym = *(const Symbol **) iter.currentValue();
-         if ( sym->isFunction() ) {
-            #if 0
-            functions[ sym->getFuncDef()->offset() ] = sym;
-            #endif
-         }
-         else if ( sym->isClass() ) {
-            // we can generate the classess now, as the symbols have been
-            // already declared.
-            gen_class( stdOut, sym );
-         }
-
-         iter.next();
-      }
    }
 
+   // now write MAIN, if it exists
+   Symbol *main = module->findGlobalSymbol( "__main__" );
+   if ( main != 0 )
+   {
+      current_symtab = global_symtab;
+      if ( options.m_isomorphic )
+      {
+         labels.clear();
+         Analizer( main->getFuncDef(), labels );
+      }
+      gen_code( module, main->getFuncDef(), stdOut, labels );
+   }
 
-   disassembler( module, stdOut, labels, functions );
+   // also fetch the function map.
+   MapIterator iter = module->symbolTable().map().begin();
+
+   while( iter.hasCurrent() )
+   {
+      const Symbol *sym = *(const Symbol **) iter.currentValue();
+      if ( sym->name() == "__main__" )
+      {
+         // already managed
+         iter.next();
+         continue;
+      }
+
+      if ( sym->isFunction() )
+      {
+         current_symtab = &sym->getFuncDef()->symtab();
+
+         if ( options.m_isomorphic )
+         {
+            labels.clear();
+            Analizer( sym->getFuncDef(), labels );
+            gen_function( module, sym, stdOut, labels );
+         }
+         else {
+            String tempOff;
+            tempOff.writeNumberHex( sym->getFuncDef()->basePC() );
+            stdOut->writeString( "\n; Generating function " + sym->name() + "(0x"+ tempOff + ")\n" );
+            gen_code( module, sym->getFuncDef(), stdOut, labels );
+         }
+
+
+      }
+      else if ( sym->isClass() && options.m_isomorphic ) {
+         // we can generate the classess now, as the symbols have been
+         // already declared.
+         gen_class( stdOut, sym );
+      }
+
+      iter.next();
+   }
 
    if ( options.m_dump_str ) {
       write_strtable( e_mode_comment, stdOut, module );

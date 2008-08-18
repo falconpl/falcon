@@ -40,8 +40,7 @@ Pseudo *AsmCompiler::regL1_Inst() { return m_lexer->regL1_Inst(); }
 Pseudo *AsmCompiler::regL2_Inst() { return m_lexer->regL2_Inst(); }
 Pseudo *AsmCompiler::nil_Inst() { return m_lexer->nil_Inst(); }
 
-AsmCompiler::AsmCompiler( Module *mod, Stream *in, Stream *out ):
-      m_out( out ),
+AsmCompiler::AsmCompiler( Module *mod, Stream *in ):
       m_current( 0 ),
       m_module( mod ),
       m_errhand(0),
@@ -630,6 +629,7 @@ void AsmCompiler::addFuncDef( Pseudo *val, bool exp )
    }
 
    m_current = sym;
+   sym->getFuncDef()->basePC( m_pc );
 
    delete val;
 }
@@ -652,9 +652,11 @@ void AsmCompiler::addClassDef( Pseudo *val, bool exp )
             sym->exported( true );
          ClassDef *fd = sym->getClassDef();
 
-         if ( fd != 0 ) {
+         if ( sym->getClassDef()->basePC() != 0x0 ) {
             raiseError( e_already_def, val->asString() );
          }
+         // just a marker, actually is not used for classes.
+         sym->getClassDef()->basePC( 0x1 );
       }
    }
    // defined it as a brand new thing
@@ -664,6 +666,7 @@ void AsmCompiler::addClassDef( Pseudo *val, bool exp )
       sym->setClass( new ClassDef );
       sym->exported( exp );
       m_module->addGlobalSymbol( sym );
+      sym->declaredAt( lexer()->line() - 1 );
    }
 
    m_current = sym;
@@ -675,7 +678,7 @@ void AsmCompiler::addClassDef( Pseudo *val, bool exp )
 void AsmCompiler::closeMain()
 {
    uint32 codeSize = m_outTemp->length();
-   if ( codeSize > 0 )
+   if ( codeSize > 0 && m_pc == 0 )
    {
       Symbol *sym = m_module->findGlobalSymbol( "__main__" );
       if ( sym != 0 )
@@ -686,11 +689,13 @@ void AsmCompiler::closeMain()
          // pseudo strings for symbols are already defined in the module.
          sym = m_module->addSymbol( *m_module->addString("__main__") );
          sym->setFunction( new FuncDef( m_outTemp->closeToBuffer(), codeSize ) );
+         m_pc += codeSize;
          sym->exported( false );
          m_module->addGlobalSymbol( sym );
+         delete m_outTemp;
+         m_outTemp = new StringStream;
       }
    }
-   m_pc += codeSize;
 }
 
 void AsmCompiler::addInherit( Pseudo *baseclass )
@@ -756,6 +761,9 @@ void AsmCompiler::addFuncEnd()
       m_pc += m_outTemp->length();
       m_current->getFuncDef()->codeSize( m_outTemp->length() );
       m_current->getFuncDef()->code( m_outTemp->closeToBuffer() );
+      m_pc += m_current->getFuncDef()->codeSize();
+      delete m_outTemp;
+      m_outTemp = new StringStream;
       m_current = 0;
    }
 }
@@ -801,7 +809,7 @@ void AsmCompiler::defineLabel( LabelDef *def )
       raiseError( e_already_def, def->name() );
    }
    else {
-      def->defineNow( m_out );
+      def->defineNow( m_outTemp );
    }
 }
 
@@ -981,10 +989,10 @@ void AsmCompiler::addDEndSwitch()
       m_outTemp->write( reinterpret_cast<char *>(&opcode), 1 );
 
       // prepare end of switch position
-      m_switchJump->write( m_out );
+      m_switchJump->write( m_outTemp );
 
       //write the item
-      m_switchItem->write( m_out );
+      m_switchItem->write( m_outTemp );
 
       // compose and write the item table size
       int64 sizeInt = (int16) m_switchEntriesInt.size();
@@ -997,7 +1005,7 @@ void AsmCompiler::addDEndSwitch()
 
       // write the nil entry
       if ( m_switchEntryNil != 0 )
-         m_switchEntryNil->write( m_out );
+         m_switchEntryNil->write( m_outTemp );
       else {
          int32 dummy = 0xFFFFFFFF;
          m_outTemp->write( reinterpret_cast<char *>( &dummy ), sizeof( dummy ) );
@@ -1019,8 +1027,8 @@ void AsmCompiler::addDEndSwitch()
          {
             Pseudo *first = *(Pseudo**) iter.currentKey();
             Pseudo *second = *(Pseudo**) iter.currentValue();
-            first->write( m_out ); // will do the right thing
-            second->write( m_out );
+            first->write( m_outTemp ); // will do the right thing
+            second->write( m_outTemp );
             iter.next();
          }
       }
@@ -1034,8 +1042,8 @@ void AsmCompiler::addDEndSwitch()
          fassert( objjmp != 0 );
          if( objjmp != 0 )
          {
-            pseudo->write( m_out ); // will do the right thing
-            (*objjmp)->write( m_out );
+            pseudo->write( m_outTemp ); // will do the right thing
+            (*objjmp)->write( m_outTemp );
          }
          elem = elem->next();
       }
@@ -1099,14 +1107,14 @@ void AsmCompiler::addInstr( unsigned char opcode, Pseudo *op1, Pseudo *op2, Pseu
 
    if ( op1 != 0 )
    {
-      op1->write( m_out );
+      op1->write( m_outTemp );
       if ( op1->disposeable())
          delete op1;
    }
 
    if ( op2 != 0 )
    {
-      op2->write( m_out );
+      op2->write( m_outTemp );
 
       if ( op2->disposeable() )
          delete op2;
@@ -1114,7 +1122,7 @@ void AsmCompiler::addInstr( unsigned char opcode, Pseudo *op1, Pseudo *op2, Pseu
 
    if ( op3 != 0 )
    {
-      op3->write( m_out );
+      op3->write( m_outTemp );
 
       if ( op3->disposeable() )
          delete op3;
