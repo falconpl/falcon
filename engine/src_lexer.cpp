@@ -38,12 +38,12 @@
 
 namespace Falcon {
 
-SrcLexer::SrcLexer( Compiler *comp, Stream *in ):
+SrcLexer::SrcLexer( Compiler *comp ):
    m_prevStat(0),
    m_line( 1 ),
    m_previousLine( 1 ),
    m_value(0),
-   m_in( in ),
+   m_in( 0 ),
    m_compiler( comp ),
    m_contexts(0),
    m_squareContexts(0),
@@ -54,8 +54,30 @@ SrcLexer::SrcLexer( Compiler *comp, Stream *in ):
    m_lineFilled( false ),
    m_mode( t_mNormal ),
    m_ctxOpenLine(0),
-   m_bIsDirectiveLine(false)
+   m_bIsDirectiveLine(false),
+   m_incremental( false ),
+   m_lineContContext( false )
 {}
+
+void SrcLexer::reset()
+{
+   m_prevStat = 0;
+   m_contexts = 0;
+   m_squareContexts = 0;
+   m_character = 0;
+   m_state = e_line;
+   m_ctxOpenLine = 0;
+   m_bIsDirectiveLine = false;
+}
+
+void SrcLexer::input( Stream *i )
+{
+   m_in = i;
+   m_done = false;
+   m_addEol = false;
+   m_lineFilled = false;
+}
+
 
 int SrcLexer::lex()
 {
@@ -257,19 +279,26 @@ int SrcLexer::lex_normal()
    // generate an extra eol?
    if ( m_addEol )
    {
-      m_addEol = false;
-      m_lineFilled = false;
-      if ( m_contexts == 0 && m_squareContexts == 0 )
+      // ignore in incremental mode with open contexts
+      if ( ! (m_done && incremental() && hasOpenContexts()) )
       {
-         m_bIsDirectiveLine = false;
-         return EOL;
+         m_addEol = false;
+         m_lineFilled = false;
+         if ( m_contexts == 0 && m_squareContexts == 0 )
+         {
+            m_bIsDirectiveLine = false;
+            return EOL;
+         }
       }
    }
 
    if ( m_done )
    {
       // raise error if there is some lexer context open
-      checkContexts();
+      // in incremental mode ignore completely end of file errors
+      if ( ! m_incremental )
+         checkContexts();
+
       return 0;
    }
 
@@ -307,6 +336,7 @@ int SrcLexer::lex_normal()
    }
 
    // reset previous token
+   m_lineContContext = false;
    m_string.size(0);
    m_string.manipulator( &csh::handler_buffer );
 
@@ -323,8 +353,8 @@ int SrcLexer::lex_normal()
       {
          // fake an empty terminator at the end of input.
          chr = '\n';
-         m_done = true;
          m_addEol = true;
+         m_done = true;
       }
 
       m_character++;
@@ -351,6 +381,9 @@ int SrcLexer::lex_normal()
 
                int token = state_line( chr );
                if ( token != 0 ) {
+                  if ( m_done ) {
+                     continue;
+                  }
                   // we have a token in this line
                   //m_lineFilled = true;
                   return token;
@@ -932,8 +965,16 @@ int SrcLexer::state_line( uint32 chr )
    {
       // don't return at next eol:
       uint32 nextChr;
-      m_in->readAhead( nextChr );
-      if ( nextChr == '\n' )
+      if ( ! m_in->readAhead( nextChr ) )
+      {
+         // end of file; if we're in incremental mode,
+         // declare the opening of a temporary context
+         if ( m_incremental )
+         {
+            m_lineContContext = true;
+         }
+      }
+      else if ( nextChr == '\n' )
       {
          m_previousLine = m_line;
          m_line ++;

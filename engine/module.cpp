@@ -155,7 +155,12 @@ Symbol *Module::addConstant( const String &name, const String &value, bool exp )
 
 Symbol *Module::addExtFunc( const String &name, ext_func_t func, void *extra, bool exp )
 {
-   Symbol *sym = addGlobalSymbol( addSymbol(name) );
+   Symbol *sym = findGlobalSymbol( name );
+   if ( sym == 0 )
+   {
+      sym = addSymbol(name);
+      addGlobalSymbol( sym );
+   }
    sym->setExtFunc( new ExtFuncDef( func, extra ) );
    sym->exported( exp );
    return sym;
@@ -163,7 +168,12 @@ Symbol *Module::addExtFunc( const String &name, ext_func_t func, void *extra, bo
 
 Symbol *Module::addFunction( const String &name, byte *code, uint32 size, bool exp )
 {
-   Symbol *sym = addGlobalSymbol( addSymbol(name) );
+   Symbol *sym = findGlobalSymbol( name );
+   if ( sym == 0 )
+   {
+      sym = addSymbol(name);
+      addGlobalSymbol( sym );
+   }
    sym->setFunction( new FuncDef( code, size ) );
    sym->exported( exp );
    return sym;

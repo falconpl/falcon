@@ -80,7 +80,7 @@ Compiler::Compiler():
    m_lambdaCount(0),
    m_bParsingFtd(false)
 {
-   reset();
+   init();
 }
 
 Compiler::~Compiler()
@@ -98,7 +98,7 @@ Compiler::~Compiler()
 
 void Compiler::init()
 {
-   m_lexer = new SrcLexer( this, m_stream );
+   m_lexer = new SrcLexer( this );
    if ( m_bParsingFtd )
       m_lexer->parsingFtd( true );
 
@@ -220,6 +220,7 @@ bool Compiler::compile()
    int64 modver = m_modVersion;
 
    // parse
+   m_lexer->input( m_stream );
    flc_src_parse( this );
    m_module->language( m_language );
    m_module->version( (uint32) m_modVersion );

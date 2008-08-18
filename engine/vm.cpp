@@ -327,7 +327,7 @@ bool VMachine::link( Runtime *rt )
    for( uint32 iter = 0; iter < listSize; ++iter )
    {
       ModuleDep *md = rt->moduleVector()->moduleDepAt( iter );
-      if ( link( md->module(), iter + 1 == listSize, md->isPrivate() ) == 0 )
+      if ( link( md->module(), rt->hasMainModule() && (iter + 1 == listSize), md->isPrivate() ) == 0 )
          return false;
    }
 
@@ -2163,6 +2163,8 @@ void VMachine::callReturn()
       Item oldA = m_regA;
       opcodeHandler_END( this );
       m_regA = oldA;
+      // not executing anymore.
+      m_symbol = 0;
       return;
    }
 

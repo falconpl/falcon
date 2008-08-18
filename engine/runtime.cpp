@@ -33,13 +33,15 @@ ModuleVector::ModuleVector():
 Runtime::Runtime():
    m_loader( 0 ),
    m_provider( 0 ),
-   m_modPending( &traits::t_stringptr, &traits::t_int )
+   m_modPending( &traits::t_stringptr, &traits::t_int ),
+   m_hasMainModule( true )
 {}
 
 Runtime::Runtime( ModuleLoader *loader, VMachine *prov ):
    m_loader( loader ),
    m_provider( prov ),
-   m_modPending( &traits::t_stringptr, &traits::t_int )
+   m_modPending( &traits::t_stringptr, &traits::t_int ),
+   m_hasMainModule( true )
 {}
 
 /** Declared here to avoid inlining of destructor. */

@@ -185,6 +185,7 @@ ADD_LIBRARY( falcon_engine SHARED
    genericvector.cpp
    genhasm.cpp
    gentree.cpp
+   intcomp.cpp
    item.cpp
    itemlist.cpp
    itemserial.cpp

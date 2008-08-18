@@ -50,7 +50,7 @@ static ErrorManager core_error_manager;
    Module initializer
 ****************************************/
 
-Module * core_module_init()
+Module* core_module_init()
 {
    Module *self = new Module();
    self->name( "falcon.core" );

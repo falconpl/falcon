@@ -2061,6 +2061,8 @@ object_decl:
          sym->setInstance( clsym );
 
          Falcon::StmtClass *cls = new Falcon::StmtClass( COMPILER->lexer()->line(), clsym );
+         cls->singleton( sym );
+
          // prepare the statement allocation context
          COMPILER->pushContext( cls );
 
