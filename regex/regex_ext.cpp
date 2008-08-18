@@ -364,7 +364,7 @@ FALCON_FUNC Regex_match( ::Falcon::VMachine *vm )
 
    if ( data->m_matches == PCRE_ERROR_NOMATCH )
    {
-      vm->retval( (int64) 0 );
+      vm->regA().setBoolean( false );
       return;
    }
 
@@ -378,7 +378,7 @@ FALCON_FUNC Regex_match( ::Falcon::VMachine *vm )
       return;
    }
 
-   vm->retval( (int64) 1 );
+   vm->regA().setBoolean( true );
 }
 
 /*#
