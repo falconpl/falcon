@@ -32,6 +32,7 @@ namespace Falcon
 
 class SrcLexer;
 class Stream;
+class InteractiveCompiler;
 
 /**
    ( const String *, Symbol * )
@@ -202,6 +203,9 @@ protected:
       symbols.
    */
   void addPredefs();
+
+  InteractiveCompiler *m_metacomp;
+
 public:
    /** Creates an empty compiler.
       This constructor doesn't set a stream and a module for the compiler.
@@ -513,6 +517,11 @@ public:
    */
    virtual void importSymbols( List *lst, const String *prefix=0, const String *alias=0, bool filename=false );
 
+   /** Performs a meta compilation.
+      If any data is written on the metacompiler output stream, the
+      stream is immediately sent to the lexer for further compilation.
+   */
+   void metaCompile( const String &data );
 };
 
 } // end of namespace

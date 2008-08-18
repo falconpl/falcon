@@ -228,6 +228,11 @@ toplevel_statement:
          if ( $1 != 0 )
             COMPILER->addClass( $1 );
       }
+   | enum_statement
+      {
+         if ( $1 != 0 )
+            COMPILER->addClass( $1 );
+      }
    | statement
       {
          if( $1 != 0 )

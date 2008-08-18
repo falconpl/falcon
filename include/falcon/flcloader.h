@@ -85,6 +85,9 @@ protected:
 
 public:
    FlcLoader( const String &path );
+   FlcLoader( const FlcLoader &other );
+
+   virtual ModuleLoader *clone() const;
 
    /** Ignore Source accessor.
       \return true if the Module Loader must load only pre-compiled modules, false otherwise.

@@ -22,6 +22,11 @@
 #include <falcon/itemid.h>
 #include <falcon/fassert.h>
 #include <falcon/path.h>
+#include <falcon/intcomp.h>
+#include <falcon/flcloader.h>
+#include <falcon/vm.h>
+#include <falcon/stringstream.h>
+#include "core_module/core_module.h"
 
 namespace Falcon
 {
@@ -49,7 +54,8 @@ Compiler::Compiler( Module *mod, Stream* in ):
    m_rootError( 0 ),
    m_lexer(0),
    m_root(0),
-   m_bParsingFtd(false)
+   m_bParsingFtd(false),
+   m_metacomp( 0 )
 {
    // Initializing now prevents adding predefined constants to the module.
    init();
@@ -78,7 +84,8 @@ Compiler::Compiler():
    m_lexer(0),
    m_root(0),
    m_lambdaCount(0),
-   m_bParsingFtd(false)
+   m_bParsingFtd(false),
+   m_metacomp(0)
 {
    init();
 }
@@ -164,8 +171,11 @@ void Compiler::clear()
 {
    delete m_root;
    delete m_lexer;
+   delete m_metacomp;
+
    m_root = 0;
    m_lexer= 0;
+   m_metacomp = 0;
 
    m_functions.clear();
 
@@ -1170,6 +1180,38 @@ void Compiler::importSymbols( List *lst, const String *prefix, const String *ali
       li = li->next();
    }
    delete lst;
+}
+
+void Compiler::metaCompile( const String &data )
+{
+   // evantually turn on the meta-compiler
+   if ( m_metacomp == 0 )
+   {
+      VMachine *vm = new VMachine;
+      vm->stdOut( new StringStream );
+      vm->link( core_module_init() );
+      m_metacomp = new InteractiveCompiler( new FlcLoader( "." ), vm );
+      m_metacomp->errorHandler( errorHandler() );
+      // not incremental...
+      m_metacomp->lexer()->incremental( false );
+   }
+
+   InteractiveCompiler::t_ret_type ret = m_metacomp->compileAll( data );
+
+   if ( ret == InteractiveCompiler::e_error || ret ==  InteractiveCompiler::e_vm_error )
+      m_errors++;
+   else {
+      StringStream *ss = static_cast<StringStream *>(m_metacomp->vm()->stdOut());
+      // something has been written
+      if ( ss->length() != 0 )
+      {
+         // pass it to the lexer
+         ss->seekBegin(0);
+         m_lexer->appendStream( new StringStream( *ss->getString() ) );
+         // and dispose it
+         m_metacomp->vm()->stdOut( new StringStream );
+      }
+   }
 }
 
 }

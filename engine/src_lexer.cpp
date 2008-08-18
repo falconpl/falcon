@@ -73,9 +73,11 @@ void SrcLexer::reset()
 void SrcLexer::input( Stream *i )
 {
    m_in = i;
+   m_streams.pushBack(i);
    m_done = false;
    m_addEol = false;
    m_lineFilled = false;
+
 }
 
 
@@ -279,10 +281,11 @@ int SrcLexer::lex_normal()
    // generate an extra eol?
    if ( m_addEol )
    {
+      m_addEol = false;
+
       // ignore in incremental mode with open contexts
       if ( ! (m_done && incremental() && hasOpenContexts()) )
       {
-         m_addEol = false;
          m_lineFilled = false;
          if ( m_contexts == 0 && m_squareContexts == 0 )
          {
@@ -299,7 +302,14 @@ int SrcLexer::lex_normal()
       if ( ! m_incremental )
          checkContexts();
 
-      return 0;
+      m_streams.popBack();
+      if ( m_streams.empty() )
+         return 0;
+      else {
+         m_done = false;
+         delete m_in; // all the streams except first are to be disposed.
+         m_in = (Stream *)m_streams.back();
+      }
    }
 
    // check for shell directive
@@ -353,7 +363,9 @@ int SrcLexer::lex_normal()
       {
          // fake an empty terminator at the end of input.
          chr = '\n';
-         m_addEol = true;
+         // if this is the last stream, ask also an extra EOL
+         if ( m_streams.size() == 1 )
+            m_addEol = true;
          m_done = true;
       }
 
@@ -381,9 +393,6 @@ int SrcLexer::lex_normal()
 
                int token = state_line( chr );
                if ( token != 0 ) {
-                  if ( m_done ) {
-                     continue;
-                  }
                   // we have a token in this line
                   //m_lineFilled = true;
                   return token;
@@ -994,7 +1003,45 @@ int SrcLexer::state_line( uint32 chr )
             m_in->discardReadAhead( 2 );
          }
       }
+      else if ( nextChr == '[' )
+      {
+         m_in->discardReadAhead( 1 );
+         // create meta data up to \]
+         String temp;
+         temp.reserve( 512 );
+         uint32 chr;
+         bool waiting = false;
+         while( m_in->get( chr ) )
+         {
 
+            if ( chr == '\\' )
+            {
+               waiting = true;
+            }
+            else {
+               if ( waiting )
+               {
+                  // done?
+                  if ( chr == ']' )
+                     break;
+
+                  temp.append( '\\' );
+               }
+
+               if ( chr == '\n' )
+               {
+                  m_previousLine = m_line;
+                  m_line ++;
+                  m_character = 0;
+                  waiting = false;
+               }
+
+               temp.append( chr );
+            }
+         }
+
+         m_compiler->metaCompile( temp );
+      }
    }
    else if ( chr < 0x20 )
    {
@@ -1441,6 +1488,12 @@ void SrcLexer::resetContexts()
    m_state = e_line;
    m_lineFilled = false;
    m_string = "";
+}
+
+void SrcLexer::appendStream( Stream *s )
+{
+   m_in = s;
+   m_streams.pushBack( s );
 }
 
 }

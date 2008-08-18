@@ -50,6 +50,8 @@ private:
    uint32 m_chrEndString;
 
    Stream *m_in;
+   List m_streams;
+
    Compiler *m_compiler;
    String m_string;
 
@@ -184,6 +186,8 @@ public:
    bool hasOpenContexts() { return m_contexts != 0 || m_squareContexts != 0 || m_lineContContext != 0; }
    bool incremental() const { return m_incremental; }
    void incremental( bool b ) { m_incremental = b; }
+
+   void appendStream( Stream *s );
 };
 
 }

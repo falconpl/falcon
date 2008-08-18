@@ -180,7 +180,15 @@ public:
       m_path.pushBack( new String(".") );
    }
 
+   ModuleLoader( const ModuleLoader &other ):
+      m_errhand(other.m_errhand),
+      m_acceptSources( other.m_acceptSources )
+   {
+   }
+
    ~ModuleLoader();
+
+   virtual ModuleLoader *clone() const;
 
    /** Creates a module loader with a given path.
       The path is in the FALCON format; path are separated by semicolons (;). If the system uses

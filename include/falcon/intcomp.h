@@ -20,11 +20,12 @@
 #include <falcon/compiler.h>
 #include <falcon/module.h>
 #include <falcon/vm.h>
+#include <falcon/intcomp.h>
 
 namespace Falcon
 {
 
-class FlcLoader;
+class ModuleLoader;
 
 /** Interactive compiler.
    This compiler is meant to incrementally compile, load dependencies and
@@ -44,7 +45,7 @@ class InteractiveCompiler: public Compiler
 {
    VMachine *m_vm;
    LiveModule *m_lmodule;
-   FlcLoader *m_loader;
+   ModuleLoader *m_loader;
    void loadNow( const String &name, bool isFilename );
 
 public:
@@ -54,7 +55,7 @@ public:
       Notice that the compiler will apply its error handler to the loader
       at compile time.
    */
-   InteractiveCompiler( FlcLoader *loader, VMachine *vm=0 );
+   InteractiveCompiler( ModuleLoader *loader, VMachine *vm=0 );
    ~InteractiveCompiler();
 
    typedef enum {
@@ -86,14 +87,16 @@ public:
    */
    t_ret_type compileNext( const String &input );
 
+   t_ret_type compileAll( const String &input );
+
    VMachine *vm() const { return m_vm; }
 
    virtual void addLoad( const String &name, bool isFilename );
    virtual void addNamespace( const String &nspace, const String &alias, bool full=false, bool filename=false );
 
 
-   FlcLoader *loader() const { return m_loader; }
-   void loader( FlcLoader *l ) { m_loader = l; }
+   ModuleLoader *loader() const { return m_loader; }
+   void loader( ModuleLoader *l ) { m_loader = l; }
 };
 
 }

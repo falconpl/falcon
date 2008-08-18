@@ -49,6 +49,25 @@ FlcLoader::FlcLoader( const String &path ):
    m_acceptSources = true;
 }
 
+FlcLoader::FlcLoader( const FlcLoader &other ):
+      ModuleLoader( other ),
+      m_alwaysRecomp( other.m_alwaysRecomp ),
+      m_compMemory( other.m_compMemory ),
+      m_viaAssembly( other.m_viaAssembly ),
+      m_saveModule( other.m_saveModule ),
+      m_sourceIsAssembly( other.m_sourceIsAssembly ),
+      m_compileErrors(0),
+      m_delayRaise( other.m_delayRaise ),
+      m_saveMandatory( other.m_saveMandatory ),
+      m_detectTemplate( other.m_detectTemplate ),
+      m_forceTemplate( other.m_forceTemplate )
+{
+}
+
+ModuleLoader *FlcLoader::clone() const
+{
+   return new FlcLoader( *this );
+}
 
 Stream *FlcLoader::openResource( const String &path, t_filetype type )
 {

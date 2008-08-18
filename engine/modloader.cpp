@@ -35,6 +35,10 @@ ModuleLoader::ModuleLoader( const String &path ):
    setSearchPath( path );
 }
 
+ModuleLoader *ModuleLoader::clone() const
+{
+   return new ModuleLoader( *this );
+}
 
 void ModuleLoader::getModuleName( const String &path, String &modName )
 {

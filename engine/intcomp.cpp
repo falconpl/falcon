@@ -17,14 +17,14 @@
 #include <falcon/rosstream.h>
 #include <falcon/gencode.h>
 #include <falcon/runtime.h>
-#include <falcon/flcloader.h>
+#include <falcon/modloader.h>
 #include <falcon/src_lexer.h>
 #include "core_module/core_module.h"
 
 namespace Falcon
 {
 
-InteractiveCompiler::InteractiveCompiler( FlcLoader *l, VMachine *vm ):
+InteractiveCompiler::InteractiveCompiler( ModuleLoader *l, VMachine *vm ):
    Compiler(),
    m_loader( l ),
    m_lmodule( 0 )
@@ -65,6 +65,23 @@ InteractiveCompiler::t_ret_type InteractiveCompiler::compileNext( const String &
 {
    ROStringStream ss( input );
    return compileNext( &ss );
+}
+
+InteractiveCompiler::t_ret_type InteractiveCompiler::compileAll( const String &input )
+{
+   ROStringStream ss( input );
+   t_ret_type ret = e_nothing;
+
+   while ( ! ss.eof() )
+   {
+      ret = compileNext( &ss );
+      if ( ret == e_vm_error || ret == e_error )
+      {
+         return ret;
+      }
+   }
+
+   return ret;
 }
 
 InteractiveCompiler::t_ret_type InteractiveCompiler::compileNext( Stream *input )
@@ -162,6 +179,7 @@ InteractiveCompiler::t_ret_type InteractiveCompiler::compileNext( Stream *input 
    // now we have to decide what to do with the beast.
    // if it's a directive, we already handled it.
    m_tempLine += m_lexer->previousLine();
+   t_ret_type ret = e_nothing;
 
    // Is it a class?
    if ( ! m_root->classes().empty() )
@@ -189,7 +207,7 @@ InteractiveCompiler::t_ret_type InteractiveCompiler::compileNext( Stream *input 
             return e_vm_error;
       }
 
-      return e_decl;
+      ret = e_decl;
    }
 
    // if it's a function
@@ -205,7 +223,7 @@ InteractiveCompiler::t_ret_type InteractiveCompiler::compileNext( Stream *input 
          return e_vm_error;
       }
 
-      return e_decl;
+      ret = e_decl;
    }
 
    // if it's a statement we must clear the __main__
@@ -273,7 +291,7 @@ InteractiveCompiler::t_ret_type InteractiveCompiler::compileNext( Stream *input 
       return ret;
    }
 
-   return e_nothing;
+   return ret;
 }
 
 void InteractiveCompiler::addNamespace( const String &nspace, const String &alias,
