@@ -41,6 +41,7 @@ public:
    String module_language;
    List preloaded;
    List directives;
+   List defines;
 
    bool interactive;
    bool compile_only;

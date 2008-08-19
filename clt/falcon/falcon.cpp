@@ -165,7 +165,8 @@ static void usage()
    stdOut->writeString ( "   -a          assemble the given module (a Falcon Assembly '.fas' file)\n" );
    stdOut->writeString ( "   -c          compile only the given source\n" );
    stdOut->writeString ( "   -C          Check for memory allocation correctness.\n" );
-   stdOut->writeString ( "   -D          Set directive (as <directive>=<value>).\n" );
+   stdOut->writeString ( "   -d          Set directive (as <directive>=<value>).\n" );
+   stdOut->writeString ( "   -D          Set constant (as <constant>=<value>).\n" );
    stdOut->writeString ( "   -e <enc>    Set given encoding as default for VM I/O.\n" );
    stdOut->writeString ( "   -E <enc>    Source files are in <enc> encoding (overrides -e)\n" );
    stdOut->writeString ( "   -f          force recompilation of modules even when .fam are found\n" );
@@ -426,11 +427,18 @@ void parseOptions ( int argc, char **argv, int &script_pos )
             case 'a': options.assemble_only = true; break;
             case 'c': options.compile_only = true; break;
             case 'C': options.check_memory = true; break;
-            case 'D':
+            case 'd':
                if ( op[2] == 0 && i + 1< argc )
                   options.directives.pushBack ( new String ( argv[++i] ) );
                else
                   options.directives.pushBack ( new String ( op + 2 ) );
+               break;
+
+            case 'D':
+               if ( op[2] == 0 && i + 1< argc )
+                  options.defines.pushBack ( new String ( argv[++i] ) );
+               else
+                  options.defines.pushBack ( new String ( op + 2 ) );
                break;
 
             case 'e':
@@ -602,6 +610,43 @@ bool apply_directives ( Compiler &compiler )
          stdErr->writeString ( directive );
          stdErr->writeString ( "'\n\n" );
          return false;
+      }
+
+      dliter = dliter->next();
+   }
+
+   return true;
+}
+
+
+bool apply_constants ( Compiler &compiler )
+{
+   ListElement *dliter = options.defines.begin();
+   while ( dliter != 0 )
+   {
+      String &directive = * ( ( String * ) dliter->data() );
+      // find "="
+      uint32 pos = directive.find ( "=" );
+      if ( pos == String::npos )
+      {
+         stdErr->writeString ( "falcon: constant not in <constant>=<value> syntax'" );
+         stdErr->writeString ( directive );
+         stdErr->writeString ( "'\n\n" );
+         return false;
+      }
+
+      //split the directive
+      String dirname ( directive, 0, pos );
+      String dirvalue ( directive, pos + 1 );
+      dirname.trim();
+      dirvalue.trim();
+
+      // is the value a number?
+      int64 number;
+      if ( dirvalue.parseInt ( number ) )
+         compiler.addIntConstant( dirname, number );
+      else {
+         compiler.addStringConstant( dirname, dirvalue );
       }
 
       dliter = dliter->next();
@@ -815,6 +860,11 @@ int main ( int argc, char *argv[] )
          exit_sequence ( 1 );
       }
 
+      if ( ! apply_constants ( compiler ) )
+      {
+         exit_sequence ( 1 );
+      }
+
       compiler.errorHandler ( errHand );
 
       // is input an FTD?
@@ -871,6 +921,12 @@ int main ( int argc, char *argv[] )
    {
       exit_sequence ( 1 );
    }
+
+   if ( ! apply_constants ( modLoader->compiler() ) )
+   {
+      exit_sequence ( 1 );
+   }
+
 
    if ( options.input != "" && options.input != "-" )
    {
