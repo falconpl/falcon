@@ -27,7 +27,8 @@ namespace Falcon
 InteractiveCompiler::InteractiveCompiler( ModuleLoader *l, VMachine *vm ):
    Compiler(),
    m_loader( l ),
-   m_lmodule( 0 )
+   m_lmodule( 0 ),
+   m_interactive( true )
 {
    if ( vm == 0 )
    {
@@ -51,7 +52,6 @@ InteractiveCompiler::InteractiveCompiler( ModuleLoader *l, VMachine *vm ):
    fassert( m_lmodule );
 
    // set incremental mode for the lexer.
-   m_lexer->incremental( true );
    m_tempLine = 1;
 }
 
@@ -121,6 +121,8 @@ InteractiveCompiler::t_ret_type InteractiveCompiler::compileNext( Stream *input 
    m_lexer->reset();
    m_lexer->line( m_tempLine );
    m_lexer->input( m_stream );
+   m_lexer->incremental( m_interactive );
+
 
    // prepare to unroll changes in the module
    uint32 modSymSize = m_module->symbols().size();
@@ -181,13 +183,46 @@ InteractiveCompiler::t_ret_type InteractiveCompiler::compileNext( Stream *input 
    m_tempLine += m_lexer->previousLine();
    t_ret_type ret = e_nothing;
 
-   // Is it a class?
-   if ( ! m_root->classes().empty() )
+   // empty?
+   if ( m_root->classes().empty() && m_root->functions().empty() && m_root->statements().empty() )
+   {
+      return e_nothing;
+   }
+
+   // if we have some statements, we may need to change the first expression
+   // into a return, if we are in interactive mode.
+   if( ! m_root->statements().empty() )
+   {
+      Statement *front = m_root->statements().front();
+
+      // was it an expression?
+      if( m_interactive && m_root->statements().front()->type() == Statement::t_autoexp )
+      {
+         // wrap it around a return, so A is not nilled.
+         StmtAutoexpr *ae = static_cast<StmtAutoexpr *>( m_root->statements().pop_front() );
+         m_root->statements().push_front( new StmtReturn( 1, ae->value()->clone() ) );
+
+         // what kind of expression is it? -- if it's a call, we're interested
+         if( ae->value()->asExpr()->type() == Expression::t_funcall )
+            ret = e_call;
+         else
+            ret = e_expression;
+
+         // we don't need the expression anymore.
+         delete ae;
+      }
+      else
+         ret = e_statement;
+   }
+
+   // generate the module
+   GenCode gencode( module() );
+   gencode.generate( m_root );
+
+   while ( ! m_root->classes().empty() )
    {
       StmtClass *cls = static_cast<StmtClass *>( m_root->classes().front() );
 
-      GenCode gencode( module() );
-      gencode.generate( m_root );
       // in case of classes, we have to link the constructor,
       // the class itself and eventually the singleton.
       StmtFunction *init = cls->ctorFunction();
@@ -207,88 +242,60 @@ InteractiveCompiler::t_ret_type InteractiveCompiler::compileNext( Stream *input 
             return e_vm_error;
       }
 
-      ret = e_decl;
+      if ( ret == e_nothing )
+         ret = e_decl;
+      delete m_root->classes().pop_front();
    }
 
    // if it's a function
-   if ( ! m_root->functions().empty() )
+   while ( ! m_root->functions().empty() )
    {
       StmtFunction *func = static_cast<StmtFunction *>( m_root->functions().front() );
 
-      GenCode gencode( module() );
-      gencode.generate( m_root );
       if ( ! m_vm->linkCompleteSymbol( func->symbol(), m_lmodule ) )
       {
          // perform the unroll
          return e_vm_error;
       }
 
-      ret = e_decl;
+      if ( ret == e_nothing )
+         ret = e_decl;
+      delete m_root->functions().pop_front();
    }
 
-   // if it's a statement we must clear the __main__
-   // symbol, generate it and re-execute it.
-   if( ! m_root->statements().empty() )
+   // now, the symbol table must be traversed.
+   MapIterator iter = m_module->symbolTable().map().begin();
+   bool success = true;
+   while( iter.hasCurrent() )
    {
-      t_ret_type ret;
-      Statement *front = m_root->statements().front();
+      Symbol *sym = *(Symbol **) iter.currentValue();
+      // try to link undefined symbols.
 
-      // was it an expression?
-      if( m_root->statements().front()->type() == Statement::t_autoexp )
+      if ( sym->isUndefined() && m_lmodule->globals().itemAt( sym->itemId() ).isNil() )
       {
-         // wrap it around a return, so A is not nilled.
-         StmtAutoexpr *ae = static_cast<StmtAutoexpr *>( m_root->statements().pop_front() );
-         m_root->statements().push_front( new StmtReturn( 1, ae->value()->clone() ) );
-
-         // what kind of expression is it? -- if it's a call, we're interested
-         if( ae->value()->asExpr()->type() == Expression::t_funcall )
-            ret = e_call;
-         else
-            ret = e_expression;
-
-         // we don't need the expression anymore.
-         delete ae;
-      }
-      else
-         ret = e_statement;
-
-      // generate it
-      GenCode gencode( module() );
-      gencode.generate( m_root );
-
-      // now, the symbol table must be traversed.
-      MapIterator iter = m_module->symbolTable().map().begin();
-      bool success = true;
-      while( iter.hasCurrent() )
-      {
-         Symbol *sym = *(Symbol **) iter.currentValue();
-         // try to link undefined symbols.
-
-         if ( sym->isUndefined() && m_lmodule->globals().itemAt( sym->itemId() ).isNil() )
+         if ( ! m_vm->linkSymbol( sym, m_lmodule ) )
          {
-            if ( ! m_vm->linkSymbol( sym, m_lmodule ) )
-            {
-               // but continue to expose other errors as well.
-               success = false;
-               // prevent searching again
-               sym->setGlobal();
-            }
+            // but continue to expose other errors as well.
+            success = false;
+            // prevent searching again
+            sym->setGlobal();
          }
-
-         // next symbol
-         iter.next();
       }
 
-      // re-link failed?
-      if ( ! success )
-         return e_error;
+      // next symbol
+      iter.next();
+   }
 
-      // launch the vm.
+   // re-link failed?
+   if ( ! success )
+      return e_error;
+
+   // launch the vm.
+   if ( ret == e_statement || ret == e_call || ret == e_expression )
+   {
       m_vm->launch();
       if ( m_vm->hadError() )
          return e_error;
-
-      return ret;
    }
 
    return ret;

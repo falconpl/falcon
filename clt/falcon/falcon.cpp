@@ -927,7 +927,6 @@ int main ( int argc, char *argv[] )
       exit_sequence ( 1 );
    }
 
-
    if ( options.input != "" && options.input != "-" )
    {
       String source_path;
@@ -974,6 +973,9 @@ int main ( int argc, char *argv[] )
       // force not to save modules, we're saving it on our own
       modLoader->saveModules ( false );
 
+      // give a copy of the loader to the meta compiler
+      modLoader->compiler().serviceLoader( modLoader->clone() );
+
       Module *mod;
       if ( options.input == "" || options.input == "-" )
          mod = modLoader->loadSource ( stdIn, "<stdin>" );
@@ -999,6 +1001,9 @@ int main ( int argc, char *argv[] )
    // At this point, we can ignore sources if only willing to run
    // with ignore source option, the flcLoader will bypass loadSource and use loadModule.
    modLoader->ignoreSources ( options.run_only );
+
+   // give a copy of the loader to the meta compiler
+   modLoader->compiler().serviceLoader( modLoader->clone() );
 
    // Load the modules
    Module *mainMod;

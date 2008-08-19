@@ -35,6 +35,13 @@ ModuleLoader::ModuleLoader( const String &path ):
    setSearchPath( path );
 }
 
+ModuleLoader::ModuleLoader( const ModuleLoader &other ):
+      m_errhand(other.m_errhand),
+      m_acceptSources( other.m_acceptSources )
+{
+   setSearchPath( other.getSearchPath() );
+}
+
 ModuleLoader *ModuleLoader::clone() const
 {
    return new ModuleLoader( *this );

@@ -186,6 +186,8 @@ const String &errorDesc( int code )
       case e_syn_self_print: return getMessage( msg::err_syn_self_print );
       case e_syn_directive: return getMessage( msg::err_syn_directive );
       case e_syn_import: return getMessage( msg::err_syn_import );
+      case e_syn_macro: return getMessage( msg::err_syn_macro );
+      case e_syn_macro_call: return getMessage( msg::err_syn_macro_call );
 
       case e_nl_in_lit: return getMessage( msg::err_nl_in_lit );
       case e_catch_clash: return getMessage( msg::err_catch_clash );

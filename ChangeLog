@@ -20,6 +20,11 @@ Falcon (0.8.11)
            or not.
   * minor: Added testAttribute() function to test for attributes.
   * major: Added interactive mode to Falcon command line tool.
+  * minor: Option -D (set directive) has been moved to -d;
+           -D sets compile time constants.
+  * major: Macro and Meta compilation added. The escapes \[ and \] perform meta
+           compilation, and the macro keyword and \\ escapes are candy grammar
+           for macro compilation.
 
 Falcon (0.8.10)
   * minor: Now classes can be stored in object properties and called to get

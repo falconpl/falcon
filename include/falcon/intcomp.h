@@ -47,6 +47,7 @@ class InteractiveCompiler: public Compiler
    LiveModule *m_lmodule;
    ModuleLoader *m_loader;
    void loadNow( const String &name, bool isFilename );
+   bool m_interactive;
 
 public:
 
@@ -97,6 +98,18 @@ public:
 
    ModuleLoader *loader() const { return m_loader; }
    void loader( ModuleLoader *l ) { m_loader = l; }
+
+
+   bool interactive() const { return m_interactive; }
+   /** Sets or resets interactive mode.
+      In interactive mode, the compiler accepts one statement at a time and transforms
+      expressions into "return [expression]" statements to allow their value
+      to be visible after the execution.
+
+      Also, the lexer is configured so that it can accept partial elements from
+      streams and tell back about a partial status to the compiler.
+   */
+   void interactive( bool iactive ) { m_interactive = iactive; }
 };
 
 }

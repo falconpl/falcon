@@ -51,6 +51,7 @@ private:
 
    Stream *m_in;
    List m_streams;
+   List m_streamLines;
 
    Compiler *m_compiler;
    String m_string;
@@ -137,6 +138,7 @@ private:
 
 public:
    SrcLexer( Compiler *comp );
+   ~SrcLexer();
 
    /** Return current line in file (starting from 1). */
    int line() const {
@@ -188,6 +190,9 @@ public:
    void incremental( bool b ) { m_incremental = b; }
 
    void appendStream( Stream *s );
+   void parseMacro();
+   void parseMacroCall();
+
 };
 
 }

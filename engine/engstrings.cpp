@@ -186,6 +186,8 @@ const char *en_table[] =
       "Syntax error in fast print statement",
       "Syntax error in directive",
       "Syntax error in import statement",
+      "Syntax error in macro definition",
+      "Syntax error in macro call",
 
       "New line in literal string",
       "Duplicate type identifier in catch selector",

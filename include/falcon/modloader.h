@@ -180,11 +180,7 @@ public:
       m_path.pushBack( new String(".") );
    }
 
-   ModuleLoader( const ModuleLoader &other ):
-      m_errhand(other.m_errhand),
-      m_acceptSources( other.m_acceptSources )
-   {
-   }
+   ModuleLoader( const ModuleLoader &other );
 
    ~ModuleLoader();
 

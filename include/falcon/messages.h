@@ -185,6 +185,8 @@ namespace msg {
       err_syn_self_print,
       err_syn_directive,
       err_syn_import,
+      err_syn_macro,
+      err_syn_macro_call,
 
       err_nl_in_lit,
       err_catch_clash,

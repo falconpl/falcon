@@ -1768,7 +1768,8 @@ void String::escape( String &strout ) const
       uint32 chat = getCharAt( pos );
       switch( chat )
       {
-         case '"':  strout += "\\\""; break;
+         case '"':
+            strout += "\\\""; break;
          case '\r': strout += "\\r"; break;
          case '\n': strout += "\\n"; break;
          case '\t': strout += "\\t"; break;

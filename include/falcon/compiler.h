@@ -33,6 +33,8 @@ namespace Falcon
 class SrcLexer;
 class Stream;
 class InteractiveCompiler;
+class VMachine;
+class ModuleLoader;
 
 /**
    ( const String *, Symbol * )
@@ -205,6 +207,9 @@ protected:
   void addPredefs();
 
   InteractiveCompiler *m_metacomp;
+
+  VMachine *m_serviceVM;
+  ModuleLoader *m_serviceLoader;
 
 public:
    /** Creates an empty compiler.
@@ -521,7 +526,39 @@ public:
       If any data is written on the metacompiler output stream, the
       stream is immediately sent to the lexer for further compilation.
    */
-   void metaCompile( const String &data );
+   void metaCompile( const String &data, int startline );
+
+   /** Gets the service VM for this compiler.
+      Used to create the associate meta-compiler.
+      The VM is owned by this compiler (or of its meta-compiler).
+   */
+   VMachine *serviceVM() const { return m_serviceVM; }
+
+   /** Gets the service VM for this compiler.
+      Used to create the associate meta-compiler.
+      The loader is owned by this compiler (or of its meta-compiler).
+   */
+   ModuleLoader *serviceLoader() const { return m_serviceLoader; }
+
+   /** Sets the service VM for this compiler.
+      Used to create the associate meta-compiler.
+      The VM is owned by this compiler (or of its meta-compiler).
+
+      If a metacompilation is required, the ownership of this VM is transferred
+      to the meta compiler. If a service VM is not set and a meta-compilation
+      is requried, the compiler creates a VM on the fly.
+   */
+   void serviceVM( VMachine *vm ) { m_serviceVM = vm; }
+
+   /** Sets the service VM for this compiler.
+      Used to create the associate meta-compiler.
+      The loader is owned by this compiler (or of its meta-compiler).
+
+      If a metacompilation is required, the ownership of this loader is transferred
+      to the meta compiler. If a service loader is not set and a meta-compilation
+      is requried, the compiler creates a loader on the fly.
+   */
+   void serviceLoader(ModuleLoader *l) { m_serviceLoader = l; }
 };
 
 } // end of namespace

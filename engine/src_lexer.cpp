@@ -59,6 +59,11 @@ SrcLexer::SrcLexer( Compiler *comp ):
    m_lineContContext( false )
 {}
 
+SrcLexer::~SrcLexer()
+{
+   reset();
+}
+
 void SrcLexer::reset()
 {
    m_prevStat = 0;
@@ -68,16 +73,25 @@ void SrcLexer::reset()
    m_state = e_line;
    m_ctxOpenLine = 0;
    m_bIsDirectiveLine = false;
+
+   while( ! m_streams.empty() )
+   {
+      Stream *s = (Stream *) m_streams.back();
+      m_streams.popBack();
+      // all the streams except the first are to be deleted.
+      if ( !m_streams.empty() )
+         delete s;
+   }
 }
 
 void SrcLexer::input( Stream *i )
 {
    m_in = i;
    m_streams.pushBack(i);
+   m_streamLines.pushBack( (uint32) m_line );
    m_done = false;
    m_addEol = false;
    m_lineFilled = false;
-
 }
 
 
@@ -301,15 +315,7 @@ int SrcLexer::lex_normal()
       // in incremental mode ignore completely end of file errors
       if ( ! m_incremental )
          checkContexts();
-
-      m_streams.popBack();
-      if ( m_streams.empty() )
-         return 0;
-      else {
-         m_done = false;
-         delete m_in; // all the streams except first are to be disposed.
-         m_in = (Stream *)m_streams.back();
-      }
+      return 0;
    }
 
    // check for shell directive
@@ -361,12 +367,27 @@ int SrcLexer::lex_normal()
 
       if ( ! next_loop )
       {
-         // fake an empty terminator at the end of input.
-         chr = '\n';
          // if this is the last stream, ask also an extra EOL
-         if ( m_streams.size() == 1 )
-            m_addEol = true;
-         m_done = true;
+         m_streams.popBack();
+         if ( m_streams.empty() )
+         {
+            // fake an empty terminator at the end of input.
+            chr = '\n';
+
+            if ( ! m_incremental || ! hasOpenContexts() )
+               m_addEol = true;
+
+            m_done = true;
+         }
+         else {
+            delete m_in; // all the streams except first are to be disposed.
+            m_in = (Stream *) m_streams.back();
+            m_line = (uint32) m_streamLines.back();
+            m_streamLines.popBack();
+            m_previousLine = m_line-1;
+            next_loop = true;
+            continue;
+         }
       }
 
       m_character++;
@@ -446,6 +467,12 @@ int SrcLexer::lex_normal()
                if ( token != 0 )
                {
                   return token;
+               }
+               // internally parsed?
+               else if ( m_string.size() == 0 ) {
+                  // reset
+                  m_state = e_line;
+                  continue;
                }
 
                // see if we have named constants
@@ -938,7 +965,9 @@ int SrcLexer::lex_normal()
       }
    }
 
-   checkContexts();
+   if ( ! m_incremental )
+      checkContexts();
+
    return 0;
 }
 
@@ -1003,8 +1032,14 @@ int SrcLexer::state_line( uint32 chr )
             m_in->discardReadAhead( 2 );
          }
       }
+      else if ( nextChr == '\\' )
+      {
+         m_in->discardReadAhead( 1 );
+         parseMacroCall();
+      }
       else if ( nextChr == '[' )
       {
+         int startline = m_line;
          m_in->discardReadAhead( 1 );
          // create meta data up to \]
          String temp;
@@ -1026,6 +1061,7 @@ int SrcLexer::state_line( uint32 chr )
                      break;
 
                   temp.append( '\\' );
+                  waiting = false;
                }
 
                if ( chr == '\n' )
@@ -1040,7 +1076,8 @@ int SrcLexer::state_line( uint32 chr )
             }
          }
 
-         m_compiler->metaCompile( temp );
+         temp.append( '\n' );
+         m_compiler->metaCompile( temp, startline );
       }
    }
    else if ( chr < 0x20 )
@@ -1387,6 +1424,12 @@ int SrcLexer::checkLimitedTokens()
             return WHILE;
          if ( m_string == "false" )
             return FALSE_TOKEN;
+         if( m_string == "macro" )
+         {
+            m_string.size(0);
+            parseMacro();
+            return 0;
+         }
       break;
 
       case 6:
@@ -1494,6 +1537,186 @@ void SrcLexer::appendStream( Stream *s )
 {
    m_in = s;
    m_streams.pushBack( s );
+   m_streamLines.pushBack( (uint32) m_line );
+}
+
+
+void SrcLexer::parseMacro()
+{
+   // macros are in the form
+   // macro decl( params ) (content)
+   // they must be passed to the compiler as
+   // function decl( params ); > content; end
+
+   int startline = m_line;
+
+   typedef enum {
+      s_decl,
+      s_params,
+      s_endparams,
+      s_content,
+      s_done
+   } macro_state;
+
+   macro_state state = s_decl;
+   String sDecl;
+   String sContent;
+   uint32 ctx;
+
+   uint32 chr;
+   while( state != s_done && m_in->get( chr ) )
+   {
+      if ( chr == '\n' ) {
+         m_previousLine = m_line;
+         m_line++;
+      }
+
+      switch(state) {
+         case s_decl:
+            if ( chr == '(' )
+               state = s_params;
+            sDecl += chr;
+            break;
+
+         case s_params:
+            if ( chr == ')' )
+               state = s_endparams;
+            sDecl += chr;
+            break;
+
+         case s_endparams:
+            if ( chr == '(' )
+            {
+               state = s_content;
+               ctx = 1;
+            }
+            break;
+
+         case s_content:
+            if ( chr == '(' )
+               ctx++;
+            else if( chr == ')' )
+            {
+               ctx--;
+               if ( ctx == 0 )
+               {
+                  state = s_done;
+                  // last ) must not be included
+                  break;
+               }
+            }
+
+            sContent += chr;
+            break;
+      }
+   }
+   // if we're done, pass the thing to the compiler for metacompilation
+   if ( s_done )
+   {
+      // escape \ and "
+      String sContEsc;
+      sContent.escape( sContEsc );
+
+      String sFunc = "function " + sDecl + "\n>>@\"" + sContEsc + "\"\nend\n";
+      m_compiler->metaCompile( sFunc, startline );
+   }
+   else {
+      // raise an error.
+      m_compiler->raiseError( e_syn_macro, sDecl, startline );
+   }
+}
+
+void SrcLexer::parseMacroCall()
+{
+   // macros are in the form
+   // \\decl( param1, param2 )
+   // they must be passed to the compiler as
+   // decl( "param1", param2 )
+
+   int startline = m_line;
+
+   typedef enum {
+      s_decl,
+      s_params,
+      s_done
+   } macro_state;
+
+   macro_state state = s_decl;
+   String sDecl;
+   String sParam;
+   String sFinal;
+   uint32 ctx;
+
+   uint32 chr;
+   while( state != s_done && m_in->get( chr ) )
+   {
+      if ( chr == '\n' ) {
+         m_previousLine = m_line;
+         m_line++;
+      }
+
+      switch(state) {
+         case s_decl:
+            if ( chr == '(' )
+            {
+               state = s_params;
+               ctx = 1;
+            }
+            sFinal += chr;
+            sDecl += chr;
+            break;
+
+         case s_params:
+            if ( chr == '(' )
+            {
+               ctx++;
+               sParam += chr;
+            }
+            else if ( chr == ')' )
+            {
+               ctx--;
+               if ( ctx == 0 )
+               {
+                  state = s_done;
+                  if ( sParam.size() > 0 )
+                  {
+                     String temp;
+                     sParam.escape( temp );
+                     sFinal += '"';
+                     sFinal += sParam;
+                     sFinal += '"';
+                  }
+
+                  sFinal += chr;
+                  break;
+               }
+               else
+                  sParam += chr;
+            }
+            else if( chr == ',' && ctx == 1 )
+            {
+               String temp;
+               sParam.escape( temp );
+               sFinal += '"';
+               sFinal += sParam;
+               sFinal += '"';
+               sFinal += ',';
+               sParam.size(0);
+            }
+            else
+               sParam += chr;
+            break;
+      }
+   }
+   // if we're done, pass the thing to the compiler for metacompilation
+   if ( s_done )
+   {
+      m_compiler->metaCompile( sFinal+"\n", startline );
+   }
+   else {
+      // raise an error.
+      m_compiler->raiseError( e_syn_macro_call, sDecl, startline );
+   }
 }
 
 }

@@ -55,7 +55,9 @@ Compiler::Compiler( Module *mod, Stream* in ):
    m_lexer(0),
    m_root(0),
    m_bParsingFtd(false),
-   m_metacomp( 0 )
+   m_metacomp( 0 ),
+   m_serviceVM( 0 ),
+   m_serviceLoader( 0 )
 {
    // Initializing now prevents adding predefined constants to the module.
    init();
@@ -85,7 +87,9 @@ Compiler::Compiler():
    m_root(0),
    m_lambdaCount(0),
    m_bParsingFtd(false),
-   m_metacomp(0)
+   m_metacomp(0),
+   m_serviceVM( 0 ),
+   m_serviceLoader( 0 )
 {
    init();
 }
@@ -138,12 +142,12 @@ void Compiler::reset()
    }
 
    // reset contants
-   MapIterator iter = m_constants.begin();
+   /*MapIterator iter = m_constants.begin();
    while( iter.hasCurrent() ) {
       delete *(Value **) iter.currentValue();
       iter.next();
-   }
-   m_constants.clear();
+   }*/
+   //m_constants.clear();
    m_namespaces.clear();
 
    m_alias.clear();
@@ -153,7 +157,7 @@ void Compiler::reset()
    m_loops.clear();
    m_statementVals.clear();
 
-   addPredefs();
+   //addPredefs();
 
    m_errors = 0;
    m_enumId = 0;
@@ -169,6 +173,12 @@ void Compiler::reset()
 
 void Compiler::clear()
 {
+   if ( m_metacomp == 0 )
+   {
+      delete m_serviceVM;
+      delete m_serviceLoader;
+   }
+
    delete m_root;
    delete m_lexer;
    delete m_metacomp;
@@ -768,7 +778,14 @@ void Compiler::addNilConstant( const String &name, uint32 line )
 
 void Compiler::addStringConstant( const String &name, const String &value, uint32 line )
 {
-   addConstant( name, new Value( m_module->addString( value ) ), line );
+   if ( m_module != 0 )
+      addConstant( name, new Value( m_module->addString( value ) ), line );
+   else {
+      // we'll leak, but oh, well...
+      //TODO: fix the leak
+      addConstant( name, new Value( new String( value ) ), line );
+   }
+
 }
 
 void Compiler::addNumConstant( const String &name, numeric value, uint32 line )
@@ -1182,20 +1199,49 @@ void Compiler::importSymbols( List *lst, const String *prefix, const String *ali
    delete lst;
 }
 
-void Compiler::metaCompile( const String &data )
+void Compiler::metaCompile( const String &data, int startline )
 {
    // evantually turn on the meta-compiler
    if ( m_metacomp == 0 )
    {
-      VMachine *vm = new VMachine;
+      VMachine *vm;
+
+      if ( m_serviceVM == 0 )
+      {
+         vm = new VMachine;
+         vm->link( core_module_init() );
+      }
+      else {
+         vm = m_serviceVM;
+      }
+
+      ModuleLoader *modloader = m_serviceLoader == 0 ? new FlcLoader( "." ) : m_serviceLoader;
+
       vm->stdOut( new StringStream );
-      vm->link( core_module_init() );
-      m_metacomp = new InteractiveCompiler( new FlcLoader( "." ), vm );
+      m_metacomp = new InteractiveCompiler( modloader, vm );
       m_metacomp->errorHandler( errorHandler() );
       // not incremental...
       m_metacomp->lexer()->incremental( false );
+      // do not confuse our user...
+      m_metacomp->module()->path( module()->path() );
+      m_metacomp->module()->name( "[meta] " + module()->name() );
+
+      // transfer the constants.
+      MapIterator iter = m_constants.begin();
+      while( iter.hasCurrent() ) {
+         if ( m_metacomp->m_constants.find( iter.currentKey() ) == 0 )
+         {
+            m_metacomp->addConstant(
+               *(String *)iter.currentKey(),
+               new Value( **(Value **) iter.currentValue()) );
+         }
+         iter.next();
+      }
+
    }
 
+   // set current line in lexer of the meta compiler
+   m_metacomp->tempLine( startline );
    InteractiveCompiler::t_ret_type ret = m_metacomp->compileAll( data );
 
    if ( ret == InteractiveCompiler::e_error || ret ==  InteractiveCompiler::e_vm_error )
