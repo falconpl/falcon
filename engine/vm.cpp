@@ -635,6 +635,10 @@ bool VMachine::linkSymbol( Symbol *sym, LiveModule *livemod )
          }
       }
       break;
+
+      // nil when we don't know what it is.
+      default:
+         globs->itemAt( sym->itemId() ).setNil();
    }
 
    // see if the symbol needs exportation and eventually do that.

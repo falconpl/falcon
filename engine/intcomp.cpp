@@ -91,23 +91,20 @@ InteractiveCompiler::t_ret_type InteractiveCompiler::compileNext( Stream *input 
    m_vm->errorHandler( errorHandler() );
 
    // reset if last code was executed.
-   //if ( m_contextSet.size() == 1 )
-   {
-      m_contextSet.clear();
-      m_context.clear();
-      m_loops.clear();
-      m_functions.clear();
-      m_func_ctx.clear();
+   m_contextSet.clear();
+   m_context.clear();
+   m_loops.clear();
+   m_functions.clear();
+   m_func_ctx.clear();
 
-      delete m_root;
-      m_root = new SourceTree;
-      pushContextSet( &m_root->statements() );
+   delete m_root;
+   m_root = new SourceTree;
+   pushContextSet( &m_root->statements() );
 
-      // and an empty list for the local function undefined values
-      m_statementVals.clear();
-      List *l = new List;
-      m_statementVals.pushBack( l );
-   }
+   // and an empty list for the local function undefined values
+   m_statementVals.clear();
+   List *l = new List;
+   m_statementVals.pushBack( l );
 
    // reset compilation
    m_enumId = 0;
@@ -135,7 +132,7 @@ InteractiveCompiler::t_ret_type InteractiveCompiler::compileNext( Stream *input 
    m_module->version( (uint32) m_modVersion );
 
    // faulty compilation in incremental steps?
-   if( m_errors != 0 || m_contextSet.size() != 1 || m_lexer->hasOpenContexts() )
+   if( m_errors != 0 || ( !m_context.empty() || m_contextSet.size() != 1 ) || m_lexer->hasOpenContexts() )
    {
       // unroll changes to the module.
       for (uint32 pos = modSymSize; pos < m_module->symbols().size(); pos ++ )
@@ -174,7 +171,7 @@ InteractiveCompiler::t_ret_type InteractiveCompiler::compileNext( Stream *input 
 
    // If the context is not empty, then we have a partial data.
    // more is needed
-   if ( m_contextSet.size() != 1 ) {
+   if ( !m_context.empty() || m_contextSet.size() != 1 ) {
       return e_more;
    }
 
@@ -271,7 +268,10 @@ InteractiveCompiler::t_ret_type InteractiveCompiler::compileNext( Stream *input 
       Symbol *sym = *(Symbol **) iter.currentValue();
       // try to link undefined symbols.
 
-      if ( sym->isUndefined() && m_lmodule->globals().itemAt( sym->itemId() ).isNil() )
+      if ( sym->isUndefined() && 
+         (m_lmodule->globals().size() <= sym->itemId() || 
+          m_lmodule->globals().itemAt( sym->itemId() ).isNil() )
+          )
       {
          if ( ! m_vm->linkSymbol( sym, m_lmodule ) )
          {
