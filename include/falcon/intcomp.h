@@ -41,7 +41,7 @@ class ModuleLoader;
    will create a standard VM on its own (which can be configured at a later
    moment.
 */
-class InteractiveCompiler: public Compiler
+class FALCON_DYN_CLASS InteractiveCompiler: public Compiler
 {
    VMachine *m_vm;
    LiveModule *m_lmodule;
