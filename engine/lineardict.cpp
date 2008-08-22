@@ -228,7 +228,7 @@ void LinearDict::last( DictIterator &iter )
 
 
 
-Item *LinearDict::find( const Item &key )
+Item *LinearDict::find( const Item &key ) const
 {
    uint32 posHint;
 

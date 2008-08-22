@@ -56,7 +56,7 @@ public:
    //
 
    virtual uint32 length() const =0;
-   virtual Item *find( const Item &key ) = 0;
+   virtual Item *find( const Item &key ) const = 0;
    virtual bool find( const Item &key, DictIterator &iter ) = 0;
    virtual DictIterator *findIterator( const Item &key ) = 0;
 

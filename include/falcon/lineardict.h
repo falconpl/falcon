@@ -111,7 +111,7 @@ public:
    ~LinearDict();
 
    virtual uint32 length() const;
-   virtual Item *find( const Item &key );
+   virtual Item *find( const Item &key ) const;
    virtual bool find( const Item &key, DictIterator &iter );
    virtual DictIterator *findIterator( const Item &key );
 

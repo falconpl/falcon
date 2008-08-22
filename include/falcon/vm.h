@@ -296,6 +296,8 @@ protected:
    Item m_regL1;
    Item m_regL2;
 
+   Item m_regBind;
+
    /** Space for immediate operands. */
    Item m_imm[4];
 
@@ -2153,6 +2155,54 @@ public:
       as soon as they are linked in the vm, or false otherwise.
    */
    bool launchAtLink() const { return m_launchAtLink; }
+
+   /** Set current binding context.
+      The current binding context is a dictionary containing
+      a set of bound symbols and their value (referenced).
+
+      Binding context is NOT GC masked, so it must exist
+      elsewhere (i.e. in a live dictionary).
+
+      The binding context is automatically removed at
+      frame return.
+   */
+   void setBindingContext( CoreDict *ctx ) { m_regBind = ctx; }
+
+   /** Return the value associated with a binding symbol.
+
+      This function searches the given binding symbol name
+      in the current binding context and in all the
+      visible contexts (?).
+
+      If the function returns 0, the symbol is unbound.
+      \param bind The binding symbol name.
+      \return A valid non-dereferenced binding value or 0 if the symbol is unbound.
+   */
+   Item *getBinding( const String &bind ) const;
+
+   /** Return the value associated with a binding symbol, or creates one if not found.
+
+      This function searches the given binding symbol name
+      in the current binding context and in all the
+      visible contexts (?). If the symbol is not found,
+      it is created in the innermost visible context.
+
+      If the function returns 0, then there is no visible context.
+      \param bind The binding symbol name.
+      \return A valid non-dereferenced binding value or 0 if there is no visible context.
+   */
+   Item *getSafeBinding( const String &bind );
+
+   /** Set a binding value.
+
+      This function sets a binding value in the current context.
+      If a binding context has not been set, the function returns false.
+      \param bind The binding symbol name.
+      \param value The value to associate to this binding.
+   */
+   bool setBinding( const String &bind, const Item &value );
+
+
 //==========================================================================
 //==========================================================================
 //==========================================================================

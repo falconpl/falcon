@@ -29,6 +29,7 @@
 namespace Falcon {
 
 class Item;
+class Bindings;
 
 /** Core array (or array of items).
 
@@ -43,6 +44,7 @@ class FALCON_DYN_CLASS CoreArray: public Garbageable
    uint32 m_alloc;
    uint32 m_size;
    Item *m_data;
+   CoreDict *m_bindings;
 
    CoreArray( VMachine *vm, Item *buffer, uint32 size, uint32 alloc );
 
@@ -79,6 +81,10 @@ public:
 
    void resize( uint32 size );
    void reserve( uint32 size );
+
+   /** Create the bindings for this array, or get those already created. */
+   CoreDict *makeBindings();
+   CoreDict *bindings() const { return m_bindings; }
 
    /** Checks the position to be in the array, and eventually changes it if it's negative.
       \param pos the position to be checked and eventually turned into a positive value.

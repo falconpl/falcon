@@ -1592,17 +1592,12 @@ bool VMachine::callItem( const Item &callable, int32 paramCount, e_callMode call
             if ( carr.isFbom() || carr.isFunction() ||
                carr.isMethod() || carr.isClass() )
             {
+               // ok, it's a callable array. See if we can set the binding context.
+               if ( ! m_regBind.isDict() )
+                  m_regBind = arr->makeBindings();
+
                uint32 arraySize = arr->length();
                uint32 sizeNow = m_stack->size();
-
-               // prevent calling too wide arrays.
-               if ( paramCount + arraySize > 254 )
-               {
-                  raiseError( e_too_params, "CALL" );
-                  if ( paramCount != 0 )
-                     m_stack->resize( sizeNow - paramCount );
-                  return false;
-               }
 
                // move parameters beyond array parameters
                arraySize -- ; // first element is the callable item.
@@ -1620,7 +1615,11 @@ bool VMachine::callItem( const Item &callable, int32 paramCount, e_callMode call
                   // push array paramers
                   for ( uint32 i = 0; i < arraySize; i ++ )
                   {
-                     m_stack->itemAt( i + sizeNow ) = (*arr)[i + 1];
+                     Item &itm = (*arr)[i + 1];
+                     if( itm.isLBind() )
+                        m_stack->itemAt( i + sizeNow ) = *getSafeBinding( *itm.asLBind() );
+                     else
+                        m_stack->itemAt( i + sizeNow ) = itm;
                   }
                }
 
@@ -1669,6 +1668,7 @@ bool VMachine::callItem( const Item &callable, int32 paramCount, e_callMode call
    frame->m_try_base = m_tryFrame;
    frame->m_break = false;
    frame->m_suspend = false;
+   frame->m_binding = m_regBind;
 
    // iterative processing support
    frame->m_endFrameFunc = 0;
@@ -2188,6 +2188,7 @@ void VMachine::callReturn()
       }
    }
 
+   m_regBind = frame.m_binding;
    // fix the self and sender
    if ( ! frame.m_initFrame ) {
       m_regS1 = m_regS2;
@@ -3344,68 +3345,90 @@ static bool vm_func_eval( VMachine *vm )
 bool VMachine::functionalEval( const Item &itm )
 {
    // An array
-   if ( itm.isArray() )
+   switch( itm.type() )
    {
-      createFrame(0);
-
-      CoreArray *arr = itm.asArray();
-
-      // great. Then recursively evaluate the parameters.
-      uint32 count = arr->length();
-      if ( count > 0 )
+      case FLC_ITEM_ARRAY:
       {
-         // if the first element is an ETA function, just call it as frame and return.
-         if ( (*arr)[0].isFunction() && (*arr)[0].asFunction()->isEta() )
-         {
-            callFrame( arr, 0 );
-            return true;
-         }
+         createFrame(0);
 
-         // create two locals; we may need it
-         addLocals( 2 );
-         // time to install our handleres
-         returnHandler( vm_func_eval );
-         *local(0) = itm;
-         *local(1) = (int64)0;
+         CoreArray *arr = itm.asArray();
 
-         for ( uint32 l = 0; l < count; l ++ )
+         // great. Then recursively evaluate the parameters.
+         uint32 count = arr->length();
+         if ( count > 0 )
          {
-            const Item &citem = (*arr)[l];
-            *local(1) = (int64)l+1;
-            if ( functionalEval( citem ) )
+            // if the first element is an ETA function, just call it as frame and return.
+            if ( (*arr)[0].isFunction() && (*arr)[0].asFunction()->isEta() )
             {
+               callFrame( arr, 0 );
                return true;
             }
 
-            pushParameter( m_regA );
-         }
-         // we got nowere to go
-         returnHandler( 0 );
+            // create two locals; we may need it
+            addLocals( 2 );
+            // time to install our handleres
+            returnHandler( vm_func_eval );
+            *local(0) = itm;
+            *local(1) = (int64)0;
 
-         // is there anything to call? -- is the first element an atom?
-         // local 2 is the first element we have pushed
-         if( local(2)->isCallable() )
+            for ( uint32 l = 0; l < count; l ++ )
+            {
+               const Item &citem = (*arr)[l];
+               *local(1) = (int64)l+1;
+               if ( functionalEval( citem ) )
+               {
+                  return true;
+               }
+
+               pushParameter( m_regA );
+            }
+            // we got nowere to go
+            returnHandler( 0 );
+
+            // is there anything to call? -- is the first element an atom?
+            // local 2 is the first element we have pushed
+            if( local(2)->isCallable() )
+            {
+               callFrame( *local(2), count-1 );
+               return true;
+            }
+         }
+
+         // if the first element is not callable, generate an array
+         CoreArray *array = new CoreArray( this, count );
+         Item *data = array->elements();
+         int32 base = m_stack->size() - count;
+
+         for ( uint32 i = 0; i < count; i++ ) {
+            data[ i ] = m_stack->itemAt(i + base);
+         }
+         array->length( count );
+         m_regA = array;
+         callReturn();
+      }
+      break;
+
+      case FLC_ITEM_LBIND:
+         if ( m_regBind.isDict() )
          {
-            callFrame( *local(2), count-1 );
-            return true;
+            Item *bind = getBinding( *itm.asLBind() );
+            if ( bind == 0 )
+            {
+               m_regA.setReference( new GarbageItem( this, Item() ) );
+               setBinding( *itm.asLBind(), m_regA );
+            }
+            else {
+               fassert( bind->isReference() );
+               m_regA = *bind;
+            }
          }
-      }
+         else
+            m_regA.setNil();
 
-      // if the first element is not callable, generate an array
-      CoreArray *array = new CoreArray( this, count );
-      Item *data = array->elements();
-      int32 base = m_stack->size() - count;
+         break;
 
-      for ( uint32 i = 0; i < count; i++ ) {
-         data[ i ] = m_stack->itemAt(i + base);
-      }
-      array->length( count );
-      m_regA = array;
-      callReturn();
-   }
-   else
-   {
-      m_regA = itm;
+      default:
+         m_regA = itm;
    }
 
    return false;
@@ -3545,6 +3568,40 @@ bool VMachine::interrupted( bool raise, bool reset, bool dontCheck )
    }
 
    return false;
+}
+
+Item *VMachine::getBinding( const String &bind ) const
+{
+   if ( ! m_regBind.isDict() )
+      return 0;
+
+   return m_regBind.asDict()->find( Item(const_cast<String *>(&bind)) );
+}
+
+Item *VMachine::getSafeBinding( const String &bind )
+{
+   if ( ! m_regBind.isDict() )
+      return 0;
+
+   Item *found = m_regBind.asDict()->find( Item(const_cast<String *>(&bind)) );
+   if ( found == 0 )
+   {
+      m_regBind.asDict()->insert( new GarbageString(this, bind), Item() );
+      found = m_regBind.asDict()->find( Item(const_cast<String *>(&bind)) );
+      found->setReference( new GarbageItem( this, Item() ) );
+   }
+
+   return found;
+}
+
+
+bool VMachine::setBinding( const String &bind, const Item &value )
+{
+   if ( ! m_regBind.isDict() )
+      return false;
+
+   m_regBind.asDict()->insert( new GarbageString(this, bind), value );
+   return true;
 }
 
 

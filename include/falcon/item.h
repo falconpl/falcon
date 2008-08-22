@@ -169,10 +169,6 @@ public:
    }
 
    /** Creates a boolean item. */
-   explicit Item( bool tof )
-   {
-      setBoolean( tof );
-   }
 
    /** Sets this item as boolean */
    void setBoolean( bool tof )

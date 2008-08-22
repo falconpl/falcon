@@ -330,6 +330,10 @@ void MemPool::markItem( Item &item )
             for( uint32 pos = 0; pos < array->length(); pos++ ) {
                markItemFast( array->at( pos ) );
             }
+
+            // mark also the bindings
+            if ( array->bindings() != 0 )
+               array->bindings()->mark( currentMark() );
          }
       }
       break;

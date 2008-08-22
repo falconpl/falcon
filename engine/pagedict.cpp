@@ -184,7 +184,7 @@ void PageDict::last( DictIterator &iter )
    ptr->m_versionNumber = version();
 }
 
-Item *PageDict::find( const Item &key )
+Item *PageDict::find( const Item &key ) const
 {
    return (Item *) m_map.find( &key );
 }

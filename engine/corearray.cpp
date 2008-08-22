@@ -22,6 +22,7 @@
 #include <falcon/memory.h>
 #include <falcon/vm.h>
 #include <string.h>
+#include <falcon/lineardict.h>
 
 namespace Falcon {
 
@@ -29,12 +30,14 @@ CoreArray::CoreArray( VMachine *vm ):
    m_alloc(0),
    m_size(0),
    m_data(0),
+   m_bindings(0),
    Garbageable( vm, sizeof( CoreArray ) )
 {}
 
 
 CoreArray::CoreArray( VMachine *vm, uint32 prealloc ):
-   Garbageable( vm, esize(prealloc) + sizeof(CoreArray) )
+   Garbageable( vm, esize(prealloc) + sizeof(CoreArray) ),
+   m_bindings(0)
 {
    m_data = (Item *) memAlloc( esize(prealloc) );
    m_alloc = prealloc;
@@ -42,7 +45,8 @@ CoreArray::CoreArray( VMachine *vm, uint32 prealloc ):
 }
 
 CoreArray::CoreArray( VMachine *vm, Item *buffer, uint32 size, uint32 alloc ):
-   Garbageable( vm, esize(alloc) + sizeof(CoreArray) )
+   Garbageable( vm, esize(alloc) + sizeof(CoreArray) ),
+   m_bindings(0)
 {
    m_data = buffer;
    m_alloc = alloc;
@@ -364,7 +368,11 @@ CoreArray *CoreArray::clone() const
 {
    Item *buffer = (Item *) memAlloc( esize( m_size ) );
    memcpy( buffer, m_data, esize( m_size )  );
-   return new CoreArray( origin(), buffer, m_size, m_size );
+   CoreArray *ca = new CoreArray( origin(), buffer, m_size, m_size );
+   if ( m_bindings != 0 )
+   {
+      ca->m_bindings = m_bindings->clone();
+   }
 }
 
 
@@ -392,6 +400,13 @@ void CoreArray::reserve( uint32 size ) {
       m_alloc = size;
       updateAllocSize( esize( m_alloc ) + sizeof( CoreArray ) );
    }
+}
+
+CoreDict *CoreArray::makeBindings()
+{
+   if ( m_bindings == 0 )
+      return new LinearDict( origin() );
+   return m_bindings;
 }
 
 }

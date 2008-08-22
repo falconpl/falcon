@@ -47,6 +47,7 @@ class FALCON_DYN_CLASS VMContext: public BaseAlloc
    Item m_regS2;
    Item m_regL1;
    Item m_regL2;
+   Item m_regBind;
 
    ItemVector *m_stack;
    uint32 m_stackBase;
