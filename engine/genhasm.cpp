@@ -1580,6 +1580,10 @@ void GenHAsm::gen_operand( const Value *stmt )
       }
       break;
 
+      case Value::t_lbind:
+         m_out->writeString( "&"+ *stmt->asLBind() );
+      break;
+
       case Value::t_imm_bool:
          m_out->writeString( stmt->asBool() ? "T" : "F" );
       break;

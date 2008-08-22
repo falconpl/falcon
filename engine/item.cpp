@@ -83,6 +83,9 @@ bool Item::internal_is_equal( const Item &other ) const
       case FLC_ITEM_STRING:
          return *asString() == *other.asString();
 
+      case FLC_ITEM_LBIND:
+         return asLBind() != 0 && other.asLBind() != 0 && *asLBind() == *other.asLBind();
+
       case FLC_ITEM_ARRAY:
          // for now, just compare the pointers.
          return asArray() == other.asArray();
@@ -154,6 +157,7 @@ bool Item::isTrue() const
       case FLC_ITEM_FBOM:
       case FLC_ITEM_ATTRIBUTE:
       case FLC_ITEM_MEMBUF:
+      case FLC_ITEM_LBIND:
          // methods are always filled, so they are always true.
          return true;
    }
@@ -300,6 +304,11 @@ int Item::internal_compare( const Item &other ) const
 
       case FLC_ITEM_STRING:
          return asString()->compare( *other.asString() );
+
+      case FLC_ITEM_LBIND:
+         if ( asLBind() == 0 ) return -1;
+         if ( other.asLBind() == 0 ) return 1;
+         return asLBind()->compare( *other.asLBind() );
 
       case FLC_ITEM_RANGE:
          if ( asRangeStart() < other.asRangeStart() ) return -1;
@@ -463,6 +472,13 @@ void Item::toString( String &target ) const
 
       case FLC_ITEM_STRING:
          target = *asString();
+      break;
+
+      case FLC_ITEM_LBIND:
+         if ( asLBind() == 0 )
+            target = "Nil";
+         else
+            target = "&" + *asLBind();
       break;
 
       case FLC_ITEM_REFERENCE:
@@ -664,6 +680,39 @@ bool Item::isCallable() const
 
    // in all the other cases, the item is not callable
    return false;
+}
+
+bool Item::isLBind() const
+{
+   if ( type() == FLC_ITEM_LBIND )
+   {
+      if ( m_data.ptr.m_liveMod->module() == 0 )
+      {
+         const_cast< Item*>(this)->setNil();
+         return false;
+      }
+
+      return true;
+   }
+
+   return false;
+}
+
+const String *Item::asLBind() const
+{
+   if ( type() == FLC_ITEM_LBIND )
+   {
+      LiveModule *lmod = m_data.ptr.m_liveMod;
+      if ( lmod->module() == 0 )
+      {
+         const_cast< Item*>(this)->setNil();
+         return 0;
+      }
+
+      return lmod->module()->getString( (uint32) m_data.num.val1 );
+   }
+
+   return 0;
 }
 
 }

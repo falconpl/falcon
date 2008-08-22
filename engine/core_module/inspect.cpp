@@ -25,7 +25,7 @@
 #include <falcon/membuf.h>
 
 /*#
-   
+
 */
 
 namespace Falcon {
@@ -100,6 +100,16 @@ void inspect_internal( VMachine *vm, bool isShort, const Item *elem, int32 level
          stream->writeString( "\"" );
          stream->writeString( *elem->asString() );
          stream->writeString( "\"" );
+      break;
+
+      case FLC_ITEM_LBIND:
+         if ( elem->asLBind() != 0 )
+         {
+            stream->writeString( "&" );
+            stream->writeString( *elem->asLBind() );
+         }
+         else
+            stream->writeString( "Nil" );
       break;
 
       case FLC_ITEM_ATTRIBUTE:

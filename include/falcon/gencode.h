@@ -41,6 +41,7 @@ class FALCON_DYN_CLASS GenCode: public Generator
       e_parS2,
       e_parL1,
       e_parL2,
+      e_parLBIND,
       e_parTRUE,
       e_parFALSE,
       e_parNTD32,

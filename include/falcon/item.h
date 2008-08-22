@@ -204,7 +204,7 @@ public:
    {
       setInteger( (int64) val );
    }
-   
+
 
    /** Creates an integer item */
    Item( int64 val )
@@ -340,6 +340,34 @@ public:
       m_data.ptr.voidp = sym;
       m_data.ptr.m_liveMod = lmod;
    }
+
+   /** Creates a late binding item.
+      The late binding is just a string in a live module which is
+      resolved into a value by referencing a item in the current
+      context (symbol tables) having the given name at runtime.
+
+      Thus, the string representing the late binding symbol name
+      lives in the live module that generated this LBind. If
+      the module is unloaded, the LBind is invalidated.
+   */
+   void setLBind( LiveModule *lmod, uint32 strId )
+   {
+      type( FLC_ITEM_LBIND );
+      m_data.num.val1 = (uint32) strId;
+      m_data.ptr.m_liveMod = lmod;
+   }
+
+   /** Returns true if this item is a valid LBind.
+      Although this function is marked const, the item may suddenly become NIL
+      if the binding resides in a module which is not living anymore.
+   */
+   bool isLBind() const;
+
+   /** Return the binding name associate with this LBind item.
+      May return 0 if this is not a LBind item or if the item
+      has become invalid in the meanwhile.
+   */
+   const String *asLBind() const;
 
    /** Creates a method.
       The method is able to remember if it was called with

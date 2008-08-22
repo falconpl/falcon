@@ -104,7 +104,7 @@ public:
       t_symdef,
       t_self,
       t_sender,
-      t_funcvar,  //!< Inner functional variable.
+      t_lbind,
 
       t_byref,
       t_array_decl,
@@ -251,7 +251,7 @@ public:
 
    bool isSimple() const {
       return isImmediate() ||
-             m_type == t_symbol || m_type == t_symdef ||
+             m_type == t_symbol || m_type == t_symdef || m_type == t_lbind ||
              m_type == t_self || m_type == t_sender;
    }
 
@@ -269,6 +269,7 @@ public:
    numeric asNumeric() const { return m_content.asNumeric; }
    String *asString() const { return m_content.asString; }
    String *asSymdef() const { return m_content.asString; }
+   String *asLBind() const { return m_content.asString; }
    Symbol *asSymbol() const { return m_content.asSymbol; }
 
    Value *asReference() const { return m_content.asRef; }
@@ -291,7 +292,7 @@ public:
    void setRange( RangeDecl *val ) { m_type = t_range_decl; m_content.asRange = val; }
    void setSelf() { m_type = t_self; }
    void setSender() { m_type = t_sender; }
-
+   void setLBind( String *val ) { m_type = t_lbind; m_content.asString = val; }
 
    bool isNil() const { return m_type == t_nil; }
    bool isBool() const { return m_type == t_imm_bool; }
@@ -307,6 +308,7 @@ public:
    bool isSelf() const { return m_type == t_self; }
    bool isSender() const { return m_type == t_sender; }
    bool isRange() const { return m_type == t_range_decl; }
+   bool isLBind() const { return m_type == t_lbind; }
 
    Value &operator =( const Value &other ) {
       copy( other );

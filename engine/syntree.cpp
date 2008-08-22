@@ -154,7 +154,12 @@ bool Value::isEqualByValue( const Value &other ) const
          break;
 
          case Value::t_imm_string:
-            if( asString() == other.asString() )
+            if( *asString() == *other.asString() )
+               return true;
+         break;
+
+         case Value::t_lbind:
+            if( *asLBind() == *other.asLBind() )
                return true;
          break;
 
@@ -203,6 +208,11 @@ bool Value::less( const Value &other ) const
                return true;
          break;
 
+         case Value::t_lbind:
+            if( *asLBind() < *other.asLBind() )
+               return true;
+         break;
+
          case Value::t_symbol:
             if( asSymbol()->id() < other.asSymbol()->id() )
                return true;
@@ -215,35 +225,7 @@ bool Value::less( const Value &other ) const
       }
    }
    else {
-      int typeval, other_typeval;
-
-      switch( type() )
-      {
-         case Value::t_nil: typeval = 0; break;
-         case Value::t_imm_integer: typeval = 1; break;
-         case Value::t_imm_num: typeval = 2; break;
-         case Value::t_range_decl: typeval = 3; break;
-         case Value::t_imm_string: typeval = 4; break;
-         case Value::t_symbol: typeval = 5; break;
-         case Value::t_symdef: typeval = 6; break;
-         default:
-            return false;
-      }
-
-      switch( other.type() )
-      {
-         case Value::t_nil: other_typeval = 0; break;
-         case Value::t_imm_integer: other_typeval = 1; break;
-         case Value::t_imm_num: other_typeval = 2; break;
-         case Value::t_range_decl: other_typeval = 3; break;
-         case Value::t_imm_string: other_typeval = 4; break;
-         case Value::t_symbol: other_typeval = 5; break;
-         case Value::t_symdef: other_typeval = 6; break;
-         default:
-            return false;
-      }
-
-      return typeval < other_typeval;
+      return ((uint32)type()) < ((uint32)other.type());
    }
 
    return false;

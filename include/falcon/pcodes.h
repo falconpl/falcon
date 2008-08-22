@@ -35,6 +35,7 @@ three bytes are the operator type an can be:
    - \b 07H - Variable ID in the local table
    - \b 08H - Variable ID in the parameter table
    - \b 09H - Reserved for external symbol load
+   - \b 0AH - a string ID representing a late binding
    - \b 0BH - True
    - \b 0CH - False
    - \b 0EH - 32 bit not to be decoded
@@ -79,6 +80,7 @@ while it will fill OP2 with an integer item containing 15H.
 #define P_PARAM_GLOBID  0x06
 #define P_PARAM_LOCID   0x07
 #define P_PARAM_PARID   0x08
+#define P_PARAM_LBIND   0x0A
 #define P_PARAM_TRUE    0x0B
 #define P_PARAM_FALSE   0x0C
 #define P_PARAM_NTD64   0x0F

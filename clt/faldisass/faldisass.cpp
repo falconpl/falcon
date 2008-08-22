@@ -156,6 +156,7 @@ void write_operand( Stream *output, byte *instruction, int opnum, Module *mod )
          case P_PARAM_LOCID:
          case P_PARAM_PARID:
          case P_PARAM_STRID:
+         case P_PARAM_LBIND:
             offset += 4;
          break;
 
@@ -201,6 +202,8 @@ void write_operand( Stream *output, byte *instruction, int opnum, Module *mod )
       case P_PARAM_NOTUSED: return;
 
       case P_PARAM_STRID: write_string( output, endianInt32(*((int32*) (instruction + offset ))), mod ); break;
+      case P_PARAM_LBIND: output->writeString( "$" + *mod->getString( endianInt32(*((int32*) (instruction + offset ))))); break;
+
       case P_PARAM_NUM:
          temp.writeNumber( endianNum( *((numeric*) (instruction + offset ) ) ));
          output->writeString(temp );
@@ -246,6 +249,7 @@ uint32 calc_next( byte *instruction )
          case P_PARAM_LOCID:
          case P_PARAM_PARID:
          case P_PARAM_STRID:
+         case P_PARAM_LBIND:
             offset += 4;
          break;
 

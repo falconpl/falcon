@@ -244,6 +244,16 @@ Item::e_sercode Item::serialize( Stream *file, bool bLive ) const
       }
       break;
 
+      case FLC_ITEM_LBIND:
+      {
+         byte type = FLC_ITEM_LBIND;
+         file->write((byte *) &type, 1 );
+         int32 id = endianInt32( m_data.num.val1 );
+         file->write( (byte*) &id, sizeof(id) );
+         m_data.ptr.m_liveMod->name().serialize( file );
+      }
+      break;
+
       case FLC_ITEM_MEMBUF:
       {
          byte type = FLC_ITEM_MEMBUF;
@@ -547,6 +557,21 @@ Item::e_sercode Item::deserialize( Stream *file, VMachine *vm )
             return sc_missclass;
 
          setAttribute( attrib );
+      }
+      break;
+
+      case FLC_ITEM_LBIND:
+      {
+         int32 id;
+         file->read( (byte*) &id, sizeof(id) );
+         String modName;
+         if ( ! modName.deserialize( file ) )
+            return file->bad() ? sc_ferror : sc_invformat;
+         LiveModule *lmod = vm->findModule( modName );
+         if ( lmod == 0 )
+            return sc_misssym;
+
+         setLBind( lmod, (uint32) endianInt32( id ) );
       }
       break;
 

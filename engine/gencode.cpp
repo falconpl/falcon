@@ -313,6 +313,13 @@ void GenCode::gen_operand( const Value *stmt )
       }
       break;
 
+      case Value::t_lbind:
+      {
+         uint32 strid = (uint32) endianInt32( stmt->asLBind()->id() );
+         m_outTemp->write( &strid, sizeof( strid ) );
+      }
+      break;
+
       case Value::t_imm_bool:
       case Value::t_self:
       case Value::t_sender:
@@ -342,6 +349,7 @@ byte GenCode::gen_pdef( const c_varpar &elem )
             case Value::t_imm_num: return P_PARAM_NUM;
             case Value::t_self: return P_PARAM_REGS1;
             case Value::t_sender: return P_PARAM_REGS2;
+            case Value::t_lbind: return P_PARAM_LBIND;
 
             case Value::t_symbol:
                if ( val->asSymbol()->isLocal() ) return P_PARAM_LOCID;
@@ -363,6 +371,7 @@ byte GenCode::gen_pdef( const c_varpar &elem )
             case VarDef::t_int: return P_PARAM_INT64;
             case VarDef::t_num: return P_PARAM_NUM;
             case VarDef::t_string: return P_PARAM_STRID;
+            case Value::t_lbind: return P_PARAM_LBIND;
             case VarDef::t_symbol:
                if ( vd->asSymbol()->isLocal() ) return P_PARAM_LOCID;
                if ( vd->asSymbol()->isParam() ) return P_PARAM_PARID;
@@ -392,6 +401,7 @@ byte GenCode::gen_pdef( const c_varpar &elem )
       case e_parL2: return P_PARAM_REGL2;
       case e_parS1: return P_PARAM_REGS1;
       case e_parS2: return P_PARAM_REGS2;
+      case e_parLBIND: return P_PARAM_LBIND;
       case e_parTRUE: return P_PARAM_TRUE;
       case e_parFALSE: return P_PARAM_FALSE;
       case e_parSTRID: return P_PARAM_STRID;

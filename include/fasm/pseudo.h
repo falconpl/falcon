@@ -57,6 +57,7 @@ public:
       imm_string,
       imm_range,
       tdispstring,
+      tlbind,
       tname,
       tsymbol,
       tswitch_list,

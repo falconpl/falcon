@@ -857,6 +857,7 @@ unsigned char AsmCompiler::paramDesc( Pseudo *op1 ) const
          case Pseudo::imm_int: return P_PARAM_INT64;
          case Pseudo::imm_double: return P_PARAM_NUM;
          case Pseudo::imm_string: return P_PARAM_STRID;
+         case Pseudo::tlbind: return P_PARAM_LBIND;
          case Pseudo::tsymbol:
             if ( isLocal( op1 ) ) return P_PARAM_LOCID;
             if ( isParam( op1 ) ) return P_PARAM_PARID;

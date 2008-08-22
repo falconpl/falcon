@@ -528,6 +528,13 @@ void GenTree::gen_value( const Value *val )
       }
       break;
 
+      case Value::t_lbind:
+      {
+
+         m_out->writeString( "&" + *val->asLBind() );
+      }
+      break;
+
       case Value::t_imm_num: {
          String numStr;
          numStr.writeNumber( val->asInteger() );

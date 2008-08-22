@@ -454,6 +454,25 @@ int AsmLexer::lex()
                   return SYMBOL;
                }
 
+               // Is this a late binding?
+               if ( m_string.getCharAt( 0 ) == '&' )
+               {
+                  if ( m_string.length() > 1 )
+                  {
+                     String symname( m_string, 1, m_string.length() );
+
+                     // return also if zero, as no one is gonna read it after an error.
+                     *VALUE = new Falcon::Pseudo( m_line,
+                        Falcon::Pseudo::tlbind,
+                        (Falcon::String *) m_compiler->addString(symname), false );
+                     return SYMBOL;
+                  }
+                  else {
+                     *VALUE = regA_Inst();
+                     return REG_A;
+                  }
+               }
+
                // else, it's a name
                if ( m_bDirective )
                {
