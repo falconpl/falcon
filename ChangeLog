@@ -25,6 +25,9 @@ Falcon (0.8.11)
   * major: Macro and Meta compilation added. The escapes \[ and \] perform meta
            compilation, and the macro keyword and \\ escapes are candy grammar
            for macro compilation.
+  * major: Added support for late binding.
+  * major: Added local/late binding in functional constructs.
+  * major: Added dynamic symbol resolution for arrays.
 
 Falcon (0.8.10)
   * minor: Now classes can be stored in object properties and called to get

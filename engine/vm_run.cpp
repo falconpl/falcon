@@ -1930,6 +1930,17 @@ void opcodeHandler_LDP( register VMachine *vm )
                return;
             }
          break;
+
+         case FLC_ITEM_ARRAY:
+         {
+            Item *found;
+            if( source->asArray()->bindings() != 0 &&
+                ( found = source->asArray()->bindings()->find( property ) ) != 0 )
+            {
+               vm->regA() = *found->dereference();
+               return;
+            }
+         }
       }
 
       // try to find a generic method
@@ -2682,6 +2693,14 @@ void opcodeHandler_STPS( register VMachine *vm )
             new AccessError( ErrorParam( e_prop_acc ).origin( e_orig_vm ) .
                extra( *method->asString() ) ) );
       }
+      else if ( target->isArray() )
+      {
+         CoreDict *bindings = target->asArray()->makeBindings();
+         Item temp;
+         vm->referenceItem( temp, item );
+         bindings->insert( *method, temp );
+         return;
+      }
    }
 
    vm->raiseRTError( new TypeError( ErrorParam( e_prop_acc ).extra("STPS").origin( e_orig_vm ) ) );
@@ -2898,55 +2917,66 @@ void opcodeHandler_STP( register VMachine *vm )
    Item *method = vm->getOpcodeParam( 2 )->dereference();
    Item *source = vm->getOpcodeParam( 3 )->dereference();
 
-   if ( method->isString() && target->isObject() )
+   if ( method->isString() )
    {
-      Item temp;
-
-      // Are we restoring an original item?
-      if( source->isMethod() && source->asMethodObject() == target->asObject() )
+      if ( target->isObject() )
       {
-         temp.setFunction( source->asMethodFunction(), source->asModule() );
-         source = &temp;
-      }
-      else if ( source->isString() && source->asString()->garbageable() )
-      {
-         GarbageString *gcs = new GarbageString( vm, *source->asString() );
-         source->setString( gcs );
-      }
+         Item temp;
 
-      if( target->asObject()->setProperty( *method->asString(), *source ) )
-            return;
-
-      vm->raiseRTError(
-         new AccessError( ErrorParam( e_prop_acc ).origin( e_orig_vm ) .
-            extra( *method->asString() ) ) );
-
-      return;
-   }
-   else if ( target->isClass() )
-   {
-      // is the target property a static property -- it must be a reference.
-      PropertyTable &pt = target->asClass()->properties();
-      uint32 propId;
-      if ( pt.findKey( *method->asString(), propId ) )
-      {
-         Item *prop = pt.getValue( propId );
-         if ( prop->isReference() )
+         // Are we restoring an original item?
+         if( source->isMethod() && source->asMethodObject() == target->asObject() )
          {
-            if ( source->isString() )
+            temp.setFunction( source->asMethodFunction(), source->asModule() );
+            source = &temp;
+         }
+         else if ( source->isString() && source->asString()->garbageable() )
+         {
+            GarbageString *gcs = new GarbageString( vm, *source->asString() );
+            source->setString( gcs );
+         }
+
+         if( target->asObject()->setProperty( *method->asString(), *source ) )
+               return;
+
+         vm->raiseRTError(
+            new AccessError( ErrorParam( e_prop_acc ).origin( e_orig_vm ) .
+               extra( *method->asString() ) ) );
+
+         return;
+      }
+      else if ( target->isClass() )
+      {
+         // is the target property a static property -- it must be a reference.
+         PropertyTable &pt = target->asClass()->properties();
+         uint32 propId;
+         if ( pt.findKey( *method->asString(), propId ) )
+         {
+            Item *prop = pt.getValue( propId );
+            if ( prop->isReference() )
             {
-               GarbageString *gcs = new GarbageString( vm, *source->asString() );
-               source->setString( gcs );
+               if ( source->isString() )
+               {
+                  GarbageString *gcs = new GarbageString( vm, *source->asString() );
+                  source->setString( gcs );
+               }
+               *prop->dereference() = *source;
+               return;
             }
-            *prop->dereference() = *source;
-            return;
+            else {
+               vm->raiseRTError(
+                  new AccessError( ErrorParam( e_prop_ro ).origin( e_orig_vm ) .
+                     extra( *method->asString() ) ) );
+               return;
+            }
          }
-         else {
-            vm->raiseRTError(
-               new AccessError( ErrorParam( e_prop_ro ).origin( e_orig_vm ) .
-                  extra( *method->asString() ) ) );
-            return;
-         }
+      }
+      else if ( target->isArray() )
+      {
+         CoreDict *bindings = target->asArray()->makeBindings();
+         Item temp;
+         vm->referenceItem( temp, *source );
+         bindings->insert( *method, temp );
+         return;
       }
 
       vm->raiseRTError(
@@ -3111,6 +3141,14 @@ void opcodeHandler_STPR( register VMachine *vm )
       break;
 
       // classes cannot have their properties set (for now).
+      case FLC_ITEM_ARRAY:
+      if ( operand2->type() == FLC_ITEM_STRING ) {
+         CoreDict *bindings = target->asArray()->makeBindings();
+         // we know source is a reference
+         bindings->insert( *operand2, *source );
+         return;
+      }
+      break;
    }
 
    vm->raiseRTError(

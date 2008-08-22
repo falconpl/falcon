@@ -405,7 +405,10 @@ void CoreArray::reserve( uint32 size ) {
 CoreDict *CoreArray::makeBindings()
 {
    if ( m_bindings == 0 )
-      return new LinearDict( origin() );
+   {
+      m_bindings = new LinearDict( origin() );
+   }
+
    return m_bindings;
 }
 
