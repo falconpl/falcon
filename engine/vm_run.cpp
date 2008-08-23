@@ -1945,6 +1945,11 @@ void opcodeHandler_LDP( register VMachine *vm )
                 ( found = source->asArray()->bindings()->find( property ) ) != 0 )
             {
                vm->regA() = *found->dereference();
+               // propagate owner bindings
+               if ( vm->regA().isArray() )
+               {
+                  vm->regA().asArray()->setBindings( source->asArray()->bindings() );
+               }
                return;
             }
          }

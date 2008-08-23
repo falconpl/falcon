@@ -407,6 +407,7 @@ CoreDict *CoreArray::makeBindings()
    if ( m_bindings == 0 )
    {
       m_bindings = new LinearDict( origin() );
+      m_bindings->insert( new GarbageString( origin(), "self" ), this );
    }
 
    return m_bindings;

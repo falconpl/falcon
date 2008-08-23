@@ -85,6 +85,8 @@ public:
    /** Create the bindings for this array, or get those already created. */
    CoreDict *makeBindings();
    CoreDict *bindings() const { return m_bindings; }
+   void setBindings( CoreDict *binds ) { m_bindings = binds; }
+
 
    /** Checks the position to be in the array, and eventually changes it if it's negative.
       \param pos the position to be checked and eventually turned into a positive value.

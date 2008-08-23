@@ -2246,6 +2246,7 @@ expression:
      const_atom
    | var_atom
    | AMPER SYMBOL { $$ = new Falcon::Value(); $$->setLBind( $2 ); /* do not add the symbol to the compiler */ }
+   | AMPER SELF { $$ = new Falcon::Value(); $$->setLBind( COMPILER->addString("self") ); /* do not add the symbol to the compiler */ }
    | MINUS expression %prec NEG { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_neg, $2 ) ); }
    | expression PLUS expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_plus, $1, $3 ) ); }
    | expression MINUS expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_minus, $1, $3 ) ); }

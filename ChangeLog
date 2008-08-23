@@ -28,6 +28,8 @@ Falcon (0.8.11)
   * major: Added support for late binding.
   * major: Added local/late binding in functional constructs.
   * major: Added dynamic symbol resolution for arrays.
+  * bufix: deadlocks at coroutine end when some context was waiting
+           endless was not detected.
 
 Falcon (0.8.10)
   * minor: Now classes can be stored in object properties and called to get
