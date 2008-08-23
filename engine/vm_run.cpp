@@ -389,11 +389,11 @@ void VMachine::run()
 
             m_currentContext->save( this );
 
-			// if wait time is > 0, put at sleep
-			if( m_yieldTime > 0.0 )
-				putAtSleep( m_currentContext, m_yieldTime );
+            // if wait time is > 0, put at sleep
+            if( m_yieldTime > 0.0 )
+               putAtSleep( m_currentContext, m_yieldTime );
 
-			electContext();
+            electContext();
 
             if ( m_event == eventSleep )
                return;
@@ -424,6 +424,13 @@ void opcodeHandler_END( register VMachine *vm )
    // scan the contexts and remove the current one.
    if ( vm->m_sleepingContexts.empty() )
    {
+      // there is wating non-sleeping context that will never be awaken?
+      if( vm->m_contexts.size() != 1 )
+      {
+         vm->raiseRTError( new CodeError( ErrorParam( e_deadlock ).extra("END").origin( e_orig_vm ) ) );
+         return;
+      }
+
       vm->m_event = VMachine::eventQuit;
       // nil also the A register
       vm->regA().setNil();

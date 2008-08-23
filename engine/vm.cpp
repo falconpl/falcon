@@ -1593,8 +1593,12 @@ bool VMachine::callItem( const Item &callable, int32 paramCount, e_callMode call
                carr.isMethod() || carr.isClass() )
             {
                // ok, it's a callable array. See if we can set the binding context.
+               Item regBindP = m_regBind;
                if ( ! m_regBind.isDict() )
+               {
                   m_regBind = arr->makeBindings();
+                  m_regBindP = m_regBind;
+               }
 
                uint32 arraySize = arr->length();
                uint32 sizeNow = m_stack->size();
@@ -1623,6 +1627,7 @@ bool VMachine::callItem( const Item &callable, int32 paramCount, e_callMode call
                   }
                }
 
+               m_regBind = regBindP;
                return callItem( carr, arraySize + paramCount, callMode );
             }
          }
@@ -1669,6 +1674,12 @@ bool VMachine::callItem( const Item &callable, int32 paramCount, e_callMode call
    frame->m_break = false;
    frame->m_suspend = false;
    frame->m_binding = m_regBind;
+
+   if( ! m_regBindP.isNil() )
+   {
+      m_regBind = m_regBindP;
+      m_regBindP.setNil();
+   }
 
    // iterative processing support
    frame->m_endFrameFunc = 0;
@@ -1769,6 +1780,7 @@ void VMachine::createFrame( uint32 paramCount )
    frame->m_try_base = m_tryFrame;
    frame->m_break = false;
    frame->m_suspend = false;
+   frame->m_binding = m_regBind;
 
    // iterative processing support
    frame->m_endFrameFunc = 0;
@@ -2189,6 +2201,7 @@ void VMachine::callReturn()
    }
 
    m_regBind = frame.m_binding;
+
    // fix the self and sender
    if ( ! frame.m_initFrame ) {
       m_regS1 = m_regS2;

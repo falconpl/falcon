@@ -297,6 +297,7 @@ protected:
    Item m_regL2;
 
    Item m_regBind;
+   Item m_regBindP;
 
    /** Space for immediate operands. */
    Item m_imm[4];
