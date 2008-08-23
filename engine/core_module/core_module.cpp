@@ -346,6 +346,7 @@ Module* core_module_init()
    self->addExtFunc( "floop", Falcon::core::core_floop )->setEta( true );
    self->addExtFunc( "firstOf", Falcon::core::core_firstof )->setEta( true );
    self->addExtFunc( "times", Falcon::core::core_times )->setEta( true );
+   self->addExtFunc( "let", Falcon::core::core_let )->setEta( true );
 
    // other functions
    self->addExtFunc( "min", Falcon::core::core_min );
@@ -357,6 +358,9 @@ Module* core_module_init()
    self->addExtFunc( "oob", Falcon::core::core_oob );
    self->addExtFunc( "deoob", Falcon::core::core_deoob );
    self->addExtFunc( "isoob", Falcon::core::core_isoob );
+
+   self->addExtFunc( "lbind", Falcon::core::core_lbind );
+
 
    //=======================================================================
    // RTL basic functionality

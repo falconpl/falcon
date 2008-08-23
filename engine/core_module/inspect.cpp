@@ -103,13 +103,8 @@ void inspect_internal( VMachine *vm, bool isShort, const Item *elem, int32 level
       break;
 
       case FLC_ITEM_LBIND:
-         if ( elem->asLBind() != 0 )
-         {
-            stream->writeString( "&" );
-            stream->writeString( *elem->asLBind() );
-         }
-         else
-            stream->writeString( "Nil" );
+         stream->writeString( "&" );
+         stream->writeString( *elem->asLBind() );
       break;
 
       case FLC_ITEM_ATTRIBUTE:

@@ -125,10 +125,13 @@ FALCON_FUNC  core_lit ( ::Falcon::VMachine *vm );
 FALCON_FUNC  core_cascade ( ::Falcon::VMachine *vm );
 FALCON_FUNC  core_floop ( ::Falcon::VMachine *vm );
 FALCON_FUNC  core_firstof ( ::Falcon::VMachine *vm );
+FALCON_FUNC  core_let ( ::Falcon::VMachine *vm );
 
 FALCON_FUNC  core_oob( ::Falcon::VMachine *vm );
 FALCON_FUNC  core_deoob( ::Falcon::VMachine *vm );
 FALCON_FUNC  core_isoob( ::Falcon::VMachine *vm );
+
+FALCON_FUNC  core_lbind( ::Falcon::VMachine *vm );
 
 FALCON_FUNC  gcEnable( ::Falcon::VMachine *vm );
 FALCON_FUNC  gcSetThreshold( ::Falcon::VMachine *vm );

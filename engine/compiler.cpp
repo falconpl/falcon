@@ -757,6 +757,7 @@ void Compiler::addPredefs()
    addIntConstant( "AttributeType", FLC_ITEM_ATTRIBUTE );
    addIntConstant( "FunctionType", FLC_ITEM_FUNC );
    addIntConstant( "StringType", FLC_ITEM_STRING );
+   addIntConstant( "LBindType", FLC_ITEM_LBIND );
    addIntConstant( "MemBufType", FLC_ITEM_MEMBUF );
    addIntConstant( "ArrayType", FLC_ITEM_ARRAY );
    addIntConstant( "DictionaryType", FLC_ITEM_DICT );

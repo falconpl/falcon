@@ -84,7 +84,7 @@ bool Item::internal_is_equal( const Item &other ) const
          return *asString() == *other.asString();
 
       case FLC_ITEM_LBIND:
-         return asLBind() != 0 && other.asLBind() != 0 && *asLBind() == *other.asLBind();
+         return *asLBind() == *other.asLBind();
 
       case FLC_ITEM_ARRAY:
          // for now, just compare the pointers.
@@ -306,8 +306,6 @@ int Item::internal_compare( const Item &other ) const
          return asString()->compare( *other.asString() );
 
       case FLC_ITEM_LBIND:
-         if ( asLBind() == 0 ) return -1;
-         if ( other.asLBind() == 0 ) return 1;
          return asLBind()->compare( *other.asLBind() );
 
       case FLC_ITEM_RANGE:
@@ -475,10 +473,7 @@ void Item::toString( String &target ) const
       break;
 
       case FLC_ITEM_LBIND:
-         if ( asLBind() == 0 )
-            target = "Nil";
-         else
-            target = "&" + *asLBind();
+         target = "&" + *asLBind();
       break;
 
       case FLC_ITEM_REFERENCE:
@@ -680,39 +675,6 @@ bool Item::isCallable() const
 
    // in all the other cases, the item is not callable
    return false;
-}
-
-bool Item::isLBind() const
-{
-   if ( type() == FLC_ITEM_LBIND )
-   {
-      if ( m_data.ptr.m_liveMod->module() == 0 )
-      {
-         const_cast< Item*>(this)->setNil();
-         return false;
-      }
-
-      return true;
-   }
-
-   return false;
-}
-
-const String *Item::asLBind() const
-{
-   if ( type() == FLC_ITEM_LBIND )
-   {
-      LiveModule *lmod = m_data.ptr.m_liveMod;
-      if ( lmod->module() == 0 )
-      {
-         const_cast< Item*>(this)->setNil();
-         return 0;
-      }
-
-      return lmod->module()->getString( (uint32) m_data.num.val1 );
-   }
-
-   return 0;
 }
 
 }

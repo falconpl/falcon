@@ -276,6 +276,7 @@ FALCON_FUNC  val_numeric ( ::Falcon::VMachine *vm )
    - @b RangeType - the item is a range (a pair of two integers)
    - @b FunctionType - the item is a function
    - @b StringType - the item is a string
+   - @b LBindType - the item is a late binding symbol
    - @b MemBufType - the item is a Memory Buffer Table
    - @b ArrayType - the item is an array
    - @b DictionaryType - the item is a dictionary

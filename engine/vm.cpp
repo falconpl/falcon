@@ -3315,7 +3315,22 @@ static bool vm_func_eval( VMachine *vm )
    CoreArray *arr = vm->local( 0 )->asArray();
    uint32 count = (uint32) vm->local( 1 )->asInteger();
 
-   // let's push other function's return vallue
+   // let's push other function's return value
+  if ( vm->regA().isLBind() )
+   {
+      String *binding = vm->regA().asLBind();
+      Item *bind = vm->getBinding( *binding );
+      if ( bind == 0 )
+      {
+         vm->regA().setReference( new GarbageItem( vm, Item() ) );
+         vm->setBinding( *binding, vm->regA() );
+      }
+      else {
+         fassert( bind->isReference() );
+         vm->regA() = *bind;
+      }
+   }
+
    vm->pushParameter( vm->regA() );
 
    // fake a call return

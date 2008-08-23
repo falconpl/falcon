@@ -304,6 +304,7 @@ void MemPool::markItem( Item &item )
       break;
 
       case FLC_ITEM_STRING:
+      case FLC_ITEM_LBIND:
          if ( item.asString()->garbageable() )
          {
             GarbageString *gs = static_cast< GarbageString *>( item.asString() );

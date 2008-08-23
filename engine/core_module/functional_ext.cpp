@@ -1837,6 +1837,109 @@ FALCON_FUNC  core_firstof ( ::Falcon::VMachine *vm )
    vm->retnil();
 }
 
+/*#
+   @function lbind
+   @inset functional_support
+   @brief Creates a dynamic late binding symbol
+   @param name A string representing a late binding name.
+   @return A newly created late binding name.
+
+   This function create a late binding item which can be used
+   in functional sequences as if the parameter was written in
+   the source code prefixed with the amper '&' operator.
+
+   The following lines are equivalent:
+   @code
+      bound = lbind( "count" )
+      ctx = &count
+   @endcode
+
+   The return value of this function, both used directly or pre-cached,
+   can be seamlessly merged with the & operator in functional sequences.
+
+   In example, it is possible to write the following loop:
+   @code
+      eval( .[
+         .[ times 10 &count .[
+            .[eval .[ printl 'Counting...' .[lbind 'count'] ] ]
+            ]
+         ]] )
+   @endcode
+
+   It is also possible cache the value and use it afterwards:
+   @code
+      x = lbind( 'count' )
+      eval( .[
+         .[ times 10 &count .[
+            .[ printl 'Counting...' x]
+            ]
+         ]] )
+   @endcode
+
+   @note lbind is @b not an ETA function.
+*/
+FALCON_FUNC  core_lbind ( ::Falcon::VMachine *vm )
+{
+   Item *i_name = vm->param(0);
+
+   if( i_name == 0 || !i_name->isString() )
+   {
+      vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).
+         extra( "S" ) ) );
+      return;
+   }
+
+   vm->regA().setLBind( new GarbageString( vm, *i_name->asString() ));
+}
+
+
+static bool core_let_next( ::Falcon::VMachine *vm )
+{
+   *vm->param(0) = *vm->param(1);
+   vm->regA() = *vm->param(0);
+
+   return false;
+}
+
+
+/*#
+   @function let
+   @inset functional_support
+   @brief Assigns a value to another in a functional context.
+   @param dest Destination value (passed by reference).
+   @param source Source value.
+   @return The assigned (source) value.
+
+   This function assigns a literal value given in @b source into @b dest,
+   provided dest is a late binding or is passed by referece.
+
+   This function is an ETA and prevents evaluation of its first parameter. In other
+   words, the first parameter is treadted as if passed through @a lit.
+*/
+
+FALCON_FUNC  core_let ( ::Falcon::VMachine *vm )
+{
+   Item *i_dest = vm->param(0);
+   Item *i_source = vm->param(1);
+
+   if( i_dest == 0 || ! vm->isParamByRef( 0 ) || i_source == 0 )
+   {
+      vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).
+         extra( "$X,X" ) ) );
+      return;
+   }
+
+   vm->returnHandler( core_let_next );
+   if ( vm->functionalEval( *i_source ) )
+   {
+      return;
+   }
+   vm->returnHandler( 0 );
+
+   *vm->param(0) = *vm->param(1);
+   vm->regA() = *vm->param(0);
+}
+
 }
 }
 

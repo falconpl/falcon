@@ -530,7 +530,6 @@ void GenTree::gen_value( const Value *val )
 
       case Value::t_lbind:
       {
-
          m_out->writeString( "&" + *val->asLBind() );
       }
       break;
