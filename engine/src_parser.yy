@@ -2610,8 +2610,11 @@ expression_list:
 
 listpar_expression_list:
    expression { $$ = new Falcon::ArrayDecl(); $$->pushBack( $1 ); }
-   | listpar_expression_list expression { $1->pushBack( $2 ); $$ = $1; }
+   | listpar_expression_list listpar_comma expression { $1->pushBack( $3 ); $$ = $1; }
 ;
+
+listpar_comma:
+   /*nothing */ | COMMA;
 
 symbol_list:
    atomic_symbol {

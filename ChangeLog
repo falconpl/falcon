@@ -31,6 +31,7 @@ Falcon (0.8.11)
   * bufix: deadlocks at coroutine end when some context was waiting
            endless was not detected.
   * minor: added ETA functions let (assign) and lbind (make late binding).
+  * minor: ',' can now be optionally used in .[] decl.
 
 Falcon (0.8.10)
   * minor: Now classes can be stored in object properties and called to get
