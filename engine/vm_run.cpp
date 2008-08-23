@@ -2926,7 +2926,8 @@ void opcodeHandler_STP( register VMachine *vm )
 {
    Item *target = vm->getOpcodeParam( 1 )->dereference();
    Item *method = vm->getOpcodeParam( 2 )->dereference();
-   Item *source = vm->getOpcodeParam( 3 )->dereference();
+   Item *sourcend = vm->getOpcodeParam( 3 );
+   Item *source = sourcend->dereference();
 
    if ( method->isString() )
    {
@@ -2985,7 +2986,7 @@ void opcodeHandler_STP( register VMachine *vm )
       {
          CoreDict *bindings = target->asArray()->makeBindings();
          Item temp;
-         vm->referenceItem( temp, *source );
+         vm->referenceItem( temp, *sourcend );
          bindings->insert( *method, temp );
          return;
       }
@@ -3155,8 +3156,9 @@ void opcodeHandler_STPR( register VMachine *vm )
       case FLC_ITEM_ARRAY:
       if ( operand2->type() == FLC_ITEM_STRING ) {
          CoreDict *bindings = target->asArray()->makeBindings();
-         // we know source is a reference
-         bindings->insert( *operand2, *source );
+         Item temp;
+         vm->referenceItem( temp, *source ); // source is not dereferenced.
+         bindings->insert( *operand2, temp );
          return;
       }
       break;
