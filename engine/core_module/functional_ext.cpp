@@ -686,7 +686,7 @@ static bool core_dolist_next ( ::Falcon::VMachine *vm )
    if ( vm->local(1)->asInteger() == 1 )
    {
       // not true? -- exit
-      if ( ! vm->regA().isTrue() )
+      if ( vm->regA().isOob() && vm->regA().isNil() )
       {
          return false;
       }
