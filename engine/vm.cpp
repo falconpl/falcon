@@ -3380,6 +3380,8 @@ bool VMachine::functionalEval( const Item &itm )
          createFrame(0);
 
          CoreArray *arr = itm.asArray();
+         if ( m_regBind.isNil() )
+            m_regBind = arr->makeBindings();
 
          // great. Then recursively evaluate the parameters.
          uint32 count = arr->length();
