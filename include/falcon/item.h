@@ -345,20 +345,29 @@ public:
       Thus, the string representing the late binding symbol name
       lives in the live module that generated this LBind. If
       the module is unloaded, the LBind is invalidated.
+
+      \param lbind The name of the late binding symbol.
+      \param val If provided, a future value (future binding).
    */
-   void setLBind( String *lbind )
+   void setLBind( String *lbind, GarbageItem *val=0 )
    {
       type( FLC_ITEM_LBIND );
       m_data.ptr.voidp = lbind;
+      m_data.ptr.m_extra = val;
    }
 
    /** Returns true if this item is a valid LBind.
    */
    bool isLBind() const { return type() == FLC_ITEM_LBIND; }
+   bool isFutureBind() { return isLBind() && m_data.ptr.m_extra != 0; }
 
    /** Return the binding name associate with this LBind item.
    */
    String *asLBind() const { return (String *) m_data.ptr.voidp; }
+   GarbageItem *asFBind() const { return (GarbageItem *) m_data.ptr.m_extra; }
+
+   const Item &asFutureBind() const;
+   Item &asFutureBind();
 
    /** Creates a method.
       The method is able to remember if it was called with

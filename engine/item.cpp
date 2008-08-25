@@ -677,6 +677,14 @@ bool Item::isCallable() const
    return false;
 }
 
+const Item &Item::asFutureBind() const {
+   return ((GarbageItem*)m_data.ptr.m_extra)->origin();
+}
+
+Item &Item::asFutureBind() {
+   return ((GarbageItem*)m_data.ptr.m_extra)->origin();
+}
+
 }
 
 /* end of item.cpp */

@@ -303,8 +303,16 @@ void MemPool::markItem( Item &item )
       }
       break;
 
-      case FLC_ITEM_STRING:
       case FLC_ITEM_LBIND:
+         if ( item.asFBind() != 0 )
+         {
+            GarbageItem *gi = item.asFBind();
+            if ( gi->mark() != currentMark() )
+               gi->mark( currentMark() );
+         }
+         // fallback to string for the name part
+
+      case FLC_ITEM_STRING:
          if ( item.asString()->garbageable() )
          {
             GarbageString *gs = static_cast< GarbageString *>( item.asString() );

@@ -844,7 +844,7 @@ void opcodeHandler_LD( register VMachine *vm )
    else
       operand1->copy( *operand2 );
 
-   vm->regA() =  *operand2;
+   vm->regA() =  *operand1;
 }
 
 // 1F
@@ -4003,7 +4003,7 @@ void opcodeHandler_STO( register VMachine *vm )
    else
       operand1->copy( *operand2 );
 
-   vm->regA() = *operand2;
+   vm->regA() = *operand1;
 }
 
 

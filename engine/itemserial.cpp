@@ -248,6 +248,8 @@ Item::e_sercode Item::serialize( Stream *file, bool bLive ) const
       {
          byte type = FLC_ITEM_LBIND;
          file->write((byte *) &type, 1 );
+         // Future bindings are temporary items; as such, their future
+         // value is not to be serialized.
          asLBind()->serialize( file );
       }
       break;
