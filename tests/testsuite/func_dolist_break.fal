@@ -15,8 +15,7 @@ value = 0
 function test( a )
    global value
    value += a
-   if a > 3: return false
-   return true
+   if a > 3: return oob( nil )
 end
 
 dolist( test, [1,2,3,4,5,6] )
