@@ -559,6 +559,12 @@ void opcodeHandler_PUSH( register VMachine *vm )
 {
    /** \TODO Raise a stack overflow error on VM stack boundary limit. */
    Item *data = vm->getOpcodeParam( 1 )->dereference();
+   if ( data->isFutureBind() )
+   {
+      // with this marker, the next call operation will search its parameters.
+      // Let's consider this a temporary (but legitimate) hack.
+      vm->m_regBind.flags( 0xF0 );
+   }
    vm->m_stack->push( data );
 }
 

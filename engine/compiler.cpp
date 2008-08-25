@@ -92,6 +92,7 @@ Compiler::Compiler():
    m_serviceLoader( 0 )
 {
    init();
+   addPredefs();
 }
 
 Compiler::~Compiler()

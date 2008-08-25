@@ -1,0 +1,114 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 73a
+* Category: functional
+* Subcategory: fbind
+* Short: Basic future binding
+* Description:
+*   Checking named parameters and their behavior in positional calls.
+* [/Description]
+*
+****************************************************************************/
+
+function test( z, a, b )
+   global gpar1, gpar2, gpar3
+   gpar1 = z
+   gpar2 = a
+   gpar3 = b
+end
+
+function reset()
+   global gpar1, gpar2, gpar3
+   gpar1 = nil
+   gpar2 = nil
+   gpar3 = nil
+end
+
+x = lbind( "a", "Hello" )
+
+test( x )
+if gpar1 != nil or gpar2 != "Hello" or gpar3 != nil
+   failure( "Single named parameter" )
+end
+
+reset()
+test( x, "Yo!" )
+if gpar1 != "Yo!" or gpar2 != "Hello" or gpar3 != nil
+   failure( "Named+positional reverse" )
+end
+
+reset()
+test( "Yo!", x )
+if gpar1 != "Yo!" or gpar2 != "Hello" or gpar3 != nil
+   failure( "Named+positional direct" )
+end
+
+reset()
+test( "Yo!", "Yo! again", x )
+if gpar1 != "Yo!" or gpar2 != "Hello" or gpar3 != nil
+   failure( "Named+positional overwrite" )
+end
+
+reset()
+test( x, "Yo!", "Yo! again", "end" )
+if gpar1 != "Yo!" or gpar2 != "Hello" or gpar3 != "end"
+   failure( "Named+positional overwrite + other" )
+end
+
+
+
+// now same thing with an array.
+reset()
+[test, x, "Yo!" ]()
+if gpar1 != "Yo!" or gpar2 != "Hello" or gpar3 != nil
+   failure( "[A] Named+positional reverse" )
+end
+
+reset()
+[test, "Yo!", x ]()
+if gpar1 != "Yo!" or gpar2 != "Hello" or gpar3 != nil
+   failure( "[A] Named+positional direct" )
+end
+
+reset()
+[test, "Yo!", "Yo! again", x ]()
+if gpar1 != "Yo!" or gpar2 != "Hello" or gpar3 != nil
+   failure( "[A] Named+positional overwrite" )
+end
+
+reset()
+[test, x, "Yo!", "Yo! again", "end" ]()
+if gpar1 != "Yo!" or gpar2 != "Hello" or gpar3 != "end"
+   failure( "[A] Named+positional overwrite + other" )
+end
+
+
+
+// and with partially cached arrays
+reset()
+[test, x ]( "Yo!")
+if gpar1 != "Yo!" or gpar2 != "Hello" or gpar3 != nil
+   failure( "[A2] Named+positional reverse" )
+end
+
+reset()
+[test, "Yo!" ](x)
+if gpar1 != "Yo!" or gpar2 != "Hello" or gpar3 != nil
+   failure( "[A2] Named+positional direct" )
+end
+
+reset()
+[test, "Yo!" ]("Yo! again", x)
+if gpar1 != "Yo!" or gpar2 != "Hello" or gpar3 != nil
+   failure( "[A2] Named+positional overwrite" )
+end
+
+reset()
+[test, x, "Yo!" ]("Yo! again", "end")
+if gpar1 != "Yo!" or gpar2 != "Hello" or gpar3 != "end"
+   failure( "[A2] Named+positional overwrite + other" )
+end
+
+
+success()

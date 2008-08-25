@@ -1840,8 +1840,9 @@ FALCON_FUNC  core_firstof ( ::Falcon::VMachine *vm )
 /*#
    @function lbind
    @inset functional_support
-   @brief Creates a dynamic late binding symbol
+   @brief Creates a dynamic late binding symbol.
    @param name A string representing a late binding name.
+   @optparam value A future binding value.
    @return A newly created late binding name.
 
    This function create a late binding item which can be used
@@ -1876,11 +1877,39 @@ FALCON_FUNC  core_firstof ( ::Falcon::VMachine *vm )
          ]] )
    @endcode
 
+   The @b value parameter initializes a future (forward) binding.
+   Future bindings are bindings with a potential value, which is applied
+   during function calls and symbol resolution to pre-existing symbolic
+   entities. In practice, they allow calling fucntions with named parameters.
+
+   When mixing forward bindings and normal parameters, forward bindings are as
+   placed directly at the position of the parameter they refer to, and they
+   doesn't count during parameter expansion of non-named parameters. Also,
+   they always overwrite the positional parameters, as they are considered
+   after all the positional parameters have been placed on their spots.
+
+   @code
+      function test( par1, par2, par3 )
+         >> "Par1: ", par1
+         >> ", Par2: ", par2
+         >  ", Par3: ", par3
+      end
+
+      x = lbind( "par2", "Hello" )
+
+      test( x )                       // nil->par1, "Hello"->par2, nil->par3
+      test( x, "Yo!" )                // "Yo!"->par1, "Hello"->par2, nil->par3
+      test( "Yo!", x )                // as above
+      test( "Yo!", "Yo! again", x )   // "Hello" overwrites "Yo again"
+      test( x, "Yo!", "Yo! again", "end" )   // "Yo!"->par1, "Hello"->par2, "end"->par3
+   @endcode
+
    @note lbind is @b not an ETA function.
 */
 FALCON_FUNC  core_lbind ( ::Falcon::VMachine *vm )
 {
    Item *i_name = vm->param(0);
+   Item *i_value = vm->param(1);
 
    if( i_name == 0 || !i_name->isString() )
    {
@@ -1888,8 +1917,9 @@ FALCON_FUNC  core_lbind ( ::Falcon::VMachine *vm )
          extra( "S" ) ) );
       return;
    }
+   GarbageItem *itm = i_value == 0 ? 0 : new GarbageItem( vm, *i_value );
 
-   vm->regA().setLBind( new GarbageString( vm, *i_name->asString() ));
+   vm->regA().setLBind( new GarbageString( vm, *i_name->asString() ), itm );
 }
 
 

@@ -136,13 +136,16 @@ private:
 	#if _MSC_VER < 1299
 	#define flagOpenRange 0x02
 	#define flagIsOob 0x04
+	#define flagFuture 0x08
 	#else
 	   static const byte flagOpenRange = 0x02;
 	   static const byte flagIsOob = 0x04;
+	   static const byte flagFuture = 0x08;
 	#endif
 #else
 	static const byte flagOpenRange = 0x02;
    static const byte flagIsOob = 0x04;
+   static const byte flagFuture = 0x08;
 #endif
 
 public:
