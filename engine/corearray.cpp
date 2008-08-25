@@ -373,6 +373,8 @@ CoreArray *CoreArray::clone() const
    {
       ca->m_bindings = m_bindings->clone();
    }
+
+   return ca;
 }
 
 
