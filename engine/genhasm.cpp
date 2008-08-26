@@ -1795,6 +1795,8 @@ void GenHAsm::gen_expression( const Expression *exp, t_valType &xValue )
       }
       return;
 
+      case Expression::t_fbind: mode = 2; opname = "FORB"; break;
+
       case Expression::t_assign:
          // handle it as a load...
          // don't change x-value

@@ -131,6 +131,7 @@ inline int flc_src_lex (void *lvalp, void *yyparam)
 */
 
 %left ARROW
+%right VBAR
 %right ASSIGN_ADD ASSIGN_SUB ASSIGN_MUL ASSIGN_DIV ASSIGN_MOD ASSIGN_BAND ASSIGN_BOR ASSIGN_BXOR ASSIGN_SHR ASSIGN_SHL ASSIGN_POW
 %right OP_EQ
 %right COMMA OP_TO
@@ -319,7 +320,6 @@ base_statement:
    | fordot_statement
    | self_print_statement
    | outer_print_statement
-   | enum_statement
 ;
 
 assignment_def_list:
@@ -2248,6 +2248,7 @@ expression:
    | AMPER SYMBOL { $$ = new Falcon::Value(); $$->setLBind( $2 ); /* do not add the symbol to the compiler */ }
    | AMPER SELF { $$ = new Falcon::Value(); $$->setLBind( COMPILER->addString("self") ); /* do not add the symbol to the compiler */ }
    | MINUS expression %prec NEG { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_neg, $2 ) ); }
+   | SYMBOL VBAR expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_fbind, new Falcon::Value($1), $3) ); }
    | expression PLUS expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_plus, $1, $3 ) ); }
    | expression MINUS expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_minus, $1, $3 ) ); }
    | expression STAR expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_times, $1, $3 ) ); }

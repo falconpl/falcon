@@ -33,6 +33,8 @@ Falcon (0.8.11)
   * minor: added ETA functions let (assign) and lbind (make late binding).
   * minor: ',' can now be optionally used in .[] decl.
   * bugfix: dolist wasn't breaking on oob(nil), but on just false.
+  * major: Forward binding implemented. Currently used to resolve
+           named parameter function calls.
 
 Falcon (0.8.10)
   * minor: Now classes can be stored in object properties and called to get

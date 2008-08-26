@@ -413,6 +413,7 @@ public:
       t_indirect,
 
       t_assign,
+      t_fbind,
 
       t_aadd,
       t_asub,

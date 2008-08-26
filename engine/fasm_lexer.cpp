@@ -837,6 +837,8 @@ int AsmLexer::checkTokens()
              return I_STEX;
          if ( m_string.compareIgnoreCase( "TRAC" ) == 0 )
              return I_TRAC;
+         if ( m_string.compareIgnoreCase( "FORB" ) == 0 )
+             return I_FORB;
       break;
 
    }

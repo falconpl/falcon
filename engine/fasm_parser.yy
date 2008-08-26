@@ -220,6 +220,7 @@ inline int yylex (void *lvalp, void *fasm_param)
 %token I_TRAC
 %token I_WRT
 %token I_STO
+%token I_FORB
 %%
 
 /****************************************************
@@ -460,6 +461,7 @@ instruction:
    | inst_trac
    | inst_wrt
    | inst_sto
+   | inst_forb
 ;
 
 inst_ld:
@@ -1040,6 +1042,10 @@ inst_sto:
      | I_STO error              { COMPILER->raiseError(Falcon::e_invop, "STO" ); }
 ;
 
+inst_forb:
+       I_FORB op_string COMMA xoperand    { COMPILER->addInstr( P_FORB, $2, $4 ); }
+     | I_FORB error              { COMPILER->raiseError(Falcon::e_invop, "FORB" ); }
+;
 
 %% /* c code */
 

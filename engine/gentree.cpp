@@ -635,6 +635,7 @@ void GenTree::gen_expression( const Expression *exp )
       case Expression::t_iif: type = 3; break;
 
       case Expression::t_assign: type = 4; name = " = "; break;
+      case Expression::t_fbind: type = 4; name = " | "; break;
       case Expression::t_aadd: type = 4; name = " += "; break;
       case Expression::t_asub: type = 4; name = " -= "; break;
       case Expression::t_amul: type = 4; name = " *= "; break;

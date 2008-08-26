@@ -605,6 +605,7 @@ void gen_code( Module *module, const FuncDef *fd, Stream *out, const t_labelMap 
          case P_TRAC: csOpName = "TRAC"; break;
          case P_WRT : csOpName = "WRT "; break;
          case P_STO : csOpName = "STO "; break;
+         case P_FORB: csOpName = "FORB"; break;
 
          default:
             csOpName = "????";

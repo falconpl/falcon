@@ -100,55 +100,56 @@
      OPENSQUARE = 316,
      DOT = 317,
      ARROW = 318,
-     ASSIGN_POW = 319,
-     ASSIGN_SHL = 320,
-     ASSIGN_SHR = 321,
-     ASSIGN_BXOR = 322,
-     ASSIGN_BOR = 323,
-     ASSIGN_BAND = 324,
-     ASSIGN_MOD = 325,
-     ASSIGN_DIV = 326,
-     ASSIGN_MUL = 327,
-     ASSIGN_SUB = 328,
-     ASSIGN_ADD = 329,
-     OP_EQ = 330,
-     OP_TO = 331,
-     COMMA = 332,
-     QUESTION = 333,
-     OR = 334,
-     AND = 335,
-     NOT = 336,
-     LE = 337,
-     GE = 338,
-     LT = 339,
-     GT = 340,
-     NEQ = 341,
-     EEQ = 342,
-     PROVIDES = 343,
-     OP_NOTIN = 344,
-     OP_IN = 345,
-     HASNT = 346,
-     HAS = 347,
-     DIESIS = 348,
-     ATSIGN = 349,
-     CAP_CAP = 350,
-     VBAR_VBAR = 351,
-     AMPER_AMPER = 352,
-     MINUS = 353,
-     PLUS = 354,
-     PERCENT = 355,
-     SLASH = 356,
-     STAR = 357,
-     POW = 358,
-     SHR = 359,
-     SHL = 360,
-     TILDE = 361,
-     NEG = 362,
-     AMPER = 363,
-     BANG = 364,
-     DECREMENT = 365,
-     INCREMENT = 366,
-     DOLLAR = 367
+     VBAR = 319,
+     ASSIGN_POW = 320,
+     ASSIGN_SHL = 321,
+     ASSIGN_SHR = 322,
+     ASSIGN_BXOR = 323,
+     ASSIGN_BOR = 324,
+     ASSIGN_BAND = 325,
+     ASSIGN_MOD = 326,
+     ASSIGN_DIV = 327,
+     ASSIGN_MUL = 328,
+     ASSIGN_SUB = 329,
+     ASSIGN_ADD = 330,
+     OP_EQ = 331,
+     OP_TO = 332,
+     COMMA = 333,
+     QUESTION = 334,
+     OR = 335,
+     AND = 336,
+     NOT = 337,
+     LE = 338,
+     GE = 339,
+     LT = 340,
+     GT = 341,
+     NEQ = 342,
+     EEQ = 343,
+     PROVIDES = 344,
+     OP_NOTIN = 345,
+     OP_IN = 346,
+     HASNT = 347,
+     HAS = 348,
+     DIESIS = 349,
+     ATSIGN = 350,
+     CAP_CAP = 351,
+     VBAR_VBAR = 352,
+     AMPER_AMPER = 353,
+     MINUS = 354,
+     PLUS = 355,
+     PERCENT = 356,
+     SLASH = 357,
+     STAR = 358,
+     POW = 359,
+     SHR = 360,
+     SHL = 361,
+     TILDE = 362,
+     NEG = 363,
+     AMPER = 364,
+     BANG = 365,
+     DECREMENT = 366,
+     INCREMENT = 367,
+     DOLLAR = 368
    };
 #endif
 /* Tokens.  */
@@ -213,62 +214,63 @@
 #define OPENSQUARE 316
 #define DOT 317
 #define ARROW 318
-#define ASSIGN_POW 319
-#define ASSIGN_SHL 320
-#define ASSIGN_SHR 321
-#define ASSIGN_BXOR 322
-#define ASSIGN_BOR 323
-#define ASSIGN_BAND 324
-#define ASSIGN_MOD 325
-#define ASSIGN_DIV 326
-#define ASSIGN_MUL 327
-#define ASSIGN_SUB 328
-#define ASSIGN_ADD 329
-#define OP_EQ 330
-#define OP_TO 331
-#define COMMA 332
-#define QUESTION 333
-#define OR 334
-#define AND 335
-#define NOT 336
-#define LE 337
-#define GE 338
-#define LT 339
-#define GT 340
-#define NEQ 341
-#define EEQ 342
-#define PROVIDES 343
-#define OP_NOTIN 344
-#define OP_IN 345
-#define HASNT 346
-#define HAS 347
-#define DIESIS 348
-#define ATSIGN 349
-#define CAP_CAP 350
-#define VBAR_VBAR 351
-#define AMPER_AMPER 352
-#define MINUS 353
-#define PLUS 354
-#define PERCENT 355
-#define SLASH 356
-#define STAR 357
-#define POW 358
-#define SHR 359
-#define SHL 360
-#define TILDE 361
-#define NEG 362
-#define AMPER 363
-#define BANG 364
-#define DECREMENT 365
-#define INCREMENT 366
-#define DOLLAR 367
+#define VBAR 319
+#define ASSIGN_POW 320
+#define ASSIGN_SHL 321
+#define ASSIGN_SHR 322
+#define ASSIGN_BXOR 323
+#define ASSIGN_BOR 324
+#define ASSIGN_BAND 325
+#define ASSIGN_MOD 326
+#define ASSIGN_DIV 327
+#define ASSIGN_MUL 328
+#define ASSIGN_SUB 329
+#define ASSIGN_ADD 330
+#define OP_EQ 331
+#define OP_TO 332
+#define COMMA 333
+#define QUESTION 334
+#define OR 335
+#define AND 336
+#define NOT 337
+#define LE 338
+#define GE 339
+#define LT 340
+#define GT 341
+#define NEQ 342
+#define EEQ 343
+#define PROVIDES 344
+#define OP_NOTIN 345
+#define OP_IN 346
+#define HASNT 347
+#define HAS 348
+#define DIESIS 349
+#define ATSIGN 350
+#define CAP_CAP 351
+#define VBAR_VBAR 352
+#define AMPER_AMPER 353
+#define MINUS 354
+#define PLUS 355
+#define PERCENT 356
+#define SLASH 357
+#define STAR 358
+#define POW 359
+#define SHR 360
+#define SHL 361
+#define TILDE 362
+#define NEG 363
+#define AMPER 364
+#define BANG 365
+#define DECREMENT 366
+#define INCREMENT 367
+#define DOLLAR 368
 
 
 
 
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union
-#line 61 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+#line 61 "/home/user/Progetti/falcon/core/engine/src_parser.yy"
 lex_value_t {
    Falcon::int64 integer;
    Falcon::numeric numeric;
@@ -284,7 +286,7 @@ lex_value_t {
    Falcon::List *fal_genericList;
 }
 /* Line 1489 of yacc.c.  */
-#line 288 "/home/gian/Progetti/falcon/core/engine/src_parser.hpp"
+#line 290 "/home/user/Progetti/falcon/core/engine/src_parser.hpp"
 	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1

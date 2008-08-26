@@ -1169,10 +1169,9 @@ int SrcLexer::checkUnlimitedTokens( uint32 nextChar )
             return AMPER;
          else if ( chr == '~' && nextChar != '=' )
                return TILDE;
-         /*
-            This may come useful in future.
-         else if ( chr == '|' && nextChar != '=' && nextChar != '|' )
+        else if ( chr == '|' && nextChar != '=' && nextChar != '|' )
             return VBAR;
+         /*
          else if ( chr == '^' && nextChar != '=' && nextChar != '^' )
             return CAP;
          else if ( chr == '!' && nextChar != '=' )

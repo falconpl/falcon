@@ -4012,6 +4012,22 @@ void opcodeHandler_STO( register VMachine *vm )
    vm->regA() = *operand1;
 }
 
+// 0x69
+void opcodeHandler_FORB( register VMachine *vm )
+{
+   // We know the first operand must be a string
+   Item *operand1 =  vm->getOpcodeParam( 1 );
+   Item *operand2 =  vm->getOpcodeParam( 2 )->dereference();
+
+   if ( ! operand1->isString() )
+   {
+      vm->raiseError( e_invop, "FORB" );
+      return;
+   }
+
+   vm->regA().setLBind( operand1->asString(),
+      new GarbageItem( vm, *operand2 ) );
+}
 
 }
 

@@ -383,7 +383,13 @@ while it will fill OP2 with an integer item containing 15H.
 */
 #define P_STO         0x66
 
-#define FLC_PCODE_COUNT 0x67
+/** FORB
+   Forward binding
+   FORB OP1, OP2 -> A := lbind( OP1, OP2 ).
+*/
+#define P_FORB         0x67
+
+#define FLC_PCODE_COUNT 0x68
 
 #endif
 

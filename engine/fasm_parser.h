@@ -195,7 +195,8 @@
      I_STEX = 411,
      I_TRAC = 412,
      I_WRT = 413,
-     I_STO = 414
+     I_STO = 414,
+     I_FORB = 415
    };
 #endif
 /* Tokens.  */
@@ -356,6 +357,7 @@
 #define I_TRAC 412
 #define I_WRT 413
 #define I_STO 414
+#define I_FORB 415
 
 
 

@@ -1615,6 +1615,7 @@ void GenCode::gen_expression( const Expression *exp, t_valType &xValue )
       case Expression::t_in: mode = 2; opname = P_IN; break;
       case Expression::t_notin: mode = 2; opname = P_NOIN; break;
       case Expression::t_provides: mode = 2; opname = P_PROV; break;
+      case Expression::t_fbind: mode = 2; opname = P_FORB; break;
 
       // it is better to handle the rest directly here.
       case Expression::t_iif:
