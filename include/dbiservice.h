@@ -176,7 +176,7 @@ public:
  * It represents a single database query with results. Through this class, query data
  * can be accessed.
  */
-class DBIRecordset : public UserData
+class DBIRecordset : public FalconData
 {
 protected:
    DBIHandle *m_dbh;
@@ -278,6 +278,9 @@ public:
     * Close the recordset
     */
    virtual void close()=0;
+
+   virtual FalconData *clone() const { return 0; }
+   virtual void gcMark(Falcon::VMachine*) {};
 };
 
 /**
@@ -296,7 +299,7 @@ public:
  * wrapping CoreObjects fors cripts.
  */
 
-class DBITransaction: public UserData
+class DBITransaction: public FalconData
 {
 protected:
    DBIHandle *m_dbh;
@@ -378,6 +381,9 @@ public:
     * override this setting, which must be ignored in case a specific setting is provided.
     */
    virtual DBIBlobStream *createBlob( dbi_status &status, const String &params= "", bool bBinary = false )=0;
+
+   virtual FalconData *clone() const { return 0; }
+   virtual void gcMark(Falcon::VMachine*) {};
 };
 
 /**
@@ -395,7 +401,7 @@ public:
  * The handle is derived from UserData as it is likely to be assigned
  * to a CoreObject.
  */
-class DBIHandle: public UserData
+class DBIHandle: public FalconData
 {
 public:
    typedef enum {
@@ -489,6 +495,10 @@ public:
 
    /** Disconnects this handle from the database */
    virtual dbi_status close()=0;
+
+   virtual FalconData *clone() const { return 0; }
+   virtual void gcMark(Falcon::VMachine*) {};
+
 };
 
 /**

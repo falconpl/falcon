@@ -3,6 +3,7 @@
 #
 # CMake configuration file for DBI
 ####################################################################
+cmake_minimum_required(VERSION 2.4)
 
 PROJECT(Falcon_DBI)
 OPTION(WITH_MYSQL  "Include MySQL DBI Module" OFF)

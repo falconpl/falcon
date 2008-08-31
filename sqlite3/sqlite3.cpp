@@ -36,7 +36,7 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    self->version( VERSION_MAJOR, VERSION_MINOR, VERSION_REVISION );
 
    // first of all, we need to declare our dependency from the DBI module.
-   self->addDepend( self->addString("dbi") );
+   self->addDepend( "dbi" );
 
    // also, we declare a SQLite3 class, which derives from DBIHandler which
    // is in the DBI module.
