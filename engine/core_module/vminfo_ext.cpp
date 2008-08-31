@@ -15,6 +15,7 @@
 
 #include "core_module.h"
 #include <falcon/stackframe.h>
+#include <falcon/sys.h>
 
 namespace Falcon {
 namespace core {
@@ -149,6 +150,31 @@ FALCON_FUNC vmIsMain( ::Falcon::VMachine *vm )
       vm->retval( (bool) (callerMod == vm->mainModule()->module() ) );
    }
 }
+
+/*#
+   @function vmFalconPath
+   @ingroup vminfo
+   @inset vminfo
+   @brief Returns default system path for Falcon load requests.
+   @return The default compiled-in load path, or the value of the
+      environemnt variable FALCON_LOAD_PATH if defined.
+*/
+
+FALCON_FUNC vmFalconPath( ::Falcon::VMachine *vm )
+{
+   String envpath;
+   bool hasEnvPath = Sys::_getEnv( "FALCON_LOAD_PATH", envpath );
+
+   if ( hasEnvPath )
+   {
+      vm->retval( new GarbageString( vm, envpath ) );
+   }
+   else {
+      vm->retval( new GarbageString( vm, FALCON_DEFAULT_LOAD_PATH ) );
+   }
+}
+
+
 
 }
 }
