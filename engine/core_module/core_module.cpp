@@ -497,6 +497,8 @@ Module* core_module_init()
 
    self->addExtFunc( "itemCopy", Falcon::core::itemCopy );
 
+   self->addExtFunc( "include", Falcon::core::fal_include );
+
    //==============================================
    // Transcoding functions
 

@@ -367,6 +367,7 @@ reflectionFuncDecl FileStats_ctime_rfrom;
 reflectionFuncDecl FileStats_atime_rfrom;
 
 FALCON_FUNC  itemCopy( ::Falcon::VMachine *vm );
+FALCON_FUNC  fal_include( ::Falcon::VMachine *vm );
 
 /** Path class */
 FALCON_FUNC Path_init ( ::Falcon::VMachine *vm );

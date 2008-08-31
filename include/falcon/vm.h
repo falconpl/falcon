@@ -693,9 +693,9 @@ public:
       \note The main module is the module that is preferentially searched
             for start symbol(s) by prepare() function.
       \param rt the runtime to be linked
-      \return false on link time error, true on success
+      \return The topmost module in the runtime turned into a livemoude, or zero on failure.
    */
-   bool link( Runtime *rt );
+   LiveModule* link( Runtime *rt );
 
    /** Links a single module.
       The last-linked module is usually set as the main module, but it is possible

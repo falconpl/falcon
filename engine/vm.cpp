@@ -320,19 +320,26 @@ void VMachine::errorHandler( ErrorHandler *em, bool own )
 }
 
 
-bool VMachine::link( Runtime *rt )
+LiveModule* VMachine::link( Runtime *rt )
 {
    // link all the modules in the runtime from first to last.
    // FIFO order is important.
    uint32 listSize = rt->moduleVector()->size();
+   LiveModule* lmod = 0;
    for( uint32 iter = 0; iter < listSize; ++iter )
    {
       ModuleDep *md = rt->moduleVector()->moduleDepAt( iter );
-      if ( link( md->module(), rt->hasMainModule() && (iter + 1 == listSize), md->isPrivate() ) == 0 )
-         return false;
+      if ( (lmod = link( md->module(),
+                       rt->hasMainModule() && (iter + 1 == listSize),
+                       md->isPrivate() ) ) == 0
+      )
+      {
+         return 0;
+      }
    }
 
-   return true;
+   // returns the topmost livemodule
+   return lmod;
 }
 
 

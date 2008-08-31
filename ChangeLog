@@ -35,6 +35,8 @@ Falcon (0.8.11)
   * bugfix: dolist wasn't breaking on oob(nil), but on just false.
   * major: Forward binding implemented. Currently used to resolve
            named parameter function calls.
+  * major: include() function added to Core module allowing dynamic module
+           loading directly from base programs.
 
 Falcon (0.8.10)
   * minor: Now classes can be stored in object properties and called to get

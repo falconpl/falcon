@@ -121,6 +121,7 @@ SET( CORE_MODULE_SOURCES
    core_module/dir_ext.cpp
    core_module/envvars.cpp
    core_module/error_ext.cpp
+   core_module/fal_include.cpp
    core_module/fbom.cpp
    core_module/file_ext.cpp
    core_module/format_ext.cpp

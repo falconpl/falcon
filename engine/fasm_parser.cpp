@@ -398,7 +398,7 @@
 
 
 /* Copy the first part of user declarations.  */
-#line 17 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 17 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
 
 #include <falcon/setup.h>
 #include <stdio.h>
@@ -468,7 +468,7 @@ typedef int YYSTYPE;
 
 
 /* Line 216 of yacc.c.  */
-#line 472 "/home/user/Progetti/falcon/core/engine/fasm_parser.cpp"
+#line 472 "/home/gian/Progetti/falcon/core/engine/fasm_parser.cpp"
 
 #ifdef short
 # undef short
@@ -2688,266 +2688,266 @@ yyreduce:
   switch (yyn)
     {
         case 9:
-#line 242 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 242 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->raiseError(Falcon::e_syntax, LINE - 1 ); }
     break;
 
   case 35:
-#line 258 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 258 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addEntry(); }
     break;
 
   case 36:
-#line 259 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 259 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->setModuleName( (yyvsp[(2) - (2)]) ); }
     break;
 
   case 37:
-#line 260 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 260 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addGlobal( (yyvsp[(2) - (3)]), (yyvsp[(3) - (3)]) ); }
     break;
 
   case 38:
-#line 261 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 261 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addGlobal( (yyvsp[(2) - (4)]), (yyvsp[(3) - (4)]), true ); }
     break;
 
   case 39:
-#line 262 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 262 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addVar( (yyvsp[(2) - (4)]), (yyvsp[(3) - (4)]), (yyvsp[(4) - (4)]) ); }
     break;
 
   case 40:
-#line 263 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 263 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addVar( (yyvsp[(2) - (5)]), (yyvsp[(3) - (5)]), (yyvsp[(4) - (5)]), true ); }
     break;
 
   case 41:
-#line 264 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 264 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addConst( (yyvsp[(2) - (3)]), (yyvsp[(3) - (3)]) ); }
     break;
 
   case 42:
-#line 265 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 265 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addConst( (yyvsp[(2) - (4)]), (yyvsp[(3) - (4)]), true ); }
     break;
 
   case 43:
-#line 266 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 266 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addAttrib( (yyvsp[(2) - (3)]), (yyvsp[(3) - (3)]) ); }
     break;
 
   case 44:
-#line 267 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 267 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addAttrib( (yyvsp[(2) - (4)]), (yyvsp[(3) - (4)]), true ); }
     break;
 
   case 45:
-#line 268 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 268 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     {  COMPILER->addLocal( (yyvsp[(2) - (3)]), (yyvsp[(3) - (3)]) ); }
     break;
 
   case 46:
-#line 269 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 269 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     {  COMPILER->addParam( (yyvsp[(2) - (3)]), (yyvsp[(3) - (3)]) ); }
     break;
 
   case 47:
-#line 270 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 270 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     {  COMPILER->addFuncDef( (yyvsp[(2) - (2)]) ); }
     break;
 
   case 48:
-#line 271 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 271 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     {  COMPILER->addFuncDef( (yyvsp[(2) - (3)]), true ); }
     break;
 
   case 49:
-#line 272 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 272 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     {  COMPILER->addFunction( (yyvsp[(2) - (3)]), (yyvsp[(3) - (3)]) ); }
     break;
 
   case 50:
-#line 273 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 273 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     {  COMPILER->addFunction( (yyvsp[(2) - (4)]), (yyvsp[(3) - (4)]), true ); }
     break;
 
   case 51:
-#line 274 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 274 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addFuncEnd(); }
     break;
 
   case 52:
-#line 275 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 275 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     {  COMPILER->addLoad( (yyvsp[(2) - (2)]), false ); }
     break;
 
   case 53:
-#line 276 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 276 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     {  COMPILER->addLoad( (yyvsp[(2) - (2)]), true ); }
     break;
 
   case 54:
-#line 277 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 277 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addImport( (yyvsp[(2) - (3)]), (yyvsp[(3) - (3)]) ); }
     break;
 
   case 55:
-#line 278 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 278 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addImport( (yyvsp[(2) - (4)]), (yyvsp[(3) - (4)]), (yyvsp[(4) - (4)]), 0, false ); }
     break;
 
   case 56:
-#line 279 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 279 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addImport( (yyvsp[(2) - (4)]), (yyvsp[(3) - (4)]), (yyvsp[(4) - (4)]), 0, true ); }
     break;
 
   case 57:
-#line 280 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 280 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     {
       COMPILER->addImport( (yyvsp[(2) - (5)]), (yyvsp[(3) - (5)]), (yyvsp[(4) - (5)]), (yyvsp[(5) - (5)]), false );
    }
     break;
 
   case 58:
-#line 283 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 283 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     {
       COMPILER->addImport( (yyvsp[(2) - (5)]), (yyvsp[(3) - (5)]), (yyvsp[(4) - (5)]), (yyvsp[(5) - (5)]), true );
    }
     break;
 
   case 59:
-#line 286 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 286 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addDSwitch( (yyvsp[(2) - (4)]), (yyvsp[(4) - (4)]) ); }
     break;
 
   case 60:
-#line 287 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 287 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addDSwitch( (yyvsp[(2) - (4)]), (yyvsp[(4) - (4)]) ); }
     break;
 
   case 61:
-#line 288 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 288 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addDSwitch( (yyvsp[(2) - (4)]), (yyvsp[(4) - (4)]), true ); }
     break;
 
   case 62:
-#line 289 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 289 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addDSwitch( (yyvsp[(2) - (4)]), (yyvsp[(4) - (4)]), true ); }
     break;
 
   case 63:
-#line 290 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 290 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addDCase( (yyvsp[(2) - (4)]), (yyvsp[(4) - (4)]) ); }
     break;
 
   case 64:
-#line 291 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 291 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addDCase( (yyvsp[(2) - (4)]), (yyvsp[(4) - (4)]) ); }
     break;
 
   case 65:
-#line 292 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 292 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addDCase( (yyvsp[(2) - (4)]), (yyvsp[(4) - (4)]) ); }
     break;
 
   case 66:
-#line 293 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 293 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addDCase( (yyvsp[(2) - (4)]), (yyvsp[(4) - (4)]) ); }
     break;
 
   case 67:
-#line 294 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 294 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addDCase( (yyvsp[(2) - (4)]), (yyvsp[(4) - (4)]) ); }
     break;
 
   case 68:
-#line 295 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 295 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addDCase( (yyvsp[(2) - (6)]), (yyvsp[(6) - (6)]), (yyvsp[(4) - (6)]) ); }
     break;
 
   case 69:
-#line 296 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 296 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addDEndSwitch(); }
     break;
 
   case 70:
-#line 297 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 297 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     {  COMPILER->addProperty( (yyvsp[(2) - (3)]), (yyvsp[(3) - (3)]) ); }
     break;
 
   case 71:
-#line 298 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 298 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     {  COMPILER->addProperty( (yyvsp[(2) - (3)]), (yyvsp[(3) - (3)]) ); }
     break;
 
   case 72:
-#line 299 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 299 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     {  COMPILER->addPropRef( (yyvsp[(2) - (3)]), (yyvsp[(3) - (3)]) ); }
     break;
 
   case 75:
-#line 302 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 302 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstance( (yyvsp[(2) - (4)]), (yyvsp[(3) - (4)]), (yyvsp[(4) - (4)]) ); }
     break;
 
   case 76:
-#line 303 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 303 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstance( (yyvsp[(2) - (5)]), (yyvsp[(3) - (5)]), (yyvsp[(4) - (5)]), true ); }
     break;
 
   case 77:
-#line 304 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 304 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     {  COMPILER->addClass( (yyvsp[(2) - (3)]), (yyvsp[(3) - (3)]) ); }
     break;
 
   case 78:
-#line 305 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 305 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     {  COMPILER->addClass( (yyvsp[(2) - (4)]), (yyvsp[(3) - (4)]), true ); }
     break;
 
   case 79:
-#line 306 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 306 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     {  COMPILER->addClassDef( (yyvsp[(2) - (2)]) ); }
     break;
 
   case 80:
-#line 307 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 307 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     {  COMPILER->addClassDef( (yyvsp[(2) - (3)]), true ); }
     break;
 
   case 81:
-#line 308 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 308 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     {  COMPILER->addClassCtor( (yyvsp[(2) - (2)]) ); }
     break;
 
   case 82:
-#line 309 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 309 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addFuncEnd(); /* Currently the same as .endfunc */ }
     break;
 
   case 83:
-#line 310 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 310 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInherit((yyvsp[(2) - (2)])); }
     break;
 
   case 85:
-#line 311 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 311 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     {  COMPILER->addFrom( (yyvsp[(2) - (2)]) ); }
     break;
 
   case 86:
-#line 312 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 312 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     {  COMPILER->addExtern( (yyvsp[(2) - (3)]), (yyvsp[(3) - (3)]) ); }
     break;
 
   case 87:
-#line 313 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 313 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     {  COMPILER->addDLine( (yyvsp[(2) - (2)]) ); }
     break;
 
   case 88:
-#line 315 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 315 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     {
          // string already added to the module by the lexer
          delete (yyvsp[(2) - (2)]);
@@ -2955,7 +2955,7 @@ yyreduce:
     break;
 
   case 89:
-#line 320 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 320 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     {
          // string already added to the module by the lexer
          (yyvsp[(2) - (2)])->asString().exported( true );
@@ -2964,7 +2964,7 @@ yyreduce:
     break;
 
   case 90:
-#line 326 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 326 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     {
          // string already added to the module by the lexer
          delete (yyvsp[(2) - (2)]);
@@ -2972,837 +2972,837 @@ yyreduce:
     break;
 
   case 91:
-#line 334 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 334 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->classHas( (yyvsp[(1) - (1)]) ); }
     break;
 
   case 92:
-#line 335 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 335 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->classHas( (yyvsp[(3) - (3)]) ); }
     break;
 
   case 93:
-#line 339 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 339 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->classHasnt( (yyvsp[(1) - (1)]) ); }
     break;
 
   case 94:
-#line 340 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 340 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->classHasnt( (yyvsp[(3) - (3)]) ); }
     break;
 
   case 95:
-#line 343 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 343 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->defineLabel( (yyvsp[(1) - (2)])->asLabel() ); }
     break;
 
   case 97:
-#line 347 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 347 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInheritParam( (yyvsp[(1) - (1)]) ); }
     break;
 
   case 98:
-#line 348 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 348 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInheritParam( (yyvsp[(3) - (3)]) ); }
     break;
 
   case 101:
-#line 357 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 357 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     {(yyval) = new Falcon::Pseudo( LINE, (Falcon::int64) 0 ); }
     break;
 
   case 206:
-#line 468 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 468 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstr( P_LD, (yyvsp[(2) - (4)]), (yyvsp[(4) - (4)]) ); }
     break;
 
   case 207:
-#line 469 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 469 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->raiseError(Falcon::e_invop, "LD" ); }
     break;
 
   case 208:
-#line 473 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 473 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstr( P_LDRF, (yyvsp[(2) - (4)]), (yyvsp[(4) - (4)]) ); }
     break;
 
   case 209:
-#line 474 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 474 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->raiseError(Falcon::e_invop, "LDRF" ); }
     break;
 
   case 210:
-#line 478 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 478 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstr( P_LNIL, (yyvsp[(2) - (2)]) ); }
     break;
 
   case 211:
-#line 479 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 479 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->raiseError(Falcon::e_invop, "LNIL" ); }
     break;
 
   case 212:
-#line 483 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 483 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstr( P_ADD, (yyvsp[(2) - (4)]), (yyvsp[(4) - (4)])); }
     break;
 
   case 213:
-#line 484 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 484 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->raiseError(Falcon::e_invop, "ADD" ); }
     break;
 
   case 214:
-#line 488 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 488 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstr( P_ADDS, (yyvsp[(2) - (4)]), (yyvsp[(4) - (4)])); }
     break;
 
   case 215:
-#line 489 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 489 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->raiseError(Falcon::e_invop, "ADDS" ); }
     break;
 
   case 216:
-#line 494 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 494 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstr( P_SUB, (yyvsp[(2) - (4)]), (yyvsp[(4) - (4)])); }
     break;
 
   case 217:
-#line 495 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 495 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->raiseError(Falcon::e_invop, "SUB" ); }
     break;
 
   case 218:
-#line 499 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 499 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstr( P_SUBS, (yyvsp[(2) - (4)]), (yyvsp[(4) - (4)])); }
     break;
 
   case 219:
-#line 500 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 500 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->raiseError(Falcon::e_invop, "SUBS" ); }
     break;
 
   case 220:
-#line 504 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 504 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstr( P_MUL, (yyvsp[(2) - (4)]), (yyvsp[(4) - (4)])); }
     break;
 
   case 221:
-#line 505 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 505 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->raiseError(Falcon::e_invop, "MUL" ); }
     break;
 
   case 222:
-#line 509 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 509 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstr( P_MULS, (yyvsp[(2) - (4)]), (yyvsp[(4) - (4)])); }
     break;
 
   case 223:
-#line 510 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 510 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->raiseError(Falcon::e_invop, "MULS" ); }
     break;
 
   case 224:
-#line 515 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 515 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstr( P_DIV, (yyvsp[(2) - (4)]), (yyvsp[(4) - (4)])); }
     break;
 
   case 225:
-#line 516 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 516 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->raiseError(Falcon::e_invop, "DIV" ); }
     break;
 
   case 226:
-#line 520 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 520 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstr( P_DIVS, (yyvsp[(2) - (4)]), (yyvsp[(4) - (4)])); }
     break;
 
   case 227:
-#line 521 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 521 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->raiseError(Falcon::e_invop, "DIVS" ); }
     break;
 
   case 228:
-#line 525 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 525 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstr( P_MOD, (yyvsp[(2) - (4)]), (yyvsp[(4) - (4)])); }
     break;
 
   case 229:
-#line 526 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 526 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->raiseError(Falcon::e_invop, "MOD" ); }
     break;
 
   case 230:
-#line 530 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 530 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstr( P_POW, (yyvsp[(2) - (4)]), (yyvsp[(4) - (4)])); }
     break;
 
   case 231:
-#line 531 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 531 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->raiseError(Falcon::e_invop, "POW" ); }
     break;
 
   case 232:
-#line 536 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 536 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstr( P_EQ, (yyvsp[(2) - (4)]), (yyvsp[(4) - (4)])); }
     break;
 
   case 233:
-#line 537 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 537 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->raiseError(Falcon::e_invop, "EQ" ); }
     break;
 
   case 234:
-#line 541 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 541 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstr( P_NEQ, (yyvsp[(2) - (4)]), (yyvsp[(4) - (4)])); }
     break;
 
   case 235:
-#line 542 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 542 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->raiseError(Falcon::e_invop, "NEQ" ); }
     break;
 
   case 236:
-#line 546 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 546 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstr( P_GE, (yyvsp[(2) - (4)]), (yyvsp[(4) - (4)])); }
     break;
 
   case 237:
-#line 547 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 547 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->raiseError(Falcon::e_invop, "GE" ); }
     break;
 
   case 238:
-#line 551 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 551 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstr( P_GT, (yyvsp[(2) - (4)]), (yyvsp[(4) - (4)])); }
     break;
 
   case 239:
-#line 552 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 552 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->raiseError(Falcon::e_invop, "GT" ); }
     break;
 
   case 240:
-#line 556 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 556 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstr( P_LE, (yyvsp[(2) - (4)]), (yyvsp[(4) - (4)])); }
     break;
 
   case 241:
-#line 557 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 557 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->raiseError(Falcon::e_invop, "LE" ); }
     break;
 
   case 242:
-#line 561 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 561 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstr( P_LT, (yyvsp[(2) - (4)]), (yyvsp[(4) - (4)])); }
     break;
 
   case 243:
-#line 562 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 562 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->raiseError(Falcon::e_invop, "LT" ); }
     break;
 
   case 244:
-#line 566 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 566 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { (yyvsp[(2) - (2)])->fixed(true); COMPILER->addInstr( P_TRY, (yyvsp[(2) - (2)])); }
     break;
 
   case 245:
-#line 567 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 567 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { (yyvsp[(2) - (2)])->fixed(true); COMPILER->addInstr( P_TRY, (yyvsp[(2) - (2)])); }
     break;
 
   case 246:
-#line 568 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 568 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->raiseError(Falcon::e_invop, "TRY" ); }
     break;
 
   case 247:
-#line 572 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 572 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstr( P_INC, (yyvsp[(2) - (2)]) ); }
     break;
 
   case 248:
-#line 573 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 573 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->raiseError(Falcon::e_invop, "INC" ); }
     break;
 
   case 249:
-#line 577 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 577 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstr( P_DEC, (yyvsp[(2) - (2)])  ); }
     break;
 
   case 250:
-#line 578 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 578 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->raiseError(Falcon::e_invop, "DEC" ); }
     break;
 
   case 251:
-#line 583 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 583 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstr( P_INCP, (yyvsp[(2) - (2)]) ); }
     break;
 
   case 252:
-#line 584 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 584 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->raiseError(Falcon::e_invop, "INCP" ); }
     break;
 
   case 253:
-#line 588 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 588 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstr( P_DECP, (yyvsp[(2) - (2)])  ); }
     break;
 
   case 254:
-#line 589 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 589 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->raiseError(Falcon::e_invop, "DECP" ); }
     break;
 
   case 255:
-#line 594 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 594 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstr( P_NEG, (yyvsp[(2) - (2)])  ); }
     break;
 
   case 256:
-#line 595 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 595 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->raiseError(Falcon::e_invop, "NEG" ); }
     break;
 
   case 257:
-#line 599 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 599 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstr( P_NOT, (yyvsp[(2) - (2)])  ); }
     break;
 
   case 258:
-#line 600 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 600 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->raiseError(Falcon::e_invop, "NOT" ); }
     break;
 
   case 259:
-#line 604 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 604 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { (yyvsp[(2) - (4)])->fixed( true ); COMPILER->addInstr( P_CALL, (yyvsp[(2) - (4)]), (yyvsp[(4) - (4)]) ); }
     break;
 
   case 260:
-#line 605 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 605 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { (yyvsp[(2) - (4)])->fixed( true ); COMPILER->addInstr( P_CALL, (yyvsp[(2) - (4)]), (yyvsp[(4) - (4)]) ); }
     break;
 
   case 261:
-#line 606 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 606 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->raiseError(Falcon::e_invop, "CALL" ); }
     break;
 
   case 262:
-#line 610 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 610 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { (yyvsp[(2) - (4)])->fixed( true ); COMPILER->addInstr( P_INST, (yyvsp[(2) - (4)]), (yyvsp[(4) - (4)]) ); }
     break;
 
   case 263:
-#line 611 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 611 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { (yyvsp[(2) - (4)])->fixed( true ); COMPILER->addInstr( P_INST, (yyvsp[(2) - (4)]), (yyvsp[(4) - (4)]) ); }
     break;
 
   case 264:
-#line 612 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 612 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->raiseError(Falcon::e_invop, "INST" ); }
     break;
 
   case 265:
-#line 616 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 616 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstr( P_UNPK, (yyvsp[(2) - (4)]), (yyvsp[(4) - (4)]) ); }
     break;
 
   case 266:
-#line 617 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 617 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->raiseError(Falcon::e_invop, "UNPK" ); }
     break;
 
   case 267:
-#line 621 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 621 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { (yyvsp[(2) - (4)])->fixed( true ); COMPILER->addInstr( P_UNPS, (yyvsp[(2) - (4)]), (yyvsp[(4) - (4)]) ); }
     break;
 
   case 268:
-#line 622 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 622 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->raiseError(Falcon::e_invop, "UNPS" ); }
     break;
 
   case 269:
-#line 627 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 627 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     {  COMPILER->addInstr( P_PUSH, (yyvsp[(2) - (2)]) ); }
     break;
 
   case 270:
-#line 628 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 628 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstr( P_PSHN ); }
     break;
 
   case 271:
-#line 629 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 629 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->raiseError(Falcon::e_invop, "PUSH" ); }
     break;
 
   case 272:
-#line 633 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 633 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstr( P_PSHR, (yyvsp[(2) - (2)]) ); }
     break;
 
   case 273:
-#line 634 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 634 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->raiseError(Falcon::e_invop, "PSHR" ); }
     break;
 
   case 274:
-#line 639 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 639 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     {  COMPILER->addInstr( P_POP, (yyvsp[(2) - (2)]) ); }
     break;
 
   case 275:
-#line 640 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 640 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->raiseError(Falcon::e_invop, "POP" ); }
     break;
 
   case 276:
-#line 644 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 644 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     {  COMPILER->addInstr( P_PEEK, (yyvsp[(2) - (2)]) ); }
     break;
 
   case 277:
-#line 645 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 645 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->raiseError(Falcon::e_invop, "PEEK" ); }
     break;
 
   case 278:
-#line 649 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 649 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstr( P_XPOP, (yyvsp[(2) - (2)]) ); }
     break;
 
   case 279:
-#line 650 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 650 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->raiseError(Falcon::e_invop, "XPOP" ); }
     break;
 
   case 280:
-#line 655 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 655 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstr( P_LDV, (yyvsp[(2) - (4)]), (yyvsp[(4) - (4)])); }
     break;
 
   case 281:
-#line 656 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 656 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstr( P_LDV, (yyvsp[(2) - (4)]), (yyvsp[(4) - (4)])); }
     break;
 
   case 282:
-#line 657 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 657 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->raiseError(Falcon::e_invop, "LDV" ); }
     break;
 
   case 283:
-#line 661 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 661 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstr( P_LDVT, (yyvsp[(2) - (6)]), (yyvsp[(4) - (6)]), (yyvsp[(6) - (6)])); }
     break;
 
   case 284:
-#line 662 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 662 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstr( P_LDVT, (yyvsp[(2) - (6)]), (yyvsp[(4) - (6)]), (yyvsp[(6) - (6)])); }
     break;
 
   case 285:
-#line 663 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 663 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->raiseError(Falcon::e_invop, "LDVT" ); }
     break;
 
   case 286:
-#line 667 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 667 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstr( P_STV, (yyvsp[(2) - (6)]), (yyvsp[(4) - (6)]), (yyvsp[(6) - (6)])); }
     break;
 
   case 287:
-#line 668 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 668 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstr( P_STV, (yyvsp[(2) - (6)]), (yyvsp[(4) - (6)]), (yyvsp[(6) - (6)])); }
     break;
 
   case 288:
-#line 669 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 669 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->raiseError(Falcon::e_invop, "STV" ); }
     break;
 
   case 289:
-#line 673 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 673 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstr( P_STVR, (yyvsp[(2) - (6)]), (yyvsp[(4) - (6)]), (yyvsp[(6) - (6)])); }
     break;
 
   case 290:
-#line 674 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 674 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstr( P_STVR, (yyvsp[(2) - (6)]), (yyvsp[(4) - (6)]), (yyvsp[(6) - (6)])); }
     break;
 
   case 291:
-#line 675 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 675 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->raiseError(Falcon::e_invop, "STVR" ); }
     break;
 
   case 292:
-#line 679 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 679 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstr( P_STVS, (yyvsp[(2) - (4)]), (yyvsp[(4) - (4)]) ); }
     break;
 
   case 293:
-#line 680 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 680 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstr( P_STVS, (yyvsp[(2) - (4)]), (yyvsp[(4) - (4)]) ); }
     break;
 
   case 294:
-#line 681 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 681 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->raiseError(Falcon::e_invop, "STVS" ); }
     break;
 
   case 295:
-#line 685 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 685 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstr( P_LDP, (yyvsp[(2) - (4)]), (yyvsp[(4) - (4)])); }
     break;
 
   case 296:
-#line 686 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 686 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstr( P_LDP, (yyvsp[(2) - (4)]), (yyvsp[(4) - (4)])); }
     break;
 
   case 297:
-#line 687 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 687 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->raiseError(Falcon::e_invop, "LDP" ); yyerrok; }
     break;
 
   case 298:
-#line 691 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 691 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstr( P_LDPT, (yyvsp[(2) - (6)]), (yyvsp[(4) - (6)]), (yyvsp[(6) - (6)])); }
     break;
 
   case 299:
-#line 692 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 692 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstr( P_LDPT, (yyvsp[(2) - (6)]), (yyvsp[(4) - (6)]), (yyvsp[(6) - (6)])); }
     break;
 
   case 300:
-#line 693 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 693 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->raiseError(Falcon::e_invop, "LDPT" ); yyerrok; }
     break;
 
   case 301:
-#line 697 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 697 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstr( P_STP, (yyvsp[(2) - (6)]), (yyvsp[(4) - (6)]), (yyvsp[(6) - (6)]) ); }
     break;
 
   case 302:
-#line 698 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 698 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstr( P_STP, (yyvsp[(2) - (6)]), (yyvsp[(4) - (6)]), (yyvsp[(6) - (6)]) ); }
     break;
 
   case 303:
-#line 699 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 699 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->raiseError(Falcon::e_invop, "STP" ); }
     break;
 
   case 304:
-#line 703 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 703 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstr( P_STPR, (yyvsp[(2) - (6)]), (yyvsp[(4) - (6)]), (yyvsp[(6) - (6)]) ); }
     break;
 
   case 305:
-#line 704 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 704 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstr( P_STPR, (yyvsp[(2) - (6)]), (yyvsp[(4) - (6)]), (yyvsp[(6) - (6)]) ); }
     break;
 
   case 306:
-#line 705 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 705 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->raiseError(Falcon::e_invop, "STPR" ); }
     break;
 
   case 307:
-#line 709 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 709 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstr( P_STPS, (yyvsp[(2) - (4)]), (yyvsp[(4) - (4)]) ); }
     break;
 
   case 308:
-#line 710 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 710 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstr( P_STPS, (yyvsp[(2) - (4)]), (yyvsp[(4) - (4)]) ); }
     break;
 
   case 309:
-#line 711 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 711 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->raiseError(Falcon::e_invop, "STPS" ); }
     break;
 
   case 310:
-#line 715 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 715 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { (yyvsp[(2) - (6)])->fixed( true ); COMPILER->addInstr( P_TRAV, (yyvsp[(2) - (6)]), (yyvsp[(4) - (6)]), (yyvsp[(6) - (6)])); }
     break;
 
   case 311:
-#line 716 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 716 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { (yyvsp[(2) - (6)])->fixed( true ); COMPILER->addInstr( P_TRAV, (yyvsp[(2) - (6)]), (yyvsp[(4) - (6)]), (yyvsp[(6) - (6)])); }
     break;
 
   case 312:
-#line 717 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 717 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->raiseError(Falcon::e_invop, "TRAV" ); }
     break;
 
   case 313:
-#line 721 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 721 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { (yyvsp[(2) - (6)])->fixed( true ); (yyvsp[(4) - (6)])->fixed( true ); (yyvsp[(6) - (6)])->fixed( true ); COMPILER->addInstr( P_TRAN, (yyvsp[(2) - (6)]), (yyvsp[(4) - (6)]), (yyvsp[(6) - (6)]) ); }
     break;
 
   case 314:
-#line 722 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 722 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { (yyvsp[(2) - (6)])->fixed( true ); (yyvsp[(4) - (6)])->fixed( true ); (yyvsp[(6) - (6)])->fixed( true ); COMPILER->addInstr( P_TRAN, (yyvsp[(2) - (6)]), (yyvsp[(4) - (6)]), (yyvsp[(6) - (6)]) ); }
     break;
 
   case 315:
-#line 723 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 723 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->raiseError(Falcon::e_invop, "TRAN" ); }
     break;
 
   case 316:
-#line 727 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 727 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { (yyvsp[(2) - (2)])->fixed( true ); COMPILER->addInstr( P_TRAL, (yyvsp[(2) - (2)]) ); }
     break;
 
   case 317:
-#line 728 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 728 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { (yyvsp[(2) - (2)])->fixed( true ); COMPILER->addInstr( P_TRAL, (yyvsp[(2) - (2)]) ); }
     break;
 
   case 318:
-#line 729 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 729 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->raiseError(Falcon::e_invop, "TRAL" ); }
     break;
 
   case 319:
-#line 733 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 733 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { (yyvsp[(2) - (2)])->fixed( true ); COMPILER->addInstr( P_IPOP, (yyvsp[(2) - (2)]) ); }
     break;
 
   case 320:
-#line 734 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 734 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->raiseError(Falcon::e_invop, "IPOP" ); }
     break;
 
   case 321:
-#line 738 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 738 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { (yyvsp[(2) - (2)])->fixed( true ); COMPILER->addInstr( P_GENA, (yyvsp[(2) - (2)]) ); }
     break;
 
   case 322:
-#line 739 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 739 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->raiseError(Falcon::e_invop, "GENA" ); }
     break;
 
   case 323:
-#line 743 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 743 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { (yyvsp[(2) - (2)])->fixed( true ); COMPILER->addInstr( P_GEND, (yyvsp[(2) - (2)]) ); }
     break;
 
   case 324:
-#line 744 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 744 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->raiseError(Falcon::e_invop, "GEND" ); }
     break;
 
   case 325:
-#line 748 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 748 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstr( P_GENR, (yyvsp[(2) - (6)]), (yyvsp[(4) - (6)]), (yyvsp[(6) - (6)])); }
     break;
 
   case 326:
-#line 749 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 749 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->raiseError(Falcon::e_invop, "GENR" ); }
     break;
 
   case 327:
-#line 753 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 753 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstr( P_GEOR, (yyvsp[(2) - (2)]) ); }
     break;
 
   case 328:
-#line 754 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 754 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->raiseError(Falcon::e_invop, "GEOR" ); }
     break;
 
   case 329:
-#line 758 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 758 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstr( P_RIS, (yyvsp[(2) - (2)]) ); }
     break;
 
   case 330:
-#line 759 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 759 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->raiseError(Falcon::e_invop, "RIS" ); }
     break;
 
   case 331:
-#line 763 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 763 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { (yyvsp[(2) - (2)])->fixed( true ); COMPILER->addInstr( P_JMP, (yyvsp[(2) - (2)]) ); }
     break;
 
   case 332:
-#line 764 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 764 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { (yyvsp[(2) - (2)])->fixed( true ); COMPILER->addInstr( P_JMP, (yyvsp[(2) - (2)]) ); }
     break;
 
   case 333:
-#line 765 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 765 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->raiseError(Falcon::e_invop, "JMP" ); }
     break;
 
   case 334:
-#line 769 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 769 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstr( P_BOOL, (yyvsp[(1) - (2)]) ); }
     break;
 
   case 335:
-#line 770 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 770 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->raiseError(Falcon::e_invop, "BOOL" ); }
     break;
 
   case 336:
-#line 774 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 774 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { (yyvsp[(2) - (4)])->fixed( true ); COMPILER->addInstr( P_IFT, (yyvsp[(2) - (4)]), (yyvsp[(4) - (4)]) ); }
     break;
 
   case 337:
-#line 775 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 775 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { (yyvsp[(2) - (4)])->fixed( true ); COMPILER->addInstr( P_IFT, (yyvsp[(2) - (4)]), (yyvsp[(4) - (4)]) ); }
     break;
 
   case 338:
-#line 776 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 776 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->raiseError(Falcon::e_invop, "IFT" ); }
     break;
 
   case 339:
-#line 780 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 780 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { (yyvsp[(2) - (4)])->fixed( true ); COMPILER->addInstr( P_IFF, (yyvsp[(2) - (4)]), (yyvsp[(4) - (4)]) ); }
     break;
 
   case 340:
-#line 781 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 781 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { (yyvsp[(2) - (4)])->fixed( true ); COMPILER->addInstr( P_IFF, (yyvsp[(2) - (4)]), (yyvsp[(4) - (4)]) ); }
     break;
 
   case 341:
-#line 782 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 782 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->raiseError(Falcon::e_invop, "IFF" ); }
     break;
 
   case 342:
-#line 787 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 787 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { (yyvsp[(2) - (4)])->fixed( true ); (yyvsp[(4) - (4)])->fixed( true ); COMPILER->addInstr( P_FORK, (yyvsp[(2) - (4)]), (yyvsp[(4) - (4)]) ); }
     break;
 
   case 343:
-#line 788 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 788 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { (yyvsp[(2) - (4)])->fixed( true ); (yyvsp[(4) - (4)])->fixed( true ); COMPILER->addInstr( P_FORK, (yyvsp[(2) - (4)]), (yyvsp[(4) - (4)]) ); }
     break;
 
   case 344:
-#line 789 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 789 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->raiseError(Falcon::e_invop, "FORK" ); }
     break;
 
   case 345:
-#line 793 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 793 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { (yyvsp[(2) - (2)])->fixed( true ); COMPILER->addInstr( P_JTRY, (yyvsp[(2) - (2)]) ); }
     break;
 
   case 346:
-#line 794 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 794 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { (yyvsp[(2) - (2)])->fixed( true ); COMPILER->addInstr( P_JTRY, (yyvsp[(2) - (2)]) ); }
     break;
 
   case 347:
-#line 795 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 795 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->raiseError(Falcon::e_invop, "JTRY" ); }
     break;
 
   case 348:
-#line 799 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 799 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstr( P_RET ); }
     break;
 
   case 349:
-#line 800 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 800 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->raiseError(Falcon::e_invop, "RET" ); }
     break;
 
   case 350:
-#line 804 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 804 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstr( P_RETA ); }
     break;
 
   case 351:
-#line 805 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 805 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->raiseError(Falcon::e_invop, "RETA" ); }
     break;
 
   case 352:
-#line 809 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 809 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstr( P_RETV, (yyvsp[(2) - (2)]) ); }
     break;
 
   case 353:
-#line 810 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 810 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->raiseError(Falcon::e_invop, "RETV" ); }
     break;
 
   case 354:
-#line 814 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 814 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstr( P_NOP ); }
     break;
 
   case 355:
-#line 815 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 815 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->raiseError(Falcon::e_invop, "NOP" ); }
     break;
 
   case 356:
-#line 819 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 819 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { (yyvsp[(2) - (2)])->fixed( true ); COMPILER->addInstr( P_PTRY, (yyvsp[(2) - (2)]) ); }
     break;
 
   case 357:
-#line 820 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 820 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->raiseError(Falcon::e_invop, "PTRY" ); }
     break;
 
   case 358:
-#line 824 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 824 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstr( P_END ); }
     break;
 
   case 359:
-#line 825 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 825 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->raiseError(Falcon::e_invop, "END" ); }
     break;
 
   case 360:
-#line 829 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 829 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { (yyvsp[(2) - (6)])->fixed(true); COMPILER->write_switch( (yyvsp[(2) - (6)]), (yyvsp[(4) - (6)]), (yyvsp[(6) - (6)]) ); }
     break;
 
   case 361:
-#line 830 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 830 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->raiseError(Falcon::e_invop, "SWCH" ); }
     break;
 
   case 362:
-#line 834 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 834 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { (yyvsp[(2) - (6)])->fixed(true); COMPILER->write_switch( (yyvsp[(2) - (6)]), (yyvsp[(4) - (6)]), (yyvsp[(6) - (6)]) ); }
     break;
 
   case 363:
-#line 835 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 835 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->raiseError(Falcon::e_invop, "SELE" ); }
     break;
 
   case 364:
-#line 840 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 840 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     {
          Falcon::Pseudo *psd = new Falcon::Pseudo( Falcon::Pseudo::tswitch_list );
          psd->line( LINE );
@@ -3813,7 +3813,7 @@ yyreduce:
     break;
 
   case 365:
-#line 849 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 849 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     {
          (yyvsp[(1) - (5)])->asList()->pushBack( (yyvsp[(3) - (5)]) );
          (yyvsp[(1) - (5)])->asList()->pushBack( (yyvsp[(5) - (5)]) );
@@ -3822,443 +3822,443 @@ yyreduce:
     break;
 
   case 366:
-#line 857 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 857 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { (yyvsp[(2) - (4)])->fixed( true ); COMPILER->addInstr( P_ONCE, (yyvsp[(2) - (4)]), (yyvsp[(4) - (4)]) ); COMPILER->addStatic(); }
     break;
 
   case 367:
-#line 858 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 858 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { (yyvsp[(2) - (4)])->fixed( true ); COMPILER->addInstr( P_ONCE, (yyvsp[(2) - (4)]), (yyvsp[(4) - (4)]) ); COMPILER->addStatic(); }
     break;
 
   case 368:
-#line 859 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 859 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->raiseError(Falcon::e_invop, "ONCE" ); }
     break;
 
   case 369:
-#line 863 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 863 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstr( P_BAND, (yyvsp[(2) - (4)]), (yyvsp[(4) - (4)]) ); }
     break;
 
   case 370:
-#line 864 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 864 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstr( P_BAND, (yyvsp[(2) - (4)]), (yyvsp[(4) - (4)]) ); }
     break;
 
   case 371:
-#line 865 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 865 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstr( P_BAND, (yyvsp[(2) - (4)]), (yyvsp[(4) - (4)]) ); }
     break;
 
   case 372:
-#line 866 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 866 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstr( P_BAND, (yyvsp[(2) - (4)]), (yyvsp[(4) - (4)]) ); }
     break;
 
   case 373:
-#line 867 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 867 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->raiseError(Falcon::e_invop, "BAND" ); }
     break;
 
   case 374:
-#line 871 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 871 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstr( P_BOR, (yyvsp[(2) - (4)]), (yyvsp[(4) - (4)]) ); }
     break;
 
   case 375:
-#line 872 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 872 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstr( P_BOR, (yyvsp[(2) - (4)]), (yyvsp[(4) - (4)]) ); }
     break;
 
   case 376:
-#line 873 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 873 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstr( P_BOR, (yyvsp[(2) - (4)]), (yyvsp[(4) - (4)]) ); }
     break;
 
   case 377:
-#line 874 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 874 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstr( P_BOR, (yyvsp[(2) - (4)]), (yyvsp[(4) - (4)]) ); }
     break;
 
   case 378:
-#line 875 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 875 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->raiseError(Falcon::e_invop, "BOR" ); }
     break;
 
   case 379:
-#line 879 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 879 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstr( P_BXOR, (yyvsp[(2) - (4)]), (yyvsp[(4) - (4)]) ); }
     break;
 
   case 380:
-#line 880 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 880 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstr( P_BXOR, (yyvsp[(2) - (4)]), (yyvsp[(4) - (4)]) ); }
     break;
 
   case 381:
-#line 881 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 881 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstr( P_BXOR, (yyvsp[(2) - (4)]), (yyvsp[(4) - (4)]) ); }
     break;
 
   case 382:
-#line 882 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 882 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstr( P_BXOR, (yyvsp[(2) - (4)]), (yyvsp[(4) - (4)]) ); }
     break;
 
   case 383:
-#line 883 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 883 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->raiseError(Falcon::e_invop, "BXOR" ); }
     break;
 
   case 384:
-#line 887 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 887 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstr( P_BNOT, (yyvsp[(2) - (2)]) ); }
     break;
 
   case 385:
-#line 888 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 888 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstr( P_BNOT, (yyvsp[(2) - (2)]) ); }
     break;
 
   case 386:
-#line 889 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 889 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->raiseError(Falcon::e_invop, "BXOR" ); }
     break;
 
   case 387:
-#line 893 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 893 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstr( P_AND, (yyvsp[(2) - (4)]), (yyvsp[(4) - (4)])); }
     break;
 
   case 388:
-#line 894 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 894 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->raiseError(Falcon::e_invop, "AND" ); }
     break;
 
   case 389:
-#line 898 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 898 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstr( P_OR, (yyvsp[(2) - (4)]), (yyvsp[(4) - (4)])); }
     break;
 
   case 390:
-#line 899 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 899 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->raiseError(Falcon::e_invop, "OR" ); }
     break;
 
   case 391:
-#line 903 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 903 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstr( P_ANDS, (yyvsp[(2) - (4)]), (yyvsp[(4) - (4)])); }
     break;
 
   case 392:
-#line 904 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 904 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->raiseError(Falcon::e_invop, "ANDS" ); }
     break;
 
   case 393:
-#line 908 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 908 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstr( P_ORS, (yyvsp[(2) - (4)]), (yyvsp[(4) - (4)])); }
     break;
 
   case 394:
-#line 909 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 909 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->raiseError(Falcon::e_invop, "ORS" ); }
     break;
 
   case 395:
-#line 913 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 913 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstr( P_XORS, (yyvsp[(2) - (4)]), (yyvsp[(4) - (4)])); }
     break;
 
   case 396:
-#line 914 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 914 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->raiseError(Falcon::e_invop, "XORS" ); }
     break;
 
   case 397:
-#line 918 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 918 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstr( P_MODS, (yyvsp[(2) - (4)]), (yyvsp[(4) - (4)])); }
     break;
 
   case 398:
-#line 919 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 919 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->raiseError(Falcon::e_invop, "MODS" ); }
     break;
 
   case 399:
-#line 923 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 923 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstr( P_POWS, (yyvsp[(2) - (4)]), (yyvsp[(4) - (4)])); }
     break;
 
   case 400:
-#line 924 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 924 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->raiseError(Falcon::e_invop, "POWS" ); }
     break;
 
   case 401:
-#line 928 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 928 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstr( P_NOTS, (yyvsp[(2) - (2)]) ); }
     break;
 
   case 402:
-#line 929 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 929 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->raiseError(Falcon::e_invop, "NOTS" ); }
     break;
 
   case 403:
-#line 933 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 933 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstr( P_HAS, (yyvsp[(2) - (4)]), (yyvsp[(4) - (4)])); }
     break;
 
   case 404:
-#line 934 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 934 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstr( P_HAS, (yyvsp[(2) - (4)]), (yyvsp[(4) - (4)])); }
     break;
 
   case 405:
-#line 935 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 935 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->raiseError(Falcon::e_invop, "HAS" ); }
     break;
 
   case 406:
-#line 939 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 939 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstr( P_HASN, (yyvsp[(2) - (4)]), (yyvsp[(4) - (4)])); }
     break;
 
   case 407:
-#line 940 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 940 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstr( P_HASN, (yyvsp[(2) - (4)]), (yyvsp[(4) - (4)])); }
     break;
 
   case 408:
-#line 941 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 941 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->raiseError(Falcon::e_invop, "HASN" ); }
     break;
 
   case 409:
-#line 945 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 945 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstr( P_GIVE, (yyvsp[(2) - (4)]), (yyvsp[(4) - (4)])); }
     break;
 
   case 410:
-#line 946 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 946 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstr( P_GIVE, (yyvsp[(2) - (4)]), (yyvsp[(4) - (4)])); }
     break;
 
   case 411:
-#line 947 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 947 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->raiseError(Falcon::e_invop, "GIVE" ); }
     break;
 
   case 412:
-#line 951 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 951 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstr( P_GIVN, (yyvsp[(2) - (4)]), (yyvsp[(4) - (4)])); }
     break;
 
   case 413:
-#line 952 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 952 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstr( P_GIVN, (yyvsp[(2) - (4)]), (yyvsp[(4) - (4)])); }
     break;
 
   case 414:
-#line 953 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 953 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->raiseError(Falcon::e_invop, "GIVN" ); }
     break;
 
   case 415:
-#line 958 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 958 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstr( P_IN, (yyvsp[(2) - (4)]), (yyvsp[(4) - (4)])); }
     break;
 
   case 416:
-#line 959 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 959 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->raiseError(Falcon::e_invop, "IN" ); }
     break;
 
   case 417:
-#line 963 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 963 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstr( P_NOIN, (yyvsp[(2) - (4)]), (yyvsp[(4) - (4)])); }
     break;
 
   case 418:
-#line 964 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 964 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->raiseError(Falcon::e_invop, "NOIN" ); }
     break;
 
   case 419:
-#line 968 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 968 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstr( P_PROV, (yyvsp[(2) - (4)]), (yyvsp[(4) - (4)])); }
     break;
 
   case 420:
-#line 969 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 969 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->raiseError(Falcon::e_invop, "PROV" ); }
     break;
 
   case 421:
-#line 973 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 973 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstr( P_PSIN, (yyvsp[(2) - (2)]) ); }
     break;
 
   case 422:
-#line 974 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 974 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->raiseError(Falcon::e_invop, "PSIN" ); }
     break;
 
   case 423:
-#line 978 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 978 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstr( P_PASS, (yyvsp[(2) - (2)]) ); }
     break;
 
   case 424:
-#line 979 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 979 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->raiseError(Falcon::e_invop, "PASS" ); }
     break;
 
   case 425:
-#line 983 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 983 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstr( P_SHR, (yyvsp[(2) - (4)]), (yyvsp[(4) - (4)]) ); }
     break;
 
   case 426:
-#line 984 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 984 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->raiseError(Falcon::e_invop, "SHR" ); }
     break;
 
   case 427:
-#line 988 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 988 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstr( P_SHL, (yyvsp[(2) - (4)]), (yyvsp[(4) - (4)]) ); }
     break;
 
   case 428:
-#line 989 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 989 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->raiseError(Falcon::e_invop, "SHL" ); }
     break;
 
   case 429:
-#line 993 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 993 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstr( P_SHRS, (yyvsp[(2) - (4)]), (yyvsp[(4) - (4)]) ); }
     break;
 
   case 430:
-#line 994 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 994 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->raiseError(Falcon::e_invop, "SHRS" ); }
     break;
 
   case 431:
-#line 998 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 998 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstr( P_SHLS, (yyvsp[(2) - (4)]), (yyvsp[(4) - (4)]) ); }
     break;
 
   case 432:
-#line 999 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 999 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->raiseError(Falcon::e_invop, "SHLS" ); }
     break;
 
   case 433:
-#line 1003 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 1003 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstr( P_LDVR, (yyvsp[(2) - (4)]), (yyvsp[(4) - (4)]) ); }
     break;
 
   case 434:
-#line 1004 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 1004 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->raiseError(Falcon::e_invop, "LDVR" ); }
     break;
 
   case 435:
-#line 1008 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 1008 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstr( P_LDPR, (yyvsp[(2) - (4)]), (yyvsp[(4) - (4)]) ); }
     break;
 
   case 436:
-#line 1009 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 1009 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->raiseError(Falcon::e_invop, "LDPR" ); }
     break;
 
   case 437:
-#line 1013 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 1013 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstr( P_LSB, (yyvsp[(2) - (4)]), (yyvsp[(4) - (4)]) ); }
     break;
 
   case 438:
-#line 1014 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 1014 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->raiseError(Falcon::e_invop, "LSB" ); }
     break;
 
   case 439:
-#line 1018 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 1018 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstr( P_INDI, (yyvsp[(2) - (2)]) ); }
     break;
 
   case 440:
-#line 1019 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 1019 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstr( P_INDI, (yyvsp[(2) - (2)]) ); }
     break;
 
   case 441:
-#line 1020 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 1020 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->raiseError(Falcon::e_invop, "INDI" ); }
     break;
 
   case 442:
-#line 1024 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 1024 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstr( P_STEX, (yyvsp[(2) - (2)]) ); }
     break;
 
   case 443:
-#line 1025 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 1025 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstr( P_STEX, (yyvsp[(2) - (2)]) ); }
     break;
 
   case 444:
-#line 1026 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 1026 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->raiseError( Falcon::e_invop, "STEX" ); }
     break;
 
   case 445:
-#line 1030 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 1030 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstr( P_TRAC, (yyvsp[(2) - (2)]) ); }
     break;
 
   case 446:
-#line 1031 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 1031 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->raiseError( Falcon::e_invop, "TRAC" ); }
     break;
 
   case 447:
-#line 1035 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 1035 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstr( P_WRT, (yyvsp[(2) - (2)]) ); }
     break;
 
   case 448:
-#line 1036 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 1036 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->raiseError( Falcon::e_invop, "WRT" ); }
     break;
 
   case 449:
-#line 1041 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 1041 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstr( P_STO, (yyvsp[(2) - (4)]), (yyvsp[(4) - (4)]) ); }
     break;
 
   case 450:
-#line 1042 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 1042 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->raiseError(Falcon::e_invop, "STO" ); }
     break;
 
   case 451:
-#line 1046 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 1046 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->addInstr( P_FORB, (yyvsp[(2) - (4)]), (yyvsp[(4) - (4)]) ); }
     break;
 
   case 452:
-#line 1047 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 1047 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
     { COMPILER->raiseError(Falcon::e_invop, "FORB" ); }
     break;
 
 
 /* Line 1267 of yacc.c.  */
-#line 4262 "/home/user/Progetti/falcon/core/engine/fasm_parser.cpp"
+#line 4262 "/home/gian/Progetti/falcon/core/engine/fasm_parser.cpp"
       default: break;
     }
   YY_SYMBOL_PRINT ("-> $$ =", yyr1[yyn], &yyval, &yyloc);
@@ -4472,7 +4472,7 @@ yyreturn:
 }
 
 
-#line 1050 "/home/user/Progetti/falcon/core/engine/fasm_parser.yy"
+#line 1050 "/home/gian/Progetti/falcon/core/engine/fasm_parser.yy"
  /* c code */
 
 
