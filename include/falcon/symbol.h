@@ -82,7 +82,7 @@ private:
       } val_rfunc;
 
       const String *val_str;
-      const Symbol *val_sym;
+      Symbol *val_sym;
    } m_value;
 
 public:
@@ -120,14 +120,14 @@ public:
       m_value.val_str = str;
    }
 
-   VarDef( const Symbol *sym ):
+   VarDef( Symbol *sym ):
       m_val_type( t_symbol ),
       m_bReadOnly( false )
    {
       m_value.val_sym = sym;
    }
 
-   VarDef( t_type t, const Symbol *sym ):
+   VarDef( t_type t, Symbol *sym ):
       m_val_type( t ),
       m_bReadOnly( false )
    {
@@ -166,10 +166,10 @@ public:
    VarDef& setBool( bool val ) { m_val_type = t_bool; m_value.val_bool = val; return *this;}
    VarDef& setInteger( uint64 val ) { m_val_type = t_int; m_value.val_int = val; return *this;}
    VarDef& setString( const String *str ) { m_val_type = t_string; m_value.val_str = str; return *this; }
-   VarDef& setSymbol( const Symbol *sym ) { m_val_type = t_symbol; m_value.val_sym = sym; return *this;}
+   VarDef& setSymbol( Symbol *sym ) { m_val_type = t_symbol; m_value.val_sym = sym; return *this;}
    VarDef& setNumeric( numeric val ) { m_val_type = t_num; m_value.val_num = val; return *this;}
-   VarDef& setBaseClass( const Symbol *sym ) { m_val_type = t_base; m_value.val_sym = sym; return *this;}
-   VarDef& setReference( const Symbol *sym ) { m_val_type = t_reference; m_value.val_sym = sym; return *this;}
+   VarDef& setBaseClass( Symbol *sym ) { m_val_type = t_base; m_value.val_sym = sym; return *this;}
+   VarDef& setReference( Symbol *sym ) { m_val_type = t_reference; m_value.val_sym = sym; return *this;}
 
    /** Describes this property as reflective.
       This ValDef defines a property that will have user functions called when the VM wants
@@ -228,7 +228,7 @@ public:
    bool asBool() const { return m_value.val_bool; }
    int64 asInteger() const { return m_value.val_int; }
    const String *asString() const { return m_value.val_str; }
-   const Symbol *asSymbol() const { return m_value.val_sym; }
+   Symbol *asSymbol() const { return m_value.val_sym; }
    numeric asNumeric() const { return m_value.val_num; }
    reflectionFunc asReflectFuncFrom() const { return m_value.val_rfunc.from; }
    reflectionFunc asReflectFuncTo() const { return m_value.val_rfunc.to; }
@@ -867,12 +867,12 @@ public:
       \param exp true if the symbol must be exported, false otherwise.
       \return itself
    */
-   Symbol &exported( bool exp ) {
+   Symbol* exported( bool exp ) {
       if ( exp )
          m_flags |= FLAG_EXPORTED;
       else
          m_flags &=~FLAG_EXPORTED;
-      return *this;
+      return this;
    }
 
    /** Sets the symbol import class.
@@ -882,12 +882,12 @@ public:
       \param exp true if the symbol must be imported, false otherwise.
       \return itself
    */
-   Symbol &imported( bool exp ) {
+   Symbol* imported( bool exp ) {
       if ( exp )
          m_flags |= FLAG_IMPORTED;
       else
          m_flags &=~FLAG_IMPORTED;
-      return *this;
+      return this;
    }
 
    /** Declares the symbol as an "eta function".
@@ -896,12 +896,12 @@ public:
       \param exp true if the symbol is an ETA function, false otherwise.
       \return itself
    */
-   Symbol &setEta( bool exp ) {
+   Symbol* setEta( bool exp ) {
       if ( exp )
          m_flags |= FLAG_ETAFUNC;
       else
          m_flags &=~FLAG_ETAFUNC;
-      return *this;
+      return this;
    }
 
    /** Declares the symbol as an "well known symbol".
@@ -923,12 +923,12 @@ public:
       \param exp true if the symbol is a Well Known Symbol.
       \return itself
    */
-   Symbol &setWKS( bool exp ) {
+   Symbol* setWKS( bool exp ) {
       if ( exp )
          m_flags |= FLAG_WELLKNOWN;
       else
          m_flags &=~FLAG_WELLKNOWN;
-      return *this;
+      return this;
    }
 
 
@@ -939,12 +939,12 @@ public:
       \param exp true if the symbol is an enumeration.
       \return itself
    */
-   Symbol &setEnum( bool exp ) {
+   Symbol* setEnum( bool exp ) {
       if ( exp )
          m_flags |= FLAG_ENUM;
       else
          m_flags &=~FLAG_ENUM;
-      return *this;
+      return this;
    }
 
    void setUndefined() { clear(); m_type = tundef; }

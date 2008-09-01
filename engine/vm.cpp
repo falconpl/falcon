@@ -1720,7 +1720,7 @@ bool VMachine::callItem( const Item &callable, int32 paramCount, e_callMode call
          const String *pname = item.asLBind();
          Symbol *param = symtab == 0 ? 0 : symtab->findByName( *pname );
          if ( param == 0 ) {
-            raiseError( e_undef_sym, param->name() );
+            raiseError( e_undef_sym, *pname );
             return true; // prevent sub-raising.
          }
 

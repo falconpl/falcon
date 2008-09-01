@@ -103,44 +103,69 @@ Module* core_module_init()
    */
    self->addGlobal( "scriptPath", true );
 
-   self->addExtFunc( "len", Falcon::core::len );
-   self->addExtFunc( "chr", Falcon::core::chr );
-   self->addExtFunc( "ord", Falcon::core::ord );
-   self->addExtFunc( "toString", Falcon::core::hToString );
-   self->addExtFunc( "isCallable", Falcon::core::isCallable );
-   self->addExtFunc( "getProperty", Falcon::core::getProperty );
-   self->addExtFunc( "setProperty", Falcon::core::setProperty );
+   self->addExtFunc( "len", Falcon::core::len )->
+      addParam("item");
+   self->addExtFunc( "chr", Falcon::core::chr )->
+      addParam("number");
+   self->addExtFunc( "ord", Falcon::core::ord )->
+      addParam("string");
+   self->addExtFunc( "toString", Falcon::core::hToString )->
+      addParam("item")->addParam("numprec");
+   self->addExtFunc( "isCallable", Falcon::core::isCallable )->
+      addParam("item");
+   self->addExtFunc( "getProperty", Falcon::core::getProperty )->
+      addParam("obj")->addParam("propName");
+   self->addExtFunc( "setProperty", Falcon::core::setProperty )->
+      addParam("obj")->addParam("propName")->addParam("value");
 
    self->addExtFunc( "yield", Falcon::core::yield );
-   self->addExtFunc( "yieldOut", Falcon::core::yieldOut );
-   self->addExtFunc( "sleep", Falcon::core::_f_sleep );
+   self->addExtFunc( "yieldOut", Falcon::core::yieldOut )->
+      addParam("retval");
+   self->addExtFunc( "sleep", Falcon::core::_f_sleep )->
+      addParam("time");
    self->addExtFunc( "beginCritical", Falcon::core::beginCritical );
    self->addExtFunc( "endCritical", Falcon::core::endCritical );
-   self->addExtFunc( "suspend", Falcon::core::vmSuspend );
+   self->addExtFunc( "suspend", Falcon::core::vmSuspend )->
+      addParam("timeout");
 
-   self->addExtFunc( "int", Falcon::core::val_int );
-   self->addExtFunc( "numeric", Falcon::core::val_numeric );
-   self->addExtFunc( "typeOf", Falcon::core::typeOf );
-   self->addExtFunc( "exit", Falcon::core::core_exit );
+   self->addExtFunc( "int", Falcon::core::val_int )->
+      addParam("item");
+   self->addExtFunc( "numeric", Falcon::core::val_numeric )->
+      addParam("item");
+   self->addExtFunc( "typeOf", Falcon::core::typeOf )->
+      addParam("item");
+   self->addExtFunc( "exit", Falcon::core::core_exit )->
+      addParam("value");
 
    self->addExtFunc( "paramCount", Falcon::core::paramCount );
    self->addExtFunc( "paramNumber", Falcon::core::_parameter );
-   self->addExtFunc( "parameter", Falcon::core::_parameter );
-   self->addExtFunc( "paramIsRef", Falcon::core::paramIsRef );
-   self->addExtFunc( "paramSet", Falcon::core::paramSet );
-   self->addExtFunc( "PageDict", Falcon::core::PageDict );
+   self->addExtFunc( "parameter", Falcon::core::_parameter )->
+      addParam("pnum");
+   self->addExtFunc( "paramIsRef", Falcon::core::paramIsRef )->
+      addParam("number");
+   self->addExtFunc( "paramSet", Falcon::core::paramSet )->
+      addParam("number")->addParam("value");
+   self->addExtFunc( "PageDict", Falcon::core::PageDict )->
+      addParam("pageSize");
    self->addExtFunc( "MemBuf", Falcon::core::Make_MemBuf );
 
    // ===================================
    // Attribute support
    //
-   self->addExtFunc( "attributeByName", Falcon::core::attributeByName );
-   self->addExtFunc( "having", Falcon::core::having );
-   self->addExtFunc( "testAttribute", Falcon::core::testAttribute );
-   self->addExtFunc( "giveTo", Falcon::core::giveTo );
-   self->addExtFunc( "removeFrom", Falcon::core::removeFrom );
-   self->addExtFunc( "removeFromAll", Falcon::core::removeFromAll );
-   self->addExtFunc( "broadcast", Falcon::core::broadcast );
+   self->addExtFunc( "attributeByName", Falcon::core::attributeByName )->
+      addParam("name");
+   self->addExtFunc( "having", Falcon::core::having )->
+      addParam("attrib");
+   self->addExtFunc( "testAttribute", Falcon::core::testAttribute )->
+      addParam("item")->addParam("attrib");
+   self->addExtFunc( "giveTo", Falcon::core::giveTo )->
+      addParam("attrib")->addParam("obj");
+   self->addExtFunc( "removeFrom", Falcon::core::removeFrom )->
+      addParam("attrib")->addParam("obj");
+   self->addExtFunc( "removeFromAll", Falcon::core::removeFromAll )->
+      addParam("attrib");
+   self->addExtFunc( "broadcast", Falcon::core::broadcast )->
+      addParam("signaling");
    self->addExtFunc( "%broadcast_next_attrib", Falcon::core::broadcast_next_attrib )->setWKS(true);
 
    // Creating the TraceStep class:
@@ -266,17 +291,22 @@ Module* core_module_init()
    Symbol *semaphore_class = self->addClass( "Semaphore", semaphore_init );
    semaphore_class->getClassDef()->setObjectManager( &core_falcon_data_manager );
 
-   self->addClassMethod( semaphore_class, "post",
-            self->addExtFunc( "Semaphore.post", Falcon::core::Semaphore_post ) );
-   self->addClassMethod( semaphore_class, "wait",
-            self->addExtFunc( "Semaphore.wait", Falcon::core::Semaphore_wait ) );
+   self->addClassMethod( semaphore_class, "post", Falcon::core::Semaphore_post ).asSymbol()->
+      addParam("count");
+   self->addClassMethod( semaphore_class, "wait", Falcon::core::Semaphore_wait ).asSymbol()->
+      addParam("timeout");
 
    // GC support
-   self->addExtFunc( "gcEnable", Falcon::core::gcEnable );
-   self->addExtFunc( "gcSetThreshold", Falcon::core::gcSetThreshold );
-   self->addExtFunc( "gcPerform", Falcon::core::gcPerform );
-   self->addExtFunc( "gcSetTimeout", Falcon::core::gcSetTimeout );
-   self->addExtFunc( "gcGetParams", Falcon::core::gcGetParams );
+   self->addExtFunc( "gcEnable", Falcon::core::gcEnable )->
+      addParam("mode");
+   self->addExtFunc( "gcSetThreshold", Falcon::core::gcSetThreshold )->
+      addParam("scanTh")->addParam("collectTh");
+   self->addExtFunc( "gcPerform", Falcon::core::gcPerform )->
+      addParam("bForce");
+   self->addExtFunc( "gcSetTimeout", Falcon::core::gcSetTimeout )->
+      addParam("msTimeout");
+   self->addExtFunc( "gcGetParams", Falcon::core::gcGetParams )->
+      addParam("amem")->addParam("aitm")->addParam("lmem")->addParam("litm")->addParam("sth")->addParam("cth")->addParam("to");
 
    // VM support
    self->addExtFunc( "vmVersionInfo", Falcon::core::vmVersionInfo );
@@ -289,8 +319,10 @@ Module* core_module_init()
    // Format
    Symbol *format_class = self->addClass( "Format", Falcon::core::Format_init );
    format_class->getClassDef()->setObjectManager( &core_falcon_data_manager );
-   self->addClassMethod( format_class, "format", Falcon::core::Format_format );
-   self->addClassMethod( format_class, "parse", Falcon::core::Format_parse );
+   self->addClassMethod( format_class, "format", Falcon::core::Format_format ).asSymbol()->
+      addParam("item")->addParam("dest");
+   self->addClassMethod( format_class, "parse", Falcon::core::Format_parse ).asSymbol()->
+      addParam("fmtspec");
    self->addClassMethod( format_class, "toString", Falcon::core::Format_toString );
    self->addClassProperty( format_class,"size" );
    self->addClassProperty( format_class, "decimals" );
@@ -316,13 +348,17 @@ Module* core_module_init()
    self->addClassMethod( iterator_class, "hasPrev", Falcon::core::Iterator_hasPrev );
    self->addClassMethod( iterator_class, "next", Falcon::core::Iterator_next );
    self->addClassMethod( iterator_class, "prev", Falcon::core::Iterator_prev );
-   self->addClassMethod( iterator_class, "value", Falcon::core::Iterator_value );
+   self->addClassMethod( iterator_class, "value", Falcon::core::Iterator_value ).asSymbol()->
+      addParam("subst");
    self->addClassMethod( iterator_class, "key", Falcon::core::Iterator_key );
    self->addClassMethod( iterator_class, "erase", Falcon::core::Iterator_erase );
-   self->addClassMethod( iterator_class, "equal", Falcon::core::Iterator_equal );
+   self->addClassMethod( iterator_class, "equal", Falcon::core::Iterator_equal ).asSymbol()->
+      addParam("item");
    self->addClassMethod( iterator_class, "clone", Falcon::core::Iterator_clone );
-   self->addClassMethod( iterator_class, "find", Falcon::core::Iterator_find );
-   self->addClassMethod( iterator_class, "insert", Falcon::core::Iterator_insert );
+   self->addClassMethod( iterator_class, "find", Falcon::core::Iterator_find ).asSymbol()->
+      addParam("key");
+   self->addClassMethod( iterator_class, "insert", Falcon::core::Iterator_insert ).asSymbol()->
+      addParam("key")->addParam("value");
    self->addClassMethod( iterator_class, "getOrigin", Falcon::core::Iterator_getOrigin );
    self->addClassProperty( iterator_class, "_origin" );
    self->addClassProperty( iterator_class, "_pos" );
@@ -334,34 +370,53 @@ Module* core_module_init()
    self->addExtFunc( "eq", Falcon::core::core_eq );
 
    //ETA functions
-   self->addExtFunc( "all", Falcon::core::core_all )->setEta( true );
-   self->addExtFunc( "any", Falcon::core::core_any )->setEta( true );
+   self->addExtFunc( "all", Falcon::core::core_all )->setEta( true )->
+      addParam("sequence");
+   self->addExtFunc( "any", Falcon::core::core_any )->setEta( true )->
+      addParam("sequence");
    self->addExtFunc( "allp", Falcon::core::core_allp )->setEta( true );
    self->addExtFunc( "anyp", Falcon::core::core_anyp )->setEta( true );
-   self->addExtFunc( "eval", Falcon::core::core_eval )->setEta( true );
-   self->addExtFunc( "choice", Falcon::core::core_choice )->setEta( true );
-   self->addExtFunc( "xmap", Falcon::core::core_xmap )->setEta( true );
-   self->addExtFunc( "iff", Falcon::core::core_iff )->setEta( true );
-   self->addExtFunc( "lit", Falcon::core::core_lit )->setEta( true );
-   self->addExtFunc( "cascade", Falcon::core::core_cascade )->setEta( true );
-   self->addExtFunc( "dolist", Falcon::core::core_dolist )->setEta( true );
-   self->addExtFunc( "floop", Falcon::core::core_floop )->setEta( true );
+   self->addExtFunc( "eval", Falcon::core::core_eval )->setEta( true )->
+      addParam("sequence");
+   self->addExtFunc( "choice", Falcon::core::core_choice )->setEta( true )->
+      addParam("selector")->addParam("whenTrue")->addParam("whenFalse");
+   self->addExtFunc( "xmap", Falcon::core::core_xmap )->setEta( true )->
+      addParam("mfunc")->addParam("sequence");
+   self->addExtFunc( "iff", Falcon::core::core_iff )->setEta( true )->
+      addParam("cfr")->addParam("whenTrue")->addParam("whenFalse");
+   self->addExtFunc( "lit", Falcon::core::core_lit )->setEta( true )->
+      addParam("item");
+   self->addExtFunc( "cascade", Falcon::core::core_cascade )->setEta( true )->
+      addParam("callList");
+   self->addExtFunc( "dolist", Falcon::core::core_dolist )->setEta( true )->
+      addParam("processor")->addParam("sequence");
+   self->addExtFunc( "floop", Falcon::core::core_floop )->setEta( true )->
+      addParam("sequence");
    self->addExtFunc( "firstOf", Falcon::core::core_firstof )->setEta( true );
-   self->addExtFunc( "times", Falcon::core::core_times )->setEta( true );
-   self->addExtFunc( "let", Falcon::core::core_let )->setEta( true );
+   self->addExtFunc( "times", Falcon::core::core_times )->setEta( true )->
+      addParam("count")->addParam("var")->addParam("sequence");
+   self->addExtFunc( "let", Falcon::core::core_let )->setEta( true )->
+      addParam("dest")->addParam("source");
 
    // other functions
    self->addExtFunc( "min", Falcon::core::core_min );
    self->addExtFunc( "max", Falcon::core::core_max );
-   self->addExtFunc( "map", Falcon::core::core_map );
-   self->addExtFunc( "filter", Falcon::core::core_filter );
-   self->addExtFunc( "reduce", Falcon::core::core_reduce );
+   self->addExtFunc( "map", Falcon::core::core_map )->
+      addParam("mfunc")->addParam("sequence");
+   self->addExtFunc( "filter", Falcon::core::core_filter )->
+      addParam("ffunc")->addParam("sequence");
+   self->addExtFunc( "reduce", Falcon::core::core_reduce )->
+      addParam("reductor")->addParam("sequence")->addParam("initial_value");
 
-   self->addExtFunc( "oob", Falcon::core::core_oob );
-   self->addExtFunc( "deoob", Falcon::core::core_deoob );
-   self->addExtFunc( "isoob", Falcon::core::core_isoob );
+   self->addExtFunc( "oob", Falcon::core::core_oob )->
+      addParam("item");
+   self->addExtFunc( "deoob", Falcon::core::core_deoob )->
+      addParam("item");
+   self->addExtFunc( "isoob", Falcon::core::core_isoob )->
+      addParam("item");
 
-   self->addExtFunc( "lbind", Falcon::core::core_lbind );
+   self->addExtFunc( "lbind", Falcon::core::core_lbind )->
+      addParam("name")->addParam("value");
 
 
    //=======================================================================
@@ -381,34 +436,57 @@ Module* core_module_init()
 
    self->addExtFunc( "random", Falcon::core::flc_random );
    self->addExtFunc( "randomChoice", Falcon::core::flc_randomChoice );
-   self->addExtFunc( "randomPick", Falcon::core::flc_randomPick );
-   self->addExtFunc( "randomWalk", Falcon::core::flc_randomWalk );
-   self->addExtFunc( "randomGrab", Falcon::core::flc_randomGrab );
-   self->addExtFunc( "randomSeed", Falcon::core::flc_randomSeed );
-   self->addExtFunc( "randomDice", Falcon::core::flc_randomDice );
+   self->addExtFunc( "randomPick", Falcon::core::flc_randomPick )->
+      addParam("series");
+   self->addExtFunc( "randomWalk", Falcon::core::flc_randomWalk )->
+      addParam("series")->addParam("size");
+   self->addExtFunc( "randomGrab", Falcon::core::flc_randomGrab )->
+      addParam("series")->addParam("size");
+   self->addExtFunc( "randomSeed", Falcon::core::flc_randomSeed )->
+      addParam("seed");
+   self->addExtFunc( "randomDice", Falcon::core::flc_randomDice )->
+      addParam("dices");
 
    //=======================================================================
    // RTL math
    //=======================================================================
 
-   self->addExtFunc( "log", Falcon::core::flc_math_log );
-   self->addExtFunc( "exp", Falcon::core::flc_math_exp );
-   self->addExtFunc( "pow", Falcon::core::flc_math_pow );
-   self->addExtFunc( "sin", Falcon::core::flc_math_sin );
-   self->addExtFunc( "cos", Falcon::core::flc_math_cos );
-   self->addExtFunc( "tan", Falcon::core::flc_math_tan );
-   self->addExtFunc( "asin", Falcon::core::flc_math_asin );
-   self->addExtFunc( "acos", Falcon::core::flc_math_acos );
-   self->addExtFunc( "atan", Falcon::core::flc_math_atan );
-   self->addExtFunc( "atan2", Falcon::core::flc_math_atan2 );
-   self->addExtFunc( "rad2deg", Falcon::core::flc_math_rad2deg );
-   self->addExtFunc( "deg2rad", Falcon::core::flc_math_deg2rad );
-   self->addExtFunc( "fract", Falcon::core::flc_fract );
-   self->addExtFunc( "fint", Falcon::core::flc_fint );
-   self->addExtFunc( "round", Falcon::core::flc_round );
-   self->addExtFunc( "floor", Falcon::core::flc_floor );
-   self->addExtFunc( "ceil", Falcon::core::flc_ceil );
-   self->addExtFunc( "abs", Falcon::core::flc_fract );
+   self->addExtFunc( "log", Falcon::core::flc_math_log )->
+      addParam("x");
+   self->addExtFunc( "exp", Falcon::core::flc_math_exp )->
+      addParam("x");
+   self->addExtFunc( "pow", Falcon::core::flc_math_pow )->
+      addParam("x")->addParam("y");
+   self->addExtFunc( "sin", Falcon::core::flc_math_sin )->
+      addParam("x");
+   self->addExtFunc( "cos", Falcon::core::flc_math_cos )->
+      addParam("x");
+   self->addExtFunc( "tan", Falcon::core::flc_math_tan )->
+      addParam("x");
+   self->addExtFunc( "asin", Falcon::core::flc_math_asin )->
+      addParam("x");
+   self->addExtFunc( "acos", Falcon::core::flc_math_acos )->
+      addParam("x");
+   self->addExtFunc( "atan", Falcon::core::flc_math_atan )->
+      addParam("x");
+   self->addExtFunc( "atan2", Falcon::core::flc_math_atan2 )->
+      addParam("x")->addParam("y");
+   self->addExtFunc( "rad2deg", Falcon::core::flc_math_rad2deg )->
+      addParam("x");
+   self->addExtFunc( "deg2rad", Falcon::core::flc_math_deg2rad )->
+      addParam("x");
+   self->addExtFunc( "fract", Falcon::core::flc_fract )->
+      addParam("x");
+   self->addExtFunc( "fint", Falcon::core::flc_fint )->
+      addParam("x");
+   self->addExtFunc( "round", Falcon::core::flc_round )->
+      addParam("x");
+   self->addExtFunc( "floor", Falcon::core::flc_floor )->
+      addParam("x");
+   self->addExtFunc( "ceil", Falcon::core::flc_ceil )->
+      addParam("x");
+   self->addExtFunc( "abs", Falcon::core::flc_fract )->
+      addParam("x");
 
    //=======================================================================
    // RTL string api
@@ -416,106 +494,179 @@ Module* core_module_init()
    self->addExtFunc( "strSplit", Falcon::core::strSplit )
       ->addParam( "string" )->addParam( "token" )->addParam( "count" );
 
-   self->addExtFunc( "strSplitTrimmed", Falcon::core::strSplitTrimmed );
-   self->addExtFunc( "strMerge", Falcon::core::strMerge );
-   self->addExtFunc( "strFind", Falcon::core::strFind );
-   self->addExtFunc( "strBackFind", Falcon::core::strBackFind );
-   self->addExtFunc( "strFront", Falcon::core::strFront );
-   self->addExtFunc( "strBack", Falcon::core::strBack );
-   self->addExtFunc( "strTrim", Falcon::core::strTrim );
-   self->addExtFunc( "strFrontTrim", Falcon::core::strFrontTrim );
-   self->addExtFunc( "strAllTrim", Falcon::core::strAllTrim );
-   self->addExtFunc( "strReplace", Falcon::core::strReplace );
-   self->addExtFunc( "strReplicate", Falcon::core::strReplicate );
-   self->addExtFunc( "strBuffer", Falcon::core::strBuffer );
-   self->addExtFunc( "strUpper", Falcon::core::strUpper );
-   self->addExtFunc( "strLower", Falcon::core::strLower );
-   self->addExtFunc( "strCmpIgnoreCase", Falcon::core::strCmpIgnoreCase );
-   self->addExtFunc( "strWildcardMatch", Falcon::core::strWildcardMatch );
-   self->addExtFunc( "strToMemBuf", Falcon::core::strToMemBuf );
-   self->addExtFunc( "strFromMemBuf", Falcon::core::strFromMemBuf );
+   self->addExtFunc( "strSplitTrimmed", Falcon::core::strSplitTrimmed )->
+      addParam("string")->addParam("token")->addParam("count");
+   self->addExtFunc( "strMerge", Falcon::core::strMerge )->
+      addParam("array")->addParam("mergeStr")->addParam("count");
+   self->addExtFunc( "strFind", Falcon::core::strFind )->
+      addParam("string")->addParam("needle")->addParam("start")->addParam("end");
+   self->addExtFunc( "strBackFind", Falcon::core::strBackFind )->
+      addParam("string")->addParam("needle")->addParam("start")->addParam("end");
+   self->addExtFunc( "strFront", Falcon::core::strFront )->
+      addParam("string")->addParam("count");
+   self->addExtFunc( "strBack", Falcon::core::strBack )->
+      addParam("string")->addParam("count");
+   self->addExtFunc( "strTrim", Falcon::core::strTrim )->
+      addParam("string")->addParam("trimSet");
+   self->addExtFunc( "strFrontTrim", Falcon::core::strFrontTrim )->
+      addParam("string");
+   self->addExtFunc( "strAllTrim", Falcon::core::strAllTrim )->
+      addParam("string");
+   self->addExtFunc( "strReplace", Falcon::core::strReplace )->
+      addParam("string")->addParam("substr")->addParam("repstr")->addParam("start")->addParam("end");
+   self->addExtFunc( "strReplicate", Falcon::core::strReplicate )->
+      addParam("string")->addParam("times");
+   self->addExtFunc( "strBuffer", Falcon::core::strBuffer )->
+      addParam("size");
+   self->addExtFunc( "strUpper", Falcon::core::strUpper )->
+      addParam("string");
+   self->addExtFunc( "strLower", Falcon::core::strLower )->
+      addParam("string");
+   self->addExtFunc( "strCmpIgnoreCase", Falcon::core::strCmpIgnoreCase )->
+      addParam("string1")->addParam("string2");
+   self->addExtFunc( "strWildcardMatch", Falcon::core::strWildcardMatch )->
+      addParam("wildcard")->addParam("string")->addParam("ignoreCase");
+   self->addExtFunc( "strToMemBuf", Falcon::core::strToMemBuf )->
+      addParam("string")->addParam("wordWidth");
+   self->addExtFunc( "strFromMemBuf", Falcon::core::strFromMemBuf )->
+      addParam("membuf");
 
    //=======================================================================
    // RTL array API
    //=======================================================================
-   self->addExtFunc( "arrayIns", Falcon::core::arrayIns );
-   self->addExtFunc( "arrayDel", Falcon::core::arrayDel );
-   self->addExtFunc( "arrayDelAll", Falcon::core::arrayDelAll );
-   self->addExtFunc( "arrayAdd", Falcon::core::arrayAdd );
-   self->addExtFunc( "arrayResize", Falcon::core::arrayResize );
-   self->addExtFunc( "arrayBuffer", Falcon::core::arrayBuffer );
-   self->addExtFunc( "arrayFind", Falcon::core::arrayFind );
-   self->addExtFunc( "arrayScan", Falcon::core::arrayScan );
-   self->addExtFunc( "arrayFilter", Falcon::core::arrayFilter );
-   self->addExtFunc( "arrayMap", Falcon::core::arrayMap );
-   self->addExtFunc( "arraySort", Falcon::core::arraySort );
-   self->addExtFunc( "arrayCopy", Falcon::core::arrayCopy );
-   self->addExtFunc( "arrayRemove", Falcon::core::arrayRemove );
-   self->addExtFunc( "arrayMerge", Falcon::core::arrayMerge );
-   self->addExtFunc( "arrayHead", Falcon::core::arrayHead );
-   self->addExtFunc( "arrayTail", Falcon::core::arrayTail );
+   self->addExtFunc( "arrayIns", Falcon::core::arrayIns )->
+      addParam("array")->addParam("itempos")->addParam("item");
+   self->addExtFunc( "arrayDel", Falcon::core::arrayDel )->
+      addParam("array")->addParam("item");
+   self->addExtFunc( "arrayDelAll", Falcon::core::arrayDelAll )->
+      addParam("array")->addParam("item");
+   self->addExtFunc( "arrayAdd", Falcon::core::arrayAdd )->
+      addParam("array")->addParam("element");
+   self->addExtFunc( "arrayResize", Falcon::core::arrayResize )->
+      addParam("array")->addParam("newSize");
+   self->addExtFunc( "arrayBuffer", Falcon::core::arrayBuffer )->
+      addParam("size");
+   self->addExtFunc( "arrayFind", Falcon::core::arrayFind )->
+      addParam("array")->addParam("item")->addParam("start")->addParam("end");
+   self->addExtFunc( "arrayScan", Falcon::core::arrayScan )->
+      addParam("array")->addParam("scanFunc")->addParam("start")->addParam("end");
+   self->addExtFunc( "arrayFilter", Falcon::core::arrayFilter )->
+      addParam("array")->addParam("filterFunc")->addParam("start")->addParam("end");
+   self->addExtFunc( "arrayMap", Falcon::core::arrayMap )->
+      addParam("array")->addParam("mapFunc")->addParam("start")->addParam("end");
+   self->addExtFunc( "arraySort", Falcon::core::arraySort )->
+      addParam("array")->addParam("sortingFunc")->addParam("start")->addParam("end");
+   self->addExtFunc( "arrayCopy", Falcon::core::arrayCopy )->
+      addParam("array")->addParam("start")->addParam("end");
+   self->addExtFunc( "arrayRemove", Falcon::core::arrayRemove )->
+      addParam("array")->addParam("itemPos")->addParam("lastItemPos");
+   self->addExtFunc( "arrayMerge", Falcon::core::arrayMerge )->
+      addParam("array1")->addParam("array2")->addParam("insertPos")->addParam("start")->addParam("end");
+   self->addExtFunc( "arrayHead", Falcon::core::arrayHead )->
+      addParam("array");
+   self->addExtFunc( "arrayTail", Falcon::core::arrayTail )->
+      addParam("array");
 
    //=======================================================================
    // Indirect call
    //=======================================================================
-   self->addExtFunc( "call", Falcon::core::call );
-   self->addExtFunc( "methodCall", Falcon::core::methodCall );
-   self->addExtFunc( "marshalCB", Falcon::core::marshalCB );
-   self->addExtFunc( "marshalCBX", Falcon::core::marshalCBX );
-   self->addExtFunc( "marshalCBR", Falcon::core::marshalCBR );
+   self->addExtFunc( "call", Falcon::core::call )->
+      addParam("callable")->addParam("parameters");
+   self->addExtFunc( "methodCall", Falcon::core::methodCall )->
+      addParam("object")->addParam("methodName")->addParam("parameters");
+   self->addExtFunc( "marshalCB", Falcon::core::marshalCB )->
+      addParam("message")->addParam("prefix")->addParam("when_not_found");
+   self->addExtFunc( "marshalCBX", Falcon::core::marshalCBX )->
+      addParam("prefix")->addParam("when_not_found")->addParam("message");
+   self->addExtFunc( "marshalCBR", Falcon::core::marshalCBR )->
+      addParam("prefix")->addParam("message");
 
    //=======================================================================
    // RTL dictionary
    //=======================================================================
-   self->addExtFunc( "dictMerge", Falcon::core::dictMerge );
-   self->addExtFunc( "dictKeys", Falcon::core::dictKeys );
-   self->addExtFunc( "dictValues", Falcon::core::dictValues );
-   self->addExtFunc( "dictInsert", Falcon::core::dictInsert );
-   self->addExtFunc( "dictGet", Falcon::core::dictGet );
-   self->addExtFunc( "dictFind", Falcon::core::dictFind );
-   self->addExtFunc( "dictBest", Falcon::core::dictBest );
-   self->addExtFunc( "dictRemove", Falcon::core::dictRemove );
-   self->addExtFunc( "dictClear", Falcon::core::dictClear );
+   self->addExtFunc( "dictMerge", Falcon::core::dictMerge )->
+      addParam("destDict")->addParam("sourceDict");
+   self->addExtFunc( "dictKeys", Falcon::core::dictKeys )->
+      addParam("dict");
+   self->addExtFunc( "dictValues", Falcon::core::dictValues )->
+      addParam("dict");
+   self->addExtFunc( "dictInsert", Falcon::core::dictInsert )->
+      addParam("dict")->addParam("key")->addParam("value");
+   self->addExtFunc( "dictGet", Falcon::core::dictGet )->
+      addParam("dict")->addParam("key");
+   self->addExtFunc( "dictFind", Falcon::core::dictFind )->
+      addParam("dict")->addParam("key");
+   self->addExtFunc( "dictBest", Falcon::core::dictBest )->
+      addParam("dict")->addParam("key");
+   self->addExtFunc( "dictRemove", Falcon::core::dictRemove )->
+      addParam("dict")->addParam("key");
+   self->addExtFunc( "dictClear", Falcon::core::dictClear )->
+      addParam("dict");
 
-   self->addExtFunc( "fileType", Falcon::core::fileType );
-   self->addExtFunc( "fileNameMerge", Falcon::core::fileNameMerge );
-   self->addExtFunc( "fileNameSplit", Falcon::core::fileNameSplit );
-   self->addExtFunc( "fileName", Falcon::core::fileName );
-   self->addExtFunc( "filePath", Falcon::core::filePath );
-   self->addExtFunc( "fileMove", Falcon::core::fileMove );
-   self->addExtFunc( "fileRemove", Falcon::core::fileRemove );
-   self->addExtFunc( "fileChown", Falcon::core::fileChown );
-   self->addExtFunc( "fileChmod", Falcon::core::fileChmod );
-   self->addExtFunc( "fileChgroup", Falcon::core::fileChgroup );
-   self->addExtFunc( "fileCopy", Falcon::core::fileCopy );
+   self->addExtFunc( "fileType", Falcon::core::fileType )->
+      addParam("filename");
+   self->addExtFunc( "fileNameMerge", Falcon::core::fileNameMerge )->
+      addParam("spec")->addParam("path")->addParam("filename")->addParam("ext");
+   self->addExtFunc( "fileNameSplit", Falcon::core::fileNameSplit )->
+      addParam("path");
+   self->addExtFunc( "fileName", Falcon::core::fileName )->
+      addParam("path");
+   self->addExtFunc( "filePath", Falcon::core::filePath )->
+      addParam("fullpath");
+   self->addExtFunc( "fileMove", Falcon::core::fileMove )->
+      addParam("sourcePath")->addParam("destPath");
+   self->addExtFunc( "fileRemove", Falcon::core::fileRemove )->
+      addParam("filename");
+   self->addExtFunc( "fileChown", Falcon::core::fileChown )->
+      addParam("path")->addParam("ownerId");
+   self->addExtFunc( "fileChmod", Falcon::core::fileChmod )->
+      addParam("path")->addParam("mode");
+   self->addExtFunc( "fileChgroup", Falcon::core::fileChgroup )->
+      addParam("path")->addParam("groupId");
+   self->addExtFunc( "fileCopy", Falcon::core::fileCopy )->
+      addParam("source")->addParam("dest");
 
-   self->addExtFunc( "dirMake", Falcon::core::dirMake );
-   self->addExtFunc( "dirChange", Falcon::core::dirChange );
+   self->addExtFunc( "dirMake", Falcon::core::dirMake )->
+      addParam("dirname")->addParam("bFull");
+   self->addExtFunc( "dirChange", Falcon::core::dirChange )->
+      addParam("newDir");
    self->addExtFunc( "dirCurrent", Falcon::core::dirCurrent );
-   self->addExtFunc( "dirRemove", Falcon::core::dirRemove );
-   self->addExtFunc( "dirReadLink", Falcon::core::dirReadLink );
-   self->addExtFunc( "dirMakeLink", Falcon::core::dirMakeLink );
+   self->addExtFunc( "dirRemove", Falcon::core::dirRemove )->
+      addParam("dir");
+   self->addExtFunc( "dirReadLink", Falcon::core::dirReadLink )->
+      addParam("linkPath");
+   self->addExtFunc( "dirMakeLink", Falcon::core::dirMakeLink )->
+      addParam("source")->addParam("dest");
 
-   self->addExtFunc( "serialize", Falcon::core::serialize );
-   self->addExtFunc( "deserialize", Falcon::core::deserialize );
+   self->addExtFunc( "serialize", Falcon::core::serialize )->
+      addParam("stream")->addParam("item");
+   self->addExtFunc( "deserialize", Falcon::core::deserialize )->
+      addParam("stream");
 
-   self->addExtFunc( "itemCopy", Falcon::core::itemCopy );
+   self->addExtFunc( "itemCopy", Falcon::core::itemCopy )->
+      addParam("item");
 
-   self->addExtFunc( "include", Falcon::core::fal_include );
+   self->addExtFunc( "include", Falcon::core::fal_include )->
+      addParam("name")->addParam("symDict")->addParam("inputEnc")->addParam("path");
 
    //==============================================
    // Transcoding functions
 
-   self->addExtFunc( "transcodeTo", Falcon::core::transcodeTo );
-   self->addExtFunc( "transcodeTo", Falcon::core::transcodeFrom );
+   self->addExtFunc( "transcodeTo", Falcon::core::transcodeTo )->
+      addParam("string")->addParam("encoding");
+   self->addExtFunc( "transcodeTo", Falcon::core::transcodeFrom )->
+      addParam("string")->addParam("encoding");
    self->addExtFunc( "getSystemEncoding", Falcon::core::getSystemEncoding );
 
    //==============================================
    // Environment variable functions
 
-   self->addExtFunc( "getenv", Falcon::core::falcon_getenv );
-   self->addExtFunc( "setenv", Falcon::core::falcon_setenv );
-   self->addExtFunc( "unsetenv", Falcon::core::falcon_unsetenv );
+   self->addExtFunc( "getenv", Falcon::core::falcon_getenv )->
+      addParam("varName");
+   self->addExtFunc( "setenv", Falcon::core::falcon_setenv )->
+      addParam("varName")->addParam("value");
+   self->addExtFunc( "unsetenv", Falcon::core::falcon_unsetenv )->
+      addParam("varName");
    //=======================================================================
    // RTL CLASSES
    //=======================================================================
@@ -524,9 +675,12 @@ Module* core_module_init()
    // Stream class
 
    // Factory functions
-   self->addExtFunc( "InputStream", Falcon::core::InputStream_creator );
-   self->addExtFunc( "OutputStream", Falcon::core::OutputStream_creator );
-   self->addExtFunc( "IOStream", Falcon::core::IOStream_creator );
+   self->addExtFunc( "InputStream", Falcon::core::InputStream_creator )->
+      addParam("fileName")->addParam("shareMode");
+   self->addExtFunc( "OutputStream", Falcon::core::OutputStream_creator )->
+      addParam("fileName")->addParam("createMode")->addParam("shareMode");
+   self->addExtFunc( "IOStream", Falcon::core::IOStream_creator )->
+      addParam("fileName")->addParam("createMode")->addParam("shareMode");
 
    // create the stream class (without constructor).
    Falcon::Symbol *stream_class = self->addClass( "Stream" );
@@ -534,27 +688,40 @@ Module* core_module_init()
    stream_class->getClassDef()->setObjectManager( &core_falcon_data_manager );
    self->addClassMethod( stream_class, "close", Falcon::core::Stream_close );
    self->addClassMethod( stream_class, "flush", Falcon::core::Stream_flush );
-   self->addClassMethod( stream_class, "read", Falcon::core::Stream_read );
-   self->addClassMethod( stream_class, "readLine", Falcon::core::Stream_readLine );
-   self->addClassMethod( stream_class, "write", Falcon::core::Stream_write );
-   self->addClassMethod( stream_class, "seek", Falcon::core::Stream_seek );
-   self->addClassMethod( stream_class, "seekEnd", Falcon::core::Stream_seekEnd );
-   self->addClassMethod( stream_class, "seekCur", Falcon::core::Stream_seekCur );
+   self->addClassMethod( stream_class, "read", Falcon::core::Stream_read ).asSymbol()->
+      addParam("buffer")->addParam("size");
+   self->addClassMethod( stream_class, "readLine", Falcon::core::Stream_readLine ).asSymbol()->
+      addParam("buffer")->addParam("size");
+   self->addClassMethod( stream_class, "write", Falcon::core::Stream_write ).asSymbol()->
+      addParam("buffer")->addParam("size")->addParam("start");
+   self->addClassMethod( stream_class, "seek", Falcon::core::Stream_seek ).asSymbol()->
+      addParam("position");
+   self->addClassMethod( stream_class, "seekEnd", Falcon::core::Stream_seekEnd ).asSymbol()->
+      addParam("position");
+   self->addClassMethod( stream_class, "seekCur", Falcon::core::Stream_seekCur ).asSymbol()->
+      addParam("position");
    self->addClassMethod( stream_class, "tell", Falcon::core::Stream_tell );
-   self->addClassMethod( stream_class, "truncate", Falcon::core::Stream_truncate );
+   self->addClassMethod( stream_class, "truncate", Falcon::core::Stream_truncate ).asSymbol()->
+      addParam("position");
    self->addClassMethod( stream_class, "lastMoved", Falcon::core::Stream_lastMoved );
    self->addClassMethod( stream_class, "lastError", Falcon::core::Stream_lastError );
    self->addClassMethod( stream_class, "errorDescription", Falcon::core::Stream_errorDescription );
    self->addClassMethod( stream_class, "eof", Falcon::core::Stream_eof );
    self->addClassMethod( stream_class, "isOpen", Falcon::core::Stream_errorDescription );
-   self->addClassMethod( stream_class, "readAvailable", Falcon::core::Stream_readAvailable );
-   self->addClassMethod( stream_class, "writeAvailable", Falcon::core::Stream_writeAvailable );
-   self->addClassMethod( stream_class, "readText", Falcon::core::Stream_readText );
-   self->addClassMethod( stream_class, "writeText", Falcon::core::Stream_writeText );
-   self->addClassMethod( stream_class, "setEncoding", Falcon::core::Stream_setEncoding );
+   self->addClassMethod( stream_class, "readAvailable", Falcon::core::Stream_readAvailable ).asSymbol()->
+      addParam("seconds");
+   self->addClassMethod( stream_class, "writeAvailable", Falcon::core::Stream_writeAvailable ).asSymbol()->
+      addParam("seconds");
+   self->addClassMethod( stream_class, "readText", Falcon::core::Stream_readText ).asSymbol()->
+      addParam("buffer")->addParam("size");
+   self->addClassMethod( stream_class, "writeText", Falcon::core::Stream_writeText ).asSymbol()->
+      addParam("buffer")->addParam("start")->addParam("end");
+   self->addClassMethod( stream_class, "setEncoding", Falcon::core::Stream_setEncoding ).asSymbol()->
+      addParam("encoding")->addParam("EOLMode");
    self->addClassMethod( stream_class, "clone", Falcon::core::Stream_clone );
    self->addClassMethod( stream_class, "readItem", Falcon::core::Stream_readItem );
-   self->addClassMethod( stream_class, "writeItem", Falcon::core::Stream_writeItem );
+   self->addClassMethod( stream_class, "writeItem", Falcon::core::Stream_writeItem ).asSymbol()->
+      addParam("item");
 
    // Specialization of the stream class to manage the closing of process bound streams.
    Falcon::Symbol *stdstream_class = self->addClass( "StdStream" );
@@ -600,17 +767,23 @@ Module* core_module_init()
 
    self->addClassMethod( tstamp_class, "dayOfYear", Falcon::core::TimeStamp_dayOfYear ).setReadOnly(true);
    self->addClassMethod( tstamp_class, "dayOfWeek", Falcon::core::TimeStamp_dayOfWeek ).setReadOnly(true);
-   self->addClassMethod( tstamp_class, "toString", Falcon::core::TimeStamp_toString ).setReadOnly(true);
-   self->addClassMethod( tstamp_class, "add", Falcon::core::TimeStamp_add ).setReadOnly(true);
-   self->addClassMethod( tstamp_class, "distance", Falcon::core::TimeStamp_distance ).setReadOnly(true);
+   self->addClassMethod( tstamp_class, "toString", Falcon::core::TimeStamp_toString ).setReadOnly(true).asSymbol()->
+      addParam("format");
+   self->addClassMethod( tstamp_class, "add", Falcon::core::TimeStamp_add ).setReadOnly(true).asSymbol()->
+      addParam("timestamp");
+   self->addClassMethod( tstamp_class, "distance", Falcon::core::TimeStamp_distance ).setReadOnly(true).asSymbol()->
+      addParam("timestamp");
    self->addClassMethod( tstamp_class, "isValid", Falcon::core::TimeStamp_isValid ).setReadOnly(true);
    self->addClassMethod( tstamp_class, "isLeapYear", Falcon::core::TimeStamp_isLeapYear ).setReadOnly(true);
    self->addClassMethod( tstamp_class, "toLongFormat", Falcon::core::TimeStamp_toLongFormat ).setReadOnly(true);
    self->addClassMethod( tstamp_class, "fromLongFormat", Falcon::core::TimeStamp_fromLongFormat ).setReadOnly(true);
-   self->addClassMethod( tstamp_class, "compare", Falcon::core::TimeStamp_compare ).setReadOnly(true);
-   self->addClassMethod( tstamp_class, "fromRFC2822", Falcon::core::TimeStamp_fromRFC2822 ).setReadOnly(true);
+   self->addClassMethod( tstamp_class, "compare", Falcon::core::TimeStamp_compare ).setReadOnly(true).asSymbol()->
+      addParam("timestamp");
+   self->addClassMethod( tstamp_class, "fromRFC2822", Falcon::core::TimeStamp_fromRFC2822 ).setReadOnly(true).asSymbol()->
+      addParam("sTimestamp");
    self->addClassMethod( tstamp_class, "toRFC2822", Falcon::core::TimeStamp_toRFC2822 ).setReadOnly(true);
-   self->addClassMethod( tstamp_class, "changeZone", Falcon::core::TimeStamp_changeZone ).setReadOnly(true);
+   self->addClassMethod( tstamp_class, "changeZone", Falcon::core::TimeStamp_changeZone ).setReadOnly(true).asSymbol()->
+      addParam("zone");
 
    // properties
    TimeStamp ts_dummy;
@@ -625,8 +798,10 @@ Module* core_module_init()
       setReflectFunc( Falcon::core::TimeStamp_timezone_rfrom, Falcon::core::TimeStamp_timezone_rto );
 
    Falcon::Symbol *c_timezone = self->addClass( "TimeZone" );
-   self->addClassMethod( c_timezone, "getDisplacement", Falcon::core::TimeZone_getDisplacement );
-   self->addClassMethod( c_timezone, "describe", Falcon::core::TimeZone_describe );
+   self->addClassMethod( c_timezone, "getDisplacement", Falcon::core::TimeZone_getDisplacement ).asSymbol()->
+      addParam("tz");
+   self->addClassMethod( c_timezone, "describe", Falcon::core::TimeZone_describe ).asSymbol()->
+      addParam("tz");
    self->addClassMethod( c_timezone, "getLocal", Falcon::core::TimeZone_getLocal );
    self->addClassProperty( c_timezone, "local" ).setInteger( Falcon::tz_local );
    self->addClassProperty( c_timezone, "UTC" ).setInteger( Falcon::tz_UTC );
@@ -682,7 +857,8 @@ Module* core_module_init()
    //=======================================================================
 
    // factory function
-   self->addExtFunc( "DirectoryOpen", Falcon::core::DirectoryOpen );
+   self->addExtFunc( "DirectoryOpen", Falcon::core::DirectoryOpen )->
+      addParam("dirname");
 
    Falcon::Symbol *dir_class = self->addClass( "Directory" );
    dir_class->setWKS(true);
@@ -698,7 +874,8 @@ Module* core_module_init()
    //=======================================================================
 
    // factory function
-   self->addExtFunc( "FileReadStats", Falcon::core::FileReadStats );
+   self->addExtFunc( "FileReadStats", Falcon::core::FileReadStats )->
+      addParam("filename");
 
    // create the FileStat class (without constructor).
    Falcon::Symbol *fileStats_class = self->addClass( "FileStat" );
@@ -748,9 +925,11 @@ Module* core_module_init()
    Falcon::Symbol *list_class = self->addClass( "List", Falcon::core::List_init );
    list_class->setWKS(true);
    list_class->getClassDef()->setObjectManager( &core_falcon_data_manager );
-   self->addClassMethod( list_class, "push", Falcon::core::List_push );
+   self->addClassMethod( list_class, "push", Falcon::core::List_push ).asSymbol()->
+      addParam("item");
    self->addClassMethod( list_class, "pop", Falcon::core::List_pop );
-   self->addClassMethod( list_class, "pushFront", Falcon::core::List_pushFront );
+   self->addClassMethod( list_class, "pushFront", Falcon::core::List_pushFront ).asSymbol()->
+      addParam("item");
    self->addClassMethod( list_class, "popFront", Falcon::core::List_popFront );
    self->addClassMethod( list_class, "front", Falcon::core::List_front );
    self->addClassMethod( list_class, "back", Falcon::core::List_back );
@@ -758,8 +937,10 @@ Module* core_module_init()
    self->addClassMethod( list_class, "first", Falcon::core::List_first );
    self->addClassMethod( list_class, "len", Falcon::core::List_len );
    self->addClassMethod( list_class, "empty", Falcon::core::List_empty );
-   self->addClassMethod( list_class, "erase", Falcon::core::List_erase );
-   self->addClassMethod( list_class, "insert", Falcon::core::List_insert );
+   self->addClassMethod( list_class, "erase", Falcon::core::List_erase ).asSymbol()->
+      addParam("iter");
+   self->addClassMethod( list_class, "insert", Falcon::core::List_insert ).asSymbol()->
+      addParam("it")->addParam("item");
    self->addClassMethod( list_class, "clear", Falcon::core::List_clear );
 
    //=======================================================================
@@ -796,10 +977,13 @@ Module* core_module_init()
    self->addClassProperty( uri_class, "fragment" );
    self->addClassProperty( uri_class, "uri" ).
          setReflectFunc( Falcon::core::URI_uri_rfrom, Falcon::core::URI_uri_rto );
-   self->addClassMethod( uri_class, "encode", Falcon::core::URI_encode );
-   self->addClassMethod( uri_class, "decode", Falcon::core::URI_decode );
+   self->addClassMethod( uri_class, "encode", Falcon::core::URI_encode ).asSymbol()->
+      addParam("string");
+   self->addClassMethod( uri_class, "decode", Falcon::core::URI_decode ).asSymbol()->
+      addParam("enc_string");
    self->addClassMethod( uri_class, "getFields", Falcon::core::URI_getFields );
-   self->addClassMethod( uri_class, "setFields", Falcon::core::URI_setFields );
+   self->addClassMethod( uri_class, "setFields", Falcon::core::URI_setFields ).asSymbol()->
+      addParam("fields");
 
    //=======================================================================
    // The command line parser class
@@ -807,7 +991,8 @@ Module* core_module_init()
 
    Falcon::Symbol *cmdparser_class = self->addClass( "CmdlineParser", true );
    cmdparser_class->getClassDef()->setObjectManager( &core_falcon_data_manager );
-   self->addClassMethod( cmdparser_class, "parse", Falcon::core::CmdlineParser_parse );
+   self->addClassMethod( cmdparser_class, "parse", Falcon::core::CmdlineParser_parse ).asSymbol()->
+      addParam("args");
    self->addClassMethod( cmdparser_class, "expectValue", Falcon::core::CmdlineParser_expectValue );
    self->addClassMethod( cmdparser_class, "terminate", Falcon::core::CmdlineParser_terminate );
    // private property internally used to communicate between the child classes and
@@ -832,7 +1017,8 @@ Module* core_module_init()
    self->addExtFunc( "stdInRaw", Falcon::core::stdInRaw );
    self->addExtFunc( "stdOutRaw", Falcon::core::stdOutRaw );
    self->addExtFunc( "stdErrRaw", Falcon::core::stdErrRaw );
-   self->addExtFunc( "systemErrorDescription", Falcon::core::systemErrorDescription );
+   self->addExtFunc( "systemErrorDescription", Falcon::core::systemErrorDescription )->
+      addParam("errorCode");
 
    return self;
 }
@@ -840,3 +1026,4 @@ Module* core_module_init()
 }
 
 /* end of core_func.cpp */
+
