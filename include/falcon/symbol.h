@@ -988,7 +988,7 @@ public:
    bool isAttribute() const  { return m_type == tconst; }
 
    /** Candy grammar to add a parameter to a function (internal or external) */
-   Symbol &addParam( const String &param );
+   Symbol* addParam( const String &param );
 
    FuncDef *getFuncDef() const { return m_value.v_func; }
    ExtFuncDef *getExtFuncDef() const { return m_value.v_extfunc; }

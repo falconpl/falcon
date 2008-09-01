@@ -161,8 +161,8 @@ Module* core_module_init()
 
    // Creating the Error class class
    Symbol *error_init = self->addExtFunc( "Error._init", Falcon::core::Error_init );
-   error_init->addParam( "code" ).addParam( "description").addParam( "extra" );
-   Symbol *error_class = self->addClass( "Error", error_init );
+   Symbol *error_class = self->addClass( "Error", error_init )
+      ->addParam( "code" )->addParam( "description")->addParam( "extra" );
    error_class->getClassDef()->setObjectManager( &core_error_manager );
    error_class->setWKS( true );
 
@@ -414,7 +414,7 @@ Module* core_module_init()
    // RTL string api
    //=======================================================================
    self->addExtFunc( "strSplit", Falcon::core::strSplit )
-      ->addParam( "string" ).addParam( "token" ).addParam( "count" );
+      ->addParam( "string" )->addParam( "token" )->addParam( "count" );
 
    self->addExtFunc( "strSplitTrimmed", Falcon::core::strSplitTrimmed );
    self->addExtFunc( "strMerge", Falcon::core::strMerge );

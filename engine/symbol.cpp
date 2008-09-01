@@ -163,17 +163,20 @@ bool Symbol::save( Stream *out ) const
 }
 
 
-Symbol& Symbol::addParam( const String &param )
+Symbol* Symbol::addParam( const String &param )
 {
    Symbol *sym = new Symbol( m_module, m_module->addString( param ) );
 
    switch( m_type ) {
       case tfunc: getFuncDef()->addParameter(sym); break;
       case textfunc: getExtFuncDef()->addParam(sym); break;
-
+      case tclass:
+         if( getClassDef()->constructor() != 0 )
+            getClassDef()->constructor()->addParam( param );
+      break;
    }
 
-   return *this;
+   return this;
 }
 
 //=================================================================
