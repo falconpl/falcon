@@ -266,10 +266,13 @@ class FALCON_DYN_CLASS ExtFuncDef: public BaseAlloc
    */
    void *m_extra;
 
+   SymbolTable *m_params;
+
 public:
    ExtFuncDef( ext_func_t func ):
       m_func( func ),
-      m_extra( 0 )
+      m_extra( 0 ),
+      m_params( 0 )
    {}
 
    /** Crates this definition setting extra data.
@@ -277,7 +280,8 @@ public:
    */
    ExtFuncDef( ext_func_t func, void *extra ):
       m_func( func ),
-      m_extra( extra )
+      m_extra( extra ),
+      m_params(0)
    {}
 
    /** Call this function.
@@ -311,6 +315,26 @@ public:
       which will return the symbol containig this funcdef.
    */
    void extra( void *e )  { m_extra = e; }
+
+   /** Returns the ID of the given function parameter, or -1 if the parameter doesn't exist. */
+   int32 getParam( const String &name );
+
+   /** Adds a function parameter with the specified ID.
+      Consider using Symbol::addParam() instead (candy grammar).
+   */
+   ExtFuncDef &addParam( Symbol *param, int32 id =-1 );
+
+   /** External Function symbol table.
+
+      Not all the external functions need to be provided with a
+      symbol table (actually storing only formal parameters).
+      For this reason, the symbol table of external functions
+      gets allocated
+      only when actually adding parameters.
+   */
+   SymbolTable *parameters() const { return m_params; }
+
+   uint32 paramCount() const { return m_params == 0 ? 0 : m_params->size(); }
 };
 
 /** Implements a callable symbol.
@@ -962,6 +986,9 @@ public:
    bool isInstance() const { return m_type == tinst; }
    bool isConst() const { return m_type == tconst; }
    bool isAttribute() const  { return m_type == tconst; }
+
+   /** Candy grammar to add a parameter to a function (internal or external) */
+   Symbol &addParam( const String &param );
 
    FuncDef *getFuncDef() const { return m_value.v_func; }
    ExtFuncDef *getExtFuncDef() const { return m_value.v_extfunc; }

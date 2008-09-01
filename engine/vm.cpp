@@ -1665,73 +1665,81 @@ bool VMachine::callItem( const Item &callable, int32 paramCount, e_callMode call
          return false;
    }
 
-   if ( target->isFunction() )
+   // manage internal functions
+   FuncDef *tg_def;
+   const SymbolTable *symtab;
+
+   if( target->isFunction() ) {
+      tg_def = target->getFuncDef();
+      symtab = &tg_def->symtab();
+   }
+   else {
+      tg_def = 0;
+      symtab = target->getExtFuncDef()->parameters();
+   }
+
+
+   // eventually check for named parameters
+   if ( m_regBind.flags() == 0xF0 )
    {
-      // manage internal functions
-      FuncDef *tg_def = target->getFuncDef();
+      m_regBind.flags(0);
+      // We know we have (probably) a named parameter.
+      uint32 size = m_stack->size();
+      uint32 paramBase = size - paramCount;
+      ItemVector iv(8);
 
-      // eventually check for named parameters
-      if ( m_regBind.flags() == 0xF0 )
+      uint32 pid = 0;
+
+      // first step; identify future binds and pack parameters.
+      while( paramBase+pid < size )
       {
-         m_regBind.flags(0);
-         // We know we have (probably) a named parameter.
-         uint32 size = m_stack->size();
-         uint32 paramBase = size - paramCount;
-         ItemVector iv(8);
-
-         uint32 pid = 0;
-
-         // first step; identify future binds and pack parameters.
-         while( paramBase+pid < size )
+         Item &item = m_stack->itemAt( paramBase+pid );
+         if ( item.isFutureBind() )
          {
-            Item &item = m_stack->itemAt( paramBase+pid );
-            if ( item.isFutureBind() )
+            // we must move the parameter into the right position
+            iv.push( &item );
+            for( uint32 pos = paramBase + pid + 1; pos < size; pos ++ )
             {
-               // we must move the parameter into the right position
-               iv.push( &item );
-               for( uint32 pos = paramBase + pid + 1; pos < size; pos ++ )
-               {
-                  m_stack->itemAt( pos - 1 ) = m_stack->itemAt( pos );
-               }
-               m_stack->itemAt( size-1 ).setNil();
-               size--;
-               paramCount--;
+               m_stack->itemAt( pos - 1 ) = m_stack->itemAt( pos );
             }
-            else
-               pid++;
+            m_stack->itemAt( size-1 ).setNil();
+            size--;
+            paramCount--;
          }
-         m_stack->resize( size );
-
-         // second step: apply future binds.
-         for( uint32 i = 0; i < iv.size(); i ++ )
-         {
-            Item &item = iv.itemAt( i );
-
-            // try to find the parameter
-            const String *pname = item.asLBind();
-            Symbol *param = tg_def->symtab().findByName( *pname );
-            if ( param == 0 ) {
-               raiseError( e_undef_sym, param->name() );
-               return true; // prevent sub-raising.
-            }
-
-            // place it in the stack; if the stack is not big enough, resize it.
-            if ( m_stack->size() <= param->itemId() + paramBase )
-            {
-               paramCount = param->itemId()+1;
-               m_stack->resize( paramCount + paramBase );
-            }
-
-            m_stack->itemAt( param->itemId() + paramBase ) = item.asFBind()->origin();
-         }
+         else
+            pid++;
       }
+      m_stack->resize( size );
 
-      // ensure against optional parameters.
-      if( paramCount < tg_def->params() )
+      // second step: apply future binds.
+      for( uint32 i = 0; i < iv.size(); i ++ )
       {
-         m_stack->resize( m_stack->size() + tg_def->params() - paramCount );
-         paramCount = tg_def->params();
+         Item &item = iv.itemAt( i );
+
+         // try to find the parameter
+         const String *pname = item.asLBind();
+         Symbol *param = symtab == 0 ? 0 : symtab->findByName( *pname );
+         if ( param == 0 ) {
+            raiseError( e_undef_sym, param->name() );
+            return true; // prevent sub-raising.
+         }
+
+         // place it in the stack; if the stack is not big enough, resize it.
+         if ( m_stack->size() <= param->itemId() + paramBase )
+         {
+            paramCount = param->itemId()+1;
+            m_stack->resize( paramCount + paramBase );
+         }
+
+         m_stack->itemAt( param->itemId() + paramBase ) = item.asFBind()->origin();
       }
+   }
+
+   // ensure against optional parameters.
+   if( tg_def != 0 && paramCount < tg_def->params() )
+   {
+      m_stack->resize( m_stack->size() + tg_def->params() - paramCount );
+      paramCount = tg_def->params();
    }
 
    // space for frame
@@ -1780,8 +1788,7 @@ bool VMachine::callItem( const Item &callable, int32 paramCount, e_callMode call
 
    if ( target->isFunction() )
    {
-      // manage internal functions
-      FuncDef *tg_def = target->getFuncDef();
+
       // space for locals
       if ( tg_def->locals() > 0 )
          m_stack->resize( m_stackBase + tg_def->locals() );

@@ -163,6 +163,50 @@ bool Symbol::save( Stream *out ) const
 }
 
 
+Symbol& Symbol::addParam( const String &param )
+{
+   Symbol *sym = new Symbol( m_module, m_module->addString( param ) );
+
+   switch( m_type ) {
+      case tfunc: getFuncDef()->addParameter(sym); break;
+      case textfunc: getExtFuncDef()->addParam(sym); break;
+
+   }
+
+   return *this;
+}
+
+//=================================================================
+//
+int32 ExtFuncDef::getParam( const String &name )
+{
+   if ( m_params == 0 )
+      return -1;
+
+   Symbol *sym = m_params->findByName( name );
+   if ( sym == 0 )
+      return -1;
+   return sym->itemId();
+}
+
+/** Adds a function parameter with the specified ID.
+   Consider using Symbol::addParam() instead (candy grammar).
+*/
+ExtFuncDef &ExtFuncDef::addParam( Symbol *param, int32 id )
+{
+   if ( m_params == 0 )
+      m_params = new SymbolTable;
+
+   param->setParam();
+   param->itemId( id == -1 ? m_params->size() : id );
+   m_params->add( param );
+
+   return *this;
+}
+
+
+//=================================================================
+//
 FuncDef::FuncDef( byte *code, uint32 codeSize ):
    m_code( code ),
    m_codeSize( codeSize ),
@@ -326,6 +370,7 @@ bool InheritDef::load( Module *mod, Stream *in )
 
    return true;
 }
+
 
 //=================================================================
 //
