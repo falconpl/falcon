@@ -49,7 +49,8 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    self->version( VERSION_MAJOR, VERSION_MINOR, VERSION_REVISION );
 
    // main factory function
-   self->addExtFunc( "DBIConnect", Falcon::Ext::DBIConnect );
+   self->addExtFunc( "DBIConnect", Falcon::Ext::DBIConnect )->
+      addParam("String");
 
    /*#
     @class DBIHandle
@@ -227,4 +228,5 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
 }
 
 /* end of dbi.cpp */
+
 
