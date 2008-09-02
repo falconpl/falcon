@@ -658,7 +658,7 @@ bool apply_constants ( Compiler &compiler )
 //===========================================
 // Interactive mode
 //===========================================
-void read_line( Stream *in, String &line, int maxSize )
+void read_line( Stream *in, String &line, uint32 maxSize )
 {
    line.reserve( maxSize );
    line.size(0);
