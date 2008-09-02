@@ -140,22 +140,37 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    Falcon::Symbol *c_cparser = self->addClass( "ConfParser", Falcon::Ext::ConfParser_init );
    c_cparser->getClassDef()->setObjectManager( &Falcon::core_falcon_data_manager );
 
-   self->addClassMethod( c_cparser, "read", Falcon::Ext::ConfParser_read );
-   self->addClassMethod( c_cparser, "write", Falcon::Ext::ConfParser_write );
-   self->addClassMethod( c_cparser, "get", Falcon::Ext::ConfParser_get );
-   self->addClassMethod( c_cparser, "getOne", Falcon::Ext::ConfParser_getOne );
-   self->addClassMethod( c_cparser, "getMultiple", Falcon::Ext::ConfParser_getMultiple );
+   self->addClassMethod( c_cparser, "read", Falcon::Ext::ConfParser_read ).asSymbol()->
+      addParam("stream");
+   self->addClassMethod( c_cparser, "write", Falcon::Ext::ConfParser_write ).asSymbol()->
+      addParam("stream");
+   self->addClassMethod( c_cparser, "get", Falcon::Ext::ConfParser_get ).asSymbol()->
+      addParam("key")->addParam("section");
+   self->addClassMethod( c_cparser, "getOne", Falcon::Ext::ConfParser_getOne ).asSymbol()->
+      addParam("key")->addParam("section");
+   self->addClassMethod( c_cparser, "getMultiple", Falcon::Ext::ConfParser_getMultiple ).asSymbol()->
+      addParam("key")->addParam("section");
    self->addClassMethod( c_cparser, "getSections", Falcon::Ext::ConfParser_getSections );
-   self->addClassMethod( c_cparser, "getKeys", Falcon::Ext::ConfParser_getKeys );
-   self->addClassMethod( c_cparser, "getCategoryKeys", Falcon::Ext::ConfParser_getCategoryKeys );
-   self->addClassMethod( c_cparser, "getCategory", Falcon::Ext::ConfParser_getCategory );
-   self->addClassMethod( c_cparser, "removeCategory", Falcon::Ext::ConfParser_removeCategory );
-   self->addClassMethod( c_cparser, "getDictionary", Falcon::Ext::ConfParser_getDictionary );
-   self->addClassMethod( c_cparser, "add", Falcon::Ext::ConfParser_add );
-   self->addClassMethod( c_cparser, "set", Falcon::Ext::ConfParser_set );
-   self->addClassMethod( c_cparser, "remove", Falcon::Ext::ConfParser_remove );
-   self->addClassMethod( c_cparser, "addSection", Falcon::Ext::ConfParser_addSection );
-   self->addClassMethod( c_cparser, "removeSection", Falcon::Ext::ConfParser_removeSection );
+   self->addClassMethod( c_cparser, "getKeys", Falcon::Ext::ConfParser_getKeys ).asSymbol()->
+      addParam("section");
+   self->addClassMethod( c_cparser, "getCategoryKeys", Falcon::Ext::ConfParser_getCategoryKeys ).asSymbol()->
+      addParam("category")->addParam("section");
+   self->addClassMethod( c_cparser, "getCategory", Falcon::Ext::ConfParser_getCategory ).asSymbol()->
+      addParam("category")->addParam("section");
+   self->addClassMethod( c_cparser, "removeCategory", Falcon::Ext::ConfParser_removeCategory ).asSymbol()->
+      addParam("category")->addParam("section");
+   self->addClassMethod( c_cparser, "getDictionary", Falcon::Ext::ConfParser_getDictionary ).asSymbol()->
+      addParam("section");
+   self->addClassMethod( c_cparser, "add", Falcon::Ext::ConfParser_add ).asSymbol()->
+      addParam("key")->addParam("value")->addParam("section");
+   self->addClassMethod( c_cparser, "set", Falcon::Ext::ConfParser_set ).asSymbol()->
+      addParam("key")->addParam("value")->addParam("section");
+   self->addClassMethod( c_cparser, "remove", Falcon::Ext::ConfParser_remove ).asSymbol()->
+      addParam("key")->addParam("section");
+   self->addClassMethod( c_cparser, "addSection", Falcon::Ext::ConfParser_addSection ).asSymbol()->
+      addParam("section");
+   self->addClassMethod( c_cparser, "removeSection", Falcon::Ext::ConfParser_removeSection ).asSymbol()->
+      addParam("section");
    self->addClassMethod( c_cparser, "clearMain", Falcon::Ext::ConfParser_clearMain );
    self->addClassProperty( c_cparser, "errorLine" );
    self->addClassProperty( c_cparser, "error" );
@@ -164,3 +179,4 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
 }
 
 /* end of socket.cpp */
+

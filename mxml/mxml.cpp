@@ -208,18 +208,26 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    //
    Falcon::Symbol *c_doc = self->addClass( "MXMLDocument", Falcon::Ext::MXMLDocument_init );
    c_doc->getClassDef()->setObjectManager( &Falcon::core_falcon_data_manager );
-   self->addClassMethod( c_doc, "deserialize", Falcon::Ext::MXMLDocument_deserialize );
-   self->addClassMethod( c_doc, "serialize", Falcon::Ext::MXMLDocument_serialize );
-   self->addClassMethod( c_doc, "style", Falcon::Ext::MXMLDocument_style );
+   self->addClassMethod( c_doc, "deserialize", Falcon::Ext::MXMLDocument_deserialize ).asSymbol()->
+      addParam("istream");
+   self->addClassMethod( c_doc, "serialize", Falcon::Ext::MXMLDocument_serialize ).asSymbol()->
+      addParam("ostream");
+   self->addClassMethod( c_doc, "style", Falcon::Ext::MXMLDocument_style ).asSymbol()->
+      addParam("setting");
    self->addClassMethod( c_doc, "root", Falcon::Ext::MXMLDocument_root );
    self->addClassMethod( c_doc, "top", Falcon::Ext::MXMLDocument_top );
-   self->addClassMethod( c_doc, "find", Falcon::Ext::MXMLDocument_find );
+   self->addClassMethod( c_doc, "find", Falcon::Ext::MXMLDocument_find ).asSymbol()->
+      addParam("name")->addParam("attrib")->addParam("value")->addParam("data");
    self->addClassMethod( c_doc, "findNext", Falcon::Ext::MXMLDocument_findNext );
-   self->addClassMethod( c_doc, "findPath", Falcon::Ext::MXMLDocument_findPath );
+   self->addClassMethod( c_doc, "findPath", Falcon::Ext::MXMLDocument_findPath ).asSymbol()->
+      addParam("path");
    self->addClassMethod( c_doc, "findPathNext", Falcon::Ext::MXMLDocument_findPathNext );
-   self->addClassMethod( c_doc, "write", Falcon::Ext::MXMLDocument_save );
-   self->addClassMethod( c_doc, "read", Falcon::Ext::MXMLDocument_load );
-   self->addClassMethod( c_doc, "setEncoding", Falcon::Ext::MXMLDocument_setEncoding );
+   self->addClassMethod( c_doc, "write", Falcon::Ext::MXMLDocument_save ).asSymbol()->
+      addParam("filename");
+   self->addClassMethod( c_doc, "read", Falcon::Ext::MXMLDocument_load ).asSymbol()->
+      addParam("filename");
+   self->addClassMethod( c_doc, "setEncoding", Falcon::Ext::MXMLDocument_setEncoding ).asSymbol()->
+      addParam("encoding");
    self->addClassMethod( c_doc, "getEncoding", Falcon::Ext::MXMLDocument_getEncoding );
 
    //=================================================================
@@ -232,23 +240,32 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    self->addClassMethod( c_node, "deserialize", Falcon::Ext::MXMLNode_deserialize );
    self->addClassMethod( c_node, "serialize", Falcon::Ext::MXMLNode_serialize );
    self->addClassMethod( c_node, "nodeType", Falcon::Ext::MXMLNode_nodeType );
-   self->addClassMethod( c_node, "name", Falcon::Ext::MXMLNode_name );
-   self->addClassMethod( c_node, "data", Falcon::Ext::MXMLNode_data );
-   self->addClassMethod( c_node, "setAttribute", Falcon::Ext::MXMLNode_setAttribute );
-   self->addClassMethod( c_node, "getAttribute", Falcon::Ext::MXMLNode_getAttribute );
+   self->addClassMethod( c_node, "name", Falcon::Ext::MXMLNode_name ).asSymbol()->
+      addParam("name");
+   self->addClassMethod( c_node, "data", Falcon::Ext::MXMLNode_data ).asSymbol()->
+      addParam("data");
+   self->addClassMethod( c_node, "setAttribute", Falcon::Ext::MXMLNode_setAttribute ).asSymbol()->
+      addParam("attribute")->addParam("value");
+   self->addClassMethod( c_node, "getAttribute", Falcon::Ext::MXMLNode_getAttribute ).asSymbol()->
+      addParam("attribute");
    self->addClassMethod( c_node, "getAttribs", Falcon::Ext::MXMLNode_getAttribs );
    self->addClassMethod( c_node, "getChildren", Falcon::Ext::MXMLNode_getChildren );
    self->addClassMethod( c_node, "unlink", Falcon::Ext::MXMLNode_unlink );
-   self->addClassMethod( c_node, "removeChild", Falcon::Ext::MXMLNode_removeChild );
+   self->addClassMethod( c_node, "removeChild", Falcon::Ext::MXMLNode_removeChild ).asSymbol()->
+      addParam("child");
    self->addClassMethod( c_node, "parent", Falcon::Ext::MXMLNode_parent );
    self->addClassMethod( c_node, "firstChild", Falcon::Ext::MXMLNode_firstChild );
    self->addClassMethod( c_node, "nextSibling", Falcon::Ext::MXMLNode_nextSibling );
    self->addClassMethod( c_node, "prevSibling", Falcon::Ext::MXMLNode_prevSibling );
    self->addClassMethod( c_node, "lastChild", Falcon::Ext::MXMLNode_lastChild );
-   self->addClassMethod( c_node, "addBelow", Falcon::Ext::MXMLNode_addBelow );
-   self->addClassMethod( c_node, "insertBelow", Falcon::Ext::MXMLNode_insertBelow );
-   self->addClassMethod( c_node, "insertBefore", Falcon::Ext::MXMLNode_insertBefore );
-   self->addClassMethod( c_node, "insertAfter", Falcon::Ext::MXMLNode_insertAfter );
+   self->addClassMethod( c_node, "addBelow", Falcon::Ext::MXMLNode_addBelow ).asSymbol()->
+      addParam("node");
+   self->addClassMethod( c_node, "insertBelow", Falcon::Ext::MXMLNode_insertBelow ).asSymbol()->
+      addParam("node");
+   self->addClassMethod( c_node, "insertBefore", Falcon::Ext::MXMLNode_insertBefore ).asSymbol()->
+      addParam("node");
+   self->addClassMethod( c_node, "insertAfter", Falcon::Ext::MXMLNode_insertAfter ).asSymbol()->
+      addParam("node");
    self->addClassMethod( c_node, "depth", Falcon::Ext::MXMLNode_depth );
    self->addClassMethod( c_node, "path", Falcon::Ext::MXMLNode_path );
    self->addClassMethod( c_node, "clone", Falcon::Ext::MXMLNode_clone );
@@ -264,3 +281,4 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
 }
 
 /* end of sdl.cpp */
+

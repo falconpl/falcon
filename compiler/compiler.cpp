@@ -203,10 +203,14 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    self->addClassProperty( c_compiler, "compileTemplate" );
    self->addClassProperty( c_compiler, "language" );
 
-   self->addClassMethod( c_compiler, "compile", Falcon::Ext::Compiler_compile );
-   self->addClassMethod( c_compiler, "loadByName", Falcon::Ext::Compiler_loadByName );
-   self->addClassMethod( c_compiler, "loadModule", Falcon::Ext::Compiler_loadModule);
-   self->addClassMethod( c_compiler, "setDirective", Falcon::Ext::Compiler_setDirective);
+   self->addClassMethod( c_compiler, "compile", Falcon::Ext::Compiler_compile ).asSymbol()->
+      addParam("modName")->addParam("data");
+   self->addClassMethod( c_compiler, "loadByName", Falcon::Ext::Compiler_loadByName ).asSymbol()->
+      addParam("modName");
+   self->addClassMethod( c_compiler, "loadModule", Falcon::Ext::Compiler_loadModule).asSymbol()->
+      addParam("modPath");
+   self->addClassMethod( c_compiler, "setDirective", Falcon::Ext::Compiler_setDirective).asSymbol()->
+      addParam("dt")->addParam("value");
    self->addClassMethod( c_compiler, "addFalconPath", Falcon::Ext::Compiler_addFalconPath);
 
 
@@ -216,9 +220,12 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    self->addClassProperty( c_module, "name" );
    self->addClassProperty( c_module, "path" );
 
-   self->addClassMethod( c_module, "get", Falcon::Ext::Module_get );
-   self->addClassMethod( c_module, "set", Falcon::Ext::Module_set );
-   self->addClassMethod( c_module, "getReference", Falcon::Ext::Module_getReference );
+   self->addClassMethod( c_module, "get", Falcon::Ext::Module_get ).asSymbol()->
+      addParam("symName");
+   self->addClassMethod( c_module, "set", Falcon::Ext::Module_set ).asSymbol()->
+      addParam("symName")->addParam("value");
+   self->addClassMethod( c_module, "getReference", Falcon::Ext::Module_getReference ).asSymbol()->
+      addParam("symName");
    self->addClassMethod( c_module, "unload", Falcon::Ext::Module_unload );
    self->addClassMethod( c_module, "engineVersion", Falcon::Ext::Module_engineVersion );
    self->addClassMethod( c_module, "moduleVersion", Falcon::Ext::Module_moduleVersion );
@@ -228,3 +235,4 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
 
 
 /* end of compiler.cpp */
+

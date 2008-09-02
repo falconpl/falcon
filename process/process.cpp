@@ -87,11 +87,15 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    //============================================================
    // Minimal system api
    //
-   self->addExtFunc( "system", Falcon::Ext::falcon_system );
-   self->addExtFunc( "systemCall", Falcon::Ext::falcon_systemCall );
-   self->addExtFunc( "exec", Falcon::Ext::falcon_exec );
+   self->addExtFunc( "system", Falcon::Ext::falcon_system )->
+      addParam("command")->addParam("background");
+   self->addExtFunc( "systemCall", Falcon::Ext::falcon_systemCall )->
+      addParam("command")->addParam("background");
+   self->addExtFunc( "exec", Falcon::Ext::falcon_exec )->
+      addParam("command");
    self->addExtFunc( "processId", Falcon::Ext::falcon_processId );
-   self->addExtFunc( "processKill", Falcon::Ext::falcon_processKill );
+   self->addExtFunc( "processKill", Falcon::Ext::falcon_processKill )->
+      addParam("pid")->addParam("severe");
 
    //============================================================
    // Process Enumerator class
@@ -112,8 +116,10 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    Falcon::Symbol *proc_class = self->addClass( "Process", Falcon::Ext::Process_init );
    proc_class->getClassDef()->setObjectManager( &Falcon::core_falcon_data_manager );
    self->addClassMethod( proc_class, "wait", Falcon::Ext::Process_wait );
-   self->addClassMethod( proc_class, "terminate", Falcon::Ext::Process_terminate );
-   self->addClassMethod( proc_class, "value", Falcon::Ext::Process_value );
+   self->addClassMethod( proc_class, "terminate", Falcon::Ext::Process_terminate ).asSymbol()->
+      addParam("severe");
+   self->addClassMethod( proc_class, "value", Falcon::Ext::Process_value ).asSymbol()->
+      addParam("wait");
    self->addClassMethod( proc_class, "getInput", Falcon::Ext::Process_getInput );
    self->addClassMethod( proc_class, "getOutput", Falcon::Ext::Process_getOutput );
    self->addClassMethod( proc_class, "getAux", Falcon::Ext::Process_getAux );
@@ -139,3 +145,4 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
 
 
 /* end of process.cpp */
+

@@ -116,17 +116,22 @@ FALCON_MODULE_DECL(const Falcon::EngineData &data )
    // Generic functions
 
    self->addExtFunc( "getHostName", Falcon::Ext::falcon_getHostName );
-   self->addExtFunc( "resolveAddress", Falcon::Ext::resolveAddress );
-   self->addExtFunc( "socketErrorDesc", Falcon::Ext::socketErrorDesc );
+   self->addExtFunc( "resolveAddress", Falcon::Ext::resolveAddress )->
+      addParam("address");
+   self->addExtFunc( "socketErrorDesc", Falcon::Ext::socketErrorDesc )->
+      addParam("code");
 
    // private class socket.
    Falcon::Symbol *c_socket = self->addClass( "Socket", Falcon::Ext::Socket_init, false );
    c_socket->getClassDef()->setObjectManager( &Falcon::core_falcon_data_manager );
    self->addClassMethod( c_socket, "getTimeout", Falcon::Ext::Socket_getTimeout );
-   self->addClassMethod( c_socket, "setTimeout", Falcon::Ext::Socket_setTimeout );
+   self->addClassMethod( c_socket, "setTimeout", Falcon::Ext::Socket_setTimeout ).asSymbol()->
+      addParam("timeout");
    self->addClassMethod( c_socket, "dispose", Falcon::Ext::Socket_dispose );
-   self->addClassMethod( c_socket, "readAvailable", Falcon::Ext::Socket_readAvailable );
-   self->addClassMethod( c_socket, "writeAvailable", Falcon::Ext::Socket_writeAvailable );
+   self->addClassMethod( c_socket, "readAvailable", Falcon::Ext::Socket_readAvailable ).asSymbol()->
+      addParam("timeout");
+   self->addClassMethod( c_socket, "writeAvailable", Falcon::Ext::Socket_writeAvailable ).asSymbol()->
+      addParam("timeout");
    self->addClassMethod( c_socket, "getService", Falcon::Ext::Socket_getService );
    self->addClassMethod( c_socket, "getHost", Falcon::Ext::Socket_getHost );
    self->addClassMethod( c_socket, "getPort", Falcon::Ext::Socket_getPort );
@@ -136,10 +141,13 @@ FALCON_MODULE_DECL(const Falcon::EngineData &data )
    Falcon::Symbol *tcpsocket = self->addClass( "TCPSocket", Falcon::Ext::TCPSocket_init );
    tcpsocket->setWKS( true ); // needed by TCPServer
    tcpsocket->getClassDef()->addInheritance(  new Falcon::InheritDef( c_socket ) );
-   self->addClassMethod( tcpsocket, "connect", Falcon::Ext::TCPSocket_connect );
+   self->addClassMethod( tcpsocket, "connect", Falcon::Ext::TCPSocket_connect ).asSymbol()->
+      addParam("host")->addParam("service");
    self->addClassMethod( tcpsocket, "isConnected", Falcon::Ext::TCPSocket_isConnected );
-   self->addClassMethod( tcpsocket, "send", Falcon::Ext::TCPSocket_send );
-   self->addClassMethod( tcpsocket, "recv", Falcon::Ext::TCPSocket_recv );
+   self->addClassMethod( tcpsocket, "send", Falcon::Ext::TCPSocket_send ).asSymbol()->
+      addParam("buffer")->addParam("size")->addParam("start");
+   self->addClassMethod( tcpsocket, "recv", Falcon::Ext::TCPSocket_recv ).asSymbol()->
+      addParam("bufOrSize");
    self->addClassMethod( tcpsocket, "close", Falcon::Ext::TCPSocket_close );
    self->addClassMethod( tcpsocket, "closeRead", Falcon::Ext::TCPSocket_closeRead );
    self->addClassMethod( tcpsocket, "closeWrite", Falcon::Ext::TCPSocket_closeWrite );
@@ -147,15 +155,19 @@ FALCON_MODULE_DECL(const Falcon::EngineData &data )
    Falcon::Symbol *udpsocket = self->addClass( "UDPSocket", Falcon::Ext::UDPSocket_init );
    udpsocket->getClassDef()->addInheritance(  new Falcon::InheritDef( c_socket ) );
    self->addClassMethod( udpsocket, "broadcast", Falcon::Ext::UDPSocket_broadcast );
-   self->addClassMethod( udpsocket, "sendTo", Falcon::Ext::UDPSocket_sendTo );
-   self->addClassMethod( udpsocket, "recv", Falcon::Ext::UDPSocket_recv );
+   self->addClassMethod( udpsocket, "sendTo", Falcon::Ext::UDPSocket_sendTo ).asSymbol()->
+      addParam("host")->addParam("service")->addParam("buffer")->addParam("size")->addParam("start");
+   self->addClassMethod( udpsocket, "recv", Falcon::Ext::UDPSocket_recv ).asSymbol()->
+      addParam("bufOrSize");
    self->addClassProperty( udpsocket, "remote" );
    self->addClassProperty( udpsocket, "remoteService" );
 
    Falcon::Symbol *tcpserver = self->addClass( "TCPServer", Falcon::Ext::TCPServer_init );
    self->addClassMethod( tcpserver, "dispose", Falcon::Ext::TCPServer_dispose );
-   self->addClassMethod( tcpserver, "bind", Falcon::Ext::TCPServer_bind );
-   self->addClassMethod( tcpserver, "accept", Falcon::Ext::TCPServer_accept );
+   self->addClassMethod( tcpserver, "bind", Falcon::Ext::TCPServer_bind ).asSymbol()->
+      addParam("addrOrService")->addParam("service");
+   self->addClassMethod( tcpserver, "accept", Falcon::Ext::TCPServer_accept ).asSymbol()->
+      addParam("timeout");
    self->addClassProperty( tcpserver, "lastError" );
 
    //==================================================
@@ -171,3 +183,4 @@ FALCON_MODULE_DECL(const Falcon::EngineData &data )
 }
 
 /* end of socket.cpp */
+

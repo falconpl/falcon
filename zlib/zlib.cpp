@@ -110,10 +110,14 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    // ZLib class
 
    Falcon::Symbol *c_zlib = self->addClass( "ZLib" );
-   self->addClassMethod( c_zlib, "compress", Falcon::Ext::ZLib_compress );
-   self->addClassMethod( c_zlib, "uncompress", Falcon::Ext::ZLib_uncompress );
-   self->addClassMethod( c_zlib, "compressText", Falcon::Ext::ZLib_compressText );
-   self->addClassMethod( c_zlib, "uncompressText", Falcon::Ext::ZLib_uncompressText );
+   self->addClassMethod( c_zlib, "compress", Falcon::Ext::ZLib_compress ).asSymbol()->
+      addParam("buffer");
+   self->addClassMethod( c_zlib, "uncompress", Falcon::Ext::ZLib_uncompress ).asSymbol()->
+      addParam("buffer");
+   self->addClassMethod( c_zlib, "compressText", Falcon::Ext::ZLib_compressText ).asSymbol()->
+      addParam("text");
+   self->addClassMethod( c_zlib, "uncompressText", Falcon::Ext::ZLib_uncompressText ).asSymbol()->
+      addParam("buffer");
    self->addClassMethod( c_zlib, "getVersion", Falcon::Ext::ZLib_getVersion );
 
    //============================================================
@@ -127,4 +131,5 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
 }
 
 /* end of zlib.cpp */
+
 

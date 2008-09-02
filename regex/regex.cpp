@@ -146,16 +146,25 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    Falcon::Symbol *regex_c = self->addClass( "Regex", Falcon::Ext::Regex_init );
    regex_c->getClassDef()->setObjectManager( &Falcon::core_falcon_data_manager );
    self->addClassMethod( regex_c, "study", Falcon::Ext::Regex_study );
-   self->addClassMethod( regex_c, "match", Falcon::Ext::Regex_match );
-   self->addClassMethod( regex_c, "grab", Falcon::Ext::Regex_grab );
-   self->addClassMethod( regex_c, "find", Falcon::Ext::Regex_find );
-   self->addClassMethod( regex_c, "findAll", Falcon::Ext::Regex_findAll );
-   self->addClassMethod( regex_c, "findAllOverlapped", Falcon::Ext::Regex_findAllOverlapped );
-   self->addClassMethod( regex_c, "replace", Falcon::Ext::Regex_replace );
-   self->addClassMethod( regex_c, "replaceAll", Falcon::Ext::Regex_replaceAll );
+   self->addClassMethod( regex_c, "match", Falcon::Ext::Regex_match ).asSymbol()->
+      addParam("string");
+   self->addClassMethod( regex_c, "grab", Falcon::Ext::Regex_grab ).asSymbol()->
+      addParam("string");
+   self->addClassMethod( regex_c, "find", Falcon::Ext::Regex_find ).asSymbol()->
+      addParam("string")->addParam("start");
+   self->addClassMethod( regex_c, "findAll", Falcon::Ext::Regex_findAll ).asSymbol()->
+      addParam("string")->addParam("start")->addParam("maxcount");
+   self->addClassMethod( regex_c, "findAllOverlapped", Falcon::Ext::Regex_findAllOverlapped ).asSymbol()->
+      addParam("string")->addParam("start")->addParam("maxcount");
+   self->addClassMethod( regex_c, "replace", Falcon::Ext::Regex_replace ).asSymbol()->
+      addParam("string")->addParam("replacer")->addParam("start");
+   self->addClassMethod( regex_c, "replaceAll", Falcon::Ext::Regex_replaceAll ).asSymbol()->
+      addParam("string")->addParam("replacer")->addParam("start")->addParam("maxCount");
    self->addClassMethod( regex_c, "capturedCount", Falcon::Ext::Regex_capturedCount );
-   self->addClassMethod( regex_c, "captured", Falcon::Ext::Regex_captured );
-   self->addClassMethod( regex_c, "compare", Falcon::Ext::Regex_compare );
+   self->addClassMethod( regex_c, "captured", Falcon::Ext::Regex_captured ).asSymbol()->
+      addParam("count");
+   self->addClassMethod( regex_c, "compare", Falcon::Ext::Regex_compare ).asSymbol()->
+      addParam("string");
    self->addClassMethod( regex_c, "version", Falcon::Ext::Regex_version );
 
    //==================================================
@@ -170,3 +179,4 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
 }
 
 /* end of regex.cpp */
+
