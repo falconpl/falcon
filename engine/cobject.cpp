@@ -309,6 +309,14 @@ void CoreObject::gcMarkData( byte mark )
 
    if( m_user_data != 0 )
    {
+      /*
+         IF THIS ASSERT FAILS ---
+         it means that the module where this object has been generated
+         has not declared an object manager.
+
+         [class]->getClassDef()->setObjectManager( [i.e. &Falcon::core_falcon_data_manager] );
+      */
+      fassert( m_generatedBy->getObjectManager() != 0 );
       m_generatedBy->getObjectManager()->onGarbageMark( origin(), m_user_data );
    }
 }
