@@ -517,19 +517,16 @@ FALCON_FUNC ttf_SizeText( VMachine *vm )
 
 static bool internal_object_to_color( CoreObject *obj_color, SDL_Color &color )
 {
-   Item *prop;
-   prop = obj_color->getProperty( "r" );
-   if( prop != 0 )
+   Item prop;
+   if( obj_color->getProperty( "r", prop ) )
    {
-      color.r = (Uint8) prop->forceInteger();
-      prop = obj_color->getProperty( "g" );
-      if( prop != 0 )
+      color.r = (Uint8) prop.forceInteger();
+      if( obj_color->getProperty( "g", prop ) )
       {
-         color.g = (Uint8) prop->forceInteger();
-         prop = obj_color->getProperty( "b" );
-         if( prop != 0 )
+         color.g = (Uint8) prop.forceInteger();
+         if( obj_color->getProperty( "b", prop ) )
          {
-            color.b = (Uint8) prop->forceInteger();
+            color.b = (Uint8) prop.forceInteger();
          }
       }
    }

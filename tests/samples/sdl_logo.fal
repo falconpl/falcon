@@ -25,7 +25,7 @@ load sdl
 try
    a = SDL.InitAuto( SDL.INIT_VIDEO )
    SDL.LoadBMP("falcon-ico.bmp").SetIcon()
-   SDL.SetCaption( "Falcon logo!" )
+   SDL.WM_SetCaption( "Falcon logo!" )
 
    screen = SDL.SetVideoMode( 640, 480 )
 

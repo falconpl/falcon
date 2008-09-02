@@ -32,11 +32,14 @@ namespace Falcon{
 namespace Ext{
 
 /** Automatic quit system. */
-class QuitCarrier: public UserData
+class QuitCarrier: public FalconData
 {
 public:
    QuitCarrier() {}
-   ~QuitCarrier();
+   virtual ~QuitCarrier();
+
+   virtual void gcMark( VMachine* ) {}
+   virtual FalconData* clone() const { return 0; }
 };
 
 
@@ -54,28 +57,27 @@ public:
 };
 
 /** Reflexive SDL Surface */
-class SDLSurfaceCarrier: public SharedUserData
+class SDLSurfaceCarrier: public UserData
 {
 public:
    SDL_Surface *m_surface;
    uint32 m_lockCount;
 
-   SDLSurfaceCarrier( VMachine *vm, SDL_Surface *s ):
-      SharedUserData( vm ),
+   SDLSurfaceCarrier( SDL_Surface *s ):
       m_surface( s ),
       m_lockCount(0)
    {}
 
-   ~SDLSurfaceCarrier();
+   virtual ~SDLSurfaceCarrier();
 
-   virtual bool isReflective() const;
    virtual void getProperty( VMachine *vm, const String &propName, Item &prop );
-   virtual void setProperty( VMachine *vm, const String &propName, Item &prop );
-   virtual UserData *clone() const;
+   virtual void setProperty(Falcon::VMachine*, const Falcon::String&, const Falcon::Item&);
+   virtual void gcMark( VMachine* ) {}
+   virtual FalconData *clone() const;
 };
 
 /** Opaque Cursor structure carrier */
-class SDLCursorCarrier: public UserData
+class SDLCursorCarrier: public FalconData
 {
 public:
    SDL_Cursor *m_cursor;
@@ -86,7 +88,9 @@ public:
       m_bCreated( bCreated )
    {}
 
-   ~SDLCursorCarrier();
+   virtual ~SDLCursorCarrier();
+   virtual FalconData *clone() const { return 0; }
+   virtual void gcMark(VMachine*) {}
 };
 
 //==========================================

@@ -3,13 +3,12 @@
 #
 # CMake configuration file for module Mxml
 ####################################################################
-PROJECT(sdl)
 
 # Inclusion settings
 add_definitions(`sdl-config --cflags`)
 INCLUDE_DIRECTORIES(.)
-INCLUDE_DIRECTORIES(BEFORE ${TARGET_DIR}/include)
-LINK_DIRECTORIES(BEFORE ${TARGET_DIR}/${TARGET_LIB_DIR} )
+INCLUDE_DIRECTORIES(BEFORE "${FALCON_INC_DIR}")
+LINK_DIRECTORIES(BEFORE "${FALCON_LIB_DIR}")
 
 # Target
 ADD_LIBRARY( sdl MODULE
@@ -29,5 +28,6 @@ TARGET_LINK_LIBRARIES(sdl falcon_engine SDL)
 
 SET_TARGET_PROPERTIES(sdl
    PROPERTIES PREFIX "")
+
 #Install
-FALCON_MODULE_INSTALL( sdl )
+FALCON_LINK_MODULE( sdl )

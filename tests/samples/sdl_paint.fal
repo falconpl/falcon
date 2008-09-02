@@ -24,10 +24,9 @@ load sdl
 
 try
    a = SDL.InitAuto( SDL.INIT_VIDEO )
-   SDL.WM_SetCaption( "Falcon SDL paint test - 3" )
+   SDL.WM_SetCaption( "Falcon SDL paint test - 1" )
    SDL.LoadBMP("falcon-ico.bmp").SetIcon()
    screen = SDL.SetVideoMode( 640, 480 )
-
    // draw a cloured band
    band = MemBuf( 640, screen.format.BytesPerPixel )
    for bid in [0:640]
@@ -36,8 +35,8 @@ try
 
    pixels = screen.pixels
    screen.LockIfNeeded()
-   for y = 0 to 479
-      for x = 0 to 639
+   for y in [0:480]
+      for x in [0:640]
          n = x + y * 640
          pixels[ n ] = band[x]
       end

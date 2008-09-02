@@ -21,7 +21,7 @@
 #define FALCON_SDLTTF_MOD
 
 #include <falcon/setup.h>
-#include <falcon/suserdata.h>
+#include <falcon/falcondata.h>
 #include <falcon/error.h>
 
 #include <SDL_ttf.h>
@@ -32,14 +32,17 @@ namespace Falcon{
 namespace Ext{
 
 /** Automatic quit system. */
-class TTFQuitCarrier: public UserData
+class TTFQuitCarrier: public FalconData
 {
 public:
    TTFQuitCarrier() {}
-   ~TTFQuitCarrier();
+   virtual ~TTFQuitCarrier();
+
+   virtual void gcMark( VMachine* ) {}
+   virtual FalconData* clone() const { return 0; }
 };
 
-class TTFFontCarrier: public UserData
+class TTFFontCarrier: public FalconData
 {
 public:
    TTF_Font *m_font;
@@ -48,7 +51,10 @@ public:
       m_font( font )
    {}
 
-   ~TTFFontCarrier();
+   virtual ~TTFFontCarrier();
+
+   virtual void gcMark( VMachine* ) {}
+   virtual FalconData* clone() const { return 0; }
 };
 
 }

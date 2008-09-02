@@ -931,22 +931,21 @@ FALCON_FUNC  SDLPalette_getColor( ::Falcon::VMachine *vm )
          return;
    }
 
-   Item *i_colors = vm->self().asObject()->getProperty( "colors" );
-   fassert( i_colors != 0 );
-   if ( (i_colors->isMemBuf() )
-      )
+   Item i_colors;
+   vm->self().asObject()->getProperty( "colors", i_colors );
+   if ( ! i_colors.isMemBuf() )
    {
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-            extra( "self.colors.type != MemBuf" ) ) );
+            extra( "self.colors.type() != MemBuf" ) ) );
          return;
    }
 
-   MemBuf *colors = i_colors->asMemBuf();
+   MemBuf *colors = i_colors.asMemBuf();
 
    int64 index = i_index->forceInteger();
    if ( index < 0 || index >= (int64) colors->length() )
    {
-      vm->raiseModError( new RangeError( ErrorParam( e_param_range, __LINE__ ) ) );
+      vm->raiseModError( new AccessError( ErrorParam( e_param_range, __LINE__ ) ) );
          return;
    }
 
@@ -992,23 +991,22 @@ FALCON_FUNC  SDLPalette_setColor( ::Falcon::VMachine *vm )
          return;
    }
 
-   Item *i_colors = vm->self().asObject()->getProperty( "colors" );
-   fassert( i_colors != 0 );
-   if ( (i_colors->isMemBuf() )
-      )
+   Item i_colors;
+   vm->self().asObject()->getProperty( "colors", i_colors );
+   if ( !i_colors.isMemBuf() )
    {
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-            extra( "self.colors.type != MemBuf" ) ) );
-         return;
+            extra( "self.colors.type() != MemBuf" ) ) );
+      return;
    }
 
-   MemBuf *colors = i_colors->asMemBuf();
+   MemBuf *colors = i_colors.asMemBuf();
 
    int64 index = i_index->forceInteger();
    if ( index < 0 || index >= (int64) colors->length() )
    {
-      vm->raiseModError( new RangeError( ErrorParam( e_param_range, __LINE__ ) ) );
-         return;
+      vm->raiseModError( new AccessError( ErrorParam( e_param_range, __LINE__ ) ) );
+      return;
    }
 
    // extract the colors

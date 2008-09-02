@@ -43,7 +43,7 @@ try
    // then copy the result on the screen
    rect = SDLRect( 0, 0, 640, 1 )
    blitter = band.BlitSurface
-   for y = 0 to 479
+   for y in [0:480]
       rect.y = y
       blitter( nil, screen, rect )
    end

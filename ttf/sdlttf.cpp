@@ -25,6 +25,7 @@
 #include <falcon/module.h>
 #include "version.h"
 #include "sdlttf_ext.h"
+#include "sdlttf_mod.h"
 
 /*#
    @module sdlttf True Type extensions for the Falcon SDL module.
@@ -49,7 +50,7 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    self->version( VERSION_MAJOR, VERSION_MINOR, VERSION_REVISION );
 
    // first of all, we need to declare our dependency from the main SDL module.
-   self->addDepend( self->addString("sdl") );
+   self->addDepend( "sdl" );
 
    //=================================================================
    // Encapsulation SDLTTF
@@ -65,10 +66,10 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    */
 
    Falcon::Symbol *c_sdlttf = self->addClass( "TTF" );
-   self->addClassProperty( c_sdlttf, "STYLE_BOLD" )->setInteger( TTF_STYLE_BOLD );
-   self->addClassProperty( c_sdlttf, "STYLE_ITALIC" )->setInteger( TTF_STYLE_ITALIC );
-   self->addClassProperty( c_sdlttf, "STYLE_UNDERLINE" )->setInteger( TTF_STYLE_UNDERLINE );
-   self->addClassProperty( c_sdlttf, "STYLE_NORMAL" )->setInteger( TTF_STYLE_NORMAL );
+   self->addClassProperty( c_sdlttf, "STYLE_BOLD" ).setInteger( TTF_STYLE_BOLD );
+   self->addClassProperty( c_sdlttf, "STYLE_ITALIC" ).setInteger( TTF_STYLE_ITALIC );
+   self->addClassProperty( c_sdlttf, "STYLE_UNDERLINE" ).setInteger( TTF_STYLE_UNDERLINE );
+   self->addClassProperty( c_sdlttf, "STYLE_NORMAL" ).setInteger( TTF_STYLE_NORMAL );
 
    // Init and quit
    self->addClassMethod( c_sdlttf, "Init", Falcon::Ext::ttf_Init );
@@ -77,8 +78,10 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    self->addClassMethod( c_sdlttf, "Quit", Falcon::Ext::ttf_Quit );
    self->addClassMethod( c_sdlttf, "Compiled_Version", Falcon::Ext::ttf_Compiled_Version );
    self->addClassMethod( c_sdlttf, "Linked_Version", Falcon::Ext::ttf_Linked_Version );
-   self->addClassMethod( c_sdlttf, "OpenFont", Falcon::Ext::ttf_OpenFont );
-   self->addClassMethod( c_sdlttf, "ByteSwappedUNICODE", Falcon::Ext::ttf_ByteSwappedUNICODE );
+   self->addClassMethod( c_sdlttf, "OpenFont", Falcon::Ext::ttf_OpenFont ).asSymbol()->
+      addParam("fontname")->addParam("ptsize")->addParam("index");
+   self->addClassMethod( c_sdlttf, "ByteSwappedUNICODE", Falcon::Ext::ttf_ByteSwappedUNICODE ).asSymbol()->
+      addParam("swap");
 
 
    //=================================================================
@@ -99,9 +102,11 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    Falcon::Symbol *c_ttffont = self->addClass( "TTFFont" );
    c_ttffont->setWKS( true );
    c_ttffont->exported( false ); // It's private.
+   c_ttffont->getClassDef()->setObjectManager( &Falcon::core_falcon_data_manager );
 
    self->addClassMethod( c_ttffont, "GetFontStyle", Falcon::Ext::ttf_GetFontStyle );
-   self->addClassMethod( c_ttffont, "SetFontStyle", Falcon::Ext::ttf_SetFontStyle );
+   self->addClassMethod( c_ttffont, "SetFontStyle", Falcon::Ext::ttf_SetFontStyle ).asSymbol()->
+      addParam("style");
    self->addClassMethod( c_ttffont, "FontHeight", Falcon::Ext::ttf_FontHeight );
    self->addClassMethod( c_ttffont, "FontAscent", Falcon::Ext::ttf_FontAscent );
    self->addClassMethod( c_ttffont, "FontDescent", Falcon::Ext::ttf_FontDescent );
@@ -110,11 +115,16 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    self->addClassMethod( c_ttffont, "FontFaceIsFixedWidth", Falcon::Ext::ttf_FontFaceIsFixedWidth );
    self->addClassMethod( c_ttffont, "FontFaceFamilyName", Falcon::Ext::ttf_FontFaceFamilyName );
    self->addClassMethod( c_ttffont, "FontFaceStyleName", Falcon::Ext::ttf_FontFaceStyleName );
-   self->addClassMethod( c_ttffont, "GlyphMetrics", Falcon::Ext::ttf_GlyphMetrics );
-   self->addClassMethod( c_ttffont, "SizeText", Falcon::Ext::ttf_SizeText );
-   self->addClassMethod( c_ttffont, "Render_Solid", Falcon::Ext::ttf_Render_Solid );
-   self->addClassMethod( c_ttffont, "Render_Shaded", Falcon::Ext::ttf_Render_Shaded );
-   self->addClassMethod( c_ttffont, "Render_Blended", Falcon::Ext::ttf_Render_Blended );
+   self->addClassMethod( c_ttffont, "GlyphMetrics", Falcon::Ext::ttf_GlyphMetrics ).asSymbol()->
+      addParam("charId")->addParam("metrics");
+   self->addClassMethod( c_ttffont, "SizeText", Falcon::Ext::ttf_SizeText ).asSymbol()->
+      addParam("string")->addParam("metrics");
+   self->addClassMethod( c_ttffont, "Render_Solid", Falcon::Ext::ttf_Render_Solid ).asSymbol()->
+      addParam("string")->addParam("color");
+   self->addClassMethod( c_ttffont, "Render_Shaded", Falcon::Ext::ttf_Render_Shaded ).asSymbol()->
+      addParam("string")->addParam("color")->addParam("bgcolor");
+   self->addClassMethod( c_ttffont, "Render_Blended", Falcon::Ext::ttf_Render_Blended ).asSymbol()->
+      addParam("string")->addParam("color");
 
    /*#
       @class TTFMetrics
@@ -153,6 +163,7 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    Falcon::Symbol *c_sdl_aq = self->addClass( "_TTF_AutoQuit" );
    c_sdl_aq->setWKS( true );
    c_sdl_aq->exported( false );
+   c_sdl_aq->getClassDef()->setObjectManager( &Falcon::core_falcon_data_manager );
    self->addClassMethod( c_sdl_aq, "Quit", Falcon::Ext::ttf_Quit );
 
 
@@ -160,3 +171,4 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
 }
 
 /* end of sdlttf.cpp */
+

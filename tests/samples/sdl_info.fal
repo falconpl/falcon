@@ -30,10 +30,10 @@ try
    > "==============================="
    > "Using driver: ", SDL.VideoDriverName()
    >> "Available modes: "
-   ListModes( SDL.ListModes( nil, SDL.FULLSCREEN|SDL.HWSURFACE ) )
+   ListModes( SDL.ListModes( nil, SDL.FULLSCREEN||SDL.HWSURFACE ) )
    > "Preferred bit per pixels at 640x480: ", \
       SDL.VideoModeOK( 640, 480, 8  )
-   > "Captions: ", title, " / ", iconTitle
+   //> "Captions: ", title, " / ", iconTitle
    > "==============================="
 
 catch in e

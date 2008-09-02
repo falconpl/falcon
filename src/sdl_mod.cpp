@@ -45,16 +45,13 @@ QuitCarrier::~QuitCarrier()
 
 SDLSurfaceCarrier::~SDLSurfaceCarrier()
 {
-   while( m_lockCount-- > 0 )
+   /*while( m_lockCount-- > 0 )
       SDL_UnlockSurface( m_surface );
 
    SDL_FreeSurface( m_surface );
+*/
 }
 
-bool SDLSurfaceCarrier::isReflective() const
-{
-   return true;
-}
 
 void SDLSurfaceCarrier::getProperty( VMachine *vm, const String &propName, Item &prop )
 {
@@ -96,6 +93,7 @@ void SDLSurfaceCarrier::getProperty( VMachine *vm, const String &propName, Item 
       if ( prop.isNil() )
       {
          MemBuf *mb;
+         fassert( m_surface != 0 );
 
          switch( m_surface->format->BytesPerPixel )
          {
@@ -104,15 +102,14 @@ void SDLSurfaceCarrier::getProperty( VMachine *vm, const String &propName, Item 
             case 3: mb = new MemBuf_3( vm, (byte*)m_surface->pixels, m_surface->h * m_surface->pitch, false );
             case 4: mb = new MemBuf_4( vm, (byte*)m_surface->pixels, m_surface->h * m_surface->pitch, false );
          }
-         mb->dependant( this );
+         mb->dependant( vm->self().asObject() );
          prop = mb;
       }
+
    }
-
-
 }
 
-void SDLSurfaceCarrier::setProperty( VMachine *vm, const String &propName, Item &prop )
+void SDLSurfaceCarrier::setProperty( VMachine *vm, const String &propName, const Item &prop )
 {
    // refuse to set anything
    vm->raiseModError( new SDLError( ErrorParam( FALCON_SDL_ERROR_BASE, __LINE__ )
@@ -120,7 +117,7 @@ void SDLSurfaceCarrier::setProperty( VMachine *vm, const String &propName, Item 
 }
 
 
-UserData *SDLSurfaceCarrier::clone() const
+FalconData *SDLSurfaceCarrier::clone() const
 {
    return 0;
 }
@@ -149,21 +146,18 @@ bool RectToObject( const ::SDL_Rect &rect, CoreObject *obj )
 
 bool ObjectToRect( CoreObject *obj, ::SDL_Rect &rect )
 {
-   Item *itm = obj->getProperty( "x" );
-   if ( itm == 0 ) return false;
-   rect.x = (Sint16) itm->forceInteger();
+   Item itm;
+   if ( ! obj->getProperty( "x", itm ) ) return false;
+   rect.x = (Sint16) itm.forceInteger();
 
-   itm = obj->getProperty( "y" );
-   if ( itm == 0 ) return false;
-   rect.y = (Sint16) itm->forceInteger();
+   if ( ! obj->getProperty( "y", itm ) ) return false;
+   rect.y = (Sint16) itm.forceInteger();
 
-   itm = obj->getProperty( "w" );
-   if ( itm == 0 ) return false;
-   rect.w = (Uint16) itm->forceInteger();
+   if ( ! obj->getProperty( "w", itm ) ) return false;
+   rect.w = (Sint16) itm.forceInteger();
 
-   itm = obj->getProperty( "h" );
-   if ( itm == 0 ) return false;
-   rect.h = (Uint16) itm->forceInteger();
+   if ( ! obj->getProperty( "h", itm ) ) return false;
+   rect.h = (Sint16) itm.forceInteger();
    return true;
 }
 
@@ -215,7 +209,7 @@ CoreObject *MakePixelFormatInst( VMachine *vm, SDLSurfaceCarrier *carrier, ::SDL
          (byte *) fmt->palette->colors, fmt->palette->ncolors, false );
 
       if ( carrier != 0 )
-         colors->dependant( carrier );
+         colors->dependant( obj );
 
       objpal->setProperty( "colors", colors );
       objpal->setProperty( "ncolors", fmt->palette->ncolors );
