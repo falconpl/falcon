@@ -720,9 +720,9 @@ void GenTree::gen_expression( const Expression *exp )
 
       case 10:
          gen_value( exp->first() );
-         m_out->writeString( "[[ " );
+         m_out->writeString( "[ *" );
          gen_value( exp->second() );
-         m_out->writeString( " ]]" );
+         m_out->writeString( " ]" );
       break;
    }
 }
