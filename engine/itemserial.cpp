@@ -790,7 +790,7 @@ Item::e_sercode Item::deserialize( Stream *file, VMachine *vm )
             sc = temp.deserialize( file, vm );
             object->setPropertyAt( i, temp );
             if ( sc != sc_ok ) {
-               break;
+               return sc;
             }
          }
 

@@ -176,19 +176,6 @@ public:
       This function adds a module to the runtime library and then it
       links it in two steps.
 
-      First, link() method is called to fill the module global variables table,
-      (which may be empty), by importing external symbols from the already
-      added modules. Then all exported symbol is uploaded in the global symbols
-      table (m_gsyms).
-
-      Module symbol exporting overrides previous export requests. In example, if
-      the rtl module (providing and exporting \b printl function ) and then another
-      module exporting a symbol printl is added, all the subsequent references to
-      printl will refer to the latter definition. However, modules importing printl()
-      before the latter override will still refer to the original printl(). To override
-      \b all instance of an already defined function, just assign it to something else
-      everywhere in the executed module(s).
-
       When a module is added to the runtime, its reference count is incremented, and
       a record containing its ID (relative position) is added. The ID will soft-link
       the module with its own global variable representation in the executing VM (i.e. Module N

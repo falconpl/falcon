@@ -2205,6 +2205,18 @@ public:
    bool setBinding( const String &bind, const Item &value );
 
 
+   typedef enum {
+      lm_complete,
+      lm_prelink,
+      lm_postlink
+   } t_linkMode;
+
+   LiveModule *prelink( Module *mod, bool bIsMain, bool bPrivate );
+
+   bool postlink();
+
+   bool liveLink( LiveModule *livemod, t_linkMode mode );
+
 //==========================================================================
 //==========================================================================
 //==========================================================================

@@ -104,6 +104,15 @@ class FALCON_DYN_CLASS LiveModule: public Garbageable
    bool m_bPrivate;
 
 public:
+   typedef enum {
+      init_none,
+      init_trav,
+      init_complete
+   } t_initState;
+private:
+   t_initState m_initState;
+
+public:
    LiveModule( VMachine *vm, Module *mod, bool bPrivate=false );
    ~LiveModule();
 
@@ -149,6 +158,9 @@ public:
       must be separately called.
    */
    void setPrivate( bool mode ) { m_bPrivate = mode; }
+
+   t_initState initialized() const { return m_initState; }
+   void initialized( t_initState tis ) { m_initState = tis; }
 };
 
 

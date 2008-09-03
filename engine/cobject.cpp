@@ -122,7 +122,10 @@ void CoreObject::setPropertyAt( uint32 pos, const Item &value )
    }
 
    if ( m_cache != 0 ) {
-      *m_cache[ pos ].dereference() = value;
+      if ( value.isReference() )
+         m_cache[ pos ] = value;
+      else
+         *m_cache[ pos ].dereference() = value;
    }
 }
 
@@ -136,6 +139,8 @@ bool CoreObject::setProperty( const String &propName, const String &value )
 bool CoreObject::getProperty( const String &propName, Item &ret )
 {
    register uint32 pos;
+   fassert( m_generatedBy != 0 );
+
    const PropertyTable &pt = m_generatedBy->properties();
 
    if ( pt.findKey( propName, pos ) )

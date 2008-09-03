@@ -373,16 +373,102 @@ LiveModule *VMachine::link( Module *mod, bool isMainModule, bool bPrivate )
       svmap_iter.next();
    }
 
+   // Ok, the module is now in.
+   // We can now increment reference count and add it to ourselves
+   LiveModule *livemod = new LiveModule( this, mod, bPrivate );
+
+   // set this as the main module if required.
+   if ( isMainModule )
+      m_mainModule = livemod;
+
+    if ( liveLink( livemod, lm_complete ) )
+      return livemod;
+
+   // no need to free on failure: livemod are garbaged
+   return 0;
+}
+
+LiveModule *VMachine::prelink( Module *mod, bool bIsMain, bool bPrivate )
+{
+   // See if we have a module with the same name
+   LiveModule *oldMod = findModule( mod->name() );
+   if ( oldMod == 0 )
+   {
+      oldMod = new LiveModule( this, mod, bPrivate );
+      m_liveModules.insert( &oldMod->name(), oldMod );
+   }
+
+   if ( bIsMain )
+      m_mainModule = oldMod;
+
+   return oldMod;
+}
+
+bool VMachine::postlink()
+{
+   MapIterator iter = m_liveModules.begin();
+   while( iter.hasCurrent() )
+   {
+      LiveModule *livemod = *(LiveModule **) iter.currentValue();
+
+      if ( livemod->initialized() != LiveModule::init_complete )
+      {
+         if ( ! liveLink( livemod, lm_postlink ) )
+            return false;
+      }
+
+      iter.next();
+   }
+
+   return true;
+}
+
+
+bool VMachine::liveLink( LiveModule *livemod, t_linkMode mode )
+{
+   if ( mode == lm_postlink )
+   {
+      // mark the module as being inspected
+      livemod->initialized( LiveModule::init_trav );
+
+      MapIterator deps = livemod->module()->dependencies().begin();
+      while( deps.hasCurrent() )
+      {
+         const ModuleDepData *depdata = *(const ModuleDepData **) deps.currentValue();
+         const String *moduleName = depdata->moduleName();
+
+         // have we got that module?
+         LiveModule *needed = findModule( *moduleName );
+         if( needed == 0 )
+         {
+            // not present
+            return false;
+         }
+         else if( needed->initialized() == LiveModule::init_trav )
+         {
+            // ricular ref
+            return false;
+         }
+         else if( needed->initialized() == LiveModule::init_none )
+         {
+            // must link THAT before us
+            if ( ! liveLink( needed, mode ) )
+               return false;
+         }
+         // else the module is already linked in.
+
+         // have we got the module?
+         deps.next();
+      }
+   }
+
+
    // we need to record the classes in the module as they have to be evaluated last.
    SymbolList modClasses;
    SymbolList modObjects;
 
    // then we always need the symbol table.
-   SymbolTable *symtab = &mod->symbolTable();
-
-   // Ok, the module is now in.
-   // We can now increment reference count and add it to ourselves
-   LiveModule *livemod = new LiveModule( this, mod, bPrivate );
+   const SymbolTable *symtab = &livemod->module()->symbolTable();
 
    // A shortcut
    ItemVector *globs = &livemod->globals();
@@ -468,15 +554,12 @@ LiveModule *VMachine::link( Module *mod, bool isMainModule, bool bPrivate )
    if ( ! success )
    {
       // LiveModule is garbageable, cannot be destroyed.
-      return 0;
+      return false;
    }
 
    // We can now add the module to our list of available modules.
-   m_liveModules.insert( &mod->name(), livemod );
-
-   // by default, set the main module to the lastly linked module.
-   if ( isMainModule )
-      m_mainModule = livemod;
+   m_liveModules.insert( &livemod->name(), livemod );
+   livemod->initialized( LiveModule::init_complete );
 
    // execute the main code, if we have one
    if ( m_launchAtLink )
@@ -486,11 +569,11 @@ LiveModule *VMachine::link( Module *mod, bool isMainModule, bool bPrivate )
       {
          callItem( *mainItem, 0 );
          if ( m_event == eventRisen )
-            return 0;
+            return false;
       }
    }
 
-   return livemod;
+   return true;
 }
 
 
@@ -2067,7 +2150,7 @@ void VMachine::yield( numeric secs )
             {
                m_systemData.resetInterrupt();
 
-               fassert( m_symbol->isFunction() );
+               fassert( m_symbol->isFunction() || m_symbol->isExtFunc() );
 
                raiseError( new InterruptedError(
                   ErrorParam( e_interrupted ).origin( e_orig_vm ).
