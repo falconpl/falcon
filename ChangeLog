@@ -38,6 +38,10 @@ Falcon (0.8.11)
   * minor: include() function added to Core module allowing dynamic module
            loading directly from base programs.
   * minor: added vmFalconPath() informative function.
+  * major: Addition and self addition on strings now forces conversion of the
+           target object into a string. I.e. "H" + 1 => "H1". Integer UNICODE
+           operations are now delegated to the "*" and "*=" operators. So,
+           "Hello" * 32 + "World" => "Hello World" and "H" *= 65 => "HA".
 
 Falcon (0.8.10)
   * minor: Now classes can be stored in object properties and called to get

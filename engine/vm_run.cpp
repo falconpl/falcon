@@ -903,20 +903,6 @@ void opcodeHandler_ADD( register VMachine *vm )
          vm->m_regA.setNumeric( operand1->asNumeric() + operand2->asNumeric() );
       return;
 
-      case FLC_ITEM_STRING<< 8 | FLC_ITEM_INT:
-      case FLC_ITEM_STRING<< 8 | FLC_ITEM_NUM:
-      {
-         int64 chr = operand2->forceInteger();
-         if ( chr >= 0 && chr <= (int64) 0xFFFFFFFF )
-         {
-            GarbageString *gcs = new GarbageString( vm, *operand1->asString() );
-            gcs->append( (uint32) chr );
-            vm->m_regA.setString( gcs );
-            return;
-         }
-      }
-      break;
-
       case FLC_ITEM_STRING<< 8 | FLC_ITEM_STRING:
       {
          GarbageString *gcs = new GarbageString( vm, *operand1->asString() );
@@ -950,6 +936,18 @@ void opcodeHandler_ADD( register VMachine *vm )
             first->append( *operand2 );
       }
       vm->retval( first );
+      return;
+   }
+   else if( operand1->isString() )
+   {
+      String tgt;
+      vm->itemToString( tgt, operand2 );
+      if ( vm->hadError() ) 
+         return;
+
+      GarbageString *gcs = new GarbageString( vm, *operand1->asString() );
+      gcs->append( tgt );
+      vm->m_regA.setString( gcs );
       return;
    }
 
@@ -1058,6 +1056,20 @@ void opcodeHandler_MUL( register VMachine *vm )
       case FLC_ITEM_NUM<< 8 | FLC_ITEM_NUM:
          vm->m_regA.setNumeric( operand1->asNumeric() * operand2->asNumeric() );
       return;
+
+      case FLC_ITEM_STRING<< 8 | FLC_ITEM_INT:
+      case FLC_ITEM_STRING<< 8 | FLC_ITEM_NUM:
+      {
+         int64 chr = operand2->forceInteger();
+         if ( chr >= 0 && chr <= (int64) 0xFFFFFFFF )
+         {
+            GarbageString *gcs = new GarbageString( vm, *operand1->asString() );
+            gcs->append( (uint32) chr );
+            vm->m_regA.setString( gcs );
+            return;
+         }
+      }
+      break;
    }
    vm->raiseRTError( new TypeError( ErrorParam( e_invop ).extra("MUL").origin( e_orig_vm ) ) );
 }
@@ -1233,20 +1245,6 @@ void opcodeHandler_ADDS( register VMachine *vm )
          operand1->setNumeric(operand1->asNumeric() + operand2->asNumeric() );
       break;
 
-      case FLC_ITEM_STRING<< 8 | FLC_ITEM_INT:
-      case FLC_ITEM_STRING<< 8 | FLC_ITEM_NUM:
-      {
-         int64 chr = operand2->forceInteger();
-         if ( chr >= 0 && chr <= (int64) 0xFFFFFFFF )
-         {
-            String *str = new GarbageString( vm, *operand1->asString() );
-            str->append( (uint32) chr );
-            operand1->setString( str );
-            break;
-         }
-      }
-      break;
-
       case FLC_ITEM_STRING<< 8 | FLC_ITEM_STRING:
       {
          String *str = new GarbageString( vm, *operand1->asString() );
@@ -1274,6 +1272,16 @@ void opcodeHandler_ADDS( register VMachine *vm )
                else
                   operand1->asArray()->append( *operand2 );
             }
+            break;
+         }
+         else if( operand1->isString() )
+         {
+            String tgt;
+            vm->itemToString( tgt, operand2 );
+            if ( vm->hadError() ) 
+               return;
+
+            operand1->asString()->append( tgt );
             break;
          }
 
@@ -1388,6 +1396,20 @@ void opcodeHandler_MULS( register VMachine *vm )
 
       case FLC_ITEM_NUM<< 8 | FLC_ITEM_NUM:
          operand1->setNumeric(operand1->asNumeric() * operand2->asNumeric() );
+      break;
+
+      case FLC_ITEM_STRING<< 8 | FLC_ITEM_INT:
+      case FLC_ITEM_STRING<< 8 | FLC_ITEM_NUM:
+      {
+         int64 chr = operand2->forceInteger();
+         if ( chr >= 0 && chr <= (int64) 0xFFFFFFFF )
+         {
+            String *str = new GarbageString( vm, *operand1->asString() );
+            str->append( (uint32) chr );
+            operand1->setString( str );
+            break;
+         }
+      }
       break;
 
       default:
