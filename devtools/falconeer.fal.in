@@ -1,4 +1,4 @@
-#!@FINAL_DESTINATION@/bin/falcon
+#!/usr/bin/env falcon
 /*
    FALCON - The Falcon Programming Language.
    FILE: falconeer.fal
