@@ -22,7 +22,7 @@
 */
 
 /*#
-   
+
 */
 
 /*#
@@ -40,6 +40,131 @@
 
 namespace Falcon {
 namespace core {
+
+/*#
+   @function at
+   @brief Retreives or sets the nth element of a indexed sequence.
+   @param sequence An array, string or another sequence.
+   @param itempos A number or a range to access the sequence.
+   @optparam item If given, will substitue the given item or range.
+
+   The item is inserted before the given position. If pos is 0, the item is
+   inserted in the very first position, while if it's equal to the array length, it
+   is appended at the array tail.
+*/
+
+FALCON_FUNC  at ( ::Falcon::VMachine *vm )
+{
+   Item *i_array = vm->param(0);
+   Item *i_pos = vm->param(1);
+   Item *i_val = vm->param(2);
+
+   if ( i_array != 0 )
+   {
+      if ( i_array->isArray() )
+      {
+         CoreArray *ca = i_array->asArray();
+
+         if ( i_pos->isOrdinal() )
+         {
+            int32 pos = i_pos->forceInteger();
+            if ( pos < 0 ) pos = ca->length() - pos;
+            if ( pos >= ca->length() )
+            {
+               vm->raiseModError( new AccessError( ErrorParam( e_arracc, __LINE__ ).
+                  origin( e_orig_runtime ) )
+                  );
+               return;
+            }
+            vm->retval( ca->at( pos ) );
+            if ( i_val != 0 )
+               (*ca)[pos] = *i_val;
+
+            return;
+         }
+         else if ( i_pos->isRange() )
+         {
+            int32 start = i_pos->asRangeStart();
+            int32 end = i_pos->asRangeIsOpen() ? ca->length() : i_pos->asRangeEnd();
+            CoreArray *part = ca->partition( start, end );
+
+            if ( part != 0 )
+            {
+               vm->retval( part );
+
+               if ( i_val != 0 )
+               {
+                  if( i_val->isArray() ) {
+                     if( ca->change( *i_val->asArray(), start, end ) )
+                        return;
+                  }
+                  else
+                  {
+                     if ( start != end )
+                     {// insert
+                        if( ca->remove( start, end ) )
+                        {
+                           if( ca->insert( *i_val, start ) )
+                              return;
+                        }
+                     }
+                  }
+               }
+               else
+                  return;
+            }
+            else {
+               vm->raiseModError( new AccessError( ErrorParam( e_arracc, __LINE__ ).
+                  origin( e_orig_runtime ) )
+                  );
+               return;
+            }
+         }
+      }
+      else if ( i_array->isString() )
+      {
+         String *str = i_array->asString();
+
+         if ( i_pos->isOrdinal() )
+         {
+            int32 pos = i_pos->forceInteger();
+            if ( pos < 0 ) pos = str->length() - pos;
+            if ( pos >= str->length() )
+            {
+               vm->raiseModError( new AccessError( ErrorParam( e_arracc, __LINE__ ).
+                  origin( e_orig_runtime ) )
+                  );
+               return;
+            }
+            vm->retval( new GarbageString( vm, str->subString( pos, pos+1) ) );
+
+            if ( i_val != 0 && i_val->isString() && i_val->asString()->size() > 0 )
+            {
+               str->setCharAt(pos, i_val->asString()->getCharAt(0) );
+            }
+
+            return;
+         }
+         else if ( i_pos->isRange() )
+         {
+            int32 start = i_pos->asRangeStart();
+            int32 end = i_pos->asRangeIsOpen() ? str->length() : i_pos->asRangeEnd();
+
+            vm->retval( new GarbageString( vm, str->subString( start, end ) ) );
+            if ( i_val != 0 && i_val->isString() )
+            {
+               str->change( start, end, *i_val->asString() );
+            }
+
+            return;
+         }
+      }
+   }
+
+   vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+      origin( e_orig_runtime ).
+      extra("A,N|R,[X]") ) );
+}
 
 /*#
    @function arrayIns

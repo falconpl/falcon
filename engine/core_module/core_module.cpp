@@ -534,6 +534,8 @@ Module* core_module_init()
    //=======================================================================
    // RTL array API
    //=======================================================================
+   self->addExtFunc( "at", Falcon::core::at )->
+      addParam("array")->addParam("itempos")->addParam("item");
    self->addExtFunc( "arrayIns", Falcon::core::arrayIns )->
       addParam("array")->addParam("itempos")->addParam("item");
    self->addExtFunc( "arrayDel", Falcon::core::arrayDel )->
