@@ -17,7 +17,7 @@
    This is the falcon command line.
 
    Consider this a relatively complex example of an embedding application.
-*/\
+*/
 
 #include <falcon/sys.h>
 #include <falcon/setup.h>
@@ -705,6 +705,13 @@ void interactive_mode( FlcLoader *loader )
       read_line( stdIn, line, 1024 );
       if ( line.size() > 0 )
       {
+         if( line.getCharAt( line.length() -1 ) == '\\' )
+         {
+            lastRet = InteractiveCompiler::e_more;
+            codeSlice += line + "\n";
+            continue;
+         }
+
          InteractiveCompiler::t_ret_type lastRet1
             = comp.compileNext( codeSlice + line + "\n" );
 

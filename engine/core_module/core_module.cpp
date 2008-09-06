@@ -367,8 +367,6 @@ Module* core_module_init()
    // Functional extensions
    //
 
-   self->addExtFunc( "eq", Falcon::core::core_eq );
-
    //ETA functions
    self->addExtFunc( "all", Falcon::core::core_all )->setEta( true )->
       addParam("sequence");
@@ -534,8 +532,6 @@ Module* core_module_init()
    //=======================================================================
    // RTL array API
    //=======================================================================
-   self->addExtFunc( "at", Falcon::core::at )->
-      addParam("array")->addParam("itempos")->addParam("item");
    self->addExtFunc( "arrayIns", Falcon::core::arrayIns )->
       addParam("array")->addParam("itempos")->addParam("item");
    self->addExtFunc( "arrayDel", Falcon::core::arrayDel )->

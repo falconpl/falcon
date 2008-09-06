@@ -105,7 +105,6 @@ FALCON_FUNC  core_exit ( ::Falcon::VMachine *vm );
 FALCON_FUNC  PageDict( ::Falcon::VMachine *vm );
 FALCON_FUNC Make_MemBuf( ::Falcon::VMachine *vm );
 
-FALCON_FUNC  core_eq( ::Falcon::VMachine *vm );
 FALCON_FUNC  core_any ( ::Falcon::VMachine *vm );
 FALCON_FUNC  core_all ( ::Falcon::VMachine *vm );
 FALCON_FUNC  core_anyp ( ::Falcon::VMachine *vm );
@@ -223,7 +222,6 @@ FALCON_FUNC  strToMemBuf ( ::Falcon::VMachine *vm );
 FALCON_FUNC  strFromMemBuf ( ::Falcon::VMachine *vm );
 
 
-FALCON_FUNC  at ( ::Falcon::VMachine *vm );
 FALCON_FUNC  arrayIns ( ::Falcon::VMachine *vm );
 FALCON_FUNC  arrayDel ( ::Falcon::VMachine *vm );
 FALCON_FUNC  arrayDelAll ( ::Falcon::VMachine *vm );
