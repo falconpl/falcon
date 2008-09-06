@@ -3,6 +3,7 @@ Feathers (0.8.11)
             to mess up the virtual table. Fixed (using a carrier).
   * major: The compiler link mode is now "private".
   * minor: Returning true or false from Regex.match() instead of 0/1.
+  * major: Added funcext (Functional extension functions) module.
 
 Feathers (0.8.10)
   * minor: Added load directive support for loadXXX on reflexive compiler.
