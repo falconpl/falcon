@@ -174,10 +174,12 @@ void Compiler::reset()
 
 void Compiler::clear()
 {
-   if ( m_metacomp == 0 )
+   if ( m_metacomp != 0 )
    {
       delete m_serviceVM;
       delete m_serviceLoader;
+      m_serviceVM = 0;
+      m_serviceLoader = 0;
    }
 
    delete m_root;
