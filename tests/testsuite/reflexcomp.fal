@@ -44,8 +44,8 @@ test( mod1, "Module1 - first try" )
 test( mod2, "Module2 - first try" )
 
 // unload
-mod2.unload()
-mod1.unload()
+//mod2.unload()
+//mod1.unload()
 
 // try again
 mod1 = comp.loadByName( "reflexcomp_1" )
