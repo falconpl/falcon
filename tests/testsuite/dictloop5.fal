@@ -19,7 +19,7 @@ for key, value in dict
 	try
 		if key == "C"
 			// focefully generate an exception
-			printl( "first param", "second", "third", "test" * value )
+			printl( "first param", "second", "third", 9*nil )
 		end
 	catch
 		continue dropping
@@ -33,7 +33,7 @@ for key, value in dict
 	try
 		if key == "D"
 			// focefully generate an exception
-			printl( "first param", "second", "third", "test" * value )
+			printl( "first param", "second", "third", 9 * nil )
 		end
 	catch
 		continue dropping
@@ -47,7 +47,7 @@ for key, value in dict
 	try
 		if key == "A"
 			// focefully generate an exception
-			printl( "first param", "second", "third", "test" * value )
+			printl( "first param", "second", "third", 9*nil )
 		end
 	catch
 		continue dropping

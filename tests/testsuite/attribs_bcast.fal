@@ -15,6 +15,15 @@ attributes
    a_one, a_two, a_three
 end
 
+function vector_eq( v1, v2 )
+   if v1.len() != v2.len(): return false
+   for i in [0:v1.len()]
+      if v1[i] != v2[i]: return false
+   end
+
+   return true
+end
+
 class CObj( name, attrib )
    name = name
    called = nil
@@ -53,7 +62,7 @@ o4 = CObj( "four" )  // without attribute
 // broadcast on one
 o1.reset()
 broadcast( a_one )
-if not eq( o1.called, [1, nil] )
+if not vector_eq( o1.called, [1, nil] )
    failure( "Broadcast on one/nil" )
 end
 if o1.callcount != 1: failure( "Excessive broadcast on one" )
@@ -61,11 +70,11 @@ if o1.callcount != 1: failure( "Excessive broadcast on one" )
 // broadcast on one + two, with one param
 o1.reset()
 broadcast( [ a_one, a_two ], "Hello" )
-if not eq( o1.called, [1, "Hello"] )
+if not vector_eq( o1.called, [1, "Hello"] )
    failure( "Broadcast on one+two/Hello (one)" )
 end
 
-if not eq( o2.called, [2, "Hello"] )
+if not vector_eq( o2.called, [2, "Hello"] )
    failure( "Broadcast on one+two/Hello (two)" )
 end
 if o1.callcount != 2: failure( "Excessive broadcast on one+two" )
@@ -76,13 +85,13 @@ give a_one, a_two  to o4
 o1.reset()
 broadcast( [ a_one, a_two ], "World" )
 
-if not eq( o1.called, [1, "World"] )
+if not vector_eq( o1.called, [1, "World"] )
    failure( "Broadcast on one+two/Hello (one)" )
 end
-if not eq( o2.called, [2, "World"] )
+if not vector_eq( o2.called, [2, "World"] )
    failure( "Broadcast on one+two/Hello (two)" )
 end
-if not eq( o4.called, [2, "World"] )
+if not vector_eq( o4.called, [2, "World"] )
    failure( "Broadcast on one+two/World (four)" )
 end
 // o1, o2 and o4 twice!

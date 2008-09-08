@@ -1072,14 +1072,14 @@ if array[-1][1] != "SE": failure( "Array 1 - Last element" )
 if array[-2][0] != "2430": failure( "Array 1 - Second last element 1" )
 if array[-2][1] != "DTP": failure( "Array 1 - Second last element 2" )
 if array[0][1] != "ST": failure( "Array 1 - First element" )
-if not eq( array[300], [ "2330B", "REF", "9F" ]): failure( "Array 1 - Middle element" )
+if array[300][0] != "2330B": failure( "Array 1 - Middle element" )
 
 if array2.len() != 557: failure( "Array 2 - size" )
 if array2[-1][1] != "SE": failure( "Array 2 - Last element" )
 if array2[-2][0] != "2440": failure( "Array 2 - Second last element 1" )
 if array2[-2][1] != "FRM": failure( "Array 2 - Second last element 2" )
 if array2[0][1] != "ST": failure( "Array 2 - First element" )
-if not eq( array2[300], [ "2330A", "N4", nil ]): failure( "Array 2 - Middle element" )
+if array2[300][1] != "N4": failure( "Array 2 - Middle element" )
 
 success()
 

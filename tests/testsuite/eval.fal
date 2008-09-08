@@ -11,10 +11,19 @@
 *
 ****************************************************************************/
 
+function vector_eq( v1, v2 )
+   if v1.len() != v2.len(): return false
+   for i in [0:v1.len()]
+      if v1[i] != v2[i]: return false
+   end
+
+   return true
+end
+
 // identity eval
 if eval( 0 ) != 0: failure( "eval(0)" )
 if eval( "a" ) != "a": failure( "eval(a)" )
-if not eq( eval( [1,2,3] ), [1,2,3] ) : failure( "eval flat array" )
+if not vector_eq( eval( [1,2,3] ), [1,2,3] ) : failure( "eval flat array" )
 
 function produce( a )
    return a + 1
@@ -22,14 +31,14 @@ end
 
 // single result
 if eval( [produce, 1] ) != 2: failure( "Single eval" )
-   
+
 // multiple result
-if not eq( eval( [[produce, 1], [produce,2] ] ), [2,3] )
+if not vector_eq( eval( [[produce, 1], [produce,2] ] ), [2,3] )
    failure( "multiple eval" )
 end
 
 // recursive result
-if not eq( eval( [\
+if not vector_eq( eval( [\
                [produce, [produce, 1]],\
                [produce, [produce, 2]]\
             ] ), [3,4] )

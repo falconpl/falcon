@@ -99,7 +99,7 @@ if a != 4: failure( "Raise / catch in 1" )
 // capture a subclass in order
 a = 0
 try
-	a = "1" + nil
+	a = 9 + nil
 catch IntegerType in err
 	a = 1
 catch TypeError
@@ -115,7 +115,7 @@ if a != 10: failure( "Catch order / 1" )
 // capture a subclass in reverse order
 a = 0
 try
-	a = "1" + nil
+	a = 9 + nil
 catch IntegerType in err
 	a = 1
 catch Error
