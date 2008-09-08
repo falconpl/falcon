@@ -65,8 +65,8 @@ FALCON_FUNC fal_include( Falcon::VMachine *vm )
 
    if( i_file == 0 || ! i_file->isString()
       || (i_syms != 0 && ! (i_syms->isDict() || i_syms->isNil())  )
-      || (i_enc != 0 && !(i_enc->isString() || i_syms->isNil()) )
-      || (i_path != 0 && !(i_path->isString() || i_syms->isNil()) )
+      || (i_enc != 0 && !(i_enc->isString() || i_enc->isNil()) )
+      || (i_path != 0 && !(i_path->isString() || i_path->isNil()) )
       )
    {
       vm->raiseModError( new Falcon::ParamError(
