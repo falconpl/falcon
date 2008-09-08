@@ -690,7 +690,7 @@ void interactive_mode( FlcLoader *loader )
    stdOut->writeString(" to exit\n" );
 
    InteractiveCompiler::t_ret_type lastRet = InteractiveCompiler::e_nothing;
-   String line, codeSlice;
+   String line, pline, codeSlice;
    while( stdIn->good() && ! stdIn->eof() )
    {
       const char *prompt = (
@@ -702,15 +702,18 @@ void interactive_mode( FlcLoader *loader )
       stdOut->writeString( prompt );
       stdOut->flush();
 
-      read_line( stdIn, line, 1024 );
-      if ( line.size() > 0 )
+      read_line( stdIn, pline, 1024 );
+      if ( pline.size() > 0 )
       {
-         if( line.getCharAt( line.length() -1 ) == '\\' )
+         if( pline.getCharAt( pline.length() -1 ) == '\\' )
          {
             lastRet = InteractiveCompiler::e_more;
-            codeSlice += line + "\n";
+            pline.setCharAt( pline.length() - 1, ' ');
+            line += pline;
             continue;
          }
+         else
+            line += pline;
 
          InteractiveCompiler::t_ret_type lastRet1
             = comp.compileNext( codeSlice + line + "\n" );
@@ -752,6 +755,8 @@ void interactive_mode( FlcLoader *loader )
                   codeSlice.size(0);
                }
          }
+
+         line.size(0);
 
          // maintain previous status if having a compilation error.
          if( lastRet1 != InteractiveCompiler::e_error )
