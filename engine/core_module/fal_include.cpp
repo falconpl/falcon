@@ -25,10 +25,10 @@ namespace core {
 /*#
    @function include
    @brief Dynamically loads a module as a plugin.
-   @param name The relative filename of the module.
-   @optparam symDict Symbols to be queried (or nil).
+   @param file The relative filename of the module.
    @optparam inputEnc Input encoding.
    @optparam path A string of ';' separated search paths.
+   @optparam symDict Symbols to be queried (or nil).
 
    @raise IOError if the module cannot be found or load.
 
@@ -59,9 +59,9 @@ namespace core {
 FALCON_FUNC fal_include( Falcon::VMachine *vm )
 {
    Falcon::Item *i_file = vm->param(0);
-   Falcon::Item *i_syms = vm->param(1);
-   Falcon::Item *i_enc = vm->param(2);
-   Falcon::Item *i_path = vm->param(3);
+   Falcon::Item *i_enc = vm->param(1);
+   Falcon::Item *i_path = vm->param(2);
+   Falcon::Item *i_syms = vm->param(3);
 
    if( i_file == 0 || ! i_file->isString()
       || (i_syms != 0 && ! (i_syms->isDict() || i_syms->isNil())  )
@@ -71,12 +71,12 @@ FALCON_FUNC fal_include( Falcon::VMachine *vm )
    {
       vm->raiseModError( new Falcon::ParamError(
          Falcon::ErrorParam( Falcon::e_inv_params, __LINE__ ).
-         extra( "S,[D],[S],[S]" ) ) );
+         extra( "S,[S],[S],[D]" ) ) );
       return;
    }
 
    // create the loader/runtime pair.
-   FlcLoader cpl( i_path == 0 || i_path->isNil() ? "" : *i_path->asString() );
+   FlcLoader cpl( i_path == 0 || i_path->isNil() ? "." : *i_path->asString() );
    Runtime rt( &cpl, vm );
    rt.hasMainModule( false );
 
@@ -91,7 +91,7 @@ FALCON_FUNC fal_include( Falcon::VMachine *vm )
    bool execAtLink = vm->launchAtLink();
    if ( rt.loadFile( *i_file->asString(), false ) )
    {
-      vm->launchAtLink( i_syms == 0 );
+      vm->launchAtLink( i_syms == 0 || i_syms->isNil() );
       LiveModule *lmod = vm->link( &rt );
 
       // shall we read the symbols?
@@ -127,7 +127,7 @@ FALCON_FUNC fal_include( Falcon::VMachine *vm )
       }
    }
 
-   // resent launch status
+   // reset launch status
    vm->launchAtLink( execAtLink );
 }
 

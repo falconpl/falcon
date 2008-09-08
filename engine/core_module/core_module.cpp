@@ -645,7 +645,7 @@ Module* core_module_init()
       addParam("item");
 
    self->addExtFunc( "include", Falcon::core::fal_include )->
-      addParam("name")->addParam("symDict")->addParam("inputEnc")->addParam("path");
+      addParam("file")->addParam("inputEnc")->addParam("path")->addParam("symDict");
 
    //==============================================
    // Transcoding functions
