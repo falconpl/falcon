@@ -46,7 +46,7 @@ namespace core {
    to be searched in the loaded module. If present, the entry are filled with
    symbols coming from the loaded module. When @b symDict is provided, the
    linked module won't have its main code executed (it is possible to execute
-   it at a later time adding "__main__" to the retreived modules). If a symbol
+   it at a later time adding "__main__" to the searched symbols). If a symbol
    is not found, its entry in the dictionary will be set to nil. When loaded
    this way, the export requests in the loaded module are @b not honored (import/from
    semantic).

@@ -16,6 +16,7 @@ IF(UNIX OR MAC)
          stdstreams_unix.cpp
          time_sys_unix.cpp
          vm_sys_posix.cpp
+         vfs_file_unix.cpp
     )
 
    #for solaris system flavor, add sys_solaris.cpp
@@ -220,6 +221,7 @@ ADD_LIBRARY( falcon_engine SHARED
    transcoding.cpp
    uri.cpp
    userdata.cpp
+   vfsprovider.cpp
    vmcontext.cpp
    vm.cpp
    vmmaps.cpp
