@@ -45,6 +45,7 @@ class FALCON_DYN_CLASS CoreArray: public Garbageable
    uint32 m_size;
    Item *m_data;
    CoreDict *m_bindings;
+   CoreObject *m_table;
 
    CoreArray( VMachine *vm, Item *buffer, uint32 size, uint32 alloc );
 
@@ -140,6 +141,10 @@ public:
          pos = m_size + pos;
       return m_data[pos];
    }
+
+   CoreObject *table() const { return m_table; }
+   void table( CoreObject *t ) { m_table = t; }
+
 };
 
 }

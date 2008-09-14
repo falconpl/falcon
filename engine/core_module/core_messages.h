@@ -37,5 +37,6 @@ FAL_MODSTR( rtl_sender_not_object, L"Sender is not an object" );
 FAL_MODSTR( rtl_marshall_not_cb, L"Marshalled event name must be a string as first element in the given array" );
 FAL_MODSTR( rtl_invalid_path, L"Invalid path" );
 FAL_MODSTR( rtl_invalid_uri, L"Invalid URI" );
+FAL_MODSTR( rtl_no_tabhead, L"First row of the table must be a header" );
 
 /* end of core_messages.h */

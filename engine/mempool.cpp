@@ -343,6 +343,10 @@ void MemPool::markItem( Item &item )
             // mark also the bindings
             if ( array->bindings() != 0 )
                array->bindings()->mark( currentMark() );
+
+            // and also the table
+            if ( array->table() != 0 )
+               array->table()->mark( currentMark() );
          }
       }
       break;

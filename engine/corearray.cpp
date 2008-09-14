@@ -27,17 +27,19 @@
 namespace Falcon {
 
 CoreArray::CoreArray( VMachine *vm ):
+   Garbageable( vm, sizeof( CoreArray ) ),
    m_alloc(0),
    m_size(0),
    m_data(0),
    m_bindings(0),
-   Garbageable( vm, sizeof( CoreArray ) )
+   m_table( 0 )
 {}
 
 
 CoreArray::CoreArray( VMachine *vm, uint32 prealloc ):
    Garbageable( vm, esize(prealloc) + sizeof(CoreArray) ),
-   m_bindings(0)
+   m_bindings(0),
+   m_table( 0 )
 {
    m_data = (Item *) memAlloc( esize(prealloc) );
    m_alloc = prealloc;
@@ -373,6 +375,7 @@ CoreArray *CoreArray::clone() const
    {
       ca->m_bindings = m_bindings->clone();
    }
+   m_table = other.m_table;
 
    return ca;
 }
