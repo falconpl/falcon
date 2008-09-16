@@ -375,7 +375,7 @@ CoreArray *CoreArray::clone() const
    {
       ca->m_bindings = m_bindings->clone();
    }
-   m_table = other.m_table;
+   ca->m_table = m_table;
 
    return ca;
 }

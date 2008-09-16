@@ -42,6 +42,7 @@ Falcon (0.8.11)
            target object into a string. I.e. "H" + 1 => "H1". Integer UNICODE
            operations are now delegated to the "*" and "*=" operators. So,
            "Hello" * 32 + "World" => "Hello World" and "H" *= 65 => "HA".
+  * bugfix: URI.encode() was actually decoding.
 
 Falcon (0.8.10)
   * minor: Now classes can be stored in object properties and called to get

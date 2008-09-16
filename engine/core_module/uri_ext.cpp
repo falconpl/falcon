@@ -26,7 +26,7 @@
 #include "core_messages.h"
 
 /*#
-   
+
 */
 
 namespace Falcon {
@@ -232,7 +232,7 @@ FALCON_FUNC  URI_encode ( ::Falcon::VMachine *vm )
    }
 
    String *str = new GarbageString( vm );
-   URI::URLDecode( *p0->asString(), *str );
+   URI::URLEncode( *p0->asString(), *str );
    vm->retval( str );
 }
 
