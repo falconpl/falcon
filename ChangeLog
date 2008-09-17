@@ -43,6 +43,8 @@ Falcon (0.8.11)
            operations are now delegated to the "*" and "*=" operators. So,
            "Hello" * 32 + "World" => "Hello World" and "H" *= 65 => "HA".
   * bugfix: URI.encode() was actually decoding.
+  * minor: Introduced xtimes() function which works like times(), but evaluates
+           all the items in sequence instead of just running them.
 
 Falcon (0.8.10)
   * minor: Now classes can be stored in object properties and called to get

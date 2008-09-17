@@ -707,6 +707,9 @@ static bool core_times_next ( ::Falcon::VMachine *vm )
    int32 start = range.asRangeStart();
    uint32 currentItemID = (uint32) vm->local(1)->asInteger();
 
+   // eval request
+   int evalReq = (int) vm->local(2)->asInteger();
+
    // Continue or items terminated?
    if( currentItemID == sequence->length() ||
       ( vm->regA().isOob() && vm->regA().isInteger() && vm->regA().asInteger() == 1 )
@@ -735,9 +738,6 @@ static bool core_times_next ( ::Falcon::VMachine *vm )
    // get the current item.
    Item &current = sequence->at( currentItemID );
 
-   // prepare the next current item ID
-   vm->local(1)->setInteger( currentItemID + 1 );
-
    // Is the current item callable? -- if not, raise an error
    if ( ! current.isCallable() )
    {
@@ -745,6 +745,38 @@ static bool core_times_next ( ::Falcon::VMachine *vm )
          extra( "uncallable" ) ) );
       return false;   // don't call me anymore
    }
+
+   // check for evaluation required (xtimes)
+   if ( evalReq > 0 )
+   {
+      // continuing a previous evaluation?
+      if ( evalReq == 2 )
+      {
+         // evaluation complete, proceed
+         *vm->local(2) = (int64)1;
+
+      }
+      else {
+         // prepares next iteration
+         vm->local(1)->setInteger( currentItemID + 1 );
+
+         // try to evaluate
+         if ( vm->functionalEval( current ) )
+         {
+            // Evaluation required? -- reiterate
+            *vm->local(2) = (int64)2;
+            return true;
+         }
+         // else, we can continue.
+         return true;
+      }
+
+
+      return true;
+   }
+
+   // prepare the next current item ID
+   vm->local(1)->setInteger( currentItemID + 1 );
 
    // how should we call the item?
    if ( ! vm->isParamByRef( 1 ) )
@@ -786,9 +818,6 @@ static bool core_times_next ( ::Falcon::VMachine *vm )
       // we need just to call the item.
       vm->callFrame( current, 0 );
    }
-
-   // prepare the next current item ID
-   vm->local(1)->setInteger( currentItemID + 1 );
 
    return true;
 }
@@ -989,6 +1018,19 @@ FALCON_FUNC  core_times ( ::Falcon::VMachine *vm )
 }
 
 
+/*#
+   @function xtimes
+   @inset functional_support
+   @brief Repeats a sequence a determined number of times.
+   @param count Count of times to be repeated or non-open range.
+   @param var A reference to a variable that will receive the current count, nil or a number.
+   @param sequence A list of callable items that can be called one at a time.
+   @return Last index processed.
+
+   This function is omologous to @a times, but it automatically evaluates each
+   one of the items in the @b sequence list, as if they were all prefixed by an @a eval call.
+   @see times
+*/
 FALCON_FUNC  core_xtimes ( ::Falcon::VMachine *vm )
 {
    internal_times( vm, true );

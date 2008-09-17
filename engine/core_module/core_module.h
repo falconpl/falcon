@@ -115,6 +115,7 @@ FALCON_FUNC  core_max ( ::Falcon::VMachine *vm );
 FALCON_FUNC  core_map ( ::Falcon::VMachine *vm );
 FALCON_FUNC  core_dolist ( ::Falcon::VMachine *vm );
 FALCON_FUNC  core_times ( ::Falcon::VMachine *vm );
+FALCON_FUNC  core_xtimes ( ::Falcon::VMachine *vm );
 FALCON_FUNC  core_xmap ( ::Falcon::VMachine *vm );
 FALCON_FUNC  core_filter ( ::Falcon::VMachine *vm );
 FALCON_FUNC  core_reduce ( ::Falcon::VMachine *vm );

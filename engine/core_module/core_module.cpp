@@ -393,6 +393,8 @@ Module* core_module_init()
    self->addExtFunc( "firstOf", Falcon::core::core_firstof )->setEta( true );
    self->addExtFunc( "times", Falcon::core::core_times )->setEta( true )->
       addParam("count")->addParam("var")->addParam("sequence");
+   self->addExtFunc( "xtimes", Falcon::core::core_xtimes )->setEta( true )->
+      addParam("count")->addParam("var")->addParam("sequence");
    self->addExtFunc( "let", Falcon::core::core_let )->setEta( true )->
       addParam("dest")->addParam("source");
 
