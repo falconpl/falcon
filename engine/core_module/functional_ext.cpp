@@ -905,7 +905,7 @@ static bool core_times_next ( ::Falcon::VMachine *vm )
    @note Ranges [m:n] where m > n (down-ranges) terminate at n included; in that case, a succesful
    completion of @b times return one-past n.
 */
-FALCON_FUNC  core_times ( ::Falcon::VMachine *vm )
+static void  internal_times ( ::Falcon::VMachine *vm, bool eval )
 {
    Item *i_count = vm->param(0);
    Item *i_var = vm->param(1);
@@ -960,12 +960,14 @@ FALCON_FUNC  core_times ( ::Falcon::VMachine *vm )
    // ok, we must do at least a loop
    vm->returnHandler( core_times_next );
 
-   // 1: shifting range
-   // 2: position in the sequence calls.
-   vm->addLocals( 2 );
+   // 0: shifting range
+   // 1: position in the sequence calls.
+   // 2: should evaluate ? 0 = no 1 = yes, 2 = already evaluating.
+   vm->addLocals( 3 );
    // count
    vm->local(0)->setRange( start, end, step, false);
    *vm->local(1) = (int64) 0;
+   *vm->local(2) = (int64) (eval?1:0);
 
    // prevent dirty A to mess our break/continue system.
    vm->regA().setNil();
@@ -977,6 +979,14 @@ FALCON_FUNC  core_times ( ::Falcon::VMachine *vm )
    }
 
    // ready; now the VM will call core_times_next
+}
+
+FALCON_FUNC  core_xtimes ( ::Falcon::VMachine *vm )
+{
+}
+
+FALCON_FUNC  core_times ( ::Falcon::VMachine *vm )
+{
 }
 
 static bool core_xmap_next( ::Falcon::VMachine *vm )
