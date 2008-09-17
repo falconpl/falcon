@@ -793,6 +793,84 @@ static bool core_times_next ( ::Falcon::VMachine *vm )
    return true;
 }
 
+
+static void  internal_times ( ::Falcon::VMachine *vm, bool eval )
+{
+   Item *i_count = vm->param(0);
+   Item *i_var = vm->param(1);
+   Item *i_sequence = vm->param(2);
+
+   if( i_count == 0 || ! ( i_count->isRange() || i_count->isOrdinal() ) ||
+       i_var == 0 || ! ( vm->isParamByRef( 1 ) || i_var->isNil() || i_var->isOrdinal() ) ||
+       i_sequence == 0 || ! i_sequence->isArray()
+      )
+   {
+      vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).
+         extra( "N|R, $|Nil|N, A" ) ) );
+      return;
+   }
+
+   CoreArray *origin = i_sequence->asArray();
+   int32 start, end, step;
+   if( i_count->isRange() )
+   {
+      if ( i_count->asRangeIsOpen() )
+      {
+         vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).
+            extra( "open range" ) ) );
+         return;
+      }
+
+      start = i_count->asRangeStart();
+      end = i_count->asRangeEnd();
+      step = i_count->asRangeStep();
+      if ( step == 0 ) step = start > end ? -1 : 1;
+   }
+   else {
+      start = 0;
+      end = (int32) i_count->forceInteger();
+      step = end < 0 ? -1 : 1;
+   }
+
+   CoreArray *sequence = i_sequence->asArray();
+
+   // check ranges and steps.
+   if ( start == end ||
+        ( start < end && ( step < 0 || start + step > end ) ) ||
+        ( start > end && ( step > 0 || start + step < end ) ) ||
+        sequence->length() == 0
+    )
+   {
+      // no loop to be done.
+      vm->retval( (int64) start );
+      return;
+   }
+
+   // ok, we must do at least a loop
+   vm->returnHandler( core_times_next );
+
+   // 0: shifting range
+   // 1: position in the sequence calls.
+   // 2: should evaluate ? 0 = no 1 = yes, 2 = already evaluating.
+   vm->addLocals( 3 );
+   // count
+   vm->local(0)->setRange( start, end, step, false);
+   *vm->local(1) = (int64) 0;
+   *vm->local(2) = (int64) (eval?1:0);
+
+   // prevent dirty A to mess our break/continue system.
+   vm->regA().setNil();
+
+   // eventually, set the initial count
+   if ( vm->isParamByRef( 1 ) )
+   {
+      *i_var = (int64) start;
+   }
+
+   // ready; now the VM will call core_times_next
+}
+
+
 /*#
    @function times
    @inset functional_support
@@ -905,88 +983,15 @@ static bool core_times_next ( ::Falcon::VMachine *vm )
    @note Ranges [m:n] where m > n (down-ranges) terminate at n included; in that case, a succesful
    completion of @b times return one-past n.
 */
-static void  internal_times ( ::Falcon::VMachine *vm, bool eval )
+FALCON_FUNC  core_times ( ::Falcon::VMachine *vm )
 {
-   Item *i_count = vm->param(0);
-   Item *i_var = vm->param(1);
-   Item *i_sequence = vm->param(2);
-
-   if( i_count == 0 || ! ( i_count->isRange() || i_count->isOrdinal() ) ||
-       i_var == 0 || ! ( vm->isParamByRef( 1 ) || i_var->isNil() || i_var->isOrdinal() ) ||
-       i_sequence == 0 || ! i_sequence->isArray()
-      )
-   {
-      vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).
-         extra( "N|R, $|Nil|N, A" ) ) );
-      return;
-   }
-
-   CoreArray *origin = i_sequence->asArray();
-   int32 start, end, step;
-   if( i_count->isRange() )
-   {
-      if ( i_count->asRangeIsOpen() )
-      {
-         vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).
-            extra( "open range" ) ) );
-         return;
-      }
-
-      start = i_count->asRangeStart();
-      end = i_count->asRangeEnd();
-      step = i_count->asRangeStep();
-      if ( step == 0 ) step = start > end ? -1 : 1;
-   }
-   else {
-      start = 0;
-      end = (int32) i_count->forceInteger();
-      step = end < 0 ? -1 : 1;
-   }
-
-   CoreArray *sequence = i_sequence->asArray();
-
-   // check ranges and steps.
-   if ( start == end ||
-        ( start < end && ( step < 0 || start + step > end ) ) ||
-        ( start > end && ( step > 0 || start + step < end ) ) ||
-        sequence->length() == 0
-    )
-   {
-      // no loop to be done.
-      vm->retval( (int64) start );
-      return;
-   }
-
-   // ok, we must do at least a loop
-   vm->returnHandler( core_times_next );
-
-   // 0: shifting range
-   // 1: position in the sequence calls.
-   // 2: should evaluate ? 0 = no 1 = yes, 2 = already evaluating.
-   vm->addLocals( 3 );
-   // count
-   vm->local(0)->setRange( start, end, step, false);
-   *vm->local(1) = (int64) 0;
-   *vm->local(2) = (int64) (eval?1:0);
-
-   // prevent dirty A to mess our break/continue system.
-   vm->regA().setNil();
-
-   // eventually, set the initial count
-   if ( vm->isParamByRef( 1 ) )
-   {
-      *i_var = (int64) start;
-   }
-
-   // ready; now the VM will call core_times_next
+   internal_times( vm, false );
 }
+
 
 FALCON_FUNC  core_xtimes ( ::Falcon::VMachine *vm )
 {
-}
-
-FALCON_FUNC  core_times ( ::Falcon::VMachine *vm )
-{
+   internal_times( vm, true );
 }
 
 static bool core_xmap_next( ::Falcon::VMachine *vm )
