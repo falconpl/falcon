@@ -52,109 +52,218 @@ namespace Ext {
 FALCON_FUNC  fe_at ( ::Falcon::VMachine *vm )
 {
    Item *i_array = vm->param(0);
-   Item *i_pos = vm->param(1);
+   Item *i_pos = vm->pam(1);
    Item *i_val = vm->param(2);
 
-   if ( i_array != 0 )
+   CoreObject *self = 0;
+   CoreClass *sourceClass=0;
+   uint32 pos;
+
+   if ( i_array == 0 || i_pos == 0 )
    {
-      if ( i_array->isArray() )
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+            origin( e_orig_runtime ).
+            extra("A|S|C|O, N|R|S, [X]") ) );
+      return
+   }
+
+   switch( i_array->type() )
+   {
+   case FLC_ITEM_ARRAY:
+      CoreArray *ca = i_array->asArray();
+
+      if ( i_pos->isOrdinal() )
       {
-         CoreArray *ca = i_array->asArray();
-
-         if ( i_pos->isOrdinal() )
+         int32 pos = i_pos->forceInteger();
+         if ( pos < 0 ) pos = ca->length() - pos;
+         if ( pos >= ca->length() )
          {
-            int32 pos = i_pos->forceInteger();
-            if ( pos < 0 ) pos = ca->length() - pos;
-            if ( pos >= ca->length() )
-            {
-               vm->raiseModError( new AccessError( ErrorParam( e_arracc, __LINE__ ).
-                  origin( e_orig_runtime ) )
-                  );
-               return;
-            }
-            vm->retval( ca->at( pos ) );
-            if ( i_val != 0 )
-               (*ca)[pos] = *i_val;
-
+            vm->raiseModError( new AccessError( ErrorParam( e_arracc, __LINE__ ).
+               origin( e_orig_runtime ) )
+               );
             return;
          }
-         else if ( i_pos->isRange() )
+         vm->retval( ca->at( pos ) );
+         if ( i_val != 0 )
+            (*ca)[pos] = *i_val;
+
+         return;
+      }
+      else if ( i_pos->isRange() )
+      {
+         int32 start = i_pos->asRangeStart();
+         int32 end = i_pos->asRangeIsOpen() ? ca->length() : i_pos->asRangeEnd();
+         CoreArray *part = ca->partition( start, end );
+
+         if ( part != 0 )
          {
-            int32 start = i_pos->asRangeStart();
-            int32 end = i_pos->asRangeIsOpen() ? ca->length() : i_pos->asRangeEnd();
-            CoreArray *part = ca->partition( start, end );
+            vm->retval( part );
 
-            if ( part != 0 )
+            if ( i_val != 0 )
             {
-               vm->retval( part );
-
-               if ( i_val != 0 )
+               if( i_val->isArray() ) {
+                  if( ca->change( *i_val->asArray(), start, end ) )
+                     return;
+               }
+               else
                {
-                  if( i_val->isArray() ) {
-                     if( ca->change( *i_val->asArray(), start, end ) )
-                        return;
-                  }
-                  else
-                  {
-                     if ( start != end )
-                     {// insert
-                        if( ca->remove( start, end ) )
-                        {
-                           if( ca->insert( *i_val, start ) )
-                              return;
-                        }
+                  if ( start != end )
+                  {// insert
+                     if( ca->remove( start, end ) )
+                     {
+                        if( ca->insert( *i_val, start ) )
+                           return;
                      }
                   }
                }
-               else
-                  return;
             }
-            else {
-               vm->raiseModError( new AccessError( ErrorParam( e_arracc, __LINE__ ).
-                  origin( e_orig_runtime ) )
-                  );
+            else
                return;
-            }
+         }
+         else {
+            vm->raiseModError( new AccessError( ErrorParam( e_arracc, __LINE__ ).
+               origin( e_orig_runtime ) )
+               );
+            return;
          }
       }
-      else if ( i_array->isString() )
+   }
+   break;
+
+   case FLC_ITEM_STRING:
+   {
+      String *str = i_array->asString();
+
+      if ( i_pos->isOrdinal() )
       {
-         String *str = i_array->asString();
-
-         if ( i_pos->isOrdinal() )
+         int32 pos = i_pos->forceInteger();
+         if ( pos < 0 ) pos = str->length() - pos;
+         if ( pos >= str->length() )
          {
-            int32 pos = i_pos->forceInteger();
-            if ( pos < 0 ) pos = str->length() - pos;
-            if ( pos >= str->length() )
-            {
-               vm->raiseModError( new AccessError( ErrorParam( e_arracc, __LINE__ ).
-                  origin( e_orig_runtime ) )
-                  );
-               return;
-            }
-            vm->retval( new GarbageString( vm, str->subString( pos, pos+1) ) );
-
-            if ( i_val != 0 && i_val->isString() && i_val->asString()->size() > 0 )
-            {
-               str->setCharAt(pos, i_val->asString()->getCharAt(0) );
-            }
-
+            vm->raiseModError( new AccessError( ErrorParam( e_arracc, __LINE__ ).
+               origin( e_orig_runtime ) )
+               );
             return;
          }
-         else if ( i_pos->isRange() )
+         vm->retval( new GarbageString( vm, str->subString( pos, pos+1) ) );
+
+         if ( i_val != 0 && i_val->isString() && i_val->asString()->size() > 0 )
          {
-            int32 start = i_pos->asRangeStart();
-            int32 end = i_pos->asRangeIsOpen() ? str->length() : i_pos->asRangeEnd();
-
-            vm->retval( new GarbageString( vm, str->subString( start, end ) ) );
-            if ( i_val != 0 && i_val->isString() )
-            {
-               str->change( start, end, *i_val->asString() );
-            }
-
-            return;
+            str->setCharAt(pos, i_val->asString()->getCharAt(0) );
          }
+
+         return;
       }
+      else if ( i_pos->isRange() )
+      {
+         int32 start = i_pos->asRangeStart();
+         int32 end = i_pos->asRangeIsOpen() ? str->length() : i_pos->asRangeEnd();
+
+         vm->retval( new GarbageString( vm, str->subString( start, end ) ) );
+         if ( i_val != 0 && i_val->isString() )
+         {
+            str->change( start, end, *i_val->asString() );
+         }
+
+         return;
+      }
+   }
+   break;
+
+   // dictionary?
+   case FLC_ITEM_DICT:
+      CoreDict *dict = i_array->asDict();
+      if( i_pos != 0 )
+      {
+         if( i_val == 0 )
+         {
+            if ( dict->find( *i_pos, vm->regA() ) )
+               return;
+         }
+         else {
+            dict->insert( *i_pos, vm->regA() );
+            return;
+         }
+
+         vm->raiseModError( new AccessError( ErrorParam( e_arracc, __LINE__ ).
+            origin( e_orig_runtime ) )
+            );
+         return;
+      }
+      break;
+
+   case FLC_ITEM_OBJECT:
+      if ( i_pos->isString() )
+      {
+         Item prop;
+         if( source->asObject()->getProperty( *i_pos->asString, prop ) )
+         {
+            // we must create a method if the property is a function.
+            Item *p = prop.dereference();
+
+            switch( p->type() ) {
+               case FLC_ITEM_FUNC:
+                  // the function may be a dead function; by so, the method will become a dead method,
+                  // and it's ok for us.
+                  vm->regA().setMethod( source->asObject(), p->asFunction(), p->asModule() );
+                  break;
+
+               case FLC_ITEM_CLASS:
+                  vm->regA().setClassMethod( source->asObject(), p->asClass() );
+                  break;
+
+               default:
+                  vm->regA() = *p;
+            }
+            //it's ok anyhow
+            return;
+         }
+
+         vm->raiseModError( new AccessError( ErrorParam( e_arracc, __LINE__ ).
+            origin( e_orig_runtime ) )
+            );
+         return;
+      }
+      break;
+
+   case FLC_ITEM_CLSMETHOD:
+         sourceClass = source->asMethodClass();
+         self = source->asMethodObject();
+
+   // do not break: fallback
+   case FLC_ITEM_CLASS:
+      if ( sourceClass == 0 )
+         sourceClass = source->asClass();
+
+      if( i_pos->isString() )
+      {
+         if( sourceClass->properties().findKey( *i_pos->asString(), pos ) )
+         {
+            Item *prop = sourceClass->properties().getValue( pos );
+
+            // now, accessing a method in a class means that we want to call the base method in a
+            // self item:
+            if( prop->type() == FLC_ITEM_FUNC )
+            {
+               if ( self != 0 )
+                  vm->regA().setMethod( self, prop->asFunction(), prop->asModule() );
+               else
+                  vm->regA().setFunction( prop->asFunction(), prop->asModule() );
+            }
+            else
+            {
+               vm->regA() = *prop;
+            }
+            return;
+         }
+
+         vm->raiseModError( new AccessError( ErrorParam( e_arracc, __LINE__ ).
+            origin( e_orig_runtime ) )
+            );
+
+         return;
+      }
+      break;
    }
 
    vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
