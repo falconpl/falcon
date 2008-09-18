@@ -39,20 +39,56 @@ namespace Ext {
 
 /*#
    @function at
-   @brief Retreives or sets the nth element of a indexed sequence.
-   @param sequence An array, string or another sequence.
-   @param itempos A number or a range to access the sequence.
-   @optparam item If given, will substitue the given item or range.
+   @brief Passe-par-tout accessor function.
+   @param item An array, string, or any accessible item or collection.
+   @param access A number, a range or a string to access the item.
+   @optparam value If given, will substitue the given item or range (new value).
+   @raise AccessError in case the accessor is invalid for the given item type.
 
-   The item is inserted before the given position. If pos is 0, the item is
-   inserted in the very first position, while if it's equal to the array length, it
-   is appended at the array tail.
+   This function emulates all the language-level accessors provided by Falcon.
+   Subscript accessors ([]) accepting numbers, ranges and generic items (for
+   dictionaries) and property accessors (.) accepting strings are fully 
+   supported. When two parameters are passed, the function works in 
+   access semantics, while when the @b value parameter is also given,
+   the function will work as an accessor/subscript assignment. In example,
+   to change a string the @b at function can be used as a range accessor:
+
+   @code
+      string = "hello"
+      string[0:1] = "H"          //first letter up
+      at( string, [1:], "ELLO" ) // ...all up
+      > string
+      > "First letter: ", at( string, 0 ) 
+                          // ^^^ same as string[0]
+   @endcode
+
+   This function is also able to access and modify the bindings of
+   arrays (i.e. like accessing the arrays using the "." operator),
+   members of objects and instances and static methods of classes.
+   Properties and bindings can be accessed by names as strings. In
+   example:
+   
+   @code
+      // making a binding
+      // ... equivalent to "array.bind = ..."
+      array = []
+      at( array, "bind", "binding value" )
+      > array.bind
+      
+      //... accessing a property
+      at( CurrentTime(), "toRFC2822" )()
+   @endcode
+
+   Trying to access an item with an incompatible type of accessor
+   (i.e. trying to access an object with a range, or a string with a string).
+
+   @note At the moment, the @b at function doesn't support BOM methods.
 */
 
 FALCON_FUNC  fe_at ( ::Falcon::VMachine *vm )
 {
    Item *i_array = vm->param(0);
-   Item *i_pos = vm->pam(1);
+   Item *i_pos = vm->param(1);
    Item *i_val = vm->param(2);
 
    CoreObject *self = 0;
@@ -63,20 +99,55 @@ FALCON_FUNC  fe_at ( ::Falcon::VMachine *vm )
    {
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
             origin( e_orig_runtime ).
-            extra("A|S|C|O, N|R|S, [X]") ) );
-      return
+            extra("X, N|R|S, [X]") ) );
+      return;
    }
 
    switch( i_array->type() )
    {
+
    case FLC_ITEM_ARRAY:
+   {
       CoreArray *ca = i_array->asArray();
 
-      if ( i_pos->isOrdinal() )
+      if( i_pos->isString() )
       {
-         int32 pos = i_pos->forceInteger();
+         Item *found;
+         if( ca->bindings() != 0 &&
+            ( found = ca->bindings()->find( i_pos->asString() ) ) != 0 )
+         {
+            vm->regA() = *found->dereference();
+            // propagate owner bindings
+            if ( vm->regA().isArray() )
+            {
+               vm->regA().asArray()->setBindings( ca->bindings() );
+            }
+            if ( i_val != 0 )
+               *found = *i_val;
+            return;
+         }
+         else {
+            if ( i_val != 0 ) {
+               if ( ca->bindings() == 0 )
+                  ca->setBindings( new LinearDict(vm) );
+               ca->bindings()->insert( i_pos->asString(), *i_val );
+               vm->retnil();
+               return;
+            }
+            else {
+               vm->raiseModError( new AccessError( ErrorParam( e_prop_acc, __LINE__ ).
+                  origin( e_orig_runtime ).
+                  extra( *i_pos->asString() ) )
+               );
+               return;
+            }
+         }
+      }
+      else if ( i_pos->isOrdinal() )
+      {
+         int32 pos = (int32) i_pos->forceInteger();
          if ( pos < 0 ) pos = ca->length() - pos;
-         if ( pos >= ca->length() )
+         if ( pos >= (int32) ca->length() )
          {
             vm->raiseModError( new AccessError( ErrorParam( e_arracc, __LINE__ ).
                origin( e_orig_runtime ) )
@@ -136,9 +207,9 @@ FALCON_FUNC  fe_at ( ::Falcon::VMachine *vm )
 
       if ( i_pos->isOrdinal() )
       {
-         int32 pos = i_pos->forceInteger();
+         int32 pos = (int32) i_pos->forceInteger();
          if ( pos < 0 ) pos = str->length() - pos;
-         if ( pos >= str->length() )
+         if ( pos >= (int32) str->length() )
          {
             vm->raiseModError( new AccessError( ErrorParam( e_arracc, __LINE__ ).
                origin( e_orig_runtime ) )
@@ -172,16 +243,19 @@ FALCON_FUNC  fe_at ( ::Falcon::VMachine *vm )
 
    // dictionary?
    case FLC_ITEM_DICT:
-      CoreDict *dict = i_array->asDict();
-      if( i_pos != 0 )
       {
+         CoreDict *dict = i_array->asDict();
          if( i_val == 0 )
          {
             if ( dict->find( *i_pos, vm->regA() ) )
                return;
          }
          else {
-            dict->insert( *i_pos, vm->regA() );
+            bool find = dict->find( *i_pos, vm->regA() );
+            dict->insert( *i_pos, *i_val );
+            // assign the value itself if find is not found
+            if (! find) 
+               vm->retnil();
             return;
          }
 
@@ -195,8 +269,9 @@ FALCON_FUNC  fe_at ( ::Falcon::VMachine *vm )
    case FLC_ITEM_OBJECT:
       if ( i_pos->isString() )
       {
+         CoreObject *self = i_array->asObject();
          Item prop;
-         if( source->asObject()->getProperty( *i_pos->asString, prop ) )
+         if( self->getProperty( *i_pos->asString(), prop ) )
          {
             // we must create a method if the property is a function.
             Item *p = prop.dereference();
@@ -205,35 +280,56 @@ FALCON_FUNC  fe_at ( ::Falcon::VMachine *vm )
                case FLC_ITEM_FUNC:
                   // the function may be a dead function; by so, the method will become a dead method,
                   // and it's ok for us.
-                  vm->regA().setMethod( source->asObject(), p->asFunction(), p->asModule() );
+                  vm->regA().setMethod( self, p->asFunction(), p->asModule() );
                   break;
 
                case FLC_ITEM_CLASS:
-                  vm->regA().setClassMethod( source->asObject(), p->asClass() );
+                  vm->regA().setClassMethod( self, p->asClass() );
                   break;
 
                default:
                   vm->regA() = *p;
             }
+            // we can set the property now
+            if ( i_val != 0 )
+            {
+               if ( ! self->setProperty( *i_pos->asString(), *i_val ) )
+               {
+                  vm->raiseModError( new AccessError( ErrorParam( e_prop_ro, __LINE__ ).
+                     origin( e_orig_runtime ).
+                     extra( *i_pos->asString()) )
+                     );
+               }
+            }
             //it's ok anyhow
             return;
          }
 
-         vm->raiseModError( new AccessError( ErrorParam( e_arracc, __LINE__ ).
-            origin( e_orig_runtime ) )
+         vm->raiseModError( new AccessError( ErrorParam( e_prop_acc, __LINE__ ).
+            origin( e_orig_runtime ).
+            extra( *i_pos->asString()) )
             );
          return;
       }
       break;
 
    case FLC_ITEM_CLSMETHOD:
-         sourceClass = source->asMethodClass();
-         self = source->asMethodObject();
+         sourceClass = i_array->asMethodClass();
+         self = i_array->asMethodObject();
 
    // do not break: fallback
    case FLC_ITEM_CLASS:
+      if ( i_val != 0 )
+      {
+         vm->raiseModError( new AccessError( ErrorParam( e_prop_ro, __LINE__ ).
+            origin( e_orig_runtime ).
+            extra( *i_pos->asString()) )
+            );
+         return;
+      }
+
       if ( sourceClass == 0 )
-         sourceClass = source->asClass();
+         sourceClass = i_array->asClass();
 
       if( i_pos->isString() )
       {
@@ -257,18 +353,18 @@ FALCON_FUNC  fe_at ( ::Falcon::VMachine *vm )
             return;
          }
 
-         vm->raiseModError( new AccessError( ErrorParam( e_arracc, __LINE__ ).
-            origin( e_orig_runtime ) )
+         vm->raiseModError( new AccessError( ErrorParam( e_prop_acc, __LINE__ ).
+            origin( e_orig_runtime ).
+            extra( *i_pos->asString() ))
             );
-
          return;
       }
       break;
    }
 
-   vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+   vm->raiseModError( new ParamError( ErrorParam( e_param_type, __LINE__ ).
       origin( e_orig_runtime ).
-      extra("A,N|R,[X]") ) );
+      extra("X, N|S|R, [X]") ) );
 }
 
 

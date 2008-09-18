@@ -64,7 +64,7 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    //#include "funcext_st.h"
 
    self->addExtFunc( "at", Falcon::Ext::fe_at )->
-      addParam("array")->addParam("itempos")->addParam("item");
+      addParam("item")->addParam("access")->addParam("value");
 
    // Comparation functions
    self->addExtFunc( "ge", Falcon::Ext::fe_ge )->
