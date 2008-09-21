@@ -26,6 +26,7 @@
 #include <falcon/error.h>
 #include <falcon/attribute.h>
 #include <falcon/membuf.h>
+#include <falcon/coretable.h>
 
 #include <falcon/format.h>
 
@@ -792,6 +793,115 @@ FALCON_FUNC BOM_back( VMachine *vm )
    vm->raiseRTError( new AccessError( ErrorParam( e_prop_acc ) ) );
 }
 
+/*#
+   @method table BOM
+   @brief Returns the table related with this array.
+   @raise AccessError if the item is not an array.
+   @return The table of which this item is a row.
+
+   This BOM method retreives the table that is related with the
+   item, provided the item is an array being part of a table.
+
+   In case the item is an array, but it doesn't belong to any
+   table, nil is returned.
+*/
+
+/* BOMID: 18 */
+FALCON_FUNC BOM_table( VMachine *vm )
+{
+   const Item &self = vm->self();
+   Item *i_field = vm->bomParam( 0 );
+
+   if ( self.isArray() )
+   {
+      CoreArray *array = self.asArray();
+      if ( array->table() != 0 )
+      {
+         vm->retval( array->table() );
+         return;
+      }
+
+      vm->retnil();
+      return;
+   }
+
+   vm->raiseRTError( new AccessError( ErrorParam( e_prop_acc ) ) );
+}
+
+/*#
+   @method tabField BOM
+   @brief Returns one of the items in the array, given the field name.
+   @param field The field name or position to be retreived.
+   @raise AccessError if the item is not an array.
+   @return An item in the array or the default column value.
+
+   If this item is an array and is part of a table, the field with
+   the given name or ID (number) is searched in the table definition,
+   and if found, it is returned. If the coresponding item in the array
+   is nil, then the table column data (default data) is returned instead,
+   unless the item is also an OOB item. In that case, nil is returned
+   and the default column value is ignored.
+*/
+
+/* BOMID: 19 */
+FALCON_FUNC BOM_tabField( VMachine *vm )
+{
+   const Item &self = vm->self();
+   Item *i_field = vm->bomParam( 0 );
+   if ( i_field == 0 ||
+      ! ( i_field->isString() || i_field->isOrdinal() ))
+   {
+      vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).
+               extra( "(N)" ) ) );
+      return;
+   }
+
+   if ( self.isArray() )
+   {
+      CoreArray *array = self.asArray();
+      if ( array->table() != 0 )
+      {
+         // if a field paramter is given, return its value
+         uint32 num = (uint32) CoreTable::noitem;
+         CoreTable *table = reinterpret_cast<CoreTable*>(array->table()->getUserData());
+
+         if ( i_field->isString() )
+         {
+            num = table->getHeaderPos( *i_field->asString() );
+         }
+         else {
+            // we already checked, must be a field
+            num = i_field->forceInteger();
+         }
+
+         if ( num < array->length() )
+         {
+            Item &data = (*array)[num];
+            if ( ! data.isNil() )
+            {
+               vm->retval( data );
+            }
+            else {
+               if ( data.isOob() )
+                  vm->retnil();
+               else
+                  vm->retval( table->columnData( num ) );
+            }
+
+            return;
+         }
+
+         vm->raiseRTError( new AccessError( ErrorParam( e_param_range ) ) );
+         return;
+      }
+
+      vm->retnil();
+      return;
+   }
+
+   vm->raiseRTError( new AccessError( ErrorParam( e_prop_acc ) ) );
+}
+
 //====================================================//
 // THE BOM TABLE
 //====================================================//
@@ -816,12 +926,14 @@ static void (* const  BOMTable  [] ) ( Falcon::VMachine *) =
    BOM_frontTrim,
    BOM_allTrim,
    BOM_front,
-   BOM_back
+   BOM_back,
+   BOM_table,
+   BOM_tabField
 };
 
-//====================================================//
+//====================================================
 // THE BOM IMPLEMENTATION
-//====================================================//
+//====================================================
 
 bool Item::getBom( const String &property, Item &method, BomMap *bmap ) const
 {

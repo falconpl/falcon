@@ -1037,6 +1037,8 @@ Module* core_module_init()
    self->addClassMethod( table_class, "back", Falcon::core::Table_back );
    self->addClassMethod( table_class, "first", Falcon::core::Table_first );
    self->addClassMethod( table_class, "last", Falcon::core::Table_last );
+   self->addClassMethod( table_class, "get", Falcon::core::Table_get ).asSymbol()->
+      addParam("element")->addParam("column");
 
    return self;
 }

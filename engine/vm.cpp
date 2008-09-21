@@ -237,6 +237,8 @@ void VMachine::internal_construct()
    m_fbom->add( "allTrim" );
    m_fbom->add( "front" );
    m_fbom->add( "back" );
+   m_fbom->add( "table" );
+   m_fbom->add( "tabField" );
 }
 
 

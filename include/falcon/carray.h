@@ -142,7 +142,7 @@ public:
    void table( CoreObject *t ) { m_table = t; }
 
    uint32 tablePos() const { return m_tablePos; }
-   void table( uint32 tp ) { m_tablePos = tp; }
+   void tablePos( uint32 tp ) { m_tablePos = tp; }
 
 };
 

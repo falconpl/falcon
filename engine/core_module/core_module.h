@@ -402,6 +402,8 @@ FALCON_FUNC  Table_front ( ::Falcon::VMachine *vm );
 FALCON_FUNC  Table_back ( ::Falcon::VMachine *vm );
 FALCON_FUNC  Table_first ( ::Falcon::VMachine *vm );
 FALCON_FUNC  Table_last ( ::Falcon::VMachine *vm );
+FALCON_FUNC  Table_get ( ::Falcon::VMachine *vm );
+
 
 /** Message table **/
 extern const wchar_t *message_table[];
