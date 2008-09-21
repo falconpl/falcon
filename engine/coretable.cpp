@@ -35,12 +35,14 @@ bool CoreTableIterator::next()
    if( page == 0 )
       return false;
 
+   m_itemNum++;
    if ( m_itemNum >= page->length() )
    {
+      if ( m_itemNum > page->length() )
+         m_itemNum--;
       return false;
    }
 
-   m_itemNum++;
    return true;
 }
 
@@ -66,7 +68,7 @@ bool CoreTableIterator::hasNext() const
    if( page == 0 )
       return false;
 
-   return m_itemNum < page->length();
+   return m_itemNum < page->length()-1;
 }
 
 
@@ -93,9 +95,6 @@ Item &CoreTableIterator::getCurrent() const
 
 bool CoreTableIterator::isValid() const
 {
-   if ( m_itemNum < 0 )
-      return false;
-
    CoreArray *page = m_owner->page( m_pageNum );
    if( page == 0 )
       return false;
@@ -123,7 +122,6 @@ bool CoreTableIterator::equal( const CoreIterator &other ) const
 
 bool CoreTableIterator::erase()
 {
-
    CoreArray *page = m_owner->page( m_pageNum );
    if( page == 0 )
       return false;
@@ -139,24 +137,10 @@ bool CoreTableIterator::erase()
 
 bool CoreTableIterator::insert( const Item &other )
 {
-   CoreArray *page = m_owner->page( m_pageNum );
-   if( page == 0 )
+   if( ! other.isArray() )
       return false;
 
-   if ( m_itemNum < page->length() )
-   {
-      page->insert( other, m_itemNum );
-      m_itemNum++;
-      return true;
-   }
-   else if ( m_itemNum == page->length() )
-   {
-      page->append( other );
-      m_itemNum++;
-      return true;
-   }
-
-   return false;
+   return m_owner->insertRow( other.asArray(), m_itemNum, m_pageNum );
 }
 
 

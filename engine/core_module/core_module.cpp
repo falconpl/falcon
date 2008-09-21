@@ -1032,6 +1032,11 @@ Module* core_module_init()
    self->addClassMethod( table_class, "getColData", Falcon::core::Table_getColData ).asSymbol()->
       addParam("id");
    self->addClassMethod( table_class, "order", Falcon::core::Table_order );
+   self->addClassMethod( table_class, "len", Falcon::core::Table_len );
+   self->addClassMethod( table_class, "front", Falcon::core::Table_front );
+   self->addClassMethod( table_class, "back", Falcon::core::Table_back );
+   self->addClassMethod( table_class, "first", Falcon::core::Table_first );
+   self->addClassMethod( table_class, "last", Falcon::core::Table_last );
 
    return self;
 }

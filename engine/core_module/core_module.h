@@ -397,7 +397,11 @@ FALCON_FUNC  Table_init ( ::Falcon::VMachine *vm );
 FALCON_FUNC  Table_getHeader ( ::Falcon::VMachine *vm );
 FALCON_FUNC  Table_getColData ( ::Falcon::VMachine *vm );
 FALCON_FUNC  Table_order ( ::Falcon::VMachine *vm );
-
+FALCON_FUNC  Table_len ( ::Falcon::VMachine *vm );
+FALCON_FUNC  Table_front ( ::Falcon::VMachine *vm );
+FALCON_FUNC  Table_back ( ::Falcon::VMachine *vm );
+FALCON_FUNC  Table_first ( ::Falcon::VMachine *vm );
+FALCON_FUNC  Table_last ( ::Falcon::VMachine *vm );
 
 /** Message table **/
 extern const wchar_t *message_table[];

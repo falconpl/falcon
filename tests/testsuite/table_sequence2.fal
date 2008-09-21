@@ -1,0 +1,60 @@
+/****************************************************************************
+* Falcon test suite
+*
+*
+* ID: 80c
+* Category: tabular
+* Subcategory: basic
+* Short: Table as sequence 2
+* Description:
+*     Other than checking if this table can be seen as a sequence,
+*     this test also verifies that the sequence can be properly
+*     alterated with .= and continue dropping.
+* [/Description]
+*
+****************************************************************************/
+
+// minimal table
+customers = Table(
+   [ custId|nil, "name"  ],
+   [ "cust1", "Frank Capra" ],
+   [ "cust2", "Sam Wise" ],
+   [ "cust3", "My Cousin" ],
+   [ "cust4", "Unknown Person" ]
+   )
+
+cfrTable = [
+   [ "cust1", "Frank Capra" ],
+   [ "cust3", "My Cousin" ],
+   [ "stranger", "me" ]
+   ]
+
+
+count = 0
+for row in customers
+   if count == 1
+      count++
+      continue dropping
+   elif count == 3
+      .= [ "stranger", "me" ]
+   end
+   count ++
+end
+
+count = 0
+for row in customers
+   if count > cfrTable.len()
+      failure( "Loop termination" )
+   end
+
+   cfr = cfrTable[count]
+   if row[0] != cfr[0]: failure( @"Content in row $count, col 0" )
+   if row[1] != cfr[1]: failure( @"Content in row $count, col 1" )
+
+   count++
+end
+
+if count != cfrTable.len()
+   failure( "Check too short" )
+end
+

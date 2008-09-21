@@ -89,7 +89,7 @@ public:
    virtual ~CoreTable();
 
    CoreArray *page( uint32 num ) const {
-      return reinterpret_cast<CoreArray *>(m_pages.size() < num ? m_pages.at(num) : 0);
+      return *reinterpret_cast<CoreArray **>(m_pages.size() >= num ? m_pages.at(num) : 0);
    }
 
    /** Returns the order (number of colums) in the table */
@@ -118,10 +118,10 @@ public:
 
    bool setCurrentPage( uint32 num )
    {
-      if ( m_pages.size() < num )
+      if ( num < m_pages.size() )
       {
          m_pageNumId = num;
-         m_currentPage = reinterpret_cast<CoreArray *>(m_pages.at( num ));
+         m_currentPage = *reinterpret_cast<CoreArray **>(m_pages.at( num ));
          return true;
       }
 
