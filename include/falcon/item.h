@@ -362,7 +362,7 @@ public:
    /** Returns true if this item is a valid LBind.
    */
    bool isLBind() const { return type() == FLC_ITEM_LBIND; }
-   bool isFutureBind() { return isLBind() && m_data.ptr.m_extra != 0; }
+   bool isFutureBind() const { return isLBind() && m_data.ptr.m_extra != 0; }
 
    /** Return the binding name associate with this LBind item.
    */

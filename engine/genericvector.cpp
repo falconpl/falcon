@@ -93,10 +93,10 @@ void GenericVector::insert( void *data, uint32 pos )
    m_traits->copy( m_data + ( m_itemSize * pos ), data );
 }
 
-void GenericVector::remove( void *data, uint32 pos )
+bool GenericVector::remove( uint32 pos )
 {
    if ( pos >= m_size )
-      return;
+      return false;
 
 
    m_traits->destroy( m_data + ( m_itemSize * pos ) );
@@ -107,6 +107,7 @@ void GenericVector::remove( void *data, uint32 pos )
    }
 
    m_size --;
+   return true;
 }
 
 void GenericVector::set( void *data, uint32 pos )

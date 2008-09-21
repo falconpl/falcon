@@ -38,5 +38,8 @@ FAL_MODSTR( rtl_marshall_not_cb, L"Marshalled event name must be a string as fir
 FAL_MODSTR( rtl_invalid_path, L"Invalid path" );
 FAL_MODSTR( rtl_invalid_uri, L"Invalid URI" );
 FAL_MODSTR( rtl_no_tabhead, L"First row of the table must be a header" );
+FAL_MODSTR( rtl_invalid_tabhead, L"Table header must be composed of strings or future bindings" );
+FAL_MODSTR( rtl_invalid_order, L"Table order must be greater than zero" );
+FAL_MODSTR( rtl_invalid_tabrow, L"Row inserted in table has different order" );
 
 /* end of core_messages.h */

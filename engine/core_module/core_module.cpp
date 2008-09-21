@@ -1020,6 +1020,19 @@ Module* core_module_init()
    self->addExtFunc( "systemErrorDescription", Falcon::core::systemErrorDescription )->
       addParam("errorCode");
 
+   //=======================================================================
+   // Table class - tabular programming
+   //=======================================================================
+   Falcon::Symbol *table_class = self->addClass( "Table", Falcon::core::Table_init );
+   table_class->setWKS(true);
+   table_class->getClassDef()->setObjectManager( &core_falcon_data_manager );
+
+   self->addClassMethod( table_class, "getHeader", Falcon::core::Table_getHeader ).asSymbol()->
+      addParam("id");
+   self->addClassMethod( table_class, "getColData", Falcon::core::Table_getColData ).asSymbol()->
+      addParam("id");
+   self->addClassMethod( table_class, "order", Falcon::core::Table_order );
+
    return self;
 }
 

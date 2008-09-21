@@ -32,14 +32,16 @@ CoreArray::CoreArray( VMachine *vm ):
    m_size(0),
    m_data(0),
    m_bindings(0),
-   m_table( 0 )
+   m_table(0),
+   m_tablePos(0)
 {}
 
 
 CoreArray::CoreArray( VMachine *vm, uint32 prealloc ):
    Garbageable( vm, esize(prealloc) + sizeof(CoreArray) ),
    m_bindings(0),
-   m_table( 0 )
+   m_table(0),
+   m_tablePos(0)
 {
    m_data = (Item *) memAlloc( esize(prealloc) );
    m_alloc = prealloc;
@@ -48,7 +50,9 @@ CoreArray::CoreArray( VMachine *vm, uint32 prealloc ):
 
 CoreArray::CoreArray( VMachine *vm, Item *buffer, uint32 size, uint32 alloc ):
    Garbageable( vm, esize(alloc) + sizeof(CoreArray) ),
-   m_bindings(0)
+   m_bindings(0),
+   m_table(0),
+   m_tablePos(0)
 {
    m_data = buffer;
    m_alloc = alloc;
@@ -77,6 +81,9 @@ void CoreArray::append( const Item &ndata )
 
 void CoreArray::merge( const CoreArray &other )
 {
+   if ( m_table != 0 )
+      return;
+
    if ( other.m_size == 0 )
       return;
 
@@ -92,6 +99,9 @@ void CoreArray::merge( const CoreArray &other )
 
 void CoreArray::prepend( const Item &ndata )
 {
+   if ( m_table != 0 )
+      return;
+
    // create enough space to hold the data
    Item *mem = (Item *) memAlloc( esize(m_size + 1) );
    m_alloc = m_size + 1;
@@ -106,6 +116,9 @@ void CoreArray::prepend( const Item &ndata )
 
 void CoreArray::merge_front( const CoreArray &other )
 {
+   if ( m_table != 0 )
+      return;
+
    if ( other.m_size == 0 )
       return;
 
@@ -131,6 +144,9 @@ void CoreArray::merge_front( const CoreArray &other )
 
 bool CoreArray::insert( const Item &ndata, int32 pos )
 {
+   if ( m_table != 0 )
+      return false;
+
    if ( pos < 0 )
       pos = m_size + pos;
    if ( pos < 0 || pos > (int32) m_size )
@@ -161,6 +177,9 @@ bool CoreArray::insert( const Item &ndata, int32 pos )
 
 bool CoreArray::insert( const CoreArray &other, int32 pos )
 {
+   if ( m_table != 0 )
+      return false;
+
    if ( other.m_size == 0 )
       return true;
 
@@ -197,6 +216,9 @@ bool CoreArray::insert( const CoreArray &other, int32 pos )
 
 bool CoreArray::remove( int32 first, int32 last )
 {
+   if ( m_table != 0 )
+      return false;
+
    if ( first < 0 )
       first = m_size + first;
    if ( first < 0 || first >= (int32)m_size )
@@ -234,6 +256,9 @@ int32 CoreArray::find( const Item &itm ) const
 
 bool CoreArray::remove( int32 first )
 {
+   if ( m_table != 0 )
+      return false;
+
    if ( first < 0 )
       first = m_size + first;
    if ( first < 0 || first >= (int32)m_size )
@@ -295,6 +320,9 @@ bool CoreArray::change( const CoreArray &other, int32 begin, int32 end )
 
 bool CoreArray::insertSpace( uint32 pos, uint32 size )
 {
+   if ( m_table != 0 )
+      return false;
+
    if ( size == 0 )
       return true;
 
@@ -371,11 +399,13 @@ CoreArray *CoreArray::clone() const
    Item *buffer = (Item *) memAlloc( esize( m_size ) );
    memcpy( buffer, m_data, esize( m_size )  );
    CoreArray *ca = new CoreArray( origin(), buffer, m_size, m_size );
+   ca->m_table = m_table;
+   ca->m_tablePos = m_tablePos;
+
    if ( m_bindings != 0 )
    {
       ca->m_bindings = m_bindings->clone();
    }
-   ca->m_table = m_table;
 
    return ca;
 }

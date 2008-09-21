@@ -55,7 +55,7 @@ public:
 	~GenericVector();
 
 	void insert( void *data, uint32 pos );
-	void remove( void *data, uint32 pos );
+	bool remove( uint32 pos );
 	void *at( uint32 pos ) const { return m_data + ( pos * m_itemSize ); }
 	void set( void *data, uint32 pos );
 	void push( void *data );

@@ -35,10 +35,10 @@ class VMachine;
 class FALCON_DYN_CLASS Garbageable: public Destroyable
 {
    VMachine *m_origin;
-   uint32 m_gcSize;
-   unsigned char m_gcStatus;
    Garbageable *m_garbage_next;
    Garbageable *m_garbage_prev;
+   uint32 m_gcSize;
+   unsigned char m_gcStatus;
 
    friend class MemPool;
 

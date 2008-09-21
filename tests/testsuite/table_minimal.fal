@@ -1,0 +1,76 @@
+/****************************************************************************
+* Falcon test suite
+*
+*
+* ID: 80a
+* Category: tabular
+* Subcategory: basic
+* Short: Table class
+* Description:
+*     This test just creates a minimal Table() and checks for
+*     essential functions to be available and working. It's
+*     the smoke test for tabular programming.
+* [/Description]
+*
+****************************************************************************/
+
+// minimal table
+customers = Table(
+   [ custId|nil, "name", "quantity", discount|lambda x => 2*x ]
+   )
+
+if customers.order() != 4: failure( "Table order" )
+
+// Check for positional retreival
+if customers.getHeader( 0 ) != "custId"
+   failure( "getHeader - future binding header" )
+end
+
+if customers.getHeader( 1 ) != "name"
+   failure( "getHeader - string binding header" )
+end
+
+// positional retrival with coldata
+
+if customers.getColData( 0 ) != nil
+   failure( "getColData - nil item" )
+end
+
+if customers.getColData( 3 ).type() != FunctionType
+   failure( "getColData - function item (1)" )
+end
+
+if customers.getColData( 3 )(100) != 200
+   failure( "getColData - function item (2)" )
+end
+
+// non positional
+header = customers.getHeader()
+if header.len() != 4
+   failure( "getHeader - size" )
+end
+
+if header[0] != "custId" or \
+         header[1] != "name" or \
+         header[2] != "quantity" or \
+         header[3] != "discount"
+   failure( "getHeader - content" )
+end
+
+coldata = customers.getColData()
+if coldata.len() != 4
+   failure( "getColData - size" )
+end
+
+if coldata[0] != nil or \
+         coldata[1] != nil or \
+         coldata[2] != nil or \
+         coldata[3].type() != FunctionType
+   failure( "getColData - content" )
+end
+
+if coldata[3](100) != 200
+   failure( "getColData - function item" )
+end
+
+

@@ -392,6 +392,12 @@ FALCON_FUNC  URI_setFields ( ::Falcon::VMachine *vm );
 reflectionFuncDecl URI_uri_rfrom;
 reflectionFuncDecl URI_uri_rto;
 
+/** Table class */
+FALCON_FUNC  Table_init ( ::Falcon::VMachine *vm );
+FALCON_FUNC  Table_getHeader ( ::Falcon::VMachine *vm );
+FALCON_FUNC  Table_getColData ( ::Falcon::VMachine *vm );
+FALCON_FUNC  Table_order ( ::Falcon::VMachine *vm );
+
 
 /** Message table **/
 extern const wchar_t *message_table[];

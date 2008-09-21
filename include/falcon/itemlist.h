@@ -154,14 +154,14 @@ public:
       NOT empty.
       \return a reference to the first item in the list or a spectacular crash.
    */
-   const Item &front() const;
+   virtual const Item &front() const;
 
    /** Gets the last item in the list.
       If the list is empty, you will crash, so use this only when the list is
       NOT empty.
       \return a reference to the last item in the list or a spectacular crash.
    */
-   const Item &back() const;
+   virtual const Item &back() const;
 
    /** Gets the pointer to the first element for list traversal.
       The list element is just an item with previous and next pointers.

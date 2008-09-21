@@ -148,6 +148,7 @@ SET( CORE_MODULE_SOURCES
    core_module/string.cpp
    core_module/stringstream_ext.cpp
    core_module/sys_ext.cpp
+   core_module/table.cpp
    core_module/time_ext.cpp
    core_module/transcode_ext.cpp
    core_module/uri_ext.cpp
@@ -167,6 +168,7 @@ ADD_LIBRARY( falcon_engine SHARED
    compiler.cpp
    corearray.cpp
    coreclass.cpp
+   coretable.cpp
    deferrorhandler.cpp
    deptab.cpp
    detmempool.cpp

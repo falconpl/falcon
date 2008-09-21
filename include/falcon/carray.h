@@ -32,11 +32,6 @@ class Item;
 class Bindings;
 
 /** Core array (or array of items).
-
-   Why not just use STL vectors?
-
-   Because 1) this ones must be derived from garbageable, and 2) in future
-   they may be polymorphic (we may have chuncked array).
 */
 
 class FALCON_DYN_CLASS CoreArray: public Garbageable
@@ -46,6 +41,7 @@ class FALCON_DYN_CLASS CoreArray: public Garbageable
    Item *m_data;
    CoreDict *m_bindings;
    CoreObject *m_table;
+   uint32 m_tablePos;
 
    CoreArray( VMachine *vm, Item *buffer, uint32 size, uint32 alloc );
 
@@ -144,6 +140,9 @@ public:
 
    CoreObject *table() const { return m_table; }
    void table( CoreObject *t ) { m_table = t; }
+
+   uint32 tablePos() const { return m_tablePos; }
+   void table( uint32 tp ) { m_tablePos = tp; }
 
 };
 

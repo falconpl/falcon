@@ -303,8 +303,9 @@ public:
       This extra data is useful to create flexible reflected calls.
       The ext_func_t gets called with the VM data; it can then
       decode the VM data and prepare it accordingly to m_extra,
-      and finally call mextra. This allows to reuse a single
-      ext_func_t in m_func to call different bound function.
+      and finally call some different function as retreived
+      data instructs to do. This allows to reuse a single
+      ext_func_t in m_func to call different binding function.
 
       This item doesn't own m_extra; the data must be held
       in the same module in which this function exists (or in the
