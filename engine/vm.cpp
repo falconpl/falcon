@@ -2899,6 +2899,7 @@ bool VMachine::findLocalVariable( const String &name, Item &itm ) const
       firstToken,
       interToken,
       dotAccessor,
+      dotArrayAccessor,
       squareAccessor,
       postSquareAccessor,
       singleQuote,
@@ -2975,6 +2976,33 @@ bool VMachine::findLocalVariable( const String &name, Item &itm ) const
                // also, notice that we change the item itself.
                if ( !itm.asObject()->getProperty( sItemName, itm ) )
                   return false;
+
+               // set state accordingly to chr.
+               goto resetState;
+            }
+            else if ( vmIsTokenChr( chr ) )
+            {
+               sItemName.append( chr );
+            }
+            else
+               return false;
+         break;
+
+         case dotArrayAccessor:
+            // wating for a complete token.
+
+            if ( vmIsWhiteSpace( chr ) || chr == '.' || chr == '[' )
+            {
+               // ignore leading ws.
+               if( sItemName.size() == 0 && vmIsWhiteSpace( chr ) )
+                  break;
+
+               // access the item. We know it's an object or we wouldn't be in this state.
+               // also, notice that we change the item itself.
+               Item *tmp;
+               if ( ( tmp = itm.asArray()->getProperty( sItemName ) ) == 0 )
+                  return false;
+               itm = *tmp;
 
                // set state accordingly to chr.
                goto resetState;
@@ -3094,9 +3122,12 @@ bool VMachine::findLocalVariable( const String &name, Item &itm ) const
          case interToken:
             switch( chr ) {
                case '.':
-                  if( ! itm.isObject() )
+                  if( itm.isObject() )
+                     state = dotAccessor;
+                  else if( itm.isArray() )
+                     state = dotArrayAccessor;
+                  else
                      return false;
-                  state = dotAccessor;
                break;
 
                case '[':
@@ -3125,9 +3156,12 @@ resetState:
 
       switch( chr ) {
          case '.':
-            if( ! itm.isObject() )
+            if( itm.isObject() )               
+               state = dotAccessor;
+            else if ( itm.isArray() )
+               state = dotArrayAccessor;
+            else
                return false;
-            state = dotAccessor;
          break;
 
          case '[':
