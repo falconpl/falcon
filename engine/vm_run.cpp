@@ -1968,15 +1968,22 @@ void opcodeHandler_LDP( register VMachine *vm )
          case FLC_ITEM_ARRAY:
          {
             Item *found;
-            if( source->asArray()->bindings() != 0 &&
-                ( found = source->asArray()->bindings()->find( property ) ) != 0 )
+            if( ( found = source->asArray()->getProperty( *property ) ) != 0 )
             {
-               vm->regA() = *found->dereference();
-               // propagate owner bindings
-               if ( vm->regA().isArray() )
+               found = found->dereference();
+               if( found->isFunction() )
                {
-                  vm->regA().asArray()->setBindings( source->asArray()->bindings() );
+                  vm->regA().setTabMethod( source->asArray(), found->asFunction(), found->asModule() );
                }
+               // propagate owner bindings
+               else if ( found->isArray() )
+               {
+                  found->asArray()->setBindings( source->asArray()->bindings() );
+                  vm->regA() = *found;
+               }
+               else
+                  vm->regA() = *found;
+               
                return;
             }
          }
@@ -2502,11 +2509,6 @@ void opcodeHandler_IN( register VMachine *vm )
          }
       }
       break;
-
-      case FLC_ITEM_METHOD:
-         //TODO
-      break;
-
    }
 
    vm->m_regA.setBoolean( result );

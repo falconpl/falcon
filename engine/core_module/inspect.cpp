@@ -250,6 +250,7 @@ void inspect_internal( VMachine *vm, bool isShort, const Item *elem, int32 level
          stream->writeString( "Class " + elem->asClass()->symbol()->name() );
       break;
 
+      case FLC_ITEM_TABMETHOD:
       case FLC_ITEM_METHOD:
       {
          if ( ! elem->asModule()->isAlive() )
@@ -258,14 +259,21 @@ void inspect_internal( VMachine *vm, bool isShort, const Item *elem, int32 level
          }
          else
          {
-            temp = "Method 0x";
+            temp = elem->isTabMethod() ? "TabMethod 0x" : "Method 0x";
             temp.writeNumberHex( (uint64) elem->asMethodObject() );
             temp += "->" + elem->asMethodFunction()->name();
             stream->writeString( temp );
 
             Item itemp;
-            itemp.setObject( elem->asMethodObject() );
-            inspect_internal( vm, isShort, &itemp, level + 1, true );
+            if ( elem->isMethod() )
+            {
+               itemp.setObject( elem->asMethodObject() );
+               inspect_internal( vm, isShort, &itemp, level + 1, true );
+            }
+            else {
+               itemp.setArray( elem->asTabMethodArray() );
+               inspect_internal( vm, isShort, &itemp, level + 1, true );
+            }
             itemp.setFunction( elem->asMethodFunction(), elem->asModule() );
             inspect_internal( vm, isShort, &itemp, level + 1, true );
             for ( i = 0; i < level; i ++ )

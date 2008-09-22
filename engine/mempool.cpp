@@ -413,6 +413,25 @@ void MemPool::markItem( Item &item )
       }
       break;
 
+      case FLC_ITEM_TABMETHOD:
+      {
+         // if the item isn't alive, give it the death blow.
+         if ( item.asModule()->module() == 0 )
+            item.setNil();
+         else
+         {
+            CoreArray *co = item.asTabMethodArray();
+            if ( co->mark() != currentMark() )
+            {
+               Item temp = co;
+               markItemFast( temp );
+            }
+            // no need to mark the live modue;
+            // if it's alive it has been marked by the main loop
+         }
+      }
+      break;
+
       case FLC_ITEM_CLSMETHOD:
       {
          CoreObject *co = item.asMethodObject();

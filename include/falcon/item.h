@@ -381,6 +381,15 @@ public:
       setMethod( obj, func, lmod );
    }
 
+   /** Creates a table/array method.
+      The method is able to remember if it was called with
+      a Function pointer or using an external function.
+   */
+   Item( CoreArray *arr, Symbol *func, LiveModule *lmod )
+   {
+      setTabMethod( arr, func, lmod );
+   }
+
 
    Item( CoreObject *obj, CoreClass *cls )
    {
@@ -397,6 +406,18 @@ public:
       m_data.ptr.m_extra = func;
       m_data.ptr.m_liveMod = lmod;
    }
+   
+   /** Creates a table/array method.
+      The method is able to remember if it was called with
+      a Function pointer or using an external function.
+   */
+   void setTabMethod( CoreArray *arr, Symbol *func, LiveModule *lmod ) {
+      type( FLC_ITEM_TABMETHOD );
+      m_data.ptr.voidp = arr;
+      m_data.ptr.m_extra = func;
+      m_data.ptr.m_liveMod = lmod;
+   }
+
 
    void setClassMethod( CoreObject *obj, CoreClass *cls ) {
       type( FLC_ITEM_CLSMETHOD );
@@ -552,6 +573,7 @@ public:
    Symbol *asFunction() const { return (Symbol *) m_data.ptr.voidp; }
 
    CoreObject *asMethodObject() const { return (CoreObject *) m_data.ptr.voidp; }
+   CoreArray *asTabMethodArray() const { return (CoreArray *) m_data.ptr.voidp; }
    Symbol *asMethodFunction() const { return (Symbol *)m_data.ptr.m_extra; }
    CoreClass *asMethodClass() const { return (CoreClass*) m_data.ptr.m_extra; }
    Attribute *asAttribute() const { return (Attribute *) m_data.ptr.voidp; }
@@ -588,6 +610,7 @@ public:
    bool isReference() const { return type() == FLC_ITEM_REFERENCE; }
    bool isFunction() const { return type() == FLC_ITEM_FUNC; }
    bool isMethod() const { return type() == FLC_ITEM_METHOD; }
+   bool isTabMethod() const { return type() == FLC_ITEM_TABMETHOD; }
    bool isClassMethod() const { return type() == FLC_ITEM_CLSMETHOD; }
    bool isClass() const { return type() == FLC_ITEM_CLASS; }
    bool isFbom() const { return type() == FLC_ITEM_FBOM; }

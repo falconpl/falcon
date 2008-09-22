@@ -104,7 +104,10 @@ bool Item::internal_is_equal( const Item &other ) const
 
       case FLC_ITEM_METHOD:
          return asMethodObject() == other.asMethodObject() && asMethodFunction() == other.asMethodFunction();
-
+      
+      case FLC_ITEM_TABMETHOD: 
+         return asTabMethodArray() == other.asTabMethodArray() && asMethodFunction() == other.asMethodFunction();
+ 
       case FLC_ITEM_REFERENCE:
          return asReference() == other.asReference();
 
@@ -154,6 +157,7 @@ bool Item::isTrue() const
       case FLC_ITEM_OBJECT:
       case FLC_ITEM_CLASS:
       case FLC_ITEM_METHOD:
+      case FLC_ITEM_TABMETHOD:
       case FLC_ITEM_FBOM:
       case FLC_ITEM_ATTRIBUTE:
       case FLC_ITEM_MEMBUF:
@@ -353,6 +357,7 @@ int Item::internal_compare( const Item &other ) const
 
       case FLC_ITEM_CLSMETHOD:
       case FLC_ITEM_METHOD:
+      case FLC_ITEM_TABMETHOD:  // method object == method array (different by cast)
          if( asMethodObject() > other.asMethodObject() )
             return 1;
          if( asMethodObject() < other.asMethodObject() )
@@ -506,9 +511,13 @@ void Item::toString( String &target ) const
          target = "Method " + this->asMethodFunction()->name();
       break;
 
+      case FLC_ITEM_TABMETHOD:
+         target = "TabMethod " + this->asMethodFunction()->name();
+      break;
+
 
       case FLC_ITEM_CLSMETHOD:
-         target = "ClsMeth " + this->asMethodClass()->symbol()->name();
+         target = "ClsMethod " + this->asMethodClass()->symbol()->name();
       break;
 
       default:
@@ -621,10 +630,13 @@ void Item::destroy()
             fbitm.destroy();
          }
          break;
+      
       case FLC_ITEM_METHOD:
-         {
          Item(asMethodObject()).destroy();
-         }
+      break;
+      
+      case FLC_ITEM_TABMETHOD:
+         Item(asTabMethodArray()).destroy();
       break;
 
       case FLC_ITEM_CLSMETHOD:
@@ -650,7 +662,7 @@ bool Item::isCallable() const
       return true;
 
    // simple case: normally callable item
-   if( isFunction() || isMethod() )
+   if( isFunction() || isMethod() || isTabMethod() )
    {
       // Detached?
       if ( ! m_data.ptr.m_liveMod->isAlive() )

@@ -23,6 +23,7 @@
 #include <falcon/vm.h>
 #include <string.h>
 #include <falcon/lineardict.h>
+#include <falcon/coretable.h>
 
 namespace Falcon {
 
@@ -446,6 +447,31 @@ CoreDict *CoreArray::makeBindings()
    }
 
    return m_bindings;
+}
+
+Item* CoreArray::getProperty( const String &name )
+{
+   Item *found = 0;
+
+   if ( m_bindings != 0 )
+   {
+      found = m_bindings->find( const_cast<String *>(&name) );
+   }
+
+   if ( found == 0 && m_table )
+   {
+      CoreTable *table = reinterpret_cast<CoreTable *>(m_table->getUserData() );
+      uint32 pos = table->getHeaderPos( name );
+      if ( pos != CoreTable::noitem )
+      {
+         found = (*this)[pos].dereference();
+         if ( found->isNil() && ! found->isOob() )
+            found = table->getHeaderData( pos )->dereference();
+
+      }
+   }
+
+   return found;
 }
 
 }

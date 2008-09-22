@@ -339,6 +339,15 @@ Item::e_sercode Item::serialize( Stream *file, bool bLive ) const
          serialize_function( file, this->asMethodFunction() );
       }
       break;
+      
+      case FLC_ITEM_TABMETHOD:
+      {
+         byte type = FLC_ITEM_TABMETHOD;
+         Item temp = asTabMethodArray();
+         serialize_function( file, this->asMethodFunction() );
+         temp.serialize( file, bLive );
+      }
+      break;
 
       case FLC_ITEM_OBJECT:
          serialize_object( file, this->asObject(), bLive );
@@ -751,6 +760,32 @@ Item::e_sercode Item::deserialize( Stream *file, VMachine *vm )
          return sc_ok;
       }
 
+      case FLC_ITEM_TABMETHOD:
+      {
+         if( vm == 0 )
+            return sc_missvm;
+
+         Item vector;
+         Item func;
+         e_sercode sc;
+
+         sc = func.deserialize( file, vm );
+         if ( sc != sc_ok )
+            return sc;
+         if ( ! func.isFunction() )
+            return sc_invformat;
+
+         sc = vector.deserialize( file, vm );
+         if ( sc != sc_ok )
+            return sc;
+         if ( ! vector.isArray() )
+            return sc_invformat;
+
+
+         setTabMethod( vector.asArray(), func.asFunction(), func.asModule() );
+         return sc_ok;
+      }
+
       case FLC_ITEM_OBJECT | 0x80:
       case FLC_ITEM_OBJECT:
       {
@@ -890,6 +925,16 @@ bool Item::clone( Item &target, VMachine *vm ) const
             return false;
          }
          target.setMethod( clone, item->asMethodFunction(), item->asModule() );
+      }
+      break;
+
+      case FLC_ITEM_TABMETHOD:
+      {
+         CoreArray *clone = item->asTabMethodArray()->clone();
+         if ( clone == 0 ) {
+            return false;
+         }
+         target.setTabMethod( clone, item->asMethodFunction(), item->asModule() );
       }
       break;
 

@@ -53,6 +53,7 @@
 
 #define FLC_ITEM_CLSMETHOD 20
 #define FLC_ITEM_METHOD    22
+#define FLC_ITEM_TABMETHOD 23
 #define FLC_ITEM_CLASS     24
 
 

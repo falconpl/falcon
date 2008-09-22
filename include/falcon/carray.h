@@ -84,6 +84,16 @@ public:
    CoreDict *bindings() const { return m_bindings; }
    void setBindings( CoreDict *binds ) { m_bindings = binds; }
 
+   /** Gets a proprty of this vector.
+      Properties are either bindings or table properties. Bindings
+      override table-wide properties.
+
+      If the given property is not found, 0 is returned.
+      \param name The property to be found.
+      \return the property item if found or zero.
+   */
+   Item* getProperty( const String &name );
+
 
    /** Checks the position to be in the array, and eventually changes it if it's negative.
       \param pos the position to be checked and eventually turned into a positive value.

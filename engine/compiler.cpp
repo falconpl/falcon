@@ -767,6 +767,7 @@ void Compiler::addPredefs()
    addIntConstant( "ObjectType", FLC_ITEM_OBJECT );
    addIntConstant( "ClassType", FLC_ITEM_CLASS );
    addIntConstant( "MethodType", FLC_ITEM_METHOD );
+   addIntConstant( "TableMethodType", FLC_ITEM_TABMETHOD );
    addIntConstant( "ClassMethodType", FLC_ITEM_CLSMETHOD );
 }
 

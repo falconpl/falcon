@@ -1614,7 +1614,7 @@ bool VMachine::callItem( const Item &callable, int32 paramCount, e_callMode call
 {
    Symbol *target;
    Item oldsender;
-   CoreObject *self = 0;
+   Garbageable *self = 0;
    LiveModule *targetMod;
 
    if ( ! callable.isCallable() )
@@ -1631,6 +1631,12 @@ bool VMachine::callItem( const Item &callable, int32 paramCount, e_callMode call
       }
 
       case FLC_ITEM_METHOD:
+         self = callable.asMethodObject();
+         target = callable.asMethodFunction();
+         targetMod = callable.asModule();
+      break;
+
+      case FLC_ITEM_TABMETHOD:
          self = callable.asMethodObject();
          target = callable.asMethodFunction();
          targetMod = callable.asModule();
@@ -1657,7 +1663,8 @@ bool VMachine::callItem( const Item &callable, int32 paramCount, e_callMode call
          // if the class has not a constructor, we just set the item in A
          // and return
          if ( cls->constructor().isNil() ) {
-            m_regA.setObject( self );
+            // we are sure it's a core object
+            m_regA.setObject( static_cast<CoreObject* >(self) );
             // pop the stack
             m_stack->resize( m_stack->size() - paramCount );
             return true;
@@ -1867,8 +1874,12 @@ bool VMachine::callItem( const Item &callable, int32 paramCount, e_callMode call
       m_regS2 = m_regS1;
       if ( self == 0 )
          m_regS1.setNil();
-      else
-         m_regS1.setObject( self );
+      else {
+         if( callable.isTabMethod() )
+            m_regS1.setArray( static_cast<CoreArray*>(self) );
+         else
+            m_regS1.setObject( static_cast<CoreObject*>(self) );
+      }
    }
 
    if ( target->isFunction() )
@@ -1911,14 +1922,14 @@ bool VMachine::callItem( const Item &callable, int32 paramCount, e_callMode call
          regA().setNil(); // clear return value if calling external functions
          target->getExtFuncDef()->call( this );
          if ( callable.isClass() )
-            m_regA.setObject( self );
+            m_regA.setObject( static_cast<CoreObject* >(self) );
          callReturn();
       }
       //else, ask the  VM to call it by using the fake m_pc
       else {
          if ( callable.isClass() )
          {
-            m_regS1 = self;
+            m_regS1 = static_cast<CoreObject* >(self);
             m_pc_next = i_pc_call_external_ctor;
          }
          else  {
@@ -2016,7 +2027,6 @@ bool VMachine::callItemPass( const Item &callable  )
 {
    Symbol *target;
    FuncDef *tg_def;
-   CoreObject *self = 0;
    LiveModule *targetMod;
 
    if ( ! callable.isCallable() )
@@ -2033,7 +2043,11 @@ bool VMachine::callItemPass( const Item &callable  )
       }
 
       case FLC_ITEM_METHOD:
-         self = callable.asMethodObject();
+         target = callable.asMethodFunction();
+         targetMod = callable.asModule();
+      break;
+      
+      case FLC_ITEM_TABMETHOD:
          target = callable.asMethodFunction();
          targetMod = callable.asModule();
       break;
