@@ -2544,7 +2544,9 @@ void opcodeHandler_PROV( register VMachine *vm )
          result = operand1->asObject()->hasProperty( *operand2->asString() );
       break;
 
-
+      case FLC_ITEM_ARRAY:
+         result = operand1->asArray()->getProperty( *operand2->asString() )!=0;
+      break;
       default:
          result = false;
    }
