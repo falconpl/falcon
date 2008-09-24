@@ -1,0 +1,60 @@
+/****************************************************************************
+* Falcon test suite
+*
+*
+* ID: 81b
+* Category: tabular
+* Subcategory: oop
+* Short: Table find
+* Description:
+*     Check methods on tables.
+* [/Description]
+*
+****************************************************************************/
+
+
+// minimal table
+customers = Table(
+   [ custId|nil, "name", xval| defmethod ],
+   [ "cust1", "Frank Capra", "plain value" ],
+   [ "cust2", "Sam Wise", func ],
+   [ "cust3", "My Cousin", method ],
+   [ "cust4", "Unknown Person", nil ]
+   )
+
+function func()
+   return "plain return"
+end
+
+function method()
+   return self.name
+end
+
+function defmethod()
+   return self.custId
+end
+
+if customers.find("custId", "cust3").name != "My Cousin"
+   failure( "Find row" )
+end
+
+if customers.find("custId", "cust3", "name") != "My Cousin"
+   failure( "Find item" )
+end
+
+// by number
+if customers.find(0, "cust3").name != "My Cousin"
+   failure( "Find row - number" )
+end
+
+if customers.find(0, "cust3", "name") != "My Cousin"
+   failure( "Find item - number" )
+end
+
+
+if customers.find(0, "cust3", 1) != "My Cousin"
+   failure( "Find item - number 2" )
+end
+
+success()
+

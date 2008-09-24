@@ -290,11 +290,64 @@ FALCON_FUNC  Table_last ( ::Falcon::VMachine *vm )
    internal_first_last( vm, true );
 }
 
+static uint32 internal_col_pos( CoreTable *table, VMachine *vm, Item *i_column )
+{
+   uint32 colPos;
+
+   if( i_column->isString() ) {
+      colPos = table->getHeaderPos( *i_column->asString() );
+      if ( colPos == CoreTable::noitem )
+      {
+         // there isn't such field
+         vm->raiseModError( new AccessError( ErrorParam( e_prop_acc, __LINE__ )
+            .origin( e_orig_runtime )
+            .extra( *i_column->asString() ) ) );
+         return CoreTable::noitem;
+      }
+   }
+   else {
+      colPos = (uint32) i_column->forceInteger();
+      if ( colPos >= table->order() )
+      {
+         String temp;
+         temp = "col ";
+         temp.append( i_column->forceInteger());
+         vm->raiseModError( new AccessError( ErrorParam( e_prop_acc, __LINE__ )
+            .origin( e_orig_runtime )
+            .extra( temp ) ) );
+         return CoreTable::noitem;
+      }
+   }
+
+   return colPos;
+}
+
+static void internal_get_item( CoreTable *table, CoreArray *row, VMachine *vm, Item *i_column )
+{
+   uint32 colPos = internal_col_pos( table, vm, i_column );
+
+   // otherwise we have already an error risen.
+   if ( colPos != CoreTable::noitem )
+   {
+      Item ret = (*row)[colPos];
+
+      if ( ret.isNil() && ! ret.isOob() )
+         ret = *table->getHeaderData(colPos);
+
+      // eventually methodize.
+      if ( ret.isFunction() )
+         ret.setTabMethod( row, ret.asFunction(), ret.asModule() );
+
+      vm->retval( ret );
+   }
+}
+
+
 /*#
    @method get Table
    @brief Gets an element in a table.
-   @param element An element number or selector.
-   @optparam colum The name of the column to be extracted.
+   @param row a Row number.
+   @optparam tcol The name of the column to be extracted (target column; either name or 0 based number).
    @return An array (if the column is not specified) or an item.
 
 */
@@ -304,90 +357,107 @@ FALCON_FUNC  Table_get ( ::Falcon::VMachine *vm )
    Item* i_pos = vm->param(0);
    Item* i_column = vm->param(1);
 
-   if ( i_pos == 0 ||
-      ! ( i_pos->isOrdinal() || i_pos->isFutureBind() )
-      || ( i_column != 0 && ! i_column->isString() ) )
+   if ( i_pos == 0 || ! i_pos->isOrdinal()
+      || ( i_column != 0 && ! (i_column->isString() || i_column->isOrdinal()) ) )
    {
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
          .origin( e_orig_runtime )
-         .extra( "N|f, [S]" ) ) );
+         .extra( "N, [S|N]" ) ) );
       return;
    }
 
-   // get the column if given.
-   uint32 colPos = CoreTable::noitem;
-   if ( i_column != 0 )
+   CoreArray* page = table->currentPage();
+
+   // Get the correct row.
+   uint32 pos = (uint32) i_pos->forceInteger();
+   if ( pos >= page->length() )
    {
-      colPos = table->getHeaderPos( *i_column->asString() );
-      if ( colPos == CoreTable::noitem )
-      {
-         // there isn't such field
-         vm->raiseModError( new AccessError( ErrorParam( e_prop_acc, __LINE__ )
-            .origin( e_orig_runtime )
-            .extra( *i_column->asString() ) ) );
-         return;
-      }
+      vm->raiseModError( new AccessError( ErrorParam( e_prop_acc, __LINE__ )
+         .origin( e_orig_runtime ) ) );
+      return;
+   }
+
+   // Should we also get a single item?
+   if( i_column == 0 )
+   {
+      Item &itm = (*page)[pos];
+      fassert( itm.isArray() );
+      itm.asArray()->tablePos( pos );
+      vm->retval( itm );
+   }
+   else {
+      internal_get_item( table, (*page)[pos].asArray(), vm, i_column );
+   }
+}
+
+/*#
+   @method find Table
+   @brief Finds an element in a table.
+   @param column The column where to perform the search (either name or 0 based number).
+   @param value The value to be found.
+   @optparam tcol The name of the column to be extracted (target column; either name or 0 based number).
+   @return An array (if the column is not specified) or an item.
+
+*/
+FALCON_FUNC  Table_find ( ::Falcon::VMachine *vm )
+{
+   CoreTable *table = static_cast<CoreTable *>( vm->self().asObject()->getUserData() );
+   Item* i_column = vm->param(0);
+   Item* i_value = vm->param(1);
+   Item* i_tcol = vm->param(2);
+
+   if ( i_column == 0 || ! ( i_column->isString() || i_column->isOrdinal() ) ||
+        i_value == 0 ||
+        ( i_tcol != 0 && ! (i_tcol->isString()|| i_tcol->isOrdinal()) ) )
+   {
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
+         .origin( e_orig_runtime )
+         .extra( "S|N,X,[S|N]" ) ) );
+      return;
    }
 
    CoreArray* page = table->currentPage();
    uint32 pos = CoreTable::noitem;
-   if ( i_pos->isOrdinal() )
-   {
-      // the easy way
-      pos = (uint32) i_pos->forceInteger();
 
-      if ( pos >= page->length() )
-      {
-         vm->raiseModError( new AccessError( ErrorParam( e_prop_acc, __LINE__ )
-            .origin( e_orig_runtime ) ) );
-         return;
-      }
+   // the easy way
+   // must be a future binding. find it.
+   uint32 col = internal_col_pos( table, vm, i_column );
+   if ( col == CoreTable::noitem )
+   {
+      // error already risen.
+      return;
    }
-   else
+
+   for ( uint32 i = 0; i < page->length(); i++ )
    {
-      // must be a future binding. find it.
-      String *name = i_pos->asLBind();
-
-      // first of all we need the position of the given lbind.
-      uint32 col = table->getHeaderPos( *name );
-      if ( col == CoreTable::noitem )
+      if( vm->compareItems( page->at(i).asArray()->at(col), *i_value ) == 0 )
       {
-         // there isn't such field
-         vm->raiseModError( new AccessError( ErrorParam( e_prop_acc, __LINE__ )
-            .origin( e_orig_runtime )
-            .extra( *name ) ) );
+         pos = i;
+         break;
+      }
+
+      if ( vm->hadError() )
          return;
-      }
+   }
 
-      const Item &value = i_pos->asFutureBind();
-      for ( uint32 i = 0; i < page->length(); i++ )
-      {
-         if( vm->compareItems( page->at(i).asArray()->at(col), value ) == 0 )
-         {
-            pos = i;
-            break;
-         }
-
-         if ( vm->hadError() )
-            return;
-      }
-
-      if ( pos == CoreTable::noitem )
-      {
-         // there isn't such field
-         vm->raiseModError( new AccessError( ErrorParam( e_prop_acc, __LINE__ )
-            .origin( e_orig_runtime )));
-         return;
-      }
+   if ( pos == CoreTable::noitem )
+   {
+      // there isn't such field
+      vm->raiseModError( new AccessError( ErrorParam( e_prop_acc, __LINE__ )
+         .origin( e_orig_runtime )));
+      return;
    }
 
    // we know we have a valid pos here.
-   if( colPos == CoreTable::noitem )
+   if( i_tcol == 0 )
    {
-      vm->retval( (*page)[pos] );
+      Item &itm = (*page)[pos];
+      fassert( itm.isArray() );
+      itm.asArray()->tablePos( pos );
+      vm->retval( itm );
    }
    else {
-      vm->retval( (*(*page)[pos].asArray())[colPos] );
+      internal_get_item( table, (*page)[pos].asArray(), vm, i_tcol );
    }
 }
 

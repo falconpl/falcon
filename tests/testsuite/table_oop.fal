@@ -1,0 +1,83 @@
+/****************************************************************************
+* Falcon test suite
+*
+*
+* ID: 81a
+* Category: tabular
+* Subcategory: oop
+* Short: Table as class
+* Description:
+*     Check methods on tables.
+* [/Description]
+*
+****************************************************************************/
+
+
+// minimal table
+customers = Table(
+   [ custId|nil, "name", xval| defmethod ],
+   [ "cust1", "Frank Capra", "plain value" ],
+   [ "cust2", "Sam Wise", func ],
+   [ "cust3", "My Cousin", method ],
+   [ "cust4", "Unknown Person", nil ]
+   )
+
+function func()
+   return "plain return"
+end
+
+function method()
+   return self.name
+end
+
+function defmethod()
+   return self.custId
+end
+
+a0 = customers.get(0)
+if a0.xval != "plain value": failure( "plain value" )
+
+a1 = customers.get(1)
+if a1.xval() != "plain return": failure( "simple function" )
+
+a2 = customers.get(2)
+if a2.xval() != "My Cousin": failure( "method call" )
+
+a3 = customers.get(3)
+if a3.xval() != "cust4": failure( "default method call" )
+
+// repeat using the property directly
+if customers.get(0, "xval") != "plain value"
+   failure( "plain value - colname" )
+end
+
+if customers.get(1, "xval")() != "plain return"
+   failure( "simple function - colname" )
+end
+
+if customers.get(2, "xval")() != "My Cousin"
+   failure( "method call - colname" )
+end
+
+if customers.get(3, "xval")() != "cust4"
+   failure( "default method call - colname" )
+end
+
+// repeat using the property directly, but by number
+if customers.get(0, 2) != "plain value"
+   failure( "plain value - colnumber" )
+end
+
+if customers.get(1, 2)() != "plain return"
+   failure( "simple function - colnumber" )
+end
+
+if customers.get(2, 2)() != "My Cousin"
+   failure( "method call - colnumber" )
+end
+
+if customers.get(3, 2)() != "cust4"
+   failure( "default method call - colnumber" )
+end
+
+success()
