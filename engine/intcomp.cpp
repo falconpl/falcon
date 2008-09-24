@@ -190,14 +190,12 @@ InteractiveCompiler::t_ret_type InteractiveCompiler::compileNext( Stream *input 
    // into a return, if we are in interactive mode.
    if( ! m_root->statements().empty() )
    {
-      Statement *front = m_root->statements().front();
-
       // was it an expression?
-      if( m_interactive && m_root->statements().front()->type() == Statement::t_autoexp )
+      if( m_interactive && m_root->statements().back()->type() == Statement::t_autoexp )
       {
          // wrap it around a return, so A is not nilled.
-         StmtAutoexpr *ae = static_cast<StmtAutoexpr *>( m_root->statements().pop_front() );
-         m_root->statements().push_front( new StmtReturn( 1, ae->value()->clone() ) );
+         StmtAutoexpr *ae = static_cast<StmtAutoexpr *>( m_root->statements().pop_back() );
+         m_root->statements().push_back( new StmtReturn( 1, ae->value()->clone() ) );
 
          // what kind of expression is it? -- if it's a call, we're interested
          if( ae->value()->asExpr()->type() == Expression::t_funcall )
@@ -268,8 +266,8 @@ InteractiveCompiler::t_ret_type InteractiveCompiler::compileNext( Stream *input 
       Symbol *sym = *(Symbol **) iter.currentValue();
       // try to link undefined symbols.
 
-      if ( sym->isUndefined() && 
-         (m_lmodule->globals().size() <= sym->itemId() || 
+      if ( sym->isUndefined() &&
+         (m_lmodule->globals().size() <= sym->itemId() ||
           m_lmodule->globals().itemAt( sym->itemId() ).isNil() )
           )
       {
