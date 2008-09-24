@@ -167,6 +167,10 @@ FALCON_FUNC BOM_first( VMachine *vm )
          vm->retval( (int64) self.asRangeStart() );
       break;
 
+      case FLC_ITEM_LBIND:
+         vm->retval( new GarbageString( vm, *self.asLBind() ) );
+      break;
+
       default:
          vm->raiseRTError( new AccessError( ErrorParam( e_prop_acc ) ) );
    }
@@ -204,7 +208,10 @@ FALCON_FUNC BOM_last( VMachine *vm )
             vm->retnil();
          else
             vm->retval( (int64) self.asRangeEnd() );
+      break;
 
+      case FLC_ITEM_LBIND:
+         vm->retval( self.isFutureBind() ? self.asFutureBind() : Item() );
       break;
 
       default:
@@ -871,7 +878,7 @@ FALCON_FUNC BOM_tabField( VMachine *vm )
          }
          else {
             // we already checked, must be a field
-            num = i_field->forceInteger();
+            num = (uint32) i_field->forceInteger();
          }
 
          if ( num < array->length() )
