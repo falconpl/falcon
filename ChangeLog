@@ -49,7 +49,9 @@ Falcon (0.8.11)
            - Added Item type "TabMethod" to store methods for arrays/tables
            - Self item is now propagated to functions called inside arrays.
            - Table column can now be used as properties of arrays inside the tables.
-           
+  * bugfix: Assignments to properties and vector didn't propagate the assignand
+            value.
+
 Falcon (0.8.10)
   * minor: Now classes can be stored in object properties and called to get
       an instance.

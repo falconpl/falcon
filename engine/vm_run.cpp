@@ -942,7 +942,7 @@ void opcodeHandler_ADD( register VMachine *vm )
    {
       String tgt;
       vm->itemToString( tgt, operand2 );
-      if ( vm->hadError() ) 
+      if ( vm->hadError() )
          return;
 
       GarbageString *gcs = new GarbageString( vm, *operand1->asString() );
@@ -1278,7 +1278,7 @@ void opcodeHandler_ADDS( register VMachine *vm )
          {
             String tgt;
             vm->itemToString( tgt, operand2 );
-            if ( vm->hadError() ) 
+            if ( vm->hadError() )
                return;
 
             operand1->asString()->append( tgt );
@@ -1983,7 +1983,7 @@ void opcodeHandler_LDP( register VMachine *vm )
                }
                else
                   vm->regA() = *found;
-               
+
                return;
             }
          }
@@ -2568,7 +2568,9 @@ void opcodeHandler_STVS( register VMachine *vm )
       return;
    }
 
-   Item origin = vm->m_stack->topItem();
+   // the thing must be copied in A, as STV counts as an assignment.
+   Item &origin = vm->regA();
+   origin = vm->m_stack->topItem();
    vm->m_stack->pop();
 
 
@@ -2679,7 +2681,10 @@ void opcodeHandler_STPS( register VMachine *vm )
 
    Item *target = operand1;
    Item *method = operand2;
-   Item item = vm->m_stack->topItem();
+
+   // STP(S) counts as an assignments, we have to store the thing in A.
+   Item &item = vm->regA();
+   item = vm->m_stack->topItem();
    vm->m_stack->pop();
 
    if ( method->isString() )
@@ -2793,6 +2798,10 @@ void opcodeHandler_STV( register VMachine *vm )
    Item *operand1 = vm->getOpcodeParam( 1 )->dereference();
    Item *operand2 = vm->getOpcodeParam( 2 )->dereference();
    Item *origin = vm->getOpcodeParam( 3 )->dereference();
+
+   // counts as an assignment.
+   // Should we check for dereferencing?
+   vm->regA() = *origin;
 
    // try to access a dictionary with every item
    // access addition.
@@ -2963,6 +2972,11 @@ void opcodeHandler_STP( register VMachine *vm )
 
    if ( method->isString() )
    {
+      // STP counts as an assignment, we have to copy the thing in A
+
+      if ( sourcend != &vm->regA() )
+         vm->regA() = *source;
+
       if ( target->isObject() )
       {
          Item temp;
@@ -3099,6 +3113,10 @@ void opcodeHandler_STVR( register VMachine *vm )
    // do not deref op3
    Item *origin = vm->getOpcodeParam( 3 );
 
+   //STV counts as an assignment, we must copy to expression value.
+   if( origin != &vm->regA())
+      vm->regA() = *origin;
+
    GarbageItem *gitem;
    if( ! origin->isReference() )
    {
@@ -3154,6 +3172,8 @@ void opcodeHandler_STPR( register VMachine *vm )
    // do not deref op3
    Item *source = vm->getOpcodeParam( 3 );
 
+   if ( source != &vm->regA() )
+      vm->regA() = *source;
 
    switch( target->type() )
    {
