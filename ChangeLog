@@ -51,6 +51,7 @@ Falcon (0.8.11)
            - Table column can now be used as properties of arrays inside the tables.
   * bugfix: Assignments to properties and vector didn't propagate the assignand
             value.
+  * bugfix: Fixed compilation on Darwin.
 
 Falcon (0.8.10)
   * minor: Now classes can be stored in object properties and called to get

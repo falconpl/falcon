@@ -17,12 +17,12 @@
 #ifndef flc_DLL_H
 #define flc_DLL_H
 
-#ifdef FALCON_SYSTEM_WIN
-#include <falcon/dll_win.h>
-#elif FALCON_SYSTEM_MAC
-#include <falcon/dll_mac.h>
+#if defined(FALCON_SYSTEM_WIN)
+	#include <falcon/dll_win.h>
+#elif defined(FALCON_SYSTEM_MAC)
+	#include <falcon/dll_mac.h>
 #else
-#include <falcon/dll_dl.h>
+	#include <falcon/dll_dl.h>
 #endif
 
 #endif

@@ -9,7 +9,7 @@ ADD_DEFINITIONS(-DFALCON_ENGINE_EXPORTS)
 
 
 #Specific system files
-IF(UNIX OR MAC)
+IF(UNIX OR APPLE)
    SET( SYS_SPECIFIC
          dir_sys_unix.cpp
          fstream_sys_unix.cpp
@@ -33,15 +33,15 @@ IF(UNIX OR MAC)
    ENDIF( "${FALCON_UNIX_FLAVOR}" STREQUAL "SOLARIS" )
 
    #DL is different for unix and mac
-   IF(UNIX)
-      SET( SYS_SPECIFIC
-         ${SYS_SPECIFIC}
-         dll_dl.cpp )
-   ELSE(UNIX)
+   IF(APPLE)
       SET( SYS_SPECIFIC
          ${SYS_SPECIFIC}
          dll_mac.cpp )
-   ENDIF(UNIX)
+   ELSE(APPLE)
+      SET( SYS_SPECIFIC
+         ${SYS_SPECIFIC}
+         dll_dl.cpp )
+   ENDIF(APPLE)
 
    #We need bison.
    IF(NOT BISON_EXECUTABLE)
@@ -107,7 +107,7 @@ ELSEIF(WIN32)
       falcon_engine.rc
       )
 
-ENDIF(UNIX OR MAC)
+ENDIF(UNIX OR APPLE)
 
 INCLUDE_DIRECTORIES(.)
 INCLUDE_DIRECTORIES(core_module)
