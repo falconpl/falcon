@@ -2568,9 +2568,8 @@ void opcodeHandler_STVS( register VMachine *vm )
       return;
    }
 
-   // the thing must be copied in A, as STV counts as an assignment.
-   Item &origin = vm->regA();
-   origin = vm->m_stack->topItem();
+   
+   Item origin = vm->m_stack->topItem();
    vm->m_stack->pop();
 
 
@@ -2578,6 +2577,7 @@ void opcodeHandler_STVS( register VMachine *vm )
    // access addition.
    if( operand1->type() == FLC_ITEM_DICT ) {
       operand1->asDict()->insert( *(operand2), origin );
+      vm->regA() = *operand2;
       return;
    }
 
@@ -2594,6 +2594,7 @@ void opcodeHandler_STVS( register VMachine *vm )
                   GarbageString *gcs = new GarbageString( vm, *operand1->asString() );
                   gcs->setCharAt( pos, cs_orig->getCharAt(0) );
                   operand1->setString( gcs );
+                  vm->regA() = gcs;
                   return;
                }
             }
@@ -2609,8 +2610,11 @@ void opcodeHandler_STVS( register VMachine *vm )
             bool result = operand2->asRangeIsOpen() ?
                gcs->change( operand2->asRangeStart(), *origin.asString() ) :
                gcs->change( operand2->asRangeStart(), operand2->asRangeEnd(), *origin.asString() );
-            if ( result )
+            
+            if ( result ) {
+               vm->regA() = gcs;
                return;
+            }
          }
       break;
 
@@ -2625,6 +2629,7 @@ void opcodeHandler_STVS( register VMachine *vm )
             if ( uPos < mb->length() )
             {
                mb->set( uPos, (uint32) origin.forceInteger() );
+               vm->regA() = origin;
                return;
             }
          }
@@ -2638,6 +2643,7 @@ void opcodeHandler_STVS( register VMachine *vm )
          CoreArray *array = operand1->asArray();
          if ( pos >= (-(int)array->length()) && pos < (int32) array->length() ) {
             (*array)[ pos ] = origin;
+            vm->regA() = origin;
             return;
          }
       }
@@ -2649,16 +2655,20 @@ void opcodeHandler_STVS( register VMachine *vm )
          register int32 end = operand2->asRangeIsOpen() ? array->length() : operand2->asRangeEnd();
          register int32 start = operand2->asRangeStart();
          if( origin.isArray() ) {
-            if( array->change( *origin.asArray() , start, end ) )
+            if( array->change( *origin.asArray() , start, end ) ) {
+               vm->regA() = origin;
                return;
+            }
          }
          else {
             if ( start != end ) {// insert
                if( ! array->remove( start, end ) )
                   break;
             }
-            if( array->insert( origin, start ) )
+            if( array->insert( origin, start ) ) {
+               vm->regA() = origin;
                return;
+            }
          }
       }
       break;
@@ -2800,16 +2810,22 @@ void opcodeHandler_STV( register VMachine *vm )
    Item *origin = vm->getOpcodeParam( 3 )->dereference();
 
    // counts as an assignment.
-   // Should we check for dereferencing?
-   vm->regA() = *origin;
-
    // try to access a dictionary with every item
    // access addition.
    if( operand1->type() == FLC_ITEM_DICT ) {
+      /*
       if ( origin->isString() && origin->asString()->garbageable() )
-         operand1->asDict()->insert( *(operand2), new GarbageString( vm, *origin->asString() ) );
+         vm->regA() = new GarbageString( vm, *origin->asString() );
+      else
+         vm->regA() = *origin;
+      
+      operand1->asDict()->insert( *(operand2), vm->regA() );
+      */
+      if ( origin->isString() && origin->asString()->garbageable() )
+         operand1->asDict()->insert( *(operand2), new GarbageString( vm, *origin->asString() ));
       else
          operand1->asDict()->insert( *(operand2), *origin );
+      vm->regA() = *origin;
       return;
    }
 
@@ -2824,6 +2840,7 @@ void opcodeHandler_STV( register VMachine *vm )
                String *cs = operand1->asString();
                if ( cs->checkPosBound( pos ) ) {
                   cs->setCharAt( pos, cs_orig->getCharAt(0) );
+                  vm->regA() = cs_orig;
                   return;
                }
             }
@@ -2836,7 +2853,8 @@ void opcodeHandler_STV( register VMachine *vm )
                String *cs = operand1->asString();
                register int32 pos = (int32) operand2->forceInteger();
                if ( cs->checkPosBound( pos ) ) {
-                  cs->setCharAt( pos, (int32) chr );
+                  cs->setCharAt( pos, (uint32) chr );
+                  vm->regA() = (int64) chr;
                   return;
                }
             }
@@ -2850,8 +2868,10 @@ void opcodeHandler_STV( register VMachine *vm )
             bool result = operand2->asRangeIsOpen() ?
                gcs->change( operand2->asRangeStart(), *origin->asString() ) :
                gcs->change( operand2->asRangeStart(), operand2->asRangeEnd(), *origin->asString() );
-            if ( result )
+            if ( result ) {
+               vm->regA() = gcs;
                return;
+            }
          }
       break;
 
@@ -2866,6 +2886,7 @@ void opcodeHandler_STV( register VMachine *vm )
             if ( uPos <  mb->length() )
             {
                mb->set( uPos, (uint32) origin->forceInteger() );
+               vm->regA() = *origin;
                return;
             }
          }
@@ -2882,6 +2903,8 @@ void opcodeHandler_STV( register VMachine *vm )
                (*array)[ pos ] = origin->asString()->clone();
             else
                (*array)[ pos ] = *origin;
+            
+            vm->regA() = (*array)[pos];
             return;
          }
       }
@@ -2901,6 +2924,7 @@ void opcodeHandler_STV( register VMachine *vm )
                if( ! array->remove( start, end ) )
                   break;
             }
+            vm->regA() = *origin;
             if ( origin->isString() && origin->asString()->garbageable() ) {
                if( array->insert( origin->asString()->clone(), start ) )
                   return;
@@ -2928,6 +2952,7 @@ void opcodeHandler_STV( register VMachine *vm )
                         operand1->asRangeEnd(),
                         operand1->asRangeStep(),
                         operand1->asRangeIsOpen() );
+                   vm->regA() = *operand1;
                return;
 
                case 1: case -2:
@@ -2935,14 +2960,16 @@ void opcodeHandler_STV( register VMachine *vm )
                         (int32) origin->forceInteger(),
                         (int32) operand1->asRangeStep(),
                         false );
-               return;
+                  vm->regA() = *operand1;
+                  return;
 
                case 2: case -1:
                   operand1->setRange( operand1->asRangeStart(),
                         operand1->asRangeEnd(),
                         (int32) origin->forceInteger(),
                         false );
-               return;
+                  vm->regA() = *operand1;
+                  return;
             }
          }
          else if ( origin->isNil() && ( pos == -1 || pos == 1 || pos == -2 || pos == 2 ) )
@@ -2951,6 +2978,7 @@ void opcodeHandler_STV( register VMachine *vm )
                   0,
                   0,
                   true );
+            vm->regA() = *operand1;
             return;
          }
 
@@ -2973,10 +3001,6 @@ void opcodeHandler_STP( register VMachine *vm )
    if ( method->isString() )
    {
       // STP counts as an assignment, we have to copy the thing in A
-
-      if ( sourcend != &vm->regA() )
-         vm->regA() = *source;
-
       if ( target->isObject() )
       {
          Item temp;
@@ -2993,8 +3017,10 @@ void opcodeHandler_STP( register VMachine *vm )
             source->setString( gcs );
          }
 
-         if( target->asObject()->setProperty( *method->asString(), *source ) )
-               return;
+         if( target->asObject()->setProperty( *method->asString(), *source ) ) {
+            vm->regA() = *source;
+            return;
+         }
 
          vm->raiseRTError(
             new AccessError( ErrorParam( e_prop_acc ).origin( e_orig_vm ) .
@@ -3018,6 +3044,7 @@ void opcodeHandler_STP( register VMachine *vm )
                   source->setString( gcs );
                }
                *prop->dereference() = *source;
+               vm->regA() = *source;
                return;
             }
             else {
@@ -3034,6 +3061,7 @@ void opcodeHandler_STP( register VMachine *vm )
          Item temp;
          vm->referenceItem( temp, *sourcend );
          bindings->insert( *method, temp );
+         vm->regA() = temp;
          return;
       }
 
