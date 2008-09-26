@@ -139,7 +139,7 @@ public:
    /** Prevents calling the markitem function in case of shallow items. */
    void markItemFast( Item &itm )
    {
-      if( itm.type() >= FLC_ITEM_STRING )
+      if( itm.isDeep() )
          markItem( itm );
    }
 

@@ -406,7 +406,7 @@ public:
       m_data.ptr.m_extra = func;
       m_data.ptr.m_liveMod = lmod;
    }
-   
+
    /** Creates a table/array method.
       The method is able to remember if it was called with
       a Function pointer or using an external function.
@@ -761,7 +761,7 @@ public:
       Deep items are the ones that are subject to garbage collecting.
       \return true if the item is deep.
    */
-   bool isDeep() const { return type() < FLC_ITEM_FIRST_DEEP; }
+   bool isDeep() const { return type() >= FLC_ITEM_FIRST_DEEP; }
 };
 
 /** Creates a garbageable version of an item.

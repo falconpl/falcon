@@ -52,6 +52,8 @@ Falcon (0.8.11)
   * bugfix: Assignments to properties and vector didn't propagate the assignand
             value.
   * bugfix: Fixed compilation on Darwin.
+  * bugfix: Fixed missed mark of some deep item during GC (may have caused random
+            crashes).
 
 Falcon (0.8.10)
   * minor: Now classes can be stored in object properties and called to get

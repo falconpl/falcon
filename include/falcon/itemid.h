@@ -38,7 +38,7 @@
 #define FLC_ITEM_POINTER   9
 
 /** From this point on, we have possibly deep items */
-#define FLC_ITEM_FIRST_DEEP 10
+#define FLC_ITEM_FIRST_DEEP 5
 
 #define FLC_ITEM_STRING    10
 #define FLC_ITEM_ARRAY     11
