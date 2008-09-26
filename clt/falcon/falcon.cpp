@@ -95,7 +95,7 @@ static void account_free ( void *mem )
    long *block = ( long * ) mem;
    block = block - MEMBLOCK_DATA_COUNT;
 
-   if ( block[1] != 0xFEDCBA98 )
+   if ( block[1] != (long) 0xFEDCBA98 )
    {
       s_validAlloc = 0;
       return;
@@ -114,7 +114,7 @@ static void *account_realloc ( void *mem, size_t size )
    if ( mem != 0 )
    {
       block = block - MEMBLOCK_DATA_COUNT;
-      if ( block[1] != 0xFEDCBA98 )
+      if ( block[1] != (long) 0xFEDCBA98 )
       {
          s_validAlloc = 0;
          block = ( long * ) malloc ( size + MEMBLOCK_SIZE );

@@ -43,7 +43,6 @@ public:
    List directives;
    List defines;
 
-   bool interactive;
    bool compile_only;
    bool assemble_only;
    bool run_only;
@@ -56,35 +55,37 @@ public:
    bool via_asm;
    bool comp_memory;
    bool recompile_on_load;
-
    bool save_modules;
-
    bool wait_after;
-
    bool parse_ftd;
 
    bool compile_tltable;
+   bool interactive;
 
    HOptions():
       input( "" ),
       output( "" ),
       load_path( "" ),
-      compile_only( false ),
-      check_memory( false ),
-      assemble_only( false ),
-      assemble_out( false ),
-      run_only( false ),
-      tree_out( false ),
-      via_asm( false ),
-      search_path( false ),
-      recompile_on_load( true ),
-      comp_memory( true ),
-      save_modules( true ),
-      force_recomp( false ),
       io_encoding( "" ),
       source_encoding( "" ),
+      module_language( "" ),
+   
+      compile_only( false ),
+      assemble_only( false ),
+      run_only( false ),
+      tree_out( false ),
+      assemble_out( false ),
+      search_path( false ),
+      force_recomp( false ),
+      check_memory( false ),
+
+      via_asm(false),
+      comp_memory( true ),
+      recompile_on_load( true ),
+      save_modules( true ),
       wait_after( false ),
       parse_ftd( false ),
+      
       compile_tltable( false ),
       interactive( false )
    {}

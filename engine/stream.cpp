@@ -25,11 +25,11 @@
 namespace Falcon {
 
 Stream::Stream( const Stream &other ):
+   m_rhBufferSize( other.m_rhBufferSize ),
+   m_rhBufferPos( other.m_rhBufferPos ),
    m_streamType( other.m_streamType ),
    m_status( other.m_status ),
-   m_lastMoved( other.m_lastMoved ),
-   m_rhBufferSize( other.m_rhBufferSize ),
-   m_rhBufferPos( other.m_rhBufferPos )
+   m_lastMoved( other.m_lastMoved )
 {
    if ( m_rhBufferSize != 0 )
    {
@@ -155,7 +155,6 @@ bool Stream::readString( String &target, uint32 size )
 bool Stream::writeString( const String &source, uint32 begin, uint32 end )
 {
    uint32 pos = begin;
-   bool exitStatus = true;
    if ( end > source.length() )
       end = source.length();
 

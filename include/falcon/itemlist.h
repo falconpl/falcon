@@ -47,9 +47,9 @@ public:
       The item is shallow copied.
    */
    ItemListElement( const Item &itm, ItemListElement *p = 0, ItemListElement *n = 0 ):
+      m_item( itm ),   
       m_next( n ),
-      m_prev( p ),
-      m_item( itm )
+      m_prev( p )
    {}
 
    /** Deletes the element.

@@ -39,7 +39,8 @@ class DllLoader_base
 {
 public:
    DllLoader_base() {}
-
+   virtual ~DllLoader_base() {}
+   
    virtual bool open( const String &dll_name ) = 0;
    virtual bool close() = 0;
    virtual DllFunc getSymbol( const String &sym_name ) const = 0;

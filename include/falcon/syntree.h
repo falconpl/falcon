@@ -260,8 +260,8 @@ public:
          case t_imm_integer: return asInteger() != 0;
          case t_imm_num:  return asNumeric() != 0.0;
          case t_imm_string: return asString()->size() != 0;
+         default: return false;
       }
-      return false;
    }
 
    bool asBool() const { return m_content.asBool; }
@@ -439,10 +439,10 @@ private:
 
 public:
    Expression( operator_t t, Value *first, Value *second = 0, Value *third = 0 ):
+      m_operator( t ),
       m_first( first ),
       m_second( second ),
-      m_third( third ),
-      m_operator( t )
+      m_third( third )
    {}
 
    Expression( const Expression &other );
@@ -490,8 +490,11 @@ public:
          case t_notin:
          case t_provides:
             return true;
+            
+         default:
+            return false;
       }
-      return false;
+      // returning from switch
    }
 };
 
@@ -1162,9 +1165,9 @@ public:
 
    StmtClass( uint32 line, Symbol *name ):
       StmtCallable( line, t_class, name ),
+      m_ctor(0),
       m_initGiven( false ),
       m_bDeleteCtor( false ),
-      m_ctor(0),
       m_singleton(0)
    {}
 
@@ -1195,11 +1198,11 @@ class FALCON_DYN_CLASS StmtFunction: public StmtCallable
 {
 
 private:
+   int m_lambda_id;
    StatementList m_staticBlock;
    StatementList m_statements;
-
-   int m_lambda_id;
    const StmtClass *m_ctor_for;
+
 public:
 
    StmtFunction( uint32 line, Symbol *name ):

@@ -41,17 +41,17 @@ Pseudo *AsmCompiler::regL2_Inst() { return m_lexer->regL2_Inst(); }
 Pseudo *AsmCompiler::nil_Inst() { return m_lexer->nil_Inst(); }
 
 AsmCompiler::AsmCompiler( Module *mod, Stream *in ):
-      m_current( 0 ),
-      m_module( mod ),
-      m_errhand(0),
-      m_pc(0),
-      m_currentLine( 1 ),
-      m_outTemp( new StringStream ),
       m_labels( &traits::t_stringptr, &traits::t_voidp ),
+      m_current( 0 ),
       m_switchEntriesInt( &traits::t_pseudoptr, &traits::t_pseudoptr ),
       m_switchEntriesRng( &traits::t_pseudoptr, &traits::t_pseudoptr ),
       m_switchEntriesStr( &traits::t_pseudoptr, &traits::t_pseudoptr ),
-      m_switchEntriesObj( &traits::t_pseudoptr, &traits::t_pseudoptr )
+      m_switchEntriesObj( &traits::t_pseudoptr, &traits::t_pseudoptr ),
+      m_errhand(0),
+      m_module( mod ),
+      m_outTemp( new StringStream ),
+      m_currentLine( 1 ),
+      m_pc(0)
 {
    m_lexer = new AsmLexer( mod, this, in );
    m_errors = 0;
@@ -650,7 +650,6 @@ void AsmCompiler::addClassDef( Pseudo *val, bool exp )
       else {
          if ( exp )
             sym->exported( true );
-         ClassDef *fd = sym->getClassDef();
 
          if ( sym->getClassDef()->basePC() != 0x0 ) {
             raiseError( e_already_def, val->asString() );
@@ -725,7 +724,6 @@ void AsmCompiler::addInheritParam( Pseudo *param )
    }
    else {
       // the symbol must be already defined.
-      Symbol *cls = param->asSymbol();
       ClassDef *cd = m_current->getClassDef();
       if ( cd->inheritance().empty() ) {
          fassert( false ); // impossible if the program is correct
@@ -847,6 +845,8 @@ unsigned char AsmCompiler::paramDesc( Pseudo *op1 ) const
          case Pseudo::tname:
             return P_PARAM_NTD32;
          case Pseudo::imm_double: return P_PARAM_NTD64;
+         default:
+            break;
       }
    }
    else {
@@ -871,6 +871,8 @@ unsigned char AsmCompiler::paramDesc( Pseudo *op1 ) const
          case Pseudo::tregL1: return P_PARAM_REGL1;
          case Pseudo::tregL2: return P_PARAM_REGL2;
          case Pseudo::tnil: return P_PARAM_NIL;
+         default:
+            break;
       }
    }
 
@@ -953,6 +955,9 @@ void AsmCompiler::addDCase( Pseudo *val, Pseudo *jump, Pseudo *second )
             switchEntries = &m_switchEntriesObj;
             m_switchObjList.pushBack( val );
          break;
+            
+         default:
+            break;
       }
 
       // are we filling something different than the NIL entry?
@@ -1077,8 +1082,6 @@ bool AsmCompiler::isParam( Pseudo *op1 ) const
    // forcing a global symbol?
    if ( op1->asSymbol()->name().getCharAt(0) == '*' )
       return false;
-
-   FuncDef *func = m_current->getFuncDef();
 
    Symbol *sym = op1->asSymbol();
    if ( sym  != 0 && sym->isParam() )

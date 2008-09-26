@@ -36,6 +36,8 @@ void Symbol::clear()
       case tclass: delete m_value.v_class; break;
       case tprop: delete m_value.v_prop; break;
       case tconst: delete m_value.v_prop; break;
+      default:
+         break;
    }
    m_type = tundef;
 }
@@ -158,6 +160,9 @@ bool Symbol::save( Stream *out ) const
          strid = endianInt32( getInstance()->id() );
          out->write( &strid, sizeof( strid ) );
       break;
+         
+      default:
+         break;
    }
    return true;
 }
@@ -174,6 +179,9 @@ Symbol* Symbol::addParam( const String &param )
          if( getClassDef()->constructor() != 0 )
             getClassDef()->constructor()->addParam( param );
       break;
+         
+      default:
+         return this;
    }
 
    return this;
@@ -381,16 +389,15 @@ bool InheritDef::load( Module *mod, Stream *in )
 ClassDef::ClassDef( ObjectManager *manager ):
    FuncDef( 0, 0 ),
    m_constructor( 0 ),
-   m_manager( manager ),
-   m_properties( &traits::t_stringptr, &traits::t_voidp )
-
+   m_properties( &traits::t_stringptr, &traits::t_voidp ),
+   m_manager( manager )
 {}
 
 ClassDef::ClassDef( Symbol *ext_ctor, ObjectManager *manager ):
    FuncDef( 0, 0 ),
    m_constructor( ext_ctor ),
-   m_manager( manager ),
-   m_properties( &traits::t_stringptr, &traits::t_voidp )
+   m_properties( &traits::t_stringptr, &traits::t_voidp ),
+   m_manager( manager )
 {}
 
 
@@ -669,8 +676,12 @@ bool VarDef::save( Stream *out ) const
          uint32 val = endianInt32( asSymbol()->id() );
          out->write( &val , sizeof( val ) );
       }
+         
+      default:
+         return true;
    }
-   return true;
+   
+   return out->good();
 }
 
 bool VarDef::load( Module *mod, Stream *in )
@@ -727,6 +738,9 @@ bool VarDef::load( Module *mod, Stream *in )
          if ( m_value.val_sym == 0 )
             return false;
       }
+         
+      default:
+         break;
    }
    return true;
 }

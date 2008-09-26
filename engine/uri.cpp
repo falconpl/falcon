@@ -21,21 +21,21 @@ namespace Falcon
 {
 
 URI::URI():
-   m_queryMap( 0 ),
-   m_bValid( true )
+   m_bValid( true ),
+   m_queryMap( 0 )
 {
 }
 
 URI::URI( const String &suri ):
-   m_queryMap(0),
-   m_bValid( true )
+   m_bValid( true ),
+   m_queryMap(0)
 {
    parse( suri );
 }
 
 URI::URI( const URI &other ):
-   m_queryMap(0),
-   m_bValid( true )
+   m_bValid( true ),
+   m_queryMap(0)
 {
    //TODO
    parse( other.m_original );
@@ -97,7 +97,6 @@ bool URI::internal_parse( const String &newUri, bool parseQuery, bool decode )
 
    t_status state = e_begin;
    bool bUserGiven = false;
-   bool bPortGiven = false;
 
    String tempPath; // we're setting the path after.
 
@@ -264,6 +263,8 @@ bool URI::internal_parse( const String &newUri, bool parseQuery, bool decode )
          m_port = newUri.subString( pStart, pEnd );
          break;
       // in all other cases, just let it through
+      default:
+         break;
    }
 
    if ( decode )

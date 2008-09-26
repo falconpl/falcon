@@ -46,9 +46,9 @@ class FALCON_DYN_CLASS InteractiveCompiler: public Compiler
    VMachine *m_vm;
    LiveModule *m_lmodule;
    ModuleLoader *m_loader;
-   void loadNow( const String &name, bool isFilename );
    bool m_interactive;
 
+   void loadNow( const String &name, bool isFilename );
 public:
 
    /** Create the interactive compiler.

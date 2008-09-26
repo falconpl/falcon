@@ -119,7 +119,9 @@ public:
 class ListTraits: public ElementTraits
 {
 public:
-	virtual uint32 memSize() const;
+	virtual ~ListTraits() {}
+   
+   virtual uint32 memSize() const;
 	virtual void init( void *itemZone ) const;
 	virtual void copy( void *targetZone, const void *sourceZone ) const;
 	virtual int compare( const void *first, const void *second ) const;

@@ -34,7 +34,7 @@ public:
       m_module( 0 )
    {}
 
-   ~DllLoader_dl();
+   virtual ~DllLoader_dl();
 
    bool open( const String &dll_name );
    bool close();

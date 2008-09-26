@@ -35,9 +35,9 @@ MemBuf::MemBuf( VMachine *vm, uint32 size ):
 
 MemBuf::MemBuf( VMachine *vm, byte *data, uint32 size, bool bOwn ):
    Garbageable( vm, sizeof( this ) + size ),
+   m_memory( data ),
    m_size( size ),
    m_bOwn( bOwn ),
-   m_memory( data ),
    m_dependant(0)
 {
 }
@@ -84,13 +84,13 @@ MemBuf *MemBuf::deserialize( VMachine *vm, Stream *stream )
    uint32 nSize;
    if ( stream->read( &nSize, sizeof( nSize ) ) != sizeof( nSize ) )
       return 0;
-   nSize = endianInt32( nSize );
+   nSize = (uint32) endianInt32( nSize );
 
    byte *mem = (byte *) memAlloc( nSize );
    if ( mem == 0 )
       return 0;
 
-   if ( stream->read( mem, nSize ) != nSize )
+   if ( stream->read( mem, nSize ) != (int32) nSize )
    {
       memFree( mem );
       return 0;

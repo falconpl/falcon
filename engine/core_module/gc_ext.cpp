@@ -193,7 +193,6 @@ FALCON_FUNC  gcSetThreshold( ::Falcon::VMachine *vm )
 FALCON_FUNC  gcSetTimeout( ::Falcon::VMachine *vm )
 {
    Item *p0 = vm->param( 0 );
-   bool done = false;
 
    if( p0 != 0 && p0->isOrdinal() ) {
       vm->memPool()->setTimeout( (uint32) p0->forceInteger() );

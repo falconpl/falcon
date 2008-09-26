@@ -28,12 +28,12 @@ namespace Falcon
 
 
 GenCode::c_jmptag::c_jmptag( Stream *stream, uint32 offset ):
-   m_tries( 0 ),
-   m_stream( stream ),
-   m_offset( offset ),
    m_elifDefs( &traits::t_int ),
    m_elifQueries( &traits::t_List ),
-   m_bIsForIn( false )
+   m_tries( 0 ),
+   m_offset( offset ),
+   m_bIsForIn( false ),
+   m_stream( stream )
 {
    m_defs[0] = m_defs[1] = m_defs[2] = m_defs[3] = JMPTAG_UNDEFINED;
    m_elifQueries.resize(12);
@@ -273,6 +273,9 @@ void GenCode::c_varpar::generate( GenCode *owner ) const
          owner->m_outTemp->write( &out, sizeof(out) );
       }
       break;
+         
+      default:
+         break;
    }
 
    // else we should not generate anything
@@ -356,6 +359,9 @@ byte GenCode::gen_pdef( const c_varpar &elem )
                if ( val->asSymbol()->isParam() ) return P_PARAM_PARID;
                // valid for undefined, extern and globals:
             return P_PARAM_GLOBID;
+               
+            default:
+               break;
          }
       }
       // should not get here
@@ -377,6 +383,9 @@ byte GenCode::gen_pdef( const c_varpar &elem )
                if ( vd->asSymbol()->isParam() ) return P_PARAM_PARID;
                // valid for undefined, extern and globals:
             return P_PARAM_GLOBID;
+               
+            default:
+               break;
          }
       }
       // should not get here
@@ -443,6 +452,9 @@ void GenCode::gen_var( const VarDef &def )
          m_outTemp->write( reinterpret_cast< const char *>( &ival ), sizeof( ival ) );
       }
       break;
+         
+      default:
+         break;
    }
 }
 
@@ -465,7 +477,6 @@ void GenCode::gen_function( const StmtFunction *func )
       while( it_elem != 0 )
       {
          const InheritDef *id = (const InheritDef *) it_elem->data();
-         const Symbol *parent = id->base();
          ListElement *param_elem = id->parameters().begin();
          int count = 0;
          while( param_elem != 0 )
@@ -1308,6 +1319,9 @@ void GenCode::gen_statement( const Statement *stmt )
          }
       }
       break;
+         
+      default:
+         break;
    }
 }
 
@@ -1760,6 +1774,9 @@ void GenCode::gen_expression( const Expression *exp, t_valType &xValue )
          xValue = l_value;
          gen_pcode( P_STO, e_parA, exp->first()->asSymbol() );
       return;
+         
+      default:
+         break;
    }
 
    // post-processing unary and binary operators.

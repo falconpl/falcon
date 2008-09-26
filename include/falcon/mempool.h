@@ -126,7 +126,7 @@ public:
    /** Destroys all the items.
       Needless to say, this must be called outside any VM.
    */
-   ~MemPool();
+   virtual ~MemPool();
 
    void setOwner( VMachine *owner ) { m_owner = owner; }
 

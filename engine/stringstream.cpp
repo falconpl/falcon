@@ -25,8 +25,8 @@ namespace Falcon {
 
 StringStream::StringStream( int32 size ):
    Stream( t_membuf ),
-   m_allocated( size ),
    m_length( 0 ),
+   m_allocated( size ),
    m_pos( 0 ),
    m_lastError( 0 )
 {

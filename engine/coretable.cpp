@@ -160,22 +160,22 @@ FalconData *CoreTableIterator::clone() const
 
 
 CoreTable::CoreTable():
-   m_pages(&traits::t_voidp),
-   m_pageNumId(noitem),
    m_currentPage(0),
-   m_order(noitem),
+   m_pages(&traits::t_voidp),
+   m_headerData( &traits::t_item ),
    m_heading( &traits::t_string, &traits::t_int ),
-   m_headerData( &traits::t_item )
+   m_pageNumId(noitem),
+   m_order(noitem)
 {
 }
 
 CoreTable::CoreTable( const CoreTable& other ):
-   m_pages(other.m_pages),
-   m_pageNumId( other.m_pageNumId ),
-   m_headerData( other.m_headerData ),
    m_currentPage( other.m_currentPage ),
-   m_order( other.m_order ),
-   m_heading( other.m_heading )
+   m_pages(other.m_pages),
+   m_headerData( other.m_headerData ),
+   m_heading( other.m_heading ),
+   m_pageNumId( other.m_pageNumId ),
+   m_order( other.m_order )
 {
 }
 
@@ -196,7 +196,7 @@ bool CoreTable::setHeader( CoreArray *header )
    m_headerData.resize(0);
    m_heading.clear();
 
-   for( int i = 0; i < len; i++ )
+   for( uint32 i = 0; i < len; i++ )
    {
       const Item &itm = (*header)[i];
 
@@ -311,7 +311,7 @@ Item *CoreTable::getHeaderData( uint32 pos ) const
 bool CoreTable::insertPage( CoreArray *data, uint32 pos )
 {
    // may be long zero; it's ok
-   for( int i = 0; i < data->length(); i ++ )
+   for( uint32 i = 0; i < data->length(); i ++ )
    {
       if ( ! (*data)[i].isArray() || (*data)[i].asArray()->length() != m_order )
          return false;
@@ -391,7 +391,7 @@ bool CoreTable::insert( CoreIterator *iter, const Item &item )
 
 void CoreTable::gcMark( VMachine *vm )
 {
-   int i;
+   uint32 i;
 
    // mark the header data...
    for ( i = 0; i < m_headerData.size(); i ++ )

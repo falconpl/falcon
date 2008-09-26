@@ -725,6 +725,9 @@ bool VMachine::linkSymbol( Symbol *sym, LiveModule *livemod )
                itm->setString( new GarbageString( this, *vd->asString() ) );
             }
             break;
+               
+            default:
+               break;
          }
       }
       break;
@@ -1100,6 +1103,9 @@ PropertyTable *VMachine::createClassTemplate( LiveModule *lmod, const Map &pt )
             }
          }
          break;
+         
+         default:
+            break; // compiler warning no-op
       }
 
       iter.next();
@@ -1355,7 +1361,7 @@ bool VMachine::prepare( const String &startSym, uint32 paramCount )
    }
 
    // ok, let's setup execution environment.
-   const Module *mod = execSym->module();
+   //const Module *mod = execSym->module();
 	FuncDef *tg_def = execSym->getFuncDef();
 	m_code = tg_def->code();
    m_pc = 0;
@@ -3354,6 +3360,9 @@ VMachine::returnCode  VMachine::expandString( const String &src, String &target 
             case escapeDouble:
                state = escapeDouble;
             break;
+               
+            default: // compiler warning no-op
+               break;
          }
 
          ++pos1;

@@ -94,6 +94,7 @@ const uint32 npos = 0xFFFFFFFF;
 class FALCON_DYN_CLASS Base
 {
 public:
+   virtual ~Base() {}
    virtual t_type type() const =0;
    virtual uint32 charSize() const = 0;
    virtual uint32 length( const String *str ) const =0;
@@ -125,6 +126,7 @@ public:
 class FALCON_DYN_CLASS Byte: public Base
 {
 public:
+   virtual ~ Byte() {}
    virtual uint32 length( const String *str ) const;
    virtual uint32 getCharAt( const String *str, uint32 pos ) const;
    virtual void subString( const String *str, int32 start, int32 end, String *target ) const;
@@ -152,6 +154,7 @@ public:
 class FALCON_DYN_CLASS Static: public Byte
 {
 public:
+   virtual ~Static() {}
    virtual t_type type() const { return cs_static; }
    virtual uint32 charSize() const { return 1; }
 
@@ -177,6 +180,7 @@ public:
 class FALCON_DYN_CLASS Buffer: public Byte
 {
 public:
+   virtual ~Buffer() {}
    virtual t_type type() const { return cs_buffer; }
    virtual uint32 charSize() const { return 1; }
 
@@ -191,6 +195,7 @@ public:
 class FALCON_DYN_CLASS Static16: public Static
 {
 public:
+   virtual ~Static16() {}
    virtual uint32 charSize() const  { return 2; }
    virtual uint32 length( const String *str ) const;
    virtual uint32 getCharAt( const String *str, uint32 pos ) const;
@@ -204,6 +209,7 @@ public:
 class FALCON_DYN_CLASS Static32: public Static16
 {
 public:
+   virtual ~Static32() {}
    virtual uint32 charSize() const { return 4; }
    virtual uint32 length( const String *str ) const;
    virtual uint32 getCharAt( const String *str, uint32 pos ) const;
@@ -227,6 +233,7 @@ public:
 class FALCON_DYN_CLASS Buffer32: public Buffer16
 {
 public:
+   virtual ~Buffer32() {}
    virtual uint32 charSize() const { return 4; }
    virtual uint32 length( const String *str ) const;
    virtual uint32 getCharAt( const String *str, uint32 pos ) const;
@@ -345,12 +352,12 @@ public:
     * no valid internal storage at creation time.
     */
    String():
+      m_class( &csh::handler_static ),
+      m_allocated( 0 ),
       m_size( 0 ),
       m_storage( 0 ),
-      m_allocated( 0 ),
-      m_bExported( false ),
-      m_class( &csh::handler_static ),
-      m_garbageable( false )
+      m_garbageable( false ),
+      m_bExported( false )
    {}
 
 
@@ -456,8 +463,8 @@ public:
       Use bufferize() on this string to ensure that it is deep-copied.
    */
    String( const String &other ):
-      m_garbageable( false ),
-      m_allocated( 0 )
+      m_allocated( 0 ),
+      m_garbageable( false )
    {
       copy( other );
    }

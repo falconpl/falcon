@@ -169,6 +169,7 @@ bool Item::isTrue() const
    return false;
 }
 
+/*
 static int64 s_atoi( const String *cs )
 {
    if ( cs->size() == 0 )
@@ -187,7 +188,8 @@ static int64 s_atoi( const String *cs )
    if ( *p == '-' ) return -(int64)val;
    return (int64)(val*base);
 }
-
+*/
+   
 int64 Item::forceInteger() const
 {
    switch( type() ) {
@@ -421,7 +423,6 @@ bool Item::isOfClass( const String &className ) const
 
 void Item::toString( String &target ) const
 {
-   bool saveHstr = false;
    target.size(0);
 
    switch( this->type() )

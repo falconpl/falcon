@@ -26,8 +26,8 @@ GenericVector::GenericVector( const ElementTraits *traits, uint32 prealloc ):
    m_data( 0 ),
 	m_size( 0 ),
 	m_allocated( prealloc < alloc_block ? alloc_block : prealloc ),
-	m_traits(traits),
-	m_threshold_size( 0 )
+	m_threshold_size( 0 ),
+	m_traits(traits)
 {
    fassert( traits !=  0 );
 

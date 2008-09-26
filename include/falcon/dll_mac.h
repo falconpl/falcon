@@ -38,7 +38,7 @@ public:
       m_module( 0 )
    {}
 
-   ~DllLoader_Mac();
+   virtual ~DllLoader_Mac();
 
    bool open( const String &dll_name );
    bool close();

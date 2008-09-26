@@ -41,20 +41,32 @@ AliasMap::AliasMap():
 //===============================================================
 
 Compiler::Compiler( Module *mod, Stream* in ):
-   m_errhand(0),
-   m_module(0),
-   m_stream( in ),
    m_constants( &traits::t_string, &traits::t_voidp ),
    m_namespaces( &traits::t_string, &traits::t_voidp ),
+   m_root(0),
+   m_errors(0),
+   m_optLevel(0),
+   
+   m_lexer(0),
+   m_stream( in ),
+
+   m_errhand(0),
+   m_module(0),
+   m_enumId(0),
+   
+   m_staticPrefix(0),
+   m_lambdaCount(0),
+   m_closureContexts(0),
+   m_tempLine(0),
+   
    m_strict( false ),
    m_language( "C" ),
    m_modVersion( 0 ),
    m_defContext( false ),
+   m_bParsingFtd(false),
+   
    m_delayRaise( false ),
    m_rootError( 0 ),
-   m_lexer(0),
-   m_root(0),
-   m_bParsingFtd(false),
    m_metacomp( 0 ),
    m_serviceVM( 0 ),
    m_serviceLoader( 0 )
@@ -72,21 +84,27 @@ Compiler::Compiler( Module *mod, Stream* in ):
 }
 
 Compiler::Compiler():
-   m_errhand(0),
-   m_module( 0 ),
-   m_stream( 0 ),
    m_constants( &traits::t_string, &traits::t_voidp ),
    m_namespaces( &traits::t_string, &traits::t_voidp ),
+   m_root(0),
+   m_errors(0),
+   m_optLevel(0),
+   m_lexer(0),
+   m_stream( 0 ),
+   m_errhand(0),
+   m_module( 0 ),
+   m_enumId( 0 ),
+   m_staticPrefix(0),
+   m_lambdaCount(0),
+   m_closureContexts(0),
+   m_tempLine(0),
    m_strict( false ),
    m_language( "C" ),
    m_modVersion( 0 ),
    m_defContext( false ),
+   m_bParsingFtd(false),
    m_delayRaise( false ),
    m_rootError( 0 ),
-   m_lexer(0),
-   m_root(0),
-   m_lambdaCount(0),
-   m_bParsingFtd(false),
    m_metacomp(0),
    m_serviceVM( 0 ),
    m_serviceLoader( 0 )
@@ -1051,6 +1069,9 @@ void Compiler::addEnumerator( const String &str, Value *val )
 
          case Value::t_imm_bool:
             vd->setBool( val->asBool() );
+            break;
+            
+         default:
             break;
       }
    }

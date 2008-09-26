@@ -39,24 +39,28 @@
 namespace Falcon {
 
 SrcLexer::SrcLexer( Compiler *comp ):
-   m_prevStat(0),
+   m_value(0),
    m_line( 1 ),
    m_previousLine( 1 ),
-   m_value(0),
-   m_in( 0 ),
-   m_compiler( comp ),
+   m_character( 0 ),
    m_contexts(0),
    m_squareContexts(0),
-   m_character( 0 ),
-   m_state( e_line ),
+   m_ctxOpenLine(0),
+   m_prevStat(0),
+   m_firstEq( false ),
    m_done( false ),
    m_addEol( false ),
    m_lineFilled( false ),
-   m_mode( t_mNormal ),
-   m_ctxOpenLine(0),
    m_bIsDirectiveLine(false),
    m_incremental( false ),
-   m_lineContContext( false )
+   m_lineContContext( false ),
+   m_chrEndString(0),
+   
+   m_in( 0 ),
+   m_compiler( comp ),
+   m_state( e_line ),
+   m_mode( t_mNormal ),
+   m_bParsingFtd(false)
 {}
 
 SrcLexer::~SrcLexer()
@@ -273,6 +277,7 @@ int SrcLexer::lex_outscape()
       {
          case t_mNormal: return lex_normal();
          case t_mEval: return lex_eval();
+         case t_mOutscape: return 0;
       }
    }
 
@@ -962,6 +967,9 @@ int SrcLexer::lex_normal()
                m_state = e_string;
             }
          break;
+            
+         default:
+            break;
       }
    }
 
@@ -1607,6 +1615,9 @@ void SrcLexer::parseMacro()
 
             sContent += chr;
             break;
+            
+         default:
+            break;
       }
    }
    // if we're done, pass the thing to the compiler for metacompilation
@@ -1704,6 +1715,9 @@ void SrcLexer::parseMacroCall()
             }
             else
                sParam += chr;
+            break;
+         
+         default:
             break;
       }
    }

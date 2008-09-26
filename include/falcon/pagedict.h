@@ -67,8 +67,8 @@ class FALCON_DYN_CLASS PageDict: public CoreDict
 {
    VMItemTraits m_itemTraits;
    MapIterator m_traverseIter;
-   uint32 m_version;
    Map m_map;
+   uint32 m_version;
 
 public:
 

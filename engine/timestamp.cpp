@@ -211,7 +211,7 @@ const char *TimeStamp::getRFC2822_MonthName( int16 month )
 
 int16 TimeStamp::getRFC2822_WeekDay( const char *name )
 {
-   for ( int16 i = 0; i < sizeof( RFC_2822_days ) / sizeof( char *); i ++ )
+   for ( uint32 i = 0; i < sizeof( RFC_2822_days ) / sizeof( char *); i ++ )
    {
       if ( strncmp( RFC_2822_days[i], name, 3) == 0 )
          return i;
@@ -221,7 +221,7 @@ int16 TimeStamp::getRFC2822_WeekDay( const char *name )
 
 int16 TimeStamp::getRFC2822_Month( const char *name )
 {
-   for ( int16 i = 0; i < sizeof( RFC_2822_months ) / sizeof( char *); i ++ )
+   for ( uint32 i = 0; i < sizeof( RFC_2822_months ) / sizeof( char *); i ++ )
    {
       if ( strncmp( RFC_2822_months[i], name, 3) == 0 )
          return i+1;
@@ -625,7 +625,7 @@ void TimeStamp::distance( const TimeStamp &ts )
    m_year = 0;
    m_month = 0;
 
-   int tday = days;
+   //int tday = days;
    int thour = endDate->m_hour;
    int tminute = endDate->m_minute;
    int tsecond = endDate->m_second;

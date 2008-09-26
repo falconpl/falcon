@@ -76,7 +76,6 @@ void _tempName( String &res )
 {
    static bool first = true;
    const char *temp_dir;
-   char *fname;
    struct stat st;
 
    if( first ) {

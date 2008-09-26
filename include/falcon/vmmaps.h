@@ -167,6 +167,7 @@ public:
 class LiveModulePtrTraits: public ElementTraits
 {
 public:
+   virtual ~LiveModulePtrTraits() {}
 	virtual uint32 memSize() const;
 	virtual void init( void *itemZone ) const;
 	virtual void copy( void *targetZone, const void *sourceZone ) const;
@@ -195,17 +196,16 @@ public:
 */
 class FALCON_DYN_CLASS SymModule: public BaseAlloc
 {
+   Item *m_item;
    Symbol *m_symbol;
    LiveModule *m_lmod;
-
-   Item *m_item;
    int32 m_wkiid;
 
 public:
    SymModule():
+      m_item(0),
       m_symbol(0),
       m_lmod(0),
-      m_item(0),
       m_wkiid( -1 )
    {}
 
@@ -260,6 +260,7 @@ public:
 class SymModuleTraits: public ElementTraits
 {
 public:
+   virtual ~SymModuleTraits() {}
 	virtual uint32 memSize() const;
 	virtual void init( void *itemZone ) const;
 	virtual void copy( void *targetZone, const void *sourceZone ) const;

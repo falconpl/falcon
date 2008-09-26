@@ -250,12 +250,14 @@ void GenHAsm::gen_propdef( const VarDef &def )
       break;
       case VarDef::t_reference:
       case VarDef::t_symbol: m_out->writeString( "$" + def.asSymbol()->name() ); break;
+      
+      default:
+         break;
    }
 }
 
 void GenHAsm::gen_depTable( const Module *mod )
 {
-   uint32 count = 0;
    MapIterator iter = mod->dependencies().begin();
 
    while( iter.hasCurrent() )
@@ -390,6 +392,9 @@ void GenHAsm::gen_symbolTable( const Module *mod )
             temp.writeNumber( (int64) sym->declaredAt() );
             m_out->writeString( temp );
          break;
+            
+         default:
+            break;
 
       }
 
@@ -437,6 +442,9 @@ void GenHAsm::gen_function( const StmtFunction *func )
             locals.set( sym, sym->itemId() );
 
          break;
+            
+         default:
+            break;
       }
 
       iter.next();
@@ -1294,6 +1302,9 @@ void GenHAsm::gen_statement( const Statement *stmt )
          m_out->writeString( "_branch_try_end_" + branchStr + ":\n" );
       }
       break;
+         
+      default:
+         break;
    }
 }
 
@@ -1634,6 +1645,9 @@ void GenHAsm::gen_expression( const Expression *exp, t_valType &xValue )
    // first, deterime the operator name and operation type
    switch( exp->type() )
    {
+      case Expression::t_none:
+         return;
+         
       // optimized away operations
       case Expression::t_optimized:
          gen_value( exp->first() );

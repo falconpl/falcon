@@ -24,8 +24,8 @@
 namespace Falcon {
 
 ScriptData::ScriptData( const String &filename, int id ):
-   m_filename( filename ),
-   m_id( id )
+   m_id( id ),
+   m_filename( filename )
 {
 	m_filename.bufferize();
 }

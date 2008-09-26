@@ -198,7 +198,6 @@ bool GenericStream::errorDescription( ::Falcon::String &description ) const
    if ( data->m_lastError == 0 )
       return false;
 
-   char *buffer;
    const char *error;
 
    if ( data->m_lastError == -1 )
@@ -264,7 +263,7 @@ bool GenericStream::readString( String &content, uint32 size )
    // TODO OPTIMIZE
    uint32 chr;
    content.size( 0 );
-   UnixFileSysData *data = static_cast< UnixFileSysData *>( m_fsData );
+   //UnixFileSysData *data = static_cast< UnixFileSysData *>( m_fsData );
 
    while( size > 0 && get( chr ) )
    {

@@ -172,6 +172,9 @@ bool Value::isEqualByValue( const Value &other ) const
             if( asSymdef()->id() == other.asSymdef()->id() )
                return true;
          break;
+            
+         default:
+            break;
       }
    }
 
@@ -222,6 +225,9 @@ bool Value::less( const Value &other ) const
             if( asSymdef()->id() < other.asSymdef()->id() )
                return true;
          break;
+         
+         default:
+            break;
       }
    }
    else {
@@ -298,8 +304,10 @@ Value::~Value()
          delete m_content.asExpr;
       break;
 
+      default:
       // In every other case, there is nothing to do as strings and symbols are held in the
       // module and are not to be disposed here.
+         break;
    }
 
 }
@@ -725,24 +733,24 @@ Statement *StmtCaseBlock::clone() const
 
 StmtSwitch::StmtSwitch( uint32 line, Value *expr ):
    Statement( line, t_switch ),
-   m_nilBlock( -1 ),
-   m_cfr( expr ),
    m_cases_int( &traits::t_valueptr, &traits::t_int, 19 ),
    m_cases_rng( &traits::t_valueptr, &traits::t_int, 19 ),
    m_cases_str( &traits::t_valueptr, &traits::t_int, 19 ),
-   m_cases_obj( &traits::t_valueptr, &traits::t_int, 19 )
+   m_cases_obj( &traits::t_valueptr, &traits::t_int, 19 ),
+   m_nilBlock( -1 ),
+   m_cfr( expr )
 {}
 
 StmtSwitch::StmtSwitch( const StmtSwitch &other ):
    Statement( other ),
-   m_nilBlock( other.m_nilBlock ),
    m_cases_int( other.m_cases_int ),
    m_cases_rng( other.m_cases_rng ),
    m_cases_str( other.m_cases_str ),
    m_cases_obj( other.m_cases_obj ),
    m_obj_list( other.m_obj_list ),
    m_blocks( other.m_blocks ),
-   m_defaultBlock( other.m_defaultBlock )
+   m_defaultBlock( other.m_defaultBlock ),
+   m_nilBlock( other.m_nilBlock )
 {
    m_cfr = other.m_cfr == 0 ? 0 : new Value( *other.m_cfr );
 }
@@ -947,10 +955,10 @@ Statement *StmtCatchBlock::clone() const
 
 StmtTry::StmtTry( uint32 line ):
    StmtBlock( line, t_try ),
-   m_default(0),
    m_cases_int( &traits::t_valueptr, &traits::t_int, 13 ),
    m_cases_sym( &traits::t_valueptr, &traits::t_int, 13 ),
-   m_into_values( s_valueDeletor )
+   m_into_values( s_valueDeletor ),
+   m_default(0)
 {}
 
 StmtTry::StmtTry( const StmtTry &other ):

@@ -39,11 +39,13 @@ FlcLoader::FlcLoader( const String &path ):
       m_viaAssembly( false ),
       m_saveModule( true ),
       m_sourceIsAssembly( false ),
-      m_compileErrors(0),
-      m_delayRaise( false ),
+
       m_saveMandatory( false ),
       m_detectTemplate( true ),
-      m_forceTemplate( false )
+      m_forceTemplate( false ),
+   
+      m_delayRaise( false ),
+      m_compileErrors(0)
 {
    // we accept sources ( by default)
    m_acceptSources = true;
@@ -56,11 +58,13 @@ FlcLoader::FlcLoader( const FlcLoader &other ):
       m_viaAssembly( other.m_viaAssembly ),
       m_saveModule( other.m_saveModule ),
       m_sourceIsAssembly( other.m_sourceIsAssembly ),
-      m_compileErrors(0),
-      m_delayRaise( other.m_delayRaise ),
+   
       m_saveMandatory( other.m_saveMandatory ),
       m_detectTemplate( other.m_detectTemplate ),
-      m_forceTemplate( other.m_forceTemplate )
+      m_forceTemplate( other.m_forceTemplate ),
+      
+      m_delayRaise( other.m_delayRaise ),
+      m_compileErrors(0)
 {
 }
 

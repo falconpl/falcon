@@ -581,6 +581,9 @@ void GenTree::gen_value( const Value *val )
       case Value::t_expression:
          gen_expression( val->asExpr() );
       break;
+         
+      default:
+         break;
    }
 }
 
@@ -653,6 +656,8 @@ void GenTree::gen_expression( const Expression *exp )
       case Expression::t_obj_access: type = 6; break;
       case Expression::t_funcall: type = 7; break;
       case Expression::t_lambda: type = 8; break;
+      default:
+         return;
    }
 
    switch( type )

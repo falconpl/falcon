@@ -213,7 +213,7 @@ bool fal_chmod( const String &fname, uint32 mode )
 bool fal_chown( const String &fname, int32 owner )
 {
    AutoCString filename( fname );
-   bool ret = ::chown( filename.c_str(), owner , -1 ) == 0;
+   bool ret = ::chown( filename.c_str(), owner , (gid_t) -1 ) == 0;
    return ret;
 }
 
@@ -247,7 +247,7 @@ bool fal_writelink( const String &fname, const String &link )
 bool fal_chgrp( const String &fname, int32 owner )
 {
    AutoCString filename( fname );
-   bool ret = ::chown( filename.c_str(), -1, owner ) == 0;
+   bool ret = ::chown( filename.c_str(), (uid_t) -1, owner ) == 0;
    return ret;
 }
 

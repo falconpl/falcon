@@ -839,7 +839,6 @@ static void  internal_times ( ::Falcon::VMachine *vm, bool eval )
       return;
    }
 
-   CoreArray *origin = i_sequence->asArray();
    int32 start, end, step;
    if( i_count->isRange() )
    {

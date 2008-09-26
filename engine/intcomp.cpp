@@ -26,8 +26,8 @@ namespace Falcon
 
 InteractiveCompiler::InteractiveCompiler( ModuleLoader *l, VMachine *vm ):
    Compiler(),
-   m_loader( l ),
    m_lmodule( 0 ),
+   m_loader( l ),
    m_interactive( true )
 {
    if ( vm == 0 )

@@ -36,6 +36,12 @@ private:
    String m_string;
    int m_prev_stat;
 
+   Module *m_module;
+   AsmCompiler *m_compiler;
+   Stream *m_in;
+   bool m_done;
+   bool m_bDirective;
+   
    Pseudo m_rega;
    Pseudo m_regb;
    Pseudo m_regs1;
@@ -45,11 +51,6 @@ private:
    Pseudo m_nil;
    Pseudo m_true;
    Pseudo m_false;
-
-   Module *m_module;
-   AsmCompiler *m_compiler;
-   Stream *m_in;
-   bool m_done;
 
    typedef enum
    {
@@ -97,7 +98,7 @@ private:
 
    int checkDirectives();
    int checkPostDirectiveTokens();
-   bool m_bDirective;
+
 
 public:
    AsmLexer( Module *mod, AsmCompiler *cmp, Stream *in );

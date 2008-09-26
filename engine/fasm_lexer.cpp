@@ -30,25 +30,28 @@ namespace Falcon {
 
 
 AsmLexer::AsmLexer( Module *mod, AsmCompiler *cmp, Stream *in ):
-      m_module( mod ),
-      m_in( in ),
-      m_line( 1 ),
-      m_prev_stat(0),
       m_value(0),
+      m_line( 1 ),
       m_character( 0 ),
-      m_compiler( cmp ),
+      m_prev_stat(0),
+      
+      m_module( mod ),
+      m_compiler( cmp ),   
+      m_in( in ),
       m_done( false ),
-      m_state( e_line ),
       m_bDirective( true ),
+      
       m_rega( Pseudo::tregA, false),
       m_regb( Pseudo::tregB, false ),
       m_regs1( Pseudo::tregS1, false ),
       m_regs2( Pseudo::tregS2, false ),
-      m_regl1( Pseudo::tregL1, false ),
+   	m_regl1( Pseudo::tregL1, false ),
       m_regl2( Pseudo::tregL2, false ),
       m_nil( Pseudo::tnil, false ),
       m_true( Pseudo::imm_true, false ),
-      m_false( Pseudo::imm_false, false )
+      m_false( Pseudo::imm_false, false ),
+      
+      m_state( e_line )
 {}
 
 int AsmLexer::lex()

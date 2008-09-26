@@ -227,6 +227,9 @@ void PropEntry::reflectTo( CoreObject *instance, void *user_data, const Item &pr
          fassert( m_reflection.rfunc.to != 0 );
          m_reflection.rfunc.to( instance, user_data, *const_cast<Item *>(&prop), *this );
          break;
+         
+      default:
+         break;
    }
 }
 
@@ -290,6 +293,9 @@ void PropEntry::reflectFrom( CoreObject *instance, void *user_data, Item &prop )
 
       case e_reflectFunc:
          m_reflection.rfunc.from( instance, user_data, prop, *this );
+         break;
+         
+      default:
          break;
    }
 }

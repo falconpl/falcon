@@ -56,8 +56,8 @@ class FALCON_DYN_CLASS Map: public BaseAlloc
    uint16 m_keySize;
    uint16 m_valueSize;
 
-   MAP_PAGE *m_treeTop;
    uint32 m_size;
+   MAP_PAGE *m_treeTop;
 
    friend class MapIterator;
 
@@ -171,6 +171,7 @@ public:
 class MapPtrTraits: public ElementTraits
 {
 public:
+   virtual ~MapPtrTraits() {}
 	virtual uint32 memSize() const;
 	virtual void init( void *itemZone ) const;
 	virtual void copy( void *targetZone, const void *sourceZone ) const;
@@ -182,6 +183,7 @@ public:
 class MapPtrOwnTraits: public MapPtrTraits
 {
 public:
+   virtual ~MapPtrOwnTraits() {}
 	virtual void destroy( void *item ) const;
    virtual bool owning() const;
 };

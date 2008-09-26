@@ -784,8 +784,6 @@ FALCON_FUNC  Iterator_erase( ::Falcon::VMachine *vm )
       default:
       {
          CoreIterator *iter = (DictIterator *) self->getUserData();
-         CoreDict *dict = porigin->asDict();
-
          if( iter->isValid() )
          {
             iter->erase();

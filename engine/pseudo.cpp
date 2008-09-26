@@ -106,6 +106,8 @@ void Pseudo::write( Stream *out ) const
       }
       break;
 
+      default:
+         break;
       // in any other case, it can't write anything.
    }
 }
@@ -125,6 +127,8 @@ bool  Pseudo::operator <( const Pseudo &other ) const
          case imm_string: return asString() < other.asString();
          case imm_range: return asRangeStart() < other.asRangeStart();
          case tsymbol: return asSymbol()->id() < other.asSymbol()->id();
+         default:
+            return false;
       }
 
    return false;
@@ -173,6 +177,9 @@ int PseudoPtrTraits::compare( const void *firstArea, const void *secondv ) const
             else if( first->asSymbol()->id() > second->asSymbol()->id() )
                return 1;
             return 0;
+            
+         default: 
+            return 1;
       }
    }
 

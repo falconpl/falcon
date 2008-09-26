@@ -319,7 +319,6 @@ static bool broadcast_next_array( ::Falcon::VMachine *vm )
    }
 
    // select next item in the array.
-   Item *callback = 0;
    uint32 pos = (uint32) vm->local(0)->asInteger();
    CoreArray *aarr = vm->param(0)->asArray();
 
@@ -413,7 +412,6 @@ static bool broadcast_next_array( ::Falcon::VMachine *vm )
 
 FALCON_FUNC  broadcast( ::Falcon::VMachine *vm )
 {
-   uint32 pcount = vm->paramCount();
    Item *i_attrib = vm->param( 0 );
    if ( ! i_attrib->isAttribute() && ! i_attrib->isArray() )
    {

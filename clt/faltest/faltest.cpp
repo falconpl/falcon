@@ -132,7 +132,7 @@ static void account_free( void *mem )
 	if ( mem == 0 )
 		return;
 
-	long *block = (long *) mem;
+	unsigned long *block = (unsigned long *) mem;
 	block = block - 4;
 
 	if ( block[1] != 0xFEDCBA98 ) {
@@ -150,23 +150,23 @@ static void account_free( void *mem )
 
 static void *account_realloc( void *mem, size_t size )
 {
-	long *block = (long *) mem;
+	unsigned long *block = (unsigned long *) mem;
 
 	if ( mem != 0 )
 	{
 		block = block - 4;
 		if ( block[1] != 0xFEDCBA98 ) {
 			s_validAlloc = 0;
-			block = (long *) malloc( size + 16 );
+			block = (unsigned long *) malloc( size + 16 );
 		}
 		else {
 			s_allocatedMem -= block[0];
          s_totalMem -= block[0];
-			block = (long *) realloc( block, size + 16 );
+			block = (unsigned long *) realloc( block, size + 16 );
 		}
 	}
 	else {
-		block = (long *) malloc( size + 16 );
+		block = (unsigned long *) malloc( size + 16 );
       s_outBlocks++;
       s_totalOutBlocks++;
 	}
@@ -181,7 +181,7 @@ static void *account_realloc( void *mem, size_t size )
       s_totalOutBlocks--;
    }
 
-	block[0] = (long) size;
+	block[0] = (unsigned long) size;
 	block[1] = 0xFEDCBA98;
 	return block + 4;
 }

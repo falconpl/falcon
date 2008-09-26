@@ -30,10 +30,10 @@ namespace Falcon {
 
 //==================================
 // Deletor for the frame list.
-static void s_frameDestroyer( void *sframe )
+/*static void s_frameDestroyer( void *sframe )
 {
    delete (StackFrame *) sframe;
-}
+}*/
 
 VMContext::VMContext( VMachine *origin )
 {

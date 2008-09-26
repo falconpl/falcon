@@ -343,6 +343,7 @@ Item::e_sercode Item::serialize( Stream *file, bool bLive ) const
       case FLC_ITEM_TABMETHOD:
       {
          byte type = FLC_ITEM_TABMETHOD;
+         file->write( &type, 1 );
          Item temp = asTabMethodArray();
          serialize_function( file, this->asMethodFunction() );
          temp.serialize( file, bLive );

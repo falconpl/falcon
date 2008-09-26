@@ -39,15 +39,15 @@ namespace Falcon {
 Transcoder::Transcoder( Stream *s, bool bOwn ):
    Stream( t_proxy ),
    m_stream( s ),
-   m_streamOwner( bOwn ),
-   m_parseStatus( true )
+   m_parseStatus( true ),
+   m_streamOwner( bOwn )
 {
 }
 
 Transcoder::Transcoder( const Transcoder &other ):
    Stream( other ),
-   m_streamOwner( other.m_streamOwner ),
-   m_parseStatus( other.m_parseStatus )
+   m_parseStatus( other.m_parseStatus ),
+   m_streamOwner( other.m_streamOwner )
 {
    if( m_streamOwner )
       m_stream = static_cast<Stream *>(other.m_stream->clone());

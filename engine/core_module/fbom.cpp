@@ -817,7 +817,6 @@ FALCON_FUNC BOM_back( VMachine *vm )
 FALCON_FUNC BOM_table( VMachine *vm )
 {
    const Item &self = vm->self();
-   Item *i_field = vm->bomParam( 0 );
 
    if ( self.isArray() )
    {

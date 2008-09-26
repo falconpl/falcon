@@ -35,12 +35,12 @@ public:
 	} enum_default_buffer_size ;
 
 private:
-   byte *m_buffer;
-   uint64 m_filePos;
-   int32 m_bufPos;
-   int32 m_bufLen;
    int32 m_bufSize;
    bool m_changed;
+   byte *m_buffer;
+   int32 m_bufPos;
+   int32 m_bufLen;
+   uint64 m_filePos;
 
    bool refill();
 

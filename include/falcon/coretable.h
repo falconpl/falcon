@@ -73,11 +73,11 @@ public:
 class CoreTable: public Sequence
 {
    CoreArray *m_currentPage;
-   GenericVector m_headerData;
    GenericVector m_pages;
+   GenericVector m_headerData;
+   Map m_heading;
    uint32 m_pageNumId;
    uint32 m_order;
-   Map m_heading;
 
 public:
    enum {

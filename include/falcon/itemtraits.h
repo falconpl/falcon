@@ -31,6 +31,7 @@ class VMachine;
 class FALCON_DYN_CLASS ItemTraits: public ElementTraits
 {
 public:
+   virtual ~ItemTraits() {}
 	virtual uint32 memSize() const;
 	virtual void init( void *itemZone ) const;
 	virtual void copy( void *targetZone, const void *sourceZone ) const;
@@ -47,7 +48,8 @@ public:
    VMItemTraits( VMachine *vm ):
       m_vm( vm )
    {}
-
+   
+   virtual ~VMItemTraits()  {}
 	virtual int compare( const void *first, const void *second ) const;
 };
 

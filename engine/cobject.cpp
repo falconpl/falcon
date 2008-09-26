@@ -29,8 +29,8 @@ CoreObject::CoreObject( const CoreClass *generator,  void *user_data ):
    Garbageable( generator->origin(), sizeof( this ) ),
    m_attributes( 0 ),
    m_generatedBy( generator ),
-   m_cache( 0 ),
-   m_user_data( user_data )
+   m_user_data( user_data ),
+   m_cache( 0 )
 {
    ObjectManager *om = m_generatedBy->getObjectManager();
    const PropertyTable &pt = m_generatedBy->properties();

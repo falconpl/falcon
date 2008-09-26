@@ -35,8 +35,8 @@ class FALCON_DYN_SYM MemBuf: public Garbageable
 protected:
    byte *m_memory;
    uint32 m_size;
-   CoreObject *m_dependant;
    bool m_bOwn;
+   CoreObject *m_dependant;
 
 public:
 

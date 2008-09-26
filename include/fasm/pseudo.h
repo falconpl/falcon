@@ -86,12 +86,11 @@ private:
       } range;
    } pseudo_value;
 
-   type_t m_type;
    int m_line;
-
-   pseudo_value m_value;
+   type_t m_type;
    bool m_disp;
    bool m_fixed;
+   pseudo_value m_value;
 
 public:
 

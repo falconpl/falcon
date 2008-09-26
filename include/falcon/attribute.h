@@ -155,9 +155,9 @@ public:
 class FALCON_DYN_CLASS AttribHandler: public BaseAlloc
 {
    Attribute *m_attrib;
-   AttribObjectHandler *m_hobj;
    AttribHandler *m_next;
    AttribHandler *m_prev;
+   AttribObjectHandler *m_hobj;
 
 public:
    /** Initializes an attribute handler.

@@ -114,12 +114,12 @@ protected:
 
    /** Initializes the base file class. */
    Stream( t_streamType streamType ):
-      m_lastMoved( 0 ),
-      m_status( t_none ),
       m_rhBuffer( 0 ),
       m_rhBufferSize( 0 ),
       m_rhBufferPos( 0 ),
-      m_streamType( streamType )
+      m_streamType( streamType ),
+      m_status( t_none ),
+      m_lastMoved( 0 )
    {}
 
    typedef enum {

@@ -1247,8 +1247,8 @@ void Buffer::destroy( String *str ) const
 
 String::String( uint32 size ):
    m_class( &csh::handler_buffer ),
-   m_garbageable( false ),
    m_id(String::no_id),
+   m_garbageable( false ),
    m_bExported( false )
 {
    m_storage = (byte *) memAlloc( size );
@@ -1258,10 +1258,10 @@ String::String( uint32 size ):
 
 String::String( const char *data ):
    m_class( &csh::handler_static ),
-   m_garbageable( false ),
    m_allocated( 0 ),
-   m_storage( (byte*) const_cast< char *>(data) ),
    m_id(String::no_id),
+   m_storage( (byte*) const_cast< char *>(data) ),
+   m_garbageable( false ),
    m_bExported( false )
 {
    m_size = strlen( data );
@@ -1269,8 +1269,8 @@ String::String( const char *data ):
 
 String::String( const char *data, int32 len ):
    m_class( &csh::handler_buffer ),
-   m_garbageable( false ),
    m_id(String::no_id ),
+   m_garbageable( false ),
    m_bExported( false )
 {
    m_size = len >= 0 ? len : strlen( data );
@@ -1281,10 +1281,10 @@ String::String( const char *data, int32 len ):
 
 
 String::String( const wchar_t *data ):
-   m_garbageable( false ),
    m_allocated( 0 ),
-   m_storage( (byte*) const_cast< wchar_t *>(data) ),
    m_id( String::no_id ),
+   m_storage( (byte*) const_cast< wchar_t *>(data) ),
+   m_garbageable( false ),
    m_bExported( false )
 {
    if ( sizeof( wchar_t ) == 2 )
@@ -1301,9 +1301,9 @@ String::String( const wchar_t *data ):
 
 String::String( const wchar_t *data, int32 len ):
    m_allocated( 0 ),
+   m_id( String::no_id ),
    m_storage( (byte *) const_cast< wchar_t *>( data ) ),
    m_garbageable( false ),
-   m_id( String::no_id ),
    m_bExported( false )
 {
    if ( sizeof( wchar_t ) == 2 )
@@ -1332,9 +1332,9 @@ String::String( const wchar_t *data, int32 len ):
 String::String( const String &other, uint32 begin, uint32 end ):
    m_allocated( 0 ),
    m_size( 0 ),
+   m_id( String::no_id ),
    m_storage( 0 ),
    m_garbageable( false ),
-   m_id( String::no_id ),
    m_bExported( false )
 {
    // by default, copy manipulator
@@ -1796,7 +1796,6 @@ void String::escapeFull( String &strout ) const
 {
    int len = length();
    int pos = 0;
-   uint32 oldAlloc = strout.m_allocated;
    strout.m_class->reserve( &strout, len ); // prepare for at least len chars
    strout.size( 0 ); // clear target string
 
@@ -1829,8 +1828,6 @@ void String::unescape()
 {
    uint32 len = length();
    uint32 pos = 0;
-   uint32 oldAlloc = m_allocated;
-
 
    while( pos < len )
    {
@@ -2299,7 +2296,7 @@ void String::writeNumber( int64 number, const String &format )
    char buffer[64];
 
    char bufFormat[32];
-   if ( format.toCString( bufFormat, 32 ) == - 1 )
+   if ( format.toCString( bufFormat, 32 ) == npos )
       return;
 
    sprintf( buffer, bufFormat, number );
@@ -2311,7 +2308,7 @@ void String::writeNumber( double number, const String &format )
    char buffer[64];
 
    char bufFormat[32];
-   if ( format.toCString( bufFormat, 32 ) == - 1 )
+   if ( format.toCString( bufFormat, 32 ) == npos )
       return;
 
    sprintf( buffer, bufFormat, number );

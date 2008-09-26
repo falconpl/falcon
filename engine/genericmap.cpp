@@ -711,7 +711,6 @@ void Map::rebalanceNode( MAP_PAGE *page, MapIterator *scanner )
 
 void Map::splitPage( MAP_PAGE *page )
 {
-   static int splitted = 0;
    // splitting a page requires to insert the median element in the upper page.
    MAP_PAGE *parent = page->m_parent;
 

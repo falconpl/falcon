@@ -113,7 +113,8 @@ bool VFSFile::readStats( const URI& uri, FileStat &s )
 
 bool VFSFile::writeStats( const URI& uri, const FileStat &s )
 {
-   // todo
+   // TODO: write contents
+   return false;
 }
 
 bool VFSFile::chown( const URI &uri, int uid, int gid )

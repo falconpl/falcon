@@ -182,7 +182,7 @@ public:
 
    ModuleLoader( const ModuleLoader &other );
 
-   ~ModuleLoader();
+   virtual ~ModuleLoader();
 
    virtual ModuleLoader *clone() const;
 

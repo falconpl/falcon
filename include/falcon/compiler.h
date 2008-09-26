@@ -186,7 +186,10 @@ protected:
    /** True to raise only one exception. */
    bool m_delayRaise;
    Error *m_rootError;
-
+   InteractiveCompiler *m_metacomp;
+   VMachine *m_serviceVM;
+   ModuleLoader *m_serviceLoader;
+   
    /** Removes all the structures and temporary data used to compile a file.
       This function is called automatically by the various compile() and
       destructors.
@@ -206,11 +209,6 @@ protected:
    */
   void addPredefs();
 
-  InteractiveCompiler *m_metacomp;
-
-  VMachine *m_serviceVM;
-  ModuleLoader *m_serviceLoader;
-
 public:
    /** Creates an empty compiler.
       This constructor doesn't set a stream and a module for the compiler.
@@ -228,7 +226,7 @@ public:
    /** Destroys the compiler.
       Internally calls clear()
    */
-   ~Compiler();
+   virtual ~Compiler();
 
    /** Reset compiler settings to defaults and prepares for a new compilation.
       Precisely, this function:

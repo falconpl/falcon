@@ -31,14 +31,14 @@
 namespace Falcon {
 
 MemPool::MemPool():
+   m_setThreshold( 0 ),
+   m_msLimit( 0 ),
    m_status( 0 ),
-   m_allocatedItems( 0 ),
-   m_allocatedMem( 0 ),
    m_aliveItems( 0 ),
    m_aliveMem( 0 ),
-   m_setThreshold( 0 ),
-   m_autoClean( true ),
-   m_msLimit( 0 )
+   m_allocatedItems( 0 ),
+   m_allocatedMem( 0 ),
+   m_autoClean( true )
 {
    m_garbageRoot = 0;
    m_gstrRoot = 0;

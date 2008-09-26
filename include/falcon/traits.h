@@ -26,6 +26,7 @@ namespace Falcon {
 class FALCON_DYN_CLASS ElementTraits
 {
 public:
+   virtual ~ElementTraits() {}
 	virtual uint32 memSize() const = 0;
 	virtual void init( void *itemZone ) const = 0;
 	virtual void copy( void *targetZone, const void *sourceZone ) const = 0;
@@ -37,6 +38,7 @@ public:
 class FALCON_DYN_CLASS VoidpTraits: public ElementTraits
 {
 public:
+   virtual ~VoidpTraits() {}
 	virtual uint32 memSize() const;
 	virtual void init( void *itemZone ) const;
 	virtual void copy( void *targetZone, const void *sourceZone ) const;
@@ -48,6 +50,7 @@ public:
 class FALCON_DYN_CLASS IntTraits: public ElementTraits
 {
 public:
+   virtual ~IntTraits() {}
 	virtual uint32 memSize() const;
 	virtual void init( void *itemZone ) const;
 	virtual void copy( void *targetZone, const void *sourceZone ) const;
@@ -59,6 +62,7 @@ public:
 class FALCON_DYN_CLASS StringPtrTraits: public ElementTraits
 {
 public:
+   virtual ~StringPtrTraits() {}
 	virtual uint32 memSize() const;
 	virtual void init( void *itemZone ) const;
 	virtual void copy( void *targetZone, const void *sourceZone ) const;
@@ -70,6 +74,7 @@ public:
 class FALCON_DYN_CLASS StringPtrOwnTraits: public StringPtrTraits
 {
 public:
+   virtual ~StringPtrOwnTraits() {}
    virtual bool owning() const;
 	virtual void destroy( void *item ) const;
 };
@@ -77,6 +82,7 @@ public:
 class FALCON_DYN_CLASS StringTraits: public ElementTraits
 {
 public:
+   virtual ~StringTraits() {}
 	virtual uint32 memSize() const;
 	virtual void init( void *itemZone ) const;
 	virtual void copy( void *targetZone, const void *sourceZone ) const;

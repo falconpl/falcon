@@ -3947,6 +3947,9 @@ void opcodeHandler_STEX( register VMachine *vm )
          vm->raiseRTError(
                new ParamError( ErrorParam( e_param_indir_code ).origin( e_orig_vm ).extra( "STEX" ) ) );
       break;
+      
+      default:  // warning no-op
+         return;
    }
 }
 

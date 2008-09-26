@@ -36,8 +36,8 @@ namespace Falcon
 
 
 PageDictIterator::PageDictIterator( PageDict *owner, const MapIterator &iter ):
-   m_owner( owner ),
-   m_iter( iter )
+   m_iter( iter ),
+   m_owner( owner )
 {
    m_versionNumber = owner->version();
 }

@@ -1703,7 +1703,7 @@ class_decl:
             Falcon::ClassDef *cd = cls->symbol()->getClassDef();
             if ( cd->inheritance().size() != 0 )
             {
-               Falcon::StmtFunction *func = func = COMPILER->buildCtorFor( cls );
+               COMPILER->buildCtorFor( cls );
                // COMPILER->addStatement( func ); should be done in buildCtorFor
                // cls->ctorFunction( func ); idem
             }
@@ -1866,8 +1866,6 @@ init_decl:
       statement_list
 
       END EOL {
-         Falcon::StmtFunction *func = static_cast<Falcon::StmtFunction *>(COMPILER->getContext());
-
          COMPILER->popContext();
          COMPILER->popContextSet();
          COMPILER->popFunction();
@@ -2091,7 +2089,7 @@ object_decl:
             Falcon::ClassDef *cd = cls->symbol()->getClassDef();
             if ( !cd->inheritance().empty() )
             {
-               Falcon::StmtFunction *func = func = COMPILER->buildCtorFor( cls );
+               COMPILER->buildCtorFor( cls );
                // COMPILER->addStatement( func ); should be done in buildCtorFor
                // cls->ctorFunction( func ); idem
             }
@@ -2520,7 +2518,6 @@ lambda_expr:
       ARROW
       expression
          {
-            Falcon::StmtFunction *func = static_cast<Falcon::StmtFunction *>(COMPILER->getContext());
             COMPILER->addStatement( new Falcon::StmtReturn( LINE, $5 ) );
             COMPILER->checkLocalUndefined();
             $$ = COMPILER->closeClosure();

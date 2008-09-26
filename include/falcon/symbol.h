@@ -806,12 +806,12 @@ public:
       \param exp true if this symbol is exported.
    */
    Symbol( Module *mod, uint32 id, const String *name, bool exp ):
-      m_name( name ),
-      m_id( id ),
       m_type( tundef ),
       m_flags(exp ? 1: 0),
-      m_module(mod),
-      m_lineDecl(0)
+      m_id( id ),
+      m_lineDecl(0),
+      m_name( name ),
+      m_module(mod)
    {}
 
    /** Builds a symbol without ID and export class.
@@ -825,12 +825,12 @@ public:
                  (i.e. module string table).
    */
    Symbol( Module *mod, const String *name ):
-      m_name( name ),
       m_type( tundef ),
       m_flags( 0 ),
-      m_module( mod ),
+      m_id(0),
       m_lineDecl(0),
-      m_id(0)
+      m_name( name ),
+      m_module( mod )
    {}
 
    /** Basic empty constructor.
@@ -840,12 +840,12 @@ public:
       \note by default, the symbol is not exported.
    */
    Symbol( Module *owner ):
-      m_module( owner ),
-      m_name( 0 ),
-      m_id( 0 ),
       m_type( tundef ),
       m_flags( 0 ),
-      m_lineDecl(0)
+      m_id( 0 ),
+      m_lineDecl(0),
+      m_name( 0 ),
+      m_module( owner )
    {}
 
    ~Symbol() {

@@ -42,9 +42,9 @@ Options::Options():
    m_dump_dep( false ),
    m_isomorphic( false ),
    m_inline_str( false ),
-   m_fname(0),
    m_stdin( false ),
-   m_lineinfo( true )
+   m_lineinfo( true ),
+   m_fname(0)
 {}
 
 Options options;
@@ -297,6 +297,9 @@ void gen_function( Module *module, const Symbol *func, Stream *m_out, t_labelMap
          case Symbol::tlocal:
             m_out->writeString( ".local " + sym->name() + "\n" );
          break;
+            
+         default:
+            break;
       }
 
       iter.next();
@@ -341,6 +344,7 @@ void gen_propdef( Stream *m_out, const VarDef &def )
       case VarDef::t_symbol:
          m_out->writeString( "$" +def.asSymbol()->name() );
          break;
+      default: break;
    }
 }
 
@@ -673,7 +677,7 @@ void gen_code( Module *module, const FuncDef *fd, Stream *out, const t_labelMap 
          uint16 sw_obj = (int16) sw_count;
 
          //write the nil operand
-         if ( *reinterpret_cast<int32 *>(code) != 0xffffffff )
+         if ( *reinterpret_cast<uint32 *>(code) != 0xffffffff )
          {
             if ( ! options.m_isomorphic )
                out->writeString( "\t\t" );
@@ -842,7 +846,7 @@ void Analizer( FuncDef *fd, t_labelMap &labels )
          code += sizeof( int64 );
 
          //write the nil operand
-         if ( *reinterpret_cast<int32 *>(code) != 0xffffffff )
+         if ( *reinterpret_cast<uint32 *>(code) != 0xffffffff )
          {
             labels[*reinterpret_cast<int32 *>(code)] = 0;
          }
@@ -968,6 +972,8 @@ void write_symtable( e_tabmode mode , Stream *out, Module *mod )
                case Symbol::tvar: out->writeString( "VDEF" ); break;
                case Symbol::tinst: out->writeString( "INST" ); break;
                case Symbol::tattribute: out->writeString( "ATTR" ); break;
+               default:
+                  break;
             }
             out->writeString( " " + sym->name() + ": " );
             temp.writeNumber( (int64) sym->id() );
@@ -1043,6 +1049,7 @@ void write_symtable( e_tabmode mode , Stream *out, Module *mod )
                   out->writeString( sym->getInstance()->name() );
                   break;
                case Symbol::tattribute: out->writeString( ".attrib" ); break;
+               default: break;
             }
             out->writeString( " " + sym->name() );
             if( sym->declaredAt() != 0 ) {

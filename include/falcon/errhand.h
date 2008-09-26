@@ -34,7 +34,7 @@ namespace Falcon {
 class FALCON_DYN_CLASS ErrorHandler: public BaseAlloc
 {
 public:
-
+   virtual ~ErrorHandler() {} 
     /** Commits the error to the final media.
       Once the caller has properly setup the error description,
       this method will be called to deliver the error to the

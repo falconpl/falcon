@@ -550,6 +550,8 @@ bool Format::format( VMachine *vm, const Item &source, String &target )
                case e_binary: case e_binaryB: base = 2; break;
                case e_octalZero: case e_octal: base = 8; break;
                case e_cHexUpper: case e_hexUpper: case e_cHexLower: case e_hexLower: base = 16; break;
+               default:
+                  break;
             }
 
             while( intPart > 9e14 )
@@ -871,6 +873,9 @@ void Format::formatInt( int64 number, String &target, bool bUseGroup )
          base = 16;
          baseHexChr = 'A';
       break;
+         
+      default:
+         break;
    }
 
    while( number != 0 )
@@ -975,6 +980,9 @@ void Format::applyNeg( String &target, int64 number )
             target.prepend( m_paddingChr );
             target.append( m_paddingChr );
          break;
+            
+         default:
+            break;
       }
    }
 
