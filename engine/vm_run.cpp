@@ -2807,7 +2807,8 @@ void opcodeHandler_STV( register VMachine *vm )
 {
    Item *operand1 = vm->getOpcodeParam( 1 )->dereference();
    Item *operand2 = vm->getOpcodeParam( 2 )->dereference();
-   Item *origin = vm->getOpcodeParam( 3 )->dereference();
+   Item *origItm = vm->getOpcodeParam( 3 );
+   Item *origin = origItm->dereference();
 
    // counts as an assignment.
    // try to access a dictionary with every item
@@ -2825,7 +2826,9 @@ void opcodeHandler_STV( register VMachine *vm )
          operand1->asDict()->insert( *(operand2), new GarbageString( vm, *origin->asString() ));
       else
          operand1->asDict()->insert( *(operand2), *origin );
-      vm->regA() = *origin;
+      // If we're receivng B, then A has already the correct value.
+      if( origItm != &vm->regB() )
+         vm->regA() = *origin;
       return;
    }
 
@@ -2840,7 +2843,10 @@ void opcodeHandler_STV( register VMachine *vm )
                String *cs = operand1->asString();
                if ( cs->checkPosBound( pos ) ) {
                   cs->setCharAt( pos, cs_orig->getCharAt(0) );
-                  vm->regA() = cs_orig;
+                  
+                  // If we're receivng B, then A has already the correct value.
+                  if( origItm != &vm->regB() )
+                     vm->regA() = cs_orig;
                   return;
                }
             }
@@ -2854,7 +2860,9 @@ void opcodeHandler_STV( register VMachine *vm )
                register int32 pos = (int32) operand2->forceInteger();
                if ( cs->checkPosBound( pos ) ) {
                   cs->setCharAt( pos, (uint32) chr );
-                  vm->regA() = (int64) chr;
+                  // If we're receivng B, then A has already the correct value.
+                  if( origItm != &vm->regB() )
+                     vm->regA() = (int64) chr;
                   return;
                }
             }
@@ -2869,7 +2877,9 @@ void opcodeHandler_STV( register VMachine *vm )
                gcs->change( operand2->asRangeStart(), *origin->asString() ) :
                gcs->change( operand2->asRangeStart(), operand2->asRangeEnd(), *origin->asString() );
             if ( result ) {
-               vm->regA() = gcs;
+               // If we're receivng B, then A has already the correct value.
+               if( origItm != &vm->regB() )
+                  vm->regA() = gcs;
                return;
             }
          }
@@ -2886,7 +2896,9 @@ void opcodeHandler_STV( register VMachine *vm )
             if ( uPos <  mb->length() )
             {
                mb->set( uPos, (uint32) origin->forceInteger() );
-               vm->regA() = *origin;
+               // If we're receivng B, then A has already the correct value.
+               if( origItm != &vm->regB() )
+                  vm->regA() = *origin;
                return;
             }
          }
@@ -2904,7 +2916,9 @@ void opcodeHandler_STV( register VMachine *vm )
             else
                (*array)[ pos ] = *origin;
             
-            vm->regA() = (*array)[pos];
+            // If we're receivng B, then A has already the correct value.
+            if( origItm != &vm->regB() )
+               vm->regA() = (*array)[pos];
             return;
          }
       }
@@ -2924,7 +2938,13 @@ void opcodeHandler_STV( register VMachine *vm )
                if( ! array->remove( start, end ) )
                   break;
             }
-            vm->regA() = *origin;
+            
+            // we have already array in a separate var; even if the
+            // destination was the A register, we can overwrite it now.
+            // If we're receivng B, then A has already the correct value.
+            if( origItm != &vm->regB() )
+               vm->regA() = *origin;
+            
             if ( origin->isString() && origin->asString()->garbageable() ) {
                if( array->insert( origin->asString()->clone(), start ) )
                   return;
@@ -2942,9 +2962,9 @@ void opcodeHandler_STV( register VMachine *vm )
       case FLC_ITEM_RANGE << 8 | FLC_ITEM_NIL:
       {
          int32 pos = (int32) operand2->forceInteger();
+         bool bDone = false;
          if ( origin->isOrdinal() )
          {
-
             switch( pos )
             {
                case 0: case -3:
@@ -2952,24 +2972,24 @@ void opcodeHandler_STV( register VMachine *vm )
                         operand1->asRangeEnd(),
                         operand1->asRangeStep(),
                         operand1->asRangeIsOpen() );
-                   vm->regA() = *operand1;
-               return;
+                  bDone = true;
+                  break;
 
                case 1: case -2:
                   operand1->setRange( operand1->asRangeStart(),
                         (int32) origin->forceInteger(),
                         (int32) operand1->asRangeStep(),
                         false );
-                  vm->regA() = *operand1;
-                  return;
+                   bDone = true;
+                   break;
 
                case 2: case -1:
                   operand1->setRange( operand1->asRangeStart(),
                         operand1->asRangeEnd(),
                         (int32) origin->forceInteger(),
                         false );
-                  vm->regA() = *operand1;
-                  return;
+                   bDone = true;
+                   break;
             }
          }
          else if ( origin->isNil() && ( pos == -1 || pos == 1 || pos == -2 || pos == 2 ) )
@@ -2978,10 +2998,14 @@ void opcodeHandler_STV( register VMachine *vm )
                   0,
                   0,
                   true );
-            vm->regA() = *operand1;
-            return;
+             bDone = true;
          }
 
+         if ( bDone ) {
+            if ( origItm != &vm->regB() )
+               vm->regA() = *operand1;
+            return;
+         }
       }
       break;
    }
@@ -3018,7 +3042,9 @@ void opcodeHandler_STP( register VMachine *vm )
          }
 
          if( target->asObject()->setProperty( *method->asString(), *source ) ) {
-            vm->regA() = *source;
+            // when B is the source, the right value is already in A.
+            if( sourcend != &vm->regB() )
+               vm->regA() = *source;
             return;
          }
 
@@ -3044,7 +3070,10 @@ void opcodeHandler_STP( register VMachine *vm )
                   source->setString( gcs );
                }
                *prop->dereference() = *source;
-               vm->regA() = *source;
+               
+               // when B is the source, the right value is already in A.
+               if( sourcend != &vm->regB() )
+                  vm->regA() = *source;
                return;
             }
             else {
@@ -3061,7 +3090,10 @@ void opcodeHandler_STP( register VMachine *vm )
          Item temp;
          vm->referenceItem( temp, *sourcend );
          bindings->insert( *method, temp );
-         vm->regA() = temp;
+         
+         // when B is the source, the right value is already in A.
+         if( sourcend != &vm->regB() )
+            vm->regA() = temp;
          return;
       }
 
