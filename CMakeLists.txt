@@ -7,7 +7,7 @@ cmake_minimum_required(VERSION 2.4)
 PROJECT(Falcon_Feathers)
 
 #Check for environment
-IF($ENV{FALCON_DEVEL_TREE} STREQUAL "" )
+IF("$ENV{FALCON_DEVEL_TREE}" STREQUAL "" )
    MESSAGE( FATAL_ERROR "Sorry, Falcon environment not correctly configured" )
 ENDIF($ENV{FALCON_DEVEL_TREE} STREQUAL "")
 
@@ -42,6 +42,9 @@ SET( FALCON_LIB_DIR "${FALCON_INSTALL_TREE}/${FALCON_INSTALL_TREE_LIB}" )
 IF( WIN32 )
    SET( FALCON_MOD_INSTALL "${FALCON_BIN_DIR}" )
 ELSE( WIN32 )
+   # Set common UNIX warnings.
+   add_definitions(-Wall)
+   
    SET( FALCON_MOD_INSTALL "${FALCON_LIB_DIR}/falcon" )
 ENDIF( WIN32 )
 

@@ -336,7 +336,7 @@ FALCON_FUNC ZLib_uncompressText( ::Falcon::VMachine *vm )
    }
 
    int err;
-   uLong allocLen, compLen;
+   uLong compLen;
    Bytef *compData;
    const byte *dataIn;
    uint32 dataInSize;

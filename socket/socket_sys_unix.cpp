@@ -671,8 +671,8 @@ bool TCPSocket::isConnected()
 //================================================
 
 ServerSocket::ServerSocket( bool ipv6 ):
-   m_bListening( false ),
-   Socket( 0, ipv6 )
+   Socket( 0, ipv6 ),
+   m_bListening( false )
 {
 }
 
@@ -741,7 +741,6 @@ UDPSocket::UDPSocket( bool ipv6 ):
    Socket( 0, ipv6 )
 {
    // creating an unbound socket
-   int family = ipv6? PF_INET6 : PF_INET;
    int skt = socket( ipv6, SOCK_DGRAM, 0 );
    if ( skt == -1 ) {
       m_lastError = errno;

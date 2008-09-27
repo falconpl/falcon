@@ -45,6 +45,7 @@ protected:
    virtual __iterator &__prev();
 public:
    __iterator( __Node *nd=0 ) { m_base = m_node = nd; }
+   virtual ~__iterator() {}
    inline __iterator &operator=( __iterator src ) {
       copy( src );
       return *this;

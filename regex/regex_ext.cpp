@@ -527,9 +527,6 @@ static void internal_findAll( Falcon::VMachine *vm, bool overlapped )
 
 FALCON_FUNC Regex_findAll( ::Falcon::VMachine *vm )
 {
-   CoreObject *self = vm->self().asObject();
-   RegexCarrier *data = ( RegexCarrier *) self->getUserData();
-
    internal_findAll( vm, false );
 }
 

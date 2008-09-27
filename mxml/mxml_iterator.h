@@ -190,7 +190,6 @@ __iterator< __Node>( nd )
 template< class __Node >
 __iterator<__Node> &__path_iterator<__Node>::__next()
 {
-	__Node *ptr = this->m_node;
 	Falcon::String name;
 	Falcon::uint32 pos = m_path.rfind( "/" );
 

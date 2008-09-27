@@ -62,9 +62,9 @@ public:
 
    Address():
       m_systemData(0),
+      m_port(0),
       m_resolvCount(0),
-      m_activeHostId(-1),
-      m_port(0)
+      m_activeHostId(-1)
       {}
 
    ~Address();
@@ -165,10 +165,10 @@ protected:
    }
 
    Socket( void *systemData, bool ipv6 = false ):
+      m_ipv6(ipv6 ),
       m_lastError(0),
       m_timeout(0),
-      m_boundFamily(0),
-      m_ipv6(ipv6 )
+      m_boundFamily(0)
    {
       d.m_systemData = systemData;
    }

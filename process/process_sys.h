@@ -33,9 +33,9 @@ namespace Sys {
 
 class ProcessHandle: public FalconData
 {
-   int m_procVal;
-   int m_lastError;
    bool m_done;
+   int m_lastError;
+   int m_procVal;
 
 public:
    ProcessHandle():

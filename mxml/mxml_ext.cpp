@@ -508,7 +508,7 @@ FALCON_FUNC MXMLDocument_findNext( ::Falcon::VMachine *vm )
    be stacked inside the "middle" node, and all of them would have the same path.
 
    This method allows to use a "*" wildcard to substitute a level of the path with "anything". In
-   example, the path "/root/*\/middle/inner" would find the inner node in the above sample no matter
+   example, the path "/root/\*\/middle/inner" would find the inner node in the above sample no matter
    what the second-topmost node name was.
 
    If the path cannot match any node in the three, the method returns nil. It is possible to iterate
@@ -517,7 +517,7 @@ FALCON_FUNC MXMLDocument_findNext( ::Falcon::VMachine *vm )
    which have exactly two parents:
 
    @code
-      node = doc.findPath( "/*\/*\/*" )
+      node = doc.findPath( "/\*\/\*\/\*" )
       while node != nil
          > "Found a node at level 3:", node.path()
          ...

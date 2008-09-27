@@ -68,7 +68,6 @@ void Node::read( Falcon::Stream &in, const int style, const int l, const int pos
    Falcon::uint32 chr;
    Falcon::String entity;
    int iStatus = STATUS_BEGIN;
-   int iParentStatus = STATUS_BEGIN;
 
    m_prev = m_next = m_parent = m_child = m_last_child = 0;
    // defaults to data type: parents will ignore/destroy empty data elements
@@ -851,7 +850,9 @@ void Node::write( Falcon::Stream &out, const int style ) const
          }
          out.put( '\n' );
       break;
-
+         
+      default:
+         break;
    }
 
 }

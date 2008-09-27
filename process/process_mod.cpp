@@ -31,7 +31,7 @@ namespace Falcon {
 
 namespace Mod {
 
-const int assing_block = 32;
+const uint32 assing_block = 32;
 
 static String **assignString( const String &params, String **args, uint32 &assigned, uint32 &count, uint32 posInit, uint32 pos )
 {

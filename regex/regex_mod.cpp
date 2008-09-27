@@ -24,8 +24,8 @@
 namespace Falcon {
 
 RegexCarrier::RegexCarrier( pcre *pattern ):
-   m_extra( 0 ),
-   m_pattern( pattern )
+   m_pattern( pattern ),
+   m_extra( 0 )
 {
    int retval;
    pcre_fullinfo( pattern, 0, PCRE_INFO_CAPTURECOUNT, &retval );
