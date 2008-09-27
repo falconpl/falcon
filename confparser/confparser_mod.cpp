@@ -240,6 +240,9 @@ bool ConfigFileLine::parseLine()
                return true;
             }
          break;
+            
+         default:
+            break;
       }
    }
 
@@ -314,7 +317,7 @@ bool ConfigEntryPtrTraits::owning() const
 
 namespace traits
 {
-   ConfigEntryPtrTraits t_ConfigEntryPtr;
+   ConfigEntryPtrTraits &t_ConfigEntryPtr() { static ConfigEntryPtrTraits td; return td; }
 }
 
 
@@ -324,8 +327,8 @@ namespace traits
 
 ConfigSection::ConfigSection( const String &name, ListElement *begin, ListElement *ae ):
    m_name(name),
+   m_entries( &traits::t_stringptr(), &traits::t_ConfigEntryPtr() ),
    m_sectDecl( begin ),
-   m_entries( &traits::t_stringptr, &traits::t_ConfigEntryPtr ),
    m_additionPoint( ae )
 {
 }
@@ -366,7 +369,7 @@ bool ConfigSectionPtrTraits::owning() const
 
 namespace traits
 {
-   ConfigSectionPtrTraits t_ConfigSectionPtr;
+   ConfigSectionPtrTraits &t_ConfigSectionPtr() { static ConfigSectionPtrTraits dt; return dt; }
 }
 
 //==============================================================
@@ -374,16 +377,16 @@ namespace traits
 //==============================================================
 
 ConfigFile::ConfigFile( const String &filename, const String &encoding ):
-   m_lines( deletor_ConfigFileLine ),
-   m_encoding( encoding ),
    m_fileName( filename ),
-   m_errorLine( 0 ),
-   m_currentValue( 0 ),
+   m_lines( deletor_ConfigFileLine ),
    m_rootEntry( "root", 0 ),
-   m_sections( &traits::t_stringptr, &traits::t_ConfigSectionPtr ),
+   m_sections( &traits::t_stringptr(), &traits::t_ConfigSectionPtr() ),
+   m_fsError(0),
+   m_encoding( encoding ),
+   m_currentValue( 0 ),
+   m_errorLine( 0 ),
    m_bUseUnixComments( false ),
-   m_bUseUnixSpecs( false ),
-   m_fsError(0)
+   m_bUseUnixSpecs( false )
 {
 }
 

@@ -165,6 +165,8 @@ class ConfigFile: public FalconData
    ListElement *m_currentValue;
 
    uint32 m_errorLine;
+   bool m_bUseUnixComments;
+   bool m_bUseUnixSpecs;
 
    bool getFirstKey_internal( ConfigSection *sect, const String &prefix, String &key );
    void setValue_internal( ConfigSection *sect, const String &key, const String &value );
@@ -172,8 +174,6 @@ class ConfigFile: public FalconData
    bool removeValue_internal( ConfigSection *sect, const String &key );
    bool removeCategory_internal( ConfigSection *sect, const String &key );
 
-   bool m_bUseUnixComments;
-   bool m_bUseUnixSpecs;
 public:
    ConfigFile( const String &fileName, const String &encoding );
    virtual ~ConfigFile();
