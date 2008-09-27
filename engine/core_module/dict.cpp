@@ -27,7 +27,7 @@
 #include "core_messages.h"
 
 /*#
-   
+
 */
 
 /*#
@@ -42,6 +42,35 @@ namespace core {
 /****************************************
    Support for dictionaries
 ****************************************/
+
+/*#
+   @function bless
+   @brief Blesses a dictionary, making it an OOP instance.
+   @param dict A dictionary to be blessed.
+   @optparam mode True (default) to bless the dictionary, false to unbless it.
+   @return The same dictonary passed as @b dict.
+
+   Blessed dictionaries become sensible to OOP operators: dot accessors
+   and "provides" keyword behave as if the dictionary was an object instance,
+   with its string entries being properties.
+*/
+FALCON_FUNC  bless ( ::Falcon::VMachine *vm )
+{
+   Item *i_dict = vm->param(0);
+   Item *i_mode = vm->param(1);
+
+
+   if( i_dict == 0  || ! i_dict->isDict() ) {
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+      origin( e_orig_runtime ).
+      extra( "D,[B]" ) ) );
+      return;
+   }
+
+   bool mode = i_mode == 0 ? true: i_mode->isTrue();
+   i_dict->asDict()->bless( mode );
+   vm->regA() = *i_dict;
+}
 
 /*#
    @function dictInsert

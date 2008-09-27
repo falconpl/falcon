@@ -247,6 +247,7 @@ FALCON_FUNC  marshalCBX( ::Falcon::VMachine *vm );
 FALCON_FUNC  marshalCBR( ::Falcon::VMachine *vm );
 
 
+FALCON_FUNC  bless( ::Falcon::VMachine *vm );
 FALCON_FUNC  dictMerge( ::Falcon::VMachine *vm );
 FALCON_FUNC  dictKeys( ::Falcon::VMachine *vm );
 FALCON_FUNC  dictValues( ::Falcon::VMachine *vm );
@@ -404,6 +405,7 @@ FALCON_FUNC  Table_first ( ::Falcon::VMachine *vm );
 FALCON_FUNC  Table_last ( ::Falcon::VMachine *vm );
 FALCON_FUNC  Table_get ( ::Falcon::VMachine *vm );
 FALCON_FUNC  Table_find ( ::Falcon::VMachine *vm );
+FALCON_FUNC  Table_insert ( ::Falcon::VMachine *vm );
 
 /** Message table **/
 extern const wchar_t *message_table[];

@@ -40,6 +40,7 @@ public:
 
 class FALCON_DYN_CLASS CoreDict: public Garbageable
 {
+   bool m_blessed;
 
 protected:
    CoreDict( VMachine *vm ):
@@ -98,6 +99,18 @@ public:
 
    bool empty() const { return length() == 0; }
 
+   /** Returns true if this dictionary is blessed. */
+   bool isBlessed() const { return m_blessed; }
+
+   /** Bless this dictionary.
+      A blessed dictionary becomes a flessible instance.
+
+      Its elements are treated as properties; the dot accessor will
+      act as searching for the given property, and a read dot
+      accessor will create a mehtod; in the method, the dictionary
+      can be accessed through "self".
+   */
+   void bless( bool b ) { m_blessed = b; }
 };
 
 }

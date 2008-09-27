@@ -584,6 +584,8 @@ Module* core_module_init()
    //=======================================================================
    // RTL dictionary
    //=======================================================================
+   self->addExtFunc( "bless", Falcon::core::bless )->
+      addParam("dict")->addParam("mode");
    self->addExtFunc( "dictMerge", Falcon::core::dictMerge )->
       addParam("destDict")->addParam("sourceDict");
    self->addExtFunc( "dictKeys", Falcon::core::dictKeys )->
@@ -1041,6 +1043,8 @@ Module* core_module_init()
       addParam("row")->addParam("tcol");
    self->addClassMethod( table_class, "find", Falcon::core::Table_find ).asSymbol()->
       addParam("column")->addParam("value")->addParam("tcol");
+   self->addClassMethod( table_class, "insert", Falcon::core::Table_insert ).asSymbol()->
+      addParam("element")->addParam("pos");
 
    return self;
 }

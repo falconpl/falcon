@@ -1987,6 +1987,29 @@ void opcodeHandler_LDP( register VMachine *vm )
                return;
             }
          }
+         break;
+
+         case FLC_ITEM_DICT:
+         {
+            Item *found;
+            CoreDict *dict = source->asDict();
+            if ( dict->isBlessed() )
+            {
+               if( ( found = source->asDict()->find( property ) ) != 0 )
+               {
+                  found = found->dereference();
+                  if( found->isFunction() )
+                  {
+                     vm->regA().setTabMethod( source->asDict(), found->asFunction(), found->asModule() );
+                  }
+                  else
+                     vm->regA() = *found;
+
+                  return;
+               }
+            }
+         }
+         break;
       }
 
       // try to find a generic method
@@ -2547,6 +2570,10 @@ void opcodeHandler_PROV( register VMachine *vm )
       case FLC_ITEM_ARRAY:
          result = operand1->asArray()->getProperty( *operand2->asString() )!=0;
       break;
+      case FLC_ITEM_DICT:
+         result = operand1->asDict()->isBlessed() &&
+                  operand1->asDict()->find( operand2->asString() )!=0;
+      break;
       default:
          result = false;
    }
@@ -2568,7 +2595,7 @@ void opcodeHandler_STVS( register VMachine *vm )
       return;
    }
 
-   
+
    Item origin = vm->m_stack->topItem();
    vm->m_stack->pop();
 
@@ -2610,7 +2637,7 @@ void opcodeHandler_STVS( register VMachine *vm )
             bool result = operand2->asRangeIsOpen() ?
                gcs->change( operand2->asRangeStart(), *origin.asString() ) :
                gcs->change( operand2->asRangeStart(), operand2->asRangeEnd(), *origin.asString() );
-            
+
             if ( result ) {
                vm->regA() = gcs;
                return;
@@ -2693,13 +2720,14 @@ void opcodeHandler_STPS( register VMachine *vm )
    Item *method = operand2;
 
    // STP(S) counts as an assignments, we have to store the thing in A.
-   Item &item = vm->regA();
-   item = vm->m_stack->topItem();
+   Item item = vm->m_stack->topItem();
    vm->m_stack->pop();
 
    if ( method->isString() )
    {
-      if ( target->isObject() )
+      switch( target->type() )
+      {
+      case FLC_ITEM_OBJECT:
       {
          // Are we restoring an original item?
          if( item.isMethod() && item.asMethodObject() == target->asObject() )
@@ -2713,7 +2741,10 @@ void opcodeHandler_STPS( register VMachine *vm )
          }
 
          if( target->asObject()->setProperty( *method->asString(), item ) )
+         {
+            vm->regA() = item;
             return;
+         }
 
          vm->raiseRTError(
             new AccessError( ErrorParam( e_prop_acc ).origin( e_orig_vm ) .
@@ -2721,7 +2752,9 @@ void opcodeHandler_STPS( register VMachine *vm )
 
          return;
       }
-      else if ( target->isClass() )
+      break;
+
+      case FLC_ITEM_CLASS:
       {
          // is the target property a static property -- it must be a reference.
          PropertyTable &pt = target->asClass()->properties();
@@ -2737,6 +2770,7 @@ void opcodeHandler_STPS( register VMachine *vm )
                   item.setString( gcs );
                }
                *prop->dereference() = item;
+               vm->regA() = item;
                return;
             }
             else {
@@ -2751,13 +2785,29 @@ void opcodeHandler_STPS( register VMachine *vm )
             new AccessError( ErrorParam( e_prop_acc ).origin( e_orig_vm ) .
                extra( *method->asString() ) ) );
       }
-      else if ( target->isArray() )
+      break;
+
+      case FLC_ITEM_ARRAY:
       {
          CoreDict *bindings = target->asArray()->makeBindings();
          Item temp;
          vm->referenceItem( temp, item );
          bindings->insert( *method, temp );
+         vm->regA() = temp;
          return;
+      }
+      break;
+
+      case FLC_ITEM_DICT:
+      {
+         CoreDict *dict = target->asDict();
+         if( dict->isBlessed() ) {
+            dict->insert( method->asString(), item );
+            vm->regA() = item;
+            return;
+         }
+      }
+      break;
       }
    }
 
@@ -2819,7 +2869,7 @@ void opcodeHandler_STV( register VMachine *vm )
          vm->regA() = new GarbageString( vm, *origin->asString() );
       else
          vm->regA() = *origin;
-      
+
       operand1->asDict()->insert( *(operand2), vm->regA() );
       */
       if ( origin->isString() && origin->asString()->garbageable() )
@@ -2843,7 +2893,7 @@ void opcodeHandler_STV( register VMachine *vm )
                String *cs = operand1->asString();
                if ( cs->checkPosBound( pos ) ) {
                   cs->setCharAt( pos, cs_orig->getCharAt(0) );
-                  
+
                   // If we're receivng B, then A has already the correct value.
                   if( origItm != &vm->regB() )
                      vm->regA() = cs_orig;
@@ -2915,7 +2965,7 @@ void opcodeHandler_STV( register VMachine *vm )
                (*array)[ pos ] = origin->asString()->clone();
             else
                (*array)[ pos ] = *origin;
-            
+
             // If we're receivng B, then A has already the correct value.
             if( origItm != &vm->regB() )
                vm->regA() = (*array)[pos];
@@ -2938,13 +2988,13 @@ void opcodeHandler_STV( register VMachine *vm )
                if( ! array->remove( start, end ) )
                   break;
             }
-            
+
             // we have already array in a separate var; even if the
             // destination was the A register, we can overwrite it now.
             // If we're receivng B, then A has already the correct value.
             if( origItm != &vm->regB() )
                vm->regA() = *origin;
-            
+
             if ( origin->isString() && origin->asString()->garbageable() ) {
                if( array->insert( origin->asString()->clone(), start ) )
                   return;
@@ -3025,7 +3075,9 @@ void opcodeHandler_STP( register VMachine *vm )
    if ( method->isString() )
    {
       // STP counts as an assignment, we have to copy the thing in A
-      if ( target->isObject() )
+      switch( target->type() )
+      {
+      case FLC_ITEM_OBJECT:
       {
          Item temp;
 
@@ -3054,7 +3106,9 @@ void opcodeHandler_STP( register VMachine *vm )
 
          return;
       }
-      else if ( target->isClass() )
+      break;
+
+      case FLC_ITEM_CLASS:
       {
          // is the target property a static property -- it must be a reference.
          PropertyTable &pt = target->asClass()->properties();
@@ -3070,7 +3124,7 @@ void opcodeHandler_STP( register VMachine *vm )
                   source->setString( gcs );
                }
                *prop->dereference() = *source;
-               
+
                // when B is the source, the right value is already in A.
                if( sourcend != &vm->regB() )
                   vm->regA() = *source;
@@ -3084,17 +3138,36 @@ void opcodeHandler_STP( register VMachine *vm )
             }
          }
       }
-      else if ( target->isArray() )
+      break;
+
+      case FLC_ITEM_ARRAY:
       {
          CoreDict *bindings = target->asArray()->makeBindings();
          Item temp;
          vm->referenceItem( temp, *sourcend );
          bindings->insert( *method, temp );
-         
+
          // when B is the source, the right value is already in A.
          if( sourcend != &vm->regB() )
             vm->regA() = temp;
          return;
+      }
+      break;
+
+      case FLC_ITEM_DICT:
+      {
+         CoreDict *dict = target->asDict();
+         if( dict->isBlessed() ) {
+            dict->insert( method->asString(), *source );
+
+            // when B is the source, the right value is already in A.
+            if( sourcend != &vm->regB() )
+               vm->regA() = *source;
+            return;
+         }
+      }
+      break;
+
       }
 
       vm->raiseRTError(
@@ -3272,6 +3345,15 @@ void opcodeHandler_STPR( register VMachine *vm )
          vm->referenceItem( temp, *source ); // source is not dereferenced.
          bindings->insert( *operand2, temp );
          return;
+      }
+      break;
+
+      case FLC_ITEM_DICT:
+      {
+         CoreDict *dict = target->asDict();
+         if( dict->isBlessed() ) {
+            dict->insert( *operand2, *source );
+         }
       }
       break;
    }
@@ -3658,50 +3740,9 @@ void opcodeHandler_LDVR( register VMachine *vm )
                new AccessError( ErrorParam( e_arracc ).origin( e_orig_vm ).extra( "LDVR" ) ) );
 }
 */
-//5F
-/*
-void opcodeHandler_LDPR( register VMachine *vm )
-{
-   Item *operand1 = vm->getOpcodeParam( 1 )->dereference();
-   Item *operand2 = vm->getOpcodeParam( 2 )->dereference();
 
-   Item *source = operand1;
+//5F - empty
 
-   switch( source->type() )
-   {
-      case FLC_ITEM_OBJECT:
-         if ( operand2->type() == FLC_ITEM_STRING )
-         {
-            Item prop;
-            if( source->asObject()->getProperty( *operand2->asString(), prop ) )
-            {
-               // we must create a method if the property is a function.
-               GarbageItem *gitem;
-               // we don't use memPool::referenceItem for performace reasons
-               if ( prop.isReference() ) {
-                  gitem = prop.asReference();
-               }
-               else{
-                  gitem = new GarbageItem( vm, prop );
-                  prop.setReference( gitem );
-                  source->asObject()->setProperty( *operand2->asString(), prop );
-               }
-               vm->m_regA.setReference( gitem );
-               return;
-            }
-
-            vm->raiseRTError(
-               new AccessError( ErrorParam( e_prop_acc ).origin( e_orig_vm ) .
-                  extra( *operand2->asString() ) ) );
-            return;
-         }
-      break;
-   }
-
-   vm->raiseRTError(
-               new AccessError( ErrorParam( e_prop_acc ).origin( e_orig_vm ).extra( "LDPR" ) ) );
-}
-*/
 // 60
 void opcodeHandler_POWS( register VMachine *vm )
 {
@@ -3947,7 +3988,7 @@ void opcodeHandler_STEX( register VMachine *vm )
          vm->raiseRTError(
                new ParamError( ErrorParam( e_param_indir_code ).origin( e_orig_vm ).extra( "STEX" ) ) );
       break;
-      
+
       default:  // warning no-op
          return;
    }

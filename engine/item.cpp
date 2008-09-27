@@ -104,10 +104,10 @@ bool Item::internal_is_equal( const Item &other ) const
 
       case FLC_ITEM_METHOD:
          return asMethodObject() == other.asMethodObject() && asMethodFunction() == other.asMethodFunction();
-      
-      case FLC_ITEM_TABMETHOD: 
+
+      case FLC_ITEM_TABMETHOD:
          return asTabMethodArray() == other.asTabMethodArray() && asMethodFunction() == other.asMethodFunction();
- 
+
       case FLC_ITEM_REFERENCE:
          return asReference() == other.asReference();
 
@@ -189,7 +189,7 @@ static int64 s_atoi( const String *cs )
    return (int64)(val*base);
 }
 */
-   
+
 int64 Item::forceInteger() const
 {
    switch( type() ) {
@@ -631,13 +631,16 @@ void Item::destroy()
             fbitm.destroy();
          }
          break;
-      
+
       case FLC_ITEM_METHOD:
          Item(asMethodObject()).destroy();
       break;
-      
+
       case FLC_ITEM_TABMETHOD:
-         Item(asTabMethodArray()).destroy();
+         if( isTabMethodDict() )
+            Item(asTabMethodArray()).destroy();
+         else
+            Item(asTabMethodDict()).destroy();
       break;
 
       case FLC_ITEM_CLSMETHOD:

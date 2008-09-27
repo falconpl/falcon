@@ -420,11 +420,18 @@ void MemPool::markItem( Item &item )
             item.setNil();
          else
          {
-            CoreArray *co = item.asTabMethodArray();
+            Garbageable *co = item.asTabMethodArray();
             if ( co->mark() != currentMark() )
             {
-               Item temp = co;
-               markItemFast( temp );
+               if( item.isTabMethodDict() )
+               {
+                  Item temp = item.asTabMethodDict();
+                  markItemFast( temp );
+               }
+               else {
+                  Item temp = item.asTabMethodArray();
+                  markItemFast( temp );
+               }
             }
             // no need to mark the live modue;
             // if it's alive it has been marked by the main loop

@@ -87,7 +87,7 @@ FALCON_FUNC Table_init( VMachine* vm )
 
 /*#
    @method getHeader Table
-   @brief Gets the name of one header, or the list of header namese.
+   @brief Gets the name of one header, or the list of header names.
    @optparam id If given, a number indicating the column of which to get the name.
    @return A string (if @id is given) or the vector of ordered column names.
 */
@@ -175,7 +175,11 @@ FALCON_FUNC Table_getColData( VMachine* vm )
    }
 }
 
-
+/*#
+   @method order Table
+   @brief Returns the order of the table (column count).
+   @return The number of the columns, and of the length of every array in the table.
+*/
 FALCON_FUNC Table_order( VMachine* vm )
 {
    CoreObject* self = vm->self().asObject();
@@ -183,6 +187,16 @@ FALCON_FUNC Table_order( VMachine* vm )
    vm->retval( (int64) table->order() );
 }
 
+/*#
+   @method len Table
+   @brief Returns the length of the table (the number of rows).
+   @return The rows in the current page of the table.
+
+   Tables may have multiple pages, each of which having the same order
+   (column count), but different length (rows).
+
+   This method returns the length of the currently active page.
+*/
 FALCON_FUNC Table_len( VMachine* vm )
 {
    CoreObject* self = vm->self().asObject();
@@ -345,11 +359,14 @@ static void internal_get_item( CoreTable *table, CoreArray *row, VMachine *vm, I
 
 /*#
    @method get Table
-   @brief Gets an element in a table.
+   @brief Gets a row in a table.
    @param row a Row number.
    @optparam tcol The name of the column to be extracted (target column; either name or 0 based number).
    @return An array (if the column is not specified) or an item.
 
+   The returned array is a "table component", and as such, its size cannot be changed;
+   also, it inherits all the table clumns, that can be accessed as bindings with the
+   dot accessor and will resolve in one of the element in the array.
 */
 FALCON_FUNC  Table_get ( ::Falcon::VMachine *vm )
 {
@@ -398,6 +415,12 @@ FALCON_FUNC  Table_get ( ::Falcon::VMachine *vm )
    @optparam tcol The name of the column to be extracted (target column; either name or 0 based number).
    @return An array (if the column is not specified) or an item.
 
+   The returned array is a "table component", and as such, its size cannot be changed;
+   also, it inherits all the table clumns, that can be accessed as bindings with the
+   dot accessor and will resolve in one of the element in the array.
+
+   In case of success, through the BOM method @a BOM.tabRow it is possible to retreive
+   the table row position of the returned array.
 */
 FALCON_FUNC  Table_find ( ::Falcon::VMachine *vm )
 {
@@ -459,6 +482,59 @@ FALCON_FUNC  Table_find ( ::Falcon::VMachine *vm )
    else {
       internal_get_item( table, (*page)[pos].asArray(), vm, i_tcol );
    }
+}
+
+/*#
+   @method insert Table
+   @brief Insert a row in the table.
+   @param element The row to be inserted.
+   @param pos The position where to insert the row.
+   @raise AccessError if the position is out of range.
+   @raise ParamError if the row is not an array with the same lenght of the table order.
+
+   The element is inserted before the given position.
+
+   If @b pos is greater or equal to the length of the table, the row will be inserted
+   at end (added). If @b pos is negative, the row will be accessed backward, -1 being
+   the last element (the row will be inserted before the last one).
+*/
+FALCON_FUNC  Table_insert ( ::Falcon::VMachine *vm )
+{
+   CoreTable *table = static_cast<CoreTable *>( vm->self().asObject()->getUserData() );
+   Item* i_element = vm->param(0);
+   Item* i_pos = vm->param(1);
+
+   if ( i_element == 0 || ! i_element->isArray()
+        || i_pos == 0 || ! i_pos->isOrdinal() )
+   {
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
+         .origin( e_orig_runtime )
+         .extra( "A,N" ) ) );
+      return;
+   }
+
+   CoreArray* element = i_element->asArray();
+   uint32 pos = i_pos->forceInteger();
+   if ( element->length() != table->order() )
+   {
+      vm->raiseModError( new ParamError( ErrorParam( e_param_type, __LINE__ )
+         .origin( e_orig_runtime )
+         .extra( FAL_STR( rtl_invalid_tabrow ) ) ) );
+      return;
+   }
+
+   CoreArray* page = table->currentPage();
+   if ( pos < 0 )
+      pos = page->length() - pos;
+
+   if ( pos > page->length() ) {
+      page->append( element );
+   }
+   else {
+      page->insert( Item(element), pos );
+   }
+
+   element->table( vm->self().asObject() );
 }
 
 }

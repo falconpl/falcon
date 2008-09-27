@@ -271,7 +271,11 @@ void inspect_internal( VMachine *vm, bool isShort, const Item *elem, int32 level
                inspect_internal( vm, isShort, &itemp, level + 1, true );
             }
             else {
-               itemp.setArray( elem->asTabMethodArray() );
+               if ( elem->isTabMethodDict() )
+                  itemp.setArray( elem->asTabMethodArray() );
+               else
+                  itemp.setDict( elem->asTabMethodDict() );
+
                inspect_internal( vm, isShort, &itemp, level + 1, true );
             }
             itemp.setFunction( elem->asMethodFunction(), elem->asModule() );

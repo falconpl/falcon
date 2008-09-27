@@ -239,6 +239,7 @@ void VMachine::internal_construct()
    m_fbom->add( "back" );
    m_fbom->add( "table" );
    m_fbom->add( "tabField" );
+   m_fbom->add( "tabRow" );
 }
 
 
@@ -725,7 +726,7 @@ bool VMachine::linkSymbol( Symbol *sym, LiveModule *livemod )
                itm->setString( new GarbageString( this, *vd->asString() ) );
             }
             break;
-               
+
             default:
                break;
          }
@@ -1103,7 +1104,7 @@ PropertyTable *VMachine::createClassTemplate( LiveModule *lmod, const Map &pt )
             }
          }
          break;
-         
+
          default:
             break; // compiler warning no-op
       }
@@ -1637,11 +1638,6 @@ bool VMachine::callItem( const Item &callable, int32 paramCount, e_callMode call
       }
 
       case FLC_ITEM_METHOD:
-         self = callable.asMethodObject();
-         target = callable.asMethodFunction();
-         targetMod = callable.asModule();
-      break;
-
       case FLC_ITEM_TABMETHOD:
          self = callable.asMethodObject();
          target = callable.asMethodFunction();
@@ -1881,8 +1877,13 @@ bool VMachine::callItem( const Item &callable, int32 paramCount, e_callMode call
       if ( self == 0 )
          m_regS1.setNil();
       else {
-         if( callable.isTabMethod() )
-            m_regS1.setArray( static_cast<CoreArray*>(self) );
+
+         if( callable.isTabMethod() ) {
+            if( callable.isTabMethodDict() )
+               m_regS1.setDict( static_cast<CoreDict*>(self) );
+            else
+               m_regS1.setArray( static_cast<CoreArray*>(self) );
+         }
          else
             m_regS1.setObject( static_cast<CoreObject*>(self) );
       }
@@ -2049,10 +2050,6 @@ bool VMachine::callItemPass( const Item &callable  )
       }
 
       case FLC_ITEM_METHOD:
-         target = callable.asMethodFunction();
-         targetMod = callable.asModule();
-      break;
-      
       case FLC_ITEM_TABMETHOD:
          target = callable.asMethodFunction();
          targetMod = callable.asModule();
@@ -2906,6 +2903,7 @@ bool VMachine::findLocalVariable( const String &name, Item &itm ) const
       interToken,
       dotAccessor,
       dotArrayAccessor,
+      dotDictAccessor,
       squareAccessor,
       postSquareAccessor,
       singleQuote,
@@ -3021,6 +3019,34 @@ bool VMachine::findLocalVariable( const String &name, Item &itm ) const
                return false;
          break;
 
+         case dotDictAccessor:
+            // wating for a complete token.
+
+            if ( vmIsWhiteSpace( chr ) || chr == '.' || chr == '[' )
+            {
+               // ignore leading ws.
+               if( sItemName.size() == 0 && vmIsWhiteSpace( chr ) )
+                  break;
+
+               // access the item. We know it's an object or we wouldn't be in this state.
+               // also, notice that we change the item itself.
+               Item *tmp;
+               if ( ( tmp = itm.asDict()->find( &sItemName ) ) == 0 )
+                  return false;
+               itm = *tmp;
+
+               // set state accordingly to chr.
+               goto resetState;
+            }
+            else if ( vmIsTokenChr( chr ) )
+            {
+               sItemName.append( chr );
+            }
+            else
+               return false;
+         break;
+
+
          //===================================================
          // Parse the square accessor; from [ to matching ]
 
@@ -3132,6 +3158,8 @@ bool VMachine::findLocalVariable( const String &name, Item &itm ) const
                      state = dotAccessor;
                   else if( itm.isArray() )
                      state = dotArrayAccessor;
+                  else if( itm.isDict() && itm.asDict()->isBlessed() )
+                     state = dotDictAccessor;
                   else
                      return false;
                break;
@@ -3162,9 +3190,11 @@ resetState:
 
       switch( chr ) {
          case '.':
-            if( itm.isObject() )               
+            if( itm.isObject() )
                state = dotAccessor;
             else if ( itm.isArray() )
+               state = dotArrayAccessor;
+            else if ( itm.isDict() && itm.asDict()->isBlessed() )
                state = dotArrayAccessor;
             else
                return false;
@@ -3360,7 +3390,7 @@ VMachine::returnCode  VMachine::expandString( const String &src, String &target 
             case escapeDouble:
                state = escapeDouble;
             break;
-               
+
             default: // compiler warning no-op
                break;
          }

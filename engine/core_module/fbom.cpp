@@ -908,6 +908,40 @@ FALCON_FUNC BOM_tabField( VMachine *vm )
    vm->raiseRTError( new AccessError( ErrorParam( e_prop_acc ) ) );
 }
 
+/*#
+   @method tabRow BOM
+   @brief Returns the row ID of this element.
+   @raise AccessError if the item is not a table row (array).
+   @return A number indicating the position of this row in the table, or
+      nil if this item is an array, but it's not stored in a table.
+
+   This method returns the position of this element in a table.
+
+   This number gets valorized only after a @a Table.get or @a Table.find
+   method call, so that it is possible to know what index had this element
+   in the owning table. If the table is changed by inserting or removing
+   a row, the number returned by this function becomes meaningless.
+*/
+
+/* BOMID: 20 */
+FALCON_FUNC BOM_tabRow( VMachine *vm )
+{
+   const Item &self = vm->self();
+
+   if ( self.isArray() )
+   {
+      CoreArray *array = self.asArray();
+      if ( array->table() != 0 )
+         vm->retval( (int64) array->tablePos() );
+      else
+         vm->retnil();
+      return;
+   }
+
+   vm->raiseRTError( new AccessError( ErrorParam( e_prop_acc ) ) );
+}
+
+
 //====================================================//
 // THE BOM TABLE
 //====================================================//
@@ -934,7 +968,8 @@ static void (* const  BOMTable  [] ) ( Falcon::VMachine *) =
    BOM_front,
    BOM_back,
    BOM_table,
-   BOM_tabField
+   BOM_tabField,
+   BOM_tabRow
 };
 
 //====================================================

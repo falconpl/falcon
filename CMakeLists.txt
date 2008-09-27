@@ -123,6 +123,9 @@ IF(WIN32)
    SET( FALCON_HOST_SYSTEM "WINDOWS" )
    SET( FALCON_SYSTEM_WIN 1 )
 ELSE(WIN32)
+   # Set common UNIX warnings.
+   add_definitions(-Wall)
+
    IF(APPLE)
       SET( FALCON_HOST_SYSTEM "MAC" )
       SET( FALCON_SYSTEM_MAC 1 )

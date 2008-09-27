@@ -390,6 +390,11 @@ public:
       setTabMethod( arr, func, lmod );
    }
 
+   Item( CoreDict *dict, Symbol *func, LiveModule *lmod )
+   {
+      setTabMethod( dict, func, lmod );
+   }
+
 
    Item( CoreObject *obj, CoreClass *cls )
    {
@@ -413,7 +418,16 @@ public:
    */
    void setTabMethod( CoreArray *arr, Symbol *func, LiveModule *lmod ) {
       type( FLC_ITEM_TABMETHOD );
+      m_base.bits.reserved = 0;
       m_data.ptr.voidp = arr;
+      m_data.ptr.m_extra = func;
+      m_data.ptr.m_liveMod = lmod;
+   }
+
+   void setTabMethod( CoreDict *dict, Symbol *func, LiveModule *lmod ) {
+      type( FLC_ITEM_TABMETHOD );
+      m_base.bits.reserved = 1;
+      m_data.ptr.voidp = dict;
       m_data.ptr.m_extra = func;
       m_data.ptr.m_liveMod = lmod;
    }
@@ -574,6 +588,8 @@ public:
 
    CoreObject *asMethodObject() const { return (CoreObject *) m_data.ptr.voidp; }
    CoreArray *asTabMethodArray() const { return (CoreArray *) m_data.ptr.voidp; }
+   CoreDict *asTabMethodDict() const { return (CoreDict *) m_data.ptr.voidp; }
+   bool isTabMethodDict() const { return m_base.bits.reserved==1; }
    Symbol *asMethodFunction() const { return (Symbol *)m_data.ptr.m_extra; }
    CoreClass *asMethodClass() const { return (CoreClass*) m_data.ptr.m_extra; }
    Attribute *asAttribute() const { return (Attribute *) m_data.ptr.voidp; }

@@ -339,14 +339,22 @@ Item::e_sercode Item::serialize( Stream *file, bool bLive ) const
          serialize_function( file, this->asMethodFunction() );
       }
       break;
-      
+
       case FLC_ITEM_TABMETHOD:
       {
          byte type = FLC_ITEM_TABMETHOD;
          file->write( &type, 1 );
-         Item temp = asTabMethodArray();
          serialize_function( file, this->asMethodFunction() );
-         temp.serialize( file, bLive );
+
+         if( isTabMethodDict() )
+         {
+            Item temp = asTabMethodDict();
+            temp.serialize( file, bLive );
+         }
+         else {
+            Item temp = asTabMethodArray();
+            temp.serialize( file, bLive );
+         }
       }
       break;
 
@@ -779,11 +787,13 @@ Item::e_sercode Item::deserialize( Stream *file, VMachine *vm )
          sc = vector.deserialize( file, vm );
          if ( sc != sc_ok )
             return sc;
-         if ( ! vector.isArray() )
+         if ( vector.isArray() )
+            setTabMethod( vector.asArray(), func.asFunction(), func.asModule() );
+         else if ( vector.isDict() )
+            setTabMethod( vector.asArray(), func.asFunction(), func.asModule() );
+         else
             return sc_invformat;
 
-
-         setTabMethod( vector.asArray(), func.asFunction(), func.asModule() );
          return sc_ok;
       }
 
@@ -931,11 +941,17 @@ bool Item::clone( Item &target, VMachine *vm ) const
 
       case FLC_ITEM_TABMETHOD:
       {
-         CoreArray *clone = item->asTabMethodArray()->clone();
-         if ( clone == 0 ) {
-            return false;
+         if( item->isTabMethodDict() )
+         {
+            CoreDict *clone = item->asTabMethodDict()->clone();
+            if ( clone == 0 ) return false;
+            target.setTabMethod( clone, item->asMethodFunction(), item->asModule() );
          }
-         target.setTabMethod( clone, item->asMethodFunction(), item->asModule() );
+         else {
+            CoreArray *clone = item->asTabMethodArray()->clone();
+            if ( clone == 0 ) return false;
+            target.setTabMethod( clone, item->asMethodFunction(), item->asModule() );
+         }
       }
       break;
 
