@@ -32,7 +32,7 @@ namespace Falcon
 {
 
 AliasMap::AliasMap():
-   Map( &traits::t_stringptr, &traits::t_voidp )
+   Map( &traits::t_stringptr(), &traits::t_voidp() )
 {
 }
 
@@ -41,8 +41,8 @@ AliasMap::AliasMap():
 //===============================================================
 
 Compiler::Compiler( Module *mod, Stream* in ):
-   m_constants( &traits::t_string, &traits::t_voidp ),
-   m_namespaces( &traits::t_string, &traits::t_voidp ),
+   m_constants( &traits::t_string(), &traits::t_voidp() ),
+   m_namespaces( &traits::t_string(), &traits::t_voidp() ),
    m_root(0),
    m_errors(0),
    m_optLevel(0),
@@ -84,8 +84,8 @@ Compiler::Compiler( Module *mod, Stream* in ):
 }
 
 Compiler::Compiler():
-   m_constants( &traits::t_string, &traits::t_voidp ),
-   m_namespaces( &traits::t_string, &traits::t_voidp ),
+   m_constants( &traits::t_string(), &traits::t_voidp() ),
+   m_namespaces( &traits::t_string(), &traits::t_voidp() ),
    m_root(0),
    m_errors(0),
    m_optLevel(0),
@@ -746,7 +746,7 @@ StmtFunction *Compiler::buildCtorFor( StmtClass *cls )
 
    // now we must copy the parameter of the class in the parameters of the constructor.
    MapIterator iter = def->symtab().map().begin();
-   GenericVector params( &traits::t_voidp );
+   GenericVector params( &traits::t_voidp() );
 
    while( iter.hasCurrent() )
    {

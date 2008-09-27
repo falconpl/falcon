@@ -234,7 +234,7 @@ public:
 };
 
 namespace traits {
-   extern PseudoPtrTraits t_pseudoptr;
+   extern PseudoPtrTraits &t_pseudoptr();
 }
 
 }

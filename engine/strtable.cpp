@@ -27,9 +27,9 @@
 namespace Falcon {
 
 StringTable::StringTable():
-   m_vector( &traits::t_stringptr_own ),
-   m_map( &traits::t_stringptr, &traits::t_int ),
-   m_intMap( &traits::t_stringptr, &traits::t_int ),
+   m_vector( &traits::t_stringptr_own() ),
+   m_map( &traits::t_stringptr(), &traits::t_int() ),
+   m_intMap( &traits::t_stringptr(), &traits::t_int() ),
    m_tableStorage(0),
    m_internatCount(0)
 {}

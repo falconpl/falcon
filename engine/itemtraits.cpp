@@ -62,7 +62,9 @@ bool ItemTraits::owning() const
 //==========================================================
 // Item traits using VM
 //
-
+VMItemTraits::~VMItemTraits()
+   {}
+   
 int VMItemTraits::compare( const void *first, const void *second ) const
 {
    const Item *f = (Item  *) first;
@@ -72,7 +74,7 @@ int VMItemTraits::compare( const void *first, const void *second ) const
 }
 
 namespace traits {
-	ItemTraits t_item;
+	ItemTraits &t_item() { static ItemTraits *dt = new ItemTraits; return *dt; }
 }
 
 }

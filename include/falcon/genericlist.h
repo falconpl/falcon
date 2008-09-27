@@ -131,7 +131,7 @@ public:
 
 namespace traits
 {
-	extern FALCON_DYN_SYM ListTraits t_List;
+	extern FALCON_DYN_SYM ListTraits &t_List();
 }
 
 }

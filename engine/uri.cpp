@@ -309,7 +309,7 @@ bool URI::internal_parseQuery( const String &src, uint32 pEnd, bool parseQuery, 
    }
 
    delete m_queryMap;
-   m_queryMap = new Map( &traits::t_string, &traits::t_string );
+   m_queryMap = new Map( &traits::t_string(), &traits::t_string() );
 
    // break & and = fields.
    uint32 len = src.length();
@@ -478,7 +478,7 @@ void URI::setField( const String &key, const String &value )
 {
    if( m_queryMap == 0 )
    {
-      m_queryMap = new Map( &traits::t_string, &traits::t_string );
+      m_queryMap = new Map( &traits::t_string(), &traits::t_string() );
    }
 
    m_queryMap->insert( &key, &value );

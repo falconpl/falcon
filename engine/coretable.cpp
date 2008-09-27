@@ -161,9 +161,9 @@ FalconData *CoreTableIterator::clone() const
 
 CoreTable::CoreTable():
    m_currentPage(0),
-   m_pages(&traits::t_voidp),
-   m_headerData( &traits::t_item ),
-   m_heading( &traits::t_string, &traits::t_int ),
+   m_pages(&traits::t_voidp()),
+   m_headerData( &traits::t_item() ),
+   m_heading( &traits::t_string(), &traits::t_int() ),
    m_pageNumId(noitem),
    m_order(noitem)
 {

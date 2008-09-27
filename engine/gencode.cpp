@@ -28,8 +28,8 @@ namespace Falcon
 
 
 GenCode::c_jmptag::c_jmptag( Stream *stream, uint32 offset ):
-   m_elifDefs( &traits::t_int ),
-   m_elifQueries( &traits::t_List ),
+   m_elifDefs( &traits::t_int() ),
+   m_elifQueries( &traits::t_List() ),
    m_tries( 0 ),
    m_offset( offset ),
    m_bIsForIn( false ),

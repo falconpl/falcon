@@ -38,13 +38,12 @@ class Item;
 
 class FALCON_DYN_CLASS ItemVector: public GenericVector
 {
-   const ItemTraits s_it;
 
 public:
    ItemVector( uint32 prealloc=0 ):
       GenericVector()
   {
-      init( &s_it, prealloc );
+     init( &traits::t_item(), prealloc );
   }
 
    Item &itemAt( uint32 pos ) const { return *(Item *) at( pos ); }
@@ -272,7 +271,7 @@ public:
 
 namespace traits
 {
-   extern SymModuleTraits t_SymModule;
+   extern SymModuleTraits &t_SymModule();
 }
 
 /** Map of symbol names and module where they are located.

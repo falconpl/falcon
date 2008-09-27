@@ -41,12 +41,12 @@ Pseudo *AsmCompiler::regL2_Inst() { return m_lexer->regL2_Inst(); }
 Pseudo *AsmCompiler::nil_Inst() { return m_lexer->nil_Inst(); }
 
 AsmCompiler::AsmCompiler( Module *mod, Stream *in ):
-      m_labels( &traits::t_stringptr, &traits::t_voidp ),
+      m_labels( &traits::t_stringptr(), &traits::t_voidp() ),
       m_current( 0 ),
-      m_switchEntriesInt( &traits::t_pseudoptr, &traits::t_pseudoptr ),
-      m_switchEntriesRng( &traits::t_pseudoptr, &traits::t_pseudoptr ),
-      m_switchEntriesStr( &traits::t_pseudoptr, &traits::t_pseudoptr ),
-      m_switchEntriesObj( &traits::t_pseudoptr, &traits::t_pseudoptr ),
+      m_switchEntriesInt( &traits::t_pseudoptr(), &traits::t_pseudoptr() ),
+      m_switchEntriesRng( &traits::t_pseudoptr(), &traits::t_pseudoptr() ),
+      m_switchEntriesStr( &traits::t_pseudoptr(), &traits::t_pseudoptr() ),
+      m_switchEntriesObj( &traits::t_pseudoptr(), &traits::t_pseudoptr() ),
       m_errhand(0),
       m_module( mod ),
       m_outTemp( new StringStream ),

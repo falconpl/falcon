@@ -24,7 +24,7 @@
 namespace Falcon {
 
 SymbolTable::SymbolTable():
-   m_map( &traits::t_stringptr, &traits::t_voidp, 19 )
+   m_map( &traits::t_stringptr(), &traits::t_voidp(), 19 )
 {
 }
 
@@ -119,7 +119,7 @@ bool SymbolTable::load( Module *mod, Stream *in )
 
 
 SymbolVector::SymbolVector():
-	GenericVector( &traits::t_voidp )
+	GenericVector( &traits::t_voidp() )
 {
 }
 

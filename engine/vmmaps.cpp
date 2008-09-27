@@ -58,11 +58,11 @@ bool SymModuleTraits::owning() const
 
 namespace traits
 {
-   SymModuleTraits t_symmodule;
+   SymModuleTraits &t_symmodule() { static SymModuleTraits *dt = new SymModuleTraits; return *dt; }
 }
 
 SymModuleMap::SymModuleMap():
-   Map( &traits::t_stringptr, &traits::t_symmodule )
+   Map( &traits::t_stringptr(), &traits::t_symmodule() )
 {}
 
 
@@ -108,11 +108,11 @@ bool LiveModulePtrTraits::owning() const
 
 namespace traits
 {
-   LiveModulePtrTraits t_livemoduleptr;
+   LiveModulePtrTraits &t_livemoduleptr() { static LiveModulePtrTraits *dt = new LiveModulePtrTraits; return *dt; }
 }
 
 LiveModuleMap::LiveModuleMap():
-   Map( &traits::t_string, &traits::t_livemoduleptr )
+   Map( &traits::t_string(), &traits::t_livemoduleptr() )
 {}
 
 

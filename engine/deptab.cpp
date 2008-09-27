@@ -26,7 +26,7 @@
 namespace Falcon {
 
 DependTable::DependTable():
-   Map( &traits::t_stringptr, &traits::t_voidp )
+   Map( &traits::t_stringptr(), &traits::t_voidp() )
 {
 }
 

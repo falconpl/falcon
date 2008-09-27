@@ -25,7 +25,7 @@ namespace Falcon {
 
    class BomMap : public Map {
    public:
-      BomMap() : Map( &traits::t_string, &traits::t_int ) {}
+      BomMap() : Map( &traits::t_string(), &traits::t_int() ) {}
       void add( const String &key ) {
          int s = (int) size();
          insert( &key, &s );

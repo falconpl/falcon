@@ -389,14 +389,14 @@ bool InheritDef::load( Module *mod, Stream *in )
 ClassDef::ClassDef( ObjectManager *manager ):
    FuncDef( 0, 0 ),
    m_constructor( 0 ),
-   m_properties( &traits::t_stringptr, &traits::t_voidp ),
+   m_properties( &traits::t_stringptr(), &traits::t_voidp() ),
    m_manager( manager )
 {}
 
 ClassDef::ClassDef( Symbol *ext_ctor, ObjectManager *manager ):
    FuncDef( 0, 0 ),
    m_constructor( ext_ctor ),
-   m_properties( &traits::t_stringptr, &traits::t_voidp ),
+   m_properties( &traits::t_stringptr(), &traits::t_voidp() ),
    m_manager( manager )
 {}
 

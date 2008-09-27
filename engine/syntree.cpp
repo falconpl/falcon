@@ -383,7 +383,7 @@ bool ValuePtrTraits::owning() const
 
 
 namespace traits {
-   ValuePtrTraits t_valueptr;
+   ValuePtrTraits &t_valueptr() { static ValuePtrTraits *dt = new ValuePtrTraits; return *dt; }
 }
 
 //================================================
@@ -733,10 +733,10 @@ Statement *StmtCaseBlock::clone() const
 
 StmtSwitch::StmtSwitch( uint32 line, Value *expr ):
    Statement( line, t_switch ),
-   m_cases_int( &traits::t_valueptr, &traits::t_int, 19 ),
-   m_cases_rng( &traits::t_valueptr, &traits::t_int, 19 ),
-   m_cases_str( &traits::t_valueptr, &traits::t_int, 19 ),
-   m_cases_obj( &traits::t_valueptr, &traits::t_int, 19 ),
+   m_cases_int( &traits::t_valueptr(), &traits::t_int(), 19 ),
+   m_cases_rng( &traits::t_valueptr(), &traits::t_int(), 19 ),
+   m_cases_str( &traits::t_valueptr(), &traits::t_int(), 19 ),
+   m_cases_obj( &traits::t_valueptr(), &traits::t_int(), 19 ),
    m_nilBlock( -1 ),
    m_cfr( expr )
 {}
@@ -955,8 +955,8 @@ Statement *StmtCatchBlock::clone() const
 
 StmtTry::StmtTry( uint32 line ):
    StmtBlock( line, t_try ),
-   m_cases_int( &traits::t_valueptr, &traits::t_int, 13 ),
-   m_cases_sym( &traits::t_valueptr, &traits::t_int, 13 ),
+   m_cases_int( &traits::t_valueptr(), &traits::t_int(), 13 ),
+   m_cases_sym( &traits::t_valueptr(), &traits::t_int(), 13 ),
    m_into_values( s_valueDeletor ),
    m_default(0)
 {}

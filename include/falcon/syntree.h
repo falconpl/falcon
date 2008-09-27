@@ -355,7 +355,7 @@ public:
 };
 
 namespace traits {
-   extern ValuePtrTraits t_valueptr;
+   extern ValuePtrTraits &t_valueptr();
 }
 
 

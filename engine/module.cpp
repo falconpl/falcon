@@ -36,7 +36,7 @@ Module::Module():
    m_engineVersion( 0 ),
    m_lineInfo( 0 ),
    m_loader(0),
-   m_serviceMap( &traits::t_string, &traits::t_voidp )
+   m_serviceMap( &traits::t_string(), &traits::t_voidp() )
 {}
 
 

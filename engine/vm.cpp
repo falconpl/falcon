@@ -39,14 +39,14 @@
 namespace Falcon {
 
 VMachine::VMachine():
-   m_services( &traits::t_string, &traits::t_voidp )
+   m_services( &traits::t_string(), &traits::t_voidp() )
 {
    internal_construct();
    init();
 }
 
 VMachine::VMachine( bool initItems ):
-   m_services( &traits::t_string, &traits::t_voidp )
+   m_services( &traits::t_string(), &traits::t_voidp() )
 {
    internal_construct();
    if ( initItems )
@@ -1119,7 +1119,7 @@ PropertyTable *VMachine::createClassTemplate( LiveModule *lmod, const Map &pt )
 
 CoreClass *VMachine::linkClass( LiveModule *lmod, Symbol *clssym )
 {
-   Map props( &traits::t_stringptr, &traits::t_voidp ) ;
+   Map props( &traits::t_stringptr(), &traits::t_voidp() ) ;
    AttribHandler *head = 0;
    ObjectManager *manager = 0;
 

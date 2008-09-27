@@ -25,7 +25,7 @@
 namespace Falcon {
 
 LineMap::LineMap():
-   Map( &traits::t_int, &traits::t_int )
+   Map( &traits::t_int(), &traits::t_int() )
 {}
 
 bool LineMap::save( Stream *out ) const

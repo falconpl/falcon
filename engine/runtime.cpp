@@ -21,26 +21,26 @@
 namespace Falcon {
 
 ModuleMap::ModuleMap():
-   Map( &traits::t_stringptr, &traits::t_voidp )
+   Map( &traits::t_stringptr(), &traits::t_voidp() )
 {
 }
 
 ModuleVector::ModuleVector():
-	GenericVector( &traits::t_voidp )
+	GenericVector( &traits::t_voidp() )
 {
 }
 
 Runtime::Runtime():
    m_loader( 0 ),
    m_provider( 0 ),
-   m_modPending( &traits::t_stringptr, &traits::t_int ),
+   m_modPending( &traits::t_stringptr(), &traits::t_int() ),
    m_hasMainModule( true )
 {}
 
 Runtime::Runtime( ModuleLoader *loader, VMachine *prov ):
    m_loader( loader ),
    m_provider( prov ),
-   m_modPending( &traits::t_stringptr, &traits::t_int ),
+   m_modPending( &traits::t_stringptr(), &traits::t_int() ),
    m_hasMainModule( true )
 {}
 

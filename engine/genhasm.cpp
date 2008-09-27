@@ -422,8 +422,8 @@ void GenHAsm::gen_function( const StmtFunction *func )
 
    // generate the local symbol table.
    const FuncDef *fd = func->symbol()->getFuncDef();
-   GenericVector params( &traits::t_voidp );
-   GenericVector locals( &traits::t_voidp );
+   GenericVector params( &traits::t_voidp() );
+   GenericVector locals( &traits::t_voidp() );
 
    params.resize( fd->symtab().size() );
    locals.resize( fd->symtab().size() );

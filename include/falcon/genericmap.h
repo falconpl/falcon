@@ -190,8 +190,8 @@ public:
 
 namespace traits
 {
-	extern FALCON_DYN_SYM MapPtrTraits t_MapPtr;
-	extern FALCON_DYN_SYM MapPtrOwnTraits t_MapPtrOwn;
+	extern FALCON_DYN_SYM MapPtrTraits &t_MapPtr();
+	extern FALCON_DYN_SYM MapPtrOwnTraits &t_MapPtrOwn();
 }
 
 }

@@ -22,11 +22,10 @@
 
 namespace Falcon {
 
-
 class FALCON_DYN_CLASS ElementTraits
 {
 public:
-   virtual ~ElementTraits() {}
+   virtual ~ElementTraits();
 	virtual uint32 memSize() const = 0;
 	virtual void init( void *itemZone ) const = 0;
 	virtual void copy( void *targetZone, const void *sourceZone ) const = 0;
@@ -38,7 +37,6 @@ public:
 class FALCON_DYN_CLASS VoidpTraits: public ElementTraits
 {
 public:
-   virtual ~VoidpTraits() {}
 	virtual uint32 memSize() const;
 	virtual void init( void *itemZone ) const;
 	virtual void copy( void *targetZone, const void *sourceZone ) const;
@@ -50,7 +48,6 @@ public:
 class FALCON_DYN_CLASS IntTraits: public ElementTraits
 {
 public:
-   virtual ~IntTraits() {}
 	virtual uint32 memSize() const;
 	virtual void init( void *itemZone ) const;
 	virtual void copy( void *targetZone, const void *sourceZone ) const;
@@ -62,7 +59,6 @@ public:
 class FALCON_DYN_CLASS StringPtrTraits: public ElementTraits
 {
 public:
-   virtual ~StringPtrTraits() {}
 	virtual uint32 memSize() const;
 	virtual void init( void *itemZone ) const;
 	virtual void copy( void *targetZone, const void *sourceZone ) const;
@@ -82,7 +78,6 @@ public:
 class FALCON_DYN_CLASS StringTraits: public ElementTraits
 {
 public:
-   virtual ~StringTraits() {}
 	virtual uint32 memSize() const;
 	virtual void init( void *itemZone ) const;
 	virtual void copy( void *targetZone, const void *sourceZone ) const;
@@ -93,11 +88,11 @@ public:
 
 
 namespace traits {
-	extern FALCON_DYN_SYM StringTraits t_string;
-	extern FALCON_DYN_SYM VoidpTraits t_voidp;
-	extern FALCON_DYN_SYM IntTraits t_int;
-	extern FALCON_DYN_SYM StringPtrTraits t_stringptr;
-	extern FALCON_DYN_SYM StringPtrOwnTraits t_stringptr_own;
+	extern FALCON_DYN_SYM StringTraits &t_string();
+	extern FALCON_DYN_SYM VoidpTraits &t_voidp();
+	extern FALCON_DYN_SYM IntTraits &t_int();
+	extern FALCON_DYN_SYM StringPtrTraits &t_stringptr();
+	extern FALCON_DYN_SYM StringPtrOwnTraits &t_stringptr_own();
 }
 
 }

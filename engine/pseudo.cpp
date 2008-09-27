@@ -200,7 +200,7 @@ bool PseudoPtrTraits::owning() const
 }
 
 namespace traits {
-   PseudoPtrTraits t_pseudoptr;
+   PseudoPtrTraits &t_pseudoptr() { static PseudoPtrTraits *dt = new PseudoPtrTraits; return *dt; }
 }
 
 }

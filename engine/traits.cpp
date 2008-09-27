@@ -20,7 +20,10 @@
 #include <string.h>  // for memset
 
 namespace Falcon {
-
+   
+ElementTraits::~ElementTraits()
+   {}
+   
 uint32 VoidpTraits::memSize() const
 {
    return sizeof( void * );
@@ -195,11 +198,11 @@ bool StringTraits::owning() const
 
 
 namespace traits {
-	FALCON_DYN_SYM StringTraits t_string;
-	FALCON_DYN_SYM VoidpTraits t_voidp;
-	FALCON_DYN_SYM IntTraits t_int;
-	FALCON_DYN_SYM StringPtrTraits t_stringptr;
-	FALCON_DYN_SYM StringPtrOwnTraits t_stringptr_own;
+	FALCON_DYN_SYM StringTraits &t_string() { static StringTraits *dt = new StringTraits; return *dt; }
+	FALCON_DYN_SYM VoidpTraits &t_voidp() { static VoidpTraits *dt = new VoidpTraits; return *dt; }
+	FALCON_DYN_SYM IntTraits &t_int() { static IntTraits *dt = new IntTraits; return *dt; }
+	FALCON_DYN_SYM StringPtrTraits &t_stringptr() { static StringPtrTraits *dt = new StringPtrTraits; return *dt; }
+	FALCON_DYN_SYM StringPtrOwnTraits &t_stringptr_own() { static StringPtrOwnTraits *dt = new StringPtrOwnTraits; return *dt; }
 }
 
 }

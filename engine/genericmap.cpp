@@ -1102,8 +1102,8 @@ bool MapPtrOwnTraits::owning() const
 
 namespace traits
 {
-	FALCON_DYN_SYM MapPtrTraits t_MapPtr;
-	FALCON_DYN_SYM MapPtrOwnTraits t_MapPtrOwn;
+	FALCON_DYN_SYM MapPtrTraits &t_MapPtr();
+	FALCON_DYN_SYM MapPtrOwnTraits &t_MapPtrOwn();
 }
 
 }
