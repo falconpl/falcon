@@ -311,7 +311,7 @@ static uint32 internal_col_pos( CoreTable *table, VMachine *vm, Item *i_column )
       {
          String temp;
          temp = "col ";
-         temp.append( i_column->forceInteger());
+         temp.append( colPos );
          vm->raiseModError( new AccessError( ErrorParam( e_prop_acc, __LINE__ )
             .origin( e_orig_runtime )
             .extra( temp ) ) );

@@ -160,7 +160,7 @@ const String *AsmCompiler::addString( const String &data )
 
 void AsmCompiler::addDLine( Pseudo *line )
 {
-   m_currentLine = line->asInt();
+   m_currentLine = (uint32) line->asInt();
    m_module->addLineInfo( m_pc + (uint32) m_outTemp->tell(), static_cast<uint32>(line->asInt()) );
    delete line;
 }

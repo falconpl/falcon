@@ -141,7 +141,7 @@ typedef void reflectionFuncDecl(CoreObject *instance, void *user_data, Item &pro
       instance->origin()->raiseRTError( new ParamError( ErrorParam( e_inv_params ).extra( "N" ) ) );\
       return;\
    }\
-   obj->accessor( property.forceInteger() );\
+   obj->accessor( (uint32) property.forceInteger() );\
 
 
 #endif /* FALCON_REFLECTION_FUNC_H */
