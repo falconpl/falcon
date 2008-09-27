@@ -1,17 +1,17 @@
 <?
    title = "A parsed falcon template document!"
    thingToSay = args.len() > 0 ? args[0] : "No argument"
-?><html>
+?>
+<html>
 <head>
 <title><?=title?></title>
 </head>
 <body>
 <? makeTitle( "Hello" )?>
-
 <? if args.len() > 0 ?>
-<p>You said something: <? print( thingToSay )?></p>
+   <p>You said something: <? print( thingToSay )?></p>
 <? else ?>
-<p>You said nothing</p>
+   <p>You said nothing</p>
 <? end ?>
 </body>
 </html>

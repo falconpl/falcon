@@ -92,6 +92,9 @@ private:
 
    t_mode m_mode;
    bool m_bParsingFtd;
+   bool m_bWasntEmpty;
+   String m_whiteLead;
+
 
    /** Scans m_string for recognized tokens, and eventually returns them. */
    int checkUnlimitedTokens( uint32 nextChar );

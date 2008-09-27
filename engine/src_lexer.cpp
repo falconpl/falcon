@@ -55,12 +55,12 @@ SrcLexer::SrcLexer( Compiler *comp ):
    m_incremental( false ),
    m_lineContContext( false ),
    m_chrEndString(0),
-   
    m_in( 0 ),
    m_compiler( comp ),
    m_state( e_line ),
    m_mode( t_mNormal ),
-   m_bParsingFtd(false)
+   m_bParsingFtd(false),
+   m_bWasntEmpty(false)
 {}
 
 SrcLexer::~SrcLexer()
@@ -77,6 +77,8 @@ void SrcLexer::reset()
    m_state = e_line;
    m_ctxOpenLine = 0;
    m_bIsDirectiveLine = false;
+   m_bWasntEmpty = false;
+   m_whiteLead = "";
 
    while( ! m_streams.empty() )
    {
@@ -115,6 +117,7 @@ int SrcLexer::lex()
 int SrcLexer::lex_outscape()
 {
    enum {
+      e_leadIn,
       e_normal,
       e_esc1,
       e_esc2,
@@ -129,7 +132,7 @@ int SrcLexer::lex_outscape()
 
    // in outscape mode, everything up to an escape (or at EOF) is a "fast print" statement.
    uint32 chr;
-   state = e_normal;
+   state = e_leadIn;
    m_state = e_line;
    m_bIsDirectiveLine = false;
 
@@ -141,6 +144,9 @@ int SrcLexer::lex_outscape()
          m_line++;
          m_character = 0;
          m_bIsDirectiveLine = false;
+
+         if ( state == e_normal )
+            state = e_leadIn;
       }
       else
       {
@@ -149,17 +155,41 @@ int SrcLexer::lex_outscape()
 
       switch( state )
       {
+         case e_leadIn:
+            if( isWhiteSpace(chr) )
+            {
+               m_whiteLead.append( chr );
+               break;
+            }
+            else
+               state = e_normal;
+
+         // fall through, don't break
+
          case e_normal:
             if ( chr == '<' )
                state = e_esc1;
-            else
+            else {
+               if ( m_whiteLead.size() > 0 )
+               {
+                  m_string.append( m_whiteLead );
+                  m_whiteLead.size(0);
+               }
+
                m_string.append( chr );
+            }
          break;
 
          case e_esc1:
             if ( chr == '?' )
                state = e_esc2;
             else {
+               if ( m_whiteLead.size() > 0 )
+               {
+                  m_string.append( m_whiteLead );
+                  m_whiteLead.size(0);
+               }
+
                m_string.append( '<' );
                m_string.append( chr );
                state  = e_normal;
@@ -169,21 +199,25 @@ int SrcLexer::lex_outscape()
          case e_esc2:
             if ( chr == '=' )
             {
+               // reset lead chars and eventually remove last \n
+               m_whiteLead.size(0);
+               // but don't remove extra EOL; we want another line.
+               m_bWasntEmpty = true;
+
                // we enter now in the eval mode
                m_mode = t_mEval;
                // and break from the loop so to return the string to print.
                break;
             }
-            else if ( chr == ' ' || chr == '\t' || chr == '\r' )
+            else if ( chr == ' ' || chr == '\t' || chr == '\r' || chr == '\n' )
             {
+               // reset lead chars and eventually remove last \n
+               m_whiteLead.size(0);
+               m_bWasntEmpty = m_string.size() > 0;
+               if ( m_string.size() > 0 && m_string.getCharAt( m_string.length() -1 ) == '\n' )
+                  m_string.size( m_string.size() - m_string.manipulator()->charSize() );
+
                // we enter now the normal mode; we start to consider a standard program.
-               m_mode = t_mNormal;
-               // and break from the loop so to return the string to print.
-               break;
-            }
-            else if ( chr == '\n' )
-            {
-               // as above, but now count theline
                m_mode = t_mNormal;
                // and break from the loop so to return the string to print.
                break;
@@ -194,6 +228,12 @@ int SrcLexer::lex_outscape()
             }
             else
             {
+               if ( m_whiteLead.size() > 0 )
+               {
+                  m_string.append( m_whiteLead );
+                  m_whiteLead.size(0);
+               }
+
                state = e_normal;
                m_string.append( '<' );
                m_string.append( '?' );
@@ -207,6 +247,12 @@ int SrcLexer::lex_outscape()
                state = e_escA;
             }
             else {
+               if ( m_whiteLead.size() > 0 )
+               {
+                  m_string.append( m_whiteLead );
+                  m_whiteLead.size(0);
+               }
+
                state = e_normal;
                m_string.append( '<' );
                m_string.append( '?' );
@@ -221,6 +267,12 @@ int SrcLexer::lex_outscape()
               state = e_escL;
             }
             else {
+               if ( m_whiteLead.size() > 0 )
+               {
+                  m_string.append( m_whiteLead );
+                  m_whiteLead.size(0);
+               }
+
                state = e_normal;
                m_string.append( '<' );
                m_string.append( '?' );
@@ -231,25 +283,26 @@ int SrcLexer::lex_outscape()
          break;
 
          case e_escL:
-            if ( chr == ' ' || chr == '\t' || chr == '\r' )
+            if ( chr == ' ' || chr == '\t' || chr == '\r' || chr == '\n')
             {
+               // reset lead chars and eventually remove last \n
+               m_whiteLead.size(0);
+               m_bWasntEmpty = m_string.size() > 0;
+               if ( m_string.size() > 0 && m_string.getCharAt( m_string.length() -1 ) == '\n' )
+                  m_string.size( m_string.size() - m_string.manipulator()->charSize() );
+
                // we enter now the normal mode; we start to consider a standard program.
                m_mode = t_mNormal;
                // and break from the loop so to return the string to print.
                break;
             }
-            else if( chr == '\n' )
-            {
-               // as above, but now count theline
-               m_previousLine = m_line;
-               m_line++;
-               m_character = 0;
-               m_bIsDirectiveLine = false;
-               m_mode = t_mNormal;
-               // and break from the loop so to return the string to print.
-               break;
-            }
             else {
+               if ( m_whiteLead.size() > 0 )
+               {
+                  m_string.append( m_whiteLead );
+                  m_whiteLead.size(0);
+               }
+
                state = e_normal;
                m_string.append( '<' );
                m_string.append( '?' );
@@ -967,7 +1020,7 @@ int SrcLexer::lex_normal()
                m_state = e_string;
             }
          break;
-            
+
          default:
             break;
       }
@@ -1324,7 +1377,7 @@ int SrcLexer::checkUnlimitedTokens( uint32 nextChar )
             m_chrEndString = '"'; //... up to the matching "
             return 0;
          }
-         else if ( parsingFtd() && m_string == "?>" )
+         else if ( parsingFtd() && m_string == "?>" && nextChar != '\n')
          {
             m_mode = t_mOutscape;
             m_bIsDirectiveLine = false;
@@ -1333,7 +1386,15 @@ int SrcLexer::checkUnlimitedTokens( uint32 nextChar )
       break;
 
       case 3:
-         if ( m_string == ">>=" )
+         if ( parsingFtd() && m_string == "?>\n" )
+         {
+            m_mode = t_mOutscape;
+            if ( m_bWasntEmpty )
+               m_whiteLead = "\n";
+            m_bIsDirectiveLine = false;
+            return EOL;
+         }
+         else if ( m_string == ">>=" )
             return ASSIGN_SHR;
          else if ( m_string == "<<=" )
             return ASSIGN_SHL;
@@ -1615,7 +1676,7 @@ void SrcLexer::parseMacro()
 
             sContent += chr;
             break;
-            
+
          default:
             break;
       }
@@ -1716,7 +1777,7 @@ void SrcLexer::parseMacroCall()
             else
                sParam += chr;
             break;
-         
+
          default:
             break;
       }

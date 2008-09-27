@@ -54,6 +54,8 @@ Falcon (0.8.11)
   * bugfix: Fixed compilation on Darwin.
   * bugfix: Fixed missed mark of some deep item during GC (may have caused random
             crashes).
+  * Major: Added the concept of "blessed dictionary" that is seen as an instance.
+  * Minor: Much more sensible policy of EOL removal in FTD escapes.
 
 Falcon (0.8.10)
   * minor: Now classes can be stored in object properties and called to get
