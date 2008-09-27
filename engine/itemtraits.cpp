@@ -74,7 +74,7 @@ int VMItemTraits::compare( const void *first, const void *second ) const
 }
 
 namespace traits {
-	ItemTraits &t_item() { static ItemTraits *dt = new ItemTraits; return *dt; }
+	ItemTraits &t_item() { static ItemTraits dt; return dt; }
 }
 
 }

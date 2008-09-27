@@ -286,7 +286,7 @@ bool ListTraits::owning() const
 
 namespace traits
 {
-	FALCON_DYN_SYM ListTraits &t_List() { static ListTraits *lt = new ListTraits(); return *lt; }
+	FALCON_DYN_SYM ListTraits &t_List() { static ListTraits lt; return lt; }
 }
 
 }

@@ -383,7 +383,7 @@ bool ValuePtrTraits::owning() const
 
 
 namespace traits {
-   ValuePtrTraits &t_valueptr() { static ValuePtrTraits *dt = new ValuePtrTraits; return *dt; }
+   ValuePtrTraits &t_valueptr() { static ValuePtrTraits dt; return dt; }
 }
 
 //================================================
