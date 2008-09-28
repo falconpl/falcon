@@ -4,7 +4,12 @@
 # CMake configuration file for Core falcon
 ####################################################################
 cmake_minimum_required(VERSION 2.4)
+if(COMMAND cmake_policy)
+   cmake_policy(SET CMP0003 NEW)
+endif(COMMAND cmake_policy)
+
 PROJECT(Falcon_Core)
+
 
 IF("$ENV{FALCON_DEVEL_TREE}" STREQUAL "")
    MESSAGE( FATAL_ERROR "Sorry, Falcon environment not correctly configured" )
