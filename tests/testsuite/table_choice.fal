@@ -42,3 +42,15 @@ if table.choice(lastBeFirst, rows|[0:2]).name != "Second"
    failure( "Ranged selection" )
 end
 
+// select 100.
+if table.choice( lambda x => x.value == 100 ? oob(100) : 1000 ).name != "Second"
+   failure( "Interrupted successful selection" )
+end
+
+// aborted selection
+// select 100.
+if table.choice( lambda x => x.value == 100 ? oob(nil) : 1000 ) != nil
+   failure( "Interrupted negative selection" )
+end
+
+success()
