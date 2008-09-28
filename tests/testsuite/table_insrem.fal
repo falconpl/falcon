@@ -1,0 +1,102 @@
+/****************************************************************************
+* Falcon test suite
+*
+*
+* ID: 80e
+* Category: tabular
+* Subcategory: basic
+* Short: Row juggling.
+* Description:
+*    Test for row insertion and removal of rows into tables.
+* [/Description]
+*
+****************************************************************************/
+
+
+// minimal table
+table = Table(
+   [ custId|nil, "name"  ],
+   [ "cust1", "Frank Capra" ],
+   [ "cust2", "Sam Wise" ],
+   [ "cust3", "My Cousin" ],
+   [ "cust4", "Unknown Person" ]
+   )
+
+// try to insert a new row.
+table.insert( 2, ["newrow", "Some data"] )
+
+if table.len() != 5: failure( "Lenght 0" )
+if table.get(2)[0] != "newrow": failure( "Insert pos 0" )
+if table.get(3)[0] != "cust3": failure( "Moved pos 0" )
+if table.get(1)[0] != "cust2": failure( "Unmoved pos 0" )
+
+// try to remove a row
+table.remove( 2 )
+if table.len() != 4: failure( "Lenght 1" )
+if table.get(2)[0] != "cust3": failure( "Moved pos 1" )
+if table.get(1)[0] != "cust2": failure( "Unmoved pos 1" )
+
+// try to delete the last row
+table.remove( 3 )
+if table.len() != 3: failure( "Lenght 2" )
+if table.get(2)[0] != "cust3": failure( "Taken back pos 2" )
+
+// try to remove the first row.
+table.remove(0)
+if table.len() != 2: failure( "Lenght 3" )
+if table.get(1)[0] != "cust3": failure( "Taken back pos 3" )
+
+// empty the table
+table.remove(0)
+table.remove(0)
+if table.len() != 0: failure( "Emptying" )
+
+// reinsert some element
+table.insert( 0,  [ "cust4", "Unknown Person" ] )
+if table.len() != 1: failure( "Refilling" )
+if table.get(0)[0] != "cust4": failure( "Refilling data" )
+
+
+// prepend
+table.insert( 0,  [ "prepended", "one" ] )
+if table.len() != 2: failure( "Prepend len" )
+if table.get(0)[0] != "prepended": failure( "Prepend data" )
+
+// postpend
+table.insert( -1,  [ "postpended", "two" ] )
+if table.len() != 3: failure( "Postpend len" )
+if table.get(0)[0] != "prepended": failure( "Postpend data" )
+
+
+//=============================
+// try to raise some error
+try
+   table.insert( -1,  [ "postpended", "two", "three" ] )
+   failure( "Error not raised for array size != order 1" )
+catch ParamError in p
+catch in p
+   failure( "Wrong error raised for array size != order 1" )
+end
+
+try
+   table.insert( -1,  [ "postpended" ] )
+   failure( "Error not raised for array size != order 2" )
+catch ParamError in p
+catch in p
+   failure( "Wrong error raised for array size != order 2" )
+end
+
+// empty table
+table.remove(0)
+table.remove(0)
+table.remove(0)
+
+try
+   table.remove(0)
+   failure( "Error not raised remove on table empty" )
+catch AccessError in e
+catch in p
+   failure( "Wrong error raised for remove on table empty" )
+end
+
+success()

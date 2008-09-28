@@ -119,10 +119,11 @@ FALCON_FUNC Table_getHeader( VMachine* vm )
    }
    else {
       CoreArray *ret = new CoreArray(vm, table->order() );
+      ret->resize( table->order() );
 
       for( uint32 i = 0; i < table->order(); i ++ )
       {
-         ret->append( new GarbageString( vm, table->heading( i ) ) );
+         ret->at(i) = new GarbageString( vm, table->heading( i ) );
       }
 
       vm->retval( ret );
@@ -414,12 +415,12 @@ FALCON_FUNC  Table_get ( ::Falcon::VMachine *vm )
 }
 
 /*#
-   @method column Table
+   @method columnPos Table
    @brief Returns the number of a given column name.
-   @param name The column header name.
+   @param column The column header name.
    @return The numeric position of the column or -1 if not found.
 */
-FALCON_FUNC  Table_column ( ::Falcon::VMachine *vm )
+FALCON_FUNC  Table_columnPos ( ::Falcon::VMachine *vm )
 {
    CoreTable *table = static_cast<CoreTable *>( vm->self().asObject()->getUserData() );
    Item* i_column = vm->param(0);
@@ -432,13 +433,42 @@ FALCON_FUNC  Table_column ( ::Falcon::VMachine *vm )
       return;
    }
 
-   uint32 colpos = internal_col_pos( table, vm, i_column );
+   uint32 colpos = table->getHeaderPos( *i_column->asString() );
    if ( colpos == CoreTable::noitem )
       vm->regA().setInteger( -1 );
    else
       vm->regA().setInteger( colpos );
 }
 
+/*#
+   @method columnData Table
+   @brief Returns the column data bound with a certain column
+   @param column The column header name or numeric position.
+   @return The column data for the given column, or nil is not found.
+
+   Notice that the column data of an existing column may be nil; to know
+   if a column with a given name exists, use the @a Table.column method.
+*/
+
+FALCON_FUNC  Table_columnData ( ::Falcon::VMachine *vm )
+{
+   CoreTable *table = static_cast<CoreTable *>( vm->self().asObject()->getUserData() );
+   Item* i_column = vm->param(0);
+
+   if ( i_column != 0 && ! i_column->isString() && ! i_column->isOrdinal() )
+   {
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
+         .origin( e_orig_runtime )
+         .extra( "S" ) ) );
+      return;
+   }
+
+   uint32 colpos = internal_col_pos( table, vm, i_column );
+   if ( colpos == CoreTable::noitem )
+      vm->regA().setNil();
+   else
+      vm->regA() = table->columnData( colpos );
+}
 
 /*#
    @method find Table
@@ -520,8 +550,8 @@ FALCON_FUNC  Table_find ( ::Falcon::VMachine *vm )
 /*#
    @method insert Table
    @brief Insert a row in the table.
+   @param row The position where to insert the row.
    @param element The row to be inserted.
-   @param pos The position where to insert the row.
    @raise AccessError if the position is out of range.
    @raise ParamError if the row is not an array with the same lenght of the table order.
 
@@ -534,15 +564,15 @@ FALCON_FUNC  Table_find ( ::Falcon::VMachine *vm )
 FALCON_FUNC  Table_insert ( ::Falcon::VMachine *vm )
 {
    CoreTable *table = static_cast<CoreTable *>( vm->self().asObject()->getUserData() );
-   Item* i_element = vm->param(0);
-   Item* i_pos = vm->param(1);
+   Item* i_pos = vm->param(0);
+   Item* i_element = vm->param(1);
 
    if ( i_element == 0 || ! i_element->isArray()
         || i_pos == 0 || ! i_pos->isOrdinal() )
    {
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
          .origin( e_orig_runtime )
-         .extra( "A,N" ) ) );
+         .extra( "N,A" ) ) );
       return;
    }
 
@@ -557,15 +587,10 @@ FALCON_FUNC  Table_insert ( ::Falcon::VMachine *vm )
    }
 
    CoreArray* page = table->currentPage();
-   if ( pos < 0 )
-      pos = page->length() - pos;
+   if ( pos > table->order() )
+      pos = table->order();
 
-   if ( pos > page->length() ) {
-      page->append( element );
-   }
-   else {
-      page->insert( Item(element), pos );
-   }
+   page->insert( Item(element), pos );
 
    element->table( vm->self().asObject() );
 }
@@ -612,6 +637,154 @@ FALCON_FUNC  Table_remove ( ::Falcon::VMachine *vm )
    //rem->table(0);
    page->remove( pos );
    vm->retval(rem);
+}
+
+
+/*#
+   @method setColumn Table
+   @brief Change the title or column data of a column.
+   @param column The number of name of the column to be renamed.
+   @param name The new name of the column, or nil to let it unchanged.
+   @optparam coldata The new column data.
+
+   This method changes the column heading in a table. It may be also used
+   to change the column-wide data.
+*/
+FALCON_FUNC  Table_setColumn ( ::Falcon::VMachine *vm )
+{
+   CoreTable *table = static_cast<CoreTable *>( vm->self().asObject()->getUserData() );
+   Item* i_column = vm->param(0);
+   Item* i_name = vm->param(1);
+   Item* i_value = vm->param(2);
+
+   if (i_column == 0 || ! ( i_column->isOrdinal()|| i_column->isString())
+      || i_name == 0 || ! ( i_name->isNil() || i_name->isString()) )
+   {
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
+         .origin( e_orig_runtime )
+         .extra( "N|S, Nil|S, [X]" ) ) );
+      return;
+   }
+
+   uint32 colpos = internal_col_pos( table, vm, i_column );
+   if ( colpos == CoreTable::noitem )
+   {
+      return;
+   }
+
+   if ( ! i_name->isNil() )
+   {
+      table->renameColumn( colpos, *i_name->asString() );
+   }
+
+   if ( i_value != 0 )
+   {
+      table->columnData( colpos ) = *i_value;
+   }
+}
+
+/*#
+   @method insertColumn Table
+   @brief Inserts a column in a table.
+   @param column The column name or position where to insert the column.
+   @param name The name of the new column.
+   @optparam coldata The column data for the new column.
+   @optparam dflt Default value for the newly inserted columns.
+
+   This method creates a new column in the table, inserting or adding
+   a new heading, a new column data and an item in the coresponding
+   column position of each array in the table.
+
+   If @b dflt parameter is specified, that value is used to fill the
+   newly created columns in the table rows, otherwise the new items
+   will be nil.
+*/
+FALCON_FUNC  Table_insertColumn ( ::Falcon::VMachine *vm )
+{
+   CoreTable *table = static_cast<CoreTable *>( vm->self().asObject()->getUserData() );
+   Item* i_column = vm->param(0);
+   Item* i_name = vm->param(1);
+   Item* i_data = vm->param(2);
+   Item* i_dflt = vm->param(3);
+
+   if ( i_column == 0 || ! ( i_column->isOrdinal()|| i_column->isString())
+      || i_name == 0 || ! i_name->isString() )
+   {
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
+         .origin( e_orig_runtime )
+         .extra( "N|S, S, [X], [X]" ) ) );
+      return;
+   }
+
+   uint32 colpos;
+   if ( i_column->isOrdinal() )
+   {
+      colpos = i_column->forceInteger() < 0 ?
+         (uint32) (table->order() + i_column->forceInteger()) :
+         (uint32) (i_column->forceInteger());
+
+      if ( colpos > table->order() )
+         colpos = table->order();
+   }
+   else {
+      colpos = internal_col_pos( table, vm, i_column );
+      if ( colpos == CoreTable::noitem )
+      {
+         // already raised.
+         return;
+      }
+   }
+
+   Item data, dflt;
+   if ( i_data != 0 )
+      data = *i_data;
+   if ( i_dflt != 0 )
+      dflt = *i_dflt;
+
+   table->insertColumn( colpos, *i_name->asString(), data, dflt );
+}
+
+/*#
+   @method removeColumn Table
+   @brief Inserts a column in a table.
+   @param column The column name or position to be removed.
+   @raise AccessError if the column is not found.
+
+   This method removes column in the table, removing also the coresponding
+   position in the
+
+   If @b dflt parameter is specified, that value is used to fill the
+   newly created columns in the table rows, otherwise the new items
+   will be nil.
+*/
+FALCON_FUNC  Table_removeColumn ( ::Falcon::VMachine *vm )
+{
+   CoreTable *table = static_cast<CoreTable *>( vm->self().asObject()->getUserData() );
+   Item* i_column = vm->param(0);
+
+
+   if ( i_column == 0 || ! ( i_column->isOrdinal() || i_column->isString()) )
+   {
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
+         .origin( e_orig_runtime )
+         .extra( "N|S" ) ) );
+      return;
+   }
+
+   if ( i_column->isOrdinal() && i_column->forceInteger() < 0 )
+   {
+      i_column->setInteger( table->order() + i_column->forceInteger());
+   }
+
+   uint32 colpos = internal_col_pos( table, vm, i_column );
+   if ( colpos == CoreTable::noitem )
+   {
+      // already raised.
+      return;
+   }
+
+
+   table->removeColumn( colpos );
 }
 
 static bool table_choice_next( Falcon::VMachine *vm )
@@ -762,14 +935,14 @@ static void internal_bind_or_choice( VMachine *vm )
    }
    else {
       start = (uint32) (i_rows->asRangeStart() < 0 ?
-            cp->length() - i_rows->asRangeStart() : i_rows->asRangeStart());
+            cp->length() + i_rows->asRangeStart() : i_rows->asRangeStart());
       end = i_rows->asRangeIsOpen() ? cp->length() :
           (uint32) (i_rows->asRangeEnd() < 0 ?
-            cp->length() - i_rows->asRangeEnd() : i_rows->asRangeEnd());
+            cp->length() + i_rows->asRangeEnd() : i_rows->asRangeEnd());
    }
 
 
-   if ( start == cp->length() || start == end )
+   if ( start == cp->length() || start >= end || start < 0 )
    {
       vm->retnil();
       return;
@@ -920,8 +1093,6 @@ FALCON_FUNC  Table_bidding ( ::Falcon::VMachine *vm )
 
    internal_bind_or_choice( vm );
 }
-
-
 
 }
 

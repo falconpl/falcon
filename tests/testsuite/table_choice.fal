@@ -23,7 +23,7 @@ table = Table(
 function lastBeFirst( array )
    // cache for faster oeration
    static
-      pos = array.table().column( 'value' )
+      pos = array.table().columnPos( 'value' )
    end
 
    // ... and then use the cached value

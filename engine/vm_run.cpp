@@ -2789,14 +2789,10 @@ void opcodeHandler_STPS( register VMachine *vm )
 
       case FLC_ITEM_ARRAY:
       {
-         CoreDict *bindings = target->asArray()->makeBindings();
-         Item temp;
-         vm->referenceItem( temp, item );
-         bindings->insert( *method, temp );
-         vm->regA() = temp;
-         return;
+         target->asArray()->setProperty( *method->asString(), item );
+         vm->regA() = item;
       }
-      break;
+      return;
 
       case FLC_ITEM_DICT:
       {
@@ -3142,14 +3138,11 @@ void opcodeHandler_STP( register VMachine *vm )
 
       case FLC_ITEM_ARRAY:
       {
-         CoreDict *bindings = target->asArray()->makeBindings();
-         Item temp;
-         vm->referenceItem( temp, *sourcend );
-         bindings->insert( *method, temp );
+         target->asArray()->setProperty( *method->asString(), *sourcend );
 
          // when B is the source, the right value is already in A.
          if( sourcend != &vm->regB() )
-            vm->regA() = temp;
+            vm->regA() = *sourcend;
          return;
       }
       break;
@@ -3340,10 +3333,7 @@ void opcodeHandler_STPR( register VMachine *vm )
       // classes cannot have their properties set (for now).
       case FLC_ITEM_ARRAY:
       if ( operand2->type() == FLC_ITEM_STRING ) {
-         CoreDict *bindings = target->asArray()->makeBindings();
-         Item temp;
-         vm->referenceItem( temp, *source ); // source is not dereferenced.
-         bindings->insert( *operand2, temp );
+         target->asArray()->setProperty( *operand2->asString(), *source );
          return;
       }
       break;

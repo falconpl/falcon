@@ -120,6 +120,33 @@ public:
    */
    const String &heading( uint32 pos ) const;
 
+   /** Rename a colunm.
+      \param pos Column to be renamed.
+      \param name The new name for the given column.
+   */
+   void renameColumn( uint32 pos, const String &name );
+
+   /** Inserts a colum in the table.
+      This alters the heading and all the pages, inserting a row of default
+      items (can be nil) as the new column.
+
+      If pos >= order, the column will be appended at end.
+      \param pos The position where to add the column.
+      \param name The name of the column to be inserted.
+      \param data The column data, can be nil.
+      \param dflt The default value for inserted items; can be nil.
+   */
+   void insertColumn( uint32 pos, const String &name, const Item &data, const Item &dflt );
+
+   /** Removes a colum from the table.
+      This alters the heading and all the pages, removing the item
+      at given position in all the arrays in every page.
+
+      \param pos The index of the column to be removed.
+      \return true on success, false if pos >= order.
+   */
+   bool removeColumn( uint32 pos );
+
    bool setCurrentPage( uint32 num )
    {
       if ( num < m_pages.size() )

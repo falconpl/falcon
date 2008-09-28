@@ -89,7 +89,9 @@ Item &CoreTableIterator::getCurrent() const
    CoreArray *page = m_owner->page( m_pageNum );
    fassert( page != 0 );
    fassert( m_itemNum < page->length() );
-   return (*page)[m_itemNum];
+   Item &itm = (*page)[m_itemNum];
+   itm.asArray()->tablePos(m_itemNum);
+   return itm;
 }
 
 
@@ -425,6 +427,120 @@ void CoreTable::reserveBiddings( uint32 size )
       m_biddingSize = size;
       m_biddingVals = (numeric *) memAlloc( size * sizeof( numeric ) );
    }
+}
+
+void CoreTable::renameColumn( uint32 pos, const String &name )
+{
+   fassert( pos < order() );
+
+   MapIterator mi = m_heading.begin();
+   while( mi.hasCurrent() )
+   {
+      uint32* p = (uint32*) mi.currentValue();
+      if ( *p == pos ) {
+         m_heading.erase( mi );
+         m_heading.insert( &name, &pos );
+         return;
+      }
+      mi.next();
+   }
+
+   fassert( false );
+
+}
+
+void CoreTable::insertColumn( uint32 pos, const String &name, const Item &data, const Item &dflt )
+{
+   // if pos >= order, we're lucky. Append.
+   if ( pos >= m_order )
+   {
+      pos = m_order;
+      m_heading.insert( &name, &pos );
+   }
+   else
+   {
+      // first, move all following elements 1 forward
+      MapIterator mi = m_heading.begin();
+      while( mi.hasCurrent() )
+      {
+         uint32* p = (uint32*) mi.currentValue();
+         if ( *p >= pos ) {
+            *p = *p+1;
+         }
+         mi.next();
+      }
+      // then insert the new entry
+      m_heading.insert( &name, &pos );
+   }
+
+   m_order++;
+   // add the column data.
+   m_headerData.insert( (void *) &data, pos );
+
+   // now, for each page, for each row, insert the default item.
+   for( uint32 pid = 0; pid < m_pages.size(); pid++ )
+   {
+      CoreArray *pg = page( pid );
+      for( uint32 rowid = 0; rowid < pg->length(); rowid++ )
+      {
+         CoreArray *row = pg->at(rowid).asArray();
+         // modify is forbidden if the array has a table.
+         CoreObject *save = row->table();
+         row->table(0);
+         row->insert( dflt, pos );
+         row->table(save);
+      }
+   }
+}
+
+bool CoreTable::removeColumn( uint32 pos )
+{
+   // if pos >= order, we're lucky. Append.
+   if ( pos >= m_order )
+   {
+     return false;
+   }
+
+   // first, move all following elements 1 forward
+   MapIterator mi = m_heading.begin();
+   while( mi.hasCurrent() )
+   {
+      uint32* p = (uint32*) mi.currentValue();
+
+      // when we find the foobar'd column, remove it.
+      if ( *p == pos )
+      {
+         m_heading.erase( mi );
+         continue;
+      }
+
+      // else, take other columns back
+      if ( *p > pos ) {
+         *p = *p-1;
+      }
+      mi.next();
+   }
+
+   // add the column data.
+   m_headerData.remove( pos );
+   m_order--;
+
+   // now, for each page, for each row, insert the default item.
+   for( uint32 pid = 0; pid < m_pages.size(); pid++ )
+   {
+      CoreArray *pg = page( pid );
+      for( uint32 rowid = 0; rowid < pg->length(); rowid++ )
+      {
+         CoreArray *row = pg->at(rowid).asArray();
+         // modify is forbidden if the array has a table.
+         CoreObject *save = row->table();
+         row->table(0);
+         row->remove( pos );
+         row->table(save);
+      }
+   }
+
+   return true;
 }
 
 }

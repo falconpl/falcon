@@ -94,6 +94,16 @@ public:
    */
    Item* getProperty( const String &name );
 
+   /** Set a property in this array.
+      If there is a biniding with the given property name, that item is updated.
+      If not, If there is a table with a column name, the coresponding item in
+      the array is updated.
+      If not, new bindings are created, and the property is stored as a new binding.
+
+      \param name The property to be updated.
+      \param data The update data.
+   */
+   void setProperty( const String &name, Item &data );
 
    /** Checks the position to be in the array, and eventually changes it if it's negative.
       \param pos the position to be checked and eventually turned into a positive value.

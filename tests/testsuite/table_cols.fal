@@ -1,0 +1,195 @@
+/****************************************************************************
+* Falcon test suite
+*
+*
+* ID: 80f
+* Category: tabular
+* Subcategory: basic
+* Short: Column juggling.
+* Description:
+*    Test for insertion, change and removal of columns into tables.
+* [/Description]
+*
+****************************************************************************/
+
+
+// minimal table
+table = Table(
+   [ custId|'a test data' , "name"  ],
+   [ "cust1", "Frank Capra" ],
+   [ "cust2", "Sam Wise" ],
+   [ "cust3", "My Cousin" ],
+   [ "cust4", "Unknown Person" ]
+   )
+
+// basic column data access & change
+if table.order() != 2: failure( "order" )
+if table.columnPos( 'name' ) != 1: failure( "columnPos" )
+if table.columnData( 'custId' ) != 'a test data'
+   failure( "columnData - string" )
+end
+if table.columnData( 0 ) != 'a test data'
+   failure( "columnData - int" )
+end
+
+//======================================
+// Column changing
+//
+table.setColumn( "name", "newname" )
+if table.columnPos( 'newname' ) != 1: failure( "rename column" )
+
+table.setColumn( 1, coldata|'some data in col 1' )
+if table.columnData( 'newname' ) != 'some data in col 1'
+   failure( "change column data" )
+end
+
+//======================================
+// Column insertion
+//
+table.insertColumn( 0, "prepend", "added col", 10 )
+if table.order() != 3
+   failure( "Prepend order" )
+end
+
+if table.columnPos( 'prepend' ) != 0
+   failure( "Prepend - name" )
+end
+
+if table.columnData( 0 ) != "added col"
+   failure( "Prepend - data" )
+end
+
+if table.get(0).prepend != 10
+   failure( "Prepend value defaulting" )
+end
+
+//===========================
+// now append
+table.insertColumn( 100, "append", "added col 2" )
+if table.order() != 4
+   failure( "Append order" )
+end
+
+if table.columnPos( 'append' ) != 3
+   failure( "Append - name" )
+end
+
+if table.columnData( 3 ) != "added col 2"
+   failure( "Append - data" )
+end
+
+if table.get(1)[3] != nil
+   failure( "Append (non) defaulting" )
+end
+
+//=============================================
+// now in the middle
+table.insertColumn( "newname", "insert", dflt|20 )
+
+if table.order() != 5
+   failure( "Insert order" )
+end
+
+if table.columnPos( 'insert' ) != table.columnPos( 'newname' ) - 1
+   failure( "Insert - position" )
+end
+
+if table.columnData( 'insert' ) != nil
+   failure( "Insert - (non) data" )
+end
+
+// Insert is not a great name for a property...
+if table.get(2)[ table.columnPos( 'insert' ) ] != 20
+   failure( "Insert - defaulting" )
+end
+
+//======================================
+// Column removing
+//
+table.removeColumn( "newname" )
+if table.order() != 4
+   failure( "Remove order" )
+end
+
+if table.columnPos( "newname" ) != -1
+   failure( "Remove - not removing..." )
+end
+
+if table.columnPos( "append" ) != 3 or \
+   table.columnPos( "insert" ) != 2
+   failure( "Remove - Not squishing columns" )
+end
+
+if table.get(0).len() != 4
+   failure( "Remove not resizing rows" )
+end
+
+if table.get(3)[3] != nil or \
+   table.get(2)[2] != 20
+   failure( "Remove - not squishing rows" )
+end
+
+//=======================================
+// remove extremes
+table.removeColumn( 0 )
+table.removeColumn( -1 )
+if table.order() != 2
+   failure( "Remove extremes order" )
+end
+
+if table.columnPos( 'custId' ) != 0 or \
+   table.columnPos( 'insert' ) != 1
+   failure( "Remove extremes not squeezing..." )
+end
+
+if table.columnData( 'custId' ) != 'a test data' or \
+   table.columnData( 'insert' ) != nil
+   failure( "Remove not squeezing column data..." )
+end
+
+if table.get(0).len() != 2
+   failure( "Remove extremes not resizing rows" )
+end
+
+if table.get(0)[0] != 'cust1' or \
+   table.get(2)[1] != 20
+   failure( "Remove - not squishing rows" )
+end
+
+//======================================
+// empty the table
+table.removeColumn( 0 )
+table.removeColumn( 0 )
+
+if table.order() != 0
+   failure( "Empty table order" )
+end
+
+if table.get(0).len() != 0
+   failure( "Empty table array length" )
+end
+
+//===============================================
+// and reinsert again
+table.insertColumn( 0, "readded", "readded data", 40 )
+if table.order() != 1
+   failure( "Readd order" )
+end
+
+if table.getHeader(0) != "readded"
+   failure( "Readd header" )
+end
+
+if table.columnData(0) != "readded data"
+   failure( "Readd data" )
+end
+
+if table.get(0).len() != 1
+   failure( "Readd row length" )
+end
+
+if table.get(1)[0] != 40
+   failure( "Readd row - data" )
+end
+
+success()

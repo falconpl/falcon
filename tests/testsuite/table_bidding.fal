@@ -23,17 +23,17 @@ table = Table(
    )
 
 function offer_same()
-   self[3] = self.value
+   self.prize = self.value
    return self.prize
 end
 
 function offer_few()
-   self[3] = self.value / 3
+   self.prize = self.value / 3
    return self.prize
 end
 
 function offer_much()
-   self[3] = self.value *3
+   self.prize = self.value *3
    return self.prize
 end
 

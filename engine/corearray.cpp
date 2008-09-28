@@ -474,6 +474,32 @@ Item* CoreArray::getProperty( const String &name )
    return found;
 }
 
+void CoreArray::setProperty( const String &name, Item &data )
+{
+   if ( m_bindings != 0 )
+   {
+      Item* found = m_bindings->find( const_cast<String *>(&name) );
+      if ( found != 0 ) {
+         *found = data;
+         return;
+      }
+   }
+
+   if ( m_table != 0 )
+   {
+      CoreTable *table = reinterpret_cast<CoreTable *>(m_table->getUserData() );
+      uint32 pos = table->getHeaderPos( name );
+      if ( pos != CoreTable::noitem )
+      {
+         *(*this)[pos].dereference() = data;
+         return;
+      }
+   }
+
+   m_bindings = makeBindings();
+   m_bindings->insert( new GarbageString( origin(), name ), data );
+}
+
 }
 
 /* end of corearray.cpp */
