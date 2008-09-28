@@ -404,11 +404,11 @@ FALCON_FUNC  Table_back ( ::Falcon::VMachine *vm );
 FALCON_FUNC  Table_first ( ::Falcon::VMachine *vm );
 FALCON_FUNC  Table_last ( ::Falcon::VMachine *vm );
 FALCON_FUNC  Table_get ( ::Falcon::VMachine *vm );
+FALCON_FUNC  Table_column ( ::Falcon::VMachine *vm );
 FALCON_FUNC  Table_find ( ::Falcon::VMachine *vm );
 FALCON_FUNC  Table_insert ( ::Falcon::VMachine *vm );
-
-/** Message table **/
-extern const wchar_t *message_table[];
+FALCON_FUNC  Table_choice ( ::Falcon::VMachine *vm );
+FALCON_FUNC  Table_bidding ( ::Falcon::VMachine *vm );
 
 /** Class used to manage the file stats.
    The FileStat reflection object provides three reflected timestamps

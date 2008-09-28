@@ -165,7 +165,9 @@ CoreTable::CoreTable():
    m_headerData( &traits::t_item() ),
    m_heading( &traits::t_string(), &traits::t_int() ),
    m_pageNumId(noitem),
-   m_order(noitem)
+   m_order(noitem),
+   m_biddingVals(0),
+   m_biddingSize(0)
 {
 }
 
@@ -175,13 +177,20 @@ CoreTable::CoreTable( const CoreTable& other ):
    m_headerData( other.m_headerData ),
    m_heading( other.m_heading ),
    m_pageNumId( other.m_pageNumId ),
-   m_order( other.m_order )
+   m_order( other.m_order ),
+   m_biddingVals(0),
+   m_biddingSize(0)
 {
 }
 
 
 CoreTable::~CoreTable()
-{}
+{
+   if ( m_biddingVals != 0 ) {
+      memFree( m_biddingVals );
+      m_biddingVals = 0;
+   }
+}
 
 bool CoreTable::setHeader( CoreArray *header )
 {
@@ -404,6 +413,17 @@ void CoreTable::gcMark( VMachine *vm )
    {
       Item temp = (CoreArray *) m_pages.at(i);
       vm->memPool()->markItemFast( temp );
+   }
+}
+
+void CoreTable::reserveBiddings( uint32 size )
+{
+   if ( size > m_biddingSize )
+   {
+      if ( m_biddingVals != 0 )
+         memFree( m_biddingVals );
+      m_biddingSize = size;
+      m_biddingVals = (numeric *) memAlloc( size * sizeof( numeric ) );
    }
 }
 

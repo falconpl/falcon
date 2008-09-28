@@ -79,6 +79,10 @@ class CoreTable: public Sequence
    uint32 m_pageNumId;
    uint32 m_order;
 
+   /** Used for votation and bidding operations */
+   numeric *m_biddingVals;
+   uint32 m_biddingSize;
+
 public:
    enum {
       noitem = 0xFFFFFFFF
@@ -219,6 +223,16 @@ public:
    /** Perform marking of items stored in the table.
    */
    virtual void gcMark( VMachine * );
+
+   /** Returns bidding results.
+      Must be initialized with makebiddings().
+   */
+   numeric *biddings() const { return m_biddingVals; }
+
+   /** Returns max size of the biddings array. */
+   uint32 biddingsSize() const { return m_biddingSize; }
+
+   void reserveBiddings( uint32 size );
 };
 
 }

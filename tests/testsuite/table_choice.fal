@@ -1,0 +1,44 @@
+/****************************************************************************
+* Falcon test suite
+*
+*
+* ID: 81c
+* Category: tabular
+* Subcategory: functional
+* Short: Table choice
+* Description:
+*     Checks the Find method of Table class.
+* [/Description]
+*
+****************************************************************************/
+
+table = Table(
+   [ "value", "name" ],
+   [ 200, "First" ],
+   [ 100, "Second" ],
+   [ 50, "Third" ],
+   [ 400, "Fourth" ]
+   )
+
+function lastBeFirst( array )
+   // cache for faster oeration
+   static
+      pos = array.table().column( 'value' )
+   end
+
+   // ... and then use the cached value
+   return 10000000 - array[pos]
+end
+
+if table.choice( lastBeFirst, 'name' ) != "Third"
+   failure( "Selection of the smaller" )
+end
+
+if table.choice( lambda x => x.value ).name != "Fourth"
+   failure( "Selection of the highest" )
+end
+
+if table.choice(lastBeFirst, rows|[0:2]).name != "Second"
+   failure( "Ranged selection" )
+end
+

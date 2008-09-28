@@ -325,7 +325,7 @@ static uint32 internal_col_pos( CoreTable *table, VMachine *vm, Item *i_column )
       {
          String temp;
          temp = "col ";
-         temp.append( colPos );
+         temp.writeNumber( (int64) colPos );
          vm->raiseModError( new AccessError( ErrorParam( e_prop_acc, __LINE__ )
             .origin( e_orig_runtime )
             .extra( temp ) ) );
@@ -338,6 +338,12 @@ static uint32 internal_col_pos( CoreTable *table, VMachine *vm, Item *i_column )
 
 static void internal_get_item( CoreTable *table, CoreArray *row, VMachine *vm, Item *i_column )
 {
+   if ( i_column->isInteger() && i_column->asInteger() == CoreTable::noitem )
+   {
+      vm->retval( row );
+      return;
+   }
+
    uint32 colPos = internal_col_pos( table, vm, i_column );
 
    // otherwise we have already an error risen.
@@ -406,6 +412,33 @@ FALCON_FUNC  Table_get ( ::Falcon::VMachine *vm )
       internal_get_item( table, (*page)[pos].asArray(), vm, i_column );
    }
 }
+
+/*#
+   @method column Table
+   @brief Returns the number of a given column name.
+   @param name The column header name.
+   @return The numeric position of the column or -1 if not found.
+*/
+FALCON_FUNC  Table_column ( ::Falcon::VMachine *vm )
+{
+   CoreTable *table = static_cast<CoreTable *>( vm->self().asObject()->getUserData() );
+   Item* i_column = vm->param(0);
+
+   if ( i_column != 0 && ! i_column->isString() )
+   {
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
+         .origin( e_orig_runtime )
+         .extra( "S" ) ) );
+      return;
+   }
+
+   uint32 colpos = internal_col_pos( table, vm, i_column );
+   if ( colpos == CoreTable::noitem )
+      vm->regA().setInteger( -1 );
+   else
+      vm->regA().setInteger( colpos );
+}
+
 
 /*#
    @method find Table
@@ -536,6 +569,359 @@ FALCON_FUNC  Table_insert ( ::Falcon::VMachine *vm )
 
    element->table( vm->self().asObject() );
 }
+
+/*#
+   @method remove Table
+   @brief Remove a row from the table.
+   @param row The number of the row to be removed.
+   @raise AccessError if the position is out of range.
+   @return The removed array.
+
+   This method removes one of the rows from the table.
+
+   However, the array still remember the table from which it came from,
+   as the table may have multiple reference to the array. So, the array
+   stays bound with the table, and cannot be modified.
+*/
+FALCON_FUNC  Table_remove ( ::Falcon::VMachine *vm )
+{
+   CoreTable *table = static_cast<CoreTable *>( vm->self().asObject()->getUserData() );
+   Item* i_row = vm->param(0);
+
+   if (i_row == 0 || ! i_row->isOrdinal() )
+   {
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
+         .origin( e_orig_runtime )
+         .extra( "N" ) ) );
+      return;
+   }
+
+   uint32 pos = i_row->forceInteger();
+
+   CoreArray* page = table->currentPage();
+   if ( pos < 0 )
+      pos = page->length() - pos;
+
+   if ( pos >= page->length() ) {
+      vm->raiseModError( new AccessError( ErrorParam( e_param_range, __LINE__ )
+         .origin( e_orig_runtime ) ) );
+      return;
+   }
+
+   CoreArray *rem = (*page)[pos].asArray();
+   //rem->table(0);
+   page->remove( pos );
+   vm->retval(rem);
+}
+
+static bool table_choice_next( Falcon::VMachine *vm )
+{
+   CoreTable *table = static_cast<CoreTable *>( vm->self().asObject()->getUserData() );
+   CoreArray &page = *table->currentPage();
+   uint32 start = (uint32) vm->local(0)->forceInteger();
+   uint32 row = (uint32) vm->local(1)->forceInteger();
+   uint32 end = (uint32) vm->local(2)->forceInteger();
+
+   // has the evaluation function just asked us to stop?
+   if( vm->regA().isOob() )
+   {
+      // in case of just row end, A can't be nil as the function has
+      if( vm->regA().isNil() )
+      {
+         vm->regA().setOob(false);
+      }
+      else {
+         // get the winner
+         CoreArray *winner = page[row-1].asArray();
+         winner->tablePos( row-1 );
+         internal_get_item( table, winner, vm, vm->local(3) );
+      }
+
+      // we're done, don't call us anymore
+      return false;
+   }
+   else if ( start != row ) {
+      // we have a bidding
+      uint32 pos = row - start;
+
+      // a bit paranoid, but users may really screw up the table.
+      if ( pos > table->biddingsSize() ) {
+         vm->raiseModError( new AccessError( ErrorParam( e_continue_out, __LINE__ )
+         .origin( e_orig_runtime )
+         .extra( FAL_STR( rtl_broken_table ) ) ) );
+         return false;
+      }
+
+      numeric *biddings = table->biddings();
+      biddings[pos-1] = vm->regA().forceNumeric();
+
+      // is the bidding step over?
+      if( pos == end - start) {
+         uint32 maxrow = CoreTable::noitem;
+
+         // our threshold is 0. If no item meets the requirement, we return nil
+         numeric maxval = 0.0;
+         // but take also the first row in the loop, to update maxval
+         for ( pos = 0; pos < end - start; pos ++ )
+         {
+            if( biddings[pos] > maxval )
+            {
+               maxrow = pos + start;
+               maxval = biddings[pos];
+            }
+         }
+
+         // no winner?
+         if ( maxrow == CoreTable::noitem )
+         {
+            vm->retnil();
+         }
+         else {
+            // we have a winner.
+            CoreArray *winner = page[row-1].asArray();
+            winner->tablePos( row-1 );
+            internal_get_item( table, page[maxrow].asArray(), vm, vm->local(3) );
+         }
+
+         // we're done, don't call us anymore
+         return false;
+      }
+   }
+
+   // nothing special to do: just call the desired function with our row.
+   Item &rowItem = page[row];
+   rowItem.asArray()->tablePos(row); // save the position, in case is needed by our evaluator
+
+   // update counter for next loop
+   vm->local(1)->setInteger( row + 1 );
+
+   // do we have to call a function or an item in the row?
+   Item &calling = *vm->local(4);
+   if( calling.isInteger() )
+   {
+      // colunn in the table.
+      Item ret = page[row].asArray()->at( (uint32) calling.asInteger() );
+
+      if ( ret.isNil() && ! ret.isOob() )
+         ret = *table->getHeaderData((uint32) calling.asInteger());
+
+      // eventually methodize.
+      if ( ret.isFunction() )
+      {
+         ret.setTabMethod( page[row].asArray(), ret.asFunction(), ret.asModule() );
+         vm->callFrame( ret, 0 );
+         return true;
+      }
+
+      if ( ret.isCallable() )
+      {
+         vm->pushParameter( page[row] );
+         vm->callFrame( ret, 1 );
+         return true;
+      }
+
+      // else, the item is not callable! Raise an error.
+      // (it's ok also if we pushed the parameter; stack is unwinded).
+      vm->raiseModError( new AccessError( ErrorParam( e_non_callable, __LINE__ )
+         .origin( e_orig_runtime )
+         .extra( FAL_STR( rtl_uncallable_col ) ) ) );
+
+      // pitifully, we're done.
+      return false;
+   }
+   else {
+      // function provided externally
+      vm->pushParameter( page[row] );
+      vm->callFrame( calling, 1 );
+   }
+
+   // call us again when the frame is done.
+   return true;
+}
+
+static void internal_bind_or_choice( VMachine *vm )
+{
+   CoreTable *table = static_cast<CoreTable *>( vm->self().asObject()->getUserData() );
+   Item* i_offer = vm->param(1);
+   Item* i_rows = vm->param(2);
+
+   CoreArray *cp = table->currentPage();
+
+   // if the table is empty, just return.
+   if ( cp->length() == 0 )
+   {
+      vm->retnil();
+      return;
+   }
+
+   uint32 start, end;
+   if( i_rows == 0 )
+   {
+      start = 0;
+      end = cp->length();
+   }
+   else {
+      start = (uint32) (i_rows->asRangeStart() < 0 ?
+            cp->length() - i_rows->asRangeStart() : i_rows->asRangeStart());
+      end = i_rows->asRangeIsOpen() ? cp->length() :
+          (uint32) (i_rows->asRangeEnd() < 0 ?
+            cp->length() - i_rows->asRangeEnd() : i_rows->asRangeEnd());
+   }
+
+
+   if ( start == cp->length() || start == end )
+   {
+      vm->retnil();
+      return;
+   }
+
+   // performs also a preliminary check of column pos
+   uint32 colpos;
+   if( i_offer == 0 || i_offer->isNil() )
+   {
+      colpos = CoreTable::noitem;
+   }
+   else {
+      colpos = internal_col_pos( table, vm, i_offer );
+      if ( colpos == CoreTable::noitem )
+      {
+         // error already raised
+         return;
+      }
+   }
+
+   // locals already allocated.
+   vm->local(0)->setInteger( (int64) start ); // we need a copy
+   vm->local(1)->setInteger( (int64) start );
+   vm->local(2)->setInteger( (int64) end );
+   vm->local(3)->setInteger( (int64) colpos );
+
+   table->reserveBiddings( end - start + 1);
+
+   // returning from this frame will call table_choice_next
+   vm->returnHandler( table_choice_next );
+}
+
+/*#
+   @method choice Table
+   @brief Performs a choice between rows.
+   @param func Choice function or callable.
+   @optparam offer Offer column (number or name).
+   @optparam rows Range of rows in which to perform the bidding.
+   @return The winning row, or the coresponding value in the offer column.
+
+   This method sends all the rows in the table as the sole parameter of
+   a function which has to return a numeric value for each row.
+
+   After all the rows have been processed, the row for which the called function
+   had the highest value is returned. If the optional parameter @b offer is specified,
+   then the item specified by that column number or name is returned instead.
+
+   If two or more rows are equally evaluated by the choice function, only the
+   first one is returned.
+
+   The evaluation function may return a number lower than 0 to have the row effectively
+   excluded from the evaluation. If all the rows are evaluated to have a value lower
+   than zero, the function returns nil (as if the table was empty).
+
+   The function may force an immediate selection by returning an out of band item.
+   An out of band nil will force this method to return nil, and an out of band
+   number will force the selection of the current row.
+
+   If an @b offer parameter is specified, then the item in the coresponding
+   column (indicated by a numeric index or by column name) is returned.
+
+   A @b row range can be used to iterate selectively on one part of the table.
+
+   If the table is empty, or if the given row range is empty, the function returns
+   nil.
+
+   @note Except for OOB nil, every return value coming from the choice function
+   will be turned into a floating point numeric value. Non-numeric returns will
+   be evaluated as 0.0.
+*/
+FALCON_FUNC  Table_choice ( ::Falcon::VMachine *vm )
+{
+   Item* i_func = vm->param(0);
+   Item* i_offer = vm->param(1);
+   Item* i_rows = vm->param(2);
+
+   if ( i_func == 0 || ! i_func->isCallable()
+         || (i_offer != 0 && (! i_offer->isNil() && ! i_offer->isString() && ! i_offer->isOrdinal() ))
+         || (i_rows != 0 && ! i_rows->isRange() )
+       )
+   {
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
+         .origin( e_orig_runtime )
+         .extra( "C,[N|S],[R]" ) ) );
+      return;
+   }
+
+   // prepare local stack and function pointer
+   vm->addLocals(5);
+   *vm->local(4) = *vm->param(0);
+
+   internal_bind_or_choice( vm );
+}
+
+/*#
+   @method bidding Table
+   @brief Performs a bidding between rows.
+   @param column Betting column (number or name).
+   @optparam offer Offer column (number or name).
+   @optparam rows Range of rows in which to perform the bidding.
+   @return The winning row, or the coresponding value in the offer column.
+   @return AccessError if the table or ranges are empty.
+
+   This method calls iteratively all the items in a determined column of
+   the table, recording their return value, which must be numeric. It is
+   allowed also to have numeric and nil values in the cells in the
+   betting column. Numeric values will be considered as final values and
+   will participate in the final auction, while row having nil values
+   will be excluded.
+
+   After the bidding is complete, the row offering the highest value
+   is selected and returned, or if the @b offer parameter is specified,
+   the coresponding value in the given column will be returned.
+
+   @note If the bidding element is a plain function, it will be called
+      as a method of the array, so "self" will be available. In all the
+      other cases, the array will be passed as the last parameter.
+
+   A @b rows range can be specified to limit the bidding to a part
+   smaller part of the table.
+*/
+FALCON_FUNC  Table_bidding ( ::Falcon::VMachine *vm )
+{
+   Item* i_column = vm->param(0);
+   Item* i_offer = vm->param(1);
+   Item* i_rows = vm->param(2);
+
+   if ( i_column == 0 || ( ! i_column->isOrdinal() && ! i_column->isString() )
+         || (i_offer != 0 && (! i_offer->isNil() && ! i_offer->isString() && ! i_offer->isOrdinal() ))
+         || (i_rows != 0 && ! i_rows->isRange() )
+       )
+   {
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
+         .origin( e_orig_runtime )
+         .extra( "[N|S],[N|S],[R]" ) ) );
+      return;
+   }
+
+   CoreTable *table = static_cast<CoreTable *>( vm->self().asObject()->getUserData() );
+   uint32 colpos = internal_col_pos( table, vm, i_column );
+   // wrong position?
+   if( colpos == CoreTable::noitem )
+      return;
+
+   // prepare local stack and data pointer
+   vm->addLocals(5);
+   vm->local(4)->setInteger( colpos );
+
+   internal_bind_or_choice( vm );
+}
+
+
 
 }
 

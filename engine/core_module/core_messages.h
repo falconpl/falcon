@@ -41,5 +41,7 @@ FAL_MODSTR( rtl_no_tabhead, L"First row of the table must be a header" );
 FAL_MODSTR( rtl_invalid_tabhead, L"Table header must be composed of strings or future bindings" );
 FAL_MODSTR( rtl_invalid_order, L"Table order must be greater than zero" );
 FAL_MODSTR( rtl_invalid_tabrow, L"Row inserted in table has different order" );
+FAL_MODSTR( rtl_broken_table, L"The table changed during a const operation" );
+FAL_MODSTR( rtl_uncallable_col, L"Given column contains some uncallable items" );
 
 /* end of core_messages.h */

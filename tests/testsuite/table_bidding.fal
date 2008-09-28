@@ -1,0 +1,75 @@
+/****************************************************************************
+* Falcon test suite
+*
+*
+* ID: 81d
+* Category: tabular
+* Subcategory: functional
+* Short: Table choice
+* Description:
+*     Checks the Find method of Table class.
+* [/Description]
+*
+****************************************************************************/
+
+table = Table(
+   // by default, the bidder bids the value (lambda x => x)
+   [ bidder|offer_same,    "value", "name",  "prize" ],
+
+   [ offer_few,            200,     "First",  nil ],
+   [ nil,                  100,     "Second", nil ],
+   [ offer_much,           50,      "Third",  nil ],
+   [ nil,                  400,     "Fourth", nil ]
+   )
+
+function offer_same()
+   self[3] = self.value
+   return self.prize
+end
+
+function offer_few()
+   self[3] = self.value / 3
+   return self.prize
+end
+
+function offer_much()
+   self[3] = self.value *3
+   return self.prize
+end
+
+if table.bidding( 'bidder', 'name' ) != "Fourth"
+   failure( "Step 1 - A" )
+end
+
+if table.get(3).prize != 400
+   failure( "Modification on step 1 - A" )
+end
+
+if table.bidding( 'bidder' ).name != "Fourth"
+   failure( "Step 1 - B" )
+end
+
+if table.bidding( 'bidder', rows|[0:2] ).name != "Second"
+   failure( "Step 1 - C" )
+end
+
+//==============================================
+table.get(3)[0] = offer_few
+
+if table.bidding( 'bidder', 'name' ) != "Third"
+   failure( "Step 2 - A" )
+end
+
+if table.get(2).prize != 150
+   failure( "Modification on step 2 - A" )
+end
+
+if table.bidding( 'bidder' ).name != "Third"
+   failure( "Step 2 - B" )
+end
+
+if table.bidding( 'bidder', rows|[0:3] ).name != "Third"
+   failure( "Step 1 - C" )
+end
+
+success()

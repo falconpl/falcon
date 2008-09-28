@@ -1041,10 +1041,16 @@ Module* core_module_init()
    self->addClassMethod( table_class, "last", Falcon::core::Table_last );
    self->addClassMethod( table_class, "get", Falcon::core::Table_get ).asSymbol()->
       addParam("row")->addParam("tcol");
+   self->addClassMethod( table_class, "column", Falcon::core::Table_column ).asSymbol()->
+      addParam("name");
    self->addClassMethod( table_class, "find", Falcon::core::Table_find ).asSymbol()->
       addParam("column")->addParam("value")->addParam("tcol");
    self->addClassMethod( table_class, "insert", Falcon::core::Table_insert ).asSymbol()->
       addParam("element")->addParam("pos");
+   self->addClassMethod( table_class, "choice", Falcon::core::Table_choice ).asSymbol()->
+      addParam("func")->addParam("offer")->addParam("rows");
+   self->addClassMethod( table_class, "bidding", Falcon::core::Table_bidding ).asSymbol()->
+      addParam("column")->addParam("offer")->addParam("rows");
 
    return self;
 }

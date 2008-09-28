@@ -4,10 +4,10 @@
 *
 * ID: 81b
 * Category: tabular
-* Subcategory: oop
+* Subcategory: functional
 * Short: Table find
 * Description:
-*     Check methods on tables.
+*     Checks the find method of Table class.
 * [/Description]
 *
 ****************************************************************************/
