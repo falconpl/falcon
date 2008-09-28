@@ -4,12 +4,17 @@
 # CMake configuration file for Feather modules
 ####################################################################
 cmake_minimum_required(VERSION 2.4)
+if(COMMAND cmake_policy)
+   cmake_policy(SET CMP0003 NEW)
+   cmake_policy(SET CMP0005 NEW)
+endif(COMMAND cmake_policy)
+
 PROJECT(Falcon_Feathers)
 
 #Check for environment
 IF("$ENV{FALCON_DEVEL_TREE}" STREQUAL "" )
    MESSAGE( FATAL_ERROR "Sorry, Falcon environment not correctly configured" )
-ENDIF($ENV{FALCON_DEVEL_TREE} STREQUAL "")
+ENDIF("$ENV{FALCON_DEVEL_TREE}" STREQUAL "")
 
 #Set the default buid type to Debug
 IF(NOT CMAKE_BUILD_TYPE)
