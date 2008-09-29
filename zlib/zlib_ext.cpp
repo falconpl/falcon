@@ -182,11 +182,11 @@ FALCON_FUNC ZLib_compressText( ::Falcon::VMachine *vm )
 
    allocLen = compLen; // and keep a copy.
    compData = (Bytef *) memAlloc( compLen );
-   compData[0] = dataI->asString()->manipulator()->charSize();
-   compData[1] = dataLen >> 24;
-   compData[2] = (dataLen >> 16) & 0xff;
-   compData[3] = (dataLen >> 8) & 0xff;
-   compData[4] = (dataLen) & 0xff;
+   compData[0] = (Bytef) dataI->asString()->manipulator()->charSize();
+   compData[1] = (Bytef)(dataLen >> 24);
+   compData[2] = (Bytef)((dataLen >> 16) & 0xff);
+   compData[3] = (Bytef)((dataLen >> 8) & 0xff);
+   compData[4] = (Bytef)((dataLen) & 0xff);
    compLen-=5;
 
    do {
@@ -198,11 +198,11 @@ FALCON_FUNC ZLib_compressText( ::Falcon::VMachine *vm )
          memFree( compData );
          compLen += dataLen/2;
          allocLen = compLen;
-         compData[0] = dataI->asString()->manipulator()->charSize();
-         compData[1] = dataLen >> 24;
-         compData[2] = (dataLen >> 16) & 0xff;
-         compData[3] = (dataLen >> 8) & 0xff;
-         compData[4] = (dataLen) & 0xff;
+         compData[0] = (Bytef) dataI->asString()->manipulator()->charSize();
+         compData[1] = (Bytef)(dataLen >> 24);
+         compData[2] = (Bytef)((dataLen >> 16) & 0xff);
+         compData[3] = (Bytef)((dataLen >> 8) & 0xff);
+         compData[4] = (Bytef)((dataLen) & 0xff);
          compLen-=5;
 
          compData = (Bytef *) memAlloc( compLen );
