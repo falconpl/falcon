@@ -163,14 +163,13 @@ FALCON_FUNC  Stream_read ( ::Falcon::VMachine *vm )
    // if the string is missing, we must create a new appropriate target.
    Item *last = vm->param(1);
 
-
-   int32 size;
-   bool returnTarget;
-
    if ( target == 0 ) {
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
       return;
    }
+
+   int32 size = 0;
+   bool returnTarget = false;
 
    if ( last != 0 ) {
       size = (int32) last->forceInteger();
@@ -903,6 +902,8 @@ FALCON_FUNC  Stream_truncate ( ::Falcon::VMachine *vm )
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
       return;
    }
+   else
+      pos = position->forceInteger();
 
    if ( pos == -1 || ! file->truncate( pos ) )
    {

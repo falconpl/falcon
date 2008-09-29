@@ -620,8 +620,8 @@ void Static::insert( String *str, uint32 pos, uint32 len, const String *source )
    if ( pos + len > str->size() )
       len = str->size() - pos;
 
-   uint32 finalSize;
-   byte *mem;
+   uint32 finalSize=0;
+   byte *mem=0;
    switch( source->manipulator()->charSize() )
    {
       case 1:
@@ -709,8 +709,8 @@ void Static16::insert( String *str, uint32 pos, uint32 len, const String *source
    if ( pos + len > strLen )
       len = strLen - pos;
 
-   uint32 finalSize;
-   byte *mem;
+   uint32 finalSize=0;
+   byte *mem=0;
    switch( source->manipulator()->charSize() )
    {
       case 1:
@@ -796,8 +796,8 @@ void Static32::insert( String *str, uint32 pos, uint32 len, const String *source
    if ( pos + len > strLen )
       len = strLen - pos;
 
-   uint32 finalSize;
-   byte *mem;
+   uint32 finalSize=0;
+   byte *mem=0;
    switch( source->manipulator()->charSize() )
    {
       case 1:
@@ -884,8 +884,8 @@ void Buffer::insert( String *str, uint32 pos, uint32 len, const String *source )
    if ( pos + len > str->size() )
       len = str->size() - pos;
 
-   uint32 finalSize;
-   byte *mem;
+   uint32 finalSize=0;
+   byte *mem=0;
 	bool toFree = str->allocated() > 0;
    byte *tgtBuf = str->getRawStorage();
 
@@ -980,9 +980,9 @@ void Buffer16::insert( String *str, uint32 pos, uint32 len, const String *source
    if ( pos + len > strLen )
       len = strLen - pos;
 
-   uint32 finalSize;
+   uint32 finalSize=0;
 	bool toFree = str->allocated() > 0;
-   byte *mem;
+   byte *mem=0;
 
    switch( source->manipulator()->charSize() )
    {
@@ -1076,9 +1076,9 @@ void Buffer32::insert( String *str, uint32 pos, uint32 len, const String *source
    if ( pos + len > strLen )
       len = strLen - pos;
 
-   uint32 finalSize;
+   uint32 finalSize=0;
 	bool toFree = str->allocated() > 0;
-   byte *mem;
+   byte *mem = 0;
    switch( source->manipulator()->charSize() )
    {
       case 1:
@@ -1840,7 +1840,7 @@ void String::unescape()
             return;
 
          uint32 chnext = getCharAt( endSub );
-         uint32 chsub;
+         uint32 chsub=0;
 
          switch( chnext )
          {

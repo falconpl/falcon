@@ -738,7 +738,7 @@ void AsmCompiler::addInheritParam( Pseudo *param )
             case Pseudo::imm_double: vd = new VarDef( param->asDouble() ); break;
             case Pseudo::imm_string: vd = new VarDef( m_module->addString( param->asString() ) ); break;
             case Pseudo::tsymbol: vd = new VarDef( param->asSymbol() ); break;
-            default: fassert( false ); // imposible if the program is correct
+            default: vd = 0; fassert( false ); // imposible if the program is correct
          }
 
          inherit->addParameter( vd );
@@ -930,7 +930,7 @@ void AsmCompiler::addDCase( Pseudo *val, Pseudo *jump, Pseudo *second )
 
    if ( m_switchItem != 0 )
    {
-      Map *switchEntries;
+      Map *switchEntries = 0;
 
       // depending on the type of the case, select the correct map
       switch( val->type() )
@@ -955,7 +955,7 @@ void AsmCompiler::addDCase( Pseudo *val, Pseudo *jump, Pseudo *second )
             switchEntries = &m_switchEntriesObj;
             m_switchObjList.pushBack( val );
          break;
-            
+
          default:
             break;
       }
@@ -1026,6 +1026,8 @@ void AsmCompiler::addDEndSwitch()
             case 1: pmap = &m_switchEntriesRng; break;
             case 2: pmap = &m_switchEntriesStr; break;
             //case 3: pmap = &m_switchEntriesObj; break;
+            default:
+               pmap = 0;
          }
 
          MapIterator iter = pmap->begin();

@@ -868,7 +868,7 @@ void executeTests( FlcLoader *modloader )
 
    // now we are all armed up.
    t_idScriptMap::const_iterator iter;
-   ListElement *order;
+   ListElement *order = 0;
 
    if( opt_testList.empty() )
       iter = scriptMap.begin();
@@ -1054,6 +1054,8 @@ int main( int argc, char *argv[] )
    double appTime;
    if( opt_timings )
       appTime = Sys::_seconds();
+   else
+      appTime = 0.0;
 
    FlcLoader *modloader = new FlcLoader( opt_libpath );
    modloader->addFalconPath();

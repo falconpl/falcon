@@ -842,8 +842,8 @@ void Format::formatInt( int64 number, String &target, bool bUseGroup )
    int grp = m_grouping;
 
    // init base
-   int base;
-   uint32 baseHexChr;
+   int base = 10;
+   uint32 baseHexChr = (uint32) 'X';
    switch( m_numFormat )
    {
       case e_decimal: base = 10; break;
@@ -873,7 +873,7 @@ void Format::formatInt( int64 number, String &target, bool bUseGroup )
          base = 16;
          baseHexChr = 'A';
       break;
-         
+
       default:
          break;
    }
@@ -980,7 +980,7 @@ void Format::applyNeg( String &target, int64 number )
             target.prepend( m_paddingChr );
             target.append( m_paddingChr );
          break;
-            
+
          default:
             break;
       }

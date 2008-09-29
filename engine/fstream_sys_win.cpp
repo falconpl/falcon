@@ -142,6 +142,8 @@ int64 GenericStream::seek( int64 pos, e_whence whence )
       case 0: from = FILE_BEGIN; break;
       case 1: from = FILE_CURRENT; break;
       case 2: from = FILE_END; break;
+      default:
+         from = FILE_BEGIN;
    }
 
    LONG posLow = (LONG)(pos & 0xFFFFFFFF);

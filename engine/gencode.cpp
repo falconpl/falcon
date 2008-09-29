@@ -273,7 +273,7 @@ void GenCode::c_varpar::generate( GenCode *owner ) const
          owner->m_outTemp->write( &out, sizeof(out) );
       }
       break;
-         
+
       default:
          break;
    }
@@ -359,7 +359,7 @@ byte GenCode::gen_pdef( const c_varpar &elem )
                if ( val->asSymbol()->isParam() ) return P_PARAM_PARID;
                // valid for undefined, extern and globals:
             return P_PARAM_GLOBID;
-               
+
             default:
                break;
          }
@@ -383,7 +383,7 @@ byte GenCode::gen_pdef( const c_varpar &elem )
                if ( vd->asSymbol()->isParam() ) return P_PARAM_PARID;
                // valid for undefined, extern and globals:
             return P_PARAM_GLOBID;
-               
+
             default:
                break;
          }
@@ -452,7 +452,7 @@ void GenCode::gen_var( const VarDef &def )
          m_outTemp->write( reinterpret_cast< const char *>( &ival ), sizeof( ival ) );
       }
       break;
-         
+
       default:
          break;
    }
@@ -1319,7 +1319,7 @@ void GenCode::gen_statement( const Statement *stmt )
          }
       }
       break;
-         
+
       default:
          break;
    }
@@ -1532,8 +1532,8 @@ void GenCode::gen_push( const Value *val )
 void GenCode::gen_expression( const Expression *exp, t_valType &xValue )
 {
 
-   byte opname;
-   int mode; // 1 = unary, 2 = binary
+   byte opname = 0;
+   int mode = 0; // 1 = unary, 2 = binary
 
    // first, deterime the operator name and operation type
    switch( exp->type() )
@@ -1774,7 +1774,7 @@ void GenCode::gen_expression( const Expression *exp, t_valType &xValue )
          xValue = l_value;
          gen_pcode( P_STO, e_parA, exp->first()->asSymbol() );
       return;
-         
+
       default:
          break;
    }

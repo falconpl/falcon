@@ -137,6 +137,8 @@ int64 GenericStream::seek( int64 pos, e_whence whence )
       case ew_begin: from = SEEK_SET; break;
       case ew_cur: from = SEEK_CUR; break;
       case ew_end: from = SEEK_END; break;
+      default:
+         from = SEEK_SET;
    }
 
    pos = (int64) lseek( data->m_handle, pos, from );

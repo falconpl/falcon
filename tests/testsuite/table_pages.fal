@@ -72,6 +72,8 @@ if table.get(1)[0] != "p1 cust2" or  table.get(0)[1] != "Frank Zappa1"
    failure( "Remove - const data" )
 end
 
+table.setPage(1)
+table.removePage(1)
 if table.pageCount() != 1: failure( "Remove self" )
 if table.curPage() != 0: failure( "Remove self - move to zero" )
 if table.get(1)[0] != "p1 cust2" or  table.get(0)[1] != "Frank Zappa1"

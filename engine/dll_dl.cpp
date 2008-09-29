@@ -14,6 +14,7 @@
 */
 
 #include <falcon/dll_dl.h>
+#include <falcon/autocstring.h>
 
 namespace Falcon
 {
@@ -25,15 +26,12 @@ DllLoader_dl::~DllLoader_dl()
 
 bool DllLoader_dl::open( const String &dll_name )
 {
-   char name[2048];
-   if ( dll_name.toCString( name, 2048 ) == -1 )
-      return false;
-
+   AutoCString name( dll_name );
    if( m_module != 0 )
       if ( ! dlclose( m_module ) )
          return false;
 
-   m_module = dlopen( name, RTLD_NOW );
+   m_module = dlopen( name.c_str(), RTLD_NOW );
    if ( m_module == 0 )
       return false;
    return true;
@@ -62,12 +60,10 @@ void DllLoader_dl::assign( DllLoader_dl &other )
 
 DllFunc DllLoader_dl::getSymbol( const String &sym_name ) const
 {
-   char name[256];
-   if ( sym_name.toCString( name, 256 ) == -1 )
-      return DllFunc( 0 );
+   AutoCString name( sym_name );
 
    if ( m_module != 0 )
-      return DllFunc( dlsym( m_module, name ) );
+      return DllFunc( dlsym( m_module, name.c_str() ) );
    return DllFunc( 0 );
 }
 

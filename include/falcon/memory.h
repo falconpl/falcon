@@ -45,13 +45,13 @@
 
 namespace Falcon {
 
-FALCON_DYN_SYM extern "C" void * DflMemAlloc( size_t amount );
-FALCON_DYN_SYM extern "C" void DflMemFree( void *mem );
-FALCON_DYN_SYM extern "C" void * DflMemRealloc( void *mem, size_t amount );
+FALCON_DYN_SYM void * DflMemAlloc( size_t amount );
+FALCON_DYN_SYM void DflMemFree( void *mem );
+FALCON_DYN_SYM void * DflMemRealloc( void *mem, size_t amount );
 
-FALCON_DYN_SYM extern "C" void * (*memAlloc) ( size_t );
-FALCON_DYN_SYM extern "C" void (*memFree) ( void * );
-FALCON_DYN_SYM extern "C" void * (*memRealloc) ( void *,  size_t );
+FALCON_DYN_SYM extern void * (*memAlloc) ( size_t );
+FALCON_DYN_SYM extern void (*memFree) ( void * );
+FALCON_DYN_SYM extern void * (*memRealloc) ( void *,  size_t );
 
 }
 

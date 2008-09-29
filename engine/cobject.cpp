@@ -341,8 +341,12 @@ void CoreObject::cacheStringProperty( const String& propName, const String &valu
    uint32 pos;
 
    const PropertyTable &pt = m_generatedBy->properties();
-   bool found = pt.findKey( propName, pos );
-   fassert( found );
+   #if defined(NDEBUG)
+      pt.findKey( propName, pos );
+   #else
+      bool found = pt.findKey( propName, pos );
+      fassert( found );
+   #endif
 
    Item &itm = m_cache[pos];
    if( itm.isString() )

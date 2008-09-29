@@ -1629,7 +1629,7 @@ void SrcLexer::parseMacro()
    macro_state state = s_decl;
    String sDecl;
    String sContent;
-   uint32 ctx;
+   uint32 ctx = 0;
 
    uint32 chr;
    while( state != s_done && m_in->get( chr ) )
@@ -1716,7 +1716,7 @@ void SrcLexer::parseMacroCall()
    String sDecl;
    String sParam;
    String sFinal;
-   uint32 ctx;
+   uint32 ctx=0;
 
    uint32 chr;
    while( state != s_done && m_in->get( chr ) )

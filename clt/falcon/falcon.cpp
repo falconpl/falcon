@@ -1110,8 +1110,12 @@ int main ( int argc, char *argv[] )
 
    // we know we're not launching the core module.
    vmachine->launchAtLink ( false );
-   LiveModule *res = vmachine->link ( core );
-   fassert ( res != 0 ); // should not fail
+   #ifdef NDEBUG
+      vmachine->link ( core );
+   #else
+      LiveModule *res = vmachine->link ( core );
+      fassert ( res != 0 ); // should not fail
+   #endif
    core->decref();
 
    // prepare environment
