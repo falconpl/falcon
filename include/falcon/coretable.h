@@ -96,6 +96,8 @@ public:
       return *reinterpret_cast<CoreArray **>(m_pages.size() >= num ? m_pages.at(num) : 0);
    }
 
+   uint32 pageCount() const { return m_pages.size(); }
+
    /** Returns the order (number of colums) in the table */
    uint32 order() const { return m_order; }
 

@@ -577,7 +577,7 @@ FALCON_FUNC  Table_insert ( ::Falcon::VMachine *vm )
    }
 
    CoreArray* element = i_element->asArray();
-   uint32 pos = i_pos->forceInteger();
+   uint32 pos = (uint32) i_pos->forceInteger();
    if ( element->length() != table->order() )
    {
       vm->raiseModError( new ParamError( ErrorParam( e_param_type, __LINE__ )
@@ -621,7 +621,7 @@ FALCON_FUNC  Table_remove ( ::Falcon::VMachine *vm )
       return;
    }
 
-   uint32 pos = i_row->forceInteger();
+   uint32 pos = (uint32) i_row->forceInteger();
 
    CoreArray* page = table->currentPage();
    if ( pos < 0 )
@@ -1092,6 +1092,115 @@ FALCON_FUNC  Table_bidding ( ::Falcon::VMachine *vm )
    vm->local(4)->setInteger( colpos );
 
    internal_bind_or_choice( vm );
+}
+
+/*#
+   @method pageCount Table
+   @brief Gets the number of pages in this table.
+   @return Number of pages stored in this table.
+*/
+FALCON_FUNC  Table_pageCount ( ::Falcon::VMachine *vm )
+{
+   CoreTable *table = static_cast<CoreTable *>( vm->self().asObject()->getUserData() );
+   vm->retval( (int64) table->pageCount() );
+}
+
+/*#
+   @method setPage Table
+   @brief Sets current active page.
+   @param page The number of the selected page.
+
+   All the tables are created with at least one page having ID = 0.
+*/
+FALCON_FUNC  Table_setPage ( ::Falcon::VMachine *vm )
+{
+   Item* i_page = vm->param(0);
+
+   if ( i_page == 0 || ! i_page->isOrdinal() )
+   {
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
+         .origin( e_orig_runtime )
+         .extra( "N" ) ) );
+      return;
+   }
+
+   CoreTable *table = static_cast<CoreTable *>( vm->self().asObject()->getUserData() );
+   uint32 pcount = table->pageCount();
+   int64 reqPid = i_page->forceInteger();
+   uint32 pid = (uint32)(reqPid < 0 ? pcount + reqPid : reqPid);
+   
+   if ( ! table->setCurrentPage( pid ) )
+   {
+      vm->raiseModError( new ParamError( ErrorParam( e_param_range, __LINE__ )
+         .origin( e_orig_runtime )
+         .extra( "N" ) ) );
+      return;
+   }
+}
+
+/*#
+   @method getPage Table
+   @brief Gets the current table page.
+   @return The currently active table page.
+
+   All the tables are created with at least one page having ID = 0.
+*/
+FALCON_FUNC  Table_getPage ( ::Falcon::VMachine *vm )
+{
+   CoreTable *table = static_cast<CoreTable *>( vm->self().asObject()->getUserData() );
+   vm->retval( (int64) table->currentPage() );
+}
+
+/*#
+   @method insertPage Table
+   @brief Inserts a new table page.
+   @param pos The position at which to insert the page; if greater than page count, will append.
+   @optparam data an array of rows (arrays), each of which having length equal to table order.
+
+   If @b pos is greater than the number of pages in the table, the page will be
+   appended at the end.
+*/
+FALCON_FUNC  Table_insertPage ( ::Falcon::VMachine *vm )
+{
+   Item* i_pos = vm->param(0);
+   Item* i_data = vm->param(1);
+
+   if ( i_pos == 0 || ( ! i_pos->isOrdinal() )
+      || ( i_data != 0 && ! i_data->isArray() ) )
+   {
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
+         .origin( e_orig_runtime )
+         .extra( "N,[A]" ) ) );
+      return;
+   }
+
+   CoreTable *table = static_cast<CoreTable *>( vm->self().asObject()->getUserData() );
+   if ( i_data == 0 )
+   {
+      table->insertPage( new CoreArray(vm), (uint32) i_pos->forceInteger() );
+   }
+   else {
+      if ( ! table->insertPage( i_data->asArray(), (uint32) i_pos->forceInteger() ) )
+      {
+         vm->raiseModError( new ParamError( ErrorParam( e_param_type, __LINE__ )
+            .origin( e_orig_runtime )
+            .extra( FAL_STR( rtl_invalid_tabrow ) ) ));
+         return;
+      }
+   }
+}
+
+/*#
+   @method removePage Table
+   @brief Removes a page.
+   @param pos The page to be removed.
+
+   The table cannot exist without at least one page, and if the
+   deleted page is the current one, the page 0 is selected.
+*/
+FALCON_FUNC  Table_removePage ( ::Falcon::VMachine *vm )
+{
+   //TODO
 }
 
 }
