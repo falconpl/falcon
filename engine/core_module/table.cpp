@@ -339,7 +339,7 @@ static uint32 internal_col_pos( CoreTable *table, VMachine *vm, Item *i_column )
 
 static void internal_get_item( CoreTable *table, CoreArray *row, VMachine *vm, Item *i_column )
 {
-   if ( i_column->isInteger() && i_column->asInteger() == CoreTable::noitem )
+   if ( i_column->isInteger() && (((uint32)i_column->asInteger()) == CoreTable::noitem) )
    {
       vm->retval( row );
       return;
