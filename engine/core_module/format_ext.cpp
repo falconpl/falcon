@@ -16,10 +16,6 @@
 #include "core_module.h"
 #include <falcon/format.h>
 
-/*#
-   @beginmodule core
-*/
-
 namespace Falcon {
 namespace core {
 

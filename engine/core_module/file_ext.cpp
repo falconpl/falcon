@@ -1199,7 +1199,7 @@ FALCON_FUNC  Stream_readItem ( ::Falcon::VMachine *vm )
 }
 
 /*#
-   @funset rtl_stream_factory Stream factory functions
+   @funset core_stream_factory Stream factory functions
    @brief Function creating or opening file and system streams.
 
    Stream factory functions create a stream object bound to a system file.
@@ -1243,7 +1243,7 @@ FALCON_FUNC  Stream_readItem ( ::Falcon::VMachine *vm )
 
    If the file cannot be open, an error containing a valid fsError code is raised.
 
-   See @a rtl_stream_factory for a description of the shared modes.
+   See @a core_stream_factory for a description of the shared modes.
 */
 FALCON_FUNC  InputStream_creator ( ::Falcon::VMachine *vm )
 {
@@ -1304,7 +1304,7 @@ FALCON_FUNC  InputStream_creator ( ::Falcon::VMachine *vm )
    If the file cannot be created, an error containing a valid fsError code is
    raised.
 
-   See @a rtl_stream_factory for a description of the shared modes.
+   See @a core_stream_factory for a description of the shared modes.
 */
 FALCON_FUNC  OutputStream_creator ( ::Falcon::VMachine *vm )
 {
@@ -1381,7 +1381,7 @@ FALCON_FUNC  OutputStream_creator ( ::Falcon::VMachine *vm )
    If the file cannot be created, an error containing a valid fsError code is
    raised.
 
-   See @a rtl_stream_factory for a description of the shared modes.
+   See @a core_stream_factory for a description of the shared modes.
 */
 FALCON_FUNC  IOStream_creator ( ::Falcon::VMachine *vm )
 {

@@ -25,10 +25,10 @@
 */
 
 /*#
-   @funset rtl_indirect Indirect call support
+   @funset core_indirect Indirect call support
    @brief Functions meant to provide indirect symbol call facilities.
 
-   
+
    @beginset core_indirect
 */
 

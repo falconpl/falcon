@@ -26,11 +26,11 @@
 
 
 /*#
-   
+
 */
 
 /*#
-   @funset rtl_math Math functions.
+   @funset core_math Math functions.
    @brief Functions providing math support to Falcon.
 
    This group includes mathematical, trigonometrical and floating point conversion

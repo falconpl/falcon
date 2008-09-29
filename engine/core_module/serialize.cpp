@@ -29,11 +29,11 @@
 #include <falcon/stream.h>
 
 /*#
-   
+
 */
 
 /*#
-   @funset rtl_serialization Serialization functions
+   @funset core_serialization Serialization functions
    @brief Function used to store items persistently.
 
    Serialization functions allow to flatten a Falcon item,

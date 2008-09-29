@@ -31,7 +31,7 @@
 */
 
 /*#
-   @funset rtl_dict_funcs Dictionary support
+   @funset core_dict_funcs Dictionary support
    @brief Dictionary related functions.
    @beginset core_dict_funcs
 */

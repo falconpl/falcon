@@ -35,9 +35,6 @@
 
 #include <stdio.h>
 
-/*#
-   @beginmodule core
-*/
 
 /*#
    @class BOM Basic object model

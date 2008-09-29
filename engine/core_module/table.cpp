@@ -89,7 +89,7 @@ FALCON_FUNC Table_init( VMachine* vm )
    @method getHeader Table
    @brief Gets the name of one header, or the list of header names.
    @optparam id If given, a number indicating the column of which to get the name.
-   @return A string (if @id is given) or the vector of ordered column names.
+   @return A string (if @b id is given) or the vector of ordered column names.
 */
 FALCON_FUNC Table_getHeader( VMachine* vm )
 {
@@ -135,7 +135,7 @@ FALCON_FUNC Table_getHeader( VMachine* vm )
    @method getColData Table
    @brief Gets the clumn wide data associated with this table.
    @optparam id If given, a number indicating the column of which to get the data.
-   @return An item (if @id is given) or the vector of ordered column names.
+   @return An item (if @b id is given) or the vector of ordered column names.
 
 */
 FALCON_FUNC Table_getColData( VMachine* vm )

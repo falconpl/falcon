@@ -28,11 +28,11 @@
 #include <string.h>
 
 /*#
-   
+
 */
 
 /*#
-   @funset rtl_string_functions String functions
+   @funset core_string_functions String functions
    @brief Functions manipulating strings
 
    @beginset core_string_functions

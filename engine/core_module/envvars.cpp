@@ -24,7 +24,7 @@
 #include "core_module.h"
 
 /*#
-   
+
 */
 
 /*#
@@ -32,7 +32,7 @@
 */
 
 /*#
-   @funset rtl_environ Environment support
+   @funset core_environ Environment support
    @brief Functions used to access the process environment variables.
 
    Environment variables are an handful way to provide system wide

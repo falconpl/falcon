@@ -35,7 +35,7 @@
 #include <string.h>
 
 /*#
-   
+
 */
 
 /*#
@@ -43,7 +43,7 @@
 */
 
 /*#
-   @funset rtl_dir_funcs Directory functions
+   @funset core_dir_funcs Directory functions
    @brief Directory and file names functions.
 
    Directory functions are currently under development. The general principle is

@@ -502,7 +502,7 @@ public:
    */
    void setUserPointer( void *tpd )
    {
-      type( FLC_ITEM_POINTER );
+      type( FLC_ITEM_USER_POINTER );
       m_data.ptr.voidp = tpd;
    }
 

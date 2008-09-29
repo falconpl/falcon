@@ -14,19 +14,7 @@
 */
 
 /*#
-   @file array.cpp  Array specialized operation
-
-   Theese operations replicate VM array management,
-   but they are more flexible and use atomic calls in
-   callbacks.
-*/
-
-/*#
-
-*/
-
-/*#
-   @funset rtl_array_funcs Array support
+   @funset core_array_funcs Array support
    @brief Array related functions.
    @beginset core_array_funcs
 */

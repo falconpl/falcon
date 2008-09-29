@@ -30,11 +30,11 @@
 #include <math.h>
 
 /*#
-   
+
 */
 
 /*#
-   @funset rtl_random Random functions
+   @funset core_random Random functions
    @brief Functions providing random numbers and sequences.
    @beginset core_random
 */

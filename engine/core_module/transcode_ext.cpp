@@ -26,7 +26,7 @@
 #include "core_module.h"
 
 /*#
-   
+
 */
 
 namespace Falcon {
@@ -105,7 +105,7 @@ FALCON_FUNC  Stream_setEncoding ( ::Falcon::VMachine *vm )
 }
 
 /*#
-   @funset rtl_transcoding_functions Transcoding functions
+   @funset core_transcoding_functions Transcoding functions
    @brief Functions needed to transcode texts into various character sets.
 
    Transcoding functions turns binary strings encoded in a format into
