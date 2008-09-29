@@ -43,5 +43,6 @@ FAL_MODSTR( rtl_invalid_order, L"Table order must be greater than zero" );
 FAL_MODSTR( rtl_invalid_tabrow, L"Row inserted in table has different order" );
 FAL_MODSTR( rtl_broken_table, L"The table changed during a const operation" );
 FAL_MODSTR( rtl_uncallable_col, L"Given column contains some uncallable items" );
+FAL_MODSTR( rtl_no_page, L"Page ID not present in table." );
 
 /* end of core_messages.h */

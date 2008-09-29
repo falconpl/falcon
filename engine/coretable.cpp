@@ -166,7 +166,7 @@ CoreTable::CoreTable():
    m_pages(&traits::t_voidp()),
    m_headerData( &traits::t_item() ),
    m_heading( &traits::t_string(), &traits::t_int() ),
-   m_pageNumId(noitem),
+   m_currentPageId(noitem),
    m_order(noitem),
    m_biddingVals(0),
    m_biddingSize(0)
@@ -178,7 +178,7 @@ CoreTable::CoreTable( const CoreTable& other ):
    m_pages(other.m_pages),
    m_headerData( other.m_headerData ),
    m_heading( other.m_heading ),
-   m_pageNumId( other.m_pageNumId ),
+   m_currentPageId( other.m_currentPageId ),
    m_order( other.m_order ),
    m_biddingVals(0),
    m_biddingSize(0)
@@ -248,7 +248,7 @@ bool CoreTable::insertRow(  CoreArray *ca, uint32 pos, uint32 page )
       if( m_pages.size() <= page )
          return false;
 
-      tgt = (CoreArray *) m_pages.at(page);
+      tgt = *(CoreArray **) m_pages.at(page);
    }
 
    if ( pos < ca->length() )
@@ -273,7 +273,7 @@ bool CoreTable::removeRow( uint32 pos, uint32 page )
       if( m_pages.size() <= page )
          return false;
 
-      tgt = (CoreArray *) m_pages.at(page);
+      tgt = *(CoreArray **) m_pages.at(page);
    }
 
    if ( pos >= tgt->length() )
@@ -319,7 +319,7 @@ Item *CoreTable::getHeaderData( uint32 pos ) const
    return (Item *) m_headerData.at(pos);
 }
 
-bool CoreTable::insertPage( CoreArray *data, uint32 pos )
+bool CoreTable::insertPage( CoreObject *self, CoreArray *data, uint32 pos )
 {
    // may be long zero; it's ok
    for( uint32 i = 0; i < data->length(); i ++ )
@@ -328,18 +328,47 @@ bool CoreTable::insertPage( CoreArray *data, uint32 pos )
          return false;
    }
 
+   for( uint32 i = 0; i < data->length(); i ++ )
+   {
+      (*data)[i].asArray()->table( self );
+   }
+
    // ok we have a good page to add.
    if( pos < m_pages.size() )
       m_pages.insert( data, pos );
    else
       m_pages.push( data );
 
+   if ( m_currentPageId >= pos )
+      m_currentPageId++;
+
    return true;
 }
 
 bool CoreTable::removePage( uint32 pos )
 {
-   return m_pages.remove(pos);
+   if ( m_pages.size() == 1 || pos >= m_pages.size() )
+   {
+      // can't delete the only page left.
+      return false;
+   }
+
+   // are we going to remove the current page?
+   if ( m_currentPageId == pos )
+   {
+      m_pages.remove(pos);
+      m_currentPage = *(CoreArray **) m_pages.at(0);
+      m_currentPageId = 0;
+   }
+   else {
+      m_pages.remove(pos);
+   }
+
+   // If it was equal, it became 0
+   if( m_currentPageId > pos )
+      m_currentPageId--;
+
+   return true;
 }
 
 
@@ -374,7 +403,7 @@ FalconData *CoreTable::clone() const
 
 CoreIterator *CoreTable::getIterator( bool tail )
 {
-   return new CoreTableIterator( this, m_pageNumId,
+   return new CoreTableIterator( this, m_currentPageId,
       tail ? (
          m_currentPage != 0 && m_currentPage->length() > 0 ?
             currentPage()->length()-1 : 0 ) : 0
@@ -413,7 +442,7 @@ void CoreTable::gcMark( VMachine *vm )
    // and all the tables.
    for( i = 0; i < m_pages.size(); i++ )
    {
-      Item temp = (CoreArray *) m_pages.at(i);
+      Item temp = *(CoreArray **) m_pages.at(i);
       vm->memPool()->markItemFast( temp );
    }
 }

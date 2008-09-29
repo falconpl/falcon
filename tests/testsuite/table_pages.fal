@@ -1,0 +1,87 @@
+/****************************************************************************
+* Falcon test suite
+*
+*
+* ID: 81e
+* Category: tabular
+* Subcategory: pages
+* Short: Table pages
+* Description:
+*    Checking page insertion, removal and switching.
+* [/Description]
+*
+****************************************************************************/
+
+// minimal table
+table = Table(
+   [ custId|nil, "name"  ],
+   [ "cust1", "Frank Capra" ],
+   [ "cust2", "Sam Wise" ],
+   [ "cust3", "My Cousin" ],
+   [ "cust4", "Unknown Person" ]
+   )
+
+if table.pageCount() != 1: failure( "Basic page count" )
+
+// insert an empty page
+table.insertPage()
+if table.pageCount() != 2: failure( "Empty append - size" )
+if table.curPage() != 0: failure( "Empty append - curPage" )
+table.setPage(1)
+if table.curPage() != 1: failure( "Empty append - setPage" )
+if table.len() != 0: failure( "Empty append - page len" )
+
+// append some data
+table.insertPage( data|
+   [[ "p2 cust1", "Frank Zappa" ],
+    [ "p2 cust2", "Sam unwise" ]]
+   )
+
+if table.pageCount() != 3: failure( "Filled append - size" )
+if table.curPage() != 1: failure( "Filled append - curPage" )
+table.setPage(2)
+if table.curPage() != 2: failure( "Filled append - setPage" )
+if table.len() != 2: failure( "Filled append - page len" )
+
+if table.get(1)[0] != "p2 cust2" or  table.get(0)[1] != "Frank Zappa"
+   failure( "Filled append - data" )
+end
+
+// positional insert
+table.insertPage( 1,
+   [[ "p1 cust1", "Frank Zappa1" ],
+    [ "p1 cust2", "Sam unwise1" ]]
+   )
+
+if table.pageCount() != 4: failure( "Insert - size" )
+if table.curPage() != 3: failure( "Insert - relocation" )
+
+table.setPage(1)
+if table.get(1)[0] != "p1 cust2" or  table.get(0)[1] != "Frank Zappa1"
+   failure( "Insert - data" )
+end
+
+table.removePage(2)
+if table.pageCount() != 3: failure( "Remove - size" )
+if table.curPage() != 1: failure( "Remove - const pos" )
+
+table.removePage(0)
+if table.pageCount() != 2: failure( "Remove - size 2" )
+if table.curPage() != 0: failure( "Remove - move pos" )
+if table.get(1)[0] != "p1 cust2" or  table.get(0)[1] != "Frank Zappa1"
+   failure( "Remove - const data" )
+end
+
+if table.pageCount() != 1: failure( "Remove self" )
+if table.curPage() != 0: failure( "Remove self - move to zero" )
+if table.get(1)[0] != "p1 cust2" or  table.get(0)[1] != "Frank Zappa1"
+   failure( "Remove self - const data" )
+end
+
+// excessive removal
+try
+   table.removePage(0)
+   failure( "Remove - error not raised" )
+end
+
+success()

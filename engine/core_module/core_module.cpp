@@ -1063,6 +1063,16 @@ Module* core_module_init()
    self->addClassMethod( table_class, "bidding", Falcon::core::Table_bidding ).asSymbol()->
       addParam("column")->addParam("offer")->addParam("rows");
 
+   self->addClassMethod( table_class, "pageCount", Falcon::core::Table_pageCount );
+   self->addClassMethod( table_class, "setPage", Falcon::core::Table_setPage ).asSymbol()->
+      addParam("pageId");
+   self->addClassMethod( table_class, "curPage", Falcon::core::Table_curPage );
+   self->addClassMethod( table_class, "insertPage", Falcon::core::Table_insertPage ).asSymbol()->
+      addParam("pageId")->addParam("data");
+   self->addClassMethod( table_class, "removePage", Falcon::core::Table_removePage ).asSymbol()->
+      addParam("pageId");
+
+
    return self;
 }
 

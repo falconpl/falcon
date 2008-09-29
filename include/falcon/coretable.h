@@ -76,7 +76,7 @@ class CoreTable: public Sequence
    GenericVector m_pages;
    GenericVector m_headerData;
    Map m_heading;
-   uint32 m_pageNumId;
+   uint32 m_currentPageId;
    uint32 m_order;
 
    /** Used for votation and bidding operations */
@@ -153,7 +153,7 @@ public:
    {
       if ( num < m_pages.size() )
       {
-         m_pageNumId = num;
+         m_currentPageId = num;
          m_currentPage = *reinterpret_cast<CoreArray **>(m_pages.at( num ));
          return true;
       }
@@ -162,6 +162,7 @@ public:
    }
 
    CoreArray *currentPage() const { return m_currentPage; }
+   uint32 currentPageId() const { return m_currentPageId; }
    bool setHeader( CoreArray *header );
    uint32 getHeaderPos( const String &name ) const;
    Item *getHeaderData( uint32 pos ) const;
@@ -195,6 +196,7 @@ public:
    /** Inserts a page.
       The function checks if the array is actually a matrix with an order compatible
       with the table.
+      \param self The core object representing this table in the VM.
       \param pos Where to insert the page. If greater than the number of pages, or
          set to noitem, will append the page at the end.
 
@@ -203,7 +205,7 @@ public:
 
       \return true if the page can be added, false if the given array wasn't of correct order.
    */
-   bool insertPage( CoreArray *data, uint32 pos = noitem );
+   bool insertPage( CoreObject *self, CoreArray *data, uint32 pos = noitem );
 
    /** Removes a page.
       \param pos Which page to remove.
