@@ -4,9 +4,12 @@
 # CMake configuration file for module Process
 ####################################################################
 
-INCLUDE(FindZLIB)
 
-OPTION(WITH_INTERNAL_ZLIB "Use internal zlib library" OFF)
+IF( WIN OR APPLE )
+   OPTION(WITH_INTERNAL_ZLIB "Use internal zlib library" ON)
+ELSE( WIN OR APPLE )
+   OPTION(WITH_INTERNAL_ZLIB "Use internal zlib library" OFF)
+ENDIF( WIN OR APPLE)
 
 # Inclusion settings
 INCLUDE_DIRECTORIES(.)
@@ -36,6 +39,8 @@ IF (WITH_INTERNAL_ZLIB)
     ${SYS_SPECIFIC}
   )
 ELSE(WITH_INTERNAL_ZLIB)
+   INCLUDE(FindZLIB)
+
    IF(NOT ZLIB_FOUND AND NOT ZLIB_LIBRARIES)
       IF(NOT ZLIB_LIB_NAMES)
          SET(ZLIB_LIB_NAMES libz.so libz.a zlib.dll)

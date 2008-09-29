@@ -4,7 +4,11 @@
 # CMake configuration file for module Regex
 ####################################################################
 
-OPTION(WITH_INTERNAL_PCRE "Use internal pcre library" OFF)
+IF( WIN OR APPLE )
+   OPTION(WITH_INTERNAL_PCRE "Use internal pcre library" ON)
+ELSE( WIN OR APPLE )
+   OPTION(WITH_INTERNAL_PCRE "Use internal pcre library" OFF)
+ENDIF( WIN OR APPLE)
 
 # Inclusion settings
 INCLUDE_DIRECTORIES(BEFORE ${TARGET_DIR}/include)
