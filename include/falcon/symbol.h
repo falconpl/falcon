@@ -59,7 +59,7 @@ public:
       t_base,
       t_reference,
       t_reflective,
-      t_reflectFunc,
+      t_reflectFunc
    } t_type;
 private:
    t_type m_val_type;

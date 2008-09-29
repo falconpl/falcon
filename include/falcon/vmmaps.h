@@ -54,12 +54,11 @@ public:
 
 class FALCON_DYN_CLASS GlobalsVector: public GenericVector
 {
-   const VoidpTraits s_vpt;
 public:
    GlobalsVector( uint32 prealloc=0 ):
       GenericVector()
    {
-      init( &s_vpt, prealloc );
+      init( &traits::t_voidp(), prealloc );
    }
 
    ItemVector &vat( uint32 pos ) const { return **(ItemVector **) at( pos ); }
