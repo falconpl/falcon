@@ -1377,7 +1377,7 @@ int SrcLexer::checkUnlimitedTokens( uint32 nextChar )
             m_chrEndString = '"'; //... up to the matching "
             return 0;
          }
-         else if ( parsingFtd() && m_string == "?>" && nextChar != '\n')
+         else if ( parsingFtd() && m_string == "?>" && (nextChar != '\n' || m_in->eof() ))
          {
             m_mode = t_mOutscape;
             m_bIsDirectiveLine = false;
