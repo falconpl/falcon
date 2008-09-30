@@ -58,7 +58,7 @@ String **argvize( const String &params, bool addShell )
       s_token
    } t_state;
 
-   t_state state;
+   t_state state = s_none;
 
    uint32 start;
    if ( addShell )
@@ -77,7 +77,6 @@ String **argvize( const String &params, bool addShell )
 
    if( len > 0 )
    {
-      state = s_none;
       while( pos < len )
       {
          uint32 chr = params.getCharAt( pos );

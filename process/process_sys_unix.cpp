@@ -271,7 +271,7 @@ ProcessHandle *openProcess( String **arg_list, bool sinkin, bool sinkout, bool s
 
    if ( ph->m_pid == 0 )
    {
-      int hNull;
+      int hNull = 0;
       // do we need to sink?
       if ( sinkin || sinkout || sinkerr )
          hNull = open("/dev/null", O_RDWR);

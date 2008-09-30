@@ -20,7 +20,7 @@ namespace MXML {
 Attribute::Attribute( Falcon::Stream &in, int style, int l, int p ):
    Element( l, p )
 {
-   Falcon::uint32 chr, quotechr;
+   Falcon::uint32 chr, quotechr=0;
    int iStatus = 0;
    Falcon::String entity;
    markBegin(); // default start
