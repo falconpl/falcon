@@ -549,7 +549,7 @@ void TimeStamp::add( const TimeStamp &ts )
 
    if ( m_timezone != ts.m_timezone && m_timezone != tz_NONE && ts.m_timezone != tz_NONE )
    {
-      int16 hours, mins, ts_hours, ts_mins;
+      int16 hours=0, mins=0, ts_hours=0, ts_mins=0;
       ts.getTZDisplacement( ts_hours, ts_mins );
       getTZDisplacement( hours, mins );
       m_hour += hours - ts_hours;
@@ -633,7 +633,7 @@ void TimeStamp::distance( const TimeStamp &ts )
 
    if ( m_timezone != ts.m_timezone && m_timezone != tz_NONE && ts.m_timezone != tz_NONE )
    {
-      int16 hours, mins, ts_hours, ts_mins;
+      int16 hours=0, mins=0, ts_hours=0, ts_mins=0;
       ts.getTZDisplacement( ts_hours, ts_mins );
       getTZDisplacement( hours, mins );
       // if ts bigger (positive distance) we must add the difference between TS timezone and us
@@ -784,8 +784,8 @@ int32 TimeStamp::compare( const TimeStamp &ts ) const
       if ( m_day > ts.m_day  ) return 1;
    }
    else {
-      int16 hdisp, mdisp;
-      int16 ts_hdisp, ts_mdisp;
+      int16 hdisp=0, mdisp=0;
+      int16 ts_hdisp=0, ts_mdisp=0;\
 
       getTZDisplacement( hdisp, mdisp );
       ts.getTZDisplacement( ts_hdisp, ts_mdisp );
@@ -968,7 +968,7 @@ void TimeStamp::changeTimezone( TimeZone tz )
       return;
 
    // get the relative total shift.
-   int16 currentHour, currentMin, newHour, newMin;
+   int16 currentHour=0, currentMin=0, newHour=0, newMin=0;
    getTZDisplacement( tz, newHour, newMin );
    getTZDisplacement( m_timezone, currentHour, currentMin );
 

@@ -561,7 +561,7 @@ bool MemPool::performGC( bool bForceReclaim )
    if ( bForceReclaim ||
         (m_allocatedMem - m_aliveMem ) > m_thresholdReclaim )
    {
-      //gcSweep();
+      gcSweep();
       m_thresholdMemory = m_aliveMem +
                           (m_aliveMem / 3 ) + m_thresholdReclaim;
    }
