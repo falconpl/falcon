@@ -440,7 +440,7 @@ int SrcLexer::lex_normal()
          else {
             delete m_in; // all the streams except first are to be disposed.
             m_in = (Stream *) m_streams.back();
-            m_line = (uint32) m_streamLines.back();
+            m_line = (uint32)(int64) m_streamLines.back();
             m_streamLines.popBack();
             m_previousLine = m_line-1;
             next_loop = true;
