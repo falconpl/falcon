@@ -1,0 +1,21 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: ---
+* Category: meta
+* Subcategory:
+* Short: Meta extern
+* Description:
+*   Part of the metaextern (90d) test.
+*   This file acts as a macro library for metaextern.fal
+* [/Description]
+*
+****************************************************************************/
+
+var = "value"
+
+function MetaExternCode()
+   >> 'meta_value = "Assigned"'
+end
+
+export

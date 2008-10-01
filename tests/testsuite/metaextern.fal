@@ -1,0 +1,32 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 90d
+* Category: meta
+* Subcategory:
+* Short: Meta extern
+* Description:
+*   Loading meta compilation fragments from external modules.
+* [/Description]
+*
+****************************************************************************/
+
+\[
+   // loading inside a meta-block loads a meta library
+   load metaextern_module
+\]
+
+value = 250
+
+if \[ >> var \] != 250
+   failure( "Basic load" )
+end
+
+// calling a meta function from extern code.
+\[ MetaExternCode() \]
+
+if meta_value != "Assigned"
+   failure( "Function load" )
+end
+
+success()

@@ -1,0 +1,28 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 90b
+* Category: meta
+* Subcategory:
+* Short: Metacompiler
+* Description:
+*   Minimal meta compiler test with some functions
+* [/Description]
+*
+****************************************************************************/
+
+\[
+   function factorial( number )
+      if number == 1: return 1
+      return factorial( number - 1 ) * number
+   end
+
+   // print the row.
+   > "var = ", factorial( 5 )
+\]
+
+if var != (5*4*3*2)
+   failure( "Different" )
+end
+
+success()

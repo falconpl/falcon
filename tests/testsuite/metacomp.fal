@@ -1,0 +1,19 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 90a
+* Category: meta
+* Subcategory:
+* Short: Meta smoke
+* Description:
+*   Smoketest for meta compiler.
+* [/Description]
+*
+****************************************************************************/
+
+\[
+   >> "variable "
+\] = 100
+
+if variable != 100: failure( "Not compiled" )
+success()

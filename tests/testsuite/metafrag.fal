@@ -1,0 +1,30 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 90c
+* Category: meta
+* Subcategory:
+* Short: Meta fragments
+* Description:
+*   Tests for fragmented (incremental) metacompiler usage.
+* [/Description]
+*
+****************************************************************************/
+
+object first
+   second = "value"
+end
+
+\[ var = "first" \]
+
+if \[ >>var \] != first
+   failure( "First test" )
+end
+
+\[ var += ".second" \]
+
+if \[ >> var \] != "value"
+   failure( "Second test" )
+end
+
+success()
