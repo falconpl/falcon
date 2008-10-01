@@ -1,0 +1,30 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 91b
+* Category: macro
+* Subcategory:
+* Short: Macro class
+* Description:
+*   A serious macro definition test.
+* [/Description]
+*
+****************************************************************************/
+
+macro makeClass( name ) (
+   class $name( value )
+      prop = value
+   end
+)
+
+\\makeClass( MyClass )
+
+try
+   x = MyClass( "val" )
+catch
+   failure( "Class generation" )
+end
+
+if x.prop != "val": failure( "Instance generation" )
+
+success()

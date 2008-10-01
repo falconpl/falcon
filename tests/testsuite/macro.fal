@@ -1,0 +1,19 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 91a
+* Category: macro
+* Subcategory:
+* Short: Macro smoke
+* Description:
+*   Minimal macro compiler smoke test.
+* [/Description]
+*
+****************************************************************************/
+
+macro mmin( a, b ) (($a<$b ? $a : $b))
+
+if \\mmin( 3, 4 ) != 3: failure( "Min1" )
+if \\mmin( 4, 3 ) != 3: failure( "Min2" )
+
+success()
