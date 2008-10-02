@@ -579,7 +579,7 @@ FALCON_FUNC  Table_insert ( ::Falcon::VMachine *vm )
    }
 
    CoreArray* element = i_element->asArray();
-   uint32 pos = (uint32) i_pos->isNil() ? table->order() : i_pos->forceInteger();
+   uint32 pos = (uint32)( i_pos->isNil() ? table->order() : i_pos->forceInteger());
    if ( element->length() != table->order() )
    {
       vm->raiseModError( new ParamError( ErrorParam( e_param_type, __LINE__ )
@@ -1176,7 +1176,7 @@ FALCON_FUNC  Table_insertPage ( ::Falcon::VMachine *vm )
       return;
    }
 
-   uint32 pos = i_pos == 0 || i_pos->isNil() ? CoreTable::noitem : i_pos->forceInteger();
+   uint32 pos = i_pos == 0 || i_pos->isNil() ? CoreTable::noitem : (uint32) i_pos->forceInteger();
    CoreTable *table = static_cast<CoreTable *>( vm->self().asObject()->getUserData() );
    if ( i_data == 0 )
    {
