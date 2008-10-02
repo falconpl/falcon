@@ -132,7 +132,7 @@ InteractiveCompiler::t_ret_type InteractiveCompiler::compileNext( Stream *input 
    m_module->version( (uint32) m_modVersion );
 
    // faulty compilation in incremental steps?
-   if( m_errors != 0 || ( !m_context.empty() || m_contextSet.size() != 1 ) || m_lexer->hasOpenContexts() )
+   if( !m_context.empty() || m_contextSet.size() != 1 || m_lexer->hasOpenContexts() )
    {
       // unroll changes to the module.
       for (uint32 pos = modSymSize; pos < m_module->symbols().size(); pos ++ )
