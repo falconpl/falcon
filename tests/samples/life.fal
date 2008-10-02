@@ -1,0 +1,111 @@
+/*****************************************************
+   The life game
+*/
+const ALIVE="*"	
+const DEAD=" "
+
+class Life( width, height )
+   w = width
+   h = height
+   
+   thisgen = nil
+   nextgen = nil
+   
+   // we need an array of rows...
+   init
+      self.thisgen = arrayBuffer( height )
+      self.nextgen = arrayBuffer( height )
+      for row in [0: height]
+         self.thisgen[row] = arrayBuffer( width )
+         self.nextgen[row] = arrayBuffer( width )
+         for col in [0:width]
+            self.thisgen[row][col] = 0
+            self.nextgen[row][col] = 0
+         end
+      end
+   end
+   
+   function spawn( shape, left, top )
+      for y in [0: shape.h]
+         for x in [0: shape.w]
+            self.thisgen[top+y][left+x] = shape[y*shape.w+x]
+         end
+      end
+   end
+
+   // run the CA and produce the next generation
+   function evolve()
+      next = self.nextgen
+      data = self.thisgen
+      
+      y = self.h - 2
+      while y > 1
+         ym1, yp1 = y - 1, y + 1
+         x = self.w - 2
+         while x > 1
+            xm1, xp1 = x - 1, x + 1
+            sum = data[ym1][xm1] + data[ym1][x] + data[ym1][xp1] + \
+                     data[y][xm1] + data[y][xp1] + \
+                     data[yp1][xm1] + data[yp1][x] + data[yp1][xp1]
+            next[y][x] = ((sum==2) and data[y][x]) or ((sum==3) and 1) or 0
+            x--
+         end
+         y--
+      end
+      
+      // exchange data.
+      self.nextgen = self.thisgen
+      self.thisgen = next
+   end
+   
+   // Display this generation
+   function draw()
+      out = strBuffer( self.h*self.w ) // Write all at once
+      
+      for y in [0:self.h]
+         row = self.thisgen[y]
+         for x in [0:self.w]
+            out += row[x]>0 ? ALIVE : DEAD
+         end
+         out += "\n"
+      end
+      
+      print(out)
+   end
+
+end
+
+/**************************************************
+   Shapes that we may want to use as tests
+   They are arrays with w and h bindings.
+**************************************************/
+HEART = [1,0,1,1,0,1,1,1,1]; HEART.w = 3; HEART.h = 3
+GLIDER = [0,0,1,1,0,1,0,1,1]; GLIDER.w = 3; GLIDER.h = 3
+EXPLODE = [0,1,0,1,1,1,1,0,1,0,1,0]; EXPLODE.w = 3; EXPLODE.h = 4
+FISH = [0,1,1,1,1,1,0,0,0,1,0,0,0,0,1,1,0,0,1,0]; FISH.w = 5; FISH.h = 4
+BUTTERFLY = [1,0,0,0,1,0,1,1,1,0,1,0,0,0,1,1,0,1,0,1,1,0,0,0,1]
+   BUTTERFLY.w = 5; BUTTERFLY.h = 5
+
+/****************************************************
+* Main routine
+****************************************************/
+  
+// create some life
+life = Life( 60, 20 )
+
+// some spawning
+life.spawn(GLIDER, 5, 4)
+life.spawn(EXPLODE, 30, 10)
+life.spawn(FISH, 8, 12)
+
+// run until break
+gen = 1
+print("\027[2J")	// ANSI clear screen
+while gen <= 500
+   life.evolve()
+   print("\027[H")	// ANSI home cursor
+   life.draw()
+   printl( "Life - generation ", gen++ )
+   //sleep(0.05) // slight delay
+   gen++
+end
