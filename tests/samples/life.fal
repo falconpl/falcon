@@ -1,30 +1,32 @@
 /*****************************************************
    The life game
 */
-const ALIVE="*"	
-const DEAD=" "
+ALIVE=ord("O")
+DEAD=ord("-")
+
+write = stdOut().write
 
 class Life( width, height )
    w = width
    h = height
-   
+
    thisgen = nil
    nextgen = nil
-   
+
    // we need an array of rows...
    init
-      self.thisgen = arrayBuffer( height )
-      self.nextgen = arrayBuffer( height )
-      for row in [0: height]
-         self.thisgen[row] = arrayBuffer( width )
-         self.nextgen[row] = arrayBuffer( width )
-         for col in [0:width]
+      self.thisgen = arrayBuffer( height+1 )
+      self.nextgen = arrayBuffer( height+1 )
+      for row in [1: height+1]
+         self.thisgen[row] = arrayBuffer( width+1 )
+         self.nextgen[row] = arrayBuffer( width+1 )
+         for col in [1:width+1]
             self.thisgen[row][col] = 0
             self.nextgen[row][col] = 0
          end
       end
    end
-   
+
    function spawn( shape, left, top )
       for y in [0: shape.h]
          for x in [0: shape.w]
@@ -35,42 +37,58 @@ class Life( width, height )
 
    // run the CA and produce the next generation
    function evolve()
+      static
+         w = self.w
+      end
       next = self.nextgen
       data = self.thisgen
-      
-      y = self.h - 2
-      while y > 1
-         ym1, yp1 = y - 1, y + 1
-         x = self.w - 2
-         while x > 1
-            xm1, xp1 = x - 1, x + 1
-            sum = data[ym1][xm1] + data[ym1][x] + data[ym1][xp1] + \
-                     data[y][xm1] + data[y][xp1] + \
-                     data[yp1][xm1] + data[yp1][x] + data[yp1][xp1]
-            next[y][x] = ((sum==2) and data[y][x]) or ((sum==3) and 1) or 0
-            x--
+
+      ym1,y=self.h-1,self.h
+      for yp1 in [1:self.h+1]
+         xm1,x=w-1,w
+         nextRow = next[y]
+         for xp1 in [1:w+1]
+            rm1 = data[ym1]
+            ry = data[y]
+            rp1 = data[yp1]
+            sum = rm1[xm1] + rm1[x] + rm1[xp1] + \
+                        ry[xm1] + ry[xp1] + \
+                        rp1[xm1] + rp1[x] + rp1[xp1]
+            nextRow[x] = (sum==2) and ry[x] ? 1 : sum==3 ? 1 : 0
+            xm1,x = x,xp1
          end
-         y--
+         ym1,y = y,yp1
       end
-      
+
       // exchange data.
       self.nextgen = self.thisgen
       self.thisgen = next
    end
-   
+
    // Display this generation
    function draw()
-      out = strBuffer( self.h*self.w ) // Write all at once
-      
-      for y in [0:self.h]
-         row = self.thisgen[y]
-         for x in [0:self.w]
-            out += row[x]>0 ? ALIVE : DEAD
-         end
-         out += "\n"
+      static
+         out = strReplicate( " ", self.h*(self.w+1) ) // Write all at once
+         height = self.h+1
+         width = self.w
       end
-      
-      print(out)
+
+      p = 0
+      for y in [1:height]
+         row = self.thisgen[y]
+         for x in [0:width]
+            if row[x+1]
+               out[p+x] = ALIVE
+            else
+               out[p+x] = DEAD
+            end
+         end
+         p += self.w
+         out[p] = 10
+         p++
+      end
+
+      write( out )
    end
 
 end
@@ -89,23 +107,27 @@ BUTTERFLY = [1,0,0,0,1,0,1,1,1,0,1,0,0,0,1,1,0,1,0,1,1,0,0,0,1]
 /****************************************************
 * Main routine
 ****************************************************/
-  
+
 // create some life
-life = Life( 60, 20 )
+life = Life( 40, 20 )
 
 // some spawning
-life.spawn(GLIDER, 5, 4)
-life.spawn(EXPLODE, 30, 10)
-life.spawn(FISH, 8, 12)
+/*life.spawn(GLIDER, 2, 2)
+life.spawn(EXPLODE, 40, 10)
+life.spawn(FISH, 10, 14)*/
 
+life.spawn(GLIDER, 5,4)
+  life.spawn(EXPLODE, 25,10)
+  life.spawn(FISH, 4,12)
 // run until break
 gen = 1
-print("\027[2J")	// ANSI clear screen
-while gen <= 500
+write("\x1b[2J")	// ANSI clear screen
+while gen <= 2000
    life.evolve()
-   print("\027[H")	// ANSI home cursor
+   write("\x1b[H")	// ANSI home cursor
    life.draw()
-   printl( "Life - generation ", gen++ )
+   write( "Life - generation " + gen++ )
    //sleep(0.05) // slight delay
-   gen++
 end
+
+printl()
