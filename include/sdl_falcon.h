@@ -34,7 +34,7 @@ public:
    SDLSurfaceCarrier() {}
 
    virtual ~SDLSurfaceCarrier() {};
-   virtual SDL_Surface* getSurface() const=0;
+   virtual SDL_Surface* surface() const=0;
 };
 
 }

@@ -75,7 +75,7 @@ public:
    virtual void setProperty(Falcon::VMachine*, const Falcon::String&, const Falcon::Item&);
    virtual void gcMark( VMachine* ) {}
    virtual FalconData* clone() const;
-   virtual SDL_Surface* getSurface() const { return m_surface; }
+   virtual SDL_Surface* surface() const { return m_surface; }
 };
 
 /** Opaque Cursor structure carrier */

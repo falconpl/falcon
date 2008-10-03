@@ -124,7 +124,7 @@ FALCON_FUNC SDLSurface_SaveBMP( ::Falcon::VMachine *vm )
    AutoCString fname( *i_file->asString() );
 
    CoreObject *self = vm->self().asObject();
-   SDL_Surface *source = static_cast<SDLSurfaceCarrier_impl*>( self->getUserData() )->getSurface();
+   SDL_Surface *source = static_cast<SDLSurfaceCarrier_impl*>( self->getUserData() )->surface();
 
    if ( ::SDL_SaveBMP( source, fname.c_str() ) < 0 )
    {
@@ -204,8 +204,8 @@ FALCON_FUNC SDLSurface_BlitSurface( ::Falcon::VMachine *vm )
    }
 
    CoreObject *self = vm->self().asObject();
-   SDL_Surface *source = static_cast<SDLSurfaceCarrier_impl*>( self->getUserData() )->getSurface();
-   SDL_Surface *dest = static_cast<SDLSurfaceCarrier_impl*>( i_dest->asObject()->getUserData() )->getSurface();
+   SDL_Surface *source = static_cast<SDLSurfaceCarrier_impl*>( self->getUserData() )->surface();
+   SDL_Surface *dest = static_cast<SDLSurfaceCarrier_impl*>( i_dest->asObject()->getUserData() )->surface();
 
    int res = ::SDL_BlitSurface( source, pSrcRect, dest, pDstRect );
    if( res < 0 )
@@ -251,7 +251,7 @@ FALCON_FUNC SDLSurface_SetPixel( ::Falcon::VMachine *vm )
    }
 
    CoreObject *self = vm->self().asObject();
-   SDL_Surface *surface = static_cast<SDLSurfaceCarrier_impl*>( self->getUserData() )->getSurface();
+   SDL_Surface *surface = static_cast<SDLSurfaceCarrier_impl*>( self->getUserData() )->surface();
    int x = (int) i_x->forceInteger();
    int y = (int) i_y->forceInteger();
 
@@ -324,7 +324,7 @@ FALCON_FUNC SDLSurface_GetPixel( ::Falcon::VMachine *vm )
    }
 
    CoreObject *self = vm->self().asObject();
-   SDL_Surface *surface = static_cast<SDLSurfaceCarrier_impl*>( self->getUserData() )->getSurface();
+   SDL_Surface *surface = static_cast<SDLSurfaceCarrier_impl*>( self->getUserData() )->surface();
    int x = (int) i_x->forceInteger();
    int y = (int) i_y->forceInteger();
 
@@ -395,7 +395,7 @@ FALCON_FUNC SDLSurface_GetPixelIndex( ::Falcon::VMachine *vm )
    }
 
    CoreObject *self = vm->self().asObject();
-   SDL_Surface *surface = static_cast<SDLSurfaceCarrier_impl*>( self->getUserData() )->getSurface();
+   SDL_Surface *surface = static_cast<SDLSurfaceCarrier_impl*>( self->getUserData() )->surface();
    int x = (int) i_x->forceInteger();
    int y = (int) i_y->forceInteger();
 
@@ -426,7 +426,7 @@ FALCON_FUNC SDLSurface_LockSurface( ::Falcon::VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
    SDLSurfaceCarrier_impl *carrier = static_cast<SDLSurfaceCarrier_impl*>( self->getUserData() );
-   SDL_LockSurface( carrier->getSurface() );
+   SDL_LockSurface( carrier->surface() );
    carrier->m_lockCount++;
 }
 
@@ -441,7 +441,7 @@ FALCON_FUNC SDLSurface_UnlockSurface( ::Falcon::VMachine *vm )
    CoreObject *self = vm->self().asObject();
    SDLSurfaceCarrier_impl *carrier = static_cast<SDLSurfaceCarrier_impl*>( self->getUserData() );
    carrier->m_lockCount--;
-   SDL_UnlockSurface( carrier->getSurface() );
+   SDL_UnlockSurface( carrier->surface() );
 }
 
 /*#
@@ -452,9 +452,9 @@ FALCON_FUNC SDLSurface_LockIfNeeded( ::Falcon::VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
    SDLSurfaceCarrier_impl *carrier = static_cast<SDLSurfaceCarrier_impl*>( self->getUserData() );
-   if( SDL_MUSTLOCK( carrier->getSurface() ) )
+   if( SDL_MUSTLOCK( carrier->surface() ) )
    {
-      SDL_LockSurface( carrier->getSurface() );
+      SDL_LockSurface( carrier->surface() );
       carrier->m_lockCount++;
    }
 }
@@ -467,10 +467,10 @@ FALCON_FUNC SDLSurface_UnlockIfNeeded( ::Falcon::VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
    SDLSurfaceCarrier_impl *carrier = static_cast<SDLSurfaceCarrier_impl*>( self->getUserData() );
-   if( SDL_MUSTLOCK( carrier->getSurface() ) )
+   if( SDL_MUSTLOCK( carrier->surface() ) )
    {
       carrier->m_lockCount--;
-      SDL_UnlockSurface( carrier->getSurface() );
+      SDL_UnlockSurface( carrier->surface() );
    }
 }
 
@@ -483,7 +483,7 @@ FALCON_FUNC SDLSurface_UnlockIfNeeded( ::Falcon::VMachine *vm )
 FALCON_FUNC SDLSurface_IsLockNeeded( ::Falcon::VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
-   SDL_Surface *surface = static_cast<SDLSurfaceCarrier_impl*>( self->getUserData() )->getSurface();
+   SDL_Surface *surface = static_cast<SDLSurfaceCarrier_impl*>( self->getUserData() )->surface();
    vm->retval( SDL_MUSTLOCK( surface ) ? true : false );
 }
 
@@ -511,7 +511,7 @@ FALCON_FUNC SDLSurface_FillRect( ::Falcon::VMachine *vm )
    }
 
    CoreObject *self = vm->self().asObject();
-   SDL_Surface *surface = static_cast<SDLSurfaceCarrier_impl*>( self->getUserData() )->getSurface();
+   SDL_Surface *surface = static_cast<SDLSurfaceCarrier_impl*>( self->getUserData() )->surface();
    SDL_Rect *pRect = i_rect->isNil() ? 0 : &rect;
 
    if ( ::SDL_FillRect( surface, pRect, i_color->forceInteger() ) != 0 )
@@ -550,7 +550,7 @@ FALCON_FUNC SDLSurface_GetRGBA( ::Falcon::VMachine *vm )
    }
 
    CoreObject *self = vm->self().asObject();
-   SDL_Surface *surface = static_cast<SDLSurfaceCarrier_impl*>( self->getUserData() )->getSurface();
+   SDL_Surface *surface = static_cast<SDLSurfaceCarrier_impl*>( self->getUserData() )->surface();
    SDL_PixelFormat *fmt = surface->format;
 
    Uint32 color = (Uint32) i_color->forceInteger();
@@ -597,7 +597,7 @@ FALCON_FUNC SDLSurface_MapRGBA( ::Falcon::VMachine *vm )
    }
 
    CoreObject *self = vm->self().asObject();
-   SDL_Surface *surface = static_cast<SDLSurfaceCarrier_impl*>( self->getUserData() )->getSurface();
+   SDL_Surface *surface = static_cast<SDLSurfaceCarrier_impl*>( self->getUserData() )->surface();
    SDL_PixelFormat *fmt = surface->format;
 
    Uint8 r = (Uint8) i_red->forceInteger();
@@ -643,7 +643,7 @@ FALCON_FUNC SDLSurface_SetColors( ::Falcon::VMachine *vm )
    MemBuf *colors = i_colors->asMemBuf();
    int first = (int) i_first->forceInteger();
    CoreObject *self = vm->self().asObject();
-   SDL_Surface *surface = static_cast<SDLSurfaceCarrier_impl*>( self->getUserData() )->getSurface();
+   SDL_Surface *surface = static_cast<SDLSurfaceCarrier_impl*>( self->getUserData() )->surface();
 
    vm->retval(
       ::SDL_SetColors( surface, (SDL_Color *) colors->data(), first, colors->length() ) == 0 ?
@@ -660,7 +660,7 @@ FALCON_FUNC SDLSurface_SetColors( ::Falcon::VMachine *vm )
 FALCON_FUNC SDLSurface_SetIcon ( ::Falcon::VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
-   SDL_Surface *surface = static_cast<SDLSurfaceCarrier_impl*>( self->getUserData() )->getSurface();
+   SDL_Surface *surface = static_cast<SDLSurfaceCarrier_impl*>( self->getUserData() )->surface();
 
    ::SDL_WM_SetIcon( surface, NULL );
 }
@@ -697,7 +697,7 @@ FALCON_FUNC SDLScreen_UpdateRect( ::Falcon::VMachine *vm )
 {
    // accept a rect as first parameter, or even no parameter.
    CoreObject *self = vm->self().asObject();
-   SDL_Surface *screen = static_cast<SDLSurfaceCarrier_impl*>( self->getUserData() )->getSurface();
+   SDL_Surface *screen = static_cast<SDLSurfaceCarrier_impl*>( self->getUserData() )->surface();
 
    if( vm->paramCount() == 0 )
    {
@@ -749,7 +749,7 @@ FALCON_FUNC SDLScreen_UpdateRect( ::Falcon::VMachine *vm )
 FALCON_FUNC SDLScreen_Flip( ::Falcon::VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
-   SDL_Surface *screen = static_cast<SDLSurfaceCarrier_impl*>( self->getUserData() )->getSurface();
+   SDL_Surface *screen = static_cast<SDLSurfaceCarrier_impl*>( self->getUserData() )->surface();
    ::SDL_Flip( screen );
 }
 
@@ -791,7 +791,7 @@ FALCON_FUNC SDLScreen_UpdateRects( ::Falcon::VMachine *vm )
    }
 
    CoreObject *self = vm->self().asObject();
-   SDL_Surface *screen = static_cast<SDLSurfaceCarrier_impl*>( self->getUserData() )->getSurface();
+   SDL_Surface *screen = static_cast<SDLSurfaceCarrier_impl*>( self->getUserData() )->surface();
    ::SDL_UpdateRects( screen, (int) aRect->length(), rects );
    memFree( rects );
 }
@@ -835,7 +835,7 @@ FALCON_FUNC SDLScreen_SetPalette( ::Falcon::VMachine *vm )
    int flags = (int) i_flags->asInteger();
    int first = (int) i_first->forceInteger();
    CoreObject *self = vm->self().asObject();
-   SDL_Surface *surface = static_cast<SDLSurfaceCarrier_impl*>( self->getUserData() )->getSurface();
+   SDL_Surface *surface = static_cast<SDLSurfaceCarrier_impl*>( self->getUserData() )->surface();
 
    vm->retval(
       ::SDL_SetPalette( surface, flags, (SDL_Color *) colors->data(), first, colors->length() ) == 0 ?
@@ -852,7 +852,7 @@ FALCON_FUNC SDLScreen_SetPalette( ::Falcon::VMachine *vm )
 FALCON_FUNC SDLScreen_ToggleFullScreen ( ::Falcon::VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
-   SDL_Surface *surface = static_cast<SDLSurfaceCarrier_impl*>( self->getUserData() )->getSurface();
+   SDL_Surface *surface = static_cast<SDLSurfaceCarrier_impl*>( self->getUserData() )->surface();
 
    if ( SDL_WM_ToggleFullScreen( surface ) == 0 )
    {

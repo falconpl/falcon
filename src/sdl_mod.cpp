@@ -177,7 +177,7 @@ CoreObject *MakePixelFormatInst( VMachine *vm, SDLSurfaceCarrier *carrier, ::SDL
    CoreObject *obj = cls->asClass()->createInstance();
 
    if ( carrier != 0 )
-      fmt = carrier->getSurface()->format;
+      fmt = carrier->surface()->format;
 
    obj->setProperty( "BitsPerPixel", (int64) fmt->BitsPerPixel );
    obj->setProperty( "BytesPerPixel", (int64) fmt->BytesPerPixel );
