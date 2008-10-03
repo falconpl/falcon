@@ -399,6 +399,7 @@ Module* core_module_init()
       addParam("dest")->addParam("source");
 
    // other functions
+   self->addExtFunc( "valof", Falcon::core::core_valof )->addParam("item");
    self->addExtFunc( "min", Falcon::core::core_min );
    self->addExtFunc( "max", Falcon::core::core_max );
    self->addExtFunc( "map", Falcon::core::core_map )->

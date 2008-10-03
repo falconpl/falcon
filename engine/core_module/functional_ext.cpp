@@ -477,6 +477,56 @@ FALCON_FUNC  core_eval ( ::Falcon::VMachine *vm )
    vm->functionalEval( *i_param );
 }
 
+/*#
+   @function valof
+   @inset functional_support
+   @brief Calls callable items or returns non callable ones.
+   @param item The item to be checked.
+   @return The item if it is not callable, or the call return value.
+
+   The name function is a short for @i extended @i value. It is meant
+   to determine if the passed item is a non-callable value or if it
+   should be called to determine a value. Performing this check at
+   script level time consuming and often clumsy, and this function
+   is easily used in functional sequences.
+*/
+
+FALCON_FUNC  core_valof ( ::Falcon::VMachine *vm )
+{
+   if ( vm->paramCount() == 0 )
+   {
+      vm->retnil();
+      return;
+   }
+
+   Item *elem = vm->param( 0 );
+   if( elem->isCallable() )
+      vm->callFrame( *elem, 0 );
+   else
+      vm->retval( *elem );
+}
+
+/*#
+   @function min
+   @inset functional_support
+   @brief Picks the minimal value among its parameters.
+   @param ... The items to be checked.
+   @return The smallest item in the sequence.
+
+   This function performs a lexicographic minority check
+   on each element passed as a parameter, returning the
+   smallest of them.
+
+   A standard VM comparation is performed, so the standard
+   ordering rules apply. This also means that objects overloading
+   the @a FBOM.compare method may provide specialized ordering
+   rules.
+
+   If more than one item is found equal and lesser than
+   all the others, the first one is returned.
+
+   If the function is called without parameters, it returns @b nil.
+*/
 
 FALCON_FUNC  core_min ( ::Falcon::VMachine *vm )
 {
@@ -500,6 +550,28 @@ FALCON_FUNC  core_min ( ::Falcon::VMachine *vm )
 
    vm->retval( *elem );
 }
+
+/*#
+   @function max
+   @inset functional_support
+   @brief Picks the minimal value among its parameters.
+   @param ... The items to be checked.
+   @return The smallest item in the sequence.
+
+   This function performs a lexicographic majority check
+   on each element passed as a parameter, returning the
+   greater of them.
+
+   A standard VM comparation is performed, so the standard
+   ordering rules apply. This also means that objects overloading
+   the @a FBOM.compare method may provide specialized ordering
+   rules.
+
+   If more than one item is found equal and greater than
+   all the others, the first one is returned.
+
+   If the function is called without parameters, it returns @b nil.
+*/
 
 FALCON_FUNC  core_max ( ::Falcon::VMachine *vm )
 {

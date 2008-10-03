@@ -110,6 +110,7 @@ FALCON_FUNC  core_all ( ::Falcon::VMachine *vm );
 FALCON_FUNC  core_anyp ( ::Falcon::VMachine *vm );
 FALCON_FUNC  core_allp ( ::Falcon::VMachine *vm );
 FALCON_FUNC  core_eval ( ::Falcon::VMachine *vm );
+FALCON_FUNC  core_valof ( ::Falcon::VMachine *vm );
 FALCON_FUNC  core_min ( ::Falcon::VMachine *vm );
 FALCON_FUNC  core_max ( ::Falcon::VMachine *vm );
 FALCON_FUNC  core_map ( ::Falcon::VMachine *vm );
