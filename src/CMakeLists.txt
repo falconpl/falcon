@@ -6,6 +6,7 @@
 
 # Inclusion settings
 add_definitions(`sdl-config --cflags`)
+INCLUDE_DIRECTORIES(../include)
 INCLUDE_DIRECTORIES(.)
 INCLUDE_DIRECTORIES(BEFORE "${FALCON_INC_DIR}")
 LINK_DIRECTORIES(BEFORE "${FALCON_LIB_DIR}")

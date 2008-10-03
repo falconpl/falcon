@@ -43,7 +43,7 @@ QuitCarrier::~QuitCarrier()
 // Surface reflection
 //
 
-SDLSurfaceCarrier::~SDLSurfaceCarrier()
+SDLSurfaceCarrier_impl::~SDLSurfaceCarrier_impl()
 {
    /*while( m_lockCount-- > 0 )
       SDL_UnlockSurface( m_surface );
@@ -53,7 +53,7 @@ SDLSurfaceCarrier::~SDLSurfaceCarrier()
 }
 
 
-void SDLSurfaceCarrier::getProperty( VMachine *vm, const String &propName, Item &prop )
+void SDLSurfaceCarrier_impl::getProperty( VMachine *vm, const String &propName, Item &prop )
 {
    if ( propName == "w" )
    {
@@ -109,7 +109,7 @@ void SDLSurfaceCarrier::getProperty( VMachine *vm, const String &propName, Item 
    }
 }
 
-void SDLSurfaceCarrier::setProperty( VMachine *vm, const String &propName, const Item &prop )
+void SDLSurfaceCarrier_impl::setProperty( VMachine *vm, const String &propName, const Item &prop )
 {
    // refuse to set anything
    vm->raiseModError( new SDLError( ErrorParam( FALCON_SDL_ERROR_BASE, __LINE__ )
@@ -117,7 +117,7 @@ void SDLSurfaceCarrier::setProperty( VMachine *vm, const String &propName, const
 }
 
 
-FalconData *SDLSurfaceCarrier::clone() const
+FalconData *SDLSurfaceCarrier_impl::clone() const
 {
    return 0;
 }
@@ -177,7 +177,7 @@ CoreObject *MakePixelFormatInst( VMachine *vm, SDLSurfaceCarrier *carrier, ::SDL
    CoreObject *obj = cls->asClass()->createInstance();
 
    if ( carrier != 0 )
-      fmt = carrier->m_surface->format;
+      fmt = carrier->getSurface()->format;
 
    obj->setProperty( "BitsPerPixel", (int64) fmt->BitsPerPixel );
    obj->setProperty( "BytesPerPixel", (int64) fmt->BytesPerPixel );

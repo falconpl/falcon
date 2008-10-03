@@ -460,7 +460,7 @@ FALCON_FUNC sdl_SetVideoMode( ::Falcon::VMachine *vm )
    Item *cls = vm->findWKI( "SDLScreen" );
    fassert( cls != 0 );
    CoreObject *obj = cls->asClass()->createInstance();
-   obj->setUserData( new SDLSurfaceCarrier( screen ) );
+   obj->setUserData( new SDLSurfaceCarrier_impl( screen ) );
 
    vm->retval( obj );
 }
@@ -509,7 +509,7 @@ FALCON_FUNC sdl_LoadBMP( ::Falcon::VMachine *vm )
    Item *cls = vm->findWKI( "SDLSurface" );
    fassert( cls != 0 );
    CoreObject *obj = cls->asClass()->createInstance();
-   obj->setUserData( new SDLSurfaceCarrier( surf ) );
+   obj->setUserData( new SDLSurfaceCarrier_impl( surf ) );
 
    vm->retval( obj );
 }
@@ -536,7 +536,7 @@ FALCON_FUNC sdl_GetVideoSurface( ::Falcon::VMachine *vm )
    Item *cls = vm->findWKI( "SDLScreen" );
    fassert( cls != 0 );
    CoreObject *obj = cls->asClass()->createInstance();
-   obj->setUserData( new SDLSurfaceCarrier( surf ) );
+   obj->setUserData( new SDLSurfaceCarrier_impl( surf ) );
 
    vm->retval( obj );
 }
@@ -841,7 +841,7 @@ static void sdl_CreateRGBSurface_internal ( ::Falcon::VMachine *vm, MemBuf *mb, 
       obj->setProperty( "pixels", mb );
    }
    // set the user data AFTER, so reflectivity starts after.
-   obj->setUserData( new SDLSurfaceCarrier( surf ) );
+   obj->setUserData( new SDLSurfaceCarrier_impl( surf ) );
 
    vm->retval( obj );
 }

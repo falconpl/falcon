@@ -23,8 +23,7 @@
 #include <falcon/setup.h>
 #include <falcon/suserdata.h>
 #include <falcon/error.h>
-
-#include <SDL.h>
+#include <sdl_falcon.h>
 
 #define FALCON_SDL_ERROR_BASE 2100
 
@@ -57,23 +56,26 @@ public:
 };
 
 /** Reflexive SDL Surface */
-class SDLSurfaceCarrier: public UserData
+class SDLSurfaceCarrier_impl: public SDLSurfaceCarrier
 {
-public:
    SDL_Surface *m_surface;
+
+
+public:
    uint32 m_lockCount;
 
-   SDLSurfaceCarrier( SDL_Surface *s ):
+   SDLSurfaceCarrier_impl( SDL_Surface *s ):
       m_surface( s ),
       m_lockCount(0)
    {}
 
-   virtual ~SDLSurfaceCarrier();
+   virtual ~SDLSurfaceCarrier_impl();
 
    virtual void getProperty( VMachine *vm, const String &propName, Item &prop );
    virtual void setProperty(Falcon::VMachine*, const Falcon::String&, const Falcon::Item&);
    virtual void gcMark( VMachine* ) {}
-   virtual FalconData *clone() const;
+   virtual FalconData* clone() const;
+   virtual SDL_Surface* getSurface() const { return m_surface; }
 };
 
 /** Opaque Cursor structure carrier */
