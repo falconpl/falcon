@@ -5,11 +5,11 @@
 ####################################################################
 
 
-IF( WIN OR APPLE )
+IF( WIN32 OR APPLE )
    OPTION(WITH_INTERNAL_ZLIB "Use internal zlib library" ON)
-ELSE( WIN OR APPLE )
+ELSE( WIN32 OR APPLE )
    OPTION(WITH_INTERNAL_ZLIB "Use internal zlib library" OFF)
-ENDIF( WIN OR APPLE)
+ENDIF( WIN32 OR APPLE)
 
 # Inclusion settings
 INCLUDE_DIRECTORIES(.)
