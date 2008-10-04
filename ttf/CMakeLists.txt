@@ -1,7 +1,7 @@
 ####################################################################
 # The Falcon Programming language
 #
-# CMake configuration file for module Mxml
+# CMake configuration file for module SDL_ttf
 ####################################################################
 PROJECT(sdlttf)
 

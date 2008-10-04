@@ -12,3 +12,4 @@ INCLUDE( "falmod.cmake" )
 # Project directories
 ADD_SUBDIRECTORY(src)
 ADD_SUBDIRECTORY(ttf)
+ADD_SUBDIRECTORY(image)

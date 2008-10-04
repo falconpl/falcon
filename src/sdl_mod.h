@@ -23,7 +23,7 @@
 #include <falcon/setup.h>
 #include <falcon/suserdata.h>
 #include <falcon/error.h>
-#include <sdl_falcon.h>
+#include "../include/sdl_falcon.h"
 
 #define FALCON_SDL_ERROR_BASE 2100
 
