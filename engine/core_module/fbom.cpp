@@ -944,7 +944,8 @@ FALCON_FUNC BOM_tabRow( VMachine *vm )
 //====================================================//
 
 
-extern "C" static void (* const  BOMTable  [] ) ( Falcon::VMachine *) =
+extern "C"{
+static void (* const  BOMTable  [] ) ( Falcon::VMachine *) =
 {
    BOM_toString,
    BOM_len,
@@ -968,6 +969,7 @@ extern "C" static void (* const  BOMTable  [] ) ( Falcon::VMachine *) =
    BOM_tabField,
    BOM_tabRow
 };
+}
 
 //====================================================
 // THE BOM IMPLEMENTATION

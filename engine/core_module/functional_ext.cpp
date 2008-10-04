@@ -88,7 +88,8 @@ namespace core {
    Survival Guide.
 */
 
-extern "C" static bool core_any_next( ::Falcon::VMachine *vm )
+extern "C" {
+static bool core_any_next( ::Falcon::VMachine *vm )
 {
    // was the elaboration succesful?
    if ( vm->regA().isTrue() )
@@ -118,7 +119,7 @@ extern "C" static bool core_any_next( ::Falcon::VMachine *vm )
    vm->retval( (int64) 0 );
    return false;
 }
-
+}
 
 /*#
    @function any
@@ -175,7 +176,8 @@ FALCON_FUNC  core_any ( ::Falcon::VMachine *vm )
 }
 
 
-extern "C" static bool core_all_next( ::Falcon::VMachine *vm )
+extern "C" {
+static bool core_all_next( ::Falcon::VMachine *vm )
 {
    // was the elaboration succesful?
    if ( ! vm->regA().isTrue() )
@@ -205,6 +207,7 @@ extern "C" static bool core_all_next( ::Falcon::VMachine *vm )
 
    vm->retval( (int64) 1 );
    return false;
+}
 }
 
 /*#
@@ -270,7 +273,8 @@ FALCON_FUNC  core_all ( ::Falcon::VMachine *vm )
 }
 
 
-extern "C" static bool core_anyp_next( ::Falcon::VMachine *vm )
+extern "C" {
+static bool core_anyp_next( ::Falcon::VMachine *vm )
 {
    // was the elaboration succesful?
    if ( vm->regA().isTrue() )
@@ -299,6 +303,7 @@ extern "C" static bool core_anyp_next( ::Falcon::VMachine *vm )
 
    vm->retval( (int64) 0 );
    return false;
+}
 }
 
 /*#
@@ -356,7 +361,8 @@ FALCON_FUNC  core_anyp ( ::Falcon::VMachine *vm )
 }
 
 
-extern "C" static bool core_allp_next( ::Falcon::VMachine *vm )
+extern "C" {
+static bool core_allp_next( ::Falcon::VMachine *vm )
 {
    // was the elaboration succesful?
    if ( ! vm->regA().isTrue() )
@@ -385,6 +391,7 @@ extern "C" static bool core_allp_next( ::Falcon::VMachine *vm )
 
    vm->retval( 1 );
    return false;
+}
 }
 
 /*#
@@ -625,7 +632,8 @@ FALCON_FUNC  core_max ( ::Falcon::VMachine *vm )
    @see oob
 */
 
-extern "C" static bool core_map_next( ::Falcon::VMachine *vm )
+extern "C" {
+static bool core_map_next( ::Falcon::VMachine *vm )
 {
    // callable in first item
    CoreArray *origin = vm->param(1)->asArray();
@@ -645,6 +653,7 @@ extern "C" static bool core_map_next( ::Falcon::VMachine *vm )
 
    vm->retval( mapped );
    return false;
+}
 }
 
 FALCON_FUNC  core_map ( ::Falcon::VMachine *vm )
@@ -678,7 +687,8 @@ FALCON_FUNC  core_map ( ::Falcon::VMachine *vm )
    vm->retval( mapped );
 }
 
-extern "C" static bool core_dolist_next ( ::Falcon::VMachine *vm )
+extern "C" {
+static bool core_dolist_next ( ::Falcon::VMachine *vm )
 {
    CoreArray *origin = vm->param(1)->asArray();
    uint32 count = (uint32) vm->local(0)->asInteger();
@@ -709,6 +719,7 @@ extern "C" static bool core_dolist_next ( ::Falcon::VMachine *vm )
    vm->pushParameter( vm->regA() );
    vm->callFrame( *vm->param(0), 1 );
    return true;
+}
 }
 
 /*#
@@ -770,7 +781,8 @@ FALCON_FUNC  core_dolist ( ::Falcon::VMachine *vm )
 }
 
 
-extern "C" static bool core_times_next ( ::Falcon::VMachine *vm )
+extern "C" {
+static bool core_times_next ( ::Falcon::VMachine *vm )
 {
    // we may mangle with the parameters -- be careful.
    Item var = *vm->param(1);
@@ -893,9 +905,12 @@ extern "C" static bool core_times_next ( ::Falcon::VMachine *vm )
 
    return true;
 }
+}
 
 
-extern "C" static void  internal_times ( ::Falcon::VMachine *vm, bool eval )
+extern "C"
+{
+static void  internal_times ( ::Falcon::VMachine *vm, bool eval )
 {
    Item *i_count = vm->param(0);
    Item *i_var = vm->param(1);
@@ -969,7 +984,7 @@ extern "C" static void  internal_times ( ::Falcon::VMachine *vm, bool eval )
 
    // ready; now the VM will call core_times_next
 }
-
+}
 
 /*#
    @function times
@@ -1107,7 +1122,8 @@ FALCON_FUNC  core_xtimes ( ::Falcon::VMachine *vm )
    internal_times( vm, true );
 }
 
-extern "C" static bool core_xmap_next( ::Falcon::VMachine *vm )
+extern "C" {
+static bool core_xmap_next( ::Falcon::VMachine *vm )
 {
    // in vm->param(0) there is "callable".
    CoreArray *origin = vm->param(1)->asArray();
@@ -1143,6 +1159,7 @@ extern "C" static bool core_xmap_next( ::Falcon::VMachine *vm )
 
    vm->retval( mapped );
    return false;
+}
 }
 
 /*#
@@ -1210,7 +1227,8 @@ FALCON_FUNC  core_xmap ( ::Falcon::VMachine *vm )
    vm->retval( mapped );
 }
 
-extern "C" static bool core_filter_next ( ::Falcon::VMachine *vm )
+extern "C" {
+static bool core_filter_next ( ::Falcon::VMachine *vm )
 {
    CoreArray *origin = vm->param(1)->asArray();
    CoreArray *mapped = vm->local(0)->asArray();
@@ -1230,7 +1248,7 @@ extern "C" static bool core_filter_next ( ::Falcon::VMachine *vm )
    vm->callFrame( *vm->param(0), 1 );
    return true;
 }
-
+}
 
 /*#
    @function filter
@@ -1277,7 +1295,8 @@ FALCON_FUNC  core_filter ( ::Falcon::VMachine *vm )
 }
 
 
-extern "C" static bool core_reduce_next ( ::Falcon::VMachine *vm )
+extern "C" {
+static bool core_reduce_next ( ::Falcon::VMachine *vm )
 {
    // Callable in param 0
    CoreArray *origin = vm->param(1)->asArray();
@@ -1296,6 +1315,7 @@ extern "C" static bool core_reduce_next ( ::Falcon::VMachine *vm )
    vm->pushParameter( origin->at(count) ); // next element
    vm->callFrame( *vm->param(0), 2 );
    return true;
+}
 }
 
 /*#
@@ -1382,7 +1402,8 @@ FALCON_FUNC  core_reduce ( ::Falcon::VMachine *vm )
 }
 
 
-extern "C" static bool core_iff_next( ::Falcon::VMachine *vm )
+extern "C" {
+static bool core_iff_next( ::Falcon::VMachine *vm )
 {
    // anyhow, we don't want to be called anymore
    vm->returnHandler( 0 );
@@ -1405,6 +1426,7 @@ extern "C" static bool core_iff_next( ::Falcon::VMachine *vm )
    }
 
    return false;
+}
 }
 
 
@@ -1473,7 +1495,8 @@ FALCON_FUNC  core_iff ( ::Falcon::VMachine *vm )
 }
 
 
-extern "C" static bool core_choice_next( ::Falcon::VMachine *vm )
+extern "C" {
+static bool core_choice_next( ::Falcon::VMachine *vm )
 {
    if ( vm->regA().isTrue() )
    {
@@ -1488,6 +1511,7 @@ extern "C" static bool core_choice_next( ::Falcon::VMachine *vm )
    }
 
    return false;
+}
 }
 
 /*#
@@ -1580,7 +1604,10 @@ FALCON_FUNC  core_lit ( ::Falcon::VMachine *vm )
 }
 
 
-extern "C" static bool core_cascade_next ( ::Falcon::VMachine *vm )
+extern "C"
+{
+
+static bool core_cascade_next ( ::Falcon::VMachine *vm )
 {
    // Param 0: callables array
    // local 0: counter (position)
@@ -1644,6 +1671,7 @@ extern "C" static bool core_cascade_next ( ::Falcon::VMachine *vm )
    }
 
    return true;
+}
 }
 
 /*#
@@ -1772,7 +1800,8 @@ FALCON_FUNC  core_cascade ( ::Falcon::VMachine *vm )
 }
 
 
-extern "C" static bool core_floop_next ( ::Falcon::VMachine *vm )
+extern "C" {
+static bool core_floop_next ( ::Falcon::VMachine *vm )
 {
    // Param 0: callables array
    CoreArray *callables = vm->param(0)->asArray();
@@ -1817,6 +1846,7 @@ extern "C" static bool core_floop_next ( ::Falcon::VMachine *vm )
 
    // else, just return true
    return true;
+}
 }
 
 /*#
@@ -1984,12 +2014,14 @@ FALCON_FUNC  core_lbind ( ::Falcon::VMachine *vm )
 }
 
 
-extern "C" static bool core_let_next( ::Falcon::VMachine *vm )
+extern "C" {
+static bool core_let_next( ::Falcon::VMachine *vm )
 {
    *vm->param(0) = *vm->param(1);
    vm->regA() = *vm->param(0);
 
    return false;
+}
 }
 
 
