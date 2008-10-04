@@ -44,6 +44,7 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
 
    Falcon::Module *self = new Falcon::Module();
    self->name ( "sdlimage" );
+   self->language( "en_US" );
    self->engineVersion ( FALCON_VERSION_NUM );
    self->version ( VERSION_MAJOR, VERSION_MINOR, VERSION_REVISION );
 

@@ -2,10 +2,10 @@
    FALCON - The Falcon Programming Language.
    FILE: verion.h
 
-   SDL module version informations
+   SDL - Mixer module version informations
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
-   Begin: Sun, 16 Mar 2008 19:37:29 +0100
+   Begin: Sat, 04 Oct 2008 19:11:27 +0200
 
    -------------------------------------------------------------------
    (C) Copyright 2008: the FALCON developers (see list in AUTHORS file)
@@ -17,7 +17,7 @@
 #define VERSION_H
 
 #define VERSION_MAJOR        1
-#define VERSION_MINOR        1
+#define VERSION_MINOR        0
 #define VERSION_REVISION     0
 
 #endif

@@ -27,9 +27,10 @@
 #include "sdlttf_ext.h"
 #include "sdlttf_mod.h"
 #include <sdl_service.h>  // for the reset
-
-#include <SDL_ttf.h>
-
+extern "C"
+{
+   #include <SDL_ttf.h>
+}
 
 /*# @beginmodule sdlttf */
 
