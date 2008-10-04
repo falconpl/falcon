@@ -944,7 +944,7 @@ FALCON_FUNC BOM_tabRow( VMachine *vm )
 //====================================================//
 
 
-static void (* const  BOMTable  [] ) ( Falcon::VMachine *) =
+extern "C" static void (* const  BOMTable  [] ) ( Falcon::VMachine *) =
 {
    BOM_toString,
    BOM_len,
@@ -996,8 +996,7 @@ bool Item::callBom( VMachine *vm ) const
       // real call
       getFbomItem( vm->self() );
       // todo: check validity
-      void (* const f)( VMachine *)  = BOMTable[ getFbomMethod() ];
-      f( vm );
+      BOMTable[ getFbomMethod() ](vm);
 
       // Switching self/sender. Is it needed?
       vm->self() = vm->sender();

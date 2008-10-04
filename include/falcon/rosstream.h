@@ -51,9 +51,9 @@ public:
    virtual ~ROStringStream() { close(); }
 
    virtual bool close();
-   virtual int32 write( const byte *buffer, int32 size );
+   virtual int32 write( const void *buffer, int32 size );
    virtual int32 write( const String &source );
-   virtual int32 writeAvailable( int32 msecs );
+   virtual int32 writeAvailable( int32 msecs, const Falcon::Sys::SystemData* );
    virtual bool truncate( int64 pos=-1 );
    virtual FalconData *clone() const;
 };

@@ -3564,7 +3564,7 @@ void VMachine::referenceItem( Item &target, Item &source )
 }
 
 
-static bool vm_func_eval( VMachine *vm )
+extern "C" static bool vm_func_eval( VMachine *vm )
 {
    CoreArray *arr = vm->local( 0 )->asArray();
    uint32 count = (uint32) vm->local( 1 )->asInteger();

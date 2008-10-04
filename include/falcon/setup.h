@@ -145,12 +145,12 @@ different systems.
 // Unix specific defines
 //
 #else
-   #define CDECL
+   #define CDECL 
    #define FALCON_FUNC \
       extern "C" void
 
    #define FALCON_DYN_CLASS
-   #define FALCON_DYN_SYM
+   #define FALCON_DYN_SYM 
    #define EXTERN_TEMPLATE
 
    #define FALCON_MODULE_TYPE \

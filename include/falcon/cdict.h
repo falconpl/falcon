@@ -86,7 +86,7 @@ public:
    //=======================================
    // Utilities
 
-   virtual bool find( const Item &key, Item &value )
+   bool find( const Item &key, Item &value )
    {
       Item *itm;
       if( ( itm = find( key ) ) != 0 )

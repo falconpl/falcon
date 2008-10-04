@@ -50,10 +50,10 @@ public:
    BufferedStream( uint32 bufSize = default_buffer_size );
    virtual ~BufferedStream();
 
-   virtual int32 read( byte *buffer, int32 size );
-   virtual int32 write( const byte *buffer, int32 size );
+   virtual int32 read( void *buffer, int32 size );
+   virtual int32 write( const void *buffer, int32 size );
    virtual int64 tell();
-   virtual bool truncate( int64 pos = - 1 );
+   virtual bool truncate( int64 pos = -1 );
 
    virtual int32 readAvailable( int32 msecs_timeout, const Sys::SystemData *data = 0 );
    virtual int32 writeAvailable( int32 msecs_timeout, const Sys::SystemData *data = 0 );

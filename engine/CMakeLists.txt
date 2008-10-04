@@ -20,17 +20,17 @@ IF(UNIX OR APPLE)
     )
 
    #for solaris system flavor, add sys_solaris.cpp
-   IF( "${FALCON_UNIX_FLAVOR}" STREQUAL "SOLARIS" )
+   IF( "${CMAKE_SYSTEM_NAME}" STREQUAL "SunOS" )
       SET( SYS_SPECIFIC
          ${SYS_SPECIFIC}
          sys_solaris.cpp
       )
-   ELSE( "${FALCON_UNIX_FLAVOR}" STREQUAL "SOLARIS" )
+   ELSE( "${CMAKE_SYSTEM_NAME}" STREQUAL "SunOS" )
       SET( SYS_SPECIFIC
          ${SYS_SPECIFIC}
          sys_unix.cpp
       )
-   ENDIF( "${FALCON_UNIX_FLAVOR}" STREQUAL "SOLARIS" )
+   ENDIF( "${CMAKE_SYSTEM_NAME}" STREQUAL "SunOS" )
 
    #DL is different for unix and mac
    IF(APPLE)
@@ -251,11 +251,11 @@ IF(UNIX OR MAC)
    #also dl for linux and solaris
    IF(UNIX)
       # and RT only for solaris
-      IF( "${FALCON_UNIX_FLAVOR}" STREQUAL "SOLARIS" )
+      IF( "${CMAKE_SYSTEM_NAME}" STREQUAL "SunOS" )
          TARGET_LINK_LIBRARIES(falcon_engine dl rt)
-      ELSE( "${FALCON_UNIX_FLAVOR}" STREQUAL "SOLARIS" )
+      ELSE( "${CMAKE_SYSTEM_NAME}" STREQUAL "SunOS" )
          TARGET_LINK_LIBRARIES(falcon_engine dl)
-      ENDIF( "${FALCON_UNIX_FLAVOR}" STREQUAL "SOLARIS" )
+      ENDIF( "${CMAKE_SYSTEM_NAME}" STREQUAL "SunOS" )
    ENDIF(UNIX)
 
    #Finally, link everything to the lib dir

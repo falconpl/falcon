@@ -211,7 +211,7 @@ public:
       return -1;
    }
 */
-   virtual bool truncate( int pos ) {
+   virtual bool truncate( int64 pos=-1 ) {
       m_status = t_unsupported;
       return false;
    }
@@ -240,7 +240,7 @@ public:
       StdStream( fsdata )
    {}
 
-   virtual int32 read( const void *buffer, int32 size ) {
+   virtual int32 read( void *buffer, int32 size ) {
       m_status = t_unsupported;
       return -1;
    }

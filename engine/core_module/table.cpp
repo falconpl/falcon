@@ -257,7 +257,7 @@ FALCON_FUNC  Table_back ( ::Falcon::VMachine *vm )
    vm->retval( table->back() );
 }
 
-static void internal_first_last( VMachine *vm, bool mode )
+extern"C" static void internal_first_last( VMachine *vm, bool mode )
 {
    CoreTable *table = static_cast<CoreTable *>( vm->self().asObject()->getUserData() );
 
@@ -789,7 +789,7 @@ FALCON_FUNC  Table_removeColumn ( ::Falcon::VMachine *vm )
    table->removeColumn( colpos );
 }
 
-static bool table_choice_next( Falcon::VMachine *vm )
+extern "C" static bool table_choice_next( Falcon::VMachine *vm )
 {
    CoreTable *table = static_cast<CoreTable *>( vm->self().asObject()->getUserData() );
    CoreArray &page = *table->currentPage();

@@ -123,7 +123,7 @@ int SrcLexer::lex_outscape()
       e_esc2,
       e_escF,
       e_escA,
-      e_escL,
+      e_escL
    }
    state;
 

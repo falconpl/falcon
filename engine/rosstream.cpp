@@ -64,7 +64,7 @@ bool ROStringStream::close()
    return false;
 }
 
-int32 ROStringStream::write( const byte *buffer, int32 size )
+int32 ROStringStream::write( const void *buffer, int32 size )
 {
    status( t_unsupported );
    return -1;
@@ -76,7 +76,7 @@ int32 ROStringStream::write( const String &source )
    return -1;
 }
 
-int32 ROStringStream::writeAvailable( int32 msecs )
+int32 ROStringStream::writeAvailable( int32 msecs, const Falcon::Sys::SystemData* )
 {
    status( t_unsupported );
    return -1;

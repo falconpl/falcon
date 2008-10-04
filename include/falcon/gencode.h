@@ -46,7 +46,7 @@ class FALCON_DYN_CLASS GenCode: public Generator
       e_parFALSE,
       e_parNTD32,
       e_parNTD64,
-      e_parSTRID,
+      e_parSTRID
    } t_paramType;
 
 

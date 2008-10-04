@@ -71,11 +71,12 @@ bool BufferedStream::refill()
    return true;
 }
 
-int32 BufferedStream::read( byte *buffer, int32 size )
+int32 BufferedStream::read( void *buf, int32 size )
 {
    if ( size <= 0 )
       return 0;
 
+   byte* buffer = (byte*) buf;
    int inbuf = 0;
    // time to read fresh data?
    if ( m_bufLen == m_bufPos )
@@ -153,11 +154,12 @@ bool BufferedStream::readString( String &target, uint32 size )
 }
 
 
-int32 BufferedStream::write( const byte *buffer, int32 size )
+int32 BufferedStream::write( const void *buf, int32 size )
 {
    if ( size <= 0 )
       return 0;
 
+   byte* buffer = (byte*) buf;
    if ( size + m_bufPos > m_bufSize )
    {
       // flush up to current position, if we have something to flush.

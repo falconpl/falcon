@@ -66,6 +66,12 @@ SET(FALCON_SRC_TREE     $ENV{FALCON_SRC_TREE})
 SET(FALCON_DEVEL_TREE   $ENV{FALCON_DEVEL_TREE})
 SET(FALCON_BUILD_TREE   $ENV{FALCON_BUILD_TREE})
 
+
+MESSAGE( "Compiling Falcon on ${CMAKE_SYSTEM}" )
+
+
+MESSAGE( "Compiling Falcon on ${CMAKE_SYSTEM}" )
+
 ##############################################################################
 # Including specific build informations
 # This is a user-configurable script containing vars
@@ -129,7 +135,10 @@ IF(WIN32)
    SET( FALCON_SYSTEM_WIN 1 )
 ELSE(WIN32)
    # Set common UNIX warnings.
-   add_definitions(-Wall)
+   IF("${CMAKE_SYSTEM_NAME}" STREQUAL "SunOS")
+   ELSE("${CMAKE_SYSTEM_NAME}" STREQUAL "SunOS")
+      add_definitions(-Wall)
+   ENDIF("${CMAKE_SYSTEM_NAME}" STREQUAL "SunOS")
 
    IF(APPLE)
       SET( FALCON_HOST_SYSTEM "MAC" )

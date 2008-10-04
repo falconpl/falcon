@@ -149,7 +149,7 @@ public:
 
    virtual int32 read( void *buffer, int32 size ) { return m_stream->read( buffer, size ); }
    virtual int32 write( const void *buffer, int32 size ) { return m_stream->write( buffer, size ); }
-   virtual bool errorDescription( ::Falcon::String &description ) {
+   virtual bool errorDescription( ::Falcon::String &description ) const {
       return m_stream->errorDescription( description );
    }
 

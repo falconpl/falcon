@@ -256,7 +256,7 @@ FALCON_FUNC  removeFromAll( ::Falcon::VMachine *vm )
 }
 
 
-static bool broadcast_next_attrib_next( ::Falcon::VMachine *vm )
+extern "C" static bool broadcast_next_attrib_next( ::Falcon::VMachine *vm )
 {
    // break the chain if last call returned true or an OOB item
    if ( vm->regA().isOob() || vm->regA().isTrue() )
@@ -310,7 +310,7 @@ FALCON_FUNC broadcast_next_attrib( ::Falcon::VMachine *vm )
    vm->returnHandler( broadcast_next_attrib_next );
 }
 
-static bool broadcast_next_array( ::Falcon::VMachine *vm )
+extern "C" static bool broadcast_next_array( ::Falcon::VMachine *vm )
 {
    // break chain if last call returned true
    if ( vm->regA().isOob() || vm->regA().isTrue() )
