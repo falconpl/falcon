@@ -26,6 +26,8 @@ namespace Falcon {
 namespace Ext {
 
 // Generic mixer
+FALCON_FUNC mix_Compiled_Version( VMachine *vm );
+FALCON_FUNC mix_Linked_Version( VMachine *vm );
 FALCON_FUNC mix_OpenAudio( VMachine *vm );
 FALCON_FUNC mix_CloseAudio( VMachine *vm );
 

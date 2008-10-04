@@ -21,7 +21,7 @@ ADD_LIBRARY( sdlmixer MODULE
 )
 
 #Link
-TARGET_LINK_LIBRARIES(sdlmixer falcon_engine ${SDLTTF_LIBRARY})
+TARGET_LINK_LIBRARIES(sdlmixer falcon_engine ${SDLMIXER_LIBRARY})
 
 SET_TARGET_PROPERTIES(sdlmixer
    PROPERTIES PREFIX "")

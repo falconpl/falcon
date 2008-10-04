@@ -146,9 +146,9 @@ FALCON_FUNC ttf_Compiled_Version( VMachine *vm )
    TTF_VERSION(&compile_version);
 
    CoreArray *arr = new CoreArray( vm, 3 );
-   arr->append( compile_version.major );
-   arr->append( compile_version.minor );
-   arr->append( compile_version.patch );
+   arr->append( (int64) compile_version.major );
+   arr->append( (int64) compile_version.minor );
+   arr->append( (int64) compile_version.patch );
    vm->retval( arr );
 }
 
@@ -167,9 +167,9 @@ FALCON_FUNC ttf_Linked_Version( VMachine *vm )
    link_version = TTF_Linked_Version();
 
    CoreArray *arr = new CoreArray( vm, 3 );
-   arr->append( link_version->major );
-   arr->append( link_version->minor );
-   arr->append( link_version->patch );
+   arr->append( (int64) link_version->major );
+   arr->append( (int64) link_version->minor );
+   arr->append( (int64) link_version->patch );
    vm->retval( arr );
 }
 
