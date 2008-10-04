@@ -3,17 +3,13 @@
 #
 # DBI - Macros and utilities for Falcon modules
 ####################################################################
+cmake_minimum_required(VERSION 2.4)
 
 #Set the default buid type to Debug
 IF(NOT CMAKE_BUILD_TYPE)
-   SET( CMAKE_BUILD_TYPE $ENV{FALCON_BUILD_TYPE} )
-
-   #Still unset?
-   IF(NOT CMAKE_BUILD_TYPE)
-   SET(CMAKE_BUILD_TYPE Debug CACHE STRING
+  SET(CMAKE_BUILD_TYPE Debug CACHE STRING
       "Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel."
       FORCE)
-   ENDIF(NOT CMAKE_BUILD_TYPE)
 ENDIF(NOT CMAKE_BUILD_TYPE)
 
 
@@ -24,14 +20,14 @@ IF("$ENV{FALCON_INC_PATH}" STREQUAL "" )
 
    EXEC_PROGRAM( falcon-conf
          ARGS -i
-         OUTPUT_VARIABLE FALCON_INC_DIR )
-   MESSAGE( "Read INCLUDE=${FALCON_INC_DIR} from falcon conf" )
+         OUTPUT_VARIABLE FALCON_INC_PATH )
+   MESSAGE( "Read INCLUDE=${FALCON_INC_PATH} from falcon conf" )
 
    EXEC_PROGRAM( falcon-conf
          ARGS --libs-only-L
-         OUTPUT_VARIABLE FALCON_LIB_DIR )
+         OUTPUT_VARIABLE FALCON_LIB_PATH )
 
-   MESSAGE( "Read LIB=${FALCON_LIB_DIR} from falcon conf" )
+   MESSAGE( "Read LIB=${FALCON_LIB_PATH} from falcon conf" )
 
    EXEC_PROGRAM( falcon-conf
          ARGS --moddir
@@ -44,12 +40,12 @@ ELSE("$ENV{FALCON_INC_PATH}" STREQUAL "" )
    MESSAGE( "Configuring FALCON from environmental settings" )
 
    IF ("$ENV{FALCON_ACTIVE_TREE}" STREQUAL "")
-      SET( FALCON_INC_DIR "$ENV{FALCON_INC_PATH}" )
-      SET( FALCON_LIB_DIR "$ENV{FALCON_LIB_PATH}" )
+      SET( FALCON_INC_PATH "$ENV{FALCON_INC_PATH}" )
+      SET( FALCON_LIB_PATH "$ENV{FALCON_LIB_PATH}" )
       SET( FALCON_MOD_INSTALL "$ENV{FALCON_BIN_PATH}" )
    ELSE ("$ENV{FALCON_ACTIVE_TREE}" STREQUAL "")
-      SET( FALCON_INC_DIR "$ENV{FALCON_ACTIVE_TREE}/include" )
-      SET( FALCON_LIB_DIR "$ENV{FALCON_ACTIVE_TREE}/lib" )
+      SET( FALCON_INC_PATH "$ENV{FALCON_ACTIVE_TREE}/include" )
+      SET( FALCON_LIB_PATH "$ENV{FALCON_ACTIVE_TREE}/bin" )
       SET( FALCON_MOD_INSTALL "$ENV{FALCON_ACTIVE_TREE}/bin" )
    ENDIF ("$ENV{FALCON_ACTIVE_TREE}" STREQUAL "")
 
@@ -68,8 +64,15 @@ MACRO(FALCON_LINK_MODULE tgt )
 ENDMACRO(FALCON_LINK_MODULE)
 
 MACRO(FALCON_INSTALL_MODULE tgt )
-   SET_TARGET_PROPERTIES(${tgt}
-      PROPERTIES PREFIX "")
+   IF(APPLE)
+      SET_TARGET_PROPERTIES(${tgt}
+         PROPERTIES 
+		    PREFIX ""
+		    SUFFIX ".dylib" )
+   ELSE(APPLE)
+      SET_TARGET_PROPERTIES(${tgt}
+         PROPERTIES PREFIX "")
+   ENDIF(APPLE)
 
    #Install
    INSTALL( TARGETS ${tgt}
