@@ -22,10 +22,7 @@
 
 #include <falcon/setup.h>
 #include <falcon/suserdata.h>
-#include <falcon/error.h>
-#include "../include/sdl_falcon.h"
-
-#define FALCON_SDL_ERROR_BASE 2100
+#include <sdl_service.h>
 
 namespace Falcon{
 namespace Ext{
@@ -41,19 +38,6 @@ public:
    virtual FalconData* clone() const { return 0; }
 };
 
-
-/** Low level SDL error */
-class SDLError: public ::Falcon::Error
-{
-public:
-   SDLError():
-      Error( "SDLError" )
-   {}
-
-   SDLError( const ErrorParam &params  ):
-      Error( "SDLError", params )
-      {}
-};
 
 /** Reflexive SDL Surface */
 class SDLSurfaceCarrier_impl: public SDLSurfaceCarrier

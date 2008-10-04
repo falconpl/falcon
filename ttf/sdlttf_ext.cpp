@@ -26,8 +26,7 @@
 
 #include "sdlttf_ext.h"
 #include "sdlttf_mod.h"
-#include "../src/sdl_mod.h"  // for SDLError class
-#include "../src/sdl_service.h"  // for the reset
+#include <sdl_service.h>  // for the reset
 
 #include <SDL_ttf.h>
 

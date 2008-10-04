@@ -24,7 +24,9 @@
 #include <falcon/falcondata.h>
 #include <falcon/error.h>
 
-#include <SDL_ttf.h>
+extern "C" {
+   #include <SDL_ttf.h>
+}
 
 #define FALCON_TTF_ERROR_BASE 2120
 

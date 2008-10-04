@@ -5,11 +5,13 @@
 ####################################################################
 PROJECT(sdlimage)
 
+Find_Package ( SDL_image REQUIRED ) # if using SDL_image
+
 # Inclusion settings
-add_definitions(`sdl-config --cflags`)
+INCLUDE_DIRECTORIES(../include)
 INCLUDE_DIRECTORIES(.)
-INCLUDE_DIRECTORIES(BEFORE "${FALCON_INC_DIR}")
-LINK_DIRECTORIES(BEFORE "${FALCON_LIB_DIR}")
+INCLUDE_DIRECTORIES(BEFORE "${FALCON_INC_PATH}")
+LINK_DIRECTORIES(BEFORE "${FALCON_INC_PATH}")
 
 # Target
 ADD_LIBRARY( sdlimage MODULE
@@ -19,10 +21,10 @@ ADD_LIBRARY( sdlimage MODULE
 )
 
 #Link
-link_libraries(`sdl-config --libs`)
-TARGET_LINK_LIBRARIES(sdlimage falcon_engine SDL_image)
+TARGET_LINK_LIBRARIES(sdlimage falcon_engine ${SDLIMAGE_LIBRARY})
 
 SET_TARGET_PROPERTIES(sdlimage
    PROPERTIES PREFIX "")
+
 #Install
 FALCON_LINK_MODULE( sdlimage )

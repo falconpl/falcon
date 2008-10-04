@@ -17,17 +17,14 @@
    The sdl module - main file.
 */
 
-extern "C" {
-   #include <SDL.h>
-}
-
 #include <falcon/setup.h>
 #include <falcon/enginedata.h>
 #include <falcon/module.h>
 #include <falcon/userdata.h>
+#include <sdl_service.h>
+
 #include "version.h"
 #include "sdl_ext.h"
-#include "sdl_service.h"
 
 /*#
    @module sdl The SDL Falcon Module.

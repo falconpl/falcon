@@ -5,11 +5,10 @@
 ####################################################################
 
 # Inclusion settings
-add_definitions(`sdl-config --cflags`)
 INCLUDE_DIRECTORIES(../include)
 INCLUDE_DIRECTORIES(.)
-INCLUDE_DIRECTORIES(BEFORE "${FALCON_INC_DIR}")
-LINK_DIRECTORIES(BEFORE "${FALCON_LIB_DIR}")
+INCLUDE_DIRECTORIES(BEFORE "${FALCON_INC_PATH}")
+LINK_DIRECTORIES(BEFORE "${FALCON_INC_PATH}")
 
 # Target
 ADD_LIBRARY( sdl MODULE
@@ -24,8 +23,7 @@ ADD_LIBRARY( sdl MODULE
 )
 
 #Link
-link_libraries(`sdl-config --libs`)
-TARGET_LINK_LIBRARIES(sdl falcon_engine SDL)
+TARGET_LINK_LIBRARIES(sdl falcon_engine ${SDL_LIBRARY})
 
 SET_TARGET_PROPERTIES(sdl
    PROPERTIES PREFIX "")

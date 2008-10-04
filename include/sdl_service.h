@@ -22,10 +22,33 @@
 
 #include <falcon/setup.h>
 #include <falcon/service.h>
-#include <SDL.h>
+#include <falcon/error.h>
+#include <falcon/userdata.h>
 
-namespace Falcon {
+extern "C" {
+   #include <SDL.h>
+}
+
+
+#define FALCON_SDL_ERROR_BASE 2100
+
+namespace Falcon
+{
+
 class CoreObject;
+
+/** Base for general SDL exported carrier.
+
+*/
+class SDLSurfaceCarrier: public UserData
+{
+public:
+   SDLSurfaceCarrier() {}
+
+   virtual ~SDLSurfaceCarrier() {};
+   virtual SDL_Surface* surface() const=0;
+};
+
 
 /**
    Shared SDL module services
@@ -36,6 +59,20 @@ class FALCON_DYN_CLASS SDLService: public Service
 public:
    SDLService();
    virtual CoreObject *createSurfaceInstance( VMachine *vm, ::SDL_Surface *surface );
+};
+
+
+/** Low level SDL error */
+class SDLError: public ::Falcon::Error
+{
+public:
+   SDLError():
+      Error( "SDLError" )
+   {}
+
+   SDLError( const ErrorParam &params  ):
+      Error( "SDLError", params )
+      {}
 };
 
 }
