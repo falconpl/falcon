@@ -1045,7 +1045,7 @@ Module* core_module_init()
    self->addClassMethod( table_class, "columnPos", Falcon::core::Table_columnPos ).asSymbol()->
       addParam("column");
    self->addClassMethod( table_class, "columnData", Falcon::core::Table_columnData ).asSymbol()->
-      addParam("column");
+      addParam("column")->addParam("data");
    self->addClassMethod( table_class, "find", Falcon::core::Table_find ).asSymbol()->
       addParam("column")->addParam("value")->addParam("tcol");
    self->addClassMethod( table_class, "insert", Falcon::core::Table_insert ).asSymbol()->

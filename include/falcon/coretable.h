@@ -109,12 +109,20 @@ public:
       return *(Item*) m_headerData.at(pos);
    }
 
-   /** Returns nth column-wide data in the table (const).
+   /** Returns nth column-wide data in the table.
       Using an incorrect (greater than order) position parameter will crash.
    */
    Item& columnData( uint32 pos ) {
       fassert( pos < order() );
       return *(Item*) m_headerData.at(pos);
+   }
+
+   /** Sets nth column-wide data in the table.
+      Using an incorrect (greater than order) position parameter will crash.
+   */
+   void columnData( uint32 pos, const Item& data ) {
+      fassert( pos < order() );
+      m_headerData.set( const_cast<Item*>( &data ), pos);
    }
 
    /** Returns the nth heading (column title).

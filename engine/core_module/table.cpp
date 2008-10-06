@@ -446,16 +446,22 @@ FALCON_FUNC  Table_columnPos ( ::Falcon::VMachine *vm )
    @method columnData Table
    @brief Returns the column data bound with a certain column
    @param column The column header name or numeric position.
+   @optparam data New data to be stored as column data.
    @return The column data for the given column, or nil is not found.
+
+   If the @b data parameter is specified, then the value of the given
+   column data is changed. Anyhow, the previous value is returned.
 
    Notice that the column data of an existing column may be nil; to know
    if a column with a given name exists, use the @a Table.column method.
+
 */
 
 FALCON_FUNC  Table_columnData ( ::Falcon::VMachine *vm )
 {
    CoreTable *table = static_cast<CoreTable *>( vm->self().asObject()->getUserData() );
    Item* i_column = vm->param(0);
+   Item* i_data = vm->param(1);
 
    if ( i_column != 0 && ! i_column->isString() && ! i_column->isOrdinal() )
    {
@@ -470,6 +476,11 @@ FALCON_FUNC  Table_columnData ( ::Falcon::VMachine *vm )
       vm->regA().setNil();
    else
       vm->regA() = table->columnData( colpos );
+
+   if ( i_data != 0 )
+   {
+      table->columnData( colpos, *i_data );
+   }
 }
 
 /*#
