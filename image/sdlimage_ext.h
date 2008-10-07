@@ -7,6 +7,9 @@
    Author: Federico Baroni
    Begin: Tue, 30 Sep 2008 23:40:06 +0100
 
+   Last modified because:
+   Tue 7 Oct 2008 23:06:03 - GetError and SetError added
+
    -------------------------------------------------------------------
    (C) Copyright 2008: the FALCON developers (see list in AUTHORS file)
 
@@ -60,8 +63,8 @@ FALCON_FUNC img_isJPG ( VMachine *vm );
 
 // Errors functions
 
-//FALCON_FUNC img_SetError ( VMachine *vm );
 FALCON_FUNC img_GetError ( VMachine *vm );
+FALCON_FUNC img_SetError ( VMachine *vm );
 
 
 }

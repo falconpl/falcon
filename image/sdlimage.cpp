@@ -7,6 +7,9 @@
    Author: Federico Baroni
    Begin: Wed, 24 Sep 2008 23:04:56 +0100
 
+   Last modified because:
+   Tue 7 Oct 2008 23:06:03 - GetError and SetError added
+
    -------------------------------------------------------------------
    (C) Copyright 2008: the FALCON developers (see list in AUTHORS file)
 
@@ -23,7 +26,6 @@
 #include <falcon/module.h>
 #include "version.h"
 #include "sdlimage_ext.h"
-//#include "sdlimage_mod.h"
 
 /*#
    @module sdlimage image loading extensions for the Falcon SDL module.
@@ -81,6 +83,8 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
 
    // Error
    self->addClassMethod( c_sdlimage, "GetError", Falcon::Ext::img_GetError );
+   self->addClassMethod( c_sdlimage, "SetError", Falcon::Ext::img_SetError ).asSymbol()->
+        addParam ( "error_str" );
 
 
    return self;

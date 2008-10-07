@@ -7,6 +7,9 @@
    Author: Federico Baroni
    Begin: Tue, 30 Sep 2008 23:05:06 +0100
 
+   Last modified because:
+   Tue 7 Oct 2008 23:06:03 - GetError and SetError added
+
    -------------------------------------------------------------------
    (C) Copyright 2008: the FALCON developers (see list in AUTHORS file)
 
@@ -18,11 +21,7 @@
 */
 
 #include <falcon/vm.h>
-//#include <falcon/transcoding.h>
-//#include <falcon/fstream.h>
-//#include <falcon/lineardict.h>
 #include <falcon/autocstring.h>
-//#include <falcon/membuf.h>
 
 #include <sdl_service.h>
 
@@ -31,9 +30,6 @@
 extern "C" {
    #include <SDL_image.h>
 }
-
-//#include <iostream> // Da rimuovere
-
 
 /*# @beginmodule sdlimage */
 
@@ -68,7 +64,7 @@ FALCON_FUNC img_Load ( VMachine *vm )
    {
       vm->raiseModError( new SDLError( ErrorParam( FALCON_SDL_ERROR_BASE + 3, __LINE__ )
          .desc( "IMG_Load" )
-         .extra( SDL_GetError() ) ) );
+         .extra( IMG_GetError() ) ) );
       return;
    }
 
@@ -82,10 +78,10 @@ FALCON_FUNC img_Load ( VMachine *vm )
 
 /*#
    @method img_isJPG
-   @brief Checks if the image is a JPG file
-   @return The return value is 1 if the image is a JPG file, 0 if it's not a JPG encoded file
+   @brief fff
+   @return fff
 
-   the image data is tested to see if it is readable as a JPG, otherwise it returns false (Zero).
+   adkjaòldkfj
 */
 
 FALCON_FUNC img_isJPG ( VMachine *vm )
@@ -95,16 +91,46 @@ FALCON_FUNC img_isJPG ( VMachine *vm )
 
 /*#
    @method img_GetError
-   @brief fff
-   @return fff
+   @brief Gets image related error
+   @return Returns a string containing a humam readble version or the reason for the last error that occured
 
-   adkjaòldkfj
+   The current active image error is returned
 */
 
 FALCON_FUNC img_GetError ( VMachine *vm )
 {
-   // Something here
+   // Returns the available error
+   vm->retval ( IMG_GetError () );
 }
+
+/*#
+   @method img_SetError
+   @brief Sets image related error string
+   @return Returns a string containing a humam readble version or the reason for the last error that occured
+
+   This function sets the error string which may be fetched with img_GetError (or sdl_GetError). The function accepts a string not longer than 1024 chars in length.
+*/
+
+FALCON_FUNC img_SetError ( VMachine *vm )
+{
+   // Check error string
+   Item *i_string = vm->param(0);
+
+   // Is a string?
+   if ( i_string == 0 || ! i_string->isString() )
+   {
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "Not a string" ) ) );
+      return;
+   }
+
+   // Convert i_string to a C string
+   AutoCString serror( *i_string->asString() );
+
+   // Setting the new error string
+   IMG_SetError ( serror.c_str () );
+}
+
 
 }
 }
