@@ -21,9 +21,18 @@ load sdlmixer
 try
    a = SDL.InitAuto( SDL.INIT_AUDIO )
    MIX.OpenAudio( 44100, AUDIO.S16, 2, 4096 )
-   MIX.AllocateChannels( 2 )
+   MIX.AllocateChannels( 3 )
    sound = MIX.LoadWAV( "fading.ogg" )
-   sound.Play( -1, -1 )
+   sound.Play( 0, -1 )
+
+   // perform a bit of echo
+   MIX.Volume( 1, 60 )
+   MIX.Volume( 2, 40 )
+   sleep( 0.30 )
+   sound.Play( 1, -1 )
+   sleep( 0.30 )
+   sound.Play( 2, -1 )
+
 
    > "Success. Press enter to stop"
    count = 0

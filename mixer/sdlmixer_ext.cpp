@@ -378,7 +378,7 @@ FALCON_FUNC MixChunk_Play( VMachine *vm )
    int loops = (int) i_loops->forceInteger();
    int res = Mix_PlayChannel( channel, chunk, loops );
 
-   if ( res != 0 )
+   if ( res < 0 )
    {
       vm->raiseModError( new SDLError( ErrorParam( FALCON_SDLMIXER_ERROR_BASE+4, __LINE__ )
          .desc( "Playback error" )
