@@ -1,0 +1,44 @@
+#!/usr/bin/falcon
+/*
+   FALCON - SDL MIXER MODULE Samples
+
+   FILE: sdlmix_pause.fal
+
+   Test for sound channel pause/resume.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Thu, 09 Oct 2008 23:19:59 +0200
+   Last modified because:
+
+   -------------------------------------------------------------------
+   (C) Copyright 2008: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+load sdlmixer
+
+try
+   a = SDL.InitAuto( SDL.INIT_AUDIO )
+   MIX.OpenAudio( 44100, AUDIO.S16, 2, 4096 )
+   MIX.AllocateChannels( 2 )
+   sound = MIX.LoadWAV( "fading.ogg" )
+   sound.Play( -1, -1 )
+
+   > "Success. Press enter to stop"
+   > "Fadeout in 8 seconds (for 5 seconds)."
+   count = 0
+   stdin = stdIn()
+   loop count++
+      >> @"[$(count)]\r"
+      if stdin.readAvailable(0.1): break
+      if count %80 == 0: MIX.FadeOutChannel( 0, 5.0 )
+   end
+
+   MIX.CloseAudio()
+catch in e
+   > "Test failed: "
+   > e
+end
+
+/* end of file */
