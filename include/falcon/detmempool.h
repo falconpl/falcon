@@ -50,7 +50,7 @@ class DetMemPool: public MemPool
 
 public:
    DetMemPool() {}
-   virtual bool performGC();
+   virtual bool performGC( bool bForceReclaim = false );
 };
 
 }

@@ -22,6 +22,8 @@
 
 #include <string.h>
 
+#define PLAT_ALIGN 4
+
 namespace Falcon
 {
 
@@ -39,16 +41,16 @@ Map::Map( ElementTraits *keyt, ElementTraits *valuet, uint16 order ):
    m_keySize = keyt->memSize();
 
    // force 4bytes alignment
-   if ( m_keySize % 4 != 0 )
+   if ( m_keySize % PLAT_ALIGN != 0 )
    {
-      m_keySize = ((m_keySize / 4) + 1) * 4;
+      m_keySize = ((m_keySize / PLAT_ALIGN ) + 1) * PLAT_ALIGN;
    }
 
    m_valueSize = valuet->memSize();
    // force 4bytes alignment
-   if ( m_valueSize % 4 != 0 )
+   if ( m_valueSize % PLAT_ALIGN != 0 )
    {
-      m_valueSize = ((m_valueSize / 4) + 1) * 4;
+      m_valueSize = ((m_valueSize / PLAT_ALIGN) + 1) * PLAT_ALIGN;
    }
 
    // create the first page.

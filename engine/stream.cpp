@@ -33,7 +33,7 @@ Stream::Stream( const Stream &other ):
 {
    if ( m_rhBufferSize != 0 )
    {
-      uint32 *m_rhBuffer = (uint32 *) memAlloc( m_rhBufferSize * sizeof( uint32 ) );
+      m_rhBuffer = (uint32 *) memAlloc( m_rhBufferSize * sizeof( uint32 ) );
       memcpy( m_rhBuffer, other.m_rhBuffer, m_rhBufferSize * sizeof( uint32 ) );
    }
    else

@@ -81,18 +81,7 @@ public:
    e_sercode;
 
 private:
-   union {
-      struct {
-         byte methodId;
-         byte reserved;
-         byte type;
-         byte flags;
-      } bits;
-      uint16 half;
-      uint32 whole;
-   } m_base;
-
-   union {
+  union {
       struct {
          int32 val1;
          int32 val2;
@@ -116,10 +105,20 @@ private:
          GarbagePointer *gcptr;
          int32 signature;
       } gptr;
-
-
    } m_data;
 
+   union {
+      struct {
+         byte methodId;
+         byte reserved;
+         byte type;
+         byte flags;
+      } bits;
+      uint16 half;
+      uint32 whole;
+   } m_base;
+
+ 
 
    bool internal_is_equal( const Item &other ) const;
    int internal_compare( const Item &other ) const;
@@ -543,8 +542,16 @@ public:
 
    void copy( const Item &other )
    {
-      m_base = other.m_base;
-      m_data = other.m_data;
+      #if defined( __sparc )
+        //memcpy( this, &other, sizeof(Item) );
+        m_base.whole = other.m_base.whole;
+	m_data.ptr.voidp = other.m_data.ptr.voidp;
+        m_data.ptr.m_extra = other.m_data.ptr.m_extra;
+        m_data.ptr.m_liveMod = other.m_data.ptr.m_liveMod;
+      #else
+        m_base = other.m_base;
+        m_data = other.m_data;
+      #endif
    }
 
    /** Tells if this item is callable.

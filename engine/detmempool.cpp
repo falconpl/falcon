@@ -137,7 +137,7 @@ void DetMemPool::gcDetSweep()
 }
 
 
-bool DetMemPool::performGC()
+bool DetMemPool::performGC( bool /* unused */ )
 {
    // to avoid useless ifs around, in case timeout is zero call the base GC
    if ( m_msLimit == 0 )

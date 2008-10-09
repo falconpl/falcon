@@ -304,7 +304,8 @@ void GenCode::gen_operand( const Value *stmt )
 
       case Value::t_imm_num:
       {
-         numeric dval = endianNum( stmt->asNumeric() );
+         numeric dval = stmt->asNumeric();
+         //numeric dval = endianNum( stmt->asNumeric() );
          m_outTemp->write( &dval, sizeof( dval ) );
       }
       break;
@@ -433,7 +434,8 @@ void GenCode::gen_var( const VarDef &def )
 
       case VarDef::t_num:
       {
-         numeric num = endianNum( def.asNumeric() );
+         numeric num = def.asNumeric();
+         //numeric num = endianNum( def.asNumeric() );
          m_outTemp->write( reinterpret_cast< const char *>( &num ), sizeof( num ) );
       }
       break;
