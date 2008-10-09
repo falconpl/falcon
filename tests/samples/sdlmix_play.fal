@@ -1,0 +1,37 @@
+#!/usr/bin/falcon
+/*
+   FALCON - SDL MIXER MODULE Samples
+
+   FILE: sdlmix_play.fal
+
+   Test for minimal sound play.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Sun, 16 Mar 2008 21:15:18 +0100
+   Last modified because:
+
+   -------------------------------------------------------------------
+   (C) Copyright 2008: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+load sdlmixer
+
+try
+   a = SDL.InitAuto( SDL.INIT_AUDIO )
+   MIX.OpenAudio( 44100, AUDIO.S16, 2, 4096 )
+   MIX.AllocateChannels( 2 )
+   sound = MIX.LoadWAV( "fading.ogg" )
+   sound.Play( -1, -1 )
+
+   > "Success. Press enter to stop"
+   input()
+
+   MIX.CloseAudio()
+catch in e
+   > "Test failed: "
+   > e
+end
+
+/* end of file */

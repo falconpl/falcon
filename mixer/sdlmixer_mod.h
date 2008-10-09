@@ -32,6 +32,44 @@ extern "C" {
 #define FALCON_SDLMIXER_ERROR_BASE 2140
 #endif
 
+namespace Falcon {
+namespace Ext {
+
+class MixChunkCarrier: public FalconData {
+private:
+   Mix_Chunk* m_chunk;
+   int32 *m_counter;
+
+public:
+   MixChunkCarrier( Mix_Chunk* c );
+   MixChunkCarrier( const MixChunkCarrier &other );
+
+   virtual ~MixChunkCarrier();
+   virtual void gcMark( VMachine* );
+   virtual FalconData* clone() const;
+
+   Mix_Chunk* chunk() const { return m_chunk; }
+};
+
+class MixMusicCarrier: public FalconData {
+private:
+   Mix_Music* m_music;
+   int32 *m_counter;
+
+public:
+   MixMusicCarrier( Mix_Music* m );
+   MixMusicCarrier( const MixMusicCarrier &other );
+
+   virtual ~MixMusicCarrier();
+   virtual void gcMark( VMachine* );
+   virtual FalconData* clone() const;
+
+   Mix_Music* chunk() const { return m_music; }
+};
+
+}
+}
+
 #endif
 
 /* end of sdlttf_mod.h */

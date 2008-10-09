@@ -84,6 +84,12 @@ FALCON_FUNC mix_Linked_Version( VMachine *vm )
 /*#
    @method OpenAudio MIX
    @brief Initialize the MIX module.
+   @param frequency Output sampling frequency in samples per second (Hz).
+          you might use MIX.DEFAULT_FREQUENCY(22050) since that is a good value for most games.
+   @param format Output sample format; it's one of the @a MIX.AUDIO enums.
+   @param channels Number of sound channels in output. Set to 2 for stereo, 1 for mono.
+      This has nothing to do with mixing channels.
+   @param chunksize Bytes used per output sample.
    @raise SDLError on initialization failure.
 
    It is necessary to call @a SDL.Init with SDL.INIT_AUDIO option.
@@ -91,23 +97,36 @@ FALCON_FUNC mix_Linked_Version( VMachine *vm )
 
 FALCON_FUNC mix_OpenAudio( VMachine *vm )
 {
-/*
-   if ( i_stream == 0 || ! i_stream->isObject() || ! i_stream->asObject()->derivedFrom( "Stream" ) )
+   Item *i_frequency = vm->param(0);
+   Item *i_format = vm->param(1);
+   Item *i_channels = vm->param(2);
+   Item *i_chunksize = vm->param(3);
+
+   if ( i_frequency == 0 || ! i_frequency->isOrdinal() ||
+        i_format == 0 || ! i_format->isOrdinal() ||
+        i_channels == 0 || ! i_channels->isOrdinal() ||
+        i_chunksize == 0 || ! i_chunksize->isOrdinal() )
    {
       vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "Stream" ) ) );
+         extra( "N,N,N,N" ) ) );
       return;
    }
 
-   int retval = ::MIX_OpenAudio();
-   if ( retval < 0 )
+   int retval = ::Mix_OpenAudio(
+      (int) i_frequency->forceInteger(),
+      (uint16)i_format->forceInteger(),
+      (int) i_channels->forceInteger(),
+      (int) i_chunksize->forceInteger() );
+
+   if ( retval != 0 )
    {
       vm->raiseModError( new SDLError( ErrorParam( FALCON_SDLMIXER_ERROR_BASE, __LINE__ )
-         .desc( "Mixer" )
-         .extra( MIX_GetError() ) ) );
+         .desc( "Mixer open" )
+         .extra( Mix_GetError() ) ) );
       return;
    }
 
+/*
    // we can be reasonabily certain that our service is ready here.
    s_service = (SDLService *) vm->getService( "SDLService" );
    if ( s_service == 0 )
@@ -115,38 +134,269 @@ FALCON_FUNC mix_OpenAudio( VMachine *vm )
       vm->raiseModError( new SDLError( ErrorParam( FALCON_MIX_ERROR_BASE+1, __LINE__ )
          .desc( "SDL service not in the target VM" ) ) );
    }
-   */
+*/
 }
 
 /*#
    @method CloseAudio MIX
    @brief Turn off the MIX module.
-   @raise SDLError on initialization failure.
 
    This method turns off he mixing facility. It must becalled
    the same number of times @a MIX.OpenAudio has been called.
+
+   After the mix system has been effectively turned off, it is
+   possible to re-init it.
+
+   Also, the MIX module doesn't require MIX.CloseAudio() to be
+   called before the SDL system is exited.
 */
 
 FALCON_FUNC mix_CloseAudio( VMachine *vm )
 {
-/*
-   int retval = ::MIX_Init();
-   if ( retval < 0 )
+  ::Mix_CloseAudio();
+}
+
+/*#
+   @method QuerySpec MIX
+   @brief Queries the settings that have been used to open the SDL mixer system.
+   @return A vector with three numeric values representing the
+      frequency, the audio format and the channel numbers that were set on init.
+   @raise SDLError if the system was not initialized.
+
+   @see MIX.OpenAudio
+*/
+FALCON_FUNC mix_QuerySpec( VMachine *vm )
+{
+   int res;
+   int frequency;
+   Uint16 format;
+   int channels;
+
+   res = ::Mix_QuerySpec(&frequency, &format, &channels);
+   if ( res == 0 )
    {
-      vm->raiseModError( new SDLError( ErrorParam( FALCON_SDLMIXER_ERROR_BASE, __LINE__ )
-         .desc( "Mixer" )
-         .extra( MIX_GetError() ) ) );
+      // not initialized.
+      vm->raiseModError( new SDLError( ErrorParam( FALCON_SDLMIXER_ERROR_BASE+1, __LINE__ )
+         .desc( "Mixer not initialized" )
+         .extra( Mix_GetError() ) ) );
       return;
    }
 
-   // we can be reasonabily certain that our service is ready here.
-   s_service = (SDLService *) vm->getService( "SDLService" );
-   if ( s_service == 0 )
+   CoreArray *retval = new CoreArray( vm, 3 );
+   retval->append( (int64) frequency );
+   retval->append( (int64) format );
+   retval->append( (int64) channels );
+
+   vm->retval( retval );
+}
+
+/*#
+   @method LoadWAV MIX
+   @brief Loads an audio file.
+   @param filename A file name to be loaded.
+   @return On success, an instance of @a MixChunk class.
+   @raise SDLError if the system was not initialized or on load error.
+
+   The @b filename parameter is not parsed through the Falcon I/O system,
+   so a valid locally available file specification must be provided.
+
+   @note This may change in future
+   @see MIX.OpenAudio
+*/
+FALCON_FUNC mix_LoadWAV( VMachine *vm )
+{
+   Item *i_filename = vm->param(0);
+
+   if ( i_filename == 0 || ! i_filename->isString() )
    {
-      vm->raiseModError( new SDLError( ErrorParam( FALCON_MIX_ERROR_BASE+1, __LINE__ )
-         .desc( "SDL service not in the target VM" ) ) );
+      vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "S" ) ) );
+      return;
    }
-   */
+
+   AutoCString filename( *i_filename->asString() );
+   Mix_Chunk* chunk = ::Mix_LoadWAV( filename.c_str() );
+   if ( chunk == 0 )
+   {
+      // not initialized.
+      vm->raiseModError( new SDLError( ErrorParam( FALCON_SDLMIXER_ERROR_BASE+2, __LINE__ )
+         .desc( "Error in I/O operation" )
+         .extra( Mix_GetError() ) ) );
+      return;
+   }
+
+   Item *i_chunk_cls = vm->findWKI( "MixChunk" );
+   fassert( i_chunk_cls != 0 && i_chunk_cls->isClass() );
+   CoreObject* obj = i_chunk_cls->asClass()->createInstance();
+   obj->setUserData( new MixChunkCarrier( chunk ) );
+
+   vm->retval( obj );
+}
+
+
+//=======================================================================
+// Channel control
+//
+
+/*#
+   @method AllocateChannels MIX
+   @brief Sets or read the number of mixing channels.
+   @optparam channels Number the number of channels to be set, or nil to get current channel count.
+   @return Current channel count (before eventually changing it).
+
+   This method sets up mixing sound effect channels. Channels
+   can be independently pre-processed and mixed at different volumes on the
+   background music.
+
+   This method can be called multiple times, even with sounds playing.
+   If numchans is less than the current number of channels,
+   then the higher channels will be stopped, freed, and therefore
+   not mixed any longer. It's probably not a good idea to change
+   the size 1000 times a second though.
+
+   @note Passing in zero WILL free all mixing channels, however music will still play.
+
+   Channels are also the place where MixChunk instances can be played.
+*/
+FALCON_FUNC mix_AllocateChannels( VMachine *vm )
+{
+   Item *i_channels = vm->param(0);
+
+   if ( i_channels == 0 || i_channels->isNil() )
+   {
+      vm->retval( (int64) Mix_AllocateChannels(-1) );
+   }
+   else if( i_channels->isOrdinal() )
+   {
+      vm->retval( (int64) Mix_AllocateChannels((int) i_channels->forceInteger() ) );
+   }
+   else {
+      vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "[N]" ) ) );
+   }
+}
+
+
+/*#
+   @method Volume MIX
+   @brief Sets or read current volume setting for given channel.
+   @param channel Target channel ID
+   @optparam volume The new volume to be set (pass nothing, nil or < 0 to read).
+   @return Current volume level (prior to setting).
+
+   This method convigure the overall volume setting
+   mixing sound effect channels.
+
+   Pass -1 as @b channel to set the volume in all the channels.
+*/
+FALCON_FUNC mix_Volume( VMachine *vm )
+{
+   Item *i_channel = vm->param(0);
+   Item *i_volume = vm->param(1);
+
+   if ( i_channel == 0 || ! i_channel->isOrdinal() ||
+        (i_volume != 0 && ! i_volume->isNil() && ! i_volume->isOrdinal() ) )
+   {
+      vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "N,[N]" ) ) );
+   }
+
+   int channel = (int) i_channel->forceInteger();
+   int volume = i_volume == 0 ? -1 :
+      i_volume->isNil() ? -1 : ((int) i_volume->forceInteger() );
+
+   vm->retval( (int64) Mix_Volume( channel, volume ) );
+}
+
+
+
+//=======================================================================
+// Mix chunks
+//
+FALCON_FUNC MixChunk_init( VMachine *vm )
+{
+   vm->raiseModError( new SDLError( ErrorParam( FALCON_SDLMIXER_ERROR_BASE+3, __LINE__ )
+      .desc( "Can't instantiate directly this class" ) ) );
+}
+
+/*#
+   @method Volume MixChunk
+   @brief Sets the mixing volume for a loaded chunk.
+   @optparam volume Volume level between 0 and MIX.MAX_VOLUME (128).
+   @return Previous setting for volume.
+
+   If @b volume is set to a less than zero integer, or if its not given,
+   the previous value for this setting is returned and the value is not
+   changed.
+*/
+FALCON_FUNC MixChunk_Volume( VMachine *vm )
+{
+   CoreObject *self = vm->self().asObject();
+   Mix_Chunk* chunk = static_cast<MixChunkCarrier *>(self->getUserData())->chunk();
+
+   Item *i_volume = vm->param(0);
+   if( i_volume == 0 || i_volume->isNil() )
+   {
+      vm->retval( (int64) Mix_VolumeChunk( chunk, -1 ) );
+   }
+   else if ( ! i_volume->isOrdinal() )
+   {
+       vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "[N]" ) ) );
+   }
+   else {
+      vm->retval( (int64) Mix_VolumeChunk( chunk, (int) i_volume->forceInteger() ) );
+   }
+}
+
+/*#
+   @method Play MixChunk
+   @brief Play a sound on a given channel
+   @param channel Target channel ID (-1 to select the first available channel).
+   @param loops Numbers of repetitions; 1 means repeat once, -1 repeat forever.
+   @return The channel on which the sound is played.
+   @raise SDLError on playback error.
+
+   This method plays a previously loaded sound onto one channel.
+*/
+FALCON_FUNC MixChunk_Play( VMachine *vm )
+{
+   Item *i_channel = vm->param(0);
+   Item *i_loops = vm->param(1);
+
+   if ( i_channel == 0 || ! i_channel->isOrdinal() ||
+        i_loops == 0 || ! i_loops->isOrdinal() )
+   {
+      vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "N,N" ) ) );
+   }
+
+   CoreObject *self = vm->self().asObject();
+   Mix_Chunk* chunk = static_cast<MixChunkCarrier *>(self->getUserData())->chunk();
+
+   int channel = (int) i_channel->forceInteger();
+   int loops = (int) i_loops->forceInteger();
+   int res = Mix_PlayChannel( channel, chunk, loops );
+
+   if ( res != 0 )
+   {
+      vm->raiseModError( new SDLError( ErrorParam( FALCON_SDLMIXER_ERROR_BASE+4, __LINE__ )
+         .desc( "Playback error" )
+         .extra( Mix_GetError() ) ) );
+      return;
+   }
+
+   vm->retval( (int64) res );
+}
+
+
+//=======================================================================
+// Mix music
+//
+FALCON_FUNC MixMusic_init( VMachine *vm )
+{
+   vm->raiseModError( new SDLError( ErrorParam( FALCON_SDLMIXER_ERROR_BASE+3, __LINE__ )
+      .desc( "Can't instantiate directly this class" ) ) );
 }
 
 }

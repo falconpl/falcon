@@ -30,6 +30,24 @@ FALCON_FUNC mix_Compiled_Version( VMachine *vm );
 FALCON_FUNC mix_Linked_Version( VMachine *vm );
 FALCON_FUNC mix_OpenAudio( VMachine *vm );
 FALCON_FUNC mix_CloseAudio( VMachine *vm );
+FALCON_FUNC mix_QuerySpec( VMachine *vm );
+
+// waves
+FALCON_FUNC mix_LoadWAV( VMachine *vm );
+
+// channels
+FALCON_FUNC mix_AllocateChannels( VMachine *vm );
+FALCON_FUNC mix_Volume( VMachine *vm );
+
+//==========================================
+// Mix Chunks
+FALCON_FUNC MixChunk_init( VMachine *vm );
+FALCON_FUNC MixChunk_Volume( VMachine *vm );
+FALCON_FUNC MixChunk_Play( VMachine *vm );
+
+//==========================================
+// Mix Music
+FALCON_FUNC MixMusic_init( VMachine *vm );
 
 }
 }
