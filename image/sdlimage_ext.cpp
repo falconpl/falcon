@@ -77,6 +77,22 @@ FALCON_FUNC img_Load ( VMachine *vm )
 }
 
 /*#
+   @method img_LoadRW
+   @brief Loads an image file already available in a RWops
+   @return It returns a pointer to the image as a new SDL_Surface. NULL is returned on errors, such as no support built for the image or some other error.
+
+   Loads data for use as an image in a new surface. It do not support TGA images!
+*/
+
+FALCON_FUNC img_LoadRW ( VMachine *vm )
+{
+   // Check provided filename
+   Item *i_rwops = vm->param(0);
+   Item *i_free = vm->param(1);
+   
+}
+
+/*#
    @method img_isJPG
    @brief fff
    @return fff

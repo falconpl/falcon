@@ -76,6 +76,8 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    // Loading
    self->addClassMethod( c_sdlimage, "Load", Falcon::Ext::img_Load ).asSymbol()->
         addParam ( "filename" );
+   self->addClassMethod( c_sdlimage, "LoadRW", Falcon::Ext::img_LoadRW ).asSymbol()->
+        addParam ( "data" );
 
    // Info
    self->addClassMethod( c_sdlimage, "IsJPG", Falcon::Ext::img_isJPG ).asSymbol()->

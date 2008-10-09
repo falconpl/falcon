@@ -32,7 +32,7 @@ namespace Ext {
 // Loading functions
 
 FALCON_FUNC img_Load ( VMachine *vm );
-//FALCON_FUNC img_Load_RW ( VMachine *vm );
+FALCON_FUNC img_LoadRW ( VMachine *vm );
 //FALCON_FUNC img_LoadTyped_RW ( VMachine *vm );
 //FALCON_FUNC img_LoadBMP_RW ( VMachine *vm );
 //FALCON_FUNC img_LoadPNM_RW ( VMachine *vm );

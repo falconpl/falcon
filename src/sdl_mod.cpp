@@ -7,6 +7,9 @@
    Author: Giancarlo Niccolai
    Begin: Sun, 16 Mar 2008 19:37:29 +0100
 
+   Last modified because:
+   Federico Baroni - Thu 9 Oct 2008 23:08:41 - RWops carrier class added
+
    -------------------------------------------------------------------
    (C) Copyright 2008: the FALCON developers (see list in AUTHORS file)
 
@@ -23,6 +26,7 @@
 
 extern "C" {
    #include <SDL.h>
+   #include <SDL_rwops.h>
 }
 
 /*# @beginmodule sdl */
@@ -131,6 +135,25 @@ SDLCursorCarrier::~SDLCursorCarrier()
    if ( m_bCreated )
       SDL_FreeCursor( m_cursor );
 }
+
+//=======================================
+// RWops carrier
+//
+
+SDLRWopsCarrier::SDLRWopsCarrier ( VMachine *vm )
+{
+}
+
+SDLRWopsCarrier::~SDLRWopsCarrier ()
+{
+   // Check member status and clears it
+   if ( m_rwops != NULL )
+   {
+      SDL_FreeRW ( m_rwops );
+      SDL_RWclose ( m_rwops );
+   }
+}
+
 
 //==========================================
 // Utilities

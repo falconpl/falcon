@@ -7,6 +7,9 @@
    Author: Giancarlo Niccolai
    Begin: Sun, 16 Mar 2008 19:37:29 +0100
 
+   Last modified because:
+   Federico Baroni - Thu 9 Oct 2008 23:08:41 - RWops carrier class added
+
    -------------------------------------------------------------------
    (C) Copyright 2008: the FALCON developers (see list in AUTHORS file)
 
@@ -78,6 +81,32 @@ public:
    virtual FalconData *clone() const { return 0; }
    virtual void gcMark(VMachine*) {}
 };
+
+/** Reflexive SDL RWops */
+class SDLRWopsCarrier
+{
+   SDL_RWops *m_rwops;
+
+
+public:
+
+   SDLRWopsCarrier( VMachine *vm );
+   virtual ~SDLRWopsCarrier();
+
+   virtual void OpenFile();
+   virtual void OpenMem();
+   virtual void OpenCMem();
+   virtual void SetMemSpace();
+   virtual void FreeMemSpace();
+   virtual void Seek();
+   virtual void Tell();
+   virtual void Read();
+   virtual void Write();
+   virtual void Close();
+//virtual void getProperty( VMachine *vm, const String &propName, Item &prop );
+   virtual SDL_RWops* data() const { return m_rwops; }
+};
+
 
 //==========================================
 // Utilities
