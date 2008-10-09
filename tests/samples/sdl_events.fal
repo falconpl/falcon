@@ -62,7 +62,7 @@ function blinker( screen )
    time = 0
    while not MyEventManager.quitRequest
       sleep( 0.8 )
-      color = (color = white ? black : white )
+      color = (color == white ? black : white )
       screen.FillRect( r, color )
       screen.UpdateRect( r )
       time ++
