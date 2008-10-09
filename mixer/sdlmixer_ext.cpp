@@ -308,6 +308,49 @@ FALCON_FUNC mix_Volume( VMachine *vm )
    vm->retval( (int64) Mix_Volume( channel, volume ) );
 }
 
+/*#
+   @method Pause MIX
+   @brief Pauses a channel.
+   @param channel The channel to be paused (-1 for all).
+
+   You can pause an already paused channel, and no error
+   is raised for pausing an unexisting channel.
+*/
+FALCON_FUNC mix_Pause( VMachine *vm )
+{
+   Item *i_channel = vm->param(0);
+
+   if ( i_channel == 0 || ! i_channel->isOrdinal() )
+   {
+      vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "N" ) ) );
+      return;
+   }
+
+   Mix_Pause( (int) i_channel->forceInteger() );
+}
+
+/*#
+   @method Resume MIX
+   @brief Resumes a paused a channel.
+   @param channel The channel to be resumed (-1 for all).
+
+   You can resume an already playing channel, and no error
+   is raised for resuming an unexisting channel.
+*/
+FALCON_FUNC mix_Resume( VMachine *vm )
+{
+   Item *i_channel = vm->param(0);
+
+   if ( i_channel == 0 || ! i_channel->isOrdinal() )
+   {
+      vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "N" ) ) );
+      return;
+   }
+
+   Mix_Resume( (int) i_channel->forceInteger() );
+}
 
 
 //=======================================================================
@@ -354,21 +397,37 @@ FALCON_FUNC MixChunk_Volume( VMachine *vm )
    @brief Play a sound on a given channel
    @param channel Target channel ID (-1 to select the first available channel).
    @param loops Numbers of repetitions; 1 means repeat once, -1 repeat forever.
+   @optparam time Seconds and fractions during which music will play.
+   @optparam fadeIn Seconds and fractions for the fade-in effect.
    @return The channel on which the sound is played.
    @raise SDLError on playback error.
 
    This method plays a previously loaded sound onto one channel.
+
+   If @b fadeIn parameter is not given, nil or <=0, the sample will play immediately
+   at full volume without fade-in.
+
+   If @b time parameter is not given, nil or -1, the sample will play forever,
+   until the channel is stopped, while if it's a value, it will play for the
+   given amount of seconds.
+
+   @note This method encapsulates the functions of Mix_PlayChannel, Mix_PlayChannelTimed,
+   Mix_FadeInChannel and Mix_FadeInChannelTimed in the SDL_Mixere API.
 */
 FALCON_FUNC MixChunk_Play( VMachine *vm )
 {
    Item *i_channel = vm->param(0);
    Item *i_loops = vm->param(1);
+   Item *i_time = vm->param(2);
+   Item *i_fadeIn = vm->param(3);
 
    if ( i_channel == 0 || ! i_channel->isOrdinal() ||
-        i_loops == 0 || ! i_loops->isOrdinal() )
+        i_loops == 0 || ! i_loops->isOrdinal() ||
+        (i_time != 0 && ! i_time->isNil() && ! i_time->isOrdinal()) ||
+        (i_fadeIn != 0 && ! i_fadeIn->isNil() && ! i_fadeIn->isOrdinal()) )
    {
       vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "N,N" ) ) );
+         extra( "N,N,[N],[N]" ) ) );
    }
 
    CoreObject *self = vm->self().asObject();
@@ -376,7 +435,20 @@ FALCON_FUNC MixChunk_Play( VMachine *vm )
 
    int channel = (int) i_channel->forceInteger();
    int loops = (int) i_loops->forceInteger();
-   int res = Mix_PlayChannel( channel, chunk, loops );
+   int res;
+
+   if ( i_fadeIn == 0 || i_fadeIn->isNil() )
+   {
+      res = i_time == 0 || i_time->isNil() ?
+         Mix_PlayChannel( channel, chunk, loops ) :
+         Mix_PlayChannelTimed( channel, chunk, loops, (int)(i_time->forceNumeric() * 1000.0 ));
+   }
+   else {
+      int ms = (int)(i_fadeIn->forceNumeric() * 1000.0);
+      res = i_time == 0 || i_time->isNil() ?
+         Mix_FadeInChannel( channel, chunk, loops, ms ) :
+         Mix_FadeInChannelTimed( channel, chunk, loops, ms, (int)(i_time->forceNumeric() * 1000.0 ));
+   }
 
    if ( res < 0 )
    {
@@ -388,7 +460,6 @@ FALCON_FUNC MixChunk_Play( VMachine *vm )
 
    vm->retval( (int64) res );
 }
-
 
 //=======================================================================
 // Mix music

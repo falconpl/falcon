@@ -32,7 +32,6 @@ object MyEventManager from SDLEventHandler
    end
 
    function onQuit( state, x, y, xrel, yrel )
-      global quitRequest
       > strReplicate( " ", 60 )
       > "== Quit! =="
       self.quitRequest = true

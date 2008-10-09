@@ -38,6 +38,8 @@ FALCON_FUNC mix_LoadWAV( VMachine *vm );
 // channels
 FALCON_FUNC mix_AllocateChannels( VMachine *vm );
 FALCON_FUNC mix_Volume( VMachine *vm );
+FALCON_FUNC mix_Pause( VMachine *vm );
+FALCON_FUNC mix_Resume( VMachine *vm );
 
 //==========================================
 // Mix Chunks

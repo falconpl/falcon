@@ -2,9 +2,9 @@
 /*
    FALCON - SDL MIXER MODULE Samples
 
-   FILE: sdlmix_playecho.fal
+   FILE: sdlmix_pause.fal
 
-   Test for play on multiple channels.
+   Test for sound channel pause/resume.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: Thu, 09 Oct 2008 23:19:59 +0200
@@ -21,25 +21,19 @@ load sdlmixer
 try
    a = SDL.InitAuto( SDL.INIT_AUDIO )
    MIX.OpenAudio( 44100, AUDIO.S16, 2, 4096 )
-   MIX.AllocateChannels( 3 )
+   MIX.AllocateChannels( 2 )
    sound = MIX.LoadWAV( "fading.ogg" )
-   sound.Play( 0, -1 )
-
-   // perform a bit of echo
-   MIX.Volume( 1, 60 )
-   MIX.Volume( 2, 40 )
-   sleep( 0.30 )
-   sound.Play( 1, -1 )
-   sleep( 0.30 )
-   sound.Play( 2, -1 )
-
+   sound.Play( -1, -1 )
 
    > "Success. Press enter to stop"
+   > "Notice that we'll pause and resume the channel every 5 seconds"
    count = 0
    stdin = stdIn()
    loop count++
       >> @"[$(count)]\r"
-      if stdin.readAvailable(0.010): break
+      if stdin.readAvailable(0.1): break
+      if count %50 == 0: MIX.Pause( 0 )
+      if count %60 == 0: MIX.Resume( 0 )
    end
 
    MIX.CloseAudio()

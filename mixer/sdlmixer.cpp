@@ -119,6 +119,11 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    self->addClassMethod( c_sdlmix, "Volume", Falcon::Ext::mix_Volume ).asSymbol()->
       addParam("channel")->addParam("volume");
 
+   self->addClassMethod( c_sdlmix, "Pause", Falcon::Ext::mix_Pause ).asSymbol()->
+      addParam("channel");
+   self->addClassMethod( c_sdlmix, "Resume", Falcon::Ext::mix_Resume ).asSymbol()->
+      addParam("channel");
+
    /*#
       @class MIXChunk
       @brief SDL Mixer Chunk encapsulation class.
@@ -136,7 +141,7 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    self->addClassMethod( c_sdlmix_chunk, "Volume", Falcon::Ext::MixChunk_Volume ).asSymbol()->
       addParam("volume");
    self->addClassMethod( c_sdlmix_chunk, "Play", Falcon::Ext::MixChunk_Play ).asSymbol()->
-      addParam("channel")->addParam("loops");
+      addParam("channel")->addParam("loops")->addParam( "time" )->addParam( "fadeIn" );
 
    /*#
       @class MIXMusic
