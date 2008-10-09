@@ -327,7 +327,7 @@ FALCON_FUNC mix_Pause( VMachine *vm )
       return;
    }
 
-   Mix_Pause( (int) i_channel->forceInteger() );
+   ::Mix_Pause( (int) i_channel->forceInteger() );
 }
 
 /*#
@@ -349,8 +349,86 @@ FALCON_FUNC mix_Resume( VMachine *vm )
       return;
    }
 
-   Mix_Resume( (int) i_channel->forceInteger() );
+   ::Mix_Resume( (int) i_channel->forceInteger() );
 }
+
+
+/*#
+   @method HaltChannel MIX
+   @brief Stops the playback on channel.
+   @param channel The channel to be stopped (-1 for all).
+
+   You can resume an already playing channel, and no error
+   is raised for resuming an unexisting channel.
+*/
+FALCON_FUNC mix_HaltChannel( VMachine *vm )
+{
+   Item *i_channel = vm->param(0);
+
+   if ( i_channel == 0 || ! i_channel->isOrdinal() )
+   {
+      vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "N" ) ) );
+      return;
+   }
+
+   ::Mix_HaltChannel( (int) i_channel->forceInteger() );
+}
+
+
+/*#
+   @method ExpireChannel MIX
+   @brief Requests to the playback on a channel after some time.
+   @param channel The channel to be stopped (-1 for all).
+   @param time Number of seconds and fractions after which the timeout expires.
+   @return Number of channels scheduled for stopping.
+
+   @note The @b time parameter is in Falcon sleep format (i.e. 1.2 is 1.2 seconds).
+*/
+FALCON_FUNC mix_ExpireChannel( VMachine *vm )
+{
+   Item *i_channel = vm->param(0);
+   Item *i_time = vm->param(1);
+
+   if ( i_channel == 0 || ! i_channel->isOrdinal() ||
+        i_time == 0 || ! i_time->isOrdinal() )
+   {
+      vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "N,N" ) ) );
+      return;
+   }
+
+   vm->retval( (int64) ::Mix_ExpireChannel( (int) i_channel->forceInteger(),
+      (int) ( i_time->forceNumeric() * 1000.0 ) ) );
+}
+
+/*#
+   @method FadeOutChannel MIX
+   @brief Requests to the playback on a channel after some, fading out in the meanwhile.
+   @param channel The channel to be faded (-1 for all).
+   @param time Number of seconds and fractions after which the timeout expires.
+   @return Number of channel fading out.
+
+   @note The @b time parameter is in Falcon sleep format (i.e. 1.2 is 1.2 seconds).
+
+*/
+FALCON_FUNC mix_FadeOutChannel( VMachine *vm )
+{
+   Item *i_channel = vm->param(0);
+   Item *i_time = vm->param(1);
+
+   if ( i_channel == 0 || ! i_channel->isOrdinal() ||
+        i_time == 0 || ! i_time->isOrdinal() )
+   {
+      vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "N,N" ) ) );
+      return;
+   }
+
+   vm->retval( (int64)  ::Mix_FadeOutChannel( (int) i_channel->forceInteger(),
+      (int) ( i_time->forceNumeric() * 1000.0 ) ) );
+}
+
 
 
 //=======================================================================

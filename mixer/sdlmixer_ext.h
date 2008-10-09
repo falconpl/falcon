@@ -41,6 +41,10 @@ FALCON_FUNC mix_Volume( VMachine *vm );
 FALCON_FUNC mix_Pause( VMachine *vm );
 FALCON_FUNC mix_Resume( VMachine *vm );
 
+FALCON_FUNC mix_HaltChannel( VMachine *vm );
+FALCON_FUNC mix_ExpireChannel( VMachine *vm );
+FALCON_FUNC mix_FadeOutChannel( VMachine *vm );
+
 //==========================================
 // Mix Chunks
 FALCON_FUNC MixChunk_init( VMachine *vm );

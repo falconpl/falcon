@@ -123,6 +123,12 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
       addParam("channel");
    self->addClassMethod( c_sdlmix, "Resume", Falcon::Ext::mix_Resume ).asSymbol()->
       addParam("channel");
+   self->addClassMethod( c_sdlmix, "HaltChannel", Falcon::Ext::mix_HaltChannel ).asSymbol()->
+      addParam("channel");
+   self->addClassMethod( c_sdlmix, "ExpireChannel", Falcon::Ext::mix_ExpireChannel ).asSymbol()->
+      addParam("channel")->addParam( "time" );
+   self->addClassMethod( c_sdlmix, "FadeOutChannel", Falcon::Ext::mix_FadeOutChannel ).asSymbol()->
+      addParam("channel")->addParam( "time" );
 
    /*#
       @class MIXChunk
