@@ -93,17 +93,17 @@ public:
    SDLRWopsCarrier( VMachine *vm );
    virtual ~SDLRWopsCarrier();
 
-   virtual void OpenFile();
-   virtual void OpenMem();
-   virtual void OpenCMem();
-   virtual void SetMemSpace();
-   virtual void FreeMemSpace();
-   virtual void Seek();
-   virtual void Tell();
-   virtual void Read();
-   virtual void Write();
-   virtual void Close();
-//virtual void getProperty( VMachine *vm, const String &propName, Item &prop );
+   //virtual void OpenFile();
+   //virtual void OpenMem();
+   //virtual void OpenCMem();
+   //virtual void SetMemSpace();
+   //virtual void FreeMemSpace();
+   //virtual void Seek();
+   //virtual void Tell();
+   //virtual void Read();
+   //virtual void Write();
+   //virtual void Close();
+   //virtual void getProperty( VMachine *vm, const String &propName, Item &prop );
    virtual SDL_RWops* data() const { return m_rwops; }
 };
 
