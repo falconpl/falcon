@@ -55,7 +55,7 @@ namespace Falcon {
       virtual calls inside the module.
 */
 
-class Service {
+class FALCON_DYN_CLASS Service {
    String m_name;
 
 public:
