@@ -16,6 +16,7 @@
 /** \file
    The sdl module - main file.
 */
+#define FALCON_EXPORT_SERVICE
 
 #include <falcon/setup.h>
 #include <falcon/enginedata.h>
@@ -49,7 +50,7 @@
    is several time faster than the creation of a Falcon object that should be then
    inspected and eventually marshalled.
 
-   @beginmodule sdl
+   @beginmodule fsdl
 */
 
 
@@ -61,7 +62,7 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    data.set();
 
    Falcon::Module *self = new Falcon::Module();
-   self->name( "sdl" );
+   self->name( "fsdl" );
    self->language( "en_US" );
    self->engineVersion( FALCON_VERSION_NUM );
    self->version( VERSION_MAJOR, VERSION_MINOR, VERSION_REVISION );

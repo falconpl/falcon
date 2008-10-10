@@ -20,7 +20,7 @@
    package.
 */
 
-load sdl
+load fsdl
 
 try
    a = SDL.InitAuto( SDL.INIT_VIDEO )

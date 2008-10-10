@@ -24,7 +24,6 @@
 #define FALCON_SDL_MOD
 
 #include <falcon/setup.h>
-#include <falcon/suserdata.h>
 #include <sdl_service.h>
 
 namespace Falcon{

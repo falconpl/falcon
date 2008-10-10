@@ -1,17 +1,20 @@
 ####################################################################
 # The Falcon Programming language
 #
-# CMake configuration file for module SDL_ttf
+# CMake configuration file for module SDL_mixer
 ####################################################################
-PROJECT(sdlmixer)
-
-Find_Package ( SDL_mixer REQUIRED ) # if using SDL_mixer
+if(COMMAND cmake_policy)
+   cmake_policy(SET CMP0003 OLD)
+endif(COMMAND cmake_policy)
+ 
+Find_Package ( SDL_mixer REQUIRED ) 
+INCLUDE_DIRECTORIES( ${SDLMIXER_INCLUDE_DIR} )
 
 # Inclusion settings
 INCLUDE_DIRECTORIES(../include)
 INCLUDE_DIRECTORIES(.)
 INCLUDE_DIRECTORIES(BEFORE "${FALCON_INC_PATH}")
-LINK_DIRECTORIES(BEFORE "${FALCON_INC_PATH}")
+LINK_DIRECTORIES(BEFORE "${FALCON_LIB_PATH}")
 
 # Target
 ADD_LIBRARY( sdlmixer MODULE
@@ -21,7 +24,7 @@ ADD_LIBRARY( sdlmixer MODULE
 )
 
 #Link
-TARGET_LINK_LIBRARIES(sdlmixer falcon_engine ${SDLMIXER_LIBRARY})
+TARGET_LINK_LIBRARIES(sdlmixer falcon_engine ${SDLMIXER_LIBRARY} ${SDL_LIBRARY})
 
 SET_TARGET_PROPERTIES(sdlmixer
    PROPERTIES PREFIX "")

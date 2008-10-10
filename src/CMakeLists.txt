@@ -1,17 +1,21 @@
 ####################################################################
 # The Falcon Programming language
 #
-# CMake configuration file for module Mxml
+# CMake configuration file for module SDL
 ####################################################################
 
+ if(COMMAND cmake_policy)
+   cmake_policy(SET CMP0003 OLD)
+ endif(COMMAND cmake_policy)
+ 
 # Inclusion settings
 INCLUDE_DIRECTORIES(../include)
 INCLUDE_DIRECTORIES(.)
 INCLUDE_DIRECTORIES(BEFORE "${FALCON_INC_PATH}")
-LINK_DIRECTORIES(BEFORE "${FALCON_INC_PATH}")
+LINK_DIRECTORIES(BEFORE "${FALCON_LIB_PATH}")
 
 # Target
-ADD_LIBRARY( sdl MODULE
+ADD_LIBRARY( fsdl MODULE
    sdl.cpp
    sdl_ext.cpp
    sdl_cursor_ext.cpp
@@ -23,10 +27,10 @@ ADD_LIBRARY( sdl MODULE
 )
 
 #Link
-TARGET_LINK_LIBRARIES(sdl falcon_engine ${SDL_LIBRARY})
+TARGET_LINK_LIBRARIES(fsdl falcon_engine ${SDL_LIBRARY})
 
-SET_TARGET_PROPERTIES(sdl
+SET_TARGET_PROPERTIES(fsdl
    PROPERTIES PREFIX "")
 
 #Install
-FALCON_LINK_MODULE( sdl )
+FALCON_LINK_MODULE( fsdl )

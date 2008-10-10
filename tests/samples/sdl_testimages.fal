@@ -22,7 +22,6 @@
    package.
 */
 
-load sdl
 load sdlimage
 
 > "\nStarting SDL_image module testing procedure:\n"

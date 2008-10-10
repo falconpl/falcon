@@ -53,11 +53,12 @@ public:
 /**
    Shared SDL module services
 */
-class FALCON_DYN_CLASS SDLService: public Service
+class FALCON_SERVICE SDLService: public Service
 {
 
 public:
    SDLService();
+   virtual ~SDLService();
    virtual CoreObject *createSurfaceInstance( VMachine *vm, ::SDL_Surface *surface );
 };
 

@@ -17,6 +17,8 @@
    The SDL binding support module - intermodule services.
 */
 
+#define FALCON_EXPORT_SERVICE
+
 #include "sdl_service.h"
 #include "sdl_mod.h"
 #include <falcon/vm.h>
@@ -25,6 +27,10 @@ namespace Falcon {
 
 SDLService::SDLService():
    Service( "SDLService" )
+{
+}
+
+SDLService::~SDLService()
 {
 }
 
