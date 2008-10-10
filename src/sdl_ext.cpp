@@ -27,7 +27,7 @@
 #include "sdl_ext.h"
 #include "sdl_mod.h"
 
-#include <SDL.h>
+#include "SDL.h"
 
 /*# @beginmodule fsdl */
 

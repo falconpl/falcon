@@ -27,3 +27,19 @@ Then,
 
 should do.
 
+On MacOSX
+=========
+
+SDL On MacOSX uses the Cocoa framework. This requires the SDL-using
+applications to be specially built and configured.
+
+Falcon applications using the SDL Module and initializing the video
+output should be run with sdl_falcon rather than with falcon.
+
+sdl_falcon is a MacOSX application which sends COCOA messages to SDL.
+Otherwise, it is a completely normal falcon interpreter (it is always
+kept in sync with the official Falcon command line tool).
+
+This application is built and installed exclusively on MacOSX.
+
+
