@@ -37,7 +37,7 @@ extern "C" {
 
 namespace Falcon {
 
-static SDLService *s_service = 0;
+//static SDLService *s_service = 0;
 
 namespace Ext {
 

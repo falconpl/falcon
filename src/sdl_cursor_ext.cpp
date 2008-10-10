@@ -201,7 +201,7 @@ FALCON_FUNC sdl_MakeCursor( ::Falcon::VMachine *vm )
          memset( data, 0, width / 8 * height );
          memset( mask, 0, width / 8 * height );
       }
-      else if ( width != row.length() )
+      else if ( width != (int) row.length() )
       {
          vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
             extra( "Strings of different sizes" ) ) );
@@ -312,7 +312,7 @@ FALCON_FUNC sdl_CreateCursor( ::Falcon::VMachine *vm )
       return;
    }
 
-   if( data->size() != width/8 * height )
+   if( data->size() != (uint32)( width/8 * height ) )
    {
       vm->raiseModError( new ParamError( ErrorParam( e_param_type, __LINE__ ).
          extra( "Membuf doesn't match width and height" ) ) );

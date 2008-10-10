@@ -87,8 +87,8 @@ FALCON_FUNC img_Load ( VMachine *vm )
 FALCON_FUNC img_LoadRW ( VMachine *vm )
 {
    // Check provided filename
-   Item *i_rwops = vm->param(0);
-   Item *i_free = vm->param(1);
+   //Item *i_rwops = vm->param(0);
+   //Item *i_free = vm->param(1);
    
 }
 

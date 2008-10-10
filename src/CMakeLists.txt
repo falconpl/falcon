@@ -27,7 +27,12 @@ ADD_LIBRARY( fsdl MODULE
 )
 
 #Link
-TARGET_LINK_LIBRARIES(fsdl falcon_engine ${SDL_LIBRARY})
+TARGET_LINK_LIBRARIES(fsdl falcon_engine ${SDL_LIBRARY}  )
+
+if(APPLE)
+   find_file( SDLMAIN_LIBRARY SDLMain.nib PATHS /Library/Frameworks/SDL.Framework/Resources )
+   add_definitions( -l${SDLMAIN_LIBRARY} )
+endif(APPLE)
 
 SET_TARGET_PROPERTIES(fsdl
    PROPERTIES PREFIX "")

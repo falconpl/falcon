@@ -48,7 +48,7 @@ namespace Ext {
    @code
       load SDL
 
-      SDL.Init( \/* parameters *\/ )
+      SDL.Init( /\* parameters *\/ )
    @endcode
 
    @note When using functions repeatedly, it is advisable to cache them to a local
@@ -777,7 +777,7 @@ static void sdl_CreateRGBSurface_internal ( ::Falcon::VMachine *vm, MemBuf *mb, 
             // we have to calculate the value on our own
             uint32 base = 0;
             uint32 colorSize = depth/4;
-            for ( int i = 0; i < colorSize; i ++ )
+            for ( uint32 i = 0; i < colorSize; i ++ )
             {
                base |= 1 << i;
             }

@@ -291,6 +291,8 @@ bool ObjectToPixelFormat( CoreObject *obj, ::SDL_PixelFormat *fmt )
    fmt->Amask = Amask.forceInteger();
    fmt->colorkey = colorkey.forceInteger();
    fmt->alpha = alpha.forceInteger();
+   
+   return true;
 }
 
 /*#
