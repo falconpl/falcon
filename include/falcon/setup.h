@@ -41,26 +41,6 @@ different systems.
    // Compiler specific defines
    //
 
-   /* Specifics for Borlandc */
-   #ifdef __BORLANDC__
-      #define DLL
-      #define CDECL __export __stdcall
-      #define FALCON_FUNC \
-         extern "C" void __export __stdcall
-      #define FALCON_MODULE_TYPE \
-         extern "C"  ::Falcon::Module * __export __stdcall
-
-		#if defined(FALCON_ENGINE_EXPORTS)
-			#define FALCON_DYN_CLASS __declspec(dllexport)
-			#define FALCON_DYN_SYM __declspec(dllexport)
-			#define EXTERN_TEMPLATE
-		#else
-			#define FALCON_DYN_CLASS __declspec(dllimport)
-			#define FALCON_DYN_SYM __declspec(dllimport)
-			#define EXTERN_TEMPLATE export
-		#endif
-   #endif
-
    /* Specifigs for MSVC */
    #ifdef _MSC_VER
       #undef CDECL
@@ -82,6 +62,12 @@ different systems.
 			#define FALCON_DYN_CLASS
 			#define FALCON_DYN_SYM
 		#endif
+
+      #ifdef FALCON_EXPORT_SERVICE
+         #define FALCON_SERVICE __declspec(dllexport)
+      #else
+         #define FALCON_SERVICE __declspec(dllimport)
+      #endif
 
       #define FALCON_FUNC_DYN_SYM \
 		   extern "C" FALCON_DYN_SYM void CDECL
@@ -126,6 +112,12 @@ different systems.
 			#define EXTERN_TEMPLATE export
 		#endif
 
+      #ifdef FALCON_EXPORT_SERVICE
+         #define FALCON_SERVICE __declspec(dllexport)
+      #else
+         #define FALCON_SERVICE __declspec(dllimport)
+      #endif
+
       #define FALCON_FUNC_DYN_SYM \
 		   extern "C" FALCON_DYN_SYM void CDECL
 
@@ -152,6 +144,7 @@ different systems.
    #define FALCON_DYN_CLASS
    #define FALCON_DYN_SYM 
    #define EXTERN_TEMPLATE
+   #define FALCON_SERVICE
 
    #define FALCON_MODULE_TYPE \
       extern "C" ::Falcon::Module *

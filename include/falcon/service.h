@@ -46,6 +46,16 @@ namespace Falcon {
    methods by the user application won't require any linkage with the falcon modules. Of course,
    this causes a minor inefficience in function calls.
 
+   The module where services are defined should declare 
+   \code
+      #define FALCON_EXPORT_SERVICE
+   \endcode
+   before any Falcon file is inlcuded (specifically, before falcon/setup.h). This will tell
+   MS-Windows compilers that the module is willing to offer the service to the users of the target
+   DLL. Subclasses derived from services should maintain the FALCON_SERVICE signature to provide
+   the same DLL export policy (necessary in MSVC C++ projects).
+
+
    \note Willing to spare every bit of CPU on module side for non-required overhead, the FALCON_FUNC
       that interacts with the script may call directly the needed function as C calls, passing the
       pointer to the service to them just as a data holder. The Service instance will hold the required
@@ -55,7 +65,7 @@ namespace Falcon {
       virtual calls inside the module.
 */
 
-class FALCON_DYN_CLASS Service {
+class FALCON_SERVICE Service {
    String m_name;
 
 public:
