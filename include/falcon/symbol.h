@@ -164,7 +164,7 @@ public:
    */
    VarDef& setNil() { m_val_type = t_nil; return *this; }
    VarDef& setBool( bool val ) { m_val_type = t_bool; m_value.val_bool = val; return *this;}
-   VarDef& setInteger( uint64 val ) { m_val_type = t_int; m_value.val_int = val; return *this;}
+   VarDef& setInteger( int64 val ) { m_val_type = t_int; m_value.val_int = val; return *this;}
    VarDef& setString( const String *str ) { m_val_type = t_string; m_value.val_str = str; return *this; }
    VarDef& setSymbol( Symbol *sym ) { m_val_type = t_symbol; m_value.val_sym = sym; return *this;}
    VarDef& setNumeric( numeric val ) { m_val_type = t_num; m_value.val_num = val; return *this;}
