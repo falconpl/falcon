@@ -76,6 +76,7 @@ inline uint64 endianInt64( const uint64 param ) { return param; }
 inline uint32 endianInt32( const uint32 param ) { return param; }
 inline uint16 endianInt16( const uint16 param ) { return param; }
 inline numeric endianNum( const numeric param ) { return param; }
+
 #else
 inline uint64 endianInt64( const uint64 param ) {
    byte *chars = (byte *) &param;
@@ -84,11 +85,23 @@ inline uint64 endianInt64( const uint64 param ) {
           ((uint64)chars[6]) << 8 | ((uint64)chars[7]);
 }
 
-inline numeric endianNum( const numeric param ) {
-   byte *chars = (byte *) &param;
-   return ((uint64)chars[0]) << 56 | ((uint64)chars[1]) << 48 | ((uint64)chars[2]) << 40 |
-          ((uint64)chars[3]) << 32 | ((uint64)chars[4]) << 24 | ((uint64)chars[5]) << 16 |
-          ((uint64)chars[6]) << 8 | ((uint64)chars[7]);
+//if defined( __sparc )
+
+inline numeric endianNum( const numeric &param )
+{
+   const byte* data = (byte*) &param;
+
+   union t_unumeric {
+      byte buffer[ sizeof(numeric) ];
+      numeric number;
+   } unumeric;
+
+   uint32 i;
+   for ( i = 0; i < sizeof( numeric ); i++ ) {
+      unumeric.buffer[i] = data[(sizeof( numeric )-1) - i];
+   }
+
+   return unumeric.number;
 }
 
 inline uint32 endianInt32( const uint32 param ) {

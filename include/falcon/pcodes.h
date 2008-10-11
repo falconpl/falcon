@@ -83,7 +83,6 @@ while it will fill OP2 with an integer item containing 15H.
 #define P_PARAM_LBIND   0x0A
 #define P_PARAM_TRUE    0x0B
 #define P_PARAM_FALSE   0x0C
-#define P_PARAM_NTD64   0x0F
 #define P_PARAM_NTD32   0x0E
 #define P_PARAM_NTD64   0x0F
 #define P_PARAM_REGA    0x10

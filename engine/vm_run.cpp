@@ -72,26 +72,8 @@ Item *VMachine::getOpcodeParam( register uint32 bc_pos )
       return m_imm + bc_pos;
 
       case P_PARAM_NUM:
-         #if defined( __sparc )
-         {
-            union t_unumeric {
-              byte buffer[ sizeof(numeric) ];
-	      numeric number;
-	    } unumeric; 
-
-	    int i;
-	    for ( i = 0; i < sizeof( numeric ); i++ ) {
-	       unumeric.buffer[i] = m_code[ m_pc_next + i ];
-	    }    
- 
-            m_imm[bc_pos].setNumeric( unumeric.number );
-	    m_pc_next += sizeof( numeric );
-
-         }
-         #else
-             m_imm[bc_pos].setNumeric( endianNum( *reinterpret_cast<numeric *>( m_code + m_pc_next ) ) );
-             m_pc_next += sizeof( numeric );
-         #endif
+         m_imm[bc_pos].setNumeric( endianNum( *reinterpret_cast<numeric *>( m_code + m_pc_next ) ) );
+         m_pc_next += sizeof( numeric );
       return m_imm + bc_pos;
 
       case P_PARAM_NIL:
