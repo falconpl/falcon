@@ -100,7 +100,10 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    // Definitions
    self->addClassProperty( c_sdlmix, "DEFAULT_FREQUENCY" ).setInteger( MIX_DEFAULT_FREQUENCY );
    self->addClassProperty( c_sdlmix, "MAX_VOLUME" ).setInteger( MIX_MAX_VOLUME );
-
+   self->addClassProperty( c_sdlmix, "NO_FADING" ).setInteger( MIX_NO_FADING );
+   self->addClassProperty( c_sdlmix, "FADING_OUT" ).setInteger( MIX_FADING_OUT );
+   self->addClassProperty( c_sdlmix, "FADING_IN" ).setInteger( MIX_FADING_IN );
+   
    // Init and quit
    self->addClassMethod( c_sdlmix, "Compiled_Version", Falcon::Ext::mix_Compiled_Version );
    self->addClassMethod( c_sdlmix, "Linked_Version", Falcon::Ext::mix_Linked_Version );
@@ -129,7 +132,20 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
       addParam("channel")->addParam( "time" );
    self->addClassMethod( c_sdlmix, "FadeOutChannel", Falcon::Ext::mix_FadeOutChannel ).asSymbol()->
       addParam("channel")->addParam( "time" );
+   self->addClassMethod( c_sdlmix, "ChannelFinished", Falcon::Ext::mix_ChannelFinished ).asSymbol()->
+      addParam("active");
+   
+   self->addClassMethod( c_sdlmix, "Playing", Falcon::Ext::mix_Playing ).asSymbol()->
+      addParam("channel");
+   self->addClassMethod( c_sdlmix, "Paused", Falcon::Ext::mix_Paused ).asSymbol()->
+      addParam("channel");
+   self->addClassMethod( c_sdlmix, "FadingChannel", Falcon::Ext::mix_FadingChannel ).asSymbol()->
+      addParam("channel");
 
+   // Music
+   self->addClassMethod( c_sdlmix, "HookMusicFinished", Falcon::Ext::mix_HookMusicFinished ).asSymbol()->
+      addParam("active");
+   
    /*#
       @class MIXChunk
       @brief SDL Mixer Chunk encapsulation class.

@@ -798,7 +798,7 @@ void internal_dispatchEvent( VMachine *vm, SDL_Event &evt )
          params = 0;
       break;
 
-      case SDL_NUMEVENTS-1:
+      case FALCON_SDL_USER_EVENT:
          // we must anyhow unlock the garbage data if it's not zero
          if ( ! self->getMethod( "onUserEvent", method ) )
          {
@@ -820,6 +820,29 @@ void internal_dispatchEvent( VMachine *vm, SDL_Event &evt )
             params = 2;
          }
       break;
+         
+      case FALCON_SDL_CHANNEL_DONE_EVENT:
+         // we must anyhow unlock the garbage data if it's not zero
+         if ( ! self->getMethod( "onChannelFinished", method ) )
+         {
+            return;
+         }
+         
+         // channel number is in the data2 pointer
+         vm->pushParameter( (int64) evt.user.code );
+         params = 1;
+         break;
+      
+      case FALCON_SDL_MUSIC_DONE_EVENT:
+         // we must anyhow unlock the garbage data if it's not zero
+         if ( ! self->getMethod( "onMusicFinished", method ) )
+         {
+            return;
+         }
+         
+         params = 0;
+         break;
+         
    }
 
    vm->callFrame( method, params );
@@ -964,7 +987,7 @@ FALCON_FUNC SDLEventHandler_PushUserEvent( VMachine *vm )
    }
 
    SDL_Event evt;
-   evt.type = SDL_NUMEVENTS-1;
+   evt.type = FALCON_SDL_USER_EVENT;
    evt.user.code = (int) i_code->forceInteger();
    GarbageLock *lock = 0;
 

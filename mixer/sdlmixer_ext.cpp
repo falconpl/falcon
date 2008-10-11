@@ -429,7 +429,142 @@ FALCON_FUNC mix_FadeOutChannel( VMachine *vm )
       (int) ( i_time->forceNumeric() * 1000.0 ) ) );
 }
 
+/*#
+   @method ChannelFinished MIX
+   @brief Requests onChannelFinished callbacks to be called when a channel finishes playing.
+   @param active Set to true to generate messages, false to prevent it.
+   
+   This method works differently with respect to SDL_Mixer C API counterpart.
+ If activated, all channels terminating will generate a callback request on the
+ SDL message queue. This will cause a waiting Falcon SDLEventHandler class to receive
+ an onChannelFinished( chnum ) callback (where chnum is the number of the channel that
+ has finished playing).
+*/
+FALCON_FUNC mix_ChannelFinished( VMachine *vm )
+{
+   Item *i_active = vm->param(0);
+   if ( i_active == 0 )
+   {
+      vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "X" ) ) );
+      return;
+   }
 
+   ::Mix_ChannelFinished( i_active->isTrue() ? falcon_sdl_mixer_on_channel_done : NULL );
+}
+   
+/*#
+   @method Playing MIX
+   @brief Returns the number of playing channels.
+   @optparam channel Channel ID that is to be queried (-1 for all).
+   @return 1 if the desired channel is playing, or the number of playing
+           channels channel is not passed or -1.
+   
+ Channel to test whether it is playing or not.
+ Passing -1 in the @b channel parameter, or not passing it at all,
+ will tell you how many channels are playing.
+ Note: Does not check if the channel has been paused.
+*/
+FALCON_FUNC mix_Playing( VMachine *vm )
+{
+   Item *i_channel = vm->param(0);
+   if ( i_channel != 0 && 
+       ( ! i_channel->isOrdinal() || i_channel->isNil()) )
+   {
+      vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "[N]" ) ) );
+      return;
+   }
+
+   int channel = i_channel == 0 || i_channel->isNil() ? -1 :
+      (int) i_channel->forceInteger();
+      
+   vm->retval( (int64) ::Mix_Playing( channel ) );
+}
+  
+
+/*#
+   @method Paused MIX
+   @brief Returns the number of paused channels.
+   @optparam channel Channel ID that is to be queried (-1 for all).
+   @return 1 if the desired channel is paused, or the number of paused
+           channels channel is not passed or -1.
+   
+ Channel to test whether it is paused or not.
+ Passing -1 in the @b channel parameter, or not passing it at all,
+ will tell you how many channels are paused.
+*/
+FALCON_FUNC mix_Paused( VMachine *vm )
+{
+   Item *i_channel = vm->param(0);
+   if ( i_channel != 0 && 
+       ( ! i_channel->isOrdinal() || i_channel->isNil()) )
+   {
+      vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "[N]" ) ) );
+      return;
+   }
+
+   int channel = i_channel == 0 || i_channel->isNil() ? -1 :
+      (int) i_channel->forceInteger();
+      
+   vm->retval( (int64) ::Mix_Paused( channel ) );
+}
+
+/*#
+   @method Paused MIX
+   @brief Returns the number of channels currently fading out.
+   @param channel Channel ID that is to be queried (-1 for all).
+   @return One of the MIX.FADING_IN, MIX.FADING_OUT or MIX.NO_FADING values   
+
+   Channel to test whether it is faiding out or not.
+*/
+
+FALCON_FUNC mix_FadingChannel( VMachine *vm )
+{
+   Item *i_channel = vm->param(0);
+   if ( i_channel == 0 || i_channel->isOrdinal() )
+   {
+      vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "N" ) ) );
+      return;
+   }
+
+   int channel = (int) i_channel->forceInteger();
+   
+   if ( channel < 0 )
+   {
+      vm->raiseModError( new  ParamError( ErrorParam( e_param_range, __LINE__ ).
+         extra( "N>0" ) ) );
+      return;
+   }
+
+   vm->retval( (int64) ::Mix_FadingChannel( channel ) );
+}
+   
+   
+/*#
+   @method HookMusicFinished MIX
+   @brief Requests onMusicFinished callbacks to be called when the music finishes playing.
+   @param active Set to true to generate messages, false to prevent it.
+   
+   This method works differently with respect to SDL_Mixer C API counterpart.
+ If activated, the music terminating or being terminated will generate a callback request on the
+ SDL message queue. This will cause a waiting Falcon SDLEventHandler class to receive
+ an onMusicFinished() callback.
+*/
+FALCON_FUNC mix_HookMusicFinished( VMachine *vm )
+{
+   Item *i_active = vm->param(0);
+   if ( i_active == 0 )
+   {
+      vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "X" ) ) );
+      return;
+   }
+
+   ::Mix_HookMusicFinished( i_active->isTrue() ? falcon_sdl_mixer_on_music_finished : NULL );
+}
 
 //=======================================================================
 // Mix chunks

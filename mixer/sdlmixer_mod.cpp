@@ -19,6 +19,7 @@
 
 #include <falcon/vm.h>
 #include <falcon/membuf.h>
+#include <sdl_service.h>
 #include "sdlmixer_mod.h"
 
 namespace Falcon {
@@ -93,6 +94,25 @@ FalconData* MixMusicCarrier::clone() const
 }
 
 }
+}
+
+#include "SDL.h"
+
+void falcon_sdl_mixer_on_channel_done( int channel ) 
+{
+   // We must post a SDL user event for the main loop
+   SDL_Event evt;
+   evt.type = FALCON_SDL_CHANNEL_DONE_EVENT;
+   evt.user.code = channel;
+   ::SDL_PushEvent( &evt );
+}
+
+void falcon_sdl_mixer_on_music_finished()
+{
+   // We must post a SDL user event for the main loop
+   SDL_Event evt;
+   evt.type = FALCON_SDL_MUSIC_DONE_EVENT;
+   ::SDL_PushEvent( &evt );
 }
 
 /* end of sdlmixer_mod.cpp */

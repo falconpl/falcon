@@ -70,6 +70,9 @@ public:
 }
 }
 
+extern "C" void falcon_sdl_mixer_on_channel_done( int channel );
+extern "C" void falcon_sdl_mixer_on_music_finished();
+
 #endif
 
 /* end of sdlttf_mod.h */

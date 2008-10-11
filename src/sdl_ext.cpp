@@ -46,7 +46,7 @@ namespace Ext {
    should do the following:
 
    @code
-      load SDL
+      load fsdl
 
       SDL.Init( /\* parameters *\/ )
    @endcode

@@ -44,6 +44,14 @@ FALCON_FUNC mix_Resume( VMachine *vm );
 FALCON_FUNC mix_HaltChannel( VMachine *vm );
 FALCON_FUNC mix_ExpireChannel( VMachine *vm );
 FALCON_FUNC mix_FadeOutChannel( VMachine *vm );
+FALCON_FUNC mix_ChannelFinished( VMachine *vm );
+
+FALCON_FUNC mix_Playing( VMachine *vm );
+FALCON_FUNC mix_Paused( VMachine *vm ); 
+FALCON_FUNC mix_FadingChannel( VMachine *vm );
+
+// music
+FALCON_FUNC mix_HookMusicFinished( VMachine *vm );
 
 //==========================================
 // Mix Chunks
