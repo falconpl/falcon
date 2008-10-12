@@ -82,7 +82,7 @@ FALCON_FUNC img_Load ( VMachine *vm )
    Item *i_file = vm->param(0);
    Item *i_type = vm->param(1);
 
-   if ( i_file == 0 || ! i_file->isString() ||
+   if ( i_file == 0 ||
       ( ! i_file->isString() &&
             !( i_file->isObject() && i_file->asObject()->derivedFrom("Stream") ))||
       ( i_type != 0 && ! i_type->isString() ) )
@@ -93,7 +93,7 @@ FALCON_FUNC img_Load ( VMachine *vm )
    }
 
    // see if we need to cache our service
-   if( s_sdlservice != 0 )
+   if( s_sdlservice == 0 )
    {
       s_sdlservice = static_cast<SDLService*>(vm->getService ( SDL_SERVICE_SIGNATURE ));
    }
@@ -145,7 +145,7 @@ typedef int (*t_check_func)(SDL_RWops *);
 static void img_checkImageType( VMachine *vm, t_check_func func )
 {
    // see if we need to cache our service
-   if( s_sdlservice != 0 )
+   if( s_sdlservice == 0 )
    {
       s_sdlservice = static_cast<SDLService*>(vm->getService ( SDL_SERVICE_SIGNATURE ));
    }
