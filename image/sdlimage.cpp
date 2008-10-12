@@ -75,9 +75,28 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
 
    // Loading
    self->addClassMethod( c_sdlimage, "Load", Falcon::Ext::img_Load ).asSymbol()->
-        addParam ( "filename" );
-   self->addClassMethod( c_sdlimage, "LoadRW", Falcon::Ext::img_LoadRW ).asSymbol()->
-        addParam ( "data" );
+        addParam ( "file" )->addParam ( "type" );
+
+   self->addClassMethod( c_sdlimage, "isBMP", Falcon::Ext::img_isBMP ).asSymbol()->
+        addParam ( "file" );
+   self->addClassMethod( c_sdlimage, "isPNM", Falcon::Ext::img_isPNM ).asSymbol()->
+        addParam ( "file" );
+   self->addClassMethod( c_sdlimage, "isXPM", Falcon::Ext::img_isXPM ).asSymbol()->
+        addParam ( "file" );
+   self->addClassMethod( c_sdlimage, "isXCF", Falcon::Ext::img_isXCF ).asSymbol()->
+        addParam ( "file" );
+   self->addClassMethod( c_sdlimage, "isPCX", Falcon::Ext::img_isPCX ).asSymbol()->
+        addParam ( "file" );
+   self->addClassMethod( c_sdlimage, "isGIF", Falcon::Ext::img_isGIF ).asSymbol()->
+        addParam ( "file" );
+   self->addClassMethod( c_sdlimage, "isJPG", Falcon::Ext::img_isJPG ).asSymbol()->
+        addParam ( "file" );
+   self->addClassMethod( c_sdlimage, "isTIF", Falcon::Ext::img_isTIF ).asSymbol()->
+        addParam ( "file" );
+   self->addClassMethod( c_sdlimage, "isPNG", Falcon::Ext::img_isPNG ).asSymbol()->
+        addParam ( "file" );
+   self->addClassMethod( c_sdlimage, "isLBM", Falcon::Ext::img_isLBM ).asSymbol()->
+        addParam ( "file" );
 
    // Info
    self->addClassMethod( c_sdlimage, "IsJPG", Falcon::Ext::img_isJPG ).asSymbol()->

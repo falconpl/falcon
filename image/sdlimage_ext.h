@@ -30,39 +30,24 @@ namespace Falcon {
 namespace Ext {
 
 // Loading functions
-
 FALCON_FUNC img_Load ( VMachine *vm );
 FALCON_FUNC img_LoadRW ( VMachine *vm );
-//FALCON_FUNC img_LoadTyped_RW ( VMachine *vm );
-//FALCON_FUNC img_LoadBMP_RW ( VMachine *vm );
-//FALCON_FUNC img_LoadPNM_RW ( VMachine *vm );
-//FALCON_FUNC img_LoadXPM_RW ( VMachine *vm );
-//FALCON_FUNC img_LoadXCF_RW ( VMachine *vm );
-//FALCON_FUNC img_LoadPCX_RW ( VMachine *vm );
-//FALCON_FUNC img_LoadGIF_RW ( VMachine *vm );
-//FALCON_FUNC img_LoadJPG_RW ( VMachine *vm );
-//FALCON_FUNC img_LoadTIF_RW ( VMachine *vm );
-//FALCON_FUNC img_LoadPNG_RW ( VMachine *vm );
-//FALCON_FUNC img_LoadTGA_RW ( VMachine *vm );
-//FALCON_FUNC img_LoadLBM_RW ( VMachine *vm );
-//FALCON_FUNC img_ReadXPMFromArray ( VMachine *vm );
 
 // Info functions
 
-//FALCON_FUNC img_isBMP ( VMachine *vm );
-//FALCON_FUNC img_isPNM ( VMachine *vm );
-//FALCON_FUNC img_isXPM ( VMachine *vm );
-//FALCON_FUNC img_isXCF ( VMachine *vm );
-//FALCON_FUNC img_isPCX ( VMachine *vm );
-//FALCON_FUNC img_isGIF ( VMachine *vm );
+FALCON_FUNC img_isBMP ( VMachine *vm );
+FALCON_FUNC img_isPNM ( VMachine *vm );
+FALCON_FUNC img_isXPM ( VMachine *vm );
+FALCON_FUNC img_isXCF ( VMachine *vm );
+FALCON_FUNC img_isPCX ( VMachine *vm );
+FALCON_FUNC img_isGIF ( VMachine *vm );
 FALCON_FUNC img_isJPG ( VMachine *vm );
-//FALCON_FUNC img_isTIF ( VMachine *vm );
-//FALCON_FUNC img_isPNG ( VMachine *vm );
-//FALCON_FUNC img_isLBM ( VMachine *vm );
+FALCON_FUNC img_isTIF ( VMachine *vm );
+FALCON_FUNC img_isPNG ( VMachine *vm );
+FALCON_FUNC img_isLBM ( VMachine *vm );
 
 
 // Errors functions
-
 FALCON_FUNC img_GetError ( VMachine *vm );
 FALCON_FUNC img_SetError ( VMachine *vm );
 

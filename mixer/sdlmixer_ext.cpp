@@ -130,15 +130,11 @@ FALCON_FUNC mix_OpenAudio( VMachine *vm )
    s_service = static_cast<SDLService*>(vm->getService( SDL_SERVICE_SIGNATURE ));
    fassert( s_service != 0 ); // or load should have failed.
 
-/*
-   // we can be reasonabily certain that our service is ready here.
-   s_service = (SDLService *) vm->getService( "SDLService" );
    if ( s_service == 0 )
    {
-      vm->raiseModError( new SDLError( ErrorParam( FALCON_MIX_ERROR_BASE+1, __LINE__ )
+      vm->raiseModError( new SDLError( ErrorParam( FALCON_SDLMIXER_ERROR_BASE+1, __LINE__ )
          .desc( "SDL service not in the target VM" ) ) );
    }
-*/
 }
 
 /*#
