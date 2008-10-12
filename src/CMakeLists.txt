@@ -7,7 +7,7 @@
  if(COMMAND cmake_policy)
    cmake_policy(SET CMP0003 OLD)
  endif(COMMAND cmake_policy)
- 
+
 # Inclusion settings
 INCLUDE_DIRECTORIES(../include)
 INCLUDE_DIRECTORIES(.)
@@ -27,7 +27,7 @@ ADD_LIBRARY( fsdl MODULE
 )
 
 #Link
-TARGET_LINK_LIBRARIES(fsdl falcon_engine ${SDL_LIBRARY}  )
+TARGET_LINK_LIBRARIES(fsdl falcon_engine ${SDL_LIBRARY})
 
 SET_TARGET_PROPERTIES(fsdl
    PROPERTIES PREFIX "")

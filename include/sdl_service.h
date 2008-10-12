@@ -29,6 +29,7 @@ extern "C" {
    #include <SDL.h>
 }
 
+#define SDL_SERVICE_SIGNATURE "SDLService"
 
 #define FALCON_SDL_ERROR_BASE 2100
 #define FALCON_SDL_USER_EVENT (SDL_NUMEVENTS-1)
@@ -63,6 +64,7 @@ public:
    SDLService();
    virtual ~SDLService();
    virtual CoreObject *createSurfaceInstance( VMachine *vm, ::SDL_Surface *surface );
+   virtual void rwopsFromStream( SDL_RWops &ops, Stream *stream );
 };
 
 

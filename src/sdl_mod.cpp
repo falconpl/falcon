@@ -26,7 +26,6 @@
 
 extern "C" {
    #include <SDL.h>
-   #include <SDL_rwops.h>
 }
 
 /*# @beginmodule sdl */
@@ -135,25 +134,6 @@ SDLCursorCarrier::~SDLCursorCarrier()
    if ( m_bCreated )
       SDL_FreeCursor( m_cursor );
 }
-
-//=======================================
-// RWops carrier
-//
-
-SDLRWopsCarrier::SDLRWopsCarrier ( VMachine *vm )
-{
-}
-
-SDLRWopsCarrier::~SDLRWopsCarrier ()
-{
-   // Check member status and clears it
-   if ( m_rwops != NULL )
-   {
-      SDL_FreeRW ( m_rwops );
-      SDL_RWclose ( m_rwops );
-   }
-}
-
 
 //==========================================
 // Utilities
@@ -291,7 +271,7 @@ bool ObjectToPixelFormat( CoreObject *obj, ::SDL_PixelFormat *fmt )
    fmt->Amask = Amask.forceInteger();
    fmt->colorkey = colorkey.forceInteger();
    fmt->alpha = alpha.forceInteger();
-   
+
    return true;
 }
 

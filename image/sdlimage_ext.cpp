@@ -36,6 +36,9 @@ extern "C" {
 namespace Falcon {
 namespace Ext {
 
+// Cached instance of our service
+static SDLService *s_sdlservice = 0;
+
 /*#
    @method img_Load
    @brief Loads an image file based on filename extension
@@ -68,28 +71,17 @@ FALCON_FUNC img_Load ( VMachine *vm )
       return;
    }
 
+   // see if we need to cache our service
+   if( s_sdlservice != 0 )
+   {
+      s_sdlservice = static_cast<SDLService*>(vm->getService ( SDL_SERVICE_SIGNATURE ));
+   }
+
    // Copy the new item in a surface
-   SDLService *sdlservice = (SDLService*)vm->getService ( "SDLService" );
-   CoreObject* ret = sdlservice->createSurfaceInstance ( vm, surf );
+   CoreObject* ret = s_sdlservice->createSurfaceInstance ( vm, surf );
 
    vm->retval( ret );
 
-}
-
-/*#
-   @method img_LoadRW
-   @brief Loads an image file already available in a RWops
-   @return It returns a pointer to the image as a new SDL_Surface. NULL is returned on errors, such as no support built for the image or some other error.
-
-   Loads data for use as an image in a new surface. It do not support TGA images!
-*/
-
-FALCON_FUNC img_LoadRW ( VMachine *vm )
-{
-   // Check provided filename
-   //Item *i_rwops = vm->param(0);
-   //Item *i_free = vm->param(1);
-   
 }
 
 /*#

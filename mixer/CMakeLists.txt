@@ -6,8 +6,8 @@
 if(COMMAND cmake_policy)
    cmake_policy(SET CMP0003 OLD)
 endif(COMMAND cmake_policy)
- 
-Find_Package ( SDL_mixer REQUIRED ) 
+
+Find_Package ( SDL_mixer REQUIRED )
 INCLUDE_DIRECTORIES( ${SDLMIXER_INCLUDE_DIR} )
 
 # Inclusion settings
@@ -24,7 +24,7 @@ ADD_LIBRARY( sdlmixer MODULE
 )
 
 #Link
-TARGET_LINK_LIBRARIES(sdlmixer falcon_engine ${SDLMIXER_LIBRARY} ${SDL_LIBRARY})
+TARGET_LINK_LIBRARIES(sdlmixer falcon_engine ${SDLMIXER_LIBRARY} ${SDL_LIBRARY} )
 
 SET_TARGET_PROPERTIES(sdlmixer
    PROPERTIES PREFIX "")
