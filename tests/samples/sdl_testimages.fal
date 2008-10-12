@@ -117,4 +117,24 @@ end
    input()
    > "End of test 03.\n\n"
 
+
+try
+   > "!------------------------------------- TEST 04 -------------------------------------------!"
+
+   > "Trying to load a BMP image using streams:\n"
+   img_stream = InputStream( "FalconLogo1.bmp" )
+   img = IMAGE.Load( img_stream )
+   img.BlitSurface( nil, screen, SDLRect(0,200,640,300) )
+   screen.UpdateRect()
+
+   > "Success! - press enter"
+
+catch in e
+   > "Test failed: "
+   > e
+   > "Press enter"
+end
+   input()
+   > "End of test 04.\n\n"
+
 /* end of file */
