@@ -616,7 +616,7 @@ void URI::URLEncode( const String &source, String &target )
       {
          target.append( '+' );
       }
-      else if ( chr < 0x20 || chr > 0x7F || isSubDelim( chr ) )
+      else if ( chr < 0x20 || chr > 0x7F || isSubDelim( chr ) || chr == '%' )
       {
          target.append( '%' );
          target.append( URI::CharToHex( chr >> 4 ) );
