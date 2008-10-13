@@ -98,7 +98,7 @@ FalconData* MixMusicCarrier::clone() const
 
 #include "SDL.h"
 
-void falcon_sdl_mixer_on_channel_done( int channel ) 
+void falcon_sdl_mixer_on_channel_done( int channel )
 {
    // We must post a SDL user event for the main loop
    SDL_Event evt;

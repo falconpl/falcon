@@ -47,10 +47,23 @@ FALCON_FUNC mix_FadeOutChannel( VMachine *vm );
 FALCON_FUNC mix_ChannelFinished( VMachine *vm );
 
 FALCON_FUNC mix_Playing( VMachine *vm );
-FALCON_FUNC mix_Paused( VMachine *vm ); 
+FALCON_FUNC mix_Paused( VMachine *vm );
 FALCON_FUNC mix_FadingChannel( VMachine *vm );
 
 // music
+FALCON_FUNC mix_LoadMUS( VMachine *vm );
+FALCON_FUNC mix_VolumeMusic( VMachine *vm );
+FALCON_FUNC mix_HaltMusic( VMachine *vm );
+FALCON_FUNC mix_FadeOutMusic( VMachine *vm );
+FALCON_FUNC mix_PauseMusic( VMachine *vm );
+FALCON_FUNC mix_ResumeMusic( VMachine *vm );
+FALCON_FUNC mix_RewindMusic( VMachine *vm );
+FALCON_FUNC mix_PausedMusic( VMachine *vm );
+FALCON_FUNC mix_SetMusicPosition( VMachine *vm );
+FALCON_FUNC mix_PlayingMusic( VMachine *vm );
+FALCON_FUNC mix_SetMusicCMD( VMachine *vm );
+FALCON_FUNC mix_SetSynchroValue( VMachine *vm );
+FALCON_FUNC mix_GetSynchroValue( VMachine *vm );
 FALCON_FUNC mix_HookMusicFinished( VMachine *vm );
 
 //==========================================
@@ -62,6 +75,8 @@ FALCON_FUNC MixChunk_Play( VMachine *vm );
 //==========================================
 // Mix Music
 FALCON_FUNC MixMusic_init( VMachine *vm );
+FALCON_FUNC MixMusic_GetType( VMachine *vm );
+FALCON_FUNC MixMusic_Play( VMachine *vm );
 
 }
 }

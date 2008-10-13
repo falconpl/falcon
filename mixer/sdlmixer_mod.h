@@ -64,7 +64,7 @@ public:
    virtual void gcMark( VMachine* );
    virtual FalconData* clone() const;
 
-   Mix_Music* chunk() const { return m_music; }
+   Mix_Music* music() const { return m_music; }
 };
 
 }

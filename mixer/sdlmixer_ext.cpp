@@ -562,6 +562,280 @@ FALCON_FUNC mix_FadingChannel( VMachine *vm )
    vm->retval( (int64) ::Mix_FadingChannel( channel ) );
 }
 
+//=================================================================================
+// Music support
+//
+
+/*#
+   @method LoadMUS MIX
+   @brief Loads a music file.
+   @param file A file name or a stream to be loaded.
+   @return On success, an instance of @a MixMusic class.
+   @raise SDLError if the system was not initialized or on load error.
+
+   The @b file parameter may be either a stream pointing to the beginning
+   of a valid SDL_mixer supported file, or it may be a filename.
+
+   If it's a string, the @b file parameter is not parsed through the
+   Falcon I/O system; it's directly sent to the underlying SDL function,
+   so a valid locally available file specification must be provided.
+
+   @note This may change in future (we may use Falcon metafile services
+   also to resolve file names).
+   @see MIX.OpenAudio
+*/
+FALCON_FUNC mix_LoadMUS( VMachine *vm )
+{
+   Item *i_filename = vm->param(0);
+
+   if ( i_filename == 0 ||
+         ( ! i_filename->isString() &&
+            !( i_filename->isObject() && i_filename->asObject()->derivedFrom("Stream") ))
+      )
+   {
+      vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "S|Stream" ) ) );
+      return;
+   }
+
+   Mix_Music* music = 0;
+
+   if( i_filename->isString() )
+   {
+      AutoCString filename( *i_filename->asString() );
+      music = ::Mix_LoadMUS( filename.c_str() );
+   }
+   else {
+      struct SDL_RWops rwops;
+      Stream* stream = static_cast<Stream *>(i_filename->asObject()->getUserData());
+      s_service->rwopsFromStream( rwops, stream );
+      music = ::Mix_LoadMUS_RW( &rwops );
+   }
+
+   if ( music == 0 )
+   {
+      // not initialized.
+      vm->raiseModError( new SDLError( ErrorParam( FALCON_SDLMIXER_ERROR_BASE+2, __LINE__ )
+         .desc( "Error in I/O operation" )
+         .extra( Mix_GetError() ) ) );
+      return;
+   }
+
+   Item *i_music_cls = vm->findWKI( "MixMusic" );
+   fassert( i_music_cls != 0 && i_music_cls->isClass() );
+   CoreObject* obj = i_music_cls->asClass()->createInstance();
+   obj->setUserData( new MixMusicCarrier( music ) );
+
+   vm->retval( obj );
+}
+
+
+/*#
+   @method VolumeMusic MIX
+   @brief Sets or read the global music volume.
+   @optparam volume The new volume setting.
+   @return Previous volume value.
+
+   The volume setting goes from 0 to 127. If the @b volume parameter
+   is not given, nil or -1, the setting is just read without being changed.
+*/
+FALCON_FUNC mix_VolumeMusic( VMachine *vm )
+{
+   Item *i_volume = vm->param(0);
+
+   if ( i_volume != 0 && ! i_volume->isOrdinal() && ! i_volume->isNil() )
+   {
+      vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "[N]" ) ) );
+      return;
+   }
+
+   int volume = i_volume == 0 || i_volume->isNil() ? -1 : i_volume->forceInteger();
+
+   vm->retval( (int64) ::Mix_VolumeMusic( volume ) );
+}
+
+/*#
+   @method HaltMusic MIX
+   @brief Immediately halts the music.
+
+   (If it's playing...)
+*/
+FALCON_FUNC mix_HaltMusic( VMachine *vm )
+{
+   ::Mix_HaltMusic();
+}
+
+
+/*#
+   @method FadeOutMusic MIX
+   @brief Fades out the music channel.
+   @param fadeOut Duration of the fadeout time in seconds and fractions.
+*/
+FALCON_FUNC mix_FadeOutMusic( VMachine *vm )
+{
+   Item *i_fadeout = vm->param(0);
+
+   if ( i_fadeout == 0 || ! i_fadeout->isOrdinal() )
+   {
+      vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "N" ) ) );
+      return;
+   }
+
+   ::Mix_FadeOutMusic( (int) (i_fadeout->forceNumeric()*1000.0) );
+}
+
+
+/*#
+   @method PauseMusic MIX
+   @brief Pause the music.
+
+   The music can later be resumed from the current position though
+   @a MIX.ResumeMusic.
+
+   @see MIX.PausedMusic
+*/
+FALCON_FUNC mix_PauseMusic( VMachine *vm )
+{
+   ::Mix_PauseMusic();
+}
+
+/*#
+   @method ResumeMusic MIX
+   @brief Resumes a paused music.
+
+   @see MIX.PauseMusic
+*/
+FALCON_FUNC mix_ResumeMusic( VMachine *vm )
+{
+   ::Mix_ResumeMusic();
+}
+
+/*#
+   @method RewindMusic MIX
+   @brief Reposition music stream at the start of the currently played music.
+
+   @see MIX.SetMusicPosition
+*/
+FALCON_FUNC mix_RewindMusic( VMachine *vm )
+{
+   ::Mix_RewindMusic();
+}
+
+/*#
+   @method RewindMusic MIX
+   @brief Determines if the music is currently playing but paused.
+   @return True if the music is paused.
+
+   @see MIX.PauseMusic
+*/
+FALCON_FUNC mix_PausedMusic( VMachine *vm )
+{
+   vm->regA().setBoolean( ::Mix_PausedMusic() != 0 );
+}
+
+/*#
+   @method SetMusicPosition MIX
+   @brief Changes the position in the music stream.
+   @param position The relative position (0 to 1).
+   @raise SDLError if the function is not implemented
+      for the current music stream type.
+*/
+FALCON_FUNC mix_SetMusicPosition( VMachine *vm )
+{
+   Item* i_position = vm->param(0);
+
+   if ( i_position == 0 || ! i_position->isOrdinal() )
+   {
+      vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "[N]" ) ) );
+      return;
+   }
+
+   if ( ::Mix_SetMusicPosition( i_position->forceNumeric() ) == 0 )
+   {
+      vm->raiseModError( new  SDLError( ErrorParam( FALCON_SDLMIXER_ERROR_BASE+5, __LINE__ ).
+         desc( "Not implemented").
+         extra( "SetMusicPosition" ) ) );
+   }
+}
+
+
+/*#
+   @method PlayingMusic MIX
+   @brief Checks if the music is playing or not.
+   @return True if it's playing, false otherwhise.
+
+   Returns true also if the music is paused.
+*/
+
+FALCON_FUNC mix_PlayingMusic( VMachine *vm )
+{
+   vm->regA().setBoolean( ::Mix_PlayingMusic() != 0 );
+}
+
+/*#
+   @method SetMusicCMD MIX
+   @brief Sets the command used to load some kind of music.
+   @raise SDLError In case of problems in finding the given command.
+
+   See the SDL_mixer api description.
+*/
+FALCON_FUNC mix_SetMusicCMD( VMachine *vm )
+{
+   Item* i_command = vm->param(0);
+
+   if ( i_command == 0 || ! i_command->isString() )
+   {
+      vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "S" ) ) );
+      return;
+   }
+
+   AutoCString command( *i_command->asString() );
+   if( ::Mix_SetMusicCMD( command.c_str() ) == 0 )
+   {
+      vm->raiseModError( new  SDLError( ErrorParam( FALCON_SDLMIXER_ERROR_BASE+2, __LINE__ )
+         .desc( "Error in I/O operation" )
+         .extra( Mix_GetError() ) ) );
+   }
+}
+
+/*#
+   @method SetSynchroValue MIX
+   @brief Changes the Synchro value for MICMOD library (Mod, STM, IT, etc.).
+   @param value New synchro value.
+
+   See the SDL_mixer API description.
+*/
+FALCON_FUNC mix_SetSynchroValue( VMachine *vm )
+{
+   Item* i_value = vm->param(0);
+
+   if ( i_value == 0 || ! i_value->isOrdinal() )
+   {
+      vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "N" ) ) );
+      return;
+   }
+
+   ::Mix_SetSynchroValue( (int) i_value->forceInteger() );
+}
+
+
+/*#
+   @method GetSynchroValue MIX
+   @brief Returns Syncro value for MICMOD library (Mod, STM, IT, etc.).
+   @return Current Synchro value.
+
+   See the SDL_mixer API description.
+*/
+FALCON_FUNC mix_GetSynchroValue( VMachine *vm )
+{
+   vm->regA().setInteger( ::Mix_GetSynchroValue() );
+}
+
 
 /*#
    @method HookMusicFinished MIX
@@ -576,14 +850,17 @@ FALCON_FUNC mix_FadingChannel( VMachine *vm )
 FALCON_FUNC mix_HookMusicFinished( VMachine *vm )
 {
    Item *i_active = vm->param(0);
-   if ( i_active == 0 )
+   if ( i_active == 0  )
    {
       vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
          extra( "X" ) ) );
       return;
    }
 
-   ::Mix_HookMusicFinished( i_active->isTrue() ? falcon_sdl_mixer_on_music_finished : NULL );
+   if( i_active->isTrue() )
+      ::Mix_HookMusicFinished( falcon_sdl_mixer_on_music_finished );
+   else
+      ::Mix_HookMusicFinished( NULL );
 }
 
 //=======================================================================
@@ -629,13 +906,15 @@ FALCON_FUNC MixChunk_Volume( VMachine *vm )
    @method Play MixChunk
    @brief Play a sound on a given channel
    @param channel Target channel ID (-1 to select the first available channel).
-   @param loops Numbers of repetitions; 1 means repeat once, -1 repeat forever.
+   @optparam loops Numbers of repetitions; 1 means repeat once, -1 repeat forever.
    @optparam time Seconds and fractions during which music will play.
    @optparam fadeIn Seconds and fractions for the fade-in effect.
    @return The channel on which the sound is played.
    @raise SDLError on playback error.
 
    This method plays a previously loaded sound onto one channel.
+
+   If the @b loops parameter is not given, the chunk will play just once.
 
    If @b fadeIn parameter is not given, nil or <=0, the sample will play immediately
    at full volume without fade-in.
@@ -655,19 +934,19 @@ FALCON_FUNC MixChunk_Play( VMachine *vm )
    Item *i_fadeIn = vm->param(3);
 
    if ( i_channel == 0 || ! i_channel->isOrdinal() ||
-        i_loops == 0 || ! i_loops->isOrdinal() ||
+        (i_loops != 0 && ! i_loops->isNil() && ! i_loops->isOrdinal()) ||
         (i_time != 0 && ! i_time->isNil() && ! i_time->isOrdinal()) ||
         (i_fadeIn != 0 && ! i_fadeIn->isNil() && ! i_fadeIn->isOrdinal()) )
    {
       vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "N,N,[N],[N]" ) ) );
+         extra( "N,[N],[N],[N]" ) ) );
    }
 
    CoreObject *self = vm->self().asObject();
    Mix_Chunk* chunk = static_cast<MixChunkCarrier *>(self->getUserData())->chunk();
 
    int channel = (int) i_channel->forceInteger();
-   int loops = (int) i_loops->forceInteger();
+   int loops = i_loops == 0 || i_loops->isNil() ? 1: (int) i_loops->forceInteger();
    int res;
 
    if ( i_fadeIn == 0 || i_fadeIn->isNil() )
@@ -702,6 +981,78 @@ FALCON_FUNC MixMusic_init( VMachine *vm )
    vm->raiseModError( new SDLError( ErrorParam( FALCON_SDLMIXER_ERROR_BASE+3, __LINE__ )
       .desc( "Can't instantiate directly this class" ) ) );
 }
+
+/*#
+   @method Play GetType
+   @brief Return the loaded music type.
+   @return One of the @a MUS enum items.
+*/
+FALCON_FUNC MixMusic_GetType( VMachine *vm )
+{
+   CoreObject *self = vm->self().asObject();
+   Mix_Music* music = static_cast<MixMusicCarrier *>(self->getUserData())->music();
+   vm->retval( (int64) Mix_GetMusicType( music ) );
+}
+
+/*#
+   @method Play MixMusic
+   @brief Play a sound on a given channel
+   @optparam loops Numbers of repetitions; 1 means repeat once, -1 repeat forever.
+   @optparam fadeIn Seconds and fractions for the fade-in effect.
+   @optparam position Relative position in the music stream (0 to 1).
+   @raise SDLError on playback error.
+
+   This method plays a previously loaded music information.
+
+   If the @b loops parameter is not given, the music will play just once.
+
+   If @b fadeIn parameter is not given, nil or <=0, the music will play immediately
+   at full volume without fade-in.
+
+   @note This method encapsulates the functions of Mix_PlayMusic, Mix_FadeInMusic and
+   Mix_cFadeInMusiPos in the SDL_Mixere API.
+*/
+FALCON_FUNC MixMusic_Play( VMachine *vm )
+{
+   Item *i_loops = vm->param(0);
+   Item *i_fadeIn = vm->param(1);
+   Item *i_position = vm->param(2);
+
+   if ( (i_loops != 0 && ! i_loops->isNil() && ! i_loops->isOrdinal()) ||
+        (i_fadeIn != 0 && ! i_fadeIn->isNil() && ! i_fadeIn->isOrdinal()) ||
+        (i_position != 0 && ! i_position->isNil() && ! i_position->isOrdinal())
+      )
+   {
+      vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "[N],[N],[N]" ) ) );
+   }
+
+   CoreObject *self = vm->self().asObject();
+   Mix_Music* music = static_cast<MixMusicCarrier *>(self->getUserData())->music();
+
+   int loops = i_loops == 0 || i_loops->isNil() ? 1: (int) i_loops->forceInteger();
+   int res;
+
+   if ( i_fadeIn == 0 || i_fadeIn->isNil() )
+   {
+      res = ::Mix_PlayMusic( music, loops );
+   }
+   else {
+      int ms = (int)(i_fadeIn->forceNumeric() * 1000.0);
+      res = i_position == 0 || i_position->isNil() ?
+         ::Mix_FadeInMusic( music, loops, ms ) :
+         ::Mix_FadeInMusicPos( music, loops, ms, (int)(i_position->forceNumeric() * 1000.0 ));
+   }
+
+   if ( res < 0 )
+   {
+      vm->raiseModError( new SDLError( ErrorParam( FALCON_SDLMIXER_ERROR_BASE+4, __LINE__ )
+         .desc( "Playback error" )
+         .extra( Mix_GetError() ) ) );
+      return;
+   }
+}
+
 
 }
 }

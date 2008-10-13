@@ -87,6 +87,31 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    self->addClassProperty( c_audio, "S16SYS").setInteger( AUDIO_S16SYS );
 
    /*#
+      @enum MUS
+      @brief Enumeartion listing the possible music types.
+
+      Possible values:
+
+      - NONE
+      - CMD: external command
+      - WAV: Pure wave
+      - MOD: FastTracker MOD
+      - MID: Midi
+      - OGG: Ogg-vorbis
+      - MP3: MP3
+      - MP3_MAD: MP3 via MAD library.
+   */
+   Falcon::Symbol *c_mus_t= self->addClass( "MUS" );
+   self->addClassProperty( c_mus_t, "NONE").setInteger( MUS_NONE );
+   self->addClassProperty( c_mus_t, "CMD").setInteger( MUS_CMD );
+   self->addClassProperty( c_mus_t, "WAV").setInteger( MUS_WAV );
+   self->addClassProperty( c_mus_t, "MOD").setInteger( MUS_MOD );
+   self->addClassProperty( c_mus_t, "MID").setInteger( MUS_MID );
+   self->addClassProperty( c_mus_t, "OGG").setInteger( MUS_OGG );
+   self->addClassProperty( c_mus_t, "MP3").setInteger( MUS_MP3 );
+   self->addClassProperty( c_mus_t, "MP3_MAD").setInteger( MUS_MP3_MAD );
+
+   /*#
       @class MIX
       @brief Main SDL Mixer encapsulation class.
 
@@ -103,7 +128,7 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    self->addClassProperty( c_sdlmix, "NO_FADING" ).setInteger( MIX_NO_FADING );
    self->addClassProperty( c_sdlmix, "FADING_OUT" ).setInteger( MIX_FADING_OUT );
    self->addClassProperty( c_sdlmix, "FADING_IN" ).setInteger( MIX_FADING_IN );
-   
+
    // Init and quit
    self->addClassMethod( c_sdlmix, "Compiled_Version", Falcon::Ext::mix_Compiled_Version );
    self->addClassMethod( c_sdlmix, "Linked_Version", Falcon::Ext::mix_Linked_Version );
@@ -134,7 +159,7 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
       addParam("channel")->addParam( "time" );
    self->addClassMethod( c_sdlmix, "ChannelFinished", Falcon::Ext::mix_ChannelFinished ).asSymbol()->
       addParam("active");
-   
+
    self->addClassMethod( c_sdlmix, "Playing", Falcon::Ext::mix_Playing ).asSymbol()->
       addParam("channel");
    self->addClassMethod( c_sdlmix, "Paused", Falcon::Ext::mix_Paused ).asSymbol()->
@@ -142,10 +167,31 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    self->addClassMethod( c_sdlmix, "FadingChannel", Falcon::Ext::mix_FadingChannel ).asSymbol()->
       addParam("channel");
 
+   //===================================
    // Music
+   self->addClassMethod( c_sdlmix, "LoadMUS", Falcon::Ext::mix_LoadMUS ).asSymbol()->
+      addParam("file");
+   self->addClassMethod( c_sdlmix, "VolumeMusic", Falcon::Ext::mix_VolumeMusic ).asSymbol()->
+      addParam("volume");
+   self->addClassMethod( c_sdlmix, "HaltMusic", Falcon::Ext::mix_HaltMusic );
+   self->addClassMethod( c_sdlmix, "FadeOutMusic", Falcon::Ext::mix_FadeOutMusic ).asSymbol()->
+      addParam("fadeOut");
+   self->addClassMethod( c_sdlmix, "PauseMusic", Falcon::Ext::mix_PauseMusic );
+   self->addClassMethod( c_sdlmix, "ResumeMusic", Falcon::Ext::mix_ResumeMusic );
+   self->addClassMethod( c_sdlmix, "RewindMusic", Falcon::Ext::mix_RewindMusic );
+   self->addClassMethod( c_sdlmix, "PausedMusic", Falcon::Ext::mix_PausedMusic );
+   self->addClassMethod( c_sdlmix, "SetMusicPosition", Falcon::Ext::mix_SetMusicPosition ).asSymbol()->
+      addParam("position");
+   self->addClassMethod( c_sdlmix, "PlayingMusic", Falcon::Ext::mix_PlayingMusic );
+   self->addClassMethod( c_sdlmix, "SetMusicCMD", Falcon::Ext::mix_SetMusicCMD ).asSymbol()->
+      addParam("command");
+   self->addClassMethod( c_sdlmix, "SetSynchroValue", Falcon::Ext::mix_SetSynchroValue ).asSymbol()->
+      addParam("value");
+   self->addClassMethod( c_sdlmix, "GetSynchroValue", Falcon::Ext::mix_GetSynchroValue );
+
    self->addClassMethod( c_sdlmix, "HookMusicFinished", Falcon::Ext::mix_HookMusicFinished ).asSymbol()->
       addParam("active");
-   
+
    /*#
       @class MIXChunk
       @brief SDL Mixer Chunk encapsulation class.
@@ -179,6 +225,10 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    Falcon::Symbol *c_sdlmix_music = self->addClass( "MixMusic", Falcon::Ext::MixMusic_init );
    c_sdlmix_music->setWKS( true );
    c_sdlmix_music->getClassDef()->setObjectManager( &Falcon::core_falcon_data_manager );
+
+   self->addClassMethod( c_sdlmix_music, "GetType", Falcon::Ext::MixMusic_GetType );
+   self->addClassMethod( c_sdlmix_music, "Play", Falcon::Ext::MixMusic_Play ).asSymbol()->
+      addParam("loops")->addParam( "fadeIn" )->addParam( "position" );
 
    return self;
 }
