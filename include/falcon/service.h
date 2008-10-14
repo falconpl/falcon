@@ -72,12 +72,10 @@ public:
    /** Creates the service assigning it a certain name.
       The service requries a name by which it can be published by the module.
    */
-   Service( const String & name ):
-      m_name(name)
-   {};
+   Service( const String & name );
 
    /** Destructor needs to be virtual. */
-   virtual ~Service() {};
+   virtual ~Service();
 
    const String &getServiceName() const { return m_name; }
 };

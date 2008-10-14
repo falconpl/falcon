@@ -210,6 +210,7 @@ ADD_LIBRARY( falcon_engine SHARED
    pseudo.cpp
    rosstream.cpp
    runtime.cpp
+   service.cpp
    src_lexer.cpp
    stream.cpp
    string.cpp
