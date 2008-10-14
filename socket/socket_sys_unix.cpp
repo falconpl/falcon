@@ -542,7 +542,7 @@ bool TCPSocket::close()
 bool TCPSocket::connect( Address &where )
 {
    m_lastError = 0;
-   int flags;
+   int flags = 0;
 
    // let's try to connect the addresses in where.
    if ( where.getResolvedCount() == 0 ) {
