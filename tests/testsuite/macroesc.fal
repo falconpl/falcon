@@ -1,0 +1,18 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 91d
+* Category: macro
+* Subcategory:
+* Short: Macro escape
+* Description:
+*   Checks for escapes (string escapes) correctly respected in macro calls.
+* [/Description]
+*
+****************************************************************************/
+
+macro t( a, b ) ($(a)($b))
+
+if \\t( len  ,  "Hello" ) != 5: failure( "Escaping" )
+
+success()

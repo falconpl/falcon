@@ -1754,9 +1754,10 @@ void SrcLexer::parseMacroCall()
                   if ( sParam.size() > 0 )
                   {
                      String temp;
+                     sParam.trim();
                      sParam.escape( temp );
                      sFinal += '"';
-                     sFinal += sParam;
+                     sFinal += temp;
                      sFinal += '"';
                   }
 
@@ -1769,9 +1770,10 @@ void SrcLexer::parseMacroCall()
             else if( chr == ',' && ctx == 1 )
             {
                String temp;
+               sParam.trim();
                sParam.escape( temp );
                sFinal += '"';
-               sFinal += sParam;
+               sFinal += temp;
                sFinal += '"';
                sFinal += ',';
                sParam.size(0);

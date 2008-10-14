@@ -1,0 +1,24 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 91c
+* Category: macro
+* Subcategory:
+* Short: Macro access
+* Description:
+*   An even more serious access test.
+* [/Description]
+*
+****************************************************************************/
+
+macro access1( a, b ) ("$(a).$b")
+macro access2( a, b ) ($(a).$b)
+
+object test
+   prop = "Hello"
+end
+
+if \\access1( test  , prop ) != "test.prop": failure( "Trim" )
+if \\access2( test  , prop ) != "Hello": failure( "Access" )
+
+success()
