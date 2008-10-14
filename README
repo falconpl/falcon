@@ -3,7 +3,7 @@
 
                               Falcon DBI
 
-                                  0.9.2
+                                  0.9.3
 
 
 Falcon DBI is the database abstraction layer that is part of the official
@@ -20,6 +20,7 @@ Modules admitted in the DBI are currently:
    * mysql
    * pgsql
    * sqlite3
+   * ODBC
 
 BUILDING
 ========
