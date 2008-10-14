@@ -21,7 +21,8 @@
 
 #include "dbi.h"
 #include "dbi_ext.h"
-#include "../include/dbiservice.h"
+
+#include <dbiservice.h>
 
 /*#
    @beginmodule dbi
@@ -1186,7 +1187,7 @@ FALCON_FUNC DBITransaction_createBlob( VMachine *vm )
          String errorMessage;
          dbt->getLastError( errorMessage );
          vm->raiseModError( new DBIError(
-               ErrorParam( DBI_ERROR_BASE + dbstream->lastError(), __LINE__ )
+               ErrorParam( DBI_ERROR_BASE + (int32)dbstream->lastError(), __LINE__ )
                   .desc( errorMessage ) ) );
       }
 
@@ -1262,7 +1263,7 @@ FALCON_FUNC DBITransaction_readBlob( VMachine *vm )
          absmax = readBuf->size();
       }
 
-      int64 readIn = stream->read( readBuf, absmax );
+      int64 readIn = (int64) stream->read( readBuf, (int32) absmax );
       vm->retval( readIn );
    }
    else {
@@ -1275,7 +1276,7 @@ FALCON_FUNC DBITransaction_readBlob( VMachine *vm )
       String temp(1024);
       str->size( 0 ); // be sure we are not appending.
 
-      while( stream->readString( temp, 1024 ) > 0 )
+      while( stream->readString( temp, 1024 ) )
       {
          *str += temp;
       }
@@ -1290,7 +1291,7 @@ FALCON_FUNC DBITransaction_readBlob( VMachine *vm )
       String errorMessage;
       dbt->getLastError( errorMessage );
       vm->raiseModError( new DBIError(
-            ErrorParam( DBI_ERROR_BASE + stream->lastError(), __LINE__ )
+            ErrorParam( DBI_ERROR_BASE + (int32)stream->lastError(), __LINE__ )
                .desc( errorMessage ) ) );
    }
 
@@ -1356,7 +1357,7 @@ FALCON_FUNC DBITransaction_writeBlob( VMachine *vm )
 
    if ( i_data->isString() )
    {
-      stream->writeString( *i_data->asString(), startFrom, maxlen );
+      stream->writeString( *i_data->asString(), (uint32)startFrom, (uint32)maxlen );
    }
    else {
       MemBuf *mb = i_data->asMemBuf();
@@ -1369,7 +1370,7 @@ FALCON_FUNC DBITransaction_writeBlob( VMachine *vm )
          return;
       }
 
-      stream->write( mb->data() + startFrom, maxlen );
+      stream->write( mb->data() + startFrom, (int32)maxlen );
    }
 
    if ( ! stream->good() )
@@ -1508,7 +1509,6 @@ FALCON_FUNC DBIRecordset_fetchDict( VMachine *vm )
 
    for ( int cIdx = 0; cIdx < cCount; cIdx++ )
    {
-      dbi_status retval;
       GarbageString *gsName = new GarbageString( vm );
       gsName->bufferize( cNames[cIdx] );
 

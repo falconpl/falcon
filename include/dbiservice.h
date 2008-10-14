@@ -515,6 +515,8 @@ protected:
    {}
 
 public:
+   virtual ~DBIService() {}
+
    /**
     * Initialization hook.
     *
