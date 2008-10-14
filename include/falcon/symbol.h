@@ -338,6 +338,25 @@ public:
    uint32 paramCount() const { return m_params == 0 ? 0 : m_params->size(); }
 };
 
+
+/** Implements an imported symbol.
+*/
+
+class FALCON_DYN_CLASS ImportAlias: public BaseAlloc
+{
+   const String *m_name;
+   const String *m_origModule;
+
+public:
+   ImportAlias( const String* name, const String* origModule ):
+      m_name( name ),
+      m_origModule( origModule )
+   {}
+
+   const String *name() const { return m_name; }
+   const String *origModule() const { return m_origModule; }
+};
+
 /** Implements a callable symbol.
    A callable symbol has many more fields to keep track of. It has a back-pointer to the owning module,
    because the module contains the bytecode where data is held. It has also a symbol table pointer
@@ -752,7 +771,8 @@ public:
       tvar,
       tinst,
       tconst,
-      tattribute
+      tattribute,
+      timportalias,
    } type_t;
 
 private:
@@ -788,10 +808,10 @@ private:
    union {
       FuncDef *v_func;
       ExtFuncDef *v_extfunc;
+      ImportAlias  *v_importalias;
       ClassDef *v_class;
       VarDef *v_prop;
       Symbol *v_symbol;
-      const String *m_extModName;
    } m_value;
 
    void clear();
@@ -961,6 +981,10 @@ public:
    void setConst( VarDef *p ) { clear(); m_type = tconst; m_value.v_prop = p; }
    void setAttribute() { clear(); m_type = tattribute; }
    void setInstance( Symbol *base_class ) { clear(); m_type = tinst; m_value.v_symbol = base_class; }
+   void setImportAlias( ImportAlias* alias )
+      { clear(); m_type = timportalias; m_value.v_importalias = alias; imported(true); }
+   void setImportAlias( const String *name, const String* origModule ) {
+      setImportAlias( new ImportAlias( name, origModule ) ); }
 
    const String &name() const { return *m_name; }
    uint32 id() const { return m_id; }
@@ -987,6 +1011,7 @@ public:
    bool isInstance() const { return m_type == tinst; }
    bool isConst() const { return m_type == tconst; }
    bool isAttribute() const  { return m_type == tconst; }
+   bool isImportAlias() const { return m_type == timportalias; }
 
    /** Candy grammar to add a parameter to a function (internal or external) */
    Symbol* addParam( const String &param );
@@ -996,6 +1021,7 @@ public:
    ClassDef *getClassDef() const { return m_value.v_class; }
    VarDef *getVarDef() const { return m_value.v_prop; }
    Symbol *getInstance() const { return m_value.v_symbol; }
+   ImportAlias* getImportAlias() const { return m_value.v_importalias; }
    uint16 getItemId() const { return m_itemPos; }
 
    /** If the symbol is a class, check if this class is the named one or derived from the named one.

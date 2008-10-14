@@ -134,7 +134,7 @@ inline int flc_src_lex (void *lvalp, void *yyparam)
 %right VBAR
 %right ASSIGN_ADD ASSIGN_SUB ASSIGN_MUL ASSIGN_DIV ASSIGN_MOD ASSIGN_BAND ASSIGN_BOR ASSIGN_BXOR ASSIGN_SHR ASSIGN_SHL ASSIGN_POW
 %right OP_EQ
-%right COMMA OP_TO
+%right COMMA OP_TO OP_AS
 %left QUESTION
 %right COLON
 %left OR
@@ -1499,14 +1499,58 @@ import_statement:
          COMPILER->importSymbols( $2, $4, 0, true );
          $$ = 0;
       }
-   | IMPORT import_symbol_list FROM SYMBOL OP_EQ SYMBOL EOL
+   | IMPORT import_symbol_list FROM SYMBOL OP_AS SYMBOL EOL
+      {
+         // destroy the list to avoid leak
+         Falcon::ListElement *li = $2->begin();
+         int counter = 0;
+         while( li != 0 ) {
+            Falcon::String *symName = (Falcon::String *) li->data();
+            if ( counter == 0 )
+               COMPILER->importAlias( symName, $4, $6, false );
+            delete symName;
+            li = li->next();
+            counter++;
+         }
+         delete $2;
+
+         if ( counter != 1 )
+            COMPILER->raiseError(Falcon::e_syn_import );
+
+         $$ = 0;
+      }
+   | IMPORT import_symbol_list FROM STRING OP_AS SYMBOL EOL
+      {
+         // destroy the list to avoid leak
+         Falcon::ListElement *li = $2->begin();
+         int counter = 0;
+         while( li != 0 ) {
+            Falcon::String *symName = (Falcon::String *) li->data();
+            if ( counter == 0 )
+               COMPILER->importAlias( symName, $4, $6, true );
+            delete symName;
+            li = li->next();
+            counter++;
+         }
+         delete $2;
+
+         if ( counter != 1 )
+            COMPILER->raiseError(Falcon::e_syn_import );
+         $$ = 0;
+      }
+   | IMPORT import_symbol_list FROM SYMBOL OP_TO SYMBOL EOL
       {
          COMPILER->importSymbols( $2, $4, $6, false );
          $$ = 0;
       }
-   | IMPORT import_symbol_list FROM STRING OP_EQ SYMBOL EOL
+   | IMPORT import_symbol_list FROM STRING OP_TO SYMBOL EOL
       {
          COMPILER->importSymbols( $2, $4, $6, true );
+         $$ = 0;
+      }
+   | IMPORT SYMBOL error EOL
+      {
+         COMPILER->raiseError(Falcon::e_syn_import );
          $$ = 0;
       }
    | IMPORT import_symbol_list error EOL

@@ -12,11 +12,11 @@
 * [/Description]
 *
 ****************************************************************************/
-// named import 
-import test1 from import_sub_2 = first
+// named import
+import test1 from import_sub_2 to first
 
 // aliased import
-import test1 from import_sub_3 = second
+import test1 from import_sub_3 to second
 
 if first.test1() != "From sub2"
    failure( "import test1 from import_sub_2 = first" )

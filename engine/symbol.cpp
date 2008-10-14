@@ -36,6 +36,7 @@ void Symbol::clear()
       case tclass: delete m_value.v_class; break;
       case tprop: delete m_value.v_prop; break;
       case tconst: delete m_value.v_prop; break;
+      case timportalias: delete m_value.v_importalias; break;
       default:
          break;
    }
@@ -120,12 +121,25 @@ bool Symbol::load( Stream *in )
       }
       break;
 
+      case timportalias:
+      {
+         in->read( &strid , sizeof( strid ) );
+         strid = endianInt32( strid );
+         const String *name = m_module->getString( strid );
+         in->read( &strid , sizeof( strid ) );
+         strid = endianInt32( strid );
+         const String *origMod = m_module->getString( strid );
+         setImportAlias( name, origMod );
+      }
+      break;
+
       case tundef:
       case tlocal:
       case tparam:
       case tlocalundef:
       case tattribute:
          m_type = type_t( type );
+
       break;
 
       default:
@@ -160,7 +174,14 @@ bool Symbol::save( Stream *out ) const
          strid = endianInt32( getInstance()->id() );
          out->write( &strid, sizeof( strid ) );
       break;
-         
+
+      case timportalias:
+         strid = endianInt32( getImportAlias()->name()->id() );
+         out->write( &strid, sizeof( strid ) );
+         strid = endianInt32( getImportAlias()->origModule()->id() );
+         out->write( &strid, sizeof( strid ) );
+      break;
+
       default:
          break;
    }
@@ -179,7 +200,7 @@ Symbol* Symbol::addParam( const String &param )
          if( getClassDef()->constructor() != 0 )
             getClassDef()->constructor()->addParam( param );
       break;
-         
+
       default:
          return this;
    }
@@ -676,11 +697,11 @@ bool VarDef::save( Stream *out ) const
          uint32 val = endianInt32( asSymbol()->id() );
          out->write( &val , sizeof( val ) );
       }
-         
+
       default:
          return true;
    }
-   
+
    return out->good();
 }
 
@@ -738,7 +759,7 @@ bool VarDef::load( Module *mod, Stream *in )
          if ( m_value.val_sym == 0 )
             return false;
       }
-         
+
       default:
          break;
    }

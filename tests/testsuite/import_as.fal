@@ -1,0 +1,30 @@
+/****************************************************************************
+* Falcon test suite
+*
+*
+* ID: 53e
+* Category: modloader
+* Subcategory: import
+* Short: Import as
+* Description:
+*   this tests the import/alias modality
+* [/Description]
+*
+****************************************************************************/
+// named import
+import test1 from import_sub_2 as first
+
+// aliased import
+import test1 from import_sub_3 as second
+
+if first() != "From sub2"
+   failure( "import test1 from import_sub_2 = first" )
+end
+
+if second() != "From sub3"
+   failure( "import test1 from import_sub_3 = second" )
+end
+
+success()
+
+/* End of file */

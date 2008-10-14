@@ -15,7 +15,7 @@
 import test1 from import_sub_1
 
 // aliased import
-import test1 from import_sub_1 = alias
+import test1 from import_sub_1 to alias
 
 if import_sub_1.test1() != "Hello world"
    failure( "Non aliased test" )

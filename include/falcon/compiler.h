@@ -189,7 +189,7 @@ protected:
    InteractiveCompiler *m_metacomp;
    VMachine *m_serviceVM;
    ModuleLoader *m_serviceLoader;
-   
+
    /** Removes all the structures and temporary data used to compile a file.
       This function is called automatically by the various compile() and
       destructors.
@@ -519,6 +519,17 @@ public:
       \param filename if true the module load request is for a direct file name
    */
    virtual void importSymbols( List *lst, const String *prefix=0, const String *alias=0, bool filename=false );
+
+   /** Import a single aliased symbol from a module.
+      This tries to resolve the given symbol in the given symName in the target from module
+      during link time, and assings the local alias to it
+      \param symName The symbol name to be aliased.
+      \param fromMod The module name or path.
+      \param alias The namespace. If not given, will be the name of the module.
+      \param filename if true the module load request is for a direct file name.
+      \param return The newly added symbol.
+   */
+   virtual Symbol* importAlias( const String *symName, const String *fromMod, const String *alias, bool filename=false );
 
    /** Performs a meta compilation.
       If any data is written on the metacompiler output stream, the

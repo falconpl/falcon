@@ -591,64 +591,84 @@ bool VMachine::linkSymbol( Symbol *sym, LiveModule *livemod )
    {
       // is the symbol name-spaced?
       uint32 dotPos;
+
+      String localSymName;
+      ModuleDepData *depData;
+      LiveModule *lmod = 0;
+
       if ( ( dotPos = sym->name().rfind( "." ) ) != String::npos )
       {
          String nameSpace = sym->name().subString( 0, dotPos );
          // get the module name for the given module
-         ModuleDepData *depData = livemod->module()->dependencies().findModule( nameSpace );
+         depData = mod->dependencies().findModule( nameSpace );
          // if we linked it, it must exist
          fassert( depData != 0 );
 
+         // ... then find the module in the item
+         lmod = findModule( Module::relativizeName(
+               *depData->moduleName(), mod->name() ));
+
          // we must convert the name if it contains self or if it starts with "."
-
-         LiveModule *lmod = findModule( Module::relativizeName(
-            *depData->moduleName(), livemod->module()->name() ));
-         // If we find it...
          if ( lmod != 0 )
+            localSymName = sym->name().subString( dotPos + 1 );
+      }
+      else if ( sym->isImportAlias() )
+      {
+         depData = mod->dependencies().findModule( *sym->getImportAlias()->origModule() );
+         // if we linked it, it must exist
+         fassert( depData != 0 );
+
+         // ... then find the module in the item
+         lmod = findModule( Module::relativizeName(
+               *depData->moduleName(), mod->name() ));
+
+         if( lmod != 0 )
+            localSymName = *sym->getImportAlias()->name();
+      }
+
+      // If we found it it...
+      if ( lmod != 0 )
+      {
+         Symbol *localSym = lmod->module()->findGlobalSymbol( localSymName );
+
+         if ( localSym != 0 )
          {
-            // ... then find the module in the item
-            String localSymName = sym->name().subString( dotPos + 1 );
-            Symbol *localSym = lmod->module()->findGlobalSymbol( localSymName );
+            referenceItem( globs->itemAt( sym->itemId() ),
+               lmod->globals().itemAt( localSym->itemId() ) );
+            return true;
+         }
 
-            if ( localSym != 0 )
+         // last chance: if the module is flexy, we may ask it do dynload it.
+         if( lmod->module()->isFlexy() )
+         {
+            // Destroy also constness; flexy modules love to be abused.
+            FlexyModule *fmod = (FlexyModule *)( lmod->module() );
+            Symbol *newsym = fmod->onSymbolRequest( localSymName );
+
+            // Found -- great, link it and if all it's fine, link again this symbol.
+            if ( newsym != 0 )
             {
-               referenceItem( globs->itemAt( sym->itemId() ),
-                  lmod->globals().itemAt( localSym->itemId() ) );
-               return true;
-            }
-
-            // last chance: if the module is flexy, we may ask it do dynload it.
-            if( lmod->module()->isFlexy() )
-            {
-               // Destroy also constness; flexy modules love to be abused.
-               FlexyModule *fmod = (FlexyModule *)( lmod->module() );
-               Symbol *newsym = fmod->onSymbolRequest( localSymName );
-
-               // Found -- great, link it and if all it's fine, link again this symbol.
-               if ( newsym != 0 )
+               // be sure to allocate enough space in the module global table.
+               if ( newsym->itemId() >= lmod->globals().size() )
                {
-                  // be sure to allocate enough space in the module global table.
-                  if ( newsym->itemId() >= lmod->globals().size() )
-                  {
-                     lmod->globals().resize( newsym->itemId() );
-                  }
+                  lmod->globals().resize( newsym->itemId() );
+               }
 
-                  // now we have space to link it.
-                  if ( linkCompleteSymbol( newsym, lmod ) )
-                  {
-                     referenceItem( globs->itemAt( sym->itemId() ), *lmod->globals().itemPtrAt( newsym->itemId() ) );
-                     return true;
-                  }
-                  else {
-                     // we found the symbol, but it was flacky. We must have raised an error,
-                     // and so we should return now.
-                     // Notice that there is no need to free the symbol.
-                     return false;
-                  }
+               // now we have space to link it.
+               if ( linkCompleteSymbol( newsym, lmod ) )
+               {
+                  referenceItem( globs->itemAt( sym->itemId() ), *lmod->globals().itemPtrAt( newsym->itemId() ) );
+                  return true;
+               }
+               else {
+                  // we found the symbol, but it was flacky. We must have raised an error,
+                  // and so we should return now.
+                  // Notice that there is no need to free the symbol.
+                  return false;
                }
             }
-            // otherwise, the symbol is undefined.
          }
+         // ... otherwise, the symbol is undefined.
       }
       else {
          // try to find the imported symbol.

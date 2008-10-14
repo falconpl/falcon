@@ -46,25 +46,25 @@ Compiler::Compiler( Module *mod, Stream* in ):
    m_root(0),
    m_errors(0),
    m_optLevel(0),
-   
+
    m_lexer(0),
    m_stream( in ),
 
    m_errhand(0),
    m_module(0),
    m_enumId(0),
-   
+
    m_staticPrefix(0),
    m_lambdaCount(0),
    m_closureContexts(0),
    m_tempLine(0),
-   
+
    m_strict( false ),
    m_language( "C" ),
    m_modVersion( 0 ),
    m_defContext( false ),
    m_bParsingFtd(false),
-   
+
    m_delayRaise( false ),
    m_rootError( 0 ),
    m_metacomp( 0 ),
@@ -1070,7 +1070,7 @@ void Compiler::addEnumerator( const String &str, Value *val )
          case Value::t_imm_bool:
             vd->setBool( val->asBool() );
             break;
-            
+
          default:
             break;
       }
@@ -1158,6 +1158,23 @@ void Compiler::addNamespace( const String &nspace, const String &alias, bool ful
    // no? -- eventually change to load all.
    else if ( *res == 0 && full )
       *res = (void *) 1;
+}
+
+
+Symbol *Compiler::importAlias( const String *symName, const String *fromMod, const String *alias, bool filename )
+{
+   // add the dependency
+   m_module->addDepend( *fromMod, true, filename );
+
+   // add the alias
+   Falcon::Symbol *sym = new Symbol( m_module, m_module->addString( *alias ) );
+   m_module->addGlobalSymbol( sym );
+   sym->declaredAt( lexer()->previousLine() );
+
+   // sets the alias
+   sym->setImportAlias( m_module->addString( *symName ), m_module->addString( *fromMod ) );
+
+   return sym;
 }
 
 

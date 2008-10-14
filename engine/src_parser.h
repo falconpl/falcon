@@ -113,43 +113,44 @@
      ASSIGN_SUB = 329,
      ASSIGN_ADD = 330,
      OP_EQ = 331,
-     OP_TO = 332,
-     COMMA = 333,
-     QUESTION = 334,
-     OR = 335,
-     AND = 336,
-     NOT = 337,
-     LE = 338,
-     GE = 339,
-     LT = 340,
-     GT = 341,
-     NEQ = 342,
-     EEQ = 343,
-     PROVIDES = 344,
-     OP_NOTIN = 345,
-     OP_IN = 346,
-     HASNT = 347,
-     HAS = 348,
-     DIESIS = 349,
-     ATSIGN = 350,
-     CAP_CAP = 351,
-     VBAR_VBAR = 352,
-     AMPER_AMPER = 353,
-     MINUS = 354,
-     PLUS = 355,
-     PERCENT = 356,
-     SLASH = 357,
-     STAR = 358,
-     POW = 359,
-     SHR = 360,
-     SHL = 361,
-     TILDE = 362,
-     NEG = 363,
-     AMPER = 364,
-     BANG = 365,
-     DECREMENT = 366,
-     INCREMENT = 367,
-     DOLLAR = 368
+     OP_AS = 332,
+     OP_TO = 333,
+     COMMA = 334,
+     QUESTION = 335,
+     OR = 336,
+     AND = 337,
+     NOT = 338,
+     LE = 339,
+     GE = 340,
+     LT = 341,
+     GT = 342,
+     NEQ = 343,
+     EEQ = 344,
+     PROVIDES = 345,
+     OP_NOTIN = 346,
+     OP_IN = 347,
+     HASNT = 348,
+     HAS = 349,
+     DIESIS = 350,
+     ATSIGN = 351,
+     CAP_CAP = 352,
+     VBAR_VBAR = 353,
+     AMPER_AMPER = 354,
+     MINUS = 355,
+     PLUS = 356,
+     PERCENT = 357,
+     SLASH = 358,
+     STAR = 359,
+     POW = 360,
+     SHR = 361,
+     SHL = 362,
+     TILDE = 363,
+     NEG = 364,
+     AMPER = 365,
+     BANG = 366,
+     DECREMENT = 367,
+     INCREMENT = 368,
+     DOLLAR = 369
    };
 #endif
 /* Tokens.  */
@@ -227,50 +228,51 @@
 #define ASSIGN_SUB 329
 #define ASSIGN_ADD 330
 #define OP_EQ 331
-#define OP_TO 332
-#define COMMA 333
-#define QUESTION 334
-#define OR 335
-#define AND 336
-#define NOT 337
-#define LE 338
-#define GE 339
-#define LT 340
-#define GT 341
-#define NEQ 342
-#define EEQ 343
-#define PROVIDES 344
-#define OP_NOTIN 345
-#define OP_IN 346
-#define HASNT 347
-#define HAS 348
-#define DIESIS 349
-#define ATSIGN 350
-#define CAP_CAP 351
-#define VBAR_VBAR 352
-#define AMPER_AMPER 353
-#define MINUS 354
-#define PLUS 355
-#define PERCENT 356
-#define SLASH 357
-#define STAR 358
-#define POW 359
-#define SHR 360
-#define SHL 361
-#define TILDE 362
-#define NEG 363
-#define AMPER 364
-#define BANG 365
-#define DECREMENT 366
-#define INCREMENT 367
-#define DOLLAR 368
+#define OP_AS 332
+#define OP_TO 333
+#define COMMA 334
+#define QUESTION 335
+#define OR 336
+#define AND 337
+#define NOT 338
+#define LE 339
+#define GE 340
+#define LT 341
+#define GT 342
+#define NEQ 343
+#define EEQ 344
+#define PROVIDES 345
+#define OP_NOTIN 346
+#define OP_IN 347
+#define HASNT 348
+#define HAS 349
+#define DIESIS 350
+#define ATSIGN 351
+#define CAP_CAP 352
+#define VBAR_VBAR 353
+#define AMPER_AMPER 354
+#define MINUS 355
+#define PLUS 356
+#define PERCENT 357
+#define SLASH 358
+#define STAR 359
+#define POW 360
+#define SHR 361
+#define SHL 362
+#define TILDE 363
+#define NEG 364
+#define AMPER 365
+#define BANG 366
+#define DECREMENT 367
+#define INCREMENT 368
+#define DOLLAR 369
 
 
 
 
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union
-#line 61 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
+#line 61 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
 lex_value_t {
    Falcon::int64 integer;
    Falcon::numeric numeric;
@@ -285,8 +287,8 @@ lex_value_t {
    Falcon::SymbolList *fal_symlist;
    Falcon::List *fal_genericList;
 }
-/* Line 1529 of yacc.c.  */
-#line 290 "/export/medusa/gniccola/falcon/core/engine/src_parser.hpp"
+/* Line 1489 of yacc.c.  */
+#line 292 "/home/gian/Progetti/falcon/core/engine/src_parser.hpp"
 	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
