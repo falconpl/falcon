@@ -274,7 +274,7 @@ FALCON_FUNC Compiler_loadByName( ::Falcon::VMachine *vm )
    CoreObject *self = vm->self().asObject();
    CompilerIface *iface = static_cast<CompilerIface *>( self->getUserData() );
 
-   Symbol *caller_sym;
+   const Symbol *caller_sym;
    const Module *caller_mod;
    String modname;
    if ( vm->getCaller( caller_sym, caller_mod ) )
