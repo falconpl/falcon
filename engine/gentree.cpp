@@ -64,7 +64,6 @@ void GenTree::generate( const SourceTree *st )
             gen_block( func->staticBlock(), 1 );
          }
 
-         m_out->writeString( "PROLOGUE:\n" );
          gen_block( func->statements(), 1 );
 
          func = static_cast<const StmtFunction *>(func->next());
@@ -581,7 +580,7 @@ void GenTree::gen_value( const Value *val )
       case Value::t_expression:
          gen_expression( val->asExpr() );
       break;
-         
+
       default:
          break;
    }
@@ -654,7 +653,7 @@ void GenTree::gen_expression( const Expression *exp )
       case Expression::t_array_access: type = 5; break;
       case Expression::t_array_byte_access: type = 10; break;
       case Expression::t_obj_access: type = 6; break;
-      case Expression::t_funcall: type = 7; break;
+      case Expression::t_funcall: case Expression::t_inherit: type = 7; break;
       case Expression::t_lambda: type = 8; break;
       default:
          return;

@@ -151,16 +151,6 @@ void GenHAsm::gen_class( const StmtClass *cls )
       const InheritDef *id = (const InheritDef *) it_elem->data();
       const Symbol *parent = id->base();
       m_out->writeString( ".inherit $" + parent->name() );
-      ListElement *param_elem = id->parameters().begin();
-      while( param_elem != 0 )
-      {
-         m_out->writeString( " " );
-         const VarDef *vd = (const VarDef*) param_elem->data(); // WARNING, must be const...
-         gen_propdef( *vd ); // or the copy destructor will mess it up
-         param_elem = param_elem->next();
-         if( param_elem != 0 )
-            m_out->writeString( "," );
-      }
       m_out->writeString( "\n" );
       it_elem = it_elem->next();
    }
@@ -464,30 +454,14 @@ void GenHAsm::gen_function( const StmtFunction *func )
          m_out->writeString( ".local " + sym->name() + "\n" );
    }
 
-   // generates INST for constructors
+   // generates INIT for constructors
    if ( ctorFor != 0 )
    {
-      const ClassDef *cd = ctorFor->symbol()->getClassDef();
-      ListElement *it_iter = cd->inheritance().begin();
+      ListElement *it_iter = ctorFor->initExpressions().begin();
       while( it_iter != 0 )
       {
-         const InheritDef *id = (const InheritDef *) it_iter->data();
-         const Symbol *parent = id->base();
-         ListElement *param_iter = id->parameters().begin();
-         int count = 0;
-         while( param_iter != 0 )
-         {
-            m_out->writeString( "\tPUSH\t" );
-            const VarDef *vd = (const VarDef*) param_iter->data();
-            gen_propdef( *vd );
-            m_out->writeString( "\n" );
-            param_iter = param_iter->next();
-            count++;
-         }
-         String strcount;
-         strcount.writeNumber( (int64) count );
-         m_out->writeString( "\tINST\t" + strcount + ", $" + parent->name() + "\n" );
-
+         const Value *value = (const Value *) it_iter->data();
+         gen_value( value );
          it_iter = it_iter->next();
       }
    }

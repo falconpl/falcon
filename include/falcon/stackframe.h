@@ -35,7 +35,7 @@ typedef struct tag_StackFrame
 {
    Item header;
 
-   Symbol *m_symbol;
+   const Symbol *m_symbol;
    uint32 m_ret_pc;
    uint32 m_call_pc;
    const Module *m_module;

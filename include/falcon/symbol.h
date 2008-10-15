@@ -470,13 +470,6 @@ private:
    /** The base class. */
    Symbol *m_baseClass;
 
-   /** Parameter list.
-      The VarDefs in this list are owned by this class.
-      The destruction of this class causes destruction of the defs.
-      However, Falcon::VarDef doesn't own its contents.
-   */
-   List m_params;
-
 public:
    /** Constructs the Inheritance.
       The inheritance is initially built without parameters.
@@ -495,13 +488,9 @@ public:
 
    ~InheritDef();
 
-   void addParameter( VarDef *def );
-
    bool save( Stream *out ) const;
    bool load( Module *mod, Stream *in );
 
-   const List &parameters() const { return m_params; }
-   List &parameters() { return m_params; }
    Symbol *base() const { return m_baseClass; }
 };
 

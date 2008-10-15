@@ -154,7 +154,7 @@ inline int flc_src_lex (void *lvalp, void *yyparam)
 
 %type <integer> INTNUM_WITH_MINUS
 %type <fal_adecl> expression_list listpar_expression_list array_decl
-%type <fal_adecl> symbol_list inherit_param_list inherit_call
+%type <fal_adecl> symbol_list
 %type <fal_ddecl> expression_pair_list
 %type <fal_genericList> import_symbol_list
 %type <fal_val> expression func_call nameless_func nameless_closure lambda_expr iif_expr
@@ -162,7 +162,7 @@ inline int flc_src_lex (void *lvalp, void *yyparam)
 %type <fal_val> if_decl if_short_decl elif_decl
 %type <fal_val> const_atom var_atom  atomic_symbol /* atom */
 %type <fal_val> dotarray_decl dict_decl
-%type <fal_val> inherit_param_token
+%type <fal_val> inherit_call
 %type <fal_stat> break_statement continue_statement
 %type <fal_stat> toplevel_statement statement while_statement if_statement
 %type <fal_stat> forin_statement switch_statement fordot_statement
@@ -1800,24 +1800,14 @@ inherit_token:
 
          if ( clsdef->addInheritance( idef ) )
          {
-            if ( $2 != 0 )
-            {
-               // save the carried
-               Falcon::ListElement *iter = $2->begin();
-               while( iter != 0 )
-               {
-                  Falcon::Value *val = (Falcon::Value *) iter->data();
-                  idef->addParameter( val->genVarDefSym() );
-                  iter = iter->next();
-               }
-
-               // dispose of the carrier
-               delete $2;
-            }
+            cls->addInitExpression(
+               new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_inherit,
+                     new Falcon::Value( sym ), $2 ) ) );
          }
          else {
             COMPILER->raiseError(Falcon::e_prop_adef );
             delete idef;
+            delete $2;
          }
       }
 ;
@@ -1825,33 +1815,13 @@ inherit_token:
 inherit_call:
    /* nothing */
       { $$ = 0; }
-   |
-   OPENPAR
-      inherit_param_list /* in the constructor symbol table */
-   CLOSEPAR
+   | OPENPAR CLOSEPAR { $$=0; }
+   | OPENPAR expression_list  CLOSEPAR
    {
-      $$ = $2;
+      $$ = $2 == 0 ? 0 : new Falcon::Value( $2 );
    }
 ;
 
-inherit_param_list:
-   inherit_param_token { $$ = new Falcon::ArrayDecl(); $$->pushBack( $1 ); }
-   | inherit_param_list COMMA inherit_param_token { $1->pushBack( $3 ); $$ = $1; }
-;
-
-inherit_param_token:
-   const_atom
-   | SYMBOL
-      {
-         // the symbol must be a parameter, or we raise an error
-         Falcon::Symbol *sym = COMPILER->searchLocalSymbol( $1 );
-         if ( sym == 0 || sym->type() != Falcon::Symbol::tparam ) {
-            sym = COMPILER->addGlobalSymbol( $1 );
-         }
-         $$ = new Falcon::Value( sym );
-      }
-   | SELF { $$ = new Falcon::Value(); $$->setSelf(); }
-;
 
 class_statement_list:
    /* nothing */

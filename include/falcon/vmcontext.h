@@ -37,7 +37,7 @@ class VMSemaphore;
 /** Class representing a coroutine execution context. */
 class FALCON_DYN_CLASS VMContext: public BaseAlloc
 {
-   Symbol* m_symbol;
+   const Symbol* m_symbol;
    const Module *m_currentModule;
    ItemVector *m_currentGlobals;
 

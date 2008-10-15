@@ -76,7 +76,7 @@ CoreObject::~CoreObject()
 
 bool CoreObject::derivedFrom( const String &className ) const
 {
-   Symbol *clssym = m_generatedBy->symbol();
+   const Symbol *clssym = m_generatedBy->symbol();
    return (clssym->name() == className || m_generatedBy->derivedFrom( className ));
 }
 

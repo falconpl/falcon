@@ -65,7 +65,7 @@ public:
 
    ~CoreObject();
 
-   Symbol *instanceOf() const  { return m_generatedBy->symbol(); }
+   const Symbol *instanceOf() const  { return m_generatedBy->symbol(); }
    bool derivedFrom( const String &className ) const;
 
    /** Return the head of attribute lists.

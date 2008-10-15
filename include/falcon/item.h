@@ -118,7 +118,7 @@ private:
       uint32 whole;
    } m_base;
 
- 
+
 
    bool internal_is_equal( const Item &other ) const;
    int internal_compare( const Item &other ) const;
@@ -159,7 +159,7 @@ public:
       content( dt );
    }
 
-   Item( Symbol *func, LiveModule *mod )
+   Item( const Symbol *func, LiveModule *mod )
    {
       setFunction( func, mod );
    }
@@ -332,10 +332,10 @@ public:
    GarbageItem *asReference() const { return (GarbageItem *) m_data.ptr.voidp; }
 
    /** Creates a function item */
-   void setFunction( Symbol *sym, LiveModule *lmod )
+   void setFunction( const Symbol *sym, LiveModule *lmod )
    {
       type( FLC_ITEM_FUNC );
-      m_data.ptr.voidp = sym;
+      m_data.ptr.voidp = const_cast<Symbol *>(sym);
       m_data.ptr.m_liveMod = lmod;
    }
 
@@ -375,7 +375,7 @@ public:
       The method is able to remember if it was called with
       a Function pointer or using an external function.
    */
-   Item( CoreObject *obj, Symbol *func, LiveModule *lmod )
+   Item( CoreObject *obj, const Symbol *func, LiveModule *lmod )
    {
       setMethod( obj, func, lmod );
    }
@@ -384,12 +384,12 @@ public:
       The method is able to remember if it was called with
       a Function pointer or using an external function.
    */
-   Item( CoreArray *arr, Symbol *func, LiveModule *lmod )
+   Item( CoreArray *arr, const Symbol *func, LiveModule *lmod )
    {
       setTabMethod( arr, func, lmod );
    }
 
-   Item( CoreDict *dict, Symbol *func, LiveModule *lmod )
+   Item( CoreDict *dict, const Symbol *func, LiveModule *lmod )
    {
       setTabMethod( dict, func, lmod );
    }
@@ -404,10 +404,10 @@ public:
       The method is able to remember if it was called with
       a Function pointer or using an external function.
    */
-   void setMethod( CoreObject *obj, Symbol *func, LiveModule *lmod ) {
+   void setMethod( CoreObject *obj, const Symbol *func, LiveModule *lmod ) {
       type( FLC_ITEM_METHOD );
       m_data.ptr.voidp = obj;
-      m_data.ptr.m_extra = func;
+      m_data.ptr.m_extra = const_cast<Symbol *>(func);
       m_data.ptr.m_liveMod = lmod;
    }
 
@@ -415,19 +415,19 @@ public:
       The method is able to remember if it was called with
       a Function pointer or using an external function.
    */
-   void setTabMethod( CoreArray *arr, Symbol *func, LiveModule *lmod ) {
+   void setTabMethod( CoreArray *arr, const Symbol *func, LiveModule *lmod ) {
       type( FLC_ITEM_TABMETHOD );
       m_base.bits.reserved = 0;
       m_data.ptr.voidp = arr;
-      m_data.ptr.m_extra = func;
+      m_data.ptr.m_extra = const_cast<Symbol *>(func);
       m_data.ptr.m_liveMod = lmod;
    }
 
-   void setTabMethod( CoreDict *dict, Symbol *func, LiveModule *lmod ) {
+   void setTabMethod( CoreDict *dict, const Symbol *func, LiveModule *lmod ) {
       type( FLC_ITEM_TABMETHOD );
       m_base.bits.reserved = 1;
       m_data.ptr.voidp = dict;
-      m_data.ptr.m_extra = func;
+      m_data.ptr.m_extra = const_cast<Symbol *>(func);
       m_data.ptr.m_liveMod = lmod;
    }
 
@@ -591,13 +591,13 @@ public:
    MemBuf *asMemBuf() const { return ( MemBuf *) m_data.ptr.voidp; }
 
    CoreClass *asClass() const { return (CoreClass *) m_data.ptr.m_extra; }
-   Symbol *asFunction() const { return (Symbol *) m_data.ptr.voidp; }
+   const Symbol *asFunction() const { return (const Symbol *) m_data.ptr.voidp; }
 
    CoreObject *asMethodObject() const { return (CoreObject *) m_data.ptr.voidp; }
    CoreArray *asTabMethodArray() const { return (CoreArray *) m_data.ptr.voidp; }
    CoreDict *asTabMethodDict() const { return (CoreDict *) m_data.ptr.voidp; }
    bool isTabMethodDict() const { return m_base.bits.reserved==1; }
-   Symbol *asMethodFunction() const { return (Symbol *)m_data.ptr.m_extra; }
+   const Symbol *asMethodFunction() const { return (const Symbol *)m_data.ptr.m_extra; }
    CoreClass *asMethodClass() const { return (CoreClass*) m_data.ptr.m_extra; }
    Attribute *asAttribute() const { return (Attribute *) m_data.ptr.voidp; }
 

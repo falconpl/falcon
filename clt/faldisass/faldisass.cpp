@@ -297,7 +297,7 @@ void gen_function( Module *module, const Symbol *func, Stream *m_out, t_labelMap
          case Symbol::tlocal:
             m_out->writeString( ".local " + sym->name() + "\n" );
          break;
-            
+
          default:
             break;
       }
@@ -378,16 +378,6 @@ void gen_class( Stream *m_out, const Symbol *sym )
       const InheritDef *id = (const InheritDef *) it_iter->data();
       const Symbol *parent = id->base();
       m_out->writeString( ".inherit $" + parent->name() );
-      ListElement *param_iter = id->parameters().begin();
-      while( param_iter != 0 )
-      {
-         m_out->writeString( " " );
-         const VarDef *vd = ( const VarDef * ) param_iter->data();
-         gen_propdef( m_out, *vd );
-         param_iter = param_iter->next();
-         if( param_iter != 0 )
-            m_out->writeString( "," );
-      }
       m_out->writeString( "\n" );
       it_iter = it_iter->next();
    }

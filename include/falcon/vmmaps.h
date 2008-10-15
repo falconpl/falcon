@@ -195,7 +195,7 @@ public:
 class FALCON_DYN_CLASS SymModule: public BaseAlloc
 {
    Item *m_item;
-   Symbol *m_symbol;
+   const Symbol *m_symbol;
    LiveModule *m_lmod;
    int32 m_wkiid;
 
@@ -208,7 +208,7 @@ public:
    {}
 
    /** Creates an exported Global Item. */
-   SymModule( Item *itm, LiveModule *mod, Symbol *sym ):
+   SymModule( Item *itm, LiveModule *mod, const Symbol *sym ):
       m_item( itm ),
       m_symbol( sym ),
       m_lmod( mod ),
@@ -218,7 +218,7 @@ public:
    /** Creates an exported Global Item.
       This shortcut initializes the item pointer atonomously.
    */
-   SymModule( LiveModule *mod, Symbol *sym ):
+   SymModule( LiveModule *mod, const Symbol *sym ):
       m_item( mod->globals().itemPtrAt( sym->itemId() ) ),
       m_symbol( sym ),
       m_lmod( mod ),
@@ -226,7 +226,7 @@ public:
    {}
 
    /** Creates an exported Well Known Item. */
-   SymModule( int32 wiid, LiveModule *mod, Symbol *sym ):
+   SymModule( int32 wiid, LiveModule *mod, const Symbol *sym ):
       m_item( 0 ),
       m_symbol( sym ),
       m_lmod( mod ),
@@ -241,7 +241,7 @@ public:
       \return a pointer to the referenced item.
    */
    Item *item() const { return m_item; }
-   Symbol *symbol() const { return m_symbol; }
+   const Symbol *symbol() const { return m_symbol; }
    uint32 symbolId() const { return m_symbol->itemId(); }
    LiveModule *liveModule() const { return m_lmod; }
 

@@ -316,7 +316,7 @@ void inspect_internal( VMachine *vm, bool isShort, const Item *elem, int32 level
             stream->writeString( "Dead function" );
          }
          else {
-            Symbol *funcSym = elem->asFunction();
+            const Symbol *funcSym = elem->asFunction();
 
             if ( funcSym->isExtFunc() )
             {

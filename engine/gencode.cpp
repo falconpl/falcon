@@ -469,25 +469,15 @@ void GenCode::gen_function( const StmtFunction *func )
    // get the offset of the function
    const Symbol *funcsym = func->symbol();
 
-   // generates INST for constructors
+   // generates INIT for constructors
    if ( ctorFor != 0 )
    {
-      const ClassDef *cd = ctorFor->symbol()->getClassDef();
-      ListElement *it_elem = cd->inheritance().begin();
-      while( it_elem != 0 )
+      ListElement *it_iter = ctorFor->initExpressions().begin();
+      while( it_iter != 0 )
       {
-         const InheritDef *id = (const InheritDef *) it_elem->data();
-         ListElement *param_elem = id->parameters().begin();
-         int count = 0;
-         while( param_elem != 0 )
-         {
-            gen_pcode( P_PUSH, (VarDef *) param_elem->data() );
-            param_elem = param_elem->next();
-            count++;
-         }
-         gen_pcode( P_INST, c_param_fixed( count ), id->base() );
-
-         it_elem = it_elem->next();
+         const Value *value = (const Value *) it_iter->data();
+         gen_value( value );
+         it_iter = it_iter->next();
       }
    }
 

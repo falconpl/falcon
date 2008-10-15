@@ -581,7 +581,7 @@ bool VMachine::liveLink( LiveModule *livemod, t_linkMode mode )
 
 
 // Link a single symbol
-bool VMachine::linkSymbol( Symbol *sym, LiveModule *livemod )
+bool VMachine::linkSymbol( const Symbol *sym, LiveModule *livemod )
 {
    // A shortcut
    ItemVector *globs = &livemod->globals();
@@ -791,7 +791,7 @@ bool VMachine::exportAllSymbols( LiveModule *livemod )
 }
 
 
-bool VMachine::exportSymbol( Symbol *sym, LiveModule *livemod )
+bool VMachine::exportSymbol( const Symbol *sym, LiveModule *livemod )
 {
    // A shortcut
    ItemVector *globs = &livemod->globals();
@@ -900,7 +900,7 @@ bool VMachine::linkSymbolDynamic( const String &name, SymModule &symdata )
    return false;
 }
 
-bool VMachine::linkClassSymbol( Symbol *sym, LiveModule *livemod )
+bool VMachine::linkClassSymbol( const Symbol *sym, LiveModule *livemod )
 {
    // shortcut
    ItemVector *globs = &livemod->globals();
@@ -926,7 +926,7 @@ bool VMachine::linkClassSymbol( Symbol *sym, LiveModule *livemod )
 }
 
 
-bool VMachine::linkInstanceSymbol( Symbol *obj, LiveModule *livemod )
+bool VMachine::linkInstanceSymbol( const Symbol *obj, LiveModule *livemod )
 {
    // shortcut
    ItemVector *globs = &livemod->globals();
@@ -958,7 +958,7 @@ bool VMachine::linkInstanceSymbol( Symbol *obj, LiveModule *livemod )
 }
 
 
-bool VMachine::initializeInstance( Symbol *obj, LiveModule *livemod )
+bool VMachine::initializeInstance( const Symbol *obj, LiveModule *livemod )
 {
    ItemVector *globs = &livemod->globals();
    bool bSuccess = true;
@@ -1002,7 +1002,7 @@ bool VMachine::initializeInstance( Symbol *obj, LiveModule *livemod )
 }
 
 
-bool VMachine::linkCompleteSymbol( Symbol *sym, LiveModule *livemod )
+bool VMachine::linkCompleteSymbol( const Symbol *sym, LiveModule *livemod )
 {
    // try a pre-link
    bool bSuccess = linkSymbol( sym, livemod );
@@ -1138,7 +1138,7 @@ PropertyTable *VMachine::createClassTemplate( LiveModule *lmod, const Map &pt )
 }
 
 
-CoreClass *VMachine::linkClass( LiveModule *lmod, Symbol *clssym )
+CoreClass *VMachine::linkClass( LiveModule *lmod, const Symbol *clssym )
 {
    Map props( &traits::t_stringptr(), &traits::t_voidp() ) ;
    AttribHandler *head = 0;
@@ -1350,7 +1350,7 @@ bool VMachine::prepare( const String &startSym, uint32 paramCount )
       return false;
    }
 
-   Symbol *execSym = m_mainModule->module()->findGlobalSymbol( startSym );
+   const Symbol *execSym = m_mainModule->module()->findGlobalSymbol( startSym );
    if ( execSym == 0 )
    {
       SymModule *it_global = (SymModule *) m_globalSyms.find( &startSym );
@@ -1562,7 +1562,7 @@ void VMachine::fillErrorTraceback( Error &error )
    while( base != 0 )
    {
       StackFrame &frame = *(StackFrame *) m_stack->at( base - VM_FRAME_SPACE );
-      Symbol *sym = frame.m_symbol;
+      const Symbol *sym = frame.m_symbol;
       if ( sym != 0 )
       { // possible when VM has not been initiated from main
          uint32 line;
@@ -1579,7 +1579,7 @@ void VMachine::fillErrorTraceback( Error &error )
 }
 
 
-bool VMachine::getCaller( Symbol *&sym, const Module *&module)
+bool VMachine::getCaller( const Symbol *&sym, const Module *&module)
 {
    if ( m_stackBase < VM_FRAME_SPACE )
       return false;
@@ -1639,7 +1639,7 @@ void VMachine::fillErrorContext( Error *err, bool filltb )
 
 bool VMachine::callItem( const Item &callable, int32 paramCount, e_callMode callMode )
 {
-   Symbol *target;
+   const Symbol *target;
    Item oldsender;
    Garbageable *self = 0;
    LiveModule *targetMod;
@@ -2052,7 +2052,7 @@ ext_func_frame_t VMachine::returnHandler()
 
 bool VMachine::callItemPass( const Item &callable  )
 {
-   Symbol *target;
+   const Symbol *target;
    FuncDef *tg_def;
    LiveModule *targetMod;
 

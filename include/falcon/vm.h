@@ -278,7 +278,7 @@ protected:
       this should be impossible when things are set up properly
       \todo, make always nonzeor
    */
-   Symbol* m_symbol;
+   const Symbol* m_symbol;
 
    /** Module that contains the currently being executed symbol. */
    const Module *m_currentModule;
@@ -729,7 +729,7 @@ public:
       \param lmod The live module where the symbol must go.
       \return false if the link fails, true on success.
    */
-   bool linkSymbol( Symbol *sym, LiveModule *lmod );
+   bool linkSymbol( const Symbol *sym, LiveModule *lmod );
 
    /** Try to link a dynamic symbol.
 
@@ -775,7 +775,7 @@ public:
       \param lmod The live module where the symbol must go.
       \return false if the link fails, true on success.
    */
-   bool linkClassSymbol( Symbol *sym, LiveModule *livemod );
+   bool linkClassSymbol( const Symbol *sym, LiveModule *livemod );
 
    /** Links a class instance.
 
@@ -795,7 +795,7 @@ public:
       \param lmod The live module where the symbol must go.
       \return false if the link fails, true on success.
    */
-   bool linkInstanceSymbol( Symbol *sym, LiveModule *livemod );
+   bool linkInstanceSymbol( const Symbol *sym, LiveModule *livemod );
 
    /** Constructs an instance calling its _init method if necessary.
 
@@ -820,7 +820,7 @@ public:
       \param lmod The live module where the symbol must go.
       \return false if the link fails, true on success.
    */
-   bool initializeInstance( Symbol *sym, LiveModule *livemod );
+   bool initializeInstance( const Symbol *sym, LiveModule *livemod );
 
    /** Links a symbol eventually performing class and instances initializations.
 
@@ -838,7 +838,7 @@ public:
 
       This method should run in atomic mode (see initializeInstance() ).
    */
-   bool linkCompleteSymbol( Symbol *sym, LiveModule *livemod );
+   bool linkCompleteSymbol( const Symbol *sym, LiveModule *livemod );
 
    /** Links a symbol eventually performing class and instances initializations.
 
@@ -921,7 +921,7 @@ public:
       \param lmod the live module (module + live data) where this class is generated
       \param clsym the symbol where the class is defined.
    */
-   CoreClass *linkClass( LiveModule *lmod, Symbol *clsym );
+   CoreClass *linkClass( LiveModule *lmod, const Symbol *clsym );
 
    /** Prepares a routine.
       The launch() method calls prepare() and run() in succession.
@@ -1077,7 +1077,7 @@ public:
       \param module on success, will hold a pointer to the module where the caller symbol resides.
       \return true on success, false on failure.
    */
-   bool getCaller( Symbol *&sym, const Module *&module);
+   bool getCaller( const Symbol *&sym, const Module *&module);
 
    /** Fills an error with current VM execution context and traceback.
    */
@@ -1365,7 +1365,7 @@ public:
 
    void retnil() { m_regA.setNil();}
 
-   Symbol *currentSymbol() const { return m_symbol; }
+   const Symbol *currentSymbol() const { return m_symbol; }
    uint32 programCounter() const { return m_pc; }
 
    const SymModule *findGlobalSymbol( const String &str ) const;
@@ -2142,7 +2142,7 @@ public:
       The function checks for the symbol to be exported and/or Well Known before
       actually performing the final export.
    */
-   bool exportSymbol( Symbol *sym, LiveModule *mod );
+   bool exportSymbol( const Symbol *sym, LiveModule *mod );
 
    /** Exports all symbols in a module.
       To be called when changing the module publicity policy.

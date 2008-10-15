@@ -172,7 +172,7 @@ bool Value::isEqualByValue( const Value &other ) const
             if( asSymdef()->id() == other.asSymdef()->id() )
                return true;
          break;
-            
+
          default:
             break;
       }
@@ -225,7 +225,7 @@ bool Value::less( const Value &other ) const
             if( asSymdef()->id() < other.asSymdef()->id() )
                return true;
          break;
-         
+
          default:
             break;
       }
@@ -265,18 +265,6 @@ VarDef *Value::genVarDef()
    }
 
    return def;
-}
-
-VarDef *Value::genVarDefSym()
-{
-   switch( type() )
-   {
-      case t_symbol:
-         return new VarDef( asSymbol() );
-
-      default:
-         return genVarDef();
-   }
 }
 
 Value::~Value()

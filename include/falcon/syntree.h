@@ -234,13 +234,6 @@ public:
    */
    VarDef *genVarDef();
 
-   /** Creates a Falcon::VarDef using the contents of this object.
-      This version will create a VarDef also for symbols and references.
-      \return a newly allocated prodef that has the same contents a the value, or 0
-         for complex values.
-   */
-   VarDef *genVarDefSym();
-
    bool isImmediate() const {
       return m_type == t_nil ||
              m_type == t_imm_bool ||
@@ -490,7 +483,7 @@ public:
          case t_notin:
          case t_provides:
             return true;
-            
+
          default:
             return false;
       }
@@ -1161,6 +1154,8 @@ class FALCON_DYN_CLASS StmtClass: public StmtCallable
    bool m_bDeleteCtor;
 
    Symbol *m_singleton;
+   /** set of expressions (values, usually inherit calls) to be prepended to the constructor */
+   ArrayDecl m_initExpressions;
 public:
 
    StmtClass( uint32 line, Symbol *name ):
@@ -1187,6 +1182,10 @@ public:
 
    bool initGiven() const { return m_initGiven; }
    void initGiven( bool val ) { m_initGiven = val; }
+
+   void addInitExpression( Value *expr ) { m_initExpressions.pushBack( expr ); }
+   const ArrayDecl& initExpressions() const { return m_initExpressions; }
+   ArrayDecl& initExpressions() { return m_initExpressions; }
 
    /** Singleton associated to this class, if any. */
    Symbol *singleton() const { return m_singleton; }

@@ -307,7 +307,7 @@ directive:
    | DCLASSDEF NAME EXPORT{  COMPILER->addClassDef( $2, true ); }
    | DCTOR SYMBOL {  COMPILER->addClassCtor( $2 ); }
    | DENDCLASS { COMPILER->addFuncEnd(); /* Currently the same as .endfunc */ }
-   | DINHERIT SYMBOL { COMPILER->addInherit($2); } inherit_param_list
+   | DINHERIT SYMBOL { COMPILER->addInherit($2); }
    | DFROM NAME {  COMPILER->addFrom( $2 ); }
    | DEXTERN NAME def_line {  COMPILER->addExtern( $2, $3 ); }
    | DLINE INTEGER {  COMPILER->addDLine( $2 ); }
@@ -342,16 +342,6 @@ hasnt_symlist:
 
 label: LABEL COLON { COMPILER->defineLabel( $1->asLabel() ); };
 
-inherit_param_list:
-   /* nothing */
-   | inherit_param { COMPILER->addInheritParam( $1 ); }
-   | inherit_param_list COMMA inherit_param { COMPILER->addInheritParam( $3 ); }
-;
-
-inherit_param:
-   x_op_immediate
-   | SYMBOL
-;
 
 def_line:
    /* nothing */ {$$ = new Falcon::Pseudo( LINE, (Falcon::int64) 0 ); }

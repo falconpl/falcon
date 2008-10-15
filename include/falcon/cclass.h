@@ -53,7 +53,7 @@ class FALCON_DYN_CLASS CoreClass: public Garbageable
 
 private:
    LiveModule *m_lmod;
-   Symbol *m_sym;
+   const Symbol *m_sym;
    Item m_constructor;
    PropertyTable *m_properties;
    AttribHandler *m_attributes;
@@ -83,11 +83,11 @@ public:
       The module id is useful as this object often refers to its module in the VM. Having the ID
       recorded here prevents the need to search for the live ID in the VM at critical times.
    */
-   CoreClass( VMachine *mp, Symbol *sym, LiveModule *lmod, PropertyTable *pt );
+   CoreClass( VMachine *mp, const Symbol *sym, LiveModule *lmod, PropertyTable *pt );
    ~CoreClass();
 
    LiveModule *liveModule() const { return m_lmod; }
-   Symbol *symbol() const { return m_sym; }
+   const Symbol *symbol() const { return m_sym; }
 
    PropertyTable &properties() { return *m_properties; }
    const PropertyTable &properties() const { return *m_properties; }

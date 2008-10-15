@@ -714,43 +714,6 @@ void AsmCompiler::addInherit( Pseudo *baseclass )
    delete baseclass;
 }
 
-
-void AsmCompiler::addInheritParam( Pseudo *param )
-{
-   // we must be in a class context
-   if ( m_current == 0 || ! m_current->isClass() )
-   {
-      raiseError( e_no_class );
-   }
-   else {
-      // the symbol must be already defined.
-      ClassDef *cd = m_current->getClassDef();
-      if ( cd->inheritance().empty() ) {
-         fassert( false ); // impossible if the program is correct
-      }
-      else {
-         InheritDef *inherit = ( InheritDef *) cd->inheritance().back();
-         VarDef *vd;
-         switch( param->type() )
-         {
-            case Pseudo::tnil: vd = new VarDef(); break;
-            case Pseudo::imm_int: vd = new VarDef( param->asInt() ); break;
-            case Pseudo::imm_double: vd = new VarDef( param->asDouble() ); break;
-            case Pseudo::imm_string: vd = new VarDef( m_module->addString( param->asString() ) ); break;
-            case Pseudo::tsymbol: vd = new VarDef( param->asSymbol() ); break;
-            default: vd = 0; fassert( false ); // imposible if the program is correct
-         }
-
-         inherit->addParameter( vd );
-      }
-   }
-
-   if ( param->disposeable() )
-      delete param;
-}
-
-
-
 void AsmCompiler::addFuncEnd()
 {
    if ( m_current == 0 )

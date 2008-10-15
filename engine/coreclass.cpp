@@ -24,7 +24,7 @@
 
 namespace Falcon {
 
-CoreClass::CoreClass( VMachine *origin, Symbol *sym, LiveModule *lmod, PropertyTable *pt ):
+CoreClass::CoreClass( VMachine *origin, const Symbol *sym, LiveModule *lmod, PropertyTable *pt ):
    Garbageable( origin, sizeof( this ) + sizeof( void * ) * 2 * pt->size() + sizeof( *pt ) ),
    m_lmod( lmod ),
    m_sym( sym ),

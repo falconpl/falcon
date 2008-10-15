@@ -146,7 +146,6 @@ public:
    void classHas( Pseudo *has );
    void classHasnt( Pseudo *hasnt );
    void addInherit( Pseudo *baseclass );
-   void addInheritParam( Pseudo *param );
 
    void raiseError( int errorNum, int errorLine=0);
    void raiseError( int errorNum, const String &errorp, int errorLine=0);

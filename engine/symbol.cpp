@@ -345,36 +345,12 @@ bool FuncDef::load( Module *mod, Stream *in )
 
 InheritDef::~InheritDef()
 {
-   ListElement *iter = m_params.begin();
-   while( iter != 0 ) {
-      VarDef *param = (VarDef *) iter->data();
-      delete param;
-      iter = iter->next();
-   }
 }
-
-
-void InheritDef::addParameter( VarDef *def )
-{
-   //creates a copy of the passed object.
-   m_params.pushBack( def );
-}
-
 
 bool InheritDef::save( Stream *out ) const
 {
    uint32 parentId = endianInt32( m_baseClass->id() );
    out->write( &parentId, sizeof( parentId ) );
-
-   uint32 size = endianInt32( m_params.size() );
-   out->write( &size, sizeof( size ) );
-
-   ListElement *iter = m_params.begin();
-   while( iter != 0 ) {
-      const VarDef *param = (const VarDef *) iter->data();
-      param->save( out );
-      iter = iter->next();
-   }
 
    return true;
 }
@@ -387,18 +363,6 @@ bool InheritDef::load( Module *mod, Stream *in )
    m_baseClass = mod->getSymbol( parentId );
    if ( m_baseClass == 0 )
       return false;
-
-   uint32 size;
-   in->read(  &size , sizeof( size ) );
-   size = endianInt32( size );
-
-   for( uint32 i = 0; i < size; i++ )
-   {
-      VarDef *vd = new VarDef();
-      m_params.pushBack( vd ); // avoid leak in case of failure.
-      if ( ! vd->load( mod, in ) )
-         return false;
-   }
 
    return true;
 }

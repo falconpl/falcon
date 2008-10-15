@@ -1699,8 +1699,8 @@ void opcodeHandler_INST( register VMachine *vm )
       return;
    }
 
-   Symbol *cls = operand2->asClass()->symbol();
-   Symbol *ctor = cls->getClassDef()->constructor();
+   const Symbol *cls = operand2->asClass()->symbol();
+   const Symbol *ctor = cls->getClassDef()->constructor();
    if ( ctor != 0 ) {
       if( ! vm->callItem( *operand2, pNext, VMachine::e_callInstFrame ) )
          vm->raiseRTError( new TypeError( ErrorParam( e_invop ).extra("INST").origin( e_orig_vm ) ) );
@@ -1713,7 +1713,7 @@ void opcodeHandler_ONCE( register VMachine *vm )
    uint32 pNext = (uint32) vm->getNextNTD32();
    Item *operand2 =  vm->getOpcodeParam( 2 )->dereference();
 
-   Symbol *call = 0;
+   const Symbol *call = 0;
 
    if ( operand2->isFunction() )
    {

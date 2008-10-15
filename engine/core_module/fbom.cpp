@@ -341,7 +341,7 @@ FALCON_FUNC BOM_baseClass( VMachine *vm )
 
    if( vm->self().isObject() )
    {
-      Symbol *cls = vm->self().asObject()->instanceOf();
+      const Symbol *cls = vm->self().asObject()->instanceOf();
       Item *i_cls = vm->findLocalSymbolItem( cls->name() );
 
       if( i_cls != 0 )
