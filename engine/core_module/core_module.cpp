@@ -1030,6 +1030,8 @@ Module* core_module_init()
    table_class->setWKS(true);
    table_class->getClassDef()->setObjectManager( &core_falcon_data_manager );
 
+   self->addClassMethod( table_class, "setHeader", Falcon::core::Table_setHeader ).asSymbol()->
+      addParam("header");
    self->addClassMethod( table_class, "getHeader", Falcon::core::Table_getHeader ).asSymbol()->
       addParam("id");
    self->addClassMethod( table_class, "getColData", Falcon::core::Table_getColData ).asSymbol()->

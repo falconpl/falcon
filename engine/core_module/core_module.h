@@ -396,6 +396,7 @@ reflectionFuncDecl URI_uri_rto;
 
 /** Table class */
 FALCON_FUNC  Table_init ( ::Falcon::VMachine *vm );
+FALCON_FUNC  Table_setHeader ( ::Falcon::VMachine *vm );
 FALCON_FUNC  Table_getHeader ( ::Falcon::VMachine *vm );
 FALCON_FUNC  Table_getColData ( ::Falcon::VMachine *vm );
 FALCON_FUNC  Table_order ( ::Falcon::VMachine *vm );
