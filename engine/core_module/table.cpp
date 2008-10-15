@@ -23,13 +23,14 @@ namespace Falcon {
 /*#
    @class Table
    @brief Home of tabular programming.
+   @optparam heading The heading of the table (array)
 */
 
 FALCON_FUNC Table_init( VMachine* vm )
 {
    // the first parameter is the heading
    Item *i_heading = vm->param( 0 );
-   if ( i_heading == 0 || ! i_heading->isArray() )
+   if ( i_heading != 0 && ! i_heading->isArray() )
    {
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
          .origin( e_orig_runtime )
@@ -38,23 +39,18 @@ FALCON_FUNC Table_init( VMachine* vm )
    }
 
    CoreTable* table = new CoreTable();
-
-   if (! table->setHeader( i_heading->asArray() ) )
+   if( i_heading != 0 )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_param_type, __LINE__ )
-         .origin( e_orig_runtime )
-         .extra( FAL_STR(rtl_invalid_tabhead) ) ) );
-      return;
+      if (! table->setHeader( i_heading->asArray() ) )
+      {
+         vm->raiseModError( new ParamError( ErrorParam( e_param_type, __LINE__ )
+            .origin( e_orig_runtime )
+            .extra( FAL_STR(rtl_invalid_tabhead) ) ) );
+         return;
+      }
    }
 
    uint32 order = table->order();
-   if ( order == 0 )
-   {
-      vm->raiseModError( new ParamError( ErrorParam( e_param_type, __LINE__ )
-         .origin( e_orig_runtime )
-         .extra( FAL_STR(rtl_invalid_order) ) ) );
-      return;
-   }
 
    // create the first table
    CoreArray *page = new CoreArray( vm, vm->paramCount() );
@@ -83,6 +79,48 @@ FALCON_FUNC Table_init( VMachine* vm )
    }
 
    self->setUserData( table );
+}
+
+
+/*#
+   @method setHeader Table
+   @brief Sets the header of an empty table.
+   @param header An array of strings or future bindings that will be used as table header
+   @raise CodeError if the table has already a valid header.
+
+   This method allows to set the header of an uninitialized table after its
+   creation.
+*/
+FALCON_FUNC Table_setHeader( VMachine* vm )
+{
+   // the first parameter is the heading
+   Item *i_heading = vm->param( 0 );
+   if ( i_heading != 0 && ! i_heading->isArray() )
+   {
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
+         .origin( e_orig_runtime )
+         .extra( FAL_STR(rtl_no_tabhead) ) ) );
+      return;
+   }
+
+   CoreObject* self = vm->self().asObject();
+   CoreTable* table = reinterpret_cast<CoreTable*>(self->getUserData());
+
+   if ( table->order() != CoreTable::noitem )
+   {
+      vm->raiseModError( new CodeError( ErrorParam( e_inv_state, __LINE__ )
+         .origin( e_orig_runtime )
+         .extra( FAL_STR(rtl_tabhead_given) ) ) );
+      return;
+   }
+
+   if (! table->setHeader( i_heading->asArray() ) )
+   {
+      vm->raiseModError( new ParamError( ErrorParam( e_param_type, __LINE__ )
+         .origin( e_orig_runtime )
+         .extra( FAL_STR(rtl_invalid_tabhead) ) ) );
+      return;
+   }
 }
 
 /*#

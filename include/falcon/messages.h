@@ -64,7 +64,7 @@ namespace msg {
       err_switch_again,
       err_switch_case,
       err_switch_end,
-      err_inv_setstate,
+      err_inv_state,
       err_prop_no_class,
       err_prop_pinit,
       err_prop_adef,

@@ -65,7 +65,7 @@ const char *en_table[] =
       "Switch directive was already pending",
       "Case directive is not in a switch",
       "Switch not open and .end_switch requested",
-      "Directive .state out of function",
+      "Inconsistent or invalid state",
       "Property definition outside class",
       "Property definition after init definition",
       "Property already defined",

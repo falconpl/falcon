@@ -67,7 +67,7 @@ const String &errorDesc( int code )
       case e_switch_again: return getMessage( msg::err_switch_again);
       case e_switch_case: return getMessage( msg::err_switch_case);
       case e_switch_end: return getMessage( msg::err_switch_end);
-      case e_inv_setstate: return getMessage( msg::err_inv_setstate);
+      case e_inv_state: return getMessage( msg::err_inv_state);
       case e_prop_no_class: return getMessage( msg::err_prop_no_class);
       case e_prop_pinit: return getMessage( msg::err_prop_pinit);
       case e_prop_adef: return getMessage( msg::err_prop_adef);
