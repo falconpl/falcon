@@ -426,6 +426,7 @@ FALCON_FUNC  Table_setPage ( ::Falcon::VMachine *vm );
 FALCON_FUNC  Table_curPage ( ::Falcon::VMachine *vm );
 FALCON_FUNC  Table_insertPage ( ::Falcon::VMachine *vm );
 FALCON_FUNC  Table_removePage ( ::Falcon::VMachine *vm );
+FALCON_FUNC  Table_getPage ( ::Falcon::VMachine *vm );
 
 /** Class used to manage the file stats.
    The FileStat reflection object provides three reflected timestamps

@@ -1303,19 +1303,18 @@ FALCON_FUNC  Table_getPage ( ::Falcon::VMachine *vm )
    }
 
    CoreTable *table = static_cast<CoreTable *>( vm->self().asObject()->getUserData() );
-   uint32 pos = i_pos == 0 ? currentPage() : i_pos->forceInteger();
+   uint32 pos = i_pos == 0 ? table->currentPageId() : i_pos->forceInteger();
+   CoreArray* page = table->page( pos );
 
-
-
-
-
-
-   if ( ! table->Page( pos )
+   if ( page == 0 )
    {
       vm->raiseModError( new AccessError( ErrorParam( e_arracc, __LINE__ )
          .origin( e_orig_runtime )
          .extra( FAL_STR( rtl_no_page ) ) ) );
+      return;
    }
+
+   vm->retval( page->clone() );
 }
 
 }

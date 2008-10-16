@@ -1074,6 +1074,8 @@ Module* core_module_init()
       addParam("pageId")->addParam("data");
    self->addClassMethod( table_class, "removePage", Falcon::core::Table_removePage ).asSymbol()->
       addParam("pageId");
+   self->addClassMethod( table_class, "getPage", Falcon::core::Table_getPage ).asSymbol()->
+      addParam("pageId");
 
 
    return self;
