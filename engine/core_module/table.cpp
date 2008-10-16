@@ -1276,6 +1276,48 @@ FALCON_FUNC  Table_removePage ( ::Falcon::VMachine *vm )
    }
 }
 
+
+/*#
+   @method getPage Table
+   @brief Returns a copy of a given page in the table.
+   @optparam pageId The page to be copied (defaults to the current page).
+   @return An array containings all the rows in the page.
+
+   While the returned item is a copy, and modifying it doesn't
+   cause the change the be reflected on the table, each row
+   returned with it is the actual item stored in the table. So,
+   modifying the nth element of one of the arrays in the returned one
+   will affect the page.
+
+*/
+FALCON_FUNC  Table_getPage ( ::Falcon::VMachine *vm )
+{
+   Item* i_pos = vm->param(0);
+
+   if ( i_pos != 0 && ! i_pos->isOrdinal() )
+   {
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
+         .origin( e_orig_runtime )
+         .extra( "[N]" ) ) );
+      return;
+   }
+
+   CoreTable *table = static_cast<CoreTable *>( vm->self().asObject()->getUserData() );
+   uint32 pos = i_pos == 0 ? currentPage() : i_pos->forceInteger();
+
+
+
+
+
+
+   if ( ! table->Page( pos )
+   {
+      vm->raiseModError( new AccessError( ErrorParam( e_arracc, __LINE__ )
+         .origin( e_orig_runtime )
+         .extra( FAL_STR( rtl_no_page ) ) ) );
+   }
+}
+
 }
 
 /* end of table.cpp */
