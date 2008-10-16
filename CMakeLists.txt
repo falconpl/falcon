@@ -48,8 +48,11 @@ IF( WIN32 )
    SET( FALCON_MOD_INSTALL "${FALCON_BIN_DIR}" )
 ELSE( WIN32 )
    # Set common UNIX warnings.
-   add_definitions(-Wall)
-   
+   IF("${CMAKE_SYSTEM_NAME}" STREQUAL "SunOS")
+   ELSE("${CMAKE_SYSTEM_NAME}" STREQUAL "SunOS")
+      add_definitions(-Wall)
+   ENDIF("${CMAKE_SYSTEM_NAME}" STREQUAL "SunOS")
+ 
    SET( FALCON_MOD_INSTALL "${FALCON_LIB_DIR}/falcon" )
 ENDIF( WIN32 )
 
