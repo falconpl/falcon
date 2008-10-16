@@ -761,7 +761,7 @@ public:
       tinst,
       tconst,
       tattribute,
-      timportalias,
+      timportalias
    } type_t;
 
 private:
