@@ -34,13 +34,13 @@ AsmLexer::AsmLexer( Module *mod, AsmCompiler *cmp, Stream *in ):
       m_line( 1 ),
       m_character( 0 ),
       m_prev_stat(0),
-      
+
       m_module( mod ),
-      m_compiler( cmp ),   
+      m_compiler( cmp ),
       m_in( in ),
       m_done( false ),
       m_bDirective( true ),
-      
+
       m_rega( Pseudo::tregA, false),
       m_regb( Pseudo::tregB, false ),
       m_regs1( Pseudo::tregS1, false ),
@@ -50,7 +50,7 @@ AsmLexer::AsmLexer( Module *mod, AsmCompiler *cmp, Stream *in ):
       m_nil( Pseudo::tnil, false ),
       m_true( Pseudo::imm_true, false ),
       m_false( Pseudo::imm_false, false ),
-      
+
       m_state( e_line )
 {}
 
@@ -887,6 +887,8 @@ int AsmLexer::checkDirectives()
       case 5:
          if ( m_string == "const" )
             return DCONST;
+         if ( m_string == "alias" )
+            return DALIAS;
          if ( m_string == "local" )
             return DLOCAL;
          if ( m_string == "param" )

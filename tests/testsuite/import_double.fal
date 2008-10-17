@@ -13,10 +13,10 @@
 *
 ****************************************************************************/
 // named import
-import test1 from import_sub_2 to first
+import test1 from import_sub_2 in first
 
 // aliased import
-import test1 from import_sub_3 to second
+import test1 from import_sub_3 in second
 
 if first.test1() != "From sub2"
    failure( "import test1 from import_sub_2 = first" )

@@ -1538,12 +1538,12 @@ import_statement:
             COMPILER->raiseError(Falcon::e_syn_import );
          $$ = 0;
       }
-   | IMPORT import_symbol_list FROM SYMBOL OP_TO SYMBOL EOL
+   | IMPORT import_symbol_list FROM SYMBOL OP_IN SYMBOL EOL
       {
          COMPILER->importSymbols( $2, $4, $6, false );
          $$ = 0;
       }
-   | IMPORT import_symbol_list FROM STRING OP_TO SYMBOL EOL
+   | IMPORT import_symbol_list FROM STRING OP_IN SYMBOL EOL
       {
          COMPILER->importSymbols( $2, $4, $6, true );
          $$ = 0;

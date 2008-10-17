@@ -686,9 +686,10 @@ bool testScript( ScriptData *script,
          genTime = Sys::_seconds() - genTime;
 
 
+      String scriptName = scriptModule->name();
       scriptModule->decref();
       scriptModule = new Module();
-      scriptModule->name( script->filename() );
+      scriptModule->name( scriptName );
       scriptModule->path( path );
 
       // reset input.
@@ -730,9 +731,10 @@ bool testScript( ScriptData *script,
 
       scriptModule->save( module_stream, false );
       module_stream->seekBegin( 0 );
+      String scriptName = scriptModule->name();
       scriptModule->decref();
       scriptModule = new Module();
-      scriptModule->name( script->filename() );
+      scriptModule->name( scriptName );
       scriptModule->path( path );
 
       if ( ! scriptModule->load( module_stream, false ) )

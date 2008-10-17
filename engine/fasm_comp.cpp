@@ -24,6 +24,7 @@
 #include <falcon/module.h>
 #include <falcon/stream.h>
 #include <falcon/fassert.h>
+#include <falcon/path.h>
 #include <falcon/error.h>
 
 
@@ -94,6 +95,11 @@ bool AsmCompiler::compile()
       }
       loc_iter.next();
    }
+
+   // should we close the main function?
+
+   if ( m_module->findGlobalSymbol( "__main__" ) == 0 )
+      closeMain();
 
    return (m_errors == 0);
 }
@@ -275,16 +281,45 @@ void AsmCompiler::addLoad( Pseudo *val, bool isFile )
    delete val;
 }
 
-void AsmCompiler::addImport( Pseudo *val, Pseudo *line, Pseudo *mod, Pseudo *alias, bool isFile )
+void AsmCompiler::addImport( Pseudo *val, Pseudo *line, Pseudo *mod, Pseudo *nspace, bool isFile )
 {
-
    String symname = val->asString();
 
    // prefix the name
-   if ( alias != 0 )
-      symname = alias->asString() + "." + symname;
+   if ( nspace != 0 )
+      symname = nspace->asString() + "." + symname;
    else if ( mod != 0 )
-      symname = mod->asString() + "." + symname;
+   {
+      String nselfed;
+
+      // if the namespace starts with self, add also the namespace
+      // with the same name of the module
+      if( isFile )
+      {
+         // we got to convert "/" into "."
+         Path fconv( mod->asString() );
+         nselfed = fconv.getLocation() + "." + fconv.getFile();
+         uint32 pos = 0;
+
+         if ( nselfed.getCharAt(0) == '/' )
+            nselfed = nselfed.subString( 1 );
+
+         while( (pos = nselfed.find( "/", pos ) ) != String::npos ) {
+            nselfed.setCharAt( pos, '.' );
+         }
+      }
+      else if ( mod->asString().getCharAt(0) == '.' ) {
+         nselfed = mod->asString().subString( 1 );
+      }
+      else if ( mod->asString().find( "self." ) == 0 ) {
+         nselfed = mod->asString().subString(5);
+      }
+      else {
+         nselfed = mod->asString();
+      }
+
+      symname = nselfed + "." + symname;
+   }
 
    if ( defined( symname ) )
    {
@@ -302,11 +337,37 @@ void AsmCompiler::addImport( Pseudo *val, Pseudo *line, Pseudo *mod, Pseudo *ali
    // add the module dependency, if required
    if( mod != 0 )
    {
-      if ( alias != 0 )
-         m_module->addDepend( alias->asString(), mod->asString(), true, isFile ); // private
+      if ( nspace != 0 )
+         m_module->addDepend( nspace->asString(), mod->asString(), true, isFile ); // private
       else
          m_module->addDepend( mod->asString(), true, isFile ); // private
    }
+
+   delete val;
+   delete line;
+   delete mod;
+   delete nspace;
+}
+
+void AsmCompiler::addAlias( Pseudo *val, Pseudo *line, Pseudo *mod, Pseudo *alias, bool isFile )
+{
+
+   String symname = alias->asString();
+
+   if ( defined( symname ) )
+   {
+      raiseError( e_already_def, symname );
+   }
+   else
+   {
+      Symbol *sym = m_module->addSymbol( symname );
+      // sym is undef (extern) by default.
+      m_module->addGlobalSymbol( sym )->declaredAt( (int32) line->asInt() );
+      sym->setImportAlias( m_module->addString(val->asString()), m_module->addString(mod->asString()), isFile );
+   }
+
+   // add the module dependency, if required
+   m_module->addDepend( mod->asString(), true, isFile ); // private
 
    delete val;
    delete line;

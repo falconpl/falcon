@@ -132,7 +132,10 @@ public:
    void defineLabel( LabelDef *def );
    void addExtern( Pseudo *val, Pseudo *line );
    void addLoad( Pseudo *val, bool isFile = false );
-   void addImport( Pseudo *val, Pseudo *line, Pseudo *mod=0, Pseudo *alias=0, bool isFile = false );
+   /** Import in a namespace */
+   void addImport( Pseudo *val, Pseudo *line, Pseudo *mod=0, Pseudo *nspace=0, bool isFile = false );
+   /** Import with local alias (import as) */
+   void addAlias( Pseudo *val, Pseudo *line, Pseudo *mod, Pseudo *alias, bool isFile = false );
    void addDLine( Pseudo *line );
 
    void addInstr( unsigned char opCode, Pseudo *op1=0, Pseudo *op2=0, Pseudo *op3=0 );

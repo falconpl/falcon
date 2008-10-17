@@ -296,7 +296,7 @@ void GenHAsm::gen_symbolTable( const Module *mod )
             // see if it's imported
             if ( sym->imported() )
             {
-               // see if we have an alias from where to import it
+               // see if we have a namespace into which import it
                uint32 dotpos = sym->name().rfind( "." );
                if( dotpos != String::npos )
                {
@@ -380,6 +380,21 @@ void GenHAsm::gen_symbolTable( const Module *mod )
          case Symbol::tattribute:
             temp =  ".attrib " + sym->name() + " ";
             temp.writeNumber( (int64) sym->declaredAt() );
+            m_out->writeString( temp );
+         break;
+
+         case Symbol::timportalias:
+            {
+               ImportAlias* ia = sym->getImportAlias();
+               temp =  ".alias " + *ia->name() + " ";
+               temp.writeNumber( (int64) sym->declaredAt() );
+               temp.append( " " );
+               if ( ia->isOrigFileName() ) temp.append( "\"" );
+               temp.append( *ia->origModule() );
+               if ( ia->isOrigFileName() ) temp.append( "\"" );
+               temp.append( " " );
+               temp.append( sym->name() );
+            }
             m_out->writeString( temp );
          break;
 

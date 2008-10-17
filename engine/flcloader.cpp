@@ -43,7 +43,7 @@ FlcLoader::FlcLoader( const String &path ):
       m_saveMandatory( false ),
       m_detectTemplate( true ),
       m_forceTemplate( false ),
-   
+
       m_delayRaise( false ),
       m_compileErrors(0)
 {
@@ -58,11 +58,11 @@ FlcLoader::FlcLoader( const FlcLoader &other ):
       m_viaAssembly( other.m_viaAssembly ),
       m_saveModule( other.m_saveModule ),
       m_sourceIsAssembly( other.m_sourceIsAssembly ),
-   
+
       m_saveMandatory( other.m_saveMandatory ),
       m_detectTemplate( other.m_detectTemplate ),
       m_forceTemplate( other.m_forceTemplate ),
-      
+
       m_delayRaise( other.m_delayRaise ),
       m_compileErrors(0)
 {
@@ -241,7 +241,7 @@ Module *FlcLoader::loadSource( Stream *fin, const String &path )
          bDelFin = true;
          fin = temp_binary;
 
-         // as the output stream will be a text, use a text ranscoder.
+         // as the output stream will be a text, use a text transcoder.
          temp_binary = DefaultTextTranscoder( temp_binary, true );
 
          // generate.

@@ -129,7 +129,9 @@ bool Symbol::load( Stream *in )
          in->read( &strid , sizeof( strid ) );
          strid = endianInt32( strid );
          const String *origMod = m_module->getString( strid );
-         setImportAlias( name, origMod );
+         byte b;
+         in->read( &b, 1 );
+         setImportAlias( name, origMod, b == 1 );
       }
       break;
 
@@ -180,6 +182,10 @@ bool Symbol::save( Stream *out ) const
          out->write( &strid, sizeof( strid ) );
          strid = endianInt32( getImportAlias()->origModule()->id() );
          out->write( &strid, sizeof( strid ) );
+         {
+            byte b = getImportAlias()->isOrigFileName() ? 1 : 0;
+            out->write( &b, 1 );
+         }
       break;
 
       default:

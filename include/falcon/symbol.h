@@ -346,15 +346,18 @@ class FALCON_DYN_CLASS ImportAlias: public BaseAlloc
 {
    const String *m_name;
    const String *m_origModule;
+   bool m_isFileName;
 
 public:
-   ImportAlias( const String* name, const String* origModule ):
+   ImportAlias( const String* name, const String* origModule, bool bIsFileName = false ):
       m_name( name ),
-      m_origModule( origModule )
+      m_origModule( origModule ),
+      m_isFileName( bIsFileName )
    {}
 
    const String *name() const { return m_name; }
    const String *origModule() const { return m_origModule; }
+   bool isOrigFileName() const { return m_isFileName; }
 };
 
 /** Implements a callable symbol.
@@ -972,8 +975,8 @@ public:
    void setInstance( Symbol *base_class ) { clear(); m_type = tinst; m_value.v_symbol = base_class; }
    void setImportAlias( ImportAlias* alias )
       { clear(); m_type = timportalias; m_value.v_importalias = alias; imported(true); }
-   void setImportAlias( const String *name, const String* origModule ) {
-      setImportAlias( new ImportAlias( name, origModule ) ); }
+   void setImportAlias( const String *name, const String* origModule, bool bIsFileName = false ) {
+      setImportAlias( new ImportAlias( name, origModule, bIsFileName ) ); }
 
    const String &name() const { return *m_name; }
    uint32 id() const { return m_id; }

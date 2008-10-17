@@ -86,6 +86,7 @@ inline int yylex (void *lvalp, void *fasm_param)
 %token DMODULE
 %token DLOAD
 %token DIMPORT
+%token DALIAS
 %token DSWITCH
 %token DSELECT
 %token DCASE
@@ -282,6 +283,12 @@ directive:
    }
    | DIMPORT NAME def_line STRING string_or_name {
       COMPILER->addImport( $2, $3, $4, $5, true );
+   }
+   | DALIAS NAME def_line STRING string_or_name {
+      COMPILER->addAlias( $2, $3, $4, $5, true );
+   }
+   | DALIAS NAME def_line NAME string_or_name {
+      COMPILER->addAlias( $2, $3, $4, $5, false );
    }
    | DSWITCH op_variable COMMA NAME { COMPILER->addDSwitch( $2, $4 ); }
    | DSWITCH op_variable COMMA INTEGER { COMPILER->addDSwitch( $2, $4 ); }

@@ -1172,7 +1172,7 @@ Symbol *Compiler::importAlias( const String *symName, const String *fromMod, con
    sym->declaredAt( lexer()->previousLine() );
 
    // sets the alias
-   sym->setImportAlias( m_module->addString( *symName ), m_module->addString( *fromMod ) );
+   sym->setImportAlias( m_module->addString( *symName ), m_module->addString( *fromMod ), filename );
 
    return sym;
 }
