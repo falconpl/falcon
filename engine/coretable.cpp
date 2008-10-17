@@ -321,14 +321,16 @@ Item *CoreTable::getHeaderData( uint32 pos ) const
 
 bool CoreTable::insertPage( CoreObject *self, CoreArray *data, uint32 pos )
 {
+   uint32 i;
+
    // may be long zero; it's ok
-   for( uint32 i = 0; i < data->length(); i ++ )
+   for( i = 0; i < data->length(); i ++ )
    {
       if ( ! (*data)[i].isArray() || (*data)[i].asArray()->length() != m_order )
          return false;
    }
 
-   for( uint32 i = 0; i < data->length(); i ++ )
+   for( i = 0; i < data->length(); i ++ )
    {
       (*data)[i].asArray()->table( self );
    }
