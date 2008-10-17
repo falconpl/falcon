@@ -30,13 +30,7 @@ InteractiveCompiler::InteractiveCompiler( ModuleLoader *l, VMachine *vm ):
    m_loader( l ),
    m_interactive( true )
 {
-   if ( vm == 0 )
-   {
-      m_vm = new VMachine;
-      m_vm->link( core_module_init() );
-   }
-   else
-      m_vm = vm;
+   m_vm = vm;
 
    m_modVersion = 0x010000;
    m_language = "en_EN";
@@ -57,7 +51,6 @@ InteractiveCompiler::InteractiveCompiler( ModuleLoader *l, VMachine *vm ):
 
 InteractiveCompiler::~InteractiveCompiler()
 {
-   delete m_vm;
    m_module->decref();
 }
 

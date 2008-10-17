@@ -52,6 +52,12 @@ GenericStream::GenericStream( const GenericStream &other ):
    m_fsData = other.m_fsData->dup();
 }
 
+GenericStream::~GenericStream()
+{
+   close();
+   delete m_fsData;
+}
+
 bool GenericStream::close()
 {
    UnixFileSysData *data = static_cast< UnixFileSysData *>( m_fsData );

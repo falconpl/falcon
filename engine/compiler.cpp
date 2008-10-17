@@ -192,21 +192,19 @@ void Compiler::reset()
 
 void Compiler::clear()
 {
-   if ( m_metacomp != 0 )
-   {
-      delete m_serviceVM;
-      delete m_serviceLoader;
-      m_serviceVM = 0;
-      m_serviceLoader = 0;
-   }
+
+   delete m_serviceVM;
+   delete m_serviceLoader;
+   delete m_metacomp;
+   m_serviceVM = 0;
+   m_serviceLoader = 0;
+   m_metacomp = 0;
 
    delete m_root;
    delete m_lexer;
-   delete m_metacomp;
 
    m_root = 0;
    m_lexer= 0;
-   m_metacomp = 0;
 
    m_functions.clear();
 
@@ -1247,21 +1245,19 @@ void Compiler::metaCompile( const String &data, int startline )
    // evantually turn on the meta-compiler
    if ( m_metacomp == 0 )
    {
-      VMachine *vm;
-
       if ( m_serviceVM == 0 )
       {
-         vm = new VMachine;
-         vm->link( core_module_init() );
-      }
-      else {
-         vm = m_serviceVM;
+         m_serviceVM = new VMachine;
+         Module*cm = core_module_init();
+         m_serviceVM->link( cm );
+         cm->decref();
       }
 
-      ModuleLoader *modloader = m_serviceLoader == 0 ? new FlcLoader( "." ) : m_serviceLoader;
+      if ( m_serviceLoader == 0 )
+         m_serviceLoader = new FlcLoader( "." );
 
-      vm->stdOut( new StringStream );
-      m_metacomp = new InteractiveCompiler( modloader, vm );
+      m_serviceVM->stdOut( new StringStream );
+      m_metacomp = new InteractiveCompiler( m_serviceLoader, m_serviceVM );
       m_metacomp->errorHandler( errorHandler() );
       // not incremental...
       m_metacomp->lexer()->incremental( false );
@@ -1296,7 +1292,9 @@ void Compiler::metaCompile( const String &data, int startline )
       {
          // pass it to the lexer
          ss->seekBegin(0);
-         m_lexer->appendStream( new StringStream( *ss->getString() ) );
+         StringStream *transferred = new StringStream();
+         transferred->transfer( *ss );
+         m_lexer->appendStream( transferred );
          // and dispose it
          m_metacomp->vm()->stdOut( new StringStream );
       }

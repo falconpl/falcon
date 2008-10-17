@@ -58,6 +58,12 @@ GenericStream::GenericStream( const GenericStream &gs ):
    m_fsData = gs.m_fsData->dup();
 }
 
+GenericStream::~GenericStream()
+{
+   close();
+   delete m_fsData;
+}
+
 bool GenericStream::close()
 {
    WinFileSysData *data = static_cast< WinFileSysData *>( m_fsData );

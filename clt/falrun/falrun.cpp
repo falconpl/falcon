@@ -264,6 +264,7 @@ int main( int argc, char *argv[] )
       vmachine->init();
 
       vmachine->link( core );
+      core->decref();
       Runtime *runtime = new Runtime( modloader );
 
       // preload required modules

@@ -105,6 +105,7 @@ Module* core_module_init()
 
    self->addExtFunc( "len", Falcon::core::len )->
       addParam("item");
+
    self->addExtFunc( "chr", Falcon::core::chr )->
       addParam("number");
    self->addExtFunc( "ord", Falcon::core::ord )->
@@ -1076,7 +1077,6 @@ Module* core_module_init()
       addParam("pageId");
    self->addClassMethod( table_class, "getPage", Falcon::core::Table_getPage ).asSymbol()->
       addParam("pageId");
-
 
    return self;
 }

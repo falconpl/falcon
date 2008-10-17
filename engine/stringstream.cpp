@@ -101,6 +101,20 @@ StringStream::StringStream( const StringStream &strbuf ):
    memcpy( m_membuf, strbuf.m_membuf, m_length );
 }
 
+
+void StringStream::transfer( StringStream &strbuf )
+{
+   if ( m_membuf != 0 )
+      memFree( m_membuf );
+
+   status( strbuf.status() );
+   m_length = strbuf.m_length;
+   m_pos = strbuf.m_pos;
+   m_lastError = strbuf.m_lastError;
+   m_allocated = strbuf.m_allocated;
+   m_membuf = strbuf.closeToBuffer();
+}
+
 bool StringStream::errorDescription( String &description ) const
 {
    switch( m_lastError )

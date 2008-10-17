@@ -107,11 +107,7 @@ public:
 
    GenericStream( const GenericStream &other );
 
-   ~GenericStream()
-   {
-      close();
-      delete m_fsData;
-   }
+   virtual ~GenericStream();
 
    virtual bool close();
    virtual int32 read( void *buffer, int32 size );

@@ -284,6 +284,8 @@ public:
       m_params(0)
    {}
 
+   ~ExtFuncDef();
+
    /** Call this function.
       Will crash if function is not an external function.
    */

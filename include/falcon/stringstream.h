@@ -61,6 +61,12 @@ public:
 
    virtual bool errorDescription( ::Falcon::String &description ) const;
 
+   /** Transfers a string stream buffer into this one.
+      The original buffer is emptied, and this buffer aqcuires the
+      same status, allocation and contents of the other one.
+   */
+   void transfer( StringStream &strbuf );
+
    /** Gets a string copying the content of the stream.
       The memory that is currently held in this object is copied in a string.
       Read-write operations can then continue, and the status of the object
