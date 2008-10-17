@@ -70,7 +70,7 @@ public:
    const Falcon::String describeLine() const { Falcon::String s; describeLine(s); return s; }
 
    virtual void gcMark( Falcon::VMachine *mp ) {};
-   virtual FalconData *clone() const { return 0; }
+   virtual Falcon::FalconData *clone() const { return 0; }
 };
 
 

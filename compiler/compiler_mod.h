@@ -50,7 +50,7 @@ public:
    virtual void setProperty( VMachine *vm, const String &propName, const Item &prop );
 
    // we don't provide a clone() method
-   virtual UserData *clone() const { return 0; }
+   virtual FalconData *clone() const { return 0; }
 };
 
 class ModuleCarrier: public FalconData

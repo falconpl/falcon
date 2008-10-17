@@ -223,7 +223,7 @@ public:
    }
 
    virtual void gcMark( Falcon::VMachine *mp )  {};
-   virtual FalconData *clone() const { return 0; }
+   virtual Falcon::FalconData *clone() const { return 0; }
 
    Document *document() const { return m_doc; }
 };
