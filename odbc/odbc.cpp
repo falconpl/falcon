@@ -21,7 +21,7 @@
 #include "odbc_ext.h"
 
 // Instantiate the driver service
-Falcon::DBIServiceODBC theMySQLService;
+Falcon::DBIServiceODBC theODBCService;
 
 // the main module
 FALCON_MODULE_DECL( const Falcon::EngineData &data )
@@ -31,7 +31,7 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
 
    // Module declaration
    Falcon::Module *self = new Falcon::Module();
-   self->name( "odbc" );
+   self->name( "fodbc" );
    self->engineVersion( FALCON_VERSION_NUM );
    self->version( VERSION_MAJOR, VERSION_MINOR, VERSION_REVISION );
 
@@ -41,15 +41,16 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    // also, we declare a MySQL class, which derives from DBIHandler which
    // is in the DBI module.
    Falcon::Symbol *dbh_class = self->addExternalRef( "%DBIHandle" ); // it's external
-   Falcon::Symbol *mysql_class = self->addClass( "ODBC", Falcon::Ext::ODBC_init );
-   mysql_class->getClassDef()->addInheritance( new Falcon::InheritDef( dbh_class ) );
-   mysql_class->setWKS( true );
+   Falcon::Symbol *odbc_class = self->addClass( "ODBC", Falcon::Ext::ODBC_init );
+   odbc_class->exported(true);
+   odbc_class->getClassDef()->addInheritance( new Falcon::InheritDef( dbh_class ) );
+   odbc_class->setWKS( true );
 
    // we don't have extra functions for the dbhandler of mysql. If whe had,
    // this would be the right place to store them.
 
    // service publication
-   self->publishService( &theMySQLService );
+   self->publishService( &theODBCService );
 
    // we're done
    return self;

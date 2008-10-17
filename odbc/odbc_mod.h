@@ -171,7 +171,7 @@ namespace Falcon
 
 }
 
-extern Falcon::DBIServiceODBC theMySQLService;
+extern Falcon::DBIServiceODBC theODBCService;
 
 #endif /* DBI_ODBC_H */
 

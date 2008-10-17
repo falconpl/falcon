@@ -413,7 +413,7 @@ DBIRecordset *DBITransactionODBC::query( const String &query, dbi_status &retval
    AutoCString asQuery( query );
    ODBCConn *conn = ((DBIHandleODBC *) m_dbh)->getConn();
 
-   RETCODE ret = SQLExecDirect( conn->m_hHstmt, ( SQLCHAR* )asQuery.c_str( ), SQL_NTS );
+   RETCODE ret = SQLExecDirect( conn->m_hHstmt, ( SQLCHAR* )asQuery.c_str( ), asQuery.length() );
 
    if( ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO )
    {
@@ -432,12 +432,12 @@ DBIRecordset *DBITransactionODBC::query( const String &query, dbi_status &retval
 
    retval = dbi_ok;
 
-   if( nRowCount > 0 )
+   if( nRowCount != 0 )
    {
 	   SQLSMALLINT nColCount;
 	   retcode = SQLNumResultCols( conn->m_hHstmt, &nColCount );
 
-	   if( retcode != SQL_SUCCESS && retcode != SQL_SUCCESS_WITH_INFO )
+      if( retcode != SQL_SUCCESS && retcode != SQL_SUCCESS_WITH_INFO )
 	   {
 		   retval = dbi_query_error;
 		   return NULL;
