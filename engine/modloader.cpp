@@ -200,8 +200,8 @@ ModuleLoader::t_filetype
       ModuleLoader::scanForFile( const String &name, bool isPath,
       ModuleLoader::t_filetype scanForType, String &found, bool accSrc )
 {
-   const char *exts[] = { DllLoader::dllExt(), ".fam", ".fal", ".ftd", 0 };
-   const t_filetype ftypes[] = { t_binmod, t_vmmod, t_source, t_source, t_none };
+   const char *exts[] = { ".ftd", ".fal", ".fam", DllLoader::dllExt(), 0 };
+   const t_filetype ftypes[] = { t_source, t_source, t_vmmod, t_binmod,  t_none };
 
    String path_name;
    String expName = name;
@@ -215,6 +215,10 @@ ModuleLoader::t_filetype
    }
 
    t_filetype tf = t_none;
+
+   // record also a second best, in case we can't load a vm mod
+   String secondBest;
+   t_filetype tf_secondBest = t_none;
 
    ListElement *path_elem = m_path.begin();
    while ( tf == t_none && path_elem != 0 )
@@ -264,6 +268,10 @@ ModuleLoader::t_filetype
                     stats.m_mtime->compare( tsNewest ) > 0
                     )
                {
+                  // record the old candidate
+                  tf_secondBest = tf;
+                  secondBest = found;
+
                   // we found a candidate.
                   tsNewest = *stats.m_mtime;
                   found = temp;
@@ -291,16 +299,22 @@ ModuleLoader::t_filetype
                char ch[4];
                in.read( ch, 4 );
                in.close();
-               if( ch[0] !='F' || ch[1] !='M' ||
-                  ch[2] != FALCON_PCODE_VERSION || ch[3] != FALCON_PCODE_MINOR )
+               if(  ch[0] =='F' && ch[1] =='M' &&
+                          ch[2] == FALCON_PCODE_VERSION &&
+                        ch[3] == FALCON_PCODE_MINOR
+                  )
                {
-                  // try again;
-                  tf = t_none;
+                  // yay, we did it!
+                  break;
                }
             }
-            else {
-               // In the end, we were not even to open it.
-               tf = t_none;
+
+            // nay, back to the old second best (or none)
+            tf = tf_secondBest;
+            if ( tf != t_none )
+            {
+               found = secondBest;
+               break;
             }
          }
       }

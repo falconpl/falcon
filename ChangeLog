@@ -60,6 +60,7 @@ Falcon (0.8.11)
            of a callable item.
   * Major: Added import aliasing.
   * Major: Inheritance initialization parameter can now be any expression.
+  * Fixed: Disregarding old bytecode .fam files didn't work correctly.
 
 Falcon (0.8.10)
   * minor: Now classes can be stored in object properties and called to get
