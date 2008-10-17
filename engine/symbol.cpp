@@ -258,7 +258,7 @@ FuncDef::FuncDef( byte *code, uint32 codeSize ):
 
 FuncDef::~FuncDef()
 {
-   delete m_code;
+   memFree( m_code );
 }
 
 Symbol *FuncDef::addParameter( Symbol *sym )
