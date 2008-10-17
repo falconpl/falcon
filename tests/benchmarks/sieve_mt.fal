@@ -1,0 +1,103 @@
+/*
+   FALCON - Benchmarks
+
+   FILE: sieve_mt.fal
+
+   Multithreaded Sieve of Eratosthenes.
+   
+   Measures performance linearity in pure parallel calculation tasks
+   by summing up the computational cycles performed by each thread
+   in a given amount of time.
+   
+   Requires the threading module.
+   
+   Provide the number of desired threads as a parameter (defaults to 1).
+   
+   See also "sieve.fal"
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin:
+
+   -------------------------------------------------------------------
+   (C) Copyright 2008: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+load threading
+
+// Config
+
+const SIZE = 5000
+const BATCH = 20
+const TIME = 30
+
+//=========================
+// The sieve
+//=========================
+
+function sieve()
+   count = 0
+   
+   flags = arrayBuffer( SIZE )
+   for i in [0:SIZE]
+      if flags[i]: continue
+      
+      prime = 2 * i + 1
+      start = prime + i
+      for k in [start:SIZE:prime]
+         flags[k] = true
+      end 
+      count++
+   end
+   return count
+end
+
+//=========================
+// The thread main routine
+//=========================
+
+function threaded()
+   
+   cycles = 0
+   t = seconds()
+   while seconds() < t + TIME      // test for TIME (30) seconds
+       for iter in [0:BATCH]
+         p = sieve()
+       end
+       cycles += BATCH
+   end
+   
+   // return to join() the number of completed loops
+   return cycles
+end
+
+//=========================
+// Main code
+//=========================
+
+// get the argument
+if args.len()
+   tcount = int(args[0])
+   if tcount < 1: tcount = 1
+else
+   tcount = 1
+end
+ 
+// creates nameless threads
+threads = arrayBuffer( tcount )
+t = seconds()
+for i in [0:tcount]
+   threads[i] = Threading.start( threaded )
+end
+
+// wait for the threads to finish
+count = 0
+for i in [0:tcount]
+   count += threads[i].join()
+end
+t = seconds() - t
+
+// results
+f = Format( ".3" )
+> f.format(count / t), " sieves per second"

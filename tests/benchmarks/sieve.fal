@@ -1,0 +1,64 @@
+/*
+   FALCON - Benchmarks
+
+   FILE: sieve.fal
+
+   Timed Sieve of Eratosthenes.
+   
+   Measures performance how many computational loops are performed
+   in  a given amount of time.
+   
+   See also "sieve_mt.fal"
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin:
+
+   -------------------------------------------------------------------
+   (C) Copyright 2008: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+// Config
+
+const SIZE = 5000
+const BATCH = 20
+const TIME = 30
+
+//=========================
+// The sieve
+//=========================
+
+function sieve()
+   count = 0
+   
+   flags = arrayBuffer( SIZE )
+   for i in [0:SIZE]
+      if flags[i]: continue
+      
+      prime = 2 * i + 1
+      start = prime + i
+      for k in [start:SIZE:prime]
+         flags[k] = true
+      end 
+      count++
+   end
+   return count
+end
+
+//=========================
+// Main code
+//=========================
+
+cycles = 0
+t = seconds()
+while seconds() < t + TIME   // Test for TIME (30) seconds
+    for iter in [0:BATCH]
+      p = sieve()
+    end
+    cycles += BATCH
+end
+t = seconds() - t
+
+f = Format( ".3" )
+> f.format(count / t), " sieves per second"
