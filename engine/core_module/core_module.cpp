@@ -491,8 +491,8 @@ Module* core_module_init()
       addParam("x");
    self->addExtFunc( "fact", Falcon::core::flc_math_fact )->
       addParam("x");
-   self->addExtFunc( "P", Falcon::core::flc_math_P )->
-      addParam("x")->addParam("y");
+   //self->addExtFunc( "P", Falcon::core::flc_math_P )->
+   //   addParam("x")->addParam("y");
    self->addExtFunc( "C", Falcon::core::flc_math_C )->
       addParam("x")->addParam("y");
 

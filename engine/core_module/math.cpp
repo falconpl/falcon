@@ -671,7 +671,7 @@ FALCON_FUNC flc_math_fact( ::Falcon::VMachine *vm )
    @note For high values of @x, the function may require
    exponential computational time and power.
 */
-FALCON_FUNC flc_math_P( ::Falcon::VMachine *vm )
+/*FALCON_FUNC flc_math_P( ::Falcon::VMachine *vm )
 {
    Item *num1 = vm->param( 0 );
    Item *num2 = vm->param( 1 );
@@ -692,7 +692,10 @@ FALCON_FUNC flc_math_P( ::Falcon::VMachine *vm )
    }
 
    errno = 0;
-   numeric res = ( fact( num1->forceNumeric() ) /  fact( num1->forceNumeric() - num2->forceNumeric() ) );
+	// check to make sure numbers aren't the same
+	numeric x = (num1->forceNumeric() == num2->forceNumeric()) ? num1->forceNumeric() : (num1->forceNumeric() - num2->forceNumeric());
+
+   numeric res = ( fact( num1->forceNumeric() ) /  fact( x ) );
    if ( errno != 0 )
    {
       vm->raiseModError( new MathError( ErrorParam( e_domain, __LINE__).extra( "P()" ) ) );
@@ -700,7 +703,7 @@ FALCON_FUNC flc_math_P( ::Falcon::VMachine *vm )
    else {
       vm->retval( res );
    }
-}
+} */
 
 /*#
    @function C
