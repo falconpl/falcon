@@ -1303,7 +1303,7 @@ FALCON_FUNC  Table_getPage ( ::Falcon::VMachine *vm )
    }
 
    CoreTable *table = static_cast<CoreTable *>( vm->self().asObject()->getUserData() );
-   uint32 pos = i_pos == 0 ? table->currentPageId() : i_pos->forceInteger();
+   uint32 pos = i_pos == 0 ? table->currentPageId() : (uint32) i_pos->forceInteger();
    CoreArray* page = table->page( pos );
 
    if ( page == 0 )
