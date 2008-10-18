@@ -24,11 +24,6 @@
 #include <errno.h>
 
 
-
-/*#
-
-*/
-
 /*#
    @funset core_math Math functions.
    @brief Functions providing math support to Falcon.
@@ -617,20 +612,23 @@ FALCON_FUNC  flc_abs ( ::Falcon::VMachine *vm )
 
 numeric fact(numeric n)
 {
-	if (n == 1) {
-		return (1);
-	} else {
-		return (fact(n-1) * n);
-	}
+   if (n == 1) {
+      return (1);
+   } else {
+      return (fact(n-1) * n);
+   }
 }
 
 /*#
    @function fact
-   @brief Returns the factorial of the argument. (Uses local C function for recursion)
+   @brief Returns the factorial of the argument.
    @param x Argument.
    @return The factorial of the argument.
 
-   The return value is expressed in numeric.
+   The return value is expressed as a floating point value.
+
+   @note For high values of @x, the function may require
+   exponential computational time and power.
 */
 FALCON_FUNC flc_math_fact( ::Falcon::VMachine *vm )
 {
@@ -646,7 +644,7 @@ FALCON_FUNC flc_math_fact( ::Falcon::VMachine *vm )
 
    if ( num <= 0 )
    {
-	  vm->raiseModError( new ParamError( ErrorParam( e_param_range, __LINE__ ).origin( e_orig_runtime ) ) );
+      vm->raiseModError( new ParamError( ErrorParam( e_param_range, __LINE__ ).origin( e_orig_runtime ) ) );
       return;
    }
 
@@ -654,7 +652,7 @@ FALCON_FUNC flc_math_fact( ::Falcon::VMachine *vm )
    numeric res = fact( num1->forceNumeric() );
    if ( errno != 0 )
    {
-      vm->raiseModError( new MathError( ErrorParam( e_domain, __LINE__).extra( "acos()" ) ) );
+      vm->raiseModError( new MathError( ErrorParam( e_domain, __LINE__).extra( "fact()" ) ) );
    }
    else {
       vm->retval( res );
