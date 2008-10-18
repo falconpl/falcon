@@ -489,6 +489,8 @@ Module* core_module_init()
       addParam("x");
    self->addExtFunc( "abs", Falcon::core::flc_fract )->
       addParam("x");
+   self->addExtFunc( "fact", Falcon::core::flc_math_fact )->
+      addParam("x");
 
    //=======================================================================
    // RTL string api

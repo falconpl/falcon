@@ -615,6 +615,52 @@ FALCON_FUNC  flc_abs ( ::Falcon::VMachine *vm )
    }
 }
 
+numeric fact(numeric n)
+{
+	if (n == 1) {
+		return (1);
+	} else {
+		return (fact(n-1) * n);
+	}
+}
+
+/*#
+   @function fact
+   @brief Returns the factorial of the argument. (Uses local C function for recursion)
+   @param x Argument.
+   @return The factorial of the argument.
+
+   The return value is expressed in numeric.
+*/
+FALCON_FUNC flc_math_fact( ::Falcon::VMachine *vm )
+{
+   Item *num1 = vm->param( 0 );
+
+   if ( num1 == 0 || ! num1->isOrdinal() )
+   {
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
+      return;
+   }
+
+   numeric num = num1->forceNumeric();
+
+   if ( num <= 0 )
+   {
+	  vm->raiseModError( new ParamError( ErrorParam( e_param_range, __LINE__ ).origin( e_orig_runtime ) ) );
+      return;
+   }
+
+   errno = 0;
+   numeric res = fact( num1->forceNumeric() );
+   if ( errno != 0 )
+   {
+      vm->raiseModError( new MathError( ErrorParam( e_domain, __LINE__).extra( "acos()" ) ) );
+   }
+   else {
+      vm->retval( res );
+   }
+}
+
 }
 }
 
