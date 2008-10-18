@@ -659,6 +659,92 @@ FALCON_FUNC flc_math_fact( ::Falcon::VMachine *vm )
    }
 }
 
+/*#
+   @function P
+   @brief Returns the permutation of the arguments.
+   @param x Argument.
+	@param y Argument.
+   @return The permutation of the arguments.
+
+   The return value is expressed as a floating point value.
+
+   @note For high values of @x, the function may require
+   exponential computational time and power.
+*/
+FALCON_FUNC flc_math_P( ::Falcon::VMachine *vm )
+{
+   Item *num1 = vm->param( 0 );
+   Item *num2 = vm->param( 1 );
+
+   if ( num1 == 0 || ! num1->isOrdinal() || num2 == 0 || ! num2->isOrdinal() )
+   {
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
+      return;
+   }
+
+   numeric n = num1->forceNumeric();
+	numeric r = num2->forceNumeric();
+
+   if ( n <= 0 || r <= 0)
+   {
+      vm->raiseModError( new ParamError( ErrorParam( e_param_range, __LINE__ ).origin( e_orig_runtime ) ) );
+      return;
+   }
+
+   errno = 0;
+   numeric res = ( fact( num1->forceNumeric() ) /  fact( num1->forceNumeric() - num2->forceNumeric() ) );
+   if ( errno != 0 )
+   {
+      vm->raiseModError( new MathError( ErrorParam( e_domain, __LINE__).extra( "P()" ) ) );
+   }
+   else {
+      vm->retval( res );
+   }
+}
+
+/*#
+   @function C
+   @brief Returns the combination of the arguments.
+   @param x Argument.
+	@param y Argument.
+   @return The combination of the arguments.
+
+   The return value is expressed as a floating point value.
+
+   @note For high values of @x, the function may require
+   exponential computational time and power.
+*/
+FALCON_FUNC flc_math_C( ::Falcon::VMachine *vm )
+{
+   Item *num1 = vm->param( 0 );
+   Item *num2 = vm->param( 1 );
+
+   if ( num1 == 0 || ! num1->isOrdinal() || num2 == 0 || ! num2->isOrdinal() )
+   {
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
+      return;
+   }
+
+   numeric n = num1->forceNumeric();
+	numeric r = num2->forceNumeric();
+
+   if ( n <= 0 || r <= 0)
+   {
+      vm->raiseModError( new ParamError( ErrorParam( e_param_range, __LINE__ ).origin( e_orig_runtime ) ) );
+      return;
+   }
+
+   errno = 0;
+   numeric res = ( fact( num1->forceNumeric() ) /  fact( num1->forceNumeric() * num2->forceNumeric() ) );
+   if ( errno != 0 )
+   {
+      vm->raiseModError( new MathError( ErrorParam( e_domain, __LINE__).extra( "C()" ) ) );
+   }
+   else {
+      vm->retval( res );
+   }
+}
+
 }
 }
 
