@@ -1,0 +1,66 @@
+/****************************************************************************
+* Falcon test suite
+*
+*
+* ID: 74a
+* Category: functional
+* Subcategory: operator
+* Short: Eval operator
+* Description:
+*   Tests the "!" for eval operations.
+* [/Description]
+*
+****************************************************************************/
+
+// values must ve returned as is.
+test = 100
+if ^* test != 100: failure( "Value 1" )
+
+test = "Hello"
+if ^* test != "Hello": failure( "Value 2" )
+
+// same for array. No copy involved
+test = [1,2,3]
+n = ^* test
+if n.len() != 3: failure( "Non callable Arrays" )
+test[1] = 'a'
+
+if n[1] != 'a': failure( "Array persistency" )
+
+object test1
+   prop = nil
+end
+
+t = ^*test1
+if not (t provides prop): failure( "Deep objects" )
+test1.prop = "something"
+if t.prop != "something": failure( "Deep objects persistency" )
+
+//==========================================
+// Test for functions.
+//
+
+function retSomething( param )
+   if param: return param
+   return "Empty"
+end
+
+if ^* retSomething != "Empty": failure( "Direct call" )
+if ^* .[retSomething "Other Param" ] != "Other Param"
+   failure( "Minimal eval" )
+end
+
+x = .[retSomething .[retSomething .[ retSomething "param" ]]]
+if ^* x != "param"
+   failure( "Full eval" )
+end
+
+// a failed functional evaluation may mess up the return stack.
+^*x
+^*x
+
+if ^*x != "param"
+   failure( "Repeated full eval" )
+end
+
+success()

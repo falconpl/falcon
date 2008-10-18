@@ -180,6 +180,7 @@ void opcodeHandler_TRAC( register VMachine *vm );
 void opcodeHandler_WRT( register VMachine *vm );
 void opcodeHandler_STO( register VMachine *vm );
 void opcodeHandler_FORB( register VMachine *vm );
+void opcodeHandler_EVAL( register VMachine *vm );
 
 /** The Falcon virtual machine.
 
@@ -2341,6 +2342,7 @@ public:
    friend void opcodeHandler_WRT( register VMachine *vm );
    friend void opcodeHandler_STO( register VMachine *vm );
    friend void opcodeHandler_FORB( register VMachine *vm );
+   friend void opcodeHandler_EVAL( register VMachine *vm );
 };
 
 }

@@ -1718,6 +1718,7 @@ void GenHAsm::gen_expression( const Expression *exp, t_valType &xValue )
       case Expression::t_bin_not: mode = 1; opname = "BNOT"; break;
       case Expression::t_strexpand: mode = 1; opname = "STEX"; break;
       case Expression::t_indirect: mode = 1; opname = "INDI"; break;
+      case Expression::t_eval: mode = 1; opname = "EVAL"; break;
 
       case Expression::t_bin_and: mode = 2; opname = "BAND"; break;
       case Expression::t_bin_or: mode = 2; opname = "BOR "; break;

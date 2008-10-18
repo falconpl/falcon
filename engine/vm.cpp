@@ -217,6 +217,7 @@ void VMachine::internal_construct()
    m_opHandlers[ P_WRT ] = opcodeHandler_WRT;
    m_opHandlers[ P_STO ] = opcodeHandler_STO;
    m_opHandlers[ P_FORB ] = opcodeHandler_FORB;
+   m_opHandlers[ P_EVAL ] = opcodeHandler_EVAL;
 
    m_fbom = new BomMap();
    m_fbom->add( "toString" );

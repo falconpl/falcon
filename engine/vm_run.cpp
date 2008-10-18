@@ -4152,7 +4152,7 @@ void opcodeHandler_STO( register VMachine *vm )
    vm->regA() = *operand1;
 }
 
-// 0x69
+// 0x67
 void opcodeHandler_FORB( register VMachine *vm )
 {
    // We know the first operand must be a string
@@ -4167,6 +4167,42 @@ void opcodeHandler_FORB( register VMachine *vm )
 
    vm->regA().setLBind( operand1->asString(),
       new GarbageItem( vm, *operand2 ) );
+}
+
+// 0x68
+void opcodeHandler_EVAL( register VMachine *vm )
+{
+   // We know the first operand must be a string
+   Item *operand1 =  vm->getOpcodeParam( 1 )->dereference();
+
+   if ( operand1->isArray() )
+   {
+      CoreArray *arr = operand1->asArray();
+      if ( arr->length() > 0 && (*arr)[0].isCallable() ) {
+         // fake as if we were called by a function
+         // This will cause functionalEval to produce a correct return frame
+         // in case it needs sub functional evals.
+         vm->createFrame(0);
+         uint32 savePC = vm->m_pc_next;
+         vm->m_pc_next = VMachine::i_pc_call_external_return;
+         if( ! vm->functionalEval( *operand1 ) )
+         {
+            // it wasn't necessary; reset pc to the correct value
+            vm->callReturn();
+            vm->m_pc_next = savePC;
+         }
+         // ok here we're ready either to jump where required by functionalEval or
+         // to go on as usual
+         return;
+      }
+   }
+   else if ( operand1->isCallable() ) {
+      vm->callFrame( *operand1, 0 );
+      return;
+   }
+
+   // by default, just copy the operand
+   vm->regA() = *operand1;
 }
 
 }

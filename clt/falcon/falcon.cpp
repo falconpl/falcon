@@ -673,9 +673,12 @@ void read_line( Stream *in, String &line, uint32 maxSize )
    }
 }
 
-void interactive_mode( FlcLoader *loader )
+void interactive_mode( FlcLoader *loader, Module *core )
 {
-   InteractiveCompiler comp( loader );
+   VMachine intcomp_vm;
+   intcomp_vm.link( core );
+
+   InteractiveCompiler comp( loader, &intcomp_vm );
    comp.errorHandler( loader->errorHandler() );
 
    version();
@@ -970,9 +973,12 @@ int main ( int argc, char *argv[] )
    modLoader->compileTemplate ( options.parse_ftd );
 
    // enter in interactive mode now, if needed.
+   Module *core = core_module_init();
+
    if( options.interactive )
    {
-      interactive_mode( modLoader );
+      interactive_mode( modLoader, core );
+      core->decref();
       exit_sequence(0);
    }
 
@@ -1106,8 +1112,6 @@ int main ( int argc, char *argv[] )
    vmachine->errorHandler ( errHand );
 
    // push the core module
-   Module *core = core_module_init();
-
    // we know we're not launching the core module.
    vmachine->launchAtLink ( false );
    #ifdef NDEBUG

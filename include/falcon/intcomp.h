@@ -56,7 +56,7 @@ public:
       Notice that the compiler will apply its error handler to the loader
       at compile time.
    */
-   InteractiveCompiler( ModuleLoader *loader, VMachine *vm=0 );
+   InteractiveCompiler( ModuleLoader *loader, VMachine *vm );
    ~InteractiveCompiler();
 
    typedef enum {

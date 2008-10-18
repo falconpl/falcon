@@ -149,8 +149,8 @@ inline int flc_src_lex (void *lvalp, void *yyparam)
 %left STAR SLASH PERCENT
 %left POW
 %left SHL SHR
-%right NEG TILDE
-%right DOLLAR INCREMENT DECREMENT BANG AMPER
+%right NEG TILDE CAP_EVAL
+%right DOLLAR INCREMENT DECREMENT AMPER
 
 %type <integer> INTNUM_WITH_MINUS
 %type <fal_adecl> expression_list listpar_expression_list array_decl
@@ -2295,6 +2295,7 @@ expression:
    | DOLLAR INTNUM { $$ = new Falcon::Value( (Falcon::Value *) 0 ); }
    | ATSIGN expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_strexpand, $2 ) ); }
    | DIESIS expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_indirect, $2 ) ); }
+   | CAP_EVAL expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_eval, $2 ) ); }
    | lambda_expr
    | nameless_func
    | nameless_closure

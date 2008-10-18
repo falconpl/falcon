@@ -1594,6 +1594,7 @@ void GenCode::gen_expression( const Expression *exp, t_valType &xValue )
       case Expression::t_bin_not: mode = 1; opname = P_BNOT; break;
       case Expression::t_strexpand: mode = 1; opname = P_STEX; break;
       case Expression::t_indirect: mode = 1; opname = P_INDI; break;
+      case Expression::t_eval: mode = 1; opname = P_EVAL; break;
 
       case Expression::t_bin_and: mode = 2; opname = P_BAND; break;
       case Expression::t_bin_or: mode = 2; opname = P_BOR; break;

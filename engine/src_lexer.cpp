@@ -1230,14 +1230,15 @@ int SrcLexer::checkUnlimitedTokens( uint32 nextChar )
             return AMPER;
          else if ( chr == '~' && nextChar != '=' )
                return TILDE;
-        else if ( chr == '|' && nextChar != '=' && nextChar != '|' )
+         else if ( chr == '|' && nextChar != '=' && nextChar != '|' )
             return VBAR;
          /*
          else if ( chr == '^' && nextChar != '=' && nextChar != '^' )
             return CAP;
-         else if ( chr == '!' && nextChar != '=' )
-               return BANG;*/
-
+         */
+         /*else if ( chr == '!' && nextChar != '=' )
+               return BANG;
+         */
          else if ( chr == '$' )
          {
             return DOLLAR;
@@ -1315,7 +1316,15 @@ int SrcLexer::checkUnlimitedTokens( uint32 nextChar )
       break;
 
       case 2:
-         if ( m_string == "=>" )
+         // EXTENDED CAP OPERATORS
+         if ( m_string == "^=" )
+            return ASSIGN_BXOR;
+         else if ( m_string == "^^" )
+            return CAP_CAP;
+         else if ( m_string == "^*" )
+            return CAP_EVAL;
+         //====
+         else if ( m_string == "=>" )
             return ARROW;
          else if ( m_string == "==" )
             return EEQ;
@@ -1339,12 +1348,8 @@ int SrcLexer::checkUnlimitedTokens( uint32 nextChar )
             return ASSIGN_BAND;
          else if ( m_string == "|=" )
             return ASSIGN_BOR;
-         else if ( m_string == "^=" )
-            return ASSIGN_BXOR;
          else if ( m_string == "&&" )
             return AMPER_AMPER;
-         else if ( m_string == "^^" )
-            return CAP_CAP;
          else if ( m_string == "||" )
             return VBAR_VBAR;
          else if ( m_string == ">>" && nextChar != '=' )

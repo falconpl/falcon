@@ -388,7 +388,17 @@ while it will fill OP2 with an integer item containing 15H.
 */
 #define P_FORB         0x67
 
-#define FLC_PCODE_COUNT 0x68
+/** EVAL
+   Perform functional evaluation, direct call or return the value as-is
+   FORB OP1 -> A := if OP1 is callable
+                      if OP1 is array eval(op1)
+                      else OP1()
+                    else
+                       OP1
+*/
+#define P_EVAL         0x68
+
+#define FLC_PCODE_COUNT 0x69
 
 #endif
 

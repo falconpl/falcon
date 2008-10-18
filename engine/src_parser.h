@@ -144,10 +144,10 @@
      POW = 360,
      SHR = 361,
      SHL = 362,
-     TILDE = 363,
-     NEG = 364,
-     AMPER = 365,
-     BANG = 366,
+     CAP_EVAL = 363,
+     TILDE = 364,
+     NEG = 365,
+     AMPER = 366,
      DECREMENT = 367,
      INCREMENT = 368,
      DOLLAR = 369
@@ -259,10 +259,10 @@
 #define POW 360
 #define SHR 361
 #define SHL 362
-#define TILDE 363
-#define NEG 364
-#define AMPER 365
-#define BANG 366
+#define CAP_EVAL 363
+#define TILDE 364
+#define NEG 365
+#define AMPER 366
 #define DECREMENT 367
 #define INCREMENT 368
 #define DOLLAR 369

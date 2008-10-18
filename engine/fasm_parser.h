@@ -197,7 +197,8 @@
      I_TRAC = 413,
      I_WRT = 414,
      I_STO = 415,
-     I_FORB = 416
+     I_FORB = 416,
+     I_EVAL = 417
    };
 #endif
 /* Tokens.  */
@@ -360,6 +361,7 @@
 #define I_WRT 414
 #define I_STO 415
 #define I_FORB 416
+#define I_EVAL 417
 
 
 

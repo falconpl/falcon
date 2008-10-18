@@ -420,6 +420,8 @@ public:
       t_ashl,
       t_ashr,
 
+      t_eval,
+
       /** An optimized expression is like an unary operator */
       t_optimized
    } operator_t;

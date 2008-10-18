@@ -6,12 +6,12 @@ Falcon (0.8.11)
       - FILE_TYPE_* constants are now static properties of FileStat.
   * major: Added support for module dynamic symbol creation on script request.
   * major: Added import [sym1, sym2, ... symN] from Module grammar.
-  * bugfix: Assigments shouldn't define symbols accessed or called.
-  * bugfix: continue dropping wasn't working for last elements in dictionaries.
+  * fixed: Assigments shouldn't define symbols accessed or called.
+  * fixed: continue dropping wasn't working for last elements in dictionaries.
   * minor: Now it is possible to alter static properties by their class name.
-  * bugfix: Some type error in VM should have been catchable, but was raised hard.
-  * bugfix: The compiler didn't always add module strings as symbol names.
-  * bugfix: Broadcast may have broadcast double in case of a single receiver not
+  * fixed: Some type error in VM should have been catchable, but was raised hard.
+  * fixed: The compiler didn't always add module strings as symbol names.
+  * fixed: Broadcast may have broadcast double in case of a single receiver not
             returning true.
   * minor: Added attributeByName function.
   * major: RTL module is removed (merged with core).
@@ -32,7 +32,7 @@ Falcon (0.8.11)
            endless was not detected.
   * minor: added ETA functions let (assign) and lbind (make late binding).
   * minor: ',' can now be optionally used in .[] decl.
-  * bugfix: dolist wasn't breaking on oob(nil), but on just false.
+  * fixed: dolist wasn't breaking on oob(nil), but on just false.
   * major: Forward binding implemented. Currently used to resolve
            named parameter function calls.
   * minor: include() function added to Core module allowing dynamic module
@@ -42,25 +42,28 @@ Falcon (0.8.11)
            target object into a string. I.e. "H" + 1 => "H1". Integer UNICODE
            operations are now delegated to the "*" and "*=" operators. So,
            "Hello" * 32 + "World" => "Hello World" and "H" *= 65 => "HA".
-  * bugfix: URI.encode() was actually decoding.
+  * fixed: URI.encode() was actually decoding.
   * minor: Introduced xtimes() function which works like times(), but evaluates
            all the items in sequence instead of just running them.
   * major: Added TABULAR PROGRAMMING:
            - Added Item type "TabMethod" to store methods for arrays/tables
            - Self item is now propagated to functions called inside arrays.
            - Table column can now be used as properties of arrays inside the tables.
-  * bugfix: Assignments to properties and vector didn't propagate the assignand
+  * fixed: Assignments to properties and vector didn't propagate the assignand
             value.
-  * bugfix: Fixed compilation on Darwin.
-  * bugfix: Fixed missed mark of some deep item during GC (may have caused random
+  * fixed: Fixed compilation on Darwin.
+  * fixed: Fixed missed mark of some deep item during GC (may have caused random
             crashes).
-  * Major: Added the concept of "blessed dictionary" that is seen as an instance.
-  * Minor: Much more sensible policy of EOL removal in FTD escapes.
-  * Minor: Added function valof returning the value of a variable or the return value
+  * major: Added the concept of "blessed dictionary" that is seen as an instance.
+  * minor: Much more sensible policy of EOL removal in FTD escapes.
+  * minor: Added function valof returning the value of a variable or the return value
            of a callable item.
-  * Major: Added import aliasing.
-  * Major: Inheritance initialization parameter can now be any expression.
-  * Fixed: Disregarding old bytecode .fam files didn't work correctly.
+  * major: Added import aliasing.
+  * major: Inheritance initialization parameter can now be any expression.
+  * fixed: Disregarding old bytecode .fam files didn't work correctly.
+  * minor: Added the eval unary prefix operator, first of cap-special operators: "^*"
+           works a bit like eval() function, but much more efficient, expecially in
+           the fast path.
 
 Falcon (0.8.10)
   * minor: Now classes can be stored in object properties and called to get
