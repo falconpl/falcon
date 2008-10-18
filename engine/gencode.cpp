@@ -143,6 +143,7 @@ GenCode::GenCode( Module *mod ):
 
 GenCode::~GenCode()
 {
+   delete m_outTemp;
 }
 
 void GenCode::generate( const SourceTree *st  )

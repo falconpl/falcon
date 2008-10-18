@@ -632,6 +632,7 @@ bool testScript( ScriptData *script,
    scriptModule->name( scriptPath.getFile() );
    scriptModule->path( path );
 
+
    Compiler compiler( scriptModule, source );
 
    compiler.errorHandler( &fteh );
@@ -751,11 +752,6 @@ bool testScript( ScriptData *script,
    //---------------------------------
    // 2. link
    VMachine vmachine;
-
-   // we want to keep our own copies of the modules.
-   testSuite->incref();
-   core->incref();
-
 
    // so we can link them
    vmachine.link( core );

@@ -51,9 +51,7 @@ StringStream::StringStream( int32 size ):
       m_allocated = 0;
       status( t_open );
    }
-
-
-};
+}
 
 StringStream::StringStream( const String &strbuf ):
    Stream( t_membuf ),

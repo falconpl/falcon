@@ -1,0 +1,47 @@
+/****************************************************************************
+* Falcon test suite
+*
+*
+* ID: 117a
+* Category: rtl
+* Subcategory: reflection
+* Short: Auto-reflectivity
+* Description:
+*   Checks correct update of reflective properties with auto-operations
+* [/Description]
+*
+****************************************************************************/
+
+// create a reflective property
+timestamp = TimeStamp()
+timestamp.day = 5
+
+timestamp.day++
+if timestamp.day != 6: failure( "++" )
+
+timestamp.day--
+if timestamp.day != 5: failure( "--" )
+
+timestamp.day+=5
+if timestamp.day != 10: failure( "+=" )
+
+timestamp.day-=2
+if timestamp.day != 8: failure( "-=" )
+
+timestamp.day*=2
+if timestamp.day != 16: failure( "*=" )
+
+timestamp.day/=2
+if timestamp.day != 8: failure( "/=" )
+
+timestamp.day|=1
+if timestamp.day != 9: failure( "|=" )
+
+timestamp.day&=8
+if timestamp.day != 8: failure( "&=" )
+
+// there are another couple of them, but we trust them.
+
+success()
+
+/* End of file */

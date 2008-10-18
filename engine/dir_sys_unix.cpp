@@ -101,16 +101,19 @@ bool fal_stats( const String &f, FileStat &sts )
 
    UnixSystemTime mtime( fs.st_mtime );
 
-   sts.m_atime = new TimeStamp();
+   if (sts.m_atime == 0 )
+      sts.m_atime = new TimeStamp();
    mtime.m_time_t = fs.st_atime;
    sts.m_atime->fromSystemTime( mtime );    /* time of last access */
 
-   sts.m_ctime = new TimeStamp();
+   if (sts.m_ctime == 0 )
+      sts.m_ctime = new TimeStamp();
    mtime.m_time_t = fs.st_ctime;
    sts.m_ctime->fromSystemTime( mtime );     /* time of last change */
 
    // copy last change time to last modify time
-   sts.m_mtime = new TimeStamp();
+   if (sts.m_mtime == 0 )
+      sts.m_mtime = new TimeStamp();
    sts.m_mtime->fromSystemTime( mtime );
 
    return true;
@@ -181,26 +184,33 @@ bool fal_chdir( const String &f, int32 &fsStatus )
 
 bool fal_getcwd( String &fname, int32 &fsError )
 {
-   uint32 pwdSize = 64;
 
-   char *buffer = (char *) memAlloc( 64 );
+   char buf[256];
+   uint32 pwdSize = 256;
+   char *buffer = buf;
    char *bufret;
 
    while ( (bufret = ::getcwd( buffer, pwdSize )) == 0 && errno == ERANGE ) {
-      pwdSize += 64;
+      pwdSize += 256;
+      if ( buffer != buf )
+         memFree( buffer );
       buffer = ( char * ) memAlloc( pwdSize );
    }
 
-   if ( bufret == 0 )
+   fsError = errno;
+   bool val;
+   if ( bufret != 0 )
    {
-      memFree( buffer );
-      fsError = errno;
-      return 0;
+      val = true;
+      fname.bufferize( bufret );
    }
+   else
+      val = false;
 
-   fname.bufferize( buffer );
-   memFree( buffer );
-   return true;
+   if ( buffer != buf )
+      memFree( buffer );
+
+   return val;
 }
 
 bool fal_chmod( const String &fname, uint32 mode )

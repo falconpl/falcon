@@ -44,7 +44,7 @@ public:
       m_raw_dir( d )
    {}
 
-   ~DirEntry_unix() {
+   virtual ~DirEntry_unix() {
       close();
    }
 

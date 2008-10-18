@@ -92,11 +92,17 @@ InteractiveCompiler::t_ret_type InteractiveCompiler::compileNext( Stream *input 
 
    delete m_root;
    m_root = new SourceTree;
+
    pushContextSet( &m_root->statements() );
 
    // and an empty list for the local function undefined values
-   m_statementVals.clear();
-   List *l = new List;
+   while( ! m_statementVals.empty() )
+   {
+      delete (List*) m_statementVals.back();
+      m_statementVals.popBack();
+   }
+
+   List* l = new List;
    m_statementVals.pushBack( l );
 
    // reset compilation

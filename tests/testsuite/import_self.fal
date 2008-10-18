@@ -1,0 +1,24 @@
+/****************************************************************************
+* Falcon test suite
+*
+*
+* ID: 53d
+* Category: modloader
+* Subcategory: import
+* Short: Import from self-named module
+* Description:
+*   Tests for the module loader being able to load a module named after self.
+* [/Description]
+*
+****************************************************************************/
+// named with self
+import test1 from self.imported
+
+
+if imported.test1() != "From test1"
+   failure( "import test1 from import_self = first" )
+end
+
+success()
+
+/* End of file */

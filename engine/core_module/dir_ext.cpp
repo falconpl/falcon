@@ -277,7 +277,6 @@ FALCON_FUNC FileStat_readStats ( ::Falcon::VMachine *vm )
       return;
    }
 
-   FileStat fstats;
    CoreObject *self = vm->self().asObject();
    FileStatManager::InnerData *id = static_cast<FileStatManager::InnerData *>( self->getUserData() );
    vm->regA().setBoolean( Sys::fal_stats( *name->asString(), id->m_fsdata ) );
@@ -873,7 +872,6 @@ FALCON_FUNC  dirCurrent ( ::Falcon::VMachine *vm )
    int32 fsError;
    String *ret = new GarbageString( vm );
    if( ! Sys::fal_getcwd( *ret, fsError ) ) {
-      delete ret;
       vm->raiseModError( new IoError( ErrorParam( 1014, __LINE__ ).
          origin( e_orig_runtime ).desc( "Cannot read current working directory" ).
          sysError( (uint32) Sys::_lastError() ) ) );
