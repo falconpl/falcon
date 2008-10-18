@@ -1,0 +1,18 @@
+﻿/****************************************************************************
+* Falcon test suite
+*
+* ID: 113f
+* Category: rtl
+* Subcategory: math
+* Short: Fact
+* Description:
+*   Checks for correct working of fact( n ) (factorial) function.
+* [/Description]
+****************************************************************************/
+
+// Integer numbers
+if fact( 5 ) != 120: failure( "fact(5) incorrectly evaluated" )	
+if fact( 10 ) != 3628800: failure( "fact(10) incorrectly evaluated" )
+success()
+
+/* End of file */

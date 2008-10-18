@@ -1,0 +1,22 @@
+﻿/****************************************************************************
+* Falcon test suite
+*
+* ID: 113g
+* Category: rtl
+* Subcategory: math
+* Short: C
+* Description:
+*   Checks for correct working of C( n, r ) (combination) function.
+* [/Description]
+****************************************************************************/
+
+// Integer numbers
+if C( 5, 1 ) != 5: failure( "C(5, 1) incorrectly evaluated" )	
+if C( 5, 2 ) != 10: failure( "C(5, 2) incorrectly evaluated" )
+if C( 5, 3 ) != 10: failure( "C(5, 3) incorrectly evaluated" )
+if C( 5, 4 ) != 5: failure( "C(5, 4) incorrectly evaluated" )
+if C( 5, 5 ) != 1: failure( "C(5, 5) incorrectly evaluated" )
+
+success()
+
+/* End of file */
