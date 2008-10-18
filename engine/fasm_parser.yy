@@ -1047,7 +1047,7 @@ inst_forb:
 ;
 
 inst_eval:
-       I_EVAL op_string    { COMPILER->addInstr( P_EVAL, $2 ); }
+       I_EVAL xoperand     { COMPILER->addInstr( P_EVAL, $2 ); }
      | I_EVAL error        { COMPILER->raiseError(Falcon::e_invop, "EVAL" ); }
 ;
 
