@@ -2,18 +2,15 @@ Missing before 0.9
 
     * Range providers.
     * Specialization of FBOM per type.
-    * Type reflectivity (class Type).
-    * Dynamic class creation from class Type.
+    * Contracts.
     * 3d party DLL support.
-    * Redesign of VM link-export model/module naming.
     * Virtual file system support.
     * Advanced script debug support.
-    * The screen (advanced console I/O) module.
+    * The conio (advanced console I/O) module.
     * The Falcon Abstract Toolkit (FAT), with GTK driver.
     * CGI support module.
     * Internet protocols (http, ftp, smtp, imap ecc.) modules.
     * Mail module.
-    * Table oriented programming paradigm.
     * The language reference.
     * The developer (contributor) guide with doxygen generated API reference.
 

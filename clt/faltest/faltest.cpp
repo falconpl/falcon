@@ -625,12 +625,12 @@ bool testScript( ScriptData *script,
 
    Stream *source = TranscoderFactory( "utf-8", source_f, true );
 
+
    FTErrorHandler fteh;
    scriptModule = new Module();
    Path scriptPath( script->filename() );
    scriptModule->name( scriptPath.getFile() );
    scriptModule->path( path );
-
 
    Compiler compiler( scriptModule, source );
 
@@ -649,7 +649,6 @@ bool testScript( ScriptData *script,
 
    if ( opt_timings )
       compTime = Sys::_seconds() - compTime;
-
 
    // we can get rid of the source here.
    delete source;
@@ -771,27 +770,12 @@ bool testScript( ScriptData *script,
    // we can abandon our reference to the script module
    scriptModule->decref();
 
-   if ( opt_timings )
-      linkTime = Sys::_seconds();
-
-   /*
-   if ( ! vmachine.link( &runtime ) )
-   {
-      trace = fteh.getError();
-      reason = "VM Link step failed.";
-      return false;
-   }
-   */
-
-   if ( opt_timings )
-         linkTime = Sys::_seconds() - linkTime;
    //---------------------------------
    // 3. execute
    TestSuite::setSuccess( true );
    TestSuite::setTimeFactor( opt_tf );
    if ( opt_timings )
          execTime = Sys::_seconds();
-
 
    // inject args and script name
    Item *sname = vmachine.findGlobalItem( "scriptName" );
@@ -806,10 +790,14 @@ bool testScript( ScriptData *script,
       return false;
    }
 
+   if ( opt_timings )
+      linkTime = Sys::_seconds();
+
    //vmachine.launch();
 
    if ( opt_timings )
          execTime = Sys::_seconds() - execTime;
+
    if ( vmachine.lastEvent() != VMachine::eventQuit && vmachine.lastEvent() != VMachine::eventNone )
    {
       trace = fteh.getError();
@@ -1129,12 +1117,14 @@ int main( int argc, char *argv[] )
       return 0;
    }
 
+   // ensure correct accounting by removing extra data.
+   modloader->compiler().reset();
 
-
+   // reset memory tests
    s_totalMem = 0;
    s_totalOutBlocks = 0;
-   executeTests( modloader );
 
+   executeTests( modloader );
 
    // in context to have it destroyed on exit
    {

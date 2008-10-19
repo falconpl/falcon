@@ -1,8 +1,22 @@
 
-                       RELNOTES for Falcon 0.8.10
+                              RELNOTES for Falcon
 
-  This release presents some major breakthrough with respect to the past
-releases.
+                                 Condor Release
+
+                                     0.8.12
+
+
+  Condor release closes the overall language structure extension and completes
+the paradigms supported by falcon adding prototype based OOP and tabular
+programming.
+
+  The functional programming paradingm has been greatly extended through the
+introduction of late bindings and the addition of more functional-oriented
+operators in the the funcext feather module.
+
+  Functionally, late bindings are variables declared in sequences which
+assume values as the evaluation proceeds. They are declared through the "&"
+opeartor, and
 
   Paradigms are now more formalized and the overall stability of the engine
 and of the language has sensibly grown. Be sure to read carefully the
