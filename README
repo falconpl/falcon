@@ -6,40 +6,66 @@
                                   1.0
 
   This is the SDL binding module for The Falcon Programming language.
+Binary downloads, documentation, support and so on is available through
+the following link:
 
+  http://www.falconpl.org/index.ftd?page_id=prjs&prj_id=sdl&sect_id=main
 
 BUILDING
 ========
 
-To build the Falcon SDL, you'll need a well setup Falcon Development
+  To build the Falcon SDL, you'll need a well setup Falcon Development
 Environment, as specified in the relative document at
 
    http://www.falconpl.org/wiki/tiki-index.php?page=The+build+environment
 
-The core must be built and installed in the active tree before starting
-feathers configuration.
+  Once the Core is in place, you should be sure you have installed and 
+configured all the SDL libraries needed for this module:
 
-Then,
+   - SDL base
+   - SDL_ttf
+   - SDL_mixer
+   - SDL_image
 
-   cmake .
-   make
-   make install
+  If you're on linux, chances are that you will have all them pre-installed.
+However you will very probably have to install the relative development 
+packages.
 
-should do.
+  You may obtain the libraries in binary (with headers) and source format from
+
+   http://www.libsdl.com
+
+
+On MS-WINDOWS
+=============
+
+  On the Falcon site, the SDL project area stores a pre-configured set of
+the official SDL libraries and development support files that you can copy
+and install. on the SDL_DEV directory under this one.
+
+  The file contains an sdl_falpb.bat configurator that can be used in place
+of falpb to find all the SDL dependency and create the development tree.
+
+  The sdl_falpb.bat script can be used also as a reference on how to direct
+the cmake build system to find SDL libraries you may have compiled and
+installed elsewhere.
+
+
 
 On MacOSX
 =========
 
-SDL On MacOSX uses the Cocoa framework. This requires the SDL-using
+  SDL On MacOSX uses the Cocoa framework. This requires the SDL-using
 applications to be specially built and configured.
 
-Falcon applications using the SDL Module and initializing the video
+  First, you should install the SDL frameworks provided by SDL at the
+home site we indicated above. 
+
+  Falcon applications using the SDL Module and initializing the video
 output should be run with sdl_falcon rather than with falcon.
 
-sdl_falcon is a MacOSX application which sends COCOA messages to SDL.
+  sdl_falcon is a MacOSX application which sends COCOA messages to SDL.
 Otherwise, it is a completely normal falcon interpreter (it is always
 kept in sync with the official Falcon command line tool).
 
-This application is built and installed exclusively on MacOSX.
-
-
+  This application is built and installed exclusively on MacOSX.
