@@ -3,7 +3,7 @@
 
                                  Condor Release
 
-                                     0.8.12
+                                    0.8.11-10
 
 
   Condor release closes the overall language structure extension and completes
@@ -21,3 +21,7 @@ opeartor, and
   Paradigms are now more formalized and the overall stability of the engine
 and of the language has sensibly grown. Be sure to read carefully the
 ChangeLog in this version, as many aspects of the grammar has been changed.
+
+  Current package is a bleeding edge verison released to test build and
+installation issues on supported platforms.
+
