@@ -4178,7 +4178,7 @@ void opcodeHandler_EVAL( register VMachine *vm )
    if ( operand1->isArray() )
    {
       CoreArray *arr = operand1->asArray();
-      if ( arr->length() > 0 && (*arr)[0].isCallable() ) {
+      if ( arr->length() > 0 ) {
          // fake as if we were called by a function
          // This will cause functionalEval to produce a correct return frame
          // in case it needs sub functional evals.

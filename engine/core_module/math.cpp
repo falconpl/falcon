@@ -630,7 +630,7 @@ static numeric fact( numeric n )
 
    The return value is expressed as a floating point value.
 
-   @note For high values of @x, the function may require
+   @note For high values of @b x, the function may require
    exponential computational time and power.
 */
 FALCON_FUNC flc_math_factorial( ::Falcon::VMachine *vm )
@@ -671,7 +671,7 @@ FALCON_FUNC flc_math_factorial( ::Falcon::VMachine *vm )
 
    The return value is expressed as a floating point value.
 
-   @note For high values of @x, the function may require
+   @note For high values of @b x, the function may require
    exponential computational time and power.
 */
 
@@ -725,7 +725,7 @@ FALCON_FUNC flc_math_permutations( ::Falcon::VMachine *vm )
 
    The return value is expressed as a floating point value.
 
-   @note For high values of @x, the function may require
+   @note For high values of @b x, the function may require
    exponential computational time and power.
 */
 FALCON_FUNC flc_math_combinations( ::Falcon::VMachine *vm )

@@ -25,7 +25,7 @@ n = ^* test
 if n.len() != 3: failure( "Non callable Arrays" )
 test[1] = 'a'
 
-if n[1] != 'a': failure( "Array persistency" )
+if n[1] != 2: failure( "Array non-persistency" )
 
 object test1
    prop = nil
