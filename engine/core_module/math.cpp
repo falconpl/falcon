@@ -426,7 +426,7 @@ FALCON_FUNC flc_math_deg2rad( ::Falcon::VMachine *vm )
    This function returns the non-integer part of a number.
    In example,
    @code
-     > fract( 1.234 )
+   > fract( 1.234 )
    @endcode
 
    would print 0.234.
@@ -610,17 +610,20 @@ FALCON_FUNC  flc_abs ( ::Falcon::VMachine *vm )
    }
 }
 
-numeric fact(numeric n)
+
+static numeric fact( numeric n )
 {
-   if (n == 1) {
-      return (1);
-   } else {
-      return (fact(n-1) * n);
+   numeric res = 1.0;
+   while( n > 0 ) {
+      res *= n;
+      n = n-1.0;
    }
+
+   return res;
 }
 
 /*#
-   @function fact
+   @function factorial
    @brief Returns the factorial of the argument.
    @param x Argument.
    @return The factorial of the argument.
@@ -630,7 +633,7 @@ numeric fact(numeric n)
    @note For high values of @x, the function may require
    exponential computational time and power.
 */
-FALCON_FUNC flc_math_fact( ::Falcon::VMachine *vm )
+FALCON_FUNC flc_math_factorial( ::Falcon::VMachine *vm )
 {
    Item *num1 = vm->param( 0 );
 
@@ -642,14 +645,14 @@ FALCON_FUNC flc_math_fact( ::Falcon::VMachine *vm )
 
    numeric num = num1->forceNumeric();
 
-   if ( num <= 0 )
+   if ( num < 0 )
    {
       vm->raiseModError( new ParamError( ErrorParam( e_param_range, __LINE__ ).origin( e_orig_runtime ) ) );
       return;
    }
 
    errno = 0;
-   numeric res = fact( num1->forceNumeric() );
+   numeric res = fact( num );
    if ( errno != 0 )
    {
       vm->raiseModError( new MathError( ErrorParam( e_domain, __LINE__).extra( "fact()" ) ) );
@@ -660,10 +663,10 @@ FALCON_FUNC flc_math_fact( ::Falcon::VMachine *vm )
 }
 
 /*#
-   @function P
+   @function permutations
    @brief Returns the permutation of the arguments.
-   @param x Argument.
-	@param y Argument.
+   @param x First argument.
+   @param y Second arguments.
    @return The permutation of the arguments.
 
    The return value is expressed as a floating point value.
@@ -671,7 +674,8 @@ FALCON_FUNC flc_math_fact( ::Falcon::VMachine *vm )
    @note For high values of @x, the function may require
    exponential computational time and power.
 */
-/*FALCON_FUNC flc_math_P( ::Falcon::VMachine *vm )
+
+FALCON_FUNC flc_math_permutations( ::Falcon::VMachine *vm )
 {
    Item *num1 = vm->param( 0 );
    Item *num2 = vm->param( 1 );
@@ -683,33 +687,40 @@ FALCON_FUNC flc_math_fact( ::Falcon::VMachine *vm )
    }
 
    numeric n = num1->forceNumeric();
-	numeric r = num2->forceNumeric();
+   numeric r = num2->forceNumeric();
 
-   if ( n <= 0 || r <= 0)
+   // n must be > 0, but r may be zero.
+   if ( n <= 0 || r < 0)
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_param_range, __LINE__ ).origin( e_orig_runtime ) ) );
+      vm->raiseModError( new ParamError( ErrorParam( e_param_range, __LINE__ ).
+      origin( e_orig_runtime ) ) );
       return;
    }
 
    errno = 0;
-	// check to make sure numbers aren't the same
-	numeric x = (num1->forceNumeric() == num2->forceNumeric()) ? num1->forceNumeric() : (num1->forceNumeric() - num2->forceNumeric());
+   // check to make sure numbers aren't the same
+   double res = 1.0;
+   double from = r == 0 ? 1 : n - r + 1;
+   while ( from <= n && errno == 0 )
+   {
+      res *= from;
+      from += 1.0;
+   }
 
-   numeric res = ( fact( num1->forceNumeric() ) /  fact( x ) );
    if ( errno != 0 )
    {
-      vm->raiseModError( new MathError( ErrorParam( e_domain, __LINE__).extra( "P()" ) ) );
+      vm->raiseModError( new MathError( ErrorParam( e_domain, __LINE__).extra( "permutations()" ) ) );
    }
    else {
       vm->retval( res );
    }
-} */
+}
 
 /*#
-   @function C
+   @function combinations
    @brief Returns the combination of the arguments.
-   @param x Argument.
-	@param y Argument.
+   @param x First argument.
+   @param y Second arguments.
    @return The combination of the arguments.
 
    The return value is expressed as a floating point value.
@@ -717,7 +728,7 @@ FALCON_FUNC flc_math_fact( ::Falcon::VMachine *vm )
    @note For high values of @x, the function may require
    exponential computational time and power.
 */
-FALCON_FUNC flc_math_C( ::Falcon::VMachine *vm )
+FALCON_FUNC flc_math_combinations( ::Falcon::VMachine *vm )
 {
    Item *num1 = vm->param( 0 );
    Item *num2 = vm->param( 1 );
@@ -729,22 +740,29 @@ FALCON_FUNC flc_math_C( ::Falcon::VMachine *vm )
    }
 
    numeric n = num1->forceNumeric();
-	numeric r = num2->forceNumeric();
-
-   if ( n <= 0 || r <= 0)
+   numeric r = num2->forceNumeric();
+   // check to make sure numbers aren't the same
+   if ( n <= 0 || r < 0)
    {
       vm->raiseModError( new ParamError( ErrorParam( e_param_range, __LINE__ ).origin( e_orig_runtime ) ) );
       return;
    }
 
-   errno = 0;
-   numeric res = ( fact( num1->forceNumeric() ) /  fact( num1->forceNumeric() * num2->forceNumeric() ) );
-   if ( errno != 0 )
+   if ( n == r )
    {
-      vm->raiseModError( new MathError( ErrorParam( e_domain, __LINE__).extra( "C()" ) ) );
+      vm->retval( n );
    }
-   else {
-      vm->retval( res );
+   else
+   {
+      errno = 0;
+      numeric res = fact( n ) / (fact( r ) * fact(n-r));
+      if ( errno != 0 )
+      {
+         vm->raiseModError( new MathError( ErrorParam( e_domain, __LINE__).extra( "combinations()" ) ) );
+      }
+      else {
+         vm->retval( res );
+      }
    }
 }
 

@@ -1,0 +1,23 @@
+/****************************************************************************
+* Falcon test suite
+*
+*
+* ID: 10e
+* Category: types
+* Subcategory: strings
+* Short: String widening.
+* Description:
+*   Tries to widen some strings from 1 to 2 bytes representation.
+*
+* [/Description]
+*
+****************************************************************************/
+
+
+string = "abc"
+string[1:2] = "あばたとは、天然痘が治った後、皮膚に残る小さなくぼみ。"
+if string != "aあばたとは、天然痘が治った後、皮膚に残る小さなくぼみ。c"
+   failure( "insertion" )
+end
+
+success()

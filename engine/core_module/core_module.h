@@ -307,9 +307,9 @@ FALCON_FUNC  flc_math_atan ( ::Falcon::VMachine *vm );
 FALCON_FUNC  flc_math_atan2 ( ::Falcon::VMachine *vm );
 FALCON_FUNC  flc_math_deg2rad ( ::Falcon::VMachine *vm );
 FALCON_FUNC  flc_math_rad2deg ( ::Falcon::VMachine *vm );
-FALCON_FUNC  flc_math_fact ( ::Falcon::VMachine *vm );
-//FALCON_FUNC  flc_math_P ( ::Falcon::VMachine *vm );
-FALCON_FUNC  flc_math_C ( ::Falcon::VMachine *vm );
+FALCON_FUNC  flc_math_factorial ( ::Falcon::VMachine *vm );
+FALCON_FUNC  flc_math_permutations ( ::Falcon::VMachine *vm );
+FALCON_FUNC  flc_math_combinations ( ::Falcon::VMachine *vm );
 
 FALCON_FUNC  serialize ( ::Falcon::VMachine *vm );
 FALCON_FUNC  deserialize ( ::Falcon::VMachine *vm );

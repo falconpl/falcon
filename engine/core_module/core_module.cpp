@@ -489,11 +489,11 @@ Module* core_module_init()
       addParam("x");
    self->addExtFunc( "abs", Falcon::core::flc_fract )->
       addParam("x");
-   self->addExtFunc( "fact", Falcon::core::flc_math_fact )->
+   self->addExtFunc( "factorial", Falcon::core::flc_math_factorial )->
       addParam("x");
-   //self->addExtFunc( "P", Falcon::core::flc_math_P )->
-   //   addParam("x")->addParam("y");
-   self->addExtFunc( "C", Falcon::core::flc_math_C )->
+   self->addExtFunc( "permutations", Falcon::core::flc_math_permutations )->
+      addParam("x")->addParam("y");
+   self->addExtFunc( "combinations", Falcon::core::flc_math_combinations )->
       addParam("x")->addParam("y");
 
    //=======================================================================

@@ -200,7 +200,6 @@ public:
    virtual uint32 length( const String *str ) const;
    virtual uint32 getCharAt( const String *str, uint32 pos ) const;
    virtual void setCharAt( String *str, uint32 pos, uint32 chr ) const;
-   virtual void insert( String *str, uint32 pos, uint32 len, const String *source ) const;
    virtual void remove( String *str, uint32 pos, uint32 len ) const;
    virtual void reserve( String *str, uint32 size, bool relative = false, bool block = false ) const;
    virtual const Base *bufferedManipulator() const;
@@ -214,7 +213,6 @@ public:
    virtual uint32 length( const String *str ) const;
    virtual uint32 getCharAt( const String *str, uint32 pos ) const;
    virtual void setCharAt( String *str, uint32 pos, uint32 chr ) const;
-   virtual void insert( String *str, uint32 pos, uint32 len, const String *source ) const;
    virtual void remove( String *str, uint32 pos, uint32 len ) const;
    virtual void reserve( String *str, uint32 size, bool relative = false, bool block = false ) const;
    virtual const Base *bufferedManipulator() const;
@@ -227,7 +225,6 @@ public:
    virtual uint32 length( const String *str ) const;
    virtual uint32 getCharAt( const String *str, uint32 pos ) const;
    virtual void setCharAt( String *str, uint32 pos, uint32 chr ) const;
-   virtual void insert( String *str, uint32 pos, uint32 len, const String *source ) const;
 };
 
 class FALCON_DYN_CLASS Buffer32: public Buffer16
@@ -238,7 +235,6 @@ public:
    virtual uint32 length( const String *str ) const;
    virtual uint32 getCharAt( const String *str, uint32 pos ) const;
    virtual void setCharAt( String *str, uint32 pos, uint32 chr ) const;
-   virtual void insert( String *str, uint32 pos, uint32 len, const String *source ) const;
 };
 
 extern FALCON_DYN_SYM Static handler_static;

@@ -39,6 +39,78 @@ Static32 handler_static32;
 Buffer32 handler_buffer32;
 
 
+template<typename t1, typename t2>
+inline void copySized( byte* dest_, byte* src_, uint32 size )
+{
+   if ( size != 0 )
+   {
+      t1* dest = (t1*) dest_;
+      t2* src = (t2*) src_;
+
+      do {
+         size--;
+         dest[size] = (t1) src[size];
+      } while( size > 0 );
+   }
+}
+
+template<typename T>
+inline void copySame( byte* dest_, byte* src_, uint32 size )
+{
+   if ( size != 0 )
+   {
+      uint32 len = size * sizeof(T);
+      T* dest = (T*) dest_;
+      T* src = (T*) src_;
+
+
+      // overlapping? -- use memmove, else use memcpy; but do the check only if worth
+      if( len < 10 ||
+            (src + len > dest) ||
+            (dest + len > src )
+      )
+         memmove( dest, src, len );
+      else
+         memcpy( dest, src, len );
+   }
+}
+
+// service function; adapts a smaller buffer into a larger one
+// srclen is in "elements" (bytes * charLen).
+// // destCharLen >= srcCharLen
+// returns also the dynamic buffer manipulator useful to handle the target buffer
+static Base* adaptBuffer( byte *srcBuffer, uint32 srcPos, uint32 srcCharLen,
+                          byte *destBuffer, uint32 destPos, uint32 destCharLen,
+                          uint32 srcLen )
+{
+   srcBuffer += srcPos * srcCharLen;
+   destBuffer += destPos * destCharLen;
+
+   switch( destCharLen )
+   {
+      case 1:
+         copySame<byte>( destBuffer, srcBuffer, srcLen );
+         return &handler_buffer;
+
+      case 2:
+         switch( srcCharLen ) {
+            case 1: copySized<uint16,byte>( destBuffer, srcBuffer, srcLen ); break;
+            case 2: copySame<uint16>( destBuffer, srcBuffer, srcLen ); break;
+         }
+         return &handler_buffer16;
+
+      case 4:
+         switch( srcCharLen ) {
+            case 1: copySized<uint32,byte>( destBuffer, srcBuffer, srcLen ); break;
+            case 2: copySized<uint32,uint16>( destBuffer, srcBuffer, srcLen ); break;
+            case 4: copySame<uint32>( destBuffer, srcBuffer, srcLen ); break;
+         }
+         return &handler_buffer32;
+   }
+
+   return 0;
+}
+
 uint32 Byte::length( const String *str ) const
 {
    return str->size() / charSize();
@@ -616,262 +688,41 @@ void Buffer32::setCharAt( String *str, uint32 pos, uint32 chr ) const
 
 void Static::insert( String *str, uint32 pos, uint32 len, const String *source ) const
 {
-   // 8-bit string, len == size
+   uint32 sourceLen = source->length();
+
+   uint32 strLen = str->length();
+
    if ( pos + len > str->size() )
       len = str->size() - pos;
 
-   uint32 finalSize=0;
-   byte *mem=0;
-   switch( source->manipulator()->charSize() )
-   {
-      case 1:
-      {
-         // same char size
-         finalSize = str->size() + source->size() - len;
+   uint32 strCharSize = str->manipulator()->charSize();
+   uint32 posBytes = pos *strCharSize;
+   uint32 lenBytes = len *strCharSize;
 
-         mem = (byte *) memAlloc( finalSize );
-         if ( pos > 0 )
-            memcpy( mem, str->getRawStorage(), pos );
+   uint32 destCharSize = source->manipulator()->charSize() > str->manipulator()->charSize() ?
+      source->manipulator()->charSize() : str->manipulator()->charSize() ; // can be 1 or larger
 
-         if ( source->size() > 0 )
-            memcpy( mem + pos, source->getRawStorage(), source->size() );
+   uint32 finalSize = destCharSize * (strLen - len + sourceLen );
+   uint32 finalAlloc = ((finalSize / FALCON_STRING_ALLOCATION_BLOCK) + 1) *
+      FALCON_STRING_ALLOCATION_BLOCK;
 
-         if ( pos + len < str->size() )
-            memcpy( mem + pos + source->size(), str->getRawStorage() + pos + len, str->size() - pos - len );
+   // we know we have to relocate, so just do the relocation step
+   byte *mem = (byte*) memAlloc( finalAlloc );
+   if ( pos > 0 )
+      adaptBuffer( str->getRawStorage(), 0, strCharSize, mem, 0, destCharSize, pos );
 
-           str->manipulator(&handler_buffer);
-      }
-      break;
+   str->manipulator(
+      adaptBuffer( source->getRawStorage(), 0, source->manipulator()->charSize(),
+                   mem, pos, destCharSize, sourceLen ) );
 
-      case 2:
-      {
-         // double size
-         finalSize = str->size() * 2 + source->size() - len * 2;
-         uint16 *mem16 = ( uint16 * ) memAlloc( finalSize );
-         mem = ( byte * ) mem16;
-         byte *tgtBuf = str->getRawStorage();
-         uint32 strLen = str->size();
-         uint32 sourceLen = source->length();
-
-         for( uint32 frontPos = 0; frontPos < pos; frontPos ++ )
-            mem16[ frontPos ] = (uint16) tgtBuf[ frontPos ];
-
-         // using mem16 + pos so we have already * x factor in target string
-         if ( source->size() > 0 )
-            memcpy( mem16 + pos, source->getRawStorage(), source->size() );
-
-         for( uint32 memPos = pos + sourceLen, backPos = pos + len; backPos < strLen; memPos++, backPos ++ )
-            mem16[ memPos ] = (uint16) tgtBuf[ backPos ];
-
-         str->manipulator(&handler_buffer16);
-      }
-      break;
-
-      case 4:
-      {
-         // quad size
-         finalSize = str->size() * 4 + source->size() - len * 4;
-         uint32 *mem32 = ( uint32 * ) memAlloc( finalSize );
-         mem = ( byte * ) mem32;
-         byte *tgtBuf = str->getRawStorage();
-         uint32 strLen = str->size();
-         uint32 sourceLen = source->length();
-
-
-         for( uint32 frontPos = 0; frontPos < pos; frontPos ++ )
-            mem32[ frontPos ] = (uint32) tgtBuf[ frontPos ];
-
-         // using mem32 + pos so we have already * x factor in target string
-         if ( source->size() > 0 )
-            memcpy( mem32 + pos, source->getRawStorage(), source->size() );
-
-         for( uint32 memPos = pos + sourceLen, backPos = pos + len; backPos < strLen; memPos++, backPos ++ )
-            mem32[ memPos ] = (uint32) tgtBuf[ backPos ];
-
-         str->manipulator(&handler_buffer32);
-      }
-      break;
-   }
+   if ( pos + len < strLen )
+      adaptBuffer( str->getRawStorage(), pos + len, strCharSize,
+                   mem,  pos + sourceLen, destCharSize,
+                   strLen - pos - len );
 
    str->size( finalSize );
    uint32 oldSize = str->allocated();
-   str->allocated( finalSize );
-   str->setRawStorage( mem );
-
-   str->checkAdjustSize( oldSize );
-}
-
-void Static16::insert( String *str, uint32 pos, uint32 len, const String *source ) const
-{
-   uint32 strLen = str->length();
-   uint32 sourceLen = source->length();
-   uint16 *tgtBuf = (uint16 *) str->getRawStorage();
-   if ( pos + len > strLen )
-      len = strLen - pos;
-
-   uint32 finalSize=0;
-   byte *mem=0;
-   switch( source->manipulator()->charSize() )
-   {
-      case 1:
-      {
-         // shorter - will still be int16 in the end.
-         finalSize = str->size() + (source->size() - len) * 2;
-         uint16 *mem16 = ( uint16 * ) memAlloc( finalSize );
-         mem = ( byte * ) mem16;
-         byte *srcBuf = source->getRawStorage();
-
-         if ( pos > 0 )
-            memcpy( mem, tgtBuf, pos * 2 );
-
-         // using mem16 + pos so we have already * x factor in target string
-         for( uint32 middlePos = 0; middlePos < sourceLen; middlePos ++ )
-            mem16[ middlePos + pos ] = (uint16) srcBuf[ middlePos ];
-
-         if ( pos + len < strLen )
-            memcpy( mem16 + pos + sourceLen, tgtBuf + pos + len, ( strLen - pos - len ) * 2 );
-
-         str->manipulator(&handler_buffer16);
-      }
-      break;
-
-      case 2:
-      {
-         // same size
-         finalSize = str->size() + source->size() - (len * 2);
-         uint16 *mem16 = ( uint16 * ) memAlloc( finalSize );
-         mem = ( byte * ) mem16;
-
-         if ( pos > 0 )
-            memcpy( mem16, tgtBuf, pos * 2 );
-
-         // using mem16 + pos so we have already * x factor in target string
-         if ( source->size() > 0 )
-            memcpy( mem16 + pos, source->getRawStorage(), source->size() );
-
-         if ( pos + len < strLen )
-            memcpy( mem16 + pos + sourceLen, tgtBuf + pos + len, (strLen - pos - len)*2 );
-
-         str->manipulator(&handler_buffer16);
-      }
-      break;
-
-      case 4:
-      {
-         // double size
-         finalSize = str->size() * 2 + source->size() - (len * 4);
-         uint32 *mem32 = (uint32 *) memAlloc( finalSize );
-         mem = (byte *) mem32;
-
-         for( uint32 frontPos = 0; frontPos < pos; frontPos ++ )
-            mem32[ frontPos ] = (uint32) tgtBuf[ frontPos ];
-
-         // using mem32 + pos so we have already * x factor in target string
-         if ( source->size() > 0 )
-            memcpy( mem32 + pos, source->getRawStorage(), source->size() );
-
-         for( uint32 memPos = pos + sourceLen, backPos = pos + len; backPos < strLen; memPos++, backPos ++ )
-            mem32[ memPos ] = (uint32) tgtBuf[ backPos ];
-
-         str->manipulator(&handler_buffer32);
-      }
-      break;
-   }
-
-   uint32 oldSize = str->allocated();
-
-   str->size( finalSize );
-   str->allocated( finalSize );
-   str->setRawStorage( mem );
-
-   str->checkAdjustSize( oldSize );
-}
-
-
-void Static32::insert( String *str, uint32 pos, uint32 len, const String *source ) const
-{
-   uint32 strLen = str->length();
-   uint32 sourceLen = source->length();
-   uint32 *tgtBuf = (uint32 *) str->getRawStorage();
-   if ( pos + len > strLen )
-      len = strLen - pos;
-
-   uint32 finalSize=0;
-   byte *mem=0;
-   switch( source->manipulator()->charSize() )
-   {
-      case 1:
-      {
-         // shorter - will still be int32 in the end.
-         finalSize = str->size() + (source->size() - len) * 4;
-         uint32 *mem32 = ( uint32 * ) memAlloc( finalSize );
-         mem = (byte *) mem32;
-         byte *srcBuf = source->getRawStorage();
-
-         if ( pos > 0 )
-            memcpy( mem, tgtBuf, pos * 4 );
-
-         // using mem32 + pos so we have already * x factor in target string
-         for( uint32 middlePos = 0; middlePos < sourceLen; middlePos ++ )
-            mem32[ middlePos + pos ] = (uint32) srcBuf[ middlePos ];
-
-         if ( pos + len < strLen )
-            memcpy( mem32 + pos + sourceLen, tgtBuf + pos + len, ( strLen - pos - len ) * 4 );
-
-         str->manipulator(&handler_buffer32);
-      }
-      break;
-
-      case 2:
-      {
-         // shorter - will still be int32 in the end.
-         finalSize = str->size() + source->size() - (len * 2);
-         uint32 *mem32 = ( uint32 * ) memAlloc( finalSize );
-         mem = ( byte * ) mem32;
-         uint16 *srcBuf = (uint16 *) source->getRawStorage();
-
-         if ( pos > 0 )
-            memcpy( mem, tgtBuf, pos * 4 );
-
-         // using mem32 + pos so we have already * x factor in target string
-         for( uint32 middlePos = 0; middlePos < sourceLen; middlePos ++ )
-            mem32[ middlePos + pos ] = (uint32) srcBuf[ middlePos ];
-
-         if ( pos + len < strLen )
-            memcpy( mem32 + pos + sourceLen, tgtBuf + pos + len, ( strLen - pos - len ) * 4 );
-
-         str->manipulator(&handler_buffer32);
-      }
-      break;
-
-      case 4:
-      {
-         // same size
-         finalSize = str->size() + source->size() - (len * 4);
-         uint32 *mem32 = (uint32 *) memAlloc( finalSize );
-         mem = (byte *) mem32;
-
-         // same char size
-         finalSize = str->size() + source->size() - len;
-         mem = (byte *) memAlloc( finalSize );
-         if ( pos > 0 )
-            memcpy( mem32, tgtBuf, pos * 4 );
-
-         if ( source->size() > 0 )
-            memcpy( mem32 + pos, source->getRawStorage(), source->size() );
-
-         if ( pos + len < strLen )
-            memcpy( mem32 + pos + strLen, str->getRawStorage() + pos + len, (strLen - pos - len ) * 4 );
-
-         str->manipulator(&handler_buffer32);
-      }
-      break;
-   }
-
-   uint32 oldSize = str->allocated();
-
-   str->size( finalSize );
-   str->allocated( finalSize );
+   str->allocated( finalAlloc );
    str->setRawStorage( mem );
 
    str->checkAdjustSize( oldSize );
@@ -880,289 +731,84 @@ void Static32::insert( String *str, uint32 pos, uint32 len, const String *source
 
 void Buffer::insert( String *str, uint32 pos, uint32 len, const String *source ) const
 {
-   // 8-bit string, len == size
+   uint32 sourceLen = source->length();
+
+   uint32 strLen = str->length();
    if ( pos + len > str->size() )
       len = str->size() - pos;
 
-   uint32 finalSize=0;
-   byte *mem=0;
-	bool toFree = str->allocated() > 0;
-   byte *tgtBuf = str->getRawStorage();
+   uint32 strCharSize = str->manipulator()->charSize();
+   uint32 posBytes = pos *strCharSize;
+   uint32 lenBytes = len *strCharSize;
 
-   switch( source->manipulator()->charSize() )
+   uint32 destCharSize = source->manipulator()->charSize() > strCharSize ?
+      source->manipulator()->charSize() : strCharSize; // can be 1 or larger
+
+   uint32 finalSize = destCharSize * (strLen - len + sourceLen );
+
+   // should we re-allocate?
+   if( finalSize > str->allocated() )
    {
-      case 1:
+
+      uint32 finalAlloc = ((finalSize / FALCON_STRING_ALLOCATION_BLOCK) + 1) *
+         FALCON_STRING_ALLOCATION_BLOCK;
+
+      // we know we have to relocate, so just do the relocation step
+      byte *mem = (byte*) memAlloc( finalAlloc );
+      if ( pos > 0 )
+         adaptBuffer( str->getRawStorage(), 0, strCharSize,
+                      mem, 0, destCharSize, pos );
+
+      str->manipulator(
+         adaptBuffer( source->getRawStorage(), 0, source->manipulator()->charSize(),
+                      mem, pos, destCharSize, sourceLen ) );
+
+      if ( pos + len < strLen )
+         adaptBuffer( str->getRawStorage(), pos + len, strCharSize,
+                      mem, pos+sourceLen, destCharSize,
+                      strLen - pos - len );
+
+      uint32 oldSize = str->allocated();
+      str->allocated( finalAlloc );
+      str->checkAdjustSize( oldSize );
+      str->setRawStorage( mem );
+   }
+   else
+   {
+      // should we move the tail?
+      if ( pos + len < strLen )
       {
-         // same char size
-         finalSize = str->size() + source->size() - len;
-         mem = ( byte * ) memAlloc( finalSize );
-
-         if ( pos > 0 )
-            memcpy( mem, str->getRawStorage(), pos );
-
-         if ( source->size() > 0 )
-            memcpy( mem + pos, source->getRawStorage(), source->size() );
-
-         if ( pos + len < str->size() )
-            memcpy( mem + pos + source->size(), str->getRawStorage() + pos + len, str->size() - pos - len );
-
+         // can we maintain our char size?
+         if( destCharSize == strCharSize )
+         {
+            // then just move the postfix away
+            memmove( str->getRawStorage() + posBytes + source->size(),
+                     str->getRawStorage() + posBytes + lenBytes,
+                     str->size() - posBytes - lenBytes );
+         }
+         else {
+            // adapt it to the new size.
+               adaptBuffer( str->getRawStorage(), pos + len, strCharSize,
+                  str->getRawStorage(), pos + sourceLen, destCharSize,
+                  strLen - pos - len );
+         }
       }
-      break;
 
-      case 2:
-      {
-         // double size
-         finalSize = str->size() * 2 + source->size() - len * 2;
-         uint32 strLen = str->size();
-         uint32 sourceLen = source->length();
+      // adapt the incoming part
+      str->manipulator(
+         adaptBuffer( source->getRawStorage(), 0, source->manipulator()->charSize(),
+                     str->getRawStorage(), pos, destCharSize,
+                     sourceLen ) );
 
-         uint16 *mem16 = ( uint16 * ) memAlloc( finalSize );
-         mem = ( byte * ) mem16;
-
-         for( uint32 frontPos = 0; frontPos < pos; frontPos ++ )
-            mem16[ frontPos ] = (uint16) tgtBuf[ frontPos ];
-
-         // using mem16 + pos so we have already * x factor in target string
-         if ( source->size() > 0 )
-            memcpy( mem16 + pos, source->getRawStorage(), source->size() );
-
-         for( uint32 memPos = pos + sourceLen, backPos = pos + len; backPos < strLen; memPos++, backPos ++ )
-            mem16[ memPos ] = (uint16) tgtBuf[ backPos ];
-
-         str->manipulator(&handler_buffer16);
-      }
-      break;
-
-      case 4:
-      {
-         // quad size
-         finalSize = str->size() * 4 + source->size() - len * 4;
-         uint32 *mem32;
-         uint32 strLen = str->size();
-         uint32 sourceLen = source->length();
-
-         mem32 = ( uint32 * ) memAlloc( finalSize );
-
-         mem = ( byte * ) mem32;
-
-         for( uint32 frontPos = 0; frontPos < pos; frontPos ++ )
-            mem32[ frontPos ] = (uint32) tgtBuf[ frontPos ];
-
-         // using mem32 + pos so we have already * x factor in target string
-         if ( source->size() > 0 )
-            memcpy( mem32 + pos, source->getRawStorage(), source->size() );
-
-         for( uint32 memPos = pos + sourceLen, backPos = pos + len; backPos < strLen; memPos++, backPos ++ )
-            mem32[ memPos ] = (uint32) tgtBuf[ backPos ];
-
-         str->manipulator(&handler_buffer32);
-      }
-      break;
+      // eventually adapt the head -- adaptBuffer can work on itself
+      if ( pos > 0 && destCharSize != strCharSize )
+         str->manipulator(
+            adaptBuffer( str->getRawStorage(), 0, strCharSize,
+                         str->getRawStorage(), 0, destCharSize,
+                         pos ) );
    }
 
-   uint32 oldSize = str->allocated();
-
    str->size( finalSize );
-   str->allocated( finalSize );
-   if ( toFree )
-		memFree( tgtBuf );
-   str->setRawStorage( mem );
-
-   str->checkAdjustSize( oldSize );
-
-}
-
-void Buffer16::insert( String *str, uint32 pos, uint32 len, const String *source ) const
-{
-   uint32 strLen = str->length();
-   uint32 sourceLen = source->length();
-   uint16 *tgtBuf = (uint16 *) str->getRawStorage();
-   if ( pos + len > strLen )
-      len = strLen - pos;
-
-   uint32 finalSize=0;
-	bool toFree = str->allocated() > 0;
-   byte *mem=0;
-
-   switch( source->manipulator()->charSize() )
-   {
-      case 1:
-      {
-         // shorter - will still be int16 in the end.
-         finalSize = str->size() + (source->size() - len) * 2;
-         uint16 *mem16;
-         mem16 = ( uint16 * ) memAlloc( finalSize );
-         mem = ( byte * ) mem16;
-
-         byte *srcBuf = source->getRawStorage();
-
-         if ( pos > 0 )
-            memcpy( mem, tgtBuf, pos * 2 );
-
-         // using mem16 + pos so we have already * x factor in target string
-         for( uint32 middlePos = 0; middlePos < sourceLen; middlePos ++ )
-            mem16[ middlePos + pos ] = (uint16) srcBuf[ middlePos ];
-
-         if ( pos + len < strLen )
-            memcpy( mem16 + pos + sourceLen, tgtBuf + pos + len, ( strLen - pos - len ) * 2 );
-
-         str->manipulator(&handler_buffer16);
-      }
-      break;
-
-      case 2:
-      {
-         // same size
-         finalSize = str->size() + source->size() - (len * 2);
-         uint16 *mem16;
-         mem16 = ( uint16 * ) memAlloc( finalSize );
-         mem = ( byte * ) mem16;
-
-         if ( pos > 0 )
-            memcpy( mem16, tgtBuf, pos * 2 );
-
-         // using mem16 + pos so we have already * x factor in target string
-         if ( source->size() > 0 )
-            memcpy( mem16 + pos, source->getRawStorage(), source->size() );
-
-         if ( pos + len < strLen )
-            memcpy( mem16 + pos + sourceLen, tgtBuf + pos + len, (strLen - pos - len)*2 );
-
-         str->manipulator(&handler_buffer16);
-      }
-      break;
-
-      case 4:
-      {
-         // double size
-         finalSize = str->size() * 2 + source->size() - (len * 4);
-         uint32 *mem32;
-         mem32 = ( uint32 * ) memAlloc( finalSize );
-         mem = (byte *) mem32;
-
-         for( uint32 frontPos = 0; frontPos < pos; frontPos ++ )
-            mem32[ frontPos ] = (uint32) tgtBuf[ frontPos ];
-
-         // using mem32 + pos so we have already * x factor in target string
-         if ( source->size() > 0 )
-            memcpy( mem32 + pos, source->getRawStorage(), source->size() );
-
-         for( uint32 memPos = pos + sourceLen, backPos = pos + len; backPos < strLen; memPos++, backPos ++ )
-            mem32[ memPos ] = (uint32) tgtBuf[ backPos ];
-
-         str->manipulator(&handler_buffer32);
-      }
-      break;
-   }
-
-   uint32 oldSize = str->allocated();
-
-   str->size( finalSize );
-   str->allocated( finalSize );
-	if( toFree )
-		memFree( tgtBuf );
-   str->setRawStorage( mem );
-
-   str->checkAdjustSize( oldSize );
-
-}
-
-
-void Buffer32::insert( String *str, uint32 pos, uint32 len, const String *source ) const
-{
-   uint32 strLen = str->length();
-   uint32 sourceLen = source->length();
-   uint32 *tgtBuf = (uint32 *) str->getRawStorage();
-   if ( pos + len > strLen )
-      len = strLen - pos;
-
-   uint32 finalSize=0;
-	bool toFree = str->allocated() > 0;
-   byte *mem = 0;
-   switch( source->manipulator()->charSize() )
-   {
-      case 1:
-      {
-         // shorter - will still be int32 in the end.
-         finalSize = str->size() + (source->size() - len) * 4;
-         uint32 *mem32;
-         mem32 = ( uint32 * ) memAlloc( finalSize );
-         mem = (byte *) mem32;
-         byte *srcBuf = source->getRawStorage();
-
-         if ( pos > 0 )
-            memcpy( mem, tgtBuf, pos * 4 );
-
-         // using mem32 + pos so we have already * x factor in target string
-         for( uint32 middlePos = 0; middlePos < sourceLen; middlePos ++ )
-            mem32[ middlePos + pos ] = (uint32) srcBuf[ middlePos ];
-
-         if ( pos + len < strLen )
-            memcpy( mem32 + pos + sourceLen, tgtBuf + pos + len, ( strLen - pos - len ) * 4 );
-
-         str->manipulator(&handler_buffer32);
-      }
-      break;
-
-      case 2:
-      {
-         // shorter - will still be int32 in the end.
-         finalSize = str->size() + source->size() - (len * 2);
-         uint32 *mem32;
-         mem32 = ( uint32 * ) tgtBuf;
-         mem = ( byte * ) mem32;
-
-         uint16 *srcBuf = (uint16 *) source->getRawStorage();
-
-         if ( pos > 0 )
-            memcpy( mem, tgtBuf, pos * 4 );
-
-         // using mem32 + pos so we have already * x factor in target string
-         for( uint32 middlePos = 0; middlePos < sourceLen; middlePos ++ )
-            mem32[ middlePos + pos ] = (uint32) srcBuf[ middlePos ];
-
-         if ( pos + len < strLen )
-            memcpy( mem32 + pos + sourceLen, tgtBuf + pos + len, ( strLen - pos - len ) * 4 );
-
-         str->manipulator(&handler_buffer32);
-      }
-      break;
-
-      case 4:
-      {
-         // same size
-         finalSize = str->size() + source->size() - (len * 4);
-         uint32 *mem32;
-         mem32 = ( uint32 * ) tgtBuf;
-         mem = (byte *) mem32;
-
-         // same char size
-         finalSize = str->size() + source->size() - len;
-         mem = (byte *) memAlloc( finalSize );
-         if ( pos > 0 )
-            memcpy( mem32, tgtBuf, pos * 4 );
-
-         if ( source->size() > 0 )
-            memcpy( mem32 + pos, source->getRawStorage(), source->size() );
-
-         if ( pos + len < strLen )
-            memcpy( mem32 + pos + strLen, str->getRawStorage() + pos + len, (strLen - pos - len ) * 4 );
-
-         str->manipulator(&handler_buffer32);
-      }
-      break;
-   }
-
-   uint32 oldSize = str->allocated();
-
-   str->size( finalSize );
-   str->allocated( finalSize );
-	if( toFree )
-		memFree( tgtBuf );
-   str->setRawStorage( mem );
-
-   str->checkAdjustSize( oldSize );
-
 }
 
 
