@@ -607,7 +607,6 @@ bool testScript( ScriptData *script,
          FlcLoader *modloader, Module *core, Module *testSuite,
          String &reason, String &trace )
 {
-   reason = "";
    Module *scriptModule;
 
    //---------------------------------

@@ -721,11 +721,14 @@ void Static::insert( String *str, uint32 pos, uint32 len, const String *source )
                    strLen - pos - len );
 
    str->size( finalSize );
+#if ! defined(NDEBUG)
    uint32 oldSize = str->allocated();
+   fassert( oldSize == 0 );
+#endif
    str->allocated( finalAlloc );
    str->setRawStorage( mem );
 
-   str->checkAdjustSize( oldSize );
+   str->checkAdjustSize( 0 );
 }
 
 
@@ -771,6 +774,7 @@ void Buffer::insert( String *str, uint32 pos, uint32 len, const String *source )
       uint32 oldSize = str->allocated();
       str->allocated( finalAlloc );
       str->checkAdjustSize( oldSize );
+      memFree( str->getRawStorage() );
       str->setRawStorage( mem );
    }
    else
