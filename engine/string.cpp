@@ -404,11 +404,19 @@ void Byte::bufferize( String *str ) const
 
    uint32 size = str->m_size;
    if ( size != 0 ) {
+      uint32 oldSize = str->allocated();
+
       byte *mem = (byte *) memAlloc( size );
       memcpy( mem, str->getRawStorage(), size );
+
+      if( oldSize != 0 )
+      {
+         memFree( str->getRawStorage() );
+      }
+
       str->setRawStorage( mem, size );
       str->m_class = str->m_class->bufferedManipulator();
-      str->checkAdjustSize( 0 );
+      str->checkAdjustSize( oldSize );
    }
 }
 
@@ -464,7 +472,8 @@ void Byte::reserve( String *str, uint32 size, bool relative, bool block ) const
          memcpy( mem, str->m_storage, str->m_size );
 
       // we can now destroy the old string.
-      destroy( str );
+      if ( oldAlloc != 0 )
+         memFree( str->m_storage );
 
       str->m_storage = mem;
       str->m_size = size;
@@ -555,6 +564,8 @@ void Static::setCharAt( String *str, uint32 pos, uint32 chr ) const
    }
 
    uint32 oldSize = str->allocated();
+   if( oldSize != 0 )
+      memFree( str->getRawStorage() );
    str->setRawStorage( buffer, size );
    str->checkAdjustSize( oldSize );
 }
@@ -589,6 +600,8 @@ void Static16::setCharAt( String *str, uint32 pos, uint32 chr ) const
 
    uint32 oldSize = str->allocated();
    str->setRawStorage( buffer, size );
+   if( oldSize != 0 )
+      memFree( str->getRawStorage() );
    str->checkAdjustSize( oldSize );
 }
 
@@ -605,6 +618,8 @@ void Static32::setCharAt( String *str, uint32 pos, uint32 chr ) const
    str->manipulator( &handler_buffer32 );
    uint32 oldSize = str->allocated();
    str->setRawStorage( buffer, size );
+   if( oldSize != 0 )
+      memFree( str->getRawStorage() );
    str->checkAdjustSize( oldSize );
 }
 
@@ -721,14 +736,18 @@ void Static::insert( String *str, uint32 pos, uint32 len, const String *source )
                    strLen - pos - len );
 
    str->size( finalSize );
-#if ! defined(NDEBUG)
+
+   // Static strings CAN have non-static memory: expecially if they are de-serialized strings in modules.
    uint32 oldSize = str->allocated();
-   fassert( oldSize == 0 );
-#endif
    str->allocated( finalAlloc );
+
+   if ( oldSize > 0 )
+   {
+      memFree( str->getRawStorage() );
+   }
    str->setRawStorage( mem );
 
-   str->checkAdjustSize( 0 );
+   str->checkAdjustSize( oldSize );
 }
 
 
@@ -1027,7 +1046,6 @@ void String::copy( const String &other )
    m_size = other.m_size;
    m_allocated = other.m_allocated;
    if ( m_allocated > 0 ) {
-		// Non-static classes cannot have m_allocated > 0, so we already have a buffer.
       m_storage = (byte *) memAlloc( m_allocated );
       if ( m_size > 0 )
          memcpy( m_storage, other.m_storage, m_size );
@@ -1655,7 +1673,6 @@ bool String::deserialize( Stream *in, bool bStatic )
       m_storage = (byte *) memRealloc( m_storage, m_size );
       if( m_storage == 0 )
          return false;
-
 
       m_allocated = m_size;
 
