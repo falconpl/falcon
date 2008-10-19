@@ -132,17 +132,20 @@ bool fal_stats( const String &filename, FileStat &sts )
    FileTimeToLocalFileTime( &info.ftCreationTime, &local_timing );
    FileTimeToSystemTime( &local_timing, &timing );
    WinSystemTime mtime( timing );
-   sts.m_ctime = new TimeStamp();
+   if ( sts.m_ctime == 0 )
+      sts.m_ctime = new TimeStamp();
    sts.m_ctime->fromSystemTime( mtime );
 
    FileTimeToLocalFileTime( &info.ftLastAccessTime, &local_timing );
    FileTimeToSystemTime( &local_timing, &mtime.m_time );
-   sts.m_atime = new TimeStamp();
+   if ( sts.m_atime == 0 )
+      sts.m_atime = new TimeStamp();
    sts.m_atime->fromSystemTime( mtime );
 
    FileTimeToLocalFileTime( &info.ftLastWriteTime, &local_timing );
    FileTimeToSystemTime( &local_timing, &mtime.m_time );
-   sts.m_mtime = new TimeStamp();
+   if ( sts.m_mtime == 0 )
+      sts.m_mtime = new TimeStamp();
    sts.m_mtime->fromSystemTime( mtime );
 
    sts.m_size = info.nFileSizeHigh;
