@@ -711,8 +711,6 @@ void Static::insert( String *str, uint32 pos, uint32 len, const String *source )
       len = str->size() - pos;
 
    uint32 strCharSize = str->manipulator()->charSize();
-   uint32 posBytes = pos *strCharSize;
-   uint32 lenBytes = len *strCharSize;
 
    uint32 destCharSize = source->manipulator()->charSize() > str->manipulator()->charSize() ?
       source->manipulator()->charSize() : str->manipulator()->charSize() ; // can be 1 or larger
