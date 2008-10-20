@@ -1044,6 +1044,12 @@ int main ( int argc, char *argv[] )
       exit_sequence ( 1, modLoader->compileErrors() );
    }
 
+   // Hack: on newer windows, CTRL+C doesn't cause the application to die.
+   // this check prevents to run modules without symbols
+   if ( mainMod->symbols().empty() )
+   {
+      exit_sequence ( 1, modLoader->compileErrors() );
+   }
    // should we just write the string table?
    if ( options.compile_tltable )
    {
