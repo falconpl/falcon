@@ -1,0 +1,51 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 26b
+* Category: prototype
+* Subcategory: pagedict
+* Short: Prototype oop - page dict
+* Description:
+*  Checking prototype OOP on blessed page dictionaries.
+* [/Description]
+*
+****************************************************************************/
+
+// Smoke test: compilation
+v = bless( PageDict() )
+
+v["prop"] = 0
+v["add"] = function( val ); self.prop += val; end
+v["sub"] = function( val )
+      self["prop"] -= val
+   end
+
+// Cover some basics first
+
+if not v provides prop: failure( "Provides property" )
+if not v provides add: failure( "Provides method" )
+
+if "prop" notin v or v["prop"] != 0
+   failure( "Dict access" )
+end
+
+if v.prop != 0: failure( "Dot access" )
+
+v["prop"] = 1
+if "prop" notin v or v["prop"] != 1
+   failure( "Dict write" )
+end
+
+v.prop = 0
+if v.prop != 0: failure( "Dot write" )
+
+// and now some call
+v.add( 2 )
+if v.prop != 2: failure( "self with dot access" )
+
+v.sub( 1 )
+if v.prop != 1: failure( "self with dict access" )
+
+success()
+
+/* End of file */

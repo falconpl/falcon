@@ -1,0 +1,57 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 26e
+* Category: prototype
+* Subcategory: dict
+* Short: Prototype copy oop
+* Description:
+*  Checking prototype OOP on blessed linear dictionaries. In particular,
+*  this test checks for copying and inter-copy safety of prototypes.
+* [/Description]
+*
+****************************************************************************/
+
+// Smoke test: compilation
+v = bless( [
+   "prop" => 0,
+   "add" => function( val ); self.prop += val; end,
+   "sub" => function( val );
+      self["prop"] -= val;
+   end,
+   1 => 0 ])
+
+// copy
+try
+   s = @"$v.prop"
+   > s
+   if s != "0"
+      failure( "Stex value" )
+   end
+catch
+   failure( "Stex compilation" )
+end
+
+try
+   s =  #"v.prop"
+   > s
+   if s != "0"
+      failure( "INDI value" )
+   end
+catch
+   failure( "INDI compilation" )
+end
+
+mth = #"v.add"
+
+try
+   mth(2)
+   if v.prop != "2"
+      failure( "INDI call" )
+   end
+catch
+   failure( "INDI exception on call" )
+end
+
+success()
+/* End of file */

@@ -1,0 +1,38 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 26c
+* Category: prototype
+* Subcategory: dict
+* Short: Prototype copy oop
+* Description:
+*  Checking prototype OOP on blessed linear dictionaries. In particular,
+*  this test checks for copying and inter-copy safety of prototypes.
+* [/Description]
+*
+****************************************************************************/
+
+// Smoke test: compilation
+v = bless( [
+   "prop" => 0,
+   "add" => function( val ); self.prop += val; end,
+   "sub" => function( val );
+      self["prop"] -= val;
+   end,
+   1 => 0 ])
+
+// our copy
+c = v.clone()
+
+if c.prop != 0: failure( "Clone" )
+
+v.add( 2 )
+c.sub( 2 )
+if v.prop != 2: failure( "Source insolation - value" )
+if c.prop != -2: failure( "Dest insolation - value" )
+
+v["another"] = 1
+if c provides another: failure( "Content insolation" )
+
+success()
+/* End of file */

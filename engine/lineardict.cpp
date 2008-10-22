@@ -493,12 +493,21 @@ bool LinearDict::findInternal( const Item &key, uint32 &ret_pos ) const
 
 CoreDict *LinearDict::clone() const
 {
-   if ( m_size == 0 )
-      return new LinearDict( origin() );
+   LinearDict *ret;
 
-   LinearDict *ret = new LinearDict( origin(), m_size );
-   ret->length( m_size );
-   memcpy( ret->m_data, m_data, esize( m_size ) );
+   if ( m_size == 0 )
+   {
+      ret = new LinearDict( origin() );
+   }
+   else
+   {
+      ret = new LinearDict( origin(), m_size );
+      ret->length( m_size );
+      memcpy( ret->m_data, m_data, esize( m_size ) );
+   }
+
+   ret->bless( isBlessed() );
+
    return ret;
 }
 

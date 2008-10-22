@@ -271,14 +271,21 @@ void PageDict::merge( const CoreDict &dict )
 }
 
 
-
 CoreDict *PageDict::clone() const
 {
-   if ( m_map.size() == 0 )
-      return new PageDict( origin() );
+   PageDict *ret;
 
-   PageDict *ret = new PageDict( origin(), m_map.order() );
-   ret->merge( *this );
+   if ( m_map.size() == 0 )
+   {
+      ret = new PageDict( origin() );
+   }
+   else
+   {
+      ret = new PageDict( origin(), m_map.order() );
+      ret->merge( *this );
+   }
+
+   ret->bless( isBlessed() );
    return ret;
 }
 
