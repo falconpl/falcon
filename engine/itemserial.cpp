@@ -301,6 +301,9 @@ Item::e_sercode Item::serialize( Stream *file, bool bLive ) const
          file->write( &type, 1 );
 
          CoreDict *dict = this->asDict();
+         type = dict->isBlessed() ? 1:0;
+         file->write( &type, 1 );
+
          int32 len = endianInt32( dict->length() );
          file->write( (byte *) &len, sizeof( len ) );
 
@@ -695,6 +698,9 @@ Item::e_sercode Item::deserialize( Stream *file, VMachine *vm )
          if( vm == 0 )
             return sc_missvm;
 
+         byte blessed;
+         file->read( &blessed, 1 );
+
          int32 val;
          file->read( (byte *) &val, sizeof( val ) );
 
@@ -716,6 +722,7 @@ Item::e_sercode Item::deserialize( Stream *file, VMachine *vm )
             }
 
             if( retval == sc_ok ) {
+               dict->bless( blessed ? true : false );
                setDict( dict );
 
                return sc_ok;
