@@ -3027,8 +3027,11 @@ bool VMachine::findLocalVariable( const String &name, Item &itm ) const
                Item *tmp;
                if ( ( tmp = itm.asArray()->getProperty( sItemName ) ) == 0 )
                   return false;
-               itm = *tmp;
 
+               if ( tmp->isFunction() )
+                  tmp->setTabMethod( itm.asArray(), tmp->asFunction(), tmp->asModule() );
+
+               itm = *tmp;
                // set state accordingly to chr.
                goto resetState;
             }
@@ -3054,6 +3057,9 @@ bool VMachine::findLocalVariable( const String &name, Item &itm ) const
                Item *tmp;
                if ( ( tmp = itm.asDict()->find( &sItemName ) ) == 0 )
                   return false;
+
+               if ( tmp->isFunction() )
+                  tmp->setTabMethod( itm.asDict(), tmp->asFunction(), tmp->asModule() );
                itm = *tmp;
 
                // set state accordingly to chr.
@@ -3216,7 +3222,7 @@ resetState:
             else if ( itm.isArray() )
                state = dotArrayAccessor;
             else if ( itm.isDict() && itm.asDict()->isBlessed() )
-               state = dotArrayAccessor;
+               state = dotDictAccessor;
             else
                return false;
          break;

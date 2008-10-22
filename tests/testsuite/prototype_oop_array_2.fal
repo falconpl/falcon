@@ -1,0 +1,34 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 26g
+* Category: prototype
+* Subcategory: array
+* Short: Prototype copy oop - array
+* Description:
+*  Checking prototype OOP arrays. In particular,
+*  this test checks for copying and inter-copy safety of prototypes.
+* [/Description]
+*
+****************************************************************************/
+
+// Smoke test: compilation
+v = []
+v.prop = 0
+v.add = function( val ); self.prop += val; end
+v.sub = function( val )
+      self.prop -= val
+   end
+
+// our copy
+c = v.clone()
+
+if c.prop != 0: failure( "Clone" )
+
+v.add( 2 )
+c.sub( 2 )
+if v.prop != 2: failure( "Source insolation - value" )
+if c.prop != -2: failure( "Dest insolation - value" )
+
+success()
+/* End of file */

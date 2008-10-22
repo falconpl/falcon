@@ -1,0 +1,43 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 26f
+* Category: prototype
+* Subcategory: array
+* Short: Prototype oop array
+* Description:
+*  Checking prototype OOP on arrays.
+* [/Description]
+*
+****************************************************************************/
+
+// Smoke test: compilation
+v = [0]
+v.prop = 0
+v.add = function( val ); self.prop += val; end
+v.sub = function( val )
+      self.prop -= val
+      self[0] -= val
+   end
+
+// Cover some basics first
+
+if not v provides prop: failure( "Provides property" )
+if not v provides add: failure( "Provides method" )
+
+if v.prop != 0: failure( "Dot access" )
+
+v.prop = 1
+if v.prop != 1: failure( "Dot write" )
+
+// and now some call
+v.add( 2 )
+if v.prop != 3: failure( "Self with dot access" )
+
+v.sub( 1 )
+if v.prop != 2: failure( "Self with array access" )
+if v[0] != -1: failure( "Self as array" )
+
+success()
+
+/* End of file */
