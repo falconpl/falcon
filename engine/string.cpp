@@ -1,6 +1,6 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: cstring.cpp
+   FILE: string.cpp
 
    Implementation of Core Strings.
    -------------------------------------------------------------------
