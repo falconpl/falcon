@@ -1317,6 +1317,124 @@ FALCON_FUNC  Table_getPage ( ::Falcon::VMachine *vm )
    vm->retval( page->clone() );
 }
 
+/*#
+   @method resetColumn Table
+   @brief Applies a value on a colum, eventually setting one or more rows to a different value.
+   @param column Column name or number where the value must be applied.
+   @optparam resetVal The value that must be set to clear the rows (defaults to nil).
+   @optparam row The row (or rows, if a range is given) to be set to @b value.
+   @optparam value The value that must be set in the given row(s) (defaluts to true).
+
+   This method takes a column in the current page and sets all the values in all
+   the rows to @b resetVal (or nil if not given).
+
+   Optionally, a single row or a range of rows where to apply a different value
+   can be given.
+
+   In example, this allows to create a diagonal matrix like the following:
+   @code
+     x = Table( ["a","b","c"] )
+     x.insert( 0, arrayBuffer( 3 ) )
+     x.insert( 0, arrayBuffer( 3 ) )
+     x.insert( 0, arrayBuffer( 3 ) )
+
+     for i in [0:3]
+        x.resetColumn( i, 0, i, 1 )
+     end
+   @endcode
+
+   Tables are not meant for linear algebra calculus, but it is often useful to
+   clear a whole column, and it can come useful to set just one row in a table
+   to stand out, especially in decision support systems and program logic control,
+   which is what Falcon tables are specifically designed.
+*/
+FALCON_FUNC  Table_resetColumn ( ::Falcon::VMachine *vm )
+{
+   Item* i_col = vm->param(0);
+   Item* i_value = vm->param(1);
+   Item* i_row = vm->param(2);
+   Item* i_resVal = vm->param(3);
+
+   if ( i_col == 0 || !(i_col->isOrdinal() || i_col->isString() ) ||
+        i_row != 0 && !(i_row->isOrdinal() || i_row->isRange() )
+   )
+   {
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
+         .origin( e_orig_runtime )
+         .extra( "N|S,[X],[N|R],[X]" ) ) );
+      return;
+   }
+
+   CoreTable *table = static_cast<CoreTable *>( vm->self().asObject()->getUserData() );
+   uint32 colpos = internal_col_pos( table, vm, i_col );
+   // wrong position?
+   if( colpos == CoreTable::noitem )
+      return;
+
+   // first, reset all rows
+   Item dummyNil;
+   if ( i_value == 0 )
+      i_value = &dummyNil;
+
+   CoreArray &page = *table->currentPage();
+   for ( uint32 i = 0; i < page.length(); i++ )
+   {
+      page[i].asArray()->at(colpos) = *i_value;
+   }
+
+   if ( i_row == 0 )
+      return;
+
+   // then, eventually sets the rows
+   // doing this AFTER may seem a waste, but usually it's just a row being touched
+   int32 start, end, step;
+   if ( i_row->isRange() )
+   {
+      start = i_row->asRangeStart();
+      if ( start < 0 )
+         start = page.length() + start;
+
+      end = i_row->asRangeIsOpen() ? page.length() : i_row->asRangeEnd();
+      if ( end < 0 )
+         end = page.length() + end;
+
+      if ( end < start )
+      {
+         int32 temp = start;
+         start = end;
+         // to compensate different closure semantics
+         end = temp + 1;
+      }
+      step = i_row->asRangeStep();
+      if ( step == 0 )
+         step = 1;
+   }
+   else  {
+      start = (int32) i_row->forceInteger();
+      if ( start < 0 )
+         start = page.length() + start;
+      end = start + 1;
+      step = 1;
+   }
+
+   if ( ((uint32)start) >= page.length() || ((uint32)end) > page.length() ) {
+      vm->raiseModError( new ParamError( ErrorParam( e_param_range, __LINE__ )
+         .origin( e_orig_runtime ) ) );
+      return;
+   }
+
+   Item dummyTrue;
+   dummyTrue.setBoolean( true );
+   if ( i_resVal == 0 )
+      i_resVal = &dummyTrue;
+
+   while( start < end )
+   {
+      page[start].asArray()->at(colpos) = *i_resVal;
+      start += step;
+   }
+}
+
 }
 
 /* end of table.cpp */

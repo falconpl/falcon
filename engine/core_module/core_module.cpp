@@ -1073,6 +1073,9 @@ Module* core_module_init()
    self->addClassMethod( table_class, "bidding", Falcon::core::Table_bidding ).asSymbol()->
       addParam("column")->addParam("offer")->addParam("rows");
 
+   self->addClassMethod( table_class, "resetColumn", Falcon::core::Table_resetColumn ).asSymbol()->
+      addParam("column")->addParam("resetVal")->addParam("row")->addParam("value");
+
    self->addClassMethod( table_class, "pageCount", Falcon::core::Table_pageCount );
    self->addClassMethod( table_class, "setPage", Falcon::core::Table_setPage ).asSymbol()->
       addParam("pageId");
