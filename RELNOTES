@@ -1,5 +1,5 @@
 
-                              RELNOTES for Falcon
+                               RELNOTES for Falcon
 
                                  Condor Release
 
@@ -25,3 +25,38 @@ ChangeLog in this version, as many aspects of the grammar has been changed.
   Current package is a bleeding edge verison released to test build and
 installation issues on supported platforms.
 
+Open issues at 0.8.12
+=====================
+
+   * Streams, mainly file streams, are still to be buffered and optimized.
+     If Falcon is employed for high throughput applications, as i.e.
+     grepping files, writing massive log amounts, copying files, applicative
+     data buffering should be used, and raw write/read stream methods on
+     large strings or MemBuf data types should be employed for
+     better performance.
+
+   * Stream API may undergo some reshaping during 0.8.12->0.9 step.
+
+   * Assembler has some issues; it is being moved to a stand-alone
+     application and library (and possibly to a separate project)
+     in 0.9, so its known problems are not being fixed now. The
+     assembler is not functional to a correct Falcon application,
+     so its status is irrilevant at current development stage.
+   
+   * Functional closeures are checking and closing only the direct
+     parent's local variables and globally visible variables; 
+     other parents in the hierarcy are not being considered. So
+     
+        glob n = 0
+	
+        function a()
+	   x = 1
+	   function b()
+	      y = 2
+	      return (function(); y * x *n; end)
+	   end
+	end
+	
+     will close y and n, but not x. In this moment it is not clear
+     if this is a issue or not.
+     
