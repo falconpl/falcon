@@ -3,7 +3,7 @@
 
                                  Condor Release
 
-                                    0.8.11-10
+                                     0.8.12
 
 
   Condor release closes the overall language structure extension and completes
@@ -42,21 +42,27 @@ Open issues at 0.8.12
      in 0.9, so its known problems are not being fixed now. The
      assembler is not functional to a correct Falcon application,
      so its status is irrilevant at current development stage.
-   
+
    * Functional closeures are checking and closing only the direct
-     parent's local variables and globally visible variables; 
+     parent's local variables and globally visible variables;
      other parents in the hierarcy are not being considered. So
-     
+
         glob n = 0
-	
+
         function a()
-	   x = 1
-	   function b()
-	      y = 2
-	      return (function(); y * x *n; end)
-	   end
-	end
-	
+          x = 1
+          function b()
+            y = 2
+            return (function(); y * x *n; end)
+          end
+        end
+
      will close y and n, but not x. In this moment it is not clear
      if this is a issue or not.
-     
+
+  * FBOM (falcon basic object model) and operator overloading is corrently
+    not strongly defined. We need to work a better and deeper object model
+    set and enforce it as a generic interface to access items across all
+    the engine. The main consequence is that some VM operators can use
+    class instance define symbols (as i.e. string conversion), while
+    automatic method calls are not available for prototype oriented OOP.
