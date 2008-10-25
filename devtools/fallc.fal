@@ -1,4 +1,4 @@
-#!/usr/bin/falcon
+#!/usr/bin/env falcon
 /***********************************************************
 * Falcon international translation compiler
 *
