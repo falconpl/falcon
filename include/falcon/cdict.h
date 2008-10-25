@@ -44,11 +44,13 @@ class FALCON_DYN_CLASS CoreDict: public Garbageable
 
 protected:
    CoreDict( VMachine *vm ):
-      Garbageable(vm)
+      Garbageable(vm),
+      m_blessed( false )
    {}
 
    CoreDict( VMachine *vm, uint32 alloc ):
-      Garbageable( vm, alloc )
+      Garbageable( vm, alloc ),
+      m_blessed( false )
    {}
 
 public:
