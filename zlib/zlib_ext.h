@@ -31,11 +31,11 @@ class ZLibError: public ::Falcon::Error
 {
 public:
    ZLibError():
-      Error( "ZlibError" )
+      Error( "ZLibError" )
    {}
 
    ZLibError( const ErrorParam &params  ):
-      Error( "ZlibError", params )
+      Error( "ZLibError", params )
       {}
 };
 

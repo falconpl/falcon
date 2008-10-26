@@ -269,7 +269,7 @@ FALCON_FUNC ZLib_uncompress( ::Falcon::VMachine *vm )
    }
 
    // preallocate a good default memory
-   compLen = sizeof(char) * ( dataInSize * 4 );
+   compLen = sizeof(char) * ( dataInSize * 2 );
    if ( compLen < 512 )
    {
       compLen = 512;
@@ -282,12 +282,12 @@ FALCON_FUNC ZLib_uncompress( ::Falcon::VMachine *vm )
    {
       err = uncompress( compData, &compLen, dataIn, dataInSize );
 
-      if ( err == Z_MEM_ERROR )
+      if ( err == Z_BUF_ERROR )
       {
-         //TODO: break also with Z_MEM_ERROR if we're using too much memory, like i.e. 512MB
+         //TODO: break also with Z_STREAM_ERROR if we're using too much memory, like i.e. 512MB
 
          // try with a larger buffer
-         compLen += dataInSize < 512 ? 512 : dataInSize * 4;
+         compLen += dataInSize < 512 ? 512 : dataInSize * 2;
          allocLen = compLen;
          memFree( compData );
          compData = (Bytef *) memAlloc( compLen );
@@ -356,8 +356,8 @@ FALCON_FUNC ZLib_uncompressText( ::Falcon::VMachine *vm )
    // type of string
    if ( dataIn[0] != 1 && dataIn[0] != 2 && dataIn[0] != 4 )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
-               .extra( FAL_STR(zl_msg_notct) ) ) );
+      vm->raiseModError( new ZLibError( ErrorParam( FALCON_ZLIB_ERROR_BASE, __LINE__ ).
+               desc( FAL_STR(zl_msg_notct) ) ) );
       return;
    }
 

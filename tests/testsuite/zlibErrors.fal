@@ -1,0 +1,88 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 10f
+* Category: zlib
+* Subcategory: error
+* Short: ZLib errors.
+* Description:
+*  Checks that correct errors are raised when zlib is misused (and that we
+*  don't crash if buffers are messed up).
+* [/Description]
+*
+****************************************************************************/
+
+load zlib
+
+// first, a simple param error check
+z = ZLib()
+
+try
+   z.compress(0)
+   failure( "Parameter error not raised - 1" )
+catch ParamError
+end
+
+try
+   z.uncompress(nil)
+   failure( "Parameter error not raised - 2" )
+catch ParamError
+end
+
+try
+   z.compressText( 1.2 )
+   failure( "Parameter error not raised - 3" )
+catch ParamError
+end
+
+try
+   z.uncompressText( nil )
+   failure( "Parameter error not raised - 4" )
+catch ParamError
+end
+
+// then, try to uncompress something wrong
+try
+   z.uncompressText( "Hello, this is an uncompressed text" )
+   failure( "Uncompressing a random string" )
+catch ZLibError in e
+   //inspect( e )
+end
+
+// then, try to uncompress something wrong
+try
+   z.uncompress( MemBuf( 4096 ) )
+   failure( "Uncompressing a random memory buffer" )
+catch ZLibError in e
+   //inspect( e )
+end
+
+// and finally, compress some data and mess it up
+data = z.compress( MemBuf( 4096 ) )
+data[10] = 99
+try
+   z.uncompress( data )
+   failure( "Uncompressing a corrupted buffer" )
+catch ZLibError in e
+   //inspect( e )
+end
+
+data = z.compressText( "Hello, this is an uncompressed text" )
+data[0] = 10
+try
+   z.uncompressText( data )
+   failure( "Uncompressing a corrupted string (length)" )
+catch ZLibError in e
+   //inspect( e )
+end
+
+data = z.compressText( "Hello, this is an uncompressed text" )
+data[6] = 10
+try
+   z.uncompressText( data )
+   failure( "Uncompressing a corrupted string (data)" )
+catch ZLibError in e
+   //inspect( e )
+end
+
+success()

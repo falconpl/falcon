@@ -123,7 +123,8 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    //============================================================
    // ZlibError class
    Falcon::Symbol *error_class = self->addExternalRef( "Error" ); // it's external
-   Falcon::Symbol *procerr_cls = self->addClass( "ZLibError", Falcon::Ext::ZLibError_init );
+   Falcon::Symbol *procerr_cls = self->addClass( "ZLibError", Falcon::Ext::ZLibError_init )
+      ->addParam( "code" )->addParam( "description")->addParam( "extra" );
    procerr_cls->setWKS( true );
    procerr_cls->getClassDef()->addInheritance(  new Falcon::InheritDef( error_class ) );
 

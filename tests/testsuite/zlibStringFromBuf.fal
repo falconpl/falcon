@@ -1,12 +1,13 @@
 /****************************************************************************
 * Falcon test suite
 *
-* ID: 10a
+* ID: 10e
 * Category: zlib
 * Subcategory:
-* Short: Compress and Uncompress binary data
+* Short: ZLib strigns/buffer mixed.
 * Description:
-*    Creates a some binary buffers, compress and uncompress them.
+*   This test verifies that string data converted to binary data via
+*   a simple compress can be turned back into a string via strFromMemBuf.
 * [/Description]
 *
 ****************************************************************************/
@@ -26,18 +27,24 @@ function flatRnd( spread, buffer, pos )
    buffer[pos] = 256 / 2 + int((0.5 - random()) * spread)
 end
 
+function flatInt( spread, buffer, pos )
+   buffer[pos] = 5600 + int((0.5 - random()) * spread)
+end
+
 buffers = []
-buffers += [[MemBuf( 256 ), blank]]
-buffers += [[MemBuf( 512 ), modPos]]
-buffers += [[MemBuf( 1024 ), modPos]]
-buffers += [[MemBuf( 2048 ), [flatRnd, 10] ]]
-buffers += [[MemBuf( 4096 ), [flatRnd, 100] ]]
+buffers += [[strReplicate( ' ', 256 ), blank]]
+buffers += [[strReplicate( ' ', 512 ), modPos]]
+buffers += [[strReplicate( ' ', 1024 ), modPos]]
+buffers += [[strReplicate( ' ', 2048 ), [flatRnd, 10] ]]
+buffers += [[strReplicate( ' ', 4096 ), [flatRnd, 100] ]]
 
 // some oddly shaped buffer
-buffers += [[MemBuf( 129 ), modPos]]
-buffers += [[MemBuf( 1200 ), modPos]]
-buffers += [[MemBuf( 3121 ), blank]]
-buffers += [[MemBuf( 3121 ), [flatRnd,100] ]]
+buffers += [[strReplicate( ' ', 129 ), modPos]]
+buffers += [[strReplicate( ' ', 1200 ), modPos]]
+buffers += [[strReplicate( ' ', 3121 ), blank]]
+
+// strFromMemBuf doesn't work on international strings unless
+// external hints are provided.
 
 // fill the buffers
 for buffer, algo in buffers
@@ -75,7 +82,7 @@ end
 
 for i in [0:buffers.len()]
    try
-      unc = z.uncompress( compbufs[i] )
+      unc = strFromMemBuf( z.uncompress( compbufs[i] ) )
    catch ZLibError in err
       failure( "Buffer " + i + " failed de-compression:\n" +
          err )
@@ -92,3 +99,4 @@ for i in [0:buffers.len()]
 end
 
 success()
+
