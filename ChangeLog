@@ -6,6 +6,11 @@ Feathers (0.8.11)
   * major: Added funcext (Functional extension functions) module
 	   containing comparation functional operators and "at" accessor
 	   function.
+  * bugfix: ZLib wasn't raising a correct error (ZLibError was declared
+            as ZlibError); this caused a dynlink error in the VM on
+            zlib errors.
+  * bugfix: Zlib was not correctly extending the decompression buffer if
+            the initial extimate wasn't correct. 
 
 Feathers (0.8.10)
   * minor: Added load directive support for loadXXX on reflexive compiler.
