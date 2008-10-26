@@ -120,7 +120,8 @@ FALCON_FUNC  Error_init ( ::Falcon::VMachine *vm )
    Falcon::Error *err;
    if( einst->getUserData() == 0 )
    {
-      err = new Falcon::GenericError;
+      err = new Falcon::Error( ErrorParam( 0, __LINE__ ).
+         module( "core" ) );
    }
    else {
       err = reinterpret_cast<Falcon::Error *>(einst->getUserData());
@@ -248,6 +249,32 @@ FALCON_FUNC  SyntaxError_init ( ::Falcon::VMachine *vm )
    CoreObject *einst = vm->self().asObject();
    if( einst->getUserData() == 0 )
       einst->setUserData( new Falcon::SyntaxError );
+
+   Error_init( vm );
+}
+
+
+/*#
+   @class GenericError
+   @brief Generic undefined failure.
+   @ingroup errors
+   @ingroup general_purpose
+   @optparam code A numeric error code.
+   @optparam description A textual description of the error code.
+   @optparam extra A descriptive message explaining the error conditions.
+   @from Error code, description, extra
+
+   This error reports a generic failure, usually not recoverable, which
+   cannot be classified under a more specific class. Examples are failure
+   in VM linking of deserialized objects, once the de-serialization is
+   succesfull both on the stream side (correct load) and on the code side
+   (correct conversion into Falcon items).
+*/
+FALCON_FUNC  GenericError_init ( ::Falcon::VMachine *vm )
+{
+   CoreObject *einst = vm->self().asObject();
+   if( einst->getUserData() == 0 )
+      einst->setUserData( new Falcon::GenericError );
 
    Error_init( vm );
 }

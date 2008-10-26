@@ -246,43 +246,58 @@ Module* core_module_init()
    self->addClassMethod( error_class, "getSysErrorDesc", Falcon::core::Error_getSysErrDesc );
 
    // Other derived error classes.
-   Falcon::Symbol *synerr_cls = self->addClass( "SyntaxError", Falcon::core::SyntaxError_init );
+   Falcon::Symbol *synerr_cls = self->addClass( "SyntaxError", Falcon::core::SyntaxError_init )
+      ->addParam( "code" )->addParam( "description")->addParam( "extra" );
    synerr_cls->getClassDef()->addInheritance(  new Falcon::InheritDef( error_class ) );
    synerr_cls->setWKS( true );
 
-   Falcon::Symbol *codeerr_cls = self->addClass( "CodeError", Falcon::core::CodeError_init );
+   Falcon::Symbol *genericerr_cls = self->addClass( "GenericError", Falcon::core::GenericError_init )
+      ->addParam( "code" )->addParam( "description")->addParam( "extra" );
+   genericerr_cls->getClassDef()->addInheritance(  new Falcon::InheritDef( error_class ) );
+   genericerr_cls->setWKS( true );
+
+   Falcon::Symbol *codeerr_cls = self->addClass( "CodeError", Falcon::core::CodeError_init )
+      ->addParam( "code" )->addParam( "description")->addParam( "extra" );
    codeerr_cls->getClassDef()->addInheritance(  new Falcon::InheritDef( error_class ) );
    codeerr_cls->setWKS( true );
 
-   Falcon::Symbol *rangeerr_cls = self->addClass( "AccessError", Falcon::core::AccessError_init );
+   Falcon::Symbol *rangeerr_cls = self->addClass( "AccessError", Falcon::core::AccessError_init )
+      ->addParam( "code" )->addParam( "description")->addParam( "extra" );
    rangeerr_cls->getClassDef()->addInheritance(  new Falcon::InheritDef( error_class ) );
    rangeerr_cls->setWKS( true );
 
-   Falcon::Symbol *matherr_cls = self->addClass( "MathError", Falcon::core::MathError_init );
+   Falcon::Symbol *matherr_cls = self->addClass( "MathError", Falcon::core::MathError_init )
+      ->addParam( "code" )->addParam( "description")->addParam( "extra" );
    matherr_cls->getClassDef()->addInheritance(  new Falcon::InheritDef( error_class ) );
    matherr_cls->setWKS( true );
 
-   Falcon::Symbol *ioerr_cls = self->addClass( "IoError", Falcon::core::IoError_init );
+   Falcon::Symbol *ioerr_cls = self->addClass( "IoError", Falcon::core::IoError_init )
+      ->addParam( "code" )->addParam( "description")->addParam( "extra" );
    ioerr_cls->getClassDef()->addInheritance(  new Falcon::InheritDef( error_class ) );
    ioerr_cls->setWKS( true );
 
-   Falcon::Symbol *typeerr_cls = self->addClass( "TypeError", Falcon::core::TypeError_init );
+   Falcon::Symbol *typeerr_cls = self->addClass( "TypeError", Falcon::core::TypeError_init )
+      ->addParam( "code" )->addParam( "description")->addParam( "extra" );
    typeerr_cls->getClassDef()->addInheritance(  new Falcon::InheritDef( error_class ) );
    typeerr_cls->setWKS( true );
 
-   Falcon::Symbol *paramerr_cls = self->addClass( "ParamError", Falcon::core::ParamError_init );
+   Falcon::Symbol *paramerr_cls = self->addClass( "ParamError", Falcon::core::ParamError_init )
+      ->addParam( "code" )->addParam( "description")->addParam( "extra" );
    paramerr_cls->getClassDef()->addInheritance(  new Falcon::InheritDef( error_class ) );
    paramerr_cls->setWKS( true );
 
-   Falcon::Symbol *parsererr_cls = self->addClass( "ParseError", Falcon::core::ParseError_init );
+   Falcon::Symbol *parsererr_cls = self->addClass( "ParseError", Falcon::core::ParseError_init )
+      ->addParam( "code" )->addParam( "description")->addParam( "extra" );
    parsererr_cls->getClassDef()->addInheritance(  new Falcon::InheritDef( error_class ) );
    parsererr_cls->setWKS( true );
 
-   Falcon::Symbol *cloneerr_cls = self->addClass( "CloneError", Falcon::core::CloneError_init );
+   Falcon::Symbol *cloneerr_cls = self->addClass( "CloneError", Falcon::core::CloneError_init )
+      ->addParam( "code" )->addParam( "description")->addParam( "extra" );
    cloneerr_cls->getClassDef()->addInheritance(  new Falcon::InheritDef( error_class ) );
    cloneerr_cls->setWKS( true );
 
-   Falcon::Symbol *interr_cls = self->addClass( "InterruptedError", Falcon::core::IntrruptedError_init );
+   Falcon::Symbol *interr_cls = self->addClass( "InterruptedError", Falcon::core::IntrruptedError_init )
+      ->addParam( "code" )->addParam( "description")->addParam( "extra" );
    interr_cls->getClassDef()->addInheritance(  new Falcon::InheritDef( error_class ) );
    interr_cls->setWKS( true );
    //=========================================

@@ -319,13 +319,12 @@ void VMachine::run()
                   continue;
                }
                else {
-                  // panic. Should not happen
+                  // Panic. Should not happen -- scriptize has raised a symbol not found error
+                  // describing the missing error class; we must tell the user so that the module
+                  // not declaring the correct error class, or failing to export it, can be
+                  // fixed.
                   if( m_errhand != 0 ) {
-                     Error *err = new CodeError( ErrorParam( e_undef_sym, __LINE__ ).
-                        module( "core.vm" ).symbol( "vm_run" ).extra( m_error->className() ) );
-                     m_error->decref();
-                     m_error = err;
-                     m_errhand->handleError( err );
+                     m_errhand->handleError( m_error );
                   }
                   return;
                }

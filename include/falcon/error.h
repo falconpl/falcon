@@ -441,6 +441,41 @@ protected:
    virtual ~Error();
 public:
 
+   Error():
+      m_refCount( 1 ),
+      m_errorCode ( e_none ),
+      m_className( "Error" ),
+      m_line( 0 ),
+      m_character( 0 ),
+      m_pc( 0 ),
+      m_sysError( 0 ),
+      m_origin( e_orig_runtime ),
+      m_catchable( true ),
+      m_nextError( 0 ),
+      m_LastNextError( 0 )
+   {
+      m_raised.setNil();
+   }
+
+   Error( const ErrorParam &params ):
+      m_refCount( 1 ),
+      m_errorCode ( params.m_errorCode ),
+      m_description( params.m_description ),
+      m_extra( params.m_extra ),
+      m_symbol( params.m_symbol ),
+      m_module( params.m_module ),
+      m_className( "Error" ),
+      m_line( params.m_line ),
+      m_character( params.m_character ),
+      m_pc( params.m_pc ),
+      m_sysError( params.m_sysError ),
+      m_origin( params.m_origin ),
+      m_catchable( params.m_catchable ),
+      m_nextError( 0 ),
+      m_LastNextError( 0 )
+   {
+      m_raised.setNil();
+   }
 
    void errorCode( int ecode ) { m_errorCode = ecode; }
    void systemError( uint32 ecode ) { m_sysError = ecode; }

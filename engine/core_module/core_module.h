@@ -51,6 +51,7 @@ FALCON_FUNC  Error_toString ( ::Falcon::VMachine *vm );
 FALCON_FUNC  Error_heading ( ::Falcon::VMachine *vm );
 FALCON_FUNC  Error_getSysErrDesc ( ::Falcon::VMachine *vm );
 FALCON_FUNC  SyntaxError_init ( ::Falcon::VMachine *vm );
+FALCON_FUNC  GenericError_init ( ::Falcon::VMachine *vm );
 FALCON_FUNC  CodeError_init ( ::Falcon::VMachine *vm );
 FALCON_FUNC  IoError_init ( ::Falcon::VMachine *vm );
 FALCON_FUNC  TypeError_init ( ::Falcon::VMachine *vm );
