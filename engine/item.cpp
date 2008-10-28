@@ -38,14 +38,14 @@ namespace Falcon {
 
 void Item::setGCPointer( VMachine *vm, FalconData *ptr, uint32 sig )
 {
-   type( FLC_ITEM_POINTER );
+   type( FLC_ITEM_GCPTR );
    m_data.gptr.signature = sig;
    m_data.gptr.gcptr = new GarbagePointer( vm, ptr );
 }
 
 void Item::setGCPointer( GarbagePointer *shell, uint32 sig )
 {
-   type( FLC_ITEM_POINTER );
+   type( FLC_ITEM_GCPTR );
    m_data.gptr.signature = sig;
    m_data.gptr.gcptr = shell;
 }

@@ -40,7 +40,7 @@
 #define FLC_ITEM_ATTRIBUTE    13
 /** Used to store pointers in temporary local items by
    two-step VM functions. */
-#define FLC_ITEM_POINTER      14
+#define FLC_ITEM_GCPTR      14
 
 
 #define FLC_ITEM_STRING       20
@@ -51,8 +51,6 @@
 
 #define FLC_ITEM_REFERENCE    25
 
-/** Used to store long lasting garbage pointers */
-#define FLC_ITEM_GCPTR        26
 
 #define FLC_ITEM_CLSMETHOD    30
 #define FLC_ITEM_METHOD       31

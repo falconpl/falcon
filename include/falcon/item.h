@@ -510,7 +510,7 @@ public:
       return m_data.ptr.voidp;
    }
 
-   bool isUserPointer() const { return m_base.bits.flags == FLC_ITEM_POINTER; }
+   bool isUserPointer() const { return type() == FLC_ITEM_USER_POINTER; }
 
    /** Set this item as a user-defined Garbage pointers.
        VM provides GC-control over them.
@@ -522,7 +522,7 @@ public:
    GarbagePointer *asGCPointerShell() const { return m_data.gptr.gcptr; }
    uint32 asGCPointerSignature()  const { return m_data.gptr.signature; }
 
-   bool isGCPointer() const { return m_base.bits.flags == FLC_ITEM_GCPTR; }
+   bool isGCPointer() const { return type() == FLC_ITEM_GCPTR; }
 
    /** Tells wether this item is out of band.
       \return true if out of band.

@@ -325,7 +325,7 @@ void MemPool::markItem( Item &item )
          }
       break;
 
-      case FLC_ITEM_POINTER:
+      case FLC_ITEM_GCPTR:
          item.asGCPointerShell()->mark( currentMark() );
          break;
 
