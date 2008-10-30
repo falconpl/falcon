@@ -16,19 +16,36 @@ INCLUDE_DIRECTORIES(.)
 INCLUDE_DIRECTORIES(BEFORE "${FALCON_INC_PATH}")
 LINK_DIRECTORIES(BEFORE "${FALCON_LIB_PATH}")
 
+IF(WIN32)
+   SET( SYS_FILES
+      dynlib_sys_win.cpp )
+
+   # No other library needed on windows
+   SET( SYS_LIBS )
+ELSE(WIN32)
+   SET( SYS_FILES
+      dynlib_sys_dl.cpp )
+
+   # TODO: BSD has no libs and MacOSX has a different lib
+   SET( SYS_LIBS
+      dl )
+ENDIF(WIN32)
+
 #sources
-FILE( GLOB SRC_FILES "*.cpp" )
+SET( SRC_FILES
+   dynlib.cpp
+   dynlib_ext.cpp
+   dynlib_mod.cpp
+   dynlib_st.cpp
+
+   ${SYS_FILES}
+   )
 
 # Target
 ADD_LIBRARY( dynlib MODULE
    ${SRC_FILES}
 )
 
-#Link
-FALCON_LINK_MODULE( dynlib )
 
-#If your module needs some lib more, use the followings:
-#
-# TARGET_LINK_LIBRARIES( dynlib falcon_engine)
-# FALCON_INSTALL_MODULE( dynlib )
-#
+TARGET_LINK_LIBRARIES( dynlib falcon_engine ${SYS_LIBS})
+FALCON_INSTALL_MODULE( dynlib )

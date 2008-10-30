@@ -12,20 +12,7 @@
    -------------------------------------------------------------------
    (C) Copyright 2008: The Falcon Comittee
 
-      Licensed under the Falcon Programming Language License,
-   Version 1.1 (the "License"); you may not use this file
-   except in compliance with the License. You may obtain
-   a copy of the License at
-
-      http://www.falconpl.org/?page_id=license_1_1
-
-   Unless required by applicable law or agreed to in writing,
-   software distributed under the License is distributed on
-   an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-   KIND, either express or implied. See the License for the
-   specific language governing permissions and limitations
-   under the License.
-
+   See the LICENSE file distributed with this package for licensing details.
 */
 
 /** \file
@@ -34,11 +21,14 @@
 */
 
 #include <falcon/module.h>
+#include <falcon/objectmanager.h>
 #include "dynlib_ext.h"
-#include "dynlib_srv.h"
+#include "dynlib_mod.h"
 #include "dynlib_st.h"
 
 #include "version.h"
+
+static Falcon::DynFuncManager dyn_func_manager;
 
 /*#
    @main dynlib
@@ -73,11 +63,23 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    self->addClassMethod( dynlib_cls, "get", Falcon::Ext::DynLib_get );
    self->addClassMethod( dynlib_cls, "unload", Falcon::Ext::DynLib_unload );
 
+   Falcon::Symbol *dynfunc_cls = self->addClass( "DynFunction", Falcon::Ext::DynFunction_init );
+   dynfunc_cls->getClassDef()->setObjectManager( &dyn_func_manager );
+   dynfunc_cls->setWKS( true );
+   self->addClassMethod( dynfunc_cls, "call", Falcon::Ext::DynFunction_call );
+   self->addClassMethod( dynfunc_cls, "toString", Falcon::Ext::DynFunction_toString );
 
-   //============================================================
-   // Publish Skeleton service
-   //
-   self->publishService( new Falcon::Srv::Skeleton() );
+   /*#
+    @class DynLibError
+    @brief DynLib specific error.
+
+    Inherited class from Error to distinguish from a standard Falcon error.
+   */
+   // create the base class DynLibError for falcon
+   Falcon::Symbol *error_class = self->addExternalRef( "Error" ); // it's external
+   Falcon::Symbol *dbierr_cls = self->addClass( "DynLibError", Falcon::Ext::DynLibError_init );
+   dbierr_cls->setWKS( true );
+   dbierr_cls->getClassDef()->addInheritance( new Falcon::InheritDef( error_class ) );
 
    return self;
 }

@@ -1,6 +1,6 @@
 /*
    The Falcon Programming Language
-   FILE: dynlib_ext.cpp
+   FILE: dynlib_mod.cpp
 
    Direct dynamic library interface for Falcon
    Interface extension functions
@@ -11,20 +11,7 @@
    -------------------------------------------------------------------
    (C) Copyright 2008: The Falcon Comittee
 
-      Licensed under the Falcon Programming Language License,
-   Version 1.1 (the "License"); you may not use this file
-   except in compliance with the License. You may obtain
-   a copy of the License at
-
-      http://www.falconpl.org/?page_id=license_1_1
-
-   Unless required by applicable law or agreed to in writing,
-   software distributed under the License is distributed on
-   an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-   KIND, either express or implied. See the License for the
-   specific language governing permissions and limitations
-   under the License.
-
+   See the LICENSE file distributed with this package for licensing details.
 */
 
 /** \file
@@ -32,15 +19,55 @@
    Internal logic functions - implementation.
 */
 
-namespace Falcon {
-namespace Mod {
+#include "dynlib_mod.h"
 
-int skeleton()
+namespace Falcon {
+
+FunctionAddress::~FunctionAddress()
+{
+   // nothing needed to be done.
+}
+
+void FunctionAddress::gcMark( VMachine * )
+{
+   // nothing to mark
+}
+
+FalconData *FunctionAddress::clone() const
+{
+   return new FunctionAddress( *this );
+}
+
+
+void FunctionAddress::call( VMachine *vm, int32 firstParam ) const
+{
+}
+
+
+
+bool DynFuncManager::isFalconData() const
+{
+   return true;
+}
+
+void *DynFuncManager::onInit( Falcon::VMachine * )
 {
    return 0;
 }
 
+void DynFuncManager::onDestroy( Falcon::VMachine *, void *user_data )
+{
+   FunctionAddress *fa = reinterpret_cast<FunctionAddress *>( user_data );
+   delete fa;
 }
+
+void *DynFuncManager::onClone( Falcon::VMachine *, void *user_data )
+{
+   FunctionAddress *fa = reinterpret_cast<FunctionAddress *>( user_data );
+   return fa->clone();
+}
+
+
 }
 
 

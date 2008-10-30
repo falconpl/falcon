@@ -1,24 +1,24 @@
 /*
-   @MAIN_PRJ@
-   FILE: version.h
+   The Falcon Programming Language
+   FILE: dynlib_sys.cpp
 
-   @DESCRIPTION@
-   Interface extension functions
+   Direct dynamic library interface for Falcon
+   Version file
    -------------------------------------------------------------------
-   Author: @AUTHOR@
-   Begin: @DATE@
+   Author: Giancarlo Niccolai
+   Begin: Mon, 28 Oct 2008 22:23:29 +0100
 
    -------------------------------------------------------------------
-   (C) Copyright @YEAR@: @COPYRIGHT@
+   (C) Copyright 2008: The Falcon Comittee
 
-   @LICENSE@
+   See the LICENSE file distributed with this package for licensing details.
 */
 
 #ifndef VERSION_H
 #define VERSION_H
 
-#define VERSION_MAJOR        0
-#define VERSION_MINOR        0 
+#define VERSION_MAJOR        1
+#define VERSION_MINOR        0
 #define VERSION_REVISION     0
 
 #endif
