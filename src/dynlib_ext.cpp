@@ -169,12 +169,12 @@ FALCON_FUNC  DynFunction_call( ::Falcon::VMachine *vm )
    byte buffer[1024]; // 1024/4 = 256 parameters (usually).
    uint32 pos = 0;
 
-   uint32 p = 0;
-   uint32 pcount = vm->paramCount();
-   while( p < pcount )
+   uint32 p = vm->paramCount();
+   while( p > 0 )
    {
+      p--;
       Item *param = vm->param(p);
-      if ( fa->m_bGuessParams )
+      if ( fa->m_bGuessParams || true )
       {
          switch( param->type() )
          {
@@ -182,6 +182,7 @@ FALCON_FUNC  DynFunction_call( ::Falcon::VMachine *vm )
          case FLC_ITEM_NUM:
             {
                *(int*)(buffer + pos) = (int) param->forceInteger();
+               pos += 4;
             }
             break;
 
@@ -196,21 +197,22 @@ FALCON_FUNC  DynFunction_call( ::Falcon::VMachine *vm )
             return;
          }
       }
-      ++p;
    }
+
+   Sys::dynlib_void_call( fa->m_fAddress, buffer, pos );
 }
 
 
 FALCON_FUNC  DynFunction_toString( ::Falcon::VMachine *vm )
 {
    FunctionAddress *fa = reinterpret_cast<FunctionAddress *>(vm->self().asObject()->getUserData());
-   
+
    String ret = fa->name();
    if ( fa->m_bGuessParams ) {
       ret += "(...)";
    }
    else {
-      ret += "(" + fa->m_paramMask + ")";  
+      ret += "(" + fa->m_paramMask + ")";
    }
 
    if ( fa->m_returnMask != "" )

@@ -31,6 +31,12 @@ namespace Sys {
    int dynlib_unload( void *libhandler );
    void *dynlib_get_address( void *libhandler, const String &func_name );
    bool dynlib_get_error( int32 &ecode, String &sError );
+
+   void dynlib_void_call( void *faddress, byte *stack_image, uint32 stack_depth );
+   void* dynlib_voidp_call( void *faddress, byte *stack_image, uint32 stack_depth );
+   uint32 dynlib_dword_call( void *faddress, byte *stack_image, uint32 stack_depth );
+   uint64 dynlib_qword_call( void *faddress, byte *stack_image, uint32 stack_depth );
+   double dynlib_double_call( void *faddress, byte *stack_image, uint32 stack_depth );
 }
 }
 
