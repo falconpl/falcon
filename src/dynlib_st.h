@@ -39,6 +39,6 @@ FAL_MODSTR( dle_already_unloaded, "Library has been already unloaded" );
 FAL_MODSTR( dle_unload_fail, "Failed to unload the library" );
 FAL_MODSTR( dle_cant_instance, "Can't create directly an instance of class DynFunction" );
 FAL_MODSTR( dle_cant_describe, "Error description unavailable" );
-
+FAL_MODSTR( dle_cant_guess_param, "Cannot guess automatic conversion for parameter" );
 
 /* end of dynlib_st.h */

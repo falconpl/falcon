@@ -161,14 +161,62 @@ FALCON_FUNC  DynFunction_init( ::Falcon::VMachine *vm )
          .desc( FAL_STR( dle_cant_instance ) ) ) );
 }
 
+
 FALCON_FUNC  DynFunction_call( ::Falcon::VMachine *vm )
 {
+   FunctionAddress *fa = reinterpret_cast<FunctionAddress *>(vm->self().asObject()->getUserData());
+
+   byte buffer[1024]; // 1024/4 = 256 parameters (usually).
+   uint32 pos = 0;
+
+   uint32 p = 0;
+   uint32 pcount = vm->paramCount();
+   while( p < pcount )
+   {
+      Item *param = vm->param(p);
+      if ( fa->m_bGuessParams )
+      {
+         switch( param->type() )
+         {
+         case FLC_ITEM_INT:
+         case FLC_ITEM_NUM:
+            {
+               *(int*)(buffer + pos) = (int) param->forceInteger();
+            }
+            break;
+
+         default:
+            {
+               String temp;
+               temp.writeNumber( (int64) p );
+               vm->raiseError( new DynLibError( ErrorParam( FALCON_DYNLIB_ERROR_BASE+4, __LINE__ )
+                  .desc( FAL_STR( dle_cant_guess_param ) )
+                  .extra( temp ) ));
+            }
+            return;
+         }
+      }
+      ++p;
+   }
 }
+
 
 FALCON_FUNC  DynFunction_toString( ::Falcon::VMachine *vm )
 {
    FunctionAddress *fa = reinterpret_cast<FunctionAddress *>(vm->self().asObject()->getUserData());
-   vm->retval( fa->name() + "()");
+   
+   String ret = fa->name();
+   if ( fa->m_bGuessParams ) {
+      ret += "(...)";
+   }
+   else {
+      ret += "(" + fa->m_paramMask + ")";  
+   }
+
+   if ( fa->m_returnMask != "" )
+      ret += " --> " + fa->m_returnMask;
+
+   vm->retval( ret );
 }
 
 //======================================================
