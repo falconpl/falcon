@@ -30,7 +30,7 @@ namespace Sys {
    void *dynlib_load( const String &libpath );
    int dynlib_unload( void *libhandler );
    void *dynlib_get_address( void *libhandler, const String &func_name );
-   bool dynlib_get_error( String &sError );
+   bool dynlib_get_error( int32 &ecode, String &sError );
 }
 }
 

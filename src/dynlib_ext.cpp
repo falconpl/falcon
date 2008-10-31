@@ -53,10 +53,12 @@ FALCON_FUNC  DynLib_init( ::Falcon::VMachine *vm )
    if( lib_handle == 0 )
    {
       String errorContent;
-      if( Sys::dynlib_get_error( errorContent ) )
+      int32 nErr;
+      if( Sys::dynlib_get_error( nErr, errorContent ) )
       {
          vm->raiseModError( new DynLibError( ErrorParam( FALCON_DYNLIB_ERROR_BASE, __LINE__ )
                   .desc( FAL_STR( dle_load_error ) )
+                  .sysError( (uint32) nErr )
                   .extra( *i_path->asString() + " - " + errorContent) ) );
       }
       else {

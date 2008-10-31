@@ -23,6 +23,7 @@
 
 #include <falcon/autocstring.h>
 #include <dlfcn.h>
+#include <errno.h>
 
 namespace Falcon {
 namespace Sys {
@@ -44,7 +45,7 @@ void *dynlib_get_address( void *libhandler, const String &func_name )
    return dlsym( libhandler, c_sym.c_str() );
 }
 
-bool dynlib_get_error( String &sError )
+bool dynlib_get_error( int32 &ecode, String &sError )
 {
    const char *error = dlerror();
    // no error? -- don't mangle the string and return false.
@@ -52,6 +53,7 @@ bool dynlib_get_error( String &sError )
       return false;
 
    // bufferize the error and signal we have some.
+   ecode = errno;
    sError.bufferize( error );
    return true;
 }

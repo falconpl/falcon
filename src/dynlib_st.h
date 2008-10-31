@@ -38,6 +38,7 @@ FAL_MODSTR( dle_unknown_error, "Reason unknown" );
 FAL_MODSTR( dle_already_unloaded, "Library has been already unloaded" );
 FAL_MODSTR( dle_unload_fail, "Failed to unload the library" );
 FAL_MODSTR( dle_cant_instance, "Can't create directly an instance of class DynFunction" );
+FAL_MODSTR( dle_cant_describe, "Error description unavailable" );
 
 
 /* end of dynlib_st.h */
