@@ -34,8 +34,8 @@ namespace Sys {
 
    void dynlib_void_call( void *faddress, byte *stack_image, uint32 stack_depth );
    void* dynlib_voidp_call( void *faddress, byte *stack_image, uint32 stack_depth );
-   uint32 dynlib_dword_call( void *faddress, byte *stack_image, uint32 stack_depth );
-   uint64 dynlib_qword_call( void *faddress, byte *stack_image, uint32 stack_depth );
+   int32 dynlib_dword_call( void *faddress, byte *stack_image, uint32 stack_depth );
+   int64 dynlib_qword_call( void *faddress, byte *stack_image, uint32 stack_depth );
    double dynlib_double_call( void *faddress, byte *stack_image, uint32 stack_depth );
 }
 }

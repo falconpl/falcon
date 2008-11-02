@@ -33,11 +33,15 @@ namespace Ext {
 
 FALCON_FUNC  DynLib_init( ::Falcon::VMachine *vm );
 FALCON_FUNC  DynLib_get( ::Falcon::VMachine *vm );
+FALCON_FUNC  DynLib_query( ::Falcon::VMachine *vm );
 FALCON_FUNC  DynLib_unload( ::Falcon::VMachine *vm );
 
 
 FALCON_FUNC  DynFunction_init( ::Falcon::VMachine *vm );
 FALCON_FUNC  DynFunction_call( ::Falcon::VMachine *vm );
+FALCON_FUNC  DynFunction_isSafe( ::Falcon::VMachine *vm );
+FALCON_FUNC  DynFunction_parameters( ::Falcon::VMachine *vm );
+FALCON_FUNC  DynFunction_retval( ::Falcon::VMachine *vm );
 FALCON_FUNC  DynFunction_toString( ::Falcon::VMachine *vm );
 
 

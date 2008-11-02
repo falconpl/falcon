@@ -28,7 +28,14 @@
 namespace Falcon {
 namespace Ext {
 
-// The following is a faldoc block for the function
+/*#
+   @class DynLib
+   @brief Dynamic Loader support.
+
+   This class allows to load functions from dynamic link library or
+   shared objects.
+*/
+
 /*#
    @init DynLib
    @brief Creates a reference to a dynamic library.
@@ -73,22 +80,22 @@ FALCON_FUNC  DynLib_init( ::Falcon::VMachine *vm )
    vm->self().asObject()->setUserData( lib_handle );
 }
 
-/*#
-   @method get DynLib
-   @brief Gets a dynamic symbol in this library.
-   @param symbol The symbol to be retreived.
-   @return On success an instance of @a DynFunction class, nil non failure.
-   @raise DynLibError if this instance is not valid (i.e. if used after an unload).
 
-*/
-FALCON_FUNC  DynLib_get( ::Falcon::VMachine *vm )
+
+CoreObject *internal_dynlib_get( VMachine* vm, bool& shouldRaise )
 {
    Item *i_symbol = vm->param(0);
-   if( i_symbol == 0 || ! i_symbol->isString() )
+   Item *i_rettype = vm->param(1);
+   Item *i_pmask = vm->param(2);
+
+   if( i_symbol == 0 || ! i_symbol->isString() ||
+      (i_rettype != 0 && ! i_rettype->isString() ) ||
+      (i_pmask != 0 && ! i_pmask->isString() )
+    )
    {
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                  .extra("S") ) );
-      return;
+                  .extra("S,[S],[S]") ) );
+      return 0;
    }
 
    void *hlib = vm->self().asObject()->getUserData();
@@ -96,19 +103,25 @@ FALCON_FUNC  DynLib_get( ::Falcon::VMachine *vm )
    {
       vm->raiseModError( new DynLibError( ErrorParam( FALCON_DYNLIB_ERROR_BASE+1, __LINE__ )
          .desc( FAL_STR( dle_already_unloaded ) ) ) );
+      return 0;
    }
 
    void *sym_handle = Sys::dynlib_get_address( hlib, *i_symbol->asString() );
 
-   // No handle? -- we wrong something in the name; report the user without the
-   // penalty of extra raises (?).
+   // No handle? -- we wrong something in the name.
+   // Let the decision to raise something to the caller.
    if( sym_handle == 0 )
    {
-      vm->retnil();
-      return;
+      shouldRaise = true;
+      return 0;
    }
 
    FunctionAddress *addr = new FunctionAddress( *i_symbol->asString(), sym_handle );
+
+   // should we guess the parameters?
+   if ( vm->paramCount() == 1 )
+      addr->m_bGuessParams = true;
+
    Item* dfc = vm->findWKI( "DynFunction" );
    fassert( dfc != 0 );
    fassert( dfc->isClass() );
@@ -117,8 +130,75 @@ FALCON_FUNC  DynLib_get( ::Falcon::VMachine *vm )
    CoreObject *obj = dfc->asClass()->createInstance();
    // fill it
    obj->setUserData( addr );
-   // and return it
-   vm->retval( obj );
+   return obj;
+}
+
+
+/*#
+   @method get DynLib
+   @brief Gets a dynamic symbol in this library.
+   @param symbol The symbol to be retreived.
+   @optparam rettype Function return type (see below).
+   @optparam pmask Function parameter mask (see below).
+   @return On success an instance of @a DynFunction class.
+   @raise DynLibError if this instance is not valid (i.e. if used after an unload).
+   @raise DynLibError if the @b sybmol parameter cannot be resolved in the library.
+
+   On success, the returned @a DynFunction instance has all the needed informations
+   to perform calls directed to the foreign library.
+
+   As the call method of @a DynFunction is performing the actual call, if the other
+   informations are not needed, it is possible to get a callable symbol by accessing
+   directly the @b call property:
+
+   @code
+      lib = DynLib( "somelib.so" )
+      func = lib.get( "somefunc" ).call
+      func( "some value" )
+   @endcode
+*/
+FALCON_FUNC  DynLib_get( ::Falcon::VMachine *vm )
+{
+   bool shouldRaise = false;
+   CoreObject *obj = internal_dynlib_get( vm, shouldRaise );
+
+   if ( shouldRaise )
+   {
+      vm->raiseModError( new DynLibError( ErrorParam( FALCON_DYNLIB_ERROR_BASE+6, __LINE__ )
+         .desc( FAL_STR( dle_symbol_not_found ) )
+         .extra( *vm->param(0)->asString() ) ) );  // shouldRaise tells us we have a correct parameter.
+   }
+   else {
+      vm->retval( obj );
+   }
+}
+
+/*#
+   @method query DynLib
+   @brief Gets a dynamic symbol in this library.
+   @param symbol The symbol to be retreived.
+   @optparam rettype Function return type (see below).
+   @optparam pmask Function parameter mask (see below).
+   @return On success an instance of @a DynFunction class; nil if the @b symbol can't be found.
+   @raise DynLibError if this instance is not valid (i.e. if used after an unload).
+
+   This function is equivalent to DynLib.get, except for the fact that it returns nil
+   instead of raising an error if the given function is not found. Some program logic
+   may prefer a raise when the desired function is not there (as it is supposed to be there),
+   other may prefer just to peek at the library for optional content.
+*/
+FALCON_FUNC  DynLib_query( ::Falcon::VMachine *vm )
+{
+   bool shouldRaise = false;
+   CoreObject *obj = internal_dynlib_get( vm, shouldRaise );
+
+   if ( shouldRaise )
+   {
+      vm->retnil();
+   }
+   else {
+      vm->retval( obj );
+   }
 }
 
 /*#
@@ -153,6 +233,13 @@ FALCON_FUNC  DynLib_unload( ::Falcon::VMachine *vm )
 //======================================================
 // DynLib Function class
 //======================================================
+/*#
+   @class DynFunction
+   @brief Internal representation of dynamically loaded functions.
+
+   This class cannot be instantiated directly. It is generated by
+   the @a DynLib.get method on succesful load.
+*/
 
 FALCON_FUNC  DynFunction_init( ::Falcon::VMachine *vm )
 {
@@ -161,28 +248,85 @@ FALCON_FUNC  DynFunction_init( ::Falcon::VMachine *vm )
          .desc( FAL_STR( dle_cant_instance ) ) ) );
 }
 
+/*#
+   @method call DynFunction
+   @brief Calls the external dynamically loaded function.
+   @optparam ...
+   @return Either nil, a Falcon item or an instance of @a DynOpaque.
 
+   The function calls the dynamically loaded function. If the function was loaded by
+   @a DynLib.get with parameter specificators, input parameters are checked for consistency,
+   and a ParamError may be raised if they don't match. Otherwise, the parameters
+   are passed to the underlying remote functions using this conversion:
+
+      - Integer numbers are turned into platform specific pointer-sized integers. This
+        allows to store both real integers and opaque pointers into Falcon integers.
+      - Strings are turned into UTF-8 strings (characters in ASCII range are unchanged).
+      - MemBuf are passed as they are.
+      - Floating point numbers are turned into 32 bit integers.
+
+   If a return specificator was applied in @a DynLib.get, the function return value is
+   determined by the specificator, otherwise a single integer is returned. The integer
+   is sized after the void* size in the host platform, so it may contain either an integer
+   returned as a status value or an opaque pointer to a structure created by the function.
+
+   @see DynLib.get
+*/
 FALCON_FUNC  DynFunction_call( ::Falcon::VMachine *vm )
 {
-   FunctionAddress *fa = reinterpret_cast<FunctionAddress *>(vm->self().asObject()->getUserData());
+   uint32 p = vm->paramCount();
+   if ( p > F_DYNLIB_MAX_PARAMS )
+   {
+       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
+               .extra( FAL_STR( dyl_toomany_pars ) ) ) );
+      return;
+   }
 
-   byte buffer[1024]; // 1024/4 = 256 parameters (usually).
+   FunctionAddress *fa = reinterpret_cast<FunctionAddress *>(vm->self().asObject()->getUserData());
+   byte buffer[MAX_PARAMS * 8]; // be sure we'll have enough space.
    uint32 pos = 0;
 
-   uint32 p = vm->paramCount();
+   AutoCString *csPlaces[MAX_PARAMS];
+   uint32 count_cs = 0;
+
+   AutoWString *wsPlaces[MAX_PARAMS];
+   uint32 count_ws = 0;
+
    while( p > 0 )
    {
       p--;
       Item *param = vm->param(p);
-      if ( fa->m_bGuessParams || true )
+      if ( fa->m_bGuessParams )
       {
          switch( param->type() )
          {
          case FLC_ITEM_INT:
+            {
+               *(void**)(buffer + pos) = (void*) param->asInteger();
+               pos += sizeof(void*);
+            }
+            break;
+
          case FLC_ITEM_NUM:
             {
-               *(int*)(buffer + pos) = (int) param->forceInteger();
-               pos += 4;
+               *(int32*)(buffer + pos) = (int32) param->forceInteger();
+               pos += sizeof(int32);
+            }
+            break;
+
+         case FLC_ITEM_STRING:
+            {
+               csPlaces[count_cs] = new AutoCString( *param->asString() );
+               *(const char**)(buffer + pos) = (const char*) csPlaces[count_cs]->c_str();
+               count_cs++;
+               pos += sizeof(char*);
+            }
+            break;
+
+         case FLC_ITEM_MEMBUF:
+            {
+               *(void**)(buffer + pos) = (void*) param->asMemBuf()->data();
+               pos += sizeof(void*);
             }
             break;
 
@@ -199,10 +343,36 @@ FALCON_FUNC  DynFunction_call( ::Falcon::VMachine *vm )
       }
    }
 
-   Sys::dynlib_void_call( fa->m_fAddress, buffer, pos );
+   if ( fa->m_bGuessParams )
+   {
+      // by default, return an int
+      vm->retval( (int64) Sys::dynlib_voidp_call( fa->m_fAddress, buffer, pos ) );
+   }
+   else {
+      Sys::dynlib_void_call( fa->m_fAddress, buffer, pos );
+   }
+
+   // cleanup -- remove the strings we used.
+   uint32 i;
+   for ( i = 0; i < count_cs; ++i )
+   {
+      delete csPlaces[i];
+   }
+
+   for ( i = 0; i < count_ws; ++i )
+   {
+      delete wsPlaces[i];
+   }
 }
 
+/*#
+   @method toString DynFunction
+   @brief Returns a string representation of the function.
+   @return A string representation of the function.
 
+   The representation will contain the original parameter list and return values,
+   if given.
+*/
 FALCON_FUNC  DynFunction_toString( ::Falcon::VMachine *vm )
 {
    FunctionAddress *fa = reinterpret_cast<FunctionAddress *>(vm->self().asObject()->getUserData());
@@ -221,10 +391,74 @@ FALCON_FUNC  DynFunction_toString( ::Falcon::VMachine *vm )
    vm->retval( ret );
 }
 
+
+/*#
+   @method isSafe DynFunction
+   @brief Checks if this DynFunction has safety constraints.
+   @return True if this function has parameter and return values constraints, false otherwise.
+
+   @see DynLib.get
+*/
+FALCON_FUNC  DynFunction_isSafe( ::Falcon::VMachine *vm )
+{
+   FunctionAddress *fa = reinterpret_cast<FunctionAddress *>(vm->self().asObject()->getUserData());
+   vm->regA().setBoolean( !fa->m_bGuessParams );
+}
+
+/*#
+   @method parameters DynFunction
+   @brief Returns the parameter constraints that were given for this function.
+   @return The parameters given for this function (as a string), or nil if not given.
+
+   @see DynLib.get
+*/
+
+FALCON_FUNC  DynFunction_parameters( ::Falcon::VMachine *vm )
+{
+   FunctionAddress *fa = reinterpret_cast<FunctionAddress *>(vm->self().asObject()->getUserData());
+   if( fa->m_bGuessParams )
+      vm->retnil();
+   else
+      vm->retval( fa->m_paramMask );
+}
+
+/*#
+   @method retval DynFunction
+   @brief Returns the return type constraint that were given for this function.
+   @return The return type given for this function (as a string), or nil if not given.
+
+   @see DynLib.get
+*/
+
+FALCON_FUNC  DynFunction_retval( ::Falcon::VMachine *vm )
+{
+   FunctionAddress *fa = reinterpret_cast<FunctionAddress *>(vm->self().asObject()->getUserData());
+   if( fa->m_bGuessParams )
+      vm->retnil();
+   else
+      vm->retval( fa->m_returnMask );
+}
+
 //======================================================
 // DynLib error
 //======================================================
 
+/*#
+   @class DynLibError
+   @optparam code
+   @optparam desc
+   @optparam extra
+
+   @from Error( code, desc, extra )
+   @brief DynLib specific error.
+
+   Inherited class from Error to distinguish from a standard Falcon error.
+*/
+
+/*#
+   @init DynLibError
+   See Core Error class descriptiong.
+*/
 FALCON_FUNC DynLibError_init( VMachine *vm )
 {
    CoreObject *einst = vm->self().asObject();

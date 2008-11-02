@@ -40,5 +40,8 @@ FAL_MODSTR( dle_unload_fail, "Failed to unload the library" );
 FAL_MODSTR( dle_cant_instance, "Can't create directly an instance of class DynFunction" );
 FAL_MODSTR( dle_cant_describe, "Error description unavailable" );
 FAL_MODSTR( dle_cant_guess_param, "Cannot guess automatic conversion for parameter" );
+FAL_MODSTR( dle_symbol_not_found, "Symbol not found" );
+FAL_MODSTR( dyl_toomany_pars, "Too many parameters" );
+
 
 /* end of dynlib_st.h */
