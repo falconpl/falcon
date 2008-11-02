@@ -647,9 +647,7 @@ dbi_status DBIHandlePgSQL::escapeString( const String &value, String &escaped )
 
    size_t convertedSize = PQescapeStringConn( m_conn, cTo, asValue.c_str(), maxLen,
                                               &errorCode );
-
-   escaped = cTo;
-   escaped.bufferize();
+   escaped.fromUTF8(cTo);
 
    free( cTo );
 

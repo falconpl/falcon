@@ -557,8 +557,7 @@ dbi_status DBIHandleSQLite3::escapeString( const String &value, String &escaped 
    AutoCString asValue( value );
 
    char *cTo = sqlite3_mprintf( "%q", asValue.c_str() );
-   escaped = cTo;
-   escaped.bufferize();
+   escaped.fromUTF8(cTo);
 
    sqlite3_free( cTo );
 

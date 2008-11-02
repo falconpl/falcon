@@ -603,9 +603,7 @@ dbi_status DBIHandleMySQL::escapeString( const String &value, String &escaped )
       return dbi_error;
    }
 
-   escaped = cTo;
-   escaped.bufferize();
-
+   escaped.fromUTF8( cTo );
    free( cTo );
 
    return dbi_ok;
