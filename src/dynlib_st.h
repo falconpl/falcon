@@ -42,6 +42,8 @@ FAL_MODSTR( dle_cant_describe, "Error description unavailable" );
 FAL_MODSTR( dle_cant_guess_param, "Cannot guess automatic conversion for parameter" );
 FAL_MODSTR( dle_symbol_not_found, "Symbol not found" );
 FAL_MODSTR( dyl_toomany_pars, "Too many parameters" );
+FAL_MODSTR( dyl_invalid_pmask, "Invalid parameter mask" );
+FAL_MODSTR( dyl_invalid_rmask, "Invalid return mask" );
 
 
 /* end of dynlib_st.h */

@@ -92,11 +92,12 @@ bool FunctionAddress::parseParams( const String &mask )
          if ( ! empty )
          {
             // we found the limit of a previous token
-            if ( ! parseSingleParam( mask, m_parsedParams + parsedTokens, spos, pos ) )
+            byte token;
+            if ( ! parseSingleParam( mask, token, spos, pos ) )
                return false;
 
             // ok the token was valid - was it a safety string?
-            if( m_parsedParams[ parsedTokens ] == F_DYNLIB_PTYPE_OPAQUE )
+            if( token == F_DYNLIB_PTYPE_OPAQUE )
             {
                // record the string.
                safeStarts[safeCount] = spos;
@@ -104,13 +105,15 @@ bool FunctionAddress::parseParams( const String &mask )
                ++safeCount;
             }
             // was it ... -- then the string must be over NOW
-            else if ( m_parsedParams[ parsedTokens ] == F_DYNLIB_PTYPE_VAR )
+            else if ( token == F_DYNLIB_PTYPE_VAR )
             {
-               return (pos == plen) || (pos + 1 == plen);
+               if( pos != plen )
+                  return false;
             }
 
             // anyhow accept the token and move on.
-            ++parsedTokens;
+            m_parsedParams[parsedTokens++] = token;
+            empty = true;
          }
          // else, just ignore.
       }
@@ -126,6 +129,25 @@ bool FunctionAddress::parseParams( const String &mask )
 
       ++pos;  // advance
    }
+
+   // Exited because of excessive tokens?
+   if( pos < plen )
+      return false;
+
+   // close the sequence
+   m_parsedParams[ parsedTokens ] = F_DYNLIB_PTYPE_END;
+
+   // Now create the string vector containing our safety types
+   if( safeCount > 0 )
+   {
+      m_safetyParams = new String[safeCount];
+      for( int i = 0; i < safeCount; i++ )
+      {
+         m_safetyParams[i] = mask.subString(safeStarts[i], safeEnds[i]);
+      }
+   }
+
+   return true;
 }
 
 
@@ -259,23 +281,18 @@ bool FunctionAddress::parseSingleParam( const String &mask, byte &type, uint32 b
             // nothing should be after a third dot
             return false;
 
-         case '.':
-             if ( chr != '.' )
-               return false;
-            else {
-               value = F_DYNLIB_PTYPE_VAR;
-               state = es_thirdDot;
-            }
-            break;
-
          case es_symbol:
             if ( chr == '$' || chr == '.' )
                return false;
-         break;
+            break;
       }
 
       ++pos;
    }
+
+   // we are at the end of input, and all is fine,
+   type = prefix | value;
+   return true;
 }
 
 /*

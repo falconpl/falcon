@@ -25,6 +25,8 @@
 #include "dynlib_st.h"
 #include "dynlib_sys.h"
 
+#include <stdio.h>
+
 namespace Falcon {
 namespace Ext {
 
@@ -119,8 +121,29 @@ CoreObject *internal_dynlib_get( VMachine* vm, bool& shouldRaise )
    FunctionAddress *addr = new FunctionAddress( *i_symbol->asString(), sym_handle );
 
    // should we guess the parameters?
-   if ( vm->paramCount() == 1 )
-      addr->m_bGuessParams = true;
+   if( i_pmask != 0 )
+   {
+      if ( ! addr->parseParams( *i_pmask->asString() ) )
+      {
+         vm->raiseModError( new DynLibError( ErrorParam( FALCON_DYNLIB_ERROR_BASE+7, __LINE__ )
+         .desc( FAL_STR( dyl_invalid_pmask ) ) ) );
+         return 0;
+      }
+
+      // debug
+      uint32 p=0, sp=0;
+      byte mask;
+      while( (mask=addr->parsedParam(p)) != 0 )
+      {
+         printf( "Parameter %d: %d\n", p, mask );
+         if( mask == F_DYNLIB_PTYPE_OPAQUE ) {
+            AutoCString pName(addr->pclassParam(sp++));
+            printf( "PseudoClass: %s\n", pName.c_str() );
+         }
+         p++;
+      }
+
+   }
 
    Item* dfc = vm->findWKI( "DynFunction" );
    fassert( dfc != 0 );
@@ -283,13 +306,13 @@ FALCON_FUNC  DynFunction_call( ::Falcon::VMachine *vm )
    }
 
    FunctionAddress *fa = reinterpret_cast<FunctionAddress *>(vm->self().asObject()->getUserData());
-   byte buffer[MAX_PARAMS * 8]; // be sure we'll have enough space.
+   byte buffer[F_DYNLIB_MAX_PARAMS * 8]; // be sure we'll have enough space.
    uint32 pos = 0;
 
-   AutoCString *csPlaces[MAX_PARAMS];
+   AutoCString *csPlaces[F_DYNLIB_MAX_PARAMS];
    uint32 count_cs = 0;
 
-   AutoWString *wsPlaces[MAX_PARAMS];
+   AutoWString *wsPlaces[F_DYNLIB_MAX_PARAMS];
    uint32 count_ws = 0;
 
    while( p > 0 )
