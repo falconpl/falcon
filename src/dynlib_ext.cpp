@@ -91,7 +91,7 @@ CoreObject *internal_dynlib_get( VMachine* vm, bool& shouldRaise )
    Item *i_pmask = vm->param(2);
 
    if( i_symbol == 0 || ! i_symbol->isString() ||
-      (i_rettype != 0 && ! i_rettype->isString() ) ||
+      (i_rettype != 0 && ! i_rettype->isString() && ! i_rettype->isNil()) ||
       (i_pmask != 0 && ! i_pmask->isString() )
     )
    {
@@ -120,6 +120,17 @@ CoreObject *internal_dynlib_get( VMachine* vm, bool& shouldRaise )
 
    FunctionAddress *addr = new FunctionAddress( *i_symbol->asString(), sym_handle );
 
+   // have we a return value?
+   if( i_rettype != 0 && ! i_rettype->isNil() )
+   {
+      if ( ! parseReturn( *i_rettype->asString() ) )
+      {
+         vm->raiseModError( new DynLibError( ErrorParam( FALCON_DYNLIB_ERROR_BASE+8, __LINE__ )
+         .desc( FAL_STR( dyl_invalid_rmask ) ) ) );
+         return 0;
+      }
+   }
+
    // should we guess the parameters?
    if( i_pmask != 0 )
    {
@@ -136,13 +147,12 @@ CoreObject *internal_dynlib_get( VMachine* vm, bool& shouldRaise )
       while( (mask=addr->parsedParam(p)) != 0 )
       {
          printf( "Parameter %d: %d\n", p, mask );
-         if( mask == F_DYNLIB_PTYPE_OPAQUE ) {
+         if( ( mask & 0x7f) == F_DYNLIB_PTYPE_OPAQUE ) {
             AutoCString pName(addr->pclassParam(sp++));
             printf( "PseudoClass: %s\n", pName.c_str() );
          }
          p++;
       }
-
    }
 
    Item* dfc = vm->findWKI( "DynFunction" );

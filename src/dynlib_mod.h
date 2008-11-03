@@ -77,12 +77,12 @@ public:
    /**
       The (original) parameter mask.
    */
-   const String m_paramMask;
+   String m_paramMask;
 
    /**
       The return mask.
    */
-   const String m_returnMask;
+   String m_returnMask;
 
    /** Should we guess our params? */
    bool m_bGuessParams;
@@ -90,6 +90,7 @@ public:
    FunctionAddress( const String &name, void *address = 0 ):
       m_name( name ),
       m_parsedParams(0),
+      m_parsedReturn( F_DYNLIB_PTYPE_PTR ),
       m_safetyParams(0),
       m_fAddress(address),
       m_bGuessParams( true )
@@ -97,6 +98,7 @@ public:
 
    /**
       Copies an existing function pointer.
+      /TODO
    */
    FunctionAddress( const FunctionAddress &other ):
       m_parsedParams(0),
@@ -186,6 +188,13 @@ public:
       or if the only character is > 256U.
    */
    bool parseParams( const String &params );
+
+   /**
+      Parses the return value type specifier.
+
+      On success, also configures this object's internal data.
+   */
+   bool parseReturn( const String &rval );
 
    /** Parses a single parameter, finding its type.
       \param mask A parameter list format.

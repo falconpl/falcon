@@ -21,6 +21,8 @@
 
 #include "dynlib_mod.h"
 
+#include <stdio.h>
+
 namespace Falcon {
 
 FunctionAddress::~FunctionAddress()
@@ -104,6 +106,13 @@ bool FunctionAddress::parseParams( const String &mask )
                safeEnds[safeCount] = pos;
                ++safeCount;
             }
+            else if ( token == (F_DYNLIB_PTYPE_OPAQUE | F_DYNLIB_PTYPE_BYPTR) )
+            {
+               // record the string.
+               safeStarts[safeCount] = spos+1;
+               safeEnds[safeCount] = pos;
+               ++safeCount;
+            }
             // was it ... -- then the string must be over NOW
             else if ( token == F_DYNLIB_PTYPE_VAR )
             {
@@ -129,6 +138,8 @@ bool FunctionAddress::parseParams( const String &mask )
 
       ++pos;  // advance
    }
+
+   printf( "Parsing complete: %d tokens\n", parsedTokens );
 
    // Exited because of excessive tokens?
    if( pos < plen )
@@ -164,6 +175,7 @@ bool FunctionAddress::parseSingleParam( const String &mask, byte &type, uint32 b
       es_firstdot,
       es_seconddot,
       es_thirddot,
+      es_maybesym,
       es_invalid
    } t_state;
 
@@ -248,12 +260,16 @@ bool FunctionAddress::parseSingleParam( const String &mask, byte &type, uint32 b
                      state = es_symbol;
                      value = F_DYNLIB_PTYPE_OPAQUE;
                   }
+                  else {
+                     state = es_maybesym;
+                  }
             }
             break;
 
+         case es_maybesym:
          case es_firstchar:
             // well, we have a char, so
-            if ( chr == '$' )
+            if ( chr == '$' || chr == '.' )
                return false;
             else {
                state = es_symbol;
@@ -274,6 +290,7 @@ bool FunctionAddress::parseSingleParam( const String &mask, byte &type, uint32 b
             if ( chr != '.' )
                return false;
             else
+               value = F_DYNLIB_PTYPE_VAR;
                state = es_thirddot;
             break;
 
@@ -282,7 +299,9 @@ bool FunctionAddress::parseSingleParam( const String &mask, byte &type, uint32 b
             return false;
 
          case es_symbol:
-            if ( chr == '$' || chr == '.' )
+            if ( chr < 256 &&
+               ( (chr|0x32) < 'a' || (chr|0x32) > 'z' )
+               )
                return false;
             break;
       }
@@ -290,10 +309,26 @@ bool FunctionAddress::parseSingleParam( const String &mask, byte &type, uint32 b
       ++pos;
    }
 
+   if( state == es_maybesym )
+   {
+      // a single character...
+      return false;
+   }
+
    // we are at the end of input, and all is fine,
    type = prefix | value;
    return true;
 }
+
+
+bool FunctionAddress::parseReturn( const String &rval )
+{
+   m_returnMask = rval;
+   m_returnMask.trim();
+
+   return parseSingleParam( m_returnMask, m_parsedReturn );
+}
+
 
 /*
 void FunctionAddress::call( VMachine *vm, int32 firstParam ) const
