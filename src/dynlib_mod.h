@@ -92,7 +92,7 @@ public:
       m_parsedParams(0),
       m_safetyParams(0),
       m_fAddress(address),
-      m_bGuessParams( false )
+      m_bGuessParams( true )
    {}
 
    /**
