@@ -136,7 +136,7 @@ CoreObject *internal_dynlib_get( VMachine* vm, bool& shouldRaise )
    {
       if ( ! addr->parseParams( *i_pmask->asString() ) )
       {
-         vm->raiseModError( new DynLibError( ErrorParam( FALCON_DYNLIB_ERROR_BASE+7, __LINE__ )
+         vm->raiseModError( new ParamError( ErrorParam( FALCON_DYNLIB_ERROR_BASE+7, __LINE__ )
          .desc( FAL_STR( dyl_invalid_pmask ) ) ) );
          return 0;
       }
@@ -274,7 +274,7 @@ FALCON_FUNC  DynLib_unload( ::Falcon::VMachine *vm )
    the @a DynLib.get method on succesful load.
 */
 
-FALCON_FUNC  DynFunction_init( ::Falcon::VMachine *vm )
+FALCON_FUNC  Dyn_dummy_init( ::Falcon::VMachine *vm )
 {
    // this can't be called directly, so it just raises an error
    vm->raiseModError( new DynLibError( ErrorParam( FALCON_DYNLIB_ERROR_BASE+3, __LINE__ )
@@ -470,6 +470,25 @@ FALCON_FUNC  DynFunction_retval( ::Falcon::VMachine *vm )
       vm->retnil();
    else
       vm->retval( fa->m_returnMask );
+}
+
+//======================================================
+// DynLib opaque
+//======================================================
+
+FALCON_FUNC  DynOpaque_toString( ::Falcon::VMachine *vm )
+{
+   Item pseudoClass;
+   vm->self().asObject()->getProperty( "pseudoClass", pseudoClass );
+   if( vm->self().asObject()->getProperty( "pseudoClass", pseudoClass ) &&
+         pseudoClass.isString() )
+   {
+      vm->retval( new GarbageString( vm, "DynOpaque: " + *pseudoClass.asString() ) );
+   }
+   else 
+   {
+      vm->retval( "Invalid DynOpaque" );
+   }
 }
 
 //======================================================

@@ -176,7 +176,7 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    //============================================================
    // Callable function API
    //
-   Falcon::Symbol *dynfunc_cls = self->addClass( "DynFunction", Falcon::Ext::DynFunction_init );
+   Falcon::Symbol *dynfunc_cls = self->addClass( "DynFunction", Falcon::Ext::Dyn_dummy_init ); // actually, raises
    dynfunc_cls->getClassDef()->setObjectManager( &dyn_func_manager );
    dynfunc_cls->setWKS( true );
    self->addClassMethod( dynfunc_cls, "call", Falcon::Ext::DynFunction_call );
@@ -184,6 +184,15 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    self->addClassMethod( dynfunc_cls, "parameters", Falcon::Ext::DynFunction_parameters );
    self->addClassMethod( dynfunc_cls, "retval", Falcon::Ext::DynFunction_retval );
    self->addClassMethod( dynfunc_cls, "toString", Falcon::Ext::DynFunction_toString );
+
+   //============================================================
+   // Opaque item mask
+   //
+   Falcon::Symbol *dynopaque_cls = self->addClass( "DynOpaque", Falcon::Ext::Dyn_dummy_init );  // actually, raises
+   // No object manager needed.
+   dynopaque_cls->setWKS( true );
+   self->addClassProperty( dynopaque_cls, "pseudoClass" );
+   self->addClassMethod( dynopaque_cls, "toString", Falcon::Ext::DynOpaque_toString );
 
 
    //============================================================
