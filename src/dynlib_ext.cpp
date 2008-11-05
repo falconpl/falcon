@@ -25,7 +25,9 @@
 #include "dynlib_st.h"
 #include "dynlib_sys.h"
 
+#ifndef NDEBUG
 #include <stdio.h>
+#endif
 
 namespace Falcon {
 namespace Ext {
@@ -142,6 +144,7 @@ CoreObject *internal_dynlib_get( VMachine* vm, bool& shouldRaise )
       }
 
       // debug
+      #ifndef NDEBUG
       uint32 p=0, sp=0;
       byte mask;
       while( (mask=addr->parsedParam(p)) != 0 )
@@ -153,6 +156,7 @@ CoreObject *internal_dynlib_get( VMachine* vm, bool& shouldRaise )
          }
          p++;
       }
+      #endif
    }
 
    Item* dfc = vm->findWKI( "DynFunction" );
@@ -557,18 +561,18 @@ FALCON_FUNC  DynFunction_call( ::Falcon::VMachine *vm )
    bufpos = buffer + pos;
    bufsize = (F_DYNLIB_MAX_PARAMS * 8) - pos;
 
-   if ( fa->m_bGuessParams || (fa->parsedReturn() & 0x80) == 0x80 )
+   // the return value is not set, it defaults to pointer
+   if ( fa->parsedReturn() == F_DYNLIB_PTYPE_END ||
+        fa->parsedReturn() == F_DYNLIB_PTYPE_PTR ||
+        (fa->parsedReturn() & F_DYNLIB_PTYPE_BYPTR) == F_DYNLIB_PTYPE_BYPTR )
    {
       // by default, return a pointer encapsulated in an integer.
       vm->retval( (int64) Sys::dynlib_voidp_call( fa->m_fAddress, bufpos, bufsize ) );
    }
-   else {
+   else
+   {
       switch( fa->parsedReturn() )
       {
-         case F_DYNLIB_PTYPE_PTR:
-            vm->retval( (int64) Sys::dynlib_voidp_call( fa->m_fAddress, bufpos, bufsize ) );
-            break;
-
          case F_DYNLIB_PTYPE_FLOAT:
          case F_DYNLIB_PTYPE_DOUBLE:
             vm->retval( Sys::dynlib_double_call( fa->m_fAddress, bufpos, bufsize ) );
@@ -603,7 +607,7 @@ FALCON_FUNC  DynFunction_call( ::Falcon::VMachine *vm )
          case F_DYNLIB_PTYPE_MB:
             {
                byte *data = (byte *) Sys::dynlib_voidp_call( fa->m_fAddress, bufpos, bufsize );
-               MemBuf *mb = new MemBuf_1( vm, data, 0xFFFFFFFF );  // allow to mangle with memory ad lib.
+               MemBuf *mb = new MemBuf_1( vm, data, 0x7FFFFFFF );  // allow to mangle with memory ad lib.
                vm->retval( mb );
             }
             break;
@@ -618,6 +622,7 @@ FALCON_FUNC  DynFunction_call( ::Falcon::VMachine *vm )
                fassert( i_copaque->isClass() );
                CoreObject *ptr = i_copaque->asClass()->createInstance( data );
                ptr->setProperty( "pseudoClass", fa->m_returnMask );
+               vm->retval( ptr );
             }
             break;
       }
@@ -729,6 +734,13 @@ FALCON_FUNC  DynOpaque_toString( ::Falcon::VMachine *vm )
       vm->retval( "Invalid DynOpaque" );
    }
 }
+
+FALCON_FUNC  DynOpaque_getData( ::Falcon::VMachine *vm )
+{
+   int64 ptr = (int64) vm->self().asObject()->getUserData();
+   vm->retval( "ptr" );
+}
+
 
 //======================================================
 // DynLib error

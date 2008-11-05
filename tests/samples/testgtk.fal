@@ -1,0 +1,21 @@
+load dynlib
+
+l = DynLib( "/usr/lib/libgtk-x11-2.0.so" )
+gtkInit = l.get( "gtk_init" ).call
+gtkDialogWithButtons = l.get( "gtk_dialog_new_with_buttons", "GTKWidget", "S,I,I,..." ).call
+gtkWindowSetTitle = l.get( "gtk_window_set_title", "", "GTKWidget" ).call
+gtkDialogRun = l.get( "gtk_dialog_run", "I", "GTKWidget" ).call
+gtkWidgetDestroy = l.get( "gtk_widget_destroy", "", "GTKWidget" ).call
+
+gtkInit( 0, 0 )
+w = gtkDialogWithButtons( "Hello world", 0, 1,
+   "Ok", 1,
+   "Cancel", 2,
+   "何か言った？", 3,
+   0 )
+inspect( w )
+n = gtkDialogRun( w )
+> "Dialog result: ", n
+
+//cleanup
+gtkWidgetDestroy( w )

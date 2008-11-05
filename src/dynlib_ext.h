@@ -46,6 +46,7 @@ FALCON_FUNC  DynFunction_retval( ::Falcon::VMachine *vm );
 FALCON_FUNC  DynFunction_toString( ::Falcon::VMachine *vm );
 
 FALCON_FUNC  DynOpaque_toString( ::Falcon::VMachine *vm );
+FALCON_FUNC  DynOpaque_getData( ::Falcon::VMachine *vm );
 
 //=====================
 // DynLib Error class

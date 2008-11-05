@@ -193,6 +193,7 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    dynopaque_cls->setWKS( true );
    self->addClassProperty( dynopaque_cls, "pseudoClass" );
    self->addClassMethod( dynopaque_cls, "toString", Falcon::Ext::DynOpaque_toString );
+   self->addClassMethod( dynopaque_cls, "getData", Falcon::Ext::DynOpaque_getData );
 
 
    //============================================================

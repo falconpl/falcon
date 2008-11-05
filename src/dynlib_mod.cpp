@@ -21,8 +21,6 @@
 
 #include "dynlib_mod.h"
 
-#include <stdio.h>
-
 namespace Falcon {
 
 FunctionAddress::~FunctionAddress()
@@ -139,8 +137,6 @@ bool FunctionAddress::parseParams( const String &mask )
       ++pos;  // advance
    }
 
-   printf( "Parsing complete: %d tokens\n", parsedTokens );
-   
    // Exited because of excessive tokens?
    if( pos < plen )
       return false;
@@ -302,7 +298,7 @@ bool FunctionAddress::parseSingleParam( const String &mask, byte &type, uint32 b
 
          case es_symbol:
             if ( chr < 256 &&
-               ( (chr|0x32) < 'a' || (chr|0x32) > 'z' )
+               ( (chr|32) < 'a' || (chr|32) > 'z' )
                )
                return false;
             break;
@@ -334,13 +330,13 @@ bool FunctionAddress::parseReturn( const String &rval )
    // of course, "..." is not a valid return
    if ( m_parsedReturn == F_DYNLIB_PTYPE_VAR )
       return false;
-   
+
    // and in case of pass opaque by pointer, we got to remove the $ in front of the retval
    if ( m_parsedReturn == (F_DYNLIB_PTYPE_OPAQUE | F_DYNLIB_PTYPE_BYPTR) )
    {
       m_returnMask = m_returnMask.subString(1);
    }
-   
+
    return true;
 }
 

@@ -67,7 +67,7 @@ class FunctionAddress: public FalconData
 
    /** Array of strings parallel to m_parsedParams where safety input types are stored. */
    String *m_safetyParams;
-   
+
    uint32 m_parsedParamsCount;
    uint32 m_safetyParamsCount;
 
@@ -93,7 +93,7 @@ public:
    FunctionAddress( const String &name, void *address = 0 ):
       m_name( name ),
       m_parsedParams(0),
-      m_parsedReturn( F_DYNLIB_PTYPE_PTR ),
+      m_parsedReturn( F_DYNLIB_PTYPE_END ),
       m_safetyParams(0),
       m_fAddress(address),
       m_bGuessParams( true )
@@ -105,6 +105,7 @@ public:
    */
    FunctionAddress( const FunctionAddress &other ):
       m_parsedParams(0),
+      m_parsedReturn( other.m_parsedReturn ),
       m_safetyParams(0),
       m_fAddress( other.m_fAddress ),
       m_paramMask( other.m_paramMask ),
