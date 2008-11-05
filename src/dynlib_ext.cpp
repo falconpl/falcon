@@ -123,7 +123,7 @@ CoreObject *internal_dynlib_get( VMachine* vm, bool& shouldRaise )
    // have we a return value?
    if( i_rettype != 0 && ! i_rettype->isNil() )
    {
-      if ( ! parseReturn( *i_rettype->asString() ) )
+      if ( ! addr->parseReturn( *i_rettype->asString() ) )
       {
          vm->raiseModError( new DynLibError( ErrorParam( FALCON_DYNLIB_ERROR_BASE+8, __LINE__ )
          .desc( FAL_STR( dyl_invalid_rmask ) ) ) );
@@ -307,17 +307,20 @@ FALCON_FUNC  Dyn_dummy_init( ::Falcon::VMachine *vm )
 */
 FALCON_FUNC  DynFunction_call( ::Falcon::VMachine *vm )
 {
-   uint32 p = vm->paramCount();
-   if ( p > F_DYNLIB_MAX_PARAMS )
+   uint32 paramCount = vm->paramCount();
+   if ( paramCount > F_DYNLIB_MAX_PARAMS )
    {
        vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
                .extra( FAL_STR( dyl_toomany_pars ) ) ) );
       return;
    }
-
+   
    FunctionAddress *fa = reinterpret_cast<FunctionAddress *>(vm->self().asObject()->getUserData());
+   
+   // check paramter types
+   
    byte buffer[F_DYNLIB_MAX_PARAMS * 8]; // be sure we'll have enough space.
-   uint32 pos = 0;
+   uint32 pos = F_DYNLIB_MAX_PARAMS * 8;  // 
 
    AutoCString *csPlaces[F_DYNLIB_MAX_PARAMS];
    uint32 count_cs = 0;
@@ -325,42 +328,37 @@ FALCON_FUNC  DynFunction_call( ::Falcon::VMachine *vm )
    AutoWString *wsPlaces[F_DYNLIB_MAX_PARAMS];
    uint32 count_ws = 0;
 
-   while( p > 0 )
+   uint32 count_sp = fa->pclassCount();
+   bool bGuessParams = fa->m_bGuessParams;
+   
+   uint32 p = 0;
+   while( p < paramCount )
    {
-      p--;
       Item *param = vm->param(p);
-      if ( fa->m_bGuessParams )
+      if ( bGuessParams )
       {
          switch( param->type() )
          {
          case FLC_ITEM_INT:
-            {
-               *(void**)(buffer + pos) = (void*) param->asInteger();
-               pos += sizeof(void*);
-            }
+            pos -= sizeof(void*);
+            *(void**)(buffer + pos) = (void*) param->asInteger();
             break;
 
          case FLC_ITEM_NUM:
-            {
-               *(int32*)(buffer + pos) = (int32) param->forceInteger();
-               pos += sizeof(int32);
-            }
+            pos -= sizeof(int32);
+            *(int32*)(buffer + pos) = (int32) param->forceInteger();
             break;
 
          case FLC_ITEM_STRING:
-            {
-               csPlaces[count_cs] = new AutoCString( *param->asString() );
-               *(const char**)(buffer + pos) = (const char*) csPlaces[count_cs]->c_str();
-               count_cs++;
-               pos += sizeof(char*);
-            }
+            pos -= sizeof(char*);
+            csPlaces[count_cs] = new AutoCString( *param->asString() );
+            *(const char**)(buffer + pos) = (const char*) csPlaces[count_cs]->c_str();
+            count_cs++;
             break;
 
          case FLC_ITEM_MEMBUF:
-            {
-               *(void**)(buffer + pos) = (void*) param->asMemBuf()->data();
-               pos += sizeof(void*);
-            }
+            pos -= sizeof(void*);
+            *(void**)(buffer + pos) = (void*) param->asMemBuf()->data();
             break;
 
          default:
@@ -374,15 +372,154 @@ FALCON_FUNC  DynFunction_call( ::Falcon::VMachine *vm )
             return;
          }
       }
-   }
+      else 
+      {
+         
+         // We have some parameter description.
+         byte pdesc = fa->parsedParam(p);
+         switch( pdesc &0x7F )
+         {
+         case F_DYNLIB_PTYPE_END:
+            // Parameter count is not matching.
+            if ( paramCount > F_DYNLIB_MAX_PARAMS )
+            {
+                vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                        .extra( FAL_STR( dyl_toomany_pars ) ) ) );
+               return;
+            }
+            break;
 
-   if ( fa->m_bGuessParams )
+
+         case F_DYNLIB_PTYPE_PTR:
+            pos -= sizeof(void*);
+            *(void**)(buffer + pos) = (void*) param->asInteger();
+            break;
+
+         case F_DYNLIB_PTYPE_FLOAT:
+            pos -= sizeof(float*);
+            *(float*)(buffer + pos) = (float) param->forceNumeric();
+            break;
+   
+         case F_DYNLIB_PTYPE_DOUBLE:
+            // TODO: Padding on solaris.
+            pos -= sizeof(double*);
+            *(double*)(buffer + pos) = (double) param->forceNumeric();
+            break;
+
+         case F_DYNLIB_PTYPE_I32:
+            // TODO: Padding on solaris.
+            pos -= sizeof(int32);
+            *(int32*)(buffer + pos) = (int32) param->forceInteger();
+            break;
+
+
+         case F_DYNLIB_PTYPE_U32:
+            pos -= sizeof(uint32);
+            *(uint32*)(buffer + pos) = (uint32) param->forceInteger();
+            break;
+
+         case F_DYNLIB_PTYPE_LI:
+            pos -= sizeof(int64);
+            *(int64*)(buffer + pos) = (int64) param->forceInteger();
+            break;
+
+         case F_DYNLIB_PTYPE_SZ:
+            break;
+         
+         case F_DYNLIB_PTYPE_WZ:
+            break;
+
+         case F_DYNLIB_PTYPE_MB:
+            pos -= sizeof(void*);
+            *(void**)(buffer + pos) = (void*) param->asMemBuf()->data();
+            break;
+
+         case F_DYNLIB_PTYPE_OPAQUE:
+            break;
+
+         case F_DYNLIB_PTYPE_VAR:
+            // ok, we're done with strict parameter checking.
+            // go into guess mode and loop without incrementing param id.
+            bGuessParams = true;
+            continue;
+         }
+      }
+
+      // increment the parameter count.
+      ++p;
+   }
+   
+   //TODO: Check for extra passed but unused parameters ? 
+   // -- Falcon call protocol allows them, so, for now we're ignoring them.
+
+   // pass the stack starting from first used position.
+   byte* bufpos = buffer + pos;
+   uint32 bufsize = (F_DYNLIB_MAX_PARAMS * 8) - pos;
+
+   if ( fa->m_bGuessParams || (fa->parsedReturn() & 0x80) == 0x80 )
    {
-      // by default, return an int
-      vm->retval( (int64) Sys::dynlib_voidp_call( fa->m_fAddress, buffer, pos ) );
+      // by default, return a pointer encapsulated in an integer.
+      vm->retval( (int64) Sys::dynlib_voidp_call( fa->m_fAddress, bufpos, bufsize ) );
    }
    else {
-      Sys::dynlib_void_call( fa->m_fAddress, buffer, pos );
+      switch( fa->parsedReturn() )
+      {
+         case F_DYNLIB_PTYPE_PTR:
+            vm->retval( (int64) Sys::dynlib_voidp_call( fa->m_fAddress, bufpos, bufsize ) );
+            break;
+
+         case F_DYNLIB_PTYPE_FLOAT:
+         case F_DYNLIB_PTYPE_DOUBLE:
+            vm->retval( Sys::dynlib_double_call( fa->m_fAddress, bufpos, bufsize ) );
+            break;
+
+         case F_DYNLIB_PTYPE_I32:
+            vm->regA().setInteger( (int32) Sys::dynlib_dword_call( fa->m_fAddress, bufpos, bufsize ) );
+         
+         case F_DYNLIB_PTYPE_U32:
+            vm->regA().setInteger( (uint32) Sys::dynlib_dword_call( fa->m_fAddress, bufpos, bufsize ) );
+            break;
+         
+         case F_DYNLIB_PTYPE_LI:
+            vm->regA().setInteger( (int64) Sys::dynlib_qword_call( fa->m_fAddress, bufpos, bufsize ) );
+            break;
+         
+         case F_DYNLIB_PTYPE_SZ:
+            {
+               GarbageString *str = UTF8GarbageString( vm, (const char *) Sys::dynlib_voidp_call( fa->m_fAddress, bufpos, bufsize ) );
+               vm->retval( str );
+            }
+            break;
+
+         case F_DYNLIB_PTYPE_WZ:
+            {
+               const wchar_t *wz = (const wchar_t *) Sys::dynlib_voidp_call( fa->m_fAddress, bufpos, bufsize );
+               GarbageString *str = new GarbageString( vm, wz, -1 );
+               vm->retval( str );
+            }
+            break;
+
+         case F_DYNLIB_PTYPE_MB:
+            {
+               byte *data = (byte *) Sys::dynlib_voidp_call( fa->m_fAddress, bufpos, bufsize );
+               MemBuf *mb = new MemBuf_1( vm, data, 0xFFFFFFFF );  // allow to mangle with memory ad lib.
+               vm->retval( mb );
+            }
+            break;
+
+   
+         case F_DYNLIB_PTYPE_OPAQUE:
+            {
+               void *data = Sys::dynlib_voidp_call( fa->m_fAddress, bufpos, bufsize );
+
+               Item* i_copaque = vm->findWKI( "DynOpaque" );
+               fassert( i_copaque != 0 );
+               fassert( i_copaque->isClass() );
+               CoreObject *ptr = i_copaque->asClass()->createInstance( data );
+               ptr->setProperty( "pseudoClass", fa->m_returnMask );
+            }
+            break;
+      }
    }
 
    // cleanup -- remove the strings we used.

@@ -44,6 +44,7 @@ FAL_MODSTR( dle_symbol_not_found, "Symbol not found" );
 FAL_MODSTR( dyl_toomany_pars, "Too many parameters" );
 FAL_MODSTR( dyl_invalid_pmask, "Invalid parameter mask" );
 FAL_MODSTR( dyl_invalid_rmask, "Invalid return mask" );
+FAL_MODSTR( dyl_pcount, "Parameter count not matching; expected: " );
 
 
 /* end of dynlib_st.h */

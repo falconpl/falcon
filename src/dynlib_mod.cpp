@@ -140,19 +140,21 @@ bool FunctionAddress::parseParams( const String &mask )
    }
 
    printf( "Parsing complete: %d tokens\n", parsedTokens );
-
+   
    // Exited because of excessive tokens?
    if( pos < plen )
       return false;
 
    // close the sequence
    m_parsedParams[ parsedTokens ] = F_DYNLIB_PTYPE_END;
+   m_parsedParamsCount = parsedTokens;
 
    // Now create the string vector containing our safety types
    if( safeCount > 0 )
    {
       m_safetyParams = new String[safeCount];
-      for( int i = 0; i < safeCount; i++ )
+      m_safetyParamsCount = safeCount;
+      for( uint32 i = 0; i < safeCount; i++ )
       {
          m_safetyParams[i] = mask.subString(safeStarts[i], safeEnds[i]);
       }
@@ -326,7 +328,20 @@ bool FunctionAddress::parseReturn( const String &rval )
    m_returnMask = rval;
    m_returnMask.trim();
 
-   return parseSingleParam( m_returnMask, m_parsedReturn );
+   if (! parseSingleParam( m_returnMask, m_parsedReturn ) )
+      return false;
+
+   // of course, "..." is not a valid return
+   if ( m_parsedReturn == F_DYNLIB_PTYPE_VAR )
+      return false;
+   
+   // and in case of pass opaque by pointer, we got to remove the $ in front of the retval
+   if ( m_parsedReturn == (F_DYNLIB_PTYPE_OPAQUE | F_DYNLIB_PTYPE_BYPTR) )
+   {
+      m_returnMask = m_returnMask.subString(1);
+   }
+   
+   return true;
 }
 
 

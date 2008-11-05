@@ -67,6 +67,9 @@ class FunctionAddress: public FalconData
 
    /** Array of strings parallel to m_parsedParams where safety input types are stored. */
    String *m_safetyParams;
+   
+   uint32 m_parsedParamsCount;
+   uint32 m_safetyParamsCount;
 
 public:
    /**
@@ -209,11 +212,15 @@ public:
       Return the decoded nth param.
    */
    byte parsedParam( uint32 id ) const { return m_parsedParams[id]; }
+   uint32 parsedParamCount() const { return m_parsedParamsCount; }
 
    /** Return the nth pseudoclass name being present in the parsed parameters.
       If pid if out of range or the parameters are not parsed, the function will crash.
    */
    const String &pclassParam( uint32 pid ) const { return m_safetyParams[pid]; }
+   uint32 pclassCount() const { return m_safetyParamsCount; }
+
+   byte parsedReturn() const { return m_parsedReturn; }
 };
 
 
