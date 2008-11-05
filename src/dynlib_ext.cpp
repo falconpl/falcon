@@ -281,6 +281,22 @@ FALCON_FUNC  Dyn_dummy_init( ::Falcon::VMachine *vm )
          .desc( FAL_STR( dle_cant_instance ) ) ) );
 }
 
+
+// Simple utility function to raise an error in case of parameter mismatch in calls
+static void s_raiseType( VMachine *vm, uint32 pid, const String &extra )
+{
+   String sPid;
+   sPid.writeNumber( (int64) pid );
+   vm->raiseModError( new ParamError( ErrorParam( FALCON_DYNLIB_ERROR_BASE+8, __LINE__ )
+         .desc( FAL_STR( dyl_param_mismatch ) )
+         .extra( sPid ) ) );
+}
+
+inline void s_raiseType( VMachine* vm, uint32 pid )
+{
+   s_raiseType( vm, pid, "" );
+}
+
 /*#
    @method call DynFunction
    @brief Calls the external dynamically loaded function.
@@ -314,13 +330,16 @@ FALCON_FUNC  DynFunction_call( ::Falcon::VMachine *vm )
                .extra( FAL_STR( dyl_toomany_pars ) ) ) );
       return;
    }
-   
+
    FunctionAddress *fa = reinterpret_cast<FunctionAddress *>(vm->self().asObject()->getUserData());
-   
+
    // check paramter types
-   
+
    byte buffer[F_DYNLIB_MAX_PARAMS * 8]; // be sure we'll have enough space.
-   uint32 pos = F_DYNLIB_MAX_PARAMS * 8;  // 
+   uint32 pos = F_DYNLIB_MAX_PARAMS * 8;  //
+
+   byte* bufpos;
+   uint32 bufsize;
 
    AutoCString *csPlaces[F_DYNLIB_MAX_PARAMS];
    uint32 count_cs = 0;
@@ -328,9 +347,9 @@ FALCON_FUNC  DynFunction_call( ::Falcon::VMachine *vm )
    AutoWString *wsPlaces[F_DYNLIB_MAX_PARAMS];
    uint32 count_ws = 0;
 
-   uint32 count_sp = fa->pclassCount();
+   uint32 count_sp = 0;
    bool bGuessParams = fa->m_bGuessParams;
-   
+
    uint32 p = 0;
    while( p < paramCount )
    {
@@ -369,12 +388,11 @@ FALCON_FUNC  DynFunction_call( ::Falcon::VMachine *vm )
                   .desc( FAL_STR( dle_cant_guess_param ) )
                   .extra( temp ) ));
             }
-            return;
+            goto cleanup;
          }
       }
-      else 
+      else
       {
-         
          // We have some parameter description.
          byte pdesc = fa->parsedParam(p);
          switch( pdesc &0x7F )
@@ -391,50 +409,133 @@ FALCON_FUNC  DynFunction_call( ::Falcon::VMachine *vm )
 
 
          case F_DYNLIB_PTYPE_PTR:
+            if ( ! param->isInteger() )
+            {
+               s_raiseType( vm, p );
+               goto cleanup;
+            }
+
             pos -= sizeof(void*);
             *(void**)(buffer + pos) = (void*) param->asInteger();
             break;
 
          case F_DYNLIB_PTYPE_FLOAT:
+            if ( ! param->isOrdinal() )
+            {
+               s_raiseType( vm, p );
+               goto cleanup;
+            }
             pos -= sizeof(float*);
             *(float*)(buffer + pos) = (float) param->forceNumeric();
             break;
-   
+
          case F_DYNLIB_PTYPE_DOUBLE:
             // TODO: Padding on solaris.
+            if ( ! param->isOrdinal() )
+            {
+               s_raiseType( vm, p );
+               goto cleanup;
+            }
             pos -= sizeof(double*);
             *(double*)(buffer + pos) = (double) param->forceNumeric();
             break;
 
          case F_DYNLIB_PTYPE_I32:
-            // TODO: Padding on solaris.
+            if ( ! param->isOrdinal() )
+            {
+               s_raiseType( vm, p );
+               goto cleanup;
+            }
+
             pos -= sizeof(int32);
             *(int32*)(buffer + pos) = (int32) param->forceInteger();
             break;
 
 
          case F_DYNLIB_PTYPE_U32:
+            if ( ! param->isOrdinal() )
+            {
+               s_raiseType( vm, p );
+               goto cleanup;
+            }
+
             pos -= sizeof(uint32);
             *(uint32*)(buffer + pos) = (uint32) param->forceInteger();
             break;
 
          case F_DYNLIB_PTYPE_LI:
+            if ( ! param->isOrdinal() )
+            {
+               s_raiseType( vm, p );
+               goto cleanup;
+            }
+
             pos -= sizeof(int64);
             *(int64*)(buffer + pos) = (int64) param->forceInteger();
             break;
 
          case F_DYNLIB_PTYPE_SZ:
+            if ( ! param->isString() )
+            {
+               s_raiseType( vm, p );
+               goto cleanup;
+            }
+
+            pos -= sizeof(char*);
+            csPlaces[count_cs] = new AutoCString( *param->asString() );
+            *(const char**)(buffer + pos) = csPlaces[count_cs]->c_str();
+            count_cs++;
             break;
-         
+
          case F_DYNLIB_PTYPE_WZ:
+            if ( ! param->isString() )
+            {
+               s_raiseType( vm, p );
+               goto cleanup;
+            }
+
+            pos -= sizeof(wchar_t*);
+            wsPlaces[count_ws] = new AutoWString( *param->asString() );
+            *(const wchar_t**)(buffer + pos) = wsPlaces[count_ws]->w_str();
+            count_ws++;
             break;
 
          case F_DYNLIB_PTYPE_MB:
+            if ( ! param->isMemBuf() )
+            {
+               s_raiseType( vm, p );
+               goto cleanup;
+            }
+
             pos -= sizeof(void*);
             *(void**)(buffer + pos) = (void*) param->asMemBuf()->data();
             break;
 
          case F_DYNLIB_PTYPE_OPAQUE:
+            {
+
+            // first, check if we're receiving a dynopaque instance.
+            Item cls;
+            if ( ! param->isObject() || ! param->asObject()->derivedFrom( "DynOpaque" ) )
+            {
+               s_raiseType( vm, p );
+               goto cleanup;
+            }
+
+            // second, check if the dynopaque matches our definition.
+            if( ! param->asObject()->getProperty( "pseudoClass", cls ) ||
+               ! cls.isString() || *cls.asString() != fa->pclassParam( count_sp )  )
+            {
+               s_raiseType( vm, p, fa->pclassParam( count_sp ) );
+               goto cleanup;
+            }
+            // finally, increment the dynopaque counter.
+            count_sp++;
+
+            // put in the user data.
+            pos -= sizeof(void*);
+            *(void**)(buffer + pos) = param->asObject()->getUserData();
+            }
             break;
 
          case F_DYNLIB_PTYPE_VAR:
@@ -448,13 +549,13 @@ FALCON_FUNC  DynFunction_call( ::Falcon::VMachine *vm )
       // increment the parameter count.
       ++p;
    }
-   
-   //TODO: Check for extra passed but unused parameters ? 
+
+   //TODO: Check for extra passed but unused parameters ?
    // -- Falcon call protocol allows them, so, for now we're ignoring them.
 
    // pass the stack starting from first used position.
-   byte* bufpos = buffer + pos;
-   uint32 bufsize = (F_DYNLIB_MAX_PARAMS * 8) - pos;
+   bufpos = buffer + pos;
+   bufsize = (F_DYNLIB_MAX_PARAMS * 8) - pos;
 
    if ( fa->m_bGuessParams || (fa->parsedReturn() & 0x80) == 0x80 )
    {
@@ -475,15 +576,15 @@ FALCON_FUNC  DynFunction_call( ::Falcon::VMachine *vm )
 
          case F_DYNLIB_PTYPE_I32:
             vm->regA().setInteger( (int32) Sys::dynlib_dword_call( fa->m_fAddress, bufpos, bufsize ) );
-         
+
          case F_DYNLIB_PTYPE_U32:
             vm->regA().setInteger( (uint32) Sys::dynlib_dword_call( fa->m_fAddress, bufpos, bufsize ) );
             break;
-         
+
          case F_DYNLIB_PTYPE_LI:
             vm->regA().setInteger( (int64) Sys::dynlib_qword_call( fa->m_fAddress, bufpos, bufsize ) );
             break;
-         
+
          case F_DYNLIB_PTYPE_SZ:
             {
                GarbageString *str = UTF8GarbageString( vm, (const char *) Sys::dynlib_voidp_call( fa->m_fAddress, bufpos, bufsize ) );
@@ -507,7 +608,7 @@ FALCON_FUNC  DynFunction_call( ::Falcon::VMachine *vm )
             }
             break;
 
-   
+
          case F_DYNLIB_PTYPE_OPAQUE:
             {
                void *data = Sys::dynlib_voidp_call( fa->m_fAddress, bufpos, bufsize );
@@ -522,6 +623,7 @@ FALCON_FUNC  DynFunction_call( ::Falcon::VMachine *vm )
       }
    }
 
+cleanup:
    // cleanup -- remove the strings we used.
    uint32 i;
    for ( i = 0; i < count_cs; ++i )
@@ -622,7 +724,7 @@ FALCON_FUNC  DynOpaque_toString( ::Falcon::VMachine *vm )
    {
       vm->retval( new GarbageString( vm, "DynOpaque: " + *pseudoClass.asString() ) );
    }
-   else 
+   else
    {
       vm->retval( "Invalid DynOpaque" );
    }
