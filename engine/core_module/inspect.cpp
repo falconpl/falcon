@@ -218,7 +218,7 @@ void inspect_internal( VMachine *vm, bool isShort, const Item *elem, int32 level
 
       case FLC_ITEM_OBJECT:
       {
-         CoreObject *arr = elem->asObject();
+         CoreObject *arr = elem->asObjectSafe();
          stream->writeString( "Object of class " + arr->instanceOf()->name() );
          if ( isShort && level > 1 )
          {

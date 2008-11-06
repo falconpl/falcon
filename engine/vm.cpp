@@ -1676,7 +1676,7 @@ bool VMachine::callItem( const Item &callable, int32 paramCount, e_callMode call
       {
          CoreClass *cls = callable.asClass();
          if( callMode != e_callNormal && callMode != e_callFrame ) {
-            self = m_regS1.asObject();
+            self = m_regS1.asObjectSafe();
          }
          else {
             self = cls->createInstance();
@@ -2361,7 +2361,7 @@ void VMachine::itemToString( String &target, const Item *itm, const String &form
    if( itm->isObject() )
    {
       Item propString;
-      if( itm->asObject()->getProperty( "toString", propString ) )
+      if( itm->asObjectSafe()->getProperty( "toString", propString ) )
       {
          if ( propString.type() == FLC_ITEM_STRING )
             target = *propString.asString();
@@ -2694,7 +2694,7 @@ bool VMachine::seekItemClass( const Item *itm, byte *base, uint16 size, uint32 &
          case FLC_ITEM_CLASS:
             if ( itm->isObject() )
             {
-               const CoreObject *obj = itm->asObject();
+               const CoreObject *obj = itm->asObjectSafe();
                if ( obj->derivedFrom( cfr->asClass()->symbol()->name() ) )
                   goto success;
             }
@@ -2707,7 +2707,7 @@ bool VMachine::seekItemClass( const Item *itm, byte *base, uint16 size, uint32 &
          case FLC_ITEM_OBJECT:
             if ( itm->isObject() )
             {
-               if( itm->asObject() == cfr->asObject() )
+               if( itm->asObject() == cfr->asObjectSafe() )
                   goto success;
             }
          break;
@@ -2720,7 +2720,7 @@ bool VMachine::seekItemClass( const Item *itm, byte *base, uint16 size, uint32 &
          break;
 
          case FLC_ITEM_STRING:
-            if ( itm->isObject() && itm->asObject()->derivedFrom( *cfr->asString() ) )
+            if ( itm->isObject() && itm->asObjectSafe()->derivedFrom( *cfr->asString() ) )
                goto success;
          break;
       }
@@ -3021,7 +3021,7 @@ bool VMachine::findLocalVariable( const String &name, Item &itm ) const
 
                // access the item. We know it's an object or we wouldn't be in this state.
                // also, notice that we change the item itself.
-               if ( !itm.asObject()->getProperty( sItemName, itm ) )
+               if ( !itm.asObjectSafe()->getProperty( sItemName, itm ) )
                   return false;
 
                // set state accordingly to chr.
@@ -3541,11 +3541,11 @@ int VMachine::compareItems( const Item &first, const Item &second )
 {
    if ( first.isObject() )
    {
-      CoreObject *fo = first.asObject();
+      CoreObject *fo = first.asObjectSafe();
 
       // provide a fast path. IF the items are the SAME object,
       // comparation is ==.
-      if( second.isObject() && second.asObject() == fo )
+      if( second.isObject() && second.asObjectSafe() == fo )
          return 0;
 
       Item comparer;

@@ -336,14 +336,14 @@ FALCON_FUNC  getProperty( ::Falcon::VMachine *vm )
    if ( obj_x == 0 || ! obj_x->isObject() || prop_x == 0 || ! prop_x->isString() ) {
       vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).extra( "(0,S)" ) ) );
    }
-   else if ( ! obj_x->asObject()->getProperty( *prop_x->asString(), vm->regA() ) )
+   else if ( ! obj_x->asObjectSafe()->getProperty( *prop_x->asString(), vm->regA() ) )
    {
       vm->raiseRTError( new AccessError( ErrorParam( e_prop_acc ) ) );
    }
 
    if ( vm->regA().isCallable() )
    {
-      vm->regA().methodize( obj_x->asObject() );
+      vm->regA().methodize( obj_x->asObjectSafe() );
    }
 }
 
@@ -368,7 +368,7 @@ FALCON_FUNC  setProperty( ::Falcon::VMachine *vm )
       vm->raiseRTError( new ParamError( ErrorParam( e_inv_params )
          .extra( "O,S" ) ) );
    }
-   else if ( ! obj_x->asObject()->setProperty( *prop_x->asString(), *new_item ) )
+   else if ( ! obj_x->asObjectSafe()->setProperty( *prop_x->asString(), *new_item ) )
    {
       vm->raiseRTError( new AccessError( ErrorParam( e_prop_acc ) ) );
    }

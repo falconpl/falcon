@@ -353,7 +353,7 @@ void MemPool::markItem( Item &item )
 
       case FLC_ITEM_OBJECT:
       {
-         CoreObject *co = item.asObject();
+         CoreObject *co = item.asObjectSafe();
          if( co->mark() != currentMark() ) {
             co->mark( currentMark() );
             m_aliveItems++;

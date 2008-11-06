@@ -93,7 +93,7 @@ FALCON_FUNC  serialize ( ::Falcon::VMachine *vm )
    Item *fileId = vm->param(0);
    Item *source = vm->param(1);
 
-   if( fileId == 0 || source == 0 || ! fileId->isObject() || ! fileId->asObject()->derivedFrom( "Stream" ) )
+   if( fileId == 0 || source == 0 || ! fileId->isObject() || ! fileId->asObjectSafe()->derivedFrom( "Stream" ) )
    {
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ).
          extra( "X,O:Stream" ) ) );
@@ -138,7 +138,7 @@ FALCON_FUNC  deserialize ( ::Falcon::VMachine *vm )
 {
    Item *fileId = vm->param(0);
 
-   if( fileId == 0 || ! fileId->isObject() || ! fileId->isObject() || ! fileId->asObject()->derivedFrom( "Stream" ) )
+   if( fileId == 0 || ! fileId->isObject() || ! fileId->isObject() || ! fileId->asObjectSafe()->derivedFrom( "Stream" ) )
    {
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ).
          extra( "O:Stream" ) ) );

@@ -153,7 +153,7 @@ FALCON_FUNC  testAttribute( ::Falcon::VMachine *vm )
       return;
    }
 
-   vm->regA().setBoolean( (itm->asObject()->has( attr->asAttribute() )) );
+   vm->regA().setBoolean( (itm->asObjectSafe()->has( attr->asAttribute() )) );
 }
 
 /*#
@@ -190,7 +190,7 @@ FALCON_FUNC  giveTo( ::Falcon::VMachine *vm )
       return;
    }
 
-   vm->retval( (int64) (i_attrib->asAttribute()->giveTo( i_obj->asObject() ) ? 1 : 0) );
+   vm->retval( (int64) (i_attrib->asAttribute()->giveTo( i_obj->asObjectSafe() ) ? 1 : 0) );
 }
 
 
@@ -228,7 +228,7 @@ FALCON_FUNC  removeFrom( ::Falcon::VMachine *vm )
       return;
    }
 
-   vm->retval( (int64) (i_attrib->asAttribute()->removeFrom( i_obj->asObject() ) ? 1 : 0) );
+   vm->retval( (int64) (i_attrib->asAttribute()->removeFrom( i_obj->asObjectSafe() ) ? 1 : 0) );
 }
 
 /*#

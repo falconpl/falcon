@@ -226,7 +226,7 @@ static void internal_marshal( VMachine *vm, Item *message, Item *prefix,
 
    // do the marshalled method exist and is it callable?
    Item method;
-   CoreObject *self = vm->self().isObject() ? vm->self().asObject() : vm->sender().asObject();
+   CoreObject *self = vm->self().isObject() ? vm->self().asObjectSafe() : vm->sender().asObject();
    if ( ! self->getProperty( *method_name, method ) ||
         ! method.isCallable() )
    {

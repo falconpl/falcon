@@ -362,7 +362,7 @@ Item::e_sercode Item::serialize( Stream *file, bool bLive ) const
       break;
 
       case FLC_ITEM_OBJECT:
-         serialize_object( file, this->asObject(), bLive );
+         serialize_object( file, this->asObjectSafe(), bLive );
       break;
 
       case FLC_ITEM_REFERENCE:
@@ -772,7 +772,7 @@ Item::e_sercode Item::deserialize( Stream *file, VMachine *vm )
          if ( ! func.isFunction() )
             return sc_invformat;
 
-         setMethod( obj.asObject(), func.asFunction(), func.asModule() );
+         setMethod( obj.asObjectSafe(), func.asFunction(), func.asModule() );
          return sc_ok;
       }
 
@@ -928,7 +928,7 @@ bool Item::clone( Item &target, VMachine *vm ) const
 
       case FLC_ITEM_OBJECT:
       {
-         CoreObject *obj = item->asObject()->clone();
+         CoreObject *obj = item->asObjectSafe()->clone();
          if ( obj == 0 ) {
             return false;
          }
