@@ -44,6 +44,7 @@ class LiveModule;
 class MemBuf;
 class GarbagePointer;
 class FalconData;
+class CodeError;
 
 
 /** Basic item abstraction.*/
@@ -586,7 +587,8 @@ public:
    */
    void toString( String &target ) const;
    CoreArray *asArray() const { return (CoreArray *) m_data.ptr.voidp; }
-   CoreObject *asObject() const { return (CoreObject *) m_data.ptr.voidp; }
+   CoreObject *asObject() const;
+   CoreObject *asObjectSafe() const { return (CoreObject *) m_data.ptr.voidp; }
    CoreDict *asDict() const { return ( CoreDict *) m_data.ptr.voidp; }
    MemBuf *asMemBuf() const { return ( MemBuf *) m_data.ptr.voidp; }
 

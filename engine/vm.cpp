@@ -1948,7 +1948,18 @@ bool VMachine::callItem( const Item &callable, int32 paramCount, e_callMode call
       if( callMode == e_callNormal || callMode == e_callInst )
       {
          regA().setNil(); // clear return value if calling external functions
-         target->getExtFuncDef()->call( this );
+         try {
+            target->getExtFuncDef()->call( this );
+         }
+         catch( CodeError *e )
+         {
+            if ( m_error != 0 )
+               m_error->decref();
+            // fake an error raisal
+            m_error = e;
+            m_event = eventRisen;
+         }
+
          if ( callable.isClass() )
             m_regA.setObject( static_cast<CoreObject* >(self) );
          callReturn();

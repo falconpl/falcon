@@ -31,6 +31,7 @@
 #include <falcon/membuf.h>
 #include <falcon/attribute.h>
 #include <falcon/vmmaps.h>
+#include <falcon/error.h>
 #include <cstdlib>
 #include <cstring>
 
@@ -97,7 +98,7 @@ bool Item::internal_is_equal( const Item &other ) const
          return asFunction() == other.asFunction();
 
       case FLC_ITEM_OBJECT:
-         return asObject() == other.asObject();
+         return asObjectSafe() == other.asObjectSafe();
 
       case FLC_ITEM_MEMBUF:
          return asMemBuf() == other.asMemBuf();
@@ -348,8 +349,8 @@ int Item::internal_compare( const Item &other ) const
          else return 0;
 
       case FLC_ITEM_OBJECT:
-         if ( asObject() < other.asObject() ) return -1;
-         else if ( asObject() > other.asObject() ) return 1;
+         if ( asObjectSafe() < other.asObjectSafe() ) return -1;
+         else if ( asObjectSafe() > other.asObjectSafe() ) return 1;
          else return 0;
 
       case FLC_ITEM_MEMBUF:
@@ -408,7 +409,7 @@ bool Item::isOfClass( const String &className ) const
    {
       case FLC_ITEM_OBJECT:
          // objects may be classless or derived from exactly one class.
-         return asObject()->derivedFrom( className );
+         return asObjectSafe()->derivedFrom( className );
 
       case FLC_ITEM_CLASS:
          return className == asClass()->symbol()->name() || asClass()->derivedFrom( className );
@@ -600,7 +601,7 @@ void Item::destroy()
 
       case FLC_ITEM_OBJECT:
       {
-         CoreObject *obj = asObject();
+         CoreObject *obj = asObjectSafe();
          for( uint32 i = 0; i < obj->propCount(); i++ )
          {
             Item tmp;
@@ -699,6 +700,15 @@ const Item &Item::asFutureBind() const {
 
 Item &Item::asFutureBind() {
    return ((GarbageItem*)m_data.ptr.m_extra)->origin();
+}
+
+CoreObject *Item::asObject() const {
+   if ( ! isObject() )
+      throw new CodeError( ErrorParam( e_prop_acc, __LINE__ )
+         .extra( "static method call" )
+         .hard() );
+
+   return (CoreObject *) m_data.ptr.voidp;
 }
 
 }

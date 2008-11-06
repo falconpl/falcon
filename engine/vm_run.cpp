@@ -263,7 +263,7 @@ void VMachine::run()
                if ( m_regB.isOfClass( "Error" ) )
                {
                   // in case of an error of class Error, we have already a good error inside of it.
-                  err = static_cast<Error *>(m_regB.asObject()->getUserData());
+                  err = static_cast<Error *>(m_regB.asObjectSafe()->getUserData());
                   err->incref();
                }
                else {
@@ -1905,7 +1905,7 @@ void opcodeHandler_LDP( register VMachine *vm )
       String *property = operand2->asString();
 
       Item *source = operand1;
-      CoreObject *self = vm->m_regS1.isNil()? 0: vm->m_regS1.asObject();
+      CoreObject *self = vm->m_regS1.isNil()? 0: vm->m_regS1.asObjectSafe();
       CoreClass *sourceClass=0;
       Item prop;
       uint32 pos;
@@ -1913,7 +1913,7 @@ void opcodeHandler_LDP( register VMachine *vm )
       switch( source->type() )
       {
          case FLC_ITEM_OBJECT:
-            if( source->asObject()->getProperty( *property, prop ) ) {
+            if( source->asObjectSafe()->getProperty( *property, prop ) ) {
                // we must create a method if the property is a function.
                Item *p = prop.dereference();
 
@@ -1921,11 +1921,11 @@ void opcodeHandler_LDP( register VMachine *vm )
                   case FLC_ITEM_FUNC:
                      // the function may be a dead function; by so, the method will become a dead method,
                      // and it's ok for us.
-                     vm->m_regA.setMethod( source->asObject(), p->asFunction(), p->asModule() );
+                     vm->m_regA.setMethod( source->asObjectSafe(), p->asFunction(), p->asModule() );
                   break;
 
                   case FLC_ITEM_CLASS:
-                     vm->m_regA.setClassMethod( source->asObject(), p->asClass() );
+                     vm->m_regA.setClassMethod( source->asObjectSafe(), p->asClass() );
                   break;
                   default:
                      vm->m_regA = *p;
@@ -2393,12 +2393,12 @@ void opcodeHandler_HAS( register VMachine *vm )
    {
       if ( operand2->isAttribute() )
       {
-         vm->regA() = (int64) ( operand1->asObject()->has( operand2->asAttribute() ) ? 1: 0 );
+         vm->regA() = (int64) ( operand1->asObjectSafe()->has( operand2->asAttribute() ) ? 1: 0 );
          return;
       }
       else if ( operand2->isString() )
       {
-         vm->regA() = (int64) ( operand1->asObject()->has( *operand2->asString() ) ? 1: 0 );
+         vm->regA() = (int64) ( operand1->asObjectSafe()->has( *operand2->asString() ) ? 1: 0 );
          return;
       }
    }
@@ -2416,12 +2416,12 @@ void opcodeHandler_HASN( register VMachine *vm )
    {
       if ( operand2->isAttribute() )
       {
-         vm->regA() = (int64) ( operand1->asObject()->has( operand2->asAttribute() ) ? 0: 1 );
+         vm->regA() = (int64) ( operand1->asObjectSafe()->has( operand2->asAttribute() ) ? 0: 1 );
          return;
       }
       else if ( operand2->isString() )
       {
-         vm->regA() = (int64) ( operand1->asObject()->has( *operand2->asString() ) ? 0: 1 );
+         vm->regA() = (int64) ( operand1->asObjectSafe()->has( *operand2->asString() ) ? 0: 1 );
          return;
       }
    }
@@ -2439,7 +2439,7 @@ void opcodeHandler_GIVE( register VMachine *vm )
    {
       if ( operand2->isAttribute() )
       {
-         operand2->asAttribute()->giveTo( operand1->asObject() );
+         operand2->asAttribute()->giveTo( operand1->asObjectSafe() );
          return;
       }
       else if ( operand2->isString() )
@@ -2447,7 +2447,7 @@ void opcodeHandler_GIVE( register VMachine *vm )
          Attribute *attrib = vm->findAttribute( *operand2->asString() );
          if ( attrib != 0 )
          {
-            attrib->giveTo( operand1->asObject() );
+            attrib->giveTo( operand1->asObjectSafe() );
          }
          return;
       }
@@ -2466,7 +2466,7 @@ void opcodeHandler_GIVN( register VMachine *vm )
    {
       if ( operand2->isAttribute() )
       {
-         operand2->asAttribute()->removeFrom( operand1->asObject() );
+         operand2->asAttribute()->removeFrom( operand1->asObjectSafe() );
          return;
       }
       else if ( operand2->isString() )
@@ -2474,7 +2474,7 @@ void opcodeHandler_GIVN( register VMachine *vm )
          Attribute *attrib = vm->findAttribute( *operand2->asString() );
          if ( attrib != 0 )
          {
-            attrib->removeFrom( operand1->asObject() );
+            attrib->removeFrom( operand1->asObjectSafe() );
          }
          return;
       }
@@ -2519,7 +2519,7 @@ void opcodeHandler_IN( register VMachine *vm )
 
       case FLC_ITEM_OBJECT:
          if( operand1->type() == FLC_ITEM_STRING )
-            result = operand2->asObject()->hasProperty( *operand1->asString() );
+            result = operand2->asObjectSafe()->hasProperty( *operand1->asString() );
       break;
 
       case FLC_ITEM_CLASS:
@@ -2563,7 +2563,7 @@ void opcodeHandler_PROV( register VMachine *vm )
       break;
 
       case FLC_ITEM_OBJECT:
-         result = operand1->asObject()->hasProperty( *operand2->asString() );
+         result = operand1->asObjectSafe()->hasProperty( *operand2->asString() );
       break;
 
       case FLC_ITEM_ARRAY:
@@ -2729,7 +2729,7 @@ void opcodeHandler_STPS( register VMachine *vm )
       case FLC_ITEM_OBJECT:
       {
          // Are we restoring an original item?
-         if( item.isMethod() && item.asMethodObject() == target->asObject() )
+         if( item.isMethod() && item.asMethodObject() == target->asObjectSafe() )
          {
             item.setFunction( item.asMethodFunction(), item.asModule() );
          }
@@ -2739,7 +2739,7 @@ void opcodeHandler_STPS( register VMachine *vm )
             item.setString( gcs );
          }
 
-         if( target->asObject()->setProperty( *method->asString(), item ) )
+         if( target->asObjectSafe()->setProperty( *method->asString(), item ) )
          {
             vm->regA() = item;
             return;
@@ -3077,7 +3077,7 @@ void opcodeHandler_STP( register VMachine *vm )
          Item temp;
 
          // Are we restoring an original item?
-         if( source->isMethod() && source->asMethodObject() == target->asObject() )
+         if( source->isMethod() && source->asMethodObject() == target->asObjectSafe() )
          {
             temp.setFunction( source->asMethodFunction(), source->asModule() );
             source = &temp;
@@ -3088,7 +3088,7 @@ void opcodeHandler_STP( register VMachine *vm )
             source->setString( gcs );
          }
 
-         if( target->asObject()->setProperty( *method->asString(), *source ) ) {
+         if( target->asObjectSafe()->setProperty( *method->asString(), *source ) ) {
             // when B is the source, the right value is already in A.
             if( sourcend != &vm->regB() )
                vm->regA() = *source;
@@ -3308,7 +3308,7 @@ void opcodeHandler_STPR( register VMachine *vm )
             if( source->type() == FLC_ITEM_METHOD ) {
                // will instantiate by value
                Item temp( source->asMethodFunction(), source->asModule() );
-               if( target->asObject()->setProperty( *operand2->asString(), temp ) )
+               if( target->asObjectSafe()->setProperty( *operand2->asString(), temp ) )
                   return;
             }
             else {
@@ -3317,7 +3317,7 @@ void opcodeHandler_STPR( register VMachine *vm )
                   source->setReference( gitem );
                }
 
-               if( target->asObject()->setProperty( *operand2->asString(), *source ) )
+               if( target->asObjectSafe()->setProperty( *operand2->asString(), *source ) )
                   return;
             }
 
@@ -3433,7 +3433,7 @@ void opcodeHandler_TRAV( register VMachine *vm )
 
       case FLC_ITEM_OBJECT:
       {
-         CoreObject *obj = source->asObject();
+         CoreObject *obj = source->asObjectSafe();
          if( ! obj->isSequence() )
          {
             vm->raiseRTError( new TypeError( ErrorParam( e_invop ).extra("TRAV").origin( e_orig_vm ) ) );
