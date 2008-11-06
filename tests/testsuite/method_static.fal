@@ -1,0 +1,35 @@
+/****************************************************************************
+* Falcon test suite
+*
+*
+* ID: 21m
+* Category: types
+* Subcategory: classes
+* Short: Static external call prevention.
+* Description:
+*    External functions always take for granted that the self object
+*    is containing Falcon object. Calling a method directly from a
+*    class causes the class to be passed as self, thus breaking this
+*    convention.
+* [/Description]
+*
+****************************************************************************/
+
+try
+   x = Stream.read
+catch in e
+   // non-static methods from classes are cacheable...
+   failure( "Caugth error " + e )
+end
+
+// ... but they are not callable.
+try
+   str = "some value"
+   x( str )
+   failure( "Called non-static method." )
+catch in e
+end
+
+success()
+
+/* End of file */

@@ -36,6 +36,7 @@
 #include <falcon/vm_sys.h>
 #include <falcon/flexymodule.h>
 
+#include <stdio.h>
 namespace Falcon {
 
 VMachine::VMachine():
@@ -1950,6 +1951,8 @@ bool VMachine::callItem( const Item &callable, int32 paramCount, e_callMode call
          regA().setNil(); // clear return value if calling external functions
          try {
             target->getExtFuncDef()->call( this );
+            if ( callable.isClass() )
+               m_regA.setObject( static_cast<CoreObject* >(self) );
          }
          catch( CodeError *e )
          {
@@ -1960,8 +1963,6 @@ bool VMachine::callItem( const Item &callable, int32 paramCount, e_callMode call
             m_event = eventRisen;
          }
 
-         if ( callable.isClass() )
-            m_regA.setObject( static_cast<CoreObject* >(self) );
          callReturn();
       }
       //else, ask the  VM to call it by using the fake m_pc
@@ -2145,8 +2146,18 @@ bool VMachine::callItemPass( const Item &callable  )
    {
       m_stack->resize( m_stackBase );
       regA().setNil(); // clear return value if calling external functions
-      target->getExtFuncDef()->call( this );
-      m_pc_next = ((StackFrame *)m_stack->at( m_stackBase - VM_FRAME_SPACE ))->m_ret_pc;
+      try {
+         target->getExtFuncDef()->call( this );
+         m_pc_next = ((StackFrame *)m_stack->at( m_stackBase - VM_FRAME_SPACE ))->m_ret_pc;
+      }
+      catch( CodeError *e )
+      {
+         if ( m_error != 0 )
+            m_error->decref();
+         // fake an error raisal
+         m_error = e;
+         m_event = eventRisen;
+      }
       callReturn();
    }
    return true;

@@ -39,7 +39,7 @@
 
 #include <math.h>
 #include <errno.h>
-
+#include <stdio.h>
 namespace Falcon {
 
 
@@ -155,7 +155,18 @@ void VMachine::run()
 
             default:
                m_regA.setNil();
-               m_symbol->getExtFuncDef()->call( this );
+               try {
+                  m_symbol->getExtFuncDef()->call( this );
+               }
+               catch( CodeError *e )
+               {
+                  if ( m_error != 0 )
+                     m_error->decref();
+                  // fake an error raisal
+                  m_error = e;
+                  m_event = eventRisen;
+               }
+
          }
       }
       else
