@@ -337,10 +337,13 @@ FALCON_FUNC  DynFunction_call( ::Falcon::VMachine *vm )
 
    FunctionAddress *fa = reinterpret_cast<FunctionAddress *>(vm->self().asObject()->getUserData());
 
-   // check paramter types
+   // push buffer - this will go directly in the call stack.
+   byte stackbuf[F_DYNLIB_MAX_PARAMS * 8]; // be sure we'll have enough space.
+   uint32 stackbuf_pos = F_DYNLIB_MAX_PARAMS * 8;  // we're starting from the end so to be able to push forward.
 
-   byte buffer[F_DYNLIB_MAX_PARAMS * 8]; // be sure we'll have enough space.
-   uint32 pos = F_DYNLIB_MAX_PARAMS * 8;  //
+   // pointer buffer; this won't be used unless we have some parameter passed by-pointer.
+   byte *ptrbuf = 0;
+   uint32 ptrbuf_pos = F_DYNLIB_MAX_PARAMS * 8;
 
    byte* bufpos;
    uint32 bufsize;
@@ -363,25 +366,25 @@ FALCON_FUNC  DynFunction_call( ::Falcon::VMachine *vm )
          switch( param->type() )
          {
          case FLC_ITEM_INT:
-            pos -= sizeof(void*);
-            *(void**)(buffer + pos) = (void*) param->asInteger();
+            stackbuf_pos -= sizeof(void*);
+            *(void**)(stackbuf + stackbuf_pos) = (void*) param->asInteger();
             break;
 
          case FLC_ITEM_NUM:
-            pos -= sizeof(int32);
-            *(int32*)(buffer + pos) = (int32) param->forceInteger();
+            stackbuf_pos -= sizeof(int32);
+            *(int32*)(stackbuf + stackbuf_pos) = (int32) param->forceInteger();
             break;
 
          case FLC_ITEM_STRING:
-            pos -= sizeof(char*);
+            stackbuf_pos -= sizeof(char*);
             csPlaces[count_cs] = new AutoCString( *param->asString() );
-            *(const char**)(buffer + pos) = (const char*) csPlaces[count_cs]->c_str();
+            *(const char**)(stackbuf + stackbuf_pos) = (const char*) csPlaces[count_cs]->c_str();
             count_cs++;
             break;
 
          case FLC_ITEM_MEMBUF:
-            pos -= sizeof(void*);
-            *(void**)(buffer + pos) = (void*) param->asMemBuf()->data();
+            stackbuf_pos -= sizeof(void*);
+            *(void**)(stackbuf + stackbuf_pos) = (void*) param->asMemBuf()->data();
             break;
 
          default:
@@ -399,6 +402,46 @@ FALCON_FUNC  DynFunction_call( ::Falcon::VMachine *vm )
       {
          // We have some parameter description.
          byte pdesc = fa->parsedParam(p);
+         
+         // this two variables will point to the stack buffer or the pointer buffer,
+         // depending on the by-pointer nature of the parameter.
+         uint32 *ppos;
+         byte *buffer;
+
+         // first, see if the parameter is passed by pointer
+         if( (pdesc & 0x80) == 0x80 )
+         {
+            // raise an error if the parameter wasn't passed by reference.
+            if( ! vm->isParamByRef(p) )
+            {
+               String temp;
+               temp.writeNumber( (int64) p );
+
+               vm->raiseError( new ParamError( ErrorParam( FALCON_DYNLIB_ERROR_BASE+9, __LINE__ )
+                  .desc( FAL_STR( dle_not_byref ) )
+                  .extra( temp ) ));
+
+               goto cleanup;
+            }
+
+            // do we need some pointer space?
+            // TODO -- maybe it's better to use a plain stack area instead of Heap?
+            if( ptrbuf == 0 )
+               ptrbuf = (byte*) memAlloc( F_DYNLIB_MAX_PARAMS * 8 );
+            
+            // ... and set the work buffer to the ptrbuffer
+            buffer = ptrbuf;
+            ppos = &ptrbuf_pos;
+         }
+         else
+         {
+            buffer = stackbuf;
+            ppos = &stackbuf_pos;
+         }
+
+         // candy grammarize
+         uint32 &pos = *ppos;
+
          switch( pdesc &0x7F )
          {
          case F_DYNLIB_PTYPE_END:
@@ -479,40 +522,64 @@ FALCON_FUNC  DynFunction_call( ::Falcon::VMachine *vm )
             break;
 
          case F_DYNLIB_PTYPE_SZ:
-            if ( ! param->isString() )
-            {
-               s_raiseType( vm, p );
-               goto cleanup;
-            }
-
             pos -= sizeof(char*);
-            csPlaces[count_cs] = new AutoCString( *param->asString() );
-            *(const char**)(buffer + pos) = csPlaces[count_cs]->c_str();
-            count_cs++;
+            
+            // passing by pointer?
+            if( buffer == ptrbuf )
+            {
+               *(void**)(buffer + pos) = 0;
+            }
+            else {
+               if ( ! param->isString() )
+               {
+                  s_raiseType( vm, p );
+                  goto cleanup;
+               }
+
+               
+               csPlaces[count_cs] = new AutoCString( *param->asString() );
+               *(const char**)(buffer + pos) = csPlaces[count_cs]->c_str();
+               count_cs++;
+            }
             break;
 
          case F_DYNLIB_PTYPE_WZ:
-            if ( ! param->isString() )
-            {
-               s_raiseType( vm, p );
-               goto cleanup;
-            }
-
             pos -= sizeof(wchar_t*);
-            wsPlaces[count_ws] = new AutoWString( *param->asString() );
-            *(const wchar_t**)(buffer + pos) = wsPlaces[count_ws]->w_str();
-            count_ws++;
+
+            // passing by pointer?
+            if( buffer == ptrbuf )
+            {
+               *(void**)(buffer + pos) = 0;
+            }
+            else {
+               if ( ! param->isString() )
+               {
+                  s_raiseType( vm, p );
+                  goto cleanup;
+               }
+
+               wsPlaces[count_ws] = new AutoWString( *param->asString() );
+               *(const wchar_t**)(buffer + pos) = wsPlaces[count_ws]->w_str();
+               count_ws++;
+            }
             break;
 
          case F_DYNLIB_PTYPE_MB:
-            if ( ! param->isMemBuf() )
-            {
-               s_raiseType( vm, p );
-               goto cleanup;
-            }
-
             pos -= sizeof(void*);
-            *(void**)(buffer + pos) = (void*) param->asMemBuf()->data();
+            // passing by pointer?
+            if( buffer == ptrbuf )
+            {
+               *(void**)(buffer + pos) = 0;
+            }
+            else {
+               if ( ! param->isMemBuf() )
+               {
+                  s_raiseType( vm, p );
+                  goto cleanup;
+               }
+
+               *(void**)(buffer + pos) = (void*) param->asMemBuf()->data();
+            }
             break;
 
          case F_DYNLIB_PTYPE_OPAQUE:
@@ -548,6 +615,13 @@ FALCON_FUNC  DynFunction_call( ::Falcon::VMachine *vm )
             bGuessParams = true;
             continue;
          }
+
+         // prepare the stack pointer in case we were by-pointer
+         if( ptrbuf == buffer )
+         {
+            stackbuf_pos -= sizeof(void*);
+            *(void**)(stackbuf + stackbuf_pos) = (void*) (ptrbuf + ptrbuf_pos);
+         }
       }
 
       // increment the parameter count.
@@ -558,8 +632,8 @@ FALCON_FUNC  DynFunction_call( ::Falcon::VMachine *vm )
    // -- Falcon call protocol allows them, so, for now we're ignoring them.
 
    // pass the stack starting from first used position.
-   bufpos = buffer + pos;
-   bufsize = (F_DYNLIB_MAX_PARAMS * 8) - pos;
+   bufpos = stackbuf + stackbuf_pos;
+   bufsize = (F_DYNLIB_MAX_PARAMS * 8) - stackbuf_pos;
 
    // the return value is not set, it defaults to pointer
    if ( fa->parsedReturn() == F_DYNLIB_PTYPE_END ||
@@ -580,6 +654,7 @@ FALCON_FUNC  DynFunction_call( ::Falcon::VMachine *vm )
 
          case F_DYNLIB_PTYPE_I32:
             vm->regA().setInteger( (int32) Sys::dynlib_dword_call( fa->m_fAddress, bufpos, bufsize ) );
+            break;
 
          case F_DYNLIB_PTYPE_U32:
             vm->regA().setInteger( (uint32) Sys::dynlib_dword_call( fa->m_fAddress, bufpos, bufsize ) );
@@ -628,7 +703,96 @@ FALCON_FUNC  DynFunction_call( ::Falcon::VMachine *vm )
       }
    }
 
+   // finally, set the byreference params, if we have some
+   if ( ptrbuf != 0 )
+   {
+      uint32 pos = F_DYNLIB_MAX_PARAMS * 8;
+      
+      uint32 pn = 0;
+      while( pn < paramCount )
+      {
+         byte pdesc = fa->parsedParam(pn);
+         Item *param = vm->param( pn );
+
+         switch( pdesc )
+         {
+
+         case F_DYNLIB_PTYPE_BYPTR | F_DYNLIB_PTYPE_PTR:
+            pos -= sizeof(void*);
+            param->setInteger( (int64) *(void**)(ptrbuf + pos) );
+            break;
+
+         case F_DYNLIB_PTYPE_BYPTR | F_DYNLIB_PTYPE_FLOAT:
+            pos -= sizeof(float);
+            param->setNumeric( *(float*)(ptrbuf + pos) );
+            break;
+
+         case F_DYNLIB_PTYPE_BYPTR | F_DYNLIB_PTYPE_DOUBLE:
+            pos -= sizeof(numeric);
+            param->setNumeric( *(numeric*)(ptrbuf + pos) );
+            break;
+
+         case F_DYNLIB_PTYPE_BYPTR | F_DYNLIB_PTYPE_I32:
+            pos -= sizeof(int32);
+            param->setInteger( *(int32*)(ptrbuf + pos) );
+            break;
+
+
+         case F_DYNLIB_PTYPE_BYPTR | F_DYNLIB_PTYPE_U32:
+            pos -= sizeof(uint32);
+            param->setInteger( *(uint32*)(ptrbuf + pos) );
+            break;
+
+         case F_DYNLIB_PTYPE_BYPTR | F_DYNLIB_PTYPE_LI:
+            pos -= sizeof(int64);
+            param->setInteger( *(int64*)(ptrbuf + pos) );
+            break;
+
+         case F_DYNLIB_PTYPE_BYPTR | F_DYNLIB_PTYPE_SZ:
+            {
+            pos -= sizeof(char*);
+            GarbageString *str = UTF8GarbageString( vm, (const char *) (ptrbuf+pos) );
+            param->setString( str );
+            }
+            break;
+
+         case F_DYNLIB_PTYPE_BYPTR | F_DYNLIB_PTYPE_WZ:
+            {
+            pos -= sizeof(wchar_t*);
+            GarbageString *str = new GarbageString( vm, (const wchar_t *) (ptrbuf+pos), -1 );
+            param->setString( str );
+            }
+            break;
+
+         case F_DYNLIB_PTYPE_BYPTR | F_DYNLIB_PTYPE_MB:
+            {
+            pos -= sizeof(void*);
+            // it was originally a membuf, or we'd rised
+            MemBuf *mb = new MemBuf_1( vm, (byte*)(ptrbuf + pos), 0x7FFFFFFF, false );
+            param->setMemBuf( mb );
+            }
+            break;
+
+         case F_DYNLIB_PTYPE_BYPTR | F_DYNLIB_PTYPE_OPAQUE:
+            pos -= sizeof(void*);
+            param->asObject()->setUserData( *(void**)(ptrbuf + pos) );
+            break;
+
+         case F_DYNLIB_PTYPE_BYPTR | F_DYNLIB_PTYPE_VAR:
+            // we're done.
+            pn = paramCount;
+            break;
+         }
+
+         // next loop
+         pn ++; 
+      }
+   }
+
 cleanup:
+   if( ptrbuf != 0 )
+      memFree( ptrbuf );
+
    // cleanup -- remove the strings we used.
    uint32 i;
    for ( i = 0; i < count_cs; ++i )

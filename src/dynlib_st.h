@@ -45,5 +45,6 @@ FAL_MODSTR( dyl_toomany_pars, "Too many parameters" );
 FAL_MODSTR( dyl_invalid_pmask, "Invalid parameter mask" );
 FAL_MODSTR( dyl_invalid_rmask, "Invalid return mask" );
 FAL_MODSTR( dyl_param_mismatch, "Given parameter type is not matching formal definition." );
+FAL_MODSTR( dle_not_byref, "Parameter is declared as reference but passed by value." );
 
 /* end of dynlib_st.h */

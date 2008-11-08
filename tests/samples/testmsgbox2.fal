@@ -2,14 +2,15 @@ load DynLib
 
 l = DynLib( "user32.dll" )
 k = DynLib( "kernel32.dll" )
-MessageBox = l.get( "MessageBoxA" ).call
+MessageBox = l.get( "MessageBoxW", "I", "P W W I" ).call
 GetLastError = k.get( "GetLastError" ).call
 
+n = 4 || 32
 v = MessageBox(  
     0,
-    "Hello world!",
+    "こんにちは、世界よ！",
     "Hello",
-    4 || 32
+    $n
 )
 
 > "Ops: ", v, " le: ", GetLastError()

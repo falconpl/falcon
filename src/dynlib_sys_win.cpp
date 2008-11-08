@@ -105,8 +105,8 @@ void dynlib_void_call( void *faddress, byte *stack_image, uint32 stack_depth )
 {
    stack_depth /= 4;
    __asm {
-      lea   esi, stack_image
-      mov   ecx, stack_depth
+      mov  esi, stack_image
+      mov  ecx, stack_depth
    }
    lbl1:
    __asm {
@@ -158,8 +158,8 @@ int32 dynlib_dword_call( void *faddress, byte *stack_image, uint32 stack_depth )
 {
    stack_depth /= 4;
    __asm {
-      lea   esi, stack_image
-      mov   ecx, stack_depth
+      mov  esi, stack_image
+      mov  ecx, stack_depth
    }
    lbl1:
    __asm {
@@ -185,8 +185,8 @@ int64 dynlib_qword_call( void *faddress, byte *stack_image, uint32 stack_depth )
 {
    stack_depth /= 4;
    __asm {
-      lea   esi, stack_image
-      mov   ecx, stack_depth
+      mov  esi, stack_image
+      mov  ecx, stack_depth
    }
    lbl1:
    __asm {
@@ -212,8 +212,8 @@ double dynlib_double_call( void *faddress, byte *stack_image, uint32 stack_depth
 {
    stack_depth /= 4;
    __asm {
-      lea   esi, stack_image
-      mov   ecx, stack_depth
+      mov  esi, stack_image
+      mov  ecx, stack_depth
    }
    lbl1:
    __asm {
