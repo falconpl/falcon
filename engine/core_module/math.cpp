@@ -113,7 +113,7 @@ FALCON_FUNC flc_math_exp( ::Falcon::VMachine *vm )
 FALCON_FUNC flc_math_pow( ::Falcon::VMachine *vm )
 {
    Item *num1 = vm->param( 0 );
-   Item *num2 = vm->param( 0 );
+   Item *num2 = vm->param( 1 );
 
    if ( num1 == 0 || ! num1->isOrdinal() || num2 == 0 || ! num2->isOrdinal() )
    {

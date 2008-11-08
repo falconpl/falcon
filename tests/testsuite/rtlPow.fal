@@ -1,0 +1,52 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 113f
+* Category: rtl
+* Subcategory: math
+* Short: pow
+* Description:
+*   Test for pow function.
+* [/Description]
+****************************************************************************/
+
+// standard pows
+if pow( 1, 0 ) != 1: failure( "pow(1,0)" )
+if pow( 1, 1 ) != 1: failure( "pow(1,1)" )
+if pow( 2, 0 ) != 1: failure( "pow(2,0)" )
+if pow( 2, 1 ) != 2: failure( "pow(2,1)" )
+if pow( 2, 2 ) != 4: failure( "pow(2,2)" )
+if pow( 100, 1/2 ) != 10: failure( "pow(100,1/2)" )
+if pow( -2, 2 ) != 4: failure( "pow(-2,2)" )
+if pow( -2, 3 ) != -8: failure( "pow(-2,3)" )
+if pow( 10, -1 ) != 1/10: failure( "pow(10,-1)" )
+
+// some error check
+try
+   pow( 2 )
+   failure( "Too few params error not raised" )
+catch ParamError in e
+end
+
+try
+   pow( 2, "a" )
+   failure( "Param type error not raised - second" )
+catch ParamError in e
+end
+
+try
+   pow( "a", 2 )
+   failure( "Param type error not raised - first" )
+catch ParamError in e
+end
+
+// now some domain error
+try
+   pow( -2, 0.5 )
+   failure( "Domain error not raised" )
+catch MathError in e
+end
+
+success()
+
+/* End of file */

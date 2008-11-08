@@ -1,6 +1,8 @@
 Falcon (0.8.13)
   * fixed: Now asObject() raises an error if the item is not an object;
            this grant safety for methods that are not considered static.
+  * fixed: Pow function (possibly to be deleted) was taking the first
+           argument twice.
 
 Falcon (0.8.12)
   * major: Support for class-driven full reflection and 0-space contstant/reflected
