@@ -151,7 +151,7 @@ public:
 
    /** Parse and eventually setup parameter masks.
 
-      The parameter mask is parsed scanning an string containing tokens
+      The parameter mask is parsed scanning a string containing tokens
       separated by whitespaces, ',' or ';' (they are the same).
 
       Each parameter specificator is either a single character or a "pseudoclass" name,

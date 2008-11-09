@@ -32,6 +32,208 @@
 namespace Falcon {
 namespace Ext {
 
+
+/*#
+   @function limitMembuf
+   @brief Sizes a memory buffer to a zero terminated string.
+   @param mb The memory buffer to be sized.
+   @optparam size The size at which to cut the memory buffer.
+   @return The resized Memory Buffer.
+   
+   Many external functions in C dynamic libraries returns
+   zero terminated strings in an encoding-neutral format.
+   
+   It is possible to encapsulate that data in a Falcon memory
+   buffer for easier manipulation in Falcon, and possibly for
+   a later transformation into an internationalized Falcon
+   string.
+   
+   Whenever DynLib returns a memory buffer, it sets its size
+   to 2^31, as the size of the returned data is not known. But
+   if the user knows that the returned data is actually a
+   non-utf8 zero terminated string (utf-8 strings can be
+   parsed directly with the "S" return specifier), or if it
+   has some mean to determine the returned structure size,
+   it is possible to re-size the MemBuf so that it fits
+   the actual data. It is granted that the resized memory
+   buffer points to the same foreign data as the original
+   one, so the returned buffer can be fed into foreign function
+   expecting to deal with the original data.
+   
+   @note The behavior of this function is undefined if the
+         @b mb parameter was not created through a function
+         in DynLib in versions prior to 0.8.12.
+   
+   If the @b size parameter is not provided, the function
+   scans for a zero byte and sets that position as the
+   size of this memory buffer. If it's provided, that value
+   is used as the new dimension of the Memory Buffer.
+   
+   @note Using this function is necessary to correctly turn
+   a C zero terminated string in arbitrary encoding into a
+   Falcon string via @b transcodeFrom.
+   
+   @note since version 0.9, the function modifies the
+   original memory buffer and returns it, instead of creating
+   a new memory buffer.
+*/
+
+FALCON_FUNC  limitMembuf( ::Falcon::VMachine *vm )
+{
+   Item *i_mb = vm->param(0);
+   Item *i_size = vm->param(1);
+   
+   if ( i_mb == 0 || ! i_mb->isMemBuf() ||
+        ( i_size != 0 && ! i_size->isOrdinal() ) )
+   {
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
+            .extra("M,N") ) );
+      return;
+   }
+   
+   MemBuf* mb = i_mb->asMemBuf();
+   
+   // This since VM version 0.9
+   #if FALCON_VERSION_NUM > 0x00080C
+   if( i_size != 0 )
+   {
+      mb->size( (uint32) i_size->forceInteger() );
+   }
+   else {
+      for ( uint32 s = 0; s < mb->size(); s )
+      {
+         if ( mb->get( s ) == 0 )
+         {
+            mb->size( s );
+            break;
+         }
+      }
+   }
+   #else
+   if( i_size != 0 )
+   {
+      mb = new MemBuf_1( vm, mb->data(), i_size->forceInteger(), false ); 
+   }
+   else {
+      for ( uint32 s = 0; s < mb->size(); s )
+      {
+         if ( mb->get( s ) == 0 )
+         {
+            mb = new MemBuf_1( vm, mb->data(), s, false ); 
+            break;
+         }
+      }
+   }
+   #endif
+   
+   vm->retval( mb );
+}
+
+/*#
+   @function limitMembuf
+   @brief Sizes a memory buffer to a zero terminated string.
+   @param mb The memory buffer to be sized.
+   @optparam size The size at which to cut the memory buffer.
+   
+   Many external functions in C dynamic libraries returns
+   zero terminated strings in an encoding-neutral format.
+   
+   It is possible to encapsulate that data in a Falcon memory
+   buffer for easier manipulation in Falcon, and possibly for
+   a later transformation into an internationalized Falcon
+   string.
+   
+   Whenever DynLib returns a memory buffer, it sets its size
+   to 2^31, as the size of the returned data is not known. But
+   if the user knows that the returned data is actually a
+   non-utf16 zero terminated string (utf-16 strings can be
+   parsed directly with the "W" return specifier), or if it
+   has some mean to determine the returned structure size,
+   it is possible to re-size the MemBuf so that it fits
+   the actual data. It is granted that the resized memory
+   buffer points to the same foreign data as the original
+   one, so the returned buffer can be fed into foreign function
+   expecting to deal with the original data.
+   
+   @note The behavior of this function is undefined if the
+         @b mb parameter was not created through a function
+         in DynLib in versions prior to 0.8.12.
+   
+   If the @b size parameter is not provided, the function
+   scans for a zero short int (16-bit word) and sets that 
+   position as the size of this memory buffer. 
+   If it's provided, that value is used as the new 
+   dimension of the Memory Buffer.
+   
+   @note Using this function is necessary to correctly turn
+   a C zero terminated string in arbitrary encoding into a
+   Falcon string via @b transcodeFrom.
+   
+   @note Actually, this function uses the platform specific
+   wchar_t size to scan for the 0 terminator. On some platforms,
+   wchar_t is 4 bytes wide.
+   
+   @note since version 0.9, the function modifies the
+   original memory buffer and returns it, instead of creating
+   a new memory buffer.
+*/
+
+FALCON_FUNC  limitMembufW( ::Falcon::VMachine *vm )
+{
+   Item *i_mb = vm->param(0);
+   Item *i_size = vm->param(1);
+   
+   if ( i_mb == 0 || ! i_mb->isMemBuf() ||
+        ( i_size != 0 && ! i_size->isOrdinal() ) )
+   {
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
+            .extra("M,N") ) );
+      return;
+   }
+   
+   MemBuf* mb = i_mb->asMemBuf();
+   
+   // This since VM version 0.9
+   #if FALCON_VERSION_NUM > 0x00080C
+   if( i_size != 0 )
+   {
+      mb->size( (uint32) i_size->forceInteger() );
+   }
+   else {
+      for ( uint32 s = 0; s < mb->size(); s )
+      {
+         wchar_t* data = (wchar_t*) mb->data();
+         
+         if ( data[s] == 0 )
+         {
+            mb->size( s * sizeof(wchar_t) );
+            break;
+         }
+      }
+   }
+   #else
+   if( i_size != 0 )
+   {
+      mb = new MemBuf_1( vm, mb->data(), i_size->forceInteger(), false ); 
+   }
+   else {
+      for ( uint32 s = 0; s < mb->size(); s )
+      {
+         wchar_t* data = (wchar_t*) mb->data();
+         
+         if ( data[s] == 0 )
+         {
+            mb = new MemBuf_1( vm, mb->data(), s * sizeof(wchar_t), false ); 
+            break;
+         }
+      }
+   }
+   #endif
+   
+   vm->retval( mb );
+}
+
+
 /*#
    @class DynLib
    @brief Dynamic Loader support.
@@ -189,10 +391,21 @@ CoreObject *internal_dynlib_get( VMachine* vm, bool& shouldRaise )
    directly the @b call property:
 
    @code
-      lib = DynLib( "somelib.so" )
-      func = lib.get( "somefunc" ).call
-      func( "some value" )
+      allocate = mylib.get( "allocate" ).call
+      use = mylib.get( "use" ).call
+      dispose = mylib.get( "dispose" ).call
+      
+      // create an item
+      item = allocate()
+      
+      // use it
+      use( item )
+      
+      // and free it
+      dispose( item )
    @endcode
+   
+   See the main page of this document for more details on safety.
 */
 FALCON_FUNC  DynLib_get( ::Falcon::VMachine *vm )
 {

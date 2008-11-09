@@ -8,9 +8,9 @@
 # Documentation generic data
 ################################################
 
-Title = dynlib
+Title = DynLib
 Author = Giancarlo Niccolai
-Version = <version>
+Version = 0.9
 
 ################################################
 # Faldoc Input settings
@@ -39,4 +39,4 @@ Output.module=html
 
 Output.html.directory=html
 Output.html.url=.
-Output.html.doctitle=dynlib module Function Reference
+Output.html.doctitle=DynLib module Function Reference

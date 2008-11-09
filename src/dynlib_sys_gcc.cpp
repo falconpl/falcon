@@ -34,7 +34,7 @@ namespace Sys {
       "ret\n"                     /* really return */\
       : /* no output */\
       :"d"(faddress), "S"(stack_image), "c"(stack_depth)  /* input */\
-      :"%eax", "%ebp", "%esp"         /* clobbered register */\
+      :"%eax", "%esp"         /* clobbered register */\
    );\
 
    // will never reach here
