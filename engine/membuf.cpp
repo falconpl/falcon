@@ -44,8 +44,18 @@ MemBuf::MemBuf( VMachine *vm, byte *data, uint32 size, bool bOwn ):
 
 MemBuf::~MemBuf()
 {
-   if ( m_bOwn )
+   if ( m_bOwn && m_memory != 0 )
       memFree( m_memory );
+}
+
+void MemBuf::setData( byte *data, uint32 size, bool bOwn )
+{
+   if ( m_bOwn && m_memory != 0 )
+      memFree( m_memory );
+      
+   m_memory = data;
+   m_size = size;
+   m_bOwn = bOwn;
 }
 
 bool MemBuf::serialize( Stream *stream, bool bLive ) const

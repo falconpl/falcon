@@ -51,6 +51,10 @@ public:
 
    uint32 size() const { return m_size; }
    byte *data() const { return m_memory; }
+   
+   void size( uint32 s ) { m_size = s; }
+   void setData( byte *data, uint32 size, bool bOwn=true );
+   
    /** Return the CoreObject that stores vital data for this mempool.
       \see void dependant( CoreObject *g )
    */
