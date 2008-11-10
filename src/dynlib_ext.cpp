@@ -130,7 +130,7 @@ FALCON_FUNC  limitMembuf( ::Falcon::VMachine *vm )
 }
 
 /*#
-   @function limitMembuf
+   @function limitMembufW
    @brief Sizes a memory buffer to a zero terminated string.
    @param mb The memory buffer to be sized.
    @optparam size The size at which to cut the memory buffer.
@@ -1097,6 +1097,25 @@ FALCON_FUNC  DynFunction_retval( ::Falcon::VMachine *vm )
 // DynLib opaque
 //======================================================
 
+/*#
+   @class DynOpaque
+   @brief Opaque remote data "pseudo-class" encapsulator.
+   
+   This class encapsulates a opaque pseudo-class for dynamic
+   function calls.
+   
+   It cannot be instantiated directly; instead, it is created by
+   @a DynFunction.call if a certain dynamic function has been
+   declared to return a safe PseudoClass type in @a DynLib.get.
+*/
+
+/*#
+   @method toString DynOpaque
+   @brief Returns s string representation of this object.
+   @return A string representation of this object.
+   
+   Describes this instance as a pseudo-class foreign pointer.
+*/
 FALCON_FUNC  DynOpaque_toString( ::Falcon::VMachine *vm )
 {
    Item pseudoClass;
@@ -1112,6 +1131,16 @@ FALCON_FUNC  DynOpaque_toString( ::Falcon::VMachine *vm )
    }
 }
 
+/*#
+   @method getData DynOpaque
+   @brief Gets the inner opaque pointer.
+   @return A pointer-sized integer containing the dynamic opaque data.
+   
+   This functions returns the pointer stored in the safe pseudo-class
+   wrapper. That value can be directly fed into non-prototyped remote
+   functions (i.e. created with @a DynLib.get without parameter specificators),
+   accepting a pointer to remote data in their parameters.
+*/
 FALCON_FUNC  DynOpaque_getData( ::Falcon::VMachine *vm )
 {
    int64 ptr = (int64) vm->self().asObject()->getUserData();
@@ -1125,9 +1154,9 @@ FALCON_FUNC  DynOpaque_getData( ::Falcon::VMachine *vm )
 
 /*#
    @class DynLibError
-   @optparam code
-   @optparam desc
-   @optparam extra
+   @optparam code Error code
+   @optparam desc Error description
+   @optparam extra Extra description of specific error condition.
 
    @from Error( code, desc, extra )
    @brief DynLib specific error.

@@ -138,7 +138,7 @@ static Falcon::DynFuncManager dyn_func_manager;
    Trying to do anything not fitting this scheme, in example passing a random value to gtkDialogRun
    will probably crash the application with little information about what went wrong.
 
-   @section safe_mode
+   @section Safe Mode
       
    The @b pmask parameter of @a DynLib.get is parsed scanning a string containing tokens
    separated by whitespaces, ',' or ';' (they are the same). When a parameter mask
