@@ -1710,7 +1710,10 @@ static void internal_asString_or_BlobID( VMachine *vm, int mode )
    if ( retval == dbi_nil_value )
       vm->retnil();
    else if ( retval != dbi_ok )
-      vm->retnil();        // TODO: handle the error
+   {
+      vm->raiseModError( new DBIError( ErrorParam( DBI_ERROR_BASE + retval, __LINE__ )
+            .desc( "Error while reading the recordset" ) ) );
+   }
    else
       vm->retval( value ); // we know it's a garbage string
 }

@@ -180,11 +180,40 @@ dbi_status DBIRecordsetODBC::asString( const int columnIndex, String &value )
       return dbi_column_range_error;
    else if ( m_pConn == NULL )
       return dbi_invalid_recordset;
-   else if ( m_pDataArr[columnIndex].m_pData == NULL )
-      return dbi_nil_value;
+
+   // read the length
+   SQLINTEGER cbValue = 0;
+   SQLRETURN retval;
+   LPCSTR pszValue;
+   // &pszValue is needed just to have the driver not to return a meaningless error.
+   retval = SQLGetData(m_pConn->m_hHstmt, columnIndex+1, SQL_C_CHAR, &pszValue, 0, &cbValue);
+   if ( retval != SQL_SUCCESS && retval != SQL_SUCCESS_WITH_INFO )
+   {
+      if( retval == SQL_NO_DATA ) 
+         return dbi_eof;
+      else {
+         m_sLastError = GetErrorMessage( SQL_HANDLE_STMT, m_pConn->m_hHstmt, TRUE );
+         return dbi_error;
+      }
+   }
+   
+   // allocate enough space
+   cbValue++; // also for zero
+   pszValue = (LPCSTR) memAlloc(cbValue);
+   retval = SQLGetData( m_pConn->m_hHstmt, columnIndex+1, SQL_C_CHAR, (SQLPOINTER) pszValue, cbValue, NULL );
+   if ( retval != SQL_SUCCESS && retval != SQL_SUCCESS_WITH_INFO )
+   {
+      if( retval == SQL_NO_DATA ) 
+         return dbi_eof;
+      else {
+         m_sLastError = GetErrorMessage( SQL_HANDLE_STMT, m_pConn->m_hHstmt, TRUE );
+         return dbi_error;
+      }
+   }
 
    // TODO: check proper field encoding and transcode.
-   value = String( ( char* )( m_pDataArr[columnIndex].m_pData ), m_pDataArr[columnIndex].m_nLen );
+   uint32 size = pszValue[cbValue] == '\0' ? cbValue-1 : cbValue;
+   value.adopt( (char *) pszValue, size, cbValue );
    return dbi_ok;
 }
 
