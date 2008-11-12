@@ -112,7 +112,7 @@ FALCON_FUNC  limitMembuf( ::Falcon::VMachine *vm )
    #else
    if( i_size != 0 )
    {
-      mb = new MemBuf_1( vm, mb->data(), i_size->forceInteger(), false ); 
+      mb = new MemBuf_1( vm, mb->data(), (uint32) i_size->forceInteger(), false ); 
    }
    else {
       for ( uint32 s = 0; s < mb->size(); s )
@@ -214,7 +214,7 @@ FALCON_FUNC  limitMembufW( ::Falcon::VMachine *vm )
    #else
    if( i_size != 0 )
    {
-      mb = new MemBuf_1( vm, mb->data(), i_size->forceInteger(), false ); 
+      mb = new MemBuf_1( vm, mb->data(), (uint32) i_size->forceInteger(), false ); 
    }
    else {
       for ( uint32 s = 0; s < mb->size(); s )
