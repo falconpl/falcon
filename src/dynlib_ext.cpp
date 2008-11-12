@@ -115,7 +115,7 @@ FALCON_FUNC  limitMembuf( ::Falcon::VMachine *vm )
       mb = new MemBuf_1( vm, mb->data(), (uint32) i_size->forceInteger(), false ); 
    }
    else {
-      for ( uint32 s = 0; s < mb->size(); s )
+      for ( uint32 s = 0; s < mb->size(); s++ )
       {
          if ( mb->get( s ) == 0 )
          {
@@ -200,7 +200,7 @@ FALCON_FUNC  limitMembufW( ::Falcon::VMachine *vm )
       mb->size( (uint32) i_size->forceInteger() );
    }
    else {
-      for ( uint32 s = 0; s < mb->size(); s )
+      for ( uint32 s = 0; s < mb->size(); s++ )
       {
          wchar_t* data = (wchar_t*) mb->data();
          
@@ -217,7 +217,7 @@ FALCON_FUNC  limitMembufW( ::Falcon::VMachine *vm )
       mb = new MemBuf_1( vm, mb->data(), (uint32) i_size->forceInteger(), false ); 
    }
    else {
-      for ( uint32 s = 0; s < mb->size(); s )
+      for ( uint32 s = 0; s < mb->size(); s++ )
       {
          wchar_t* data = (wchar_t*) mb->data();
          
@@ -862,7 +862,7 @@ FALCON_FUNC  DynFunction_call( ::Falcon::VMachine *vm )
       {
          case F_DYNLIB_PTYPE_FLOAT:
          case F_DYNLIB_PTYPE_DOUBLE:
-            vm->retval( Sys::dynlib_double_call( fa->m_fAddress, bufpos, bufsize ) );
+            vm->retval( (numeric) Sys::dynlib_double_call( fa->m_fAddress, bufpos, bufsize ) );
             break;
 
          case F_DYNLIB_PTYPE_I32:
@@ -1144,7 +1144,7 @@ FALCON_FUNC  DynOpaque_toString( ::Falcon::VMachine *vm )
 FALCON_FUNC  DynOpaque_getData( ::Falcon::VMachine *vm )
 {
    int64 ptr = (int64) vm->self().asObject()->getUserData();
-   vm->retval( "ptr" );
+   vm->retval( ptr );
 }
 
 

@@ -173,8 +173,7 @@ bool FunctionAddress::parseSingleParam( const String &mask, byte &type, uint32 b
       es_firstdot,
       es_seconddot,
       es_thirddot,
-      es_maybesym,
-      es_invalid
+      es_maybesym
    } t_state;
 
    t_state state = es_begin;
