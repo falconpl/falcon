@@ -685,7 +685,7 @@ FALCON_FUNC  DynFunction_call( ::Falcon::VMachine *vm )
                s_raiseType( vm, p );
                goto cleanup;
             }
-            pos -= sizeof(float*);
+            pos -= sizeof(float);
             *(float*)(buffer + pos) = (float) param->forceNumeric();
             break;
 
@@ -696,7 +696,7 @@ FALCON_FUNC  DynFunction_call( ::Falcon::VMachine *vm )
                s_raiseType( vm, p );
                goto cleanup;
             }
-            pos -= sizeof(double*);
+            pos -= sizeof(double);
             *(double*)(buffer + pos) = (double) param->forceNumeric();
             break;
 
@@ -862,7 +862,7 @@ FALCON_FUNC  DynFunction_call( ::Falcon::VMachine *vm )
       {
          case F_DYNLIB_PTYPE_FLOAT:
          case F_DYNLIB_PTYPE_DOUBLE:
-            vm->retval( (numeric) Sys::dynlib_double_call( fa->m_fAddress, bufpos, bufsize ) );
+            vm->regA().setNumeric( Sys::dynlib_double_call( fa->m_fAddress, bufpos, bufsize ) );
             break;
 
          case F_DYNLIB_PTYPE_I32:
