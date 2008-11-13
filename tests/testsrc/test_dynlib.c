@@ -19,6 +19,15 @@
 
 #include <falcon/setup.h>
 #include <stdio.h>
+#include <stdlib.h>
+
+#ifdef __int64
+   #define int64 __int64
+   #define uint64 __uint64
+#else
+   #define int64 long long
+   #define uint64 unsigned long long
+#endif
 
 //=====================================================
 // Basic int/float calls
@@ -102,15 +111,15 @@ int FALCON_DYN_SYM call_psz_ri_check( const char *data )
 
 static wchar_t *wz_data = L"Hello world";
 
-wchar_t* FALCON_DYN_SYM call_rsz()
+wchar_t* FALCON_DYN_SYM call_rwz()
 {
    return wz_data;
 }
 
 int FALCON_DYN_SYM call_pwz_ri_check( const wchar_t *data )
 {
-   const char *p1 = data;
-   const char *p2 = wz_data;
+   const wchar_t *p1 = data;
+   const wchar_t *p2 = wz_data;
 
    while( *p1 == *p2 && *p1 != 0 )
    {
@@ -128,7 +137,7 @@ int FALCON_DYN_SYM call_pwz_ri_check( const wchar_t *data )
 // useful to check the content of memory
 //
 
-uint64 checksum( const byte *data, uint32 size )
+uint64 checksum( const unsigned char *data, unsigned int size )
 {
    uint64 ret = 0;
    int bitmask = 1 << sizeof( uint64 );
@@ -164,7 +173,8 @@ void call_piiRu( int a, int b, unsigned int *sum )
 
 void call_piiRl( int a, int b, int64 *sum )
 {
-   int64 v = 1 << 33;
+   int64 v = 1;
+   v <<= 33;
    *sum = a + b;
 }
 

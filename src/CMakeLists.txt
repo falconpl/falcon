@@ -42,13 +42,13 @@ ELSE(WIN32)
          dynlib_sys_gcc.cpp )
    ENDIF(${CMAKE_SYSTEM_NAME} STREQUAL "SunOS")
 
-   IF(${CMAKE_SYSTEM_NAME} STREQUAL "MacOSX" )
+   IF(APPLE)
       SET( SYS_SPECIFIC
          dynlib_sys_macosx.cpp )
-   ELSE(${CMAKE_SYSTEM_NAME} STREQUAL "MacOSX" )
+   ELSE(APPLE)
       SET( SYS_SPECIFIC
          dynlib_sys_posix.cpp )
-   ENDIF(${CMAKE_SYSTEM_NAME} STREQUAL "MacOSX" )
+   ENDIF(APPLE)
 
    SET( SYS_FILES
       ${COMP_FILES}

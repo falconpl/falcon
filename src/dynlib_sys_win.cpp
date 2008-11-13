@@ -98,7 +98,7 @@ bool dynlib_get_error( int32 &ecode, String &sError )
 
 const char* dynlib_get_dynlib_ext()
 {
-   static char* ext = "dll";
+   static const char* ext = "dll";
    return ext;
 }
 

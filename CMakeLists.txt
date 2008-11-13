@@ -14,3 +14,7 @@ INCLUDE( "falmod.cmake" )
 
 #process source directory
 ADD_SUBDIRECTORY(src)
+
+IF(WITH_TESTS)
+  ADD_SUBDIRECTORY(tests)
+ENDIF(WITH_TESTS)

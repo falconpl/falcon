@@ -23,7 +23,7 @@
 
 const char* dynlib_get_dynlib_ext()
 {
-   static char* ext = "dylib";
+   static const char* ext = "dylib";
    return ext;
 }
 
