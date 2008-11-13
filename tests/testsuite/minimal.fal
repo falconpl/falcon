@@ -1,0 +1,24 @@
+/****************************************************************************
+* DynLib - Falcon dynamic library loader module - test suite
+*
+* ID: 0b
+* Category: smoke
+* Subcategory:
+* Short: Minimal test
+* Description:
+*   Gets an unguarded routine, calls it and see if the result is coherent.
+* [/Description]
+*
+****************************************************************************/
+
+load dynlib
+
+try
+   l = DynLib( "./test_dynlib." + dynExt() )
+   f = l.get( "call_p0_ri" ).call
+   if f() != 100: failure( "Invalid unguarded return value" )
+   
+   success()
+catch DynLibError in e
+   failure( e )
+end

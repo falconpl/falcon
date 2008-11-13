@@ -21,10 +21,16 @@
 
 #include "dynlib_sys.h"
 
+namespace Falcon {
+namespace Sys {
+
 const char* dynlib_get_dynlib_ext()
 {
    static const char* ext = "dylib";
    return ext;
+}
+
+}
 }
 
 /* end of dynlib_sys_posix.cpp */

@@ -1165,7 +1165,7 @@ FALCON_FUNC  DynFunction_toString( ::Falcon::VMachine *vm )
          case F_DYNLIB_PTYPE_MB: ret += "M"; break;
          case F_DYNLIB_PTYPE_VAR: ret += "..."; cont = false; break;
 
-         case F_DYNLIB_PTYPE_OPAQUE: ret += "P"; break;
+         case F_DYNLIB_PTYPE_OPAQUE:
             ret += fa->pclassParam(sp++);
             break;
          }

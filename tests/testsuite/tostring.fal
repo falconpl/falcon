@@ -1,0 +1,82 @@
+/****************************************************************************
+* DynLib - Falcon dynamic library loader module - test suite
+*
+* ID: 0d
+* Category: smoke
+* Subcategory:
+* Short: String conversion
+* Description:
+*   Verifies if the parameter parsing and reverse conversion of the function
+*   description are working.
+* [/Description]
+*
+****************************************************************************/
+
+load dynlib
+
+try
+   // setup
+   l = DynLib( "./test_dynlib." + dynExt() )
+   f = l.get( "call_p0_ri" )
+
+   // Basic check 
+   if f.toString() != "call_p0_ri(...)": failure( "Unguarded" )
+
+   // mean check
+   f = l.get( "call_p0_ri", "I" )
+   if f.toString() != "call_p0_ri(...) --> I": failure( "? --> I" )
+   f = l.get( "call_p0_ri", "I", "" )
+   if f.toString() != "call_p0_ri() --> I": failure( "--> I" )
+   f = l.get( "call_p0_ri", "I", "..." )
+   if f.toString() != "call_p0_ri(...) --> I": failure( "... --> I" )
+
+   // a bit more complex
+   f = l.get( "call_p0_ri", "I", "P" )
+   if f.toString() != "call_p0_ri(P) --> I": failure( "P--> I" )
+   f = l.get( "call_p0_ri", "I", "I" )
+   if f.toString() != "call_p0_ri(I) --> I": failure( "I--> I" )
+   f = l.get( "call_p0_ri", "I", "U" )
+   if f.toString() != "call_p0_ri(U) --> I": failure( "U--> I" )
+   f = l.get( "call_p0_ri", "I", "L" )
+   if f.toString() != "call_p0_ri(L) --> I": failure( "L--> I" )
+   f = l.get( "call_p0_ri", "I", "S" )
+   if f.toString() != "call_p0_ri(S) --> I": failure( "S--> I" )
+   f = l.get( "call_p0_ri", "I", "W" )
+   if f.toString() != "call_p0_ri(W) --> I": failure( "W--> I" )
+   f = l.get( "call_p0_ri", "I", "M" )
+   if f.toString() != "call_p0_ri(M) --> I": failure( "M--> I" )
+
+   // by reference
+   f = l.get( "call_p0_ri", "I", "$P" )
+   if f.toString() != "call_p0_ri($P) --> I": failure( "$P--> I" )
+   f = l.get( "call_p0_ri", "I", "$I" )
+   if f.toString() != "call_p0_ri($I) --> I": failure( "$I--> I" )
+   f = l.get( "call_p0_ri", "I", "$U" )
+   if f.toString() != "call_p0_ri($U) --> I": failure( "$U--> I" )
+   f = l.get( "call_p0_ri", "I", "$L" )
+   if f.toString() != "call_p0_ri($L) --> I": failure( "$L--> I" )
+   f = l.get( "call_p0_ri", "I", "$S" )
+   if f.toString() != "call_p0_ri($S) --> I": failure( "$S--> I" )
+   f = l.get( "call_p0_ri", "I", "$W" )
+   if f.toString() != "call_p0_ri($W) --> I": failure( "$W--> I" )
+   f = l.get( "call_p0_ri", "I", "$M" )
+   if f.toString() != "call_p0_ri($M) --> I": failure( "$M--> I" )
+
+   // multiple parameters
+   f = l.get( "call_p0_ri", "I", "P S, W,M    I" )
+   // we have to see this normalized
+   if f.toString() != "call_p0_ri(P, S, W, M, I) --> I": failure( "Multiple params" )
+
+   // multiple params with ...
+   f = l.get( "call_p0_ri", "I", "P S, W,M    I ..." )
+   if f.toString() != "call_p0_ri(P, S, W, M, I, ...) --> I": failure( "Multiple params with ..." )
+
+   // Multiple params with some protection
+   f = l.get( "call_p0_ri", "I", "P S, W, MetaData    I OtherData" )
+   > f
+   if f.toString() != "call_p0_ri(P, S, W, MetaData, I, OtherData) --> I": failure( "Multiple with meta" )
+
+   success()
+catch DynLibError in e
+   failure( e )
+end

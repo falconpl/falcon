@@ -1,0 +1,24 @@
+/****************************************************************************
+* DynLib - Falcon dynamic library loader module - test suite
+*
+* ID: 0c
+* Category: smoke
+* Subcategory:
+* Short: Guarded test
+* Description:
+*   Gets an guarded routine, calls it and see if the result is coherent.
+* [/Description]
+*
+****************************************************************************/
+
+load dynlib
+
+try
+   l = DynLib( "./test_dynlib." + dynExt() )
+   f = l.get( "call_p0_ri", "I" ).call
+   if f() != 100: failure( "Invalid guarded return value" )
+
+   success()
+catch DynLibError in e
+   failure( e )
+end
