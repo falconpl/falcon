@@ -1,7 +1,10 @@
 Dynlib (0.9.1)
    - Fixed toString to display safe parameters formats.
    - Fixed double floating point parameter and return values.
+   - Added function derefPtr() for double dereference.
+   - Added function dynExt function returning system specific
+     dynlib extension.
 
 Dynlib (0.9)
    - This is 1.0 release candidate.
-  
+

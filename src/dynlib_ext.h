@@ -33,6 +33,8 @@ namespace Ext {
 
 FALCON_FUNC  limitMembuf( ::Falcon::VMachine *vm );
 FALCON_FUNC  limitMembufW( ::Falcon::VMachine *vm );
+FALCON_FUNC  derefPtr( ::Falcon::VMachine *vm );
+FALCON_FUNC  dynExt( ::Falcon::VMachine *vm );
 
 FALCON_FUNC  DynLib_init( ::Falcon::VMachine *vm );
 FALCON_FUNC  DynLib_get( ::Falcon::VMachine *vm );

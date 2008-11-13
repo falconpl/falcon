@@ -233,6 +233,56 @@ FALCON_FUNC  limitMembufW( ::Falcon::VMachine *vm )
    vm->retval( mb );
 }
 
+/*#
+   @function derefPtr
+   @brief Dereferences a pointer to pointer.
+   @param ptr The pointer to be dereferenced.
+   @return The pointer stored at the location indicated by ptr, as a pointer-sized integer.
+
+   This function can be used to access data stored into indirect pointers either
+   returned or stored into by-reference parameters or structures by foreign
+   functions.
+*/
+
+FALCON_FUNC  derefPtr( ::Falcon::VMachine *vm )
+{
+   Item *i_ptr = vm->param(0);
+
+   if ( i_ptr == 0 || ! i_ptr->isInteger() )
+   {
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
+            .extra("I") ) );
+      return;
+   }
+
+   void **ptr = (void**) i_ptr->asInteger();
+
+   vm->retval( (int64) *ptr );
+}
+
+/*#
+   @function dynExt
+   @brief Return a system dependent dynamic library extension.
+   @return A string containing the local platform dynamic library extension.
+
+   This methods return one of the following values:
+
+   - "dll" if the underlying system is an MS-Windows system.
+   - "so" if the underlying system is a POSIX compliant system.
+   - "dylib" if the underlying system is a MacOSX system.
+
+   It is possible to use this string to load the "same" dynamic library,
+   exporting the same functions, on different platforms.
+*/
+
+FALCON_FUNC  dynExt( ::Falcon::VMachine *vm )
+{
+   const char* ext = Sys::dynlib_get_dynlib_ext();
+   GarbageString *gs = new GarbageString( vm, ext );
+   gs->bufferize();
+   vm->retval( ext );
+}
+
 
 /*#
    @class DynLib
@@ -716,7 +766,7 @@ FALCON_FUNC  DynFunction_call( ::Falcon::VMachine *vm )
                s_raiseType( vm, p );
                goto cleanup;
             }
-            
+
             {
                // we push the words in reverse order with respect to local byte ordering,
                // as we un-push them dword by dword in the underlying call (in the asm code).
@@ -730,7 +780,7 @@ FALCON_FUNC  DynFunction_call( ::Falcon::VMachine *vm )
                      uint32 w2;
                   } int_part;
                } d;
-            
+
                pos -= sizeof(double);
                d.dbl = (double) param->forceNumeric();
                *(uint32*)(buffer + pos) = d.int_part.w2;
@@ -768,7 +818,7 @@ FALCON_FUNC  DynFunction_call( ::Falcon::VMachine *vm )
                s_raiseType( vm, p );
                goto cleanup;
             }
-            
+
             {
                // See the note on double.
                union {
@@ -778,7 +828,7 @@ FALCON_FUNC  DynFunction_call( ::Falcon::VMachine *vm )
                      uint32 w2;
                   } int_part;
                } d;
-            
+
                pos -= sizeof(int64);
                d.l = (int64) param->forceInteger();
                *(uint32*)(buffer + pos) = d.int_part.w2;

@@ -139,7 +139,7 @@ static Falcon::DynFuncManager dyn_func_manager;
    will probably crash the application with little information about what went wrong.
 
    @section Safe Mode
-      
+
    The @b pmask parameter of @a DynLib.get is parsed scanning a string containing tokens
    separated by whitespaces, ',' or ';' (they are the same). When a parameter mask
    is specified, a ParamError is raised if the coresponding @b DynFunction.call doesn't
@@ -165,10 +165,10 @@ static Falcon::DynFuncManager dyn_func_manager;
 
    The special "..." token indicates that the function accepts a set of unknown
    parameters after that point, which will be treated as in unsafe mode.
-   
+
    To specify that a function doesn't return a value or can't accept parameters, use an empty
    string.
-   
+
    @note Ideographic language users can define pseudoclasses with a single ideographic character,
    as a pseudoclass name is parsed if the count of characters in a substring is more than one,
       or if the only character is > 256U.
@@ -178,26 +178,26 @@ static Falcon::DynFuncManager dyn_func_manager;
    the class name and wrap the transported item. A pseudoclass parameter will check for the
    parameter passed by the Falcon script at the given position is of class DynOpaque and carrying
    the required pseudoclass type.
-   
+
    For example:
-   
+
    @code
       // declare the function as returning a MyItem pseudo-type, and accepting no parameters.
       allocate = mylib.get( "allocate", "MyItem", "" ).call
-      
+
       // functions returns an integer and uses a single MyItem object
       use = mylib.get( "use", "I", "MyItem" ).call
-      
+
       // Dispose the MyItem instance
       dispose = mylib.get( "dispose", "", "MyItem" ).call
-      
+
       // create an item
       item = allocate()
       inspect( item )  // will show that it's encapsulated in a DynOpaque instance
-      
+
       // use it
       > "Usage result: ", use( item )
-      
+
       // and free it
       dispose( item )
    @endcode
@@ -205,15 +205,15 @@ static Falcon::DynFuncManager dyn_func_manager;
    Prepending a '$' sign in front of the parameter specificator will inform the parameter parsing
    system to pass the item by pointer to the underlying library. Parameters coresponding to by-pointer
    definitions must be references (passed by reference or reference items), and DynLib will
-   place adequately converted data coming from the underlying library into them. 
+   place adequately converted data coming from the underlying library into them.
    In every case, @a DynFunction.call copies the data from the underlying library (which
-   cannot be disposed by the script), except for MemBuf and pseudo-class paramers. 
-   
+   cannot be disposed by the script), except for MemBuf and pseudo-class paramers.
+
    @note Return specifiers cannot be prepended with '$'.
-   
+
    In case a MemBuf is passed by pointer,
       - As input data, the pointer to the MemBuf controlled memory is sent to the remote function.
-      - As output data, the pointer as modified by the remote function is used to create a new 
+      - As output data, the pointer as modified by the remote function is used to create a new
         MemBuf, with elements long 1 bytes and virtually unterminated (its len() method will
         report 2^31).
    So, the original MemBuf is untouched, and the new one, stored in the parameter, will contain
@@ -221,30 +221,30 @@ static Falcon::DynFuncManager dyn_func_manager;
    own that memory, which will not be automatically disposed by the Falcon garbage collector.
    It is necessary to call the appropriate function from the loaded library disposing the
    structure when the data is not needed anymore.
-   
+
    If an opaque pseudo-class type is passed by pointer, the original opaque data is then sent to the remote
    library, and the new pointer as returned by the library gets stored in the opaque item. This
    changes the original opaque item. Still, the original pointer in the input opaque item is
    not disposed.
-   
+
    For example:
       @code
       // Gets a raw error string from the library in iso8859-1 encoding.
       getErrorString = mylib.get( "getErrorString", "M", "" ).call
-      
+
       // the API docs of the library require this string to be freed with disposeErrorString
       disposeErrorString = mylib.get( "getErrorString", "M", "" ).call
-      
+
       // get an error in the Falcon world
       function getMyLibError()
          mb = getErrorString()
-         
+
          // convert into a memory buffer correctly sized
          mb = limitMembuf( mb )
-         
+
          // transcode
          error = transcodeFrom( mb, "iso8859-1" )
-         
+
          // get rid of the error string
          disposeErrorString( mb )
          return error
@@ -291,12 +291,17 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    //============================================================
    // Helper functions.
    //
-   self->addClassMethod( dynlib_cls, "limitMembuf", Falcon::Ext::limitMembuf ).asSymbol()
+   self->addExtFunc( "limitMembuf", Falcon::Ext::limitMembuf )
       ->addParam( "mb" )->addParam( "size" );
 
-   self->addClassMethod( dynlib_cls, "limitMembufW", Falcon::Ext::limitMembufW ).asSymbol()
+   self->addExtFunc( "limitMembufW", Falcon::Ext::limitMembufW )
       ->addParam( "mb" )->addParam( "size" );
-   
+
+   self->addExtFunc( "derefPtr", Falcon::Ext::derefPtr )
+      ->addParam( "ptr" );
+
+   self->addExtFunc( "dynExt", Falcon::Ext::dynExt );
+
    //============================================================
    // Callable function API
    //

@@ -25,7 +25,7 @@ IF(WIN32)
       SET( COMP_FILES
          dynlib_sys_gcc.cpp )
    ENDIF(MSVC)
-   
+
    SET( SYS_FILES
       ${COMP_FILES}
       dynlib_sys_win.cpp )
@@ -41,10 +41,20 @@ ELSE(WIN32)
       SET( COMP_FILES
          dynlib_sys_gcc.cpp )
    ENDIF(${CMAKE_SYSTEM_NAME} STREQUAL "SunOS")
-   
+
+   IF(${CMAKE_SYSTEM_NAME} STREQUAL "MacOSX" )
+      SET( SYS_SPECIFIC
+         dynlib_sys_macosx.cpp )
+   ELSE(${CMAKE_SYSTEM_NAME} STREQUAL "MacOSX" )
+      SET( SYS_SPECIFIC
+         dynlib_sys_posix.cpp )
+   ENDIF(${CMAKE_SYSTEM_NAME} STREQUAL "MacOSX" )
+
    SET( SYS_FILES
       ${COMP_FILES}
-      dynlib_sys_dl.cpp )
+      ${SYS_SPECIFIC}
+      dynlib_sys_dl.cpp    #COMMON to all unices
+      )
 
    # TODO: BSD has no libs and MacOSX has a different lib
    SET( SYS_LIBS
