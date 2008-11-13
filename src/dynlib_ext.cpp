@@ -39,15 +39,15 @@ namespace Ext {
    @param mb The memory buffer to be sized.
    @optparam size The size at which to cut the memory buffer.
    @return The resized Memory Buffer.
-   
+
    Many external functions in C dynamic libraries returns
    zero terminated strings in an encoding-neutral format.
-   
+
    It is possible to encapsulate that data in a Falcon memory
    buffer for easier manipulation in Falcon, and possibly for
    a later transformation into an internationalized Falcon
    string.
-   
+
    Whenever DynLib returns a memory buffer, it sets its size
    to 2^31, as the size of the returned data is not known. But
    if the user knows that the returned data is actually a
@@ -59,20 +59,20 @@ namespace Ext {
    buffer points to the same foreign data as the original
    one, so the returned buffer can be fed into foreign function
    expecting to deal with the original data.
-   
+
    @note The behavior of this function is undefined if the
          @b mb parameter was not created through a function
          in DynLib in versions prior to 0.8.12.
-   
+
    If the @b size parameter is not provided, the function
    scans for a zero byte and sets that position as the
    size of this memory buffer. If it's provided, that value
    is used as the new dimension of the Memory Buffer.
-   
+
    @note Using this function is necessary to correctly turn
    a C zero terminated string in arbitrary encoding into a
    Falcon string via @b transcodeFrom.
-   
+
    @note since version 0.9, the function modifies the
    original memory buffer and returns it, instead of creating
    a new memory buffer.
@@ -82,7 +82,7 @@ FALCON_FUNC  limitMembuf( ::Falcon::VMachine *vm )
 {
    Item *i_mb = vm->param(0);
    Item *i_size = vm->param(1);
-   
+
    if ( i_mb == 0 || ! i_mb->isMemBuf() ||
         ( i_size != 0 && ! i_size->isOrdinal() ) )
    {
@@ -90,9 +90,9 @@ FALCON_FUNC  limitMembuf( ::Falcon::VMachine *vm )
             .extra("M,N") ) );
       return;
    }
-   
+
    MemBuf* mb = i_mb->asMemBuf();
-   
+
    // This since VM version 0.9
    #if FALCON_VERSION_NUM > 0x00080C
    if( i_size != 0 )
@@ -112,20 +112,20 @@ FALCON_FUNC  limitMembuf( ::Falcon::VMachine *vm )
    #else
    if( i_size != 0 )
    {
-      mb = new MemBuf_1( vm, mb->data(), (uint32) i_size->forceInteger(), false ); 
+      mb = new MemBuf_1( vm, mb->data(), (uint32) i_size->forceInteger(), false );
    }
    else {
       for ( uint32 s = 0; s < mb->size(); s++ )
       {
          if ( mb->get( s ) == 0 )
          {
-            mb = new MemBuf_1( vm, mb->data(), s, false ); 
+            mb = new MemBuf_1( vm, mb->data(), s, false );
             break;
          }
       }
    }
    #endif
-   
+
    vm->retval( mb );
 }
 
@@ -134,15 +134,15 @@ FALCON_FUNC  limitMembuf( ::Falcon::VMachine *vm )
    @brief Sizes a memory buffer to a zero terminated string.
    @param mb The memory buffer to be sized.
    @optparam size The size at which to cut the memory buffer.
-   
+
    Many external functions in C dynamic libraries returns
    zero terminated strings in an encoding-neutral format.
-   
+
    It is possible to encapsulate that data in a Falcon memory
    buffer for easier manipulation in Falcon, and possibly for
    a later transformation into an internationalized Falcon
    string.
-   
+
    Whenever DynLib returns a memory buffer, it sets its size
    to 2^31, as the size of the returned data is not known. But
    if the user knows that the returned data is actually a
@@ -154,25 +154,25 @@ FALCON_FUNC  limitMembuf( ::Falcon::VMachine *vm )
    buffer points to the same foreign data as the original
    one, so the returned buffer can be fed into foreign function
    expecting to deal with the original data.
-   
+
    @note The behavior of this function is undefined if the
          @b mb parameter was not created through a function
          in DynLib in versions prior to 0.8.12.
-   
+
    If the @b size parameter is not provided, the function
-   scans for a zero short int (16-bit word) and sets that 
-   position as the size of this memory buffer. 
-   If it's provided, that value is used as the new 
+   scans for a zero short int (16-bit word) and sets that
+   position as the size of this memory buffer.
+   If it's provided, that value is used as the new
    dimension of the Memory Buffer.
-   
+
    @note Using this function is necessary to correctly turn
    a C zero terminated string in arbitrary encoding into a
    Falcon string via @b transcodeFrom.
-   
+
    @note Actually, this function uses the platform specific
    wchar_t size to scan for the 0 terminator. On some platforms,
    wchar_t is 4 bytes wide.
-   
+
    @note since version 0.9, the function modifies the
    original memory buffer and returns it, instead of creating
    a new memory buffer.
@@ -182,7 +182,7 @@ FALCON_FUNC  limitMembufW( ::Falcon::VMachine *vm )
 {
    Item *i_mb = vm->param(0);
    Item *i_size = vm->param(1);
-   
+
    if ( i_mb == 0 || ! i_mb->isMemBuf() ||
         ( i_size != 0 && ! i_size->isOrdinal() ) )
    {
@@ -190,9 +190,9 @@ FALCON_FUNC  limitMembufW( ::Falcon::VMachine *vm )
             .extra("M,N") ) );
       return;
    }
-   
+
    MemBuf* mb = i_mb->asMemBuf();
-   
+
    // This since VM version 0.9
    #if FALCON_VERSION_NUM > 0x00080C
    if( i_size != 0 )
@@ -203,7 +203,7 @@ FALCON_FUNC  limitMembufW( ::Falcon::VMachine *vm )
       for ( uint32 s = 0; s < mb->size(); s++ )
       {
          wchar_t* data = (wchar_t*) mb->data();
-         
+
          if ( data[s] == 0 )
          {
             mb->size( s * sizeof(wchar_t) );
@@ -214,22 +214,22 @@ FALCON_FUNC  limitMembufW( ::Falcon::VMachine *vm )
    #else
    if( i_size != 0 )
    {
-      mb = new MemBuf_1( vm, mb->data(), (uint32) i_size->forceInteger(), false ); 
+      mb = new MemBuf_1( vm, mb->data(), (uint32) i_size->forceInteger(), false );
    }
    else {
       for ( uint32 s = 0; s < mb->size(); s++ )
       {
          wchar_t* data = (wchar_t*) mb->data();
-         
+
          if ( data[s] == 0 )
          {
-            mb = new MemBuf_1( vm, mb->data(), s * sizeof(wchar_t), false ); 
+            mb = new MemBuf_1( vm, mb->data(), s * sizeof(wchar_t), false );
             break;
          }
       }
    }
    #endif
-   
+
    vm->retval( mb );
 }
 
@@ -394,17 +394,17 @@ CoreObject *internal_dynlib_get( VMachine* vm, bool& shouldRaise )
       allocate = mylib.get( "allocate" ).call
       use = mylib.get( "use" ).call
       dispose = mylib.get( "dispose" ).call
-      
+
       // create an item
       item = allocate()
-      
+
       // use it
       use( item )
-      
+
       // and free it
       dispose( item )
    @endcode
-   
+
    See the main page of this document for more details on safety.
 */
 FALCON_FUNC  DynLib_get( ::Falcon::VMachine *vm )
@@ -615,7 +615,7 @@ FALCON_FUNC  DynFunction_call( ::Falcon::VMachine *vm )
       {
          // We have some parameter description.
          byte pdesc = fa->parsedParam(p);
-         
+
          // this two variables will point to the stack buffer or the pointer buffer,
          // depending on the by-pointer nature of the parameter.
          uint32 *ppos;
@@ -641,7 +641,7 @@ FALCON_FUNC  DynFunction_call( ::Falcon::VMachine *vm )
             // TODO -- maybe it's better to use a plain stack area instead of Heap?
             if( ptrbuf == 0 )
                ptrbuf = (byte*) memAlloc( F_DYNLIB_MAX_PARAMS * 8 );
-            
+
             // ... and set the work buffer to the ptrbuffer
             buffer = ptrbuf;
             ppos = &ptrbuf_pos;
@@ -736,7 +736,7 @@ FALCON_FUNC  DynFunction_call( ::Falcon::VMachine *vm )
 
          case F_DYNLIB_PTYPE_SZ:
             pos -= sizeof(char*);
-            
+
             // passing by pointer?
             if( buffer == ptrbuf )
             {
@@ -749,7 +749,7 @@ FALCON_FUNC  DynFunction_call( ::Falcon::VMachine *vm )
                   goto cleanup;
                }
 
-               
+
                csPlaces[count_cs] = new AutoCString( *param->asString() );
                *(const char**)(buffer + pos) = csPlaces[count_cs]->c_str();
                count_cs++;
@@ -920,7 +920,7 @@ FALCON_FUNC  DynFunction_call( ::Falcon::VMachine *vm )
    if ( ptrbuf != 0 )
    {
       uint32 pos = F_DYNLIB_MAX_PARAMS * 8;
-      
+
       uint32 pn = 0;
       while( pn < paramCount )
       {
@@ -998,7 +998,7 @@ FALCON_FUNC  DynFunction_call( ::Falcon::VMachine *vm )
          }
 
          // next loop
-         pn ++; 
+         pn ++;
       }
    }
 
@@ -1036,7 +1036,42 @@ FALCON_FUNC  DynFunction_toString( ::Falcon::VMachine *vm )
       ret += "(...)";
    }
    else {
-      ret += "(" + fa->m_paramMask + ")";
+      ret += "(";
+
+      uint32 p=0, sp=0;
+      byte mask;
+      bool cont = true;
+      while( cont && (mask=fa->parsedParam(p)) != 0 )
+      {
+         if ( p > 0 )
+            ret += ", ";
+
+         if( (mask &  F_DYNLIB_PTYPE_BYPTR) ==  F_DYNLIB_PTYPE_BYPTR )
+            ret += "$";
+
+         switch( mask & 0x7f )
+         {
+         case F_DYNLIB_PTYPE_END: cont = false; break;
+         case F_DYNLIB_PTYPE_PTR: ret += "P"; break;
+         case F_DYNLIB_PTYPE_FLOAT: ret += "F"; break;
+         case F_DYNLIB_PTYPE_DOUBLE: ret += "D"; break;
+         case F_DYNLIB_PTYPE_I32: ret += "I"; break;
+         case F_DYNLIB_PTYPE_U32: ret += "U"; break;
+         case F_DYNLIB_PTYPE_LI: ret += "L"; break;
+         case F_DYNLIB_PTYPE_SZ: ret += "S"; break;
+         case F_DYNLIB_PTYPE_WZ: ret += "W"; break;
+         case F_DYNLIB_PTYPE_MB: ret += "M"; break;
+         case F_DYNLIB_PTYPE_VAR: ret += "..."; cont = false; break;
+
+         case F_DYNLIB_PTYPE_OPAQUE: ret += "P"; break;
+            ret += fa->pclassParam(sp++);
+            break;
+         }
+
+         p++;
+      }
+
+      ret += ")";
    }
 
    if ( fa->m_returnMask != "" )
@@ -1100,10 +1135,10 @@ FALCON_FUNC  DynFunction_retval( ::Falcon::VMachine *vm )
 /*#
    @class DynOpaque
    @brief Opaque remote data "pseudo-class" encapsulator.
-   
+
    This class encapsulates a opaque pseudo-class for dynamic
    function calls.
-   
+
    It cannot be instantiated directly; instead, it is created by
    @a DynFunction.call if a certain dynamic function has been
    declared to return a safe PseudoClass type in @a DynLib.get.
@@ -1113,7 +1148,7 @@ FALCON_FUNC  DynFunction_retval( ::Falcon::VMachine *vm )
    @method toString DynOpaque
    @brief Returns s string representation of this object.
    @return A string representation of this object.
-   
+
    Describes this instance as a pseudo-class foreign pointer.
 */
 FALCON_FUNC  DynOpaque_toString( ::Falcon::VMachine *vm )
@@ -1135,7 +1170,7 @@ FALCON_FUNC  DynOpaque_toString( ::Falcon::VMachine *vm )
    @method getData DynOpaque
    @brief Gets the inner opaque pointer.
    @return A pointer-sized integer containing the dynamic opaque data.
-   
+
    This functions returns the pointer stored in the safe pseudo-class
    wrapper. That value can be directly fed into non-prototyped remote
    functions (i.e. created with @a DynLib.get without parameter specificators),
