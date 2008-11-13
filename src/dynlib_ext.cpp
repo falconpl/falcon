@@ -676,7 +676,27 @@ FALCON_FUNC  DynFunction_call( ::Falcon::VMachine *vm )
             }
 
             pos -= sizeof(void*);
-            *(void**)(buffer + pos) = (void*) param->asInteger();
+
+            if ( sizeof(void*) == 4 )
+            {
+               *(void**)(buffer + pos) = (void*) param->asInteger();
+            }
+            else if ( sizeof( void* ) ==8 )
+            {
+               // See the note on double.
+               union {
+                  void* p;
+                  struct {
+                     uint32 w1;
+                     uint32 w2;
+                  } int_part;
+               } d;
+
+               pos -= sizeof(void*);
+               d.p = (void*) param->asInteger();
+               *(uint32*)(buffer + pos) = d.int_part.w2;
+               *(uint32*)(buffer + pos + sizeof(uint32)) = d.int_part.w1;
+            }
             break;
 
          case F_DYNLIB_PTYPE_FLOAT:
@@ -696,8 +716,26 @@ FALCON_FUNC  DynFunction_call( ::Falcon::VMachine *vm )
                s_raiseType( vm, p );
                goto cleanup;
             }
-            pos -= sizeof(double);
-            *(double*)(buffer + pos) = (double) param->forceNumeric();
+            
+            {
+               // we push the words in reverse order with respect to local byte ordering,
+               // as we un-push them dword by dword in the underlying call (in the asm code).
+               // So, we must reverse the word ordering, and that is fine as it fix also
+               // double alignment on solaris.
+
+               union {
+                  double dbl;
+                  struct {
+                     uint32 w1;
+                     uint32 w2;
+                  } int_part;
+               } d;
+            
+               pos -= sizeof(double);
+               d.dbl = (double) param->forceNumeric();
+               *(uint32*)(buffer + pos) = d.int_part.w2;
+               *(uint32*)(buffer + pos+sizeof(uint32)) = d.int_part.w1;
+            }
             break;
 
          case F_DYNLIB_PTYPE_I32:
@@ -723,15 +761,29 @@ FALCON_FUNC  DynFunction_call( ::Falcon::VMachine *vm )
             *(uint32*)(buffer + pos) = (uint32) param->forceInteger();
             break;
 
+
          case F_DYNLIB_PTYPE_LI:
             if ( ! param->isOrdinal() )
             {
                s_raiseType( vm, p );
                goto cleanup;
             }
-
-            pos -= sizeof(int64);
-            *(int64*)(buffer + pos) = (int64) param->forceInteger();
+            
+            {
+               // See the note on double.
+               union {
+                  int64 l;
+                  struct {
+                     uint32 w1;
+                     uint32 w2;
+                  } int_part;
+               } d;
+            
+               pos -= sizeof(int64);
+               d.l = (int64) param->forceInteger();
+               *(uint32*)(buffer + pos) = d.int_part.w2;
+               *(uint32*)(buffer + pos+sizeof(uint32)) = d.int_part.w1;
+            }
             break;
 
          case F_DYNLIB_PTYPE_SZ:
