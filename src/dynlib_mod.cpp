@@ -306,9 +306,9 @@ bool FunctionAddress::parseSingleParam( const String &mask, byte &type, uint32 b
       ++pos;
    }
 
-   if( state == es_maybesym )
+   if( state == es_maybesym || pos != end )
    {
-      // a single character...
+      // a single character... or an incomplete parsing...
       return false;
    }
 
@@ -330,10 +330,13 @@ bool FunctionAddress::parseReturn( const String &rval )
    if ( m_parsedReturn == F_DYNLIB_PTYPE_VAR )
       return false;
 
-   // and in case of pass opaque by pointer, we got to remove the $ in front of the retval
-   if ( m_parsedReturn == (F_DYNLIB_PTYPE_OPAQUE | F_DYNLIB_PTYPE_BYPTR) )
+   // and we must consume all the return value
+
+
+   // Return values cannot have byptr specifier
+   if ( (m_parsedReturn & F_DYNLIB_PTYPE_BYPTR) )
    {
-      m_returnMask = m_returnMask.subString(1);
+      return false;
    }
 
    return true;

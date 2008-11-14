@@ -1,0 +1,42 @@
+/****************************************************************************
+* DynLib - Falcon dynamic library loader module - test suite
+*
+* ID: 0e
+* Category: smoke
+* Subcategory:
+* Short: Pseudoclass
+* Description:
+*   Checks correct identification, content and protection of foreign
+*   pseudoclasses.
+* [/Description]
+*
+****************************************************************************/
+
+load dynlib
+
+try
+   // setup
+   l = DynLib( "./test_dynlib." + dynExt() )
+   f = l.get( "call_p0_ri", "PData" ).call   // this creates a pseudo class
+
+   pdata = f()
+   // what is pdata?
+   if pdata.toString() != "DynOpaque: PData"
+      failure( "pseudo class creation" )
+   end
+
+   if pdata.pseudoClass != "PData"
+      failure( "pseudo class value" )
+   end
+
+   // has pdata the right content?
+   if pdata.getData() != 100
+      failure( "pseudo class content" )
+   end
+
+   // correct call in other tests.
+
+   success()
+catch DynLibError in e
+   failure( e )
+end

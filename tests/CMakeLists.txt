@@ -4,6 +4,9 @@
 # CMake configuration file for dynlib - TESTS
 ####################################################################
 
+INCLUDE_DIRECTORIES(BEFORE "${FALCON_INC_PATH}")
+LINK_DIRECTORIES(BEFORE "${FALCON_LIB_PATH}")
+
 ADD_LIBRARY( test_dynlib MODULE
    testsrc/test_dynlib.c
 )

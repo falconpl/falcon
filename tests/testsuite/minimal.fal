@@ -17,7 +17,12 @@ try
    l = DynLib( "./test_dynlib." + dynExt() )
    f = l.get( "call_p0_ri" ).call
    if f() != 100: failure( "Invalid unguarded return value" )
-   
+
+   // try also with query.
+   f = l.query( "call_p0_ri" )
+   if f == nil: failure( "Queried function not found" )
+   if f.call() != 100: failure( "Query - Invalid unguarded return value" )
+
    success()
 catch DynLibError in e
    failure( e )
