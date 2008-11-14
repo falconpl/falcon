@@ -1,0 +1,49 @@
+/****************************************************************************
+* DynLib - Falcon dynamic library loader module - test suite
+*
+* ID: 2a
+* Category: guarded
+* Subcategory:
+* Short: Guarded integers
+* Description:
+*   Verifies working with various types of integer parameters.
+* [/Description]
+*
+****************************************************************************/
+
+load dynlib
+
+try
+   // setup
+   l = DynLib( "./test_dynlib." + dynExt() )
+
+   // Parameterless
+   f = l.get( "call_p0_ri", "I", "" ).call
+   if f() != 100: failure( "call_p0_ri" )
+
+   // int
+   f = l.get( "call_p3i_ri", "I", "I,I,I" ).call
+   if f( 1, 2, 3 ) != 6: failure( "call_p3i_ri (1)" )
+   if f( 1, -2, 3 ) != 2: failure( "call_p3i_ri (2)" )
+
+   // unsigned
+   f = l.get( "call_p3u_ri", "I", "U,U,U" ).call
+   if f( 1, 2, 3 ) != 6: failure( "call_p3u_ri (1)" )
+   if f( 0x80000000, 1, 2 ) != -0x7ffffffd: failure( "call_p3u_ri (2)" )
+
+   f = l.get( "call_p3u_ru", "U", "U,U,U" ).call
+   if f( 1, 2, 3 ) != 6: failure( "call_p3u_ru (1)" )
+   if f( 0x80000000, 1, 2 ) != 0x80000003: failure( "call_p3u_ru (2)" )
+
+   // long
+   f = l.get( "call_p3i_rl", "L", "I,I,I" ).call
+   if f( 1, 2, 3 ) != 0x100000006: failure( "call_p3u_rl (1)" )
+   if f( -1, -1, -1 ) != 0xFFFFFFFD: failure( "call_p3u_rl (2)" )
+
+   f = l.get( "call_p3l_rl", "L", "L,L,L" ).call
+   if f( 1, 0x100000000, 0x100000000 ) != 0x300000001: failure( "call_p3l_rl (1)" )
+
+   success()
+catch DynLibError in e
+   failure( e.toString() )
+end

@@ -1,0 +1,76 @@
+/****************************************************************************
+* DynLib - Falcon dynamic library loader module - test suite
+*
+* ID: 1d
+* Category: unguarded
+* Subcategory:
+* Short: Unguessable parameters
+* Description:
+*   Checks if the library correctly raises error for unknown/unguessable
+*   parameters.
+* [/Description]
+*
+****************************************************************************/
+
+load dynlib
+
+class cls
+   function f()
+   end
+end
+
+attributes: attr
+
+try
+   // setup
+   l = DynLib( "./test_dynlib." + dynExt() )
+   // use a parameterless function so we won't crash on mistakes.
+   f = l.get( "call_p0_ri" ).call
+
+   try
+      f( nil )
+      failure( "Unguessable not guarded: nil" )
+   catch DynLibError in e
+   end
+
+   try
+      f( true )
+      failure( "Unguessable not guarded: boolean" )
+   catch DynLibError in e
+   end
+
+   try
+      f( [1:2] )
+      failure( "Unguessable not guarded: range" )
+   catch DynLibError in e
+   end
+
+   try
+      f( attr )
+      failure( "Unguessable not guarded: attributes" )
+   catch DynLibError in e
+   end
+
+   try
+      f( cls )
+      failure( "Unguessable not guarded: class" )
+   catch DynLibError in e
+   end
+
+   try
+      f( cls() )
+      failure( "Unguessable not guarded: object" )
+   catch DynLibError in e
+   end
+
+   try
+      f( cls().f )
+      failure( "Unguessable not guarded: method" )
+   catch DynLibError in e
+   end
+
+
+   success()
+catch DynLibError in e
+   failure( e.toString() )
+end

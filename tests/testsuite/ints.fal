@@ -1,0 +1,37 @@
+/****************************************************************************
+* DynLib - Falcon dynamic library loader module - test suite
+*
+* ID: 1a
+* Category: unguarded
+* Subcategory: int
+* Short: Unguarded integer operations
+* Description:
+*   Try some call on unguarded integers
+* [/Description]
+*
+****************************************************************************/
+
+load dynlib
+
+try
+   // setup
+   l = DynLib( "./test_dynlib." + dynExt() )
+   f = l.get( "call_p3i_ri" ).call
+
+   r = f( 1, 2, 3 )
+   if r != 6: failure( "int sum" )
+
+   r = f( 1, -2, 3 )
+   if r != 2: failure( "int sum with negative" )
+
+   f = l.get( "call_p3u_ri" ).call
+   r = f( 1, 2, 3 )
+   if r != 6: failure( "unsigned int sum" )
+
+   r = f( 1.5, 2.6, 3.1 )
+   if r != 6: failure( "unsigned int sum (with float truncation)" )
+
+   success()
+catch DynLibError in e
+   failure( e.toString() )
+end

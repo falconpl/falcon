@@ -140,12 +140,13 @@ int EXPORT call_pwz_ri_check( const wchar_t *data )
 
 uint64 EXPORT checksum( const unsigned char *data, unsigned int size )
 {
-   uint64 ret = 0;
+   int64 ret = 0;
    int bitmask = 1 << sizeof( uint64 );
 
    while ( size > 0 )
    {
-      ret |= *data << bitmask;
+      int64 val = (int64) *data;
+      ret += val << bitmask;
 
       if ( bitmask == 0 )
          bitmask = 1 << sizeof( uint64 );
@@ -153,6 +154,7 @@ uint64 EXPORT checksum( const unsigned char *data, unsigned int size )
          bitmask--;
 
       ++data;
+      size --;
    }
 
    return ret;
