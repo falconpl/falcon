@@ -25,10 +25,6 @@
 #include "dynlib_st.h"
 #include "dynlib_sys.h"
 
-#ifndef NDEBUG
-#include <stdio.h>
-#endif
-
 namespace Falcon {
 namespace Ext {
 
@@ -379,7 +375,7 @@ CoreObject *internal_dynlib_get( VMachine* vm, bool& shouldRaise )
    {
       if ( ! addr->parseReturn( *i_rettype->asString() ) )
       {
-         vm->raiseModError( new DynLibError( ErrorParam( FALCON_DYNLIB_ERROR_BASE+8, __LINE__ )
+         vm->raiseModError( new ParamError( ErrorParam( FALCON_DYNLIB_ERROR_BASE+8, __LINE__ )
          .desc( FAL_STR( dyl_invalid_rmask ) ) ) );
          return 0;
       }
@@ -394,21 +390,6 @@ CoreObject *internal_dynlib_get( VMachine* vm, bool& shouldRaise )
          .desc( FAL_STR( dyl_invalid_pmask ) ) ) );
          return 0;
       }
-
-      // debug
-      #ifndef NDEBUG
-      uint32 p=0, sp=0;
-      byte mask;
-      while( (mask=addr->parsedParam(p)) != 0 )
-      {
-         printf( "Parameter %d: %d\n", p, mask );
-         if( ( mask & 0x7f) == F_DYNLIB_PTYPE_OPAQUE ) {
-            AutoCString pName(addr->pclassParam(sp++));
-            printf( "PseudoClass: %s\n", pName.c_str() );
-         }
-         p++;
-      }
-      #endif
    }
 
    Item* dfc = vm->findWKI( "DynFunction" );
@@ -432,6 +413,7 @@ CoreObject *internal_dynlib_get( VMachine* vm, bool& shouldRaise )
    @return On success an instance of @a DynFunction class.
    @raise DynLibError if this instance is not valid (i.e. if used after an unload).
    @raise DynLibError if the @b sybmol parameter cannot be resolved in the library.
+   @raise ParamError in case of invalid parameter mask or return type.
 
    On success, the returned @a DynFunction instance has all the needed informations
    to perform calls directed to the foreign library.
@@ -481,6 +463,7 @@ FALCON_FUNC  DynLib_get( ::Falcon::VMachine *vm )
    @optparam pmask Function parameter mask (see below).
    @return On success an instance of @a DynFunction class; nil if the @b symbol can't be found.
    @raise DynLibError if this instance is not valid (i.e. if used after an unload).
+   @raise ParamError in case of invalid parameter mask or return type.
 
    This function is equivalent to DynLib.get, except for the fact that it returns nil
    instead of raising an error if the given function is not found. Some program logic

@@ -73,7 +73,6 @@ try
 
    // Multiple params with some protection
    f = l.get( "call_p0_ri", "I", "P S, W, MetaData    I OtherData" )
-   > f
    if f.toString() != "call_p0_ri(P, S, W, MetaData, I, OtherData) --> I": failure( "Multiple with meta" )
 
    success()

@@ -266,7 +266,7 @@ bool FunctionAddress::parseSingleParam( const String &mask, byte &type, uint32 b
          case es_maybesym:
          case es_firstchar:
             // well, we have a char, so
-            if ( chr == '$' || chr == '.' )
+            if ( chr == '$' || chr == '.' || chr == ' ' )
                return false;
             else {
                state = es_symbol;

@@ -17,63 +17,64 @@
    See the LICENSE file distributed with this package for licensing details.
 */
 
-#include <falcon/setup.h>
 #include <stdio.h>
 #include <stdlib.h>
 
-#ifdef __int64
+#ifdef _MSC_VER
    #define int64 __int64
-   #define uint64 __uint64
+   #define uint64 unsigned __int64
+   #define EXPORT __declspec(dllexport)
 #else
    #define int64 long long
    #define uint64 unsigned long long
+   #define EXPORT
 #endif
 
 //=====================================================
 // Basic int/float calls
 //
 
-int FALCON_DYN_SYM call_p0_ri()
+int EXPORT call_p0_ri()
 {
    return 100;
 }
 
-int FALCON_DYN_SYM call_p3i_ri( int a, int b, int c )
+int EXPORT call_p3i_ri( int a, int b, int c )
 {
    return a + b + c;
 }
 
-int FALCON_DYN_SYM call_p3u_ri( unsigned int a, unsigned int b, unsigned int c )
+int EXPORT call_p3u_ri( unsigned int a, unsigned int b, unsigned int c )
 {
    return (int)(a + b + c);
 }
 
 
-unsigned int FALCON_DYN_SYM call_p3u_ru( unsigned int a, unsigned int b, unsigned int c )
+unsigned int EXPORT call_p3u_ru( unsigned int a, unsigned int b, unsigned int c )
 {
    return a + b + c;
 }
 
-int64 FALCON_DYN_SYM call_p3i_rl( int a, int b, int c )
+int64 EXPORT call_p3i_rl( int a, int b, int c )
 {
    int64 test = 1;
    test <<= 32;
    return a + b + c + test;
 }
 
-int64 FALCON_DYN_SYM call_p3l_rl( int64 a, int64 b, int64 c )
+int64 EXPORT call_p3l_rl( int64 a, int64 b, int64 c )
 {
    int64 test = 1;
    test <<= 32;
    return a + b + c + test;
 }
 
-float FALCON_DYN_SYM call_pfdi_rf( float x, double y, int c )
+float EXPORT call_pfdi_rf( float x, double y, int c )
 {
    return (float) y + x + c;
 }
 
-double FALCON_DYN_SYM call_pfdi_rd( float x, double y, int c )
+double EXPORT call_pfdi_rd( float x, double y, int c )
 {
    return y + x + c;
 }
@@ -84,12 +85,12 @@ double FALCON_DYN_SYM call_pfdi_rd( float x, double y, int c )
 
 static char *sz_data = "Hello world";
 
-char* FALCON_DYN_SYM call_rsz()
+EXPORT const char* call_rsz()
 {
    return sz_data;
 }
 
-int FALCON_DYN_SYM call_psz_ri_check( const char *data )
+int EXPORT call_psz_ri_check( const char *data )
 {
    const char *p1 = data;
    const char *p2 = sz_data;
@@ -111,12 +112,12 @@ int FALCON_DYN_SYM call_psz_ri_check( const char *data )
 
 static wchar_t *wz_data = L"Hello world";
 
-wchar_t* FALCON_DYN_SYM call_rwz()
+EXPORT const wchar_t*  call_rwz()
 {
    return wz_data;
 }
 
-int FALCON_DYN_SYM call_pwz_ri_check( const wchar_t *data )
+int EXPORT call_pwz_ri_check( const wchar_t *data )
 {
    const wchar_t *p1 = data;
    const wchar_t *p2 = wz_data;
@@ -137,7 +138,7 @@ int FALCON_DYN_SYM call_pwz_ri_check( const wchar_t *data )
 // useful to check the content of memory
 //
 
-uint64 checksum( const unsigned char *data, unsigned int size )
+uint64 EXPORT checksum( const unsigned char *data, unsigned int size )
 {
    uint64 ret = 0;
    int bitmask = 1 << sizeof( uint64 );

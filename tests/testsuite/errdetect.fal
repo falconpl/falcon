@@ -32,47 +32,47 @@ try
    try
       f = l.get( "call_p0_ri", "K" )
       failure( "Invalid retval not detected" )
-   catch DynLibError in e
+   catch ParamError in e
    end
 
    // checks invalid return (by $)
    try
       f = l.get( "call_p0_ri", "$I" )
       failure( "Byref retval not detected" )
-   catch DynLibError in e
+   catch ParamError in e
    end
 
    // checks invalid return (multiple)
    try
       f = l.get( "call_p0_ri", "I U" )
       failure( "Multiple retval not detected" )
-   catch DynLibError in e
+   catch ParamError in e
    end
 
    // checks invalid param
    try
       f = l.get( "call_p0_ri", "I", "K" )
       failure( "Invalid param not detected" )
-   catch DynLibError in e
+   catch ParamError in e
    end
 
    // checks invalid param in sequence
    try
       f = l.get( "call_p0_ri", "I", "I K U" )
       failure( "Invalid param in sequence not detected" )
-   catch DynLibError in e
+   catch ParamError in e
    end
 
    // checks parameter after ...
    try
       f = l.get( "call_p0_ri", "I", "I ... U" )
       failure( "Parameter after ... not detected" )
-   catch DynLibError in e
+   catch ParamError in e
    end
 
    // type checks in other tests.
 
    success()
 catch DynLibError in e
-   failure( e )
+   failure( e.toString() )
 end
