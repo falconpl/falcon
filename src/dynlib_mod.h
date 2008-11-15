@@ -95,6 +95,8 @@ public:
       m_parsedParams(0),
       m_parsedReturn( F_DYNLIB_PTYPE_END ),
       m_safetyParams(0),
+      m_parsedParamsCount(0),
+      m_safetyParamsCount(0),
       m_fAddress(address),
       m_bGuessParams( true )
    {}
@@ -107,6 +109,8 @@ public:
       m_parsedParams(0),
       m_parsedReturn( other.m_parsedReturn ),
       m_safetyParams(0),
+      m_parsedParamsCount(0),
+      m_safetyParamsCount(0),
       m_fAddress( other.m_fAddress ),
       m_paramMask( other.m_paramMask ),
       m_returnMask( other.m_returnMask ),
