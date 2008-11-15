@@ -55,6 +55,8 @@ bool FunctionAddress::parseParams( const String &mask )
       // it's just a declaration of "no parameters"
       m_parsedParams = new byte[1];
       m_parsedParams[0] = F_DYNLIB_PTYPE_END;
+      m_parsedParamsCount = 0;
+      m_safetyParams = 0;
       return true;
    }
 

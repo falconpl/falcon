@@ -646,6 +646,18 @@ FALCON_FUNC  DynFunction_call( ::Falcon::VMachine *vm )
       }
       else
       {
+         // too many parameters?
+         if ( p >= fa->parsedParamCount() )
+         {
+            String temp;
+            temp.writeNumber( (int64) p );
+
+            vm->raiseError( new ParamError( ErrorParam( FALCON_DYNLIB_ERROR_BASE+9, __LINE__ )
+                  .desc( FAL_STR( dle_too_many ) )
+                  .extra( temp ) ));
+            goto cleanup;
+         }
+         
          // We have some parameter description.
          byte pdesc = fa->parsedParam(p);
 
@@ -725,10 +737,18 @@ FALCON_FUNC  DynFunction_call( ::Falcon::VMachine *vm )
                   } int_part;
                } d;
 
-               pos -= sizeof(void*);
                d.p = (void*) param->asInteger();
-               *(uint32*)(buffer + pos) = d.int_part.w2;
-               *(uint32*)(buffer + pos + sizeof(uint32)) = d.int_part.w1;
+               if( ptrbuf == buffer )
+               {
+                  // direct
+                  *(uint32*)(buffer + pos) = d.int_part.w1;
+                  *(uint32*)(buffer + pos+sizeof(uint32)) = d.int_part.w2;
+               }
+               else {
+                  // reverse
+                  *(uint32*)(buffer + pos) = d.int_part.w2;
+                  *(uint32*)(buffer + pos + sizeof(uint32)) = d.int_part.w1;
+               }
             }
             break;
 
@@ -766,8 +786,17 @@ FALCON_FUNC  DynFunction_call( ::Falcon::VMachine *vm )
 
                pos -= sizeof(double);
                d.dbl = (double) param->forceNumeric();
-               *(uint32*)(buffer + pos) = d.int_part.w2;
-               *(uint32*)(buffer + pos+sizeof(uint32)) = d.int_part.w1;
+               if( ptrbuf == buffer )
+               {
+                  // direct
+                  *(uint32*)(buffer + pos) = d.int_part.w1;
+                  *(uint32*)(buffer + pos+sizeof(uint32)) = d.int_part.w2;
+               }
+               else {
+                  // reverse
+                  *(uint32*)(buffer + pos) = d.int_part.w2;
+                  *(uint32*)(buffer + pos+sizeof(uint32)) = d.int_part.w1;
+               }
             }
             break;
 
@@ -814,8 +843,17 @@ FALCON_FUNC  DynFunction_call( ::Falcon::VMachine *vm )
 
                pos -= sizeof(int64);
                d.l = (int64) param->forceInteger();
-               *(uint32*)(buffer + pos) = d.int_part.w2;
-               *(uint32*)(buffer + pos+sizeof(uint32)) = d.int_part.w1;
+               if( ptrbuf == buffer )
+               {
+                  // direct
+                  *(uint32*)(buffer + pos) = d.int_part.w1;
+                  *(uint32*)(buffer + pos+sizeof(uint32)) = d.int_part.w2;
+               }
+               else {
+                  // reverse
+                  *(uint32*)(buffer + pos) = d.int_part.w2;
+                  *(uint32*)(buffer + pos+sizeof(uint32)) = d.int_part.w1;
+               }
             }
             break;
 
@@ -918,7 +956,26 @@ FALCON_FUNC  DynFunction_call( ::Falcon::VMachine *vm )
          if( ptrbuf == buffer )
          {
             stackbuf_pos -= sizeof(void*);
-            *(void**)(stackbuf + stackbuf_pos) = (void*) (ptrbuf + ptrbuf_pos);
+            if ( sizeof(void*) == 4 )
+            {
+               *(void**)(stackbuf + stackbuf_pos) = (void*) (ptrbuf + ptrbuf_pos);
+            }
+            else if ( sizeof( void* ) ==8 )
+            {
+               // See the note on double.
+               union {
+                  void* p;
+                  struct {
+                     uint32 w1;
+                     uint32 w2;
+                  } int_part;
+               } d;
+
+               d.p = (void*) param->asInteger();
+               *(uint32*)(stackbuf + stackbuf_pos) = d.int_part.w2;
+               *(uint32*)(stackbuf + stackbuf_pos + sizeof(uint32)) = d.int_part.w1;
+            }
+            
          }
       }
 
@@ -926,8 +983,18 @@ FALCON_FUNC  DynFunction_call( ::Falcon::VMachine *vm )
       ++p;
    }
 
-   //TODO: Check for extra passed but unused parameters ?
-   // -- Falcon call protocol allows them, so, for now we're ignoring them.
+   // too few parameters?
+   if ( p < fa->parsedParamCount() && fa->parsedParam( p ) != F_DYNLIB_PTYPE_VAR)
+   {
+      String temp;
+      temp.writeNumber( (int64) p );
+
+      vm->raiseError( new ParamError( ErrorParam( FALCON_DYNLIB_ERROR_BASE+10, __LINE__ )
+            .desc( FAL_STR( dle_too_few ) )
+            .extra( temp ) ));
+      goto cleanup;
+   }
+
 
    // pass the stack starting from first used position.
    bufpos = stackbuf + stackbuf_pos;
@@ -1049,7 +1116,7 @@ FALCON_FUNC  DynFunction_call( ::Falcon::VMachine *vm )
          case F_DYNLIB_PTYPE_BYPTR | F_DYNLIB_PTYPE_SZ:
             {
             pos -= sizeof(char*);
-            GarbageString *str = UTF8GarbageString( vm, (const char *) (ptrbuf+pos) );
+            GarbageString *str = UTF8GarbageString( vm, *(const char **) (ptrbuf+pos) );
             param->setString( str );
             }
             break;
@@ -1057,7 +1124,7 @@ FALCON_FUNC  DynFunction_call( ::Falcon::VMachine *vm )
          case F_DYNLIB_PTYPE_BYPTR | F_DYNLIB_PTYPE_WZ:
             {
             pos -= sizeof(wchar_t*);
-            GarbageString *str = new GarbageString( vm, (const wchar_t *) (ptrbuf+pos), -1 );
+            GarbageString *str = new GarbageString( vm, *(const wchar_t **) (ptrbuf+pos), -1 );
             param->setString( str );
             }
             break;
@@ -1066,7 +1133,7 @@ FALCON_FUNC  DynFunction_call( ::Falcon::VMachine *vm )
             {
             pos -= sizeof(void*);
             // it was originally a membuf, or we'd rised
-            MemBuf *mb = new MemBuf_1( vm, (byte*)(ptrbuf + pos), 0x7FFFFFFF, false );
+            MemBuf *mb = new MemBuf_1( vm, *(byte**)(ptrbuf + pos), 0x7FFFFFFF, false );
             param->setMemBuf( mb );
             }
             break;

@@ -177,8 +177,9 @@ void call_piiRu( int a, int b, unsigned int *sum )
 void call_piiRl( int a, int b, int64 *sum )
 {
    int64 v = 1;
-   v <<= 33;
+   v <<= 32;
    *sum = a + b;
+   *sum += v;
 }
 
 //===========================================
