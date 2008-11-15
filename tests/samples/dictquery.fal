@@ -10,7 +10,7 @@ nameFilter = "%"
 if len( args ) > 0: nameFilter = args[0]
 
 r = d.query( "SELECT name,dob FROM names WHERE name LIKE :1 ORDER BY dob", nameFilter )
-while (let a = r.fetchDict() )
+while (a = r.fetchDict())
 	> a["name"], " was born on ", a["dob"]
 end
 r.close()
