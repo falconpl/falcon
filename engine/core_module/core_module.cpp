@@ -679,7 +679,7 @@ Module* core_module_init()
 
    self->addExtFunc( "transcodeTo", Falcon::core::transcodeTo )->
       addParam("string")->addParam("encoding");
-   self->addExtFunc( "transcodeTo", Falcon::core::transcodeFrom )->
+   self->addExtFunc( "transcodeFrom", Falcon::core::transcodeFrom )->
       addParam("string")->addParam("encoding");
    self->addExtFunc( "getSystemEncoding", Falcon::core::getSystemEncoding );
 
