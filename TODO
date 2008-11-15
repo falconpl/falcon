@@ -1,0 +1,8 @@
+Known issues:
+   - Music termination is not correctly detected.
+
+Todo:
+   - Complete support for SDL_Mixer groups.
+   - Complete support for SDL_Effects.
+   - Add sdl_ffmpeg/smpeg module bindings.
+
