@@ -37,12 +37,12 @@ try
 
    MIX.OpenAudio( 44100, AUDIO.S16, 2, 4096 )
    music = MIX.LoadMUS( "fading.ogg" )
-   MIX.HookMusicFinished( true )
 
    > "Success. Press enter to stop"
 
    > "Fading in in 6 seconds"
    music.Play( fadeIn| 6 )
+   MIX.HookMusicFinished( true )
    count = 0
    stdin = stdIn()
    loop count++
