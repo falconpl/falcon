@@ -5,4 +5,8 @@ Todo:
    - Complete support for SDL_Mixer groups.
    - Complete support for SDL_Effects.
    - Add sdl_ffmpeg/smpeg module bindings.
+   - Rename fsdl module into sdl (required refactoring "load fsdl"
+      => "load sdl")
+   - Remove static classes used for wrapping; use namespaces if needed
+     (required refactoring, search&replace "SDL.", "MIX." etc).
 
