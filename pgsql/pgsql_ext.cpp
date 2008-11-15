@@ -26,11 +26,21 @@ namespace Ext
 
 FALCON_FUNC PgSQL_init( VMachine *vm )
 {
+   Item *i_connParams = vm->param(0);
+   if ( i_connParams != 0 && ! i_connParams->isString() )
+   {
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                          .extra("[S]") ) );
+      return;
+   }
+
    CoreObject *self = vm->self().asObject();
    dbi_status status;
    String connectErrorMessage;
+   const String& params = i_connParams == 0 ? String("") : *i_connParams->asString();
+   
    DBIHandlePgSQL *dbh = static_cast<DBIHandlePgSQL *>(
-      thePgSQLService.connect( "", false, status, connectErrorMessage ) );
+      thePgSQLService.connect( params, false, status, connectErrorMessage ) );
    
    if ( dbh == 0 )
    {

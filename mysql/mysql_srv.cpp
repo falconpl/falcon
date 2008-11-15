@@ -647,7 +647,10 @@ DBIHandle *DBIServiceMySQL::connect( const String &parameters, bool persistent,
    unixSocket  = strtok( NULL, "," );
    clientFlags = strtok( NULL, "," );
 
-   if ( strcmp( unixSocket, "0" ) == 0 )
+   if ( passwd[0] == '\0' )
+      passwd = NULL;
+      
+   if ( unixSocket != NULL && strcmp( unixSocket, "0" ) == 0 )
       unixSocket = NULL;
 
    MYSQL *conn = mysql_init( NULL );

@@ -26,11 +26,21 @@ namespace Ext
 
 FALCON_FUNC SQLite3_init( VMachine *vm )
 {
+      Item *i_connParams = vm->param(0);
+   if ( i_connParams != 0 && ! i_connParams->isString() )
+   {
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                          .extra("[S]") ) );
+      return;
+   }
+
    CoreObject *self = vm->self().asObject();
    dbi_status status;
    String connectErrorMessage;
+   const String& params = i_connParams == 0 ? String("") : *i_connParams->asString();
+   
    DBIHandleSQLite3 *dbh = static_cast<DBIHandleSQLite3 *>(
-      theSQLite3Service.connect( "", false, status, connectErrorMessage ) );
+      theSQLite3Service.connect( params, false, status, connectErrorMessage ) );
    
    if ( dbh == 0 )
    {
