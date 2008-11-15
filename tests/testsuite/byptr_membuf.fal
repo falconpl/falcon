@@ -1,0 +1,41 @@
+/****************************************************************************
+* DynLib - Falcon dynamic library loader module - test suite
+*
+* ID: 3c
+* Category: byptr
+* Subcategory:
+* Short: Byptr membuf
+* Description:
+*   Checks correct return via pointer of MemBuf types.
+* [/Description]
+*
+****************************************************************************/
+
+load dynlib
+
+try
+   // setup
+   l = DynLib( "./test_dynlib." + dynExt() )
+
+   // String pointer
+   mb = MemBuf(100)
+   f = l.get( "call_pRsz", "", "$M" ).call
+   f( $mb )
+   mb = limitMembuf( mb )
+   if strFromMemBuf( mb ) != "Hello world"
+      failure( "Simple membuf" )
+   end
+
+   // Wide string pointer.
+   /*
+   f = l.get( "call_pRwz", "", "$M" ).call
+   f( $mb )
+   mb = limitMembufW( mb )
+   ss = StringStream(strFromMemBuf(mb))
+   ss.setEncoding( "utf-32" )
+   s = ss.readText( mb.len() )
+   */
+   success()
+catch DynLibError in e
+   failure( e.toString() )
+end

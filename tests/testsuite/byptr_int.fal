@@ -1,0 +1,41 @@
+/****************************************************************************
+* DynLib - Falcon dynamic library loader module - test suite
+*
+* ID: 3a
+* Category: byptr
+* Subcategory:
+* Short: Byptr integers
+* Description:
+*   Checks correct return via pointer of integer types.
+* [/Description]
+*
+****************************************************************************/
+
+load dynlib
+
+try
+   // setup
+   l = DynLib( "./test_dynlib." + dynExt() )
+
+   // Integer pointer
+   f = l.get( "call_piiRi", "", "I I $I" ).call
+   v = 0
+   f( 10, 5, $v )
+   if v != 15: failure( "Int ptr (1)" )
+
+   f( -10, 5, $v )
+   if v != -5: failure( "Int ptr (2)" )
+
+   f = l.get( "call_piiRu", "", "I I $U" ).call
+   f( 10, 5, $v )
+   if v != 15: failure( "Uint ptr" )
+
+   f = l.get( "call_piiRl", "", "I I $L" ).call
+
+   f( 1, 5, $v )
+   if v != 1 << 32 + 6: failure( "int64 ptr" )
+
+   success()
+catch DynLibError in e
+   failure( e.toString() )
+end

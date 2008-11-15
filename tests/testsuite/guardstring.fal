@@ -1,0 +1,73 @@
+/****************************************************************************
+* DynLib - Falcon dynamic library loader module - test suite
+*
+* ID: 2b
+* Category: guarded
+* Subcategory:
+* Short: Guarded strings
+* Description:
+*   Verifies working with various types of strings parameters.
+* [/Description]
+*
+****************************************************************************/
+
+load dynlib
+
+try
+   // setup
+   l = DynLib( "./test_dynlib." + dynExt() )
+
+   // plain string
+   rsz = l.get( "call_rsz", "S", "" ).call
+   check = l.get( "call_psz_ri_check", "I", "S" ).call
+
+   the_string = rsz()
+   if the_string != "Hello world"
+      failure( "S return" )
+   end
+
+   if check( the_string ) != 0
+      failure( "S check" )
+   end
+
+   if check( "Hello world" ) != 0
+      failure( "S similar" )
+   end
+
+   if check( "Walla" ) != 1
+      failure( "S greather" )
+   end
+
+   if check( "All" ) != -1
+      failure( "S smaller" )
+   end
+
+   // wchar_t string
+   rsz = l.get( "call_rwz", "W", "" ).call
+   check = l.get( "call_pwz_ri_check", "I", "W" ).call
+
+   the_string = rsz()
+   if the_string != "Hello world"
+      failure( "W return" )
+   end
+
+ if check( the_string ) != 0
+      failure( "W check" )
+   end
+
+   if check( "Hello world" ) != 0
+      failure( "W similar" )
+   end
+
+   if check( "Walla" ) != 1
+      failure( "W greather" )
+   end
+
+   if check( "All" ) != -1
+      failure( "W smaller" )
+   end
+
+   success()
+catch DynLibError in e
+   failure( e.toString() )
+end

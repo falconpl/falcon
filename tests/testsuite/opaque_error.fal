@@ -1,0 +1,44 @@
+/****************************************************************************
+* DynLib - Falcon dynamic library loader module - test suite
+*
+* ID: 4b
+* Category: opaque
+* Subcategory:
+* Short: Opaque error
+* Description:
+*   Checks for errors in using opaque data.
+* [/Description]
+*
+****************************************************************************/
+
+load dynlib
+
+try
+   // setup
+   l = DynLib( "./test_dynlib." + dynExt() )
+
+   // String pointer
+   mb = MemBuf(100)
+   make = l.get( "call_rsz", "AnotherItem", "" ).call
+   test = l.get( "call_psz_ri_check", "I", "MyItem" ).call
+
+   data = make()
+   try
+      test( 0 )
+      failure( "Not filtering an integer" )
+   end
+
+   try
+      test( "data" )
+      failure( "Not filtering a string" )
+   end
+
+   try
+      test( data )
+      failure( "Not filtering another type of data" )
+   end
+   
+   success()
+catch DynLibError in e
+   failure( e.toString() )
+end
