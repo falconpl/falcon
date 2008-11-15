@@ -17,6 +17,7 @@
 
 #include <falcon/engine.h>
 #include "sqlite3_mod.h"
+#include "sqlite3.h"
 
 namespace Falcon
 {

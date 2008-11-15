@@ -41,7 +41,7 @@ typedef enum {
    dbit_time,
    dbit_datetime,
    dbit_boolean,
-   dbit_blob,
+   dbit_blob
 }
 dbi_type;
 
