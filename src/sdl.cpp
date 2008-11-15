@@ -28,7 +28,7 @@
 #include "sdl_ext.h"
 
 /*#
-   @module sdl The SDL Falcon Module.
+   @module fsdl The SDL Falcon Module.
    @brief Main module for the Falcon SDL module suite.
 
    This is the base of the falcon SDL subsystem.

@@ -193,7 +193,7 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
       addParam("active");
 
    /*#
-      @class MIXChunk
+      @class MixChunk
       @brief SDL Mixer Chunk encapsulation class.
 
       This class is used to store chunks created by MIX_LoadWAV* functions.
@@ -212,7 +212,7 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
       addParam("channel")->addParam("loops")->addParam( "time" )->addParam( "fadeIn" );
 
    /*#
-      @class MIXMusic
+      @class MixMusic
       @brief SDL Mixer Music encapsulation class.
 
       This class is used to manipulate music (usually background music)

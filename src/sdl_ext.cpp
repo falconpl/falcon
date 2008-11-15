@@ -939,7 +939,8 @@ FALCON_FUNC sdl_CreateRGBSurfaceFrom ( ::Falcon::VMachine *vm )
 
 /*#
    @class SDLRect
-   @Brief Storage for rectangular coordinates.
+   @brief Storage for rectangular coordinates.
+   
    This class stores rectangular coordinates.
    Actually, this class is just a "contract" or "interface",
    as every function accepting an SDLRect will just accept any

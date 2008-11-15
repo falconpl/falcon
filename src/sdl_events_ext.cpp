@@ -29,7 +29,7 @@
 
 #include <SDL.h>
 
-/*# @beginmodule sdl */
+/*# @beginmodule fsdl */
 
 namespace Falcon {
 namespace Ext {
@@ -431,7 +431,7 @@ void declare_events( Module *self )
 
 
       If the program doesn't call periodically event dispatching
-      routines or if it doesn't pump events through @a SDL.PumpEvent,
+      routines or if it doesn't pump events through @a SDL.PumpEvents,
       then it is necessary to use the pumpAndRefresh() method for
       the contents of this class to be updated.
 
@@ -639,8 +639,8 @@ void declare_events( Module *self )
    @param code An arbitrary integer code available for the application.
    @param item An arbitrary item that can be passed to the handler.
 
-   Applications can generate user events through SDL.PostUserEvent or
-   the static method @a SDLEventHandler.PostUserEvent (they are the same).
+   Applications can generate user events through SDL.PushUserEvent or
+   the static method @a SDLEventHandler.PushUserEvent (they are the same).
 
    Optionally, those calls can pass an arbitrary item of any type or class
    to the handler; the handler can inspect it and even manipulate it.
@@ -1260,7 +1260,7 @@ SDL_JoystickEventState -- Enable/disable joystick event polling
    @method PumpEvents SDL
    @brief Update event listing and queueing during long operations.
 
-   Normally, a responsive SDL-Falcon program should issue a @a SDLEventHandler.WaitEvents
+   Normally, a responsive SDL-Falcon program should issue a @a SDLEventHandler.WaitEvent
    loop in its main code to start marshalling events to listeners, but it is also possible
    to periodically poll the status of keyboard and other devices with direct query functions.
 

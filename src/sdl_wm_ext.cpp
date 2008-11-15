@@ -29,7 +29,7 @@
 
 #include <SDL.h>
 
-/*# @beginmodule sdl */
+/*# @beginmodule fsdl */
 
 namespace Falcon {
 namespace Ext {

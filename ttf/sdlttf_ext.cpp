@@ -397,7 +397,7 @@ FALCON_FUNC ttf_FontFaceStyleName( VMachine *vm )
    This method stores the glyph metrics of character determined by the given @b charId into
    the @b minx, @b maxx, @b miny, @b maxy and @b advance properties of the object given
    as second parameter. If that object is not given, this method creates an instance of the
-   @a TTFGlyphMetrics class and returns it. It is advisable to use repeatedly such instance
+   @a TTFMetrics class and returns it. It is advisable to use repeatedly such instance
    to avoid useless garbage generation.
 
    The function may fail if the @b charId is not found.

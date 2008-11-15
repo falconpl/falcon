@@ -86,7 +86,7 @@ FALCON_FUNC mix_Linked_Version( VMachine *vm )
    @brief Initialize the MIX module.
    @param frequency Output sampling frequency in samples per second (Hz).
           you might use MIX.DEFAULT_FREQUENCY(22050) since that is a good value for most games.
-   @param format Output sample format; it's one of the @a MIX.AUDIO enums.
+   @param format Output sample format; it's one of the @a AUDIO enums.
    @param channels Number of sound channels in output. Set to 2 for stereo, 1 for mono.
       This has nothing to do with mixing channels.
    @param chunksize Bytes used per output sample.
@@ -724,7 +724,7 @@ FALCON_FUNC mix_RewindMusic( VMachine *vm )
 }
 
 /*#
-   @method RewindMusic MIX
+   @method PausedMusic MIX
    @brief Determines if the music is currently playing but paused.
    @return True if the music is paused.
 
@@ -983,7 +983,7 @@ FALCON_FUNC MixMusic_init( VMachine *vm )
 }
 
 /*#
-   @method Play GetType
+   @method MixMusic GetType
    @brief Return the loaded music type.
    @return One of the @a MUS enum items.
 */

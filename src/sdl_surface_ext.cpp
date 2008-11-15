@@ -29,7 +29,7 @@
 
 #include <SDL.h>
 
-/*# @beginmodule sdl */
+/*# @beginmodule fsdl */
 
 namespace Falcon {
 namespace Ext {
@@ -68,7 +68,7 @@ namespace Ext {
    It is possible to retreive the count of elements for a line dividing
    SDLSurface.pitch by SDLSurface.bpp.
 
-   Remember to call @a SDLSurface.LockIfNeeded() before using this property if
+   Remember to call @a SDLSurface.LockIfNeeded before using this property if
    the object may be used by another thread in your application (or if it is
    a shared object as a screen).
 */
@@ -231,7 +231,7 @@ FALCON_FUNC SDLSurface_BlitSurface( ::Falcon::VMachine *vm )
    mode depth.
 
    To get a suitable value for this surface,
-   use @a SDLSurface.GetPixelValue.
+   use @a SDLSurface.GetPixel.
 */
 
 FALCON_FUNC SDLSurface_SetPixel( ::Falcon::VMachine *vm )
@@ -420,7 +420,7 @@ FALCON_FUNC SDLSurface_GetPixelIndex( ::Falcon::VMachine *vm )
    surfaces. However, please notice that SDL Locks are quite invasive, use them
    sparcely and only for the needed operations.
 
-   Possibly, use the @a SDLSurface.LockIfNeeded() Falcon specific extension.
+   Possibly, use the @a SDLSurface.LockIfNeeded Falcon specific extension.
 */
 FALCON_FUNC SDLSurface_LockSurface( ::Falcon::VMachine *vm )
 {
@@ -434,7 +434,7 @@ FALCON_FUNC SDLSurface_LockSurface( ::Falcon::VMachine *vm )
    @method UnlockSurface SDLSurface
    @brief Unlocks the surface.
 
-   Possibly, use the @a SDLSurface.UnlockIfNeeded() Falcon specific extension.
+   Possibly, use the @a SDLSurface.UnlockIfNeeded Falcon specific extension.
 */
 FALCON_FUNC SDLSurface_UnlockSurface( ::Falcon::VMachine *vm )
 {
