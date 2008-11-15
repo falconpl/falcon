@@ -41,7 +41,7 @@ On MS-WINDOWS
 
   On the Falcon site, the SDL project area stores a pre-configured set of
 the official SDL libraries and development support files that you can copy
-and install. on the SDL_DEV directory under this one.
+and install on the SDL_DEV directory under this one.
 
   The file contains an sdl_falpb.bat configurator that can be used in place
 of falpb to find all the SDL dependency and create the development tree.
@@ -50,8 +50,26 @@ of falpb to find all the SDL dependency and create the development tree.
 the cmake build system to find SDL libraries you may have compiled and
 installed elsewhere.
 
+  For an out-of-source build not using the Falcon Build environment, or if
+you just prefer to build this module against an installed version of Falcon,
+just create a build dir, enter it and run a script setting the needed 
+variables, accordingly with the SDL_* variables found in the SDL_DEV package.
 
+  In example:
+  
+      SET SDL_DEV_ROOT=<mypath>\SDL_DEV
+      SET SDLDIR=%SDL_DEV_ROOT%\SDL-1.2.13
+      SET SDLMIXERDIR=%SDL_DEV_ROOT%\SDL_mixer-1.2.8
+      SET SDLIMAGEDIR=%SDL_DEV_ROOT%\SDL_image-1.2.6
+      SET SDLTTFDIR=%SDL_DEV_ROOT%\SDL_ttf-2.0.9
 
+changing <mypath> into the pat to your SDL_DEV expanded directory. After 
+this, cmake will be able to find the SDL needed sdl modules.
+ 
+  Don't forget to copy also del SDL dlls you find in the varous bin/ 
+directories into the Falcon binary directory, or install them system-wide in 
+C:\windows\system32
+     
 On MacOSX
 =========
 
