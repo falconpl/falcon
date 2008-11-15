@@ -1,8 +1,8 @@
              The Falcon Programming Language
 
-                 DBI - Database Interface 
+           Featured modules copyright statement
 
-                 http://www.falconpl.org
+                http://www.falconpl.org
 
 Falcon and featured modules are currently distributed under a 
 dual licensing scheme GPL/FPLL.
@@ -21,7 +21,8 @@ as it supports applying different and incompatible licenses to
 embedding and extension elements, while ensuring the openness of
 the core engine and of any work derived directly from it.
 
-Falcon 0.8.10 is released under one of GPLv2 or FPLLv1.1, at your choice.
+Falcon 0.8.10 and following is released under one of GPLv2 or 
+FPLLv1.1, at your choice.
 
 The GPLv2 license can be found at:
    http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
