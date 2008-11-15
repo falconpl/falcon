@@ -27,14 +27,24 @@ try
    end
 
    // Wide string pointer.
-   /*
    f = l.get( "call_pRwz", "", "$M" ).call
    f( $mb )
    mb = limitMembufW( mb )
    ss = StringStream(strFromMemBuf(mb))
-   ss.setEncoding( "utf-32" )
+   ss.setEncoding( "utf-16" )
    s = ss.readText( mb.len() )
-   */
+   
+   // little trick: on systems where wchar_t is 32 bit, re-apply utf16
+   if mb[2] == 0
+      ss = StringStream(s)
+      ss.setEncoding( "utf-16" )
+      s = ss.readText( s.len() )
+   end
+
+   if s != "Hello world"
+      failure( "Wide membuf" )
+   end
+   
    success()
 catch DynLibError in e
    failure( e.toString() )
