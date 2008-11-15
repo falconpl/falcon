@@ -51,7 +51,7 @@ try
       failure( "W return" )
    end
 
- if check( the_string ) != 0
+   if check( the_string ) != 0
       failure( "W check" )
    end
 

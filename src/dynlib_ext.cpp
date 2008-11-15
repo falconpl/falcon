@@ -1038,8 +1038,7 @@ FALCON_FUNC  DynFunction_call( ::Falcon::VMachine *vm )
 
          case F_DYNLIB_PTYPE_WZ:
             {
-               const wchar_t *wz = (const wchar_t *) Sys::dynlib_voidp_call( fa->m_fAddress, bufpos, bufsize );
-               GarbageString *str = new GarbageString( vm, wz, -1 );
+               GarbageString *str = new GarbageString( vm, (const wchar_t *) Sys::dynlib_voidp_call( fa->m_fAddress, bufpos, bufsize ), -1 );
                vm->retval( str );
             }
             break;

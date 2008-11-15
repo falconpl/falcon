@@ -164,17 +164,17 @@ uint64 EXPORT checksum( const unsigned char *data, unsigned int size )
 // Param byref tests -- int
 //
 
-void call_piiRi( int a, int b, int *sum )
+void EXPORT call_piiRi( int a, int b, int *sum )
 {
    *sum = a + b;
 }
 
-void call_piiRu( int a, int b, unsigned int *sum )
+void EXPORT call_piiRu( int a, int b, unsigned int *sum )
 {
    *sum = a + b;
 }
 
-void call_piiRl( int a, int b, int64 *sum )
+void EXPORT call_piiRl( int a, int b, int64 *sum )
 {
    int64 v = 1;
    v <<= 32;
@@ -186,12 +186,12 @@ void call_piiRl( int a, int b, int64 *sum )
 // Param byref tests -- strings
 //
 
-void call_pRsz( char **sz )
+void EXPORT call_pRsz( char **sz )
 {
    *sz = sz_data;
 }
 
-void call_pRwz( wchar_t **wz )
+void EXPORT call_pRwz( wchar_t **wz )
 {
    *wz = wz_data;
 }
