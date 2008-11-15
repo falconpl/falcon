@@ -40,7 +40,7 @@ namespace Ext {
 static SDLService *s_sdlservice = 0;
 
 /*#
-   @method img_Load
+   @method Load IMAGE
    @brief Loads an image file based on filename extension
    @param file The name of the file to be loaded, or a Falcon Stream
           instance pointing at the beginning of the image data.
@@ -170,58 +170,149 @@ static void img_checkImageType( VMachine *vm, t_check_func func )
    vm->regA().setBoolean( func( &rwops ) != 0 );
 }
 
+/*#
+   @method isBMP IMAGE
+   @brief Checks if an image is in BMP format.
+   @param file a Falcon Stream instance pointing at the beginning of the image data.
+   @return True if the stream is stroing a BMP image.
+
+   It may be useful to reset the stream to the current position after calling
+   this function.
+*/
+
 FALCON_FUNC img_isBMP ( VMachine *vm )
 {
    img_checkImageType( vm, ::IMG_isBMP );
 }
 
+/*#
+   @method isGIF IMAGE
+   @brief Checks if an image is in GIF format.
+   @param file a Falcon Stream instance pointing at the beginning of the image data.
+   @return True if the stream is stroing a GIF image.
+
+   It may be useful to reset the stream to the current position after calling
+   this function.
+*/
 FALCON_FUNC img_isGIF ( VMachine *vm )
 {
    img_checkImageType( vm, ::IMG_isGIF );
 }
 
+/*#
+   @method isJPG IMAGE
+   @brief Checks if an image is in JPG format.
+   @param file a Falcon Stream instance pointing at the beginning of the image data.
+   @return True if the stream is stroing a JPG image.
+
+   It may be useful to reset the stream to the current position after calling
+   this function.
+*/
 FALCON_FUNC img_isJPG ( VMachine *vm )
 {
    img_checkImageType( vm, ::IMG_isJPG );
 }
 
+/*#
+   @method isLBM IMAGE
+   @brief Checks if an image is in LBM format.
+   @param file a Falcon Stream instance pointing at the beginning of the image data.
+   @return True if the stream is stroing a LBM image.
+
+   It may be useful to reset the stream to the current position after calling
+   this function.
+*/
 FALCON_FUNC img_isLBM ( VMachine *vm )
 {
    img_checkImageType( vm, ::IMG_isLBM );
 }
 
+/*#
+   @method isPCX IMAGE
+   @brief Checks if an image is in PCX format.
+   @param file a Falcon Stream instance pointing at the beginning of the image data.
+   @return True if the stream is stroing a PCX image.
+
+   It may be useful to reset the stream to the current position after calling
+   this function.
+*/
 FALCON_FUNC img_isPCX ( VMachine *vm )
 {
    img_checkImageType( vm, ::IMG_isPCX );
 }
 
+/*#
+   @method isPNG IMAGE
+   @brief Checks if an image is in PCX format.
+   @param file a Falcon Stream instance pointing at the beginning of the image data.
+   @return True if the stream is stroing a PCX image.
+
+   It may be useful to reset the stream to the current position after calling
+   this function.
+*/
 FALCON_FUNC img_isPNG ( VMachine *vm )
 {
    img_checkImageType( vm, ::IMG_isPNG );
 }
 
+/*#
+   @method isPNM IMAGE
+   @brief Checks if an image is in PNM format.
+   @param file a Falcon Stream instance pointing at the beginning of the image data.
+   @return True if the stream is stroing a PNM image.
+
+   It may be useful to reset the stream to the current position after calling
+   this function.
+*/
 FALCON_FUNC img_isPNM ( VMachine *vm )
 {
    img_checkImageType( vm, ::IMG_isPNM );
 }
 
+/*#
+   @method isTIF IMAGE
+   @brief Checks if an image is in TIF format.
+   @param file a Falcon Stream instance pointing at the beginning of the image data.
+   @return True if the stream is stroing a TIF image.
+
+   It may be useful to reset the stream to the current position after calling
+   this function.
+*/
 FALCON_FUNC img_isTIF ( VMachine *vm )
 {
    img_checkImageType( vm, ::IMG_isTIF );
 }
 
+/*#
+   @method isXCF IMAGE
+   @brief Checks if an image is in XCF format.
+   @param file a Falcon Stream instance pointing at the beginning of the image data.
+   @return True if the stream is stroing a XCF image.
+
+   It may be useful to reset the stream to the current position after calling
+   this function.
+*/
 FALCON_FUNC img_isXCF ( VMachine *vm )
 {
    img_checkImageType( vm, ::IMG_isXCF );
 }
 
+/*#
+   @method isXPM IMAGE
+   @brief Checks if an image is in XPM format.
+   @param file a Falcon Stream instance pointing at the beginning of the image data.
+   @return True if the stream is stroing a XPM image.
+
+   It may be useful to reset the stream to the current position after calling
+   this function.
+*/
 FALCON_FUNC img_isXPM ( VMachine *vm )
 {
    img_checkImageType( vm, ::IMG_isXPM );
 }
 
 /*#
-   @method img_GetError
+   @method GetError IMAGE
    @brief Gets image related error
    @return Returns a string containing a humam readble version or the reason for the last error that occured
 
@@ -235,7 +326,7 @@ FALCON_FUNC img_GetError ( VMachine *vm )
 }
 
 /*#
-   @method img_SetError
+   @method SetError IMAGE
    @brief Sets image related error string
    @return Returns a string containing a humam readble version or the reason for the last error that occured
 
