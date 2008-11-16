@@ -1,0 +1,17 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: --
+* Category: types
+* Subcategory: objects
+* Short: Expressions in from
+* Description:
+*   Component for test 22g
+* [/Description]
+*
+****************************************************************************/
+class Base( param )
+   param = param
+end
+
+export

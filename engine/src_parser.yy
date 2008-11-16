@@ -1739,6 +1739,10 @@ class_decl:
 
       END EOL {
          $$ = COMPILER->getContext();
+         
+         // check for expressions in from clauses
+         COMPILER->checkLocalUndefined();
+
          Falcon::StmtClass *cls = static_cast<Falcon::StmtClass *>($$);
 
          // if the class has no constructor, create one in case of inheritance.
@@ -2096,6 +2100,9 @@ object_decl:
       END EOL {
          $$ = COMPILER->getContext();
          Falcon::StmtClass *cls = static_cast<Falcon::StmtClass *>($$);
+         
+         // check for expressions in from clauses
+         COMPILER->checkLocalUndefined();
 
          // if the class has no constructor, create one in case of inheritance.
          if( cls->ctorFunction() == 0  )

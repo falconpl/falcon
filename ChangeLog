@@ -5,6 +5,10 @@ Falcon (0.8.13)
            argument twice.
   * fixed: transcodeTo/transcodeFrom was actually not published correctly
            by the core module.
+  * fixed: Expressions in "from" clauses (init expressions) may not resolve
+           correctly symbols if the body of the object or class was empty.
+           This caused assert and crash if generating expressions with symbols
+           during "from" clauses of otherwise bodyless objects and classes.
 
 Falcon (0.8.12)
   * major: Support for class-driven full reflection and 0-space contstant/reflected

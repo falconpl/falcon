@@ -1,0 +1,42 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 22g
+* Category: types
+* Subcategory: objects
+* Short: Expressions in from
+* Description:
+* Test for corerect generation and usage of expressions and
+* forward references during from clause calls.
+* [/Description]
+*
+****************************************************************************/
+
+load obj_nest_base
+
+object fseq1 from Base( .[ 1 fseq2 3 ] )
+end
+
+object fseq2
+   function test()
+      return 100
+   end
+end
+
+try
+   call = fseq1.param[1]
+catch AccessError
+   failure( "Expression generation during init" )
+end
+
+try
+   if call.test() != 100
+      failure( "Call value" )
+   end
+catch AccessError
+   failure( "Expression deep generation" )
+end
+
+success()
+
+/* end of test */
