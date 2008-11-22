@@ -1,8 +1,11 @@
 ####################################################################
 # The Falcon Programming Language
 #
-# dynlib - Macros and utilities for Falcon modules
+# Macros and utilities for Falcon modules
 ####################################################################
+
+#Options common to all the falcon modules
+set(INSTDIR "" CACHE STRING "Overrdies the default install path" )
 
 #Set the default buid type to Debug
 IF(NOT CMAKE_BUILD_TYPE)
@@ -54,6 +57,12 @@ ELSE("$ENV{FALCON_INC_PATH}" STREQUAL "" )
    ENDIF ("$ENV{FALCON_ACTIVE_TREE}" STREQUAL "")
 
 ENDIF("$ENV{FALCON_INC_PATH}" STREQUAL "" )
+
+#Anyhow, override if INSTDIR is given
+if(NOT ${INSTDIR} STREQUAL "" )
+   SET(FALCON_MOD_INSTALL ${INSTDIR} )
+   MESSAGE( "Overriding default install path with ${INSTDIR}" )
+endif(NOT ${INSTDIR} STREQUAL "" )
 
 MACRO(FALCON_CLEANUP tgt)
    IF(FALCON_STRIP_TARGET)
