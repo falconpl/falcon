@@ -1194,11 +1194,13 @@ Symbol *AsmCompiler::findSymbol( const String &name ) const
 
    // havn't we found it in the local table?
    if ( sym == 0 )
+   {
       if ( name.getCharAt( 0 ) == '*' )
          sym = m_module->symbolTable().findByName( name.subString( 1 ) );
       else
          sym = m_module->symbolTable().findByName( name );
-
+   }
+   
    return sym;
 }
 

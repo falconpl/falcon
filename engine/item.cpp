@@ -215,6 +215,23 @@ int64 Item::forceInteger() const
 }
 
 
+int64 Item::forceIntegerEx() const
+{
+   switch( type() ) {
+      case FLC_ITEM_INT:
+         return asInteger();
+
+      case FLC_ITEM_NUM:
+         return (int64) asNumeric();
+
+   }
+   throw new TypeError( ErrorParam( e_param_type, __LINE__ ) );
+   
+   // to make some dumb compiler happy
+   return 0;
+}
+
+
 numeric Item::forceNumeric() const
 {
    switch( type() ) {
@@ -704,9 +721,7 @@ Item &Item::asFutureBind() {
 
 CoreObject *Item::asObject() const {
    if ( ! isObject() )
-      throw new CodeError( ErrorParam( e_prop_acc, __LINE__ )
-         .extra( "static method call" )
-         .hard() );
+      throw new CodeError( ErrorParam( e_static_call, __LINE__ ) );
 
    return (CoreObject *) m_data.ptr.voidp;
 }

@@ -141,8 +141,9 @@ bool Value::isEqualByValue( const Value &other ) const
 
          case Value::t_range_decl:
             if( other.asRange()->rangeStart() == asRange()->rangeStart() &&
-                  ( asRange()->isOpen() && other.asRange()->isOpen() ||
-                    ! asRange()->isOpen() && ! other.asRange()->isOpen() && other.asRange()->rangeEnd() == asRange()->rangeEnd()
+                  ( (asRange()->isOpen() && other.asRange()->isOpen()) ||
+                    (! asRange()->isOpen() && ! other.asRange()->isOpen() 
+                       && other.asRange()->rangeEnd() == asRange()->rangeEnd())
                   )
                )
                return true;
@@ -822,7 +823,7 @@ bool StmtSwitch::addRangeCase( Value *itm )
       Value *first = *(Value **) iter.currentKey();
       int32 val = (int32) first->asInteger();
 
-      if ( isOpen && val >= start || !isOpen && val >= start && val <= end )
+      if ( (isOpen && val >= start) || (!isOpen && val >= start && val <= end) )
       {
          return false;
       }
@@ -857,10 +858,10 @@ bool StmtSwitch::addRangeCase( Value *itm )
          }
          else
          {
-            if (  start <= other_start && other_start <= end ||
-                  start <= other_end && other_end <= end ||
-                  other_start <= start && start <= other_end ||
-                  other_start <= end && end <= other_end
+            if ( (start <= other_start && other_start <= end) ||
+                 (start <= other_end && other_end <= end) ||
+                 (other_start <= start && start <= other_end) ||
+                 (other_start <= end && end <= other_end)
             )
                return false;
          }

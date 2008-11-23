@@ -38,7 +38,7 @@ const char *en_table[] =
       "Assignment to a constant",
       "Assignment to a non assignable symbol",
       //10
-      "Repeated symbol in declaration",
+      "Non-staitc method called statically",
       "Global statement not inside a function",
       "Symbol already defined",
       "Non callable symbol called",

@@ -1323,6 +1323,14 @@ int SrcLexer::checkUnlimitedTokens( uint32 nextChar )
             return CAP_CAP;
          else if ( m_string == "^*" )
             return CAP_EVAL;
+         else if ( m_string == "^!" )
+            return CAP_XOROOB;
+         else if ( m_string == "^?" )
+            return CAP_ISOOB;
+         else if ( m_string == "^-" )
+            return CAP_DEOOB;
+         else if ( m_string == "^+" )
+            return CAP_OOB;
          //====
          else if ( m_string == "=>" )
             return ARROW;

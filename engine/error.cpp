@@ -42,7 +42,7 @@ const String &errorDesc( int code )
       case e_invalid_op: return getMessage( msg::err_invalid_op);
       case e_assign_const: return getMessage( msg::err_assign_const);
       case e_assign_sym: return getMessage( msg::err_assign_sym);
-      case e_repeated: return getMessage( msg::err_repeated);
+      case e_static_call: return getMessage( msg::err_static_call);
       case e_global_notin_func: return getMessage( msg::err_global_notin_func);
       case e_already_def: return getMessage( msg::err_already_def);
       case e_non_callable: return getMessage( msg::err_non_callable);

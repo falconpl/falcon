@@ -38,7 +38,7 @@ CoreObject::CoreObject( const CoreClass *generator,  void *user_data ):
    // do we need to create a local cache?
    // if pt is not static and we have not class reflection we need it
    // we need it also if we ask explicitly for it (needCacheData)
-   if( om != 0 && ( (! om->hasClassReflection() && ! pt.isStatic()) || om->needCacheData() ) ||
+   if( (om != 0 && ( (! om->hasClassReflection() && ! pt.isStatic()) || om->needCacheData() )) ||
       (! pt.isStatic()) )
    {
       m_cache = (Item *) memAlloc( sizeof( Item ) * pt.added() );

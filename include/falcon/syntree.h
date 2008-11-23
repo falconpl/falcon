@@ -69,7 +69,6 @@ class FALCON_DYN_CLASS RangeDecl: public BaseAlloc
    Value *m_rend;
    Value *m_step;
 
-
 public:
    RangeDecl( Value *start, Value *end = 0, Value *step = 0 ):
       m_rstart( start ),
@@ -421,6 +420,10 @@ public:
       t_ashr,
 
       t_eval,
+      t_deoob,
+      t_oob,
+      t_xoroob,
+      t_isoob,
 
       /** An optimized expression is like an unary operator */
       t_optimized

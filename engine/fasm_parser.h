@@ -198,7 +198,8 @@
      I_WRT = 414,
      I_STO = 415,
      I_FORB = 416,
-     I_EVAL = 417
+     I_EVAL = 417,
+     I_OOB = 418
    };
 #endif
 /* Tokens.  */
@@ -362,6 +363,7 @@
 #define I_STO 415
 #define I_FORB 416
 #define I_EVAL 417
+#define I_OOB 418
 
 
 

@@ -144,13 +144,17 @@
      POW = 360,
      SHR = 361,
      SHL = 362,
-     CAP_EVAL = 363,
-     TILDE = 364,
-     NEG = 365,
-     AMPER = 366,
-     DECREMENT = 367,
-     INCREMENT = 368,
-     DOLLAR = 369
+     CAP_XOROOB = 363,
+     CAP_ISOOB = 364,
+     CAP_DEOOB = 365,
+     CAP_OOB = 366,
+     CAP_EVAL = 367,
+     TILDE = 368,
+     NEG = 369,
+     AMPER = 370,
+     DECREMENT = 371,
+     INCREMENT = 372,
+     DOLLAR = 373
    };
 #endif
 /* Tokens.  */
@@ -259,13 +263,17 @@
 #define POW 360
 #define SHR 361
 #define SHL 362
-#define CAP_EVAL 363
-#define TILDE 364
-#define NEG 365
-#define AMPER 366
-#define DECREMENT 367
-#define INCREMENT 368
-#define DOLLAR 369
+#define CAP_XOROOB 363
+#define CAP_ISOOB 364
+#define CAP_DEOOB 365
+#define CAP_OOB 366
+#define CAP_EVAL 367
+#define TILDE 368
+#define NEG 369
+#define AMPER 370
+#define DECREMENT 371
+#define INCREMENT 372
+#define DOLLAR 373
 
 
 
@@ -288,7 +296,7 @@ lex_value_t {
    Falcon::List *fal_genericList;
 }
 /* Line 1489 of yacc.c.  */
-#line 292 "/home/gian/Progetti/falcon/core/engine/src_parser.hpp"
+#line 300 "/home/gian/Progetti/falcon/core/engine/src_parser.hpp"
 	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1

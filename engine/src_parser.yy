@@ -149,7 +149,7 @@ inline int flc_src_lex (void *lvalp, void *yyparam)
 %left STAR SLASH PERCENT
 %left POW
 %left SHL SHR
-%right NEG TILDE CAP_EVAL
+%right NEG TILDE CAP_EVAL CAP_OOB CAP_DEOOB CAP_ISOOB CAP_XOROOB
 %right DOLLAR INCREMENT DECREMENT AMPER
 
 %type <integer> INTNUM_WITH_MINUS
@@ -158,6 +158,7 @@ inline int flc_src_lex (void *lvalp, void *yyparam)
 %type <fal_ddecl> expression_pair_list
 %type <fal_genericList> import_symbol_list
 %type <fal_val> expression func_call nameless_func nameless_closure lambda_expr iif_expr
+%type <fal_val> for_to_expr for_to_step_clause
 %type <fal_val> switch_decl select_decl while_decl while_short_decl
 %type <fal_val> if_decl if_short_decl elif_decl
 %type <fal_val> const_atom var_atom  atomic_symbol /* atom */
@@ -500,7 +501,7 @@ continue_statement:
 
 
 forin_statement:
-   FOR symbol_list OP_IN expression EOL
+   FOR symbol_list OP_IN expression 
       {
          Falcon::StmtForin *f;
          Falcon::ArrayDecl *decl = $2;
@@ -515,8 +516,9 @@ forin_statement:
          COMPILER->pushContext( f );
          COMPILER->pushContextSet( &f->children() );
       }
-      forin_statement_list
-      END EOL
+      
+      forin_rest
+      
       {
          Falcon::StmtForin *f = static_cast<Falcon::StmtForin *>(COMPILER->getContext());
          COMPILER->popLoop();
@@ -524,32 +526,28 @@ forin_statement:
          COMPILER->popContextSet();
          $$ = f;
       }
-   | FOR symbol_list OP_IN expression COLON
+      
+   | FOR atomic_symbol OP_EQ for_to_expr
       {
-          Falcon::StmtForin *f;
-         Falcon::ArrayDecl *decl = $2;
-         if ( decl->front() == decl->back() ) {
-            f = new Falcon::StmtForin( CURRENT_LINE, (Falcon::Value *) decl->front(), $4 );
-            decl->deletor(0);
-            delete decl;
-         }
-         else
-            f = new Falcon::StmtForin( CURRENT_LINE, new Falcon::Value(decl), $4 );
-
+         Falcon::StmtForin *f;
+         COMPILER->defineVal( $2 );
+         f = new Falcon::StmtForin( LINE, $2, $4 );
          COMPILER->pushLoop( f );
          COMPILER->pushContext( f );
          COMPILER->pushContextSet( &f->children() );
       }
-      statement
+      
+      forin_rest
+      
       {
-         if ( $7 != 0 )
-            COMPILER->addStatement( $7 );
          Falcon::StmtForin *f = static_cast<Falcon::StmtForin *>(COMPILER->getContext());
          COMPILER->popLoop();
          COMPILER->popContext();
          COMPILER->popContextSet();
          $$ = f;
       }
+      
+      
    | FOR symbol_list OP_IN error EOL
       { delete $2;
          COMPILER->raiseError( Falcon::e_syn_forin );
@@ -560,6 +558,42 @@ forin_statement:
          COMPILER->raiseError( Falcon::e_syn_forin );
          $$ = 0;
       }
+;
+
+forin_rest:
+   COLON statement
+      {
+         if ( $2 != 0 )
+            COMPILER->addStatement( $2 );
+      }
+      
+   | EOL
+      forin_statement_list
+      END EOL
+;
+      
+
+for_to_expr:
+   expression OP_TO expression for_to_step_clause
+      {
+         Falcon::RangeDecl* rd = new Falcon::RangeDecl( $1, 
+            new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_oob, $3)), $4 );
+         $$ = new Falcon::Value( rd );
+      }
+   | expression OP_TO expression error
+      {
+         $$ = new Falcon::Value( new Falcon::RangeDecl( $1, $3, 0 ) );
+      }
+   | expression OP_TO  error
+      {
+         $$ = new Falcon::Value( new Falcon::RangeDecl( $1, 0, 0 ) );
+      }
+;
+
+for_to_step_clause:
+   /* nothing */ { $$=0; }
+   | COMMA expression { $$=new Falcon::Value( $2 ); }
+   | COMMA error  { $$=0; }
 ;
 
 forin_statement_list:
@@ -1577,12 +1611,12 @@ import_statement:
          COMPILER->addNamespace( *$3, "", true, true );
          $$ = 0;
       }
-   | IMPORT FROM SYMBOL OP_EQ SYMBOL EOL
+   | IMPORT FROM SYMBOL OP_AS SYMBOL EOL
       {
          COMPILER->addNamespace( *$3, *$5, true, false );
          $$ = 0;
       }
-   | IMPORT FROM STRING OP_EQ SYMBOL EOL
+   | IMPORT FROM STRING OP_AS SYMBOL EOL
       {
          COMPILER->addNamespace( *$3, *$5, true, true );
          $$ = 0;
@@ -2303,6 +2337,10 @@ expression:
    | ATSIGN expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_strexpand, $2 ) ); }
    | DIESIS expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_indirect, $2 ) ); }
    | CAP_EVAL expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_eval, $2 ) ); }
+   | CAP_OOB expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_oob, $2 ) ); }
+   | CAP_DEOOB expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_deoob, $2 ) ); }
+   | CAP_ISOOB expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_isoob, $2 ) ); }
+   | CAP_XOROOB expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_xoroob, $2 ) ); }
    | lambda_expr
    | nameless_func
    | nameless_closure

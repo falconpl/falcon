@@ -579,6 +579,12 @@ public:
    int32 asRangeEnd()  const { return m_data.rng.rend; }
    int32 asRangeStep()  const { return m_data.rng.rstep; }
    bool asRangeIsOpen()  const { return (m_base.bits.flags & flagOpenRange) != 0; }
+   void rangeSetIsOpen( bool b ) { 
+      if( b ) 
+         m_base.bits.flags |= flagOpenRange;
+      else
+         m_base.bits.flags &= ~flagOpenRange;
+   }
 
    String *asString() const { return (String *) m_data.ptr.voidp; }
    /** Provides a basic string representation of the item.
@@ -610,6 +616,14 @@ public:
       It will do nothing meaningfull on other types.
    */
    int64 forceInteger() const ;
+   
+   /** Convert current object into an integer.
+      This operations is usually done on integers, numeric and strings.
+      It will do nothing meaningfull on other types.
+      
+      \note this version will throw a code error if the item is not an ordinal.
+   */
+   int64 forceIntegerEx() const ;
 
    /** Convert current object into a numeric.
       This operations is usually done on integers, numeric and strings.

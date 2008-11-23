@@ -544,6 +544,7 @@ Item::e_sercode Item::deserialize( Stream *file, VMachine *vm )
          file->read( (byte *) &val2, sizeof( val2 ) );
          file->read( (byte *) &val3, sizeof( val3 ) );
          file->read( (byte *) &isOpen, sizeof( isOpen ) );
+         
          if ( file->good() ) {
             setRange( val1, val2, val3, isOpen != 0 );
             return sc_ok;

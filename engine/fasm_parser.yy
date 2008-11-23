@@ -223,6 +223,7 @@ inline int yylex (void *lvalp, void *fasm_param)
 %token I_STO
 %token I_FORB
 %token I_EVAL
+%token I_OOB
 %%
 
 /****************************************************
@@ -461,6 +462,7 @@ instruction:
    | inst_sto
    | inst_forb
    | inst_eval
+   | inst_oob
 ;
 
 inst_ld:
@@ -1049,6 +1051,11 @@ inst_forb:
 inst_eval:
        I_EVAL xoperand     { COMPILER->addInstr( P_EVAL, $2 ); }
      | I_EVAL error        { COMPILER->raiseError(Falcon::e_invop, "EVAL" ); }
+;
+
+inst_oob:
+       I_OOB INTEGER COMMA xoperand     { $2->fixed(true); COMPILER->addInstr( P_OOB, $2, $4 ); }
+     | I_OOB error        { COMPILER->raiseError(Falcon::e_invop, "OOB" ); }
 ;
 
 %% /* c code */

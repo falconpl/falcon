@@ -602,6 +602,12 @@ void GenTree::gen_expression( const Expression *exp )
       case Expression::t_not: type = 0; name = "not"; break;
       case Expression::t_pre_inc: type = 0; name = "++"; break;
       case Expression::t_pre_dec: type = 0; name = "--"; break;
+      
+      case Expression::t_eval: type = 0; name = "^*"; break;
+      case Expression::t_oob: type = 0; name = "^+"; break;
+      case Expression::t_deoob: type = 0; name = "^-"; break;
+      case Expression::t_isoob: type = 0; name = "^?"; break;
+      case Expression::t_xoroob: type = 0; name = "^!"; break;
 
       case Expression::t_post_inc: type = 1; name = "++"; break;
       case Expression::t_post_dec: type = 1; name = "--"; break;

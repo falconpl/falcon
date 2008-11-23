@@ -449,12 +449,12 @@ void opcodeHandler_END( register VMachine *vm )
       while( iter != 0 ) {
          if( iter->data() == vm->m_currentContext ) {
             vm->m_contexts.erase( iter );
-			// removing the context also deletes it.
-
-			// Not necessary, but we do for debug reasons (i.e. if we access it before election, we crash)
-			vm->m_currentContext = 0;
-
-			break;
+               // removing the context also deletes it.
+               
+               // Not necessary, but we do for debug reasons (i.e. if we access it before election, we crash)
+               vm->m_currentContext = 0;
+               
+               break;
          }
          iter = iter->next();
       }
@@ -765,7 +765,17 @@ void opcodeHandler_XPOP( register VMachine *vm )
 //16
 void opcodeHandler_GEOR( register VMachine *vm )
 {
-   vm->regA().setRange( (int32) vm->getOpcodeParam( 1 )->dereference()->forceInteger(), 0 , true );
+   try 
+   {
+      vm->regA().setRange( 
+         (int32) vm->getOpcodeParam( 1 )->dereference()->forceIntegerEx(),
+         0,
+         true );
+   }
+   catch( TypeError* te ) 
+   {
+      vm->raiseError( te );
+   }
 }
 
 //17
@@ -1595,22 +1605,32 @@ void opcodeHandler_GENR( register VMachine *vm )
    Item *operand1 =  vm->getOpcodeParam( 1 )->dereference();
    Item *operand2 =  vm->getOpcodeParam( 2 )->dereference();
    Item *operand3 =  vm->getOpcodeParam( 3 )->dereference();
-
-   if ( operand3->isNil() )
+   
+   try 
    {
-      vm->m_regA.setRange(
-            (int32) operand1->forceInteger(),
-            (int32) operand2->forceInteger(),
-            (int32) vm->m_stack->itemAt( vm->m_stack->size() - 1).forceInteger(),
+      int32 secondOp = (int32) operand2->forceIntegerEx();
+      if( operand2->isOob() && secondOp > 0 )
+         secondOp++;
+         
+      if ( operand3->isNil() )
+      {
+         vm->m_regA.setRange(
+               (int32) operand1->forceIntegerEx(),
+               secondOp,
+               (int32) vm->m_stack->itemAt( vm->m_stack->size() - 1).forceIntegerEx(),
+               false );
+         vm->m_stack->pop();
+      }
+      else
+         vm->m_regA.setRange(
+            (int32) operand1->forceIntegerEx(),
+            secondOp,
+            (int32) operand3->forceIntegerEx(),
             false );
-      vm->m_stack->pop();
    }
-   else
-      vm->m_regA.setRange(
-         (int32) operand1->forceInteger(),
-         (int32) operand2->forceInteger(),
-         (int32) operand3->forceInteger(),
-         false );
+   catch( TypeError* te ) {
+      vm->raiseError( te );
+   }
 }
 
 //32
@@ -1848,8 +1868,8 @@ void opcodeHandler_LDV( register VMachine *vm )
 
          // open ranges?
          if ( operand2->asRangeIsOpen() &&
-              (operand2->asRangeStart() >= 0 && (int) array->length() <= operand2->asRangeStart() ) ||
-              (operand2->asRangeStart() < 0 && (int) array->length() < -operand2->asRangeStart() )
+              ((operand2->asRangeStart() >= 0 && (int) array->length() <= operand2->asRangeStart() ) ||
+              (operand2->asRangeStart() < 0 && (int) array->length() < -operand2->asRangeStart() ))
               )
          {
             vm->retval( new CoreArray( vm ) );
@@ -4213,6 +4233,33 @@ void opcodeHandler_EVAL( register VMachine *vm )
 
    // by default, just copy the operand
    vm->regA() = *operand1;
+}
+
+// 0x69
+void opcodeHandler_OOB( register VMachine *vm )
+{
+   uint32 pmode = (uint32) vm->getNextNTD32();
+   Item *operand =  vm->getOpcodeParam( 2 )->dereference();
+   switch( pmode )
+   {
+      case 0: 
+         vm->m_regA = *operand;
+         vm->m_regA.setOob( false );
+         break;
+      
+      case 1: 
+         vm->m_regA = *operand;
+         vm->m_regA.setOob( true ); 
+         break;
+         
+      case 2: 
+         vm->m_regA = *operand;
+         vm->m_regA.setOob( ! operand->isOob() );
+         break;
+      
+      default:
+         vm->m_regA.setBoolean( operand->isOob() );
+   }
 }
 
 }

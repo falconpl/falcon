@@ -95,8 +95,10 @@ void write_string( Stream *output, uint32 stringId, Module *mod )
 
 void write_symbol( Stream *output, const char *prefix, int32 id )
 {
-   if ( options.m_isomorphic ) {
-      if ( *prefix == 'L' || *prefix == 'P' && current_symtab != 0 )
+   if ( options.m_isomorphic ) 
+   {
+      if ( current_symtab != 0 
+           && (*prefix == 'L' || *prefix == 'P')  )
       {
          MapIterator iter = current_symtab->map().begin();
          while( iter.hasCurrent() )
@@ -601,6 +603,7 @@ void gen_code( Module *module, const FuncDef *fd, Stream *out, const t_labelMap 
          case P_STO : csOpName = "STO "; break;
          case P_FORB: csOpName = "FORB"; break;
          case P_EVAL: csOpName = "EVAL"; break;
+         case P_OOB: csOpName = "OOB "; break;
          default:
             csOpName = "????";
       }

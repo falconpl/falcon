@@ -1766,6 +1766,26 @@ void GenCode::gen_expression( const Expression *exp, t_valType &xValue )
          xValue = l_value;
          gen_pcode( P_STO, e_parA, exp->first()->asSymbol() );
       return;
+      
+      case Expression::t_oob:
+         xValue = l_value;
+         gen_pcode( P_OOB, c_param_fixed(1), exp->first() );
+      return;
+      
+      case Expression::t_deoob:
+         xValue = l_value;
+         gen_pcode( P_OOB, c_param_fixed(0), exp->first() );
+      return;
+      
+      case Expression::t_xoroob:
+         xValue = l_value;
+         gen_pcode( P_OOB, c_param_fixed(2), exp->first() );
+      return;
+      
+      case Expression::t_isoob:
+         xValue = l_value;
+         gen_pcode( P_OOB, c_param_fixed(3), exp->first() );
+      return;
 
       default:
          break;

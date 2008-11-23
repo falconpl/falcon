@@ -1862,10 +1862,10 @@ void GenHAsm::gen_expression( const Expression *exp, t_valType &xValue )
          gen_autoassign( "SHRS", exp->first(), exp->second() );
          return;
 
-      case Expression::t_pre_inc: gen_inc_prefix( exp->first() ); return;
-      case Expression::t_pre_dec: gen_dec_prefix( exp->first() ); return;
-      case Expression::t_post_inc: gen_inc_postfix( exp->first() ); return;
-      case Expression::t_post_dec: gen_dec_postfix( exp->first() ); return;
+      case Expression::t_pre_inc: xValue = l_value; gen_inc_prefix( exp->first() ); return;
+      case Expression::t_pre_dec: xValue = l_value; gen_dec_prefix( exp->first() ); return;
+      case Expression::t_post_inc: xValue = l_value; gen_inc_postfix( exp->first() ); return;
+      case Expression::t_post_dec: xValue = l_value; gen_dec_postfix( exp->first() ); return;
 
       case Expression::t_obj_access:
          xValue = p_value;
@@ -1896,6 +1896,34 @@ void GenHAsm::gen_expression( const Expression *exp, t_valType &xValue )
          xValue = l_value;
          m_out->writeString( "\tSTO \tA, $" + exp->first()->asSymbol()->name() + "\n" );
       }
+      return;
+      
+      case Expression::t_oob:
+         xValue = l_value;
+         m_out->writeString( "\tOOB  \t1, " );
+            gen_operand( exp->first() );
+            m_out->writeString( "\n" );
+      return;
+      
+      case Expression::t_deoob:
+         xValue = l_value;
+         m_out->writeString( "\tOOB  \t0, " );
+            gen_operand( exp->first() );
+            m_out->writeString( "\n" );
+      return;
+      
+      case Expression::t_xoroob:
+         xValue = l_value;
+         m_out->writeString( "\tOOB  \t2, " );
+            gen_operand( exp->first() );
+            m_out->writeString( "\n" );
+      return;
+      
+      case Expression::t_isoob:
+         xValue = l_value;
+         m_out->writeString( "\tOOB  \t3, " );
+            gen_operand( exp->first() );
+            m_out->writeString( "\n" );
       return;
    }
 

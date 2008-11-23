@@ -37,7 +37,7 @@ namespace msg {
       err_assign_const,
       err_assign_sym,
       //10
-      err_repeated,
+      err_static_call,
       err_global_notin_func,
       err_already_def,
       err_non_callable,
