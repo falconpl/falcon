@@ -38,6 +38,31 @@ catch
    failure( "Resized array access" )
 end
 
+try
+   x = arrayBuffer( 10 )
+   if x.len() != 10: failure( "Array buffer basic (length)" )
+   
+   for i in [0:x.len()]
+      if x[i] != nil: failure( "Array buffer basic" )
+   end
+
+catch AccessError
+   failure( "Array buffer basic (access)" )
+end
+
+try
+   x = arrayBuffer( 10, "default" )
+   if x.len() != 10: failure( "Array buffer default (length)" )
+   
+   for i in [0:x.len()]
+      if x[i] != "default": failure( "Array buffer default" )
+   end
+
+catch AccessError
+   failure( "Array buffer default (access)" )
+end
+
+   
 success()
 
 /* End of file */

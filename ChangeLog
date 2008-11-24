@@ -18,6 +18,7 @@ Falcon (0.8.13)
   * added: OOB opcode which manages out of band items. 
   * added: OOB operators: ^+ (oob), ^- (deoob), ^? (isoob), ^! (invert oob status)
   * minor: Removed function inspectShort() and secured/empowered inspect().
+  * minor: Added parameter defItem to arrayBuffer to "replicate items in arrays".
            
 Falcon (0.8.12)
   * major: Support for class-driven full reflection and 0-space contstant/reflected

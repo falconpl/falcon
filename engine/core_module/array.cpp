@@ -301,20 +301,26 @@ FALCON_FUNC  arrayCopy( ::Falcon::VMachine *vm )
    @function arrayBuffer
    @brief Creates an array filled with nil items.
    @param size The length of the returned array.
+   @optparam defItem The default item to be that will fill the array.
    @return An array filled with @b size nil elements.
 
    This function is useful when the caller knows the number of needed items. In
    this way, it is just necessary to set the various elements to their values,
-   rather than adding them to the array. This will result in faster operations
+   rather than adding them to the array. This will result in faster operations.
+
+   If @b defItem is not given, the elements in the returned array will be set to
+   nil, otherwise each element will be a flat copy of @b item.
 */
 FALCON_FUNC  arrayBuffer ( ::Falcon::VMachine *vm )
 {
    Item *item_size = vm->param(0);
+   Item *i_item = vm->param(1);
 
    if ( item_size == 0 || ! item_size->isOrdinal() )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         origin( e_orig_runtime ) ) );
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
+         .origin( e_orig_runtime )
+         .extra( "N,[X]" ) ) );
       return;
    }
 
@@ -322,9 +328,19 @@ FALCON_FUNC  arrayBuffer ( ::Falcon::VMachine *vm )
    CoreArray *array = new CoreArray( vm, nsize );
    Item *mem = array->elements();
 
-   for ( int i = 0; i < nsize; i++ ) {
-      mem[i].setNil();
+   if( i_item == 0 )
+   {
+      for ( int i = 0; i < nsize; i++ ) {
+         mem[i].setNil();
+      }
    }
+   else 
+   {
+      for ( int i = 0; i < nsize; i++ ) {
+         mem[i] = *i_item;
+      }      
+   }
+
    array->length( nsize );
    vm->retval( array );
 }

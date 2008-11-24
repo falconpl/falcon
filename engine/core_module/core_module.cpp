@@ -568,7 +568,7 @@ Module* core_module_init()
    self->addExtFunc( "arrayResize", Falcon::core::arrayResize )->
       addParam("array")->addParam("newSize");
    self->addExtFunc( "arrayBuffer", Falcon::core::arrayBuffer )->
-      addParam("size");
+      addParam("size")->addParam("defItem");
    self->addExtFunc( "arrayFind", Falcon::core::arrayFind )->
       addParam("array")->addParam("item")->addParam("start")->addParam("end");
    self->addExtFunc( "arrayScan", Falcon::core::arrayScan )->
