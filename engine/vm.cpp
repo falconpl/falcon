@@ -2866,7 +2866,7 @@ inline bool vmIsWhiteSpace( uint32 chr )
 
 inline bool vmIsTokenChr( uint32 chr )
 {
-   return chr >= 'A' || chr >= '0' && chr <= '9' || chr == '_';
+   return chr >= 'A' || (chr >= '0' && chr <= '9') || chr == '_';
 }
 
 
