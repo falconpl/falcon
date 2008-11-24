@@ -441,8 +441,8 @@ Module* core_module_init()
    //=======================================================================
 
    self->addExtFunc( "print", Falcon::core::print );
-   self->addExtFunc( "inspect", Falcon::core::inspect );
-   self->addExtFunc( "inspectShort", Falcon::core::inspectShort );
+   self->addExtFunc( "inspect", Falcon::core::inspect )->
+      addParam("item")->addParam( "depth" )->addParam( "maxLen" );
    self->addExtFunc( "input", Falcon::core::input );
    self->addExtFunc( "printl", Falcon::core::printl );
    self->addExtFunc( "seconds", Falcon::core::seconds );

@@ -31,24 +31,29 @@
 namespace Falcon {
 namespace core {
 
-void inspect_internal( VMachine *vm, bool isShort, const Item *elem, int32 level, bool add = true );
+void inspect_internal( VMachine *vm, const Item *elem, int32 level, int32 maxLevel, int32 maxSize, bool add = true, bool addLine=true );
 
-void inspect_internal( VMachine *vm, bool isShort, const Item *elem, int32 level, bool add )
+void inspect_internal( VMachine *vm, const Item *elem, int32 level, int32 maxLevel, int32 maxSize, bool add, bool addline )
 {
+
    uint32 count;
    int32 i;
-   bool addline = true;
    Stream *stream = vm->stdErr();
+
+   // return if we reached the maximum level.
+   if ( maxLevel >= 0 && level > maxLevel )
+   {
+      stream->writeString( "..." );
+      if ( addline )
+         stream->writeString( "\n" );
+      return;
+   }
+
    if ( stream == 0 )
    {
       stream = vm->stdOut();
       if ( stream == 0 )
          return;
-   }
-
-   if( level < 0 ) {
-      level = -level;
-      addline = false;
    }
 
    if ( add )
@@ -98,8 +103,15 @@ void inspect_internal( VMachine *vm, bool isShort, const Item *elem, int32 level
 
       case FLC_ITEM_STRING:
          stream->writeString( "\"" );
-         stream->writeString( *elem->asString() );
-         stream->writeString( "\"" );
+         if ( maxSize < 0 || elem->asString()->length() < (uint32) maxSize )
+         {
+            stream->writeString( *elem->asString() );
+            stream->writeString( "\"" );
+         }
+         else {
+            stream->writeString( elem->asString()->subString(0, maxSize ) );
+            stream->writeString( " ... \"" );
+         }
       break;
 
       case FLC_ITEM_LBIND:
@@ -122,7 +134,7 @@ void inspect_internal( VMachine *vm, bool isShort, const Item *elem, int32 level
          temp.writeNumber( (int64) mb->wordSize() );
          temp += ")";
 
-         if ( isShort )
+         if ( maxSize == 0 )
             stream->writeString( temp );
          else {
             temp += " [\n";
@@ -138,7 +150,8 @@ void inspect_internal( VMachine *vm, bool isShort, const Item *elem, int32 level
             }
 
             int written = 0;
-            for( count = 0; count < mb->length(); count++ )
+            uint32 max = maxSize < 0 || mb->length() < (uint32) maxSize ? mb->length() : (uint32) maxSize;
+            for( count = 0; count < max; count++ )
             {
                temp.writeNumber( (int64)  mb->get( count ), fmt );
                temp += " ";
@@ -151,6 +164,8 @@ void inspect_internal( VMachine *vm, bool isShort, const Item *elem, int32 level
                stream->writeString( temp );
                temp = "";
             }
+            if ( count == maxSize )
+               stream->writeString( " ... " );
             stream->writeString( "]" );
          }
       }
@@ -164,7 +179,7 @@ void inspect_internal( VMachine *vm, bool isShort, const Item *elem, int32 level
          temp += "]";
          stream->writeString( temp );
 
-         if ( isShort && level > 1 )
+         if ( level == maxLevel )
          {
             stream->writeString( "{...}" );
             break;
@@ -172,8 +187,8 @@ void inspect_internal( VMachine *vm, bool isShort, const Item *elem, int32 level
 
          stream->writeString( "{\n" );
 
-         for( count = 0; count < arr->length() ; count++ ) {
-            inspect_internal( vm, isShort, & ((*arr)[count]), level + 1 );
+         for( count = 0; count < arr->length(); count++ ) {
+            inspect_internal( vm, & ((*arr)[count]), level + 1, maxLevel, maxSize, true, true );
          }
 
          for ( i = 0; i < level; i ++ )
@@ -192,7 +207,7 @@ void inspect_internal( VMachine *vm, bool isShort, const Item *elem, int32 level
          temp += "]";
          stream->writeString( temp );
 
-         if ( isShort && level > 1 )
+         if ( level == maxLevel )
          {
             stream->writeString( "{...}" );
             break;
@@ -204,9 +219,9 @@ void inspect_internal( VMachine *vm, bool isShort, const Item *elem, int32 level
          dict->traverseBegin();
          while( dict->traverseNext( key, value ) )
          {
-            inspect_internal( vm, isShort, &key, -(level + 1) );
+            inspect_internal( vm, &key, level + 1, maxLevel, maxSize, true, false );
             stream->writeString( " => " );
-            inspect_internal( vm, isShort, &value, level + 1, false );
+            inspect_internal( vm, &value, level + 1, maxLevel, maxSize, false, true );
          }
          for ( i = 0; i < level; i ++ )
          {
@@ -220,7 +235,7 @@ void inspect_internal( VMachine *vm, bool isShort, const Item *elem, int32 level
       {
          CoreObject *arr = elem->asObjectSafe();
          stream->writeString( "Object of class " + arr->instanceOf()->name() );
-         if ( isShort && level > 1 )
+         if ( level == maxLevel )
          {
             stream->writeString( "{...}" );
             break;
@@ -236,7 +251,7 @@ void inspect_internal( VMachine *vm, bool isShort, const Item *elem, int32 level
             stream->writeString( arr->getPropertyName( count ) + " => " );
             Item dummy;
             arr->getPropertyAt(count, dummy);
-            inspect_internal( vm, isShort, &dummy, level + 1, false );
+            inspect_internal( vm, &dummy, level + 1, false, true );
          }
          for ( i = 0; i < level; i ++ )
          {
@@ -268,7 +283,7 @@ void inspect_internal( VMachine *vm, bool isShort, const Item *elem, int32 level
             if ( elem->isMethod() )
             {
                itemp.setObject( elem->asMethodObject() );
-               inspect_internal( vm, isShort, &itemp, level + 1, true );
+               inspect_internal( vm, &itemp, level + 1, maxLevel, maxSize, true, true );
             }
             else {
                if ( elem->isTabMethodDict() )
@@ -276,10 +291,10 @@ void inspect_internal( VMachine *vm, bool isShort, const Item *elem, int32 level
                else
                   itemp.setDict( elem->asTabMethodDict() );
 
-               inspect_internal( vm, isShort, &itemp, level + 1, true );
+               inspect_internal( vm, &itemp, level + 1, maxLevel, maxSize, true, true );
             }
             itemp.setFunction( elem->asMethodFunction(), elem->asModule() );
-            inspect_internal( vm, isShort, &itemp, level + 1, true );
+            inspect_internal( vm, &itemp, level + 1, maxLevel, maxSize, true, true );
             for ( i = 0; i < level; i ++ )
             {
                stream->writeString("   ");
@@ -297,7 +312,7 @@ void inspect_internal( VMachine *vm, bool isShort, const Item *elem, int32 level
          {
             Item other;
             elem->getFbomItem( other );
-            inspect_internal( vm, isShort, &other, level, false );
+            inspect_internal( vm, &other, level + 1, maxLevel, maxSize, false, true );
          }
 
       break;
@@ -341,7 +356,7 @@ void inspect_internal( VMachine *vm, bool isShort, const Item *elem, int32 level
 
       case FLC_ITEM_REFERENCE:
          stream->writeString( "Ref to " );
-         inspect_internal( vm, isShort, elem->dereference(), level, false );
+         inspect_internal( vm, elem->dereference(), level + 1, maxLevel, maxSize, false, true );
       break;
 
       default:
@@ -357,11 +372,13 @@ void inspect_internal( VMachine *vm, bool isShort, const Item *elem, int32 level
 /*#
    @function inspect
    @inset core_basic_io
-   @param ... An arbitrary list of items.
+   @param item The item to be inspected.
+   @optparam depth Maximum inspect depth.
+   @optparam maxLen Limit the display size of possibly very long items as i.e. strings or membufs.
    @brief Displays the deep contents of an item.
 
    This is mainly a debugging function that prints all the available
-   informations on the item on the standard output stream. This function
+   informations on the item on the auxiliary stream. This function
    should not be used except for testing scripts and checking what
    they put in arrays, dictionaries, objects, classes or simple items.
 
@@ -371,32 +388,48 @@ void inspect_internal( VMachine *vm, bool isShort, const Item *elem, int32 level
    auxiliary stream and provide separate output for that.
 
    This function traverse arrays and items deeply; there isn't any protection
-   against circular references, which may cause endless loop. If the inspected
-   items can be subject to circular references, use the @a inspectShort function
-   instead.
+   against circular references, which may cause endless loop. However, the
+   default maximum depth is 3, which is a good depth for debugging (goes deep,
+   but doesn't dig beyond average interesting points). Set to -1 to have
+   infinite depth.
+
+   By default, only the first 60 characters of strings and elements of membufs
+   are displayed. You may change this default by providing a maxlen parameter.
+
+   You may create personalized inspect functions using forward bindings, like
+   the following:
+   @code
+   compactInspect = .[inspect depth|1 maxLen|15]
+   @endcode
+
+   And then, you may inspect a list of item with something like:
+   @code
+   linsp = .[ dolist _compactInspect x ]
+   linsp( ["hello", "world"] )
+   @endcode
+
 */
 
 FALCON_FUNC  inspect ( ::Falcon::VMachine *vm )
 {
-   for( int i = 0; i < vm->paramCount(); i ++ )
-      inspect_internal( vm, false, vm->param(i), 0 );
-}
+   Item *i_item = vm->param(0);
+   Item *i_depth = vm->param(1);
+   Item *i_maxLen = vm->param(2);
+   
+   if ( i_item == 0 
+      || ( i_depth != 0 && ! i_depth->isNil() && ! i_depth->isOrdinal() )
+      || ( i_maxLen != 0 && ! i_maxLen->isNil() && ! i_maxLen->isOrdinal() ) )
+   {
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         origin( e_orig_runtime ).
+         extra("X,[N],[N]") ) );
+      return;
+   }
 
-/*#
-   @function inspectShort
-   @inset core_basic_io
-   @param ... An arbitrary list of items.
-   @brief Displays the deep contents of an item (short version).
+   int32 depth = (int32) (i_depth == 0 || i_depth->isNil() ? 3 : i_depth->forceInteger());
+   int32 maxlen = (int32) (i_maxLen == 0 || i_maxLen->isNil() ? 60 : i_maxLen->forceInteger());
 
-   This function works as @a inspect, but it provides a shorter output
-   and scans items only three level deep. This is generally enough to
-   know exactly the nature of items and of their immediate contents,
-   and prevents endless loops when the items have circular relations.
-*/
-FALCON_FUNC  inspectShort ( ::Falcon::VMachine *vm )
-{
-   for( int i = 0; i < vm->paramCount(); i ++ )
-      inspect_internal( vm, true, vm->param(i), 0 );
+   inspect_internal( vm, i_item, 0, depth, maxlen );
 }
 
 
