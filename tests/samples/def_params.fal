@@ -1,0 +1,42 @@
+/*
+   FALCON - Samples
+
+   FILE: def_params.fal
+
+   Shows the default parameter idiom.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Sun, 13 Apr 2008 23:26:44 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+> "Test for default parameters"
+> "Will pring a string prefixed by \">>>\" below"
+> "---------------------------------------------"
+>
+
+// Let's say we have a function with two parameters, the second one 
+// being optional.
+// -- In example, this prints p1 eventually prefixed by prefix, if given.
+function prompt_print( p1, prefix )
+   if prefix
+      > prefix, p1
+   else
+      > p1
+   end
+end
+
+// now we create a version of the function that gives a value for prefix...
+xprint =.[prompt_print prefix|">>> "]
+
+// ... and use it.
+if args.len() == 0
+   xprint( "Hello world" )
+else
+   for elem in args: xprint( elem )
+end
+
