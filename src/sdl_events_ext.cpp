@@ -843,6 +843,8 @@ void internal_dispatchEvent( VMachine *vm, SDL_Event &evt )
          params = 0;
          break;
          
+      default:
+         params = 0;
    }
 
    vm->callFrame( method, params );

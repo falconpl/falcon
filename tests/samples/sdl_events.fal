@@ -90,6 +90,8 @@ try
       // then software -- let it fail if it fails
       band = SDL.CreateRGBSurface( SDL.SWSURFACE, 640, 1, 32 )
    end
+   
+   inspect( band )
 
    pixels = band.pixels
    for bid in [0:640]

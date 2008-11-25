@@ -657,7 +657,7 @@ FALCON_FUNC sdl_SetGammaRamp ( ::Falcon::VMachine *vm )
       return;
    }
 
-   Uint16 *red, *green, *blue;
+   Uint16 *red=0, *green=0, *blue=0;
    bool valid = true;
    // non-nil membuf must be 2 bytes wide 256 elements
    if( i_redmb->isNil() )

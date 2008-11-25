@@ -100,10 +100,13 @@ void SDLSurfaceCarrier_impl::getProperty( VMachine *vm, const String &propName, 
 
          switch( m_surface->format->BytesPerPixel )
          {
-            case 1: mb = new MemBuf_1( vm, (byte*)m_surface->pixels, m_surface->h * m_surface->pitch, false );
-            case 2: mb = new MemBuf_2( vm, (byte*)m_surface->pixels, m_surface->h * m_surface->pitch, false );
-            case 3: mb = new MemBuf_3( vm, (byte*)m_surface->pixels, m_surface->h * m_surface->pitch, false );
-            case 4: mb = new MemBuf_4( vm, (byte*)m_surface->pixels, m_surface->h * m_surface->pitch, false );
+            case 1: mb = new MemBuf_1( vm, (byte*)m_surface->pixels, m_surface->h * m_surface->pitch, false ); break;
+            case 2: mb = new MemBuf_2( vm, (byte*)m_surface->pixels, m_surface->h * m_surface->pitch, false ); break;
+            case 3: mb = new MemBuf_3( vm, (byte*)m_surface->pixels, m_surface->h * m_surface->pitch, false ); break;
+            case 4: mb = new MemBuf_4( vm, (byte*)m_surface->pixels, m_surface->h * m_surface->pitch, false ); break;
+            default:
+               fassert( false );
+               return;
          }
          mb->dependant( vm->self().asObject() );
          prop = mb;

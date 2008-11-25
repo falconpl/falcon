@@ -572,7 +572,7 @@ static void internal_render( VMachine *vm, int mode )
 
    ::TTF_Font *font = static_cast<TTFFontCarrier *>(vm->self().asObject()->getUserData())->m_font;
 
-   SDL_Surface *text_surface;
+   SDL_Surface *text_surface = 0;
    // if the thing is a string...
    if( i_string->isString() )
    {
