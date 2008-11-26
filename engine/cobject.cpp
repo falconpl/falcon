@@ -83,9 +83,14 @@ bool CoreObject::derivedFrom( const String &className ) const
 
 bool CoreObject::setProperty( const String &propName, const Item &value )
 {
+   ObjectManager *mngr = m_generatedBy->getObjectManager();
+   if ( mngr != 0 && mngr->hasClassReflection() )
+   {
+      return mngr->onSetProperty( this, m_user_data, propName, value );
+   }
+
    register uint32 pos;
    const PropertyTable &pt = m_generatedBy->properties();
-
    if ( pt.findKey( propName, pos ) )
    {
       // to be optimized
@@ -138,9 +143,15 @@ bool CoreObject::setProperty( const String &propName, const String &value )
 
 bool CoreObject::getProperty( const String &propName, Item &ret )
 {
-   register uint32 pos;
    fassert( m_generatedBy != 0 );
 
+   ObjectManager *mngr = m_generatedBy->getObjectManager();
+   if ( mngr != 0 && mngr->hasClassReflection() )
+   {
+      return mngr->onGetProperty( this, m_user_data, propName, value );
+   }
+
+   register uint32 pos;
    const PropertyTable &pt = m_generatedBy->properties();
 
    if ( pt.findKey( propName, pos ) )

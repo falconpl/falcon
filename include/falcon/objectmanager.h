@@ -103,7 +103,7 @@ public:
    */
    virtual bool hasClassReflection() const { return false; }
 
-   /** Callback on property set on the managed object.
+      /** Callback on property set on the managed object.
 
       This callback gets called if hasClassReflection() returns true,
       declaring that the class using this manager is willing to manage
@@ -112,8 +112,10 @@ public:
       Single per-property reflection settings get the priority, so the
       properties must be declared normally (it is not possible to have synthetic
       properties this way).
+
+      \return true if the property was managed, falsed if the property doesn't exist.
    */
-   virtual void onSetProperty( CoreObject *owner, void *user_data, const String &propname, const Item &property ) {}
+   virtual bool onSetProperty( CoreObject *owner, void *user_data, const String &propname, const Item &property ) {return false;}
 
    /** Callback on property get on the managed object.
 
@@ -124,8 +126,11 @@ public:
       Single per-property reflection settings get the priority, so the
       properties must be declared normally (it is not possible to have synthetic
       properties this way).
+
+      \return true if the property was managed, falsed if the property doesn't exist.
    */
-   virtual void onGetProperty( CoreObject *owner, void *user_data, const String &propname, Item &property ) {}
+   virtual bool onGetProperty( CoreObject *owner, void *user_data, const String &propname, Item &property ) {return false;}
+
 
    /** Tells the engine if this class should create cache Items.
 

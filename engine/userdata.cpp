@@ -30,22 +30,26 @@ UserDataManager::UserDataManager( bool bNeedCache, UserData *model ):
 UserDataManager::~UserDataManager()
 {}
 
-void UserDataManager::onSetProperty( CoreObject *owner, void *user_data, const String &propname, const Item &property )
+bool UserDataManager::onSetProperty( CoreObject *owner, void *user_data, const String &propname, const Item &property )
 {
    if( user_data != 0 )
    {
       UserData *ud = (UserData *)user_data;
-      ud->setProperty( owner->origin(), propname, property );
+      ud->setProperty( owner, propname, property );
+      return true; // ud->setProperty raises on need.
    }
+   return false;
 }
 
-void UserDataManager::onGetProperty( CoreObject *owner, void *user_data, const String &propname, Item &property )
+bool UserDataManager::onGetProperty( CoreObject *owner, void *user_data, const String &propname, Item &property )
 {
    if ( user_data != 0 )
    {
       UserData *ud = (UserData *)user_data;
-      ud->getProperty( owner->origin(), propname, property );
+      ud->getProperty( owner, propname, property );
+      return true; // ud->setProperty raises on need.
    }
+   return false;
 }
 
 UserDataManager core_user_data_manager_cacheful( true );

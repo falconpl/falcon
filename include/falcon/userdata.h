@@ -48,8 +48,8 @@ class FALCON_DYN_CLASS UserData: public FalconData
 public:
    virtual ~UserData() {}
 
-   virtual void getProperty( VMachine *vm, const String &propName, Item &prop ) = 0;
-   virtual void setProperty( VMachine *vm, const String &propName, const Item &prop ) = 0;
+   virtual void getProperty( CoreObject *obj, const String &propName, Item &prop ) = 0;
+   virtual void setProperty( CoreObject *obj, const String &propName, const Item &prop ) = 0;
 
    /** Defaulting GcMarking to none. */
    virtual void gcMark( VMachine *mp ) {}
@@ -82,8 +82,8 @@ public:
    virtual bool needCacheData() const { return m_bNeedCache; }
    virtual bool hasClassReflection() const { return true; }
 
-   virtual void onSetProperty( CoreObject *owner, void *user_data, const String &propname, const Item &property );
-   virtual void onGetProperty( CoreObject *owner, void *user_data, const String &propname, Item &property );
+   virtual bool onSetProperty( CoreObject *owner, void *user_data, const String &propname, const Item &property );
+   virtual bool onGetProperty( CoreObject *owner, void *user_data, const String &propname, Item &property );
 };
 
 extern FALCON_DYN_SYM UserDataManager core_user_data_manager_cacheful;
