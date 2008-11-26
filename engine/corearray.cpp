@@ -291,6 +291,11 @@ bool CoreArray::change( const CoreArray &other, int32 begin, int32 end )
 
    int32 rsize = end - begin;
 
+   // we're considering end as "included" from now on.
+   // this considers also negative range which already includes their extreme.
+   if ( rsize != 0 )
+      end++;
+
    if ( m_size - rsize + other.m_size > m_alloc )
    {
       m_alloc =  m_size - rsize +other.m_size;
