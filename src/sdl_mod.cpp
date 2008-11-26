@@ -56,7 +56,7 @@ SDLSurfaceCarrier_impl::~SDLSurfaceCarrier_impl()
 }
 
 
-void SDLSurfaceCarrier_impl::getProperty( VMachine *vm, const String &propName, Item &prop )
+void SDLSurfaceCarrier_impl::getProperty( CoreObject *self, const String &propName, Item &prop )
 {
    if ( propName == "w" )
    {
@@ -81,14 +81,14 @@ void SDLSurfaceCarrier_impl::getProperty( VMachine *vm, const String &propName, 
    else if ( propName == "clip_rect" )
    {
       if ( prop.isNil() )
-         prop = MakeRectInst( vm, m_surface->clip_rect );
+         prop = MakeRectInst( self->origin(), m_surface->clip_rect );
       else
          RectToObject( m_surface->clip_rect, prop.asObject() );
    }
    else if ( propName == "format" )
    {
       if ( prop.isNil() )
-         prop = MakePixelFormatInst( vm, this );
+         prop = MakePixelFormatInst( self->origin(), this );
 
    }
    else if ( propName == "pixels" )
@@ -96,6 +96,7 @@ void SDLSurfaceCarrier_impl::getProperty( VMachine *vm, const String &propName, 
       if ( prop.isNil() )
       {
          MemBuf *mb;
+         VMachine *vm = self->origin();
          fassert( m_surface != 0 );
 
          switch( m_surface->format->BytesPerPixel )
@@ -108,17 +109,17 @@ void SDLSurfaceCarrier_impl::getProperty( VMachine *vm, const String &propName, 
                fassert( false );
                return;
          }
-         mb->dependant( vm->self().asObject() );
+         mb->dependant( self );
          prop = mb;
       }
 
    }
 }
 
-void SDLSurfaceCarrier_impl::setProperty( VMachine *vm, const String &propName, const Item &prop )
+void SDLSurfaceCarrier_impl::setProperty( CoreObject *self, const String &propName, const Item &prop )
 {
    // refuse to set anything
-   vm->raiseModError( new SDLError( ErrorParam( FALCON_SDL_ERROR_BASE, __LINE__ )
+   self->origin()->raiseModError( new SDLError( ErrorParam( FALCON_SDL_ERROR_BASE, __LINE__ )
          .desc( "SDL Read Only Access" ) ) );
 }
 
@@ -136,6 +137,30 @@ SDLCursorCarrier::~SDLCursorCarrier()
 {
    if ( m_bCreated )
       SDL_FreeCursor( m_cursor );
+}
+
+
+//==========================================
+// Color Manager
+//
+
+void *SDLColorManager::onInit( VMachine *)
+{
+   return memAlloc( sizeof( SDL_Color ) );
+}
+
+void SDLColorManager::onDestroy( VMachine *, void *user_data )
+{
+   memFree( user_data );
+}
+
+void *SDLColorManager::onClone( VMachine *, void *user_data )
+{
+   SDL_Color* c = static_cast<SDL_Color*>( memAlloc( sizeof( SDL_Color ) ) );
+   SDL_Color* other = static_cast<SDL_Color*>( user_data );
+   *c = *other;
+
+   return c;
 }
 
 //==========================================
@@ -256,24 +281,24 @@ bool ObjectToPixelFormat( CoreObject *obj, ::SDL_PixelFormat *fmt )
    )
       return false;
 
-   fmt->BitsPerPixel = BitsPerPixel.forceInteger();
-   fmt->BytesPerPixel = BytesPerPixel.forceInteger();
-   fmt->Rloss = Rloss.forceInteger();
-   fmt->Gloss = Gloss.forceInteger();
-   fmt->Bloss = Bloss.forceInteger();
-   fmt->Aloss = Aloss.forceInteger();
+   fmt->BitsPerPixel = (Uint8) BitsPerPixel.forceInteger();
+   fmt->BytesPerPixel = (Uint8) BytesPerPixel.forceInteger();
+   fmt->Rloss = (Uint8) Rloss.forceInteger();
+   fmt->Gloss = (Uint8) Gloss.forceInteger();
+   fmt->Bloss = (Uint8) Bloss.forceInteger();
+   fmt->Aloss = (Uint8) Aloss.forceInteger();
 
-   fmt->Rshift = Rshift.forceInteger();
-   fmt->Gshift = Gshift.forceInteger();
-   fmt->Bshift = Bshift.forceInteger();
-   fmt->Ashift = Ashift.forceInteger();
+   fmt->Rshift = (Uint8) Rshift.forceInteger();
+   fmt->Gshift = (Uint8) Gshift.forceInteger();
+   fmt->Bshift = (Uint8) Bshift.forceInteger();
+   fmt->Ashift = (Uint8) Ashift.forceInteger();
 
-   fmt->Rmask = Rmask.forceInteger();
-   fmt->Gmask = Gmask.forceInteger();
-   fmt->Bmask = Bmask.forceInteger();
-   fmt->Amask = Amask.forceInteger();
-   fmt->colorkey = colorkey.forceInteger();
-   fmt->alpha = alpha.forceInteger();
+   fmt->Rmask = (Uint8) Rmask.forceInteger();
+   fmt->Gmask = (Uint8) Gmask.forceInteger();
+   fmt->Bmask = (Uint8) Bmask.forceInteger();
+   fmt->Amask = (Uint8) Amask.forceInteger();
+   fmt->colorkey = (Uint8) colorkey.forceInteger();
+   fmt->alpha = (Uint8) alpha.forceInteger();
 
    return true;
 }

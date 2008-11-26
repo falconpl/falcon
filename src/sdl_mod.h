@@ -29,6 +29,18 @@
 namespace Falcon{
 namespace Ext{
 
+/** SDLColor inner manager class.
+   The manager model is a bit more advance (and performing) than the 
+   carrier model.
+*/
+class SDLColorManager: public ObjectManager
+{
+public:
+   virtual void *onInit( VMachine *vm );
+   virtual void onDestroy( VMachine *vm, void *user_data );
+   virtual void *onClone( VMachine *vm, void *user_data );
+};
+
 /** Automatic quit system. */
 class QuitCarrier: public FalconData
 {
@@ -57,8 +69,8 @@ public:
 
    virtual ~SDLSurfaceCarrier_impl();
 
-   virtual void getProperty( VMachine *vm, const String &propName, Item &prop );
-   virtual void setProperty(Falcon::VMachine*, const Falcon::String&, const Falcon::Item&);
+   virtual void getProperty( CoreObject *obj, const String &propName, Item &prop );
+   virtual void setProperty( CoreObject *obj, const Falcon::String&, const Falcon::Item&);
    virtual void gcMark( VMachine* ) {}
    virtual FalconData* clone() const;
    virtual SDL_Surface* surface() const { return m_surface; }

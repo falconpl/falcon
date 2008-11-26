@@ -261,7 +261,7 @@ FALCON_FUNC SDLSurface_SetPixel( ::Falcon::VMachine *vm )
       return;
    }
 
-   Uint32 pixel = i_value->forceInteger();
+   Uint32 pixel = (Uint32) i_value->forceInteger();
 
    int bpp = surface->format->BytesPerPixel;
    /* Here p is the address to the pixel we want to set */
@@ -514,7 +514,7 @@ FALCON_FUNC SDLSurface_FillRect( ::Falcon::VMachine *vm )
    SDL_Surface *surface = static_cast<SDLSurfaceCarrier_impl*>( self->getUserData() )->surface();
    SDL_Rect *pRect = i_rect->isNil() ? 0 : &rect;
 
-   if ( ::SDL_FillRect( surface, pRect, i_color->forceInteger() ) != 0 )
+   if ( ::SDL_FillRect( surface, pRect, (Uint32) i_color->forceInteger() ) != 0 )
    {
       vm->raiseModError( new SDLError( ErrorParam( FALCON_SDL_ERROR_BASE + 6, __LINE__ )
          .desc( "SDL FillRect error" )
@@ -735,8 +735,8 @@ FALCON_FUNC SDLScreen_UpdateRect( ::Falcon::VMachine *vm )
          return;
       }
 
-      ::SDL_UpdateRect( screen, i_x->forceInteger(), i_y->forceInteger(),
-                                i_w->forceInteger(), i_h->forceInteger() );
+      ::SDL_UpdateRect( screen, (Sint32) i_x->forceInteger(), (Sint32) i_y->forceInteger(),
+                                (Sint32) i_w->forceInteger(), (Sint32) i_h->forceInteger() );
    }
 }
 
@@ -949,7 +949,7 @@ FALCON_FUNC  SDLPalette_getColor( ::Falcon::VMachine *vm )
          return;
    }
 
-   uint32 color = colors->get( index );
+   uint32 color = colors->get( (uint32) index );
    CoreArray *array = i_target == 0 ? new CoreArray( vm, 3 ) : i_target->asArray();
    array->append( (int64) (color & 0xff ) ); // red lsb
    array->append( (int64) ((color & 0xff00 ) >> 8 ) ); // green
@@ -1030,8 +1030,8 @@ FALCON_FUNC  SDLPalette_setColor( ::Falcon::VMachine *vm )
       green = i_green->forceInteger();
       blue = i_blue->forceInteger();
    }
-   uint32 color = (red &0xff) | ((green & 0xff)<< 8) | ((green & 0xff)<< 16);
-   colors->set( index, color );
+   uint32 color = (uint32) ((red &0xff) | ((green & 0xff)<< 8) | ((green & 0xff)<< 16));
+   colors->set( (uint32) index, color );
 }
 
 

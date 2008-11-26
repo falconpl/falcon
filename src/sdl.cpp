@@ -26,6 +26,7 @@
 
 #include "version.h"
 #include "sdl_ext.h"
+#include "sdl_mod.h"
 
 /*#
    @module fsdl The SDL Falcon Module.
@@ -55,6 +56,7 @@
 
 
 Falcon::SDLService the_service;
+Falcon::Ext::SDLColorManager m_sdlcolor_manager;
 
 FALCON_MODULE_DECL( const Falcon::EngineData &data )
 {
@@ -318,6 +320,7 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
 
    Falcon::Symbol *c_sdlcolor = self->addClass( "SDLColor", Falcon::Ext::SDLColor_init );
    c_sdlcolor->setWKS( true );
+   c_sdlcolor->getClassDef()->setObjectManager( &m_sdlcolor_manager );
    SDL_Color sdl_color;
    self->addClassProperty( c_sdlcolor, "r" )
          .setReflective( Falcon::e_reflectByte, &sdl_color, &sdl_color.r );

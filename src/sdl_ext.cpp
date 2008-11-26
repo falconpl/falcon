@@ -1015,11 +1015,15 @@ FALCON_FUNC SDLColor_init( VMachine *vm )
          extra( "N,N,N" ) ) );
       return;
    }
-
+   
    CoreObject *self = vm->self().asObject();
-   self->setProperty( "r", i_r->forceInteger() );
-   self->setProperty( "g", i_g->forceInteger() );
-   self->setProperty( "b", i_b->forceInteger() );
+   // the SDL Manager has created the item for us.
+   SDL_Color* color = static_cast<SDL_Color*>( self->getUserData() );
+
+   // so we just init.
+   color->r = (unsigned int) i_r->forceInteger();
+   color->g = (unsigned int) i_g->forceInteger();
+   color->b = (unsigned int) i_b->forceInteger();
 }
 
 

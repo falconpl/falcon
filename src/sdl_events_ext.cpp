@@ -1321,7 +1321,7 @@ FALCON_FUNC sdl_JoystickEventState( VMachine *vm )
       return;
    }
 
-   vm->retval( (int64) ::SDL_JoystickEventState( i_code->asInteger() ) );
+   vm->retval( (int64) ::SDL_JoystickEventState( (int) i_code->asInteger() ) );
 }
 
 /*#

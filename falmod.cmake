@@ -1,15 +1,22 @@
 ####################################################################
-# The Falcon Programming language
+# The Falcon Programming Language
 #
-# DBI - Macros and utilities for Falcon modules
+# Macros and utilities for Falcon modules
 ####################################################################
-cmake_minimum_required(VERSION 2.4)
+
+#Options common to all the falcon modules
+set(INSTDIR "" CACHE STRING "Overrdies the default install path" )
 
 #Set the default buid type to Debug
 IF(NOT CMAKE_BUILD_TYPE)
-  SET(CMAKE_BUILD_TYPE Debug CACHE STRING
+   SET( CMAKE_BUILD_TYPE $ENV{FALCON_BUILD_TYPE} )
+
+   #Still unset?
+   IF(NOT CMAKE_BUILD_TYPE)
+   SET(CMAKE_BUILD_TYPE Debug CACHE STRING
       "Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel."
       FORCE)
+   ENDIF(NOT CMAKE_BUILD_TYPE)
 ENDIF(NOT CMAKE_BUILD_TYPE)
 
 
@@ -51,6 +58,12 @@ ELSE("$ENV{FALCON_INC_PATH}" STREQUAL "" )
 
 ENDIF("$ENV{FALCON_INC_PATH}" STREQUAL "" )
 
+#Anyhow, override if INSTDIR is given
+if(NOT ${INSTDIR} STREQUAL "" )
+   SET(FALCON_MOD_INSTALL ${INSTDIR} )
+   MESSAGE( "Overriding default install path with ${INSTDIR}" )
+endif(NOT ${INSTDIR} STREQUAL "" )
+
 MACRO(FALCON_CLEANUP tgt)
    IF(FALCON_STRIP_TARGET)
       INSTALL( CODE "EXECUTE_PROCESS( COMMAND stirp --strip-unneeded ${FALCON_MOD_INSTALL}/${tgt}.${CMAKE_SHARED_LIBRARY_SUFFIX} )" )
@@ -66,7 +79,7 @@ ENDMACRO(FALCON_LINK_MODULE)
 MACRO(FALCON_INSTALL_MODULE tgt )
    IF(APPLE)
       SET_TARGET_PROPERTIES(${tgt}
-         PROPERTIES 
+         PROPERTIES
 		    PREFIX ""
 		    SUFFIX ".dylib" )
    ELSE(APPLE)
