@@ -236,9 +236,9 @@ bool CoreArray::remove( int32 first, int32 last )
       last = temp;
    }
 
-   uint32 rsize = last - first + 1;
-   if ( last < (int32)m_size - 1 )
-      memmove( m_data + first, m_data + last + 1, esize(m_size - last) );
+   uint32 rsize = last - first;
+   if ( last < (int32)m_size )
+      memmove( m_data + first, m_data + last, esize(m_size - last) );
    m_size -= rsize;
    return true;
 }
@@ -293,9 +293,6 @@ bool CoreArray::change( const CoreArray &other, int32 begin, int32 end )
 
    // we're considering end as "included" from now on.
    // this considers also negative range which already includes their extreme.
-   if ( rsize != 0 )
-      end++;
-
    if ( m_size - rsize + other.m_size > m_alloc )
    {
       m_alloc =  m_size - rsize +other.m_size;
