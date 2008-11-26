@@ -251,7 +251,7 @@ void inspect_internal( VMachine *vm, const Item *elem, int32 level, int32 maxLev
             stream->writeString( arr->getPropertyName( count ) + " => " );
             Item dummy;
             arr->getPropertyAt(count, dummy);
-            inspect_internal( vm, &dummy, level + 1, false, true );
+            inspect_internal( vm, &dummy, level + 1, maxLevel, maxSize, false, true );
          }
          for ( i = 0; i < level; i ++ )
          {
