@@ -209,9 +209,10 @@ FALCON_FUNC  arrayResize ( ::Falcon::VMachine *vm )
    @brief Removes one or more elements in the array.
    @param array The array from which items must be removed.
    @param itemPos The position of the item to be removed, or the first of the items to be removed.
-   @optparam lastItemPos The last item to be removed + 1
+   @optparam lastItemPos The last item to be removed, in range semantic.
 
    Remove one item or a range of items. The size of the array is shortened accordingly.
+   The semantic of @b lastItemPos is the same as ranged access to the array.
 */
 
 FALCON_FUNC  arrayRemove( ::Falcon::VMachine *vm )
