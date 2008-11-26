@@ -109,10 +109,10 @@ FALCON_FUNC Compiler_init( ::Falcon::VMachine *vm )
          return;
       }
 
-      iface = new CompilerIface( vm->self().asObject(), *i_path->asString() );
+      iface = new CompilerIface( *i_path->asString() );
    }
    else
-      iface = new CompilerIface( vm->self().asObject() );
+      iface = new CompilerIface();
 
    // set our VM as the error handler for this loader.
    iface->loader().errorHandler( vm );

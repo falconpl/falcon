@@ -27,9 +27,8 @@ namespace Falcon {
 namespace Ext {
 
 // Implemented here to reduce inline overhead
-CompilerIface::CompilerIface( CoreObject *owner ):
-   m_loader( "." ),
-   m_owner( owner )
+CompilerIface::CompilerIface():
+   m_loader( "." )
 {
    // get default source encoding
    m_sourceEncoding = m_loader.sourceEncoding();
@@ -37,9 +36,8 @@ CompilerIface::CompilerIface( CoreObject *owner ):
 }
 
 // Implemented here to reduce inline overhead
-CompilerIface::CompilerIface( CoreObject *owner, const String &path ):
-   m_loader( path ),
-   m_owner( owner )
+CompilerIface::CompilerIface( const String &path ):
+   m_loader( path )
 {
    // get default source encoding
    m_sourceEncoding = m_loader.sourceEncoding();
@@ -51,12 +49,12 @@ CompilerIface::CompilerIface( CoreObject *owner, const String &path ):
 CompilerIface::~CompilerIface()
 {}
 
-void CompilerIface::getProperty( VMachine *, const String &propName, Item &prop )
+void CompilerIface::getProperty( CoreObject *owner, const String &propName, Item &prop )
 {
    if( propName == "path" )
    {
       if ( ! prop.isString() )
-         prop = new GarbageString( m_owner->origin() );
+         prop = new GarbageString( owner->origin() );
       m_loader.getSearchPath( *prop.asString() );
    }
    else if( propName == "alwaysRecomp" )
@@ -81,7 +79,7 @@ void CompilerIface::getProperty( VMachine *, const String &propName, Item &prop 
    }
    else if( propName == "sourceEncoding" )
    {
-      prop = new GarbageString( m_owner->origin(), m_loader.sourceEncoding() );
+      prop = new GarbageString( owner->origin(), m_loader.sourceEncoding() );
    }
    else if( propName == "detectTemplate" )
    {
@@ -94,12 +92,12 @@ void CompilerIface::getProperty( VMachine *, const String &propName, Item &prop 
    else if( propName == "langauge" )
    {
       if ( ! prop.isString() )
-         prop = new GarbageString( m_owner->origin() );
+         prop = new GarbageString( owner->origin() );
       *prop.asString() = m_loader.getLanguage();
    }
 }
 
-void CompilerIface::setProperty( VMachine *, const String &propName, const Item &prop )
+void CompilerIface::setProperty( CoreObject *owner, const String &propName, const Item &prop )
 {
    if( propName == "path" && prop.isString() )
    {

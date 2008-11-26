@@ -35,19 +35,18 @@ class CompilerIface: public UserData
 {
    FlcLoader m_loader;
    String m_sourceEncoding;
-   CoreObject *m_owner;
 
 public:
-   CompilerIface( CoreObject *mod );
-   CompilerIface( CoreObject *mod, const String &path );
+   CompilerIface();
+   CompilerIface( const String &path );
 
    virtual ~CompilerIface();
 
    const FlcLoader &loader() const { return m_loader; }
    FlcLoader &loader() { return m_loader; }
 
-   virtual void getProperty( VMachine *vm, const String &propName, Item &prop );
-   virtual void setProperty( VMachine *vm, const String &propName, const Item &prop );
+   virtual void getProperty( CoreObject *vm, const String &propName, Item &prop );
+   virtual void setProperty( CoreObject *vm, const String &propName, const Item &prop );
 
    // we don't provide a clone() method
    virtual FalconData *clone() const { return 0; }
