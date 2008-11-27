@@ -20,6 +20,11 @@ Falcon (0.8.13)
   * minor: Removed function inspectShort() and secured/empowered inspect().
   * minor: Added parameter defItem to arrayBuffer to "replicate items in arrays".
   * fixed: Range change in arrays was taking one item too much.
+  * fixed: Exotic range applications (as substitutions in reverse ranges with
+           negative indices) wasn't working as expected. Part of it was due to
+           missing or approximative definition, part to plain errors. Now the
+           semantic of ranged access is defined and enforced through all the
+           operators and RTL functions.
   
 Falcon (0.8.12)
   * major: Support for class-driven full reflection and 0-space contstant/reflected
