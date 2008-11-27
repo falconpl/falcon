@@ -1,0 +1,24 @@
+/****************************************************************************
+* Falcon test suite
+*
+*
+* ID: 41b
+* Category: types
+* Subcategory: Range
+* Short: Range error checks
+* Description:
+*  Checks for error in the generation of ranges.
+* [/Description]
+****************************************************************************/
+
+expr = "a"
+
+try
+   a = [0:expr:1]
+   failure( "Error not caught" )
+catch TypeError
+end
+
+success()
+
+/* end of test */

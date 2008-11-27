@@ -279,7 +279,7 @@ FALCON_FUNC  arrayCopy( ::Falcon::VMachine *vm )
 
    if ( array_x == 0 || !array_x->isArray() ||
          (item_start != 0 && !item_start->isOrdinal()) ||
-         (item_end != 0 && !item_end->isOrdinal()) )
+         (item_end != 0 && ! (item_end->isOrdinal()||item_end->isNil()) ))
    {
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
          origin( e_orig_runtime ).extra( vm->moduleString( rtl_array_missing ) ) ) );
@@ -288,7 +288,7 @@ FALCON_FUNC  arrayCopy( ::Falcon::VMachine *vm )
 
    CoreArray *array = array_x->asArray();
    int64 start = item_start == 0 ? 0 : item_start->forceInteger();
-   int64 end = item_end == 0 ? array->length() : item_end->forceInteger();
+   int64 end = item_end == 0 || item_end->isNil() ? array->length() : item_end->forceInteger();
    CoreArray *arr1 = array->partition( (int32) start, (int32) end );
    if ( arr1 == 0 ) {
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).

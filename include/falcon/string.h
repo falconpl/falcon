@@ -1000,7 +1000,7 @@ public:
       if ( begin < 0 || begin >= s )
          return false;
       if ( end < 0 )
-         end = s + end + 1;
+         end = s + end;
 
       // end can be the same as lenght
       if ( end < 0 || end > s )

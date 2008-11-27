@@ -30,13 +30,19 @@ arr1 = arrayCopy( array, -3 )
 if len( arr1 ) != 3 or arr1[2] != 4: failure( "Copy with negative start" )
 
 arr1 = arrayCopy( array, 1, -1 )
-if len( arr1 ) != 5 or arr1[4] != 4: failure( "Copy with start and negative end" )
+if len( arr1 ) != 4 or arr1[3] != "beta": failure( "Copy with start and negative end" )
+
+arr1 = arrayCopy( array, 1, nil )
+if len( arr1 ) != 5 or arr1[4] != 4: failure( "Copy with start and open end" )
 
 arr1 = arrayCopy( array, -4, -1 )
-if len( arr1 ) != 4 or arr1[0] != "alpha": failure( "Copy with negative start and negative end" )
+if len( arr1 ) != 3 or arr1[0] != "alpha": failure( "Copy with negative start and negative end" )
+
+arr1 = arrayCopy( array, -4, nil )
+if len( arr1 ) != 4 or arr1[0] != "alpha": failure( "Copy with negative start and open end" )
 
 arr1 = arrayCopy( array, -1, -5 )
-if len( arr1 ) != 4 or arr1[0] != 4: failure( "Copy with reverse negative start and negative end" )
+if len( arr1 ) != 5 or arr1[0] != 4 or arr1[4]!= 2: failure( "Copy with reverse negative start and negative end" )
 
 success()
 

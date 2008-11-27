@@ -1,0 +1,87 @@
+/****************************************************************************
+* Falcon test suite
+*
+*
+* ID: 10f
+* Category: types
+* Subcategory: strings
+* Short: Ranged string access.
+* Description:
+*    Check ranged subscription access to strings.
+*    This check is complete of positive and negative ranged tests.
+* [/Description]
+*
+****************************************************************************/
+
+string = "01234567"
+
+// get an empty range
+str  = string[0:0]
+if len( str ) != 0: failure( "Get Empty range" )
+
+// Get whole open range.
+str  = string[0:]
+if len( str ) != 8: failure( "Get Full range - len" )
+for i in [0:len(str)]
+    if str[i] != string[i]: failure( "Get Full range - item " + i )
+end
+
+// direct range -- 1 item
+str  = string[2:3]
+if len( str ) != 1: failure( "Get 1 item - len" )
+if str[0] != "2": failure( "Get 1 item - value" )
+
+// direct range -- more items
+str  = string[2:5]
+if len( str ) != 3: failure( "Get more elements - len" )
+if str[0] != "2" or str[-1] != "4": failure( "Get more elements - value" )
+
+// Reverse range -- full
+str  = string[-1:0]
+if len( str ) != 8: failure( "Reverse range full - len" )
+for i in [0:len(str)]
+    if str[i] != string[len(str)-i-1]: failure( "Reverse range full - item " + i )
+end
+
+// Reverse range -- partial
+str  = string[5:4]
+if len( str ) != 2: failure( "Reverse range - len" )
+if str[0] != string[5] or str[1] != string[4]: failure( "Reverse range - items" )
+
+// Direct range with negative index
+str  = string[-5:-4]
+if len( str ) != 1: failure( "Direct range neg - len(1)" )
+if str[0] != string[-5]: failure( "Dircet range - items(1)" )
+
+// Direct range with negative index
+str  = string[-5:-3]
+if len( str ) != 2: failure( "Dirct range neg - len(2)" )
+if str[0] != string[-5] or str[1] != string[-4]: failure( "Dirct range - items(2)" )
+
+// Reverse range with negative index
+str  = string[-3:-5]
+if len( str ) != 3: failure( "Reverse range neg - len(3)" )
+if str[0] != string[-3] or str[2] != string[-5]: failure( "Dirct range - items(3)" )
+
+// Reverse range open
+str  = string[-5:]
+if len( str ) != 5: failure( "Reverse range open - len" )
+if str[4] != "7" or str[0] != "3": failure( "Reverse range open - items" )
+
+// Reverse range open -- empty
+str  = string[-1:]
+if len( str ) != 1: failure( "Reverse range open last" )
+if str[0] != "7": failure( "Reverse range open last - item" )
+
+// negative empty
+str = string[-5:-5]
+if len( str ) != 0: failure( "Negative empty" )
+str = string[3:-5]
+if len( str ) != 0: failure( "Negative empty x:-x" )
+str = string[-5:3]
+if len( str ) != 0: failure( "Negative empty -x:x" )
+
+
+success()
+
+/* End of file */

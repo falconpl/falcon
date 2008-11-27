@@ -227,13 +227,14 @@ bool CoreArray::remove( int32 first, int32 last )
 
    if ( last < 0 )
       last = m_size + last;
-   if ( last < 0 || last >= (int32)m_size )
+   if ( last < 0 || last > (int32)m_size )
       return false;
 
    if( first > last ) {
       int32 temp = first;
       first = last;
-      last = temp;
+      // last can't be < first if it was == size.
+      last = temp+1;
    }
 
    uint32 rsize = last - first;
@@ -286,7 +287,7 @@ bool CoreArray::change( const CoreArray &other, int32 begin, int32 end )
    if( begin > end ) {
       int32 temp = begin;
       begin = end;
-      end = temp;
+      end = temp+1;
    }
 
    int32 rsize = end - begin;

@@ -258,14 +258,14 @@ bool Byte::change( String *str, uint32 start, uint32 end, const String *source )
 
    if ( start >= strLen )
       return false;
-
+   
    if ( end > strLen )
       end = strLen;
 
 
    if ( end < start ) {
       uint32 temp = end;
-      end = start;
+      end = start+1;
       start = temp;
    }
    int32 len = end - start;

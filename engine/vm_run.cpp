@@ -2718,10 +2718,23 @@ void opcodeHandler_STVS( register VMachine *vm )
             }
          }
          else {
-            if ( start != end ) {// insert
+            // if it's not a plain insert...
+            if ( start != end ) 
+            { 
+               // before it's too late.
+               if ( start <  0 )
+                  start = array->length() + start;
+               
+               if ( end <  0 )
+                  end = array->length() + end;
+                  
                if( ! array->remove( start, end ) )
                   break;
+                  
+               if ( start > end )
+                  start = end;
             }
+         
             if( array->insert( origin, start ) ) {
                vm->regA() = origin;
                return;
@@ -2946,17 +2959,22 @@ void opcodeHandler_STV( register VMachine *vm )
       break;
 
       case FLC_ITEM_STRING << 8 | FLC_ITEM_RANGE:
-         if( origin->type() == FLC_ITEM_STRING ) {
+         if( origin->type() == FLC_ITEM_STRING ) 
+         {
             GarbageString *gcs = new GarbageString( vm, *operand1->asString() );
             operand1->setString( gcs );
-            bool result = operand2->asRangeIsOpen() ?
-               gcs->change( operand2->asRangeStart(), *origin->asString() ) :
-               gcs->change( operand2->asRangeStart(), operand2->asRangeEnd(), *origin->asString() );
-            if ( result ) {
-               // If we're receivng B, then A has already the correct value.
-               if( origItm != &vm->regB() )
-                  vm->regA() = gcs;
-               return;
+            
+            register int pos = operand2->asRangeStart();
+            register int end = operand2->asRangeIsOpen() ? gcs->length() :  operand2->asRangeEnd();
+            if ( gcs->checkRangeBound( pos, end ) ) 
+            {
+               if ( gcs->change( pos, end, *origin->asString() ) )
+               {
+                  // If we're receivng B, then A has already the correct value.
+                  if( origItm != &vm->regB() )
+                     vm->regA() = gcs;
+                  return;
+               }
             }
          }
       break;
@@ -3010,11 +3028,23 @@ void opcodeHandler_STV( register VMachine *vm )
                return;
          }
          else {
-            if ( start != end ) {// insert
+            // if it's not a plain insert...
+            if ( start != end ) 
+            { 
+               // before it's too late.
+               if ( start <  0 )
+                  start = array->length() + start;
+               
+               if ( end <  0 )
+                  end = array->length() + end;
+                  
                if( ! array->remove( start, end ) )
                   break;
+                  
+               if ( start > end )
+                  start = end;
             }
-
+            
             // we have already array in a separate var; even if the
             // destination was the A register, we can overwrite it now.
             // If we're receivng B, then A has already the correct value.
@@ -3306,11 +3336,26 @@ void opcodeHandler_STVR( register VMachine *vm )
          CoreArray *array =  operand1->asArray();
          register int32 end = operand2->asRangeIsOpen() ? array->length() : operand2->asRangeEnd();
          register int32 start = operand2->asRangeStart();
-         if ( start != end ) {// insert
+         
+         // if it's not a plain insert...
+         if ( start != end ) 
+         { 
+            // before it's too late.
+            if ( start <  0 )
+               start = array->length() + start;
+            
+            if ( end <  0 )
+               end = array->length() + end;
+                  
             if( ! array->remove( start, end ) )
                break;
+               
+            if ( start > end )
+               start = end;
          }
-         if( array->insert( *origin, start ) )
+         
+         // if start < 0, its position has shifted due to 
+         if( array->insert( *origin, start < 0 ? start++: start ) )
             return;
       }
       break;
