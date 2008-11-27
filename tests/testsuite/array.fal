@@ -58,20 +58,11 @@ if array[6] != 6:failure( "Range insertion item" )
 if array[5] != 5 or array[7] != 7: failure( "Range insertion surrounding" )
 if len( array ) != 8: failure( "Range insertion item - len" )
 
-
 array[6:6] = [1, 2, 3]
 if array[7] != 2: failure( "Range insertion array" )
 if len( array ) != 11: failure( "Range insertion array - len" )
 
-// array change
-array[6:10] = 6
-if array[6] != 6 or array[7] != 7: failure( "Range change item" )
-if len( array ) != 8: failure( "Range change item - len" )
-
-array[6:7] = [6,7,8]
-if array[7] != 7 or array[9] != 7: failure( "Range change array" )
-if len( array ) != 10: failure( "Range change array - len" )
-
+// array changes are in another test ( arr_change.fal -- 11k)
 
 // array concatenation
 test = [1,2]

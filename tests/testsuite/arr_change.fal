@@ -1,0 +1,140 @@
+/****************************************************************************
+* Falcon test suite
+*
+*
+* ID: 11k
+* Category: types
+* Subcategory: array
+* Short: Ranged substitutions.
+* Description:
+*    Verify that substitutions performed on arrays with ranges
+*    are correct.
+* [/Description]
+*
+****************************************************************************/
+
+array =  [ 0, 1, 2,
+           3, 4, 5,
+           6, 7
+         ]
+
+// array change 1 item
+array[3:4] = "alpha"
+if len( array ) != 8 : failure( "item - len" )
+if array[2] != 2 or array[4] != 4: failure( "item - surround" )
+if array[3] != "alpha": failure( "item - item" )
+
+//=========================================
+// Substitute with one item
+//
+
+// array change more items - middle
+array =  [ 0, 1, 2,
+           3, 4, 5,
+           6, 7
+         ]
+
+array[3:6] = "alpha"
+if len( array ) != 6 : failure( "more items - len" )
+if array[2] != 2 or array[4] != 6: failure( "more items - surround" )
+if array[3] != "alpha": failure( "more items - item" )
+
+// array change more items - begin
+array =  [ 0, 1, 2,
+           3, 4, 5,
+           6, 7
+         ]
+
+array[0:3] = "alpha"
+if len( array ) != 6 : failure( "more items (begin) - len" )
+if array[1] != 3: failure( "more items (begin) - surround" )
+if array[0] != "alpha": failure( "more items (begin) - item" )
+
+// array change more items - end
+array =  [ 0, 1, 2,
+           3, 4, 5,
+           6, 7
+         ]
+
+array[6:] = "alpha"
+if len( array ) != 7 : failure( "more items (end) - len" )
+if array[5] != 5: failure( "more items (end) - surround" )
+if array[6] != "alpha": failure( "more items (end) - item" )
+
+//=========================================
+// Substitute with a shorter array
+//
+
+// in the middle
+array =  [ 0, 1, 2,
+           3, 4, 5,
+           6, 7
+         ]
+array[2:6] = ["a","b"]
+
+if len( array ) != 6 : failure( "smaller array - len" )
+if array[1] != 1 or array[4] != 6: failure( "smaller array - surround" )
+if array[2] != "a" or array[3] != "b": failure( "smaller array - items" )
+
+// at begin the middle
+array =  [ 0, 1, 2,
+           3, 4, 5,
+           6, 7
+         ]
+array[0:4] = ["a","b"]
+
+if len( array ) != 6 : failure( "smaller array (begin) - len" )
+if array[2] != 4: failure( "smaller array (begin) - surround" )
+if array[0] != "a" or array[1] != "b": failure( "smaller array (begin) - items" )
+
+// at begin the middle
+array =  [ 0, 1, 2,
+           3, 4, 5,
+           6, 7
+         ]
+array[4:] = ["a","b"]
+
+if len( array ) != 6 : failure( "smaller array (end) - len" )
+if array[3] != 3: failure( "smaller array (end) - surround" )
+if array[4] != "a" or array[5] != "b": failure( "smaller array (end) - items" )
+
+//=========================================
+// Substitute with a larger array
+//
+
+// in the middle
+array =  [ 0, 1, 2,
+           3, 4, 5,
+           6, 7
+         ]
+array[2:4] = ["a","b","c"]
+
+if len( array ) != 9 : failure( "larger array - len" )
+if array[1] != 1 or array[6] != 5: failure( "Range larger smaller array - surround" )
+if array[2] != "a" or array[4] != "c": failure( "larger array - items" )
+
+// at begin the middle
+array =  [ 0, 1, 2,
+           3, 4, 5,
+           6, 7
+         ]
+array[0:2] = ["a","b","c"]
+
+if len( array ) != 9 : failure( "larger array (begin) - len" )
+if array[3] != 2: failure( "larger array (begin) - surround" )
+if array[0] != "a" or array[2] != "c": failure( "larger array (begin) - items" )
+
+// at begin the middle
+array =  [ 0, 1, 2,
+           3, 4, 5,
+           6, 7
+         ]
+array[7:] = ["a","b","c"]
+
+if len( array ) != 9 : failure( "larger array (end) - len" )
+if array[6] != 6: failure( "larger array (end) - surround" )
+if array[7] != "a" or array[9] != "c": failure( "larger array (end) - items" )
+
+success()
+
+/* End of file */
