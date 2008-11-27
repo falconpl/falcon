@@ -226,7 +226,7 @@ bool CoreArray::remove( int32 first, int32 last )
       return false;
 
    if ( last < 0 )
-      last = m_size + last + 1;
+      last = m_size + last;
    if ( last < 0 || last >= (int32)m_size )
       return false;
 
@@ -279,7 +279,7 @@ bool CoreArray::change( const CoreArray &other, int32 begin, int32 end )
       return false;
 
    if ( end < 0 )
-      end = m_size + end + 1;
+      end = m_size + end;
    if ( end < 0 || end > (int32)m_size )
       return false;
 
@@ -374,7 +374,7 @@ CoreArray *CoreArray::partition( int32 start, int32 end ) const
       return 0;
 
    if ( end < 0 )
-      end = m_size + end + 1;
+      end = m_size + end;
    if ( end < 0 || end > (int32)m_size )
       return 0;
 
