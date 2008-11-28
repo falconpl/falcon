@@ -25,6 +25,12 @@ Falcon (0.8.13)
            missing or approximative definition, part to plain errors. Now the
            semantic of ranged access is defined and enforced through all the
            operators and RTL functions.
+  * minor: VMachine::launch() is now necessary to start executing the main script 
+           even if launchAtLink() is true at link time. In other words, 
+           launchAtLink() controls only the execution of the main symbol in the
+           non-main scripts.
+  * minor: falrun now returns 255 on vm error.
+           
   
 Falcon (0.8.12)
   * major: Support for class-driven full reflection and 0-space contstant/reflected

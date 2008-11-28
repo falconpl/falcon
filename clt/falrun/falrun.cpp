@@ -294,16 +294,19 @@ int main( int argc, char *argv[] )
       // the runtime will try to load the references.
       runtime->addModule( main_mod );
 
-      if( vmachine->link( runtime ) )
+      if( vmachine->link( runtime ) && vmachine->launch() )
       {
          if ( vmachine->regA().type() == FLC_ITEM_INT )
             return (int32) vmachine->regA().asInteger();
+         else 
+            return 0;
       }
+      
       delete vmachine;
    }
 
 
-   return 0;
+   return 255;
 }
 
 

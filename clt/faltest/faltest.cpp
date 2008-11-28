@@ -793,7 +793,12 @@ bool testScript( ScriptData *script,
    if ( opt_timings )
       linkTime = Sys::_seconds();
 
-   //vmachine.launch();
+   if ( ! vmachine.launch() )
+   {
+      trace = "";
+      reason = "Non executable script.";
+      return false;
+   }
 
    if ( opt_timings )
          execTime = Sys::_seconds() - execTime;

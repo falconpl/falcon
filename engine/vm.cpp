@@ -387,7 +387,7 @@ LiveModule *VMachine::link( Module *mod, bool isMainModule, bool bPrivate )
    if ( isMainModule )
       m_mainModule = livemod;
 
-    if ( liveLink( livemod, lm_complete ) )
+   if ( liveLink( livemod, lm_complete ) )
       return livemod;
 
    // no need to free on failure: livemod are garbaged
@@ -568,7 +568,8 @@ bool VMachine::liveLink( LiveModule *livemod, t_linkMode mode )
    livemod->initialized( LiveModule::init_complete );
 
    // execute the main code, if we have one
-   if ( m_launchAtLink )
+   // -- but only if this is NOT the main module
+   if ( m_launchAtLink && m_mainModule != livemod )
    {
       Item *mainItem = livemod->findModuleItem( "__main__" );
       if( mainItem != 0 )

@@ -1157,7 +1157,7 @@ int main ( int argc, char *argv[] )
    // Link the runtime in the VM.
    // We'll be running the modules as we link them in.
    vmachine->launchAtLink ( true );
-   if ( ! vmachine->link ( runtime ) )
+   if ( ! vmachine->link ( runtime ) || ! vmachine->launch() )
    {
       delete vmachine;
       delete runtime;
@@ -1165,8 +1165,6 @@ int main ( int argc, char *argv[] )
       // a failed link means undefined symbols or error in object init.
       exit_sequence ( 1 );
    }
-
-   // our main module has been already executed here.
 
    // manage suspension events.
    while ( vmachine->lastEvent() == VMachine::eventSuspend )
