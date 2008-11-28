@@ -19,6 +19,8 @@
    Consider this a relatively complex example of an embedding application.
 */
 
+#include "SDL_main.h"
+
 #include <falcon/sys.h>
 #include <falcon/setup.h>
 #include <falcon/common.h>
@@ -46,8 +48,6 @@
 #include <falcon/intcomp.h>
 
 #include "options.h"
-
-#include "SDL_main.h"
 
 using namespace Falcon;
 
@@ -1046,6 +1046,12 @@ int main ( int argc, char *argv[] )
       exit_sequence ( 1, modLoader->compileErrors() );
    }
 
+   // Hack: on newer windows, CTRL+C doesn't cause the application to die.
+   // this check prevents to run modules without symbols
+   if ( mainMod->symbols().empty() )
+   {
+      exit_sequence ( 1, modLoader->compileErrors() );
+   }
    // should we just write the string table?
    if ( options.compile_tltable )
    {
@@ -1153,7 +1159,7 @@ int main ( int argc, char *argv[] )
    // Link the runtime in the VM.
    // We'll be running the modules as we link them in.
    vmachine->launchAtLink ( true );
-   if ( ! vmachine->link ( runtime ) )
+   if ( ! vmachine->link ( runtime ) || ! vmachine->launch() )
    {
       delete vmachine;
       delete runtime;
@@ -1161,8 +1167,6 @@ int main ( int argc, char *argv[] )
       // a failed link means undefined symbols or error in object init.
       exit_sequence ( 1 );
    }
-
-   // our main module has been already executed here.
 
    // manage suspension events.
    while ( vmachine->lastEvent() == VMachine::eventSuspend )
