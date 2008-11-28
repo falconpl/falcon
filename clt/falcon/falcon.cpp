@@ -777,6 +777,9 @@ void interactive_mode( FlcLoader *loader, Module *core )
 
 int main ( int argc, char *argv[] )
 {
+   // Install a void ctrl-c handler (let ctrl-c to kill this app)
+   Sys::_dummy_ctrl_c_handler();
+
    // Function wide statics must be created here, as we may be making memory accounting later on.
    String ioEncoding;
    String sysEncoding;

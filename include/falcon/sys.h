@@ -73,6 +73,8 @@ FALCON_DYN_SYM bool _getEnv( const String &var, String &result );
 FALCON_DYN_SYM bool _setEnv( const String &var, const String &value );
 FALCON_DYN_SYM bool _unsetEnv( const String &var );
 
+FALCON_DYN_SYM void _dummy_ctrl_c_handler();
+
 #ifdef FALCON_SYSTEM_WIN
 }
 }

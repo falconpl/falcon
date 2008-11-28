@@ -35,6 +35,9 @@
 namespace Falcon {
 namespace Sys {
 
+void _dummy_ctrl_c_handler()
+{
+}
 
 numeric _seconds()
 {

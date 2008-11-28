@@ -36,6 +36,23 @@
 namespace Falcon {
 namespace Sys {
 
+static BOOL CtrlHandler(DWORD dwCtrlType)
+{
+    if( CTRL_C_EVENT == dwCtrlType)
+    {
+       // just terminate the process.
+       exit(0);
+    }
+}
+
+void _dummy_ctrl_c_handler()
+{
+    SetConsoleCtrlHandler(
+      (PHANDLER_ROUTINE) CtrlHandler,
+      TRUE); 
+}
+
+
 numeric SYSTEMTIME_TO_SECONDS( const SYSTEMTIME &st )
 {
    int secsAt[12];

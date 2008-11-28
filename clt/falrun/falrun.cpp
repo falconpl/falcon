@@ -122,6 +122,9 @@ String get_io_encoding()
 
 int main( int argc, char *argv[] )
 {
+   // Install a void ctrl-c handler (let ctrl-c to kill this app)
+   Sys::_dummy_ctrl_c_handler();
+
    EngineData data1;
    Init( data1 );
 
