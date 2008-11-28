@@ -1,31 +1,39 @@
 
                                RELNOTES for Falcon
 
-                                 Condor Release
+                                 Vulture Release
 
-                                     0.8.12
+                                     0.8.14
 
 
-  Condor release closes the overall language structure extension and completes
-the paradigms supported by falcon adding prototype based OOP and tabular
-programming.
+  Vulture release is mainly a maintainance version for Condor release (0.8.12),
+consolidating some bugfix that have been detailed in the ChangeLog.
 
-  The functional programming paradingm has been greatly extended through the
-introduction of late bindings and the addition of more functional-oriented
-operators in the the funcext feather module.
+  Other than this, the for/to construct has been reintroduced, and four
+extended operators are now available for managing OOB items.
 
-  Functionally, late bindings are variables declared in sequences which
-assume values as the evaluation proceeds. They are declared through the "&"
-opeartor, and
+  The for/to loop is now grammar sugar for for/in ranges, being always
+  inclusive on the last element.
 
-  Paradigms are now more formalized and the overall stability of the engine
-and of the language has sensibly grown. Be sure to read carefully the
-ChangeLog in this version, as many aspects of the grammar has been changed.
+  For example:
 
-  Current package is a bleeding edge verison released to test build and
-installation issues on supported platforms.
+      for i = 2 to 10 , 2
+         > i
+      end
 
-Open issues at 0.8.12
+will print all the pair numbers between 2 and 10 included. Being a simple
+front-end for the for/in construct, it supports break, continue, forfirst
+formiddle and forlast statements.
+
+  OOB operators are all unary and work on the item to their right. they are:
+
+  - ^+ x       return an out of band x.
+  - ^- x       return a non out of band x.
+  - ^? x       return true if x is oob.
+  - ^! x       return an item with oob status invert with respect to x.
+
+
+Open issues at 0.8.14
 =====================
 
    * Streams, mainly file streams, are still to be buffered and optimized.

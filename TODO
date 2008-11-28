@@ -2,7 +2,6 @@ Missing before 0.9
 
     * Specialization of FBOM per type.
     * Contracts.
-    * 3d party DLL support.
     * Virtual file system support.
     * Advanced script debug support.
     * The conio (advanced console I/O) module.
@@ -12,3 +11,4 @@ Missing before 0.9
     * Mail module.
     * The language reference.
     * The developer (contributor) guide with doxygen generated API reference.
+    * Point-to-point, behavioral and launch-and-forget messages.
