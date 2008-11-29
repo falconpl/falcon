@@ -43,6 +43,6 @@ Output.module=html
 # Output.<module>.<parameters> configs
 ################################################
 
-Output.html.directory=Falcon-feathers-docs.0.8.12
+Output.html.directory=Falcon-feathers-docs.0.8.14
 Output.html.url=.
 Output.html.doctitle=Falcon Feathers Function Reference
