@@ -1,24 +1,23 @@
-/* A Bison parser, made by GNU Bison 2.3.  */
+
+/* A Bison parser, made by GNU Bison 2.4.  */
 
 /* Skeleton implementation for Bison's Yacc-like parsers in C
-
-   Copyright (C) 1984, 1989, 1990, 2000, 2001, 2002, 2003, 2004, 2005, 2006
+   
+      Copyright (C) 1984, 1989, 1990, 2000, 2001, 2002, 2003, 2004, 2005, 2006
    Free Software Foundation, Inc.
-
-   This program is free software; you can redistribute it and/or modify
+   
+   This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 2, or (at your option)
-   any later version.
-
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+   
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
    GNU General Public License for more details.
-
+   
    You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 51 Franklin Street, Fifth Floor,
-   Boston, MA 02110-1301, USA.  */
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 /* As a special exception, you may create a larger work that contains
    part or all of the Bison parser skeleton and distribute that work
@@ -29,7 +28,7 @@
    special exception, which will cause the skeleton and the resulting
    Bison output files to be licensed under the GNU General Public
    License without this special exception.
-
+   
    This special exception was added by the Free Software Foundation in
    version 2.2 of Bison.  */
 
@@ -47,7 +46,7 @@
 #define YYBISON 1
 
 /* Bison version.  */
-#define YYBISON_VERSION "2.3"
+#define YYBISON_VERSION "2.4"
 
 /* Skeleton name.  */
 #define YYSKELETON_NAME "yacc.c"
@@ -55,17 +54,91 @@
 /* Pure parsers.  */
 #define YYPURE 1
 
+/* Push parsers.  */
+#define YYPUSH 0
+
+/* Pull parsers.  */
+#define YYPULL 1
+
 /* Using locations.  */
 #define YYLSP_NEEDED 0
 
 /* Substitute the variable and function names.  */
-#define yyparse flc_src_parse
-#define yylex   flc_src_lex
-#define yyerror flc_src_error
-#define yylval  flc_src_lval
-#define yychar  flc_src_char
-#define yydebug flc_src_debug
-#define yynerrs flc_src_nerrs
+#define yyparse         flc_src_parse
+#define yylex           flc_src_lex
+#define yyerror         flc_src_error
+#define yylval          flc_src_lval
+#define yychar          flc_src_char
+#define yydebug         flc_src_debug
+#define yynerrs         flc_src_nerrs
+
+
+/* Copy the first part of user declarations.  */
+
+/* Line 189 of yacc.c  */
+#line 17 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
+
+
+#include <math.h>
+#include <stdio.h>
+#include <iostream>
+
+#include <falcon/setup.h>
+#include <falcon/compiler.h>
+#include <falcon/src_lexer.h>
+#include <falcon/syntree.h>
+#include <falcon/error.h>
+#include <stdlib.h>
+
+#include <falcon/fassert.h>
+
+#include <falcon/memory.h>
+
+#define YYMALLOC	Falcon::memAlloc
+#define YYFREE Falcon::memFree
+
+#define  COMPILER  ( reinterpret_cast< Falcon::Compiler *>(yyparam) )
+#define  CTX_LINE  ( COMPILER->lexer()->ctxOpenLine() )
+#define  LINE      ( COMPILER->lexer()->previousLine() )
+#define  CURRENT_LINE      ( COMPILER->lexer()->line() )
+
+
+#define YYPARSE_PARAM yyparam
+#define YYLEX_PARAM yyparam
+
+int flc_src_parse( void *param );
+void flc_src_error (const char *s);
+
+inline int flc_src_lex (void *lvalp, void *yyparam)
+{
+   return COMPILER->lexer()->doLex( lvalp );
+}
+
+/* Cures a bug in bison 1.8  */
+#undef __GNUC_MINOR__
+
+
+
+/* Line 189 of yacc.c  */
+#line 124 "/export/medusa/gniccola/falcon/core/engine/src_parser.cpp"
+
+/* Enabling traces.  */
+#ifndef YYDEBUG
+# define YYDEBUG 0
+#endif
+
+/* Enabling verbose error messages.  */
+#ifdef YYERROR_VERBOSE
+# undef YYERROR_VERBOSE
+# define YYERROR_VERBOSE 1
+#else
+# define YYERROR_VERBOSE 0
+#endif
+
+/* Enabling the token table.  */
+#ifndef YYTOKEN_TABLE
+# define YYTOKEN_TABLE 0
+#endif
 
 
 /* Tokens.  */
@@ -313,72 +386,16 @@
 
 
 
-/* Copy the first part of user declarations.  */
-#line 17 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
-
-
-#include <math.h>
-#include <stdio.h>
-#include <iostream>
-
-#include <falcon/setup.h>
-#include <falcon/compiler.h>
-#include <falcon/src_lexer.h>
-#include <falcon/syntree.h>
-#include <falcon/error.h>
-#include <stdlib.h>
-
-#include <falcon/fassert.h>
-
-#include <falcon/memory.h>
-
-#define YYMALLOC	Falcon::memAlloc
-#define YYFREE Falcon::memFree
-
-#define  COMPILER  ( reinterpret_cast< Falcon::Compiler *>(yyparam) )
-#define  CTX_LINE  ( COMPILER->lexer()->ctxOpenLine() )
-#define  LINE      ( COMPILER->lexer()->previousLine() )
-#define  CURRENT_LINE      ( COMPILER->lexer()->line() )
-
-
-#define YYPARSE_PARAM yyparam
-#define YYLEX_PARAM yyparam
-
-int flc_src_parse( void *param );
-void flc_src_error (const char *s);
-
-inline int flc_src_lex (void *lvalp, void *yyparam)
-{
-   return COMPILER->lexer()->doLex( lvalp );
-}
-
-/* Cures a bug in bison 1.8  */
-#undef __GNUC_MINOR__
-
-
-
-/* Enabling traces.  */
-#ifndef YYDEBUG
-# define YYDEBUG 0
-#endif
-
-/* Enabling verbose error messages.  */
-#ifdef YYERROR_VERBOSE
-# undef YYERROR_VERBOSE
-# define YYERROR_VERBOSE 1
-#else
-# define YYERROR_VERBOSE 0
-#endif
-
-/* Enabling the token table.  */
-#ifndef YYTOKEN_TABLE
-# define YYTOKEN_TABLE 0
-#endif
-
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
-typedef union
-#line 61 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
-lex_value_t {
+typedef union 
+/* Line 214 of yacc.c  */
+#line 61 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
+lex_value_t
+{
+
+/* Line 214 of yacc.c  */
+#line 61 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
+
    Falcon::int64 integer;
    Falcon::numeric numeric;
    char * charp;
@@ -391,22 +408,23 @@ lex_value_t {
    Falcon::DictDecl *fal_ddecl;
    Falcon::SymbolList *fal_symlist;
    Falcon::List *fal_genericList;
-}
-/* Line 187 of yacc.c.  */
-#line 397 "/home/gian/Progetti/falcon/core/engine/src_parser.cpp"
-	YYSTYPE;
+
+
+
+/* Line 214 of yacc.c  */
+#line 416 "/export/medusa/gniccola/falcon/core/engine/src_parser.cpp"
+} YYSTYPE;
+# define YYSTYPE_IS_TRIVIAL 1
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
-# define YYSTYPE_IS_TRIVIAL 1
 #endif
-
 
 
 /* Copy the second part of user declarations.  */
 
 
-/* Line 216 of yacc.c.  */
-#line 410 "/home/gian/Progetti/falcon/core/engine/src_parser.cpp"
+/* Line 264 of yacc.c  */
+#line 428 "/export/medusa/gniccola/falcon/core/engine/src_parser.cpp"
 
 #ifdef short
 # undef short
@@ -481,14 +499,14 @@ typedef short int yytype_int16;
 #if (defined __STDC__ || defined __C99__FUNC__ \
      || defined __cplusplus || defined _MSC_VER)
 static int
-YYID (int i)
+YYID (int yyi)
 #else
 static int
-YYID (i)
-    int i;
+YYID (yyi)
+    int yyi;
 #endif
 {
-  return i;
+  return yyi;
 }
 #endif
 
@@ -569,9 +587,9 @@ void free (void *); /* INFRINGES ON USER NAME SPACE */
 /* A type that is properly aligned for any stack member.  */
 union yyalloc
 {
-  yytype_int16 yyss;
-  YYSTYPE yyvs;
-  };
+  yytype_int16 yyss_alloc;
+  YYSTYPE yyvs_alloc;
+};
 
 /* The size of the maximum gap between one aligned stack and the next.  */
 # define YYSTACK_GAP_MAXIMUM (sizeof (union yyalloc) - 1)
@@ -605,12 +623,12 @@ union yyalloc
    elements in the stack, and YYPTR gives the new location of the
    stack.  Advance YYPTR to a properly aligned location for the next
    stack.  */
-# define YYSTACK_RELOCATE(Stack)					\
+# define YYSTACK_RELOCATE(Stack_alloc, Stack)				\
     do									\
       {									\
 	YYSIZE_T yynewbytes;						\
-	YYCOPY (&yyptr->Stack, Stack, yysize);				\
-	Stack = &yyptr->Stack;						\
+	YYCOPY (&yyptr->Stack_alloc, Stack, yysize);			\
+	Stack = &yyptr->Stack_alloc;					\
 	yynewbytes = yystacksize * sizeof (*Stack) + YYSTACK_GAP_MAXIMUM; \
 	yyptr += yynewbytes / sizeof (*yyptr);				\
       }									\
@@ -977,42 +995,42 @@ static const char *const yytname[] =
   "DECREMENT", "INCREMENT", "DOLLAR", "$accept", "input", "body", "line",
   "toplevel_statement", "INTNUM_WITH_MINUS", "load_statement", "statement",
   "base_statement", "assignment_def_list", "def_statement",
-  "while_statement", "@1", "while_decl", "while_short_decl",
-  "if_statement", "@2", "if_decl", "if_short_decl", "elif_or_else", "@3",
-  "else_decl", "elif_statement", "@4", "elif_decl", "statement_list",
-  "break_statement", "continue_statement", "forin_statement", "@5", "@6",
+  "while_statement", "$@1", "while_decl", "while_short_decl",
+  "if_statement", "$@2", "if_decl", "if_short_decl", "elif_or_else", "$@3",
+  "else_decl", "elif_statement", "$@4", "elif_decl", "statement_list",
+  "break_statement", "continue_statement", "forin_statement", "$@5", "$@6",
   "forin_rest", "for_to_expr", "for_to_step_clause",
   "forin_statement_list", "forin_statement_elem", "fordot_statement",
   "self_print_statement", "outer_print_statement", "first_loop_block",
-  "@7", "last_loop_block", "@8", "middle_loop_block", "@9",
-  "switch_statement", "@10", "switch_decl", "case_list", "case_statement",
-  "@11", "@12", "@13", "@14", "default_statement", "@15", "default_decl",
-  "default_body", "case_expression_list", "case_element",
-  "select_statement", "@16", "select_decl", "selcase_list",
-  "selcase_statement", "@17", "@18", "@19", "@20",
+  "$@7", "last_loop_block", "$@8", "middle_loop_block", "$@9",
+  "switch_statement", "$@10", "switch_decl", "case_list", "case_statement",
+  "$@11", "$@12", "$@13", "$@14", "default_statement", "$@15",
+  "default_decl", "default_body", "case_expression_list", "case_element",
+  "select_statement", "$@16", "select_decl", "selcase_list",
+  "selcase_statement", "$@17", "$@18", "$@19", "$@20",
   "selcase_expression_list", "selcase_element", "give_statement",
-  "try_statement", "@21", "try_decl", "catch_statements", "catch_list",
+  "try_statement", "$@21", "try_decl", "catch_statements", "catch_list",
   "catch_statement", "catch_decl", "catchcase_element_list",
   "catchcase_element", "raise_statement", "func_statement", "func_decl",
-  "@22", "func_decl_short", "@23", "func_begin", "param_list",
-  "param_symbol", "static_block", "@24", "@25", "static_decl",
+  "$@22", "func_decl_short", "$@23", "func_begin", "param_list",
+  "param_symbol", "static_block", "$@24", "$@25", "static_decl",
   "static_short_decl", "launch_statement", "pass_statement",
   "const_statement", "export_statement", "export_symbol_list",
   "import_statement", "import_symbol_list", "directive_statement",
   "directive_pair_list", "directive_pair", "attributes_statement",
   "attributes_decl", "attributes_short_decl", "attribute_list",
-  "attribute_vert_list", "class_decl", "@26", "class_def_inner",
-  "class_param_list", "@27", "from_clause", "inherit_list",
+  "attribute_vert_list", "class_decl", "$@26", "class_def_inner",
+  "class_param_list", "$@27", "from_clause", "inherit_list",
   "inherit_token", "inherit_call", "class_statement_list",
-  "class_statement", "init_decl", "@28", "property_decl", "has_list",
-  "has_clause_list", "enum_statement", "@29", "enum_statement_list",
-  "enum_item_decl", "enum_item_terminator", "object_decl", "@30",
+  "class_statement", "init_decl", "$@28", "property_decl", "has_list",
+  "has_clause_list", "enum_statement", "$@29", "enum_statement_list",
+  "enum_item_decl", "enum_item_terminator", "object_decl", "$@30",
   "object_decl_inner", "object_statement_list", "object_statement",
-  "global_statement", "@31", "global_symbol_list", "globalized_symbol",
+  "global_statement", "$@31", "global_symbol_list", "globalized_symbol",
   "return_statement", "const_atom", "atomic_symbol", "var_atom",
-  "expression", "range_decl", "func_call", "@32", "nameless_func", "@33",
-  "nameless_func_decl_inner", "nameless_closure", "@34", "lambda_expr",
-  "@35", "lambda_expr_inner", "iif_expr", "array_decl", "dotarray_decl",
+  "expression", "range_decl", "func_call", "$@32", "nameless_func", "$@33",
+  "nameless_func_decl_inner", "nameless_closure", "$@34", "lambda_expr",
+  "$@35", "lambda_expr_inner", "iif_expr", "array_decl", "dotarray_decl",
   "dict_decl", "expression_list", "listpar_expression_list",
   "listpar_comma", "symbol_list", "expression_pair_list", 0
 };
@@ -3004,17 +3022,20 @@ yy_symbol_print (yyoutput, yytype, yyvaluep)
 #if (defined __STDC__ || defined __C99__FUNC__ \
      || defined __cplusplus || defined _MSC_VER)
 static void
-yy_stack_print (yytype_int16 *bottom, yytype_int16 *top)
+yy_stack_print (yytype_int16 *yybottom, yytype_int16 *yytop)
 #else
 static void
-yy_stack_print (bottom, top)
-    yytype_int16 *bottom;
-    yytype_int16 *top;
+yy_stack_print (yybottom, yytop)
+    yytype_int16 *yybottom;
+    yytype_int16 *yytop;
 #endif
 {
   YYFPRINTF (stderr, "Stack now");
-  for (; bottom <= top; ++bottom)
-    YYFPRINTF (stderr, " %d", *bottom);
+  for (; yybottom <= yytop; yybottom++)
+    {
+      int yybot = *yybottom;
+      YYFPRINTF (stderr, " %d", yybot);
+    }
   YYFPRINTF (stderr, "\n");
 }
 
@@ -3048,11 +3069,11 @@ yy_reduce_print (yyvsp, yyrule)
   /* The symbols being reduced.  */
   for (yyi = 0; yyi < yynrhs; yyi++)
     {
-      fprintf (stderr, "   $%d = ", yyi + 1);
+      YYFPRINTF (stderr, "   $%d = ", yyi + 1);
       yy_symbol_print (stderr, yyrhs[yyprhs[yyrule] + yyi],
 		       &(yyvsp[(yyi + 1) - (yynrhs)])
 		       		       );
-      fprintf (stderr, "\n");
+      YYFPRINTF (stderr, "\n");
     }
 }
 
@@ -3332,10 +3353,8 @@ yydestruct (yymsg, yytype, yyvaluep)
 	break;
     }
 }
-
 
 /* Prevent warnings from -Wmissing-prototypes.  */
-
 #ifdef YYPARSE_PARAM
 #if defined __STDC__ || defined __cplusplus
 int yyparse (void *YYPARSE_PARAM);
@@ -3354,10 +3373,9 @@ int yyparse ();
 
 
 
-
-/*----------.
-| yyparse.  |
-`----------*/
+/*-------------------------.
+| yyparse or yypush_parse.  |
+`-------------------------*/
 
 #ifdef YYPARSE_PARAM
 #if (defined __STDC__ || defined __C99__FUNC__ \
@@ -3381,22 +3399,46 @@ yyparse ()
 #endif
 #endif
 {
-  /* The look-ahead symbol.  */
+/* The lookahead symbol.  */
 int yychar;
 
-/* The semantic value of the look-ahead symbol.  */
+/* The semantic value of the lookahead symbol.  */
 YYSTYPE yylval;
 
-/* Number of syntax errors so far.  */
-int yynerrs;
+    /* Number of syntax errors so far.  */
+    int yynerrs;
 
-  int yystate;
+    int yystate;
+    /* Number of tokens to shift before error messages enabled.  */
+    int yyerrstatus;
+
+    /* The stacks and their tools:
+       `yyss': related to states.
+       `yyvs': related to semantic values.
+
+       Refer to the stacks thru separate pointers, to allow yyoverflow
+       to reallocate them elsewhere.  */
+
+    /* The state stack.  */
+    yytype_int16 yyssa[YYINITDEPTH];
+    yytype_int16 *yyss;
+    yytype_int16 *yyssp;
+
+    /* The semantic value stack.  */
+    YYSTYPE yyvsa[YYINITDEPTH];
+    YYSTYPE *yyvs;
+    YYSTYPE *yyvsp;
+
+    YYSIZE_T yystacksize;
+
   int yyn;
   int yyresult;
-  /* Number of tokens to shift before error messages enabled.  */
-  int yyerrstatus;
-  /* Look-ahead token as an internal (translated) token number.  */
-  int yytoken = 0;
+  /* Lookahead token as an internal (translated) token number.  */
+  int yytoken;
+  /* The variables used to return semantic value and location from the
+     action routines.  */
+  YYSTYPE yyval;
+
 #if YYERROR_VERBOSE
   /* Buffer for error messages, and its allocated size.  */
   char yymsgbuf[128];
@@ -3404,51 +3446,28 @@ int yynerrs;
   YYSIZE_T yymsg_alloc = sizeof yymsgbuf;
 #endif
 
-  /* Three stacks and their tools:
-     `yyss': related to states,
-     `yyvs': related to semantic values,
-     `yyls': related to locations.
-
-     Refer to the stacks thru separate pointers, to allow yyoverflow
-     to reallocate them elsewhere.  */
-
-  /* The state stack.  */
-  yytype_int16 yyssa[YYINITDEPTH];
-  yytype_int16 *yyss = yyssa;
-  yytype_int16 *yyssp;
-
-  /* The semantic value stack.  */
-  YYSTYPE yyvsa[YYINITDEPTH];
-  YYSTYPE *yyvs = yyvsa;
-  YYSTYPE *yyvsp;
-
-
-
 #define YYPOPSTACK(N)   (yyvsp -= (N), yyssp -= (N))
-
-  YYSIZE_T yystacksize = YYINITDEPTH;
-
-  /* The variables used to return semantic value and location from the
-     action routines.  */
-  YYSTYPE yyval;
-
 
   /* The number of symbols on the RHS of the reduced rule.
      Keep to zero when no symbol should be popped.  */
   int yylen = 0;
+
+  yytoken = 0;
+  yyss = yyssa;
+  yyvs = yyvsa;
+  yystacksize = YYINITDEPTH;
 
   YYDPRINTF ((stderr, "Starting parse\n"));
 
   yystate = 0;
   yyerrstatus = 0;
   yynerrs = 0;
-  yychar = YYEMPTY;		/* Cause a token to be read.  */
+  yychar = YYEMPTY; /* Cause a token to be read.  */
 
   /* Initialize stack pointers.
      Waste one element of value and location stack
      so that they stay on the same level as the state stack.
      The wasted elements are never initialized.  */
-
   yyssp = yyss;
   yyvsp = yyvs;
 
@@ -3478,7 +3497,6 @@ int yynerrs;
 	YYSTYPE *yyvs1 = yyvs;
 	yytype_int16 *yyss1 = yyss;
 
-
 	/* Each stack pointer address is followed by the size of the
 	   data in use in that stack, in bytes.  This used to be a
 	   conditional around just the two extra args, but that might
@@ -3486,7 +3504,6 @@ int yynerrs;
 	yyoverflow (YY_("memory exhausted"),
 		    &yyss1, yysize * sizeof (*yyssp),
 		    &yyvs1, yysize * sizeof (*yyvsp),
-
 		    &yystacksize);
 
 	yyss = yyss1;
@@ -3509,9 +3526,8 @@ int yynerrs;
 	  (union yyalloc *) YYSTACK_ALLOC (YYSTACK_BYTES (yystacksize));
 	if (! yyptr)
 	  goto yyexhaustedlab;
-	YYSTACK_RELOCATE (yyss);
-	YYSTACK_RELOCATE (yyvs);
-
+	YYSTACK_RELOCATE (yyss_alloc, yyss);
+	YYSTACK_RELOCATE (yyvs_alloc, yyvs);
 #  undef YYSTACK_RELOCATE
 	if (yyss1 != yyssa)
 	  YYSTACK_FREE (yyss1);
@@ -3522,7 +3538,6 @@ int yynerrs;
       yyssp = yyss + yysize - 1;
       yyvsp = yyvs + yysize - 1;
 
-
       YYDPRINTF ((stderr, "Stack size increased to %lu\n",
 		  (unsigned long int) yystacksize));
 
@@ -3532,6 +3547,9 @@ int yynerrs;
 
   YYDPRINTF ((stderr, "Entering state %d\n", yystate));
 
+  if (yystate == YYFINAL)
+    YYACCEPT;
+
   goto yybackup;
 
 /*-----------.
@@ -3540,16 +3558,16 @@ int yynerrs;
 yybackup:
 
   /* Do appropriate processing given the current state.  Read a
-     look-ahead token if we need one and don't already have one.  */
+     lookahead token if we need one and don't already have one.  */
 
-  /* First try to decide what to do without reference to look-ahead token.  */
+  /* First try to decide what to do without reference to lookahead token.  */
   yyn = yypact[yystate];
   if (yyn == YYPACT_NINF)
     goto yydefault;
 
-  /* Not known => get a look-ahead token if don't already have one.  */
+  /* Not known => get a lookahead token if don't already have one.  */
 
-  /* YYCHAR is either YYEMPTY or YYEOF or a valid look-ahead symbol.  */
+  /* YYCHAR is either YYEMPTY or YYEOF or a valid lookahead symbol.  */
   if (yychar == YYEMPTY)
     {
       YYDPRINTF ((stderr, "Reading a token: "));
@@ -3581,20 +3599,16 @@ yybackup:
       goto yyreduce;
     }
 
-  if (yyn == YYFINAL)
-    YYACCEPT;
-
   /* Count tokens shifted since error; after three, turn off error
      status.  */
   if (yyerrstatus)
     yyerrstatus--;
 
-  /* Shift the look-ahead token.  */
+  /* Shift the lookahead token.  */
   YY_SYMBOL_PRINT ("Shifting", yytoken, &yylval, &yylloc);
 
-  /* Discard the shifted token unless it is eof.  */
-  if (yychar != YYEOF)
-    yychar = YYEMPTY;
+  /* Discard the shifted token.  */
+  yychar = YYEMPTY;
 
   yystate = yyn;
   *++yyvsp = yylval;
@@ -3634,22 +3648,30 @@ yyreduce:
   switch (yyn)
     {
         case 6:
-#line 211 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 211 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { COMPILER->raiseError(Falcon::e_lone_end ); }
     break;
 
   case 7:
-#line 212 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 212 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { COMPILER->raiseError(Falcon::e_case_outside ); }
     break;
 
   case 8:
-#line 216 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 216 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { (yyval.fal_stat)=0; }
     break;
 
   case 10:
-#line 219 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 219 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          if( (yyvsp[(1) - (1)].fal_stat) != 0 )
             COMPILER->addFunction( (yyvsp[(1) - (1)].fal_stat) );
@@ -3657,7 +3679,9 @@ yyreduce:
     break;
 
   case 11:
-#line 224 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 224 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          if ( (yyvsp[(1) - (1)].fal_stat) != 0 )
             COMPILER->addClass( (yyvsp[(1) - (1)].fal_stat) );
@@ -3665,7 +3689,9 @@ yyreduce:
     break;
 
   case 12:
-#line 229 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 229 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          if ( (yyvsp[(1) - (1)].fal_stat) != 0 )
             COMPILER->addClass( (yyvsp[(1) - (1)].fal_stat) );
@@ -3673,7 +3699,9 @@ yyreduce:
     break;
 
   case 13:
-#line 234 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 234 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          if ( (yyvsp[(1) - (1)].fal_stat) != 0 )
             COMPILER->addClass( (yyvsp[(1) - (1)].fal_stat) );
@@ -3681,7 +3709,9 @@ yyreduce:
     break;
 
   case 14:
-#line 239 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 239 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          if( (yyvsp[(1) - (1)].fal_stat) != 0 )
             COMPILER->addStatement( (yyvsp[(1) - (1)].fal_stat) );
@@ -3689,12 +3719,16 @@ yyreduce:
     break;
 
   case 20:
-#line 251 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 251 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { (yyval.integer) = - (yyvsp[(2) - (2)].integer); }
     break;
 
   case 21:
-#line 256 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 256 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          if ( COMPILER->getContext() != 0 )
             COMPILER->raiseError(Falcon::e_toplevel_load );
@@ -3703,7 +3737,9 @@ yyreduce:
     break;
 
   case 22:
-#line 262 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 262 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          if ( COMPILER->getContext() != 0 )
             COMPILER->raiseError(Falcon::e_toplevel_load );
@@ -3712,49 +3748,67 @@ yyreduce:
     break;
 
   case 23:
-#line 268 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 268 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          COMPILER->raiseError(Falcon::e_syn_load );
       }
     break;
 
   case 24:
-#line 274 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 274 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { COMPILER->checkLocalUndefined(); (yyval.fal_stat) = (yyvsp[(1) - (1)].fal_stat); }
     break;
 
   case 25:
-#line 275 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 275 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { (yyval.fal_stat) = 0; }
     break;
 
   case 26:
-#line 276 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 276 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { COMPILER->raiseError(Falcon::e_toplevel_func ); (yyval.fal_stat) = 0; }
     break;
 
   case 27:
-#line 277 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 277 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { COMPILER->raiseError(Falcon::e_toplevel_obj ); (yyval.fal_stat) = 0; }
     break;
 
   case 28:
-#line 278 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 278 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { COMPILER->raiseError(Falcon::e_toplevel_class ); (yyval.fal_stat) = 0; }
     break;
 
   case 29:
-#line 279 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 279 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { COMPILER->raiseError(Falcon::e_syntax ); (yyval.fal_stat) = 0;}
     break;
 
   case 30:
-#line 284 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 284 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { (yyval.fal_stat) = new Falcon::StmtAutoexpr( LINE, (yyvsp[(1) - (2)].fal_val) ); }
     break;
 
   case 31:
-#line 286 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 286 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          Falcon::Value *first = new Falcon::Value( (yyvsp[(1) - (4)].fal_adecl) );
          COMPILER->defineVal( first );
@@ -3764,7 +3818,9 @@ yyreduce:
     break;
 
   case 32:
-#line 292 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 292 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          if ( (yyvsp[(1) - (6)].fal_adecl)->size() != (yyvsp[(5) - (6)].fal_adecl)->size() + 1 )
          {
@@ -3781,7 +3837,9 @@ yyreduce:
     break;
 
   case 51:
-#line 327 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 327 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
       COMPILER->defContext( true );
       COMPILER->defineVal( (yyvsp[(1) - (3)].fal_val) );
@@ -3791,7 +3849,9 @@ yyreduce:
     break;
 
   case 52:
-#line 333 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 333 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
       COMPILER->defineVal( (yyvsp[(3) - (5)].fal_val) );
       COMPILER->addStatement( new Falcon::StmtAutoexpr(CURRENT_LINE, new Falcon::Value(
@@ -3800,17 +3860,23 @@ yyreduce:
     break;
 
   case 53:
-#line 342 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 342 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { COMPILER->defContext( false );  (yyval.fal_stat)=0; }
     break;
 
   case 54:
-#line 344 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 344 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { COMPILER->raiseError( Falcon::e_syn_def ); }
     break;
 
   case 55:
-#line 348 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 348 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          Falcon::StmtWhile *w = new Falcon::StmtWhile( LINE, (yyvsp[(1) - (1)].fal_val) );
          COMPILER->pushLoop( w );
@@ -3820,7 +3886,9 @@ yyreduce:
     break;
 
   case 56:
-#line 355 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 355 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          Falcon::StmtWhile *w = static_cast<Falcon::StmtWhile *>(COMPILER->getContext());
          COMPILER->popLoop();
@@ -3831,7 +3899,9 @@ yyreduce:
     break;
 
   case 57:
-#line 362 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 362 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          Falcon::StmtWhile *w = new Falcon::StmtWhile( LINE, (yyvsp[(1) - (2)].fal_val) );
          if ( (yyvsp[(2) - (2)].fal_stat) != 0 )
@@ -3841,37 +3911,51 @@ yyreduce:
     break;
 
   case 58:
-#line 370 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 370 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { (yyval.fal_val) = (yyvsp[(2) - (3)].fal_val); }
     break;
 
   case 59:
-#line 371 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 371 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { (yyval.fal_val) = 0; }
     break;
 
   case 60:
-#line 372 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 372 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { COMPILER->raiseError(Falcon::e_syn_while ); (yyval.fal_val) = 0; }
     break;
 
   case 61:
-#line 376 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 376 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { (yyval.fal_val) = (yyvsp[(2) - (3)].fal_val); }
     break;
 
   case 62:
-#line 377 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 377 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { (yyval.fal_val) = 0; }
     break;
 
   case 63:
-#line 378 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 378 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { COMPILER->raiseError(Falcon::e_syn_while, "", CURRENT_LINE ); (yyval.fal_val) = 0; }
     break;
 
   case 64:
-#line 382 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 382 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          Falcon::StmtIf *stmt = new Falcon::StmtIf( LINE, (yyvsp[(1) - (1)].fal_val) );
          COMPILER->pushContext( stmt );
@@ -3880,7 +3964,9 @@ yyreduce:
     break;
 
   case 65:
-#line 390 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 390 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          Falcon::StmtIf *stmt = static_cast<Falcon::StmtIf *>(COMPILER->getContext());
          COMPILER->popContext();
@@ -3890,7 +3976,9 @@ yyreduce:
     break;
 
   case 66:
-#line 397 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 397 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          // use LINE as statement includes EOL
          Falcon::StmtIf *stmt = new Falcon::StmtIf( LINE, (yyvsp[(1) - (2)].fal_val) );
@@ -3901,27 +3989,37 @@ yyreduce:
     break;
 
   case 67:
-#line 407 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 407 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { (yyval.fal_val) = (yyvsp[(2) - (3)].fal_val); }
     break;
 
   case 68:
-#line 408 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 408 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {  COMPILER->raiseError(Falcon::e_syn_if ); (yyval.fal_val) = 0; }
     break;
 
   case 69:
-#line 412 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 412 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { (yyval.fal_val) = (yyvsp[(2) - (3)].fal_val); }
     break;
 
   case 70:
-#line 413 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 413 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {  COMPILER->raiseError(Falcon::e_syn_if, "", CURRENT_LINE ); (yyval.fal_val) = 0; }
     break;
 
   case 73:
-#line 420 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 420 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          Falcon::StmtIf *stmt = static_cast<Falcon::StmtIf *>(COMPILER->getContext());
          COMPILER->popContextSet();
@@ -3930,12 +4028,16 @@ yyreduce:
     break;
 
   case 76:
-#line 430 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 430 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { COMPILER->raiseError(Falcon::e_syn_else ); }
     break;
 
   case 77:
-#line 435 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 435 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          Falcon::StmtIf *stmt = static_cast<Falcon::StmtIf *>(COMPILER->getContext());
          COMPILER->popContextSet();
@@ -3946,24 +4048,32 @@ yyreduce:
     break;
 
   case 79:
-#line 447 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 447 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { (yyval.fal_val) = (yyvsp[(2) - (3)].fal_val); }
     break;
 
   case 80:
-#line 448 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 448 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { COMPILER->raiseError(Falcon::e_syn_elif ); (yyval.fal_val) = 0; }
     break;
 
   case 82:
-#line 453 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 453 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
       COMPILER->addStatement( (yyvsp[(2) - (2)].fal_stat) );
    }
     break;
 
   case 83:
-#line 460 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 460 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          if ( COMPILER->getLoop() == 0 ) {
             COMPILER->raiseError(Falcon::e_break_out );
@@ -3975,7 +4085,9 @@ yyreduce:
     break;
 
   case 84:
-#line 469 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 469 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          COMPILER->raiseError(Falcon::e_syn_break );
          (yyval.fal_stat) = 0;
@@ -3983,7 +4095,9 @@ yyreduce:
     break;
 
   case 85:
-#line 477 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 477 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          if ( COMPILER->getLoop() == 0 ) {
             COMPILER->raiseError(Falcon::e_continue_out );
@@ -3995,7 +4109,9 @@ yyreduce:
     break;
 
   case 86:
-#line 487 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 487 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          if ( COMPILER->getLoop() == 0 ) {
             COMPILER->raiseError(Falcon::e_continue_out );
@@ -4007,7 +4123,9 @@ yyreduce:
     break;
 
   case 87:
-#line 496 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 496 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          COMPILER->raiseError(Falcon::e_syn_continue );
          (yyval.fal_stat) = 0;
@@ -4015,7 +4133,9 @@ yyreduce:
     break;
 
   case 88:
-#line 505 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 505 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          Falcon::StmtForin *f;
          Falcon::ArrayDecl *decl = (yyvsp[(2) - (4)].fal_adecl);
@@ -4033,7 +4153,9 @@ yyreduce:
     break;
 
   case 89:
-#line 522 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 522 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          Falcon::StmtForin *f = static_cast<Falcon::StmtForin *>(COMPILER->getContext());
          COMPILER->popLoop();
@@ -4044,7 +4166,9 @@ yyreduce:
     break;
 
   case 90:
-#line 531 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 531 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          Falcon::StmtForin *f;
          COMPILER->defineVal( (yyvsp[(2) - (4)].fal_val) );
@@ -4056,7 +4180,9 @@ yyreduce:
     break;
 
   case 91:
-#line 542 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 542 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          Falcon::StmtForin *f = static_cast<Falcon::StmtForin *>(COMPILER->getContext());
          COMPILER->popLoop();
@@ -4067,7 +4193,9 @@ yyreduce:
     break;
 
   case 92:
-#line 552 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 552 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { delete (yyvsp[(2) - (5)].fal_adecl);
          COMPILER->raiseError( Falcon::e_syn_forin );
          (yyval.fal_stat) = 0;
@@ -4075,7 +4203,9 @@ yyreduce:
     break;
 
   case 93:
-#line 557 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 557 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          COMPILER->raiseError( Falcon::e_syn_forin );
          (yyval.fal_stat) = 0;
@@ -4083,7 +4213,9 @@ yyreduce:
     break;
 
   case 94:
-#line 565 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 565 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          if ( (yyvsp[(2) - (2)].fal_stat) != 0 )
             COMPILER->addStatement( (yyvsp[(2) - (2)].fal_stat) );
@@ -4091,7 +4223,9 @@ yyreduce:
     break;
 
   case 96:
-#line 578 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 578 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          Falcon::RangeDecl* rd = new Falcon::RangeDecl( (yyvsp[(1) - (4)].fal_val), 
             new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_oob, (yyvsp[(3) - (4)].fal_val))), (yyvsp[(4) - (4)].fal_val) );
@@ -4100,36 +4234,48 @@ yyreduce:
     break;
 
   case 97:
-#line 584 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 584 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          (yyval.fal_val) = new Falcon::Value( new Falcon::RangeDecl( (yyvsp[(1) - (4)].fal_val), (yyvsp[(3) - (4)].fal_val), 0 ) );
       }
     break;
 
   case 98:
-#line 588 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 588 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          (yyval.fal_val) = new Falcon::Value( new Falcon::RangeDecl( (yyvsp[(1) - (3)].fal_val), 0, 0 ) );
       }
     break;
 
   case 99:
-#line 594 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 594 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { (yyval.fal_val)=0; }
     break;
 
   case 100:
-#line 595 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 595 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { (yyval.fal_val)=new Falcon::Value( (yyvsp[(2) - (2)].fal_val) ); }
     break;
 
   case 101:
-#line 596 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 596 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { (yyval.fal_val)=0; }
     break;
 
   case 104:
-#line 605 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 605 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          if ( (yyvsp[(1) - (1)].fal_stat) != 0 )
          {
@@ -4140,7 +4286,9 @@ yyreduce:
     break;
 
   case 108:
-#line 619 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 619 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          Falcon::StmtForin *f = static_cast<Falcon::StmtForin *>(COMPILER->getLoop());
          if ( f == 0 || f->type() != Falcon::Statement::t_forin )
@@ -4156,7 +4304,9 @@ yyreduce:
     break;
 
   case 109:
-#line 632 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 632 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          COMPILER->raiseError( Falcon::e_syn_fordot );
          (yyval.fal_stat) = 0;
@@ -4164,14 +4314,18 @@ yyreduce:
     break;
 
   case 110:
-#line 640 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 640 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          (yyval.fal_stat) = new Falcon::StmtSelfPrint( LINE, (yyvsp[(2) - (3)].fal_adecl) );
       }
     break;
 
   case 111:
-#line 644 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 644 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          COMPILER->raiseError( Falcon::e_syn_self_print );
          (yyval.fal_stat) = 0;
@@ -4179,7 +4333,9 @@ yyreduce:
     break;
 
   case 112:
-#line 650 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 650 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          (yyvsp[(2) - (3)].fal_adecl)->pushBack( new Falcon::Value( COMPILER->addString( "\n" ) ) );
          (yyval.fal_stat) = new Falcon::StmtSelfPrint( LINE, (yyvsp[(2) - (3)].fal_adecl) );
@@ -4187,7 +4343,9 @@ yyreduce:
     break;
 
   case 113:
-#line 656 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 656 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          Falcon::ArrayDecl *adecl = new Falcon::ArrayDecl();
          adecl->pushBack( new Falcon::Value( COMPILER->addString( "\n" ) ) );
@@ -4196,7 +4354,9 @@ yyreduce:
     break;
 
   case 114:
-#line 663 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 663 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          COMPILER->raiseError( Falcon::e_syn_self_print );
          (yyval.fal_stat) = 0;
@@ -4204,7 +4364,9 @@ yyreduce:
     break;
 
   case 115:
-#line 668 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 668 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          COMPILER->raiseError( Falcon::e_syn_self_print );
          (yyval.fal_stat) = 0;
@@ -4212,7 +4374,9 @@ yyreduce:
     break;
 
   case 116:
-#line 677 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 677 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
       Falcon::ArrayDecl *adecl = new Falcon::ArrayDecl();
       adecl->pushBack( new Falcon::Value( (yyvsp[(1) - (1)].stringp) ) );
@@ -4221,7 +4385,9 @@ yyreduce:
     break;
 
   case 117:
-#line 686 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 686 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          Falcon::StmtForin *f = static_cast<Falcon::StmtForin *>(COMPILER->getContext());
          if( ! f->firstBlock().empty() )
@@ -4235,12 +4401,16 @@ yyreduce:
     break;
 
   case 118:
-#line 698 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 698 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { COMPILER->popContextSet(); }
     break;
 
   case 119:
-#line 700 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 700 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          Falcon::StmtForin *f = static_cast<Falcon::StmtForin *>(COMPILER->getContext());
          if( ! f->firstBlock().empty() )
@@ -4253,12 +4423,16 @@ yyreduce:
     break;
 
   case 120:
-#line 709 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 709 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { COMPILER->raiseError(Falcon::e_syn_forfirst ); }
     break;
 
   case 121:
-#line 713 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 713 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          Falcon::StmtForin *f = static_cast<Falcon::StmtForin *>(COMPILER->getContext());
          if( ! f->lastBlock().empty() )
@@ -4272,12 +4446,16 @@ yyreduce:
     break;
 
   case 122:
-#line 725 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 725 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { COMPILER->popContextSet(); }
     break;
 
   case 123:
-#line 726 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 726 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          Falcon::StmtForin *f = static_cast<Falcon::StmtForin *>(COMPILER->getContext());
          if( ! f->lastBlock().empty() )
@@ -4290,12 +4468,16 @@ yyreduce:
     break;
 
   case 124:
-#line 735 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 735 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { COMPILER->raiseError(Falcon::e_syn_forlast ); }
     break;
 
   case 125:
-#line 739 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 739 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          Falcon::StmtForin *f = static_cast<Falcon::StmtForin *>(COMPILER->getContext());
          if( ! f->middleBlock().empty() )
@@ -4311,12 +4493,16 @@ yyreduce:
     break;
 
   case 126:
-#line 753 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 753 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { COMPILER->popContextSet(); }
     break;
 
   case 127:
-#line 755 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 755 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          Falcon::StmtForin *f = static_cast<Falcon::StmtForin *>(COMPILER->getContext());
          if( ! f->middleBlock().empty() )
@@ -4329,12 +4515,16 @@ yyreduce:
     break;
 
   case 128:
-#line 764 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 764 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { COMPILER->raiseError(Falcon::e_syn_formiddle ); }
     break;
 
   case 129:
-#line 768 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 768 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
       Falcon::StmtSwitch *stmt = new Falcon::StmtSwitch( LINE, (yyvsp[(1) - (1)].fal_val) );
          COMPILER->pushContext( stmt );
@@ -4343,7 +4533,9 @@ yyreduce:
     break;
 
   case 130:
-#line 776 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 776 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          Falcon::StmtSwitch *stmt = static_cast<Falcon::StmtSwitch *>(COMPILER->getContext());
          COMPILER->popContext();
@@ -4353,12 +4545,16 @@ yyreduce:
     break;
 
   case 131:
-#line 785 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 785 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { (yyval.fal_val) = (yyvsp[(2) - (3)].fal_val); }
     break;
 
   case 132:
-#line 787 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 787 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          COMPILER->raiseError(Falcon::e_switch_decl );
          (yyval.fal_val) = 0;
@@ -4366,12 +4562,16 @@ yyreduce:
     break;
 
   case 135:
-#line 796 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 796 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { COMPILER->raiseError(Falcon::e_switch_body ); }
     break;
 
   case 137:
-#line 802 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 802 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          Falcon::StmtSwitch *stmt = static_cast<Falcon::StmtSwitch *>(COMPILER->getContext());
          COMPILER->popContextSet();
@@ -4383,7 +4583,9 @@ yyreduce:
     break;
 
   case 139:
-#line 812 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 812 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          Falcon::StmtSwitch *stmt = static_cast<Falcon::StmtSwitch *>(COMPILER->getContext());
          COMPILER->popContextSet();
@@ -4395,14 +4597,18 @@ yyreduce:
     break;
 
   case 140:
-#line 820 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 820 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
             COMPILER->addStatement( (yyvsp[(5) - (5)].fal_stat) );
       }
     break;
 
   case 141:
-#line 824 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 824 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          COMPILER->raiseError(Falcon::e_case_decl );
 
@@ -4416,7 +4622,9 @@ yyreduce:
     break;
 
   case 143:
-#line 836 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 836 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          COMPILER->raiseError(Falcon::e_case_decl );
 
@@ -4430,14 +4638,18 @@ yyreduce:
     break;
 
   case 144:
-#line 846 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 846 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
             COMPILER->addStatement( (yyvsp[(5) - (5)].fal_stat) );
       }
     break;
 
   case 146:
-#line 855 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 855 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          Falcon::StmtSwitch *stmt = static_cast<Falcon::StmtSwitch *>(COMPILER->getContext());
          COMPILER->popContextSet();
@@ -4450,19 +4662,25 @@ yyreduce:
     break;
 
   case 150:
-#line 869 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 869 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { COMPILER->raiseError(Falcon::e_default_decl ); }
     break;
 
   case 152:
-#line 873 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 873 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          COMPILER->addStatement( (yyvsp[(2) - (2)].fal_stat) );
       }
     break;
 
   case 155:
-#line 885 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 885 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          Falcon::StmtSwitch *stmt = static_cast<Falcon::StmtSwitch *>(COMPILER->getContext());
          // todo: correct error
@@ -4473,7 +4691,9 @@ yyreduce:
     break;
 
   case 156:
-#line 894 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 894 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          Falcon::StmtSwitch *stmt = static_cast<Falcon::StmtSwitch *>(COMPILER->getContext());
          // todo: correct error
@@ -4487,7 +4707,9 @@ yyreduce:
     break;
 
   case 157:
-#line 906 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 906 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          Falcon::StmtSwitch *stmt = static_cast<Falcon::StmtSwitch *>(COMPILER->getContext());
          Falcon::Value *val = new Falcon::Value( (yyvsp[(1) - (1)].stringp) );
@@ -4500,7 +4722,9 @@ yyreduce:
     break;
 
   case 158:
-#line 917 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 917 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          Falcon::StmtSwitch *stmt = static_cast<Falcon::StmtSwitch *>(COMPILER->getContext());
          Falcon::Value *val = new Falcon::Value( new Falcon::RangeDecl( new Falcon::Value( (yyvsp[(1) - (3)].integer) ), new Falcon::Value( (yyvsp[(3) - (3)].integer) ) ) );
@@ -4513,7 +4737,9 @@ yyreduce:
     break;
 
   case 159:
-#line 928 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 928 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          Falcon::StmtSwitch *stmt = static_cast<Falcon::StmtSwitch *>(COMPILER->getContext());
          Falcon::Symbol *sym = COMPILER->searchLocalSymbol( (yyvsp[(1) - (1)].stringp) );
@@ -4530,7 +4756,9 @@ yyreduce:
     break;
 
   case 160:
-#line 948 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 948 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
       Falcon::StmtSelect *stmt = new Falcon::StmtSelect( LINE, (yyvsp[(1) - (1)].fal_val) );
          COMPILER->pushContext( stmt );
@@ -4539,7 +4767,9 @@ yyreduce:
     break;
 
   case 161:
-#line 956 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 956 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          Falcon::StmtSelect *stmt = static_cast<Falcon::StmtSelect *>(COMPILER->getContext());
          COMPILER->popContext();
@@ -4549,12 +4779,16 @@ yyreduce:
     break;
 
   case 162:
-#line 965 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 965 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { (yyval.fal_val) = (yyvsp[(2) - (3)].fal_val); }
     break;
 
   case 163:
-#line 967 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 967 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          COMPILER->raiseError(Falcon::e_select_decl );
          (yyval.fal_val) = 0;
@@ -4562,12 +4796,16 @@ yyreduce:
     break;
 
   case 166:
-#line 976 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 976 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { COMPILER->raiseError(Falcon::e_select_body ); }
     break;
 
   case 168:
-#line 982 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 982 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          Falcon::StmtSelect *stmt = static_cast<Falcon::StmtSelect *>(COMPILER->getContext());
          COMPILER->popContextSet();
@@ -4579,7 +4817,9 @@ yyreduce:
     break;
 
   case 170:
-#line 992 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 992 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          Falcon::StmtSelect *stmt = static_cast<Falcon::StmtSelect *>(COMPILER->getContext());
          COMPILER->popContextSet();
@@ -4591,14 +4831,18 @@ yyreduce:
     break;
 
   case 171:
-#line 1001 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 1001 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
             COMPILER->addStatement( (yyvsp[(5) - (5)].fal_stat) );
       }
     break;
 
   case 172:
-#line 1005 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 1005 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          COMPILER->raiseError(Falcon::e_case_decl );
 
@@ -4612,7 +4856,9 @@ yyreduce:
     break;
 
   case 174:
-#line 1017 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 1017 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          COMPILER->raiseError(Falcon::e_case_decl );
 
@@ -4626,14 +4872,18 @@ yyreduce:
     break;
 
   case 175:
-#line 1027 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 1027 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
             COMPILER->addStatement( (yyvsp[(5) - (5)].fal_stat) );
       }
     break;
 
   case 179:
-#line 1041 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 1041 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          Falcon::StmtSwitch *stmt = static_cast<Falcon::StmtSwitch *>(COMPILER->getContext());
          // todo: correct error
@@ -4647,7 +4897,9 @@ yyreduce:
     break;
 
   case 180:
-#line 1053 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 1053 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          Falcon::StmtSwitch *stmt = static_cast<Falcon::StmtSwitch *>(COMPILER->getContext());
          Falcon::Symbol *sym = COMPILER->searchLocalSymbol( (yyvsp[(1) - (1)].stringp) );
@@ -4664,14 +4916,18 @@ yyreduce:
     break;
 
   case 181:
-#line 1074 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 1074 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          (yyval.fal_stat) = new Falcon::StmtGive( LINE, (yyvsp[(4) - (5)].fal_adecl), (yyvsp[(2) - (5)].fal_adecl) );
       }
     break;
 
   case 182:
-#line 1078 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 1078 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          (yyval.fal_stat) = new Falcon::StmtGive( LINE, 0, (yyvsp[(2) - (4)].fal_adecl) );
          COMPILER->raiseError(Falcon::e_syn_give );
@@ -4679,12 +4935,16 @@ yyreduce:
     break;
 
   case 183:
-#line 1082 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 1082 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { COMPILER->raiseError(Falcon::e_syn_give ); (yyval.fal_stat) = 0; }
     break;
 
   case 184:
-#line 1090 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 1090 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
       Falcon::StmtTry *t = new Falcon::StmtTry( CURRENT_LINE );
       if ( (yyvsp[(3) - (3)].fal_stat) != 0 )
@@ -4694,7 +4954,9 @@ yyreduce:
     break;
 
   case 185:
-#line 1097 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 1097 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          Falcon::StmtTry *t = new Falcon::StmtTry( LINE );
          COMPILER->pushContext( t );
@@ -4703,7 +4965,9 @@ yyreduce:
     break;
 
   case 186:
-#line 1107 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 1107 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          (yyval.fal_stat) = COMPILER->getContext();
          COMPILER->popContext();
@@ -4712,12 +4976,16 @@ yyreduce:
     break;
 
   case 188:
-#line 1116 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 1116 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { COMPILER->raiseError(Falcon::e_syn_try ); }
     break;
 
   case 194:
-#line 1136 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 1136 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          COMPILER->popContextSet(); // popping previous catch
 
@@ -4737,7 +5005,9 @@ yyreduce:
     break;
 
   case 195:
-#line 1154 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 1154 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          COMPILER->popContextSet(); // popping previous catch
 
@@ -4759,7 +5029,9 @@ yyreduce:
     break;
 
   case 196:
-#line 1174 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 1174 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          COMPILER->popContextSet(); // popping previous catch
 
@@ -4771,7 +5043,9 @@ yyreduce:
     break;
 
   case 197:
-#line 1184 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 1184 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          COMPILER->popContextSet(); // popping previous catch
 
@@ -4784,14 +5058,18 @@ yyreduce:
     break;
 
   case 198:
-#line 1195 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 1195 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
       COMPILER->raiseError( Falcon::e_syn_catch );
    }
     break;
 
   case 201:
-#line 1208 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 1208 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          Falcon::StmtTry *stmt = static_cast<Falcon::StmtTry *>(COMPILER->getContext());
          Falcon::Value *val = new Falcon::Value( (yyvsp[(1) - (1)].integer) );
@@ -4805,7 +5083,9 @@ yyreduce:
     break;
 
   case 202:
-#line 1220 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 1220 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          Falcon::StmtTry *stmt = static_cast<Falcon::StmtTry *>(COMPILER->getContext());
          Falcon::Symbol *sym = COMPILER->searchLocalSymbol( (yyvsp[(1) - (1)].stringp) );
@@ -4823,17 +5103,23 @@ yyreduce:
     break;
 
   case 203:
-#line 1242 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 1242 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { (yyval.fal_stat) = new Falcon::StmtRaise( LINE, (yyvsp[(2) - (3)].fal_val) ); }
     break;
 
   case 204:
-#line 1243 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 1243 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { COMPILER->raiseError(Falcon::e_syn_raise ); (yyval.fal_stat) = 0; }
     break;
 
   case 205:
-#line 1255 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 1255 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          (yyval.fal_stat) = COMPILER->getContext();
          COMPILER->closeFunction();
@@ -4841,7 +5127,9 @@ yyreduce:
     break;
 
   case 206:
-#line 1261 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 1261 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          COMPILER->addStatement( (yyvsp[(2) - (2)].fal_stat) );
          (yyval.fal_stat) = COMPILER->getContext();
@@ -4850,36 +5138,48 @@ yyreduce:
     break;
 
   case 208:
-#line 1270 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 1270 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { COMPILER->tempLine( CURRENT_LINE ); }
     break;
 
   case 209:
-#line 1271 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 1271 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          COMPILER->raiseContextError(Falcon::e_syn_funcdecl, COMPILER->tempLine(), CTX_LINE );
       }
     break;
 
   case 210:
-#line 1274 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 1274 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { COMPILER->raiseError(Falcon::e_syn_funcdecl ); }
     break;
 
   case 212:
-#line 1279 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 1279 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { COMPILER->tempLine( CURRENT_LINE ); }
     break;
 
   case 213:
-#line 1280 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 1280 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          COMPILER->raiseContextError(Falcon::e_syn_funcdecl, COMPILER->tempLine(), CTX_LINE );
       }
     break;
 
   case 214:
-#line 1287 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 1287 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          Falcon::FuncDef *def = new Falcon::FuncDef( 0, 0 );
          // the SYMBOL which names the function goes in the old symbol table, while the parameters
@@ -4933,7 +5233,9 @@ yyreduce:
     break;
 
   case 218:
-#line 1348 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 1348 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          Falcon::Symbol *sym = COMPILER->searchLocalSymbol( (yyvsp[(1) - (1)].stringp) );
          if ( sym != 0 ) {
@@ -4949,7 +5251,9 @@ yyreduce:
     break;
 
   case 220:
-#line 1365 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 1365 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          Falcon::StmtFunction *func = static_cast<Falcon::StmtFunction *>(COMPILER->getContext());
          COMPILER->pushContextSet( &func->staticBlock() );
@@ -4958,7 +5262,9 @@ yyreduce:
     break;
 
   case 221:
-#line 1371 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 1371 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          COMPILER->popContextSet();
          COMPILER->staticPrefix(0);
@@ -4966,7 +5272,9 @@ yyreduce:
     break;
 
   case 222:
-#line 1376 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 1376 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          Falcon::StmtFunction *func = static_cast<Falcon::StmtFunction *>(COMPILER->getContext());
          COMPILER->pushContextSet( &func->staticBlock() );
@@ -4975,7 +5283,9 @@ yyreduce:
     break;
 
   case 223:
-#line 1382 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 1382 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          COMPILER->addStatement( (yyvsp[(3) - (3)].fal_stat) );
          COMPILER->popContextSet();
@@ -4984,29 +5294,39 @@ yyreduce:
     break;
 
   case 225:
-#line 1391 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 1391 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { COMPILER->raiseError(Falcon::e_syn_static ); }
     break;
 
   case 227:
-#line 1396 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 1396 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { COMPILER->raiseError(Falcon::e_syn_static, "", CURRENT_LINE ); }
     break;
 
   case 228:
-#line 1406 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 1406 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          (yyval.fal_stat) = new Falcon::StmtLaunch( LINE, (yyvsp[(2) - (3)].fal_val) );
       }
     break;
 
   case 229:
-#line 1409 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 1409 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { COMPILER->raiseError(Falcon::e_syn_launch ); (yyval.fal_stat) = 0; }
     break;
 
   case 230:
-#line 1418 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 1418 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          if ( COMPILER->getFunction() == 0 )
             COMPILER->raiseError(Falcon::e_pass_outside );
@@ -5016,7 +5336,9 @@ yyreduce:
     break;
 
   case 231:
-#line 1425 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 1425 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          // define the expression anyhow so we don't have fake errors below
          if ( COMPILER->getFunction() == 0 )
@@ -5034,7 +5356,9 @@ yyreduce:
     break;
 
   case 232:
-#line 1440 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 1440 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          delete (yyvsp[(2) - (5)].fal_val);
          COMPILER->raiseError(Falcon::e_syn_pass_in );
@@ -5043,7 +5367,9 @@ yyreduce:
     break;
 
   case 233:
-#line 1446 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 1446 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          COMPILER->raiseError(Falcon::e_syn_pass );
          (yyval.fal_stat) = 0;
@@ -5051,7 +5377,9 @@ yyreduce:
     break;
 
   case 234:
-#line 1458 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 1458 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          // TODO: evalute const expressions on the fly.
          Falcon::Value *val = (yyvsp[(4) - (5)].fal_val); //COMPILER->exprSimplify( $4 );
@@ -5064,7 +5392,9 @@ yyreduce:
     break;
 
   case 235:
-#line 1468 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 1468 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          COMPILER->raiseError(Falcon::e_inv_const_val );
          (yyval.fal_stat) = 0;
@@ -5072,7 +5402,9 @@ yyreduce:
     break;
 
   case 236:
-#line 1473 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 1473 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          COMPILER->raiseError(Falcon::e_syn_const );
          (yyval.fal_stat) = 0;
@@ -5080,7 +5412,9 @@ yyreduce:
     break;
 
   case 237:
-#line 1485 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 1485 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          if ( COMPILER->sourceTree()->isExportAll() )
             COMPILER->raiseError(Falcon::e_export_all );
@@ -5092,7 +5426,9 @@ yyreduce:
     break;
 
   case 238:
-#line 1494 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 1494 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          if ( COMPILER->sourceTree()->isExportAll() )
             COMPILER->raiseError(Falcon::e_export_all );
@@ -5102,7 +5438,9 @@ yyreduce:
     break;
 
   case 239:
-#line 1501 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 1501 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          COMPILER->raiseError(Falcon::e_syn_export );
          (yyval.fal_stat) = 0;
@@ -5110,7 +5448,9 @@ yyreduce:
     break;
 
   case 240:
-#line 1509 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 1509 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          Falcon::Symbol *sym = COMPILER->addGlobalSymbol( (yyvsp[(1) - (1)].stringp) );
          sym->exported(true);
@@ -5118,7 +5458,9 @@ yyreduce:
     break;
 
   case 241:
-#line 1514 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 1514 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          Falcon::Symbol *sym = COMPILER->addGlobalSymbol( (yyvsp[(3) - (3)].stringp) );
          sym->exported(true);
@@ -5126,7 +5468,9 @@ yyreduce:
     break;
 
   case 242:
-#line 1522 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 1522 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          COMPILER->importSymbols( (yyvsp[(2) - (3)].fal_genericList) );
          (yyval.fal_stat) = 0;
@@ -5134,7 +5478,9 @@ yyreduce:
     break;
 
   case 243:
-#line 1527 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 1527 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          COMPILER->importSymbols( (yyvsp[(2) - (5)].fal_genericList), (yyvsp[(4) - (5)].stringp), 0, false );
          (yyval.fal_stat) = 0;
@@ -5142,7 +5488,9 @@ yyreduce:
     break;
 
   case 244:
-#line 1532 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 1532 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          COMPILER->importSymbols( (yyvsp[(2) - (5)].fal_genericList), (yyvsp[(4) - (5)].stringp), 0, true );
          (yyval.fal_stat) = 0;
@@ -5150,7 +5498,9 @@ yyreduce:
     break;
 
   case 245:
-#line 1537 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 1537 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          // destroy the list to avoid leak
          Falcon::ListElement *li = (yyvsp[(2) - (7)].fal_genericList)->begin();
@@ -5173,7 +5523,9 @@ yyreduce:
     break;
 
   case 246:
-#line 1557 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 1557 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          // destroy the list to avoid leak
          Falcon::ListElement *li = (yyvsp[(2) - (7)].fal_genericList)->begin();
@@ -5195,7 +5547,9 @@ yyreduce:
     break;
 
   case 247:
-#line 1576 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 1576 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          COMPILER->importSymbols( (yyvsp[(2) - (7)].fal_genericList), (yyvsp[(4) - (7)].stringp), (yyvsp[(6) - (7)].stringp), false );
          (yyval.fal_stat) = 0;
@@ -5203,7 +5557,9 @@ yyreduce:
     break;
 
   case 248:
-#line 1581 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 1581 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          COMPILER->importSymbols( (yyvsp[(2) - (7)].fal_genericList), (yyvsp[(4) - (7)].stringp), (yyvsp[(6) - (7)].stringp), true );
          (yyval.fal_stat) = 0;
@@ -5211,7 +5567,9 @@ yyreduce:
     break;
 
   case 249:
-#line 1586 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 1586 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          COMPILER->raiseError(Falcon::e_syn_import );
          (yyval.fal_stat) = 0;
@@ -5219,7 +5577,9 @@ yyreduce:
     break;
 
   case 250:
-#line 1591 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 1591 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          // destroy the list to avoid leak
          Falcon::ListElement *li = (yyvsp[(2) - (4)].fal_genericList)->begin();
@@ -5236,7 +5596,9 @@ yyreduce:
     break;
 
   case 251:
-#line 1605 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 1605 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          COMPILER->addNamespace( *(yyvsp[(3) - (4)].stringp), "", true, false );
          (yyval.fal_stat) = 0;
@@ -5244,7 +5606,9 @@ yyreduce:
     break;
 
   case 252:
-#line 1610 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 1610 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          COMPILER->addNamespace( *(yyvsp[(3) - (4)].stringp), "", true, true );
          (yyval.fal_stat) = 0;
@@ -5252,7 +5616,9 @@ yyreduce:
     break;
 
   case 253:
-#line 1615 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 1615 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          COMPILER->addNamespace( *(yyvsp[(3) - (6)].stringp), *(yyvsp[(5) - (6)].stringp), true, false );
          (yyval.fal_stat) = 0;
@@ -5260,7 +5626,9 @@ yyreduce:
     break;
 
   case 254:
-#line 1620 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 1620 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          COMPILER->addNamespace( *(yyvsp[(3) - (6)].stringp), *(yyvsp[(5) - (6)].stringp), true, true );
          (yyval.fal_stat) = 0;
@@ -5268,7 +5636,9 @@ yyreduce:
     break;
 
   case 255:
-#line 1625 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 1625 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          COMPILER->raiseError(Falcon::e_syn_import );
          (yyval.fal_stat) = 0;
@@ -5276,7 +5646,9 @@ yyreduce:
     break;
 
   case 256:
-#line 1633 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 1633 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          Falcon::List *lst = new Falcon::List;
          lst->pushBack( new Falcon::String( *(yyvsp[(1) - (1)].stringp) ) );
@@ -5285,7 +5657,9 @@ yyreduce:
     break;
 
   case 257:
-#line 1639 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 1639 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          (yyvsp[(1) - (3)].fal_genericList)->pushBack( new Falcon::String( *(yyvsp[(3) - (3)].stringp) ) );
          (yyval.fal_genericList) = (yyvsp[(1) - (3)].fal_genericList);
@@ -5293,7 +5667,9 @@ yyreduce:
     break;
 
   case 258:
-#line 1651 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 1651 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          // no effect
          (yyval.fal_stat)=0;
@@ -5301,7 +5677,9 @@ yyreduce:
     break;
 
   case 259:
-#line 1656 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 1656 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          COMPILER->raiseError(Falcon::e_syn_directive );
          (yyval.fal_stat)=0;
@@ -5309,28 +5687,36 @@ yyreduce:
     break;
 
   case 262:
-#line 1669 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 1669 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          COMPILER->setDirective( *(yyvsp[(1) - (3)].stringp), *(yyvsp[(3) - (3)].stringp) );
       }
     break;
 
   case 263:
-#line 1673 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 1673 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          COMPILER->setDirective( *(yyvsp[(1) - (3)].stringp), *(yyvsp[(3) - (3)].stringp) );
       }
     break;
 
   case 264:
-#line 1677 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 1677 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          COMPILER->setDirective( *(yyvsp[(1) - (3)].stringp), (yyvsp[(3) - (3)].integer) );
       }
     break;
 
   case 265:
-#line 1691 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 1691 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          // no other action:
          (yyval.fal_stat) = 0;
@@ -5338,7 +5724,9 @@ yyreduce:
     break;
 
   case 266:
-#line 1698 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 1698 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          // no other action:
          (yyval.fal_stat) = 0;
@@ -5346,38 +5734,50 @@ yyreduce:
     break;
 
   case 268:
-#line 1706 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 1706 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { COMPILER->raiseError(Falcon::e_syn_attributes ); }
     break;
 
   case 270:
-#line 1710 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 1710 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { COMPILER->raiseError(Falcon::e_syn_attributes, "", CURRENT_LINE ); }
     break;
 
   case 272:
-#line 1716 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 1716 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
             COMPILER->addAttribute( (yyvsp[(1) - (1)].stringp) );
          }
     break;
 
   case 273:
-#line 1720 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 1720 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
             COMPILER->addAttribute( (yyvsp[(3) - (3)].stringp) );
          }
     break;
 
   case 276:
-#line 1729 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 1729 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
       COMPILER->raiseError(Falcon::e_inv_attrib );
    }
     break;
 
   case 277:
-#line 1740 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 1740 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          Falcon::ClassDef *def = new Falcon::ClassDef;
          // the SYMBOL which names the function goes in the old symbol table, while the parameters
@@ -5408,7 +5808,9 @@ yyreduce:
     break;
 
   case 278:
-#line 1774 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 1774 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          (yyval.fal_stat) = COMPILER->getContext();
          
@@ -5436,26 +5838,34 @@ yyreduce:
     break;
 
   case 280:
-#line 1806 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 1806 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          COMPILER->raiseError(Falcon::e_syn_class );
       }
     break;
 
   case 283:
-#line 1814 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 1814 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { COMPILER->tempLine( CURRENT_LINE ); }
     break;
 
   case 284:
-#line 1815 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 1815 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          COMPILER->raiseContextError(Falcon::e_syn_class, COMPILER->tempLine(), CTX_LINE );
       }
     break;
 
   case 289:
-#line 1832 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 1832 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          Falcon::StmtClass *cls = static_cast<Falcon::StmtClass *>( COMPILER->getContext() );
          // creates or find the symbol.
@@ -5478,31 +5888,41 @@ yyreduce:
     break;
 
   case 290:
-#line 1855 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 1855 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { (yyval.fal_val) = 0; }
     break;
 
   case 291:
-#line 1856 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 1856 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { (yyval.fal_val)=0; }
     break;
 
   case 292:
-#line 1858 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 1858 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
       (yyval.fal_val) = (yyvsp[(2) - (3)].fal_adecl) == 0 ? 0 : new Falcon::Value( (yyvsp[(2) - (3)].fal_adecl) );
    }
     break;
 
   case 296:
-#line 1871 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 1871 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
       COMPILER->addFunction( (yyvsp[(1) - (1)].fal_stat) );
    }
     break;
 
   case 297:
-#line 1874 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 1874 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
       Falcon::StmtClass *cls = static_cast<Falcon::StmtClass *>( COMPILER->getContext() );
       if ( cls->initGiven() ) {
@@ -5524,7 +5944,9 @@ yyreduce:
     break;
 
   case 299:
-#line 1896 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 1896 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          Falcon::StmtClass *cls = static_cast<Falcon::StmtClass *>( COMPILER->getContext() );
          if( cls->initGiven() ) {
@@ -5547,7 +5969,9 @@ yyreduce:
     break;
 
   case 300:
-#line 1920 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 1920 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          COMPILER->popContext();
          COMPILER->popContextSet();
@@ -5556,7 +5980,9 @@ yyreduce:
     break;
 
   case 301:
-#line 1929 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 1929 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
       COMPILER->checkLocalUndefined();
       Falcon::StmtClass *cls = static_cast<Falcon::StmtClass *>( COMPILER->getContext() );
@@ -5580,7 +6006,9 @@ yyreduce:
     break;
 
   case 302:
-#line 1951 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 1951 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
       COMPILER->checkLocalUndefined();
       Falcon::StmtClass *cls = static_cast<Falcon::StmtClass *>( COMPILER->getContext() );
@@ -5608,14 +6036,18 @@ yyreduce:
     break;
 
   case 305:
-#line 1981 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 1981 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
       COMPILER->raiseError(Falcon::e_syn_hasdef );
    }
     break;
 
   case 306:
-#line 1988 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 1988 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          Falcon::StmtClass *cls = static_cast<Falcon::StmtClass *>( COMPILER->getContext() );
          Falcon::ClassDef *clsdef = cls->symbol()->getClassDef();
@@ -5626,7 +6058,9 @@ yyreduce:
     break;
 
   case 307:
-#line 1996 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 1996 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          Falcon::StmtClass *cls = static_cast<Falcon::StmtClass *>( COMPILER->getContext() );
          Falcon::ClassDef *clsdef = cls->symbol()->getClassDef();
@@ -5635,7 +6069,9 @@ yyreduce:
     break;
 
   case 308:
-#line 2002 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2002 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          Falcon::StmtClass *cls = static_cast<Falcon::StmtClass *>( COMPILER->getContext() );
          Falcon::ClassDef *clsdef = cls->symbol()->getClassDef();
@@ -5644,7 +6080,9 @@ yyreduce:
     break;
 
   case 309:
-#line 2008 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2008 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          Falcon::StmtClass *cls = static_cast<Falcon::StmtClass *>( COMPILER->getContext() );
          Falcon::ClassDef *clsdef = cls->symbol()->getClassDef();
@@ -5653,7 +6091,9 @@ yyreduce:
     break;
 
   case 310:
-#line 2021 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2021 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          Falcon::ClassDef *def = new Falcon::ClassDef;
          // the SYMBOL which names the function goes in the old symbol table, while the parameters
@@ -5687,7 +6127,9 @@ yyreduce:
     break;
 
   case 311:
-#line 2055 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2055 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          (yyval.fal_stat) = COMPILER->getContext();
 
@@ -5698,21 +6140,27 @@ yyreduce:
     break;
 
   case 315:
-#line 2072 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2072 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          COMPILER->addEnumerator( *(yyvsp[(1) - (4)].stringp), (yyvsp[(3) - (4)].fal_val) );
       }
     break;
 
   case 316:
-#line 2077 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2077 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          COMPILER->addEnumerator( *(yyvsp[(1) - (2)].stringp) );
       }
     break;
 
   case 319:
-#line 2092 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2092 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          Falcon::ClassDef *def = new Falcon::ClassDef;
          // the SYMBOL which names the function goes in the old symbol table, while the parameters
@@ -5752,7 +6200,9 @@ yyreduce:
     break;
 
   case 320:
-#line 2134 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2134 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          (yyval.fal_stat) = COMPILER->getContext();
          Falcon::StmtClass *cls = static_cast<Falcon::StmtClass *>((yyval.fal_stat));
@@ -5779,21 +6229,27 @@ yyreduce:
     break;
 
   case 322:
-#line 2162 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2162 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          COMPILER->raiseError(Falcon::e_syn_object );
       }
     break;
 
   case 326:
-#line 2174 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2174 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
       COMPILER->addFunction( (yyvsp[(1) - (1)].fal_stat) );
    }
     break;
 
   case 327:
-#line 2177 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2177 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
       Falcon::StmtClass *cls = static_cast<Falcon::StmtClass *>( COMPILER->getContext() );
       if ( cls->initGiven() ) {
@@ -5816,7 +6272,9 @@ yyreduce:
     break;
 
   case 329:
-#line 2205 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2205 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          Falcon::StmtGlobal *glob = new Falcon::StmtGlobal( CURRENT_LINE );
          COMPILER->pushContext( glob );
@@ -5824,7 +6282,9 @@ yyreduce:
     break;
 
   case 330:
-#line 2210 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2210 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          // raise an error if we are not in a local context
          if ( ! COMPILER->isLocalContext() )
@@ -5837,14 +6297,18 @@ yyreduce:
     break;
 
   case 333:
-#line 2225 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2225 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          COMPILER->raiseError( Falcon::e_syn_global );
       }
     break;
 
   case 334:
-#line 2232 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2232 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          // we create (or retrieve) a globalized symbol
          Falcon::Symbol *sym = COMPILER->globalize( (yyvsp[(1) - (1)].stringp) );
@@ -5856,52 +6320,72 @@ yyreduce:
     break;
 
   case 335:
-#line 2247 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2247 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { (yyval.fal_stat) = new Falcon::StmtReturn(LINE, 0); }
     break;
 
   case 336:
-#line 2248 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2248 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { (yyval.fal_stat) = new Falcon::StmtReturn( LINE, (yyvsp[(2) - (3)].fal_val) ); }
     break;
 
   case 337:
-#line 2249 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2249 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { COMPILER->raiseError(Falcon::e_syn_return ); (yyval.fal_stat) = 0; }
     break;
 
   case 338:
-#line 2259 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2259 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { (yyval.fal_val) = new Falcon::Value(); }
     break;
 
   case 339:
-#line 2260 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2260 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { (yyval.fal_val) = new Falcon::Value( true ); }
     break;
 
   case 340:
-#line 2261 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2261 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { (yyval.fal_val) = new Falcon::Value( false ); }
     break;
 
   case 341:
-#line 2262 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2262 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { (yyval.fal_val) = new Falcon::Value( (yyvsp[(1) - (1)].integer) ); }
     break;
 
   case 342:
-#line 2263 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2263 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { (yyval.fal_val) = new Falcon::Value( (yyvsp[(1) - (1)].numeric) ); }
     break;
 
   case 343:
-#line 2264 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2264 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { (yyval.fal_val) = new Falcon::Value( (yyvsp[(1) - (1)].stringp) ); }
     break;
 
   case 344:
-#line 2269 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2269 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          Falcon::Value *val;
          Falcon::Symbol *sym = COMPILER->searchLocalSymbol( (yyvsp[(1) - (1)].stringp) );
@@ -5919,232 +6403,324 @@ yyreduce:
     break;
 
   case 346:
-#line 2287 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2287 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { (yyval.fal_val) = new Falcon::Value(); (yyval.fal_val)->setSelf(); }
     break;
 
   case 347:
-#line 2288 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2288 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { (yyval.fal_val) = new Falcon::Value(); (yyval.fal_val)->setSender(); }
     break;
 
   case 350:
-#line 2301 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2301 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { (yyval.fal_val) = new Falcon::Value(); (yyval.fal_val)->setLBind( (yyvsp[(2) - (2)].stringp) ); /* do not add the symbol to the compiler */ }
     break;
 
   case 351:
-#line 2302 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2302 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { (yyval.fal_val) = new Falcon::Value(); (yyval.fal_val)->setLBind( COMPILER->addString("self") ); /* do not add the symbol to the compiler */ }
     break;
 
   case 352:
-#line 2303 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2303 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { (yyval.fal_val) = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_neg, (yyvsp[(2) - (2)].fal_val) ) ); }
     break;
 
   case 353:
-#line 2304 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2304 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { (yyval.fal_val) = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_fbind, new Falcon::Value((yyvsp[(1) - (3)].stringp)), (yyvsp[(3) - (3)].fal_val)) ); }
     break;
 
   case 354:
-#line 2305 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2305 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { (yyval.fal_val) = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_plus, (yyvsp[(1) - (3)].fal_val), (yyvsp[(3) - (3)].fal_val) ) ); }
     break;
 
   case 355:
-#line 2306 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2306 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { (yyval.fal_val) = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_minus, (yyvsp[(1) - (3)].fal_val), (yyvsp[(3) - (3)].fal_val) ) ); }
     break;
 
   case 356:
-#line 2307 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2307 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { (yyval.fal_val) = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_times, (yyvsp[(1) - (3)].fal_val), (yyvsp[(3) - (3)].fal_val) ) ); }
     break;
 
   case 357:
-#line 2308 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2308 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { (yyval.fal_val) = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_divide, (yyvsp[(1) - (3)].fal_val), (yyvsp[(3) - (3)].fal_val) ) ); }
     break;
 
   case 358:
-#line 2309 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2309 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { (yyval.fal_val) = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_modulo, (yyvsp[(1) - (3)].fal_val), (yyvsp[(3) - (3)].fal_val) ) ); }
     break;
 
   case 359:
-#line 2310 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2310 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { (yyval.fal_val) = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_power, (yyvsp[(1) - (3)].fal_val), (yyvsp[(3) - (3)].fal_val) ) ); }
     break;
 
   case 360:
-#line 2311 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2311 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { (yyval.fal_val) = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_bin_and, (yyvsp[(1) - (3)].fal_val), (yyvsp[(3) - (3)].fal_val) ) ); }
     break;
 
   case 361:
-#line 2312 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2312 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { (yyval.fal_val) = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_bin_or, (yyvsp[(1) - (3)].fal_val), (yyvsp[(3) - (3)].fal_val) ) ); }
     break;
 
   case 362:
-#line 2313 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2313 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { (yyval.fal_val) = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_bin_xor, (yyvsp[(1) - (3)].fal_val), (yyvsp[(3) - (3)].fal_val) ) ); }
     break;
 
   case 363:
-#line 2314 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2314 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { (yyval.fal_val) = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_shift_left, (yyvsp[(1) - (3)].fal_val), (yyvsp[(3) - (3)].fal_val) ) ); }
     break;
 
   case 364:
-#line 2315 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2315 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { (yyval.fal_val) = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_shift_right, (yyvsp[(1) - (3)].fal_val), (yyvsp[(3) - (3)].fal_val) ) ); }
     break;
 
   case 365:
-#line 2316 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2316 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { (yyval.fal_val) = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_bin_not, (yyvsp[(2) - (2)].fal_val) ) ); }
     break;
 
   case 366:
-#line 2317 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2317 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { (yyval.fal_val) = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_neq, (yyvsp[(1) - (3)].fal_val), (yyvsp[(3) - (3)].fal_val) ) ); }
     break;
 
   case 367:
-#line 2318 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2318 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { (yyval.fal_val) = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_post_inc, (yyvsp[(1) - (2)].fal_val) ) ); }
     break;
 
   case 368:
-#line 2319 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2319 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { (yyval.fal_val) = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_pre_inc, (yyvsp[(2) - (2)].fal_val) ) ); }
     break;
 
   case 369:
-#line 2320 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2320 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { (yyval.fal_val) = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_post_dec, (yyvsp[(1) - (2)].fal_val) ) ); }
     break;
 
   case 370:
-#line 2321 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2321 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { (yyval.fal_val) = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_pre_dec, (yyvsp[(2) - (2)].fal_val) ) ); }
     break;
 
   case 371:
-#line 2322 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2322 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { (yyval.fal_val) = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_eq, (yyvsp[(1) - (3)].fal_val), (yyvsp[(3) - (3)].fal_val) ) ); }
     break;
 
   case 372:
-#line 2323 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2323 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { (yyval.fal_val) = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_gt, (yyvsp[(1) - (3)].fal_val), (yyvsp[(3) - (3)].fal_val) ) ); }
     break;
 
   case 373:
-#line 2324 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2324 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { (yyval.fal_val) = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_lt, (yyvsp[(1) - (3)].fal_val), (yyvsp[(3) - (3)].fal_val) ) ); }
     break;
 
   case 374:
-#line 2325 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2325 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { (yyval.fal_val) = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_ge, (yyvsp[(1) - (3)].fal_val), (yyvsp[(3) - (3)].fal_val) ) ); }
     break;
 
   case 375:
-#line 2326 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2326 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { (yyval.fal_val) = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_le, (yyvsp[(1) - (3)].fal_val), (yyvsp[(3) - (3)].fal_val) ) ); }
     break;
 
   case 376:
-#line 2327 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2327 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { (yyval.fal_val) = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_and, (yyvsp[(1) - (3)].fal_val), (yyvsp[(3) - (3)].fal_val) ) ); }
     break;
 
   case 377:
-#line 2328 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2328 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { (yyval.fal_val) = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_or, (yyvsp[(1) - (3)].fal_val), (yyvsp[(3) - (3)].fal_val) ) ); }
     break;
 
   case 378:
-#line 2329 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2329 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { (yyval.fal_val) = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_not, (yyvsp[(2) - (2)].fal_val) ) ); }
     break;
 
   case 379:
-#line 2330 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2330 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { (yyval.fal_val) = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_has, (yyvsp[(1) - (3)].fal_val), (yyvsp[(3) - (3)].fal_val) ) ); }
     break;
 
   case 380:
-#line 2331 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2331 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { (yyval.fal_val) = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_hasnt, (yyvsp[(1) - (3)].fal_val), (yyvsp[(3) - (3)].fal_val) ) ); }
     break;
 
   case 381:
-#line 2332 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2332 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { (yyval.fal_val) = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_in, (yyvsp[(1) - (3)].fal_val), (yyvsp[(3) - (3)].fal_val) ) ); }
     break;
 
   case 382:
-#line 2333 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2333 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { (yyval.fal_val) = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_notin, (yyvsp[(1) - (3)].fal_val), (yyvsp[(3) - (3)].fal_val) ) ); }
     break;
 
   case 383:
-#line 2334 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2334 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { (yyval.fal_val) = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_provides, (yyvsp[(1) - (3)].fal_val), new Falcon::Value( (yyvsp[(3) - (3)].stringp) ) ) ); }
     break;
 
   case 384:
-#line 2335 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2335 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { (yyval.fal_val) = new Falcon::Value( (yyvsp[(2) - (2)].fal_val) ); }
     break;
 
   case 385:
-#line 2336 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2336 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { (yyval.fal_val) = new Falcon::Value( (Falcon::Value *) 0 ); }
     break;
 
   case 386:
-#line 2337 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2337 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { (yyval.fal_val) = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_strexpand, (yyvsp[(2) - (2)].fal_val) ) ); }
     break;
 
   case 387:
-#line 2338 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2338 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { (yyval.fal_val) = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_indirect, (yyvsp[(2) - (2)].fal_val) ) ); }
     break;
 
   case 388:
-#line 2339 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2339 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { (yyval.fal_val) = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_eval, (yyvsp[(2) - (2)].fal_val) ) ); }
     break;
 
   case 389:
-#line 2340 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2340 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { (yyval.fal_val) = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_oob, (yyvsp[(2) - (2)].fal_val) ) ); }
     break;
 
   case 390:
-#line 2341 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2341 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { (yyval.fal_val) = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_deoob, (yyvsp[(2) - (2)].fal_val) ) ); }
     break;
 
   case 391:
-#line 2342 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2342 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { (yyval.fal_val) = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_isoob, (yyvsp[(2) - (2)].fal_val) ) ); }
     break;
 
   case 392:
-#line 2343 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2343 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { (yyval.fal_val) = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_xoroob, (yyvsp[(2) - (2)].fal_val) ) ); }
     break;
 
   case 399:
-#line 2351 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2351 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          Falcon::Expression *exp = new Falcon::Expression( Falcon::Expression::t_array_access, (yyvsp[(1) - (2)].fal_val), (yyvsp[(2) - (2)].fal_val) );
          (yyval.fal_val) = new Falcon::Value( exp );
@@ -6152,14 +6728,18 @@ yyreduce:
     break;
 
   case 400:
-#line 2356 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2356 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
       (yyval.fal_val) = new Falcon::Value( (yyvsp[(1) - (1)].fal_adecl) );
    }
     break;
 
   case 401:
-#line 2360 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2360 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
       Falcon::Expression *exp = new Falcon::Expression( Falcon::Expression::t_array_access, (yyvsp[(1) - (4)].fal_val), (yyvsp[(3) - (4)].fal_val) );
       (yyval.fal_val) = new Falcon::Value( exp );
@@ -6167,7 +6747,9 @@ yyreduce:
     break;
 
   case 402:
-#line 2365 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2365 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          Falcon::Expression *exp = new Falcon::Expression( Falcon::Expression::t_array_byte_access, (yyvsp[(1) - (5)].fal_val), (yyvsp[(4) - (5)].fal_val) );
          (yyval.fal_val) = new Falcon::Value( exp );
@@ -6175,7 +6757,9 @@ yyreduce:
     break;
 
   case 403:
-#line 2371 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2371 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          Falcon::Expression *exp = new Falcon::Expression( Falcon::Expression::t_obj_access, (yyvsp[(1) - (3)].fal_val), new Falcon::Value( (yyvsp[(3) - (3)].stringp) ) );
          if ( (yyvsp[(3) - (3)].stringp)->getCharAt(0) == '_' && ! (yyvsp[(1) - (3)].fal_val)->isSelf() )
@@ -6187,7 +6771,9 @@ yyreduce:
     break;
 
   case 406:
-#line 2383 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2383 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
       COMPILER->defineVal( (yyvsp[(1) - (3)].fal_val) );
       (yyval.fal_val) = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_assign, (yyvsp[(1) - (3)].fal_val), (yyvsp[(3) - (3)].fal_val) ) );
@@ -6195,7 +6781,9 @@ yyreduce:
     break;
 
   case 407:
-#line 2388 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2388 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
       COMPILER->defineVal( (yyvsp[(1) - (5)].fal_val) );
       (yyvsp[(5) - (5)].fal_adecl)->pushFront( (yyvsp[(3) - (5)].fal_val) );
@@ -6205,102 +6793,138 @@ yyreduce:
     break;
 
   case 408:
-#line 2395 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2395 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { (yyval.fal_val) = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_aadd, (yyvsp[(1) - (3)].fal_val), (yyvsp[(3) - (3)].fal_val) ) ); }
     break;
 
   case 409:
-#line 2396 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2396 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { (yyval.fal_val) = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_asub, (yyvsp[(1) - (3)].fal_val), (yyvsp[(3) - (3)].fal_val) ) ); }
     break;
 
   case 410:
-#line 2397 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2397 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { (yyval.fal_val) = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_amul, (yyvsp[(1) - (3)].fal_val), (yyvsp[(3) - (3)].fal_val) ) ); }
     break;
 
   case 411:
-#line 2398 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2398 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { (yyval.fal_val) = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_adiv, (yyvsp[(1) - (3)].fal_val), (yyvsp[(3) - (3)].fal_val) ) ); }
     break;
 
   case 412:
-#line 2399 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2399 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { (yyval.fal_val) = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_amod, (yyvsp[(1) - (3)].fal_val), (yyvsp[(3) - (3)].fal_val) ) ); }
     break;
 
   case 413:
-#line 2400 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2400 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { (yyval.fal_val) = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_apow, (yyvsp[(1) - (3)].fal_val), (yyvsp[(3) - (3)].fal_val) ) ); }
     break;
 
   case 414:
-#line 2401 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2401 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { (yyval.fal_val) = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_aband, (yyvsp[(1) - (3)].fal_val), (yyvsp[(3) - (3)].fal_val) ) ); }
     break;
 
   case 415:
-#line 2402 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2402 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { (yyval.fal_val) = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_abor, (yyvsp[(1) - (3)].fal_val), (yyvsp[(3) - (3)].fal_val) ) ); }
     break;
 
   case 416:
-#line 2403 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2403 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { (yyval.fal_val) = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_abxor, (yyvsp[(1) - (3)].fal_val), (yyvsp[(3) - (3)].fal_val) ) ); }
     break;
 
   case 417:
-#line 2404 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2404 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { (yyval.fal_val) = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_ashl, (yyvsp[(1) - (3)].fal_val), (yyvsp[(3) - (3)].fal_val) ) ); }
     break;
 
   case 418:
-#line 2405 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2405 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { (yyval.fal_val) = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_ashr, (yyvsp[(1) - (3)].fal_val), (yyvsp[(3) - (3)].fal_val) ) ); }
     break;
 
   case 419:
-#line 2406 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2406 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {(yyval.fal_val)=(yyvsp[(2) - (3)].fal_val);}
     break;
 
   case 420:
-#line 2411 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2411 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          (yyval.fal_val) = new Falcon::Value( new Falcon::RangeDecl( new Falcon::Value( (Falcon::int64) 0 ) ) );
       }
     break;
 
   case 421:
-#line 2414 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2414 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          (yyval.fal_val) = new Falcon::Value( new Falcon::RangeDecl( (yyvsp[(2) - (4)].fal_val) ) );
       }
     break;
 
   case 422:
-#line 2417 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2417 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          (yyval.fal_val) = new Falcon::Value( new Falcon::RangeDecl( new Falcon::Value( (Falcon::int64) 0 ), (yyvsp[(3) - (4)].fal_val) ) );
       }
     break;
 
   case 423:
-#line 2420 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2420 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          (yyval.fal_val) = new Falcon::Value( new Falcon::RangeDecl( (yyvsp[(2) - (5)].fal_val), (yyvsp[(4) - (5)].fal_val) ) );
       }
     break;
 
   case 424:
-#line 2423 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2423 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          (yyval.fal_val) = new Falcon::Value( new Falcon::RangeDecl( (yyvsp[(2) - (7)].fal_val), (yyvsp[(4) - (7)].fal_val), (yyvsp[(6) - (7)].fal_val) ) );
       }
     break;
 
   case 425:
-#line 2430 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2430 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          (yyval.fal_val) = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_funcall,
                                       (yyvsp[(1) - (4)].fal_val), new Falcon::Value( (yyvsp[(3) - (4)].fal_adecl) ) ) );
@@ -6308,19 +6932,25 @@ yyreduce:
     break;
 
   case 426:
-#line 2436 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2436 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          (yyval.fal_val) = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_funcall, (yyvsp[(1) - (3)].fal_val), 0 ) );
       }
     break;
 
   case 427:
-#line 2440 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2440 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { COMPILER->tempLine( CURRENT_LINE ); }
     break;
 
   case 428:
-#line 2441 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2441 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          delete (yyvsp[(3) - (6)].fal_adecl);
          COMPILER->raiseContextError(Falcon::e_syn_funcall, COMPILER->tempLine(), CTX_LINE );
@@ -6329,7 +6959,9 @@ yyreduce:
     break;
 
   case 429:
-#line 2450 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2450 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          Falcon::FuncDef *def = new Falcon::FuncDef( 0, 0 );
          // set the def as a lambda.
@@ -6362,28 +6994,36 @@ yyreduce:
     break;
 
   case 430:
-#line 2484 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2484 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
             (yyval.fal_val) = COMPILER->closeClosure();
          }
     break;
 
   case 432:
-#line 2492 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2492 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          COMPILER->raiseContextError(Falcon::e_syn_funcdecl, LINE, CTX_LINE );
       }
     break;
 
   case 433:
-#line 2496 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2496 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          COMPILER->raiseError(Falcon::e_syn_funcdecl );
       }
     break;
 
   case 434:
-#line 2503 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2503 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          Falcon::FuncDef *def = new Falcon::FuncDef( 0, 0 );
          // set the def as a lambda.
@@ -6415,7 +7055,9 @@ yyreduce:
     break;
 
   case 435:
-#line 2536 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2536 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
             Falcon::StmtFunction *func = static_cast<Falcon::StmtFunction *>(COMPILER->getContext());
             (yyval.fal_val) = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_lambda ,
@@ -6426,7 +7068,9 @@ yyreduce:
     break;
 
   case 436:
-#line 2548 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2548 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          Falcon::FuncDef *def = new Falcon::FuncDef( 0, 0 );
          // set the def as a lambda.
@@ -6459,7 +7103,9 @@ yyreduce:
     break;
 
   case 437:
-#line 2580 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2580 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
             COMPILER->addStatement( new Falcon::StmtReturn( LINE, (yyvsp[(5) - (5)].fal_val) ) );
             COMPILER->checkLocalUndefined();
@@ -6468,14 +7114,18 @@ yyreduce:
     break;
 
   case 439:
-#line 2591 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2591 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          COMPILER->raiseError( Falcon::e_syn_lambda );
       }
     break;
 
   case 440:
-#line 2600 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2600 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
       (yyval.fal_val) = new Falcon::Value( new
          Falcon::Expression( Falcon::Expression::t_iif, (yyvsp[(1) - (5)].fal_val), (yyvsp[(3) - (5)].fal_val), (yyvsp[(5) - (5)].fal_val) ) );
@@ -6483,7 +7133,9 @@ yyreduce:
     break;
 
   case 441:
-#line 2605 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2605 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
       delete (yyvsp[(1) - (5)].fal_val);
       delete (yyvsp[(3) - (5)].fal_val);
@@ -6493,7 +7145,9 @@ yyreduce:
     break;
 
   case 442:
-#line 2612 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2612 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
       delete (yyvsp[(1) - (4)].fal_val);
       delete (yyvsp[(3) - (4)].fal_val);
@@ -6503,7 +7157,9 @@ yyreduce:
     break;
 
   case 443:
-#line 2619 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2619 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          delete (yyvsp[(1) - (3)].fal_val);
          COMPILER->raiseError(Falcon::e_syn_iif, CURRENT_LINE );
@@ -6512,19 +7168,25 @@ yyreduce:
     break;
 
   case 444:
-#line 2628 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2628 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { (yyval.fal_adecl) = new Falcon::ArrayDecl(); }
     break;
 
   case 445:
-#line 2630 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2630 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          (yyval.fal_adecl) = (yyvsp[(2) - (3)].fal_adecl);
       }
     break;
 
   case 446:
-#line 2634 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2634 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          COMPILER->raiseContextError( Falcon::e_syn_arraydecl, CURRENT_LINE, CTX_LINE );
          (yyval.fal_adecl) = (yyvsp[(2) - (3)].fal_adecl);
@@ -6532,19 +7194,25 @@ yyreduce:
     break;
 
   case 447:
-#line 2641 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2641 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {  (yyval.fal_val) = new Falcon::Value( new Falcon::ArrayDecl() ); }
     break;
 
   case 448:
-#line 2643 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2643 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          (yyval.fal_val) = new Falcon::Value( (yyvsp[(2) - (3)].fal_adecl) );
       }
     break;
 
   case 449:
-#line 2647 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2647 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          COMPILER->raiseContextError( Falcon::e_syn_arraydecl, CURRENT_LINE, CTX_LINE );
          (yyval.fal_val) = new Falcon::Value( (yyvsp[(2) - (3)].fal_adecl) );
@@ -6552,17 +7220,23 @@ yyreduce:
     break;
 
   case 450:
-#line 2655 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2655 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {  (yyval.fal_val) = new Falcon::Value( new Falcon::DictDecl() ); }
     break;
 
   case 451:
-#line 2656 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2656 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { (yyval.fal_val) = new Falcon::Value( (yyvsp[(2) - (3)].fal_ddecl) ); }
     break;
 
   case 452:
-#line 2658 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2658 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          COMPILER->raiseContextError( Falcon::e_syn_dictdecl, LINE, CTX_LINE );
          (yyval.fal_val) = new Falcon::Value( (yyvsp[(2) - (4)].fal_ddecl) );
@@ -6570,27 +7244,37 @@ yyreduce:
     break;
 
   case 453:
-#line 2665 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2665 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { (yyval.fal_adecl) = new Falcon::ArrayDecl(); (yyval.fal_adecl)->pushBack( (yyvsp[(1) - (1)].fal_val) ); }
     break;
 
   case 454:
-#line 2666 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2666 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { (yyvsp[(1) - (3)].fal_adecl)->pushBack( (yyvsp[(3) - (3)].fal_val) ); (yyval.fal_adecl) = (yyvsp[(1) - (3)].fal_adecl); }
     break;
 
   case 455:
-#line 2670 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2670 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { (yyval.fal_adecl) = new Falcon::ArrayDecl(); (yyval.fal_adecl)->pushBack( (yyvsp[(1) - (1)].fal_val) ); }
     break;
 
   case 456:
-#line 2671 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2671 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { (yyvsp[(1) - (3)].fal_adecl)->pushBack( (yyvsp[(3) - (3)].fal_val) ); (yyval.fal_adecl) = (yyvsp[(1) - (3)].fal_adecl); }
     break;
 
   case 459:
-#line 2678 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2678 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          COMPILER->defineVal( (yyvsp[(1) - (1)].fal_val) );
          Falcon::ArrayDecl *ad = new Falcon::ArrayDecl();
@@ -6600,7 +7284,9 @@ yyreduce:
     break;
 
   case 460:
-#line 2684 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2684 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     {
          COMPILER->defineVal( (yyvsp[(3) - (3)].fal_val) );
          (yyvsp[(1) - (3)].fal_adecl)->pushBack( (yyvsp[(3) - (3)].fal_val) );
@@ -6608,18 +7294,23 @@ yyreduce:
     break;
 
   case 461:
-#line 2691 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2691 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { (yyval.fal_ddecl) = new Falcon::DictDecl(); (yyval.fal_ddecl)->pushBack( (yyvsp[(1) - (3)].fal_val), (yyvsp[(3) - (3)].fal_val) ); }
     break;
 
   case 462:
-#line 2692 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1455 of yacc.c  */
+#line 2692 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
     { (yyvsp[(1) - (5)].fal_ddecl)->pushBack( (yyvsp[(3) - (5)].fal_val), (yyvsp[(5) - (5)].fal_val) ); (yyval.fal_ddecl) = (yyvsp[(1) - (5)].fal_ddecl); }
     break;
 
 
-/* Line 1267 of yacc.c.  */
-#line 6623 "/home/gian/Progetti/falcon/core/engine/src_parser.cpp"
+
+/* Line 1455 of yacc.c  */
+#line 7314 "/export/medusa/gniccola/falcon/core/engine/src_parser.cpp"
       default: break;
     }
   YY_SYMBOL_PRINT ("-> $$ =", yyr1[yyn], &yyval, &yyloc);
@@ -6629,7 +7320,6 @@ yyreduce:
   YY_STACK_PRINT (yyss, yyssp);
 
   *++yyvsp = yyval;
-
 
   /* Now `shift' the result of the reduction.  Determine what state
      that goes to, based on the state we popped back to and the rule
@@ -6695,7 +7385,7 @@ yyerrlab:
 
   if (yyerrstatus == 3)
     {
-      /* If just tried and failed to reuse look-ahead token after an
+      /* If just tried and failed to reuse lookahead token after an
 	 error, discard it.  */
 
       if (yychar <= YYEOF)
@@ -6712,7 +7402,7 @@ yyerrlab:
 	}
     }
 
-  /* Else will try to reuse look-ahead token after shifting the error
+  /* Else will try to reuse lookahead token after shifting the error
      token.  */
   goto yyerrlab1;
 
@@ -6769,9 +7459,6 @@ yyerrlab1:
       YY_STACK_PRINT (yyss, yyssp);
     }
 
-  if (yyn == YYFINAL)
-    YYACCEPT;
-
   *++yyvsp = yylval;
 
 
@@ -6796,7 +7483,7 @@ yyabortlab:
   yyresult = 1;
   goto yyreturn;
 
-#ifndef yyoverflow
+#if !defined(yyoverflow) || YYERROR_VERBOSE
 /*-------------------------------------------------.
 | yyexhaustedlab -- memory exhaustion comes here.  |
 `-------------------------------------------------*/
@@ -6807,7 +7494,7 @@ yyexhaustedlab:
 #endif
 
 yyreturn:
-  if (yychar != YYEOF && yychar != YYEMPTY)
+  if (yychar != YYEMPTY)
      yydestruct ("Cleanup: discarding lookahead",
 		 yytoken, &yylval);
   /* Do not reclaim the symbols of the rule which action triggered
@@ -6833,7 +7520,9 @@ yyreturn:
 }
 
 
-#line 2696 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+
+/* Line 1675 of yacc.c  */
+#line 2696 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
  /* c code */
 
 

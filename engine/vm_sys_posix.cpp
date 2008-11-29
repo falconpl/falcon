@@ -35,7 +35,7 @@ SystemData::SystemData()
    m_sysData = (struct VM_SYS_DATA*) memAlloc( sizeof( struct VM_SYS_DATA ) );
 
    // create the dup'd suspend pipe.
-   if( pipe( m_sysData->interruptPipe ) == 0 )
+   if( pipe( m_sysData->interruptPipe ) != 0 )
    {
       printf( "Falcon: fatal allocation error in creating pipe at %s:%d\n", __FILE__, __LINE__ );
       exit(1);
