@@ -10,15 +10,19 @@ Binary downloads, documentation, support and so on is available through
 the following link:
 
   http://www.falconpl.org/index.ftd?page_id=prjs&prj_id=sdl&sect_id=main
+  
 
 BUILDING
 ========
 
-  To build the Falcon SDL, you'll need a well setup Falcon Development
-Environment, as specified in the relative document at
+  FSDL can be built direclty against installed Falcon Programming Language
+development files (they come with the installers for the various platfomrs, 
+or are available as separate packages of various GNU/Linux based 
+distributions). Alternatively, they can be built or through the 
+Falcon Development Environment:
 
-   http://www.falconpl.org/wiki/tiki-index.php?page=The+build+environment
-
+   http://www.falconpl.org/devenv
+   
   Once the Core is in place, you should be sure you have installed and 
 configured all the SDL libraries needed for this module:
 
@@ -33,7 +37,24 @@ packages.
 
   You may obtain the libraries in binary (with headers) and source format from
 
-   http://www.libsdl.com
+      http://www.libsdl.com
+      
+  The FSDL project at falconpl.org site ships a set of pre-configured 
+
+
+FOR PACKAGERS
+=============
+
+  This module respects Falcon Module Standards and can be automatically
+built and installed when Falcon Development files are available.
+
+  To override the default installation directories (which are located where
+Falcon modules are currently installed) use the CMAKE option 
+    
+     -DINSTDIR=...
+     
+  This allows installation of modules on temporary paths where they can
+be picked by the packaging system.
 
 
 On MS-WINDOWS
