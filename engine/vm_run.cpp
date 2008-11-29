@@ -1232,7 +1232,7 @@ void opcodeHandler_POW( register VMachine *vm )
          return;
    }
 
-   if ( errno != 0  )
+   if ( errno != 0 || powval == NAN || powval == EDOM )
    {
       vm->raiseRTError( new MathError( ErrorParam( e_domain ).origin( e_orig_vm ) ) );
    }

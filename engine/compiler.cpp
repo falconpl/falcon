@@ -28,6 +28,8 @@
 #include <falcon/stringstream.h>
 #include "core_module/core_module.h"
 
+#include <math.h>
+
 namespace Falcon
 {
 
@@ -785,6 +787,7 @@ void Compiler::addPredefs()
    addIntConstant( "MethodType", FLC_ITEM_METHOD );
    addIntConstant( "TableMethodType", FLC_ITEM_TABMETHOD );
    addIntConstant( "ClassMethodType", FLC_ITEM_CLSMETHOD );
+  
 }
 
 void Compiler::addIntConstant( const String &name, int64 value, uint32 line )

@@ -164,7 +164,7 @@ void inspect_internal( VMachine *vm, const Item *elem, int32 level, int32 maxLev
                stream->writeString( temp );
                temp = "";
             }
-            if ( count == maxSize )
+            if ( count == (uint32) maxSize )
                stream->writeString( " ... " );
             stream->writeString( "]" );
          }
