@@ -150,7 +150,7 @@ int ProcessEnum::next( String &name, uint64 &pid, uint64 &ppid, String &path )
    }
 
    // read also the command line, which may be missing.
-   snprintf( statent, 255, "/proc/%s/cmdline", de->d_name );
+   snprintf( statent, sizeof(statent), "/proc/%s/cmdline", de->d_name );
    fp = fopen( statent, "r" );
    if ( fp == NULL || fscanf( fp, "%s", szName ) != 1 )
    {
