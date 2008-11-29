@@ -196,11 +196,6 @@ FALCON_FUNC  val_numeric ( ::Falcon::VMachine *vm )
       case FLC_ITEM_INT:
       {
          int64 num = to_numeric->asInteger();
-         if ( num > 9.223372036854775808e18 || num < -9.223372036854775808e18 )
-         {
-            vm->raiseRTError( new MathError( ErrorParam( e_domain, __LINE__ ) ) );
-            return;
-         }
          vm->retval( (numeric)num );
       }
       break;

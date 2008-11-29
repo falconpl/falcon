@@ -133,7 +133,7 @@ bool _getEnv( const String &var, String &result )
    AutoCString convertBuf( var );
    
    char *value = getenv( convertBuf.c_str() );
-   if ( value != 0 )
+   if ( value != 0 && value[0] != '\0' )
    {
       TranscodeFromString( value, "utf-8", result );
       return true;
@@ -147,7 +147,13 @@ bool _setEnv( const String &var, const String &value )
    // in unix system, we have at worst UTF-8 var names.
    String tmp = var + "=" + value;
    AutoCString env( tmp );
-   return (putenv( env.c_str() ) == 0);
+   
+   // Solaris putenv requires that memory is permanently stored in the system.
+
+   char *buffer = (char*) malloc( env.length() + 1 );
+   memcpy( buffer, env.c_str(), env.length() );
+   buffer[ env.length() ] = '\0';
+   return (putenv( buffer ) == 0);
 
 }
 
@@ -155,9 +161,14 @@ bool _unsetEnv( const String &var )
 {
    // in unix system, we have at worst UTF-8 var names.
    String sVarValue = var + "=";
-   AutoCString buffer( sVarValue );
-   bool result = putenv( (char*) buffer.c_str()) == 0;
-   return result;
+   AutoCString env( sVarValue );
+
+   // Solaris putenv requires that memory is permanently stored in the system.
+
+   char *buffer = (char*) malloc( env.length() + 1 );
+   memcpy( buffer, env.c_str(), env.length() );
+   buffer[ env.length() ] = '\0';
+   return (putenv( buffer ) == 0);
 }
 
 }
