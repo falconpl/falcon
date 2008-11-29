@@ -25,6 +25,7 @@
 #include <falcon/memory.h>
 
 #include <stdio.h>
+#include <errno.h>
 
 #ifndef WIN32
    #include <unistd.h>
@@ -64,7 +65,13 @@ FALCON_FUNC  input ( ::Falcon::VMachine *vm )
 
    while( size < 511 )
    {
-      ::read( STDIN_FILENO, mem + size, 1 );
+      if ( ::read( STDIN_FILENO, mem + size, 1 ) != 1 )
+      {
+         vm->raiseModError( new IoError( ErrorParam( e_io_error )
+            .origin( e_orig_runtime )
+            .sysError( errno ) ) );
+         return;
+      }
 
       if( mem[size] == '\n' ) {
          mem[ size ] = 0;

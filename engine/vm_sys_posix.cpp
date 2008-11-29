@@ -19,6 +19,8 @@
 #include <falcon/memory.h>
 #include <unistd.h>
 #include <poll.h>
+#include <stdio.h>
+
 // if poll.h does not define POLLIN, then it's in stropts.
 #ifndef POLLIN
    #include <stropts.h>
@@ -33,7 +35,11 @@ SystemData::SystemData()
    m_sysData = (struct VM_SYS_DATA*) memAlloc( sizeof( struct VM_SYS_DATA ) );
 
    // create the dup'd suspend pipe.
-   pipe( m_sysData->interruptPipe );
+   if( pipe( m_sysData->interruptPipe ) == 0 )
+   {
+      printf( "Falcon: fatal allocation error in creating pipe at %s:%d\n", __FILE__, __LINE__ );
+      exit(1);
+   }
 }
 
 
@@ -63,7 +69,12 @@ bool SystemData::interrupted() const
 
 void SystemData::interrupt()
 {
-   write( m_sysData->interruptPipe[1], "0", 1 );
+   if( write( m_sysData->interruptPipe[1], "0", 1 ) != 1 )
+   {
+      printf( "Falcon: fatal error in writing to the interrupt pipe at %s:%d\n", __FILE__, __LINE__ );
+      exit(1);
+   }
+
 }
 
 void SystemData::resetInterrupt()
@@ -78,7 +89,11 @@ void SystemData::resetInterrupt()
       if( res == 1 )
       {
          char dt;
-         read( m_sysData->interruptPipe[0], &dt, 1 );
+         if( read( m_sysData->interruptPipe[0], &dt, 1 ) < 0 )
+         {
+            printf( "Falcon: fatal error in reading from the interrupt pipe at %s:%d\n", __FILE__, __LINE__ );
+            exit(1);
+         }
          continue;
       }
 

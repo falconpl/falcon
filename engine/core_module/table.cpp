@@ -1221,7 +1221,7 @@ FALCON_FUNC  Table_insertPage ( ::Falcon::VMachine *vm )
    Item* i_pos = vm->param(0);
    Item* i_data = vm->param(1);
 
-   if ( i_pos != 0 && ! ( i_pos->isOrdinal() || i_pos->isNil() )
+   if ( (i_pos != 0 && ! ( i_pos->isOrdinal() || i_pos->isNil() ))
       || ( i_data != 0 && ! i_data->isArray() ) )
    {
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
@@ -1356,7 +1356,7 @@ FALCON_FUNC  Table_resetColumn ( ::Falcon::VMachine *vm )
    Item* i_resVal = vm->param(3);
 
    if ( i_col == 0 || !(i_col->isOrdinal() || i_col->isString() ) ||
-        i_row != 0 && !(i_row->isOrdinal() || i_row->isRange() )
+        (i_row != 0 && !(i_row->isOrdinal() || i_row->isRange() ))
    )
    {
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
