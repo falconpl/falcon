@@ -11,6 +11,12 @@ LINK_DIRECTORIES(BEFORE ${TARGET_DIR}/${TARGET_LIB_DIR} )
 
 IF(UNIX OR MAC)
    SET(SYS_SPECIFIC socket_sys_unix.cpp)
+
+   # On Solaris, we need also socket lib
+   IF( "${CMAKE_SYSTEM_NAME}" STREQUAL "SunOS" )
+      SET(SYS_SPECIFIC_LIBS /lib/libsocket.so)
+   ENDIF( "${CMAKE_SYSTEM_NAME}" STREQUAL "SunOS" )
+
 ELSE(UNIX OR MAC)
    #We must configure socket_sys_win.cpp.in with the correct location of SDK
    IF( "${CMAKE_GENERATOR}" STREQUAL "MinGW Makefiles" )
@@ -37,7 +43,7 @@ ADD_LIBRARY( socket MODULE
 )
 
 #Link
-TARGET_LINK_LIBRARIES(socket falcon_engine)
+TARGET_LINK_LIBRARIES(socket falcon_engine ${SYS_SPECIFIC_LIBS} )
 IF(WIN32)
    TARGET_LINK_LIBRARIES(socket ws2_32)
 ENDIF(WIN32)
