@@ -35,6 +35,7 @@ object MyEventManager from SDLEventHandler
       > strReplicate( " ", 60 )
       > "== Quit! =="
       self.quitRequest = true
+      self.PushUserEvent( 0, "Quit" )
    end
 
    function onExpose()

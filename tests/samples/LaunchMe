@@ -39,9 +39,9 @@ object MyEventManager from SDLEventHandler
          global font, screen, color
          screen.BlitSurface( self.surf1, saved, nil )
       end
-color.r, color.g, color.b = 20, 240, 240
-      inspect( color )
-      saved.BlitSurface( self.surf1, screen, self.surf1 )
+      
+      color.r, color.g, color.b = 20, 240, 240
+      saved.BlitSurface( nil, screen, self.surf1 )
       dataImage = font.Render_Blended( @ "X=$x, Y=$y, XRel=$xrel, YRel=$yrel", color )
       dataImage.BlitSurface( nil, screen, self.surf1 )
       screen.UpdateRect()
@@ -67,10 +67,10 @@ color.r, color.g, color.b = 20, 240, 240
          screen.BlitSurface( self.surf2, saved, nil )
       end
 
-      saved.BlitSurface( self.surf2, screen, self.surf1 )
+      saved.BlitSurface( nil, screen, self.surf2 )
       dataImage = font.Render_Blended( item.toString(), color )
       dataImage.BlitSurface( nil, screen, self.surf2 )
-      screen.UpdateRect( self.surf2 )
+      screen.UpdateRect()
       > item, strReplicate( " ", 60 )
    end
 end
@@ -87,15 +87,16 @@ function blinker( screen )
    color = white
 
    time = 0
+   count = 0
    while not MyEventManager.quitRequest
       sleep( 0.8 )
       color = (color == white ? black : white )
       screen.FillRect( r, color )
       screen.UpdateRect( r )
       time ++
-      if time > 8
+      if time > 4
          time = 0
-         SDLEventHandler.PushUserEvent( 0, "Reset..." )
+         SDLEventHandler.PushUserEvent( 0, "Time event " + (count ++) +"..." )
       end
    end
 end
@@ -123,7 +124,7 @@ try
 
    MIX.OpenAudio( 44100, AUDIO.S16, 2, 4096 )
    music = MIX.LoadMUS( prefix + "fading.ogg" )
-   music.Play( fadeIn| 6 )
+   music.Play( loops| -1, fadeIn| 6 )
    
    // FONT ======================
    a = TTF.InitAuto()
@@ -133,7 +134,6 @@ try
    font.SetFontStyle( TTF.STYLE_BOLD || TTF.STYLE_ITALIC )
 
    screen.UpdateRect()
-
 
    pixels = band.pixels
    for bid in [0:640]
@@ -149,6 +149,12 @@ try
 
    // make a solid rectangle
    launch blinker( screen )
+   
+   > "Trying to load a BMP image:\n"
+   img = IMAGE.Load( prefix + "FalconLogo1.bmp" )
+   img.BlitSurface( nil, screen, SDLRect(0, 390, 640, 480 ) )
+   screen.UpdateRect()
+
 
    while not MyEventManager.quitRequest
       MyEventManager.WaitEvent()

@@ -23,6 +23,13 @@ TARGET_LINK_LIBRARIES(sdl_falcon falcon_engine ${SDL_LIBRARY})
       SET( FALCON_BIN_PATH "$ENV{FALCON_ACTIVE_TREE}/bin" )
    ENDIF ("$ENV{FALCON_ACTIVE_TREE}" STREQUAL "")
 
+if(NOT ${INSTDIR} STREQUAL "" )
+   set(BINDEST ${INSTDIR})
+else(NOT ${INSTDIR} STREQUAL "" )
+   set(BINDEST ${FALCON_BIN_PATH})
+endif(NOT ${INSTDIR} STREQUAL "" )
+
 #Install
+MESSAGE( "Intalling sdl_falcon on ${BINDEST}" )
 INSTALL( TARGETS sdl_falcon
-      DESTINATION ${FALCON_BIN_PATH} )
+      DESTINATION ${BINDEST} )

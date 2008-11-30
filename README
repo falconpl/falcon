@@ -3,7 +3,7 @@
 
                                SDL binding
 
-                                   0.9
+                                  0.9.2
 
   This is the SDL binding module for The Falcon Programming language.
 Binary downloads, documentation, support and so on is available through
@@ -81,7 +81,7 @@ variables, accordingly with the SDL_* variables found in the SDL_DEV package.
       SET SDL_DEV_ROOT=<mypath>\SDL_DEV
       SET SDLDIR=%SDL_DEV_ROOT%\SDL-1.2.13
       SET SDLMIXERDIR=%SDL_DEV_ROOT%\SDL_mixer-1.2.8
-      SET SDLIMAGEDIR=%SDL_DEV_ROOT%\SDL_image-1.2.6
+      SET SDLIMAGEDIR=%SDL_DEV_ROOT%\SDL_image-1.2.7
       SET SDLTTFDIR=%SDL_DEV_ROOT%\SDL_ttf-2.0.9
 
 changing <mypath> into the pat to your SDL_DEV expanded directory. After 

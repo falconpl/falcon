@@ -919,16 +919,15 @@ bool SDLEventHandler_WaitEvent_next( VMachine *vm )
    int res = SDL_PollEvent( &evt );
    if ( res == 1 )
    {
+      vm->returnHandler( 0 );  // do not call us anymore
+      
       internal_dispatchEvent( vm, evt );
       // we're done -- but we have still a call pending
-
-      vm->retval( (int64) 1 );
-      vm->returnHandler( 0 );  // do not call us anymore
       return true;
    }
    else {
       // prepare to try again after a yield
-      vm->yieldRequest( 0.001 );
+      vm->yieldRequest( 0.01 );
       return true;
    }
 }
@@ -940,12 +939,11 @@ FALCON_FUNC SDLEventHandler_WaitEvent( VMachine *vm )
    if ( res == 1 )
    {
       internal_dispatchEvent( vm, evt );
-      vm->retval( (int64) 1 );
    }
    else {
       // prepare to try again after a yield
       vm->returnHandler( SDLEventHandler_WaitEvent_next );
-      vm->yieldRequest( 0.001 );
+      vm->yieldRequest( 0.01 );
    }
 }
 

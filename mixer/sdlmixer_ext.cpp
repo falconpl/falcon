@@ -858,7 +858,9 @@ FALCON_FUNC mix_HookMusicFinished( VMachine *vm )
    }
 
    if( i_active->isTrue() )
+   {
       ::Mix_HookMusicFinished( falcon_sdl_mixer_on_music_finished );
+   }
    else
       ::Mix_HookMusicFinished( NULL );
 }
