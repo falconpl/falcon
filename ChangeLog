@@ -4,9 +4,7 @@ SDL (0.9.2)
    * fixed: WaitEvent() always returned to itself, even in case of quit,
             instead returning to the caller after a single message was 
             processed.
-
-SDL (0.9.2)
-   * Fixed SDLColor (full class reflection was drawn but left incomplete).
+   * Fixed: SDLColor (full class reflection was drawn but left incomplete).
 
 SDL (0.9)
    * Added support for SDL_image and SDL_mixer
