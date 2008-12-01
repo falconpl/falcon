@@ -1,3 +1,6 @@
+Dynlib (0.9.4)
+   - Minor: linked against 0.8.14
+   
 Dynlib (0.9.2)
    - Fixed: toString to display safe parameters formats.
    - Fixed: double floating point parameter and return values.
