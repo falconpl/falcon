@@ -1,10 +1,12 @@
-Dynlib (0.9.3)
-   - Minor: Linked against 0.8.14
+Dynlib (0.9.5)
    - Major: Added function set to manipulate C structures:
             stringToPtr, memBufToPtr, memBufFromPtr, setStruct, getStruct
             and memSet.
    - Bugfix: limitBuffer without size was doing endless loop.
    
+Dynlib (0.9.4)
+   - Minor: Linked against 0.8.14
+
 Dynlib (0.9.2)
    - Fixed: toString to display safe parameters formats.
    - Fixed: double floating point parameter and return values.
