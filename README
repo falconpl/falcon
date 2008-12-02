@@ -2,10 +2,10 @@
 
                             Dynamic Library Binder
 
-                                Version 0.9 
+                                Version 0.9.5
 
-  This module is part of The Falcon Programming Language, and works
-with Falcon 0.8.12 or following.
+  This is an under-development version; we have released this version as a
+developent stapshot.
 
   To compile it from source, you must have a current binary installation
 of The Falcon Programming Language with development files (or "dev" package
