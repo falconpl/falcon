@@ -36,6 +36,12 @@ FALCON_FUNC  limitMembufW( ::Falcon::VMachine *vm );
 FALCON_FUNC  derefPtr( ::Falcon::VMachine *vm );
 FALCON_FUNC  dynExt( ::Falcon::VMachine *vm );
 
+FALCON_FUNC  stringToPtr( ::Falcon::VMachine *vm );
+FALCON_FUNC  memBufToPtr( ::Falcon::VMachine *vm );
+FALCON_FUNC  memBufFromPtr( ::Falcon::VMachine *vm );
+FALCON_FUNC  getStruct( ::Falcon::VMachine *vm );
+FALCON_FUNC  setStruct( ::Falcon::VMachine *vm );
+
 FALCON_FUNC  DynLib_init( ::Falcon::VMachine *vm );
 FALCON_FUNC  DynLib_get( ::Falcon::VMachine *vm );
 FALCON_FUNC  DynLib_query( ::Falcon::VMachine *vm );

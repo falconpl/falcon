@@ -228,6 +228,291 @@ FALCON_FUNC  limitMembufW( ::Falcon::VMachine *vm )
 
    vm->retval( mb );
 }
+/*#
+   @funset structsup Structure Support
+   @brief Functions used to manipulate C structures directly.
+
+   This functions are meant to use memory buffers as structures to be
+   passed to remote functions.
+
+   @beginset structsup
+*/
+
+//===================================================================
+//
+
+/*#
+   @function stringToPtr
+   @brief Returns the inner data of a string.
+   @param string The string to be placed in a foreign structure.
+   @return The memory pointer to the string data.
+   
+   This function returns the inner data of a Falcon string to be used in
+   managed structures. As such, it is quite dangerous, and should be used 
+   only when the remote functions is taking this data as read-only.
+   
+   To pass mutable strings, please use @a stringCopyPtr function.
+*/
+
+FALCON_FUNC  stringToPtr( ::Falcon::VMachine *vm )
+{
+   Item* i_str = vm->param(0);
+   if ( i_str == 0 || ! i_str->isString() )
+   {
+      vm->raiseError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
+         .extra( "S" ) ));
+      return;
+   }
+   
+   vm->retval( (int64) i_str->asString()->getRawStorage() );
+}
+
+/*#
+   @function memBufToPtr
+   @brief Returns the inner data of a memory buffer.
+   @param mb The memory buffer to be placed in the foreign structure.
+   @return The memory pointer to the memory buffer data.
+   
+   This function returns the inner data of a Falcon MemBuf to be used in
+   managed structures. It can be passed to any remote function, as long
+   as the remote function doesn't relocate the structure, or tries to write
+   more bytes than the structure size.
+   
+   Memory Buffers passed in this way can receive string data placed in deep
+   structures by the remote library and then turned into string via 
+   @b strFromMemBuf function in the core module. Use @a limitMembuf or
+   @a limitMembufW prior to create a string from a memory buffer filled
+   in this way.
+*/
+FALCON_FUNC  memBufToPtr( ::Falcon::VMachine *vm )
+{
+   Item* i_str = vm->param(0);
+   if ( i_str == 0 || ! i_str->isMemBuf() )
+   {
+      vm->raiseError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
+         .extra( "M" ) ));
+      return;
+   }
+   
+   vm->retval( (int64) i_str->asMemBuf()->data() );
+}
+
+/*#
+   @function memBufFromPtr
+   @brief Creates a memory buffer out from a raw pointer.
+   @param ptr The raw memory pointer.
+   @param size The size of the memory buffer.
+   @return A memory buffer pointing to the memory data.
+   
+   This function returns a memory buffer that can be used to access the
+   given data area, byte by byte. The memory buffer doesn't dispose
+   of the memory when it is destroyed.
+*/
+FALCON_FUNC  memBufFromPtr( ::Falcon::VMachine *vm )
+{
+   Item* i_ptr = vm->param(0);
+   Item* i_size = vm->param(1);
+   
+   if ( i_ptr == 0 || ! i_ptr->isInteger() ||  i_size == 0 || ! i_size->isInteger() )
+   {
+      vm->raiseError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
+         .extra( "M,I" ) ));
+      return;
+   }
+   
+   vm->retval( new MemBuf_1( vm, (byte*) i_ptr->asInteger(), (uint32) i_size->asInteger(), false )  );
+}
+
+/*#
+   @function getStruct
+   @brief Gets raw data from a structure.
+   @param struct Memory buffer or raw pointer pointing to the structure.
+   @param offset Offset in bytes of the retreived data.
+   @param size Size in bytes of the retreived data.
+   @return An integer containing the binary value of the data (in local endianity).
+   
+   Size can be either 1, 2, 4 or 8.
+   If @b struct is a MemBuf, offset must be smaller than the size of the MemBuf.
+*/
+FALCON_FUNC  getStruct( ::Falcon::VMachine *vm )
+{
+   Item* i_struct = vm->param(0);
+   Item* i_offset = vm->param(1);
+   Item* i_size = vm->param(2);
+   
+   if( i_struct == 0 || ! ( i_struct->isInteger() || i_struct->isMemBuf() )
+      || i_offset == 0 || ! i_offset->isInteger() 
+      || i_size == 0 || ! i_size->isInteger() )
+   {
+      vm->raiseError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
+         .extra( "M|I,I,I" ) ));
+      return;
+   }
+   
+   byte *data;
+   uint32 offset = (uint32) i_offset->asInteger();
+
+   if( i_struct->isInteger() )
+   {
+      data = (byte*) i_struct->asInteger();
+   }
+   else
+   {
+      if ( offset > i_struct->asMemBuf()->size() ) {
+         vm->raiseError( new ParamError( ErrorParam( e_param_range, __LINE__ )  ));
+         return;
+      }
+      
+      data = i_struct->asMemBuf()->data();
+   }
+   
+   int64 ret;
+   
+   switch( i_size->asInteger() )
+   {
+      case 1: ret = data[offset]; break;
+      case 2: ret = *((uint16*)(data + offset)); break;
+      case 4: ret = *((uint32*)(data + offset)); break;
+      case 8: ret = *((int64*)(data + offset)); break;
+      default:
+         vm->raiseError( new ParamError( ErrorParam( e_param_range, __LINE__ )  ));
+         return;
+   }
+
+   vm->retval( ret );
+}
+
+/*#
+   @function setStruct
+   
+   @brief Sets raw data into a structure.
+   @param struct Memory buffer or raw pointer pointing to the structure.
+   @param offset Offset in bytes of the set data.
+   @param size Size in bytes of the set data.
+   @param data The data to be set (numeric value)
+   
+   Size can be either 1, 2, 4 or 8.
+   If @b struct is a MemBuf, offset must be smaller than the size of the MemBuf.
+   Data must be an integer; it should be always > 0 except when size is 8.
+*/
+FALCON_FUNC  setStruct( ::Falcon::VMachine *vm )
+{
+   Item* i_struct = vm->param(0);
+   Item* i_offset = vm->param(1);
+   Item* i_size = vm->param(2);
+   Item* i_data = vm->param(3);
+   
+   if( i_struct == 0 || ! ( i_struct->isInteger() || i_struct->isMemBuf() )
+      || i_offset == 0 || ! i_offset->isInteger() 
+      || i_size == 0 || ! i_size->isInteger()
+      || i_data == 0 || ! i_data->isInteger() )
+   {
+      vm->raiseError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
+         .extra( "M|I,I,I,I" ) ));
+      return;
+   }
+   
+   byte *data;
+   uint32 offset = (uint32) i_offset->asInteger();
+
+   if( i_struct->isInteger() )
+   {
+      data = (byte*) i_struct->asInteger();
+   }
+   else
+   {
+      if ( offset > i_struct->asMemBuf()->size() ) {
+         vm->raiseError( new ParamError( ErrorParam( e_param_range, __LINE__ )  ));
+         return;
+      }
+      
+      data = i_struct->asMemBuf()->data();
+   }
+   
+   int64 ret = i_data->asInteger();
+   
+   switch( i_size->asInteger() )
+   {
+      case 1: data[offset] = (byte) ret; break;
+      case 2: *((uint16*)(data + offset)) = (uint16)ret; break;
+      case 4: *((uint32*)(data + offset)) = (uint32)ret; break;
+      case 8: *((int64*)(data + offset)) = ret; break;
+      default:
+         vm->raiseError( new ParamError( ErrorParam( e_param_range, __LINE__ )  ));
+         return;
+   }
+
+   vm->retval( ret );
+}
+
+
+/*#
+   @function memSet
+   @brief sets the given memory to a given byte value
+   @param struct The structure raw pointer o MemBuf
+   @param value The value to be set in the structure (0-255)
+   @param size The size of the memory to be set.
+*/
+FALCON_FUNC  memSet( ::Falcon::VMachine *vm )
+{
+   Item* i_struct = vm->param(0);
+   Item* i_value = vm->param(1);
+   
+   if( i_struct == 0 || ! ( i_struct->isInteger() || i_struct->isMemBuf() )
+      || i_value == 0 || ! i_value->isInteger() )
+   {
+      vm->raiseError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
+         .extra( "M|I,I,[I]" ) ));
+      return;
+   }
+   
+   uint32 size;
+   byte *data;
+   
+   if ( i_struct->isMemBuf() ) 
+   {
+      data = i_struct->asMemBuf()->data();
+      Item* i_size = vm->param(2);
+      if( i_size != 0 )
+      {
+         if ( ! i_size->isInteger() )
+         {
+            vm->raiseError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
+               .extra( "M|I,I,[I]" ) ));
+            return;
+         }
+         
+         size = (uint32) i_size->asInteger();
+      }
+      else {
+         size = i_struct->asMemBuf()->size();
+      }
+   }
+   else
+   {
+      Item* i_size = vm->param(2);
+      
+      if ( i_size == 0 || ! i_size->isInteger() )
+      {
+         vm->raiseError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
+            .extra( "M|I,I,[I]" ) ));
+         return;
+      }
+      
+      data = (byte*) i_struct->asInteger();
+      size = (uint32) i_size->asInteger();
+   }
+   
+   memset( data, (int) i_value->asInteger(), size );
+}
+
+
+/*#
+   @endset structsup
+*/
+
+//===================================================================
+//
 
 /*#
    @function derefPtr

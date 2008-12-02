@@ -300,6 +300,24 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    self->addExtFunc( "derefPtr", Falcon::Ext::derefPtr )
       ->addParam( "ptr" );
 
+   self->addExtFunc( "stringToPtr", Falcon::Ext::stringToPtr )
+      ->addParam( "string" );
+
+   self->addExtFunc( "memBufToPtr", Falcon::Ext::memBufToPtr )
+      ->addParam( "mb" );
+
+   self->addExtFunc( "memBufFromPtr", Falcon::Ext::memBufFromPtr )
+      ->addParam( "mb" )->addParam( "size" );
+
+   self->addExtFunc( "getStruct", Falcon::Ext::getStruct )
+      ->addParam( "struct" )->addParam( "offset" )->addParam( "size" );
+
+   self->addExtFunc( "setStruct", Falcon::Ext::setStruct )
+      ->addParam( "struct" )->addParam( "offset" )->addParam( "size" )->addParam( "data" );
+
+   self->addExtFunc( "memSet", Falcon::Ext::setStruct )
+      ->addParam( "struct" )->addParam( "value" )->addParam( "size" );
+
    self->addExtFunc( "dynExt", Falcon::Ext::dynExt );
 
    //============================================================
