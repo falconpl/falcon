@@ -41,6 +41,7 @@ FALCON_FUNC  memBufToPtr( ::Falcon::VMachine *vm );
 FALCON_FUNC  memBufFromPtr( ::Falcon::VMachine *vm );
 FALCON_FUNC  getStruct( ::Falcon::VMachine *vm );
 FALCON_FUNC  setStruct( ::Falcon::VMachine *vm );
+FALCON_FUNC  memSet( ::Falcon::VMachine *vm );
 
 FALCON_FUNC  DynLib_init( ::Falcon::VMachine *vm );
 FALCON_FUNC  DynLib_get( ::Falcon::VMachine *vm );

@@ -315,7 +315,7 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    self->addExtFunc( "setStruct", Falcon::Ext::setStruct )
       ->addParam( "struct" )->addParam( "offset" )->addParam( "size" )->addParam( "data" );
 
-   self->addExtFunc( "memSet", Falcon::Ext::setStruct )
+   self->addExtFunc( "memSet", Falcon::Ext::memSet )
       ->addParam( "struct" )->addParam( "value" )->addParam( "size" );
 
    self->addExtFunc( "dynExt", Falcon::Ext::dynExt );

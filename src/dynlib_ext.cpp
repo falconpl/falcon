@@ -96,7 +96,7 @@ FALCON_FUNC  limitMembuf( ::Falcon::VMachine *vm )
       mb->size( (uint32) i_size->forceInteger() );
    }
    else {
-      for ( uint32 s = 0; s < mb->size(); s )
+      for ( uint32 s = 0; s < mb->size(); s++ )
       {
          if ( mb->get( s ) == 0 )
          {
@@ -259,7 +259,7 @@ FALCON_FUNC  stringToPtr( ::Falcon::VMachine *vm )
    Item* i_str = vm->param(0);
    if ( i_str == 0 || ! i_str->isString() )
    {
-      vm->raiseError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
          .extra( "S" ) ));
       return;
    }
@@ -289,7 +289,7 @@ FALCON_FUNC  memBufToPtr( ::Falcon::VMachine *vm )
    Item* i_str = vm->param(0);
    if ( i_str == 0 || ! i_str->isMemBuf() )
    {
-      vm->raiseError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
          .extra( "M" ) ));
       return;
    }
@@ -315,7 +315,7 @@ FALCON_FUNC  memBufFromPtr( ::Falcon::VMachine *vm )
    
    if ( i_ptr == 0 || ! i_ptr->isInteger() ||  i_size == 0 || ! i_size->isInteger() )
    {
-      vm->raiseError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
          .extra( "M,I" ) ));
       return;
    }
@@ -344,7 +344,7 @@ FALCON_FUNC  getStruct( ::Falcon::VMachine *vm )
       || i_offset == 0 || ! i_offset->isInteger() 
       || i_size == 0 || ! i_size->isInteger() )
    {
-      vm->raiseError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
          .extra( "M|I,I,I" ) ));
       return;
    }
@@ -359,7 +359,7 @@ FALCON_FUNC  getStruct( ::Falcon::VMachine *vm )
    else
    {
       if ( offset > i_struct->asMemBuf()->size() ) {
-         vm->raiseError( new ParamError( ErrorParam( e_param_range, __LINE__ )  ));
+         vm->raiseModError( new ParamError( ErrorParam( e_param_range, __LINE__ )  ));
          return;
       }
       
@@ -375,7 +375,7 @@ FALCON_FUNC  getStruct( ::Falcon::VMachine *vm )
       case 4: ret = *((uint32*)(data + offset)); break;
       case 8: ret = *((int64*)(data + offset)); break;
       default:
-         vm->raiseError( new ParamError( ErrorParam( e_param_range, __LINE__ )  ));
+         vm->raiseModError( new ParamError( ErrorParam( e_param_range, __LINE__ )  ));
          return;
    }
 
@@ -407,7 +407,7 @@ FALCON_FUNC  setStruct( ::Falcon::VMachine *vm )
       || i_size == 0 || ! i_size->isInteger()
       || i_data == 0 || ! i_data->isInteger() )
    {
-      vm->raiseError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
          .extra( "M|I,I,I,I" ) ));
       return;
    }
@@ -422,7 +422,7 @@ FALCON_FUNC  setStruct( ::Falcon::VMachine *vm )
    else
    {
       if ( offset > i_struct->asMemBuf()->size() ) {
-         vm->raiseError( new ParamError( ErrorParam( e_param_range, __LINE__ )  ));
+         vm->raiseModError( new ParamError( ErrorParam( e_param_range, __LINE__ )  ));
          return;
       }
       
@@ -438,7 +438,7 @@ FALCON_FUNC  setStruct( ::Falcon::VMachine *vm )
       case 4: *((uint32*)(data + offset)) = (uint32)ret; break;
       case 8: *((int64*)(data + offset)) = ret; break;
       default:
-         vm->raiseError( new ParamError( ErrorParam( e_param_range, __LINE__ )  ));
+         vm->raiseModError( new ParamError( ErrorParam( e_param_range, __LINE__ )  ));
          return;
    }
 
@@ -461,7 +461,7 @@ FALCON_FUNC  memSet( ::Falcon::VMachine *vm )
    if( i_struct == 0 || ! ( i_struct->isInteger() || i_struct->isMemBuf() )
       || i_value == 0 || ! i_value->isInteger() )
    {
-      vm->raiseError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
          .extra( "M|I,I,[I]" ) ));
       return;
    }
@@ -477,7 +477,7 @@ FALCON_FUNC  memSet( ::Falcon::VMachine *vm )
       {
          if ( ! i_size->isInteger() )
          {
-            vm->raiseError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
+            vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
                .extra( "M|I,I,[I]" ) ));
             return;
          }
@@ -494,7 +494,7 @@ FALCON_FUNC  memSet( ::Falcon::VMachine *vm )
       
       if ( i_size == 0 || ! i_size->isInteger() )
       {
-         vm->raiseError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
+         vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
             .extra( "M|I,I,[I]" ) ));
          return;
       }
@@ -922,7 +922,7 @@ FALCON_FUNC  DynFunction_call( ::Falcon::VMachine *vm )
             {
                String temp;
                temp.writeNumber( (int64) p );
-               vm->raiseError( new DynLibError( ErrorParam( FALCON_DYNLIB_ERROR_BASE+4, __LINE__ )
+               vm->raiseModError( new DynLibError( ErrorParam( FALCON_DYNLIB_ERROR_BASE+4, __LINE__ )
                   .desc( FAL_STR( dle_cant_guess_param ) )
                   .extra( temp ) ));
             }
@@ -937,7 +937,7 @@ FALCON_FUNC  DynFunction_call( ::Falcon::VMachine *vm )
             String temp;
             temp.writeNumber( (int64) p );
 
-            vm->raiseError( new ParamError( ErrorParam( FALCON_DYNLIB_ERROR_BASE+9, __LINE__ )
+            vm->raiseModError( new ParamError( ErrorParam( FALCON_DYNLIB_ERROR_BASE+9, __LINE__ )
                   .desc( FAL_STR( dle_too_many ) )
                   .extra( temp ) ));
             goto cleanup;
@@ -960,7 +960,7 @@ FALCON_FUNC  DynFunction_call( ::Falcon::VMachine *vm )
                String temp;
                temp.writeNumber( (int64) p );
 
-               vm->raiseError( new ParamError( ErrorParam( FALCON_DYNLIB_ERROR_BASE+9, __LINE__ )
+               vm->raiseModError( new ParamError( ErrorParam( FALCON_DYNLIB_ERROR_BASE+9, __LINE__ )
                   .desc( FAL_STR( dle_not_byref ) )
                   .extra( temp ) ));
 
@@ -1274,7 +1274,7 @@ FALCON_FUNC  DynFunction_call( ::Falcon::VMachine *vm )
       String temp;
       temp.writeNumber( (int64) p );
 
-      vm->raiseError( new ParamError( ErrorParam( FALCON_DYNLIB_ERROR_BASE+10, __LINE__ )
+      vm->raiseModError( new ParamError( ErrorParam( FALCON_DYNLIB_ERROR_BASE+10, __LINE__ )
             .desc( FAL_STR( dle_too_few ) )
             .extra( temp ) ));
       goto cleanup;
