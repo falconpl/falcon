@@ -527,11 +527,12 @@ static bool internal_object_to_color( CoreObject *obj_color, SDL_Color &color )
          if( obj_color->getProperty( "b", prop ) )
          {
             color.b = (Uint8) prop.forceInteger();
+            return true;
          }
       }
    }
 
-   return prop != 0;
+   return false;
 }
 
 static void internal_render( VMachine *vm, int mode )
