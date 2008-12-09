@@ -1,0 +1,49 @@
+/****************************************************************************
+* Falcon direct benchmarks
+*
+* ID: 7a
+* Category: functional
+* Subcategory:
+* Short: Benchmark on repeated functional calls
+* Description:
+*      Performing a CPU killing funcional sieve of erathostenes reusing the
+*      same functional sequence again and again. Notice that with correct
+*      optimization, this test sould run as 7b.
+* [/Description]
+****************************************************************************/
+
+const NUM = 100
+loops = NUM * timeFactor()
+each = int(loops/10)
+
+// getting time
+time = seconds()
+
+function main(num)
+   global count
+   flags = MemBuf(8193,4)
+   count = 0
+
+   the_param = nil
+   the_loop = .[times $the_param &k
+               .[ .[ function( x,y ); x[y] = 0; end  flags &k ] .[ lambda x => ++x $count ] ]
+               ]
+               
+   for num in [1:num+1]
+
+      for i in [1: 8193]: flags[i] = num
+
+      for i in [2:8193]
+         if flags[i]
+            the_param = [ i+i: 8193: i ]
+            the_loop()
+         end
+      end
+
+      alive( i / num*100 )
+  end
+end
+
+main(loops)
+time = seconds() - time
+timings( time, count )

@@ -1,4 +1,8 @@
-Falcon (0.8.13)
+Falcon (0.8.14.1)
+  * fixed: Array bindings was not correctly accounted by the Garbage
+           Collector.
+
+Falcon (0.8.14)
   * fixed: Now asObject() raises an error if the item is not an object;
            this grant safety for methods that are not considered static.
   * fixed: Pow function (possibly to be deleted) was taking the first

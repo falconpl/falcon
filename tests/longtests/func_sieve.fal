@@ -1,0 +1,51 @@
+/****************************************************************************
+* Falcon direct benchmarks
+*
+* ID: 7b
+* Category: functional
+* Subcategory: 
+* Short: Benchmark on repeated functional calls
+* Description:
+*      Performing a CPU killing funcional sieve of erathostenes with forced
+*      regeneration of the functional sequence to stress the garbage
+*      collector. Don't take this as a good example of fast code, it is meant
+*      to disrupt the GC as much as possible.
+*
+*      The performance of this script can be checked against 7a to test for
+*      fast creation and setup of the functional loop.
+* [/Description]
+****************************************************************************/
+
+const NUM = 100
+loops = NUM * timeFactor()
+each = int(loops/10)
+
+// getting time
+time = seconds()
+
+function main(num)
+   global count
+   flags = MemBuf(8193,4)
+   count = 0
+
+   for num in [1:num+1]
+
+      for i in [1: 8193]: flags[i] = num
+   
+      for i in [2:8193]
+         if flags[i]
+            .[times ,[ i+i: 8193: i ] &k
+               .[ .[ function( x,y ); x[y] = 0; end  flags &k ] .[ lambda x => ++x $count ] ]
+               ]()
+         end
+      end
+
+      alive( i / num*100 )
+  end
+end
+
+main(loops)
+
+time = seconds() - time
+
+timings( time, count )

@@ -226,6 +226,10 @@ bool MemPool::gcMark()
    markItemFast( m_owner->regB() );
    markItemFast( m_owner->self() );
    markItemFast( m_owner->sender() );
+   // Latch and latcher are not necessary here because they must exist elsewhere.
+   
+   markItemFast( m_owner->regBind() );
+   markItemFast( m_owner->regBindP() );
 
    // mark the global symbols
    // When generational gc will be on, this won't be always needed.
@@ -259,7 +263,7 @@ bool MemPool::gcMark()
 
       markItemFast( ctx->regA() );
       markItemFast( ctx->regB() );
-      markItemFast( ctx->self() );
+      markItemFast( ctx->latcher() );
       markItemFast( ctx->sender() );
 
       stack = ctx->getStack();
@@ -342,11 +346,17 @@ void MemPool::markItem( Item &item )
 
             // mark also the bindings
             if ( array->bindings() != 0 )
-               array->bindings()->mark( currentMark() );
+            {
+               Item bindings = array->bindings();
+               markItemFast( bindings );
+            }
 
             // and also the table
             if ( array->table() != 0 )
-               array->table()->mark( currentMark() );
+            {
+               Item table = array->table();
+               markItemFast( table );
+            }
          }
       }
       break;

@@ -1270,6 +1270,10 @@ public:
    Item &regA() { return m_regA; }
    const Item &regB() const { return m_regB; }
    Item &regB() { return m_regB; }
+   const Item &regBind() const { return m_regBind; }
+   Item &regBind() { return m_regBind; }
+   const Item &regBindP() const { return m_regBindP; }
+   Item &regBindP() { return m_regBind; }
 
    const Item &self() const { return m_regS1; }
    Item &self() { return m_regS1; }
