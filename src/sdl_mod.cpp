@@ -48,11 +48,10 @@ QuitCarrier::~QuitCarrier()
 
 SDLSurfaceCarrier_impl::~SDLSurfaceCarrier_impl()
 {
-   /*while( m_lockCount-- > 0 )
+   while( m_lockCount-- > 0 )
       SDL_UnlockSurface( m_surface );
 
    SDL_FreeSurface( m_surface );
-*/
 }
 
 
