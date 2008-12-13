@@ -631,6 +631,22 @@ int SrcLexer::lex_normal()
             m_lineFilled = true;
             if ( chr == '.' )
             {
+               // a method on a number?
+               uint32 nextChr;
+               if ( m_in->readAhead( nextChr ) && (nextChr < '0' || nextChr > '9') )
+               {
+                  // end
+                  m_in->unget( chr );
+                  int64 retval;
+                  if ( ! m_string.parseInt( retval ) )
+                     m_compiler->raiseError( e_inv_num_format, m_line );
+   
+                  VALUE->integer = retval;
+                  m_state = e_line;
+                  return INTNUM;
+               }
+               
+               // no.
                m_state = e_floatNumber;
             }
             else if ( chr == 'e' )
@@ -660,10 +676,20 @@ int SrcLexer::lex_normal()
                m_state = e_floatNumber_e;
                m_string.append( chr );
             }
-            else if ( (chr < '0' || chr > '9')  && chr != '.'  )
+            else if ( chr < '0' || chr > '9'  )
             {
                // end
                m_in->unget( chr );
+               
+               // "0." ?
+               if( m_string == "0." )
+               {
+                  m_in->unget( '.' );
+                  VALUE->integer = 0;
+                  m_state = e_line;
+                  return INTNUM;
+               }
+               
                numeric retval;
                if ( ! m_string.parseDouble( retval ) )
                   m_compiler->raiseError( e_inv_num_format, m_line );
@@ -698,6 +724,7 @@ int SrcLexer::lex_normal()
             {
                // end
                m_in->unget( chr );
+               
                numeric retval;
                if ( ! m_string.parseDouble( retval ) )
                   m_compiler->raiseError( e_inv_num_format, m_line );
