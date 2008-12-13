@@ -1,6 +1,7 @@
 Falcon (0.8.14.1)
   * fixed: Array bindings was not correctly accounted by the Garbage
            Collector.
+  * minor: Methods can now be called directly also on numbers.
 
 Falcon (0.8.14)
   * fixed: Now asObject() raises an error if the item is not an object;
