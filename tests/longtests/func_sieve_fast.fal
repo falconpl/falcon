@@ -19,7 +19,7 @@ each = int(loops/10)
 // getting time
 time = seconds()
 
-function main(num)
+function main(loops)
    global count
    flags = MemBuf(8193,4)
    count = 0
@@ -29,7 +29,7 @@ function main(num)
                .[ .[ function( x,y ); x[y] = 0; end  flags &k ] .[ lambda x => ++x $count ] ]
                ]
                
-   for num in [1:num+1]
+   for num in [1:loops+1]
 
       for i in [1: 8193]: flags[i] = num
 
@@ -40,7 +40,7 @@ function main(num)
          end
       end
 
-      alive( i / num*100 )
+      alive( num / loops*100 )
   end
 end
 
