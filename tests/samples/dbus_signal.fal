@@ -1,0 +1,44 @@
+/*
+   FALCON - Samples
+
+   FILE: dcop_signal.fal
+
+   Show a minimal DCOP sample signaling an object.
+
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Sat, 20 Dec 2008 15:36:59 +0100
+
+   -------------------------------------------------------------------
+   (C) Copyright 2008: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+load dbus
+
+try
+   conn = DBus()
+
+   // First without parameters
+   > "Sending a parameterless signal on /opt/Falcon/tests/dbus_signal - Test()"
+   conn.signal( "/opt/Falcon/tests/dbus_signal",
+      "opt.Falcon.tests.dbus_signal",
+      "Test" )
+
+   // And then with some params
+   > "Sending a signal"
+   > "Sending a parameter signal on /opt/Falcon/tests/dbus_signal - Testp(1, 2.5, \"Hello world\")"
+   conn.signal( "/opt/Falcon/tests/dbus_signal",
+      "opt.Falcon.tests.dbus_signal",
+      "Testp",
+      1,
+      2.5,
+      "Hello world" )
+
+   > "Test complete"
+catch DBusError in e
+   > "Test failed. DBus subsystem reported the following error: "
+   >
+   > e
+end
