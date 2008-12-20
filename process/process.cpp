@@ -91,6 +91,8 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
       addParam("command")->addParam("background");
    self->addExtFunc( "systemCall", Falcon::Ext::falcon_systemCall )->
       addParam("command")->addParam("background");
+   self->addExtFunc( "pread", Falcon::Ext::falcon_pread )->
+      addParam("command")->addParam("background");
    self->addExtFunc( "exec", Falcon::Ext::falcon_exec )->
       addParam("command");
    self->addExtFunc( "processId", Falcon::Ext::falcon_processId );

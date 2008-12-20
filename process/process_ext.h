@@ -41,6 +41,7 @@ namespace Ext {
 
 FALCON_FUNC  falcon_system ( ::Falcon::VMachine *vm );
 FALCON_FUNC  falcon_systemCall ( ::Falcon::VMachine *vm );
+FALCON_FUNC  falcon_pread ( ::Falcon::VMachine *vm );
 FALCON_FUNC  falcon_exec ( ::Falcon::VMachine *vm );
 FALCON_FUNC  falcon_processId ( ::Falcon::VMachine *vm );
 FALCON_FUNC  falcon_processKill ( ::Falcon::VMachine *vm );

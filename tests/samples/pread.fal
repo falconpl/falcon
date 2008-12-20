@@ -1,0 +1,45 @@
+#!/usr/bin/falcon
+/*
+   FALCON - Samples
+
+   FILE: pread.fal
+
+   Even simpler process wrapper. Useful when you want read the
+   output of some process.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: mer nov 3 2004
+
+   -------------------------------------------------------------------
+   (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+load process
+
+if args.len() == 0
+   > "Please, specify the process to be launched. Use a single string.\n"
+     "   Example: \n"
+     "            pread.fal \"ls -l /usr/lib\"\n"
+   return 1
+end
+
+try
+   data = pread( args[0] )
+   
+   > "---------------------------------------------------------------"
+   > data
+   > "---------------------------------------------------------------"
+   > "Test complete"
+
+catch in error
+   > "Catched error during processing!!:\n", error
+   > "------------------------------------"
+   > "Terminating with error"
+   exit(1)
+end
+
+exit(0)
+
+/* end of echoproc.fal */

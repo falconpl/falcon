@@ -82,6 +82,8 @@ public:
 };
 
 bool spawn( String **args, bool overlay, bool background, int *result );
+bool spawn_read( String **args, bool overlay, bool background, int *result, String *sOut );
+
 const char *shellParam();
 const char *shellName();
 ProcessHandle *openProcess( String **args, bool sinkin, bool sinkout, bool sinkerr, bool mergeErr, bool bg );

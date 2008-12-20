@@ -183,7 +183,7 @@ bool spawn( String **args, bool overlay, bool background, int *returnValue )
 {
    // convert to our local format.
    char **argv = s_localize( args );
-
+   
    if ( ! overlay )
    {
       pid_t pid = fork();
@@ -194,13 +194,14 @@ bool spawn( String **args, bool overlay, bool background, int *returnValue )
             // if child output is not wanted, sink it
             int hNull;
             hNull = open("/dev/null", O_RDWR);
-            dup2( hNull, 0 );
-            dup2( hNull, 1 );
-            dup2( hNull, 2 );
+            
+            dup2( hNull, STDIN_FILENO );
+            dup2( hNull, STDOUT_FILENO );
+            dup2( hNull, STDERR_FILENO );
          }
-
+         
          execvp( argv[0], argv ); // never returns.
-         _exit( -1 ); // or we have an error
+         exit( -1 ); // or we have an error
       }
 
       s_freeLocalized( argv );
@@ -213,8 +214,85 @@ bool spawn( String **args, bool overlay, bool background, int *returnValue )
 
    // in case of overlay, just run the execvp and eventually return in case of error.
    execvp( argv[0], argv ); // never returns.
-   _exit( -1 );
+   exit( -1 );
 }
+
+
+
+bool spawn_read( String **args, bool overlay, bool background, int *returnValue, String *sOutput )
+{
+   int pipe_fd[2];
+   
+   if ( pipe( pipe_fd ) != 0 )
+      return false;
+
+   // convert to our local format.
+   char **argv = s_localize( args );
+   const char *cookie = "---ASKasdfyug72348AIOfasdjkfb---";
+   
+   if ( ! overlay )
+   {
+      pid_t pid = fork();
+
+      if ( pid == 0 ) {
+         // we are in the child;
+         if ( background ) {
+            // if child output is not wanted, sink it
+            int hNull;
+            hNull = open("/dev/null", O_RDWR);
+            
+            dup2( hNull, STDIN_FILENO );
+            dup2( hNull, STDERR_FILENO );
+         }
+         
+         dup2( pipe_fd[1], STDOUT_FILENO );
+               
+         execvp( argv[0], argv ); // never returns.
+         write( pipe_fd[1], cookie, strlen( cookie ) );
+         exit( -1 ); // or we have an error
+      }
+
+      s_freeLocalized( argv );
+      
+      // read the output
+      #define MAX_READ_PER_LOOP  4096
+      char buffer[MAX_READ_PER_LOOP];
+      int readin;
+      fd_set rfds;
+      struct timeval tv;
+
+      /* Wait up to 100msecs */
+      tv.tv_sec = 0;
+      tv.tv_usec = 100;
+      
+      while( true ) 
+      {
+         FD_ZERO( &rfds );
+         FD_SET( pipe_fd[0], &rfds);
+         int retval = select(pipe_fd[0]+1, &rfds, NULL, NULL, &tv );
+        
+         if( retval )
+         {
+            readin = read( pipe_fd[0], buffer, MAX_READ_PER_LOOP );
+            String s;
+            s.adopt( buffer, readin, 0 ); 
+            sOutput->append( s );
+         }
+         else {
+            if ( pid == waitpid( pid, returnValue, WNOHANG ) )
+            {
+               return *sOutput != cookie;
+            }
+         }
+      }
+   }
+
+   // in case of overlay, just run the execvp and eventually return in case of error.
+   execvp( argv[0], argv ); // never returns.
+   exit( -1 );
+   return false;
+}
+
 
 const char *shellName()
 {

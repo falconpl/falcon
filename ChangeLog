@@ -1,4 +1,7 @@
-Feathers (0.8.11)
+Feathers (0.8.14.1)
+  * minor: Added pread function to process module.
+  
+Feathers (0.8.12)
   * bugfix: Double inheritance in MXML::Document may have caused some compilers
             to mess up the virtual table. Fixed (using a carrier).
   * major: The compiler link mode is now "private".
