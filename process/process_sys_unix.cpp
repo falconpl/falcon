@@ -281,6 +281,8 @@ bool spawn_read( String **args, bool overlay, bool background, int *returnValue,
          else {
             if ( pid == waitpid( pid, returnValue, WNOHANG ) )
             {
+               close( pipe_fd[0] );
+               close( pipe_fd[1] );
                return *sOutput != cookie;
             }
          }
