@@ -92,6 +92,31 @@ public:
       {}
 };
 
+
+/**
+   Class used to manage the pending call items.
+*/
+/**
+   The inner wrapper.
+   It can be "cloned", that is, just shared across cloned instances.
+*/
+class DBusPendingWrapper: public FalconData
+{
+   DBusConnection* m_conn;
+   DBusPendingCall* m_pc;
+   
+public:
+   DBusPendingWrapper( DBusConnection*c, DBusPendingCall* p );
+   DBusPendingWrapper( const DBusPendingWrapper & );
+   virtual ~DBusPendingWrapper();
+   
+   DBusConnection *conn() const { return m_conn; }
+   DBusPendingCall *pending() const { return m_pc; }
+
+   virtual FalconData* clone() const; // just increments the reference counter
+   virtual void gcMark( VMachine *vm );
+};
+
 }
 }
 

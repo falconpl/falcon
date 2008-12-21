@@ -88,6 +88,41 @@ void DBusWrapper::gcMark( VMachine *vm )
 {
 }
 
+//=======================================================
+//
+//=======================================================
+
+DBusPendingWrapper::DBusPendingWrapper( DBusConnection*c, DBusPendingCall* p ):
+   m_conn( c ),
+   m_pc( p )
+{
+   dbus_connection_ref( c );
+   dbus_pending_call_ref( p );
+}
+
+DBusPendingWrapper::DBusPendingWrapper( const DBusPendingWrapper &other ):
+   m_conn( other.m_conn ),
+   m_pc( other.m_pc )
+{
+   dbus_connection_ref( m_conn );
+   dbus_pending_call_ref( m_pc );
+}
+
+DBusPendingWrapper::~DBusPendingWrapper()
+{
+   dbus_connection_unref( m_conn );
+   dbus_pending_call_unref( m_pc );
+}
+
+FalconData* DBusPendingWrapper::clone() const
+{
+   return new DBusPendingWrapper( *this );
+}
+
+void DBusPendingWrapper::gcMark( VMachine *vm )
+{
+}
+
 }
 }
 

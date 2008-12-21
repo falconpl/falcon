@@ -36,6 +36,7 @@
 #include <falcon/module.h>
 #include "dbus_ext.h"
 #include "dbus_st.h"
+#include "dbus_mod.h"
 
 #include "version.h"
 
@@ -88,7 +89,23 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    dbus_cls->getClassDef()->setObjectManager( &Falcon::core_falcon_data_manager );
    self->addClassMethod( dbus_cls, "signal", Falcon::Ext::DBus_signal ).asSymbol()->
       addParam("path")->addParam("interface")->addParam("name");
+   self->addClassMethod( dbus_cls, "invoke", Falcon::Ext::DBus_invoke ).asSymbol()->
+      addParam("destination")->addParam("path")->addParam("interface")->addParam("name");
+   self->addClassMethod( dbus_cls, "dispatch", Falcon::Ext::DBus_dispatch ).asSymbol()->
+      addParam("timeout");
       
+   //============================================================
+   // The pending class.
+   //
+   Falcon::Symbol* dbusp_cls = self->addClass( "%DBusPendingCall"); 
+   dbusp_cls->exported( false );
+   dbusp_cls->setWKS( true );
+   dbusp_cls->getClassDef()->setObjectManager( &Falcon::core_falcon_data_manager );
+   
+   self->addClassMethod( dbusp_cls, "wait", Falcon::Ext::DBusPendingCall_wait );
+   self->addClassMethod( dbusp_cls, "cancel", Falcon::Ext::DBusPendingCall_cancel );
+   self->addClassMethod( dbusp_cls, "completed", Falcon::Ext::DBusPendingCall_completed ).asSymbol()->
+      addParam("dispatch");
    
    //============================================================
    // Error for DBUS related ops

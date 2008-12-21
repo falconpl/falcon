@@ -46,7 +46,12 @@ namespace Falcon {
 namespace Ext {
    FALCON_FUNC  DBus_init( VMachine *vm );
    FALCON_FUNC  DBus_signal( VMachine *vm );
+   FALCON_FUNC  DBus_invoke( VMachine *vm );
+   FALCON_FUNC  DBus_dispatch( VMachine *vm );
    
+   FALCON_FUNC  DBusPendingCall_wait( VMachine *vm );
+   FALCON_FUNC  DBusPendingCall_completed( VMachine *vm );
+   FALCON_FUNC  DBusPendingCall_cancel( VMachine *vm );
    
    FALCON_FUNC DBusError_init( VMachine *vm );
 }

@@ -47,6 +47,9 @@
 // functions as a shortcut.
 
 FAL_MODSTR( dbus_out_of_mem, "Out of memory while creating basic DBUS data" );
+FAL_MODSTR( dbus_null_reply, "No valid reply from remote connection" );
+FAL_MODSTR( dbus_unknown_type, "Unknown item type in return from DBUS method" );
+FAL_MODSTR( dbus_method_call, "Error in remote method invocation" );
 
 //... add here your messages, and remove or configure the above one
 
