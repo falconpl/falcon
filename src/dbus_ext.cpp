@@ -250,7 +250,8 @@ static bool s_extract_return( VMachine *vm, Item &target, DBusMessage *msg )
             {
             const char *v;
             dbus_message_iter_get_basic(&args, &v);
-            item  = new GarbageString( vm, v );
+            item  = new GarbageString( vm );
+            item.asString()->fromUTF8(v);
             }
             break;
          
