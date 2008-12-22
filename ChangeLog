@@ -1,4 +1,4 @@
-Falcon (0.8.14.1)
+Falcon (0.8.14.2)
   * fixed: Array bindings was not correctly accounted by the Garbage
            Collector.
   * minor: Methods can now be called directly also on numbers.

@@ -5,10 +5,6 @@ Falcon provides an ever growing set of modules which interacts with the host sys
 Also, there are many function meant to operate on the standard types, or to interact
 with the Virtual Machine itself.
 
-This manual contains those functions, classes and objects that are included in the
-fundamental modules usually available at scripts. This includes a very limited
-subset of functions, which are published through the @b core module.
-
 @section The core module
 
    The core module interacts with the virtual machine, to the point that, at times,
