@@ -93,6 +93,10 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
       addParam("destination")->addParam("path")->addParam("interface")->addParam("name");
    self->addClassMethod( dbus_cls, "dispatch", Falcon::Ext::DBus_dispatch ).asSymbol()->
       addParam("timeout");
+   self->addClassMethod( dbus_cls, "addMatch", Falcon::Ext::DBus_addMatch ).asSymbol()->
+      addParam("rule");
+   self->addClassMethod( dbus_cls, "removeMatch", Falcon::Ext::DBus_removeMatch ).asSymbol()->
+      addParam("rule");
       
    //============================================================
    // The pending class.

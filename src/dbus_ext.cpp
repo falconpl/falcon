@@ -558,6 +558,105 @@ FALCON_FUNC  DBus_dispatch( VMachine *vm )
    dbus_connection_read_write_dispatch( wp->conn(), to );
 }
 
+/*#
+   @method addMatch DBus
+   @brief Adds an active filter for incoming signals.
+   @optparam rule The filter rule in DBUS rule specification format.
+   @raise DBusError in case of failure.
+   
+   Set @b rule to nil or leave empty to perform a "full filter" request.
+   
+   See the dbus_bus_add_match() description in the official DBUS low
+   level documentation.
+*/
+FALCON_FUNC  DBus_addMatch( VMachine *vm )
+{
+   Item *i_rule = vm->param(0);
+   
+   if( i_rule != 0 && ! ( i_rule->isString() || i_rule->isNil() ) )
+   {
+      vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).
+         extra( "[S]" ) ) );
+      return;
+   }
+
+   Mod::DBusWrapper* wp = static_cast<Mod::DBusWrapper*>( vm->self().asObject()->getUserData() );
+   
+   if( i_rule != 0 && ! i_rule->isNil() )
+   {
+      AutoCString cs( *i_rule->asString() );
+      
+      dbus_bus_add_match( wp->conn(), 
+         cs.c_str(), 
+         wp->error()); 
+   }
+   else {
+      dbus_bus_add_match( wp->conn(), 
+         0, 
+         wp->error()); 
+   }
+   
+   dbus_connection_flush( wp->conn() );
+   if ( dbus_error_is_set( wp->error() ) ) 
+   { 
+      vm->raiseModError( new Mod::f_DBusError( ErrorParam( FALCON_ERROR_DBUS_BASE, __LINE__ )
+         .desc( wp->error()->name )
+         .extra( wp->error()->message ) ) );
+      return;
+   }
+}
+
+
+/*#
+   @method removeMatch DBus
+   @brief Removes an active filter for incoming signals.
+   @optparam rule The filter rule in DBUS rule specification format.
+   @raise DBusError in case of failure.
+   
+   Set @b rule to nil or leave empty to remove a previous "full filter" request.
+   
+   See the dbus_bus_remove_match() description in the official DBUS low
+   level documentation.
+*/
+FALCON_FUNC  DBus_removeMatch( VMachine *vm )
+{
+   Item *i_rule = vm->param(0);
+   
+   if( i_rule != 0 && ! ( i_rule->isString() || i_rule->isNil() ) )
+   {
+      vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).
+         extra( "[S]" ) ) );
+      return;
+   }
+
+   Mod::DBusWrapper* wp = static_cast<Mod::DBusWrapper*>( vm->self().asObject()->getUserData() );
+   
+   if( i_rule != 0 && ! i_rule->isNil() )
+   {
+      AutoCString cs( *i_rule->asString() );
+      
+      dbus_bus_remove_match( wp->conn(), 
+         cs.c_str(), 
+         wp->error()); 
+   }
+   else {
+      dbus_bus_remove_match( wp->conn(), 
+         0, 
+         wp->error()); 
+   }
+   
+   dbus_connection_flush( wp->conn() );
+   if ( dbus_error_is_set( wp->error() ) ) 
+   { 
+      vm->raiseModError( new Mod::f_DBusError( ErrorParam( FALCON_ERROR_DBUS_BASE, __LINE__ )
+         .desc( wp->error()->name )
+         .extra( wp->error()->message ) ) );
+      return;
+   }
+
+}
+
+
 //============================================================
 // Pending call
 //
