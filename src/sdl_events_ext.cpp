@@ -995,6 +995,8 @@ FALCON_FUNC SDLEventHandler_PushUserEvent( VMachine *vm )
    {
       evt.user.data1 = lock = vm->memPool()->lock( *i_user_data );
    }
+   else
+      evt.user.data1 = 0;
 
    if ( ::SDL_PushEvent( &evt ) == 0 )
       vm->retval( true );
