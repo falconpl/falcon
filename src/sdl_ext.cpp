@@ -983,10 +983,10 @@ FALCON_FUNC SDLRect_init( ::Falcon::VMachine *vm )
    }
 
    CoreObject *self = vm->self().asObject();
-   self->setProperty( "x", i_x->forceInteger() );
-   self->setProperty( "y", i_y->forceInteger() );
-   self->setProperty( "w", i_width->forceInteger() );
-   self->setProperty( "h", i_height->forceInteger() );
+   self->setProperty( "x", i_x == 0 ? 0 : i_x->forceInteger() );
+   self->setProperty( "y", i_y == 0 ? 0 : i_y->forceInteger() );
+   self->setProperty( "w", i_width == 0 ? 0 : i_width->forceInteger() );
+   self->setProperty( "h", i_height == 0 ? 0 : i_height->forceInteger() );
 }
 
 //==================================================================

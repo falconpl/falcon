@@ -715,7 +715,7 @@ FALCON_FUNC SDLScreen_UpdateRect( ::Falcon::VMachine *vm )
          return;
       }
 
-      ::SDL_UpdateRect( screen, r.x, r.y, r.w, r.w );
+      ::SDL_UpdateRect( screen, r.x, r.y, r.w, r.h );
    }
    else
    {
