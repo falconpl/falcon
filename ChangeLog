@@ -1,3 +1,6 @@
+SDL (0.9.5)
+   * added: Method SDLSurface.SetAlpha
+   
 SDL (0.9.4)
    * fxied: TTF Function wasn't getting colors with b == 0.
    * fixed: Memleak (debug code in destructor...)

@@ -533,7 +533,6 @@ FALCON_FUNC SDLSurface_FillRect( ::Falcon::VMachine *vm )
    This method is meant to determine the value of each component in a
    palette or truecolor value that has been read on a surface with
    compatible pixel format.
-
 */
 FALCON_FUNC SDLSurface_GetRGBA( ::Falcon::VMachine *vm )
 {
@@ -565,6 +564,52 @@ FALCON_FUNC SDLSurface_GetRGBA( ::Falcon::VMachine *vm )
    array->append( (int64) a );
 
    vm->retval( array );
+}
+
+/*#
+   @method SetAlpha SDLSurface
+   @brief Sets the ALPHA settings for this surface
+   @param flags ALPHA composition flags.
+   @param alpha A value between 0 (transparent) and 255 (opaque)
+   @raise SDLError on error.
+
+   SDL_SetAlpha is used for setting the per-surface alpha value and/or enabling and disabling alpha blending.
+
+   The @b flags is used to specify whether alpha blending should be used (SDL.SRCALPHA)
+   and whether the surface should use RLE acceleration for blitting (SDL.RLEACCEL).
+   The @b flags can be an OR'd combination of these two options, one of these options or 0.
+   If SDL.SRCALPHA is not passed as a flag then all alpha information is ignored when blitting the surface.
+
+   The @b alpha parameter is the per-surface alpha value; a surface need not
+   have an alpha channel to use per-surface alpha and blitting can still
+   be accelerated with SDL_RLEACCEL.
+*/
+FALCON_FUNC SDLSurface_SetAlpha( ::Falcon::VMachine *vm )
+{
+   Item *i_flags = vm->param(0);
+   Item *i_alpha = vm->param(1);
+
+   if ( i_flags == 0 || ! i_flags->isOrdinal() ||
+        i_alpha == 0 || ! i_alpha->isOrdinal()
+      )
+   {
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "I,I" ) ) );
+      return;
+   }
+
+   uint32 flags = (uint32) i_flags->forceInteger();
+   byte alpha = (int8) i_alpha->forceInteger();
+
+   CoreObject *self = vm->self().asObject();
+   SDL_Surface *surface = static_cast<SDLSurfaceCarrier_impl*>( self->getUserData() )->surface();
+   
+   if ( ::SDL_SetAlpha( surface, flags, alpha ) != 0 )
+   {
+      vm->raiseModError( new SDLError( ErrorParam( FALCON_SDL_ERROR_BASE + 10, __LINE__ )
+         .desc( "SDL SetAlpha error" )
+         .extra( SDL_GetError() ) ) );
+   }
 }
 
 /*#

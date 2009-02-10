@@ -253,6 +253,8 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    self->addClassMethod( c_surface, "SetColors", Falcon::Ext::SDLSurface_SetColors ).asSymbol()->
       addParam("colors")->addParam("firstColor");
    self->addClassMethod( c_surface, "SetIcon", Falcon::Ext::SDLSurface_SetIcon );
+   self->addClassMethod( c_surface, "SetAlpha", Falcon::Ext::SDLSurface_SetAlpha ).asSymbol()->
+      addParam("flags")->addParam("alpha");
 
    //============================================================
    // SDL Pixel Format
