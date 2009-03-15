@@ -81,6 +81,43 @@ bool CoreObject::serialize( Stream *stream, bool bLive ) const
 }
 
 
+bool CoreObject::hasProperty( const String &key ) const
+{
+   fassert( m_generatedBy != 0 );
+
+   register uint32 pos;
+   const PropertyTable &pt = m_generatedBy->properties();
+   return pt.findKey( key, pos );
+}
+
+
+bool CoreObject::defaultProperty( const String &key, Item &prop ) const
+{
+   fassert( m_generatedBy != 0 );
+
+   register uint32 pos;
+   const PropertyTable &pt = m_generatedBy->properties();
+   if ( pt.findKey( key, pos ) )
+   {
+      prop = *pt.getValue(pos);
+      prop.methodize( const_cast<CoreObject *>(this) );
+      return true;
+   }
+
+   return false;
+}
+
+
+void CoreObject::readOnlyError( const String &key ) const
+{
+   fassert( m_generatedBy != 0 );
+
+   register uint32 pos;
+   const PropertyTable &pt = m_generatedBy->properties();
+   throw new AccessError( ErrorParam( pt.findKey( key, pos ) ? e_prop_ro : e_prop_acc, __LINE__ )
+         .extra( key ) );
+}
+
 bool CoreObject::deserialize( Stream *stream, bool bLive )
 {
    if( bLive )

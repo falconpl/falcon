@@ -41,7 +41,6 @@ public:
 
    virtual ~CacheObject();
 
-   virtual bool hasProperty( const String &key ) const;
    virtual bool serialize( Stream *stream, bool bLive ) const;
    virtual bool deserialize( Stream *stream, bool bLive );
    virtual bool setProperty( const String &prop, const Item &value );

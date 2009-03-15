@@ -54,6 +54,10 @@ class FalconData;
    virtual bool deserialize( Stream *stream, bool bLive );
    \endcode
    
+   Those default methods in this class will save the object on the stream on live
+   serialization (i.e. inter-vm serializations), but will just fail on 
+   normal serializations.
+   
    Then, create a factory function returning an object of your class
    when creating an instance, like the following:
       
@@ -113,6 +117,46 @@ protected:
    CoreObject( const CoreClass *parent );
    CoreObject( const CoreObject &other );
 
+   /** Creates the default value for this property.
+   
+      Simple reflection can be done by overloading CoreObject and handling
+      reflected properties in a string if/else cascade or in a switch
+      based on property searches in the class property table.
+      
+      This utility function can be used as a default way to return basic
+      values (and eventually methods) from the property table if they doesn't
+      need special management.
+      
+      Example:
+      \code
+      bool MyClass::getProperty( const String &key, Item &ret ) const
+      {
+         if ( key == "prop1" ) 
+         {
+            //...
+         }
+         else if ( key == "prop2" )
+         {
+            //...
+         }
+         else {
+            return defaultProperty( key, ret );
+         }
+         
+         return true; // we found it or we would have called defalutProperty.
+      }
+      \endcode
+   */
+   bool defaultProperty( const String &key, Item &prop ) const;
+   
+   /** Generates a property access error.
+      If the property is in the class property table, a "read only" property error
+      is raised, otherwise a "property not found" error is raised instead.
+      
+      Useful as a default terminator of simple subclass setProperty() overloads.
+   */
+   void readOnlyError( const String &key ) const;
+   
 public:
 
    /** The base destructor does nothing.
@@ -193,9 +237,7 @@ public:
    /** Returns true if the class provides a certain property.
       Should not account Object metaclass properties, unless explicitly overloaded.
    */
-   virtual bool hasProperty( const String &key ) const = 0;
-
-
+   virtual bool hasProperty( const String &key ) const;
 
    /** Creates a shallow copy of this item.
       Will return zero if this item has a non-cloneable user-defined data,
@@ -243,7 +285,6 @@ public:
       \return true if the property can be found, false otherwise
    */
    virtual bool getProperty( const String &key, Item &ret ) const = 0;
-
 
    /** Returns a method from an object.
        This function searches for the required property; if it's found,
@@ -294,6 +335,8 @@ public:
       Resolves into setProperty().
    */
    virtual void writeProperty( const String &pos, const Item &target );
+
+
 };
 
 }

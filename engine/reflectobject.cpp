@@ -81,16 +81,6 @@ bool ReflectObject::setProperty( const String &propName, const Item &value )
 }
 
 
-bool ReflectObject::hasProperty( const String &key ) const
-{
-   fassert( m_generatedBy != 0 );
-
-   register uint32 pos;
-   const PropertyTable &pt = m_generatedBy->properties();
-
-   return pt.findKey( key, pos );
-}
-
 
 bool ReflectObject::getProperty( const String &propName, Item &ret ) const
 {

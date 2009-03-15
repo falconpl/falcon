@@ -315,6 +315,7 @@ bool ModuleLoader::scanForFile( URI &origUri, VFSProvider* vfs, t_filetype &type
          copy.pathElement().setFile( copy.pathElement().getFile() + BINMODULE_EXT );
          if( vfs->readStats( copy, fs ) )
          {
+            origUri.pathElement().setFile( copy.pathElement().getFile() );
             type = t_binmod;
             return true;
          }

@@ -69,14 +69,6 @@ CacheObject::~CacheObject()
    memFree( m_cache );
 }
 
-
-bool CacheObject::hasProperty( const String &key ) const
-{
-   fassert( m_generatedBy != 0 );
-   register uint32 pos;
-   return m_generatedBy->properties().findKey( key, pos );
-}
-
 void CacheObject::gcMark( MemPool *mp )
 {
    CoreObject::gcMark( mp );
