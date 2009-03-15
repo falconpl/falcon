@@ -47,7 +47,7 @@ public:
 
    virtual ~RegexCarrier();
 
-   virtual void gcMark( VMachine *mp ) {};
+   virtual void gcMark( MemPool *mp ) {};
    virtual FalconData *clone() const {return 0;}
 };
 

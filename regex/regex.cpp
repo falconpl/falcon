@@ -119,10 +119,9 @@ A minimal example would look like the following:
    @beginmodule feather_regex
 */
 
-FALCON_MODULE_DECL( const Falcon::EngineData &data )
+FALCON_MODULE_DECL
 {
    #define FALCON_DECLARE_MODULE self
-   data.set();
 
    Falcon::Module *self = new Falcon::Module();
    self->name( "regex" );
@@ -144,7 +143,6 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    // Regex class
    //
    Falcon::Symbol *regex_c = self->addClass( "Regex", Falcon::Ext::Regex_init );
-   regex_c->getClassDef()->setObjectManager( &Falcon::core_falcon_data_manager );
    self->addClassMethod( regex_c, "study", Falcon::Ext::Regex_study );
    self->addClassMethod( regex_c, "match", Falcon::Ext::Regex_match ).asSymbol()->
       addParam("string");

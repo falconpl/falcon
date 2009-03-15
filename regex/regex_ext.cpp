@@ -427,7 +427,7 @@ FALCON_FUNC Regex_find( ::Falcon::VMachine *vm )
    {
       // we know by hypotesis that oVector is at least 1 entry.
       Item rng;
-      rng.setRange( data->m_ovector[0], data->m_ovector[1], false );
+      rng.setRange( new CoreRange( data->m_ovector[0], data->m_ovector[1] ) );
       vm->retval( rng );
    }
    else if ( data->m_matches == PCRE_ERROR_NOMATCH ){
@@ -477,7 +477,7 @@ static void internal_findAll( Falcon::VMachine *vm, bool overlapped )
          max = 0xFFFFFFFF;
    }
 
-   CoreArray *ca = new CoreArray
+   CoreArray *ca = new CoreArray();
    int frontOrBack = overlapped ? 0 : 1;
    uint32 maxLen = source->asString()->length();
 
@@ -486,7 +486,7 @@ static void internal_findAll( Falcon::VMachine *vm, bool overlapped )
       if( data->m_matches > 0 )
       {
          Item rng;
-         rng.setRange( data->m_ovector[0], data->m_ovector[1], false );
+         rng.setRange( new CoreRange( data->m_ovector[0], data->m_ovector[1] ) );
          ca->append( rng );
          // restart from the end of the patter
          from = data->m_ovector[frontOrBack];
@@ -762,7 +762,7 @@ FALCON_FUNC Regex_captured( ::Falcon::VMachine *vm )
    }
 
    Item rng;
-   rng.setRange( data->m_ovector[ count * 2 ] , data->m_ovector[ count * 2 + 1 ], false );
+   rng.setRange( new CoreRange( data->m_ovector[ count * 2 ] , data->m_ovector[ count * 2 + 1 ] ) );
    vm->retval( rng );
 }
 
@@ -809,7 +809,7 @@ FALCON_FUNC Regex_grab( Falcon::VMachine *vm )
 
    // grab all the strings
 
-   CoreArray *ca = new CoreArray
+   CoreArray *ca = new CoreArray();
    for( int32 capt = 0; capt < data->m_matches; capt++ )
    {
 
