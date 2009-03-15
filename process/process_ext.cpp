@@ -147,9 +147,6 @@ FALCON_FUNC  ProcessEnum_next  ( ::Falcon::VMachine *vm )
 
    if ( res != 1 )
    {
-      vm->memPool()->destroyGarbage( name );
-      vm->memPool()->destroyGarbage( path );
-
       if ( res == -1 )
       {
          vm->raiseModError( new ProcessError( ErrorParam( FALPROC_ERR_READLIST, __LINE__ )
@@ -234,9 +231,15 @@ FALCON_FUNC  falcon_system ( ::Falcon::VMachine *vm )
    argv[3] = 0;
 
    int retval;
+   vm->idle();
    if( ::Falcon::Sys::spawn( argv, false, background, &retval ) )
+   {
+      vm->unidle();
       vm->retval( retval );
-   else {
+   }
+   else 
+   {
+      vm->unidle();
       vm->raiseModError( new ProcessError( ErrorParam( FALPROC_ERR_CREATLIST, __LINE__ )
          .desc( FAL_STR(proc_msg_errlist3) )
          .sysError( retval ) ) );
@@ -282,6 +285,8 @@ FALCON_FUNC  falcon_systemCall ( ::Falcon::VMachine *vm )
       return;
    }
 
+   vm->idle();
+   
    bool background = mode == 0 ? false : mode->isTrue();
    String **argv;
 
@@ -308,8 +313,22 @@ FALCON_FUNC  falcon_systemCall ( ::Falcon::VMachine *vm )
 
    int retval;
    if( ::Falcon::Sys::spawn( argv, false, background, &retval ) )
+   {
+      vm->unidle();
       vm->retval( retval );
+      
+      if( sys_req->type() == FLC_ITEM_STRING )
+         ::Falcon::Mod::freeArgv( argv );
+      else
+         memFree( argv );
+   }
    else {
+      vm->unidle();
+       if( sys_req->type() == FLC_ITEM_STRING )
+         ::Falcon::Mod::freeArgv( argv );
+      else
+         memFree( argv );
+         
       vm->raiseModError( new ProcessError( ErrorParam( FALPROC_ERR_CREATPROC, __LINE__ )
          .desc( FAL_STR( proc_msg_prccreate ) )
          .sysError( retval ) ) );
@@ -599,13 +618,18 @@ FALCON_FUNC  Process_wait ( ::Falcon::VMachine *vm )
 {
    ::Falcon::Sys::ProcessHandle *handle = (::Falcon::Sys::ProcessHandle *)
       vm->self().asObject()->getUserData();
-   if( ! handle->wait( true ) ) {
+   
+   vm->idle();
+   if( ! handle->wait( true ) ) 
+   {
+      vm->unidle();
       vm->raiseModError( new ProcessError( ErrorParam( FALPROC_ERR_WAIT, __LINE__ )
          .desc( FAL_STR( proc_msg_waitfail ) )
          .sysError( handle->lastError() ) ) );
    }
    else {
       handle->close();
+      vm->unidle();
    }
 }
 
@@ -667,11 +691,16 @@ FALCON_FUNC  Process_value ( ::Falcon::VMachine *vm )
 
    bool wait = h_wait == 0 ? false : h_wait->isTrue();
    if ( wait && ! handle->done() ) {
+      vm->idle();
       if( ! handle->wait( true ) ) {
+         handle->close();
+         vm->unidle();
          vm->raiseModError( new ProcessError( ErrorParam( FALPROC_ERR_WAIT, __LINE__ )
             .desc( FAL_STR( proc_msg_waitfail ) )
             .sysError( handle->lastError() ) ) );
       }
+      else
+         vm->unidle();
    }
    // give a test to see if the process is terminated in the meanwhile
    else if ( ! handle->done() ) {

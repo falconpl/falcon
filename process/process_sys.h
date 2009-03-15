@@ -59,7 +59,7 @@ public:
    int lastError() const { return m_lastError; }
    void lastError( int val ) { m_lastError = val; }
 
-   virtual void gcMark( VMachine *mp ) {};
+   virtual void gcMark( MemPool *mp ) {};
    virtual FalconData *clone() const {return 0;}
 };
 
@@ -77,7 +77,7 @@ public:
    int next( String &name, uint64 &pid, uint64 &ppid, String &path );
    bool close();
 
-   virtual void gcMark( VMachine *mp ) {};
+   virtual void gcMark( MemPool *mp ) {};
    virtual FalconData *clone() const {return 0;}
 };
 
