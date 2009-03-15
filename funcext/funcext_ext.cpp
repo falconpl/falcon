@@ -280,7 +280,7 @@ FALCON_FUNC  fe_at ( ::Falcon::VMachine *vm )
                case FLC_ITEM_FUNC:
                   // the function may be a dead function; by so, the method will become a dead method,
                   // and it's ok for us.
-                  vm->regA().setMethod( self, p->asFunction(), p->asModule() );
+                  vm->regA().setMethod( self, p->asFunction() );
                   break;
 
                case FLC_ITEM_CLASS:
@@ -315,7 +315,7 @@ FALCON_FUNC  fe_at ( ::Falcon::VMachine *vm )
 
    case FLC_ITEM_CLSMETHOD:
          sourceClass = i_array->asMethodClass();
-         self = i_array->asMethodObject();
+         self = i_array->asObject();
 
    // do not break: fallback
    case FLC_ITEM_CLASS:
@@ -342,9 +342,9 @@ FALCON_FUNC  fe_at ( ::Falcon::VMachine *vm )
             if( prop->type() == FLC_ITEM_FUNC )
             {
                if ( self != 0 )
-                  vm->regA().setMethod( self, prop->asFunction(), prop->asModule() );
+                  vm->regA().setMethod( self, prop->asFunction() );
                else
-                  vm->regA().setFunction( prop->asFunction(), prop->asModule() );
+                  vm->regA().setFunction( prop->asFunction());
             }
             else
             {
@@ -388,7 +388,7 @@ FALCON_FUNC  fe_gt ( ::Falcon::VMachine *vm )
       return;
    }
 
-   vm->regA().setBoolean( vm->compareItems( *i_a, *i_b ) > 0 );
+   vm->regA().setBoolean( i_a->compare( *i_b ) > 0 );
 }
 
 /*#
@@ -411,7 +411,7 @@ FALCON_FUNC  fe_ge ( ::Falcon::VMachine *vm )
       return;
    }
 
-   vm->regA().setBoolean( vm->compareItems( *i_a, *i_b ) >= 0 );
+   vm->regA().setBoolean( i_a->compare( *i_b ) >= 0 );
 }
 
 /*#
@@ -434,7 +434,7 @@ FALCON_FUNC  fe_lt ( ::Falcon::VMachine *vm )
       return;
    }
 
-   vm->regA().setBoolean( vm->compareItems( *i_a, *i_b ) < 0 );
+   vm->regA().setBoolean( i_a->compare( *i_b ) < 0 );
 }
 
 /*#
@@ -457,7 +457,7 @@ FALCON_FUNC  fe_le ( ::Falcon::VMachine *vm )
       return;
    }
 
-   vm->regA().setBoolean( vm->compareItems( *i_a, *i_b ) <= 0 );
+   vm->regA().setBoolean( i_a->compare( *i_b ) <= 0 );
 }
 
 /*#
@@ -480,7 +480,7 @@ FALCON_FUNC  fe_eq ( ::Falcon::VMachine *vm )
       return;
    }
 
-   vm->regA().setBoolean( vm->compareItems( *i_a, *i_b ) == 0 );
+   vm->regA().setBoolean( i_a->compare( *i_b ) == 0 );
 }
 
 /*#
@@ -503,7 +503,7 @@ FALCON_FUNC  fe_neq ( ::Falcon::VMachine *vm )
       return;
    }
 
-   vm->regA().setBoolean( vm->compareItems( *i_a, *i_b ) != 0 );
+   vm->regA().setBoolean( i_a->compare( *i_b ) != 0 );
 }
 
 /*#
@@ -517,7 +517,7 @@ FALCON_FUNC  fe_neq ( ::Falcon::VMachine *vm )
 
 static bool internal_eq( ::Falcon::VMachine *vm, const Item &first, const Item &second )
 {
-   if( first == second || vm->compareItems( first, second ) == 0 )
+   if( first.compare( second ) == 0 )
    {
       return true;
    }
@@ -670,10 +670,7 @@ FALCON_FUNC  fe_add( ::Falcon::VMachine *vm )
          first->merge( *operand2->asArray() );
       }
       else {
-         if ( operand2->isString() && operand2->asString()->garbageable() )
-            first->append( operand2->asString()->clone() );
-         else
-            first->append( *operand2 );
+         first->append( *operand2 );
       }
       vm->retval( first );
       return;
