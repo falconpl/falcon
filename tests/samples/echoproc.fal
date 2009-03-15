@@ -34,7 +34,7 @@ try
 
    while (result = proc.value())
       if procout.readAvailable( 0.1 )
-         >> procout.read( 1024 )
+         >> procout.grab( 1024 )
       end
    end
    >

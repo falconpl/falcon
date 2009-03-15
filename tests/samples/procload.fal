@@ -34,7 +34,7 @@ try
    // until the process is done, read what it has to say
    while (result = proc.value() ) == -1
       if procout.readAvailable( 0.1 )
-         strout += procout.read( 1024 )
+         strout += procout.grab( 1024 )
       end
    end
 
