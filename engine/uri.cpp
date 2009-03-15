@@ -22,12 +22,14 @@ namespace Falcon
 
 URI::URI():
    m_bValid( true ),
+   m_path( this ),
    m_queryMap( 0 )
 {
 }
 
 URI::URI( const String &suri ):
    m_bValid( true ),
+   m_path( this ),
    m_queryMap(0)
 {
    parse( suri );
@@ -35,10 +37,10 @@ URI::URI( const String &suri ):
 
 URI::URI( const URI &other ):
    m_bValid( true ),
+   m_path( this ),
    m_queryMap(0)
 {
-   //TODO
-   parse( other.m_original );
+   parse( other.get( true ) );
 }
 
 URI::~URI()

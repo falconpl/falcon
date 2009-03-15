@@ -22,6 +22,7 @@
 
 namespace Falcon
 {
+class URI;
 
 /** Falcon path representation.
 
@@ -58,6 +59,7 @@ class FALCON_DYN_CLASS Path: public GCAlloc
    uint32 m_fileEnd;
    uint32 m_extStart;
    bool m_bValid;
+   URI* m_owner;
 
    /** Analyze the path, splitting its constituents.
       \param isWin true to perform also \\ -> / conversion while parsing.
@@ -69,9 +71,13 @@ public:
 
    /** Empty constructor. */
    Path();
-
+   
+   /** Path-in-uri constructor */
+   Path( URI *owner );
+   
    /** Path constructor from strings. */
-   Path( const String &path )
+   Path( const String &path ):
+      m_owner(0)
    {
       set( path );
    }
@@ -79,7 +85,8 @@ public:
    /** Path constructor from strings.
       This constiuctor allows to select between MS-Windows path format or Falcon path format.
    */
-   Path( const String &path, bool winFormat )
+   Path( const String &path, bool winFormat ):
+      m_owner(0)
    {
       if ( winFormat )
          setFromWinFormat( path );
@@ -90,7 +97,8 @@ public:
    /** Copy constructor.
       Copies the other path as-is.
    */
-   Path( const Path &other )
+   Path( const Path &other ):
+      m_owner(0)
    {
       copy( other );
    }

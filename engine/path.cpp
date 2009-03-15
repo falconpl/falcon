@@ -13,6 +13,7 @@
    See LICENSE file for licensing details.
 */
 
+#include <falcon/uri.h>
 #include <falcon/path.h>
 
 namespace Falcon
@@ -25,13 +26,27 @@ Path::Path():
    m_fileStart(String::npos),
    m_fileEnd(String::npos),
    m_extStart(String::npos),
-   m_bValid( true )
+   m_bValid( true ),
+   m_owner(0)
 {
 }
 
+Path::Path( URI *owner ):
+   m_resEnd(String::npos),
+   m_pathStart(String::npos),
+   m_pathEnd(String::npos),
+   m_fileStart(String::npos),
+   m_fileEnd(String::npos),
+   m_extStart(String::npos),
+   m_bValid( true ),
+   m_owner( owner )
+{
+}
 
 void Path::copy( const Path &other )
 {
+   if ( m_owner != 0 ) m_owner->m_encoded.size(0);
+   
    m_path = other.m_path;
    m_bValid = other.m_bValid;
 
@@ -41,10 +56,12 @@ void Path::copy( const Path &other )
    m_fileStart = other.m_fileStart;
    m_fileEnd = other.m_fileEnd;
    m_extStart = other.m_extStart;
+   
 }
 
 void Path::set( const String &p )
 {
+   if ( m_owner ) m_owner->m_encoded.size(0);
    m_path = p;
    analyze( false );
 }
@@ -143,6 +160,7 @@ bool Path::analyze( bool isWin )
 
 void Path::setFromWinFormat( const String &p )
 {
+   if ( m_owner ) m_owner->m_encoded.size(0);
    m_path = p;
    analyze( true );
 }
@@ -249,6 +267,8 @@ bool Path::getExtension( String &str ) const
 
 void Path::setResource( const String &res )
 {
+   if ( m_owner ) m_owner->m_encoded.size(0);
+
    if ( res.size() )
    {
       if ( m_resEnd != String::npos )
@@ -274,6 +294,7 @@ void Path::setResource( const String &res )
 
 void Path::setLocation( const String &in_loc )
 {
+   if ( m_owner ) m_owner->m_encoded.size(0);
 
 
    if ( in_loc.length() >0 )
@@ -318,6 +339,8 @@ void Path::setLocation( const String &in_loc )
 
 void Path::setWinLocation( const String &in_loc )
 {
+   if ( m_owner ) m_owner->m_encoded.size(0);
+
    String loc = in_loc;
 
    if ( loc.length() >0 )
@@ -349,6 +372,8 @@ void Path::setWinLocation( const String &in_loc )
 
 void Path::setFile( const String &file )
 {
+   if ( m_owner ) m_owner->m_encoded.size(0);
+
    if( m_fileStart != String::npos )
    {
       m_path.change( m_fileStart, m_fileEnd, file );
@@ -382,6 +407,8 @@ void Path::setFile( const String &file )
 
 void Path::setExtension( const String &extension )
 {
+   if ( m_owner ) m_owner->m_encoded.size(0);
+
    if ( m_extStart != String::npos )
    {
       if( extension.size() != 0 )
@@ -407,6 +434,8 @@ void Path::setExtension( const String &extension )
 
 void Path::setFilename( const String &fname )
 {
+   if ( m_owner ) m_owner->m_encoded.size(0);
+
    if( m_fileStart != String::npos )
    {
       m_path.change( m_fileStart, String::npos, fname );
@@ -497,6 +526,8 @@ void Path::splitWinFormat( String &res, String &loc, String &name, String &ext )
 
 void Path::join( const String &loc, const String &name, const String &ext )
 {
+   if ( m_owner ) m_owner->m_encoded.size(0);
+
    m_path = loc;
    if( loc.length() !=  0 )
    {
@@ -522,6 +553,8 @@ void Path::join( const String &loc, const String &name, const String &ext )
 
 void Path::join( const String &res, const String &loc, const String &name, const String &ext, bool bWin )
 {
+   if ( m_owner ) m_owner->m_encoded.size(0);
+
    m_path = res;
 
    if ( res.length() != 0 && res.getCharAt( res.length() - 1 ) != ':' )

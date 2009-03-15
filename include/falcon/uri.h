@@ -96,6 +96,8 @@ class FALCON_DYN_CLASS URI: public BaseAlloc
 
    bool internal_parse( const String &newUri, bool parseQuery, bool decode = true );
 
+   friend class Path;
+   
 public:
 
    /** Empty constructor.
