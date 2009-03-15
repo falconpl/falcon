@@ -305,8 +305,11 @@ FALCON_FUNC  Socket_readAvailable( ::Falcon::VMachine *vm )
    Sys::Socket *tcps = (Sys::Socket *) self->getUserData();
    int res;
 
+   if ( timeout > 0 ) vm->idle();
    if ( (res = tcps->readAvailable( (int32)timeout, &vm->systemData() ) ) <= 0 )
    {
+      if ( timeout > 0 ) vm->unidle();
+      
       // interrupted?
       if ( res == -2 )
       {
@@ -327,6 +330,7 @@ FALCON_FUNC  Socket_readAvailable( ::Falcon::VMachine *vm )
       }
    }
    else {
+      if ( timeout > 0 ) vm->unidle();
       self->setProperty( "timedOut", Item( false ) );
       vm->regA().setBoolean( true );
    }
@@ -381,8 +385,11 @@ FALCON_FUNC  Socket_writeAvailable( ::Falcon::VMachine *vm )
    Sys::Socket *tcps = (Sys::Socket *) self->getUserData();
    int res;
 
+   if ( timeout > 0 ) vm->idle();
    if ( ( res = tcps->writeAvailable( (int32)timeout, &vm->systemData() ) ) <= 0 )
    {
+      if ( timeout > 0 ) vm->unidle();
+      
       // interrupted?
       if ( res == -2 )
       {
@@ -404,6 +411,7 @@ FALCON_FUNC  Socket_writeAvailable( ::Falcon::VMachine *vm )
       }
    }
    else {
+      if ( timeout > 0 ) vm->unidle();
       self->setProperty( "timedOut", Item( false ) );
       vm->regA().setBoolean( true );
    }
@@ -567,12 +575,15 @@ FALCON_FUNC  TCPSocket_connect( ::Falcon::VMachine *vm )
       return;
    }
 
+   vm->idle();
    // connection
    if ( tcps->connect( addr ) ) {
+      vm->unidle();
       vm->regA().setBoolean( true );
       self->setProperty( "timedOut", Item( false ) );
       return;
    }
+   vm->unidle();
 
    // connection not complete
    if ( tcps->lastError() == 0 ) {
@@ -686,7 +697,10 @@ FALCON_FUNC  TCPSocket_send( ::Falcon::VMachine *vm )
       count = dataStr->size() - start_pos;
    }
 
+   vm->idle();
    int32 res = tcps->send( dataStr->getRawStorage() + start_pos, count );
+   vm->unidle();
+   
    if( res == -1 ) {
       self->setProperty( "lastError", tcps->lastError() );
       vm->raiseModError(  new NetError( ErrorParam( FALSOCK_ERR_SEND, __LINE__ )
@@ -819,8 +833,10 @@ FALCON_FUNC  TCPSocket_recv( ::Falcon::VMachine *vm )
       return;
    }
 
-
+   vm->idle();
    size = tcps->recv( cs_target->getRawStorage(), size );
+   vm->unidle();
+   
    if( size == -1 ) {
       self->setProperty( "lastError", tcps->lastError() ) ;
       vm->raiseModError(  new NetError( ErrorParam( FALSOCK_ERR_RECV, __LINE__ )
@@ -871,8 +887,10 @@ FALCON_FUNC  TCPSocket_closeRead( ::Falcon::VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
    Sys::TCPSocket *tcps = (Sys::TCPSocket *) self->getUserData();
-
+   
+   vm->idle();
    if ( ! tcps->closeRead() ) {
+   vm->unidle();
       // may time out
       if ( tcps->lastError() == 0 ) {
          self->setProperty( "timedOut", Item( true ) );
@@ -888,7 +906,8 @@ FALCON_FUNC  TCPSocket_closeRead( ::Falcon::VMachine *vm )
          .sysError( (uint32) tcps->lastError() ) ) );
       return;
    }
-
+   
+   vm->unidle();
    vm->regA().setBoolean( true );
 }
 
@@ -919,8 +938,10 @@ FALCON_FUNC  TCPSocket_closeWrite( ::Falcon::VMachine *vm )
    Sys::TCPSocket *tcps = (Sys::TCPSocket *) self->getUserData();
 
    self->setProperty( "timedOut", Item( false ) );
-
+   
+   vm->idle();
    if ( tcps->closeWrite() ) {
+      vm->unidle();
       vm->regA().setBoolean( true );
    }
    else {
@@ -930,6 +951,7 @@ FALCON_FUNC  TCPSocket_closeWrite( ::Falcon::VMachine *vm )
          .desc( FAL_STR( sk_msg_errclose ) )
          .sysError( (uint32) tcps->lastError() ) ) );
    }
+   vm->unidle();
 }
 
 
@@ -953,7 +975,10 @@ FALCON_FUNC  TCPSocket_close( ::Falcon::VMachine *vm )
    CoreObject *self = vm->self().asObject();
    Sys::TCPSocket *tcps = (Sys::TCPSocket *) self->getUserData();
 
-   if ( ! tcps->close() ) {
+   vm->idle();
+   if ( ! tcps->close() ) 
+   {
+      vm->unidle();
       // may time out
       if ( tcps->lastError() == 0 ) {
          self->setProperty( "timedOut", Item( true ) );
@@ -970,6 +995,7 @@ FALCON_FUNC  TCPSocket_close( ::Falcon::VMachine *vm )
       return;
    }
 
+   vm->unidle();
    vm->regA().setBoolean( true );
 }
 
@@ -1107,9 +1133,14 @@ FALCON_FUNC  UDPSocket_sendTo( ::Falcon::VMachine *vm )
       count = dataStr->size() - start_pos;
    }
 
+
    Sys::Address target;
    target.set( *addr->asString(), *srvc->asString() );
+   
+   vm->idle();
    int32 res = udps->sendTo( dataStr->getRawStorage() + start_pos, count, target );
+   vm->unidle();
+   
    if( res == -1 ) {
       self->setProperty( "lastError", udps->lastError() );
       vm->raiseModError(  new NetError( ErrorParam( FALSOCK_ERR_SEND, __LINE__ )
@@ -1247,7 +1278,10 @@ FALCON_FUNC  UDPSocket_recv( ::Falcon::VMachine *vm )
    }
 
    Sys::Address from;
+   vm->idle();
    size = udps->recvFrom( cs_target->getRawStorage(), size, from );
+   vm->unidle();
+
    if( size == -1 ) {
       self->setProperty( "lastError", udps->lastError() ) ;
       vm->raiseModError(  new NetError( ErrorParam( FALSOCK_ERR_SEND, __LINE__ )
@@ -1453,7 +1487,10 @@ FALCON_FUNC  TCPServer_accept( ::Falcon::VMachine *vm )
       return;
    }
 
+   vm->idle();
    Sys::TCPSocket *skt = srvs->accept();
+   vm->unidle();
+
    if ( srvs->lastError() != 0 )
    {
       self->setProperty( "lastError", srvs->lastError() );

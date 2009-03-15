@@ -49,11 +49,9 @@
    @beginmodule feather_socket
 */
 
-FALCON_MODULE_DECL(const Falcon::EngineData &data )
+FALCON_MODULE_DECL
 {
    #define FALCON_DECLARE_MODULE self
-
-   data.set();
 
    if ( ! Falcon::Sys::init_system() )
    {
@@ -123,7 +121,6 @@ FALCON_MODULE_DECL(const Falcon::EngineData &data )
 
    // private class socket.
    Falcon::Symbol *c_socket = self->addClass( "Socket", Falcon::Ext::Socket_init, false );
-   c_socket->getClassDef()->setObjectManager( &Falcon::core_falcon_data_manager );
    self->addClassMethod( c_socket, "getTimeout", Falcon::Ext::Socket_getTimeout );
    self->addClassMethod( c_socket, "setTimeout", Falcon::Ext::Socket_setTimeout ).asSymbol()->
       addParam("timeout");
@@ -163,7 +160,6 @@ FALCON_MODULE_DECL(const Falcon::EngineData &data )
    self->addClassProperty( udpsocket, "remoteService" );
 
    Falcon::Symbol *tcpserver = self->addClass( "TCPServer", Falcon::Ext::TCPServer_init );
-   tcpserver->getClassDef()->setObjectManager( &Falcon::core_falcon_data_manager );
    self->addClassMethod( tcpserver, "dispose", Falcon::Ext::TCPServer_dispose );
    self->addClassMethod( tcpserver, "bind", Falcon::Ext::TCPServer_bind ).asSymbol()->
       addParam("addrOrService")->addParam("service");

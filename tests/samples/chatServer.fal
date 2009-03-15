@@ -56,10 +56,7 @@ end
   output functions
 *********************************/
 
-function warn()
-   print( "WARN: " )
-   pass printl
-end
+warn = [ printl, "WARN: " ]
 
 function messageReceived( idFrom, idTo )
    print( "MSG ", idFrom, "->", idTo, ": " )
@@ -90,7 +87,7 @@ function manageLogins()
                continue dropping
             else
                if cliData[0:6] == "[IAM_]"
-                  cliId = cliData[6:-3]
+                  cliId = cliData[6:-2]
                   if cliId in clients
                      cli.messages += CliMessage( nil, "[SERV]ID Already present." )
                   else
