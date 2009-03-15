@@ -37,6 +37,71 @@ class MemPool;
 class Sequence;
 class FalconData;
 
+/** Base core object class.
+   To create your own objects, derive from this class and reimplement:
+   
+   \code
+   virtual bool hasProperty( const String &key ) const;
+   virtual bool setProperty( const String &prop, const Item &value );
+   virtual bool getProperty( const String &key, Item &ret ) const;
+   virtual CoreObject *clone() const;
+   \endcode
+   
+   Eventually, reimplement also:
+   
+   \code
+   virtual bool serialize( Stream *stream, bool bLive ) const;
+   virtual bool deserialize( Stream *stream, bool bLive );
+   \endcode
+   
+   Then, create a factory function returning an object of your class
+   when creating an instance, like the following:
+      
+   \code
+   // typedef ObjectFactory ... 
+   CoreObject* MyClassFactory( const CoreClass *cls, void *data, bool bDeserializing );
+   \endcode
+      
+   Remember that inner program-specific data may be provided later via setUserData() method,
+   so the factory function must take into accunt the fact that \b data may not be provided (may be 0).
+
+   The \b bDeserializing parameter will be true when creating an instance after a
+   serialized data. As deserialize() is going to be called next, the constructor may take this
+   parameter to avoid performing full construction and let deserialize() to setup the object.
+
+   
+   Then, in the module owning this object, the class that shall return an instance of this
+   must be configured via ClassDef::factory( ObjectFactory ) method. In example:
+   
+   \code
+   Symbol *my_class = self->addClass( "MyClass", my_class_init );
+   my_class->getClassDef()->factory( &MyClassFactory );
+   \code
+   
+   Three standard subclasses with their respective factories are provided. 
+   - FalconObject is the standard CoreObject containing falcon Item instances in each property and 
+      possibly a FalconData entity.
+   - ReflectObject is totally opaque, and all its get/set properties are sent to the class reflection
+     table. The class reflection table indicates which action must be taken when setting or getting
+     a property, and can both store C native data in the underlying user_data, or call functions to
+     perform this task.
+   - CRObject: Is a reflective object that has a back-up Item for each property. If a prioperty is
+     not declared reflective in the class reflection table, it is treated as if in a FalconObject,
+     otherwise its value is generated through the reflection mechanism and cached in the property
+     item.
+     
+   Those three class factories are automatically applied by the VM in case it has not been set.
+   If the class has all the properties fully reflected (or reflected on read and read only) 
+   ReflectObject factory will be used; if one or more properties are not reflected CRObject
+   factory will be used; if none is reflected, FalconObject factory is used.
+   
+   \note Actually, there are three factories for each one of the basic classes, depending on
+         which kind of user data is expected to be associated with the created instance, if any.
+         The VM uses the factory functions that suppose that the data stored in the instance
+         will be an instance of FalconData class, as this is the most common case and the only
+         data stored in objects by the engine.
+*/
+
 class FALCON_DYN_CLASS CoreObject: public DeepItem, public Garbageable
 {
 protected:
