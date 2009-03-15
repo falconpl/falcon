@@ -31,7 +31,6 @@
 namespace Falcon
 {
 
-class ObjectManager;
 class CoreObject;
 
 /** Descriptor of single property.
@@ -71,7 +70,7 @@ struct PropEntry
    /** Reflects a single property.
       user_data -> Item
    */
-   void  reflectFrom( CoreObject *instance, void *user_data, Item &prop ) const;
+   void reflectFrom( CoreObject *instance, void *user_data, Item &prop ) const;
 };
 
 
@@ -94,12 +93,6 @@ struct PropEntry
 
    Actually, the ObjectHandler information would not be needed, but it is kept here for caching.
    There is only one property table per class in each program, so it's an affordable cost.
-
-   Read-only properties that doesn't need reflection (generally fixed-methods and properties storing
-   the directly inherited classes that can be accessed through class instances) can be stored with
-   the ObjectManager field equal to zero. This makes the VM and every get() request on the
-   instances to return the template value stored in the property table, while every set() request
-   will raise a read-only access error.
 
    Once created, the m_value field of each entry is read-only. It stores enumeration and constant
    initialization values for properties and method/class entries for methods/class accessors.

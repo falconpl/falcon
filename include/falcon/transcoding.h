@@ -87,6 +87,8 @@ public:
    virtual ~Transcoder();
 
    virtual t_status status() const { return m_stream->status(); }
+   
+   virtual bool isTranscoder() const { return true; }
 
    /** Returns the character encoding which is managed by this transcoder.
       Subclasses must reimplement this to return the name of the supported encoding.
@@ -167,6 +169,9 @@ public:
    }
 
    virtual bool flush();
+   
+   /** Disengages this transcoder from the underlying stream. */
+   void detach() { m_stream = 0; m_streamOwner = false; }
 };
 
 /** EOL Transcoder.

@@ -17,8 +17,10 @@
 #include <falcon/mempool.h>
 #include <falcon/item.h>
 #include <falcon/string.h>
-#include <falcon/cobject.h>
+#include <falcon/coreobject.h>
 #include <falcon/carray.h>
+#include <falcon/corefunc.h>
+#include <falcon/corerange.h>
 #include <falcon/cdict.h>
 #include <falcon/cclass.h>
 #include <falcon/vm.h>
@@ -26,157 +28,291 @@
 #include <falcon/membuf.h>
 #include <falcon/garbagepointer.h>
 
+#define GC_IDLE_TIME 250
+
+#if 0
+#define TRACE printf
+#include <stdio.h>
+#else
+   #define TRACE(...)
+#endif
+
 // By default, 1MB
 #define TEMP_MEM_THRESHOLD 1000000
 namespace Falcon {
 
+MemPool* memPool = 0;
+
 MemPool::MemPool():
    m_setThreshold( 0 ),
    m_msLimit( 0 ),
-   m_status( 0 ),
+   m_mingen( 0 ),
+   m_bNewReady( true ),
+   m_olderVM( 0 ),
+   m_vmRing(0),
+   m_vmCount(0),
+   m_vmIdle_head( 0 ),
+   m_vmIdle_tail( 0 ),
+   m_generation( 0 ),
    m_aliveItems( 0 ),
    m_aliveMem( 0 ),
    m_allocatedItems( 0 ),
    m_allocatedMem( 0 ),
-   m_autoClean( true )
+   m_autoClean( true ),
+   m_th(0),
+   m_bLive(false)
 {
-   m_garbageRoot = 0;
-   m_gstrRoot = 0;
-   m_availPoolRoot = 0;
+   m_vmRing = 0;
 
-   m_thresholdMemory = TEMP_MEM_THRESHOLD;
-   m_setThreshold = TEMP_MEM_THRESHOLD;
-   m_thresholdReclaim = TEMP_MEM_THRESHOLD/3;
+   // use a ring for lock items.
+   m_lockRoot = new GarbageLock(Item());
+   m_lockRoot->next( m_lockRoot );
+   m_lockRoot->prev( m_lockRoot );
+
+   // use a ring for garbage items.
+   m_garbageRoot = new GarbageableBase;
+   m_garbageRoot->nextGarbage( m_garbageRoot );
+   m_garbageRoot->prevGarbage( m_garbageRoot );
+
+   // use a ring for lock items.
+   m_lockRoot = new GarbageLock(Item());
+   m_lockRoot->next( m_lockRoot );
+   m_lockRoot->prev( m_lockRoot );
+
+   // separate the newly allocated items to allow allocations during sweeps.
+   m_newRoot = new GarbageableBase;
+   m_newRoot->nextGarbage( m_newRoot );
+   m_newRoot->prevGarbage( m_newRoot );
+
+   m_thresholdNormal = TEMP_MEM_THRESHOLD;
+   m_thresholdActive = TEMP_MEM_THRESHOLD*3;
 }
+
 
 MemPool::~MemPool()
 {
-   if ( m_availPoolRoot != 0 )
+   // ensure the thread is down.
+   stop();
+
+   // delete the garbage ring.
+   GarbageLock *ge = m_lockRoot->next();
+   while( ge != m_lockRoot )
    {
-      GarbageLock *g1 = m_availPoolRoot;
-      GarbageLock *g2 = m_availPoolRoot->next();
-      while( g2 != m_availPoolRoot ) {
-         g1 = g2;
-         g2 = g2->next();
-         delete  g1 ;
-      }
-      delete m_availPoolRoot;
+      GarbageLock *gnext = ge->next();
+      delete ge;
+      ge = gnext;
    }
+   delete ge;
 
-   if ( m_garbageRoot != 0 ) {
-      Garbageable *g1 = m_garbageRoot;
-      Garbageable *g2 = m_garbageRoot->nextGarbage();
-      while( g2 != m_garbageRoot ) {
-         g1 = g2;
-         g2 = g2->nextGarbage();
-         delete  g1 ;
-      }
-      delete m_garbageRoot;
-   }
+   clearRing( m_newRoot );
+   clearRing( m_garbageRoot );
 
-   if ( m_gstrRoot != 0 ) {
-      GarbageString *g1 = m_gstrRoot;
-      GarbageString *g2 = m_gstrRoot->nextGarbage();
-      while( g2 != m_gstrRoot ) {
-         g1 = g2;
-         g2 = g2->nextGarbage();
-         delete  g1 ;
-      }
-      delete m_gstrRoot;
-   }
-
+   // VMs are not mine, and they should be already dead since long.
 }
 
 
-void MemPool::storeForGarbage( GarbageString *ptr )
+void MemPool::safeArea()
 {
-   ptr->mark( currentMark() );
+   m_mtx_newitem.lock();
+   m_bNewReady = false;
+   m_mtx_newitem.unlock();
+}
 
-   if ( m_gstrRoot == 0 ) {
-      m_gstrRoot = ptr;
-      ptr->nextGarbage(ptr);
-      ptr->prevGarbage(ptr);
+
+void MemPool::unsafeArea()
+{
+   m_mtx_newitem.lock();
+   m_bNewReady = true;
+   m_mtx_newitem.unlock();
+}
+
+
+void MemPool::registerVM( VMachine *vm )
+{
+   vm->m_generation = ++m_generation; // rollover detection in run()
+   vm->m_idlePrev = vm->m_idleNext = 0;
+
+   m_mtx_vms.lock();
+   int data = 0;
+   ++m_vmCount;
+   if ( m_vmCount > 2 )
+   {
+      data = 2;
+   }
+   else if ( m_vmCount > 1 )
+   {
+      data = 1;
+   }
+   
+   if ( m_vmRing == 0 )
+   {
+      m_vmRing = vm;
+      vm->m_nextVM = vm;
+      vm->m_prevVM = vm;
+
+      m_mingen = vm->m_generation;
+      m_olderVM = vm;
    }
    else {
-      ptr->prevGarbage( m_gstrRoot );
-      ptr->nextGarbage( m_gstrRoot->nextGarbage() );
-      m_gstrRoot->nextGarbage()->prevGarbage( ptr );
-      m_gstrRoot->nextGarbage( ptr );
+      vm->m_prevVM = m_vmRing;
+      vm->m_nextVM = m_vmRing->m_nextVM;
+      m_vmRing->m_nextVM->m_prevVM = vm;
+      m_vmRing->m_nextVM = vm;
+
+      // also account for older VM.
+      if ( m_mingen == vm->m_generation )
+      {
+         m_olderVM = vm;
+      }
    }
-   m_allocatedItems++;
-   m_allocatedMem += ptr->allocated() + sizeof( *ptr );
+
+   m_mtx_vms.unlock();
 }
 
 
-
-void MemPool::destroyGarbage( GarbageString *ptr )
+void MemPool::unregisterVM( VMachine *vm )
 {
-   ptr->nextGarbage()->prevGarbage( ptr->prevGarbage() );
-   ptr->prevGarbage()->nextGarbage( ptr->nextGarbage() );
-   m_allocatedItems--;
-   m_allocatedMem -= (ptr->allocated() + sizeof( *ptr ) );
-   if ( ptr == m_gstrRoot ) {
-      m_gstrRoot = ptr->nextGarbage();
-      // That was the last of the rings?
-      if ( m_gstrRoot == ptr )
-         m_gstrRoot = 0;
+   m_mtx_vms.lock();
+
+   // disengage
+   vm->m_nextVM->m_prevVM = vm->m_prevVM;
+   vm->m_prevVM->m_nextVM = vm->m_nextVM;
+
+   // was this the ring top?
+   if ( m_vmRing == vm )
+   {
+      m_vmRing = m_vmRing->m_nextVM;
+      // still the ring top? -- then the ring is empty
+      if( m_vmRing == vm )
+         m_vmRing = 0;
    }
-   delete ptr;
+
+   --m_vmCount;
+
+   // is this the oldest VM? -- then we got to elect a new one.
+   if( vm == m_olderVM )
+   {
+      electOlderVM();
+   }
+
+   m_mtx_vms.unlock();
+
+   // eventually disengage from the idle list -- useful because we may unsuscribe due to destruction.
+   m_mtx_idlevm.lock();
+   if( m_vmIdle_head == vm )
+   {
+      m_vmIdle_head = vm->m_idleNext;
+   }
+
+   if( m_vmIdle_tail == vm )
+   {
+      m_vmIdle_tail = vm->m_idlePrev;
+   }
+
+   if ( vm->m_idleNext != 0 )
+   {
+      vm->m_idleNext->m_idlePrev = vm->m_idlePrev;
+   }
+
+   if ( vm->m_idlePrev != 0 )
+   {
+      vm->m_idlePrev->m_idleNext = vm->m_idleNext;
+   }
+
+   vm->m_idlePrev = vm->m_idleNext = 0;
+   m_mtx_idlevm.unlock();
+   // great; now the main thread will perform a sweep loop on its own the next time it is alive.
+}
+
+
+// WARNING -- this must be called with m_mtx_vms locked
+void MemPool::electOlderVM()
+{
+   // Nay, we don't have any VM.
+   if ( m_vmRing == 0 )
+   {
+      m_olderVM = 0;
+   }
+   else
+   {
+      VMachine *vmc = m_vmRing;
+      m_mingen = vmc->m_generation;
+      m_olderVM = vmc;
+      vmc = vmc->m_nextVM;
+
+      while( vmc != m_vmRing )
+      {
+         if ( vmc->m_generation < m_mingen )
+         {
+            m_mingen = vmc->m_generation;
+            m_olderVM = vmc;
+         }
+         vmc = vmc->m_nextVM;
+      }
+   }
+}
+
+
+void MemPool::clearRing( GarbageableBase *ringRoot )
+{
+   // delete the garbage ring.
+   GarbageableBase *ge = ringRoot->nextGarbage();
+   while( ge != ringRoot )
+   {
+      GarbageableBase *gnext = ge->nextGarbage();
+      if ( ! ge->finalize() )
+         delete ge;
+      ge = gnext;
+   }
+
+   delete ge;
 }
 
 
 void MemPool::storeForGarbage( Garbageable *ptr )
 {
-   ptr->mark( currentMark() );
-
-   if ( m_garbageRoot == 0 ) {
-      m_garbageRoot = ptr;
-      ptr->nextGarbage(ptr);
-      ptr->prevGarbage(ptr);
-   }
-   else {
-      ptr->prevGarbage( m_garbageRoot );
-      ptr->nextGarbage( m_garbageRoot->nextGarbage() );
-      m_garbageRoot->nextGarbage()->prevGarbage( ptr );
-      m_garbageRoot->nextGarbage( ptr );
-   }
+   // We mark newly created items as the maximum possible value
+   // so they can't be reclaimed until marked at least once.
+   //ptr->mark( MAX_GENERATION );
+   ptr->mark( generation() );
+   
+   m_mtx_newitem.lock();
    m_allocatedItems++;
-   m_allocatedMem += ptr->m_gcSize;
+
+   ptr->prevGarbage( m_newRoot );
+   ptr->nextGarbage( m_newRoot->nextGarbage() );
+   m_newRoot->nextGarbage()->prevGarbage( ptr );
+   m_newRoot->nextGarbage( ptr );
+   m_mtx_newitem.unlock();
 }
 
+/*
 void MemPool::destroyGarbage( Garbageable *ptr )
 {
+   assert( ptr != m_garbageRoot );
+
+   m_mtxa.lock();
    ptr->nextGarbage()->prevGarbage( ptr->prevGarbage() );
    ptr->prevGarbage()->nextGarbage( ptr->nextGarbage() );
    m_allocatedItems--;
-   m_allocatedMem -= ptr->m_gcSize;
-   if ( ptr == m_garbageRoot ) {
-      m_garbageRoot = ptr->nextGarbage();
-      // That was the last of the rings?
-      if ( m_garbageRoot == ptr )
-         m_garbageRoot = 0;
-   }
-   delete ptr;
-}
+   m_mtxa.unlock();
 
+   if ( ! ptr->finalize() )
+      delete ptr;
+}
+*/
 
 
 GarbageLock *MemPool::lock( const Item &itm )
 {
    GarbageLock *ptr = new GarbageLock( itm );
 
-   // then add it in the availability pool
-   if ( m_availPoolRoot == 0 ) {
-      m_availPoolRoot = ptr;
-      ptr->next(ptr);
-      ptr->prev(ptr);
-   }
-   else {
-      ptr->prev( m_availPoolRoot );
-      ptr->next( m_availPoolRoot->next() );
-      m_availPoolRoot->next()->prev( ptr );
-      m_availPoolRoot->next( ptr );
-   }
+   m_mtx_lockitem.lock();
+   ptr->prev( m_lockRoot );
+   ptr->next( m_lockRoot->next() );
+   m_lockRoot->next()->prev( ptr );
+   m_lockRoot->next( ptr );
+   m_mtx_lockitem.unlock();
 
    return ptr;
 }
@@ -184,21 +320,17 @@ GarbageLock *MemPool::lock( const Item &itm )
 
 void MemPool::unlock( GarbageLock *ptr )
 {
+   fassert( ptr != m_lockRoot );
+
    // frirst: remove the item from the availability pool
    ptr->next()->prev( ptr->prev() );
    ptr->prev()->next( ptr->next() );
-
-   if ( ptr == m_availPoolRoot ) {
-      m_availPoolRoot = ptr->next();
-      // That was the last of the rings?
-      if ( m_availPoolRoot == ptr )
-         m_availPoolRoot = 0;
-   }
 
    delete ptr;
 }
 
 
+/*
 bool MemPool::checkForGarbage()
 {
    if ( m_autoClean ) {
@@ -211,34 +343,34 @@ bool MemPool::checkForGarbage()
 
    return false;
 }
+*/
 
-bool MemPool::gcMark()
+bool MemPool::gcMark( VMachine *vm )
 {
-   // first, invert mark bit.
-   changeMark();
-
    m_aliveItems = 0;
    m_aliveMem = 0;
 
 
    // presume that all the registers need fresh marking
-   markItemFast( m_owner->regA() );
-   markItemFast( m_owner->regB() );
-   markItemFast( m_owner->self() );
-   markItemFast( m_owner->sender() );
+   markItemFast( vm->regA() );
+   markItemFast( vm->regB() );
+   markItemFast( vm->self() );
+
    // Latch and latcher are not necessary here because they must exist elsewhere.
-   
-   markItemFast( m_owner->regBind() );
-   markItemFast( m_owner->regBindP() );
+   markItemFast( vm->regBind() );
+   markItemFast( vm->regBindP() );
+
+   // mark all the messaging system.
+   vm->markSlots( generation() );
 
    // mark the global symbols
    // When generational gc will be on, this won't be always needed.
-   MapIterator iter = m_owner->liveModules().begin();
+   MapIterator iter = vm->liveModules().begin();
    while( iter.hasCurrent() )
    {
       LiveModule *currentMod = *(LiveModule **) iter.currentValue();
       // We must mark the current module.
-      currentMod->mark( currentMark() );
+      currentMod->mark( generation() );
       m_aliveMem += sizeof( LiveModule );
       m_aliveItems++;
 
@@ -254,7 +386,7 @@ bool MemPool::gcMark()
    }
 
    // mark all the items in the coroutines.
-   ListElement *ctx_iter = m_owner->getCtxList()->begin();
+   ListElement *ctx_iter = vm->getCtxList()->begin();
    uint32 pos;
    ItemVector *stack;
    while( ctx_iter != 0 )
@@ -264,7 +396,6 @@ bool MemPool::gcMark()
       markItemFast( ctx->regA() );
       markItemFast( ctx->regB() );
       markItemFast( ctx->latcher() );
-      markItemFast( ctx->sender() );
 
       stack = ctx->getStack();
       for( pos = 0; pos < stack->size(); pos++ ) {
@@ -278,16 +409,6 @@ bool MemPool::gcMark()
       ctx_iter = ctx_iter->next();
    }
 
-   // do the same for the locked pools
-   if ( m_availPoolRoot != 0 )
-   {
-      GarbageLock *lock = m_availPoolRoot->next();
-      while( lock != m_availPoolRoot ) {
-         markItemFast( lock->item() );
-         lock = lock->next();
-      }
-   }
-
    return true;
 }
 
@@ -298,48 +419,70 @@ void MemPool::markItem( Item &item )
       case FLC_ITEM_REFERENCE:
       {
          GarbageItem *gi = item.asReference();
-         if( gi->mark() != currentMark() ) {
+         if( gi->mark() != generation() ) {
             m_aliveItems++;
-            m_aliveMem += gi->m_gcSize;
-            gi->mark( currentMark() );
+            //m_aliveMem += gi->m_gcSize;
+            gi->mark( generation() );
             markItemFast( gi->origin() );
          }
       }
       break;
 
+      case FLC_ITEM_FUNC:
+         if ( item.asFunction()->isValid() )
+         {
+            if( item.asFunction()->mark() != generation() )
+            {
+               m_aliveItems++;
+               //m_aliveMem += item.asFunction()->m_gcSize;
+               item.asFunction()->mark( generation() );
+            }
+         }
+         else
+            item.setNil();
+         break;
+
+      case FLC_ITEM_RANGE:
+         m_aliveItems++;
+         //m_aliveMem += item.asRange()->m_gcSize;
+         item.asRange()->mark( generation() );
+         break;
+
       case FLC_ITEM_LBIND:
          if ( item.asFBind() != 0 )
          {
             GarbageItem *gi = item.asFBind();
-            if ( gi->mark() != currentMark() )
-               gi->mark( currentMark() );
+            if ( gi->mark() != generation() )
+               gi->mark( generation() );
          }
          // fallback to string for the name part
 
       case FLC_ITEM_STRING:
-         if ( item.asString()->garbageable() )
          {
-            GarbageString *gs = static_cast< GarbageString *>( item.asString() );
-            if ( gs->mark() != currentMark() )
+            if( item.asString()->isCore() )
             {
-               gs->mark( currentMark() );
-               m_aliveMem += item.asString()->allocated() + sizeof( GarbageString );
-               m_aliveItems++;
+               StringGarbage *gs = &item.asCoreString()->garbage();
+               if ( gs->mark() != generation() )
+               {
+                  gs->mark( generation() );
+                  m_aliveMem += item.asCoreString()->allocated() + sizeof( String );
+                  m_aliveItems++;
+               }
             }
          }
       break;
 
       case FLC_ITEM_GCPTR:
-         item.asGCPointerShell()->mark( currentMark() );
+         item.asGCPointerShell()->mark( generation() );
          break;
 
       case FLC_ITEM_ARRAY:
       {
          CoreArray *array = item.asArray();
-         if( array->mark() != currentMark() ) {
-            array->mark(currentMark());
+         if( array->mark() != generation() ) {
+            array->mark(generation());
             m_aliveItems++;
-            m_aliveMem += array->m_gcSize;
+            //m_aliveMem += array->m_gcSize;
             for( uint32 pos = 0; pos < array->length(); pos++ ) {
                markItemFast( array->at( pos ) );
             }
@@ -364,32 +507,23 @@ void MemPool::markItem( Item &item )
       case FLC_ITEM_OBJECT:
       {
          CoreObject *co = item.asObjectSafe();
-         if( co->mark() != currentMark() ) {
-            co->mark( currentMark() );
+         if( co->mark() != generation() )
+         {
             m_aliveItems++;
-            m_aliveMem += co->m_gcSize;
-            co->gcMarkData( currentMark() );
+            //m_aliveMem += co->m_gcSize;
+            co->mark( generation() );
+            co->gcMark( this );
          }
-
-      }
-      break;
-
-      case FLC_ITEM_FBOM:
-      {
-         // TODO: Optimize
-         Item fbom;
-         item.getFbomItem( fbom );
-         markItemFast( fbom );
       }
       break;
 
       case FLC_ITEM_DICT:
       {
          CoreDict *cd = item.asDict();
-         if( cd->mark() != currentMark() ) {
-            cd->mark( currentMark() );
+         if( cd->mark() != generation() ) {
+            cd->mark( generation() );
             m_aliveItems++;
-            m_aliveMem += cd->m_gcSize;
+            //m_aliveMem += cd->m_gcSize;
 
             Item key, value;
             cd->traverseBegin();
@@ -405,66 +539,39 @@ void MemPool::markItem( Item &item )
       case FLC_ITEM_METHOD:
       {
          // if the item isn't alive, give it the death blow.
-         if ( item.asModule()->module() == 0 )
+         if ( ! item.asMethodFunc()->isValid() )
             item.setNil();
          else
          {
-            CoreObject *co = item.asMethodObject();
-            if( co->mark() != currentMark() ) {
-               m_aliveItems++;
-               m_aliveMem += co->m_gcSize;
-               co->mark( currentMark() );
-               co->gcMarkData( currentMark() );
-            }
-
-            // no need to mark the live modue;
-            // if it's alive it has been marked by the main loop
-         }
-      }
-      break;
-
-      case FLC_ITEM_TABMETHOD:
-      {
-         // if the item isn't alive, give it the death blow.
-         if ( item.asModule()->module() == 0 )
-            item.setNil();
-         else
-         {
-            Garbageable *co = item.asTabMethodArray();
-            if ( co->mark() != currentMark() )
+            if( item.asMethodFunc()->mark() != generation() )
             {
-               if( item.isTabMethodDict() )
-               {
-                  Item temp = item.asTabMethodDict();
-                  markItemFast( temp );
-               }
-               else {
-                  Item temp = item.asTabMethodArray();
-                  markItemFast( temp );
-               }
+               m_aliveItems++;
+               //m_aliveMem += item.asMethodFunc()->m_gcSize;
+               item.asMethodFunc()->mark( generation() );
             }
-            // no need to mark the live modue;
-            // if it's alive it has been marked by the main loop
+            Item self;
+            item.getMethodItem( self );
+            markItem( self );
          }
       }
       break;
 
       case FLC_ITEM_CLSMETHOD:
       {
-         CoreObject *co = item.asMethodObject();
-         if( co->mark() != currentMark() ) {
+         CoreObject *co = item.asMethodClassOwner();
+         if( co->mark() != generation() ) {
             m_aliveItems++;
-            m_aliveMem += co->m_gcSize;
-            co->mark( currentMark() );
+            //m_aliveMem += co->m_gcSize;
+            co->mark( generation() );
             // mark all the property values.
-            co->gcMarkData( currentMark() );
+            co->gcMark( this );
          }
 
          CoreClass *cls = item.asMethodClass();
-         if( cls->mark() != currentMark() ) {
-            cls->mark( currentMark() );
+         if( cls->mark() != generation() ) {
+            cls->mark( generation() );
             m_aliveItems++;
-            m_aliveMem += cls->m_gcSize;
+            //m_aliveMem += cls->m_gcSize;
             markItemFast( cls->constructor() );
             for( uint32 i = 0; i <cls->properties().added(); i++ ) {
                markItemFast( *cls->properties().getValue(i) );
@@ -476,10 +583,10 @@ void MemPool::markItem( Item &item )
       case FLC_ITEM_CLASS:
       {
          CoreClass *cls = item.asClass();
-         if( cls->mark() != currentMark() ) {
-            cls->mark( currentMark() );
+         if( cls->mark() != generation() ) {
+            cls->mark( generation() );
             m_aliveItems++;
-            m_aliveMem += cls->m_gcSize;
+            //m_aliveMem += cls->m_gcSize;
             markItemFast( cls->constructor() );
             for( uint32 i = 0; i <cls->properties().added(); i++ ) {
                markItemFast( *cls->properties().getValue(i) );
@@ -488,29 +595,23 @@ void MemPool::markItem( Item &item )
       }
       break;
 
-      case FLC_ITEM_FUNC:
-         // kill items referencing nothing
-         if ( item.asModule()->module() == 0 )
-            item.setNil();
-      break;
-
       case FLC_ITEM_MEMBUF:
       {
          MemBuf *mb = item.asMemBuf();
-         if ( mb->mark() != currentMark() )
+         if ( mb->mark() != generation() )
          {
             m_aliveMem += mb->size() + sizeof( MemBuf );
             m_aliveItems++;
 
-            mb->mark( currentMark() );
+            mb->mark( generation() );
             CoreObject *co = item.asMemBuf()->dependant();
             // small optimization; resolve the problem here instead of looping again.
-            if( co != 0 && co->mark() != currentMark() )
+            if( co != 0 && co->mark() != generation() )
             {
-               co->mark( currentMark() );
                m_aliveItems++;
-               m_aliveMem += co->m_gcSize;
-               co->gcMarkData( currentMark() );
+               //m_aliveMem += co->m_gcSize;
+               co->mark( generation() );
+               co->gcMark( this );
             }
          }
       }
@@ -524,45 +625,34 @@ void MemPool::markItem( Item &item )
 
 void MemPool::gcSweep()
 {
-   Garbageable *ring = ringRoot();
-   if( ring != 0 )
-   {
-      Garbageable *ring2 = ring->nextGarbage();
-      while( ring2 != ring ) {
-         if ( ring2->mark() != currentMark() ) {
-            ring2 = ring2->nextGarbage();
-            destroyGarbage( ring2->prevGarbage() );
-         }
-         else
-            ring2 = ring2->nextGarbage();
-      }
-      if ( ring->mark() != currentMark() )
-         destroyGarbage( ring );
+   TRACE( "Sweeping %d\n", gcMemAllocated() );
 
+   GarbageableBase *ring = m_garbageRoot->nextGarbage();
+   while( ring != m_garbageRoot )
+   {
+      if ( ring->mark() < m_mingen )
+      {
+         ring->nextGarbage()->prevGarbage( ring->prevGarbage() );
+         ring->prevGarbage()->nextGarbage( ring->nextGarbage() );
+         GarbageableBase *dropped = ring;
+         ring = ring->nextGarbage();
+         if( ! dropped->finalize() )
+            delete dropped;
+      }
+      else {
+         ring = ring->nextGarbage();
+      }
    }
 
-   GarbageString *gsRing = m_gstrRoot;
-   if( gsRing != 0 )
-   {
-      GarbageString *gsRing2 = gsRing->nextGarbage();
-      while( gsRing2 != gsRing ) {
-         if ( gsRing2->mark() != currentMark() ) {
-            gsRing2 = gsRing2->nextGarbage();
-            destroyGarbage( gsRing2->prevGarbage() );
-         }
-         else
-            gsRing2 = gsRing2->nextGarbage();
-      }
-      if ( gsRing->mark() != currentMark() )
-         destroyGarbage( gsRing );
-   }
+   TRACE( "Sweeping complete %d\n", gcMemAllocated() );
 }
+
 
 bool MemPool::performGC( bool bForceReclaim )
 {
    m_aliveItems = 0;
    m_aliveMem = 0;
-
+/*
    // cannot perform?
    if ( ! gcMark() )
       return false;
@@ -583,8 +673,344 @@ bool MemPool::performGC( bool bForceReclaim )
 
    if ( m_thresholdMemory < m_setThreshold )
       m_thresholdMemory = m_setThreshold;
-
+*/
    return true;
+}
+
+
+
+//===================================================================================
+// MT functions
+//
+
+void MemPool::idleVM( VMachine *vm )
+{
+   m_mtx_idlevm.lock();
+   if ( vm->m_idleNext != 0 || vm->m_idlePrev != 0 || vm == m_vmIdle_head)
+   {
+      // already waiting
+      m_mtx_idlevm.unlock();
+      return;
+   }
+
+   vm->m_idleNext = 0;
+   if ( m_vmIdle_head == 0 )
+   {
+      m_vmIdle_head = vm;
+      m_vmIdle_tail = vm;
+      vm->m_idlePrev = 0;
+   }
+   else {
+      m_vmIdle_tail->m_idleNext = vm;
+      vm->m_idlePrev = m_vmIdle_tail;
+      m_vmIdle_tail = vm;
+   }
+
+   m_mtx_idlevm.unlock();
+   // wake up if we're waiting.
+   m_eRequest.set();
+}
+
+void MemPool::start()
+{
+   if ( m_th == 0 )
+   {
+      m_bLive = true;
+      m_th = new SysThread( this );
+      m_th->start();
+   }
+}
+
+void MemPool::stop()
+{
+   if ( m_th != 0 )
+   {
+      m_bLive = false;
+      m_eRequest.set();
+      void *dummy;
+      m_th->join( dummy );
+      m_th = 0;
+   }
+}
+
+void* MemPool::run()
+{
+   uint32 oldGeneration = m_generation;
+   uint32 oldMingen = m_mingen;
+   bool bMoreWork;
+
+   while( m_bLive )
+   {
+      bMoreWork = false;
+
+      // first, detect the operating status.
+      size_t memory = gcMemAllocated();
+      int state = memory >= m_thresholdActive ? 2 :      // active mode
+                  memory >= m_thresholdNormal ? 1 :      // normal mode
+                  0;                                     // dormient mode
+
+      TRACE( "Working %d (in mode %d) \n", gcMemAllocated(), state );
+
+      // if we're in active mode, send a block request to all the enabled vms.
+      if ( state == 2 )
+      {
+         m_mtx_vms.lock();
+         VMachine *vm = m_vmRing;
+         if ( vm != 0 )
+         {
+            if ( vm->isGcEnabled() )
+            {
+               TRACE( "Activating blocking request vm %p\n", vm );
+               vm->baton().block();
+            }
+            vm = vm->m_nextVM;
+            while( vm != m_vmRing )
+            {
+               if ( vm->isGcEnabled() )
+                  vm->baton().block();
+               vm = vm->m_nextVM;
+            }
+         }
+         m_mtx_vms.unlock();
+      }
+
+      // In all 3 the modes, we must clear the idle queue, so let's do that.
+      m_mtx_idlevm.lock();
+      if( m_vmIdle_head != 0 )
+      {
+         // get the first VM to be processed.
+         VMachine* vm = m_vmIdle_head;
+         m_vmIdle_head = m_vmIdle_head->m_idleNext;
+         if ( m_vmIdle_head == 0 )
+            m_vmIdle_tail = 0;
+         else
+            bMoreWork = true;
+         vm->m_idleNext = 0;
+         vm->m_idlePrev = 0;
+
+         // if we're dormient, just empty the queue.
+         if ( state == 0 )
+         {
+            // this to discard block requets.
+            vm->baton().unblock();
+            m_mtx_idlevm.unlock();
+
+            TRACE( "Discarding idle vm %p\n", vm );
+            continue;
+         }
+
+         // mark the idle VM if we're not dormient.
+         // ok, we need to reclaim some memory.
+         if ( ! vm->baton().tryAcquire() )
+         {
+            m_mtx_idlevm.unlock();
+            TRACE( "Was going to mark vm %p, but forfaited\n", vm );
+            // oh damn, we lost the occasion. The VM is back alive.
+            continue;
+         }
+
+         // great; start mark loop -- first, set the new generation.
+         advanceGeneration( vm, oldGeneration );
+         m_mtx_idlevm.unlock();
+
+         TRACE( "Marking vm %p \n", vm );
+
+         // and then mark
+         gcMark( vm );
+         // the VM is now free to go.
+         vm->baton().release();
+      }
+      else
+      {
+         m_mtx_idlevm.unlock();
+      }
+
+      // Mark of idle VM complete. See if it's useful to promote the last vm.
+      if ( state > 0 && ( m_generation - m_mingen > (unsigned) m_vmCount ) )
+      {
+         m_mtx_vms.lock();
+         if ( m_olderVM != 0 )
+         {
+            if( m_olderVM->baton().tryAcquire() )
+            {
+               VMachine *vm = m_olderVM;
+               // great; start mark loop -- first, set the new generation.
+               advanceGeneration( vm, oldGeneration );
+               m_mtx_vms.unlock();
+
+               TRACE( "Marking idle oldest vm %p \n", vm );
+               // and then mark
+               gcMark( vm );
+               // the VM is now free to go.
+               vm->baton().release();
+            }
+            else
+            {
+               // we may want to promote the VM data if we're in active state or if VM is not disabled.
+               if( state == 2 || m_olderVM->isGcEnabled() )
+               {
+                  TRACE( "Promoting the oldest VM %p from %d to %d\n", m_olderVM, m_mingen, m_generation );
+                  uint32 oldmg = m_mingen;
+                  advanceGeneration( m_olderVM, oldGeneration );
+                  uint32 ng = m_generation;
+                  m_mtx_vms.unlock();
+
+                  promote( oldmg, ng );
+               }
+            }
+         }
+         else
+         {
+            m_mtx_vms.unlock();
+         }
+      }
+
+      // TODO: Do this only if necessary.
+      markLocked();
+
+      // if we have to sweep (we can claim something only if the lower VM has moved).
+      if ( oldMingen != m_mingen )
+         gcSweep();
+
+      // finally, put the new ring in the garbage ring
+      m_mtx_newitem.lock();
+      // Are we in a safe area?
+      if ( m_bNewReady )
+      {
+         GarbageableBase* newRingFront = m_newRoot->nextGarbage();
+         if( newRingFront != m_newRoot )
+         {
+            GarbageableBase* newRingBack = m_newRoot->prevGarbage();
+   
+            // disengage the chain from the new garbage thing
+            m_newRoot->nextGarbage( m_newRoot );
+            m_newRoot->prevGarbage( m_newRoot );
+            // we can release the chain
+            m_mtx_newitem.unlock();
+   
+            // and now, store the disengaged ring in the standard reclaimable garbage ring.
+            TRACE( "Storing the garbage new ring in the normal ring\n" );
+            newRingFront->prevGarbage( m_garbageRoot );
+            newRingBack->nextGarbage( m_garbageRoot->nextGarbage() );
+            m_garbageRoot->nextGarbage()->prevGarbage( newRingBack );
+            m_garbageRoot->nextGarbage( newRingFront );
+         }
+         else
+            m_mtx_newitem.unlock();
+      }
+      else {
+         m_mtx_newitem.unlock();
+         TRACE( "Skipping new ring inclusion due to safe area lock.\n" );
+      }
+      
+      oldGeneration = m_generation;
+      oldMingen = m_mingen;
+
+      // if we have nothing to do, we shall wait a bit.
+      if( ! bMoreWork )
+      {
+         TRACE( "Waiting GC idle time\n" );
+         m_eRequest.wait(GC_IDLE_TIME);
+      }
+   }
+
+   TRACE( "Stopping %d \n", gcMemAllocated() );
+   return 0;
+}
+
+
+// to be called with m_mtx_vms locked
+void MemPool::advanceGeneration( VMachine* vm, uint32 oldGeneration )
+{
+   uint32 curgen = ++m_generation;
+
+   // detect here rollover.
+   if ( curgen < oldGeneration || curgen == MAX_GENERATION )
+   {
+      curgen = m_generation = m_vmCount+1;
+      // perform rollover
+      rollover();
+      m_mtx_vms.unlock();
+
+      // re-mark everything
+      remark( curgen );
+      m_mtx_vms.unlock();
+
+      // as we have remarked everything, there's nothing we can do
+      // but wait for the next occasion to do some collection.
+      return;
+   }
+
+   vm->m_generation = curgen;
+
+   // Now that we have marked it, if this was the oldest VM, we need to elect the new oldest vm.
+   if ( vm == m_olderVM )
+   {
+      // calling it with mtx_vms locked
+      electOlderVM();
+   }
+}
+
+
+// WARNING: Rollover is to be called with m_mtx_vms locked.
+void MemPool::rollover()
+{
+   // Sets the minimal VM.
+   m_mingen = 1;
+   m_olderVM = m_vmRing;
+   m_olderVM->m_generation = 1;
+
+   // ramp up the other VMS
+   uint32 curgen = 1;
+   VMachine* vm = m_vmRing->m_nextVM;
+   while( vm != m_vmRing )
+   {
+      vm->m_generation = ++curgen;
+      vm = vm->m_nextVM;
+   }
+}
+
+
+void MemPool::remark( uint32 curgen )
+{
+   GarbageableBase* gc = m_garbageRoot->nextGarbage();
+   while( gc != m_garbageRoot )
+   {
+      // Don't mark objects that are still unassigned.
+      if( gc->mark() != MAX_GENERATION )
+         gc->mark( curgen );
+
+      gc = gc->nextGarbage();
+   }
+}
+
+void MemPool::promote( uint32 oldgen, uint32 curgen )
+{
+   GarbageableBase* gc = m_garbageRoot->nextGarbage();
+   while( gc != m_garbageRoot )
+   {
+      if( gc->mark() == oldgen )
+         gc->mark( curgen );
+      gc = gc->nextGarbage();
+   }
+}
+
+void MemPool::markLocked()
+{
+   // do the same for the locked pools
+   m_mtx_lockitem.lock();
+   if ( m_lockRoot != 0 )
+   {
+      GarbageLock *lock = m_lockRoot;
+      markItemFast( lock->item() );
+      lock = m_lockRoot->next();
+
+      while( lock != m_lockRoot ) {
+         markItemFast( lock->item() );
+         lock = lock->next();
+      }
+   }
+   m_mtx_lockitem.unlock();
 }
 
 }

@@ -71,9 +71,36 @@ public:
       The memory that is currently held in this object is copied in a string.
       Read-write operations can then continue, and the status of the object
       is not changed.
-      \return a string containing all the data in the stream.
+      \param target The string where the buffer is copied.
    */
-   String *getString() const;
+   void getString( String &target ) const;
+   
+   /** Gets a string copying the content of the stream, newly allocating the target string.
+      The memory that is currently held in this object is copied in a string.
+      Read-write operations can then continue, and the status of the object
+      is not changed.
+      \return a string containing all the data in the stream (may be empty, but not 0).
+   */
+   String *getString() const
+   {
+      String *temp = new String;
+      getString( *temp );
+      return temp;
+   }
+   
+   /** Gets a string copying the content of the stream, allocating in the garbage the target string.
+      The memory that is currently held in this object is copied in a string.
+      Read-write operations can then continue, and the status of the object
+      is not changed.
+      \return a string containing all the data in the stream (may be empty, but not 0).
+   */
+   CoreString *getCoreString() const
+   {
+      CoreString *temp = new CoreString;
+      getString( *temp );
+      return temp;
+   }
+
 
    /** Gets the phisical memory created by this object and turns it into a string.
       The memory that has been created by the stream-like operations is directly
@@ -85,7 +112,27 @@ public:
 
       \return a string containing all the data in the stream.
    */
-   String *closeToString();
+   String *closeToString()
+   {
+      if ( m_membuf == 0 )
+         return 0;
+      String *temp = new String;
+      closeToString( *temp );
+      return temp;
+   }
+   
+   /** Gets the phisical memory created by this object and turns it into a newly created garbage collected string.
+      \see closeToString()
+      \return a string containing all the data in the stream.
+   */
+   CoreString *closeToCoreString()
+   {
+      if ( m_membuf == 0 )
+         return 0;
+      CoreString *temp = new CoreString;
+      closeToString( *temp );
+      return temp;
+   }
 
    /** Gets the phisical memory created by this object and turns it into a string.
       This version of the method stores the phisical memory in the given string,
@@ -108,6 +155,7 @@ public:
    virtual int64 lastError() const { return (int64) m_lastError; }
 
    virtual FalconData *clone() const;
+   virtual void gcMark( MemPool* ) {}
 };
 
 }

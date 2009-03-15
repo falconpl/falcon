@@ -55,8 +55,8 @@ counter1 = 0
 array = [1,2]
 t1 = tester( "first", array )
 
-serialize( stream, t1 )
-serialize( stream, testerObj )
+serialize( t1, stream )
+serialize( testerObj, stream )
 stream.seek(0)
 
 try
@@ -70,8 +70,8 @@ try
    item1.check( "first", array )
    item2.check( "a", "b" )
 
-catch
-   failure( "Deserialization failed" )
+catch in e
+   failure( "Deserialization failed: " + e.toString() )
 end
 
 success()

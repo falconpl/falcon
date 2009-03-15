@@ -8,11 +8,7 @@ CONFIGURE_FILE(
          ESCAPE_QUOTES
          @ONLY )
 
-FILE( GLOB fasm_files "fasm/*.h" )
 FILE( GLOB falcon_files "falcon/*.h" )
-
-INSTALL( FILES ${fasm_files}
-   DESTINATION "${FALCON_INC_DIR}/fasm")
 
 INSTALL( FILES ${falcon_files}
    DESTINATION "${FALCON_INC_DIR}/falcon")

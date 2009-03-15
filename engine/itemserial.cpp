@@ -22,9 +22,9 @@
 #include <falcon/setup.h>
 #include <falcon/item.h>
 #include <falcon/vm.h>
+#include <falcon/corefunc.h>
 #include <falcon/stream.h>
 #include <falcon/lineardict.h>
-#include <falcon/attribute.h>
 #include <falcon/membuf.h>
 
 namespace Falcon {
@@ -45,41 +45,31 @@ bool Item::serialize_symbol( Stream *file, const Symbol *sym ) const
 }
 
 
-bool Item::serialize_function( Stream *file, const Symbol *func ) const
+bool Item::serialize_function( Stream *file, const CoreFunc *func ) const
 {
    byte type = FLC_ITEM_FUNC;
    file->write( &type, 1 );
 
    // we don't serialize the module ID because it is better to rebuild it on deserialization
-   serialize_symbol( file, func );
+   serialize_symbol( file, func->symbol() );
 
-   if( func->isFunction() )
+   FuncDef *fdef = func->symbol()->getFuncDef();
+   // write the called status
+   uint32 itemId = fdef->onceItemId();
+   if ( itemId != FuncDef::NO_STATE )
    {
-      FuncDef *fdef = func->getFuncDef();
-      // write the called status
-      uint32 itemId = fdef->onceItemId();
-      if ( itemId != FuncDef::NO_STATE )
-      {
-         byte called = asModule()->globals().itemAt( itemId ).isNil() ? 0 : 1;
-         file->write( &called, 1 );
-      }
-
-      if ( ! file->good() )
-         return false;
+      byte called = func->liveModule()->globals().itemAt( itemId ).isNil() ? 0 : 1;
+      file->write( &called, 1 );
    }
+
+   if ( ! file->good() )
+      return false;
 
    return true;
 }
 
 bool Item::serialize_object( Stream *file, CoreObject *obj, bool bLive ) const
 {
-   // if we're not live, we can't have user data
-   if ( ! bLive && obj->getUserData() != 0 )
-   {
-      obj->origin()->raiseError( e_unserializable, "Item::serialize" );
-      return false;
-   }
-
    byte type = FLC_ITEM_OBJECT;
    if ( bLive )
       type |= 0x80;
@@ -87,68 +77,10 @@ bool Item::serialize_object( Stream *file, CoreObject *obj, bool bLive ) const
    file->write( &type, 1 );
 
    // write the class symbol so that it can be rebuilt back.
-   serialize_symbol( file, obj->instanceOf() );
+   serialize_symbol( file, obj->generator()->symbol() );
 
-   // then serialzie the properties
-   uint32 len = endianInt32( obj->propCount() );
-   file->write((byte *) &len, sizeof(len) );
-
-   for( uint32 i = 0; i < len; i ++ ) {
-      Item temp;
-      obj->getPropertyAt( i, temp );
-      if ( temp.serialize( file, bLive ) != sc_ok )
-         return false;
-   }
-
-   // and the attributes
-   AttribHandler *head = obj->attributes();
-   uint32 att_count = 0;
-   while( head != 0 )
-   {
-      att_count++;
-      head = head->next();
-   }
-
-   // write the size...
-   len = endianInt32( att_count );
-   file->write((byte *) &len, sizeof(len) );
-
-   // and then serialize...
-   head = obj->attributes();
-   while( head != 0 )
-   {
-      head->attrib()->name().serialize( file );
-      if ( ! file->good() )
-         return false;
-
-      head = head->next();
-   }
-
-   // finally, clone if live
-   if ( bLive )
-   {
-      if ( obj->getUserData() != 0 )
-      {
-         void *cloned = obj->getObjectManager()->onClone( obj->origin(), obj->getUserData() );
-         if ( cloned == 0 )
-         {
-            obj->origin()->raiseError( e_uncloneable, "Item::serialize" );
-            return false;
-         }
-         file->write( (byte *) &cloned, sizeof( cloned ) );
-      }
-      else {
-         void *data = 0;
-         file->write( (byte *) &data, sizeof( data ) );
-      }
-
-      if ( ! file->good() )
-      {
-         return false;
-      }
-   }
-
-   return true;
+   // then serialzie the object itself
+   return obj->serialize( file, bLive );
 }
 
 
@@ -205,15 +137,15 @@ Item::e_sercode Item::serialize( Stream *file, bool bLive ) const
          byte type = FLC_ITEM_RANGE;
          file->write((byte *) &type, 1 );
 
-         int32 val1 = endianInt32(this->asRangeStart());
-         int32 val2 = endianInt32(this->asRangeEnd());
-         int32 val3 = endianInt32(this->asRangeStep());
-         byte isOpen = this->asRangeIsOpen() ? 1 : 0;
+         int64 val1 = endianInt64(this->asRangeStart());
+         int64 val2 = endianInt64(this->asRangeEnd());
+         int64 val3 = endianInt64(this->asRangeStep());
+         //byte isOpen = this->asRangeIsOpen() ? 1 : 0;
 
          file->write( (byte *) &val1, sizeof( val1 ) );
          file->write( (byte *) &val2, sizeof( val2 ) );
          file->write( (byte *) &val3, sizeof( val3 ) );
-         file->write( (byte *) &isOpen, sizeof( isOpen ) );
+         //file->write( (byte *) &isOpen, sizeof( isOpen ) );
       }
       break;
 
@@ -224,15 +156,6 @@ Item::e_sercode Item::serialize( Stream *file, bool bLive ) const
 
          numeric val = endianNum( this->asNumeric() );
          file->write( (byte *) &val, sizeof( val ) );
-      }
-      break;
-
-      case FLC_ITEM_ATTRIBUTE:
-      {
-         byte type = FLC_ITEM_ATTRIBUTE;
-         file->write( &type, 1 );
-
-         this->asAttribute()->name().serialize( file );
       }
       break;
 
@@ -262,20 +185,6 @@ Item::e_sercode Item::serialize( Stream *file, bool bLive ) const
 
          file->write( &type, 1 );
          this->asMemBuf()->serialize( file, bLive );
-      }
-      break;
-
-      case FLC_ITEM_FBOM:
-      {
-         byte type = FLC_ITEM_FBOM;
-         file->write((byte *) &type, 1 );
-
-         type = this->getFbomMethod();
-         file->write((byte *) &type, 1 );
-
-         Item ifbom;
-         getFbomItem( ifbom );
-         ifbom.serialize( file, bLive );
       }
       break;
 
@@ -328,36 +237,13 @@ Item::e_sercode Item::serialize( Stream *file, bool bLive ) const
       case FLC_ITEM_METHOD:
       {
          byte type = FLC_ITEM_METHOD;
-         if ( bLive )
-         {
-            type |= 0x80;
-            file->write( &type, 1 );
-            void *obj = this->asMethodObject();
-            file->write( &obj, sizeof( obj ) );
-         }
-         else {
-            // TODO
-            serialize_object( file, this->asMethodObject(), bLive );
-         }
-         serialize_function( file, this->asMethodFunction() );
-      }
-      break;
-
-      case FLC_ITEM_TABMETHOD:
-      {
-         byte type = FLC_ITEM_TABMETHOD;
          file->write( &type, 1 );
-         serialize_function( file, this->asMethodFunction() );
-
-         if( isTabMethodDict() )
-         {
-            Item temp = asTabMethodDict();
-            temp.serialize( file, bLive );
-         }
-         else {
-            Item temp = asTabMethodArray();
-            temp.serialize( file, bLive );
-         }
+         
+         e_sercode sc = asMethodItem().serialize( file, bLive );
+         if( sc != sc_ok )
+            return sc;
+         
+         serialize_function( file, this->asMethodFunc() );
       }
       break;
 
@@ -375,7 +261,7 @@ Item::e_sercode Item::serialize( Stream *file, bool bLive ) const
 
        case FLC_ITEM_CLSMETHOD:
          serialize_class( file, this->asMethodClass() );
-         serialize_function( file, this->asMethodFunction() );
+         serialize_function( file, this->asFunction() );
       break;
 
       default:
@@ -439,7 +325,7 @@ Item::e_sercode Item::deserialize_function( Stream *file, VMachine *vm )
 
    if ( ! sym->isFunction() ) {
       // external function
-      setFunction( sym, lmod );
+      setFunction( new CoreFunc( sym, lmod ) );
       return sc_ok;
    }
 
@@ -458,7 +344,7 @@ Item::e_sercode Item::deserialize_function( Stream *file, VMachine *vm )
          lmod->globals().itemAt( itemId ).setNil();
    }
 
-   setFunction( sym, lmod );
+   setFunction( new CoreFunc( sym, lmod ) );
    return sc_ok;
 }
 
@@ -535,18 +421,22 @@ Item::e_sercode Item::deserialize( Stream *file, VMachine *vm )
 
       case FLC_ITEM_RANGE:
       {
-         int32 val1;
-         int32 val2;
-         int32 val3;
-         byte isOpen;
+         int64 val1;
+         int64 val2;
+         int64 val3;
+         //byte isOpen;
 
          file->read( (byte *) &val1, sizeof( val1 ) );
          file->read( (byte *) &val2, sizeof( val2 ) );
          file->read( (byte *) &val3, sizeof( val3 ) );
-         file->read( (byte *) &isOpen, sizeof( isOpen ) );
+         //file->read( (byte *) &isOpen, sizeof( isOpen ) );
+         
+         val1 = endianInt64( val1 );
+         val2 = endianInt64( val2 );
+         val3 = endianInt64( val3 );
          
          if ( file->good() ) {
-            setRange( val1, val2, val3, isOpen != 0 );
+            setRange( new CoreRange( val1, val2, val3 ) );
             return sc_ok;
          }
          return sc_ferror;
@@ -565,23 +455,6 @@ Item::e_sercode Item::deserialize( Stream *file, VMachine *vm )
       }
       break;
 
-      case FLC_ITEM_ATTRIBUTE:
-      {
-         String aname;
-
-         if ( ! aname.deserialize( file ) )
-         {
-            return file->bad() ? sc_ferror : sc_invformat;
-         }
-
-         Attribute *attrib = vm->findAttribute( aname );
-         if ( attrib == 0 )
-            return sc_missclass;
-
-         setAttribute( attrib );
-      }
-      break;
-
       case FLC_ITEM_LBIND:
       {
          int32 id;
@@ -590,13 +463,13 @@ Item::e_sercode Item::deserialize( Stream *file, VMachine *vm )
          if ( ! name.deserialize( file ) )
             return file->bad() ? sc_ferror : sc_invformat;
 
-         setLBind( new GarbageString( vm, name ) );
+         setLBind( new CoreString( name ) );
       }
       break;
 
       case FLC_ITEM_STRING:
       {
-         GarbageString *cs = new GarbageString( vm );
+         CoreString *cs = new CoreString;
          setString( cs );
 
          if ( ! cs->deserialize( file ) )
@@ -646,21 +519,6 @@ Item::e_sercode Item::deserialize( Stream *file, VMachine *vm )
       break;
 
 
-      case FLC_ITEM_FBOM:
-      {
-         byte methodId;
-         //TODO: Verify if methodId is in a valid range.
-         file->read( &methodId, 1 );
-
-         Item bommed;
-         e_sercode code = bommed.deserialize( file, vm );
-         if ( code != sc_ok )
-            return code;
-
-         setFbom( bommed, methodId );
-         return sc_ok;
-      }
-
       case FLC_ITEM_ARRAY:
       {
          if( vm == 0 )
@@ -673,7 +531,7 @@ Item::e_sercode Item::deserialize( Stream *file, VMachine *vm )
          if ( file->good() )
          {
             val = endianInt32(val);
-            CoreArray *array = new CoreArray( vm, val );
+            CoreArray *array = new CoreArray( val );
 
             for( int i = 0; i < val; i ++ )
             {
@@ -708,7 +566,7 @@ Item::e_sercode Item::deserialize( Stream *file, VMachine *vm )
          if ( file->good() )
          {
             val = endianInt32(val);
-            LinearDict *dict = new LinearDict( vm, val );
+            LinearDict *dict = new LinearDict( val );
             LinearDictEntry *elems = dict->entries();
             e_sercode retval = sc_ok;
             for( int i = 0; i < val; i ++ ) {
@@ -743,7 +601,6 @@ Item::e_sercode Item::deserialize( Stream *file, VMachine *vm )
          return deserialize_function( file, vm );
       break;
 
-      case FLC_ITEM_METHOD | 0x80:
       case FLC_ITEM_METHOD:
       {
          if( vm == 0 )
@@ -752,58 +609,20 @@ Item::e_sercode Item::deserialize( Stream *file, VMachine *vm )
          Item obj;
          Item func;
          e_sercode sc;
-         if( type == FLC_ITEM_METHOD )
-         {
-            // TODO
-            sc = obj.deserialize( file, vm );
-            if ( sc != sc_ok )
-               return sc;
-            if ( ! obj.isObject() )
-               return sc_invformat;
-         }
-         else {
-            CoreObject *memObj;
-            file->read( &memObj, sizeof( memObj ) );
-            obj = memObj;
-         }
-
+         sc = obj.deserialize( file, vm );
+         if ( sc != sc_ok )
+            return sc;
+         
          sc = func.deserialize( file, vm );
          if ( sc != sc_ok )
             return sc;
          if ( ! func.isFunction() )
             return sc_invformat;
 
-         setMethod( obj.asObjectSafe(), func.asFunction(), func.asModule() );
+         setMethod( obj, func.asMethodFunc() );
          return sc_ok;
       }
 
-      case FLC_ITEM_TABMETHOD:
-      {
-         if( vm == 0 )
-            return sc_missvm;
-
-         Item vector;
-         Item func;
-         e_sercode sc;
-
-         sc = func.deserialize( file, vm );
-         if ( sc != sc_ok )
-            return sc;
-         if ( ! func.isFunction() )
-            return sc_invformat;
-
-         sc = vector.deserialize( file, vm );
-         if ( sc != sc_ok )
-            return sc;
-         if ( vector.isArray() )
-            setTabMethod( vector.asArray(), func.asFunction(), func.asModule() );
-         else if ( vector.isDict() )
-            setTabMethod( vector.asArray(), func.asFunction(), func.asModule() );
-         else
-            return sc_invformat;
-
-         return sc_ok;
-      }
 
       case FLC_ITEM_OBJECT | 0x80:
       case FLC_ITEM_OBJECT:
@@ -823,67 +642,14 @@ Item::e_sercode Item::deserialize( Stream *file, VMachine *vm )
          Item *clitem = lmod->globals().itemPtrAt( sym->itemId() );
 
          // Create the core object, but don't fill attribs.
-         CoreObject *object = clitem->asClass()->createInstance(0, false);
-
-         // Read the class property table.
-         uint32 len;
-         file->read( (byte *) &len, sizeof( len ) );
-         len = endianInt32( len );
-         if ( len != object->propCount() ){
+         CoreObject *object = clitem->asClass()->createInstance(0, true);
+         if ( ! object->deserialize( file, bLive ) )
+         {
             return sc_missclass;
          }
-
-         // sc must be sc_ok
-         for( uint32 i = 0; i < len; i ++ ) {
-            if( ! file->good() ) {
-               sc = sc_ferror;
-               break;
-            }
-
-            Item temp;
-            sc = temp.deserialize( file, vm );
-            object->setPropertyAt( i, temp );
-            if ( sc != sc_ok ) {
-               return sc;
-            }
-         }
-
-         // now deserialize the attributes
-         file->read( (byte *) &len, sizeof( len ) );
-         len = endianInt32( len );
-         for( uint32 j = 0; j < len; j ++ )
-         {
-            // first the string, which is the name...
-            String a_name;
-            if( ! a_name.deserialize( file ) ) {
-               return file->good() ? sc_invformat : sc_ferror;
-            }
-
-            // then the attribute
-            Attribute *attrib = vm->findAttribute( a_name );
-            if( attrib == 0 )
-            {
-               return sc_missclass;
-            }
-
-            attrib->giveTo( object );
-         }
-
-         if ( sc == sc_ok ) {
-            // if the object was serialized live, get the user data.
-            if( bLive )
-            {
-               void *data;
-               if ( file->read( (byte *) &data, sizeof( data ) ) != sizeof( data ) )
-                  return sc_ferror;
-               object->setUserData( data );
-            }
-
-            setObject( object );
-            return sc_ok;
-         }
-
-         return sc;
+         
+         setObject( object );
+         return file->good() ? sc_ok : sc_ferror;
       }
       break;
 
@@ -909,14 +675,14 @@ Item::e_sercode Item::deserialize( Stream *file, VMachine *vm )
 
 
 //TODO:Move in another file.
-bool Item::clone( Item &target, VMachine *vm ) const
+bool Item::clone( Item &target) const
 {
    const Item *item = this->dereference();
 
    switch( item->type() )
    {
       case FLC_ITEM_STRING:
-         target = new GarbageString( vm, *item->asString() );
+         target = new CoreString( *item->asString() );
       break;
 
       case FLC_ITEM_ARRAY:
@@ -939,27 +705,7 @@ bool Item::clone( Item &target, VMachine *vm ) const
 
       case FLC_ITEM_METHOD:
       {
-         CoreObject *clone = item->asMethodObject()->clone();
-         if ( clone == 0 ) {
-            return false;
-         }
-         target.setMethod( clone, item->asMethodFunction(), item->asModule() );
-      }
-      break;
-
-      case FLC_ITEM_TABMETHOD:
-      {
-         if( item->isTabMethodDict() )
-         {
-            CoreDict *clone = item->asTabMethodDict()->clone();
-            if ( clone == 0 ) return false;
-            target.setTabMethod( clone, item->asMethodFunction(), item->asModule() );
-         }
-         else {
-            CoreArray *clone = item->asTabMethodArray()->clone();
-            if ( clone == 0 ) return false;
-            target.setTabMethod( clone, item->asMethodFunction(), item->asModule() );
-         }
+         target = *this;
       }
       break;
 

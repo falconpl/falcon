@@ -1,11 +1,11 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: flc_vm.h
+   FILE: vm.h
 
    Falcon virtual machine.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
-   Begin: dom ago 8 2004
+   Begin: Dom, 08 Aug 2004 01:22:55 +0100
 
    -------------------------------------------------------------------
    (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
@@ -13,33 +13,32 @@
    See LICENSE file for licensing details.
 */
 
-#ifndef flc_VM_H
-#define flc_VM_H
+#ifndef FLC_VM_H
+#define FLC_VM_H
 
 #include <falcon/symtab.h>
 #include <falcon/symlist.h>
 #include <falcon/item.h>
 #include <falcon/stackframe.h>
-#include <falcon/mempool.h>
 #include <falcon/module.h>
 #include <falcon/common.h>
-#include <falcon/errhand.h>
 #include <falcon/error.h>
 #include <falcon/runtime.h>
 #include <falcon/vmmaps.h>
 #include <falcon/genericlist.h>
 #include <falcon/carray.h>
 #include <falcon/string.h>
-#include <falcon/cobject.h>
+#include <falcon/coreobject.h>
 #include <falcon/cdict.h>
 #include <falcon/cclass.h>
 #include <falcon/genericmap.h>
 #include <falcon/genericlist.h>
 #include <falcon/fassert.h>
-#include <falcon/bommap.h>
 #include <falcon/vm_sys.h>
+#include <falcon/coreslot.h>
+#include <falcon/baton.h>
 
-#define FALCON_VM_DFAULT_CHECK_LOOPS 1000
+#define FALCON_VM_DFAULT_CHECK_LOOPS 3500
 
 namespace Falcon {
 
@@ -48,6 +47,9 @@ class VMachine;
 class VMContext;
 class PropertyTable;
 class AttribHandler;
+class CoreFunc;
+class MemPool;
+class VMMessage;
 
 typedef void (*tOpcodeHandler)( register VMachine *);
 
@@ -133,10 +135,6 @@ void opcodeHandler_LDP ( register VMachine *vm );
 void opcodeHandler_TRAN( register VMachine *vm );
 void opcodeHandler_UNPK( register VMachine *vm );
 void opcodeHandler_SWCH( register VMachine *vm );
-void opcodeHandler_HAS ( register VMachine *vm );
-void opcodeHandler_HASN( register VMachine *vm );
-void opcodeHandler_GIVE( register VMachine *vm );
-void opcodeHandler_GIVN( register VMachine *vm );
 void opcodeHandler_IN  ( register VMachine *vm );
 void opcodeHandler_NOIN( register VMachine *vm );
 void opcodeHandler_PROV( register VMachine *vm );
@@ -183,6 +181,24 @@ void opcodeHandler_FORB( register VMachine *vm );
 void opcodeHandler_EVAL( register VMachine *vm );
 void opcodeHandler_OOB( register VMachine *vm );
 
+
+class VMachine;
+
+class FALCON_DYN_CLASS VMBaton: public Baton
+{
+   VMachine *m_owner;
+   
+public:
+   VMBaton( VMachine* owner ): 
+      Baton( true ),
+      m_owner( owner )
+   {}
+   virtual ~VMBaton() {}
+   
+   virtual void release();
+   virtual void onBlockedAcquire();
+};
+
 /** The Falcon virtual machine.
 
    Virtual machine is in charge to execute Falcon bytecode.
@@ -210,8 +226,9 @@ void opcodeHandler_OOB( register VMachine *vm );
       and runtime may all be embedded in a VM that may act as a referee for the
       script to be i.e. evaluating correctly a piece of falcon source code.
 */
-class FALCON_DYN_CLASS VMachine: public ErrorHandler
+class FALCON_DYN_CLASS VMachine: public BaseAlloc
 {
+   friend class MemPool;
 
 public:
    /** VM events.
@@ -275,6 +292,12 @@ protected:
       LiveModule *lmod;
    };
 
+
+   mutable Mutex m_mtx;
+   
+   /** Mutex guarding the slot structure. */
+   mutable Mutex m_slot_mtx;
+
    /** Currently executed symbol.
       May be 0 if the startmodule has not a "__main__" symbol;
       this should be impossible when things are set up properly
@@ -283,7 +306,7 @@ protected:
    const Symbol* m_symbol;
 
    /** Module that contains the currently being executed symbol. */
-   const Module *m_currentModule;
+   LiveModule *m_currentModule;
 
    /** Main module.
       This is the last linked module, that should also be the module where to search
@@ -295,7 +318,6 @@ protected:
    Item m_regA;
    Item m_regB;
    Item m_regS1;
-   Item m_regS2;
    Item m_regL1;
    Item m_regL2;
 
@@ -338,6 +360,9 @@ protected:
    /** Smaller check in op loops. */
    uint32 m_opNextCheck;
 
+   /** Generation at which the garbage data in this VM is marked. */
+   uint32 m_generation;
+
    /**  Map of live modules.
       Todo: better docs.
    */
@@ -354,7 +379,7 @@ protected:
 
    /** This value indicate that there isn't any active try handler in the stack */
    enum {
-		i_noTryFrame = 0xFFFFFFFF
+      i_noTryFrame = 0xFFFFFFFF
    };
 
    /** Currently executed code.
@@ -367,13 +392,6 @@ protected:
       Current execution point in current code.
    */
    uint32 m_pc;
-
-   /** Parameter count in BOM operations.
-      Normally, parameter count is set in stack frames, but BOM calls are faster and
-      don't build a frame. This variable is used to record the parameter count for
-      BOM calls. Don't use it elsewhere.
-   */
-   int32 m_bomParams;
 
    /** Next program counter register.
       This is the next instruction the VM has to execute.
@@ -399,34 +417,6 @@ protected:
    /** Execute at link time? */
    bool m_launchAtLink;
 
-   /** Raised error.
-      If the VM receives an error (i.e. via raiseError() ), this variable gets the
-      pointer to the error instance. The error is passed to the handler, and then the
-      VM terminates.
-      The VM can either terminate execution cleanly (on empty stack return or via END opcode)
-      or because of an error being placed in this variable. So, if the VM terminates with
-      error this variable will be filled with a proper value.
-   */
-
-   Error *m_error;
-
-   /** Error handler ownership.
-      Signals if this VM owns its error handler (m_errhand). Some errorhandler may be
-      provided by the application and shared among many objects, including the application
-      itself. Usually, the VM will create its own error handler and dispose of it, but
-      if provided externally, the error handler may be left undeleted at VM destruction.
-   */
-   bool m_bOwnErrorHandler;
-
-   /** Error handler.
-      By default set to a DefaultErrorHandler with an unowned copy of m_stdErr Falcon Stream.
-      The error handler may be owned or not (destroyed at VM destruction or not) depending on
-      the m_bOwnErrorHandler setting.
-   */
-   ErrorHandler *m_errhand;
-
-   MemPool *m_memPool;
-
    /** Stack of global variables for the current module.
       This is a vector (or stack) of variables that represent the globals for the active module.
 
@@ -445,9 +435,6 @@ protected:
 
    /** Opcode handler function calls. */
    tOpcodeHandler *m_opHandlers;
-
-   /** Falcon BOM function map */
-   BomMap *m_fbom;
 
    /** Events that are required */
    tEvent m_event;
@@ -476,34 +463,13 @@ protected:
 
    numeric m_yieldTime;
 
-   /** Attributes being held in the VM.*/
-   AttribHandler *m_attributes;
-
    void yield( numeric seconds );
    void putAtSleep( VMContext *ctx, numeric secs );
    void reschedule( VMContext *ctx, numeric secs );
    void rotateContext();
 
    /** Service recursive function called by LinkClass to create a class. */
-   bool linkSubClass( LiveModule *mod , const Symbol *clssym, Map &props,
-      AttribHandler **attribs, ObjectManager **manager );
-
-   /** Passes current frame to the called item.
-         Used by the PASS opcode, this element removes the local variables and
-         prepares other local variables for the called item, but does not alter
-         the stack frame. As the first ret opcode is hit, control returns to the
-         caller of the item that generated this kind of pass; in other words,
-         the Falcon function using callItem this way is effectively canceled as if
-         never called (you won't see it even in a debug stack frame).
-   */
-   bool callItemPass( const Item &callable );
-
-   /** Passes parameters of this function to the called item.
-      When callItem is called in this way, a normal stack frame is generated,
-      the function parameters just being copied into a new stack frame. This is
-      a shortcut to a normal call, preceded by pushing of all the original parameters.
-   */
-   bool callItemPassIn( const Item &callable );
+   bool linkSubClass( LiveModule *mod , const Symbol *clssym, Map &props, ObjectFactory *factory );
 
    friend class VMContext;
    friend class VMSemaphore;
@@ -527,6 +493,35 @@ protected:
       \see systemData();
    */
    Sys::SystemData m_systemData;
+
+   CoreClass **m_metaClasses;
+
+   Map m_slots;
+
+   VMachine *m_nextVM;
+   VMachine *m_prevVM;
+
+   VMachine *m_idleNext;
+   VMachine *m_idlePrev;
+
+   /** If true, the VM allows to be blocked periodically by the GC in case of need.
+
+      If false, the VM is left alone, and in case it becomes the VM having taken a GC
+      scan for the last, its GC data gets promoted only if the GC enters the active
+      state.
+   */
+   bool m_bGcEnabled;
+   
+   /** Main synchronization baton. */
+   VMBaton m_baton;
+   
+   Mutex m_mtx_mesasges;
+   VMMessage* m_msg_head;
+   VMMessage* m_msg_tail;
+   
+   //=============================================================
+   // Private functions
+   //
 
    /** Utility for switch opcode.
       Just pretend it's not here.
@@ -578,50 +573,56 @@ protected:
    Item *getOpcodeParam( register uint32 bc_pos );
 
    /** Creates a new stack frame.
-      // well...
       \param paramCount number of parameters in the stack
    */
    void createFrame( uint32 paramCount );
 
-public:
+   /** Sets the currently running VM.
+      The Currently running VM is the VM currently in control
+      of garbage collecting and item creation.
 
-   /** Types of item calls.
-      This type must be passed to callItem function to determine the mode by which an object
-      in the VM is called.
-      \see callItem()
+      There can be only one current VM per thread; the value is
+      stored in a thread specific variable.
+
+      Accessing it can be relatively heavy, so it is highly advised
+      not tu use it except when absolutely necessary to know
+      the current vm and the value is currently unknown.
+
+      \note Embedding applications are advised not to "corss VM", that is,
+      not to nest call into different VMs in the same thread
    */
-   typedef enum {
-      /** Normal call mode.
-         When an item is called in this way, as a return PCODE resets the stack at the same
-         level as it was before the call, the VM returns. In other words, when the called
-         function returns or otherwise terminates, the control returns to the caller.
-      */
-      e_callNormal,
+   void setCurrent() const;
 
-      /** Builds a VM compliant return frame.
-         As a return instruction is hit in the called item, the control is passed to the
-         VM item that was active before callItem(). It's the standard way falcon functions
-         are called.
-      */
-      e_callFrame,
+   friend class CoreFunc;
+   
+   /** Processes an incoming message. 
+      This searches for the slot requierd by the message;
+      if it is found, the message is broadcast to the slot in a newly created coroutine,
+      otherwise the onMessageComplete is immedately called.
+      
+      The message will be immediately destroyed if it can't be broadcast.
+      
+      \param msg The message to be processed.
+   */
+   void processMessage( VMMessage* msg );
 
-      /** Calls an object and return control but respect self object.
-          This is the same as callNormal mode, except for the fact that self and sender
-          are not updated. This is used eventually by user
-          functions that wish to be seen just as extensions of methods they are called
-          from.
-      */
-      e_callInst,
+public:
+   /** Returns the currently running VM.
 
-      /** Calls an object and continue, but respect self object.
-          This is the same as callFrame mode, except for the fact that self and sender
-          are not updated. This is used by the INST opcode, that needs to emulate a
-          VM internal call, but respecting the SELF object that may have been created
-          in the meanwhile.
-      */
-      e_callInstFrame
+      The Currently running VM is the VM currently in control
+      of garbage collecting and item creation.
 
-   } e_callMode;
+      There can be only one current VM per thread; the value is
+      stored in a thread specific variable.
+
+      Accessing it can be relatively heavy, so it is highly advised
+      not tu use it except when absolutely necessary to know
+      the current vm and the value is currently unknown.
+
+      \note Embedding applications are advised not to "corss VM", that is,
+      not to nest call into different VMs in the same thread
+   */
+   static VMachine *getCurrent();
 
    /** Initialize VM from subclasses.
       Subclasses willing to provide their own initialization routine,
@@ -641,12 +642,7 @@ public:
    */
    VMachine();
 
-   /** Destroys the virtual machine.
-      It destroys the mempool manager, that causes also memory cleaning (complete fast garbage collecting)
-      and memory pool destruction.
-      It does not destroys the runtime, that must be destroyed by the caller. In the future, a reference
-      count may be added both to the mempool and the runtime.
-   */
+   /** Destroys the virtual machine. */
    virtual ~VMachine();
 
    /** Initialize the virutal machine.
@@ -654,8 +650,6 @@ public:
 
       They are namely:
 
-      - m_memPool: the memory manager manager for this VM. The default
-        is to use the Falcon::MemPool() manager.
       - m_stdIn: standard input. The default is to use an instance returned by
         stdInputStream(), which interfaces a localized text version of
         process stdin.
@@ -665,9 +659,6 @@ public:
       - m_stdErr: standard error. The default is to use an instance returned by
         stdErrorStream(), which interfaces a localized text version of
         process stderr.
-      - m_errhand: error handler. The default is to create an instance of
-        DefaultErrorHandler built on the given m_stdErr (without ownership, as
-        the VM destroys m_stdErr on exit).
 
       The subclass should set up its own items, if the default ones are not
       suitable, and then call the base class init(). The base init will
@@ -820,9 +811,9 @@ public:
 
       \param sym The class instance to be initialized.
       \param lmod The live module where the symbol must go.
-      \return false if the link fails, true on success.
+      \throw Error if the instance cannot be created.
    */
-   bool initializeInstance( const Symbol *sym, LiveModule *livemod );
+   void initializeInstance( const Symbol *sym, LiveModule *livemod );
 
    /** Links a symbol eventually performing class and instances initializations.
 
@@ -1063,7 +1054,6 @@ public:
       \param line the script line where the error happened. If zero, it will be
          determined by the context, if we're running one.
       \param expl an eventual explanation of the error conditions.
-      \see errorHandler()
    */
    void raiseError( int code, const String &expl, int32 line = 0 );
 
@@ -1110,7 +1100,10 @@ public:
    const Item &moduleItem( uint32 pos ) const { return currentGlobals().itemAt( pos ); }
 
    /** Returns the module in which the execution is currently taking place. */
-   const Module *currentModule() const { return m_currentModule; }
+   const Module *currentModule() const { return m_currentModule->module(); }
+
+   /** Returns the module in which the execution is currently taking place. */
+   const LiveModule *currentLiveModule() const { return m_currentModule; }
 
    /** Find a linked module with a given name.
       Returns a pointer to the linked live module if the name exists, or 0 if the named module
@@ -1128,15 +1121,6 @@ public:
    */
    const LiveModuleMap &liveModules() const { return m_liveModules; }
 
-   /** Sets the error handler.
-      If there is a previously owned error handler in this VM, it is destroyed now.
-      \param em the error handler to be set
-      \param own true to allow VM to destroy this handler when disposing of it, false if the error handler is shared
-                 with the application.
-   */
-   void errorHandler( ErrorHandler *em, bool own = false );
-   ErrorHandler *errorHandler() const { return m_errhand; }
-
    /** Returns the parameter count for the current function.
       \note Calling this when the VM is not engaged in executing a function will crash.
       \return parameter count for the current function.
@@ -1145,45 +1129,6 @@ public:
       return ((StackFrame *)m_stack->at( m_stackBase - VM_FRAME_SPACE ) )->m_param_count;
    }
 
-   /** Returns the parameter count in the current BOM handler.
-      Falcon Basic Object Model handler are those methods that handle
-      non-object items in "self" register (s1).
-
-      As their call is handled specially, they have a special mean to
-      access their stack elements (read: their parameters).
-
-      \note Calling this from a non-bom handler will crash.
-
-      \return number of parameters passed to the current BOM handler
-   */
-   int32 bomParamCount() const {
-      return m_bomParams;
-   }
-
-   /** Returns the nth BOM handler parameter.
-      Falcon Basic Object Model handler are those methods that handle
-      non-object items in "self" register (s1).
-
-      As their call is handled specially, they have a special mean to
-      access their stack elements (read: their parameters).
-
-      \note Fetched item pointers are valid while the stack doesn't change.
-            Pushes, addLocal(), item calls and VM operations may alter the
-            stack. Using this method again after such operations allows to
-            get a valid pointer to the desired item again. Items extracted with
-            this method can be also saved locally in an Item instance, at
-            the cost of a a flat item copy (a few bytes).
-
-      \param itemId the number of the parameter accessed, 0 based.
-      \return a valid pointer to the (dereferenced) parameter or 0 if itemId is invalid.
-      \note Calling this from a non-bom handler will crash.
-   */
-   Item *bomParam( uint32 itemId )
-   {
-      register uint32 params = bomParamCount();
-      if ( itemId >= params ) return 0;
-      return stackItem( m_stack->size() - params + itemId ).dereference();
-   }
 
    /** Returns the nth paramter passed to the VM.
       Const version of param(uint32).
@@ -1277,8 +1222,6 @@ public:
 
    const Item &self() const { return m_regS1; }
    Item &self() { return m_regS1; }
-   const Item &sender() const { return m_regS2; }
-   Item &sender() { return m_regS2; }
 
    /** Latch item.
       Generated on load property/vector instructions, it stores the accessed object.
@@ -1314,8 +1257,6 @@ public:
       run();
    }
 
-   MemPool *memPool() const  { return m_memPool; }
-
    void retval( int32 val ) {
        m_regA.setInteger( (int64) val );
    }
@@ -1332,17 +1273,11 @@ public:
        m_regA = val;
    }
 
-   /*void retval( String *cs ) {
-      m_regA.setString(cs);
-   }*/
-
    /** Returns a garbageable string.
-      The string must have been allocated with MemPool::allocString() or there will be a leack
-      (and an assert in debug).
 
       \note to put a nongarbage string in the VM use regA() accessor, but you must know what you're doing.
    */
-   void retval( GarbageString *cs )
+   void retval( CoreString *cs )
    {
       m_regA.setString(cs);
    }
@@ -1364,7 +1299,7 @@ public:
    }
 
    void retval( const String &cs ) {
-      GarbageString *cs1 = new GarbageString( this, cs );
+      CoreString *cs1 = new CoreString( cs );
       cs1->bufferize();
       m_regA.setString( cs1 );
    }
@@ -1487,7 +1422,12 @@ public:
 
       \return false if the item is not callable, true if the item is called.
    */
-   bool callItem( const Item &callable, int32 paramCount, e_callMode mode=e_callNormal );
+   bool callItem( const Item &callable, int32 paramCount )
+   {
+      callFrame( callable, paramCount );
+      execFrame();
+      return true;
+   }
 
    /** Shortcut for to call an item from a VM frame.
       Extension functions and VM/core functions meant to be called from the
@@ -1504,7 +1444,31 @@ public:
    */
    bool callFrame( const Item &callable, int32 paramCount )
    {
-      return callItem( callable, paramCount, VMachine::e_callFrame );
+      callable.readyFrame( this, paramCount );
+      return true;
+   }
+
+   /** Prepare a coroutine context.
+
+     The context is immediately swapped, so any operation performed by
+     the caller is done on the new context. This allow to call an item
+     right after coroutine creation.
+
+     \param paramCount Number of parameters to be passed in the coroutine stack.
+   */
+   void coPrepare( int32 paramCount );
+
+   /** Executes currently prepared frame. */
+   void execFrame()
+   {
+      currentFrame()->m_break = true; // force to exit when meeting this limit
+      m_pc = m_pc_next;
+      run();
+   }
+
+   StackFrame* currentFrame()
+   {
+      return (StackFrame *) m_stack->at( m_stackBase - VM_FRAME_SPACE );
    }
 
    /** Resets the return handler and prepares to call given external handler.
@@ -1562,8 +1526,10 @@ public:
       Things to be called in atomic mode are i.e. small VM operations
       overload methods, as the toString or the compare. All the rest should
       be performed using the callFrame mechanism.
+
+      \throw CodeError if the item is not callable.
    */
-   bool callItemAtomic(const Item &callable, int32 paramCount, e_callMode mode=e_callNormal );
+   void callItemAtomic(const Item &callable, int32 paramCount );
 
    /** Installs a post-processing return frame handler.
       The function passed as a parmeter will receive a pointer to this VM.
@@ -1774,30 +1740,6 @@ public:
    */
    void hasProcessStreams( bool b ) { m_bhasStandardStreams = b; }
 
-   /** Error handler implementation.
-      Creates an error object and raises it in the current script.
-      The script can then intercept the raised error, or let it flow
-      through. If going thoruh, this same error will be passed to the
-      error handler of this VM.
-   */
-
-   virtual void handleError( Error *error );
-
-   /** Return the exit error.
-      If the virutal machine exited uncleanly, i.e. because of a raised error,
-      this variable contains an instance of the error that caused premature
-      termination.
-
-      The variable belongs to the VM and is destroyed with it.
-   */
-   Error *exitError() const { return m_error; }
-
-   /** True if the VM exited with error.
-      If the VM is cleanly terminated, this method returns false.
-      Useful to know if the script did what it was supposed to do.
-   */
-   bool hadError() const { return m_event == eventRisen; }
-
    /** True if the VM exited with any event set.
 
       The vast majority of the extension function calling the VM again,
@@ -1917,16 +1859,6 @@ public:
    void singleStep( bool ss ) { m_bSingleStep = ss; }
    bool singleStep() const { return m_bSingleStep; }
 
-   /** Compare two items.
-      If the first comparand is an object, compare() and eventually equal()
-      are searched in the object definition, and then executed.
-      If compare() is not found, and equal() is not found or does not return
-      true, a normal item comparation is performed.
-
-      This method is used in all the VM basic comparations.
-   */
-   int compareItems( const Item &first, const Item &second );
-
    /** Periodic callback.
       This is the periodic callback routine. Subclasses may use this function to get
       called every now and then to i.e. stop the VM asynchronously, or to perform
@@ -1989,9 +1921,6 @@ public:
    */
    returnCode  expandString( const String &src, String &target );
 
-   void store( Garbageable *data ) { m_memPool->storeForGarbage( data ); }
-   void store( GarbageString *str_data ) { m_memPool->storeForGarbage( str_data ); }
-
    /** Creates a reference to an item.
       The source item is turned into a reference which is passed in the
       target item. If the source is already a reference, the reference
@@ -2000,44 +1929,6 @@ public:
       \param source the source item to be referenced
    */
    void referenceItem( Item &target, Item &source );
-
-   /** Ensures that the given item is never destroyed by the garbage collector.
-      At times, embedding applications takes references to items so that they
-      can directly access them later. In example, a script may declare a callback
-      method, and then lose reference of that callable object. The embedding
-      application will want to have the callable object to stay alive, wether
-      the script wants to save it or not.
-
-      One solution may be that of recording the item somewhere in the VM, in
-      example in an hidden global array where all the "saved" item are stored,
-      but that's quite expensive.
-
-      Instead, the embedding application may just have a local copy of the item
-      and call "gcLock" on it. This ensures that the data stay valid until the
-      VM is alive even if the item contains deep (garbage sensible) data, and
-      the script lose track of it.
-
-      When the data is not needed anymore (i.e. because the callback handler is
-      destroyed externally), the embedding application may call gcUnlock() to
-      allow VM and Garbabe Collector to reclaim that memory in case it is needed.
-
-      \note This method is currently implemented using the underlying MemPool::lock
-         method, and it follows the same rules. Be careful re-locking items twice or
-         unlocking non-locked items, or you'll crash.
-
-      \see MemPool::lock
-      \see gcUnlock( const Item & )
-      \see GarbageItem
-      \param itm the item to be locked
-      \return a relocable item pointer that can be used to access the deep data.
-   */
-   GarbageLock *gcLock( const Item &itm ) { return m_memPool->lock( itm ); }
-
-   /** Allows a previously locked item to be reclaimed (later on).
-      \param itm the item to be unlocked
-      \see gcLock( const Item & )
-   */
-   void gcUnlock( GarbageLock *itm ) { m_memPool->unlock( itm ); }
 
    uint32 stackBase() const { return m_stackBase; }
 
@@ -2085,24 +1976,13 @@ public:
       needs to continue processing, it must install a frame return handler
       to be called back when the frame created by functionalEval is done.
 
+      \param itm the item to be functionally evaluated.
+      \param pcount the number of parameters in the VM to be treated as evaluation parameters.
+      \param retArray true to force return of an evaluated array in case the input is not a Sigma sequence.
       \return false if the caller can proceed, true if it must return.
    */
 
-   bool functionalEval( const Item &itm );
-
-   /** Find an attribute by name.
-      Return the attribute that coresponds with the given name, if it exists.
-      \param name the name of the attribute to be searched.
-      \return the attribute instance or zero if not found.
-   */
-   Attribute *findAttribute( const String &name ) const;
-
-   /** Find an attribute by symbol.
-      Return the attribute that is generated from the given symbol, if it exists.
-      \param sym the symbol from which the attribute has been generated.
-      \return the attribute instance or zero if not found.
-   */
-   Attribute *findAttribute( const Symbol *sym ) const;
+   bool functionalEval( const Item &itm, uint32 pcount=0, bool retArray = true );
 
    /** Interrupts pending I/O on this machine from a separate thread.
       Interrupts compliant streams I/O and wait operations. The next I/O or
@@ -2223,6 +2103,117 @@ public:
 
    bool liveLink( LiveModule *livemod, t_linkMode mode );
 
+   /** Request a constructor call after a call frame.
+      If the preceding callFrame() was directed to an external function, requests the VM to treat
+      the return value as an init() return, placing self() in regA() when all is done.
+   */
+   void requestConstruct() { if( m_pc_next == i_pc_call_external ) m_pc_next = i_pc_call_external_ctor; }
+
+   void setMetaClass( int itemID, CoreClass *metaClass )
+   {
+      fassert( itemID >= 0 && itemID < FLC_ITEM_COUNT );
+      m_metaClasses[ itemID ] = metaClass;
+   }
+
+   CoreClass *getMetaClass( int itemID )
+   {
+      fassert( itemID >= 0 && itemID < FLC_ITEM_COUNT );
+      return m_metaClasses[ itemID ];
+   }
+
+   /** Gets a slot for a given message.
+      If the slot doesn't exist, 0 is returned, unless create is set to true.
+      In that case, the slot is created anew and returned.
+   */
+   CoreSlot* getSlot( const String& slotName, bool create = true );
+
+   /** Removes and dereference a message slot in the VM.
+   */
+   void removeSlot( const String& slotName );
+
+   /** Used by the garbage collector to accunt for items stored as slot callbacks. */
+   void markSlots( byte mark );
+
+   /** Comsume the currently broadcast signal.
+      This blocks the processing of signals to further listener of the currently broadcasting slot.
+      \return true if the signal is consumed, false if there was no signal to consume.
+   */
+   bool consumeSignal();
+
+   /** Declares an IDLE section.
+      In code sections where the VM is idle, it is granted not to change its internal
+      structure. This allow inspection from outer code, as i.e. the garbage collector.
+      
+      \note Calls VM baton release (just candy grammar).
+      \see baton()
+   */
+   void idle() { m_baton.release(); }
+
+   /** Declares the end of an idle code section.
+      \note Calls VM baton acquire (just candy grammar).
+      \see baton()
+   */
+   void unidle() { m_baton.acquire(); }
+
+   /** Enable the Garbage Collector requests on this VM.
+
+      If \b mode is false, the VM never checks for garbage collector requests to
+      block operations for detailed inspections.
+
+      If \b mode is true, the VM periodically tells the GC that it is ready for inspection,
+      and it is forced to honor block requests when memory gets critically high.
+
+      However, if the GC is disabled, the VM may be inspected if it volountarily enters
+      the idle state (sleep or I/O calls).
+
+      \param mode True to allow forced periodic inspections in case of need.
+   */
+   void gcEnable( bool mode );
+
+   bool isGcEnabled() const;
+
+
+
+   /** Class automating idle-unidle fragments.
+      This purely inlined class automathises the task of calling
+      unidle() as a function putting the VM in idle (i.e. I/O function)
+      returns.
+   */
+   class Pauser
+   {
+      VMachine *m_vm;
+   public:
+      inline Pauser( VMachine *vm ):
+         m_vm( vm ) { m_vm->idle(); }
+
+      inline ~Pauser() { m_vm->unidle(); }
+   };
+
+   
+   /** Accessor to the VM baton.
+      Used to serialize concurrent access to this VM.
+   */
+   const VMBaton& baton() const { return m_baton;  }
+   
+   /** Accessor to the VM baton.
+      Used to serialize concurrent access to this VM.
+   */
+   VMBaton& baton() { return m_baton; }
+   
+   /** Send a message to the VMachine.
+   
+      If the virtual machine is currently idle, the message is immediately processed.
+      
+      Otherwise, it is posted to the main VM loop, and it is executed as soon as
+      possible.
+      
+      The ownership of the message passes to the virtual machine, which will destroy
+      it as the message is complete.
+      
+      The message is processed by broadcasting on the coresponding VM slot.
+   */
+   void postMessage( VMMessage *vm );
+   
 //==========================================================================
 //==========================================================================
 //==========================================================================
@@ -2301,10 +2292,6 @@ public:
    friend void opcodeHandler_TRAN( register VMachine *vm );
    friend void opcodeHandler_UNPK( register VMachine *vm );
    friend void opcodeHandler_SWCH( register VMachine *vm );
-   friend void opcodeHandler_HAS ( register VMachine *vm );
-   friend void opcodeHandler_HASN( register VMachine *vm );
-   friend void opcodeHandler_GIVE( register VMachine *vm );
-   friend void opcodeHandler_GIVN( register VMachine *vm );
    friend void opcodeHandler_IN  ( register VMachine *vm );
    friend void opcodeHandler_NOIN( register VMachine *vm );
    friend void opcodeHandler_PROV( register VMachine *vm );
@@ -2355,4 +2342,4 @@ public:
 
 #endif
 
-/* end of flc_vm.h */
+/* end of vm.h */

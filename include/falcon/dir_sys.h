@@ -51,7 +51,7 @@ public:
 
    // unsupported (for now)
    virtual FalconData *clone() const { return 0; }
-   virtual void gcMark( VMachine *mp ) {}
+   virtual void gcMark( MemPool *mp ) {}
 };
 
 namespace Sys {

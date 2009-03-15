@@ -17,8 +17,8 @@
    Core Class definition
 */
 
-#ifndef flc_cclass_H
-#define flc_cclass_H
+#ifndef FLC_CCLASS_H
+#define FLC_CCLASS_H
 
 #include <falcon/setup.h>
 #include <falcon/symbol.h>
@@ -29,8 +29,6 @@
 namespace Falcon {
 
 class VMachine;
-class AttribHandler;
-class Attribute;
 
 /** Representation of classes held in VM while executing code.
    The Virtual Machine has his own image of the classes. Classes items
@@ -56,10 +54,9 @@ private:
    const Symbol *m_sym;
    Item m_constructor;
    PropertyTable *m_properties;
-   AttribHandler *m_attributes;
-
-   /** Cached object manager */
-   ObjectManager *m_manager;
+   
+   /** Locally cached factory. */
+   ObjectFactory m_factory;
 
    /** Configures a newborn instance.
       This method is called by createInstance on this class and all the subclasses,
@@ -83,7 +80,7 @@ public:
       The module id is useful as this object often refers to its module in the VM. Having the ID
       recorded here prevents the need to search for the live ID in the VM at critical times.
    */
-   CoreClass( VMachine *mp, const Symbol *sym, LiveModule *lmod, PropertyTable *pt );
+   CoreClass( const Symbol *sym, LiveModule *lmod, PropertyTable *pt );
    ~CoreClass();
 
    LiveModule *liveModule() const { return m_lmod; }
@@ -92,17 +89,14 @@ public:
    PropertyTable &properties() { return *m_properties; }
    const PropertyTable &properties() const { return *m_properties; }
 
-
+   ObjectFactory factory() const { return m_factory; }
+   void factory( ObjectFactory f ) { m_factory = f; }
+   
    /** Creates an instance of this class.
       The returned object and all its properties are stored in the same memory pool
       from which this instance is created.
       On a multithreading application, this method can only be called from inside the
       thread that is running the VM.
-
-      The instance may be created with some pre-configured user-data (which must be
-      manageable by the ObjectManager declared by this class); if a user data is not
-      provided, or if it's zero, the class will create a user data using it's own
-      ObjectManager.
 
       In some cases (e.g. de-serialization) the caller may wish not to have
       the object initialized and filled with attributes. The optional
@@ -111,10 +105,11 @@ public:
 
       \note This function never calls the constructor of the object.
       \param user_data pre-allocated user data.
-      \param appendAttribs false to prevent initialization of default attributes.
+      \param bDeserialize set to true if you are deserializing an instance (that is, if its
+         constructor should not configure it).
       \return The new instance of the Core Object.
    */
-   CoreObject *createInstance( void *user_data=0, bool appendAttribs = true ) const;
+   CoreObject *createInstance( void *user_data=0, bool bDeserialize = false ) const;
 
    const Item &constructor() const { return m_constructor; }
    Item &constructor() { return m_constructor; }
@@ -128,41 +123,7 @@ public:
    */
    bool derivedFrom( const String &className ) const;
 
-   /** Adds an attribute to a class definition.
-      This attribute will be given to every instance of this class.
-
-      There is no validity check about i.e. attribute duplication as
-      this function is usually called by the VM at link time on a properly
-      compiled attribute list, or by extensions at module creation time.
-
-      Also, duplicate attributes would have no consequence.
-      \param attrib the attribute do be added to this class definition.
-   */
-   void addAttribute( Attribute *attrib );
-
-   /** Removes an attribute to a class definition.
-      Removes a previously given attribute.
-
-      Generally used by the VM at class inheritance resolution time.
-      \param attrib the attribute to be removed.
-   */
-   void removeAttribute( Attribute *attrib );
-
-   /** Changes the attribute list.
-      This is mainly used by the VM during the link phase.
-   */
-   void setAttributeList( AttribHandler *lst );
-
-   /** Returns the object manager used by this class.
-      Shortcut that gets the manager declared by the topmost reflective class.
-      \return the ObjectManager used for this class.
-   */
-   ObjectManager* getObjectManager() const { return m_manager; }
-
-   /** Sets  the object manager used by this class.
-      Used directly by the VM during the link phase.
-   */
-   void setObjectManager( ObjectManager *om ) { m_manager = om; }
+   
 };
 
 }

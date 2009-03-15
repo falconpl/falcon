@@ -44,7 +44,7 @@ public:
 
    void unsubscribe( VMContext *ctx );
    virtual FalconData *clone() const;
-   virtual void gcMark( VMachine *mp ) {}
+   virtual void gcMark( MemPool *mp ) {}
 };
 
 }

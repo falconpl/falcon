@@ -40,7 +40,7 @@ try
    item = nil
    count = 0
    while item != "last"
-      item = stream.readItem()
+      item = deserialize( stream )
       count ++
       if count == 1 and item != "Hello world": failure( "first item" )
       if count == 2 and item != 1: failure( "second item" )
@@ -51,13 +51,13 @@ try
       if count == 7 and item != true: failure( "seventh item" )
       if count == 8 and item != false: failure( "eight item" )
    end
-catch
-   failure( "deserialization failed" )
+catch in e 
+   failure( "deserialization failed: " + e.toString() )
 end
 
 if count != 9: failure( "count of items" )
 try
-   stream.read(1)
+   stream.grab(1)
    if not stream.eof(): failure( "Stream was not at eof" )
 catch
    failure( "Standard read after deserialization" )

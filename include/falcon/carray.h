@@ -23,6 +23,7 @@
 #include <falcon/types.h>
 #include <falcon/garbageable.h>
 #include <falcon/item.h>
+#include <falcon/deepitem.h>
 
 #define flc_ARRAY_GROWTH   32
 
@@ -34,7 +35,7 @@ class Bindings;
 /** Core array (or array of items).
 */
 
-class FALCON_DYN_CLASS CoreArray: public Garbageable
+class FALCON_DYN_CLASS CoreArray:  public DeepItem, public Garbageable
 {
    uint32 m_alloc;
    uint32 m_size;
@@ -43,13 +44,13 @@ class FALCON_DYN_CLASS CoreArray: public Garbageable
    CoreObject *m_table;
    uint32 m_tablePos;
 
-   CoreArray( VMachine *vm, Item *buffer, uint32 size, uint32 alloc );
+   CoreArray( Item *buffer, uint32 size, uint32 alloc );
 
 public:
 
    /** Creates the core array. */
-   CoreArray( VMachine *owner );
-   CoreArray( VMachine *owner, uint32 prealloc );
+   CoreArray();
+   CoreArray( uint32 prealloc );
 
    ~CoreArray();
 
@@ -103,7 +104,7 @@ public:
       \param name The property to be updated.
       \param data The update data.
    */
-   void setProperty( const String &name, Item &data );
+   void setProperty( const String &name, const Item &data );
 
    /** Checks the position to be in the array, and eventually changes it if it's negative.
       \param pos the position to be checked and eventually turned into a positive value.
@@ -164,6 +165,10 @@ public:
    uint32 tablePos() const { return m_tablePos; }
    void tablePos( uint32 tp ) { m_tablePos = tp; }
 
+   virtual void readProperty( const String &prop, Item &item );
+   virtual void writeProperty( const String &prop, const Item &item );
+   virtual void readIndex( const Item &pos, Item &target );
+   virtual void writeIndex( const Item &pos, const Item &target );
 };
 
 }

@@ -231,7 +231,6 @@ void write_operand( Stream *output, byte *instruction, int opnum, Module *mod )
       case P_PARAM_REGA: output->writeString( "A" ); break;
       case P_PARAM_REGB: output->writeString( "B" ); break;
       case P_PARAM_REGS1: output->writeString( "S1" ); break;
-      case P_PARAM_REGS2: output->writeString( "S2" ); break;
       case P_PARAM_REGL1: output->writeString( "L1" ); break;
       case P_PARAM_REGL2: output->writeString( "L2" ); break;
    }
@@ -409,35 +408,6 @@ void gen_class( Stream *m_out, const Symbol *sym )
       m_out->writeString( ".ctor $" + cd->constructor()->name() + "\n" );
    }
 
-   // write has and hasn't clauses
-   if ( ! cd->has().empty() ) {
-      m_out->writeString( ".has " );
-      ListElement *has_iter = cd->has().begin();
-      while( has_iter != 0 )
-      {
-         const Symbol *hsym = (const Symbol *) has_iter->data();
-         m_out->writeString( "$" + hsym->name() );
-         has_iter = has_iter->next();
-         if ( has_iter != 0 )
-            m_out->writeString( ", " );
-      }
-      m_out->writeString( "\n" );
-   }
-
-   if ( ! cd->hasnt().empty() ) {
-      m_out->writeString( ".hasnt " );
-      ListElement *hasnt_iter = cd->has().begin();
-      while( hasnt_iter != 0 )
-      {
-         const Symbol *hsym = (const Symbol *) hasnt_iter->data();
-         m_out->writeString( "$" + hsym->name() );
-         hasnt_iter = hasnt_iter->next();
-         if ( hasnt_iter != 0 )
-            m_out->writeString( ", " );
-      }
-      m_out->writeString( "\n" );
-   }
-
    m_out->writeString( ".endclass\n" );
    m_out->writeString( "; ---------------------------------------------\n" );
 }
@@ -563,10 +533,6 @@ void gen_code( Module *module, const FuncDef *fd, Stream *out, const t_labelMap 
          case P_UNPS: csOpName = "UNPS"; break;
          // when isomorphic, switch is created through directive
          case P_SWCH: csOpName = options.m_isomorphic ? "" : "SWCH"; break;
-         case P_HAS : csOpName = "HAS "; break;
-         case P_HASN: csOpName = "HASN"; break;
-         case P_GIVE: csOpName = "GIVE"; break;
-         case P_GIVN: csOpName = "GIVN"; break;
          case P_IN  : csOpName = "IN  "; break;
          case P_NOIN: csOpName = "NOIN"; break;
          case P_PROV: csOpName = "PROV"; break;
@@ -585,8 +551,6 @@ void gen_code( Module *module, const FuncDef *fd, Stream *out, const t_labelMap 
          case P_TRAV: csOpName = "TRAV"; break;
          case P_INCP: csOpName = "INCP"; break;
          case P_DECP: csOpName = "DECP"; break;
-         case P_PASS: csOpName = "PASS"; break;
-         case P_PSIN: csOpName = "PSIN"; break;
 
          case P_SHR : csOpName = "SHR "; break;
          case P_SHL : csOpName = "SHL "; break;
@@ -964,7 +928,6 @@ void write_symtable( e_tabmode mode , Stream *out, Module *mod )
                case Symbol::tprop: out->writeString( "PROP" ); break;
                case Symbol::tvar: out->writeString( "VDEF" ); break;
                case Symbol::tinst: out->writeString( "INST" ); break;
-               case Symbol::tattribute: out->writeString( "ATTR" ); break;
                default:
                   break;
             }
@@ -1029,20 +992,24 @@ void write_symtable( e_tabmode mode , Stream *out, Module *mod )
 
             switch( sym->type() )
             {
-
                case Symbol::tglobal: out->writeString( ".global" ); break;
                case Symbol::tlocal: out->writeString( ".local" ); break;
                case Symbol::tparam: out->writeString( ".param" ); break;
                case Symbol::tfunc: out->writeString( ".func" ); break;
                case Symbol::tclass: out->writeString( ".class" ); break;
                case Symbol::tprop: out->writeString( ".prop" ); break;
-               case Symbol::tvar: out->writeString( ".propdef" ); break;
+               
+               case Symbol::tundef: out->writeString( ";---(INVALID) .undef" ); break;
+               case Symbol::tlocalundef: out->writeString( ";---(INVALID) .localundef" ); break;
+               case Symbol::textfunc: out->writeString( ";---(INVALID) .extfunc" ); break;
+               case Symbol::tconst: out->writeString( ";---(INVALID) .const" ); break;
+               case Symbol::timportalias: out->writeString( ";---(INVALID) .importalias" ); break;
+               case Symbol::tvar: out->writeString( ";---(INVALID) .var" ); break;
+               
                case Symbol::tinst:
                   out->writeString( ".instance $" );
                   out->writeString( sym->getInstance()->name() );
                   break;
-               case Symbol::tattribute: out->writeString( ".attrib" ); break;
-               default: break;
             }
             out->writeString( " " + sym->name() );
             if( sym->declaredAt() != 0 ) {
@@ -1144,8 +1111,7 @@ using namespace Falcon;
 int main( int argc, char *argv[] )
 {
    // initialize the engine
-   EngineData data;
-   Init( data );
+   Falcon::Engine::AutoInit autoInit;
 
    Stream *stdErr = stdErrorStream();
 

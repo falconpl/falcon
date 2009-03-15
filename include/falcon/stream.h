@@ -128,7 +128,6 @@ protected:
       ew_end
    } e_whence;
 
-   virtual int64 seek( int64 pos, e_whence w );
    friend class Transcoder;
 
 public:
@@ -153,8 +152,9 @@ public:
 
    virtual ~Stream();
 
-   virtual void gcMark( VMachine *mp ) {}
-
+   virtual void gcMark( MemPool *mp ) {}
+   virtual bool isStreamBuffer() const { return false; }
+   virtual bool isTranscoder() const { return false; }
 
    /** Reads from target stream.
 
@@ -195,6 +195,8 @@ public:
    int64 seekEnd( int64 pos ) {
       return seek( pos, ew_end );
    }
+   
+   virtual int64 seek( int64 pos, e_whence w );
 
    virtual int64 lastError() const;
 

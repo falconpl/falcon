@@ -18,21 +18,19 @@
 */
 
 #include <falcon/cclass.h>
-#include <falcon/cobject.h>
+#include <falcon/coreobject.h>
 #include <falcon/vm.h>
-#include <falcon/attribute.h>
 
 namespace Falcon {
 
-CoreClass::CoreClass( VMachine *origin, const Symbol *sym, LiveModule *lmod, PropertyTable *pt ):
-   Garbageable( origin, sizeof( this ) + sizeof( void * ) * 2 * pt->size() + sizeof( *pt ) ),
+CoreClass::CoreClass( const Symbol *sym, LiveModule *lmod, PropertyTable *pt ):
+   Garbageable(),
    m_lmod( lmod ),
    m_sym( sym ),
    m_properties( pt ),
-   m_attributes( 0 )
+   m_factory(sym->getClassDef()->factory())
 {
 }
-
 
 bool CoreClass::derivedFrom( const String &className ) const
 {
@@ -52,92 +50,25 @@ bool CoreClass::derivedFrom( const String &className ) const
 CoreClass::~CoreClass()
 {
    delete m_properties;
-   setAttributeList( 0 );
 }
 
 
-CoreObject *CoreClass::createInstance( void *userdata, bool applyAttributes ) const
+CoreObject *CoreClass::createInstance( void *userdata, bool bDeserial ) const
 {
    if ( m_sym->isEnum() )
    {
-      origin()->raiseError( new CodeError( ErrorParam( e_noninst_cls, __LINE__ ).
-         extra( m_sym->name() ) ) );
+      throw new CodeError( ErrorParam( e_noninst_cls, __LINE__ )
+            .extra( m_sym->name() ) );
       // anyhow, flow through to allow user to see the object
    }
 
-   if ( userdata == 0 && m_manager )
-      userdata = m_manager->onInit( origin() );
 
    // The core object will self configure,
    // eventually calling the user data constructor and creating the property vector.
-   CoreObject *instance = new CoreObject( this, userdata );
-
-   // assign attributes to the instance.
-   if ( applyAttributes )
-   {
-      AttribHandler *head = m_attributes;
-      while( head != 0 )
-      {
-         head->attrib()->giveTo( instance );
-         head = head->next();
-      }
-   }
+   CoreObject *instance = m_factory( this, userdata, bDeserial );
 
    return instance;
 }
-
-
-void CoreClass::addAttribute( Attribute *attrib )
-{
-   m_attributes->prev( new AttribHandler( attrib, 0, 0, m_attributes ) );
-   m_attributes = m_attributes->prev();
-}
-
-
-void CoreClass::removeAttribute( Attribute *attrib )
-{
-   AttribHandler *head = m_attributes;
-   if ( head == 0 )
-      return;
-
-   if ( head->attrib() == attrib )
-   {
-      m_attributes = m_attributes->next();
-      m_attributes->prev( 0 );
-      delete head;
-      return;
-   }
-
-   head = head->next();
-   while( head != 0 )
-   {
-      if ( head->attrib() == attrib )
-      {
-         head->prev()->next( head->next() );
-         if ( head->next() != 0 )
-            head->next()->prev( head->prev() );
-         delete head;
-         return;
-      }
-
-      head = head->next();
-   }
-
-}
-
-
-void CoreClass::setAttributeList( AttribHandler *lst )
-{
-   while ( m_attributes != 0 )
-   {
-      AttribHandler *old = m_attributes;
-      m_attributes = m_attributes->next();
-      delete old;
-   }
-
-   m_attributes = lst;
-}
-
 
 }
 

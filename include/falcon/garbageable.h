@@ -1,6 +1,6 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: flc_garbageable.h
+   FILE: garbageable.h
 
    Garbageable interface definition
    -------------------------------------------------------------------
@@ -26,56 +26,74 @@
 
 #include <falcon/setup.h>
 #include <falcon/types.h>
-#include <falcon/destroyable.h>
+#include <falcon/gcalloc.h>
 
 namespace Falcon {
 
-class VMachine;
-
-class FALCON_DYN_CLASS Garbageable: public Destroyable
+class FALCON_DYN_CLASS GarbageableBase: public GCAlloc
 {
-   VMachine *m_origin;
-   Garbageable *m_garbage_next;
-   Garbageable *m_garbage_prev;
-   uint32 m_gcSize;
-   unsigned char m_gcStatus;
-
-   friend class MemPool;
-
 protected:
-   void updateAllocSize( uint32 nSize );
+   GarbageableBase *m_garbage_next;
+   GarbageableBase *m_garbage_prev;
+   unsigned int m_gcStatus;
 
 public:
-   Garbageable( VMachine *vm, uint32 size=0 );
+   GarbageableBase() {}
 
    /** Copy constructor.
-      This constructor is actaully here to prevent field copy to take place:
-      it just sets the m_added field to false.
    */
-   Garbageable( const Garbageable &other );
+   GarbageableBase( const GarbageableBase &other );
 
-   virtual ~Garbageable() {}
+   virtual ~GarbageableBase();
 
-   void mark( byte mode ) {
-      m_gcStatus = mode;
+   /** Performs pre-delete finalization of the object.
+      If this function returns false, then the destructor is called.
+      If it returns true, it means that the finalizer has somewhat reclaimed
+      the memory in a clean way (i.e. deleting itself), so the delete on this
+      garbageable won't be called.
+
+      \return true to prevent destructor to be applied on this garbageable.
+   */
+   virtual bool finalize();
+
+   /** Returns an exteem of the size occupied by this object in memory.
+      The final GC size is determined by an heuristic algorithm allocating
+      part of the allocated space to the items returning 0 from this call
+      (the default), taking away all the memory declared by items not
+      returning 0.
+   */
+   virtual uint32 occupation();
+
+   void mark( uint32 gen ) {
+      m_gcStatus = gen;
    }
 
    /** Return the current GC mark status. */
-   unsigned char mark() {
+   unsigned int mark() {
       return m_gcStatus;
    }
 
+   GarbageableBase *nextGarbage() const { return m_garbage_next; }
+   GarbageableBase *prevGarbage() const { return m_garbage_prev; }
+   void nextGarbage( GarbageableBase *next ) { m_garbage_next = next; }
+   void prevGarbage( GarbageableBase *prev ) { m_garbage_prev = prev; }
+};
 
-   Garbageable *nextGarbage() const { return m_garbage_next; }
-   Garbageable *prevGarbage() const { return m_garbage_prev; }
-   void nextGarbage( Garbageable *next ) { m_garbage_next = next; }
-   void prevGarbage( Garbageable *prev ) { m_garbage_prev = prev; }
 
-   VMachine *origin() const { return m_origin; }
+class FALCON_DYN_CLASS Garbageable: public GarbageableBase
+{
+public:
+   Garbageable();
+
+   /** Copy constructor.
+   */
+   Garbageable( const Garbageable &other );
+
+   virtual ~Garbageable();
 };
 
 }
 
 #endif
 
-/* end of flc_garbageable.h */
+/* end of garbageable.h */

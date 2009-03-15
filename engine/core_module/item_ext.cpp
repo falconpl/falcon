@@ -14,8 +14,7 @@
 */
 
 #include "core_module.h"
-#include <falcon/attribute.h>
-#include <falcon/fbom.h>
+#include <falcon/format.h>
 
 /*#
 
@@ -45,14 +44,19 @@ namespace core {
    value is 0.
 */
 
-FALCON_FUNC  len ( ::Falcon::VMachine *vm )
+FALCON_FUNC  mth_len ( ::Falcon::VMachine *vm )
 {
-   if ( vm->paramCount() == 0 ) {
+   Item *elem;
+   if ( ! vm->self().isMethodic() )
+      elem = vm->param( 0 );
+   else
+      elem = &vm->self(); 
+  
+  if ( elem == 0 ) {
       vm->retval( 0 );
       return;
    }
 
-   Item *elem = vm->param(0);
    switch( elem->type() ) {
       case FLC_ITEM_STRING:
          vm->retval( (int64) elem->asString()->length() );
@@ -68,10 +72,6 @@ FALCON_FUNC  len ( ::Falcon::VMachine *vm )
 
       case FLC_ITEM_DICT:
          vm->retval( (int64) elem->asDict()->length() );
-      break;
-
-      case FLC_ITEM_ATTRIBUTE:
-         vm->retval( (int64) elem->asAttribute()->size() );
       break;
 
       case FLC_ITEM_RANGE:
@@ -280,12 +280,16 @@ FALCON_FUNC  val_numeric ( ::Falcon::VMachine *vm )
    - @b MethodType - the item is a method
    - @b ClassMethodType - the item is a method inside a class
 */
-FALCON_FUNC  typeOf ( ::Falcon::VMachine *vm )
+FALCON_FUNC  mth_typeId ( ::Falcon::VMachine *vm )
 {
-   if ( vm->paramCount() == 0 )
-      vm->retnil();
-   else
-      vm->retval( vm->param( 0 )->type() );
+   if ( vm->self().isMethodic() )
+      vm->regA() = (int64) vm->self().dereference()->type();
+   else {
+      if ( vm->paramCount() > 0 )
+         vm->regA() = (int64) vm->param(0)->type();
+      else
+         vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).extra( "X" ) ) );
+   }
 }
 
 /*#
@@ -299,13 +303,26 @@ FALCON_FUNC  typeOf ( ::Falcon::VMachine *vm )
    If it returns false, the item is not a callable one, and trying to call
    it would cause an error.
 */
+/*#
+   @method isCallable BOM
+   @brief Determines if an item is callable.
+   @return true if the item is callable, false otheriwse.
 
-FALCON_FUNC  isCallable ( ::Falcon::VMachine *vm )
+   If the function returns true, then the call operator can be applied.
+   If it returns false, the item is not a callable one, and trying to call
+   it would cause an error.
+*/
+
+FALCON_FUNC  mth_isCallable ( ::Falcon::VMachine *vm )
 {
-   if ( vm->paramCount() == 0 )
-      vm->retval( 0 );
-   else
-      vm->retval( vm->param( 0 )->isCallable() ? 1 : 0 );
+   if ( vm->self().isMethodic() )
+      vm->regA().setBoolean( vm->self().isCallable() );
+   else {
+      if ( vm->paramCount() > 0 )
+         vm->regA().setBoolean( vm->param( 0 )->isCallable() ? 1 : 0 );
+      else
+         vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).extra( "X" ) ) );
+   }
 }
 
 /*#
@@ -329,7 +346,7 @@ FALCON_FUNC  getProperty( ::Falcon::VMachine *vm )
    Item *prop_x = vm->param(1);
 
    if ( obj_x == 0 || ! obj_x->isObject() || prop_x == 0 || ! prop_x->isString() ) {
-      vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).extra( "(0,S)" ) ) );
+      vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).extra( "O,S" ) ) );
    }
    else if ( ! obj_x->asObjectSafe()->getProperty( *prop_x->asString(), vm->regA() ) )
    {
@@ -395,7 +412,7 @@ FALCON_FUNC  chr ( ::Falcon::VMachine *vm )
       return;
    }
 
-   String *ret = new GarbageString( vm );
+   CoreString *ret = new CoreString;
    ret->append( val );
    vm->retval( ret );
 }
@@ -427,7 +444,7 @@ FALCON_FUNC  ord ( ::Falcon::VMachine *vm )
    @function toString
    @brief Returns a string representation of the item.
    @param item The item to be converted to string.
-   @optparam numprec Number of significative decimals for numeric items.
+   @optparam format Specific object format.
    @return the string representation of the item.
 
    This function is useful to convert an unknown value in a string. The item may be any kind of Falcon
@@ -444,16 +461,470 @@ FALCON_FUNC  ord ( ::Falcon::VMachine *vm )
 
    This function is not meant to provide complex applications with pretty-print facilities, but just to provide
    simple scripts with a simple and consistent output facility.
+   
+   If a @b format parameter is given, the format will be passed unparsed to toString() methods of underlying
+   items.
 
    @see Format
 */
 
-FALCON_FUNC  hToString ( ::Falcon::VMachine *vm )
-{
-   Item *elem = vm->param(0);
-   Item *format = vm->param(1);
+/*#
+   @method toString BOM
+   @brief Coverts the object to string.
+   @optparam format Optional object-specific format string.
 
-   Fbom::toString( vm, elem, format );
+   Calling this BOM method is equivalent to call toString() core function
+   passing the item as the first parameter.
+
+   Returns a string representation of the given item. If applied on strings,
+   it returns the string as is, while it converts numbers with default
+   internal conversion. Ranges are represented as “[N:M:S]” where N and M are respectively
+   lower and higher limits of the range, and S is the step. Nil values are represented as
+   “Nil”.
+
+   The format parameter is not a Falcon format specification, but a specific optional
+   object-specific format that may be passed to objects willing to use them.
+   In example, the TimeStamp class uses this parameter to format its string
+   representation.
+*/
+
+FALCON_FUNC  mth_ToString ( ::Falcon::VMachine *vm )
+{
+   Item *elem;
+   Item *format;
+
+   // methodic?
+   if ( vm->self().isMethodic() )
+   {
+      elem = &vm->self();
+      format = vm->param(0);
+   }
+   else {
+      elem = vm->param(0);
+      format = vm->param(1);
+   }
+   
+   CoreString *target = new CoreString;
+   
+   if ( format != 0 )
+   {
+      if ( format->isString() )
+      {
+         Format fmt( *format->asString() );  
+         if ( ! fmt.isValid() )
+         {
+            throw new ParamError( ErrorParam( e_param_fmt_code ).
+               extra( *format->asString() ) );
+         }
+         else 
+         {
+            fmt.format( vm, *elem, *target );
+         }
+      }
+      else 
+      {
+         vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).extra( vm->self().isMethodic() ? "[S]" :  "X,[S]" ) ) );
+         return;
+      }
+   }
+   else {
+      if ( vm->self().isMethodic() )
+      {
+         elem->toString( *target );
+      }
+      else
+      {
+         vm->itemToString( *target, elem );
+      }
+   }
+
+   vm->retval( target );
+}
+
+/*#
+   @method compare BOM
+   @brief Performs a lexicographical comparison.
+   @param item The item to which this object must be compared.
+   @return -1, 0 or 1 depending on the comparation result.
+
+   Performs a lexicographical comparison between the self item and the
+   item passed as a parameter. If the item is found smaller than the parameter,
+   it returns -1; if the item is greater than the parameter, it returns 1.
+   If the two items are equal, it returns 0.
+
+   The compare method, if overloaded, is used by the Virtual Machine to perform
+   tests on unknown types (i.e. objects), and to sort dictionary keys.
+
+   Item different by type are ordered by their type ID, as indicated in the
+   documentation of the @a typeOf core function.
+
+   By default, string comparison is performed in UNICODE character order,
+   and objects, classes, vectors, and dictionaries are ordered by their
+   internal pointer address.
+*/
+/*#
+   @function compare
+   @brief Performs a lexicographical comparison.
+   @param operand1 The item to which this object must be compared.
+   @param operand2 The item to which this object must be compared.
+   @return -1, 0 or 1 depending on the comparation result.
+
+   Performs a lexicographical comparison between the self item and the
+   item passed as a parameter. If the item is found smaller than the parameter,
+   it returns -1; if the item is greater than the parameter, it returns 1.
+   If the two items are equal, it returns 0.
+
+   The compare method, if overloaded, is used by the Virtual Machine to perform
+   tests on unknown types (i.e. objects), and to sort dictionary keys.
+
+   Item different by type are ordered by their type ID, as indicated in the
+   documentation of the @a typeOf core function.
+
+   By default, string comparison is performed in UNICODE character order,
+   and objects, classes, vectors, and dictionaries are ordered by their
+   internal pointer address.
+*/
+
+FALCON_FUNC mth_compare( VMachine *vm )
+{
+   Item *first;
+   Item *second;
+   
+   if( vm->self().isMethodic() )
+   {
+      first = &vm->self();
+      second = vm->param(0);
+   }
+   else
+   {
+      first = vm->param(0);
+      second = vm->param(1);
+   }
+   
+   if( first == 0 || second == 0 )
+   {
+      vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).extra( vm->self().isMethodic() ? "X" : "X,X" ) ) );
+      return;
+   }
+   
+   
+   vm->retval( (int64) first->compare(*second) );
+}
+
+
+/*#
+   @method clone BOM
+   @brief Performs a deep copy of the item.
+   @return A copy of the item.
+   @raise CloneError if the item is not cloneable.
+
+   Returns an item equal to the current one, but phisically separated.
+   If the item is a sequence, only the first level of the item gets actually
+   cloned: vectors and dictionaries gets cloned, but the items they store
+   are just copied. This means that the new copy of the collection itself may
+   change, and the older version will stay untouched, but if a deep item
+   in the collection (as an object) is changed, its change will be reflected
+   also in the original collection.
+
+   Cloning objects causes each of their properties to be cloned. If they store
+   an internal user data which is provided by extension modules or embedding
+   applications, that data is cloned too. Behavior of user data is beyond the
+   control of the script, and the data may actually be just referenced or
+   it may also refuse to be cloned. In that case, this method will raise a
+   CloneError, which indicates that a deep user data provided by an external
+   module or application doesn't provide a cloning feature.
+
+   @note Cloning objects that stores other objects referencing themselves in
+   their properties may cause an endless loop in this version. To provide
+   a safe duplicate of objects that may be organized in circular hierarcies,
+   overload the clone method so that it creates a new instance of the item
+   and just performs a flat copy of the properties.
+*/
+
+/*#
+   @function clone
+   @brief Performs a deep copy of the item.
+   @param item The item to be copied.
+   @return A copy of the item.
+   @raise CloneError if the item is not cloneable.
+
+   Returns an item equal to the @b item, but phisically separated.
+   If the item is a sequence, only the first level of the item gets actually
+   cloned: vectors and dictionaries gets cloned, but the items they store
+   are just copied. This means that the new copy of the collection itself may
+   change, and the older version will stay untouched, but if a deep item
+   in the collection (as an object) is changed, its change will be reflected
+   also in the original collection.
+
+   Cloning objects causes each of their properties to be cloned. If they store
+   an internal user data which is provided by extension modules or embedding
+   applications, that data is cloned too. Behavior of user data is beyond the
+   control of the script, and the data may actually be just referenced or
+   it may also refuse to be cloned. In that case, this method will raise a
+   CloneError, which indicates that a deep user data provided by an external
+   module or application doesn't provide a cloning feature.
+
+   @note Cloning objects that stores other objects referencing themselves in
+   their properties may cause an endless loop in this version. To provide
+   a safe duplicate of objects that may be organized in circular hierarcies,
+   overload the clone method so that it creates a new instance of the item
+   and just performs a flat copy of the properties.
+*/
+
+FALCON_FUNC mth_clone( VMachine *vm )
+{
+   bool result;
+   if( vm->self().isMethodic() )
+   {
+      result = vm->self().clone( vm->regA() );
+   }
+   else
+   {
+      if( vm->paramCount() == 0 )
+      {
+         vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).extra("X") ) );
+         return;
+      }
+      else
+      {
+         result = vm->param(0)->clone( vm->regA() );
+      }
+   }
+   
+   if( ! result )
+      vm->raiseError( new CloneError( ErrorParam( e_uncloneable, __LINE__ ).origin( e_orig_runtime ) ) );
+}
+
+/*#
+   @method className BOM
+   @brief Returns the name of the class an instance is instantiated from.
+   @return The class name of an object (a string) or nil.
+
+   If applied to objects, returns the name of the class of which the object
+   is an instance. When applied to classes, it return the class symbolic name.
+   In all other cases, return nil.
+   
+   @see className
+*/
+
+/*#
+   @function className
+   @brief Returns the name of the class an instance is instantiated from.
+   @param The item to be checked.
+   @return The class name of an object (a string) or nil.
+
+   If applied to objects, returns the name of the class of which the object
+   is an instance. When applied to classes, it return the class symbolic name.
+   In all other cases, return nil.
+   
+   @see BOM.className
+*/
+
+FALCON_FUNC mth_className( VMachine *vm )
+{
+   Item *self;
+   
+   if ( vm->self().isMethodic() )
+   {
+      self = &vm->self();
+   }
+   else {
+      self = vm->param(0);
+      if ( self == 0 )
+      {
+         vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).extra("X") ) );
+         return;
+      }
+   }
+   
+   switch( self->type() )
+   {
+      case FLC_ITEM_OBJECT:
+         vm->retval(
+            new CoreString(  vm->self().asObject()->generator()->symbol()->name() ) );
+         break;
+         
+      case FLC_ITEM_CLASS:
+         vm->retval(
+            new CoreString(  vm->self().asClass()->symbol()->name() ) );
+         break;
+         
+      default:
+         vm->retnil();
+   }
+   
+}
+
+/*#
+   @method baseClass BOM
+   @brief Returns the class item from which an object has been instantiated.
+   @return A class item or nil.
+
+   If applied on objects, returns the class item that has been used
+   to instantiate an object. Calling the returned item is equivalent
+   to call the class that instantiated this object.
+
+   The returned item can be used to create another instance of the same class,
+   or for comparisons on @b select branches.
+
+   If the item on which this method is applied is not an object, it returns nil.
+   
+   @see baseClass
+*/
+
+/*#
+   @function baseClass
+   @brief Returns the class item from which an object has been instantiated.
+   @param item
+   @return A class item or nil.
+
+   If applied on objects, returns the class item that has been used
+   to instantiate an object. Calling the returned item is equivalent
+   to call the class that instantiated this object.
+
+   The returned item can be used to create another instance of the same class,
+   or for comparisons on @b select branches.
+
+   If the item on which this method is applied is not an object, it returns nil.
+   
+   @see BOM.baseClass
+*/
+
+FALCON_FUNC mth_baseClass( VMachine *vm )
+{
+   Item *self;
+   
+   if ( vm->self().isMethodic() )
+   {
+      self = &vm->self();
+   }
+   else {
+      self = vm->param(0);
+      if ( self == 0 )
+      {
+         vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).extra("X") ) );
+         return;
+      }
+   }
+   
+   if( self->isObject() )
+   {
+      CoreClass* cls = const_cast<CoreClass*>(self->asObject()->generator());
+      if ( cls != 0 )
+      {
+         vm->retval( cls );
+         return;
+      }
+   }
+
+   vm->retnil();
+}
+
+/*#
+   @method derivedFrom BOM
+   @brief Checks if this item has a given parent.
+   @param cls A symbolic class name or a class instance.
+   @return true if the given class is one of the ancestors of this item.
+
+   If applied on objects, returns true if the given parameter is the name
+   of the one of the classes that compose the class hierarchy of the object.
+
+   If applied on class instances, it returns true if the parameter is its name
+   or the name of one of its ancestors.
+
+   In all the other cases, it return false.
+
+   It is also possible to use directly the class instance as a parameter, instead of
+   a class name. In example:
+
+   @code
+   object MyError from Error
+       //...
+   end
+
+   > "Is MyError derived from 'Error' (by name)?: ", \
+         MyError.derivedFrom( "Error" )
+
+   > "Is MyError derived from 'Error' (by class)?: ", \
+         MyError.derivedFrom( Error )
+   @endcode
+   
+   @see derivedFrom
+*/
+
+/*#
+   @function derivedFrom
+   @brief Checks if this item has a given parent.
+   @param item The item to be checked.
+   @param cls A symbolic class name or a class instance.
+   @return true if the given class is one of the ancestors of this item.
+
+   If applied on objects, returns true if the given parameter is the name
+   of the one of the classes that compose the class hierarchy of the object.
+
+   If applied on class instances, it returns true if the parameter is its name
+   or the name of one of its ancestors.
+
+   In all the other cases, it return false.
+
+   It is also possible to use directly the class instance as a parameter, instead of
+   a class name. In example:
+
+   @code
+   object MyError from Error
+       //...
+   end
+
+   > "Is MyError derived from 'Error' (by name)?: ", \
+         derivedFrom( MyError, "Error" )
+
+   > "Is MyError derived from 'Error' (by class)?: ", \
+         derivedFrom( MyError, Error )
+   @endcode
+
+   @see BOM.derivedFrom
+*/
+
+FALCON_FUNC mth_derivedFrom( VMachine *vm )
+{
+   Item *i_clsName;
+   Item *self;
+   
+   if( vm->self().isMethodic() )
+   {
+      self = &vm->self();
+      i_clsName = vm->param( 0 );
+   }
+   else {
+      self = vm->param(0);
+      i_clsName = vm->param(1);
+   }
+   
+   if( i_clsName == 0 || ! (i_clsName->isString() || i_clsName->isClass()) )
+   {
+      vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).extra( "S|C" ) ) );
+      return;
+   }
+
+   const String *name;
+   if ( i_clsName->isString() )
+      name = i_clsName->asString();
+   else
+      name = &i_clsName->asClass()->symbol()->name();
+
+   switch( self->type() ) 
+   {
+      case FLC_ITEM_OBJECT:
+         vm->regA().setBoolean( (bool)self->asObjectSafe()->derivedFrom( *name ) );
+         break;
+      
+      case FLC_ITEM_CLASS:
+         vm->regA().setBoolean( (bool)self->asClass()->derivedFrom( *name ) );
+         break;
+   
+      default:
+         vm->regA().setBoolean( false );
+   }
 }
 
 }

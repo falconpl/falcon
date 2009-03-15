@@ -61,7 +61,7 @@ FALCON_FUNC  paramCount ( ::Falcon::VMachine *vm )
    else {
       StackFrame *thisFrame = (StackFrame *) &vm->stackItem( vm->stackBase() - VM_FRAME_SPACE );
       if( thisFrame->m_stack_base == 0 ) {
-         vm->raiseRTError( new GenericError( ErrorParam( e_param_outside ) ) );
+         vm->raiseRTError( new GenericError( ErrorParam( e_param_range ) ) );
          return;
       }
 
@@ -93,7 +93,7 @@ FALCON_FUNC  _parameter ( ::Falcon::VMachine *vm )
 {
    Item *number = vm->param(0);
    if ( number == 0 || ! number->isOrdinal() ) {
-      vm->raiseRTError( new ParamError( ErrorParam( e_param_outside ).extra( "(N)" ) ) );
+      vm->raiseRTError( new ParamError( ErrorParam( e_param_range ).extra( "(N)" ) ) );
       return;
    }
 
@@ -107,7 +107,7 @@ FALCON_FUNC  _parameter ( ::Falcon::VMachine *vm )
       StackFrame *thisFrame = (StackFrame *) vm->currentStack().at( vm->stackBase() - VM_FRAME_SPACE );
       uint32 oldbase = thisFrame->m_stack_base;
       if( oldbase == 0 ) {
-         vm->raiseRTError( new GenericError( ErrorParam( e_param_outside ) ) );
+         vm->raiseRTError( new GenericError( ErrorParam( e_param_range ) ) );
          return;
       }
 
@@ -147,7 +147,7 @@ FALCON_FUNC  paramIsRef ( ::Falcon::VMachine *vm )
 {
    Item *number = vm->param(0);
    if ( number == 0 || ! number->isOrdinal() ) {
-      vm->raiseRTError( new ParamError( ErrorParam( e_param_outside ).extra( "N" ) ) );
+      vm->raiseRTError( new ParamError( ErrorParam( e_param_range ).extra( "N" ) ) );
       return;
    }
 
@@ -162,7 +162,7 @@ FALCON_FUNC  paramIsRef ( ::Falcon::VMachine *vm )
       StackFrame *thisFrame = (StackFrame *) &vm->stackItem( vm->stackBase() - VM_FRAME_SPACE );
       uint32 oldbase = thisFrame->m_stack_base;
       if( oldbase == 0 ) {
-         vm->raiseRTError( new GenericError( ErrorParam( e_param_outside ) ) );
+         vm->raiseRTError( new GenericError( ErrorParam( e_stackuf ) ) );
          return;
       }
 
@@ -200,7 +200,7 @@ FALCON_FUNC  paramSet ( ::Falcon::VMachine *vm )
    Item *number = vm->param(0);
    Item *value = vm->param(1);
    if ( number == 0 || ! number->isOrdinal() || value == 0) {
-      vm->raiseRTError( new ParamError( ErrorParam( e_param_outside ).extra( "N,X" ) ) );
+      vm->raiseRTError( new ParamError( ErrorParam( e_param_range ).extra( "N,X" ) ) );
       return;
    }
 
@@ -215,7 +215,7 @@ FALCON_FUNC  paramSet ( ::Falcon::VMachine *vm )
       StackFrame *thisFrame = (StackFrame *) &vm->stackItem( vm->stackBase() - VM_FRAME_SPACE );
       uint32 oldbase = thisFrame->m_stack_base;
       if( oldbase == 0 ) {
-         vm->raiseRTError( new GenericError( ErrorParam( e_param_outside ) ) );
+         vm->raiseRTError( new GenericError( ErrorParam( e_param_range ) ) );
          return;
       }
 

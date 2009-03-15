@@ -315,7 +315,7 @@ void ItemList::notifyDeletion( ItemListElement *elem )
    }
 }
 
-void ItemList::gcMark( VMachine *vm )
+void ItemList::gcMark( MemPool *mp )
 {
    // we don't have to record the mark byte, as we woudln't have been called
    // if the coreobject holding us had the right mark.
@@ -323,7 +323,7 @@ void ItemList::gcMark( VMachine *vm )
    ItemListElement *h = m_head;
    while( h != 0 )
    {
-      vm->memPool()->markItem( h->item() );
+      mp->markItem( h->item() );
       h = h->next();
    }
 }

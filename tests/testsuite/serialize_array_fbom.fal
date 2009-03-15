@@ -25,7 +25,7 @@ stream.seek(0)
 
 try
 
-   item1 = stream.readItem()
+   item1 = deserialize( stream )
    if len( array1 ) != len( item1 ): failure( "Basic" )
    for i in [ 0 : len( array1 ) ]
       if array1[i] != item1[i]: failure( "Deep item retrival" )

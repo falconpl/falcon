@@ -38,7 +38,7 @@ namespace core {
 */
 FALCON_FUNC  vmVersionInfo( ::Falcon::VMachine *vm )
 {
-   CoreArray *ca = new CoreArray( vm, 3 );
+   CoreArray *ca = new CoreArray( 3 );
    ca->append( (int64) ((FALCON_VERSION_NUM >> 16)) );
    ca->append( (int64) ((FALCON_VERSION_NUM >> 8) & 0xFF) );
    ca->append( (int64) ((FALCON_VERSION_NUM ) & 0xFF) );
@@ -55,7 +55,7 @@ FALCON_FUNC  vmVersionInfo( ::Falcon::VMachine *vm )
 */
 FALCON_FUNC  vmModuleVersionInfo( ::Falcon::VMachine *vm )
 {
-   CoreArray *ca = new CoreArray( vm, 3 );
+   CoreArray *ca = new CoreArray( 3 );
    int major=0, minor=0, revision=0;
 
    // we don't want our current (core) module version info...
@@ -65,7 +65,7 @@ FALCON_FUNC  vmModuleVersionInfo( ::Falcon::VMachine *vm )
       StackFrame *prevFrame = (StackFrame *) &vm->stackItem( thisFrame->m_stack_base - VM_FRAME_SPACE );
       if ( prevFrame->m_module != 0 )
       {
-         prevFrame->m_module->getModuleVersion( major, minor, revision );
+         prevFrame->m_module->module()->getModuleVersion( major, minor, revision );
       }
    }
 
@@ -84,7 +84,7 @@ FALCON_FUNC  vmModuleVersionInfo( ::Falcon::VMachine *vm )
 */
 FALCON_FUNC  vmVersionName( ::Falcon::VMachine *vm )
 {
-   String *str = new GarbageString( vm, FALCON_VERSION " (" FALCON_VERSION_NAME ")" );
+   CoreString *str = new CoreString(  FALCON_VERSION " (" FALCON_VERSION_NAME ")" );
    vm->retval( str );
 }
 
@@ -100,7 +100,7 @@ FALCON_FUNC  vmVersionName( ::Falcon::VMachine *vm )
 */
 FALCON_FUNC  vmSystemType( ::Falcon::VMachine *vm )
 {
-   String *str = new GarbageString( vm, Sys::SystemData::getSystemType() );
+   CoreString *str = new CoreString(  Sys::SystemData::getSystemType() );
    vm->retval( str );
 }
 
@@ -146,8 +146,7 @@ FALCON_FUNC vmIsMain( ::Falcon::VMachine *vm )
    else {
       // get the calling symbol module
       StackFrame *thisFrame = (StackFrame *) vm->currentStack().at( vm->stackBase() - VM_FRAME_SPACE );
-      const Module *callerMod = thisFrame->m_module;
-      vm->retval( (bool) (callerMod == vm->mainModule()->module() ) );
+      vm->retval( (bool) (thisFrame->m_module == vm->mainModule() ) );
    }
 }
 
@@ -167,10 +166,10 @@ FALCON_FUNC vmFalconPath( ::Falcon::VMachine *vm )
 
    if ( hasEnvPath )
    {
-      vm->retval( new GarbageString( vm, envpath ) );
+      vm->retval( new CoreString(  envpath ) );
    }
    else {
-      vm->retval( new GarbageString( vm, FALCON_DEFAULT_LOAD_PATH ) );
+      vm->retval( new CoreString(  FALCON_DEFAULT_LOAD_PATH ) );
    }
 }
 

@@ -44,7 +44,7 @@ public:
 
    DllFunc getSymbol( const String &sym_name ) const ;
    static bool isDllMark( char ch1, char ch2 );
-   static const char *dllExt() { return ".so"; };
+   static const char *dllExt() { return "so"; };
 };
 
 typedef DllLoader_dl DllLoader;

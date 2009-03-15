@@ -1,14 +1,14 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: flc_mempool.h
+   FILE: mempool.h
 
    garbage basket class
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
-   Begin: lun ago 2 2004
+   Begin: Sun, 08 Feb 2009 16:08:50 +0100
 
    -------------------------------------------------------------------
-   (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
+   (C) Copyright 2009: the FALCON developers (see list in AUTHORS file)
 
    See LICENSE file for licensing details.
 */
@@ -23,11 +23,34 @@
 #include <falcon/setup.h>
 #include <falcon/item.h>
 #include <falcon/basealloc.h>
+#include <falcon/mt.h>
 
 namespace Falcon {
 
 class Garbageable;
-class GarbageString;
+class GarbageableBase;
+
+/** Storage pit for garbageable data.
+   Garbage items can be removed acting directly on them.
+*/
+#if 0
+class FALCON_DYN_CLASS PoolRing: public BaseAlloc
+{
+   Garbageable* m_head;
+
+public:
+   PoolRing();
+   ~PoolRing();
+
+   /**
+      Adds a garbageable item to this pool ring.
+   */
+   void add( Garbageable * );
+   void transfer( PoolRing *target );
+   Garbageable *linearize();
+};
+#endif
+
 
 class FALCON_DYN_CLASS GarbageLock: public BaseAlloc
 {
@@ -65,42 +88,97 @@ public:
         and memory leaks can be detected.
 */
 
-class FALCON_DYN_CLASS MemPool: public BaseAlloc
+class FALCON_DYN_CLASS MemPool: public Runnable, public BaseAlloc
 {
-   friend class VMachine;
 
 protected:
-   uint32 m_thresholdMemory;
-   uint32 m_thresholdReclaim;
+   size_t m_thresholdNormal;
+   size_t m_thresholdActive;
+   
    uint32 m_setThreshold;
    uint32 m_msLimit;
+   /** Minimal generation.
+      Items marked with generations lower than this are killed. 
+   */
+   uint32 m_mingen; 
 
-   VMachine *m_owner;
-
-   Garbageable *m_garbageRoot;
-   GarbageString *m_gstrRoot;
-
-   GarbageLock *m_availPoolRoot;
-
+   /** Alive and possibly collectable items are stored in this ring. */
+   GarbageableBase *m_garbageRoot;
+   
+   /** Locked and unreclaimable items are stored in this ring. */
+   GarbageLock *m_lockRoot;
+   
+   /** Newly created and unreclaimable items are stored in this ring. */
+   GarbageableBase *m_newRoot;
+   
+   /** Used to block prevent the pool from grabbing new garbage. */
+   bool m_bNewReady;
+   
+   /** The machine with the oldest generation loop checked out. */
+   VMachine *m_olderVM;
+   
+   /** Ring of VMs */
+   VMachine *m_vmRing;
+   
+   int32 m_vmCount;
+   
+   /** List of VM in idle state and waiting to be inspected */
+   VMachine *m_vmIdle_head;
+   VMachine *m_vmIdle_tail;
+   
    // for gc
-   byte m_status;
-   uint32 m_aliveItems;
+   uint32 m_generation;
+   int32 m_aliveItems;
    uint32 m_aliveMem;
 
-   uint32 m_allocatedItems;
+   int32 m_allocatedItems;
    uint32 m_allocatedMem;
    bool m_autoClean;
 
-   bool gcMark();
+   SysThread *m_th;
+   bool m_bLive;
+   
+   Event m_eRequest;
+   Mutex m_mtxa;
+   
+   
+   /** Mutex for locked items ring. 
+      
+   */
+   Mutex m_mtx_lockitem;
+   
+   /** Mutex for newly created items ring. 
+      - GarbageableBase::nextGarbage()
+      - GarbageableBase::prevGarbage()
+      - m_generation
+      - m_newRoot
+      - rollover()
+      \note This mutex is acquired once while inside  m_mtx_vms.lock()
+   */
+   Mutex m_mtx_newitem;
+   
+   /** Mutex for the VM ring structure.
+      - VMachine::m_nextVM
+      - VMachine::m_prevVM
+      - m_vmRing
+      - electOlderVM()   -- call guard
+      - advanceGeneration()
+   */
+   Mutex m_mtx_vms;
+   
+   /** Mutex for the idle VM list structure. 
+      Guards the linked list of VMs being in idle state.
+      
+      - VMachine::m_idleNext
+      - VMachine::m_idlePrev
+      - m_vmIdle_head
+      - m_vmIdle_tail
+   */
+   Mutex m_mtx_idlevm;
+   
+   bool gcMark( VMachine *vm );
    void gcSweep();
-
-   void changeMark() { m_status = m_status == 1 ? 0 : 1; }
-   Garbageable *ringRoot() const { return m_garbageRoot; }
-
-   void storeForGarbage( GarbageString *ptr );
-   void storeForGarbage( Garbageable *ptr );
-
-
+   
    /*
    To reimplement this, we need to have anti-recursion checks on item, which are
    currently being under consideration. However, I would prefer not to need to
@@ -110,25 +188,47 @@ protected:
    In other words, I want items to be in garbage as soon as they are created,
    and to exit when they are destroyed.
 
-   void removeFromGarbage( GarbageString *ptr );
+   void removeFromGarbage( String *ptr );
    void removeFromGarbage( Garbageable *ptr );
 
    void storeForGarbageDeep( const Item &item );
    void removeFromGarbageDeep( const Item &item );
    */
-
+   
+   void clearRing( GarbageableBase *ringRoot );
+   void rollover();
+   void remark(uint32 mark);
+   void electOlderVM(); // to be called with m_mtx_vms locked
+   
+   void promote( uint32 oldgen, uint32 curgen );
+   void advanceGeneration( VMachine* vm, uint32 oldGeneration );
+   void markLocked();
+   
+   enum constants { 
+      MAX_GENERATION = 0xFFFFFFFF
+   };
+   
 public:
    /** Builds a memory pool.
       Initializes all element at 0 and set buffer sizes to the FALCON default.
    */
    MemPool();
-
+   
    /** Destroys all the items.
       Needless to say, this must be called outside any VM.
    */
    virtual ~MemPool();
 
-   void setOwner( VMachine *owner ) { m_owner = owner; }
+   /** Called upon creation of a new VM.
+      This sets the current generation of the VM so that it is unique 
+      among the currently living VMs.
+   */
+   void registerVM( VMachine *vm );
+   
+   /** Called before destruction of a VM.
+      Takes also care to disengage the VM from idle VM list.
+   */
+   void unregisterVM( VMachine *vm );
 
    /** Marks an item during a GC Loop.
       This method should be called only from inside GC mark callbacks
@@ -143,21 +243,12 @@ public:
          markItem( itm );
    }
 
-   /** Destroys a garbageable element.
-      \note is this useful???
-   */
-   void destroyGarbage( Garbageable *ptr );
-
-   /** Destroys a garbageable element.
-      \note is this useful???
-   */
-   void destroyGarbage( GarbageString *ptr );
-
+ 
    /** Return current threshold memory level.
       \see thresholdMemory( uint32 mem )
       \return current threshold memory level.
    */
-   uint32 thresholdMemory() const { return m_thresholdMemory; }
+   //uint32 thresholdMemory() const { return m_thresholdMemory; }
 
    /** Set threshold memory level.
       The threshold memory level is the amount of allocated memory at which
@@ -169,13 +260,13 @@ public:
       while keeping it too high may cause too much memory to be acquired
       by the VM and/or may force GC to excessively long loops.
    */
-   void thresholdMemory( uint32 mem ) { m_thresholdMemory = mem; m_setThreshold = mem; }
+   //void thresholdMemory( uint32 mem ) { m_thresholdMemory = mem; m_setThreshold = mem; }
 
    /** Return current reclaim memory level.
       \see reclaimLevel( uint32 mem )
       \return current reclaim memory level.
    */
-   uint32 reclaimLevel() const { return m_thresholdReclaim; }
+   //uint32 reclaimLevel() const { return m_thresholdReclaim; }
 
    /** Set reclaim memory level.
       The reclaim memory level is the amount of unused memory that,
@@ -189,7 +280,7 @@ public:
       detect before deciding to intervene ad use additional time for
       the actual collection loop.
    */
-   void reclaimLevel( uint32 mem ) { m_thresholdReclaim = mem; }
+   //void reclaimLevel( uint32 mem ) { m_thresholdReclaim = mem; }
 
 
    /** Perform garbage collection loop.
@@ -205,10 +296,6 @@ public:
    */
    virtual bool performGC( bool bForceReclaim = false );
 
-   /** Used by garbageable objects to update their allocation size */
-   void updateAlloc( int32 sizeChange ) { m_allocatedMem += sizeChange; }
-   /** Returns the size of memory managed by this mempool. */
-   uint32 allocatedMem() const { return m_allocatedMem; }
 
    /** Returns the number of elements managed by this mempool. */
    uint32 allocatedItems() const { return m_allocatedItems; }
@@ -294,12 +381,91 @@ public:
    */
    void unlock( GarbageLock *locked );
 
-   /** Return the value of the current mark. */
-   byte currentMark() const { return m_status; }
+   /** Returns the current generation. */
+   uint32 generation() const { return m_generation; }
+
+   /** Stores a garbageable instance in the pool.
+      Called by the Garbageable constructor to ensure accounting of this item.
+   */
+   void storeForGarbage( Garbageable *ptr );
+   
+   virtual void* run();
+
+   /** Starts the parallel garbage collector. */
+   void start();
+   
+   /** Stops the collector.
+      The function synchronously wait for the thread to exit and sets it to 0.
+   */
+   void stop();
+   
+   /** Turns the GC safe allocation mode on.
+      
+      In case an "core" class object (like CoreObject, CoreDict, CoreArray, CoreString and so on)
+      needs to be declared in a place where it cannot be granted that there is a working
+      virtual machine, it is necessary to ask the Garbage Collector not to 
+      try to collect newly allocated data.
+      
+      When core data is allocated inside a running VM, the GC ensures that the data
+      cannot be ripped away before it reaches a safe area in a virtual machine; but
+      modules or embedding applications may will to allocate garbage sensible data
+      without any chance to control the idle status of the running virtual machines.
+      
+      To inform the GC about this fact, the safeArea(); / unsafeArea() functions are
+      provided.
+      
+      Data should be assigned to a virtual machine or alternatively garbage locked
+      before unsafeArea() is called to allow the Garbage Collector to proceed
+      normally.
+      
+      Example:
+      \code
+         // ask the memory pool to delay checks on newly allocated data.
+         memPool->safeArea();
+         
+         // Create an object instance
+         CoreObject *co = myClass->createInstance();
+         
+         // work on the core object.
+         
+         // save it somewhere
+         if( bCond )
+            myVM->retval( co );  // assign to a non-running virtual machine
+         else
+            GarbageLock *safe = memPool->gcLock( co );  // save it for later usage
+         
+         // We're clear to proceed
+         memPool->unsafeArea();
+      \endcode
+      
+      \note Keep in mind that safe areas are global. The Garbage Collecotr won't be able to
+            check for newly allocated data generated by all the running VMs in the meanwhile,
+            so reduce it's use to the minimum.
+   */
+   void safeArea();
+   
+   /** Allows VM to proceed in checking newly allocated data.
+      \see safeArea()
+   */
+   void unsafeArea();
+   
+   /** Declares the given VM idle.
+      
+      The VM may be sent to the the main memory pool garbage collector mark loop
+      if it is found outdated and in need of a new marking.
+   */
+   void idleVM( VMachine *vm );
+   
+   void thresholdNormal( size_t mem ) { m_thresholdNormal = mem; }
+   void thresholdActive( size_t mem ) { m_thresholdActive = mem; }
+   size_t thresholdNormal() const { return m_thresholdNormal; }
+   size_t thresholdActive() const { return m_thresholdActive; }
+   
+   
 };
 
 
 }
 
 #endif
-/* end of flc_mempool.h */
+/* end of mempool.h */

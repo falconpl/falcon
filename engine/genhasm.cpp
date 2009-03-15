@@ -178,36 +178,6 @@ void GenHAsm::gen_class( const StmtClass *cls )
       m_out->writeString( ".ctor $" + cd->constructor()->name() + "\n" );
    }
 
-   // write has and hasn't clauses
-   if ( ! cd->has().empty() )
-   {
-      m_out->writeString( ".has " );
-      ListElement *has_iter = cd->has().begin();
-      while( has_iter != 0 )
-      {
-         const Symbol *sym = (const Symbol *) has_iter->data();
-         m_out->writeString( "$" + sym->name() );
-         has_iter = has_iter->next();
-         if ( has_iter != 0 )
-            m_out->writeString( ", " );
-      }
-      m_out->writeString( "\n" );
-   }
-
-   if ( ! cd->hasnt().empty() ) {
-      m_out->writeString( ".hasnt " );
-      ListElement *hasnt_iter = cd->hasnt().begin();
-      while( hasnt_iter != 0 )
-      {
-         const Symbol *sym = (const Symbol *) hasnt_iter->data();
-         m_out->writeString( "$" + sym->name() );
-         hasnt_iter = hasnt_iter->next();
-         if ( hasnt_iter != 0 )
-            m_out->writeString( ", " );
-      }
-      m_out->writeString( "\n" );
-   }
-
    m_out->writeString( ".endclass\n" );
 }
 
@@ -373,12 +343,6 @@ void GenHAsm::gen_symbolTable( const Module *mod )
             m_out->writeString( ".instance $" + sym->getInstance()->name() + " " +
                sym->name() );
             temp = " ";
-            temp.writeNumber( (int64) sym->declaredAt() );
-            m_out->writeString( temp );
-         break;
-
-         case Symbol::tattribute:
-            temp =  ".attrib " + sym->name() + " ";
             temp.writeNumber( (int64) sym->declaredAt() );
             m_out->writeString( temp );
          break;
@@ -603,29 +567,6 @@ void GenHAsm::gen_statement( const Statement *stmt )
       }
       break;
 
-      case Statement::t_pass:
-      {
-         const StmtPass *pass = static_cast< const StmtPass *>( stmt );
-         String mode = pass->saveIn() == 0 ? "\tPASS\t" : "\tPSIN\t" ;
-         if ( pass->called()->isSimple() )
-         {
-            m_out->writeString( mode );
-            gen_operand( pass->called() );
-         }
-         else {
-            gen_value( pass->called() );
-            m_out->writeString( mode + "A" );
-         }
-         m_out->writeString( "\n" );
-
-         if ( pass->saveIn() != 0 )
-         {
-            gen_load_from_A( pass->saveIn() );
-         }
-      }
-      break;
-
-
       case Statement::t_autoexp:
       {
          const StmtExpression *val = static_cast<const StmtExpression *>( stmt );
@@ -719,101 +660,6 @@ void GenHAsm::gen_statement( const Statement *stmt )
          }
       }
       break;
-
-      case Statement::t_give:
-      {
-         const StmtGive *give = static_cast<const StmtGive *>( stmt );
-         const ArrayDecl *give_to = give->objects();
-         const ListElement *elem = give_to->begin();
-
-         while( elem != 0 )
-         {
-            const Value *object = (const Value *) elem->data();
-
-            if ( ! object->isSimple() )
-            {
-               gen_complex_value( object );
-            }
-
-            const ArrayDecl *attribs = give->attributes();
-            ListElement *iter = attribs->begin();
-            bool pushed = false;
-            bool peek = false;
-
-            while( iter != 0 )
-            {
-               const Value *val = (const Value *) iter->data();
-               String mode;
-               ListElement *iter_next = iter->next();
-
-               if ( val->isExpr() && val->asExpr()->type() == Expression::t_not ) {
-                  val = val->asExpr()->first();
-                  mode = "\tGIVN\t";
-               }
-               else
-                  mode = "\tGIVE\t";
-
-
-               if( val->isSimple() )
-               {
-                  if ( object->isSimple() ) {
-                     m_out->writeString( mode );
-                     gen_operand( object );
-                     m_out->writeString( ", " );
-                     gen_operand( val );
-                  }
-                  else {
-                     if ( peek ) {
-                        if ( iter_next != 0 )
-                           m_out->writeString( "\tPEEK\tA\n" );
-                        else {
-                           m_out->writeString( "\tPOP\tA\n" );
-                           pushed = false;
-                        }
-                        peek = false;
-                     }
-                     m_out->writeString( mode + "A, " );
-                     gen_operand( val );
-                  }
-               }
-               else {
-                  if ( object->isSimple() ) {
-                     gen_value( val );
-                     m_out->writeString( mode );
-                     gen_operand( object );
-                     m_out->writeString( ", A" );
-                  }
-                  else {
-                     if ( ! pushed ) {
-                        m_out->writeString( "\tPUSH A\n" );
-                        pushed = true;
-                     }
-
-                     gen_value( val );
-                     if ( iter_next != 0 )
-                        m_out->writeString( "\tPEEK\tB\n" );
-                     else {
-                        m_out->writeString( "\tPOP\tB\n" );
-                        pushed = false;
-                     }
-                     peek = true;
-
-                     m_out->writeString( mode + "B, A" );
-                  }
-               }
-
-               m_out->writeString( "\n" );
-               iter = iter_next;
-            }
-            if ( pushed ) {
-               m_out->writeString( "\tIPOP\t1\n" );
-            }
-
-            elem = elem->next();
-         }
-      }
-      break;
-
 
       case Statement::t_unref:
       {
@@ -1013,6 +859,42 @@ void GenHAsm::gen_statement( const Statement *stmt )
       }
       break;
 
+      case Statement::t_loop:
+      {
+         const StmtLoop *elem = static_cast<const StmtLoop* >( stmt );
+
+         int branch = m_loop_id++;
+         m_loops.pushBack( (void *) branch );
+         String branchStr;
+         branchStr.writeNumber( (int64) branch );
+         m_out->writeString( "_loop_next_" + branchStr + ":\n" );
+         m_out->writeString( "_loop_begin_" + branchStr + ":\n" );
+
+         gen_block( &elem->children() );
+
+         if ( elem->condition() == 0 )
+         {
+            // endless loop
+            m_out->writeString( "\tJMP \t_loop_begin_" + branchStr + "\n" );
+         }
+         else if ( ! elem->condition()->isTrue() )
+         {
+            if ( elem->condition()->isSimple() ) {
+               m_out->writeString( "\tIFF \t_loop_begin_" + branchStr + ", " );
+               gen_operand( elem->condition() );
+            }
+            else {
+               gen_complex_value( elem->condition() );
+               m_out->writeString( "\tIFF \t_loop_begin_" + branchStr + ", A" );
+            }
+            m_out->writeString( "\n" );
+         }
+         // if it's true, terminate immediately
+
+         m_out->writeString( "_loop_end_" + branchStr + ":\n" );
+         m_loops.popBack();
+      }
+      break;
 
       case Statement::t_propdef:
       {
@@ -1616,10 +1498,6 @@ void GenHAsm::gen_operand( const Value *stmt )
          m_out->writeString( "S1" );
       break;
 
-      case Value::t_sender:
-         m_out->writeString( "S2" );
-      break;
-
       default:
          m_out->writeString( "???" );
    }
@@ -1897,28 +1775,28 @@ void GenHAsm::gen_expression( const Expression *exp, t_valType &xValue )
          m_out->writeString( "\tSTO \tA, $" + exp->first()->asSymbol()->name() + "\n" );
       }
       return;
-      
+
       case Expression::t_oob:
          xValue = l_value;
          m_out->writeString( "\tOOB  \t1, " );
             gen_operand( exp->first() );
             m_out->writeString( "\n" );
       return;
-      
+
       case Expression::t_deoob:
          xValue = l_value;
          m_out->writeString( "\tOOB  \t0, " );
             gen_operand( exp->first() );
             m_out->writeString( "\n" );
       return;
-      
+
       case Expression::t_xoroob:
          xValue = l_value;
          m_out->writeString( "\tOOB  \t2, " );
             gen_operand( exp->first() );
             m_out->writeString( "\n" );
       return;
-      
+
       case Expression::t_isoob:
          xValue = l_value;
          m_out->writeString( "\tOOB  \t3, " );

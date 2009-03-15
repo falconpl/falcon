@@ -22,6 +22,8 @@
 
 #include <falcon/types.h>
 #include <falcon/garbageable.h>
+#include <falcon/gcalloc.h>
+#include <falcon/deepitem.h>
 #include <stdlib.h>
 
 #define FALCON_STRING_ALLOCATION_BLOCK 32
@@ -276,7 +278,7 @@ extern FALCON_DYN_SYM Buffer32 handler_buffer32;
    mapping between corestring subclasses and the manager they use.
 */
 
-class FALCON_DYN_CLASS String: public BaseAlloc //: public Garbageable
+class FALCON_DYN_CLASS String: public GCAlloc
 {
 
    friend class csh::Base;
@@ -288,24 +290,12 @@ class FALCON_DYN_CLASS String: public BaseAlloc //: public Garbageable
    friend class csh::Static32;
    friend class csh::Buffer32;
 
-   friend class GarbageString;
-
 protected:
    const csh::Base *m_class;
    uint32 m_allocated;
    uint32 m_size;
    uint32 m_id;
    byte *m_storage;
-
-   /** True if this is a garbage string. */
-   bool m_garbageable;
-
-   /**
-    * gcStatus used by the GarbageString subclass.
-    *
-    * Placed here in the base class to help memory alignment.
-    */
-   byte m_gcStatus;
 
    /**
     * True if this string is exportable - importable in GC context.
@@ -314,6 +304,8 @@ protected:
 
    // Reserved for future usage.
    byte m_bFlags;
+   
+   bool m_bCore;
 
    /**
     * Creates the core string.
@@ -321,17 +313,8 @@ protected:
     * This method is protected. It can be accessed only by subclasses.
     */
    explicit String( csh::Base *cl ) :
-      m_class( cl ),
-      m_garbageable( false )
+      m_class( cl )
    {}
-
-   /**
-    * Eventually fix the string allocation in the garbage collector.
-    *
-    * Mainly meant to be called by manipulators.
-    * \param oldSize the previous allocated size
-    */
-   void checkAdjustSize( uint32 oldSize );
 
 public:
 
@@ -352,8 +335,8 @@ public:
       m_allocated( 0 ),
       m_size( 0 ),
       m_storage( 0 ),
-      m_garbageable( false ),
-      m_bExported( false )
+      m_bExported( false ),
+      m_bCore( false )
    {}
 
 
@@ -460,7 +443,8 @@ public:
    */
    String( const String &other ):
       m_allocated( 0 ),
-      m_garbageable( false )
+      m_bExported( false ),
+      m_bCore( false )
    {
       copy( other );
    }
@@ -697,7 +681,6 @@ public:
    void prepend( uint32 chr );
 
    void prepend( const String &source ) { m_class->insert( this, 0, 0, &source ); }
-   String *clone() const { return m_class->clone( this ); }
 
    uint32 find( const String &element, uint32 start=0, uint32 end=csh::npos) const
    {
@@ -1019,17 +1002,13 @@ public:
       m_class->reserve( this, size );
    }
 
-   /** Check if this instance of string is actually an instance of GarbageString.
-      \return true if the instance is derived from GarbageString and can be statically casted to that class.
-   */
-   bool garbageable() const { return m_garbageable; }
-
    /** Remove efficiently whitespaces at beginning and end of the string.
       If whitespaces are only at the end of the string, the lenght of the string
       is simply reduced; this means that static strings may stay static after
       this process.
       In case of whitespaces at beginning, the string will be resized, and eventually
       allocated, moving the characters back to the beginning position.
+      \param mode 0 = all, 1 = front, 2 = back
 
    */
    void trim( int mode );
@@ -1053,19 +1032,6 @@ public:
     */
    void upper();
 
-   /**
-    * Tells if a string is read-only.
-    *
-    * Static strings are the ones with a static manipulator or with an ID != 0.
-    * \return true if the string is read-only
-    */
-   bool isReadOnly() const {
-      return manipulator()->type() == csh::cs_static ||
-             manipulator()->type() == csh::cs_static16 ||
-             manipulator()->type() == csh::cs_static32 ||
-         m_id != no_id;
-   }
-
    bool isStatic() const {
       return manipulator()->type() == csh::cs_static ||
              manipulator()->type() == csh::cs_static16 ||
@@ -1077,7 +1043,7 @@ public:
       This is an efficient shortcut for the very common case of UTF8 strings
       being turned into falcon string.
       There isn't a drect constructor that understands that the input char *
-      is an UTF8 string, but the proxy generators UTF8String and UTF8GarbageString
+      is an UTF8 string, but the proxy generators UTF8String and UTF8String
       serve to this purpose.
 
       After the call, the previous content of this string is destroyed.
@@ -1108,6 +1074,12 @@ public:
    /** Sets wether this string should be exported in international context or not.
    */
    void exported( bool e ) { m_bExported = e; }
+
+   void writeIndex( const Item &index, const Item &target );
+   void readIndex( const Item &index, Item &target );
+   void readProperty( const String &prop, Item &item );
+   
+   bool isCore() const { return m_bCore; }
 };
 
 
@@ -1151,139 +1123,140 @@ public:
 };
 
 
-/** Garbageable string class.
-   As Falcon::String is the most common garbageable item found in Falcon, and as it's
-   also used widely in the engine and in the embedding applications without
-   an express need for garbage collecting, this specialized garbage class
-   has been provided expecially for strings.
-
-   This forces the garbage collector to have two chains of garbageable items,
-   the normal items and the strings, but as a great deal of strings in a falcon based
-   applications are not meant to be garbage collected, the differentiation between
-   garbageable strings and program strings pays back the extra complexity of this
-   management.
-
-   Also, having non garbageable Falcon::String as module and program application string class
-   saves 16 bytes per string and obviates the need for the Garbageable virtual
-   destructor, with another far ptr space spare for the virtual table, which are a
-   relatively considerable amount of memory if compared to the size of strings
-   usually managed in scripts.
-
-   Finally, as strings has already an accounting system for their allocated memory,
-   a specialized GarbageString which knows the underlying strings mechanics is more
-   efficient than a generic Garbageable object accounting.
-*/
-
-class FALCON_DYN_CLASS GarbageString: public String
-{
-   GarbageString *m_garbage_next;
-   GarbageString *m_garbage_prev;
-   VMachine *m_origin;
-
-public:
-   /** Empty constructor.
-      Creates an empty garbage string.
-
-      \see String()
-   */
-   explicit GarbageString( VMachine *vm );
-
-   /** Preallocator constructor
-      Creates an empty garbage string with preallocation support.
-
-      \see String( uint32 )
-   */
-   explicit GarbageString( VMachine *vm, uint32 prealloc );
-
-
-   /** Substring constructor
-      Creates a garbage string which copies a part of the given string.
-
-      The constructor is explicit: you can't use a char* or wchar_t* with automatic conversion
-      into String as the \b other parameter of this constructor; it must be an already existing
-      string or garbage string.
-
-      \see String( const String &, uint32, uint32 )
-   */
-   explicit GarbageString( VMachine *vm, const String &other, uint32 pos0, uint32 pos1 = npos );
-
-   /** Constructs a copy of the string
-      Creates a garbage string copying the contents of the other string.
-      If the source string is static, this GarbageString becomes a static
-      string too. If it is a bufferized string, this string becomes bufferized too,
-      and the contents of the other string are copied in the newly allocated buffer.
-      \see String
-   */
-   explicit GarbageString( VMachine *vm,  const String &other );
-
-    /** Adopt a static buffer and creates a static string.
-      This constructor just makes this string to point to the static data that has been
-      provided, which must stay valid for the whole lifetime of this string.
-      \see String( const char* )
-   */
-   explicit GarbageString( VMachine *vm, const char *other );
-
-    /** Adopt a static buffer and creates a static string.
-
-      This constructor just makes this string to point to the static data that has been
-      provided, which must stay valid for the whole lifetime of this string.
-      This is the wide char version.
-      \see String( const wchar_t* )
-   */
-   explicit GarbageString( VMachine *vm, const wchar_t *other );
-
-   /** Copies the static data in this string.
-      \see String( const char*, int32 )
-   */
-   explicit GarbageString( VMachine *vm, const char *other, int32 len );
-
-   /**  Copies the static data in this string.
-      \see String( const wchar_t*, int32 )
-   */
-   explicit GarbageString( VMachine *vm, const wchar_t *other, int32 len );
-
-   /** Copy constructor.
-
-   */
-   explicit GarbageString( const GarbageString &other );
-
-   ~GarbageString() {}
-
-   /** Mark for Garbage Collecting.
-      This is reserved to the Garbage collector, don't use it.
-   */
-   void mark( byte mode ) {
-      m_gcStatus = mode;
-   }
-
-   /** Return the current GC mark status. */
-   unsigned char mark() {
-      return m_gcStatus;
-   }
-
-   GarbageString *nextGarbage() const { return m_garbage_next; }
-   GarbageString *prevGarbage() const { return m_garbage_prev; }
-   void nextGarbage( GarbageString *next ) { m_garbage_next = next; }
-   void prevGarbage( GarbageString *prev ) { m_garbage_prev = prev; }
-
-   void updateGCSize( uint32 oldSize = 0 ) const;
-};
-
-
-//=============================
-// inline forwarded decls
-//
-
-inline void String::checkAdjustSize( uint32 oldSize )
-{
-   if ( garbageable() && oldSize != m_allocated )
-      static_cast<GarbageString *>( this )->updateGCSize( oldSize );
-}
-
 //=================================
 // Helpful list of string deletor
 //
 void string_deletor( void *data );
+
+class CoreString;
+
+class FALCON_DYN_CLASS StringGarbage: public Garbageable
+{
+   CoreString *m_str;
+
+public:
+   StringGarbage( CoreString *owner ):
+      Garbageable(),
+      m_str( owner )
+   {}
+
+   virtual ~StringGarbage();
+   virtual bool finalize();
+};
+
+/** Garbage storage string.
+   This is the String used in VM operations (i.e. in all the VM items).
+   It is allocated inside the garbage collector, and cannot be directly
+   deleted.
+*/
+class FALCON_DYN_CLASS CoreString: public String
+{
+   StringGarbage m_gcptr;
+
+public:
+   CoreString():
+      String(),
+      m_gcptr( this )
+   {
+      m_bCore = true;
+   }
+
+   CoreString( const String &str ):
+      String( str ),
+      m_gcptr( this )
+   {
+      m_bCore = true;
+   }
+
+   CoreString( const CoreString &str ):
+      String( str ),
+      m_gcptr( this )
+   {
+      m_bCore = true;
+   }
+
+   CoreString( const char *data ):
+      String( data ),
+      m_gcptr( this )
+   {
+      m_bCore = true;
+   }
+
+   CoreString( const wchar_t *data ):
+      String( data ),
+      m_gcptr( this )
+   {
+      m_bCore = true;
+   }
+
+   CoreString( const char *data, int32 len ):
+      String( data, len ),
+      m_gcptr( this )
+   {
+      m_bCore = true;
+   }
+
+   CoreString( const wchar_t *data, int32 len ):
+      String( data, len ),
+      m_gcptr( this )
+   {
+      m_bCore = true;
+   }
+
+
+   /** Creates a bufferized string with preallocated space.
+   */
+   explicit CoreString( uint32 prealloc ):
+      String( prealloc ),
+      m_gcptr( this )
+   {
+      m_bCore = true;
+   }
+
+   CoreString( const String &other, uint32 begin, uint32 end = csh::npos ):
+      String( other, begin, end ),
+      m_gcptr( this )
+   {
+      m_bCore = true;
+   }
+
+   const StringGarbage &garbage() const { return m_gcptr; }
+
+   StringGarbage &garbage() { return m_gcptr; }
+   
+   CoreString & operator+=( const CoreString &other ) { append( other ); return *this; }
+   CoreString & operator+=( const String &other ) { append( other ); return *this; }
+   CoreString & operator+=( uint32 other ) { append( other ); return *this; }
+   CoreString & operator+=( char other ) { append( (uint32) other ); return *this; }
+   CoreString & operator+=( const char *other ) { append( String( other ) ); return *this; }
+   CoreString & operator+=( wchar_t other ) { append( (uint32) other ); return *this; }
+   CoreString & operator+=( const wchar_t *other ) { append( String( other ) ); return *this; }
+
+   CoreString & operator=( const CoreString &other ) {
+      copy( other );
+      return *this;
+   }
+   
+   CoreString & operator=( const String &other ) {
+      copy( other );
+      return *this;
+   }
+
+   CoreString & operator=( uint32 chr ) {
+      m_size = 0;
+      append( chr );
+      return *this;
+   }
+
+
+   CoreString & operator=( const char *other ) {
+      if ( m_storage != 0 )
+         m_class->destroy( this );
+      copy( String( other ) );
+      return *this;
+   }
+};
+
 
 //=================================
 // inline proxy constructors
@@ -1301,30 +1274,9 @@ void string_deletor( void *data );
    \param utf8 the sequence
    \return a string containing the decoded sequence
 */
-inline String *UTF8String( const char *utf8 )
+inline CoreString *UTF8String( const char *utf8 )
 {
-   String *str = new String;
-   str->fromUTF8( utf8 );
-   return str;
-}
-
-/** Creates a Garbage String from an utf8 sequence on the fly.
-   This is a proxy constructor for GarbageString. The string data is
-   bufferized, so the sequence needs not to be valid after this call.
-
-   \note this function returns a valid string also if the \b utf8 paramter is
-      not a valid utf8 sequence. If there is the need for error detection,
-      use String::fromUTF8 instead.
-
-   \see String::fromUTF8
-   \param vm a VM where this garbage string will be stored
-   \param utf8 the sequence
-   \return a string containing the decoded sequence
-*/
-
-inline GarbageString *UTF8GarbageString( VMachine *vm, const char *utf8 )
-{
-   GarbageString *str = new GarbageString( vm );
+   CoreString *str = new CoreString;
    str->fromUTF8( utf8 );
    return str;
 }
@@ -1334,3 +1286,4 @@ inline GarbageString *UTF8GarbageString( VMachine *vm, const char *utf8 )
 #endif
 
 /* end of string.h */
+

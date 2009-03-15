@@ -65,15 +65,15 @@ public:
 
 class FALCON_DYN_CLASS PageDict: public CoreDict
 {
-   VMItemTraits m_itemTraits;
+   ItemTraits m_itemTraits;
    MapIterator m_traverseIter;
    Map m_map;
    uint32 m_version;
 
 public:
 
-   PageDict( VMachine *vm );
-   PageDict( VMachine *vm, uint32 pageSize );
+   PageDict();
+   PageDict( uint32 pageSize );
    ~PageDict();
 
    virtual uint32 length() const;

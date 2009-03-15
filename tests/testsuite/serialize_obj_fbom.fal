@@ -63,9 +63,8 @@ item1 = nil
 item2 = nil
 
 try
-	// mixing deserialize and readItem
    item1 = deserialize( stream )
-   item2 = stream.readItem()
+   item2 = deserialize( stream )
 
    // the deserialization should not call the initializer (?)
    //if counter != 2: failure( "class item has not been re-created" )

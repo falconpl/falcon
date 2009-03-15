@@ -46,19 +46,19 @@ FileSysData *UnixFileSysData::dup()
 }
 
 
-GenericStream::GenericStream( const GenericStream &other ):
+BaseFileStream::BaseFileStream( const BaseFileStream &other ):
    Stream( other )
 {
    m_fsData = other.m_fsData->dup();
 }
 
-GenericStream::~GenericStream()
+BaseFileStream::~BaseFileStream()
 {
    close();
    delete m_fsData;
 }
 
-bool GenericStream::close()
+bool BaseFileStream::close()
 {
    UnixFileSysData *data = static_cast< UnixFileSysData *>( m_fsData );
 
@@ -75,7 +75,7 @@ bool GenericStream::close()
    return true;
 }
 
-int32 GenericStream::read( void *buffer, int32 size )
+int32 BaseFileStream::read( void *buffer, int32 size )
 {
    UnixFileSysData *data = static_cast< UnixFileSysData *>( m_fsData );
 
@@ -96,7 +96,7 @@ int32 GenericStream::read( void *buffer, int32 size )
    return result;
 }
 
-int32 GenericStream::write( const void *buffer, int32 size )
+int32 BaseFileStream::write( const void *buffer, int32 size )
 {
    UnixFileSysData *data = static_cast< UnixFileSysData *>( m_fsData );
 
@@ -111,14 +111,14 @@ int32 GenericStream::write( const void *buffer, int32 size )
    return result;
 }
 
-bool GenericStream::put( uint32 chr )
+bool BaseFileStream::put( uint32 chr )
 {
    /** \TODO optimize */
    byte b = (byte) chr;
    return write( &b, 1 ) == 1;
 }
 
-bool GenericStream::get( uint32 &chr )
+bool BaseFileStream::get( uint32 &chr )
 {
    /** \TODO optimize */
 
@@ -134,7 +134,7 @@ bool GenericStream::get( uint32 &chr )
    return false;
 }
 
-int64 GenericStream::seek( int64 pos, e_whence whence )
+int64 BaseFileStream::seek( int64 pos, e_whence whence )
 {
    UnixFileSysData *data = static_cast< UnixFileSysData *>( m_fsData );
 
@@ -161,7 +161,7 @@ int64 GenericStream::seek( int64 pos, e_whence whence )
 }
 
 
-int64 GenericStream::tell()
+int64 BaseFileStream::tell()
 {
    UnixFileSysData *data = static_cast< UnixFileSysData *>( m_fsData );
 
@@ -177,7 +177,7 @@ int64 GenericStream::tell()
 }
 
 
-bool GenericStream::truncate( int64 pos )
+bool BaseFileStream::truncate( int64 pos )
 {
    UnixFileSysData *data = static_cast< UnixFileSysData *>( m_fsData );
 
@@ -197,7 +197,7 @@ bool GenericStream::truncate( int64 pos )
    return true;
 }
 
-bool GenericStream::errorDescription( ::Falcon::String &description ) const
+bool BaseFileStream::errorDescription( ::Falcon::String &description ) const
 {
    if ( Stream::errorDescription( description ) )
       return true;
@@ -221,13 +221,13 @@ bool GenericStream::errorDescription( ::Falcon::String &description ) const
    return true;
 }
 
-int64 GenericStream::lastError() const
+int64 BaseFileStream::lastError() const
 {
    UnixFileSysData *data = static_cast< UnixFileSysData *>( m_fsData );
    return (int64) data->m_lastError;
 }
 
-void GenericStream::setError( int64 errorCode )
+void BaseFileStream::setError( int64 errorCode )
 {
    UnixFileSysData *data = static_cast< UnixFileSysData *>( m_fsData );
    data->m_lastError = errorCode;
@@ -237,7 +237,7 @@ void GenericStream::setError( int64 errorCode )
       status( status() & ~Stream::t_error );
 }
 
-bool GenericStream::writeString( const String &content, uint32 begin, uint32 end )
+bool BaseFileStream::writeString( const String &content, uint32 begin, uint32 end )
 {
    UnixFileSysData *data = static_cast< UnixFileSysData *>( m_fsData );
    uint32 done = begin;
@@ -266,7 +266,7 @@ bool GenericStream::writeString( const String &content, uint32 begin, uint32 end
    return true;
 }
 
-bool GenericStream::readString( String &content, uint32 size )
+bool BaseFileStream::readString( String &content, uint32 size )
 {
    // TODO OPTIMIZE
    uint32 chr;
@@ -290,7 +290,7 @@ bool GenericStream::readString( String &content, uint32 size )
 }
 
 
-int32 GenericStream::readAvailable( int32 msec, const Sys::SystemData *sysData )
+int32 BaseFileStream::readAvailable( int32 msec, const Sys::SystemData *sysData )
 {
    UnixFileSysData *data = static_cast< UnixFileSysData *>( m_fsData );
    /* Temporarily turned off because a darwin flaw
@@ -364,7 +364,7 @@ int32 GenericStream::readAvailable( int32 msec, const Sys::SystemData *sysData )
    return 0;
 }
 
-int32 GenericStream::writeAvailable( int32 msec, const Sys::SystemData *sysData )
+int32 BaseFileStream::writeAvailable( int32 msec, const Sys::SystemData *sysData )
 {
    UnixFileSysData *data = static_cast< UnixFileSysData *>( m_fsData );
    struct pollfd poller[2];
@@ -406,9 +406,9 @@ int32 GenericStream::writeAvailable( int32 msec, const Sys::SystemData *sysData 
    return 0;
 }
 
-FalconData *GenericStream::clone() const
+FalconData *BaseFileStream::clone() const
 {
-   GenericStream *ge = new GenericStream( *this );
+   BaseFileStream *ge = new BaseFileStream( *this );
    if ( ge->m_fsData == 0 )
    {
       delete ge;
@@ -423,7 +423,7 @@ FalconData *GenericStream::clone() const
 //=========================================
 
 FileStream::FileStream():
-   GenericStream( t_file, new UnixFileSysData( -1, 0 ) )
+   BaseFileStream( t_file, new UnixFileSysData( -1, 0 ) )
 {
    status( t_none );
 }

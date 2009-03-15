@@ -22,6 +22,7 @@
 #include <falcon/sequence.h>
 #include <falcon/fassert.h>
 #include <falcon/item.h>
+#include <falcon/genericmap.h>
 
 namespace Falcon {
 
@@ -261,7 +262,7 @@ public:
 
    /** Perform marking of items stored in the table.
    */
-   virtual void gcMark( VMachine * );
+   virtual void gcMark( MemPool * );
 
    /** Returns bidding results.
       Must be initialized with makebiddings().

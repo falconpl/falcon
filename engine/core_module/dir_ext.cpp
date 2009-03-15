@@ -27,10 +27,9 @@
 #include <falcon/dir_sys.h>
 #include <falcon/memory.h>
 #include <falcon/fassert.h>
-#include <falcon/uri.h>
 
 #include "core_module.h"
-#include "core_messages.h"
+#include <falcon/eng_messages.h>
 
 #include <string.h>
 
@@ -62,77 +61,79 @@ namespace Falcon {
 
 namespace core {
 
-FileStatManager::InnerData::InnerData()
+FileStatObject::FileStatObject( const CoreClass *cls ):
+   ReflectObject( cls, new InnerData )
 {
-   // we'll fill them on request.
-   m_cache_mtime.setNil();
-   m_cache_atime.setNil();
-   m_cache_mtime.setNil();
 }
 
-FileStatManager::InnerData::InnerData( const InnerData &other ):
+FileStatObject::FileStatObject( const FileStatObject &other ):
+   ReflectObject( other.generator(), new InnerData( *other.getInnerData() ) )
+{
+}
+   
+FileStatObject::~FileStatObject()
+{
+   delete getInnerData();
+}
+
+void FileStatObject::gcMark( MemPool *mp )
+{
+   mp->markItemFast( getInnerData()->m_cache_mtime );
+   mp->markItemFast( getInnerData()->m_cache_atime );
+   mp->markItemFast( getInnerData()->m_cache_ctime );
+}
+
+CoreObject* FileStatObject::clone() const
+{
+   return new FileStatObject( *this );
+}
+
+extern "C" {
+   CoreObject* FileStatObjectFactory( const CoreClass *cls, void *, bool  )
+   {
+      return new FileStatObject( cls );
+   }
+}
+
+
+FileStatObject::InnerData::InnerData( const InnerData &other ):
    m_fsdata( other.m_fsdata )
 {
-   // we'll fill them on request.
-   m_cache_mtime.setNil();
-   m_cache_atime.setNil();
-   m_cache_mtime.setNil();
+   fassert( m_cache_atime.asObjectSafe() );
+      
+   other.m_cache_mtime.clone( m_cache_mtime );
+   other.m_cache_atime.clone( m_cache_atime );
+   other.m_cache_ctime.clone( m_cache_ctime );
 }
-
-FileStatManager::InnerData::~InnerData()
-{
-}
-
-void *FileStatManager::onInit( VMachine *vm )
-{
-   return new InnerData;
-}
-
-void FileStatManager::onGarbageMark( VMachine *vm, void *data )
-{
-   InnerData *id = static_cast<InnerData *>(data);
-   vm->memPool()->markItemFast( id->m_cache_mtime );
-   vm->memPool()->markItemFast( id->m_cache_atime );
-   vm->memPool()->markItemFast( id->m_cache_ctime );
-}
-
-void FileStatManager::onDestroy( VMachine *vm, void *user_data )
-{
-   InnerData *id = static_cast<InnerData *>(user_data);
-   delete id;
-}
-
-
-void* FileStatManager::onClone( VMachine *vm, void *user_data )
-{
-   InnerData *id = static_cast<InnerData *>(user_data);
-   InnerData *clone = new InnerData( *id );
-
-   // don't clone the timestamps now; let them lazy
-   return clone;
-}
-
 
 void FileStats_type_rfrom(CoreObject *instance, void *user_data, Item &property, const PropEntry& )
 {
-   FileStatManager::InnerData *id = static_cast<FileStatManager::InnerData *>(user_data);
+   FileStatObject::InnerData *id = static_cast<FileStatObject::InnerData *>(user_data);
    property = (int64) id->m_fsdata.m_type;
 }
 
 void FileStats_ctime_rfrom(CoreObject *instance, void *user_data, Item &property, const PropEntry& )
 {
-   FileStatManager::InnerData *id = static_cast<FileStatManager::InnerData *>(user_data);
+   FileStatObject::InnerData *id = static_cast<FileStatObject::InnerData *>(user_data);
 
    // is read only
-   if ( id->m_cache_ctime.isNil() ) {
-      Item *ts_class = instance->origin()->findWKI( "TimeStamp" );
-      //if we wrote the std module, can't be zero.
-      fassert( ts_class != 0 );
-      id->m_cache_ctime = ts_class->asClass()->createInstance( new TimeStamp(*id->m_fsdata.m_ctime) );
+   if ( id->m_fsdata.m_ctime != 0 )
+   {
+      if ( id->m_cache_ctime.isNil() ) {
+         VMachine* vm = VMachine::getCurrent();
+         fassert( vm != 0 );
+         Item *ts_class = vm->findWKI( "TimeStamp" );
+         //if we wrote the std module, can't be zero.
+         fassert( ts_class != 0 );
+         id->m_cache_ctime = ts_class->asClass()->createInstance( new TimeStamp( *id->m_fsdata.m_ctime) );
+      }
+      else {
+         TimeStamp *ts = dyncast<TimeStamp *>( id->m_cache_ctime.asObject()->getFalconData());
+         *ts = *id->m_fsdata.m_ctime;
+      }
    }
    else {
-      TimeStamp *ts = static_cast<TimeStamp *>( id->m_cache_ctime.asObject()->getUserData());
-      *ts = *id->m_fsdata.m_ctime;
+      id->m_cache_ctime.setNil();
    }
 
    property = id->m_cache_ctime;
@@ -140,18 +141,26 @@ void FileStats_ctime_rfrom(CoreObject *instance, void *user_data, Item &property
 
 void FileStats_mtime_rfrom(CoreObject *instance, void *user_data, Item &property, const PropEntry& )
 {
-   FileStatManager::InnerData *id = static_cast<FileStatManager::InnerData *>(user_data);
+   FileStatObject::InnerData *id = static_cast< FileStatObject::InnerData *>(user_data);
 
    // is read only
-   if ( id->m_cache_mtime.isNil() ) {
-      Item *ts_class = instance->origin()->findWKI( "TimeStamp" );
-      //if we wrote the std module, can't be zero.
-      fassert( ts_class != 0 );
-      id->m_cache_mtime = ts_class->asClass()->createInstance( new TimeStamp(*id->m_fsdata.m_mtime) );
+   if ( id->m_fsdata.m_mtime != 0 )
+   {
+      if ( id->m_cache_mtime.isNil() ) {
+         VMachine* vm = VMachine::getCurrent();
+         fassert( vm != 0 );
+         Item *ts_class = vm->findWKI( "TimeStamp" );
+         //if we wrote the std module, can't be zero.
+         fassert( ts_class != 0 );
+         id->m_cache_mtime = ts_class->asClass()->createInstance( new TimeStamp( *id->m_fsdata.m_mtime) );
+      }
+      else {
+         TimeStamp *ts = dyncast<TimeStamp *>( id->m_cache_ctime.asObject()->getFalconData());
+         *ts = *id->m_fsdata.m_mtime;
+      }
    }
    else {
-      TimeStamp *ts = static_cast<TimeStamp *>( id->m_cache_mtime.asObject()->getUserData());
-      *ts = *id->m_fsdata.m_mtime;
+      id->m_cache_mtime.setNil();
    }
 
    property = id->m_cache_mtime;
@@ -159,17 +168,27 @@ void FileStats_mtime_rfrom(CoreObject *instance, void *user_data, Item &property
 
 void FileStats_atime_rfrom(CoreObject *instance, void *user_data, Item &property, const PropEntry& )
 {
-   FileStatManager::InnerData *id = static_cast<FileStatManager::InnerData *>(user_data);
+   FileStatObject::InnerData *id = static_cast<FileStatObject::InnerData *>(user_data);
    // is read only
-   if ( id->m_cache_atime.isNil() ) {
-      Item *ts_class = instance->origin()->findWKI( "TimeStamp" );
-      //if we wrote the std module, can't be zero.
-      fassert( ts_class != 0 );
-      id->m_cache_atime = ts_class->asClass()->createInstance( new TimeStamp(*id->m_fsdata.m_atime) );
+   if ( id->m_fsdata.m_atime != 0 )
+   {
+      if ( id->m_cache_atime.isNil() )
+      {
+         VMachine* vm = VMachine::getCurrent();
+         fassert( vm != 0 );
+         Item *ts_class = vm->findWKI( "TimeStamp" );
+         //if we wrote the std module, can't be zero.
+         fassert( ts_class != 0 );
+         id->m_cache_atime = ts_class->asClass()->createInstance( new TimeStamp( *id->m_fsdata.m_atime) );
+      }
+      else 
+      {
+         TimeStamp *ts = dyncast<TimeStamp *>( id->m_cache_atime.asObject()->getFalconData());
+         *ts = *id->m_fsdata.m_atime;
+      }
    }
    else {
-      TimeStamp *ts = static_cast<TimeStamp *>( id->m_cache_atime.asObject()->getUserData());
-      *ts = *id->m_fsdata.m_atime;
+      id->m_cache_atime.setNil();
    }
 
    property = id->m_cache_atime;
@@ -177,57 +196,20 @@ void FileStats_atime_rfrom(CoreObject *instance, void *user_data, Item &property
 
 
 /*#
-   @function FileReadStats
-   @param filename Relative or absolute path to a file for which stats must be read
-   @return A new @a FileStat instance or nil.
-
-   On success, retunrs a new instance of the FileStat class; on failure, nil is returned.
-*/
-
-FALCON_FUNC FileReadStats( ::Falcon::VMachine *vm )
-{
-   Item *name = vm->param(0);
-
-   // if the name is not given, we expect a readStats to be called later on
-   if ( name == 0 )
-      return;
-
-   if ( ! name->isString() )
-   {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
-      return;
-   }
-
-   // create the timestamps
-   Item *fs_class = vm->findWKI( "FileStat" );
-   //if we wrote the std module, can't be zero.
-   fassert( fs_class != 0 );
-
-   CoreObject *self = fs_class->asClass()->createInstance();
-
-   // CreateInstance will prepare our inner data.
-   FileStatManager::InnerData *id = static_cast<FileStatManager::InnerData *>( self->getUserData() );
-
-   if ( ! Sys::fal_stats( *name->asString(), id->m_fsdata ) )
-   {
-      String fname =  *name->asString();
-      vm->raiseModError( new IoError( ErrorParam( 1001, __LINE__ ).
-         origin( e_orig_runtime ).desc( "Cannot read stats for file" ).extra( fname ).
-         sysError( (uint32) Sys::_lastError() ) ) );
-      return;
-   }
-
-   vm->retval( self );
-}
-
-/*#
    @class FileStat
+   @optparam path If given, the filestats will be initialized with stats of the given file.
+   @raise IoError if @b path is given but not found.
    @brief Class holding informations on system files.
 
-   The FileStat class holds informations on a single directory entry. It is
-   returned by the @a FileReadStats factory function, but it can be also instantiated
-   directly. Then the @a FileStat.readStats method can be used to fill the contents of
-   the instance with actual data from the file system.
+   The FileStat class holds informations on a single directory entry.  
+   
+   It is possible to pass a @b path parameter, in which case, if the given file is found,
+   the contents of this class is filled with the stat data from the required file, otherwise
+   an IoError is raised. The @a FileStat.read method would search for the required file
+   without raising in case it is not found, so if it preferable not to raise on failure
+   (i.e. because searching the most fitting of a list of possibly existing files), it is
+   possiblo to create the FileStat object without parameters and the use the @b read method
+   iteratively.
 
    @prop access POSIX access mode
    @prop atime Last access time, expressed as a @a TimeStamp instance.
@@ -257,6 +239,25 @@ FALCON_FUNC FileReadStats( ::Falcon::VMachine *vm )
    as local system time.
 */
 
+FALCON_FUNC FileStat_init( ::Falcon::VMachine *vm )
+{
+   // we're initialized with consistent data from the class factory function.
+   if ( vm->paramCount() > 0 )
+   {
+      // would throw on param error...
+      FileStat_read( vm );
+      
+      // we must raise from the constructor, if we didn't found the file.
+      if( ! vm->regA().isTrue() )
+      {
+         throw new IoError( ErrorParam( e_nofile, __LINE__ )
+            .origin( e_orig_runtime )
+            .extra( *vm->param(0)->asString() ) );
+      }
+      
+   }
+}
+
 /*#
    @method readStats FileStat
    @brief Fills the data in this instance reading them from a system file.
@@ -267,18 +268,20 @@ FALCON_FUNC FileReadStats( ::Falcon::VMachine *vm )
    If the stats of the required file can be read, the function returns true.
 */
 
-FALCON_FUNC FileStat_readStats ( ::Falcon::VMachine *vm )
+FALCON_FUNC FileStat_read ( ::Falcon::VMachine *vm )
 {
    Item *name = vm->param(0);
 
    if ( name == 0 || ! name->isString() )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
+         .origin( e_orig_runtime )
+         .extra("S") ) );
       return;
    }
-
-   CoreObject *self = vm->self().asObject();
-   FileStatManager::InnerData *id = static_cast<FileStatManager::InnerData *>( self->getUserData() );
+   
+   FileStatObject *self = dyncast<FileStatObject*>(vm->self().asObject());
+   FileStatObject::InnerData *id = self->getInnerData();
    vm->regA().setBoolean( Sys::fal_stats( *name->asString(), id->m_fsdata ) );
 }
 
@@ -309,7 +312,9 @@ FALCON_FUNC  fileType( ::Falcon::VMachine *vm )
 
    if ( name == 0 || ! name->isString() )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
+         .origin( e_orig_runtime )
+         .extra( "S" ) ) );
       return;
    }
 
@@ -345,7 +350,7 @@ FALCON_FUNC  dirReadLink( ::Falcon::VMachine *vm )
       vm->retnil();
    }
    else {
-      String *ret = new GarbageString( vm );
+      CoreString *ret = new CoreString;
       ret->bufferize( temp );
       vm->retval( ret );
    }
@@ -427,12 +432,12 @@ FALCON_FUNC  fileNameSplit ( ::Falcon::VMachine *vm )
       return;
    }
 
-   CoreArray *parts = new CoreArray( vm, 4 );
+   CoreArray *parts = new CoreArray( 4 );
    parts->length( 4 );
-   String *res = new GarbageString( vm );
-   String *loc = new GarbageString( vm );
-   String *file = new GarbageString( vm );
-   String *ext = new GarbageString( vm );
+   CoreString *res = new CoreString;
+   CoreString *loc = new CoreString;
+   CoreString *file = new CoreString;
+   CoreString *ext = new CoreString;
 
    path.split( *res, *loc, *file, *ext );
    parts->at(0) = res;
@@ -521,7 +526,7 @@ FALCON_FUNC  fileNameMerge ( ::Falcon::VMachine *vm )
       return;
    }
 
-   vm->retval( new GarbageString( vm, p.get() ) );
+   vm->retval( new CoreString( p.get() ) );
 }
 
 /*
@@ -552,7 +557,7 @@ FALCON_FUNC  fileName ( ::Falcon::VMachine *vm )
    {
       if ( name->getCharAt( pos ) == '/' )
       {
-         vm->retval( new GarbageString( vm, *name, pos + 1 ) );
+         vm->retval( new CoreString( *name, pos + 1 ) );
          return;
       }
       pos--;
@@ -592,16 +597,16 @@ FALCON_FUNC  filePath ( ::Falcon::VMachine *vm )
 
    while( pos > 0 ) {
       if ( name->getCharAt( pos ) == '/' ) {
-         vm->retval( new GarbageString( vm, *name, 0, pos ) );
+         vm->retval( new CoreString( *name, 0, pos ) );
          return;
       }
       pos--;
    }
 
    if ( name->getCharAt( pos ) == '/' )
-      vm->retval( new GarbageString( vm, "/" ) );
+      vm->retval( new CoreString( "/" ) );
    else
-      vm->retval( new GarbageString( vm ) );
+      vm->retval( new CoreString );
 }
 
 /*
@@ -634,8 +639,7 @@ FALCON_FUNC  DirectoryOpen ( ::Falcon::VMachine *vm )
       Item *dir_class = vm->findWKI( "Directory" );
       //if we wrote the std module, can't be zero.
       fassert( dir_class != 0 );
-      CoreObject *self = dir_class->asClass()->createInstance();
-      self->setUserData( dir );
+      CoreObject *self = dir_class->asClass()->createInstance(dir);
       vm->retval( self );
    }
    else {
@@ -669,11 +673,11 @@ FALCON_FUNC  DirectoryOpen ( ::Falcon::VMachine *vm )
 */
 FALCON_FUNC  Directory_read ( ::Falcon::VMachine *vm )
 {
-   DirEntry *dir = static_cast<DirEntry *>(vm->self().asObject()->getUserData());
+   DirEntry *dir = dyncast<DirEntry *>(vm->self().asObject()->getFalconData());
 
    String reply;
    if ( dir->read( reply ) ) {
-      String *ret = new GarbageString( vm );
+      CoreString *ret = new CoreString;
       ret->bufferize( reply );
       vm->retval( ret );
    }
@@ -698,7 +702,7 @@ FALCON_FUNC  Directory_read ( ::Falcon::VMachine *vm )
 */
 FALCON_FUNC  Directory_close ( ::Falcon::VMachine *vm )
 {
-   DirEntry *dir = static_cast<DirEntry *>(vm->self().asObject()->getUserData());
+   DirEntry *dir = dyncast<DirEntry *>(vm->self().asObject()->getFalconData());
    dir->close();
    if ( dir->lastError() != 0 ) {
       vm->raiseModError( new IoError( ErrorParam( 1010, __LINE__ ).
@@ -717,7 +721,7 @@ FALCON_FUNC  Directory_close ( ::Falcon::VMachine *vm )
 
 FALCON_FUNC  Directory_error( ::Falcon::VMachine *vm )
 {
-   DirEntry *dir = static_cast<DirEntry *>(vm->self().asObject()->getUserData());
+   DirEntry *dir =  dyncast<DirEntry *>(vm->self().asObject()->getFalconData());
    vm->retval( (int)dir->lastError() );
 }
 
@@ -870,7 +874,7 @@ FALCON_FUNC  dirChange ( ::Falcon::VMachine *vm )
 FALCON_FUNC  dirCurrent ( ::Falcon::VMachine *vm )
 {
    int32 fsError;
-   String *ret = new GarbageString( vm );
+   CoreString *ret = new CoreString;
    if( ! Sys::fal_getcwd( *ret, fsError ) ) {
       vm->raiseModError( new IoError( ErrorParam( 1014, __LINE__ ).
          origin( e_orig_runtime ).desc( "Cannot read current working directory" ).
@@ -1039,330 +1043,7 @@ FALCON_FUNC  fileChgroup ( ::Falcon::VMachine *vm )
    }
 }
 
-//====================================================
-// (reflexive) Class path
-//
-
-/*# @class Path
-   @brief Interface to local filesystem path definition.
-   @optparam path The path that will be used as initial path.
-   @raise ParamError in case the inital path is malformed.
-
-   This class offers an object oriented interface to access
-   path elements given a complete path, or to build a path from its elements.
-*/
-
-/*# @property unit Path
-   @brief Unit specificator.
-   @raise ParamError if assigned to a value that makes the path invalid.
-
-   This is the unit specificator (disk name) used in some filesystems.
-   It is separated by the rest of the path via a ":". According to
-   RFC 3986 it always starts with a "/", which is automatically added
-   if absent.
-*/
-
-/*# @property location Path
-   @brief Location specificator.
-   @raise ParamError if assigned to a value that makes the path invalid.
-
-   This is the "path to file". It can start with a "/" or not; if
-   it starts with a "/" it is considered absolute.
-*/
-
-/*# @property file Path
-   @brief File part.
-   @raise ParamError if assigned to a value that makes the path invalid.
-
-   This is the part of the path that identifies an element in a directory.
-   It includes everything after the last "/" path separator.
-*/
-
-/*# @property filename Path
-   @brief File name part.
-   @raise ParamError if assigned to a value that makes the path invalid.
-
-   This element coresponds to the first part of the file element, if it is
-   divided into a filename and an extension by a "." dot.
-*/
-
-/*# @property extension Path
-   @brief File extension part.
-   @raise ParamError if assigned to a value that makes the path invalid.
-
-   This element coresponds to the first last of the file element, if it is
-   divided into a filename and an extension by a "." dot.
-*/
-
-/*# @property path Path
-   @brief Complete path.
-   @raise ParamError if assigned to a value that makes the path invalid.
-
-   This is the complete path referred by this object.
-*/
-
-void* PathManager::onInit( VMachine *vm )
-{
-   return 0;
-}
-
-void  PathManager::onDestroy( VMachine *vm, void *user_data )
-{
-   delete static_cast<Path* >( user_data );
-}
-
-void* PathManager::onClone( VMachine *vm, void *user_data )
-{
-   return new Path( *static_cast<Path* >( user_data ) );
-}
-
-bool PathManager::onObjectReflectTo( CoreObject *reflector, void *user_data )
-{
-   Path &path = *static_cast<Path *>( user_data );
-
-   Item *property = reflector->cachedProperty( "unit" );
-   if ( ! property->isString() )
-      goto complain;
-
-   path.setResource( *property->asString() );
-
-   property = reflector->cachedProperty( "location" );
-   if ( ! property->isString() )
-      goto complain;
-
-   path.setLocation( *property->asString() );
-
-   property = reflector->cachedProperty( "file" );
-   if ( ! property->isString() )
-      goto complain;
-
-   path.setFile( *property->asString() );
-
-   property = reflector->cachedProperty( "extension" );
-   if ( ! property->isString() )
-      goto complain;
-
-   path.setExtension( *property->asString() );
-
-   if ( ! path.isValid() )
-   {
-      reflector->origin()->raiseModError( new ParamError( ErrorParam( e_inv_params ).
-         origin( e_orig_runtime ).
-         extra( reflector->origin()->moduleString( rtl_invalid_path ) ) ) );
-   }
-
-   return true;
-
-complain:
-   reflector->origin()->raiseModError( new ParamError( ErrorParam( e_inv_params ).
-      origin( e_orig_runtime ).extra( "S" ) ) );
-   return true;
-}
-
-bool PathManager::onObjectReflectFrom( CoreObject *reflector, void *user_data )
-{
-   Path &path = *static_cast<Path *>( user_data );
-
-   reflector->cacheStringProperty( "unit", path.getResource() );
-   reflector->cacheStringProperty( "location", path.getLocation() );
-   reflector->cacheStringProperty( "file", path.getFile() );
-   reflector->cacheStringProperty( "extension", path.getExtension() );
-   reflector->cacheStringProperty( "filename", path.getFilename() );
-
-   // TODO: reflect URI
-   return true;
-}
-
-// Reflective URI method
-void Path_path_rfrom(CoreObject *instance, void *user_data, Item &property, const PropEntry& )
-{
-   Path &path = *static_cast<Path *>( user_data );
-
-   instance->reflectTo( user_data );
-
-   if ( ! path.isValid() )
-   {
-      instance->origin()->raiseModError( new ParamError( ErrorParam( e_inv_params ).
-         origin( e_orig_runtime ).
-         extra( instance->origin()->moduleString( rtl_invalid_path ) ) ) );
-   }
-
-   // And now set the property
-   if ( property.isString() )
-      property.asString()->bufferize( path.get() );
-   else
-      property = new GarbageString( instance->origin(), path.get() );
-}
-
-void Path_path_rto(CoreObject *instance, void *user_data, Item &property, const PropEntry& )
-{
-   Path &path = *static_cast<Path *>( user_data );
-
-   // We're setting the URI, that is, the property has been written.
-   FALCON_REFLECT_STRING_TO( (&path), set );
-   instance->reflectFrom( user_data );
-
-   if ( ! path.isValid() )
-   {
-      instance->origin()->raiseModError( new ParamError( ErrorParam( e_inv_params ).
-         origin( e_orig_runtime ).
-         extra( instance->origin()->moduleString( rtl_invalid_path ) ) ) );
-   }
-}
-
-// Reflective URI method
-void Path_filename_rfrom(CoreObject *instance, void *user_data, Item &property, const PropEntry& )
-{
-   Path &path = *static_cast<Path *>( user_data );
-   FALCON_REFLECT_STRING_FROM( (&path), getFilename );
-}
-
-void Path_filename_rto(CoreObject *instance, void *user_data, Item &property, const PropEntry& )
-{
-   Path &path = *static_cast<Path *>( user_data );
-
-   // We're setting the path, that is, the property has been written.
-   FALCON_REFLECT_STRING_TO( (&path), setFilename );
-
-   if ( ! path.isValid() )
-   {
-      instance->origin()->raiseModError( new ParamError( ErrorParam( e_inv_params ).
-         origin( e_orig_runtime ).
-         extra( instance->origin()->moduleString( rtl_invalid_path ) ) ) );
-   }
-}
-
-// Reflective path method
-void Path_file_rfrom(CoreObject *instance, void *user_data, Item &property, const PropEntry& )
-{
-   Path &path = *static_cast<Path *>( user_data );
-   FALCON_REFLECT_STRING_FROM( (&path), getFile );
-}
-
-void Path_file_rto(CoreObject *instance, void *user_data, Item &property, const PropEntry& )
-{
-   Path &path = *static_cast<Path *>( user_data );
-   // We're setting the path, that is, the property has been written.
-   FALCON_REFLECT_STRING_TO( (&path), setFile );
-
-   if ( ! path.isValid() )
-   {
-      instance->origin()->raiseModError( new ParamError( ErrorParam( e_inv_params ).
-         origin( e_orig_runtime ).
-         extra( instance->origin()->moduleString( rtl_invalid_path ) ) ) );
-   }
-}
-
-// Reflective path method
-void Path_extension_rfrom(CoreObject *instance, void *user_data, Item &property, const PropEntry& )
-{
-   Path &path = *static_cast<Path *>( user_data );
-   FALCON_REFLECT_STRING_FROM( (&path), getExtension );
-}
-
-void Path_extension_rto(CoreObject *instance, void *user_data, Item &property, const PropEntry& )
-{
-   Path &path = *static_cast<Path *>( user_data );
-   // We're setting the path, that is, the property has been written.
-   FALCON_REFLECT_STRING_TO( (&path), setExtension );
-
-   if ( ! path.isValid() )
-   {
-      instance->origin()->raiseModError( new ParamError( ErrorParam( e_inv_params ).
-         origin( e_orig_runtime ).
-         extra( instance->origin()->moduleString( rtl_invalid_path ) ) ) );
-   }
-}
-
-/*#
-   @init Path
-   @brief Constructor for the Path class.
-   @raise ParamError in case the inital path is malformed.
-
-   Builds the path object, optionally using the given parameter
-   as a complete path constructor.
-
-   If the parameter is an array, it must have at least four
-   string elements, and it will be used to build the path from
-   its constituents. In example:
-
-   @code
-      unit = "C"
-      location = "/a/path/to"
-      file = "somefile"
-      ext = "anext"
-      p = Path( [ unit, location, file, ext ] )
-   @endocde
-
-   @b nil can be passed if some part of the specification is not used.
-
-   @note Use the fileNameMerge() function to simply merge elements of a path
-   specification into a string.
-   @see fileNameMerge
-*/
-
-FALCON_FUNC  Path_init ( ::Falcon::VMachine *vm )
-{
-   Item *p0 = vm->param(0);
-   // we need anyhow a carrier.
-   CoreObject *self = vm->self().asObject();
-   Path *path = new Path;
-   self->setUserData( path );
-
-   if ( p0 == 0 || ( ! p0->isString() && ! p0->isArray() ) )
-   {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         origin( e_orig_runtime ).extra( "S|A" ) ) );
-      return;
-   }
-
-   if ( p0->isString() )
-   {
-      path->set( *p0->asString() );
-   }
-   else {
-      const String *unitspec = 0;
-      const String *fname = 0;
-      const String *fpath = 0;
-      const String *fext = 0;
-
-      String sDummy;
-
-      const CoreArray &array = *p0->asArray();
-      if( array.length() >= 0 && array[0].isString() )
-         unitspec = array[0].asString();
-      else
-         unitspec = &sDummy;
-
-      if( array.length() >= 1 && array[1].isString() )
-         fpath = array[1].asString();
-      else
-         fpath = &sDummy;
-
-      if( array.length() >= 2 && array[2].isString() )
-         fname = array[2].asString();
-      else
-         fname = &sDummy;
-
-      if( array.length() >= 3 && array[3].isString() )
-         fext = array[3].asString();
-      else
-         fext = &sDummy;
-
-      path->join( *unitspec, *fpath, *fname, *fext );
-   }
-
-   self->reflectFrom( path );
-
-   if ( ! path->isValid() )
-   {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         origin( e_orig_runtime ).
-         extra( vm->moduleString( rtl_invalid_path ) ) ) );
-   }
-}
-
 }
 }
 
-/* end of dir.cpp */
+/* end of dir_ext.cpp */

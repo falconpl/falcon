@@ -64,10 +64,27 @@ namespace Falcon {
 namespace core {
 
 /*#
+   @method serialize BOM
+   @brief Serialize the item on a stream for persistent storage.
+   @param stream The stream on which to perform serialization.
+   @raise IoError on stream errors.
+
+   The item is stored on the stream so that a deserialize() call on the same
+   position in the stream where serialization took place will create
+   an exact copy of the serialized item.
+
+   The application must ensure that the item does not contains circular references,
+   or the serialization will enter an endless loop.
+
+   In case the underlying stream write causes an i/o failure, an error is raised.
+*/
+
+
+/*#
    @function serialize
    @brief Serializes an item on a stream.
-   @param stream An instance of the Stream (or derived) class.
    @param item The item to be serialized.
+   @param stream An instance of the Stream (or derived) class.
    @raise IoError on underlying stream error.
 
    The item is stored on the stream so that a deserialize() call on the same
@@ -88,15 +105,26 @@ namespace core {
    parameter, while Stream.writeItem() must be provided with the item to be
    serialized.
 */
-FALCON_FUNC  serialize ( ::Falcon::VMachine *vm )
+FALCON_FUNC  mth_serialize ( ::Falcon::VMachine *vm )
 {
-   Item *fileId = vm->param(0);
-   Item *source = vm->param(1);
-
+   Item *fileId;
+   Item *source; 
+   
+   if ( vm->self().isMethodic() )
+   {
+      source = &vm->self();
+      fileId = vm->param(0);
+   }
+   else
+   {
+      source = vm->param(0);
+      fileId = vm->param(1);
+   }
+   
    if( fileId == 0 || source == 0 || ! fileId->isObject() || ! fileId->asObjectSafe()->derivedFrom( "Stream" ) )
    {
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ).
-         extra( "X,O:Stream" ) ) );
+         extra( vm->self().isMethodic() ? "Stream" : "X,Stream" ) ) );
       return;
    }
 

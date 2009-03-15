@@ -256,13 +256,20 @@ bool StringStream::get( uint32 &chr )
    if( popBuffer( chr ) )
       return true;
 
-   byte b;
-   if ( read( &b, 1 ) == 1 )
-   {
-      chr = (uint32) b;
-      return true;
+   if ( m_membuf == 0 ) {
+      m_status = t_error;
+      return false;
    }
-   return false;
+
+   if ( m_pos == m_length ) {
+      m_status = m_status | t_eof;
+      return false;
+   }
+   
+   chr = m_membuf[m_pos];
+   m_pos++;
+   m_lastMoved = 1;
+   return true;
 }
 
 int64 StringStream::seek( int64 pos, Stream::e_whence w )
@@ -321,33 +328,17 @@ int32 StringStream::writeAvailable( int32, const Sys::SystemData * )
    return 1;
 }
 
-String *StringStream::getString() const
+void StringStream::getString( String &target ) const
 {
    if ( m_length == 0 )
-      return new String();
-
-   char *data = (char *) memAlloc( m_length );
-   memcpy( data, m_membuf, m_length );
-   String *ret = new String;
-   ret->adopt( data, m_length, m_length );
-   return ret;
-}
-
-String *StringStream::closeToString()
-{
-   if ( m_membuf == 0 )
-      return 0;
-
-   if ( m_length == 0 )
-      return new String();
-
-   String *ret = new String;
-   ret->adopt( (char *) m_membuf, m_length, m_allocated );
-   m_membuf = 0;
-   m_length = 0;
-   m_allocated = 0;
-
-   return ret;
+   {
+      target.size(0);
+   }
+   else {
+      char *data = (char *) memAlloc( m_length );
+      memcpy( data, m_membuf, m_length );
+      target.adopt( data, m_length, m_length );
+   }
 }
 
 bool StringStream::closeToString( String &target )

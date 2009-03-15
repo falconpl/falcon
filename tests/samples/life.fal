@@ -120,13 +120,13 @@ life.spawn(GLIDER, 5,4)
   life.spawn(EXPLODE, 25,10)
   life.spawn(FISH, 4,12)
 // run until break
-gen = 1
+gen = 0
 write("\x1b[2J")	// ANSI clear screen
-while gen <= 2000
+while gen < 2000
    life.evolve()
    write("\x1b[H")	// ANSI home cursor
    life.draw()
-   write( "Life - generation " + gen++ )
+   write( "Life - generation " + ++gen )
    //sleep(0.05) // slight delay
 end
 

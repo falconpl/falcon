@@ -1,7 +1,82 @@
-Falcon (0.8.14.2)
+Falcon (0.9)
+  * major: Removed "sender" from grammar.
   * fixed: Array bindings was not correctly accounted by the Garbage
            Collector.
   * minor: Methods can now be called directly also on numbers.
+  * minor: Removed VMachine::compareItems; using inbound item
+           comparators.
+  * minor: Fallc now saves in UTF-8 in merge mode.
+  * major: Removed "pass" and "pass/in" statements.
+  * minor: Removed "itemCopy()" function (changed into clone() methodic FBOM).
+  * minor: Renamed FBom method into typeId (type is too useful as property name for users).
+  * minor: Revamped and methodized strFront and strBack (String.front()/String.back()).
+  * major: Removed attributes.
+  * major: Added class VMSlot, broadcast, consume, assert, retract, register and unregister
+           message oriented functions.
+  * major: Revamped Engine Message and Error system; now, they are centralized in
+           eng_messages.h, where new generic messages and errors can be simply added.
+  * minor: The engine string table is now expoerted as for any module and can be
+           internationalized.
+  * fixed: String Copy constructor didn't set export to false.
+  * minor: -L option in falcon and falrun excluded automatically the system default path.
+  * major: VFS in loading modules implemented.
+  * major: Removed the obsolete ErrorHandler mechanism and using C++ exceptions.
+  * minor: MemBuf now provides an interface with Java NIO Buffer semantics.
+  * minor: Removed factory function FileReadStats(); now the constructor in FileStats()
+           does everything.
+  * minor: Method FileStat.readStats is renamed as FileStat.read
+  * minor: Changed the order of parameters in RTL serialize() function (first the item,
+           then the stream).
+  * minor: Swapped wildcard and string parameters in strWilcardMatch.
+  * minor: Added String.join method.
+  * major: Methodized all Item API related functions.
+  * minor: Removed now useless functions arrayCopy, arrayFilter and arrayMap.
+  * minor: Removed indirect function (call, callMethod, marshal*), as they are now easily
+           available through eval() and languge operators.
+  * minor: Removed now useless function dictInsert().
+  * minor: Added methodic function strFill() / String.fill().
+  * minor: Added methodic function arrayFill() / Array.fill().
+  * minor: Added methodic function dictFill() / Dictionary.fill().
+  * major: Standard streams and local filesystem VFS providers are now
+           serving buffered streams.
+  * minor: Added getBuffering()/setBuffering() methods to Stream.
+  * fixed: Transcoding control (it is now possible to change
+           transcoders more than once).
+  * minor: Added grab(), grabLine() and grabText() methods to streams. The
+           older functions cannot return newly allocated buffers anymore.
+  * minor: read/write functions on streams now can take advantage of NIO
+           MemBuf interface.
+  * fixed: abs() was mapped to fract(!)
+  * major: Assignment does not causes strings to be automatically copied
+           anymore. Automatic copy is performed on modify (if the string
+           is static), and in deep copies of containers. Modify of non-static
+           string doesn't cause the strings to be copied (explicit .clone() is
+           required). So, a = "...", b = a, b and a faith will be disconnected
+           when one is modified, while a = strMerge(...), b = a, b and a would
+           reflect each other changes. This is a bit hybrid, but consequences
+           are hardly visible. The point is that if you want a mutable string
+           to be different, use an explicit .clone(), and if you want just
+           read-only strings use "...".
+  * major: New GC support: Added singleton GC with static members usedMem,
+           aliveMem, items, th_normal th_active and with static functions
+           enable() and perform(), reflecting the new engine wide GC. The
+           old functions gcEnable, gcSetThreshold, gcPerform, gcSetTimeout,
+           gcGetParams are removed.
+  * major: Introduced parametric evaluation, and oob(0/1) now works at
+           VMachine::functionalEval() level. Parametric eval is done by
+           setting &N where N 1..parmCount() to the nth parameter.
+  * minor: Removed xtimes() and empowered times(). Also, times() is now
+           methodic for Integers and Ranges. Times passes the loop number
+           via parametric evaluation (&1).
+  * minor: Added ETA methods upto() and downto() for Integer metaclass.
+  * major: Added { param => body } fast nameless function declaration.
+  * major: Binary module logical names are resolved adding _fm to the
+           searched module name. In example, "load module" searches for
+           module_fm.dll. Fam/fal/ftd file resolution is unchanged.
+  * major: The loop statement now supports a conditional ending.
+           The end keyword of the loop statement block can be followed by
+           an expression; the loop terminates when the condition is true
+           (same as repeat/until).
 
 Falcon (0.8.14)
   * fixed: Now asObject() raises an error if the item is not an object;
@@ -18,9 +93,9 @@ Falcon (0.8.14)
   * fixed: Relevant warnings symbol table generation (check order priority).
   * fixed: Generating a range from bogus values didn't raise a type error.
   * fixed: Import from module used "=" instead of "as" (leftover).
-  * added: Reintroduced for/to grammar, (step now substituted by "," ), 
+  * added: Reintroduced for/to grammar, (step now substituted by "," ),
            actually a candy grammar for for/in.
-  * added: OOB opcode which manages out of band items. 
+  * added: OOB opcode which manages out of band items.
   * added: OOB operators: ^+ (oob), ^- (deoob), ^? (isoob), ^! (invert oob status)
   * minor: Removed function inspectShort() and secured/empowered inspect().
   * minor: Added parameter defItem to arrayBuffer to "replicate items in arrays".
@@ -30,13 +105,13 @@ Falcon (0.8.14)
            missing or approximative definition, part to plain errors. Now the
            semantic of ranged access is defined and enforced through all the
            operators and RTL functions.
-  * minor: VMachine::launch() is now necessary to start executing the main script 
-           even if launchAtLink() is true at link time. In other words, 
+  * minor: VMachine::launch() is now necessary to start executing the main script
+           even if launchAtLink() is true at link time. In other words,
            launchAtLink() controls only the execution of the main symbol in the
            non-main scripts.
   * minor: falrun now returns 255 on vm error.
-           
-  
+
+
 Falcon (0.8.12)
   * major: Support for class-driven full reflection and 0-space contstant/reflected
       classes.

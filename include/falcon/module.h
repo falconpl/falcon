@@ -27,7 +27,6 @@
 #include <falcon/strtable.h>
 #include <falcon/service.h>
 #include <falcon/genericmap.h>
-#include <falcon/enginedata.h>
 #include <falcon/basealloc.h>
 
 namespace Falcon {
@@ -57,7 +56,7 @@ class FALCON_DYN_CLASS Module: public BaseAlloc
 {
 protected:
 
-   volatile long m_refcount;
+   int32 m_refcount;
 
    /******************************
    * Anagraphic section
@@ -73,7 +72,8 @@ protected:
    /******************************
    * Tables section
    *******************************/
-   StringTable m_strTab;
+   StringTable* m_strTab;
+   bool m_bOwnStringTable;
    SymbolVector m_symbols;
    SymbolTable m_symtab;
    DependTable m_depend;
@@ -196,7 +196,7 @@ public:
       \param id the ID of the string in the string table (insertion order).
       \return A pointer to the string.
    */
-   const String *getString( uint32 id ) const { return m_strTab.get(id); }
+   const String *getString( uint32 id ) const { return m_strTab->get(id); }
 
    Symbol *getSymbol( uint32 id ) const
    {
@@ -456,7 +456,7 @@ public:
          get it with Symbol::instanceOf() and export it with Symbol::exported().
       \return the symbol of the singleton object on success, zero on failure.
    */
-   Symbol *addSingleton( const String &name, Symbol *ctor_sym, bool exp = true );
+   Symbol *addSingleton( const String &name, Symbol *ctor_sym=0, bool exp = true );
 
    /** Adds a singleton object to this module.
       This is like addSingleton( const String &, Symbol *, bool ), but this version
@@ -572,8 +572,10 @@ public:
    */
    virtual bool load( Stream *is, bool skipHeader=true );
 
-   const StringTable &stringTable() const { return m_strTab; }
-   StringTable &stringTable() { return m_strTab; }
+   const StringTable &stringTable() const { return *m_strTab; }
+   StringTable &stringTable() { return *m_strTab; }
+
+   void adoptStringTable( StringTable *st, bool bOwn = false );
 
    /** Creates an istance for a certain service.
       Returns 0 if the module does not provide the required service.
@@ -629,7 +631,7 @@ public:
    bool saveTableTemplate( Stream *stream, const String &encoding ) const;
 
    /** Extract the full logical module name from current module name and parent loader. */
-   static String relativizeName( const String &module_name, const String &parent_name );
+   static String absoluteName( const String &module_name, const String &parent_name );
 };
 
 }
@@ -642,7 +644,7 @@ public:
 #define DEFALUT_FALCON_MODULE_INIT falcon_module_init
 
 #define FALCON_MODULE_DECL \
-   FALCON_MODULE_TYPE DEFALUT_FALCON_MODULE_INIT
+   FALCON_MODULE_TYPE DEFALUT_FALCON_MODULE_INIT()
 
 // Module string table service functions
 #ifndef FAL_STR

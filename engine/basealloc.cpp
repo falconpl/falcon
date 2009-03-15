@@ -18,6 +18,7 @@
 */
 
 #include <falcon/setup.h>
+#include <falcon/globals.h>
 #include <falcon/memory.h>
 #include <falcon/basealloc.h>
 

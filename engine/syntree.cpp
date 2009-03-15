@@ -142,7 +142,7 @@ bool Value::isEqualByValue( const Value &other ) const
          case Value::t_range_decl:
             if( other.asRange()->rangeStart() == asRange()->rangeStart() &&
                   ( (asRange()->isOpen() && other.asRange()->isOpen()) ||
-                    (! asRange()->isOpen() && ! other.asRange()->isOpen() 
+                    (! asRange()->isOpen() && ! other.asRange()->isOpen()
                        && other.asRange()->rangeEnd() == asRange()->rangeEnd())
                   )
                )
@@ -567,28 +567,6 @@ Statement *StmtLaunch::clone() const
    return new StmtLaunch( *this );
 }
 
-// StmtPass statement
-//
-
-StmtPass::StmtPass( const StmtPass &other ):
-   Statement( other )
-{
-   m_called = other.m_called == 0 ? 0 : new Value( *other.m_called );
-   m_saveRetIn = other.m_saveRetIn == 0 ? 0 : new Value( *other.m_saveRetIn );
-}
-
-StmtPass::~StmtPass()
-{
-   delete m_called;
-   delete m_saveRetIn;
-}
-
-Statement *StmtPass::clone() const
-{
-   return new StmtPass( *this );
-}
-
-
 
 // StmtGive statement
 //
@@ -653,9 +631,15 @@ StmtConditional::~StmtConditional()
    delete m_condition;
 }
 
+// StmtLoop statement
+//
+Statement *StmtLoop::clone() const
+{
+   return new StmtLoop( *this );
+}
+
 // StmtWhile statement
 //
-
 Statement *StmtWhile::clone() const
 {
    return new StmtWhile( *this );

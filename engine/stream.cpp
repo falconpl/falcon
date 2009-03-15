@@ -63,7 +63,7 @@ void Stream::pushBuffer( uint32 chr )
 {
    if ( m_rhBufferPos == m_rhBufferSize )
    {
-		m_rhBufferSize += FALCON_READAHEAD_BUFFER_BLOCK;
+      m_rhBufferSize += FALCON_READAHEAD_BUFFER_BLOCK;
       uint32 *buf = (uint32 *) memRealloc( m_rhBuffer, m_rhBufferSize *sizeof(uint32) );
       m_rhBuffer = buf;
    }

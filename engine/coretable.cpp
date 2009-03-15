@@ -431,21 +431,21 @@ bool CoreTable::insert( CoreIterator *iter, const Item &item )
 }
 
 
-void CoreTable::gcMark( VMachine *vm )
+void CoreTable::gcMark( MemPool *mp )
 {
    uint32 i;
 
    // mark the header data...
    for ( i = 0; i < m_headerData.size(); i ++ )
    {
-      vm->memPool()->markItemFast( *((Item *) m_headerData.at(i)) );
+      mp->markItemFast( *((Item *) m_headerData.at(i)) );
    }
 
    // and all the tables.
    for( i = 0; i < m_pages.size(); i++ )
    {
       Item temp = *(CoreArray **) m_pages.at(i);
-      vm->memPool()->markItemFast( temp );
+      mp->markItemFast( temp );
    }
 }
 

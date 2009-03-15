@@ -20,9 +20,6 @@
 #include <falcon/stream.h>
 #include <falcon/traits.h>
 
-#include <falcon/falcondata.h>
-#include <falcon/userdata.h>
-
 namespace Falcon
 {
 
@@ -139,7 +136,6 @@ bool Symbol::load( Stream *in )
       case tlocal:
       case tparam:
       case tlocalundef:
-      case tattribute:
          m_type = type_t( type );
 
       break;
@@ -384,18 +380,22 @@ bool InheritDef::load( Module *mod, Stream *in )
 //=================================================================
 //
 
-ClassDef::ClassDef( ObjectManager *manager ):
+ClassDef::ClassDef( ObjectFactory fact ):
    FuncDef( 0, 0 ),
    m_constructor( 0 ),
    m_properties( &traits::t_stringptr(), &traits::t_voidp() ),
-   m_manager( manager )
+   m_factory( fact ),
+   m_metaclassFor( -1 ),
+   m_bFinal( false )
 {}
 
-ClassDef::ClassDef( Symbol *ext_ctor, ObjectManager *manager ):
+ClassDef::ClassDef( Symbol *ext_ctor, ObjectFactory fact ):
    FuncDef( 0, 0 ),
    m_constructor( ext_ctor ),
    m_properties( &traits::t_stringptr(), &traits::t_voidp() ),
-   m_manager( manager )
+   m_factory( fact ),
+   m_metaclassFor( -1 ),
+   m_bFinal( false )
 {}
 
 
@@ -473,32 +473,6 @@ bool ClassDef::save( Stream *out ) const
 
    uint32 has;
 
-   // Writing of the has clause
-   //TODO: optimize count of has/hasnt clause.
-   has = endianInt32( m_has.size() );
-   out->write(   &has , sizeof( has ) );
-
-   has = endianInt32( m_hasnt.size() );
-   out->write(   &has , sizeof( has ) );
-
-   // writing has clause
-   ListElement *sym_iter = m_has.begin();
-   while( sym_iter != 0 ) {
-      const Symbol *sym = (const Symbol *) sym_iter->data();
-      has = endianInt32( sym->id() );
-      out->write( &has , sizeof( has ) );
-      sym_iter = sym_iter->next();
-   }
-
-   // writing hasn't clause
-   sym_iter = m_hasnt.begin();
-   while( sym_iter != 0 ) {
-      const Symbol *sym = (const Symbol *) sym_iter->data();
-      has = endianInt32( sym->id() );
-      out->write( &has , sizeof( has ) );
-      sym_iter = sym_iter->next();
-   }
-
    // Have we got a constructor?
    if( m_constructor == 0 ) {
       has = 0xffFFffFF;
@@ -544,33 +518,9 @@ bool ClassDef::load( Module *mod, Stream *in )
    if ( ! FuncDef::load( mod, in ) )
       return false;
 
-   uint32 value, has_count, hasnt_count;
-   m_has.clear();
-   m_hasnt.clear();
-
+   uint32 value;
+   
    in->read( &value , sizeof( value ) );
-   has_count = endianInt32(value);
-
-   in->read( &value , sizeof( value ) );
-   hasnt_count = endianInt32(value);
-
-   // reading has clause
-   while( has_count > 0 ) {
-      uint32 has;
-      in->read( &has , sizeof( has ) );
-      m_has.pushBack( mod->getSymbol( endianInt32( has ) ) );
-      --has_count;
-   }
-
-   // reading hasnt clause
-   while( hasnt_count > 0 ) {
-      uint32 hasnt;
-      in->read( &hasnt , sizeof( hasnt ) );
-      m_hasnt.pushBack( mod->getSymbol( endianInt32( hasnt ) ) );
-      --hasnt_count;
-   }
-
-   in->read(   &value , sizeof( value ) );
    value = endianInt32( value );
    // Have we got a constructor?
    if( value == 0xffFFffFF ) {
@@ -613,20 +563,6 @@ bool ClassDef::load( Module *mod, Stream *in )
    }
 
    return true;
-}
-
-
-void ClassDef::carryUserData() {
-   setObjectManager( &core_user_data_manager_cacheful );
-}
-
-void ClassDef::carryUserDataCacheless() {
-   setObjectManager( &core_user_data_manager_cacheless );
-}
-
-
-void ClassDef::carryFalconData(){
-   setObjectManager( &core_falcon_data_manager );
 }
 
 //===================================================================

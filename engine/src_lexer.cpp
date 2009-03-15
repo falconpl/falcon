@@ -54,6 +54,7 @@ SrcLexer::SrcLexer( Compiler *comp ):
    m_bIsDirectiveLine(false),
    m_incremental( false ),
    m_lineContContext( false ),
+   m_graphAgain( false ),
    m_chrEndString(0),
    m_in( 0 ),
    m_compiler( comp ),
@@ -640,12 +641,12 @@ int SrcLexer::lex_normal()
                   int64 retval;
                   if ( ! m_string.parseInt( retval ) )
                      m_compiler->raiseError( e_inv_num_format, m_line );
-   
+
                   VALUE->integer = retval;
                   m_state = e_line;
                   return INTNUM;
                }
-               
+
                // no.
                m_state = e_floatNumber;
             }
@@ -680,7 +681,7 @@ int SrcLexer::lex_normal()
             {
                // end
                m_in->unget( chr );
-               
+
                // "0." ?
                if( m_string == "0." )
                {
@@ -689,7 +690,7 @@ int SrcLexer::lex_normal()
                   m_state = e_line;
                   return INTNUM;
                }
-               
+
                numeric retval;
                if ( ! m_string.parseDouble( retval ) )
                   m_compiler->raiseError( e_inv_num_format, m_line );
@@ -724,7 +725,7 @@ int SrcLexer::lex_normal()
             {
                // end
                m_in->unget( chr );
-               
+
                numeric retval;
                if ( ! m_string.parseDouble( retval ) )
                   m_compiler->raiseError( e_inv_num_format, m_line );
@@ -1331,6 +1332,23 @@ int SrcLexer::checkUnlimitedTokens( uint32 nextChar )
                return CLOSESQUARE;
             }
          }
+         else if ( chr == '{' )
+         {
+            return OPEN_GRAPH;
+         }
+         else if ( chr == '}' )
+         {
+            if( m_graphAgain )
+            {
+               m_graphAgain = false;
+               return CLOSE_GRAPH;
+            }
+            else {
+               m_in->unget( chr );
+               m_graphAgain = true;
+               return EOL;
+            }
+         }
          else if ( chr == '@' )
          {
             return ATSIGN;
@@ -1472,8 +1490,6 @@ int SrcLexer::checkLimitedTokens()
             return NIL;
          else if ( m_string == "for" )
             return FOR;
-         else if ( m_string == "has" )
-            return HAS;
          else if ( m_string == "and" )
             return AND;
          else if ( m_string == "and" )
@@ -1491,8 +1507,6 @@ int SrcLexer::checkLimitedTokens()
             m_bIsDirectiveLine = true;
             return LOAD;
          }
-         if ( m_string == "give" )
-            return GIVE;
          if ( m_string == "init" )
             return INIT;
          if ( m_string == "else" )
@@ -1503,8 +1517,6 @@ int SrcLexer::checkLimitedTokens()
             return FROM;
          if ( m_string == "self" )
             return SELF;
-         if ( m_string == "pass" )
-            return PASS;
          if ( m_string == "case" )
             return CASE;
          if ( m_string == "loop" )
@@ -1526,8 +1538,6 @@ int SrcLexer::checkLimitedTokens()
             return CLASS;
          if ( m_string == "notin" )
             return OP_NOTIN;
-         if ( m_string == "hasnt" )
-            return HASNT;
          if ( m_string == "const" )
             return CONST_KW;
          if ( m_string == "while" )
@@ -1553,8 +1563,6 @@ int SrcLexer::checkLimitedTokens()
             return LAUNCH;
          if ( m_string == "lambda" )
             return LAMBDA;
-         if ( m_string == "sender" )
-            return SENDER;
          if ( m_string == "object" )
             return OBJECT;
          if ( m_string == "return" )
@@ -1605,12 +1613,6 @@ int SrcLexer::checkLimitedTokens()
             return INNERFUNC;
          if ( m_string == "formiddle" )
             return FORMIDDLE;
-      break;
-
-      case 10:
-
-         if ( m_string == "attributes" )
-            return ATTRIBUTES;
       break;
    }
 

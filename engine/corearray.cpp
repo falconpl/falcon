@@ -27,8 +27,8 @@
 
 namespace Falcon {
 
-CoreArray::CoreArray( VMachine *vm ):
-   Garbageable( vm, sizeof( CoreArray ) ),
+CoreArray::CoreArray( ):
+   Garbageable(),
    m_alloc(0),
    m_size(0),
    m_data(0),
@@ -38,8 +38,8 @@ CoreArray::CoreArray( VMachine *vm ):
 {}
 
 
-CoreArray::CoreArray( VMachine *vm, uint32 prealloc ):
-   Garbageable( vm, esize(prealloc) + sizeof(CoreArray) ),
+CoreArray::CoreArray( uint32 prealloc ):
+   Garbageable(),
    m_bindings(0),
    m_table(0),
    m_tablePos(0)
@@ -49,8 +49,8 @@ CoreArray::CoreArray( VMachine *vm, uint32 prealloc ):
    m_size = 0;
 }
 
-CoreArray::CoreArray( VMachine *vm, Item *buffer, uint32 size, uint32 alloc ):
-   Garbageable( vm, esize(alloc) + sizeof(CoreArray) ),
+CoreArray::CoreArray( Item *buffer, uint32 size, uint32 alloc ):
+   Garbageable(),
    m_bindings(0),
    m_table(0),
    m_tablePos(0)
@@ -74,7 +74,6 @@ void CoreArray::append( const Item &ndata )
    {
       m_alloc = m_size + flc_ARRAY_GROWTH;
       m_data = (Item *) memRealloc( m_data, esize( m_alloc ) );
-      updateAllocSize( esize( m_alloc ) + sizeof( CoreArray ) );
    }
    m_data[ m_size ] = ndata;
    m_size++;
@@ -91,7 +90,6 @@ void CoreArray::merge( const CoreArray &other )
    if ( m_alloc < m_size + other.m_size ) {
       m_alloc = m_size + other.m_size;
       m_data = (Item *) memRealloc( m_data, esize( m_alloc ) );
-      updateAllocSize( esize( m_alloc ) + sizeof( CoreArray ) );
    }
 
    memcpy( m_data + m_size, other.m_data, esize( other.m_size ) );
@@ -133,7 +131,6 @@ void CoreArray::merge_front( const CoreArray &other )
       }
 
       m_size = m_alloc;
-      updateAllocSize( esize( m_alloc ) + sizeof( CoreArray ) );
       m_data = mem;
    }
    else {
@@ -165,7 +162,6 @@ bool CoreArray::insert( const Item &ndata, int32 pos )
       m_size++;
       memFree( m_data );
       m_data = mem;
-      updateAllocSize( esize( m_alloc ) + sizeof( CoreArray ) );
    }
    else {
       if ( pos < (int32)m_size )
@@ -203,7 +199,6 @@ bool CoreArray::insert( const CoreArray &other, int32 pos )
       m_size = m_alloc;
       memFree( m_data );
       m_data = mem;
-      updateAllocSize( esize( m_alloc ) + sizeof( CoreArray ) );
    }
    else {
       if ( pos < (int32)m_size )
@@ -248,7 +243,7 @@ int32 CoreArray::find( const Item &itm ) const
 {
    for( uint32 i = 0; i < m_size; i ++ )
    {
-      if ( origin()->compareItems( itm, m_data[ i ] ) == 0 )
+      if ( itm == m_data[ i ] )
          return (int32) i;
    }
 
@@ -308,7 +303,6 @@ bool CoreArray::change( const CoreArray &other, int32 begin, int32 end )
       memFree( m_data );
       m_data = mem;
       m_size = m_alloc;
-      updateAllocSize( esize( m_alloc ) + sizeof( CoreArray ) );
    }
    else {
       if ( end < (int32)m_size )
@@ -350,7 +344,6 @@ bool CoreArray::insertSpace( uint32 pos, uint32 size )
       m_size += size;
       memFree( m_data );
       m_data = mem;
-      updateAllocSize( esize( m_alloc ) + sizeof( CoreArray ) );
    }
    else {
       if ( pos < m_size )
@@ -387,22 +380,23 @@ CoreArray *CoreArray::partition( int32 start, int32 end ) const
          buffer[i] = m_data[start - i];
    }
    else {
-
+      //TODO: GARBAGE
       if( end == start ) {
-         return new CoreArray( origin() );
+         return new CoreArray();
       }
       size = end - start;
       buffer = (Item *) memAlloc( esize( size ) );
       memcpy( buffer, m_data + start, esize( size )  );
    }
-   return new CoreArray( origin(), buffer, size, size );
+   return new CoreArray( buffer, size, size );
 }
 
 CoreArray *CoreArray::clone() const
 {
    Item *buffer = (Item *) memAlloc( esize( m_size ) );
    memcpy( buffer, m_data, esize( m_size )  );
-   CoreArray *ca = new CoreArray( origin(), buffer, m_size, m_size );
+   //TODO: GARBAGE
+   CoreArray *ca = new CoreArray( buffer, m_size, m_size );
    ca->m_table = m_table;
    ca->m_tablePos = m_tablePos;
 
@@ -437,7 +431,6 @@ void CoreArray::reserve( uint32 size ) {
    if ( size > m_alloc ) {
       m_data = (Item *) memRealloc( m_data, esize( size ) );
       m_alloc = size;
-      updateAllocSize( esize( m_alloc ) + sizeof( CoreArray ) );
    }
 }
 
@@ -445,8 +438,9 @@ CoreDict *CoreArray::makeBindings()
 {
    if ( m_bindings == 0 )
    {
-      m_bindings = new LinearDict( origin() );
-      m_bindings->insert( new GarbageString( origin(), "self" ), this );
+      //TODO: GARBAGE
+      m_bindings = new LinearDict( );
+      m_bindings->insert( new CoreString( "self" ), this );
    }
 
    return m_bindings;
@@ -458,12 +452,15 @@ Item* CoreArray::getProperty( const String &name )
 
    if ( m_bindings != 0 )
    {
-      found = m_bindings->find( const_cast<String *>(&name) );
+      found = m_bindings->find( name );
+      if ( found )
+         return found->dereference();
    }
 
-   if ( found == 0 && m_table )
+   // we didn't find it.
+   if ( m_table )
    {
-      CoreTable *table = reinterpret_cast<CoreTable *>(m_table->getUserData() );
+      CoreTable *table = reinterpret_cast<CoreTable *>( m_table->getFalconData() );
       uint32 pos = table->getHeaderPos( name );
       if ( pos != CoreTable::noitem )
       {
@@ -477,11 +474,11 @@ Item* CoreArray::getProperty( const String &name )
    return found;
 }
 
-void CoreArray::setProperty( const String &name, Item &data )
+void CoreArray::setProperty( const String &name, const Item &data )
 {
    if ( m_bindings != 0 )
    {
-      Item* found = m_bindings->find( const_cast<String *>(&name) );
+      Item* found = m_bindings->find( name );
       if ( found != 0 ) {
          *found = data;
          return;
@@ -490,7 +487,7 @@ void CoreArray::setProperty( const String &name, Item &data )
 
    if ( m_table != 0 )
    {
-      CoreTable *table = reinterpret_cast<CoreTable *>(m_table->getUserData() );
+      CoreTable *table = reinterpret_cast<CoreTable *>( m_table->getFalconData() );
       uint32 pos = table->getHeaderPos( name );
       if ( pos != CoreTable::noitem )
       {
@@ -500,8 +497,236 @@ void CoreArray::setProperty( const String &name, Item &data )
    }
 
    m_bindings = makeBindings();
-   m_bindings->insert( new GarbageString( origin(), name ), data );
+   Item ref;
+   VMachine* vm = VMachine::getCurrent();
+   if ( vm )
+      vm->referenceItem( ref, *const_cast<Item*>(&data) );
+
+   m_bindings->insert( new CoreString( name ), ref );
 }
+
+
+void CoreArray::readProperty( const String &prop, Item &item )
+{
+   Item *p = getProperty( prop );
+   if ( p == 0 )
+   {
+      // try to find a generic method
+      VMachine* vm = VMachine::getCurrent();
+      fassert( vm != 0);
+      CoreClass* cc = vm->getMetaClass( FLC_ITEM_ARRAY );
+      uint32 id;
+      if ( cc == 0 || ! cc->properties().findKey( prop, id ) )
+      {
+         throw new AccessError( ErrorParam( e_prop_acc, __LINE__ ).extra( prop ) );
+      }
+
+      p = cc->properties().getValue( id );
+      fassert( ! p->isReference() );
+   }
+
+   if ( p->isFunction() )
+      item.setMethod( this, p->asFunction() );
+   else
+      item = *p;
+}
+
+void CoreArray::writeProperty( const String &prop, const Item &item )
+{
+   setProperty( prop, *item.dereference() );
+}
+
+void CoreArray::readIndex( const Item &index, Item &target )
+{
+   switch ( index.type() )
+   {
+      case FLC_ITEM_INT:
+      {
+         register int32 pos = (int32) index.asInteger();
+         if ( pos < 0 )
+         {
+            if ( -pos <= (int32) length() )
+            {
+               target = elements()[length()+pos];
+               return;
+            }
+         }
+         else
+         {
+            if( pos < (int) length() )
+            {
+               target = elements()[pos];
+               return;
+            }
+         }
+      }
+      break;
+
+      case FLC_ITEM_NUM:
+      {
+         register int32 pos = (int32) index.asNumeric();
+         if ( pos < 0 )
+         {
+            if ( -pos <= (int32) length() )
+            {
+               target = elements()[length()+pos];
+               return;
+            }
+         }
+         else
+         {
+            if( pos < (int) length() )
+            {
+               target = elements()[pos];
+               return;
+            }
+         }
+      }
+      break;
+
+      case FLC_ITEM_RANGE:
+      {
+         // open ranges?
+         if ( index.asRangeIsOpen() &&
+              ((index.asRangeStart() >= 0 && (int) length() <= index.asRangeStart() ) ||
+              (index.asRangeStart() < 0 && (int) length() < -index.asRangeStart() ))
+              )
+         {
+            target = new CoreArray();
+            return;
+         }
+
+         register int32 end = (int32)(index.asRangeIsOpen() ? length() : index.asRangeEnd());
+         CoreArray* array = partition( (int32) index.asRangeStart(), end );
+         if ( array != 0 )
+         {
+            target = array;
+            return;
+         }
+      }
+      break;
+
+      case FLC_ITEM_REFERENCE:
+         readIndex( index.asReference()->origin(), target );
+         return;
+   }
+
+   throw new AccessError( ErrorParam( e_arracc, __LINE__ ).extra( "LDP" ) );
+}
+
+void CoreArray::writeIndex( const Item &index, const Item &target )
+{
+  switch ( index.type() )
+   {
+      case FLC_ITEM_INT:
+      {
+         register int32 pos = (int32) index.asInteger();
+         if ( pos < 0 )
+         {
+            if ( -pos <= (int32) length() )
+            {
+               if ( target.isString() )
+                  elements()[length()+pos] = new CoreString( *target.asString() );
+               else
+                  elements()[length()+pos] = target;
+               return;
+            }
+         }
+         else
+         {
+            if( pos < (int) length() )
+            {
+               if ( target.isString() )
+                  elements()[pos] = new CoreString( *target.asString() );
+               else
+                  elements()[pos] = target;
+               return;
+            }
+         }
+      }
+      break;
+
+      case FLC_ITEM_NUM:
+      {
+         register int32 pos = (int32) index.asNumeric();
+         if ( pos < 0 )
+         {
+            if ( -pos <= (int32) length() )
+            {
+               if ( target.isString() )
+                  elements()[length()+pos] = new CoreString( *target.asString() );
+               else
+                  elements()[length()+pos] = target;
+               return;
+            }
+         }
+         else
+         {
+            if( pos < (int) length() )
+            {
+                if ( target.isString() )
+                  elements()[pos] = new CoreString( *target.asString() );
+               else
+                  elements()[pos] = target;
+               return;
+            }
+         }
+      }
+      break;
+
+      case FLC_ITEM_RANGE:
+      {
+         int32 end = (int32)(index.asRangeIsOpen() ? length() : index.asRangeEnd());
+         int32 start = (int32) index.asRangeStart();
+         const Item *tgt = target.dereference();
+
+         if( tgt->isArray() )
+         {
+            if( change( *target.asArray(), (int32)start, (int32)end ) )
+               return;
+         }
+         else
+         {
+            // if it's not a plain insert...
+            if ( start != end )
+            {
+               // before it's too late.
+               if ( start <  0 )
+                  start = length() + start;
+
+               if ( end <  0 )
+                  end = length() + end;
+
+               if( ! remove( start, end ) )
+                  throw new AccessError( ErrorParam( e_arracc, __LINE__ ).extra( "STP" ) );
+
+               if ( start > end )
+                  start = end;
+            }
+
+            if ( tgt->isString() )
+            {
+                if ( insert( new CoreString( *tgt->asString() ), start ) )
+                  return;
+            }
+            else {
+               if( insert( *tgt, start ) )
+                  return;
+            }
+         }
+
+      }
+      break;
+
+      case FLC_ITEM_REFERENCE:
+         writeIndex( index.asReference()->origin(), target );
+         return;
+   }
+
+
+   throw new AccessError( ErrorParam( e_arracc, __LINE__ ).extra( "STP" ) );
+}
+
 
 }
 

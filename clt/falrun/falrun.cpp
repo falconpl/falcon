@@ -26,7 +26,6 @@
 #include <falcon/fstream.h>
 #include <falcon/fassert.h>
 #include <falcon/genericlist.h>
-#include <falcon/deferrorhandler.h>
 
 
 using namespace Falcon;
@@ -91,22 +90,35 @@ void findModulepath( const String &filename, String &path )
    }
 }
 
+
 String get_load_path()
 {
    String envpath;
-   bool hasEnvPath = Sys::_getEnv( "FALCON_LOAD_PATH", envpath );
-
-   if ( ! hasEnvPath && load_path == "" )
-      return FALCON_DEFAULT_LOAD_PATH;
-   else if ( hasEnvPath ) {
-      if ( load_path == "" )
-         return envpath;
+   bool hasEnvPath = Sys::_getEnv ( "FALCON_LOAD_PATH", envpath );
+   
+   String lp;
+   
+   if ( load_path.size() > 0 )
+   {
+      if ( load_path.getCharAt(0) == ';' )
+         lp = load_path.subString( 1 );
       else
-         return load_path +";"+ envpath;
+         lp = FALCON_DEFAULT_LOAD_PATH ";" + load_path;
+   }
+   
+   if ( ! hasEnvPath )
+   {
+      return lp;
    }
    else
-      return load_path;
+   {
+      if ( lp == "" )
+         return envpath;
+      else
+         return lp + ";" + envpath;
+   }
 }
+
 
 String get_io_encoding()
 {
@@ -120,13 +132,14 @@ String get_io_encoding()
    return "";
 }
 
+
 int main( int argc, char *argv[] )
 {
    // Install a void ctrl-c handler (let ctrl-c to kill this app)
    Sys::_dummy_ctrl_c_handler();
 
-   EngineData data1;
-   Init( data1 );
+   Falcon::Engine::AutoInit autoInit;
+
 
    int script_pos = argc;
    char *input_file = 0;
@@ -252,9 +265,6 @@ int main( int argc, char *argv[] )
    // set the module preferred language; ok also if default ("") is used
    modloader->setLanguage( module_language );
 
-   DefaultErrorHandler *errHand = new DefaultErrorHandler( stdErr );
-   modloader->errorHandler( errHand );
-
    Module *core = core_module_init();
 
    Module *main_mod = modloader->loadModule( bincode_stream );
@@ -284,15 +294,15 @@ int main( int argc, char *argv[] )
 
       Item *item_args = vmachine->findGlobalItem( "args" );
       fassert( item_args != 0 );
-      CoreArray *args = new CoreArray( vmachine, argc - script_pos );
+      CoreArray *args = new CoreArray( argc - script_pos );
       for ( int ap = script_pos; ap < argc; ap ++ ) {
-         args->append( new GarbageString( vmachine, argv[ap] ) );
+         args->append( new CoreString( argv[ap] ) );
       }
       item_args->setArray( args );
 
       Item *script_name = vmachine->findGlobalItem( "scriptName" );
       fassert( script_name != 0 );
-      script_name->setString( new GarbageString( vmachine, module_name ) );
+      script_name->setString( new CoreString( module_name ) );
 
       // the runtime will try to load the references.
       runtime->addModule( main_mod );

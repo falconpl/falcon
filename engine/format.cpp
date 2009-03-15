@@ -632,8 +632,8 @@ bool Format::format( VMachine *vm, const Item &source, String &target )
             return processMismatch( vm, source, target );
          }
 
-         int32 begin = source.asRangeStart();
-         String sBuf1, sBuf2;
+         int64 begin = source.asRangeStart();
+         String sBuf1, sBuf2, sBuf3;
 
          formatInt( begin, sBuf1, true );
 
@@ -641,12 +641,24 @@ bool Format::format( VMachine *vm, const Item &source, String &target )
          applyNeg( sBuf1, (int64) begin );
          if ( ! source.asRangeIsOpen() )
          {
-            int32 end = source.asRangeEnd();
+            int64 end = source.asRangeEnd();
             formatInt( end, sBuf2, true );
             applyNeg( sBuf2, (int64) end );
+            
+            int64 step = source.asRangeStep();
+            if ( (begin <= end && step != 1) ||
+                 (begin > end && step != -1 ) )
+            {
+               formatInt( step, sBuf3, true );
+               applyNeg( sBuf3, (int64) step );
+               sBuffer = "[" + sBuf1 + ":" + sBuf2 + ":" + sBuf3 + "]";
+            }
+            else
+               sBuffer = "[" + sBuf1 + ":" + sBuf2 + "]";
          }
+         else
+            sBuffer = "[" + sBuf1 + ":" + sBuf2 + "]";
 
-         sBuffer = "[" + sBuf1 + ":" + sBuf2 + "]";
          applyPad( sBuffer );
       }
       break;
@@ -676,11 +688,6 @@ bool Format::format( VMachine *vm, const Item &source, String &target )
             }
             else {
                vm->itemToString( sBuffer, &source );
-            }
-
-            if ( vm->hadError() )
-            {
-               return false;
             }
          }
          else {
@@ -786,8 +793,6 @@ bool Format::tryConvertAndFormat( VMachine *vm, const Item &source, String &targ
       if( m_posOfObjectFmt != String::npos )
       {
          vm->itemToString( temp, &source, originalFormat().subString( m_posOfObjectFmt + 1 ) );
-         if( vm->hadError() )
-            return false;
       }
       else
          vm->itemToString( temp, &source );

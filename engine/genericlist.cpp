@@ -21,6 +21,7 @@
 #include <falcon/setup.h>
 #include <falcon/memory.h>
 #include <falcon/genericlist.h>
+#include <falcon/globals.h>
 
 #include <string.h>
 

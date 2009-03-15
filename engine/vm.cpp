@@ -19,8 +19,9 @@
 #include <falcon/runtime.h>
 #include <falcon/vmcontext.h>
 #include <falcon/sys.h>
-#include <falcon/cobject.h>
+#include <falcon/coreobject.h>
 #include <falcon/cclass.h>
+#include <falcon/corefunc.h>
 #include <falcon/symlist.h>
 #include <falcon/proptable.h>
 #include <falcon/memory.h>
@@ -29,54 +30,79 @@
 #include <falcon/stdstreams.h>
 #include <falcon/traits.h>
 #include <falcon/fassert.h>
-#include <falcon/deferrorhandler.h>
 #include <falcon/format.h>
-#include <falcon/attribute.h>
-#include <falcon/bommap.h>
 #include <falcon/vm_sys.h>
 #include <falcon/flexymodule.h>
+#include <falcon/mt.h>
+#include <falcon/vmmsg.h>
 
-#include <stdio.h>
+#include <string.h>
 namespace Falcon {
 
+static ThreadSpecific s_currentVM;
+
+VMachine *VMachine::getCurrent()
+{
+   return (VMachine *) s_currentVM.get();
+}
+
+
 VMachine::VMachine():
-   m_services( &traits::t_string(), &traits::t_voidp() )
+   m_services( &traits::t_string(), &traits::t_voidp() ),
+   m_slots( &traits::t_string(), &traits::t_coreslotptr() ),
+   m_nextVM(0),
+   m_prevVM(0),
+   m_idleNext( 0 ),
+   m_idlePrev( 0 ),
+   m_baton( this ),
+   m_msg_head(0),
+   m_msg_tail(0)
 {
    internal_construct();
    init();
 }
 
 VMachine::VMachine( bool initItems ):
-   m_services( &traits::t_string(), &traits::t_voidp() )
+   m_services( &traits::t_string(), &traits::t_voidp() ),
+   m_slots( &traits::t_string(), &traits::t_coreslotptr() ),
+   m_nextVM(0),
+   m_prevVM(0),
+   m_idleNext( 0 ),
+   m_idlePrev( 0 ),
+   m_baton( this ),
+   m_msg_head(0),
+   m_msg_tail(0)
 {
    internal_construct();
    if ( initItems )
       init();
 }
 
+void VMachine::setCurrent() const
+{
+   s_currentVM.set( (void*) this );
+}
 
 void VMachine::internal_construct()
 {
    m_userData = 0;
-   m_attributes = 0;
-   m_bOwnErrorHandler = false;
    m_bhasStandardStreams = false;
-   m_errhand =0;
-   m_error = 0;
    m_pc = 0;
    m_pc_next = 0;
    m_loopsGC = FALCON_VM_DFAULT_CHECK_LOOPS;
    m_loopsContext = FALCON_VM_DFAULT_CHECK_LOOPS;
    m_loopsCallback = 0;
    m_opLimit = 0;
+   m_generation = 0;
    m_bSingleStep = false;
    m_sleepAsRequests = false;
-   m_memPool = 0;
    m_stdIn = 0;
    m_stdOut = 0;
    m_stdErr = 0;
    m_tryFrame = i_noTryFrame;
    m_launchAtLink = true;
+   m_bGcEnabled = true;
+
 
    resetCounters();
 
@@ -101,6 +127,9 @@ void VMachine::internal_construct()
    m_contexts.pushBack( m_currentContext );
 
    m_opHandlers = (tOpcodeHandler *) memAlloc( FLC_PCODE_COUNT * sizeof( tOpcodeHandler ) );
+
+   m_metaClasses = (CoreClass**) memAlloc( FLC_ITEM_COUNT * sizeof(CoreClass*) );
+   memset( m_metaClasses, 0, FLC_ITEM_COUNT * sizeof(CoreClass*) );
 
    // This code is actually here for debug reasons. Opcode management should
    // be performed via a swtich in the end, but until the beta version, this
@@ -177,10 +206,6 @@ void VMachine::internal_construct()
    m_opHandlers[ P_TRAN] = opcodeHandler_TRAN;
    m_opHandlers[ P_UNPK] = opcodeHandler_UNPK;
    m_opHandlers[ P_SWCH] = opcodeHandler_SWCH;
-   m_opHandlers[ P_HAS ] = opcodeHandler_HAS ;
-   m_opHandlers[ P_HASN] = opcodeHandler_HASN;
-   m_opHandlers[ P_GIVE] = opcodeHandler_GIVE;
-   m_opHandlers[ P_GIVN] = opcodeHandler_GIVN;
    m_opHandlers[ P_IN  ] = opcodeHandler_IN  ;
    m_opHandlers[ P_NOIN] = opcodeHandler_NOIN;
    m_opHandlers[ P_PROV] = opcodeHandler_PROV;
@@ -188,8 +213,6 @@ void VMachine::internal_construct()
    m_opHandlers[ P_STVS] = opcodeHandler_STVS;
    m_opHandlers[ P_AND ] = opcodeHandler_AND;
    m_opHandlers[ P_OR  ] = opcodeHandler_OR;
-   m_opHandlers[ P_PASS ] = opcodeHandler_PASS;
-   m_opHandlers[ P_PSIN ] = opcodeHandler_PSIN;
 
    // Range 4: ternary opcodes
    m_opHandlers[ P_STP ] = opcodeHandler_STP ;
@@ -221,41 +244,14 @@ void VMachine::internal_construct()
    m_opHandlers[ P_EVAL ] = opcodeHandler_EVAL;
    m_opHandlers[ P_OOB ] = opcodeHandler_OOB;
 
-   m_fbom = new BomMap();
-   m_fbom->add( "toString" );
-   m_fbom->add( "len" );
-   m_fbom->add( "first" );
-   m_fbom->add( "last" );
-   m_fbom->add( "compare" );
-   m_fbom->add( "equal" );
-   m_fbom->add( "type" );
-   m_fbom->add( "className" );
-   m_fbom->add( "baseClass" );
-   m_fbom->add( "derivedFrom" );
-   m_fbom->add( "clone" );
-   m_fbom->add( "serialize" );
-   m_fbom->add( "attribs" );
-   m_fbom->add( "trim" );
-   m_fbom->add( "frontTrim" );
-   m_fbom->add( "allTrim" );
-   m_fbom->add( "front" );
-   m_fbom->add( "back" );
-   m_fbom->add( "table" );
-   m_fbom->add( "tabField" );
-   m_fbom->add( "tabRow" );
+   // Finally, register to the GC system
+   memPool->registerVM( this );
 }
 
 
 
 void VMachine::init()
 {
-   //================================
-   // Preparing memory handling
-   if ( m_memPool == 0 )
-      m_memPool = new MemPool();
-
-   m_memPool->setOwner( this );
-
    //================================
    // Preparing minimal input/output
    if ( m_stdIn == 0 )
@@ -266,63 +262,33 @@ void VMachine::init()
 
    if ( m_stdErr == 0 )
       m_stdErr = stdErrorStream();
-
-   if ( m_errhand == 0 )
-   {
-      m_bOwnErrorHandler = true;
-      m_errhand = new DefaultErrorHandler( m_stdErr );
-   }
 }
 
 
 VMachine::~VMachine()
 {
+   // disengage from mempool
+   if ( memPool != 0 )
+   {
+      // Assert that the baton is held here.
+      fassert( m_baton.busy() );
+      memPool->unregisterVM( this );
+   }
+
    // Free generic tables (quite safe)
    memFree( m_opHandlers );
-   delete m_fbom;
-
-   // errors may be created by modules, so we should destroy them before
-   // having a chance to destroy modules
-   // delete the owned error
-   if( m_error != 0 ) {
-     m_error->decref();
-	  m_error = 0;
-   }
-
-   if ( m_bOwnErrorHandler )
-      delete m_errhand;
-
-   // delete the attributes
-   AttribHandler *h = m_attributes;
-   while( h != 0 )
-   {
-      AttribHandler *h1 = h->next();
-      // this is the only place where we destroy also the attribute.
-      delete h->attrib();
-      delete h;
-      h = h1;
-   }
+   memFree( m_metaClasses );
 
    // and finally, the streams.
    delete m_stdErr;
    delete m_stdIn;
    delete m_stdOut;
 
-   delete  m_memPool;
    // clear now the global maps
    // this also decrefs the modules and destroys the globals.
    // Notice that this would be done automatically also at destructor exit.
    m_liveModules.clear();
 
-}
-
-void VMachine::errorHandler( ErrorHandler *em, bool own )
-{
-   if ( m_bOwnErrorHandler )
-      delete m_errhand;
-
-   m_errhand = em;
-   m_bOwnErrorHandler = own;
 }
 
 
@@ -381,7 +347,7 @@ LiveModule *VMachine::link( Module *mod, bool isMainModule, bool bPrivate )
 
    // Ok, the module is now in.
    // We can now increment reference count and add it to ourselves
-   LiveModule *livemod = new LiveModule( this, mod, bPrivate );
+   LiveModule *livemod = new LiveModule( mod, bPrivate );
 
    // set this as the main module if required.
    if ( isMainModule )
@@ -400,7 +366,7 @@ LiveModule *VMachine::prelink( Module *mod, bool bIsMain, bool bPrivate )
    LiveModule *oldMod = findModule( mod->name() );
    if ( oldMod == 0 )
    {
-      oldMod = new LiveModule( this, mod, bPrivate );
+      oldMod = new LiveModule( mod, bPrivate );
       m_liveModules.insert( &oldMod->name(), oldMod );
    }
 
@@ -546,10 +512,7 @@ bool VMachine::liveLink( LiveModule *livemod, t_linkMode mode )
    while( success && obj_iter != 0 )
    {
       Symbol *obj = (Symbol *) obj_iter->data();
-
-      if( ! initializeInstance( obj, livemod ) )
-         success = false;
-
+      initializeInstance( obj, livemod );
       obj_iter = obj_iter->next();
    }
 
@@ -609,7 +572,7 @@ bool VMachine::linkSymbol( const Symbol *sym, LiveModule *livemod )
          fassert( depData != 0 );
 
          // ... then find the module in the item
-         lmod = findModule( Module::relativizeName(
+         lmod = findModule( Module::absoluteName(
                *depData->moduleName(), mod->name() ));
 
          // we must convert the name if it contains self or if it starts with "."
@@ -623,7 +586,7 @@ bool VMachine::linkSymbol( const Symbol *sym, LiveModule *livemod )
          fassert( depData != 0 );
 
          // ... then find the module in the item
-         lmod = findModule( Module::relativizeName(
+         lmod = findModule( Module::absoluteName(
                *depData->moduleName(), mod->name() ));
 
          if( lmod != 0 )
@@ -713,27 +676,7 @@ bool VMachine::linkSymbol( const Symbol *sym, LiveModule *livemod )
    {
       case Symbol::tfunc:
       case Symbol::textfunc:
-         globs->itemAt( sym->itemId() ).setFunction( sym, livemod );
-      break;
-
-      case Symbol::tattribute:
-         {
-            // create a new attribute
-            Attribute *attrib = new Attribute( sym );
-
-            // define the item as an attribute
-            globs->itemAt( sym->itemId() ).setAttribute( attrib );
-
-            // add the attribute to the list of known attributes
-            if ( m_attributes == 0 )
-            {
-               m_attributes = new AttribHandler( attrib, 0 );
-            }
-            else {
-               m_attributes->prev( new AttribHandler( attrib, 0, 0, m_attributes ) );
-               m_attributes = m_attributes->prev();
-            }
-         }
+         globs->itemAt( sym->itemId() ).setFunction( new CoreFunc( sym, livemod ) );
       break;
 
       case Symbol::tvar:
@@ -747,7 +690,7 @@ bool VMachine::linkSymbol( const Symbol *sym, LiveModule *livemod )
             case VarDef::t_num: itm->setNumeric( vd->asNumeric() ); break;
             case VarDef::t_string:
             {
-               itm->setString( new GarbageString( this, *vd->asString() ) );
+               itm->setString( new CoreString( *vd->asString() ) );
             }
             break;
 
@@ -926,6 +869,11 @@ bool VMachine::linkClassSymbol( const Symbol *sym, LiveModule *livemod )
       tmp->liveModule()->wkitems().itemAt( tmp->wkiid() ) = cc;
    }
 
+   if ( sym->getClassDef()->isMetaclassFor() >= 0 )
+   {
+      m_metaClasses[ sym->getClassDef()->isMetaclassFor() ] = cc;
+   }
+
    return true;
 }
 
@@ -962,47 +910,27 @@ bool VMachine::linkInstanceSymbol( const Symbol *obj, LiveModule *livemod )
 }
 
 
-bool VMachine::initializeInstance( const Symbol *obj, LiveModule *livemod )
+void VMachine::initializeInstance( const Symbol *obj, LiveModule *livemod )
 {
    ItemVector *globs = &livemod->globals();
-   bool bSuccess = true;
 
    Symbol *cls = obj->getInstance();
    if ( cls->getClassDef()->constructor() != 0 )
    {
-      // save S1 and S2, or we won't be able to link in scripts
-      Item oldS1 = m_regS1;
-      Item oldS2 = m_regS2;
-
-      Item *clsItem = globs->itemAt( cls->itemId() ).dereference();
-      m_regS1 = globs->itemAt( obj->itemId() ) ;
-      m_event = eventNone;
+      Item ctor = *globs->itemAt( cls->getClassDef()->constructor()->itemId() ).dereference();
+      ctor.methodize( *globs->itemAt( obj->itemId() ).dereference() );
 
       // If we can't call, we have a wrong init.
-      if ( ! callItem( *clsItem, 0, e_callInst ) )
-      {
-         raiseError(
-            new CodeError( ErrorParam( e_non_callable, __LINE__ ).origin( e_orig_vm ).
-                  module( livemod->module()->name() ).
-                  symbol( obj->name() ).
-                  extra( "_init" ) )
-            );
+      try {
+         callItemAtomic( ctor, 0 );
       }
-      // eventually report an initialization error.
-      else if ( m_event == eventRisen )
+      catch( Error *err )
       {
-        bSuccess = false;
+         err->extraDescription( "_init" );
+         err->origin( e_orig_vm );
+         throw;
       }
-
-      // clear S1
-      m_regS1 = oldS1;
-      // and s2 for safety
-      m_regS2 = oldS2;
-
    }
-
-
-   return true;
 }
 
 
@@ -1027,8 +955,7 @@ bool VMachine::linkCompleteSymbol( const Symbol *sym, LiveModule *livemod )
            linkInstanceSymbol( sym, livemod )
       )
       {
-         if ( ! initializeInstance( sym, livemod ) )
-            bSuccess = false;
+         initializeInstance( sym, livemod );
       }
       else
          bSuccess = false;
@@ -1102,7 +1029,7 @@ PropertyTable *VMachine::createClassTemplate( LiveModule *lmod, const Map &pt )
 
          case VarDef::t_string:
          {
-            e.m_value.setString( new GarbageString( this, *vd->asString() ) );
+            e.m_value.setString( new CoreString( *vd->asString() ) );
          }
          break;
 
@@ -1124,7 +1051,7 @@ PropertyTable *VMachine::createClassTemplate( LiveModule *lmod, const Map &pt )
             fassert( sym->isExtFunc() || sym->isFunction() );
             if ( sym->isExtFunc() || sym->isFunction() )
             {
-               e.m_value.setFunction( sym, vdmod->lmod );
+               e.m_value.setFunction( new CoreFunc( sym, vdmod->lmod ) );
             }
          }
          break;
@@ -1145,20 +1072,16 @@ PropertyTable *VMachine::createClassTemplate( LiveModule *lmod, const Map &pt )
 CoreClass *VMachine::linkClass( LiveModule *lmod, const Symbol *clssym )
 {
    Map props( &traits::t_stringptr(), &traits::t_voidp() ) ;
-   AttribHandler *head = 0;
-   ObjectManager *manager = 0;
 
-   if( ! linkSubClass( lmod, clssym, props, &head, &manager ) )
+   ObjectFactory factory = 0;
+   if( ! linkSubClass( lmod, clssym, props, &factory ) )
       return 0;
 
-   CoreClass *cc = new CoreClass( this, clssym, lmod, createClassTemplate( lmod, props ) );
-   cc->setObjectManager( manager );
+   CoreClass *cc = new CoreClass( clssym, lmod, createClassTemplate( lmod, props ) );
    Symbol *ctor = clssym->getClassDef()->constructor();
    if ( ctor != 0 ) {
-      cc->constructor().setFunction( ctor, lmod );
+      cc->constructor().setFunction( new CoreFunc( ctor, lmod ) );
    }
-
-   cc->setAttributeList( head );
 
    // destroy the temporary vardef we have created
    MapIterator iter = props.begin();
@@ -1168,19 +1091,58 @@ CoreClass *VMachine::linkClass( LiveModule *lmod, const Symbol *clssym )
       delete value;
       iter.next();
    }
+
+   // ok, now determine the default object factory, if not provided.
+   if( factory != 0 )
+   {
+      cc->factory( factory );
+   }
+   else
+   {
+      if ( ! cc->properties().isReflective() )
+      {
+         // a standard falcon object
+         cc->factory( FalconObjectFactory );
+      }
+      else
+      {
+         if ( cc->properties().isStatic() )
+         {
+            // A fully reflective class.
+            cc->factory( ReflectFalconFactory );
+         }
+         else
+         {
+            // a partially reflective class.
+            cc->factory( CRFalconFactory );
+         }
+      }
+   }
+
    return cc;
 }
 
 
 bool VMachine::linkSubClass( LiveModule *lmod, const Symbol *clssym,
-      Map &props, AttribHandler **attribs, ObjectManager **manager )
+      Map &props, ObjectFactory *factory )
 {
    // first sub-instantiates all the inheritances.
    ClassDef *cd = clssym->getClassDef();
    ListElement *from_iter = cd->inheritance().begin();
    const Module *class_module = clssym->module();
 
-   if( *manager != 0 && cd->getObjectManager() != 0 )
+   // If the class is final, we're doomed, as this is called on subclasses
+   if( cd->isFinal() )
+   {
+      raiseError(
+         new CodeError( ErrorParam( e_final_inherit, clssym->declaredAt() ).origin( e_orig_vm ).
+            symbol( clssym->name() ).
+            module( class_module->name() ) )
+            );
+      return false;
+   }
+
+   if( *factory != 0 && cd->factory() != 0 )
    {
       // raise an error for duplicated object manager.
       raiseError(
@@ -1191,7 +1153,7 @@ bool VMachine::linkSubClass( LiveModule *lmod, const Symbol *clssym,
       return false;
    }
 
-   ObjectManager *subManager = 0;
+   ObjectFactory subFactory = 0;
 
    while( from_iter != 0 )
    {
@@ -1203,7 +1165,7 @@ bool VMachine::linkSubClass( LiveModule *lmod, const Symbol *clssym,
       if( parent->isClass() )
       {
          // we create the item anew instead of relying on the already linked item.
-         if ( ! linkSubClass( lmod, parent, props, attribs, &subManager ) )
+         if ( ! linkSubClass( lmod, parent, props, &subFactory ) )
             return false;
       }
       else if ( parent->isUndefined() )
@@ -1223,7 +1185,7 @@ bool VMachine::linkSubClass( LiveModule *lmod, const Symbol *clssym,
 
          parent = icls->asClass()->symbol();
          LiveModule *parmod = findModule( parent->module()->name() );
-         if ( ! linkSubClass( parmod, parent, props, attribs, &subManager ) )
+         if ( ! linkSubClass( parmod, parent, props, &subFactory ) )
             return false;
       }
       else
@@ -1238,10 +1200,10 @@ bool VMachine::linkSubClass( LiveModule *lmod, const Symbol *clssym,
    }
 
    // assign our manager
-   if ( cd->getObjectManager() != 0 )
-      *manager = cd->getObjectManager();
+   if ( cd->factory() != 0 )
+      *factory = cd->factory();
    else
-      *manager = subManager;
+      *factory = subFactory;
 
    // then copies the vardefs declared in this class.
    MapIterator iter = cd->properties().begin();
@@ -1259,82 +1221,6 @@ bool VMachine::linkSubClass( LiveModule *lmod, const Symbol *clssym,
       props.insert( key, value );
 
       iter.next();
-   }
-
-   // and set attributes;
-   // first has
-   AttribHandler *&head = *attribs;
-   ListElement *hiter = cd->has().begin();
-   while( hiter != 0 )
-   {
-      const Symbol *sym = (const Symbol *) hiter->data();
-      Item *hitem = lmod->globals().itemAt( sym->itemId() ).dereference();
-      if ( hitem->isAttribute() ) {
-         if ( head == 0 )
-         {
-            head = new AttribHandler( hitem->asAttribute(), 0 );
-         }
-         else
-         {
-            head->prev( new AttribHandler( hitem->asAttribute(), 0, 0, head ) );
-            head = head->prev();
-         }
-      }
-      else {
-         raiseError( new CodeError(
-            ErrorParam( e_no_attrib, sym->declaredAt() ).origin( e_orig_vm ).
-            symbol( sym->name() ).
-            module( sym->module()->name() ) )
-            );
-      }
-
-      hiter = hiter->next();
-   }
-
-   // ... then hasnt
-   hiter = cd->hasnt().begin();
-   while( hiter != 0 )
-   {
-      const Symbol *sym = (const Symbol *) hiter->data();
-      Item *hitem = lmod->globals().itemAt( sym->itemId() ).dereference();
-      if ( hitem->isAttribute() )
-      {
-         AttribHandler *head = *attribs;
-         Attribute *att = hitem->asAttribute();
-         if ( head != 0 )
-         {
-            if ( head->attrib() == att )
-            {
-               *attribs = head->next();
-               if ( *attribs )
-                  (*attribs)->prev(0);
-               delete head;
-            }
-            else {
-               head = head->next();
-               while( head != 0 )
-               {
-                  if ( head->attrib() == att )
-                  {
-                     head->prev()->next( head->next() );
-                     if( head->next() != 0 )
-                        head->next()->prev( head->prev() );
-                     delete head;
-                     break;
-                  }
-                  head = head->next();
-               }
-            }
-         }
-      }
-      else {
-         raiseError( new CodeError(
-            ErrorParam( e_no_attrib, sym->declaredAt() ).origin( e_orig_vm ).
-            symbol( sym->name() ).
-            module( sym->module()->name() ) )
-            );
-      }
-      hiter = hiter->next();
    }
 
    return true;
@@ -1392,7 +1278,7 @@ bool VMachine::prepare( const String &startSym, uint32 paramCount )
    m_pc = 0;
    m_symbol = execSym;
    m_currentGlobals = &curMod->globals();
-   m_currentModule = curMod->module();
+   m_currentModule = curMod;
 
    // reset the VM to ready it for execution
    reset();
@@ -1460,76 +1346,48 @@ void VMachine::raiseError( int code, const String &expl, int32 line )
          ErrorParam( code, line ).origin( e_orig_vm ).hard().extra( expl )
       );
 
-   // should not be necessary, asthe first error in m_error will stop the VM,
-   // but we do it in case of programming errors in the modules to avoid leaks on
-   // multiple raises.
-   if ( m_error != 0 )
-      m_error->decref();
-   m_error = err;
-
    // of course, if we're not executing, there nothing to raise
-   if( currentSymbol() == 0 )
+   if( currentSymbol() != 0 )
    {
-      if ( m_errhand )
-         m_errhand->handleError( err );
-   }
-   else {
       fillErrorContext( err );
       m_event = eventRisen;
    }
+
+   throw err;
 }
 
 
 void VMachine::raiseError( Error *err )
 {
-   if ( m_error != 0 )
-      m_error->decref();
-   m_error = err;
-
    // of course, if we're not executing, there nothing to raise
-   if( currentSymbol() == 0 )
+   if( currentSymbol() != 0 )
    {
-      if ( m_errhand )
-         m_errhand->handleError( err );
-   }
-   else {
+      fillErrorContext( err );
       m_event = eventRisen;
    }
+
+   throw err;
 }
 
 void VMachine::raiseRTError( Error *err )
 {
-   if ( m_error != 0 )
-      m_error->decref();
-   m_error = err;
-
    // give an origin
    err->origin( e_orig_runtime );
    // of course, if we're not executing, there nothing to raise
-   if( currentSymbol() == 0 )
+   if( currentSymbol() != 0 )
    {
-      if ( m_errhand )
-         m_errhand->handleError( err );
-   }
-   else {
       fillErrorContext( err );
       m_event = eventRisen;
    }
+
+   throw err;
 }
 
 void VMachine::raiseModError( Error *err )
 {
-   if ( m_error != 0 )
-      m_error->decref();
-   m_error = err;
-
    // of course, if we're not executing, there nothing to raise
-   if( currentSymbol() == 0 )
+   if( currentSymbol() != 0 )
    {
-      if ( m_errhand )
-         m_errhand->handleError( err );
-   }
-   else {
       if ( err->module().size() == 0 )
          err->module( currentSymbol()->module()->name() );
 
@@ -1539,6 +1397,8 @@ void VMachine::raiseModError( Error *err )
       fillErrorTraceback( *err );
       m_event = eventRisen;
    }
+
+   throw err;
 }
 
 void VMachine::fillErrorTraceback( Error &error )
@@ -1583,6 +1443,8 @@ void VMachine::fillErrorTraceback( Error &error )
 }
 
 
+
+
 bool VMachine::getCaller( const Symbol *&sym, const Module *&module)
 {
    if ( m_stackBase < VM_FRAME_SPACE )
@@ -1590,38 +1452,9 @@ bool VMachine::getCaller( const Symbol *&sym, const Module *&module)
 
    StackFrame &frame = *(StackFrame *) m_stack->at( m_stackBase - VM_FRAME_SPACE );
    sym = frame.m_symbol;
-   module = frame.m_module;
+   module = frame.m_module->module();
    return sym != 0 && module != 0;
 }
-
-void VMachine::handleError( Error *err )
-{
-   if ( m_error )
-   {
-      m_error->decref();
-   }
-
-   m_error = err;
-   m_error->incref();
-   m_event = eventRisen;
-
-   // we got either pass the error to the script or to our error handler
-   // if we have a valid try frame, the script will handle somewhere.
-   if ( m_tryFrame == i_noTryFrame )
-   {
-      // we got to create a traceback for this error.
-      fillErrorTraceback( *err );
-
-      // and if no script is in charge, we must also notify it. Else, we'll
-      // wait for the main loop to exit
-      if( m_symbol == 0 && m_errhand != 0 )
-      {
-         m_errhand->handleError( err );
-      }
-   }
-
-}
-
 
 void VMachine::fillErrorContext( Error *err, bool filltb )
 {
@@ -1641,349 +1474,6 @@ void VMachine::fillErrorContext( Error *err, bool filltb )
 }
 
 
-bool VMachine::callItem( const Item &callable, int32 paramCount, e_callMode callMode )
-{
-   const Symbol *target;
-   Item oldsender;
-   Garbageable *self = 0;
-   LiveModule *targetMod;
-
-   if ( ! callable.isCallable() )
-      return false;
-
-   switch( callable.type() )
-   {
-      case FLC_ITEM_FBOM:
-      {
-         m_bomParams = paramCount;
-         bool bomRet = callable.callBom( this );
-         m_stack->resize( m_stack->size() - paramCount );
-         return bomRet;
-      }
-
-      case FLC_ITEM_METHOD:
-      case FLC_ITEM_TABMETHOD:
-         self = callable.asMethodObject();
-         target = callable.asMethodFunction();
-         targetMod = callable.asModule();
-      break;
-
-      case FLC_ITEM_FUNC:
-         target = callable.asFunction();
-         targetMod = callable.asModule();
-      break;
-
-      case FLC_ITEM_CLSMETHOD:
-      case FLC_ITEM_CLASS:
-      {
-         CoreClass *cls = callable.asClass();
-         if( callMode != e_callNormal && callMode != e_callFrame ) {
-            self = m_regS1.asObjectSafe();
-         }
-         else {
-            self = cls->createInstance();
-            if ( self == 0 )
-               return false;
-         }
-
-         // if the class has not a constructor, we just set the item in A
-         // and return
-         if ( cls->constructor().isNil() ) {
-            // we are sure it's a core object
-            m_regA.setObject( static_cast<CoreObject* >(self) );
-            // pop the stack
-            m_stack->resize( m_stack->size() - paramCount );
-            return true;
-         }
-
-         if ( ! cls->constructor().asModule()->isAlive() )
-         {
-            const_cast<Item *>(&callable)->setNil();
-            return false;
-         }
-
-         target = cls->constructor().asFunction();
-         targetMod = cls->constructor().asModule();
-      }
-      break;
-
-      case FLC_ITEM_ARRAY:
-      {
-         CoreArray *arr = callable.asArray();
-
-         if ( arr->length() != 0 )
-         {
-            const Item &carr = callable.asArray()->at(0);
-
-            if ( carr.isFbom() || carr.isFunction() ||
-               carr.isMethod() || carr.isClass() )
-            {
-               // ok, it's a callable array. See if we can set the binding context.
-               Item regBindP = m_regBind;
-               if ( ! m_regBind.isDict() )
-               {
-                  m_regBind = arr->makeBindings();
-                  m_regBindP = m_regBind;
-               }
-
-               uint32 arraySize = arr->length();
-               uint32 sizeNow = m_stack->size();
-
-               // move parameters beyond array parameters
-               arraySize -- ; // first element is the callable item.
-               if ( arraySize > 0 )
-               {
-                  // first array element is the called item.
-                  m_stack->resize( sizeNow + arraySize );
-
-                  sizeNow -= paramCount;
-                  for ( uint32 j = sizeNow + paramCount; j > sizeNow; j -- )
-                  {
-                     m_stack->itemAt( j-1 + arraySize ) = m_stack->itemAt( j-1 );
-                  }
-
-                  // push array paramers
-                  for ( uint32 i = 0; i < arraySize; i ++ )
-                  {
-                     Item &itm = (*arr)[i + 1];
-                     if( itm.isLBind() )
-                     {
-                        if ( itm.asFBind() == 0 )
-                        {
-                           m_stack->itemAt( i + sizeNow ) = *getSafeBinding( *itm.asLBind() );
-                        }
-                        else {
-                           // treat as a future binding
-                           regBindP.flagsOn( 0xF0 );
-                           m_stack->itemAt( i + sizeNow ) = itm;
-                        }
-                     }
-                     else {
-                        // just transfer the parameters
-                        m_stack->itemAt( i + sizeNow ) = itm;
-                     }
-                  }
-               }
-
-               m_regBind = regBindP;
-               return callItem( carr, arraySize + paramCount, callMode );
-            }
-         }
-
-         if ( paramCount != 0 )
-               m_stack->resize( m_stack->size() - paramCount );
-         return false;
-      }
-      break;
-
-      default:
-         // non callableitem
-         if ( paramCount != 0 )
-            m_stack->resize( m_stack->size() - paramCount );
-         return false;
-   }
-
-   // manage internal functions
-   FuncDef *tg_def;
-   const SymbolTable *symtab;
-
-   if( target->isFunction() ) {
-      tg_def = target->getFuncDef();
-      symtab = &tg_def->symtab();
-   }
-   else {
-      tg_def = 0;
-      symtab = target->getExtFuncDef()->parameters();
-   }
-
-
-   // eventually check for named parameters
-   if ( m_regBind.flags() == 0xF0 )
-   {
-      m_regBind.flags(0);
-      // We know we have (probably) a named parameter.
-      uint32 size = m_stack->size();
-      uint32 paramBase = size - paramCount;
-      ItemVector iv(8);
-
-      uint32 pid = 0;
-
-      // first step; identify future binds and pack parameters.
-      while( paramBase+pid < size )
-      {
-         Item &item = m_stack->itemAt( paramBase+pid );
-         if ( item.isFutureBind() )
-         {
-            // we must move the parameter into the right position
-            iv.push( &item );
-            for( uint32 pos = paramBase + pid + 1; pos < size; pos ++ )
-            {
-               m_stack->itemAt( pos - 1 ) = m_stack->itemAt( pos );
-            }
-            m_stack->itemAt( size-1 ).setNil();
-            size--;
-            paramCount--;
-         }
-         else
-            pid++;
-      }
-      m_stack->resize( size );
-
-      // second step: apply future binds.
-      for( uint32 i = 0; i < iv.size(); i ++ )
-      {
-         Item &item = iv.itemAt( i );
-
-         // try to find the parameter
-         const String *pname = item.asLBind();
-         Symbol *param = symtab == 0 ? 0 : symtab->findByName( *pname );
-         if ( param == 0 ) {
-            raiseError( e_undef_sym, *pname );
-            return true; // prevent sub-raising.
-         }
-
-         // place it in the stack; if the stack is not big enough, resize it.
-         if ( m_stack->size() <= param->itemId() + paramBase )
-         {
-            paramCount = param->itemId()+1;
-            m_stack->resize( paramCount + paramBase );
-         }
-
-         m_stack->itemAt( param->itemId() + paramBase ) = item.asFBind()->origin();
-      }
-   }
-
-   // ensure against optional parameters.
-   if( tg_def != 0 && paramCount < tg_def->params() )
-   {
-      m_stack->resize( m_stack->size() + tg_def->params() - paramCount );
-      paramCount = tg_def->params();
-   }
-
-   // space for frame
-   m_stack->resize( m_stack->size() + VM_FRAME_SPACE );
-   StackFrame *frame = (StackFrame *) m_stack->at( m_stack->size() - VM_FRAME_SPACE );
-   frame->header.type( FLC_ITEM_INVALID );
-   frame->m_symbol = m_symbol;
-   frame->m_ret_pc = m_pc_next;
-   frame->m_call_pc = m_pc;
-   frame->m_module = m_currentModule;
-   frame->m_globals = m_currentGlobals;
-   frame->m_param_count = (byte)paramCount;
-   frame->m_stack_base = m_stackBase;
-   frame->m_try_base = m_tryFrame;
-   frame->m_break = false;
-   frame->m_suspend = false;
-   frame->m_binding = m_regBind;
-
-   if( ! m_regBindP.isNil() )
-   {
-      m_regBind = m_regBindP;
-      m_regBindP.setNil();
-   }
-
-   // iterative processing support
-   frame->m_endFrameFunc = 0;
-
-   // now we can change the stack base
-   m_stackBase = m_stack->size();
-
-   // Save the stack frame
-   if ( callMode == e_callInst || callMode == e_callInstFrame )
-   {
-      frame->m_initFrame = true;
-   }
-   else
-   {
-      frame->m_initFrame = false;
-      frame->m_sender = m_regS2;
-      m_regS2 = m_regS1;
-      if ( self == 0 )
-         m_regS1.setNil();
-      else {
-
-         if( callable.isTabMethod() ) {
-            if( callable.isTabMethodDict() )
-               m_regS1.setDict( static_cast<CoreDict*>(self) );
-            else
-               m_regS1.setArray( static_cast<CoreArray*>(self) );
-         }
-         else
-            m_regS1.setObject( static_cast<CoreObject*>(self) );
-      }
-   }
-
-   if ( target->isFunction() )
-   {
-
-      // space for locals
-      if ( tg_def->locals() > 0 )
-         m_stack->resize( m_stackBase + tg_def->locals() );
-
-      m_code = tg_def->code();
-      m_currentModule = target->module();
-      m_currentGlobals = &targetMod->globals();
-      m_symbol = target;
-
-      //jump
-      m_pc_next = 0;
-
-      // If the function is not called internally by the VM, another run is issued.
-      if( callMode == e_callNormal || callMode == e_callInst )
-      {
-         // hitting the stack limit forces the RET code to raise a return event,
-         // and this forces the machine to exit run().
-
-         m_pc = m_pc_next;
-         frame->m_break = true;
-         if ( m_event == eventSuspend )
-            frame->m_suspend = true;
-         run();
-      }
-   }
-   else
-   {
-      m_symbol = target; // so we can have adequate tracebacks.
-      m_currentModule = target->module();
-      m_currentGlobals = &targetMod->globals();
-
-      // if we aren't in a frame call, call the item directly
-      if( callMode == e_callNormal || callMode == e_callInst )
-      {
-         regA().setNil(); // clear return value if calling external functions
-         try {
-            target->getExtFuncDef()->call( this );
-            if ( callable.isClass() )
-               m_regA.setObject( static_cast<CoreObject* >(self) );
-         }
-         catch( CodeError *e )
-         {
-            if ( m_error != 0 )
-               m_error->decref();
-            // fake an error raisal
-            m_error = e;
-            m_event = eventRisen;
-         }
-
-         callReturn();
-      }
-      //else, ask the  VM to call it by using the fake m_pc
-      else {
-         if ( callable.isClass() )
-         {
-            m_regS1 = static_cast<CoreObject* >(self);
-            m_pc_next = i_pc_call_external_ctor;
-         }
-         else  {
-            m_pc_next = i_pc_call_external;
-         }
-      }
-   }
-
-   return true;
-}
-
-
 void VMachine::createFrame( uint32 paramCount )
 {
    // space for frame
@@ -1994,22 +1484,15 @@ void VMachine::createFrame( uint32 paramCount )
    frame->m_ret_pc = m_pc_next;
    frame->m_call_pc = m_pc;
    frame->m_module = m_currentModule;
-   frame->m_globals = m_currentGlobals;
    frame->m_param_count = (byte)paramCount;
    frame->m_stack_base = m_stackBase;
    frame->m_try_base = m_tryFrame;
    frame->m_break = false;
-   frame->m_suspend = false;
    frame->m_binding = m_regBind;
+   frame->m_self = m_regS1;
 
    // iterative processing support
    frame->m_endFrameFunc = 0;
-
-   // prevent change of self and sender
-   frame->m_initFrame = true;
-
-   // prevent return
-   frame->m_break = false;
 
    // now we can change the stack base
    m_stackBase = m_stack->size();
@@ -2033,13 +1516,13 @@ void VMachine::callFrameNow( ext_func_frame_t callbackFunc )
 }
 
 
-bool VMachine::callItemAtomic(const Item &callable, int32 paramCount, e_callMode mode )
+void VMachine::callItemAtomic(const Item &callable, int32 paramCount )
 {
    bool oldAtomic = m_atomicMode;
    m_atomicMode = true;
-   bool value = callItem( callable, paramCount, mode );
+   callFrame( callable, paramCount );
+   execFrame();
    m_atomicMode = oldAtomic;
-   return value;
 }
 
 
@@ -2064,134 +1547,15 @@ ext_func_frame_t VMachine::returnHandler()
    return 0;
 }
 
-
-bool VMachine::callItemPass( const Item &callable  )
-{
-   const Symbol *target;
-   FuncDef *tg_def;
-   LiveModule *targetMod;
-
-   if ( ! callable.isCallable() )
-      return false;
-
-   switch( callable.type() )
-   {
-      case FLC_ITEM_FBOM:
-      {
-         m_bomParams = paramCount();
-         bool bomRet = callable.callBom( this );
-         callReturn();
-         return bomRet;
-      }
-
-      case FLC_ITEM_METHOD:
-      case FLC_ITEM_TABMETHOD:
-         target = callable.asMethodFunction();
-         targetMod = callable.asModule();
-      break;
-
-      case FLC_ITEM_FUNC:
-         target = callable.asFunction();
-         targetMod = callable.asModule();
-      break;
-
-      default:
-         // non callableitem
-         return false;
-   }
-
-   if ( target->isFunction() )
-   {
-      tg_def = target->getFuncDef();
-      // manage an internal function
-      // ensure against optional parameters.
-
-      m_stack->resize( m_stackBase );
-      StackFrame &frame = *(StackFrame*) m_stack->at( m_stackBase - VM_FRAME_SPACE );
-
-      if ( frame.m_param_count < tg_def->params() )
-      {
-         uint32 oldCount = frame.m_param_count;
-         uint32 oldBase = m_stackBase;
-         m_stackBase += tg_def->params() - frame.m_param_count;
-         frame.m_param_count = (byte)tg_def->params();
-
-         m_stack->resize( m_stackBase + VM_FRAME_SPACE ); // fr no more valid
-
-         // reget old frame, it may have been changed
-         StackFrame &frame = *(StackFrame*) m_stack->at( oldBase - VM_FRAME_SPACE );
-
-         // now copy the frame in the right position
-         StackFrame &newPos = *(StackFrame*)m_stack->at( m_stackBase - VM_FRAME_SPACE );
-         newPos = frame;
-         for ( ; oldCount < newPos.m_param_count; oldCount++ )
-         {
-            m_stack->itemAt( m_stackBase - VM_FRAME_SPACE - newPos.m_param_count + oldCount ).setNil();
-         }
-      }
-
-      // space for locals
-      m_stack->resize( m_stackBase + VM_FRAME_SPACE + tg_def->locals() );
-
-      m_code = tg_def->code();
-      m_currentModule = target->module();
-      m_currentGlobals = &targetMod->globals();
-
-      m_symbol = target;
-
-      //jump
-      m_pc_next = 0;
-
-      return true;
-   }
-   else
-   {
-      m_stack->resize( m_stackBase );
-      regA().setNil(); // clear return value if calling external functions
-      try {
-         target->getExtFuncDef()->call( this );
-         m_pc_next = ((StackFrame *)m_stack->at( m_stackBase - VM_FRAME_SPACE ))->m_ret_pc;
-      }
-      catch( CodeError *e )
-      {
-         if ( m_error != 0 )
-            m_error->decref();
-         // fake an error raisal
-         m_error = e;
-         m_event = eventRisen;
-      }
-      callReturn();
-   }
-   return true;
-}
-
-
-bool VMachine::callItemPassIn( const Item &callable  )
-{
-   if( ! callable.isCallable() )
-   {
-      return false;
-   }
-
-   StackFrame *frame = (StackFrame *)m_stack->at( m_stackBase - VM_FRAME_SPACE );
-
-   for( uint32 i = 0; i < frame->m_param_count; i++ )
-      pushParameter( *param( i ) );
-
-   return callItem( callable, frame->m_param_count, VMachine::e_callFrame );
-}
-
-
 void VMachine::yield( numeric secs )
 {
    if ( m_atomicMode )
    {
-      raiseError( new InterruptedError( ErrorParam( e_wait_in_atomic ).origin( e_orig_vm ).
+      throw new InterruptedError( ErrorParam( e_wait_in_atomic ).origin( e_orig_vm ).
             symbol( "yield" ).
             module( "core.vm" ).
             line( __LINE__ ).
-            hard() ) );
-      return;
+            hard() );
    }
 
    // be sure to allow yelding.
@@ -2210,9 +1574,11 @@ void VMachine::yield( numeric secs )
          else
          {
             // else just ask the system to sleep.
+            idle();
             if ( ! m_systemData.sleep( secs ) )
             {
                m_systemData.resetInterrupt();
+               unidle();
 
                fassert( m_symbol->isFunction() || m_symbol->isExtFunc() );
 
@@ -2220,9 +1586,11 @@ void VMachine::yield( numeric secs )
                   ErrorParam( e_interrupted ).origin( e_orig_vm ).
                      symbol( m_symbol->name() ).
                      module( m_currentModule->name() ).
-                     line( m_currentModule->getLineAt( m_symbol->getFuncDef()->basePC() + m_pc ) )
+                     line( m_currentModule->module()->getLineAt( m_symbol->getFuncDef()->basePC() + m_pc ) )
                   ) );
             }
+
+            unidle();
          }
       }
    }
@@ -2239,6 +1607,7 @@ void VMachine::yield( numeric secs )
       electContext();
    }
 }
+
 
 void VMachine::putAtSleep( VMContext *ctx, numeric secs )
 {
@@ -2349,7 +1718,7 @@ void VMachine::electContext()
                   ErrorParam( e_interrupted ).origin( e_orig_vm ).
                      symbol( m_symbol->name() ).
                      module( m_currentModule->name() ).
-                     line( m_currentModule->getLineAt( m_symbol->getFuncDef()->basePC() + m_pc ) )
+                     line( currentModule()->getLineAt( m_symbol->getFuncDef()->basePC() + m_pc ) )
                   ) );
             }
          }
@@ -2363,31 +1732,28 @@ void VMachine::itemToString( String &target, const Item *itm, const String &form
    if( itm->isObject() )
    {
       Item propString;
-      if( itm->asObjectSafe()->getProperty( "toString", propString ) )
+      if( itm->asObjectSafe()->getMethod( "toString", propString ) )
       {
          if ( propString.type() == FLC_ITEM_STRING )
             target = *propString.asString();
          else
          {
             Item old = m_regS1;
-            m_regS1 = *itm;
 
             // eventually push parameters if format is required
             int params = 0;
             if( format.size() != 0 )
             {
-               pushParameter( const_cast<String *>(&format) );
+               pushParameter( new CoreString(format) );
                params = 1;
             }
 
             // atomically call the item
-            bool success = callItemAtomic( propString, params, e_callInst );
+            callItemAtomic( propString, params );
 
             m_regS1 = old;
-            if ( success && ! hadError() ) {
-               // if regA is already a string, it's a quite light operation.
-               regA().toString( target );
-            }
+            // if regA is already a string, it's a quite light operation.
+            regA().toString( target );
          }
       }
       else
@@ -2429,17 +1795,14 @@ void VMachine::callReturn()
       }
    }
 
+   // Ok, we can unroll the stak.
+   // reset bidings and self
    m_regBind = frame.m_binding;
-
-   // fix the self and sender
-   if ( ! frame.m_initFrame ) {
-      m_regS1 = m_regS2;
-      m_regS2 = frame.m_sender;
-   }
+   m_regS1 = frame.m_self;
 
    if( frame.m_break )
    {
-      m_event = frame.m_suspend ? eventSuspend : eventReturn;
+      m_event = eventReturn;
    }
 
    // change symbol
@@ -2449,7 +1812,7 @@ void VMachine::callReturn()
    // eventually change active module.
 
    m_currentModule = frame.m_module;
-   m_currentGlobals = frame.m_globals;
+   m_currentGlobals = &m_currentModule->globals();
    if ( m_symbol != 0 && m_symbol->isFunction() )
       m_code = m_symbol->getFuncDef()->code();
 
@@ -2581,7 +1944,7 @@ bool VMachine::seekString( const String *value, byte *base, uint16 size, uint32 
    while ( lower < higher - 1 )
    {
       pos = base + point * SEEK_STEP;
-      paragon = m_currentModule->getString( endianInt32(*reinterpret_cast< int32 *>( pos )));
+      paragon = m_currentModule->module()->getString( endianInt32(*reinterpret_cast< int32 *>( pos )));
       fassert( paragon != 0 );
       if ( paragon == 0 )
          return false;
@@ -2599,7 +1962,7 @@ bool VMachine::seekString( const String *value, byte *base, uint16 size, uint32 
    }
 
    // see if it was in the last loop
-   paragon = m_currentModule->getString( endianInt32(*reinterpret_cast< int32 *>( base + lower * SEEK_STEP )));
+   paragon = currentModule()->getString( endianInt32(*reinterpret_cast< int32 *>( base + lower * SEEK_STEP )));
    if ( paragon != 0 && *paragon == *value )
    {
       landing =  endianInt32( *reinterpret_cast< uint32 *>( base + lower * SEEK_STEP + sizeof( int32 ) ) );
@@ -2608,7 +1971,7 @@ bool VMachine::seekString( const String *value, byte *base, uint16 size, uint32 
 
    if ( lower != higher )
    {
-      paragon = m_currentModule->getString( endianInt32(*reinterpret_cast< int32 *>( base + higher * SEEK_STEP )));
+      paragon = currentModule()->getString( endianInt32(*reinterpret_cast< int32 *>( base + higher * SEEK_STEP )));
       if ( paragon != 0 && *paragon == *value )
       {
          // YATTA, we found it at last
@@ -2629,7 +1992,7 @@ bool VMachine::seekItem( const Item *item, byte *base, uint16 size, uint32 &land
 
    while ( base < target )
    {
-      Symbol *sym = m_currentModule->getSymbol( endianInt32( *reinterpret_cast< int32 *>( base ) ) );
+      Symbol *sym = currentModule()->getSymbol( endianInt32( *reinterpret_cast< int32 *>( base ) ) );
 
       fassert( sym );
       if ( sym == 0 )
@@ -2638,17 +2001,17 @@ bool VMachine::seekItem( const Item *item, byte *base, uint16 size, uint32 &land
       switch( sym->type() )
       {
          case Symbol::tlocal:
-            if( compareItems( *stackItem( m_stackBase + VM_FRAME_SPACE +  sym->itemId() ).dereference(), *item ) == 0 )
+            if( *stackItem( m_stackBase + VM_FRAME_SPACE +  sym->itemId() ).dereference() == *item )
                goto success;
          break;
 
          case Symbol::tparam:
-            if( compareItems( *param( sym->itemId() ), *item ) )
+            if( *param( sym->itemId() ) == *item )
                goto success;
          break;
 
          default:
-            if( compareItems( *moduleItem( sym->itemId() ).dereference(), *item ) == 0 )
+            if( *moduleItem( sym->itemId() ).dereference() == *item )
                goto success;
       }
 
@@ -2671,7 +2034,7 @@ bool VMachine::seekItemClass( const Item *itm, byte *base, uint16 size, uint32 &
 
    while ( base < target )
    {
-      Symbol *sym = m_currentModule->getSymbol( endianInt32( *reinterpret_cast< int32 *>( base ) ) );
+      Symbol *sym = currentModule()->getSymbol( endianInt32( *reinterpret_cast< int32 *>( base ) ) );
       fassert( sym );
       if ( sym == 0 )
          return false;
@@ -2823,13 +2186,9 @@ void VMachine::periodicCallback()
 
 void VMachine::pushTry( uint32 landingPC )
 {
-   // a small trick; we use a range to store current landing and previous try frame
-   Item frame;
-
-
-   frame.setRange( (int32) landingPC, (int32) m_tryFrame, false );
+   Item frame1( (((int64) landingPC) << 32) | (int64) m_tryFrame );
    m_tryFrame = m_stack->size();
-   m_stack->push( &frame );
+   m_stack->push( &frame1 );
 }
 
 void VMachine::popTry( bool moveTo )
@@ -2847,14 +2206,14 @@ void VMachine::popTry( bool moveTo )
    }
 
    // get the frame and resize the stack
-   Item frame = m_stack->itemAt( m_tryFrame );
+   int64 tf_land = m_stack->itemAt( m_tryFrame ).asInteger();
    m_stack->resize( m_tryFrame );
 
    // Change the try frame, and eventually move the PC to the proper position
-   m_tryFrame = (uint32) frame.asRangeEnd();
+   m_tryFrame = (uint32) tf_land;
    if( moveTo )
    {
-      m_pc_next = (uint32) frame.asRangeStart();
+      m_pc_next = (uint32)(tf_land>>32);
       m_pc = m_pc_next;
    }
 }
@@ -2879,25 +2238,33 @@ Item *VMachine::findLocalSymbolItem( const String &symName ) const
       return const_cast<Item *>(&self());
    }
 
-   if( symName == "sender" )
-   {
-      return const_cast<Item *>(&sender());
-   }
-
    // find the symbol
    const Symbol *sym = currentSymbol();
    if ( sym != 0 )
    {
       // get the relevant symbol table.
       const SymbolTable *symtab;
-      if ( sym->isClass() )
+      switch( sym->type() )
       {
+      case Symbol::tclass:
          symtab = &sym->getClassDef()->symtab();
-      }
-      else {
+         break;
+
+      case Symbol::tfunc:
          symtab = &sym->getFuncDef()->symtab();
+         break;
+
+      case Symbol::textfunc:
+         symtab = sym->getExtFuncDef()->parameters();
+         break;
+
+      default:
+         symtab = 0;
       }
-      sym = symtab->findByName( symName );
+      if ( symtab != 0 )
+         sym = symtab->findByName( symName );
+      else
+         sym = 0; // try again
    }
 
 
@@ -3053,7 +2420,7 @@ bool VMachine::findLocalVariable( const String &name, Item &itm ) const
                   return false;
 
                if ( tmp->isFunction() )
-                  tmp->setTabMethod( itm.asArray(), tmp->asFunction(), tmp->asModule() );
+                  tmp->setMethod( itm, tmp->asFunction() );
 
                itm = *tmp;
                // set state accordingly to chr.
@@ -3079,11 +2446,11 @@ bool VMachine::findLocalVariable( const String &name, Item &itm ) const
                // access the item. We know it's an object or we wouldn't be in this state.
                // also, notice that we change the item itself.
                Item *tmp;
-               if ( ( tmp = itm.asDict()->find( &sItemName ) ) == 0 )
+               if ( ( tmp = itm.asDict()->find( sItemName ) ) == 0 )
                   return false;
 
                if ( tmp->isFunction() )
-                  tmp->setTabMethod( itm.asDict(), tmp->asFunction(), tmp->asModule() );
+                  tmp->setMethod( itm, tmp->asFunction() );
                itm = *tmp;
 
                // set state accordingly to chr.
@@ -3289,13 +2656,14 @@ Item *VMachine::parseSquareAccessor( const Item &accessed, String &accessor ) co
 
    // parse the accessor.
    Item acc;
+   String da;
 
    if( firstChar >= '0' && firstChar <= '9' )
    {
       // try to parse a number.
       int64 num;
       if( accessor.parseInt( num ) )
-         acc = num;
+         acc.setInteger( num );
       else
          return 0;
    }
@@ -3305,8 +2673,8 @@ Item *VMachine::parseSquareAccessor( const Item &accessed, String &accessor ) co
       if( accessed.isArray() )
          return 0;
 
-      accessor = accessor.subString( 1, accessor.length() - 1 );
-      acc = &accessor;
+      da = accessor.subString( 1, accessor.length() - 1 );
+      acc.setString( &da );
    }
    else {
       // reparse the accessor as a token
@@ -3495,9 +2863,6 @@ VMachine::returnCode  VMachine::expandString( const String &src, String &target 
                }
 
                if( ! fmt.format( this, *itm.dereference(), temp ) ) {
-                  if( hadError() ) {
-                     return return_error_internal;
-                  }
                   return return_error_parse_fmt;
                }
             }
@@ -3511,10 +2876,6 @@ VMachine::returnCode  VMachine::expandString( const String &src, String &target 
                // append to target.
                itemToString( temp, &itm );
             }
-
-            // having an error in an itemToString ?
-            if( hadError() )
-                  return return_error_internal;
 
             target.append( temp );
          }
@@ -3539,68 +2900,6 @@ VMachine::returnCode  VMachine::expandString( const String &src, String &target 
    return return_ok;
 }
 
-int VMachine::compareItems( const Item &first, const Item &second )
-{
-   if ( first.isObject() )
-   {
-      CoreObject *fo = first.asObjectSafe();
-
-      // provide a fast path. IF the items are the SAME object,
-      // comparation is ==.
-      if( second.isObject() && second.asObjectSafe() == fo )
-         return 0;
-
-      Item comparer;
-      if( fo->getMethod( "compare", comparer ) )
-      {
-         Item oldA = m_regA;
-         m_regA.setBoolean( false );
-
-         pushParameter( second );
-         // enter atomic mode
-         callItemAtomic( comparer, 1 );
-
-         if ( hadError() )
-         {
-            m_regA = oldA;
-            return 2;
-         }
-
-         // if the item is nil, fallback to normal item comparation.
-         if( ! m_regA.isNil() )
-         {
-            int val = (int) m_regA.forceInteger();
-            m_regA = oldA;
-            return val;
-         }
-         m_regA = oldA;
-      }
-      else if ( fo->getMethod( "equal", comparer ) )
-      {
-         Item oldA = m_regA;
-
-         pushParameter( second );
-         // enter atomic mode
-         callItemAtomic( comparer, 1 );
-
-         if ( hadError() )
-         {
-            m_regA = oldA;
-            return 2;
-         }
-
-         if( m_regA.isTrue() )
-         {
-            m_regA = oldA;
-            return 0;
-         }
-         m_regA = oldA;
-         // else, fallback to standard item comparation.
-      }
-   }
-
-   return first.compare( second );
-}
 
 void VMachine::referenceItem( Item &target, Item &source )
 {
@@ -3608,7 +2907,7 @@ void VMachine::referenceItem( Item &target, Item &source )
       target.setReference( source.asReference() );
    }
    else {
-      GarbageItem *itm = new GarbageItem( this, source );
+      GarbageItem *itm = new GarbageItem( source );
       source.setReference( itm );
       target.setReference( itm );
    }
@@ -3622,18 +2921,26 @@ static bool vm_func_eval( VMachine *vm )
    CoreArray *arr = vm->local( 0 )->asArray();
    uint32 count = (uint32) vm->local( 1 )->asInteger();
 
+   // interrupt functional sequence request?
+   if ( vm->regA().isOob() && vm->regA().isInteger() )
+   {
+      int64 val =  vm->regA().asInteger();
+      if ( val == 1 || val == 0 )
+         return false;
+   }
+
    // let's push other function's return value
-  if ( vm->regA().isLBind() )
+   if ( vm->regA().isLBind() )
    {
       String *binding = vm->regA().asLBind();
       Item *bind = vm->getBinding( *binding );
       if ( bind == 0 )
       {
-         vm->regA().setReference( new GarbageItem( vm, Item() ) );
+         vm->regA().setReference( new GarbageItem( Item() ) );
          vm->setBinding( *binding, vm->regA() );
       }
       else {
-         fassert( bind->isReference() );
+         //fassert( bind->isReference() );
          vm->regA() = *bind;
       }
    }
@@ -3662,7 +2969,7 @@ static bool vm_func_eval( VMachine *vm )
    }
 
    // if the first element is not callable, generate an array
-   CoreArray *array = new CoreArray( vm, count );
+   CoreArray *array = new CoreArray( count );
    Item *data = array->elements();
    int32 base = vm->currentStack().size() - count;
 
@@ -3677,16 +2984,25 @@ static bool vm_func_eval( VMachine *vm )
 }
 }
 
-bool VMachine::functionalEval( const Item &itm )
+bool VMachine::functionalEval( const Item &itm, uint32 paramCount, bool retArray )
 {
    // An array
    switch( itm.type() )
    {
       case FLC_ITEM_ARRAY:
       {
+         CoreArray *arr = itm.asArray();
+         // prepare for parametric evaluation
+         fassert( m_stackBase + paramCount <= m_stack->size() );
+         for( uint32 pi = 1; pi <= paramCount; ++pi )
+         {
+            String s;
+            s.writeNumber( (int64) pi );
+            arr->setProperty(s, m_stack->itemAt( m_stack->size() - pi ) );
+         }
+
          createFrame(0);
 
-         CoreArray *arr = itm.asArray();
          if ( m_regBind.isNil() )
             m_regBind = arr->makeBindings();
 
@@ -3695,7 +3011,7 @@ bool VMachine::functionalEval( const Item &itm )
          if ( count > 0 )
          {
             // if the first element is an ETA function, just call it as frame and return.
-            if ( (*arr)[0].isFunction() && (*arr)[0].asFunction()->isEta() )
+            if ( (*arr)[0].isFunction() && (*arr)[0].asFunction()->symbol()->isEta() )
             {
                callFrame( arr, 0 );
                return true;
@@ -3732,15 +3048,21 @@ bool VMachine::functionalEval( const Item &itm )
          }
 
          // if the first element is not callable, generate an array
-         CoreArray *array = new CoreArray( this, count );
-         Item *data = array->elements();
-         int32 base = m_stack->size() - count;
+         if( retArray )
+         {
+            CoreArray *array = new CoreArray( count );
+            Item *data = array->elements();
+            int32 base = m_stack->size() - count;
 
-         for ( uint32 i = 0; i < count; i++ ) {
-            data[ i ] = m_stack->itemAt(i + base);
+            for ( uint32 i = 0; i < count; i++ ) {
+               data[ i ] = m_stack->itemAt(i + base);
+            }
+            array->length( count );
+            m_regA = array;
          }
-         array->length( count );
-         m_regA = array;
+         else {
+            m_regA.setNil();
+         }
          callReturn();
       }
       break;
@@ -3751,11 +3073,11 @@ bool VMachine::functionalEval( const Item &itm )
             Item *bind = getBinding( *itm.asLBind() );
             if ( bind == 0 )
             {
-               m_regA.setReference( new GarbageItem( this, Item() ) );
+               m_regA.setReference( new GarbageItem( Item() ) );
                setBinding( *itm.asLBind(), m_regA );
             }
             else {
-               fassert( bind->isReference() );
+               //fassert( bind->isReference() );
                m_regA = *bind;
             }
          }
@@ -3770,39 +3092,6 @@ bool VMachine::functionalEval( const Item &itm )
 
    return false;
 }
-
-
-Attribute *VMachine::findAttribute( const String &name ) const
-{
-   AttribHandler *head = m_attributes;
-   while( head != 0 )
-   {
-      if( head->attrib()->name() == name )
-         return head->attrib();
-      head = head->next();
-   }
-
-   return 0;
-}
-
-
-Attribute *VMachine::findAttribute( const Symbol *sym ) const
-{
-   // if the symbol is not an attribute, it cannot have generated one.
-   if ( ! sym->isAttribute() )
-      return 0;
-
-   AttribHandler *head = m_attributes;
-   while( head != 0 )
-   {
-      if( head->attrib()->symbol() == sym )
-         return head->attrib();
-      head = head->next();
-   }
-
-   return 0;
-}
-
 
 Item *VMachine::findGlobalItem( const String &name ) const
 {
@@ -3851,7 +3140,7 @@ bool VMachine::unlink( const Module *module )
    LiveModule *lm = *(LiveModule **) iter.currentValue();
 
    // ensure this module is not the active one
-   if ( m_currentModule == lm->module() )
+   if ( m_currentModule == lm )
    {
       return false;
    }
@@ -3890,7 +3179,7 @@ bool VMachine::interrupted( bool raise, bool reset, bool dontCheck )
       if ( raise )
       {
          uint32 line = m_symbol->isFunction() ?
-            m_currentModule->getLineAt( m_symbol->getFuncDef()->basePC() + m_pc )
+            currentModule()->getLineAt( m_symbol->getFuncDef()->basePC() + m_pc )
             : 0;
 
          raiseError( new InterruptedError(
@@ -3912,7 +3201,7 @@ Item *VMachine::getBinding( const String &bind ) const
    if ( ! m_regBind.isDict() )
       return 0;
 
-   return m_regBind.asDict()->find( Item(const_cast<String *>(&bind)) );
+   return m_regBind.asDict()->find( bind );
 }
 
 Item *VMachine::getSafeBinding( const String &bind )
@@ -3920,12 +3209,12 @@ Item *VMachine::getSafeBinding( const String &bind )
    if ( ! m_regBind.isDict() )
       return 0;
 
-   Item *found = m_regBind.asDict()->find( Item(const_cast<String *>(&bind)) );
+   Item *found = m_regBind.asDict()->find( bind );
    if ( found == 0 )
    {
-      m_regBind.asDict()->insert( new GarbageString(this, bind), Item() );
-      found = m_regBind.asDict()->find( Item(const_cast<String *>(&bind)) );
-      found->setReference( new GarbageItem( this, Item() ) );
+      m_regBind.asDict()->insert( new CoreString( bind ), Item() );
+      found = m_regBind.asDict()->find( bind );
+      found->setReference( new GarbageItem( Item() ) );
    }
 
    return found;
@@ -3937,10 +3226,204 @@ bool VMachine::setBinding( const String &bind, const Item &value )
    if ( ! m_regBind.isDict() )
       return false;
 
-   m_regBind.asDict()->insert( new GarbageString(this, bind), value );
+   m_regBind.asDict()->insert( new CoreString(bind), value );
    return true;
 }
 
+
+CoreSlot* VMachine::getSlot( const String& slotName, bool create )
+{
+   m_slot_mtx.lock();
+
+   MapIterator iter;
+   if ( ! m_slots.find( &slotName, iter ) )
+   {
+      if ( create )
+      {
+         CoreSlot* cs = new CoreSlot( slotName );
+         m_slots.insert( &slotName, cs );
+         m_slot_mtx.unlock();
+         return cs;
+      }
+      m_slot_mtx.unlock();
+      return 0;
+   }
+
+   // get the thing
+   CoreSlot *cs = *(CoreSlot **) iter.currentValue();
+   m_slot_mtx.unlock();
+   return cs;
+}
+
+void VMachine::removeSlot( const String& slotName )
+{
+   MapIterator iter;
+
+   m_slot_mtx.lock();
+   if ( m_slots.find( &slotName, iter ) )
+   {
+      m_slots.erase( iter );
+      // erase will decrefc, because of item traits in m_slots
+   }
+   m_slot_mtx.unlock();
+
+}
+
+void VMachine::markSlots( byte mark )
+{
+   MapIterator iter = m_slots.begin();
+   m_slot_mtx.lock();
+   while( iter.hasCurrent() )
+   {
+      (*(CoreSlot**) iter.currentValue() )->gcMark( memPool );
+      iter.next();
+   }
+   m_slot_mtx.unlock();
+}
+
+
+bool VMachine::consumeSignal()
+{
+   uint32 base = m_stackBase;
+
+   while( base != 0 )
+   {
+      StackFrame &frame = *(StackFrame *) m_stack->at( base - VM_FRAME_SPACE );
+      if( frame.m_endFrameFunc == coreslot_broadcast_internal )
+      {
+         frame.m_endFrameFunc = 0;
+         // eventually call the onMessageComplete
+         Item *msgItem = (Item *) m_stack->at( base + 4 );  // local(4)
+         if( msgItem->isInteger() )
+         {
+            VMMessage* msg = (VMMessage*) msgItem->asInteger();
+            msg->onMsgComplete( true );
+            delete msg;
+         }
+         
+         return true;
+      }
+
+      base = frame.m_stack_base;
+   }
+
+   return false;
+}
+
+
+void VMachine::gcEnable( bool mode )
+{
+   m_bGcEnabled = mode;
+}
+
+bool VMachine::isGcEnabled() const
+{
+   return m_bGcEnabled;
+}
+
+
+void VMachine::coPrepare( int32 pSize )
+{
+   // create a new context
+   VMContext *ctx = new VMContext( this );
+
+   // if there are some parameters...
+   if ( pSize > 0 )
+   {
+      // avoid reallocation afterwards.
+      ctx->getStack()->reserve( pSize );
+      // copy flat
+      for( int32 i = 0; i < pSize; i++ )
+      {
+         ctx->getStack()->push( &m_stack->itemAt( m_stack->size() - pSize + i ) );
+      }
+      m_stack->resize( m_stack->size() - pSize );
+   }
+   // rotate the context
+   m_contexts.pushBack( ctx );
+   putAtSleep( ctx, 0.0 );
+}
+
+//=====================================================================================
+// messages
+//
+
+void VMachine::postMessage( VMMessage *msg )
+{
+   // can we post now?
+   if ( m_baton.tryAcquire() )
+   {
+      processMessage( msg );
+      m_baton.release();
+   }
+   else {
+      // ok, wa can't do it now; post the message
+      m_mtx_mesasges.lock();
+      
+      if ( m_msg_head == 0 )
+      {
+         m_msg_head = msg;
+      }
+      else {
+         m_msg_tail->append( msg );
+      }
+      
+      // reach the end of the msg list and set the new tail
+      while( msg->next() != 0 ) 
+         msg = msg->next();
+      
+      m_msg_tail = msg;
+      
+      // also, ask for early checks.
+      // We're really not concerned about spurious reads here or in the other thread,
+      // everything would be ok even without this operation. It's just ok if some of
+      // the two threads sync on this asap.
+      m_opNextCheck = m_opCount;
+      
+      m_mtx_mesasges.unlock();
+   }
+}
+
+void VMachine::processMessage( VMMessage *msg )
+{
+   // find the slot
+   CoreSlot* slot = getSlot( msg->name(), false );
+   if ( slot == 0 || slot->empty() )
+   {
+      msg->onMsgComplete( false );
+      delete msg;
+   }
+   
+   // create the coroutine
+   coPrepare(0);
+   for ( uint32 i = 0; i < msg->paramCount(); ++i )
+   {
+      pushParameter( *msg->param(i) );
+   }
+   
+   // create the frame used by the broadcast process
+   createFrame( msg->paramCount() );
+   
+   // prepare the broadcast in the frame.
+   slot->prepareBroadcast( this, 0, msg->paramCount(), msg );
+}
+
+//=====================================================================================
+// baton
+//
+
+void VMBaton::release()
+{
+   Baton::release();
+   // See if the memPool has anything interesting for us.
+   memPool->idleVM( m_owner );
+}
+
+void VMBaton::onBlockedAcquire()
+{
+   // See if the memPool has anything interesting for us.
+   memPool->idleVM( m_owner );
+}
 
 }
 

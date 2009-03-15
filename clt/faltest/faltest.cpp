@@ -30,22 +30,19 @@
 #include <falcon/genhasm.h>
 #include <falcon/gencode.h>
 #include <falcon/module.h>
-#include <fasm/comp.h>
 #include <falcon/vm.h>
 #include <falcon/core_ext.h>
-#include <falcon/flcloader.h>
+#include <falcon/modloader.h>
 #include <falcon/string.h>
 #include <falcon/testsuite.h>
 #include <falcon/memory.h>
 #include <falcon/fstream.h>
 #include <falcon/stringstream.h>
 #include <falcon/stdstreams.h>
-#include <falcon/deferrorhandler.h>
 #include <falcon/transcoding.h>
 #include <falcon/path.h>
 
 #include "scriptdata.h"
-#include "fteh.h"
 
 #define DEF_PREC  5
 #define TIME_PRINT_FMT "%.3f"
@@ -478,11 +475,12 @@ void describeScript( ScriptData *data )
    ScriptData::IdToIdCode( data->id(), idCode );
    String val;
    output->writeString( idCode + " - " );
-   data->getProperty( "Short",val );
+   data->getProperty( "Short", val );
    output->writeString( val );
 
    if ( ! opt_verbose )
    {
+      output->writeString( " - " + data->filename() + " - " );
       if ( data->getProperty( "Category", val ) )
       {
          output->writeString( " (" + val );
@@ -535,7 +533,7 @@ void listScripts()
       ListElement *iter = opt_testList.begin();
       while ( iter != 0 )
       {
-			const String &name = *(String *) iter->data();
+         const String &name = *(String *) iter->data();
          t_idScriptMap::const_iterator elem =
             scriptMap.find( ScriptData::IdCodeToId( name ) );
          if ( elem == scriptMap.end() )
@@ -604,7 +602,7 @@ void filterScripts()
    Script testing
 *************************************************/
 bool testScript( ScriptData *script,
-         FlcLoader *modloader, Module *core, Module *testSuite,
+         ModuleLoader *modloader, Module *core, Module *testSuite,
          String &reason, String &trace )
 {
    Module *scriptModule;
@@ -626,7 +624,6 @@ bool testScript( ScriptData *script,
    Stream *source = TranscoderFactory( "utf-8", source_f, true );
 
 
-   FTErrorHandler fteh;
    scriptModule = new Module();
    Path scriptPath( script->filename() );
    scriptModule->name( scriptPath.getFile() );
@@ -634,13 +631,14 @@ bool testScript( ScriptData *script,
 
    Compiler compiler( scriptModule, source );
 
-   compiler.errorHandler( &fteh );
    if ( opt_timings )
       compTime = Sys::_seconds();
 
    if ( ! compiler.compile() )
    {
-      trace = fteh.getError();
+      Error* err = compiler.detachErrors();
+      trace = err->toString();
+      err->decref();
       reason = "Compile step failed.";
       delete source;
       scriptModule->decref();
@@ -655,70 +653,14 @@ bool testScript( ScriptData *script,
 
    // now compile the code.
 
-   // compile via assembly?
-   if ( opt_compasm )
-   {
-      Stream *asm_stream;
-      // compile in memory?
-      if( opt_compmem )
-         asm_stream = TranscoderFactory( "utf-8", new StringStream, true );
-      else {
-         // create a temporary file
-         FileStream *fasm =  new FileStream;
-         fasm->create( "temp_asm.fas", FileStream::e_aUserWrite | FileStream::e_aReadOnly );
-         asm_stream = TranscoderFactory( "utf-8", fasm, true );
 
-         if ( ! asm_stream->good() )
-         {
-            reason = "Failed to open temporary assembly stream temp_asm.fas";
-            delete asm_stream;
-            return false;
-         }
-      }
+   GenCode gc( compiler.module() );
+   if ( opt_timings )
+      genTime = Sys::_seconds();
+   gc.generate( compiler.sourceTree() );
 
-      GenHAsm hasmOut( asm_stream );
-      if ( opt_timings )
-         genTime = Sys::_seconds();
-      hasmOut.generatePrologue( compiler.module() );
-      hasmOut.generate( compiler.sourceTree() );
-      if ( opt_timings )
-         genTime = Sys::_seconds() - genTime;
-
-
-      String scriptName = scriptModule->name();
-      scriptModule->decref();
-      scriptModule = new Module();
-      scriptModule->name( scriptName );
-      scriptModule->path( path );
-
-      // reset input.
-      asm_stream->seekBegin( 0 );
-
-      AsmCompiler compiler( scriptModule, asm_stream );
-
-      compiler.errorHandler( &fteh );
-
-      if (! compiler.compile() ) {
-         // we can get rid of the assembly
-         delete asm_stream;
-         trace = fteh.getError();
-         reason = "Assemble step failed.";
-         return false;
-      }
-
-      // we can get rid of the assembly
-      delete asm_stream;
-   }
-   else {
-
-      GenCode gc( compiler.module() );
-      if ( opt_timings )
-         genTime = Sys::_seconds();
-      gc.generate( compiler.sourceTree() );
-
-      if ( opt_timings )
-         genTime = Sys::_seconds() - genTime;
-   }
+   if ( opt_timings )
+      genTime = Sys::_seconds() - genTime;
 
    // serialization/deserialization test
    if( opt_serialize )
@@ -754,17 +696,20 @@ bool testScript( ScriptData *script,
    // so we can link them
    vmachine.link( core );
    vmachine.link( testSuite );
-   vmachine.errorHandler( &fteh );
-
-   // use a runtime to load the module, so that it can load some modules too
-   modloader->errorHandler( &fteh );
-
    Runtime runtime( modloader );
-   if ( ! runtime.addModule( scriptModule ) ) {
-      trace = fteh.getError();
+   
+   try  
+   {      
+      runtime.addModule( scriptModule );
+   }
+   catch (Error *err) 
+   {
+      trace = err->toString();
+      err->decref();
       reason = "Module loading failed.";
       scriptModule->decref();
       return false;
+   
    }
 
    // we can abandon our reference to the script module
@@ -778,14 +723,19 @@ bool testScript( ScriptData *script,
          execTime = Sys::_seconds();
 
    // inject args and script name
-   Item *sname = vmachine.findGlobalItem( "scriptName" );
-   *sname = new GarbageString( &vmachine, scriptModule->name() );
-   sname = vmachine.findGlobalItem( "scriptPath" );
-   *sname = new GarbageString( &vmachine, scriptModule->path() );
+   Item *sname =vmachine.findGlobalItem( "scriptName" );
+   *sname = new CoreString( scriptModule->name() );
+   sname =vmachine.findGlobalItem( "scriptPath" );
+   *sname = new CoreString( scriptModule->path() );
 
-   if ( ! vmachine.link( &runtime ) )
+   try
    {
-      trace = fteh.getError();
+     vmachine.link( &runtime );
+   }
+   catch( Error *err )
+   {
+      trace = err->toString();
+      err->decref();
       reason = "VM Link step failed.";
       return false;
    }
@@ -793,19 +743,23 @@ bool testScript( ScriptData *script,
    if ( opt_timings )
       linkTime = Sys::_seconds();
 
-   if ( ! vmachine.launch() )
+   try
    {
-      trace = "";
-      reason = "Non executable script.";
-      return false;
-   }
-
-   if ( opt_timings )
+      if (!vmachine.launch() )
+      {
+         trace = "";
+         reason = "Non executable script.";
+         return false;
+      }
+      
+      if ( opt_timings )
          execTime = Sys::_seconds() - execTime;
-
-   if ( vmachine.lastEvent() != VMachine::eventQuit && vmachine.lastEvent() != VMachine::eventNone )
+   }
+   catch( Error *err )
    {
-      trace = fteh.getError();
+     
+      trace = err->toString();
+      err->decref();
       reason = "Abnormal script termniation";
       return false;
    }
@@ -817,10 +771,10 @@ bool testScript( ScriptData *script,
       total_time_link += linkTime;
       total_time_generate += genTime;
    }
+   
    // reset the success status
    reason = TestSuite::getFailureReason();
-
-   // ensure to clean memory
+   // ensure to clean memory -- do this now to ensure the VM is killed before we kill the module.
    modloader->compiler().reset();
    return TestSuite::getSuccess();
 }
@@ -851,7 +805,7 @@ void gauge()
    }
 }
 
-void executeTests( FlcLoader *modloader )
+void executeTests( ModuleLoader *modloader )
 {
    Module *core = Falcon::core_module_init();
    Module *testSuite = init_testsuite_module();
@@ -873,7 +827,7 @@ void executeTests( FlcLoader *modloader )
    }
 
    while( iter != scriptMap.end() )
-   {
+    {
 	   String cat, subcat;
       ScriptData *script = iter->second;
 
@@ -997,8 +951,7 @@ int main( int argc, char *argv[] )
    // Install a void ctrl-c handler (let ctrl-c to kill this app)
    Sys::_dummy_ctrl_c_handler();
 
-   EngineData data1;
-   Init( data1 );
+   Falcon::Engine::Init();
 
    stdOut = stdOutputStream();
    stdErr = stdErrorStream();
@@ -1006,13 +959,8 @@ int main( int argc, char *argv[] )
    // setting an environment var for self-configurating scripts
    Sys::_setEnv( "FALCON_TESTING", "1" );
 
-   // SetEngineLanguage now to avoid phantom allocations later.
-   setEngineLanguage( "C" );
-
    version();
    parse_options( argc, argv );
-
-
 
    // in case we want to check for memory management correctness
    if ( opt_checkmem )
@@ -1025,16 +973,12 @@ int main( int argc, char *argv[] )
       Falcon::memFree = account_free;
       Falcon::memRealloc = account_realloc;
 
-      Falcon::EngineData data;
-      Falcon::Init( data );
-
       stdOut = stdOutputStream();
       stdErr = stdErrorStream();
       s_totalMem = 0;
       s_totalOutBlocks = 0;
    }
 
-   DefaultErrorHandler *defhandler = new DefaultErrorHandler( stdErr );
    FileStream *fs_out = new FileStream;
    passedCount = 0;
    failedCount = 0;
@@ -1050,13 +994,11 @@ int main( int argc, char *argv[] )
    else
       appTime = 0.0;
 
-   FlcLoader *modloader = new FlcLoader( opt_libpath );
+   ModuleLoader *modloader = new ModuleLoader( opt_libpath );
    modloader->addFalconPath();
-   modloader->errorHandler( defhandler );
    modloader->alwaysRecomp( true );
    modloader->saveModules( false );
    modloader->compileInMemory( opt_compmem );
-   modloader->compileViaAssembly( opt_compasm );
    modloader->sourceEncoding( "utf-8" );
 
    int32 error;
@@ -1122,6 +1064,8 @@ int main( int argc, char *argv[] )
    if ( opt_justlist )
    {
       listScripts();
+      delete stdOut;
+      delete stdErr;
       return 0;
    }
 

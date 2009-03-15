@@ -1,0 +1,70 @@
+/*
+   FALCON - Samples
+
+   FILE: bcastRet.fal
+
+   Test for event marshalling and data returning.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Sun, 13 Apr 2008 23:26:44 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+//================================================
+// DataBay
+//
+
+class DataBay
+   _data = []
+
+   function on_SetData( data )
+      self._data += data
+      return true
+   end
+
+   function on_GetData( data )
+       consume()
+       return self._data
+   end
+end
+
+//==================================================
+
+> "=================== ***** ========================"
+> "Falcon event marshalling test"
+> "=================== ***** ========================"
+>
+> "This test verifies the event semantics for message marshalling"
+> "The arguments you type on the command line will be repeated through an event;"
+> "Then, another event will ask a storage item class to retreive the data."
+if args.len() == 0
+   >
+   >"No arguments provided; please, write something on the command line."
+   return 1
+end
+
+db = DataBay()
+// register by name
+subscribe( "GetData", db )
+
+// register by item
+slot = getSlot( "SetData" )
+slot.subscribe( db )
+
+// transmit by item
+for data in args: slot.broadcast( data )
+
+// transmit by name
+>> "Arguments replied: "
+for string in broadcast( "GetData" )
+   >> string
+   formiddle: >>", "
+   forlast: >"."
+end
+>
+> "Complete."
+

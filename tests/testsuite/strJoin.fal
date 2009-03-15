@@ -1,0 +1,31 @@
+/****************************************************************************
+* Falcon test suite
+*
+*
+* ID: 101o
+* Category: rtl
+* Subcategory: string
+* Short: join on strings method
+* Description:
+*   Test on String.join method.
+* [/Description]
+*
+****************************************************************************/
+
+if "".join() != "": failure( "Full empty join" )
+if ",".join() !="": failure( "Void join" )
+if "".join("a word") != "a word": failure( "Join single word" )
+if "".join( 1 ) != "1": failure( "Join toString" )
+if "x".join( 640, 480 ) != "640x480": failure( "Join with a string" )
+if "".join( 640, 480 ) != "640480": failure( "Join without strings" )
+if " tok ".join( "single" ) != "single": failure( "Join single token" )
+if " tok ".join( "alpha", 1, 2, "beta" ) != \
+   "alpha tok 1 tok 2 tok beta": failure( "join token" )
+
+// Nmultibyte
+if ",".join( "安心", "しました" ) != "安心,しました": failure( "Join multi mixed" )
+if "、".join( "安心", "しました" ) != "安心、しました": failure( "Join multi pure" )
+
+success()
+
+/* End of file */

@@ -36,7 +36,6 @@ bool DetMemPool::gcDetMark()
    markItemFast( m_owner->regA() );
    markItemFast( m_owner->regB() );
    markItemFast( m_owner->self() );
-   markItemFast( m_owner->sender() );
 
    if( m_msTarget < Sys::_milliseconds() )
    {
@@ -84,7 +83,6 @@ bool DetMemPool::gcDetMark()
       markItemFast( ctx->regA() );
       markItemFast( ctx->regB() );
       markItemFast( ctx->self() );
-      markItemFast( ctx->sender() );
 
       if( m_msTarget < Sys::_milliseconds() )
       {
@@ -114,7 +112,7 @@ bool DetMemPool::gcDetMark()
 
 void DetMemPool::gcDetSweep()
 {
-   Garbageable *ring = ringRoot();
+   Garbageable *ring = m_r;
    if( ring == 0 )
       return;
    Garbageable *ring2 = ring->nextGarbage();

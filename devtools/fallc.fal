@@ -5,7 +5,7 @@
 * See LICENSE file for licensing details.
 ************************************************************/
 
-directive version=0x010000, lang="en_US"
+directive version=0x010100, lang="en_US"
 load mxml
 load regex
 
@@ -217,6 +217,7 @@ end
 function saveMerge( lmerge, ltab, output )
    try
       outstream = OutputStream( output )
+      outstream.setEncoding( "utf-8" )
    catch IoError in error
       > @i"fallc: Warning: Couldn't create output file \"$(output)\": "
       > error
@@ -266,6 +267,7 @@ function saveMerge( lmerge, ltab, output )
    end
 
    doc.style( MXMLStyle.INDENT )
+   doc.setEncoding( "utf-8" )
    try
       doc.serialize( outstream )
    catch IoError in e

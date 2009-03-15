@@ -1,0 +1,53 @@
+/*
+   FALCON - Benchmarks
+
+   FILE: readline.fal
+
+   Read repeated lines.
+
+   Measures the count of characters and lines read froma stream in
+   text oriented operations.
+
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Mon, 02 Feb 2009 19:58:29 +0100
+
+   -------------------------------------------------------------------
+   (C) Copyright 2009: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+// Config
+if args.len() == 0
+   > "Please, give a file from which to read a massive number of lines."
+   return 1
+end
+
+ins = IOStream( args[0] )
+line = strBuffer( 100000 )
+count = 0
+chars = 0
+time = seconds()
+while not ins.eof()
+   ins.readLine( line )
+   ++count
+   chars += line.len()
+end
+endtime = seconds()
+diff = endtime - time
+
+if diff == 0
+   > "Sorry, file too small to take timings."
+   return 1
+end
+
+> @ "Total elapsed time: $(diff:.3)"
+meanl = count / diff
+meanc = chars / diff
+> @"Total lines: $count ($chars characters)"
+> @"Means: $(meanl:.3) l/sec   ($(meanc:.3) char/sec)"
+> "Done."
+
+return 0
+

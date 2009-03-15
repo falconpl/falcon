@@ -36,23 +36,32 @@ different systems.
 //
 
 #ifdef FALCON_SYSTEM_WIN
+   
+   // Minimal specific. 
+   #define _WIN32_WINNT 0x0403
 
    //===============================
    // Compiler specific defines
    //
+
 
    /* Specifigs for MSVC */
    #ifdef _MSC_VER
       #undef CDECL
       #define CDECL __cdecl
       #define FALCON_FUNC \
-         extern "C" void CDECL
+         void CDECL
 
 		#ifndef FALCON_ENGINE_STATIC
 			#if defined(FALCON_ENGINE_EXPORTS)
 				#define FALCON_DYN_CLASS __declspec(dllexport)
 				#define FALCON_DYN_SYM __declspec(dllexport)
 				#define EXTERN_TEMPLATE
+            
+            // Falcon export service is optional, but mandatory with engine exports.
+            #ifndef FALCON_EXPORT_SERVICE
+               #define FALCON_EXPORT_SERVICE
+            #endif
 			#else
 				#define FALCON_DYN_CLASS __declspec(dllimport)
 				#define FALCON_DYN_SYM __declspec(dllimport)
@@ -70,7 +79,7 @@ different systems.
       #endif
 
       #define FALCON_FUNC_DYN_SYM \
-		   extern "C" FALCON_DYN_SYM void CDECL
+		   FALCON_DYN_SYM void CDECL
 
       #define FALCON_MODULE_TYPE \
 		   extern "C" __declspec(dllexport) ::Falcon::Module * CDECL
@@ -100,7 +109,7 @@ different systems.
 		#define CDECL
 	   #endif
 	   #define FALCON_FUNC \
-	      extern "C" void
+	      void
 
 	   #ifdef FALCON_ENGINE_EXPORTS
 			#define FALCON_DYN_CLASS __declspec(dllexport)
@@ -119,7 +128,7 @@ different systems.
       #endif
 
       #define FALCON_FUNC_DYN_SYM \
-		   extern "C" FALCON_DYN_SYM void CDECL
+		   FALCON_DYN_SYM void CDECL
 
 	   #define FALCON_MODULE_TYPE \
 	      extern "C" __declspec(dllexport) ::Falcon::Module *
@@ -139,7 +148,7 @@ different systems.
 #else
    #define CDECL 
    #define FALCON_FUNC \
-      extern "C" void
+      void
 
    #define FALCON_DYN_CLASS
    #define FALCON_DYN_SYM 

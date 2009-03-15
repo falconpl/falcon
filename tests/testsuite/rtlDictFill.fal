@@ -1,0 +1,37 @@
+/****************************************************************************
+* Falcon test suite
+*
+*
+* ID: 104b
+* Category: rtl
+* Subcategory: dictionary
+* Short: Dictionary fill
+* Description:
+*   Test for dictionary filling routines.
+* [/Description]
+*
+****************************************************************************/
+
+dict = [ 1=>"a", 2=>"b", 3=>"c", 4=>"d", 5=>"e" ]
+
+dictFill( dict, 100 )
+if dict.len() != 5: failure( "fill length" )
+
+for k,n in dict
+   if n != 100: failure( "Fill content" )
+end
+
+dict.fill( "hello" )
+if dict.len() != 5: failure( "fill length 2" )
+for k,n in dict
+   if n != "hello": failure( "Fill content 2" )
+end
+
+dict[2][0] = "H"
+if dict[2] != "Hello": failure( "Modify after fill" )
+if dict[3] != "hello": failure( "Insolation after fill" )
+
+
+success()
+
+/* End of file */

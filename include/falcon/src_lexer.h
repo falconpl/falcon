@@ -47,6 +47,7 @@ private:
    bool m_bIsDirectiveLine;
    bool m_incremental;
    bool m_lineContContext;
+   bool m_graphAgain;
    uint32 m_chrEndString;
 
    Stream *m_in;

@@ -1,0 +1,36 @@
+/****************************************************************************
+* Falcon test suite
+*
+*
+* ID: 102d
+* Category: rtl
+* Subcategory: array
+* Short: Array fill
+* Description:
+*   Test for array filling routines.
+* [/Description]
+*
+****************************************************************************/
+
+array = [ 1, 2, 3, 4, 5 ]
+
+arrayFill( array, 100 )
+if array.len() != 5: failure( "fill length" )
+
+for n in array
+   if n != 100: failure( "Fill content" )
+end
+
+array.fill( "hello" )
+if array.len() != 5: failure( "fill length 2" )
+for n in array
+   if n != "hello": failure( "Fill content 2" )
+end
+
+array[2][0] = "H"
+if array[2] != "Hello": failure( "Modify after fill" )
+if array[3] != "hello": failure( "Insolation after fill" )
+
+success()
+
+/* End of file */

@@ -99,14 +99,14 @@ public:
       OParams& truncate() { m_oflags |= 0x8; return *this; }
       bool isTruncate() const { return (m_oflags & 0x8) == 0x8; }
 
-      OParams& shNoread() { m_shflags |= 0x1; return *this; }
-      bool shNoread() const { return (m_shflags & 0x1) == 0x1; }
+      OParams& shNoRead() { m_shflags |= 0x1; return *this; }
+      bool isShNoRead() const { return (m_shflags & 0x1) == 0x1; }
 
       OParams& shNoWrite() { m_shflags |= 0x2; return *this; }
-      bool shNoWrite() const { return (m_shflags & 0x2) == 0x2; }
+      bool isShNoWrite() const { return (m_shflags & 0x2) == 0x2; }
 
       OParams& shNone() { m_shflags |= 0x3; return *this; }
-      bool shNone() const { return (m_shflags & 0x3) == 0x3; }
+      bool isShNone() const { return (m_shflags & 0x3) == 0x3; }
    };
 
    /** Create Paramenter.

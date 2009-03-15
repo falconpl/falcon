@@ -15,6 +15,7 @@
 
 #include "core_module.h"
 #include "../vmsema.h"
+#include <falcon/falconobject.h>
 
 /*#
 
@@ -212,7 +213,7 @@ FALCON_FUNC  Semaphore_init ( ::Falcon::VMachine *vm )
       else if ( qty->type() == FLC_ITEM_NUM )
          value = (int32) qty->asNumeric();
       else {
-         vm->raiseRTError( new ParamError( ErrorParam( e_param_outside ).extra( "( N )" ) ) );
+         vm->raiseRTError( new ParamError( ErrorParam( e_param_range ).extra( "( N )" ) ) );
          return;
       }
    }
@@ -233,7 +234,7 @@ FALCON_FUNC  Semaphore_init ( ::Falcon::VMachine *vm )
 */
 FALCON_FUNC  Semaphore_post ( ::Falcon::VMachine *vm )
 {
-   VMSemaphore *semaphore = static_cast< VMSemaphore *>(vm->self().asObject()->getUserData());
+   VMSemaphore *semaphore = dyncast< VMSemaphore *>(vm->self().asObject()->getFalconData());
    Item *qty = vm->param(0);
    int32 value = 1;
    if ( qty != 0 ) {
@@ -262,19 +263,18 @@ FALCON_FUNC  Semaphore_post ( ::Falcon::VMachine *vm )
 */
 FALCON_FUNC  Semaphore_wait ( ::Falcon::VMachine *vm )
 {
-   VMSemaphore *semaphore = static_cast< VMSemaphore *>(vm->self().asObject()->getUserData());
+   VMSemaphore *semaphore = dyncast< VMSemaphore *>(vm->self().asObject()->getFalconData());
    Item *i_wc = vm->param( 0 );
    if ( i_wc == 0 )
       semaphore->wait( vm );
    else {
       if ( ! i_wc->isOrdinal() )
-	  {
-	     vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).extra( "( N )" ) ) );
+      {
+         vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).extra( "(N)" ) ) );
          return;
-	  }
-	  semaphore->wait( vm, i_wc->forceNumeric() );
+      }
+      semaphore->wait( vm, i_wc->forceNumeric() );
    }
-
 }
 
 /*#

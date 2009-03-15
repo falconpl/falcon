@@ -102,7 +102,6 @@ public:
       t_symbol,
       t_symdef,
       t_self,
-      t_sender,
       t_lbind,
 
       t_byref,
@@ -244,7 +243,7 @@ public:
    bool isSimple() const {
       return isImmediate() ||
              m_type == t_symbol || m_type == t_symdef || m_type == t_lbind ||
-             m_type == t_self || m_type == t_sender;
+             m_type == t_self;
    }
 
    bool isTrue() const {
@@ -283,7 +282,6 @@ public:
    void setDict( DictDecl *val ) { m_type = t_dict_decl; m_content.asDict = val; }
    void setRange( RangeDecl *val ) { m_type = t_range_decl; m_content.asRange = val; }
    void setSelf() { m_type = t_self; }
-   void setSender() { m_type = t_sender; }
    void setLBind( String *val ) { m_type = t_lbind; m_content.asString = val; }
 
    bool isNil() const { return m_type == t_nil; }
@@ -298,7 +296,6 @@ public:
    bool isArray() const { return m_type == t_array_decl; }
    bool isDict() const { return m_type == t_dict_decl; }
    bool isSelf() const { return m_type == t_self; }
-   bool isSender() const { return m_type == t_sender; }
    bool isRange() const { return m_type == t_range_decl; }
    bool isLBind() const { return m_type == t_lbind; }
 
@@ -518,6 +515,7 @@ public:
       t_if,
       t_elif,
       t_while,
+      t_loop,
       t_forin,
       t_try,
       t_catch,
@@ -526,7 +524,6 @@ public:
       t_case,
       t_module,
       t_global,
-      t_pass,
 
       t_class,
       t_function,
@@ -736,29 +733,6 @@ public:
 };
 
 
-class FALCON_DYN_CLASS StmtPass: public Statement
-{
-   Value *m_called;
-   Value *m_saveRetIn;
-
-public:
-   StmtPass( uint32 line, Value *exp, Value *in = 0 ):
-      Statement( line, t_pass ),
-      m_called( exp ),
-      m_saveRetIn( in )
-   {}
-
-   StmtPass( const StmtPass &other );
-
-   virtual ~StmtPass();
-
-   Value *called() const { return m_called; }
-   Value *saveIn() const { return m_saveRetIn; }
-
-   virtual Statement *clone() const;
-};
-
-
 class FALCON_DYN_CLASS StmtGive: public Statement
 {
    ArrayDecl *m_objects;
@@ -850,6 +824,7 @@ public:
 
 class FALCON_DYN_CLASS StmtConditional: public StmtBlock
 {
+protected:
    Value *m_condition;
 
 public:
@@ -865,6 +840,22 @@ public:
    Value *condition() const { return m_condition; }
 
    // pure virtual
+};
+
+class FALCON_DYN_CLASS StmtLoop: public StmtConditional
+{
+public:
+   StmtLoop( uint32 line, Value *cond = 0):
+      StmtConditional( line, t_loop, cond )
+   {}
+
+   StmtLoop( const StmtLoop &other ):
+      StmtConditional( other )
+   {}
+
+   virtual Statement *clone() const;
+
+   void setCondition( Value *cond ) { m_condition = cond; }
 };
 
 

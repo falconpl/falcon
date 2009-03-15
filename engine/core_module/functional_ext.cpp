@@ -88,7 +88,6 @@ namespace core {
    Survival Guide.
 */
 
-extern "C" {
 static bool core_any_next( ::Falcon::VMachine *vm )
 {
    // was the elaboration succesful?
@@ -118,7 +117,6 @@ static bool core_any_next( ::Falcon::VMachine *vm )
 
    vm->retval( (int64) 0 );
    return false;
-}
 }
 
 /*#
@@ -153,7 +151,7 @@ FALCON_FUNC  core_any ( ::Falcon::VMachine *vm )
 
    CoreArray *arr = i_param->asArray();
    uint32 count = arr->length();
-   vm->returnHandler( core_any_next );
+   vm->returnHandler( &core_any_next );
    vm->addLocals(1);
 
    for( uint32 i = 0; i < count; i ++ )
@@ -176,7 +174,6 @@ FALCON_FUNC  core_any ( ::Falcon::VMachine *vm )
 }
 
 
-extern "C" {
 static bool core_all_next( ::Falcon::VMachine *vm )
 {
    // was the elaboration succesful?
@@ -207,7 +204,6 @@ static bool core_all_next( ::Falcon::VMachine *vm )
 
    vm->retval( (int64) 1 );
    return false;
-}
 }
 
 /*#
@@ -249,7 +245,7 @@ FALCON_FUNC  core_all ( ::Falcon::VMachine *vm )
       return;
    }
 
-   vm->returnHandler( core_all_next );
+   vm->returnHandler( &core_all_next );
    vm->addLocals(1);
 
    for( uint32 i = 0; i < count; i ++ )
@@ -273,7 +269,6 @@ FALCON_FUNC  core_all ( ::Falcon::VMachine *vm )
 }
 
 
-extern "C" {
 static bool core_anyp_next( ::Falcon::VMachine *vm )
 {
    // was the elaboration succesful?
@@ -303,7 +298,6 @@ static bool core_anyp_next( ::Falcon::VMachine *vm )
 
    vm->retval( (int64) 0 );
    return false;
-}
 }
 
 /*#
@@ -337,7 +331,7 @@ static bool core_anyp_next( ::Falcon::VMachine *vm )
 FALCON_FUNC  core_anyp ( ::Falcon::VMachine *vm )
 {
    uint32 count = vm->paramCount();
-   vm->returnHandler( core_anyp_next );
+   vm->returnHandler( &core_anyp_next );
    vm->addLocals(1);
 
    for( uint32 i = 0; i < count; i ++ )
@@ -361,7 +355,6 @@ FALCON_FUNC  core_anyp ( ::Falcon::VMachine *vm )
 }
 
 
-extern "C" {
 static bool core_allp_next( ::Falcon::VMachine *vm )
 {
    // was the elaboration succesful?
@@ -391,7 +384,6 @@ static bool core_allp_next( ::Falcon::VMachine *vm )
 
    vm->retval( 1 );
    return false;
-}
 }
 
 /*#
@@ -425,7 +417,7 @@ static bool core_allp_next( ::Falcon::VMachine *vm )
 FALCON_FUNC  core_allp ( ::Falcon::VMachine *vm )
 {
    uint32 count = vm->paramCount();
-   vm->returnHandler( core_allp_next );
+   vm->returnHandler( &core_allp_next );
    vm->addLocals(1);
 
    if ( count == 0 )
@@ -480,8 +472,13 @@ FALCON_FUNC  core_eval ( ::Falcon::VMachine *vm )
          extra( "X" ) ) );
       return;
    }
+   uint32 pcount = vm->paramCount() - 1;
+   for ( uint32 i = pcount; i > 0; i-- )
+   {
+      vm->pushParameter( *vm->param(i) );
+   }
 
-   vm->functionalEval( *i_param );
+   vm->functionalEval( *i_param, pcount );
 }
 
 /*#
@@ -546,7 +543,7 @@ FALCON_FUNC  core_min ( ::Falcon::VMachine *vm )
    Item *elem = vm->param( 0 );
    for ( int32 i = 1; i < vm->paramCount(); i++)
    {
-      if ( vm->compareItems( *vm->param(i), *elem ) < 0 )
+      if ( *vm->param(i) < *elem )
       {
          elem = vm->param(i);
       }
@@ -592,7 +589,7 @@ FALCON_FUNC  core_max ( ::Falcon::VMachine *vm )
    int32 count = vm->paramCount();
    for ( int32 i = 1; i < count; i++)
    {
-      if ( vm->compareItems( *vm->param(i), *elem ) > 0 )
+      if ( *vm->param(i) > *elem )
       {
          elem = vm->param(i);
       }
@@ -632,7 +629,6 @@ FALCON_FUNC  core_max ( ::Falcon::VMachine *vm )
    @see oob
 */
 
-extern "C" {
 static bool core_map_next( ::Falcon::VMachine *vm )
 {
    // callable in first item
@@ -654,7 +650,7 @@ static bool core_map_next( ::Falcon::VMachine *vm )
    vm->retval( mapped );
    return false;
 }
-}
+
 
 FALCON_FUNC  core_map ( ::Falcon::VMachine *vm )
 {
@@ -670,10 +666,10 @@ FALCON_FUNC  core_map ( ::Falcon::VMachine *vm )
    }
 
    CoreArray *origin = i_origin->asArray();
-   CoreArray *mapped = new CoreArray( vm, origin->length() );
+   CoreArray *mapped = new CoreArray( origin->length() );
    if ( origin->length() > 0 )
    {
-      vm->returnHandler( core_map_next );
+      vm->returnHandler( &core_map_next );
       vm->addLocals( 2 );
       *vm->local(0) = (int64)1;
       *vm->local(1) = mapped;
@@ -687,7 +683,7 @@ FALCON_FUNC  core_map ( ::Falcon::VMachine *vm )
    vm->retval( mapped );
 }
 
-extern "C" {
+
 static bool core_dolist_next ( ::Falcon::VMachine *vm )
 {
    CoreArray *origin = vm->param(1)->asArray();
@@ -720,7 +716,7 @@ static bool core_dolist_next ( ::Falcon::VMachine *vm )
    vm->callFrame( *vm->param(0), 1 );
    return true;
 }
-}
+
 
 /*#
    @function dolist
@@ -757,7 +753,7 @@ FALCON_FUNC  core_dolist ( ::Falcon::VMachine *vm )
    CoreArray *origin = i_origin->asArray();
    if ( origin->length() != 0 )
    {
-      vm->returnHandler( core_dolist_next );
+      vm->returnHandler( &core_dolist_next );
       vm->addLocals( 2 );
       // count
       *vm->local(0) = (int64) 0;
@@ -781,152 +777,155 @@ FALCON_FUNC  core_dolist ( ::Falcon::VMachine *vm )
 }
 
 
-extern "C" {
-static bool core_times_next ( ::Falcon::VMachine *vm )
+static bool core_times_next_( ::Falcon::VMachine *vm )
 {
-   // we may mangle with the parameters -- be careful.
-   Item var = *vm->param(1);
-   CoreArray *sequence = vm->param(2)->asArray();
-   Item &range = *vm->local(0); // temporary reference, we won't hold for long.
-   int32 start = range.asRangeStart();
-   uint32 currentItemID = (uint32) vm->local(1)->asInteger();
+   int64 end = vm->local(0)->asInteger();
+   int64 step = vm->local(1)->asInteger();
+   int64 start = vm->local(2)->asInteger();
 
-   // eval request
-   int evalReq = (int) vm->local(2)->asInteger();
-
-   // Continue or items terminated?
-   if( currentItemID == sequence->length() ||
-      ( vm->regA().isOob() && vm->regA().isInteger() && vm->regA().asInteger() == 1 )
-      )
+   while ( (step > 0 && start >= end)
+     || (step < 0 && start < end )
+     || ( vm->regA().isOob() && vm->regA().isInteger() && vm->regA().asInteger() == 0 )
+     )
    {
-      currentItemID = 0;
-      // here it is safe to change the reference
-      start += range.asRangeStep();
-      if ( vm->isParamByRef( 1 ) )
-         vm->param(1)->setInteger( start );
-
-      // we won't need the range past this point.
-      range.setRange( start, range.asRangeEnd(), range.asRangeStep(), false );
-   }
-
-   // Break or loop terminated?
-   if( ( range.asRangeStep() > 0 && start >= range.asRangeEnd()) ||
-       ( range.asRangeStep() < 0 && start < range.asRangeEnd()) ||
-      ( vm->regA().isOob() && vm->regA().isInteger() && vm->regA().asInteger() == 0 )
-      )
-   {
-      vm->regA().setInteger( (int64) range.asRangeStart() );
+      vm->retval( start );
       return false;
    }
 
-   // get the current item.
-   Item &current = sequence->at( currentItemID );
-
-   // Is the current item callable? -- if not, raise an error
-   if ( ! current.isCallable() )
+   vm->pushParameter( start );
+   *vm->local(2) = start + step;
+   Item *i_sequence = vm->local(3);
+   if( i_sequence->isArray() )
    {
-      vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).
-         extra( "uncallable" ) ) );
-      return false;   // don't call me anymore
+      vm->functionalEval( *i_sequence, 1, false );
    }
-
-   // check for evaluation required (xtimes)
-   if ( evalReq > 0 )
+   else
    {
-      // continuing a previous evaluation?
-      if ( evalReq == 2 )
-      {
-         // evaluation complete, proceed
-         *vm->local(2) = (int64)1;
-
-      }
-      else {
-         // prepares next iteration
-         vm->local(1)->setInteger( currentItemID + 1 );
-
-         // try to evaluate
-         if ( vm->functionalEval( current ) )
-         {
-            // Evaluation required? -- reiterate
-            *vm->local(2) = (int64)2;
-            return true;
-         }
-         // else, we can continue.
-         return true;
-      }
-
-
-      return true;
-   }
-
-   // prepare the next current item ID
-   vm->local(1)->setInteger( currentItemID + 1 );
-
-   // how should we call the item?
-   if ( ! vm->isParamByRef( 1 ) )
-   {
-      // we must alter its parameters.
-      if ( current.isArray() )
-      {
-         CoreArray *curArray = current.asArray();
-         // append? -- explode the call (callFrame would do it anyhow)
-         int64 varID = var.forceInteger();
-         if ( varID <= 0 )
-         {
-            for ( uint32 i = 1; i < curArray->length(); i++ )
-            {
-               vm->pushParameter( curArray->at(i) );
-            }
-            vm->pushParameter( (int64) start);
-            // queue the call ( + 1 parameter - 1 because first item is callable)
-            vm->callFrame( curArray->at(0), curArray->length() );
-         }
-         // otherwise, mangle the item ID
-         else {
-            // for now, let's ignore too short arrays.
-            if ( curArray->length() > (uint32) varID )
-            {
-               curArray->at( (uint32) varID ) = (int64) start;
-            }
-            // just perform the call as-is.
-            vm->callFrame( curArray, 0 );
-         }
-      }
-      // if it's not an array, just push the parameter and call
-      else {
-         vm->pushParameter( (int64) start);
-         vm->callFrame( current, 1 );
-      }
-   }
-   else {
-      // we need just to call the item.
-      vm->callFrame( current, 0 );
+      vm->callFrame( *i_sequence, 1 );
    }
 
    return true;
 }
-}
 
 
-extern "C"
+/*#
+   @function times
+   @inset functional_support
+   @brief Repeats a sequence a determined number of times.
+   @param count Count of times to be repeated or non-open range.
+   @param sequence A function or a Sigma sequence.
+   @return Last index processed.
+
+   This function is very similar to a functional for/in loop. It repeats a sequence
+   of callable items in the @b sequence parameter a determined number of
+   times. If the @b sequence parameter is a sequence, parametric evaluation is
+   performed and the @b &1 late binding is filled with the value of the index; if
+   it's a function, then it is called with the counter value added as the last parameter.
+
+   If the evaluated parameter is a sequence, full deep sigma evaluation is performed
+   at each loop.
+
+   The loop index count will be given values from 0 to the required index-1 if @b count is numeric,
+   or it will act as the for/in loop if @b count is a range.
+
+   For example:
+
+   @code
+
+      function printParam( var )
+         > "Parameter is... ", var
+      end
+
+      // the followings are equivalent
+      times( 10, [printParam, &1] )
+      times( 10, printParam )
+   @endcode
+
+   The following example prints a list of pair numbers between 2 and 10:
+
+   @code
+      times( [2:11:2],     // range 2 to 10+1, with step 2
+         .[ printl "Index is now..." &1 ]
+         )
+   @endcode
+
+   Exactly like @a floop, the flow of calls in @b times can be altered by the functions in sequence returning
+   an out-of-band 0 or 1. If any function in the sequence returns an out-of-band 0, @b times terminates and
+   return immediately (performing an operation similar to "break"). If a function returns an out-of-band 1,
+   the rest of the items in @b sequence are ignored, and the loop is restarted with the index updated; this
+   is equivalent to a functional "continue". In example:
+
+   @code
+   times( 10,
+             // skip numbers less than 5
+      .[ .[(function(x); if x < 5: return oob(1); end)  &1]
+         .[printl &1]   // print the others
+       ]
+    )
+   @endcode
+
+   The @b times function return the last generated value for the index. A natural termination of @b times
+   can be detected thanks to the fact that the index is equal to the upper bound of the range, while
+   an anticipated termination causes @b times to return a different index. In example, if @b count is
+   10, the generated index (possibly received by the items in @b sequence) will range from 0 to 9 included,
+   and if the function terminates correctly, it will return 10. If a function in @b sequence returns an
+   out-of-band 0, causing a premature termination of the loop, the value returned by times will be the loop
+   index at which the out-of-band 0 was returned.
+
+   @note Ranges [m:n] where m > n (down-ranges) terminate at n included; in that case, a succesful
+   completion of @b times return one-past n.
+*/
+
+/*#
+   @method times Integer
+   @brief repeats a sequence a given number of times.
+   @param sequence Function or sequence to be repeated.
+   @return Last index processed.
+
+   This method works exactly as the @b times function when
+   the first parameter is a number.
+
+   @see times
+*/
+
+/*#
+   @method times Range
+   @brief repeats a sequence a given number of times.
+   @param sequence Function or sequence to be repeated.
+   @return Last index processed.
+
+   This method works exactly as the @b times function when
+   the first parameter is a range.
+
+   @see times
+*/
+
+FALCON_FUNC  core_times ( ::Falcon::VMachine *vm )
 {
-static void  internal_times ( ::Falcon::VMachine *vm, bool eval )
-{
-   Item *i_count = vm->param(0);
-   Item *i_var = vm->param(1);
-   Item *i_sequence = vm->param(2);
+   Item *i_count;
+   Item *i_sequence;
+
+   if ( vm->self().isMethodic() )
+   {
+      i_count = &vm->self();
+      i_sequence = vm->param(0);
+   }
+   else
+   {
+      i_count = vm->param(0);
+      i_sequence = vm->param(1);
+   }
 
    if( i_count == 0 || ! ( i_count->isRange() || i_count->isOrdinal() ) ||
-       i_var == 0 || ! ( vm->isParamByRef( 1 ) || i_var->isNil() || i_var->isOrdinal() ) ||
-       i_sequence == 0 || ! i_sequence->isArray()
+       i_sequence == 0 || ! ( i_sequence->isArray() || i_sequence->isCallable() )
       )
    {
       vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).
-         extra( "N|R, $|Nil|N, A" ) ) );
+         extra( "N|R, A|C" ) ) );
       return;
    }
 
-   int32 start, end, step;
+   int64 start, end, step;
    if( i_count->isRange() )
    {
       if ( i_count->asRangeIsOpen() )
@@ -943,186 +942,175 @@ static void  internal_times ( ::Falcon::VMachine *vm, bool eval )
    }
    else {
       start = 0;
-      end = (int32) i_count->forceInteger();
+      end = i_count->forceInteger();
       step = end < 0 ? -1 : 1;
    }
-
-   CoreArray *sequence = i_sequence->asArray();
 
    // check ranges and steps.
    if ( start == end ||
         ( start < end && ( step < 0 || start + step > end ) ) ||
-        ( start > end && ( step > 0 || start + step < end ) ) ||
-        sequence->length() == 0
+        ( start > end && ( step > 0 || start + step < end ) )
     )
    {
       // no loop to be done.
-      vm->retval( (int64) start );
+      vm->retval( start );
       return;
    }
 
    // ok, we must do at least a loop
-   vm->returnHandler( core_times_next );
+   vm->returnHandler( &core_times_next_ );
 
    // 0: shifting range
    // 1: position in the sequence calls.
    // 2: should evaluate ? 0 = no 1 = yes, 2 = already evaluating.
-   vm->addLocals( 3 );
+   vm->addLocals( 4 );
    // count
-   vm->local(0)->setRange( start, end, step, false);
-   *vm->local(1) = (int64) 0;
-   *vm->local(2) = (int64) (eval?1:0);
+   *vm->local(0) = end;
+   *vm->local(1) = step;
+   *vm->local(2) = start;
+   *vm->local(3) = *vm->param( vm->self().isMethodic()? 0 : 1 );
 
    // prevent dirty A to mess our break/continue system.
    vm->regA().setNil();
 
-   // eventually, set the initial count
-   if ( vm->isParamByRef( 1 ) )
+   // start the loop
+   core_times_next_(vm);
+}
+
+/*#
+      @method upto Integer
+      @brief Repeats a function or a sequence until the upper limit is reached.
+      @param llimit The upper limit of the loop.
+      @param sequence The sequence or function to be repeated.
+      @return The last index processed.
+      
+      This method repeats a loop from this integer down to the limit value included. 
+      If the limit is less than this integer, the function returns immediately.
+      
+      If the sequence is a function, then it is called iteratively with the current
+      index value as last parameter. If it is a sequence, it is functionally evaluated
+      and the &1 parametric binding is set to the index.
+      @code
+       2.upto( 5, printl )
+       2.downto(5, .[printl "Value number " &1])
+      @endcode
+      
+      In both cases, returning an oob(0) will cause the loop to terminate, while
+      returning an oob(1) from any evaluation in the sequence makes the rest of
+      the evaluation to be skipped and the loop to be restarted.
+*/
+FALCON_FUNC  core_upto ( ::Falcon::VMachine *vm )
+{
+   Item* i_count = vm->param(0);
+   Item* i_sequence = vm->param(1);
+
+   if( i_count == 0 || ! i_count->isOrdinal() ||
+       i_sequence == 0 || ! ( i_sequence->isArray() || i_sequence->isCallable() )
+      )
    {
-      *i_var = (int64) start;
+      vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).
+         extra( "N|R, A|C" ) ) );
+      return;
    }
 
-   // ready; now the VM will call core_times_next
-}
+   int64 start =  vm->self().asInteger();
+   int64 end = i_count->forceInteger();
+
+   // check ranges and steps.
+   if ( start > end )
+   {
+      // no loop to be done.
+      vm->retval( start );
+      return;
+   }
+
+   // ok, we must do at least a loop
+   vm->returnHandler( &core_times_next_ );
+
+   // 0: shifting range
+   // 1: position in the sequence calls.
+   // 2: should evaluate ? 0 = no 1 = yes, 2 = already evaluating.
+   vm->addLocals( 4 );
+   // count
+   *vm->local(0) = end+1;
+   *vm->local(1) = (int64) 1;
+   *vm->local(2) = start;
+   *vm->local(3) = *vm->param( 1 );
+
+   // prevent dirty A to mess our break/continue system.
+   vm->regA().setNil();
+
+   // start the loop
+   core_times_next_(vm);
 }
 
 /*#
-   @function times
-   @inset functional_support
-   @brief Repeats a sequence a determined number of times.
-   @param count Count of times to be repeated or non-open range.
-   @param var A reference to a variable that will receive the current count, nil or a number.
-   @param sequence A list of callable items that can be called one at a time.
-   @return Last index processed.
-
-   This function is very similar to a functional for/in loop. It repeats a sequence
-   of callable items in the @b sequence parameter a determined number of
-   times, eventually filling a variable with the current loop index, or mangling the
-   parameters of the given callable items so that they receive the index as a parameter.
-
-   @note The paramters of @b times are not functionally evaluated.
-
-   The loop index count will be given values from 0 to the required index-1 if @b count is numeric,
-   or it will act as the for/in loop if @b count is a range.
-
-   The way the current index loop is sent to the items depends on the type of @b var.
-   If it's nil, then the count is only kept internally; Sigma functions in @b sequence may not need it, or
-   they may use an internal counter. In example:
-   @code
-      function printTimes()
-         static: i = 0
-         > "Called ", ++i, " times."
-      end
-
-      times( 10, nil, [ printTimes ] )
-   @endcode
-
-   If @b val is a reference to a variable, then that variable is
-   updated to the current loop value. The Sigmas in @b sequence may receive it as a parameter
-   passed by reference or may accesses it from the outer (global) scope. In example:
-   @code
-      // module scope
-      sent = nil
-
-      function printSent()
-         global sent
-         > "Called ", sent, " times."
-      end
-
-      function printParam( var )
-         > "Parameter is... ", var
-      end
-
-      times( 10, $sent, [ printSent, [printParam, $sent] ] )
-   @endcode
-
-   In the above example, printSent "fishes" the global value of @b sent, while printParam
-   uses a reference to it in its parameters and sees its paramter list changed at each call.
-
-   Finally, @b var may be a number. If the number is zero or less, the loop variable is just
-   appended to the parameters in the call. The following example prints a list of pair numbers
-   between 2 and 10:
-
-   @code
-      times( [2:11:2],     // range 2 to 10+1, with step 2
-         0,                // instruct times to add the loop index to the calls
-         .[ .[ printl "Index is now..." ] ]      // the calls (just 1).
-         )
-   @endcode
-
-   If it's a positive number, then the nth element of the Sigmas in the list will be
-   changed. In this last case, the items in @b sequence need not just to be callable; they
-   must be Sigmas (lists starting with a callable item) having at least enough items for
-   the @b var ID to be meaningful. The next example alters the parameter element #2 in the
-   Sigmas array it calls:
-
-   @code
-      times( [2:11:2], 2,
-         .[ .[ printl "Index is now... "
-                 nil
-                 " ..." ] ]
-         )
-   @endcode
-
-   Notice the "nil" at position 2 in the Sigma call of printl. It may actually be any item, as it will be
-   changed each time before the sigma is called.
-
-   In this case, if the callable items in @b sequence are not sigmas, or if they are to short for the
-   @b var ID to be useful, they get called without the addition of the loop index parameter.
-
-   @note The original sigmas are not restored after @b times is executed in this modality. This means that the
-   arrays in @b sequence will be altered, and they will hold the last number set by @b times before exit.
-
-   Exactly like @a floop, the flow of calls in @b times can be altered by the functions in sequence returning
-   an out-of-band 0 or 1. If any function in the sequence returns an out-of-band 0, @b times terminates and
-   return immediately (performing an operation similar to "break"). If a function returns an out-of-band 1,
-   the rest of the items in @b sequence are ignored, and the loop is restarted with the index updated; this
-   is equivalent to a functional "continue". In example:
-
-   @code
-   times( 10, 0,
-      .[ (function(x); if x < 5: return oob(1); end)   // skip numbers less than 5
-         printl // print the others
-       ]
-    )
-   @endcode
-
-   The @b times function return the last generated value for the index. A natural termination of @b times
-   can be detected thanks to the fact that the index is equal to the upper bound of the range, while
-   an anticipated termination causes @b times to return a different index. In example, if @b count is
-   10, the generated index (possibly received by the items in @b sequence) will range from 0 to 9 included,
-   and if the function terminates correctly, it will return 10. If a function in @b sequence returns an
-   out-of-band 0, causing a premature termination of the loop, the value returned by times will be the loop
-   index at which the out-of-band 0 was returned.
-
-   @note Ranges [m:n] where m > n (down-ranges) terminate at n included; in that case, a succesful
-   completion of @b times return one-past n.
+      @method downto Integer
+      @brief Repeats a function or a sequence until the lower limit is reached.
+      @param llimit The lower limit of the loop.
+      @param sequence The sequence or function to be repeated.
+      @return The last index processed.
+      
+      This method repeats a loop from this integer down to the limit value included. 
+      If the limit is greater than this integer, the function returns immediately.
+      
+      If the sequence is a function, then it is called iteratively with the current
+      index value as last parameter. If it is a sequence, it is functionally evaluated
+      and the &1 parametric binding is set to the index.
+      @code
+       5.downto( 2, printl )
+       3.downto(0, .[printl "Value number " &1])
+      @endcode
+      
+      In both cases, returning an oob(0) will cause the loop to terminate, while
+      returning an oob(1) from any evaluation in the sequence makes the rest of
+      the evaluation to be skipped and the loop to be restarted.
 */
-FALCON_FUNC  core_times ( ::Falcon::VMachine *vm )
+FALCON_FUNC  core_downto ( ::Falcon::VMachine *vm )
 {
-   internal_times( vm, false );
+   Item* i_count = vm->param(0);
+   Item* i_sequence = vm->param(1);
+
+   if( i_count == 0 || ! i_count->isOrdinal() ||
+       i_sequence == 0 || ! ( i_sequence->isArray() || i_sequence->isCallable() )
+      )
+   {
+      vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).
+         extra( "N|R, A|C" ) ) );
+      return;
+   }
+
+   int64 start =  vm->self().asInteger();
+   int64 end = i_count->forceInteger();
+
+   // check ranges and steps.
+   if ( start <= end )
+   {
+      // no loop to be done.
+      vm->retval( start );
+      return;
+   }
+
+   // ok, we must do at least a loop
+   vm->returnHandler( &core_times_next_ );
+
+   // 0: shifting range
+   // 1: position in the sequence calls.
+   // 2: should evaluate ? 0 = no 1 = yes, 2 = already evaluating.
+   vm->addLocals( 4 );
+   // count
+   *vm->local(0) = end;
+   *vm->local(1) = (int64) -1;
+   *vm->local(2) = start;
+   *vm->local(3) = *vm->param( 1 );
+
+   // prevent dirty A to mess our break/continue system.
+   vm->regA().setNil();
+
+   // start the loop
+   core_times_next_(vm);
 }
 
-
-/*#
-   @function xtimes
-   @inset functional_support
-   @brief Repeats a sequence a determined number of times.
-   @param count Count of times to be repeated or non-open range.
-   @param var A reference to a variable that will receive the current count, nil or a number.
-   @param sequence A list of callable items that can be called one at a time.
-   @return Last index processed.
-
-   This function is omologous to @a times, but it automatically evaluates each
-   one of the items in the @b sequence list, as if they were all prefixed by an @a eval call.
-   @see times
-*/
-FALCON_FUNC  core_xtimes ( ::Falcon::VMachine *vm )
-{
-   internal_times( vm, true );
-}
-
-extern "C" {
 static bool core_xmap_next( ::Falcon::VMachine *vm )
 {
    // in vm->param(0) there is "callable".
@@ -1160,7 +1148,7 @@ static bool core_xmap_next( ::Falcon::VMachine *vm )
    vm->retval( mapped );
    return false;
 }
-}
+
 
 /*#
    @function xmap
@@ -1204,10 +1192,10 @@ FALCON_FUNC  core_xmap ( ::Falcon::VMachine *vm )
    }
 
    CoreArray *origin = i_origin->asArray();
-   CoreArray *mapped = new CoreArray( vm, origin->length() );
+   CoreArray *mapped = new CoreArray( origin->length() );
    if ( origin->length() > 0 )
    {
-      vm->returnHandler( core_xmap_next );
+      vm->returnHandler( &core_xmap_next );
       vm->addLocals( 3 );
       *vm->local(0) = (int64)1;
       *vm->local(1) = mapped;
@@ -1227,7 +1215,6 @@ FALCON_FUNC  core_xmap ( ::Falcon::VMachine *vm )
    vm->retval( mapped );
 }
 
-extern "C" {
 static bool core_filter_next ( ::Falcon::VMachine *vm )
 {
    CoreArray *origin = vm->param(1)->asArray();
@@ -1248,7 +1235,7 @@ static bool core_filter_next ( ::Falcon::VMachine *vm )
    vm->callFrame( *vm->param(0), 1 );
    return true;
 }
-}
+
 
 /*#
    @function filter
@@ -1279,10 +1266,10 @@ FALCON_FUNC  core_filter ( ::Falcon::VMachine *vm )
    }
 
    CoreArray *origin = i_origin->asArray();
-   CoreArray *mapped = new CoreArray( vm, origin->length() / 2 );
+   CoreArray *mapped = new CoreArray( origin->length() / 2 );
    if( origin->length() > 0 )
    {
-      vm->returnHandler( core_filter_next );
+      vm->returnHandler( &core_filter_next );
       vm->addLocals(2);
       *vm->local(0) = mapped;
       *vm->local(1) = (int64) 1;
@@ -1295,7 +1282,6 @@ FALCON_FUNC  core_filter ( ::Falcon::VMachine *vm )
 }
 
 
-extern "C" {
 static bool core_reduce_next ( ::Falcon::VMachine *vm )
 {
    // Callable in param 0
@@ -1315,7 +1301,6 @@ static bool core_reduce_next ( ::Falcon::VMachine *vm )
    vm->pushParameter( origin->at(count) ); // next element
    vm->callFrame( *vm->param(0), 2 );
    return true;
-}
 }
 
 /*#
@@ -1372,7 +1357,7 @@ FALCON_FUNC  core_reduce ( ::Falcon::VMachine *vm )
          return;
       }
 
-      vm->returnHandler( core_reduce_next );
+      vm->returnHandler( &core_reduce_next );
       vm->pushParameter( *init );
       vm->pushParameter( origin->at(0) );
       *vm->local(0) = (int64) 1;
@@ -1402,7 +1387,6 @@ FALCON_FUNC  core_reduce ( ::Falcon::VMachine *vm )
 }
 
 
-extern "C" {
 static bool core_iff_next( ::Falcon::VMachine *vm )
 {
    // anyhow, we don't want to be called anymore
@@ -1426,7 +1410,6 @@ static bool core_iff_next( ::Falcon::VMachine *vm )
    }
 
    return false;
-}
 }
 
 
@@ -1475,7 +1458,7 @@ FALCON_FUNC  core_iff ( ::Falcon::VMachine *vm )
    // we can use pre-fetched values as we have stack unchanged on
    // paths where we use item pointers.
 
-   vm->returnHandler( core_iff_next );
+   vm->returnHandler( &core_iff_next );
    if ( vm->functionalEval( *i_cond ) )
    {
       return;
@@ -1495,7 +1478,6 @@ FALCON_FUNC  core_iff ( ::Falcon::VMachine *vm )
 }
 
 
-extern "C" {
 static bool core_choice_next( ::Falcon::VMachine *vm )
 {
    if ( vm->regA().isTrue() )
@@ -1511,7 +1493,6 @@ static bool core_choice_next( ::Falcon::VMachine *vm )
    }
 
    return false;
-}
 }
 
 /*#
@@ -1549,7 +1530,7 @@ FALCON_FUNC  core_choice ( ::Falcon::VMachine *vm )
       return;
    }
 
-   vm->returnHandler( core_choice_next );
+   vm->returnHandler( &core_choice_next );
    if ( vm->functionalEval( *i_cond ) )
    {
       return;
@@ -1603,9 +1584,6 @@ FALCON_FUNC  core_lit ( ::Falcon::VMachine *vm )
    // result already in A.
 }
 
-
-extern "C"
-{
 
 static bool core_cascade_next ( ::Falcon::VMachine *vm )
 {
@@ -1671,7 +1649,6 @@ static bool core_cascade_next ( ::Falcon::VMachine *vm )
    }
 
    return true;
-}
 }
 
 /*#
@@ -1790,7 +1767,7 @@ FALCON_FUNC  core_cascade ( ::Falcon::VMachine *vm )
    pcount--;
 
    // install the handler
-   vm->returnHandler( core_cascade_next );
+   vm->returnHandler( &core_cascade_next );
 
    // perform the real call
    if ( ! vm->callFrame( callables->at(0), pcount ) )
@@ -1800,7 +1777,6 @@ FALCON_FUNC  core_cascade ( ::Falcon::VMachine *vm )
 }
 
 
-extern "C" {
 static bool core_floop_next ( ::Falcon::VMachine *vm )
 {
    // Param 0: callables array
@@ -1847,7 +1823,7 @@ static bool core_floop_next ( ::Falcon::VMachine *vm )
    // else, just return true
    return true;
 }
-}
+
 
 /*#
    @function floop
@@ -1889,11 +1865,11 @@ FALCON_FUNC  core_floop ( ::Falcon::VMachine *vm )
    vm->local(0)->setInteger( callables->length() );  // we'll start from 0 from the first loop
 
    // install the handler
-   vm->returnHandler( core_floop_next );
+   vm->returnHandler( &core_floop_next );
 
    // call it directly
    vm->regA().setNil(); // zero to avoid false signals to next handler
-   vm->callFrameNow( core_floop_next );
+   vm->callFrameNow( &core_floop_next );
 }
 
 /*#
@@ -2008,20 +1984,18 @@ FALCON_FUNC  core_lbind ( ::Falcon::VMachine *vm )
          extra( "S" ) ) );
       return;
    }
-   GarbageItem *itm = i_value == 0 ? 0 : new GarbageItem( vm, *i_value );
+   GarbageItem *itm = i_value == 0 ? 0 : new GarbageItem( *i_value );
 
-   vm->regA().setLBind( new GarbageString( vm, *i_name->asString() ), itm );
+   vm->regA().setLBind( new CoreString( *i_name->asString() ), itm );
 }
 
 
-extern "C" {
 static bool core_let_next( ::Falcon::VMachine *vm )
 {
    *vm->param(0) = *vm->param(1);
    vm->regA() = *vm->param(0);
 
    return false;
-}
 }
 
 
@@ -2052,7 +2026,7 @@ FALCON_FUNC  core_let ( ::Falcon::VMachine *vm )
       return;
    }
 
-   vm->returnHandler( core_let_next );
+   vm->returnHandler( &core_let_next );
    if ( vm->functionalEval( *i_source ) )
    {
       return;

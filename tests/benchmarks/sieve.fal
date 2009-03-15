@@ -21,44 +21,47 @@
 
 // Config
 
-const SIZE = 5000
-const BATCH = 20
+const SIZE = 8092
+const BATCH = 100
 const TIME = 30
+flags = arrayBuffer( SIZE+1 )
 
 //=========================
 // The sieve
 //=========================
 
 function sieve()
-   count = 0
-   
-   flags = arrayBuffer( SIZE )
-   for i in [0:SIZE]
+   global count
+
+   flags.fill(0)
+   for i in [1:SIZE+1]
       if flags[i]: continue
-      
+            
       prime = 2 * i + 1
       start = prime + i
-      for k in [start:SIZE:prime]
-         flags[k] = true
-      end 
-      count++
+      for k in [start:SIZE+1:prime]
+         flags[k] = 1
+      end
    end
-   return count
+   count += i
 end
 
 //=========================
 // Main code
 //=========================
 
+count = 0
 cycles = 0
 t = seconds()
-while seconds() < t + TIME   // Test for TIME (30) seconds
+//while seconds() < t + TIME   // Test for TIME (30) seconds
     for iter in [0:BATCH]
-      p = sieve()
+       sieve()
     end
     cycles += BATCH
-end
+//end
 t = seconds() - t
 
 f = Format( ".3" )
+> f.format( t ), " seconds."
+> count, " sieves."
 > f.format(count / t), " sieves per second"

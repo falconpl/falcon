@@ -48,7 +48,7 @@ public:
 
    DllFunc getSymbol( const String &sym_name ) const ;
    static bool isDllMark( unsigned char ch1, unsigned char ch2 );
-   static const char *dllExt() { return ".dylib"; };
+   static const char *dllExt() { return "dylib"; };
 };
 
 typedef DllLoader_Mac DllLoader;

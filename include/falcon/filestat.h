@@ -28,6 +28,7 @@ namespace Falcon {
 
 class String;
 class TimeStamp;
+class MemPool;
 
 /** Multiplatform statistics on files. */
 class FALCON_DYN_CLASS FileStat: public FalconData
@@ -63,7 +64,7 @@ public:
    virtual ~FileStat();
 
    virtual FalconData * clone() const;
-   virtual void gcMark( VMachine *mp ) {}
+   virtual void gcMark( MemPool *mp ) {}
 };
 
 }

@@ -99,7 +99,7 @@ typedef void reflectionFuncDecl(CoreObject *instance, void *user_data, Item &pro
 */
 #define FALCON_REFLECT_STRING_FROM( obj, accessor ) \
    if( ! property.isString() )\
-      property = new GarbageString( instance->origin(), obj->accessor() );\
+      property = new CoreString( obj->accessor() );\
    else\
       property.asString()->bufferize( obj->accessor() );
 
@@ -113,8 +113,7 @@ typedef void reflectionFuncDecl(CoreObject *instance, void *user_data, Item &pro
 */
 #define FALCON_REFLECT_STRING_TO( obj, accessor ) \
    if ( ! property.isString() ) {\
-      instance->origin()->raiseRTError( new ParamError( ErrorParam( e_inv_params ).extra( "S" ) ) );\
-      return;\
+      throw new ParamError( ErrorParam( e_inv_params ).extra( "S" ) );\
    }\
    obj->accessor( *property.asString() );\
 
@@ -138,8 +137,7 @@ typedef void reflectionFuncDecl(CoreObject *instance, void *user_data, Item &pro
 */
 #define FALCON_REFLECT_INTEGER_TO( obj, accessor ) \
    if ( ! property.isOrdinal() ) {\
-      instance->origin()->raiseRTError( new ParamError( ErrorParam( e_inv_params ).extra( "N" ) ) );\
-      return;\
+      throw new ParamError( ErrorParam( e_inv_params ).extra( "N" ) );\
    }\
    obj->accessor( (uint32) property.forceInteger() );\
 

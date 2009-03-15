@@ -25,13 +25,13 @@
 extern "C" void _perform_FALCON_assert_func( const char *expr, const char *filename, int line, const char *funcName )
 {
    printf( "FALCON ASSERTION FALIED.\n%s:%d in function %s ---\n%s\nProgram ending.\n", filename, line, funcName, expr );
-   exit(1);
+   abort();
 }
 
 extern "C" void _perform_FALCON_assert( const char *expr, const char *filename, int line )
 {
    printf( "FALCON ASSERTION FALIED.\n%s:%d    ---\n%s\nProgram ending.\n", filename, line, expr );
-   exit(1);
+   abort();
 }
 
 

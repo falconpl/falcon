@@ -22,41 +22,37 @@
 
 
 #define FLC_ITEM_NIL          0
-#define FLC_ITEM_INT          1
-#define FLC_ITEM_NUM          2
-#define FLC_ITEM_RANGE        3
-#define FLC_ITEM_BOOL         4
-#define FLC_ITEM_USER_POINTER 5
+#define FLC_ITEM_BOOL         1
+#define FLC_ITEM_INT          2
+#define FLC_ITEM_NUM          3
 
 /** From this point on, we have possibly deep items */
-#define FLC_ITEM_FIRST_DEEP   10
+#define FLC_ITEM_FIRST_DEEP   4
+#define FLC_ITEM_RANGE        4
 
-#define FLC_ITEM_LBIND        10
-#define FLC_ITEM_FUNC         11
+#define FLC_ITEM_LBIND        5
+#define FLC_ITEM_FUNC         6
 /* Some shallow callable items. */
-#define FLC_ITEM_FBOM         12
 
-/** Special VM item */
-#define FLC_ITEM_ATTRIBUTE    13
 /** Used to store pointers in temporary local items by
    two-step VM functions. */
-#define FLC_ITEM_GCPTR      14
+#define FLC_ITEM_GCPTR        7
 
 
-#define FLC_ITEM_STRING       20
-#define FLC_ITEM_ARRAY        21
-#define FLC_ITEM_DICT         22
-#define FLC_ITEM_OBJECT       23
-#define FLC_ITEM_MEMBUF       24
+#define FLC_ITEM_STRING       8
+#define FLC_ITEM_ARRAY        9
+#define FLC_ITEM_DICT         10
+#define FLC_ITEM_OBJECT       11
+#define FLC_ITEM_MEMBUF       12
 
-#define FLC_ITEM_REFERENCE    25
+#define FLC_ITEM_REFERENCE    13
 
 
-#define FLC_ITEM_CLSMETHOD    30
-#define FLC_ITEM_METHOD       31
-#define FLC_ITEM_TABMETHOD    32
-#define FLC_ITEM_CLASS        33
+#define FLC_ITEM_CLSMETHOD    14
+#define FLC_ITEM_METHOD       15
+#define FLC_ITEM_CLASS        16
 
+#define FLC_ITEM_COUNT        17
 
 #define FLC_ITEM_INVALID      99
 

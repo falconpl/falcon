@@ -107,7 +107,7 @@ FALCON_FUNC  StringStream_getString ( ::Falcon::VMachine *vm )
    // get the self object
    CoreObject *self = vm->self().asObject();
    StringStream *ss = (StringStream *)self->getUserData();
-   vm->retval( ss->getString() );
+   vm->retval( ss->getCoreString() );
 }
 
 /*#
@@ -124,7 +124,7 @@ FALCON_FUNC  StringStream_closeToString ( ::Falcon::VMachine *vm )
    // get the self object
    CoreObject *self = vm->self().asObject();
    StringStream *ss = (StringStream *)self->getUserData();
-   GarbageString *rets = new GarbageString( vm );
+   CoreString *rets = new CoreString;
    ss->closeToString( *rets );
    vm->retval( rets );
 }

@@ -25,6 +25,7 @@
 #include <falcon/falcondata.h>
 
 namespace Falcon {
+class Item;
 
 /**
    Base abstract class for generic collection iterators.
@@ -52,7 +53,7 @@ public:
 
    virtual void invalidate() = 0;
 
-   virtual void gcMark( VMachine *mp ) {}
+   virtual void gcMark( MemPool *mp ) {}
 };
 
 }

@@ -23,109 +23,39 @@
 #include <falcon/mempool.h>
 #include <falcon/common.h>
 #include <falcon/symbol.h>
-#include <falcon/cobject.h>
+#include <falcon/coreobject.h>
+#include <falcon/corefunc.h>
 #include <falcon/carray.h>
 #include <falcon/garbagepointer.h>
 #include <falcon/cdict.h>
 #include <falcon/cclass.h>
 #include <falcon/membuf.h>
-#include <falcon/attribute.h>
 #include <falcon/vmmaps.h>
 #include <falcon/error.h>
 #include <cstdlib>
 #include <cstring>
 
-namespace Falcon {
+
+namespace Falcon 
+{
 
 void Item::setGCPointer( VMachine *vm, FalconData *ptr, uint32 sig )
 {
    type( FLC_ITEM_GCPTR );
-   m_data.gptr.signature = sig;
-   m_data.gptr.gcptr = new GarbagePointer( vm, ptr );
+   all.ctx.data.gptr.signature = sig;
+   all.ctx.data.gptr.gcptr = new GarbagePointer( ptr );
 }
 
 void Item::setGCPointer( GarbagePointer *shell, uint32 sig )
 {
    type( FLC_ITEM_GCPTR );
-   m_data.gptr.signature = sig;
-   m_data.gptr.gcptr = shell;
+   all.ctx.data.gptr.signature = sig;
+   all.ctx.data.gptr.gcptr = shell;
 }
 
 FalconData *Item::asGCPointer() const
 {
-   return m_data.gptr.gcptr->ptr();
-}
-
-
-// This function is called solely if other and this have the same type.
-bool Item::internal_is_equal( const Item &other ) const
-{
-   switch( type() )
-   {
-      case FLC_ITEM_NIL: return true;
-
-      case FLC_ITEM_BOOL:
-         return asBoolean() == other.asBoolean();
-
-      case FLC_ITEM_RANGE:
-         return asRangeStart() == other.asRangeStart() && asRangeEnd() == other.asRangeEnd() &&
-               asRangeStep() == other.asRangeStep() &&
-               asRangeIsOpen() == other.asRangeIsOpen();
-
-      case FLC_ITEM_INT:
-         return asInteger() == other.asInteger();
-
-      case FLC_ITEM_NUM:
-         return asNumeric() == other.asNumeric();
-
-      case FLC_ITEM_ATTRIBUTE:
-         return asAttribute() == other.asAttribute();
-
-      case FLC_ITEM_STRING:
-         return *asString() == *other.asString();
-
-      case FLC_ITEM_LBIND:
-         return *asLBind() == *other.asLBind();
-
-      case FLC_ITEM_ARRAY:
-         // for now, just compare the pointers.
-         return asArray() == other.asArray();
-
-      case FLC_ITEM_DICT:
-         return asDict() == other.asDict();
-
-      case FLC_ITEM_FUNC:
-         return asFunction() == other.asFunction();
-
-      case FLC_ITEM_OBJECT:
-         return asObjectSafe() == other.asObjectSafe();
-
-      case FLC_ITEM_MEMBUF:
-         return asMemBuf() == other.asMemBuf();
-
-      case FLC_ITEM_METHOD:
-         return asMethodObject() == other.asMethodObject() && asMethodFunction() == other.asMethodFunction();
-
-      case FLC_ITEM_TABMETHOD:
-         return asTabMethodArray() == other.asTabMethodArray() && asMethodFunction() == other.asMethodFunction();
-
-      case FLC_ITEM_REFERENCE:
-         return asReference() == other.asReference();
-
-      case FLC_ITEM_FBOM:
-         if ( getFbomMethod() == other.getFbomMethod() ) {
-            Item lt, lo;
-            getFbomItem( lt );
-            other.getFbomItem( lo );
-            return lt == lo;
-         }
-         return false;
-
-      case FLC_ITEM_CLASS:
-         return asClass()->symbol() == other.asClass()->symbol();
-   }
-
-   return false;
+   return all.ctx.data.gptr.gcptr->ptr();
 }
 
 
@@ -158,9 +88,6 @@ bool Item::isTrue() const
       case FLC_ITEM_OBJECT:
       case FLC_ITEM_CLASS:
       case FLC_ITEM_METHOD:
-      case FLC_ITEM_TABMETHOD:
-      case FLC_ITEM_FBOM:
-      case FLC_ITEM_ATTRIBUTE:
       case FLC_ITEM_MEMBUF:
       case FLC_ITEM_LBIND:
          // methods are always filled, so they are always true.
@@ -256,170 +183,6 @@ numeric Item::forceNumeric() const
 }
 
 
-int Item::compare( const Item &other ) const
-{
-   switch ( type() << 8 | other.type() ) {
-      case FLC_ITEM_NIL<<8 | FLC_ITEM_NIL:
-         return 0;
-
-      case FLC_ITEM_BOOL<<8 | FLC_ITEM_BOOL:
-         if ( other.asBoolean() == asBoolean() )
-            return 0;
-         return ( asBoolean() > other.asBoolean() ) ? 1:-1;
-
-      case FLC_ITEM_INT<<8 | FLC_ITEM_INT:
-         if ( asInteger() < other.asInteger() ) return -1;
-         else if ( asInteger() > other.asInteger() ) return 1;
-         else return 0;
-
-      case FLC_ITEM_INT<<8 | FLC_ITEM_NUM:
-         if ( ((numeric)asInteger()) < other.asNumeric() ) return -1;
-         else if ( ((numeric)asInteger()) > other.asNumeric() ) return 1;
-         else return 0;
-
-      case FLC_ITEM_NUM<<8 | FLC_ITEM_INT:
-         if ( asNumeric() < other.asInteger() ) return -1;
-         else if ( asNumeric() > other.asInteger() ) return 1;
-         else return 0;
-
-      case FLC_ITEM_NUM<<8 | FLC_ITEM_NUM:
-         if ( asNumeric() < other.asNumeric() ) return -1;
-         else if ( asNumeric() > other.asNumeric() ) return 1;
-         else return 0;
-
-      case FLC_ITEM_STRING << 8 | FLC_ITEM_STRING:
-         return asString()->compare( *other.asString() );
-   }
-
-   if ( type() < other.type() ) return -1;
-   if ( type() > other.type() ) return 1;
-   return internal_compare( other );
-
-}
-
-int Item::internal_compare( const Item &other ) const
-{
-   switch ( type() )
-   {
-      case FLC_ITEM_NIL:
-         return 0;
-
-      case FLC_ITEM_BOOL:
-         if ( other.asBoolean() == asBoolean() )
-            return 0;
-         return ( asBoolean() > other.asBoolean() ) ? 1:-1;
-
-      case FLC_ITEM_INT:
-         if ( asInteger() < other.asInteger() ) return -1;
-         else if ( asInteger() > other.asInteger() ) return 1;
-         else return 0;
-
-      case FLC_ITEM_NUM:
-         if ( asNumeric() < other.asNumeric() ) return -1;
-         else if ( asNumeric() > other.asNumeric() ) return 1;
-         else return 0;
-
-      case FLC_ITEM_ATTRIBUTE:
-         if( asAttribute() > other.asAttribute() )
-            return 1;
-         else if ( asAttribute() > other.asAttribute() )
-            return -1;
-         return 0;
-
-      case FLC_ITEM_STRING:
-         return asString()->compare( *other.asString() );
-
-      case FLC_ITEM_LBIND:
-         return asLBind()->compare( *other.asLBind() );
-
-      case FLC_ITEM_RANGE:
-         if ( asRangeStart() < other.asRangeStart() ) return -1;
-         if ( asRangeStart() > other.asRangeStart() ) return 1;
-         if ( asRangeIsOpen() )
-         {
-            if ( other.asRangeIsOpen() ) return 0;
-            return 1;
-         }
-
-         if ( other.asRangeIsOpen() )
-            return -1;
-
-         if ( asRangeEnd() < other.asRangeEnd() ) return -1;
-         if ( asRangeEnd() > other.asRangeEnd() ) return 1;
-         if ( asRangeStep() < other.asRangeStep() ) return -1;
-         if ( asRangeStep() > other.asRangeStep() ) return 1;
-         return 0;
-
-      case FLC_ITEM_ARRAY:
-         if ( asArray() < other.asArray() ) return -1;
-         else if ( asArray() > other.asArray() ) return 1;
-         else return 0;
-
-      case FLC_ITEM_DICT:
-         if ( asDict() < other.asDict() ) return -1;
-         else if ( asDict() > other.asDict() ) return 1;
-         else return 0;
-
-      case FLC_ITEM_FUNC:
-         if ( asFunction() < other.asFunction() ) return -1;
-         else if ( asFunction() > other.asFunction() ) return 1;
-         else return 0;
-
-      case FLC_ITEM_OBJECT:
-         if ( asObjectSafe() < other.asObjectSafe() ) return -1;
-         else if ( asObjectSafe() > other.asObjectSafe() ) return 1;
-         else return 0;
-
-      case FLC_ITEM_MEMBUF:
-         if ( asMemBuf() < other.asMemBuf() ) return -1;
-         else if ( asMemBuf() > other.asMemBuf() ) return 1;
-         else return 0;
-
-      case FLC_ITEM_CLSMETHOD:
-      case FLC_ITEM_METHOD:
-      case FLC_ITEM_TABMETHOD:  // method object == method array (different by cast)
-         if( asMethodObject() > other.asMethodObject() )
-            return 1;
-         if( asMethodObject() < other.asMethodObject() )
-            return -1;
-         if( asMethodFunction() > other.asMethodFunction() )
-            return 1;
-         if( asMethodFunction() < other.asMethodFunction() )
-            return -1;
-         return 0;
-
-      case FLC_ITEM_FBOM:
-         if ( getFbomMethod() == other.getFbomMethod() ) {
-            Item lt, lo;
-            getFbomItem( lt );
-            other.getFbomItem( lo );
-            return lt.compare( lo );
-         }
-         if( getFbomMethod() > other.getFbomMethod() )
-            return 1;
-         return -1;
-
-
-      case FLC_ITEM_CLASS:
-         if ( asClass() < other.asClass() ) return -1;
-         else if ( asClass() > other.asClass() ) return 1;
-         else return 0;
-
-      // having a reference here means that some reference has been
-      // injected in some object using compare() from C code. In example,
-      // dictionary keys. So, we can't check the value of the dereference,
-      // we must use comparation on this item as if this item was an opaque
-      // type.
-      case FLC_ITEM_REFERENCE:
-         if ( asReference() < other.asReference() ) return -1;
-         if ( asReference() > other.asReference() ) return 1;
-         return 0;
-
-   }
-
-   return 0;
-}
-
 bool Item::isOfClass( const String &className ) const
 {
    switch( type() )
@@ -430,9 +193,6 @@ bool Item::isOfClass( const String &className ) const
 
       case FLC_ITEM_CLASS:
          return className == asClass()->symbol()->name() || asClass()->derivedFrom( className );
-
-      case FLC_ITEM_METHOD:
-         return asMethodObject()->derivedFrom( className );
    }
 
    return false;
@@ -465,7 +225,8 @@ void Item::toString( String &target ) const
          if ( ! this->asRangeIsOpen() )
          {
             target.writeNumber( (int64) this->asRangeEnd() );
-            if ( this->asRangeStep() !=  0 )
+            if ( ((int64) this->asRangeStart() <= (int64) this->asRangeEnd() && this->asRangeStep() != 1 ) ||
+                 ((int64) this->asRangeStart() > (int64) this->asRangeEnd() && this->asRangeStep() != -1 ) )
             {
                target += ":";
                target.writeNumber( (int64) this->asRangeStep() );
@@ -488,10 +249,6 @@ void Item::toString( String &target ) const
          target += "bytes }";
       break;
 
-      case FLC_ITEM_ATTRIBUTE:
-         target = "{attrib:" + asAttribute()->name() + "}";
-      break;
-
       case FLC_ITEM_STRING:
          target = *asString();
       break;
@@ -501,9 +258,7 @@ void Item::toString( String &target ) const
       break;
 
       case FLC_ITEM_REFERENCE:
-         target = "{Ref to ";
          dereference()->toString( target );
-         target += "}";
       break;
 
       case FLC_ITEM_OBJECT:
@@ -519,7 +274,7 @@ void Item::toString( String &target ) const
       break;
 
       case FLC_ITEM_FUNC:
-         target = "Function " + this->asFunction()->name();
+         target = "Function " + this->asFunction()->symbol()->name();
       break;
 
       case FLC_ITEM_CLASS:
@@ -527,13 +282,14 @@ void Item::toString( String &target ) const
       break;
 
       case FLC_ITEM_METHOD:
-         target = "Method " + this->asMethodFunction()->name();
+         {
+            Item orig;
+            this->getMethodItem( orig );
+            String temp;
+            orig.dereference()->toString( temp );
+            target = "Method (" + temp + ")." + this->asMethodFunc()->name();
+         }
       break;
-
-      case FLC_ITEM_TABMETHOD:
-         target = "TabMethod " + this->asMethodFunction()->name();
-      break;
-
 
       case FLC_ITEM_CLSMETHOD:
          target = "ClsMethod " + this->asMethodClass()->symbol()->name();
@@ -544,7 +300,7 @@ void Item::toString( String &target ) const
    }
 }
 
-bool Item::methodize( const CoreObject *self )
+bool Item::methodize( const Item &self )
 {
    Item *data = dereference();
 
@@ -552,19 +308,15 @@ bool Item::methodize( const CoreObject *self )
    {
       case FLC_ITEM_FUNC:
       {
-         data->setMethod( const_cast< CoreObject *>(self), data->asFunction(), data->asModule() );
+         data->setMethod( self, data->asFunction() );
       }
-      return true;
-
-      case FLC_ITEM_METHOD:
-         data->setMethod( const_cast< CoreObject *>(self), data->asMethodFunction(), data->asModule() );
       return true;
 
       case FLC_ITEM_ARRAY:
          if ( data->asArray()->length() > 0 )
          {
             Item *citem = &data->asArray()->at(0);
-            if ( citem->isMethod() && citem->asMethodObject() == self )
+            if ( citem->isMethod() && citem->asMethodItem() == self )
             {
                return true;
             }
@@ -581,113 +333,26 @@ bool Item::methodize( const CoreObject *self )
    return false;
 }
 
-void Item::destroy()
-{
-   switch( this->type() )
-   {
-      case FLC_ITEM_STRING:
-         delete asString();
-      break;
-
-      case FLC_ITEM_MEMBUF:
-         delete asMemBuf();
-      break;
-
-      case FLC_ITEM_ARRAY:
-      {
-         CoreArray *arr = asArray();
-         for( uint32 i = 0; i < arr->length(); i++ )
-            arr->elements()[i].destroy();
-         delete arr;
-      }
-      break;
-
-      case FLC_ITEM_DICT:
-      {
-         CoreDict *dict = asDict();
-         Item key, value;
-         dict->traverseBegin();
-         while( dict->traverseNext( key, value ) )
-         {
-            key.destroy();
-            value.destroy();
-         }
-         delete dict;
-      }
-      break;
-
-      case FLC_ITEM_OBJECT:
-      {
-         CoreObject *obj = asObjectSafe();
-         for( uint32 i = 0; i < obj->propCount(); i++ )
-         {
-            Item tmp;
-            obj->getPropertyAt(i, tmp);
-            tmp.destroy();
-         }
-         delete obj;
-      }
-      break;
-
-      case FLC_ITEM_CLASS:
-      {
-         CoreClass *cls = asClass();
-
-         cls->constructor().destroy();
-         PropertyTable &props = cls->properties();
-         for( uint32 i = 0; i < props.size(); i++ ) {
-            props.getValue(i)->destroy();
-         }
-         delete cls;
-      }
-      break;
-
-      case FLC_ITEM_FBOM:
-         {
-            Item fbitm;
-            getFbomItem( fbitm );
-            fbitm.destroy();
-         }
-         break;
-
-      case FLC_ITEM_METHOD:
-         Item(asMethodObject()).destroy();
-      break;
-
-      case FLC_ITEM_TABMETHOD:
-         if( isTabMethodDict() )
-            Item(asTabMethodArray()).destroy();
-         else
-            Item(asTabMethodDict()).destroy();
-      break;
-
-      case FLC_ITEM_CLSMETHOD:
-      {
-         Item(asMethodObject() ).destroy();
-         Item(asMethodClass() ).destroy();
-      }
-      break;
-
-      case FLC_ITEM_REFERENCE:
-         asReference()->origin().destroy();
-         delete asReference();
-      break;
-   }
-
-   setNil();
-}
-
 bool Item::isCallable() const
 {
 
-   if ( isFbom() || isClassMethod() || isClass() )
+   if ( isClass() )
       return true;
 
    // simple case: normally callable item
-   if( isFunction() || isMethod() || isTabMethod() )
+   if( isFunction() )
    {
       // Detached?
-      if ( ! m_data.ptr.m_liveMod->isAlive() )
+      if ( ! asFunction()->isValid() )
+      {
+         const_cast<Item *>(this)->setNil();
+         return false;
+      }
+      return true;
+   }
+   else if( isMethod() )
+   {
+      if ( ! asMethodFunc()->isValid() )
       {
          const_cast<Item *>(this)->setNil();
          return false;
@@ -712,18 +377,18 @@ bool Item::isCallable() const
 }
 
 const Item &Item::asFutureBind() const {
-   return ((GarbageItem*)m_data.ptr.m_extra)->origin();
+   return ((GarbageItem*)all.ctx.data.ptr.extra)->origin();
 }
 
 Item &Item::asFutureBind() {
-   return ((GarbageItem*)m_data.ptr.m_extra)->origin();
+   return ((GarbageItem*)all.ctx.data.ptr.extra)->origin();
 }
 
 CoreObject *Item::asObject() const {
    if ( ! isObject() )
       throw new CodeError( ErrorParam( e_static_call, __LINE__ ) );
 
-   return (CoreObject *) m_data.ptr.voidp;
+   return (CoreObject *) all.ctx.data.ptr.voidp;
 }
 
 }

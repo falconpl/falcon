@@ -106,8 +106,8 @@ class FALCON_DYN_CLASS LinearDict: public CoreDict
 
 public:
 
-   LinearDict( VMachine *vm );
-   LinearDict( VMachine *vm, uint32 prealloc );
+   LinearDict();
+   LinearDict( uint32 prealloc );
    ~LinearDict();
 
    virtual uint32 length() const;

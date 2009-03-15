@@ -1,0 +1,44 @@
+/****************************************************************************
+* Falcon test suite
+*
+*
+* ID: 101i
+* Category: rtl
+* Subcategory: string
+* Short: strFill 
+* Description:
+*   Test on RTL string functions.
+*   Check for strFill.
+*
+* [/Description]
+*
+****************************************************************************/
+
+string = "abcdefgh"
+strFill( string, 65 )
+if string != "AAAAAAAA": failure( "single char numeric" )
+
+strFill( string, "B" )
+if string != "BBBBBBBB": failure( "single char string" )
+
+strFill( string, "DE" )
+if string != "DEDEDEDE": failure( "Multiple char pair" )
+
+strFill( string, "GHI" )
+if string != "GHIGHIGH": failure( "Multiple char impair" )
+
+strFill( string, "国" )
+if string != "国国国国国国国国": failure( "Wide char single" )
+
+strFill( string, "国際" )
+if string != "国際国際国際国際": failure( "Wide char multiple pair" )
+
+strFill( string, "国際な" )
+if string != "国際な国際な国際": failure( "Wide char multiple impair" )
+
+strFill( string, 65 )
+if string != "AAAAAAAA": failure( "Back to single char" )
+
+success()
+
+/* End of file */

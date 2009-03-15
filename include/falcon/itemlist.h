@@ -249,7 +249,7 @@ public:
 
    /** Perform marking of items stored in the list.
    */
-   virtual void gcMark( VMachine * );
+   virtual void gcMark( MemPool * );
 };
 
 

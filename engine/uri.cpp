@@ -110,7 +110,7 @@ bool URI::internal_parse( const String &newUri, bool parseQuery, bool decode )
             if( pEnd == 0 )
                return false;
 
-            if ( m_scheme.size() == 0 || state == e_begin )
+            if ( state == e_begin )
                state = e_colon;
             else if ( state == e_host )
             {
@@ -531,7 +531,7 @@ uint32 URI::fieldCount()
 }
 
 
-const String &URI::get( bool synthQuery )
+const String &URI::get( bool synthQuery ) const
 {
    if ( m_encoded.size() != 0 )
       return m_encoded;
@@ -577,7 +577,7 @@ const String &URI::get( bool synthQuery )
    return m_encoded;
 }
 
-const String &URI::makeQuery()
+const String &URI::makeQuery() const
 {
    m_query = "";
 

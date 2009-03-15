@@ -54,12 +54,12 @@ public:
 };
 
 /** File stream base class.
-   The FileStream class is the base for the system-specific stream handlers.
+   The BaseFileStream class is the base for the system-specific stream handlers.
    It provides an interface to the system functions that work with
    system streams, as files or standard streams.
 */
 
-class FALCON_DYN_CLASS GenericStream: public Stream
+class FALCON_DYN_CLASS BaseFileStream: public Stream
 {
 public:
    /** Open mode. */
@@ -100,14 +100,14 @@ protected:
    virtual int64 seek( int64 pos, Stream::e_whence whence );
 
 public:
-   GenericStream( t_streamType streamType, FileSysData *fsdata ):
+   BaseFileStream( t_streamType streamType, FileSysData *fsdata ):
       Stream( streamType ),
       m_fsData( fsdata )
    {}
 
-   GenericStream( const GenericStream &other );
+   BaseFileStream( const BaseFileStream &other );
 
-   virtual ~GenericStream();
+   virtual ~BaseFileStream();
 
    virtual bool close();
    virtual int32 read( void *buffer, int32 size );
@@ -138,7 +138,7 @@ public:
    virtual FalconData *clone() const;
 };
 
-class FALCON_DYN_CLASS FileStream: public GenericStream
+class FALCON_DYN_CLASS FileStream: public BaseFileStream
 {
 public:
    /** Constructs a stream based on system resources.
@@ -146,7 +146,7 @@ public:
       containing the resoruces the target system need to access files.
    */
    FileStream( FileSysData *fsdata ):
-      GenericStream( t_file, fsdata )
+      BaseFileStream( t_file, fsdata )
    {
       status( t_open );
    }
@@ -181,7 +181,7 @@ public:
 
 };
 
-class FALCON_DYN_CLASS StdStream: public GenericStream
+class FALCON_DYN_CLASS StdStream: public BaseFileStream
 {
    virtual int64 seek( int64 pos, Stream::e_whence whence ) {
       m_status = t_unsupported;
@@ -190,7 +190,7 @@ class FALCON_DYN_CLASS StdStream: public GenericStream
 
 public:
    StdStream( FileSysData *fsdata ):
-      GenericStream( t_stream, fsdata )
+      BaseFileStream( t_stream, fsdata )
    {
       status( t_open );
    }
@@ -344,19 +344,19 @@ public:
    RawStdErrStream();
 };
 
-inline GenericStream::t_attributes operator|(  GenericStream::t_attributes one, GenericStream::t_attributes two)
+inline BaseFileStream::t_attributes operator|(  BaseFileStream::t_attributes one, BaseFileStream::t_attributes two)
 {
-   return (GenericStream::t_attributes) ( ((uint32)one) | ((uint32)two) );
+   return (BaseFileStream::t_attributes) ( ((uint32)one) | ((uint32)two) );
 }
 
-inline GenericStream::t_attributes operator&(  GenericStream::t_attributes one, GenericStream::t_attributes two)
+inline BaseFileStream::t_attributes operator&(  BaseFileStream::t_attributes one, BaseFileStream::t_attributes two)
 {
-   return (GenericStream::t_attributes) ( ((uint32)one) & ((uint32)two) );
+   return (BaseFileStream::t_attributes) ( ((uint32)one) & ((uint32)two) );
 }
 
-inline GenericStream::t_attributes operator^(  GenericStream::t_attributes one, GenericStream::t_attributes two)
+inline BaseFileStream::t_attributes operator^(  BaseFileStream::t_attributes one, BaseFileStream::t_attributes two)
 {
-   return (GenericStream::t_attributes) ( ((uint32)one) & ((uint32)two) );
+   return (BaseFileStream::t_attributes) ( ((uint32)one) & ((uint32)two) );
 }
 
 }

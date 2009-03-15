@@ -21,7 +21,7 @@ end
 
 zero.prop_array += 1
 a_variable1 = "name"
-if zero.prop_array.type() != ArrayType: failure( "Property conformance")
+if zero.prop_array.typeId() != ArrayType: failure( "Property conformance")
 
 vector = [[0]]
 vector[0][0] += 1

@@ -133,16 +133,14 @@ bool PageDictIterator::insert( const Item & )
 // Iterator
 //
 
-PageDict::PageDict( VMachine *vm ):
-   CoreDict( vm, sizeof( this ) ),
-   m_itemTraits( vm ),
+PageDict::PageDict():
+   CoreDict( sizeof( this ) ),
    m_map( &m_itemTraits, &m_itemTraits ),
    m_version( 0 )
 {}
 
-PageDict::PageDict( VMachine *vm, uint32 pageSize ):
-   CoreDict( vm, sizeof( PageDict ) ),
-   m_itemTraits( vm ),
+PageDict::PageDict( uint32 pageSize ):
+   CoreDict( sizeof( PageDict ) ),
    m_map( &m_itemTraits, &m_itemTraits, (uint16) pageSize ),
    m_version( 0 )
 {
@@ -277,11 +275,11 @@ CoreDict *PageDict::clone() const
 
    if ( m_map.size() == 0 )
    {
-      ret = new PageDict( origin() );
+      ret = new PageDict;
    }
    else
    {
-      ret = new PageDict( origin(), m_map.order() );
+      ret = new PageDict( m_map.order() );
       ret->merge( *this );
    }
 

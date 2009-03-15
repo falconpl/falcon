@@ -14,14 +14,14 @@
 */
 
 #include "core_module.h"
-#include <falcon/attribute.h>
 #include <falcon/sequence.h>
+#include <falcon/falconobject.h>
 
 namespace Falcon {
 namespace core {
 
 /*#
-   
+
 */
 
 /*#
@@ -75,7 +75,7 @@ FALCON_FUNC  Iterator_init( ::Falcon::VMachine *vm )
       return;
    }
 
-   CoreObject *self = vm->self().asObject();
+   FalconObject *self = dyncast<FalconObject *>( vm->self().asObject() );
    int32 p = pos == 0 ? 0: (int32) pos->forceInteger();
 
    switch( collection->type() )
@@ -153,30 +153,14 @@ FALCON_FUNC  Iterator_init( ::Falcon::VMachine *vm )
       }
       break;
 
-      case FLC_ITEM_ATTRIBUTE:
-      {
-         Attribute *orig = collection->asAttribute();
-         self->setProperty( "_origin", *collection );
-         if( p != 0 )
-         {
-            vm->raiseRTError( new AccessError( ErrorParam( e_inv_params ) ) );
-            return;
-         }
-
-         AttribIterator *iter = orig->getIterator();
-         self->setUserData( iter );
-      }
-      break;
-
       case FLC_ITEM_OBJECT:
       {
          // Objects can have iterators if they have sequence extensions.
          CoreObject *obj = collection->asObject();
 
-         if ( obj->isSequence() )
+         Sequence *seq = obj->getSequence();
+         if ( seq != 0 )
          {
-            Sequence *seq = static_cast<Sequence *>( obj->getUserData() );
-
             self->setProperty( "_origin", *collection );
             CoreIterator *iter = seq->getIterator( p != 0 );
             self->setUserData( iter );
@@ -238,7 +222,7 @@ FALCON_FUNC  Iterator_hasCurrent( ::Falcon::VMachine *vm )
 
       default:
       {
-         CoreIterator *iter = (CoreIterator *) self->getUserData();
+         CoreIterator *iter = dyncast<CoreIterator *>( self->getFalconData() );
          vm->retval( (int64) ( iter != 0 && iter->isValid() ? 1: 0 ) );
       }
    }
@@ -265,7 +249,7 @@ FALCON_FUNC  Iterator_hasNext( ::Falcon::VMachine *vm )
          Item pos;
          self->getProperty( "_pos", pos );
          int64 p = pos.forceInteger();
-         vm->retval( p >= 0 && (p + 1 < porigin->asString()->length() ) );
+         vm->regA().setBoolean( p >= 0 && (p + 1 < porigin->asString()->length() ) );
       }
       break;
 
@@ -274,7 +258,7 @@ FALCON_FUNC  Iterator_hasNext( ::Falcon::VMachine *vm )
          Item pos;
          self->getProperty( "_pos", pos );
          int64 p = pos.forceInteger();
-         vm->retval( p >= 0 && (p + 1 < porigin->asMemBuf()->length() ) );
+         vm->regA().setBoolean( p >= 0 && (p + 1 < porigin->asMemBuf()->length() ) );
       }
       break;
 
@@ -283,14 +267,14 @@ FALCON_FUNC  Iterator_hasNext( ::Falcon::VMachine *vm )
          Item pos;
          self->getProperty( "_pos", pos );
          int64 p = pos.forceInteger();
-         vm->retval( p >= 0 && (p + 1 < porigin->asArray()->length() ) );
+         vm->regA().setBoolean( p >= 0 && (p + 1 < porigin->asArray()->length() ) );
       }
       break;
 
       default:
       {
-         CoreIterator *iter = (CoreIterator *) self->getUserData();
-         vm->retval( (int64) ( iter != 0 && iter->hasNext() ? 1: 0 ) );
+         CoreIterator *iter = dyncast<CoreIterator *>( self->getFalconData() );
+         vm->regA().setBoolean( iter != 0 && iter->hasNext() );
       }
    }
 }
@@ -316,14 +300,14 @@ FALCON_FUNC  Iterator_hasPrev( ::Falcon::VMachine *vm )
       {
          Item pos;
          self->getProperty( "_pos", pos );
-         vm->retval( pos.forceInteger() >= 0 );
+         vm->regA().setBoolean( pos.forceInteger() >= 0 );
       }
       break;
 
       default:
       {
-         CoreIterator *iter = (CoreIterator *) self->getUserData();
-         vm->retval( (int64) ( iter != 0 && iter->hasPrev() ? 1: 0 ) );
+         CoreIterator *iter = dyncast<CoreIterator *>( self->getFalconData() );
+         vm->regA().setBoolean( iter != 0 && iter->hasPrev() );
       }
    }
 }
@@ -359,7 +343,7 @@ FALCON_FUNC  Iterator_next( ::Falcon::VMachine *vm )
             self->setProperty( "_pos", (int64) p );
          }
          else
-            vm->retval( false );
+            vm->regA().setBoolean( false );
       }
       break;
 
@@ -371,11 +355,11 @@ FALCON_FUNC  Iterator_next( ::Falcon::VMachine *vm )
          if ( p < porigin->asMemBuf()->length() )
          {
             p++;
-            vm->retval( p != porigin->asMemBuf()->length() );
+            vm->regA().setBoolean( p != porigin->asMemBuf()->length() );
             self->setProperty( "_pos", (int64) p );
          }
          else
-            vm->retval( false );
+            vm->regA().setBoolean( false );
       }
       break;
 
@@ -387,18 +371,18 @@ FALCON_FUNC  Iterator_next( ::Falcon::VMachine *vm )
          if ( p < porigin->asArray()->length() )
          {
             p++;
-            vm->retval( p != porigin->asArray()->length() );
+            vm->regA().setBoolean( p != porigin->asArray()->length() );
             self->setProperty( "_pos", (int64) p );
          }
          else
-            vm->retval( false );
+            vm->regA().setBoolean( false );
       }
       break;
 
       default:
       {
-         CoreIterator *iter = (CoreIterator *) self->getUserData();
-         vm->retval( (int64) ( iter != 0 && iter->next() ? 1: 0 ) );
+         CoreIterator *iter = dyncast<CoreIterator *>( self->getFalconData() );
+         vm->regA().setBoolean( iter != 0 && iter->next() );
       }
    }
 }
@@ -433,17 +417,17 @@ FALCON_FUNC  Iterator_prev( ::Falcon::VMachine *vm )
          if ( p >= 0 )
          {
             self->setProperty( "_pos", p - 1 );
-            vm->retval( p != 0 );
+            vm->regA().setBoolean( p != 0 );
          }
          else
-            vm->retval( false );
+            vm->regA().setBoolean( false );
       }
       break;
 
       default:
       {
-         CoreIterator *iter = (CoreIterator *) self->getUserData();
-         vm->retval( (int64) ( iter != 0 && iter->prev() ? 1: 0 ) );
+         CoreIterator *iter = dyncast<CoreIterator *>( self->getFalconData() );
+         vm->regA().setBoolean( iter != 0 && iter->prev() );
       }
    }
 }
@@ -482,7 +466,7 @@ FALCON_FUNC  Iterator_value( ::Falcon::VMachine *vm )
          uint32 p = (uint32) pos.forceInteger();
          if( p < porigin->asString()->length() )
          {
-            GarbageString *str = new GarbageString( vm,
+            CoreString *str = new CoreString( 
                porigin->asString()->subString( p, p + 1 ) );
             vm->retval( str );
 
@@ -557,7 +541,7 @@ FALCON_FUNC  Iterator_value( ::Falcon::VMachine *vm )
 
       default:
       {
-         CoreIterator *iter = (CoreIterator *) self->getUserData();
+         CoreIterator *iter = dyncast<CoreIterator *>( self->getFalconData() );
          if( iter->isValid() )
          {
             vm->retval( iter->getCurrent() );
@@ -595,7 +579,7 @@ FALCON_FUNC  Iterator_key( ::Falcon::VMachine *vm )
 
    if( origin.isDict() )
    {
-      DictIterator *iter = (DictIterator *) self->getUserData();
+      DictIterator *iter = dyncast<DictIterator *>( self->getFalconData() );
       if( iter->isValid() )
       {
          vm->retval( iter->getCurrentKey() );
@@ -617,7 +601,7 @@ FALCON_FUNC  Iterator_key( ::Falcon::VMachine *vm )
    the equality check of the VM.
 */
 
-FALCON_FUNC  Iterator_equal( ::Falcon::VMachine *vm )
+FALCON_FUNC  Iterator_compare( ::Falcon::VMachine *vm )
 {
    Item *i_other = vm->param(0);
 
@@ -638,7 +622,7 @@ FALCON_FUNC  Iterator_equal( ::Falcon::VMachine *vm )
          Item origin, other_origin;
          self->getProperty( "_origin", origin );
          other->getProperty( "_origin", other_origin );
-         if( origin.dereference()->equal( *other_origin.dereference() ) )
+         if( *origin.dereference() == *other_origin.dereference() )
          {
             switch( origin.type() )
             {
@@ -650,21 +634,17 @@ FALCON_FUNC  Iterator_equal( ::Falcon::VMachine *vm )
                   Item pos1, pos2;
                   self->getProperty( "_pos", pos1 );
                   other->getProperty( "_pos", pos2 );
-                  if( pos1 == pos2 )
-                  {
-                     vm->retval( (int64) 1 );
-                     return;
-                  }
+                  vm->regA().setInteger( pos1.forceInteger() - pos2.forceInteger() );
                }
-               break;
+               return;
 
                default:
                {
-                  CoreIterator *iter = (CoreIterator *) self->getUserData();
-                  CoreIterator *other_iter = (CoreIterator *) other->getUserData();
+                  CoreIterator *iter = dyncast<CoreIterator *>( self->getFalconData() );
+                  CoreIterator *other_iter = dyncast<CoreIterator *>( other->getFalconData() );
                   if( iter->equal( *other_iter ) )
                   {
-                     vm->retval( (int64) 1 );
+                     vm->regA().setInteger( 0 );
                      return;
                   }
                }
@@ -675,7 +655,8 @@ FALCON_FUNC  Iterator_equal( ::Falcon::VMachine *vm )
       }
    }
 
-   vm->retval( (int64) 0 );
+   // let the standard algorithm to decide.
+   vm->retnil();
 }
 
 /*#
@@ -693,13 +674,8 @@ FALCON_FUNC  Iterator_equal( ::Falcon::VMachine *vm )
 FALCON_FUNC  Iterator_clone( ::Falcon::VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
-   CoreIterator *iter = (CoreIterator *) self->getUserData();
+   CoreIterator *iter = dyncast<CoreIterator *>( self->getFalconData() );
    CoreIterator *iclone;
-
-   // create an instance
-   Item *i_cls = vm->findWKI( "Iterator" );
-   fassert( i_cls != 0 );
-   CoreObject *other = i_cls->asClass()->createInstance();
 
    // copy low level iterator, if we have one
    if ( iter != 0 ) {
@@ -715,7 +691,10 @@ FALCON_FUNC  Iterator_clone( ::Falcon::VMachine *vm )
       iclone = 0;
    }
 
-   other->setUserData( iclone );
+   // create an instance
+   Item *i_cls = vm->findWKI( "Iterator" );
+   fassert( i_cls != 0 );
+   CoreObject *other = i_cls->asClass()->createInstance(iclone);
 
    // then copy properties
    Item prop;
@@ -742,8 +721,6 @@ FALCON_FUNC  Iterator_clone( ::Falcon::VMachine *vm )
 */
 FALCON_FUNC  Iterator_erase( ::Falcon::VMachine *vm )
 {
-   // notice: attribute cannot be removed through iterator.
-
    CoreObject *self = vm->self().asObject();
    Item origin, *porigin;
    self->getProperty( "_origin", origin );
@@ -783,7 +760,7 @@ FALCON_FUNC  Iterator_erase( ::Falcon::VMachine *vm )
 
       default:
       {
-         CoreIterator *iter = (DictIterator *) self->getUserData();
+         CoreIterator *iter = dyncast<CoreIterator *>( self->getFalconData() );
          if( iter->isValid() )
          {
             iter->erase();
@@ -849,12 +826,12 @@ FALCON_FUNC  Iterator_find( ::Falcon::VMachine *vm )
 
    if ( porigin->isDict() )
    {
-      DictIterator *iter = (DictIterator *) self->getUserData();
-      CoreDict *dict = porigin->asDict();
+      DictIterator *iter = dyncast<DictIterator *>( self->getFalconData() );
+      CoreDict* dict = porigin->asDict();
 
       if( iter->isOwner( dict ) )
       {
-         vm->retval( dict->find( *i_key, *iter ) );
+         vm->regA().setBoolean( dict->find( *i_key, *iter ) );
          return;
       }
    }
@@ -941,7 +918,7 @@ FALCON_FUNC  Iterator_insert( ::Falcon::VMachine *vm )
             return;
          }
 
-         DictIterator *iter = (DictIterator *) self->getUserData();
+         DictIterator *iter = dyncast<DictIterator *>( self->getFalconData() );
          CoreDict *dict = porigin->asDict();
 
          if( iter->isOwner( dict ) && iter->isValid() )
@@ -954,7 +931,7 @@ FALCON_FUNC  Iterator_insert( ::Falcon::VMachine *vm )
 
       case FLC_ITEM_OBJECT:
       {
-         CoreIterator *iter = (CoreIterator *) self->getUserData();
+         CoreIterator *iter = dyncast<CoreIterator *>( self->getFalconData() );
          if ( iter->insert( *i_key ) )
             return;
       }

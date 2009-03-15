@@ -53,6 +53,40 @@
 extern "C" void FALCON_DYN_SYM _perform_FALCON_assert_func( const char *expr, const char *filename, int line, const char *assertFunc );
 extern "C" void FALCON_DYN_SYM _perform_FALCON_assert( const char *expr, const char *filename, int line );
 
+namespace Falcon {
+
+// for pointers
+template<typename rtype_ptr, typename stype>
+inline rtype_ptr dyncast(stype* pSource)
+{
+#ifndef NDEBUG
+   // Fassert should resolve in nothing in release, but it may change in future.
+   fassert ( pSource != 0 && static_cast<rtype_ptr>(pSource) == dynamic_cast<rtype_ptr>(pSource) );
+#endif
+
+   return static_cast<rtype_ptr>(pSource);
+}
+
+// for references
+template<typename rtype_ref, typename stype>
+inline rtype_ref dyncast(stype& rSource)
+{
+#ifndef NDEBUG
+   try
+   {
+     fassert ( &static_cast<rtype_ref>(rSource) == &dynamic_cast<rtype_ref>(rSource) );
+   }
+   catch(...)
+   {
+     // Block exceptions from dynamic_cast and assert instead.
+     fassert(false);
+   }
+#endif
+   return static_cast<rtype_ref>(rSource);
+}
+
+}
+
 #endif
 
 /* end of fassert.h */

@@ -21,29 +21,41 @@
 #include <falcon/types.h>
 #include <falcon/garbageable.h>
 #include <falcon/vm.h>
-
 namespace Falcon {
 
-Garbageable::Garbageable( VMachine *vm, uint32 size ):
-   m_origin( vm ),
-   m_gcSize( size )
+GarbageableBase::GarbageableBase( const GarbageableBase &other ):
+   m_gcStatus( other.m_gcStatus )
+{}
+
+GarbageableBase::~GarbageableBase()
+{}
+
+bool GarbageableBase::finalize()
 {
-   vm->store( this );
+   return false;
+}
+
+uint32 GarbageableBase::occupation()
+{
+   return 0;
+}
+
+//========================================================================
+
+Garbageable::Garbageable()
+{
+   memPool->storeForGarbage(this);
 }
 
 Garbageable::Garbageable( const Garbageable &other ):
-   m_origin( other.m_origin ),
-   m_gcSize( 0 )
+   GarbageableBase( other )
 {
-   other.m_origin->store( this );
+   memPool->storeForGarbage(this);
 }
 
-void Garbageable::updateAllocSize( uint32 nSize )
-{
-   if ( m_origin != 0 )
-      m_origin->memPool()->updateAlloc( nSize - m_gcSize );
-   m_gcSize = nSize;
-}
+Garbageable::~Garbageable()
+{}
+
 
 }
 

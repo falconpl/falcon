@@ -16,9 +16,10 @@
 #include <falcon/setup.h>
 #include <falcon/coretable.h>
 #include <falcon/vm.h>
-#include "core_messages.h"
+#include <falcon/globals.h>
 
 namespace Falcon {
+namespace core {
 
 /*#
    @class Table
@@ -34,7 +35,7 @@ FALCON_FUNC Table_init( VMachine* vm )
    {
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
          .origin( e_orig_runtime )
-         .extra( FAL_STR(rtl_no_tabhead) ) ) );
+         .extra( Engine::getMessage(rtl_no_tabhead) ) ) );
       return;
    }
 
@@ -45,7 +46,7 @@ FALCON_FUNC Table_init( VMachine* vm )
       {
          vm->raiseModError( new ParamError( ErrorParam( e_param_type, __LINE__ )
             .origin( e_orig_runtime )
-            .extra( FAL_STR(rtl_invalid_tabhead) ) ) );
+            .extra( Engine::getMessage(rtl_invalid_tabhead) ) ) );
          return;
       }
    }
@@ -53,7 +54,7 @@ FALCON_FUNC Table_init( VMachine* vm )
    uint32 order = table->order();
 
    // create the first table
-   CoreArray *page = new CoreArray( vm, vm->paramCount() );
+   CoreArray *page = new CoreArray( vm->paramCount() );
    table->insertPage( vm->self().asObject(), page );
    table->setCurrentPage(0);
    CoreObject *self = vm->self().asObject();
@@ -64,7 +65,7 @@ FALCON_FUNC Table_init( VMachine* vm )
       Item *vi = vm->param(i);
       if( ! vi->isArray() || vi->asArray()->length() != order )
       {
-         String tempString = FAL_STR(rtl_invalid_tabrow);
+         String tempString = Engine::getMessage(rtl_invalid_tabrow);
          tempString += ": [";
          tempString.writeNumber( (int64)( i-1 ) );
          tempString += "]";
@@ -99,7 +100,7 @@ FALCON_FUNC Table_setHeader( VMachine* vm )
    {
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
          .origin( e_orig_runtime )
-         .extra( FAL_STR(rtl_no_tabhead) ) ) );
+         .extra( Engine::getMessage(rtl_no_tabhead) ) ) );
       return;
    }
 
@@ -108,9 +109,9 @@ FALCON_FUNC Table_setHeader( VMachine* vm )
 
    if ( table->order() != CoreTable::noitem )
    {
-      vm->raiseModError( new CodeError( ErrorParam( e_inv_state, __LINE__ )
+      vm->raiseModError( new CodeError( ErrorParam( e_table_aconf, __LINE__ )
          .origin( e_orig_runtime )
-         .extra( FAL_STR(rtl_tabhead_given) ) ) );
+         .extra( Engine::getMessage(rtl_tabhead_given) ) ) );
       return;
    }
 
@@ -118,7 +119,7 @@ FALCON_FUNC Table_setHeader( VMachine* vm )
    {
       vm->raiseModError( new ParamError( ErrorParam( e_param_type, __LINE__ )
          .origin( e_orig_runtime )
-         .extra( FAL_STR(rtl_invalid_tabhead) ) ) );
+         .extra( Engine::getMessage(rtl_invalid_tabhead) ) ) );
       return;
    }
 }
@@ -153,15 +154,15 @@ FALCON_FUNC Table_getHeader( VMachine* vm )
          return;
       }
 
-      vm->retval( new GarbageString( vm, table->heading(pos) ) );
+      vm->retval( new CoreString(  table->heading(pos) ) );
    }
    else {
-      CoreArray *ret = new CoreArray(vm, table->order() );
+      CoreArray *ret = new CoreArray( table->order() );
       ret->resize( table->order() );
 
       for( uint32 i = 0; i < table->order(); i ++ )
       {
-         ret->at(i) = new GarbageString( vm, table->heading( i ) );
+         ret->at(i) = new CoreString( table->heading( i ) );
       }
 
       vm->retval( ret );
@@ -203,7 +204,7 @@ FALCON_FUNC Table_getColData( VMachine* vm )
       vm->retval( table->columnData(pos) );
    }
    else {
-      CoreArray *ret = new CoreArray(vm, table->order() );
+      CoreArray *ret = new CoreArray( table->order() );
 
       for( uint32 i = 0; i < table->order(); i ++ )
       {
@@ -397,7 +398,7 @@ static void internal_get_item( CoreTable *table, CoreArray *row, VMachine *vm, I
 
       // eventually methodize.
       if ( ret.isFunction() )
-         ret.setTabMethod( row, ret.asFunction(), ret.asModule() );
+         ret.setMethod( row, ret.asFunction() );
 
       vm->retval( ret );
    }
@@ -567,14 +568,11 @@ FALCON_FUNC  Table_find ( ::Falcon::VMachine *vm )
 
    for ( uint32 i = 0; i < page->length(); i++ )
    {
-      if( vm->compareItems( page->at(i).asArray()->at(col), *i_value ) == 0 )
+      if( page->at(i).asArray()->at(col) == *i_value )
       {
          pos = i;
          break;
       }
-
-      if ( vm->hadError() )
-         return;
    }
 
    if ( pos == CoreTable::noitem )
@@ -635,7 +633,7 @@ FALCON_FUNC  Table_insert ( ::Falcon::VMachine *vm )
    {
       vm->raiseModError( new ParamError( ErrorParam( e_param_type, __LINE__ )
          .origin( e_orig_runtime )
-         .extra( FAL_STR( rtl_invalid_tabrow ) ) ) );
+         .extra( Engine::getMessage( rtl_invalid_tabrow ) ) ) );
       return;
    }
 
@@ -876,7 +874,7 @@ static bool table_choice_next( Falcon::VMachine *vm )
       if ( pos > table->biddingsSize() ) {
          vm->raiseModError( new AccessError( ErrorParam( e_continue_out, __LINE__ )
          .origin( e_orig_runtime )
-         .extra( FAL_STR( rtl_broken_table ) ) ) );
+         .extra( Engine::getMessage( rtl_broken_table ) ) ) );
          return false;
       }
 
@@ -936,7 +934,7 @@ static bool table_choice_next( Falcon::VMachine *vm )
       // eventually methodize.
       if ( ret.isFunction() )
       {
-         ret.setTabMethod( page[row].asArray(), ret.asFunction(), ret.asModule() );
+         ret.setMethod( page[row].asArray(), ret.asFunction() );
          vm->callFrame( ret, 0 );
          return true;
       }
@@ -952,7 +950,7 @@ static bool table_choice_next( Falcon::VMachine *vm )
       // (it's ok also if we pushed the parameter; stack is unwinded).
       vm->raiseModError( new AccessError( ErrorParam( e_non_callable, __LINE__ )
          .origin( e_orig_runtime )
-         .extra( FAL_STR( rtl_uncallable_col ) ) ) );
+         .extra( Engine::getMessage( rtl_uncallable_col ) ) ) );
 
       // pitifully, we're done.
       return false;
@@ -1189,7 +1187,7 @@ FALCON_FUNC  Table_setPage ( ::Falcon::VMachine *vm )
    {
       vm->raiseModError( new ParamError( ErrorParam( e_param_range, __LINE__ )
          .origin( e_orig_runtime )
-         .extra( FAL_STR( rtl_no_page ) ) ) );
+         .extra( Engine::getMessage( rtl_no_page ) ) ) );
       return;
    }
 }
@@ -1234,14 +1232,14 @@ FALCON_FUNC  Table_insertPage ( ::Falcon::VMachine *vm )
    CoreTable *table = static_cast<CoreTable *>( vm->self().asObject()->getUserData() );
    if ( i_data == 0 )
    {
-      table->insertPage( vm->self().asObject(), new CoreArray(vm), pos );
+      table->insertPage( vm->self().asObject(), new CoreArray, pos );
    }
    else {
       if ( ! table->insertPage( vm->self().asObject(), i_data->asArray()->clone(), pos ) )
       {
          vm->raiseModError( new ParamError( ErrorParam( e_param_type, __LINE__ )
             .origin( e_orig_runtime )
-            .extra( FAL_STR( rtl_invalid_tabrow ) ) ));
+            .extra( Engine::getMessage( rtl_invalid_tabrow ) ) ));
          return;
       }
    }
@@ -1272,7 +1270,7 @@ FALCON_FUNC  Table_removePage ( ::Falcon::VMachine *vm )
    {
       vm->raiseModError( new AccessError( ErrorParam( e_arracc, __LINE__ )
          .origin( e_orig_runtime )
-         .extra( FAL_STR( rtl_no_page ) ) ) );
+         .extra( Engine::getMessage( rtl_no_page ) ) ) );
    }
 }
 
@@ -1310,7 +1308,7 @@ FALCON_FUNC  Table_getPage ( ::Falcon::VMachine *vm )
    {
       vm->raiseModError( new AccessError( ErrorParam( e_arracc, __LINE__ )
          .origin( e_orig_runtime )
-         .extra( FAL_STR( rtl_no_page ) ) ) );
+         .extra( Engine::getMessage( rtl_no_page ) ) ) );
       return;
    }
 
@@ -1390,11 +1388,11 @@ FALCON_FUNC  Table_resetColumn ( ::Falcon::VMachine *vm )
    int32 start, end, step;
    if ( i_row->isRange() )
    {
-      start = i_row->asRangeStart();
+      start = (int32) i_row->asRangeStart();
       if ( start < 0 )
          start = page.length() + start;
 
-      end = i_row->asRangeIsOpen() ? page.length() : i_row->asRangeEnd();
+      end = (int32)( i_row->asRangeIsOpen() ? page.length() : i_row->asRangeEnd());
       if ( end < 0 )
          end = page.length() + end;
 
@@ -1405,7 +1403,7 @@ FALCON_FUNC  Table_resetColumn ( ::Falcon::VMachine *vm )
          // to compensate different closure semantics
          end = temp + 1;
       }
-      step = i_row->asRangeStep();
+      step = (int32) i_row->asRangeStep();
       if ( step == 0 )
          step = 1;
    }
@@ -1435,6 +1433,7 @@ FALCON_FUNC  Table_resetColumn ( ::Falcon::VMachine *vm )
    }
 }
 
+}
 }
 
 /* end of table.cpp */

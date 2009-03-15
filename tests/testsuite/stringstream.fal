@@ -22,19 +22,19 @@ stream = StringStream()
 stream.write( "Hello" )
 
 // test1 -- try to read from bottom
-if stream.read(1) != "": failure( "Read from bottom" )
+if stream.grab(1) != "": failure( "Read from bottom" )
 if not stream.eof(): failure( "Eof not set when read from bottom" )
 
 // test2 -- read back
 stream.seek(0)
-str = stream.read( 5 )
+str = stream.grab( 5 )
 if str != "Hello": failure( "Read Back" )
 
 // test3 -- preallocated string stream
 stream = StringStream( "Hello wolrd" )
 str = ""
 while not stream.eof()
-   str += stream.read(1)
+   str += stream.grab(1)
 end
 
 success()

@@ -77,7 +77,7 @@ public:
 
    ~TimeStamp() {}
 
-   virtual void gcMark( VMachine *mp ) {}
+   virtual void gcMark( MemPool *mp ) {}
 
    TimeStamp &operator = ( const TimeStamp &ts );
    TimeStamp &operator += ( const TimeStamp &ts )

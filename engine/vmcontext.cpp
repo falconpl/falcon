@@ -51,7 +51,6 @@ VMContext::VMContext( VMachine *origin )
    m_regA = origin->m_regA;
    m_regB = origin->m_regB;
    m_regS1 = origin->m_regS1;
-   m_regS2 = origin->m_regS2;
    m_regL1 = origin->m_regL1;
    m_regL2 = origin->m_regL2;
    m_regBind = origin->m_regBind;
@@ -81,7 +80,6 @@ void VMContext::save( const VMachine *origin )
    m_regA = origin->m_regA;
    m_regB = origin->m_regB;
    m_regS1 = origin->m_regS1;
-   m_regS2 = origin->m_regS2;
    m_regL1 = origin->m_regL1;
    m_regL2 = origin->m_regL2;
    m_regBind = origin->m_regBind;
@@ -106,7 +104,6 @@ void VMContext::restore( VMachine *origin ) const
    origin->m_regA = m_regA;
    origin->m_regB = m_regB;
    origin->m_regS1 = m_regS1;
-   origin->m_regS2 = m_regS2;
    origin->m_regL1 = m_regL1;
    origin->m_regL2 = m_regL2;
    origin->m_regBind = m_regBind;

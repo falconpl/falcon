@@ -36,7 +36,8 @@ class FALCON_DYN_CLASS LineMap: public Map
 {
 public:
    LineMap();
-
+   ~LineMap() {}
+   
    void addEntry( uint32 pcounter, uint32 line ) { insert( &pcounter, &line ); }
    bool save( Stream *out ) const;
    bool load( Stream *in );

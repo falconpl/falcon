@@ -20,12 +20,13 @@
 #include <falcon/fstream.h>
 #include <falcon/transcoding.h>
 #include <falcon/stdstreams.h>
+#include <falcon/streambuffer.h>
 
 namespace Falcon {
 
 Stream *stdInputStream()
 {
-   StdInStream *stdin = new StdInStream;
+   Stream *stdin = new StreamBuffer( new StdInStream );
    String enc;
 
    Falcon::Transcoder *coder;
@@ -46,7 +47,8 @@ Stream *stdInputStream()
 
 Stream *stdOutputStream()
 {
-   StdOutStream *stdout = new StdOutStream;
+   Stream *stdout = new StreamBuffer( new StdOutStream );
+   //Stream *stdout = new StdOutStream;
    String enc;
 
    Falcon::Transcoder *coder;
@@ -67,7 +69,7 @@ Stream *stdOutputStream()
 
 Stream *stdErrorStream()
 {
-   StdErrStream *stderr = new StdErrStream;
+   Stream *stderr = new StreamBuffer( new StdErrStream );
    String enc;
 
    Falcon::Transcoder *coder;

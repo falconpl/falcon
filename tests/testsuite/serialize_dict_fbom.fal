@@ -33,9 +33,8 @@ item2 = nil
 item3 = nil
 
 try
-	// mixing deserialize and readItem
    item1 = deserialize( stream )
-   item2 = stream.readItem()
+   item2 = deserialize( stream )
    item3 = deserialize( stream )
 
    res1 = item2[ "elem1" ]

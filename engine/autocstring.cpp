@@ -72,15 +72,7 @@ void AutoCString::init_vm_and_format( VMachine *vm, const Item &itm, const Strin
 
    str = &tempStr;
    vm->itemToString( tempStr, &itm, fmt );
-   if( vm->hadError() )
-   {
-      m_pData = m_buffer;
-      // as 255 is not a valid UTF-8 character at the beginning of a string,
-      // we can use it to determine if the string is valid.
-      m_buffer[0] = (char) 255;
-      return;
-   }
-
+   
    if ( (m_len = str->toCString( m_buffer, AutoCString_BUF_SPACE ) ) != String::npos )
    {
       m_pData = m_buffer;

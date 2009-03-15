@@ -1,0 +1,43 @@
+/****************************************************************************
+* Falcon test suite
+*
+*
+* ID: 22h
+* Category: types
+* Subcategory: objects
+* Short: Cloning objects
+* Description:
+*   Checks for cloning objects and value persistency.
+* [/Description]
+*
+****************************************************************************/
+
+object Test
+   a = 100
+   b = 200
+   c = 300
+end
+
+t1 = Test.clone()
+if t1.a != 100 or t1.b != 200 or t1.c != 300
+   failure( "Cloning unchanged" )
+end
+
+Test.a = "one"
+t2 = Test.clone( Test )
+if t2.a != "one" or t2.b != 200 or t2.c != 300
+   failure( "Cloning changed" )
+end
+
+if t1.a != 100
+   failure( "Cloning persistency" )
+end
+
+Test.a = "two"
+if t2.a != "one"
+   failure( "Cloning insolation" )
+end
+
+success()
+
+/* End of file */

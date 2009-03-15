@@ -58,7 +58,7 @@ if args[0] == "-o"
 	try
 		stream = OutputStream( args[1] )
 		for elem in array
-			serialize( stream, elem )
+			elem.serialize( stream )
 		end
 		stream.close()
 	catch in err

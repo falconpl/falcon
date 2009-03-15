@@ -1,47 +1,57 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: flc_heap.h
+   FILE: heap.h
 
-   Short description
+   
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
-   Begin: gio set 30 2004
+   Begin: Sat, 13 Dec 2008 13:45:59 +0100
 
    -------------------------------------------------------------------
-   (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
+   (C) Copyright 2008: the FALCON developers (see list in AUTHORS file)
 
    See LICENSE file for licensing details.
 */
 
-/** \file
-   Short description
+#ifndef FALCON_HEAP_H
+#define FALCON_HEAP_H
+
+namespace Falcon {
+
+namespace Sys {
+   int sys_pageSize();
+   void* sys_allocPage();
+   void sys_freePage( void *page );
+}
+
+/**
+   HeapMem class.
+   
+   This class allows to manage direct memory pages from the system.
+   it's the base of the global SBA (Small Block Allocator).
+   
+   The engine creates a singleton instance of this class called Heap.
+   All its functions are inlined to system specific sys_* function;
+   this means that release build won't actually access the this-> pointer,
+   and calling the methods of the singleton Heap will be exactly as
+   calling system specific functions.
 */
+class HeapMem
+{
+public:
 
-#ifndef flc_flc_heap_H
-#define flc_flc_heap_H
+   HeapMem();
+   ~HeapMem();
 
-#ifdef HAVE_CONFIG_H
-   #include <config.h>
-#endif
+   int pageSize() { return Sys::sys_pageSize(); }
+   void *allocPage() { return Sys::sys_allocPage(); }
+   void freePage( void *page ) { Sys::sys_freePage( page ); }
+};
 
-#ifdef FALCON_SYSTEM_WIN
-   #include <falcon/heap_win.h>
-#else
-   #include <sys/mman.h>
+extern HeapMem Heap;
 
-   #if !defined( MAP_ANONYMOUS )
-      /* Make compatible with mac OSX and BSD */
-      #if defined(MAP_ANON)
-         #define MAP_ANONYMOUS      MAP_ANON
-         #include <falcon/heap_linux.h>
-      #else
-         #include <falcon/heap_unix.h>
-      #endif
-   #else
-      #include <falcon/heap_linux.h>
-   #endif
-#endif
+}
 
 #endif
 
-/* end of flc_heap.h */
+/* end of heap.h */

@@ -198,11 +198,11 @@ bool StringTraits::owning() const
 
 
 namespace traits {
-	FALCON_DYN_SYM StringTraits &t_string() { static StringTraits dt; return dt; }
-	FALCON_DYN_SYM VoidpTraits &t_voidp() { static VoidpTraits dt; return dt; }
-	FALCON_DYN_SYM IntTraits &t_int() { static IntTraits dt; return dt; }
-	FALCON_DYN_SYM StringPtrTraits &t_stringptr() { static StringPtrTraits dt; return dt; }
-	FALCON_DYN_SYM StringPtrOwnTraits &t_stringptr_own() { static StringPtrOwnTraits dt; return dt; }
+      FALCON_DYN_SYM StringTraits &t_string() { static StringTraits* dt = new StringTraits; return *dt; }
+      FALCON_DYN_SYM VoidpTraits &t_voidp() { static VoidpTraits* dt = new VoidpTraits; return *dt; }
+      FALCON_DYN_SYM IntTraits &t_int() { static IntTraits *dt = new IntTraits; return *dt; }
+      FALCON_DYN_SYM StringPtrTraits &t_stringptr() { static StringPtrTraits *dt = new StringPtrTraits; return *dt; }
+      FALCON_DYN_SYM StringPtrOwnTraits &t_stringptr_own() { static StringPtrOwnTraits *dt = new StringPtrOwnTraits; return *dt; }
 }
 
 }

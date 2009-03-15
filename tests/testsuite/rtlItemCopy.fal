@@ -14,21 +14,21 @@
 // string on test
 string = "Hello world"
 string += "."
-smod = itemCopy( string )
+smod = clone( string )
 if smod != "Hello world.": failure( "String copy" )
 string += "Modify"
 if smod != "Hello world.": failure( "String copy -- insolation" )
 
 // array copy
 array = [ "a", "b", "c" ]
-amod = itemCopy( array )
+amod = clone( array )
 if len( amod ) != 3: failure( "Array copy" )
 array += "element"
 if len( amod ) != 3: failure( "Array copy -- insolation" )
 
 // dictionary copy
 dict = [ 1 => 1, 2 => 2, 3 => 3 ]
-dmod = itemCopy( dict )
+dmod = clone( dict )
 if dmod[2] != 2: failure( "Dict copy" )
 dict[2] = "modified"
 if dmod[2] != 2: failure( "Dict copy -- insolation" )
@@ -39,7 +39,7 @@ object test
    prop2 = "two"
 end
 
-tmod = itemCopy( test )
+tmod = clone( test )
 if tmod.prop1 != "one": failure( "Object copy" )
 test.prop1 = "changed"
 if tmod.prop1 != "one": failure( "Object copy -- insolation" )

@@ -17,6 +17,7 @@
 #define flc_MEMORY_H
 
 #include <falcon/setup.h>
+#include <falcon/globals.h>
 #include <stdlib.h>
 
 /** \file
@@ -45,13 +46,29 @@
 
 namespace Falcon {
 
+/** Account allocated memory.
+   Allocators creating Falcon object should call this function to inform the GC system
+   of the memory they are consuming, and so, the memory that may be freed if they are
+   reclaimed.
+   
+   Global functions Falcon::gcAlloc(), Falcon::gcRealloc() and Falcon::gcFree() call automatically this
+   account function. Garbageable objects are derived by a base class that automatically calls this
+   functions.
+   
+*/
+FALCON_DYN_SYM  void gcMemAccount( size_t memSize );
+FALCON_DYN_SYM  void gcMemUnaccount( size_t memSize );
+   
+/** Return the total memory allocated by the GC system. */
+FALCON_DYN_SYM  size_t gcMemAllocated();
+   
 FALCON_DYN_SYM void * DflMemAlloc( size_t amount );
 FALCON_DYN_SYM void DflMemFree( void *mem );
 FALCON_DYN_SYM void * DflMemRealloc( void *mem, size_t amount );
 
-FALCON_DYN_SYM extern void * (*memAlloc) ( size_t );
-FALCON_DYN_SYM extern void (*memFree) ( void * );
-FALCON_DYN_SYM extern void * (*memRealloc) ( void *,  size_t );
+FALCON_DYN_SYM void * DflAccountMemAlloc( size_t amount );
+FALCON_DYN_SYM void DflAccountMemFree( void *mem );
+FALCON_DYN_SYM void * DflAccountMemRealloc( void *mem, size_t amount );
 
 }
 

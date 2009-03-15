@@ -22,14 +22,14 @@
 #include <falcon/sys.h>
 #include <falcon/symbol.h>
 #include <math.h>
-#include <falcon/cobject.h>
+#include <falcon/coreobject.h>
 #include <falcon/fassert.h>
 
 #include <falcon/timestamp.h>
 #include <falcon/time_sys.h>
 
 /*#
-   
+
 */
 
 namespace Falcon {
@@ -136,7 +136,7 @@ FALCON_FUNC  TimeStamp_toString ( ::Falcon::VMachine *vm )
    TimeStamp *ts = (TimeStamp *) self->getUserData();
    Item *format = vm->param( 0 );
 
-   String *str = new GarbageString( vm );
+   CoreString *str = new CoreString;
    if( format != 0 )
    {
       if( ! format->isString() )
@@ -232,7 +232,7 @@ FALCON_FUNC  TimeStamp_isValid ( ::Falcon::VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
    TimeStamp *ts = (TimeStamp *) self->getUserData();
-   vm->retval( ts->isValid() );
+   vm->regA().setBoolean( ts->isValid() );
 }
 
 /*#
@@ -358,6 +358,7 @@ FALCON_FUNC  TimeStamp_compare ( ::Falcon::VMachine *vm )
    }
 }
 
+
 /*#
    @method fromRFC2822 TimeStamp
    @brief Sets this date from a RFC 2822 string.
@@ -413,7 +414,7 @@ FALCON_FUNC  TimeStamp_toRFC2822 ( ::Falcon::VMachine *vm )
    TimeStamp *ts1 = (TimeStamp *) self->getUserData();
    if ( ts1->isValid() )
    {
-      GarbageString *str = new GarbageString( vm, 32 );
+      CoreString *str = new CoreString( String(32) );
       ts1->toRFC2822( *str );
       vm->retval( str );
    }
@@ -636,7 +637,7 @@ FALCON_FUNC  TimeZone_describe ( ::Falcon::VMachine *vm )
       return;
    }
 
-   vm->retval( new GarbageString( vm, TimeStamp::getRFC2822_ZoneName( (TimeZone) tz ) ) );
+   vm->retval( new CoreString(  TimeStamp::getRFC2822_ZoneName( (TimeZone) tz ) ) );
 }
 
 /*#

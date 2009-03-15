@@ -23,210 +23,21 @@
 
 #include <falcon/setup.h>
 #include <falcon/types.h>
-#include <falcon/error.h>
 #include <falcon/item.h>
 #include <falcon/genericlist.h>
 #include <falcon/string.h>
-#include <falcon/falcondata.h>
+#include <falcon/reflectobject.h>
 #include <falcon/reflectfunc.h>
 
 namespace Falcon {
 
-const int e_none =                 0;
-const int e_syntax =               1;
-const int e_unpack_size =          2;
-const int e_break_out =            3;
-const int e_continue_out =         4;
-const int e_div_by_zero =          6;
-const int e_mod_by_zero =          7;
-const int e_invalid_op =           8;
-const int e_assign_const =         9;
-const int e_assign_sym =           10;
-const int e_static_call =          11;
-const int e_global_notin_func =    12;
-const int e_already_def =          13;
-const int e_non_callable =         14;
-const int e_invalid_cmp =          15;
-const int e_export_undef =         16;
-const int e_export_all =           17;
-const int e_misplaced_stat =       18;
-const int e_enter_outside =        19;
-const int e_leave_outside =        20;
-const int e_static_notin_func =    21;
-const int e_self_outclass =        22;
-const int e_sender_outclass =      23;
-const int e_undef_sym  =           24;
-const int e_invops =               25;
-const int e_no_local =             26;
-const int e_too_entry =            27;
-const int e_end_no_loc =           28;
-const int e_import_out =           29;
-const int e_no_import =            30;
-const int e_too_locals =           31;
-const int e_too_params =           32;
-const int e_switch_again =         33;
-const int e_switch_case =          34;
-const int e_switch_end =           35;
-const int e_inv_state =            36;
-const int e_prop_no_class =        37;
-const int e_prop_pinit =           38;
-const int e_prop_adef =            39;
-const int e_too_props =            40;
-const int e_from_adef =            41;
-const int e_too_froms =            42;
-const int e_invopcode =            43;
-const int e_invop =                44;
-const int e_stackuf =              45;
-const int e_stackof =              46;
-const int e_arracc =               47;
-const int e_nostartsym =           48;
-const int e_uncaught =             49;
-const int e_binload =              50;
-const int e_binstartup =           51;
-const int e_bininit =              52;
-const int e_modver =               53;
-const int e_modformat =            54;
-const int e_modio =                55;
-const int e_unclosed_cs =          56;
-const int e_runaway_eof =          57;
-const int e_cmp_unprep =           58;
-const int e_undef_label =          59;
-const int e_prop_acc =             60;
-const int e_deadlock =             61;
-const int e_prov_name =            62;
-const int e_dup_case =             63;
-const int e_init_given =           64;
-const int e_static_const =         65;
-const int e_str_noid =             66;
-const int e_inv_inherit =          67;
-const int e_nonsym_ref =           68;
-const int e_state_adef =           69;
-const int e_invalid_sjmp =         100;
-const int e_no_attrib =            101;
-const int e_no_cls_inst =          102;
-const int e_pass_outside =         103;
-const int e_switch_clash =         104;
-const int e_switch_default =       105;
-const int e_for_user_error =       106;
-const int e_global_again =         107;
-const int e_service_adef =         108;
-const int e_service_undef =        109;
-const int e_uncloneable =          110;
-const int e_param_outside =        111;
-const int e_file_output =          112;
-const int e_domain =               113;
-const int e_charRange =            114;
-const int e_par_close_unbal =      115;
-const int e_square_close_unbal =   116;
-const int e_inv_num_format =       117;
-const int e_inv_esc_sequence =     118;
-const int e_eol_string =           119;
-const int e_inv_token =            120;
-const int e_inv_direct =           121;
-const int e_byte_access =          122;
-const int e_numparse_long =        123;
-const int e_numparse =             124;
-const int e_no_class =             125;
-const int e_bitwise_op =           126;
-const int e_case_decl =            127;
-const int e_switch_body =          128;
-const int e_select_body =          129;
-const int e_default_decl =         130;
-const int e_lone_end =             131;
-const int e_switch_decl =          132;
-const int e_select_decl =          133;
-const int e_case_outside =         134;
-const int e_syn_load =             135;
-const int e_toplevel_func =        136;
-const int e_toplevel_obj =         137;
-const int e_toplevel_class =       138;
-const int e_toplevel_load =        139;
-const int e_syn_while  =           140;
-const int e_syn_if =               141;
-const int e_syn_else =             142;
-const int e_syn_elif =             143;
-const int e_syn_break =            144;
-const int e_syn_continue =         145;
-const int e_syn_for =              146;
-const int e_syn_forfirst =         147;
-const int e_syn_forlast =          148;
-const int e_syn_formiddle =        149;
-const int e_syn_try =              150;
-const int e_syn_catch =            151;
-const int e_syn_raise =            152;
-const int e_syn_funcdecl =         153;
-const int e_syn_static =           154;
-const int e_syn_state =            155;
-const int e_syn_launch =           156;
-const int e_syn_pass =             157;
-const int e_inv_const_val =        158;
-const int e_syn_const =            159;
-const int e_syn_export =           160;
-const int e_syn_attributes =       161;
-const int e_enter_notavar =        162;
-const int e_syn_enter =            163;
-const int e_syn_leave =            164;
-const int e_syn_forin =            165;
-const int e_syn_pass_in =          166;
-const int e_leave_notanexp =       167;
-const int e_inv_attrib =           168;
-const int e_syn_class =            169;
-const int e_syn_hasdef =           170;
-const int e_syn_object =           171;
-const int e_syn_global =           172;
-const int e_syn_return =           173;
-const int e_syn_arraccess =        174;
-const int e_syn_funcall =          175;
-const int e_syn_lambda =           176;
-const int e_syn_iif =              177;
-const int e_syn_dictdecl =         178;
-const int e_syn_arraydecl =        179;
-const int e_syn_give =             180;
-const int e_syn_def =              181;
-const int e_syn_fordot =           182;
-const int e_syn_self_print =       183;
-const int e_syn_directive =        184;
-const int e_syn_import =           185;
-const int e_syn_macro =            186;
-const int e_syn_macro_call =       187;
+// Declare the messaages...
+#include <falcon/eng_messages.h>
 
-const int e_nl_in_lit =            200;
-const int e_catch_adef =           201;
-const int e_catch_clash =          202;
-const int e_fmt_convert =          203;
-const int e_already_forfirst =     204;
-const int e_already_forlast =      205;
-const int e_already_formiddle =    206;
-const int e_fordot_outside =       207;
-const int e_interrupted =          208;
-const int e_priv_access =          209;
-const int e_par_unbal =            210;
-const int e_square_unbal =         211;
-const int e_unclosed_string =      212;
-const int e_directive_unk =        213;
-const int e_directive_value =      214;
-const int e_noninst_cls =          215;
-const int e_unserializable =       216;
-const int e_wait_in_atomic =       217;
-const int e_inv_inherit2 =         218;
-const int e_prop_ro =              219;
-
-
-const int e_open_file =            500;
-const int e_loaderror =            501;
-const int e_nofile =               503;
-const int e_invformat =            504;
-const int e_loader_unsupported =   505;
-const int e_io_error =             506;
-const int e_unknown_encoding =     507;
-
-const int e_inv_params =           900;
-const int e_missing_params =       901;
-const int e_param_type =           902;
-const int e_param_range =          903;
-const int e_param_indir_code =     904;
-const int e_param_strexp_code =    905;
-const int e_param_fmt_code =       906;
+// and set the error IDS.
+#define FLC_DECLARE_ERROR_TABLE
+#include <falcon/eng_messages.h>
+#undef FLC_DECLARE_ERROR_TABLE
 
 typedef enum {
    e_orig_compiler = 1,
@@ -365,7 +176,7 @@ private:
 class FALCON_DYN_CLASS Error: public BaseAlloc
 {
 protected:
-   volatile long m_refCount;
+   int32 m_refCount;
 
    int m_errorCode;
    String m_description;
@@ -684,6 +495,18 @@ public:
       {}
 };
 
+class MessageError: public Error
+{
+public:
+   MessageError():
+      Error( "MessageError" )
+   {}
+
+   MessageError( const ErrorParam &params  ):
+      Error( "MessageError", params )
+      {}
+};
+
 
 /** Returns the description of a falcon error.
    In case the error ID is not found, a sensible message will be returned.
@@ -720,17 +543,25 @@ extern reflectionFuncDecl Error_module_rto;
 extern reflectionFuncDecl Error_symbol_rto;
 extern reflectionFuncDecl Error_line_rto;
 extern reflectionFuncDecl Error_pc_rto;
+
+/** Reflective class for error */
+class ErrorObject: public ReflectObject
+{
+public:
+   ErrorObject( const CoreClass* cls, Error *err );
+   Error* getError() const { return (Error*) getUserData(); }
+   
+   virtual ~ErrorObject();
+   virtual void gcMark( MemPool *mp );
+   virtual CoreObject *clone() const;
+};
+
+extern "C" 
+{
+   CoreObject* ErrorObjectFactory( const CoreClass *cls, void *user_data, bool bDeserial );
 }
 
-/** Error manager.
-   This manager takes care of decreffing the error on object destruction.
-   ATM it doesn't create an initial error.
-*/
-class ErrorManager: public ObjectManager {
-   virtual void *onInit( VMachine *vm );
-   virtual void onDestroy( VMachine *vm, void *user_data );
-   virtual void *onClone( VMachine *vm, void *user_data );
-};
+}
 
 }
 

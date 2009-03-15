@@ -52,7 +52,7 @@ try
    element = dir.read()
    stats = FileStat()
    while element != nil
-      if stats.readStats( element )
+      if stats.read( element )
          filelen2[ element ] = stats.size
       else
          failure( "Can't retrieve stats for " + element )

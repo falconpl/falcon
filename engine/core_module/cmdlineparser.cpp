@@ -24,7 +24,7 @@
 #include <falcon/vm.h>
 #include <falcon/stream.h>
 #include "core_module.h"
-#include "core_messages.h"
+#include <falcon/eng_messages.h>
 
 /*#
    
@@ -275,7 +275,7 @@ FALCON_FUNC  CmdlineParser_parse( ::Falcon::VMachine *vm )
          self->getProperty( "onValue", i_method );
          if ( i_method.methodize( self ) )
          {
-            vm->pushParameter( &currentOption );
+            vm->pushParameter( new CoreString(currentOption) );
             vm->pushParameter( i_opt );
             vm->callItemAtomic( i_method, 2 );
             if( vm->hadEvent() )
@@ -329,7 +329,7 @@ FALCON_FUNC  CmdlineParser_parse( ::Falcon::VMachine *vm )
                else {
                   //Minimal optimization; reuse the same string and memory
                   subParam = opt.subString( 2 );
-                  vm->pushParameter( &subParam );
+                  vm->pushParameter( new CoreString( subParam ) );
                }
 
                vm->callItemAtomic( i_method, 1 );
@@ -363,7 +363,7 @@ FALCON_FUNC  CmdlineParser_parse( ::Falcon::VMachine *vm )
                   self->getProperty( "onSwitchOff", i_method );
                   if ( i_method.methodize( self ) )
                   {
-                     vm->pushParameter( &subParam );
+                     vm->pushParameter( new CoreString(subParam) );
                      vm->callItemAtomic( i_method, 1 );
                      if( vm->hadEvent() )
                         return;
@@ -380,7 +380,7 @@ FALCON_FUNC  CmdlineParser_parse( ::Falcon::VMachine *vm )
                   self->getProperty( "onOption", i_method );
                   if ( i_method.methodize( self ) )
                   {
-                     vm->pushParameter( &subParam );
+                     vm->pushParameter( new CoreString(subParam) );
                      vm->callItemAtomic( i_method, 1 );
                      if( vm->hadEvent() )
                         return;

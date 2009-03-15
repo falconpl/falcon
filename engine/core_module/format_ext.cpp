@@ -15,6 +15,8 @@
 
 #include "core_module.h"
 #include <falcon/format.h>
+#include <falcon/falconobject.h>
+#include <falcon/fassert.h>
 
 namespace Falcon {
 namespace core {
@@ -166,7 +168,7 @@ FALCON_FUNC  Format_parse ( ::Falcon::VMachine *vm )
 {
 
    CoreObject *einst = vm->self().asObject();
-   Format *fmt = (Format *) einst->getUserData();
+   Format *fmt = (Format *) einst->getFalconData();
 
    Item *param = vm->param( 0 );
    if ( param != 0 )
@@ -194,7 +196,7 @@ FALCON_FUNC  Format_parse ( ::Falcon::VMachine *vm )
 */
 FALCON_FUNC  Format_init ( ::Falcon::VMachine *vm )
 {
-   CoreObject *einst = vm->self().asObject();
+   FalconObject *einst = static_cast<FalconObject*>( vm->self().asObject() );
 
    Format *fmt = new Format;
    einst->setUserData( fmt );
@@ -226,7 +228,7 @@ FALCON_FUNC  Format_init ( ::Falcon::VMachine *vm )
 FALCON_FUNC  Format_format ( ::Falcon::VMachine *vm )
 {
    CoreObject *einst = vm->self().asObject();
-   Format *fmt = (Format *) einst->getUserData();
+   Format *fmt = dyncast<Format*>( einst->getFalconData() );
 
    Item *param = vm->param( 0 );
    Item *dest = vm->param( 1 );
@@ -236,14 +238,14 @@ FALCON_FUNC  Format_format ( ::Falcon::VMachine *vm )
    }
    else
    {
-      String *tgt;
+      CoreString *tgt;
 
       if( dest != 0 )
       {
-         tgt = dest->asString();
+         tgt = dest->asCoreString();
       }
       else {
-         tgt = new GarbageString( vm );
+         tgt = new CoreString;
       }
 
       if( ! fmt->format( vm, *param, *tgt ) )
@@ -263,9 +265,9 @@ FALCON_FUNC  Format_format ( ::Falcon::VMachine *vm )
 
 FALCON_FUNC  Format_toString ( ::Falcon::VMachine *vm )
 {
-   CoreObject *einst = vm->self().asObject();
-   Format *fmt = (Format *) einst->getUserData();
-   vm->retval( new GarbageString( vm,fmt->originalFormat()) );
+   FalconObject *einst = dyncast< FalconObject*>( vm->self().asObject() );
+   Format *fmt = dyncast< Format*>( einst->getFalconData() );
+   vm->retval( new CoreString( fmt->originalFormat()) );
 }
 
 }

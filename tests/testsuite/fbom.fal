@@ -42,17 +42,17 @@ method = inst.func
 aNil = nil
 
 // Test 1: types
-if aNil.type() != NilType: failure( "NilType" )
-if integer.type() != IntegerType: failure( "IntegerType" )
-if float.type() != NumericType: failure( "NumericType" )
-if range.type() != RangeType: failure( "RangeType" )
-if string.type() != StringType: failure( "StringType" )
-if array.type() != ArrayType: failure( "ArrayType" )
-if dictionary.type() != DictionaryType: failure( "DictType" )
-if printl.type() != FunctionType: failure( "FunctionType" )
-if alpha.type() != ClassType: failure( "ClassType" )
-if obj.type() != ObjectType: failure( "ObjectType" )
-if method.type() != MethodType: failure( "MethodType" )
+if aNil.typeId() != NilType: failure( "NilType" )
+if integer.typeId() != IntegerType: failure( "IntegerType" )
+if float.typeId() != NumericType: failure( "NumericType" )
+if range.typeId() != RangeType: failure( "RangeType" )
+if string.typeId() != StringType: failure( "StringType" )
+if array.typeId() != ArrayType: failure( "ArrayType" )
+if dictionary.typeId() != DictionaryType: failure( "DictType" )
+if printl.typeId() != FunctionType: failure( "FunctionType" )
+if alpha.typeId() != ClassType: failure( "ClassType" )
+if obj.typeId() != ObjectType: failure( "ObjectType" )
+if method.typeId() != MethodType: failure( "MethodType" )
 
 // Test 2: toString
 if aNil.toString() != "Nil": failure( "Nil to string" )
@@ -65,7 +65,7 @@ if dictionary.toString() != "Dictionary": failure( "Dictionary to string" )
 if printl.toString() != "Function printl": failure( "Function to string" )
 if alpha.toString() != "Class alpha": failure( "Class to string" )
 if obj.toString() != "Object": failure( "Object to string" )
-if method.toString() != "Method mixed.func": failure( "Method to string" )
+if method.toString() != "Method (Object).mixed.func": failure( "Method to string" )
 
 // Test 3: len
 if aNil.len() != 0: failure( "Nil len" )
@@ -116,7 +116,6 @@ try
 	failure( "Method have first" )
 end
 
-if range.first() != 1: failure( "Range first" )
 if string.first() != Iterator( string ): failure( "String first" )
 if array.first() != Iterator( array ): failure( "Array first" )
 if dictionary.first() != Iterator( dictionary ): failure( "Dictionary first" )
@@ -157,14 +156,10 @@ try
 	failure( "Method have last" )
 end
 
-if range.last() != 2: failure( "Range last" )
 if string.last() != Iterator( string, -1 ): failure( "String last" )
 if array.last() != Iterator( array, -1 ): failure( "Array last" )
 if dictionary.last() != Iterator( dictionary, -1 ): failure( "Dictionary last" )
 
-// Test 4.1: rangeOpen
-range1 = [1:]
-if range1.last() != nil: failure( "Range open positive" )
 
 //test 5: compare
 bigInt = 1500
@@ -175,12 +170,6 @@ if integer.compare( bigInt ) != 0: failure( "Compare verse == first" )
 if bigInt.compare( integer ) != 0: failure( "Compare verse == beta" )
 // todo: more extensive tests in a separate file
 
-//test 6: equal
-bigInt = 1500
-if bigInt.equal( integer ): failure( "Equal negative" )
-bigInt = integer
-if not integer.equal( bigInt ): failure( "Equal positivbe" )
-// todo: more extensive tests in a separate file
 
 //test 7: className
 if aNil.className() != nil: failure( "Nil className" )

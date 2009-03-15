@@ -34,7 +34,7 @@ class FALCON_DYN_CLASS URI: public BaseAlloc
    String m_original;
 
    /** The final normalized and encoded URI. */
-   String m_encoded;
+   mutable String m_encoded;
 
    /** False if this URI is not valid. */
    bool m_bValid;
@@ -65,7 +65,7 @@ class FALCON_DYN_CLASS URI: public BaseAlloc
    Path m_path;
 
    /** Query string, recorded as-is. */
-   String m_query;
+   mutable String m_query;
 
    /** Query part.
       Map of string->string.
@@ -202,7 +202,7 @@ public:
 
    \return The synthetized string.
    */
-   const String &makeQuery();
+   const String &makeQuery() const;
 
    /** Returns the current URI.
       This method eventually builds a new URI from the internally parsed data
@@ -214,7 +214,7 @@ public:
       separately, the \b synthQuery parameter may be set to false, and the content
       of the query field will be used instead.
    */
-   const String &get( bool synthQuery = true );
+   const String &get( bool synthQuery = true ) const;
 
    //  A bit of parsing support.
    /** Character is a reserved delimiter under RFC3986 */
@@ -287,6 +287,9 @@ public:
 
    /** Returns current path as a path class. */
    const Path &pathElement() const { return m_path; }
+   
+   /** Returns current path as a path class. */
+   Path &pathElement() { return m_path; }
 
    /** Sets a different path for this URI.
       This will invalidate current URI until next uri() is called.

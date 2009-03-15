@@ -169,8 +169,8 @@ FalconData *LinearDictIterator::clone() const
 // Iterator
 //
 
-LinearDict::LinearDict( VMachine *vm ):
-   CoreDict( vm, sizeof( *this ) ),
+LinearDict::LinearDict():
+   CoreDict( sizeof( *this ) ),
    m_size(0),
    m_alloc(0),
    m_data(0),
@@ -178,8 +178,8 @@ LinearDict::LinearDict( VMachine *vm ):
    m_travPos( 0 )
 {}
 
-LinearDict::LinearDict( VMachine *vm, uint32 size ):
-   CoreDict( vm, esize( size ) + sizeof( LinearDict ) ),
+LinearDict::LinearDict( uint32 size ):
+   CoreDict( esize( size ) + sizeof( LinearDict ) ),
    m_version( 0 ),
    m_travPos( 0 )
 {
@@ -320,7 +320,7 @@ void LinearDict::smartInsert( DictIterator &iter, const Item &key, const Item &v
       posHint = ldi->m_dictPos;
 
       // right position?
-      if ( origin()->compareItems( key, m_data[posHint].key() ) == 0 )
+      if (  key == m_data[posHint].key() )
       {
          m_data[ posHint ].value( value );
          return;
@@ -328,8 +328,8 @@ void LinearDict::smartInsert( DictIterator &iter, const Item &key, const Item &v
 
       // not right, but good for insertion?
       if (
-         ( posHint == 0 || origin()->compareItems( key, m_data[posHint-1].key() ) > 0 ) &&
-         ( posHint == m_size || origin()->compareItems( key, m_data[posHint].key() ) < 0 ) )
+         ( posHint == 0 || key > m_data[posHint-1].key() ) &&
+         ( posHint == m_size || key < m_data[posHint].key() ) )
       {
          addInternal( posHint, key, value );
          ldi->m_versionNumber = version();
@@ -384,7 +384,6 @@ bool LinearDict::addInternal( uint32 pos, const Item &key, const Item &value )
       if ( m_data != 0 )
          memFree( m_data );
       m_data = mem;
-      updateAllocSize( esize( m_alloc ) + sizeof( LinearDict ) );
    }
    else {
       if ( pos < m_size )
@@ -423,7 +422,6 @@ bool LinearDict::findInternal( const Item &key, uint32 &ret_pos ) const
 {
    uint32 lower = 0, higher, point;
    higher = m_size;
-   VMachine *vm = origin();
 
    if ( higher == 0 ) {
       ret_pos = 0;
@@ -440,9 +438,7 @@ bool LinearDict::findInternal( const Item &key, uint32 &ret_pos ) const
       // get the table row
       current = m_data + point;
 
-      comparation = vm->compareItems( key, current->key() );
-      if( vm->hadError() )
-         return false;
+      comparation = key.compare( current->key() );
 
       if ( comparation == 0 )
       {
@@ -497,11 +493,11 @@ CoreDict *LinearDict::clone() const
 
    if ( m_size == 0 )
    {
-      ret = new LinearDict( origin() );
+      ret = new LinearDict();
    }
    else
    {
-      ret = new LinearDict( origin(), m_size );
+      ret = new LinearDict( m_size );
       ret->length( m_size );
       memcpy( ret->m_data, m_data, esize( m_size ) );
    }
@@ -533,7 +529,6 @@ void LinearDict::clear()
    m_data = 0;
    m_alloc = 0;
    m_size = 0;
-   updateAllocSize( sizeof( *this ) );
    m_version++;
 }
 

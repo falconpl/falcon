@@ -26,31 +26,74 @@
 #include <falcon/garbageable.h>
 #include <falcon/basealloc.h>
 #include <falcon/string.h>
-#include <falcon/bommap.h>
+#include <falcon/corerange.h>
 
 namespace Falcon {
 
 class Symbol;
-class String;
+class CoreString;
 class CoreObject;
 class CoreDict;
 class CoreArray;
 class CoreClass;
+class CoreFunc;
 class GarbageItem;
 class VMachine;
 class Stream;
-class Attribute;
 class LiveModule;
 class MemBuf;
 class GarbagePointer;
 class FalconData;
 class CodeError;
+class DeepItem;
+
+
+typedef void** CommOpsTable;
+extern CommOpsTable CommOpsDict[];
 
 
 /** Basic item abstraction.*/
 class FALCON_DYN_CLASS Item: public BaseAlloc
 {
 public:
+
+   /** Common operations that can be performed on items.
+      Each item type has a function pointer table taking care of this
+      operations.
+
+      Deep items operations is that of searching for overloadings
+      via the deep item common DeepItem::getProperty() method,
+      and then eventually calling the operator implementation.
+
+      The operator implementation is called on the VM instance of the
+      deep item.
+   */
+   typedef enum {
+      co_add,
+      co_sub,
+      co_mul,
+      co_div,
+      co_mod,
+      co_pow,
+
+      co_neg,
+
+      co_inc,
+      co_dec,
+      co_incpost,
+      co_decpost,
+
+      co_compare,
+
+      co_getIndex,
+      co_setIndex,
+      co_getProperty,
+      co_setProperty,
+
+      co_call
+
+   } e_commops;
+
    /** Serialization / deserializzation error code.
       This value is returned by serialization and deserialization
       functions to communicate what whent wrong.
@@ -81,51 +124,51 @@ public:
    }
    e_sercode;
 
-private:
+protected:
   union {
       struct {
-         int32 val1;
-         int32 val2;
-      } num ;
-      int64 val64;
-      numeric number;
-      Garbageable *content;
-      struct {
-         void *voidp;
-         void *m_extra;
-         LiveModule *m_liveMod;
-      } ptr;
+         union {
+            int32 val32;
+            int64 val64;
+            numeric number;
+            Garbageable *content;
+
+            struct {
+               void *voidp;
+               void *extra;
+            } ptr;
+
+            struct {
+               GarbagePointer *gcptr;
+               int32 signature;
+            } gptr;
+
+         } data;
+
+         CoreFunc *method;
+
+         union {
+            struct {
+               byte methodId;
+               byte oldType;
+               byte type;
+               byte flags;
+            } bits;
+            uint16 half;
+            uint32 whole;
+         } base;
+      } ctx;
 
       struct {
-         int32 rstart;
-         int32 rend;
-         int32 rstep;
-      } rng;
-
-      struct {
-         GarbagePointer *gcptr;
-         int32 signature;
-      } gptr;
-   } m_data;
-
-   union {
-      struct {
-         byte methodId;
-         byte reserved;
-         byte type;
-         byte flags;
-      } bits;
-      uint16 half;
-      uint32 whole;
-   } m_base;
+         uint64 low;
+         uint64 high;
+      } parts;
+   } all;
 
 
-
-   bool internal_is_equal( const Item &other ) const;
-   int internal_compare( const Item &other ) const;
    bool serialize_object( Stream *file, CoreObject *obj, bool bLive ) const;
    bool serialize_symbol( Stream *file, const Symbol *sym ) const;
-   bool serialize_function( Stream *file, const Symbol *func ) const;
+   bool serialize_function( Stream *file, const CoreFunc *func ) const;
    bool serialize_class( Stream *file, const CoreClass *cls ) const;
 
    e_sercode deserialize_symbol( Stream *file, VMachine *vm, Symbol **tg_sym, LiveModule **modId );
@@ -134,16 +177,16 @@ private:
 
 #ifdef _MSC_VER
 	#if _MSC_VER < 1299
-	#define flagOpenRange 0x02
+	#define flagIsMethodic 0x02
 	#define flagIsOob 0x04
 	#define flagFuture 0x08
 	#else
-	   static const byte flagOpenRange = 0x02;
+	   static const byte flagIsMethodic = 0x02;
 	   static const byte flagIsOob = 0x04;
 	   static const byte flagFuture = 0x08;
 	#endif
 #else
-	static const byte flagOpenRange = 0x02;
+   static const byte flagIsMethodic = 0x02;
    static const byte flagIsOob = 0x04;
    static const byte flagFuture = 0x08;
 #endif
@@ -160,9 +203,9 @@ public:
       content( dt );
    }
 
-   Item( const Symbol *func, LiveModule *mod )
+   Item( CoreFunc* cf )
    {
-      setFunction( func, mod );
+      setFunction( cf );
    }
 
    void setNil() { type( FLC_ITEM_NIL ); }
@@ -177,7 +220,7 @@ public:
    void setBoolean( bool tof )
    {
       type( FLC_ITEM_BOOL );
-      m_data.num.val1 = tof?1: 0;
+      all.ctx.data.val32 = tof? 1: 0;
    }
 
    /** Creates an integer item */
@@ -220,7 +263,7 @@ public:
 
    void setInteger( int64 val ) {
       type(FLC_ITEM_INT);
-      m_data.val64 = val;
+      all.ctx.data.val64 = val;
    }
 
    /** Creates a numeric item */
@@ -231,35 +274,30 @@ public:
 
    void setNumeric( numeric val ) {
       type( FLC_ITEM_NUM );
-      m_data.number = val;
+      all.ctx.data.number = val;
    }
 
    /** Creates a range item */
-   Item( int32 val1, int32 val2, bool open )
+   Item( CoreRange *r )
    {
-      setRange( val1, val2, open );
+      setRange( r );
    }
 
-   void setRange( int32 val1, int32 val2, bool open )
-   {
-      type( FLC_ITEM_RANGE );
-      m_data.rng.rstart = val1;
-      m_data.rng.rend = val2;
-      m_data.rng.rstep = 0;
-      m_base.bits.flags = open? flagOpenRange : 0;
-   }
 
-   void setRange( int32 val1, int32 val2, int32 step, bool open )
+   void setRange( CoreRange *r )
    {
       type( FLC_ITEM_RANGE );
-      m_data.rng.rstart = val1;
-      m_data.rng.rend = val2;
-      m_data.rng.rstep = step;
-      m_base.bits.flags = open? flagOpenRange : 0;
+      all.ctx.data.content = r;
    }
 
+   /** Creates a corestring.
+      The given string is copied and stored in the Garbage system.
+      It is also bufferized, as the most common usage of this constructor
+      is in patterns like Item( "a static string" );
+   */
+   Item( const String &str );
 
-   /** Creates a string item */
+   /** Creates a CoreString item */
    Item( String *str )
    {
       setString( str );
@@ -267,7 +305,7 @@ public:
 
    void setString( String *str ) {
       type( FLC_ITEM_STRING );
-      m_data.ptr.voidp = str;
+      all.ctx.data.ptr.voidp = str;
    }
 
    /** Creates an array item */
@@ -278,7 +316,7 @@ public:
 
    void setArray( CoreArray *array ) {
       type( FLC_ITEM_ARRAY );
-      m_data.ptr.voidp = array;
+      all.ctx.data.ptr.voidp = array;
    }
 
    /** Creates an object item */
@@ -289,18 +327,7 @@ public:
 
    void setObject( CoreObject *obj ) {
       type( FLC_ITEM_OBJECT );
-      m_data.ptr.voidp = obj;
-   }
-
-   /** Creates an attribute. */
-   Item( Attribute *attr )
-   {
-      setAttribute( attr );
-   }
-
-   void setAttribute( Attribute *attrib ) {
-      type( FLC_ITEM_ATTRIBUTE );
-      m_data.ptr.voidp = attrib;
+      all.ctx.data.ptr.voidp = obj;
    }
 
    /** Creates a dictionary item */
@@ -311,7 +338,7 @@ public:
 
    void setDict( CoreDict *dict ) {
       type( FLC_ITEM_DICT );
-      m_data.ptr.voidp = dict;
+      all.ctx.data.ptr.voidp = dict;
    }
 
    /** Creates a memory buffer. */
@@ -322,30 +349,34 @@ public:
 
    void setMemBuf( MemBuf *b ) {
       type( FLC_ITEM_MEMBUF );
-      m_data.ptr.voidp = b;
+      all.ctx.data.ptr.voidp = b;
+   }
+
+   Item( GarbageItem *ref )
+   {
+      setReference( ref );
    }
 
    /** Creates a reference to another item. */
    void setReference( GarbageItem *ref ) {
       type( FLC_ITEM_REFERENCE );
-      m_data.ptr.voidp = ref;
+      all.ctx.data.ptr.voidp = ref;
    }
-   GarbageItem *asReference() const { return (GarbageItem *) m_data.ptr.voidp; }
+   GarbageItem *asReference() const { return (GarbageItem *) all.ctx.data.ptr.voidp; }
 
    /** Creates a function item */
-   void setFunction( const Symbol *sym, LiveModule *lmod )
+   void setFunction( CoreFunc* cf )
    {
       type( FLC_ITEM_FUNC );
-      m_data.ptr.voidp = const_cast<Symbol *>(sym);
-      m_data.ptr.m_liveMod = lmod;
+      all.ctx.data.ptr.extra = cf;
    }
 
    /** Creates a late binding item.
-      The late binding is just a string in a live module which is
+      The late binding is just a CoreString in a live module which is
       resolved into a value by referencing a item in the current
       context (symbol tables) having the given name at runtime.
 
-      Thus, the string representing the late binding symbol name
+      Thus, the CoreString representing the late binding symbol name
       lives in the live module that generated this LBind. If
       the module is unloaded, the LBind is invalidated.
 
@@ -355,19 +386,19 @@ public:
    void setLBind( String *lbind, GarbageItem *val=0 )
    {
       type( FLC_ITEM_LBIND );
-      m_data.ptr.voidp = lbind;
-      m_data.ptr.m_extra = val;
+      all.ctx.data.ptr.voidp = lbind;
+      all.ctx.data.ptr.extra = val;
    }
 
    /** Returns true if this item is a valid LBind.
    */
    bool isLBind() const { return type() == FLC_ITEM_LBIND; }
-   bool isFutureBind() const { return isLBind() && m_data.ptr.m_extra != 0; }
+   bool isFutureBind() const { return isLBind() && all.ctx.data.ptr.extra != 0; }
 
    /** Return the binding name associate with this LBind item.
    */
-   String *asLBind() const { return (String *) m_data.ptr.voidp; }
-   GarbageItem *asFBind() const { return (GarbageItem *) m_data.ptr.m_extra; }
+   String *asLBind() const { return (String *) all.ctx.data.ptr.voidp; }
+   GarbageItem *asFBind() const { return (GarbageItem *) all.ctx.data.ptr.extra; }
 
    const Item &asFutureBind() const;
    Item &asFutureBind();
@@ -376,25 +407,10 @@ public:
       The method is able to remember if it was called with
       a Function pointer or using an external function.
    */
-   Item( CoreObject *obj, const Symbol *func, LiveModule *lmod )
+   Item( const Item &data, CoreFunc* func )
    {
-      setMethod( obj, func, lmod );
+      setMethod( data, func );
    }
-
-   /** Creates a table/array method.
-      The method is able to remember if it was called with
-      a Function pointer or using an external function.
-   */
-   Item( CoreArray *arr, const Symbol *func, LiveModule *lmod )
-   {
-      setTabMethod( arr, func, lmod );
-   }
-
-   Item( CoreDict *dict, const Symbol *func, LiveModule *lmod )
-   {
-      setTabMethod( dict, func, lmod );
-   }
-
 
    Item( CoreObject *obj, CoreClass *cls )
    {
@@ -405,38 +421,17 @@ public:
       The method is able to remember if it was called with
       a Function pointer or using an external function.
    */
-   void setMethod( CoreObject *obj, const Symbol *func, LiveModule *lmod ) {
+   void setMethod( const Item &data, CoreFunc *func ) {
+      *this = data;
+      all.ctx.base.bits.oldType = all.ctx.base.bits.type;
+      all.ctx.method = func;
       type( FLC_ITEM_METHOD );
-      m_data.ptr.voidp = obj;
-      m_data.ptr.m_extra = const_cast<Symbol *>(func);
-      m_data.ptr.m_liveMod = lmod;
    }
-
-   /** Creates a table/array method.
-      The method is able to remember if it was called with
-      a Function pointer or using an external function.
-   */
-   void setTabMethod( CoreArray *arr, const Symbol *func, LiveModule *lmod ) {
-      type( FLC_ITEM_TABMETHOD );
-      m_base.bits.reserved = 0;
-      m_data.ptr.voidp = arr;
-      m_data.ptr.m_extra = const_cast<Symbol *>(func);
-      m_data.ptr.m_liveMod = lmod;
-   }
-
-   void setTabMethod( CoreDict *dict, const Symbol *func, LiveModule *lmod ) {
-      type( FLC_ITEM_TABMETHOD );
-      m_base.bits.reserved = 1;
-      m_data.ptr.voidp = dict;
-      m_data.ptr.m_extra = const_cast<Symbol *>(func);
-      m_data.ptr.m_liveMod = lmod;
-   }
-
 
    void setClassMethod( CoreObject *obj, CoreClass *cls ) {
       type( FLC_ITEM_CLSMETHOD );
-      m_data.ptr.voidp = obj;
-      m_data.ptr.m_extra = cls;
+      all.ctx.data.ptr.voidp = obj;
+      all.ctx.data.ptr.extra = cls;
    }
 
    /** Creates a class item */
@@ -448,24 +443,9 @@ public:
    void setClass( CoreClass *cls ) {
       type( FLC_ITEM_CLASS );
       // warning: class in extra to be omologue to methodClass()
-      m_data.ptr.m_extra = cls;
+      all.ctx.data.ptr.extra = cls;
    }
 
-   /** Sets an item as a FBOM.
-      Fbom are falcon predefined basic object model methods.
-      The original item is copied into this one; the original type is stored
-      in the "reserved" field, while the method is stored as an integer
-      between 0 and 255 in methodId.
-   */
-
-   void setFbom( const Item &original, byte methodId )
-   {
-      m_data = original.m_data;
-      m_base.bits.flags = original.m_base.bits.flags;
-      m_base.bits.methodId = methodId;
-      m_base.bits.reserved = original.m_base.bits.type;
-      m_base.bits.type = FLC_ITEM_FBOM;
-   }
 
    /** Defines this item as a out of band data.
       Out of band data allow out-of-order sequencing in functional programming.
@@ -477,12 +457,12 @@ public:
       In example, returning an out of band NIL value from an xmap mapping
       function will cause xmap to discard the data.
    */
-   void setOob() { m_base.bits.flags |= flagIsOob; }
+   void setOob() { all.ctx.base.bits.flags |= flagIsOob; }
 
    /** Clear out of band status of this item.
       \see setOob()
    */
-   void resetOob() { m_base.bits.flags &= ~flagIsOob; }
+   void resetOob() { all.ctx.base.bits.flags &= ~flagIsOob; }
 
    /** Sets or clears the out of band status status of this item.
       \param oob true to make this item out of band.
@@ -490,28 +470,10 @@ public:
    */
    void setOob( bool oob ) {
       if ( oob )
-         m_base.bits.flags |= flagIsOob;
+         all.ctx.base.bits.flags |= flagIsOob;
       else
-         m_base.bits.flags &= ~flagIsOob;
+         all.ctx.base.bits.flags &= ~flagIsOob;
    }
-
-   /** Set this item as a user-defined pointers.
-      Used for some two-step extension functions.
-      They are completely user managed, and the VM never provides any
-      help to handle them.
-   */
-   void setUserPointer( void *tpd )
-   {
-      type( FLC_ITEM_USER_POINTER );
-      m_data.ptr.voidp = tpd;
-   }
-
-   void *asUserPointer() const
-   {
-      return m_data.ptr.voidp;
-   }
-
-   bool isUserPointer() const { return type() == FLC_ITEM_USER_POINTER; }
 
    /** Set this item as a user-defined Garbage pointers.
        VM provides GC-control over them.
@@ -520,8 +482,8 @@ public:
    void setGCPointer( GarbagePointer *shell, uint32 sig = 0 );
 
    FalconData *asGCPointer() const;
-   GarbagePointer *asGCPointerShell() const { return m_data.gptr.gcptr; }
-   uint32 asGCPointerSignature()  const { return m_data.gptr.signature; }
+   GarbagePointer *asGCPointerShell() const { return all.ctx.data.gptr.gcptr; }
+   uint32 asGCPointerSignature()  const { return all.ctx.data.gptr.signature; }
 
    bool isGCPointer() const { return type() == FLC_ITEM_GCPTR; }
 
@@ -529,30 +491,27 @@ public:
       \return true if out of band.
       \see oob()
    */
-   bool isOob() const { return (m_base.bits.flags & flagIsOob )== flagIsOob; }
+   bool isOob() const { return (all.ctx.base.bits.flags & flagIsOob )== flagIsOob; }
 
-   byte type() const { return m_base.bits.type; }
-   void type( byte nt ) { m_base.bits.flags = 0; m_base.bits.type = nt; }
+   /** Returns true if this item is an instance of some sort.
+      \return true if this is an object, blessed dictionary or bound array.
+   */
+   bool isComposed() const { return isObject() || isArray() || isDict(); }
+
+   byte type() const { return all.ctx.base.bits.type; }
+   void type( byte nt ) { all.ctx.base.bits.flags = 0; all.ctx.base.bits.type = nt; }
 
    /** Returns the content of the item */
-   Garbageable *content() const { return m_data.content; }
+   Garbageable *content() const { return all.ctx.data.content; }
 
    void content( Garbageable *dt ) {
-      m_data.content = dt;
+      all.ctx.data.content = dt;
    }
 
    void copy( const Item &other )
    {
-      #if defined( __sparc )
-        //memcpy( this, &other, sizeof(Item) );
-        m_base.whole = other.m_base.whole;
-	m_data.ptr.voidp = other.m_data.ptr.voidp;
-        m_data.ptr.m_extra = other.m_data.ptr.m_extra;
-        m_data.ptr.m_liveMod = other.m_data.ptr.m_liveMod;
-      #else
-        m_base = other.m_base;
-        m_data = other.m_data;
-      #endif
+      all.parts.low = other.all.parts.low;
+      all.parts.high = other.all.parts.high;
    }
 
    /** Tells if this item is callable.
@@ -568,65 +527,78 @@ public:
 
    bool asBoolean() const
    {
-      return m_data.num.val1 != 0;
+      return all.ctx.data.val32 != 0;
    }
 
-   int64 asInteger() const { return m_data.val64; }
+   int64 asInteger() const { return all.ctx.data.val64; }
 
-   numeric asNumeric() const { return m_data.number; }
+   numeric asNumeric() const { return all.ctx.data.number; }
 
-   int32 asRangeStart() const { return m_data.rng.rstart; }
-   int32 asRangeEnd()  const { return m_data.rng.rend; }
-   int32 asRangeStep()  const { return m_data.rng.rstep; }
-   bool asRangeIsOpen()  const { return (m_base.bits.flags & flagOpenRange) != 0; }
-   void rangeSetIsOpen( bool b ) { 
-      if( b ) 
-         m_base.bits.flags |= flagOpenRange;
-      else
-         m_base.bits.flags &= ~flagOpenRange;
-   }
+   int64 asRangeStart() const { return static_cast<CoreRange*>(all.ctx.data.content)->start(); }
+   int64 asRangeEnd()  const { return static_cast<CoreRange*>(all.ctx.data.content)->end(); }
+   int64 asRangeStep()  const { return static_cast<CoreRange*>(all.ctx.data.content)->step(); }
+   bool asRangeIsOpen()  const { return static_cast<CoreRange*>(all.ctx.data.content)->isOpen(); }
+   CoreRange* asRange() const { return static_cast<CoreRange*>(all.ctx.data.content); }
 
-   String *asString() const { return (String *) m_data.ptr.voidp; }
-   /** Provides a basic string representation of the item.
+   String *asString() const { return (String *) all.ctx.data.ptr.voidp; }
+   CoreString *asCoreString() const { return (CoreString *) all.ctx.data.ptr.voidp; }
+
+   DeepItem *asDeepItem() const { return (DeepItem *) all.ctx.data.ptr.voidp; }
+
+   /** Provides a basic CoreString representation of the item.
       Use Falcon::Format for a finer control of item representation.
-      \param target a string where the item string representation will be placed.
+      \param target a CoreString where the item CoreString representation will be placed.
    */
    void toString( String &target ) const;
-   CoreArray *asArray() const { return (CoreArray *) m_data.ptr.voidp; }
+   CoreArray *asArray() const { return (CoreArray *) all.ctx.data.ptr.voidp; }
    CoreObject *asObject() const;
-   CoreObject *asObjectSafe() const { return (CoreObject *) m_data.ptr.voidp; }
-   CoreDict *asDict() const { return ( CoreDict *) m_data.ptr.voidp; }
-   MemBuf *asMemBuf() const { return ( MemBuf *) m_data.ptr.voidp; }
+   CoreObject *asObjectSafe() const { return (CoreObject *) all.ctx.data.ptr.voidp; }
+   CoreDict *asDict() const { return ( CoreDict *) all.ctx.data.ptr.voidp; }
+   MemBuf *asMemBuf() const { return ( MemBuf *) all.ctx.data.ptr.voidp; }
 
-   CoreClass *asClass() const { return (CoreClass *) m_data.ptr.m_extra; }
-   const Symbol *asFunction() const { return (const Symbol *) m_data.ptr.voidp; }
+   CoreClass* asClass() const { return (CoreClass *) all.ctx.data.ptr.extra; }
+   CoreFunc* asFunction() const { return (CoreFunc*) all.ctx.data.ptr.extra; }
+   CoreFunc* asMethodFunc() const { return (CoreFunc*) all.ctx.method; }
 
-   CoreObject *asMethodObject() const { return (CoreObject *) m_data.ptr.voidp; }
-   CoreArray *asTabMethodArray() const { return (CoreArray *) m_data.ptr.voidp; }
-   CoreDict *asTabMethodDict() const { return (CoreDict *) m_data.ptr.voidp; }
-   bool isTabMethodDict() const { return m_base.bits.reserved==1; }
-   const Symbol *asMethodFunction() const { return (const Symbol *)m_data.ptr.m_extra; }
-   CoreClass *asMethodClass() const { return (CoreClass*) m_data.ptr.m_extra; }
-   Attribute *asAttribute() const { return (Attribute *) m_data.ptr.voidp; }
+   /** Gets the "self" in an item (return the item version). */
+   Item asMethodItem() const {
+      Item temp = *this;
+      temp.type( all.ctx.base.bits.oldType );
+      temp.flagsOn( flagIsMethodic );
+      return temp;
+   }
 
-   LiveModule *asModule() const { return m_data.ptr.m_liveMod; }
+   /** Gets the "self" in an item (pass byref version). */
+   void getMethodItem( Item &itm ) const {
+      itm = *this;
+      itm.type( all.ctx.base.bits.oldType );
+      itm.flagsOn( flagIsMethodic );
+   }
+
+   /** Turns a method item into its original "self". */
+   void deMethod() { type( all.ctx.base.bits.oldType ); }
+
+   CoreClass *asMethodClass() const { return (CoreClass*) all.ctx.data.ptr.extra; }
+   CoreObject *asMethodClassOwner() const { return (CoreObject*) all.ctx.data.ptr.voidp; }
+
+   //LiveModule *asModule() const { return all.ctx.data.ptr.m_liveMod; }
 
    /** Convert current object into an integer.
-      This operations is usually done on integers, numeric and strings.
+      This operations is usually done on integers, numeric and CoreStrings.
       It will do nothing meaningfull on other types.
    */
    int64 forceInteger() const ;
-   
+
    /** Convert current object into an integer.
-      This operations is usually done on integers, numeric and strings.
+      This operations is usually done on integers, numeric and CoreStrings.
       It will do nothing meaningfull on other types.
-      
+
       \note this version will throw a code error if the item is not an ordinal.
    */
    int64 forceIntegerEx() const ;
 
    /** Convert current object into a numeric.
-      This operations is usually done on integers, numeric and strings.
+      This operations is usually done on integers, numeric and CoreStrings.
       It will do nothing meaningfull on other types.
    */
    numeric forceNumeric() const ;
@@ -649,43 +621,17 @@ public:
    bool isReference() const { return type() == FLC_ITEM_REFERENCE; }
    bool isFunction() const { return type() == FLC_ITEM_FUNC; }
    bool isMethod() const { return type() == FLC_ITEM_METHOD; }
-   bool isTabMethod() const { return type() == FLC_ITEM_TABMETHOD; }
    bool isClassMethod() const { return type() == FLC_ITEM_CLSMETHOD; }
    bool isClass() const { return type() == FLC_ITEM_CLASS; }
-   bool isFbom() const { return type() == FLC_ITEM_FBOM; }
-   bool isAttribute() const { return type() == FLC_ITEM_ATTRIBUTE; }
-
-   void getFbomItem( Item &target ) const
-   {
-      target.m_data = m_data;
-      target.m_base.bits.type = m_base.bits.reserved;
-      target.m_base.bits.flags = m_base.bits.flags;
-   }
-
-   byte getFbomMethod() const { return m_base.bits.methodId; }
-
-
-   bool equal( const Item &other ) const {
-      if ( type() == other.type() )
-         return internal_is_equal( other );
-      else if ( type() == FLC_ITEM_INT && other.type() == FLC_ITEM_NUM ) {
-         return ((numeric) m_data.num.val1) == other.m_data.number;
-      }
-      else if ( type() == FLC_ITEM_NUM && other.type() == FLC_ITEM_INT ) {
-         return ((numeric) other.m_data.num.val1) == m_data.number;
-      }
-      return false;
-   }
-
-   int compare( const Item &other ) const;
-
    bool isOfClass( const String &className ) const;
+
+   bool isMethodic() const { return (flags() & flagIsMethodic) != 0; }
 
    bool isTrue() const;
 
    Item &operator=( const Item &other ) { copy( other ); return *this; }
-   bool operator==( const Item &other ) const { return equal(other); }
-   bool operator!=( const Item &other ) const { return !equal(other); }
+   bool operator==( const Item &other ) const { return compare(other) == 0; }
+   bool operator!=( const Item &other ) const { return compare(other) != 0; }
    bool operator<(const Item &other) const { return compare( other ) < 0; }
    bool operator<=(const Item &other) const { return compare( other ) <= 0; }
    bool operator>(const Item &other) const { return compare( other ) > 0; }
@@ -693,9 +639,6 @@ public:
 
    Item *dereference();
    const Item *dereference() const;
-
-   /** To be used by function that are taking items outside the VM */
-   void destroy();
 
    /** Turns this item in a method of the given object.
       This is meant to be used by external functions when accessing object properties.
@@ -722,7 +665,7 @@ public:
       \param self the object that will be set as "self" for the method
       \return true if the item can be called properly, false if it's not a callable.
    */
-   bool methodize( const CoreObject *self );
+   bool methodize( const Item& self );
 
 
    /** Serialize this item.
@@ -757,10 +700,10 @@ public:
    e_sercode deserialize( Stream *in, VMachine *vm = 0 );
 
    /** Flags, used for internal vm needs. */
-   byte flags() const { return m_base.bits.flags; }
-   void flags( byte b ) { m_base.bits.flags = b; }
-   void flagsOn( byte b ) { m_base.bits.flags |= b; }
-   void flagsOff( byte b ) { m_base.bits.flags &= ~b; }
+   byte flags() const { return all.ctx.base.bits.flags; }
+   void flags( byte b ) { all.ctx.base.bits.flags = b; }
+   void flagsOn( byte b ) { all.ctx.base.bits.flags |= b; }
+   void flagsOff( byte b ) { all.ctx.base.bits.flags &= ~b; }
 
 
    /** Clone the item (with the help of a VM).
@@ -778,30 +721,142 @@ public:
       \param target the item where to stored the cloned instance of this item.
       \return true if the clone operation is possible
    */
-   bool clone( Item &target, VMachine *vm ) const;
-
-   /** Returns a Falcon Basic Object Model method for the given object.
-      If the given item provides the named FBOM method, the function returns true
-      and the item "method" is set to a correctly setup FBOM item.
-
-      \param property the name of the searched property
-      \param method on success, a valorized FBOM item
-      \return true if the property is a FBOM property name
-   */
-   bool getBom( const String &property, Item &method, BomMap *bmap ) const;
-
-   /** Call this item's basic object method, if the item is a FBOM
-
-      \param vm the VM that will be used to call this bom.
-   */
-   bool callBom( VMachine *vm ) const;
+   bool clone( Item &target ) const;
 
    /** Return true if the item deep.
       Deep items are the ones that are subject to garbage collecting.
       \return true if the item is deep.
    */
    bool isDeep() const { return type() >= FLC_ITEM_FIRST_DEEP; }
+
+   //====================================================================//
+
+   void add( const Item &operand, Item &result ) const {
+      void (*addfunc)( const Item &first, const Item& second, Item &third) =
+         (void (*)( const Item &first, const Item& second, Item &third))
+         CommOpsDict[type()][co_add];
+      addfunc( *this, operand, result );
+   }
+
+   void sub( const Item &operand, Item &result ) const {
+      void (*func)( const Item &first, const Item& second, Item &third) =
+         (void (*)( const Item &first, const Item& second, Item &third))
+         CommOpsDict[type()][co_sub];
+      func( *this, operand, result );
+   }
+
+   void mul( const Item &operand, Item &result ) const {
+      void (*func)( const Item &first, const Item& second, Item &third) =
+         (void (*)( const Item &first, const Item& second, Item &third))
+         CommOpsDict[type()][co_mul];
+      func( *this, operand, result );
+   }
+
+   void div( const Item &operand, Item &result ) const {
+      void (*func)( const Item &first, const Item& second, Item &third) =
+         (void (*)( const Item &first, const Item& second, Item &third))
+         CommOpsDict[type()][co_div];
+      func( *this, operand, result );
+   }
+
+   void mod( const Item &operand, Item &result ) const {
+      void (*func)( const Item &first, const Item& second, Item &third) =
+         (void (*)( const Item &first, const Item& second, Item &third))
+         CommOpsDict[type()][co_mod];
+      func( *this, operand, result );
+   }
+
+   void pow( const Item &operand, Item &result ) const {
+      void (*func)( const Item &first, const Item& second, Item &third) =
+         (void (*)( const Item &first, const Item& second, Item &third))
+         CommOpsDict[type()][co_pow];
+      func( *this, operand, result );
+   }
+
+   void neg( Item& target ) const {
+      void (*func)( const Item &first, Item &tg ) =
+         (void (*)( const Item &first, Item &tg ))
+         CommOpsDict[type()][co_neg];
+      func( *this, target );
+   }
+
+   void inc() {
+      void (*func)( Item &first ) =
+         (void (*)( Item &first ))
+         CommOpsDict[type()][co_inc];
+      func( *this );
+   }
+
+   void dec() {
+      void (*func)( Item &first ) =
+         (void (*)( Item &first ))
+         CommOpsDict[type()][co_dec];
+      func( *this );
+   }
+
+   void incpost( Item& target ) {
+      void (*func)( Item &first, Item &tg ) =
+         (void (*)( Item &first, Item &tg ))
+         CommOpsDict[type()][co_incpost];
+      func( *this, target );
+   }
+
+   void decpost( Item& target ) {
+      void (*func)( Item &first, Item &tg ) =
+         (void (*)( Item &first, Item &tg ))
+         CommOpsDict[type()][co_decpost];
+      func( *this, target );
+   }
+
+   int compare( const Item &operand ) const {
+      int (*func)( const Item &first, const Item& second ) =
+         (int (*)( const Item &first, const Item& second ))
+         CommOpsDict[type()][co_compare];
+      return func( *this, operand );
+   }
+
+   void getIndex( const Item &idx, Item &result ) const {
+      void (*func)( const Item &first, const Item &idx, Item &third) =
+         (void (*)( const Item &first, const Item &idx, Item &third))
+         CommOpsDict[type()][co_getIndex];
+      func( *this, idx, result );
+   }
+
+   void setIndex( const Item &idx, const Item &result ) {
+      void (*func)( Item &first, const Item &name, const Item &third) =
+         (void (*)( Item &first, const Item &name, const Item &third))
+         CommOpsDict[type()][co_setIndex];
+      func( *this, idx, result );
+   }
+
+   void getProperty( const String &property, Item &result ) const {
+      void (*func)( const Item &first, const String &property, Item &third) =
+         (void (*)( const Item &first, const String &property, Item &third))
+         CommOpsDict[type()][co_getProperty];
+      func( *this, property, result );
+   }
+
+   void setProperty( const String &prop, const Item &result ) {
+      void (*func)( Item &first, const String &prop, const Item &third) =
+         (void (*)( Item &first, const String &prop, const Item &third))
+         CommOpsDict[type()][co_setProperty];
+      func( *this, prop, result );
+   }
+
+   /** Prepares a call frame that will be called at next VM loop.
+      \note You can use vm->execFrame() to execute the prepared frame
+      immediately instead of waiting for the loop to complete.
+   */
+   void readyFrame( VMachine *vm, int paramCount ) const
+   {
+      void (*func)( const Item &first, VMachine *vm, int paramCount ) =
+         (void (*)( const Item &first, VMachine *vm, int paramCount ))
+         CommOpsDict[type()][co_call];
+      func( *this, vm, paramCount );
+   }
+
 };
+
 
 /** Creates a garbageable version of an item.
    This class repeats the structure of an item holding an instance
@@ -816,8 +871,8 @@ class FALCON_DYN_CLASS GarbageItem: public Garbageable
    Item m_item;
 
 public:
-   GarbageItem( VMachine *vm, const Item &origin ):
-      Garbageable( vm, sizeof( this ) ),
+   GarbageItem( const Item &origin ):
+      Garbageable(),
       m_item( origin )
    {}
 
@@ -847,6 +902,7 @@ inline const Item *Item::dereference() const
       return this;
    return &asReference()->origin();
 };
+
 
 }
 

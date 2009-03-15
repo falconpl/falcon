@@ -32,7 +32,7 @@ end
 if today.hour == tomorrow.hour: failure( "Clone insolation" )
 
 // Try the same thing with item copy
-tomorrow = itemCopy( today )
+tomorrow = clone( today )
 
 // first, see if they are equal
 if today.compare( tomorrow ) != 0: failure( "ItemCopy equality" )

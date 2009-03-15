@@ -421,7 +421,7 @@ public:
    //=================================================
 
    virtual FalconData *clone() const;
-   virtual void gcMark( VMachine *mp ) {}
+   virtual void gcMark( MemPool *mp ) {}
 };
 
 }

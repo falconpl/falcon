@@ -17,13 +17,12 @@
 #include <falcon/syntree.h>
 #include <falcon/src_lexer.h>
 #include <falcon/error.h>
-#include <falcon/deferrorhandler.h>
 #include <falcon/stdstreams.h>
 #include <falcon/itemid.h>
 #include <falcon/fassert.h>
 #include <falcon/path.h>
 #include <falcon/intcomp.h>
-#include <falcon/flcloader.h>
+#include <falcon/modloader.h>
 #include <falcon/vm.h>
 #include <falcon/stringstream.h>
 #include "core_module/core_module.h"
@@ -52,7 +51,6 @@ Compiler::Compiler( Module *mod, Stream* in ):
    m_lexer(0),
    m_stream( in ),
 
-   m_errhand(0),
    m_module(0),
    m_enumId(0),
 
@@ -67,7 +65,6 @@ Compiler::Compiler( Module *mod, Stream* in ):
    m_defContext( false ),
    m_bParsingFtd(false),
 
-   m_delayRaise( false ),
    m_rootError( 0 ),
    m_metacomp( 0 ),
    m_serviceVM( 0 ),
@@ -93,7 +90,6 @@ Compiler::Compiler():
    m_optLevel(0),
    m_lexer(0),
    m_stream( 0 ),
-   m_errhand(0),
    m_module( 0 ),
    m_enumId( 0 ),
    m_staticPrefix(0),
@@ -105,7 +101,6 @@ Compiler::Compiler():
    m_modVersion( 0 ),
    m_defContext( false ),
    m_bParsingFtd(false),
-   m_delayRaise( false ),
    m_rootError( 0 ),
    m_metacomp(0),
    m_serviceVM( 0 ),
@@ -263,6 +258,12 @@ bool Compiler::compile()
    // parse
    m_lexer->input( m_stream );
    flc_src_parse( this );
+   if ( ! m_stream->good() )
+   {
+      raiseError( new IoError( ErrorParam( e_io_error, __LINE__ )
+         .origin( e_orig_compiler )
+         .sysError( (uint32) m_stream->lastError() ) ) );
+   }
    m_module->language( m_language );
    m_module->version( (uint32) m_modVersion );
 
@@ -288,18 +289,6 @@ bool Compiler::compile()
       }
 
       return true;
-   }
-
-   if ( m_delayRaise && m_rootError != 0 && m_errhand != 0 )
-   {
-      m_errhand->handleError( m_rootError );
-   }
-
-   // eventually prepare for next compilation
-   if ( m_rootError != 0 )
-   {
-      m_rootError->decref();
-      m_rootError = 0;
    }
 
    // we had errors.
@@ -333,25 +322,22 @@ void Compiler::raiseError( int code, const String &errorp, int line )
    if ( line == 0 )
       line = lexer()->line()-1;
 
-   if ( m_errhand != 0 )
+   SyntaxError *error = new SyntaxError( ErrorParam(code, line).origin( e_orig_compiler ));
+   error->extraDescription( errorp );
+   error->module( m_module->path() );
+   
+   raiseError( error );
+}
+
+void Compiler::raiseError( Error *error )
+{
+   if ( m_rootError == 0 )
    {
-      SyntaxError *error = new SyntaxError( ErrorParam(code, line).origin( e_orig_compiler ));
-      error->extraDescription( errorp );
-      error->module( m_module->path() );
-
-      if ( m_delayRaise )
-      {
-         if ( m_rootError == 0 )
-         {
-            m_rootError = new SyntaxError( ErrorParam( e_syntax ).origin( e_orig_compiler ) );
-         }
-         m_rootError->appendSubError( error );
-      }
-      else
-      {
-         m_errhand->handleError( error );
-      }
-
+      m_rootError = error;
+   }
+   else
+   {
+      m_rootError->appendSubError( error );
       error->decref();
    }
 
@@ -666,27 +652,6 @@ Symbol *Compiler::addGlobalVar( const String *symname, VarDef *value )
    return sym;
 }
 
-
-Symbol *Compiler::addAttribute( const String *symname )
-{
-   // find the global symbol for this.
-   Symbol *sym = searchGlobalSymbol( symname );
-
-   // Not defined?
-   if( sym == 0 ) {
-      sym = addGlobalSymbol( symname );
-      sym->declaredAt( lexer()->previousLine() );
-   }
-   else {
-      raiseError( e_already_def,  sym->name() );
-   }
-   // but change it in an attribute anyhow
-   sym->setAttribute();
-
-   return sym;
-}
-
-
 Symbol *Compiler::globalize( const String *symname )
 {
    if ( ! isLocalContext() ) {
@@ -775,7 +740,6 @@ void Compiler::addPredefs()
    addIntConstant( "IntegerType", FLC_ITEM_INT );
    addIntConstant( "NumericType", FLC_ITEM_NUM );
    addIntConstant( "RangeType", FLC_ITEM_RANGE );
-   addIntConstant( "AttributeType", FLC_ITEM_ATTRIBUTE );
    addIntConstant( "FunctionType", FLC_ITEM_FUNC );
    addIntConstant( "StringType", FLC_ITEM_STRING );
    addIntConstant( "LBindType", FLC_ITEM_LBIND );
@@ -785,9 +749,8 @@ void Compiler::addPredefs()
    addIntConstant( "ObjectType", FLC_ITEM_OBJECT );
    addIntConstant( "ClassType", FLC_ITEM_CLASS );
    addIntConstant( "MethodType", FLC_ITEM_METHOD );
-   addIntConstant( "TableMethodType", FLC_ITEM_TABMETHOD );
    addIntConstant( "ClassMethodType", FLC_ITEM_CLSMETHOD );
-  
+
 }
 
 void Compiler::addIntConstant( const String &name, int64 value, uint32 line )
@@ -1257,11 +1220,11 @@ void Compiler::metaCompile( const String &data, int startline )
       }
 
       if ( m_serviceLoader == 0 )
-         m_serviceLoader = new FlcLoader( "." );
+         m_serviceLoader = new ModuleLoader( "." );
 
       m_serviceVM->stdOut( new StringStream );
       m_metacomp = new InteractiveCompiler( m_serviceLoader, m_serviceVM );
-      m_metacomp->errorHandler( errorHandler() );
+
       // not incremental...
       m_metacomp->lexer()->incremental( false );
       // do not confuse our user...
@@ -1284,11 +1247,11 @@ void Compiler::metaCompile( const String &data, int startline )
 
    // set current line in lexer of the meta compiler
    m_metacomp->tempLine( startline );
-   InteractiveCompiler::t_ret_type ret = m_metacomp->compileAll( data );
-
-   if ( ret == InteractiveCompiler::e_error || ret ==  InteractiveCompiler::e_vm_error )
-      m_errors++;
-   else {
+   try
+   {
+      /*InteractiveCompiler::t_ret_type ret =*/ 
+      m_metacomp->compileAll( data );
+      
       StringStream *ss = static_cast<StringStream *>(m_metacomp->vm()->stdOut());
       // something has been written
       if ( ss->length() != 0 )
@@ -1301,6 +1264,10 @@ void Compiler::metaCompile( const String &data, int startline )
          // and dispose it
          m_metacomp->vm()->stdOut( new StringStream );
       }
+   }
+   catch( Error *e )
+   {
+      raiseError( e );
    }
 }
 

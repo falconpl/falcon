@@ -111,7 +111,7 @@ private:
    t_initState m_initState;
 
 public:
-   LiveModule( VMachine *vm, Module *mod, bool bPrivate=false );
+   LiveModule( Module *mod, bool bPrivate=false );
    ~LiveModule();
 
    const Module *module() const { return m_module; }

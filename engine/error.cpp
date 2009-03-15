@@ -19,12 +19,11 @@
 
 #include <falcon/setup.h>
 #include <falcon/error.h>
-#include <falcon/messages.h>
-#include <falcon/engstrings.h>
 #include <falcon/sys.h>
 #include <falcon/vm.h>
-#include <falcon/cobject.h>
-#include <falcon/enginedata.h>
+#include <falcon/coreobject.h>
+
+#include <falcon/eng_messages.h>
 
 namespace Falcon {
 
@@ -32,207 +31,11 @@ const String &errorDesc( int code )
 {
    switch( code )
    {
-      case e_none: return getMessage( msg::unrecognized_err );
-      case e_syntax: return getMessage( msg::err_syntax );
-      case e_unpack_size: return getMessage( msg::err_unpack_size );
-      case e_break_out: return getMessage( msg::err_break_out );
-      case e_continue_out: return getMessage( msg::err_continue_out);
-      case e_div_by_zero: return getMessage( msg::err_div_by_zero);
-      case e_mod_by_zero: return getMessage( msg::err_mod_by_zero);
-      case e_invalid_op: return getMessage( msg::err_invalid_op);
-      case e_assign_const: return getMessage( msg::err_assign_const);
-      case e_assign_sym: return getMessage( msg::err_assign_sym);
-      case e_static_call: return getMessage( msg::err_static_call);
-      case e_global_notin_func: return getMessage( msg::err_global_notin_func);
-      case e_already_def: return getMessage( msg::err_already_def);
-      case e_non_callable: return getMessage( msg::err_non_callable);
-      case e_invalid_cmp: return getMessage( msg::err_invalid_cmp);
-      case e_export_undef: return getMessage( msg::err_export_undef);
-      case e_export_all: return getMessage( msg::err_export_all);
-      case e_misplaced_stat: return getMessage( msg::err_misplaced_stat);
-      case e_enter_outside: return getMessage( msg::err_enter_outside);
-      case e_leave_outside: return getMessage( msg::err_leave_outside);
-      case e_static_notin_func: return getMessage( msg::err_static_notin_func);
-      case e_self_outclass: return getMessage( msg::err_self_outclass);
-      case e_sender_outclass: return getMessage( msg::err_sender_outclass);
-      case e_undef_sym: return getMessage( msg::err_undef_sym);
-      case e_invops: return getMessage( msg::err_invops);
-      case e_no_local: return getMessage( msg::err_no_local);
-      case e_too_entry: return getMessage( msg::err_too_entry);
-      case e_end_no_loc: return getMessage( msg::err_end_no_loc);
-      case e_import_out: return getMessage( msg::err_import_out);
-      case e_no_import: return getMessage( msg::err_no_import);
-      case e_too_locals: return getMessage( msg::err_too_locals);
-      case e_too_params: return getMessage( msg::err_too_params);
-      case e_switch_again: return getMessage( msg::err_switch_again);
-      case e_switch_case: return getMessage( msg::err_switch_case);
-      case e_switch_end: return getMessage( msg::err_switch_end);
-      case e_inv_state: return getMessage( msg::err_inv_state);
-      case e_prop_no_class: return getMessage( msg::err_prop_no_class);
-      case e_prop_pinit: return getMessage( msg::err_prop_pinit);
-      case e_prop_adef: return getMessage( msg::err_prop_adef);
-      case e_too_props: return getMessage( msg::err_too_props);
-      case e_from_adef: return getMessage( msg::err_from_adef);
-      case e_too_froms: return getMessage( msg::err_too_froms);
-      case e_invopcode: return getMessage( msg::err_invopcode);
-      case e_invop: return getMessage( msg::err_invop);
-      case e_stackuf: return getMessage( msg::err_stackuf);
-      case e_stackof: return getMessage( msg::err_stackof);
-      case e_arracc: return getMessage( msg::err_arracc);
-      case e_nostartsym: return getMessage( msg::err_nostartsym);
-      case e_uncaught: return getMessage( msg::err_uncaught);
-      case e_binload: return getMessage( msg::err_binload);
-      case e_binstartup: return getMessage( msg::err_binstartup);
-      case e_bininit: return getMessage( msg::err_bininit);
-      case e_modver: return getMessage( msg::err_modver);
-      case e_modformat: return getMessage( msg::err_modformat);
-      case e_modio: return getMessage( msg::err_modio);
-      case e_unclosed_cs: return getMessage( msg::err_unclosed_cs);
-      case e_runaway_eof: return getMessage( msg::err_runaway_eof);
-      case e_cmp_unprep: return getMessage( msg::err_cmp_unprep);
-      case e_undef_label: return getMessage( msg::err_undef_label);
-      case e_prop_acc: return getMessage( msg::err_prop_acc);
-      case e_deadlock: return getMessage( msg::err_deadlock);
-      case e_prov_name: return getMessage( msg::err_prov_name);
-      case e_dup_case: return getMessage( msg::err_dup_case);
-      case e_init_given: return getMessage( msg::err_init_given);
-      case e_static_const: return getMessage( msg::err_static_const);
-      case e_str_noid: return getMessage( msg::err_str_noid);
-      case e_inv_inherit: return getMessage( msg::err_inv_inherit);
-      case e_nonsym_ref: return getMessage( msg::err_nonsym_ref);
-      case e_state_adef: return getMessage( msg::err_state_adef);
-      case e_invalid_sjmp: return getMessage( msg::err_invalid_sjmp);
-      case e_no_attrib: return getMessage( msg::err_no_attrib);
-      case e_no_cls_inst: return getMessage( msg::err_no_cls_inst);
-      case e_pass_outside: return getMessage( msg::err_pass_outside);
-      case e_switch_clash: return getMessage( msg::err_switch_clash);
-      case e_switch_default: return getMessage( msg::err_switch_default);
-      case e_for_user_error: return getMessage( msg::err_for_user_error);
-      case e_global_again: return getMessage( msg::err_global_again);
-      case e_service_adef: return getMessage( msg::err_service_adef);
-      case e_service_undef: return getMessage( msg::err_service_undef);
-      case e_uncloneable: return getMessage( msg::err_uncloneable);
-      case e_param_outside: return getMessage( msg::err_param_outside);
-      case e_file_output: return getMessage( msg::err_file_output);
-      case e_domain: return getMessage( msg::err_domain);
-      case e_charRange: return getMessage( msg::err_charRange);
-      case e_par_close_unbal: return getMessage( msg::err_par_close_unbal);
-      case e_square_close_unbal: return getMessage( msg::err_square_close_unbal);
-      case e_inv_num_format: return getMessage( msg::err_inv_num_format);
-      case e_inv_esc_sequence: return getMessage( msg::err_inv_esc_sequence);
-      case e_eol_string: return getMessage( msg::err_eol_string);
-      case e_inv_token: return getMessage( msg::err_inv_token);
-      case e_inv_direct: return getMessage( msg::err_inv_direct);
-      case e_byte_access: return getMessage( msg::err_byte_access );
-      case e_numparse_long: return getMessage( msg::err_numparse_long );
-      case e_numparse: return getMessage( msg::err_numparse );
-      case e_no_class: return getMessage( msg::err_no_class );
-      case e_bitwise_op: return getMessage( msg::err_bitwise_op );
-      case e_case_decl: return getMessage( msg::err_case_decl );
-      case e_switch_body: return getMessage( msg::err_switch_body );
-      case e_select_body: return getMessage( msg::err_select_body );
-      case e_default_decl: return getMessage( msg::err_default_decl );
-      case e_lone_end: return getMessage( msg::err_lone_end );
-      case e_switch_decl: return getMessage( msg::err_switch_decl );
-      case e_select_decl: return getMessage( msg::err_select_decl );
-      case e_case_outside: return getMessage( msg::err_case_outside );
-      case e_syn_load: return getMessage( msg::err_syn_load );
-      case e_toplevel_func: return getMessage( msg::err_toplevel_func );
-      case e_toplevel_obj: return getMessage( msg::err_toplevel_obj );
-      case e_toplevel_class: return getMessage( msg::err_toplevel_class );
-      case e_toplevel_load: return getMessage( msg::err_toplevel_load );
-      case e_syn_while : return getMessage( msg::err_syn_while  );
-      case e_syn_if: return getMessage( msg::err_syn_if );
-      case e_syn_else: return getMessage( msg::err_syn_else );
-      case e_syn_elif: return getMessage( msg::err_syn_elif );
-      case e_syn_break: return getMessage( msg::err_syn_break );
-      case e_syn_continue: return getMessage( msg::err_syn_continue );
-      case e_syn_for: return getMessage( msg::err_syn_for );
-      case e_syn_forfirst: return getMessage( msg::err_syn_forfirst );
-      case e_syn_forlast: return getMessage( msg::err_syn_forlast );
-      case e_syn_formiddle: return getMessage( msg::err_syn_formiddle );
-      case e_syn_give: return getMessage( msg::err_syn_give );
-      case e_syn_try: return getMessage( msg::err_syn_try );
-      case e_syn_catch: return getMessage( msg::err_syn_catch );
-      case e_syn_raise: return getMessage( msg::err_syn_raise );
-      case e_syn_funcdecl: return getMessage( msg::err_syn_funcdecl );
-      case e_syn_static: return getMessage( msg::err_syn_static );
-      case e_syn_state: return getMessage( msg::err_syn_state );
-      case e_syn_launch: return getMessage( msg::err_syn_launch );
-      case e_syn_pass: return getMessage( msg::err_syn_pass );
-      case e_inv_const_val: return getMessage( msg::err_inv_const_val );
-      case e_syn_const: return getMessage( msg::err_syn_const );
-      case e_syn_export: return getMessage( msg::err_syn_export );
-      case e_syn_attributes: return getMessage( msg::err_syn_attributes );
-      case e_enter_notavar: return getMessage( msg::err_enter_notavar );
-      case e_syn_enter: return getMessage( msg::err_syn_enter );
-      case e_syn_leave: return getMessage( msg::err_syn_leave );
-      case e_syn_forin: return getMessage( msg::err_syn_forin );
-      case e_syn_pass_in: return getMessage( msg::err_syn_pass_in );
-      case e_leave_notanexp: return getMessage( msg::err_leave_notanexp );
-      case e_inv_attrib: return getMessage( msg::err_inv_attrib );
-      case e_syn_class: return getMessage( msg::err_syn_class );
-      case e_syn_hasdef: return getMessage( msg::err_syn_hasdef );
-      case e_syn_object: return getMessage( msg::err_syn_object );
-      case e_syn_global: return getMessage( msg::err_syn_global );
-      case e_syn_return: return getMessage( msg::err_syn_return );
-      case e_syn_arraccess: return getMessage( msg::err_syn_arraccess );
-      case e_syn_funcall: return getMessage( msg::err_syn_funcall );
-      case e_syn_lambda: return getMessage( msg::err_syn_lambda );
-      case e_syn_iif: return getMessage( msg::err_syn_iif );
-      case e_syn_dictdecl: return getMessage( msg::err_syn_dictdecl );
-      case e_syn_arraydecl: return getMessage( msg::err_syn_arraydecl );
-      case e_syn_fordot: return getMessage( msg::err_syn_fordot );
-      case e_syn_self_print: return getMessage( msg::err_syn_self_print );
-      case e_syn_directive: return getMessage( msg::err_syn_directive );
-      case e_syn_import: return getMessage( msg::err_syn_import );
-      case e_syn_macro: return getMessage( msg::err_syn_macro );
-      case e_syn_macro_call: return getMessage( msg::err_syn_macro_call );
-
-      case e_nl_in_lit: return getMessage( msg::err_nl_in_lit );
-      case e_catch_clash: return getMessage( msg::err_catch_clash );
-      case e_catch_adef: return getMessage( msg::err_catch_adef );
-      case e_syn_def: return getMessage( msg::err_syn_def );
-      case e_fmt_convert: return getMessage( msg::err_fmt_convert );
-      case e_fordot_outside: return getMessage( msg::err_fordot_outside );
-      case e_interrupted: return getMessage( msg::err_interrupted );
-      case e_priv_access: return getMessage( msg::err_priv_access );
-      case e_par_unbal: return getMessage( msg::err_par_unbal );
-      case e_square_unbal: return getMessage( msg::err_square_unbal );
-      case e_unclosed_string: return getMessage( msg::err_unclosed_string );
-      case e_directive_unk: return getMessage( msg::err_directive_unk );
-      case e_directive_value: return getMessage( msg::err_directive_value );
-      case e_noninst_cls: return getMessage( msg::err_noninst_cls );
-      case e_unserializable: return getMessage( msg::err_unserializable );
-      case e_wait_in_atomic: return getMessage( msg::err_wait_in_atomic );
-      case e_inv_inherit2: return getMessage( msg::err_inv_inherit2 );
-      case e_prop_ro: return getMessage( msg::err_prop_ro );
-
-
-      case e_already_forfirst: return getMessage( msg::err_already_forfirst );
-      case e_already_forlast: return getMessage( msg::err_already_forlast );
-      case e_already_formiddle: return getMessage( msg::err_already_formiddle );
-
-
-      case e_open_file: return getMessage( msg::err_open_file);
-      case e_loaderror: return getMessage( msg::err_loaderror);
-      case e_nofile: return getMessage( msg::err_nofile);
-      case e_invformat: return getMessage( msg::err_invformat );
-      case e_loader_unsupported: return getMessage( msg::err_loader_unsupported );
-      case e_io_error: return getMessage( msg::err_io_error );
-      case e_unknown_encoding: return getMessage( msg::err_unknown_encoding );
-
-      case e_inv_params: return getMessage( msg::err_inv_params );
-      case e_missing_params: return getMessage( msg::err_missing_params );
-      case e_param_type: return getMessage( msg::err_param_type );
-      case e_param_range: return getMessage( msg::err_param_range );
-      case e_param_indir_code: return getMessage( msg::err_param_indir_code );
-      case e_param_strexp_code: return getMessage( msg::err_param_strexp_code );
-      case e_param_fmt_code: return getMessage( msg::err_param_fmt_code );
-
-      default:
-         return getMessage( msg::unrecognized_err );
+      #define FLC_MAKE_ERROR_MESSAGE_SELECTOR
+      #include <falcon/eng_messages.h>
    }
+   
+   return Engine::getMessage( msg_unknown_error );
 }
 
 
@@ -317,14 +120,14 @@ Error::~Error()
 
 void Error::incref()
 {
-   Engine::atomicInc( m_refCount );
+   atomicInc( m_refCount );
 }
 
 void Error::decref()
 {
-   if( Engine::atomicDec( m_refCount ) <= 0 )
+   if( atomicDec( m_refCount ) <= 0 )
    {
-		delete this;
+      delete this;
    }
 }
 
@@ -508,21 +311,20 @@ CoreObject *Error::scriptize( VMachine *vm )
       return 0;
    }
 
-   CoreObject *cobject = error_class->asClass()->createInstance();
-   incref();
-   cobject->setUserData( this );
-
+   // CreateInstance will use ErrorObject, which increfs to us.
+   CoreObject *cobject = error_class->asClass()->createInstance( this );
+   
    // scriptize sub-errors
    if (m_nextError != 0)
    {
-      CoreArray *errorList = new CoreArray( vm );
+      //TODO: GARBAGE
+      CoreArray *errorList = new CoreArray();
 
       Error *ptr = m_nextError;
       while( ptr != 0 )
       {
-         CoreObject *subobject = error_class->asClass()->createInstance();
-         subobject->setUserData( ptr );
-         ptr->incref();
+         // CreateInstance will use ErrorObject, which increfs ptr.
+         CoreObject *subobject = error_class->asClass()->createInstance( ptr );
 
          errorList->append( subobject );
          ptr = ptr->m_nextError;
@@ -586,7 +388,7 @@ void Error_origin_rfrom(CoreObject *instance, void *userData, Item &property, co
 
    if ( !property.isString() || origin != *property.asString() )
    {
-      property = new GarbageString( instance->origin(), origin );
+      property = new CoreString( origin );
    }
 }
 
@@ -675,13 +477,13 @@ void Error_origin_rto(CoreObject *instance, void *userData, Item &property, cons
          error->origin( e_orig_mod);
       }
       else {
-         instance->origin()->raiseRTError( new ParamError( ErrorParam( e_param_outside ) ) );
+         throw new ParamError( ErrorParam( e_param_range ) );
       }
 
       return;
    }
 
-   instance->origin()->raiseRTError( new ParamError( ErrorParam( e_inv_params ).extra( "S" ) ) );
+   throw new ParamError( ErrorParam( e_inv_params ).extra( "S" ) );
 }
 
 void Error_module_rto(CoreObject *instance, void *userData, Item &property, const PropEntry& )
@@ -708,23 +510,48 @@ void Error_pc_rto(CoreObject *instance, void *userData, Item &property, const Pr
    FALCON_REFLECT_INTEGER_TO( error, pcounter );
 }
 
+
+//============================================================
+// Reflector
+
+ErrorObject::ErrorObject( const CoreClass* cls, Error *err ):
+   ReflectObject( cls, err )
+{
+   if ( err != 0 )
+      err->incref();
 }
 
-void *ErrorManager::onInit( VMachine *vm )
+ErrorObject::~ErrorObject()
 {
-   return 0;
+   if ( m_user_data != 0 )
+      getError()->decref();
 }
 
-void ErrorManager::onDestroy( VMachine *vm, void *user_data )
+void ErrorObject::gcMark( MemPool *mp )
 {
-   Error *error = static_cast<Error *>( user_data );
-   error->decref();
+   Error* error = getError();
+   if ( error != 0 )
+      mp->markItem( const_cast<Item&>(error->raised()) );
 }
 
-void *ErrorManager::onClone( VMachine *vm, void *user_data )
+
+CoreObject *ErrorObject::clone() const
 {
-   Error *error = static_cast<Error *>( user_data );
-   return error->clone();
+   return new ErrorObject( m_generatedBy, getError() );
+}
+
+//========================================================
+// Factory function
+//
+
+extern "C" 
+{
+   CoreObject* ErrorObjectFactory( const CoreClass *cls, void *user_data, bool bDeserial )
+   {
+      return new ErrorObject( cls, (Error *) user_data );
+   }
+}
+
 }
 
 }

@@ -17,7 +17,6 @@
 #define FALCON_COMPILER_H
 
 #include <falcon/syntree.h>
-#include <falcon/errhand.h>
 #include <falcon/error.h>
 #include <falcon/common.h>
 #include <falcon/string.h>
@@ -113,17 +112,6 @@ protected:
    SrcLexer *m_lexer;
    Stream *m_stream;
 
-   /** Error handler.
-      This interface is invoked to present the errors to the embedding application;
-      If an embedding VM is present (\see m_vm) this field is ignored, and the error
-      is sent directly to the VM for handling. If neither this field nor a virtual
-      machine are present, the error data printed on the error stream.
-
-      \note Probably, the ability to print on the error stream if error handler is not found
-      will be removed.
-   */
-   ErrorHandler *m_errhand;
-
    /** This is the module that is being formed in the meanwhile. */
    Module *m_module;
 
@@ -183,8 +171,6 @@ protected:
 
    bool m_bParsingFtd;
 
-   /** True to raise only one exception. */
-   bool m_delayRaise;
    Error *m_rootError;
    InteractiveCompiler *m_metacomp;
    VMachine *m_serviceVM;
@@ -263,7 +249,20 @@ public:
    */
    bool compile( Module *mod, Stream *input );
 
+   /** Front-end to raiseError( *e ).
+      
+      The compiler doesn't throw the error list until the compilation is over.
+      error raisal is delayed until the end of the compilation step.
+   */
    void raiseError( int errorNum, int errorLine=0);
+   
+   /** Raises an error.
+      
+      The compiler doesn't throw the error list until the compilation is over.
+      error raisal is delayed until the end of the compilation step.
+   */
+   void raiseError( Error *e );
+   
    /** Raises an error related to a context problem.
       The error reports the line where the problem has been detected, and the line
       that begun current faulty context.
@@ -280,7 +279,6 @@ public:
    Symbol *addLocalSymbol( const String *symname, bool parameter );
    Symbol *addGlobalSymbol( const String *symname );
    Symbol *searchOuterSymbol( const String *symname );
-   Symbol *addAttribute( const String *symname );
 
    /** Creates a symbol that will be an initially defined global variable.
       The global variables may be created with an initial values (i.e. for
@@ -335,9 +333,6 @@ public:
    StmtFunction *getFunctionContext() const { if ( m_func_ctx.empty() ) return 0; return (StmtFunction*) m_func_ctx.back(); }
 
    String *addString( const String &str ) { return m_module->addString( str ); }
-
-   void errorHandler( ErrorHandler *errhand ) { m_errhand = errhand; }
-   ErrorHandler *errorHandler() const { return m_errhand; }
 
    SrcLexer *lexer() const { return m_lexer; }
    Stream *stream() const { return m_stream; }
@@ -431,12 +426,6 @@ public:
    */
    void strictMode( bool breq ) { m_strict = breq; }
    bool strictMode() const { return m_strict; }
-
-   /** Set to true to send all the errors to a list, and have only one error raised at the end. */
-   void delayRaise( bool setting ) { m_delayRaise = setting; }
-
-   /** Returns true if delay raise is enabled. */
-   bool delayRaise() const { return m_delayRaise; }
 
    /** Are we parsing a normal file or an escaped template file? */
    bool parsingFtd() const;
@@ -568,6 +557,20 @@ public:
       is requried, the compiler creates a loader on the fly.
    */
    void serviceLoader(ModuleLoader *l) { m_serviceLoader = l; }
+   
+   /** Passes the ownership of the error structure to the caller.
+      
+      This allows the caller to get the errors received during the processing of the
+      last compilation and handle them separately.
+      
+      The ownership is passed to the caller, or in other world, the list of errors
+      in this compiler is zeroed and the reference count of the returned error
+      list is not changed.
+      
+      \return 0 if the compiler was not in error state, or a list of one or more errors if it
+      raised some errors during the processing of the files.
+   */
+   Error *detachErrors() { Error *e = m_rootError; m_rootError = 0; m_errors = 0; return e; }
 };
 
 } // end of namespace

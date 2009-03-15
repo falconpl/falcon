@@ -38,13 +38,12 @@ class VMSemaphore;
 class FALCON_DYN_CLASS VMContext: public BaseAlloc
 {
    const Symbol* m_symbol;
-   const Module *m_currentModule;
+   LiveModule *m_currentModule;
    ItemVector *m_currentGlobals;
 
    Item m_regA;
    Item m_regB;
    Item m_regS1;
-   Item m_regS2;
    Item m_regL1;
    Item m_regL2;
    Item m_regBind;
@@ -84,8 +83,6 @@ public:
 
    Item &self() { return m_regS1; }
    const Item &self() const { return m_regS1; }
-   Item &sender() { return m_regS2; }
-   const Item &sender() const { return m_regS2; }
 
    Item &latch() { return m_regL1; }
    const Item &latch() const { return m_regL1; }

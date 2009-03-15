@@ -167,8 +167,8 @@ FALCON_FUNC  flc_timeFactor( ::Falcon::VMachine *vm )
 Falcon::Module *init_testsuite_module()
 {
 #else
-FALCON_MODULE_DECL ( ::Falcon::EngineData *engdata ) {
-   engdata->set();
+FALCON_MODULE_DECL 
+{
 #endif
 
    s_timeFactor = 1;

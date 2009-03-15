@@ -326,7 +326,6 @@ void GenCode::gen_operand( const Value *stmt )
 
       case Value::t_imm_bool:
       case Value::t_self:
-      case Value::t_sender:
          // do nothing
       break;
 
@@ -352,7 +351,6 @@ byte GenCode::gen_pdef( const c_varpar &elem )
             case Value::t_imm_string: return P_PARAM_STRID;
             case Value::t_imm_num: return P_PARAM_NUM;
             case Value::t_self: return P_PARAM_REGS1;
-            case Value::t_sender: return P_PARAM_REGS2;
             case Value::t_lbind: return P_PARAM_LBIND;
 
             case Value::t_symbol:
@@ -410,7 +408,6 @@ byte GenCode::gen_pdef( const c_varpar &elem )
       case e_parL1: return P_PARAM_REGL1;
       case e_parL2: return P_PARAM_REGL2;
       case e_parS1: return P_PARAM_REGS1;
-      case e_parS2: return P_PARAM_REGS2;
       case e_parLBIND: return P_PARAM_LBIND;
       case e_parTRUE: return P_PARAM_TRUE;
       case e_parFALSE: return P_PARAM_FALSE;
@@ -594,28 +591,6 @@ void GenCode::gen_statement( const Statement *stmt )
       }
       break;
 
-      case Statement::t_pass:
-      {
-         const StmtPass *pass = static_cast< const StmtPass *>( stmt );
-         byte mode = pass->saveIn() == 0 ? P_PASS : P_PSIN;
-
-         if ( pass->called()->isSimple() )
-         {
-            gen_pcode( mode, pass->called() );
-         }
-         else {
-            gen_value( pass->called() );
-            gen_pcode( mode, e_parA );
-         }
-
-         if ( pass->saveIn() != 0 )
-         {
-            gen_load_from_A( pass->saveIn() );
-         }
-      }
-      break;
-
-
       case Statement::t_autoexp:
       {
          const StmtExpression *val = static_cast<const StmtExpression *>( stmt );
@@ -670,97 +645,8 @@ void GenCode::gen_statement( const Statement *stmt )
             gen_pcode( P_WRT, val );
             iter = iter->next();
          }
-
       }
       break;
-
-      case Statement::t_give:
-      {
-         const StmtGive *give = static_cast<const StmtGive *>( stmt );
-         const ArrayDecl *give_to = give->objects();
-
-         const ListElement *elem = give_to->begin();
-         while( elem != 0 )
-         {
-            const Value *object = (const Value *) elem->data();
-
-            if ( ! object->isSimple() )
-            {
-               gen_complex_value( object );
-            }
-
-            const ArrayDecl *attribs = give->attributes();
-            ListElement *iter = attribs->begin();
-            bool pushed = false;
-            bool peek = false;
-
-            while( iter != 0 )
-            {
-               const Value *val = (const Value *) iter->data();
-               byte mode;
-               ListElement *iter_next = iter->next();
-
-               if ( val->isExpr() && val->asExpr()->type() == Expression::t_not ) {
-                  val = val->asExpr()->first();
-                  mode = P_GIVN;
-               }
-               else
-                  mode = P_GIVE;
-
-
-               if( val->isSimple() )
-               {
-                  if ( object->isSimple() ) {
-                     gen_pcode( mode, object, val );
-                  }
-                  else {
-                     if ( peek ) {
-                        if ( iter_next != 0 )
-                           gen_pcode( P_PEEK, e_parA );
-                        else {
-                           gen_pcode( P_POP, e_parA );
-                           pushed = false;
-                        }
-                        peek = false;
-                     }
-                     gen_pcode( mode, e_parA, val );
-                  }
-               }
-               else {
-                  if ( object->isSimple() ) {
-                     gen_value( val );
-                     gen_pcode( mode, object, e_parA );
-                  }
-                  else {
-                     if ( ! pushed ) {
-                        gen_pcode( P_PUSH, e_parA );
-                        pushed = true;
-                     }
-
-                     gen_value( val );
-                        if ( iter_next != 0 )
-                           gen_pcode( P_PEEK, e_parB );
-                        else {
-                           gen_pcode( P_POP, e_parB );
-                           pushed = false;
-                        }
-                     peek = true;
-
-                     gen_pcode( mode, e_parB, e_parA );
-                  }
-               }
-
-               iter = iter_next;
-            }
-            if ( pushed ) {
-               gen_pcode( P_IPOP, c_param_fixed( 1 ) );
-            }
-
-            elem = elem->next();
-         }
-      }
-      break;
-
 
       case Statement::t_unref:
       {
@@ -1011,6 +897,43 @@ void GenCode::gen_statement( const Statement *stmt )
 
          gen_block( &elem->children() );
          gen_pcode( P_JMP, c_param_fixed( tag.addQueryBegin() ) );
+         // end of the loop
+         tag.defineEnd();
+         m_labels_loop.popBack();
+      }
+      break;
+
+      case Statement::t_loop:
+      {
+         const StmtLoop *elem = static_cast<const StmtLoop *>( stmt );
+
+         c_jmptag tag( m_outTemp );
+         m_labels_loop.pushBack( &tag );
+
+         // this is the place for next and begin
+         tag.defineBegin();
+         tag.defineNext();
+
+         gen_block( &elem->children() );
+
+         // generate condition check only if present and if not always true
+         if ( elem->condition() == 0 )
+         {
+            // endless loop
+            gen_pcode( P_JMP, c_param_fixed( tag.addQueryBegin() ) );
+         }
+         else if ( ! elem->condition()->isTrue() )
+         {
+            if ( elem->condition()->isSimple() ) {
+               gen_pcode( P_IFF, c_param_fixed( tag.addQueryBegin() ), elem->condition() );
+            }
+            else {
+               gen_complex_value( elem->condition() );
+               gen_pcode( P_IFF, c_param_fixed( tag.addQueryBegin() ), e_parA );
+            }
+         }
+         // if it's true, terminate immediately
+
          // end of the loop
          tag.defineEnd();
          m_labels_loop.popBack();
@@ -1616,8 +1539,6 @@ void GenCode::gen_expression( const Expression *exp, t_valType &xValue )
       case Expression::t_eq: mode = 2; opname = P_EQ; break;
       case Expression::t_neq: mode = 2; opname = P_NEQ; break;
 
-      case Expression::t_has: mode = 2; opname = P_HAS; break;
-      case Expression::t_hasnt: mode = 2; opname = P_HASN; break;
       case Expression::t_in: mode = 2; opname = P_IN; break;
       case Expression::t_notin: mode = 2; opname = P_NOIN; break;
       case Expression::t_provides: mode = 2; opname = P_PROV; break;
@@ -1766,22 +1687,22 @@ void GenCode::gen_expression( const Expression *exp, t_valType &xValue )
          xValue = l_value;
          gen_pcode( P_STO, e_parA, exp->first()->asSymbol() );
       return;
-      
+
       case Expression::t_oob:
          xValue = l_value;
          gen_pcode( P_OOB, c_param_fixed(1), exp->first() );
       return;
-      
+
       case Expression::t_deoob:
          xValue = l_value;
          gen_pcode( P_OOB, c_param_fixed(0), exp->first() );
       return;
-      
+
       case Expression::t_xoroob:
          xValue = l_value;
          gen_pcode( P_OOB, c_param_fixed(2), exp->first() );
       return;
-      
+
       case Expression::t_isoob:
          xValue = l_value;
          gen_pcode( P_OOB, c_param_fixed(3), exp->first() );

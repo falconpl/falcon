@@ -44,7 +44,7 @@ class VMachine;
    "user pointer" items).
 */
 
-class GarbagePointer: public Garbageable
+class FALCON_DYN_CLASS GarbagePointer: public Garbageable
 {
    FalconData *m_ptr;
 
@@ -52,8 +52,8 @@ public:
    /** Creates the garbage pointer.
       Must be filled with the data guarded falcon data
    */
-   GarbagePointer( VMachine *vm, FalconData *p ):
-      Garbageable( vm, sizeof( this ) ),
+   GarbagePointer( FalconData *p ):
+      Garbageable(),
       m_ptr(p)
    {}
 

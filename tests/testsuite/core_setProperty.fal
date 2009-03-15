@@ -41,14 +41,14 @@ try
    setProperty( cls, "not here!!", "arrg" )
    failure( "Exception not raised for classes" )
 catch in error
-   if error.code != 60: failure( "Wrong exception raised for classes" )
+   if error.code != 33: failure( "Wrong exception raised for classes" )
 end
 
 try
    setProperty( testObj, "not here!!", "arrg" )
    failure( "Exception not raised for object" )
 catch in error
-   if error.code != 60: failure( "Wrong exception raised for object" )
+   if error.code != 33: failure( "Wrong exception raised for object" )
 end
 
 success()

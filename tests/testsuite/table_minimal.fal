@@ -36,7 +36,7 @@ if customers.getColData( 0 ) != nil
    failure( "getColData - nil item" )
 end
 
-if customers.getColData( 3 ).type() != FunctionType
+if customers.getColData( 3 ).typeId() != FunctionType
    failure( "getColData - function item (1)" )
 end
 
@@ -65,7 +65,7 @@ end
 if coldata[0] != nil or \
          coldata[1] != nil or \
          coldata[2] != nil or \
-         coldata[3].type() != FunctionType
+         coldata[3].typeId() != FunctionType
    failure( "getColData - content" )
 end
 

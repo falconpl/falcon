@@ -32,29 +32,18 @@ class FALCON_DYN_CLASS ItemTraits: public ElementTraits
 {
 public:
 
-	virtual uint32 memSize() const;
-	virtual void init( void *itemZone ) const;
-	virtual void copy( void *targetZone, const void *sourceZone ) const;
-	virtual int compare( const void *first, const void *second ) const;
-	virtual void destroy( void *item ) const;
+   virtual uint32 memSize() const;
+   virtual void init( void *itemZone ) const;
+   virtual void copy( void *targetZone, const void *sourceZone ) const;
+   virtual int compare( const void *first, const void *second ) const;
+   virtual void destroy( void *item ) const;
    virtual bool owning() const;
 };
 
 
-class FALCON_DYN_CLASS VMItemTraits: public ItemTraits
-{
-   VMachine *m_vm;
-public:
-   VMItemTraits( VMachine *vm ):
-      m_vm( vm )
-   {}
-   
-   virtual ~VMItemTraits();
-	virtual int compare( const void *first, const void *second ) const;
-};
 
 namespace traits {
-	extern ItemTraits &t_item();
+   extern ItemTraits &t_item();
 }
 
 

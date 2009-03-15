@@ -22,12 +22,18 @@
 #include <falcon/item.h>
 #include <falcon/vm.h>
 #include <falcon/string.h>
-#include <falcon/cobject.h>
+#include <falcon/coreobject.h>
 #include <falcon/fstream.h>
 #include <falcon/sys.h>
 #include <falcon/fassert.h>
 #include <falcon/stdstreams.h>
 #include <falcon/membuf.h>
+#include <falcon/streambuffer.h>
+#include <falcon/uri.h>
+#include <falcon/vfsprovider.h>
+#include <falcon/transcoding.h>
+
+#include "core_module.h"
 
 /*#
 
@@ -35,6 +41,23 @@
 
 namespace Falcon {
 namespace core {
+
+// raises te correct error depending on the problem on the file
+static void s_breakage( Stream *file )
+{
+   if ( file->unsupported() )
+      throw new IoError( ErrorParam( e_io_unsup )
+         .origin( e_orig_runtime ) );
+   
+   else if ( file->invalid() )
+      throw new IoError( ErrorParam( e_io_invalid )
+         .origin( e_orig_runtime ) );
+   
+   throw new IoError( ErrorParam( e_io_error )
+         .origin( e_orig_runtime )
+         .sysError( (uint32) file->lastError() ) );
+
+}
 
 /*#
    @class Stream
@@ -71,17 +94,14 @@ namespace core {
 */
 FALCON_FUNC  Stream_close ( ::Falcon::VMachine *vm )
 {
-   Stream *file = static_cast<Stream *>(
-      vm->self().asObject()->getUserData() );
+   Stream *file = static_cast<Stream *>( vm->self().asObject()->getFalconData() );
+   
+   // declaring the VM idle from now on.
+   VMachine::Pauser pauser( vm );
 
-   if ( ! file->close() ) {
-      if ( file->unsupported() )
-         vm->raiseModError( new IoError( ErrorParam( 1101 ).origin( e_orig_runtime ).
-            desc( "Unsupported operation for this file type" ) ) );
-      else {
-         vm->raiseModError( new IoError(  ErrorParam( 1110 ).origin( e_orig_runtime ).
-            desc( "File error while closing the stream" ).sysError( (uint32) file->lastError()) ) );
-      }
+   if ( ! file->close() ) 
+   {
+      s_breakage( file );
    }
 }
 
@@ -94,16 +114,14 @@ FALCON_FUNC  Stream_close ( ::Falcon::VMachine *vm )
 FALCON_FUNC  Stream_flush ( ::Falcon::VMachine *vm )
 {
    Stream *file = static_cast<Stream *>(
-      vm->self().asObject()->getUserData() );
+      vm->self().asObject()->getFalconData() );
+   
+   // declaring the VM idle from now on.
+   VMachine::Pauser pauser( vm );
 
-   if ( ! file->flush() ) {
-      if ( file->unsupported() )
-         vm->raiseModError( new IoError( ErrorParam( 1101 ).origin( e_orig_runtime ).
-            desc( "Unsupported operation for this file type" ) ) );
-      else {
-         vm->raiseModError( new IoError(  ErrorParam( 1110 ).origin( e_orig_runtime ).
-            desc( "File error while flushing the stream" ).sysError( (uint32) file->lastError()) ) );
-      }
+   if ( ! file->flush() ) 
+   {
+      s_breakage( file );
    }
 }
 
@@ -111,7 +129,10 @@ FALCON_FUNC  Stream_flush ( ::Falcon::VMachine *vm )
 FALCON_FUNC  StdStream_close ( ::Falcon::VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
-   Stream *file = static_cast<Stream *>( self->getUserData() );
+   Stream *file = static_cast<Stream *>( self->getFalconData() );
+
+   // declaring the VM idle from now on.
+   VMachine::Pauser pauser( vm );
 
    if ( file->close() )
    {
@@ -136,140 +157,165 @@ FALCON_FUNC  StdStream_close ( ::Falcon::VMachine *vm )
    @brief Reads binary data from the stream.
    @param buffer A string or MemBuf that will be filled with read data.
    @optparam size Optionally, a maximum size to be read.
-   @return Amount of data actually read (or a new string).
+   @return Amount of data actually read.
    @raise IoError on system errors.
 
-   Read at maximum size bytes and returns the count of bytes that have
-   been actually read. This version uses an already existing string
-   as the destination buffer. If the string has not enough internal
-   storage, it is reallocated to fit the required size. If the size
-   parameter is not given, the internal storage size of the string is used
-   as maximum read size; this is usually equal to len(buffer),
-   but functions as @a strBuffer can create strings that have an internal
-   storage wider than their length.
-
-   The @b buffer parameter may be omitted; in that case, it is necessary to
-   pass the @b size parameter. This method will then create a string wide
-   enough to store the incoming data.
+   This method uses an already existing and pre-allocated
+   string or Memory Buffer, filling it with at maximum @b size bytes. If
+   @b size is not provided, the method tries to read enough data to fill
+   the given buffer. A string may be pre-allocated with the @a strBuffer
+   function.
+   
+   If @b size is provided but it's larger than the available space in
+   the given buffer, it is ignored. If there isn't any available space in
+   the target buffer, a ParamError is raised.
+   
+   If the buffer is a string, each read fills the string from the beginning.
+   If it is a MemBuffer, the space between @a MemoryBuffer.limit and @a len is
+   filled. This allow for partial reads in slow (i.e. network) streams.
 */
 FALCON_FUNC  Stream_read ( ::Falcon::VMachine *vm )
 {
-   MemBuf *membuf = 0;
-   Stream *file = static_cast<Stream *>(
-                     vm->self().asObject()->getUserData() );
-   Item *target = vm->param(0);
-   String *cs_target;
-   // if the third parameter is a not number, the second must be a string;
-   // if the string is missing, we must create a new appropriate target.
-   Item *last = vm->param(1);
+   Stream *file = dyncast<Stream *>( vm->self().asObject()->getFalconData() );
+   
+   Item *i_target = vm->param(0);
+   Item *i_size = vm->param(1);
 
-   if ( target == 0 ) {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
-      return;
+   if ( i_target == 0 || ! ( i_target->isString() || i_target->isMemBuf() ) 
+      || ( i_size != 0 && ! i_size->isOrdinal() ) )
+   {
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+            .origin( e_orig_runtime )
+            .extra( "S|M,[N]" ) );
    }
 
-   int32 size = 0;
-   bool returnTarget = false;
-
-   if ( last != 0 ) {
-      size = (int32) last->forceInteger();
-      if ( size <= 0 ) {
-         vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
-         return;
-      }
-
-      if ( target->isString() )
+   int32 size;
+   byte *memory;
+   
+   // first, extract the maximum possible size
+   if ( i_target->isString() )
+   {
+      String *str = i_target->asString();
+      if ( str->allocated() == 0 )
       {
-         cs_target = target->asString();
-         cs_target->reserve( size );
+         throw new ParamError( ErrorParam( e_param_range, __LINE__ )
+            .origin( e_orig_runtime )
+            .extra( vm->moduleString( rtl_string_empty ) ) );
       }
-      else {
-         vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
-            //"Given a size, the first parameter must be a string" );
-         return;
+      
+      memory = str->getRawStorage();
+      size = str->allocated();
+   }
+   else 
+   {
+      MemBuf* mb = i_target->asMemBuf();
+      size = mb->length() - mb->limit();
+      
+      if( size <= 0 )
+      {
+         throw new ParamError( ErrorParam( e_param_range, __LINE__ )
+               .origin( e_orig_runtime )
+               .extra( vm->moduleString( rtl_buffer_full ) ) );
       }
+      
+      memory = mb->data();
+   }
+   
+   if( i_size != 0 )
+   {
+      int32 nsize = (int32) i_size->forceInteger();
+      
+      if( nsize <= 0 )
+      {
+         throw new ParamError( ErrorParam( e_param_range, __LINE__ )
+               .origin( e_orig_runtime )
+               .extra( vm->moduleString( rtl_zero_size ) ) );
+      }
+      
+      if ( nsize < size )
+         size = nsize;
+   }
+   
+   // delcare the VM idle during the I/O
+   vm->idle();
+   size = file->read( memory, size );
+   vm->unidle();
+   
+   if ( size < 0 ) 
+   {
+      s_breakage( file );
+   }
 
-      returnTarget = false;
-   }
-   // we have only the second parameter.
-   // it MUST be a string or an integer .
-   else if ( target->isString() )
+   if ( i_target->isString() )
    {
-      cs_target = target->asString();
-      size = cs_target->allocated();
-      if ( size <= 0 ) {
-         size = cs_target->size();
-         if ( size <= 0 ) {
-            vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
-            return;
-         }
-
-         cs_target->bufferize(); // force to bufferize
-      }
-      returnTarget = false;
-   }
-   else if ( target->isMemBuf() )
-   {
-      cs_target = 0;
-      membuf = target->asMemBuf();
-      returnTarget = false;
-   }
-   else if ( target->isInteger() )
-   {
-      size = (int32) target->forceInteger();
-      if ( size <= 0 ) {
-         vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
-         return;
-      }
-      cs_target = new GarbageString( vm );
-      cs_target->reserve( size );
-      // no need to store for garbage, as we'll return this.
-      returnTarget = true;
+      i_target->asString()->size( size );
    }
    else
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
-         //"Second parameter must be either a string or an integer" );
-      return;
+      MemBuf* mb = i_target->asMemBuf();
+      mb->limit( i_target->asMemBuf()->limit() + size );
+      fassert( mb->limit() <= mb->length() );
    }
 
-   if ( membuf != 0 )
-      size = file->read( membuf->data(), membuf->size() );
-   else
-      size = file->read( cs_target->getRawStorage(), size );
-
-   if ( size < 0 ) {
-      if ( file->unsupported() )
-         vm->raiseModError( new IoError( ErrorParam( 1101 ).origin( e_orig_runtime ).
-            desc( "Unsupported operation for this file type" ) ) );
-      else if ( file->invalid() )
-         vm->raiseModError( new IoError( ErrorParam( 1102 ).origin( e_orig_runtime ).
-            desc( "Stream not open for reading" ) ) );
-      else {
-         vm->raiseModError( new IoError( ErrorParam( 1103 ).origin( e_orig_runtime ).
-            desc( "File error while reading the stream" ).sysError( (uint32) file->lastError() ) ) );
-      }
-      return;
-   }
-
-   // valid also if size == 0
-   if ( membuf == 0 )
-      cs_target->size( size );
-
-   if ( returnTarget ) {
-      vm->retval( cs_target );
-   }
-   else {
-      vm->retval((int64) size );
-   }
+   vm->retval((int64) size );
 }
+
+
+/*#
+   @method grab Stream
+   @brief Grabs binary data from the stream.
+   @param size Maximum size to be read.
+   @return A string containing binary data from the stream.
+   @raise IoError on system errors.
+
+   This metod creates a string wide enough to read size bytes,
+   and then tries to fill it with binary data coming from the stream.
+*/
+FALCON_FUNC  Stream_grab ( ::Falcon::VMachine *vm )
+{
+   Stream *file = dyncast<Stream *>( vm->self().asObject()->getFalconData() );
+   Item *i_size = vm->param(0);
+
+   if ( i_size == 0 || ! i_size->isOrdinal() )
+   {
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+            .origin( e_orig_runtime )
+            .extra( "N" ) );
+   }
+
+   int32 nsize = (int32) i_size->forceInteger();
+   
+   if( nsize <= 0 )
+   {
+      throw new ParamError( ErrorParam( e_param_range, __LINE__ )
+            .origin( e_orig_runtime )
+            .extra( vm->moduleString( rtl_zero_size ) ) );
+   }
+   
+   CoreString* str = new CoreString;
+   str->reserve( nsize );
+   
+   vm->idle();
+   int32 size = file->read( str->getRawStorage(), nsize );
+   vm->unidle();
+   
+   if ( size < 0 ) 
+   {
+      s_breakage( file );
+   }
+
+   
+   str->size( size );
+   vm->retval( str );
+}
+
 
 /*#
    @method readText Stream
    @brief Reads text encoded data from the stream.
    @param buffer A string that will be filled with read data.
    @optparam size Optionally, a maximum size to be read.
-   @return Amount of data actually read (or a new string).
+   @return Amount of data actually read.
    @raise IoError on system errors.
 
    This method reads a string from a stream, eventually parsing the input
@@ -277,14 +323,13 @@ FALCON_FUNC  Stream_read ( ::Falcon::VMachine *vm )
    The number of bytes actually read may vary depending on the decoding rules.
 
    If the size parameter is given, the function will try to read at maximum @b size
-   characters, enlarging the buffer if there isn't enough room for the operation.
+   characters, enlarging the string if there isn't enough room for the operation.
    If it is not given, the current allocated memory of buffer will be used instead.
+   
+   @note This differ from Stream.read, where the buffer is never grown, even when
+   it is a string.
 
-   The @b buffer parameter may be omitted; in that case, it is necessary to
-   pass the @b size parameter. This method will then create a string wide
-   enough to store the incoming data.
-
-   If the function is successful, the buffer may contain size characters or less
+   If the function is successful, the buffer may contain @b size characters or less
    if the stream hadn't enough characters to read.
 
    In case of failure, an IoError is raised.
@@ -297,97 +342,115 @@ FALCON_FUNC  Stream_read ( ::Falcon::VMachine *vm )
 
 FALCON_FUNC  Stream_readText ( ::Falcon::VMachine *vm )
 {
-   Stream *file = static_cast<Stream *>(
-                     vm->self().asObject()->getUserData() );
-   Item *target = vm->param(0);
-   String *cs_target;
-   // if the third parameter is a not number, the second must be a string;
-   // if the string is missing, we must create a new appropriate target.
-   Item *last = vm->param(1);
+   Stream *file = dyncast<Stream *>( vm->self().asObject()->getFalconData() );
+   Item *i_target = vm->param(0);
+   Item *i_size = vm->param(1);
+   
+   if ( i_target == 0 || ! i_target->isString() 
+      || ( i_size != 0 && ! i_size->isOrdinal() ) )
+   {
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+            .origin( e_orig_runtime )
+            .extra( "S,[N]" ) );
+   }
 
+   String *str = i_target->asString();
    int32 size;
-   bool returnTarget;
-
-   if ( target == 0 ) {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
-      return;
-   }
-
-   if ( last != 0 ) {
-      size = (int32) last->forceInteger();
-      if ( size <= 0 ) {
-         vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
-         return;
-      }
-
-      if ( target->isString() )
+   
+   if ( i_size != 0  )
+   {
+      size = (int32) i_size->forceInteger();
+      if ( size <= 0 ) 
       {
-         cs_target = target->asString();
-         cs_target->reserve( size );
-      }
-      else {
-         vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
-            //"Given a size, the first parameter must be a string" );
+         throw new ParamError( ErrorParam( e_param_range, __LINE__ )
+               .origin( e_orig_runtime )
+               .extra( vm->moduleString( rtl_zero_size ) ) );
          return;
       }
-      returnTarget = false;
-   }
-   // we have only the second parameter.
-   // it MUST be a string or an integer .
-   else if ( target->isString() )
-   {
-      cs_target = target->asString();
-      size = cs_target->allocated();
-      if ( size <= 0 ) {
-         size = cs_target->size();
-         if ( size <= 0 ) {
-            vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
-            return;
-         }
-
-         cs_target->bufferize(); // force to bufferize
-      }
-      returnTarget = false;
-   }
-   else if ( target->isInteger() )
-   {
-      size = (int32) target->forceInteger();
-      if ( size <= 0 ) {
-         vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
-         return;
-      }
-      cs_target = new GarbageString( vm );
-      cs_target->reserve( size );
-      // no need to store for garbage, as we'll return this.
-      returnTarget = true;
+      str->reserve( size );
    }
    else
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
-         //"Second parameter must be either a string or an integer" );
-      return;
-   }
-
-   if ( ! file->readString( *cs_target, size ) ) {
-      if ( file->unsupported() )
-         vm->raiseModError( new IoError( ErrorParam( 1101 ).origin( e_orig_runtime ).
-            desc( "Unsupported operation for this file type" ) ) );
-      else if ( file->invalid() )
-         vm->raiseModError( new IoError( ErrorParam( 1102 ).origin( e_orig_runtime ).
-            desc( "Stream not open for reading" ) ) );
-      else {
-         vm->raiseModError( new IoError( ErrorParam( 1103 ).origin( e_orig_runtime ).
-            desc( "File error while reading the stream" ).sysError( (uint32) file->lastError() ) ) );
+      size = str->allocated();
+      
+      if ( size <= 0 ) 
+      {
+         throw new ParamError( ErrorParam( e_param_range, __LINE__ )
+               .origin( e_orig_runtime )
+               .extra( vm->moduleString( rtl_string_empty ) ) );
+         return;
       }
-      return;
    }
 
-   if ( returnTarget ) {
-      vm->retval( cs_target );
+   vm->idle();
+   if ( ! file->readString( *str, size ) )
+   {
+      vm->unidle();
+      s_breakage( file );
    }
    else {
-      vm->retval((int64) cs_target->length() );
+      vm->unidle();
    }
+
+   vm->retval( (int64) str->length() );
+}
+
+/*#
+   @method grabText Stream
+   @brief Grabs text encoded data from the stream.
+   @param size Optionally, a maximum size to be read.
+   @return A string containing the read text.
+   @raise IoError on system errors.
+
+   This method reads a string from a stream, eventually parsing the input
+   data through the given character encoding set by the @a Stream.setEncoding method,
+   and returns it in a newly allocated string.
+
+   If the function is successful, the buffer may contain @b size characters or less
+   if the stream hadn't enough characters to read.
+
+   In case of failure, an IoError is raised.
+
+   Notice that this function is meant to be used on streams that are known to have
+   available all the required data. For streams that may perform partial
+   updates (i.e. network streams), a combination of binary reads and
+   @a transcodeFrom calls should be used instead.
+*/
+
+FALCON_FUNC  Stream_grabText ( ::Falcon::VMachine *vm )
+{
+   Stream *file = dyncast<Stream *>( vm->self().asObject()->getFalconData() );
+   Item *i_size = vm->param(0);
+   
+   if ( i_size == 0 || ! i_size->isOrdinal() )
+   {
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+            .origin( e_orig_runtime )
+            .extra( "N" ) );
+   }
+
+   CoreString *str = new CoreString;
+   int32 size = (int32) i_size->forceInteger();
+   if ( size <= 0 ) 
+   {
+      throw new ParamError( ErrorParam( e_param_range, __LINE__ )
+            .origin( e_orig_runtime )
+            .extra( vm->moduleString( rtl_zero_size ) ) );
+      return;
+   }
+   str->reserve( size );
+
+   vm->idle();
+   if ( ! file->readString( *str, size ) ) 
+   {
+      vm->unidle();
+      s_breakage( file ); // will throw
+   }
+   else {
+      vm->unidle();
+   }
+   
+   vm->retval( str );
 }
 
 /*#
@@ -395,97 +458,59 @@ FALCON_FUNC  Stream_readText ( ::Falcon::VMachine *vm )
    @brief Reads a line of text encoded data.
    @param buffer A string that will be filled with read data.
    @optparam size Maximum count of characters to be read before to return anyway.
-   @return Amount of data actually read (or a new string).
+   @return Amount of data actually read.
    @raise IoError on system errors.
 
    This function works as @a Stream.readText, but if a new line is encountered,
    the read terminates. Returned string does not contain the EOL sequence.
-
-   As for readText, this function may accept a numeric size as first parameter;
-   in that case it will autonomously create a string wide enough to store
-   the incoming data.
 */
 FALCON_FUNC  Stream_readLine ( ::Falcon::VMachine *vm )
 {
-   Stream *file = static_cast<Stream *>(
-                     vm->self().asObject()->getUserData() );
-   if ( file == 0 ) return;
-   Item *target = vm->param(0);
-   String *cs_target;
-   // if the third parameter is a not number, the second must be a string;
-   // if the string is missing, we must create a new appropriate target.
-   Item *last = vm->param(1);
+   Stream *file = dyncast<Stream *>( vm->self().asObject()->getFalconData() );
+   Item *i_target = vm->param(0);
+   Item *i_size = vm->param(1);
+   
+   if ( i_target == 0 || ! i_target->isString() 
+      || ( i_size != 0 && ! i_size->isOrdinal() ) )
+   {
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+            .origin( e_orig_runtime )
+            .extra( "S,[N]" ) );
+   }
 
-
+   String *str = i_target->asString();
    int32 size;
-   bool returnTarget;
-
-   if ( target == 0 ) {
-      if ( last != 0 ) {
-         vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
-            //"Given a size, the first parameter must be a string" );
-         return;
-      }
-      size = 512;
-      cs_target = new GarbageString( vm );
-      cs_target->reserve( size );
-      returnTarget = true;
-   }
-   else if ( last != 0 )
+   
+   if ( i_size != 0  )
    {
-      size = (int32) last->forceInteger();
-      if ( size <= 0 ) {
-         vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
-         return;
-      }
-
-      if ( target == 0 || target->type() == FLC_ITEM_STRING )
+      size = (int32) i_size->forceInteger();
+      if ( size <= 0 ) 
       {
-         cs_target = target->asString();
-         cs_target->size( 0 );
-         // reserve a little size; it is ignored when there's enough space.
-         cs_target->reserve( size );
-      }
-      else {
-         vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
-            //"Given a size, the first parameter must be a string" );
+         throw new ParamError( ErrorParam( e_param_range, __LINE__ )
+               .origin( e_orig_runtime )
+               .extra( vm->moduleString( rtl_zero_size ) ) );
          return;
       }
-      returnTarget = false;
-   }
-   // we have only the second parameter.
-   // it MUST be a string or an integer .
-   else if ( target->type() == FLC_ITEM_STRING )
-   {
-      cs_target = target->asString();
-      size = cs_target->allocated();
-      cs_target->size( 0 );
-
-      if ( size <= 0 ) {
-         vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
-         return;
-      }
-
-      cs_target->reserve( size ); // force to bufferize
-      returnTarget = false;
-   }
-   else if ( target->type() == FLC_ITEM_INT ) {
-      size = (int32) target->forceInteger();
-      if ( size <= 0 ) {
-         vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
-         return;
-      }
-      cs_target = new GarbageString( vm );
-      cs_target->reserve( size );
-      returnTarget = true;
+      str->reserve( size );
    }
    else
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
-         //"Second parameter must be either a string or an integer" );
-      return;
+      size = str->allocated();
+      
+      if ( size <= 0 ) 
+      {
+         throw new ParamError( ErrorParam( e_param_range, __LINE__ )
+               .origin( e_orig_runtime )
+               .extra( vm->moduleString( rtl_string_empty ) ) );
+         return;
+      }
    }
-
+   
+   str->size(0);
+   
+   // we're idling while using VM memory, but we know we're keeping the data structure constant.
+   vm->idle();
+   
    uint32 c = 0, c1 = 0;
    int pos = 0;
    bool getOk = file->get( c );
@@ -501,35 +526,95 @@ FALCON_FUNC  Stream_readLine ( ::Falcon::VMachine *vm )
       }
       else if ( c1 != 0 ) {
          c1 = 0;
-         cs_target->append( c1 );
+         str->append( c1 );
          ++pos;
       }
 
-      cs_target->append( c );
+      str->append( c );
       ++pos;
       getOk = file->get( c );
    }
+   
+   vm->unidle();
 
-   if ( ! getOk && ! file->eof() ) {
-      if ( file->unsupported() )
-         vm->raiseModError( new IoError( ErrorParam( 1101 ).origin( e_orig_runtime ).
-            desc( "Unsupported operation for this file type" ) ) );
-      else if ( file->invalid() )
-         vm->raiseModError( new IoError( ErrorParam( 1102 ).origin( e_orig_runtime ).
-            desc( "Stream not open for reading" ) ) );
-      else {
-         vm->raiseModError( new IoError( ErrorParam( 1103 ).origin( e_orig_runtime ).
-            desc( "File error while reading the stream" ).sysError( (uint32) file->lastError() ) ) );
+   if ( ! getOk && ! file->eof() )
+   {
+      s_breakage( file );
+   }
+
+   vm->retval( (int64) pos );
+}
+
+/*#
+   @method grabLine Stream
+   @brief Grabs a line of text encoded data.
+   @sparam size Maximum count of characters to be read before to return anyway.
+   @return A string containing the read line.
+   @raise IoError on system errors.
+
+   This function works as @a Stream.grabText, but if a new line is encountered,
+   the read terminates. Returned string does not contain the EOL sequence.
+*/
+FALCON_FUNC  Stream_grabLine ( ::Falcon::VMachine *vm )
+{
+   Stream *file = dyncast<Stream *>( vm->self().asObject()->getFalconData() );
+   Item *i_size = vm->param(0);
+   
+   if ( i_size != 0 && ! i_size->isOrdinal() )
+   {
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+            .origin( e_orig_runtime )
+            .extra( "[N]" ) );
+   }
+
+   
+   int32 size = i_size == 0 ? -1 : (int32) i_size->forceInteger();
+   if ( size == 0 ) 
+   {
+      throw new ParamError( ErrorParam( e_param_range, __LINE__ )
+            .origin( e_orig_runtime )
+            .extra( vm->moduleString( rtl_zero_size ) ) );
+   }
+   
+   CoreString *str = new CoreString;
+   // put it in the VM now, so that it can be inspected
+   vm->retval( str );
+
+   if ( size > 0 )
+      str->reserve( size );
+
+   vm->idle();
+   uint32 c = 0, c1 = 0;
+   int pos = 0;
+   bool getOk = file->get( c );
+   while( getOk && (size < 0 || pos < size) )
+   {
+      if ( c == (uint32)'\r' ) {
+         c1 = c;
+         getOk = file->get( c );
+         continue;
       }
-      return;
+      else if ( c == (uint32)'\n' ) {
+         break;
+      }
+      else if ( c1 != 0 ) {
+         c1 = 0;
+         str->append( c1 );
+         ++pos;
+      }
+
+      str->append( c );
+      ++pos;
+      getOk = file->get( c );
+   }
+   
+   vm->unidle();
+   
+   if ( ! getOk && ! file->eof() )
+   {
+      s_breakage( file );
    }
 
-   if ( returnTarget ) {
-      vm->retval( cs_target );
-   }
-   else {
-      vm->retval( (int64) pos );
-   }
 }
 
 /*#
@@ -538,7 +623,7 @@ FALCON_FUNC  Stream_readLine ( ::Falcon::VMachine *vm )
    @param buffer A string or a MemBuf containing the data to be written.
    @optparam size Number of bytes to be written.
    @optparam start A position from where to start writing.
-   @return Amout of data actually written.
+   @return Amount of data actually written.
    @raise IoError on system errors.
 
    Writes bytes from a buffer on the stream. The write operation is synchronous,
@@ -546,114 +631,96 @@ FALCON_FUNC  Stream_readLine ( ::Falcon::VMachine *vm )
    stream may complete only partially the operation. The number of bytes actually
    written on the stream is returned.
 
-   If a size parameter is not given, it defaults to len( buffer ).
+   When the output buffer is a string, a size parameter can be given; otherwise
+   the whole binary contents of the stream are written. A start position may 
+   optionally be given too; this allows to iterate through writes and send part 
+   of the data that couldent be send previously without extracting substrings or 
+   copying the memory buffers.
 
-   A start position may optionally be given too; this allows to iterate through
-   writes and send part of the data that couldent be send previously without
-   extracting substrings or copying the memory buffers.
+   MemBuf items can participate to stream binary writes through their internal
+   position pointers. The buffer is written from @a MemBuf.position up to
+   @a MemBuf.limit, and upon completion @a MemBuf.position is advanced accordingly
+   to the number of bytes effectively stored on the stream. When a MemBuf is
+   used, @b size and @b start parameters are ignored.
 */
 
 FALCON_FUNC  Stream_write ( ::Falcon::VMachine *vm )
 {
-   Stream *file = static_cast<Stream *>(
-                     vm->self().asObject()->getUserData() );
-
-   Item *source = vm->param(0);
-   Item *count = vm->param(1);
-   Item *i_start = vm->param(2);
-   uint32 size, ssize, start;
+   Item *i_source = vm->param(0);
+   if ( i_source == 0 || ! ( i_source->isString() || i_source->isMemBuf() ))
+   {
+       throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ).
+         extra( "S|M, [N, N]" ) );
+   }
+   
+   uint32 size, start;
    byte *buffer;
 
-   if ( source == 0 ||
-      ( ! source->isMemBuf() && ! source->isString() ) ||
-      ( count != 0 && ! count->isOrdinal() ) ||
-      ( i_start != 0 && ! i_start->isOrdinal() ))
+   if ( i_source->isString() )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ).
-         extra( "S|M, [N, N]" ) ) );
-      return;
-   }
+      Item *i_count = vm->param(1);
+      Item *i_start = vm->param(2);
+      if ( 
+         ( i_count != 0 && ! i_count->isOrdinal() ) ||
+         ( i_start != 0 && ! i_start->isOrdinal() )
+      )
+      {
+         throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ).
+            extra( "S|M, [N, N]" ) );
+      }
 
-   if ( i_start == 0 )
-      start = 0;
-   else {
-      start = (uint32) i_start->forceInteger();
-
-      // minimal sanitization -- should we raise instead?
-      if ( start < 0 )
+      String* str = i_source->asString();
+      
+      if ( i_start == 0 )
       {
          start = 0;
       }
-   }
-
-   if ( source->isMemBuf() )
-   {
-      MemBuf *mb = source->asMemBuf();
-      buffer = mb->data();
-      if ( count == 0 )
-      {
-         size = mb->size();
-      }
-      else {
-         size = (uint32) count->forceInteger();
-      }
-
-
-      if ( size + start > mb->size() )
-      {
-         size = mb->size() - start; // can overflow...
-      }
-
-      //... but we'd return here, so it's ok
-      if ( start >= mb->size() || size == 0 )
-      {
-         // nothing to write
-         vm->retval( 0 );
-         return;
-      }
-   }
-   else {
-      ssize = (uint32) source->asString()->size();
-      buffer = source->asString()->getRawStorage();
-      if( count != 0 ) {
-         size = (uint32) count->forceInteger();
-         if ( size > ssize )
-            size = ssize;
-      }
       else
-         size = ssize;
-
-      if ( size + start > ssize )
       {
-         size = ssize - start; // can overflow...
+         start = (uint32) i_start->forceInteger();
+         if ( start > str->size() )
+         {
+            throw new ParamError( ErrorParam( e_param_range, __LINE__ ).origin( e_orig_runtime ) );
+         }
       }
-
-      //... but we'd return here, so it's ok
-      if ( start > ssize || size == 0 )
+      
+      if( i_count == 0 )
       {
-         // nothing to write
-         vm->retval( 0 );
-         return;
+         size = str->size();
       }
-
+      else 
+      {
+         size = (uint32) i_count->forceInteger();
+         if ( size > str->size() - start )
+         {
+            size = str->size() - start;
+         }
+      }
+      
+      buffer = str->getRawStorage();
    }
+   else
+   {
+      MemBuf* mb = i_source->asMemBuf();
+      start = mb->position();
+      size = mb->limit() - start;
+      buffer = mb->data();
+   }
+   
+   Stream *file = dyncast<Stream *>( vm->self().asObject()->getFalconData() );
 
-   int64 written = file->write( buffer + start, size - start );
+   vm->idle();
+   int64 written = file->write( buffer + start, size );
+   vm->unidle();
+   
    if ( written < 0 )
    {
-      if ( file->unsupported() )
-         vm->raiseModError( new IoError( ErrorParam( 1101 ).origin( e_orig_runtime ).
-            desc( "Unsupported operation for this file type" ) ) );
-      else if ( file->invalid() )
-         vm->raiseModError( new IoError( ErrorParam( 1104 ).origin( e_orig_runtime ).
-            desc( "Stream not open for writing" ) ) );
-      else {
-         vm->raiseModError( new IoError( ErrorParam( 1105 ).origin( e_orig_runtime ).
-            desc( "File error while writing the stream" ).sysError( (uint32) file->lastError() ) ) );
-      }
-      return;
+      s_breakage( file );
    }
-
+   
+   if ( i_source->isMemBuf() )
+      i_source->asMemBuf()->position(  (uint32) (i_source->asMemBuf()->position() + written) );
+   
    vm->retval( written );
 }
 
@@ -663,7 +730,6 @@ FALCON_FUNC  Stream_write ( ::Falcon::VMachine *vm )
    @param buffer A string containing the text to be written.
    @optparam start The character count from which to start writing data.
    @optparam end The position of the last character to write.
-   @return Amout of characters actually written.
    @raise IoError on system errors.
 
    Writes a string to a stream using the character encoding set with
@@ -676,7 +742,7 @@ FALCON_FUNC  Stream_write ( ::Falcon::VMachine *vm )
 FALCON_FUNC  Stream_writeText ( ::Falcon::VMachine *vm )
 {
    Stream *file = static_cast<Stream *>(
-                     vm->self().asObject()->getUserData() );
+                     vm->self().asObject()->getFalconData() );
 
    Item *source = vm->param(0);
    Item *begin = vm->param(1);
@@ -687,29 +753,24 @@ FALCON_FUNC  Stream_writeText ( ::Falcon::VMachine *vm )
       (begin != 0 && begin->type() != FLC_ITEM_INT ) ||
       (end != 0 && end->type() != FLC_ITEM_INT ) )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
+            .origin( e_orig_runtime )
+            .extra( "S,[N],[N]" ) ) );
       return;
    }
 
    iBegin = begin == 0 ? 0 : (uint32) begin->asInteger();
    iEnd = end == 0 ? source->asString()->length() : (uint32) end->asInteger();
 
+   vm->idle();
    if ( ! file->writeString( *(source->asString()), iBegin, iEnd )  )
    {
-      if ( file->unsupported() )
-         vm->raiseModError( new IoError( ErrorParam( 1101 ).origin( e_orig_runtime ).
-            desc( "Unsupported operation for this file type" ) ) );
-      else if ( file->invalid() )
-         vm->raiseModError( new IoError( ErrorParam( 1104 ).origin( e_orig_runtime ).
-            desc( "Stream not open for writing" ) ) );
-      else {
-         vm->raiseModError( new IoError( ErrorParam( 1105 ).origin( e_orig_runtime ).
-            desc( "File error while writing the stream" ).sysError( (uint32) file->lastError() ) ) );
-      }
-      return;
+      vm->unidle();
+      s_breakage( file );
    }
-
-   vm->retval( (int64) 1 );
+   else {
+      vm->unidle();
+   }
 }
 
 
@@ -730,7 +791,7 @@ FALCON_FUNC  Stream_writeText ( ::Falcon::VMachine *vm )
 FALCON_FUNC  Stream_seek ( ::Falcon::VMachine *vm )
 {
    Stream *file = static_cast<Stream *>(
-                     vm->self().asObject()->getUserData() );
+                     vm->self().asObject()->getFalconData() );
 
    Item *position = vm->param(0);
    if ( position== 0 || ! position->isOrdinal() )
@@ -739,17 +800,13 @@ FALCON_FUNC  Stream_seek ( ::Falcon::VMachine *vm )
       return;
    }
 
+   vm->idle();
    int64 pos = file->seekBegin( position->forceInteger() );
-
-   if ( file->bad() ) {
-      if ( file->unsupported() )
-         vm->raiseModError( new IoError( ErrorParam( 1101 ).origin( e_orig_runtime ).
-            desc( "Unsupported operation for this file type" ) ) );
-      else {
-         vm->raiseModError( new IoError( ErrorParam( 1100 ).origin( e_orig_runtime ).
-            desc( "Generic stream error" ).sysError( (uint32) file->lastError() ) ) );
-      }
-      return;
+   vm->unidle();
+   
+   if ( file->bad() ) 
+   {
+      s_breakage( file );
    }
 
    vm->retval( pos );
@@ -773,7 +830,7 @@ FALCON_FUNC  Stream_seek ( ::Falcon::VMachine *vm )
 FALCON_FUNC  Stream_seekCur ( ::Falcon::VMachine *vm )
 {
    Stream *file = static_cast<Stream *>(
-                     vm->self().asObject()->getUserData() );
+                     vm->self().asObject()->getFalconData() );
 
    Item *position = vm->param(0);
    if ( position== 0 || ! position->isOrdinal() )
@@ -782,17 +839,13 @@ FALCON_FUNC  Stream_seekCur ( ::Falcon::VMachine *vm )
       return;
    }
 
+   vm->idle();
    int64 pos = file->seekCurrent( position->forceInteger() );
-
-   if ( file->bad() ) {
-      if ( file->unsupported() )
-         vm->raiseModError( new IoError( ErrorParam( 1101 ).origin( e_orig_runtime ).
-            desc( "Unsupported operation for this file type" ) ) );
-      else {
-         vm->raiseModError( new IoError( ErrorParam( 1100 ).origin( e_orig_runtime ).
-            desc( "Generic stream error" ).sysError( (uint32) file->lastError() ) ) );
-      }
-      return;
+   vm->unidle();
+   
+   if ( file->bad() )
+   {
+      s_breakage( file );
    }
 
    vm->retval( pos );
@@ -819,7 +872,7 @@ FALCON_FUNC  Stream_seekCur ( ::Falcon::VMachine *vm )
 FALCON_FUNC  Stream_seekEnd ( ::Falcon::VMachine *vm )
 {
    Stream *file = static_cast<Stream *>(
-                     vm->self().asObject()->getUserData() );
+                     vm->self().asObject()->getFalconData() );
 
    Item *position = vm->param(0);
    if ( position== 0 || ! position->isOrdinal() )
@@ -828,17 +881,13 @@ FALCON_FUNC  Stream_seekEnd ( ::Falcon::VMachine *vm )
       return;
    }
 
+   vm->idle();
    int64 pos = file->seekEnd( position->forceInteger() );
-
-   if ( file->bad() ) {
-      if ( file->unsupported() )
-         vm->raiseModError( new IoError( ErrorParam( 1101 ).origin( e_orig_runtime ).
-            desc( "Unsupported operation for this file type" ) ) );
-      else {
-         vm->raiseModError( new IoError( ErrorParam( 1100 ).origin( e_orig_runtime ).
-            desc( "Generic stream error" ).sysError( (uint32) file->lastError() ) ) );
-      }
-      return;
+   vm->unidle();
+   
+   if ( file->bad() )
+   {
+      s_breakage( file );
    }
 
    vm->retval( pos );
@@ -856,19 +905,15 @@ FALCON_FUNC  Stream_seekEnd ( ::Falcon::VMachine *vm )
 FALCON_FUNC  Stream_tell ( ::Falcon::VMachine *vm )
 {
    Stream *file = static_cast<Stream *>(
-                     vm->self().asObject()->getUserData() );
+                     vm->self().asObject()->getFalconData() );
 
+   vm->idle();
    int64 pos = file->tell();
+   vm->unidle();
 
-   if ( file->bad() ) {
-      if ( file->unsupported() )
-         vm->raiseModError( new IoError( ErrorParam( 1101 ).origin( e_orig_runtime ).
-            desc( "Unsupported operation for this file type" ) ) );
-      else {
-         vm->raiseModError( new IoError( ErrorParam( 1100 ).origin( e_orig_runtime ).
-            desc( "Generic stream error" ).sysError( (uint32) file->lastError() ) ) );
-      }
-      return;
+   if ( file->bad() ) 
+   {
+      s_breakage( file );
    }
    vm->retval( pos );
 }
@@ -890,31 +935,26 @@ FALCON_FUNC  Stream_tell ( ::Falcon::VMachine *vm )
 FALCON_FUNC  Stream_truncate ( ::Falcon::VMachine *vm )
 {
    Stream *file = static_cast<Stream *>(
-                     vm->self().asObject()->getUserData() );
+                     vm->self().asObject()->getFalconData() );
 
    Item *position = vm->param(0);
    int64 pos;
-
+   
+   // declaring the VM idle from now on.
+   VMachine::Pauser pauser( vm );
+   
    if ( position == 0 )
       pos = file->tell();
    else if ( ! position->isOrdinal() )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) );
    }
    else
       pos = position->forceInteger();
 
    if ( pos == -1 || ! file->truncate( pos ) )
    {
-      if ( file->unsupported() )
-         vm->raiseModError( new IoError( ErrorParam( 1101 ).origin( e_orig_runtime ).
-            desc( "Unsupported operation for this file type" ) ) );
-      else {
-         vm->raiseModError( new IoError( ErrorParam( 1100 ).origin( e_orig_runtime ).
-            desc( "Generic stream error" ).sysError( (uint32) file->lastError() ) ) );
-      }
-      return;
+      s_breakage( file );
    }
 }
 
@@ -929,7 +969,7 @@ FALCON_FUNC  Stream_truncate ( ::Falcon::VMachine *vm )
 FALCON_FUNC  Stream_lastError ( ::Falcon::VMachine *vm )
 {
    Stream *file = static_cast<Stream *>(
-                     vm->self().asObject()->getUserData() );
+                     vm->self().asObject()->getFalconData() );
    vm->retval( (int64) file->lastError() );
 }
 
@@ -945,7 +985,7 @@ FALCON_FUNC  Stream_lastError ( ::Falcon::VMachine *vm )
 FALCON_FUNC  Stream_lastMoved ( ::Falcon::VMachine *vm )
 {
    Stream *file = static_cast<Stream *>(
-                     vm->self().asObject()->getUserData() );
+                     vm->self().asObject()->getFalconData() );
    vm->retval( (int64) file->lastMoved() );
 }
 
@@ -960,7 +1000,7 @@ FALCON_FUNC  Stream_lastMoved ( ::Falcon::VMachine *vm )
 FALCON_FUNC  Stream_eof ( ::Falcon::VMachine *vm )
 {
    Stream *file = static_cast<Stream *>(
-                     vm->self().asObject()->getUserData() );
+                     vm->self().asObject()->getFalconData() );
    vm->retval( file->eof() ? 1 : 0 );
 }
 
@@ -974,7 +1014,7 @@ FALCON_FUNC  Stream_eof ( ::Falcon::VMachine *vm )
 FALCON_FUNC  Stream_isOpen ( ::Falcon::VMachine *vm )
 {
    Stream *file = static_cast<Stream *>(
-                     vm->self().asObject()->getUserData() );
+                     vm->self().asObject()->getFalconData() );
    vm->retval( file->open() ? 1 : 0 );
 }
 
@@ -1002,13 +1042,15 @@ FALCON_FUNC  Stream_isOpen ( ::Falcon::VMachine *vm )
 FALCON_FUNC  Stream_readAvailable ( ::Falcon::VMachine *vm )
 {
    Stream *file = static_cast<Stream *>(
-                     vm->self().asObject()->getUserData() );
+                     vm->self().asObject()->getFalconData() );
 
    Item *secs_item = vm->param(0);
    int32 msecs = secs_item == 0 ? -1 : (int32) (secs_item->forceNumeric()*1000);
 
-
+   if ( msecs != 0 ) vm->idle();
    int32 avail = file->readAvailable( msecs, &vm->systemData() );
+   if ( msecs != 0 ) vm->unidle();
+   
    if ( file->interrupted() )
    {
       vm->interrupted( true, true, true );
@@ -1019,10 +1061,11 @@ FALCON_FUNC  Stream_readAvailable ( ::Falcon::VMachine *vm )
       vm->regA().setBoolean( true );
    else if ( avail == 0 )
       vm->regA().setBoolean( false );
-   else if ( file->lastError() != 0 ) {
-      vm->raiseModError( new IoError( ErrorParam( 1108 ).origin( e_orig_runtime ).
-         desc( "Query on the stream failed" ).sysError( (uint32) file->lastError() ) ) );
-      return;
+   else if ( file->lastError() != 0 ) 
+   {
+      throw new IoError( ErrorParam( e_io_error, __LINE__ )
+         .origin( e_orig_runtime )
+         .sysError( (uint32) file->lastError() ) );
    }
    else
       vm->regA().setBoolean( false );
@@ -1052,12 +1095,16 @@ FALCON_FUNC  Stream_readAvailable ( ::Falcon::VMachine *vm )
 FALCON_FUNC  Stream_writeAvailable ( ::Falcon::VMachine *vm )
 {
    Stream *file = static_cast<Stream *>(
-                     vm->self().asObject()->getUserData() );
+                     vm->self().asObject()->getFalconData() );
 
    Item *secs_item = vm->param(0);
    int32 msecs = secs_item == 0 ? -1 : (int32) (secs_item->forceNumeric()*1000);
 
-   if ( file->writeAvailable( msecs, &vm->systemData() ) <= 0 )
+   if ( msecs != 0 ) vm->idle();
+   int32 available = file->writeAvailable( msecs, &vm->systemData() );
+   if ( msecs != 0 ) vm->unidle();
+   
+   if ( available <= 0 )
    {
       if ( file->interrupted() )
       {
@@ -1065,15 +1112,16 @@ FALCON_FUNC  Stream_writeAvailable ( ::Falcon::VMachine *vm )
          return;
       }
 
-      if ( file->lastError() != 0 ) {
-         vm->raiseModError( new IoError( ErrorParam( 1108 ).origin( e_orig_runtime ).
-            desc( "Query on the stream failed" ).sysError( (uint32) file->lastError() ) ) );
-         return;
+      if ( file->lastError() != 0 ) 
+      {
+         throw new IoError( ErrorParam( e_io_error, __LINE__ )
+            .origin( e_orig_runtime )
+            .sysError( (uint32) file->lastError() ) );
       }
-      vm->retval( 0 );
+      vm->regA().setBoolean( false );
    }
    else {
-      vm->retval( 1 );
+      vm->regA().setBoolean( true );
    }
 }
 
@@ -1095,24 +1143,21 @@ FALCON_FUNC  Stream_writeAvailable ( ::Falcon::VMachine *vm )
 FALCON_FUNC  Stream_clone ( ::Falcon::VMachine *vm )
 {
    Stream *file = static_cast<Stream *>(
-                     vm->self().asObject()->getUserData() );
+                     vm->self().asObject()->getFalconData() );
 
    // create a new stream instance.
    Item *clstream = vm->findWKI( "Stream" );
    fassert( clstream != 0 );
-   CoreObject *obj = clstream->asClass()->createInstance();
 
    Stream *nstream = static_cast<Stream *>( file->clone() );
    // in case of filesystem error, we get 0 and system error properly set.
    if ( nstream == 0 )
    {
-      // TODO: Raise uncloneable.
-      vm->raiseModError( new IoError( ErrorParam( 1111 ).origin( e_orig_runtime ).
-            desc( "Clone failed" ).sysError( (uint32) file->lastError() ) ) );
-         return;
+       throw new CodeError( ErrorParam( e_uncloneable )
+            .origin( e_orig_runtime ) );
    }
 
-   obj->setUserData( nstream );
+   CoreObject *obj = clstream->asClass()->createInstance( nstream );
    vm->retval( obj );
 }
 
@@ -1127,76 +1172,12 @@ FALCON_FUNC  Stream_clone ( ::Falcon::VMachine *vm )
 FALCON_FUNC  Stream_errorDescription ( ::Falcon::VMachine *vm )
 {
    Stream *file = static_cast<Stream *>(
-                     vm->self().asObject()->getUserData() );
-   String *str = new GarbageString( vm );
+                     vm->self().asObject()->getFalconData() );
+   CoreString *str = new CoreString;
    file->errorDescription( *str );
    vm->retval( str );
 }
 
-/*#
-   @method writeItem Stream
-   @brief Serializes an item to the stream.
-   @param item The item to be serialized.
-   @raise IoError On stream error.
-
-   Serializes an item to the given stream. This method works as @b serialize, but
-   it works as a method of this stream instead of being considered a function.
-*/
-
-FALCON_FUNC  Stream_writeItem ( ::Falcon::VMachine *vm )
-{
-   CoreObject *fileObj = vm->self().asObject();
-   Item *source = vm->param(0);
-
-   if( source == 0 )
-   {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ).
-         extra( "X" ) ) );
-      return;
-   }
-
-   Stream *file = static_cast<Stream *>( fileObj->getUserData() );
-   Item::e_sercode sc = source->serialize( file );
-   switch( sc )
-   {
-      case Item::sc_ok: vm->retval( 1 ); break;
-      case Item::sc_ferror: vm->raiseModError( new IoError( ErrorParam( e_modio, __LINE__ ).origin( e_orig_runtime ) ) );
-      default:
-         vm->retnil(); // VM may already have raised an error.
-   }
-}
-
-/*#
-   @method readItem Stream
-   @brief Deserializes an item from the stream.
-   @return The deserialized item.
-   @raise IoError on underlying stream error.
-   @raise GenericError If the data is correctly de-serialized, but it refers to
-         external symbols non defined by this script.
-   @raise ParseError if the format of the input data is invalid.
-
-   Deerializes an item from the given stream. This method works as @b deserialize, but
-   it works as a method of this stream instead of being considered a function.
-*/
-FALCON_FUNC  Stream_readItem ( ::Falcon::VMachine *vm )
-{
-   // deserialize rises it's error if it belives it should.
-   Stream *file = static_cast<Stream *>( vm->self().asObject()->getUserData() );
-   Item::e_sercode sc = vm->regA().deserialize( file, vm );
-   switch( sc )
-   {
-      case Item::sc_ok: return; // ok, we've nothing to do
-      case Item::sc_ferror: vm->raiseModError( new IoError( ErrorParam( e_modio, __LINE__ ).origin( e_orig_runtime ) ) );
-      case Item::sc_misssym: vm->raiseModError( new GenericError( ErrorParam( e_undef_sym, __LINE__ ).origin( e_orig_runtime ) ) );
-      case Item::sc_missclass: vm->raiseModError( new GenericError( ErrorParam( e_undef_sym, __LINE__ ).origin( e_orig_runtime ) ) );
-      case Item::sc_invformat: vm->raiseModError( new ParseError( ErrorParam( e_invformat, __LINE__ ).origin( e_orig_runtime ) ) );
-
-      case Item::sc_vmerror:
-      default:
-         vm->retnil(); // VM may already have raised an error.
-         //TODO: repeat error.
-   }
-}
 
 /*#
    @funset core_stream_factory Stream factory functions
@@ -1248,39 +1229,62 @@ FALCON_FUNC  Stream_readItem ( ::Falcon::VMachine *vm )
 FALCON_FUNC  InputStream_creator ( ::Falcon::VMachine *vm )
 {
    Item *fileName = vm->param(0);
-   if ( fileName == 0 || ! fileName->isString() ) {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
-      return;
-   }
-
    Item *fileShare = vm->param(1);
-   if ( fileShare != 0 && ! fileShare->isInteger() ) {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
-      return;
-   }
-
-   ::Falcon::GenericStream::t_shareMode shMode = ::Falcon::GenericStream::e_smShareFull;
-   if ( fileShare != 0 )
-      shMode = (::Falcon::GenericStream::t_shareMode) fileShare->asInteger();
-
-   FileStream *stream = new FileStream;
-   stream->open( *fileName->asString(), ::Falcon::GenericStream::e_omReadOnly, shMode );
-
-   if ( stream->lastError() != 0 )
+   
+   if ( fileName == 0 || ! fileName->isString() ||
+        ( fileShare != 0 && ! fileShare->isOrdinal() )
+      ) 
    {
-      vm->raiseModError( new IoError( ErrorParam( 1109 ).origin( e_orig_runtime ).
-         desc( "Can't open file" ).extra(*fileName->asString()).sysError( (uint32) stream->lastError() ) ) );
-      delete stream;
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+         .origin( e_orig_runtime )
+         .extra( "S,[N]" ) );
    }
-   else {
-      Item *stream_class = vm->findWKI( "Stream" );
-      //if we wrote the std module, can't be zero.
-      fassert( stream_class != 0 );
 
-      ::Falcon::CoreObject *co = stream_class->asClass()->createInstance();
-      co->setUserData( stream );
-      vm->retval( co );
+   URI furi( *fileName->asString() );
+
+   if ( !furi.isValid() )
+   {
+      throw new ParamError( ErrorParam( e_malformed_uri, __LINE__ )
+            .origin( e_orig_runtime )
+            .extra( *fileName->asString() )  );
    }
+
+   // find the appropriage provider.
+   VFSProvider* vfs = Engine::getVFS( furi.scheme() );
+   if ( vfs == 0 )
+   {
+      throw new ParamError( ErrorParam( e_unknown_vfs, __LINE__ )
+            .origin( e_orig_runtime )
+            .extra( *fileName->asString() )  );
+   }
+
+   ::Falcon::BaseFileStream::t_shareMode shMode = fileShare != 0 ? 
+         (::Falcon::BaseFileStream::t_shareMode) fileShare->forceInteger() :
+         ::Falcon::BaseFileStream::e_smShareFull;
+
+   VFSProvider::OParams params;
+   params.rdOnly();
+   
+   if ( shMode == BaseFileStream::e_smExclusive )
+      params.shNone();
+   else if ( shMode == BaseFileStream::e_smShareRead )
+      params.shNoWrite();
+   
+   vm->idle();
+   Stream *in = vfs->open( furi, params );
+   vm->unidle();
+   
+   if ( in == 0 )
+   {
+      throw vfs->getLastError();
+   }
+
+   Item *stream_class = vm->findWKI( "Stream" );
+   //if we wrote the std module, can't be zero.
+   fassert( stream_class != 0 );
+
+   ::Falcon::CoreObject *co = stream_class->asClass()->createInstance( in );
+   vm->retval( co );
 }
 
 /*#
@@ -1314,6 +1318,24 @@ FALCON_FUNC  OutputStream_creator ( ::Falcon::VMachine *vm )
       return;
    }
 
+   URI furi( *fileName->asString() );
+
+   if ( !furi.isValid() )
+   {
+      throw new ParamError( ErrorParam( e_malformed_uri, __LINE__ )
+            .origin( e_orig_runtime )
+            .extra( *fileName->asString() )  );
+   }
+
+   // find the appropriage provider.
+   VFSProvider* vfs = Engine::getVFS( furi.scheme() );
+   if ( vfs == 0 )
+   {
+      throw new ParamError( ErrorParam( e_unknown_vfs, __LINE__ )
+            .origin( e_orig_runtime )
+            .extra( *fileName->asString() )  );
+   }
+   
    Item *osMode = vm->param(1);
    int mode;
 
@@ -1336,28 +1358,34 @@ FALCON_FUNC  OutputStream_creator ( ::Falcon::VMachine *vm )
       return;
    }
 
-   ::Falcon::GenericStream::t_shareMode shMode = ::Falcon::GenericStream::e_smShareFull;
-   if ( fileShare != 0 )
-      shMode = (::Falcon::GenericStream::t_shareMode ) fileShare->asInteger();
+   ::Falcon::BaseFileStream::t_shareMode shMode = fileShare != 0 ? 
+         (::Falcon::BaseFileStream::t_shareMode) fileShare->forceInteger() :
+         ::Falcon::BaseFileStream::e_smShareFull;
 
-   FileStream *stream = new FileStream;
-   stream->create( *fileName->asString(), (::Falcon::GenericStream::t_attributes) mode, shMode );
+   VFSProvider::CParams params;
+   params.wrOnly();
+   
+   if ( shMode == BaseFileStream::e_smExclusive )
+      params.shNone();
+   else if ( shMode == BaseFileStream::e_smShareRead )
+      params.shNoWrite();
 
-   if ( stream->lastError() != 0 )
+   params.createMode( mode );
+
+   vm->idle();
+   Stream *stream =  vfs->create( furi, params );
+   vm->unidle();
+
+   if ( stream == 0 )
    {
-         vm->raiseModError( new IoError( ErrorParam( 1109 ).origin( e_orig_runtime ).
-         desc( "Can't open file" ).sysError( (uint32) stream->lastError() ) ) );
+      throw vfs->getLastError();
+   }
 
-      delete stream;
-   }
-   else {
-      Item *stream_class = vm->findWKI( "Stream" );
-      //if we wrote the std module, can't be zero.
-      fassert( stream_class != 0 );
-      ::Falcon::CoreObject *co = stream_class->asClass()->createInstance();
-      co->setUserData( stream );
-      vm->retval( co );
-   }
+   Item *stream_class = vm->findWKI( "Stream" );
+   //if we wrote the std module, can't be zero.
+   fassert( stream_class != 0 );
+   CoreObject *co = stream_class->asClass()->createInstance(stream);
+   vm->retval( co );
 }
 
 /*#
@@ -1390,7 +1418,25 @@ FALCON_FUNC  IOStream_creator ( ::Falcon::VMachine *vm )
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
       return;
    }
+   
+   URI furi( *fileName->asString() );
 
+   if ( !furi.isValid() )
+   {
+      throw new ParamError( ErrorParam( e_malformed_uri, __LINE__ )
+            .origin( e_orig_runtime )
+            .extra( *fileName->asString() )  );
+   }
+
+   // find the appropriage provider.
+   VFSProvider* vfs = Engine::getVFS( furi.scheme() );
+   if ( vfs == 0 )
+   {
+      throw new ParamError( ErrorParam( e_unknown_vfs, __LINE__ )
+            .origin( e_orig_runtime )
+            .extra( *fileName->asString() )  );
+   }
+   
    Item *osMode = vm->param(1);
    int mode;
 
@@ -1413,30 +1459,35 @@ FALCON_FUNC  IOStream_creator ( ::Falcon::VMachine *vm )
       return;
    }
 
-   ::Falcon::GenericStream::t_shareMode shMode = ::Falcon::GenericStream::e_smShareFull;
-   if ( fileShare != 0 )
-      shMode = (::Falcon::GenericStream::t_shareMode ) fileShare->asInteger();
+   ::Falcon::BaseFileStream::t_shareMode shMode = fileShare != 0 ? 
+         (::Falcon::BaseFileStream::t_shareMode) fileShare->forceInteger() :
+         ::Falcon::BaseFileStream::e_smShareFull;
 
-   FileStream *stream = new FileStream;
-   stream->open( *fileName->asString(), ::Falcon::GenericStream::e_omReadWrite, shMode );
+   VFSProvider::CParams params;
+   params.rdwr();
+   
+   if ( shMode == BaseFileStream::e_smExclusive )
+      params.shNone();
+   else if ( shMode == BaseFileStream::e_smShareRead )
+      params.shNoWrite();
 
-   if ( stream->lastError() != 0 )
+   params.createMode( mode );
+
+   vm->idle();
+   Stream *stream = vfs->open( furi, params );
+   vm->unidle();
+
+   if ( stream == 0 )
    {
-      stream->create( *fileName->asString(), (::Falcon::GenericStream::t_attributes) mode, shMode );
-      if ( stream->lastError() != 0 )
-      {
-         vm->raiseModError( new IoError( ErrorParam( 1109 ).origin( e_orig_runtime ).
-            desc( "Can't open file" ).extra(*fileName->asString()).sysError( (uint32) stream->lastError() ) ) );
-         delete stream;
-         return;
-      }
+      stream = vfs->create( furi, params );
+      if ( stream == 0 )
+         throw vfs->getLastError();
    }
 
    Item *stream_class = vm->findWKI( "Stream" );
    //if we wrote the std module, can't be zero.
    fassert( stream_class != 0 );
-   ::Falcon::CoreObject *co = stream_class->asClass()->createInstance();
-   co->setUserData( stream );
+   ::Falcon::CoreObject *co = stream_class->asClass()->createInstance( stream );
    vm->retval( co );
 }
 
@@ -1508,7 +1559,7 @@ FALCON_FUNC  _stdIn ( ::Falcon::VMachine *vm )
       //keep the stream
       internal_make_stream( vm, vm->stdIn()->clone(), -1 ); // this also returns the old stream
 
-      Stream *orig = (Stream *) p1->asObject()->getUserData();
+      Stream *orig = (Stream *) p1->asObject()->getFalconData();
       Stream *clone = (Stream *) orig->clone();
       if ( clone == 0 )
       {
@@ -1557,7 +1608,7 @@ FALCON_FUNC  _stdOut ( ::Falcon::VMachine *vm )
 
       //keep the stream
       internal_make_stream( vm, vm->stdOut()->clone(), -1 );
-      Stream *orig = (Stream *) p1->asObject()->getUserData();
+      Stream *orig = (Stream *) p1->asObject()->getFalconData();
       Stream *clone = (Stream *) orig->clone();
       if ( clone == 0 )
       {
@@ -1605,7 +1656,7 @@ FALCON_FUNC  _stdErr ( ::Falcon::VMachine *vm )
 
       //keep the stream
       internal_make_stream( vm, vm->stdErr()->clone(), -1 );
-      Stream *orig = (Stream *) p1->asObject()->getUserData();
+      Stream *orig = (Stream *) p1->asObject()->getFalconData();
       Stream *clone = (Stream *) orig->clone();
       if ( clone == 0 )
       {
@@ -1720,7 +1771,7 @@ FALCON_FUNC  systemErrorDescription ( ::Falcon::VMachine *vm )
       return;
    }
 
-   String *str = new GarbageString( vm );
+   CoreString *str = new CoreString;
    ::Falcon::Sys::_describeError( number->forceInteger(), *str );
    vm->retval( str );
 }
@@ -1756,10 +1807,10 @@ FALCON_FUNC  fileCopy ( ::Falcon::VMachine *vm )
    const String &source = *filename->asString();
    const String &dest = *filedest->asString();
 
-   ::Falcon::GenericStream::t_shareMode shMode = ::Falcon::GenericStream::e_smShareFull;
+   ::Falcon::BaseFileStream::t_shareMode shMode = ::Falcon::BaseFileStream::e_smShareFull;
 
    FileStream instream, outstream;
-   instream.open( source, ::Falcon::GenericStream::e_omReadOnly, shMode );
+   instream.open( source, ::Falcon::BaseFileStream::e_omReadOnly, shMode );
    if ( ! instream.good() )
    {
       vm->raiseModError( new IoError( ErrorParam( e_io_error, __LINE__ ).
@@ -1768,7 +1819,7 @@ FALCON_FUNC  fileCopy ( ::Falcon::VMachine *vm )
       return;
    }
 
-   outstream.create( dest, (Falcon::GenericStream::t_attributes) 0644, shMode );
+   outstream.create( dest, (Falcon::BaseFileStream::t_attributes) 0644, shMode );
    if ( ! outstream.good() )
    {
       instream.close();
@@ -1777,6 +1828,9 @@ FALCON_FUNC  fileCopy ( ::Falcon::VMachine *vm )
          sysError( (uint32) outstream.lastError() ) ) );
       return;
    }
+   
+   // Declaring the VM idle from now on.
+   VMachine::Pauser pauser( vm );
 
    byte buffer[4096];
    int count = 0;
@@ -1800,6 +1854,233 @@ FALCON_FUNC  fileCopy ( ::Falcon::VMachine *vm )
 
    instream.close();
    outstream.close();
+}
+
+/*#
+   @method setBuffering Stream
+   @brief Set the buffering state of this stream.
+   @param size Buffering size; pass 0 to disable.
+
+   This method activates or disactivates I/O buffering on this stream.
+   
+   When buffering is active, every read/write operation is first cached
+   in memory, provided the size of the memory buffer is wide enough to
+   store the data being written or to provide the data being read.
+   
+   Seek operations invalidate the buffer, that is automatically flushed
+   when necessary.
+   
+   Local filesystem providers and standard I/O streams are buffered
+   by default; other streams may be created with buffering enabled or not,
+   buffered or not depending on their and common usage patterns (network
+   streams are usually unbuffered).
+   
+   You may want to disable buffering when preparing binary data in memory,
+   or parsing big chunks of binary data at once via block (MemBuf) read/write
+   operations. However, notice that buffering is always optimizing when chunk width is
+   1/4 of the buffer size or less, and causes only minor overhead in the other cases.
+*/
+
+FALCON_FUNC  Stream_setBuffering ( ::Falcon::VMachine *vm )
+{
+   CoreObject *self = vm->self().asObject();
+   Stream *file = dyncast<Stream *>( self->getFalconData() );
+
+   Item *i_size = vm->param(0);
+
+   if ( i_size == 0 || ! i_size->isOrdinal() )
+   {
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+         .origin( e_orig_runtime )
+         .extra( "N") );
+   }
+   
+   int64 size = i_size->forceInteger();
+
+   // Buffering lies between transcoders and the final stream. 
+   // We need to find the first non-transcoder in the hierarcy.
+   
+   Stream *sub = file;
+   Transcoder* ts = 0;   // lowermost transcoder.
+   while( sub->isTranscoder() )
+   {
+      ts = dyncast<Transcoder*>( sub );
+      sub = ts->underlying();
+   }
+   
+   // detach the lowermost transcoder.
+   if ( ts != 0 )
+      ts->detach();
+   
+   // Ok, the sub stream may be a buffering stream or the final stream itself.
+   if ( sub->isStreamBuffer() )
+   {
+      StreamBuffer* sb = dyncast<StreamBuffer*>( sub );
+      // do we want to disable it?
+      if( size <= 0 )
+      {
+         sub = sb->underlying();
+         sb->flush();
+         sb->detach();
+         delete sb;
+      
+         // re-attach the unbuffered stream to the transcoders, 
+         //    or set it as the new user data.
+         if( ts != 0 )
+         {
+            // reflected streams are always owned.
+            ts->setUnderlying( sub, true ); 
+         }
+         else
+            self->setUserData( sub );
+      }
+      else
+      {
+         // we just want to resize it.
+         if ( ! sb->resizeBuffer( (uint32) size ) )
+         {
+            throw new IoError( ErrorParam( e_io_error, __LINE__ )
+               .origin( e_orig_runtime )
+               .sysError( (uint32) sb->underlying()->lastError() ) );
+         }
+      }
+   }
+   else
+   {
+      // if we want to enable it, we need to create a bufferer.
+      if ( size > 0 )
+      {
+         StreamBuffer* sb = new StreamBuffer( sub, true, (uint32) size );
+         // attach the newly buffered stream to the transcoders, 
+         //    or set it as the new user data.
+         if( ts != 0 )
+         {
+            // reflected streams are always owned.
+            ts->setUnderlying( sb, true ); 
+         }
+         else
+            self->setUserData( sb );
+      }
+   }
+}
+
+/*#
+   @method getBuffering Stream
+   @brief Returns the size of I/O buffering active on this stream.
+   @return 0 if the stream is unbuffered or a positive number if it is buffered.
+
+   @see setBuffering
+*/
+
+FALCON_FUNC  Stream_getBuffering ( ::Falcon::VMachine *vm )
+{
+   CoreObject *self = vm->self().asObject();
+   Stream *file = dyncast<Stream *>( self->getFalconData() );
+
+   // Buffering lies between transcoders and the final stream. 
+   // We need to find the first non-transcoder in the hierarcy.
+   Stream *sub = file;
+   while( sub->isTranscoder() )
+   {
+      Transcoder* ts = dyncast<Transcoder*>( sub );
+      sub = ts->underlying();
+   }
+   
+   // if it's a streambuffer, we have buffering enabled
+   if( sub->isStreamBuffer() )
+   {
+      StreamBuffer* sb = dyncast<StreamBuffer*>( sub );
+      vm->retval( (int64) sb->bufferSize() );
+   }
+   else {
+      // buffering is disabled.
+      vm->retval( 0 );
+   }
+}
+
+/*#
+   @method setEncoding Stream
+   @brief Set the text encoding and EOL mode for text-based operations.
+   @param encoding Name of the encoding that is used for the stream.
+   @optparam EOLMode How to treat end of line indicators.
+
+   This method sets an encoding that will affect readText() and writeText() methods.
+   Provided encodings are:
+   - "utf-8"
+   - "utf-16"
+   - "utf-16BE"
+   - "utf-16LE"
+   - "iso8859-1" to "iso8859-15"
+   - "cp1252"
+   - "C" (byte oriented – writes byte per byte)
+
+   As EOL manipulation is also part of the text operations, this function allows to
+   chose how to deal with EOL characters stored in Falcon strings when writing data
+   and how to parse incoming EOL. Available values are:
+   - CR_TO_CR: CR and LF characters are untranslated
+   - CR_TO_CRLF: When writing, CR (“\n”) is translated into CRLF, when reading CRLF is translated into a single “\n”
+   - SYSTEM_DETECT: use host system policy.
+
+   If not provided, this parameter defaults to SYSTEM_DETECT.
+
+   If the given encoding is unknown, a ParamError is raised.
+*/
+
+FALCON_FUNC  Stream_setEncoding ( ::Falcon::VMachine *vm )
+{
+   CoreObject *self = vm->self().asObject();
+   Stream *file = dyncast<Stream *>( self->getFalconData() );
+
+   Item *i_encoding = vm->param(0);
+   Item *i_eolMode = vm->param(1);
+
+   if ( i_encoding == 0 || ! i_encoding->isString() )
+   {
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
+      return;
+   }
+
+   int mode = ( i_eolMode == 0 ? SYSTEM_DETECT : (int) i_eolMode->forceInteger());
+   if( mode != SYSTEM_DETECT && mode != CR_TO_CR && mode != CR_TO_CRLF )
+   {
+      mode = SYSTEM_DETECT;
+   }
+   
+   // find the first non-transcoder stream entity
+   while( file->isTranscoder() )
+   {
+      Transcoder* tc = dyncast<Transcoder *>(file);
+      file = tc->underlying();
+      tc->detach();
+      delete tc;
+   }
+
+   // just in case, set the stream back in place.
+   self->setUserData( file );
+   
+   Transcoder *trans = TranscoderFactory( *(i_encoding->asString()), file, true );
+
+   if ( trans == 0 )
+   {
+      vm->raiseModError( new ParamError( ErrorParam( e_param_range, __LINE__ ).origin( e_orig_runtime ) ) );
+      return;
+   }
+
+   Stream *final;
+   if ( mode == SYSTEM_DETECT )
+   {
+      final = AddSystemEOL( trans );
+   }
+   else if( mode == CR_TO_CRLF )
+   {
+      final = new TranscoderEOL( trans, true );
+   }
+   else
+      final = trans;
+
+   self->setUserData( final );
+   self->setProperty( "encoding", *i_encoding );
+   self->setProperty( "eolMode", (int64) mode );
 }
 
 

@@ -83,7 +83,7 @@ FALCON_FUNC  input ( ::Falcon::VMachine *vm )
    }
 
    mem[size] = 0;
-   String *str = new GarbageString( vm );
+   CoreString *str = new CoreString;
    str->bufferize( mem );
    vm->retval( str );
 }

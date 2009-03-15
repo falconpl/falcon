@@ -22,9 +22,9 @@ array1 = [ "Hello", "world", "an item", 1, 2.2, nil, [2:3] ]
 array2 = [ "a", "nested", array1, "array" ]
 dict = [ "elem1" => array1, "elem2" => array2 ]
 
-serialize( stream, array1 )
-serialize( stream, dict )
-serialize( stream, array2 )
+serialize( array1, stream )
+serialize( dict, stream )
+serialize( array2, stream )
 
 stream.seek(0)
 

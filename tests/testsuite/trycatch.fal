@@ -46,7 +46,7 @@ catch in e
    a = e
 end
 
-if e != "test": failure( "raise" )
+if a != "test": failure( "raise" )
 
 success()
 

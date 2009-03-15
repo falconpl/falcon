@@ -24,7 +24,7 @@
 #include <falcon/citerator.h>
 #include <falcon/vm.h>
 #include "core_module.h"
-#include "core_messages.h"
+#include <falcon/eng_messages.h>
 
 /*#
    
@@ -80,7 +80,6 @@ FALCON_FUNC  List_init ( ::Falcon::VMachine *vm )
    }
 
    vm->self().asObject()->setUserData( list );
-
 }
 
 /*#

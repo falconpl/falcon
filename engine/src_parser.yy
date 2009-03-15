@@ -94,8 +94,7 @@ inline int flc_src_lex (void *lvalp, void *yyparam)
 %token FORFIRST FORLAST FORMIDDLE
 %token SWITCH CASE DEFAULT
 %token SELECT
-%token SENDER SELF
-%token GIVE
+%token SELF
 %token TRY CATCH RAISE
 %token CLASS FROM OBJECT
 %token RETURN
@@ -105,8 +104,6 @@ inline int flc_src_lex (void *lvalp, void *yyparam)
 %token LOAD
 %token LAUNCH
 %token CONST_KW
-%token ATTRIBUTES
-%token PASS
 %token EXPORT
 %token IMPORT
 %token DIRECTIVE
@@ -123,7 +120,7 @@ inline int flc_src_lex (void *lvalp, void *yyparam)
 /* Special token used by the parser to generate a parse print */
 %token <stringp> OUTER_STRING
 
-%token CLOSEPAR OPENPAR CLOSESQUARE OPENSQUARE DOT
+%token CLOSEPAR OPENPAR CLOSESQUARE OPENSQUARE DOT OPEN_GRAPH CLOSE_GRAPH
 /*
    Assigning rule precendence: immediate operations have maximum precedence, being resolved immediately,
    then the assignment gets more precendece than the expressions (OP_EQ is preferibily parsed as an
@@ -141,7 +138,7 @@ inline int flc_src_lex (void *lvalp, void *yyparam)
 %left AND
 %right NOT
 %left EEQ NEQ GT LT GE LE
-%left HAS HASNT OP_IN OP_NOTIN PROVIDES
+%left OP_IN OP_NOTIN PROVIDES
 %right ATSIGN DIESIS
 %left VBAR_VBAR CAP_CAP
 %left AMPER_AMPER
@@ -157,8 +154,8 @@ inline int flc_src_lex (void *lvalp, void *yyparam)
 %type <fal_adecl> symbol_list
 %type <fal_ddecl> expression_pair_list
 %type <fal_genericList> import_symbol_list
-%type <fal_val> expression func_call nameless_func nameless_closure lambda_expr iif_expr
-%type <fal_val> for_to_expr for_to_step_clause
+%type <fal_val> expression func_call nameless_func innerfunc nameless_block lambda_expr iif_expr
+%type <fal_val> for_to_expr for_to_step_clause loop_terminator
 %type <fal_val> switch_decl select_decl while_decl while_short_decl
 %type <fal_val> if_decl if_short_decl elif_decl
 %type <fal_val> const_atom var_atom  atomic_symbol /* atom */
@@ -168,18 +165,17 @@ inline int flc_src_lex (void *lvalp, void *yyparam)
 %type <fal_stat> toplevel_statement statement while_statement if_statement
 %type <fal_stat> forin_statement switch_statement fordot_statement
 %type <fal_stat> select_statement
-%type <fal_stat> give_statement try_statement raise_statement return_statement global_statement
+%type <fal_stat> try_statement raise_statement return_statement global_statement
 %type <fal_stat> base_statement
 %type <fal_stat> launch_statement
-%type <fal_stat> pass_statement
 %type <fal_stat> func_statement
 %type <fal_stat> self_print_statement
 %type <fal_stat> enum_statement
-%type <fal_stat> class_decl object_decl property_decl attributes_statement export_statement directive_statement
+%type <fal_stat> class_decl object_decl property_decl export_statement directive_statement
 %type <fal_stat> import_statement
 %type <fal_stat> def_statement
+%type <fal_stat> loop_statement
 %type <fal_stat> outer_print_statement
-
 
 
 %type <fal_stat> const_statement
@@ -243,7 +239,6 @@ toplevel_statement:
    | const_statement /* no action */
    | export_statement /* no action */
    | import_statement /* no action */
-   | attributes_statement /* no action */
 ;
 
 INTNUM_WITH_MINUS:
@@ -305,19 +300,18 @@ base_statement:
 
    | def_statement /* no action  -- at the moment def_statement always returns 0*/
    | while_statement
+   | loop_statement
    | forin_statement
    | switch_statement
    | select_statement
    | if_statement
    | break_statement
    | continue_statement
-   | give_statement
    | try_statement
    | raise_statement
    | return_statement
    | global_statement
    | launch_statement
-   | pass_statement
    | fordot_statement
    | self_print_statement
    | outer_print_statement
@@ -368,14 +362,44 @@ while_statement:
 
 while_decl:
    WHILE expression EOL { $$ = $2; }
-   | LOOP { $$ = 0; }
    | WHILE error EOL { COMPILER->raiseError(Falcon::e_syn_while ); $$ = 0; }
 ;
 
 while_short_decl:
    WHILE expression COLON { $$ = $2; }
-   | LOOP COLON { $$ = 0; }
    | WHILE error COLON { COMPILER->raiseError(Falcon::e_syn_while, "", CURRENT_LINE ); $$ = 0; }
+;
+
+loop_statement:
+   LOOP EOL {
+         Falcon::StmtLoop *w = new Falcon::StmtLoop( LINE );
+         COMPILER->pushLoop( w );
+         COMPILER->pushContext( w );
+         COMPILER->pushContextSet( &w->children() );
+      }
+      statement_list END loop_terminator EOL
+      {
+         Falcon::StmtLoop *w = static_cast<Falcon::StmtLoop* >(COMPILER->getContext());
+         w->setCondition($6);
+         COMPILER->popLoop();
+         COMPILER->popContext();
+         COMPILER->popContextSet();
+         $$ = w;
+      }
+   | LOOP COLON statement {
+         Falcon::StmtLoop *w = new Falcon::StmtLoop( LINE );
+         if ( $3 != 0 )
+            w->children().push_back( $3 );
+         $$ = w;
+      }
+   | LOOP error EOL {
+      COMPILER->raiseError( Falcon::e_syn_loop );
+   }
+;
+
+loop_terminator:
+   { $$=0; }
+   | expression { $$ = $1; }
 ;
 
 if_statement:
@@ -501,7 +525,7 @@ continue_statement:
 
 
 forin_statement:
-   FOR symbol_list OP_IN expression 
+   FOR symbol_list OP_IN expression
       {
          Falcon::StmtForin *f;
          Falcon::ArrayDecl *decl = $2;
@@ -516,9 +540,9 @@ forin_statement:
          COMPILER->pushContext( f );
          COMPILER->pushContextSet( &f->children() );
       }
-      
+
       forin_rest
-      
+
       {
          Falcon::StmtForin *f = static_cast<Falcon::StmtForin *>(COMPILER->getContext());
          COMPILER->popLoop();
@@ -526,7 +550,7 @@ forin_statement:
          COMPILER->popContextSet();
          $$ = f;
       }
-      
+
    | FOR atomic_symbol OP_EQ for_to_expr
       {
          Falcon::StmtForin *f;
@@ -536,9 +560,9 @@ forin_statement:
          COMPILER->pushContext( f );
          COMPILER->pushContextSet( &f->children() );
       }
-      
+
       forin_rest
-      
+
       {
          Falcon::StmtForin *f = static_cast<Falcon::StmtForin *>(COMPILER->getContext());
          COMPILER->popLoop();
@@ -546,8 +570,8 @@ forin_statement:
          COMPILER->popContextSet();
          $$ = f;
       }
-      
-      
+
+
    | FOR symbol_list OP_IN error EOL
       { delete $2;
          COMPILER->raiseError( Falcon::e_syn_forin );
@@ -566,17 +590,17 @@ forin_rest:
          if ( $2 != 0 )
             COMPILER->addStatement( $2 );
       }
-      
+
    | EOL
       forin_statement_list
       END EOL
 ;
-      
+
 
 for_to_expr:
    expression OP_TO expression for_to_step_clause
       {
-         Falcon::RangeDecl* rd = new Falcon::RangeDecl( $1, 
+         Falcon::RangeDecl* rd = new Falcon::RangeDecl( $1,
             new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_oob, $3)), $4 );
          $$ = new Falcon::Value( rd );
       }
@@ -1066,23 +1090,6 @@ selcase_element:
 ;
 
 /*****************************************************
-   give statement
-******************************************************/
-
-give_statement:
-   GIVE expression_list OP_TO expression_list EOL
-      {
-         $$ = new Falcon::StmtGive( LINE, $4, $2 );
-      }
-   | GIVE expression_list error EOL
-      {
-         $$ = new Falcon::StmtGive( LINE, 0, $2 );
-         COMPILER->raiseError(Falcon::e_syn_give );
-      }
-   | GIVE error EOL { COMPILER->raiseError(Falcon::e_syn_give ); $$ = 0; }
-;
-
-/*****************************************************
    Try statement
 ******************************************************/
 
@@ -1410,46 +1417,6 @@ launch_statement:
 ;
 
 /**********************************************************
-   Pass Statement
-***********************************************************/
-
-pass_statement:
-   PASS expression EOL
-      {
-         if ( COMPILER->getFunction() == 0 )
-            COMPILER->raiseError(Falcon::e_pass_outside );
-         else
-            $$ = new Falcon::StmtPass( LINE, $2 );
-      }
-   | PASS expression OP_IN expression EOL
-      {
-         // define the expression anyhow so we don't have fake errors below
-         if ( COMPILER->getFunction() == 0 )
-         {
-            COMPILER->raiseError(Falcon::e_pass_outside );
-            /*delete $2;
-            delete $4;*/
-            $$ = 0;
-         }
-         else {
-            COMPILER->defineVal( $4 );
-            $$ = new Falcon::StmtPass( LINE, $2, $4 );
-         }
-      }
-   | PASS expression OP_IN error EOL
-      {
-         delete $2;
-         COMPILER->raiseError(Falcon::e_syn_pass_in );
-         $$ = 0;
-      }
-   | PASS error EOL
-      {
-         COMPILER->raiseError(Falcon::e_syn_pass );
-         $$ = 0;
-      }
-;
-
-/**********************************************************
    Const Statement
 ***********************************************************/
 
@@ -1680,56 +1647,6 @@ directive_pair:
 ;
 
 
-/**********************************************************
-   Attributes Statement
-***********************************************************/
-
-attributes_statement:
-   attributes_decl
-      attribute_vert_list
-      END EOL
-      {
-         // no other action:
-         $$ = 0;
-      }
-   | attributes_short_decl
-      attribute_list
-      EOL
-      {
-         // no other action:
-         $$ = 0;
-      }
-;
-
-attributes_decl:
-   ATTRIBUTES EOL
-   | ATTRIBUTES error EOL { COMPILER->raiseError(Falcon::e_syn_attributes ); }
-
-attributes_short_decl:
-   ATTRIBUTES COLON
-   | ATTRIBUTES error COLON { COMPILER->raiseError(Falcon::e_syn_attributes, "", CURRENT_LINE ); }
-;
-
-attribute_list:
-   /* nothing */
-   | SYMBOL
-         {
-            COMPILER->addAttribute( $1 );
-         }
-   | attribute_list COMMA SYMBOL
-         {
-            COMPILER->addAttribute( $3 );
-         }
-;
-
-attribute_vert_list:
-   attribute_list EOL
-   | attribute_vert_list attribute_list EOL
-   | error EOL
-   {
-      COMPILER->raiseError(Falcon::e_inv_attrib );
-   }
-;
 
 /**********************************************************
    Class Declaration
@@ -1769,11 +1686,9 @@ class_decl:
 
       class_statement_list
 
-      has_list
-
       END EOL {
          $$ = COMPILER->getContext();
-         
+
          // check for expressions in from clauses
          COMPILER->checkLocalUndefined();
 
@@ -1974,43 +1889,6 @@ property_decl:
    }
 ;
 
-has_list:
-   /* nothing */
-   | HAS has_clause_list EOL
-   | HAS error EOL
-   {
-      COMPILER->raiseError(Falcon::e_syn_hasdef );
-   }
-;
-
-has_clause_list:
-   SYMBOL
-      {
-         Falcon::StmtClass *cls = static_cast<Falcon::StmtClass *>( COMPILER->getContext() );
-         Falcon::ClassDef *clsdef = cls->symbol()->getClassDef();
-
-         // The symbolmay be undefined or defined; it's not our task to define it here.
-         clsdef->has().pushBack( COMPILER->addGlobalSymbol( $1 ) );
-      }
-   | NOT SYMBOL
-      {
-         Falcon::StmtClass *cls = static_cast<Falcon::StmtClass *>( COMPILER->getContext() );
-         Falcon::ClassDef *clsdef = cls->symbol()->getClassDef();
-         clsdef->hasnt().pushBack( COMPILER->addGlobalSymbol( $2 ) );
-      }
-   | has_clause_list COMMA SYMBOL
-      {
-         Falcon::StmtClass *cls = static_cast<Falcon::StmtClass *>( COMPILER->getContext() );
-         Falcon::ClassDef *clsdef = cls->symbol()->getClassDef();
-         clsdef->has().pushBack( COMPILER->addGlobalSymbol( $3 ) );
-      }
-   | has_clause_list COMMA NOT SYMBOL
-      {
-         Falcon::StmtClass *cls = static_cast<Falcon::StmtClass *>( COMPILER->getContext() );
-         Falcon::ClassDef *clsdef = cls->symbol()->getClassDef();
-         clsdef->hasnt().pushBack( COMPILER->addGlobalSymbol( $4 ) );
-      }
-;
 
 /*****************************************************
    ENUM declaration
@@ -2129,12 +2007,10 @@ object_decl:
 
       object_statement_list
 
-      has_list
-
       END EOL {
          $$ = COMPILER->getContext();
          Falcon::StmtClass *cls = static_cast<Falcon::StmtClass *>($$);
-         
+
          // check for expressions in from clauses
          COMPILER->checkLocalUndefined();
 
@@ -2285,7 +2161,6 @@ atomic_symbol:
 var_atom:
    atomic_symbol
    | SELF { $$ = new Falcon::Value(); $$->setSelf(); }
-   | SENDER { $$ = new Falcon::Value(); $$->setSender(); }
 ;
 
 /* Currently not needed
@@ -2299,6 +2174,7 @@ expression:
      const_atom
    | var_atom
    | AMPER SYMBOL { $$ = new Falcon::Value(); $$->setLBind( $2 ); /* do not add the symbol to the compiler */ }
+   | AMPER INTNUM { char space[32]; sprintf(space, "%d", (int)$2 ); $$ = new Falcon::Value(); $$->setLBind( COMPILER->addString(space) ); }
    | AMPER SELF { $$ = new Falcon::Value(); $$->setLBind( COMPILER->addString("self") ); /* do not add the symbol to the compiler */ }
    | MINUS expression %prec NEG { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_neg, $2 ) ); }
    | SYMBOL VBAR expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_fbind, new Falcon::Value($1), $3) ); }
@@ -2327,8 +2203,6 @@ expression:
    | expression AND expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_and, $1, $3 ) ); }
    | expression OR expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_or, $1, $3 ) ); }
    | NOT expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_not, $2 ) ); }
-   | expression HAS expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_has, $1, $3 ) ); }
-   | expression HASNT expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_hasnt, $1, $3 ) ); }
    | expression OP_IN expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_in, $1, $3 ) ); }
    | expression OP_NOTIN expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_notin, $1, $3 ) ); }
    | expression PROVIDES SYMBOL { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_provides, $1, new Falcon::Value( $3 ) ) ); }
@@ -2343,7 +2217,8 @@ expression:
    | CAP_XOROOB expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_xoroob, $2 ) ); }
    | lambda_expr
    | nameless_func
-   | nameless_closure
+   | nameless_block
+   | innerfunc
    | func_call
    | iif_expr
    | dotarray_decl
@@ -2486,6 +2361,58 @@ nameless_func:
          }
 ;
 
+nameless_block:
+   OPEN_GRAPH
+      {
+         Falcon::FuncDef *def = new Falcon::FuncDef( 0, 0 );
+         // set the def as a lambda.
+         COMPILER->incLambdaCount();
+         COMPILER->incClosureContext();
+         int id = COMPILER->lambdaCount();
+         // find the global symbol for this.
+         char buf[48];
+         sprintf( buf, "_lambda#_id_%d", id );
+         Falcon::String *name = COMPILER->addString( buf );
+         Falcon::Symbol *sym = COMPILER->searchGlobalSymbol( name );
+
+         // Not defined?
+         fassert( sym == 0 );
+         sym = COMPILER->addGlobalSymbol( name );
+
+         // anyhow, also in case of error, destroys the previous information to allow a correct parsing
+         // of the rest.
+         sym->setFunction( def );
+
+         Falcon::StmtFunction *func = new Falcon::StmtFunction( COMPILER->lexer()->line(), sym );
+         COMPILER->addFunction( func );
+         func->setLambda( id );
+         // prepare the statement allocation context
+         COMPILER->pushContext( func );
+         COMPILER->pushFunctionContext( func );
+         COMPILER->pushContextSet( &func->statements() );
+         COMPILER->pushFunction( def );
+      }
+      nameless_block_decl_inner
+      static_block
+
+      statement_list
+
+      CLOSE_GRAPH {
+         Falcon::StatementList *stmt = COMPILER->getContextSet();
+         if( stmt->size() == 1 && stmt->back()->type() == Falcon::Statement::t_autoexp )
+         {
+            // wrap it around a return, so A is not nilled.
+            Falcon::StmtAutoexpr *ae = static_cast<Falcon::StmtAutoexpr *>( stmt->pop_back() );
+            stmt->push_back( new Falcon::StmtReturn( 1, ae->value()->clone() ) );
+
+            // we don't need the expression anymore.
+            delete ae;
+         }
+
+         $$ = COMPILER->closeClosure();
+      }
+;
+
 nameless_func_decl_inner:
    OPENPAR param_list CLOSEPAR EOL
    | OPENPAR param_list error
@@ -2498,7 +2425,19 @@ nameless_func_decl_inner:
       }
 ;
 
-nameless_closure:
+nameless_block_decl_inner:
+   param_list ARROW
+   | param_list error
+      {
+         COMPILER->raiseContextError(Falcon::e_syn_funcdecl, LINE, CTX_LINE );
+      }
+   | error ARROW
+      {
+         COMPILER->raiseError(Falcon::e_syn_funcdecl );
+      }
+;
+
+innerfunc:
    INNERFUNC
       {
          Falcon::FuncDef *def = new Falcon::FuncDef( 0, 0 );

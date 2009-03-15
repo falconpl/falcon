@@ -81,7 +81,6 @@ InteractiveCompiler::t_ret_type InteractiveCompiler::compileNext( Stream *input 
 {
    // ensure we're talking the same language...
    m_stream = input;
-   m_vm->errorHandler( errorHandler() );
 
    // reset if last code was executed.
    m_contextSet.clear();
@@ -92,6 +91,7 @@ InteractiveCompiler::t_ret_type InteractiveCompiler::compileNext( Stream *input 
 
    delete m_root;
    m_root = new SourceTree;
+  
 
    pushContextSet( &m_root->statements() );
 
@@ -146,21 +146,10 @@ InteractiveCompiler::t_ret_type InteractiveCompiler::compileNext( Stream *input 
    // some errors during compilation?
    if( m_errors != 0 )
    {
-      // do we still need to raise?
-      if ( m_delayRaise && m_rootError != 0 && m_errhand != 0 )
-      {
-         m_errhand->handleError( m_rootError );
-         // TODO: Really?
-      }
-
-      if ( m_rootError != 0 )
-      {
-         m_rootError->decref();
-         m_rootError = 0;
-      }
-
       // but do not reset errors, the onwer may want to know.
-      return e_error;
+      Error *err = m_rootError;
+      m_rootError = 0;
+      throw err;
    }
 
    if ( m_lexer->hasOpenContexts() )
@@ -223,28 +212,24 @@ InteractiveCompiler::t_ret_type InteractiveCompiler::compileNext( Stream *input 
       if ( init != 0 )
       {
          ListElement *from_iter = cls->symbol()->getClassDef()->inheritance().begin();
-         while( from_iter != 0 )
-         {
-            const InheritDef *def = (const InheritDef *) from_iter->data();
-            const Symbol *parent = def->base();
-            // it's just an import
-            if ( ! m_vm->linkSymbol( parent, m_lmodule ) )
-               return e_vm_error;
-            from_iter = from_iter->next();
-         }
-
-         if ( ! m_vm->linkCompleteSymbol( init->symbol(), m_lmodule ) )
-            return e_vm_error;
+            while( from_iter != 0 )
+            {
+               const InheritDef *def = (const InheritDef *) from_iter->data();
+               const Symbol *parent = def->base();
+               // it's just an import
+               m_vm->linkSymbol( parent, m_lmodule );
+               from_iter = from_iter->next();
+            }
+            
+            m_vm->linkCompleteSymbol( init->symbol(), m_lmodule );
       }
 
-      if ( ! m_vm->linkCompleteSymbol( cls->symbol(), m_lmodule ) )
-         return e_vm_error;
+      m_vm->linkCompleteSymbol( cls->symbol(), m_lmodule );
 
       Symbol *singleton = cls->singleton();
       if ( singleton != 0 )
       {
-         if ( ! m_vm->linkCompleteSymbol( singleton, m_lmodule ) )
-            return e_vm_error;
+         m_vm->linkCompleteSymbol( singleton, m_lmodule );
       }
 
       if ( ret == e_nothing )
@@ -256,12 +241,7 @@ InteractiveCompiler::t_ret_type InteractiveCompiler::compileNext( Stream *input 
    while ( ! m_root->functions().empty() )
    {
       StmtFunction *func = static_cast<StmtFunction *>( m_root->functions().front() );
-
-      if ( ! m_vm->linkCompleteSymbol( func->symbol(), m_lmodule ) )
-      {
-         // perform the unroll
-         return e_vm_error;
-      }
+      m_vm->linkCompleteSymbol( func->symbol(), m_lmodule );
 
       if ( ret == e_nothing )
          ret = e_decl;
@@ -281,12 +261,18 @@ InteractiveCompiler::t_ret_type InteractiveCompiler::compileNext( Stream *input 
           m_lmodule->globals().itemAt( sym->itemId() ).isNil() )
           )
       {
-         if ( ! m_vm->linkSymbol( sym, m_lmodule ) )
+         try 
+         {
+            m_vm->linkSymbol( sym, m_lmodule );
+         }
+         catch( Error *e )
          {
             // but continue to expose other errors as well.
             success = false;
+            
             // prevent searching again
             sym->setGlobal();
+            raiseError( e );
          }
       }
 
@@ -296,14 +282,16 @@ InteractiveCompiler::t_ret_type InteractiveCompiler::compileNext( Stream *input 
 
    // re-link failed?
    if ( ! success )
-      return e_error;
+   {
+      Error *e = m_rootError;
+      m_rootError = 0;
+      throw e;
+   }
 
    // launch the vm.
    if ( ret == e_statement || ret == e_call || ret == e_expression )
    {
       m_vm->launch();
-      if ( m_vm->hadError() )
-         return e_error;
    }
 
    return ret;

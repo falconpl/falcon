@@ -22,7 +22,7 @@
 #include <falcon/item.h>
 #include <falcon/carray.h>
 #include <falcon/cdict.h>
-#include <falcon/cobject.h>
+#include <falcon/coreobject.h>
 #include <falcon/vm.h>
 
 /*#

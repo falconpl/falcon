@@ -16,7 +16,6 @@ ENDIF(WIN32)
 ADD_EXECUTABLE( faltest
    faltest.cpp
    fal_testsuite.cpp
-   fteh.cpp
    scriptdata.cpp
    ${SYS_RC}
 )

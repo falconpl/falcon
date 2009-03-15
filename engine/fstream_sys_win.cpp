@@ -52,19 +52,19 @@ FileSysData *WinFileSysData::dup()
    return new WinFileSysData( dupped, m_lastError, m_isConsole, m_direction, m_isPipe );
 }
 
-GenericStream::GenericStream( const GenericStream &gs ):
+BaseFileStream::BaseFileStream( const BaseFileStream &gs ):
    Stream( gs )
 {
    m_fsData = gs.m_fsData->dup();
 }
 
-GenericStream::~GenericStream()
+BaseFileStream::~BaseFileStream()
 {
    close();
    delete m_fsData;
 }
 
-bool GenericStream::close()
+bool BaseFileStream::close()
 {
    WinFileSysData *data = static_cast< WinFileSysData *>( m_fsData );
 
@@ -82,7 +82,7 @@ bool GenericStream::close()
    return true;
 }
 
-int32 GenericStream::read( void *buffer, int32 size )
+int32 BaseFileStream::read( void *buffer, int32 size )
 {
    WinFileSysData *data = static_cast< WinFileSysData *>( m_fsData );
 
@@ -102,7 +102,7 @@ int32 GenericStream::read( void *buffer, int32 size )
    return result;
 }
 
-int32 GenericStream::write( const void *buffer, int32 size )
+int32 BaseFileStream::write( const void *buffer, int32 size )
 {
    WinFileSysData *data = static_cast< WinFileSysData *>( m_fsData );
 
@@ -118,15 +118,15 @@ int32 GenericStream::write( const void *buffer, int32 size )
    return result;
 }
 
-bool GenericStream::put( uint32 chr )
+bool BaseFileStream::put( uint32 chr )
 {
    byte b = (byte) chr;
    return write( &b, 1 ) == 1;
 }
 
-bool GenericStream::get( uint32 &chr )
+bool BaseFileStream::get( uint32 &chr )
 {
-	if( popBuffer( chr ) )
+   if( popBuffer( chr ) )
       return true;
 
    byte b;
@@ -139,7 +139,7 @@ bool GenericStream::get( uint32 &chr )
 }
 
 
-int64 GenericStream::seek( int64 pos, e_whence whence )
+int64 BaseFileStream::seek( int64 pos, e_whence whence )
 {
    WinFileSysData *data = static_cast< WinFileSysData *>( m_fsData );
 
@@ -174,7 +174,7 @@ int64 GenericStream::seek( int64 pos, e_whence whence )
 }
 
 
-int64 GenericStream::tell()
+int64 BaseFileStream::tell()
 {
    WinFileSysData *data = static_cast< WinFileSysData *>( m_fsData );
 
@@ -192,7 +192,7 @@ int64 GenericStream::tell()
 }
 
 
-bool GenericStream::truncate( int64 pos )
+bool BaseFileStream::truncate( int64 pos )
 {
    WinFileSysData *data = static_cast< WinFileSysData *>( m_fsData );
 
@@ -222,7 +222,7 @@ bool GenericStream::truncate( int64 pos )
    return true;
 }
 
-bool GenericStream::errorDescription( ::Falcon::String &description ) const
+bool BaseFileStream::errorDescription( ::Falcon::String &description ) const
 {
 	if ( Stream::errorDescription( description ) )
       return true;
@@ -258,14 +258,14 @@ bool GenericStream::errorDescription( ::Falcon::String &description ) const
 
 }
 
-int64 GenericStream::lastError() const
+int64 BaseFileStream::lastError() const
 {
    WinFileSysData *data = static_cast< WinFileSysData *>( m_fsData );
    return (int64) data->m_lastError;
 }
 
 
-int GenericStream::readAvailable( int32 msec, const Sys::SystemData *sysData )
+int BaseFileStream::readAvailable( int32 msec, const Sys::SystemData *sysData )
 {
    WinFileSysData *data = static_cast< WinFileSysData *>( m_fsData );
 
@@ -332,7 +332,7 @@ int GenericStream::readAvailable( int32 msec, const Sys::SystemData *sysData )
    return 1;
 }
 
-int32 GenericStream::writeAvailable( int32 msec, const Sys::SystemData *sysData )
+int32 BaseFileStream::writeAvailable( int32 msec, const Sys::SystemData *sysData )
 {
    WinFileSysData *data = static_cast< WinFileSysData *>( m_fsData );
 
@@ -373,7 +373,7 @@ int32 GenericStream::writeAvailable( int32 msec, const Sys::SystemData *sysData 
    return 1;
 }
 
-bool GenericStream::writeString( const String &content, uint32 begin, uint32 end )
+bool BaseFileStream::writeString( const String &content, uint32 begin, uint32 end )
 {
    WinFileSysData *data = static_cast< WinFileSysData *>( m_fsData );
    uint32 done = begin;
@@ -384,7 +384,7 @@ bool GenericStream::writeString( const String &content, uint32 begin, uint32 end
 
    while ( done < stop )
    {
-		DWORD result;
+      DWORD result;
       if (! WriteFile( data->m_handle, content.getRawStorage() + done, content.size() - done, &result, NULL ) )
       {
          setError( GetLastError() );
@@ -400,7 +400,7 @@ bool GenericStream::writeString( const String &content, uint32 begin, uint32 end
 }
 
 
-bool GenericStream::readString( String &content, uint32 size )
+bool BaseFileStream::readString( String &content, uint32 size )
 {
    // TODO OPTIMIZE
    uint32 chr;
@@ -423,7 +423,7 @@ bool GenericStream::readString( String &content, uint32 size )
    return false;
 }
 
-void GenericStream::setError( int64 errorCode )
+void BaseFileStream::setError( int64 errorCode )
 {
    WinFileSysData *data = static_cast< WinFileSysData *>( m_fsData );
    data->m_lastError = (uint32) errorCode;
@@ -433,9 +433,9 @@ void GenericStream::setError( int64 errorCode )
       status( (t_status) (((int)status()) & ~(int)Stream::t_error ));
 }
 
-FalconData *GenericStream::clone() const
+FalconData *BaseFileStream::clone() const
 {
-   GenericStream *gs = new GenericStream( *this );
+   BaseFileStream *gs = new BaseFileStream( *this );
    if ( gs->m_fsData == 0 )
    {
       delete gs;
@@ -450,7 +450,7 @@ FalconData *GenericStream::clone() const
 //
 
 FileStream::FileStream():
-   GenericStream( t_file, new WinFileSysData( INVALID_HANDLE_VALUE, 0 ) )
+   BaseFileStream( t_file, new WinFileSysData( INVALID_HANDLE_VALUE, 0 ) )
 {
    status( t_none );
 }

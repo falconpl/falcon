@@ -24,8 +24,8 @@ end
 
 top = Top( "first",  "second", "third" )
 
-if top.Base.type() != ClassMethodType: failure( "Base class - type" )
-if top.Middle.type() != ClassMethodType: failure( "Middle class - type" )
+if top.Base.typeId() != ClassMethodType: failure( "Base class - type" )
+if top.Middle.typeId() != ClassMethodType: failure( "Middle class - type" )
 if top.alpha != "second": failure( "Top - alpha" )
 if top.beta != "third": failure( "Top - beta" )
 if top.gamma != "Middle": failure( "Top - gamma" )

@@ -14,7 +14,6 @@
 // named with self
 import test1 from self.imported
 
-
 if imported.test1() != "From test1"
    failure( "import test1 from import_self = first" )
 end

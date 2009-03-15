@@ -22,9 +22,12 @@
 
 #include <falcon/setup.h>
 #include <falcon/memory.h>
-#include <falcon/objectmanager.h>
+#include <falcon/basealloc.h>
 
 namespace Falcon {
+
+class MemPool;
+class Stream;
 
 /** Common falcon inner object data infrastructure */
 
@@ -35,78 +38,29 @@ public:
 
    virtual bool isSequence() const { return false; }
 
-   virtual void gcMark( VMachine *mp ) = 0;
+   virtual void gcMark( MemPool *mp ) = 0;
 
    virtual FalconData *clone() const = 0;
-};
-
-
-/** Object manager for Falcon data.
-   The FalconData class infrastructure has a common interface
-   which can be used to fulfil the needs of a standard object
-   manager.
-
-   Instead of creating many object managers, we provide just
-   one for all the class derived from FalconData, and let
-   their virtual methods to handle the events that the
-   data manager receives.
-
-   Applications and modules willing to provide object user_data
-   which respects FalconData interface may use this manager
-   instead of providing their own.
-
-   It is possible to provide a dummy instance of the FlaconData
-   subclass that should be handled by the CoreClass using this
-   FalconDataManager at construction; in that case, the dummy
-   data will be used as a "stamp" to create an initial user_data
-   via the FalconData::clone() method at init.
-*/
-
-class FalconDataManager: public ObjectManager
-{
-   FalconData *m_model;
-
-public:
-
-   /** Creates the instance, eventually providing a stamp model.
-      If a stamp model is given, the onInit() method will use it's
-      clone() virtual method to create a new instance of the needed
-      classes. To configure it it's then necessary to have the
-      object "_init" method called, or to configure it by hand.
-
-      If the model is left to 0, onInit does nothing.
-
-      The model is destroyed (via virtual destructor) when the manager
-      is destroyed.
+   
+   /** Serializes this instance on a stream.
+      \throw IOError in case of stream error.
    */
-   FalconDataManager( FalconData *model=0 ):
-      m_model( model )
-   {}
-
-   virtual ~FalconDataManager();
-
-   virtual bool isFalconData() const { return true; }
-
-   /** Initializes the user data in the object as a FalconData.
-
-      If a model has been provided to the constructor of this class,
-      that model is used and cloned here. The result is set as
-      user_data in the given object.
-
-      If no stamp were given, this method does nothing.
+   virtual bool serialize( Stream *stream, bool bLive ) const;
+   
+   /** Deserializes the object from a stream.
+      The object should be created shortly before this call, giving 
+      instruction to the constructor not to perform a full initialization,
+      as the content of the object will be soon overwritten.
+      
+      Will throw in case of error.
+      \throw IOError in case of stream error.
+      \param stream The stream from which to read the object.
+      \param bLive If true, 
+      \return External call indicator. In case it returns true, the caller
+         should 
    */
-
-   virtual void *onInit( VMachine *vm );
-
-   virtual void onGarbageMark( VMachine *vm, void *data );
-
-   virtual void onDestroy( VMachine *vm, void *user_data );
-
-   virtual void *onClone( VMachine *vm, void *user_data );
+   virtual bool deserialize( Stream *stream, bool bLive );
 };
-
-
-extern FALCON_DYN_SYM FalconDataManager core_falcon_data_manager;
 
 }
 

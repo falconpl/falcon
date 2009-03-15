@@ -38,15 +38,12 @@ typedef struct tag_StackFrame
    const Symbol *m_symbol;
    uint32 m_ret_pc;
    uint32 m_call_pc;
-   const Module *m_module;
-   ItemVector *m_globals;
-   bool m_initFrame;
+   LiveModule *m_module;
    bool m_break;
-   bool m_suspend;
    uint16 m_param_count;
    uint32 m_stack_base;
    uint32 m_try_base;
-   Item m_sender;
+   Item m_self;
    Item m_binding;
 
    ext_func_frame_t m_endFrameFunc;

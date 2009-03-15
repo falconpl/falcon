@@ -43,7 +43,6 @@ static BOOL CtrlHandler(DWORD dwCtrlType)
        // just terminate the process.
        exit(0);
     }
-
     return FALSE;
 }
 

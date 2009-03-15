@@ -44,7 +44,6 @@ public:
    List defines;
 
    bool compile_only;
-   bool assemble_only;
    bool run_only;
    bool tree_out;
    bool assemble_out;
@@ -52,7 +51,6 @@ public:
    bool force_recomp;
    bool check_memory;
 
-   bool via_asm;
    bool comp_memory;
    bool recompile_on_load;
    bool save_modules;
@@ -71,7 +69,6 @@ public:
       module_language( "" ),
    
       compile_only( false ),
-      assemble_only( false ),
       run_only( false ),
       tree_out( false ),
       assemble_out( false ),
@@ -79,7 +76,6 @@ public:
       force_recomp( false ),
       check_memory( false ),
 
-      via_asm(false),
       comp_memory( true ),
       recompile_on_load( true ),
       save_modules( true ),

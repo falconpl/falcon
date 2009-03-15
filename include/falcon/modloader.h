@@ -13,24 +13,29 @@
    See LICENSE file for licensing details.
 */
 
-#ifndef flc_MODLOADER_H
-#define flc_MODLOADER_H
+#ifndef FLC_MODLOADER_H
+#define FLC_MODLOADER_H
 
 #include <falcon/common.h>
 #include <falcon/error.h>
-#include <falcon/errhand.h>
 #include <falcon/string.h>
 #include <falcon/basealloc.h>
+#include <falcon/compiler.h>
 
 namespace Falcon {
 
 class Module;
 class Stream;
+class URI;
+class FileStat;
+class VFSProvider;
 
 /** Module Loader support.
+
    This class enables embedding applications and falcon VM (and thus, Falcon scripts)
    to load modueles.
-   \TODO more docs
+
+
 */
 class FALCON_DYN_CLASS ModuleLoader: public BaseAlloc
 {
@@ -46,6 +51,8 @@ public:
       t_none,
       /** The module is a source. */
       t_source,
+      /** The module is a Falcon Templage Document. */
+      t_ftd,
       /** The module is a falcon FAM module. */
       t_vmmod,
       /** The module is a native .so/.dll. */
@@ -57,12 +64,29 @@ public:
       t_defaultSource
    } t_filetype;
 
-private:
-   Module *loadModule_ver_1_0( Stream *in );
 
 protected:
-   ErrorHandler *m_errhand;
+   Module *loadModule_ver_1_0( Stream *in );
+
+   bool m_alwaysRecomp;
+   bool m_compMemory;
+   bool m_saveModule;
+   bool m_saveMandatory;
+   bool m_detectTemplate;
+   bool m_forceTemplate;
+   bool m_delayRaise;
+   bool m_ignoreSources;
+   bool m_saveRemote;
+   uint32 m_compileErrors;
+
+   Compiler m_compiler;
+   String m_srcEncoding;
    bool m_bSaveIntTemplate;
+
+   Module *compile( const String &path );
+   t_filetype searchForModule( String &final_name );
+   t_filetype checkForModuleAlreadyThere( String &final_name );
+
 
    /** Required language during load. */
    String m_language;
@@ -74,16 +98,6 @@ protected:
       \param modNmae the possible falcon module name
    */
    static void getModuleName( const String &path, String &modName );
-
-   /** Tell if the subclass accepts sources or not.
-      Vast part of the module loader is configured to behave the same way
-      when compilation of source scripts is allowed or not. However, the base
-      ModuleLoader class can't compile directly scripts (i.e. can be used to
-      run a set of pre-compiled scripts). If a module loader subclass has
-      support for sources, this variable should be set to true in its
-      constructor.
-   */
-   bool m_acceptSources;
 
    /** Path where to search the modules.
       Each entry of the list is one single system path encoded in falcon file name format.
@@ -111,43 +125,20 @@ protected:
    virtual Stream *openResource( const String &path, t_filetype type = t_none );
 
    /** Scan for files that may be loaded.
+      Utility funciton searching for one possible file in a directory.
 
-      This function searches for files that may be loaded under the loader rules.
-      A "name" string is provided as parameter; the name may either be a
-      logical module name or a parth of a file name or relative path to be
-      searched in the target filesystem; the parameter \b isPath will determine
-      how the \b name parameter should be considered.
+      Tries all the possible system extensions (applied directly on origUri)
+      and searches for a matching file. If one is found, true is returned and
+      type and fs are filled with the item module-type and its data.
 
-      If the function is succesful, the function returns a file type and sets
-      the \b found accordingly to the path that can be used to open the file.
+      Priority is scan file types are ftd, fal, fam and .so/.dll/.dylib.
 
-      The algorithm searches for binary modules, and if they are not found,
-      for native "fam" modules. If the \b searchSources parameter is true,
-      then the function should return sources instead of .fam modules, if
-      they are found.
+      The function doesn't check for validity of the given file, but only
+      for its existence.
 
-      In case the \b name parameter is a path, the function will check for
-      the file to have an extension; if the extension is a known one, it
-      won't automatically add known other known extensions, and will only
-      perform a scan within the knwon directory. Overloaded method should
-      respect this behavior.
-
-      This function is meant to allow subclassess to determine file types
-      on their own  will; this method tell sources, binary module and
-      Falcon native modules. This basic version of the method will try
-      to open the file for reading to determine their type. It will
-      also close them before returning.
-      \param name partial path to a file or logical module name
-      \param isPath true will indicate that name is a partial path
-      \param scanForType set to t_none to search for any kind of file, or to a specific type to limit the search
-      \param found if a file can be found, a complete path to the file
-      \param searchSources true to include sources in the search
-      \return on success, returns the file type for the \b found parameter, else returns t_none.
+      \return on success, returns true.
    */
-
-   virtual t_filetype scanForFile( const String &name, bool isPath, t_filetype scanForType,
-         String &found,
-         bool searchSources = false );
+   bool scanForFile( URI &origUri, VFSProvider*, t_filetype &type, FileStat &fs );
 
    /** Determine file types.
       This method tries to determine the type of a file given a path.+
@@ -173,18 +164,8 @@ public:
       As default, the current directory is included in the path. If this is not desired, use
       ModuleLoader( "" ) as a constructor.
    */
-   ModuleLoader():
-    m_errhand(0),
-    m_acceptSources( false )
-   {
-      m_path.pushBack( new String(".") );
-   }
-
+   ModuleLoader();
    ModuleLoader( const ModuleLoader &other );
-
-   virtual ~ModuleLoader();
-
-   virtual ModuleLoader *clone() const;
 
    /** Creates a module loader with a given path.
       The path is in the FALCON format; path are separated by semicolons (;). If the system uses
@@ -201,6 +182,11 @@ public:
       as a single "." entry.
    */
    ModuleLoader( const String &path );
+
+   virtual ~ModuleLoader();
+
+   virtual ModuleLoader *clone() const;
+
 
    /** Changes the search path used to load modules by this module loader
 
@@ -287,50 +273,60 @@ public:
    }
 
    /** Loads a module by its name.
-      This function scan the directories in the path for the given module,
-      be it a binary module (loadable object or dll) or a falcon native
-      module ("fam" format).
+      This function scan the directories in the path for a matching module
+      name. The logical module name, which can be logically related with a
+      parent module (as in the case of "load self.submodule") is used to
+      determine possible phisical file names within the given search path
+      and filesystems.
 
-      If the extension is not given, the loader will try to load first the file
-      as it is given (without extension), trying to detect it's type. Then, it
-      will add first the system loadable module extension (i.e. ".so" or ".dll"),
-      and if a file with that name cannot be found, it will try by adding ".fam".
+      Once a suitable file is found, loadFile() is called with the
+      appriopriate path and type parameters. The loadFile() method has its own
+      precompiled-versus-source resolution logic. As this function is just a
+      front-end to resolve logical name into potential physical names, this function
+      follows the same compile-or-load logic as loadFile().
 
-      The process terminates when a module can be loaded, or when the search path
-      is exhausted.
-
-      In case of error, it will be reported to the error manager and 0 will be returned.
-
-      Subclasses may filter modules to prevent the code to load unwanted modules, change
-      default modules with application specific ones or other mangling things.
-      \note On failure, the module loader will post an error to its error handler, if
-      it has been provided.
-
-      Once found a suitable candidate, this method calls either loadModule() or
-         loadBinModule() to load the module from the filesystem.
-
-      \note On success, the returned module will have its logical name and path
+      \note On success, the returned module will have its physical name and path
       set accordingly to the module_name parameter and the path where the module
       has been found.
 
+      If a suitable file is found, but fails to load (beynd the recovery logic
+      as stored in loadFile()), the search is interrupted and an error is raised.
+
       \param module_name the name of the module to search for
       \param parent_name the name of the module that is asking for this module to be loaded
-      \return 0 on failure or a newly allocated module on success.
+      \return newly allocated module on success.
+      \throw Error or appropriate subclass on error.
    */
    virtual Module *loadName( const String &module_name, const String &parent_module = "" );
 
    /** Loads a module by its path.
+
       This method loads directly a module. If the \b scan parameter is given \b and
       the path is relative, then the module is searched in the modloader path. Current
       directory is not explicitly searched unless it is present in the loader search
       path.
 
       If the path is relative and \b scan is false, the path will be considered relative
-      to current working directory.
+      to current working directory. If it's true, a relative path would be searched
+      across all the paths in turn, that doesn't necesarily include the current
+      working directory.
 
       If the type of file is not given (set to t_none) the method tries to dentermine
       the type of the file. If it's given, it will ignore the file type detection and
-      will pass an opened stream directly to the loadModule() or loadBinModule() method.
+      will pass an opened stream directly to the loadSource(), loadModule() or loadBinModule()
+      method.
+
+      In case the module is determined to be a source (or an FTD), this method scans for
+      a file in the same directory with a .fam extension, and checks if the module can
+      is newer and can be loaded (unless alwaysRecomp() is true, In this case, if the
+      .fam module fails to load, then the the error is discarded and the program
+      continues trying to compile the original source. If trying to use a .fam is not
+      desired, either set alwaysRecomp() or call directly loadSource().
+
+      Conversely, if the file is determined to be a .fam module, a source with the same
+      name but with newer timestamp is searched, and eventually compiled if found. If
+      this is not wanted, either call directly loadModule() or set ignoreSources() to
+      true.
 
       This implementation will raise an error if t_source is explicitly provided as a
       type or if the target file is detected as a source.
@@ -345,20 +341,13 @@ public:
       \param type the type of the file to be loaded, or t_none to autodetect
       \param scan if module_path is relative, set to true to allow scanning of the modloader path
       \return a valid module on success.
+      \throw Error or appropriate subclass on error.
    */
    virtual Module *loadFile( const String &module_path, t_filetype type=t_none, bool scan=false );
 
-   /** Loads a Falcon precompiled native module from a given path
-      This is a shortcut that simply opens the module file and loads it
-      through loadModule( Stream * ). After a succesful load, the module
-      path and logical name will be filled accordingly.
-
-      \param file  A direct relative or absolute path to an openable serialized source.
-      \return 0 on failure or a newly allocated module on success.
-   */
-   virtual Module *loadModule( const String &file );
 
    /** Loads a Falcon precompiled native module from the input stream.
+
       This function tries to load a Falcon native module. It will
       detect falcon module mark ('F' and 'M'), and if successful
       it will recognize the module format, and finally pass the
@@ -366,42 +355,61 @@ public:
       that has been detected.
 
       On success, a new memory representation of the module, ready
-      for linking, will be returned. On failure, 0 will be returned
-      and the error handler will be called with the appropriate
-      error description.
+      for linking, will be returned.
 
       \note after loading, the caller must properly set returned module
       name and path.
 
       \param input An input stream from which a module can be deserialized.
-      \return 0 on failure or a newly allocated module on success.
+      \return a newly allocated module on success.
+      \throw Error or appropriate subclass on error.
    */
    virtual Module *loadModule( Stream *input );
 
-   /** Loads a Falcon source from a given path.
-      This is a shortcut that simply opens the module through openResource()
-      file and loads it through loadSource( Stream * ). After a succesful load,
-      the module path and logical name will be filled accordingly.
+   /** Loads a Falcon precompiled native module.
 
-      \param file A direct relative or absolute path to an openable source.
-      \return 0 on failure or a newly allocated module on success.
+      Front end for loadModule(Stream).
+
+      This function sets the module name and path accordingly to the \b file
+      parameter. The caller may know better and reset the module logical
+      name once a valid module is returned.
+
+      \note This method doesn't set the module language table.
+
+      \param path A path from which to load the module.
+      \return a newly allocated module on success.
+      \throw Error or appropriate subclass on error.
+   */
+   Module *loadModule( const String &file );
+
+   /** Load a source.
+
+      Tries to load a file that is directly considered a source file. This is just
+      a front-end to loadSource( Stream ).
+
+      This function sets the module name and path accordingly to the \b file
+      parameter. The caller may know better and reset the module logical
+      name once a valid module is returned.
+
+      \note This method doesn't set the module language table.
+
+      \param file a complete (relative or absolute) path to a source to be compiled.
+      \return a valid module on success, 0 on failure (with error risen).
+      \throw Error or appropriate subclass on error.
    */
    virtual Module *loadSource( const String &file );
 
-   /** Loads a source stream.
-      In the base class, this module returns always 0 raising an error.
-      This method is meant to be overloaded by subclasses that accepts
-      sources, i.e. by integrating with the compiler.
+   /** Compile the source from an input stream.
 
-      \note after loading, the caller must properly set returned module
-      name and path.
+       The input stream must be already correctly transcoded.
+       Also, this function doesn't set the the module name/path
+       pair; that must be done by the caller.
 
-      \param input an opened input stream delivering the source to be parsed.
-      \param file complete path to the loaded file. Useful i.e. to be set in the compiler.
-      \return 0 on failure or a newly allocated module on success.
+       Finally, notice that this function doesn't load the translation
+       table.
+       \throw Error or appropriate subclass on error.
    */
-   virtual Module *loadSource( Stream *input, const String &file );
-
+   virtual Module *loadSource( Stream *in );
 
    /** Loads a binary module by realizing a system dynamic file.
 
@@ -416,11 +424,16 @@ public:
       Special strategies in opening binary modules may be implemented
       by subclassing the binary module loader.
 
-      \note after loading, the caller must properly set returned module
-      name and path.
+      This function sets the module name and path accordingly to the \b file
+      parameter. The caller may know better and reset the module logical
+      name once a valid module is returned.
+
+      \note This method doesn't set the module language table.
 
       \param module_path the relative or absolute path.
-      \return 0 on failure or a newly allocated module on success.
+
+      \return newly allocated module on success.
+      \throw Error or appropriate subclass on error.
    */
    virtual Module *loadBinaryModule( const String &module_path );
 
@@ -429,7 +442,6 @@ public:
    {
       raiseError( code, "" );
    }
-
 
    /** Get the search path used by this module loader.
       \param target a string where the path will be saved.
@@ -446,15 +458,6 @@ public:
       getSearchPath( temp );
       return temp;
    }
-
-   /** Sets the error handler.
-      The module loader never owns the handler; it must be disposed separately.
-   */
-   void errorHandler( ErrorHandler *h ) { m_errhand = h; }
-
-   /** Returns the error handler.
-   */
-   ErrorHandler *errorHandler() const { return m_errhand; }
 
    /** Save international templates for loaded modules.
       If this option is set to true, and if the loaded modules
@@ -496,6 +499,71 @@ public:
       \return true on success.
    */
    bool loadLanguageTable( Module *module, const String &language );
+
+   /** Ignore Source accessor.
+      \return true if the Module Loader must load only pre-compiled modules, false otherwise.
+   */
+   bool ignoreSources() const { return m_ignoreSources; }
+
+   /** Always recompile accessor.
+      \return true if source modules must always be recompiled before loading.
+   */
+   bool alwaysRecomp() const { return m_alwaysRecomp;}
+
+   void ignoreSources( bool mode ) { m_ignoreSources = mode; }
+   void alwaysRecomp( bool mode ) { m_alwaysRecomp = mode; }
+
+   void compileInMemory( bool ci ) { m_compMemory = ci; }
+   bool compileInMemory() const { return m_compMemory; }
+
+   void saveModules( bool t ) { m_saveModule = t; }
+   bool saveModules() const { return m_saveModule; }
+
+   void sourceEncoding( const String &name ) { m_srcEncoding = name; }
+   const String &sourceEncoding() const { return m_srcEncoding; }
+
+   void delayRaise( bool setting ) { m_delayRaise = setting; }
+   bool delayRaise() const { return m_delayRaise; }
+
+   void saveMandatory( bool setting ) { m_saveMandatory = setting; }
+   bool saveMandatory() const { return m_saveMandatory; }
+
+   void detectTemplate( bool bDetect ) { m_detectTemplate = bDetect; }
+   bool detectTemplate() const { return m_detectTemplate; }
+
+   void compileTemplate( bool bCompTemplate ) { m_forceTemplate = bCompTemplate; }
+   bool compileTemplate() const { return m_forceTemplate; }
+
+   /** Tells if this modloader should save .fam on remote filesystems.
+      By default, if a source file is loaded from a remote filesystem,
+      the module loader doesn't try to save a .fam serialized version
+      of the module besides the source.
+
+      You can set this to true to force a try to store modules also
+      on remote filesystems.
+      \param brem true to try to save .fam files on remote filesystems.
+   */
+   void saveRemote( bool brem ) { m_saveRemote = brem; }
+
+   /** Tells wether this loader tries to save .fam on remote filesystems.
+   \see saveRemote( bool )
+   */
+   bool saveRemote() const { return m_saveRemote; }
+
+   /** return last compile errors. */
+   uint32 compileErrors() const { return m_compileErrors; }
+
+   /** Return the compiler used by this module loader.
+      This object can be inspected, or compiler options can be set by the caller.
+      \return a reference of the compiler used by the loader.
+   */
+   const Compiler &compiler() const { return m_compiler; }
+
+   /** Return the compiler used by this module loader (non const).
+      This object can be inspected, or compiler options can be set by the caller.
+      \return a reference of the compiler used by the loader.
+   */
+   Compiler &compiler() { return m_compiler; }
 };
 
 }

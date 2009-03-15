@@ -14,11 +14,11 @@
 
 string = "this is a string"
 
-if not strWildcardMatch( "this is*", string ): failure( "match end" )
-if not strWildcardMatch( "*a string", string ): failure( "match begining" )
-if not strWildcardMatch( "this*string", string ): failure( "match middle" )
+if not strWildcardMatch( string, "this is*" ): failure( "match end" )
+if not strWildcardMatch( string, "*a string" ): failure( "match begining" )
+if not strWildcardMatch( string, "this*string" ): failure( "match middle" )
 
-if strWildcardMatch( "*.fal", ".svn" ): failure( "partial match then fail" )
+if strWildcardMatch( ".svn", "*.fal" ): failure( "partial match then fail" )
 
 
 success()

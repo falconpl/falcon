@@ -29,6 +29,22 @@ Error *rtlError( int t, const String &desc );
 
 namespace core {
 
+// Methodic functions
+FALCON_FUNC  mth_ToString ( ::Falcon::VMachine *vm );
+FALCON_FUNC  mth_len ( ::Falcon::VMachine *vm );
+FALCON_FUNC  mth_typeId ( ::Falcon::VMachine *vm );
+FALCON_FUNC  mth_compare ( ::Falcon::VMachine *vm );
+FALCON_FUNC  mth_clone( ::Falcon::VMachine *vm );
+FALCON_FUNC  mth_serialize( ::Falcon::VMachine *vm );
+FALCON_FUNC  mth_isCallable ( ::Falcon::VMachine *vm );
+FALCON_FUNC  mth_className ( ::Falcon::VMachine *vm );
+FALCON_FUNC  mth_derivedFrom ( ::Falcon::VMachine *vm );
+FALCON_FUNC  mth_baseClass ( ::Falcon::VMachine *vm );
+
+FALCON_FUNC  getProperty( ::Falcon::VMachine *vm );
+FALCON_FUNC  setProperty( ::Falcon::VMachine *vm );
+
+
 // Iterator class
 FALCON_FUNC  Iterator_init( ::Falcon::VMachine *vm );
 FALCON_FUNC  Iterator_hasCurrent( ::Falcon::VMachine *vm );
@@ -39,7 +55,7 @@ FALCON_FUNC  Iterator_next( ::Falcon::VMachine *vm );
 FALCON_FUNC  Iterator_prev( ::Falcon::VMachine *vm );
 FALCON_FUNC  Iterator_value( ::Falcon::VMachine *vm );
 FALCON_FUNC  Iterator_key( ::Falcon::VMachine *vm );
-FALCON_FUNC  Iterator_equal( ::Falcon::VMachine *vm );
+FALCON_FUNC  Iterator_compare( ::Falcon::VMachine *vm );
 FALCON_FUNC  Iterator_clone( ::Falcon::VMachine *vm );
 FALCON_FUNC  Iterator_erase( ::Falcon::VMachine *vm );
 FALCON_FUNC  Iterator_find( ::Falcon::VMachine *vm );
@@ -62,16 +78,12 @@ FALCON_FUNC  ParseError_init ( ::Falcon::VMachine *vm );
 FALCON_FUNC  CloneError_init ( ::Falcon::VMachine *vm );
 FALCON_FUNC  IntrruptedError_init ( ::Falcon::VMachine *vm );
 
-FALCON_FUNC  len ( ::Falcon::VMachine *vm );
 FALCON_FUNC  val_int ( ::Falcon::VMachine *vm );
 FALCON_FUNC  val_numeric ( ::Falcon::VMachine *vm );
-FALCON_FUNC  typeOf ( ::Falcon::VMachine *vm );
-FALCON_FUNC  isCallable ( ::Falcon::VMachine *vm );
-FALCON_FUNC  getProperty( ::Falcon::VMachine *vm );
-FALCON_FUNC  setProperty( ::Falcon::VMachine *vm );
+
 FALCON_FUNC  chr ( ::Falcon::VMachine *vm );
 FALCON_FUNC  ord ( ::Falcon::VMachine *vm );
-FALCON_FUNC  hToString ( ::Falcon::VMachine *vm );
+
 
 FALCON_FUNC  paramCount ( ::Falcon::VMachine *vm );
 FALCON_FUNC  _parameter ( ::Falcon::VMachine *vm );
@@ -93,18 +105,44 @@ FALCON_FUNC  Format_init ( ::Falcon::VMachine *vm );
 FALCON_FUNC  Format_format ( ::Falcon::VMachine *vm );
 FALCON_FUNC  Format_toString ( ::Falcon::VMachine *vm );
 
-FALCON_FUNC  attributeByName( ::Falcon::VMachine *vm );
-FALCON_FUNC  having( ::Falcon::VMachine *vm );
-FALCON_FUNC  testAttribute( ::Falcon::VMachine *vm );
-FALCON_FUNC  giveTo( ::Falcon::VMachine *vm );
-FALCON_FUNC  removeFrom( ::Falcon::VMachine *vm );
-FALCON_FUNC  removeFromAll( ::Falcon::VMachine *vm );
-FALCON_FUNC broadcast_next_attrib( ::Falcon::VMachine *vm );
 FALCON_FUNC  broadcast( ::Falcon::VMachine *vm );
+FALCON_FUNC  subscribe( ::Falcon::VMachine *vm );
+FALCON_FUNC  unsubscribe( ::Falcon::VMachine *vm );
+FALCON_FUNC  getSlot( ::Falcon::VMachine *vm );
+FALCON_FUNC  consume( ::Falcon::VMachine *vm );
+
+FALCON_FUNC  assert( ::Falcon::VMachine *vm );
+FALCON_FUNC  retract( ::Falcon::VMachine *vm );
+FALCON_FUNC  getAssert( ::Falcon::VMachine *vm );
+
+FALCON_FUNC  VMSlot_prepend( ::Falcon::VMachine *vm );
+FALCON_FUNC  VMSlot_broadcast( ::Falcon::VMachine *vm );
+FALCON_FUNC  VMSlot_subscribe( ::Falcon::VMachine *vm );
+FALCON_FUNC  VMSlot_unsubscribe( ::Falcon::VMachine *vm );
+FALCON_FUNC  VMSlot_assert( ::Falcon::VMachine *vm );
+FALCON_FUNC  VMSlot_retract( ::Falcon::VMachine *vm );
+FALCON_FUNC  VMSlot_getAssert( ::Falcon::VMachine *vm );
 
 FALCON_FUNC  core_exit ( ::Falcon::VMachine *vm );
 FALCON_FUNC  PageDict( ::Falcon::VMachine *vm );
 FALCON_FUNC Make_MemBuf( ::Falcon::VMachine *vm );
+FALCON_FUNC MemoryBuffer_first( ::Falcon::VMachine *vm );
+FALCON_FUNC MemoryBuffer_last( ::Falcon::VMachine *vm );
+FALCON_FUNC MemoryBuffer_front( ::Falcon::VMachine *vm );
+FALCON_FUNC MemoryBuffer_back( ::Falcon::VMachine *vm );
+
+FALCON_FUNC MemoryBuffer_put( ::Falcon::VMachine *vm );
+FALCON_FUNC MemoryBuffer_get( ::Falcon::VMachine *vm );
+FALCON_FUNC MemoryBuffer_rewind( ::Falcon::VMachine *vm );
+FALCON_FUNC MemoryBuffer_reset( ::Falcon::VMachine *vm );
+FALCON_FUNC MemoryBuffer_flip( ::Falcon::VMachine *vm );
+FALCON_FUNC MemoryBuffer_limit( ::Falcon::VMachine *vm );
+FALCON_FUNC MemoryBuffer_mark( ::Falcon::VMachine *vm );
+FALCON_FUNC MemoryBuffer_position( ::Falcon::VMachine *vm );
+FALCON_FUNC MemoryBuffer_clear( ::Falcon::VMachine *vm );
+FALCON_FUNC MemoryBuffer_fill( ::Falcon::VMachine *vm );
+
+
 
 FALCON_FUNC  core_any ( ::Falcon::VMachine *vm );
 FALCON_FUNC  core_all ( ::Falcon::VMachine *vm );
@@ -117,7 +155,8 @@ FALCON_FUNC  core_max ( ::Falcon::VMachine *vm );
 FALCON_FUNC  core_map ( ::Falcon::VMachine *vm );
 FALCON_FUNC  core_dolist ( ::Falcon::VMachine *vm );
 FALCON_FUNC  core_times ( ::Falcon::VMachine *vm );
-FALCON_FUNC  core_xtimes ( ::Falcon::VMachine *vm );
+FALCON_FUNC  core_upto ( ::Falcon::VMachine *vm );
+FALCON_FUNC  core_downto ( ::Falcon::VMachine *vm );
 FALCON_FUNC  core_xmap ( ::Falcon::VMachine *vm );
 FALCON_FUNC  core_filter ( ::Falcon::VMachine *vm );
 FALCON_FUNC  core_reduce ( ::Falcon::VMachine *vm );
@@ -134,6 +173,17 @@ FALCON_FUNC  core_deoob( ::Falcon::VMachine *vm );
 FALCON_FUNC  core_isoob( ::Falcon::VMachine *vm );
 
 FALCON_FUNC  core_lbind( ::Falcon::VMachine *vm );
+
+reflectionFuncDecl GC_usedMem_rfrom;
+reflectionFuncDecl GC_aliveMem_rfrom;
+reflectionFuncDecl GC_items_rfrom;
+reflectionFuncDecl GC_th_normal_rfrom;
+reflectionFuncDecl GC_th_normal_rto;
+reflectionFuncDecl GC_th_active_rfrom;
+reflectionFuncDecl GC_th_active_rto;
+FALCON_FUNC  GC_init( ::Falcon::VMachine *vm );
+FALCON_FUNC  GC_enable( ::Falcon::VMachine *vm );
+FALCON_FUNC  GC_perform( ::Falcon::VMachine *vm );
 
 FALCON_FUNC  gcEnable( ::Falcon::VMachine *vm );
 FALCON_FUNC  gcSetThreshold( ::Falcon::VMachine *vm );
@@ -164,14 +214,15 @@ FALCON_FUNC  Stream_close ( ::Falcon::VMachine *vm );
 FALCON_FUNC  Stream_flush ( ::Falcon::VMachine *vm );
 FALCON_FUNC  StdStream_close ( ::Falcon::VMachine *vm );
 FALCON_FUNC  Stream_read ( ::Falcon::VMachine *vm );
+FALCON_FUNC  Stream_grab ( ::Falcon::VMachine *vm );
 FALCON_FUNC  Stream_readLine ( ::Falcon::VMachine *vm );
+FALCON_FUNC  Stream_grabLine ( ::Falcon::VMachine *vm );
 FALCON_FUNC  Stream_readText ( ::Falcon::VMachine *vm );
+FALCON_FUNC  Stream_grabText ( ::Falcon::VMachine *vm );
 FALCON_FUNC  Stream_write ( ::Falcon::VMachine *vm );
 FALCON_FUNC  Stream_writeText ( ::Falcon::VMachine *vm );
 FALCON_FUNC  Stream_setEncoding ( ::Falcon::VMachine *vm );
 FALCON_FUNC  Stream_clone ( ::Falcon::VMachine *vm );
-FALCON_FUNC  Stream_readItem ( ::Falcon::VMachine *vm );
-FALCON_FUNC  Stream_writeItem ( ::Falcon::VMachine *vm );
 
 #define   CR_TO_CR 0
 #define   CR_TO_CRLF 1
@@ -189,6 +240,8 @@ FALCON_FUNC  Stream_eof ( ::Falcon::VMachine *vm );
 FALCON_FUNC  Stream_isOpen ( ::Falcon::VMachine *vm );
 FALCON_FUNC  Stream_writeAvailable ( ::Falcon::VMachine *vm );
 FALCON_FUNC  Stream_readAvailable ( ::Falcon::VMachine *vm );
+FALCON_FUNC  Stream_getBuffering ( ::Falcon::VMachine *vm );
+FALCON_FUNC  Stream_setBuffering ( ::Falcon::VMachine *vm );
 
 FALCON_FUNC  _stdIn ( ::Falcon::VMachine *vm );
 FALCON_FUNC  _stdOut ( ::Falcon::VMachine *vm );
@@ -203,61 +256,71 @@ FALCON_FUNC  StringStream_getString ( ::Falcon::VMachine *vm );
 FALCON_FUNC  StringStream_closeToString ( ::Falcon::VMachine *vm );
 
 
-FALCON_FUNC  strSplit ( ::Falcon::VMachine *vm );
-FALCON_FUNC  strSplitTrimmed ( ::Falcon::VMachine *vm );
-FALCON_FUNC  strMerge ( ::Falcon::VMachine *vm );
-FALCON_FUNC  strFind ( ::Falcon::VMachine *vm );
-FALCON_FUNC  strBackFind ( ::Falcon::VMachine *vm );
-FALCON_FUNC  strFront ( ::Falcon::VMachine *vm );
-FALCON_FUNC  strBack ( ::Falcon::VMachine *vm );
-FALCON_FUNC  strTrim ( ::Falcon::VMachine *vm );
-FALCON_FUNC  strFrontTrim ( ::Falcon::VMachine *vm );
-FALCON_FUNC  strAllTrim ( ::Falcon::VMachine *vm );
-FALCON_FUNC  strReplace ( ::Falcon::VMachine *vm );
-FALCON_FUNC  strReplicate ( ::Falcon::VMachine *vm );
+FALCON_FUNC  mth_strFront ( ::Falcon::VMachine *vm );
+FALCON_FUNC  mth_strBack ( ::Falcon::VMachine *vm );
+
+FALCON_FUNC  mth_strFill ( ::Falcon::VMachine *vm );
+FALCON_FUNC  mth_strSplit ( ::Falcon::VMachine *vm );
+FALCON_FUNC  mth_strSplitTrimmed ( ::Falcon::VMachine *vm );
+FALCON_FUNC  mth_strMerge ( ::Falcon::VMachine *vm );
+FALCON_FUNC  mth_strFind ( ::Falcon::VMachine *vm );
+FALCON_FUNC  mth_strBackFind ( ::Falcon::VMachine *vm );
+FALCON_FUNC  mth_strTrim ( ::Falcon::VMachine *vm );
+FALCON_FUNC  mth_strFrontTrim ( ::Falcon::VMachine *vm );
+FALCON_FUNC  mth_strBackTrim ( ::Falcon::VMachine *vm );
+FALCON_FUNC  mth_strReplace ( ::Falcon::VMachine *vm );
+FALCON_FUNC  mth_strReplicate ( ::Falcon::VMachine *vm );
 FALCON_FUNC  strBuffer ( ::Falcon::VMachine *vm );
-FALCON_FUNC  strUpper ( ::Falcon::VMachine *vm );
-FALCON_FUNC  strLower ( ::Falcon::VMachine *vm );
-FALCON_FUNC  strCmpIgnoreCase ( ::Falcon::VMachine *vm );
-FALCON_FUNC  strWildcardMatch ( ::Falcon::VMachine *vm );
-FALCON_FUNC  strToMemBuf ( ::Falcon::VMachine *vm );
+FALCON_FUNC  mth_strUpper ( ::Falcon::VMachine *vm );
+FALCON_FUNC  mth_strLower ( ::Falcon::VMachine *vm );
+FALCON_FUNC  mth_strCmpIgnoreCase ( ::Falcon::VMachine *vm );
+FALCON_FUNC  mth_strWildcardMatch ( ::Falcon::VMachine *vm );
+FALCON_FUNC  mth_strToMemBuf ( ::Falcon::VMachine *vm );
 FALCON_FUNC  strFromMemBuf ( ::Falcon::VMachine *vm );
+FALCON_FUNC  String_first ( ::Falcon::VMachine *vm );
+FALCON_FUNC  String_last ( ::Falcon::VMachine *vm );
+FALCON_FUNC  String_join ( ::Falcon::VMachine *vm );
 
 
-FALCON_FUNC  arrayIns ( ::Falcon::VMachine *vm );
-FALCON_FUNC  arrayDel ( ::Falcon::VMachine *vm );
-FALCON_FUNC  arrayDelAll ( ::Falcon::VMachine *vm );
-FALCON_FUNC  arrayAdd ( ::Falcon::VMachine *vm );
-FALCON_FUNC  arrayResize ( ::Falcon::VMachine *vm );
+FALCON_FUNC  mth_arrayIns ( ::Falcon::VMachine *vm );
+FALCON_FUNC  mth_arrayDel ( ::Falcon::VMachine *vm );
+FALCON_FUNC  mth_arrayDelAll ( ::Falcon::VMachine *vm );
+FALCON_FUNC  mth_arrayAdd ( ::Falcon::VMachine *vm );
+FALCON_FUNC  mth_arrayResize ( ::Falcon::VMachine *vm );
+FALCON_FUNC  mth_arrayFind ( ::Falcon::VMachine *vm );
+FALCON_FUNC  mth_arrayScan ( ::Falcon::VMachine *vm );
+FALCON_FUNC  mth_arraySort( ::Falcon::VMachine *vm );
+FALCON_FUNC  mth_arrayRemove( ::Falcon::VMachine *vm );
+FALCON_FUNC  mth_arrayMerge( ::Falcon::VMachine *vm );
+FALCON_FUNC  mth_arrayHead ( ::Falcon::VMachine *vm );
+FALCON_FUNC  mth_arrayTail ( ::Falcon::VMachine *vm );
+FALCON_FUNC  mth_arrayFill ( ::Falcon::VMachine *vm );
 FALCON_FUNC  arrayBuffer ( ::Falcon::VMachine *vm );
-FALCON_FUNC  arrayFind ( ::Falcon::VMachine *vm );
-FALCON_FUNC  arrayScan ( ::Falcon::VMachine *vm );
-FALCON_FUNC  arrayFilter ( ::Falcon::VMachine *vm );
-FALCON_FUNC  arrayMap( ::Falcon::VMachine *vm );
-FALCON_FUNC  arraySort( ::Falcon::VMachine *vm );
-FALCON_FUNC  arrayCopy( ::Falcon::VMachine *vm );
-FALCON_FUNC  arrayRemove( ::Falcon::VMachine *vm );
-FALCON_FUNC  arrayMerge( ::Falcon::VMachine *vm );
-FALCON_FUNC  arrayHead ( ::Falcon::VMachine *vm );
-FALCON_FUNC  arrayTail ( ::Falcon::VMachine *vm );
 
-FALCON_FUNC  call( ::Falcon::VMachine *vm );
-FALCON_FUNC  methodCall( ::Falcon::VMachine *vm );
-FALCON_FUNC  marshalCB( ::Falcon::VMachine *vm );
-FALCON_FUNC  marshalCBX( ::Falcon::VMachine *vm );
-FALCON_FUNC  marshalCBR( ::Falcon::VMachine *vm );
+
+FALCON_FUNC  Array_front ( ::Falcon::VMachine *vm );
+FALCON_FUNC  Array_back ( ::Falcon::VMachine *vm );
+FALCON_FUNC  Array_table ( ::Falcon::VMachine *vm );
+FALCON_FUNC  Array_tabField ( ::Falcon::VMachine *vm );
+FALCON_FUNC  Array_tabRow ( ::Falcon::VMachine *vm );
+FALCON_FUNC  Array_first ( ::Falcon::VMachine *vm );
+FALCON_FUNC  Array_last ( ::Falcon::VMachine *vm );
 
 
 FALCON_FUNC  bless( ::Falcon::VMachine *vm );
-FALCON_FUNC  dictMerge( ::Falcon::VMachine *vm );
-FALCON_FUNC  dictKeys( ::Falcon::VMachine *vm );
-FALCON_FUNC  dictValues( ::Falcon::VMachine *vm );
-FALCON_FUNC  dictInsert( ::Falcon::VMachine *vm );
-FALCON_FUNC  dictGet( ::Falcon::VMachine *vm );
-FALCON_FUNC  dictFind( ::Falcon::VMachine *vm );
-FALCON_FUNC  dictBest( ::Falcon::VMachine *vm );
-FALCON_FUNC  dictRemove( ::Falcon::VMachine *vm );
-FALCON_FUNC  dictClear( ::Falcon::VMachine *vm );
+FALCON_FUNC  mth_dictMerge( ::Falcon::VMachine *vm );
+FALCON_FUNC  mth_dictKeys( ::Falcon::VMachine *vm );
+FALCON_FUNC  mth_dictValues( ::Falcon::VMachine *vm );
+FALCON_FUNC  mth_dictGet( ::Falcon::VMachine *vm );
+FALCON_FUNC  mth_dictFind( ::Falcon::VMachine *vm );
+FALCON_FUNC  mth_dictBest( ::Falcon::VMachine *vm );
+FALCON_FUNC  mth_dictRemove( ::Falcon::VMachine *vm );
+FALCON_FUNC  mth_dictClear( ::Falcon::VMachine *vm );
+FALCON_FUNC  mth_dictFront( ::Falcon::VMachine *vm );
+FALCON_FUNC  mth_dictBack( ::Falcon::VMachine *vm );
+FALCON_FUNC  mth_dictFill ( ::Falcon::VMachine *vm );
+FALCON_FUNC  Dictionary_first( ::Falcon::VMachine *vm );
+FALCON_FUNC  Dictionary_last( ::Falcon::VMachine *vm );
 
 
 FALCON_FUNC  fileType( ::Falcon::VMachine *vm );
@@ -311,7 +374,6 @@ FALCON_FUNC  flc_math_factorial ( ::Falcon::VMachine *vm );
 FALCON_FUNC  flc_math_permutations ( ::Falcon::VMachine *vm );
 FALCON_FUNC  flc_math_combinations ( ::Falcon::VMachine *vm );
 
-FALCON_FUNC  serialize ( ::Falcon::VMachine *vm );
 FALCON_FUNC  deserialize ( ::Falcon::VMachine *vm );
 
 // Transcoder functions
@@ -365,28 +427,37 @@ FALCON_FUNC  CmdlineParser_expectValue( ::Falcon::VMachine *vm );
 FALCON_FUNC  CmdlineParser_terminate( ::Falcon::VMachine *vm );
 FALCON_FUNC  CmdlineParser_usage( ::Falcon::VMachine *vm );
 
-FALCON_FUNC FileReadStats ( ::Falcon::VMachine *vm ); // factory function
-FALCON_FUNC FileStat_readStats ( ::Falcon::VMachine *vm );
+FALCON_FUNC FileStat_init ( ::Falcon::VMachine *vm );
+FALCON_FUNC FileStat_read ( ::Falcon::VMachine *vm );
 
 reflectionFuncDecl FileStats_type_rfrom;
 reflectionFuncDecl FileStats_mtime_rfrom;
 reflectionFuncDecl FileStats_ctime_rfrom;
 reflectionFuncDecl FileStats_atime_rfrom;
 
-FALCON_FUNC  itemCopy( ::Falcon::VMachine *vm );
 FALCON_FUNC  fal_include( ::Falcon::VMachine *vm );
+FALCON_FUNC  Object_attribs( ::Falcon::VMachine *vm );
+
 
 /** Path class */
 FALCON_FUNC Path_init ( ::Falcon::VMachine *vm );
 reflectionFuncDecl Path_path_rfrom;
 reflectionFuncDecl Path_filename_rfrom;
+reflectionFuncDecl Path_unit_rfrom;
+reflectionFuncDecl Path_location_rfrom;
 reflectionFuncDecl Path_file_rfrom;
 reflectionFuncDecl Path_extension_rfrom;
 
 reflectionFuncDecl Path_path_rto;
 reflectionFuncDecl Path_filename_rto;
+reflectionFuncDecl Path_unit_rto;
+reflectionFuncDecl Path_location_rto;
 reflectionFuncDecl Path_file_rto;
 reflectionFuncDecl Path_extension_rto;
+extern "C" {
+   CoreObject* PathObjectFactory( const CoreClass *cr, void *path, bool );
+}
+
 
 /** URI class */
 FALCON_FUNC  URI_init ( ::Falcon::VMachine *vm );
@@ -432,6 +503,24 @@ FALCON_FUNC  Table_insertPage ( ::Falcon::VMachine *vm );
 FALCON_FUNC  Table_removePage ( ::Falcon::VMachine *vm );
 FALCON_FUNC  Table_getPage ( ::Falcon::VMachine *vm );
 
+FALCON_FUNC  Tokenizer_init ( ::Falcon::VMachine *vm );
+FALCON_FUNC  Tokenizer_parse ( ::Falcon::VMachine *vm );
+FALCON_FUNC  Tokenizer_rewind ( ::Falcon::VMachine *vm );
+FALCON_FUNC  Tokenizer_nextToken ( ::Falcon::VMachine *vm );
+FALCON_FUNC  Tokenizer_next ( ::Falcon::VMachine *vm );
+FALCON_FUNC  Tokenizer_token ( ::Falcon::VMachine *vm );
+
+#define TOKENIZER_OPT_GRROUPSEP 1
+#define TOKENIZER_OPT_BINDSEP 2
+#define TOKENIZER_OPT_TRIM 4
+
+
+extern "C" {
+   CoreObject* UriObjectFactory( const CoreClass *cr, void *uri, bool );
+}
+
+
+
 /** Class used to manage the file stats.
    The FileStat reflection object provides three reflected timestamps
    in its object body.
@@ -456,62 +545,36 @@ FALCON_FUNC  Table_getPage ( ::Falcon::VMachine *vm );
    would be possible to create object managers to use that instances directly, and keep alive
    their owner, but TimeStamp is too small to bother about this.
 */
-class FileStatManager: public ObjectManager
+class FileStatObject: public ReflectObject
 {
 
 public:
-
    class InnerData
    {
    public:
+      InnerData() {}
+      InnerData( const InnerData &other );
+
       FileStat m_fsdata;
       Item m_cache_atime;
       Item m_cache_mtime;
       Item m_cache_ctime;
-
-      InnerData();
-      InnerData( const InnerData &other );
-      ~InnerData();
    };
 
-   FileStatManager() {}
-   virtual void *onInit( VMachine *vm );
-   virtual void onGarbageMark( VMachine *vm, void *data );
-   virtual void onDestroy( VMachine *vm, void *user_data );
-   virtual void *onClone( VMachine *vm, void *user_data );
+   FileStatObject( const CoreClass* generator );
+   FileStatObject( const FileStatObject &other );
+   virtual ~FileStatObject();
+
+   virtual void gcMark( MemPool *mp );
+   virtual CoreObject* clone() const;
+
+   InnerData* getInnerData() const { return (InnerData*) m_user_data; }
 };
 
-
-/** Special manager for URI reflection. */
-class URIManager: public ObjectManager
-{
-public:
-
-   // cache data is needed (not really needed, as we have non-read-only properties)
-   virtual bool needCacheData() const { return true; }
-
-   virtual void *onInit( VMachine *vm );
-   virtual void onDestroy( VMachine *vm, void *user_data );
-   virtual void *onClone( VMachine *vm, void *user_data );
-   virtual bool onObjectReflectTo( CoreObject *reflector, void *user_data );
-   virtual bool onObjectReflectFrom( CoreObject *reflector, void *user_data );
-};
-
-/** Special manager for URI reflection. */
-class PathManager: public ObjectManager
-{
-public:
-
-   // cache data is needed (not really needed, as we have non-read-only properties)
-   virtual bool needCacheData() const { return true; }
-
-   virtual void *onInit( VMachine *vm );
-   virtual void onDestroy( VMachine *vm, void *user_data );
-   virtual void *onClone( VMachine *vm, void *user_data );
-   virtual bool onObjectReflectTo( CoreObject *reflector, void *user_data );
-   virtual bool onObjectReflectFrom( CoreObject *reflector, void *user_data );
-};
-
+extern "C" {
+   CoreObject* FileStatObjectFactory( const CoreClass *cls, void *user_data, bool bDeserializing );
+   CoreObject* PathObjectFactory( const CoreClass *me, void *uri, bool dyn );
+}
 
 }}
 

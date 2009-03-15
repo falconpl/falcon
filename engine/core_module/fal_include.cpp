@@ -16,8 +16,7 @@
 #include <falcon/setup.h>
 #include <falcon/vm.h>
 #include <falcon/module.h>
-
-#include <falcon/flcloader.h>
+#include <falcon/modloader.h>
 
 namespace Falcon {
 namespace core {
@@ -72,59 +71,56 @@ FALCON_FUNC fal_include( Falcon::VMachine *vm )
       vm->raiseModError( new Falcon::ParamError(
          Falcon::ErrorParam( Falcon::e_inv_params, __LINE__ ).
          extra( "S,[S],[S],[D]" ) ) );
-      return;
    }
 
    // create the loader/runtime pair.
-   FlcLoader cpl( i_path == 0 || i_path->isNil() ? "." : *i_path->asString() );
+   ModuleLoader cpl( i_path == 0 || i_path->isNil() ? "." : String(*i_path->asString()) );
    Runtime rt( &cpl, vm );
    rt.hasMainModule( false );
 
    // minimal config
-   cpl.errorHandler( vm->errorHandler() );
    if ( i_enc != 0 && ! i_enc->isNil() )
    {
       cpl.sourceEncoding( *i_enc->asString() );
    }
 
    // load and link
+   // Let raise to filter down to VM.
    bool execAtLink = vm->launchAtLink();
-   if ( rt.loadFile( *i_file->asString(), false ) )
+   rt.loadFile( *i_file->asString(), false );
+   vm->launchAtLink( i_syms == 0 || i_syms->isNil() );
+   LiveModule *lmod = vm->link( &rt );
+
+   // shall we read the symbols?
+   if( lmod != 0 && ( i_syms != 0 && i_syms->isDict() ) )
    {
-      vm->launchAtLink( i_syms == 0 || i_syms->isNil() );
-      LiveModule *lmod = vm->link( &rt );
+      CoreDict *dict = i_syms->asDict();
 
-      // shall we read the symbols?
-      if( ! vm->hadError() && lmod != 0 && ( i_syms != 0 && i_syms->isDict() ) )
+      // get the topmost module.
+      uint32 listSize = rt.moduleVector()->size();
+      ModuleDep *md = rt.moduleVector()->moduleDepAt( listSize-1 );
+      vm->findModule( md->module()->name() );
+      fassert( lmod != 0 );
+
+      // traverse the dictionary
+      DictIterator *iter = dict->first();
+      while( iter->isValid() )
       {
-         CoreDict *dict = i_syms->asDict();
-
-         // get the topmost module.
-         uint32 listSize = rt.moduleVector()->size();
-         ModuleDep *md = rt.moduleVector()->moduleDepAt( listSize-1 );
-         vm->findModule( md->module()->name() );
-         fassert( lmod != 0 );
-
-         // traverse the dictionary
-         DictIterator *iter = dict->first();
-         while( iter->isValid() )
+         // if the key is a string and a coresponding item is found...
+         Item *ival;
+         if ( iter->getCurrentKey().isString() &&
+               ( ival = lmod->findModuleItem( *iter->getCurrentKey().asString() ) ) != 0 )
          {
-            // if the key is a string and a coresponding item is found...
-            Item *ival;
-            if ( iter->getCurrentKey().isString() &&
-                 ( ival = lmod->findModuleItem( *iter->getCurrentKey().asString() ) ) != 0 )
-            {
-               // copy it locally
-               iter->getCurrent() = *ival;
-            }
-            else {
-               iter->getCurrent().setNil();
-            }
-
-            iter->next();
+            // copy it locally
+            iter->getCurrent() = *ival;
          }
-         delete iter;
+         else {
+            iter->getCurrent().setNil();
+         }
+
+         iter->next();
       }
+      delete iter;
    }
 
    // reset launch status

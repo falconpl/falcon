@@ -22,8 +22,9 @@
 #include <falcon/genericmap.h>
 #include <falcon/basealloc.h>
 #include <falcon/reflectfunc.h>
-#include <falcon/objectmanager.h>
+#include <falcon/objectfactory.h>
 #include <falcon/fassert.h>
+#include <falcon/itemid.h>
 
 namespace Falcon {
 
@@ -338,6 +339,8 @@ public:
    SymbolTable *parameters() const { return m_params; }
 
    uint32 paramCount() const { return m_params == 0 ? 0 : m_params->size(); }
+   
+   ext_func_t func() const { return m_func; }
 };
 
 
@@ -509,9 +512,8 @@ public:
    any other callable. Finally, the ClassSymbol holds a vector of direct
    parent pointers, each of which being a ClassSymbol.
 
-   Class symbols can be "reflective". They can be linked with a "user data manager" or
-   "ObjectManager" which creates, destroys and manages externally provided data for the objects.
-
+   Class symbols can be "reflective". They can be linked with a "user data manager".
+   
    As reflection status cannot be properly serialized (atm), only user-provided and binary
    modules can declare reflective classes.
 */
@@ -553,21 +555,14 @@ private:
    */
    InheritList m_inheritance;
 
-   /** Startup has */
-   SymbolList m_has;
-
-   /** Startup hasnt */
-   SymbolList m_hasnt;
-
-   /** Object manager used by this class.
-      If this class is reflective it NEEDS to set up an object manager that
-      will handle the reflective data provided by the external program.
-
-      Reflective class cannot be extended from more than another reflective
-      class. It's impossible to link two different reflective classes in the
-      same subclass.
+   /** Object factory used by this class.
+      Function used to create instances of objects from this class.
    */
-   ObjectManager *m_manager;
+   ObjectFactory m_factory;
+   
+   int m_metaclassFor;
+   
+   bool m_bFinal;
 
 public:
    /** Creates a class definition without a constructor.
@@ -575,11 +570,10 @@ public:
       require an "init" method declared at Falcon level, nor an external C method
       used to provide an "init" feature.
 
-      \param manager The object manager used to manipulate externally provided user_data of this class;
-         if not provided, this class will be fully non-reflexive (and providing some vardef
-         with reflexivity enabled will lead to undefined results).
+      \param manager The object factory used to manipulate externally provided user_data of this class.
+         If not provided, the factory will depend on added properties.
    */
-   ClassDef( ObjectManager *manager=0 );
+   ClassDef( ObjectFactory factory=0 );
 
    /** Creates the definition of this class an external constructor.
 
@@ -587,11 +581,10 @@ public:
       external symbol (a C function).
 
       \param offset the start offset of the constructor, if this class as a Falcon code constructor.
-      \param manager The object manager used to manipulate externally provided user_data of this class;
-         if not provided, this class will be fully non-reflexive (and providing some vardef
-         with reflexivity enabled will lead to undefined results).
+      \param manager The object factory used to manipulate externally provided user_data of this class.
+         If not provided, the factory will depend on added properties.
    */
-   ClassDef( Symbol *ext_ctor, ObjectManager *manager=0 );
+   ClassDef( Symbol *ext_ctor, ObjectFactory factory=0 );
    ~ClassDef();
 
    /** Declares an object manager for this class.
@@ -599,7 +592,8 @@ public:
       application or in the binary modules. The classes never dispose
       them.
    */
-   void setObjectManager( ObjectManager *om ) { m_manager = om; }
+   void factory( ObjectFactory om ) { m_factory = om; }
+   ObjectFactory factory() const { return m_factory; }
 
    const Map &properties() const { return m_properties; }
    /** Return a updateable version of the property map. */
@@ -612,27 +606,6 @@ public:
    void constructor( Symbol *ctor ) { m_constructor = ctor; }
    Symbol *constructor() const { return m_constructor; }
 
-   /** Accessor to the list of Symbol declared as "HAS" clause.
-      Const version.
-      \return the list of symbols that this class should have as attributes
-   */
-   const SymbolList &has() const { return m_has; }
-
-   /** Accessor to the list of Symbol declared as "HAS" clause.
-      \return the list of symbols that this class should have as attributes
-   */
-   SymbolList &has() { return m_has; }
-
-   /** Accessor to the list of Symbol undefined in "HAS" clause.
-      Const version.
-      \return the list of symbols that this class won't have as attributes
-   */
-   const SymbolList &hasnt() const { return m_hasnt; }
-
-   /** Accessor to the list of Symbol undefined in "HAS" clause.
-      \return the list of symbols that this class won't have as attributes
-   */
-   SymbolList &hasnt() { return m_hasnt; }
 
    bool save( Stream *out ) const;
    bool load( Module *mod, Stream *in );
@@ -687,59 +660,12 @@ public:
 
    /** Returns true if one of the base classes of this one has the given name. */
    bool inheritsFrom( const String &find_name ) const;
-
-   /** Returns the object manager used by this class.
-      If this class has an object manager, then is a "reflective class", and can
-      handle dynamically objects (create and destroy them).
-
-      See the object manager for further details.
-   */
-   ObjectManager *getObjectManager() const { return m_manager; }
-
-   /** Set this ClassDef as using a UserData reflection model.
-      This method sets int this class definition the UserData ObjectManager,
-      which is meant to provide set/get properties callbacks.
-
-      This means that all the instances of this class should receive a
-      UserData in the user-provided init method. It is legal to give or
-      set 0 as the user data at any point in the lifetime of the class.
-
-      \see UserData
-      \see UserDataManager
-
-      \note This is a shortcut to setting Falcon::core_user_data_cacheful as the
-         object manager for this class.
-   */
-   void carryUserData();
-
-   /** Set this ClassDef as using a UserData (without cache) reflection model.
-      This method sets int this class definition the UserData ObjectManager,
-      which is meant to provide set/get properties callbacks.
-
-      This means that all the instances of this class should receive a
-      UserData in the user-provided init method. It is legal to give or
-      set 0 as the user data at any point in the lifetime of the class.
-
-      \see UserData
-      \see UserDataManager
-
-      \note This is a shortcut to setting Falcon::core_user_data_cacheless as the
-         object manager for this class.
-
-      This version of the method prevents the final class to have a local cache.
-      This means that 1) either the class don't need a location where to store
-      temporarily created Falcon items or 2) the class provides a cache for some
-      property internally.
-   */
-   void carryUserDataCacheless();
-
-   /** Sets this class as carrying falcon data.
-      FalconData reflective model is lighter than UserData model, and is
-      used internally by the engine to reflect classes more precisely.
-      \see FalconData
-      \see FalconDataManager
-   */
-   void carryFalconData();
+   
+   int isMetaclassFor() const { return m_metaclassFor; }
+   void setMetaclassFor( int ItemID ) { fassert( ItemID >= 0 && ItemID < FLC_ITEM_COUNT ); m_metaclassFor = ItemID; }
+   
+   void setFinal( bool mod )  { m_bFinal = mod; }
+   bool isFinal() const { return m_bFinal; }
 };
 
 /** Representation of a VM symbol
@@ -765,7 +691,6 @@ public:
       tvar,
       tinst,
       tconst,
-      tattribute,
       timportalias
    } type_t;
 
@@ -973,7 +898,6 @@ public:
    void setProp( VarDef *p ) { clear(); m_type = tprop; m_value.v_prop = p; }
    void setVar( VarDef *p ) { clear(); m_type = tvar; m_value.v_prop = p; }
    void setConst( VarDef *p ) { clear(); m_type = tconst; m_value.v_prop = p; }
-   void setAttribute() { clear(); m_type = tattribute; }
    void setInstance( Symbol *base_class ) { clear(); m_type = tinst; m_value.v_symbol = base_class; }
    void setImportAlias( ImportAlias* alias )
       { clear(); m_type = timportalias; m_value.v_importalias = alias; imported(true); }
@@ -1004,7 +928,6 @@ public:
    bool isCallable() const { return isFunction() || isExtFunc() || isClass(); }
    bool isInstance() const { return m_type == tinst; }
    bool isConst() const { return m_type == tconst; }
-   bool isAttribute() const  { return m_type == tconst; }
    bool isImportAlias() const { return m_type == timportalias; }
 
    /** Candy grammar to add a parameter to a function (internal or external) */
@@ -1036,26 +959,6 @@ public:
 
    void declaredAt( int32 line ) { m_lineDecl = line; }
    int32 declaredAt() const { return m_lineDecl; }
-
-   /** Shortcut to ClassDef::carryUserData. */
-   void carryUserData() {
-      fassert( isClass() );
-      getClassDef()->carryUserData();
-   }
-
-   /** Shortcut to ClassDef::carryUserDataCacheless
-   */
-   void carryUserDataCacheless() {
-      fassert( isClass() );
-      getClassDef()->carryUserDataCacheless();
-   }
-
-   /** Shortcut to ClassDef::carryFalconData
-   */
-   void carryFalconData(){
-      fassert( isClass() );
-      getClassDef()->carryFalconData();
-   }
 };
 
 

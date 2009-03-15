@@ -1,4 +1,4 @@
-/*
+ /*
    FALCON - The Falcon Programming Language.
    FILE: genericmap.cpp
 
@@ -82,6 +82,9 @@ MAP_PAGE *Map::allocPage() const
    page->m_count = 0;
    page->m_parent = 0;
    page->m_higher = 0;
+   page->m_allocated = 0;
+   page->m_dummy = 0;
+   page->m_parentElement = 0;
 
    return page;
 }

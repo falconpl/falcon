@@ -116,8 +116,8 @@ LiveModuleMap::LiveModuleMap():
 {}
 
 
-LiveModule::LiveModule( VMachine *vm, Module *mod, bool bPrivate ):
-   Garbageable( vm, sizeof( *this ) ),
+LiveModule::LiveModule( Module *mod, bool bPrivate ):
+   Garbageable(),
    m_module( mod ),
    m_bPrivate( bPrivate ),
    m_initState( init_none )

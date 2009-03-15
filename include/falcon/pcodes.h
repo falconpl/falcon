@@ -17,7 +17,7 @@
 #define flc_PCODES_H
 
 #define FALCON_PCODE_VERSION  2
-#define FALCON_PCODE_MINOR  5
+#define FALCON_PCODE_MINOR  6
 
 /** \page opcode_format Virtual machine opcode format
 
@@ -43,7 +43,6 @@ three bytes are the operator type an can be:
    - \b 10H - register A - Accumulator
    - \b 11H - register B - Extra
    - \b 12H - register S1 - self
-   - \b 13H - register S2 - sender (to be removed)
    - \b 14H - register L1 - first latch (accessed item)
    - \b 15H - register L2 - second latch (accessor item)
 
@@ -88,7 +87,6 @@ while it will fill OP2 with an integer item containing 15H.
 #define P_PARAM_REGA    0x10
 #define P_PARAM_REGB    0x11
 #define P_PARAM_REGS1   0x12
-#define P_PARAM_REGS2   0x13
 #define P_PARAM_REGL1   0x14
 #define P_PARAM_REGL2   0x15
 
@@ -244,7 +242,7 @@ while it will fill OP2 with an integer item containing 15H.
 */
 #define P_CALL        0x3A
 /** INST $sym, \<int32\>.
-   As call, but does not changes self and sender registers. */
+   As call, but does not changes self register. */
 #define P_INST        0x3B
 /** ONCE: Execute a code portion only once.
    If the function OP2 has not been executed, then proceeds, else jumps at OP1.
@@ -273,14 +271,6 @@ while it will fill OP2 with an integer item containing 15H.
 */
 #define P_SWCH        0x41
 
-/** HAS: sets A to 1 if OP1 object has attribute OP2, otherwise sets A to 0. */
-#define P_HAS         0x42
-/** HAS: sets A to 0 if OP1 object has attribute OP2, otherwise sets A to 0. */
-#define P_HASN        0x43
-/** GIVE: gives attribute set in OP1 to object OP2. */
-#define P_GIVE        0x44
-/** GIVN: removes attribute set in OP1 from object OP2. */
-#define P_GIVN        0x45
 /** IN: sets A to 1 if OP1 is in set OP2, else sets A to 0 */
 #define P_IN          0x46
 /** NOIN: sets A to 0 if OP1 is in set OP2, else sets A to 1 */
@@ -297,12 +287,6 @@ while it will fill OP2 with an integer item containing 15H.
 #define P_AND         0x4B
 /** AND: Logical OR if (op1 is true or op2 is true ) true->A  */
 #define P_OR          0x4C
-
-/** PASS: calls the given callable object without changing the stack frame. */
-#define P_PASS        0x4D
-
-/** PSIN: as PASS, but changes the stack frame (just passes the parameters as they are). */
-#define P_PSIN        0x4E
 
 // Range 4: ternary opcodes
 

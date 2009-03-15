@@ -114,17 +114,15 @@ namespace core {
 
 FALCON_FUNC  Error_init ( ::Falcon::VMachine *vm )
 {
-   CoreObject *einst = vm->self().asObject();
+   core::ErrorObject *einst = static_cast<core::ErrorObject* >(vm->self().asObject());
 
    // subclasses may have already given a value to the userdata.
-   Falcon::Error *err;
-   if( einst->getUserData() == 0 )
+   Falcon::Error *err = einst->getError();
+   if( err == 0 )
    {
       err = new Falcon::Error( ErrorParam( 0, __LINE__ ).
          module( "core" ) );
-   }
-   else {
-      err = reinterpret_cast<Falcon::Error *>(einst->getUserData());
+      einst->setUserData( err );
    }
 
    // declare that the script has created it
@@ -143,10 +141,6 @@ FALCON_FUNC  Error_init ( ::Falcon::VMachine *vm )
    param = vm->param( 2 );
    if ( param != 0 && param->isString() )
       err->extraDescription( *param->asString() );
-
-   einst->setUserData( err );
-
-   vm->retval( einst );
 }
 
 /*#
@@ -162,12 +156,12 @@ FALCON_FUNC  Error_init ( ::Falcon::VMachine *vm )
 */
 FALCON_FUNC  Error_toString ( ::Falcon::VMachine *vm )
 {
-   CoreObject *einst = vm->self().asObject();
-   Falcon::Error *err = static_cast<Falcon::Error *>( einst->getUserData() );
+   core::ErrorObject *einst = static_cast<core::ErrorObject* >(vm->self().asObject());
+   Falcon::Error *err = einst->getError();
 
    if ( err != 0 )
    {
-      String *cs = new GarbageString( vm );
+      CoreString *cs = new CoreString;
       err->toString( *cs );
       vm->retval( cs );
    }
@@ -187,12 +181,12 @@ FALCON_FUNC  Error_toString ( ::Falcon::VMachine *vm )
 */
 FALCON_FUNC  Error_heading ( ::Falcon::VMachine *vm )
 {
-   CoreObject *einst = vm->self().asObject();
+   ErrorObject *einst = static_cast<ErrorObject *>(vm->self().asObject());
    Falcon::Error *err = static_cast<Falcon::Error *>(einst->getUserData());
 
    if ( err != 0 )
    {
-      String *cs = new GarbageString( vm );
+      CoreString *cs = new CoreString;
       err->heading( *cs );
       vm->retval( cs );
    }
@@ -213,7 +207,7 @@ FALCON_FUNC  Error_heading ( ::Falcon::VMachine *vm )
 */
 FALCON_FUNC  Error_getSysErrDesc ( ::Falcon::VMachine *vm )
 {
-   CoreObject *einst = vm->self().asObject();
+   ErrorObject *einst = static_cast<ErrorObject *>(vm->self().asObject());
    Falcon::Error *err = static_cast<Falcon::Error *>(einst->getUserData());
 
    if ( err != 0 )
@@ -246,8 +240,8 @@ FALCON_FUNC  Error_getSysErrDesc ( ::Falcon::VMachine *vm )
 */
 FALCON_FUNC  SyntaxError_init ( ::Falcon::VMachine *vm )
 {
-   CoreObject *einst = vm->self().asObject();
-   if( einst->getUserData() == 0 )
+   ErrorObject *einst = static_cast<ErrorObject *>(vm->self().asObject());
+   if( einst->getFalconData() == 0 )
       einst->setUserData( new Falcon::SyntaxError );
 
    Error_init( vm );
@@ -272,8 +266,8 @@ FALCON_FUNC  SyntaxError_init ( ::Falcon::VMachine *vm )
 */
 FALCON_FUNC  GenericError_init ( ::Falcon::VMachine *vm )
 {
-   CoreObject *einst = vm->self().asObject();
-   if( einst->getUserData() == 0 )
+   ErrorObject *einst = static_cast<ErrorObject *>(vm->self().asObject());
+   if( einst->getFalconData() == 0 )
       einst->setUserData( new Falcon::GenericError );
 
    Error_init( vm );
@@ -296,7 +290,7 @@ FALCON_FUNC  GenericError_init ( ::Falcon::VMachine *vm )
 */
 FALCON_FUNC  CodeError_init ( ::Falcon::VMachine *vm )
 {
-   CoreObject *einst = vm->self().asObject();
+   ErrorObject *einst = static_cast<ErrorObject *>(vm->self().asObject());
    if( einst->getUserData() == 0 )
       einst->setUserData( new Falcon::CodeError );
 
@@ -320,7 +314,7 @@ FALCON_FUNC  CodeError_init ( ::Falcon::VMachine *vm )
 */
 FALCON_FUNC  IoError_init ( ::Falcon::VMachine *vm )
 {
-   CoreObject *einst = vm->self().asObject();
+   ErrorObject *einst = static_cast<ErrorObject *>(vm->self().asObject());
    if( einst->getUserData() == 0 )
       einst->setUserData( new Falcon::IoError );
 
@@ -343,7 +337,7 @@ FALCON_FUNC  IoError_init ( ::Falcon::VMachine *vm )
 
 FALCON_FUNC  TypeError_init ( ::Falcon::VMachine *vm )
 {
-   CoreObject *einst = vm->self().asObject();
+   ErrorObject *einst = static_cast<ErrorObject *>(vm->self().asObject());
    if( einst->getUserData() == 0 )
       einst->setUserData( new Falcon::TypeError );
 
@@ -370,7 +364,7 @@ FALCON_FUNC  TypeError_init ( ::Falcon::VMachine *vm )
 */
 FALCON_FUNC  AccessError_init ( ::Falcon::VMachine *vm )
 {
-   CoreObject *einst = vm->self().asObject();
+   ErrorObject *einst = static_cast<ErrorObject *>(vm->self().asObject());
    if( einst->getUserData() == 0 )
       einst->setUserData( new Falcon::AccessError );
 
@@ -394,7 +388,7 @@ FALCON_FUNC  AccessError_init ( ::Falcon::VMachine *vm )
 */
 FALCON_FUNC  MathError_init ( ::Falcon::VMachine *vm )
 {
-   CoreObject *einst = vm->self().asObject();
+   ErrorObject *einst = static_cast<ErrorObject *>(vm->self().asObject());
    if( einst->getUserData() == 0 )
       einst->setUserData( new Falcon::MathError );
 
@@ -422,7 +416,7 @@ FALCON_FUNC  MathError_init ( ::Falcon::VMachine *vm )
 */
 FALCON_FUNC  ParamError_init ( ::Falcon::VMachine *vm )
 {
-   CoreObject *einst = vm->self().asObject();
+   ErrorObject *einst = static_cast<ErrorObject *>(vm->self().asObject());
    if( einst->getUserData() == 0 )
       einst->setUserData( new Falcon::ParamError );
 
@@ -452,7 +446,7 @@ FALCON_FUNC  ParamError_init ( ::Falcon::VMachine *vm )
 */
 FALCON_FUNC  ParseError_init ( ::Falcon::VMachine *vm )
 {
-   CoreObject *einst = vm->self().asObject();
+   ErrorObject *einst = static_cast<ErrorObject *>(vm->self().asObject());
    if( einst->getUserData() == 0 )
       einst->setUserData( new Falcon::ParseError );
 
@@ -483,7 +477,7 @@ FALCON_FUNC  ParseError_init ( ::Falcon::VMachine *vm )
 */
 FALCON_FUNC  CloneError_init ( ::Falcon::VMachine *vm )
 {
-   CoreObject *einst = vm->self().asObject();
+   ErrorObject *einst = static_cast<ErrorObject *>(vm->self().asObject());
    if( einst->getUserData() == 0 )
       einst->setUserData( new Falcon::CloneError);
 
@@ -507,9 +501,33 @@ FALCON_FUNC  CloneError_init ( ::Falcon::VMachine *vm )
 */
 FALCON_FUNC  IntrruptedError_init ( ::Falcon::VMachine *vm )
 {
-   CoreObject *einst = vm->self().asObject();
+   ErrorObject *einst = static_cast<ErrorObject *>(vm->self().asObject());
    if( einst->getUserData() == 0 )
       einst->setUserData( new Falcon::InterruptedError );
+
+   Error_init( vm );
+}
+
+/*#
+   @class MessageError
+   @brief Error in the messaging system.
+   @ingroup errors
+   @ingroup general_purpose
+   @optparam code A numeric error code.
+   @optparam description A textual description of the error code.
+   @optparam extra A descriptive message explaining the error conditions.
+   @from Error code, description, extra
+
+   This error is raised when a wait interrupt request has been received
+   by the VM during a blocking wait.
+
+   @see interrupt_protocol
+*/
+FALCON_FUNC  MessageError_init ( ::Falcon::VMachine *vm )
+{
+   ErrorObject *einst = static_cast<ErrorObject *>(vm->self().asObject());
+   if( einst->getUserData() == 0 )
+      einst->setUserData( new Falcon::MessageError );
 
    Error_init( vm );
 }

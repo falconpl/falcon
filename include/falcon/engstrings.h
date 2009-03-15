@@ -22,12 +22,12 @@
 
 #include <falcon/setup.h>
 #include <falcon/types.h>
+#include <falcon/globals.h>
 #include <falcon/string.h>
 
 namespace Falcon {
 
 class FALCON_DYN_SYM StringTable;
-FALCON_DYN_SYM extern StringTable *engineStrings;
 
 const String &getMessage( uint32 id );
 bool setTable( StringTable *tab );

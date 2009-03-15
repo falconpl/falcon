@@ -45,7 +45,6 @@ int ItemTraits::compare( const void *first, const void *second ) const
 {
    const Item *f = (Item  *) first;
    const Item *s = (Item  *) second;
-
    return f->compare( *s );
 }
 
@@ -59,22 +58,8 @@ bool ItemTraits::owning() const
    return false;
 }
 
-//==========================================================
-// Item traits using VM
-//
-VMItemTraits::~VMItemTraits()
-   {}
-   
-int VMItemTraits::compare( const void *first, const void *second ) const
-{
-   const Item *f = (Item  *) first;
-   const Item *s = (Item  *) second;
-
-   return m_vm->compareItems( *f, *s );
-}
-
 namespace traits {
-	ItemTraits &t_item() { static ItemTraits dt; return dt; }
+	ItemTraits &t_item() { static ItemTraits *dt = new ItemTraits(); return *dt; }
 }
 
 }

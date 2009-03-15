@@ -19,6 +19,7 @@
 #include <falcon/dir_sys_unix.h>
 #include <falcon/sys.h>
 #include <falcon/autocstring.h>
+#include <falcon/streambuffer.h>
 
 #include <sys/types.h>
 #include <dirent.h>
@@ -55,7 +56,7 @@ Stream *VFSFile::open( const URI& uri, const OParams &p )
    if ( handle >= 0 )
    {
       UnixFileSysData *ufd = new UnixFileSysData( handle, 0 );
-      return new FileStream( ufd );
+      return new StreamBuffer( new FileStream( ufd ) );
    }
 
    return 0;
@@ -73,7 +74,7 @@ Stream *VFSFile::create( const URI& uri, const CParams &p, bool &bSuccess )
    AutoCString cfilename( uri.path() );
    errno=0;
 
-   umask( 0777 );
+   umask( 0000 );
    int handle = ::open( cfilename.c_str(), O_CREAT | omode, p.createMode() );
 
    if ( handle >= 0 ) {
@@ -81,7 +82,7 @@ Stream *VFSFile::create( const URI& uri, const CParams &p, bool &bSuccess )
       if ( ! p.isNoStream() )
       {
          UnixFileSysData *ufd = new UnixFileSysData( handle, 0 );
-         return new FileStream( ufd );
+         return new StreamBuffer( new FileStream( ufd ) );
       }
       else
          return 0;

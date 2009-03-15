@@ -18,14 +18,14 @@ if str.front() != "H": failure( "String front" )
 if str.back() != "o": failure( "String back" )
 
 // numeric version
-if str.front(false, true) != ord("H"): failure( "String front numeric" )
-if str.back(false, true) != ord("o"): failure( "String back numeric" )
+if str.front(1, false, true) != ord("H"): failure( "String front numeric" )
+if str.back(1, false, true) != ord("o"): failure( "String back numeric" )
 
 // removal
 count = 0
 cfrvector = ["H","e","l","l","o"]
 while str
-   if str.front(true) != cfrvector[count++]: failure( "String removal" )
+   if str.front(1,true) != cfrvector[count++]: failure( "String removal" )
 end
 
 // Arrays
@@ -65,13 +65,14 @@ if mb.front() != 1: failure( "Membuf front" )
 if mb.back() != 2: failure( "Membuf back" )
 
 // error
+/*
 try
    err = ""
    k = err.front()
    failure( "Error on empty string not raised" )
 catch AccessError
 end
-
+*/
 success()
 
 /* End of file */

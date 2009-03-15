@@ -26,16 +26,17 @@
 #include <falcon/core_ext.h>
 #include <falcon/sequence.h>
 
-#include <falcon/cobject.h>
+#include <falcon/coreobject.h>
 #include <falcon/lineardict.h>
 #include <falcon/string.h>
 #include <falcon/cclass.h>
 #include <falcon/carray.h>
 #include <falcon/cdict.h>
+#include <falcon/corefunc.h>
 #include <falcon/error.h>
 #include <falcon/stream.h>
-#include <falcon/attribute.h>
 #include <falcon/membuf.h>
+#include <falcon/vmmsg.h>
 
 #include <math.h>
 #include <errno.h>
@@ -61,12 +62,15 @@ Item *VMachine::getOpcodeParam( register uint32 bc_pos )
       return m_imm + bc_pos;
 
       case P_PARAM_STRID:
-         m_imm[bc_pos].setString( const_cast< String *>( m_currentModule->getString( endianInt32(*reinterpret_cast<int32 *>( m_code + m_pc_next ) ) ) ) );
-         m_pc_next += sizeof( int32 );
+         {
+            String *temp = const_cast<String *>(currentModule()->getString( endianInt32(*reinterpret_cast<int32 *>( m_code + m_pc_next ) ) ) );
+            m_imm[bc_pos].setString( temp );
+            m_pc_next += sizeof( int32 );
+         }
       return m_imm + bc_pos;
 
       case P_PARAM_LBIND:
-         m_imm[bc_pos].setLBind( const_cast<String *>(m_currentModule->getString(
+         m_imm[bc_pos].setLBind( const_cast<String *>(currentModule()->getString(
             endianInt32(*reinterpret_cast<int32 *>( m_code + m_pc_next ) ) ) ) );
          m_pc_next += sizeof( int32 );
       return m_imm + bc_pos;
@@ -113,7 +117,6 @@ Item *VMachine::getOpcodeParam( register uint32 bc_pos )
       case P_PARAM_REGA: return &m_regA;
       case P_PARAM_REGB: return &m_regB;
       case P_PARAM_REGS1: return &m_regS1;
-      case P_PARAM_REGS2: return &m_regS2;
       case P_PARAM_REGL1: return &m_regL1;
       case P_PARAM_REGL2: return &m_regL2;
    }
@@ -128,6 +131,23 @@ void VMachine::run()
 {
    tOpcodeHandler *ops = m_opHandlers;
    m_event = eventNone;
+   Error *the_error = 0;
+
+   // declare this as the running machine
+   setCurrent();
+
+   /*
+   class AutoIdle
+   {
+      VMachine  *m_vm;
+   public:
+      inline AutoIdle( VMachine *vm ):
+         m_vm(vm) { vm->pulseIdle(); } 
+         // ^^we are already idle, but pulseidle force to honor pending
+         // blocking requets.
+      inline ~AutoIdle() { m_vm->idle(); }
+   } l_autoidle(this);
+   */
 
    while( 1 )
    {
@@ -138,55 +158,63 @@ void VMachine::run()
       // external call required?
       if ( m_pc >= i_pc_call_request )
       {
-         switch( m_pc )
-         {
-            case i_pc_call_external_ctor_return:
-               m_regA = m_regS1;
-               //fallthrough
-            case i_pc_call_external_return:
-               callReturn();
-            break;
+         try {
+            switch( m_pc )
+            {
+               case i_pc_call_external_ctor_return:
+                  m_regA = m_regS1;
+                  //fallthrough
+               case i_pc_call_external_return:
+                  callReturn();
+               break;
 
-            // the request was just to ignore opcode
-            case i_pc_redo_request:
-               if ( m_opCount )
-                  m_opCount--; // prevent hitting oplimit
-            break;
+               // the request was just to ignore opcode
+               case i_pc_redo_request:
+                  if ( m_opCount )
+                     m_opCount--; // prevent hitting oplimit
+               break;
 
-            default:
-               m_regA.setNil();
-               try {
+               default:
+                  m_regA.setNil();
                   m_symbol->getExtFuncDef()->call( this );
-               }
-               catch( CodeError *e )
-               {
-                  if ( m_error != 0 )
-                     m_error->decref();
-                  // fake an error raisal
-                  m_error = e;
-                  m_event = eventRisen;
-               }
-
+            }
+         }
+         catch( Error *err )
+         {
+            // fake an error raisal
+            the_error = err;
+            m_event = eventRisen;
+            fillErrorContext( err );
          }
       }
       else
       {
          // execute the opcode.
-         ops[ m_code[ m_pc ] ]( this );
+         try {
+            ops[ m_code[ m_pc ] ]( this );
+         }
+         catch( Error *err )
+         {
+            m_event = eventRisen;
+            the_error = err;
+            err->origin( e_orig_vm );
+            fillErrorContext( err );
+         }
       }
 
       m_opCount ++;
 
       //=========================
       // Executes periodic checks
+
       if ( m_opCount > m_opNextCheck )
       {
-         if ( m_opCount > m_opNextGC )
-         {
-            m_memPool->checkForGarbage();
-            m_opNextGC = m_opCount + m_loopsGC;
-            m_opNextCheck = m_opNextGC;
-         }
+         // By default, if nothing else happens, we should do a check no sooner than this.
+         m_opNextCheck = m_opCount + FALCON_VM_DFAULT_CHECK_LOOPS;
+
+         // pulse VM idle
+         if( m_bGcEnabled )
+            m_baton.checkBlock();
 
          if ( m_opLimit > 0 )
          {
@@ -223,6 +251,24 @@ void VMachine::run()
                m_opNextCheck = m_opCount + 1;
                return; // maintain the event we have, but exit now.
             }
+            
+            // perform messages
+            m_mtx_mesasges.lock();
+            while( m_msg_head != 0 )
+            {
+               VMMessage* msg = m_msg_head;
+               m_msg_head = msg->next();
+               // it is ok if m_msg_tail is left dangling.
+               m_mtx_mesasges.unlock();
+               
+               processMessage( msg );
+               
+               // see if we have more messages in the meanwhile
+               m_mtx_mesasges.lock();
+            }
+            
+            m_msg_tail = 0;
+            m_mtx_mesasges.unlock();
          }
       }
 
@@ -234,12 +280,11 @@ void VMachine::run()
 
          // This events leads to VM main loop exit.
          case eventInterrupt:
-         case eventSuspend:
             if ( m_atomicMode )
             {
                raiseError( new InterruptedError( ErrorParam( e_interrupted ).origin( e_orig_vm ).
-                     symbol( "itemToString" ).
-                     module( "core.vm" ).
+                     symbol( m_symbol->name() ).
+                     module( m_currentModule->module()->name() ).
                      line( __LINE__ ).
                      hard() ) );
                // just re-parse the event
@@ -267,14 +312,14 @@ void VMachine::run()
             // If the error is internally generated, a frame has been already created. We should
             // create here only error data about uncaught raises from the scripts.
 
-            if( m_tryFrame == i_noTryFrame && m_error == 0 )  // uncaught error raised from scripts...
+            if( m_tryFrame == i_noTryFrame && the_error == 0 )  // uncaught error raised from scripts...
             {
                // create the error that the external application will see.
                Error *err;
                if ( m_regB.isOfClass( "Error" ) )
                {
                   // in case of an error of class Error, we have already a good error inside of it.
-                  err = static_cast<Error *>(m_regB.asObjectSafe()->getUserData());
+                  err = static_cast<core::ErrorObject *>(m_regB.asObjectSafe())->getError();
                   err->incref();
                }
                else {
@@ -283,7 +328,7 @@ void VMachine::run()
                   err->raised( m_regB );
                   fillErrorContext( err );
                }
-               m_error = err;
+               the_error = err;
             }
 
             // Enter the stack frame that should handle the error (or raise to the top if uncaught)
@@ -308,24 +353,23 @@ void VMachine::run()
             // should we catch it?
             // If the error is zero, we know we have a script exception ready to be caught
             // as we have filtered it before
-            if ( m_error == 0 )
+            if ( the_error == 0 )
             {
                popTry( true );
                m_event = eventNone;
                continue;
             }
             // else catch it only if allowed.
-            else if( m_error->catchable() && m_tryFrame != i_noTryFrame )
+            else if( the_error->catchable() && m_tryFrame != i_noTryFrame )
             {
-               CoreObject *obj = m_error->scriptize( this );
-
+               CoreObject *obj = the_error->scriptize( this );
+               the_error = 0;
                if ( obj != 0 )
                {
                   // we'll manage the error throuhg the obj, so we release the ref.
-                  m_error->decref();
-                  m_error = 0;
                   m_regB.setObject( obj );
                   popTry( true );
+                  //the_error->decref();  // scriptize adds a reference
                   m_event = eventNone;
                   continue;
                }
@@ -334,10 +378,7 @@ void VMachine::run()
                   // describing the missing error class; we must tell the user so that the module
                   // not declaring the correct error class, or failing to export it, can be
                   // fixed.
-                  if( m_errhand != 0 ) {
-                     m_errhand->handleError( m_error );
-                  }
-                  return;
+                  throw the_error;
                }
             }
             // we couldn't catch the error (this also means we're at m_stackBase zero)
@@ -345,10 +386,7 @@ void VMachine::run()
             else {
                // we should manage the error; if we're here, m_stackBase is zero,
                // so we are the last in charge
-               if( m_errhand != 0 )
-                  m_errhand->handleError( m_error );
-               // we're out of business.
-               return;
+               throw the_error;
             }
          break;
 
@@ -386,12 +424,10 @@ void VMachine::run()
             }
             if ( m_sleepingContexts.empty() && !m_sleepAsRequests && m_yieldTime < 0.0 )
             {
-               m_error = new GenericError( ErrorParam( e_deadlock ).origin( e_orig_vm ) );
-               fillErrorContext( m_error );
+               Error* the_error = new GenericError( ErrorParam( e_deadlock ).origin( e_orig_vm ) );
+               fillErrorContext( the_error );
                m_event = eventRisen;
-               if( m_errhand != 0 )
-                     m_errhand->handleError( m_error );
-               return;
+               throw the_error;
             }
 
             m_pc = m_pc_next;
@@ -450,10 +486,10 @@ void opcodeHandler_END( register VMachine *vm )
          if( iter->data() == vm->m_currentContext ) {
             vm->m_contexts.erase( iter );
                // removing the context also deletes it.
-               
+
                // Not necessary, but we do for debug reasons (i.e. if we access it before election, we crash)
                vm->m_currentContext = 0;
-               
+
                break;
          }
          iter = iter->next();
@@ -534,7 +570,7 @@ void opcodeHandler_JMP( register VMachine *vm )
 void opcodeHandler_GENA( register VMachine *vm )
 {
    register uint32 size = (uint32) vm->getNextNTD32();
-   CoreArray *array = new CoreArray( vm, size );
+   CoreArray *array = new CoreArray( size );
 
    // copy the m-topmost items in the stack into the array
    Item *data = array->elements();
@@ -552,7 +588,7 @@ void opcodeHandler_GENA( register VMachine *vm )
 void opcodeHandler_GEND( register VMachine *vm )
 {
    register uint32 length = (uint32) vm->getNextNTD32();
-   LinearDict *dict = new LinearDict( vm, length );
+   LinearDict *dict = new LinearDict( length );
 
    // copy the m-topmost items in the stack into the array
    int32 base = vm->m_stack->size() - ( length * 2 );
@@ -584,7 +620,7 @@ void opcodeHandler_PSHR( register VMachine *vm )
    Item *referenced = vm->getOpcodeParam( 1 );
    if ( ! referenced->isReference() )
    {
-      GarbageItem *ref = new GarbageItem( vm, *referenced );
+      GarbageItem *ref = new GarbageItem( *referenced );
       referenced->setReference( ref );
    }
 
@@ -608,36 +644,16 @@ void opcodeHandler_POP( register VMachine *vm )
 // 0F
 void opcodeHandler_INC( register VMachine *vm )
 {
-   Item *operand =  vm->getOpcodeParam( 1 )->dereference();
-
-   switch( operand->type() )
-   {
-      case FLC_ITEM_INT: *operand = operand->asInteger() + 1; break;
-      case FLC_ITEM_NUM: *operand = operand->asNumeric() + 1.0; break;
-      default:
-         vm->raiseRTError( new TypeError( ErrorParam( e_invop ).extra("INC").origin( e_orig_vm ) ) );
-         return;
-
-   }
-
+   Item *operand =  vm->getOpcodeParam( 1 );
+   operand->inc();
    vm->regA() = *operand;
 }
 
 // 10
 void opcodeHandler_DEC( register VMachine *vm )
 {
-   Item *operand =  vm->getOpcodeParam( 1 )->dereference();
-
-   switch( operand->type() )
-   {
-      case FLC_ITEM_INT: *operand = operand->asInteger() - 1; break;
-      case FLC_ITEM_NUM: *operand = operand->asNumeric() - 1.0; break;
-      default:
-         vm->raiseRTError( new TypeError( ErrorParam( e_invop ).extra("DEC").origin( e_orig_vm ) ) );
-         return;
-
-   }
-
+   Item *operand =  vm->getOpcodeParam( 1 );
+   operand->dec();
    vm->regA() = *operand;
 }
 
@@ -645,16 +661,8 @@ void opcodeHandler_DEC( register VMachine *vm )
 // 11
 void opcodeHandler_NEG( register VMachine *vm )
 {
-   Item *operand = vm->getOpcodeParam( 1 )->dereference();
-
-   switch( operand->type() )
-   {
-      case FLC_ITEM_INT: vm->m_regA.setInteger( -operand->asInteger() ); break;
-      case FLC_ITEM_NUM: vm->m_regA.setNumeric( -operand->asNumeric() ); break;
-      default:
-         vm->raiseRTError( new TypeError( ErrorParam( e_invop ).extra("NEG").origin( e_orig_vm ) ) );
-         return;
-   }
+   Item *operand = vm->getOpcodeParam( 1 );
+   operand->neg( vm->regA() );
 }
 
 
@@ -688,7 +696,6 @@ void opcodeHandler_TRAL( register VMachine *vm )
 
       case FLC_ITEM_DICT:
       case FLC_ITEM_OBJECT:
-      case FLC_ITEM_ATTRIBUTE:
       {
          CoreIterator *iter = (CoreIterator *) iterator->asGCPointer();
          if ( ! iter->hasNext() )
@@ -713,7 +720,7 @@ void opcodeHandler_TRAL( register VMachine *vm )
             vm->m_pc_next = pcNext;
          }
 
-         int32 increment = source->asRangeStep();
+         int64 increment = source->asRangeStep();
          if ( source->asRangeStart() < source->asRangeEnd() )
          {
             if ( increment == 0 )
@@ -765,17 +772,8 @@ void opcodeHandler_XPOP( register VMachine *vm )
 //16
 void opcodeHandler_GEOR( register VMachine *vm )
 {
-   try 
-   {
-      vm->regA().setRange( 
-         (int32) vm->getOpcodeParam( 1 )->dereference()->forceIntegerEx(),
-         0,
-         true );
-   }
-   catch( TypeError* te ) 
-   {
-      vm->raiseError( te );
-   }
+   vm->regA().setRange(
+      new CoreRange( (int32) vm->getOpcodeParam( 1 )->dereference()->forceIntegerEx() ) );
 }
 
 //17
@@ -840,19 +838,10 @@ void opcodeHandler_FORK( register VMachine *vm )
    uint32 pSize = (uint32) vm->getNextNTD32();
    uint32 pJump = (uint32) vm->getNextNTD32();
 
-   VMContext *ctx = new VMContext( vm );
+   // create the coroutine
+   vm->coPrepare( pSize );
 
-   if ( pSize > 0 ) {
-      ctx->getStack()->reserve( pSize );
-      for( uint32 i = 0; i < pSize; i++ ) {
-         Item temp = vm->m_stack->itemAt( vm->m_stack->size() - pSize + i );
-         ctx->getStack()->push( &temp );
-      }
-      vm->m_stack->resize( vm->m_stack->size() - pSize );
-   }
-   vm->m_contexts.pushBack( ctx );
-   vm->putAtSleep( ctx, 0.0 );
-
+   // fork
    vm->m_pc = pJump;
    vm->m_pc_next = pJump;
 }
@@ -865,9 +854,9 @@ void opcodeHandler_LD( register VMachine *vm )
    Item *operand1 =  vm->getOpcodeParam( 1 )->dereference();
    Item *operand2 =  vm->getOpcodeParam( 2 )->dereference();
 
-   if ( operand2->isString() )
-      operand1->setString( new GarbageString( vm, *operand2->asString() ) );
-   else
+   /*if ( operand2->isString() )
+      operand1->setString( new CoreString( *operand2->asString() ) );
+   else*/
       operand1->copy( *operand2 );
 
    vm->regA() =  *operand1;
@@ -891,7 +880,7 @@ void opcodeHandler_LDRF( register VMachine *vm )
       }
       else
       {
-         gitem = new GarbageItem( vm, *operand2 );
+         gitem = new GarbageItem( *operand2 );
          operand2->setReference( gitem );
       }
 
@@ -902,493 +891,72 @@ void opcodeHandler_LDRF( register VMachine *vm )
 // 20
 void opcodeHandler_ADD( register VMachine *vm )
 {
-   Item *operand1 =  vm->getOpcodeParam( 1 )->dereference();
-   Item *operand2 =  vm->getOpcodeParam( 2 )->dereference();
+   Item *operand1 = vm->getOpcodeParam( 1 );
+   Item *operand2 = vm->getOpcodeParam( 2 );
 
-   switch( operand1->type() << 8 | operand2->type() )
-   {
-      case FLC_ITEM_INT << 8 | FLC_ITEM_INT:
-         vm->m_regA.setInteger( operand1->asInteger() + operand2->asInteger() );
-      return;
-
-      case FLC_ITEM_INT << 8 | FLC_ITEM_NUM:
-         vm->m_regA.setNumeric( operand1->asInteger() + operand2->asNumeric() );
-      return;
-
-      case FLC_ITEM_NUM<< 8 | FLC_ITEM_INT:
-         vm->m_regA.setNumeric( operand1->asNumeric() + operand2->asInteger() );
-      return;
-
-      case FLC_ITEM_NUM<< 8 | FLC_ITEM_NUM:
-         vm->m_regA.setNumeric( operand1->asNumeric() + operand2->asNumeric() );
-      return;
-
-      case FLC_ITEM_STRING<< 8 | FLC_ITEM_STRING:
-      {
-         GarbageString *gcs = new GarbageString( vm, *operand1->asString() );
-         gcs->append( *operand2->asString() );
-         vm->m_regA.setString( gcs );
-      }
-      return;
-
-      case FLC_ITEM_DICT<< 8 | FLC_ITEM_DICT:
-      {
-         CoreDict *dict = new LinearDict( vm, operand1->asDict()->length() + operand2->asDict()->length() );
-         dict->merge( *operand1->asDict() );
-         dict->merge( *operand2->asDict() );
-         vm->m_regA.setDict( dict );
-      }
-      return;
-   }
-
-   // add any item to the end of an array.
-   if( operand1->type() == FLC_ITEM_ARRAY )
-   {
-      CoreArray *first = operand1->asArray()->clone();
-
-      if ( operand2->type() == FLC_ITEM_ARRAY ) {
-         first->merge( *operand2->asArray() );
-      }
-      else {
-         if ( operand2->isString() && operand2->asString()->garbageable() )
-            first->append( operand2->asString()->clone() );
-         else
-            first->append( *operand2 );
-      }
-      vm->retval( first );
-      return;
-   }
-   else if( operand1->isString() )
-   {
-      String tgt;
-      vm->itemToString( tgt, operand2 );
-      if ( vm->hadError() )
-         return;
-
-      GarbageString *gcs = new GarbageString( vm, *operand1->asString() );
-      gcs->append( tgt );
-      vm->m_regA.setString( gcs );
-      return;
-   }
-
-   vm->raiseRTError( new TypeError( ErrorParam( e_invop ).extra("ADD").origin( e_orig_vm ) ) );
+   operand1->add( *operand2, vm->regA() );
 }
 
 // 21
 void opcodeHandler_SUB( register VMachine *vm )
 {
-   Item *operand1 =  vm->getOpcodeParam( 1 )->dereference();
-   Item *operand2 =  vm->getOpcodeParam( 2 )->dereference();
-
-   switch( operand1->type() << 8 | operand2->type() )
-   {
-      case FLC_ITEM_INT << 8 | FLC_ITEM_INT:
-         vm->m_regA.setInteger( operand1->asInteger() - operand2->asInteger() );
-      return;
-
-      case FLC_ITEM_INT << 8 | FLC_ITEM_NUM:
-         vm->m_regA.setNumeric( operand1->asInteger() - operand2->asNumeric() );
-      return;
-
-      case FLC_ITEM_NUM<< 8 | FLC_ITEM_INT:
-         vm->m_regA.setNumeric( operand1->asNumeric() - operand2->asInteger() );
-      return;
-
-      case FLC_ITEM_NUM<< 8 | FLC_ITEM_NUM:
-         vm->m_regA.setNumeric( operand1->asNumeric() - operand2->asNumeric() );
-      return;
-   }
-
-   // remove any element from an array
-   if ( operand1->isArray() )
-   {
-      CoreArray *source = operand1->asArray();
-      CoreArray *dest = source->clone();
-
-      // if we have an array, remove all of it
-      if( operand2->isArray() )
-      {
-         CoreArray *removed = operand2->asArray();
-         for( uint32 i = 0; i < removed->length(); i ++ )
-         {
-            int32 rem = dest->find( removed->at(i) );
-            if( rem >= 0 )
-               dest->remove( rem );
-         }
-      }
-      else {
-         int32 rem = dest->find( *operand2 );
-         if( rem >= 0 )
-            dest->remove( rem );
-      }
-
-      // never raise.
-      vm->m_regA = dest;
-      return;
-   }
-   // remove various keys from arrays
-   else if( operand1->isDict() )
-   {
-      CoreDict *source = operand1->asDict();
-      CoreDict *dest = source->clone();
-
-      // if we have an array, remove all of it
-      if( operand2->isArray() )
-      {
-         CoreArray *removed = operand2->asArray();
-         for( uint32 i = 0; i < removed->length(); i ++ )
-         {
-            dest->remove( removed->at(i) );
-         }
-      }
-      else {
-         dest->remove( *operand2 );
-      }
-
-      // never raise.
-      vm->m_regA = dest;
-      return;
-   }
-
-   vm->raiseRTError( new TypeError( ErrorParam( e_invop ).extra("SUB").origin( e_orig_vm ) ) );
+   Item *operand1 =  vm->getOpcodeParam( 1 );
+   Item *operand2 =  vm->getOpcodeParam( 2 );
+   operand1->sub( *operand2, vm->regA() );
 }
 
 // 22
 void opcodeHandler_MUL( register VMachine *vm )
 {
-   Item *operand1 =  vm->getOpcodeParam( 1 )->dereference();
-   Item *operand2 =  vm->getOpcodeParam( 2 )->dereference();
-
-   switch( operand1->type() << 8 | operand2->type() )
-   {
-      case FLC_ITEM_INT << 8 | FLC_ITEM_INT:
-         vm->m_regA.setInteger( operand1->asInteger() * operand2->asInteger() );
-      return;
-
-      case FLC_ITEM_INT << 8 | FLC_ITEM_NUM:
-         vm->m_regA.setNumeric( operand1->asInteger() * operand2->asNumeric() );
-      return;
-
-      case FLC_ITEM_NUM<< 8 | FLC_ITEM_INT:
-         vm->m_regA.setNumeric( operand1->asNumeric() * operand2->asInteger() );
-      return;
-
-      case FLC_ITEM_NUM<< 8 | FLC_ITEM_NUM:
-         vm->m_regA.setNumeric( operand1->asNumeric() * operand2->asNumeric() );
-      return;
-
-      case FLC_ITEM_STRING<< 8 | FLC_ITEM_INT:
-      case FLC_ITEM_STRING<< 8 | FLC_ITEM_NUM:
-      {
-         int64 chr = operand2->forceInteger();
-         if ( chr >= 0 && chr <= (int64) 0xFFFFFFFF )
-         {
-            GarbageString *gcs = new GarbageString( vm, *operand1->asString() );
-            gcs->append( (uint32) chr );
-            vm->m_regA.setString( gcs );
-            return;
-         }
-      }
-      break;
-   }
-   vm->raiseRTError( new TypeError( ErrorParam( e_invop ).extra("MUL").origin( e_orig_vm ) ) );
+   Item *operand1 =  vm->getOpcodeParam( 1 );
+   Item *operand2 =  vm->getOpcodeParam( 2 );
+   operand1->mul( *operand2, vm->regA() );
 }
 
 // 23
 void opcodeHandler_DIV( register VMachine *vm )
 {
-   Item *operand1 =  vm->getOpcodeParam( 1 )->dereference();
-   Item *operand2 =  vm->getOpcodeParam( 2 )->dereference();
-
-   switch( operand2->type() )
-   {
-      case FLC_ITEM_INT:
-      {
-         int64 val2 = operand2->asInteger();
-         if ( val2 == 0 ) {
-            vm->raiseRTError( new MathError( ErrorParam( e_div_by_zero ).origin( e_orig_vm ) ) );
-            return;
-         }
-
-         switch( operand1->type() ) {
-            case FLC_ITEM_INT:
-               vm->m_regA.setNumeric( operand1->asInteger() / (numeric)val2 );
-            return;
-            case FLC_ITEM_NUM:
-               vm->m_regA.setNumeric( operand1->asNumeric() / (numeric)val2 );
-            return;
-         }
-      }
-      break;
-
-      case FLC_ITEM_NUM:
-      {
-         numeric val2 = operand2->asNumeric();
-         if ( val2 == 0.0 ) {
-            vm->raiseRTError( new MathError( ErrorParam( e_div_by_zero ).origin( e_orig_vm ) ) );
-            return;
-         }
-
-         switch( operand1->type() ) {
-            case FLC_ITEM_INT:
-               vm->m_regA.setNumeric( operand1->asInteger() / (numeric)val2 );
-            return;
-            case FLC_ITEM_NUM:
-               vm->m_regA.setNumeric( operand1->asNumeric() / (numeric)val2 );
-            return;
-         }
-      }
-      break;
-   }
-
-   vm->raiseRTError( new TypeError( ErrorParam( e_invop ).extra("DIV").origin( e_orig_vm ) ) );
+   Item *operand1 =  vm->getOpcodeParam( 1 );
+   Item *operand2 =  vm->getOpcodeParam( 2 );
+   operand1->div( *operand2, vm->regA() );
 }
 
 
 //24
 void opcodeHandler_MOD( register VMachine *vm )
 {
-   Item *operand1 =  vm->getOpcodeParam( 1 )->dereference();
-   Item *operand2 =  vm->getOpcodeParam( 2 )->dereference();
-
-   if ( operand1->type() == FLC_ITEM_INT && operand2->type() == FLC_ITEM_INT ) {
-      if ( operand2->asInteger() == 0 )
-         vm->raiseRTError( new TypeError( ErrorParam( e_invop ).extra("MOD").origin( e_orig_vm ) ) );
-      else
-         vm->m_regA.setInteger( operand1->asInteger() % operand2->asInteger() );
-   }
-   else if ( operand1->isOrdinal() && operand2->isOrdinal() )
-   {
-      if ( operand2->forceNumeric() == 0.0 )
-         vm->raiseRTError( new TypeError( ErrorParam( e_invop ).extra("MOD").origin( e_orig_vm ) ) );
-      else
-         vm->regA().setNumeric( fmod( operand1->forceNumeric(), operand2->forceNumeric() ) );
-   }
-   else
-      vm->raiseRTError( new TypeError( ErrorParam( e_invop ).extra("MOD").origin( e_orig_vm ) ) );
+   Item *operand1 =  vm->getOpcodeParam( 1 );
+   Item *operand2 =  vm->getOpcodeParam( 2 );
+   operand1->mod( *operand2, vm->regA() );
 }
 
 // 25
 void opcodeHandler_POW( register VMachine *vm )
 {
-   Item *operand1 =  vm->getOpcodeParam( 1 )->dereference();
-   Item *operand2 =  vm->getOpcodeParam( 2 )->dereference();
-
-   numeric powval;
-
-   errno = 0;
-   switch( operand2->type() )
-   {
-      case FLC_ITEM_INT:
-      {
-         if ( operand2->asInteger() == 0 ) {
-            vm->retval( (int64) 1 );
-            return;
-         }
-
-         numeric val2 = (numeric) operand2->asInteger();
-         switch( operand1->type() ) {
-            case FLC_ITEM_INT:
-               powval = pow( (double)operand1->asInteger(), val2 );
-            break;
-
-            case FLC_ITEM_NUM:
-               powval = pow( operand1->asNumeric(), val2 );
-            break;
-
-            default:
-               vm->raiseRTError( new TypeError( ErrorParam( e_invop ).extra("POW").origin( e_orig_vm ) ) );
-               return;
-         }
-      }
-      break;
-
-      case FLC_ITEM_NUM:
-      {
-         numeric val2 = operand2->asNumeric();
-         if ( val2 == 0.0 ) {
-            vm->retval( (int64) 1 );
-            return;
-         }
-
-         switch( operand1->type() ) {
-            case FLC_ITEM_INT:
-               powval = pow( (double) operand1->asInteger(), val2 );
-            break;
-
-            case FLC_ITEM_NUM:
-               powval = pow( operand1->asNumeric(), val2 );
-            break;
-
-            default:
-               vm->raiseRTError( new TypeError( ErrorParam( e_invop ).extra("POW").origin( e_orig_vm ) ) );
-               return;
-         }
-      }
-      break;
-
-      default:
-         vm->raiseRTError( new TypeError( ErrorParam( e_invop ).extra("POW").origin( e_orig_vm ) ) );
-         return;
-   }
-
-   if ( errno != 0 )
-   {
-      vm->raiseRTError( new MathError( ErrorParam( e_domain ).origin( e_orig_vm ) ) );
-   }
-   else {
-      vm->retval( powval );
-   }
+   Item *operand1 =  vm->getOpcodeParam( 1 );
+   Item *operand2 =  vm->getOpcodeParam( 2 );
+   operand1->pow( *operand2, vm->regA() );
 }
 
 // 26
 void opcodeHandler_ADDS( register VMachine *vm )
 {
-   Item *operand1 =  vm->getOpcodeParam( 1 )->dereference();
-   Item *operand2 =  vm->getOpcodeParam( 2 )->dereference();
+   Item *operand1 = vm->getOpcodeParam( 1 )->dereference();
+   Item *operand2 = vm->getOpcodeParam( 2 );
 
-   switch( operand1->type() << 8 | operand2->type() )
-   {
-      case FLC_ITEM_INT << 8 | FLC_ITEM_INT:
-         operand1->setInteger(operand1->asInteger() + operand2->asInteger() );
-      break;
-
-      case FLC_ITEM_INT << 8 | FLC_ITEM_NUM:
-         operand1->setNumeric(operand1->asInteger() + operand2->asNumeric() );
-      break;
-
-      case FLC_ITEM_NUM<< 8 | FLC_ITEM_INT:
-         operand1->setNumeric(operand1->asNumeric() + operand2->asInteger() );
-      break;
-
-      case FLC_ITEM_NUM<< 8 | FLC_ITEM_NUM:
-         operand1->setNumeric(operand1->asNumeric() + operand2->asNumeric() );
-      break;
-
-      case FLC_ITEM_STRING<< 8 | FLC_ITEM_STRING:
-      {
-         String *str = new GarbageString( vm, *operand1->asString() );
-         str->append( *operand2->asString() );
-         operand1->setString( str );
-      }
-      break;
-
-      case FLC_ITEM_DICT<< 8 | FLC_ITEM_DICT:
-      {
-         operand1->asDict()->merge( *operand2->asDict() );
-      }
-      break;
-
-      default:
-         // add any item to the end of an array.
-         if( operand1->type() == FLC_ITEM_ARRAY )
-         {
-            if ( operand2->type() == FLC_ITEM_ARRAY ) {
-               operand1->asArray()->merge( *operand2->asArray() );
-            }
-            else {
-               if ( operand2->isString() && operand2->asString()->garbageable() )
-                  operand1->asArray()->append( operand2->asString()->clone() );
-               else
-                  operand1->asArray()->append( *operand2 );
-            }
-            break;
-         }
-         else if( operand1->isString() )
-         {
-            String tgt;
-            vm->itemToString( tgt, operand2 );
-            if ( vm->hadError() )
-               return;
-
-            operand1->asString()->append( tgt );
-            break;
-         }
-
-         vm->raiseRTError( new TypeError( ErrorParam( e_invop ).extra("ADDS").origin( e_orig_vm ) ) );
-         return;
-   }
-
-   vm->regA() = *operand1; // valid also if A
+   // TODO: S-operators
+   operand1->add( *operand2, *operand1 );
+   vm->regA() = *operand1;
 }
 
 //27
 void opcodeHandler_SUBS( register VMachine *vm )
 {
-   Item *operand1 =  vm->getOpcodeParam( 1 )->dereference();
-   Item *operand2 =  vm->getOpcodeParam( 2 )->dereference();
+   Item *operand1 = vm->getOpcodeParam( 1 )->dereference();
+   Item *operand2 = vm->getOpcodeParam( 2 );
 
-   switch( operand1->type() << 8 | operand2->type() )
-   {
-      case FLC_ITEM_INT << 8 | FLC_ITEM_INT:
-         operand1->setInteger(operand1->asInteger() - operand2->asInteger() );
-      break;
-
-      case FLC_ITEM_INT << 8 | FLC_ITEM_NUM:
-         operand1->setNumeric(operand1->asInteger() - operand2->asNumeric() );
-      break;
-
-      case FLC_ITEM_NUM<< 8 | FLC_ITEM_INT:
-         operand1->setNumeric(operand1->asNumeric() - operand2->asInteger() );
-      break;
-
-      case FLC_ITEM_NUM<< 8 | FLC_ITEM_NUM:
-         operand1->setNumeric(operand1->asNumeric() - operand2->asNumeric() );
-      break;
-
-      default:
-         // remove any element from an array
-         if ( operand1->isArray() )
-         {
-            CoreArray *source = operand1->asArray();
-
-            // if we have an array, remove all of it
-            if( operand2->isArray() )
-            {
-               CoreArray *removed = operand2->asArray();
-               for( uint32 i = 0; i < removed->length(); i ++ )
-               {
-                  int32 rem = source->find( removed->at(i) );
-                  if( rem >= 0 )
-                     source->remove( rem );
-               }
-            }
-            else {
-               int32 rem = source->find( *operand2 );
-               if( rem >= 0 )
-                  source->remove( rem );
-            }
-
-            // never raise.
-            break;
-         }
-         // remove various keys from arrays
-         else if( operand1->isDict() )
-         {
-            CoreDict *source = operand1->asDict();
-
-            // if we have an array, remove all of it
-            if( operand2->isArray() )
-            {
-               CoreArray *removed = operand2->asArray();
-               for( uint32 i = 0; i < removed->length(); i ++ )
-               {
-                  source->remove( removed->at(i) );
-               }
-            }
-            else {
-               source->remove( *operand2 );
-            }
-
-            // never raise.
-            vm->m_regA = source;
-            break;
-         }
-
-         vm->raiseRTError( new TypeError( ErrorParam( e_invop ).extra("SUBS").origin( e_orig_vm ) ) );
-         return;
-   }
-
+   // TODO: S-operators
+   operand1->sub( *operand2, *operand1 );
    vm->regA() = *operand1;
 }
 
@@ -1397,128 +965,35 @@ void opcodeHandler_SUBS( register VMachine *vm )
 
 void opcodeHandler_MULS( register VMachine *vm )
 {
-   Item *operand1 =  vm->getOpcodeParam( 1 )->dereference();
-   Item *operand2 =  vm->getOpcodeParam( 2 )->dereference();
+   Item *operand1 = vm->getOpcodeParam( 1 )->dereference();
+   Item *operand2 = vm->getOpcodeParam( 2 );
 
-   switch( operand1->type() << 8 | operand2->type() )
-   {
-      case FLC_ITEM_INT << 8 | FLC_ITEM_INT:
-         operand1->setInteger(operand1->asInteger() * operand2->asInteger() );
-      break;
-
-      case FLC_ITEM_INT << 8 | FLC_ITEM_NUM:
-         operand1->setNumeric(operand1->asInteger() * operand2->asNumeric() );
-      break;
-
-      case FLC_ITEM_NUM<< 8 | FLC_ITEM_INT:
-         operand1->setNumeric(operand1->asNumeric() * operand2->asInteger() );
-      break;
-
-      case FLC_ITEM_NUM<< 8 | FLC_ITEM_NUM:
-         operand1->setNumeric(operand1->asNumeric() * operand2->asNumeric() );
-      break;
-
-      case FLC_ITEM_STRING<< 8 | FLC_ITEM_INT:
-      case FLC_ITEM_STRING<< 8 | FLC_ITEM_NUM:
-      {
-         int64 chr = operand2->forceInteger();
-         if ( chr >= 0 && chr <= (int64) 0xFFFFFFFF )
-         {
-            String *str = new GarbageString( vm, *operand1->asString() );
-            str->append( (uint32) chr );
-            operand1->setString( str );
-            break;
-         }
-      }
-      break;
-
-      default:
-         vm->raiseRTError( new TypeError( ErrorParam( e_invop ).extra("MULS").origin( e_orig_vm ) ) );
-         return;
-   }
-
+   // TODO: S-operators
+   operand1->mul( *operand2, *operand1 );
    vm->regA() = *operand1;
 }
 
 //29
 void opcodeHandler_DIVS( register VMachine *vm )
 {
-   Item *operand1 =  vm->getOpcodeParam( 1 )->dereference();
-   Item *operand2 =  vm->getOpcodeParam( 2 )->dereference();
+   Item *operand1 = vm->getOpcodeParam( 1 )->dereference();
+   Item *operand2 = vm->getOpcodeParam( 2 );
 
-   switch( operand2->type() )
-   {
-      case FLC_ITEM_INT:
-      {
-         int64 val2 = operand2->asInteger();
-         if ( val2 == 0 ) {
-            vm->raiseRTError( new MathError( ErrorParam( e_div_by_zero ).origin( e_orig_vm ) ) );
-            return;
-         }
-
-         switch( operand1->type() ) {
-            case FLC_ITEM_INT:
-               operand1->setNumeric( operand1->asInteger() / (numeric)val2 );
-               vm->regA() = *operand1;
-            return;
-            case FLC_ITEM_NUM:
-               operand1->setNumeric( operand1->asNumeric() / (numeric)val2 );
-               vm->regA() = *operand1;
-            return;
-         }
-      }
-      break;
-
-      case FLC_ITEM_NUM:
-      {
-         numeric val2 = operand2->asNumeric();
-         if ( val2 == 0.0 ) {
-            vm->raiseRTError( new MathError( ErrorParam( e_div_by_zero ).origin( e_orig_vm ) ) );
-            return;
-         }
-
-         switch( operand1->type() ) {
-            case FLC_ITEM_INT:
-               operand1->setNumeric( operand1->asInteger() / (numeric)val2 );
-               vm->regA() = *operand1;
-            return;
-            case FLC_ITEM_NUM:
-               operand1->setNumeric( operand1->asNumeric() / (numeric)val2 );
-               vm->regA() = *operand1;
-            return;
-         }
-      }
-      break;
-   }
-
-   vm->raiseRTError( new TypeError( ErrorParam( e_invop ).extra("DIVS").origin( e_orig_vm ) ) );
+   // TODO: S-operators
+   operand1->div( *operand2, *operand1 );
+   vm->regA() = *operand1;
 }
 
 
 //2A
 void opcodeHandler_MODS( register VMachine *vm )
 {
-   Item *operand1 =  vm->getOpcodeParam( 1 )->dereference();
-   Item *operand2 =  vm->getOpcodeParam( 2 )->dereference();
+   Item *operand1 = vm->getOpcodeParam( 1 )->dereference();
+   Item *operand2 = vm->getOpcodeParam( 2 );
 
-   if ( operand1->type() == FLC_ITEM_INT && operand2->type() == FLC_ITEM_INT ) {
-      if ( operand2->asInteger() == 0 )
-         vm->raiseRTError( new TypeError( ErrorParam( e_invop ).extra("MODS").origin( e_orig_vm ) ) );
-      else {
-         operand1->setInteger( operand1->asInteger() % operand2->asInteger() );
-         vm->regA() = *operand1;
-      }
-   }
-   else if ( operand1->isOrdinal() && operand2->isOrdinal() ) {
-      if ( operand2->forceNumeric() == 0.0 )
-         vm->raiseRTError( new TypeError( ErrorParam( e_invop ).extra("MODS").origin( e_orig_vm ) ) );
-      else {
-         operand1->setNumeric( fmod( operand1->forceNumeric(), operand2->forceNumeric() ) );
-         vm->regA() = *operand1;
-      }
-   }
-   else
-      vm->raiseRTError( new TypeError( ErrorParam( e_invop ).extra("MODS").origin( e_orig_vm ) ) );
+   // TODO: S-operators
+   operand1->mod( *operand2, *operand1 );
+   vm->regA() = *operand1;
 }
 
 //2B
@@ -1605,86 +1080,84 @@ void opcodeHandler_GENR( register VMachine *vm )
    Item *operand1 =  vm->getOpcodeParam( 1 )->dereference();
    Item *operand2 =  vm->getOpcodeParam( 2 )->dereference();
    Item *operand3 =  vm->getOpcodeParam( 3 )->dereference();
-   
-   try 
+
+
+   int64 secondOp = operand2->forceIntegerEx();
+   if( operand2->isOob() && secondOp > 0 )
+      secondOp++;
+
+   int64 step;
+   if ( operand3->isNil() )
    {
-      int32 secondOp = (int32) operand2->forceIntegerEx();
-      if( operand2->isOob() && secondOp > 0 )
-         secondOp++;
-         
-      if ( operand3->isNil() )
-      {
-         vm->m_regA.setRange(
-               (int32) operand1->forceIntegerEx(),
-               secondOp,
-               (int32) vm->m_stack->itemAt( vm->m_stack->size() - 1).forceIntegerEx(),
-               false );
-         vm->m_stack->pop();
-      }
+      step = vm->m_stack->itemAt( vm->m_stack->size() - 1).forceIntegerEx();
+      vm->m_stack->pop();
+   }
+   else {
+      step = operand3->forceIntegerEx();
+   }
+
+   int64 firstOp = operand1->forceIntegerEx();
+   if( step == 0 )
+   {
+      if ( firstOp <= secondOp )
+          step = 1;
       else
-         vm->m_regA.setRange(
-            (int32) operand1->forceIntegerEx(),
-            secondOp,
-            (int32) operand3->forceIntegerEx(),
-            false );
+         step = -1;
    }
-   catch( TypeError* te ) {
-      vm->raiseError( te );
-   }
+
+   vm->m_regA.setRange( new CoreRange(
+      firstOp,
+      secondOp,
+      step   ) );
+
 }
 
 //32
 void opcodeHandler_EQ( register VMachine *vm )
 {
-   Item *operand1 =  vm->getOpcodeParam( 1 )->dereference();
-   Item *operand2 =  vm->getOpcodeParam( 2 )->dereference();
-
-   vm->m_regA.setBoolean( vm->compareItems( *operand1, *operand2 ) == 0 );
+   Item *operand1 =  vm->getOpcodeParam( 1 );
+   Item *operand2 =  vm->getOpcodeParam( 2 );
+   vm->regA().setBoolean( *operand1 == *operand2 );
 }
 
 //33
 void opcodeHandler_NEQ( register VMachine *vm )
 {
-   Item *operand1 =  vm->getOpcodeParam( 1 )->dereference();
-   Item *operand2 =  vm->getOpcodeParam( 2 )->dereference();
-
-   vm->m_regA.setBoolean( vm->compareItems( *operand1, *operand2 ) != 0 );
+   Item *operand1 =  vm->getOpcodeParam( 1 );
+   Item *operand2 =  vm->getOpcodeParam( 2 );
+   vm->regA().setBoolean( *operand1 != *operand2 );
 }
 
 //34
 void opcodeHandler_GT( register VMachine *vm )
 {
-   Item *operand1 =  vm->getOpcodeParam( 1 )->dereference();
-   Item *operand2 =  vm->getOpcodeParam( 2 )->dereference();
-
-   vm->regA().setBoolean( vm->compareItems( *operand1, *operand2 ) > 0 );
+   Item *operand1 =  vm->getOpcodeParam( 1 );
+   Item *operand2 =  vm->getOpcodeParam( 2 );
+   vm->regA().setBoolean( *operand1 > *operand2 );
 }
 
 //35
 void opcodeHandler_GE( register VMachine *vm )
 {
-   Item *operand1 =  vm->getOpcodeParam( 1 )->dereference();
-   Item *operand2 =  vm->getOpcodeParam( 2 )->dereference();
-
-   vm->regA().setBoolean( vm->compareItems( *operand1, *operand2 ) >= 0 );
+   Item *operand1 =  vm->getOpcodeParam( 1 );
+   Item *operand2 =  vm->getOpcodeParam( 2 );
+   vm->regA().setBoolean( *operand1 >= *operand2 );
 }
 
 //36
 void opcodeHandler_LT( register VMachine *vm )
 {
-   Item *operand1 =  vm->getOpcodeParam( 1 )->dereference();
-   Item *operand2 =  vm->getOpcodeParam( 2 )->dereference();
-
-   vm->regA().setBoolean( vm->compareItems( *operand1, *operand2 ) < 0 );
+   Item *operand1 =  vm->getOpcodeParam( 1 );
+   Item *operand2 =  vm->getOpcodeParam( 2 );
+   vm->regA().setBoolean( *operand1 < *operand2 );
 }
 
 //37
 void opcodeHandler_LE( register VMachine *vm )
 {
-   Item *operand1 =  vm->getOpcodeParam( 1 )->dereference();
-   Item *operand2 =  vm->getOpcodeParam( 2 )->dereference();
-
-   vm->regA().setBoolean( vm->compareItems( *operand1, *operand2 ) <= 0 );
+   Item *operand1 =  vm->getOpcodeParam( 1 );
+   Item *operand2 =  vm->getOpcodeParam( 2 );
+   vm->regA().setBoolean( *operand1 <= *operand2 );
 }
 
 //38
@@ -1713,8 +1186,7 @@ void opcodeHandler_CALL( register VMachine *vm )
    uint32 pNext = (uint32) vm->getNextNTD32();
    Item *operand2 = vm->getOpcodeParam( 2 )->dereference();
 
-   if( ! vm->callItem( *operand2, pNext, VMachine::e_callFrame ) )
-      vm->raiseRTError( new TypeError( ErrorParam( e_invop ).extra("CALL").origin( e_orig_vm ) ) );
+   operand2->readyFrame( vm, pNext );
 }
 
 //3B
@@ -1729,11 +1201,12 @@ void opcodeHandler_INST( register VMachine *vm )
       return;
    }
 
-   const Symbol *cls = operand2->asClass()->symbol();
-   const Symbol *ctor = cls->getClassDef()->constructor();
-   if ( ctor != 0 ) {
-      if( ! vm->callItem( *operand2, pNext, VMachine::e_callInstFrame ) )
-         vm->raiseRTError( new TypeError( ErrorParam( e_invop ).extra("INST").origin( e_orig_vm ) ) );
+   Item method = operand2->asClass()->constructor();
+   if ( ! method.isNil() )
+   {
+      // set self in the function method.
+      method.methodize( vm->self() );
+      method.readyFrame( vm, pNext );
    }
 }
 
@@ -1747,11 +1220,11 @@ void opcodeHandler_ONCE( register VMachine *vm )
 
    if ( operand2->isFunction() )
    {
-      call = operand2->asFunction();
+      call = operand2->asFunction()->symbol();
    }
    else if ( operand2->isMethod() )
    {
-      call = operand2->asMethodFunction();
+      call = operand2->asMethodFunc()->symbol();
    }
 
    if ( call != 0 && call->isFunction() )
@@ -1771,162 +1244,18 @@ void opcodeHandler_ONCE( register VMachine *vm )
 //3D
 void opcodeHandler_LDV( register VMachine *vm )
 {
-   Item *operand1 =  vm->getOpcodeParam( 1 )->dereference();
-   Item *operand2 =  vm->getOpcodeParam( 2 )->dereference();
+   Item *operand1 =  vm->getOpcodeParam( 1 );
+   Item *operand2 =  vm->getOpcodeParam( 2 );
    vm->latch() = *operand1;
    vm->latcher() = *operand2;
 
-   switch( operand1->type() << 8 | operand2->type() )
-   {
-      case FLC_ITEM_STRING << 8 | FLC_ITEM_INT:
-      {
-         int32 pos = (int32) operand2->asInteger();
-         String *cs = operand1->asString();
-         if ( cs->checkPosBound( pos ) )
-         {
-            vm->retval( new GarbageString( vm, String(*cs, pos, pos+1 ) ) );
-            return;
-         }
-      }
-      break;
-
-      case FLC_ITEM_STRING << 8 | FLC_ITEM_NUM:
-      {
-         int32 pos = (int32) operand2->asNumeric();
-         String *cs = operand1->asString();
-         if ( cs->checkPosBound( pos ) )  {
-            vm->retval( new GarbageString( vm, String(*cs, pos, pos+1 ) ) );
-            return;
-         }
-      }
-      break;
-
-      case FLC_ITEM_MEMBUF << 8 | FLC_ITEM_INT:
-      case FLC_ITEM_MEMBUF << 8 | FLC_ITEM_NUM:
-      {
-         int64 pos = (int64) operand2->forceInteger();
-         MemBuf *mb = operand1->asMemBuf();
-         uint32 uPos = (uint32) (pos >= 0 ? pos : mb->length() + pos);
-         if ( uPos < mb->length() )  {
-            vm->retval( (int64) mb->get( uPos ) );
-            return;
-         }
-      }
-      break;
-
-      case FLC_ITEM_STRING << 8 | FLC_ITEM_RANGE:
-      {
-         String *cs = operand1->asString();
-         int32 rstart =  operand2->asRangeStart();
-         if ( operand2->asRangeIsOpen() )
-         {
-            if ( cs->checkPosBound( rstart ) ) {
-               vm->retval( new GarbageString( vm, String( *cs, rstart ) ) );
-            }
-            else {
-               vm->retval( new GarbageString( vm ) );
-            }
-            return;
-         }
-         else {
-            int32 rend =  operand2->asRangeEnd();
-            if ( cs->checkRangeBound( rstart, rend ) )
-            {
-               vm->retval( new GarbageString( vm, String(*cs, rstart, rend ) ) );
-               return;
-            }
-         }
-      }
-      break;
-
-      case FLC_ITEM_ARRAY << 8 | FLC_ITEM_INT:
-      {
-         register int32 pos = (int32) operand2->asInteger();
-         CoreArray *array = operand1->asArray();
-         if (!( -pos > int(array->length()) || pos >= int(array->length()) ) )
-         {
-            vm->retval( (*array)[ pos ] );
-            return;
-         }
-      }
-      break;
-
-      case FLC_ITEM_ARRAY << 8 | FLC_ITEM_NUM:
-      {
-         register int32 pos = (int32) operand2->asNumeric();
-         CoreArray *array = operand1->asArray();
-         if ( ! (-pos > int(array->length()) || pos >= int(array->length()) ) ){
-            vm->retval( (*array)[ pos ] );
-            return;
-         }
-      }
-      break;
-
-      case FLC_ITEM_ARRAY << 8 | FLC_ITEM_RANGE:
-      {
-         CoreArray *array =  operand1->asArray();
-
-         // open ranges?
-         if ( operand2->asRangeIsOpen() &&
-              ((operand2->asRangeStart() >= 0 && (int) array->length() <= operand2->asRangeStart() ) ||
-              (operand2->asRangeStart() < 0 && (int) array->length() < -operand2->asRangeStart() ))
-              )
-         {
-            vm->retval( new CoreArray( vm ) );
-            return;
-         }
-
-         register int32 end = operand2->asRangeIsOpen() ? array->length() : operand2->asRangeEnd();
-         array = array->partition( operand2->asRangeStart(), end );
-         if ( array != 0 )
-         {
-            vm->retval( array );
-            return;
-         }
-      }
-      break;
-
-      case FLC_ITEM_RANGE << 8 | FLC_ITEM_INT:
-      case FLC_ITEM_RANGE << 8 | FLC_ITEM_NUM:
-      {
-         int32 pos = (int32) operand2->forceInteger();
-         switch( pos )
-         {
-            case -3: case 0: vm->retval( operand1->asRangeStart() ); return;
-
-            case 1: case -2:
-               if( operand1->asRangeIsOpen() )
-                  vm->retnil();
-               else
-                  vm->retval( operand1->asRangeEnd() );
-            return;
-
-            case 2: case -1:
-               if( operand1->asRangeIsOpen() )
-                  vm->retnil();
-               else
-                  vm->retval( operand1->asRangeStep() );
-            return;
-         }
-      }
-      break;
-
-      default:
-         if( operand1->type() == FLC_ITEM_DICT ) {
-            if( operand1->asDict()->find( *operand2, vm->m_regA ) ) {
-               return;
-            }
-         }
-   }
-
-   vm->raiseRTError(
-            new AccessError( ErrorParam( e_arracc ).origin( e_orig_vm ).extra( "LDV" ) ) );
+   operand1->getIndex( *operand2, vm->regA() );
 }
 
 //3E
 void opcodeHandler_LDP( register VMachine *vm )
 {
-   Item *operand1 =  vm->getOpcodeParam( 1 )->dereference();
+   Item *operand1 =  vm->getOpcodeParam( 1 );
    Item *operand2 =  vm->getOpcodeParam( 2 )->dereference();
    vm->latch() = *operand1;
    vm->latcher() = *operand2;
@@ -1934,124 +1263,12 @@ void opcodeHandler_LDP( register VMachine *vm )
    if( operand2->isString() )
    {
       String *property = operand2->asString();
-
-      Item *source = operand1;
-      CoreObject *self = vm->m_regS1.isNil()? 0: vm->m_regS1.asObjectSafe();
-      CoreClass *sourceClass=0;
-      Item prop;
-      uint32 pos;
-
-      switch( source->type() )
-      {
-         case FLC_ITEM_OBJECT:
-            if( source->asObjectSafe()->getProperty( *property, prop ) ) {
-               // we must create a method if the property is a function.
-               Item *p = prop.dereference();
-
-               switch( p->type() ) {
-                  case FLC_ITEM_FUNC:
-                     // the function may be a dead function; by so, the method will become a dead method,
-                     // and it's ok for us.
-                     vm->m_regA.setMethod( source->asObjectSafe(), p->asFunction(), p->asModule() );
-                  break;
-
-                  case FLC_ITEM_CLASS:
-                     vm->m_regA.setClassMethod( source->asObjectSafe(), p->asClass() );
-                  break;
-                  default:
-                     vm->m_regA = *p;
-               }
-               return;
-            }
-         break;
-
-         case FLC_ITEM_CLSMETHOD:
-            sourceClass = source->asMethodClass();
-            self = source->asMethodObject();
-
-         // do not break: fallback
-         case FLC_ITEM_CLASS:
-            if ( sourceClass == 0 )
-               sourceClass = source->asClass();
-
-            if( sourceClass->properties().findKey( *property, pos ) )
-            {
-               Item *prop = sourceClass->properties().getValue( pos );
-
-               // now, accessing a method in a class means that we want to call the base method in a
-               // self item:
-               if( prop->type() == FLC_ITEM_FUNC )
-               {
-                  if ( self != 0 )
-                     vm->m_regA.setMethod( self, prop->asFunction(), prop->asModule() );
-                  else
-                     vm->m_regA.setFunction( prop->asFunction(), prop->asModule() );
-               }
-               else
-               {
-                  vm->regA() = *prop;
-               }
-               return;
-            }
-         break;
-
-         case FLC_ITEM_ARRAY:
-         {
-            Item *found;
-            if( ( found = source->asArray()->getProperty( *property ) ) != 0 )
-            {
-               found = found->dereference();
-               if( found->isFunction() )
-               {
-                  vm->regA().setTabMethod( source->asArray(), found->asFunction(), found->asModule() );
-               }
-               // propagate owner bindings
-               else if ( found->isArray() )
-               {
-                  found->asArray()->setBindings( source->asArray()->bindings() );
-                  vm->regA() = *found;
-               }
-               else
-                  vm->regA() = *found;
-
-               return;
-            }
-         }
-         break;
-
-         case FLC_ITEM_DICT:
-         {
-            Item *found;
-            CoreDict *dict = source->asDict();
-            if ( dict->isBlessed() )
-            {
-               if( ( found = source->asDict()->find( property ) ) != 0 )
-               {
-                  found = found->dereference();
-                  if( found->isFunction() )
-                  {
-                     vm->regA().setTabMethod( source->asDict(), found->asFunction(), found->asModule() );
-                  }
-                  else
-                     vm->regA() = *found;
-
-                  return;
-               }
-            }
-         }
-         break;
-      }
-
-      // try to find a generic method
-      if( source->getBom( *property, vm->regA(), vm->m_fbom ) )
-      {
-         return;
-      }
+      operand1->getProperty( *property, vm->regA() );
    }
-
-   vm->raiseRTError(
-      new AccessError( ErrorParam( e_prop_acc ).origin( e_orig_vm ) .
-         extra( operand2->isString() ? *operand2->asString() : "?" ) ) );
+   else
+      vm->raiseRTError(
+         new AccessError( ErrorParam( e_prop_acc ).origin( e_orig_vm ) .
+            extra( operand2->isString() ? *operand2->asString() : "?" ) ) );
 }
 
 
@@ -2171,7 +1388,6 @@ void opcodeHandler_TRAN( register VMachine *vm )
          }
       break;
 
-      case FLC_ITEM_ATTRIBUTE:
       case FLC_ITEM_OBJECT:
          if ( ! isIterator )
          {
@@ -2240,7 +1456,7 @@ void opcodeHandler_TRAN( register VMachine *vm )
                return;
             }
 
-            *dest->dereference() = new GarbageString( vm,
+            *dest->dereference() = new CoreString(
                   sstr->subString( counter, counter + 1 ) );
          }
       break;
@@ -2277,8 +1493,8 @@ void opcodeHandler_TRAN( register VMachine *vm )
             return;
          }
          else {
-            int32 counter = (int32) iterator->asInteger();
-            int32 increment = source->asRangeStep();
+            int64 counter = iterator->asInteger();
+            int64 increment = source->asRangeStep();
             // if( p3 == 1 ) -- we Ignore this case, and let continue dropping to act as continue.
 
             if( source->asRangeStart() < source->asRangeEnd() )
@@ -2414,105 +1630,6 @@ void opcodeHandler_SWCH( register VMachine *vm )
    vm->m_pc_next = pNext;
 }
 
-//42
-void opcodeHandler_HAS( register VMachine *vm )
-{
-   Item *operand1 =  vm->getOpcodeParam( 1 )->dereference();
-   Item *operand2 =  vm->getOpcodeParam( 2 )->dereference();
-
-   if( operand1->isObject() )
-   {
-      if ( operand2->isAttribute() )
-      {
-         vm->regA() = (int64) ( operand1->asObjectSafe()->has( operand2->asAttribute() ) ? 1: 0 );
-         return;
-      }
-      else if ( operand2->isString() )
-      {
-         vm->regA() = (int64) ( operand1->asObjectSafe()->has( *operand2->asString() ) ? 1: 0 );
-         return;
-      }
-   }
-
-   vm->raiseRTError( new TypeError( ErrorParam( e_invop ).extra("HAS") ) );
-}
-
-//43
-void opcodeHandler_HASN( register VMachine *vm )
-{
-   Item *operand1 =  vm->getOpcodeParam( 1 )->dereference();
-   Item *operand2 =  vm->getOpcodeParam( 2 )->dereference();
-
-   if( operand1->isObject() )
-   {
-      if ( operand2->isAttribute() )
-      {
-         vm->regA() = (int64) ( operand1->asObjectSafe()->has( operand2->asAttribute() ) ? 0: 1 );
-         return;
-      }
-      else if ( operand2->isString() )
-      {
-         vm->regA() = (int64) ( operand1->asObjectSafe()->has( *operand2->asString() ) ? 0: 1 );
-         return;
-      }
-   }
-
-   vm->raiseRTError( new TypeError( ErrorParam( e_invop ).extra("HASN") ) );
-}
-
-//44
-void opcodeHandler_GIVE( register VMachine *vm )
-{
-   Item *operand1 =  vm->getOpcodeParam( 1 )->dereference();
-   Item *operand2 =  vm->getOpcodeParam( 2 )->dereference();
-
-   if( operand1->isObject() )
-   {
-      if ( operand2->isAttribute() )
-      {
-         operand2->asAttribute()->giveTo( operand1->asObjectSafe() );
-         return;
-      }
-      else if ( operand2->isString() )
-      {
-         Attribute *attrib = vm->findAttribute( *operand2->asString() );
-         if ( attrib != 0 )
-         {
-            attrib->giveTo( operand1->asObjectSafe() );
-         }
-         return;
-      }
-   }
-
-   vm->raiseRTError( new TypeError( ErrorParam( e_invop ).extra("GIVE") ) );
-}
-
-//45
-void opcodeHandler_GIVN( register VMachine *vm )
-{
-   Item *operand1 =  vm->getOpcodeParam( 1 )->dereference();
-   Item *operand2 =  vm->getOpcodeParam( 2 )->dereference();
-
-   if( operand1->isObject() )
-   {
-      if ( operand2->isAttribute() )
-      {
-         operand2->asAttribute()->removeFrom( operand1->asObjectSafe() );
-         return;
-      }
-      else if ( operand2->isString() )
-      {
-         Attribute *attrib = vm->findAttribute( *operand2->asString() );
-         if ( attrib != 0 )
-         {
-            attrib->removeFrom( operand1->asObjectSafe() );
-         }
-         return;
-      }
-   }
-
-   vm->raiseRTError( new TypeError( ErrorParam( e_invop ).extra("GIVN") ) );
-}
 
 //46
 void opcodeHandler_IN( register VMachine *vm )
@@ -2534,7 +1651,7 @@ void opcodeHandler_IN( register VMachine *vm )
          Item *elements =  operand2->asArray()->elements();
          for( uint32 pos = 0; pos <operand2->asArray()->length(); pos++ )
          {
-            if( elements[pos].equal( *operand1 )) {
+            if( elements[pos] == *operand1 ) {
                result = true;
                break;
             }
@@ -2602,7 +1719,7 @@ void opcodeHandler_PROV( register VMachine *vm )
       break;
       case FLC_ITEM_DICT:
          result = operand1->asDict()->isBlessed() &&
-                  operand1->asDict()->find( operand2->asString() )!=0;
+                  operand1->asDict()->find( *operand2->asString() )!=0;
       break;
       default:
          result = false;
@@ -2616,238 +1733,39 @@ void opcodeHandler_PROV( register VMachine *vm )
 //49
 void opcodeHandler_STVS( register VMachine *vm )
 {
-   Item *operand1 =  vm->getOpcodeParam( 1 )->dereference();
-   Item *operand2 =  vm->getOpcodeParam( 2 )->dereference();
-
    if(  vm->m_stack->empty() )
    {
       vm->raiseError( e_stackuf, "STVS" );
       return;
    }
 
+   Item *operand1 =  vm->getOpcodeParam( 1 );
+   Item *operand2 =  vm->getOpcodeParam( 2 );
+   Item *origin = &vm->m_stack->topItem();
 
-   Item origin = vm->m_stack->topItem();
+   operand1->setIndex( *operand2, *origin );
+   vm->regA() = *origin;
    vm->m_stack->pop();
 
-
-   // try to access a dictionary with every item
-   // access addition.
-   if( operand1->type() == FLC_ITEM_DICT ) {
-      operand1->asDict()->insert( *(operand2), origin );
-      vm->regA() = *operand2;
-      return;
-   }
-
-   switch( operand1->type() << 8 | operand2->type() )
-   {
-      case FLC_ITEM_STRING << 8 | FLC_ITEM_INT:
-      case FLC_ITEM_STRING << 8 | FLC_ITEM_NUM:
-         if ( origin.isString() ) {
-            register int32 pos = (int32) operand2->forceInteger();
-            String *cs_orig = origin.asString();
-            if( cs_orig->length() > 0 ) {
-               if ( pos < (int32) operand1->asString()->length() )
-               {
-                  GarbageString *gcs = new GarbageString( vm, *operand1->asString() );
-                  gcs->setCharAt( pos, cs_orig->getCharAt(0) );
-                  operand1->setString( gcs );
-                  vm->regA() = gcs;
-                  return;
-               }
-            }
-         }
-      break;
-
-      case FLC_ITEM_STRING << 8 | FLC_ITEM_RANGE:
-         if( origin.isString() )
-         {
-            GarbageString *gcs = new GarbageString( vm, *operand1->asString() );
-            operand1->setString( gcs );
-
-            bool result = operand2->asRangeIsOpen() ?
-               gcs->change( operand2->asRangeStart(), *origin.asString() ) :
-               gcs->change( operand2->asRangeStart(), operand2->asRangeEnd(), *origin.asString() );
-
-            if ( result ) {
-               vm->regA() = gcs;
-               return;
-            }
-         }
-      break;
-
-      case FLC_ITEM_MEMBUF << 8 | FLC_ITEM_INT:
-      case FLC_ITEM_MEMBUF << 8 | FLC_ITEM_NUM:
-      {
-         if ( origin.isOrdinal() )
-         {
-            int64 pos = (int64) operand2->forceInteger();
-            MemBuf *mb = operand1->asMemBuf();
-            uint32 uPos = (uint32) (pos >= 0 ? pos : mb->length() + pos);
-            if ( uPos < mb->length() )
-            {
-               mb->set( uPos, (uint32) origin.forceInteger() );
-               vm->regA() = origin;
-               return;
-            }
-         }
-      }
-      break;
-
-      case FLC_ITEM_ARRAY << 8 | FLC_ITEM_INT:
-      case FLC_ITEM_ARRAY << 8 | FLC_ITEM_NUM:
-      {
-         register int32 pos = (int32) operand2->forceInteger();
-         CoreArray *array = operand1->asArray();
-         if ( pos >= (-(int)array->length()) && pos < (int32) array->length() ) {
-            (*array)[ pos ] = origin;
-            vm->regA() = origin;
-            return;
-         }
-      }
-      break;
-
-      case FLC_ITEM_ARRAY << 8 | FLC_ITEM_RANGE:
-      {
-         CoreArray *array =  operand1->asArray();
-         register int32 end = operand2->asRangeIsOpen() ? array->length() : operand2->asRangeEnd();
-         register int32 start = operand2->asRangeStart();
-         if( origin.isArray() ) {
-            if( array->change( *origin.asArray() , start, end ) ) {
-               vm->regA() = origin;
-               return;
-            }
-         }
-         else {
-            // if it's not a plain insert...
-            if ( start != end ) 
-            { 
-               // before it's too late.
-               if ( start <  0 )
-                  start = array->length() + start;
-               
-               if ( end <  0 )
-                  end = array->length() + end;
-                  
-               if( ! array->remove( start, end ) )
-                  break;
-                  
-               if ( start > end )
-                  start = end;
-            }
-         
-            if( array->insert( origin, start ) ) {
-               vm->regA() = origin;
-               return;
-            }
-         }
-      }
-      break;
-   }
-
-    vm->raiseRTError( new AccessError( ErrorParam( e_arracc ).origin( e_orig_vm ) ) );
 }
 
 //4A
 void opcodeHandler_STPS( register VMachine *vm )
 {
-   Item *operand1 =  vm->getOpcodeParam( 1 )->dereference();
-   Item *operand2 =  vm->getOpcodeParam( 2 )->dereference();
-
    if( vm->m_stack->empty() )
    {
       vm->raiseError( e_stackuf, "STPS" );
       return;
    }
 
-   Item *target = operand1;
-   Item *method = operand2;
-
-   // STP(S) counts as an assignments, we have to store the thing in A.
-   Item item = vm->m_stack->topItem();
-   vm->m_stack->pop();
+   Item *target =  vm->getOpcodeParam( 1 );
+   Item *method = vm->getOpcodeParam( 2 )->dereference();
 
    if ( method->isString() )
    {
-      switch( target->type() )
-      {
-      case FLC_ITEM_OBJECT:
-      {
-         // Are we restoring an original item?
-         if( item.isMethod() && item.asMethodObject() == target->asObjectSafe() )
-         {
-            item.setFunction( item.asMethodFunction(), item.asModule() );
-         }
-         else if ( item.isString() )
-         {
-            GarbageString *gcs = new GarbageString( vm, *item.asString() );
-            item.setString( gcs );
-         }
-
-         if( target->asObjectSafe()->setProperty( *method->asString(), item ) )
-         {
-            vm->regA() = item;
-            return;
-         }
-
-         vm->raiseRTError(
-            new AccessError( ErrorParam( e_prop_acc ).origin( e_orig_vm ) .
-               extra( *method->asString() ) ) );
-
-         return;
-      }
-      break;
-
-      case FLC_ITEM_CLASS:
-      {
-         // is the target property a static property -- it must be a reference.
-         PropertyTable &pt = target->asClass()->properties();
-         uint32 propId;
-         if ( pt.findKey( *method->asString(), propId ) )
-         {
-            Item *prop = pt.getValue( propId );
-            if ( prop->isReference() )
-            {
-               if ( item.isString() )
-               {
-                  GarbageString *gcs = new GarbageString( vm, *item.asString() );
-                  item.setString( gcs );
-               }
-               *prop->dereference() = item;
-               vm->regA() = item;
-               return;
-            }
-            else {
-               vm->raiseRTError(
-                  new AccessError( ErrorParam( e_prop_ro ).origin( e_orig_vm ) .
-                  extra( *method->asString() ) ) );
-               return;
-            }
-         }
-
-         vm->raiseRTError(
-            new AccessError( ErrorParam( e_prop_acc ).origin( e_orig_vm ) .
-               extra( *method->asString() ) ) );
-      }
-      break;
-
-      case FLC_ITEM_ARRAY:
-      {
-         target->asArray()->setProperty( *method->asString(), item );
-         vm->regA() = item;
-      }
+      target->setProperty( *method->asString(), vm->m_stack->topItem() );
+      vm->regA() = vm->m_stack->topItem();
       return;
-
-      case FLC_ITEM_DICT:
-      {
-         CoreDict *dict = target->asDict();
-         if( dict->isBlessed() ) {
-            dict->insert( method->asString(), item );
-            vm->regA() = item;
-            return;
-         }
-      }
-      break;
-      }
    }
 
    vm->raiseRTError( new TypeError( ErrorParam( e_prop_acc ).extra("STPS").origin( e_orig_vm ) ) );
@@ -2872,360 +1790,37 @@ void opcodeHandler_OR( register VMachine *vm )
    vm->m_regA.setBoolean( operand1->isTrue() || operand2->isTrue() );
 }
 
-//4E
-void opcodeHandler_PASS( register VMachine *vm )
-{
-   Item *operand1 =  vm->getOpcodeParam( 1 )->dereference();
-
-   if( ! vm->callItemPass( *operand1 ) )
-      vm->raiseRTError( new TypeError( ErrorParam( e_invop ).extra("PASS").origin( e_orig_vm ) ) );
-}
-
-//4F
-void opcodeHandler_PSIN( register VMachine *vm )
-{
-   Item *operand1 =  vm->getOpcodeParam( 1 )->dereference();
-
-   if( ! vm->callItemPassIn( *operand1 ) )
-      vm->raiseRTError( new TypeError( ErrorParam( e_invop ).extra("PSIN").origin( e_orig_vm ) ) );
-
-}
-
 //50
 void opcodeHandler_STV( register VMachine *vm )
 {
-   Item *operand1 = vm->getOpcodeParam( 1 )->dereference();
-   Item *operand2 = vm->getOpcodeParam( 2 )->dereference();
+   Item *operand1 = vm->getOpcodeParam( 1 );
+   Item *operand2 = vm->getOpcodeParam( 2 );
    Item *origItm = vm->getOpcodeParam( 3 );
    Item *origin = origItm->dereference();
 
-   // counts as an assignment.
-   // try to access a dictionary with every item
-   // access addition.
-   if( operand1->type() == FLC_ITEM_DICT ) {
-      /*
-      if ( origin->isString() && origin->asString()->garbageable() )
-         vm->regA() = new GarbageString( vm, *origin->asString() );
-      else
+   operand1->setIndex( *operand2, *origin );
+
+   if( origItm != &vm->regB() )
          vm->regA() = *origin;
-
-      operand1->asDict()->insert( *(operand2), vm->regA() );
-      */
-      if ( origin->isString() && origin->asString()->garbageable() )
-         operand1->asDict()->insert( *(operand2), new GarbageString( vm, *origin->asString() ));
-      else
-         operand1->asDict()->insert( *(operand2), *origin );
-      // If we're receivng B, then A has already the correct value.
-      if( origItm != &vm->regB() )
-         vm->regA() = *origin;
-      return;
-   }
-
-   switch( operand1->type() << 8 | operand2->type() )
-   {
-      case FLC_ITEM_STRING << 8 | FLC_ITEM_INT:
-      case FLC_ITEM_STRING << 8 | FLC_ITEM_NUM:
-         if ( origin->type() == FLC_ITEM_STRING ) {
-            register int32 pos = (int32) operand2->forceInteger();
-            String *cs_orig = origin->asString();
-            if( cs_orig->length() > 0 ) {
-               String *cs = operand1->asString();
-               if ( cs->checkPosBound( pos ) ) {
-                  cs->setCharAt( pos, cs_orig->getCharAt(0) );
-
-                  // If we're receivng B, then A has already the correct value.
-                  if( origItm != &vm->regB() )
-                     vm->regA() = cs_orig;
-                  return;
-               }
-            }
-         }
-         else if( origin->isOrdinal() )
-         {
-            int64 chr = origin->forceInteger();
-            if ( chr >=0 && chr <= (int64) 0xFFFFFFFF )
-            {
-               String *cs = operand1->asString();
-               register int32 pos = (int32) operand2->forceInteger();
-               if ( cs->checkPosBound( pos ) ) {
-                  cs->setCharAt( pos, (uint32) chr );
-                  // If we're receivng B, then A has already the correct value.
-                  if( origItm != &vm->regB() )
-                     vm->regA() = (int64) chr;
-                  return;
-               }
-            }
-         }
-      break;
-
-      case FLC_ITEM_STRING << 8 | FLC_ITEM_RANGE:
-         if( origin->type() == FLC_ITEM_STRING ) 
-         {
-            GarbageString *gcs = new GarbageString( vm, *operand1->asString() );
-            operand1->setString( gcs );
-            
-            register int pos = operand2->asRangeStart();
-            register int end = operand2->asRangeIsOpen() ? gcs->length() :  operand2->asRangeEnd();
-            if ( gcs->checkRangeBound( pos, end ) ) 
-            {
-               if ( gcs->change( pos, end, *origin->asString() ) )
-               {
-                  // If we're receivng B, then A has already the correct value.
-                  if( origItm != &vm->regB() )
-                     vm->regA() = gcs;
-                  return;
-               }
-            }
-         }
-      break;
-
-      case FLC_ITEM_MEMBUF << 8 | FLC_ITEM_INT:
-      case FLC_ITEM_MEMBUF << 8 | FLC_ITEM_NUM:
-      {
-         if ( origin->isOrdinal() )
-         {
-            int64 pos = (int64) operand2->forceInteger();
-            MemBuf *mb = operand1->asMemBuf();
-            uint32 uPos = (uint32) (pos >= 0 ? pos : mb->length() + pos);
-            if ( uPos <  mb->length() )
-            {
-               mb->set( uPos, (uint32) origin->forceInteger() );
-               // If we're receivng B, then A has already the correct value.
-               if( origItm != &vm->regB() )
-                  vm->regA() = *origin;
-               return;
-            }
-         }
-      }
-      break;
-
-      case FLC_ITEM_ARRAY << 8 | FLC_ITEM_INT:
-      case FLC_ITEM_ARRAY << 8 | FLC_ITEM_NUM:
-      {
-         register int32 pos = (int32) operand2->forceInteger();
-         CoreArray *array = operand1->asArray();
-         if ( pos >= (-(int)array->length()) && pos < (int32) array->length() ) {
-            if ( origin->isString() && origin->asString()->garbageable() )
-               (*array)[ pos ] = origin->asString()->clone();
-            else
-               (*array)[ pos ] = *origin;
-
-            // If we're receivng B, then A has already the correct value.
-            if( origItm != &vm->regB() )
-               vm->regA() = (*array)[pos];
-            return;
-         }
-      }
-      break;
-
-      case FLC_ITEM_ARRAY << 8 | FLC_ITEM_RANGE:
-      {
-         CoreArray *array =  operand1->asArray();
-         register int32 end = operand2->asRangeIsOpen() ? array->length() : operand2->asRangeEnd();
-         register int32 start = operand2->asRangeStart();
-         if( origin->type() == FLC_ITEM_ARRAY ) {
-            if( array->change( *origin->asArray(), start, end ) )
-               return;
-         }
-         else {
-            // if it's not a plain insert...
-            if ( start != end ) 
-            { 
-               // before it's too late.
-               if ( start <  0 )
-                  start = array->length() + start;
-               
-               if ( end <  0 )
-                  end = array->length() + end;
-                  
-               if( ! array->remove( start, end ) )
-                  break;
-                  
-               if ( start > end )
-                  start = end;
-            }
-            
-            // we have already array in a separate var; even if the
-            // destination was the A register, we can overwrite it now.
-            // If we're receivng B, then A has already the correct value.
-            if( origItm != &vm->regB() )
-               vm->regA() = *origin;
-
-            if ( origin->isString() && origin->asString()->garbageable() ) {
-               if( array->insert( origin->asString()->clone(), start ) )
-                  return;
-            }
-            else {
-               if( array->insert( *origin, start ) )
-                  return;
-            }
-         }
-      }
-      break;
-
-      case FLC_ITEM_RANGE << 8 | FLC_ITEM_INT:
-      case FLC_ITEM_RANGE << 8 | FLC_ITEM_NUM:
-      case FLC_ITEM_RANGE << 8 | FLC_ITEM_NIL:
-      {
-         int32 pos = (int32) operand2->forceInteger();
-         bool bDone = false;
-         if ( origin->isOrdinal() )
-         {
-            switch( pos )
-            {
-               case 0: case -3:
-                  operand1->setRange( (int32) origin->forceInteger(),
-                        operand1->asRangeEnd(),
-                        operand1->asRangeStep(),
-                        operand1->asRangeIsOpen() );
-                  bDone = true;
-                  break;
-
-               case 1: case -2:
-                  operand1->setRange( operand1->asRangeStart(),
-                        (int32) origin->forceInteger(),
-                        (int32) operand1->asRangeStep(),
-                        false );
-                   bDone = true;
-                   break;
-
-               case 2: case -1:
-                  operand1->setRange( operand1->asRangeStart(),
-                        operand1->asRangeEnd(),
-                        (int32) origin->forceInteger(),
-                        false );
-                   bDone = true;
-                   break;
-            }
-         }
-         else if ( origin->isNil() && ( pos == -1 || pos == 1 || pos == -2 || pos == 2 ) )
-         {
-            operand1->setRange( operand1->asRangeStart(),
-                  0,
-                  0,
-                  true );
-             bDone = true;
-         }
-
-         if ( bDone ) {
-            if ( origItm != &vm->regB() )
-               vm->regA() = *operand1;
-            return;
-         }
-      }
-      break;
-   }
-
-   vm->raiseRTError(
-               new AccessError( ErrorParam( e_arracc ).origin( e_orig_vm ).extra("STV") ) );
 }
 
 //51
 void opcodeHandler_STP( register VMachine *vm )
 {
-   Item *target = vm->getOpcodeParam( 1 )->dereference();
+   Item *target = vm->getOpcodeParam( 1 );
    Item *method = vm->getOpcodeParam( 2 )->dereference();
    Item *sourcend = vm->getOpcodeParam( 3 );
    Item *source = sourcend->dereference();
 
+
    if ( method->isString() )
    {
-      // STP counts as an assignment, we have to copy the thing in A
-      switch( target->type() )
-      {
-      case FLC_ITEM_OBJECT:
-      {
-         Item temp;
+      target->setProperty( *method->asString(), *source );
 
-         // Are we restoring an original item?
-         if( source->isMethod() && source->asMethodObject() == target->asObjectSafe() )
-         {
-            temp.setFunction( source->asMethodFunction(), source->asModule() );
-            source = &temp;
-         }
-         else if ( source->isString() && source->asString()->garbageable() )
-         {
-            GarbageString *gcs = new GarbageString( vm, *source->asString() );
-            source->setString( gcs );
-         }
-
-         if( target->asObjectSafe()->setProperty( *method->asString(), *source ) ) {
-            // when B is the source, the right value is already in A.
-            if( sourcend != &vm->regB() )
-               vm->regA() = *source;
-            return;
-         }
-
-         vm->raiseRTError(
-            new AccessError( ErrorParam( e_prop_acc ).origin( e_orig_vm ) .
-               extra( *method->asString() ) ) );
-
-         return;
-      }
-      break;
-
-      case FLC_ITEM_CLASS:
-      {
-         // is the target property a static property -- it must be a reference.
-         PropertyTable &pt = target->asClass()->properties();
-         uint32 propId;
-         if ( pt.findKey( *method->asString(), propId ) )
-         {
-            Item *prop = pt.getValue( propId );
-            if ( prop->isReference() )
-            {
-               if ( source->isString() )
-               {
-                  GarbageString *gcs = new GarbageString( vm, *source->asString() );
-                  source->setString( gcs );
-               }
-               *prop->dereference() = *source;
-
-               // when B is the source, the right value is already in A.
-               if( sourcend != &vm->regB() )
-                  vm->regA() = *source;
-               return;
-            }
-            else {
-               vm->raiseRTError(
-                  new AccessError( ErrorParam( e_prop_ro ).origin( e_orig_vm ) .
-                     extra( *method->asString() ) ) );
-               return;
-            }
-         }
-      }
-      break;
-
-      case FLC_ITEM_ARRAY:
-      {
-         target->asArray()->setProperty( *method->asString(), *sourcend );
-
-         // when B is the source, the right value is already in A.
-         if( sourcend != &vm->regB() )
-            vm->regA() = *sourcend;
-         return;
-      }
-      break;
-
-      case FLC_ITEM_DICT:
-      {
-         CoreDict *dict = target->asDict();
-         if( dict->isBlessed() ) {
-            dict->insert( method->asString(), *source );
-
-            // when B is the source, the right value is already in A.
-            if( sourcend != &vm->regB() )
-               vm->regA() = *source;
-            return;
-         }
-      }
-      break;
-
-      }
-
-      vm->raiseRTError(
-         new AccessError( ErrorParam( e_prop_acc ).origin( e_orig_vm ) .
-            extra( *method->asString() ) ) );
+      // when B is the source, the right value is already in A.
+      if( sourcend != &vm->regB() )
+         vm->regA() = *source;
+      return;
    }
 
    vm->raiseRTError( new TypeError( ErrorParam( e_invop ).extra("STP").origin( e_orig_vm ) ) );
@@ -3270,32 +1865,39 @@ void opcodeHandler_STP( register VMachine *vm )
 //52
 void opcodeHandler_LDVT( register VMachine *vm )
 {
-   // do not decode the first two operands.
-   opcodeHandler_LDV( vm );
-   // Luckily, we can decode the third operand here, without any risk, as LDV never uses m_pc_next
-   Item *operand3 = vm->getOpcodeParam( 3 )->dereference();
+   Item *operand1 =  vm->getOpcodeParam( 1 );
+   Item *operand2 =  vm->getOpcodeParam( 2 );
+   vm->latch() = *operand1;
+   vm->latcher() = *operand2;
 
-   if( operand3 != &vm->m_regA )
-      operand3->copy( vm->m_regA );
+   operand1->getIndex( *operand2, *vm->getOpcodeParam( 3 ) );
 }
 
 //53
 void opcodeHandler_LDPT( register VMachine *vm )
 {
-   // do not decode the first two operands.
-   opcodeHandler_LDP( vm );
-   // Luckily, we can decode the third operand here, without any risk, as LDV never uses m_pc_next
-   Item *operand3 = vm->getOpcodeParam( 3 )->dereference();
+   Item *operand1 =  vm->getOpcodeParam( 1 );
+   Item *operand2 =  vm->getOpcodeParam( 2 )->dereference();
+   vm->latch() = *operand1;
+   vm->latcher() = *operand2;
 
-   if( operand3 != &vm->m_regA )
-      operand3->copy( vm->m_regA );
+   if( operand2->isString() )
+   {
+      String *property = operand2->asString();
+      operand1->getProperty( *property, *vm->getOpcodeParam( 3 ) );
+   }
+   else
+      vm->raiseRTError(
+         new AccessError( ErrorParam( e_prop_acc ).origin( e_orig_vm ) .
+            extra( operand2->isString() ? *operand2->asString() : "?" ) ) );
 }
 
 //54
 void opcodeHandler_STVR( register VMachine *vm )
 {
-   Item *operand1 = vm->getOpcodeParam( 1 )->dereference();
-   Item *operand2 = vm->getOpcodeParam( 2 )->dereference();
+   Item *operand1 = vm->getOpcodeParam( 1 );
+   Item *operand2 = vm->getOpcodeParam( 2 );
+
    // do not deref op3
    Item *origin = vm->getOpcodeParam( 3 );
 
@@ -3306,126 +1908,30 @@ void opcodeHandler_STVR( register VMachine *vm )
    GarbageItem *gitem;
    if( ! origin->isReference() )
    {
-      gitem = new GarbageItem( vm, *origin );
+      gitem = new GarbageItem( *origin );
       origin->setReference( gitem );
    }
 
-   // try to access a dictionary with every item
-   // access addition.
-   if( operand1->type() == FLC_ITEM_DICT ) {
-      operand1->asDict()->insert( *(operand2), *origin );
-      return;
-   }
-
-   switch( operand1->type() << 8 | operand2->type() )
-   {
-      case FLC_ITEM_ARRAY << 8 | FLC_ITEM_INT:
-      case FLC_ITEM_ARRAY << 8 | FLC_ITEM_NUM:
-      {
-         register int32 pos = (int32) operand2->forceInteger();
-         CoreArray *array = operand1->asArray();
-         if ( pos >= (-(int)array->length()) && pos < (int32) array->length() ) {
-            (*array)[ pos ] = *origin;
-            return;
-         }
-      }
-      break;
-
-      case FLC_ITEM_ARRAY << 8 | FLC_ITEM_RANGE:
-      {
-         CoreArray *array =  operand1->asArray();
-         register int32 end = operand2->asRangeIsOpen() ? array->length() : operand2->asRangeEnd();
-         register int32 start = operand2->asRangeStart();
-         
-         // if it's not a plain insert...
-         if ( start != end ) 
-         { 
-            // before it's too late.
-            if ( start <  0 )
-               start = array->length() + start;
-            
-            if ( end <  0 )
-               end = array->length() + end;
-                  
-            if( ! array->remove( start, end ) )
-               break;
-               
-            if ( start > end )
-               start = end;
-         }
-         
-         // if start < 0, its position has shifted due to 
-         if( array->insert( *origin, start < 0 ? start++: start ) )
-            return;
-      }
-      break;
-   }
-
-    vm->raiseRTError(
-            new AccessError( ErrorParam( e_arracc ).origin( e_orig_vm ).extra("STVR") ) );
+   operand1->setIndex( *operand2, *origin );
 }
 
 //55
 void opcodeHandler_STPR( register VMachine *vm )
 {
-   Item *target = vm->getOpcodeParam( 1 )->dereference();
-   Item *operand2 = vm->getOpcodeParam( 2 )->dereference();
-   // do not deref op3
+   Item *target = vm->getOpcodeParam( 1 );
+   Item *method = vm->getOpcodeParam( 2 )->dereference();
+
    Item *source = vm->getOpcodeParam( 3 );
+   vm->regA() = *source;
 
-   if ( source != &vm->regA() )
-      vm->regA() = *source;
-
-   switch( target->type() )
+   if ( method->isString() )
    {
-      case FLC_ITEM_OBJECT:
-         if ( operand2->type() == FLC_ITEM_STRING ) {
-            // If the source is a method, we have to put in just its function, discarding the recored object.
-            if( source->type() == FLC_ITEM_METHOD ) {
-               // will instantiate by value
-               Item temp( source->asMethodFunction(), source->asModule() );
-               if( target->asObjectSafe()->setProperty( *operand2->asString(), temp ) )
-                  return;
-            }
-            else {
-               if( ! source->isReference() ) {
-                  GarbageItem *gitem = new GarbageItem( vm, *source );
-                  source->setReference( gitem );
-               }
-
-               if( target->asObjectSafe()->setProperty( *operand2->asString(), *source ) )
-                  return;
-            }
-
-            vm->raiseRTError(
-               new AccessError( ErrorParam( e_prop_acc ).origin( e_orig_vm ) .
-                  extra( *operand2->asString() ) ) );
-            return;
-
-         }
-      break;
-
-      // classes cannot have their properties set (for now).
-      case FLC_ITEM_ARRAY:
-      if ( operand2->type() == FLC_ITEM_STRING ) {
-         target->asArray()->setProperty( *operand2->asString(), *source );
-         return;
-      }
-      break;
-
-      case FLC_ITEM_DICT:
-      {
-         CoreDict *dict = target->asDict();
-         if( dict->isBlessed() ) {
-            dict->insert( *operand2, *source );
-         }
-      }
-      break;
+      target->setProperty( *method->asString(), *source );
+      return;
    }
 
-   vm->raiseRTError(
-               new AccessError( ErrorParam( e_prop_acc ).origin( e_orig_vm ).extra("STPR") ) );
-
+   vm->raiseRTError( new TypeError( ErrorParam( e_prop_acc ).extra("STPR").origin( e_orig_vm ) ) );
+   return;
 }
 
 //56
@@ -3509,14 +2015,13 @@ void opcodeHandler_TRAV( register VMachine *vm )
 
       case FLC_ITEM_OBJECT:
       {
-         CoreObject *obj = source->asObjectSafe();
-         if( ! obj->isSequence() )
+         Sequence* seq = source->asObjectSafe()->getSequence();
+         if( seq == 0 )
          {
             vm->raiseRTError( new TypeError( ErrorParam( e_invop ).extra("TRAV").origin( e_orig_vm ) ) );
             goto trav_go_away;
          }
 
-         Sequence *seq = static_cast< Sequence *>( obj->getUserData() );
          if ( seq->empty() )
          {
             goto trav_go_away;
@@ -3539,34 +2044,19 @@ void opcodeHandler_TRAV( register VMachine *vm )
       }
       break;
 
-      case FLC_ITEM_ATTRIBUTE:
-      {
-         Attribute *attrib = source->asAttribute();
-         if ( attrib->empty() )
-         {
-            goto trav_go_away;
-         }
-
-         if( vm->operandType( 1 ) == P_PARAM_INT32 || vm->operandType( 1 ) == P_PARAM_INT64 )
-         {
-            vm->raiseRTError(
-               new AccessError( ErrorParam( e_unpack_size ).origin( e_orig_vm ).extra( "TRAV" ) ) );
-            return;
-         }
-
-         // we need an iterator...
-         AttribIterator *iter = attrib->getIterator();
-
-         *dest->dereference() = iter->getCurrent();
-
-         // prepare... iterator
-         vm->m_stack->itemAt( vm->m_stack->size()-3 ).setGCPointer( vm, iter );
-      }
-      break;
-
       case FLC_ITEM_STRING:
-         if( source->asString()->length() == 0 )
+         {
+         String *sstr = source->asString();
+
+         if( sstr->length() == 0 )
             goto trav_go_away;
+
+         // the loop may alter the string. Be sure it is in core.
+         if ( ! sstr->isCore() )
+         {
+            sstr = new CoreString( *sstr );
+            source->setString( sstr );
+         }
 
          if( vm->operandType( 1 ) == P_PARAM_INT32 || vm->operandType( 1 ) == P_PARAM_INT64 )
          {
@@ -3574,8 +2064,9 @@ void opcodeHandler_TRAV( register VMachine *vm )
                new AccessError( ErrorParam( e_unpack_size ).origin( e_orig_vm ).extra( "TRAV" ) ) );
             return;
          }
-         *dest->dereference() = new GarbageString( vm, source->asString()->subString(0,1) );
+         *dest->dereference() = new CoreString( sstr->subString(0,1) );
          vm->m_stack->itemAt( vm->m_stack->size()-3 ) = ( (int64) 0 );
+         }
          break;
 
       case FLC_ITEM_MEMBUF:
@@ -3662,37 +2153,22 @@ trav_go_away:
 void opcodeHandler_INCP( register VMachine *vm )
 {
    Item *operand =  vm->getOpcodeParam( 1 )->dereference();
-   Item temp = *operand;
+   Item temp;
+   operand->incpost( temp );
 
-   switch( operand->type() )
-   {
-      case FLC_ITEM_INT: *operand = operand->asInteger() + 1; break;
-      case FLC_ITEM_NUM: *operand = operand->asNumeric() + 1.0; break;
-      default:
-         vm->raiseRTError( new TypeError( ErrorParam( e_invop ).extra("INCP").origin( e_orig_vm ) ) );
-         return;
-   }
    vm->regB() = *operand;
-   vm->regA() = temp; // valid also if it's A or a reference in A
+   vm->regA() = temp;
 }
-
 
 //58
 void opcodeHandler_DECP( register VMachine *vm )
 {
    Item *operand =  vm->getOpcodeParam( 1 )->dereference();
-   Item temp = *operand;
+   Item temp;
+   operand->decpost( temp );
 
-   switch( operand->type() )
-   {
-      case FLC_ITEM_INT: *operand = operand->asInteger() - 1; break;
-      case FLC_ITEM_NUM: *operand = operand->asNumeric() - 1.0; break;
-      default:
-         vm->raiseRTError( new TypeError( ErrorParam( e_invop ).extra("DECP").origin( e_orig_vm ) ) );
-         return;
-   }
    vm->regB() = *operand;
-   vm->regA() = temp; // valid also if it's A or a reference in A
+   vm->regA() = temp;
 }
 
 //59
@@ -3748,141 +2224,16 @@ void opcodeHandler_SHRS( register VMachine *vm )
          new TypeError( ErrorParam( e_invop ).origin( e_orig_vm ).extra("SHRS") ) );
 }
 
-//5E
-/* Disabled; possibly removed.
-void opcodeHandler_LDVR( register VMachine *vm )
-{
-   Item *operand1 = vm->getOpcodeParam( 1 )->dereference();
-   Item *operand2 = vm->getOpcodeParam( 2 )->dereference();
-
-   if ( operand1->isArray() )
-   {
-      if ( operand2->isOrdinal() )
-      {
-         register int32 pos = (int32) operand2->forceInteger();
-         CoreArray &array = *operand1->asArray();
-         if ( -pos > (int32)array.length() || pos >= (int32)array.length() )
-             vm->raiseRTError(
-               new AccessError( ErrorParam( e_arracc ).origin( e_orig_vm ).extra("LDVR") ) );
-         else {
-            GarbageItem *gitem;
-            Item *ref = array.elements() + pos;
-            if ( ref->isReference() ) {
-               gitem = ref->asReference();
-            }
-            else{
-               gitem= new GarbageItem( vm, *ref );
-               ref->setReference( gitem );
-            }
-            vm->m_regA.setReference( gitem );
-         }
-         return;
-      }
-   }
-
-   // try to access a dictionary with every item
-   else if( operand1->type() == FLC_ITEM_DICT )
-   {
-      CoreDict &dict =  *operand1->asDict();
-      Item *value;
-      if( ( value = dict.find( *operand2 ) ) != 0  )
-      {
-         GarbageItem *gitem;
-         // we don't use memPool::referenceItem for performace reasons
-         if ( value->isReference() ) {
-            gitem = value->asReference();
-         }
-         else{
-            gitem = new GarbageItem( vm, *value );
-            value->setReference( gitem );
-         }
-         vm->m_regA.setReference( gitem );
-         return;
-      }
-   }
-
-   vm->raiseRTError(
-               new AccessError( ErrorParam( e_arracc ).origin( e_orig_vm ).extra( "LDVR" ) ) );
-}
-*/
-
-//5F - empty
 
 // 60
 void opcodeHandler_POWS( register VMachine *vm )
 {
    Item *operand1 = vm->getOpcodeParam( 1 )->dereference();
-   Item *operand2 = vm->getOpcodeParam( 2 )->dereference();
+   Item *operand2 = vm->getOpcodeParam( 2 );
 
-   numeric powval;
-
-   errno = 0;
-   switch( operand2->type() )
-   {
-      case FLC_ITEM_INT:
-      {
-         numeric val2 = (numeric) operand2->asInteger();
-         if ( val2 == 0 ) {
-            operand1->setInteger( (int64) 1 );
-            return;
-         }
-
-         switch( operand1->type() ) {
-            case FLC_ITEM_INT:
-               powval = ::pow( (numeric) operand1->asInteger(), val2 );
-            break;
-
-            case FLC_ITEM_NUM:
-               powval = ::pow( operand1->asNumeric(), val2 );
-            break;
-
-            default:
-               vm->raiseRTError(
-                  new TypeError( ErrorParam( e_invop ).origin( e_orig_vm ).extra( "POWS" ) ) );
-               return;
-         }
-      }
-      break;
-
-      case FLC_ITEM_NUM:
-      {
-         numeric val2 = operand2->asNumeric();
-         if ( val2 == 0.0 ) {
-            operand1->setInteger( (int64) 1 );
-            return;
-         }
-
-         switch( operand1->type() ) {
-            case FLC_ITEM_INT:
-               powval = pow( (double) operand1->asInteger(), val2 );
-            break;
-
-            case FLC_ITEM_NUM:
-               powval = pow( operand1->asNumeric(), val2 );
-            break;
-
-            default:
-               vm->raiseRTError(
-                  new TypeError( ErrorParam( e_invop ).origin( e_orig_vm ).extra( "POWS" ) ) );
-               return;
-         }
-      }
-      break;
-
-      default:
-         vm->raiseRTError(
-            new TypeError( ErrorParam( e_invop ).origin( e_orig_vm ).extra( "POWS" ) ) );
-         return;
-   }
-
-   if ( errno != 0 )
-   {
-      vm->raiseRTError( new MathError( ErrorParam( e_domain ).origin( e_orig_vm ) ) );
-   }
-   else {
-      operand1->setNumeric( powval );
-      vm->regA().setNumeric( powval );
-   }
+   // TODO: S-operators
+   operand1->pow( *operand2, *operand1 );
+   vm->regA() = *operand1;
 }
 
 //61
@@ -4029,7 +2380,7 @@ void opcodeHandler_STEX( register VMachine *vm )
       return;
    }
 
-   GarbageString *target = new GarbageString( vm );
+   CoreString *target = new CoreString;
    String *src = operand1->asString();
 
    VMachine::returnCode retval = vm->expandString( *src, *target );
@@ -4103,7 +2454,6 @@ void opcodeHandler_TRAC( register VMachine *vm )
 
       case FLC_ITEM_DICT:
       case FLC_ITEM_OBJECT:
-      case FLC_ITEM_ATTRIBUTE:
          if ( ! isIterator )
          {
             vm->raiseError( e_stackuf, "TRAC" );
@@ -4159,7 +2509,7 @@ void opcodeHandler_TRAC( register VMachine *vm )
 
             if( copied->isString() )
             {
-                  sstr->change( counter, counter + 1, *copied->asString() );
+               sstr->change( counter, counter + 1, *copied->asString() );
             }
             else if( copied->isOrdinal() )
                sstr->setCharAt( counter, (uint32) copied->forceInteger() );
@@ -4179,9 +2529,9 @@ void opcodeHandler_TRAC( register VMachine *vm )
          return;
    }
 
-   if( copied->isString() )
-      *dest = new GarbageString( vm, *copied->asString() );
-   else
+   /*if( copied->isString() )
+      *dest = new CoreString( *copied->asString() );
+   else*/
       *dest = *copied;
 
 }
@@ -4200,16 +2550,16 @@ void opcodeHandler_WRT( register VMachine *vm )
 
    if( operand1->isString() )
    {
-      stream->writeString( *operand1->asString() );
+      String *s = operand1->asString();
+      stream->writeString( *s );
    }
    else {
       String temp;
       vm->itemToString( temp, operand1 );
-      if( ! vm->hadError() )
-      {
-         stream->writeString( temp );
-      }
+      stream->writeString( temp );
    }
+
+   stream->flush();
 }
 
 
@@ -4219,9 +2569,9 @@ void opcodeHandler_STO( register VMachine *vm )
    Item *operand1 =  vm->getOpcodeParam( 1 );
    Item *operand2 =  vm->getOpcodeParam( 2 )->dereference();
 
-   if ( operand2->isString() )
-      operand1->setString( new GarbageString( vm, *operand2->asString() ) );
-   else
+   /*if ( operand2->isString() )
+      operand1->setString( new CoreString( *operand2->asString() ) );
+   else*/
       operand1->copy( *operand2 );
 
    vm->regA() = *operand1;
@@ -4240,8 +2590,8 @@ void opcodeHandler_FORB( register VMachine *vm )
       return;
    }
 
-   vm->regA().setLBind( operand1->asString(),
-      new GarbageItem( vm, *operand2 ) );
+   vm->regA().setLBind( new CoreString( *operand1->asString() ),
+      new GarbageItem( *operand2 ) );
 }
 
 // 0x68
@@ -4287,27 +2637,26 @@ void opcodeHandler_OOB( register VMachine *vm )
    Item *operand =  vm->getOpcodeParam( 2 )->dereference();
    switch( pmode )
    {
-      case 0: 
+      case 0:
          vm->m_regA = *operand;
          vm->m_regA.setOob( false );
          break;
-      
-      case 1: 
+
+      case 1:
          vm->m_regA = *operand;
-         vm->m_regA.setOob( true ); 
+         vm->m_regA.setOob( true );
          break;
-         
-      case 2: 
+
+      case 2:
          vm->m_regA = *operand;
          vm->m_regA.setOob( ! operand->isOob() );
          break;
-      
+
       default:
          vm->m_regA.setBoolean( operand->isOob() );
    }
 }
 
 }
-
 
 /* end of vm_run.cpp */

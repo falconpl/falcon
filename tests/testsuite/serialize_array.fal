@@ -18,8 +18,8 @@ stream = StringStream()
 array1 = [ "Hello", "world", "an item", 1, 2.2, nil, [2:3] ]
 array2 = [ "a", "nested", array1, "array" ]
 
-serialize( stream, array1 )
-serialize( stream, array2 )
+serialize( array1, stream )
+serialize( array2, stream )
 
 stream.seek(0)
 

@@ -20,6 +20,7 @@ b = 0
 (a == 1) and ( b = b + 1 ) or failure("A point")
 // expected b = 2
 a == 2 or ( b = b + 1)
+
 // expected b = 3
 (a == 1 and (b = b + 1))
 // expected, everything as it is now

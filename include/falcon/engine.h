@@ -28,6 +28,9 @@
 #include <falcon/types.h>
 #include <falcon/memory.h>
 
+// Global engine functions and variables
+#include <falcon/globals.h>
+
 // Falcon item system
 #include <falcon/item.h>
 #include <falcon/string.h>
@@ -35,7 +38,7 @@
 #include <falcon/cdict.h>
 #include <falcon/cclass.h>
 #include <falcon/cclass.h>
-#include <falcon/cobject.h>
+#include <falcon/coreobject.h>
 #include <falcon/lineardict.h>
 #include <falcon/pagedict.h>
 #include <falcon/membuf.h>
@@ -48,12 +51,9 @@
 #include <falcon/stdstreams.h>
 #include <falcon/uri.h>
 
-// error system
-#include <falcon/deferrorhandler.h>
-
 // compiler and builder
 #include <falcon/compiler.h>
-#include <falcon/flcloader.h>
+#include <falcon/modloader.h>
 #include <falcon/runtime.h>
 
 // main VM and helpers
@@ -67,6 +67,7 @@
 #include <falcon/stream.h>
 #include <falcon/stringstream.h>
 #include <falcon/rosstream.h>
+#include <falcon/streambuffer.h>
 
 // Special types
 #include <falcon/genericvector.h>
@@ -74,12 +75,8 @@
 #include <falcon/genericmap.h>
 #include <falcon/timestamp.h>
 
-// Engine dll and initialization
-#include <falcon/enginedata.h>
-
 // Falcon specific object user_data
 #include <falcon/falcondata.h>
-#include <falcon/userdata.h>
 
 #endif
 

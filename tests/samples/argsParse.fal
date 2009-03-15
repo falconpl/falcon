@@ -16,10 +16,6 @@
    See LICENSE file for licensing details.
 */
 
-attributes
-   used
-end
-
 object MyParser from CmdlineParser
    freeParams = []
    opt_d = nil
@@ -27,9 +23,10 @@ object MyParser from CmdlineParser
    opt_m = nil
    sw_k = 0
    sw_n = 0
+   used = nil
 
    function onOption( option )
-      give used to self
+      self.used = true
 
       switch option
          case "?", "help"
@@ -63,12 +60,12 @@ object MyParser from CmdlineParser
    end
 
    function onFree( param )
-      give used to self
+      self.used = true
       self.freeParams += param
    end
 
    function onSwitchOff( sw )
-      give used to self
+      self.used = true
       switch sw
          case "k"
             self.sw_k = 0
@@ -86,7 +83,7 @@ object MyParser from CmdlineParser
    end
 
    function usage()
-      if self hasnt used
+      if not self.used
          printl( "Provide some parameters to test this script.\n" )
       end
 
@@ -122,7 +119,7 @@ object MyParser from CmdlineParser
    end
 end
 
-if not MyParser.parse() or MyParser hasnt used
+if not MyParser.parse() or not MyParser.used
    MyParser.usage()
    exit(0)
 end

@@ -235,12 +235,8 @@ void Byte::subString( const String *str, int32 start, int32 end, String *tgt ) c
       if ( tgt->allocated() != 0 )
          tgt->manipulator()->destroy( tgt );
 
-      uint32 oldSize = tgt->allocated();
-
       tgt->allocated( tgt->size() );
       tgt->setRawStorage( storage );
-
-      tgt->checkAdjustSize( oldSize );
    }
 
    switch( cs )
@@ -276,18 +272,7 @@ bool Byte::change( String *str, uint32 start, uint32 end, const String *source )
 
 String *Byte::clone( const String *str ) const
 {
-   String *str1;
-
-   if ( str->garbageable() )
-   {
-      const GarbageString *gstr = static_cast< const GarbageString *>( str );
-      // the copy constructor already stores for garbage if applicable.
-      str1 = new GarbageString( *gstr );
-   }
-   else
-      str1 = new String( *str );
-
-   return str1;
+   return new String( *str );
 }
 
 uint32 Byte::find( const String *str, const String *element, uint32 start, uint32 end ) const
@@ -388,9 +373,7 @@ void Byte::remove( String *str, uint32 pos, uint32 len ) const
    {
       memFree( str->getRawStorage() );
    }
-   uint32 oldAlloc = str->allocated();
    str->setRawStorage( mem, newLen );
-   str->checkAdjustSize( oldAlloc );
 
    // subclasses will set correct manipulator if needed.
 }
@@ -416,14 +399,12 @@ void Byte::bufferize( String *str ) const
 
       str->setRawStorage( mem, size );
       str->m_class = str->m_class->bufferedManipulator();
-      str->checkAdjustSize( oldSize );
    }
 }
 
 void Byte::bufferize( String *str, const String *strOrig ) const
 {
    // copy the other string contents.
-   uint32 oldAlloc = str->m_allocated;
    if ( str->m_allocated != 0 )
       memFree( str->m_storage );
 
@@ -439,7 +420,6 @@ void Byte::bufferize( String *str, const String *strOrig ) const
       str->m_class = strOrig->m_class->bufferedManipulator();
    }
 
-   str->checkAdjustSize( oldAlloc );
 }
 
 void Byte::reserve( String *str, uint32 size, bool relative, bool block ) const
@@ -463,22 +443,18 @@ void Byte::reserve( String *str, uint32 size, bool relative, bool block ) const
    // the required size may be already allocated
    if ( nextAlloc > str->allocated() )
    {
-      // cache the old allocation.
-      uint32 oldAlloc = str->allocated();
-
       byte *mem = (byte *) memAlloc( nextAlloc );
       uint32 size = str->m_size;
       if ( str->m_size > 0 )
          memcpy( mem, str->m_storage, str->m_size );
 
       // we can now destroy the old string.
-      if ( oldAlloc != 0 )
+      if ( str->allocated() != 0 )
          memFree( str->m_storage );
 
       str->m_storage = mem;
       str->m_size = size;
       str->m_allocated = nextAlloc;
-      str->checkAdjustSize( oldAlloc );
    }
 
    // let the subclasses set the correct manipulator
@@ -567,7 +543,6 @@ void Static::setCharAt( String *str, uint32 pos, uint32 chr ) const
    if( oldSize != 0 )
       memFree( str->getRawStorage() );
    str->setRawStorage( buffer, size );
-   str->checkAdjustSize( oldSize );
 }
 
 
@@ -602,7 +577,6 @@ void Static16::setCharAt( String *str, uint32 pos, uint32 chr ) const
    str->setRawStorage( buffer, size );
    if( oldSize != 0 )
       memFree( str->getRawStorage() );
-   str->checkAdjustSize( oldSize );
 }
 
 void Static32::setCharAt( String *str, uint32 pos, uint32 chr ) const
@@ -620,7 +594,6 @@ void Static32::setCharAt( String *str, uint32 pos, uint32 chr ) const
    str->setRawStorage( buffer, size );
    if( oldSize != 0 )
       memFree( str->getRawStorage() );
-   str->checkAdjustSize( oldSize );
 }
 
 void Buffer::setCharAt( String *str, uint32 pos, uint32 chr ) const
@@ -634,7 +607,6 @@ void Buffer::setCharAt( String *str, uint32 pos, uint32 chr ) const
    }
    else if ( chr <= 0xFFFF )
    {
-      uint32 oldAlloc = str->allocated();
       uint16 *buf16 =  (uint16 *) memAlloc( size * 2 );
       buffer = str->getRawStorage();
       for ( int i = 0; i < size; i ++ )
@@ -646,11 +618,9 @@ void Buffer::setCharAt( String *str, uint32 pos, uint32 chr ) const
       if( str->allocated() > 0 )
          memFree( buffer );
       str->setRawStorage( (byte *) buf16, size );
-      str->checkAdjustSize( oldAlloc );
    }
    else
    {
-      uint32 oldAlloc = str->allocated();
       uint32 *buf32 =  (uint32 *) memAlloc( size * 4 );
       buffer = str->getRawStorage();
       for ( int i = 0; i < size; i ++ )
@@ -662,7 +632,6 @@ void Buffer::setCharAt( String *str, uint32 pos, uint32 chr ) const
       if( str->allocated() > 0 )
          memFree( buffer );
       str->setRawStorage( (byte *) buf32, size );
-      str->checkAdjustSize( oldAlloc );
    }
 }
 
@@ -676,7 +645,6 @@ void Buffer16::setCharAt( String *str, uint32 pos, uint32 chr ) const
    }
    else
    {
-      uint32 oldAlloc = str->allocated();
       int32 size = str->size();
       uint32 *buf32 =  (uint32 *) memAlloc( size * 2 );
       uint16 *buf16 = (uint16 *) str->getRawStorage();
@@ -689,7 +657,6 @@ void Buffer16::setCharAt( String *str, uint32 pos, uint32 chr ) const
       if( str->allocated() > 0 )
          memFree( buf16 );
       str->setRawStorage( (byte *) buf32, size );
-      str->checkAdjustSize( oldAlloc );
    }
 
 }
@@ -744,8 +711,6 @@ void Static::insert( String *str, uint32 pos, uint32 len, const String *source )
       memFree( str->getRawStorage() );
    }
    str->setRawStorage( mem );
-
-   str->checkAdjustSize( oldSize );
 }
 
 
@@ -788,10 +753,10 @@ void Buffer::insert( String *str, uint32 pos, uint32 len, const String *source )
                       mem, pos+sourceLen, destCharSize,
                       strLen - pos - len );
 
-      uint32 oldSize = str->allocated();
+      if ( str->allocated() != 0 )
+         memFree( str->getRawStorage() );
+      
       str->allocated( finalAlloc );
-      str->checkAdjustSize( oldSize );
-      memFree( str->getRawStorage() );
       str->setRawStorage( mem );
    }
    else
@@ -869,8 +834,6 @@ void Buffer::shrink( String *str ) const
 {
    if( str->size() > str->allocated() )
    {
-      uint32 oldSize = str->allocated();
-
       if ( str->size() == 0 )
       {
          destroy( str );
@@ -884,7 +847,6 @@ void Buffer::shrink( String *str ) const
          }
          str->allocated( str->size() );
       }
-      str->checkAdjustSize( oldSize );
    }
 }
 
@@ -915,8 +877,8 @@ void Buffer::destroy( String *str ) const
 String::String( uint32 size ):
    m_class( &csh::handler_buffer ),
    m_id(String::no_id),
-   m_garbageable( false ),
-   m_bExported( false )
+   m_bExported( false ),
+   m_bCore( false )
 {
    m_storage = (byte *) memAlloc( size );
    m_allocated = size;
@@ -928,8 +890,8 @@ String::String( const char *data ):
    m_allocated( 0 ),
    m_id(String::no_id),
    m_storage( (byte*) const_cast< char *>(data) ),
-   m_garbageable( false ),
-   m_bExported( false )
+   m_bExported( false ),
+   m_bCore( false )
 {
    m_size = strlen( data );
 }
@@ -937,8 +899,8 @@ String::String( const char *data ):
 String::String( const char *data, int32 len ):
    m_class( &csh::handler_buffer ),
    m_id(String::no_id ),
-   m_garbageable( false ),
-   m_bExported( false )
+   m_bExported( false ),
+   m_bCore( false )
 {
    m_size = len >= 0 ? len : strlen( data );
    m_allocated = (( m_size / FALCON_STRING_ALLOCATION_BLOCK ) + 1 ) * FALCON_STRING_ALLOCATION_BLOCK;
@@ -951,8 +913,8 @@ String::String( const wchar_t *data ):
    m_allocated( 0 ),
    m_id( String::no_id ),
    m_storage( (byte*) const_cast< wchar_t *>(data) ),
-   m_garbageable( false ),
-   m_bExported( false )
+   m_bExported( false ),
+   m_bCore( false )
 {
    if ( sizeof( wchar_t ) == 2 )
       m_class = &csh::handler_static16;
@@ -970,8 +932,8 @@ String::String( const wchar_t *data, int32 len ):
    m_allocated( 0 ),
    m_id( String::no_id ),
    m_storage( (byte *) const_cast< wchar_t *>( data ) ),
-   m_garbageable( false ),
-   m_bExported( false )
+   m_bExported( false ),
+   m_bCore( false )
 {
    if ( sizeof( wchar_t ) == 2 )
       m_class = &csh::handler_buffer16;
@@ -1001,8 +963,8 @@ String::String( const String &other, uint32 begin, uint32 end ):
    m_size( 0 ),
    m_id( String::no_id ),
    m_storage( 0 ),
-   m_garbageable( false ),
-   m_bExported( false )
+   m_bExported( false ),
+   m_bCore( false )
 {
    // by default, copy manipulator
    m_class = other.m_class;
@@ -1011,7 +973,7 @@ String::String( const String &other, uint32 begin, uint32 end ):
    {
       if ( other.m_size == 0 ) {
          m_size = 0;
-			m_allocated = 0;
+         m_allocated = 0;
          setRawStorage( 0 );
       }
       else {
@@ -1036,8 +998,7 @@ String::String( const String &other, uint32 begin, uint32 end ):
 
 void String::copy( const String &other )
 {
-   uint32 oldAlloc = m_allocated;
-   if ( oldAlloc )
+   if ( m_allocated != 0 )
       m_class->destroy( this );
 
    m_class = other.m_class;
@@ -1050,16 +1011,11 @@ void String::copy( const String &other )
    }
    else
       m_storage = other.m_storage;
-
-   if( m_garbageable )
-      static_cast< GarbageString *>( this )->updateGCSize( oldAlloc );
 }
 
 
 String &String::adopt( char *buffer, uint32 size, uint32 allocated )
 {
-   uint32 oldAlloc = m_allocated;
-
    if ( m_allocated != 0 )
       m_class->destroy( this );
 
@@ -1068,26 +1024,23 @@ String &String::adopt( char *buffer, uint32 size, uint32 allocated )
    m_allocated = allocated;
    m_storage = (byte *) buffer;
 
-   if( m_garbageable )
-      static_cast< GarbageString *>( this )->updateGCSize( oldAlloc );
-
+   
    return *this;
 }
 
 String &String::adopt( wchar_t *buffer, uint32 size, uint32 allocated )
 {
-   uint32 oldAlloc = m_allocated;
-
    if ( m_allocated != 0 )
       m_class->destroy( this );
 
-   m_class = &csh::handler_buffer16;
+   if ( sizeof( wchar_t ) == 2 )
+      m_class = &csh::handler_buffer16;
+   else
+      m_class = &csh::handler_buffer32;
+   
    m_size = size * sizeof( wchar_t );
    m_allocated = allocated;
    m_storage = (byte *) buffer;
-
-   if( m_garbageable )
-      static_cast< GarbageString *>( this )->updateGCSize( oldAlloc );
 
    return *this;
 }
@@ -1425,7 +1378,6 @@ void String::escape( String &strout ) const
 {
    int len = length();
    int pos = 0;
-   uint32 oldAlloc = strout.m_allocated;
    strout.m_class->reserve( &strout, len ); // prepare for at least len chars
    strout.size( 0 ); // clear target string
 
@@ -1454,8 +1406,6 @@ void String::escape( String &strout ) const
       pos++;
    }
 
-   if( strout.m_garbageable )
-      static_cast< GarbageString *>( &strout )->updateGCSize( oldAlloc );
 }
 
 void String::escapeFull( String &strout ) const
@@ -1615,7 +1565,6 @@ void String::serialize( Stream *out ) const
 bool String::deserialize( Stream *in, bool bStatic )
 {
    uint32 size;
-   uint32 oldAlloc = m_allocated;
 
    in->read( (byte *) &size, sizeof( size ) );
    m_size = endianInt32(size);
@@ -1631,9 +1580,6 @@ bool String::deserialize( Stream *in, bool bStatic )
          memFree( m_storage );
          m_storage = 0;
          m_allocated = 0;
-
-         if( m_garbageable )
-            static_cast< GarbageString *>( this )->updateGCSize( oldAlloc );
       }
 
       // anyhow, set the handler to static and return.
@@ -1707,9 +1653,6 @@ bool String::deserialize( Stream *in, bool bStatic )
       }
       #endif
    }
-
-   if( m_garbageable )
-      static_cast< GarbageString *>( this )->updateGCSize( oldAlloc );
 
    return true;
 }
@@ -2077,10 +2020,8 @@ bool String::fromUTF8( const char *utf8 )
 
    if ( m_allocated )
    {
-      uint32 oldAlloc = m_allocated;
       m_class->destroy( this );
       m_allocated = 0;
-      checkAdjustSize( oldAlloc );
    }
    m_size = 0;
 
@@ -2155,86 +2096,6 @@ bool String::fromUTF8( const char *utf8 )
    }
 
    return true;
-}
-
-//============================================================
-
-GarbageString::GarbageString( VMachine *vm ):
-   String(),
-   m_origin( vm )
-{
-   m_garbageable = true;
-   vm->store( this );
-}
-
-GarbageString::GarbageString( VMachine *vm, uint32 prealloc ):
-   String( prealloc ),
-   m_origin( vm )
-{
-   m_garbageable = true;
-   vm->store( this );
-}
-
-GarbageString::GarbageString( VMachine *vm, const String &other, uint32 pos0, uint32 pos1 ):
-   String( other, pos0, pos1 ),
-   m_origin( vm )
-{
-   m_garbageable = true;
-   vm->store( this );
-}
-
-
-GarbageString::GarbageString( VMachine *vm, const String &other ):
-   String( other ),
-   m_origin( vm )
-{
-   m_garbageable = true;
-   vm->store( this );
-}
-
-GarbageString::GarbageString( VMachine *vm, const char *other ):
-   String( other ),
-   m_origin( vm )
-{
-   m_garbageable = true;
-   vm->store( this );
-}
-
-GarbageString::GarbageString( VMachine *vm, const wchar_t *other ):
-   String( other ),
-   m_origin( vm )
-{
-   m_garbageable = true;
-   vm->store( this );
-}
-
-GarbageString::GarbageString( VMachine *vm, const char *other, int32 len ):
-   String( other, len ),
-   m_origin( vm )
-{
-   m_garbageable = true;
-   vm->store( this );
-}
-
-GarbageString::GarbageString( VMachine *vm, const wchar_t *other, int32 len ):
-   String( other, len ),
-   m_origin( vm )
-{
-   m_garbageable = true;
-   vm->store( this );
-}
-
-GarbageString::GarbageString( const GarbageString &other ):
-   String( other ),
-   m_origin( other.m_origin )
-{
-   m_garbageable = true;
-   m_origin->store( this );
-}
-
-void GarbageString::updateGCSize( uint32 oldSize ) const
-{
-   m_origin->memPool()->updateAlloc( m_allocated - oldSize );
 }
 
 //============================================================

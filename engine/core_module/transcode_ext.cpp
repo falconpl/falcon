@@ -20,7 +20,7 @@
 #include <falcon/vm.h>
 #include <falcon/stream.h>
 #include <falcon/transcoding.h>
-#include <falcon/cobject.h>
+#include <falcon/coreobject.h>
 #include <falcon/stdstreams.h>
 #include <falcon/membuf.h>
 #include "core_module.h"
@@ -30,79 +30,8 @@
 */
 
 namespace Falcon {
+namespace core {
 
-/*#
-   @method setEncoding Stream
-   @brief Set the text encoding and EOL mode for text-based operations.
-   @param encoding Name of the encoding that is used for the stream.
-   @optparam EOLMode How to treat end of line indicators.
-
-   This method sets an encoding that will affect readText() and writeText() methods.
-   Provided encodings are:
-   - "utf-8"
-   - "utf-16"
-   - "utf-16BE"
-   - "utf-16LE"
-   - "iso8859-1" to "iso8859-15"
-   - "cp1252"
-   - "C" (byte oriented – writes byte per byte)
-
-   As EOL manipulation is also part of the text operations, this function allows to
-   chose how to deal with EOL characters stored in Falcon strings when writing data
-   and how to parse incoming EOL. Available values are:
-   - CR_TO_CR: CR and LF characters are untranslated
-   - CR_TO_CRLF: When writing, CR (“\n”) is translated into CRLF, when reading CRLF is translated into a single “\n”
-   - SYSTEM_DETECT: use host system policy.
-
-   If not provided, this parameter defaults to SYSTEM_DETECT.
-
-   If the given encoding is unknown, a ParamError is raised.
-*/
-
-FALCON_FUNC  Stream_setEncoding ( ::Falcon::VMachine *vm )
-{
-   CoreObject *self = vm->self().asObject();
-   Stream *file = reinterpret_cast<Stream *>( self->getUserData() );
-
-   Item *i_encoding = vm->param(0);
-   Item *i_eolMode = vm->param(1);
-
-   if ( i_encoding == 0 || ! i_encoding->isString() )
-   {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
-      return;
-   }
-
-   int mode = ( i_eolMode == 0 ? SYSTEM_DETECT : (int) i_eolMode->forceInteger());
-   if( mode != SYSTEM_DETECT && mode != CR_TO_CR && mode != CR_TO_CRLF )
-   {
-      mode = SYSTEM_DETECT;
-   }
-
-   Transcoder *trans = TranscoderFactory( *(i_encoding->asString()), file, true );
-
-   if ( trans == 0 )
-   {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
-      return;
-   }
-
-   Stream *final;
-   if ( mode == SYSTEM_DETECT )
-   {
-      final = AddSystemEOL( trans );
-   }
-   else if( mode == CR_TO_CRLF )
-   {
-      final = new TranscoderEOL( trans, true );
-   }
-   else
-      final = trans;
-
-   self->setUserData( final );
-   self->setProperty( "encoding", *i_encoding );
-   self->setProperty( "eolMode", (int64) mode );
-}
 
 /*#
    @funset core_transcoding_functions Transcoding functions
@@ -136,7 +65,7 @@ FALCON_FUNC  Stream_setEncoding ( ::Falcon::VMachine *vm )
 
 FALCON_FUNC  getSystemEncoding ( ::Falcon::VMachine *vm )
 {
-   String *res = new GarbageString( vm );
+   CoreString *res = new CoreString;
    GetSystemEncoding( *res );
    vm->retval( res );
 }
@@ -163,7 +92,7 @@ FALCON_FUNC  transcodeTo ( ::Falcon::VMachine *vm )
       return;
    }
 
-   String *res = new GarbageString( vm );
+   CoreString *res = new CoreString;
    String *source;
    String dummy;
 
@@ -211,7 +140,7 @@ FALCON_FUNC  transcodeFrom ( ::Falcon::VMachine *vm )
       return;
    }
 
-   String *res = new GarbageString( vm );
+   CoreString *res = new CoreString;
    String *source;
    String dummy;
 
@@ -233,6 +162,8 @@ FALCON_FUNC  transcodeFrom ( ::Falcon::VMachine *vm )
    }
 
    vm->retval( res );
+}
+
 }
 }
 

@@ -23,8 +23,9 @@
 #include <falcon/string.h>
 #include <falcon/traits.h>
 #include <falcon/pcodes.h>
-#include <falcon/enginedata.h>
+#include <falcon/mt.h>
 #include <string.h>
+
 namespace Falcon {
 
 const uint32 Module::c_noEntry = 0xFFffFFff;
@@ -37,7 +38,10 @@ Module::Module():
    m_lineInfo( 0 ),
    m_loader(0),
    m_serviceMap( &traits::t_string(), &traits::t_voidp() )
-{}
+{
+   m_strTab = new StringTable;
+   m_bOwnStringTable = true;
+}
 
 
 Module::~Module()
@@ -50,6 +54,9 @@ Module::~Module()
    // ... the module will take care of them.
 
    delete m_lineInfo;
+
+   if ( m_bOwnStringTable )
+      delete m_strTab;
 }
 
 DllLoader &Module::dllLoader()
@@ -77,10 +84,10 @@ Symbol *Module::addGlobal( const String &name, bool exp )
    if ( m_symtab.findByName( name ) != 0 )
       return 0;
 
-   String *symName = m_strTab.find( name );
+   String *symName = stringTable().find( name );
    if( symName == 0 ) {
       symName = new String( name );
-      m_strTab.add( symName );
+      stringTable().add( symName );
    }
 
    Symbol *sym = new Symbol( this, m_symbols.size(), symName, exp );
@@ -127,6 +134,15 @@ Symbol *Module::addGlobalSymbol( Symbol *sym )
    m_symtab.add( sym );
    return sym;
 }
+
+void Module::adoptStringTable( StringTable *st, bool bOwn )
+{
+   if ( m_bOwnStringTable )
+      delete m_strTab;
+   m_strTab = st;
+   m_bOwnStringTable = bOwn;
+}
+
 
 Symbol *Module::addConstant( const String &name, int64 value, bool exp )
 {
@@ -185,10 +201,10 @@ Symbol *Module::addClass( const String &name, Symbol *ctor_sym, bool exp )
    if ( m_symtab.findByName( name ) != 0 )
       return 0;
 
-   String *symName = m_strTab.find( name );
+   String *symName = stringTable().find( name );
    if( symName == 0 ) {
       symName = new String( name );
-      m_strTab.add( symName );
+      stringTable().add( symName );
    }
 
    Symbol *sym = new Symbol( this, m_symbols.size(), symName, exp );
@@ -266,38 +282,38 @@ VarDef& Module::addClassMethod( Symbol *cls, const String &prop, ext_func_t meth
 
 String *Module::addCString( const char *pos, uint32 size )
 {
-   String *ret = m_strTab.find( pos );
+   String *ret = stringTable().find( pos );
    if ( ret == 0 ) {
       char *mem = (char *)memAlloc(size+1);
       memcpy( mem, pos, size );
       mem[size] = 0;
       ret = new String();
       ret->adopt( mem, size, size + 1 );
-      m_strTab.add( ret );
+      stringTable().add( ret );
    }
    return ret;
 }
 
 String *Module::addString( const String &st )
 {
-   String *ret = m_strTab.find( st );
+   String *ret = stringTable().find( st );
    if ( ret == 0 ) {
       ret = new String( st );
       ret->bufferize();
       ret->exported( st.exported() );
-		m_strTab.add( ret );
+      stringTable().add( ret );
    }
    return ret;
 }
 
 String *Module::addString( const String &st, bool exported )
 {
-   String *ret = m_strTab.find( st );
+   String *ret = stringTable().find( st );
    if ( ret == 0 ) {
       ret = new String( st );
       ret->exported( exported );
       ret->bufferize();
-		m_strTab.add( ret );
+      stringTable().add( ret );
    }
    else {
       ret->exported( exported );
@@ -326,7 +342,7 @@ bool Module::save( Stream *out, bool skipCode ) const
    // serialize the module tables.
    //NOTE: all the module tables are saved 32 bit alinged.
 
-   if ( ! m_strTab.save( out ) )
+   if ( ! stringTable().save( out ) )
       return false;
 
    if ( ! m_symbols.save( out ) )
@@ -384,7 +400,7 @@ bool Module::load( Stream *is, bool skipHeader )
    /*TODO: see if there is a localized table around and use that instead.
       If so, skip our internal strtable.
    */
-   if ( ! m_strTab.load( is ) )
+   if ( ! stringTable().load( is ) )
       return false;
 
    if ( ! m_symbols.load( this, is ) )
@@ -504,12 +520,12 @@ DllLoader *Module::detachLoader()
 
 void Module::incref()
 {
-   Engine::atomicInc( m_refcount );
+   atomicInc( m_refcount );
 }
 
 void Module::decref()
 {
-   if( Engine::atomicDec( m_refcount ) <= 0 )
+   if( atomicDec( m_refcount ) <= 0 )
    {
       DllLoader *loader = detachLoader();
       delete this;
@@ -522,11 +538,11 @@ bool Module::saveTableTemplate( Stream *stream, const String &encoding ) const
    stream->writeString( "<?xml version=\"1.0\" encoding=\"" );
    stream->writeString( encoding );
    stream->writeString( "\"?>\n" );
-   return m_strTab.saveTemplate( stream, name(), language() );
+   return stringTable().saveTemplate( stream, name(), language() );
 }
 
 
-String Module::relativizeName( const String &module_name, const String &parent_name )
+String Module::absoluteName( const String &module_name, const String &parent_name )
 {
    if ( module_name.getCharAt(0) == '.' )
    {

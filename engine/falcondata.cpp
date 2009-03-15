@@ -18,40 +18,19 @@
 */
 
 #include <falcon/falcondata.h>
+#include <falcon/stream.h>
 
 namespace Falcon {
 
-
-FalconDataManager::~FalconDataManager() {}
-
-void *FalconDataManager::onInit( VMachine *vm )
+bool FalconData::serialize( Stream *stream, bool bLive ) const
 {
-   if ( m_model != 0 )
-      return m_model->clone();
-   return 0;
+   return false;
 }
 
-void FalconDataManager::onGarbageMark( VMachine *vm, void *data )
+bool FalconData::deserialize( Stream *stream, bool bLive )
 {
-   FalconData *fd = static_cast<FalconData*>(data);
-   fd->gcMark( vm );
+   return false;
 }
-
-void FalconDataManager::onDestroy( VMachine *vm, void *user_data )
-{
-      FalconData *fd = static_cast<FalconData*>(user_data);
-      delete fd;
-}
-
-void *FalconDataManager::onClone( VMachine *vm, void *user_data )
-{
-      FalconData *fd = static_cast<FalconData*>(user_data);
-      return fd->clone();
-}
-
-
-// Define a unique data manager valid for all the engine
-FalconDataManager core_falcon_data_manager;
 
 }
 

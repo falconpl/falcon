@@ -115,19 +115,6 @@ void GenTree::generate( const Statement *cmp, const char *specifier, bool sameli
          m_out->writeString( "\n" );
       break;
 
-      case Statement::t_pass:
-      {
-         const StmtPass *pass = static_cast< const StmtPass *>( cmp );
-         m_out->writeString( "PASS " );
-         gen_value( pass->called() );
-         if ( pass->saveIn() != 0 ) {
-            m_out->writeString( " IN " );
-            gen_value( pass->saveIn() );
-         }
-         m_out->writeString( "\n" );
-      }
-      break;
-
       case Statement::t_autoexp:
          m_out->writeString( "AUTOEXPR " );
          gen_value( static_cast< const StmtExpression *>( cmp )->value() );
@@ -342,17 +329,29 @@ void GenTree::generate( const Statement *cmp, const char *specifier, bool sameli
       {
 
          const StmtWhile *wh = static_cast< const StmtWhile *>( cmp );
-         if( wh->condition() != 0 )
-         {
-            m_out->writeString( "WHILE " );
-            gen_value( wh->condition() );
-         }
-         else {
-            m_out->writeString( "LOOP " );
-         }
+         m_out->writeString( "WHILE " );
+         gen_value( wh->condition() );
 
          m_out->writeString( "\n" );
          gen_block( wh->children(), depth );
+      }
+      break;
+
+      case Statement::t_loop:
+      {
+         const StmtLoop *wh = static_cast< const StmtLoop *>( cmp );
+         m_out->writeString( "LOOP " );
+         m_out->writeString( "\n" );
+         gen_block( wh->children(), depth );
+
+         if( wh->condition() != 0 )
+         {
+            m_out->writeString( "END LOOP WHEN " );
+            gen_value( wh->condition() );
+            m_out->writeString( "\n" );
+         }
+         else
+            m_out->writeString( "END\n" );
       }
       break;
 
@@ -559,7 +558,6 @@ void GenTree::gen_value( const Value *val )
 
       case Value::t_symbol: m_out->writeString( val->asSymbol()->name() ); break;
       case Value::t_self: m_out->writeString( "self" ); break;
-      case Value::t_sender: m_out->writeString( "sender" ); break;
       case Value::t_array_decl:
          m_out->writeString( "Array: [ " );
             gen_array( val->asArray() );
@@ -602,7 +600,7 @@ void GenTree::gen_expression( const Expression *exp )
       case Expression::t_not: type = 0; name = "not"; break;
       case Expression::t_pre_inc: type = 0; name = "++"; break;
       case Expression::t_pre_dec: type = 0; name = "--"; break;
-      
+
       case Expression::t_eval: type = 0; name = "^*"; break;
       case Expression::t_oob: type = 0; name = "^+"; break;
       case Expression::t_deoob: type = 0; name = "^-"; break;

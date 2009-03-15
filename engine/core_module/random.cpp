@@ -40,7 +40,7 @@
 */
 
 namespace Falcon {
-
+namespace core {
 
 /*#
    @function random
@@ -220,7 +220,7 @@ FALCON_FUNC  flc_randomWalk ( ::Falcon::VMachine *vm )
    int32 number = qty == 0 ? 1 : (int32)qty->forceInteger();
    if( number < 0 ) number = series->asArray()->length();
 
-   CoreArray *array = new CoreArray( vm, number );
+   CoreArray *array = new CoreArray( number );
    CoreArray &source = *series->asArray();
    int32 slen = (int32) source.length();
 
@@ -273,7 +273,7 @@ FALCON_FUNC  flc_randomGrab ( ::Falcon::VMachine *vm )
    int32 number = qty == 0 ? 1 : (int32)qty->forceInteger();
    if( number < 1 ) number = series->asArray()->length();
 
-   CoreArray *array = new CoreArray( vm, number );
+   CoreArray *array = new CoreArray( number );
    CoreArray &source = *series->asArray();
    int32 slen = (int32) source.length();
 
@@ -378,6 +378,7 @@ FALCON_FUNC  flc_randomSeed ( ::Falcon::VMachine *vm )
    srand( value );
 }
 
+}
 }
 
 

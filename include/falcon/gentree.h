@@ -1,6 +1,6 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: $FILE$.h
+   FILE: gentree.h
 
    Generates a compiler-debug oriented representation of the input symtree.
    -------------------------------------------------------------------

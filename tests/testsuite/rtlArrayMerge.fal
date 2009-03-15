@@ -15,36 +15,36 @@
 array = [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ]
 arr1 = [ "a", "b", "c" ]
 
-arr2 = arrayCopy( array )
+arr2 = clone( array )
 arrayMerge( arr2, arr1 )
 if len( arr2 ) != 13 or arr2[0] != 1 or arr2[10] != "a"
    failure( "arrayMerge as append" )
 end
-arr2 = arrayCopy( array )
+arr2 = clone( array )
 arrayMerge( arr2, arr1, 5 )
 if len( arr2 ) != 13 or arr2[0] != 1 or arr2[5] != "a" or arr2[8] != 6
    failure( "arrayMerge as insert" )
 end
 
-arr2 = arrayCopy( array )
+arr2 = clone( array )
 arrayMerge( arr2, arr1, 5, 1 )
 if len( arr2 ) != 12 or arr2[0] != 1 or arr2[5] != "b" or arr2[7] != 6
    failure( "arrayMerge as partial insert" )
 end
 
-arr2 = arrayCopy( array )
+arr2 = clone( array )
 arrayMerge( arr2, arr1, 5, 1, 2 )
 if len( arr2 ) != 11 or arr2[0] != 1 or arr2[5] != "b" or arr2[6] != 6
    failure( "arrayMerge as partial insert 2" )
 end
 
-arr2 = arrayCopy( array )
+arr2 = clone( array )
 arrayMerge( arr2, arr1, 0, 0, 2 )
 if len( arr2 ) != 12 or arr2[0] != "a" or arr2[2] != 1
    failure( "arrayMerge as head insert" )
 end
 
-arr2 = arrayCopy( array )
+arr2 = clone( array )
 arrayMerge( arr2, arr1, 1, 2, 0 )
 if len( arr2 ) != 13 or arr2[0] != 1 or arr2[1] != "c" or arr2[4] != 2
    failure( "arrayMerge reverse insert" )

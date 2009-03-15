@@ -1,23 +1,24 @@
-
-/* A Bison parser, made by GNU Bison 2.4.  */
+/* A Bison parser, made by GNU Bison 2.3.  */
 
 /* Skeleton interface for Bison's Yacc-like parsers in C
-   
-      Copyright (C) 1984, 1989, 1990, 2000, 2001, 2002, 2003, 2004, 2005, 2006
+
+   Copyright (C) 1984, 1989, 1990, 2000, 2001, 2002, 2003, 2004, 2005, 2006
    Free Software Foundation, Inc.
-   
-   This program is free software: you can redistribute it and/or modify
+
+   This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
-   the Free Software Foundation, either version 3 of the License, or
-   (at your option) any later version.
-   
+   the Free Software Foundation; either version 2, or (at your option)
+   any later version.
+
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
    GNU General Public License for more details.
-   
+
    You should have received a copy of the GNU General Public License
-   along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
+   along with this program; if not, write to the Free Software
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 /* As a special exception, you may create a larger work that contains
    part or all of the Bison parser skeleton and distribute that work
@@ -28,10 +29,9 @@
    special exception, which will cause the skeleton and the resulting
    Bison output files to be licensed under the GNU General Public
    License without this special exception.
-   
+
    This special exception was added by the Free Software Foundation in
    version 2.2 of Bison.  */
-
 
 /* Tokens.  */
 #ifndef YYTOKENTYPE
@@ -62,99 +62,95 @@
      CASE = 278,
      DEFAULT = 279,
      SELECT = 280,
-     SENDER = 281,
-     SELF = 282,
-     GIVE = 283,
-     TRY = 284,
-     CATCH = 285,
-     RAISE = 286,
-     CLASS = 287,
-     FROM = 288,
-     OBJECT = 289,
-     RETURN = 290,
-     GLOBAL = 291,
-     LAMBDA = 292,
-     INIT = 293,
-     LOAD = 294,
-     LAUNCH = 295,
-     CONST_KW = 296,
-     ATTRIBUTES = 297,
-     PASS = 298,
-     EXPORT = 299,
-     IMPORT = 300,
-     DIRECTIVE = 301,
-     COLON = 302,
-     FUNCDECL = 303,
-     STATIC = 304,
-     INNERFUNC = 305,
-     FORDOT = 306,
-     LISTPAR = 307,
-     LOOP = 308,
-     ENUM = 309,
-     TRUE_TOKEN = 310,
-     FALSE_TOKEN = 311,
-     OUTER_STRING = 312,
-     CLOSEPAR = 313,
-     OPENPAR = 314,
-     CLOSESQUARE = 315,
-     OPENSQUARE = 316,
-     DOT = 317,
-     ARROW = 318,
-     VBAR = 319,
-     ASSIGN_POW = 320,
-     ASSIGN_SHL = 321,
-     ASSIGN_SHR = 322,
-     ASSIGN_BXOR = 323,
-     ASSIGN_BOR = 324,
-     ASSIGN_BAND = 325,
-     ASSIGN_MOD = 326,
-     ASSIGN_DIV = 327,
-     ASSIGN_MUL = 328,
-     ASSIGN_SUB = 329,
-     ASSIGN_ADD = 330,
-     OP_EQ = 331,
-     OP_AS = 332,
-     OP_TO = 333,
-     COMMA = 334,
-     QUESTION = 335,
-     OR = 336,
-     AND = 337,
-     NOT = 338,
-     LE = 339,
-     GE = 340,
-     LT = 341,
-     GT = 342,
-     NEQ = 343,
-     EEQ = 344,
-     PROVIDES = 345,
-     OP_NOTIN = 346,
-     OP_IN = 347,
-     HASNT = 348,
-     HAS = 349,
-     DIESIS = 350,
-     ATSIGN = 351,
-     CAP_CAP = 352,
-     VBAR_VBAR = 353,
-     AMPER_AMPER = 354,
-     MINUS = 355,
-     PLUS = 356,
-     PERCENT = 357,
-     SLASH = 358,
-     STAR = 359,
-     POW = 360,
-     SHR = 361,
-     SHL = 362,
-     CAP_XOROOB = 363,
-     CAP_ISOOB = 364,
-     CAP_DEOOB = 365,
-     CAP_OOB = 366,
-     CAP_EVAL = 367,
-     TILDE = 368,
-     NEG = 369,
-     AMPER = 370,
-     DECREMENT = 371,
-     INCREMENT = 372,
-     DOLLAR = 373
+     SELF = 281,
+     TRY = 282,
+     CATCH = 283,
+     RAISE = 284,
+     CLASS = 285,
+     FROM = 286,
+     OBJECT = 287,
+     RETURN = 288,
+     GLOBAL = 289,
+     LAMBDA = 290,
+     INIT = 291,
+     LOAD = 292,
+     LAUNCH = 293,
+     CONST_KW = 294,
+     EXPORT = 295,
+     IMPORT = 296,
+     DIRECTIVE = 297,
+     COLON = 298,
+     FUNCDECL = 299,
+     STATIC = 300,
+     INNERFUNC = 301,
+     FORDOT = 302,
+     LISTPAR = 303,
+     LOOP = 304,
+     ENUM = 305,
+     TRUE_TOKEN = 306,
+     FALSE_TOKEN = 307,
+     OUTER_STRING = 308,
+     CLOSEPAR = 309,
+     OPENPAR = 310,
+     CLOSESQUARE = 311,
+     OPENSQUARE = 312,
+     DOT = 313,
+     OPEN_GRAPH = 314,
+     CLOSE_GRAPH = 315,
+     ARROW = 316,
+     VBAR = 317,
+     ASSIGN_POW = 318,
+     ASSIGN_SHL = 319,
+     ASSIGN_SHR = 320,
+     ASSIGN_BXOR = 321,
+     ASSIGN_BOR = 322,
+     ASSIGN_BAND = 323,
+     ASSIGN_MOD = 324,
+     ASSIGN_DIV = 325,
+     ASSIGN_MUL = 326,
+     ASSIGN_SUB = 327,
+     ASSIGN_ADD = 328,
+     OP_EQ = 329,
+     OP_AS = 330,
+     OP_TO = 331,
+     COMMA = 332,
+     QUESTION = 333,
+     OR = 334,
+     AND = 335,
+     NOT = 336,
+     LE = 337,
+     GE = 338,
+     LT = 339,
+     GT = 340,
+     NEQ = 341,
+     EEQ = 342,
+     PROVIDES = 343,
+     OP_NOTIN = 344,
+     OP_IN = 345,
+     DIESIS = 346,
+     ATSIGN = 347,
+     CAP_CAP = 348,
+     VBAR_VBAR = 349,
+     AMPER_AMPER = 350,
+     MINUS = 351,
+     PLUS = 352,
+     PERCENT = 353,
+     SLASH = 354,
+     STAR = 355,
+     POW = 356,
+     SHR = 357,
+     SHL = 358,
+     CAP_XOROOB = 359,
+     CAP_ISOOB = 360,
+     CAP_DEOOB = 361,
+     CAP_OOB = 362,
+     CAP_EVAL = 363,
+     TILDE = 364,
+     NEG = 365,
+     AMPER = 366,
+     DECREMENT = 367,
+     INCREMENT = 368,
+     DOLLAR = 369
    };
 #endif
 /* Tokens.  */
@@ -181,113 +177,103 @@
 #define CASE 278
 #define DEFAULT 279
 #define SELECT 280
-#define SENDER 281
-#define SELF 282
-#define GIVE 283
-#define TRY 284
-#define CATCH 285
-#define RAISE 286
-#define CLASS 287
-#define FROM 288
-#define OBJECT 289
-#define RETURN 290
-#define GLOBAL 291
-#define LAMBDA 292
-#define INIT 293
-#define LOAD 294
-#define LAUNCH 295
-#define CONST_KW 296
-#define ATTRIBUTES 297
-#define PASS 298
-#define EXPORT 299
-#define IMPORT 300
-#define DIRECTIVE 301
-#define COLON 302
-#define FUNCDECL 303
-#define STATIC 304
-#define INNERFUNC 305
-#define FORDOT 306
-#define LISTPAR 307
-#define LOOP 308
-#define ENUM 309
-#define TRUE_TOKEN 310
-#define FALSE_TOKEN 311
-#define OUTER_STRING 312
-#define CLOSEPAR 313
-#define OPENPAR 314
-#define CLOSESQUARE 315
-#define OPENSQUARE 316
-#define DOT 317
-#define ARROW 318
-#define VBAR 319
-#define ASSIGN_POW 320
-#define ASSIGN_SHL 321
-#define ASSIGN_SHR 322
-#define ASSIGN_BXOR 323
-#define ASSIGN_BOR 324
-#define ASSIGN_BAND 325
-#define ASSIGN_MOD 326
-#define ASSIGN_DIV 327
-#define ASSIGN_MUL 328
-#define ASSIGN_SUB 329
-#define ASSIGN_ADD 330
-#define OP_EQ 331
-#define OP_AS 332
-#define OP_TO 333
-#define COMMA 334
-#define QUESTION 335
-#define OR 336
-#define AND 337
-#define NOT 338
-#define LE 339
-#define GE 340
-#define LT 341
-#define GT 342
-#define NEQ 343
-#define EEQ 344
-#define PROVIDES 345
-#define OP_NOTIN 346
-#define OP_IN 347
-#define HASNT 348
-#define HAS 349
-#define DIESIS 350
-#define ATSIGN 351
-#define CAP_CAP 352
-#define VBAR_VBAR 353
-#define AMPER_AMPER 354
-#define MINUS 355
-#define PLUS 356
-#define PERCENT 357
-#define SLASH 358
-#define STAR 359
-#define POW 360
-#define SHR 361
-#define SHL 362
-#define CAP_XOROOB 363
-#define CAP_ISOOB 364
-#define CAP_DEOOB 365
-#define CAP_OOB 366
-#define CAP_EVAL 367
-#define TILDE 368
-#define NEG 369
-#define AMPER 370
-#define DECREMENT 371
-#define INCREMENT 372
-#define DOLLAR 373
+#define SELF 281
+#define TRY 282
+#define CATCH 283
+#define RAISE 284
+#define CLASS 285
+#define FROM 286
+#define OBJECT 287
+#define RETURN 288
+#define GLOBAL 289
+#define LAMBDA 290
+#define INIT 291
+#define LOAD 292
+#define LAUNCH 293
+#define CONST_KW 294
+#define EXPORT 295
+#define IMPORT 296
+#define DIRECTIVE 297
+#define COLON 298
+#define FUNCDECL 299
+#define STATIC 300
+#define INNERFUNC 301
+#define FORDOT 302
+#define LISTPAR 303
+#define LOOP 304
+#define ENUM 305
+#define TRUE_TOKEN 306
+#define FALSE_TOKEN 307
+#define OUTER_STRING 308
+#define CLOSEPAR 309
+#define OPENPAR 310
+#define CLOSESQUARE 311
+#define OPENSQUARE 312
+#define DOT 313
+#define OPEN_GRAPH 314
+#define CLOSE_GRAPH 315
+#define ARROW 316
+#define VBAR 317
+#define ASSIGN_POW 318
+#define ASSIGN_SHL 319
+#define ASSIGN_SHR 320
+#define ASSIGN_BXOR 321
+#define ASSIGN_BOR 322
+#define ASSIGN_BAND 323
+#define ASSIGN_MOD 324
+#define ASSIGN_DIV 325
+#define ASSIGN_MUL 326
+#define ASSIGN_SUB 327
+#define ASSIGN_ADD 328
+#define OP_EQ 329
+#define OP_AS 330
+#define OP_TO 331
+#define COMMA 332
+#define QUESTION 333
+#define OR 334
+#define AND 335
+#define NOT 336
+#define LE 337
+#define GE 338
+#define LT 339
+#define GT 340
+#define NEQ 341
+#define EEQ 342
+#define PROVIDES 343
+#define OP_NOTIN 344
+#define OP_IN 345
+#define DIESIS 346
+#define ATSIGN 347
+#define CAP_CAP 348
+#define VBAR_VBAR 349
+#define AMPER_AMPER 350
+#define MINUS 351
+#define PLUS 352
+#define PERCENT 353
+#define SLASH 354
+#define STAR 355
+#define POW 356
+#define SHR 357
+#define SHL 358
+#define CAP_XOROOB 359
+#define CAP_ISOOB 360
+#define CAP_DEOOB 361
+#define CAP_OOB 362
+#define CAP_EVAL 363
+#define TILDE 364
+#define NEG 365
+#define AMPER 366
+#define DECREMENT 367
+#define INCREMENT 368
+#define DOLLAR 369
 
 
 
 
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
-typedef union 
-/* Line 1676 of yacc.c  */
-#line 61 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
-lex_value_t
-{
-
-/* Line 1676 of yacc.c  */
-#line 61 "/export/medusa/gniccola/falcon/core/engine/src_parser.yy"
-
+typedef union
+#line 61 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+lex_value_t {
    Falcon::int64 integer;
    Falcon::numeric numeric;
    char * charp;
@@ -300,17 +286,14 @@ lex_value_t
    Falcon::DictDecl *fal_ddecl;
    Falcon::SymbolList *fal_symlist;
    Falcon::List *fal_genericList;
-
-
-
-/* Line 1676 of yacc.c  */
-#line 308 "/export/medusa/gniccola/falcon/core/engine/src_parser.hpp"
-} YYSTYPE;
-# define YYSTYPE_IS_TRIVIAL 1
+}
+/* Line 1489 of yacc.c.  */
+#line 292 "/home/gian/Progetti/falcon/core/engine/src_parser.hpp"
+	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
+# define YYSTYPE_IS_TRIVIAL 1
 #endif
-
 
 
 

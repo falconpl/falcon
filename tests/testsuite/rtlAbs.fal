@@ -1,0 +1,28 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 113g
+* Category: rtl
+* Subcategory: math
+* Short: abs
+* Description:
+*   Checks for correct working of abs() function.
+* [/Description]
+****************************************************************************/
+
+// Integer numbers
+if abs( 1 ) != 1: failure( "abs integer positive" )
+if abs( -1 ) != 1: failure( "abs integer negative" )
+if abs( 0 ) != 0: failure( "abs zero" )
+
+// positive
+if abs( 1.5 ) != 1.5: failure( "abs on float" )
+if abs( -1.5 ) != 1.5: failure( "abs on float neg" )
+try
+   floor( "alpha" )
+   failure( "Error not risen for parameters" )
+end
+
+success()
+
+/* End of file */

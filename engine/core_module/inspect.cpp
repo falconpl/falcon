@@ -20,7 +20,7 @@
 #include <falcon/carray.h>
 #include <falcon/cdict.h>
 #include <falcon/cclass.h>
-#include <falcon/attribute.h>
+#include <falcon/corefunc.h>
 #include <falcon/stream.h>
 #include <falcon/membuf.h>
 
@@ -117,12 +117,6 @@ void inspect_internal( VMachine *vm, const Item *elem, int32 level, int32 maxLev
       case FLC_ITEM_LBIND:
          stream->writeString( "&" );
          stream->writeString( *elem->asLBind() );
-      break;
-
-      case FLC_ITEM_ATTRIBUTE:
-         stream->writeString( "{attrib:" );
-         stream->writeString( elem->asAttribute()->name() );
-         stream->writeString( "}" );
       break;
 
       case FLC_ITEM_MEMBUF:
@@ -234,7 +228,7 @@ void inspect_internal( VMachine *vm, const Item *elem, int32 level, int32 maxLev
       case FLC_ITEM_OBJECT:
       {
          CoreObject *arr = elem->asObjectSafe();
-         stream->writeString( "Object of class " + arr->instanceOf()->name() );
+         stream->writeString( "Object of class " + arr->generator()->symbol()->name() );
          if ( level == maxLevel )
          {
             stream->writeString( "{...}" );
@@ -242,15 +236,18 @@ void inspect_internal( VMachine *vm, const Item *elem, int32 level, int32 maxLev
          }
 
          stream->writeString( " {\n" );
+         const PropertyTable &pt = arr->generator()->properties();
 
-         for( count = 0; count < arr->propCount() ; count++ ) {
+         for( count = 0; count < pt.added() ; count++ ) 
+         {
             for ( i = 0; i < (level+1); i ++ )
             {
                stream->writeString("   ");
             }
-            stream->writeString( arr->getPropertyName( count ) + " => " );
+            const String &propName = *pt.getKey( count );
+            stream->writeString( propName + " => " );
             Item dummy;
-            arr->getPropertyAt(count, dummy);
+            arr->getProperty( propName, dummy);
             inspect_internal( vm, &dummy, level + 1, maxLevel, maxSize, false, true );
          }
          for ( i = 0; i < level; i ++ )
@@ -265,35 +262,21 @@ void inspect_internal( VMachine *vm, const Item *elem, int32 level, int32 maxLev
          stream->writeString( "Class " + elem->asClass()->symbol()->name() );
       break;
 
-      case FLC_ITEM_TABMETHOD:
       case FLC_ITEM_METHOD:
       {
-         if ( ! elem->asModule()->isAlive() )
+         if ( ! elem->asMethodFunc()->isValid() )
          {
             stream->writeString( "Dead method" );
          }
          else
          {
-            temp = elem->isTabMethod() ? "TabMethod 0x" : "Method 0x";
-            temp.writeNumberHex( (uint64) elem->asMethodObject() );
-            temp += "->" + elem->asMethodFunction()->name();
+            temp = "Method ";
+            temp += "->" + elem->asMethodFunc()->symbol()->name();
             stream->writeString( temp );
 
             Item itemp;
-            if ( elem->isMethod() )
-            {
-               itemp.setObject( elem->asMethodObject() );
-               inspect_internal( vm, &itemp, level + 1, maxLevel, maxSize, true, true );
-            }
-            else {
-               if ( elem->isTabMethodDict() )
-                  itemp.setArray( elem->asTabMethodArray() );
-               else
-                  itemp.setDict( elem->asTabMethodDict() );
-
-               inspect_internal( vm, &itemp, level + 1, maxLevel, maxSize, true, true );
-            }
-            itemp.setFunction( elem->asMethodFunction(), elem->asModule() );
+            elem->getMethodItem( itemp );
+            
             inspect_internal( vm, &itemp, level + 1, maxLevel, maxSize, true, true );
             for ( i = 0; i < level; i ++ )
             {
@@ -304,34 +287,21 @@ void inspect_internal( VMachine *vm, const Item *elem, int32 level, int32 maxLev
       }
       break;
 
-      case FLC_ITEM_FBOM:
-         temp = "Fbom Method id=";
-         temp.writeNumber( (int64) elem->getFbomMethod() );
-         stream->writeString( temp );
-         stream->writeString( " on " );
-         {
-            Item other;
-            elem->getFbomItem( other );
-            inspect_internal( vm, &other, level + 1, maxLevel, maxSize, false, true );
-         }
-
-      break;
-
       case FLC_ITEM_CLSMETHOD:
          temp = "Cls.Method 0x";
-         temp.writeNumberHex( (uint64) elem->asMethodObject() );
+         temp.writeNumberHex( (uint64) elem->asMethodClassOwner() );
          temp += "->" + elem->asMethodClass()->symbol()->name();
          stream->writeString( temp );
       break;
 
       case FLC_ITEM_FUNC:
       {
-         if ( ! elem->asModule()->isAlive() )
+         if ( ! elem->asFunction()->isValid() )
          {
             stream->writeString( "Dead function" );
          }
          else {
-            const Symbol *funcSym = elem->asFunction();
+            const Symbol *funcSym = elem->asFunction()->symbol();
 
             if ( funcSym->isExtFunc() )
             {
@@ -344,7 +314,7 @@ void inspect_internal( VMachine *vm, const Item *elem, int32 level, int32 maxLev
                uint32 itemId = def->onceItemId();
                if ( itemId != FuncDef::NO_STATE )
                {
-                  if ( elem->asModule()->globals().itemAt( itemId ).isNil() )
+                  if ( elem->asFunction()->liveModule()->globals().itemAt( itemId ).isNil() )
                      stream->writeString( "{ not called }");
                   else
                      stream->writeString( "{ called }");

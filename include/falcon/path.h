@@ -18,6 +18,7 @@
 
 #include <falcon/setup.h>
 #include <falcon/string.h>
+#include <falcon/gcalloc.h>
 
 namespace Falcon
 {
@@ -45,7 +46,7 @@ namespace Falcon
    but it may get checked i.e. when insernted in a URI.
 */
 
-class FALCON_DYN_CLASS Path: public BaseAlloc
+class FALCON_DYN_CLASS Path: public GCAlloc
 {
    String m_path;
 
@@ -145,7 +146,9 @@ public:
    */
    bool getWinLocation( String &str ) const;
 
-   /** Get the filename part. */
+   /** Get the filename part.
+      This returns the file and extension parts separated by a '.'
+   */
    String getFilename() const { String fmt; getFilename( fmt ); return fmt; }
 
    /** Stores the filename part in a given string.

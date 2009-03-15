@@ -24,6 +24,7 @@
 #include <falcon/item.h>
 
 #include <stdio.h>
+#include <string.h>
 #include <time.h>
 
 static const char *RFC_2822_days[] = { "Mon","Tue", "Wed","Thu","Fri","Sat","Sun" };

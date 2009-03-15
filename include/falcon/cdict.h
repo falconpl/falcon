@@ -38,18 +38,18 @@ public:
 
 
 
-class FALCON_DYN_CLASS CoreDict: public Garbageable
+class FALCON_DYN_CLASS CoreDict: public DeepItem, public Garbageable
 {
    bool m_blessed;
 
 protected:
-   CoreDict( VMachine *vm ):
-      Garbageable(vm),
+   CoreDict():
+      Garbageable(),
       m_blessed( false )
    {}
 
-   CoreDict( VMachine *vm, uint32 alloc ):
-      Garbageable( vm, alloc ),
+   CoreDict( uint32 alloc ):
+      Garbageable(),
       m_blessed( false )
    {}
 
@@ -59,6 +59,11 @@ public:
    //
 
    virtual uint32 length() const =0;
+   /** Performs a find using a static string as a key.
+      This wraps the string in a temporary item and calls
+      the normal find(const Item &)
+   */
+   Item *find( const String &key ) const;
    virtual Item *find( const Item &key ) const = 0;
    virtual bool find( const Item &key, DictIterator &iter ) = 0;
    virtual DictIterator *findIterator( const Item &key ) = 0;
@@ -113,6 +118,11 @@ public:
       can be accessed through "self".
    */
    void bless( bool b ) { m_blessed = b; }
+
+   virtual void readProperty( const String &, Item &item );
+   virtual void writeProperty( const String &, const Item &item );
+   virtual void readIndex( const Item &pos, Item &target );
+   virtual void writeIndex( const Item &pos, const Item &target );
 };
 
 }

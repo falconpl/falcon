@@ -29,13 +29,13 @@ try
    fileLen = file.tell()
    file.seek( 0 )
    if file.tell() != 0: failure( "Tell after seek" )
-   if file.read( 11 ) != "Hello world": failure( "Read back" )
+   if file.grab( 11 ) != "Hello world": failure( "Read back" )
 
-   file.readLine() // discards the first \n
+   file.grabLine() // discards the first \n
 
-   if file.readLine() != "Next line 1" or \
-      file.readLine() != "Next line 2" or \
-      file.readLine() != "Next line 3"
+   if file.grabLine() != "Next line 1" or \
+      file.grabLine() != "Next line 2" or \
+      file.grabLine() != "Next line 3"
          failure( "read line" )
    end
 
@@ -47,13 +47,13 @@ try
    if file.tell() != fileLen: failure( "Return to end position" )
 
    if file.eof(): failure( "early eof" )
-   if file.read( 100 ) != "": failure( "read at end of file" )
+   if file.grab( 100 ) != "": failure( "read at end of file" )
    if not file.eof(): failure( "Eof not detected." )
 
    // seekCur test.
    file.seek( 11 )
    file.seekCur( -5 )
-   if file.read( 5 ) != "world": failure( "seekCur" )
+   if file.grab( 5 ) != "world": failure( "seekCur" )
    file.close()
 
 catch in error

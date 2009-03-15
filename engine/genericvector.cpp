@@ -18,6 +18,7 @@
 #include <falcon/genericvector.h>
 #include <falcon/memory.h>
 #include <falcon/fassert.h>
+#include <falcon/globals.h>
 #include <string.h>
 
 namespace Falcon {
