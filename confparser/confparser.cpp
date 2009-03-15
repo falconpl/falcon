@@ -119,12 +119,11 @@
    or if the parameter has nil value, then the methods will operate on the main
    section.
 */
-FALCON_MODULE_DECL( const Falcon::EngineData &data )
+FALCON_MODULE_DECL
 {
    #define FALCON_DECLARE_MODULE self
 
    // setup DLL engine common data
-   data.set();
 
    Falcon::Module *self = new Falcon::Module();
    self->name( "confparser" );
@@ -138,7 +137,7 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
 
 
    Falcon::Symbol *c_cparser = self->addClass( "ConfParser", Falcon::Ext::ConfParser_init );
-   c_cparser->getClassDef()->setObjectManager( &Falcon::core_falcon_data_manager );
+   //
 
    self->addClassMethod( c_cparser, "read", Falcon::Ext::ConfParser_read ).asSymbol()->
       addParam("stream");

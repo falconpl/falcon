@@ -18,7 +18,7 @@
 */
 
 #include <falcon/module.h>
-#include <falcon/cobject.h>
+#include <falcon/coreobject.h>
 #include <falcon/vm.h>
 #include "compiler_mod.h"
 
@@ -26,8 +26,14 @@ namespace Falcon {
 
 namespace Ext {
 
+CoreObject* CompilerIfaceFactory( const CoreClass *cls, void *, bool )
+{
+   return new CompilerIface(cls);
+}
+
 // Implemented here to reduce inline overhead
-CompilerIface::CompilerIface():
+CompilerIface::CompilerIface( const CoreClass *cls ):
+   CoreObject( cls ),
    m_loader( "." )
 {
    // get default source encoding
@@ -36,7 +42,8 @@ CompilerIface::CompilerIface():
 }
 
 // Implemented here to reduce inline overhead
-CompilerIface::CompilerIface( const String &path ):
+CompilerIface::CompilerIface(  const CoreClass *cls, const String &path ):
+   CoreObject( cls ),
    m_loader( path )
 {
    // get default source encoding
@@ -49,55 +56,63 @@ CompilerIface::CompilerIface( const String &path ):
 CompilerIface::~CompilerIface()
 {}
 
-void CompilerIface::getProperty( CoreObject *owner, const String &propName, Item &prop )
+
+bool CompilerIface::getProperty( const String &propName, Item &prop ) const
 {
    if( propName == "path" )
    {
       if ( ! prop.isString() )
-         prop = new GarbageString( owner->origin() );
+         prop = new CoreString();
+         
       m_loader.getSearchPath( *prop.asString() );
    }
    else if( propName == "alwaysRecomp" )
    {
-      prop = (int64) ( m_loader.alwaysRecomp() ? 1: 0 );
+      prop.setBoolean( m_loader.alwaysRecomp() );
    }
    else if( propName == "compileInMemory" )
    {
-      prop = (int64) ( m_loader.compileInMemory() ? 1: 0 );
+      prop.setBoolean( m_loader.compileInMemory() );
    }
    else if( propName == "ignoreSources" )
    {
-      prop = (int64) ( m_loader.ignoreSources() ? 1: 0 );
+      prop.setBoolean( m_loader.ignoreSources() );
    }
    else if( propName == "saveModules" )
    {
-      prop = (int64) ( m_loader.saveModules() ? 1: 0 );
+      prop.setBoolean( m_loader.saveModules() );
    }
    else if( propName == "saveMandatory" )
    {
-      prop = (int64) ( m_loader.saveMandatory() ? 1: 0 );
+      prop.setBoolean( m_loader.saveMandatory() );
    }
    else if( propName == "sourceEncoding" )
    {
-      prop = new GarbageString( owner->origin(), m_loader.sourceEncoding() );
+      prop = new CoreString( m_loader.sourceEncoding() );
    }
    else if( propName == "detectTemplate" )
    {
-      prop = (int64) ( m_loader.saveMandatory() ? 1: 0 );
+      prop.setBoolean( m_loader.saveMandatory() );
    }
    else if( propName == "compileTemplate" )
    {
-      prop = (int64) ( m_loader.saveMandatory() ? 1: 0 );
+      prop.setBoolean( m_loader.saveMandatory() );
    }
    else if( propName == "langauge" )
    {
       if ( ! prop.isString() )
-         prop = new GarbageString( owner->origin() );
+         prop = new CoreString;
       *prop.asString() = m_loader.getLanguage();
    }
+   else {
+      return defaultProperty( propName, prop );
+   }
+   
+   return true;
 }
 
-void CompilerIface::setProperty( CoreObject *owner, const String &propName, const Item &prop )
+
+bool CompilerIface::setProperty( const String &propName, const Item &prop )
 {
    if( propName == "path" && prop.isString() )
    {
@@ -139,6 +154,11 @@ void CompilerIface::setProperty( CoreObject *owner, const String &propName, cons
    {
       m_loader.compileTemplate( prop.isTrue() );
    }
+   else {
+      readOnlyError( propName );
+   }
+   
+   return true;
 }
 
 
@@ -161,9 +181,9 @@ FalconData *ModuleCarrier::clone() const
    return new ModuleCarrier( m_lmodule );
 }
 
-void ModuleCarrier::gcMark( VMachine *vm )
+void ModuleCarrier::gcMark( MemPool *mp )
 {
-   m_lmodule->mark( vm->memPool()->currentMark() );
+   m_lmodule->mark( mp->generation() );
 }
 
 }

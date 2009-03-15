@@ -169,16 +169,15 @@
 
 #include <falcon/module.h>
 #include "compiler_ext.h"
+#include "compiler_mod.h"
 #include "compiler_st.h"
 
 #include "version.h"
 
 
-FALCON_MODULE_DECL( const Falcon::EngineData &data )
+FALCON_MODULE_DECL
 {
    #define FALCON_DECLARE_MODULE self
-
-   data.set();
 
    Falcon::Module *self = new Falcon::Module();
    self->name( "compiler" );
@@ -191,7 +190,7 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    #include "compiler_st.h"
 
    Falcon::Symbol *c_compiler = self->addClass( "Compiler", Falcon::Ext::Compiler_init );
-   c_compiler->carryUserData();
+   c_compiler->getClassDef()->factory( &Falcon::Ext::CompilerIfaceFactory );
    self->addClassProperty( c_compiler, "path" );
    self->addClassProperty( c_compiler, "alwaysRecomp" );
    self->addClassProperty( c_compiler, "compileInMemory" );
@@ -216,7 +215,6 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
 
    Falcon::Symbol *c_module = self->addClass( "Module" );
    c_module->setWKS( true );
-   c_module->carryFalconData();
    self->addClassProperty( c_module, "name" );
    self->addClassProperty( c_module, "path" );
 

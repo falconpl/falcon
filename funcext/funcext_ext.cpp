@@ -129,7 +129,7 @@ FALCON_FUNC  fe_at ( ::Falcon::VMachine *vm )
          else {
             if ( i_val != 0 ) {
                if ( ca->bindings() == 0 )
-                  ca->setBindings( new LinearDict(vm) );
+                  ca->setBindings( new LinearDict() );
                ca->bindings()->insert( i_pos->asString(), *i_val );
                vm->retnil();
                return;
@@ -216,7 +216,7 @@ FALCON_FUNC  fe_at ( ::Falcon::VMachine *vm )
                );
             return;
          }
-         vm->retval( new GarbageString( vm, str->subString( pos, pos+1) ) );
+         vm->retval( new CoreString( str->subString( pos, pos+1) ) );
 
          if ( i_val != 0 && i_val->isString() && i_val->asString()->size() > 0 )
          {
@@ -230,7 +230,7 @@ FALCON_FUNC  fe_at ( ::Falcon::VMachine *vm )
          int32 start = i_pos->asRangeStart();
          int32 end = i_pos->asRangeIsOpen() ? str->length() : i_pos->asRangeEnd();
 
-         vm->retval( new GarbageString( vm, str->subString( start, end ) ) );
+         vm->retval( new CoreString( str->subString( start, end ) ) );
          if ( i_val != 0 && i_val->isString() )
          {
             str->change( start, end, *i_val->asString() );
@@ -635,7 +635,7 @@ FALCON_FUNC  fe_add( ::Falcon::VMachine *vm )
          int64 chr = operand2->forceInteger();
          if ( chr >= 0 && chr <= (int64) 0xFFFFFFFF )
          {
-            GarbageString *gcs = new GarbageString( vm, *operand1->asString() );
+            CoreString *gcs = new CoreString( *operand1->asString() );
             gcs->append( (uint32) chr );
             vm->regA().setString( gcs );
             return;
@@ -645,7 +645,7 @@ FALCON_FUNC  fe_add( ::Falcon::VMachine *vm )
 
       case FLC_ITEM_STRING<< 8 | FLC_ITEM_STRING:
       {
-         GarbageString *gcs = new GarbageString( vm, *operand1->asString() );
+         CoreString *gcs = new CoreString( *operand1->asString() );
          gcs->append( *operand2->asString() );
          vm->regA().setString( gcs );
       }
@@ -653,7 +653,7 @@ FALCON_FUNC  fe_add( ::Falcon::VMachine *vm )
 
       case FLC_ITEM_DICT<< 8 | FLC_ITEM_DICT:
       {
-         CoreDict *dict = new LinearDict( vm, operand1->asDict()->length() + operand2->asDict()->length() );
+         CoreDict *dict = new LinearDict( operand1->asDict()->length() + operand2->asDict()->length() );
          dict->merge( *operand1->asDict() );
          dict->merge( *operand2->asDict() );
          vm->regA().setDict( dict );
@@ -837,7 +837,7 @@ FALCON_FUNC  fe_mul( ::Falcon::VMachine *vm )
          int64 chr = operand2->forceInteger();
          if ( chr >= 0 && chr <= (int64) 0xFFFFFFFF )
          {
-            GarbageString *gcs = new GarbageString( vm, *operand1->asString() );
+            CoreString *gcs = new CoreString( *operand1->asString() );
             gcs->append( (uint32) chr );
             vm->regA().setString( gcs );
             return;

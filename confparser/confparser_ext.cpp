@@ -407,12 +407,12 @@ FALCON_FUNC  ConfParser_get( ::Falcon::VMachine *vm )
    String value1;
    if ( cfile->getNextValue( value1 ) )
    {
-      CoreArray *array = new CoreArray( vm, 5 );
-      array->append( new GarbageString( vm, value ) );
-      array->append( new GarbageString( vm, value1 ) );
+      CoreArray *array = new CoreArray( 5 );
+      array->append( new CoreString( value ) );
+      array->append( new CoreString( value1 ) );
 
       while( cfile->getNextValue( value1 ) )
-         array->append( new GarbageString( vm, value1 ) );
+         array->append( new CoreString( value1 ) );
 
       vm->retval( array );
    }
@@ -511,12 +511,12 @@ FALCON_FUNC  ConfParser_getMultiple( ::Falcon::VMachine *vm )
       }
    }
 
-   CoreArray *array = new CoreArray( vm, 5 );
-   array->append( new GarbageString( vm, value ) );
+   CoreArray *array = new CoreArray( 5 );
+   array->append( new CoreString( value ) );
 
    String value1;
    while( cfile->getNextValue( value1 ) )
-      array->append( new GarbageString( vm, value1 ) );
+      array->append( new CoreString( value1 ) );
 
    vm->retval( array );
 }
@@ -535,13 +535,13 @@ FALCON_FUNC  ConfParser_getSections( ::Falcon::VMachine *vm )
    ConfigFile *cfile = (ConfigFile *) self->getUserData();
 
    String section;
-   CoreArray *ret = new CoreArray( vm );
+   CoreArray *ret = new CoreArray;
 
    if( cfile->getFirstSection( section ) )
    {
-      ret->append( new GarbageString( vm, section ) );
+      ret->append( new CoreString( section ) );
       while( cfile->getNextSection( section ) )
-         ret->append( new GarbageString( vm, section ) );
+         ret->append( new CoreString( section ) );
    }
 
    vm->retval( ret );
@@ -573,7 +573,7 @@ FALCON_FUNC  ConfParser_getKeys( ::Falcon::VMachine *vm )
    }
 
    String key;
-   CoreArray *ret = new CoreArray( vm );
+   CoreArray *ret = new CoreArray;
    bool next;
 
    if ( i_section != 0 && ! i_section->isNil() ) {
@@ -585,7 +585,7 @@ FALCON_FUNC  ConfParser_getKeys( ::Falcon::VMachine *vm )
 
    while ( next )
    {
-      ret->append( new GarbageString( vm, key ) );
+      ret->append( new CoreString( key ) );
       next = cfile->getNextKey( key );
    }
 
@@ -619,7 +619,7 @@ FALCON_FUNC  ConfParser_getCategoryKeys( ::Falcon::VMachine *vm )
    }
 
    String key;
-   CoreArray *ret = new CoreArray( vm );
+   CoreArray *ret = new CoreArray;
    bool next;
 
    if ( i_section != 0 && ! i_section->isNil() ) {
@@ -631,7 +631,7 @@ FALCON_FUNC  ConfParser_getCategoryKeys( ::Falcon::VMachine *vm )
 
    while ( next )
    {
-      ret->append( new GarbageString( vm, String( key, i_keyMask->asString()->length() + 1 ) ) );
+      ret->append( new CoreString( String( key, i_keyMask->asString()->length() + 1 ) ) );
       next = cfile->getNextKey( key );
    }
 
@@ -670,7 +670,7 @@ FALCON_FUNC  ConfParser_getCategory( ::Falcon::VMachine *vm )
       i_section = 0;
 
    String key, keymask;
-   CoreDict *ret = new LinearDict( vm );
+   CoreDict *ret = new LinearDict();
    CoreDict *current = ret;
    bool next;
 
@@ -709,24 +709,24 @@ FALCON_FUNC  ConfParser_getCategory( ::Falcon::VMachine *vm )
       String value1;
       if ( cfile->getNextValue( value1 ) )
       {
-         CoreArray *array = new CoreArray( vm, 5 );
-         array->append( new GarbageString( vm, value ) );
-         array->append( new GarbageString( vm, value1 ) );
+         CoreArray *array = new CoreArray( 5 );
+         array->append( new CoreString( value ) );
+         array->append( new CoreString( value1 ) );
 
          while( cfile->getNextValue( value1 ) )
-            array->append( new GarbageString( vm, value1 ) );
+            array->append( new CoreString( value1 ) );
 
          // we have used KEY; now what we want to save is just the non-category
          if ( stripNames )
-            current->insert( new GarbageString( vm, key, keymask.length() + 1 ), array );
+            current->insert( new CoreString( key, keymask.length() + 1 ), array );
          else
-            current->insert( new GarbageString( vm, key), array );
+            current->insert( new CoreString( key), array );
       }
       else {
           if ( stripNames )
-            current->insert( new GarbageString( vm, key, keymask.length() + 1 ), new GarbageString( vm, value ) );
+            current->insert( new CoreString( key, keymask.length() + 1 ), new CoreString( value ) );
          else
-            current->insert(  new GarbageString( vm, key) , new GarbageString( vm, value ) );
+            current->insert(  new CoreString( key) , new CoreString( value ) );
       }
 
       next = cfile->getNextKey( key );
@@ -761,7 +761,7 @@ FALCON_FUNC  ConfParser_getDictionary( ::Falcon::VMachine *vm )
    }
 
    String key;
-   CoreDict *ret = new LinearDict( vm );
+   CoreDict *ret = new LinearDict();
    CoreDict *current = ret;
    bool next;
 
@@ -786,17 +786,17 @@ FALCON_FUNC  ConfParser_getDictionary( ::Falcon::VMachine *vm )
       String value1;
       if ( cfile->getNextValue( value1 ) )
       {
-         CoreArray *array = new CoreArray( vm, 5 );
-         array->append( new GarbageString( vm, value ) );
-         array->append( new GarbageString( vm, value1 ) );
+         CoreArray *array = new CoreArray( 5 );
+         array->append( new CoreString( value ) );
+         array->append( new CoreString( value1 ) );
 
          while( cfile->getNextValue( value1 ) )
-            array->append( new GarbageString( vm, value1 ) );
+            array->append( new CoreString( value1 ) );
 
-         current->insert( new GarbageString( vm, key ), array );
+         current->insert( new CoreString( key ), array );
       }
       else {
-         current->insert( new GarbageString( vm, key ), new GarbageString( vm, value ) );
+         current->insert( new CoreString( key ), new CoreString( value ) );
       }
 
       next = cfile->getNextKey( key );
@@ -841,7 +841,7 @@ FALCON_FUNC  ConfParser_add( ::Falcon::VMachine *vm )
       value = i_value->asString();
    }
    else {
-      value = new GarbageString( vm );
+      value = new CoreString;
       delValue = true;
       vm->itemToString( *value, i_value );
    }
@@ -902,7 +902,7 @@ FALCON_FUNC  ConfParser_set( ::Falcon::VMachine *vm )
             value = itm.asString();
          }
          else {
-            value = new GarbageString( vm );
+            value = new CoreString;
             delValue = true;
             vm->itemToString( *value, &itm );
          }
@@ -938,7 +938,7 @@ FALCON_FUNC  ConfParser_set( ::Falcon::VMachine *vm )
       value = i_value->asString();
    }
    else {
-      value = new GarbageString( vm );
+      value = new CoreString;
       delValue = true;
       vm->itemToString( *value, i_value );
    }

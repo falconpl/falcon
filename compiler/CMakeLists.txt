@@ -12,7 +12,7 @@ IF(WIN32)
 ENDIF(WIN32)
 
 # Target
-ADD_LIBRARY( compiler MODULE
+ADD_LIBRARY( compiler_fm MODULE
    compiler.cpp
    compiler_ext.cpp
    compiler_mod.cpp
@@ -22,4 +22,4 @@ ADD_LIBRARY( compiler MODULE
 )
 
 #Link
-FALCON_LINK_MODULE( compiler )
+FALCON_LINK_MODULE( compiler_fm )

@@ -20,7 +20,7 @@
 #include <falcon/setup.h>
 #include <falcon/module.h>
 #include <falcon/vm.h>
-#include <falcon/stringstream.h>
+#include <falcon/rosstream.h>
 
 #include "compiler_ext.h"
 #include "compiler_mod.h"
@@ -99,8 +99,6 @@ FALCON_FUNC Compiler_init( ::Falcon::VMachine *vm )
 {
    Item *i_path = vm->param( 0 );
 
-   CompilerIface *iface;
-
    if( i_path != 0 )
    {
       if( ! i_path->isString() )
@@ -109,15 +107,9 @@ FALCON_FUNC Compiler_init( ::Falcon::VMachine *vm )
          return;
       }
 
-      iface = new CompilerIface( *i_path->asString() );
+      CompilerIface *iface = dyncast<CompilerIface*>( vm->self().asObject() );
+      iface->loader().setSearchPath( *i_path->asString() );
    }
-   else
-      iface = new CompilerIface();
-
-   // set our VM as the error handler for this loader.
-   iface->loader().errorHandler( vm );
-
-   vm->self().asObject()->setUserData( iface );
 }
 
 
@@ -139,8 +131,7 @@ FALCON_FUNC Compiler_init( ::Falcon::VMachine *vm )
 */
 FALCON_FUNC Compiler_addFalconPath( ::Falcon::VMachine *vm )
 {
-   CoreObject *self = vm->self().asObject();
-   CompilerIface *iface = static_cast<CompilerIface *>( self->getUserData() );
+   CompilerIface *iface = dyncast<CompilerIface*>( vm->self().asObject() );
    iface->loader().addFalconPath();
 
 }
@@ -206,7 +197,7 @@ FALCON_FUNC Compiler_compile( ::Falcon::VMachine *vm )
    }
 
    Stream *input;
-   String name;
+   String *name = i_name->asString();
    bool bDelete;
 
    // now, if data is an object it must be a stream.
@@ -222,25 +213,22 @@ FALCON_FUNC Compiler_compile( ::Falcon::VMachine *vm )
 
       // ok, get the stream
       input = (Stream *) data->getUserData();
-      name = "unknown_module";
       bDelete = false;
    }
    else {
       // if it's a string, we have to create a stream
-      name = *i_data->asString();
-      input = new StringStream( name );
+      input = new ROStringStream( *i_data->asString() );
       bDelete = true;
    }
 
-   CoreObject *self = vm->self().asObject();
-   CompilerIface *iface = static_cast<CompilerIface *>( self->getUserData() );
-
-   Module *mod = iface->loader().loadSource( input, name );
+   CompilerIface *iface = dyncast<CompilerIface*>( vm->self().asObject() );
+   Module *mod = iface->loader().loadSource( input );
 
    // if mod is zero, do nothing: vm has already raised the error.
    if ( mod != 0 )
    {
-      mod->name( *i_name->asString() );
+      mod->name( *name );
+      mod->path( *name );
       internal_link( vm, mod, iface );
    }
 
@@ -271,8 +259,7 @@ FALCON_FUNC Compiler_loadByName( ::Falcon::VMachine *vm )
       return;
    }
 
-   CoreObject *self = vm->self().asObject();
-   CompilerIface *iface = static_cast<CompilerIface *>( self->getUserData() );
+   CompilerIface *iface = dyncast<CompilerIface*>( vm->self().asObject() );
 
    const Symbol *caller_sym;
    const Module *caller_mod;
@@ -316,9 +303,7 @@ FALCON_FUNC Compiler_loadModule( ::Falcon::VMachine *vm )
       return;
    }
 
-   CoreObject *self = vm->self().asObject();
-   CompilerIface *iface = static_cast<CompilerIface *>( self->getUserData() );
-
+   CompilerIface *iface = dyncast<CompilerIface*>( vm->self().asObject() );
    Module *mod = iface->loader().loadFile( *i_name->asString() );
 
    // if mod is zero, do nothing: vm has already raised the error.
@@ -355,8 +340,8 @@ FALCON_FUNC Compiler_setDirective( ::Falcon::VMachine *vm )
       return;
    }
 
-   CoreObject *self = vm->self().asObject();
-   CompilerIface *iface = static_cast<CompilerIface *>( self->getUserData() );
+   CompilerIface *iface = dyncast<CompilerIface*>( vm->self().asObject() );
+   
    if ( i_value->isString() )
       iface->loader().compiler().setDirective( *i_directive->asString(), *i_value->asString() );
    else
@@ -547,7 +532,7 @@ FALCON_FUNC Module_unload( ::Falcon::VMachine *vm )
 
       // destroy the reference
       delete modc;
-      self->setUserData( 0 );
+      self->setUserData( (void*)0 );
 
       // report success.
       vm->regA().setBoolean( true );
@@ -582,7 +567,7 @@ FALCON_FUNC Module_engineVersion( ::Falcon::VMachine *vm )
 
    int major, minor, re;
    mod->getEngineVersion( major, minor, re );
-   CoreArray *ca = new CoreArray( vm, 3 );
+   CoreArray *ca = new CoreArray( 3 );
    ca->append( (int64) major );
    ca->append( (int64) minor );
    ca->append( (int64) re );
@@ -609,7 +594,7 @@ FALCON_FUNC Module_moduleVersion( ::Falcon::VMachine *vm )
 
    int major, minor, re;
    mod->getModuleVersion( major, minor, re );
-   CoreArray *ca = new CoreArray( vm, 3 );
+   CoreArray *ca = new CoreArray( 3 );
    ca->append( (int64) major );
    ca->append( (int64) minor );
    ca->append( (int64) re );

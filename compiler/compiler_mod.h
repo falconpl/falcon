@@ -22,34 +22,89 @@
 
 #include <falcon/setup.h>
 #include <falcon/types.h>
-#include <falcon/userdata.h>
-#include <falcon/flcloader.h>
+#include <falcon/modloader.h>
 #include <falcon/string.h>
 #include <falcon/vmmaps.h>
+#include <falcon/falcondata.h>
+#include <falcon/coreobject.h>
 
 namespace Falcon {
 
 namespace Ext {
 
-class CompilerIface: public UserData
+CoreObject* CompilerIfaceFactory( const CoreClass *cls, void *, bool );
+
+class CompilerIface: public CoreObject
 {
-   FlcLoader m_loader;
+   ModuleLoader m_loader;
    String m_sourceEncoding;
 
 public:
-   CompilerIface();
-   CompilerIface( const String &path );
+   CompilerIface( const CoreClass* cls );
+   CompilerIface( const CoreClass* cls, const String &path );
 
    virtual ~CompilerIface();
 
-   const FlcLoader &loader() const { return m_loader; }
-   FlcLoader &loader() { return m_loader; }
+   const ModuleLoader &loader() const { return m_loader; }
+   ModuleLoader &loader() { return m_loader; }
 
-   virtual void getProperty( CoreObject *vm, const String &propName, Item &prop );
-   virtual void setProperty( CoreObject *vm, const String &propName, const Item &prop );
+   /** Returns a valid sequence instance if this object's user data is a "Falcon Sequence".
+
+      Sequences can be used in sequential operations as the for-in loops,
+      or in functional sequence operations (as map, filter and so on).
+
+      Objects containing a Falcon Sequence as user data can declare
+      this changing this function and returning the sequence data.
+   */
+   Sequence* getSequence() const { return m_bIsSequence ? static_cast<Sequence*>( m_user_data ) : 0; }
+
+   /** Returns a valid sequence instance if this object's user data is a "Falcon Data".
+
+      Sequences can be used in sequential operations as the for-in loops,
+      or in functional sequence operations (as map, filter and so on).
+
+      Objects containing a Falcon Sequence as user data can declare
+      this changing this function and returning the sequence data.
+   */
+   FalconData *getFalconData() const { return m_bIsFalconData ? static_cast<FalconData*>( m_user_data ) : 0; }
+
+   /** Return the inner user data that is attached to this item. */
+   void *getUserData() const { return m_user_data; }
+
+   /** Set a generic user data for this object.
+      This user data is completely un-handled by this class; it's handling
+      is completely demanded to user-defined sub-classes and/or to property-level
+      reflection system.
+   */
+   void setUserData( void *data ) { m_user_data = data; }
+
+   /** Set a FalconData as the user data for this object.
+      FalconData class present a minimal interface that cooperates with this class:
+      - It has a virtual destructor, that is called when the wrapping CoreObject instance is destroyed.
+      - It provides a clone() method that is called when the wrapping CoreObject is cloned.
+      - It provides a gcMark() method, called when this Object is marked.
+      - Serialization support is available but defaulted to fail.
+   */
+   void setUserData( FalconData* fdata ) { m_bIsFalconData = true; m_user_data = fdata; }
+
+   /** Set a Sequence as the user data for this object.
+      Sequence class is derived from FalconData, and it adds an interface for serial
+      access to items.
+   */
+   void setUserData( Sequence* sdata ) { m_bIsSequence = true; m_bIsFalconData = true; m_user_data = sdata; }
+
+   /** Returns true if this object has the given class among its ancestors. */
+   bool derivedFrom( const String &className ) const;
+
+
+   /** Performs GC marking of the inner object data */
+   virtual void gcMark( MemPool *mp ) {}
+
+   virtual bool setProperty( const String &prop, const Item &value );
+   virtual bool getProperty( const String &key, Item &ret ) const;
 
    // we don't provide a clone() method
-   virtual FalconData *clone() const { return 0; }
+   virtual CoreObject *clone() const  { return 0; };
 };
 
 class ModuleCarrier: public FalconData
@@ -64,7 +119,7 @@ public:
    LiveModule *liveModule() const { return m_lmodule; }
 
    virtual FalconData *clone() const;
-   virtual void gcMark( VMachine *vm );
+   virtual void gcMark( MemPool *mp );
 
    // we don't provide a clone() method
 };

@@ -139,8 +139,8 @@ FALCON_FUNC  ProcessEnum_next  ( ::Falcon::VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
    Sys::ProcessEnum *pe = (Sys::ProcessEnum *)self->getUserData();
-   GarbageString *name = new GarbageString( vm );
-   GarbageString *path = new GarbageString( vm );
+   CoreString *name = new CoreString;
+   CoreString *path = new CoreString;
    uint64 pid, ppid;
 
    int64 res = (int64) pe->next( *name, pid, ppid, *path );
@@ -368,7 +368,7 @@ FALCON_FUNC  falcon_pread ( ::Falcon::VMachine *vm )
    argv[3] = 0;
 
    int retval=0;
-   GarbageString* gs = new GarbageString( vm );
+   CoreString* gs = new CoreString;
    if( ::Falcon::Sys::spawn_read( argv, false, background, &retval, gs ) )
    {
       if ( retval == 0x7F00 )

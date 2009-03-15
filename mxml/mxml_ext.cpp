@@ -789,7 +789,7 @@ FALCON_FUNC MXMLDocument_getEncoding( ::Falcon::VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
    MXML::Document *doc = static_cast<MXML::DocumentCarrier *>( self->getUserData() )->document();
-   vm->retval( new GarbageString( vm, doc->encoding() ) );
+   vm->retval( new CoreString( doc->encoding() ) );
 }
 
 /*#
@@ -996,7 +996,7 @@ FALCON_FUNC MXMLNode_name( ::Falcon::VMachine *vm )
    MXML::Node *node = static_cast<NodeCarrier *>( self->getUserData() )->node();
 
    if ( i_name == 0 )
-      vm->retval( new GarbageString( vm, node->name() ) );
+      vm->retval( new CoreString( node->name() ) );
    else
       node->name( *i_name->asString() );
 }
@@ -1027,7 +1027,7 @@ FALCON_FUNC MXMLNode_data( ::Falcon::VMachine *vm )
    CoreObject *self = vm->self().asObject();
    MXML::Node *node = static_cast<NodeCarrier *>( self->getUserData() )->node();
    if ( i_data == 0 )
-      vm->retval( new GarbageString( vm, node->data() ) );
+      vm->retval( new CoreString( node->data() ) );
    else
       node->data( *i_data->asString() );
 }
@@ -1121,7 +1121,7 @@ FALCON_FUNC MXMLNode_getAttribute( ::Falcon::VMachine *vm )
    }
 
    const String &val = node->getAttribute( *i_attrName->asString() );
-   vm->retval( new GarbageString( vm, val ) );
+   vm->retval( new CoreString( val ) );
 }
 
 /*#
@@ -1150,13 +1150,13 @@ FALCON_FUNC MXMLNode_getAttribs( ::Falcon::VMachine *vm )
 
    const MXML::AttribList &attribs = node->attribs();
 
-   CoreDict *dict = new LinearDict( vm, attribs.size() );
+   CoreDict *dict = new LinearDict( attribs.size() );
 
    MXML::AttribList::const_iterator iter = attribs.begin();
    while( iter != attribs.end() )
    {
-      dict->insert( new GarbageString( vm, (*iter)->name()),
-         new GarbageString( vm, (*iter)->value()) );
+      dict->insert( new CoreString( (*iter)->name()),
+         new CoreString( (*iter)->value()) );
       ++iter;
    }
 
@@ -1183,7 +1183,7 @@ FALCON_FUNC MXMLNode_getChildren( ::Falcon::VMachine *vm )
    CoreObject *self = vm->self().asObject();
    MXML::Node *node = static_cast<NodeCarrier *>( self->getUserData() )->node();
 
-   CoreArray *arr = new CoreArray( vm );
+   CoreArray *arr = new CoreArray
 
    node = node->child();
    while( node != 0 )
@@ -1552,7 +1552,7 @@ FALCON_FUNC MXMLNode_path( ::Falcon::VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
    MXML::Node *node = static_cast<NodeCarrier *>( self->getUserData() )->node();
-   GarbageString *gs = new GarbageString( vm, node->path() );
+   CoreString *gs = new CoreString( node->path() );
    gs->bufferize();
    vm->retval( gs );
 }

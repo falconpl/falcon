@@ -55,7 +55,7 @@ namespace Ext {
 
 FALCON_FUNC  falcon_getHostName( ::Falcon::VMachine *vm )
 {
-   String *s = new GarbageString( vm );
+   String *s = new CoreString;
    if ( ::Falcon::Sys::getHostName( *s ) )
       vm->retval( s );
    else {
@@ -120,13 +120,13 @@ FALCON_FUNC  resolveAddress( ::Falcon::VMachine *vm )
       return;
    }
 
-   CoreArray *ret = new CoreArray( vm, addr.getResolvedCount() );
+   CoreArray *ret = new CoreArray( addr.getResolvedCount() );
    String dummy;
    int32 port;
 
    for ( int i = 0; i < addr.getResolvedCount(); i ++ )
    {
-      String *s = new GarbageString( vm );
+      String *s = new CoreString;
       addr.getResolvedEntry( i, *s, dummy, port );
       ret->append( s );
    }
@@ -154,7 +154,7 @@ FALCON_FUNC  socketErrorDesc( ::Falcon::VMachine *vm )
       vm->retnil();
    }
    else {
-      String *str = new GarbageString( vm );
+      String *str = new CoreString;
       if ( Sys::getErrorDesc( code->asInteger(), *str ) )
          vm->retval( str );
       else
@@ -422,7 +422,7 @@ FALCON_FUNC  Socket_getHost( ::Falcon::VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
    Sys::Socket *tcps = (Sys::Socket *) self->getUserData();
-   String *s = new GarbageString( vm );
+   String *s = new CoreString;
    if ( tcps->address().getAddress( *s ) ) {
       vm->retval( s );
       return;
@@ -449,7 +449,7 @@ FALCON_FUNC  Socket_getService( ::Falcon::VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
    Sys::Socket *tcps = (Sys::Socket *) self->getUserData();
-   String *s = new GarbageString( vm );
+   String *s = new CoreString;
    if ( tcps->address().getService( *s ) ) {
       vm->retval( s );
       return;
@@ -807,7 +807,7 @@ FALCON_FUNC  TCPSocket_recv( ::Falcon::VMachine *vm )
             extra( FAL_STR( sk_msg_lesszero) ) ) );
          return;
       }
-      cs_target = new GarbageString( vm );
+      cs_target = new CoreString;
       cs_target->reserve( size );
       // no need to store for garbage, as we'll return this.
       returnTarget = true;
@@ -1234,7 +1234,7 @@ FALCON_FUNC  UDPSocket_recv( ::Falcon::VMachine *vm )
             extra( FAL_STR( sk_msg_lesszero) ) ) );
          return;
       }
-      cs_target = new GarbageString( vm );
+      cs_target = new CoreString;
       cs_target->reserve( size );
       // no need to store for garbage, as we'll return this.
       returnTarget = true;

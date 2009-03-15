@@ -58,7 +58,7 @@ static const String &internal_getErrorMsg( VMachine *vm, int error_code )
 
 FALCON_FUNC ZLib_getVersion( ::Falcon::VMachine *vm )
 {
-   GarbageString *gsVersion = new GarbageString( vm, zlibVersion() );
+   CoreString *gsVersion = new CoreString( zlibVersion() );
    gsVersion->bufferize();
    vm->retval( gsVersion );
 }
@@ -375,7 +375,7 @@ FALCON_FUNC ZLib_uncompressText( ::Falcon::VMachine *vm )
       return;
    }
 
-   GarbageString *result = new GarbageString( vm );
+   CoreString *result = new CoreString;
    result->adopt( (char *) compData, compLen, compLen );
    // set correct manipulator
    if (dataIn[0] == 2 )

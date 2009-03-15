@@ -477,7 +477,7 @@ static void internal_findAll( Falcon::VMachine *vm, bool overlapped )
          max = 0xFFFFFFFF;
    }
 
-   CoreArray *ca = new CoreArray( vm );
+   CoreArray *ca = new CoreArray
    int frontOrBack = overlapped ? 0 : 1;
    uint32 maxLen = source->asString()->length();
 
@@ -671,7 +671,7 @@ FALCON_FUNC Regex_replaceAll( ::Falcon::VMachine *vm )
       if( data->m_matches > 0 )
       {
          if ( clone == 0 ) {
-            clone = new GarbageString( vm, *source );
+            clone = new CoreString( *source );
             source = clone;
          }
          source->change( data->m_ovector[0], data->m_ovector[1], *dest );
@@ -809,11 +809,11 @@ FALCON_FUNC Regex_grab( Falcon::VMachine *vm )
 
    // grab all the strings
 
-   CoreArray *ca = new CoreArray( vm );
+   CoreArray *ca = new CoreArray
    for( int32 capt = 0; capt < data->m_matches; capt++ )
    {
 
-      String *grabbed = new GarbageString( vm,
+      String *grabbed = new CoreString(
             source->asString()->subString(
                data->m_ovector[ capt * 2 ], data->m_ovector[ capt * 2 + 1 ] )
                );
@@ -888,7 +888,7 @@ FALCON_FUNC Regex_compare( Falcon::VMachine *vm )
 FALCON_FUNC Regex_version( Falcon::VMachine *vm )
 {
    const char *ver = pcre_version();
-   vm->retval( new GarbageString( vm, ver, -1 ) );
+   vm->retval( new CoreString( ver, -1 ) );
 }
 
 /*#
