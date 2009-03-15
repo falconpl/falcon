@@ -600,10 +600,11 @@ FALCON_FUNC MXMLDocument_save( ::Falcon::VMachine *vm )
 
    String &uri = *i_uri->asString();
    MXML::Document *doc = static_cast<MXML::DocumentCarrier *>( self->getUserData() )->document();
-
+   
+   vm->idle();
    //TODO: use parsing uri
    FileStream out;
-   if ( out.create( uri, GenericStream::e_aUserRead | GenericStream::e_aUserWrite | GenericStream::e_aGroupRead | GenericStream::e_aOtherRead  ) )
+   if ( out.create( uri, BaseFileStream::e_aUserRead | BaseFileStream::e_aUserWrite | BaseFileStream::e_aGroupRead | BaseFileStream::e_aOtherRead  ) )
    {
 
       Stream *output = &out;
@@ -613,6 +614,7 @@ FALCON_FUNC MXMLDocument_save( ::Falcon::VMachine *vm )
          output = TranscoderFactory( doc->encoding(), &out, false );
          if ( output == 0 )
          {
+            vm->unidle();
             vm->raiseModError( new MXMLError( ErrorParam( e_inv_params, __LINE__ )
                .extra( "Invalid encoding " + doc->encoding() ) ) );
             return;
@@ -622,16 +624,19 @@ FALCON_FUNC MXMLDocument_save( ::Falcon::VMachine *vm )
       try
       {
          doc->write( *output, doc->style() );
+         vm->unidle();
          vm->retval( true );
       }
       catch( MXML::MalformedError &err )
       {
+         vm->unidle();
          vm->raiseModError( new MXMLError( ErrorParam( FALCON_MXML_ERROR_BASE + err.numericCode(), __LINE__ )
          .desc( err.description() )
          .extra( err.describeLine() ) ) );
       }
       catch( MXML::IOError &err )
       {
+         vm->unidle();
          vm->raiseModError( new IoError( ErrorParam( FALCON_MXML_ERROR_BASE + err.numericCode(), __LINE__ )
          .desc( err.description() )
          .extra( err.describeLine() ) ) );
@@ -639,12 +644,11 @@ FALCON_FUNC MXMLDocument_save( ::Falcon::VMachine *vm )
    }
    else
    {
+      vm->unidle();
       vm->raiseModError( new IoError( ErrorParam(
          FALCON_MXML_ERROR_BASE + (int) MXML::Error::errIo , __LINE__ )
          .desc( FAL_STR( MXML_ERR_IO ) ) ) );
    }
-
-   out.close();
 }
 
 
@@ -676,7 +680,9 @@ FALCON_FUNC MXMLDocument_load( ::Falcon::VMachine *vm )
 
    String &uri = *i_uri->asString();
    MXML::Document *doc = static_cast<MXML::DocumentCarrier *>( self->getUserData() )->document();
-
+   
+   vm->idle();
+   
    //TODO: use parsing uri
    FileStream in;
    if ( in.open( uri ) )
@@ -688,6 +694,7 @@ FALCON_FUNC MXMLDocument_load( ::Falcon::VMachine *vm )
          input = TranscoderFactory( doc->encoding(), &in, false );
          if ( input == 0 )
          {
+            vm->unidle();
             vm->raiseModError( new MXMLError( ErrorParam( e_inv_params, __LINE__ )
             .extra( FAL_STR( MXML_ERR_INVENC ) + doc->encoding() ) ) );
             return;
@@ -698,10 +705,12 @@ FALCON_FUNC MXMLDocument_load( ::Falcon::VMachine *vm )
       try
       {
          doc->read( *input );
+         vm->unidle();
          vm->retval( true );
       }
       catch( MXML::MalformedError &err )
       {
+         vm->unidle();
          vm->raiseModError( new MXMLError(
             ErrorParam( FALCON_MXML_ERROR_BASE + err.numericCode(), __LINE__ )
             .desc( err.description() )
@@ -709,6 +718,7 @@ FALCON_FUNC MXMLDocument_load( ::Falcon::VMachine *vm )
       }
       catch( MXML::IOError &err )
       {
+         vm->unidle();
          vm->raiseModError( new IoError(
             ErrorParam( FALCON_MXML_ERROR_BASE + err.numericCode(), __LINE__ )
             .desc( err.description() )
@@ -718,7 +728,7 @@ FALCON_FUNC MXMLDocument_load( ::Falcon::VMachine *vm )
       in.close();
       return;
    }
-
+   
    if ( ! in.good() )
    {
       vm->raiseModError( new IoError( ErrorParam(
@@ -1183,7 +1193,7 @@ FALCON_FUNC MXMLNode_getChildren( ::Falcon::VMachine *vm )
    CoreObject *self = vm->self().asObject();
    MXML::Node *node = static_cast<NodeCarrier *>( self->getUserData() )->node();
 
-   CoreArray *arr = new CoreArray
+   CoreArray *arr = new CoreArray;
 
    node = node->child();
    while( node != 0 )

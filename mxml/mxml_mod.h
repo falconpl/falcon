@@ -44,7 +44,7 @@ public:
 
    MXML::Node *node() const { return m_node; }
    virtual FalconData *clone() const;
-   virtual void gcMark( VMachine *mp ){};
+   virtual void gcMark( MemPool *mp ){};
 
    // just a proxy
    CoreObject *shell() const { return m_node->shell(); }

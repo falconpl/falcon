@@ -12,7 +12,7 @@
 
 #include <falcon/string.h>
 #include <falcon/stream.h>
-#include <falcon/cobject.h>
+#include <falcon/coreobject.h>
 #include <list>
 #include <cassert>
 

@@ -66,12 +66,10 @@
    @beginmodule feather_mxml
 */
 
-FALCON_MODULE_DECL( const Falcon::EngineData &data )
+FALCON_MODULE_DECL
 {
    #define FALCON_DECLARE_MODULE self
 
-   // setup DLL engine common data
-   data.set();
 
    Falcon::Module *self = new Falcon::Module();
    self->name( "mxml" );
@@ -207,7 +205,6 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    // Class document.
    //
    Falcon::Symbol *c_doc = self->addClass( "MXMLDocument", Falcon::Ext::MXMLDocument_init );
-   c_doc->getClassDef()->setObjectManager( &Falcon::core_falcon_data_manager );
    self->addClassMethod( c_doc, "deserialize", Falcon::Ext::MXMLDocument_deserialize ).asSymbol()->
       addParam("istream");
    self->addClassMethod( c_doc, "serialize", Falcon::Ext::MXMLDocument_serialize ).asSymbol()->
@@ -236,7 +233,6 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
 
    Falcon::Symbol *c_node = self->addClass( "MXMLNode", Falcon::Ext::MXMLNode_init );
    c_node->setWKS( true );
-   c_node->getClassDef()->setObjectManager( &Falcon::core_falcon_data_manager );
    self->addClassMethod( c_node, "deserialize", Falcon::Ext::MXMLNode_deserialize );
    self->addClassMethod( c_node, "serialize", Falcon::Ext::MXMLNode_serialize );
    self->addClassMethod( c_node, "nodeType", Falcon::Ext::MXMLNode_nodeType );
