@@ -52,16 +52,20 @@ bool Item::serialize_function( Stream *file, const CoreFunc *func ) const
 
    // we don't serialize the module ID because it is better to rebuild it on deserialization
    serialize_symbol( file, func->symbol() );
-
-   FuncDef *fdef = func->symbol()->getFuncDef();
-   // write the called status
-   uint32 itemId = fdef->onceItemId();
-   if ( itemId != FuncDef::NO_STATE )
+   
+   if ( func->symbol()->isFunction() )
    {
-      byte called = func->liveModule()->globals().itemAt( itemId ).isNil() ? 0 : 1;
-      file->write( &called, 1 );
+      // language function ? -- serialize the state.
+      FuncDef *fdef = func->symbol()->getFuncDef();
+      // write the called status
+      uint32 itemId = fdef->onceItemId();
+      if ( itemId != FuncDef::NO_STATE )
+      {
+         byte called = func->liveModule()->globals().itemAt( itemId ).isNil() ? 0 : 1;
+         file->write( &called, 1 );
+      }
    }
-
+   
    if ( ! file->good() )
       return false;
 
