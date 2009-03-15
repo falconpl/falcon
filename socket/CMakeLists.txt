@@ -34,7 +34,7 @@ ELSE(UNIX OR MAC)
 ENDIF(UNIX OR MAC)
 
 # Target
-ADD_LIBRARY( socket MODULE
+ADD_LIBRARY( socket_fm MODULE
    socket.cpp
    socket_ext.cpp
    socket_srv.cpp
@@ -43,10 +43,10 @@ ADD_LIBRARY( socket MODULE
 )
 
 #Link
-TARGET_LINK_LIBRARIES(socket falcon_engine ${SYS_SPECIFIC_LIBS} )
+TARGET_LINK_LIBRARIES(socket_fm falcon_engine ${SYS_SPECIFIC_LIBS} )
 IF(WIN32)
-   TARGET_LINK_LIBRARIES(socket ws2_32)
+   TARGET_LINK_LIBRARIES(socket_fm ws2_32)
 ENDIF(WIN32)
 
 #Install
-FALCON_INSTALL_MODULE( socket )
+FALCON_INSTALL_MODULE( socket_fm )

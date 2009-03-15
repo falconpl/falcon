@@ -98,7 +98,7 @@ ELSE(WITH_INTERNAL_PCRE)
 ENDIF(WITH_INTERNAL_PCRE)
 
 # Target
-ADD_LIBRARY( regex MODULE
+ADD_LIBRARY( regex_fm MODULE
 ${PCRE_SOURCE}
 
 regex.cpp
@@ -110,7 +110,7 @@ ${SYS_RC}
 )
 
 #Link
-TARGET_LINK_LIBRARIES(regex falcon_engine ${PCRE_LIBRARIES})
+TARGET_LINK_LIBRARIES(regex_fm falcon_engine ${PCRE_LIBRARIES})
 
 #Install
-FALCON_INSTALL_MODULE( regex )
+FALCON_INSTALL_MODULE( regex_fm )

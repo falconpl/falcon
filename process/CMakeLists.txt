@@ -14,7 +14,7 @@ ELSE(UNIX)
 ENDIF(UNIX)
 
 # Target
-ADD_LIBRARY( process MODULE
+ADD_LIBRARY( process_fm MODULE
    process.cpp
    process_ext.cpp
    process_mod.cpp
@@ -23,4 +23,4 @@ ADD_LIBRARY( process MODULE
 )
 
 #Link
-FALCON_LINK_MODULE( process )
+FALCON_LINK_MODULE( process_fm )

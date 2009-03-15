@@ -12,7 +12,7 @@ IF(WIN32)
 ENDIF(WIN32)
 
 # Target
-ADD_LIBRARY( confparser MODULE
+ADD_LIBRARY( confparser_fm MODULE
    confparser.cpp
    confparser_ext.cpp
    confparser_mod.cpp
@@ -21,4 +21,4 @@ ADD_LIBRARY( confparser MODULE
 )
 
 #Link
-FALCON_LINK_MODULE( confparser )
+FALCON_LINK_MODULE( confparser_fm )

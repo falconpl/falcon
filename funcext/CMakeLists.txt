@@ -12,11 +12,11 @@ IF(WIN32)
 ENDIF(WIN32)
 
 # Target
-ADD_LIBRARY( funcext MODULE
+ADD_LIBRARY( funcext_fm MODULE
    funcext.cpp
    funcext_ext.cpp
    ${SYS_RC}
 )
 
 #Link
-FALCON_LINK_MODULE( funcext )
+FALCON_LINK_MODULE( funcext_fm )

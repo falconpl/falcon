@@ -14,7 +14,7 @@ ENDIF(UNIX)
 
 
 # Target
-ADD_LIBRARY( mxml MODULE
+ADD_LIBRARY( mxml_fm MODULE
    mxml.cpp
    mxml_ext.cpp
    mxml_mod.cpp
@@ -28,4 +28,4 @@ ADD_LIBRARY( mxml MODULE
 )
 
 #Link
-FALCON_LINK_MODULE( mxml )
+FALCON_LINK_MODULE( mxml_fm )

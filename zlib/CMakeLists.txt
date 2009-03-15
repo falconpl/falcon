@@ -83,7 +83,7 @@ ELSE(WITH_INTERNAL_ZLIB)
 ENDIF(WITH_INTERNAL_ZLIB)
 
 # Target
-ADD_LIBRARY( zlib MODULE
+ADD_LIBRARY( zlib_fm MODULE
    ${ZLIB_SOURCE}
    # ZLib module source
    zlib.cpp
@@ -93,7 +93,7 @@ ADD_LIBRARY( zlib MODULE
 )
 
 #Link
-TARGET_LINK_LIBRARIES(zlib falcon_engine ${ZLIB_LIBRARIES})
+TARGET_LINK_LIBRARIES(zlib_fm falcon_engine ${ZLIB_LIBRARIES})
 
 #Install
-FALCON_INSTALL_MODULE( zlib )
+FALCON_INSTALL_MODULE( zlib_fm )
