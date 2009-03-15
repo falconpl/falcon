@@ -1,0 +1,86 @@
+/*
+   FALCON - Samples
+
+   FILE: th_grant.fal
+
+   Minimal threading sample, with interlocked screen access.
+
+   This test just launches 4 threads, and instead letting them to
+   mess the output, it uses Grants to coordinated acess to a shared
+   resource (the screen).
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Sun, 13 Apr 2008 23:26:44 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2008: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+load threading
+const threadCount = 8
+
+class MyThread(id, screenGrant, quit ) from Thread
+   id = id
+   screenGrant = screenGrant
+   quit = quit
+
+   function run()
+      i = 0
+      loop i++
+         obj = self.wait( self.quit, self.screenGrant )
+         if obj == self.quit: break
+         >> "Thread ", self.id, ": ", i, "\r"
+         obj.release()
+      end
+
+      self.wait( self.screenGrant )
+      > "Thread ", self.id, " terminated with: ", i
+      self.screenGrant.release()
+   end
+
+end
+
+class MainThread( screenGrant ) from Thread
+   screenGrant = screenGrant
+
+   function run()
+      for i in [0:3]
+         obj = self.wait( self.screenGrant )
+         >> "                           CTRL: ", i, "\r"
+         obj.release()
+         sleep( 1 )
+      end
+
+      obj = self.wait( self.screenGrant )
+      > "                      CTRL: Terminated."
+      obj.release()
+   end
+end
+
+
+sGrant = Grant()
+bQuit = Barrier()
+t = arrayBuffer(threadCount)
+
+for i in [0:t.len()]
+   t[i] = MyThread( "ID" + i.toString(), sGrant, bQuit )
+   t[i].start()
+end
+
+// wait for the controller thread to terminate
+main = MainThread( sGrant )
+main.start()
+Threading.wait( main )
+
+// tell the other threads to quit.
+bQuit.open()
+
+// now that we told the threads to quit, join them.
+for thread in t
+   Threading.wait( thread )
+end
+
+>
+> "Main thread complete."

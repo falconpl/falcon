@@ -1,0 +1,162 @@
+/*
+   FALCON - Samples
+
+   FILE: th_queue.fal
+
+   Queue test.
+
+   In this test we pass data to worker threads, and they pass
+   data back to a main inspector thread.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Sun, 13 Apr 2008 23:26:44 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+load threading
+const threadCount = 4
+const countTo = 10000
+const INTERVAL = 0.2
+const TEST_TIME = 10.0
+const BURST_SIZE = 2000
+
+class Inspector( evts, quit ) from Thread
+   evts = evts
+   quit = quit
+
+   function run()
+      // set up initial time
+      started = seconds()
+      // a storage to be displayed
+      status = [=>]
+      // publish every INTERVAL seconds
+      nextPublish = started + INTERVAL
+
+      // a useful formatter
+      fmt = Format( ".3" )
+      loop
+         // Wait for the previous thread to be done
+         waited = self.wait( self.quit, self.evts, 0.2 )
+
+         // have we been notified?
+         if waited == self.evts
+            id, count = waited.popFront()
+            if id in status
+               status[ id ] += count
+            else
+               status[ id ] = count
+            end
+
+            waited.release()
+
+         // or should we quit
+         elif waited == self.quit
+            break
+         end
+
+         // In case of timeout, see if we should publish
+         now = seconds()
+         if now >= nextPublish
+            nextPublish += INTERVAL
+            >> "\rAt ", fmt.format( now - started ), ": "
+            for id, count in status
+               >> id, ": ", count
+               formiddle: >>"; "
+            end
+         end
+
+         // loop and wait again
+      end
+   end
+
+end
+
+
+class WorkerThread(id, dataQueue, notifQueue, quit ) from Thread
+   id = id
+   dataQueue = dataQueue
+   notifQueue = notifQueue
+   quit = quit
+
+   function run()
+      done = 0
+      loop
+         // Wait for the previous thread to be done
+         waited = self.wait( self.quit, self.dataQueue )
+
+         // are we told to quit?
+         if waited == self.quit: break
+
+         // otherwise, process data.
+         data = waited.popFront()
+
+         // ...that we can release
+         waited.release()
+
+         // should be a string -- do something long (hopefully)
+         count = 0
+         for i in [0:len( data ) ]
+            for j in [0:len(data)]
+               for k in [0:len(data)]
+                  count ^= data[*k]
+               end
+            end
+         end
+
+         // and notify the inspector
+         self.notifQueue.push( [self.id, 1] )
+      end
+   end
+
+end
+
+// Main thread
+
+notifQueue = SyncQueue()
+dataQueue = SyncQueue()
+quit = Barrier()
+
+// create the inspector
+inspth = Inspector( notifQueue, quit )
+inspth.start()
+
+// ... create some consumer
+t = arrayBuffer(threadCount)
+for i in [0:t.len()]
+   // assign the i, i+1 (circular) to the events.
+   t[i] = WorkerThread( "ID" + i.toString(), dataQueue, notifQueue, quit )
+   t[i].start()
+end
+
+// Ok, produce some data for all.
+started = seconds()
+while seconds() - started < TEST_TIME
+   // how many data to produce? 1-100
+   burst = random() * BURST_SIZE
+   letter = random() * 26 + ord('A')
+   for i in [0: burst]
+      size = random() * 10 + 10
+      dataQueue.push( strReplicate( chr(letter), size ) )
+   end
+   notifQueue.push( [ "Main", int( burst ) ] )
+
+   // sleep a bit
+   sleep( random() * 0.5 )
+end
+
+quit.open()
+
+// now that we started the threads, join them.
+for thread in t
+   Threading.wait( thread )
+end
+
+// and join inspector too
+Threading.wait( inspth )
+
+>
+> "Main thread complete."

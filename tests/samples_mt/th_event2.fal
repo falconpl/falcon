@@ -1,0 +1,71 @@
+/*
+   FALCON - Samples
+
+   FILE: th_event.fal
+
+   Auto reset event test for interthread coordination.
+
+   This test is identical to th_event.fal, but it uses callable
+   arrays to configure the run method of the Thread class instead
+   deriving it. Functional programming is quite powerful and
+   compact when properly applied...
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Sun, 13 Apr 2008 23:26:44 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+load threading
+const threadCount = 5
+const countTo = 10000
+
+function threadRunner(id, prevEvent, nextEvent, isLast )
+   for count in [0: countTo+1]
+      // Wait for the previous thread to be done
+      self.wait( prevEvent )
+      >> id, ": ", count, "; "
+      // and eventually go back
+      if isLast: >> "\r"
+      // wake up the next thread
+      nextEvent.set()
+   end
+end
+
+
+// create the needed events
+evts = arrayBuffer( threadCount )
+for i in [0:evts.len()]
+   evts[i] = Event()
+end
+evts += evts[0] // create the circular buffer.
+
+// ... and assign them to our arrays
+t = arrayBuffer(threadCount)
+for i in [0:t.len()]
+   // assign the i, i+1 (circular) to the events.
+   t[i] = Thread()
+   t[i].run = [ threadRunner, "ID" + toString(i), evts[i], evts[ i + 1 ] ]
+end
+
+// In form the last thread that he's the last
+t[-1].run += true
+
+// start all the threads
+for thread in t
+   thread.start()
+end
+
+// start the game
+evts[0].set()
+
+// now that we started the threads, join them.
+for thread in t
+   Threading.wait( thread )
+end
+
+>
+> "Main thread complete."

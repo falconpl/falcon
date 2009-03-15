@@ -58,12 +58,11 @@
 */
 
 
-FALCON_MODULE_DECL( const Falcon::EngineData &data )
+FALCON_MODULE_DECL
 {
    #define FALCON_DECLARE_MODULE self
 
    // setup DLL engine common data
-   data.set();
 
    Falcon::Module *self = new Falcon::Module();
    self->name( "zlib" );

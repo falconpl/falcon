@@ -145,7 +145,7 @@ FALCON_FUNC ZLib_compress( ::Falcon::VMachine *vm )
       allocLen = compLen;
    }
 
-   MemBuf *result = new MemBuf_1( vm, compData, allocLen, true );
+   MemBuf *result = new MemBuf_1( compData, allocLen, true );
    vm->retval( result );
 }
 
@@ -227,7 +227,7 @@ FALCON_FUNC ZLib_compressText( ::Falcon::VMachine *vm )
       allocLen = compLen + 5;
    }
 
-   MemBuf *result = new MemBuf_1( vm, compData, allocLen, true );
+   MemBuf *result = new MemBuf_1( compData, allocLen, true );
    vm->retval( result );
 }
 
@@ -310,7 +310,7 @@ FALCON_FUNC ZLib_uncompress( ::Falcon::VMachine *vm )
       allocLen = compLen;
    }
 
-   MemBuf *result = new MemBuf_1( vm, compData, allocLen, true );
+   MemBuf *result = new MemBuf_1( compData, allocLen, true );
    vm->retval( result );
 }
 

@@ -1,0 +1,60 @@
+/*
+   FALCON - Samples
+
+   FILE: th_stop.fal
+
+   Basic stop test
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Sun, 13 Apr 2008 23:26:44 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+load threading
+
+class MyThread() from Thread
+   function run()
+      > "Say something or the thread will be terminated in 5 seconds"
+      >> "> "
+      inf = stdIn()
+      if inf.readAvailable()  // but wait for 10
+         > "You said '", inf.readLine(), "'"
+      end
+   end
+end
+
+function func_interrupter( thread )
+   sleep( 5 )
+   thread.stop()
+end
+
+//===========================================
+//
+thread = MyThread()
+interrupter = Thread()
+interrupter.run = [func_interrupter, thread]
+// start and wait for 5 seconds
+thread.start()
+// interrupter
+interrupter.start()
+
+// who will win?
+Threading.wait( thread )
+
+// now we don't care; just be sure to stop them both
+>
+
+if thread.hadError()
+   > "Thread was interrupted."
+else
+   > "Thread completed succesfully"
+   interrupter.stop()
+   Threading.wait( interrupter )
+end
+
+
+> "Main thread complete."

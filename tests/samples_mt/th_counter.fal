@@ -1,0 +1,119 @@
+/*
+   FALCON - Samples
+
+   FILE: th_counter.fal
+
+   Synchronization counter sample.
+
+   This sample shows how to use a synchronization counter (semaphore)
+   in both its incarantions of "barrier with a counter" and "event
+   signaler".
+
+   The main thread creates five threads which will compete on a counter;
+   once acquired the counter, they will just do some lengty work, and when
+   done they'll post back on another counter that is waited by the main
+   thread. Just, the first time the main thread will set the counter to one,
+   the second to two, the third to three and so on. This means that only
+   some of the threads will be able to proceed and complete that step
+   of computation.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Sun, 08 Jun 2008 21:50:26 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2008: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+load threading
+const threadCount = 5
+
+// ID: a numeric ID (in the panel)
+// counterIn: semaphore that must be acquired to have the right to write
+// counterDone: semaphore that must be signaled to tell the main thread we're done.
+// panel: a shared panel to write on.
+class MyThread( id, counterIn, counterDone, panel ) from Thread
+   id = id
+   counterIn = counterIn
+   counterDone = counterDone
+   panel = panel
+
+   function run()
+      loop
+         // wait for the counter
+         self.wait( self.counterIn )
+
+         // start counting like mad
+         for i in [0:1000]
+            self.panel[ self.id ] = i
+            sleep( 0.001 )
+         end
+
+         // don't release the counter; the main thread will.
+         self.counterDone.post() // declare we're done.
+         self.panel[ self.id ] = 0
+      end
+   end
+end
+
+class ControlThread( panel ) from Thread
+   panel = panel
+   function run()
+      loop
+         sleep( 0.05 )
+         for n in [0: self.panel.len()]
+            forfirst: >> "\r", strReplicate( " ", 70 ), "\r"
+            >> n, ": "
+            if self.panel[n] == 0
+               >> "_"
+            else
+               >> self.panel[n]
+            end
+            formiddle: >> "; "
+         end
+      end
+   end
+end
+
+//======================================================
+// Main thread
+// let's go.
+
+panel = SharedMemBuf( threadCount + 1, 4 )
+for i in [0:panel.len()]: panel[i] = 0
+
+counterIn = SyncCounter(0)
+counterDone = SyncCounter(0)
+ths = []
+for i in [0:threadCount]
+   thread = MyThread( i + 1, counterIn, counterDone, panel )
+   thread.start()
+   ths += thread
+end
+
+// start our control thread to see what's going on
+tcnt = ControlThread( panel )
+tcnt.start()
+
+// and now, our increasing post loop:
+for count in [0: threadCount]
+   // let the threads to go
+   panel[0] = count + 1
+   counterIn.post( count + 1 )
+   // and wait for them to be done
+   finished = 0
+   while finished <= count
+      Threading.wait( counterDone )
+      finished++
+   end
+end
+
+// avoid breaking last output
+tcnt.stop()
+Threading.wait(tcnt)
+
+// for brevity, omit the other stops
+
+>
+> "Main thread complete."

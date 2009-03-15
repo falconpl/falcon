@@ -1,0 +1,94 @@
+/*
+   FALCON - Samples
+
+   FILE: th_errors.fal
+
+   Managing errors in threads.
+
+   This program lances some threads. One will always complete with success,
+   returning an object. The others will destroy themselves.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Sun, 13 Apr 2008 23:26:44 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+load threading
+const threadCount = 2
+
+class MyThreadOk(id) from Thread
+   id = id
+
+   function run()
+      str = ""
+      sleep( random() )
+      for i in [ord('A'): ord( 'A' ) + 26]
+         str *= i
+      end
+
+      return str
+   end
+end
+
+class MyThreadFail(id) from Thread
+   id = id
+
+   function run()
+      sleep( random() * 3 )
+      raise "Ops, raised an error!"
+   end
+end
+
+class MyThreadBadFail(id) from Thread
+   id = id
+
+   function run()
+      sleep( random() * 3 )
+      self.id[400] = 10  // will surely generate an array access error.
+   end
+end
+
+
+threads = []
+for i in [0:threadCount]
+   threads += MyThreadOk( "ID" + i.toString() )
+end
+
+for i in [threadCount:threadCount*2]
+   threads += MyThreadFail( "ID" + i.toString() )
+end
+
+for i in [threadCount*2:threadCount*3]
+   threads += MyThreadBadFail( "ID" + i.toString() )
+end
+
+// start all the threads
+for t in threads
+   t.start()
+end
+
+// wait for all them.
+start = seconds()
+fmt = Format( ".3" )
+while threads
+   thnum = Threading.vwait( threads, 0.1 )
+   >> "Elapsed: ", fmt.format(seconds() - start), "\r"
+
+   // have been really signaled?
+   if ( thnum >= 0 )
+      >> "                                         \r"  // clear the row
+      // extract the thread that has been terminated
+      th = threads[thnum]
+      threads[thnum:thnum + 1] = []
+      > "Terminated thread ", th.id, \
+         ( th.hadError() ?
+         " with error: " + th.getError().heading() :
+         " with return: " + th.getReturn().toString() )
+   end
+end
+
+> "Main thread complete."
