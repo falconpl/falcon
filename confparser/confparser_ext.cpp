@@ -238,7 +238,9 @@ FALCON_FUNC  ConfParser_read( ::Falcon::VMachine *vm )
 
    if( i_stream == 0 )
    {
+      vm->idle();
       bRes = cfile->load();
+      vm->unidle();
    }
    else {
       bool bValid = false;
@@ -272,11 +274,11 @@ FALCON_FUNC  ConfParser_read( ::Falcon::VMachine *vm )
       else {
          String msg = cfile->errorMessage() + " at ";
          msg.writeNumber( (int64) cfile->errorLine() );
+         self->setProperty( "error", cfile->errorMessage() );
+         self->setProperty( "errorLine", (int64) cfile->errorLine() );
          vm->raiseModError( new ParseError( ErrorParam( FALCP_ERR_INVFORMAT, __LINE__ )
             .desc( FAL_STR(cp_msg_invformat) )
             .extra( msg ) ) );
-         self->setProperty( "error", cfile->errorMessage() );
-         self->setProperty( "errorLine", (int64) cfile->errorLine() );
       }
    }
 
@@ -340,10 +342,10 @@ FALCON_FUNC  ConfParser_write( ::Falcon::VMachine *vm )
       else
       {
          // no -- it's a configuration file.d
-         vm->raiseModError( new ParseError( ErrorParam( FALCP_ERR_STORE, __LINE__ ).
-            desc( FAL_STR(cp_msg_errstore)  ).extra( cfile->errorMessage() ) ) );
          self->setProperty( "error", cfile->errorMessage() );
          self->setProperty( "errorLine", (int64) cfile->errorLine() );
+         vm->raiseModError( new ParseError( ErrorParam( FALCP_ERR_STORE, __LINE__ ).
+            desc( FAL_STR(cp_msg_errstore)  ).extra( cfile->errorMessage() ) ) );
       }
    }
 }

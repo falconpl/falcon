@@ -225,7 +225,7 @@ public:
    bool removeSection( const String &key );
    void clearMainSection();
 
-   virtual void gcMark( VMachine *mp ) {}
+   virtual void gcMark( MemPool *mp ) {}
    virtual FalconData *clone() const { return 0; }
 };
 

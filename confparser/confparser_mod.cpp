@@ -403,7 +403,7 @@ bool ConfigFile::load()
    // Initialization
 
    FileStream stream;
-   if ( ! stream.open( m_fileName, GenericStream::e_omReadOnly, GenericStream::e_smShareRead ) )
+   if ( ! stream.open( m_fileName, BaseFileStream::e_omReadOnly, BaseFileStream::e_smShareRead ) )
    {
       stream.errorDescription( m_errorMsg );
       m_fsError = (long) stream.lastError();
