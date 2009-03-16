@@ -37,7 +37,7 @@ namespace Falcon {
 class FALCON_DYN_CLASS Destroyable: public BaseAlloc
 {
 public:
-   virtual ~Destroyable() {}
+   virtual ~Destroyable();
 };
 
 }

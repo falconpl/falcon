@@ -307,9 +307,17 @@ void falconConvertWinFname( String &ret )
 
 void falconToWin_fname( const String &path, const String &extra, String &result )
 {
-   result = path + extra;
-	result.bufferize();
+   // remove the leading "/" in url unit format (/unit:/path...)
+   if ( path.getCharAt(0) == '/' && path.find(":") != 0 )
+   {
+      result = path.subString(1) + extra;
+   }
+   else {
+      result = path + extra;
+	   result.bufferize();
+	}
 
+   // Changes slashes into backslashes
    for( unsigned int i = 0; i < result.length(); i ++ ) {
       int chr = result.getCharAt( i );
       if( chr == '/' )

@@ -18,9 +18,12 @@
 */
 
 #include <falcon/falcondata.h>
+#include <falcon/destroyable.h>
 #include <falcon/stream.h>
 
 namespace Falcon {
+Destroyable::~Destroyable()
+{}
 
 bool FalconData::serialize( Stream *stream, bool bLive ) const
 {

@@ -558,9 +558,9 @@ FALCON_FUNC  core_min ( ::Falcon::VMachine *vm )
 /*#
    @function max
    @inset functional_support
-   @brief Picks the minimal value among its parameters.
+   @brief Picks the maximum value among its parameters.
    @param ... The items to be checked.
-   @return The smallest item in the sequence.
+   @return The greatest item in the sequence.
 
    This function performs a lexicographic majority check
    on each element passed as a parameter, returning the

@@ -767,8 +767,9 @@ void Buffer::insert( String *str, uint32 pos, uint32 len, const String *source )
          // can we maintain our char size?
          if( destCharSize == strCharSize )
          {
+            uint32 sourceLenBytes = sourceLen * destCharSize;
             // then just move the postfix away
-            memmove( str->getRawStorage() + posBytes + source->size(),
+            memmove( str->getRawStorage() + posBytes + sourceLenBytes,
                      str->getRawStorage() + posBytes + lenBytes,
                      str->size() - posBytes - lenBytes );
          }
