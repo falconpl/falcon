@@ -112,11 +112,11 @@ MemBuf *MemBuf::deserialize( VMachine *vm, Stream *stream )
       return 0;
    nSize = (uint32) endianInt32( nSize );
 
-   byte *mem = (byte *) memAlloc( nSize );
+   byte *mem = (byte *) memAlloc( nSize * nWS );
    if ( mem == 0 )
       return 0;
 
-   if ( stream->read( mem, nSize ) != (int32) nSize )
+   if ( stream->read( mem, nSize*nWS ) != (int32) (nSize*nWS) )
    {
       memFree( mem );
       return 0;
@@ -138,9 +138,9 @@ MemBuf *MemBuf::create( VMachine *vm, int bpp, uint32 nSize )
    switch( bpp )
    {
       case 1: return new MemBuf_1( nSize );
-      case 2: return new MemBuf_2( nSize * 2);
-      case 3: return new MemBuf_3( nSize * 3);
-      case 4: return new MemBuf_4( nSize * 4);
+      case 2: return new MemBuf_2( nSize );
+      case 3: return new MemBuf_3( nSize );
+      case 4: return new MemBuf_4( nSize );
    }
 
    return 0;

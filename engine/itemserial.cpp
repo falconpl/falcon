@@ -185,10 +185,16 @@ Item::e_sercode Item::serialize( Stream *file, bool bLive ) const
       {
          byte type = FLC_ITEM_MEMBUF;
          if ( bLive )
+         {
             type |= 0x80;
-
-         file->write( &type, 1 );
-         this->asMemBuf()->serialize( file, bLive );
+            file->write( &type, 1 );
+            MemBuf* mb = asMemBuf();
+            file->write( &mb, sizeof(mb) );
+         }
+         else {
+            file->write( &type, 1 );
+            this->asMemBuf()->serialize( file, bLive );
+         }
       }
       break;
 
@@ -493,7 +499,7 @@ Item::e_sercode Item::deserialize( Stream *file, VMachine *vm )
       case FLC_ITEM_MEMBUF |0x80:
       {
          // get the function pointer in the stream
-         MemBuf *(*deserializer)( VMachine *, Stream * );
+         /*MemBuf *(*deserializer)( VMachine *, Stream * );
          file->read( &deserializer, sizeof( deserializer ) );
          if ( ! file->good() ) {
             return sc_ferror;
@@ -503,8 +509,10 @@ Item::e_sercode Item::deserialize( Stream *file, VMachine *vm )
          if( mb == 0 )
          {
             return sc_invformat;
-         }
-
+         }*/
+         
+         MemBuf* mb;
+         file->read( &mb, sizeof( mb ) );
          setMemBuf( mb );
          return sc_ok;
       }

@@ -46,9 +46,9 @@ FALCON_FUNC Make_MemBuf( ::Falcon::VMachine *vm )
    switch( wordSize )
    {
       case 1: mb = new MemBuf_1( (uint32) size ); break;
-      case 2: mb = new MemBuf_2( (uint32) size * 2); break;
-      case 3: mb = new MemBuf_3( (uint32) size * 3); break;
-      case 4: mb = new MemBuf_4( (uint32) size * 4); break;
+      case 2: mb = new MemBuf_2( (uint32) size ); break;
+      case 3: mb = new MemBuf_3( (uint32) size ); break;
+      case 4: mb = new MemBuf_4( (uint32) size ); break;
    }
    fassert( mb != 0 );
    vm->retval( mb );
