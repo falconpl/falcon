@@ -27,7 +27,7 @@
 */
 
 load threading
-const threadCount = 5
+const threadCount = 3
 
 // ID: a numeric ID (in the panel)
 // counterIn: semaphore that must be acquired to have the right to write
@@ -80,7 +80,7 @@ end
 // Main thread
 // let's go.
 
-panel = SharedMemBuf( threadCount + 1, 4 )
+panel = MemBuf( threadCount + 1, 4 )
 for i in [0:panel.len()]: panel[i] = 0
 
 counterIn = SyncCounter(0)

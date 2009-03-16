@@ -115,8 +115,6 @@ FALCON_FUNC SyncQueue_popFront( VMachine *vm );
 FALCON_FUNC SyncQueue_empty( VMachine *vm );
 FALCON_FUNC SyncQueue_size( VMachine *vm );
 
-FALCON_FUNC SharedMemBuf( VMachine *vm );
-
 //=====================================================
 // ThreadError
 //

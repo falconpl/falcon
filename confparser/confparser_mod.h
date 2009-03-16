@@ -107,6 +107,8 @@ class ConfigSection: public Destroyable
 public:
    String m_name;
    Map m_entries;
+   
+   virtual ~ConfigSection() {}
 
    /** List element pointing to the file line where the section is declared.
       Used to remove the whole section

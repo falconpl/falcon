@@ -31,7 +31,7 @@ class MyThread( buffer ) from Thread
 end
 
 
-buffer = SharedMemBuf( 5, 4 )
+buffer = MemBuf( 5, 4 )
 th = MyThread( buffer )
 for n in [0:buffer.len()]
    buffer[n] = 0

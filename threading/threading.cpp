@@ -436,11 +436,6 @@ FALCON_MODULE_DECL
    self->addClassMethod( c_synq, "size", Falcon::Ext::SyncQueue_size );
 
    //============================================================
-   // Shared memory buffer
-   //
-   self->addExtFunc( "SharedMemBuf", Falcon::Ext::SharedMemBuf );
-
-   //============================================================
    // Thread Error class
    Falcon::Symbol *error_class = self->addExternalRef( "Error" ); // it's external
    Falcon::Symbol *thread_cls = self->addClass( "ThreadError", Falcon::Ext::ThreadError_init );

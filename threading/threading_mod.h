@@ -41,6 +41,7 @@ class VMRunnerThread: public ::Falcon::Sys::Thread
    bool m_bOwn;
    Item m_threadInstance;
    Item m_method;
+   Error *m_lastError;
 
    ~VMRunnerThread();
 public:
@@ -75,6 +76,8 @@ public:
    VMachine &vm() { return *m_vm; }
    virtual void *run();
 
+   bool hadError() const { return m_lastError != 0; }
+   Error* exitError() const { return m_lastError; }
 };
 
 //======================================================

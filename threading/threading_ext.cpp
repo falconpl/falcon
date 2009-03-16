@@ -25,7 +25,6 @@
 #include "threading_ext.h"
 #include "threading_mod.h"
 #include "threading_st.h"
-#include "smembuf.h"
 
 namespace Falcon {
 namespace Ext {
@@ -231,7 +230,6 @@ FALCON_FUNC Thread_start( VMachine *vm )
          desc( FAL_STR(th_msg_errstart) ) ) );
       return;
    }
-
 }
 
 
@@ -543,15 +541,13 @@ FALCON_FUNC Thread_getError( VMachine *vm )
       return;
    }
    
-   /* TODO: intercept the error.
-
-   if ( thread->vm().hadError() )
+   if ( thread->hadError() )
    {
-      vm->retval( thread->vm().exitError()->scriptize( vm ) );
+      vm->retval( thread->exitError()->scriptize( vm ) );
    }
    else
       vm->retnil();
-   */
+  
    vm->retnil();
 }
 
@@ -613,8 +609,7 @@ FALCON_FUNC Thread_hadError( VMachine *vm )
       return;
    }
 
-   //vm->retval( thread->vm().hadError() );
-   //TODO:get VM error.
+   vm->retval( thread->hadError() );
    vm->retval( 0 );
 }
 
@@ -769,17 +764,16 @@ FALCON_FUNC Thread_join( VMachine *vm )
    }
 
    // we have the thread acquired in terminated status. Read its output values.
-   //TODO: Get VM Error
-   /*if ( th->vm().hadError() )
+   if ( th->hadError() )
    {
-      //th->vm().exitError()->incref();
+      //th->exitError()->incref();
       // we got to raise a threading error containing the output error of the other vm.
       ThreadError *therr = new ThreadError( ErrorParam( FALTH_ERR_JOINE, __LINE__ ).
          desc( FAL_STR( th_msg_joinwitherr ) ) );
-      therr->appendSubError( th->vm().exitError() );
+      therr->appendSubError( th->exitError() );
       vm->raiseModError( therr );
    }
-   else */{
+   else {
       // return the item in the output value
       StringStream sstream(512); // a good prealloc size
       th->vm().regA().serialize( &sstream, true );
@@ -1565,71 +1559,6 @@ FALCON_FUNC Threading_start( VMachine *vm )
          desc( FAL_STR(th_msg_errstart) ) ) );
       return;
    }
-}
-
-//=====================================================
-// Shared Memory buffer class
-//
-
-/*
-   @function sharedMembuf
-   @param size Size of the buffer in word count
-   @optparam wordSize Size of each word in bytes (defaults to 1).
-   @return A newly allocated MemBuf item.
-
-   This function works as the core function MemBuf(), returning
-   a MemBuf type Falcon item with a certain amount of allocated memory,
-   adressable in words of fixed lenght.
-
-   While a MemBuf created with the core MemBuf() function would be
-   copied if sent to other threads, this factory function creates a
-   shareable memory buffer.
-
-   Reads and writes to the memory buffer
-   can be performed concurrently from different threads; no implicit
-   synchronization is performed by Falcon. In case some synchronization
-   is needed, it must be externally provided through Falcon Synchronization
-   structures.
-*/
-
-FALCON_FUNC SharedMemBuf( VMachine *vm )
-{
-   Item *i_size = vm->param(0);
-   Item *i_wordSize = vm->param(1);
-
-   if( ( i_size == 0 || ! i_size->isOrdinal() ) ||
-       ( i_wordSize != 0 && ! i_wordSize->isOrdinal() )
-      )
-   {
-      vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).extra( "N,[N]" ) ) );
-      return;
-   }
-
-   int64 wordSize = i_wordSize == 0 ? 1: i_wordSize->forceInteger();
-   uint32 size = (uint32) i_size->forceInteger();
-   if ( wordSize < 1 || wordSize > 4 || size <= 0 )
-   {
-      vm->raiseRTError( new ParamError( ErrorParam( e_param_range ) ) );
-      return;
-   }
-
-   MemBuf *mb = 0;
-
-   byte *mem = (byte *) memAlloc( (size_t) (size*wordSize) );
-
-   int *rc = (int*) memAlloc( sizeof( int ) );
-   *rc = 1;
-   ::Falcon::Sys::Mutex *mtx = new ::Falcon::Sys::Mutex;
-
-   switch( wordSize )
-   {
-      case 1: mb = new SharedMemBuf_1( mem, size, rc, mtx ); break;
-      case 2: mb = new SharedMemBuf_2( mem, size*2, rc, mtx ); break;
-      case 3: mb = new SharedMemBuf_3( mem, size*3, rc, mtx ); break;
-      case 4: mb = new SharedMemBuf_4( mem, size*4, rc, mtx ); break;
-   }
-   fassert( mb != 0 );
-   vm->retval( mb );
 }
 
 

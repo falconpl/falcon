@@ -28,7 +28,8 @@ class MyThread(id, screenGrant, quit ) from Thread
 
    function run()
       i = 0
-      loop i++
+      loop 
+         i++
          obj = self.wait( self.quit, self.screenGrant )
          if obj == self.quit: break
          >> "Thread ", self.id, ": ", i, "\r"

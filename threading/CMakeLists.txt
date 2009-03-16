@@ -28,7 +28,6 @@ ADD_LIBRARY( threading_fm MODULE
    threading_ext.cpp
    threading_mod.cpp
    threading_st.cpp
-   smembuf.cpp
    ${SYS_SPECIFIC}
 )
 

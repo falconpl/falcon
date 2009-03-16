@@ -57,7 +57,8 @@ FalconData *ThreadCarrier::clone() const
 
 VMRunnerThread::VMRunnerThread():
    m_vm( new VMachine ),
-   m_bOwn( true )
+   m_bOwn( true ),
+   m_lastError( 0 )
 {
    // remove the error handler
    m_vm->launchAtLink( false );
@@ -68,7 +69,8 @@ VMRunnerThread::VMRunnerThread():
 
 VMRunnerThread::VMRunnerThread( VMachine *vm ):
    m_vm( vm ),
-   m_bOwn( false )
+   m_bOwn( false ),
+   m_lastError( 0 )
 {
    m_vm->launchAtLink( false );
    m_bStarted = true; // an adopted VM is running.
@@ -97,8 +99,14 @@ void *VMRunnerThread::run()
    GarbageLock *mthLock = memPool->lock( m_method );
 
    // Perform the call.
-   // TODO: Catch the VM error.
-   m_vm->callItem( m_method, 0 );
+   try {
+      m_vm->callItem( m_method, 0 );
+   }
+   catch( Error* err )
+   {
+      err->incref();
+      m_lastError = err;
+   }
 
    // unlock the threads objects
    memPool->unlock( tiLock );
