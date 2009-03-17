@@ -129,10 +129,11 @@ void MemPool::unsafeArea()
 
 void MemPool::registerVM( VMachine *vm )
 {
-   vm->m_generation = ++m_generation; // rollover detection in run()
    vm->m_idlePrev = vm->m_idleNext = 0;
 
    m_mtx_vms.lock();
+   vm->m_generation = ++m_generation; // rollover detection in run()
+   
    int data = 0;
    ++m_vmCount;
    if ( m_vmCount > 2 )
@@ -285,22 +286,6 @@ void MemPool::storeForGarbage( Garbageable *ptr )
    m_mtx_newitem.unlock();
 }
 
-/*
-void MemPool::destroyGarbage( Garbageable *ptr )
-{
-   assert( ptr != m_garbageRoot );
-
-   m_mtxa.lock();
-   ptr->nextGarbage()->prevGarbage( ptr->prevGarbage() );
-   ptr->prevGarbage()->nextGarbage( ptr->nextGarbage() );
-   m_allocatedItems--;
-   m_mtxa.unlock();
-
-   if ( ! ptr->finalize() )
-      delete ptr;
-}
-*/
-
 
 GarbageLock *MemPool::lock( const Item &itm )
 {
@@ -328,21 +313,6 @@ void MemPool::unlock( GarbageLock *ptr )
    delete ptr;
 }
 
-
-/*
-bool MemPool::checkForGarbage()
-{
-   if ( m_autoClean ) {
-      if ( m_allocatedMem > m_thresholdMemory )
-      {
-         performGC();
-         return true;
-      }
-   }
-
-   return false;
-}
-*/
 
 bool MemPool::markVM( VMachine *vm )
 {
@@ -827,10 +797,11 @@ void* MemPool::run()
          m_mtx_idlevm.unlock();
       }
 
+      m_mtx_vms.lock();
+
       // Mark of idle VM complete. See if it's useful to promote the last vm.
       if ( state > 0 && ( m_generation - m_mingen > (unsigned) m_vmCount ) )
       {
-         m_mtx_vms.lock();
          if ( m_olderVM != 0 )
          {
             if( m_olderVM->baton().tryAcquire() )
@@ -868,6 +839,8 @@ void* MemPool::run()
             m_mtx_vms.unlock();
          }
       }
+      else
+         m_mtx_vms.unlock();
 
       // TODO: Do this only if necessary.
       markLocked();
@@ -907,7 +880,7 @@ void* MemPool::run()
          TRACE( "Skipping new ring inclusion due to safe area lock.\n" );
       }
       
-      oldGeneration = m_generation;
+      oldGeneration = m_generation;  // spurious read is ok here (?)
       oldMingen = m_mingen;
 
       // if we have nothing to do, we shall wait a bit.
