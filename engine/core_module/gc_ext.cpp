@@ -23,9 +23,7 @@ namespace Falcon {
 namespace core {
 
 /*#
-   @funset gc_control Garbage collecting control
-   @brief Support for script-based garbage collection strategies.
-
+   @page gc_control About the garbage collector.
    The standard collector strategy (be it set up by the Falcon interpreter or
    by embedding applications) is adequate for average scripts.
 
@@ -57,12 +55,13 @@ namespace core {
 */
 
 /*# @object GC
-   @prop usedMem Memory used by the Falcon engine
-   @prop aliveMem Memory found alive in last scans (not implemented)
-   @prop items Single GC sensible items accounted (not implemented).
+   @brief Support for script-based garbage collection strategies.
+   @prop usedMem Memory used by the Falcon engine.
+   @prop items Single GC sensible items currently allocated.
    @prop th_normal Threshold of occupied memory above which the GC will enter the normal mode.
    @prop th_active Threshold of occupied memory above which the GC will enter the active mode.
    
+   @see gc_control
 */
 
 FALCON_FUNC  GC_init( ::Falcon::VMachine *vm )
@@ -74,7 +73,6 @@ FALCON_FUNC  GC_init( ::Falcon::VMachine *vm )
 
 /*#
    @method enable GC
-   @inset gc_control
    @brief Turns automatic GC feature on or off.
    @param mode true to turn automatic GC on, false to turn it off.
 
@@ -83,13 +81,13 @@ FALCON_FUNC  GC_init( ::Falcon::VMachine *vm )
    memory to have reached a critical point. When there is too much allocated
    memory of uncertain status, a garbage collecting loop is started.
 
-   By setting gcEnable to off, this automatic control is skipped, and allocated
+   By setting this property to false, this automatic control is skipped, and allocated
    memory can grow up to physical process limits (or VM memory limit
    constraints, if provided). Setting this value to true will cause VM to
    perform memory control checks again with the usual strategy.
 
    In case the script is sure to have generated a wide amount of garbage, it
-   is advisable to call explicitly gcPerform() before turning automatic GC on,
+   is advisable to call explicitly @a GC.perform() before turning automatic GC on,
    as the “natural” collection loop may start at any later moment, also after
    several VM loops.
 */
@@ -105,46 +103,26 @@ FALCON_FUNC  GC_enable( ::Falcon::VMachine *vm )
 
 /*#
    @method perform GC
-   @inset gc_control
    @brief Requests immediate check of garbage.
-   @optparam bForce If true, force collection of unused memory.
+   @optparam wcoll Set to true to wait for the collection of free memory to be complete.
    @return true if the gc has been actually performed, false otherwise.
-
-   Performs immediately a garbage collection loop. All the items the script
-   is managing are checked, and the memory they occupy is stored for
-   later reference; the findings of the perform loop may be retrieved
-   by the gcGetParams function. If the memory that is found unreferenced
-   is below the memory reclaim threshold level, the function returns immediately false.
-   Otherwise, a reclaim loop is performed and some memory gets cleared,
-   and the function returns true.
-
-   If @b bForce is set to true, all the unused memory is immediately reclaimed,
-   without taking into consideration the reclaim threshold.
-
-   See @a gcSetThreshold function for a in-depth of thresholds and memory
-   constraints.
+   
+   Suspends the activity of the calling Virtual Machine, waiting for the
+   garbage collector to complete a scan loop before proceeding.
 */
 
 FALCON_FUNC  GC_perform( ::Falcon::VMachine *vm )
 {
-   bool bRec;
-   /*
-   if ( vm->param( 0 ) != 0 )
-   {
-      bRec = vm->param( 0 )->isTrue();
-   }
-   else {
-      bRec = false;
-   }
-
-   vm->retval( memPool->performGC( bRec ) ? 1 : 0 );
-   */
+   if ( vm->paramCount() > 0 )
+      vm->performGC( vm->param(0)->isTrue() );
+   else
+      vm->performGC();
 }
 
 // Reflective path method
 void GC_usedMem_rfrom(CoreObject *instance, void *user_data, Item &property, const PropEntry& )
 {
-   property =  (int64) gcMemAllocated();
+   property = (int64) gcMemAllocated();
 }
 
 void GC_aliveMem_rfrom(CoreObject *instance, void *user_data, Item &property, const PropEntry& )
@@ -154,8 +132,7 @@ void GC_aliveMem_rfrom(CoreObject *instance, void *user_data, Item &property, co
 
 void GC_items_rfrom(CoreObject *instance, void *user_data, Item &property, const PropEntry& )
 {
-   //TODO
-   property = (int64) 0;
+   property = (int64) memPool->aliveItems();
 }
 
 void GC_th_normal_rfrom(CoreObject *instance, void *user_data, Item &property, const PropEntry& )

@@ -652,9 +652,14 @@ bool MemPool::performGC( bool bForceReclaim )
 // MT functions
 //
 
-void MemPool::idleVM( VMachine *vm )
+void MemPool::idleVM( VMachine *vm, bool bPrio )
 {
    m_mtx_idlevm.lock();
+   if ( bPrio )
+   {
+      vm->m_bPirorityGC = true;
+   }
+   
    if ( vm->m_idleNext != 0 || vm->m_idlePrev != 0 || vm == m_vmIdle_head)
    {
       // already waiting
@@ -719,6 +724,37 @@ void* MemPool::run()
                   0;                                     // dormient mode
 
       TRACE( "Working %d (in mode %d) \n", gcMemAllocated(), state );
+      
+      // put the new ring in the garbage ring
+      m_mtx_newitem.lock();
+      // Are we in a safe area?
+      if ( m_bNewReady )
+      {
+         GarbageableBase* newRingFront = m_newRoot->nextGarbage();
+         if( newRingFront != m_newRoot )
+         {
+            GarbageableBase* newRingBack = m_newRoot->prevGarbage();
+   
+            // disengage the chain from the new garbage thing
+            m_newRoot->nextGarbage( m_newRoot );
+            m_newRoot->prevGarbage( m_newRoot );
+            // we can release the chain
+            m_mtx_newitem.unlock();
+   
+            // and now, store the disengaged ring in the standard reclaimable garbage ring.
+            TRACE( "Storing the garbage new ring in the normal ring\n" );
+            newRingFront->prevGarbage( m_garbageRoot );
+            newRingBack->nextGarbage( m_garbageRoot->nextGarbage() );
+            m_garbageRoot->nextGarbage()->prevGarbage( newRingBack );
+            m_garbageRoot->nextGarbage( newRingFront );
+         }
+         else
+            m_mtx_newitem.unlock();
+      }
+      else {
+         m_mtx_newitem.unlock();
+         TRACE( "Skipping new ring inclusion due to safe area lock.\n" );
+      }
 
       // if we're in active mode, send a block request to all the enabled vms.
       if ( state == 2 )
@@ -746,12 +782,15 @@ void* MemPool::run()
          m_mtx_vms.unlock();
       }
 
+      VMachine* vm = 0;
+      bool bPriority = false;
+      
       // In all 3 the modes, we must clear the idle queue, so let's do that.
       m_mtx_idlevm.lock();
       if( m_vmIdle_head != 0 )
       {
          // get the first VM to be processed.
-         VMachine* vm = m_vmIdle_head;
+         vm = m_vmIdle_head;
          m_vmIdle_head = m_vmIdle_head->m_idleNext;
          if ( m_vmIdle_head == 0 )
             m_vmIdle_tail = 0;
@@ -759,9 +798,13 @@ void* MemPool::run()
             bMoreWork = true;
          vm->m_idleNext = 0;
          vm->m_idlePrev = 0;
-
+         
+         // dormient or not, we must work this VM on priority scans.
+         bPriority = vm->m_bPirorityGC;
+         vm->m_bPirorityGC = false;
+            
          // if we're dormient, just empty the queue.
-         if ( state == 0 )
+         if ( state == 0 && ! bPriority )
          {
             // this to discard block requets.
             vm->baton().unblock();
@@ -773,7 +816,8 @@ void* MemPool::run()
 
          // mark the idle VM if we're not dormient.
          // ok, we need to reclaim some memory.
-         if ( ! vm->baton().tryAcquire() )
+         // (try to acquire only if this is not a priority scan).
+         if ( ! bPriority && ! vm->baton().tryAcquire() )
          {
             m_mtx_idlevm.unlock();
             TRACE( "Was going to mark vm %p, but forfaited\n", vm );
@@ -792,8 +836,20 @@ void* MemPool::run()
 
          // and then mark
          markVM( vm );
-         // the VM is now free to go -- but it is not declared idle again.
-         vm->baton().releaseNotIdle();
+         // should notify now?
+         if ( bPriority )
+         {
+            if ( ! vm->m_bWaitForCollect )
+            {
+               bPriority = false; // disable the rest.
+               vm->m_eGCPerformed.set();
+            }
+         }
+         else
+         {
+            // the VM is now free to go -- but it is not declared idle again.
+            vm->baton().releaseNotIdle();
+         }
       }
       else
       {
@@ -837,38 +893,15 @@ void* MemPool::run()
       markLocked();
 
       // if we have to sweep (we can claim something only if the lower VM has moved).
-      if ( oldMingen != m_mingen )
-         gcSweep();
-
-      // finally, put the new ring in the garbage ring
-      m_mtx_newitem.lock();
-      // Are we in a safe area?
-      if ( m_bNewReady )
+      if ( oldMingen != m_mingen || bPriority )
       {
-         GarbageableBase* newRingFront = m_newRoot->nextGarbage();
-         if( newRingFront != m_newRoot )
+         gcSweep();
+         // should we notify about the sweep being complete?
+         if ( bPriority )
          {
-            GarbageableBase* newRingBack = m_newRoot->prevGarbage();
-   
-            // disengage the chain from the new garbage thing
-            m_newRoot->nextGarbage( m_newRoot );
-            m_newRoot->prevGarbage( m_newRoot );
-            // we can release the chain
-            m_mtx_newitem.unlock();
-   
-            // and now, store the disengaged ring in the standard reclaimable garbage ring.
-            TRACE( "Storing the garbage new ring in the normal ring\n" );
-            newRingFront->prevGarbage( m_garbageRoot );
-            newRingBack->nextGarbage( m_garbageRoot->nextGarbage() );
-            m_garbageRoot->nextGarbage()->prevGarbage( newRingBack );
-            m_garbageRoot->nextGarbage( newRingFront );
+            fassert( vm != 0 );
+            vm->m_eGCPerformed.set();
          }
-         else
-            m_mtx_newitem.unlock();
-      }
-      else {
-         m_mtx_newitem.unlock();
-         TRACE( "Skipping new ring inclusion due to safe area lock.\n" );
       }
       
       oldGeneration = m_generation;  // spurious read is ok here (?)

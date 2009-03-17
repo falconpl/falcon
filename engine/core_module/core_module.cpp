@@ -571,7 +571,7 @@ Module* core_module_init()
    self->addClassMethod( gc_cls, "enable", &Falcon::core::GC_enable ).setReadOnly(true).asSymbol()->
       addParam("mode");
    self->addClassMethod( gc_cls, "perform", &Falcon::core::GC_perform ).setReadOnly(true).asSymbol()->
-      addParam("mode");
+      addParam("wcoll");
 
    // VM support
    self->addExtFunc( "vmVersionInfo", &Falcon::core::vmVersionInfo );

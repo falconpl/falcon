@@ -102,6 +102,8 @@ void VMachine::internal_construct()
    m_tryFrame = i_noTryFrame;
    m_launchAtLink = true;
    m_bGcEnabled = true;
+   m_bWaitForCollect = false;
+   m_bPirorityGC = false;
 
 
    resetCounters();
@@ -3406,6 +3408,13 @@ void VMachine::processMessage( VMMessage *msg )
    
    // prepare the broadcast in the frame.
    slot->prepareBroadcast( this, 0, msg->paramCount(), msg );
+}
+
+void VMachine::performGC( bool bWaitForCollect )
+{
+   m_bWaitForCollect = bWaitForCollect;
+   memPool->idleVM( this, true );
+   m_eGCPerformed.wait();
 }
 
 //=====================================================================================

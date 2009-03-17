@@ -520,6 +520,18 @@ protected:
    VMMessage* m_msg_head;
    VMMessage* m_msg_tail;
    
+   /** Event set by the VM to ask for priority GC.
+      This is used by the performGC() function to inform the GC loop about the priority
+      of this VM.
+   */
+   bool m_bPirorityGC;
+   
+   /** Event set by the GC to confirm the forced GC loop is over. */
+   Event m_eGCPerformed;
+   
+   /** True when we want to wait for collection before being notified in priority scans. */
+   bool m_bWaitForCollect;
+   
    //=============================================================
    // Private functions
    //
@@ -2218,6 +2230,19 @@ public:
    /** Return current generation. */
    uint32 generation() const;
    
+   /** Force a GC collection loop on the virtual machine.
+      
+      Waits for the GC loop to be completed. The virtual machine must
+      be in non-idle mode when calling this function, as the idle ownership
+      is directly transferred to the GC and then back to the calling VM
+      without interruption.
+      
+      Normallym the GC will notify the VM back as soon as the mark loop is over;
+      If the VM wants to wait for the free memory to be collected, set
+      the parameter to true.
+   */
+   void performGC( bool bWaitForCollection = false );
+
 //==========================================================================
 //==========================================================================
 //==========================================================================

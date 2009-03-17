@@ -453,8 +453,13 @@ public:
       
       The VM may be sent to the the main memory pool garbage collector mark loop
       if it is found outdated and in need of a new marking.
+      
+      Set prio = true if the VM requests a priority GC. In that case, the VM
+      must present itself non-idle, and the idle-ship is taken implicitly by
+      the GC. The VM is notified with m_eGCPerformed being set after the complete
+      loop is performed.
    */
-   void idleVM( VMachine *vm );
+   void idleVM( VMachine *vm, bool bPrio = false );
    
    void thresholdNormal( size_t mem ) { m_thresholdNormal = mem; }
    void thresholdActive( size_t mem ) { m_thresholdActive = mem; }
