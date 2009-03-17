@@ -24,7 +24,6 @@ typedef struct tag_POSIX_BATON_DATA
 {
    bool m_bBusy;
    bool m_bBlocked;
-   bool m_bWaitedOn;
    
    pthread_t m_thBlocker;
    
@@ -39,7 +38,6 @@ Baton::Baton( bool bBusy )
    POSIX_BATON_DATA &p = *(POSIX_BATON_DATA *)m_data;
    p.m_bBusy = bBusy;
    p.m_bBlocked = false;
-   p.m_bWaitedOn = false;
    
 #ifdef NDEBUG
    pthread_mutex_init( &p.m_mtx, 0 );
@@ -86,12 +84,10 @@ void Baton::acquire()
    
    while( p.m_bBusy || (p.m_bBlocked && ! pthread_equal( pthread_self(),  p.m_thBlocker ) ) )
    {
-      p.m_bWaitedOn = true;
       cv_wait( p.m_cv, p.m_mtx );
    }
    
    p.m_bBusy = true;
-   p.m_bWaitedOn = false;
    p.m_bBlocked = false;
    mutex_unlock( p.m_mtx );
 }
@@ -130,10 +126,7 @@ void Baton::release()
    
    mutex_lock( p.m_mtx );
    p.m_bBusy = false;
-   if ( p.m_bWaitedOn )
-   {
-      cv_broadcast( p.m_cv );
-   }
+   cv_broadcast( p.m_cv );
    
    mutex_unlock( p.m_mtx );
 }
@@ -145,29 +138,23 @@ void Baton::checkBlock()
    
    mutex_lock( p.m_mtx );
    p.m_bBusy = false;
-   if ( p.m_bWaitedOn )
-   {
-      cv_broadcast( p.m_cv );
-   }
+   cv_broadcast( p.m_cv );
    
    bool bb = (p.m_bBlocked && ! pthread_equal( pthread_self(),  p.m_thBlocker ) );
-   mutex_unlock( p.m_mtx );
    
    if ( bb )
    {
+      mutex_unlock( p.m_mtx );
       onBlockedAcquire();
+      mutex_lock( p.m_mtx );
    }
-   
-   mutex_lock( p.m_mtx );
    
    while( p.m_bBusy || (p.m_bBlocked && ! pthread_equal( pthread_self(),  p.m_thBlocker ) ) )
    {
-      p.m_bWaitedOn = true;
       cv_wait( p.m_cv, p.m_mtx );
    }
    
    p.m_bBusy = true;
-   p.m_bWaitedOn = false;
    p.m_bBlocked = false;
    mutex_unlock( p.m_mtx );
 }
@@ -178,7 +165,7 @@ bool Baton::block()
    POSIX_BATON_DATA &p = *(POSIX_BATON_DATA *)m_data;
    
    mutex_lock( p.m_mtx );
-   if ( p.m_bBlocked && ! pthread_equal( pthread_self(),  p.m_thBlocker ) )
+   if ( (!p.m_bBusy) || p.m_bBlocked && ! pthread_equal( pthread_self(),  p.m_thBlocker ) )
    {
       mutex_unlock( p.m_mtx );
       return false;
@@ -202,10 +189,7 @@ bool Baton::unblock()
    if ( p.m_bBlocked && pthread_equal( pthread_self(),  p.m_thBlocker ) )
    {
       p.m_bBlocked = false;
-      if ( p.m_bWaitedOn )
-      {
-         cv_broadcast( p.m_cv );
-      }
+      cv_broadcast( p.m_cv );
       mutex_unlock( p.m_mtx );
       
       return true;

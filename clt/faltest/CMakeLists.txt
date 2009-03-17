@@ -20,14 +20,14 @@ ADD_EXECUTABLE( faltest
    ${SYS_RC}
 )
 
-ADD_LIBRARY( testsuite MODULE
+ADD_LIBRARY( testsuite_fm MODULE
    fal_testsuite.cpp
    ${SYS_RC_DLL}
 )
 
 #Link
 TARGET_LINK_LIBRARIES(faltest falcon_engine)
-TARGET_LINK_LIBRARIES(testsuite falcon_engine)
+TARGET_LINK_LIBRARIES(testsuite_fm falcon_engine)
 
 #faltest embeds the testsuite module
 SET_TARGET_PROPERTIES( faltest
@@ -35,12 +35,12 @@ SET_TARGET_PROPERTIES( faltest
 
 #while the testsuite has no prefix
 IF(APPLE)
-SET_TARGET_PROPERTIES( testsuite
+SET_TARGET_PROPERTIES( testsuite_fm
    PROPERTIES 
 	PREFIX ""
 	SUFFIX ".dylib" )
 ELSE(APPLE)
-SET_TARGET_PROPERTIES( testsuite
+SET_TARGET_PROPERTIES( testsuite_fm
    PROPERTIES PREFIX "")
 ENDIF(APPLE)
 
@@ -48,5 +48,5 @@ ENDIF(APPLE)
 INSTALL( TARGETS faltest
       DESTINATION ${FALCON_BIN_DIR} )
 
-INSTALL( TARGETS testsuite
+INSTALL( TARGETS testsuite_fm
       DESTINATION ${FALCON_MOD_INSTALL} )

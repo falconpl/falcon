@@ -736,7 +736,10 @@ void* MemPool::run()
             while( vm != m_vmRing )
             {
                if ( vm->isGcEnabled() )
+               {
+                  TRACE( "Activating blocking request vm %p\n", vm );
                   vm->baton().block();
+               }
                vm = vm->m_nextVM;
             }
          }
@@ -785,7 +788,7 @@ void* MemPool::run()
          advanceGeneration( vm, oldGeneration );
          m_mtx_vms.unlock();
 
-         TRACE( "Marking vm %p \n", vm );
+         TRACE( "Marking idle vm %p \n", vm );
 
          // and then mark
          markVM( vm );
@@ -811,7 +814,7 @@ void* MemPool::run()
                advanceGeneration( vm, oldGeneration );
                m_mtx_vms.unlock();
 
-               TRACE( "Marking idle oldest vm %p \n", vm );
+               TRACE( "Marking oldest vm %p \n", vm );
                // and then mark
                markVM( vm );
                // the VM is now free to go.
@@ -819,19 +822,7 @@ void* MemPool::run()
             }
             else
             {
-               // we may want to promote the VM data if we're in active state or if VM is not disabled.
-               if( state == 2 || m_olderVM->isGcEnabled() )
-               {
-                  TRACE( "Promoting the oldest VM %p from %d to %d\n", m_olderVM, m_mingen, m_generation );
-                  uint32 oldmg = m_mingen;
-                  advanceGeneration( m_olderVM, oldGeneration );
-                  uint32 ng = m_generation;
-                  m_mtx_vms.unlock();
-
-                  promote( oldmg, ng );
-               }
-               else 
-                  m_mtx_vms.unlock();
+               m_mtx_vms.unlock();
             }
          }
          else
