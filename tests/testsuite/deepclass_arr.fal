@@ -1,0 +1,37 @@
+/****************************************************************************
+* Falcon test suite
+*
+*
+* ID: 21n
+* Category: types
+* Subcategory: classes
+* Short: Deep loop store
+* Description:
+*   Test for deep storage and retrival of complex data 
+* [/Description]
+*
+****************************************************************************/
+
+class Test
+  p = nil
+end
+
+// prepare the classes
+classes = []
+for i in [0:10]: classes += Test()
+
+// get the instances and fill them
+for i in [0:10]
+   classes[i].p = [ i, "" + i, "Test " + toString( i ) ]
+end
+
+// test it
+for i in [0:10]
+   if classes[i].p[0] != i: failure( "First element on " + i )
+   if classes[i].p[1] != ""+i: failure( "Second element on " + i )
+   if classes[i].p[2] != "Test " + i: failure( "Third element on " + i )
+end
+
+success()
+
+/* End of file */

@@ -1765,11 +1765,13 @@ void opcodeHandler_STPS( register VMachine *vm )
    {
       target->setProperty( *method->asString(), vm->m_stack->topItem() );
       vm->regA() = vm->m_stack->topItem();
-      return;
+      vm->m_stack->pop();
    }
-
-   vm->raiseRTError( new TypeError( ErrorParam( e_prop_acc ).extra("STPS").origin( e_orig_vm ) ) );
-   return;
+   else
+   {
+      vm->m_stack->pop();
+      vm->raiseRTError( new TypeError( ErrorParam( e_prop_acc ).extra("STPS").origin( e_orig_vm ) ) );
+   }
 }
 
 //4B
