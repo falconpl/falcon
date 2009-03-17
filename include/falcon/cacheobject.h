@@ -46,7 +46,7 @@ public:
    virtual bool setProperty( const String &prop, const Item &value );
    virtual bool getProperty( const String &key, Item &ret ) const;
 
-   virtual void gcMark( MemPool *mp );
+   virtual void gcMark( uint32 mark );
 
    Item *cachedProperty( const String &name ) const
    {

@@ -197,11 +197,8 @@ public:
       type( t );
    }
 
-   Item( byte t, Garbageable *dt )
-   {
-      type( t );
-      content( dt );
-   }
+   Item( byte t, Garbageable *dt );
+
 
    Item( CoreFunc* cf )
    {
@@ -283,12 +280,7 @@ public:
       setRange( r );
    }
 
-
-   void setRange( CoreRange *r )
-   {
-      type( FLC_ITEM_RANGE );
-      all.ctx.data.content = r;
-   }
+   void setRange( CoreRange *r );
 
    /** Creates a corestring.
       The given string is copied and stored in the Garbage system.
@@ -303,10 +295,7 @@ public:
       setString( str );
    }
 
-   void setString( String *str ) {
-      type( FLC_ITEM_STRING );
-      all.ctx.data.ptr.voidp = str;
-   }
+   void setString( String *str );
 
    /** Creates an array item */
    Item( CoreArray *array )
@@ -314,10 +303,7 @@ public:
       setArray( array );
    }
 
-   void setArray( CoreArray *array ) {
-      type( FLC_ITEM_ARRAY );
-      all.ctx.data.ptr.voidp = array;
-   }
+   void setArray( CoreArray *array );
 
    /** Creates an object item */
    Item( CoreObject *obj )
@@ -325,10 +311,7 @@ public:
       setObject( obj );
    }
 
-   void setObject( CoreObject *obj ) {
-      type( FLC_ITEM_OBJECT );
-      all.ctx.data.ptr.voidp = obj;
-   }
+   void setObject( CoreObject *obj );
 
    /** Creates a dictionary item */
    Item( CoreDict *obj )
@@ -336,10 +319,7 @@ public:
       setDict( obj );
    }
 
-   void setDict( CoreDict *dict ) {
-      type( FLC_ITEM_DICT );
-      all.ctx.data.ptr.voidp = dict;
-   }
+   void setDict( CoreDict *dict );
 
    /** Creates a memory buffer. */
    Item( MemBuf *buf )
@@ -347,10 +327,7 @@ public:
       setMemBuf( buf );
    }
 
-   void setMemBuf( MemBuf *b ) {
-      type( FLC_ITEM_MEMBUF );
-      all.ctx.data.ptr.voidp = b;
-   }
+   void setMemBuf( MemBuf *b );
 
    Item( GarbageItem *ref )
    {
@@ -358,18 +335,12 @@ public:
    }
 
    /** Creates a reference to another item. */
-   void setReference( GarbageItem *ref ) {
-      type( FLC_ITEM_REFERENCE );
-      all.ctx.data.ptr.voidp = ref;
-   }
+   void setReference( GarbageItem *ref );
+   
    GarbageItem *asReference() const { return (GarbageItem *) all.ctx.data.ptr.voidp; }
 
    /** Creates a function item */
-   void setFunction( CoreFunc* cf )
-   {
-      type( FLC_ITEM_FUNC );
-      all.ctx.data.ptr.extra = cf;
-   }
+   void setFunction( CoreFunc* cf );
 
    /** Creates a late binding item.
       The late binding is just a CoreString in a live module which is
@@ -383,13 +354,8 @@ public:
       \param lbind The name of the late binding symbol.
       \param val If provided, a future value (future binding).
    */
-   void setLBind( String *lbind, GarbageItem *val=0 )
-   {
-      type( FLC_ITEM_LBIND );
-      all.ctx.data.ptr.voidp = lbind;
-      all.ctx.data.ptr.extra = val;
-   }
-
+   void setLBind( String *lbind, GarbageItem *val=0 );
+   
    /** Returns true if this item is a valid LBind.
    */
    bool isLBind() const { return type() == FLC_ITEM_LBIND; }
@@ -421,18 +387,9 @@ public:
       The method is able to remember if it was called with
       a Function pointer or using an external function.
    */
-   void setMethod( const Item &data, CoreFunc *func ) {
-      *this = data;
-      all.ctx.base.bits.oldType = all.ctx.base.bits.type;
-      all.ctx.method = func;
-      type( FLC_ITEM_METHOD );
-   }
+   void setMethod( const Item &data, CoreFunc *func );
 
-   void setClassMethod( CoreObject *obj, CoreClass *cls ) {
-      type( FLC_ITEM_CLSMETHOD );
-      all.ctx.data.ptr.voidp = obj;
-      all.ctx.data.ptr.extra = cls;
-   }
+   void setClassMethod( CoreObject *obj, CoreClass *cls );
 
    /** Creates a class item */
    Item( CoreClass *cls )
@@ -440,11 +397,7 @@ public:
       setClass( cls );
    }
 
-   void setClass( CoreClass *cls ) {
-      type( FLC_ITEM_CLASS );
-      // warning: class in extra to be omologue to methodClass()
-      all.ctx.data.ptr.extra = cls;
-   }
+   void setClass( CoreClass *cls );
 
 
    /** Defines this item as a out of band data.

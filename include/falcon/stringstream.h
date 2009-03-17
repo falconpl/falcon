@@ -155,7 +155,7 @@ public:
    virtual int64 lastError() const { return (int64) m_lastError; }
 
    virtual FalconData *clone() const;
-   virtual void gcMark( MemPool* ) {}
+   virtual void gcMark( uint32 mark ) {}
 };
 
 }

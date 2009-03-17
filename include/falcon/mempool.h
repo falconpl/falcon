@@ -176,7 +176,7 @@ protected:
    */
    Mutex m_mtx_idlevm;
    
-   bool gcMark( VMachine *vm );
+   bool markVM( VMachine *vm );
    void gcSweep();
    
    /*

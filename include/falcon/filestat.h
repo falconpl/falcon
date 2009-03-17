@@ -64,7 +64,7 @@ public:
    virtual ~FileStat();
 
    virtual FalconData * clone() const;
-   virtual void gcMark( MemPool *mp ) {}
+   virtual void gcMark( uint32 mark ) {}
 };
 
 }

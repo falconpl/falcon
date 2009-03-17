@@ -31,6 +31,60 @@
 
 namespace Falcon {
 
+class Error;
+
+namespace core {
+FALCON_FUNC_DYN_SYM Error_init ( ::Falcon::VMachine *vm );
+FALCON_FUNC_DYN_SYM SyntaxError_init ( ::Falcon::VMachine *vm );
+FALCON_FUNC_DYN_SYM CodeError_init ( ::Falcon::VMachine *vm );
+FALCON_FUNC_DYN_SYM IoError_init ( ::Falcon::VMachine *vm );
+FALCON_FUNC_DYN_SYM AccessError_init ( ::Falcon::VMachine *vm );
+FALCON_FUNC_DYN_SYM MathError_init ( ::Falcon::VMachine *vm );
+FALCON_FUNC_DYN_SYM ParamError_init ( ::Falcon::VMachine *vm );
+FALCON_FUNC_DYN_SYM ParseError_init ( ::Falcon::VMachine *vm );
+
+/** Reflective function to support error property: code */
+extern reflectionFuncDecl Error_code_rfrom;
+extern reflectionFuncDecl Error_description_rfrom;
+extern reflectionFuncDecl Error_message_rfrom;
+extern reflectionFuncDecl Error_systemError_rfrom;
+extern reflectionFuncDecl Error_origin_rfrom;
+extern reflectionFuncDecl Error_module_rfrom;
+extern reflectionFuncDecl Error_symbol_rfrom;
+extern reflectionFuncDecl Error_line_rfrom;
+extern reflectionFuncDecl Error_pc_rfrom;
+extern reflectionFuncDecl Error_subErrors_rfrom;
+
+extern reflectionFuncDecl Error_code_rto;
+extern reflectionFuncDecl Error_description_rto;
+extern reflectionFuncDecl Error_message_rto;
+extern reflectionFuncDecl Error_systemError_rto;
+extern reflectionFuncDecl Error_origin_rto;
+extern reflectionFuncDecl Error_module_rto;
+extern reflectionFuncDecl Error_symbol_rto;
+extern reflectionFuncDecl Error_line_rto;
+extern reflectionFuncDecl Error_pc_rto;
+
+/** Reflective class for error */
+class ErrorObject: public ReflectObject
+{
+public:
+   ErrorObject( const CoreClass* cls, Error *err );
+   Error* getError() const { return (Error*) getUserData(); }
+   
+   virtual ~ErrorObject();
+   virtual void gcMark( uint32 mark );
+   virtual CoreObject *clone() const;
+};
+
+extern "C" 
+{
+   CoreObject* ErrorObjectFactory( const CoreClass *cls, void *user_data, bool bDeserial );
+}
+
+}
+
+
 // Declare the messaages...
 #include <falcon/eng_messages.h>
 
@@ -356,6 +410,8 @@ public:
 
    void incref();
    void decref();
+   
+   Error* subError() const { return m_nextError; }
 
    virtual Error *clone() const;
 };
@@ -513,55 +569,6 @@ public:
 */
 const String &errorDesc( int errorCode );
 
-namespace core {
-FALCON_FUNC_DYN_SYM Error_init ( ::Falcon::VMachine *vm );
-FALCON_FUNC_DYN_SYM SyntaxError_init ( ::Falcon::VMachine *vm );
-FALCON_FUNC_DYN_SYM CodeError_init ( ::Falcon::VMachine *vm );
-FALCON_FUNC_DYN_SYM IoError_init ( ::Falcon::VMachine *vm );
-FALCON_FUNC_DYN_SYM AccessError_init ( ::Falcon::VMachine *vm );
-FALCON_FUNC_DYN_SYM MathError_init ( ::Falcon::VMachine *vm );
-FALCON_FUNC_DYN_SYM ParamError_init ( ::Falcon::VMachine *vm );
-FALCON_FUNC_DYN_SYM ParseError_init ( ::Falcon::VMachine *vm );
-
-/** Reflective function to support error property: code */
-extern reflectionFuncDecl Error_code_rfrom;
-extern reflectionFuncDecl Error_description_rfrom;
-extern reflectionFuncDecl Error_message_rfrom;
-extern reflectionFuncDecl Error_systemError_rfrom;
-extern reflectionFuncDecl Error_origin_rfrom;
-extern reflectionFuncDecl Error_module_rfrom;
-extern reflectionFuncDecl Error_symbol_rfrom;
-extern reflectionFuncDecl Error_line_rfrom;
-extern reflectionFuncDecl Error_pc_rfrom;
-
-extern reflectionFuncDecl Error_code_rto;
-extern reflectionFuncDecl Error_description_rto;
-extern reflectionFuncDecl Error_message_rto;
-extern reflectionFuncDecl Error_systemError_rto;
-extern reflectionFuncDecl Error_origin_rto;
-extern reflectionFuncDecl Error_module_rto;
-extern reflectionFuncDecl Error_symbol_rto;
-extern reflectionFuncDecl Error_line_rto;
-extern reflectionFuncDecl Error_pc_rto;
-
-/** Reflective class for error */
-class ErrorObject: public ReflectObject
-{
-public:
-   ErrorObject( const CoreClass* cls, Error *err );
-   Error* getError() const { return (Error*) getUserData(); }
-   
-   virtual ~ErrorObject();
-   virtual void gcMark( MemPool *mp );
-   virtual CoreObject *clone() const;
-};
-
-extern "C" 
-{
-   CoreObject* ErrorObjectFactory( const CoreClass *cls, void *user_data, bool bDeserial );
-}
-
-}
 
 }
 

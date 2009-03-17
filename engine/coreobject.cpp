@@ -60,12 +60,12 @@ CoreObject::~CoreObject()
       delete static_cast<FalconData *>( m_user_data );
 }
 
-void CoreObject::gcMark( MemPool *mp )
+void CoreObject::gcMark( uint32 mark )
 {
    if ( m_bIsFalconData )
    {
       fassert( m_user_data != 0 );
-      static_cast<FalconData* >(m_user_data)->gcMark( mp );
+      static_cast<FalconData* >(m_user_data)->gcMark( mark );
    }
 }
 

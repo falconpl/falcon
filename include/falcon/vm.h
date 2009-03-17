@@ -197,6 +197,7 @@ public:
    
    virtual void release();
    virtual void onBlockedAcquire();
+   void releaseNotIdle();
 };
 
 /** The Falcon virtual machine.
@@ -2132,7 +2133,7 @@ public:
    void removeSlot( const String& slotName );
 
    /** Used by the garbage collector to accunt for items stored as slot callbacks. */
-   void markSlots( byte mark );
+   void markSlots( uint32 mark );
 
    /** Comsume the currently broadcast signal.
       This blocks the processing of signals to further listener of the currently broadcasting slot.
@@ -2213,6 +2214,9 @@ public:
       The message is processed by broadcasting on the coresponding VM slot.
    */
    void postMessage( VMMessage *vm );
+   
+   /** Return current generation. */
+   uint32 generation() const;
    
 //==========================================================================
 //==========================================================================

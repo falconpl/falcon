@@ -1567,8 +1567,8 @@ void co_class_setproperty( Item &item, const String &idx, const Item &result )
       }
       else {
          throw
-            new AccessError( ErrorParam( e_prop_ro ).origin( e_orig_vm ) .
-            extra( idx ) );
+            new AccessError( ErrorParam( e_prop_ro ).origin( e_orig_vm )
+                .extra( idx ) );
          return;
       }
    }

@@ -262,7 +262,7 @@ public:
 
    /** Perform marking of items stored in the table.
    */
-   virtual void gcMark( MemPool * );
+   virtual void gcMark( uint32 mark );
 
    /** Returns bidding results.
       Must be initialized with makebiddings().

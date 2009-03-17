@@ -69,14 +69,14 @@ CacheObject::~CacheObject()
    memFree( m_cache );
 }
 
-void CacheObject::gcMark( MemPool *mp )
+void CacheObject::gcMark( uint32 mark )
 {
-   CoreObject::gcMark( mp );
+   CoreObject::gcMark( mark );
 
    const PropertyTable &props = m_generatedBy->properties();
    for ( uint32 i = 0; i < props.added(); i ++ )
    {
-     mp->markItemFast( m_cache[i] );
+     memPool->markItemFast( m_cache[i] );
    }
 
    // Subclasses shall eventually mark the user data.

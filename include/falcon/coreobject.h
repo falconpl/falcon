@@ -232,7 +232,7 @@ public:
    virtual bool deserialize( Stream *stream, bool bLive );
 
    /** Performs GC marking of the inner object data */
-   virtual void gcMark( MemPool *mp );
+   virtual void gcMark( uint32 mark );
 
    /** Returns true if the class provides a certain property.
       Should not account Object metaclass properties, unless explicitly overloaded.

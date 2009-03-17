@@ -3269,13 +3269,13 @@ void VMachine::removeSlot( const String& slotName )
 
 }
 
-void VMachine::markSlots( byte mark )
+void VMachine::markSlots( uint32 mark )
 {
    MapIterator iter = m_slots.begin();
    m_slot_mtx.lock();
    while( iter.hasCurrent() )
    {
-      (*(CoreSlot**) iter.currentValue() )->gcMark( memPool );
+      (*(CoreSlot**) iter.currentValue() )->gcMark( mark );
       iter.next();
    }
    m_slot_mtx.unlock();
@@ -3417,6 +3417,11 @@ void VMBaton::release()
    Baton::release();
    // See if the memPool has anything interesting for us.
    memPool->idleVM( m_owner );
+}
+
+void VMBaton::releaseNotIdle()
+{
+   Baton::release();
 }
 
 void VMBaton::onBlockedAcquire()

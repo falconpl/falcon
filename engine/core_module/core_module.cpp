@@ -484,7 +484,8 @@ Module* core_module_init()
          setReflectFunc( Falcon::core::Error_line_rfrom, &Falcon::core::Error_line_rto );
    self->addClassProperty( error_class, "pc" ).
          setReflectFunc( Falcon::core::Error_pc_rfrom, &Falcon::core::Error_pc_rto );
-   self->addClassProperty( error_class, "subErrors" ).setReadOnly( true );
+   self->addClassProperty( error_class, "subErrors" ).
+         setReflectFunc( Falcon::core::Error_subErrors_rfrom );
    self->addClassMethod( error_class, "getSysErrorDesc", &Falcon::core::Error_getSysErrDesc ).setReadOnly( true );
 
    // Other derived error classes.

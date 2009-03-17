@@ -177,7 +177,7 @@ public:
    virtual void rewind();
 
    virtual FalconData* clone() const;
-   virtual void gcMark( MemPool *mp ) {};
+   virtual void gcMark( uint32 mark ) {};
 
    /** Resets the tokenizer providing new data to be tokenized.
       The string \b data must stay alive as long as this parser

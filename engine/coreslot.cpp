@@ -128,12 +128,12 @@ FalconData *CoreSlot::clone() const
    return const_cast<CoreSlot*>(this);
 }
 
-void CoreSlot::gcMark( MemPool *mp ) 
+void CoreSlot::gcMark( uint32 mark ) 
 {
    if ( m_bHasAssert )
-      mp->markItem( m_assertion );
+      memPool->markItem( m_assertion );
    
-   ItemList::gcMark( mp );
+   ItemList::gcMark( mark );
 }
 
 void CoreSlot::assert( VMachine* vm, const Item &a )

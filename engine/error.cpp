@@ -313,25 +313,6 @@ CoreObject *Error::scriptize( VMachine *vm )
 
    // CreateInstance will use ErrorObject, which increfs to us.
    CoreObject *cobject = error_class->asClass()->createInstance( this );
-   
-   // scriptize sub-errors
-   if (m_nextError != 0)
-   {
-      //TODO: GARBAGE
-      CoreArray *errorList = new CoreArray();
-
-      Error *ptr = m_nextError;
-      while( ptr != 0 )
-      {
-         // CreateInstance will use ErrorObject, which increfs ptr.
-         CoreObject *subobject = error_class->asClass()->createInstance( ptr );
-
-         errorList->append( subobject );
-         ptr = ptr->m_nextError;
-      }
-
-      cobject->setProperty( "subErrors", errorList );
-   }
    return cobject;
 }
 
@@ -414,6 +395,34 @@ void Error_pc_rfrom(CoreObject *instance, void *userData, Item &property, const 
 {
    Error *error = static_cast<Error *>(userData);
    FALCON_REFLECT_INTEGER_FROM( error, pcounter );
+}
+
+void Error_subErrors_rfrom(CoreObject *instance, void *userData, Item &property, const PropEntry& )
+{
+   Error *error = static_cast<Error *>(userData);
+   VMachine* vm = VMachine::getCurrent();
+   fassert( vm != 0 );
+   
+   // scriptize sub-errors
+   Error *ptr = error->subError();
+   if ( ptr != 0)
+   {
+      CoreArray *errorList = new CoreArray();
+
+      do
+      {
+         // CreateInstance will use ErrorObject, which increfs ptr.
+         CoreObject *subobject = ptr->scriptize( vm );
+
+         errorList->append( subobject );
+         ptr = ptr->subError();
+      }
+      while( ptr != 0 );
+      
+      property = errorList;
+   }
+   else 
+      property.setNil();
 }
 
 
@@ -527,11 +536,11 @@ ErrorObject::~ErrorObject()
       getError()->decref();
 }
 
-void ErrorObject::gcMark( MemPool *mp )
+void ErrorObject::gcMark( uint32 mark )
 {
    Error* error = getError();
    if ( error != 0 )
-      mp->markItem( const_cast<Item&>(error->raised()) );
+      memPool->markItem( const_cast<Item&>(error->raised()) );
 }
 
 

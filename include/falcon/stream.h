@@ -152,7 +152,7 @@ public:
 
    virtual ~Stream();
 
-   virtual void gcMark( MemPool *mp ) {}
+   virtual void gcMark( uint32 mark ) {}
    virtual bool isStreamBuffer() const { return false; }
    virtual bool isTranscoder() const { return false; }
 

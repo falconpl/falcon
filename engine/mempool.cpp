@@ -273,8 +273,7 @@ void MemPool::storeForGarbage( Garbageable *ptr )
 {
    // We mark newly created items as the maximum possible value
    // so they can't be reclaimed until marked at least once.
-   //ptr->mark( MAX_GENERATION );
-   ptr->mark( generation() );
+   ptr->mark( MAX_GENERATION );
    
    m_mtx_newitem.lock();
    m_allocatedItems++;
@@ -345,7 +344,7 @@ bool MemPool::checkForGarbage()
 }
 */
 
-bool MemPool::gcMark( VMachine *vm )
+bool MemPool::markVM( VMachine *vm )
 {
    m_aliveItems = 0;
    m_aliveMem = 0;
@@ -512,7 +511,7 @@ void MemPool::markItem( Item &item )
             m_aliveItems++;
             //m_aliveMem += co->m_gcSize;
             co->mark( generation() );
-            co->gcMark( this );
+            co->gcMark( generation() );
          }
       }
       break;
@@ -564,7 +563,7 @@ void MemPool::markItem( Item &item )
             //m_aliveMem += co->m_gcSize;
             co->mark( generation() );
             // mark all the property values.
-            co->gcMark( this );
+            co->gcMark( generation() );
          }
 
          CoreClass *cls = item.asMethodClass();
@@ -611,7 +610,7 @@ void MemPool::markItem( Item &item )
                m_aliveItems++;
                //m_aliveMem += co->m_gcSize;
                co->mark( generation() );
-               co->gcMark( this );
+               co->gcMark( generation() );
             }
          }
       }
@@ -654,7 +653,7 @@ bool MemPool::performGC( bool bForceReclaim )
    m_aliveMem = 0;
 /*
    // cannot perform?
-   if ( ! gcMark() )
+   if ( ! gcMark( uint32 mark ) )
       return false;
 
    // is the memory enought to be reclaimed ?
@@ -809,16 +808,19 @@ void* MemPool::run()
             continue;
          }
 
+         m_mtx_idlevm.unlock();
+         
+         m_mtx_vms.lock();
          // great; start mark loop -- first, set the new generation.
          advanceGeneration( vm, oldGeneration );
-         m_mtx_idlevm.unlock();
+         m_mtx_vms.unlock();
 
          TRACE( "Marking vm %p \n", vm );
 
          // and then mark
-         gcMark( vm );
-         // the VM is now free to go.
-         vm->baton().release();
+         markVM( vm );
+         // the VM is now free to go -- but it is not declared idle again.
+         vm->baton().releaseNotIdle();
       }
       else
       {
@@ -840,9 +842,9 @@ void* MemPool::run()
 
                TRACE( "Marking idle oldest vm %p \n", vm );
                // and then mark
-               gcMark( vm );
+               markVM( vm );
                // the VM is now free to go.
-               vm->baton().release();
+               vm->baton().releaseNotIdle();
             }
             else
             {
@@ -857,6 +859,8 @@ void* MemPool::run()
 
                   promote( oldmg, ng );
                }
+               else 
+                  m_mtx_vms.unlock();
             }
          }
          else
@@ -930,11 +934,9 @@ void MemPool::advanceGeneration( VMachine* vm, uint32 oldGeneration )
       curgen = m_generation = m_vmCount+1;
       // perform rollover
       rollover();
-      m_mtx_vms.unlock();
 
       // re-mark everything
       remark( curgen );
-      m_mtx_vms.unlock();
 
       // as we have remarked everything, there's nothing we can do
       // but wait for the next occasion to do some collection.

@@ -565,7 +565,7 @@ public:
    FileStatObject( const FileStatObject &other );
    virtual ~FileStatObject();
 
-   virtual void gcMark( MemPool *mp );
+   virtual void gcMark( uint32 mark );
    virtual CoreObject* clone() const;
 
    InnerData* getInnerData() const { return (InnerData*) m_user_data; }

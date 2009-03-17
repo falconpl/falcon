@@ -88,7 +88,7 @@ public:
    void retract() { m_bHasAssert = false; }
 
    virtual FalconData *clone() const;
-   virtual void gcMark( MemPool *mp );
+   virtual void gcMark( uint32 mark );
 };
 
 

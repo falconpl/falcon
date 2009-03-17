@@ -38,7 +38,7 @@ public:
 
    virtual bool isSequence() const { return false; }
 
-   virtual void gcMark( MemPool *mp ) = 0;
+   virtual void gcMark( uint32 mark ) = 0;
 
    virtual FalconData *clone() const = 0;
    

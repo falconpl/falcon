@@ -249,7 +249,7 @@ public:
 
    /** Perform marking of items stored in the list.
    */
-   virtual void gcMark( MemPool * );
+   virtual void gcMark( uint32 mark );
 };
 
 

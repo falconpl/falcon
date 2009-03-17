@@ -67,7 +67,7 @@ bool ReflectObject::setProperty( const String &propName, const Item &value )
 
       if ( entry.m_bReadOnly )
       {
-         throw new AccessError( ErrorParam( e_prop_ro, __LINE__ ) );
+         throw new AccessError( ErrorParam( e_prop_ro, __LINE__ ).extra( propName ) );
       }
 
       fassert( m_user_data != 0 );

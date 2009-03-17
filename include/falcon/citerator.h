@@ -53,7 +53,7 @@ public:
 
    virtual void invalidate() = 0;
 
-   virtual void gcMark( MemPool *mp ) {}
+   virtual void gcMark( uint32 mark ) {}
 };
 
 }

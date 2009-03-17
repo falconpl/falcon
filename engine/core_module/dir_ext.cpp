@@ -76,11 +76,11 @@ FileStatObject::~FileStatObject()
    delete getInnerData();
 }
 
-void FileStatObject::gcMark( MemPool *mp )
+void FileStatObject::gcMark( uint32 mark )
 {
-   mp->markItemFast( getInnerData()->m_cache_mtime );
-   mp->markItemFast( getInnerData()->m_cache_atime );
-   mp->markItemFast( getInnerData()->m_cache_ctime );
+   memPool->markItemFast( getInnerData()->m_cache_mtime );
+   memPool->markItemFast( getInnerData()->m_cache_atime );
+   memPool->markItemFast( getInnerData()->m_cache_ctime );
 }
 
 CoreObject* FileStatObject::clone() const
