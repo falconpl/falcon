@@ -181,9 +181,9 @@ FalconData *ModuleCarrier::clone() const
    return new ModuleCarrier( m_lmodule );
 }
 
-void ModuleCarrier::gcMark( MemPool *mp )
+void ModuleCarrier::gcMark( uint32 mk )
 {
-   m_lmodule->mark( mp->generation() );
+   m_lmodule->mark( mk );
 }
 
 }

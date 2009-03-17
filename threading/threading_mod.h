@@ -93,7 +93,7 @@ public:
    WaitableCarrier( const WaitableCarrier &other );
    virtual ~WaitableCarrier();
    virtual FalconData *clone() const;
-   virtual void gcMark( ::Falcon::MemPool* ) {}
+   virtual void gcMark( ::Falcon::uint32  ) {}
 
    ::Falcon::Sys::Waitable *waitable() const { return m_wto; }
 };

@@ -222,7 +222,7 @@ public:
       delete m_doc;
    }
 
-   virtual void gcMark( Falcon::MemPool *mp )  {};
+   virtual void gcMark( Falcon::uint32 mk )  {};
    virtual Falcon::FalconData *clone() const { return 0; }
 
    Document *document() const { return m_doc; }

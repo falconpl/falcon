@@ -156,8 +156,8 @@ void Barrier::close()
 
 Event::Event( bool bAutoReset ):
    m_bSignaled( false ),
-   m_bHeld( false ),
-   m_bAutoReset( bAutoReset )
+   m_bAutoReset( bAutoReset ),
+   m_bHeld( false )
 {
 }
 

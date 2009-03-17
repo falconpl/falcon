@@ -98,7 +98,7 @@ public:
 
 
    /** Performs GC marking of the inner object data */
-   virtual void gcMark( MemPool *mp ) {}
+   virtual void gcMark( uint32 mk ) {}
 
    virtual bool setProperty( const String &prop, const Item &value );
    virtual bool getProperty( const String &key, Item &ret ) const;
@@ -119,7 +119,7 @@ public:
    LiveModule *liveModule() const { return m_lmodule; }
 
    virtual FalconData *clone() const;
-   virtual void gcMark( MemPool *mp );
+   virtual void gcMark( uint32 mk );
 
    // we don't provide a clone() method
 };

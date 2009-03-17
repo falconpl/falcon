@@ -196,7 +196,7 @@ public:
    */
    void terminate();
 
-   virtual void gcMark( MemPool *mp ) {};
+   virtual void gcMark( uint32 mk ) {};
    virtual FalconData *clone() const { return 0; }
 };
 
