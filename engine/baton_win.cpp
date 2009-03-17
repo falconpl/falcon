@@ -198,16 +198,26 @@ bool Baton::block()
 {
    WIN_BATON_DATA &p = *(WIN_BATON_DATA *)m_data;
    
+   if ( WaitForSingleObject( p.hEvtIdle, 0 ) == WAIT_OBJECT_0 )
+   {
+      // the baton is idle; I can't block it as there is noone that may reply.
+      SetEvent(p.hEvtIdle);
+      return false;
+   }
+   
+   // keep the baton unidle during this operation.
+   
    EnterCriticalSection( &p.cs );
    if( p.nBlockerId != GetCurrentThreadId() && p.nBlockerId != 0 )
    {
       LeaveCriticalSection( &p.cs );
+      SetEvent( p.hEvtIdle );
       return false;
    }
-
    p.nBlockerId = GetCurrentThreadId();
    LeaveCriticalSection( &p.cs );
 
+   SetEvent( p.hEvtIdle );
    ResetEvent( p.hEvtUnblocked );
    
    return true;
