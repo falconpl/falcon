@@ -49,7 +49,7 @@ class DeepItem;
 
 
 typedef void** CommOpsTable;
-extern CommOpsTable CommOpsDict[];
+FALCON_DYN_SYM CommOpsTable CommOpsDict[];
 
 
 /** Basic item abstraction.*/

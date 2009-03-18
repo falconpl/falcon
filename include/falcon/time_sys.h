@@ -65,7 +65,7 @@ typedef enum {
       tz_ACDT = 27,
       /** Australian Central Standard Time	UTC + 9:30 hours */
       tz_ACST = 28,
-      /** Heure Avanc� de Terre-Neuve	UTC - 2:30 hours */
+      /** Advanced time of Terre-Neuve	UTC - 2:30 hours */
       tz_HAT = 29,
       /** Newfoundland Standard Time	UTC - 3:30 hours */
       tz_NST = 30,
