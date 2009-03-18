@@ -250,38 +250,6 @@ public:
    */
    //uint32 thresholdMemory() const { return m_thresholdMemory; }
 
-   /** Set threshold memory level.
-      The threshold memory level is the amount of allocated memory at which
-      the GC normally considers the possibility of scan memory for
-      items to be reclaimed.
-
-      Setting it too low may cause GC to be often employed in short
-      reclaim loops that will actually reduce your programs performance,
-      while keeping it too high may cause too much memory to be acquired
-      by the VM and/or may force GC to excessively long loops.
-   */
-   //void thresholdMemory( uint32 mem ) { m_thresholdMemory = mem; m_setThreshold = mem; }
-
-   /** Return current reclaim memory level.
-      \see reclaimLevel( uint32 mem )
-      \return current reclaim memory level.
-   */
-   //uint32 reclaimLevel() const { return m_thresholdReclaim; }
-
-   /** Set reclaim memory level.
-      The reclaim memory level is the amount of unused memory that,
-      once detected, will cause the GC to start a collection loop.
-
-      After a mark loop, the GC may find that the allocated but unused
-      memory is quite small, so small that it's actually not worth to
-      perform a full GC on that.
-
-      This level indicates how much unallocated memory the GC may
-      detect before deciding to intervene ad use additional time for
-      the actual collection loop.
-   */
-   //void reclaimLevel( uint32 mem ) { m_thresholdReclaim = mem; }
-
 
    /** Perform garbage collection loop.
       Garbage collection is divided in two parts: free memory
@@ -461,9 +429,14 @@ public:
    */
    void idleVM( VMachine *vm, bool bPrio = false );
    
+   /** Sets the normal threshold level. */
    void thresholdNormal( size_t mem ) { m_thresholdNormal = mem; }
+   
+   /** Sets the active threshold level. */
    void thresholdActive( size_t mem ) { m_thresholdActive = mem; }
+   
    size_t thresholdNormal() const { return m_thresholdNormal; }
+   
    size_t thresholdActive() const { return m_thresholdActive; }
    
    
