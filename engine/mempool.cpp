@@ -44,8 +44,6 @@ namespace Falcon {
 MemPool* memPool = 0;
 
 MemPool::MemPool():
-   m_setThreshold( 0 ),
-   m_msLimit( 0 ),
    m_mingen( 0 ),
    m_bNewReady( true ),
    m_olderVM( 0 ),
@@ -58,7 +56,6 @@ MemPool::MemPool():
    m_aliveMem( 0 ),
    m_allocatedItems( 0 ),
    m_allocatedMem( 0 ),
-   m_autoClean( true ),
    m_th(0),
    m_bLive(false)
 {
@@ -76,6 +73,14 @@ MemPool::MemPool():
 
    m_thresholdNormal = TEMP_MEM_THRESHOLD;
    m_thresholdActive = TEMP_MEM_THRESHOLD*3;
+
+   // fill the ramp algorithms
+   m_ramp[RAMP_MODE_STRICT_ID] = new RampStrict;
+   m_ramp[RAMP_MODE_LOOSE_ID] = new RampLoose;
+   m_ramp[RAMP_MODE_SMOOTH_SLOW_ID] = new RampSmooth( 1.3 );
+   m_ramp[RAMP_MODE_SMOOTH_FAST_ID] = new RampSmooth( 1.8 );
+
+   rampMode( DEFAULT_RAMP_MODE );
 }
 
 
@@ -83,11 +88,49 @@ MemPool::~MemPool()
 {
    // ensure the thread is down.
    stop();
-   
+
    clearRing( m_newRoot );
    clearRing( m_garbageRoot );
 
    // VMs are not mine, and they should be already dead since long.
+   for( uint32 ri = 0; ri < RAMP_MODE_COUNT; ri++ )
+      delete m_ramp[ri];
+}
+
+
+bool MemPool::rampMode( int mode )
+{
+   if( mode == RAMP_MODE_OFF )
+   {
+      m_mtx_ramp.lock();
+      m_curRampID = mode;
+      m_curRampMode = 0;
+      m_mtx_ramp.unlock();
+      return true;
+   }
+   else
+   {
+      if( mode >= 0 && mode < RAMP_MODE_COUNT )
+      {
+         m_mtx_ramp.lock();
+         m_curRampID = mode;
+         m_curRampMode = m_ramp[mode];
+         m_curRampMode->reset();
+         m_mtx_ramp.unlock();
+         return true;
+      }
+   }
+
+   return false;
+}
+
+
+int MemPool::rampMode() const
+{
+   m_mtx_ramp.lock();
+   int mode = m_curRampID;
+   m_mtx_ramp.unlock();
+   return mode;
 }
 
 
@@ -113,7 +156,7 @@ void MemPool::registerVM( VMachine *vm )
 
    m_mtx_vms.lock();
    vm->m_generation = ++m_generation; // rollover detection in run()
-   
+
    int data = 0;
    ++m_vmCount;
    if ( m_vmCount > 2 )
@@ -124,7 +167,7 @@ void MemPool::registerVM( VMachine *vm )
    {
       data = 1;
    }
-   
+
    if ( m_vmRing == 0 )
    {
       m_vmRing = vm;
@@ -255,7 +298,7 @@ void MemPool::storeForGarbage( Garbageable *ptr )
    // We mark newly created items as the maximum possible value
    // so they can't be reclaimed until marked at least once.
    ptr->mark( MAX_GENERATION );
-   
+
    m_mtx_newitem.lock();
    m_allocatedItems++;
 
@@ -568,6 +611,15 @@ void MemPool::gcSweep()
    }
 
    TRACE( "Sweeping complete %d\n", gcMemAllocated() );
+
+   m_mtx_ramp.lock();
+   if( m_curRampMode != 0 )
+   {
+      m_curRampMode->onScanComplete();
+      m_thresholdActive = m_curRampMode->activeLevel();
+      m_thresholdNormal = m_curRampMode->normalLevel();
+   }
+   m_mtx_ramp.unlock();
 }
 
 
@@ -613,7 +665,7 @@ void MemPool::idleVM( VMachine *vm, bool bPrio )
    {
       vm->m_bPirorityGC = true;
    }
-   
+
    if ( vm->m_idleNext != 0 || vm->m_idlePrev != 0 || vm == m_vmIdle_head)
    {
       // already waiting
@@ -678,7 +730,7 @@ void* MemPool::run()
                   0;                                     // dormient mode
 
       TRACE( "Working %d (in mode %d) \n", gcMemAllocated(), state );
-      
+
       // put the new ring in the garbage ring
       m_mtx_newitem.lock();
       // Are we in a safe area?
@@ -688,13 +740,13 @@ void* MemPool::run()
          if( newRingFront != m_newRoot )
          {
             GarbageableBase* newRingBack = m_newRoot->prevGarbage();
-   
+
             // disengage the chain from the new garbage thing
             m_newRoot->nextGarbage( m_newRoot );
             m_newRoot->prevGarbage( m_newRoot );
             // we can release the chain
             m_mtx_newitem.unlock();
-   
+
             // and now, store the disengaged ring in the standard reclaimable garbage ring.
             TRACE( "Storing the garbage new ring in the normal ring\n" );
             newRingFront->prevGarbage( m_garbageRoot );
@@ -738,7 +790,7 @@ void* MemPool::run()
 
       VMachine* vm = 0;
       bool bPriority = false;
-      
+
       // In all 3 the modes, we must clear the idle queue, so let's do that.
       m_mtx_idlevm.lock();
       if( m_vmIdle_head != 0 )
@@ -752,11 +804,11 @@ void* MemPool::run()
             bMoreWork = true;
          vm->m_idleNext = 0;
          vm->m_idlePrev = 0;
-         
+
          // dormient or not, we must work this VM on priority scans.
          bPriority = vm->m_bPirorityGC;
          vm->m_bPirorityGC = false;
-            
+
          // if we're dormient, just empty the queue.
          if ( state == 0 && ! bPriority )
          {
@@ -780,7 +832,7 @@ void* MemPool::run()
          }
 
          m_mtx_idlevm.unlock();
-         
+
          m_mtx_vms.lock();
          // great; start mark loop -- first, set the new generation.
          advanceGeneration( vm, oldGeneration );
@@ -854,7 +906,7 @@ void* MemPool::run()
             vm->m_eGCPerformed.set();
          }
       }
-      
+
       oldGeneration = m_generation;  // spurious read is ok here (?)
       oldMingen = m_mingen;
 

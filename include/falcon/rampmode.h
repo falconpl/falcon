@@ -44,6 +44,9 @@ public:
    */
    virtual void onScanComplete()=0;
 
+   /** Called when first set. */
+   virtual void reset();
+
    /** Returns the lastly calculated memory level for the normal status. */
    size_t normalLevel() const { return m_normal; }
 
@@ -67,6 +70,9 @@ public:
    virtual void onScanComplete();
 };
 
+#define RAMP_MODE_STRICT_ID   0
+
+
 class FALCON_DYN_CLASS RampLoose: public RampMode
 {
 public:
@@ -78,6 +84,8 @@ public:
    virtual void onScanComplete();
 };
 
+#define RAMP_MODE_LOOSE_ID   1
+
 class FALCON_DYN_CLASS RampSmooth: public RampMode
 {
    size_t m_pNormal;
@@ -87,9 +95,17 @@ class FALCON_DYN_CLASS RampSmooth: public RampMode
 public:
    RampSmooth( numeric factor );
    virtual ~RampSmooth();
+
+   virtual void reset();
    virtual void onScanComplete();
 };
 
+#define RAMP_MODE_SMOOTH_SLOW_ID   2
+#define RAMP_MODE_SMOOTH_FAST_ID   3
+
+#define RAMP_MODE_COUNT              4
+#define RAMP_MODE_OFF               -1
+#define DEFAULT_RAMP_MODE           RAMP_MODE_LOOSE_ID
 }
 
 #endif

@@ -60,14 +60,14 @@ namespace core {
    @prop items Single GC sensible items currently allocated.
    @prop th_normal Threshold of occupied memory above which the GC will enter the normal mode.
    @prop th_active Threshold of occupied memory above which the GC will enter the active mode.
-   
+
    @see gc_control
 */
 
 FALCON_FUNC  GC_init( ::Falcon::VMachine *vm )
 {
    // just to mark our user data.
-   
+
    vm->self().asObject()->setUserData( (void*) 1 );
 }
 
@@ -106,7 +106,7 @@ FALCON_FUNC  GC_enable( ::Falcon::VMachine *vm )
    @brief Requests immediate check of garbage.
    @optparam wcoll Set to true to wait for the collection of free memory to be complete.
    @return true if the gc has been actually performed, false otherwise.
-   
+
    Suspends the activity of the calling Virtual Machine, waiting for the
    garbage collector to complete a scan loop before proceeding.
 */
@@ -117,6 +117,42 @@ FALCON_FUNC  GC_perform( ::Falcon::VMachine *vm )
       vm->performGC( vm->param(0)->isTrue() );
    else
       vm->performGC();
+}
+
+/*#
+   @method adjust GC
+   @brief Sets or gets the automatic threshold levels adjust algorithm.
+   @optparam mode The adjust mode used by the GC.
+   @return The mode currently set.
+
+   Mode can be one of:
+   - GC.ADJ_NONE: No adjust. All adjusting must be done manually.
+   - GC.ADJ_STRICT: Aggressive adjustment strategy, forcing active collection whenever
+                    the memory grows.
+   - GC.ADJ_LOOSE: Permissive adjustment strategy, forcing active collection only
+                   when memory grows propmptly.
+   - GC.ADJ_SMOOTH_FAST: Adjustment following the memory allocation status with some
+                         delay and a smooth asintotic curve (fast adaption).
+   - GC.ADJ_SMOOTH_SLOW: Adjustment following the memory allocation status with some
+                         delay and a smooth asintotic curve (slow adaption).
+*/
+
+FALCON_FUNC  GC_adjust( ::Falcon::VMachine *vm )
+{
+   Item *i_setting = vm->param(0);
+   vm->retval( memPool->rampMode() );
+
+   if ( i_setting != 0 )
+   {
+      if ( ! i_setting->isOrdinal() )
+      {
+         vm->raiseRTError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).extra( "N" ) ) );
+      }
+      else if ( ! memPool->rampMode( (int) i_setting->forceInteger() ) )
+      {
+         vm->raiseRTError( new ParamError( ErrorParam( e_param_range, __LINE__ ) ) );
+      }
+   }
 }
 
 // Reflective path method
@@ -147,7 +183,7 @@ void GC_th_normal_rto(CoreObject *instance, void *user_data, Item &property, con
       throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
          origin( e_orig_runtime ).extra( "N" ) );
    }
-   
+
    memPool->thresholdActive( (size_t) property.forceInteger() );
 }
 
@@ -160,13 +196,13 @@ void GC_th_active_rfrom(CoreObject *instance, void *user_data, Item &property, c
 
 void GC_th_active_rto(CoreObject *instance, void *user_data, Item &property, const PropEntry& )
 {
-   
+
    if ( ! property.isOrdinal() )
    {
       throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
          origin( e_orig_runtime ).extra( "[N]" ) );
    }
-   
+
    memPool->thresholdActive( (size_t) property.forceInteger() );
 }
 

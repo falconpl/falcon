@@ -16,7 +16,7 @@
 #include "core_module.h"
 #include <falcon/fstream.h>
 #include <falcon/eng_messages.h>
-
+#include <falcon/rampmode.h>
 
 /*#
    @funset core_basic_io Basic I/O
@@ -572,6 +572,13 @@ Module* core_module_init()
       addParam("mode");
    self->addClassMethod( gc_cls, "perform", &Falcon::core::GC_perform ).setReadOnly(true).asSymbol()->
       addParam("wcoll");
+   self->addClassMethod( gc_cls, "adjust", &Falcon::core::GC_adjust ).setReadOnly(true).asSymbol()->
+      addParam("mode");
+   self->addClassProperty( gc_cls, "ADJ_NONE" ).setInteger(RAMP_MODE_OFF).setReadOnly(true);
+   self->addClassProperty( gc_cls, "ADJ_STRICT" ).setInteger(RAMP_MODE_STRICT_ID).setReadOnly(true);
+   self->addClassProperty( gc_cls, "ADJ_LOOSE" ).setInteger(RAMP_MODE_LOOSE_ID).setReadOnly(true);
+   self->addClassProperty( gc_cls, "ADJ_SMOOTH_FAST" ).setInteger(RAMP_MODE_SMOOTH_SLOW_ID).setReadOnly(true);
+   self->addClassProperty( gc_cls, "ADJ_SMOOTH_SLOW" ).setInteger(RAMP_MODE_SMOOTH_FAST_ID).setReadOnly(true);
 
    // VM support
    self->addExtFunc( "vmVersionInfo", &Falcon::core::vmVersionInfo );

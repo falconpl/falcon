@@ -5,7 +5,7 @@
    Short description
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
-   Begin: $DATE
+   Begin:
 
    -------------------------------------------------------------------
    (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)

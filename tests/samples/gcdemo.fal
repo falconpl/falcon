@@ -1,0 +1,41 @@
+#!/usr/bin/env falcon
+/*
+   FALCON - Samples
+
+   FILE: gcdemo.fal
+
+   Sample showing script controlled garbage collection.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: mer nov 3 2004
+
+   -------------------------------------------------------------------
+   (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+first = ""
+GC.enable( true )
+GC.adjust( GC.ADJ_SMOOTH_FAST )
+
+function makeGC()
+   global first
+   first = [ "alpha".clone(), "beta", 2, 3 , 4 ].clone()
+   for i = 1 to 100000
+      a = [ "alpha".clone(), "beta", 2, 3 , 4 ].clone()
+   end
+end
+
+for i = 1 to 10
+   makeGC()
+   > @"$i ====================== "
+   //GC.perform(false)
+   sleep(0.1)
+   > "Used memory:   ", GC.usedMem
+   > "Live items:    ", GC.items
+   > "Normal level:  ", GC.th_normal
+   > "Active level:  ", GC.th_active
+end
+
+/* end of file */

@@ -22,6 +22,10 @@ namespace Falcon {
 RampMode::~RampMode()
 {}
 
+void RampMode::reset()
+{
+}
+
 //=========================================================
 //
 
@@ -29,6 +33,7 @@ RampMode::~RampMode()
 RampStrict::~RampStrict()
 {
 }
+
 
 void RampStrict::onScanComplete()
 {
@@ -68,6 +73,11 @@ RampSmooth::RampSmooth( numeric factor ):
 
 RampSmooth::~RampSmooth()
 {
+}
+
+void RampSmooth::reset()
+{
+   m_pNormal = 0;
 }
 
 
