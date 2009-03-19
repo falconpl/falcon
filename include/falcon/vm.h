@@ -50,6 +50,7 @@ class AttribHandler;
 class CoreFunc;
 class MemPool;
 class VMMessage;
+class GarbageLock;
 
 typedef void (*tOpcodeHandler)( register VMachine *);
 
@@ -532,6 +533,12 @@ protected:
    /** True when we want to wait for collection before being notified in priority scans. */
    bool m_bWaitForCollect;
    
+   /** Mutex for locked items ring. */
+   Mutex m_mtx_lockitem;
+      
+   /** Locked and unreclaimable items are stored in this ring. */
+   GarbageLock *m_lockRoot;
+   
    //=============================================================
    // Private functions
    //
@@ -618,6 +625,8 @@ protected:
       \param msg The message to be processed.
    */
    void processMessage( VMMessage* msg );
+
+   void markLocked();
 
 public:
    /** Returns the currently running VM.
@@ -2243,6 +2252,40 @@ public:
    */
    void performGC( bool bWaitForCollection = false );
 
+   /** Locks garbage data.
+
+      Puts the given item in the availability pool. Garbage sensible
+      objects in that pool and objects reachable from them will be marked
+      as available even if there isn't any VM related entity pointing to them.
+
+      For performance reasons, a copy of the item stored in a GarbageItem
+      is returned. The calling application save that pointer and pass it
+      to unlock() when the item can be released.
+
+      It is not necessary to unlock the locked items: at VM destruction
+      they will be correctly destroyed.
+
+      Both the scripts (the VM) and the application may use the data in the
+      returned GarbageItem and modify it at will.
+
+      \param locked entity to be locked.
+      \return a relocable item pointer that can be used to access the deep data.
+   */
+   GarbageLock *lock( const Item &locked );
+
+   /** Unlocks garbage data.
+      Moves a locked garbage sensible item back to the normal pool,
+      where it will be removed if it is not reachable by the VM.
+
+      \note after calling this method, the \b locked parameter becomes
+         invalid and cannot be used anymore.
+
+      \see lock
+
+      \param locked entity to be unlocked.
+   */
+   void unlock( GarbageLock *locked );
+   
 //==========================================================================
 //==========================================================================
 //==========================================================================

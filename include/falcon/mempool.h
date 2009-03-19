@@ -13,8 +13,8 @@
    See LICENSE file for licensing details.
 */
 
-#ifndef flc_MEMPOOL_H
-#define flc_MEMPOOL_H
+#ifndef FALCON_MEMPOOL_H
+#define FALCON_MEMPOOL_H
 
 /** \file
    Garbage basket holder.
@@ -52,29 +52,6 @@ public:
 #endif
 
 
-class FALCON_DYN_CLASS GarbageLock: public BaseAlloc
-{
-   GarbageLock *m_garbage_next;
-   GarbageLock *m_garbage_prev;
-
-   Item m_item;
-
-public:
-
-   GarbageLock( const Item &itm ):
-      m_item( itm )
-   {}
-
-   const Item &item() const { return m_item; }
-   Item &item() { return m_item; }
-
-   GarbageLock *next() const { return m_garbage_next; }
-   GarbageLock *prev() const { return m_garbage_prev; }
-   void next( GarbageLock *next ) { m_garbage_next = next; }
-   void prev( GarbageLock *prev ) { m_garbage_prev = prev; }
-};
-
-
 /** Falcon Memory pool
    The garbage basket is the Falcon standard memory allocator. It provides newly created
    objects and memory chunks and saves them for later recycle. The garbage collector moves
@@ -104,9 +81,6 @@ protected:
 
    /** Alive and possibly collectable items are stored in this ring. */
    GarbageableBase *m_garbageRoot;
-   
-   /** Locked and unreclaimable items are stored in this ring. */
-   GarbageLock *m_lockRoot;
    
    /** Newly created and unreclaimable items are stored in this ring. */
    GarbageableBase *m_newRoot;
@@ -140,12 +114,7 @@ protected:
    
    Event m_eRequest;
    Mutex m_mtxa;
-   
-   
-   /** Mutex for locked items ring. 
-      
-   */
-   Mutex m_mtx_lockitem;
+  
    
    /** Mutex for newly created items ring. 
       - GarbageableBase::nextGarbage()
@@ -202,7 +171,6 @@ protected:
    
    void promote( uint32 oldgen, uint32 curgen );
    void advanceGeneration( VMachine* vm, uint32 oldGeneration );
-   void markLocked();
    
    enum constants { 
       MAX_GENERATION = 0xFFFFFFFF
@@ -315,39 +283,6 @@ public:
    */
    uint32 getTimeout() const { return m_msLimit; }
 
-   /** Locks garbage data.
-
-      Puts the given item in the availability pool. Garbage sensible
-      objects in that pool and objects reachable from them will be marked
-      as available even if there isn't any VM related entity pointing to them.
-
-      For performance reasons, a copy of the item stored in a GarbageItem
-      is returned. The calling application save that pointer and pass it
-      to unlock() when the item can be released.
-
-      It is not necessary to unlock the locked items: at VM destruction
-      they will be correctly destroyed.
-
-      Both the scripts (the VM) and the application may use the data in the
-      returned GarbageItem and modify it at will.
-
-      \param locked entity to be locked.
-      \return a relocable item pointer that can be used to access the deep data.
-   */
-   GarbageLock *lock( const Item &locked );
-
-   /** Unlocks garbage data.
-      Moves a locked garbage sensible item back to the normal pool,
-      where it will be removed if it is not reachable by the VM.
-
-      \note after calling this method, the \b locked parameter becomes
-         invalid and cannot be used anymore.
-
-      \see lock
-
-      \param locked entity to be unlocked.
-   */
-   void unlock( GarbageLock *locked );
 
    /** Returns the current generation. */
    uint32 generation() const { return m_generation; }

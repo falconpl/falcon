@@ -64,20 +64,10 @@ MemPool::MemPool():
 {
    m_vmRing = 0;
 
-   // use a ring for lock items.
-   m_lockRoot = new GarbageLock(Item());
-   m_lockRoot->next( m_lockRoot );
-   m_lockRoot->prev( m_lockRoot );
-
    // use a ring for garbage items.
    m_garbageRoot = new GarbageableBase;
    m_garbageRoot->nextGarbage( m_garbageRoot );
    m_garbageRoot->prevGarbage( m_garbageRoot );
-
-   // use a ring for lock items.
-   m_lockRoot = new GarbageLock(Item());
-   m_lockRoot->next( m_lockRoot );
-   m_lockRoot->prev( m_lockRoot );
 
    // separate the newly allocated items to allow allocations during sweeps.
    m_newRoot = new GarbageableBase;
@@ -93,17 +83,7 @@ MemPool::~MemPool()
 {
    // ensure the thread is down.
    stop();
-
-   // delete the garbage ring.
-   GarbageLock *ge = m_lockRoot->next();
-   while( ge != m_lockRoot )
-   {
-      GarbageLock *gnext = ge->next();
-      delete ge;
-      ge = gnext;
-   }
-   delete ge;
-
+   
    clearRing( m_newRoot );
    clearRing( m_garbageRoot );
 
@@ -287,38 +267,12 @@ void MemPool::storeForGarbage( Garbageable *ptr )
 }
 
 
-GarbageLock *MemPool::lock( const Item &itm )
-{
-   GarbageLock *ptr = new GarbageLock( itm );
-
-   m_mtx_lockitem.lock();
-   ptr->prev( m_lockRoot );
-   ptr->next( m_lockRoot->next() );
-   m_lockRoot->next()->prev( ptr );
-   m_lockRoot->next( ptr );
-   m_mtx_lockitem.unlock();
-
-   return ptr;
-}
-
-
-void MemPool::unlock( GarbageLock *ptr )
-{
-   fassert( ptr != m_lockRoot );
-
-   // frirst: remove the item from the availability pool
-   ptr->next()->prev( ptr->prev() );
-   ptr->prev()->next( ptr->next() );
-
-   delete ptr;
-}
-
-
 bool MemPool::markVM( VMachine *vm )
 {
    m_aliveItems = 0;
    m_aliveMem = 0;
 
+   vm->markLocked();
 
    // presume that all the registers need fresh marking
    markItemFast( vm->regA() );
@@ -889,9 +843,6 @@ void* MemPool::run()
       else
          m_mtx_vms.unlock();
 
-      // TODO: Do this only if necessary.
-      markLocked();
-
       // if we have to sweep (we can claim something only if the lower VM has moved).
       if ( oldMingen != m_mingen || bPriority )
       {
@@ -994,23 +945,6 @@ void MemPool::promote( uint32 oldgen, uint32 curgen )
    }
 }
 
-void MemPool::markLocked()
-{
-   // do the same for the locked pools
-   m_mtx_lockitem.lock();
-   if ( m_lockRoot != 0 )
-   {
-      GarbageLock *lock = m_lockRoot;
-      markItemFast( lock->item() );
-      lock = m_lockRoot->next();
-
-      while( lock != m_lockRoot ) {
-         markItemFast( lock->item() );
-         lock = lock->next();
-      }
-   }
-   m_mtx_lockitem.unlock();
-}
 
 }
 

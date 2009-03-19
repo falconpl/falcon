@@ -35,6 +35,7 @@
 #include <falcon/flexymodule.h>
 #include <falcon/mt.h>
 #include <falcon/vmmsg.h>
+#include <falcon/garbagelock.h>
 
 #include <string.h>
 namespace Falcon {
@@ -85,6 +86,11 @@ void VMachine::setCurrent() const
 
 void VMachine::internal_construct()
 {
+   // use a ring for lock items.
+   m_lockRoot = new GarbageLock(Item());
+   m_lockRoot->next( m_lockRoot );
+   m_lockRoot->prev( m_lockRoot );
+   
    m_userData = 0;
    m_bhasStandardStreams = false;
    m_pc = 0;
@@ -290,6 +296,16 @@ VMachine::~VMachine()
    // this also decrefs the modules and destroys the globals.
    // Notice that this would be done automatically also at destructor exit.
    m_liveModules.clear();
+
+   // delete the garbage ring.
+   GarbageLock *ge = m_lockRoot->next();
+   while( ge != m_lockRoot )
+   {
+      GarbageLock *gnext = ge->next();
+      delete ge;
+      ge = gnext;
+   }
+   delete ge;
 
 }
 
@@ -3437,6 +3453,51 @@ void VMBaton::onBlockedAcquire()
 {
    // See if the memPool has anything interesting for us.
    memPool->idleVM( m_owner );
+}
+
+
+GarbageLock *VMachine::lock( const Item &itm )
+{
+   GarbageLock *ptr = new GarbageLock( itm );
+
+   m_mtx_lockitem.lock();
+   ptr->prev( m_lockRoot );
+   ptr->next( m_lockRoot->next() );
+   m_lockRoot->next()->prev( ptr );
+   m_lockRoot->next( ptr );
+   m_mtx_lockitem.unlock();
+
+   return ptr;
+}
+
+
+void VMachine::unlock( GarbageLock *ptr )
+{
+   fassert( ptr != m_lockRoot );
+
+   // frirst: remove the item from the availability pool
+   m_mtx_lockitem.lock();
+   ptr->next()->prev( ptr->prev() );
+   ptr->prev()->next( ptr->next() );
+   m_mtx_lockitem.unlock();
+
+   delete ptr;
+}
+
+
+void VMachine::markLocked()
+{
+   fassert( m_lockRoot != 0 );
+   // do the same for the locked pools
+   m_mtx_lockitem.lock();
+   GarbageLock *rlock = this->m_lockRoot;
+   GarbageLock *lock = rlock;
+   do 
+   {
+      memPool->markItemFast( lock->item() );
+      lock = lock->next();
+   } while( lock != rlock );
+   m_mtx_lockitem.unlock();
 }
 
 }

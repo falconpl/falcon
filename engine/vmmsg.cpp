@@ -19,19 +19,21 @@
 
 #include <falcon/vmmsg.h>
 #include <falcon/globals.h>
-#include <falcon/mempool.h>
+#include <falcon/vm.h>
+#include <falcon/garbagelock.h>
 
 #define PARAMS_GROWTH   8
 
 namespace Falcon {
 
 
-VMMessage::VMMessage( const String &msgName ):
+VMMessage::VMMessage( VMachine* target, const String &msgName ):
    m_msg( msgName ),
    m_params(0),
    m_allocated(0),
    m_pcount(0),
-   m_next(0)
+   m_next(0),
+   m_target( target )
 {
 }
 
@@ -42,7 +44,7 @@ VMMessage::~VMMessage()
    {
       for(uint32 i = 0; i < m_pcount; ++i )
       {
-         memPool->unlock( m_params[i] );
+         m_target->unlock( m_params[i] );
       }
       memFree( m_params );
    }
@@ -60,7 +62,7 @@ void VMMessage::addParam( const Item &itm )
       m_allocated += PARAMS_GROWTH;
       m_params = (GarbageLock **) memRealloc( m_params, sizeof( GarbageLock* ) * m_allocated );
    }
-   m_params[ m_pcount++ ] = memPool->lock( itm );
+   m_params[ m_pcount++ ] = m_target->lock( itm );
 }
 
 

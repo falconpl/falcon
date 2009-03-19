@@ -27,7 +27,7 @@
 namespace Falcon {
 
 class GarbageLock;
-
+class VMachine;
 /** Asynchronous message for the Virtual Machine.
 
    When the virtual machine receives this, it executes a broadcast loop on a coroutine
@@ -48,13 +48,15 @@ class FALCON_DYN_CLASS VMMessage: public BaseAlloc
    uint32 m_allocated;
    uint32 m_pcount;
    
+   VMachine* m_target;
+   
    VMMessage *m_next;
    
 public:
    /** Creates a VMMessage without parameters. 
    \param msgName the name of the message.
    */
-   VMMessage( const String &msgName );
+   VMMessage( VMachine* vm, const String &msgName );
    
    virtual ~VMMessage();
    
