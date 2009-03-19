@@ -191,6 +191,7 @@ ADD_LIBRARY( falcon_engine SHARED
    pagedict.cpp
    path.cpp
    proptable.cpp
+   rampmode.cpp
    reflectobject.cpp
    rosstream.cpp
    runtime.cpp
@@ -240,18 +241,18 @@ IF(UNIX OR APPLE)
    #also dl for linux and solaris
    # and RT only for solaris and non-bsd systems
    IF(APPLE)
-      SET(SYS_LIBS 
+      SET(SYS_LIBS
         dl
         pthread )
    ELSE(APPLE)
-      SET(SYS_LIBS 
+      SET(SYS_LIBS
          dl
          pthread
          rt)
    ENDIF(APPLE)
 
    TARGET_LINK_LIBRARIES(falcon_engine ${SYS_LIBS})
-   
+
       #Finally, link everything to the lib dir
    INSTALL( TARGETS falcon_engine
          DESTINATION "${FALCON_LIB_DIR}" )

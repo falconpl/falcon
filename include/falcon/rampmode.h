@@ -37,13 +37,13 @@ protected:
 public:
    RampMode() {}
    virtual ~RampMode();
-   
+
    /** Called when the scan is complete and there is the need for a new calculation.
       No need for parameters as mempool, memory sizes and statistics are
       globally available.
    */
    virtual void onScanComplete()=0;
-   
+
    /** Returns the lastly calculated memory level for the normal status. */
    size_t normalLevel() const { return m_normal; }
 
@@ -52,13 +52,17 @@ public:
 };
 
 
+/** Enforces a strict inspection policy.
+   The warning active level is set to the quantity of
+   memory used after the last collection loop.
+*/
 class FALCON_DYN_CLASS RampStrict: public RampMode
 {
 public:
    RampStrict():
       RampMode()
    {}
-   
+
    virtual ~RampStrict();
    virtual void onScanComplete();
 };
@@ -69,7 +73,7 @@ public:
    RampLoose():
       RampMode()
    {}
-   
+
    virtual ~RampLoose();
    virtual void onScanComplete();
 };
@@ -78,14 +82,10 @@ class FALCON_DYN_CLASS RampSmooth: public RampMode
 {
    size_t m_pNormal;
    size_t m_pActive;
-   int32 m_factor;
-   
+   numeric m_factor;
+
 public:
-   RampSmooth( int32 factor ):
-      RampMode(),
-      m_factor( factor )
-   {}
-   
+   RampSmooth( numeric factor );
    virtual ~RampSmooth();
    virtual void onScanComplete();
 };

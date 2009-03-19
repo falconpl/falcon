@@ -49,7 +49,7 @@ class DeepItem;
 
 
 typedef void** CommOpsTable;
-FALCON_DYN_SYM CommOpsTable CommOpsDict[];
+extern FALCON_DYN_SYM CommOpsTable CommOpsDict[];
 
 
 /** Basic item abstraction.*/
@@ -336,7 +336,7 @@ public:
 
    /** Creates a reference to another item. */
    void setReference( GarbageItem *ref );
-   
+
    GarbageItem *asReference() const { return (GarbageItem *) all.ctx.data.ptr.voidp; }
 
    /** Creates a function item */
@@ -355,7 +355,7 @@ public:
       \param val If provided, a future value (future binding).
    */
    void setLBind( String *lbind, GarbageItem *val=0 );
-   
+
    /** Returns true if this item is a valid LBind.
    */
    bool isLBind() const { return type() == FLC_ITEM_LBIND; }
