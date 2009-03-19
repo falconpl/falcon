@@ -95,8 +95,8 @@ void VMRunnerThread::prepareThreadInstance( const Item &instance, const Item &me
 void *VMRunnerThread::run()
 {
    // hold a lock to the item, as it cannot be taken in the vm.
-   GarbageLock *tiLock = memPool->lock( m_threadInstance );
-   GarbageLock *mthLock = memPool->lock( m_method );
+   GarbageLock *tiLock = m_vm->lock( m_threadInstance );
+   GarbageLock *mthLock = m_vm->lock( m_method );
 
    // Perform the call.
    try {
@@ -109,8 +109,8 @@ void *VMRunnerThread::run()
    }
 
    // unlock the threads objects
-   memPool->unlock( tiLock );
-   memPool->unlock( mthLock );
+   m_vm->unlock( tiLock );
+   m_vm->unlock( mthLock );
    return 0;
 }
 
