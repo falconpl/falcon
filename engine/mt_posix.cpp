@@ -26,7 +26,7 @@ namespace Falcon
 {
 
 static Mutex s_cs;
- 
+
 /** Performs an atomic thread safe increment. */
 int32 atomicInc( int32 &data )
 {
@@ -52,23 +52,23 @@ void Event::set()
    #ifdef NDEBUG
    pthread_mutex_lock( &m_mtx );
    m_bIsSet = true;
-   
+
    if ( m_bAutoReset )
       pthread_cond_signal( &m_cv );
    else
       pthread_cond_broadcast( &m_cv );
-      
+
    pthread_mutex_unlock( &m_mtx );
    #else
    int result = pthread_mutex_lock( &m_mtx );
    fassert( result == 0 );
    m_bIsSet = true;
-   
+
    if ( m_bAutoReset )
       result = pthread_cond_signal( &m_cv );
    else
       result = pthread_cond_broadcast( &m_cv );
-      
+
    fassert( result == 0 );
    result = pthread_mutex_unlock( &m_mtx );
    fassert( result == 0 );
@@ -79,16 +79,16 @@ void Event::set()
 bool Event::wait( int32 to )
 {
    pthread_mutex_lock( &m_mtx );
-   
+
    // are we lucky?
-   if( m_bIsSet ) 
+   if( m_bIsSet )
    {
       if ( m_bAutoReset )
          m_bIsSet = false;
       pthread_mutex_unlock( &m_mtx );
       return true;
    }
-   
+
    // No? -- then are we unlucky?
    if ( to == 0 )
    {
@@ -101,14 +101,14 @@ bool Event::wait( int32 to )
    {
       do {
          pthread_cond_wait( &m_cv, &m_mtx );
-      
+
       } while( ! m_bIsSet );
    }
-   else 
+   else
    {
       // release the mutex for a while
       pthread_mutex_unlock( &m_mtx );
-      
+
       struct timespec ts;
       #if _POSIX_TIMERS > 0
          clock_gettime(CLOCK_REALTIME, &ts);
@@ -118,15 +118,15 @@ bool Event::wait( int32 to )
           ts.tv_sec = tv.tv_sec;
           ts.tv_nsec = tv.tv_usec*1000;
       #endif
-      
+
       ts.tv_sec += to/1000;
       ts.tv_nsec += (to%1000) * 1000000;
-      if( ts.tv_nsec > 1000000000 )
+      if( ts.tv_nsec >= 1000000000 )
       {
          ++ts.tv_sec;
          ts.tv_nsec -= 1000000000;
       }
-      
+
       pthread_mutex_lock( &m_mtx );
       while( ! m_bIsSet )
       {
@@ -141,20 +141,20 @@ bool Event::wait( int32 to )
          fassert( res == 0 );
       }
    }
-   
+
    // here, m_bIsSet is set...
    if ( m_bAutoReset )
       m_bIsSet = false;
    pthread_mutex_unlock( &m_mtx );
-   
+
    return true;
 }
 
 //==================================================================================
-// System threads. 
+// System threads.
 //
 
-SysThread::~SysThread() 
+SysThread::~SysThread()
 {
    memFree( m_sysdata );
 }
@@ -188,7 +188,7 @@ void SysThread::detach()
 {
    pthread_detach( m_sysdata->pth );
 }
-   
+
 bool SysThread::join( void* &result )
 {
    if ( pthread_join( m_sysdata->pth, &result ) == 0 )
@@ -201,17 +201,17 @@ uint64 SysThread::getID()
 {
    return (uint64) m_sysdata->pth;
 }
-   
+
 uint64 SysThread::getCurrentID()
 {
    return (uint64) pthread_self();
 }
-   
+
 bool SysThread::isCurrentThread()
 {
    return pthread_equal( m_sysdata->pth, pthread_self() ) != 0;
 }
-   
+
 bool SysThread::equal( const SysThread *th1 ) const
 {
    return pthread_equal( m_sysdata->pth, th1->m_sysdata->pth ) != 0;
