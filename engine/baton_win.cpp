@@ -106,13 +106,18 @@ void Baton::acquire()
 bool Baton::busy()
 {
    WIN_BATON_DATA &p = *(WIN_BATON_DATA *)m_data;
-   
-   if( WaitForSingleObject( p.hEvtIdle, 0 ) == WAIT_OBJECT_0 )
+     
+   // we must hold the mutex to avoid block to think that the baton is
+   // busy, while we're actually keeping it busy here for a short time.
+   EnterCriticalSection( &p.cs );
+   bool bRet = ! (WaitForSingleObject( p.hEvtIdle, 0 ) == WAIT_OBJECT_0);
+   // if it's not busy, we have changed the idle setting; reset it.
+   if( ! bRet )
    {
       SetEvent(p.hEvtIdle);
-      return false;
    }
-   return true;
+   LeaveCriticalSection( &p.cs );
+   return bRet;
 }
 
 
@@ -155,7 +160,12 @@ bool Baton::tryAcquire()
 void Baton::release()
 {
    WIN_BATON_DATA &p = *(WIN_BATON_DATA *)m_data;
+   
+   // Use sync section to be sure I am not idling the baton while someone
+   // is trying to block it.
+   EnterCriticalSection( &p.cs );
    SetEvent( p.hEvtIdle );
+   LeaveCriticalSection( &p.cs );
 }
 
 
@@ -174,8 +184,10 @@ void Baton::checkBlock()
    else {
       if( p.nBlockerId != 0 )
       {
-         LeaveCriticalSection( &p.cs );
+         // Idle in a sync section to avoid idling after blockers block.
          SetEvent( p.hEvtIdle );
+         LeaveCriticalSection( &p.cs );
+         
          onBlockedAcquire();
          
          // wait for the unblocked event to be on; We just set idle, but we won't steal it
@@ -197,28 +209,31 @@ void Baton::checkBlock()
 bool Baton::block()
 {
    WIN_BATON_DATA &p = *(WIN_BATON_DATA *)m_data;
-   
-   if ( WaitForSingleObject( p.hEvtIdle, 0 ) == WAIT_OBJECT_0 )
-   {
-      // the baton is idle; I can't block it as there is noone that may reply.
-      SetEvent(p.hEvtIdle);
-      return false;
-   }
-   
-   // keep the baton unidle during this operation.
-   
+   // first, issue a block try
+      
    EnterCriticalSection( &p.cs );
+   // already blocked? -- we can't do anything.
    if( p.nBlockerId != GetCurrentThreadId() && p.nBlockerId != 0 )
    {
       LeaveCriticalSection( &p.cs );
-      SetEvent( p.hEvtIdle );
       return false;
    }
+   // Noone can release the baton while we lock the mutex.
+   // This gives us the chance to see if the baton is idle.
+   if ( WaitForSingleObject( p.hEvtIdle, 0 ) == WAIT_OBJECT_0 )
+   {
+      // Yes, the baton was idle (we jave just acquired it).
+      // This means that noone can reply our block, so we can't perform that.
+      // re-idle the baton and go away.
+      SetEvent( p.hEvtIdle );
+      LeaveCriticalSection( &p.cs );
+      return false;
+   }
+   
+   // Ok, we can block. 
    p.nBlockerId = GetCurrentThreadId();
-   LeaveCriticalSection( &p.cs );
-
-   SetEvent( p.hEvtIdle );
    ResetEvent( p.hEvtUnblocked );
+   LeaveCriticalSection( &p.cs );
    
    return true;
 }
