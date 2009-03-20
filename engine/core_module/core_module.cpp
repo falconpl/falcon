@@ -577,8 +577,8 @@ Module* core_module_init()
    self->addClassProperty( gc_cls, "ADJ_NONE" ).setInteger(RAMP_MODE_OFF).setReadOnly(true);
    self->addClassProperty( gc_cls, "ADJ_STRICT" ).setInteger(RAMP_MODE_STRICT_ID).setReadOnly(true);
    self->addClassProperty( gc_cls, "ADJ_LOOSE" ).setInteger(RAMP_MODE_LOOSE_ID).setReadOnly(true);
-   self->addClassProperty( gc_cls, "ADJ_SMOOTH_FAST" ).setInteger(RAMP_MODE_SMOOTH_SLOW_ID).setReadOnly(true);
-   self->addClassProperty( gc_cls, "ADJ_SMOOTH_SLOW" ).setInteger(RAMP_MODE_SMOOTH_FAST_ID).setReadOnly(true);
+   self->addClassProperty( gc_cls, "ADJ_SMOOTH_SLOW" ).setInteger(RAMP_MODE_SMOOTH_SLOW_ID).setReadOnly(true);
+   self->addClassProperty( gc_cls, "ADJ_SMOOTH_FAST" ).setInteger(RAMP_MODE_SMOOTH_FAST_ID).setReadOnly(true);
 
    // VM support
    self->addExtFunc( "vmVersionInfo", &Falcon::core::vmVersionInfo );

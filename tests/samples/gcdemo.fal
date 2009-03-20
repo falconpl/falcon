@@ -17,7 +17,7 @@
 
 first = ""
 GC.enable( true )
-GC.adjust( GC.ADJ_SMOOTH_FAST )
+//GC.adjust( GC.ADJ_LOOSE )
 
 function makeGC()
    global first
@@ -31,11 +31,11 @@ for i = 1 to 10
    makeGC()
    > @"$i ====================== "
    //GC.perform(false)
-   sleep(0.1)
-   > "Used memory:   ", GC.usedMem
-   > "Live items:    ", GC.items
-   > "Normal level:  ", GC.th_normal
-   > "Active level:  ", GC.th_active
+   //sleep(0.01)
+   > @"Used memory:  $(GC.usedMem:11rg3,)"
+   > @"Live items:   $(GC.items:11rg3,)"
+   > @"Normal level: $(GC.th_normal:11rg3,)"
+   > @"Active level: $(GC.th_active:11rg3,)"
 end
 
 /* end of file */

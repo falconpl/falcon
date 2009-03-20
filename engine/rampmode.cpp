@@ -34,6 +34,9 @@ RampStrict::~RampStrict()
 {
 }
 
+void RampStrict::onScanInit()
+{
+}
 
 void RampStrict::onScanComplete()
 {
@@ -50,11 +53,14 @@ RampLoose::~RampLoose()
 {
 }
 
+void RampLoose::onScanInit()
+{
+   m_active = (size_t)(gcMemAllocated() );
+   m_normal = (size_t)(gcMemAllocated() / 2 );
+}
 
 void RampLoose::onScanComplete()
 {
-   m_active = (size_t)(gcMemAllocated() * 1.5);
-   m_normal = (size_t)(gcMemAllocated() * 0.8);
 }
 
 //=========================================================
@@ -81,7 +87,7 @@ void RampSmooth::reset()
 }
 
 
-void RampSmooth::onScanComplete()
+void RampSmooth::onScanInit()
 {
    // on the first loop, we setup the waiting loops.
    if ( m_pNormal == 0 )
@@ -101,7 +107,12 @@ void RampSmooth::onScanComplete()
       }
    }
 
+   m_normal = m_pNormal;
    m_active = (size_t)(m_normal * m_factor);
+}
+
+void RampSmooth::onScanComplete()
+{
 }
 
 }

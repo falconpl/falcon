@@ -77,8 +77,8 @@ MemPool::MemPool():
    // fill the ramp algorithms
    m_ramp[RAMP_MODE_STRICT_ID] = new RampStrict;
    m_ramp[RAMP_MODE_LOOSE_ID] = new RampLoose;
-   m_ramp[RAMP_MODE_SMOOTH_SLOW_ID] = new RampSmooth( 1.3 );
-   m_ramp[RAMP_MODE_SMOOTH_FAST_ID] = new RampSmooth( 1.8 );
+   m_ramp[RAMP_MODE_SMOOTH_SLOW_ID] = new RampSmooth( 2.6 );
+   m_ramp[RAMP_MODE_SMOOTH_FAST_ID] = new RampSmooth( 6.5 );
 
    rampMode( DEFAULT_RAMP_MODE );
 }
@@ -592,6 +592,13 @@ void MemPool::markItem( Item &item )
 void MemPool::gcSweep()
 {
    TRACE( "Sweeping %d\n", gcMemAllocated() );
+   m_mtx_ramp.lock();
+   RampMode *rm = m_curRampMode;
+   if( m_curRampMode != 0 )
+   {
+      rm->onScanInit();
+   }
+   m_mtx_ramp.unlock();
 
    GarbageableBase *ring = m_garbageRoot->nextGarbage();
    while( ring != m_garbageRoot )
@@ -613,12 +620,9 @@ void MemPool::gcSweep()
    TRACE( "Sweeping complete %d\n", gcMemAllocated() );
 
    m_mtx_ramp.lock();
-   if( m_curRampMode != 0 )
-   {
-      m_curRampMode->onScanComplete();
-      m_thresholdActive = m_curRampMode->activeLevel();
-      m_thresholdNormal = m_curRampMode->normalLevel();
-   }
+   rm->onScanComplete();
+   m_thresholdActive = m_curRampMode->activeLevel();
+   m_thresholdNormal = m_curRampMode->normalLevel();
    m_mtx_ramp.unlock();
 }
 

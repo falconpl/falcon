@@ -38,6 +38,12 @@ public:
    RampMode() {}
    virtual ~RampMode();
 
+   /** Called before starting a scan loop.
+      No need for parameters as mempool, memory sizes and statistics are
+      globally available.
+   */
+   virtual void onScanInit()=0;
+
    /** Called when the scan is complete and there is the need for a new calculation.
       No need for parameters as mempool, memory sizes and statistics are
       globally available.
@@ -67,6 +73,7 @@ public:
    {}
 
    virtual ~RampStrict();
+   virtual void onScanInit();
    virtual void onScanComplete();
 };
 
@@ -81,6 +88,7 @@ public:
    {}
 
    virtual ~RampLoose();
+   virtual void onScanInit();
    virtual void onScanComplete();
 };
 
@@ -97,6 +105,7 @@ public:
    virtual ~RampSmooth();
 
    virtual void reset();
+   virtual void onScanInit();
    virtual void onScanComplete();
 };
 
@@ -105,7 +114,7 @@ public:
 
 #define RAMP_MODE_COUNT              4
 #define RAMP_MODE_OFF               -1
-#define DEFAULT_RAMP_MODE           RAMP_MODE_LOOSE_ID
+#define DEFAULT_RAMP_MODE           RAMP_MODE_SMOOTH_SLOW_ID
 }
 
 #endif
