@@ -226,6 +226,7 @@ FAL_ERRORDECL( e_directive_value, 160, "Invalid value for directive" );
 FAL_ERRORDECL( e_cmp_unprep, 161, "Compiler unprepared (still needs to be fed with a module)" );
 FAL_ERRORDECL( e_not_implemented, 162, "Feature not implemented/not available on this instance" );
 FAL_ERRORDECL( e_nl_in_lit, 163, "New line in literal string" );
+FAL_ERRORDECL( e_fself_outside, 164, "'fself' outside functions or blocks" );
 
 FAL_ERRORDECL( e_open_file, 200, "Can't open file" );
 FAL_ERRORDECL( e_loaderror, 201, "Load error" );

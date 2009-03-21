@@ -1,0 +1,26 @@
+/****************************************************************************
+* Falcon test suite
+*
+*
+* ID: 18j
+* Category: lambda
+* Subcategory:
+* Short: Recursive lambdas
+* Description:
+*    Test for the 'fself' keyword to dig into current lambdas.
+* [/Description]
+*
+****************************************************************************/
+
+if {x=> x>1 ? x+fself(x-1) : 1 }(5) != 15: failure( "Compact version" )
+
+if { x =>
+       if x > 1: return x + fself(x-1)
+       return 1
+   }(5) != 15
+      failure( "Expanded version" )
+end
+
+success()
+
+/* End of file */

@@ -26,9 +26,9 @@ function main(limit)
 
    the_param = nil
    the_loop = .[times $the_param &k
-               .[ .[ function( x,y ); x[y] = 0; end  flags &k ] .[ lambda x => ++x $count ] ]
+               .[ .[ function( x,y ); x[y] = 0; end  flags &k ] .[ { x => ++x $count } ] ]
                ]
-   
+
    for num in [1:limit+1]
 
       for i in [1: 8193]: flags[i] = num

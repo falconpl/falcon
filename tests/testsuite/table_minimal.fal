@@ -16,7 +16,7 @@
 
 // minimal table
 customers = Table(
-   [ custId|nil, "name", "quantity", discount|lambda x => 2*x ]
+   [ custId|nil, "name", "quantity", discount|{x => 2*x} ]
    )
 
 if customers.order() != 4: failure( "Table order" )

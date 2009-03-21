@@ -28,7 +28,7 @@ class XRegex( expr, pcount ) from Regex(expr)
    function grabAll( str )
       s = self.pcount
       try
-         return map( lambda part => str[part.first() + s : part.last()],
+         return map( {part => str[part.first() + s : part.last()]},
                self.findAll( str )  )
       catch RegexError
          > @i"fallc: Warning, cannot grab variables from $(str)"

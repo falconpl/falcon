@@ -12,11 +12,11 @@
 *
 ****************************************************************************/
 
-var = lambda a, b => a * b
+var = {a, b => a * b}
 
 if var( 2, 3) != 6: failure( "Lambda assingment" )
 
-if 1 + ( lambda a, b => a * b )( 3, 2 ) + 2 != 9
+if 1 + {a, b => a * b}( 3, 2 ) + 2 != 9
    failure( "Lambda in expression parsing" )
 end
 

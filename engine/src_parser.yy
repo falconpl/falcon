@@ -94,7 +94,7 @@ inline int flc_src_lex (void *lvalp, void *yyparam)
 %token FORFIRST FORLAST FORMIDDLE
 %token SWITCH CASE DEFAULT
 %token SELECT
-%token SELF
+%token SELF FSELF
 %token TRY CATCH RAISE
 %token CLASS FROM OBJECT
 %token RETURN
@@ -154,7 +154,7 @@ inline int flc_src_lex (void *lvalp, void *yyparam)
 %type <fal_adecl> symbol_list
 %type <fal_ddecl> expression_pair_list
 %type <fal_genericList> import_symbol_list
-%type <fal_val> expression func_call nameless_func innerfunc nameless_block lambda_expr iif_expr
+%type <fal_val> expression func_call nameless_func innerfunc nameless_block iif_expr
 %type <fal_val> for_to_expr for_to_step_clause loop_terminator
 %type <fal_val> switch_decl select_decl while_decl while_short_decl
 %type <fal_val> if_decl if_short_decl elif_decl
@@ -2161,6 +2161,17 @@ atomic_symbol:
 var_atom:
    atomic_symbol
    | SELF { $$ = new Falcon::Value(); $$->setSelf(); }
+   | FSELF {
+      Falcon::StmtFunction *sfunc = COMPILER->getFunctionContext();
+      if ( sfunc == 0 ) {
+         COMPILER->raiseError(Falcon::e_fself_outside, COMPILER->tempLine() );
+         $$ = new Falcon::Value();
+      }
+      else
+      {
+         $$ = new Falcon::Value( sfunc->symbol() );
+      }
+   }
 ;
 
 /* Currently not needed
@@ -2215,7 +2226,6 @@ expression:
    | CAP_DEOOB expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_deoob, $2 ) ); }
    | CAP_ISOOB expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_isoob, $2 ) ); }
    | CAP_XOROOB expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_xoroob, $2 ) ); }
-   | lambda_expr
    | nameless_func
    | nameless_block
    | innerfunc
@@ -2482,55 +2492,6 @@ innerfunc:
 ;
 
 
-lambda_expr:
-   LAMBDA
-      {
-         Falcon::FuncDef *def = new Falcon::FuncDef( 0, 0 );
-         // set the def as a lambda.
-         COMPILER->incLambdaCount();
-         COMPILER->incClosureContext();
-         int id = COMPILER->lambdaCount();
-         // find the global symbol for this.
-         char buf[48];
-         sprintf( buf, "_lambda#_id_%d", id );
-         Falcon::String *name = COMPILER->addString( buf );
-         Falcon::Symbol *sym = COMPILER->searchGlobalSymbol( name );
-
-         // Not defined?
-         fassert( sym == 0 );
-         sym = COMPILER->addGlobalSymbol( name );
-
-         // anyhow, also in case of error, destroys the previous information to allow a correct parsing
-         // of the rest.
-         sym->setFunction( def );
-
-         Falcon::StmtFunction *func = new Falcon::StmtFunction( COMPILER->lexer()->line(), sym );
-         COMPILER->addFunction( func );
-         func->setLambda( id );
-         // prepare the statement allocation context
-         COMPILER->pushContext( func );
-         COMPILER->pushFunctionContext( func );
-         COMPILER->pushContextSet( &func->statements() );
-         COMPILER->pushFunction( def );
-      }
-      lambda_expr_inner
-      ARROW
-      expression
-         {
-            COMPILER->addStatement( new Falcon::StmtReturn( LINE, $5 ) );
-            COMPILER->checkLocalUndefined();
-            $$ = COMPILER->closeClosure();
-         }
-;
-
-
-lambda_expr_inner:
-   param_list
-   | error EOL
-      {
-         COMPILER->raiseError( Falcon::e_syn_lambda );
-      }
-;
 
 
 

@@ -14,9 +14,9 @@
 
 function ret_lambda( sel )
    if sel
-      var = lambda param=> param * (lambda a, b => a * b)( 2, 3 )
+      var = { param=> param * { a, b => a * b}( 2, 3 )}
    else
-      var = lambda param=> param + (lambda a, b => a + b)( 4, 5 )
+      var = { param=> param + { a, b => a + b}( 4, 5 )}
    end
 
    return var

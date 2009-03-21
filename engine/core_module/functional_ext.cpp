@@ -983,10 +983,10 @@ FALCON_FUNC  core_times ( ::Falcon::VMachine *vm )
       @param llimit The upper limit of the loop.
       @param sequence The sequence or function to be repeated.
       @return The last index processed.
-      
-      This method repeats a loop from this integer down to the limit value included. 
+
+      This method repeats a loop from this integer down to the limit value included.
       If the limit is less than this integer, the function returns immediately.
-      
+
       If the sequence is a function, then it is called iteratively with the current
       index value as last parameter. If it is a sequence, it is functionally evaluated
       and the &1 parametric binding is set to the index.
@@ -994,7 +994,7 @@ FALCON_FUNC  core_times ( ::Falcon::VMachine *vm )
        2.upto( 5, printl )
        2.downto(5, .[printl "Value number " &1])
       @endcode
-      
+
       In both cases, returning an oob(0) will cause the loop to terminate, while
       returning an oob(1) from any evaluation in the sequence makes the rest of
       the evaluation to be skipped and the loop to be restarted.
@@ -1050,10 +1050,10 @@ FALCON_FUNC  core_upto ( ::Falcon::VMachine *vm )
       @param llimit The lower limit of the loop.
       @param sequence The sequence or function to be repeated.
       @return The last index processed.
-      
-      This method repeats a loop from this integer down to the limit value included. 
+
+      This method repeats a loop from this integer down to the limit value included.
       If the limit is greater than this integer, the function returns immediately.
-      
+
       If the sequence is a function, then it is called iteratively with the current
       index value as last parameter. If it is a sequence, it is functionally evaluated
       and the &1 parametric binding is set to the index.
@@ -1061,7 +1061,7 @@ FALCON_FUNC  core_upto ( ::Falcon::VMachine *vm )
        5.downto( 2, printl )
        3.downto(0, .[printl "Value number " &1])
       @endcode
-      
+
       In both cases, returning an oob(0) will cause the loop to terminate, while
       returning an oob(1) from any evaluation in the sequence makes the rest of
       the evaluation to be skipped and the loop to be restarted.
@@ -1168,8 +1168,8 @@ static bool core_xmap_next( ::Falcon::VMachine *vm )
     In example:
    @code
 
-      mapper = lambda item => (item < 0 ? oob(nil) : item ** 0.5)
-      add = lambda a, b => a+b         // a lambda that will be evaluated
+      mapper = { item => item < 0 ? oob(nil) : item ** 0.5 }
+      add = { a, b => a+b }         // a block that will be evaluated
 
       inspect( xmap( mapper, [ [add, 99, 1], 4, -12, 9 ]) )    // returns [10, 2, 3]
    @endcode
@@ -1322,11 +1322,11 @@ static bool core_reduce_next ( ::Falcon::VMachine *vm )
 
    Some examples:
    @code
-   > reduce( lambda a,b=> a+b, [1,2,3,4])       // sums 1 + 2 + 3 + 4 = 10
-   > reduce( lambda a,b=> a+b, [1,2,3,4], -1 )  // sums -1 + 1 + 2 + 3 + 4 = 9
-   > reduce( lambda a,b=> a+b, [1] )            // never calls lambda, returns 1
-   > reduce( lambda a,b=> a+b, [], 0 )          // never calls lambda, returns 0
-   > reduce( lambda a,b=> a+b, [] )             // never calls lambda, returns Nil
+   > reduce( {a,b=> a+b}, [1,2,3,4])       // sums 1 + 2 + 3 + 4 = 10
+   > reduce( {a,b=> a+b}, [1,2,3,4], -1 )  // sums -1 + 1 + 2 + 3 + 4 = 9
+   > reduce( {a,b=> a+b}, [1] )            // never calls lambda, returns 1
+   > reduce( {a,b=> a+b}, [], 0 )          // never calls lambda, returns 0
+   > reduce( {a,b=> a+b}, [] )             // never calls lambda, returns Nil
    @endcode
 
    Items in the collection are treated literally (not evaluated).
@@ -1428,12 +1428,12 @@ static bool core_iff_next( ::Falcon::VMachine *vm )
    for truthfulness, and also the other parameters may. In example:
    @code
       > iff( 0, "was true", "was false" )           // will print "was false"
-      iff( [lambda a=>a*2, 1] , [printl, "ok!"] )   // will print "ok!" and return nil
+      iff( [{a=>a*2}, 1] , [printl, "ok!"] )       // will print "ok!" and return nil
    @endcode
 
    In the last example, we are not interested in the return value (printl returns nil), but in executing
    that item only in case the first item is true. The first item is a callable item too, so iff will first
-   execute the given lambda, finding a result of 2 (true), and then will decide which element to pick, and
+   execute the given block, finding a result of 2 (true), and then will decide which element to pick, and
    eventually execute. Notice that:
    @code
       iff( 1 , printl( "ok!" ), printl( "no" ) )
@@ -1720,7 +1720,7 @@ static bool core_cascade_next ( ::Falcon::VMachine *vm )
          return oob(nil)
       end
 
-      csq = [cascade, [ whichparams, lambda a,b=> a*b] ]
+      csq = [cascade, [ whichparams, {a,b=> a*b} ]
       > csq( 3, 4 )
    @endcode
 

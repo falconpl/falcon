@@ -368,6 +368,12 @@ int SrcLexer::lex_normal()
       }
    }
 
+   if( m_graphAgain )
+   {
+      m_graphAgain = false;
+      return CLOSE_GRAPH;
+   }
+
    if ( m_done )
    {
       // raise error if there is some lexer context open
@@ -1338,16 +1344,8 @@ int SrcLexer::checkUnlimitedTokens( uint32 nextChar )
          }
          else if ( chr == '}' )
          {
-            if( m_graphAgain )
-            {
-               m_graphAgain = false;
-               return CLOSE_GRAPH;
-            }
-            else {
-               m_in->unget( chr );
-               m_graphAgain = true;
-               return EOL;
-            }
+            m_graphAgain = true;
+            return EOL;
          }
          else if ( chr == '@' )
          {
@@ -1544,6 +1542,8 @@ int SrcLexer::checkLimitedTokens()
             return WHILE;
          if ( m_string == "false" )
             return FALSE_TOKEN;
+         if ( m_string == "fself" )
+            return FSELF;
          if( m_string == "macro" )
          {
             m_string.size(0);

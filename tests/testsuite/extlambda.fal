@@ -13,9 +13,9 @@
 
 function ret_lambda( sel )
    if sel
-      var = lambda param=> sin(param)
+      var = {param=> sin(param)}
    else
-      var = lambda p1, p2=> p1 + (lambda a, b => a( b ) )( sin, p2 )
+      var = {p1, p2=> p1 + {a, b => a( b ) }( sin, p2 ) }
    end
 
    return var

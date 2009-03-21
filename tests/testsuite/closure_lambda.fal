@@ -14,14 +14,14 @@
 
 function closing( a, b )
    c = a * b
-   return lambda n => c *n
+   return {n => c*n}
 end
 
 function closing_nest( a, b )
    c = a * b
    return \
       function( n )
-         return c * (lambda k => k *n )(2)
+         return c * {k => k*n}(2)
       end
 end
 

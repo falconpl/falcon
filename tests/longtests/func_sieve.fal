@@ -3,7 +3,7 @@
 *
 * ID: 7b
 * Category: functional
-* Subcategory: 
+* Subcategory:
 * Short: Benchmark on repeated functional calls
 * Description:
 *      Performing a CPU killing funcional sieve of erathostenes with forced
@@ -31,11 +31,11 @@ function main(limit)
    for num in [1:limit+1]
 
       for i in [1: 8193]: flags[i] = num
-   
+
       for i in [2:8193]
          if flags[i]
             .[times ,[ i+i: 8193: i ] &k
-               .[ .[ function( x,y ); x[y] = 0; end  flags &k ] .[ lambda x => ++x $count ] ]
+               .[ .[ function( x,y ); x[y] = 0; end  flags &k ] .[ { x => ++x $count } ] ]
                ]()
          end
       end
