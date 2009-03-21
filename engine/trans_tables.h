@@ -29,7 +29,7 @@
 struct Table
 {
    void *table; /*It's depend on which kind of table you'd like:*/
-   int32 len;
+   uint32 len;
 };
 
 static uint16 s_table_cp1252[] = {

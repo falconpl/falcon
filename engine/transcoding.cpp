@@ -135,25 +135,17 @@ public:
    virtual const String encoding() const { return "utf-16BE"; }
 };
 
-
-
-
-typedef signed char sbyte;
+/** GBK encoding transcoder. */
 class TranscoderGBK: public Transcoder
 {
-
-   /*
-   * 2nd level index, provided by subclass
-   * every string has 0x10*(end-start+1) characters.
-   */
-
-   const static uint32 REPLACE_CHAR = 0xFFFD;
+private:
    Table *decoderTable1;
    Table *decoderTable2;
    Table *encoderTable1;
    Table *encoderTable2;
    const static uint32  start = 0x40;
    const static uint32  end =  0xFE;
+
 public:
    TranscoderGBK( const TranscoderGBK &other ):
       Transcoder( other ),
@@ -163,6 +155,7 @@ public:
          encoderTable2( other.encoderTable2 )
       {}
 
+public:
    TranscoderGBK( Stream *s, bool bOwn=false ):
       Transcoder(s, bOwn)
       {
@@ -172,126 +165,99 @@ public:
          encoderTable2 = &gbkEncoderTable2;
       }
 
-      uint16 getUint16(Table *t, uint32 pos)
-      {
-         return ((uint16*)t->table)[pos];
-      }
+private:
+   inline uint16 getUint16(Table *t, uint32 pos)
+   {
+      return ( (uint16*)t->table )[pos];
+   }
 
-      uint32 getUTF16Char(uint16 *t, uint32 pos)
-      {
-         return t[pos];
-      }
-      Table * getTable(Table *t, uint32 pos)
-      {
-         return ((Table*)t->table) + pos;
-      }
+   Table *getTable(Table *t, uint32 pos)
+   {
+      return ( (Table*)t->table ) + pos;
+   }
 
-      /*
-      protected char decodeSingle(int b) {
-      if (b >= 0)
-      return (char) b;
-      return REPLACE_CHAR;
-      }
-      */
-      uint32 decodeSingle(int b) {
-         if (b<0x80)
-            return (uint32) b;
+   uint32 decodeDouble(uint32 byte1, uint32 byte2) {
+      if ( (byte1 > decoderTable1->len) || (byte2 < start) || (byte2 > end) )
          return REPLACE_CHAR;
-      }
 
-      /*
-      protected char decodeDouble(int byte1, int byte2) {
-      if (((byte1 < 0) || (byte1 > index1.length))
-      || ((byte2 < start) || (byte2 > end)))
-      return REPLACE_CHAR;
+      int n0 = getUint16(decoderTable1, byte1) & 0xf;
+      int n = n0 * (end - start + 1) + (byte2 - start);
+      int ti = getUint16(decoderTable1, byte1)>>4; // Table 2 Index
+      Table *charTable = getTable(decoderTable2, ti);
+      return getUint16(charTable, n);
+   }
 
-      int n = (index1[byte1] & 0xf) * (end - start + 1) + (byte2 - start);
-      return index2[index1[byte1] >> 4].charAt(n);
-      }
-      */
-      uint32 decodeDouble(int byte1, int byte2) {
-         if (((byte1 < 0 ) || (byte1 > decoderTable1->len))
-            || ((byte2 < (int)start) || (byte2 > (int)end)))
-            return REPLACE_CHAR;
+   uint32 encodeDouble(uint32 ch) {
+      int offset = getUint16(encoderTable1, ((ch & 0xff00) >> 8 )) << 8;
+      Table *charTable = getTable(encoderTable2, offset >> 12);
+      return getUint16(charTable, (offset & 0xfff) + (ch & 0xff));
+   }
 
-         int n0 = getUint16(decoderTable1, byte1 );
-         int n = n0 * (end - start + 1) + (byte2 - start);
-         Table *charTable = getTable(decoderTable2, getUint16(decoderTable1, byte1)>>4);
-         return getUTF16Char( (uint16*)charTable->table, n);
-      }
+public:
+   virtual bool get( uint32 &chr )
+   {
+      m_parseStatus = true;
 
-      uint32 encodeSingle(uint32 inputChar) {
-         if (inputChar < 0x80)
-            return (byte)inputChar;
-         else
-            return REPLACE_CHAR;
-      }
-
-      int encodeDouble(uint32 ch) {
-         int offset = getUint16(encoderTable1,((ch & 0xff00) >> 8 )) << 8;
-         Table *charTable = getTable(encoderTable2,offset >> 12);
-         return getUTF16Char((uint16*)charTable->table, (offset & 0xfff) + (ch & 0xff));
-      }
-
-      virtual bool get( uint32 &chr )
-      {
-         m_parseStatus = true;
-
-         if( popBuffer( chr ) )
-            return true;
-
-         // converting the character into an unicode.
-         byte b1;
-         byte b2;
-         if ( m_stream->read( &b1, 1 ) != 1 )
-            return false;
-
-         chr = decodeSingle(b1);
-         if (chr == REPLACE_CHAR)
-         {
-            if (m_stream->read( &b2, 1 ) != 1)
-               return false;
-            chr = decodeDouble(b1, b2);
-            //fprintf(stderr, "B1=%d, B2=%d, chr=%x\n", (int)b1, (int)b2, chr);
-         }
-
-         if (chr == REPLACE_CHAR)
-         {
-            chr = (uint32) '?';
-            m_parseStatus = false;
-         }
-
+      if( popBuffer( chr ) )
          return true;
-      }
 
-      virtual bool put( uint32 chr )
+      // converting the byte array into an unicode.
+      byte b1;
+      byte b2;
+      if ( m_stream->read( &b1, 1 ) != 1 )
+         return false;
+
+      if (b1 < 0x80)
       {
-         fflush(stderr);
-
-         m_parseStatus = true;
-         uint32 b = encodeSingle(chr);
-         byte bPtr[2];
-         if ( b != REPLACE_CHAR )
-         {
-            bPtr[0] = (byte)b;
-            return (m_stream->write( bPtr, 1 ) == 1);
-         }
-         int ncode = encodeDouble(chr);
-         if (ncode == 0 || chr == 0)
-         {
-            m_parseStatus = false;
+         chr = b1;
+      }
+      else 
+      {
+         if (m_stream->read( &b2, 1 ) != 1)
             return false;
-         }
-         bPtr[0] = (byte)((ncode & 0xff00) >> 8);
-         bPtr[1] = (byte)(ncode);
-         return ( m_stream->write(bPtr, 2) == 2 );
+         chr = decodeDouble(b1, b2);
+         //fprintf(stderr, "B1=%d, B2=%d, chr=%x\n", (int)b1, (int)b2, chr);
       }
 
-      virtual const String encoding() const { return "gbk"; }
-      virtual FalconData *clone() const
+      if (chr == REPLACE_CHAR)
       {
-            return new TranscoderGBK( *this );
+         chr = '?';
+         m_parseStatus = false;
       }
+
+      return true;
+   }
+
+   virtual bool put( uint32 chr )
+   {
+      fflush(stderr);
+
+      m_parseStatus = true;
+
+      byte bPtr[2];
+      if (chr <0x80)
+      {
+         bPtr[0] = (byte) chr;
+         return (m_stream->write( bPtr, 1 ) == 1);
+      }
+
+      int ncode = encodeDouble(chr);
+      if (ncode == 0 || chr == 0)
+      {
+         m_parseStatus = false;
+         return false;
+      }
+      bPtr[0] = (byte)((ncode & 0xff00) >> 8);
+      bPtr[1] = (byte)(ncode);
+      return ( m_stream->write(bPtr, 2) == 2 );
+   }
+
+   virtual const String encoding() const { return "gbk"; }
+   
+   virtual FalconData *clone() const
+   {
+      return new TranscoderGBK( *this );
+   }
 };
 
 /** Base class for codepage like transcoders. */
@@ -308,9 +274,8 @@ protected:
        uint32 m_dirTabSize;
        CP_ISO_UINT_TABLE *m_reverseTable;
        uint32 m_revTabSize;
+
 public:
-
-
    virtual bool get( uint32 &chr );
    virtual bool put( uint32 chr );
 };
