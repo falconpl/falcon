@@ -183,7 +183,7 @@ public:
       }
       Table * getTable(Table *t, uint32 pos)
       {
-         return (Table*)t->table;
+         return ((Table*)t->table) + pos;
       }
 
       /*
@@ -211,7 +211,7 @@ public:
       */
       uint32 decodeDouble(int byte1, int byte2) {
          if (((byte1 < 0 ) || (byte1 > decoderTable1->len))
-            || ((byte2 < start) || (byte2 > end)))
+            || ((byte2 < (int)start) || (byte2 > (int)end)))
             return REPLACE_CHAR;
 
          int n0 = getUint16(decoderTable1, byte1 );
@@ -252,7 +252,7 @@ public:
             if (m_stream->read( &b2, 1 ) != 1)
                return false;
             chr = decodeDouble(b1, b2);
-            fprintf(stderr, "B1=%d, B2=%d, chr=%x\n", (int)b1, (int)b2, chr);
+            //fprintf(stderr, "B1=%d, B2=%d, chr=%x\n", (int)b1, (int)b2, chr);
          }
 
          if (chr == REPLACE_CHAR)
@@ -266,7 +266,6 @@ public:
 
       virtual bool put( uint32 chr )
       {
-         fputs("\nPut processing, convert from Unicode\n", stderr);
          fflush(stderr);
 
          m_parseStatus = true;
