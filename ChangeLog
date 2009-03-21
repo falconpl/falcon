@@ -77,6 +77,8 @@ Falcon (0.9)
            The end keyword of the loop statement block can be followed by
            an expression; the loop terminates when the condition is true
            (same as repeat/until).
+  * fixed: Naming two times a closed variable in closures caused the
+           parameter resolution order to be messed up.
 
 Falcon (0.8.14)
   * fixed: Now asObject() raises an error if the item is not an object;
