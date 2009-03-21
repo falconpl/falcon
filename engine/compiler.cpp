@@ -325,7 +325,7 @@ void Compiler::raiseError( int code, const String &errorp, int line )
    SyntaxError *error = new SyntaxError( ErrorParam(code, line).origin( e_orig_compiler ));
    error->extraDescription( errorp );
    error->module( m_module->path() );
-   
+
    raiseError( error );
 }
 
@@ -518,10 +518,20 @@ bool Compiler::checkLocalUndefined()
       if ( val->isSymdef() )
       {
          Symbol *sym = 0;
+
+         // Yes, it's undefined. Are we in a closure context,
+         // so that we have to find it in parents?
          if ( m_closureContexts > 0 )
          {
+            // still undefined after some loop?
+            // in case of undef == x[undef.len()] we have double
+            // un-definition of undef on the same line.
             fassert( m_functions.end() );
-            if ( m_functions.begin() != m_functions.end() )
+            const FuncDef *fd_current = reinterpret_cast<const FuncDef *>
+                  ( m_functions.end()->data() );
+
+            sym = fd_current->symtab().findByName( *val->asSymdef() );
+            if ( sym == 0 && m_functions.begin() != m_functions.end() )
             {
                const FuncDef *fd_parent = reinterpret_cast<const FuncDef *>
                   ( m_functions.end()->prev()->data() );
@@ -1249,9 +1259,9 @@ void Compiler::metaCompile( const String &data, int startline )
    m_metacomp->tempLine( startline );
    try
    {
-      /*InteractiveCompiler::t_ret_type ret =*/ 
+      /*InteractiveCompiler::t_ret_type ret =*/
       m_metacomp->compileAll( data );
-      
+
       StringStream *ss = static_cast<StringStream *>(m_metacomp->vm()->stdOut());
       // something has been written
       if ( ss->length() != 0 )

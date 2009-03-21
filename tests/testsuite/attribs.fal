@@ -2,9 +2,9 @@
 * Falcon test suite
 *
 * ID: 38a
-* Category: attributes
+* Category: messages
 * Subcategory: 
-* Short: Attrib loops
+* Short: message loop
 * Description:
 *  This test checks for/in loops over attributes, which must
 *  iterate over objets having a certain attribute.

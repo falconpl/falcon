@@ -1,0 +1,48 @@
+/****************************************************************************
+* Falcon test suite
+*
+*
+* ID: 60e
+* Category: functional
+* Subcategory: closure
+* Short: Functional closure
+* Description:
+*   Closure application test.
+* [/Description]
+*
+****************************************************************************/
+
+function token(t)
+    f = function (s)
+        //printl("t: ",t," s: ",s)
+        try
+            if t.len() != 3: failure( "Closed value size" )
+            return s[ 0 : t.len() ]
+        catch Error in error
+            failure( "Param access 1" )
+        end
+    end
+    return f
+end
+
+// the same, but here the parameter is not directly used in an expression.
+function token1(t)
+    f = function (s)
+        try
+            return t == s[ 0 : t.len() ]
+        catch Error in error
+            failure( "Param access 2" )
+        end
+    end
+    return f
+end
+
+t = token( "foo" )
+if t( "barfoo" ) != "bar": failure( "Closure result 1" )
+
+t = token1( "foo" )
+if not t( "foo" ) : failure( "Closure result 2" )
+if t( "bar" ) : failure( "Closure result 3" )
+success()
+
+/* end of file */

@@ -1515,7 +1515,7 @@ bool GetSystemEncoding( String &encoding )
    }
 
    // no dot. Guess one from the language.
-   if ( encoding.length() > 2 )
+   if ( encoding.length() >= 2 )
    {
       encoding = encoding.subString( 0, 2 );
       if ( encoding == "it" || encoding == "fr" || encoding == "de" ||

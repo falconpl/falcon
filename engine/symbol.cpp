@@ -519,7 +519,7 @@ bool ClassDef::load( Module *mod, Stream *in )
       return false;
 
    uint32 value;
-   
+
    in->read( &value , sizeof( value ) );
    value = endianInt32( value );
    // Have we got a constructor?
