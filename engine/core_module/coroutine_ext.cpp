@@ -304,16 +304,16 @@ FALCON_FUNC  Semaphore_wait ( ::Falcon::VMachine *vm )
    application, and manage them. This is an example:
 
    @code
-   lastEvent = “none”
+   lastEvent = "none"
 
-   while lastEvent != “quit”
+   while lastEvent != "quit"
 
       lastEvent = suspend()
 
       switch lastEvent
-         case “this”
+         case "this"
             doThis()
-         case “that”
+         case "that"
             doThat()
       end
    end

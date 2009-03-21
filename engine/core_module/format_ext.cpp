@@ -128,7 +128,7 @@ namespace core {
       In example, if the formatted item is an object and the conversion type is string
       (that is, no numeric related options are set), this will cause the toString()
       method of the target object to be called, or if not available, the toString()
-      function to be applied on the target object. In example “6/cr” tries to convert the
+      function to be applied on the target object. In example "6/cr" tries to convert the
       item to a 6 character long string, and if it fails (i.e. because toString() method
       returns nil) an TypeError is raised.
 

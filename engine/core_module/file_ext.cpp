@@ -65,7 +65,7 @@ static void s_breakage( Stream *file )
    @ingroup core_syssupport
 
    Stream class is a common interface for I/O operations. The class itself is to be
-   considered “abstract”. It should never be directly instantiated, as factory
+   considered "abstract". It should never be directly instantiated, as factory
    functions, subclasses and embedding applications will provide fully readied
    stream objects.
 
@@ -821,7 +821,7 @@ FALCON_FUNC  Stream_seek ( ::Falcon::VMachine *vm )
 
    Changes the position in the stream from which the next read/write operation will
    be performed. The position is relative from the current position in the stream,
-   a negative number meaning “backward”, and a positive meaning “forward”. If the
+   a negative number meaning "backward", and a positive meaning "forward". If the
    stream does not support seeking, an IoError is raised. If the operation would
    move the pointer past the end of the file size, the pointer is set to the end;
    if it would move the pointer before the beginning, it is moved to the beginning.
@@ -2018,7 +2018,7 @@ FALCON_FUNC  Stream_getBuffering ( ::Falcon::VMachine *vm )
    chose how to deal with EOL characters stored in Falcon strings when writing data
    and how to parse incoming EOL. Available values are:
    - CR_TO_CR: CR and LF characters are untranslated
-   - CR_TO_CRLF: When writing, CR (“\n”) is translated into CRLF, when reading CRLF is translated into a single “\n”
+   - CR_TO_CRLF: When writing, CR ("\n") is translated into CRLF, when reading CRLF is translated into a single "\n"
    - SYSTEM_DETECT: use host system policy.
 
    If not provided, this parameter defaults to SYSTEM_DETECT.

@@ -27,7 +27,7 @@ namespace core {
 
    Falcon provides some special functional programming constructs that are known
    to the VM to have special significance. The vast majority of them starts a
-   “functional evaluation” chain on their parameters before their value is evaluated.
+   "functional evaluation" chain on their parameters before their value is evaluated.
    A functional evaluation is a recursive evaluation (reduction) of list structures into
    atoms. At the moment, the only list structure that can be evaluated this way is the array.
    Evaluating a parameter in functional context means that the given parameter will be
@@ -49,7 +49,7 @@ namespace core {
    func0 will be called with the return value of the previous evaluation as the first parameter,
    and with param2 as the second parameter.
 
-   The functions in this section are considered “special constructs” as the VM knows them and
+   The functions in this section are considered "special constructs" as the VM knows them and
    treats them specially. Their definition overrides the definition of a functional evaluation,
    so that when the VM finds a special construct in its evaluation process, it ceases using the
    default evaluation algorithm and passes evaluation control to the construct.
@@ -72,7 +72,7 @@ namespace core {
    as-is, stopping the evaluation process as the VM meets them. The description of each construct
    explains its working principles, and whether if its parameters are  evaluated or not.
 
-   Please, notice that “callable” doesn't necessarily mean “evaluable”. To evaluate in functional
+   Please, notice that "callable" doesn't necessarily mean "evaluable". To evaluate in functional
    context a callable symbol without parameter, it must be transformed into a single-element array.
    In example:
    @code
@@ -1427,8 +1427,8 @@ static bool core_iff_next( ::Falcon::VMachine *vm )
    context. This means that cfr may be a callable item, in which case its return value will be evaluated
    for truthfulness, and also the other parameters may. In example:
    @code
-      > iff( 0, "was true", "was false" )           // will print “was false”
-      iff( [lambda a=>a*2, 1] , [printl, "ok!"] )   // will print “ok!” and return nil
+      > iff( 0, "was true", "was false" )           // will print "was false"
+      iff( [lambda a=>a*2, 1] , [printl, "ok!"] )   // will print "ok!" and return nil
    @endcode
 
    In the last example, we are not interested in the return value (printl returns nil), but in executing
@@ -1560,12 +1560,12 @@ FALCON_FUNC  core_choice ( ::Falcon::VMachine *vm )
    the same meaning of the single quote literal ' operator of the LISP language.
 
    In example, the following code will return either a callable instance of printl,
-   which prints a “prompt” before the parameter, or a callable instance of inspect:
+   which prints a "prompt" before the parameter, or a callable instance of inspect:
    @code
       iff( a > 0, [lit, [printl, "val: "] ], inspect)( param )
    @endcode
    as inspect is a callable token, but not an evaluable one, it is already returned literally;
-   however, [printl, “val:”] would be considered an evaluable item. To take its literal
+   however, [printl, "val:"] would be considered an evaluable item. To take its literal
    value and prevent evaluation in functional context, the lit construct must be used.
 */
 
@@ -1670,7 +1670,7 @@ static bool core_cascade_next ( ::Falcon::VMachine *vm )
       FN( ... F2( F1( p1, p2, ..., pn ) ) ... )
    @endcode
 
-   A function may declare itself “uninterested” to insert its value in the cascade
+   A function may declare itself "uninterested" to insert its value in the cascade
    by returning an out-of-band item. In that case, the return value is ignored and the same parameter
    it received is passed on to the next calls and eventually returned.
 
@@ -1694,7 +1694,7 @@ static bool core_cascade_next ( ::Falcon::VMachine *vm )
    @endcode
 
    Thanks to the possibility to prevent insertion of the return value in the function call sequence,
-   it is possible to program “interceptors” that will catch the progress of the sequence without
+   it is possible to program "interceptors" that will catch the progress of the sequence without
    interfering:
 
    @code

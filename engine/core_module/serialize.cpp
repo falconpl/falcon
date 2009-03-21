@@ -41,9 +41,9 @@
    storage or transmission. At the moment, custom serialization is not supported.
    This means that all the basic items, as strings and numbers, plus arrays and
    dictionaries are supported. Objects are partially supported: when they are fully
-   derived from Falcon classes, or declared as “object” by the scripts, the
+   derived from Falcon classes, or declared as "object" by the scripts, the
    serialization and de-serialization are successful. However, there is no
-   mechanism to support creation of user-specific data, as the “load” that objects
+   mechanism to support creation of user-specific data, as the "load" that objects
    can carry internally in behalf of embedding applications.
 
    Nevertheless, if there is the need, objects may be serialized/deserialized with

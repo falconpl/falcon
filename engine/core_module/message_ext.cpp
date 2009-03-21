@@ -63,11 +63,11 @@ static void check_assertion( VMachine *vm, CoreSlot *cs, const Item &itm )
    @brief Send a message to every object having an attribute.
 
    This function iterates over all the items having a certain attribute; if those objects provide a method
-   named exactly as the attribute, then that method is called. A method can declare that it has “consumed”
+   named exactly as the attribute, then that method is called. A method can declare that it has "consumed"
    the message (i.e. done what is expected to be done) by returning true. In this case, the call chain is
    interrupted and broadcast returns. A method not wishing to prevent other methods to receive the incoming
-   message must return false. Returning true means “yes, I have handled this message,
-   no further processing is needed”.
+   message must return false. Returning true means "yes, I have handled this message,
+   no further processing is needed".
 
    It is also possible to have the caller of broadcast to receive a return value created by the handler;
    If the handler returns an out of band item (using @a oob) propagation of the message is stopped and
@@ -90,7 +90,7 @@ static void check_assertion( VMachine *vm, CoreSlot *cs, const Item &itm )
    An item may be called more than once in a single chained broadcast call if it has more than one of
    the attributes being broadcast and if it provides methods to handle the messages.
 
-   It is possible to receive more than one broadcast in the same handler using the “same handler idiom”:
+   It is possible to receive more than one broadcast in the same handler using the "same handler idiom":
    setting a property to a method of the same item in the init block or in the property initialization.
    In example:
 

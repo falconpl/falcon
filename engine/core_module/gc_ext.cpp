@@ -88,7 +88,7 @@ FALCON_FUNC  GC_init( ::Falcon::VMachine *vm )
 
    In case the script is sure to have generated a wide amount of garbage, it
    is advisable to call explicitly @a GC.perform() before turning automatic GC on,
-   as the “natural” collection loop may start at any later moment, also after
+   as the "natural" collection loop may start at any later moment, also after
    several VM loops.
 */
 

@@ -430,22 +430,22 @@ FALCON_FUNC  mth_strSplitTrimmed ( ::Falcon::VMachine *vm )
    parameter.
 
    In example, the following may be useful to parse a INI file where keys are
-   separated from values by “=” signs:
+   separated from values by "=" signs:
 
    @code
-   key, value = strSplit( string, “=”, 2 )
+   key, value = strSplit( string, "=", 2 )
    @endcode
 
-   This code would return an array of 2 items at maximum; if no “=” signs are found
+   This code would return an array of 2 items at maximum; if no "=" signs are found
    in string, the above code would throw an error because of unpacking size, a
-   thing that may be desirable in a parsing code. If there are more than one “=” in
+   thing that may be desirable in a parsing code. If there are more than one "=" in
    the string, only the first starting from left is considered, while the others
    are returned in the second item, unparsed.
 
    @note This function is equivalent to the fbom method @a String.split. The above
    example can be rewritten as:
    @code
-   key, value = string.split( “=”, 2 )
+   key, value = string.split( "=", 2 )
    @endcode
 */
 
@@ -568,8 +568,8 @@ FALCON_FUNC  mth_strSplit ( ::Falcon::VMachine *vm )
    The function may be used in this way:
 
    @code
-   a = strMerge( [ “a”, “string”, “of”, “words” ], “ “ )
-   printl( a ) // prints “a string of words”
+   a = strMerge( [ "a", "string", "of", "words" ], " " )
+   printl( a ) // prints "a string of words"
    @endcode
 
    If an element of the array is not a string, an error is raised.
@@ -590,8 +590,8 @@ FALCON_FUNC  mth_strSplit ( ::Falcon::VMachine *vm )
    The function may be used in this way:
 
    @code
-   a = strMerge( [ “a”, “string”, “of”, “words” ], “ “ )
-   printl( a ) // prints “a string of words”
+   a = strMerge( [ "a", "string", "of", "words" ], " " )
+   printl( a ) // prints "a string of words"
    @endcode
 
    If an element of the array is not a string, an error is raised.
@@ -1584,10 +1584,10 @@ FALCON_FUNC  mth_strCmpIgnoreCase ( ::Falcon::VMachine *vm )
    @optparam ignoreCase If true, the latin 26 base letters case is ignored in matches.
    @return True if the string matches, false otherwise.
 
-   This function matches a wildcard that may contain jolly “*” or “?” characters against a
+   This function matches a wildcard that may contain jolly "*" or "?" characters against a
    string, eventually ignoring the case of the characters. This is a practical function
-   to match file names against given patterns. A “?” in the wildcard represents any
-   single character, while a “*” represents an arbitrary sequence of characters.
+   to match file names against given patterns. A "?" in the wildcard represents any
+   single character, while a "*" represents an arbitrary sequence of characters.
 
    The wildcard must match completely the given string for the function to return true.
 
@@ -1604,10 +1604,10 @@ FALCON_FUNC  mth_strCmpIgnoreCase ( ::Falcon::VMachine *vm )
    @optparam ignoreCase If true, the latin 26 base letters case is ignored in matches.
    @return True if the string matches, false otherwise.
 
-   This function matches a wildcard that may contain jolly “*” or “?” characters against a
+   This function matches a wildcard that may contain jolly "*" or "?" characters against a
    string, eventually ignoring the case of the characters. This is a practical function
-   to match file names against given patterns. A “?” in the wildcard represents any
-   single character, while a “*” represents an arbitrary sequence of characters.
+   to match file names against given patterns. A "?" in the wildcard represents any
+   single character, while a "*" represents an arbitrary sequence of characters.
 
    The wildcard must match completely the given string for the function to return true.
 

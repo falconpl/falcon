@@ -35,7 +35,7 @@ Number of decimals that should be represented. Zero means to represent only inte
 fixedSize
 If true, the 'size' field is mandatory, and representation of this variable is truncated to a maximum of 'size' characters.
 grouping
-Count of grouping characters in numeric representation. In example, a number like “1,000,000” has a grouping of 3, while Japanese stanrd representation is 4-grouping (like “10,0000”). Zero means no grouping.
+Count of grouping characters in numeric representation. In example, a number like "1,000,000" has a grouping of 3, while Japanese stanrd representation is 4-grouping (like "10,0000"). Zero means no grouping.
 groupingChr
 Character using for grouping. Defaults to comma (',').
 misAct

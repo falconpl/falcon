@@ -23,6 +23,8 @@
 #include <falcon/stringstream.h>
 #include <falcon/sys.h>
 
+#include <falcon/stdstreams.h>
+
 #include <string.h>
 #include <locale.h>
 #include <stdlib.h>
@@ -30,7 +32,474 @@
 
 namespace Falcon {
 
-#include "trans_tables.def"
+#include "trans_tables.h"
+
+/** UTF-8 encoding transcoder. */
+class TranscoderUTF8: public Transcoder
+{
+public:
+   TranscoderUTF8( Stream *s, bool bOwn=false ):
+     Transcoder( s, bOwn )
+   {}
+
+   TranscoderUTF8( const TranscoderUTF8 &other );
+
+   virtual bool get( uint32 &chr );
+   virtual bool put( uint32 chr );
+   virtual const String encoding() const { return "utf-8"; }
+   virtual FalconData *clone() const;
+};
+
+/** UTF-16 encoding transcoder. */
+class TranscoderUTF16: public Transcoder
+{
+public:
+   /** Endianity specification, see the constructor. */
+   typedef enum {
+      e_detect,
+      e_le,
+      e_be
+   } t_endianity;
+
+private:
+   t_endianity m_defEndian;
+   t_endianity m_streamEndian;
+   t_endianity m_hostEndian;
+
+   bool m_bFirstIn;
+   bool m_bFirstOut;
+
+protected:
+   bool m_bom;
+
+public:
+
+   /** Constructor
+   UTF-16 requires specification of endianity with a prefix character.
+
+   On output transcoding, this character is written right before the
+   first write() is performed, while on input it is read right before
+   the first get() is performed.
+
+   This constructor allows to select an endianity used in I/O. The
+   default is e_none; in this case, the transcoder will detect and
+   use the system endianity on output.
+
+   In input, the marker read at first get() determines the endianity.
+   If the marker can't be found (i.e. if the stream was not at beginning),
+   the supplied parameter will be used.
+
+   If the endianity is e_detect, the host system endianity is used.
+
+   The method endianity() can be used to determine the endianity
+   of the stream in input that was decided either by reading the marker
+   or by the constructor.
+
+   \param s the underlying stream
+   \param bOwn own the underlying stream
+   \param endianity the endianity for operations.
+   */
+   TranscoderUTF16( Stream *s, bool bOwn=false, t_endianity endianity = e_detect );
+   TranscoderUTF16( const TranscoderUTF16 &other );
+
+   virtual bool get( uint32 &chr );
+   virtual bool put( uint32 chr );
+   virtual const String encoding() const { return "utf-16"; }
+   t_endianity endianity() const { return m_streamEndian; }
+   virtual FalconData *clone() const;
+};
+
+/** UTF-16LE encoding transcoder. */
+class TranscoderUTF16LE: public TranscoderUTF16
+{
+public:
+   TranscoderUTF16LE( Stream *s, bool bOwn=false ):
+     TranscoderUTF16( s, bOwn, e_le )
+   {
+      m_bom = false;
+   }
+
+     virtual const String encoding() const { return "utf-16LE"; }
+};
+
+/** UTF-16BE encoding transcoder. */
+class TranscoderUTF16BE: public TranscoderUTF16
+{
+public:
+   TranscoderUTF16BE( Stream *s, bool bOwn=false ):
+     TranscoderUTF16( s, bOwn, e_be )
+   {
+      m_bom = false;
+   }
+
+   virtual const String encoding() const { return "utf-16BE"; }
+};
+
+
+
+
+typedef signed char sbyte;
+class TranscoderGBK: public Transcoder
+{
+
+   /*
+   * 2nd level index, provided by subclass
+   * every string has 0x10*(end-start+1) characters.
+   */
+
+   const static uint32 REPLACE_CHAR = 0xFFFD;
+   Table *decoderTable1;
+   Table *decoderTable2;
+   Table *encoderTable1;
+   Table *encoderTable2;
+   const static int  start = 0x40;
+   const static int  end =  0xFE;
+public:
+   TranscoderGBK( const TranscoderGBK &other ):
+      Transcoder( other ),
+         decoderTable1( other.decoderTable1 ),
+         decoderTable2( other.decoderTable2 ),
+         encoderTable1( other.encoderTable1 ),
+         encoderTable2( other.encoderTable2 )
+      {}
+
+   TranscoderGBK( Stream *s, bool bOwn=false ):
+      Transcoder(s, bOwn)
+      {
+         decoderTable1 = &gbkDecoderTable1;
+         decoderTable2 = &gbkDecoderTable2;
+         encoderTable1 = &gbkEncoderTable1;
+         encoderTable2 = &gbkEncoderTable2;
+      }
+
+      uint16 getUint16(Table *t, uint32 pos)
+      {
+         return ((uint16*)t->table)[pos];
+      }
+
+      uint32 getUTF16Char(uint16 *t, uint32 pos)
+      {
+         return t[pos];
+      }
+      Table * getTable(Table *t, uint32 pos)
+      {
+         return (Table*)t->table;
+      }
+
+      /*
+      protected char decodeSingle(int b) {
+      if (b >= 0)
+      return (char) b;
+      return REPLACE_CHAR;
+      }
+      */
+      uint32 decodeSingle(int b) {
+         if (b>=0)
+            return (uint32) b;
+         return REPLACE_CHAR;
+      }
+
+      /*
+      protected char decodeDouble(int byte1, int byte2) {
+      if (((byte1 < 0) || (byte1 > index1.length))
+      || ((byte2 < start) || (byte2 > end)))
+      return REPLACE_CHAR;
+
+      int n = (index1[byte1] & 0xf) * (end - start + 1) + (byte2 - start);
+      return index2[index1[byte1] >> 4].charAt(n);
+      }
+      */
+      uint32 decodeDouble(int byte1, int byte2) {
+         if (((byte1 <0 ) || (byte1 > decoderTable1->len))
+            || ((byte2 < start) || (byte2 > end)))
+            return REPLACE_CHAR;
+
+         int n = ( getUint16(decoderTable1, byte1)& 0xf) * (end - start + 1) + (byte2 - start);
+         Table *charTable = (getTable(decoderTable2, getUint16(decoderTable1, byte1) >> 4));
+         return getUTF16Char( (uint16*)charTable->table, n);
+      }
+
+      int encodeSingle(uint32 inputChar) {
+         if (inputChar < 0x80)
+            return (byte)inputChar;
+         else
+            return REPLACE_CHAR;
+      }
+
+      int encodeDouble(uint32 ch) {
+         int offset = getUint16(encoderTable1,((ch & 0xff00) >> 8 )) << 8;
+         Table *charTable = getTable(encoderTable2,offset >> 12);
+         return getUTF16Char((uint16*)charTable->table, (offset & 0xfff) + (ch & 0xff));
+      }
+
+      virtual bool get( uint32 &chr )
+      {
+         fputs("\nGet processing, convert to Unicode\n", stderr);
+         fflush(stderr);
+
+
+
+         m_parseStatus = true;
+
+         if( popBuffer( chr ) )
+            return true;
+
+         // converting the character into an unicode.
+         byte b1,b2;
+         if ( m_stream->read( &b1, 1 ) != 1 )
+            return false;
+
+         chr = decodeSingle(b1);
+         if (chr == REPLACE_CHAR)
+         {
+            b1 &= 0xff;
+            if (m_stream->read( &b2, 1 ) != 1)
+               return false;
+            chr = decodeDouble(b1, b2);
+         }
+
+         if (chr == REPLACE_CHAR)
+         {
+            chr = (uint32) '?';
+            m_parseStatus = false;
+         }
+
+         return true;
+      }
+
+      virtual bool put( uint32 chr )
+      {
+         fputs("\nPut processing, convert from Unicode\n", stderr);
+         fflush(stderr);
+
+         m_parseStatus = true;
+         int b = encodeSingle(chr);
+         byte bPtr[2];
+         if ( b != REPLACE_CHAR )
+         {
+            bPtr[0] = (byte)b;
+            return (m_stream->write( bPtr, 1 ) == 1);
+         }
+         int ncode = encodeDouble(chr);
+         if (ncode == 0 || chr == 0)
+         {
+            m_parseStatus = false;
+            return false;
+         }
+         bPtr[0] = (byte)((ncode & 0xff00) >> 8);
+         bPtr[1] = (byte)(ncode);
+         return ( m_stream->write(bPtr, 2) == 2 );
+      }
+
+      virtual const String encoding() const { return "gbk"; }
+      virtual FalconData *clone() const
+      {
+            return new TranscoderGBK( *this );
+      }
+};
+
+/** Base class for codepage like transcoders. */
+class TranscoderISO_CP: public Transcoder
+{
+protected:
+   TranscoderISO_CP( Stream *s, bool bOwn=false ):
+       Transcoder( s, bOwn )
+       {}
+
+    TranscoderISO_CP( const TranscoderISO_CP &other );
+
+       uint16 *m_directTable;
+       uint32 m_dirTabSize;
+       CP_ISO_UINT_TABLE *m_reverseTable;
+       uint32 m_revTabSize;
+public:
+
+
+   virtual bool get( uint32 &chr );
+   virtual bool put( uint32 chr );
+};
+
+class TranscoderCP1252:public TranscoderISO_CP
+{
+public:
+   TranscoderCP1252( const TranscoderCP1252 &other ):
+     TranscoderISO_CP( other )
+     {}
+
+     TranscoderCP1252( Stream *s, bool bOwn=false );
+     virtual const String encoding() const { return "cp1252"; }
+     virtual FalconData *clone() const;
+};
+
+/** Latin-1 (ISO8859_1) transcoder. */
+class TranscoderISO8859_1: public TranscoderISO_CP
+{
+public:
+   TranscoderISO8859_1( const TranscoderISO8859_1 &other ):
+     TranscoderISO_CP( other )
+     {}
+
+     TranscoderISO8859_1( Stream *s, bool bOwn=false );
+     virtual const String encoding() const { return "iso8859-1"; }
+     virtual FalconData *clone() const;
+};
+
+class TranscoderISO8859_2: public TranscoderISO_CP
+{
+public:
+   TranscoderISO8859_2( const TranscoderISO8859_2 &other ):
+     TranscoderISO_CP( other )
+     {}
+
+     TranscoderISO8859_2( Stream *s, bool bOwn=false );
+     virtual const String encoding() const { return "iso8859-2"; }
+     virtual FalconData *clone() const;
+};
+
+class TranscoderISO8859_3: public TranscoderISO_CP
+{
+public:
+   TranscoderISO8859_3( const TranscoderISO8859_3 &other ):
+     TranscoderISO_CP( other )
+     {}
+
+     TranscoderISO8859_3( Stream *s, bool bOwn=false );
+     virtual const String encoding() const { return "iso8859-3"; }
+     virtual FalconData *clone() const;
+};
+
+
+class TranscoderISO8859_4: public TranscoderISO_CP
+{
+public:
+   TranscoderISO8859_4( const TranscoderISO8859_4 &other ):
+     TranscoderISO_CP( other )
+     {}
+
+     TranscoderISO8859_4( Stream *s, bool bOwn=false );
+     virtual const String encoding() const { return "iso8859-4"; }
+     virtual FalconData *clone() const;
+};
+
+class TranscoderISO8859_5: public TranscoderISO_CP
+{
+public:
+   TranscoderISO8859_5( const TranscoderISO8859_5 &other ):
+     TranscoderISO_CP( other )
+     {}
+
+     TranscoderISO8859_5( Stream *s, bool bOwn=false );
+     virtual const String encoding() const { return "iso8859-5"; }
+     virtual FalconData *clone() const;
+};
+
+class TranscoderISO8859_6: public TranscoderISO_CP
+{
+public:
+   TranscoderISO8859_6( const TranscoderISO8859_6 &other ):
+     TranscoderISO_CP( other )
+     {}
+
+     TranscoderISO8859_6( Stream *s, bool bOwn=false );
+     virtual const String encoding() const { return "iso8859-6"; }
+     virtual FalconData *clone() const;
+};
+
+class TranscoderISO8859_7: public TranscoderISO_CP
+{
+public:
+   TranscoderISO8859_7( const TranscoderISO8859_7 &other ):
+     TranscoderISO_CP( other )
+     {}
+
+     TranscoderISO8859_7( Stream *s, bool bOwn=false );
+     virtual const String encoding() const { return "iso8859-7"; }
+     virtual FalconData *clone() const;
+};
+
+class TranscoderISO8859_8: public TranscoderISO_CP
+{
+public:
+   TranscoderISO8859_8( const TranscoderISO8859_8 &other ):
+     TranscoderISO_CP( other )
+     {}
+
+     TranscoderISO8859_8( Stream *s, bool bOwn=false );
+     virtual const String encoding() const { return "iso8859-8"; }
+     virtual FalconData *clone() const;
+};
+
+class TranscoderISO8859_9: public TranscoderISO_CP
+{
+public:
+   TranscoderISO8859_9( const TranscoderISO8859_9 &other ):
+     TranscoderISO_CP( other )
+     {}
+
+     TranscoderISO8859_9( Stream *s, bool bOwn=false );
+     virtual const String encoding() const { return "iso8859-9"; }
+     virtual FalconData *clone() const;
+};
+
+class TranscoderISO8859_10: public TranscoderISO_CP
+{
+public:
+   TranscoderISO8859_10( const TranscoderISO8859_10 &other ):
+     TranscoderISO_CP( other )
+     {}
+
+     TranscoderISO8859_10( Stream *s, bool bOwn=false );
+     virtual const String encoding() const { return "iso8859-10"; }
+     virtual FalconData *clone() const;
+};
+
+class TranscoderISO8859_11: public TranscoderISO_CP
+{
+public:
+   TranscoderISO8859_11( const TranscoderISO8859_11 &other ):
+     TranscoderISO_CP( other )
+     {}
+
+     TranscoderISO8859_11( Stream *s, bool bOwn=false );
+     virtual const String encoding() const { return "iso8859-11"; }
+     virtual FalconData *clone() const;
+};
+
+class TranscoderISO8859_13: public TranscoderISO_CP
+{
+public:
+   TranscoderISO8859_13( const TranscoderISO8859_13 &other ):
+     TranscoderISO_CP( other )
+     {}
+
+     TranscoderISO8859_13( Stream *s, bool bOwn=false );
+     virtual const String encoding() const { return "iso8859-13"; }
+     virtual FalconData *clone() const;
+};
+
+class TranscoderISO8859_14: public TranscoderISO_CP
+{
+public:
+   TranscoderISO8859_14( const TranscoderISO8859_14 &other ):
+     TranscoderISO_CP( other )
+     {}
+
+     TranscoderISO8859_14( Stream *s, bool bOwn=false );
+     virtual const String encoding() const { return "iso8859-14"; }
+     virtual FalconData *clone() const;
+};
+
+class TranscoderISO8859_15: public TranscoderISO_CP
+{
+public:
+   TranscoderISO8859_15( const TranscoderISO8859_15 &other ):
+     TranscoderISO_CP( other )
+     {}
+
+     TranscoderISO8859_15( Stream *s, bool bOwn=false );
+     virtual const String encoding() const { return "iso8859-15"; }
+     virtual FalconData *clone() const;
+};
 
 //=============================================================================
 // Transcoder class
@@ -957,6 +1426,8 @@ Transcoder *TranscoderFactory( const String &encoding, Stream *stream, bool own 
    if ( encoding == "iso8859-15" )
       return new TranscoderISO8859_15( stream, own );
 
+   if ( encoding == "gbk" )
+      return new TranscoderGBK(stream, own);
    return 0;
 }
 

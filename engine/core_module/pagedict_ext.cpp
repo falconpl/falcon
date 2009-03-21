@@ -30,7 +30,7 @@ namespace core {
 
    The function returns a Falcon dictionary that can be handled exactly as a normal
    dictionary. The difference is only in the internal management of memory allocation
-   and tree balance. Default Falcon dictionaries (the ones created with the “[=>]”
+   and tree balance. Default Falcon dictionaries (the ones created with the "[=>]"
    operator) are internally represented as paired linear vectors of ordered entries.
    They are extremely efficient to store a relatively small set of data, whose size,
    and possibly key order, is known in advance. As this is exactly the condition under

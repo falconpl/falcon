@@ -54,6 +54,7 @@ using namespace Falcon;
 *********************************************/
 /** Options for falcon command line */
 static HOptions options;
+
 Stream *stdOut;
 Stream *stdErr;
 Stream *stdIn;

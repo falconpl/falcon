@@ -53,7 +53,7 @@ namespace core {
 
 /*#
    @function getSystemEncoding
-   @brief Returns the “official” system encoding, if it matches with one known by Falcon.
+   @brief Returns the "official" system encoding, if it matches with one known by Falcon.
    @return The system encoding name.
 
    This function will return the name under which Falcon knows the default

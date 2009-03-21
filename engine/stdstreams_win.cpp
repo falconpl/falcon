@@ -48,6 +48,8 @@ Stream *stdInputStream()
    return coder;
 }
 
+
+
 Stream *stdOutputStream()
 {
    Stream *stdout = new StreamBuffer( new StdOutStream );
