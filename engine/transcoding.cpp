@@ -152,8 +152,8 @@ class TranscoderGBK: public Transcoder
    Table *decoderTable2;
    Table *encoderTable1;
    Table *encoderTable2;
-   const static int  start = 0x40;
-   const static int  end =  0xFE;
+   const static uint32  start = 0x40;
+   const static uint32  end =  0xFE;
 public:
    TranscoderGBK( const TranscoderGBK &other ):
       Transcoder( other ),
@@ -194,7 +194,7 @@ public:
       }
       */
       uint32 decodeSingle(int b) {
-         if (b>0)
+         if (b<0x80)
             return (uint32) b;
          return REPLACE_CHAR;
       }
@@ -214,9 +214,9 @@ public:
             || ((byte2 < start) || (byte2 > end)))
             return REPLACE_CHAR;
 
-         int n0 = getUint16(decoderTable1, (byte1+0x80) );
+         int n0 = getUint16(decoderTable1, byte1 );
          int n = n0 * (end - start + 1) + (byte2 - start);
-         Table *charTable = getTable(decoderTable2, getUint16(decoderTable1, byte1>> 4));
+         Table *charTable = getTable(decoderTable2, getUint16(decoderTable1, byte1)>>4);
          return getUTF16Char( (uint16*)charTable->table, n);
       }
 
@@ -235,28 +235,24 @@ public:
 
       virtual bool get( uint32 &chr )
       {
-         fprintf(stderr, "Get processing, convert to Unicode\n");
-
          m_parseStatus = true;
 
          if( popBuffer( chr ) )
             return true;
 
          // converting the character into an unicode.
-         signed char b1;
+         byte b1;
          byte b2;
-         if ( m_stream->read( (byte*)&b1, 1 ) != 1 )
+         if ( m_stream->read( &b1, 1 ) != 1 )
             return false;
 
          chr = decodeSingle(b1);
-         fprintf(stderr, "B1=%d, chr=%d\n", b1, chr);
          if (chr == REPLACE_CHAR)
          {
-            b1 &=0x7F;
             if (m_stream->read( &b2, 1 ) != 1)
                return false;
             chr = decodeDouble(b1, b2);
-            fprintf(stderr, "B1=%d, B2=%d, chr=%d\n", b1, b2, chr);
+            fprintf(stderr, "B1=%d, B2=%d, chr=%x\n", (int)b1, (int)b2, chr);
          }
 
          if (chr == REPLACE_CHAR)
