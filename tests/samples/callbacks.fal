@@ -24,35 +24,38 @@
    See LICENSE file for licensing details.
 */
 
-attributes: scope
-
 class Manager( name )
    name = name
-   // we'll use a cached call on marshallCBX to handle scope messages
-   // the "on'" parameter means that each event should be handled by
-   // a function starting with "on" and with the next letter capitalized.
-   scope = [marshalCBX, "on'", false]
 
+   // let's subscribe at creation
+   init
+      subscribe( "scope", self )
+   end
+
+   function on_scope( msg )
+      try
+         self.getProperty( "on_" + msg[0] )(msg[1])
+      catch AccessError
+         > "Malformed command"
+      end
+   end
+   
    // Just say the parameter and block processing
-   function onTest( p1 )
+   function on_test( p1 )
       > self.name, ": onTest - ", p1
-      return true
    end
 
    // Just say the parameter but allow broadcast over scope
-   function onPass( p1 )
+   function on_pass( p1 )
       > self.name, ": onPass - ", p1
-      return false
    end
 
    // say the parameter, block broadcast but remove ourself
-   function onRemove( p1 )
+   function on_remove( p1 )
       > self.name, ": onRemove - ", p1
-      give not scope to self
-      return true
+      unsubscribe( "scope", self )
+      consume()
    end
-
-   has scope
 end
 
 //=====================================================
@@ -79,6 +82,8 @@ while line
    // splits the line in words
    msg = strSplit( line, " " )
    // boradcasts the message through the 'scope' parameter
-   broadcast( scope, msg )
+   broadcast( "scope", msg )
    >> "> "; line = input()
 end
+
+/* end of file */
