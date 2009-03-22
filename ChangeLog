@@ -84,6 +84,7 @@ Falcon (0.9)
            executed. Won't work with methods for now.
   * minor: Added 'getProperty' and 'setProperty' methods to deep items
            meta-classes.
+  * minor: Added 'name' and 'caller' methods to function metaclass.
 
 Falcon (0.8.14)
   * fixed: Now asObject() raises an error if the item is not an object;
