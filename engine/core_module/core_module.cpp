@@ -371,7 +371,7 @@ Module* core_module_init()
    method_meta->getClassDef()->addInheritance( new Falcon::InheritDef( bom_meta ) );
    method_meta->exported( false );
    method_meta->getClassDef()->setMetaclassFor( FLC_ITEM_METHOD );
-   self->addClassMethod( method_meta, "object", &Falcon::core::Method_object );
+   self->addClassMethod( method_meta, "source", &Falcon::core::Method_source );
 
 
    Falcon::Symbol *class_meta = self->addClass( "Class" );

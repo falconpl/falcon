@@ -148,7 +148,7 @@ FALCON_FUNC MemoryBuffer_fill( ::Falcon::VMachine *vm );
 FALCON_FUNC MemoryBuffer_compact( ::Falcon::VMachine *vm );
 FALCON_FUNC MemoryBuffer_remaining( ::Falcon::VMachine *vm );
 
-FALCON_FUNC Method_object( ::Falcon::VMachine *vm );
+FALCON_FUNC Method_source( ::Falcon::VMachine *vm );
 
 
 FALCON_FUNC  core_any ( ::Falcon::VMachine *vm );

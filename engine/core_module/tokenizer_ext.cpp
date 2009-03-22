@@ -22,6 +22,7 @@ namespace core {
 
 /*#
    @class Tokenizer
+   @brief Simple stream-oriented parser for efficient basic recognition of incoming data.
    @optparam seps A string representing the separators.
    @optparam options Tokenization options.
    @optparam tokLen Maximum length of returned tokens.

@@ -988,16 +988,17 @@ FALCON_FUNC mth_derivedFrom( VMachine *vm )
 }
 
 /*#
-   @method object Method
+   @method source Method
    @brief Returns the object associated with this method.
    @return The object from which this method was created.
 
    Returns an object (or an item, in case this is a BOM method) that
    gave birth to this method.
 */
-FALCON_FUNC Method_object( VMachine *vm )
+FALCON_FUNC Method_source( VMachine *vm )
 {
-   vm->retval( vm->self() );
+   Item *self = vm->self().dereference();
+   vm->retval( self->isMethod() ? self->asMethodItem() : *self );
 }
 
 }

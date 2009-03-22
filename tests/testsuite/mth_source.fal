@@ -1,0 +1,34 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 27a
+* Category: methods
+* Subcategory:
+* Short: Method ops
+* Description:
+*   Method persistency and operations.
+* [/Description]
+*
+****************************************************************************/
+
+// bom methods
+x = 1.toString
+if x.typeId() != MethodType: failure( "BOM Method type" )
+if x() != "1": failure( "BOM method base" )
+if x.source() != 1: failure( "BOM method source" )
+
+// normal methods
+object AnObj
+   function some()
+      return "Some"
+   end
+end
+
+x = AnObj.some
+if x.typeId() != MethodType: failure( "Method type" )
+if x() != "Some": failure( "Method base" )
+if x.source() != AnObj: failure( "Method source" )
+
+success()
+
+/* End of file */
