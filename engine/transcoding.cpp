@@ -211,7 +211,7 @@ public:
       {
          chr = b1;
       }
-      else 
+      else
       {
 #define FULL_CONVERT
 #ifdef FULL_CONVERT
@@ -223,7 +223,7 @@ public:
          {
             chr = 0xf8f5;
          }
-         else 
+         else
 #endif
          {
             if (m_stream->read( &b2, 1 ) != 1)
@@ -278,7 +278,7 @@ public:
    }
 
    virtual const String encoding() const { return "gbk"; }
-   
+
    virtual FalconData *clone() const
    {
       return new TranscoderGBK( *this );
@@ -1349,8 +1349,7 @@ FalconData *TranscoderISO8859_15::clone() const
 // Utilities
 
 Transcoder *TranscoderFactory( const String &encoding, Stream *stream, bool own )
-{   fprintf(stderr, "Table 1 Length=%\u index=%\u\n", gbkDecoderTable1.len, (int)gbkDecoderIndex1[128]);
-
+{
    if ( encoding == "C" )
       return new TranscoderByte( stream, own );
 
