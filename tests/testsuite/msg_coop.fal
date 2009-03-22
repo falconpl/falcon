@@ -1,0 +1,47 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 38d
+* Category: messages
+* Subcategory: 
+* Short: Message cooperation
+* Description:
+*   Check the cooperation on messages (parameter modify, message stealing)
+* [/Description]
+*
+****************************************************************************/
+
+function handler1( data )
+   // mark us
+   data += "handler1"
+   // declare the data done if marked
+   if "marker" in data: consume()
+end
+
+function handler2( data )
+   // mark us
+   data += "handler2"
+   // declare the data done if marked
+   if "marker" in data: consume()
+end
+
+// Subscribe the handlers
+subscribe( "msg", handler1 )
+subscribe( "msg", handler2 )
+
+// do a first broadcast with the data and see if they're in
+data = []
+broadcast( "msg", data )
+if "handler1" notin data: failure( "First handler not in - 1" )
+if "handler2" notin data: failure( "Second handler not in - 1" )
+
+// Then, tell our handlers to rip the data from the other.
+data = ["marker"]
+broadcast( "msg", data )
+if "handler1" in data and "handler2" in data
+   failure( "Signal not consumed" )
+end
+
+success()
+
+/* end of file */

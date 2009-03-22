@@ -1,0 +1,80 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 38a
+* Category: messages
+* Subcategory:
+* Short: Basic message
+* Description:
+*   Test for subscribe and broadcast functions.
+* [/Description]
+*
+****************************************************************************/
+
+function handler1( z, y )
+   global h1c
+   // check for unordered parameters too
+   h1c = [z, y]
+end
+
+function handler2( value1, value2 )
+   global h2c
+   h2c = [value1, value2]
+end
+
+object hobj
+   function on_msg( value1, value2 )
+      global hmth
+      hmth = [value1, value2]
+   end
+end
+
+// Test1: see if a call passes through all
+subscribe( "msg", handler1 )
+subscribe( "msg", handler2 )
+subscribe( "msg", hobj )
+
+broadcast( "msg", 'first', 'second' )
+if h1c.len() != 2: failure( "Forming of handler1 - 1" )
+if h2c.len() != 2: failure( "Forming of handler2 - 1" )
+if hmth.len() != 2: failure( "Forming of handler3 - 1" )
+
+if h1c[0] != 'first' or h1c[1] != 'second': failure( "Content of handler1 - 1" )
+if h2c[0] != 'first' or h2c[1] != 'second': failure( "Content of handler2 - 1" )
+if hmth[0] != 'first' or hmth[1] != 'second': failure( "Content of handler3 - 1" )
+
+// Test2: check for unsubscription
+h1c = nil
+h2c = nil
+hmth = nil
+unsubscribe( "msg", handler1 )
+unsubscribe( "msg", handler2 )
+// allow the hobj to stay to see we did the call.
+broadcast( "msg", 'first', 'second' )
+if hmth.len() != 2: failure( "Element still subscribed not called after unsub" )
+if h1c != nil: failure( "Unsubscribed handler1 called" )
+if h2c != nil: failure( "Unsubscribed handler2 called" )
+
+// Test3: complete unsubscription
+hmth = nil
+unsubscribe( "msg", hobj )
+broadcast( "msg", 'first', 'second' )
+if hmth != nil : failure( "Single handler called after unsubscription" )
+
+// Test4: see if we can force the object handler to handle other messages.
+subscribe( "other", hobj.on_msg )
+broadcast( "other", 'first', 'second' )
+if hmth[0] != 'first' or hmth[1] != 'second': failure( "Content of handler3 - 1" )
+
+// Test5: see if we raise a failure in case of unhandled message in objects
+subscribe( "another", hobj )
+try
+   broadcast( "another", 'first', 'second' )
+   failure( "Error not raised for missing handler" )
+catch AccessError
+   // it's ok
+end
+
+success()
+
+/* End of file */

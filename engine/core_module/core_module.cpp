@@ -945,7 +945,7 @@ Module* core_module_init()
    self->addExtFunc( "unsubscribe", &Falcon::core::unsubscribe )->
       addParam("msg")->addParam("handler");
    self->addExtFunc( "getSlot", &Falcon::core::getSlot )->
-      addParam("msg");
+      addParam("msg")->addParam( "make" );
    self->addExtFunc( "consume", &Falcon::core::consume );
    self->addExtFunc( "assert", &Falcon::core::assert )->
       addParam("msg")->addParam("data");
@@ -954,10 +954,9 @@ Module* core_module_init()
    self->addExtFunc( "getAssert", &Falcon::core::getAssert )->
       addParam("msg")->addParam( "default" );
 
-   Falcon::Symbol *vmslot_class = self->addClass( "VMSlot" );
+   Falcon::Symbol *vmslot_class = self->addClass( "VMSlot", &Falcon::core::VMSlot_init )->
+      addParam("name");
    vmslot_class->setWKS( true );
-   //vmslot_class->getClassDef()->setObjectManager( &core_slot_manager );
-   vmslot_class->exported( false );
 
    // methods -- the first example is equivalent to the following.
    self->addClassMethod( vmslot_class, "broadcast", &Falcon::core::VMSlot_broadcast );

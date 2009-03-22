@@ -52,60 +52,25 @@ static void check_assertion( VMachine *vm, CoreSlot *cs, const Item &itm )
 */
 
 /*#
-   @class VMSlot
-   @brief Subscription slot for Message Oriented Programming.
-*/
-
-/*#
    @function broadcast
    @param msg A message (string) to be broadcast.
-   @param ... Zero or more data to be broadcaset.
-   @brief Send a message to every object having an attribute.
+   @optparam ... Zero or more data to be broadcaset.
+   @brief Sends a message to every callable item subscribed to a message.
+   @return true if @a msg is found, false if it doesn't exist.
+   @see VMSlot
+   @see getSlot
 
-   This function iterates over all the items having a certain attribute; if those objects provide a method
-   named exactly as the attribute, then that method is called. A method can declare that it has "consumed"
-   the message (i.e. done what is expected to be done) by returning true. In this case, the call chain is
-   interrupted and broadcast returns. A method not wishing to prevent other methods to receive the incoming
-   message must return false. Returning true means "yes, I have handled this message,
-   no further processing is needed".
+   Broadcast function implicitly searches for a Virtual Machine Message Slot (@a VMSlot)
+   with the given @a msg name, and if it finds it, it emits a broadcast on that.
 
-   It is also possible to have the caller of broadcast to receive a return value created by the handler;
-   If the handler returns an out of band item (using @a oob) propagation of the message is stopped and
-   the value is returned directly to the caller of the @b broadcast function.
+   If the message is not found, the broadcast is silently dropped (no error is raised),
+   but the function returns false.
 
-   The order in which the objects receive the message is random; there isn't any priority across a single
-   attribute message. For this reason, the second form of broadcast function is provided. To implement
-   priority processing, it is possible to broadcast a sequence of attributes. In that case, all the
-   objects having the first attribute will receive the message, and will have a chance to stop
-   further processing, before any item having the second attribute is called and so on.
-
-   The broadcast function can receive other parameters; in that case the remaining parameters are passed
-   as-is to the handlers.
-
-   Items having a certain attribute and receiving a broadcast over it need not to implement an handler.
-   If they don't provide a method having the same name of the broadcast attribute, they are simply
-   skipped. The same happens if they provide a property which is not callable; setting an handler to
-   a non-callable item is a valid operation to disable temporarily message processing.
-
-   An item may be called more than once in a single chained broadcast call if it has more than one of
-   the attributes being broadcast and if it provides methods to handle the messages.
-
-   It is possible to receive more than one broadcast in the same handler using the "same handler idiom":
-   setting a property to a method of the same item in the init block or in the property initialization.
-   In example:
-
-   @code
-      attributes: attr_one, attr_two
-
-      object handler
-         attr_two = attr_one
-         function attr_one( param )
-            // do something
-            return false
-         end
-         has attr_one, attr_two
-      end
-   @endcode
+   As calling this function requires a scan in the virtual machine message slot
+   table, in case of repeated operations it is preferable to explicitly search for
+   a slot with @a getSlot, or to create it as an @a VMSlot instance. On the other hand,
+   if the reference to a VMSlot is not needed, this function allows to broadcast on the
+   slot without adding the overhead required by the creation of the @a VMSlot wrapper.
 */
 
 FALCON_FUNC  broadcast( ::Falcon::VMachine *vm )
@@ -119,14 +84,15 @@ FALCON_FUNC  broadcast( ::Falcon::VMachine *vm )
    }
 
    CoreSlot* cs = vm->getSlot( *i_msg->asString(), false );
-   if ( cs == false )
+   if ( cs )
    {
-      vm->raiseRTError( new ParamError( ErrorParam( e_param_range ).
-         extra( "message not found" ) ) );
-      return;
+      cs->prepareBroadcast( vm, 1, vm->paramCount() - 1 );
+      vm->regA().setBoolean(true);
    }
+   else
+      vm->regA().setBoolean(false);
 
-   cs->prepareBroadcast( vm, 1, vm->paramCount() - 1 );
+   // otherwise, we're nothing to do here.
 }
 
 /*#
@@ -199,7 +165,7 @@ FALCON_FUNC unsubscribe( ::Falcon::VMachine *vm )
    @function getSlot
    @brief Retreives a MOP Message slot.
    @param msg The message slot that must be taken or created.
-   @param handler A callable item or instance providing callback support.
+   @optparam make If true (default) create the slot if it doesn't exist.
    @return The message slot coresponding with this name.
 */
 FALCON_FUNC getSlot( ::Falcon::VMachine *vm )
@@ -213,13 +179,20 @@ FALCON_FUNC getSlot( ::Falcon::VMachine *vm )
       return;
    }
 
-   CoreSlot* cs = vm->getSlot( *i_msg->asString()  );
-
-   Item* cc_slot = vm->findWKI( "VMSlot" );
-   fassert( cc_slot != 0 );
-   cs->incref();
-   CoreObject *obj = cc_slot->asClass()->createInstance( cs );
-   vm->retval( obj );
+   CoreSlot* cs = vm->getSlot( *i_msg->asString(), (vm->param(1) == 0 || vm->param(1)->isTrue())  );
+   if ( cs == 0 )
+   {
+      vm->raiseRTError( new MessageError( ErrorParam( e_inv_params ).
+         extra( *i_msg->asString() ) ) );
+   }
+   else
+   {
+      Item* cc_slot = vm->findWKI( "VMSlot" );
+      fassert( cc_slot != 0 );
+      cs->incref();
+      CoreObject *obj = cc_slot->asClass()->createInstance( cs );
+      vm->retval( obj );
+   }
 }
 
 
@@ -290,7 +263,7 @@ FALCON_FUNC retract( ::Falcon::VMachine *vm )
    @function getAssert
    @brief Returns the given assertion, if it exists.
    @param msg The message slot on which the assertion is to be ckeched.
-   @optparam default If given, instead of raising in case the essartion is not found, return this item.
+   @optparam default If given, instead of raising in case the assertion is not found, return this item.
    @raise MessageError if the given message is not asserted.
 */
 FALCON_FUNC getAssert( ::Falcon::VMachine *vm )
@@ -306,9 +279,14 @@ FALCON_FUNC getAssert( ::Falcon::VMachine *vm )
    CoreSlot* cs = vm->getSlot( *i_msg->asString(), true );
    if ( cs == 0 )
    {
-      vm->raiseRTError( new MessageError( ErrorParam( e_inv_params ).
-         extra( *i_msg->asString() ) ) );
-      return;
+      if ( vm->paramCount() > 1 )
+      {
+         vm->retval(*vm->param(1));
+      }
+      else {
+         vm->raiseRTError( new MessageError( ErrorParam( e_inv_params ).
+            extra( *i_msg->asString() ) ) );
+      }
    }
    else
    {
@@ -316,7 +294,7 @@ FALCON_FUNC getAssert( ::Falcon::VMachine *vm )
       {
          vm->regA() = cs->assertion();
       }
-      else 
+      else
       {
          if ( vm->param(0) )
          {
@@ -326,7 +304,7 @@ FALCON_FUNC getAssert( ::Falcon::VMachine *vm )
             vm->raiseRTError( new MessageError( ErrorParam( e_inv_params ).
                extra( *i_msg->asString() ) ) );
          }
-   
+
       }
    }
 }
@@ -334,6 +312,53 @@ FALCON_FUNC getAssert( ::Falcon::VMachine *vm )
 //================================================================================
 // VMSlot wrapper class.
 //
+
+/*#
+   @class VMSlot
+   @brief VM Interface for message oriented programming operations.
+   @param name The name of the mesasge managed by this VMSlot.
+
+   The VMSlot instance is a direct interface to the messaging
+   facility of the VM creating it. It is implicitly created by
+   the @a getSlot function, but it can be directly created by
+   the user.
+
+   If a slot with the given name didn't previously exist,
+   a new message slot is created in the virtual machine, otherwise
+   the already existing slot is wrapped in the returned instance.
+
+   @code
+      // create a message slot
+      x = VMSlot( "message" )
+      x.subscribe( handler )
+      ...
+      y = VMSlot( "message" )
+      y.broadcast( "value" )  // handler is called.
+   @endcode
+
+   Same happens if the VMSlot is created via @a getSlot, or implicitly
+   referenced via @a subscribe function. Slots are considered
+   unique by name, so that comparisons on slots are performed
+   on their names.
+*/
+
+/*#
+   @init VMSlot
+   @brief Creates MOP Message slot.
+*/
+FALCON_FUNC VMSlot_init( ::Falcon::VMachine *vm )
+{
+   Item *i_msg = vm->param( 0 );
+
+   if ( i_msg == 0 || ! i_msg->isString() )
+   {
+      vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).
+         extra( "S" ) ) );
+      return;
+   }
+
+   vm->self().asObjectSafe()->setUserData(vm->getSlot( *i_msg->asString(), true ) );
+}
 
 
 /*#

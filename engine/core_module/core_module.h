@@ -118,6 +118,7 @@ FALCON_FUNC  assert( ::Falcon::VMachine *vm );
 FALCON_FUNC  retract( ::Falcon::VMachine *vm );
 FALCON_FUNC  getAssert( ::Falcon::VMachine *vm );
 
+FALCON_FUNC  VMSlot_init( ::Falcon::VMachine *vm );
 FALCON_FUNC  VMSlot_prepend( ::Falcon::VMachine *vm );
 FALCON_FUNC  VMSlot_broadcast( ::Falcon::VMachine *vm );
 FALCON_FUNC  VMSlot_subscribe( ::Falcon::VMachine *vm );

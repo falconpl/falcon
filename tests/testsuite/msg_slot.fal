@@ -1,0 +1,97 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 38b
+* Category: messages
+* Subcategory: slots
+* Short: Basic slots
+* Description:
+*   Same as 38a, but using the VMSlot instance interface instead.
+* [/Description]
+*
+****************************************************************************/
+
+function handler1( z, y )
+   global h1c
+   // check for unordered parameters too
+   h1c = [z, y]
+end
+
+function handler2( value1, value2 )
+   global h2c
+   h2c = [value1, value2]
+end
+
+object hobj
+   function on_msg( value1, value2 )
+      global hmth
+      hmth = [value1, value2]
+   end
+end
+
+// Test1: see if a call passes through all
+msg = getSlot( "msg", true )
+msg.subscribe( handler1 )
+msg.subscribe( handler2 )
+msg.subscribe( hobj )
+
+msg.broadcast( 'first', 'second' )
+if h1c.len() != 2: failure( "Forming of handler1 - 1" )
+if h2c.len() != 2: failure( "Forming of handler2 - 1" )
+if hmth.len() != 2: failure( "Forming of handler3 - 1" )
+
+if h1c[0] != 'first' or h1c[1] != 'second': failure( "Content of handler1 - 1" )
+if h2c[0] != 'first' or h2c[1] != 'second': failure( "Content of handler2 - 1" )
+if hmth[0] != 'first' or hmth[1] != 'second': failure( "Content of handler3 - 1" )
+
+// Test1.1 -- verify the slot is not re-created if reget.
+msg = getSlot( "msg", true )
+h1c = nil
+h2c = nil
+hmth = nil
+msg.broadcast( 'first', 'second' )
+if h1c[0] != 'first' or h1c[1] != 'second': failure( "Content of handler1 - 2" )
+if h2c[0] != 'first' or h2c[1] != 'second': failure( "Content of handler2 - 2" )
+if hmth[0] != 'first' or hmth[1] != 'second': failure( "Content of handler3 - 2" )
+
+// Test1.2 -- verify the slot is not re-created if using VMSlot.
+msg = VMSlot( "msg" )
+h1c = nil
+h2c = nil
+hmth = nil
+msg.broadcast( 'first', 'second' )
+if h1c[0] != 'first' or h1c[1] != 'second': failure( "Content of handler1 - 3" )
+if h2c[0] != 'first' or h2c[1] != 'second': failure( "Content of handler2 - 3" )
+if hmth[0] != 'first' or hmth[1] != 'second': failure( "Content of handler3 - 3" )
+
+// Test2: check for unsubscription
+h1c = nil
+h2c = nil
+hmth = nil
+msg.unsubscribe( handler1 )
+msg.unsubscribe( handler2 )
+// allow the hobj to stay to see we did the call.
+msg.broadcast( 'first', 'second' )
+if hmth.len() != 2: failure( "Element still subscribed not called after unsub" )
+if h1c != nil: failure( "Unsubscribed handler1 called" )
+if h2c != nil: failure( "Unsubscribed handler2 called" )
+
+// Test3: complete unsubscription
+hmth = nil
+msg.unsubscribe( hobj )
+msg.broadcast( 'first', 'second' )
+if hmth != nil : failure( "Single handler called after unsubscription" )
+
+// Test5: see if we raise a failure in case of unhandled message in objects
+msg = VMSlot( "another" )
+msg.subscribe( hobj )
+try
+   msg.broadcast( 'first', 'second' )
+   failure( "Error not raised for missing handler" )
+catch AccessError
+   // it's ok
+end
+
+success()
+
+/* End of file */

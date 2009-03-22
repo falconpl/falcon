@@ -90,7 +90,7 @@ void co_string_add( const Item& first, const Item& second, Item& third )
 {
    String *sf = first.asString();
    CoreString *dest = new CoreString( *sf );
-   
+
    // Clones also garbage status
 
    const Item *op2 = second.dereference();
@@ -107,7 +107,7 @@ void co_string_add( const Item& first, const Item& second, Item& third )
          vm->itemToString( tgt, op2 ); // may raise
       else
          op2->toString( tgt );
-         
+
       dest->append( tgt );
    }
 
@@ -122,10 +122,17 @@ void co_dict_add( const Item& first, const Item& second, Item& third )
 
    if ( op2->isDict() )
    {
-      CoreDict *dict = new LinearDict( source->length() + op2->asDict()->length() );
-      dict->merge( *source );
-      dict->merge( *op2->asDict() );
-      third = dict;
+      // adjust for self-operations (do not clone if target == source)
+      if( third.isDict() && third.asDict() == source )
+      {
+         source->merge( *op2->asDict() );
+      }
+      else {
+         CoreDict *dict = new LinearDict( source->length() + op2->asDict()->length() );
+         dict->merge( *source );
+         dict->merge( *op2->asDict() );
+         third = dict;
+      }
       return;
    }
 
@@ -135,7 +142,10 @@ void co_dict_add( const Item& first, const Item& second, Item& third )
 
 void co_array_add( const Item& first, const Item& second, Item& third )
 {
-   CoreArray *array = first.asArray()->clone();
+   // adjust for self-operations (do not clone if target == source)
+   CoreArray *array = third.isArray() && third.asArray() == first.asArray() ?
+         first.asArray() :
+         first.asArray()->clone();
    const Item *op2 = second.dereference();
 
    if ( op2->isArray() )
@@ -1136,7 +1146,7 @@ int co_object_compare( const Item& first, const Item& second )
    else
    {
       CoreObject *self = first.asObjectSafe();
-      
+
       // do we have an active VM?
       VMachine *vm = VMachine::getCurrent();
       if ( vm != 0 )
@@ -1153,7 +1163,7 @@ int co_object_compare( const Item& first, const Item& second )
             }
          }
       }
-      
+
       // by fallback -- use normal ordering.
       if( second.isObject() )
          return (int)(self - second.asObjectSafe());
@@ -1346,7 +1356,7 @@ void co_string_setindex( const Item &item, const Item &idx, Item &result )
    {
       const_cast<Item *>(&item )->setString( new CoreString( *item.asString() ) );
    }
-   
+
    item.asString()->writeIndex( idx, result );
 }
 
@@ -1519,7 +1529,7 @@ void co_class_getproperty( const Item &item, const String &idx, Item &result )
    VMachine* vm = VMachine::getCurrent();
    fassert( vm != 0 );
    CoreClass* cc = vm ->getMetaClass( FLC_ITEM_CLASS );
-   
+
    uint32 id;
    if ( cc != 0 && cc->properties().findKey( idx, id ) )
    {
@@ -1648,7 +1658,7 @@ void co_call_array( const Item &itm, VMachine *vm, int paramCount )
                         // we must create bindings for this array.
                         bindings = arr->makeBindings();
                      }
-                     
+
                      if ( bindings != 0 )
                      {
                         // have we got this binding?
@@ -1658,7 +1668,7 @@ void co_call_array( const Item &itm, VMachine *vm, int paramCount )
                            arr->setProperty( *itm.asLBind(), Item() );
                            bound = bindings->find( *itm.asLBind() );
                         }
-                        
+
                         vm->currentStack().itemAt( i + sizeNow ) = *bound;
                      }
                      else

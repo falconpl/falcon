@@ -1,0 +1,52 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 38e
+* Category: messages
+* Subcategory: GC
+* Short: GC & msgs
+* Description:
+*   Verifies survival of message handlers and data across garbage collection.
+* [/Description]
+*
+****************************************************************************/
+
+function handler1( data )
+   // mark us
+   data += "handler1"
+   // destroy the data
+   data = nil
+   // perform GC
+   GC.perform( true )
+end
+
+function handler2( data )
+   // mark us
+   data += "handler2"
+   // destroy the data
+   data = nil
+   // perform GC
+   GC.perform( true )
+end
+
+// Subscribe the handlers
+subscribe( "msg", handler1 )
+subscribe( "msg", handler2 )
+//now fre the handler symbols so that their function can be reclaimed
+handler1 = nil
+handler2 = nil
+
+// do a first broadcast with the data and see if they're in
+data = []
+broadcast( "msg", data )
+if "handler1" notin data: failure( "First handler not in - 1" )
+if "handler2" notin data: failure( "Second handler not in - 1" )
+
+// again, but this time use volatile data
+broadcast( "msg", [] )
+
+// if we were wrong we would crash here.
+
+success()
+
+/* end of file */
