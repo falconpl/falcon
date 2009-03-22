@@ -1,0 +1,53 @@
+/*
+   FALCON - Samples
+
+   FILE: wordcount.fal
+
+   Counts the words found in a file through the tokenizer interface.
+
+   Give a file as a parameter or use stdin
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: mer nov 3 2004
+
+   -------------------------------------------------------------------
+   (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+if args.len() > 0
+   try
+      stream = InputStream( args[0] )
+   catch IoError in error
+      > "Sorry, can't open file ", args[0]
+      > error
+      return 1
+   end
+else
+   stream = stdIn()
+end
+
+t = Tokenizer( seps|" ;,|!.:\"'?\\/*+\r\n)", options|Tokenizer.groupsep )
+t.parse( stream )
+words = [=>]
+
+for token in t
+   if token in words
+      ++words[token]
+   else
+      words[token] = 1
+   end
+end
+
+> "========================================================"
+> "Results"
+> "========================================================"
+
+for w,n in words
+   > @"$w: $n"
+end
+> "========================================================"
+> "Done."
+
+/* end of file */

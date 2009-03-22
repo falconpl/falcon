@@ -28,6 +28,9 @@ namespace core {
    @optparam tokLen Maximum length of returned tokens.
    @optparam source The string to be tokenized, or a stream to be read for tokens.
 
+   The tokenizer class is meant to provide simple and efficiente logic to parse incoming
+   data (mainly, incoming from string).
+
    The source can also be set at a second time with the @a Tokenizer.parse method.
    @b seps defaults to " " if not given.
 */
