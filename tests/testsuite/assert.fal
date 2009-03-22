@@ -1,0 +1,41 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 38f
+* Category: messages
+* Subcategory: assert
+* Short: Assertions
+* Description:
+*   Checks working of assertions.
+* [/Description]
+*
+****************************************************************************/
+
+function handler( data )
+   if data[0] != "Hello world": failure( "Data content" )
+   data += "handler"
+end
+
+// let's create the message
+message = ["Hello world"]
+assert( "msg", message )
+
+// assert once.
+subscribe( "msg", handler )
+if "handler" notin message: failure( "Assertion not fired" )
+
+// Reassert
+message = ["Hello world"]
+assert( "msg", message )
+if "handler" notin message: failure( "Assertion not back-fired" )
+
+unsubscribe( "msg", handler )
+
+// retract
+retract( "msg" )
+subscribe( "msg", handler )
+// ^^ would cause an error if something is wrong
+
+success()
+
+/* end of file */

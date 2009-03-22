@@ -1,0 +1,44 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 38g
+* Category: messages
+* Subcategory: assert
+* Short: Assertions on VMSlots
+* Description:
+*   Checks working of assertions done on vmslots
+* [/Description]
+*
+****************************************************************************/
+
+function handler( data )
+   if data[0] != "Hello world": failure( "Data content" )
+   data += "handler"
+end
+
+// let's create the message
+message = ["Hello world"]
+slot = VMSlot( "msg" )
+slot.assert( message )
+
+// assert once.
+slot.subscribe( handler )
+if "handler" notin message: failure( "Assertion not fired" )
+
+// Reassert
+message = ["Hello world"]
+slot.assert( message )
+if "handler" notin message: failure( "Assertion not back-fired" )
+
+slot.unsubscribe( handler )
+
+// retract
+slot.retract()
+
+message = ["Hello world"]
+slot.subscribe( handler )
+// ^^ would cause an error if something is wrong
+
+success()
+
+/* end of file */
