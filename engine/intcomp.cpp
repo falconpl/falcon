@@ -91,7 +91,7 @@ InteractiveCompiler::t_ret_type InteractiveCompiler::compileNext( Stream *input 
 
    delete m_root;
    m_root = new SourceTree;
-  
+
 
    pushContextSet( &m_root->statements() );
 
@@ -186,7 +186,7 @@ InteractiveCompiler::t_ret_type InteractiveCompiler::compileNext( Stream *input 
          m_root->statements().push_back( new StmtReturn( 1, ae->value()->clone() ) );
 
          // what kind of expression is it? -- if it's a call, we're interested
-         if( ae->value()->asExpr()->type() == Expression::t_funcall )
+         if( ae->value()->isExpr() && ae->value()->asExpr()->type() == Expression::t_funcall )
             ret = e_call;
          else
             ret = e_expression;
@@ -220,7 +220,7 @@ InteractiveCompiler::t_ret_type InteractiveCompiler::compileNext( Stream *input 
                m_vm->linkSymbol( parent, m_lmodule );
                from_iter = from_iter->next();
             }
-            
+
             m_vm->linkCompleteSymbol( init->symbol(), m_lmodule );
       }
 
@@ -261,7 +261,7 @@ InteractiveCompiler::t_ret_type InteractiveCompiler::compileNext( Stream *input 
           m_lmodule->globals().itemAt( sym->itemId() ).isNil() )
           )
       {
-         try 
+         try
          {
             m_vm->linkSymbol( sym, m_lmodule );
          }
@@ -269,7 +269,7 @@ InteractiveCompiler::t_ret_type InteractiveCompiler::compileNext( Stream *input 
          {
             // but continue to expose other errors as well.
             success = false;
-            
+
             // prevent searching again
             sym->setGlobal();
             raiseError( e );

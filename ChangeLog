@@ -85,6 +85,8 @@ Falcon (0.9)
   * minor: Added 'getProperty' and 'setProperty' methods to deep items
            meta-classes.
   * minor: Added 'name' and 'caller' methods to function metaclass.
+  * fixed: Fixed crash when inserting just single constants in interactive 
+           compiler.
 
 Falcon (0.8.14)
   * fixed: Now asObject() raises an error if the item is not an object;
