@@ -25,6 +25,7 @@ if len( args ) != 4
 				"\tutf-16LE\tUnicode UTF-16 Little Endian\n"
 				"\tiso8859-<x>\twhere <x> 1..15: ISO tables\n"
 				"\tcp1252\t\tMS-Windows code page LATIN\n"
+            "\tgbk\t\tGBK encoding for modern chinese\n"
 				"\tC\t\tDirect untranslated byte encoding\n" )
    printl( "\n...Local system encoding: ", getSystemEncoding(), "\n" )
    return 0

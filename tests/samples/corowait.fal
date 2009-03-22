@@ -56,8 +56,8 @@ end
    signaled with a given timeout. The waiter function waits
    either to be waken up or 1 second.
 
-   The main loop signals the semaphore every 0.5, 0.6, 0.5
-   and so on secods, up to 2.0 seconds. The first times, the
+   The main loop signals the semaphore every 0.5, 0.6, 0.7
+   secods and so on, up to 2.0 seconds. The first times, the
    waiter is always woken up, but when the signal interval
    corsses one second, it begins to signal both timeouts and
    wakeups.
