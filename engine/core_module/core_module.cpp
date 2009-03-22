@@ -358,10 +358,21 @@ Module* core_module_init()
    clsmethod_meta->exported( false );
    clsmethod_meta->getClassDef()->setMetaclassFor( FLC_ITEM_CLSMETHOD );
 
+   /*#
+      @class Method
+      @from BOM
+      @brief Metaclass of method items.
+
+      This is the class reflecting falcon method items. A method is a set of
+      an item and a function applied to that. The item can be a method again,
+      as it is possible to apply methods to method items.
+   */
    Falcon::Symbol *method_meta = self->addClass( "Method" );
    method_meta->getClassDef()->addInheritance( new Falcon::InheritDef( bom_meta ) );
    method_meta->exported( false );
    method_meta->getClassDef()->setMetaclassFor( FLC_ITEM_METHOD );
+   self->addClassMethod( method_meta, "object", &Falcon::core::Method_object );
+
 
    Falcon::Symbol *class_meta = self->addClass( "Class" );
    class_meta->getClassDef()->addInheritance( new Falcon::InheritDef( bom_meta ) );
