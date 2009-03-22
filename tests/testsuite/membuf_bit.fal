@@ -1,0 +1,49 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 118a
+* Category: membuf
+* Subcategory: 
+* Short: Membuf byte ops
+* Description:
+*   Checks for memory buffer operations with the new NIO-like interface.
+* [/Description]
+*
+****************************************************************************/
+
+// create a nice membuffer
+mb = MemBuf(16)
+
+mb.put( 65 ).put( 66 ).put( 67 )
+if mb.position() != 3: failure( "Basic put" )
+mb.mark()
+mb.put( 68 ).put( 69 ).put( 70 )
+mb.reset()
+if mb.position() != 3: failure( "Reset put" )
+
+if mb.get() != 68: failure( "Get value 1" )
+if mb.get() != 69: failure( "Get value 2" )
+if mb.get() != 70: failure( "Get value 3" )
+
+mb.reset()
+if mb.position() != 3: failure( "Reset put 2" )
+
+// let's flip
+mb.flip() // position -> limit, 0 -> position
+if mb.remaining() != 3: failure( "Flip" )
+
+// and now a bit of compact
+mb.position( mb.limit() )
+mb.limit( 6 )
+mb.compact()
+
+if mb.position() != 3: failure( "compact - 1" )
+if mb.remaining() != 13: failure( "compact - 2" )
+// See if compact worked
+if mb[0] != 68 or mb[1] != 69 or mb[2] != 70
+   failure( "compact - 3 " )
+end
+
+success()
+
+/* end of file */

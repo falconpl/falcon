@@ -23,6 +23,8 @@
 #include <falcon/common.h>
 #include <falcon/vm.h>
 
+#include <string.h>
+
 namespace Falcon {
 
 MemBuf::MemBuf( uint32 ws, uint32 length ):
@@ -309,6 +311,18 @@ void MemBuf::writeIndex( const Item &index, const Item &target )
    }
 
    throw new AccessError( ErrorParam( e_arracc, __LINE__ ).extra( "STV" ) );
+}
+
+void MemBuf::compact()
+{
+   uint32 count = remaining();
+   if ( count > 0 )
+   {
+      memmove( m_memory, m_memory + (m_position * m_wordSize), count * m_wordSize );
+   }
+   m_mark = INVALID_MARK;
+   m_position = count;
+   m_limit = m_length;
 }
 
 }

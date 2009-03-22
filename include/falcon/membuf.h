@@ -47,7 +47,7 @@ protected:
 
    CoreObject *m_dependant;
    bool m_bOwn;
-   
+
    enum {
       INVALID_MARK = 0xFFFFFFFF
    } t_enum_mark;
@@ -60,54 +60,54 @@ public:
 
    uint16 wordSize() const { return m_wordSize; }
    uint32 length() const { return m_length; }
-   
+
    virtual uint32 get( uint32 pos ) const = 0;
    virtual void set( uint32 pos, uint32 value ) = 0;
 
    uint32 position() const { return m_position; }
    uint32 getMark() const { return m_mark; }
    uint32 limit() const { return m_limit; }
-   
-   /** Puts a value at current position and advance. 
+
+   /** Puts a value at current position and advance.
 
       Will throw AccessError on error. This is meant
       to be called from scripts.
    */
-   void put( uint32 data ) 
-   { 
+   void put( uint32 data )
+   {
       if ( m_position >= length() )
          throw new AccessError( ErrorParam( e_arracc, __LINE__ ).module( __FILE__ ).symbol( "put" ).extra( "MemBuf" ) );
-      
+
       set( m_position++, data );
    }
 
-   /** Gets a value at current position and advance. 
+   /** Gets a value at current position and advance.
 
       Will throw AccessError on error. This is meant
       to be called from scripts.
    */
-   uint32 get() 
-   { 
+   uint32 get()
+   {
       if ( m_position >= m_limit )
          throw new AccessError( ErrorParam( e_arracc, __LINE__ ).module( __FILE__ ).symbol( "get" ).extra( "MemBuf" ) );
-      
+
       return get( m_position++ );
    }
 
-   /** Returns the size of the buffer in bytes. 
+   /** Returns the size of the buffer in bytes.
       It's the length of the buffer * the word size.
    */
    uint32 size() const { return m_length * m_wordSize; }
-   
+
    /** Returns the raw buffer data. */
    byte *data() const { return m_memory; }
-   
+
    /** Sets the limit of read operations. */
    void limit( uint32 l )
-   { 
-      if ( l >= length() )
+   {
+      if ( l > length() )
          throw new AccessError( ErrorParam( e_arracc, __LINE__ ).module( __FILE__ ).symbol( "limit" ).extra( "MemBuf" ) );
-      
+
       m_limit = l;
       if ( l < m_position )
          m_position = l;
@@ -116,11 +116,11 @@ public:
    /** Set current read-write position.
       Will throw if the limit is less than the current length().
    */
-   void position( uint32 p ) 
-   {  
-      if ( p >= m_limit )
+   void position( uint32 p )
+   {
+      if ( p > m_limit )
          throw new AccessError( ErrorParam( e_arracc, __LINE__ ).module( __FILE__ ).symbol( "position" ).extra( "MemBuf" ) );
-      
+
       m_position = p;
       if ( m_mark < m_position )
          m_mark = INVALID_MARK;
@@ -129,19 +129,19 @@ public:
    /** Mark a position for a subquesent reset.
       A subquesent reset() will bring the position() pointer here.
    */
-   void placeMark( uint32 m ) 
-   { 
+   void placeMark( uint32 m )
+   {
       if ( m > m_position )
          throw new AccessError( ErrorParam( e_arracc, __LINE__ ).module( __FILE__ ).symbol( "mark" ).extra( "MemBuf" ) );
-      
+
       m_mark = m;
    }
-   
+
    /** Mark current position.
       Records the position() as it is now. A subquesent reset() will bring the position() pointer here.
    */
-   void placeMark() 
-   { 
+   void placeMark()
+   {
       m_mark = m_position;
    }
 
@@ -155,7 +155,7 @@ public:
 
       m_position = m_mark;
    }
-   
+
    /** Rewinds the membuf
       The position is set to 0 and the mark is invalidated.
    */
@@ -165,9 +165,9 @@ public:
       m_mark = INVALID_MARK;
    }
 
-   
+
    /** Rewinds the membuf
-      The position is set to 0 and the mark is invalidated.
+      The position is set to 0 and the mark is invalidated. Limit is set to size.
    */
    void clear()
    {
@@ -186,13 +186,24 @@ public:
       m_mark = INVALID_MARK;
    }
 
+   /** Compacts the buffer and prepares it for a new read.
+      Remaining data, if any, is moved to the beginning of the buffer.
+      Position is set to the previous limit, and limit is set to length.
+      The mark is discarded.
+   */
+   void compact();
+
+   /** Return the amount of items that can be taken before causing an exception. */
+   uint32 remaining() const {
+      return m_limit - m_position;
+   }
 
    /** Sets the amount of items in this buffer.
       The actual size in bytes is obtained multiplying this length by the word size.
    */
    void length( uint32 s ) { m_length = s; }
    void setData( byte *data, uint32 length, bool bOwn=true );
-   
+
    /** Return the CoreObject that stores vital data for this mempool.
       \see void dependant( CoreObject *g )
    */
@@ -218,8 +229,8 @@ public:
       by nWordSize.
    */
    static MemBuf *create( VMachine *vm, int nWordSize, uint32 length );
-   
- 
+
+
    virtual void readProperty( const String &, Item &item );
    virtual void writeProperty( const String &, const Item &item );
    virtual void readIndex( const Item &pos, Item &target );
@@ -281,7 +292,7 @@ public:
    MemBuf_4( byte *data, uint32 length, bool bOwn = false ):
       MemBuf( 4, data, length, bOwn )
    {}
-   
+
    virtual uint32 get( uint32 pos ) const;
    virtual void set( uint32 pos, uint32 value );
 };

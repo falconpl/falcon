@@ -45,11 +45,23 @@ static void check_assertion( VMachine *vm, CoreSlot *cs, const Item &itm )
 }
 
 /*#
+   @funset set_message_model Message oriented model functions
+   @brief Functions supporting Message Oriented Programming (MOP)
+   @see message_model
+
+   This is the list of functions working together to implement the
+   message oriented model. Other than this functions, it is possible
+   to use the @a VMSlot class for direct access to reflected virtual
+   machine slots. On this regards, see the @a message_model group.
+*/
+
+/*#
    @group message_model Message oriented model
    @brief Functions and classes supporting Message Oriented Programming (MOP)
 
    @begingroup message_model
 */
+
 
 /*#
    @function broadcast
@@ -57,6 +69,7 @@ static void check_assertion( VMachine *vm, CoreSlot *cs, const Item &itm )
    @optparam ... Zero or more data to be broadcaset.
    @brief Sends a message to every callable item subscribed to a message.
    @return true if @a msg is found, false if it doesn't exist.
+   @inset set_message_model
    @see VMSlot
    @see getSlot
 
@@ -97,6 +110,7 @@ FALCON_FUNC  broadcast( ::Falcon::VMachine *vm )
 
 /*#
    @function subscribe
+   @inset set_message_model
    @brief Registers a callback to a message slot.
    @param msg A string with the message name on which the item should be registered.
    @param handler A callable item or instance providing callback support.
@@ -122,6 +136,7 @@ FALCON_FUNC subscribe( ::Falcon::VMachine *vm )
 
 /*#
    @function unsubscribe
+   @inset set_message_model
    @brief Unregisters a registered callback from a slot.
    @param msg A string with the message name on which the item should be registered.
    @param handler A callable item or instance providing callback support.
@@ -164,6 +179,7 @@ FALCON_FUNC unsubscribe( ::Falcon::VMachine *vm )
 
 /*#
    @function getSlot
+   @inset set_message_model
    @brief Retreives a MOP Message slot.
    @param msg The message slot that must be taken or created.
    @optparam make If true (default) create the slot if it doesn't exist.
@@ -199,6 +215,7 @@ FALCON_FUNC getSlot( ::Falcon::VMachine *vm )
 
 /*#
    @function consume
+   @inset set_message_model
    @brief Consumes currently being broadcasted signal.
 */
 FALCON_FUNC consume( ::Falcon::VMachine *vm )
@@ -209,6 +226,7 @@ FALCON_FUNC consume( ::Falcon::VMachine *vm )
 
 /*#
    @function assert
+   @inset set_message_model
    @brief Creates a message assertion on a certain message slot.
    @param msg The message to be asserted.
    @param data The value of the assertion.
@@ -234,6 +252,7 @@ FALCON_FUNC assert( ::Falcon::VMachine *vm )
 
 /*#
    @function retract
+   @inset set_message_model
    @brief Removes a previous assertion on a message.
    @param msg The message slot to be retracted.
 */
@@ -262,6 +281,7 @@ FALCON_FUNC retract( ::Falcon::VMachine *vm )
 
 /*#
    @function getAssert
+   @inset set_message_model
    @brief Returns the given assertion, if it exists.
    @param msg The message slot on which the assertion is to be ckeched.
    @optparam default If given, instead of raising in case the assertion is not found, return this item.
@@ -341,6 +361,10 @@ FALCON_FUNC getAssert( ::Falcon::VMachine *vm )
    referenced via @a subscribe function. Slots are considered
    unique by name, so that comparisons on slots are performed
    on their names.
+*/
+
+/*#
+   @endgroup message_model
 */
 
 /*#

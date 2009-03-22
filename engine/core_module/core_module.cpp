@@ -81,6 +81,22 @@ Module* core_module_init()
    self->addExtFunc( "derivedFrom", &Falcon::core::mth_derivedFrom )->
       addParam("item")->addParam("cls");
 
+   /*#
+      @class BOM
+      @brief Basic Object Model metaclass
+
+      This class contains the methods that can be applied to
+      every falcon item; the method themselves are not
+      shown in the item list, and the @b provides keyword
+      won't detectect their availability unless they have
+      been explicitly re-declared (overloaded) by objects,
+      instances, classes, array bindings or blessed dictionariees.
+
+      Nevertheless, the method listed in the BOM metaclass can be
+      applied to any item, while methods defined in specific
+      item metaclasses derived from BOM, as i.e. the @a Dictionary
+      metaclass, can be applied only to items of the reflected type.
+   */
 
    Falcon::Symbol *bom_meta = self->addClass( "%FBOM" );
    bom_meta->exported( false );
@@ -331,6 +347,8 @@ Module* core_module_init()
    self->addClassMethod( membuf_meta, "position", &Falcon::core::MemoryBuffer_position ).asSymbol()->
       addParam( "pos" );
    self->addClassMethod( membuf_meta, "clear", &Falcon::core::MemoryBuffer_clear );
+   self->addClassMethod( membuf_meta, "compact", &Falcon::core::MemoryBuffer_compact );
+   self->addClassMethod( membuf_meta, "remaining", &Falcon::core::MemoryBuffer_remaining );
    self->addClassMethod( membuf_meta, "fill", &Falcon::core::MemoryBuffer_fill ).asSymbol()->
       addParam("value");
 

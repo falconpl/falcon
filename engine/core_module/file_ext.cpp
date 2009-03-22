@@ -48,11 +48,11 @@ static void s_breakage( Stream *file )
    if ( file->unsupported() )
       throw new IoError( ErrorParam( e_io_unsup )
          .origin( e_orig_runtime ) );
-   
+
    else if ( file->invalid() )
       throw new IoError( ErrorParam( e_io_invalid )
          .origin( e_orig_runtime ) );
-   
+
    throw new IoError( ErrorParam( e_io_error )
          .origin( e_orig_runtime )
          .sysError( (uint32) file->lastError() ) );
@@ -95,11 +95,11 @@ static void s_breakage( Stream *file )
 FALCON_FUNC  Stream_close ( ::Falcon::VMachine *vm )
 {
    Stream *file = static_cast<Stream *>( vm->self().asObject()->getFalconData() );
-   
+
    // declaring the VM idle from now on.
    VMachine::Pauser pauser( vm );
 
-   if ( ! file->close() ) 
+   if ( ! file->close() )
    {
       s_breakage( file );
    }
@@ -115,11 +115,11 @@ FALCON_FUNC  Stream_flush ( ::Falcon::VMachine *vm )
 {
    Stream *file = static_cast<Stream *>(
       vm->self().asObject()->getFalconData() );
-   
+
    // declaring the VM idle from now on.
    VMachine::Pauser pauser( vm );
 
-   if ( ! file->flush() ) 
+   if ( ! file->flush() )
    {
       s_breakage( file );
    }
@@ -165,11 +165,11 @@ FALCON_FUNC  StdStream_close ( ::Falcon::VMachine *vm )
    @b size is not provided, the method tries to read enough data to fill
    the given buffer. A string may be pre-allocated with the @a strBuffer
    function.
-   
+
    If @b size is provided but it's larger than the available space in
    the given buffer, it is ignored. If there isn't any available space in
    the target buffer, a ParamError is raised.
-   
+
    If the buffer is a string, each read fills the string from the beginning.
    If it is a MemBuffer, the space between @a MemoryBuffer.limit and @a len is
    filled. This allow for partial reads in slow (i.e. network) streams.
@@ -177,11 +177,11 @@ FALCON_FUNC  StdStream_close ( ::Falcon::VMachine *vm )
 FALCON_FUNC  Stream_read ( ::Falcon::VMachine *vm )
 {
    Stream *file = dyncast<Stream *>( vm->self().asObject()->getFalconData() );
-   
+
    Item *i_target = vm->param(0);
    Item *i_size = vm->param(1);
 
-   if ( i_target == 0 || ! ( i_target->isString() || i_target->isMemBuf() ) 
+   if ( i_target == 0 || ! ( i_target->isString() || i_target->isMemBuf() )
       || ( i_size != 0 && ! i_size->isOrdinal() ) )
    {
       throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
@@ -191,7 +191,7 @@ FALCON_FUNC  Stream_read ( ::Falcon::VMachine *vm )
 
    int32 size;
    byte *memory;
-   
+
    // first, extract the maximum possible size
    if ( i_target->isString() )
    {
@@ -202,46 +202,46 @@ FALCON_FUNC  Stream_read ( ::Falcon::VMachine *vm )
             .origin( e_orig_runtime )
             .extra( vm->moduleString( rtl_string_empty ) ) );
       }
-      
+
       memory = str->getRawStorage();
       size = str->allocated();
    }
-   else 
+   else
    {
       MemBuf* mb = i_target->asMemBuf();
-      size = mb->length() - mb->limit();
-      
+      size = mb->remaining();
+
       if( size <= 0 )
       {
          throw new ParamError( ErrorParam( e_param_range, __LINE__ )
                .origin( e_orig_runtime )
                .extra( vm->moduleString( rtl_buffer_full ) ) );
       }
-      
-      memory = mb->data();
+
+      memory = mb->data() + (mb->position() * mb->wordSize());
    }
-   
+
    if( i_size != 0 )
    {
       int32 nsize = (int32) i_size->forceInteger();
-      
+
       if( nsize <= 0 )
       {
          throw new ParamError( ErrorParam( e_param_range, __LINE__ )
                .origin( e_orig_runtime )
                .extra( vm->moduleString( rtl_zero_size ) ) );
       }
-      
+
       if ( nsize < size )
          size = nsize;
    }
-   
+
    // delcare the VM idle during the I/O
    vm->idle();
    size = file->read( memory, size );
    vm->unidle();
-   
-   if ( size < 0 ) 
+
+   if ( size < 0 )
    {
       s_breakage( file );
    }
@@ -284,27 +284,27 @@ FALCON_FUNC  Stream_grab ( ::Falcon::VMachine *vm )
    }
 
    int32 nsize = (int32) i_size->forceInteger();
-   
+
    if( nsize <= 0 )
    {
       throw new ParamError( ErrorParam( e_param_range, __LINE__ )
             .origin( e_orig_runtime )
             .extra( vm->moduleString( rtl_zero_size ) ) );
    }
-   
+
    CoreString* str = new CoreString;
    str->reserve( nsize );
-   
+
    vm->idle();
    int32 size = file->read( str->getRawStorage(), nsize );
    vm->unidle();
-   
-   if ( size < 0 ) 
+
+   if ( size < 0 )
    {
       s_breakage( file );
    }
 
-   
+
    str->size( size );
    vm->retval( str );
 }
@@ -325,7 +325,7 @@ FALCON_FUNC  Stream_grab ( ::Falcon::VMachine *vm )
    If the size parameter is given, the function will try to read at maximum @b size
    characters, enlarging the string if there isn't enough room for the operation.
    If it is not given, the current allocated memory of buffer will be used instead.
-   
+
    @note This differ from Stream.read, where the buffer is never grown, even when
    it is a string.
 
@@ -345,8 +345,8 @@ FALCON_FUNC  Stream_readText ( ::Falcon::VMachine *vm )
    Stream *file = dyncast<Stream *>( vm->self().asObject()->getFalconData() );
    Item *i_target = vm->param(0);
    Item *i_size = vm->param(1);
-   
-   if ( i_target == 0 || ! i_target->isString() 
+
+   if ( i_target == 0 || ! i_target->isString()
       || ( i_size != 0 && ! i_size->isOrdinal() ) )
    {
       throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
@@ -356,11 +356,11 @@ FALCON_FUNC  Stream_readText ( ::Falcon::VMachine *vm )
 
    String *str = i_target->asString();
    int32 size;
-   
+
    if ( i_size != 0  )
    {
       size = (int32) i_size->forceInteger();
-      if ( size <= 0 ) 
+      if ( size <= 0 )
       {
          throw new ParamError( ErrorParam( e_param_range, __LINE__ )
                .origin( e_orig_runtime )
@@ -372,8 +372,8 @@ FALCON_FUNC  Stream_readText ( ::Falcon::VMachine *vm )
    else
    {
       size = str->allocated();
-      
-      if ( size <= 0 ) 
+
+      if ( size <= 0 )
       {
          throw new ParamError( ErrorParam( e_param_range, __LINE__ )
                .origin( e_orig_runtime )
@@ -421,7 +421,7 @@ FALCON_FUNC  Stream_grabText ( ::Falcon::VMachine *vm )
 {
    Stream *file = dyncast<Stream *>( vm->self().asObject()->getFalconData() );
    Item *i_size = vm->param(0);
-   
+
    if ( i_size == 0 || ! i_size->isOrdinal() )
    {
       throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
@@ -431,7 +431,7 @@ FALCON_FUNC  Stream_grabText ( ::Falcon::VMachine *vm )
 
    CoreString *str = new CoreString;
    int32 size = (int32) i_size->forceInteger();
-   if ( size <= 0 ) 
+   if ( size <= 0 )
    {
       throw new ParamError( ErrorParam( e_param_range, __LINE__ )
             .origin( e_orig_runtime )
@@ -441,7 +441,7 @@ FALCON_FUNC  Stream_grabText ( ::Falcon::VMachine *vm )
    str->reserve( size );
 
    vm->idle();
-   if ( ! file->readString( *str, size ) ) 
+   if ( ! file->readString( *str, size ) )
    {
       vm->unidle();
       s_breakage( file ); // will throw
@@ -449,7 +449,7 @@ FALCON_FUNC  Stream_grabText ( ::Falcon::VMachine *vm )
    else {
       vm->unidle();
    }
-   
+
    vm->retval( str );
 }
 
@@ -469,8 +469,8 @@ FALCON_FUNC  Stream_readLine ( ::Falcon::VMachine *vm )
    Stream *file = dyncast<Stream *>( vm->self().asObject()->getFalconData() );
    Item *i_target = vm->param(0);
    Item *i_size = vm->param(1);
-   
-   if ( i_target == 0 || ! i_target->isString() 
+
+   if ( i_target == 0 || ! i_target->isString()
       || ( i_size != 0 && ! i_size->isOrdinal() ) )
    {
       throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
@@ -480,11 +480,11 @@ FALCON_FUNC  Stream_readLine ( ::Falcon::VMachine *vm )
 
    String *str = i_target->asString();
    int32 size;
-   
+
    if ( i_size != 0  )
    {
       size = (int32) i_size->forceInteger();
-      if ( size <= 0 ) 
+      if ( size <= 0 )
       {
          throw new ParamError( ErrorParam( e_param_range, __LINE__ )
                .origin( e_orig_runtime )
@@ -496,8 +496,8 @@ FALCON_FUNC  Stream_readLine ( ::Falcon::VMachine *vm )
    else
    {
       size = str->allocated();
-      
-      if ( size <= 0 ) 
+
+      if ( size <= 0 )
       {
          throw new ParamError( ErrorParam( e_param_range, __LINE__ )
                .origin( e_orig_runtime )
@@ -505,12 +505,12 @@ FALCON_FUNC  Stream_readLine ( ::Falcon::VMachine *vm )
          return;
       }
    }
-   
+
    str->size(0);
-   
+
    // we're idling while using VM memory, but we know we're keeping the data structure constant.
    vm->idle();
-   
+
    uint32 c = 0, c1 = 0;
    int pos = 0;
    bool getOk = file->get( c );
@@ -534,7 +534,7 @@ FALCON_FUNC  Stream_readLine ( ::Falcon::VMachine *vm )
       ++pos;
       getOk = file->get( c );
    }
-   
+
    vm->unidle();
 
    if ( ! getOk && ! file->eof() )
@@ -559,7 +559,7 @@ FALCON_FUNC  Stream_grabLine ( ::Falcon::VMachine *vm )
 {
    Stream *file = dyncast<Stream *>( vm->self().asObject()->getFalconData() );
    Item *i_size = vm->param(0);
-   
+
    if ( i_size != 0 && ! i_size->isOrdinal() )
    {
       throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
@@ -567,15 +567,15 @@ FALCON_FUNC  Stream_grabLine ( ::Falcon::VMachine *vm )
             .extra( "[N]" ) );
    }
 
-   
+
    int32 size = i_size == 0 ? -1 : (int32) i_size->forceInteger();
-   if ( size == 0 ) 
+   if ( size == 0 )
    {
       throw new ParamError( ErrorParam( e_param_range, __LINE__ )
             .origin( e_orig_runtime )
             .extra( vm->moduleString( rtl_zero_size ) ) );
    }
-   
+
    CoreString *str = new CoreString;
    // put it in the VM now, so that it can be inspected
    vm->retval( str );
@@ -607,9 +607,9 @@ FALCON_FUNC  Stream_grabLine ( ::Falcon::VMachine *vm )
       ++pos;
       getOk = file->get( c );
    }
-   
+
    vm->unidle();
-   
+
    if ( ! getOk && ! file->eof() )
    {
       s_breakage( file );
@@ -632,9 +632,9 @@ FALCON_FUNC  Stream_grabLine ( ::Falcon::VMachine *vm )
    written on the stream is returned.
 
    When the output buffer is a string, a size parameter can be given; otherwise
-   the whole binary contents of the stream are written. A start position may 
-   optionally be given too; this allows to iterate through writes and send part 
-   of the data that couldent be send previously without extracting substrings or 
+   the whole binary contents of the stream are written. A start position may
+   optionally be given too; this allows to iterate through writes and send part
+   of the data that couldent be send previously without extracting substrings or
    copying the memory buffers.
 
    MemBuf items can participate to stream binary writes through their internal
@@ -652,7 +652,7 @@ FALCON_FUNC  Stream_write ( ::Falcon::VMachine *vm )
        throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ).
          extra( "S|M, [N, N]" ) );
    }
-   
+
    uint32 size, start;
    byte *buffer;
 
@@ -660,7 +660,7 @@ FALCON_FUNC  Stream_write ( ::Falcon::VMachine *vm )
    {
       Item *i_count = vm->param(1);
       Item *i_start = vm->param(2);
-      if ( 
+      if (
          ( i_count != 0 && ! i_count->isOrdinal() ) ||
          ( i_start != 0 && ! i_start->isOrdinal() )
       )
@@ -670,7 +670,7 @@ FALCON_FUNC  Stream_write ( ::Falcon::VMachine *vm )
       }
 
       String* str = i_source->asString();
-      
+
       if ( i_start == 0 )
       {
          start = 0;
@@ -683,12 +683,12 @@ FALCON_FUNC  Stream_write ( ::Falcon::VMachine *vm )
             throw new ParamError( ErrorParam( e_param_range, __LINE__ ).origin( e_orig_runtime ) );
          }
       }
-      
+
       if( i_count == 0 )
       {
          size = str->size();
       }
-      else 
+      else
       {
          size = (uint32) i_count->forceInteger();
          if ( size > str->size() - start )
@@ -696,7 +696,7 @@ FALCON_FUNC  Stream_write ( ::Falcon::VMachine *vm )
             size = str->size() - start;
          }
       }
-      
+
       buffer = str->getRawStorage();
    }
    else
@@ -706,21 +706,21 @@ FALCON_FUNC  Stream_write ( ::Falcon::VMachine *vm )
       size = mb->limit() - start;
       buffer = mb->data();
    }
-   
+
    Stream *file = dyncast<Stream *>( vm->self().asObject()->getFalconData() );
 
    vm->idle();
    int64 written = file->write( buffer + start, size );
    vm->unidle();
-   
+
    if ( written < 0 )
    {
       s_breakage( file );
    }
-   
+
    if ( i_source->isMemBuf() )
       i_source->asMemBuf()->position(  (uint32) (i_source->asMemBuf()->position() + written) );
-   
+
    vm->retval( written );
 }
 
@@ -803,8 +803,8 @@ FALCON_FUNC  Stream_seek ( ::Falcon::VMachine *vm )
    vm->idle();
    int64 pos = file->seekBegin( position->forceInteger() );
    vm->unidle();
-   
-   if ( file->bad() ) 
+
+   if ( file->bad() )
    {
       s_breakage( file );
    }
@@ -842,7 +842,7 @@ FALCON_FUNC  Stream_seekCur ( ::Falcon::VMachine *vm )
    vm->idle();
    int64 pos = file->seekCurrent( position->forceInteger() );
    vm->unidle();
-   
+
    if ( file->bad() )
    {
       s_breakage( file );
@@ -884,7 +884,7 @@ FALCON_FUNC  Stream_seekEnd ( ::Falcon::VMachine *vm )
    vm->idle();
    int64 pos = file->seekEnd( position->forceInteger() );
    vm->unidle();
-   
+
    if ( file->bad() )
    {
       s_breakage( file );
@@ -911,7 +911,7 @@ FALCON_FUNC  Stream_tell ( ::Falcon::VMachine *vm )
    int64 pos = file->tell();
    vm->unidle();
 
-   if ( file->bad() ) 
+   if ( file->bad() )
    {
       s_breakage( file );
    }
@@ -939,10 +939,10 @@ FALCON_FUNC  Stream_truncate ( ::Falcon::VMachine *vm )
 
    Item *position = vm->param(0);
    int64 pos;
-   
+
    // declaring the VM idle from now on.
    VMachine::Pauser pauser( vm );
-   
+
    if ( position == 0 )
       pos = file->tell();
    else if ( ! position->isOrdinal() )
@@ -1050,7 +1050,7 @@ FALCON_FUNC  Stream_readAvailable ( ::Falcon::VMachine *vm )
    if ( msecs != 0 ) vm->idle();
    int32 avail = file->readAvailable( msecs, &vm->systemData() );
    if ( msecs != 0 ) vm->unidle();
-   
+
    if ( file->interrupted() )
    {
       vm->interrupted( true, true, true );
@@ -1061,7 +1061,7 @@ FALCON_FUNC  Stream_readAvailable ( ::Falcon::VMachine *vm )
       vm->regA().setBoolean( true );
    else if ( avail == 0 )
       vm->regA().setBoolean( false );
-   else if ( file->lastError() != 0 ) 
+   else if ( file->lastError() != 0 )
    {
       throw new IoError( ErrorParam( e_io_error, __LINE__ )
          .origin( e_orig_runtime )
@@ -1103,7 +1103,7 @@ FALCON_FUNC  Stream_writeAvailable ( ::Falcon::VMachine *vm )
    if ( msecs != 0 ) vm->idle();
    int32 available = file->writeAvailable( msecs, &vm->systemData() );
    if ( msecs != 0 ) vm->unidle();
-   
+
    if ( available <= 0 )
    {
       if ( file->interrupted() )
@@ -1112,7 +1112,7 @@ FALCON_FUNC  Stream_writeAvailable ( ::Falcon::VMachine *vm )
          return;
       }
 
-      if ( file->lastError() != 0 ) 
+      if ( file->lastError() != 0 )
       {
          throw new IoError( ErrorParam( e_io_error, __LINE__ )
             .origin( e_orig_runtime )
@@ -1230,10 +1230,10 @@ FALCON_FUNC  InputStream_creator ( ::Falcon::VMachine *vm )
 {
    Item *fileName = vm->param(0);
    Item *fileShare = vm->param(1);
-   
+
    if ( fileName == 0 || ! fileName->isString() ||
         ( fileShare != 0 && ! fileShare->isOrdinal() )
-      ) 
+      )
    {
       throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
          .origin( e_orig_runtime )
@@ -1258,22 +1258,22 @@ FALCON_FUNC  InputStream_creator ( ::Falcon::VMachine *vm )
             .extra( *fileName->asString() )  );
    }
 
-   ::Falcon::BaseFileStream::t_shareMode shMode = fileShare != 0 ? 
+   ::Falcon::BaseFileStream::t_shareMode shMode = fileShare != 0 ?
          (::Falcon::BaseFileStream::t_shareMode) fileShare->forceInteger() :
          ::Falcon::BaseFileStream::e_smShareFull;
 
    VFSProvider::OParams params;
    params.rdOnly();
-   
+
    if ( shMode == BaseFileStream::e_smExclusive )
       params.shNone();
    else if ( shMode == BaseFileStream::e_smShareRead )
       params.shNoWrite();
-   
+
    vm->idle();
    Stream *in = vfs->open( furi, params );
    vm->unidle();
-   
+
    if ( in == 0 )
    {
       throw vfs->getLastError();
@@ -1335,7 +1335,7 @@ FALCON_FUNC  OutputStream_creator ( ::Falcon::VMachine *vm )
             .origin( e_orig_runtime )
             .extra( *fileName->asString() )  );
    }
-   
+
    Item *osMode = vm->param(1);
    int mode;
 
@@ -1358,13 +1358,13 @@ FALCON_FUNC  OutputStream_creator ( ::Falcon::VMachine *vm )
       return;
    }
 
-   ::Falcon::BaseFileStream::t_shareMode shMode = fileShare != 0 ? 
+   ::Falcon::BaseFileStream::t_shareMode shMode = fileShare != 0 ?
          (::Falcon::BaseFileStream::t_shareMode) fileShare->forceInteger() :
          ::Falcon::BaseFileStream::e_smShareFull;
 
    VFSProvider::CParams params;
    params.wrOnly();
-   
+
    if ( shMode == BaseFileStream::e_smExclusive )
       params.shNone();
    else if ( shMode == BaseFileStream::e_smShareRead )
@@ -1418,7 +1418,7 @@ FALCON_FUNC  IOStream_creator ( ::Falcon::VMachine *vm )
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
       return;
    }
-   
+
    URI furi( *fileName->asString() );
 
    if ( !furi.isValid() )
@@ -1436,7 +1436,7 @@ FALCON_FUNC  IOStream_creator ( ::Falcon::VMachine *vm )
             .origin( e_orig_runtime )
             .extra( *fileName->asString() )  );
    }
-   
+
    Item *osMode = vm->param(1);
    int mode;
 
@@ -1459,13 +1459,13 @@ FALCON_FUNC  IOStream_creator ( ::Falcon::VMachine *vm )
       return;
    }
 
-   ::Falcon::BaseFileStream::t_shareMode shMode = fileShare != 0 ? 
+   ::Falcon::BaseFileStream::t_shareMode shMode = fileShare != 0 ?
          (::Falcon::BaseFileStream::t_shareMode) fileShare->forceInteger() :
          ::Falcon::BaseFileStream::e_smShareFull;
 
    VFSProvider::CParams params;
    params.rdwr();
-   
+
    if ( shMode == BaseFileStream::e_smExclusive )
       params.shNone();
    else if ( shMode == BaseFileStream::e_smShareRead )
@@ -1828,7 +1828,7 @@ FALCON_FUNC  fileCopy ( ::Falcon::VMachine *vm )
          sysError( (uint32) outstream.lastError() ) ) );
       return;
    }
-   
+
    // Declaring the VM idle from now on.
    VMachine::Pauser pauser( vm );
 
@@ -1862,19 +1862,19 @@ FALCON_FUNC  fileCopy ( ::Falcon::VMachine *vm )
    @param size Buffering size; pass 0 to disable.
 
    This method activates or disactivates I/O buffering on this stream.
-   
+
    When buffering is active, every read/write operation is first cached
    in memory, provided the size of the memory buffer is wide enough to
    store the data being written or to provide the data being read.
-   
+
    Seek operations invalidate the buffer, that is automatically flushed
    when necessary.
-   
+
    Local filesystem providers and standard I/O streams are buffered
    by default; other streams may be created with buffering enabled or not,
    buffered or not depending on their and common usage patterns (network
    streams are usually unbuffered).
-   
+
    You may want to disable buffering when preparing binary data in memory,
    or parsing big chunks of binary data at once via block (MemBuf) read/write
    operations. However, notice that buffering is always optimizing when chunk width is
@@ -1894,12 +1894,12 @@ FALCON_FUNC  Stream_setBuffering ( ::Falcon::VMachine *vm )
          .origin( e_orig_runtime )
          .extra( "N") );
    }
-   
+
    int64 size = i_size->forceInteger();
 
-   // Buffering lies between transcoders and the final stream. 
+   // Buffering lies between transcoders and the final stream.
    // We need to find the first non-transcoder in the hierarcy.
-   
+
    Stream *sub = file;
    Transcoder* ts = 0;   // lowermost transcoder.
    while( sub->isTranscoder() )
@@ -1907,11 +1907,11 @@ FALCON_FUNC  Stream_setBuffering ( ::Falcon::VMachine *vm )
       ts = dyncast<Transcoder*>( sub );
       sub = ts->underlying();
    }
-   
+
    // detach the lowermost transcoder.
    if ( ts != 0 )
       ts->detach();
-   
+
    // Ok, the sub stream may be a buffering stream or the final stream itself.
    if ( sub->isStreamBuffer() )
    {
@@ -1923,13 +1923,13 @@ FALCON_FUNC  Stream_setBuffering ( ::Falcon::VMachine *vm )
          sb->flush();
          sb->detach();
          delete sb;
-      
-         // re-attach the unbuffered stream to the transcoders, 
+
+         // re-attach the unbuffered stream to the transcoders,
          //    or set it as the new user data.
          if( ts != 0 )
          {
             // reflected streams are always owned.
-            ts->setUnderlying( sub, true ); 
+            ts->setUnderlying( sub, true );
          }
          else
             self->setUserData( sub );
@@ -1951,12 +1951,12 @@ FALCON_FUNC  Stream_setBuffering ( ::Falcon::VMachine *vm )
       if ( size > 0 )
       {
          StreamBuffer* sb = new StreamBuffer( sub, true, (uint32) size );
-         // attach the newly buffered stream to the transcoders, 
+         // attach the newly buffered stream to the transcoders,
          //    or set it as the new user data.
          if( ts != 0 )
          {
             // reflected streams are always owned.
-            ts->setUnderlying( sb, true ); 
+            ts->setUnderlying( sb, true );
          }
          else
             self->setUserData( sb );
@@ -1977,7 +1977,7 @@ FALCON_FUNC  Stream_getBuffering ( ::Falcon::VMachine *vm )
    CoreObject *self = vm->self().asObject();
    Stream *file = dyncast<Stream *>( self->getFalconData() );
 
-   // Buffering lies between transcoders and the final stream. 
+   // Buffering lies between transcoders and the final stream.
    // We need to find the first non-transcoder in the hierarcy.
    Stream *sub = file;
    while( sub->isTranscoder() )
@@ -1985,7 +1985,7 @@ FALCON_FUNC  Stream_getBuffering ( ::Falcon::VMachine *vm )
       Transcoder* ts = dyncast<Transcoder*>( sub );
       sub = ts->underlying();
    }
-   
+
    // if it's a streambuffer, we have buffering enabled
    if( sub->isStreamBuffer() )
    {
@@ -2045,7 +2045,7 @@ FALCON_FUNC  Stream_setEncoding ( ::Falcon::VMachine *vm )
    {
       mode = SYSTEM_DETECT;
    }
-   
+
    // find the first non-transcoder stream entity
    while( file->isTranscoder() )
    {
@@ -2057,7 +2057,7 @@ FALCON_FUNC  Stream_setEncoding ( ::Falcon::VMachine *vm )
 
    // just in case, set the stream back in place.
    self->setUserData( file );
-   
+
    Transcoder *trans = TranscoderFactory( *(i_encoding->asString()), file, true );
 
    if ( trans == 0 )

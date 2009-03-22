@@ -381,6 +381,7 @@ FALCON_FUNC  mth_getProperty( ::Falcon::VMachine *vm )
 
 /*#
    @function setProperty
+   @brief Sets the value of a proprety in a given object
    @param obj The source object.
    @param propName A string representing the name of a property or a method inside the object.
    @param value The property new value.
@@ -392,6 +393,7 @@ FALCON_FUNC  mth_getProperty( ::Falcon::VMachine *vm )
 */
 /*#
    @method setProperty Object
+   @brief Sets the value of a proprety in this object
    @param propName A string representing the name of a property or a method inside the object.
    @param value The property new value.
    @raise AccessError If the property can't be found.
@@ -402,7 +404,8 @@ FALCON_FUNC  mth_getProperty( ::Falcon::VMachine *vm )
 */
 /*#
    @method setProperty Array
-   @param propName A string representing the name of a property or a method inside the object.
+   @brief Sets a binding (as a property) in the array.
+   @param propName A string representing the name of a property or a method inside the array.
    @param value The property new value.
    @raise AccessError If the property can't be found.
 
@@ -412,7 +415,8 @@ FALCON_FUNC  mth_getProperty( ::Falcon::VMachine *vm )
 */
 /*#
    @method setProperty Dictionary
-   @param propName A string representing the name of a property or a method inside the object.
+   @brief Sets a property in dictionary based instances.
+   @param propName A string representing the name of a property or a method inside the dictionary.
    @param value The property new value.
    @raise AccessError If the property can't be found.
 

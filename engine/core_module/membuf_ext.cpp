@@ -59,7 +59,66 @@ FALCON_FUNC Make_MemBuf( ::Falcon::VMachine *vm )
    @class MemoryBuffer
    @from BOM
    @brief Metaclass for MemBuf items.
+
+   @see membuf_bin_parse
 */
+
+/*#
+   @group membuf_bin_parse MemBuf pointers
+   @brief Binary stream parsing support.
+
+   The Memory Buffers have a set of internal pointers and sequence methods
+   useful to parse binary streams read in variable size chunks.
+
+   Initially, allocate a memory buffer wide enough to store enough data.
+   The maximum possible amount of data units (generally bytes) that can
+   be stored in a memory buffer is its @b length, returned by the
+   @a BOM.len method or @a len function.
+
+   After having read some contents from a stream, the buffer @b limit
+   will be moved to the amount of incoming data (which may be also
+   the same as the @b length if the buffer is completely filled).
+
+   The application may get one item at a time via the @a MemoryBuffer.get()
+   method, or process blocks of data transferring them to other membufs
+   or arrays via ranged operators.
+
+   Each get() moves a @b position indicator forward up to the @b limit.
+   At the same time, it is possible to put data in the buffer, moving
+   forward the @b position pointer up to the limit.
+
+   The buffer has a @b marker, that can be set at current @b position,
+   and that can be later used to to return to a previously marked position.
+
+   The following invariants always hold:
+   @code
+      0 <= [mark] <= position <= limit <= length
+   @endcode
+
+   The limit is usually set to the buffer length, unless it is explicitly set
+   to a lower position via explicit calls, or the last read didn't bear
+   enough data to fill the buffer.
+
+   The following operations are meant to simplify read and partial parsing
+   of binary data:
+   - @a MemoryBuffer.reset: return the position at last mark (raises if a mark is not defined).
+   - @a MemoryBuffer.rewind: discards the mark and returns the position to 0.
+   - @a MemoryBuffer.clear: rewinds and set limit to the buffer length.
+   - @a MemoryBuffer.flip: sets the limit to the current position, the position to zero and discards the mark.
+   - @a MemoryBuffer.compact: removes already parsed data and prepares for an incremental read.
+
+   All the members in this group not explicitly returning data or sizes
+   return the MemPool itself, so that it is possible to concatenate calls like this:
+
+   @code
+      mb.clear()
+      mb.position(3)
+
+      // equivalent:
+      mb.clear().position(3)
+   @endcode
+*/
+
 /*#
    @method first MemoryBuffer
    @brief Returns an iterator to the first element of this buffer.
@@ -129,6 +188,15 @@ FALCON_FUNC MemoryBuffer_back( VMachine *vm )
    }
 }
 
+/*#
+   @method put MemoryBuffer
+   @brief Puts a value in the memory buffer.
+   @ingroup membuf_bin_parse
+   @return The buffer itself.
+   @raise AccessError if the buffer is full (limit() == position())
+
+   Sets the vaulue at current position and advances it.
+*/
 
 FALCON_FUNC MemoryBuffer_put( ::Falcon::VMachine *vm )
 {
@@ -141,7 +209,18 @@ FALCON_FUNC MemoryBuffer_put( ::Falcon::VMachine *vm )
 
    MemBuf* self = vm->self().asMemBuf();
    self->put( (uint32) i_data->forceInteger() );
+   vm->retval( self );
 }
+
+/*#
+   @method get MemoryBuffer
+   @brief Gets a value in the memory buffer.
+   @ingroup membuf_bin_parse
+   @return the retreived value.
+   @raise AccessError if the buffer is full (limit() == position())
+
+   Gets the vaulue at current position and advances it.
+*/
 
 FALCON_FUNC MemoryBuffer_get( ::Falcon::VMachine *vm )
 {
@@ -149,30 +228,129 @@ FALCON_FUNC MemoryBuffer_get( ::Falcon::VMachine *vm )
    vm->regA().setInteger( self->get() );
 }
 
+/*#
+   @method rewind MemoryBuffer
+   @brief Rewinds the buffer and discards the mark.
+   @ingroup membuf_bin_parse
+   @return The buffer itself
+
+   Returns the position at 0 and discards the mark. Limit is unchanged.
+*/
 FALCON_FUNC MemoryBuffer_rewind( ::Falcon::VMachine *vm )
 {
    MemBuf* self = vm->self().asMemBuf();
    self->rewind();
+   vm->retval( self );
 }
 
+
+/*#
+   @method reset MemoryBuffer
+   @brief Returns the position to the last mark.
+   @ingroup membuf_bin_parse
+   @return The buffer itself
+   @raise AccessError if the mark is not defined.
+
+   Returns the position at the value previously marked with @a MemoryBuffer.mark.
+   The mark itself is not discarded.
+*/
 FALCON_FUNC MemoryBuffer_reset( ::Falcon::VMachine *vm )
 {
    MemBuf* self = vm->self().asMemBuf();
    self->reset();
+   vm->retval( self );
 }
 
+/*#
+   @method remaining MemoryBuffer
+   @brief Determines how many items can be read.
+   @ingroup membuf_bin_parse
+   @return Count of remanining items.
+
+   Returns the count of times get and put can be called on this memory buffer
+   before raising an error.
+*/
+FALCON_FUNC MemoryBuffer_remaining( ::Falcon::VMachine *vm )
+{
+   MemBuf* self = vm->self().asMemBuf();
+   vm->retval( (int64) self->remaining() );
+}
+
+/*#
+   @method compact MemoryBuffer
+   @brief Discards processed data and prepares to a new read.
+   @ingroup membuf_bin_parse
+   @return The buffer itself
+
+   This operation moves all the bytes between the position (included) and the limit
+   (escluded) to the beginning of the buffer. Then, the position is moved to the
+   previous value of the limit, and the limit is reset to the length of the buffer.
+
+   As read is performed by filling the data between the current position and the limit,
+   this operation allows to trying get more data when a previously imcomplete input was
+   taken.
+
+   @note Just, remember to move the position back to the first item that was still to
+      be decoded before compact
+*/
+FALCON_FUNC MemoryBuffer_compact( ::Falcon::VMachine *vm )
+{
+   MemBuf* self = vm->self().asMemBuf();
+   self->compact();
+   vm->retval( self );
+}
+
+/*#
+   @method flip MemoryBuffer
+   @brief Sets the limit to the current position, and the position to zero.
+   @ingroup membuf_bin_parse
+   @return The buffer itself
+
+   This is useful to write some parsed or created contents back on a stream.
+   Once filled the buffer with data, the position is on the last element;
+   then, using flip and writing the buffer, the prepared data is sent to
+   the output.
+*/
 FALCON_FUNC MemoryBuffer_flip( ::Falcon::VMachine *vm )
 {
    MemBuf* self = vm->self().asMemBuf();
    self->flip();
+   vm->retval( self );
 }
 
+
+/*#
+   @method mark MemoryBuffer
+   @brief Places the mark at current position.
+   @ingroup membuf_bin_parse
+   @return The buffer itself
+
+   This position sets the mark at current position; calling @a MemoryBuffer.reset later
+   on will move the position back to this point.
+*/
 FALCON_FUNC MemoryBuffer_mark( ::Falcon::VMachine *vm )
 {
    MemBuf* self = vm->self().asMemBuf();
    self->placeMark();
+   vm->retval( self );
 }
 
+
+/*#
+   @method position MemoryBuffer
+   @brief Sets or get the current position in the buffer.
+   @ingroup membuf_bin_parse
+   @optparam pos The new position
+   @return The buffer itself or the requested position.
+   @raise AccessError if the @b pos parameter is > limit.
+
+   This method can be used to get the current postition in the memory buffer,
+   or to set a new position. In the first case, the current value of the
+   position is returned, in the second case the current buffer is returned.
+
+   As the position can never be greater that the limit, an error is raised in case
+   a value too high has been set.
+*/
 FALCON_FUNC MemoryBuffer_position( ::Falcon::VMachine *vm )
 {
    MemBuf* self = vm->self().asMemBuf();
@@ -187,26 +365,38 @@ FALCON_FUNC MemoryBuffer_position( ::Falcon::VMachine *vm )
    }
    else
    {
-      self->limit( (uint32) i_pos->forceInteger() );
+      self->position( (uint32) i_pos->forceInteger() );
+      vm->retval( self );
    }
 }
 
+/*#
+   @method clear MemoryBuffer
+   @brief Clears the buffer resetting it to initial status.
+   @ingroup membuf_bin_parse
+   @return The buffer itself.
 
+   Removes the mark, sets the position to zero and the limit to the length.
+   This makes the buffer ready for a new set of operations.
+*/
 FALCON_FUNC MemoryBuffer_clear( ::Falcon::VMachine *vm )
 {
    MemBuf* self = vm->self().asMemBuf();
    self->clear();
+   vm->retval( self );
 }
 
 
 /*#
    @method limit MemoryBuffer
    @brief Gets or sets current filled data size.
-   @optparam value The value to be applied to the memory buffer.
+   @optparam pos The value to be applied to the memory buffer.
    @return current limit.
 
+   This method can be used to get the current postition in the memory buffer,
+   or to set a new position. In the first case, the current value of the
+   position is returned, in the second case the current buffer is returned.
 */
-
 FALCON_FUNC MemoryBuffer_limit( ::Falcon::VMachine *vm )
 {
    MemBuf* self = vm->self().asMemBuf();
@@ -223,6 +413,7 @@ FALCON_FUNC MemoryBuffer_limit( ::Falcon::VMachine *vm )
    else
    {
       self->limit( (uint32) i_limit->forceInteger() );
+      vm->retval( self );
    }
 }
 

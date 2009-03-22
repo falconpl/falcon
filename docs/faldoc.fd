@@ -10,7 +10,7 @@
 
 Title = Falcon - Base Function Reference.
 Author = The Falcon Committee
-Version = 0.8.14
+Version = 0.9.0
 
 ################################################
 # Faldoc Input settings
@@ -36,6 +36,6 @@ Output.module=html
 # Output.<module>.<parameters> configs
 ################################################
 
-Output.html.directory=Falcon-docs-core.0.8.14
+Output.html.directory=Falcon-docs-core.0.9.0
 Output.html.url=.
 Output.html.doctitle=Falcon Function Reference
