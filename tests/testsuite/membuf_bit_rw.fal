@@ -1,0 +1,62 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 118b
+* Category: membuf
+* Subcategory:
+* Short: Membuf reads
+* Description:
+*   Checks for memory buffer operations with the new NIO-like interface.
+* [/Description]
+*
+****************************************************************************/
+
+// create a nice membuffer
+mb = MemBuf(8)
+// emulate a variable search in a stream.
+// we'll parse this string.
+orig = "Hello world, we need some spaces"
+sstr = StringStream( orig )
+words = []
+loop
+   word = ""
+   readin = sstr.read( mb )
+   if readin > mb.position(): failure( "Position not moved after read" )
+   mb.flip()  // ok, start reading
+   mb.mark()  // provides a default mark
+   
+   while mb.remaining()
+      char = mb.get()
+      // word complete?
+      if char == 0x20
+         words += word
+         word = ""
+         // mark if we find a partial word
+         mb.mark()
+         mark = true
+      else
+         word *= char
+      end
+   end
+   
+   // we have a partial word
+   mb.reset()  // return to the previous mark
+   mb.compact() // prepare to read some more.
+end sstr.eof()
+
+if word != "": words += word
+
+cfr = strSplit( orig, " " )
+if cfr.len() != words.len()
+   failure( "Failure (len)" )
+end
+
+for i in [0:cfr.len()]
+   if words[i] != cfr[i]
+      failure( @@"Word at $i is $$words[$i]")
+   end
+end
+
+success()
+
+/* end of file */

@@ -253,7 +253,7 @@ FALCON_FUNC  Stream_read ( ::Falcon::VMachine *vm )
    else
    {
       MemBuf* mb = i_target->asMemBuf();
-      mb->limit( i_target->asMemBuf()->limit() + size );
+      mb->position( i_target->asMemBuf()->position() + size );
       fassert( mb->limit() <= mb->length() );
    }
 
