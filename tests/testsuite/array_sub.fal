@@ -31,9 +31,11 @@ if 2 notin arr or "alpha" notin arr or "beta" notin arr
 end
 
 // now for self operators
+arr_copy = arr
 arr -= "beta"
 if arr.len() != 4: failure( "self remove one item - size" )
 if "beta" in arr : failure( "self remove one item - content" )
+if "beta" in arr_copy: failure( "self remove - consistency" )
 
 arr -= "beta"
 if arr.len() != 4: failure( "self remove one item again - size" )

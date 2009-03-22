@@ -142,7 +142,7 @@ void VMachine::run()
       VMachine  *m_vm;
    public:
       inline AutoIdle( VMachine *vm ):
-         m_vm(vm) { vm->pulseIdle(); } 
+         m_vm(vm) { vm->pulseIdle(); }
          // ^^we are already idle, but pulseidle force to honor pending
          // blocking requets.
       inline ~AutoIdle() { m_vm->idle(); }
@@ -251,7 +251,7 @@ void VMachine::run()
                m_opNextCheck = m_opCount + 1;
                return; // maintain the event we have, but exit now.
             }
-            
+
             // perform messages
             m_mtx_mesasges.lock();
             while( m_msg_head != 0 )
@@ -260,13 +260,13 @@ void VMachine::run()
                m_msg_head = msg->next();
                // it is ok if m_msg_tail is left dangling.
                m_mtx_mesasges.unlock();
-               
+
                processMessage( msg );
-               
+
                // see if we have more messages in the meanwhile
                m_mtx_mesasges.lock();
             }
-            
+
             m_msg_tail = 0;
             m_mtx_mesasges.unlock();
          }
@@ -894,7 +894,9 @@ void opcodeHandler_ADD( register VMachine *vm )
    Item *operand1 = vm->getOpcodeParam( 1 );
    Item *operand2 = vm->getOpcodeParam( 2 );
 
-   operand1->add( *operand2, vm->regA() );
+   Item target; // neutralize auto-ops
+   operand1->add( *operand2, target );
+   vm->regA() = target;
 }
 
 // 21
@@ -902,7 +904,10 @@ void opcodeHandler_SUB( register VMachine *vm )
 {
    Item *operand1 =  vm->getOpcodeParam( 1 );
    Item *operand2 =  vm->getOpcodeParam( 2 );
-   operand1->sub( *operand2, vm->regA() );
+
+   Item target; // neutralize auto-ops
+   operand1->sub( *operand2, target );
+   vm->regA() = target;
 }
 
 // 22

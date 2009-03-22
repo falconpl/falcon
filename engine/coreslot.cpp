@@ -36,13 +36,13 @@ bool coreslot_broadcast_internal( VMachine *vm )
          msg->onMsgComplete( true );
          delete msg;
       }
-      
+
       // let the GC pointer to take care of the ietrator.
       return false;
    }
-   
+
    Item current = ci->getCurrent();
-   
+
    if ( ! current.isCallable() )
    {
       if( current.isComposed() )
@@ -55,14 +55,14 @@ bool coreslot_broadcast_internal( VMachine *vm )
          throw new CodeError( ErrorParam( e_non_callable, __LINE__ ).extra( "broadcast" ) );
       }
    }
-   
+
    int64 pfirst = vm->local(1)->asInteger();
    if( pfirst < 0 )
    {
       vm->pushParameter( *vm->local( 2 ) );
       vm->callFrame( current, 1 );
    }
-   else 
+   else
    {
       int64 paramCount = vm->local(2)->asInteger();
       for( int32 i = 0; i < paramCount; i++ )
@@ -71,7 +71,7 @@ bool coreslot_broadcast_internal( VMachine *vm )
       }
       vm->callFrame( current, (int32)paramCount );
    }
-   
+
    ci->next();
    return true;
 }
@@ -92,13 +92,13 @@ void CoreSlot::prepareBroadcast( VMachine *vm, uint32 pfirst, uint32 pcount, VMM
    *vm->local(1) = (int64) pfirst;
    *vm->local(2) = (int64) pcount;
    *vm->local(3) = new CoreString( m_name );
-   
+
    if ( msg != 0 )
    {
       // store it as an opaque pointer.
       vm->local(4)->setInteger( (int64) msg );
    }
-   
+
    vm->returnHandler( &coreslot_broadcast_internal );
 }
 
@@ -128,11 +128,11 @@ FalconData *CoreSlot::clone() const
    return const_cast<CoreSlot*>(this);
 }
 
-void CoreSlot::gcMark( uint32 mark ) 
+void CoreSlot::gcMark( uint32 mark )
 {
    if ( m_bHasAssert )
       memPool->markItem( m_assertion );
-   
+
    ItemList::gcMark( mark );
 }
 
@@ -146,7 +146,7 @@ void CoreSlot::assert( VMachine* vm, const Item &a )
       *vm->local(1) = (int64) -1;
       *vm->local(2) = m_assertion;
       *vm->local(3) = new CoreString( m_name );
-      
+
       vm->returnHandler( &coreslot_broadcast_internal );
    }
 }
@@ -164,7 +164,7 @@ void CoreSlot::decref()
    m_mtx.lock();
    bool bdel = --m_refcount == 0;
    m_mtx.unlock();
-   
+
    if (bdel)
    {
       delete this;
@@ -173,8 +173,60 @@ void CoreSlot::decref()
 
 
 //=============================================================
+// Carrier for VM
+//
+
+CoreSlotCarrier::CoreSlotCarrier( const CoreClass* generator, CoreSlot* cs, bool bSeralizing ):
+   FalconObject( generator, bSeralizing )
+{
+   if( cs != 0 )
+   {
+      cs->incref();
+      m_user_data = cs;
+   }
+}
+
+CoreSlotCarrier::CoreSlotCarrier( const CoreSlotCarrier &other ):
+   FalconObject( other )
+{
+   // FalconObject takes care of cloning (increffing) the inner data.
+}
+
+CoreSlotCarrier::~CoreSlotCarrier()
+{
+    CoreSlot* cs = (CoreSlot*) m_user_data;
+    cs->decref();
+    // sterilize downward destructors
+    m_user_data = 0;
+}
+
+void CoreSlotCarrier::setSlot( CoreSlot* cs )
+{
+   CoreSlot* old_cs = (CoreSlot*) m_user_data;
+   if ( old_cs  != 0 )
+      old_cs->decref();
+   cs->incref();
+
+   m_user_data = cs;
+}
+
+
+CoreObject *CoreSlotCarrier::clone() const
+{
+   return new CoreSlotCarrier( *this );
+}
+
+extern "C"
+{
+   CoreObject* CoreSlotFactory( const CoreClass *cls, void *user_data, bool bDeserial )
+   {
+      return new CoreSlotCarrier( cls, (CoreSlot *) user_data );
+   }
+}
+
+//=============================================================
 // Traits for maps
-// 
+//
 namespace traits
 {
    CoreSlotPtrTraits &t_coreslotptr() { static CoreSlotPtrTraits dt; return dt; }

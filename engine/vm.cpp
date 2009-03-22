@@ -1332,23 +1332,23 @@ void VMachine::reset()
 
    if ( m_contexts.size() > 1 )
    {
-	   // clear the contexts
-	   m_contexts.clear();
+      // clear the contexts
+      m_contexts.clear();
 
-	   // as our frame, stack and tryframe were in one of the contexts,
-	   // they have been destroyed.
-	   m_currentContext = new VMContext( this );
+      // as our frame, stack and tryframe were in one of the contexts,
+      // they have been destroyed.
+      m_currentContext = new VMContext( this );
 
-	   // ... and then we take onwership of the items in the context.
-	   m_currentContext->restore( this );
+      // ... and then we take onwership of the items in the context.
+      m_currentContext->restore( this );
 
-	   // saving also the first context for accounting reasons.
-	   m_contexts.pushBack( m_currentContext );
+      // saving also the first context for accounting reasons.
+      m_contexts.pushBack( m_currentContext );
    }
    else
    {
-	   m_stack->resize(0);
-	   m_tryFrame = i_noTryFrame;
+      m_stack->resize(0);
+      m_tryFrame = i_noTryFrame;
    }
 
 }

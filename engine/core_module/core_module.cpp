@@ -451,7 +451,7 @@ Module* core_module_init()
    Symbol *error_init = self->addExtFunc( "Error._init", &Falcon::core::Error_init );
    Symbol *error_class = self->addClass( "Error", error_init )
       ->addParam( "code" )->addParam( "description")->addParam( "extra" );
-   error_class->getClassDef()->factory( Falcon::core::ErrorObjectFactory );
+   error_class->getClassDef()->factory( &Falcon::core::ErrorObjectFactory );
    error_class->setWKS( true );
 
    self->addClassMethod( error_class, "toString",
@@ -957,6 +957,7 @@ Module* core_module_init()
    Falcon::Symbol *vmslot_class = self->addClass( "VMSlot", &Falcon::core::VMSlot_init )->
       addParam("name");
    vmslot_class->setWKS( true );
+   vmslot_class->getClassDef()->factory( &Falcon::CoreSlotFactory );
 
    // methods -- the first example is equivalent to the following.
    self->addClassMethod( vmslot_class, "broadcast", &Falcon::core::VMSlot_broadcast );

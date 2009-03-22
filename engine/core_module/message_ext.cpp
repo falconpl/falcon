@@ -114,7 +114,8 @@ FALCON_FUNC subscribe( ::Falcon::VMachine *vm )
       return;
    }
 
-   CoreSlot* cs = vm->getSlot( *i_msg->asString(), true );
+   String *sub = i_msg->asString();
+   CoreSlot* cs = vm->getSlot( *sub, true );
    cs->push_back( *i_handler );
    check_assertion( vm, cs, *i_handler );
 }
@@ -189,7 +190,7 @@ FALCON_FUNC getSlot( ::Falcon::VMachine *vm )
    {
       Item* cc_slot = vm->findWKI( "VMSlot" );
       fassert( cc_slot != 0 );
-      cs->incref();
+      // the factory function takes care of increffing cs
       CoreObject *obj = cc_slot->asClass()->createInstance( cs );
       vm->retval( obj );
    }
@@ -357,7 +358,11 @@ FALCON_FUNC VMSlot_init( ::Falcon::VMachine *vm )
       return;
    }
 
-   vm->self().asObjectSafe()->setUserData(vm->getSlot( *i_msg->asString(), true ) );
+   CoreSlot* vms = vm->getSlot( *i_msg->asString(), true );
+   fassert( vms != 0 );
+
+   CoreSlotCarrier* self = dyncast<CoreSlotCarrier *>( vm->self().asObjectSafe() );
+   self->setSlot( vms );
 }
 
 

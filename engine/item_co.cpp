@@ -238,7 +238,10 @@ void co_array_sub( const Item& first, const Item& second, Item& third )
 {
    // remove any element from an array
    CoreArray *source = first.asArray();
-   CoreArray *dest = source->clone();
+   // accomodate for selfsub
+   CoreArray *dest = third.isArray() && third.asArray() == source ?
+      source :
+      source->clone();
    const Item *op2 = second.dereference();
 
    // if we have an array, remove all of it
@@ -267,7 +270,8 @@ void co_dict_sub( const Item& first, const Item& second, Item& third )
 {
    // remove various keys from arrays
    CoreDict *source = first.asDict();
-   CoreDict *dest = source->clone();
+   // accomodate for selfsub
+   CoreDict *dest = third.isDict() && third.asDict() == source ? source : source->clone();
    const Item *op2 = second.dereference();
 
    // if we have an array, remove all of it

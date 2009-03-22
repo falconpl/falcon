@@ -21,9 +21,11 @@ if array[0] != "0000": failure( "Array write access" )
 
 // self addition
 string = "0000"
+array_copy = array
 array += string
 string[0] = "1"
 if array[1] != "0000": failure( "array self append" )
+if "0000" notin array_copy: failure( "Self append consistency" )
 
 // normal addition
 string = "0000"
