@@ -225,7 +225,7 @@ FALCON_FUNC  ConfParser_init( ::Falcon::VMachine *vm )
    readable Falcon stream. If not, the file name provided to the ConfParser
    constructor will be opened and read. In case the name has not been given in the
    constructor, the method raises an error. The method may also raise ParseError,
-   IoError or ParamError, with the “message” field set to a relevant explanation.
+   IoError or ParamError, with the "message" field set to a relevant explanation.
 */
 
 FALCON_FUNC  ConfParser_read( ::Falcon::VMachine *vm )

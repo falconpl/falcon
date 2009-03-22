@@ -64,7 +64,7 @@ namespace Ext {
       shared object/dynamic link libraries will be loaded.
 
    @prop path The search path for modules loaded by name. It's a set of
-      Falcon format paths (forward slashes to separate dirs, e.g. “C:/my/path”),
+      Falcon format paths (forward slashes to separate dirs, e.g. "C:/my/path"),
       separated by semi comma.
 
    @prop saveMandatory If true, when saveModule option is true too and a
@@ -92,7 +92,7 @@ namespace Ext {
 /*#
    @init Compiler
    @brief Initializes the compiler with a default path.
-   If @b path is not provided, defaults to “.” (script current working directory).
+   If @b path is not provided, defaults to "." (script current working directory).
 
 */
 FALCON_FUNC Compiler_init( ::Falcon::VMachine *vm )
@@ -284,10 +284,10 @@ FALCON_FUNC Compiler_loadByName( ::Falcon::VMachine *vm )
 
    Loads the given file, trying to perform compilation or loading of the relevant
    .fam precompiled module depending on the property settings. In example, if
-   loading “./test.fal”, unless alwaysRecomp property is true, “./test.fam” will be
+   loading "./test.fal", unless alwaysRecomp property is true, "./test.fam" will be
    searched too, and if it's found and newer than ./test.fal, it will be loaded
-   instead, skipping compilation step. Similarly, if “./test.fam” is searched,
-   unless ignoreSource is true, “./test.fal” will be searched too, and if it's newer
+   instead, skipping compilation step. Similarly, if "./test.fam" is searched,
+   unless ignoreSource is true, "./test.fal" will be searched too, and if it's newer
    than ./test.fam it will be recompiled.
 
    In case a suitable module cannot be found, the method returns nil. If a module is found,
@@ -508,7 +508,7 @@ FALCON_FUNC Module_getReference( ::Falcon::VMachine *vm )
    other VMs referencing the module.
 
    References to callable items that resided in the module becomes
-   “ghost”. They are turned into nil when trying to use them or
+   "ghost". They are turned into nil when trying to use them or
    when the garbage collector reaches them; so, trying to call a
    function that resided in an unloaded module has the same effect
    as calling a nil item, raising an error.

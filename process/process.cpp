@@ -34,9 +34,9 @@
    and written synchronously and polled for activity.
 
    To provide this functionality, the Process class requires the service called
-   “Stream” normally provided by the core module. Embedders that wish to allow the
+   "Stream" normally provided by the core module. Embedders that wish to allow the
    scripts to load this module should provide core to scripts, or provide otherwise
-   the “Stream” service in the Virtual Machines that will run those scripts.
+   the "Stream" service in the Virtual Machines that will run those scripts.
    Failing to do so will cause the stream oriented methods of the Process class to
    raise an error. The generic process management functions in the module, and also
    the generic child-process management methods in the Process class do not require

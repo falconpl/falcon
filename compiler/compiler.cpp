@@ -82,7 +82,7 @@
    @endcode
 
    We may also put symbols in target scripts, forcing them to execute some part of the
-   loader code. In example, suppose this is a falcon source called “module1.fal”:
+   loader code. In example, suppose this is a falcon source called "module1.fal":
 
    @code
    // this global variable will be mangled by the loader

@@ -197,8 +197,8 @@ FALCON_FUNC  ProcessEnum_close  ( ::Falcon::VMachine *vm )
    is actually executed by passing the command string to the system command shell.
    In this way, it is possible to  execute commands that are parsed by the shell.
 
-   This includes internal commands as “dir” in Windows systems, or small scripts as
-   “for file in $(ls); do touch $file; done” if the system shell is sh.
+   This includes internal commands as "dir" in Windows systems, or small scripts as
+   "for file in $(ls); do touch $file; done" if the system shell is sh.
    However, loading the shell may generate a needless overhead for the most common
    usages of system(). Use systemCall() if there isn't the need to have the system
    shell to parse the command.

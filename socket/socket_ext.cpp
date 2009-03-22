@@ -450,7 +450,7 @@ FALCON_FUNC  Socket_getHost( ::Falcon::VMachine *vm )
    has been issued. Returned values are a system-specific 1:1 mapping of numeric
    ports to service names. If the port has not an associated service name,
    the port number is returned as a string value (I.e. port 80 is
-   returned as the string “80”).
+   returned as the string "80").
 */
 
 FALCON_FUNC  Socket_getService( ::Falcon::VMachine *vm )
