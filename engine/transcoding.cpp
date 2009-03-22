@@ -171,7 +171,7 @@ private:
       return ( (uint16*)t->table )[pos];
    }
 
-   Table *getTable(Table *t, uint32 pos)
+   inline Table *getTable(Table *t, uint32 pos)
    {
       return ( (Table*)t->table ) + pos;
    }
@@ -203,7 +203,7 @@ public:
 
       // converting the byte array into an unicode.
       byte b1;
-      byte b2;
+      byte b2=0;
       if ( m_stream->read( &b1, 1 ) != 1 )
          return false;
 
@@ -213,11 +213,26 @@ public:
       }
       else 
       {
-         if (m_stream->read( &b2, 1 ) != 1)
-            return false;
-         chr = decodeDouble(b1, b2);
-         //fprintf(stderr, "B1=%d, B2=%d, chr=%x\n", (int)b1, (int)b2, chr);
+#define FULL_CONVERT
+#ifdef FULL_CONVERT
+         if (b1 == 0x80)
+         {
+            chr = 0x20ac;
+         }
+         else if (b1 == 0xff)
+         {
+            chr = 0xf8f5;
+         }
+         else 
+#endif
+         {
+            if (m_stream->read( &b2, 1 ) != 1)
+               return false;
+            chr = decodeDouble(b1, b2);
+            //fprintf(stderr, "B1=%hhx, B2=%hhx, chr=%x\n", b1, b2, chr);
+         }
       }
+
 
       if (chr == REPLACE_CHAR)
       {
@@ -235,11 +250,21 @@ public:
       m_parseStatus = true;
 
       byte bPtr[2];
-      if (chr <0x80)
+      if (chr < 0x80
+#ifdef FULL_CONVERT
+         || chr == 0x20ac || chr == 0xf8f5
+#endif
+         )
       {
-         bPtr[0] = (byte) chr;
+#ifdef FULL_CONVERT
+         if (chr == 0x20ac) bPtr[0]=0x80;
+         else if (chr == 0xf8f5) bPtr[0] =0xff;
+         else
+#endif
+            bPtr[0] = (byte) chr;
          return (m_stream->write( bPtr, 1 ) == 1);
       }
+
 
       int ncode = encodeDouble(chr);
       if (ncode == 0 || chr == 0)
@@ -1324,7 +1349,8 @@ FalconData *TranscoderISO8859_15::clone() const
 // Utilities
 
 Transcoder *TranscoderFactory( const String &encoding, Stream *stream, bool own )
-{
+{   fprintf(stderr, "Table 1 Length=%\u index=%\u\n", gbkDecoderTable1.len, (int)gbkDecoderIndex1[128]);
+
    if ( encoding == "C" )
       return new TranscoderByte( stream, own );
 
