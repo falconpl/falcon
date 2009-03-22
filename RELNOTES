@@ -1,76 +1,72 @@
 
-                               RELNOTES for Falcon
+                            RELNOTES for Falcon
 
-                                 Vulture Release
+                             Albatross Release
 
-                                     0.8.14
-
-
-  Vulture release is mainly a maintainance version for Condor release (0.8.12),
-consolidating some bugfix that have been detailed in the ChangeLog.
-
-  Other than this, the for/to construct has been reintroduced, and four
-extended operators are now available for managing OOB items.
-
-  The for/to loop is now grammar sugar for for/in ranges, being always
-  inclusive on the last element.
-
-  For example:
-
-      for i = 2 to 10 , 2
-         > i
-      end
-
-will print all the pair numbers between 2 and 10 included. Being a simple
-front-end for the for/in construct, it supports break, continue, forfirst
-formiddle and forlast statements.
-
-  OOB operators are all unary and work on the item to their right. they are:
-
-  - ^+ x       return an out of band x.
-  - ^- x       return a non out of band x.
-  - ^? x       return true if x is oob.
-  - ^! x       return an item with oob status invert with respect to x.
+                                  0.9.0
 
 
-Open issues at 0.8.14
-=====================
+  Albatross release series is the bridge linking the distant lands of
+beta series and the final 1.0 shores. The release represents an effort
+to clear all the dirty code (at conceptual level) existing deep down in
+version 0.8.x and that prevented to extend the engine virtuality and
+interoperability.
 
-   * Streams, mainly file streams, are still to be buffered and optimized.
-     If Falcon is employed for high throughput applications, as i.e.
-     grepping files, writing massive log amounts, copying files, applicative
-     data buffering should be used, and raw write/read stream methods on
-     large strings or MemBuf data types should be employed for
-     better performance.
+  The result is a clean set of constructs that allow to completely
+virtualize the concept of "items", the introduction of "metaclasses"
+through which the Basic Object Model is now coherent and formalized,
+a set of simplified VM operations and a better API offered to
+3d party module developers.
 
-   * Stream API may undergo some reshaping during 0.8.12->0.9 step.
+  At engine level the most pervasive change in Albatross is the introduction
+of a transparent, centralized multithreading garbage collector, which is now
+able to perform mainly in background and taking into consideration the
+activity of multiple virtual machines. The engine is now natively working in
+multithreading mode, and this allows to offer some extra services to multi-
+threaded applications as the VM messaging.
 
-   * Assembler has some issues; it is being moved to a stand-alone
-     application and library (and possibly to a separate project)
-     in 0.9, so its known problems are not being fixed now. The
-     assembler is not functional to a correct Falcon application,
-     so its status is irrilevant at current development stage.
+  The changes to the language are somewhat relevant, and not always
+rear-compatible. The main ones are:
+  - Introduction of BOM methods application directly on values, (i.e.
+    1.typeId() or [a,b,c].len()).
+  - Removal of the "attributes" keyword, and introduction of the
+    VMSlot class. Message targets now doesn't need to be instances
+    anymore, as any callable item can receive broadcasts.
+  - Removal of the pass and pass/in statements (now obsolete).
+  - Removal of the "lambda" keyword, substituted by the more compact and
+    readable grammar { <param> => <expression> }. The same grammar can
+    also declare nameless functions as the part on the right of the
+    "=>" can contain multiple statements and span on multiple lines.
+  - Addition of the "parametric evaluation" concept, which allows simpler
+    passing of parameters through ETA functions and evaluated sequences.
+  - Introduction of operator callbacks (operator overloading).
 
-   * Functional closeures are checking and closing only the direct
-     parent's local variables and globally visible variables;
-     other parents in the hierarcy are not being considered. So
+  At library level, the most relevant changes are in the stream area,
+where buffering and rationalization of the parameters have finally made
+this sector of Falcon to become highly competitive, and the introduction
+of "methodic functions", which are functions that can be applied also
+as methods. The basic item API has been rationalized and is now widely
+accessible also as BOM methods, which are now type specific.
 
-        glob n = 0
+  Although no explicit optimization has been applied to the code, the
+simplification of many parts of the code has brought to a sensible increase
+in performance in certain area of the code. However the idea behind this
+release is to shape the engine interface making it coherent towards
+the surrounding applications (embedding applications, modules and scripts)
+to start working on the underlying engine to optimize it. In short, this
+represents a solid base to start the optimization cycle we want to carry
+out in the 0.9 releases.
 
-        function a()
-          x = 1
-          function b()
-            y = 2
-            return (function(); y * x *n; end)
-          end
-        end
 
-     will close y and n, but not x. In this moment it is not clear
-     if this is a issue or not.
+Short term plans
+================
 
-  * FBOM (falcon basic object model) and operator overloading is corrently
-    not strongly defined. We need to work a better and deeper object model
-    set and enforce it as a generic interface to access items across all
-    the engine. The main consequence is that some VM operators can use
-    class instance define symbols (as i.e. string conversion), while
-    automatic method calls are not available for prototype oriented OOP.
+  As this 0.9 release is considered a "bleeding edge", it calls for an early
+fix up and release. 0.9.2 shall be released in about 30-45 days, with possibly
+an in-between second bleeding edge release to issue urgent problems that
+may be discovered in the meanwhile.
+
+  The space between this release and the next one is totally devoted to bug
+hunting and finetuning. Critical features may be added in case their missing can
+be considered a bug itself.
+

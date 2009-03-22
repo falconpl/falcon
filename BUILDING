@@ -1,0 +1,137 @@
+
+
+                     The Falcon Programming Language
+
+                                0.9 series
+
+                          BUILDING INSTRUCTION
+
+
+INTRODUCTION
+============
+
+  This document refers to building Falcon source package as it distributed
+in bleeding edge and official releases on POSIX and comparable platforms
+(e.g. MSys). To build the live repository from the current development
+branch, please refer to the following document:
+
+  http://www.falconpl.org/wiki/tiki-index.php?page=The+build+environment
+
+
+PRE-REQUISITE
+=============
+
+  To build Falcon, it is necessary to have installed a recent version of a
+c/c++ compiler supporting your platform and cmake, available at
+
+   http://www.cmake.org
+
+  Other than that, it is optionally required to provide development files
+correcty installed and configured for the following well known libraries:
+
+  - ZLIB
+  - PCRE
+
+
+THE BUILD PROCESS
+=================
+
+  The source package is configured both to be installed directly on the target
+system and to prepare a delayed installation through a packaging system.
+
+  The process is divided in two steps: the package building happens inside the
+devel/ path under this directory, which must be located (or linked entierely)
+on a filesystem that can be written. All the configuration and build happens
+inside the devel/ path; the original content of the package is not altered,
+and deleting the devel/ path allows a fresh re-build process in case something
+goes wrong.
+
+  Once the package is built, the installation step moves the package where
+required through the "prefix" option of the build.sh script and creates
+the needed symlink. The installation step will create this directories,
+filling them with the needed files:
+
+  $p/bin               --> falcon, falrun, faltest etc.
+  $p/include/falcon    --> .h files needed to extend Falcon
+  $p/lib               --> libfalcon_engine.so & needed links
+  $p/lib/falcon        --> *_fm.so "feather" (useful) modules
+
+where "$p" is the "prefix" set with the -p option of the build.sh script
+(defaulting to /usr/local).
+
+  In case the installation needs to strip some of the installed files or to
+move it in different places, (in example, if the installed stuff must be
+packaged for secondary installation on different machines), the location where
+this tree can be reached must be specified via the "final destination" option
+of the build.sh script: "-f".
+
+In example, suppose we want to build a Falcon that must be installed on
+/opt/falcon, but that has to be stored on /tmp/falcon, where a packaging
+software reads it and prepares a package as an RPM, DEB or PKG. The command
+required will be:
+
+   ./build.sh -p /tmp/falcon  -f /opt/falcon
+
+and after the build process is complete:
+
+   ./build -i
+
+  This will move the needed files in /tmp/falcon, but will internally configure
+falcon to run from /opt/falcon/bin
+
+
+Changing library directory name
+===============================
+
+  In some systems, common system libraries for different architectures are
+stored on different directories. In example, one may want to store the 64 bit
+version of Falcon engine in lib64. It is possible to specify the -l option
+during the build step to change the "lib" default.
+
+
+Internal libraries
+==================
+
+  By default, Falcon builds an internally shipped version of the following
+well known libraries:
+
+  - PCRE 7.2
+  - ZLIB 1.1
+
+  If you prefer to use a version available on the system (i.e. a shared
+version of libpcre.so available for dynlink), you can remove the compilation
+and linking of the internal libraries specifying the "-inc" option on
+the build step.
+
+  To specify to use selectively one or more internal versions, disable
+the automation wit "-inc" and export the variable EXTRA_CMAKE with
+the following values (space spearated):
+
+  -DWITH_INTERNAL_PCRE=ON    (to build internal PCRE)
+  -DWITH_INTERNAL_ZLIB=ON    (to build internal ZLIB)
+
+
+
+Extra flags
+===========
+
+Build flags can be passed through the environment variables:
+
+  - CFLAGS: for the building of C files (some internal library, as PCRE)
+  - CXXFLAGS: for the building of the main engine.
+  - LDFLAGS: flags passed to the linker.
+  - EXTRA_CMAKE: extra parameters to be passed to CMAKE.
+
+
+Build processors
+================
+
+  The option "-j" can set the number of processors employed to build the
+process. When using CMAKE 2.4, and sporadically on some systems, it has
+been obserbed that setting a value > 2 causes the CMAKE build sequence
+to be confused, and causes the build process to fail once. When building
+manually, you can just ignore and repeat the build, while if you're building
+through an automated process, it is better to test if this problem is
+present on your combination of CMAKE/platform.
+
+

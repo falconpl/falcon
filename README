@@ -2,16 +2,20 @@
 
                      The Falcon Programming Language
 
-                                0.8 series
+                                0.9 series
 
 
 
-FALCON BUILD INSTRUCTIONS
-=========================
+SVN BUILD INSTRUCTIONS
+======================
 
-Plese, refer to
+  To build the currently working version from the active repository, please
+refer to this document:
 
    http://www.falconpl.org/wiki/tiki-index.php?page=The+build+environment
+
+  Instructions on how to build the released source packages are contained
+in the "BUILDING" document.
 
 
 FALCON MINIMAL OPERATION
@@ -29,7 +33,7 @@ placed before the script name, are:
   -p module  to pump in extra modules (preload them). Repetitions of -p load
              other modules
 
-On unix systems, falcon scripts can be made executable and provide the execute
+On UNIX systems, falcon scripts can be made executable and provide the execute
 instruction on the first line, like this:
 
    #! /usr/bin/falcon
@@ -41,7 +45,7 @@ instruction. The priority of load paths are:
 
 - command line -L option
 - FALCON_LOAD_PATH
-- builtin directory (in config.h created from config.h.in)
+- built-in directory (in config.h created from config.h.in)
 
 So it's always possible to redirect Falcon to load user-provided modules
 instead of system ones.
@@ -70,10 +74,10 @@ are -m (NOT compile in memory), -s (compile via assembly), -S (do a
 serialization/ deserialization on the compiled module before running it,
 instead of using it as soon as it has been compiled).
 
-It's a good idea to launch faltests on the testsuite to verify that your
+It's a good idea to launch faltest on the testsuite to verify that your
 environment is properly set up.
 
-The longtests/ directory has the same funciton as the testsuite/ directory,
+The longtests/ directory has the same function as the testsuite/ directory,
 except for the fact that its tests are meant to run for longer times to check
 for stress/repetition features.
 

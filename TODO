@@ -1,14 +1,8 @@
-Missing before 0.9
+Still TODO before official 0.9.2 release:
 
-    * Specialization of FBOM per type.
-    * Contracts.
-    * Virtual file system support.
-    * Advanced script debug support.
-    * The conio (advanced console I/O) module.
-    * The Falcon Abstract Toolkit (FAT), with GTK driver.
-    * CGI support module.
-    * Internet protocols (http, ftp, smtp, imap ecc.) modules.
-    * Mail module.
-    * The language reference.
-    * The developer (contributor) guide with doxygen generated API reference.
-    * Point-to-point, behavioral and launch-and-forget messages.
+   - Resolution of closed symbols deep down ancestors.
+   - Expansion of the Tokenizer (with custom recognizers) and deep testing.
+   - Autodetection of GBK locales on Windows
+   - Local copy of static strings to allow discharge of plugin-modules
+     at any moment.
+   - Fix the strange behavior of the console on Windows7
