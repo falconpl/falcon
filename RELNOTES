@@ -40,6 +40,11 @@ rear-compatible. The main ones are:
   - Addition of the "parametric evaluation" concept, which allows simpler
     passing of parameters through ETA functions and evaluated sequences.
   - Introduction of operator callbacks (operator overloading).
+  - Removal of the "sender" keyword; the BOM method Funciton.caller()
+    can provide the same information and is lighter.
+  - Addition of the fself keyword, that identifies the currently
+    executed function (and is useful, for example, to recurse from
+    inside nameless functions).
 
   At library level, the most relevant changes are in the stream area,
 where buffering and rationalization of the parameters have finally made

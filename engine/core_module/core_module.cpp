@@ -82,7 +82,29 @@ Module* core_module_init()
       addParam("item")->addParam("cls");
 
    /*#
+      @group bom_classes Basic Object Model
+      @brief Generic item reflection classes
+
+      The classes in this group reflect the the underlying Falcon item types.
+      Methods declared by this classes can be applied to every item
+      (if they are in the @a BOM class) or to some specific item type.
+
+      The methods can be applied both to symbols containing some data
+      of a certain types, or directly to the constants specifying them.
+      In example, to obtain the length of the "Hello world" string, it is
+      possible to do either:
+
+      @code
+         > "Hello world".len()
+         // or
+         item = "Hello world"
+         > item.len()
+      @endcode
+
+   */
+   /*#
       @class BOM
+      @ingroup bom_classes
       @brief Basic Object Model metaclass
 
       This class contains the methods that can be applied to
@@ -124,6 +146,12 @@ Module* core_module_init()
    bool_meta->exported( false );
    bool_meta->getClassDef()->setMetaclassFor( FLC_ITEM_BOOL );
 
+   /*#
+      @class Integer
+      @from BOM
+      @ingroup bom_classes
+      @brief Integer type basic object model metaclass.
+   */
    Falcon::Symbol *int_meta = self->addClass( "Integer" );
    int_meta->getClassDef()->addInheritance( new Falcon::InheritDef( bom_meta ) );
    int_meta->exported( false );
@@ -135,6 +163,12 @@ Module* core_module_init()
    self->addClassMethod( int_meta, "downto", &Falcon::core::core_downto ).asSymbol()->setEta( true )->
       addParam("limit")->addParam("sequence");
 
+   /*#
+      @class Numeric
+      @from BOM
+      @ingroup bom_classes
+      @brief Generic number type basic object model metaclass.
+   */
    Falcon::Symbol *num_meta = self->addClass( "Numeric" );
    num_meta->getClassDef()->addInheritance( new Falcon::InheritDef( bom_meta ) );
    num_meta->exported( false );
@@ -152,6 +186,12 @@ Module* core_module_init()
    lbind_meta->exported( false );
    lbind_meta->getClassDef()->setMetaclassFor( FLC_ITEM_LBIND );
 
+   /*#
+      @class Function
+      @from BOM
+      @ingroup bom_classes
+      @brief Generic number type basic object model metaclass.
+   */
    Falcon::Symbol *func_meta = self->addClass( "Function" );
    func_meta->getClassDef()->addInheritance( new Falcon::InheritDef( bom_meta ) );
    func_meta->exported( false );
@@ -178,6 +218,13 @@ Module* core_module_init()
       addParam("str")->addParam("trimSet");
    self->addExtFunc( "strTrim", &Falcon::core::mth_strTrim )->
       addParam("str")->addParam("trimSet");
+
+   /*#
+      @class String
+      @from BOM
+      @ingroup bom_classes
+      @brief Generic number type basic object model metaclass.
+   */
 
    Falcon::Symbol *string_meta = self->addClass( "String" );
    string_meta->getClassDef()->addInheritance( new Falcon::InheritDef( bom_meta ) );
@@ -229,6 +276,12 @@ Module* core_module_init()
    array_meta->exported( false );
    array_meta->getClassDef()->setMetaclassFor( FLC_ITEM_ARRAY );
 
+   /*#
+      @class Array
+      @from BOM
+      @ingroup bom_classes
+      @brief Array type basic object model metaclass.
+   */
    self->addClassMethod( array_meta, "front", &Falcon::core::Array_front ).asSymbol()->
       addParam("remove");
    self->addClassMethod( array_meta, "back", &Falcon::core::Array_back ).asSymbol()->
@@ -282,6 +335,12 @@ Module* core_module_init()
    dict_meta->exported( false );
    dict_meta->getClassDef()->setMetaclassFor( FLC_ITEM_DICT );
 
+   /*#
+      @class Dictionary
+      @from BOM
+      @ingroup bom_classes
+      @brief Dictionary type basic object model metaclass.
+   */
    self->addClassMethod( dict_meta, "front", &Falcon::core::mth_dictFront ).asSymbol()->
       addParam("remove")->addParam("key");
    self->addClassMethod( dict_meta, "back", &Falcon::core::mth_dictBack ).asSymbol()->
@@ -313,6 +372,12 @@ Module* core_module_init()
    //==================================================================
    // Object class
    //
+   /*#
+      @class Object
+      @from BOM
+      @ingroup bom_classes
+      @brief Object (class instance) type basic object model metaclass.
+   */
    Falcon::Symbol *object_meta = self->addClass( "Object" );
    object_meta->getClassDef()->addInheritance( new Falcon::InheritDef( bom_meta ) );
    object_meta->exported( false );
@@ -326,6 +391,12 @@ Module* core_module_init()
    //==================================================================
    // MemoryBuffer class
    //
+   /*#
+      @class MemoryBuffer
+      @from BOM
+      @ingroup bom_classes
+      @brief Memory buffer type basic object model metaclass.
+   */
    Falcon::Symbol *membuf_meta = self->addClass( "MemoryBuffer" );
    membuf_meta->getClassDef()->addInheritance( new Falcon::InheritDef( bom_meta ) );
    membuf_meta->exported( false );
@@ -361,6 +432,7 @@ Module* core_module_init()
    /*#
       @class Method
       @from BOM
+      @ingroup bom_classes
       @brief Metaclass of method items.
 
       This is the class reflecting falcon method items. A method is a set of
