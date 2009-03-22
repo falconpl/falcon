@@ -319,14 +319,17 @@ Module* core_module_init()
    self->addClassMethod( membuf_meta, "first", &Falcon::core::MemoryBuffer_first );
    self->addClassMethod( membuf_meta, "last", &Falcon::core::MemoryBuffer_last );
 
-   self->addClassMethod( membuf_meta, "put", &Falcon::core::MemoryBuffer_put );
+   self->addClassMethod( membuf_meta, "put", &Falcon::core::MemoryBuffer_put ).asSymbol()->
+      addParam( "data" );
    self->addClassMethod( membuf_meta, "get", &Falcon::core::MemoryBuffer_get );
    self->addClassMethod( membuf_meta, "rewind", &Falcon::core::MemoryBuffer_rewind );
    self->addClassMethod( membuf_meta, "reset", &Falcon::core::MemoryBuffer_reset );
    self->addClassMethod( membuf_meta, "flip", &Falcon::core::MemoryBuffer_flip );
-   self->addClassMethod( membuf_meta, "limit", &Falcon::core::MemoryBuffer_limit );
+   self->addClassMethod( membuf_meta, "limit", &Falcon::core::MemoryBuffer_limit ).asSymbol()->
+      addParam( "pos" );
    self->addClassMethod( membuf_meta, "mark", &Falcon::core::MemoryBuffer_mark );
-   self->addClassMethod( membuf_meta, "position", &Falcon::core::MemoryBuffer_position );
+   self->addClassMethod( membuf_meta, "position", &Falcon::core::MemoryBuffer_position ).asSymbol()->
+      addParam( "pos" );
    self->addClassMethod( membuf_meta, "clear", &Falcon::core::MemoryBuffer_clear );
    self->addClassMethod( membuf_meta, "fill", &Falcon::core::MemoryBuffer_fill ).asSymbol()->
       addParam("value");

@@ -138,7 +138,7 @@ FALCON_FUNC MemoryBuffer_put( ::Falcon::VMachine *vm )
       vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).extra( "N" ) ) );
       return;
    }
-   
+
    MemBuf* self = vm->self().asMemBuf();
    self->put( (uint32) i_data->forceInteger() );
 }
@@ -185,11 +185,12 @@ FALCON_FUNC MemoryBuffer_position( ::Falcon::VMachine *vm )
    {
       vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).extra( "N" ) ) );
    }
-   else 
+   else
    {
       self->limit( (uint32) i_pos->forceInteger() );
    }
 }
+
 
 FALCON_FUNC MemoryBuffer_clear( ::Falcon::VMachine *vm )
 {
@@ -197,10 +198,19 @@ FALCON_FUNC MemoryBuffer_clear( ::Falcon::VMachine *vm )
    self->clear();
 }
 
+
+/*#
+   @method limit MemoryBuffer
+   @brief Gets or sets current filled data size.
+   @optparam value The value to be applied to the memory buffer.
+   @return current limit.
+
+*/
+
 FALCON_FUNC MemoryBuffer_limit( ::Falcon::VMachine *vm )
 {
    MemBuf* self = vm->self().asMemBuf();
-   
+
    Item *i_limit = vm->param(0);
    if ( i_limit == 0 )
    {
@@ -210,7 +220,7 @@ FALCON_FUNC MemoryBuffer_limit( ::Falcon::VMachine *vm )
    {
       vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).extra( "N" ) ) );
    }
-   else 
+   else
    {
       self->limit( (uint32) i_limit->forceInteger() );
    }
@@ -227,19 +237,19 @@ FALCON_FUNC MemoryBuffer_fill( ::Falcon::VMachine *vm )
 {
    Item *i_item = vm->param(0);
    MemBuf* self = vm->self().asMemBuf();
-   
+
    if ( i_item == 0 || ! i_item->isOrdinal() )
    {
       throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
          .origin( e_orig_runtime )
          .extra(  "X" ) );
    }
-   
+
    uint32 value = (uint32) i_item->forceInteger();
-   
+
    for( uint32 i = 0; i < self->length(); i ++ )
       self->set( i, value );
-   
+
    vm->retval( self );
 }
 
