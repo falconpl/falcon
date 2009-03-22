@@ -113,6 +113,7 @@ SET( CORE_MODULE_SOURCES
    core_module/fal_include.cpp
    core_module/file_ext.cpp
    core_module/format_ext.cpp
+   core_module/function_ext.cpp
    core_module/functional_ext.cpp
    core_module/gc_ext.cpp
    core_module/input.cpp

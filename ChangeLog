@@ -82,6 +82,8 @@ Falcon (0.9)
   * major: Removed 'lambda' keyword. Use {=>} instead.
   * major: Added 'fself' keyword referring to the current symbol being
            executed. Won't work with methods for now.
+  * minor: Added 'getProperty' and 'setProperty' methods to deep items
+           meta-classes.
 
 Falcon (0.8.14)
   * fixed: Now asObject() raises an error if the item is not an object;

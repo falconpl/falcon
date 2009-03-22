@@ -90,7 +90,7 @@ void VMachine::internal_construct()
    m_lockRoot = new GarbageLock(Item());
    m_lockRoot->next( m_lockRoot );
    m_lockRoot->prev( m_lockRoot );
-   
+
    m_userData = 0;
    m_bhasStandardStreams = false;
    m_pc = 0;
@@ -1472,6 +1472,35 @@ bool VMachine::getCaller( const Symbol *&sym, const Module *&module)
    sym = frame.m_symbol;
    module = frame.m_module->module();
    return sym != 0 && module != 0;
+}
+
+bool VMachine::getCallerItem( Item &caller, uint32 level )
+{
+   uint32 sbase = m_stackBase;
+   while( sbase >= VM_FRAME_SPACE && level > 0 )
+   {
+      StackFrame &frame = *(StackFrame *) m_stack->at( sbase - VM_FRAME_SPACE );
+      sbase = frame.m_stack_base;
+      level--;
+   }
+
+   if ( sbase < VM_FRAME_SPACE )
+      return false;
+
+   StackFrame &frame = *(StackFrame *) m_stack->at( sbase - VM_FRAME_SPACE );
+   const Symbol* sym = frame.m_symbol;
+   const LiveModule* module = frame.m_module;
+   caller = module->globals().itemAt( sym->itemId() );
+   if ( ! caller.isFunction() )
+      return false;
+
+   // was it a method ?
+   if ( ! frame.m_self.isNil() )
+   {
+      caller.methodize( frame.m_self );
+   }
+
+   return true;
 }
 
 void VMachine::fillErrorContext( Error *err, bool filltb )
@@ -3318,7 +3347,7 @@ bool VMachine::consumeSignal()
             msg->onMsgComplete( true );
             delete msg;
          }
-         
+
          return true;
       }
 
@@ -3377,7 +3406,7 @@ void VMachine::postMessage( VMMessage *msg )
    else {
       // ok, wa can't do it now; post the message
       m_mtx_mesasges.lock();
-      
+
       if ( m_msg_head == 0 )
       {
          m_msg_head = msg;
@@ -3385,19 +3414,19 @@ void VMachine::postMessage( VMMessage *msg )
       else {
          m_msg_tail->append( msg );
       }
-      
+
       // reach the end of the msg list and set the new tail
-      while( msg->next() != 0 ) 
+      while( msg->next() != 0 )
          msg = msg->next();
-      
+
       m_msg_tail = msg;
-      
+
       // also, ask for early checks.
       // We're really not concerned about spurious reads here or in the other thread,
       // everything would be ok even without this operation. It's just ok if some of
       // the two threads sync on this asap.
       m_opNextCheck = m_opCount;
-      
+
       m_mtx_mesasges.unlock();
    }
 }
@@ -3411,17 +3440,17 @@ void VMachine::processMessage( VMMessage *msg )
       msg->onMsgComplete( false );
       delete msg;
    }
-   
+
    // create the coroutine
    coPrepare(0);
    for ( uint32 i = 0; i < msg->paramCount(); ++i )
    {
       pushParameter( *msg->param(i) );
    }
-   
+
    // create the frame used by the broadcast process
    createFrame( msg->paramCount() );
-   
+
    // prepare the broadcast in the frame.
    slot->prepareBroadcast( this, 0, msg->paramCount(), msg );
 }
@@ -3492,7 +3521,7 @@ void VMachine::markLocked()
    m_mtx_lockitem.lock();
    GarbageLock *rlock = this->m_lockRoot;
    GarbageLock *lock = rlock;
-   do 
+   do
    {
       memPool->markItemFast( lock->item() );
       lock = lock->next();

@@ -188,14 +188,14 @@ class VMachine;
 class FALCON_DYN_CLASS VMBaton: public Baton
 {
    VMachine *m_owner;
-   
+
 public:
-   VMBaton( VMachine* owner ): 
+   VMBaton( VMachine* owner ):
       Baton( true ),
       m_owner( owner )
    {}
    virtual ~VMBaton() {}
-   
+
    virtual void release();
    virtual void onBlockedAcquire();
    void releaseNotIdle();
@@ -296,7 +296,7 @@ protected:
 
 
    mutable Mutex m_mtx;
-   
+
    /** Mutex guarding the slot structure. */
    mutable Mutex m_slot_mtx;
 
@@ -513,32 +513,32 @@ protected:
       state.
    */
    bool m_bGcEnabled;
-   
+
    /** Main synchronization baton. */
    VMBaton m_baton;
-   
+
    Mutex m_mtx_mesasges;
    VMMessage* m_msg_head;
    VMMessage* m_msg_tail;
-   
+
    /** Event set by the VM to ask for priority GC.
       This is used by the performGC() function to inform the GC loop about the priority
       of this VM.
    */
    bool m_bPirorityGC;
-   
+
    /** Event set by the GC to confirm the forced GC loop is over. */
    Event m_eGCPerformed;
-   
+
    /** True when we want to wait for collection before being notified in priority scans. */
    bool m_bWaitForCollect;
-   
+
    /** Mutex for locked items ring. */
    Mutex m_mtx_lockitem;
-      
+
    /** Locked and unreclaimable items are stored in this ring. */
    GarbageLock *m_lockRoot;
-   
+
    //=============================================================
    // Private functions
    //
@@ -614,14 +614,14 @@ protected:
    void setCurrent() const;
 
    friend class CoreFunc;
-   
-   /** Processes an incoming message. 
+
+   /** Processes an incoming message.
       This searches for the slot requierd by the message;
       if it is found, the message is broadcast to the slot in a newly created coroutine,
       otherwise the onMessageComplete is immedately called.
-      
+
       The message will be immediately destroyed if it can't be broadcast.
-      
+
       \param msg The message to be processed.
    */
    void processMessage( VMMessage* msg );
@@ -1092,6 +1092,16 @@ public:
       \return true on success, false on failure.
    */
    bool getCaller( const Symbol *&sym, const Module *&module);
+
+   /** Get the item that called the current symbol.
+
+      If the caller cannot be found (i.e. because the current symbol is
+      called directly by the embedding program) the method returns false.
+      \param item on success, will hold the item (eventually the method) that originated the call.
+      \param level previous callers desired (0 is the first caller).
+      \return true on success, false on failure.
+   */
+   bool getCallerItem( Item &caller, uint32 level=0 );
 
    /** Fills an error with current VM execution context and traceback.
    */
@@ -2165,7 +2175,7 @@ public:
    /** Declares an IDLE section.
       In code sections where the VM is idle, it is granted not to change its internal
       structure. This allow inspection from outer code, as i.e. the garbage collector.
-      
+
       \note Calls VM baton release (just candy grammar).
       \see baton()
    */
@@ -2211,41 +2221,41 @@ public:
       inline ~Pauser() { m_vm->unidle(); }
    };
 
-   
+
    /** Accessor to the VM baton.
       Used to serialize concurrent access to this VM.
    */
    const VMBaton& baton() const { return m_baton;  }
-   
+
    /** Accessor to the VM baton.
       Used to serialize concurrent access to this VM.
    */
    VMBaton& baton() { return m_baton; }
-   
+
    /** Send a message to the VMachine.
-   
+
       If the virtual machine is currently idle, the message is immediately processed.
-      
+
       Otherwise, it is posted to the main VM loop, and it is executed as soon as
       possible.
-      
+
       The ownership of the message passes to the virtual machine, which will destroy
       it as the message is complete.
-      
+
       The message is processed by broadcasting on the coresponding VM slot.
    */
    void postMessage( VMMessage *vm );
-   
+
    /** Return current generation. */
    uint32 generation() const;
-   
+
    /** Force a GC collection loop on the virtual machine.
-      
+
       Waits for the GC loop to be completed. The virtual machine must
       be in non-idle mode when calling this function, as the idle ownership
       is directly transferred to the GC and then back to the calling VM
       without interruption.
-      
+
       Normallym the GC will notify the VM back as soon as the mark loop is over;
       If the VM wants to wait for the free memory to be collected, set
       the parameter to true.
@@ -2285,7 +2295,7 @@ public:
       \param locked entity to be unlocked.
    */
    void unlock( GarbageLock *locked );
-   
+
 //==========================================================================
 //==========================================================================
 //==========================================================================

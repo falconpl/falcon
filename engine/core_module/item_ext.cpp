@@ -50,8 +50,8 @@ FALCON_FUNC  mth_len ( ::Falcon::VMachine *vm )
    if ( ! vm->self().isMethodic() )
       elem = vm->param( 0 );
    else
-      elem = &vm->self(); 
-  
+      elem = &vm->self();
+
   if ( elem == 0 ) {
       vm->retval( 0 );
       return;
@@ -328,7 +328,7 @@ FALCON_FUNC  mth_isCallable ( ::Falcon::VMachine *vm )
 /*#
    @function getProperty
    @brief Returns the value of a property in an object.
-   @param obj the source object
+   @param obj the source object, array or (blessed) dictionary.
    @param propName A string representing the name of a property or a method inside the object.
    @return the property
    @raise AccessError if the property can't be found.
@@ -340,18 +340,38 @@ FALCON_FUNC  mth_isCallable ( ::Falcon::VMachine *vm )
    If the property is a method, a callable method item is returned.
    If the property is not found, an error of class RangeError is raised.
 */
-FALCON_FUNC  getProperty( ::Falcon::VMachine *vm )
-{
-   Item *obj_x = vm->param(0);
-   Item *prop_x = vm->param(1);
 
-   if ( obj_x == 0 || ! obj_x->isObject() || prop_x == 0 || ! prop_x->isString() ) {
+/*#
+   @method getProperty Object
+   @brief Returns the value of a property in an object.
+   @param propName A string representing the name of a property or a method inside the object.
+   @return the property
+   @raise AccessError if the property can't be found.
+
+   An item representing the property is returned. The returned value is
+   actually a copy of the property; assigning a new value to it won't have any
+   effect on the original object.
+
+   If the property is a method, a callable method item is returned.
+   If the property is not found, an error of class RangeError is raised.
+*/
+FALCON_FUNC  mth_getProperty( ::Falcon::VMachine *vm )
+{
+   Item *obj_x, *prop_x;
+   if( vm->self().isMethodic() ) {
+      obj_x = &vm->self();
+      prop_x = vm->param(0);
+   }
+   else {
+      obj_x= vm->param(0);
+      prop_x = vm->param(1);
+   }
+
+   if ( obj_x == 0 || ! obj_x->isDeep() || prop_x == 0 || ! prop_x->isString() ) {
       vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).extra( "O,S" ) ) );
    }
-   else if ( ! obj_x->asObjectSafe()->getProperty( *prop_x->asString(), vm->regA() ) )
-   {
-      vm->raiseRTError( new AccessError( ErrorParam( e_prop_acc ) ) );
-   }
+
+   obj_x->asDeepItem()->readProperty( *prop_x->asString(), vm->regA() );
 
    if ( vm->regA().isCallable() )
    {
@@ -370,20 +390,56 @@ FALCON_FUNC  getProperty( ::Falcon::VMachine *vm )
    an AccessError is raised.
 
 */
-FALCON_FUNC  setProperty( ::Falcon::VMachine *vm )
-{
-   Item *obj_x = vm->param(0);
-   Item *prop_x = vm->param(1);
-   Item *new_item = vm->param(2);
+/*#
+   @method setProperty Object
+   @param propName A string representing the name of a property or a method inside the object.
+   @param value The property new value.
+   @raise AccessError If the property can't be found.
 
-   if ( obj_x == 0 || ! obj_x->isObject() || prop_x == 0 || ! prop_x->isString() || new_item == 0) {
+   Alters the value of the property in the given object. If the required property is not present,
+   an AccessError is raised.
+
+*/
+/*#
+   @method setProperty Array
+   @param propName A string representing the name of a property or a method inside the object.
+   @param value The property new value.
+   @raise AccessError If the property can't be found.
+
+   Alters the value of the property in the given array. If the required property is not present,
+   an AccessError is raised.
+
+*/
+/*#
+   @method setProperty Dictionary
+   @param propName A string representing the name of a property or a method inside the object.
+   @param value The property new value.
+   @raise AccessError If the property can't be found.
+
+   Alters the value of the property in the given dictionary. If the required property is not present,
+   an AccessError is raised.
+
+*/
+FALCON_FUNC  mth_setProperty( ::Falcon::VMachine *vm )
+{
+   Item *obj_x, *prop_x, *new_item;
+   if( vm->self().isMethodic() ) {
+      obj_x = &vm->self();
+      prop_x = vm->param(0);
+      new_item = vm->param(1);
+   }
+   else {
+      obj_x= vm->param(0);
+      prop_x = vm->param(1);
+      new_item = vm->param(2);
+   }
+
+   if ( obj_x == 0 || ! obj_x->isDeep() || prop_x == 0 || ! prop_x->isString() || new_item == 0) {
       vm->raiseRTError( new ParamError( ErrorParam( e_inv_params )
          .extra( "O,S" ) ) );
    }
-   else if ( ! obj_x->asObjectSafe()->setProperty( *prop_x->asString(), *new_item ) )
-   {
-      vm->raiseRTError( new AccessError( ErrorParam( e_prop_acc ) ) );
-   }
+
+   obj_x->asDeepItem()->writeProperty( *prop_x->asString(), *new_item );
 }
 
 /*#
@@ -461,7 +517,7 @@ FALCON_FUNC  ord ( ::Falcon::VMachine *vm )
 
    This function is not meant to provide complex applications with pretty-print facilities, but just to provide
    simple scripts with a simple and consistent output facility.
-   
+
    If a @b format parameter is given, the format will be passed unparsed to toString() methods of underlying
    items.
 
@@ -503,25 +559,25 @@ FALCON_FUNC  mth_ToString ( ::Falcon::VMachine *vm )
       elem = vm->param(0);
       format = vm->param(1);
    }
-   
+
    CoreString *target = new CoreString;
-   
+
    if ( format != 0 )
    {
       if ( format->isString() )
       {
-         Format fmt( *format->asString() );  
+         Format fmt( *format->asString() );
          if ( ! fmt.isValid() )
          {
             throw new ParamError( ErrorParam( e_param_fmt_code ).
                extra( *format->asString() ) );
          }
-         else 
+         else
          {
             fmt.format( vm, *elem, *target );
          }
       }
-      else 
+      else
       {
          vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).extra( vm->self().isMethodic() ? "[S]" :  "X,[S]" ) ) );
          return;
@@ -589,7 +645,7 @@ FALCON_FUNC mth_compare( VMachine *vm )
 {
    Item *first;
    Item *second;
-   
+
    if( vm->self().isMethodic() )
    {
       first = &vm->self();
@@ -600,14 +656,14 @@ FALCON_FUNC mth_compare( VMachine *vm )
       first = vm->param(0);
       second = vm->param(1);
    }
-   
+
    if( first == 0 || second == 0 )
    {
       vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).extra( vm->self().isMethodic() ? "X" : "X,X" ) ) );
       return;
    }
-   
-   
+
+
    vm->retval( (int64) first->compare(*second) );
 }
 
@@ -690,7 +746,7 @@ FALCON_FUNC mth_clone( VMachine *vm )
          result = vm->param(0)->clone( vm->regA() );
       }
    }
-   
+
    if( ! result )
       vm->raiseError( new CloneError( ErrorParam( e_uncloneable, __LINE__ ).origin( e_orig_runtime ) ) );
 }
@@ -703,7 +759,7 @@ FALCON_FUNC mth_clone( VMachine *vm )
    If applied to objects, returns the name of the class of which the object
    is an instance. When applied to classes, it return the class symbolic name.
    In all other cases, return nil.
-   
+
    @see className
 */
 
@@ -716,14 +772,14 @@ FALCON_FUNC mth_clone( VMachine *vm )
    If applied to objects, returns the name of the class of which the object
    is an instance. When applied to classes, it return the class symbolic name.
    In all other cases, return nil.
-   
+
    @see BOM.className
 */
 
 FALCON_FUNC mth_className( VMachine *vm )
 {
    Item *self;
-   
+
    if ( vm->self().isMethodic() )
    {
       self = &vm->self();
@@ -736,23 +792,23 @@ FALCON_FUNC mth_className( VMachine *vm )
          return;
       }
    }
-   
+
    switch( self->type() )
    {
       case FLC_ITEM_OBJECT:
          vm->retval(
             new CoreString(  vm->self().asObject()->generator()->symbol()->name() ) );
          break;
-         
+
       case FLC_ITEM_CLASS:
          vm->retval(
             new CoreString(  vm->self().asClass()->symbol()->name() ) );
          break;
-         
+
       default:
          vm->retnil();
    }
-   
+
 }
 
 /*#
@@ -768,7 +824,7 @@ FALCON_FUNC mth_className( VMachine *vm )
    or for comparisons on @b select branches.
 
    If the item on which this method is applied is not an object, it returns nil.
-   
+
    @see baseClass
 */
 
@@ -786,14 +842,14 @@ FALCON_FUNC mth_className( VMachine *vm )
    or for comparisons on @b select branches.
 
    If the item on which this method is applied is not an object, it returns nil.
-   
+
    @see BOM.baseClass
 */
 
 FALCON_FUNC mth_baseClass( VMachine *vm )
 {
    Item *self;
-   
+
    if ( vm->self().isMethodic() )
    {
       self = &vm->self();
@@ -806,7 +862,7 @@ FALCON_FUNC mth_baseClass( VMachine *vm )
          return;
       }
    }
-   
+
    if( self->isObject() )
    {
       CoreClass* cls = const_cast<CoreClass*>(self->asObject()->generator());
@@ -848,7 +904,7 @@ FALCON_FUNC mth_baseClass( VMachine *vm )
    > "Is MyError derived from 'Error' (by class)?: ", \
          MyError.derivedFrom( Error )
    @endcode
-   
+
    @see derivedFrom
 */
 
@@ -889,7 +945,7 @@ FALCON_FUNC mth_derivedFrom( VMachine *vm )
 {
    Item *i_clsName;
    Item *self;
-   
+
    if( vm->self().isMethodic() )
    {
       self = &vm->self();
@@ -899,7 +955,7 @@ FALCON_FUNC mth_derivedFrom( VMachine *vm )
       self = vm->param(0);
       i_clsName = vm->param(1);
    }
-   
+
    if( i_clsName == 0 || ! (i_clsName->isString() || i_clsName->isClass()) )
    {
       vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).extra( "S|C" ) ) );
@@ -912,16 +968,16 @@ FALCON_FUNC mth_derivedFrom( VMachine *vm )
    else
       name = &i_clsName->asClass()->symbol()->name();
 
-   switch( self->type() ) 
+   switch( self->type() )
    {
       case FLC_ITEM_OBJECT:
          vm->regA().setBoolean( (bool)self->asObjectSafe()->derivedFrom( *name ) );
          break;
-      
+
       case FLC_ITEM_CLASS:
          vm->regA().setBoolean( (bool)self->asClass()->derivedFrom( *name ) );
          break;
-   
+
       default:
          vm->regA().setBoolean( false );
    }

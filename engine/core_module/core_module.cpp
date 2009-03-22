@@ -140,6 +140,9 @@ Module* core_module_init()
    func_meta->getClassDef()->addInheritance( new Falcon::InheritDef( bom_meta ) );
    func_meta->exported( false );
    func_meta->getClassDef()->setMetaclassFor( FLC_ITEM_FUNC );
+   self->addClassMethod( func_meta, "name", &Falcon::core::Function_name );
+   self->addClassMethod( func_meta, "caller", &Falcon::core::Function_caller ).asSymbol()->
+      addParam("level");    //static
 
    Falcon::Symbol *gcptr_meta = self->addClass( "GarbagePointer" );
    gcptr_meta->getClassDef()->addInheritance( new Falcon::InheritDef( bom_meta ) );
@@ -245,6 +248,11 @@ Module* core_module_init()
    self->addClassMethod( array_meta, "head", &Falcon::core::mth_arrayHead );
    self->addClassMethod( array_meta, "tail", &Falcon::core::mth_arrayTail );
 
+   self->addClassMethod( array_meta, "getProperty", &Falcon::core::mth_getProperty ).asSymbol()->
+      addParam("propName");
+   self->addClassMethod( array_meta, "setProperty", &Falcon::core::mth_setProperty ).asSymbol()->
+      addParam("propName")->addParam("value");
+
    //==================================================================
    // Dict class
    //
@@ -281,6 +289,10 @@ Module* core_module_init()
       addParam("item");
    self->addClassMethod( dict_meta, "clear", &Falcon::core::mth_dictClear );
 
+   self->addClassMethod( dict_meta, "getProperty", &Falcon::core::mth_getProperty ).asSymbol()->
+      addParam("propName");
+   self->addClassMethod( dict_meta, "setProperty", &Falcon::core::mth_setProperty ).asSymbol()->
+      addParam("propName")->addParam("value");
 
    //==================================================================
    // Object class
@@ -289,6 +301,11 @@ Module* core_module_init()
    object_meta->getClassDef()->addInheritance( new Falcon::InheritDef( bom_meta ) );
    object_meta->exported( false );
    object_meta->getClassDef()->setMetaclassFor( FLC_ITEM_OBJECT );
+   self->addClassMethod( object_meta, "getProperty", &Falcon::core::mth_getProperty ).asSymbol()->
+      addParam("propName");
+   self->addClassMethod( object_meta, "setProperty", &Falcon::core::mth_setProperty ).asSymbol()->
+      addParam("propName")->addParam("value");
+
 
    //==================================================================
    // MemoryBuffer class
@@ -375,9 +392,9 @@ Module* core_module_init()
       addParam("string");
 
 
-   self->addExtFunc( "getProperty", &Falcon::core::getProperty )->
+   self->addExtFunc( "getProperty", &Falcon::core::mth_getProperty )->
       addParam("obj")->addParam("propName");
-   self->addExtFunc( "setProperty", &Falcon::core::setProperty )->
+   self->addExtFunc( "setProperty", &Falcon::core::mth_getProperty )->
       addParam("obj")->addParam("propName")->addParam("value");
 
    self->addExtFunc( "yield", &Falcon::core::yield );

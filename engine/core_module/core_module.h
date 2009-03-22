@@ -41,9 +41,12 @@ FALCON_FUNC  mth_className ( ::Falcon::VMachine *vm );
 FALCON_FUNC  mth_derivedFrom ( ::Falcon::VMachine *vm );
 FALCON_FUNC  mth_baseClass ( ::Falcon::VMachine *vm );
 
-FALCON_FUNC  getProperty( ::Falcon::VMachine *vm );
-FALCON_FUNC  setProperty( ::Falcon::VMachine *vm );
+FALCON_FUNC  mth_getProperty( ::Falcon::VMachine *vm );
+FALCON_FUNC  mth_setProperty( ::Falcon::VMachine *vm );
+//FALCON_FUNC  mth_hasProperty( ::Falcon::VMachine *vm );
 
+FALCON_FUNC  Function_name ( ::Falcon::VMachine *vm );
+FALCON_FUNC  Function_caller ( ::Falcon::VMachine *vm );
 
 // Iterator class
 FALCON_FUNC  Iterator_init( ::Falcon::VMachine *vm );
