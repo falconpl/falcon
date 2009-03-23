@@ -5,7 +5,7 @@
    Falcon compiler and interpreter
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
-   Begin: ven set 10 2004
+   Begin: Fri, 10 Sept 2004 13:15:23 +0100
 
    -------------------------------------------------------------------
    (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
@@ -18,31 +18,7 @@
 
    Consider this a relatively complex example of an embedding application.
 */
-
-#include <falcon/sys.h>
-#include <falcon/setup.h>
-#include <falcon/common.h>
-#include <falcon/compiler.h>
-#include <falcon/genhasm.h>
-#include <falcon/gencode.h>
-#include <falcon/gentree.h>
-#include <falcon/module.h>
-#include <falcon/vm.h>
-#include <falcon/modloader.h>
-#include <falcon/runtime.h>
-#include <falcon/core_ext.h>
-#include <falcon/string.h>
-#include <falcon/carray.h>
-#include <falcon/memory.h>
-#include <falcon/transcoding.h>
-#include <falcon/stream.h>
-#include <falcon/fstream.h>
-#include <falcon/stringstream.h>
-#include <falcon/stdstreams.h>
-#include <falcon/fassert.h>
-#include <falcon/intcomp.h>
-#include <falcon/streambuffer.h>
-
+#include "falcon.h"
 #include "options.h"
 
 #include <stdio.h>
@@ -54,7 +30,6 @@ using namespace Falcon;
 *********************************************/
 /** Options for falcon command line */
 static HOptions options;
-
 Stream *stdOut;
 Stream *stdErr;
 Stream *stdIn;
@@ -159,41 +134,59 @@ static void version()
    stdOut->flush();
 }
 
-static void usage()
+static void usage( bool deep )
 {
-   stdOut->writeString ( "Usage: falcon [options] file.fal [script options]\n" );
-   stdOut->writeString ( "\n" );
-   stdOut->writeString ( "Options:\n" );
-   stdOut->writeString ( "   -c          compile only the given source\n" );
-   stdOut->writeString ( "   -C          Check for memory allocation correctness.\n" );
-   stdOut->writeString ( "   -d          Set directive (as <directive>=<value>).\n" );
-   stdOut->writeString ( "   -D          Set constant (as <constant>=<value>).\n" );
-   stdOut->writeString ( "   -e <enc>    Set given encoding as default for VM I/O.\n" );
-   stdOut->writeString ( "   -E <enc>    Source files are in <enc> encoding (overrides -e)\n" );
-   stdOut->writeString ( "   -f          force recompilation of modules even when .fam are found\n" );
-   stdOut->writeString ( "   -h/-?       this help\n" );
-   stdOut->writeString ( "   -i          interactive mode\n" );
-   stdOut->writeString ( "   -l <lang>   Set preferential language of loaded modules\n" );
-   stdOut->writeString ( "   -L <path>   Add path for 'load' directive (start with ';' remove other paths)\n" );
-   stdOut->writeString ( "   -m          do NOT compile in memory (use temporary files)\n" );
-   stdOut->writeString ( "   -M          do NOT save the compiled modules in '.fam' files\n" );
-   stdOut->writeString ( "   -o <fn>     output to <fn> instead of [filename.xxx]\n" );
-   stdOut->writeString ( "   -p <module> preload (pump in) given module\n" );
-   stdOut->writeString ( "   -P          use load path also to find main module\n" );
-   stdOut->writeString ( "   -r          do NOT recompile sources to fulfil load directives\n" );
-   stdOut->writeString ( "   -S          produce an assembly output\n" );
-   stdOut->writeString ( "   -t          generate a syntactic tree (for logic debug)\n" );
-   stdOut->writeString ( "   -T          force input parsing as .ftd (template document)\n" );
-   stdOut->writeString ( "   -v          print copyright notice and version and exit\n" );
-   stdOut->writeString ( "   -w          Add an extra console wait after program exit\n" );
-   stdOut->writeString ( "   -x          execute a binary '.fam' module\n" );
-   stdOut->writeString ( "   -y          write string translation table for the module\n" );
+   stdOut->writeString (
+      "Usage:\n"
+      "       falcon (-c|-S|-t) [c_opts] [-o<output>] module\n"
+      "       falcon -y [-o<output>] module\n"
+      "       falcon -x [c_options] module\n"
+      "       falcon [c_opts] [r_opts] module [script options]\n"
+      "       falcon -i [-p module] ...[-p module]\n"
+      "\n"
+      );
 
-   stdOut->writeString ( "\n" );
-   stdOut->writeString ( "Paths must be in falcon file name format: directory separators must be slashes [/] and\n" );
-   stdOut->writeString ( "multiple entries must be entered separed by a semicolon (';')\n" );
-   stdOut->writeString ( "File names may be set to '-' meaning standard input or output (depending on the option)\n" );
-   stdOut->writeString ( "\n" );
+   if( deep )
+   {
+      stdOut->writeString (
+      "Modal options:\n"
+      "   -c          compile the given source in a .fam module\n"
+      "   -i          interactive mode\n"
+      "   -S          produce an assembly output\n"
+      "   -t          generate a syntactic tree (for logic debug)\n"
+      "   -y          write string translation table for the module\n"
+      "   -x          execute a binary '.fam' module\n"
+      "\n"
+      "Compilation options (c_opts):\n"
+      "   -d          Set directive (as <directive>=<value>)\n"
+      "   -D          Set constant (as <constant>=<value>)\n"
+      "   -E <enc>    Source files are in <enc> encoding (overrides -e)\n"
+      "   -f          force recompilation of modules even when .fam are found\n"
+      "   -m          do NOT compile in memory (use temporary files)\n"
+      "   -T          consider given [module] as .ftd (template document)\n"
+      "\n"
+      "Run options (r_opts):\n"
+      "   -C          check for memory allocation correctness.\n"
+      "   -e <enc>    set given encoding as default for VM I/O.\n"
+      "   -l <lang>   Set preferential language of loaded modules\n"
+      "   -L <path>   Add path for 'load' directive (start with ';' remove std paths)\n"
+      "   -M          do NOT save the compiled modules in '.fam' files\n"
+      "   -p <module> preload (pump in) given module\n"
+      "   -r          do NOT recompile sources (ignore sources)\n"
+      "\n"
+      "General options:\n"
+      "   -h/-?       display usage\n"
+      "   -H          this help\n"
+      "   -o <fn>     output to <fn> instead of [module.xxx]\n"
+      "   -v          print copyright notice and version and exit\n"
+      "   -w          add an extra console wait after program exit\n"
+      "\n"
+      "Paths must be in falcon file name format: directory separators must be slashes [/] and\n"
+      "multiple entries must be entered separed by a semicolon (';')\n"
+      "File names may be set to '-' meaning standard input or output (depending on the option)\n"
+      "\n"
+      );
+   }
    stdOut->flush();
 }
 
@@ -242,7 +235,7 @@ void exit_sequence ( int exit_value, int errors = 0 )
       else
          stdErr->writeString ( "1 error\n" );
    }
-   
+
    if ( options.wait_after )
    {
       stdIn = stdInputStream();
@@ -260,7 +253,7 @@ void exit_sequence ( int exit_value, int errors = 0 )
 
    options.preloaded.clear();
    options.preloaded.clear();
-   
+
    Falcon::Engine::Shutdown();
    exit ( exit_value );
 }
@@ -425,6 +418,17 @@ Stream *openOutputStream ( const String &ext, bool bBinary = false )
    return fout;
 }
 
+void modalGiven()
+{
+   static bool modal = false;
+
+   if (modal)
+   {
+      stdErr->writeString ( "falcon: multiple modal options selected." );
+      exit_sequence(1);
+   }
+   modal = true;
+}
 
 void parseOptions ( int argc, char **argv, int &script_pos )
 {
@@ -439,7 +443,7 @@ void parseOptions ( int argc, char **argv, int &script_pos )
       {
          switch ( op[1] )
          {
-            case 'c': options.compile_only = true; break;
+            case 'c': modalGiven(); options.compile_only = true; break;
             case 'C': options.check_memory = true; break;
             case 'd':
                if ( op[2] == 0 && i + 1< argc )
@@ -478,8 +482,9 @@ void parseOptions ( int argc, char **argv, int &script_pos )
                break;
 
             case 'f': options.force_recomp = true; break;
-         case 'h': case '?': usage(); exitNow = true;
-            case 'i': options.interactive = true; break;
+            case 'h': case '?': usage(false); exitNow = true;
+            case 'H': exitNow = true;
+            case 'i': modalGiven(); options.interactive = true; break;
 
             case 'L':
                if ( op[2] == 0 && i + 1 < argc )
@@ -512,22 +517,21 @@ void parseOptions ( int argc, char **argv, int &script_pos )
                   options.preloaded.pushBack ( new String ( op + 2 ) );
                break;
 
-            case 'P': options.search_path = true; break;
             case 'r': options.recompile_on_load = false; break;
 
-            case 'S': options.assemble_out = true; break;
-            case 't': options.tree_out = true; break;
+            case 'S': modalGiven(); options.assemble_out = true; break;
+            case 't': modalGiven(); options.tree_out = true; break;
             case 'T': options.parse_ftd = true; break;
             case 'x': options.run_only = true; break;
             case 'v': version(); exitNow = true; break;
             case 'w': options.wait_after = true; break;
-            case 'y': options.compile_tltable = true; break;
+            case 'y': modalGiven(); options.compile_tltable = true; break;
 
             default:
                stdErr->writeString ( "falcon: unrecognized option '" );
                stdErr->writeString ( op );
                stdErr->writeString ( "'.\n\n" );
-               usage();
+               usage(false);
                exit_sequence ( 1 );
          }
       }
@@ -538,39 +542,6 @@ void parseOptions ( int argc, char **argv, int &script_pos )
          // the other options are for the script.
          break;
       }
-   }
-
-   // check incompatible switchs
-   if ( options.assemble_out && options.tree_out )
-   {
-      stdErr->writeString ( "falcon: incompatible output modes specified." );
-      exit_sequence ( 1 );
-   }
-
-   if ( options.compile_only && options.run_only )
-   {
-      stdErr->writeString ( "falcon: incompatible compilation only and execution only requests." );
-      exit_sequence ( 1 );
-   }
-
-   if ( ( options.assemble_out || options.tree_out ) &&
-         options.run_only )
-   {
-      stdErr->writeString ( "falcon: incompatible output mode requeste and execution only requests." );
-      exit_sequence ( 1 );
-   }
-
-   if ( options.compile_only && options.interactive )
-   {
-      stdErr->writeString ( "falcon: incompatible compilation request and interactive mode." );
-      exit_sequence ( 1 );
-   }
-
-   if ( ( options.assemble_out || options.tree_out ) &&
-         options.interactive )
-   {
-      stdErr->writeString ( "falcon: incompatible output mode request and interactive mode." );
-      exit_sequence ( 1 );
    }
 
    if ( exitNow )
@@ -659,132 +630,7 @@ bool apply_constants ( Compiler &compiler )
    return true;
 }
 
-//===========================================
-// Interactive mode
-//===========================================
-void read_line( Stream *in, String &line, uint32 maxSize )
-{
-   line.reserve( maxSize );
-   line.size(0);
-   uint32 chr;
-   while ( line.length() < maxSize && in->get( chr ) )
-   {
-      if ( chr == '\r' )
-         continue;
-      if ( chr == '\n' )
-         break;
-      line += chr;
-   }
-}
 
-void interactive_mode( ModuleLoader *loader, Module *core )
-{
-   VMachine intcomp_vm;
-   intcomp_vm.link( core );
-
-   InteractiveCompiler comp( loader, &intcomp_vm );
-
-   version();
-   stdOut->writeString("\nWelcome to Falcon interactive mode.\n" );
-   stdOut->writeString("Write statements directly at the prompt; when finished press " );
-   #ifdef FALCON_SYSTEM_WIN
-      stdOut->writeString("CTRL+Z" );
-   #else
-      stdOut->writeString("CTRL+D" );
-   #endif
-
-   stdOut->writeString(" to exit\n" );
-
-   InteractiveCompiler::t_ret_type lastRet = InteractiveCompiler::e_nothing;
-   String line, pline, codeSlice;
-   while( stdIn->good() && ! stdIn->eof() )
-   {
-      const char *prompt = (
-            lastRet == InteractiveCompiler::e_more
-            ||lastRet == InteractiveCompiler::e_incomplete
-            )
-         ? "... " : ">>> ";
-
-      stdOut->writeString( prompt );
-      stdOut->flush();
-
-      read_line( stdIn, pline, 1024 );
-      if ( pline.size() > 0 )
-      {
-         if( pline.getCharAt( pline.length() -1 ) == '\\' )
-         {
-            lastRet = InteractiveCompiler::e_more;
-            pline.setCharAt( pline.length() - 1, ' ');
-            line += pline;
-            continue;
-         }
-         else
-            line += pline;
-
-         InteractiveCompiler::t_ret_type lastRet1;
-
-         try
-         {
-            lastRet1 = comp.compileNext( codeSlice + line + "\n" );
-         }
-         catch( Error *err )
-         {
-            String temp = err->toString();
-
-            err->decref();
-            lastRet1 = InteractiveCompiler::e_error;
-            stdOut->writeString( temp );
-         }
-
-         switch( lastRet1 )
-         {
-            case InteractiveCompiler::e_more:
-               codeSlice += line + "\n";
-               break;
-
-            case InteractiveCompiler::e_incomplete:
-               // is it incomplete because of '\\' at end?
-               if ( line.getCharAt( line.length()-1 ) == '\\' )
-                  line.setCharAt( line.length()-1, ' ' );
-               codeSlice += line + "\n";
-               break;
-
-            case InteractiveCompiler::e_call:
-               if ( comp.vm()->regA().isNil() )
-               {
-                  codeSlice.size(0);
-                  break;
-               }
-               // falltrhrough
-
-            case InteractiveCompiler::e_expression:
-               {
-                  String temp;
-                  comp.vm()->itemToString( temp, &comp.vm()->regA() );
-                  stdOut->writeString( ": " + temp + "\n" );
-               }
-               // falltrhrough
-
-            default:
-               if ( lastRet1 != InteractiveCompiler::e_error )
-               {
-                  // clear the previous data in all the cases exept when having
-                  // compilation errors, so the user may try to add another line
-                  codeSlice.size(0);
-               }
-         }
-
-         line.size(0);
-
-         // maintain previous status if having a compilation error.
-         if( lastRet1 != InteractiveCompiler::e_error )
-            lastRet = lastRet1;
-      }
-      // else just continue.
-   }
-
-   stdOut->writeString( "\r     \n\n");
-}
 
 //===========================================
 // Main Routine
@@ -793,7 +639,7 @@ void interactive_mode( ModuleLoader *loader, Module *core )
 int main ( int argc, char *argv[] )
 {
    Falcon::Engine::Init();
-   
+
    // Install a void ctrl-c handler (let ctrl-c to kill this app)
    Sys::_dummy_ctrl_c_handler();
 
@@ -825,7 +671,7 @@ int main ( int argc, char *argv[] )
       delete stdOut;
       delete stdErr;
       delete stdIn;
-      
+
       /*
       memAlloc = DflMemAlloc;
       memFree = DflMemFree;
@@ -834,7 +680,7 @@ int main ( int argc, char *argv[] )
       memAlloc = DflAccountMemAlloc;
       memFree = DflAccountMemFree;
       memRealloc = DflAccountMemRealloc;
-      
+
       stdOut = stdOutputStream();
       stdErr = stdErrorStream();
       stdIn = stdInputStream();
@@ -904,7 +750,7 @@ int main ( int argc, char *argv[] )
          err->toString( temp );
          stdErr->writeString( temp );
          stdErr->flush();
-      
+
          if ( input != stdIn )
             delete input;
 

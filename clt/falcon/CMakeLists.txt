@@ -14,6 +14,8 @@ ENDIF(WIN32)
 # Target
 ADD_EXECUTABLE( falcon
    falcon.cpp
+   int_mode.cpp
+   options.cpp
    ${SYSTEM_RC}
 )
 
