@@ -177,7 +177,7 @@ private:
    }
 
    uint32 decodeDouble(uint32 byte1, uint32 byte2) {
-      if ( (byte1 > decoderTable1->len) || (byte2 < start) || (byte2 > end) )
+      if ( (byte2 < start) || (byte2 > end) )
          return REPLACE_CHAR;
 
       int n0 = getUint16(decoderTable1, byte1) & 0xf;
@@ -191,6 +191,14 @@ private:
       int offset = getUint16(encoderTable1, ((ch & 0xff00) >> 8 )) << 8;
       Table *charTable = getTable(encoderTable2, offset >> 12);
       return getUint16(charTable, (offset & 0xfff) + (ch & 0xff));
+   }
+
+public:
+   virtual const String encoding() const { return "gbk"; }
+
+   virtual FalconData *clone() const
+   {
+      return new TranscoderGBK( *this );
    }
 
 public:
@@ -211,32 +219,26 @@ public:
       {
          chr = b1;
       }
-      else
+      else if ( b1&0x7F )
       {
-#define FULL_CONVERT
-#ifdef FULL_CONVERT
-         if (b1 == 0x80)
-         {
-            chr = 0x20ac;
-         }
-         else if (b1 == 0xff)
-         {
-            chr = 0xf8f5;
-         }
-         else
-#endif
+         if ( b1^0xff )
          {
             if (m_stream->read( &b2, 1 ) != 1)
                return false;
             chr = decodeDouble(b1, b2);
-            //fprintf(stderr, "B1=%hhx, B2=%hhx, chr=%x\n", b1, b2, chr);
+         }
+         else 
+         {
+            chr = REPLACE_CHAR;
          }
       }
-
+      else 
+      {
+         chr = 0x20ac;
+      }
 
       if (chr == REPLACE_CHAR)
       {
-         chr = '?';
          m_parseStatus = false;
       }
 
@@ -245,43 +247,35 @@ public:
 
    virtual bool put( uint32 chr )
    {
-      fflush(stderr);
-
       m_parseStatus = true;
 
       byte bPtr[2];
-      if (chr < 0x80
-#ifdef FULL_CONVERT
-         || chr == 0x20ac || chr == 0xf8f5
-#endif
-         )
+      if ( chr < 0x80 )
       {
-#ifdef FULL_CONVERT
-         if (chr == 0x20ac) bPtr[0]=0x80;
-         else if (chr == 0xf8f5) bPtr[0] =0xff;
-         else
-#endif
-            bPtr[0] = (byte) chr;
-         return (m_stream->write( bPtr, 1 ) == 1);
+         bPtr[0] = (byte)chr;
+         return ( m_stream->write( bPtr, 1 ) == 1 );
+      }
+      else if ( chr == 0x20ac )
+      {
+         bPtr[0] = 0x80;
+         return ( m_stream->write( bPtr, 1 ) == 1 );
+      }
+      else if ( chr == REPLACE_CHAR )
+      {
+         bPtr[0] = '?';
+         return ( m_stream->write( bPtr, 1 ) == 1 );
       }
 
 
-      int ncode = encodeDouble(chr);
-      if (ncode == 0 || chr == 0)
+      uint32 ncode = encodeDouble( chr );
+      if ( ncode == 0 || chr == 0 )
       {
          m_parseStatus = false;
-         return false;
+         return true;
       }
-      bPtr[0] = (byte)((ncode & 0xff00) >> 8);
-      bPtr[1] = (byte)(ncode);
+      bPtr[0] = (byte)( (ncode & 0xff00) >> 8 );
+      bPtr[1] = (byte)( ncode );
       return ( m_stream->write(bPtr, 2) == 2 );
-   }
-
-   virtual const String encoding() const { return "gbk"; }
-
-   virtual FalconData *clone() const
-   {
-      return new TranscoderGBK( *this );
    }
 };
 
@@ -1413,7 +1407,7 @@ Transcoder *TranscoderFactory( const String &encoding, Stream *stream, bool own 
       return new TranscoderISO8859_15( stream, own );
 
    if ( encoding == "gbk" )
-      return new TranscoderGBK(stream, own);
+      return new TranscoderGBK( stream, own );
    return 0;
 }
 
