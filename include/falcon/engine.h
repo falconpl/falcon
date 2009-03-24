@@ -30,6 +30,7 @@
 
 // Global engine functions and variables
 #include <falcon/globals.h>
+#include <falcon/transcoding.h>
 
 // Falcon item system
 #include <falcon/item.h>
@@ -49,6 +50,7 @@
 
 // Falcon stream helpers
 #include <falcon/stdstreams.h>
+#include <falcon/fstream.h>
 #include <falcon/uri.h>
 
 // compiler and builder
