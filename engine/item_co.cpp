@@ -1503,11 +1503,10 @@ void co_class_getproperty( const Item &item, const String &idx, Item &result )
             // and it's ok for us.
             {
                VMachine* vm = VMachine::getCurrent();
-               fassert( vm != 0 );
-               if ( vm->self().isObject() )
+               if ( vm != 0 && vm->self().isObject() )
                   result.setMethod( vm->self().asObjectSafe(), prop->asFunction() );
                else
-                  result = *prop;
+                  result.setMethod( sourceClass, prop->asFunction() );
             }
             break;
 

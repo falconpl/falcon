@@ -40,6 +40,7 @@ FALCON_FUNC  mth_isCallable ( ::Falcon::VMachine *vm );
 FALCON_FUNC  mth_className ( ::Falcon::VMachine *vm );
 FALCON_FUNC  mth_derivedFrom ( ::Falcon::VMachine *vm );
 FALCON_FUNC  mth_baseClass ( ::Falcon::VMachine *vm );
+FALCON_FUNC  mth_metaclass ( ::Falcon::VMachine *vm );
 
 FALCON_FUNC  mth_getProperty( ::Falcon::VMachine *vm );
 FALCON_FUNC  mth_setProperty( ::Falcon::VMachine *vm );

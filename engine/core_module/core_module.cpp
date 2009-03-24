@@ -80,6 +80,8 @@ Module* core_module_init()
       addParam("item");
    self->addExtFunc( "derivedFrom", &Falcon::core::mth_derivedFrom )->
       addParam("item")->addParam("cls");
+   self->addExtFunc( "metaclass", &Falcon::core::mth_metaclass )->
+      addParam("item");
 
    /*#
       @group bom_classes Basic Object Model
@@ -135,6 +137,7 @@ Module* core_module_init()
    self->addClassMethod( bom_meta, "className", &Falcon::core::mth_className );
    self->addClassMethod( bom_meta, "baseClass", &Falcon::core::mth_baseClass );
    self->addClassMethod( bom_meta, "derivedFrom", &Falcon::core::mth_derivedFrom );
+   self->addClassMethod( bom_meta, "metaclass", &Falcon::core::mth_metaclass );
 
    Falcon::Symbol *nil_meta = self->addClass( "Nil" );
    nil_meta->getClassDef()->addInheritance( new Falcon::InheritDef( bom_meta ) );

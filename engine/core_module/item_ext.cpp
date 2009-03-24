@@ -1001,5 +1001,38 @@ FALCON_FUNC Method_source( VMachine *vm )
    vm->retval( self->isMethod() ? self->asMethodItem() : *self );
 }
 
+/*#
+   @method metaclass BOM
+   @brief Returns the metaclass associated with this item.
+   @return The metaclass of this item.
+*/
+/*#
+   @function metaclass
+   @brief Returns the metaclass associated with the given item.
+   @param item The item of which the metaclass must be found.
+   @return The metaclass of this item.
+*/
+FALCON_FUNC mth_metaclass( VMachine *vm )
+{
+   Item *self;
+
+   if ( vm->self().isMethodic() )
+   {
+      self = &vm->self();
+   }
+   else {
+      self = vm->param(0);
+      if ( self == 0 )
+      {
+         vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).extra("X") ) );
+         return;
+      }
+   }
+
+   CoreClass* cls = vm->getMetaClass( self->type() );
+   fassert( cls );
+   vm->retval( cls );
+}
+
 }
 }
