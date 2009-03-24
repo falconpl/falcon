@@ -218,7 +218,16 @@ bool AppFalcon::setup( int argc, char* argv[] )
 
    if ( ! m_options.wasJustInfo() )
    {
-      String ioEncoding = getSrcEncoding();
+      String srcEncoding = getSrcEncoding();
+      if ( srcEncoding != "" )
+      {
+         Transcoder *tcin = TranscoderFactory ( srcEncoding, 0, false );
+         if ( tcin == 0 )
+            throw String( "unrecognized encoding '" + srcEncoding + "'." );
+         delete tcin;
+      }
+
+      String ioEncoding = getIoEncoding();
       if ( ioEncoding != "" )
       {
          Transcoder *tcin = TranscoderFactory ( ioEncoding, 0, false );
@@ -227,15 +236,9 @@ bool AppFalcon::setup( int argc, char* argv[] )
          delete tcin;
       }
 
-      ioEncoding = getIoEncoding();
-      if ( ioEncoding != "" )
-      {
-         Transcoder *tcin = TranscoderFactory ( ioEncoding, 0, false );
-         if ( tcin == 0 )
-            throw String( "unrecognized encoding '" + ioEncoding + "'." );
-         delete tcin;
-      }
+      Engine::setEncodings( srcEncoding, ioEncoding );
    }
+
 
    return ! m_options.wasJustInfo();
 }

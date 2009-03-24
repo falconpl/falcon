@@ -26,7 +26,7 @@
 #include <falcon/strtable.h>
 
 
-namespace Falcon 
+namespace Falcon
 {
 #define FLC_DECLARE_ENGINE_MSG
 #include <falcon/eng_messages.h>
@@ -38,7 +38,9 @@ namespace Engine
 {
    static Mutex s_mtx;
    static Map *s_serviceMap = 0;
-   
+   static String s_sIOEnc;
+   static String s_sSrcEnc;
+
    bool addVFS( const String &name, VFSProvider *prv )
    {
       s_mtx.lock();
@@ -55,13 +57,13 @@ namespace Engine
             return false;
          }
       }
-      
+
       s_serviceMap->insert( &name, prv );
       s_mtx.unlock();
-      
+
       return true;
    }
-   
+
    VFSProvider* getVFS( const String &name )
    {
       s_mtx.lock();
@@ -70,12 +72,12 @@ namespace Engine
          s_mtx.unlock();
          return 0;
       }
-      
+
       void *prv = s_serviceMap->find( &name );
       s_mtx.unlock();
       if ( prv != 0 )
          return *(VFSProvider**) prv;
-      
+
       return 0;
    }
 
@@ -83,30 +85,31 @@ namespace Engine
    {
       // Default language
       setLanguage( "C" );
-      
+      setEncodings( "C", "C" );
+
       // create the default mempool.
       memPool = new MemPool;
       memPool->start();
-      
+
       // create the default file VSF
       addVFS( "file", new VFSFile );
       addVFS( "", new VFSFile );
-      
+
       // Ok, we're ready
    }
-   
+
    void Shutdown()
    {
 
       delete memPool;
       memPool = 0;
-      
+
       delete engineStrings;
       engineStrings = 0;
    }
 
 
-   
+
    const String &getMessage( uint32 id )
    {
       const String *data = engineStrings->get( id );
@@ -138,6 +141,23 @@ namespace Engine
       return false;
    }
 
+   void setEncodings( const String &sSrcEnc, const String &sIOEnc )
+   {
+      s_mtx.lock();
+      s_sSrcEnc = sSrcEnc;
+      s_sIOEnc = sIOEnc;
+      s_sSrcEnc.bufferize();
+      s_sIOEnc.bufferize();
+      s_mtx.unlock();
+   }
+
+   void getEncodings( String &sSrcEnc, String &sIOEnc )
+   {
+      s_mtx.lock();
+      sSrcEnc = s_sSrcEnc;
+      sIOEnc = s_sIOEnc;
+      s_mtx.unlock();
+   }
 }
 
 }

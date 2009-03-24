@@ -39,14 +39,36 @@ FALCON_DYN_SYM extern StringTable *engineStrings;
 
 class MemPool;
 
-namespace Engine 
+namespace Engine
 {
    FALCON_DYN_SYM void Init();
    FALCON_DYN_SYM void Shutdown();
-   
+
+   /** Utility function recording the preferential encodings for sources and VM I/O.
+      When the engine has to create its own VMs and streams, i.e. to fulfil
+      interactive compiler requests, it uses this encodings that can
+      be defined and changed by the application at any time.
+
+      The values can be used also by the calling application as a convenient
+      inter-moule communication area for this critical aspect of preferential
+      encoding.
+
+      \param sSrcEnc The encoding preferentially used by source files.
+      \param sIOEnc The encoding preferentially used in I/O streams different from sources.
+   */
+   void setEncodings( const String &sSrcEnc, const String &sIOEnc );
+
+   /** Utility function recording the preferential encodings for sources and VM I/O.
+      \see recordEncodings
+
+      \param sSrcEnc The encoding preferentially used by source files.
+      \param sIOEnc The encoding preferentially used in I/O streams different from sources.
+   */
+   void getEncodings( String &sSrcEnc, String &sIOEnc );
+
    FALCON_DYN_SYM bool addVFS( const String &name, VFSProvider *prv );
    FALCON_DYN_SYM VFSProvider* getVFS( const String &name );
-   
+
    const String &getMessage( uint32 id );
    bool setTable( StringTable *tab );
    bool setLanguage( const String &language );
@@ -56,7 +78,7 @@ namespace Engine
       inline AutoInit() { Init(); }
       inline ~AutoInit() { Shutdown(); }
    };
-   
+
 }
 
 }

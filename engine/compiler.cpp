@@ -1218,6 +1218,9 @@ void Compiler::importSymbols( List *lst, const String *prefix, const String *ali
 
 void Compiler::metaCompile( const String &data, int startline )
 {
+   String ioEnc, srcEnc;
+   Engine::getEncodings( srcEnc, ioEnc );
+
    // evantually turn on the meta-compiler
    if ( m_metacomp == 0 )
    {
@@ -1230,9 +1233,11 @@ void Compiler::metaCompile( const String &data, int startline )
       }
 
       if ( m_serviceLoader == 0 )
+      {
          m_serviceLoader = new ModuleLoader( "." );
+         m_serviceLoader->sourceEncoding( srcEnc );
+      }
 
-      m_serviceVM->stdOut( new StringStream );
       m_metacomp = new InteractiveCompiler( m_serviceLoader, m_serviceVM );
 
       // not incremental...
@@ -1255,24 +1260,25 @@ void Compiler::metaCompile( const String &data, int startline )
 
    }
 
+   StringStream* output = new StringStream;
+   // set the same encoding as the source that we're parsing.
+   m_serviceVM->stdOut( TranscoderFactory( srcEnc, output, true ) );
+
+
    // set current line in lexer of the meta compiler
    m_metacomp->tempLine( startline );
    try
    {
-      /*InteractiveCompiler::t_ret_type ret =*/
       m_metacomp->compileAll( data );
 
-      StringStream *ss = static_cast<StringStream *>(m_metacomp->vm()->stdOut());
       // something has been written
-      if ( ss->length() != 0 )
+      if ( output->length() != 0 )
       {
          // pass it to the lexer
-         ss->seekBegin(0);
+         output->seekBegin(0);
          StringStream *transferred = new StringStream();
-         transferred->transfer( *ss );
+         transferred->transfer( *output );
          m_lexer->appendStream( transferred );
-         // and dispose it
-         m_metacomp->vm()->stdOut( new StringStream );
       }
    }
    catch( Error *e )
