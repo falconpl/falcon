@@ -2,12 +2,12 @@
 * Falcon test suite
 *
 *
-* ID: 40g
-* Category: rtl
-* Subcategory: core
-* Short: getProperty
+* ID: 36d
+* Category: fbom
+* Subcategory: 
+* Short: FBOM.getProperty
 * Description:
-* The core function getProperty allows to access an object property
+* The FBOM getProperty method allows to access an object property
 * by name.
 * [/Description]
 *
@@ -35,14 +35,14 @@ array.mth = function(); return "testMethod"; end
 bd = bless([ "prop1" => "orig value", "mth" => {=>return "testMethod"} ] )
 
 try
-   prop1 = getProperty( cls, "prop1" )
+   prop1 =  cls.getProperty( "prop1" )
    if prop1 != "value1": failure( "Get property on class" )
 catch
    failure( "Property access on class" )
 end
 
 try
-   method = getProperty( cls, "func1" )
+   method =  cls.getProperty( "func1" )
    if not isCallable( method ): failure( "Method retrival on class" )
    value = method()
    if value != "func1": failure( "Method intdirect call on class" )
@@ -51,14 +51,14 @@ catch
 end
 
 try
-   prop2 = getProperty( testObj, "prop2" )
+   prop2 =  testObj.getProperty( "prop2" )
    if prop2 != "value2": failure( "Get property on object" )
 catch
    failure( "Property access on object" )
 end
 
 try
-   method2 = getProperty( testObj, "testMethod" )
+   method2 =  testObj.getProperty( "testMethod" )
    if not isCallable( method2 ): failure( "Method retrival on object" )
    value2 = method2()
    if value2 != "testMethod": failure( "Method intdirect call on object" )
@@ -69,14 +69,14 @@ end
 
 //======================================================
 try
-   prop1 = getProperty( array, "prop1" )
+   prop1 =  array.getProperty( "prop1" )
    if prop1 != "orig value": failure( "Get property on array" )
 catch
    failure( "Property access on array" )
 end
 
 try
-   mth = getProperty( array, "mth" )
+   mth =  array.getProperty( "mth" )
    if not isCallable( mth ): failure( "Method retrival on array" )
    value2 = mth()
    if value2 != "testMethod": failure( "Method intdirect call on array" )
@@ -87,14 +87,14 @@ end
 
 //======================================================
 try
-   prop1 = getProperty( bd, "prop1" )
+   prop1 =  bd.getProperty( "prop1" )
    if prop1 != "orig value": failure( "Get property on dict" )
 catch
    failure( "Property access on dict" )
 end
 
 try
-   mth = getProperty( bd, "mth" )
+   mth =  bd.getProperty( "mth" )
    if not isCallable( mth ): failure( "Method retrival on dict" )
    value2 = mth()
    if value2 != "testMethod": failure( "Method intdirect call on dict" )
@@ -106,28 +106,28 @@ end
 // negative tests.
 
 try
-   getProperty( cls, "not here!!" )
+    cls.getProperty( "not here!!" )
    failure( "Exception not raised for classes" )
 catch in error
    if error.code != 33: failure( "Wrong exception raised for classes" )
 end
 
 try
-   getProperty( testObj, "not here!!" )
+    testObj.getProperty( "not here!!" )
    failure( "Exception not raised for object" )
 catch in error
    if error.code != 33: failure( "Wrong exception raised for object" )
 end
 
 try
-   getProperty( array, "not here!!" )
+    array.getProperty( "not here!!" )
    failure( "Exception not raised for array" )
 catch in error
    if error.code != 33: failure( "Wrong exception raised for array" )
 end
 
 try
-   getProperty( bd, "not here!!" )
+    bd.getProperty( "not here!!" )
    failure( "Exception not raised for dict" )
 catch in error
    if error.code != 33: failure( "Wrong exception raised for dict" )

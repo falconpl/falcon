@@ -501,7 +501,7 @@ Module* core_module_init()
 
    self->addExtFunc( "getProperty", &Falcon::core::mth_getProperty )->
       addParam("obj")->addParam("propName");
-   self->addExtFunc( "setProperty", &Falcon::core::mth_getProperty )->
+   self->addExtFunc( "setProperty", &Falcon::core::mth_setProperty )->
       addParam("obj")->addParam("propName")->addParam("value");
 
    self->addExtFunc( "yield", &Falcon::core::yield );

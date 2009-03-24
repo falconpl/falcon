@@ -2,10 +2,10 @@
 * Falcon test suite
 *
 *
-* ID: 40h
-* Category: rtl
-* Subcategory: core
-* Short: setProperty
+* ID: 36e
+* Category: fbom
+* Subcategory: 
+* Short: FBOM.setProperty
 * Description:
 * The core function setProperty allows to change an object property
 * by name.
@@ -28,28 +28,28 @@ array.prop1 = "orig value"
 bd = bless([ "prop1" => "orig value"] )
 
 try
-   prop1 = setProperty( cls, "prop1", "new value" )
+   cls.setProperty( "prop1", "new value" )
    if cls.prop1 != "new value": failure( "Set property on class instance" )
 catch
    failure( "Property access on class" )
 end
 
 try
-   prop2 = setProperty( testObj, "prop2", "new value" )
+   testObj.setProperty( "prop2", "new value" )
    if testObj.prop2 != "new value": failure( "Set property on object" )
 catch
    failure( "Property access on object" )
 end
 
 try
-   setProperty( bd, "prop1", "new value" )
+   bd.setProperty( "prop1", "new value" )
    if bd.prop1 != "new value": failure( "Set property on dictionary" )
 catch
    failure( "Property access dictionary" )
 end
 
 try
-   setProperty( array, "prop1", "new value" )
+   array.setProperty( "prop1", "new value" )
    if array.prop1 != "new value": failure( "Set property on array" )
 catch
    failure( "Property access array" )
@@ -58,22 +58,30 @@ end
 // Negative tests.
 
 try
-   setProperty( cls, "not here!!", "arrg" )
+   cls.setProperty( "not here!!", "arrg" )
    failure( "Exception not raised for classes" )
 catch in error
    if error.code != 33: failure( "Wrong exception raised for classes" )
 end
 
 try
-   setProperty( testObj, "not here!!", "arrg" )
+   testObj.setProperty( "not here!!", "arrg" )
    failure( "Exception not raised for object" )
 catch in error
    if error.code != 33: failure( "Wrong exception raised for object" )
 end
 
+try
+   bd.setProperty( "prop2", "new value" )
+   failure( "Exception not raised for ditctionary" )
+catch in error
+   if error.code != 33: failure( "Wrong exception raised for dictionary" )
+end
+
+
 // arrays can have new property set
 try
-   setProperty( array, "prop2", "new value" )
+   array.setProperty( "prop2", "new value" )
    if array.prop2 != "new value": failure( "Set new property on array" )
 catch
    failure( "Property addition array" )
