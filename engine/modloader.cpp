@@ -404,7 +404,7 @@ Module *ModuleLoader::loadFile( const String &module_path, t_filetype type, bool
       }
       else {
          // just check if the file exists.
-         tf = type;
+         tf = type == t_none ? fileType(origUri.pathElement().getExtension()) : type;
          bFound = vfs->readStats( origUri, foundStats );
       }
    }
@@ -599,7 +599,9 @@ bool ModuleLoader::applyLangTable( Module *mod, const String &file_path )
    if( tablePos < 0 )
       return false;
 
-   fsin->seekBegin( tableSize * 9 + 5 + 2 + 4  + tablePos );
+   uint32 headerSise = 5 + 2 + 4 + (tableSize * 9);
+   uint32 filePos = headerSise + tablePos;
+   fsin->seekBegin( filePos );
 
    // read the number of strings to be decoded.
    if( fsin->read( &sizeField, 4 ) != 4 )

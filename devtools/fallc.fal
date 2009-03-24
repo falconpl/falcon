@@ -175,8 +175,8 @@ function parseLanguage( file )
             transVars = reVars.grabAll( translated ) + reParVars.grabAll( translated )
 
             //normalize spaces
-            origVars = map( lambda x => reMover.replaceAll( x, "" ), origVars )
-            transVars = map( lambda x => reMover.replaceAll( x, "" ), transVars )
+            origVars = map( {x => reMover.replaceAll( x, "" )} , origVars )
+            transVars = map( {x => reMover.replaceAll( x, "" )}, transVars )
 
             for var in origVars
                if var notin transVars
@@ -309,17 +309,17 @@ function saveTables( languages, output )
       end
 
       tempStream = StringStream()
-      mb = MemBuf( 1, 4 )
-      mb[0] = lang.entries.len()
-      tempStream.write( mb )
+      bytes = "\xFFFFFFFF"
+      bytes[0] = lang.entries.len()
+      tempStream.write( bytes )
 
       for id, entry in lang.entries
          if entry
-            mb[0] = id
-            tempStream.write( mb )
+            bytes[0] = id
+            tempStream.write( bytes )
             utf8entry = transcodeTo( entry, "utf-8" )
-            mb[0] = utf8entry.len()
-            tempStream.write( mb )
+            bytes[0] = utf8entry.len()
+            tempStream.write( bytes )
             tempStream.write( utf8entry )
          end
       end
@@ -334,8 +334,8 @@ function saveTables( languages, output )
    endianMarker = "\xFBFC"
    stream.write( endianMarker )
    // write the count of tables
-   mb[0] = tables.len()
-   stream.write( mb )
+   bytes[0] = tables.len()
+   stream.write( bytes )
 
    // then the table index
    // using the iterator avoids useless copies of big data chunks
@@ -343,8 +343,8 @@ function saveTables( languages, output )
    curpos = 0
    while iter.hasCurrent()
       stream.write( iter.key() )
-      mb[0] = curpos
-      stream.write( mb )
+      bytes[0] = curpos
+      stream.write( bytes )
       curpos += iter.value().len()
       iter.next()
    end

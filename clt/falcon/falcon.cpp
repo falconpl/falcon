@@ -121,8 +121,12 @@ String AppFalcon::getSrcEncoding()
 
 String AppFalcon::getIoEncoding()
 {
+   // I/O encoding and source encoding priority is reversed here.
    if ( m_options.io_encoding != "" )
       return m_options.io_encoding;
+
+   if ( m_options.source_encoding != "" )
+      return m_options.source_encoding;
 
    String ret;
    if ( Sys::_getEnv ( "FALCON_VM_ENCODING", ret ) )

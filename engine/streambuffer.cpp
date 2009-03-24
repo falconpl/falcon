@@ -53,7 +53,7 @@ StreamBuffer::StreamBuffer( const StreamBuffer &other ):
       m_stream = dyncast<Stream*>(other.m_stream->clone());
    else
       m_stream = other.m_stream;
-      
+
    m_buffer = (byte *) memAlloc( m_bufSize );
 }
 
@@ -61,10 +61,10 @@ StreamBuffer::StreamBuffer( const StreamBuffer &other ):
 StreamBuffer::~StreamBuffer()
 {
    flush();
-   
+
    if( m_streamOwner )
       delete m_stream;
-   
+
    memFree( m_buffer );
 }
 
@@ -85,10 +85,10 @@ bool StreamBuffer::refill()
       m_stream->seekBegin( m_filePos );
       m_bReseek = false;
    }
-   
+
    m_bufPos = 0;
    int32 readIn = m_stream->read( m_buffer, m_bufSize );
-   if ( readIn < 0 ) 
+   if ( readIn < 0 )
    {
       m_bufLen = 0;
       return false;
@@ -105,14 +105,14 @@ int32 StreamBuffer::read( void *b, int32 size )
    // minimal sanity check
    if ( size <= 0 )
       return 0;
-   
+
    if( m_stream->status() != t_open )
       return -1;
-   
+
    byte *buf = (byte*) b;
-   
+
    int32 avail = m_bufLen - m_bufPos;
-   
+
    // have we something to store in the buffer?
    if ( avail > 0 )
    {
@@ -129,12 +129,12 @@ int32 StreamBuffer::read( void *b, int32 size )
          m_bufPos = m_bufLen;  // declare we have consumed everything.
       }
    }
-   
+
    // if we're here, we need to refill the buffer, or eventually to read everything from the stream
    // the amount of data we still have to put in the buffer is size - avail.
-   
+
    int32 toBeRead = size - avail;
-   
+
    // would be a new buffer enough to store the data?
    if ( toBeRead <= m_bufSize )
    {
@@ -143,20 +143,20 @@ int32 StreamBuffer::read( void *b, int32 size )
          // if the refill operation failed, return what we have read.
          return m_stream->bad() ? -1 : avail;
       }
-      
+
       // if the refill operation succed, it is still possible that it has read less than toBeRead.
       if ( m_bufLen < toBeRead )
          toBeRead = m_bufLen;
-      
+
       memcpy( buf + avail, m_buffer, toBeRead );
       m_bufPos = toBeRead;  // declare we have consumed the data.
       return toBeRead + avail;
    }
-   else 
+   else
    {
       // it's of no use to refill the buffer now. Just read the required size and update the file pointer.
       m_filePos += m_bufLen;  // a buffer is gone.
-      
+
       int32 readin = m_stream->read( buf + avail, size - avail );
       if( readin > 0 )
       {
@@ -176,18 +176,18 @@ int32 StreamBuffer::write( const void *b, int32 size )
    // minimal sanity check
    if ( size <= 0 )
       return 0;
-   
+
    if( m_stream->status() != t_open )
       return -1;
-   
+
    const byte *buf = (byte*) b;
-   
+
    // first; is there any space left in the buffer for write?
    int32 avail = m_bufSize - m_bufPos;
    if( avail > 0 )
    {
       m_changed = true;
-      
+
       // good; if we have enough space, advance and go away.
       if ( size <= avail )
       {
@@ -197,7 +197,7 @@ int32 StreamBuffer::write( const void *b, int32 size )
          {
             m_bufLen = m_bufPos;
          }
-         
+
          return size;
       }
       else {
@@ -206,9 +206,9 @@ int32 StreamBuffer::write( const void *b, int32 size )
          m_bufPos = m_bufLen = m_bufSize;
       }
    }
-   
+
    // we have still to write part or all the data.
-   
+
    // now, if the rest of the data can be stored in the next buffer,
    // refill and write. Otherwise, just flush and try a single write out.
    int32 toBeWritten = size - avail;
@@ -216,16 +216,16 @@ int32 StreamBuffer::write( const void *b, int32 size )
    {
       flush();
       m_changed = true; // ensure we declare this buffer changed anyhow
-      
+
       memcpy( m_buffer, buf + avail, toBeWritten );
       m_bufPos = m_bufLen = toBeWritten;
-      
+
       return avail + toBeWritten;
    }
-   else 
+   else
    {
       flush(); // but don't reload now
-      
+
       toBeWritten = m_stream->write( buf + avail, toBeWritten );
       if( toBeWritten < 0 )
       {
@@ -254,27 +254,27 @@ bool StreamBuffer::truncate( int64 pos )
    {
       // shorten the buffer to the current position
       m_bufLen = m_bufPos;
-      // And truncate 
+      // And truncate
       if(  m_stream->truncate( m_filePos + m_bufPos ) )
       {
          flush();
          return true;
       }
-      
+
       return false;
    }
    else
    {
       int64 curpos = m_filePos + m_bufPos;
       flush();
-      
+
       // and trunk at the desired position
       if ( pos < curpos )
       {
          m_filePos = pos;
          curpos = pos;
       }
-      
+
       m_stream->seekBegin( curpos );
       return m_stream->truncate( pos );
    }
@@ -300,6 +300,7 @@ int64 StreamBuffer::seek( int64 pos, e_whence whence )
 {
    // TODO: optimize and avoid re-buffering if we're still in the buffer.
    flush();
+   m_bufLen = m_bufPos = 0;
 
    m_filePos = m_stream->seek( pos, whence );
    m_bReseek = false;
@@ -318,10 +319,10 @@ bool StreamBuffer::flush()
       written = m_stream->write( m_buffer + count, m_bufLen - count );
       count += written;
    }
-   
+
    if( written < 0 )
       return false;
-      
+
    m_filePos += m_bufPos;
    m_bReseek = m_bReseek || m_bufPos != m_bufLen;
    m_changed = false;
@@ -335,11 +336,11 @@ bool StreamBuffer::get( uint32 &chr )
    {
       if ( ! refill() )
          return false;
-      
+
       if( m_bufPos == m_bufLen ) // eof?
          return false;
    }
-   
+
    chr = m_buffer[m_bufPos++ ];
    return true;
 }
@@ -350,13 +351,13 @@ bool StreamBuffer::put( uint32 chr )
    {
       if ( ! flush() )
          return false;
-      
+
       m_buffer[ 0 ] = chr;
       m_bufPos = m_bufLen = 1;
       m_changed = true;
       return true;
    }
-   
+
    m_buffer[ m_bufPos++ ] = chr;
    m_changed = true;
    if ( m_bufLen < m_bufPos )
@@ -369,7 +370,7 @@ bool StreamBuffer::resizeBuffer( uint32 size )
    fassert( size > 0 );
    if ( ! flush() )
       return false;
-   
+
    memFree( m_buffer );
    m_buffer = (byte*) memAlloc( size );
    m_bufSize = size;
