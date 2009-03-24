@@ -25,6 +25,7 @@ for key, value in dict
 		continue dropping
 	end
 end
+/*
 
 if dict.len() != 3: failure( "third element removal - size" )
 
@@ -55,7 +56,7 @@ for key, value in dict
 end
 
 if dict.len() != 0: failure( "removal of single element" )
-
+*/
 success()
 
 /* End of file */

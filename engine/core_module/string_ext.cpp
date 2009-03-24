@@ -963,6 +963,7 @@ FALCON_FUNC  mth_strTrim ( ::Falcon::VMachine *vm )
    }
 
    CoreString *cs = new CoreString( *self );
+   cs->garbage().mark( vm->generation() );
 
    if ( trimChars == 0 || trimChars->isNil() ) {
       cs->trim();

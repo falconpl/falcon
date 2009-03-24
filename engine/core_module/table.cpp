@@ -55,8 +55,10 @@ FALCON_FUNC Table_init( VMachine* vm )
 
    // create the first table
    CoreArray *page = new CoreArray( vm->paramCount() );
+   page->mark(vm->generation());
    table->insertPage( vm->self().asObject(), page );
    table->setCurrentPage(0);
+
    CoreObject *self = vm->self().asObject();
 
    // now we can safely add every other row that has been passed.
@@ -205,7 +207,6 @@ FALCON_FUNC Table_getColData( VMachine* vm )
    }
    else {
       CoreArray *ret = new CoreArray( table->order() );
-
       for( uint32 i = 0; i < table->order(); i ++ )
       {
          ret->append( table->columnData(i) );
@@ -1232,10 +1233,14 @@ FALCON_FUNC  Table_insertPage ( ::Falcon::VMachine *vm )
    CoreTable *table = static_cast<CoreTable *>( vm->self().asObject()->getUserData() );
    if ( i_data == 0 )
    {
-      table->insertPage( vm->self().asObject(), new CoreArray, pos );
+      CoreArray* page = new CoreArray;
+      page->mark( vm->generation() );
+      table->insertPage( vm->self().asObject(), page, pos );
    }
    else {
-      if ( ! table->insertPage( vm->self().asObject(), i_data->asArray()->clone(), pos ) )
+      CoreArray* page = i_data->asArray()->clone();
+      page->mark( vm->generation() );
+      if ( ! table->insertPage( vm->self().asObject(), page, pos ) )
       {
          vm->raiseModError( new ParamError( ErrorParam( e_param_type, __LINE__ )
             .origin( e_orig_runtime )

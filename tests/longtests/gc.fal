@@ -30,7 +30,10 @@ for i in [ 0 : loops ]
   var = [ 1, 2, strBuffer(100000), "This is " + nonStatic() +" string", 5 ]
   var1 = [ i, var ]
   var2 = [ i, var1 ]
-  if i % each == 0: alive( i/loops*100 )
+  if i % each == 0
+      alive( i/loops*100 )
+      GC.perform()
+  end
   var2 = 0
 end
 // taking end time

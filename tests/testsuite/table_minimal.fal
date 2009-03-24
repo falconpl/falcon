@@ -73,4 +73,7 @@ if coldata[3](100) != 200
    failure( "getColData - function item" )
 end
 
+success()
+
+/* end of file */
 

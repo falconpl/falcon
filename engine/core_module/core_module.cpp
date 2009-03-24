@@ -55,8 +55,8 @@ Module* core_module_init()
    // Message setting
    //=======================================================================
 
-   self->adoptStringTable( engineStrings );
-
+   StringTable *st = new StringTable(*engineStrings);
+   self->adoptStringTable( st, true );
    //=======================================================================
    // Metaclasses
    //=======================================================================
@@ -82,6 +82,7 @@ Module* core_module_init()
       addParam("item")->addParam("cls");
    self->addExtFunc( "metaclass", &Falcon::core::mth_metaclass )->
       addParam("item");
+
 
    /*#
       @group bom_classes Basic Object Model

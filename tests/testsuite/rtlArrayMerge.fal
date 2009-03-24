@@ -20,6 +20,8 @@ arrayMerge( arr2, arr1 )
 if len( arr2 ) != 13 or arr2[0] != 1 or arr2[10] != "a"
    failure( "arrayMerge as append" )
 end
+
+
 arr2 = clone( array )
 arrayMerge( arr2, arr1, 5 )
 if len( arr2 ) != 13 or arr2[0] != 1 or arr2[5] != "a" or arr2[8] != 6

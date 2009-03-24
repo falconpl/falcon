@@ -34,6 +34,21 @@ StringTable::StringTable():
    m_internatCount(0)
 {}
 
+StringTable::StringTable( const StringTable &other ):
+   m_vector( &traits::t_stringptr_own() ),
+   m_map( &traits::t_stringptr(), &traits::t_int() ),
+   m_intMap( &traits::t_stringptr(), &traits::t_int() ),
+   m_tableStorage(0),
+   m_internatCount(0)
+{
+   for( uint32 i = 0; i < other.m_vector.size(); i ++ )
+   {
+      String* str = *(String**) other.m_vector.at(i);
+      add( new String( *str ) );
+   }
+}
+
+
 StringTable::~StringTable()
 {
    if ( m_tableStorage != 0 )

@@ -51,6 +51,7 @@ class FALCON_DYN_CLASS StringTable: public BaseAlloc
 
 public:
    StringTable();
+   StringTable( const StringTable &other );
    ~StringTable();
 
    void reserve( int32 size ) {

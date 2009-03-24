@@ -363,6 +363,7 @@ void VMachine::run()
             else if( the_error->catchable() && m_tryFrame != i_noTryFrame )
             {
                CoreObject *obj = the_error->scriptize( this );
+               the_error->decref();
                the_error = 0;
                if ( obj != 0 )
                {

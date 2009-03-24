@@ -69,7 +69,7 @@ public:
    }
 
    /** Return the current GC mark status. */
-   unsigned int mark() {
+   unsigned int mark() const {
       return m_gcStatus;
    }
 

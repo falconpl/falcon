@@ -34,7 +34,7 @@ namespace core {
 /*#
    @class Array
    @brief MetaClass for Falcon arrays.
-   
+
    This is the class reflecting the base array classes.
 */
 
@@ -49,7 +49,7 @@ FALCON_FUNC  Array_front ( ::Falcon::VMachine *vm )
 {
 
    CoreArray *array = vm->self().asArray();
-   
+
    if ( array->length() == 0 )
    {
       vm->raiseModError( new AccessError( ErrorParam( e_inv_params, __LINE__ ).
@@ -73,7 +73,7 @@ FALCON_FUNC  Array_back ( ::Falcon::VMachine *vm )
 {
 
    CoreArray *array = vm->self().asArray();
-   
+
    if ( array->length() == 0 )
    {
       vm->raiseModError( new AccessError( ErrorParam( e_inv_params, __LINE__ ).
@@ -107,7 +107,7 @@ FALCON_FUNC Array_table( VMachine *vm )
       vm->retval( array->table() );
       return;
    }
-   
+
    vm->retnil();
 }
 
@@ -249,7 +249,7 @@ FALCON_FUNC Array_last( VMachine *vm )
 */
 
 /*#
-   @method ins Array 
+   @method ins Array
    @brief Inserts an item into this array array.
    @param itempos  The position where the item should be placed.
    @param item The item to be inserted.
@@ -264,7 +264,7 @@ FALCON_FUNC  mth_arrayIns ( ::Falcon::VMachine *vm )
    Item *array_x;
    Item *item_pos;
    Item *item;
-   
+
    if ( vm->self().isMethodic() )
    {
       array_x = &vm->self();
@@ -277,7 +277,7 @@ FALCON_FUNC  mth_arrayIns ( ::Falcon::VMachine *vm )
       item_pos = vm->param(1);
       item = vm->param(2);
    }
-   
+
 
    if ( array_x == 0 || ! array_x->isArray() ||
          item_pos == 0 || ! item_pos->isOrdinal() ||
@@ -329,7 +329,7 @@ FALCON_FUNC  mth_arrayDel ( ::Falcon::VMachine *vm )
 {
    Item *array_x;
    Item *item_rem;
-   
+
    if ( vm->self().isMethodic() )
    {
       array_x = &vm->self();
@@ -341,7 +341,7 @@ FALCON_FUNC  mth_arrayDel ( ::Falcon::VMachine *vm )
       item_rem = vm->param(1);
    }
 
-   if ( array_x == 0 || ! array_x->isArray() 
+   if ( array_x == 0 || ! array_x->isArray()
          || item_rem == 0 )
    {
       throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
@@ -386,14 +386,14 @@ FALCON_FUNC  mth_arrayDel ( ::Falcon::VMachine *vm )
    considered equivalent to the given item. If one or more elements have
    been found and deleted, the function will return true, else it will
    return false.
-   
+
    @see filter
 */
 FALCON_FUNC  mth_arrayDelAll ( ::Falcon::VMachine *vm )
 {
    Item *array_x;
    Item *item_rem;
-   
+
    if ( vm->self().isMethodic() )
    {
       array_x = &vm->self();
@@ -405,7 +405,7 @@ FALCON_FUNC  mth_arrayDelAll ( ::Falcon::VMachine *vm )
       item_rem = vm->param(1);
    }
 
-   if ( array_x == 0 || ! array_x->isArray() 
+   if ( array_x == 0 || ! array_x->isArray()
        || item_rem == 0 )
    {
       throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
@@ -453,7 +453,7 @@ FALCON_FUNC  mth_arrayAdd ( ::Falcon::VMachine *vm )
 {
    Item *array_x;
    Item *item;
-   
+
    if ( vm->self().isMethodic() )
    {
       array_x = &vm->self();
@@ -465,7 +465,7 @@ FALCON_FUNC  mth_arrayAdd ( ::Falcon::VMachine *vm )
       item = vm->param(1);
    }
 
-   if ( array_x == 0 || ! array_x->isArray() 
+   if ( array_x == 0 || ! array_x->isArray()
          || item == 0 )
    {
       throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
@@ -501,7 +501,7 @@ FALCON_FUNC  mth_arrayFill ( ::Falcon::VMachine *vm )
 {
    Item *i_array;
    Item *i_item;
-   
+
    if ( vm->self().isMethodic() )
    {
       i_array = &vm->self();
@@ -513,7 +513,7 @@ FALCON_FUNC  mth_arrayFill ( ::Falcon::VMachine *vm )
       i_item = vm->param(1);
    }
 
-   if ( i_array == 0 || ! i_array->isArray() 
+   if ( i_array == 0 || ! i_array->isArray()
          || i_item == 0 )
    {
       throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
@@ -524,13 +524,13 @@ FALCON_FUNC  mth_arrayFill ( ::Falcon::VMachine *vm )
    CoreArray *array = i_array->asArray();
    for ( uint32 i = 0; i < array->length(); i ++ )
    {
-      
+
       if ( i_item->isString() )
          (*array)[i] = new CoreString( *i_item->asString() );
       else
          (*array)[i] = *i_item;
    }
-   
+
    vm->retval( array );
 }
 
@@ -549,7 +549,7 @@ FALCON_FUNC  mth_arrayResize ( ::Falcon::VMachine *vm )
 {
    Item *array_x;
    Item *item_size;
-   
+
    if ( vm->self().isMethodic() )
    {
       array_x = &vm->self();
@@ -560,7 +560,7 @@ FALCON_FUNC  mth_arrayResize ( ::Falcon::VMachine *vm )
       array_x = vm->param(0);
       item_size = vm->param(1);
    }
-   
+
 
    if ( array_x == 0 || array_x->type() != FLC_ITEM_ARRAY ||
          item_size == 0 || !item_size->isOrdinal() )
@@ -600,7 +600,7 @@ FALCON_FUNC  mth_arrayRemove( ::Falcon::VMachine *vm )
    Item *array_x;
    Item *item_start;
    Item *item_end;
-   
+
    if ( vm->self().isMethodic() )
    {
       array_x = &vm->self();
@@ -678,11 +678,11 @@ FALCON_FUNC  arrayBuffer ( ::Falcon::VMachine *vm )
          mem[i].setNil();
       }
    }
-   else 
+   else
    {
       for ( int i = 0; i < nsize; i++ ) {
          mem[i] = *i_item;
-      }      
+      }
    }
 
    array->length( nsize );
@@ -695,10 +695,10 @@ FALCON_FUNC  arrayBuffer ( ::Falcon::VMachine *vm )
    @param array The array that will be modified.
    @return The extracted item.
    @raise AccessError if the array is empty.
-   
+
    This function removes the first item of the array and returns it.
    If the original array is empty, AccessError is raised.
-   
+
    @see Array.front
    @see Array.head
 */
@@ -708,16 +708,16 @@ FALCON_FUNC  arrayBuffer ( ::Falcon::VMachine *vm )
    @brief Extracts the first element from this array and returns it.
    @return The extracted item.
    @raise AccessError if the array is empty.
-   
+
    This function removes the first item from the array and returns it.
    If the original array is empty, AccessError is raised.
-   
+
    @see Array.front
 */
 FALCON_FUNC  mth_arrayHead ( ::Falcon::VMachine *vm )
 {
    Item *array_x;
-   
+
    if( vm->self().isMethodic() )
    {
       array_x = &vm->self();
@@ -725,13 +725,13 @@ FALCON_FUNC  mth_arrayHead ( ::Falcon::VMachine *vm )
    else
    {
       array_x = vm->param(0);
-      
+
       if ( array_x == 0 || ! array_x->isArray() ) {
          throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
             origin( e_orig_runtime ).extra( "A" ) );
       }
    }
-   
+
    CoreArray *array = array_x->asArray();
    if ( array->length() == 0 )
    {
@@ -767,7 +767,7 @@ FALCON_FUNC  mth_arrayHead ( ::Falcon::VMachine *vm )
 FALCON_FUNC  mth_arrayTail ( ::Falcon::VMachine *vm )
 {
    Item *array_x;
-   
+
    if( vm->self().isMethodic() )
    {
       array_x = &vm->self();
@@ -775,7 +775,7 @@ FALCON_FUNC  mth_arrayTail ( ::Falcon::VMachine *vm )
    else
    {
       array_x = vm->param(0);
-      
+
       if ( array_x == 0 || ! array_x->isArray() ) {
          throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
             origin( e_orig_runtime ).extra( "A" ) );
@@ -832,7 +832,7 @@ FALCON_FUNC  mth_arrayFind ( ::Falcon::VMachine *vm )
    Item *item;
    Item *start;
    Item *end;
-   
+
    if ( vm->self().isMethodic() )
    {
       array_x = &vm->self();
@@ -847,12 +847,12 @@ FALCON_FUNC  mth_arrayFind ( ::Falcon::VMachine *vm )
       start = vm->param(2);
       end = vm->param(3);
    }
-   
-   if ( array_x == 0 || ! array_x->isArray() 
+
+   if ( array_x == 0 || ! array_x->isArray()
         || item == 0
-        || (start != 0 && ! start->isOrdinal()) 
-        || ( end != 0 && ! end->isOrdinal() ) 
-      ) 
+        || (start != 0 && ! start->isOrdinal())
+        || ( end != 0 && ! end->isOrdinal() )
+      )
    {
       throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
          .origin( e_orig_runtime )
@@ -868,7 +868,7 @@ FALCON_FUNC  mth_arrayFind ( ::Falcon::VMachine *vm )
 
    int32 pos_start = (int32) (start == 0 ? 0 : start->asInteger());
    int32 pos_end = (int32) (end == 0 ? array->length() : end->asInteger());
-   if ( pos_start > pos_end ) 
+   if ( pos_start > pos_end )
    {
       int32 temp = pos_start;
       pos_start = pos_end;
@@ -926,7 +926,7 @@ FALCON_FUNC  mth_arrayFind ( ::Falcon::VMachine *vm )
    @optparam start Optional first element to be searched.
    @optparam end Optional upper end of the range..
    @return The position of the searched item in the array, or -1 if not found.
-   
+
    @see arrayScan
 */
 FALCON_FUNC  mth_arrayScan ( ::Falcon::VMachine *vm )
@@ -935,7 +935,7 @@ FALCON_FUNC  mth_arrayScan ( ::Falcon::VMachine *vm )
    Item *func_x;
    Item *start;
    Item *end;
-   
+
    if ( vm->self().isMethodic() )
    {
       array_x = &vm->self();
@@ -950,12 +950,12 @@ FALCON_FUNC  mth_arrayScan ( ::Falcon::VMachine *vm )
       start = vm->param(2);
       end = vm->param(3);
    }
-   
+
    if ( array_x == 0 || ! array_x->isArray()
         || func_x == 0 || ! func_x->isCallable()
-        || (start != 0 && ! start->isOrdinal()) 
-        || ( end != 0 && ! end->isOrdinal() ) 
-      ) 
+        || (start != 0 && ! start->isOrdinal())
+        || ( end != 0 && ! end->isOrdinal() )
+      )
    {
       throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
          .origin( e_orig_runtime )
@@ -971,7 +971,7 @@ FALCON_FUNC  mth_arrayScan ( ::Falcon::VMachine *vm )
 
    int32 pos_start = (int32) (start == 0 ? 0 : start->asInteger());
    int32 pos_end = (int32) (end == 0 ? array->length() : end->asInteger());
-   if ( pos_start > pos_end ) 
+   if ( pos_start > pos_end )
    {
       int32 temp = pos_start;
       pos_start = pos_end;
@@ -1176,7 +1176,7 @@ FALCON_FUNC  mth_arraySort( ::Falcon::VMachine *vm )
 {
    Item *array_itm;
    Item *sorter_itm;
-      
+
    if( vm->self().isMethodic() )
    {
       array_itm = &vm->self();
@@ -1187,10 +1187,10 @@ FALCON_FUNC  mth_arraySort( ::Falcon::VMachine *vm )
       array_itm = vm->param( 0 );
       sorter_itm = vm->param( 1 );
    }
-   
-   if ( array_itm == 0 || ! array_itm->isArray() 
+
+   if ( array_itm == 0 || ! array_itm->isArray()
         || (sorter_itm != 0 && ! sorter_itm->isCallable())
-      ) 
+      )
    {
       throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
          origin( e_orig_runtime ).
@@ -1200,7 +1200,7 @@ FALCON_FUNC  mth_arraySort( ::Falcon::VMachine *vm )
    CoreArray *array = array_itm->asArray();
    Item *vector = array->elements();
 
-   if ( sorter_itm == 0 ) 
+   if ( sorter_itm == 0 )
    {
       arraySort_quickSort( vector, 0, array->length() - 1 );
       arraySort_insertionSort( vm, vector, 0, array->length() -1 );
@@ -1243,14 +1243,14 @@ FALCON_FUNC  mth_arraySort( ::Falcon::VMachine *vm )
    @optparam insertPos Optional position of array 1 at which to place array2
    @optparam start First element of array to merge in this array
    @optparam end Last element - 1 of array2 to merge in this array
-   
+
    @see arrayMerge
 */
 
 FALCON_FUNC  mth_arrayMerge( ::Falcon::VMachine *vm )
 {
    Item *first_i, *second_i, *from_i, *start_i, *end_i;
-   
+
    if( vm->self().isMethodic() )
    {
       first_i = &vm->self();
@@ -1267,9 +1267,9 @@ FALCON_FUNC  mth_arrayMerge( ::Falcon::VMachine *vm )
       start_i =  vm->param( 3 );
       end_i =  vm->param( 4 );
    }
-   
-   if ( first_i == 0 || ! first_i->isArray() 
-       || second_i == 0 || ! second_i->isArray() 
+
+   if ( first_i == 0 || ! first_i->isArray()
+       || second_i == 0 || ! second_i->isArray()
        || ( from_i != 0 && ! from_i->isOrdinal() ) ||
         ( start_i != 0 && ! start_i->isOrdinal() ) ||
         ( end_i != 0 && ! end_i->isOrdinal() )  )
@@ -1294,6 +1294,7 @@ FALCON_FUNC  mth_arrayMerge( ::Falcon::VMachine *vm )
    else {
       //TODO: partition on an array
       CoreArray *third = second->partition( (int32)start, (int32)end );
+      third->mark( vm->generation() );
       if ( third ==  0 ) {
          vm->raiseError( e_arracc );
          return;

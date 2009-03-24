@@ -858,7 +858,6 @@ void executeTests( ModuleLoader *modloader )
          }
       }
    }
-
    // clear the testname (or we'll have 1 extra block in accounts)
    TestSuite::setTestName( "" );
 

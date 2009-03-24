@@ -380,7 +380,6 @@ CoreArray *CoreArray::partition( int32 start, int32 end ) const
          buffer[i] = m_data[start - i];
    }
    else {
-      //TODO: GARBAGE
       if( end == start ) {
          return new CoreArray();
       }
@@ -395,7 +394,6 @@ CoreArray *CoreArray::clone() const
 {
    Item *buffer = (Item *) memAlloc( esize( m_size ) );
    memcpy( buffer, m_data, esize( m_size )  );
-   //TODO: GARBAGE
    CoreArray *ca = new CoreArray( buffer, m_size, m_size );
    ca->m_table = m_table;
    ca->m_tablePos = m_tablePos;
@@ -403,6 +401,7 @@ CoreArray *CoreArray::clone() const
    if ( m_bindings != 0 )
    {
       ca->m_bindings = m_bindings->clone();
+      ca->m_bindings->mark( mark() );
    }
 
    return ca;
@@ -438,9 +437,9 @@ CoreDict *CoreArray::makeBindings()
 {
    if ( m_bindings == 0 )
    {
-      //TODO: GARBAGE
       m_bindings = new LinearDict( );
       m_bindings->insert( new CoreString( "self" ), this );
+      m_bindings->mark( mark() );
    }
 
    return m_bindings;

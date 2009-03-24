@@ -37,7 +37,7 @@ if strTrim( nonspaced ) != "non spaced": failure( "strTrim nonspaced" )
 if nonspaced.backTrim() != "non spaced": failure( ".backTrim nonspaced" )
 if nonspaced.frontTrim() != "non spaced": failure( ".frontTrim nonspaced" )
 if nonspaced.trim() != "non spaced": failure( ".trim nonspaced" )
-    
+
 other = "54321 hello world 12345"
 
 if strBackTrim( other, "12345 " ) != "54321 hello world": failure( "strBackTrim other" )
