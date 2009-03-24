@@ -25,8 +25,8 @@ function main(limit)
    count = 0
 
    the_param = nil
-   the_loop = .[times $the_param &k
-               .[ .[ function( x,y ); x[y] = 0; end  flags &k ] .[ { x => ++x $count } ] ]
+   the_loop = .[times $the_param
+               .[ .[ function( x,y ); x[y] = 0; end  flags 1 ] .[ { x => ++x  } $count ] ]
                ]
 
    for num in [1:limit+1]

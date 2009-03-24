@@ -439,15 +439,23 @@ void MemPool::markItem( Item &item )
             // mark also the bindings
             if ( array->bindings() != 0 )
             {
-               Item bindings = array->bindings();
-               markItemFast( bindings );
+               CoreDict *cd = array->bindings();
+               if( cd->mark() != generation() ) {
+                  cd->mark( generation() );
+                  Item key, value;
+                  cd->traverseBegin();
+                  while( cd->traverseNext( key, value ) )
+                  {
+                     markItemFast( key );
+                     markItemFast( value );
+                  }
+               }
             }
 
             // and also the table
             if ( array->table() != 0 )
             {
-               Item table = array->table();
-               markItemFast( table );
+               array->table()->mark( generation() );
             }
          }
       }
