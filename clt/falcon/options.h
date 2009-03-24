@@ -27,21 +27,23 @@
    This class is just a nice place to store options for the compiler and their defaults.
 */
 
-namespace Falcon {
-
-class HOptions
+class FalconOptions
 {
+   void modalGiven();
+   bool m_modal;
+   bool m_justinfo;
+
 public:
 
-   String input;
-   String output;
-   String load_path;
-   String io_encoding;
-   String source_encoding;
-   String module_language;
-   List preloaded;
-   List directives;
-   List defines;
+   Falcon::String input;
+   Falcon::String output;
+   Falcon::String load_path;
+   Falcon::String io_encoding;
+   Falcon::String source_encoding;
+   Falcon::String module_language;
+   Falcon::List preloaded;
+   Falcon::List directives;
+   Falcon::List defines;
 
    bool compile_only;
    bool run_only;
@@ -60,34 +62,17 @@ public:
    bool compile_tltable;
    bool interactive;
 
-   HOptions():
-      input( "" ),
-      output( "" ),
-      load_path( "" ),
-      io_encoding( "" ),
-      source_encoding( "" ),
-      module_language( "" ),
-   
-      compile_only( false ),
-      run_only( false ),
-      tree_out( false ),
-      assemble_out( false ),
-      search_path( false ),
-      force_recomp( false ),
-      check_memory( false ),
+   bool ignore_syspath;
 
-      comp_memory( true ),
-      recompile_on_load( true ),
-      save_modules( true ),
-      wait_after( false ),
-      parse_ftd( false ),
-      
-      compile_tltable( false ),
-      interactive( false )
-   {}
+   FalconOptions();
+
+   void parse( int argc, char **argv, int &script_pos );
+   void usage( bool deep = false );
+   void version();
+
+   /** Returns true if the parsed options required an immediate exit. */
+   bool wasJustInfo() const { return m_justinfo; }
 };
-
-}
 
 #endif
 

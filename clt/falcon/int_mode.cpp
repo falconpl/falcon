@@ -13,9 +13,16 @@
    See LICENSE file for licensing details.
 */
 
-#include "falcon.h"
+#include "int_mode.h"
+#include <falcon/intcomp.h>
 
-void read_line( Stream *in, String &line, uint32 maxSize )
+
+IntMode::IntMode( AppFalcon* owner ):
+   m_owner( owner )
+{}
+
+
+void IntMode::read_line( Stream *in, String &line, uint32 maxSize )
 {
    line.reserve( maxSize );
    line.size(0);
@@ -30,14 +37,19 @@ void read_line( Stream *in, String &line, uint32 maxSize )
    }
 }
 
-void interactive_mode( ModuleLoader *loader, Module *core )
+void IntMode::run()
 {
+   ModuleLoader ml;
+   m_owner->prepareLoader( ml );
+
    VMachine intcomp_vm;
-   intcomp_vm.link( core );
+   intcomp_vm.link( core_module_init() );
 
-   InteractiveCompiler comp( loader, &intcomp_vm );
+   InteractiveCompiler comp( &ml, &intcomp_vm );
 
-   version();
+   Stream *stdOut = m_owner->m_stdOut;
+   Stream *stdIn = m_owner->m_stdIn;
+
    stdOut->writeString("\nWelcome to Falcon interactive mode.\n" );
    stdOut->writeString("Write statements directly at the prompt; when finished press " );
    #ifdef FALCON_SYSTEM_WIN

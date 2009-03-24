@@ -14,39 +14,79 @@
 */
 
 /** \file
-   Options storage for falcon compiler.
+   Main Falcon.
 */
 
 #ifndef FALCON_CLT_H
 #define FALCON_CLT_H
 
-#include <falcon/sys.h>
-#include <falcon/setup.h>
-#include <falcon/common.h>
-#include <falcon/compiler.h>
-#include <falcon/genhasm.h>
-#include <falcon/gencode.h>
-#include <falcon/gentree.h>
-#include <falcon/module.h>
-#include <falcon/vm.h>
-#include <falcon/modloader.h>
-#include <falcon/runtime.h>
-#include <falcon/core_ext.h>
-#include <falcon/string.h>
-#include <falcon/carray.h>
-#include <falcon/memory.h>
-#include <falcon/transcoding.h>
-#include <falcon/stream.h>
-#include <falcon/fstream.h>
-#include <falcon/stringstream.h>
-#include <falcon/stdstreams.h>
-#include <falcon/fassert.h>
-#include <falcon/intcomp.h>
-#include <falcon/streambuffer.h>
-#include <options.h>
+#include <falcon/engine.h>
+using namespace Falcon;
 
-void read_line( Stream *in, String &line, uint32 maxSize );
-void interactive_mode( ModuleLoader *loader, Module *core );
+#include "options.h"
+#include "int_mode.h"
+
+/** Typical embedding applications. */
+class AppFalcon
+{
+   FalconOptions m_options;
+   int m_exitval;
+   int m_errors;
+   int m_script_pos;
+   int m_argc;
+   char** m_argv;
+
+   String getSrcEncoding();
+   String getLoadPath();
+   String getIoEncoding();
+   Module* loadInput( ModuleLoader &ml );
+
+   void applyDirectives ( Compiler &compiler );
+   void applyConstants ( Compiler &compiler );
+   void readyStreams();
+
+   Stream* openOutputStream( const String &ext );
+
+public:
+   /** Prepares the application.
+      Sets up global values and starts the falcon engine.
+   */
+   AppFalcon();
+
+   /** Shuts down the Falcon application.
+      This destroys the global data and shuts down the engine.
+   */
+   ~AppFalcon();
+
+   /** Checks the parameters and determines if the run step must be performed.
+      If the program should stop after the setup (for any non-critical error),
+      the function sreturns false.
+
+      In case of critical errors, it raises a falcon String,
+   */
+   bool setup( int argc, char* argv[] );
+
+   /** Perform the operations required by the options. */
+   void run();
+
+   void compileTLTable();
+   void generateAssembly();
+   void generateTree();
+   void buildModule();
+   void runModule();
+   void makeInteractive();
+   void prepareLoader( ModuleLoader &ml );
+
+
+   void terminate();
+   int exitval() const { return m_exitval; }
+   void exitval( int exitVal ) { m_exitval = exitVal; }
+
+   Stream* m_stdIn;
+   Stream* m_stdOut;
+   Stream* m_stdErr;
+
+};
 
 #endif
 
