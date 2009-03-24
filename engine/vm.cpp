@@ -366,7 +366,7 @@ LiveModule *VMachine::link( Module *mod, bool isMainModule, bool bPrivate )
    // Ok, the module is now in.
    // We can now increment reference count and add it to ourselves
    LiveModule *livemod = new LiveModule( mod, bPrivate );
-
+   livemod->mark( generation() );
    // set this as the main module if required.
    if ( isMainModule )
       m_mainModule = livemod;
@@ -385,6 +385,7 @@ LiveModule *VMachine::prelink( Module *mod, bool bIsMain, bool bPrivate )
    if ( oldMod == 0 )
    {
       oldMod = new LiveModule( mod, bPrivate );
+      oldMod->mark( generation() );
       m_liveModules.insert( &oldMod->name(), oldMod );
    }
 
@@ -3527,6 +3528,11 @@ void VMachine::markLocked()
       lock = lock->next();
    } while( lock != rlock );
    m_mtx_lockitem.unlock();
+}
+
+uint32 VMachine::generation() const
+{
+   return m_generation;
 }
 
 }

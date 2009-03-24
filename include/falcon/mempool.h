@@ -177,6 +177,11 @@ protected:
    RampMode* m_curRampMode;
    int m_curRampID;
 
+   Mutex m_mtxRequest;
+   Event m_eGCPerformed;
+   bool m_bRequestSweep;
+
+
 public:
    /** Builds a memory pool.
       Initializes all element at 0 and set buffer sizes to the FALCON default.
@@ -318,6 +323,8 @@ public:
    */
    bool rampMode( int mode );
    int rampMode() const;
+
+   void performGC();
 };
 
 

@@ -107,81 +107,7 @@ static long s_allocatedMem = 0;
 static long s_totalMem = 0;
 static long s_outBlocks = 0;
 static long s_totalOutBlocks = 0;
-static long s_validAlloc = 1;
 
-static void *account_alloc( size_t size )
-{
-   if ( size == 0 )
-      return 0;
-
-	long *mem = (long *) malloc( size + 16 );
-	mem[0] = (long) size;
-	mem[1] = 0xFEDCBA98;
-	s_allocatedMem += size;
-   s_totalMem += size;
-   s_outBlocks++;
-   s_totalOutBlocks++;
-	return mem + 4;
-}
-
-static void account_free( void *mem )
-{
-	if ( mem == 0 )
-		return;
-
-	unsigned long *block = (unsigned long *) mem;
-	block = block - 4;
-
-	if ( block[1] != 0xFEDCBA98 ) {
-		s_validAlloc = 0;
-		return;
-	}
-
-	s_allocatedMem -= block[0];
-   s_totalMem -= block[0];
-   s_outBlocks--;
-   s_totalOutBlocks--;
-
-	free( block );
-}
-
-static void *account_realloc( void *mem, size_t size )
-{
-	unsigned long *block = (unsigned long *) mem;
-
-	if ( mem != 0 )
-	{
-		block = block - 4;
-		if ( block[1] != 0xFEDCBA98 ) {
-			s_validAlloc = 0;
-			block = (unsigned long *) malloc( size + 16 );
-		}
-		else {
-			s_allocatedMem -= block[0];
-         s_totalMem -= block[0];
-			block = (unsigned long *) realloc( block, size + 16 );
-		}
-	}
-	else {
-		block = (unsigned long *) malloc( size + 16 );
-      s_outBlocks++;
-      s_totalOutBlocks++;
-	}
-
-   if( size != 0 )
-   {
-	   s_allocatedMem += (long) size;
-      s_totalMem += size;
-   }
-   else {
-      s_outBlocks--;
-      s_totalOutBlocks--;
-   }
-
-	block[0] = (unsigned long) size;
-	block[1] = 0xFEDCBA98;
-	return block + 4;
-}
 
 /************************************************
    Typical utility functions for command lines
@@ -697,19 +623,19 @@ bool testScript( ScriptData *script,
    vmachine.link( core );
    vmachine.link( testSuite );
    Runtime runtime( modloader );
-   
-   try  
-   {      
+
+   try
+   {
       runtime.addModule( scriptModule );
    }
-   catch (Error *err) 
+   catch (Error *err)
    {
       trace = err->toString();
       err->decref();
       reason = "Module loading failed.";
       scriptModule->decref();
       return false;
-   
+
    }
 
    // we can abandon our reference to the script module
@@ -751,13 +677,13 @@ bool testScript( ScriptData *script,
          reason = "Non executable script.";
          return false;
       }
-      
+
       if ( opt_timings )
          execTime = Sys::_seconds() - execTime;
    }
    catch( Error *err )
    {
-     
+
       trace = err->toString();
       err->decref();
       reason = "Abnormal script termniation";
@@ -771,7 +697,7 @@ bool testScript( ScriptData *script,
       total_time_link += linkTime;
       total_time_generate += genTime;
    }
-   
+
    // reset the success status
    reason = TestSuite::getFailureReason();
    // ensure to clean memory -- do this now to ensure the VM is killed before we kill the module.
@@ -843,9 +769,8 @@ void executeTests( ModuleLoader *modloader )
 
       if ( opt_checkmem )
       {
-         s_allocatedMem = 0;
-         s_outBlocks = 0;
-         s_validAlloc = 1;
+         s_allocatedMem = gcMemAllocated();
+         s_outBlocks = memPool->allocatedItems();
       }
 
       bool success = testScript( script, modloader, core, testSuite, reason, trace );
@@ -883,16 +808,15 @@ void executeTests( ModuleLoader *modloader )
 
          if ( opt_checkmem )
          {
+            memPool->performGC();
 
-            long alloc = s_allocatedMem;
-            long blocks = s_outBlocks;
+            long alloc = gcMemAllocated() - s_allocatedMem;
+            long blocks = memPool->allocatedItems() - s_outBlocks;
 
             String temp = " (leak: ";
             temp.writeNumber( (int64) alloc );
             temp += "/";
             temp.writeNumber( (int64) blocks );
-            temp += " ";
-            temp += s_validAlloc ? "valid" : "fail";
             temp += ")";
             output->writeString( temp );
          }
@@ -961,23 +885,6 @@ int main( int argc, char *argv[] )
 
    version();
    parse_options( argc, argv );
-
-   // in case we want to check for memory management correctness
-   if ( opt_checkmem )
-   {
-      // destroy previously allocated data:
-      delete stdOut;
-      delete stdErr;
-
-      Falcon::memAlloc = account_alloc;
-      Falcon::memFree = account_free;
-      Falcon::memRealloc = account_realloc;
-
-      stdOut = stdOutputStream();
-      stdErr = stdErrorStream();
-      s_totalMem = 0;
-      s_totalOutBlocks = 0;
-   }
 
    FileStream *fs_out = new FileStream;
    passedCount = 0;
@@ -1073,8 +980,8 @@ int main( int argc, char *argv[] )
    modloader->compiler().reset();
 
    // reset memory tests
-   s_totalMem = 0;
-   s_totalOutBlocks = 0;
+   s_totalMem = gcMemAllocated();
+   s_totalOutBlocks = memPool->allocatedItems();
 
    executeTests( modloader );
 
@@ -1164,8 +1071,9 @@ int main( int argc, char *argv[] )
 
    if ( opt_checkmem )
    {
-      long blocks = s_totalOutBlocks;
-      long mem = s_totalMem;
+      memPool->performGC();
+      long blocks = memPool->allocatedItems() - s_totalOutBlocks;
+      long mem = gcMemAllocated() - s_totalMem;
 
       String temp = "Final memory balance: ";
       temp = "Final memory balance: ";

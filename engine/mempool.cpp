@@ -28,6 +28,9 @@
 #include <falcon/membuf.h>
 #include <falcon/garbagepointer.h>
 
+#include <string>
+#include <typeinfo>
+
 #define GC_IDLE_TIME 250
 
 #if 0
@@ -55,7 +58,8 @@ MemPool::MemPool():
    m_allocatedItems( 0 ),
    m_allocatedMem( 0 ),
    m_th(0),
-   m_bLive(false)
+   m_bLive(false),
+   m_bRequestSweep( false )
 {
    m_vmRing = 0;
 
@@ -614,6 +618,15 @@ int32 MemPool::allocatedItems() const
    return size;
 }
 
+void MemPool::performGC()
+{
+   m_mtxRequest.lock();
+   m_bRequestSweep = true;
+   m_eRequest.set();
+   m_mtxRequest.unlock();
+
+   m_eGCPerformed.wait();
+}
 
 //===================================================================================
 // MT functions
@@ -857,14 +870,35 @@ void* MemPool::run()
          m_mtx_vms.unlock();
 
       // if we have to sweep (we can claim something only if the lower VM has moved).
-      if ( oldMingen != m_mingen || bPriority )
+      if ( oldMingen != m_mingen || bPriority || m_bRequestSweep )
       {
+         bool signal = false;
+         m_mtxRequest.lock();
+         m_mtx_vms.lock();
+         if ( m_bRequestSweep && m_vmCount == 0 )
+         {
+            // be sure to clear the garbage
+            oldMingen = m_mingen;
+            m_mingen = MAX_GENERATION;
+            m_bRequestSweep = false;
+            signal = true;
+         }
+         m_mtx_vms.unlock();
+         m_mtxRequest.unlock();
+
          gcSweep();
          // should we notify about the sweep being complete?
+
          if ( bPriority )
          {
             fassert( vm != 0 );
             vm->m_eGCPerformed.set();
+         }
+
+         if ( signal )
+         {
+            m_mingen = oldMingen;
+            m_eGCPerformed.set();
          }
       }
 
