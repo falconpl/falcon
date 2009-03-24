@@ -52,8 +52,6 @@ MemPool::MemPool():
    m_vmIdle_head( 0 ),
    m_vmIdle_tail( 0 ),
    m_generation( 0 ),
-   m_aliveItems( 0 ),
-   m_aliveMem( 0 ),
    m_allocatedItems( 0 ),
    m_allocatedMem( 0 ),
    m_th(0),
@@ -312,9 +310,6 @@ void MemPool::storeForGarbage( Garbageable *ptr )
 
 bool MemPool::markVM( VMachine *vm )
 {
-   m_aliveItems = 0;
-   m_aliveMem = 0;
-
    vm->markLocked();
 
    // presume that all the registers need fresh marking
@@ -337,8 +332,6 @@ bool MemPool::markVM( VMachine *vm )
       LiveModule *currentMod = *(LiveModule **) iter.currentValue();
       // We must mark the current module.
       currentMod->mark( generation() );
-      m_aliveMem += sizeof( LiveModule );
-      m_aliveItems++;
 
       ItemVector *current = &currentMod->globals();
       for( uint32 j = 0; j < current->size(); j++ )
@@ -386,8 +379,6 @@ void MemPool::markItem( Item &item )
       {
          GarbageItem *gi = item.asReference();
          if( gi->mark() != generation() ) {
-            m_aliveItems++;
-            //m_aliveMem += gi->m_gcSize;
             gi->mark( generation() );
             markItemFast( gi->origin() );
          }
@@ -399,8 +390,6 @@ void MemPool::markItem( Item &item )
          {
             if( item.asFunction()->mark() != generation() )
             {
-               m_aliveItems++;
-               //m_aliveMem += item.asFunction()->m_gcSize;
                item.asFunction()->mark( generation() );
             }
          }
@@ -409,8 +398,6 @@ void MemPool::markItem( Item &item )
          break;
 
       case FLC_ITEM_RANGE:
-         m_aliveItems++;
-         //m_aliveMem += item.asRange()->m_gcSize;
          item.asRange()->mark( generation() );
          break;
 
@@ -431,8 +418,6 @@ void MemPool::markItem( Item &item )
                if ( gs->mark() != generation() )
                {
                   gs->mark( generation() );
-                  m_aliveMem += item.asCoreString()->allocated() + sizeof( String );
-                  m_aliveItems++;
                }
             }
          }
@@ -447,8 +432,6 @@ void MemPool::markItem( Item &item )
          CoreArray *array = item.asArray();
          if( array->mark() != generation() ) {
             array->mark(generation());
-            m_aliveItems++;
-            //m_aliveMem += array->m_gcSize;
             for( uint32 pos = 0; pos < array->length(); pos++ ) {
                markItemFast( array->at( pos ) );
             }
@@ -475,8 +458,6 @@ void MemPool::markItem( Item &item )
          CoreObject *co = item.asObjectSafe();
          if( co->mark() != generation() )
          {
-            m_aliveItems++;
-            //m_aliveMem += co->m_gcSize;
             co->mark( generation() );
             co->gcMark( generation() );
          }
@@ -488,9 +469,6 @@ void MemPool::markItem( Item &item )
          CoreDict *cd = item.asDict();
          if( cd->mark() != generation() ) {
             cd->mark( generation() );
-            m_aliveItems++;
-            //m_aliveMem += cd->m_gcSize;
-
             Item key, value;
             cd->traverseBegin();
             while( cd->traverseNext( key, value ) )
@@ -511,8 +489,6 @@ void MemPool::markItem( Item &item )
          {
             if( item.asMethodFunc()->mark() != generation() )
             {
-               m_aliveItems++;
-               //m_aliveMem += item.asMethodFunc()->m_gcSize;
                item.asMethodFunc()->mark( generation() );
             }
             Item self;
@@ -526,8 +502,6 @@ void MemPool::markItem( Item &item )
       {
          CoreObject *co = item.asMethodClassOwner();
          if( co->mark() != generation() ) {
-            m_aliveItems++;
-            //m_aliveMem += co->m_gcSize;
             co->mark( generation() );
             // mark all the property values.
             co->gcMark( generation() );
@@ -536,8 +510,6 @@ void MemPool::markItem( Item &item )
          CoreClass *cls = item.asMethodClass();
          if( cls->mark() != generation() ) {
             cls->mark( generation() );
-            m_aliveItems++;
-            //m_aliveMem += cls->m_gcSize;
             markItemFast( cls->constructor() );
             for( uint32 i = 0; i <cls->properties().added(); i++ ) {
                markItemFast( *cls->properties().getValue(i) );
@@ -551,8 +523,6 @@ void MemPool::markItem( Item &item )
          CoreClass *cls = item.asClass();
          if( cls->mark() != generation() ) {
             cls->mark( generation() );
-            m_aliveItems++;
-            //m_aliveMem += cls->m_gcSize;
             markItemFast( cls->constructor() );
             for( uint32 i = 0; i <cls->properties().added(); i++ ) {
                markItemFast( *cls->properties().getValue(i) );
@@ -566,16 +536,11 @@ void MemPool::markItem( Item &item )
          MemBuf *mb = item.asMemBuf();
          if ( mb->mark() != generation() )
          {
-            m_aliveMem += mb->size() + sizeof( MemBuf );
-            m_aliveItems++;
-
             mb->mark( generation() );
             CoreObject *co = item.asMemBuf()->dependant();
             // small optimization; resolve the problem here instead of looping again.
             if( co != 0 && co->mark() != generation() )
             {
-               m_aliveItems++;
-               //m_aliveMem += co->m_gcSize;
                co->mark( generation() );
                co->gcMark( generation() );
             }
@@ -600,11 +565,13 @@ void MemPool::gcSweep()
    }
    m_mtx_ramp.unlock();
 
+   int32 killed = 0;
    GarbageableBase *ring = m_garbageRoot->nextGarbage();
    while( ring != m_garbageRoot )
    {
       if ( ring->mark() < m_mingen )
       {
+         killed++;
          ring->nextGarbage()->prevGarbage( ring->prevGarbage() );
          ring->prevGarbage()->nextGarbage( ring->nextGarbage() );
          GarbageableBase *dropped = ring;
@@ -618,6 +585,10 @@ void MemPool::gcSweep()
    }
 
    TRACE( "Sweeping complete %d\n", gcMemAllocated() );
+   m_mtx_newitem.lock();
+   fassert( killed <= m_allocatedItems );
+   m_allocatedItems -= killed;
+   m_mtx_newitem.unlock();
 
    m_mtx_ramp.lock();
    rm->onScanComplete();
@@ -626,36 +597,14 @@ void MemPool::gcSweep()
    m_mtx_ramp.unlock();
 }
 
-
-bool MemPool::performGC( bool bForceReclaim )
+int32 MemPool::allocatedItems() const
 {
-   m_aliveItems = 0;
-   m_aliveMem = 0;
-/*
-   // cannot perform?
-   if ( ! gcMark( uint32 mark ) )
-      return false;
+   m_mtx_newitem.lock();
+   int32 size = m_allocatedItems;
+   m_mtx_newitem.unlock();
 
-   // is the memory enought to be reclaimed ?
-   if ( bForceReclaim ||
-        (m_allocatedMem - m_aliveMem ) > m_thresholdReclaim )
-   {
-      gcSweep();
-      m_thresholdMemory = m_aliveMem +
-                          (m_aliveMem / 3 ) + m_thresholdReclaim;
-   }
-   else {
-      // it's useful to increase the threshold memory so that we
-      // won't be called again too soon.
-      m_thresholdMemory *= 2;
-   }
-
-   if ( m_thresholdMemory < m_setThreshold )
-      m_thresholdMemory = m_setThreshold;
-*/
-   return true;
+   return size;
 }
-
 
 
 //===================================================================================

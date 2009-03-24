@@ -17,27 +17,20 @@ class tester( initparam )
    name = initparam
 end
 
-base_allocMem = 0
-base_allocItems = 0
-allocItems = 0
-allocMem = 0
-liveItems = 0
-liveMem = 0
-
 /* Now forin creates an extra reference, will be fixed in 0.9 */
 for i in [1 : 11]
 end
 
 // initialize references
-gcPerform( true )
-gcGetParams( $allocMem, $allocItems, $liveMem, $liveItems )
-base_allocMem = allocMem
-base_allocItems = allocItems
+GC.perform( true )
+aliveMem = GC.aliveMem
+items = GC.items
+usedMem = GC.usedMem
 
 // create a list
 list = List()
 // change gc mark
-gcPerform( true )
+GC.perform( true )
 
 for i in [1 : 11]
    list.push( tester( toString(i) ) )
@@ -51,7 +44,7 @@ list.erase = tester( toString(1) )
 
 // we have no reference of the original items, but they are stored deep in the list.
 // so, if we destroy them, we'll crash here:
-gcPerform( true )
+GC.perform( true )
 
 for i in [ 10 : 1 ]
    elem = list.pop()
@@ -67,14 +60,11 @@ elem = nil
 a = 2 * 1
 
 // be sure to kill both marks
-gcPerform( true )
-gcPerform( true )
-gcGetParams( $allocMem, $allocItems, $liveMem, $liveItems )
+GC.perform( true )
 
-if base_allocMem != allocMem: failure( "unmatching allocated memory" )
-if base_allocItems != allocItems: failure( "unmatching allocated items" )
-if allocMem != liveMem: failure( "live memory unmatching allocated memory" )
-if allocItems != liveItems: failure( "live items umatching allocated items" )
+if aliveMem != GC.aliveMem: failure( "unmatching allocated memory" )
+if usedMem != GC.usedMem: failure( "unmatching used memory" )
+if items != GC.items: failure( "unmatching live items items" )
 
 success()
 

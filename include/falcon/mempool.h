@@ -100,9 +100,6 @@ protected:
 
    // for gc
    uint32 m_generation;
-   int32 m_aliveItems;
-   uint32 m_aliveMem;
-
    int32 m_allocatedItems;
    uint32 m_allocatedMem;
 
@@ -121,7 +118,7 @@ protected:
       - rollover()
       \note This mutex is acquired once while inside  m_mtx_vms.lock()
    */
-   Mutex m_mtx_newitem;
+   mutable Mutex m_mtx_newitem;
 
    /** Mutex for the VM ring structure.
       - VMachine::m_nextVM
@@ -215,34 +212,8 @@ public:
          markItem( itm );
    }
 
-
-
-   /** Perform garbage collection loop.
-      Garbage collection is divided in two parts: free memory
-      identification and reclaiming.
-      Normally, GC would first identify memory that can be collected,
-      and then decide if the memory to be collected is wide enough.
-      To force memory collection even if unused memory treshold is
-      not met, pass bForceReclaim true
-      \param bForceReclaim true to reclaim memory no matter how
-            small the memory to be reclaimed is
-      \return true if some memory has been collected.
-   */
-   virtual bool performGC( bool bForceReclaim = false );
-
-
    /** Returns the number of elements managed by this mempool. */
-   uint32 allocatedItems() const { return m_allocatedItems; }
-
-   /** Returns the amount of memory that the last mark loop has found alive.
-      This is the memory allocated to items that are reachable from the
-      items the current module structure is holding.
-   */
-   uint32 aliveMem() const { return m_aliveMem; }
-
-   /** Returns the number of elements managed by this mempool. */
-   uint32 aliveItems() const { return m_aliveItems; }
-
+   int32 allocatedItems() const;
 
    /** Returns the current generation. */
    uint32 generation() const { return m_generation; }

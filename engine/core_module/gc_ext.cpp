@@ -168,7 +168,7 @@ void GC_aliveMem_rfrom(CoreObject *instance, void *user_data, Item &property, co
 
 void GC_items_rfrom(CoreObject *instance, void *user_data, Item &property, const PropEntry& )
 {
-   property = (int64) memPool->aliveItems();
+   property = (int64) memPool->allocatedItems();
 }
 
 void GC_th_normal_rfrom(CoreObject *instance, void *user_data, Item &property, const PropEntry& )

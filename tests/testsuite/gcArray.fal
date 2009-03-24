@@ -14,17 +14,10 @@
 ****************************************************************************/
 
 // Record initial memory requirements
-
-base_allocMem = 0
-base_allocItems = 0
-allocItems = 0
-allocMem = 0
-liveItems = 0
-liveMem = 0
-
-// initialize references
-gcGetParams( $allocMem, $allocItems, $liveMem, $liveItems )
-gcGetParams( $base_allocMem, $base_allocItems )
+GC.perform( true )
+aliveMem = GC.aliveMem
+items = GC.items
+usedMem = GC.usedMem
 
 //====================================
 // TEST 1
@@ -35,13 +28,11 @@ array = nil
 // ...and empty the A register
 a = 0*1
 
-gcPerform( true )
-gcGetParams( $allocMem, $allocItems, $liveMem, $liveItems )
+GC.perform( true )
 
-if base_allocMem != allocMem: failure( "dropped - unmatching allocated memory" )
-if base_allocItems != allocItems: failure( "dropped - unmatching allocated items" )
-if allocMem != liveMem: failure( "dropped - live memory unmatching allocated memory" )
-if allocItems != liveItems: failure( "dropped - live items umatching allocated items" )
+if aliveMem != GC.aliveMem: failure( "dropped - unmatching allocated memory" )
+if usedMem != GC.usedMem: failure( "dropped - unmatching used memory" )
+if items != GC.items: failure( "dropped - unmatching live items items" )
 
 //====================================
 // TEST 2
@@ -54,13 +45,11 @@ array = nil
 // ...and empty the A register
 a = 0*1
 
-gcPerform( true )
-gcGetParams( $allocMem, $allocItems, $liveMem, $liveItems )
+GC.perform( true )
 
-if base_allocMem != allocMem: failure( "drop array of array - unmatching allocated memory" )
-if base_allocItems != allocItems: failure( "drop array of array - unmatching allocated items" )
-if allocMem != liveMem: failure( "drop array of array - live memory unmatching allocated memory" )
-if allocItems != liveItems: failure( "drop array of array - live items umatching allocated items" )
+if aliveMem != GC.aliveMem: failure( "drop array of array - unmatching allocated memory" )
+if usedMem != GC.usedMem: failure( "drop array of array - unmatching used memory" )
+if items != GC.items: failure( "drop array of array - unmatching live items items" )
 
 //====================================
 // TEST 3
@@ -74,13 +63,11 @@ array = nil
 // ...and empty the A register
 a = 0*1
 
-gcPerform( true )
-gcGetParams( $allocMem, $allocItems, $liveMem, $liveItems )
+GC.perform( true )
 
-if base_allocMem != allocMem: failure( "insert - unmatching allocated memory" )
-if base_allocItems != allocItems: failure( "insert - unmatching allocated items" )
-if allocMem != liveMem: failure( "insert - live memory unmatching allocated memory" )
-if allocItems != liveItems: failure( "insert - live items umatching allocated items" )
+if aliveMem != GC.aliveMem: failure( "insert - unmatching allocated memory" )
+if usedMem != GC.usedMem: failure( "insert - unmatching used memory" )
+if items != GC.items: failure( "insert - unmatching live items items" )
 
 //====================================
 // TEST 4
@@ -94,13 +81,11 @@ array = nil
 // ...and empty the A register
 a = 0*1
 
-gcPerform( true )
-gcGetParams( $allocMem, $allocItems, $liveMem, $liveItems )
+GC.perform( true )
 
-if base_allocMem != allocMem: failure( "append - unmatching allocated memory" )
-if base_allocItems != allocItems: failure( "append - unmatching allocated items" )
-if allocMem != liveMem: failure( "append - live memory unmatching allocated memory" )
-if allocItems != liveItems: failure( "append - live items umatching allocated items" )
+if aliveMem != GC.aliveMem: failure( "append - unmatching allocated memory" )
+if usedMem != GC.usedMem: failure( "append - unmatching used memory" )
+if items != GC.items: failure( "append - unmatching live items items" )
 
 //====================================
 // TEST 5
@@ -114,13 +99,11 @@ array = nil
 // ...and empty the A register
 a = 0*1
 
-gcPerform( true )
-gcGetParams( $allocMem, $allocItems, $liveMem, $liveItems )
+GC.perform( true )
 
-if base_allocMem != allocMem: failure( "append - unmatching allocated memory" )
-if base_allocItems != allocItems: failure( "append - unmatching allocated items" )
-if allocMem != liveMem: failure( "append - live memory unmatching allocated memory" )
-if allocItems != liveItems: failure( "append - live items umatching allocated items" )
+if aliveMem != GC.aliveMem: failure( "append self - unmatching allocated memory" )
+if usedMem != GC.usedMem: failure( "append self - unmatching used memory" )
+if items != GC.items: failure( "append self - unmatching live items items" )
 
 success()
 

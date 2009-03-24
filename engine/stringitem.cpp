@@ -38,7 +38,7 @@ bool StringGarbage::finalize()
 {
    delete m_str;
    // as we're in m_str, we are destroyed here.
-   
+
    return true; // prevent destructor to be called.
 }
 
@@ -152,10 +152,8 @@ void String::writeIndex( const Item &index, const Item &target )
       {
          if ( target.isString() )
          {
-            String *gcs = new String( *this );
-
             register int pos = (int) index.asRangeStart();
-            register int end = (int) (index.asRangeIsOpen() ? gcs->length() :  index.asRangeEnd());
+            register int end = (int) (index.asRangeIsOpen() ? this->length() :  index.asRangeEnd());
             if ( checkRangeBound( pos, end ) )
             {
                if ( change( pos, end, *target.asString() ) )

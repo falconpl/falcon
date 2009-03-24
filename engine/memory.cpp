@@ -63,7 +63,7 @@ void * DflMemRealloc( void *mem, size_t amount )
       printf( "Falcon: fatal reallocation error when allocating %d bytes\n", (int) amount );
       exit(1);
    }
-   
+
    return ret;
 }
 
@@ -75,7 +75,7 @@ void * DflAccountMemAlloc( size_t amount )
       printf( "Falcon: fatal allocation error when allocating %d bytes\n", (int) amount );
       exit(1);
    }
-   
+
    gcMemAccount( amount );
    *ret = amount;
    return ret+1;
@@ -99,28 +99,28 @@ void * DflAccountMemRealloc( void *mem, size_t amount )
       DflAccountMemFree( mem );
       return 0;
    }
-   
+
    if ( mem == 0 )
       return DflAccountMemAlloc( amount );
 
-   
+
    size_t *smem = (size_t*) mem;
    smem--;
    size_t oldalloc = *smem;
-   
+
    size_t *nsmem = (size_t*) realloc( smem, amount + sizeof( size_t ) );
-   
+
    if ( nsmem == 0 ) {
       printf( "Falcon: fatal reallocation error when allocating %d bytes\n", (int) amount );
       exit(1);
    }
-   
+
    *nsmem = amount;
    if( amount > oldalloc )
       gcMemAccount( amount - oldalloc );
    else
       gcMemUnaccount( oldalloc - amount );
-      
+
    return nsmem+1;
 }
 
@@ -135,7 +135,7 @@ void gcMemAccount( size_t mem )
 {
    if( s_gcMutex == 0 )
       s_gcMutex = new Mutex;
-      
+
    s_gcMutex->lock();
    s_allocatedMem += mem;
    s_gcMutex->unlock();
@@ -145,7 +145,7 @@ void gcMemUnaccount( size_t mem )
 {
    if( s_gcMutex == 0 )
       s_gcMutex = new Mutex;
-      
+
    s_gcMutex->lock();
    s_allocatedMem -= mem;
    s_gcMutex->unlock();
@@ -155,14 +155,14 @@ size_t gcMemAllocated()
 {
    if( s_gcMutex == 0 )
       s_gcMutex = new Mutex;
-      
+
    s_gcMutex->lock();
    register uint32 val = s_allocatedMem;
    s_gcMutex->unlock();
-   
+
    return val;
 }
-   
+
 //============================================================
 // Global function pointers.
 //
