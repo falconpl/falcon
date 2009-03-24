@@ -52,7 +52,7 @@ bool Item::serialize_function( Stream *file, const CoreFunc *func ) const
 
    // we don't serialize the module ID because it is better to rebuild it on deserialization
    serialize_symbol( file, func->symbol() );
-   
+
    if ( func->symbol()->isFunction() )
    {
       // language function ? -- serialize the state.
@@ -65,7 +65,7 @@ bool Item::serialize_function( Stream *file, const CoreFunc *func ) const
          file->write( &called, 1 );
       }
    }
-   
+
    if ( ! file->good() )
       return false;
 
@@ -248,11 +248,11 @@ Item::e_sercode Item::serialize( Stream *file, bool bLive ) const
       {
          byte type = FLC_ITEM_METHOD;
          file->write( &type, 1 );
-         
+
          e_sercode sc = asMethodItem().serialize( file, bLive );
          if( sc != sc_ok )
             return sc;
-         
+
          serialize_function( file, this->asMethodFunc() );
       }
       break;
@@ -440,11 +440,11 @@ Item::e_sercode Item::deserialize( Stream *file, VMachine *vm )
          file->read( (byte *) &val2, sizeof( val2 ) );
          file->read( (byte *) &val3, sizeof( val3 ) );
          //file->read( (byte *) &isOpen, sizeof( isOpen ) );
-         
+
          val1 = endianInt64( val1 );
          val2 = endianInt64( val2 );
          val3 = endianInt64( val3 );
-         
+
          if ( file->good() ) {
             setRange( new CoreRange( val1, val2, val3 ) );
             return sc_ok;
@@ -484,7 +484,6 @@ Item::e_sercode Item::deserialize( Stream *file, VMachine *vm )
 
          if ( ! cs->deserialize( file ) )
          {
-            delete cs;
             return file->bad() ? sc_ferror : sc_invformat;
          }
 
@@ -510,7 +509,7 @@ Item::e_sercode Item::deserialize( Stream *file, VMachine *vm )
          {
             return sc_invformat;
          }*/
-         
+
          MemBuf* mb;
          file->read( &mb, sizeof( mb ) );
          setMemBuf( mb );
@@ -525,7 +524,6 @@ Item::e_sercode Item::deserialize( Stream *file, VMachine *vm )
             return sc_ok;
          }
 
-         delete mb; // may be 0, but it's ok
          return sc_ferror;
       }
       break;
@@ -599,7 +597,6 @@ Item::e_sercode Item::deserialize( Stream *file, VMachine *vm )
                return sc_ok;
             }
 
-            delete  dict;
             return retval;
          }
       }
@@ -624,7 +621,7 @@ Item::e_sercode Item::deserialize( Stream *file, VMachine *vm )
          sc = obj.deserialize( file, vm );
          if ( sc != sc_ok )
             return sc;
-         
+
          sc = func.deserialize( file, vm );
          if ( sc != sc_ok )
             return sc;
@@ -659,7 +656,7 @@ Item::e_sercode Item::deserialize( Stream *file, VMachine *vm )
          {
             return sc_missclass;
          }
-         
+
          setObject( object );
          return file->good() ? sc_ok : sc_ferror;
       }
