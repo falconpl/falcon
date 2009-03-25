@@ -3080,6 +3080,13 @@ bool VMachine::functionalEval( const Item &itm, uint32 paramCount, bool retArray
                {
                   return true;
                }
+               
+               if ( m_regA.isFutureBind() )
+               {
+                  // with this marker, the next call operation will search its parameters.
+                  // Let's consider this a temporary (but legitimate) hack.
+                  m_regBind.flags( 0xF0 );
+               }
 
                pushParameter( m_regA );
             }
@@ -3116,23 +3123,27 @@ bool VMachine::functionalEval( const Item &itm, uint32 paramCount, bool retArray
       break;
 
       case FLC_ITEM_LBIND:
-         if ( m_regBind.isDict() )
+         if ( ! itm.isFutureBind() )
          {
-            Item *bind = getBinding( *itm.asLBind() );
-            if ( bind == 0 )
+            if ( m_regBind.isDict() )
             {
-               m_regA.setReference( new GarbageItem( Item() ) );
-               setBinding( *itm.asLBind(), m_regA );
+               Item *bind = getBinding( *itm.asLBind() );
+               if ( bind == 0 )
+               {
+                  m_regA.setReference( new GarbageItem( Item() ) );
+                  setBinding( *itm.asLBind(), m_regA );
+               }
+               else {
+                  //fassert( bind->isReference() );
+                  m_regA = *bind;
+               }
             }
-            else {
-               //fassert( bind->isReference() );
-               m_regA = *bind;
-            }
-         }
-         else
-            m_regA.setNil();
+            else
+               m_regA.setNil();
 
-         break;
+            break;
+         }
+         // fallback
 
       default:
          m_regA = itm;

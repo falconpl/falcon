@@ -56,7 +56,7 @@ namespace Engine
       \param sSrcEnc The encoding preferentially used by source files.
       \param sIOEnc The encoding preferentially used in I/O streams different from sources.
    */
-   void setEncodings( const String &sSrcEnc, const String &sIOEnc );
+   FALCON_DYN_SYM void setEncodings( const String &sSrcEnc, const String &sIOEnc );
 
    /** Utility function recording the preferential encodings for sources and VM I/O.
       \see recordEncodings
@@ -64,7 +64,7 @@ namespace Engine
       \param sSrcEnc The encoding preferentially used by source files.
       \param sIOEnc The encoding preferentially used in I/O streams different from sources.
    */
-   void getEncodings( String &sSrcEnc, String &sIOEnc );
+   FALCON_DYN_SYM void getEncodings( String &sSrcEnc, String &sIOEnc );
 
    FALCON_DYN_SYM bool addVFS( const String &name, VFSProvider *prv );
    FALCON_DYN_SYM VFSProvider* getVFS( const String &name );

@@ -38,8 +38,8 @@ namespace Engine
 {
    static Mutex s_mtx;
    static Map *s_serviceMap = 0;
-   static String s_sIOEnc;
-   static String s_sSrcEnc;
+   static String* s_sIOEnc = 0;
+   static String* s_sSrcEnc = 0;
 
    bool addVFS( const String &name, VFSProvider *prv )
    {
@@ -144,18 +144,20 @@ namespace Engine
    void setEncodings( const String &sSrcEnc, const String &sIOEnc )
    {
       s_mtx.lock();
-      s_sSrcEnc = sSrcEnc;
-      s_sIOEnc = sIOEnc;
-      s_sSrcEnc.bufferize();
-      s_sIOEnc.bufferize();
+      delete s_sSrcEnc;
+      delete s_sIOEnc;
+      s_sSrcEnc = new String(sSrcEnc);
+      s_sIOEnc = new String(sIOEnc);
+      s_sSrcEnc->bufferize();
+      s_sIOEnc->bufferize();
       s_mtx.unlock();
    }
 
    void getEncodings( String &sSrcEnc, String &sIOEnc )
    {
       s_mtx.lock();
-      sSrcEnc = s_sSrcEnc;
-      sIOEnc = s_sIOEnc;
+      sSrcEnc = *s_sSrcEnc;
+      sIOEnc = *s_sIOEnc;
       s_mtx.unlock();
    }
 }
