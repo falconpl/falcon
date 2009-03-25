@@ -640,7 +640,7 @@ FALCON_FUNC  mth_dictFind( ::Falcon::VMachine *vm )
    // one search
    iter = dictBest( dict, "b" )
    isoob(iter) ? iter.insert( "b", 0 ) : iter.value( iter.value() + 1 )
-   @code
+   @endcode
 
    In the first case, the insertion of a special value in a dictionary where the
    value is still not present has required a first search then a second one at
@@ -660,7 +660,6 @@ FALCON_FUNC  mth_dictFind( ::Falcon::VMachine *vm )
    @brief Returns an iterator set to a given key, or finds the best position for its insertion.
    @param key The key to be found.
    @return An iterator to the best possible position.
-   
    
    @see dictBest
 */
