@@ -77,7 +77,7 @@ void CoreFunc::readyFrame( VMachine *vm, uint32 paramCount )
          const String *pname = item.asLBind();
          Symbol *param = symtab == 0 ? 0 : symtab->findByName( *pname );
          if ( param == 0 ) {
-            throw new CodeError( ErrorParam( e_undef_sym, __LINE__ ) );
+            throw new CodeError( ErrorParam( e_undef_param, __LINE__ ).extra(*pname) );
          }
 
          // place it in the stack; if the stack is not big enough, resize it.

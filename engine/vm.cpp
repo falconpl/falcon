@@ -2980,16 +2980,22 @@ static bool vm_func_eval( VMachine *vm )
    // let's push other function's return value
    if ( vm->regA().isLBind() )
    {
-      String *binding = vm->regA().asLBind();
-      Item *bind = vm->getBinding( *binding );
-      if ( bind == 0 )
+      if ( vm->regA().isFutureBind() )
       {
-         vm->regA().setReference( new GarbageItem( Item() ) );
-         vm->setBinding( *binding, vm->regA() );
+         vm->regBind().flagsOn( 0xF0 );
       }
       else {
-         //fassert( bind->isReference() );
-         vm->regA() = *bind;
+         String *binding = vm->regA().asLBind();
+         Item *bind = vm->getBinding( *binding );
+         if ( bind == 0 )
+         {
+            vm->regA().setReference( new GarbageItem( Item() ) );
+            vm->setBinding( *binding, vm->regA() );
+         }
+         else {
+            //fassert( bind->isReference() );
+            vm->regA() = *bind;
+         }
       }
    }
 

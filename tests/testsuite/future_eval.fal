@@ -1,0 +1,50 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 73b
+* Category: functional
+* Subcategory: fbind
+* Short: Future bindings in eval
+* Description:
+*   Evaluation and future bindings require a slighly different management.
+*   Testing them here.
+* [/Description]
+*
+****************************************************************************/
+
+function makepair( zp, vp )
+   return [zp, vp]
+end
+
+// First check that everything is fine.
+a = .[makepair vp|"b" zp|"a" ]
+ret = a()
+if ret[0] != "a" or ret[1] != "b": failure( "Smoke test" )
+
+// Let's try an evaluation.
+ret = eval(a)
+if ret[0] != "a" or ret[1] != "b": failure( "eval basic" )
+
+v = nil
+b = .[let $v a]
+eval( b )
+if v[0] != "a" or v[1] != "b": failure( "eval through let" )
+
+// More indirect evaluation
+vp = lbind( "vp", "b" )
+zp = lbind( "zp", "a" )
+a = .[makepair vp zp ]
+b = .[let $v a]
+eval( b )
+if v[0] != "a" or v[1] != "b": failure( "eval deep - precalc" )
+
+// More indirect evaluation
+v = 0
+a = .[makepair .[lbind "vp", "b"] .[lbind "zp", "a"] ]
+b = .[let $v a]
+eval( b )
+if v[0] != "a" or v[1] != "b": failure( "eval deep" )
+
+success()
+
+/* end of file */

@@ -121,6 +121,22 @@ Module* core_module_init()
       applied to any item, while methods defined in specific
       item metaclasses derived from BOM, as i.e. the @a Dictionary
       metaclass, can be applied only to items of the reflected type.
+      
+      @prop add__ Overrides +
+      @prop sub__ Overrides -
+      @prop mul__ Overrides *
+      @prop div__ Overrides /
+      @prop mod__ Overrides %
+      @prop pow__ Overrides **
+      @prop neg__ Overrides negate (prefix -)
+      @prop inc__ Overrides ++ (prefix)
+      @prop dec__ Overrides -- (prefix)
+      @prop incpost__ Overrides postfix ++
+      @prop decpost__ Overrides posrfix --
+      @prop compare Overrides <, >, <=, >=, == and != (return 1, 0, -1 or nil)
+      @prop call__ Overrides () call operator.
+      @prop setIndex__ Overrides accessor [] in write mode. Will receive 2 parameters (index, set value)
+      @prop getIndex__ Overrides accessor [] in read mode. Will receive 1 parameter (index)
    */
 
    Falcon::Symbol *bom_meta = self->addClass( "%FBOM" );

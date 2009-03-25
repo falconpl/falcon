@@ -1992,9 +1992,7 @@ FALCON_FUNC  core_lbind ( ::Falcon::VMachine *vm )
 
 static bool core_let_next( ::Falcon::VMachine *vm )
 {
-   *vm->param(0) = *vm->param(1);
-   vm->regA() = *vm->param(0);
-
+   *vm->param(0) = vm->regA();
    return false;
 }
 
