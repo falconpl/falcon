@@ -19,7 +19,8 @@
 
 
 printl( "The Falcon Programming Language - samples. " )
-printl( "Arguments Sample.
+printl( "
+         Arguments Sample.
          This script will list all the arguments that it has received." )
 
 printl()

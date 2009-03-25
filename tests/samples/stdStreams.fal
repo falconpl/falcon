@@ -9,13 +9,14 @@
 	the standard error.
 */
 
-> "Test for standard input stream
-Enter some text line; it will be printed in reverse order to
-confirm it has been read.
+> '
+   Test for ''standard input stream''
+   Enter some text line; it will be printed in reverse order to
+   confirm it has been read.
 
-After entering some line, close the stream with CTRL+D on UNIX
-and CTRL+Z (then enter) on MS-Windows. The count of read lines
-will be printed."
+   After entering some line, close the stream with CTRL+D on UNIX
+   and CTRL+Z (then enter) on MS-Windows. The count of read lines
+   will be printed.'
 
 sInput = stdIn()
 sOutput = stdOut()

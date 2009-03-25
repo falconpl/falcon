@@ -497,9 +497,21 @@ int SrcLexer::lex_normal()
                   // recognize only the i" for now
                   if ( m_string[0] == 'i' )
                   {
-                     // starting a string context
+                     uint32 nextChr;
+                     // we'll begin to read a string.
+                     if ( m_in->readAhead( nextChr ) && nextChr == '\n' )
+                     {
+                        m_mlString = true;
+                        m_line++;
+                        m_character = 0;
+                        m_in->discardReadAhead( 1 );
+                        m_state = chr == '"' ? e_stringRunning : e_litString;
+                     }
+                     else {
+                        m_state = chr == '"' ? e_string : e_litString;
+                     }
+
                      m_string.size(0); // remove first char.
-                     m_state = chr == '"' ? e_string : e_litString;;
                      m_string.exported( true );
                      m_chrEndString = chr; //... up to the matching "
                      break;
@@ -591,7 +603,6 @@ int SrcLexer::lex_normal()
          }
          break;
 
-         case e_eolCommentString:
          case e_eolComment:
             if ( chr == '\n' )
             {
@@ -599,7 +610,7 @@ int SrcLexer::lex_normal()
                m_line ++;
                m_character = 0;
                m_bIsDirectiveLine = false;
-               m_state = (m_state == e_eolCommentString) ? e_postString: e_line;
+               m_state = e_line;
 
                // a real EOL has been provided here.
                if ( m_state == e_line && m_contexts == 0  && m_squareContexts == 0 )
@@ -614,7 +625,6 @@ int SrcLexer::lex_normal()
             }
          break;
 
-         case e_blockCommentString:
          case e_blockComment:
             if ( chr == '\n' )
             { // previous line stays the same
@@ -629,7 +639,7 @@ int SrcLexer::lex_normal()
                if ( nextChr == '/' )
                {
                   m_in->discardReadAhead( nextChr );
-                  m_state = m_state == e_blockCommentString ? e_postString : e_line;
+                  m_state = e_line;
                }
             }
          break;
@@ -830,20 +840,33 @@ int SrcLexer::lex_normal()
             }
             else if ( chr == '\n' )
             {
+               if( ! m_mlString )
+               {
+                  m_compiler->raiseError( e_nl_in_lit, m_line );
+                  m_lineFilled = false;
+                  m_character = 0;
+                  m_bIsDirectiveLine = false;
+                  m_compiler->raiseError( e_nl_in_lit, m_previousLine );
+                  m_state = e_line;
+               }
+               m_string.append( chr );
                m_previousLine = m_line;
                m_line++;
-               m_lineFilled = false;
-               m_character = 0;
-               m_bIsDirectiveLine = false;
-               m_compiler->raiseError( e_nl_in_lit, m_previousLine );
-               m_state = e_line;
             }
             else if ( chr == '\'' )
             {
-               m_state = e_line;
-               VALUE->stringp = m_compiler->addString( m_string );
-               m_string.exported( false );
-               return STRING;
+               uint32 nextChar;
+               if ( m_in->readAhead( nextChar ) && nextChar == '\'' )
+               {
+                  m_string.append( '\'' );
+                  m_in->discardReadAhead(1);
+               }
+               else {
+                  m_state = e_line;
+                  VALUE->stringp = m_compiler->addString( m_string );
+                  m_string.exported( false );
+                  return STRING;
+               }
             }
             else
                m_string.append( chr );
@@ -859,27 +882,6 @@ int SrcLexer::lex_normal()
                switch ( nextChar )
                {
                   case '\\': nextChar = '\\'; break;
-                  case '\r':
-                     m_in->discardReadAhead( 1 );
-                     m_in->readAhead( nextChar );
-                     if( nextChar == '\n')
-                     {
-                        nextChar = ' ';
-                        m_previousLine = m_line;
-                        m_line++;
-                        m_character = 0;
-                        m_state = e_stringRunning;
-                     }
-                  break;
-
-                  case '\n':
-                     nextChar = ' ';
-                     m_previousLine = m_line;
-                     m_line++;
-                     m_character = 0;
-                     m_state = e_stringRunning;
-                  break;
-
                   case 'n': nextChar = '\n'; break;
                   case 'b': nextChar = '\b'; break;
                   case 't': nextChar = '\t'; break;
@@ -908,7 +910,17 @@ int SrcLexer::lex_normal()
             }
             else if ( chr == '\n' )
             {
-               m_string.append( '\n' );
+               if( ! m_mlString )
+               {
+                  m_compiler->raiseError( e_nl_in_lit, m_line );
+                  m_lineFilled = false;
+                  m_bIsDirectiveLine = false;
+                  m_compiler->raiseError( e_nl_in_lit, m_previousLine );
+                  m_state = e_line;
+               }
+               else
+                  m_state = e_stringRunning;
+
                m_previousLine = m_line;
                m_line++;
                m_character = 0;
@@ -916,8 +928,10 @@ int SrcLexer::lex_normal()
             }
             else if ( chr == m_chrEndString )
             {
-               // closed string
-               m_state = e_postString;
+               m_state = e_line;
+               VALUE->stringp = m_compiler->addString( m_string );
+               m_string.exported( false );
+               return STRING;
             }
             else
                m_string.append( chr );
@@ -934,90 +948,11 @@ int SrcLexer::lex_normal()
                }
                else {
                   m_state = e_string;
+                  if ( m_string.size() != 0 )
+                     m_string.append( ' ' );
                   m_string.append( chr );
                }
             }
-         break;
-
-         case e_postString:
-            if ( chr == '\n' ) {
-               // don't change previous line
-               m_line++;
-               m_character = 0;
-               m_addEol = true; // force to generate an EOL for the parser
-               m_bIsDirectiveLine = false;
-               // end of input?
-               if ( m_done ) {
-                  VALUE->stringp = m_compiler->addString( m_string );
-                  m_string.exported( false );
-                  m_state = e_line;
-                  return STRING;
-               }
-            }
-            else if ( chr == '"' )
-            {
-               // a chained string.
-               m_addEol = false;
-               m_state = e_string;
-               m_chrEndString = '"'; //... up to the matching "
-            }
-            else if ( chr == 0x201C )
-            {
-               // a chained string.
-               m_addEol = false;
-               m_state = e_string;
-               m_chrEndString = 0x201D; //... up to the matching close quote
-            }
-            else if ( chr == 0x300C )
-            {
-               // a chained string.
-               m_addEol = false;
-               m_state = e_string;
-               m_chrEndString = 0x300D; //... up to the matching close japanese quote
-            }
-            else if ( chr == '/' )
-            {
-               // may be a comment.
-               uint32 chr1;
-               if ( ! m_in->get( chr1 ) )
-               {
-                  // end of input.
-                  m_done = true;
-                  VALUE->stringp = m_compiler->addString( m_string );
-                  m_string.exported( false );
-                  return STRING;
-               }
-
-               if ( chr1 == '*' )
-               {
-                  m_state = e_blockCommentString;
-               }
-               else if ( chr1 == '/' ) {
-                  VALUE->stringp = m_compiler->addString( m_string );
-                  m_string.exported( false );
-                  m_state = e_eolComment;
-                  return STRING;
-               }
-               else {
-                  // not a comment
-                  m_in->unget( chr1 );
-                  m_in->unget( chr );
-                  VALUE->stringp = m_compiler->addString( m_string );
-                  m_string.exported( false );
-                  m_state = e_line;
-                  return STRING;
-               }
-            }
-            else if ( ! isWhiteSpace( chr ) )
-            {
-               m_in->unget( chr );
-               VALUE->stringp = m_compiler->addString( m_string );
-               m_string.exported( false );
-               m_state = e_line;
-               return STRING;
-            }
-
-
          break;
 
          case e_stringHex:
@@ -1124,7 +1059,7 @@ int SrcLexer::state_line( uint32 chr )
             m_previousLine = m_line;
             m_line++;
             m_character = 0;
-            m_in->discardReadAhead( 2 );
+            m_in->discardReadAhead( 1 );
          }
       }
       else if ( nextChr == '\\' )
@@ -1185,25 +1120,72 @@ int SrcLexer::state_line( uint32 chr )
    }
    else if ( chr == '"' )
    {
+      uint32 nextChr;
       // we'll begin to read a string.
-      m_state = e_string;
+      if ( m_in->readAhead( nextChr ) && nextChr == '\n' )
+      {
+         m_mlString = true;
+         m_line++;
+         m_character = 0;
+         m_in->discardReadAhead( 1 );
+         m_state = e_stringRunning;
+      }
+      else {
+         m_mlString = false;
+         m_state = e_string;
+      }
+
       m_ctxOpenLine = m_line;
       m_chrEndString = '"'; //... up to the matching "
    }
    else if ( chr == 0x201C )
    {
+      uint32 nextChr;
+      // we'll begin to read a string.
+      if ( m_in->readAhead( nextChr ) && nextChr == '\n' )
+      {
+         m_mlString = true;
+         m_line++;
+         m_character = 1;
+         m_in->discardReadAhead( 1 );
+      }
+      else
+         m_mlString = false;
       // we'll begin to read a string.
       m_state = e_string;
       m_chrEndString = 0x201D; //... up to the matching close quote
    }
    else if ( chr == 0x300C )
    {
+      uint32 nextChr;
+      // we'll begin to read a string.
+      if ( m_in->readAhead( nextChr ) && nextChr == '\n' )
+      {
+         m_mlString = true;
+         m_line++;
+         m_character = 1;
+         m_in->discardReadAhead( 1 );
+      }
+      else
+         m_mlString = false;
       // we'll begin to read a string.
       m_state = e_string;
       m_chrEndString = 0x300D; //... up to the matching close japanese quote
    }
    else if ( chr == '\'' )
    {
+      uint32 nextChr;
+      // we'll begin to read a string.
+      if ( m_in->readAhead( nextChr ) && nextChr == '\n' )
+      {
+         m_mlString = true;
+         m_line++;
+         m_character = 1;
+         m_in->discardReadAhead( 1 );
+      }
+      else
+         m_mlString = false;
+
       // we'll begin to read a non escaped string
       m_state = e_litString;
    }
@@ -1425,13 +1407,6 @@ int SrcLexer::checkUnlimitedTokens( uint32 nextChar )
             if ( m_squareContexts == 1 )
                m_ctxOpenLine = m_line;
             return LISTPAR;
-         }
-         else if ( m_string == ".\"" )
-         {
-            // starting a string context
-            m_state = e_string;
-            m_chrEndString = '"'; //... up to the matching "
-            return 0;
          }
          else if ( parsingFtd() && m_string == "?>" && (nextChar != '\n' || m_in->eof() ))
          {

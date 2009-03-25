@@ -20,7 +20,7 @@ if \
    success()
 else
     // useless backslash
-   failure( "Wrong "
+   failure( "Wrong " +
    "branch" \
    )
 end

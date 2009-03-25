@@ -87,20 +87,20 @@ object MyParser from CmdlineParser
          printl( "Provide some parameters to test this script.\n" )
       end
 
-      printl("  -?,--help\t\tPrints this help\n"
-         "  -d <value>\t\tSets the D option\n"
-         "  -m <value>\t\tSets the M option\n"
-         "  -l <value>\t\tSets the L option\n"
-         "  --long <value>\tLong version of -l\n"
-         "  -k        \t\tK switch on\n"
-         "  -n        \t\tN switch on\n"
-         "  -z,--sleep\t\tIgnore the rest of the command\n\n"
-         "Single char option can be \"chained\" i.e. -knd <value>. When chaining more than\n"
-         "one option requiring a parameter, only the last one will actually be considered.\n"
-         "Switches can be turend off by appendig a \"-\"after them.\n"
-         "Words eneterd without being prepended by '-', or a '-' by itself, are considered\n"
-         "\"free options\", and will be listed separately. A \"--\" will be interpreted as\n"
-         "end of parse marker, and everything given after that mark will be passed as\n"
+      printl("  -?,--help\t\tPrints this help"+
+         "  -d <value>\t\tSets the D option\n"+
+         "  -m <value>\t\tSets the M option\n"+
+         "  -l <value>\t\tSets the L option\n"+
+         "  --long <value>\tLong version of -l\n"+
+         "  -k        \t\tK switch on\n"+
+         "  -n        \t\tN switch on\n"+
+         "  -z,--sleep\t\tIgnore the rest of the command\n\n"+
+         "Single char option can be \"chained\" i.e. -knd <value>. When chaining more than\n"+
+         "one option requiring a parameter, only the last one will actually be considered.\n"+
+         "Switches can be turend off by appendig a \"-\"after them.\n"+
+         "Words eneterd without being prepended by '-', or a '-' by itself, are considered\n"+
+         "\"free options\", and will be listed separately. A \"--\" will be interpreted as\n"+
+         "end of parse marker, and everything given after that mark will be passed as\n"+
          "free options.\n" )
    end
 

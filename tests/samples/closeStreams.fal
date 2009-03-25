@@ -53,7 +53,7 @@ stream = stdOutRaw()
 stream.writeText( "Sent through standard output physical stream.\r\n" )
 
 // piped programs will stop now.
-errStream.writeText( "Now I close the stream; piped apps shoudld exit now:\n"
+errStream.writeText( "Now I close the stream; piped apps shoudld exit now:\n"+
                      "====================================================\n" )
 stream.close()
 for i in [3 : 0]

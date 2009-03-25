@@ -57,7 +57,8 @@ if string[ range ] != "Goodbye": failure( "Indirect range." )
 if len( string ) != 24: failure( "Len core function" )
 
 // compilationtest for multiline string
-string = "A string
+string = "
+  A string
       Spawning
          On many lines."
 

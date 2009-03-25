@@ -18,14 +18,14 @@
 
 if len( args ) != 4
 	printl( "usage: ", scriptName, " <infile> <inenc>  <outfile> <outenc>" )
-	printl( "Knwon encodings: "
-				"\tutf-8\t\tUnicode UTF-8\n"
-				"\tutf-16\t\tUnicode UTF-16 (endian detecting)\n"
-				"\tutf-16BE\tUnicode UTF-16 Big Endian\n"
-				"\tutf-16LE\tUnicode UTF-16 Little Endian\n"
-				"\tiso8859-<x>\twhere <x> 1..15: ISO tables\n"
-				"\tcp1252\t\tMS-Windows code page LATIN\n"
-            "\tgbk\t\tGBK encoding for modern chinese\n"
+	printl( "Knwon encodings: "+
+				"\tutf-8\t\tUnicode UTF-8\n"+
+				"\tutf-16\t\tUnicode UTF-16 (endian detecting)\n"+
+				"\tutf-16BE\tUnicode UTF-16 Big Endian\n"+
+				"\tutf-16LE\tUnicode UTF-16 Little Endian\n"+
+				"\tiso8859-<x>\twhere <x> 1..15: ISO tables\n"+
+				"\tcp1252\t\tMS-Windows code page LATIN\n"+
+            "\tgbk\t\tGBK encoding for modern chinese\n"+
 				"\tC\t\tDirect untranslated byte encoding\n" )
    printl( "\n...Local system encoding: ", getSystemEncoding(), "\n" )
    return 0

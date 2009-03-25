@@ -2181,6 +2181,11 @@ atom:
 ;
 */
 
+OPT_EOL:
+   /* nothing */
+   |EOL
+;
+
 expression:
      const_atom
    | var_atom
@@ -2189,17 +2194,58 @@ expression:
    | AMPER SELF { $$ = new Falcon::Value(); $$->setLBind( COMPILER->addString("self") ); /* do not add the symbol to the compiler */ }
    | MINUS expression %prec NEG { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_neg, $2 ) ); }
    | SYMBOL VBAR expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_fbind, new Falcon::Value($1), $3) ); }
-   | expression PLUS expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_plus, $1, $3 ) ); }
-   | expression MINUS expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_minus, $1, $3 ) ); }
-   | expression STAR expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_times, $1, $3 ) ); }
-   | expression SLASH expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_divide, $1, $3 ) ); }
-   | expression PERCENT expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_modulo, $1, $3 ) ); }
-   | expression POW expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_power, $1, $3 ) ); }
-   | expression AMPER_AMPER expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_bin_and, $1, $3 ) ); }
-   | expression VBAR_VBAR expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_bin_or, $1, $3 ) ); }
-   | expression CAP_CAP expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_bin_xor, $1, $3 ) ); }
-   | expression SHL expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_shift_left, $1, $3 ) ); }
-   | expression SHR expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_shift_right, $1, $3 ) ); }
+   | expression PLUS OPT_EOL expression {
+            // is this an immediate string sum ?
+            if ( $1->isString() )
+            {
+               if ( $4->isString() )
+               {
+                  Falcon::String str( *$1->asString() );
+                  str += *$4->asString();
+                  $1->setString( COMPILER->addString( str ) );
+                  delete $4;
+                  $$ = $1;
+               }
+               else if ( $4->isInteger() )
+               {
+                  Falcon::String str( *$1->asString() );
+                  str.writeNumber( $4->asInteger() );
+                  $1->setString( COMPILER->addString( str ) );
+                  delete $4;
+                  $$ = $1;
+               }
+               else
+                  $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_plus, $1, $4 ) );
+            }
+            else
+               $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_plus, $1, $4 ) );
+         }
+   | expression MINUS OPT_EOL expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_minus, $1, $4 ) ); }
+   | expression STAR OPT_EOL expression {
+            if ( $1->isString() )
+            {
+               if ( $4->isInteger() )
+               {
+                  Falcon::String str( *$1->asString() );
+                  str.append( (Falcon::uint32) $4->asInteger() );
+                  $1->setString( COMPILER->addString( str ) );
+                  delete $4;
+                  $$ = $1;
+               }
+               else
+                  $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_times, $1, $4 ) );
+            }
+            else
+               $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_times, $1, $4 ) );
+      }
+   | expression SLASH OPT_EOL expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_divide, $1, $4 ) ); }
+   | expression PERCENT OPT_EOL expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_modulo, $1, $4 ) ); }
+   | expression POW OPT_EOL expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_power, $1, $4 ) ); }
+   | expression AMPER_AMPER OPT_EOL expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_bin_and, $1, $4 ) ); }
+   | expression VBAR_VBAR OPT_EOL expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_bin_or, $1, $4 ) ); }
+   | expression CAP_CAP OPT_EOL expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_bin_xor, $1, $4 ) ); }
+   | expression SHL OPT_EOL expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_shift_left, $1, $4 ) ); }
+   | expression SHR OPT_EOL expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_shift_right, $1, $4 ) ); }
    | TILDE expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_bin_not, $2 ) ); }
    | expression NEQ expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_neq, $1, $3 ) ); }
    | expression INCREMENT { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_post_inc, $1 ) ); }

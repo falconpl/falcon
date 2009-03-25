@@ -49,6 +49,7 @@ private:
    bool m_lineContContext;
    bool m_graphAgain;
    uint32 m_chrEndString;
+   bool m_mlString;
 
    Stream *m_in;
    List m_streams;
@@ -64,12 +65,9 @@ private:
       e_stringOctal,
       e_stringHex,
       e_stringRunning,
-      e_postString,
       e_loadDirective,
       e_eolComment,
-      e_eolCommentString,
       e_blockComment,
-      e_blockCommentString,
       e_zeroNumber,
       e_intNumber,
       e_octNumber,
@@ -79,7 +77,7 @@ private:
       e_floatNumber_e1,
       e_operator,
       e_symbol,
-      e_litString
+      e_litString,
    } t_state;
 
    t_state m_state;
