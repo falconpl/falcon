@@ -332,6 +332,9 @@ bool StreamBuffer::flush()
 
 bool StreamBuffer::get( uint32 &chr )
 {
+   if ( popBuffer(chr) )
+      return true;
+      
    if ( m_bufPos == m_bufLen )
    {
       if ( ! refill() )
