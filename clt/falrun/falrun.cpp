@@ -38,6 +38,7 @@ Stream *stdIn;
 Stream *stdOut;
 Stream *stdErr;
 String io_encoding;
+bool ignore_defpath = false;
 
 
 static void version()
@@ -58,6 +59,7 @@ static void usage()
    stdOut->writeString( "   -p mod      pump one or more module in the virtual machine\n" );
    stdOut->writeString( "   -l <lang>   Set preferential language of loaded modules\n" );
    stdOut->writeString( "   -L<path>    set path for 'load' directive\n" );
+   stdOut->writeString( "   -P          Ignore default system paths\n" );
    stdOut->writeString( "   -v          print copyright notice and version and exit\n" );
    stdOut->writeString( "\n" );
    stdOut->writeString( "Paths must be in falcon file name format: directory separatros must be slashes and\n" );
@@ -100,13 +102,13 @@ String get_load_path()
    
    if ( load_path.size() > 0 )
    {
-      if ( load_path.getCharAt(0) == ';' )
-         lp = load_path.subString( 1 );
+      if ( ignore_defpath )
+         lp = load_path;
       else
          lp = FALCON_DEFAULT_LOAD_PATH ";" + load_path;
    }
    
-   if ( ! hasEnvPath )
+   if ( ! hasEnvPath || ignore_defpath )
    {
       return lp;
    }
@@ -175,6 +177,10 @@ int main( int argc, char *argv[] )
                else
                   load_path = op + 2; break;
             break;
+            
+            case 'P':
+               ignore_defpath = true;
+               break;
 
             case 'l':
                if ( op[2] == 0 && i + 1 < argc )
