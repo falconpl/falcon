@@ -57,7 +57,7 @@ Baton::~Baton()
 
 #ifdef NDEBUG
    pthread_mutex_destroy( &p.m_mtx );
-   pthread_condvar_destroy( &p.m_cv );
+   pthread_cond_destroy( &p.m_cv );
 #else
    int res = pthread_mutex_destroy( &p.m_mtx );
    fassert( res == 0 );
