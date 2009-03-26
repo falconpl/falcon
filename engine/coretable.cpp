@@ -157,7 +157,6 @@ FalconData *CoreTableIterator::clone() const
    return new CoreTableIterator( m_owner, m_pageNum, m_itemNum );
 }
 
-
 //===============================================================
 
 

@@ -2017,7 +2017,8 @@ void opcodeHandler_TRAV( register VMachine *vm )
                copy( *iter->getCurrent().dereference() );
 
          // prepare... iterator
-         vm->m_stack->itemAt( vm->m_stack->size()-3 ).setGCPointer( vm, iter );
+         iter->setOwner( dict );
+         vm->m_stack->itemAt( vm->m_stack->size()-3 ).setGCPointer( iter );
       }
       break;
 
@@ -2048,7 +2049,8 @@ void opcodeHandler_TRAV( register VMachine *vm )
          *dest->dereference() = iter->getCurrent();
 
          // prepare... iterator
-         vm->m_stack->itemAt( vm->m_stack->size()-3 ).setGCPointer( vm, iter );
+         iter->setOwner( seq );
+         vm->m_stack->itemAt( vm->m_stack->size()-3 ).setGCPointer( iter );
       }
       break;
 

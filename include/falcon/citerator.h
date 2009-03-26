@@ -25,6 +25,8 @@
 #include <falcon/falcondata.h>
 
 namespace Falcon {
+class Sequence;
+class Garbageable;
 class Item;
 
 /**
@@ -34,10 +36,14 @@ class Item;
 class FALCON_DYN_CLASS CoreIterator: public FalconData
 {
 protected:
-   CoreIterator() {}
-
+   CoreIterator();
+   CoreIterator( const CoreIterator& other );
+   Garbageable* m_creator;
+   Sequence* m_creatorSeq;
+   
 public:
-
+   virtual ~CoreIterator();
+   
    virtual bool next() = 0;
    virtual bool prev() = 0;
    virtual bool hasNext() const = 0;
@@ -52,8 +58,14 @@ public:
    virtual bool insert( const Item &item ) = 0;
 
    virtual void invalidate() = 0;
-
-   virtual void gcMark( uint32 mark ) {}
+   /** On all the non-temporary iterators use this!!!
+      Creates a local copy of the VM item to which this iterator
+      refers to. The owner is marked on GC mark, so it stays
+      alive as long as at least one iterator points to it.
+   */
+   virtual void setOwner( Garbageable *owner );
+   virtual void setOwner( Sequence *owner );
+   virtual void gcMark( uint32 mark );
 };
 
 }

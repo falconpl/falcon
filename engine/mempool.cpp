@@ -390,15 +390,11 @@ void MemPool::markItem( Item &item )
       break;
 
       case FLC_ITEM_FUNC:
-         if ( item.asFunction()->isValid() )
+         if( item.asFunction()->mark() != generation() )
          {
-            if( item.asFunction()->mark() != generation() )
-            {
-               item.asFunction()->mark( generation() );
-            }
+            item.asFunction()->mark( generation() );
+            item.asFunction()->liveModule()->mark( generation() );
          }
-         else
-            item.setNil();
          break;
 
       case FLC_ITEM_RANGE:
@@ -429,6 +425,7 @@ void MemPool::markItem( Item &item )
 
       case FLC_ITEM_GCPTR:
          item.asGCPointerShell()->mark( generation() );
+         item.asGCPointer()->gcMark( generation() );
          break;
 
       case FLC_ITEM_ARRAY:

@@ -431,7 +431,7 @@ public:
    /** Set this item as a user-defined Garbage pointers.
        VM provides GC-control over them.
    */
-   void setGCPointer( VMachine *vm, FalconData *ptr, uint32 sig = 0 );
+   void setGCPointer( FalconData *ptr, uint32 sig = 0 );
    void setGCPointer( GarbagePointer *shell, uint32 sig = 0 );
 
    FalconData *asGCPointer() const;

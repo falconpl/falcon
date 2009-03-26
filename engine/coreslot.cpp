@@ -87,8 +87,10 @@ void CoreSlot::prepareBroadcast( VMachine *vm, uint32 pfirst, uint32 pcount, VMM
       return;
    }
 
+   // we don't need to set the slot as owner, as we're sure it stays in range
+   // (slots are marked) on themselves.
    vm->addLocals( 5 );
-   vm->local(0)->setGCPointer( vm, ci );
+   vm->local(0)->setGCPointer( ci );
    *vm->local(1) = (int64) pfirst;
    *vm->local(2) = (int64) pcount;
    *vm->local(3) = new CoreString( m_name );
@@ -142,7 +144,10 @@ void CoreSlot::assert( VMachine* vm, const Item &a )
    if ( ! empty() )
    {
       vm->addLocals( 4 );
-      vm->local(0)->setGCPointer( vm, getIterator() );
+      CoreIterator* iter = getIterator();
+      // we don't need to set the slot as owner, as we're sure it stays in range
+      // (slots are marked) on themselves.
+      vm->local(0)->setGCPointer( iter );
       *vm->local(1) = (int64) -1;
       *vm->local(2) = m_assertion;
       *vm->local(3) = new CoreString( m_name );

@@ -150,6 +150,7 @@ ADD_LIBRARY( falcon_engine SHARED
    basealloc.cpp
    cacheobject.cpp
    cdict.cpp
+   citerator.cpp
    crobject.cpp
    compiler.cpp
    corearray.cpp

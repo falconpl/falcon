@@ -1,5 +1,5 @@
 
-                            RELNOTES for Falcon
+                          RELEASE NOTES for Falcon
 
                              Albatross Release
 
@@ -23,14 +23,14 @@ of a transparent, centralized multithreading garbage collector, which is now
 able to perform mainly in background and taking into consideration the
 activity of multiple virtual machines. The engine is now natively working in
 multithreading mode, and this allows to offer some extra services to multi-
-threaded applications as the VM messaging.
+threaded applications as VM messaging.
 
   The changes to the language are somewhat relevant, and not always
-rear-compatible. The main ones are:
+back-compatible. The main ones are:
   - Introduction of BOM methods application directly on values, (i.e.
     1.typeId() or [a,b,c].len()).
   - Removal of the "attributes" keyword, and introduction of the
-    VMSlot class. Message targets now doesn't need to be instances
+    VMSlot class. Message targets now doesn't need to be class instances
     anymore, as any callable item can receive broadcasts.
   - Removal of the pass and pass/in statements (now obsolete).
   - Removal of the "lambda" keyword, substituted by the more compact and
@@ -45,7 +45,10 @@ rear-compatible. The main ones are:
   - Addition of the fself keyword, that identifies the currently
     executed function (and is useful, for example, to recurse from
     inside nameless functions).
-
+  - String parsing update: multiline strings, literal string escapes,
+    string joining mechanism, and removal of the dot-quote strings
+    (see the ChangeLog for details).
+  
   At library level, the most relevant changes are in the stream area,
 where buffering and rationalization of the parameters have finally made
 this sector of Falcon to become highly competitive, and the introduction
@@ -55,12 +58,11 @@ accessible also as BOM methods, which are now type specific.
 
   Although no explicit optimization has been applied to the code, the
 simplification of many parts of the code has brought to a sensible increase
-in performance in certain area of the code. However the idea behind this
-release is to shape the engine interface making it coherent towards
-the surrounding applications (embedding applications, modules and scripts)
-to start working on the underlying engine to optimize it. In short, this
-represents a solid base to start the optimization cycle we want to carry
-out in the 0.9 releases.
+in performance in certain areas. However the idea behind this release is to 
+shape the engine interface making it coherent towards the surrounding 
+applications (embedding applications, modules and scripts) to start working 
+on the underlying engine to optimize it. In short, this represents a solid 
+base to start the optimization cycle we want to carry out in the 0.9 releases.
 
 
 Short term plans
@@ -73,5 +75,7 @@ may be discovered in the meanwhile.
 
   The space between this release and the next one is totally devoted to bug
 hunting and finetuning. Critical features may be added in case their missing can
-be considered a bug itself.
+be considered a bug itself. Also, we plan to complete the tasks in the TODO list 
+shipped with this package.
+
 

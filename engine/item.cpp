@@ -152,12 +152,13 @@ void Item::setClass( CoreClass *cls )
    assignToVm( cls );
 }
 
-void Item::setGCPointer( VMachine *vm, FalconData *ptr, uint32 sig )
+void Item::setGCPointer( FalconData *ptr, uint32 sig )
 {
    type( FLC_ITEM_GCPTR );
    all.ctx.data.gptr.signature = sig;
    all.ctx.data.gptr.gcptr = new GarbagePointer( ptr );
    assignToVm( all.ctx.data.gptr.gcptr );
+   ptr->gcMark( memPool->generation() );
 }
 
 void Item::setGCPointer( GarbagePointer *shell, uint32 sig )
@@ -166,6 +167,7 @@ void Item::setGCPointer( GarbagePointer *shell, uint32 sig )
    all.ctx.data.gptr.signature = sig;
    all.ctx.data.gptr.gcptr = shell;
    assignToVm( shell );
+   shell->ptr()->gcMark( memPool->generation() );
 }
 
 FalconData *Item::asGCPointer() const
