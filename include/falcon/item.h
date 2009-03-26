@@ -463,8 +463,7 @@ public:
 
    void copy( const Item &other )
    {
-      all.parts.low = other.all.parts.low;
-      all.parts.high = other.all.parts.high;
+      all = other.all;
    }
 
    /** Tells if this item is callable.
