@@ -582,7 +582,7 @@ void AppFalcon::runModule()
    vmachine.launchAtLink( false );
    Module* core = core_module_init();
    #ifdef NDEBUG
-      vmachine->link ( core );
+      vmachine.link ( core );
    #else
       LiveModule *res = vmachine.link ( core );
       fassert ( res != 0 ); // should not fail
