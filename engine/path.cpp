@@ -300,7 +300,13 @@ void Path::setLocation( const String &in_loc )
    if ( in_loc.length() >0 )
    {
       if ( m_pathStart != String::npos )
-         m_path.change( m_pathStart, m_pathEnd, in_loc );
+      {
+         // do the path contains the unit too?
+         if ( in_loc.find( ":" ) != String::npos )
+            m_path.change( 0, m_pathEnd, in_loc );
+         else
+            m_path.change( m_pathStart, m_pathEnd, in_loc );
+      }
       else
       {
          if ( m_resEnd != String::npos )

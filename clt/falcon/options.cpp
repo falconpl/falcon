@@ -205,7 +205,7 @@ void FalconOptions::parse( int argc, char **argv, int &script_pos )
                   preloaded.pushBack ( new String ( op + 2 ) );
                break;
 
-            case 'P': ignore_syspath = false; break;
+            case 'P': ignore_syspath = true; break;
             case 'r': recompile_on_load = false; break;
 
             case 'S': modalGiven(); assemble_out = true; break;
