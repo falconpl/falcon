@@ -77,7 +77,7 @@ object MyParser from CmdlineParser
    end
 
    function unrecognized( option )
-      printl( "Unrecognized option \"", option, "\"\n\n" );
+      printl( "Unrecognized option \"", option, "\"\n" );
       self.usage()
       exit(0)
    end
@@ -87,21 +87,23 @@ object MyParser from CmdlineParser
          printl( "Provide some parameters to test this script.\n" )
       end
 
-      printl("  -?,--help\t\tPrints this help"+
-         "  -d <value>\t\tSets the D option\n"+
-         "  -m <value>\t\tSets the M option\n"+
-         "  -l <value>\t\tSets the L option\n"+
-         "  --long <value>\tLong version of -l\n"+
-         "  -k        \t\tK switch on\n"+
-         "  -n        \t\tN switch on\n"+
-         "  -z,--sleep\t\tIgnore the rest of the command\n\n"+
-         "Single char option can be \"chained\" i.e. -knd <value>. When chaining more than\n"+
-         "one option requiring a parameter, only the last one will actually be considered.\n"+
-         "Switches can be turend off by appendig a \"-\"after them.\n"+
-         "Words eneterd without being prepended by '-', or a '-' by itself, are considered\n"+
-         "\"free options\", and will be listed separately. A \"--\" will be interpreted as\n"+
-         "end of parse marker, and everything given after that mark will be passed as\n"+
-         "free options.\n" )
+      printl('
+     -?,--help       Prints this help
+     -d <value>      Sets the D option
+     -m <value>      Sets the M option
+     -l <value>      Sets the L option
+     --long <value>  Long version of -l
+     -k              K switch on
+     -n              N switch on
+     -z,--sleep      Ignore the rest of the command
+   
+Single char option can be "chained" i.e. -knd <value>. When chaining more 
+than one option requiring a parameter, only the last one will actually be 
+considered. Switches can be turend off by appendig a "-" after them. Words 
+eneterd without being prepended by ''-'', or a ''-'' by itself, are 
+considered "free options", and will be listed separately. A "--" will be 
+interpreted as end of parse marker, and everything given after that mark 
+will be passed as free options.' )
    end
 
    function dump()
