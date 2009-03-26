@@ -79,3 +79,16 @@ be considered a bug itself. Also, we plan to complete the tasks in the TODO list
 shipped with this package.
 
 
+Usage tips
+==========
+
+   Although the new Garbage Collector is relatively efficient in determining 
+the actual needs of your application and relatively discrete in reclaiming
+unused memory, the detection algorithm is still rudimentary and experimental.
+If your application is memory-intensive, be sure to read the Core Module
+Documentation about the new GC object, which provides four default collection
+strategies and allows to implement your own. A finely tuned GC strategy can
+boost the performance of your application and reduce its memory footprint;
+while we'll work towards finding collection strategies sensible to the most
+common usage patterns, you're invited to provide your own in case this aspect
+is critical to your application.
