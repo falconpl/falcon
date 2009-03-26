@@ -16,14 +16,14 @@ load compiler
 comp = Compiler()
 
 // test 1 - syntax error in compilation
-str = "
+str = '
 	array = [1,2,3 4]
 	val = 0
 	for e in array
 		val += e
    end
 
-   return e "
+   return e'
 
 try
 	mod = comp.compile( "myPersonalModule", str )

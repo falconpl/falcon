@@ -15,14 +15,14 @@
 
 load compiler
 
-str = "
+str = '
 	array = [1, 2,3,4]
 	val = 0
 	for e in array
 		val += e
    end
 
-   return val "
+   return val'
 
 comp = Compiler()
 

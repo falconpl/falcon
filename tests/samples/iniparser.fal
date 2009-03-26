@@ -31,21 +31,22 @@ load confparser
 
 printl( "The Falcon Programming Language - samples." )
 if len(args) == 0
-   printl( "Usage:\n"
-      "  Provide a file .ini as argument.\n"
-      "  Whithout other arguments, this program will dump the contents of\n"
-      "  the file.\n"
-      "  With a second argument, it will search the key in the main section and\n"
-      "  display its value.\n"
-      "  If the argument is in format \".key\" the category will be shown.\n"
-      "  If the argument is in format \"key=value\" it will be SET.\n"
-      "  If the argument is in format \"+key=value\" it will be ADDED.\n"
-      "  With \"-key\" the given key will be removed.\n"
-      "  With \"-.key\" the given category will be removed.\n"
-      "  Providing also an argument in square brackets, as \"[section]\" the\n"
-      "  argument will be applied to the given section. \"-[section]\" will\n"
-      "  delete the given section.\n"
-      "  Provide \"encoding=...\" to change default encoding.\n" )
+   printl( '
+   Usage:
+   
+   Provide a file .ini as argument.
+   Whithout other arguments, this program will dump the contents of the file.
+   With a second argument, it will search the key in the main section and
+   display its value.
+   If the argument is in format ".key" the category will be shown.
+   If the argument is in format "key=value" it will be SET.
+   If the argument is in format "+key=value" it will be ADDED.
+   With "-key" the given key will be removed.
+   With "-.key" the given category will be removed.
+   Providing also an argument in square brackets, as "[section]" the
+   argument will be applied to the given section. "-[section]" will
+   delete the given section.
+   Provide "encoding=..." to change default encoding.' )
    return 0
 end
 

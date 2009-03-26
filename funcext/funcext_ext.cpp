@@ -164,7 +164,7 @@ FALCON_FUNC  fe_at ( ::Falcon::VMachine *vm )
       {
          int64 start = i_pos->asRangeStart();
          int64 end = i_pos->asRangeIsOpen() ? ca->length() : i_pos->asRangeEnd();
-         CoreArray *part = ca->partition( start, end );
+         CoreArray *part = ca->partition( (int32)start, (int32)end );
 
          if ( part != 0 )
          {
@@ -173,16 +173,16 @@ FALCON_FUNC  fe_at ( ::Falcon::VMachine *vm )
             if ( i_val != 0 )
             {
                if( i_val->isArray() ) {
-                  if( ca->change( *i_val->asArray(), start, end ) )
+                  if( ca->change( *i_val->asArray(), (int32)start, (int32)end ) )
                      return;
                }
                else
                {
                   if ( start != end )
                   {// insert
-                     if( ca->remove( start, end ) )
+                     if( ca->remove( (int32)start, (int32)end ) )
                      {
-                        if( ca->insert( *i_val, start ) )
+                        if( ca->insert( *i_val, (int32)start ) )
                            return;
                      }
                   }
@@ -230,10 +230,10 @@ FALCON_FUNC  fe_at ( ::Falcon::VMachine *vm )
          int64 start = i_pos->asRangeStart();
          int64 end = i_pos->asRangeIsOpen() ? str->length() : i_pos->asRangeEnd();
 
-         vm->retval( new CoreString( str->subString( start, end ) ) );
+         vm->retval( new CoreString( str->subString( (int32)start, (int32)end ) ) );
          if ( i_val != 0 && i_val->isString() )
          {
-            str->change( start, end, *i_val->asString() );
+            str->change( (int32)start, (int32)end, *i_val->asString() );
          }
 
          return;

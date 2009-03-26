@@ -15,7 +15,7 @@
 // Some globals
 global_var = nil
 global_sym = nil
-
+ 
 
 // The object that will be used by the loader
 object obj
