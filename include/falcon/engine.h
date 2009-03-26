@@ -62,6 +62,7 @@
 #include <falcon/module.h>
 #include <falcon/flexymodule.h>
 #include <falcon/vm.h>
+#include <falcon/garbagelock.h>
 
 // Environmental support
 #include <falcon/core_ext.h>
