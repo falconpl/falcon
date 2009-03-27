@@ -68,6 +68,7 @@ inline rtype_ptr dyncast(stype* pSource)
 }
 
 // for references
+/* Breaks MINGW
 template<typename rtype_ref, typename stype>
 inline rtype_ref dyncast(stype& rSource)
 {
@@ -84,7 +85,7 @@ inline rtype_ref dyncast(stype& rSource)
 #endif
    return static_cast<rtype_ref>(rSource);
 }
-
+*/
 }
 
 #endif

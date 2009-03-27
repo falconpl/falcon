@@ -131,7 +131,7 @@ inline int charToHex( const char elem )
 FALCON_DYN_SYM uint32 calcMemHash( const char *memory, uint32 size );
 FALCON_DYN_SYM uint32 calcCstrHash( const char *cstring );
 FALCON_DYN_SYM uint32 calcStringHash( const String &string );
-FALCON_DYN_SYM inline uint32 calcIntHash( const int32 number ) { return flc_HASH_SEED * number; }
+inline uint32 calcIntHash( const int32 number ) { return flc_HASH_SEED * number; }
 
 }
 

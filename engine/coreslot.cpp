@@ -259,7 +259,7 @@ void CoreSlotPtrTraits::copy( void *targetZone, const void *sourceZone ) const
 int CoreSlotPtrTraits::compare( const void *firstz, const void *secondz ) const
 {
    if ( sizeof(int) == sizeof(void*))
-      return (((int64)firstz) - ((int64)secondz));
+      return (int)(((int64)firstz) - ((int64)secondz));
    else
       return (((int64)firstz) > ((int64)secondz)) ? -1 : 
 	     (((int64)firstz) < ((int64)secondz)) ? 1 : 0;

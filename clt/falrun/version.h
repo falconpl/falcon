@@ -18,8 +18,8 @@
 #define FRUN_VERSION_H
 
 #define FRUN_VERSION_MAJOR        0
-#define FRUN_VERSION_MINOR        8 
-#define FRUN_VERSION_REVISION     14
+#define FRUN_VERSION_MINOR        9
+#define FRUN_VERSION_REVISION     0
 
 #endif
 
