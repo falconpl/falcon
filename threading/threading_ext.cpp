@@ -1327,7 +1327,7 @@ FALCON_FUNC SyncQueue_size( VMachine *vm )
 
    This class offers a namespace for generic methods provided by the Threading module.
    The mehods in this class are all static and can be directly called by items
-   not derived from the @æ Thread class to gain access to multithread functionalities.
+   not derived from the @a Thread class to gain access to multithread functionalities.
 */
 
 /*#
@@ -1442,7 +1442,7 @@ FALCON_FUNC Threading_getCurrent( VMachine *vm )
    @method sameThread Threading
    @brief Returns true if the given thread refers to the running system thread.
    @param thread Instance of the @a Thread class to be compared.
-   @return True if @thread is referencing the currently running thread.
+   @return True if @b thread is referencing the currently running thread.
 */
 FALCON_FUNC Threading_sameThread( VMachine *vm )
 {
