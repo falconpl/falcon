@@ -132,8 +132,10 @@ String AppFalcon::getIoEncoding()
    if ( Sys::_getEnv ( "FALCON_VM_ENCODING", ret ) )
       return ret;
 
-   GetSystemEncoding ( ret );
-   return ret;
+   if( GetSystemEncoding ( ret ) )
+      return ret;
+
+   return "C";
 }
 
 
