@@ -62,6 +62,10 @@ string = "
       Spawning
          On many lines."
 
+if string != "A string Spawning On many lines."
+   failure( "Multiline string" )
+end
+
 success()
 
 /* End of file */

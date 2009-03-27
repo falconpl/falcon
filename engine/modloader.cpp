@@ -29,6 +29,7 @@
 #include <falcon/uri.h>
 #include <falcon/vfsprovider.h>
 #include <falcon/streambuffer.h>
+#include <falcon/stdstreams.h>
 
 #include <memory>
 
@@ -215,16 +216,22 @@ Stream *ModuleLoader::openResource( const String &path, t_filetype type )
       throw vfs->getLastError();
    }
 
-   if ( type == t_source && m_srcEncoding != "" )
+   if ( type == t_source || type == t_ftd )
    {
-      // set input encoding
-      Stream *inputStream = TranscoderFactory( m_srcEncoding, in, true );
-      if( inputStream != 0 )
-         return inputStream;
+      if ( m_srcEncoding != "" )
+      {
+         // set input encoding
+         Stream *inputStream = TranscoderFactory( m_srcEncoding, in, true );
+         if( inputStream != 0 )
+            return AddSystemEOL( inputStream );
 
-      delete in;
-      raiseError( e_unknown_encoding, "loadSource" );
+         delete in;
+         raiseError( e_unknown_encoding, "loadSource" );
+      }
+      else
+         return AddSystemEOL( in );
    }
+   
 
    return in;
 }

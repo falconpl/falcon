@@ -823,22 +823,7 @@ int SrcLexer::lex_normal()
 
          case e_litString:
             m_lineFilled = true;
-            // an escape ?
-            if ( chr == '\\' )
-            {
-               uint32 nextChar;
-               m_in->readAhead( nextChar );
-               if( nextChar == '\'' )
-               {
-
-                  m_in->discardReadAhead( 1 );
-                  m_string.append( '\'' );
-               }
-               else {
-                  m_string.append( '\\' );
-               }
-            }
-            else if ( chr == '\n' )
+            if ( chr == '\n' )
             {
                if( ! m_mlString )
                {

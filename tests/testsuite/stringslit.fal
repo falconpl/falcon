@@ -15,10 +15,24 @@
 ****************************************************************************/
 
 string1 = 'Hello c:\world'
-string = 'Hello \'world\''
+string = 'Hello ''world'''
 
 if string1 != "Hello c:\\world": failure( "backslash parsed" )
-if string != "Hello 'world'": failure( "sequence \\' not recognized" )
+if string != "Hello 'world'": failure( "sequence '' not recognized" )
+
+lits = 'A \\ literal '' string\'  // the \' closes nevertheless
+if lits != "A \\\\ literal ' string\\"
+   failure( "literal string" )
+end
+
+string = '
+A ''string''
+ "Spawning"
+On many lines.'
+
+if string != "A 'string'\n \"Spawning\"\nOn many lines."
+   failure( "Multiline literal string" )
+end
 
 success()
 
