@@ -262,8 +262,8 @@ void AppFalcon::readyStreams()
    else
    {
       m_stdIn = AddSystemEOL ( new StreamBuffer( new StdInStream ) );
-      m_stdOut = AddSystemEOL ( new StreamBuffer( new StdInStream ) );
-      m_stdErr = AddSystemEOL ( new StreamBuffer( new StdInStream ) );
+      m_stdOut = AddSystemEOL ( new StreamBuffer( new StdOutStream ) );
+      m_stdErr = AddSystemEOL ( new StreamBuffer( new StdErrStream ) );
    }
 }
 
