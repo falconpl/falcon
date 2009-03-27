@@ -79,6 +79,19 @@ be considered a bug itself. Also, we plan to complete the tasks in the TODO list
 shipped with this package.
 
 
+Known Issues
+============
+
+  The release proved to be quite stable on Linux32, Solaris (Sparc/x86), 
+Linux AMD64 and Win32 (VS8). On Linux x64 and Windows AMD/x64, we have 
+experienced some sporadic problem in faltest, which creates and destroys
+several hundreds modules and VMs per second; it's a thing you won't
+notice when using Falcon as a standalone application, but it may be
+an issue when embedding into high demanding applications. The MinGW
+compilation seems to be relatively less stable, especially on Multithreading
+tests. We'll adress this issues before releasing the first official
+version of 0.9 series.
+
 Usage tips
 ==========
 
