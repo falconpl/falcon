@@ -58,7 +58,7 @@ typedef void ( CDECL *ext_func_t) ( VMachine *);
 typedef bool ( CDECL *ext_func_frame_t) ( VMachine * );
 
 extern "C" {
-   typedef FALCON_DYN_SYM Module* ( CDECL  *ext_mod_init)();
+   typedef Module* (CDECL  *ext_mod_init)();
 }
 
 }
