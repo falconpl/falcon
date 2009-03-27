@@ -103,7 +103,7 @@ public:
 
    /** Return encoder status.
       A false status indicates that the last encoding or decoding operation
-      wasn't succesful. In example, it may indicate an incorrect UTF-8 sequence
+      wasn't successful. In example, it may indicate an incorrect UTF-8 sequence
       in utf-8 reading, or an unencodable character in ISO8859 writing.
 
       Stream I/O error do not set to false this state, and operations may
@@ -291,7 +291,7 @@ FALCON_DYN_SYM bool TranscodeFromString( const String &source, const String &enc
    instantiated through TranscodeFactory(). If the function is not able to determine
    the default system encoding, false is returned.
    The transparent "byte" encoding is never returned. It is supposed that, on failure
-   the caller should decide wether to use the "byte" encoding or take a sensible action.
+   the caller should decide whether to use the "byte" encoding or take a sensible action.
 
    However, "byte" encoding is returned if system encoding is detected to be "C" or "POSIX".
 
