@@ -30,10 +30,10 @@ static Mutex s_cs;
 ThreadSpecific::ThreadSpecific( void (*destructor)(void*) )
 {
    #ifndef NDEBUG
-   int value = pthread_key_create( &m_key, &destructor );
+   int value = pthread_key_create( &m_key, destructor );
    fassert( value == 0 );
    #else
-   pthread_key_create( &m_key, &destructor );
+   pthread_key_create( &m_key, destructor );
    #endif
 }
 
