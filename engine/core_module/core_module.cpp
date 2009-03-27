@@ -1308,7 +1308,7 @@ Module* core_module_init()
    Falcon::Symbol *fileStats_class = self->addClass( "FileStat",  Falcon::core::FileStat_init )
          ->addParam( "path" );
    fileStats_class->setWKS( true );
-   fileStats_class->getClassDef()->factory( Falcon::core::FileStatObjectFactory );
+   fileStats_class->getClassDef()->factory( &Falcon::core::FileStatObjectFactory );
 
    // properties
    core::FileStatObject::InnerData id;

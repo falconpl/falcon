@@ -553,17 +553,12 @@ CoreObject *ErrorObject::clone() const
 // Factory function
 //
 
-extern "C" 
+CoreObject* ErrorObjectFactory( const CoreClass *cls, void *user_data, bool bDeserial )
 {
-   CoreObject* ErrorObjectFactory( const CoreClass *cls, void *user_data, bool bDeserial )
-   {
       return new ErrorObject( cls, (Error *) user_data );
-   }
 }
 
 }
-
 }
-
 
 /* end of error.cpp */

@@ -50,16 +50,14 @@ public:
    virtual CoreObject *clone() const;
    virtual bool setProperty( const String &prop, const Item &value );
    virtual void reflectFrom( void *user_data );
-   virtual void reflectTo( void *user_data );
+   virtual void reflectTo( void *user_data ) const ;
 
    URI* getUri() const { return static_cast<URI*>( m_user_data ); }
 };
 
-extern "C" {
-   CoreObject* UriObjectFactory( const CoreClass *me, void *uri, bool dyn )
-   {
-      return new UriObject( me, static_cast<URI*>( uri ), dyn );
-   }
+CoreObject* UriObjectFactory( const CoreClass *me, void *uri, bool dyn )
+{
+   return new UriObject( me, static_cast<URI*>( uri ), dyn );
 }
 
 /*# @class URI
@@ -190,7 +188,7 @@ bool UriObject::setProperty( const String &prop, const Item &value )
                extra( "S" ) );
 }
 
-void UriObject::reflectTo( void* user_data )
+void UriObject::reflectTo( void* user_data ) const
 {
    URI &uri = *static_cast<URI*>( user_data );
 

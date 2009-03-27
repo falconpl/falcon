@@ -221,12 +221,9 @@ CoreObject *CoreSlotCarrier::clone() const
    return new CoreSlotCarrier( *this );
 }
 
-extern "C"
+CoreObject* CoreSlotFactory( const CoreClass *cls, void *user_data, bool bDeserial )
 {
-   CoreObject* CoreSlotFactory( const CoreClass *cls, void *user_data, bool bDeserial )
-   {
-      return new CoreSlotCarrier( cls, (CoreSlot *) user_data );
-   }
+   return new CoreSlotCarrier( cls, (CoreSlot *) user_data );
 }
 
 //=============================================================

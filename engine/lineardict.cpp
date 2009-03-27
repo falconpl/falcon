@@ -20,12 +20,8 @@
 #include <falcon/memory.h>
 #include <falcon/mempool.h>
 #include <falcon/vm.h>
-
-#if defined(__BORLANDC__)
    #include <string.h>
-#else
    #include <cstring>
-#endif
 
 namespace Falcon
 {

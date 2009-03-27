@@ -50,14 +50,14 @@ int sys_pageSize()
 
 void *sys_allocPage()
 {
-   void *ret = mmap(((void *)0), s_pageSize, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+   void *ret = mmap(((char *)0), s_pageSize, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
    fassert( ret != MAP_FAILED );
    return ret;
 }
 
 void sys_freePage( void *page )
 {
-   munmap( page, s_pageSize );
+   munmap( (char*) page, s_pageSize );
 }
 
 }

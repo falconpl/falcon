@@ -24,7 +24,6 @@ namespace Falcon
 class CoreObject;
 class CoreClass;
 
-extern "C" {
    /** Defines the core object factory function type.
       This factory function is used by core classes to create an object of the
       appropriate type.
@@ -119,8 +118,6 @@ extern "C" {
       i.e. being cloned, GC marked or destroyed with its owner.
    */
    CoreObject* CRSequenceFactory( const CoreClass *cls, void *user_data, bool bDeserial );
-}
-
 }
 #endif
 

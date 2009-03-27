@@ -2962,8 +2962,6 @@ void VMachine::referenceItem( Item &target, Item &source )
 }
 
 
-extern "C"{
-
 static bool vm_func_eval( VMachine *vm )
 {
    CoreArray *arr = vm->local( 0 )->asArray();
@@ -3036,7 +3034,7 @@ static bool vm_func_eval( VMachine *vm )
 
    return false;
 }
-}
+
 
 bool VMachine::functionalEval( const Item &itm, uint32 paramCount, bool retArray )
 {

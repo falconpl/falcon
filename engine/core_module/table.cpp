@@ -297,7 +297,6 @@ FALCON_FUNC  Table_back ( ::Falcon::VMachine *vm )
    vm->retval( table->back() );
 }
 
-extern "C" {
 static void internal_first_last( VMachine *vm, bool mode )
 {
    CoreTable *table = static_cast<CoreTable *>( vm->self().asObject()->getUserData() );
@@ -316,7 +315,6 @@ static void internal_first_last( VMachine *vm, bool mode )
    CoreObject *iobj = i_iclass->asClass()->createInstance();
    iobj->setUserData( table->getIterator(mode) );
    vm->retval( iobj );
-}
 }
 
 /*#
@@ -839,8 +837,6 @@ FALCON_FUNC  Table_removeColumn ( ::Falcon::VMachine *vm )
    table->removeColumn( colpos );
 }
 
-extern "C"{
-
 static bool table_choice_next( Falcon::VMachine *vm )
 {
    CoreTable *table = static_cast<CoreTable *>( vm->self().asObject()->getUserData() );
@@ -964,7 +960,6 @@ static bool table_choice_next( Falcon::VMachine *vm )
 
    // call us again when the frame is done.
    return true;
-}
 }
 
 static void internal_bind_or_choice( VMachine *vm )

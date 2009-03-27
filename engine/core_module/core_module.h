@@ -463,9 +463,7 @@ reflectionFuncDecl Path_unit_rto;
 reflectionFuncDecl Path_location_rto;
 reflectionFuncDecl Path_file_rto;
 reflectionFuncDecl Path_extension_rto;
-extern "C" {
-   CoreObject* PathObjectFactory( const CoreClass *cr, void *path, bool );
-}
+CoreObject* PathObjectFactory( const CoreClass *cr, void *path, bool );
 
 
 /** URI class */
@@ -523,10 +521,7 @@ FALCON_FUNC  Tokenizer_token ( ::Falcon::VMachine *vm );
 #define TOKENIZER_OPT_BINDSEP 2
 #define TOKENIZER_OPT_TRIM 4
 
-
-extern "C" {
-   CoreObject* UriObjectFactory( const CoreClass *cr, void *uri, bool );
-}
+CoreObject* UriObjectFactory( const CoreClass *cr, void *uri, bool );
 
 
 
@@ -580,10 +575,8 @@ public:
    InnerData* getInnerData() const { return (InnerData*) m_user_data; }
 };
 
-extern "C" {
-   CoreObject* FileStatObjectFactory( const CoreClass *cls, void *user_data, bool bDeserializing );
-   CoreObject* PathObjectFactory( const CoreClass *me, void *uri, bool dyn );
-}
+CoreObject* FileStatObjectFactory( const CoreClass *cls, void *user_data, bool bDeserializing );
+CoreObject* PathObjectFactory( const CoreClass *me, void *uri, bool dyn );
 
 }}
 

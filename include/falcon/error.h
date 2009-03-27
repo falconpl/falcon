@@ -70,18 +70,14 @@ class ErrorObject: public ReflectObject
 {
 public:
    ErrorObject( const CoreClass* cls, Error *err );
-   Error* getError() const { return (Error*) getUserData(); }
+   Error* getError() const { return (::Falcon::Error*) getUserData(); }
    
    virtual ~ErrorObject();
    virtual void gcMark( uint32 mark );
    virtual CoreObject *clone() const;
 };
 
-extern "C" 
-{
-   CoreObject* ErrorObjectFactory( const CoreClass *cls, void *user_data, bool bDeserial );
-}
-
+CoreObject* ErrorObjectFactory( const CoreClass *cls, void *user_data, bool bDeserial );
 }
 
 

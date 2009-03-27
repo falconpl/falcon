@@ -54,10 +54,11 @@ typedef void * voidp;
 class VMachine;
 class Module;
 
+typedef void ( CDECL *ext_func_t) ( VMachine *);
+typedef bool ( CDECL *ext_func_frame_t) ( VMachine * );
+
 extern "C" {
-   typedef void ( CDECL *ext_func_t) ( VMachine *);
-   typedef bool ( CDECL *ext_func_frame_t) ( VMachine * );
-   typedef Module* ( CDECL  *ext_mod_init)();
+   typedef FALCON_DYN_SYM Module* ( CDECL  *ext_mod_init)();
 }
 
 }

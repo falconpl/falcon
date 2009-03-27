@@ -88,11 +88,9 @@ CoreObject* FileStatObject::clone() const
    return new FileStatObject( *this );
 }
 
-extern "C" {
-   CoreObject* FileStatObjectFactory( const CoreClass *cls, void *, bool  )
-   {
-      return new FileStatObject( cls );
-   }
+CoreObject* FileStatObjectFactory( const CoreClass *cls, void *, bool  )
+{
+   return new FileStatObject( cls );
 }
 
 

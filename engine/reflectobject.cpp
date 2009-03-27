@@ -115,8 +115,6 @@ CoreObject* ReflectObject::clone() const
 }
 
 //============================================
-extern "C"
-{
    CoreObject* ReflectOpaqueFactory( const CoreClass *cls, void *user_data, bool )
    {
       return new ReflectObject( cls, user_data );
@@ -131,8 +129,6 @@ extern "C"
    {
       return new ReflectObject( cls, static_cast<Sequence*>(user_data) );
    }
-}
-
 }
 
 /* end of cobject.cpp */

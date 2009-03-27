@@ -100,8 +100,6 @@ CoreObject *CRObject::clone() const
 }
 
 //============================================
-extern "C" 
-{
    CoreObject* CROpaqueFactory( const CoreClass *cls, void *user_data, bool bDeserial )
    {
       CRObject* cro = new CRObject( cls, bDeserial );
@@ -124,9 +122,6 @@ extern "C"
          cro->setUserData( static_cast<Sequence*>(user_data) );
       return cro;
    }
-}
-
-
 }
 
 /* end of crobject.cpp */

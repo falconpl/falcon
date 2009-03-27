@@ -21,6 +21,7 @@
 #include <falcon/streambuffer.h>
 #include <falcon/fassert.h>
 
+#include <string.h>
 #include <cstring>
 
 namespace Falcon {

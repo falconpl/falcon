@@ -52,11 +52,10 @@ public:
    Path* getPath() const { return static_cast<Path*>( m_user_data ); }
 };
 
-extern "C" {
-   CoreObject* PathObjectFactory( const CoreClass *me, void *path, bool dyn )
-   {
-      return new PathObject( me, static_cast<Path*>( path ), dyn );
-   }
+
+CoreObject* PathObjectFactory( const CoreClass *me, void *path, bool dyn )
+{
+   return new PathObject( me, static_cast<Path*>( path ), dyn );
 }
 
 PathObject::PathObject( const PathObject &other ):

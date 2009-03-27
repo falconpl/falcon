@@ -23,6 +23,7 @@
 #include <falcon/stream.h>
 #include <falcon/common.h>
 #include <falcon/vm.h>
+#include <string.h>
 #include <cstring>
 #include <stdlib.h>
 #include <stdio.h>

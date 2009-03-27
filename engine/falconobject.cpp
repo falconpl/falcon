@@ -47,7 +47,6 @@ CoreObject *FalconObject::clone() const
    return fo;
 }
 
-extern "C" {
    CoreObject* OpaqueObjectFactory( const CoreClass *cls, void *data, bool bDeserializing )
    {
       CoreObject* co =  new FalconObject( cls, bDeserializing );
@@ -70,10 +69,6 @@ extern "C" {
          co->setUserData( static_cast<Sequence* >(data) );
       return co;
    }
-
-}
-
-
 }
 
 /* end of falconobject.cpp */

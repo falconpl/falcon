@@ -127,10 +127,7 @@ public:
    void setSlot( CoreSlot* cs );
 };
 
-extern "C"
-{
-   CoreObject* CoreSlotFactory( const CoreClass *cls, void *user_data, bool bDeserial );
-}
+CoreObject* CoreSlotFactory( const CoreClass *cls, void *user_data, bool bDeserial );
 
 }
 
