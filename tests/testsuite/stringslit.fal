@@ -34,6 +34,16 @@ if string != "A 'string'\n \"Spawning\"\nOn many lines."
    failure( "Multiline literal string" )
 end
 
+string = '
+A ''string''
+ "Spawning"
+On many lines.
+'
+
+if string != "A 'string'\n \"Spawning\"\nOn many lines.\n"
+   failure( "Multiline literal string" )
+end
+
 success()
 
 /* End of file */

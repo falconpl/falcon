@@ -3,7 +3,7 @@ Still TODO before official 0.9.2 release:
    - [URGENT] Check interthread VM messaging via postMessage.
    - Resolution of closed symbols deep down ancestors.
    - Expansion of the Tokenizer (with custom recognizers) and deep testing.
-   - Autodetection of GBK locales on Windows
+   * Autodetection of GBK locales on Windows
    - Local copy of static strings to allow discharge of plugin-modules
      at any moment.
    - Fix the strange behavior of the console on Windows7
@@ -18,3 +18,5 @@ Still TODO before official 0.9.2 release:
    - [Desiderata] Submodule-loading (i.e. load core=>strings)
    - [Desiderata] Extra string functions.
    - [MINOR] Fix GC_init workaround for pure reflections.
+
+* done

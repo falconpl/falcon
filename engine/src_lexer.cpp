@@ -931,6 +931,13 @@ int SrcLexer::lex_normal()
                   m_line++;
                   m_character = 0;
                }
+               else if ( chr == m_chrEndString )
+               {
+                  m_state = e_line;
+                  VALUE->stringp = m_compiler->addString( m_string );
+                  m_string.exported( false );
+                  return STRING;
+               }
                else {
                   m_state = e_string;
                   if ( m_string.size() != 0 )
@@ -993,7 +1000,7 @@ void SrcLexer::checkContexts()
       m_compiler->raiseContextError( e_par_unbal, m_line, m_ctxOpenLine );
    if ( m_squareContexts != 0 )
       m_compiler->raiseContextError( e_square_unbal, m_line, m_ctxOpenLine );
-   if ( m_state == e_string || m_state == e_litString )
+   if ( m_state == e_string || m_state == e_litString || m_state == e_stringRunning )
       m_compiler->raiseContextError( e_unclosed_string, m_line, m_ctxOpenLine );
 }
 

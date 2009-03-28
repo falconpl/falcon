@@ -12,7 +12,7 @@
 *
 * [/Description]
 ****************************************************************************/
-
+GC.enable(false)
 const opcodes = 8  // the if is executed half of the times
 loops = 1000000 * timeFactor()
 each = int(loops/10)
