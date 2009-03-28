@@ -600,6 +600,8 @@ Thread::~Thread()
       bDetach = true;
       m_bDetached = true;
    }
+   else
+      bDetach = false;
    m_mtx.unlock();
 
    if ( bDetach )
