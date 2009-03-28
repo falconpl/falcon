@@ -298,11 +298,18 @@ void falconConvertWinFname( String &ret )
 {
    int size = ret.length();
 	ret.bufferize();
+   bool prefix = false;
+
    for( int i = 0; i < size; i ++ ) {
       int chr = ret.getCharAt( i );
       if( chr == '\\' )
          ret.setCharAt( i, '/' );
+      else if ( chr == ':' )
+         prefix = true;
    }
+
+   if( prefix && ret.getCharAt(0) != '/' )
+      ret.prepend('/');
 }
 
 void falconToWin_fname( const String &path, const String &extra, String &result )

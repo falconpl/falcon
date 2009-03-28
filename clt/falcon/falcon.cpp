@@ -283,6 +283,9 @@ Stream* AppFalcon::openOutputStream( const String &ext )
       // if input has a name, try to open there.
       if ( m_options.input != "" && m_options.input != "-" )
       {
+         #ifdef WIN32
+            Sys::falconConvertWinFname( m_options.input );
+         #endif
          URI uri_input( m_options.input );
          uri_input.pathElement().setExtension( ext );
          FileStream* fout = new FileStream;
@@ -320,6 +323,9 @@ Module* AppFalcon::loadInput( ModuleLoader &ml )
 
    if ( m_options.input != "" && m_options.input != "-" )
    {
+      #ifdef WIN32
+         Sys::falconConvertWinFname( m_options.input );
+      #endif
       mod = ml.loadFile( m_options.input, ModuleLoader::t_none, true );
    }
    else
