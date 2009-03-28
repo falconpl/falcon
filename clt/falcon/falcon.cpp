@@ -72,8 +72,7 @@ void AppFalcon::terminate()
    if ( m_options.wait_after )
    {
       cout << "Press <ENTER> to terminate" << endl;
-      char b;
-      cin >> b;
+      getchar();
    }
 }
 
