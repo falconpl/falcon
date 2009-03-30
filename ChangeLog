@@ -1,5 +1,8 @@
 Falcon (0.9.0.1)
   * fixed: String-blocks closed with " alone on a line werent' recognized.
+  * fixed: Octal numbers weren't properly scanned.
+  * added: Support for binary numbers (0b..., "\B...") and octal with 0c...
+           and numeric neuter separator "_".
   
 Falcon (0.9)
   * major: Removed "sender" from grammar.

@@ -881,13 +881,22 @@ public:
 
    /** Minimal numerical conversion.
       If this string represents a valid integer in octal format, the integer is returned.
-      Pos must start after the octal marker \\0.
+      Pos must start after the octal marker \\0 or \\c.
       \param target place where to store the number
       \param pos initial position in the string from which to start the conversion
       \return true if succesful, false if parse failed
    */
    bool parseOctal( uint64 &target, uint32 pos = 0 ) const;
 
+   /** Minimal numerical conversion.
+      If this string represents a valid integer in octal format, the integer is returned.
+      Pos must start after the octal marker \\b.
+      \param target place where to store the number
+      \param pos initial position in the string from which to start the conversion
+      \return true if succesful, false if parse failed
+   */
+   bool String::parseBin( uint64 &target, uint32 pos = 0 ) const;
+   
    /** Minimal numerical conversion.
       If this string represents a valid integer in hexadecimal format, the integer is returned.
       Pos must start after the octal marker \\x.

@@ -9,7 +9,7 @@ Still TODO before official 0.9.2 release:
    - Fix the strange behavior of the console on Windows7
    - Add tests and more documentation on operator overriding; possibly,
      introduce more and apply to blessed dictionaries too.
-   - 0b and 0c numeric formats (with _ separators).
+   * 0b and 0c numeric formats (with _ separators).
    - Detangle the iterator - sequence - garbageable loop.
    - Provide Stream interface to Sockets.
    - Provide native x64 version on Spark/Solaris

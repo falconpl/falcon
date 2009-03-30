@@ -664,13 +664,19 @@ int SrcLexer::lex_normal()
                }
 
                // no.
+               m_string.append( chr );
                m_state = e_floatNumber;
             }
             else if ( chr == 'e' )
             {
                m_state = e_floatNumber_e;
+               m_string.append( chr );
             }
-            else if ( chr < '0' || chr > '9' )
+            else if ( chr >= '0' && chr <= '9' )
+            {
+               m_string.append( chr );
+            }
+            else if ( chr != '_' )
             {
                // end
                m_in->unget( chr );
@@ -681,9 +687,7 @@ int SrcLexer::lex_normal()
                VALUE->integer = retval;
                m_state = e_line;
                return INTNUM;
-            }
-
-            m_string.append( chr );
+            }               
          break;
 
          case e_floatNumber:
@@ -693,7 +697,11 @@ int SrcLexer::lex_normal()
                m_state = e_floatNumber_e;
                m_string.append( chr );
             }
-            else if ( chr < '0' || chr > '9'  )
+            else if ( chr >= '0' && chr <= '9'  )
+            {
+               m_string.append( chr );
+            }
+            else if ( chr != '_' )
             {
                // end
                m_in->unget( chr );
@@ -715,8 +723,6 @@ int SrcLexer::lex_normal()
                m_state = e_line;
                return DBLNUM;
             }
-            else
-               m_string.append( chr );
          break;
 
          case e_floatNumber_e:
@@ -757,7 +763,20 @@ int SrcLexer::lex_normal()
          case e_zeroNumber:
             m_lineFilled = true;
             if( chr == 'x' || chr == 'X' )
+            {
+               m_string.size( 0 );
                m_state = e_hexNumber;
+            }
+            else if ( chr == 'b' || chr == 'B' )
+            {
+               m_string.size( 0 );
+               m_state = e_binNumber;
+            }
+            else if ( chr == 'c' || chr == 'C' )
+            {
+               m_string.size( 0 );
+               m_state = e_octNumber;
+            }
             else if ( chr >= '0' && chr <= '7' )
             {
                m_string.size( 0 );
@@ -784,7 +803,11 @@ int SrcLexer::lex_normal()
 
          case e_octNumber:
             m_lineFilled = true;
-            if ( chr < '0' || chr > '7' )
+            if ( chr > '0' && chr < '7' )
+            {
+               m_string.append( chr );
+            }
+            else if ( chr != '_' )
             {
                m_in->unget( chr );
                uint64 retval;
@@ -794,9 +817,24 @@ int SrcLexer::lex_normal()
                VALUE->integer = retval;
                m_state = e_line;
                return INTNUM;
-            }
-            else
+            }  
+         break;
+         
+         case e_binNumber:
+            m_lineFilled = true;
+            if ( chr == '0' || chr == '1' )
                m_string.append( chr );
+            else if ( chr != '_' )
+            {
+               m_in->unget( chr );
+               uint64 retval;
+               if ( ! m_string.parseBin( retval ) )
+                  m_compiler->raiseError( e_inv_num_format, m_line );
+               
+               VALUE->integer = retval;
+               m_state = e_line;
+               return INTNUM;
+            }
          break;
 
          case e_hexNumber:
@@ -808,7 +846,7 @@ int SrcLexer::lex_normal()
             {
                   m_string.append( chr );
             }
-            else
+            else if ( chr != '_' )
             {
                m_in->unget( chr );
                uint64 retval;
@@ -879,7 +917,13 @@ int SrcLexer::lex_normal()
                      m_state = e_stringHex;
                   break;
 
-                  case '0':
+                  case 'B':
+                     nextChar = 1;
+                     tempString.size(0);
+                     m_state = e_stringBin;
+                  break;
+
+                  case '0': case 'c': case 'C':
                      nextChar = 1;
                      tempString.size(0);
                      m_state = e_stringOctal;
@@ -955,7 +999,7 @@ int SrcLexer::lex_normal()
             {
                   tempString.append( chr );
             }
-            else
+            else if ( chr != '_' )
             {
                m_in->unget( chr );
                uint64 retval;
@@ -965,13 +1009,29 @@ int SrcLexer::lex_normal()
                m_state = e_string;
             }
          break;
+         
+         case e_stringBin:
+            if ( chr == '0' || chr == '1' )
+            {
+               tempString.append( chr );
+            }
+            else if ( chr != '_' )
+            {
+               m_in->unget( chr );
+               uint64 retval;
+               if ( ! tempString.parseBin( retval ) || retval > 0xFFFFFFFF )
+                  m_compiler->raiseError( e_inv_esc_sequence, m_line );
+               m_string.append( (uint32) retval );
+               m_state = e_string;
+            }
+         break;
 
          case e_stringOctal:
             if (  (chr >= '0' && chr <= '7') )
             {
-                  tempString.append( chr );
+               tempString.append( chr );
             }
-            else
+            else if ( chr != '_' )
             {
                m_in->unget( chr );
                uint64 retval;

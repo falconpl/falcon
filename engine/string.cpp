@@ -1744,6 +1744,33 @@ bool String::parseDouble( double &target, uint32 pos ) const
    return false;
 }
 
+
+bool String::parseBin( uint64 &target, uint32 pos ) const
+{
+   uint32 len = length();
+   if ( pos >= len )
+      return false;
+   // parse octal number
+   target = 0;
+   uint32 endSub = pos;
+
+   // max lenght of binary = 64 chars, + 2 for stubs
+   while( endSub < len && (endSub - pos < 64) )
+   {
+      uint32 chnext = getCharAt( endSub );
+      if ( chnext < 0x30 || chnext > 0x31 )
+         break;
+      target <<= 1; //*2
+      target |= (0x1) & (chnext - 0x30);
+      endSub ++;
+   }
+
+   if( endSub != pos )
+      return true;
+   return false;
+}
+
+
 bool String::parseOctal( uint64 &target, uint32 pos ) const
 {
    uint32 len = length();
@@ -1754,7 +1781,7 @@ bool String::parseOctal( uint64 &target, uint32 pos ) const
    uint32 endSub = pos;
 
    // max lenght of octals = 11 chars, + 2 for stubs
-   while( pos < len && endSub - pos < 26 )
+   while( endSub < len && (endSub - pos < 26) )
    {
       uint32 chnext = getCharAt( endSub );
       if ( chnext < 0x30 || chnext > 0x37 )
@@ -1778,7 +1805,7 @@ bool String::parseHex( uint64 &target, uint32 pos ) const
    target = 0;
    uint32 endSub = pos;
 
-   while( endSub < len && endSub - pos < 16 )
+   while( endSub < len && (endSub - pos < 16) )
    {
       uint32 chnext = getCharAt( endSub );
       if ( chnext >= 0x30 && chnext <= 0x39 ) // 0 - 9
