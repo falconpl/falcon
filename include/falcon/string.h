@@ -895,7 +895,7 @@ public:
       \param pos initial position in the string from which to start the conversion
       \return true if succesful, false if parse failed
    */
-   bool String::parseBin( uint64 &target, uint32 pos = 0 ) const;
+   bool parseBin( uint64 &target, uint32 pos = 0 ) const;
    
    /** Minimal numerical conversion.
       If this string represents a valid integer in hexadecimal format, the integer is returned.
