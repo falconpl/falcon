@@ -133,6 +133,12 @@ ENDIF("${FALCON_FINAL_DESTINATION_LIB}" STREQUAL "" )
 IF(WIN32)
    SET( FALCON_HOST_SYSTEM "WINDOWS" )
    SET( FALCON_SYSTEM_WIN 1 )
+   #mingw requires -mthreads global option
+   IF ( "${CMAKE_GENERATOR}" STREQUAL "MinGW Makefiles" )
+      set( CMAKE_EXE_LINKER_FLAGS -mthreads )
+      set( CMAKE_SHARED_LINKER_FLAGS -mthreads )
+      set( CMAKE_MODULE_LINKER_FLAGS -mthreads )
+   ENDIF ( "${CMAKE_GENERATOR}" STREQUAL "MinGW Makefiles" )
 ELSE(WIN32)
    # Set common UNIX warnings.
    IF("${CMAKE_SYSTEM_NAME}" STREQUAL "SunOS")
