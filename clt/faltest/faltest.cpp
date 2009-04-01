@@ -617,11 +617,11 @@ bool testScript( ScriptData *script,
 
    //---------------------------------
    // 2. link
-   VMachine vmachine;
+   VMachineWrapper vmachine;
 
    // so we can link them
-   vmachine.link( core );
-   vmachine.link( testSuite );
+   vmachine->link( core );
+   vmachine->link( testSuite );
    Runtime runtime( modloader );
 
    try
@@ -649,14 +649,14 @@ bool testScript( ScriptData *script,
          execTime = Sys::_seconds();
 
    // inject args and script name
-   Item *sname =vmachine.findGlobalItem( "scriptName" );
+   Item *sname =vmachine->findGlobalItem( "scriptName" );
    *sname = new CoreString( scriptModule->name() );
-   sname =vmachine.findGlobalItem( "scriptPath" );
+   sname =vmachine->findGlobalItem( "scriptPath" );
    *sname = new CoreString( scriptModule->path() );
 
    try
    {
-     vmachine.link( &runtime );
+     vmachine->link( &runtime );
    }
    catch( Error *err )
    {
@@ -671,7 +671,7 @@ bool testScript( ScriptData *script,
 
    try
    {
-      if (!vmachine.launch() )
+      if (!vmachine->launch() )
       {
          trace = "";
          reason = "Non executable script.";
@@ -809,7 +809,6 @@ void executeTests( ModuleLoader *modloader )
          if ( opt_checkmem )
          {
             memPool->performGC();
-
             long alloc = gcMemAllocated() - s_allocatedMem;
             long blocks = memPool->allocatedItems() - s_outBlocks;
 

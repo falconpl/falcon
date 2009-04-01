@@ -57,7 +57,8 @@ VMachine::VMachine():
    m_idlePrev( 0 ),
    m_baton( this ),
    m_msg_head(0),
-   m_msg_tail(0)
+   m_msg_tail(0),
+   m_refcount(1)
 {
    internal_construct();
    init();
@@ -72,12 +73,27 @@ VMachine::VMachine( bool initItems ):
    m_idlePrev( 0 ),
    m_baton( this ),
    m_msg_head(0),
-   m_msg_tail(0)
+   m_msg_tail(0),
+   m_refcount(1)
 {
    internal_construct();
    if ( initItems )
       init();
 }
+
+void VMachine::incref()
+{
+   atomicInc( m_refcount );
+}
+
+void VMachine::decref()
+{
+   if( atomicDec( m_refcount ) == 0 )
+   {
+      delete this;
+   }
+}
+
 
 void VMachine::setCurrent() const
 {
@@ -273,16 +289,23 @@ void VMachine::init()
 }
 
 
-VMachine::~VMachine()
+void VMachine::finalize()
 {
+   // we should have at least 2 refcounts here: one is from the caller and one in the GC.
+   fassert( m_refcount >= 2 );
+
    // disengage from mempool
    if ( memPool != 0 )
    {
-      // Assert that the baton is held here.
-      fassert( m_baton.busy() );
       memPool->unregisterVM( this );
    }
 
+   decref();
+}
+
+
+VMachine::~VMachine()
+{
    // Free generic tables (quite safe)
    memFree( m_opHandlers );
    memFree( m_metaClasses );
@@ -3084,7 +3107,7 @@ bool VMachine::functionalEval( const Item &itm, uint32 paramCount, bool retArray
                {
                   return true;
                }
-               
+
                if ( m_regA.isFutureBind() )
                {
                   // with this marker, the next call operation will search its parameters.

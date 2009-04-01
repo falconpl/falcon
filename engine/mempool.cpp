@@ -155,20 +155,11 @@ void MemPool::unsafeArea()
 void MemPool::registerVM( VMachine *vm )
 {
    vm->m_idlePrev = vm->m_idleNext = 0;
+   vm->incref();
 
    m_mtx_vms.lock();
    vm->m_generation = ++m_generation; // rollover detection in run()
-
-   int data = 0;
    ++m_vmCount;
-   if ( m_vmCount > 2 )
-   {
-      data = 2;
-   }
-   else if ( m_vmCount > 1 )
-   {
-      data = 1;
-   }
 
    if ( m_vmRing == 0 )
    {
@@ -223,31 +214,8 @@ void MemPool::unregisterVM( VMachine *vm )
 
    m_mtx_vms.unlock();
 
-   // eventually disengage from the idle list -- useful because we may unsuscribe due to destruction.
-   m_mtx_idlevm.lock();
-   if( m_vmIdle_head == vm )
-   {
-      m_vmIdle_head = vm->m_idleNext;
-   }
-
-   if( m_vmIdle_tail == vm )
-   {
-      m_vmIdle_tail = vm->m_idlePrev;
-   }
-
-   if ( vm->m_idleNext != 0 )
-   {
-      vm->m_idleNext->m_idlePrev = vm->m_idlePrev;
-   }
-
-   if ( vm->m_idlePrev != 0 )
-   {
-      vm->m_idlePrev->m_idleNext = vm->m_idleNext;
-   }
-
-   vm->m_idlePrev = vm->m_idleNext = 0;
-   m_mtx_idlevm.unlock();
-   // great; now the main thread will perform a sweep loop on its own the next time it is alive.
+   // ok, the VM is not held here anymore.
+   vm->decref();
 }
 
 
@@ -565,7 +533,7 @@ void MemPool::markItem( Item &item )
 
 void MemPool::gcSweep()
 {
-   TRACE( "Sweeping %d\n", gcMemAllocated() );
+   TRACE( "Sweeping %d (mingen: %d, gen: %d)\n", gcMemAllocated(), m_mingen, m_generation );
    m_mtx_ramp.lock();
    RampMode *rm = m_curRampMode;
    if( m_curRampMode != 0 )
@@ -631,6 +599,9 @@ void MemPool::performGC()
 
 void MemPool::idleVM( VMachine *vm, bool bPrio )
 {
+   // ok, we're givin the VM to the GC, so we reference it.
+   vm->incref();
+
    m_mtx_idlevm.lock();
    if ( bPrio )
    {
@@ -809,7 +780,7 @@ void* MemPool::run()
          advanceGeneration( vm, oldGeneration );
          m_mtx_vms.unlock();
 
-         TRACE( "Marking idle vm %p \n", vm );
+         TRACE( "Marking idle vm %p at %d\n", vm, m_generation );
 
          // and then mark
          markVM( vm );
@@ -826,6 +797,8 @@ void* MemPool::run()
          {
             // the VM is now free to go -- but it is not declared idle again.
             vm->baton().releaseNotIdle();
+            // we're done with this VM here
+            vm->decref();
          }
       }
       else
@@ -847,7 +820,7 @@ void* MemPool::run()
                advanceGeneration( vm, oldGeneration );
                m_mtx_vms.unlock();
 
-               TRACE( "Marking oldest vm %p \n", vm );
+               TRACE( "Marking oldest vm %p at %d \n", vm, m_generation );
                // and then mark
                markVM( vm );
                // the VM is now free to go.
@@ -876,7 +849,7 @@ void* MemPool::run()
          {
             // be sure to clear the garbage
             oldMingen = m_mingen;
-            m_mingen = MAX_GENERATION;
+            m_mingen = SWEEP_GENERATION;
             m_bRequestSweep = false;
             signal = true;
          }
@@ -890,6 +863,7 @@ void* MemPool::run()
          {
             fassert( vm != 0 );
             vm->m_eGCPerformed.set();
+            vm->decref();
          }
 
          if ( signal )
@@ -897,6 +871,8 @@ void* MemPool::run()
             m_mingen = oldMingen;
             m_eGCPerformed.set();
          }
+
+         // no more use for this vm
       }
 
       oldGeneration = m_generation;  // spurious read is ok here (?)
@@ -921,7 +897,7 @@ void MemPool::advanceGeneration( VMachine* vm, uint32 oldGeneration )
    uint32 curgen = ++m_generation;
 
    // detect here rollover.
-   if ( curgen < oldGeneration || curgen == MAX_GENERATION )
+   if ( curgen < oldGeneration || curgen >= MAX_GENERATION )
    {
       curgen = m_generation = m_vmCount+1;
       // perform rollover

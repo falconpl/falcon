@@ -73,18 +73,18 @@ inline void cv_broadcast( pthread_cond_t& cv )
    Generic mutex class.
 
    Directly mapping to the underlying type via inline functions.
-   
+
    The mutex must be considered as non-reentrant.
 */
 class Mutex
 {
    pthread_mutex_t m_mtx;
-   
+
 public:
    /** Creates the mutex.
       Will assert on failure.
    */
-   inline Mutex() 
+   inline Mutex()
    {
       #ifdef NDEBUG
       pthread_mutex_init( &m_mtx, 0 );
@@ -93,10 +93,10 @@ public:
       fassert( result == 0 );
       #endif
    }
-   
+
    /**
       Destroys the mutex.
-      
+
       Will assert on failure.
    */
    inline ~Mutex() {
@@ -107,10 +107,10 @@ public:
       fassert( result == 0 );
       #endif
    }
-   
+
    /**
       Locks the mutex.
-      
+
       Will assert on failure -- but only in debug
    */
    inline void lock()
@@ -126,7 +126,7 @@ public:
 
    /**
       Unlocks the mutex.
-      
+
       Will assert on failure -- but only in debug
    */
    inline void unlock()
@@ -141,7 +141,7 @@ public:
 
    /**
       Tries to lock the mutex.
-      
+
       Will assert on failure.
    */
    inline bool trylock()
@@ -163,16 +163,16 @@ public:
    Generic event class.
 
    Directly mapping to the underlying type via inline functions.
-   
+
    Well, events are definitely not the best way to handle MT things,
    the mutex / POSIX cv / predicate is definitely better (faster, more
    flexible, safer etc), but we're using a set of definite MT  patterns
    in which using MS-WIN style events doesn't make a great difference.
-   
+
    For low level business (i.e. implementing the script-level Waitable
    system) we're still using the system specific features (multiple
-   wait on MS-WIN, condvars on POSIX). This is class is used as 
-   a middle-level equalizer in simple MT tasks as i.e. signaling 
+   wait on MS-WIN, condvars on POSIX). This is class is used as
+   a middle-level equalizer in simple MT tasks as i.e. signaling
    non-empty queues or generic work-to-be-done flags.
 */
 class Event
@@ -181,7 +181,7 @@ class Event
    pthread_cond_t m_cv;
    bool m_bIsSet;
    bool m_bAutoReset;
-   
+
 public:
    /** Creates the mutex.
       Will assert on failure.
@@ -200,10 +200,10 @@ public:
       fassert( result == 0 );
       #endif
    }
-   
+
    /**
       Destroys the event.
-      
+
       Will assert on failure.
    */
    inline ~Event() {
@@ -217,7 +217,7 @@ public:
       fassert( result == 0 );
       #endif
    }
-   
+
    /**
       Signals the event.
       Will assert on failure -- but only in debug
@@ -246,13 +246,13 @@ public:
 
    /**
       Waits on the given event.
-      
+
       The wait is not interruptible. If a thread is blocked on this wait, the event must
       be signaled somewhere else to allow it to proceed and check for closure request.
-      
+
       Falcon script level have better semantics, but this object is meant for fairly basic
       and low-level system related activites.
-      
+
       If the event is auto-reset, only one waiting thread is woken up, and after the
       wakeup the event is automatically reset.
       \param to The timeout; set to < 0 for infinite timeout, 0 to check without blocking and
@@ -268,7 +268,7 @@ public:
 
    Directly mapping to the underlying type via inline functions.
 */
-class ThreadSpecific 
+class ThreadSpecific
 {
 private:
    pthread_key_t m_key;
@@ -278,9 +278,9 @@ public:
    {
       pthread_key_create( &m_key, NULL );
    }
-   
+
    ThreadSpecific( void (*destructor)(void*) );
-   
+
    virtual ~ThreadSpecific()
    {
       #ifndef NDEBUG
@@ -290,7 +290,7 @@ public:
       pthread_key_delete( m_key );
       #endif
    }
-   
+
    void set( void *value )
    {
       #ifndef NDEBUG
@@ -300,7 +300,7 @@ public:
       pthread_setspecific( m_key, value );
       #endif
    }
-   
+
    void* get() const
    {
       return pthread_getspecific( m_key );
@@ -313,10 +313,10 @@ struct SYSTH_DATA {
 };
 
 /** Performs an atomic thread safe increment. */
-int32 atomicInc( int32 &data );
+int32 atomicInc( volatile int32 &data );
 
 /** Performs an atomic thread safe decrement. */
-int32 atomicDec( int32 &data );
+int32 atomicDec( volatile int32 &data );
 
 }
 

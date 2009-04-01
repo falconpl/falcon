@@ -39,7 +39,7 @@ class CoreSlot: public ItemList
 {
    String m_name;
    mutable Mutex m_mtx;
-   mutable int32 m_refcount;
+   mutable volatile int32 m_refcount;
 
    Item m_assertion;
    bool m_bHasAssert;

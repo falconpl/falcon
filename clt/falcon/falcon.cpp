@@ -572,32 +572,32 @@ void AppFalcon::runModule()
    //===========================================
    // Prepare the virtual machine
    //
-   VMachine vmachine;
+   VMachineWrapper vmachine;
 
    //redirect the VM streams to ours.
    // The machine takes ownership of the streams, so they won't be useable anymore
    // after the machine destruction.
    readyStreams();
-   vmachine.stdIn( m_stdIn );
-   vmachine.stdOut( m_stdOut );
-   vmachine.stdErr( m_stdErr );
+   vmachine->stdIn( m_stdIn );
+   vmachine->stdOut( m_stdOut );
+   vmachine->stdErr( m_stdErr );
    // I have given real process streams to the vm
-   vmachine.hasProcessStreams( true );
+   vmachine->hasProcessStreams( true );
 
    // push the core module
    // we know we're not launching the core module.
-   vmachine.launchAtLink( false );
+   vmachine->launchAtLink( false );
    Module* core = core_module_init();
    #ifdef NDEBUG
-      vmachine.link ( core );
+      vmachine->link ( core );
    #else
-      LiveModule *res = vmachine.link ( core );
+      LiveModule *res = vmachine->link ( core );
       fassert ( res != 0 ); // should not fail
    #endif
    core->decref();
 
    // prepare environment
-   Item *item_args = vmachine.findGlobalItem ( "args" );
+   Item *item_args = vmachine->findGlobalItem ( "args" );
    fassert ( item_args != 0 );
    CoreArray *args = new CoreArray ( m_argc - m_script_pos );
 
@@ -615,21 +615,21 @@ void AppFalcon::runModule()
 
    item_args->setArray ( args );
 
-   Item *script_name = vmachine.findGlobalItem ( "scriptName" );
+   Item *script_name = vmachine->findGlobalItem ( "scriptName" );
    fassert ( script_name != 0 );
    *script_name = new CoreString ( mainMod->name() );
 
-   Item *script_path = vmachine.findGlobalItem ( "scriptPath" );
+   Item *script_path = vmachine->findGlobalItem ( "scriptPath" );
    fassert ( script_path != 0 );
    *script_path = new CoreString ( mainMod->path() );
 
    // Link the runtime in the VM.
    // We'll be running the modules as we link them in.
-   vmachine.launchAtLink ( true );
-   if ( vmachine.link( &runtime ) && vmachine.launch() )
+   vmachine->launchAtLink ( true );
+   if ( vmachine->link( &runtime ) && vmachine->launch() )
    {
-      if ( vmachine.regA().isInteger() )
-         exitval( ( int32 ) vmachine.regA().asInteger() );
+      if ( vmachine->regA().isInteger() )
+         exitval( ( int32 ) vmachine->regA().asInteger() );
    }
 }
 

@@ -38,7 +38,7 @@ ThreadSpecific::ThreadSpecific( void (*destructor)(void*) )
 }
 
 /** Performs an atomic thread safe increment. */
-int32 atomicInc( int32 &data )
+int32 atomicInc( volatile int32 &data )
 {
    s_cs.lock();
    register int32 res = ++data;
@@ -47,7 +47,7 @@ int32 atomicInc( int32 &data )
 }
 
 /** Performs an atomic thread safe decrement. */
-int32 atomicDec( int32 &data )
+int32 atomicDec( volatile int32 &data )
 {
    s_cs.lock();
    register int32 res = --data;

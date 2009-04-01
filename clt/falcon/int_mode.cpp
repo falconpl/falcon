@@ -42,10 +42,10 @@ void IntMode::run()
    ModuleLoader ml;
    m_owner->prepareLoader( ml );
 
-   VMachine intcomp_vm;
-   intcomp_vm.link( core_module_init() );
+   VMachineWrapper intcomp_vm;
+   intcomp_vm->link( core_module_init() );
 
-   InteractiveCompiler comp( &ml, &intcomp_vm );
+   InteractiveCompiler comp( &ml, intcomp_vm.vm() );
 
    Stream *stdOut = m_owner->m_stdOut;
    Stream *stdIn = m_owner->m_stdIn;

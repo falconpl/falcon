@@ -190,7 +190,9 @@ void Compiler::reset()
 void Compiler::clear()
 {
 
-   delete m_serviceVM;
+   if( m_serviceVM != 0 )
+      m_serviceVM->finalize();
+
    delete m_serviceLoader;
    delete m_metacomp;
    m_serviceVM = 0;

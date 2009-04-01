@@ -36,7 +36,7 @@
 #include <cstring>
 
 
-namespace Falcon 
+namespace Falcon
 {
 
 inline void assignToVm( Garbageable *gcdata )
@@ -69,7 +69,7 @@ void Item::setString( String *str )
       assignToVm( &static_cast<CoreString*>(str)->garbage() );
 }
 
-void Item::setArray( CoreArray *array ) 
+void Item::setArray( CoreArray *array )
 {
    type( FLC_ITEM_ARRAY );
    all.ctx.data.ptr.voidp = array;
@@ -84,7 +84,7 @@ void Item::setObject( CoreObject *obj )
 }
 
 
-void Item::setDict( CoreDict *dict ) 
+void Item::setDict( CoreDict *dict )
 {
    type( FLC_ITEM_DICT );
    all.ctx.data.ptr.voidp = dict;
@@ -99,7 +99,7 @@ void Item::setMemBuf( MemBuf *b )
    assignToVm( b );
 }
 
-void Item::setReference( GarbageItem *ref ) 
+void Item::setReference( GarbageItem *ref )
 {
    type( FLC_ITEM_REFERENCE );
    all.ctx.data.ptr.voidp = ref;
@@ -118,15 +118,15 @@ void Item::setLBind( String *lbind, GarbageItem *val )
    type( FLC_ITEM_LBIND );
    all.ctx.data.ptr.voidp = lbind;
    all.ctx.data.ptr.extra = val;
-   
+
    if ( lbind->isCore() )
       assignToVm( &static_cast<CoreString*>(lbind)->garbage() );
-   
+
    if ( val != 0 )
        assignToVm( val );
 }
 
-void Item::setMethod( const Item &data, CoreFunc *func ) 
+void Item::setMethod( const Item &data, CoreFunc *func )
 {
    *this = data;
    all.ctx.base.bits.oldType = all.ctx.base.bits.type;
@@ -144,7 +144,7 @@ void Item::setClassMethod( CoreObject *obj, CoreClass *cls )
    assignToVm( cls );
 }
 
-void Item::setClass( CoreClass *cls ) 
+void Item::setClass( CoreClass *cls )
 {
    type( FLC_ITEM_CLASS );
    // warning: class in extra to be omologue to methodClass()
@@ -273,7 +273,7 @@ int64 Item::forceIntegerEx() const
 
    }
    throw new TypeError( ErrorParam( e_param_type, __LINE__ ) );
-   
+
    // to make some dumb compiler happy
    return 0;
 }

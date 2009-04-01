@@ -29,34 +29,34 @@ namespace Falcon
    Generic mutex class.
 
    Directly mapping to the underlying type via inline functions.
-   
+
    The mutex must be considered as non-reentrant.
 */
 class FALCON_DYN_CLASS Mutex
 {
    CRITICAL_SECTION m_mtx;
-   
+
 public:
    /** Creates the mutex.
       Will assert on failure.
    */
-   inline Mutex() 
+   inline Mutex()
    {
       InitializeCriticalSectionAndSpinCount( &m_mtx, 512 );
    }
-   
+
    /**
       Destroys the mutex.
-      
+
       Will assert on failure.
    */
    inline ~Mutex() {
       DeleteCriticalSection( &m_mtx );
    }
-   
+
    /**
       Locks the mutex.
-      
+
       Will assert on failure -- but only in debug
    */
    inline void lock()
@@ -66,7 +66,7 @@ public:
 
    /**
       Unlocks the mutex.
-      
+
       Will assert on failure -- but only in debug
    */
    inline void unlock()
@@ -76,7 +76,7 @@ public:
 
    /**
       Tries to lock the mutex.
-      
+
       Will assert on failure.
    */
    inline bool trylock()
@@ -91,7 +91,7 @@ public:
 
    Directly mapping to the underlying type via inline functions.
 */
-class ThreadSpecific 
+class ThreadSpecific
 {
 private:
    DWORD m_key;
@@ -103,13 +103,13 @@ public:
       m_key = TlsAlloc();
       m_destructor = 0;
    }
-   
+
    ThreadSpecific( void (*destructor)(void*) )
    {
       m_key = TlsAlloc();
       m_destructor = destructor;
    }
-   
+
    virtual ~ThreadSpecific()
    {
       #ifndef NDEBUG
@@ -119,7 +119,7 @@ public:
       TlsFree( m_key );
       #endif
    }
-   
+
    void set( void *value )
    {
       #ifndef NDEBUG
@@ -129,7 +129,7 @@ public:
       TlsSetValue( m_key, value );
       #endif
    }
-   
+
    void* get() const
    {
       return TlsGetValue( m_key );
@@ -137,14 +137,14 @@ public:
 };
 
 /** Performs an atomic thread safe increment. */
-inline int32 atomicInc( int32 &data )
+inline int32 atomicInc( volatile int32 &data )
 {
    volatile LONG* dp = (volatile LONG*) &data;
    return InterlockedIncrement( dp );
 }
 
 /** Performs an atomic thread safe decrement. */
-inline int32 atomicDec( int32 &data )
+inline int32 atomicDec( volatile int32 &data )
 {
    volatile LONG* dp = (volatile LONG*) &data;
    return InterlockedDecrement( dp );
@@ -154,22 +154,22 @@ inline int32 atomicDec( int32 &data )
    Generic event class.
 
    Directly mapping to the underlying type via inline functions.
-   
+
    Well, events are definitely not the best way to handle MT things,
    the mutex / POSIX cv / predicate is definitely better (faster, more
    flexible, safer etc), but we're using a set of definite MT  patterns
    in which using MS-WIN style events doesn't make a great difference.
-   
+
    For low level business (i.e. implementing the script-level Waitable
    system) we're still using the system specific features (multiple
-   wait on MS-WIN, condvars on POSIX). This is class is used as 
-   a middle-level equalizer in simple MT tasks as i.e. signaling 
+   wait on MS-WIN, condvars on POSIX). This is class is used as
+   a middle-level equalizer in simple MT tasks as i.e. signaling
    non-empty queues or generic work-to-be-done flags.
 */
 class FALCON_DYN_CLASS Event
 {
    HANDLE m_hEvent;
-   
+
 public:
    /** Creates the mutex.
       Will assert on failure.
@@ -179,16 +179,16 @@ public:
       // Second parameter is MANUAL RESET
       m_hEvent = CreateEvent( NULL, bAutoReset ? FALSE : TRUE, initState ? TRUE : FALSE, NULL );
    }
-   
+
    /**
       Destroys the event.
-      
+
       Will assert on failure.
    */
    inline ~Event() {
       CloseHandle( m_hEvent );
    }
-   
+
    /**
       Signals the event.
       Will assert on failure -- but only in debug
@@ -204,13 +204,13 @@ public:
 
    /**
       Waits on the given event.
-      
+
       The wait is not interruptible. If a thread is blocked on this wait, the event must
       be signaled somewhere else to allow it to proceed and check for closure request.
-      
+
       Falcon script level have better semantics, but this object is meant for fairly basic
       and low-level system related activites.
-      
+
       If the event is auto-reset, only one waiting thread is woken up, and after the
       wakeup the event is automatically reset.
       \param to The timeout; set to < 0 for infinite timeout, 0 to check without blocking and

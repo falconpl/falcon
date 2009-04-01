@@ -97,9 +97,9 @@ String get_load_path()
 {
    String envpath;
    bool hasEnvPath = Sys::_getEnv ( "FALCON_LOAD_PATH", envpath );
-   
+
    String lp;
-   
+
    if ( load_path.size() > 0 )
    {
       if ( ignore_defpath )
@@ -107,7 +107,7 @@ String get_load_path()
       else
          lp = FALCON_DEFAULT_LOAD_PATH ";" + load_path;
    }
-   
+
    if ( ! hasEnvPath || ignore_defpath )
    {
       return lp;
@@ -177,7 +177,7 @@ int main( int argc, char *argv[] )
                else
                   load_path = op + 2; break;
             break;
-            
+
             case 'P':
                ignore_defpath = true;
                break;
@@ -317,11 +317,11 @@ int main( int argc, char *argv[] )
       {
          if ( vmachine->regA().type() == FLC_ITEM_INT )
             return (int32) vmachine->regA().asInteger();
-         else 
+         else
             return 0;
       }
-      
-      delete vmachine;
+
+      vmachine->finalize();
    }
 
 

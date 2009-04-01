@@ -56,7 +56,7 @@ class FALCON_DYN_CLASS Module: public BaseAlloc
 {
 protected:
 
-   int32 m_refcount;
+   volatile int32 m_refcount;
 
    /******************************
    * Anagraphic section

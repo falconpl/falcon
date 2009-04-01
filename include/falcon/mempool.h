@@ -170,7 +170,8 @@ protected:
    void advanceGeneration( VMachine* vm, uint32 oldGeneration );
 
    enum constants {
-      MAX_GENERATION = 0xFFFFFFFF
+      MAX_GENERATION = 0xFFFFFFFE,
+      SWEEP_GENERATION = 0xFFFFFFFF
    };
 
    RampMode* m_ramp[RAMP_MODE_COUNT];

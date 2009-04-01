@@ -539,6 +539,12 @@ protected:
    /** Locked and unreclaimable items are stored in this ring. */
    GarbageLock *m_lockRoot;
 
+   /** Reference count.
+      Usually, shouldn't be very high: the caller program, the GC and possibly
+      some extra method in embedding applications.
+   */
+   volatile int m_refcount;
+
    //=============================================================
    // Private functions
    //
@@ -628,6 +634,11 @@ protected:
 
    void markLocked();
 
+   /** Destroys the virtual machine.
+      Protected as it can't be called directly.
+   */
+   virtual ~VMachine();
+
 public:
    /** Returns the currently running VM.
 
@@ -664,8 +675,6 @@ public:
    */
    VMachine();
 
-   /** Destroys the virtual machine. */
-   virtual ~VMachine();
 
    /** Initialize the virutal machine.
       Setups some configurable items that are used by the machine.
@@ -2296,6 +2305,27 @@ public:
    */
    void unlock( GarbageLock *locked );
 
+   /** Increments the reference count for this VMachine. */
+   void incref();
+
+   /** Decrements the reference count for this virtual machine.
+      If the count hits zero, the virtual machine is immediately destroyed.
+   */
+   void decref();
+
+   /** Terminates this VM activity.
+
+      The thread creating the VM or the VM owner shall call this to inform the system
+         that the VM will not be actvive anymore.
+
+      The VM will be destroyed immediately or as soon as all the other references
+      are released.
+
+      This fucntion also dereference the VM once (in the behalf of the VM original
+      owner).
+   */
+   void finalize();
+
 //==========================================================================
 //==========================================================================
 //==========================================================================
@@ -2418,6 +2448,36 @@ public:
    friend void opcodeHandler_FORB( register VMachine *vm );
    friend void opcodeHandler_EVAL( register VMachine *vm );
    friend void opcodeHandler_OOB( register VMachine *vm );
+};
+
+
+class FALCON_DYN_SYM VMachineWrapper
+{
+private:
+   VMachine *m_vm;
+public:
+   VMachineWrapper():
+      m_vm( new VMachine )
+   {
+   }
+
+   VMachineWrapper( VMachine *host ):
+      m_vm(host)
+   {}
+
+   ~VMachineWrapper() {
+      m_vm->finalize();
+   }
+
+   VMachine *operator->() const
+   {
+      return m_vm;
+   }
+
+   VMachine *vm() const
+   {
+      return m_vm;
+   }
 };
 
 }
