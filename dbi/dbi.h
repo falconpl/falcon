@@ -9,7 +9,7 @@
  *
  * -------------------------------------------------------------------
  * (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
- * 
+ *
  * See LICENSE file for licensing details.
  */
 
@@ -17,7 +17,7 @@
 #define DBI_H
 
 #include "../include/dbiservice.h"
-#include <falcon/flcloader.h>
+#include <falcon/modloader.h>
 
 #define DBI_ERROR_BASE 1300
 
@@ -29,7 +29,7 @@ namespace Falcon
  */
 class DBILoaderImpl: public DBILoader
 {
-   FlcLoader m_loader;
+   ModuleLoader m_loader;
 
 public:
    DBILoaderImpl();

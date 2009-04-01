@@ -37,11 +37,8 @@
 Falcon::DBILoaderImpl theDBIService;
 
 // the main module
-FALCON_MODULE_DECL( const Falcon::EngineData &data )
+FALCON_MODULE_DECL
 {
-   // setup DLL engine common data
-   data.set();
-
    // Module declaration
    Falcon::Module *self = new Falcon::Module();
    self->name( "dbi" );
@@ -61,7 +58,6 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
 
    // create the base class DBIHandler for falcon
    Falcon::Symbol *handler_class = self->addClass( "%DBIHandle" ); // private class
-   handler_class->getClassDef()->setObjectManager( &Falcon::core_falcon_data_manager );
    self->addClassMethod( handler_class, "startTransaction",  Falcon::Ext::DBIHandle_startTransaction );
    self->addClassMethod( handler_class, "query",             Falcon::Ext::DBIHandle_query );
    self->addClassMethod( handler_class, "queryOne",          Falcon::Ext::DBIHandle_queryOne );
@@ -85,7 +81,6 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    // create the base class DBITransaction for falcon
    Falcon::Symbol *trans_class = self->addClass( "%DBITransaction", false ); // private class
    trans_class->setWKS( true );
-   trans_class->getClassDef()->setObjectManager( &Falcon::core_falcon_data_manager );
    self->addClassMethod( trans_class, "query",       Falcon::Ext::DBITransaction_query );
    self->addClassMethod( trans_class, "execute",     Falcon::Ext::DBITransaction_execute );
    self->addClassMethod( trans_class, "commit",      Falcon::Ext::DBITransaction_commit );
@@ -105,7 +100,6 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    // create the base class DBIRecordset for falcon
    Falcon::Symbol *rs_class = self->addClass( "%DBIRecordset", false ); // private class
    rs_class->setWKS( true );
-   rs_class->getClassDef()->setObjectManager( &Falcon::core_falcon_data_manager );
    self->addClassMethod( rs_class, "next",           Falcon::Ext::DBIRecordset_next );
    self->addClassMethod( rs_class, "fetchArray",     Falcon::Ext::DBIRecordset_fetchArray );
    self->addClassMethod( rs_class, "fetchDict",      Falcon::Ext::DBIRecordset_fetchDict );

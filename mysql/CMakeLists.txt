@@ -4,6 +4,8 @@
 # CMake configuration file for module mysql
 ####################################################################
 
+FALCON_DEFINE_MODULE( MODULE mysql )
+
 # Find MYSQL
 SET(MYSQL_INCLUDE_SEARCH_PATH
   ${MYSQL_INCLUDE_DIR}
@@ -46,7 +48,7 @@ INCLUDE_DIRECTORIES(BEFORE "${FALCON_INC_PATH}")
 LINK_DIRECTORIES(BEFORE "${FALCON_LIB_PATH}")
 
 # Target
-ADD_LIBRARY( mysql MODULE
+ADD_LIBRARY( ${MODULE} MODULE
    mysql.cpp
    mysql_ext.cpp
    mysql_srv.cpp
@@ -55,8 +57,8 @@ ADD_LIBRARY( mysql MODULE
 # Link
 IF(MSVC)
   SET(MYSQL_OPT_LIBS wsock32)
-  SET_TARGET_PROPERTIES(mysql PROPERTIES LINK_FLAGS "/NODEFAULTLIB:library")
+  SET_TARGET_PROPERTIES(${MODULE}  PROPERTIES LINK_FLAGS "/NODEFAULTLIB:library")
 ENDIF(MSVC)
 
-TARGET_LINK_LIBRARIES( mysql falcon_engine ${MYSQL_OPT_LIBS} ${MYSQL_LIBRARY})
-FALCON_INSTALL_MODULE( mysql )
+TARGET_LINK_LIBRARIES( ${MODULE}  falcon_engine ${MYSQL_OPT_LIBS} ${MYSQL_LIBRARY})
+FALCON_INSTALL_MODULE( ${MODULE}  )

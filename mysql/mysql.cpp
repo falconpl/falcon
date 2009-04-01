@@ -24,11 +24,8 @@
 Falcon::DBIServiceMySQL theMySQLService;
 
 // the main module
-FALCON_MODULE_DECL( const Falcon::EngineData &data )
+FALCON_MODULE_DECL
 {
-   // setup DLL engine common data
-   data.set();
-
    // Module declaration
    Falcon::Module *self = new Falcon::Module();
    self->name( "mysql" );

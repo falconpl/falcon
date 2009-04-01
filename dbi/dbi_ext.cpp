@@ -215,7 +215,7 @@ static int DBIRecordset_getItem( VMachine *vm, DBIRecordset *dbr, dbi_type typ, 
          switch ( retval )
          {
             case dbi_ok: {
-               GarbageString *gsValue = new GarbageString( vm );
+               CoreString *gsValue = new CoreString;
                gsValue->bufferize( value );
 
                item.setString( gsValue );
@@ -374,14 +374,15 @@ static int DBIRecord_getPersistPropertyNames( VMachine *vm, CoreObject *self, St
 
    if ( ! self->getProperty( "_persist", persistI ) || persistI.isNil() ) {
       // No _persist, loop through all public properties
-      int pCount = self->propCount();
+      const PropertyTable &pt = self->generator()->properties();
+      int pCount = pt.size();
       int cIdx = 0;
 
       for ( int pIdx=0; pIdx < pCount; pIdx++ ) {
-         const String &p = self->getPropertyName( pIdx );
+         const String &p = *pt.getEntry( pIdx ).m_name;
          if ( p.getCharAt( 0 ) != '_' ) {
             Item i;
-            self->getPropertyAt( pIdx, i );
+            self->getProperty( p, i );
             if ( i.isInteger() || i.isNumeric() || i.isObject() || i.isString() ) {
                columnNames[cIdx] = p;
                cIdx++;
@@ -650,7 +651,7 @@ FALCON_FUNC DBIHandle_queryOneArray( VMachine *vm )
       return; // TODO: thrown an error
 
    int cCount = recSet->getColumnCount();
-   CoreArray *ary = new CoreArray( vm, cCount );
+   CoreArray *ary = new CoreArray( cCount );
    dbi_type *cTypes = DBIHandle_getTypes( recSet );
 
    for ( int cIdx=0; cIdx < cCount; cIdx++ ) {
@@ -683,7 +684,7 @@ FALCON_FUNC DBIHandle_queryOneDict( VMachine *vm )
       return; // TODO: thrown an error
 
    int cCount = recSet->getColumnCount();
-   PageDict *dict = new PageDict( vm, cCount );
+   PageDict *dict = new PageDict( cCount );
    char **cNames = (char **) malloc( sizeof( char ) * cCount * DBI_MAX_COLUMN_NAME_SIZE );
    dbi_type *cTypes = DBIHandle_getTypes( recSet );
 
@@ -697,7 +698,7 @@ FALCON_FUNC DBIHandle_queryOneDict( VMachine *vm )
          return;
       }
 
-      GarbageString *gsName = new GarbageString( vm );
+      CoreString *gsName = new CoreString;
       gsName->bufferize( cNames[cIdx] );
 
       dict->insert( gsName, i );
@@ -871,7 +872,7 @@ FALCON_FUNC DBIHandle_getLastError( VMachine *vm )
       return;
    }
 
-   GarbageString *gs = new GarbageString( vm );
+   CoreString *gs = new CoreString;
    gs->bufferize( value );
 
    vm->retval( gs );
@@ -901,7 +902,7 @@ FALCON_FUNC DBIHandle_sqlExpand( VMachine *vm )
 
    String sql;
    if ( s_realSqlExpand( vm, dbh, sql, 0 ) )
-      vm->retval( new GarbageString( vm , sql ) );
+      vm->retval( new CoreString( sql ) );
 }
 
 /**********************************************************
@@ -1266,11 +1267,10 @@ FALCON_FUNC DBITransaction_readBlob( VMachine *vm )
       int64 readIn = (int64) stream->read( readBuf, (int32) absmax );
       vm->retval( readIn );
    }
-   else {
+   else
+   {
       // we must return a string.
-      GarbageString *str = i_data == 0 || i_data->isNil() || ! i_data->asString()->garbageable() ?
-            new GarbageString( vm ) :
-            (GarbageString *) i_data->asString();
+      String *str = i_data == 0 || i_data->isNil() ? new CoreString : i_data->asString();
 
       // now we have our string. If absmax is 0, we must read till all is read.
       String temp(1024);
@@ -1450,7 +1450,7 @@ FALCON_FUNC DBIRecordset_fetchArray( VMachine *vm )
 
    int cCount = dbr->getColumnCount();
    dbi_type *cTypes = DBIHandle_getTypes( dbr );
-   CoreArray *ary = new CoreArray( vm, cCount );
+   CoreArray *ary = new CoreArray( cCount );
 
    for ( int cIdx = 0; cIdx < cCount; cIdx++ )
    {
@@ -1501,7 +1501,7 @@ FALCON_FUNC DBIRecordset_fetchDict( VMachine *vm )
    }
 
    int cCount = dbr->getColumnCount();
-   CoreDict *dict = new PageDict( vm, cCount );
+   CoreDict *dict = new PageDict(  cCount );
    char **cNames = (char **) malloc( sizeof( char ) * cCount * DBI_MAX_COLUMN_NAME_SIZE );
    dbi_type *cTypes = DBIHandle_getTypes( dbr );
 
@@ -1509,7 +1509,7 @@ FALCON_FUNC DBIRecordset_fetchDict( VMachine *vm )
 
    for ( int cIdx = 0; cIdx < cCount; cIdx++ )
    {
-      GarbageString *gsName = new GarbageString( vm );
+      CoreString *gsName = new CoreString;
       gsName->bufferize( cNames[cIdx] );
 
       Item i;
@@ -1572,7 +1572,7 @@ FALCON_FUNC DBIRecordset_fetchObject( VMachine *vm )
    }
 
    int cCount = dbr->getColumnCount();
-   CoreDict *dict = new PageDict( vm, cCount );
+   CoreDict *dict = new PageDict( cCount );
    char **cNames = (char **) malloc( sizeof( char ) * cCount * DBI_MAX_COLUMN_NAME_SIZE );
    dbi_type *cTypes = DBIHandle_getTypes( dbr );
 
@@ -1620,7 +1620,7 @@ FALCON_FUNC DBIRecordset_getColumnTypes( VMachine *vm )
    DBIRecordset *dbr = static_cast<DBIRecordset *>( self->getUserData() );
 
    int cCount = dbr->getColumnCount();
-   CoreArray *ary = new CoreArray( vm, cCount );
+   CoreArray *ary = new CoreArray( cCount );
    dbi_type *cTypes = DBIHandle_getTypes( dbr );
 
    for (int cIdx=0; cIdx < cCount; cIdx++ )
@@ -1643,13 +1643,13 @@ FALCON_FUNC DBIRecordset_getColumnNames( VMachine *vm )
    DBIRecordset *dbr = static_cast<DBIRecordset *>( self->getUserData() );
 
    int cCount = dbr->getColumnCount();
-   CoreArray *ary = new CoreArray( vm, cCount );
+   CoreArray *ary = new CoreArray( cCount );
    char **cNames = (char **) malloc( sizeof( char ) * cCount * DBI_MAX_COLUMN_NAME_SIZE );
 
    dbr->getColumnNames( cNames );
 
    for ( int cIdx=0; cIdx < cCount; cIdx++ ) {
-      GarbageString *gs = new GarbageString( vm );
+      CoreString *gs = new CoreString;
       gs->bufferize( cNames[cIdx] );
 
       ary->append( gs );
@@ -1697,9 +1697,7 @@ static void internal_asString_or_BlobID( VMachine *vm, int mode )
    if ( DBIRecordset_checkValidColumn( vm, dbr, cIdx ) == 0 )
       return; // function handles reporting error to vm
 
-   GarbageString *value = stringBuf == 0 || ! stringBuf->asString()->garbageable() ?
-            new GarbageString( vm ) :
-            (GarbageString *) stringBuf->asString();
+   String *value = stringBuf == 0 ? new CoreString : stringBuf->asString();
 
    dbi_status retval;
    if( mode == 0 )
@@ -2062,7 +2060,7 @@ FALCON_FUNC DBIRecordset_getLastError( VMachine *vm )
       return;
    }
 
-   GarbageString *gs = new GarbageString( vm );
+   CoreString *gs = new CoreString;
    gs->bufferize( value );
    vm->retval( gs );
 }
@@ -2118,7 +2116,7 @@ FALCON_FUNC DBIRecord_insert( VMachine *vm )
    String *tableName = tableNameI.asString();
    String *primaryKey = primaryKeyI.asString();
 
-   int propertyCount = self->propCount();
+   int propertyCount = self->generator()->properties().size();
    String *columnNames = new String[propertyCount];
 
    propertyCount = DBIRecord_getPersistPropertyNames( vm, self, columnNames, propertyCount );
@@ -2180,7 +2178,7 @@ FALCON_FUNC DBIRecord_update( VMachine *vm )
    String *tableName = tableNameI.asString();
    String *primaryKey = primaryKeyI.asString();
 
-   int propertyCount = self->propCount();
+   int propertyCount = self->generator()->properties().size();
    String *columnNames = new String[propertyCount];
 
    propertyCount = DBIRecord_getPersistPropertyNames( vm, self, columnNames, propertyCount );

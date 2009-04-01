@@ -280,7 +280,7 @@ public:
    virtual void close()=0;
 
    virtual FalconData *clone() const { return 0; }
-   virtual void gcMark(Falcon::VMachine*) {};
+   virtual void gcMark( uint32 ) {}
 };
 
 /**
@@ -383,7 +383,7 @@ public:
    virtual DBIBlobStream *createBlob( dbi_status &status, const String &params= "", bool bBinary = false )=0;
 
    virtual FalconData *clone() const { return 0; }
-   virtual void gcMark(Falcon::VMachine*) {};
+   virtual void gcMark( uint32 ) {};
 };
 
 /**
@@ -497,7 +497,7 @@ public:
    virtual dbi_status close()=0;
 
    virtual FalconData *clone() const { return 0; }
-   virtual void gcMark(Falcon::VMachine*) {};
+   virtual void gcMark( uint32 ) {}
 
 };
 

@@ -4,6 +4,8 @@
 # CMake configuration file for module pgsql
 ####################################################################
 
+FALCON_DEFINE_MODULE( MODULE pgsql )
+
 # Find PgSQL
 SET(PGSQL_INCLUDE_SEARCH_PATH
   ${PGSQL_INCLUDE_DIR}
@@ -47,7 +49,7 @@ INCLUDE_DIRECTORIES(BEFORE "${FALCON_INC_PATH}")
 LINK_DIRECTORIES(BEFORE "${FALCON_LIB_PATH}")
 
 # Target
-ADD_LIBRARY( pgsql MODULE
+ADD_LIBRARY( ${MODULE} MODULE
    pgsql.cpp
    pgsql_ext.cpp
    pgsql_srv.cpp
@@ -58,5 +60,5 @@ IF(MSVC)
   SET(PGSQL_OPT_LIBS wsock32)
 ENDIF(MSVC)
 
-TARGET_LINK_LIBRARIES( pgsql falcon_engine  ${PGSQL_OPT_LIBS} ${PGSQL_LIBRARY})
-FALCON_INSTALL_MODULE( pgsql )
+TARGET_LINK_LIBRARIES( ${MODULE} falcon_engine  ${PGSQL_OPT_LIBS} ${PGSQL_LIBRARY})
+FALCON_INSTALL_MODULE( ${MODULE} )

@@ -32,22 +32,18 @@ DBILoaderImpl::~DBILoaderImpl()
 DBIService *DBILoaderImpl::loadDbProvider( VMachine *vm, const String &provName )
 {
    DBIService *serv = static_cast<DBIService *>( vm->getService( "DBI_" + provName ) );
+   Module *mod = 0;
    if ( serv == 0 )
    {
       // ok, let's try to load the service
-      m_loader.errorHandler( vm );
-      Module *mod = m_loader.loadName( provName );
-      if ( mod == 0 )
-      {
-         // no way...
-         return 0;
+      mod = m_loader.loadName( provName );
+      try {
+         vm->link( mod );
       }
-
-      // great, we have found it.
-      if ( ! vm->link( mod ) )
+      catch( Error *e )
       {
          mod->decref();
-         return 0;
+         throw;
       }
 
       // the VM has linked the module, we get rid of it.

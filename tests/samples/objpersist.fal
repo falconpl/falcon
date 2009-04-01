@@ -2,12 +2,12 @@ load dbi
 load sample_db
 
 function showNames( message, d )
-	> message
+   > message
    > "=========================================="
-   
+
    rs = d.query( "SELECT * FROM names" )
-   while ( let p = rs.fetchObject( Person() ) )
-   	> p.name, " was born on ", p.dob
+   while p = rs.fetchObject( Person() )
+      > p.name, " was born on ", p.dob
    end
    rs.close()
    >
