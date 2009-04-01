@@ -168,6 +168,7 @@ void MemPool::registerVM( VMachine *vm )
       vm->m_prevVM = vm;
 
       m_mingen = vm->m_generation;
+      vm->incref();
       m_olderVM = vm;
    }
    else {
@@ -179,6 +180,8 @@ void MemPool::registerVM( VMachine *vm )
       // also account for older VM.
       if ( m_mingen == vm->m_generation )
       {
+         vm->incref();
+         m_olderVM->decref();
          m_olderVM = vm;
       }
    }
@@ -225,13 +228,17 @@ void MemPool::electOlderVM()
    // Nay, we don't have any VM.
    if ( m_vmRing == 0 )
    {
-      m_olderVM = 0;
+      if ( m_olderVM != 0 )
+      {
+         m_olderVM->decref();
+         m_olderVM = 0;
+      }
    }
    else
    {
       VMachine *vmc = m_vmRing;
       m_mingen = vmc->m_generation;
-      m_olderVM = vmc;
+      VMachine* vmmin = vmc;
       vmc = vmc->m_nextVM;
 
       while( vmc != m_vmRing )
@@ -239,10 +246,14 @@ void MemPool::electOlderVM()
          if ( vmc->m_generation < m_mingen )
          {
             m_mingen = vmc->m_generation;
-            m_olderVM = vmc;
+            vmmin = vmc;
          }
          vmc = vmc->m_nextVM;
       }
+      vmmin->incref();
+      if( m_olderVM != 0 )
+         m_olderVM->decref();
+      m_olderVM = vmmin;
    }
 }
 
@@ -600,8 +611,6 @@ void MemPool::performGC()
 void MemPool::idleVM( VMachine *vm, bool bPrio )
 {
    // ok, we're givin the VM to the GC, so we reference it.
-   vm->incref();
-
    m_mtx_idlevm.lock();
    if ( bPrio )
    {
@@ -614,6 +623,7 @@ void MemPool::idleVM( VMachine *vm, bool bPrio )
       m_mtx_idlevm.unlock();
       return;
    }
+   vm->incref();
 
    vm->m_idleNext = 0;
    if ( m_vmIdle_head == 0 )
@@ -756,6 +766,8 @@ void* MemPool::run()
          {
             // this to discard block requets.
             vm->baton().unblock();
+            // we're done with this VM here
+            vm->decref();
             m_mtx_idlevm.unlock();
 
             TRACE( "Discarding idle vm %p\n", vm );
@@ -768,6 +780,8 @@ void* MemPool::run()
          if ( ! bPriority && ! vm->baton().tryAcquire() )
          {
             m_mtx_idlevm.unlock();
+            // we're done with this VM here
+            vm->decref();
             TRACE( "Was going to mark vm %p, but forfaited\n", vm );
             // oh damn, we lost the occasion. The VM is back alive.
             continue;
@@ -791,6 +805,7 @@ void* MemPool::run()
             {
                bPriority = false; // disable the rest.
                vm->m_eGCPerformed.set();
+               vm->decref();
             }
          }
          else
@@ -927,6 +942,11 @@ void MemPool::rollover()
 {
    // Sets the minimal VM.
    m_mingen = 1;
+
+   m_vmRing->incref();
+   if ( m_olderVM != 0 )
+      m_olderVM->decref();
+
    m_olderVM = m_vmRing;
    m_olderVM->m_generation = 1;
 
