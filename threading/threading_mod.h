@@ -38,7 +38,6 @@ namespace Ext{
 class VMRunnerThread: public ::Falcon::Sys::Thread
 {
    VMachine *m_vm;
-   bool m_bOwn;
    Item m_threadInstance;
    Item m_method;
    Error *m_lastError;

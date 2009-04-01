@@ -57,7 +57,6 @@ FalconData *ThreadCarrier::clone() const
 
 VMRunnerThread::VMRunnerThread():
    m_vm( new VMachine ),
-   m_bOwn( true ),
    m_lastError( 0 )
 {
    // remove the error handler
@@ -69,17 +68,16 @@ VMRunnerThread::VMRunnerThread():
 
 VMRunnerThread::VMRunnerThread( VMachine *vm ):
    m_vm( vm ),
-   m_bOwn( false ),
    m_lastError( 0 )
 {
+   m_vm->incref();
    m_vm->launchAtLink( false );
    m_bStarted = true; // an adopted VM is running.
 }
 
 VMRunnerThread::~VMRunnerThread()
 {
-   if( m_bOwn )
-      delete m_vm;
+   m_vm->decref();
 }
 
 void VMRunnerThread::prepareThreadInstance( const Item &instance, const Item &method )

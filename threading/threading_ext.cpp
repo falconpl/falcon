@@ -216,7 +216,10 @@ FALCON_FUNC Thread_start( VMachine *vm )
    // restore it in the new vm
    sstream.seekBegin(0);
    Item i_remoteThread;
-   Item::e_sercode result = i_remoteThread.deserialize( &sstream, &thread->vm() );
+   #ifndef NDEBUG
+   Item::e_sercode result = 
+   #endif
+       i_remoteThread.deserialize( &sstream, &thread->vm() );
    fassert( result == Item::sc_ok );
 
    // Setup the thread into the thread data.
