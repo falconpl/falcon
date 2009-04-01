@@ -3,6 +3,10 @@ Falcon (0.9.0.1)
   * fixed: Octal numbers weren't properly scanned.
   * added: Support for binary numbers (0b..., "\B...") and octal with 0c...
            and numeric neuter separator "_".
+  * fixed: (possible) race condition in VM destruction and re-creation and GC
+           VM marking.
+  * fixed: Long existing latent bug in Lists and iterators: if the GC destroyed
+           the list, the iterators may still refer to it.
   
 Falcon (0.9)
   * major: Removed "sender" from grammar.

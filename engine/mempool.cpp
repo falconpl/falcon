@@ -279,14 +279,14 @@ void MemPool::storeForGarbage( Garbageable *ptr )
    // We mark newly created items as the maximum possible value
    // so they can't be reclaimed until marked at least once.
    ptr->mark( MAX_GENERATION );
-
+   
    m_mtx_newitem.lock();
    m_allocatedItems++;
 
-   ptr->prevGarbage( m_newRoot );
-   ptr->nextGarbage( m_newRoot->nextGarbage() );
-   m_newRoot->nextGarbage()->prevGarbage( ptr );
-   m_newRoot->nextGarbage( ptr );
+   ptr->nextGarbage( m_newRoot );
+   ptr->prevGarbage( m_newRoot->prevGarbage() );
+   m_newRoot->prevGarbage()->nextGarbage( ptr );
+   m_newRoot->prevGarbage( ptr );
    m_mtx_newitem.unlock();
 }
 
@@ -564,8 +564,9 @@ void MemPool::gcSweep()
          ring->prevGarbage()->nextGarbage( ring->nextGarbage() );
          GarbageableBase *dropped = ring;
          ring = ring->nextGarbage();
-         if( ! dropped->finalize() )
-            delete dropped;
+         dropped->finalize();
+         /*if( !  )
+            delete dropped;*/
       }
       else {
          ring = ring->nextGarbage();
@@ -701,10 +702,10 @@ void* MemPool::run()
 
             // and now, store the disengaged ring in the standard reclaimable garbage ring.
             TRACE( "Storing the garbage new ring in the normal ring\n" );
-            newRingFront->prevGarbage( m_garbageRoot );
-            newRingBack->nextGarbage( m_garbageRoot->nextGarbage() );
-            m_garbageRoot->nextGarbage()->prevGarbage( newRingBack );
-            m_garbageRoot->nextGarbage( newRingFront );
+            newRingBack->nextGarbage( m_garbageRoot );
+            newRingFront->prevGarbage( m_garbageRoot->prevGarbage() );
+            m_garbageRoot->prevGarbage()->nextGarbage( newRingFront );
+            m_garbageRoot->prevGarbage( newRingBack );
          }
          else
             m_mtx_newitem.unlock();

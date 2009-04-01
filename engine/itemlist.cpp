@@ -106,6 +106,7 @@ void ItemList::pop_back()
 {
    if( m_tail != 0 )
    {
+      notifyDeletion( m_tail );
       m_tail = m_tail->prev();
 
       // was the only element?
@@ -143,8 +144,9 @@ void ItemList::pop_front()
 {
    if( m_head != 0 )
    {
+      notifyDeletion( m_head );
       m_head = m_head->next();
-
+      
       // was the only element?
       if ( m_head == 0 )
       {
@@ -270,6 +272,14 @@ void ItemList::clear()
    m_head = 0;
    m_tail = 0;
    m_size = 0;
+   
+   ItemListIterator *iter = m_iters;
+   while( iter != 0 )
+   {
+      iter->invalidate();
+      iter->m_owner = 0;
+      iter = iter->m_next;
+   }
 }
 
 
@@ -299,7 +309,7 @@ void ItemList::removeIterator( ItemListIterator *iter )
       iter->m_next = 0;
    }
    iter->m_prev = 0;
-
+   iter->m_owner = 0;
 }
 
 void ItemList::notifyDeletion( ItemListElement *elem )

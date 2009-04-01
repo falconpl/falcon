@@ -32,7 +32,8 @@ GarbageableBase::~GarbageableBase()
 
 bool GarbageableBase::finalize()
 {
-   return false;
+   delete this;
+   return true;
 }
 
 uint32 GarbageableBase::occupation()

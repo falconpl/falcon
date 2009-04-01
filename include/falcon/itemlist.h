@@ -140,7 +140,8 @@ public:
    /** Clones a list. */
    ItemList( const ItemList &l );
 
-   ~ItemList() {
+   virtual ~ItemList() 
+   {
       clear();
    }
 
