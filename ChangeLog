@@ -1,4 +1,4 @@
-SDL (0.9.5)
+SDL (0.9.6)
    * added: Method SDLSurface.SetAlpha
    
 SDL (0.9.4)

@@ -18,8 +18,8 @@
 #define FCLT_VERSION_H
 
 #define FCLT_VERSION_MAJOR        0
-#define FCLT_VERSION_MINOR        8 
-#define FCLT_VERSION_REVISION     10
+#define FCLT_VERSION_MINOR        9 
+#define FCLT_VERSION_REVISION     6
 
 #endif
 

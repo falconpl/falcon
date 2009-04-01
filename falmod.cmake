@@ -70,6 +70,10 @@ MACRO(FALCON_CLEANUP tgt)
    ENDIF(FALCON_STRIP_TARGET)
 ENDMACRO(FALCON_CLEANUP)
 
+# creates the standard name for the falcon module.
+MACRO( FALCON_DEFINE_MODULE varname modname )
+   SET( ${varname} ${modname}_fm )
+ENDMACRO(FALCON_DEFINE_MODULE)
 
 MACRO(FALCON_LINK_MODULE tgt )
    TARGET_LINK_LIBRARIES(${tgt} falcon_engine)
