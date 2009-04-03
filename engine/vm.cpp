@@ -35,6 +35,7 @@
 #include <falcon/flexymodule.h>
 #include <falcon/mt.h>
 #include <falcon/vmmsg.h>
+#include <falcon/livemodule.h>
 #include <falcon/garbagelock.h>
 
 #include <string.h>

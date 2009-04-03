@@ -183,6 +183,7 @@ ADD_LIBRARY( falcon_engine SHARED
    itemtraits.cpp
    lineardict.cpp
    linemap.cpp
+   livemodule.cpp
    ltree.cpp
    membuf.cpp
    memhash.cpp

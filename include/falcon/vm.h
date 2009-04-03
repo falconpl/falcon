@@ -37,6 +37,7 @@
 #include <falcon/vm_sys.h>
 #include <falcon/coreslot.h>
 #include <falcon/baton.h>
+#include <falcon/livemodule.h>
 
 #define FALCON_VM_DFAULT_CHECK_LOOPS 3500
 
@@ -51,6 +52,7 @@ class CoreFunc;
 class MemPool;
 class VMMessage;
 class GarbageLock;
+
 
 typedef void (*tOpcodeHandler)( register VMachine *);
 

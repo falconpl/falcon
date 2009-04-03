@@ -24,7 +24,7 @@
 #include <falcon/types.h>
 #include <falcon/garbageable.h>
 #include <falcon/symbol.h>
-#include <falcon/vmmaps.h>
+#include <falcon/livemodule.h>
 
 namespace Falcon
 {
