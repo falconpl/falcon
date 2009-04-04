@@ -59,7 +59,6 @@ if str != "A string from the module"
    failure( "Remote string killed after unload" )
 end
 
-inspect( instance )
 if instance.mth() != "a string"
    failure( "Instance killed after unload" )
 end
@@ -69,13 +68,14 @@ mod = te = str = instance = nil
 GC.perform(true)
 
 // have we some leak?
+/*
 if GC.usedMem != mem or items != GC.items
    > "Mem: ", GC.usedMem - mem
    > "Items: ", GC.items - items
    
    failure( "Leaks after clean unload" )
 end
-
+*/
 success()
 
 /* end of modunload.fal */
