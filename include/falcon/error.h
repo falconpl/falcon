@@ -71,7 +71,7 @@ class ErrorObject: public ReflectObject
 public:
    ErrorObject( const CoreClass* cls, Error *err );
    Error* getError() const { return (::Falcon::Error*) getUserData(); }
-   
+
    virtual ~ErrorObject();
    virtual void gcMark( uint32 mark );
    virtual CoreObject *clone() const;
@@ -406,10 +406,12 @@ public:
 
    void incref();
    void decref();
-   
+
    Error* subError() const { return m_nextError; }
 
    virtual Error *clone() const;
+
+   bool hasTraceback() const { return ! m_steps.empty(); }
 };
 
 

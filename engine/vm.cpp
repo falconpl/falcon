@@ -1446,6 +1446,8 @@ void VMachine::raiseModError( Error *err )
 
 void VMachine::fillErrorTraceback( Error &error )
 {
+   fassert( ! error.hasTraceback() );
+
    const Symbol *csym = currentSymbol();
    if ( csym != 0 )
    {

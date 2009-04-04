@@ -371,10 +371,15 @@ void MemPool::markItem( const Item &item )
       break;
 
       case FLC_ITEM_FUNC:
-         if( item.asFunction()->mark() != gen )
          {
-            item.asFunction()->mark( gen );
-            item.asFunction()->liveModule()->mark( gen );
+            CoreFunc* func = item.asFunction();
+            if( func->mark() != gen )
+            {
+               func->mark( gen );
+               func->liveModule()->mark( gen );
+               /*else
+                  const_cast<Item*>(&item)->setNil();*/
+            }
          }
          break;
 
@@ -389,7 +394,16 @@ void MemPool::markItem( const Item &item )
             if ( gi->mark() != gen )
                gi->mark( gen );
          }
-         // fallback to string for the name part
+
+         {
+            String* str = item.asString();
+            if( str->isCore() )
+            {
+               StringGarbage &gs = static_cast<CoreString*>(str)->garbage();
+               gs.mark( gen );
+            }
+         }
+         break;
 
       case FLC_ITEM_STRING:
          {
@@ -399,32 +413,14 @@ void MemPool::markItem( const Item &item )
                StringGarbage &gs = static_cast<CoreString*>(str)->garbage();
                gs.mark( gen );
             }
-            else {
-               if ( str->id() != String::no_id )
-               {
-                  str->liveModule()->mark( gen );
-               }
+            else
+            {
+               fassert( item.asStringModule() != 0 );
+               item.asStringModule()->mark( gen );
             }
          }
       break;
 
-      /*
-      case FLC_ITEM_STRING:
-      {
-         fassert( item.asString()->isCore() );
-
-         CoreString* str = static_cast<CoreString*>(item.asString());
-         {
-            StringGarbage &gs = str->garbage();
-            if ( gs.mark() != gen )
-            {
-               gs.mark( gen );
-               if( str->id() != String::no_id )
-                  str->liveModule()->mark( gen );
-            }
-         }
-      }
-      break;*/
 
       case FLC_ITEM_GCPTR:
          item.asGCPointerShell()->mark( gen );

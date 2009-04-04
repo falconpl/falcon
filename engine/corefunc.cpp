@@ -21,24 +21,21 @@
 #include <falcon/vm.h>
 #include <falcon/eng_messages.h>
 
-namespace Falcon 
+namespace Falcon
 {
 
 void CoreFunc::readyFrame( VMachine *vm, uint32 paramCount )
 {
-   if ( ! m_lm->isAlive() )
-      throw new TypeError( ErrorParam( e_invop ).extra("CALL") );
-      
    // eventually check for named parameters
    if ( vm->regBind().flags() == 0xF0 )
    {
       const SymbolTable *symtab;
-      
+
       if( m_symbol->isFunction() )
          symtab = &m_symbol->getFuncDef()->symtab();
       else
          symtab = m_symbol->getExtFuncDef()->parameters();
-   
+
       vm->regBind().flags(0);
       // We know we have (probably) a named parameter.
       uint32 size = vm->m_stack->size();
@@ -92,21 +89,21 @@ void CoreFunc::readyFrame( VMachine *vm, uint32 paramCount )
    }
 
    // ensure against optional parameters.
-   if( m_symbol->isFunction() ) 
+   if( m_symbol->isFunction() )
    {
       FuncDef *tg_def = m_symbol->getFuncDef();
-      
+
       if( paramCount < tg_def->params() )
       {
          vm->m_stack->resize( vm->m_stack->size() + tg_def->params() - paramCount );
          paramCount = tg_def->params();
       }
-   
+
       vm->createFrame( paramCount );
-      
+
       // now we can change the stack base
       vm->m_stackBase = vm->m_stack->size();
-   
+
       // space for locals
       if ( tg_def->locals() > 0 )
          vm->m_stack->resize( vm->m_stackBase + tg_def->locals() );
@@ -133,7 +130,7 @@ void CoreFunc::readyFrame( VMachine *vm, uint32 paramCount )
    else
    {
       vm->createFrame( paramCount );
-      
+
       // now we can change the stack base
       vm->m_stackBase = vm->m_stack->size();
 

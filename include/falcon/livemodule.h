@@ -67,9 +67,7 @@ class FALCON_DYN_CLASS LiveModule: public Garbageable
    ItemVector m_globals;
    ItemVector m_wkitems;
    bool m_bPrivate;
-
-   String** m_strings;
-   uint32 m_stringCount;
+   bool m_bAlive;
 
 public:
    typedef enum {
@@ -104,7 +102,7 @@ public:
        Short for this->module() != 0
        \return true if the module is still alive.
    */
-   bool isAlive() const { return m_module != 0; }
+   bool isAlive() const { return m_bAlive; }
 
    /** Return a module item given a global symbol name.
       This is an utility funtion retreiving an global item declared by the
@@ -135,7 +133,12 @@ public:
 
    /** Return the string in the module with the given ID.
    */
-   String* getString( uint32 stringId ) const;
+   String* getString( uint32 stringId ) const
+   {
+      return const_cast<String *>(m_module->getString( stringId ));
+   }
+
+   //String* getString( uint32 stringId ) const;
 };
 
 

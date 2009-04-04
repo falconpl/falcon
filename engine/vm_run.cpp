@@ -64,7 +64,7 @@ Item *VMachine::getOpcodeParam( register uint32 bc_pos )
       case P_PARAM_STRID:
          {
             String *temp = currentLiveModule()->getString( endianInt32(*reinterpret_cast<int32 *>( m_code + m_pc_next ) ) );
-            m_imm[bc_pos].setString( temp );
+            m_imm[bc_pos].setString( temp, const_cast<LiveModule*>(currentLiveModule()) );
             m_pc_next += sizeof( int32 );
          }
       return m_imm + bc_pos;
@@ -184,7 +184,8 @@ void VMachine::run()
             // fake an error raisal
             the_error = err;
             m_event = eventRisen;
-            fillErrorContext( err );
+            if ( ! err->hasTraceback() )
+               fillErrorContext( err );
          }
       }
       else
@@ -198,7 +199,8 @@ void VMachine::run()
             m_event = eventRisen;
             the_error = err;
             err->origin( e_orig_vm );
-            fillErrorContext( err );
+            if ( ! err->hasTraceback() )
+               fillErrorContext( err );
          }
       }
 

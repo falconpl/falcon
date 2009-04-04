@@ -295,7 +295,14 @@ public:
       setString( str );
    }
 
+   /** Creates a String item dependent from a module */
+   Item( String *str, LiveModule* lm )
+   {
+      setString( str, lm );
+   }
+
    void setString( String *str );
+   void setString( String *str, LiveModule* lm );
 
    /** Creates an array item */
    Item( CoreArray *array )
@@ -493,6 +500,7 @@ public:
    CoreRange* asRange() const { return static_cast<CoreRange*>(all.ctx.data.content); }
 
    String *asString() const { return (String *) all.ctx.data.ptr.voidp; }
+   LiveModule *asStringModule() const { return (LiveModule *) all.ctx.data.ptr.extra; }
    CoreString *asCoreString() const { return (CoreString *) all.ctx.data.ptr.voidp; }
 
    DeepItem *asDeepItem() const { return (DeepItem *) all.ctx.data.ptr.voidp; }

@@ -64,9 +64,19 @@ void Item::setRange( CoreRange *r )
 void Item::setString( String *str )
 {
    type( FLC_ITEM_STRING );
+
    all.ctx.data.ptr.voidp = str;
    if ( str->isCore() )
       assignToVm( &static_cast<CoreString*>(str)->garbage() );
+}
+
+void Item::setString( String *str, LiveModule *lm )
+{
+   type( FLC_ITEM_STRING );
+   // must not be a non-garbage string
+   fassert( ! str->isCore() );
+   all.ctx.data.ptr.voidp = str;
+   all.ctx.data.ptr.extra = lm;
 }
 
 void Item::setArray( CoreArray *array )

@@ -231,7 +231,7 @@ Stream *ModuleLoader::openResource( const String &path, t_filetype type )
       else
          return AddSystemEOL( in );
    }
-   
+
 
    return in;
 }
@@ -449,6 +449,7 @@ Module *ModuleLoader::loadFile( const String &module_path, t_filetype type, bool
          path_elem = path_elem->next();
       }
    }
+
 
    Module *mod = 0;
    // did we found a file?
