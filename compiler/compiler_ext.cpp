@@ -142,27 +142,30 @@ void internal_link( ::Falcon::VMachine *vm, Module *mod, CompilerIface *iface )
    Runtime rt( &iface->loader(), vm );
 
    // let's try to link
-   if ( ! rt.addModule( mod, true ) || ! vm->link( &rt ) )
+   try{
+      rt.addModule( mod, true );
+      vm->link( &rt );
+
+      // ok, the module is up and running.
+      // wrap it
+      Item *mod_class = vm->findWKI( "Module" );
+      fassert( mod_class != 0 );
+      CoreObject *co = mod_class->asClass()->createInstance();
+      // we know the module IS in the VM.
+      co->setUserData( new ModuleCarrier( vm->findModule( mod->name() ) ) );
+
+      co->setProperty( "name", mod->name() );
+      co->setProperty( "path", mod->path() );
+
+      // return the object
+      vm->retval( co );
+   }
+   catch( Error* e )
    {
       // VM should have raised the errors.
       mod->decref();
-      vm->retnil();
-      return;
+      throw;
    }
-
-   // ok, the module is up and running.
-   // wrap it
-   Item *mod_class = vm->findWKI( "Module" );
-   fassert( mod_class != 0 );
-   CoreObject *co = mod_class->asClass()->createInstance();
-   // we know the module IS in the VM.
-   co->setUserData( new ModuleCarrier( vm->findModule( mod->name() ) ) );
-
-   co->setProperty( "name", mod->name() );
-   co->setProperty( "path", mod->path() );
-
-   // return the object
-   vm->retval( co );
 
    // we can remove our reference
    mod->decref();
@@ -270,6 +273,7 @@ FALCON_FUNC Compiler_loadByName( ::Falcon::VMachine *vm )
    Module *mod = iface->loader().loadName( *i_name->asString(), modname );
 
    // if mod is zero, do nothing: vm has already raised the error.
+
    if ( mod != 0 )
       internal_link( vm, mod, iface );
 }
@@ -341,7 +345,7 @@ FALCON_FUNC Compiler_setDirective( ::Falcon::VMachine *vm )
    }
 
    CompilerIface *iface = dyncast<CompilerIface*>( vm->self().asObject() );
-   
+
    if ( i_value->isString() )
       iface->loader().compiler().setDirective( *i_directive->asString(), *i_value->asString() );
    else
@@ -507,11 +511,10 @@ FALCON_FUNC Module_getReference( ::Falcon::VMachine *vm )
    Unloads the module, eventually destroying it when there aren't
    other VMs referencing the module.
 
-   References to callable items that resided in the module becomes
-   "ghost". They are turned into nil when trying to use them or
-   when the garbage collector reaches them; so, trying to call a
-   function that resided in an unloaded module has the same effect
-   as calling a nil item, raising an error.
+   To actually unload the module, it is necessary not to hold any
+   reference to items served by the given module (functions, classes,
+   objects and so on). Strings are copied locally, so they can still
+   exist when the module is unloaded.
 */
 FALCON_FUNC Module_unload( ::Falcon::VMachine *vm )
 {
@@ -527,19 +530,7 @@ FALCON_FUNC Module_unload( ::Falcon::VMachine *vm )
    }
 
    // unlink
-   if ( vm->unlink( modc->module() ) )
-   {
-
-      // destroy the reference
-      delete modc;
-      self->setUserData( (void*)0 );
-
-      // report success.
-      vm->regA().setBoolean( true );
-   }
-   else {
-      vm->regA().setBoolean( false );
-   }
+   vm->regA().setBoolean( vm->unlink( modc->module() ) );
 }
 
 /*#

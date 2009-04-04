@@ -115,7 +115,7 @@ public:
    ModuleCarrier( LiveModule *m_module );
    virtual ~ModuleCarrier();
 
-   const Module *module() const { return m_lmodule->module(); }
+   const Module *module() const;
    LiveModule *liveModule() const { return m_lmodule; }
 
    virtual FalconData *clone() const;

@@ -32,7 +32,7 @@
 #include "socket_sys.h"
 
 // Sun doesn't provide strerror_r
-#if ( defined (__SVR4) && defined (__sun) )
+#if ( defined (__SUNPRO_CC) && __SUNPRO_CC < 0x580 )
 static int strerror_r(int errnum, char * buf, unsigned n)
 {
    ::strncpy(buf, strerror(errnum), n);

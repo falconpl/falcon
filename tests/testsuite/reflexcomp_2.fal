@@ -1,0 +1,32 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: --
+* Category: reflexive
+* Subcategory:
+* Short: Basic reflexive compiler
+* Description:
+* Loaded by modunload as a module
+* [/Description]
+*
+****************************************************************************/
+
+function testExport( one, two, three )
+   return one + two + three
+end
+
+exported = "a string"
+
+function returnString()
+   return "A string from the module"
+end
+
+class TestCls
+   function mth()
+      return "a string"
+   end
+end
+
+export testExport, exported, TestCls
+
+/* End of file */

@@ -53,10 +53,4 @@ test_func = mod1.get( "func" )
 if not mod.unload(): failure( "free unload not respected" )
 mod1.unload()
 
-// now test_func must be not callable.
-try
-   > test_func( "test" )
-   failure( "Call in unloaded module" )
-end
-
 success()

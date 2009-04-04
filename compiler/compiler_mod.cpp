@@ -63,7 +63,7 @@ bool CompilerIface::getProperty( const String &propName, Item &prop ) const
    {
       if ( ! prop.isString() )
          prop = new CoreString();
-         
+
       m_loader.getSearchPath( *prop.asString() );
    }
    else if( propName == "alwaysRecomp" )
@@ -107,7 +107,7 @@ bool CompilerIface::getProperty( const String &propName, Item &prop ) const
    else {
       return defaultProperty( propName, prop );
    }
-   
+
    return true;
 }
 
@@ -157,7 +157,7 @@ bool CompilerIface::setProperty( const String &propName, const Item &prop )
    else {
       readOnlyError( propName );
    }
-   
+
    return true;
 }
 
@@ -184,6 +184,12 @@ FalconData *ModuleCarrier::clone() const
 void ModuleCarrier::gcMark( uint32 mk )
 {
    m_lmodule->mark( mk );
+}
+
+
+const Module *ModuleCarrier::module() const
+{
+   return m_lmodule->module();
 }
 
 }
