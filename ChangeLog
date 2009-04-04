@@ -63,7 +63,7 @@ Falcon (0.9)
            anymore. Automatic copy is performed on modify (if the string
            is static), and in deep copies of containers. Modify of non-static
            string doesn't cause the strings to be copied (explicit .clone() is
-           required). So, a = "...", b = a, b and a faith will be disconnected
+           required). So, a = "...", b = a, b and a will be disconnected
            when one is modified, while a = strMerge(...), b = a, b and a would
            reflect each other changes. This is a bit hybrid, but consequences
            are hardly visible. The point is that if you want a mutable string

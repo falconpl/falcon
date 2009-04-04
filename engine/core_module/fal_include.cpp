@@ -29,7 +29,7 @@ namespace core {
    @optparam path A string of ';' separated search paths.
    @optparam symDict Symbols to be queried (or nil).
 
-   @raise IOError if the module cannot be found or load.
+   @raise IOError if the module cannot be found or loaded.
 
    A module indicated by filename is compiled, loaded and linked in the
    running Virtual Machine. The inclusion is relative to the current
@@ -38,7 +38,7 @@ namespace core {
    a path relative to the current script path by using the scriptPath
    variable.
 
-   If a dictionary of symbol to be queried is @b not provided, the module
+   If a dictionary of symbols to be queried is @b not provided, the module
    is loaded and its main code, if present, is executed.
 
    If @b symDict is provided, its keys are strings which refer to symbol names
