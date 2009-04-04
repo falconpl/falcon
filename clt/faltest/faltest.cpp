@@ -616,17 +616,10 @@ bool testScript( ScriptData *script,
    // 2. link
    VMachineWrapper vmachine;
 
-   scriptModule->decref();
-   return true;
-
    // so we can link them
    vmachine->link( core );
    vmachine->link( testSuite );
    Runtime runtime( modloader );
-
-
-
-
 
    try
    {
