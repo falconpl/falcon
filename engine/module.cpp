@@ -518,17 +518,18 @@ DllLoader *Module::detachLoader()
 }
 
 
-void Module::incref()
+void Module::incref() const
 {
    atomicInc( m_refcount );
 }
 
-void Module::decref()
+void Module::decref() const
 {
    if( atomicDec( m_refcount ) <= 0 )
    {
-      DllLoader *loader = detachLoader();
-      delete this;
+      Module *deconst = const_cast<Module *>(this);
+      DllLoader *loader = deconst->detachLoader();
+      delete deconst;
       delete loader;
    }
 }

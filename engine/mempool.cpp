@@ -279,7 +279,7 @@ void MemPool::storeForGarbage( Garbageable *ptr )
    // We mark newly created items as the maximum possible value
    // so they can't be reclaimed until marked at least once.
    ptr->mark( MAX_GENERATION );
-   
+
    m_mtx_newitem.lock();
    m_allocatedItems++;
 
@@ -296,13 +296,13 @@ bool MemPool::markVM( VMachine *vm )
    vm->markLocked();
 
    // presume that all the registers need fresh marking
-   markItemFast( vm->regA() );
-   markItemFast( vm->regB() );
-   markItemFast( vm->self() );
+   markItem( vm->regA() );
+   markItem( vm->regB() );
+   markItem( vm->self() );
 
    // Latch and latcher are not necessary here because they must exist elsewhere.
-   markItemFast( vm->regBind() );
-   markItemFast( vm->regBindP() );
+   markItem( vm->regBind() );
+   markItem( vm->regBindP() );
 
    // mark all the messaging system.
    vm->markSlots( generation() );
@@ -318,11 +318,11 @@ bool MemPool::markVM( VMachine *vm )
 
       ItemVector *current = &currentMod->globals();
       for( uint32 j = 0; j < current->size(); j++ )
-         markItemFast( current->itemAt( j ) );
+         markItem( current->itemAt( j ) );
 
       current = &currentMod->wkitems();
       for( uint32 k = 0; k < current->size(); k++ )
-         markItemFast( current->itemAt( k ) );
+         markItem( current->itemAt( k ) );
 
       iter.next();
    }
@@ -335,9 +335,9 @@ bool MemPool::markVM( VMachine *vm )
    {
       VMContext *ctx = (VMContext *) ctx_iter->data();
 
-      markItemFast( ctx->regA() );
-      markItemFast( ctx->regB() );
-      markItemFast( ctx->latcher() );
+      markItem( ctx->regA() );
+      markItem( ctx->regB() );
+      markItem( ctx->latcher() );
 
       stack = ctx->getStack();
       for( pos = 0; pos < stack->size(); pos++ ) {
@@ -345,7 +345,7 @@ bool MemPool::markVM( VMachine *vm )
          if ( stack->itemAt( pos ).type() == FLC_ITEM_INVALID )
             pos += VM_FRAME_SPACE - 1; // pos++
          else
-            markItemFast( stack->itemAt( pos ) );
+            markItem( stack->itemAt( pos ) );
       }
 
       ctx_iter = ctx_iter->next();
@@ -354,38 +354,40 @@ bool MemPool::markVM( VMachine *vm )
    return true;
 }
 
-void MemPool::markItem( Item &item )
+void MemPool::markItem( const Item &item )
 {
+   uint32 gen = generation();
+
    switch( item.type() )
    {
       case FLC_ITEM_REFERENCE:
       {
          GarbageItem *gi = item.asReference();
-         if( gi->mark() != generation() ) {
-            gi->mark( generation() );
-            markItemFast( gi->origin() );
+         if( gi->mark() != gen ) {
+            gi->mark( gen );
+            markItem( gi->origin() );
          }
       }
       break;
 
       case FLC_ITEM_FUNC:
-         if( item.asFunction()->mark() != generation() )
+         if( item.asFunction()->mark() != gen )
          {
-            item.asFunction()->mark( generation() );
-            item.asFunction()->liveModule()->mark( generation() );
+            item.asFunction()->mark( gen );
+            item.asFunction()->liveModule()->mark( gen );
          }
          break;
 
       case FLC_ITEM_RANGE:
-         item.asRange()->mark( generation() );
+         item.asRange()->mark( gen );
          break;
 
       case FLC_ITEM_LBIND:
          if ( item.asFBind() != 0 )
          {
             GarbageItem *gi = item.asFBind();
-            if ( gi->mark() != generation() )
-               gi->mark( generation() );
+            if ( gi->mark() != gen )
+               gi->mark( gen );
          }
          // fallback to string for the name part
 
@@ -394,40 +396,40 @@ void MemPool::markItem( Item &item )
             if( item.asString()->isCore() )
             {
                StringGarbage *gs = &item.asCoreString()->garbage();
-               if ( gs->mark() != generation() )
+               if ( gs->mark() != gen )
                {
-                  gs->mark( generation() );
+                  gs->mark( gen );
                }
             }
          }
       break;
 
       case FLC_ITEM_GCPTR:
-         item.asGCPointerShell()->mark( generation() );
-         item.asGCPointer()->gcMark( generation() );
+         item.asGCPointerShell()->mark( gen );
+         item.asGCPointer()->gcMark( gen );
          break;
 
       case FLC_ITEM_ARRAY:
       {
          CoreArray *array = item.asArray();
-         if( array->mark() != generation() ) {
-            array->mark(generation());
+         if( array->mark() != gen ) {
+            array->mark(gen);
             for( uint32 pos = 0; pos < array->length(); pos++ ) {
-               markItemFast( array->at( pos ) );
+               markItem( array->at( pos ) );
             }
 
             // mark also the bindings
             if ( array->bindings() != 0 )
             {
                CoreDict *cd = array->bindings();
-               if( cd->mark() != generation() ) {
-                  cd->mark( generation() );
+               if( cd->mark() != gen ) {
+                  cd->mark( gen );
                   Item key, value;
                   cd->traverseBegin();
                   while( cd->traverseNext( key, value ) )
                   {
-                     markItemFast( key );
-                     markItemFast( value );
+                     markItem( key );
+                     markItem( value );
                   }
                }
             }
@@ -435,7 +437,7 @@ void MemPool::markItem( Item &item )
             // and also the table
             if ( array->table() != 0 )
             {
-               array->table()->mark( generation() );
+               array->table()->mark( gen );
             }
          }
       }
@@ -444,10 +446,9 @@ void MemPool::markItem( Item &item )
       case FLC_ITEM_OBJECT:
       {
          CoreObject *co = item.asObjectSafe();
-         if( co->mark() != generation() )
+         if( co->mark() != gen )
          {
-            co->mark( generation() );
-            co->gcMark( generation() );
+            co->gcMarkData( gen );
          }
       }
       break;
@@ -455,14 +456,14 @@ void MemPool::markItem( Item &item )
       case FLC_ITEM_DICT:
       {
          CoreDict *cd = item.asDict();
-         if( cd->mark() != generation() ) {
-            cd->mark( generation() );
+         if( cd->mark() != gen ) {
+            cd->mark( gen );
             Item key, value;
             cd->traverseBegin();
             while( cd->traverseNext( key, value ) )
             {
-               markItemFast( key );
-               markItemFast( value );
+               markItem( key );
+               markItem( value );
             }
          }
       }
@@ -471,14 +472,10 @@ void MemPool::markItem( Item &item )
       case FLC_ITEM_METHOD:
       {
          // if the item isn't alive, give it the death blow.
-         if ( ! item.asMethodFunc()->isValid() )
-            item.setNil();
-         else
+         if( item.asMethodFunc()->mark() != gen )
          {
-            if( item.asMethodFunc()->mark() != generation() )
-            {
-               item.asMethodFunc()->mark( generation() );
-            }
+            item.asMethodFunc()->mark( gen );
+            item.asMethodFunc()->liveModule()->mark( gen );
             Item self;
             item.getMethodItem( self );
             markItem( self );
@@ -489,19 +486,15 @@ void MemPool::markItem( Item &item )
       case FLC_ITEM_CLSMETHOD:
       {
          CoreObject *co = item.asMethodClassOwner();
-         if( co->mark() != generation() ) {
-            co->mark( generation() );
-            // mark all the property values.
-            co->gcMark( generation() );
+         if( co->mark() != gen ) {
+            co->gcMarkData( gen );
          }
 
          CoreClass *cls = item.asMethodClass();
-         if( cls->mark() != generation() ) {
-            cls->mark( generation() );
-            markItemFast( cls->constructor() );
-            for( uint32 i = 0; i <cls->properties().added(); i++ ) {
-               markItemFast( *cls->properties().getValue(i) );
-            }
+         // if the class is the generator of the method, we have already marked it.
+         if( cls->mark() != gen )
+         {
+            cls->gcMarkData( gen );
          }
       }
       break;
@@ -509,12 +502,8 @@ void MemPool::markItem( Item &item )
       case FLC_ITEM_CLASS:
       {
          CoreClass *cls = item.asClass();
-         if( cls->mark() != generation() ) {
-            cls->mark( generation() );
-            markItemFast( cls->constructor() );
-            for( uint32 i = 0; i <cls->properties().added(); i++ ) {
-               markItemFast( *cls->properties().getValue(i) );
-            }
+         if( cls->mark() != gen ) {
+            cls->gcMarkData( gen );
          }
       }
       break;
@@ -522,15 +511,14 @@ void MemPool::markItem( Item &item )
       case FLC_ITEM_MEMBUF:
       {
          MemBuf *mb = item.asMemBuf();
-         if ( mb->mark() != generation() )
+         if ( mb->mark() != gen )
          {
-            mb->mark( generation() );
+            mb->mark( gen );
             CoreObject *co = item.asMemBuf()->dependant();
             // small optimization; resolve the problem here instead of looping again.
-            if( co != 0 && co->mark() != generation() )
+            if( co != 0 && co->mark() != gen )
             {
-               co->mark( generation() );
-               co->gcMark( generation() );
+               co->gcMarkData( gen );
             }
          }
       }
@@ -555,6 +543,9 @@ void MemPool::gcSweep()
 
    int32 killed = 0;
    GarbageableBase *ring = m_garbageRoot->nextGarbage();
+
+   // live modules must be killed after all their data. For this reason, we must put them aside.
+   GarbageableBase *later_ring = 0;
    while( ring != m_garbageRoot )
    {
       if ( ring->mark() < m_mingen )
@@ -564,16 +555,31 @@ void MemPool::gcSweep()
          ring->prevGarbage()->nextGarbage( ring->nextGarbage() );
          GarbageableBase *dropped = ring;
          ring = ring->nextGarbage();
-         dropped->finalize();
-         /*if( !  )
-            delete dropped;*/
+
+         // a module? -- do it later
+         if( ! dropped->finalize() )
+         {
+            dropped->nextGarbage(0);
+            dropped->prevGarbage( later_ring );
+            later_ring = dropped;
+         }
       }
       else {
          ring = ring->nextGarbage();
       }
    }
 
-   TRACE( "Sweeping complete %d\n", gcMemAllocated() );
+   TRACE( "Sweeping step 1 complete %d\n", gcMemAllocated() );
+
+   // deleting persistent finalized items.
+   while( later_ring != 0 )
+   {
+      GarbageableBase *current = later_ring;
+      later_ring = later_ring->nextGarbage();
+      delete current;
+   }
+   TRACE( "Sweeping step 2 complete %d\n", gcMemAllocated() );
+
    m_mtx_newitem.lock();
    fassert( killed <= m_allocatedItems );
    m_allocatedItems -= killed;

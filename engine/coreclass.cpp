@@ -53,6 +53,24 @@ CoreClass::~CoreClass()
 }
 
 
+void CoreClass::gcMarkData( uint32 gen ) const
+{
+   // first, mark ourselves.
+   mark( gen );
+
+   // then mark our items,
+   memPool->markItem( m_constructor );
+   for( uint32 i = 0; i < properties().added(); i++ )
+   {
+      // ancestors are in the property table as classItems
+      memPool->markItem( *properties().getValue(i) );
+   }
+
+   // and our module
+   m_lmod->mark( gen );
+}
+
+
 CoreObject *CoreClass::createInstance( void *userdata, bool bDeserial ) const
 {
    if ( m_sym->isEnum() )

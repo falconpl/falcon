@@ -69,14 +69,14 @@ CacheObject::~CacheObject()
    memFree( m_cache );
 }
 
-void CacheObject::gcMark( uint32 mark )
+void CacheObject::gcMarkData( uint32 mark )
 {
-   CoreObject::gcMark( mark );
+   CoreObject::gcMarkData( mark );
 
    const PropertyTable &props = m_generatedBy->properties();
    for ( uint32 i = 0; i < props.added(); i ++ )
    {
-     memPool->markItemFast( m_cache[i] );
+     memPool->markItem( m_cache[i] );
    }
 
    // Subclasses shall eventually mark the user data.
@@ -137,7 +137,7 @@ bool CacheObject::serialize( Stream *stream, bool bLive ) const
 bool CacheObject::deserialize( Stream *stream, bool bLive )
 {
    VMachine *vm = VMachine::getCurrent();
-      
+
    // Read the class property table.
    uint32 len;
    stream->read( (byte *) &len, sizeof( len ) );

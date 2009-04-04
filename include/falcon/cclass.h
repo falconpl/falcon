@@ -54,7 +54,7 @@ private:
    const Symbol *m_sym;
    Item m_constructor;
    PropertyTable *m_properties;
-   
+
    /** Locally cached factory. */
    ObjectFactory m_factory;
 
@@ -91,7 +91,7 @@ public:
 
    ObjectFactory factory() const { return m_factory; }
    void factory( ObjectFactory f ) { m_factory = f; }
-   
+
    /** Creates an instance of this class.
       The returned object and all its properties are stored in the same memory pool
       from which this instance is created.
@@ -123,7 +123,13 @@ public:
    */
    bool derivedFrom( const String &className ) const;
 
-   
+   /** Marks the class and its inner data.
+      This marks the class, the livemodule it is bound to, the property table data
+      and the ancestors.
+   */
+   void gcMarkData( uint32 mark ) const;
+
+
 };
 
 }

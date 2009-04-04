@@ -437,14 +437,14 @@ void CoreTable::gcMark( uint32 mark )
    // mark the header data...
    for ( i = 0; i < m_headerData.size(); i ++ )
    {
-      memPool->markItemFast( *((Item *) m_headerData.at(i)) );
+      memPool->markItem( *((Item *) m_headerData.at(i)) );
    }
 
    // and all the tables.
    for( i = 0; i < m_pages.size(); i++ )
    {
       Item temp = *(CoreArray **) m_pages.at(i);
-      memPool->markItemFast( temp );
+      memPool->markItem( temp );
    }
 }
 

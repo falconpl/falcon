@@ -35,7 +35,7 @@ class FALCON_DYN_CLASS GarbageableBase: public GCAlloc
 protected:
    GarbageableBase *m_garbage_next;
    GarbageableBase *m_garbage_prev;
-   unsigned int m_gcStatus;
+   mutable uint32 m_gcStatus;
 
 public:
    GarbageableBase() {}
@@ -64,12 +64,12 @@ public:
    */
    virtual uint32 occupation();
 
-   void mark( uint32 gen ) {
+   void mark( uint32 gen ) const {
       m_gcStatus = gen;
    }
 
    /** Return the current GC mark status. */
-   unsigned int mark() const {
+   uint32 mark() const {
       return m_gcStatus;
    }
 

@@ -81,6 +81,8 @@ public:
    LiveModule( Module *mod, bool bPrivate=false );
    ~LiveModule();
 
+   virtual bool finalize();
+
    const Module *module() const { return m_module; }
    const ItemVector &globals() const { return m_globals; }
    ItemVector &globals() { return m_globals; }

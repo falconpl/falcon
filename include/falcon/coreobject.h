@@ -39,33 +39,33 @@ class FalconData;
 
 /** Base core object class.
    To create your own objects, derive from this class and reimplement:
-   
+
    \code
    virtual bool hasProperty( const String &key ) const;
    virtual bool setProperty( const String &prop, const Item &value );
    virtual bool getProperty( const String &key, Item &ret ) const;
    virtual CoreObject *clone() const;
    \endcode
-   
+
    Eventually, reimplement also:
-   
+
    \code
    virtual bool serialize( Stream *stream, bool bLive ) const;
    virtual bool deserialize( Stream *stream, bool bLive );
    \endcode
-   
+
    Those default methods in this class will save the object on the stream on live
-   serialization (i.e. inter-vm serializations), but will just fail on 
+   serialization (i.e. inter-vm serializations), but will just fail on
    normal serializations.
-   
+
    Then, create a factory function returning an object of your class
    when creating an instance, like the following:
-      
+
    \code
-   // typedef ObjectFactory ... 
+   // typedef ObjectFactory ...
    CoreObject* MyClassFactory( const CoreClass *cls, void *data, bool bDeserializing );
    \endcode
-      
+
    Remember that inner program-specific data may be provided later via setUserData() method,
    so the factory function must take into accunt the fact that \b data may not be provided (may be 0).
 
@@ -73,17 +73,17 @@ class FalconData;
    serialized data. As deserialize() is going to be called next, the constructor may take this
    parameter to avoid performing full construction and let deserialize() to setup the object.
 
-   
+
    Then, in the module owning this object, the class that shall return an instance of this
    must be configured via ClassDef::factory( ObjectFactory ) method. In example:
-   
+
    \code
    Symbol *my_class = self->addClass( "MyClass", my_class_init );
    my_class->getClassDef()->factory( &MyClassFactory );
    \code
-   
-   Three standard subclasses with their respective factories are provided. 
-   - FalconObject is the standard CoreObject containing falcon Item instances in each property and 
+
+   Three standard subclasses with their respective factories are provided.
+   - FalconObject is the standard CoreObject containing falcon Item instances in each property and
       possibly a FalconData entity.
    - ReflectObject is totally opaque, and all its get/set properties are sent to the class reflection
      table. The class reflection table indicates which action must be taken when setting or getting
@@ -93,12 +93,12 @@ class FalconData;
      not declared reflective in the class reflection table, it is treated as if in a FalconObject,
      otherwise its value is generated through the reflection mechanism and cached in the property
      item.
-     
+
    Those three class factories are automatically applied by the VM in case it has not been set.
-   If the class has all the properties fully reflected (or reflected on read and read only) 
+   If the class has all the properties fully reflected (or reflected on read and read only)
    ReflectObject factory will be used; if one or more properties are not reflected CRObject
    factory will be used; if none is reflected, FalconObject factory is used.
-   
+
    \note Actually, there are three factories for each one of the basic classes, depending on
          which kind of user data is expected to be associated with the created instance, if any.
          The VM uses the factory functions that suppose that the data stored in the instance
@@ -118,20 +118,20 @@ protected:
    CoreObject( const CoreObject &other );
 
    /** Creates the default value for this property.
-   
+
       Simple reflection can be done by overloading CoreObject and handling
       reflected properties in a string if/else cascade or in a switch
       based on property searches in the class property table.
-      
+
       This utility function can be used as a default way to return basic
       values (and eventually methods) from the property table if they doesn't
       need special management.
-      
+
       Example:
       \code
       bool MyClass::getProperty( const String &key, Item &ret ) const
       {
-         if ( key == "prop1" ) 
+         if ( key == "prop1" )
          {
             //...
          }
@@ -142,21 +142,21 @@ protected:
          else {
             return defaultProperty( key, ret );
          }
-         
+
          return true; // we found it or we would have called defalutProperty.
       }
       \endcode
    */
    bool defaultProperty( const String &key, Item &prop ) const;
-   
+
    /** Generates a property access error.
       If the property is in the class property table, a "read only" property error
       is raised, otherwise a "property not found" error is raised instead.
-      
+
       Useful as a default terminator of simple subclass setProperty() overloads.
    */
    void readOnlyError( const String &key ) const;
-   
+
 public:
 
    /** The base destructor does nothing.
@@ -231,8 +231,14 @@ public:
    */
    virtual bool deserialize( Stream *stream, bool bLive );
 
-   /** Performs GC marking of the inner object data */
-   virtual void gcMark( uint32 mark );
+   /** Performs GC marking of the inner object data.
+
+      If the inner object is a falcon data, it gets marked through its
+      FalconData::gcMark function. By default, this function does nothing,
+      but some extensions may wish to store in the inner object data complete
+      items, and they shall be marked.
+   */
+   virtual void gcMarkData( uint32 mark );
 
    /** Returns true if the class provides a certain property.
       Should not account Object metaclass properties, unless explicitly overloaded.

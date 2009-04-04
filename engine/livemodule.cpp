@@ -70,6 +70,11 @@ Item *LiveModule::findModuleItem( const String &symName ) const
    return m_globals.itemPtrAt( sym->itemId() );
 }
 
+bool LiveModule::finalize()
+{
+   // resist early destruction
+   return false;
+}
 
 //=================================================================================
 // Live module related traits

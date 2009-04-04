@@ -25,7 +25,7 @@
 #include <falcon/stream.h>
 #include <falcon/falcondata.h>
 
-namespace Falcon 
+namespace Falcon
 {
 
 CoreObject::CoreObject( const CoreClass *parent ):
@@ -34,7 +34,8 @@ CoreObject::CoreObject( const CoreClass *parent ):
    m_bIsFalconData( false ),
    m_bIsSequence( false ),
    m_generatedBy( parent )
-{}
+{
+}
 
 CoreObject::CoreObject( const CoreObject &other ):
    Garbageable( other ),
@@ -60,12 +61,20 @@ CoreObject::~CoreObject()
       delete static_cast<FalconData *>( m_user_data );
 }
 
-void CoreObject::gcMark( uint32 mark )
+
+void CoreObject::gcMarkData( uint32 gen )
 {
+   // mark ourseleves
+   mark( gen );
+
+   // our class
+   m_generatedBy->gcMarkData( gen );
+
+   // and possibly our inner falcon data
    if ( m_bIsFalconData )
    {
       fassert( m_user_data != 0 );
-      static_cast<FalconData* >(m_user_data)->gcMark( mark );
+      static_cast<FalconData* >(m_user_data)->gcMark( gen );
    }
 }
 
@@ -130,7 +139,7 @@ bool CoreObject::deserialize( Stream *stream, bool bLive )
    return false;
 }
 
- 
+
 
 bool CoreObject::derivedFrom( const String &className ) const
 {
@@ -156,7 +165,7 @@ void CoreObject::readIndex( const Item &pos, Item &target )
          return;
       }
    }
-   
+
    throw new AccessError( ErrorParam( e_arracc, __LINE__ ).extra( "getIndex__" ) );
 }
 
@@ -174,14 +183,14 @@ void CoreObject::writeIndex( const Item &pos, const Item &target )
          return;
       }
    }
-   
+
    throw new AccessError( ErrorParam( e_arracc, __LINE__ ).extra( "setIndex__" ) );
 }
 
 void CoreObject::readProperty( const String &prop, Item &target )
 {
    Item *p;
-   
+
    if ( ! getProperty( prop, target ) )
    {
       // try to find a generic method
@@ -193,7 +202,7 @@ void CoreObject::readProperty( const String &prop, Item &target )
       {
          throw new AccessError( ErrorParam( e_prop_acc, __LINE__ ).extra( prop ) );
       }
-         
+
       p = cc->properties().getValue( id );
    }
    else
@@ -209,7 +218,7 @@ void CoreObject::readProperty( const String &prop, Item &target )
       case FLC_ITEM_CLASS:
          target.setClassMethod( this, p->asClass() );
       break;
-      
+
       default:
         target = *p;
    }

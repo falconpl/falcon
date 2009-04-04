@@ -209,14 +209,7 @@ public:
       This method should be called only from inside GC mark callbacks
       of class having some GC hook.
    */
-   void markItem( Item &itm );
-
-   /** Prevents calling the markitem function in case of shallow items. */
-   void markItemFast( Item &itm )
-   {
-      if( itm.isDeep() )
-         markItem( itm );
-   }
+   void markItem( const Item &itm );
 
    /** Returns the number of elements managed by this mempool. */
    int32 allocatedItems() const;

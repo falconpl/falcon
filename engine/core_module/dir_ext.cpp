@@ -78,9 +78,9 @@ FileStatObject::~FileStatObject()
 
 void FileStatObject::gcMark( uint32 mark )
 {
-   memPool->markItemFast( getInnerData()->m_cache_mtime );
-   memPool->markItemFast( getInnerData()->m_cache_atime );
-   memPool->markItemFast( getInnerData()->m_cache_ctime );
+   memPool->markItem( getInnerData()->m_cache_mtime );
+   memPool->markItem( getInnerData()->m_cache_atime );
+   memPool->markItem( getInnerData()->m_cache_ctime );
 }
 
 CoreObject* FileStatObject::clone() const

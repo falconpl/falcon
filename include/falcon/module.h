@@ -56,7 +56,7 @@ class FALCON_DYN_CLASS Module: public BaseAlloc
 {
 protected:
 
-   volatile int32 m_refcount;
+   mutable volatile int32 m_refcount;
 
    /******************************
    * Anagraphic section
@@ -144,8 +144,8 @@ public:
    virtual char pcodeVersion() const;
    virtual char pcodeSubVersion() const;
 
-   void incref();
-   void decref();
+   void incref() const;
+   void decref() const;
 
    /** Determine this to be a flexy module.
       Flexy modules can be queried for unknown symbols at runtime;

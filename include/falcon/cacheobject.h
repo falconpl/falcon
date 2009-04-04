@@ -46,7 +46,11 @@ public:
    virtual bool setProperty( const String &prop, const Item &value );
    virtual bool getProperty( const String &key, Item &ret ) const;
 
-   virtual void gcMark( uint32 mark );
+   /** Mark the items in the cache and the inner data, if it's garbageable.
+      If this object contains an external FalconData instance, it gets marked;
+      anyhow, this function marks the cache items.
+   */
+   virtual void gcMarkData( uint32 mark );
 
    Item *cachedProperty( const String &name ) const
    {

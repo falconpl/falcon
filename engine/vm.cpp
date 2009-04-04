@@ -3563,7 +3563,7 @@ void VMachine::markLocked()
    GarbageLock *lock = rlock;
    do
    {
-      memPool->markItemFast( lock->item() );
+      memPool->markItem( lock->item() );
       lock = lock->next();
    } while( lock != rlock );
    m_mtx_lockitem.unlock();
