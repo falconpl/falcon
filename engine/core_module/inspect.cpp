@@ -238,7 +238,7 @@ void inspect_internal( VMachine *vm, const Item *elem, int32 level, int32 maxLev
          stream->writeString( " {\n" );
          const PropertyTable &pt = arr->generator()->properties();
 
-         for( count = 0; count < pt.added() ; count++ ) 
+         for( count = 0; count < pt.added() ; count++ )
          {
             for ( i = 0; i < (level+1); i ++ )
             {
@@ -264,26 +264,19 @@ void inspect_internal( VMachine *vm, const Item *elem, int32 level, int32 maxLev
 
       case FLC_ITEM_METHOD:
       {
-         if ( ! elem->asMethodFunc()->isValid() )
-         {
-            stream->writeString( "Dead method" );
-         }
-         else
-         {
-            temp = "Method ";
-            temp += "->" + elem->asMethodFunc()->symbol()->name();
-            stream->writeString( temp );
+         temp = "Method ";
+         temp += "->" + elem->asMethodFunc()->symbol()->name();
+         stream->writeString( temp );
 
-            Item itemp;
-            elem->getMethodItem( itemp );
-            
-            inspect_internal( vm, &itemp, level + 1, maxLevel, maxSize, true, true );
-            for ( i = 0; i < level; i ++ )
-            {
-               stream->writeString("   ");
-            }
-            stream->writeString( "}" );
+         Item itemp;
+         elem->getMethodItem( itemp );
+
+         inspect_internal( vm, &itemp, level + 1, maxLevel, maxSize, true, true );
+         for ( i = 0; i < level; i ++ )
+         {
+            stream->writeString("   ");
          }
+         stream->writeString( "}" );
       }
       break;
 
@@ -296,29 +289,23 @@ void inspect_internal( VMachine *vm, const Item *elem, int32 level, int32 maxLev
 
       case FLC_ITEM_FUNC:
       {
-         if ( ! elem->asFunction()->isValid() )
+         const Symbol *funcSym = elem->asFunction()->symbol();
+
+         if ( funcSym->isExtFunc() )
          {
-            stream->writeString( "Dead function" );
+            stream->writeString( "Ext. Function " + funcSym->name() );
          }
          else {
-            const Symbol *funcSym = elem->asFunction()->symbol();
+            stream->writeString( "Function " + funcSym->name() );
 
-            if ( funcSym->isExtFunc() )
+            FuncDef *def = funcSym->getFuncDef();
+            uint32 itemId = def->onceItemId();
+            if ( itemId != FuncDef::NO_STATE )
             {
-               stream->writeString( "Ext. Function " + funcSym->name() );
-            }
-            else {
-               stream->writeString( "Function " + funcSym->name() );
-
-               FuncDef *def = funcSym->getFuncDef();
-               uint32 itemId = def->onceItemId();
-               if ( itemId != FuncDef::NO_STATE )
-               {
-                  if ( elem->asFunction()->liveModule()->globals().itemAt( itemId ).isNil() )
-                     stream->writeString( "{ not called }");
-                  else
-                     stream->writeString( "{ called }");
-               }
+               if ( elem->asFunction()->liveModule()->globals().itemAt( itemId ).isNil() )
+                  stream->writeString( "{ not called }");
+               else
+                  stream->writeString( "{ called }");
             }
          }
       }
@@ -385,8 +372,8 @@ FALCON_FUNC  inspect ( ::Falcon::VMachine *vm )
    Item *i_item = vm->param(0);
    Item *i_depth = vm->param(1);
    Item *i_maxLen = vm->param(2);
-   
-   if ( i_item == 0 
+
+   if ( i_item == 0
       || ( i_depth != 0 && ! i_depth->isNil() && ! i_depth->isOrdinal() )
       || ( i_maxLen != 0 && ! i_maxLen->isNil() && ! i_maxLen->isOrdinal() ) )
    {

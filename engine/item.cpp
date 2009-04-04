@@ -455,30 +455,8 @@ bool Item::methodize( const Item &self )
 
 bool Item::isCallable() const
 {
-
-   if ( isClass() )
+   if ( isClass() || isFunction() || isMethod() )
       return true;
-
-   // simple case: normally callable item
-   if( isFunction() )
-   {
-      // Detached?
-      if ( ! asFunction()->isValid() )
-      {
-         const_cast<Item *>(this)->setNil();
-         return false;
-      }
-      return true;
-   }
-   else if( isMethod() )
-   {
-      if ( ! asMethodFunc()->isValid() )
-      {
-         const_cast<Item *>(this)->setNil();
-         return false;
-      }
-      return true;
-   }
 
    //a bit more complex: a callable array...
    if( type() == FLC_ITEM_ARRAY )

@@ -18,6 +18,9 @@
 */
 
 #include <falcon/livemodule.h>
+#include <falcon/memory.h>
+#include <falcon/fassert.h>
+
 #include <string.h>
 
 namespace Falcon {
@@ -31,29 +34,51 @@ LiveModule::LiveModule( Module *mod, bool bPrivate ):
    Garbageable(),
    m_module( mod ),
    m_bPrivate( bPrivate ),
+   m_strings(0),
    m_initState( init_none )
 {
    m_module->incref();
+   m_stringCount = m_module->stringTable().size();
+
+   if ( m_stringCount > 0 )
+   {
+      m_strings = (String**) memAlloc( sizeof(String *) * m_stringCount );
+      memset( m_strings, 0, m_stringCount * sizeof(String *) );
+   }
+
 }
 
 
 LiveModule::~LiveModule()
 {
-   if ( m_module != 0 )
-      m_module->decref();
+   fassert( m_module != 0 );
+   m_module->decref();
+
+   if ( m_strings != 0 )
+   {
+      for( uint32 i = 0; i < m_stringCount; ++i )
+      {
+         if ( m_strings[i] != 0 )
+            delete m_strings[i];
+      }
+
+      memFree( m_strings );
+   }
 }
 
 void LiveModule::detachModule()
 {
-   if ( m_module != 0 )
-   {
-      Module *m = m_module;
-      m_module = 0;
-      // no reason to keep globals allocated
-      m_globals.resize(0);
-      m_wkitems.resize(0);
+   // disengage all the items.
+   uint32 i;
 
-      m->decref();
+   for ( i = 0; i < m_globals.size(); ++i )
+   {
+      m_globals.itemAt( i ).dereference()->setNil();
+   }
+
+   for ( i = 0; i < m_wkitems.size(); ++i )
+   {
+      wkitems().itemAt(i).dereference()->setNil();
    }
 }
 
@@ -74,6 +99,38 @@ bool LiveModule::finalize()
 {
    // resist early destruction
    return false;
+}
+
+String* LiveModule::getString( uint32 stringId ) const
+{
+   //return (String*)m_module->stringTable().get( stringId );
+
+   if ( stringId >= m_stringCount )
+   {
+      String *dest;
+      uint32 size;
+
+      fassert( m_module != 0 );
+      dest = new String( *m_module->stringTable().get( stringId ) );
+      dest->liveModule( this );
+      size = m_module->stringTable().size();
+      // this may (legally) happen only when m_module is a flexy module
+      // and its table has been grown in the meanwhile
+      fassert( size > stringId );
+      const_cast<LiveModule*>(this)->m_strings = (String**) memRealloc( m_strings, sizeof(String *) * size );
+      memset( m_strings + m_stringCount, 0, (size - m_stringCount) * sizeof(String *) );
+
+      const_cast<LiveModule*>(this)->m_stringCount = size;
+      m_strings[stringId] = dest;
+   }
+   else if( m_strings[stringId] == 0 )
+   {
+      String* dest = new String( *m_module->stringTable().get( stringId ) );
+      dest->liveModule( this );
+      m_strings[stringId] = dest;
+   }
+
+   return m_strings[stringId];
 }
 
 //=================================================================================

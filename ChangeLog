@@ -7,6 +7,8 @@ Falcon (0.9.0.1)
            VM marking.
   * fixed: Long existing latent bug in Lists and iterators: if the GC destroyed
            the list, the iterators may still refer to it.
+  * fixed: Some latent problem in deep marking of object/classes.
+  * major: Now lazy unload of modules on-the-fly is supported (some wip)
   
 Falcon (0.9)
   * major: Removed "sender" from grammar.

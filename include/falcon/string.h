@@ -32,6 +32,7 @@ namespace Falcon {
 
 class Stream;
 class VMachine;
+class LiveModule;
 
 /** Core falcon string representation.
    This is a string as seen by the VM and its fellows (module loader, module and so on).
@@ -294,7 +295,12 @@ protected:
    const csh::Base *m_class;
    uint32 m_allocated;
    uint32 m_size;
-   uint32 m_id;
+   union
+   {
+      uint32 m_id;
+      const LiveModule *m_lmowner;
+   } m_identifier;
+
    byte *m_storage;
 
    /**
@@ -304,10 +310,10 @@ protected:
 
    // Reserved for future usage.
    byte m_bFlags;
-   
+
    bool m_bCore;
 
-   /**
+   /**sym
     * Creates the core string.
     *
     * This method is protected. It can be accessed only by subclasses.
@@ -337,7 +343,9 @@ public:
       m_storage( 0 ),
       m_bExported( false ),
       m_bCore( false )
-   {}
+   {
+      m_identifier.m_id = no_id;
+   }
 
 
    /** Adopt a static buffer as the internal buffer.
@@ -446,6 +454,7 @@ public:
       m_bExported( false ),
       m_bCore( false )
    {
+      m_identifier.m_id = no_id;
       copy( other );
    }
 
@@ -661,8 +670,8 @@ public:
    void shrink() { m_class->shrink( this ); }
 
 
-   int32 id() const { return m_id; }
-   void id( int32 val ) { m_id = val; }
+   int32 id() const { return m_identifier.m_id; }
+   void id( int32 val ) { m_identifier.m_id = val; }
 
    uint32 getCharAt( uint32 pos ) const { return m_class->getCharAt( this, pos ); }
    void setCharAt( uint32 pos, uint32 chr ) { m_class->setCharAt( this, pos, chr ); }
@@ -896,7 +905,7 @@ public:
       \return true if succesful, false if parse failed
    */
    bool parseBin( uint64 &target, uint32 pos = 0 ) const;
-   
+
    /** Minimal numerical conversion.
       If this string represents a valid integer in hexadecimal format, the integer is returned.
       Pos must start after the octal marker \\x.
@@ -1087,8 +1096,10 @@ public:
    void writeIndex( const Item &index, const Item &target );
    void readIndex( const Item &index, Item &target );
    void readProperty( const String &prop, Item &item );
-   
+
    bool isCore() const { return m_bCore; }
+   const LiveModule* liveModule() const { return m_identifier.m_lmowner; }
+   void liveModule( const LiveModule* lm ) { m_identifier.m_lmowner = lm; }
 };
 
 
@@ -1232,7 +1243,7 @@ public:
    const StringGarbage &garbage() const { return m_gcptr; }
 
    StringGarbage &garbage() { return m_gcptr; }
-   
+
    CoreString & operator+=( const CoreString &other ) { append( other ); return *this; }
    CoreString & operator+=( const String &other ) { append( other ); return *this; }
    CoreString & operator+=( uint32 other ) { append( other ); return *this; }
@@ -1245,7 +1256,7 @@ public:
       copy( other );
       return *this;
    }
-   
+
    CoreString & operator=( const String &other ) {
       copy( other );
       return *this;

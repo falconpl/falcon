@@ -63,8 +63,6 @@ public:
    const Symbol *symbol() const { return m_symbol; }
    const String& name() const { return m_symbol->name(); }
 
-   bool isValid() const { return m_lm->isAlive(); }
-
    void readyFrame( VMachine *vm, uint32 params );
 };
 

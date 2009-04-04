@@ -549,7 +549,6 @@ bool testScript( ScriptData *script,
 
    Stream *source = TranscoderFactory( "utf-8", source_f, true );
 
-
    scriptModule = new Module();
    Path scriptPath( script->filename() );
    scriptModule->name( scriptPath.getFile() );
@@ -578,8 +577,6 @@ bool testScript( ScriptData *script,
    delete source;
 
    // now compile the code.
-
-
    GenCode gc( compiler.module() );
    if ( opt_timings )
       genTime = Sys::_seconds();
@@ -619,10 +616,17 @@ bool testScript( ScriptData *script,
    // 2. link
    VMachineWrapper vmachine;
 
+   scriptModule->decref();
+   return true;
+
    // so we can link them
    vmachine->link( core );
    vmachine->link( testSuite );
    Runtime runtime( modloader );
+
+
+
+
 
    try
    {
@@ -746,15 +750,15 @@ void executeTests( ModuleLoader *modloader )
       order = opt_testList.begin();
       iter = scriptMap.end();
       while( iter == scriptMap.end() && order != 0 ) {
-			const String &name = *(String *) order->data();
+         const String &name = *(String *) order->data();
          iter = scriptMap.find( ScriptData::IdCodeToId( name ) );
          order = order->next();
       }
    }
 
    while( iter != scriptMap.end() )
-    {
-	   String cat, subcat;
+   {
+      String cat, subcat;
       ScriptData *script = iter->second;
 
       String reason, trace;

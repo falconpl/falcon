@@ -255,7 +255,7 @@ bool Byte::change( String *str, uint32 start, uint32 end, const String *source )
 
    if ( start >= strLen )
       return false;
-   
+
    if ( end > strLen )
       end = strLen;
 
@@ -756,7 +756,7 @@ void Buffer::insert( String *str, uint32 pos, uint32 len, const String *source )
 
       if ( str->allocated() != 0 )
          memFree( str->getRawStorage() );
-      
+
       str->allocated( finalAlloc );
       str->setRawStorage( mem );
    }
@@ -878,10 +878,10 @@ void Buffer::destroy( String *str ) const
 
 String::String( uint32 size ):
    m_class( &csh::handler_buffer ),
-   m_id(String::no_id),
    m_bExported( false ),
    m_bCore( false )
 {
+   m_identifier.m_id = no_id;
    m_storage = (byte *) memAlloc( size );
    m_allocated = size;
    m_size = 0;
@@ -890,20 +890,20 @@ String::String( uint32 size ):
 String::String( const char *data ):
    m_class( &csh::handler_static ),
    m_allocated( 0 ),
-   m_id(String::no_id),
    m_storage( (byte*) const_cast< char *>(data) ),
    m_bExported( false ),
    m_bCore( false )
 {
+   m_identifier.m_id = no_id;
    m_size = strlen( data );
 }
 
 String::String( const char *data, int32 len ):
    m_class( &csh::handler_buffer ),
-   m_id(String::no_id ),
    m_bExported( false ),
    m_bCore( false )
 {
+   m_identifier.m_id = no_id;
    m_size = len >= 0 ? len : strlen( data );
    m_allocated = (( m_size / FALCON_STRING_ALLOCATION_BLOCK ) + 1 ) * FALCON_STRING_ALLOCATION_BLOCK;
    m_storage = (byte *) memAlloc( m_allocated );
@@ -913,11 +913,11 @@ String::String( const char *data, int32 len ):
 
 String::String( const wchar_t *data ):
    m_allocated( 0 ),
-   m_id( String::no_id ),
    m_storage( (byte*) const_cast< wchar_t *>(data) ),
    m_bExported( false ),
    m_bCore( false )
 {
+   m_identifier.m_id = no_id;
    if ( sizeof( wchar_t ) == 2 )
       m_class = &csh::handler_static16;
    else
@@ -932,11 +932,12 @@ String::String( const wchar_t *data ):
 
 String::String( const wchar_t *data, int32 len ):
    m_allocated( 0 ),
-   m_id( String::no_id ),
    m_storage( (byte *) const_cast< wchar_t *>( data ) ),
    m_bExported( false ),
    m_bCore( false )
 {
+   m_identifier.m_id = no_id;
+
    if ( sizeof( wchar_t ) == 2 )
       m_class = &csh::handler_buffer16;
    else
@@ -963,11 +964,12 @@ String::String( const wchar_t *data, int32 len ):
 String::String( const String &other, uint32 begin, uint32 end ):
    m_allocated( 0 ),
    m_size( 0 ),
-   m_id( String::no_id ),
    m_storage( 0 ),
    m_bExported( false ),
    m_bCore( false )
 {
+   m_identifier.m_id = no_id;
+
    // by default, copy manipulator
    m_class = other.m_class;
 
@@ -1026,7 +1028,7 @@ String &String::adopt( char *buffer, uint32 size, uint32 allocated )
    m_allocated = allocated;
    m_storage = (byte *) buffer;
 
-   
+
    return *this;
 }
 
@@ -1039,7 +1041,7 @@ String &String::adopt( wchar_t *buffer, uint32 size, uint32 allocated )
       m_class = &csh::handler_buffer16;
    else
       m_class = &csh::handler_buffer32;
-   
+
    m_size = size * sizeof( wchar_t );
    m_allocated = allocated;
    m_storage = (byte *) buffer;

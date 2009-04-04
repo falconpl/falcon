@@ -212,16 +212,16 @@ InteractiveCompiler::t_ret_type InteractiveCompiler::compileNext( Stream *input 
       if ( init != 0 )
       {
          ListElement *from_iter = cls->symbol()->getClassDef()->inheritance().begin();
-            while( from_iter != 0 )
-            {
-               const InheritDef *def = (const InheritDef *) from_iter->data();
-               const Symbol *parent = def->base();
-               // it's just an import
-               m_vm->linkSymbol( parent, m_lmodule );
-               from_iter = from_iter->next();
-            }
+         while( from_iter != 0 )
+         {
+            const InheritDef *def = (const InheritDef *) from_iter->data();
+            const Symbol *parent = def->base();
+            // it's just an import
+            m_vm->linkSymbol( parent, m_lmodule );
+            from_iter = from_iter->next();
+         }
 
-            m_vm->linkCompleteSymbol( init->symbol(), m_lmodule );
+         m_vm->linkCompleteSymbol( init->symbol(), m_lmodule );
       }
 
       m_vm->linkCompleteSymbol( cls->symbol(), m_lmodule );

@@ -68,12 +68,16 @@ class FALCON_DYN_CLASS LiveModule: public Garbageable
    ItemVector m_wkitems;
    bool m_bPrivate;
 
+   String** m_strings;
+   uint32 m_stringCount;
+
 public:
    typedef enum {
       init_none,
       init_trav,
       init_complete
    } t_initState;
+
 private:
    t_initState m_initState;
 
@@ -128,6 +132,10 @@ public:
 
    t_initState initialized() const { return m_initState; }
    void initialized( t_initState tis ) { m_initState = tis; }
+
+   /** Return the string in the module with the given ID.
+   */
+   String* getString( uint32 stringId ) const;
 };
 
 

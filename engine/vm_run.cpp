@@ -63,15 +63,15 @@ Item *VMachine::getOpcodeParam( register uint32 bc_pos )
 
       case P_PARAM_STRID:
          {
-            String *temp = const_cast<String *>(currentModule()->getString( endianInt32(*reinterpret_cast<int32 *>( m_code + m_pc_next ) ) ) );
+            String *temp = currentLiveModule()->getString( endianInt32(*reinterpret_cast<int32 *>( m_code + m_pc_next ) ) );
             m_imm[bc_pos].setString( temp );
             m_pc_next += sizeof( int32 );
          }
       return m_imm + bc_pos;
 
       case P_PARAM_LBIND:
-         m_imm[bc_pos].setLBind( const_cast<String *>(currentModule()->getString(
-            endianInt32(*reinterpret_cast<int32 *>( m_code + m_pc_next ) ) ) ) );
+         m_imm[bc_pos].setLBind( currentLiveModule()->getString(
+            endianInt32(*reinterpret_cast<int32 *>( m_code + m_pc_next ) ) ) );
          m_pc_next += sizeof( int32 );
       return m_imm + bc_pos;
 

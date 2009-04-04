@@ -2467,7 +2467,8 @@ public:
       m_vm(host)
    {}
 
-   ~VMachineWrapper() {
+   ~VMachineWrapper()
+   {
       m_vm->finalize();
    }
 

@@ -393,16 +393,38 @@ void MemPool::markItem( const Item &item )
 
       case FLC_ITEM_STRING:
          {
-            if( item.asString()->isCore() )
+            String* str = item.asString();
+            if( str->isCore() )
             {
-               StringGarbage *gs = &item.asCoreString()->garbage();
-               if ( gs->mark() != gen )
+               StringGarbage &gs = static_cast<CoreString*>(str)->garbage();
+               gs.mark( gen );
+            }
+            else {
+               if ( str->id() != String::no_id )
                {
-                  gs->mark( gen );
+                  str->liveModule()->mark( gen );
                }
             }
          }
       break;
+
+      /*
+      case FLC_ITEM_STRING:
+      {
+         fassert( item.asString()->isCore() );
+
+         CoreString* str = static_cast<CoreString*>(item.asString());
+         {
+            StringGarbage &gs = str->garbage();
+            if ( gs.mark() != gen )
+            {
+               gs.mark( gen );
+               if( str->id() != String::no_id )
+                  str->liveModule()->mark( gen );
+            }
+         }
+      }
+      break;*/
 
       case FLC_ITEM_GCPTR:
          item.asGCPointerShell()->mark( gen );
@@ -550,7 +572,6 @@ void MemPool::gcSweep()
    {
       if ( ring->mark() < m_mingen )
       {
-         killed++;
          ring->nextGarbage()->prevGarbage( ring->prevGarbage() );
          ring->prevGarbage()->nextGarbage( ring->nextGarbage() );
          GarbageableBase *dropped = ring;
@@ -559,10 +580,12 @@ void MemPool::gcSweep()
          // a module? -- do it later
          if( ! dropped->finalize() )
          {
-            dropped->nextGarbage(0);
-            dropped->prevGarbage( later_ring );
+            dropped->nextGarbage(later_ring);
+            dropped->prevGarbage( 0 );
             later_ring = dropped;
          }
+         else
+            killed++;
       }
       else {
          ring = ring->nextGarbage();
@@ -577,6 +600,7 @@ void MemPool::gcSweep()
       GarbageableBase *current = later_ring;
       later_ring = later_ring->nextGarbage();
       delete current;
+      killed++;
    }
    TRACE( "Sweeping step 2 complete %d\n", gcMemAllocated() );
 
