@@ -1,4 +1,7 @@
-Version 1.0.0
+Version 0.9.4
+  * fixed: updated to Falcon Albatros
+
+Version 0.9.2
   * Fixed: Escaping escaped UTF8 one level too much.
   * Major: added BLOB support (still to be finalized).
   * Performance: Added optional re-useable parameters for strings and
