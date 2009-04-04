@@ -93,6 +93,8 @@ MemPool::~MemPool()
 
    clearRing( m_newRoot );
    clearRing( m_garbageRoot );
+   delete m_newRoot;
+   delete m_garbageRoot;
 
    // VMs are not mine, and they should be already dead since long.
    for( uint32 ri = 0; ri < RAMP_MODE_COUNT; ri++ )
@@ -261,16 +263,51 @@ void MemPool::electOlderVM()
 void MemPool::clearRing( GarbageableBase *ringRoot )
 {
    // delete the garbage ring.
-   GarbageableBase *ge = ringRoot->nextGarbage();
-   while( ge != ringRoot )
+   int32 killed = 0;
+   GarbageableBase *ring = m_garbageRoot->nextGarbage();
+
+   // live modules must be killed after all their data. For this reason, we must put them aside.
+   GarbageableBase *later_ring = 0;
+   while( ring != m_garbageRoot )
    {
-      GarbageableBase *gnext = ge->nextGarbage();
-      if ( ! ge->finalize() )
-         delete ge;
-      ge = gnext;
+      if ( ring->mark() < m_mingen )
+      {
+         ring->nextGarbage()->prevGarbage( ring->prevGarbage() );
+         ring->prevGarbage()->nextGarbage( ring->nextGarbage() );
+         GarbageableBase *dropped = ring;
+         ring = ring->nextGarbage();
+
+         // a module? -- do it later
+         if( ! dropped->finalize() )
+         {
+            dropped->nextGarbage(later_ring);
+            dropped->prevGarbage( 0 );
+            later_ring = dropped;
+         }
+         else
+            killed++;
+      }
+      else {
+         ring = ring->nextGarbage();
+      }
    }
 
-   delete ge;
+   TRACE( "Sweeping step 1 complete %d\n", gcMemAllocated() );
+
+   // deleting persistent finalized items.
+   while( later_ring != 0 )
+   {
+      GarbageableBase *current = later_ring;
+      later_ring = later_ring->nextGarbage();
+      delete current;
+      killed++;
+   }
+   TRACE( "Sweeping step 2 complete %d\n", gcMemAllocated() );
+
+   m_mtx_newitem.lock();
+   fassert( killed <= m_allocatedItems );
+   m_allocatedItems -= killed;
+   m_mtx_newitem.unlock();
 }
 
 
@@ -559,51 +596,7 @@ void MemPool::gcSweep()
    }
    m_mtx_ramp.unlock();
 
-   int32 killed = 0;
-   GarbageableBase *ring = m_garbageRoot->nextGarbage();
-
-   // live modules must be killed after all their data. For this reason, we must put them aside.
-   GarbageableBase *later_ring = 0;
-   while( ring != m_garbageRoot )
-   {
-      if ( ring->mark() < m_mingen )
-      {
-         ring->nextGarbage()->prevGarbage( ring->prevGarbage() );
-         ring->prevGarbage()->nextGarbage( ring->nextGarbage() );
-         GarbageableBase *dropped = ring;
-         ring = ring->nextGarbage();
-
-         // a module? -- do it later
-         if( ! dropped->finalize() )
-         {
-            dropped->nextGarbage(later_ring);
-            dropped->prevGarbage( 0 );
-            later_ring = dropped;
-         }
-         else
-            killed++;
-      }
-      else {
-         ring = ring->nextGarbage();
-      }
-   }
-
-   TRACE( "Sweeping step 1 complete %d\n", gcMemAllocated() );
-
-   // deleting persistent finalized items.
-   while( later_ring != 0 )
-   {
-      GarbageableBase *current = later_ring;
-      later_ring = later_ring->nextGarbage();
-      delete current;
-      killed++;
-   }
-   TRACE( "Sweeping step 2 complete %d\n", gcMemAllocated() );
-
-   m_mtx_newitem.lock();
-   fassert( killed <= m_allocatedItems );
-   m_allocatedItems -= killed;
-   m_mtx_newitem.unlock();
+   clearRing( m_garbageRoot );
 
    m_mtx_ramp.lock();
    rm->onScanComplete();
