@@ -134,7 +134,7 @@ bool Stream::readString( String &target, uint32 size )
    uint32 chr;
 
    // if we can't get EVEN a char, return false.
-   if( ! get( chr ) || ! m_status )
+   if( ! get( chr ) || ! good() )
       return false;
 
    target.append( chr );

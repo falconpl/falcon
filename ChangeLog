@@ -11,6 +11,9 @@ Falcon (0.9.0.1)
   * major: Now lazy unload of modules on-the-fly is supported (some wip)
   * fixed: Missing rethrow at frame return (errors inside second level
            callItem()).
+  * fixed: Error reporting from inner compilations (include etc).
+  * fixed: Line number of errors in FTDs.
+  * fixed: Stream::readString exchanged a success for an error...
   
 Falcon (0.9)
   * major: Removed "sender" from grammar.
