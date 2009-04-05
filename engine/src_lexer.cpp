@@ -687,7 +687,7 @@ int SrcLexer::lex_normal()
                VALUE->integer = retval;
                m_state = e_line;
                return INTNUM;
-            }               
+            }
          break;
 
          case e_floatNumber:
@@ -817,9 +817,9 @@ int SrcLexer::lex_normal()
                VALUE->integer = retval;
                m_state = e_line;
                return INTNUM;
-            }  
+            }
          break;
-         
+
          case e_binNumber:
             m_lineFilled = true;
             if ( chr == '0' || chr == '1' )
@@ -830,7 +830,7 @@ int SrcLexer::lex_normal()
                uint64 retval;
                if ( ! m_string.parseBin( retval ) )
                   m_compiler->raiseError( e_inv_num_format, m_line );
-               
+
                VALUE->integer = retval;
                m_state = e_line;
                return INTNUM;
@@ -1009,7 +1009,7 @@ int SrcLexer::lex_normal()
                m_state = e_string;
             }
          break;
-         
+
          case e_stringBin:
             if ( chr == '0' || chr == '1' )
             {
@@ -1475,6 +1475,9 @@ int SrcLexer::checkUnlimitedTokens( uint32 nextChar )
             if ( m_bWasntEmpty )
                m_whiteLead = "\n";
             m_bIsDirectiveLine = false;
+            m_previousLine = m_line;
+            m_line++;
+            m_character = 0;
             return EOL;
          }
          else if ( m_string == ">>=" )
