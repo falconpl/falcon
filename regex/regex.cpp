@@ -130,9 +130,9 @@ FALCON_MODULE_DECL
    self->version( VERSION_MAJOR, VERSION_MINOR, VERSION_REVISION );
 
    // Initialzie pcre -- todo, import data from app.
-	pcre_malloc = Falcon::memAlloc;
+   pcre_malloc = Falcon::memAlloc;
    pcre_free = Falcon::memFree;
-	pcre_stack_malloc = Falcon::memAlloc;
+   pcre_stack_malloc = Falcon::memAlloc;
    pcre_stack_free = Falcon::memFree;
 
    //====================================
