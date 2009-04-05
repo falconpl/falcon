@@ -80,17 +80,11 @@ int32 BaseFileStream::read( void *buffer, int32 size )
    UnixFileSysData *data = static_cast< UnixFileSysData *>( m_fsData );
 
    int32 result = ::read( data->m_handle, buffer, size );
-   if ( result < 0 )
-   {
-      if ( errno == 0 )
-         result = 0;
-      else
-      {
-         data->m_lastError = errno;
-         m_status = Stream::t_error;
-         m_status = t_error;
-         return -1;
-      }
+   if ( result < 0 ) {
+      data->m_lastError = errno;
+      m_status = Stream::t_error;
+      m_status = t_error;
+      return -1;
    }
 
    if ( result == 0 ) {
