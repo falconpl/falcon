@@ -107,7 +107,7 @@ int32 StreamBuffer::read( void *b, int32 size )
    if ( size <= 0 )
       return 0;
 
-   if( m_stream->status() != t_open )
+   if( ! m_stream->good() || ! m_stream->open() )
       return -1;
 
    byte *buf = (byte*) b;
@@ -335,7 +335,7 @@ bool StreamBuffer::get( uint32 &chr )
 {
    if ( popBuffer(chr) )
       return true;
-      
+
    if ( m_bufPos == m_bufLen )
    {
       if ( ! refill() )
