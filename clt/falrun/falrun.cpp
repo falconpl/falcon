@@ -266,15 +266,17 @@ int main( int argc, char *argv[] )
    if ( source_path != "" )
       source_path += ";";
 
-   ModuleLoader *modloader = new ModuleLoader( source_path + get_load_path() );
+   try
+   {
+      ModuleLoader *modloader = new ModuleLoader( source_path + get_load_path() );
 
-   // set the module preferred language; ok also if default ("") is used
-   modloader->setLanguage( module_language );
+      // set the module preferred language; ok also if default ("") is used
+      modloader->setLanguage( module_language );
 
-   Module *core = core_module_init();
+      Module *core = core_module_init();
 
-   Module *main_mod = modloader->loadModule( bincode_stream );
-   if( main_mod != 0) {
+      Module *main_mod = modloader->loadModule( bincode_stream );
+
       VMachine *vmachine = new VMachine(false);
       // change default machine streams.
       vmachine->stdIn( stdIn );
@@ -287,14 +289,12 @@ int main( int argc, char *argv[] )
       Runtime *runtime = new Runtime( modloader );
 
       // preload required modules
+
       ListElement *pliter = preloaded.begin();
       while( pliter != 0 )
       {
          Module *module = modloader->loadName( * ((String *) pliter->data()) );
-         if ( ! module )
-            return 1;
-         if ( ! runtime->addModule( module ) )
-            return 1;
+         runtime->addModule( module );
          pliter = pliter->next();
       }
 
@@ -322,6 +322,15 @@ int main( int argc, char *argv[] )
       }
 
       vmachine->finalize();
+   }
+   catch ( Error *err )
+   {
+      String temp;
+      err->toString( temp );
+      stdErr->writeString( "falcon: FATAL - Program terminated with error.\n" );
+      stdErr->writeString( temp + "\n" );
+      err->decref();
+      return 1;
    }
 
 

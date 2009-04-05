@@ -185,9 +185,9 @@ public:
       \param mod The module to be added.
       \param bIsPrivate false (default) when linking requires exported symbols to be published
                         globally in the VM.
-      \return true if the module have been added, false on module resolution error.
+      \throw Error on compilation/load error.
    */
-   bool addModule( Module *mod, bool bIsPrivate = false );
+   void addModule( Module *mod, bool bIsPrivate = false );
 
    /** Return the symbol tably containing the global symbols.
       As a symbol table is just a symbol map that self-deletes owned symbol,
@@ -233,9 +233,9 @@ public:
       \param parent the logical name of the parent module, if any
       \param bIsPrivate false (default) to allow the module to export its
             symbols to the VM, true otherwise.
-      \return true on success, false on load or dependency resolution errors.
+      \throw Error on compilation/load error.
    */
-   bool loadName( const String &name, const String &parent = "", bool bIsPrivate=false );
+   void loadName( const String &name, const String &parent = "", bool bIsPrivate=false );
 
    /** Loads the given module and adds it to the runtime.
       This is actually a just shortcut to load a module
@@ -245,9 +245,9 @@ public:
       \param file the file name of the module to be loaded
       \param bIsPrivate false (default) to allow the module to export its
             symbols to the VM, true otherwise.
-      \return true on success, false on load or dependency resolution errors.
+      \throw Error on compilation/load error.
    */
-   bool loadFile( const String &file, bool bIsPrivate=false );
+   void loadFile( const String &file, bool bIsPrivate=false );
 
    /** Returns true if there are still some pending modules.
       This means that the module list may not be completed in case the runtime

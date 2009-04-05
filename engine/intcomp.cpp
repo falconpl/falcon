@@ -337,19 +337,19 @@ void InteractiveCompiler::loadNow( const String &name, bool isFilename )
    // perform a complete linking
    Runtime rt( m_loader, m_vm );
    rt.hasMainModule( false );
-   if( ! rt.addModule( mod ) )
+   try
    {
-      // we had an error
+      rt.addModule( mod );
+      m_vm->link( &rt );
+   }
+   catch( Error* )
+   {
       m_errors++;
+      mod->decref();
+      throw;
    }
-   else {
-      if ( ! m_vm->link( &rt ) )
-      {
-         m_errors++;
-      }
-   }
-
    mod->decref();
+
 }
 
 }

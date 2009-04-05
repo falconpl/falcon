@@ -54,10 +54,10 @@ Runtime::~Runtime()
 }
 
 
-bool Runtime::addModule( Module *mod, bool isPrivate )
+void Runtime::addModule( Module *mod, bool isPrivate )
 {
    if ( m_modules.find( &mod->name() ) != 0 )
-      return true;  // already in..
+      return;  // already in..
 
    ModuleDep *dep = new ModuleDep( mod, isPrivate );
 
@@ -101,23 +101,21 @@ bool Runtime::addModule( Module *mod, bool isPrivate )
             }
          }
 
-         Module *l;
-         if( depdata->isFile() )
-            l = m_loader->loadFile( *moduleName );
-         else
-            l = m_loader->loadName( *moduleName, mod->name() );
+         Module *l = 0;
+         try {
+            if( depdata->isFile() )
+               l = m_loader->loadFile( *moduleName );
+            else
+               l = m_loader->loadName( *moduleName, mod->name() );
 
-         if ( l == 0 )
-         {
-            delete dep;
-            return false;
+            addModule( l, depdata->isPrivate() );
          }
-
-         if ( ! addModule( l, depdata->isPrivate() ) )
+         catch( Error* )
          {
-            l->decref();
+            if ( l != 0 )
+               l->decref();
             delete dep;
-            return false;
+            throw;
          }
          l->decref();
 
@@ -156,30 +154,38 @@ bool Runtime::addModule( Module *mod, bool isPrivate )
          deps.next();
       }
    }
-
-   return true;
 }
 
-bool Runtime::loadName( const String &name, const String &parent, bool bIsPrivate )
+void Runtime::loadName( const String &name, const String &parent, bool bIsPrivate )
 {
-   Module *l;
-   if ( (l = m_loader->loadName( name, parent )) == 0)
-      return false;
+   Module *l = m_loader->loadName( name, parent );
 
-   bool ret = addModule( l, bIsPrivate );
-   l->decref();
-   return ret;
+   try
+   {
+      addModule( l, bIsPrivate );
+      l->decref();
+   }
+   catch( Error* )
+   {
+      l->decref();
+      throw;
+   }
 }
 
-bool Runtime::loadFile( const String &file, bool bIsPrivate )
+void Runtime::loadFile( const String &file, bool bIsPrivate )
 {
-   Module *l;
-   if ( (l = m_loader->loadFile( file )) == 0)
-      return false;
+   Module *l = m_loader->loadFile( file );
 
-   bool ret = addModule( l, bIsPrivate );
-   l->decref();
-   return ret;
+   try
+   {
+      addModule( l, bIsPrivate );
+      l->decref();
+   }
+   catch( Error* )
+   {
+      l->decref();
+      throw;
+   }
 }
 
 }

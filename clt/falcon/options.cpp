@@ -236,8 +236,7 @@ void FalconOptions::parse( int argc, char **argv, int &script_pos )
 void FalconOptions::version()
 {
    cout << "Falcon compiler and interpreter." << endl;
-   cout << "Version " << endl;
-   cout << FALCON_VERSION " (" FALCON_VERSION_NAME ")" << endl << endl;
+   cout << "Version "  << FALCON_VERSION " (" FALCON_VERSION_NAME ")" << endl << endl;
 }
 
 

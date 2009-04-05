@@ -184,8 +184,6 @@ void VMachine::run()
             // fake an error raisal
             the_error = err;
             m_event = eventRisen;
-            if ( ! err->hasTraceback() )
-               fillErrorContext( err );
          }
       }
       else
@@ -199,8 +197,6 @@ void VMachine::run()
             m_event = eventRisen;
             the_error = err;
             err->origin( e_orig_vm );
-            if ( ! err->hasTraceback() )
-               fillErrorContext( err );
          }
       }
 
@@ -328,10 +324,12 @@ void VMachine::run()
                   // else incapsulate the item in an error.
                   err = new GenericError( ErrorParam( e_uncaught ).origin( e_orig_vm ) );
                   err->raised( m_regB );
-                  fillErrorContext( err );
                }
                the_error = err;
             }
+
+            if( ! the_error->hasTraceback() )
+               fillErrorContext( the_error, m_tryFrame == i_noTryFrame );
 
             // Enter the stack frame that should handle the error (or raise to the top if uncaught)
             while( m_stackBase != 0 && ( m_stackBase > m_tryFrame || m_tryFrame == i_noTryFrame ) )
@@ -347,7 +345,9 @@ void VMachine::run()
                   if ( m_stackBase != 0 )
                   {
                      if ( the_error != 0 )
+                     {
                         throw the_error;
+                     }
                      return;
                   }
                }
