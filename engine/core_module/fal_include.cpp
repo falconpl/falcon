@@ -75,6 +75,7 @@ FALCON_FUNC fal_include( Falcon::VMachine *vm )
 
    // create the loader/runtime pair.
    ModuleLoader cpl( i_path == 0 || i_path->isNil() ? "." : String(*i_path->asString()) );
+   cpl.delayRaise(true);
    Runtime rt( &cpl, vm );
    rt.hasMainModule( false );
 
@@ -84,41 +85,55 @@ FALCON_FUNC fal_include( Falcon::VMachine *vm )
       cpl.sourceEncoding( *i_enc->asString() );
    }
 
-   // load and link
-   // Let raise to filter down to VM.
    bool execAtLink = vm->launchAtLink();
-   rt.loadFile( *i_file->asString(), false );
-   vm->launchAtLink( i_syms == 0 || i_syms->isNil() );
-   LiveModule *lmod = vm->link( &rt );
 
-   // shall we read the symbols?
-   if( lmod != 0 && ( i_syms != 0 && i_syms->isDict() ) )
-   {
-      CoreDict *dict = i_syms->asDict();
+   // load and link
+   try {
+      rt.loadFile( *i_file->asString(), false );
+      vm->launchAtLink( i_syms == 0 || i_syms->isNil() );
+      LiveModule *lmod = vm->link( &rt );
 
-      // traverse the dictionary
-      DictIterator *iter = dict->first();
-      while( iter->isValid() )
+      // shall we read the symbols?
+      if( lmod != 0 && ( i_syms != 0 && i_syms->isDict() ) )
       {
-         // if the key is a string and a coresponding item is found...
-         Item *ival;
-         if ( iter->getCurrentKey().isString() &&
-               ( ival = lmod->findModuleItem( *iter->getCurrentKey().asString() ) ) != 0 )
+         CoreDict *dict = i_syms->asDict();
+
+         // traverse the dictionary
+         DictIterator *iter = dict->first();
+         while( iter->isValid() )
          {
-            // copy it locally
-            iter->getCurrent() = *ival;
-         }
-         else {
-            iter->getCurrent().setNil();
-         }
+            // if the key is a string and a coresponding item is found...
+            Item *ival;
+            if ( iter->getCurrentKey().isString() &&
+                  ( ival = lmod->findModuleItem( *iter->getCurrentKey().asString() ) ) != 0 )
+            {
+               // copy it locally
+               iter->getCurrent() = *ival;
+            }
+            else {
+               iter->getCurrent().setNil();
+            }
 
-         iter->next();
+            iter->next();
+         }
+         delete iter;
       }
-      delete iter;
-   }
 
-   // reset launch status
-   vm->launchAtLink( execAtLink );
+      // reset launch status
+      vm->launchAtLink( execAtLink );
+   }
+   catch(Error* err)
+   {
+      CodeError *ce = new CodeError( ErrorParam( e_loaderror, __LINE__ ).
+         extra( *i_file->asString() ) );
+
+      ce->appendSubError(err);
+      err->decref();
+
+      // reset launch status
+      vm->launchAtLink( execAtLink );
+      throw ce;
+   }
 }
 
 }

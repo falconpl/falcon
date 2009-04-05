@@ -230,7 +230,7 @@ FAL_ERRORDECL( e_fself_outside, 164, "'fself' outside functions or blocks" );
 FAL_ERRORDECL( e_undef_param, 165, "Required parameter not found" );
 
 FAL_ERRORDECL( e_open_file, 200, "Can't open file" );
-FAL_ERRORDECL( e_loaderror, 201, "Load error" );
+FAL_ERRORDECL( e_loaderror, 201, "Error in loading a module" );
 FAL_ERRORDECL( e_nofile, 202, "File not found" );
 FAL_ERRORDECL( e_invformat, 203, "Invalid or damaged Falcon VM file" );
 FAL_ERRORDECL( e_loader_unsupported, 204, "Operation not supported by the module loader" );
