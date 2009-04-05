@@ -332,7 +332,7 @@ Module* AppFalcon::loadInput( ModuleLoader &ml )
       String ioEncoding = getSrcEncoding();
       Transcoder *tcin = TranscoderFactory ( ioEncoding == "" ? "C" : ioEncoding,
                                              new StreamBuffer( new StdInStream), true );
-      mod = ml.loadSource( AddSystemEOL( tcin ) );
+      mod = ml.loadSource( AddSystemEOL( tcin ), "<stdin>", "stdin" );
       delete tcin;
    }
 

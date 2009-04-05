@@ -286,9 +286,10 @@ Module *ModuleLoader::loadName( const String &module_name, const String &parent_
       pos = expName.find( ".", pos + 1 );
    }
 
-   Module *mod =  loadFile( expName, t_none, true );
-   // override the name calculated by loadfile
+
+   Module *mod = loadFile( expName, t_none, true );
    mod->name( nmodName );
+
    return mod;
 }
 
@@ -816,9 +817,12 @@ Module *ModuleLoader::loadSource( const String &file )
    // will throw on error
    std::auto_ptr<Stream> in( openResource( file, t_source ) );
 
+   String modName;
+   getModuleName( file, modName );
+
    Module *mod = 0;
    try {
-      mod = loadSource( in.get() );
+      mod = loadSource( in.get(), file, modName );
       m_forceTemplate = bOldForceFtd;
       in->close();
    }
@@ -829,8 +833,6 @@ Module *ModuleLoader::loadSource( const String &file )
       throw;
    }
 
-   String modName;
-   getModuleName( file, modName );
    mod->name( modName );
    mod->path( file );
 
@@ -866,7 +868,7 @@ Module *ModuleLoader::loadSource( const String &file )
 }
 
 
-Module *ModuleLoader::loadSource( Stream *fin )
+Module *ModuleLoader::loadSource( Stream *fin, const String &path, const String &name )
 {
    Module *module;
    m_compileErrors = 0;
@@ -875,6 +877,8 @@ Module *ModuleLoader::loadSource( Stream *fin )
    Stream *temp_binary;
 
    module = new Module();
+   module->name( name );
+   module->path( path );
 
    m_compiler.reset();
 

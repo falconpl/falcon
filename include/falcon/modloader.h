@@ -408,8 +408,11 @@ public:
        Finally, notice that this function doesn't load the translation
        table.
        \throw Error or appropriate subclass on error.
+       \param in the file from which to load the file.
+       \param uri the complete URI of the source file from which the stream is open,
+       \param modname logical name of the module.
    */
-   virtual Module *loadSource( Stream *in );
+   virtual Module *loadSource( Stream *in, const String &uri, const String &modname );
 
    /** Loads a binary module by realizing a system dynamic file.
 

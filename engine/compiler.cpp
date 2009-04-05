@@ -324,7 +324,8 @@ void Compiler::raiseError( int code, const String &errorp, int line )
    if ( line == 0 )
       line = lexer()->line()-1;
 
-   SyntaxError *error = new SyntaxError( ErrorParam(code, line).origin( e_orig_compiler ));
+   SyntaxError *error = new SyntaxError( ErrorParam(code, line)
+         .origin( e_orig_compiler ) );
    error->extraDescription( errorp );
    error->module( m_module->path() );
 
@@ -339,6 +340,7 @@ void Compiler::raiseError( Error *error )
    }
    else
    {
+      error->module( m_module->path() );
       m_rootError->appendSubError( error );
       error->decref();
    }
