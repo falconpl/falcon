@@ -14,6 +14,7 @@ Falcon (0.9.0.1)
   * fixed: Error reporting from inner compilations (include etc).
   * fixed: Line number of errors in FTDs.
   * fixed: Stream::readString exchanged a success for an error...
+  * fixed: Syntax errors in global statements caused the compiler to crash
   
 Falcon (0.9)
   * major: Removed "sender" from grammar.

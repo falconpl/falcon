@@ -2096,6 +2096,16 @@ global_statement:
 
 global_symbol_list:
    globalized_symbol
+   | error
+      {
+         COMPILER->raiseError( Falcon::e_syn_global );
+      }
+
+   | globalized_symbol error
+      {
+         COMPILER->raiseError( Falcon::e_syn_global );
+      }
+
    | global_symbol_list COMMA globalized_symbol
    | global_symbol_list COMMA error
       {
