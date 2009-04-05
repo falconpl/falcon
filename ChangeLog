@@ -1,3 +1,6 @@
+Feathers (0.9.1)
+  * major: Ported to Falcon 0.9
+  
 Feathers (0.8.14.2)
   * minor: Added pread function to process module.
   

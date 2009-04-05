@@ -142,30 +142,22 @@ void internal_link( ::Falcon::VMachine *vm, Module *mod, CompilerIface *iface )
    Runtime rt( &iface->loader(), vm );
 
    // let's try to link
-   try{
-      rt.addModule( mod, true );
-      vm->link( &rt );
+   rt.addModule( mod, true );
+   vm->link( &rt );
 
-      // ok, the module is up and running.
-      // wrap it
-      Item *mod_class = vm->findWKI( "Module" );
-      fassert( mod_class != 0 );
-      CoreObject *co = mod_class->asClass()->createInstance();
-      // we know the module IS in the VM.
-      co->setUserData( new ModuleCarrier( vm->findModule( mod->name() ) ) );
+   // ok, the module is up and running.
+   // wrap it
+   Item *mod_class = vm->findWKI( "Module" );
+   fassert( mod_class != 0 );
+   CoreObject *co = mod_class->asClass()->createInstance();
+   // we know the module IS in the VM.
+   co->setUserData( new ModuleCarrier( vm->findModule( mod->name() ) ) );
 
-      co->setProperty( "name", mod->name() );
-      co->setProperty( "path", mod->path() );
+   co->setProperty( "name", mod->name() );
+   co->setProperty( "path", mod->path() );
 
-      // return the object
-      vm->retval( co );
-   }
-   catch( Error* e )
-   {
-      // VM should have raised the errors.
-      mod->decref();
-      throw;
-   }
+   // return the object
+   vm->retval( co );
 
    // we can remove our reference
    mod->decref();
@@ -225,14 +217,26 @@ FALCON_FUNC Compiler_compile( ::Falcon::VMachine *vm )
    }
 
    CompilerIface *iface = dyncast<CompilerIface*>( vm->self().asObject() );
-   Module *mod = iface->loader().loadSource( input );
 
-   // if mod is zero, do nothing: vm has already raised the error.
-   if ( mod != 0 )
+   Module *mod = 0;
+
+   try
    {
-      mod->name( *name );
-      mod->path( *name );
+      mod = iface->loader().loadSource( input, *name, *name );
       internal_link( vm, mod, iface );
+      // don't decref, on success internal_link does.
+   }
+   catch(Error* err)
+   {
+      CodeError *ce = new CodeError( ErrorParam( e_loaderror, __LINE__ ).
+         extra( *i_name->asString() ) );
+
+      ce->appendSubError(err);
+      err->decref();
+
+      if ( mod != 0 )
+         mod->decref();
+      throw ce;
    }
 
    if( bDelete )
@@ -270,12 +274,25 @@ FALCON_FUNC Compiler_loadByName( ::Falcon::VMachine *vm )
    if ( vm->getCaller( caller_sym, caller_mod ) )
       modname = caller_mod->name();
 
-   Module *mod = iface->loader().loadName( *i_name->asString(), modname );
-
-   // if mod is zero, do nothing: vm has already raised the error.
-
-   if ( mod != 0 )
+   Module *mod = 0;
+   try
+   {
+      iface->loader().loadName( *i_name->asString(), modname );
       internal_link( vm, mod, iface );
+      // don't decref, on success internal_link does.
+   }
+   catch(Error* err)
+   {
+      CodeError *ce = new CodeError( ErrorParam( e_loaderror, __LINE__ ).
+         extra( *i_name->asString() ) );
+
+      ce->appendSubError(err);
+      err->decref();
+
+      if ( mod != 0 )
+         mod->decref();
+      throw ce;
+   }
 }
 
 /*#
@@ -308,11 +325,24 @@ FALCON_FUNC Compiler_loadModule( ::Falcon::VMachine *vm )
    }
 
    CompilerIface *iface = dyncast<CompilerIface*>( vm->self().asObject() );
-   Module *mod = iface->loader().loadFile( *i_name->asString() );
-
-   // if mod is zero, do nothing: vm has already raised the error.
-   if ( mod != 0 )
+   Module *mod = 0;
+   try {
+      mod = iface->loader().loadFile( *i_name->asString() );
       internal_link( vm, mod, iface );
+      // don't decref, on success internal_link does.
+   }
+   catch(Error* err)
+   {
+      CodeError *ce = new CodeError( ErrorParam( e_loaderror, __LINE__ ).
+         extra( *i_name->asString() ) );
+
+      ce->appendSubError(err);
+      err->decref();
+
+      if ( mod != 0 )
+         mod->decref();
+      throw ce;
+   }
 }
 
 
