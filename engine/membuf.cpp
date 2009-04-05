@@ -70,6 +70,29 @@ void MemBuf::setData( byte *data, uint32 size, bool bOwn )
    m_bOwn = bOwn;
 }
 
+
+
+void MemBuf::resize( uint32 newSize )
+{
+   uint32 nsize = newSize * m_wordSize;
+   m_memory = (byte*) memRealloc( m_memory, nsize );
+
+   if ( m_limit > newSize )
+   {
+      m_limit = newSize;
+      if ( m_position > newSize )
+      {
+         m_position = newSize;
+         if ( m_mark > newSize )
+         {
+            m_mark = newSize;
+         }
+      }
+   }
+
+   m_length = newSize;
+}
+
 bool MemBuf::serialize( Stream *stream, bool bLive ) const
 {
    if ( bLive )

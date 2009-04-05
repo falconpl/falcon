@@ -581,8 +581,6 @@ bool VMachine::liveLink( LiveModule *livemod, t_linkMode mode )
       if( mainItem != 0 )
       {
          callItem( *mainItem, 0 );
-         if ( m_event == eventRisen )
-            return false;
       }
    }
 

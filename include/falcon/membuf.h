@@ -99,6 +99,12 @@ public:
    */
    uint32 size() const { return m_length * m_wordSize; }
 
+   /** Resizes the Memory Buffer
+      Invariants are maintained.
+      \param newSize number of items stored.
+   */
+   void resize( uint32 newSize );
+
    /** Returns the raw buffer data. */
    byte *data() const { return m_memory; }
 

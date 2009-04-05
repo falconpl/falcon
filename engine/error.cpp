@@ -34,7 +34,7 @@ const String &errorDesc( int code )
       #define FLC_MAKE_ERROR_MESSAGE_SELECTOR
       #include <falcon/eng_messages.h>
    }
-   
+
    return Engine::getMessage( msg_unknown_error );
 }
 
@@ -402,7 +402,7 @@ void Error_subErrors_rfrom(CoreObject *instance, void *userData, Item &property,
    Error *error = static_cast<Error *>(userData);
    VMachine* vm = VMachine::getCurrent();
    fassert( vm != 0 );
-   
+
    // scriptize sub-errors
    Error *ptr = error->subError();
    if ( ptr != 0)
@@ -418,10 +418,10 @@ void Error_subErrors_rfrom(CoreObject *instance, void *userData, Item &property,
          ptr = ptr->subError();
       }
       while( ptr != 0 );
-      
+
       property = errorList;
    }
-   else 
+   else
       property.setNil();
 }
 

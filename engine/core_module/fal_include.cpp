@@ -96,12 +96,6 @@ FALCON_FUNC fal_include( Falcon::VMachine *vm )
    {
       CoreDict *dict = i_syms->asDict();
 
-      // get the topmost module.
-      uint32 listSize = rt.moduleVector()->size();
-      ModuleDep *md = rt.moduleVector()->moduleDepAt( listSize-1 );
-      vm->findModule( md->module()->name() );
-      fassert( lmod != 0 );
-
       // traverse the dictionary
       DictIterator *iter = dict->first();
       while( iter->isValid() )
