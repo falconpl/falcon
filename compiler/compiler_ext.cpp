@@ -277,7 +277,7 @@ FALCON_FUNC Compiler_loadByName( ::Falcon::VMachine *vm )
    Module *mod = 0;
    try
    {
-      iface->loader().loadName( *i_name->asString(), modname );
+      mod = iface->loader().loadName( *i_name->asString(), modname );
       internal_link( vm, mod, iface );
       // don't decref, on success internal_link does.
    }
