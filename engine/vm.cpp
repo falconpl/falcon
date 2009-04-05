@@ -2462,8 +2462,12 @@ bool VMachine::findLocalVariable( const String &name, Item &itm ) const
 
                // access the item. We know it's an object or we wouldn't be in this state.
                // also, notice that we change the item itself.
-               if ( !itm.asObjectSafe()->getProperty( sItemName, itm ) )
+               Item prop;
+               if ( !itm.asObjectSafe()->getProperty( sItemName, prop ) )
                   return false;
+
+               prop.methodize( itm );
+               itm = prop;
 
                // set state accordingly to chr.
                goto resetState;

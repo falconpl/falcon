@@ -14,8 +14,15 @@
 
 item = [ "one", "two", "three" ]
 object access
-	prop = [ 0, 1, 2 ]
-	prop1 = [ "one" => 1, "two" => 2, "three" => 3 ]
+   prop = [ 0, 1, 2 ]
+   prop1 = [ "one" => 1, "two" => 2, "three" => 3 ]
+   function mth()
+      return "method"
+   end
+
+   function mth1()
+      return self.prop1["three"]
+   end
 end
 
 if # "item[ access.prop[1] ]" != "two": failure( "Deep indirect 1" )
@@ -24,6 +31,10 @@ if # "access.prop1[ item[2] ]" != 3: failure( "Deep indirect 2" )
 deeparr = [ [1, "one"], [2, "two"], [3, "three"] ]
 if # "deeparr[ access.prop[1] ][1]" != "two": failure( "Deep indirect 3" )
 if # "deeparr[ access.prop1[ item[1] ] ][0]" != 3: failure( "Deep indirect 4" )
+
+// let's try with a method
+if (#"access.mth")() != "method": failure( "Deep indirect on methods" )
+if (#"access.mth1")() != 3: failure("Deep indirect on methods - self" )
 
 success()
 

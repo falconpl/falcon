@@ -328,7 +328,7 @@ void VMachine::run()
                the_error = err;
             }
 
-            if( ! the_error->hasTraceback() )
+            if( the_error != 0 && ! the_error->hasTraceback() )
                fillErrorContext( the_error, m_tryFrame == i_noTryFrame );
 
             // Enter the stack frame that should handle the error (or raise to the top if uncaught)
