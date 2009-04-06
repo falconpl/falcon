@@ -873,24 +873,18 @@ void TimeStamp::toString( String &target ) const
 
 bool TimeStamp::toString( String &target, const String &fmt ) const
 {
-   char fmtBuf[256];
-
-   if( ! fmt.toCString( fmtBuf, 256 )  )
-   {
-      return false;
-   }
-
+   AutoCString cfmt( fmt );
    struct tm theTime;
 
    theTime.tm_sec = m_second;
    theTime.tm_min = m_minute;
    theTime.tm_hour = m_hour;
    theTime.tm_mday = m_day;
-   theTime.tm_mon = m_month;
+   theTime.tm_mon = m_month-1;
    theTime.tm_year = m_year - 1900;
 
    char timeTgt[512];
-   if( strftime( timeTgt, 512, fmtBuf, &theTime) != 0 )
+   if( strftime( timeTgt, 512, cfmt.c_str(), &theTime) != 0 )
    {
       target.bufferize( timeTgt );
 

@@ -17,6 +17,7 @@ Falcon (0.9.0.1)
   * fixed: Syntax errors in global statements caused the compiler to crash.
   * fixed: Indirect operator didn't methodize callable properties.
   * fixed: Buffered streams returned an error on EOF instead of 0.
+  * fixed: Fixed date "%m" field in to-string.
   
 Falcon (0.9)
   * major: Removed "sender" from grammar.
