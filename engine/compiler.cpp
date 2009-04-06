@@ -70,9 +70,6 @@ Compiler::Compiler( Module *mod, Stream* in ):
    m_serviceVM( 0 ),
    m_serviceLoader( 0 )
 {
-   // Initializing now prevents adding predefined constants to the module.
-   init();
-
    m_module = mod;
    m_module->engineVersion( FALCON_VERSION_NUM );
 
@@ -106,7 +103,6 @@ Compiler::Compiler():
    m_serviceVM( 0 ),
    m_serviceLoader( 0 )
 {
-   init();
    addPredefs();
 }
 
@@ -157,13 +153,6 @@ void Compiler::reset()
       clear();
    }
 
-   // reset contants
-   /*MapIterator iter = m_constants.begin();
-   while( iter.hasCurrent() ) {
-      delete *(Value **) iter.currentValue();
-      iter.next();
-   }*/
-   //m_constants.clear();
    m_namespaces.clear();
 
    m_alias.clear();
@@ -171,9 +160,6 @@ void Compiler::reset()
    m_func_ctx.clear();
    m_contextSet.clear();
    m_loops.clear();
-   m_statementVals.clear();
-
-   //addPredefs();
 
    m_errors = 0;
    m_enumId = 0;
