@@ -1,0 +1,58 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 38c
+* Category: messages
+* Subcategory:
+* Short: Slots + messages
+* Description:
+*   Checks if functions and VMSlot are completely interoperable.
+* [/Description]
+*
+****************************************************************************/
+
+function handler1( z, y )
+   global h1c
+   // check for unordered parameters too
+   h1c = [z, y]
+end
+
+function handler2( value1, value2 )
+   global h2c
+   h2c = [value1, value2]
+end
+
+object hobj
+   function on_msg( value1, value2 )
+      global hmth
+      hmth = [value1, value2]
+   end
+end
+
+// Test1: see if a call passes through all
+msg = VMSlot( "msg" )
+msg.subscribe( handler1 )
+msg.subscribe( handler2 )
+msg.subscribe( hobj )
+
+// Test1 -- Check broadcast on the message name
+broadcast( "msg", 'first', 'second' )
+if h1c[0] != 'first' or h1c[1] != 'second': failure( "Content of handler1 - 3" )
+if h2c[0] != 'first' or h2c[1] != 'second': failure( "Content of handler2 - 3" )
+if hmth[0] != 'first' or hmth[1] != 'second': failure( "Content of handler3 - 3" )
+
+// Test2: check for unsubscription
+h1c = nil
+h2c = nil
+hmth = nil
+msg.unsubscribe( handler1 )
+unsubscribe( "msg", handler2 )
+// allow the hobj to stay to see we did the call.
+broadcast( "msg", 'first', 'second' )
+if hmth.len() != 2: failure( "Element still subscribed not called after unsub" )
+if h1c != nil: failure( "Unsubscribed handler1 called" )
+if h2c != nil: failure( "Unsubscribed handler2 called" )
+
+success()
+
+/* End of file */

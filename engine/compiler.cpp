@@ -70,6 +70,8 @@ Compiler::Compiler( Module *mod, Stream* in ):
    m_serviceVM( 0 ),
    m_serviceLoader( 0 )
 {
+   init();
+
    m_module = mod;
    m_module->engineVersion( FALCON_VERSION_NUM );
 
