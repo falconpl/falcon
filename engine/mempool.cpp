@@ -156,6 +156,10 @@ void MemPool::unsafeArea()
 
 void MemPool::registerVM( VMachine *vm )
 {
+   // already registered
+   if( vm->m_nextVM != 0 || vm->m_prevVM )
+      return;
+
    vm->m_idlePrev = vm->m_idleNext = 0;
    vm->incref();
 
