@@ -47,6 +47,8 @@ InteractiveCompiler::InteractiveCompiler( ModuleLoader *l, VMachine *vm ):
 
    // set incremental mode for the lexer.
    m_tempLine = 1;
+
+   init();
 }
 
 InteractiveCompiler::~InteractiveCompiler()
