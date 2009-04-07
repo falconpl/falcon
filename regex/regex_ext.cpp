@@ -514,16 +514,16 @@ FALCON_FUNC Regex_split( ::Falcon::VMachine *vm )
    CoreArray* ret = new CoreArray;
    uint32 maxLen = src->length();
    uint32 from = 0;
-   do   
+   do
    {
-      ret->append( new CoreString( *src, from, data->m_ovector[0] ) );   
+      ret->append( new CoreString( *src, from, data->m_ovector[0] ) );
       if( bgt )
          ret->append( new CoreString( *src, data->m_ovector[0], data->m_ovector[1] ) );
-      
+
       from = data->m_ovector[1];
       internal_regex_match( data, src, from );
       count--;
-   } 
+   }
    while( data->m_matches > 0 && count > 0 && from < (int32) maxLen );
 
    if( from < maxLen )
@@ -708,46 +708,52 @@ FALCON_FUNC Regex_replace( ::Falcon::VMachine *vm )
 }
 
 
-/*#
-   @method replaceAll Regex
-   @brief Replaces all the possible matches of this regular expression in a target with a given string.
-   @param string String where to scan for the pattern.
-   @param replacer The string to replace the matched pattern with.
-   @optparam start Optional initial scan position.
-   @optparam maxCount optional maximum replacements.
-   @return The string with the matching content replaced.
+void s_expand( RegexCarrier *data, const String &orig, String &expanded )
+{
+   uint32 pos = 0;
 
-   This method replaces all the occurrences of the pattern in string with the
-   replacer parameter. If a change can be performed, a modified instance
-   of string is returned, else nil is returned. An if an optional start parameter
-   is given, the search and replacement is performed beginning at the given
-   point, and if a maxCount is given, only maxCount replacements, at maximum,
-   will be performed.
-*/
-FALCON_FUNC Regex_replaceAll( ::Falcon::VMachine *vm )
+   // use length method as actual size will change
+   while( pos < expanded.length() )
+   {
+      if ( expanded.getCharAt( pos ) == '\\' )
+      {
+         pos++;
+         if ( pos != expanded.length() )
+         {
+            // convert \\ into \
+            if( expanded.getCharAt( pos ) == '\\' )
+            {
+               expanded.remove( pos, 1 );
+               continue;
+            }
+
+            int64 val;
+            if ( expanded.parseInteger( val, pos ) &&  data->m_matched > val && val < 10 )
+            {
+               // is a valid number?
+               expand->change( pos-1, pos+1, orig.subString( data->m_ovector[val*2], data->m_ovector[val2+1] ) );
+               pos+= data->m_ovector[val2+1] - data->m_ovector[val*2];
+            }
+         }
+      }
+      else
+         pos++;
+   }
+}
+
+static void s_replaceall( bool bExpand )
 {
    CoreObject *self = vm->self().asObject();
    RegexCarrier *data = ( RegexCarrier *) self->getUserData();
 
    Item *source_i = vm->param(0);
    Item *dest_i = vm->param(1);
-   Item *max_i = vm->param(2);
 
-   if( source_i == 0 || ! source_i->isString() || dest_i == 0 || ! dest_i->isString() ||
-      ( max_i != 0 && ! max_i->isOrdinal() )
-   )
+   if( source_i == 0 || ! source_i->isString() || dest_i == 0 || ! dest_i->isString() )
    {
       vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "S, S, [I]" ) ) );
+         extra( "S, S" ) ) );
       return;
-   }
-
-   uint32 max = 0xFFFFFFFF;
-   if ( max_i != 0 )
-   {
-      max = (int) max_i->forceInteger();
-      if ( max <= 1 )
-         max = 0xFFFFFFFF;
    }
 
    String *source = source_i->asString();
@@ -764,12 +770,21 @@ FALCON_FUNC Regex_replaceAll( ::Falcon::VMachine *vm )
             clone = new CoreString( *source );
             source = clone;
          }
-         source->change( data->m_ovector[0], data->m_ovector[1], *dest );
+
+         if (　bExpand )
+         {
+            String expanded( dest );
+            s_expand( data, expanded );
+            destlen = expanded.length();
+            source->change( data->m_ovector[0], data->m_ovector[1], expanded );
+         }
+         else
+            source->change( data->m_ovector[0], data->m_ovector[1], *dest );
+
          from = data->m_ovector[0] + destLen;
          // as we're going to exit.
       }
-      max--;
-   } while( data->m_matches > 0 && max > 0 && from < (int32) source->length() );
+   } while( data->m_matches > 0 && from < (int32) source->length() );
 
 
    if ( data->m_matches < 0 && data->m_matches != PCRE_ERROR_NOMATCH )
@@ -786,6 +801,41 @@ FALCON_FUNC Regex_replaceAll( ::Falcon::VMachine *vm )
       vm->retval( clone );
    else
       vm->retval( *source_i );
+}
+
+
+/*#
+   @method replaceAll Regex
+   @brief Replaces all the possible matches of this regular expression in a target with a given string.
+   @param string String where to scan for the pattern.
+   @param replacer The string to replace the matched pattern with.
+   @return The string with the matching content replaced.
+
+   This method replaces all the occurrences of the pattern in string with the
+   replacer parameter. If a change can be performed, a modified instance
+   of string is returned, else nil is returned. An if an optional start parameter
+   is given, the search and replacement is performed beginning at the given
+   point, and if a maxCount is given, only maxCount replacements, at maximum,
+   will be performed.
+*/
+FALCON_FUNC Regex_replaceAll( ::Falcon::VMachine *vm )
+{
+   s_replaceall( vm, false );
+}
+
+/*#
+   @method subst Regex
+   @brief Replaces all the matches expanding placeholders.
+   @param string String where to scan for the pattern.
+   @param replacer The string to replace the matched pattern with.
+   @return The string with the matching content replaced.
+
+   This method works exacly like @a Regex.replaceAll, but it expands backslash
+   placeholders with captured expressions.
+*/
+FALCON_FUNC Regex_susbst( ::Falcon::VMachine *vm )
+{
+   s_replaceall( vm, true );
 }
 
 
