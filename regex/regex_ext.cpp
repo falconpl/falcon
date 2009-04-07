@@ -727,8 +727,8 @@ void s_expand( RegexCarrier *data, const String &orig, String &expanded )
                continue;
             }
 
-            int64 val;
-            if ( expanded.parseInt( val, pos ) &&  data->m_matches > val && val < 10 )
+            uint32 val = expanded.getCharAt(pos) - 0x30;
+            if ( data->m_matches > val && val < 10 )
             {
                // is a valid number?
                expanded.change( pos-1, pos+1, orig.subString( data->m_ovector[val*2], data->m_ovector[val*2+1] ) );
@@ -833,7 +833,7 @@ FALCON_FUNC Regex_replaceAll( ::Falcon::VMachine *vm )
    This method works exacly like @a Regex.replaceAll, but it expands backslash
    placeholders with captured expressions.
 */
-FALCON_FUNC Regex_susbst( ::Falcon::VMachine *vm )
+FALCON_FUNC Regex_subst( ::Falcon::VMachine *vm )
 {
    s_replaceall( vm, true );
 }

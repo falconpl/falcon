@@ -1,6 +1,7 @@
 Feathers (0.9.1)
   * major: Ported to Falcon 0.9
   * minor: Added split() method to Regex.
+  * minor: Added subst() method to Regex (to be thougly tested).
   
   
 Feathers (0.8.14.2)
