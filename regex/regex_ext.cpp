@@ -501,33 +501,33 @@ FALCON_FUNC Regex_split( ::Falcon::VMachine *vm )
          .extra( errVal ) ) );
    }
 
-   uint32 count = (uint32) data->m_matches;
+   uint32 count = 0xFFFFFFFF;
    if ( count_i != 0 && ! count_i->isNil() )
    {
       uint32 ncount = (uint32) count_i->forceInteger();
-      if( ncount != 0 && ncount < count )
+      if( ncount != 0 )
          count = ncount;
    }
 
    bool bgt = gettoken_i != 0 && gettoken_i->isTrue();
 
-   CoreArray* ret = new CoreArray( bgt ? data->m_matches : data->m_matches * 2 - 1 );
-
-   ret->append( new CoreString( *src, 0, data->m_ovector[0] ) );
-
-   for( uint32 i = 0; i < (count-1) * 2; i += 2 )
+   CoreArray* ret = new CoreArray;
+   uint32 maxLen = src->length();
+   uint32 from = 0;
+   do   
    {
+      ret->append( new CoreString( *src, from, data->m_ovector[0] ) );   
       if( bgt )
-         ret->append( new CoreString( *src, data->m_ovector[i], data->m_ovector[i+1] ) );
+         ret->append( new CoreString( *src, data->m_ovector[0], data->m_ovector[1] ) );
+      
+      from = data->m_ovector[1];
+      internal_regex_match( data, src, from );
+      count--;
+   } 
+   while( data->m_matches > 0 && count > 0 && from < (int32) maxLen );
 
-      ret->append( new CoreString( *src, data->m_ovector[i+1], data->m_ovector[i+2] ) );
-   }
-
-   if( bgt )
-      ret->append( new CoreString( *src, data->m_ovector[count*2-2], data->m_ovector[count*2-1] ) );
-
-   if( data->m_ovector[count*2-1] < (int) src->length() )
-      ret->append( new CoreString( *src, data->m_ovector[count*2-1] ) );
+   if( from < maxLen )
+      ret->append( new CoreString( *src, from ) );
 
    vm->retval( ret );
 }
