@@ -57,10 +57,10 @@ if disk != "C": failure( "Disk or server spec - 5" )
 if path != "/a/path": failure( "Path spec - 5" )
 
 complete = fileNameMerge( disk, path )
-if complete != "/C:/a/path/": failure( "Mouting back - 5" )
+if complete != "/C:/a/path": failure( "Mouting back - 5" )
 
 complete = fileNameMerge( nil, path )
-if complete != "/a/path/": failure( "Mouting back - 6" )
+if complete != "/a/path": failure( "Mouting back - 6" )
 
 success()
 

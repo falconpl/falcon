@@ -22,6 +22,7 @@ Falcon (0.9.1)
   * fixed: Loading of deep paths (due to 0.9)
   * fixed: Some short-to-wide chars transformation code on buffered strings
            (latent from 0.8).
+  * fixed: Path class was working a bit randomly.
   
 Falcon (0.9)
   * major: Removed "sender" from grammar.

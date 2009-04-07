@@ -49,32 +49,30 @@ class URI;
 
 class FALCON_DYN_CLASS Path: public GCAlloc
 {
-   String m_path;
+   mutable String m_path;
+
+   String m_device;
+   String m_location;
+   String m_file;
+   String m_extension;
+
+   mutable bool m_bValid;
+   mutable bool m_bReady;
 
    // resStart is always 1
-   uint32 m_resEnd;
-   uint32 m_pathStart;
-   uint32 m_pathEnd;
-   uint32 m_fileStart;
-   uint32 m_fileEnd;
-   uint32 m_extStart;
-   bool m_bValid;
+
    URI* m_owner;
 
-   /** Analyze the path, splitting its constituents.
-      \param isWin true to perform also \\ -> / conversion while parsing.
-      \return false if the path is not valid.
-   */
-   bool analyze( bool isWin );
-
+   bool analyze();
+   void compose() const;
 public:
 
    /** Empty constructor. */
    Path();
-   
+
    /** Path-in-uri constructor */
    Path( URI *owner );
-   
+
    /** Path constructor from strings. */
    Path( const String &path ):
       m_owner(0)
@@ -115,7 +113,7 @@ public:
    void setFromWinFormat( const String &p );
 
    /** Retrurn the path in RFC 3986 format. */
-   const String &get() const { return m_path; }
+   const String &get() const { compose(); return m_path; }
 
    /** Returns a path in MS-Windows format. */
    String getWinFormat() const { String fmt; getWinFormat( fmt ); return fmt; }
@@ -193,9 +191,6 @@ public:
    /** Sets the location part in RFC3986 format. */
    void setLocation( const String &loc );
 
-   /** Sets the location part in MS-Windows format. */
-   void setWinLocation( const String &loc );
-
    /** Sets the file part. */
    void setFile( const String &file );
 
@@ -258,14 +253,14 @@ public:
       \param ext the file extension.
       \param bWin true if the location may be in MS-Windows format (backslashes).
    */
-   void join( const String &res, const String &loc, const String &name, const String &ext, bool bWin = false );
-   
+   void join( const String &res, const String &loc, const String &name, const String &ext );
+
    /** Add a path element at the end of a path.
       This extens the path adding some path element after the currently
       existing location portion. Leading "/" in npath, or trailing "/" in this
       path are ignored, and a traling "/" is forcefully added if there is a file
       element. In example, adding p1/p2 or /p1/p2 through this method:
-      
+
       /C:file.txt  => /C:/p1/p2/file.txt
       /path/ => /path/p1/p2
       /path/file.txt => /path/p1/p2/file.txt
