@@ -443,6 +443,96 @@ FALCON_FUNC Regex_find( ::Falcon::VMachine *vm )
    }
 }
 
+/*#
+   @method split Regex
+   @brief Splits a string at match points.
+   @param string The string to be split.
+   @optparam count  Maximum number of split instances.
+   @optparam getoken Return also the found token.
+   @return An array containing the string slices, or nil.
+
+   If the pattern matches the string, the part before the match
+   is isolated. The operation is iteratively performed until the
+   match can't be found anymore; at that point, the last string is
+   returned.
+
+   If @b gettoken parameter is given and true, the found match is
+   inserted between the isolated strings.
+
+   If @b count is given, a maximum number of matches is performed,
+   then the array of split entities is returned. Notice that the
+   this doesn't count tokens returned if the @b gettoken
+   option is specified.
+
+   If the pattern doesn't matches, this method returns nil.
+*/
+FALCON_FUNC Regex_split( ::Falcon::VMachine *vm )
+{
+   CoreObject *self = vm->self().asObject();
+   RegexCarrier *data = ( RegexCarrier *) self->getUserData();
+
+   Item *source_i = vm->param(0);
+   Item *count_i = vm->param(1);
+   Item *gettoken_i = vm->param(2);
+
+   if( source_i == 0 || ! source_i->isString()
+      || ( count_i != 0 && ! ( count_i->isOrdinal() || count_i->isNil() ) )
+      )
+   {
+      vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "S, [N], [B]" ) ) );
+      return;
+   }
+
+   // Fast path: if we don't match, get away now.
+   String* src = source_i->asString();
+   internal_regex_match( data, src, 0 );
+
+   if ( data->m_matches == PCRE_ERROR_NOMATCH ){
+      vm->retnil();
+      return;
+   }
+   else if( data->m_matches < 0 )
+   {
+      String errVal = FAL_STR( re_msg_internal );
+      errVal.writeNumber( (int64) data->m_matches );
+      vm->raiseModError( new RegexError( ErrorParam( FALRE_ERR_ERRMATCH, __LINE__ )
+         .desc( FAL_STR( re_msg_errmatch ) )
+         .extra( errVal ) ) );
+   }
+
+   uint32 count = (uint32) data->m_matches;
+   if ( count_i != 0 && ! count_i->isNil() )
+   {
+      uint32 ncount = (uint32) count_i->forceInteger();
+      if( ncount != 0 && ncount < count )
+         count = ncount;
+   }
+
+   bool bgt = gettoken_i != 0 && gettoken_i->isTrue();
+
+   CoreArray* ret = new CoreArray( bgt ? data->m_matches : data->m_matches * 2 - 1 );
+
+   ret->append( new CoreString( *src, 0, data->m_ovector[0] ) );
+
+   for( uint32 i = 0; i < (count-1) * 2; i += 2 )
+   {
+      if( bgt )
+         ret->append( new CoreString( *src, data->m_ovector[i], data->m_ovector[i+1] ) );
+
+      ret->append( new CoreString( *src, data->m_ovector[i+1], data->m_ovector[i+2] ) );
+   }
+
+   if( bgt )
+      ret->append( new CoreString( *src, data->m_ovector[count*2-2], data->m_ovector[count*2-1] ) );
+
+   if( data->m_ovector[count*2-1] < (int) src->length() )
+      ret->append( new CoreString( *src, data->m_ovector[count*2-1] ) );
+
+   vm->retval( ret );
+}
+
+
 static void internal_findAll( Falcon::VMachine *vm, bool overlapped )
 {
    CoreObject *self = vm->self().asObject();

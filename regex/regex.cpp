@@ -148,6 +148,8 @@ FALCON_MODULE_DECL
       addParam("string");
    self->addClassMethod( regex_c, "grab", Falcon::Ext::Regex_grab ).asSymbol()->
       addParam("string");
+   self->addClassMethod( regex_c, "split", Falcon::Ext::Regex_split ).asSymbol()->
+      addParam("string")->addParam("count")->addParam("gettoken");
    self->addClassMethod( regex_c, "find", Falcon::Ext::Regex_find ).asSymbol()->
       addParam("string")->addParam("start");
    self->addClassMethod( regex_c, "findAll", Falcon::Ext::Regex_findAll ).asSymbol()->
