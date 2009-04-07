@@ -46,7 +46,7 @@ Path::Path( URI *owner ):
 void Path::copy( const Path &other )
 {
    if ( m_owner != 0 ) m_owner->m_encoded.size(0);
-   
+
    m_path = other.m_path;
    m_bValid = other.m_bValid;
 
@@ -56,7 +56,7 @@ void Path::copy( const Path &other )
    m_fileStart = other.m_fileStart;
    m_fileEnd = other.m_fileEnd;
    m_extStart = other.m_extStart;
-   
+
 }
 
 void Path::set( const String &p )
@@ -155,10 +155,10 @@ bool Path::analyze( bool isWin )
 
       ++p;
    }
-   
+
    // remove trailing "/" from pure (non absolute) paths
-   if ( m_fileStart == String::npos && m_extStart == String::npos 
-         && m_path.length() > 1 && m_path.getCharAt( m_path.length()-1) == '//' )
+   if ( m_fileStart == String::npos && m_extStart == String::npos
+         && m_path.length() > 1 && m_path.getCharAt( m_path.length()-1) == '/' )
       m_path.remove( m_path.length()-1, 1 );
    m_bValid = true;
    return true;
@@ -308,7 +308,7 @@ void Path::extendLocation( const String &npath )
       setLocation( np + npath );
    else
       setLocation( np + "/" + npath );
-   
+
    analyze( false );
 }
 
