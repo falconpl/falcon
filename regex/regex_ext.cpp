@@ -524,7 +524,7 @@ FALCON_FUNC Regex_split( ::Falcon::VMachine *vm )
       internal_regex_match( data, src, from );
       count--;
    }
-   while( data->m_matches > 0 && count > 0 && from < (int32) maxLen );
+   while( data->m_matches > 0 && count > 0 && from < maxLen );
 
    if( from < maxLen )
       ret->append( new CoreString( *src, from ) );
@@ -720,7 +720,7 @@ void s_expand( RegexCarrier *data, const String &orig, String &expanded )
          pos++;
          if ( pos != expanded.length() )
          {
-            // convert \\ into \
+            // convert \\ into \;
             if( expanded.getCharAt( pos ) == '\\' )
             {
                expanded.remove( pos, 1 );
@@ -728,11 +728,11 @@ void s_expand( RegexCarrier *data, const String &orig, String &expanded )
             }
 
             int64 val;
-            if ( expanded.parseInteger( val, pos ) &&  data->m_matched > val && val < 10 )
+            if ( expanded.parseInt( val, pos ) &&  data->m_matches > val && val < 10 )
             {
                // is a valid number?
-               expand->change( pos-1, pos+1, orig.subString( data->m_ovector[val*2], data->m_ovector[val2+1] ) );
-               pos+= data->m_ovector[val2+1] - data->m_ovector[val*2];
+               expanded.change( pos-1, pos+1, orig.subString( data->m_ovector[val*2], data->m_ovector[val*2+1] ) );
+               pos+= data->m_ovector[val*2+1] - data->m_ovector[val*2];
             }
          }
       }
@@ -741,7 +741,7 @@ void s_expand( RegexCarrier *data, const String &orig, String &expanded )
    }
 }
 
-static void s_replaceall( bool bExpand )
+static void s_replaceall( VMachine* vm, bool bExpand )
 {
    CoreObject *self = vm->self().asObject();
    RegexCarrier *data = ( RegexCarrier *) self->getUserData();
@@ -771,11 +771,11 @@ static void s_replaceall( bool bExpand )
             source = clone;
          }
 
-         if (　bExpand )
+         if( bExpand )
          {
-            String expanded( dest );
-            s_expand( data, expanded );
-            destlen = expanded.length();
+            String expanded( *dest );
+            s_expand( data, *source, expanded );
+            destLen = expanded.length();
             source->change( data->m_ovector[0], data->m_ovector[1], expanded );
          }
          else

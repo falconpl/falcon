@@ -157,9 +157,11 @@ FALCON_MODULE_DECL
    self->addClassMethod( regex_c, "findAllOverlapped", Falcon::Ext::Regex_findAllOverlapped ).asSymbol()->
       addParam("string")->addParam("start")->addParam("maxcount");
    self->addClassMethod( regex_c, "replace", Falcon::Ext::Regex_replace ).asSymbol()->
-      addParam("string")->addParam("replacer")->addParam("start");
+      addParam("string")->addParam("replacer");
    self->addClassMethod( regex_c, "replaceAll", Falcon::Ext::Regex_replaceAll ).asSymbol()->
-      addParam("string")->addParam("replacer")->addParam("start")->addParam("maxCount");
+      addParam("string")->addParam("replacer");
+   self->addClassMethod( regex_c, "subst", Falcon::Ext::Regex_subst ).asSymbol()->
+      addParam("string")->addParam("replacer");
    self->addClassMethod( regex_c, "capturedCount", Falcon::Ext::Regex_capturedCount );
    self->addClassMethod( regex_c, "captured", Falcon::Ext::Regex_captured ).asSymbol()->
       addParam("count");

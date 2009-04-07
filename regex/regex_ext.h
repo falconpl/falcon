@@ -48,6 +48,7 @@ FALCON_FUNC Regex_findAll( ::Falcon::VMachine *vm );
 FALCON_FUNC Regex_findAllOverlapped( ::Falcon::VMachine *vm );
 FALCON_FUNC Regex_replace( ::Falcon::VMachine *vm );
 FALCON_FUNC Regex_replaceAll( ::Falcon::VMachine *vm );
+FALCON_FUNC Regex_subst( ::Falcon::VMachine *vm );
 FALCON_FUNC Regex_capturedCount( ::Falcon::VMachine *vm );
 FALCON_FUNC Regex_captured( ::Falcon::VMachine *vm );
 FALCON_FUNC Regex_compare( ::Falcon::VMachine *vm );
