@@ -65,7 +65,6 @@ bool Path::analyze()
 
    if ( len == 0 )
    {
-
       m_bValid = true;
       m_bReady = true;
       return true;
@@ -270,6 +269,7 @@ void Path::setResource( const String &res )
 void Path::extendLocation( const String &npath )
 {
    if ( m_owner ) m_owner->m_encoded.size(0);
+   m_bReady = false;
 
    if ( m_location.size() == 0 )
       m_location = npath;
