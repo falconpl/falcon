@@ -71,6 +71,7 @@ bool Path::analyze()
    }
 
    // a single element should be considered as the file.
+   m_bReady = false;
    bool bColon = false;
    uint32 p = 0;
    while( p < len )

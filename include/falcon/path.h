@@ -75,6 +75,8 @@ public:
 
    /** Path constructor from strings. */
    Path( const String &path ):
+      m_bValid( true ),
+      m_bReady( false ),
       m_owner(0)
    {
       set( path );
@@ -84,6 +86,8 @@ public:
       This constiuctor allows to select between MS-Windows path format or Falcon path format.
    */
    Path( const String &path, bool winFormat ):
+      m_bValid( true ),
+      m_bReady( false ),
       m_owner(0)
    {
       if ( winFormat )
@@ -96,6 +100,8 @@ public:
       Copies the other path as-is.
    */
    Path( const Path &other ):
+      m_bValid( true ),
+      m_bReady( false ),
       m_owner(0)
    {
       copy( other );
