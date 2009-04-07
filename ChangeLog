@@ -1,4 +1,4 @@
-Falcon (0.9.0.1)
+Falcon (0.9.1)
   * fixed: String-blocks closed with " alone on a line werent' recognized.
   * fixed: Octal numbers weren't properly scanned.
   * added: Support for binary numbers (0b..., "\B...") and octal with 0c...
@@ -18,6 +18,10 @@ Falcon (0.9.0.1)
   * fixed: Indirect operator didn't methodize callable properties.
   * fixed: Buffered streams returned an error on EOF instead of 0.
   * fixed: Fixed date "%m" field in to-string.
+  * fixed: Small memory leak in compiler re-initialization.
+  * fixed: Loading of deep paths (due to 0.9)
+  * fixed: Some short-to-wide chars transformation code on buffered strings
+           (latent from 0.8).
   
 Falcon (0.9)
   * major: Removed "sender" from grammar.

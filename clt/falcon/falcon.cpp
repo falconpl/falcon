@@ -513,9 +513,9 @@ void AppFalcon::prepareLoader( ModuleLoader &ml )
    if ( m_options.input != "" && m_options.input != "-" )
    {
       URI in_uri( m_options.input );
-      in_uri.pathElement().setFile("");
+      in_uri.pathElement().setFilename("");
       // empty path? -- add current directory (may be removed from defaults)
-      if ( in_uri.get() != "" )
+      if ( in_uri.get() == "" )
          modLoader->addSearchPath ( "." );
       else
          modLoader->addSearchPath ( in_uri.get() );

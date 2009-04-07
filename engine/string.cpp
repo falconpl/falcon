@@ -733,7 +733,7 @@ void Buffer::insert( String *str, uint32 pos, uint32 len, const String *source )
    uint32 finalSize = destCharSize * (strLen - len + sourceLen );
 
    // should we re-allocate?
-   if( finalSize > str->allocated() )
+   if( finalSize > str->allocated() || destCharSize > strCharSize )
    {
 
       uint32 finalAlloc = ((finalSize / FALCON_STRING_ALLOCATION_BLOCK) + 1) *

@@ -425,10 +425,8 @@ Module *ModuleLoader::loadFile( const String &module_path, t_filetype type, bool
       while ( (! bFound) && path_elem != 0 )
       {
          String *pathp = (String *) path_elem->data();
-         if( oldPath != "" )
-            origUri.pathElement().setLocation( oldPath + "/" + *pathp );
-         else
-            origUri.pathElement().setLocation( *pathp );
+         origUri.pathElement().setLocation( *pathp );
+         origUri.pathElement().extendLocation( oldPath  );
 
          // If we originally had an extension, we must not add it.
          if ( bHadExtension )

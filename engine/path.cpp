@@ -143,8 +143,10 @@ bool Path::analyze( bool isWin )
       }
       else if ( chr == '.' )
       {
+         if ( m_pathStart == String::npos )
+            m_pathStart = p;
          // skip initial "."s, as they don't make an extension.
-         if ( m_fileStart < p && p > 0  && m_path.getCharAt( p - 1 ) != '.' )
+         else if ( m_fileStart < p && p > 0  && m_path.getCharAt( p - 1 ) != '.' )
          {
             m_fileEnd = p;
             m_extStart = p + 1;
@@ -153,7 +155,11 @@ bool Path::analyze( bool isWin )
 
       ++p;
    }
-
+   
+   // remove trailing "/" from pure (non absolute) paths
+   if ( m_fileStart == String::npos && m_extStart == String::npos 
+         && m_path.length() > 1 && m_path.getCharAt( m_path.length()-1) == '//' )
+      m_path.remove( m_path.length()-1, 1 );
    m_bValid = true;
    return true;
 }
@@ -289,6 +295,20 @@ void Path::setResource( const String &res )
          return;
    }
 
+   analyze( false );
+}
+
+
+void Path::extendLocation( const String &npath )
+{
+   String np = getLocation();
+   if ( np.size() == 0 )
+      setLocation( npath );
+   else if( np.getCharAt( np.length() - 1 ) == '/' )
+      setLocation( np + npath );
+   else
+      setLocation( np + "/" + npath );
+   
    analyze( false );
 }
 

@@ -259,6 +259,18 @@ public:
       \param bWin true if the location may be in MS-Windows format (backslashes).
    */
    void join( const String &res, const String &loc, const String &name, const String &ext, bool bWin = false );
+   
+   /** Add a path element at the end of a path.
+      This extens the path adding some path element after the currently
+      existing location portion. Leading "/" in npath, or trailing "/" in this
+      path are ignored, and a traling "/" is forcefully added if there is a file
+      element. In example, adding p1/p2 or /p1/p2 through this method:
+      
+      /C:file.txt  => /C:/p1/p2/file.txt
+      /path/ => /path/p1/p2
+      /path/file.txt => /path/p1/p2/file.txt
+   */
+   void extendLocation( const String &npath );
 
    Path & operator =( const Path &other ) { copy( other ); return *this; }
    bool operator ==( const Path &other ) const { return other.m_path == m_path; }
