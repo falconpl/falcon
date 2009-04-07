@@ -21,14 +21,12 @@ namespace Falcon
 
 Path::Path():
    m_bValid( true ),
-   m_bReady( true ),
    m_owner(0)
 {
 }
 
 Path::Path( URI *owner ):
    m_bValid( true ),
-   m_bReady( true ),
    m_owner( owner )
 {
 }
@@ -39,7 +37,6 @@ void Path::copy( const Path &other )
 
    m_path = other.m_path;
    m_bValid = other.m_bValid;
-   m_bReady = other.m_bReady;
 
    m_device = other.m_device;
    m_location = other.m_location;
@@ -47,17 +44,9 @@ void Path::copy( const Path &other )
    m_extension = other.m_extension;
 }
 
-void Path::set( const String &p )
+bool Path::set( const String &path )
 {
-   m_path = p;
-   analyze();
-}
-
-bool Path::analyze()
-{
-   if ( m_owner ) m_owner->m_encoded.size(0);
-
-   uint32 len = m_path.length();
+   uint32 len = path.length();
 
    m_device.size(0);
    m_location.size(0);
@@ -67,17 +56,17 @@ bool Path::analyze()
    if ( len == 0 )
    {
       m_bValid = true;
-      m_bReady = true;
+      m_path = "";
+      if ( m_owner ) m_owner->m_encoded.size(0);
       return true;
    }
 
    // a single element should be considered as the file.
-   m_bReady = false;
    bool bColon = false;
    uint32 p = 0;
    while( p < len )
    {
-      uint32 chr = m_path.getCharAt( p );
+      uint32 chr = path.getCharAt( p );
       if ( chr == '\\' )
       {
          chr = '/';
@@ -89,6 +78,7 @@ bool Path::analyze()
             if ( bColon )
             {
                m_bValid = false;
+               if ( m_owner ) m_owner->m_encoded.size(0);
                return false;
             }
 
@@ -130,16 +120,13 @@ bool Path::analyze()
    }
 
    m_bValid = true;
-   m_bReady = false; // force to recalc at first occasion.
-   m_path.size(0);   // no need to keep memory allocated.
+   compose();
+
    return true;
 }
 
-void Path::compose() const
+void Path::compose()
 {
-   if ( m_bReady )
-      return;
-
    m_path.size(0);
 
    if ( m_device.size() > 0 )
@@ -160,13 +147,11 @@ void Path::compose() const
          m_path += "." + m_extension;
    }
 
-   m_bReady = true;
+   if ( m_owner ) m_owner->m_encoded.size(0);
 }
 
 void Path::getWinFormat( String &str ) const
 {
-   // be sure the path is ready
-   compose();
    if ( m_path.size() == 0 )
    {
       str.size(0);
@@ -255,17 +240,13 @@ void Path::setResource( const String &res )
       if ( m_device.find( ":" ) != String::npos || m_device.find( "/" ) != String::npos )
          m_bValid = false;
 
-      if ( m_owner ) m_owner->m_encoded.size(0);
-      m_bReady = false;
+      compose();
    }
 }
 
 
 void Path::extendLocation( const String &npath )
 {
-   if ( m_owner ) m_owner->m_encoded.size(0);
-   m_bReady = false;
-
    if ( m_location.size() == 0 )
       m_location = npath;
    else
@@ -281,6 +262,8 @@ void Path::extendLocation( const String &npath )
    // remove trailing "/".
    if ( npath.size() > 0 && m_location.getCharAt( m_location.length() - 1 ) == '/' )
       m_location.remove( m_location.length() - 1, 1 );
+
+   compose();
 }
 
 void Path::setLocation( const String &loc )
@@ -311,13 +294,13 @@ void Path::setLocation( const String &loc )
             pos1 = m_location.find( "\\", pos1 );
          }
 
-         if ( m_owner ) m_owner->m_encoded.size(0);
-         m_bReady = false;
+         // remove trailing "/"
+         if ( m_location.size() > 1 && m_location.getCharAt( m_location.length() - 1 ) == '/' )
+            m_location.remove( m_location.length() - 1, 1 );
+
+         compose();
       }
 
-      // remove trailing "/"
-      if ( m_location.size() > 1 && m_location.getCharAt( m_location.length() - 1 ) == '/' )
-         m_location.remove( m_location.length() - 1, 1 );
    }
 }
 
@@ -333,8 +316,7 @@ void Path::setFile( const String &file )
       if ( m_file != file )
       {
          m_file = file;
-         if ( m_owner ) m_owner->m_encoded.size(0);
-         m_bReady = false;
+         compose();
       }
    }
 }
@@ -353,7 +335,7 @@ void Path::setExtension( const String &ext )
       {
          m_extension = ext;
          if ( m_owner ) m_owner->m_encoded.size(0);
-         m_bReady = false;
+         compose();
       }
    }
 }
@@ -379,7 +361,7 @@ void Path::setFilename( const String &fname )
       }
 
       if ( m_owner ) m_owner->m_encoded.size(0);
-      m_bReady = false;
+      compose();
    }
 }
 
@@ -453,7 +435,7 @@ void Path::join( const String &loc, const String &name, const String &ext )
       }
    }
 
-   analyze();
+   set( m_path );
 }
 
 
@@ -486,7 +468,7 @@ void Path::join( const String &res, const String &loc, const String &name, const
       }
    }
 
-   analyze();
+   set(m_path);
 }
 
 }

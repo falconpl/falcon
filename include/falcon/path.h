@@ -49,22 +49,20 @@ class URI;
 
 class FALCON_DYN_CLASS Path: public GCAlloc
 {
-   mutable String m_path;
+   String m_path;
 
    String m_device;
    String m_location;
    String m_file;
    String m_extension;
 
-   mutable bool m_bValid;
-   mutable bool m_bReady;
+   bool m_bValid;
 
    // resStart is always 1
 
    URI* m_owner;
 
-   bool analyze();
-   void compose() const;
+   void compose();
 public:
 
    /** Empty constructor. */
@@ -76,7 +74,6 @@ public:
    /** Path constructor from strings. */
    Path( const String &path ):
       m_bValid( true ),
-      m_bReady( false ),
       m_owner(0)
    {
       set( path );
@@ -87,7 +84,6 @@ public:
    */
    Path( const String &path, bool winFormat ):
       m_bValid( true ),
-      m_bReady( false ),
       m_owner(0)
    {
       if ( winFormat )
@@ -101,7 +97,6 @@ public:
    */
    Path( const Path &other ):
       m_bValid( true ),
-      m_bReady( false ),
       m_owner(0)
    {
       copy( other );
@@ -113,13 +108,13 @@ public:
    void copy( const Path &other );
 
    /** Set a path from RFC 3986 format. */
-   void set( const String &p );
+   bool set( const String &p );
 
    /** Set a path having MS-Windows format */
    void setFromWinFormat( const String &p );
 
    /** Retrurn the path in RFC 3986 format. */
-   const String &get() const { compose(); return m_path; }
+   const String &get() const { return m_path; }
 
    /** Returns a path in MS-Windows format. */
    String getWinFormat() const { String fmt; getWinFormat( fmt ); return fmt; }
@@ -274,9 +269,9 @@ public:
    void extendLocation( const String &npath );
 
    Path & operator =( const Path &other ) { copy( other ); return *this; }
-   bool operator ==( const Path &other ) const { compose(); return other.m_path == m_path; }
-   bool operator !=( const Path &other ) const { compose(); return other.m_path != m_path; }
-   bool operator <( const Path &other ) const { compose(); return m_path < other.m_path; }
+   bool operator ==( const Path &other ) const { return other.m_path == m_path; }
+   bool operator !=( const Path &other ) const { return other.m_path != m_path; }
+   bool operator <( const Path &other ) const { return m_path < other.m_path; }
 
 };
 
