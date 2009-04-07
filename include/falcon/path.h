@@ -274,9 +274,9 @@ public:
    void extendLocation( const String &npath );
 
    Path & operator =( const Path &other ) { copy( other ); return *this; }
-   bool operator ==( const Path &other ) const { return other.m_path == m_path; }
-   bool operator !=( const Path &other ) const { return other.m_path != m_path; }
-   bool operator <( const Path &other ) const { return m_path < other.m_path; }
+   bool operator ==( const Path &other ) const { compose(); return other.m_path == m_path; }
+   bool operator !=( const Path &other ) const { compose(); return other.m_path != m_path; }
+   bool operator <( const Path &other ) const { compose(); return m_path < other.m_path; }
 
 };
 

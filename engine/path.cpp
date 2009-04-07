@@ -49,13 +49,14 @@ void Path::copy( const Path &other )
 
 void Path::set( const String &p )
 {
-   if ( m_owner ) m_owner->m_encoded.size(0);
    m_path = p;
    analyze();
 }
 
 bool Path::analyze()
 {
+   if ( m_owner ) m_owner->m_encoded.size(0);
+
    uint32 len = m_path.length();
 
    m_device.size(0);
@@ -134,18 +135,11 @@ bool Path::analyze()
    return true;
 }
 
-void Path::setFromWinFormat( const String &p )
-{
-   if ( m_owner ) m_owner->m_encoded.size(0);
-   m_path = p;
-   analyze();
-}
-
-
 void Path::compose() const
 {
    if ( m_bReady )
       return;
+
    m_path.size(0);
 
    if ( m_device.size() > 0 )
