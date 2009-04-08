@@ -130,11 +130,12 @@ FALCON_FUNC  GC_perform( ::Falcon::VMachine *vm )
    - GC.ADJ_STRICT: Aggressive adjustment strategy, forcing active collection whenever
                     the memory grows.
    - GC.ADJ_LOOSE: Permissive adjustment strategy, forcing active collection only
-                   when memory grows propmptly.
+                   when memory grows promptly.
    - GC.ADJ_SMOOTH_FAST: Adjustment following the memory allocation status with some
-                         delay and a smooth asintotic curve (fast adaption).
+                         delay and a smooth asymptotic curve (fast adaption).
    - GC.ADJ_SMOOTH_SLOW: Adjustment following the memory allocation status with some
-                         delay and a smooth asintotic curve (slow adaption).
+                         delay and a smooth asymptotic curve (slow adaption).
+
 */
 
 FALCON_FUNC  GC_adjust( ::Falcon::VMachine *vm )

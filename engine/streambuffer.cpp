@@ -300,6 +300,12 @@ int32 StreamBuffer::writeAvailable( int32 msecs_timeout, const Sys::SystemData *
 int64 StreamBuffer::seek( int64 pos, e_whence whence )
 {
    // TODO: optimize and avoid re-buffering if we're still in the buffer.
+   if( whence == ew_cur )
+   {
+      pos = m_filePos + m_bufPos + pos;
+      whence = ew_begin;
+   }
+
    flush();
    m_bufLen = m_bufPos = 0;
 
