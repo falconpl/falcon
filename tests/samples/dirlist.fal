@@ -29,12 +29,12 @@ try
    stats = FileStat()
    while elem != nil
       fname = dir + "/" + elem
-      if stats.readStats( fname )
-         print( elem, "(", stats.type, ")", ":", stats.size, " ",  stats.mtime.toString() )
-         if stats.type = FILE_TYPE_LINK
-            printl( " ---> ", dirReadLink( fname )  )
+      if stats.read( fname )
+         >> @ "($stats.ftype) $(elem:40) $(stats.size:r10) " + stats.mtime.toString()
+         if stats.ftype == stats.LINK
+            > " -> ", dirReadLink( fname )
          else
-            printl()
+            >
          end
       else
          printl( "Failure getting stats for: ", dir + "/" + elem  )

@@ -70,7 +70,7 @@ FileStatObject::FileStatObject( const FileStatObject &other ):
    ReflectObject( other.generator(), new InnerData( *other.getInnerData() ) )
 {
 }
-   
+
 FileStatObject::~FileStatObject()
 {
    delete getInnerData();
@@ -98,7 +98,7 @@ FileStatObject::InnerData::InnerData( const InnerData &other ):
    m_fsdata( other.m_fsdata )
 {
    fassert( m_cache_atime.asObjectSafe() );
-      
+
    other.m_cache_mtime.clone( m_cache_mtime );
    other.m_cache_atime.clone( m_cache_atime );
    other.m_cache_ctime.clone( m_cache_ctime );
@@ -117,7 +117,8 @@ void FileStats_ctime_rfrom(CoreObject *instance, void *user_data, Item &property
    // is read only
    if ( id->m_fsdata.m_ctime != 0 )
    {
-      if ( id->m_cache_ctime.isNil() ) {
+      if ( id->m_cache_ctime.isNil() )
+      {
          VMachine* vm = VMachine::getCurrent();
          fassert( vm != 0 );
          Item *ts_class = vm->findWKI( "TimeStamp" );
@@ -153,7 +154,7 @@ void FileStats_mtime_rfrom(CoreObject *instance, void *user_data, Item &property
          id->m_cache_mtime = ts_class->asClass()->createInstance( new TimeStamp( *id->m_fsdata.m_mtime) );
       }
       else {
-         TimeStamp *ts = dyncast<TimeStamp *>( id->m_cache_ctime.asObject()->getFalconData());
+         TimeStamp *ts = dyncast<TimeStamp *>( id->m_cache_mtime.asObject()->getFalconData());
          *ts = *id->m_fsdata.m_mtime;
       }
    }
@@ -179,7 +180,7 @@ void FileStats_atime_rfrom(CoreObject *instance, void *user_data, Item &property
          fassert( ts_class != 0 );
          id->m_cache_atime = ts_class->asClass()->createInstance( new TimeStamp( *id->m_fsdata.m_atime) );
       }
-      else 
+      else
       {
          TimeStamp *ts = dyncast<TimeStamp *>( id->m_cache_atime.asObject()->getFalconData());
          *ts = *id->m_fsdata.m_atime;
@@ -199,8 +200,8 @@ void FileStats_atime_rfrom(CoreObject *instance, void *user_data, Item &property
    @raise IoError if @b path is given but not found.
    @brief Class holding informations on system files.
 
-   The FileStat class holds informations on a single directory entry.  
-   
+   The FileStat class holds informations on a single directory entry.
+
    It is possible to pass a @b path parameter, in which case, if the given file is found,
    the contents of this class is filled with the stat data from the required file, otherwise
    an IoError is raised. The @a FileStat.read method would search for the required file
@@ -244,7 +245,7 @@ FALCON_FUNC FileStat_init( ::Falcon::VMachine *vm )
    {
       // would throw on param error...
       FileStat_read( vm );
-      
+
       // we must raise from the constructor, if we didn't found the file.
       if( ! vm->regA().isTrue() )
       {
@@ -252,7 +253,7 @@ FALCON_FUNC FileStat_init( ::Falcon::VMachine *vm )
             .origin( e_orig_runtime )
             .extra( *vm->param(0)->asString() ) );
       }
-      
+
    }
 }
 
@@ -277,7 +278,7 @@ FALCON_FUNC FileStat_read ( ::Falcon::VMachine *vm )
          .extra("S") ) );
       return;
    }
-   
+
    FileStatObject *self = dyncast<FileStatObject*>(vm->self().asObject());
    FileStatObject::InnerData *id = self->getInnerData();
    vm->regA().setBoolean( Sys::fal_stats( *name->asString(), id->m_fsdata ) );

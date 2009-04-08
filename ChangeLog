@@ -23,6 +23,7 @@ Falcon (0.9.1)
   * fixed: Some short-to-wide chars transformation code on buffered strings
            (latent from 0.8).
   * fixed: Path class was working a bit randomly.
+  * fixed: FileStat class wasn't correctly caching the mtime member.
   
 Falcon (0.9)
   * major: Removed "sender" from grammar.
