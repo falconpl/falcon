@@ -23,7 +23,7 @@
 #include <falcon/setup.h>
 #include <falcon/service.h>
 #include <falcon/error.h>
-#include <falcon/userdata.h>
+#include <falcon/crobject.h>
 
 extern "C" {
    #include <SDL.h>
@@ -39,15 +39,15 @@ extern "C" {
 namespace Falcon
 {
 
-class CoreObject;
-
 /** Base for general SDL exported carrier.
 
 */
-class SDLSurfaceCarrier: public UserData
+class SDLSurfaceCarrier: public CRObject
 {
 public:
-   SDLSurfaceCarrier() {}
+   SDLSurfaceCarrier( const CoreClass* cls ):
+      CRObject( cls )
+   {}
 
    virtual ~SDLSurfaceCarrier() {};
    virtual SDL_Surface* surface() const=0;

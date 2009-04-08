@@ -39,10 +39,8 @@
 */
 
 
-FALCON_MODULE_DECL( const Falcon::EngineData &data )
+FALCON_MODULE_DECL
 {
-   // setup DLL engine common data
-   data.set();
 
    Falcon::Module *self = new Falcon::Module();
    self->name ( "sdlimage" );
@@ -51,7 +49,7 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    self->version ( VERSION_MAJOR, VERSION_MINOR, VERSION_REVISION );
 
    // first of all, we need to declare our dependency from the main SDL module.
-   self->addDepend( "fsdl" );
+   self->addDepend( "sdl" );
 
    //=================================================================
    // Encapsulation SDLIMAGE

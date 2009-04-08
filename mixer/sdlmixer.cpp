@@ -37,11 +37,8 @@ extern "C"
 */
 
 
-FALCON_MODULE_DECL( const Falcon::EngineData &data )
+FALCON_MODULE_DECL
 {
-   // setup DLL engine common data
-   data.set();
-
    Falcon::Module *self = new Falcon::Module();
    self->name( "sdlmixer" );
    self->language( "en_US" );
@@ -49,7 +46,7 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    self->version( VERSION_MAJOR, VERSION_MINOR, VERSION_REVISION );
 
    // first of all, we need to declare our dependency from the main SDL module.
-   self->addDepend( "fsdl" );
+   self->addDepend( "sdl" );
 
    //=================================================================
    // Encapsulation SDLMIXER
@@ -205,7 +202,6 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
 
    Falcon::Symbol *c_sdlmix_chunk = self->addClass( "MixChunk", Falcon::Ext::MixChunk_init );
    c_sdlmix_chunk->setWKS( true );
-   c_sdlmix_chunk->getClassDef()->setObjectManager( &Falcon::core_falcon_data_manager );
    self->addClassMethod( c_sdlmix_chunk, "Volume", Falcon::Ext::MixChunk_Volume ).asSymbol()->
       addParam("volume");
    self->addClassMethod( c_sdlmix_chunk, "Play", Falcon::Ext::MixChunk_Play ).asSymbol()->
@@ -224,7 +220,6 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    */
    Falcon::Symbol *c_sdlmix_music = self->addClass( "MixMusic", Falcon::Ext::MixMusic_init );
    c_sdlmix_music->setWKS( true );
-   c_sdlmix_music->getClassDef()->setObjectManager( &Falcon::core_falcon_data_manager );
 
    self->addClassMethod( c_sdlmix_music, "GetType", Falcon::Ext::MixMusic_GetType );
    self->addClassMethod( c_sdlmix_music, "Play", Falcon::Ext::MixMusic_Play ).asSymbol()->

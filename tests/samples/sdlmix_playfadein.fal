@@ -29,7 +29,8 @@ try
    > "Fadein: 6 secs - Notice that the music will stop after 12 seconds"
    count = 0
    stdin = stdIn()
-   loop count++
+   loop
+      count++
       >> @"[$(count)]\r"
       if stdin.readAvailable(0.010): break
    end

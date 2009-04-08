@@ -52,7 +52,7 @@ FALCON_FUNC mix_Compiled_Version( VMachine *vm )
    SDL_version compile_version;
    MIX_VERSION(&compile_version);
 
-   CoreArray *arr = new CoreArray( vm, 3 );
+   CoreArray *arr = new CoreArray( 3 );
    arr->append( (int64) compile_version.major );
    arr->append( (int64) compile_version.minor );
    arr->append( (int64) compile_version.patch );
@@ -73,7 +73,7 @@ FALCON_FUNC mix_Linked_Version( VMachine *vm )
    const SDL_version *link_version;
    link_version = Mix_Linked_Version();
 
-   CoreArray *arr = new CoreArray( vm, 3 );
+   CoreArray *arr = new CoreArray( 3 );
    arr->append( (int64) link_version->major );
    arr->append( (int64) link_version->minor );
    arr->append( (int64) link_version->patch );
@@ -182,7 +182,7 @@ FALCON_FUNC mix_QuerySpec( VMachine *vm )
       return;
    }
 
-   CoreArray *retval = new CoreArray( vm, 3 );
+   CoreArray *retval = new CoreArray( 3 );
    retval->append( (int64) frequency );
    retval->append( (int64) format );
    retval->append( (int64) channels );

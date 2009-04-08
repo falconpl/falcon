@@ -3,6 +3,9 @@
 #
 # CMake configuration file for module SDL_image
 ####################################################################
+
+FALCON_DEFINE_MODULE( SDLIMAGE sdlimage )
+
 if(COMMAND cmake_policy)
    cmake_policy(SET CMP0003 OLD)
 endif(COMMAND cmake_policy)
@@ -17,17 +20,17 @@ INCLUDE_DIRECTORIES(BEFORE "${FALCON_INC_PATH}")
 LINK_DIRECTORIES(BEFORE "${FALCON_LIB_PATH}")
 
 # Target
-ADD_LIBRARY( sdlimage MODULE
+ADD_LIBRARY( ${SDLIMAGE} MODULE
    sdlimage.cpp
    sdlimage_ext.cpp
    sdlimage_mod.cpp
 )
 
 #Link
-TARGET_LINK_LIBRARIES(sdlimage falcon_engine ${SDLIMAGE_LIBRARY} ${SDL_LIBRARY} )
+TARGET_LINK_LIBRARIES(${SDLIMAGE} falcon_engine ${SDLIMAGE_LIBRARY} ${SDL_LIBRARY} )
 
-SET_TARGET_PROPERTIES(sdlimage
+SET_TARGET_PROPERTIES(${SDLIMAGE}
    PROPERTIES PREFIX "")
 
 #Install
-FALCON_LINK_MODULE( sdlimage )
+FALCON_LINK_MODULE( ${SDLIMAGE} )

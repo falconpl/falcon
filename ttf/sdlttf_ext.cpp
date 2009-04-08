@@ -145,7 +145,7 @@ FALCON_FUNC ttf_Compiled_Version( VMachine *vm )
    SDL_version compile_version;
    TTF_VERSION(&compile_version);
 
-   CoreArray *arr = new CoreArray( vm, 3 );
+   CoreArray *arr = new CoreArray( 3 );
    arr->append( (int64) compile_version.major );
    arr->append( (int64) compile_version.minor );
    arr->append( (int64) compile_version.patch );
@@ -166,7 +166,7 @@ FALCON_FUNC ttf_Linked_Version( VMachine *vm )
    const SDL_version *link_version;
    link_version = TTF_Linked_Version();
 
-   CoreArray *arr = new CoreArray( vm, 3 );
+   CoreArray *arr = new CoreArray( 3 );
    arr->append( (int64) link_version->major );
    arr->append( (int64) link_version->minor );
    arr->append( (int64) link_version->patch );
@@ -369,7 +369,7 @@ FALCON_FUNC ttf_FontFaceFamilyName( VMachine *vm )
 {
    ::TTF_Font *font = static_cast<TTFFontCarrier *>(vm->self().asObject()->getUserData())->m_font;
    const char *family = ::TTF_FontFaceFamilyName( font );
-   vm->retval( new GarbageString( vm, family ) );
+   vm->retval( new CoreString( family ) );
 }
 
 /*#
@@ -382,7 +382,7 @@ FALCON_FUNC ttf_FontFaceStyleName( VMachine *vm )
    ::TTF_Font *font = static_cast<TTFFontCarrier *>(vm->self().asObject()->getUserData())->m_font;
    const char *style = ::TTF_FontFaceStyleName( font );
    if ( style != 0 )
-      vm->retval( new GarbageString( vm, style ) );
+      vm->retval( new CoreString( style ) );
    else
       vm->retnil();
 }

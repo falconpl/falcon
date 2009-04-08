@@ -39,8 +39,7 @@ CoreObject *SDLService::createSurfaceInstance( VMachine *vm, ::SDL_Surface *surf
 {
    Item *cls = vm->findWKI( "SDLSurface" );
    fassert( cls != 0 );
-   CoreObject *obj = cls->asClass()->createInstance();
-   obj->setUserData( new Ext::SDLSurfaceCarrier_impl( surface ) );
+   CoreObject *obj = cls->asClass()->createInstance(surface);
    return obj;
 }
 

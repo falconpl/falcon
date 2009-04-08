@@ -20,13 +20,13 @@
    package.
 */
 
-load fsdl
+load sdl
 
 try
    a = SDL.InitAuto( SDL.INIT_VIDEO )
    vi = SDL.GetVideoInfo()
    > "Video informations:"
-   inspectShort( vi )
+   inspect( vi )
    > "==============================="
    > "Using driver: ", SDL.VideoDriverName()
    >> "Available modes: "

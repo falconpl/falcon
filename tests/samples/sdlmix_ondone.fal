@@ -44,7 +44,8 @@ try
    
    count = 0
    stdin = stdIn()
-   loop count++
+   loop
+      count++
       >> @"[$(count)]\r"
       if stdin.readAvailable(0.1): break
       if count %80 == 0: MIX.FadeOutChannel( 0, 2.0 )

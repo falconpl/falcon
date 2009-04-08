@@ -23,6 +23,7 @@
 #include <falcon/lineardict.h>
 #include <falcon/autocstring.h>
 #include <falcon/membuf.h>
+#include <falcon/garbagelock.h>
 
 #include "sdl_ext.h"
 #include "sdl_mod.h"
@@ -804,7 +805,7 @@ void internal_dispatchEvent( VMachine *vm, SDL_Event &evt )
          {
             GarbageLock *lock = (GarbageLock *) evt.user.data1;
             if ( lock != 0 )
-               vm->memPool()->unlock( lock );
+               vm->unlock( lock );
             return;
          }
 
@@ -816,33 +817,33 @@ void internal_dispatchEvent( VMachine *vm, SDL_Event &evt )
          else {
             GarbageLock *lock = (GarbageLock *) evt.user.data1;
             vm->pushParameter( lock->item() );
-            vm->memPool()->unlock( lock );
+            vm->unlock( lock );
             params = 2;
          }
       break;
-         
+
       case FALCON_SDL_CHANNEL_DONE_EVENT:
          // we must anyhow unlock the garbage data if it's not zero
          if ( ! self->getMethod( "onChannelFinished", method ) )
          {
             return;
          }
-         
+
          // channel number is in the data2 pointer
          vm->pushParameter( (int64) evt.user.code );
          params = 1;
          break;
-      
+
       case FALCON_SDL_MUSIC_DONE_EVENT:
          // we must anyhow unlock the garbage data if it's not zero
          if ( ! self->getMethod( "onMusicFinished", method ) )
          {
             return;
          }
-         
+
          params = 0;
          break;
-         
+
       default:
          params = 0;
    }
@@ -920,7 +921,7 @@ bool SDLEventHandler_WaitEvent_next( VMachine *vm )
    if ( res == 1 )
    {
       vm->returnHandler( 0 );  // do not call us anymore
-      
+
       internal_dispatchEvent( vm, evt );
       // we're done -- but we have still a call pending
       return true;
@@ -993,7 +994,7 @@ FALCON_FUNC SDLEventHandler_PushUserEvent( VMachine *vm )
 
    if( i_user_data != 0 )
    {
-      evt.user.data1 = lock = vm->memPool()->lock( *i_user_data );
+      evt.user.data1 = lock = vm->lock( *i_user_data );
    }
    else
       evt.user.data1 = 0;
@@ -1002,7 +1003,7 @@ FALCON_FUNC SDLEventHandler_PushUserEvent( VMachine *vm )
       vm->retval( true );
    else {
       if ( lock != 0 )
-         vm->memPool()->unlock( lock );
+         vm->unlock( lock );
       vm->retval( false );
    }
 }
@@ -1075,7 +1076,7 @@ FALCON_FUNC sdl_GetKeyState( VMachine *vm )
    int size;
 
    data = ::SDL_GetKeyState( &size );
-   vm->retval( new MemBuf_1( vm, data, size, false ) );
+   vm->retval( new MemBuf_1( data, size, false ) );
 }
 
 /*#
@@ -1137,7 +1138,7 @@ FALCON_FUNC sdl_GetKeyName( VMachine *vm )
    }
 
    vm->retval(
-      new GarbageString( vm, ::SDL_GetKeyName( (SDLKey) i_key->forceInteger() ) ) );
+      new CoreString( ::SDL_GetKeyName( (SDLKey) i_key->forceInteger() ) ) );
 }
 
 /*#
@@ -1357,11 +1358,10 @@ FALCON_FUNC sdl_JoystickUpdate( VMachine *vm )
 */
 FALCON_FUNC SDLMouseState_Refresh( VMachine *vm )
 {
-   sdl_mouse_state mstate;
+   sdl_mouse_state &mstate = *(sdl_mouse_state*) vm->self().asObject()->getUserData();
 
    mstate.state = ::SDL_GetMouseState( &mstate.x, &mstate.y );
    ::SDL_GetRelativeMouseState( &mstate.xrel, &mstate.yrel );
-   vm->self().asObject()->reflectFrom( &mstate );
 }
 
 /*#

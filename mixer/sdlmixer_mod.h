@@ -35,7 +35,8 @@ extern "C" {
 namespace Falcon {
 namespace Ext {
 
-class MixChunkCarrier: public FalconData {
+class MixChunkCarrier: public FalconData
+{
 private:
    Mix_Chunk* m_chunk;
    int32 *m_counter;
@@ -45,13 +46,14 @@ public:
    MixChunkCarrier( const MixChunkCarrier &other );
 
    virtual ~MixChunkCarrier();
-   virtual void gcMark( VMachine* );
+   virtual void gcMark( uint32 );
    virtual FalconData* clone() const;
 
    Mix_Chunk* chunk() const { return m_chunk; }
 };
 
-class MixMusicCarrier: public FalconData {
+class MixMusicCarrier: public FalconData
+{
 private:
    Mix_Music* m_music;
    int32 *m_counter;
@@ -61,7 +63,7 @@ public:
    MixMusicCarrier( const MixMusicCarrier &other );
 
    virtual ~MixMusicCarrier();
-   virtual void gcMark( VMachine* );
+   virtual void gcMark( uint32 );
    virtual FalconData* clone() const;
 
    Mix_Music* music() const { return m_music; }

@@ -37,7 +37,8 @@ try
    > "Success. Press enter to stop"
    count = 0
    stdin = stdIn()
-   loop count++
+   loop
+      count++
       >> @"[$(count)]\r"
       if stdin.readAvailable(0.010): break
    end

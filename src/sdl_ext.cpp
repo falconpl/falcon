@@ -46,7 +46,7 @@ namespace Ext {
    should do the following:
 
    @code
-      load fsdl
+      load sdl
 
       SDL.Init( /\* parameters *\/ )
    @endcode
@@ -272,7 +272,7 @@ FALCON_FUNC sdl_VideoDriverName( ::Falcon::VMachine *vm )
       return;
    }
 
-   vm->retval( new GarbageString( vm, name ) );
+   vm->retval( new CoreString( name ) );
 }
 
 /*#
@@ -330,11 +330,11 @@ FALCON_FUNC sdl_ListModes( ::Falcon::VMachine *vm )
       vm->retval( (int64) -1 );
    }
    else {
-      CoreArray *array = new CoreArray( vm );
+      CoreArray *array = new CoreArray;
       int pos = 0;
       while( list[pos] != 0 )
       {
-         CoreArray *res = new CoreArray( vm, 2 );
+         CoreArray *res = new CoreArray( 2 );
          array->append( res );
          res->append( (int64) list[pos]->w );
          res->append( (int64) list[pos]->h );
@@ -459,9 +459,8 @@ FALCON_FUNC sdl_SetVideoMode( ::Falcon::VMachine *vm )
 
    Item *cls = vm->findWKI( "SDLScreen" );
    fassert( cls != 0 );
-   CoreObject *obj = cls->asClass()->createInstance();
-   obj->setUserData( new SDLSurfaceCarrier_impl( screen ) );
-
+   CoreObject *obj = cls->asClass()->createInstance( screen );
+   SDL_FreeSurface( screen );
    vm->retval( obj );
 }
 
@@ -508,9 +507,8 @@ FALCON_FUNC sdl_LoadBMP( ::Falcon::VMachine *vm )
 
    Item *cls = vm->findWKI( "SDLSurface" );
    fassert( cls != 0 );
-   CoreObject *obj = cls->asClass()->createInstance();
-   obj->setUserData( new SDLSurfaceCarrier_impl( surf ) );
-
+   CoreObject *obj = cls->asClass()->createInstance( surf );
+   SDL_FreeSurface( surf );
    vm->retval( obj );
 }
 
@@ -535,9 +533,8 @@ FALCON_FUNC sdl_GetVideoSurface( ::Falcon::VMachine *vm )
 
    Item *cls = vm->findWKI( "SDLScreen" );
    fassert( cls != 0 );
-   CoreObject *obj = cls->asClass()->createInstance();
-   obj->setUserData( new SDLSurfaceCarrier_impl( surf ) );
-
+   CoreObject *obj = cls->asClass()->createInstance( surf );
+   SDL_FreeSurface( surf );
    vm->retval( obj );
 }
 
@@ -601,12 +598,12 @@ FALCON_FUNC sdl_GetGammaRamp ( ::Falcon::VMachine *vm )
       return;
    }
 
-   CoreArray *arr = i_arr == 0 ? new CoreArray( vm, 3 ) : i_arr->asArray();
+   CoreArray *arr = i_arr == 0 ? new CoreArray( 3 ) : i_arr->asArray();
    arr->length(0);
 
-   MemBuf *red_buf = new MemBuf_2( vm, 256 );
-   MemBuf *green_buf = new MemBuf_2( vm, 256 );
-   MemBuf *blue_buf = new MemBuf_2( vm, 256 );
+   MemBuf *red_buf = new MemBuf_2( 256 );
+   MemBuf *green_buf = new MemBuf_2( 256 );
+   MemBuf *blue_buf = new MemBuf_2( 256 );
 
    int res = ::SDL_GetGammaRamp(
       (Uint16 *) red_buf->data(),
@@ -834,14 +831,12 @@ static void sdl_CreateRGBSurface_internal ( ::Falcon::VMachine *vm, MemBuf *mb, 
 
    Item *cls = vm->findWKI( "SDLSurface" );
    fassert( cls != 0 );
-   CoreObject *obj = cls->asClass()->createInstance();
+   CoreObject *obj = cls->asClass()->createInstance( surf );
    // if we have a membuf, store it in the right property so it stays alive
    if ( mb != 0 )
    {
-      obj->setProperty( "pixels", mb );
+      dyncast<SDLSurfaceCarrier_impl* >(obj)->setPixelCache( mb );
    }
-   // set the user data AFTER, so reflectivity starts after.
-   obj->setUserData( new SDLSurfaceCarrier_impl( surf ) );
 
    vm->retval( obj );
 }
@@ -940,7 +935,7 @@ FALCON_FUNC sdl_CreateRGBSurfaceFrom ( ::Falcon::VMachine *vm )
 /*#
    @class SDLRect
    @brief Storage for rectangular coordinates.
-   
+
    This class stores rectangular coordinates.
    Actually, this class is just a "contract" or "interface",
    as every function accepting an SDLRect will just accept any
@@ -982,11 +977,12 @@ FALCON_FUNC SDLRect_init( ::Falcon::VMachine *vm )
       return;
    }
 
-   CoreObject *self = vm->self().asObject();
-   self->setProperty( "x", i_x == 0 ? 0 : i_x->forceInteger() );
-   self->setProperty( "y", i_y == 0 ? 0 : i_y->forceInteger() );
-   self->setProperty( "w", i_width == 0 ? 0 : i_width->forceInteger() );
-   self->setProperty( "h", i_height == 0 ? 0 : i_height->forceInteger() );
+   SDL_Rect* r = (SDL_Rect*) memAlloc( sizeof( SDL_Rect ) );
+   vm->self().asObject()->setUserData(r);
+   r->x = i_x->forceInteger();
+   r->y = i_y->forceInteger();
+   r->w = i_width->forceInteger();
+   r->h = i_height->forceInteger();
 }
 
 //==================================================================
@@ -1015,15 +1011,12 @@ FALCON_FUNC SDLColor_init( VMachine *vm )
          extra( "N,N,N" ) ) );
       return;
    }
-   
-   CoreObject *self = vm->self().asObject();
-   // the SDL Manager has created the item for us.
-   SDL_Color* color = static_cast<SDL_Color*>( self->getUserData() );
 
-   // so we just init.
-   color->r = (unsigned int) i_r->forceInteger();
-   color->g = (unsigned int) i_g->forceInteger();
-   color->b = (unsigned int) i_b->forceInteger();
+   SDL_Color* c = (SDL_Color*) memAlloc( sizeof( SDL_Color ) );
+   vm->self().asObject()->setUserData( c );
+   c->r = i_r->forceInteger();
+   c->g = i_g->forceInteger();
+   c->b = i_b->forceInteger();
 }
 
 

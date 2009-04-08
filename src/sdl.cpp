@@ -21,7 +21,6 @@
 #include <falcon/setup.h>
 #include <falcon/enginedata.h>
 #include <falcon/module.h>
-#include <falcon/userdata.h>
 #include <sdl_service.h>
 
 #include "version.h"
@@ -56,15 +55,11 @@
 
 
 Falcon::SDLService the_service;
-Falcon::Ext::SDLColorManager m_sdlcolor_manager;
 
-FALCON_MODULE_DECL( const Falcon::EngineData &data )
+FALCON_MODULE_DECL
 {
-   // setup DLL engine common data
-   data.set();
-
    Falcon::Module *self = new Falcon::Module();
-   self->name( "fsdl" );
+   self->name( "sdl" );
    self->language( "en_US" );
    self->engineVersion( FALCON_VERSION_NUM );
    self->version( VERSION_MAJOR, VERSION_MINOR, VERSION_REVISION );
@@ -209,25 +204,39 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    //
    Falcon::Symbol *c_rect = self->addClass( "SDLRect", Falcon::Ext::SDLRect_init );
    c_rect->setWKS( true );
-   self->addClassProperty( c_rect, "w" );
-   self->addClassProperty( c_rect, "h" );
-   self->addClassProperty( c_rect, "x" );
-   self->addClassProperty( c_rect, "y" );
+   c_rect->getClassDef()->factory( Falcon::Ext::SDLRect_Factory );
+
+   SDL_Rect dummy_rect;
+   self->addClassProperty( c_rect, "w" ).
+      setReflective( Falcon::e_reflectInt, &dummy_rect, &dummy_rect.w );
+   self->addClassProperty( c_rect, "h" ).
+      setReflective( Falcon::e_reflectInt, &dummy_rect, &dummy_rect.h );
+   self->addClassProperty( c_rect, "x" ).
+      setReflective( Falcon::e_reflectInt, &dummy_rect, &dummy_rect.x );
+   self->addClassProperty( c_rect, "y" ).
+      setReflective( Falcon::e_reflectInt, &dummy_rect, &dummy_rect.y );
 
    //============================================================
    // SDL Surface class
    //
    Falcon::Symbol *c_surface = self->addClass( "SDLSurface" );
-   c_surface->getClassDef()->setObjectManager( &Falcon::core_user_data_manager_cacheful );
    c_surface->setWKS( true );
-   self->addClassProperty( c_surface, "w" );
-   self->addClassProperty( c_surface, "h" );
-   self->addClassProperty( c_surface, "flags" );
-   self->addClassProperty( c_surface, "pitch" );
-   self->addClassProperty( c_surface, "clip_rect" );
-   self->addClassProperty( c_surface, "pixels" );
-   self->addClassProperty( c_surface, "bpp" );
-   self->addClassProperty( c_surface, "format" );
+   c_surface->getClassDef()->factory( Falcon::Ext::SDLSurface_Factory );
+
+   SDL_Surface surface_dummy;
+   self->addClassProperty( c_surface, "w" ).
+      setReflective( Falcon::e_reflectInt, &surface_dummy, &surface_dummy.w ).setReadOnly(true);
+   self->addClassProperty( c_surface, "h" ).
+      setReflective( Falcon::e_reflectInt, &surface_dummy, &surface_dummy.h ).setReadOnly(true);
+   self->addClassProperty( c_surface, "flags" ).
+      setReflective( Falcon::e_reflectUInt, &surface_dummy, &surface_dummy.flags ).setReadOnly(true);
+   self->addClassProperty( c_surface, "pitch" ).
+      setReflective( Falcon::e_reflectUShort, &surface_dummy, &surface_dummy.pitch ).setReadOnly(true);
+
+   self->addClassProperty( c_surface, "bpp" ).setReflectFunc( Falcon::Ext::sdl_surface_bpp_rfrom );
+   self->addClassProperty( c_surface, "pixels" ).setReflectFunc( Falcon::Ext::sdl_surface_pixels_rfrom );
+   self->addClassProperty( c_surface, "format" ).setReflectFunc( Falcon::Ext::sdl_surface_format_rfrom );
+   self->addClassProperty( c_surface, "clip_rect" ).setReflectFunc( Falcon::Ext::sdl_surface_clip_rect_rfrom );
 
    self->addClassMethod( c_surface, "BlitSurface", Falcon::Ext::SDLSurface_BlitSurface ).asSymbol()->
       addParam("srcRect")->addParam("dest")->addParam("dstRect");
@@ -322,7 +331,8 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
 
    Falcon::Symbol *c_sdlcolor = self->addClass( "SDLColor", Falcon::Ext::SDLColor_init );
    c_sdlcolor->setWKS( true );
-   c_sdlcolor->getClassDef()->setObjectManager( &m_sdlcolor_manager );
+
+   c_sdlcolor->getClassDef()->factory( Falcon::Ext::SDLColor_Factory );
    SDL_Color sdl_color;
    self->addClassProperty( c_sdlcolor, "r" )
          .setReflective( Falcon::e_reflectByte, &sdl_color, &sdl_color.r );
@@ -336,7 +346,6 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    //
    Falcon::Symbol *c_cursor = self->addClass( "SDLCursor", false ); // not instantiable
    c_cursor->setWKS( true );
-   c_cursor->getClassDef()->setObjectManager( &Falcon::core_falcon_data_manager );
    self->addClassMethod( c_cursor, "SetCursor", Falcon::Ext::SDLCursor_SetCursor );
 
    //============================================================
@@ -373,7 +382,6 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    Falcon::Symbol *c_sdl_aq = self->addClass( "_SDL_AutoQuit" );
    c_sdl_aq->setWKS( true );
    c_sdl_aq->exported( false );
-   c_sdl_aq->getClassDef()->setObjectManager( &Falcon::core_falcon_data_manager );
    self->addClassMethod( c_sdl_aq, "Quit", Falcon::Ext::sdl_Quit );
 
    //==================================================================

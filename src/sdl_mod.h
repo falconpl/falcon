@@ -24,22 +24,27 @@
 #define FALCON_SDL_MOD
 
 #include <falcon/setup.h>
+#include <falcon/falcondata.h>
 #include <sdl_service.h>
+
 
 namespace Falcon{
 namespace Ext{
 
-/** SDLColor inner manager class.
-   The manager model is a bit more advance (and performing) than the 
-   carrier model.
-*/
-class SDLColorManager: public ObjectManager
-{
-public:
-   virtual void *onInit( VMachine *vm );
-   virtual void onDestroy( VMachine *vm, void *user_data );
-   virtual void *onClone( VMachine *vm, void *user_data );
-};
+//====================================================
+// Reflectors
+//
+
+// surface
+CoreObject* SDLSurface_Factory( const CoreClass *cls, void *user_data, bool );
+void sdl_surface_bpp_rfrom(CoreObject *co, void *user_data, Item &property, const PropEntry& );
+void sdl_surface_pixels_rfrom(CoreObject *co, void *user_data, Item &property, const PropEntry& );
+void sdl_surface_format_rfrom(CoreObject *co, void *user_data, Item &property, const PropEntry& );
+void sdl_surface_clip_rect_rfrom(CoreObject *co, void *user_data, Item &property, const PropEntry& );
+
+// rect
+CoreObject* SDLRect_Factory( const CoreClass *cls, void *user_data, bool );
+CoreObject* SDLColor_Factory( const CoreClass *cls, void *user_data, bool );
 
 /** Automatic quit system. */
 class QuitCarrier: public FalconData
@@ -48,7 +53,7 @@ public:
    QuitCarrier() {}
    virtual ~QuitCarrier();
 
-   virtual void gcMark( VMachine* ) {}
+   virtual void gcMark( uint32 ) {}
    virtual FalconData* clone() const { return 0; }
 };
 
@@ -56,24 +61,56 @@ public:
 /** Reflexive SDL Surface */
 class SDLSurfaceCarrier_impl: public SDLSurfaceCarrier
 {
-   SDL_Surface *m_surface;
-
+   MemBuf* m_mbPixelCache;
 
 public:
    uint32 m_lockCount;
 
-   SDLSurfaceCarrier_impl( SDL_Surface *s ):
-      m_surface( s ),
+   SDLSurfaceCarrier_impl( const CoreClass* cls, SDL_Surface *s ):
+      SDLSurfaceCarrier( cls ),
+      m_mbPixelCache( 0 ),
       m_lockCount(0)
-   {}
+   {
+      s->refcount++;
+      setUserData( s );
+   }
 
    virtual ~SDLSurfaceCarrier_impl();
+   virtual void gcMark( uint32 );
+   virtual CoreObject* clone() const;
+   virtual SDL_Surface* surface() const { return (SDL_Surface*) getUserData(); }
 
-   virtual void getProperty( CoreObject *obj, const String &propName, Item &prop );
-   virtual void setProperty( CoreObject *obj, const Falcon::String&, const Falcon::Item&);
-   virtual void gcMark( VMachine* ) {}
-   virtual FalconData* clone() const;
-   virtual SDL_Surface* surface() const { return m_surface; }
+   void setPixelCache( MemBuf* mb );
+
+   friend void sdl_surface_pixels_rfrom(CoreObject *co, void *user_data, Item &property, const PropEntry& );
+};
+
+
+class SDLRectCarrier: public ReflectObject
+{
+public:
+   SDLRectCarrier( const CoreClass* cls, SDL_Rect *r ):
+      ReflectObject( cls, r )
+   {}
+
+   virtual ~SDLRectCarrier();
+   virtual void gcMark( uint32 ) {}
+   virtual CoreObject* clone() const;
+   virtual SDL_Rect* rect() const { return (SDL_Rect*) getUserData(); }
+};
+
+
+class SDLColorCarrier: public ReflectObject
+{
+public:
+   SDLColorCarrier( const CoreClass* cls, SDL_Color *c ):
+      ReflectObject( cls, c )
+   {}
+
+   virtual ~SDLColorCarrier();
+   virtual void gcMark( uint32 ) {}
+   virtual CoreObject* clone() const;
+   virtual SDL_Color* color() const { return (SDL_Color*) getUserData(); }
 };
 
 /** Opaque Cursor structure carrier */
@@ -90,7 +127,7 @@ public:
 
    virtual ~SDLCursorCarrier();
    virtual FalconData *clone() const { return 0; }
-   virtual void gcMark(VMachine*) {}
+   virtual void gcMark(uint32) {}
 };
 
 
@@ -98,8 +135,6 @@ public:
 // Utilities
 //
 
-bool RectToObject( const ::SDL_Rect &rect, CoreObject *obj );
-bool ObjectToRect( CoreObject *obj, ::SDL_Rect &rect );
 CoreObject *MakeRectInst( VMachine *vm, const ::SDL_Rect &rect );
 CoreObject *MakePixelFormatInst( VMachine *vm, SDLSurfaceCarrier *carrier, ::SDL_PixelFormat *fmt = 0 );
 bool ObjectToPixelFormat( CoreObject *obj, ::SDL_PixelFormat *fmt );

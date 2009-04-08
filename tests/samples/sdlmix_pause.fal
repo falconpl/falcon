@@ -29,7 +29,8 @@ try
    > "Notice that we'll pause and resume the channel every 5 seconds"
    count = 0
    stdin = stdIn()
-   loop count++
+   loop
+      count++
       >> @"[$(count)]\r"
       if stdin.readAvailable(0.1): break
       if count %50 == 0: MIX.Pause( 0 )

@@ -34,6 +34,131 @@ namespace Falcon {
 namespace Ext {
 
 //=======================================
+// Surface reflection
+//
+
+SDLSurfaceCarrier_impl::~SDLSurfaceCarrier_impl()
+{
+   while( m_lockCount-- > 0 )
+      SDL_UnlockSurface( surface() );
+
+   SDL_FreeSurface( surface() );
+}
+
+
+CoreObject *SDLSurfaceCarrier_impl::clone() const
+{
+   return new SDLSurfaceCarrier_impl( generator(), surface() );
+}
+
+
+void SDLSurfaceCarrier_impl::setPixelCache( MemBuf *mb )
+{
+   m_mbPixelCache = mb;
+   mb->dependant( this );
+}
+
+void SDLSurfaceCarrier_impl::gcMark( uint32 gen )
+{
+   if ( m_mbPixelCache != 0 )
+      m_mbPixelCache->mark( gen );
+}
+
+CoreObject* SDLSurface_Factory( const CoreClass *cls, void *user_data, bool )
+{
+   return new SDLSurfaceCarrier_impl( cls, (SDL_Surface*) user_data );
+}
+
+void sdl_surface_bpp_rfrom(CoreObject *co, void *user_data, Item &property, const PropEntry& )
+{
+   SDL_Surface* surf = (SDL_Surface*) user_data;
+   property = (int64) surf->format->BytesPerPixel;
+}
+
+void sdl_surface_pixels_rfrom(CoreObject *co, void *user_data, Item &property, const PropEntry& )
+{
+   SDLSurfaceCarrier_impl* self = dyncast<SDLSurfaceCarrier_impl *>(co);
+
+   if ( self->m_mbPixelCache != 0 )
+   {
+      property = self->m_mbPixelCache;
+      return;
+   }
+
+   SDL_Surface* surf = (SDL_Surface*) user_data;
+   fassert( surf != 0 );
+   MemBuf *mb;
+
+   switch( surf->format->BytesPerPixel )
+   {
+      case 1: mb = new MemBuf_1( (byte*)surf->pixels, surf->h * surf->pitch, false ); break;
+      case 2: mb = new MemBuf_2( (byte*)surf->pixels, surf->h * surf->pitch, false ); break;
+      case 3: mb = new MemBuf_3( (byte*)surf->pixels, surf->h * surf->pitch, false ); break;
+      case 4: mb = new MemBuf_4( (byte*)surf->pixels, surf->h * surf->pitch, false ); break;
+      default:
+         fassert( false );
+         return;
+   }
+
+   self->setPixelCache( mb );
+   property = mb;
+}
+
+void sdl_surface_format_rfrom(CoreObject *co, void *user_data, Item &property, const PropEntry& )
+{
+   property = MakePixelFormatInst( VMachine::getCurrent(), dyncast<SDLSurfaceCarrier*>(co) );
+}
+
+void sdl_surface_clip_rect_rfrom(CoreObject *co, void *user_data, Item &property, const PropEntry& )
+{
+   SDL_Surface* surf = (SDL_Surface*) user_data;
+   property = MakeRectInst( VMachine::getCurrent(), surf->clip_rect );
+}
+
+//=================================================
+// Rect Carrier
+//
+CoreObject* SDLRect_Factory( const CoreClass *cls, void *user_data, bool )
+{
+   return new SDLRectCarrier( cls, (SDL_Rect*) user_data );
+}
+
+SDLRectCarrier::~SDLRectCarrier()
+{
+   memFree( rect() );
+}
+
+CoreObject* SDLRectCarrier::clone() const
+{
+   SDL_Rect* r = (SDL_Rect*) memAlloc( sizeof( SDL_Rect ) );
+   *r = *rect();
+   return new SDLRectCarrier( generator(), r );
+}
+
+
+//=================================================
+// Rect Carrier
+//
+
+CoreObject* SDLColor_Factory( const CoreClass *cls, void *user_data, bool )
+{
+   return new SDLColorCarrier( cls, (SDL_Color*) user_data );
+}
+
+SDLColorCarrier::~SDLColorCarrier()
+{
+   memFree( color() );
+}
+
+CoreObject* SDLColorCarrier::clone() const
+{
+   SDL_Color* c = (SDL_Color*) memAlloc( sizeof( SDL_Color ) );
+   *c = *color();
+   return new SDLColorCarrier( generator(), c );
+}
+
+
+//=======================================
 // Quit carrier
 //
 QuitCarrier::~QuitCarrier()
@@ -41,92 +166,6 @@ QuitCarrier::~QuitCarrier()
    SDL_Quit();
 }
 
-
-//=======================================
-// Surface reflection
-//
-
-SDLSurfaceCarrier_impl::~SDLSurfaceCarrier_impl()
-{
-   while( m_lockCount-- > 0 )
-      SDL_UnlockSurface( m_surface );
-
-   SDL_FreeSurface( m_surface );
-}
-
-
-void SDLSurfaceCarrier_impl::getProperty( CoreObject *self, const String &propName, Item &prop )
-{
-   if ( propName == "w" )
-   {
-      prop = (int64) m_surface->w;
-   }
-   else if ( propName == "h" )
-   {
-      prop = (int64) m_surface->h;
-   }
-   else if ( propName == "flags" )
-   {
-      prop = (int64) m_surface->flags;
-   }
-   else if ( propName == "pitch" )
-   {
-      prop = (int64) m_surface->pitch;
-   }
-   else if ( propName == "bpp" )
-   {
-      prop = (int64) m_surface->format->BytesPerPixel;
-   }
-   else if ( propName == "clip_rect" )
-   {
-      if ( prop.isNil() )
-         prop = MakeRectInst( self->origin(), m_surface->clip_rect );
-      else
-         RectToObject( m_surface->clip_rect, prop.asObject() );
-   }
-   else if ( propName == "format" )
-   {
-      if ( prop.isNil() )
-         prop = MakePixelFormatInst( self->origin(), this );
-
-   }
-   else if ( propName == "pixels" )
-   {
-      if ( prop.isNil() )
-      {
-         MemBuf *mb;
-         VMachine *vm = self->origin();
-         fassert( m_surface != 0 );
-
-         switch( m_surface->format->BytesPerPixel )
-         {
-            case 1: mb = new MemBuf_1( vm, (byte*)m_surface->pixels, m_surface->h * m_surface->pitch, false ); break;
-            case 2: mb = new MemBuf_2( vm, (byte*)m_surface->pixels, m_surface->h * m_surface->pitch, false ); break;
-            case 3: mb = new MemBuf_3( vm, (byte*)m_surface->pixels, m_surface->h * m_surface->pitch, false ); break;
-            case 4: mb = new MemBuf_4( vm, (byte*)m_surface->pixels, m_surface->h * m_surface->pitch, false ); break;
-            default:
-               fassert( false );
-               return;
-         }
-         mb->dependant( self );
-         prop = mb;
-      }
-
-   }
-}
-
-void SDLSurfaceCarrier_impl::setProperty( CoreObject *self, const String &propName, const Item &prop )
-{
-   // refuse to set anything
-   self->origin()->raiseModError( new SDLError( ErrorParam( FALCON_SDL_ERROR_BASE, __LINE__ )
-         .desc( "SDL Read Only Access" ) ) );
-}
-
-
-FalconData *SDLSurfaceCarrier_impl::clone() const
-{
-   return 0;
-}
 
 //==========================================
 // Cusror carrier
@@ -140,63 +179,17 @@ SDLCursorCarrier::~SDLCursorCarrier()
 
 
 //==========================================
-// Color Manager
-//
-
-void *SDLColorManager::onInit( VMachine *)
-{
-   return memAlloc( sizeof( SDL_Color ) );
-}
-
-void SDLColorManager::onDestroy( VMachine *, void *user_data )
-{
-   memFree( user_data );
-}
-
-void *SDLColorManager::onClone( VMachine *, void *user_data )
-{
-   SDL_Color* c = static_cast<SDL_Color*>( memAlloc( sizeof( SDL_Color ) ) );
-   SDL_Color* other = static_cast<SDL_Color*>( user_data );
-   *c = *other;
-
-   return c;
-}
-
-//==========================================
 // Utilities
 //
-
-bool RectToObject( const ::SDL_Rect &rect, CoreObject *obj )
-{
-   return obj->setProperty( "x", (int64) rect.x ) &&
-          obj->setProperty( "y", (int64) rect.y ) &&
-          obj->setProperty( "w", (int64) rect.w ) &&
-          obj->setProperty( "h", (int64) rect.h );
-}
-
-bool ObjectToRect( CoreObject *obj, ::SDL_Rect &rect )
-{
-   Item itm;
-   if ( ! obj->getProperty( "x", itm ) ) return false;
-   rect.x = (Sint16) itm.forceInteger();
-
-   if ( ! obj->getProperty( "y", itm ) ) return false;
-   rect.y = (Sint16) itm.forceInteger();
-
-   if ( ! obj->getProperty( "w", itm ) ) return false;
-   rect.w = (Sint16) itm.forceInteger();
-
-   if ( ! obj->getProperty( "h", itm ) ) return false;
-   rect.h = (Sint16) itm.forceInteger();
-   return true;
-}
 
 CoreObject *MakeRectInst( VMachine *vm, const ::SDL_Rect &rect )
 {
    Item *cls = vm->findWKI( "SDLRect" );
    fassert( cls != 0 );
-   CoreObject *obj = cls->asClass()->createInstance();
-   RectToObject( rect, obj );
+   SDL_Rect* nrect = (SDL_Rect*) memAlloc( sizeof( SDL_Rect ) );
+   memcpy( nrect, &rect, sizeof( SDL_Rect ) );
+
+   CoreObject *obj = cls->asClass()->createInstance( nrect );
    return obj;
 }
 
@@ -235,8 +228,7 @@ CoreObject *MakePixelFormatInst( VMachine *vm, SDLSurfaceCarrier *carrier, ::SDL
       fassert( clspal != 0 );
       CoreObject *objpal = clspal->asClass()->createInstance();
       // create the MemBuf we need; it refers the surface inside the carrier.
-      MemBuf *colors = new MemBuf_4( vm,
-         (byte *) fmt->palette->colors, fmt->palette->ncolors, false );
+      MemBuf *colors = new MemBuf_4( (byte *) fmt->palette->colors, fmt->palette->ncolors, false );
 
       if ( carrier != 0 )
          colors->dependant( obj );

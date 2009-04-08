@@ -40,7 +40,7 @@ public:
    TTFQuitCarrier() {}
    virtual ~TTFQuitCarrier();
 
-   virtual void gcMark( VMachine* ) {}
+   virtual void gcMark( uint32 ) {}
    virtual FalconData* clone() const { return 0; }
 };
 
@@ -55,7 +55,7 @@ public:
 
    virtual ~TTFFontCarrier();
 
-   virtual void gcMark( VMachine* ) {}
+   virtual void gcMark( uint32 ) {}
    virtual FalconData* clone() const { return 0; }
 };
 

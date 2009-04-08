@@ -21,7 +21,7 @@
    package.
 */
 
-load fsdl
+load sdl
 
 object MyEventManager from SDLEventHandler
    quitRequest = false

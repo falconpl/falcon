@@ -39,7 +39,8 @@ try
    music.Play( fadeIn| 6 )
    count = 0
    stdin = stdIn()
-   loop count++
+   loop
+      count++
       >> @"[$(count)]\r"
       if count == 80
          > "Pausing for two seconds:"
@@ -68,8 +69,7 @@ try
       end
 
       listener.PollEvent()
-      if stdin.readAvailable(0.1): break
-   end
+   end stdin.readAvailable(0.1)
 
    MIX.CloseAudio()
 catch in e

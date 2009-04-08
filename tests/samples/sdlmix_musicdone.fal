@@ -44,11 +44,11 @@ try
    MIX.HookMusicFinished( true )
    count = 0
    stdin = stdIn()
-   loop count++
+   loop
+      count++
       >> @"[$(count)]\r"
       listener.PollEvent()
-      if stdin.readAvailable(0.1): break
-   end
+   end stdin.readAvailable(0.1)
 
    MIX.CloseAudio()
 catch in e

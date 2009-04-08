@@ -48,7 +48,7 @@ MixChunkCarrier::~MixChunkCarrier()
    }
 }
 
-void MixChunkCarrier::gcMark( VMachine* )
+void MixChunkCarrier::gcMark( uint32 )
 {
    // noop
 }
@@ -83,7 +83,7 @@ MixMusicCarrier::~MixMusicCarrier()
    }
 }
 
-void MixMusicCarrier::gcMark( VMachine* )
+void MixMusicCarrier::gcMark( uint32 )
 {
    // noop
 }

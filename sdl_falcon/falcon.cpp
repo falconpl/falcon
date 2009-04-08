@@ -1140,7 +1140,7 @@ int main ( int argc, char *argv[] )
 
    for ( int ap = script_pos; ap < argc; ap ++ )
    {
-      String *cs = new GarbageString ( vmachine );
+      String *cs = new CoreString ( vmachine );
       if ( ! TranscodeFromString ( argv[ap], ioEncoding, *cs ) )
       {
          cs->bufferize ( argv[ap] );
@@ -1153,11 +1153,11 @@ int main ( int argc, char *argv[] )
 
    Item *script_name = vmachine->findGlobalItem ( "scriptName" );
    fassert ( script_name != 0 );
-   *script_name = new GarbageString ( vmachine, mainMod->name() );
+   *script_name = new CoreString ( vmachine, mainMod->name() );
 
    Item *script_path = vmachine->findGlobalItem ( "scriptPath" );
    fassert ( script_path != 0 );
-   *script_path = new GarbageString ( vmachine, mainMod->path() );
+   *script_path = new CoreString ( vmachine, mainMod->path() );
 
    // Link the runtime in the VM.
    // We'll be running the modules as we link them in.
@@ -1181,7 +1181,7 @@ int main ( int argc, char *argv[] )
          if ( chr != '\r' )
             ret.append ( chr );
 
-      vmachine->resume ( new GarbageString ( vmachine, ret ) );
+      vmachine->resume ( new CoreString ( vmachine, ret ) );
       // items in resume are not automatically stored in the GC, so we can destroy
       // the string here.
    }

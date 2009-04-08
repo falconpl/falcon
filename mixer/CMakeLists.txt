@@ -3,6 +3,9 @@
 #
 # CMake configuration file for module SDL_mixer
 ####################################################################
+
+FALCON_DEFINE_MODULE( SDLMIXER sdlmixer )
+
 if(COMMAND cmake_policy)
    cmake_policy(SET CMP0003 OLD)
 endif(COMMAND cmake_policy)
@@ -17,16 +20,16 @@ INCLUDE_DIRECTORIES(BEFORE "${FALCON_INC_PATH}")
 LINK_DIRECTORIES(BEFORE "${FALCON_LIB_PATH}")
 
 # Target
-ADD_LIBRARY( sdlmixer MODULE
+ADD_LIBRARY( ${SDLMIXER} MODULE
    sdlmixer.cpp
    sdlmixer_ext.cpp
    sdlmixer_mod.cpp
 )
 
 #Link
-TARGET_LINK_LIBRARIES(sdlmixer falcon_engine ${SDLMIXER_LIBRARY} ${SDL_LIBRARY} )
+TARGET_LINK_LIBRARIES(${SDLMIXER} falcon_engine ${SDLMIXER_LIBRARY} ${SDL_LIBRARY} )
 
-SET_TARGET_PROPERTIES(sdlmixer
+SET_TARGET_PROPERTIES(${SDLMIXER}
    PROPERTIES PREFIX "")
 #Install
-FALCON_LINK_MODULE( sdlmixer )
+FALCON_LINK_MODULE( ${SDLMIXER} )

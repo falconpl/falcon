@@ -74,8 +74,8 @@ FALCON_FUNC sdl_WM_GetCaption ( ::Falcon::VMachine *vm )
    char *caption, *icon;
 
    ::SDL_WM_GetCaption( &caption, &icon );
-   GarbageString *sCaption = new GarbageString( vm );
-   GarbageString *sIcon = new GarbageString( vm );
+   CoreString *sCaption = new CoreString;
+   CoreString *sIcon = new CoreString;
 
    if( caption != 0 )
       sCaption->fromUTF8( caption );
@@ -83,7 +83,7 @@ FALCON_FUNC sdl_WM_GetCaption ( ::Falcon::VMachine *vm )
    if ( icon != 0 )
       sIcon->fromUTF8( icon );
 
-   CoreArray *array = new CoreArray( vm, 2 );
+   CoreArray *array = new CoreArray( 2 );
    array->append( sCaption );
    array->append( sIcon );
    vm->retval( array );

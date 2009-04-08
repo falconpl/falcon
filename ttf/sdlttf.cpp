@@ -41,11 +41,8 @@ extern "C"
 */
 
 
-FALCON_MODULE_DECL( const Falcon::EngineData &data )
+FALCON_MODULE_DECL
 {
-   // setup DLL engine common data
-   data.set();
-
    Falcon::Module *self = new Falcon::Module();
    self->name( "sdlttf" );
    self->language( "en_US" );
@@ -53,7 +50,7 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    self->version( VERSION_MAJOR, VERSION_MINOR, VERSION_REVISION );
 
    // first of all, we need to declare our dependency from the main SDL module.
-   self->addDepend( "fsdl" );
+   self->addDepend( "sdl" );
 
    //=================================================================
    // Encapsulation SDLTTF
@@ -105,7 +102,6 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    Falcon::Symbol *c_ttffont = self->addClass( "TTFFont" );
    c_ttffont->setWKS( true );
    c_ttffont->exported( false ); // It's private.
-   c_ttffont->getClassDef()->setObjectManager( &Falcon::core_falcon_data_manager );
 
    self->addClassMethod( c_ttffont, "GetFontStyle", Falcon::Ext::ttf_GetFontStyle );
    self->addClassMethod( c_ttffont, "SetFontStyle", Falcon::Ext::ttf_SetFontStyle ).asSymbol()->
@@ -166,7 +162,6 @@ FALCON_MODULE_DECL( const Falcon::EngineData &data )
    Falcon::Symbol *c_sdl_aq = self->addClass( "_TTF_AutoQuit" );
    c_sdl_aq->setWKS( true );
    c_sdl_aq->exported( false );
-   c_sdl_aq->getClassDef()->setObjectManager( &Falcon::core_falcon_data_manager );
    self->addClassMethod( c_sdl_aq, "Quit", Falcon::Ext::ttf_Quit );
 
 
