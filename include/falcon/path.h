@@ -79,19 +79,6 @@ public:
       set( path );
    }
 
-   /** Path constructor from strings.
-      This constiuctor allows to select between MS-Windows path format or Falcon path format.
-   */
-   Path( const String &path, bool winFormat ):
-      m_bValid( true ),
-      m_owner(0)
-   {
-      if ( winFormat )
-         setFromWinFormat( path );
-      else
-         set( path );
-   }
-
    /** Copy constructor.
       Copies the other path as-is.
    */
@@ -109,9 +96,6 @@ public:
 
    /** Set a path from RFC 3986 format. */
    bool set( const String &p );
-
-   /** Set a path having MS-Windows format */
-   void setFromWinFormat( const String &p );
 
    /** Retrurn the path in RFC 3986 format. */
    const String &get() const { return m_path; }
