@@ -26,7 +26,8 @@ Falcon (0.9.1)
   * fixed: FileStat class wasn't correctly caching the mtime member.
   * major: Added detection of statements without effect (or with partial effect)
            at compile time; useful to detect "str1"\n"str2" left from 0.8.x
-  
+  * fixed: Errors in "loop" definitions may have caused a segfault.
+
 Falcon (0.9)
   * major: Removed "sender" from grammar.
   * fixed: Array bindings was not correctly accounted by the Garbage
@@ -114,7 +115,7 @@ Falcon (0.9)
   * minor: Added 'getProperty' and 'setProperty' methods to deep items
            meta-classes.
   * minor: Added 'name' and 'caller' methods to function metaclass.
-  * fixed: Fixed crash when inserting just single constants in interactive 
+  * fixed: Fixed crash when inserting just single constants in interactive
            compiler.
   * major: Removed dot-quoted strings (.")
   * major: Removed automatic joining of adjiacent double quoted string.
@@ -123,20 +124,20 @@ Falcon (0.9)
            means that it is possible to join strings at compile time via
            "a" + "b"
   * minor: Binary operators can accept an optional EOL after them. A line can
-           terminate with a + and the expression can continue on the next 
+           terminate with a + and the expression can continue on the next
            line without a \ to join them.
-  * major: Literal strings now never escape with a \. "\" is always 
+  * major: Literal strings now never escape with a \. "\" is always
            considered just a \; to add a single quote in a literal (single
            quoted) string, write a single quote twice ('').
-  * major: Multiline strings are now initiated with a single open " or ' 
-           followed by an EOL. They terminate to the matching " or ', and 
-           the context coninues to the end of the terminator line. 
+  * major: Multiline strings are now initiated with a single open " or '
+           followed by an EOL. They terminate to the matching " or ', and
+           the context coninues to the end of the terminator line.
            Double-quoted strings are non-literal, and compress new line and
            leading whitespace characters into a single space, while single
            quoted strings are literal, and insert into the string any space
-           and line break in the source. This means that double quoted 
-           strings can be used to break a long string across multiple lines 
-           and arbitrarily indented, while single quoted strings define a 
+           and line break in the source. This means that double quoted
+           strings can be used to break a long string across multiple lines
+           and arbitrarily indented, while single quoted strings define a
            verbatim block.
 
 

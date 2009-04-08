@@ -403,6 +403,7 @@ loop_statement:
       }
    | LOOP error EOL {
       COMPILER->raiseError( Falcon::e_syn_loop );
+      $$ = 0;
    }
 ;
 
