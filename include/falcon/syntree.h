@@ -453,6 +453,8 @@ public:
    Value *third() const { return m_third; }
    void third( Value *t ) { delete m_third; m_third = t; }
 
+   bool isStandAlone() const;
+
    bool isBinaryOperator() const
    {
       switch( m_operator )

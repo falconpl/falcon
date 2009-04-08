@@ -106,6 +106,11 @@ void FalconOptions::usage( bool deep )
       << "File names may be set to '-' meaning standard input or output (depending on the option)" << endl
       << endl;
    }
+   else
+   {
+      cout
+      << "Use '-H' option to get more help." << endl;
+   }
 }
 
 
@@ -171,7 +176,7 @@ void FalconOptions::parse( int argc, char **argv, int &script_pos )
 
             case 'f': force_recomp = true; break;
             case 'h': case '?': usage(false); m_justinfo = true; break;
-            case 'H': m_justinfo = true; break;
+            case 'H': usage(true); m_justinfo = true; break;
             case 'i': modalGiven(); interactive = true; break;
 
             case 'L':

@@ -276,7 +276,16 @@ statement:
 
 
 base_statement:
-   expression EOL { $$ = new Falcon::StmtAutoexpr( LINE, $1 ); }
+   expression EOL {
+         if( ! $1->asExpr()->isStandAlone() )
+         {
+            Falcon::StmtFunction *func = COMPILER->getFunctionContext();
+            if ( func == 0 || ! func->isLambda() )
+               COMPILER->raiseError(Falcon::e_noeffect );
+         }
+
+         $$ = new Falcon::StmtAutoexpr( LINE, $1 );
+      }
 
    | expression_list OP_EQ expression EOL {
          Falcon::Value *first = new Falcon::Value( $1 );

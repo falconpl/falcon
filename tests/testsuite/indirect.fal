@@ -40,22 +40,22 @@ if # "item[ 1 ]. prop [0] " != "one": failure( "array access + object indirect" 
 
 // test failure
 try
-	# "item[ 1 "
+	a = # "item[ 1 "
 	failure( "Negative test 1" )
 end
 
 try
-	# "item. "
+	a = # "item. "
 	failure( "Negative test 2" )
 end
 
 try
-	# "unexisting"
+	a = # "unexisting"
 	failure( "Negative test 3" )
 end
 
 try
-	# "item[ 1 ]. prop [0] asdfa"
+	a = # "item[ 1 ]. prop [0] asdfa"
 	failure( "Negative test 4" )
 end
 

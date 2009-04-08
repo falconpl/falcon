@@ -250,19 +250,19 @@ public:
    bool compile( Module *mod, Stream *input );
 
    /** Front-end to raiseError( *e ).
-      
+
       The compiler doesn't throw the error list until the compilation is over.
       error raisal is delayed until the end of the compilation step.
    */
    void raiseError( int errorNum, int errorLine=0);
-   
+
    /** Raises an error.
-      
+
       The compiler doesn't throw the error list until the compilation is over.
       error raisal is delayed until the end of the compilation step.
    */
    void raiseError( Error *e );
-   
+
    /** Raises an error related to a context problem.
       The error reports the line where the problem has been detected, and the line
       that begun current faulty context.
@@ -557,16 +557,16 @@ public:
       is requried, the compiler creates a loader on the fly.
    */
    void serviceLoader(ModuleLoader *l) { m_serviceLoader = l; }
-   
+
    /** Passes the ownership of the error structure to the caller.
-      
+
       This allows the caller to get the errors received during the processing of the
       last compilation and handle them separately.
-      
+
       The ownership is passed to the caller, or in other world, the list of errors
       in this compiler is zeroed and the reference count of the returned error
       list is not changed.
-      
+
       \return 0 if the compiler was not in error state, or a list of one or more errors if it
       raised some errors during the processing of the files.
    */

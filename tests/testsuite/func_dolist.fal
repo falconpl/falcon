@@ -27,6 +27,8 @@ function test( a )
    return true
 end
 
+a = {a=>sin(a)}
+
 reset()
 dolist( test, [] )
 if positive != 0 or negative != 0: failure( "empty list" )

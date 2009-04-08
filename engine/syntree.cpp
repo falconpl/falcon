@@ -394,6 +394,30 @@ Expression::~Expression()
    delete m_third;
 }
 
+bool Expression::isStandAlone() const
+{
+   switch( m_operator )
+   {
+      case t_eval: case t_funcall: case t_assign:
+      case t_aadd: case t_asub: case t_amul: case t_adiv:
+      case t_amod: case t_apow:
+      case t_aband: case t_abor: case t_abxor:
+      case t_ashl: case t_ashr:
+      case t_pre_inc: case t_post_inc: case t_pre_dec: case t_post_dec:
+         return true;
+
+      // and are or are meaningful if their second element is an effective expression.
+      // the first one needs not (i.e. may be a variable), and if the first one is
+      // but the second one is not, then the second part does nothing, and we're
+      // right in raising an error as there's something wrong.
+      case t_and: case t_or:
+         return m_second->isExpr() && m_second->asExpr()->isStandAlone();
+
+      default:
+         return false;
+   }
+}
+
 //================================================
 // Statement list
 //

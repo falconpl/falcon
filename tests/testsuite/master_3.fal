@@ -17,9 +17,6 @@
 load slave_alpha
 load slave_beta
 
-// explicit import; not necessary here, just to show.
-world
-
 if world.items != 3: failure( "world initialization" )
 world.elements[0].setVal( "first" )
 world.elements[1].setVal( "second" )

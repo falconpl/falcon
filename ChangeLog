@@ -24,6 +24,8 @@ Falcon (0.9.1)
            (latent from 0.8).
   * fixed: Path class was working a bit randomly.
   * fixed: FileStat class wasn't correctly caching the mtime member.
+  * major: Added detection of statements without effect (or with partial effect)
+           at compile time; useful to detect "str1"\n"str2" left from 0.8.x
   
 Falcon (0.9)
   * major: Removed "sender" from grammar.
