@@ -163,21 +163,28 @@ FALCON_FUNC SDLSurface_BlitSurface( ::Falcon::VMachine *vm )
 
    if ( ( i_srcrect == 0  || ! ( i_srcrect->isNil() || ( i_srcrect->isObject() && i_srcrect->asObject()->derivedFrom( "SDLRect" ) ) ) )
       || ( i_dest == 0 || ! i_dest->isObject() || ! i_dest->asObject()->derivedFrom( "SDLSurface" ))
-      || ( i_dstrect != 0 && ! ( i_srcrect->isNil() || ( i_srcrect->isObject() && i_srcrect->asObject()->derivedFrom( "SDLRect" ) ) ) )
+      || ( i_dstrect != 0 && ! ( i_dstrect->isNil() || ( i_dstrect->isObject() && i_dstrect->asObject()->derivedFrom( "SDLRect" ) ) ) )
       )
    {
-      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).extra( "SDLRect|Nil, SDLSurface [, SDLRect|Nil]" ) );
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
+         .extra( "SDLRect|Nil, SDLSurface [, SDLRect|Nil]" ) ) );
    }
    else
    {
       // are rects exposing the right interface?
       if( i_srcrect != 0 && i_srcrect->isObject() )
-         pSrcRect = (SDL_Rect*) i_srcrect->asObject()->getUserData();
+      {
+         pSrcRect = &srcRect;
+         srcRect = * (SDL_Rect*) i_srcrect->asObject()->getUserData();
+      }
       else
          pSrcRect = 0;
 
       if( i_dstrect != 0 && i_dstrect->isObject() )
-         pDstRect = (SDL_Rect*) i_dstrect->asObject()->getUserData();
+      {
+         pDstRect = &dstRect;
+         dstRect = *(SDL_Rect*) i_dstrect->asObject()->getUserData();
+      }
       else
          pDstRect = 0;
    }
@@ -798,25 +805,35 @@ FALCON_FUNC SDLScreen_UpdateRects( ::Falcon::VMachine *vm )
    if( aRect->length() == 0 )
       return;
 
-   SDL_Rect *rects = (SDL_Rect *) memAlloc( sizeof( SDL_Rect ) * aRect->length() );
-   for( uint32 i = 0; i = aRect->length(); i++ )
+   uint32 len = aRect->length();
+   SDL_Rect buffer[16];
+
+   // Spare memory allocating only when necessary
+   SDL_Rect *rects = len <= 16 ?
+         buffer :
+         (SDL_Rect *) memAlloc( sizeof( SDL_Rect ) * len );
+
+   for( uint32 i = 0; i < len; i++ )
    {
       SDL_Rect *r = rects + i;
       Item &obj = aRect->at( i );
       if ( ! obj.isObject() || ! obj.asObject()->derivedFrom( "SDLRect" ) )
       {
+         memFree( rects );
          vm->raiseModError( new ParamError( ErrorParam( e_param_type, __LINE__ ).
             extra( "A->SDLRect" ) ) );
-         memFree( rects );
          return;
       }
       *r = *(SDL_Rect*) obj.asObject()->getUserData();
    }
 
    CoreObject *self = vm->self().asObject();
-   SDL_Surface *screen = dyncast<SDLSurfaceCarrier_impl*>( self )->surface() ;
-   ::SDL_UpdateRects( screen, (int) aRect->length(), rects );
-   memFree( rects );
+   SDL_Surface *screen = dyncast<SDLSurfaceCarrier_impl*>( self )->surface();
+   ::SDL_UpdateRects( screen, (int)len, rects );
+
+   // free memory if we have allocated it.
+   if( len > 16 )
+      memFree( rects );
 }
 
 /*#

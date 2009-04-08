@@ -445,6 +445,8 @@ void declare_events( Module *self )
       @see @a SDLEventHandler.WaitEvent
    */
    Falcon::Symbol *c_sdlmouse = self->addClass( "SDLMouseState" );
+   c_sdlmouse->getClassDef()->factory( &SdlMouseState_Factory );
+
    sdl_mouse_state mstate;
    self->addClassProperty( c_sdlmouse, "x" ).
       setReflective( Falcon::e_reflectInt, &mstate, &mstate.x ).setReadOnly(true);
@@ -457,8 +459,8 @@ void declare_events( Module *self )
    self->addClassProperty( c_sdlmouse, "state" ).
       setReflective( Falcon::e_reflectInt, &mstate, &mstate.state ).setReadOnly(true);
 
-   self->addClassMethod( c_sdlmouse, "Refresh", SDLMouseState_Refresh );
-   self->addClassMethod( c_sdlmouse, "PumpAndRefresh", SDLMouseState_PumpAndRefresh );
+   self->addClassMethod( c_sdlmouse, "Refresh", &SDLMouseState_Refresh );
+   self->addClassMethod( c_sdlmouse, "PumpAndRefresh", &SDLMouseState_PumpAndRefresh );
 }
 
 /*#
@@ -1345,6 +1347,12 @@ FALCON_FUNC sdl_JoystickUpdate( VMachine *vm )
 // Class SDLMouseState
 //
 
+FALCON_FUNC SDLMouseState_init( VMachine *vm )
+{
+   Inst_SdlMouseState* inst = dyncast<Inst_SdlMouseState*>( vm->self().asObject() );
+   inst->setUserData( &inst->m_ms );
+}
+
 /*#
    @method Refresh SDLMouseState
    @brief Refresh current mouse position and status.
@@ -1358,10 +1366,10 @@ FALCON_FUNC sdl_JoystickUpdate( VMachine *vm )
 */
 FALCON_FUNC SDLMouseState_Refresh( VMachine *vm )
 {
-   sdl_mouse_state &mstate = *(sdl_mouse_state*) vm->self().asObject()->getUserData();
+   Inst_SdlMouseState* inst = dyncast<Inst_SdlMouseState*>( vm->self().asObject() );
 
-   mstate.state = ::SDL_GetMouseState( &mstate.x, &mstate.y );
-   ::SDL_GetRelativeMouseState( &mstate.xrel, &mstate.yrel );
+   inst->m_ms.state = ::SDL_GetMouseState( &inst->m_ms.x, &inst->m_ms.y );
+   ::SDL_GetRelativeMouseState( &inst->m_ms.xrel, &inst->m_ms.yrel );
 }
 
 /*#

@@ -208,13 +208,13 @@ FALCON_MODULE_DECL
 
    SDL_Rect dummy_rect;
    self->addClassProperty( c_rect, "w" ).
-      setReflective( Falcon::e_reflectInt, &dummy_rect, &dummy_rect.w );
+      setReflective( Falcon::e_reflectUShort, &dummy_rect, &dummy_rect.w );
    self->addClassProperty( c_rect, "h" ).
-      setReflective( Falcon::e_reflectInt, &dummy_rect, &dummy_rect.h );
+      setReflective( Falcon::e_reflectUShort, &dummy_rect, &dummy_rect.h );
    self->addClassProperty( c_rect, "x" ).
-      setReflective( Falcon::e_reflectInt, &dummy_rect, &dummy_rect.x );
+      setReflective( Falcon::e_reflectShort, &dummy_rect, &dummy_rect.x );
    self->addClassProperty( c_rect, "y" ).
-      setReflective( Falcon::e_reflectInt, &dummy_rect, &dummy_rect.y );
+      setReflective( Falcon::e_reflectShort, &dummy_rect, &dummy_rect.y );
 
    //============================================================
    // SDL Surface class

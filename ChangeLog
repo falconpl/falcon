@@ -1,6 +1,7 @@
 SDL (0.9.8)
    * added: Updated to Falcon 0.9
    * major: Module name is now "sdl".
+   * fixed: UpdateRects wasn't working.
 
 SDL (0.9.6)
    * added: Method SDLSurface.SetAlpha

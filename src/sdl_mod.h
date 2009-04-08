@@ -66,16 +66,9 @@ class SDLSurfaceCarrier_impl: public SDLSurfaceCarrier
 public:
    uint32 m_lockCount;
 
-   SDLSurfaceCarrier_impl( const CoreClass* cls, SDL_Surface *s ):
-      SDLSurfaceCarrier( cls ),
-      m_mbPixelCache( 0 ),
-      m_lockCount(0)
-   {
-      s->refcount++;
-      setUserData( s );
-   }
-
+   SDLSurfaceCarrier_impl( const CoreClass* cls, SDL_Surface *s );
    virtual ~SDLSurfaceCarrier_impl();
+
    virtual void gcMark( uint32 );
    virtual CoreObject* clone() const;
    virtual SDL_Surface* surface() const { return (SDL_Surface*) getUserData(); }
@@ -131,6 +124,42 @@ public:
 };
 
 
+
+//==========================================
+// Mouse state
+//
+
+typedef struct tag_sdl_mouse_state
+{
+   int state;
+   int x, y;
+   int xrel, yrel;
+} sdl_mouse_state;
+
+class Inst_SdlMouseState: public CRObject
+{
+public:
+   sdl_mouse_state m_ms;
+
+   Inst_SdlMouseState( const CoreClass* gen ):
+      CRObject( gen )
+   {
+      setUserData( &m_ms );
+   }
+
+   Inst_SdlMouseState( const Inst_SdlMouseState &other ):
+      CRObject( other.m_generatedBy )
+   {
+      m_ms = other.m_ms;
+      setUserData( &m_ms );
+   }
+
+   virtual CoreObject *clone() const { new Inst_SdlMouseState( *this ); }
+   virtual void gcMark(VMachine*) {}
+};
+
+CoreObject* SdlMouseState_Factory( const CoreClass *cls, void *, bool );
+
 //==========================================
 // Utilities
 //
@@ -139,13 +168,6 @@ CoreObject *MakeRectInst( VMachine *vm, const ::SDL_Rect &rect );
 CoreObject *MakePixelFormatInst( VMachine *vm, SDLSurfaceCarrier *carrier, ::SDL_PixelFormat *fmt = 0 );
 bool ObjectToPixelFormat( CoreObject *obj, ::SDL_PixelFormat *fmt );
 CoreObject *MakeVideoInfo( VMachine *vm, const ::SDL_VideoInfo *info );
-
-typedef struct tag_sdl_mouse_state
-{
-   int state;
-   int x, y;
-   int xrel, yrel;
-} sdl_mouse_state;
 
 }
 }

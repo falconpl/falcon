@@ -40,6 +40,7 @@ CoreObject *SDLService::createSurfaceInstance( VMachine *vm, ::SDL_Surface *surf
    Item *cls = vm->findWKI( "SDLSurface" );
    fassert( cls != 0 );
    CoreObject *obj = cls->asClass()->createInstance(surface);
+   SDL_FreeSurface( surface );
    return obj;
 }
 

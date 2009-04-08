@@ -120,6 +120,7 @@ FALCON_FUNC sdl_JoystickEventState( VMachine *vm );
 FALCON_FUNC sdl_JoystickUpdate( VMachine *vm );
 
 // class SDLMouseState
+FALCON_FUNC SDLMouseState_init( VMachine *vm );
 FALCON_FUNC SDLMouseState_Refresh( VMachine *vm );
 FALCON_FUNC SDLMouseState_PumpAndRefresh( VMachine *vm );
 

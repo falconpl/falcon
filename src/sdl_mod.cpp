@@ -37,10 +37,25 @@ namespace Ext {
 // Surface reflection
 //
 
+SDLSurfaceCarrier_impl::SDLSurfaceCarrier_impl( const CoreClass* cls, SDL_Surface *s ):
+      SDLSurfaceCarrier( cls ),
+      m_mbPixelCache( 0 ),
+      m_lockCount(0)
+{
+   if ( s->refcount == 1 )
+      gcMemAccount( s->h * s->w * s->format->BytesPerPixel );
+
+   s->refcount++;
+   setUserData( s );
+}
+
 SDLSurfaceCarrier_impl::~SDLSurfaceCarrier_impl()
 {
    while( m_lockCount-- > 0 )
       SDL_UnlockSurface( surface() );
+
+   if ( surface()->refcount == 1 )
+      gcMemUnaccount( surface()->h * surface()->w * surface()->format->BytesPerPixel );
 
    SDL_FreeSurface( surface() );
 }
@@ -157,6 +172,14 @@ CoreObject* SDLColorCarrier::clone() const
    return new SDLColorCarrier( generator(), c );
 }
 
+//=======================================
+// Mouse state
+//
+
+CoreObject* SdlMouseState_Factory( const CoreClass *cls, void *, bool )
+{
+   return new Inst_SdlMouseState( cls );
+}
 
 //=======================================
 // Quit carrier

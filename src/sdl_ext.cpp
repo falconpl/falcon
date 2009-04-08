@@ -832,6 +832,7 @@ static void sdl_CreateRGBSurface_internal ( ::Falcon::VMachine *vm, MemBuf *mb, 
    Item *cls = vm->findWKI( "SDLSurface" );
    fassert( cls != 0 );
    CoreObject *obj = cls->asClass()->createInstance( surf );
+   SDL_FreeSurface( surf );
    // if we have a membuf, store it in the right property so it stays alive
    if ( mb != 0 )
    {
