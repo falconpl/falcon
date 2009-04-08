@@ -40,7 +40,6 @@ CacheObject::CacheObject( const CoreClass *generator, bool bSeralizing ):
       for ( uint32 i = 0; i < pt.added(); i ++ )
       {
          const Item &itm = *pt.getValue(i);
-         //TODO: GARBAGE
          m_cache[i] = itm.isString() ? new CoreString( *itm.asString() ) :
                      itm;
       }
