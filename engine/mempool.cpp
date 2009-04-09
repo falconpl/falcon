@@ -456,8 +456,8 @@ void MemPool::markItem( const Item &item )
             }
             else
             {
-               fassert( item.asStringModule() != 0 );
-               item.asStringModule()->mark( gen );
+               if ( item.asStringModule() != 0 )
+                  item.asStringModule()->mark( gen );
             }
          }
       break;

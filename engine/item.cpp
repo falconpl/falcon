@@ -66,6 +66,7 @@ void Item::setString( String *str )
    type( FLC_ITEM_STRING );
 
    all.ctx.data.ptr.voidp = str;
+   all.ctx.data.ptr.extra = 0;
    if ( str->isCore() )
       assignToVm( &static_cast<CoreString*>(str)->garbage() );
 }
