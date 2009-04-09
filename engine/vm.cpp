@@ -1532,8 +1532,12 @@ void VMachine::fillErrorContext( Error *err, bool filltb )
 {
    if( currentSymbol() != 0 )
    {
-      err->module( currentModule()->name() );
-      err->symbol( currentSymbol()->name() );
+      if ( err->module().size() == 0 )
+         err->module( currentModule()->name() );
+
+      if ( err->module().size() == 0 )
+         err->symbol( currentSymbol()->name() );
+
       if( m_symbol->isFunction() )
          err->line( currentModule()->getLineAt( m_symbol->getFuncDef()->basePC() + programCounter() ) );
 

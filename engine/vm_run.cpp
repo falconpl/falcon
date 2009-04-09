@@ -329,7 +329,7 @@ void VMachine::run()
             }
 
             if( the_error != 0 && ! the_error->hasTraceback() )
-               fillErrorContext( the_error, m_tryFrame == i_noTryFrame );
+               fillErrorContext( the_error, true );
 
             // Enter the stack frame that should handle the error (or raise to the top if uncaught)
             while( m_stackBase != 0 && ( m_stackBase > m_tryFrame || m_tryFrame == i_noTryFrame ) )
