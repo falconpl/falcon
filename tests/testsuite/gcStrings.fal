@@ -19,6 +19,10 @@ aliveMem = GC.aliveMem
 items = GC.items
 usedMem = GC.usedMem
 
+// test0 : keep a reference to a methodized static string.
+// gc may crash if not properly handled
+ref = "a static string".len
+
 //====================================
 // TEST 1
 // drop a static string
