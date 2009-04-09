@@ -31,6 +31,7 @@ Falcon (0.9.1)
   * fixed: Better to always fill the error backtrace, for now.
   * fixed: Ops, totally forgot to add the -L load path in falcon exe.
   * fixed: Re-enabled copy-on-assign on strings; too dangerous without.
+  * fixed: As Falcon didn't destroy the VM at end, items where not propery finalized.
 
 Falcon (0.9)
   * major: Removed "sender" from grammar.

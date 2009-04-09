@@ -661,10 +661,11 @@ void AppFalcon::run()
    else
       runModule();
 
+   memPool->performGC();
+
    if ( m_options.check_memory )
    {
       // be sure we have reclaimed all what's possible to reclaim.
-      memPool->performGC();
       size_t mem2 = gcMemAllocated();
       int32 items2 = memPool->allocatedItems();
       cout << "===============================================================" << std::endl;

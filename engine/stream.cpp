@@ -52,7 +52,7 @@ bool Stream::errorDescription( ::Falcon::String &description ) const
 
 Stream::~Stream()
 {
-  if ( m_rhBuffer != 0 )
+   if ( m_rhBuffer != 0 )
       memFree( m_rhBuffer );
 }
 
