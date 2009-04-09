@@ -82,14 +82,22 @@ String AppFalcon::getLoadPath()
    // should we ignore system paths?
    if ( m_options.ignore_syspath )
    {
-      return "";
+      return m_options.load_path;
+   }
+
+   String envpath;
+   String path = m_options.load_path;
+
+   if( Sys::_getEnv ( "FALCON_LOAD_PATH", envpath ) )
+   {
+      if ( path.size() != 0 )
+         path += ";";
+      path += envpath;
    }
 
    // Otherwise, get the load path.
-   String envpath;
-   bool hasEnvPath = Sys::_getEnv ( "FALCON_LOAD_PATH", envpath );
-   if ( hasEnvPath && envpath.size() > 0)
-      return FALCON_DEFAULT_LOAD_PATH ";" + envpath;
+   if ( path.size() > 0)
+      return  path + ";" + FALCON_DEFAULT_LOAD_PATH;
    else
       return FALCON_DEFAULT_LOAD_PATH;
 }

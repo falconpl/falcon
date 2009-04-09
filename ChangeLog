@@ -28,6 +28,8 @@ Falcon (0.9.1)
            at compile time; useful to detect "str1"\n"str2" left from 0.8.x
   * fixed: Errors in "loop" definitions may have caused a segfault.
   * fixed: Seek from current position wasn't working in buffered streams.
+  * fixed: Better to always fill the error backtrace, for now.
+  * fixed: Ops, totally forgot to add the -L load path in falcon exe.
 
 Falcon (0.9)
   * major: Removed "sender" from grammar.
