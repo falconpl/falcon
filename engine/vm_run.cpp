@@ -861,9 +861,9 @@ void opcodeHandler_LD( register VMachine *vm )
    Item *operand1 =  vm->getOpcodeParam( 1 )->dereference();
    Item *operand2 =  vm->getOpcodeParam( 2 )->dereference();
 
-   /*if ( operand2->isString() )
+   if ( operand2->isString() )
       operand1->setString( new CoreString( *operand2->asString() ) );
-   else*/
+   else
       operand1->copy( *operand2 );
 
    vm->regA() =  *operand1;

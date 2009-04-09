@@ -30,6 +30,7 @@ Falcon (0.9.1)
   * fixed: Seek from current position wasn't working in buffered streams.
   * fixed: Better to always fill the error backtrace, for now.
   * fixed: Ops, totally forgot to add the -L load path in falcon exe.
+  * fixed: Re-enabled copy-on-assign on strings; too dangerous without.
 
 Falcon (0.9)
   * major: Removed "sender" from grammar.
