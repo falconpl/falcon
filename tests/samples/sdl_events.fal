@@ -123,7 +123,7 @@ try
    SDL.StartEvents()
    count = 0
    while not MyEventManager.quitRequest
-      sleep(0.01)
+      sleep(1)
       >> count++, "\r"
       //SDL.WaitEvent()
    end
