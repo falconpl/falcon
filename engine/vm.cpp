@@ -3448,17 +3448,15 @@ void VMachine::coPrepare( int32 pSize )
 
 void VMachine::postMessage( VMMessage *msg )
 {
-   /*m_baton.acquire();
-   processMessage( msg );
-   m_baton.release();*/
    // can we post now?
 
-   /*if ( m_baton.tryAcquire() )
+   if ( m_baton.tryAcquire() )
    {
       processMessage( msg );
+      execFrame();
       m_baton.release();
    }
-   else*/
+   else
    {
       // ok, wa can't do it now; post the message
       m_mtx_mesasges.lock();
