@@ -19,7 +19,7 @@
 /** \file
    The SDL binding support module - module specific extensions.
 */
-
+#define FALCON_EXPORT_SERVICE
 #include <falcon/vm.h>
 #include <falcon/membuf.h>
 #include "sdl_mod.h"
@@ -40,14 +40,14 @@ namespace Ext {
 SDLEventListener* s_EvtListener = 0;
 Mutex* s_mtx_events = 0;
 
-SDLModule::SDLModule()
+FALCON_SERVICE SDLModule::SDLModule()
 {
    s_mtx_events = new Mutex;
    s_EvtListener = 0; // to be sure
 }
 
 
-SDLModule::~SDLModule()
+FALCON_SERVICE SDLModule::~SDLModule()
 {
    SDLEventListener *evt;
    s_mtx_events->lock();

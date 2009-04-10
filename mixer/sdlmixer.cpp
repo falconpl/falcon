@@ -23,12 +23,51 @@ extern "C"
 }
 
 #include <falcon/setup.h>
-#include <falcon/enginedata.h>
 #include <falcon/module.h>
+#include <falcon/vm.h>
 #include "version.h"
 #include "sdlmixer_ext.h"
 #include "sdlmixer_mod.h"
 
+namespace Falcon {
+namespace Ext {
+
+class SDLMixerModule: public Module
+{
+public:
+   SDLMixerModule();
+   virtual ~SDLMixerModule();
+};
+
+SDLMixerModule::SDLMixerModule()
+{
+   m_mtx_listener = new Mutex;
+}
+
+SDLMixerModule::~SDLMixerModule()
+{
+   ::Mix_HookMusicFinished( NULL );
+   ::Mix_ChannelFinished( NULL );
+
+   m_mtx_listener->lock();
+
+   if ( m_channel_listener != 0 )
+   {
+      m_channel_listener->decref();
+   }
+
+   if ( m_music_listener != 0 )
+   {
+      m_music_listener->decref();
+   }
+
+   m_mtx_listener->unlock();
+
+   delete m_mtx_listener;
+
+}
+}
+}
 /*#
    @module sdlmixer SDL Audio Mixer module for The Falcon Programming Language.
    @brief SDL AUDIO extensions for the Falcon SDL module.

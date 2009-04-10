@@ -17,6 +17,8 @@
    Binding for SDL event subsystem.
 */
 
+#define FALCON_EXPORT_SERVICE
+
 #include <falcon/vm.h>
 #include <falcon/transcoding.h>
 #include <falcon/fstream.h>
@@ -1528,33 +1530,35 @@ FALCON_FUNC sdl_StopEvents( VMachine *vm )
 }
 
 
-SDLEventListener::SDLEventListener( VMachine* vm ):
+FALCON_SERVICE SDLEventListener::SDLEventListener( VMachine* vm ):
    m_vm( vm ),
    m_th( 0 )
 {
    vm->incref();
 }
 
-SDLEventListener::~SDLEventListener()
+FALCON_SERVICE SDLEventListener::~SDLEventListener()
 {
    m_vm->decref();
 }
 
-void* SDLEventListener::run()
+FALCON_SERVICE void* SDLEventListener::run()
 {
    SDL_Event evt;
 
    while( ! m_eTerminated.wait(20) )
    {
-      while( SDL_PollEvent( &evt ) )
+      while( SDL_WaitEvent( &evt ) )
       {
          //printf( "Dispatching event\n" );
          internal_dispatchEvent( m_vm, evt );
       }
    }
+
+   return 0;
 }
 
-void SDLEventListener::start()
+void FALCON_SERVICE SDLEventListener::start()
 {
    if ( m_th == 0 )
    {
@@ -1563,7 +1567,7 @@ void SDLEventListener::start()
    }
 }
 
-void SDLEventListener::stop()
+void FALCON_SERVICE SDLEventListener::stop()
 {
    if ( m_th != 0 )
    {

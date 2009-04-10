@@ -23,6 +23,7 @@
 #ifndef FALCON_SDL_MOD
 #define FALCON_SDL_MOD
 
+#define FALCON_EXPORT_SERVICE
 #include <falcon/setup.h>
 #include <falcon/module.h>
 #include <falcon/falcondata.h>
@@ -33,7 +34,7 @@ namespace Falcon{
 namespace Ext{
 
 /** Class waiting for events. */
-class SDLEventListener: public Runnable
+class FALCON_SERVICE SDLEventListener: public Runnable
 {
    VMachine *m_vm;
    SysThread* m_th;
@@ -67,7 +68,7 @@ extern Mutex* s_mtx_events;
    and to shut down cleanly the event listener thread (if started) at application
    termination.
 */
-class FALCON_DYN_CLASS SDLModule: public Module
+class FALCON_SERVICE SDLModule: public Module
 {
 public:
    SDLModule();
@@ -198,7 +199,7 @@ public:
       setUserData( &m_ms );
    }
 
-   virtual CoreObject *clone() const { new Inst_SdlMouseState( *this ); }
+   virtual CoreObject *clone() const { return new Inst_SdlMouseState( *this ); }
    virtual void gcMark(VMachine*) {}
 };
 

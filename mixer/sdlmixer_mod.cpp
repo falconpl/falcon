@@ -16,6 +16,7 @@
 /** \file
    The SDL Mixer binding support module - module specific extensions.
 */
+#define FALCON_EXPORT_MODULE
 
 #include <falcon/vm.h>
 #include <falcon/vmmsg.h>
@@ -35,33 +36,6 @@ VMachine* m_music_listener = 0;
 
 Mutex* m_mtx_listener;
 
-SDLMixerModule::SDLMixerModule()
-{
-   m_mtx_listener = new Mutex;
-}
-
-SDLMixerModule::~SDLMixerModule()
-{
-   ::Mix_HookMusicFinished( NULL );
-   ::Mix_ChannelFinished( NULL );
-
-   m_mtx_listener->lock();
-
-   if ( m_channel_listener != 0 )
-   {
-      m_channel_listener->decref();
-   }
-
-   if ( m_music_listener != 0 )
-   {
-      m_music_listener->decref();
-   }
-
-   m_mtx_listener->unlock();
-
-   delete m_mtx_listener;
-
-}
 
 //=========================================================
 

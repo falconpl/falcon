@@ -19,7 +19,6 @@
 #define FALCON_EXPORT_SERVICE
 
 #include <falcon/setup.h>
-#include <falcon/enginedata.h>
 #include <falcon/module.h>
 #include <sdl_service.h>
 

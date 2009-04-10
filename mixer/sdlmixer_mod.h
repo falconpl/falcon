@@ -23,6 +23,7 @@
 #include <falcon/setup.h>
 #include <falcon/falcondata.h>
 #include <falcon/error.h>
+#include <falcon/mt.h>
 
 extern "C" {
    #include <SDL_mixer.h>
@@ -39,14 +40,6 @@ extern VMachine* m_channel_listener;
 extern VMachine* m_music_listener;
 
 extern Mutex *m_mtx_listener;
-
-class FALCON_DYN_CLASS SDLMixerModule: public Module
-{
-
-public:
-   SDLMixerModule();
-   virtual ~SDLMixerModule();
-};
 
 class MixChunkCarrier: public FalconData
 {

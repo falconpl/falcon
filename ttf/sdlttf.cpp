@@ -23,7 +23,6 @@ extern "C"
 }
 
 #include <falcon/setup.h>
-#include <falcon/enginedata.h>
 #include <falcon/module.h>
 #include "version.h"
 #include "sdlttf_ext.h"

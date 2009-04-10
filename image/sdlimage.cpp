@@ -22,7 +22,6 @@
 
 
 #include <falcon/setup.h>
-#include <falcon/enginedata.h>
 #include <falcon/module.h>
 #include "version.h"
 #include "sdlimage_ext.h"
