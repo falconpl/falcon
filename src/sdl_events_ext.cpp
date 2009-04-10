@@ -906,10 +906,10 @@ void internal_dispatchEvent( VMachine *vm, SDL_Event &evt )
       break;
 
       case SDL_MOUSEBUTTONDOWN:
-         if ( vm->getSlot( "sdl_mouseButtonDown", false ) == 0 )
+         if ( vm->getSlot( "sdl_MouseButtonDown", false ) == 0 )
             return;
 
-         msg = new VMMessage( "sdl_mouseButtonDown" );
+         msg = new VMMessage( "sdl_MouseButtonDown" );
          msg->addParam( (int64) evt.button.button );
          msg->addParam( (int64) evt.button.state );
          msg->addParam( (int64) evt.button.x );
