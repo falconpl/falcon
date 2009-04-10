@@ -27,13 +27,12 @@
 namespace Falcon {
 
 
-VMMessage::VMMessage( VMachine* target, const String &msgName ):
+VMMessage::VMMessage( const String &msgName ):
    m_msg( msgName ),
    m_params(0),
    m_allocated(0),
    m_pcount(0),
-   m_next(0),
-   m_target( target )
+   m_next(0)
 {
 }
 
@@ -44,31 +43,32 @@ VMMessage::~VMMessage()
    {
       for(uint32 i = 0; i < m_pcount; ++i )
       {
-         m_target->unlock( m_params[i] );
+         memPool->markItem( m_params[i] );
       }
       memFree( m_params );
    }
 }
 
 
-void VMMessage::addParam( const Item &itm )
+void VMMessage::addParam( const SafeItem &itm )
 {
    if ( m_params == 0 )
    {
-      m_params = (GarbageLock **) memAlloc( sizeof( GarbageLock* ) * PARAMS_GROWTH );
+      m_params = (SafeItem *) memAlloc( sizeof( SafeItem ) * PARAMS_GROWTH );
       m_allocated = PARAMS_GROWTH;
    }
    else if( m_pcount == m_allocated ) {
       m_allocated += PARAMS_GROWTH;
-      m_params = (GarbageLock **) memRealloc( m_params, sizeof( GarbageLock* ) * m_allocated );
+      m_params = (SafeItem *) memRealloc( m_params, sizeof( SafeItem ) * m_allocated );
    }
-   m_params[ m_pcount++ ] = m_target->lock( itm );
+
+   m_params[ m_pcount++ ].copy( itm );
 }
 
 
-Item *VMMessage::param( uint32 p ) const
+SafeItem *VMMessage::param( uint32 p ) const
 {
-   return p < m_pcount ? &m_params[p]->item() : 0; 
+   return p < m_pcount ? &m_params[p] : 0;
 }
 
 

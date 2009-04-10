@@ -295,14 +295,14 @@ public:
       setString( str );
    }
 
-   /** Creates a String item dependent from a module */
-   Item( String *str, LiveModule* lm )
+   /* Creates a String item dependent from a module */
+   /*Item( String *str, LiveModule* lm )
    {
       setString( str, lm );
-   }
+   }*/
 
    void setString( String *str );
-   void setString( String *str, LiveModule* lm );
+   //void setString( String *str, LiveModule* lm );
 
    /** Creates an array item */
    Item( CoreArray *array )
@@ -863,6 +863,113 @@ inline const Item *Item::dereference() const
    return &asReference()->origin();
 };
 
+
+class FALCON_DYN_CLASS SafeItem: public Item
+{
+public:
+   SafeItem( const SafeItem &other ) {
+      copy( other );
+   }
+
+   SafeItem( const Item &other ) {
+      copy( other );
+   }
+
+   /** Creates a boolean SafeItem. */
+
+   /** Sets this SafeItem as boolean */
+   void setBoolean( bool tof )
+   {
+      type( FLC_ITEM_BOOL );
+      all.ctx.data.val32 = tof? 1: 0;
+   }
+
+   /** Creates an integer SafeItem */
+   SafeItem( int16 val )
+   {
+      setInteger( (int64) val );
+   }
+
+   /** Creates an integer SafeItem */
+   SafeItem( uint16 val )
+   {
+      setInteger( (int64) val );
+   }
+
+   /** Creates an integer SafeItem */
+   SafeItem( int32 val )
+   {
+      setInteger( (int64) val );
+   }
+
+   /** Creates an integer SafeItem */
+   SafeItem( uint32 val )
+   {
+      setInteger( (int64) val );
+   }
+
+
+   /** Creates an integer SafeItem */
+   SafeItem( int64 val )
+   {
+      setInteger( val );
+   }
+
+
+   /** Creates an integer SafeItem */
+   SafeItem( uint64 val )
+   {
+      setInteger( (int64)val );
+   }
+
+   void setInteger( int64 val ) {
+      type(FLC_ITEM_INT);
+      all.ctx.data.val64 = val;
+   }
+
+   /** Creates a numeric SafeItem */
+   SafeItem( numeric val )
+   {
+      setNumeric( val );
+   }
+
+   void setNumeric( numeric val ) {
+      type( FLC_ITEM_NUM );
+      all.ctx.data.number = val;
+   }
+
+   SafeItem( byte t, Garbageable *dt );
+
+   SafeItem( CoreRange *r ) { setRange( r ); }
+   SafeItem( String *str ) { setString( str ); }
+   SafeItem( CoreArray *array ) { setArray( array ); }
+   SafeItem( CoreObject *obj ) { setObject( obj ); }
+   SafeItem( CoreDict *dict ) { setDict( dict ); }
+   SafeItem( MemBuf *b ) { setMemBuf( b ); }
+   SafeItem( GarbageItem *r ) { setReference( r ); }
+   SafeItem( CoreFunc* cf ) { setFunction( cf ); }
+   SafeItem( String *lbind, GarbageItem *val ) { setLBind( lbind, val ); }
+   SafeItem( const Item &data, CoreFunc *func ) { setMethod( data, func ); }
+   SafeItem( CoreObject *obj, CoreClass *cls ) { setClassMethod( obj, cls ); }
+   SafeItem( CoreClass *cls ) { setClass( cls ); }
+   SafeItem( FalconData *ptr, uint32 sig ) { setGCPointer( ptr, sig ); }
+   SafeItem( GarbagePointer *shell, uint32 sig ) { setGCPointer( shell, sig ); }
+
+   void setRange( CoreRange *r );
+   void setString( String *str );
+   void setArray( CoreArray *array );
+   void setObject( CoreObject *obj );
+   void setDict( CoreDict *dict );
+   void setMemBuf( MemBuf *b );
+   void setReference( GarbageItem *r );
+   void setFunction( CoreFunc* cf );
+   void setLBind( String *lbind, GarbageItem *val );
+   void setMethod( const Item &data, CoreFunc *func );
+   void setClassMethod( CoreObject *obj, CoreClass *cls );
+   void setClass( CoreClass *cls );
+   void setGCPointer( FalconData *ptr, uint32 sig );
+   void setGCPointer( GarbagePointer *shell, uint32 sig );
+};
 
 }
 

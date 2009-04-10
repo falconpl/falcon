@@ -70,6 +70,7 @@ void Item::setString( String *str )
    if ( str->isCore() )
       assignToVm( &static_cast<CoreString*>(str)->garbage() );
 }
+/*
 
 void Item::setString( String *str, LiveModule *lm )
 {
@@ -79,6 +80,7 @@ void Item::setString( String *str, LiveModule *lm )
    all.ctx.data.ptr.voidp = str;
    all.ctx.data.ptr.extra = lm;
 }
+*/
 
 void Item::setArray( CoreArray *array )
 {
@@ -184,6 +186,116 @@ void Item::setGCPointer( GarbagePointer *shell, uint32 sig )
 FalconData *Item::asGCPointer() const
 {
    return all.ctx.data.gptr.gcptr->ptr();
+}
+
+//====================================================
+// Safe items.
+//
+
+SafeItem::SafeItem( byte t, Garbageable *dt )
+{
+   type( t );
+   content( dt );
+}
+
+void SafeItem::setRange( CoreRange *r )
+{
+   type( FLC_ITEM_RANGE );
+   all.ctx.data.content = r;
+}
+
+
+void SafeItem::setString( String *str )
+{
+   type( FLC_ITEM_STRING );
+
+   all.ctx.data.ptr.voidp = str;
+   all.ctx.data.ptr.extra = 0;
+}
+
+void SafeItem::setArray( CoreArray *array )
+{
+   type( FLC_ITEM_ARRAY );
+   all.ctx.data.ptr.voidp = array;
+}
+
+void SafeItem::setObject( CoreObject *obj )
+{
+   type( FLC_ITEM_OBJECT );
+   all.ctx.data.ptr.voidp = obj;
+}
+
+
+void SafeItem::setDict( CoreDict *dict )
+{
+   type( FLC_ITEM_DICT );
+   all.ctx.data.ptr.voidp = dict;
+}
+
+
+void SafeItem::setMemBuf( MemBuf *b )
+{
+   type( FLC_ITEM_MEMBUF );
+   all.ctx.data.ptr.voidp = b;
+}
+
+void SafeItem::setReference( GarbageItem *ref )
+{
+   type( FLC_ITEM_REFERENCE );
+   all.ctx.data.ptr.voidp = ref;
+}
+
+void SafeItem::setFunction( CoreFunc* cf )
+{
+   type( FLC_ITEM_FUNC );
+   all.ctx.data.ptr.extra = cf;
+}
+
+void SafeItem::setLBind( String *lbind, GarbageItem *val )
+{
+   type( FLC_ITEM_LBIND );
+   all.ctx.data.ptr.voidp = lbind;
+   all.ctx.data.ptr.extra = val;
+
+   if ( val != 0 )
+       assignToVm( val );
+}
+
+void SafeItem::setMethod( const Item &data, CoreFunc *func )
+{
+   copy( data );
+   all.ctx.base.bits.oldType = all.ctx.base.bits.type;
+   all.ctx.method = func;
+   type( FLC_ITEM_METHOD );
+   assignToVm( func );
+}
+
+void SafeItem::setClassMethod( CoreObject *obj, CoreClass *cls )
+{
+   type( FLC_ITEM_CLSMETHOD );
+   all.ctx.data.ptr.voidp = obj;
+   all.ctx.data.ptr.extra = cls;
+}
+
+void SafeItem::setClass( CoreClass *cls )
+{
+   type( FLC_ITEM_CLASS );
+   // warning: class in extra to be omologue to methodClass()
+   all.ctx.data.ptr.extra = cls;
+}
+
+void SafeItem::setGCPointer( FalconData *ptr, uint32 sig )
+{
+   type( FLC_ITEM_GCPTR );
+   all.ctx.data.gptr.signature = sig;
+   all.ctx.data.gptr.gcptr = new GarbagePointer( ptr );
+}
+
+void SafeItem::setGCPointer( GarbagePointer *shell, uint32 sig )
+{
+   type( FLC_ITEM_GCPTR );
+   all.ctx.data.gptr.signature = sig;
+   all.ctx.data.gptr.gcptr = shell;
 }
 
 

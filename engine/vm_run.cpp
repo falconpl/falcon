@@ -64,7 +64,8 @@ Item *VMachine::getOpcodeParam( register uint32 bc_pos )
       case P_PARAM_STRID:
          {
             String *temp = currentLiveModule()->getString( endianInt32(*reinterpret_cast<int32 *>( m_code + m_pc_next ) ) );
-            m_imm[bc_pos].setString( temp, const_cast<LiveModule*>(currentLiveModule()) );
+            //m_imm[bc_pos].setString( temp, const_cast<LiveModule*>(currentLiveModule()) );
+            m_imm[bc_pos].setString( temp );
             m_pc_next += sizeof( int32 );
          }
       return m_imm + bc_pos;
@@ -260,6 +261,7 @@ void VMachine::run()
                m_mtx_mesasges.unlock();
 
                processMessage( msg );
+               //delete msg;
 
                // see if we have more messages in the meanwhile
                m_mtx_mesasges.lock();

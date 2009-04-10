@@ -1785,11 +1785,13 @@ void VMachine::electContext()
          }
          else {
             // raise an interrupted error on need.
+            idle();
             if ( ! m_systemData.sleep( tgtTime ) )
             {
                m_systemData.resetInterrupt();
+               unidle();
 
-               fassert( m_symbol->isFunction() );
+               //fassert( m_symbol->isFunction() );
                raiseError( new InterruptedError(
                   ErrorParam( e_interrupted ).origin( e_orig_vm ).
                      symbol( m_symbol->name() ).
@@ -1797,6 +1799,7 @@ void VMachine::electContext()
                      line( currentModule()->getLineAt( m_symbol->getFuncDef()->basePC() + m_pc ) )
                   ) );
             }
+            unidle();
          }
       }
    }
@@ -3445,13 +3448,18 @@ void VMachine::coPrepare( int32 pSize )
 
 void VMachine::postMessage( VMMessage *msg )
 {
+   /*m_baton.acquire();
+   processMessage( msg );
+   m_baton.release();*/
    // can we post now?
-   if ( m_baton.tryAcquire() )
+
+   /*if ( m_baton.tryAcquire() )
    {
       processMessage( msg );
       m_baton.release();
    }
-   else {
+   else*/
+   {
       // ok, wa can't do it now; post the message
       m_mtx_mesasges.lock();
 
@@ -3490,7 +3498,11 @@ void VMachine::processMessage( VMMessage *msg )
    }
 
    // create the coroutine
+   uint32 pcnext = m_pc_next;
+   m_pc_next = i_pc_call_external_return;
+   m_pc = i_pc_call_external_return;
    coPrepare(0);
+   m_pc_next = pcnext;
    for ( uint32 i = 0; i < msg->paramCount(); ++i )
    {
       pushParameter( *msg->param(i) );
@@ -3501,6 +3513,7 @@ void VMachine::processMessage( VMMessage *msg )
 
    // prepare the broadcast in the frame.
    slot->prepareBroadcast( this, 0, msg->paramCount(), msg );
+   callReturn();
 }
 
 void VMachine::performGC( bool bWaitForCollect )

@@ -23,6 +23,7 @@
 #include <falcon/setup.h>
 #include <falcon/basealloc.h>
 #include <falcon/string.h>
+#include <falcon/item.h>
 
 namespace Falcon {
 
@@ -44,17 +45,16 @@ class VMachine;
 class FALCON_DYN_CLASS VMMessage: public BaseAlloc
 {
    String m_msg;
-   GarbageLock **m_params;
+   SafeItem *m_params;
    uint32 m_allocated;
    uint32 m_pcount;
    VMMessage *m_next;
-   VMachine* m_target;
 
 public:
    /** Creates a VMMessage without parameters.
    \param msgName the name of the message.
    */
-   VMMessage( VMachine* vm, const String &msgName );
+   VMMessage( const String &msgName );
 
    virtual ~VMMessage();
 
@@ -64,13 +64,13 @@ public:
    /** Adds a paramter to the message.
    \param itm The item to be added (will be copied and garbage locked).
    */
-   void addParam( const Item &itm );
+   void addParam( const SafeItem &itm );
 
    /** Gets the number of parameters allocated in this message. */
    uint32 paramCount() const {return m_pcount;}
 
    /** Gets the nth parameter of this message. */
-   Item *param( uint32 p ) const;
+   SafeItem *param( uint32 p ) const;
 
    /** Called by the target VM when the message has been processed.
       The caller should create a subclass of VMMessage in case it
