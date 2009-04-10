@@ -350,7 +350,7 @@ int32 BaseFileStream::readAvailable( int32 msec, const Sys::SystemData *sysData 
             return -1;
          }
 
-      return 1;
+      return FD_ISSET( data->m_handle, &set ) ? 1 : 0;
 
       case -1:
          if( errno == EINPROGRESS ) {

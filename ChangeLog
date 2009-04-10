@@ -34,6 +34,7 @@ Falcon (0.9.1)
   * fixed: As Falcon didn't destroy the VM at end, items where not propery finalized.
   * fixed: Rare crash on static string live module owner marking. This poses a question
            on validity of current marking algorithm for live string (to be checked out).
+  * fixed: Stream.readAvaliable() may have reported spurious false positive on UNIces.
 
 Falcon (0.9)
   * major: Removed "sender" from grammar.

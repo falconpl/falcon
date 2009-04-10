@@ -1,6 +1,7 @@
 Still TODO before official 0.9.2 release:
 
    - [URGENT] Check interthread VM messaging via postMessage.
+   - [RELEVANT] Change the algoritm to ensure correc live unloading of modules.
    - Resolution of closed symbols deep down ancestors.
    - Expansion of the Tokenizer (with custom recognizers) and deep testing.
    * Autodetection of GBK locales on Windows
