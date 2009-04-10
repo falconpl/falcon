@@ -39,6 +39,9 @@
 namespace Falcon {
 namespace Ext {
 
+
+FALCON_FUNC _coroutinePoll( VMachine *vm );
+
 void declare_events( Module *self )
 {
 
@@ -82,6 +85,11 @@ void declare_events( Module *self )
    self->addClassProperty( c_evttype, "VIDEORESIZE" ).setInteger( SDL_VIDEORESIZE );
    self->addClassProperty( c_evttype, "VIDEOEXPOSE" ).setInteger( SDL_VIDEOEXPOSE );
    self->addClassProperty( c_evttype, "QUIT" ).setInteger( SDL_QUIT );
+
+   #ifdef WIN32
+   Symbol* coropoll = self->addExtFunc( "_coroutinePoll", _coroutinePoll, false );
+   coropoll->setWKS( true );
+   #endif
 
    //====================================================
    // EventType enumeration
@@ -212,7 +220,7 @@ void declare_events( Module *self )
       - SDLK.SCROLLOCK: scrollock
       - SDLK.RSHIFT: right shift
       - SDLK.LSHIFT: left shift
-      - SDLK.RCTRL: right ctrl
+      - SDLK.RCTRL: right ctrlTEST_PARA_CORO
       - SDLK.LCTRL: left ctrl
       - SDLK.RALT: right alt
       - SDLK.LALT: left alt
@@ -1477,9 +1485,38 @@ FALCON_FUNC SDLMouseState_PumpAndRefresh( VMachine *vm )
    SDLMouseState_Refresh( vm );
 }
 
+
 //===============================================================
 // The event listener.
 //
+static bool s_bCoroTerminate = false;
+
+bool _coroutinePollNext( VMachine *vm )
+{
+   SDL_Event evt;
+
+   while( (!s_bCoroTerminate) && SDL_PollEvent( &evt )  )
+   {
+      internal_dispatchEvent( vm, evt );
+   }
+
+   if ( s_bCoroTerminate )
+   {
+      vm->returnHandler( 0 );
+      s_bCoroTerminate = false;
+      return false;
+   }
+
+   vm->yieldRequest( 0.05 );
+
+   return true;
+}
+
+
+FALCON_FUNC _coroutinePoll( VMachine *vm )
+{
+   vm->returnHandler( _coroutinePollNext );
+}
 
 
 /*#
@@ -1495,6 +1532,7 @@ FALCON_FUNC SDLMouseState_PumpAndRefresh( VMachine *vm )
 */
 FALCON_FUNC sdl_StartEvents( VMachine *vm )
 {
+#ifndef WIN32
    s_mtx_events->lock();
    if ( s_EvtListener != 0 )
    {
@@ -1504,6 +1542,11 @@ FALCON_FUNC sdl_StartEvents( VMachine *vm )
    s_EvtListener = new SDLEventListener( vm );
    s_EvtListener->start();
    s_mtx_events->unlock();
+#else
+   Item* coro = vm->findWKI( "_coroutinePoll" );
+   fassert( coro != 0 );
+   vm->callCoroFrame( *coro, 0 );
+#endif
 }
 
 
@@ -1519,6 +1562,7 @@ FALCON_FUNC sdl_StartEvents( VMachine *vm )
 */
 FALCON_FUNC sdl_StopEvents( VMachine *vm )
 {
+#ifndef WIN32
    s_mtx_events->lock();
    if ( s_EvtListener != 0 )
    {
@@ -1527,6 +1571,9 @@ FALCON_FUNC sdl_StopEvents( VMachine *vm )
       s_EvtListener = 0;
    }
    s_mtx_events->unlock();
+#else
+   s_bCoroTerminate = true;
+#endif
 }
 
 
@@ -1548,7 +1595,7 @@ FALCON_SERVICE void* SDLEventListener::run()
 
    while( ! m_eTerminated.wait(20) )
    {
-      while( SDL_WaitEvent( &evt ) )
+      while( SDL_PollEvent( &evt ) )
       {
          //printf( "Dispatching event\n" );
          internal_dispatchEvent( m_vm, evt );

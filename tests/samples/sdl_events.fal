@@ -123,10 +123,11 @@ try
    SDL.StartEvents()
    count = 0
    while not MyEventManager.quitRequest
-      sleep(1)
+      sleep(0.01)
       >> count++, "\r"
-      //SDL.WaitEvent()
+      //SDL.PollEvent()
    end
+   SDL.StopEvents()
 
 catch in e
    > "Test failed: "
