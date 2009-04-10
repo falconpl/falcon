@@ -28,7 +28,7 @@
 #include "sdl_mod.h"
 
 /*#
-   @module fsdl The SDL Falcon Module.
+   @module sdl The SDL Falcon Module.
    @brief Main module for the Falcon SDL module suite.
 
    This is the base of the falcon SDL subsystem.
@@ -50,7 +50,7 @@
    is several time faster than the creation of a Falcon object that should be then
    inspected and eventually marshalled.
 
-   @beginmodule fsdl
+   @beginmodule sdl
 */
 
 
@@ -58,7 +58,7 @@ Falcon::SDLService the_service;
 
 FALCON_MODULE_DECL
 {
-   Falcon::Module *self = new Falcon::Module();
+   Falcon::Module *self = new Falcon::Ext::SDLModule();
    self->name( "sdl" );
    self->language( "en_US" );
    self->engineVersion( FALCON_VERSION_NUM );
@@ -179,8 +179,6 @@ FALCON_MODULE_DECL
       addParam("filename");
 
    // Events
-   self->addClassMethod( c_sdl, "PushEvent", Falcon::Ext::SDLEventHandler_PushEvent );
-   self->addClassMethod( c_sdl, "PushUserEvent", Falcon::Ext::SDLEventHandler_PushUserEvent );
    self->addClassMethod( c_sdl, "PumpEvents", Falcon::Ext::sdl_PumpEvents);
    self->addClassMethod( c_sdl, "EventState", Falcon::Ext::sdl_EventState).asSymbol()->
       addParam("type")->addParam("state");
@@ -198,6 +196,11 @@ FALCON_MODULE_DECL
    self->addClassMethod( c_sdl, "JoystickEventState", Falcon::Ext::sdl_JoystickEventState).asSymbol()->
       addParam("mode");
    self->addClassMethod( c_sdl, "JoystickUpdate", Falcon::Ext::sdl_JoystickUpdate);
+
+   self->addClassMethod( c_sdl, "PollEvent", Falcon::Ext::sdl_PollEvent );
+   self->addClassMethod( c_sdl, "WaitEvent", Falcon::Ext::sdl_WaitEvent );
+   self->addClassMethod( c_sdl, "StartEvents", Falcon::Ext::sdl_StartEvents );
+   self->addClassMethod( c_sdl, "StopEvents", Falcon::Ext::sdl_StopEvents );
 
     //============================================================
    // SDL rectangle class

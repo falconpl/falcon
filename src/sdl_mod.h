@@ -24,12 +24,56 @@
 #define FALCON_SDL_MOD
 
 #include <falcon/setup.h>
+#include <falcon/module.h>
 #include <falcon/falcondata.h>
 #include <sdl_service.h>
 
 
 namespace Falcon{
 namespace Ext{
+
+/** Class waiting for events. */
+class SDLEventListener: public Runnable
+{
+   VMachine *m_vm;
+   SysThread* m_th;
+
+   Event m_eTerminated;
+
+public:
+   SDLEventListener( VMachine* vm );
+   virtual ~SDLEventListener();
+
+   virtual void* run();
+
+   /** Starts the parallel event listener. */
+   void start();
+
+   /** Stops the event listener.
+
+      Synchronously wait for clean termination and destroys this object.
+      You can safely delete this object after this call.
+   */
+   void stop();
+};
+
+extern SDLEventListener* s_EvtListener;
+extern Mutex* s_mtx_events;
+
+
+/** Initializes application wide data and clear up data at termination.
+
+   This class is meant to prepare the application wide data at module initialization,
+   and to shut down cleanly the event listener thread (if started) at application
+   termination.
+*/
+class FALCON_DYN_CLASS SDLModule: public Module
+{
+public:
+   SDLModule();
+   virtual ~SDLModule();
+};
+
 
 //====================================================
 // Reflectors

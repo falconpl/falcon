@@ -39,7 +39,7 @@ extern "C"
 
 FALCON_MODULE_DECL
 {
-   Falcon::Module *self = new Falcon::Module();
+   Falcon::Module *self = new Falcon::Ext::SDLMixerModule();
    self->name( "sdlmixer" );
    self->language( "en_US" );
    self->engineVersion( FALCON_VERSION_NUM );

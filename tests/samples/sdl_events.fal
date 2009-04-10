@@ -24,26 +24,35 @@
 
 load sdl
 
-object MyEventManager from SDLEventHandler
+object MyEventManager
    quitRequest = false
+   subs = [
+      "sdl_MouseMotion",
+      "sdl_Quit",
+      "sdl_Expose",
+      "UserEvent" ]
 
-   function onMouseMotion( state, x, y, xrel, yrel )
-      >> "X=",x, " Y=",y, " Xrel=", xrel, " YRel=",yrel, "       \r"
+   init
+      for event in self.subs: subscribe( event, self )
+   end
+      
+   function on_sdl_MouseMotion( state, x, y, xrel, yrel )
+      >> "         X=",x, " Y=",y, " Xrel=", xrel, " YRel=",yrel, "       \r"
    end
 
-   function onQuit( state, x, y, xrel, yrel )
+   function on_sdl_Quit( state, x, y, xrel, yrel )
       > strReplicate( " ", 60 )
       > "== Quit! =="
       self.quitRequest = true
-      self.PushUserEvent( 0, "Quit" )
+      broadcast( "UserEvent", 0, "I am quit" )
    end
 
-   function onExpose()
+   function on_sdl_Expose()
       global screen
       screen.UpdateRect()
    end
 
-   function onUserEvent( code, item )
+   function on_UserEvent( code, item )
       > item, strReplicate( " ", 60 )
    end
 end
@@ -61,14 +70,14 @@ function blinker( screen )
 
    time = 0
    while not MyEventManager.quitRequest
-      sleep( 0.8 )
+      sleep( 0.5 )
       color = (color == white ? black : white )
       screen.FillRect( r, color )
       screen.UpdateRect( r )
       time ++
       if time > 8
          time = 0
-         SDLEventHandler.PushUserEvent( 0, "Reset..." )
+         broadcast( "UserEvent", 0, "Reset..." )
       end
    end
 end
@@ -92,7 +101,7 @@ try
       band = SDL.CreateRGBSurface( SDL.SWSURFACE, 640, 1, 32 )
    end
    
-   inspect( band )
+   launch blinker( screen )
 
    pixels = band.pixels
    for bid in [0:640]
@@ -107,12 +116,16 @@ try
    screen.UpdateRect()
 
    // make a solid rectangle
-   launch blinker( screen )
+   
    > "Success! - Now start moving the mouse."
    > "Click the X on the bar to quit the app."
 
+   SDL.StartEvents()
+   count = 0
    while not MyEventManager.quitRequest
-      MyEventManager.WaitEvent()
+      sleep(0.01)
+      >> count++, "\r"
+      //SDL.WaitEvent()
    end
 
 catch in e

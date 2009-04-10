@@ -102,10 +102,10 @@ FALCON_FUNC  SDLError_init ( VMachine *vm );
 
 // Events
 void declare_events( Module *self );
-FALCON_FUNC SDLEventHandler_PollEvent( VMachine *vm );
-FALCON_FUNC SDLEventHandler_WaitEvent( VMachine *vm );
-FALCON_FUNC SDLEventHandler_PushEvent( VMachine *vm );
-FALCON_FUNC SDLEventHandler_PushUserEvent( VMachine *vm );
+FALCON_FUNC sdl_PollEvent( VMachine *vm );
+FALCON_FUNC sdl_WaitEvent( VMachine *vm );
+FALCON_FUNC sdl_StartEvents( VMachine *vm );
+FALCON_FUNC sdl_StopEvents( VMachine *vm );
 
 FALCON_FUNC sdl_PumpEvents( VMachine *vm );
 FALCON_FUNC sdl_EventState( VMachine *vm );

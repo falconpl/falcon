@@ -24,13 +24,15 @@
 #include <falcon/autocstring.h>
 #include <falcon/membuf.h>
 #include <falcon/garbagelock.h>
+#include <falcon/mt.h>
+#include <falcon/vmmsg.h>
 
 #include "sdl_ext.h"
 #include "sdl_mod.h"
 
 #include <SDL.h>
 
-/*# @beginmodule fsdl */
+/*# @beginmodule sdl */
 
 namespace Falcon {
 namespace Ext {
@@ -38,21 +40,6 @@ namespace Ext {
 void declare_events( Module *self )
 {
 
-   //====================================================
-   // EventHandler class
-   //
-   /*#
-      @class SDLEventHandler
-      @brief Handles SDL events.
-
-      This class holds a set of callbacks that are meant to be overloaded
-      by implementors.
-   */
-   Falcon::Symbol *c_eventhandler = self->addClass( "SDLEventHandler" );
-   self->addClassMethod( c_eventhandler, "PollEvent", Falcon::Ext::SDLEventHandler_PollEvent );
-   self->addClassMethod( c_eventhandler, "WaitEvent", Falcon::Ext::SDLEventHandler_WaitEvent );
-   self->addClassMethod( c_eventhandler, "PushEvent", Falcon::Ext::SDLEventHandler_PushEvent );
-   self->addClassMethod( c_eventhandler, "PushUserEvent", Falcon::Ext::SDLEventHandler_PushUserEvent );
 
    //====================================================
    // EventType enumeration
@@ -649,6 +636,7 @@ void declare_events( Module *self )
    to the handler; the handler can inspect it and even manipulate it.
 */
 
+#if 0
 void internal_dispatchEvent( VMachine *vm, SDL_Event &evt )
 {
    Item method;
@@ -852,9 +840,169 @@ void internal_dispatchEvent( VMachine *vm, SDL_Event &evt )
 
    vm->callFrame( method, params );
 }
+#endif
+
+void internal_dispatchEvent( VMachine *vm, SDL_Event &evt )
+{
+   Item method;
+   uint32 params;
+   VMMessage *msg;
+
+   switch( evt.type )
+   {
+      case SDL_ACTIVEEVENT:
+         if ( vm->getSlot( "sdl_Active", false ) == 0 )
+            return;
+
+         msg = new VMMessage( "sdl_Active" );
+         msg->addParam( (int64) evt.active.gain );
+         msg->addParam( (int64) evt.active.state );
+      break;
+
+      case SDL_KEYDOWN:
+         if ( vm->getSlot( "sdl_KeyDown", false ) == 0 )
+            return;
+
+         msg = new VMMessage( "sdl_KeyDown" );
+         msg->addParam( (int64) evt.key.state );
+         msg->addParam( (int64) evt.key.keysym.scancode );
+         msg->addParam( (int64) evt.key.keysym.sym );
+         msg->addParam( (int64) evt.key.keysym.mod );
+         msg->addParam( (int64) evt.key.keysym.unicode );
+      break;
+
+      case SDL_KEYUP:
+         if ( vm->getSlot( "sdl_KeyUp", false ) == 0 )
+            return;
+
+         msg = new VMMessage( "sdl_KeyUp" );
+         msg->addParam( (int64) evt.key.state );
+         msg->addParam( (int64) evt.key.keysym.scancode );
+         msg->addParam( (int64) evt.key.keysym.sym );
+         msg->addParam( (int64) evt.key.keysym.mod );
+         msg->addParam( (int64) evt.key.keysym.unicode );
+      break;
+
+      case SDL_MOUSEMOTION:
+         if ( vm->getSlot( "sdl_MouseMotion", false ) == 0 )
+            return;
+
+         msg = new VMMessage( "sdl_MouseMotion" );
+         msg->addParam( (int64) evt.motion.state );
+         msg->addParam( (int64) evt.motion.x );
+         msg->addParam( (int64) evt.motion.y );
+         msg->addParam( (int64) evt.motion.xrel );
+         msg->addParam( (int64) evt.motion.yrel );
+      break;
+
+      case SDL_MOUSEBUTTONDOWN:
+         if ( vm->getSlot( "sdl_mouseButtonDown", false ) == 0 )
+            return;
+
+         msg = new VMMessage( "sdl_mouseButtonDown" );
+         msg->addParam( (int64) evt.button.button );
+         msg->addParam( (int64) evt.button.state );
+         msg->addParam( (int64) evt.button.x );
+         msg->addParam( (int64) evt.button.y );
+      break;
+
+      case SDL_MOUSEBUTTONUP:
+          if ( vm->getSlot( "sdl_MouseButtonUp", false ) == 0 )
+            return;
+
+         msg = new VMMessage( "sdl_MouseButtonUp" );
+         msg->addParam( (int64) evt.button.button );
+         msg->addParam( (int64) evt.button.state );
+         msg->addParam( (int64) evt.button.x );
+         msg->addParam( (int64) evt.button.y );
+      break;
+
+      case SDL_JOYAXISMOTION:
+         if ( vm->getSlot( "sdl_JoyAxisMotion", false ) == 0 )
+            return;
+
+         msg = new VMMessage( "sdl_JoyAxisMotion" );
+         msg->addParam( (int64) evt.jaxis.which );
+         msg->addParam( (int64) evt.jaxis.axis );
+         msg->addParam( (int64) evt.jaxis.value );
+      break;
+
+      case SDL_JOYBALLMOTION:
+         if ( vm->getSlot( "sdl_JoyBallMotion", false ) == 0 )
+            return;
+
+         msg = new VMMessage( "sdl_JoyBallMotion" );
+
+         msg->addParam( (int64) evt.jball.which );
+         msg->addParam( (int64) evt.jball.ball );
+         msg->addParam( (int64) evt.jball.xrel );
+         msg->addParam( (int64) evt.jball.yrel );
+      break;
+
+      case SDL_JOYHATMOTION:
+         if ( vm->getSlot( "sdl_JoyHatMotion", false ) == 0 )
+            return;
+
+         msg = new VMMessage( "sdl_JoyHatMotion" );
+         msg->addParam( (int64) evt.jhat.which );
+         msg->addParam( (int64) evt.jhat.hat );
+         msg->addParam( (int64) evt.jhat.value );
+      break;
+
+      case SDL_JOYBUTTONDOWN:
+         if ( vm->getSlot( "sdl_JoyButtonDown", false ) == 0 )
+            return;
+
+         msg = new VMMessage( "sdl_JoyButtonDown" );
+         msg->addParam( (int64) evt.jbutton.which );
+         msg->addParam( (int64) evt.jbutton.button );
+         msg->addParam( (int64) evt.jbutton.state );
+      break;
+
+      case SDL_JOYBUTTONUP:
+         if ( vm->getSlot( "sdl_JoyButtonUp", false ) == 0 )
+            return;
+
+         msg = new VMMessage( "sdl_JoyButtonUp" );
+
+         msg->addParam( (int64) evt.jbutton.which );
+         msg->addParam( (int64) evt.jbutton.button );
+         msg->addParam( (int64) evt.jbutton.state );
+      break;
+
+      case SDL_VIDEORESIZE:
+         if ( vm->getSlot( "sdl_Resize", false ) == 0 )
+            return;
+
+         msg = new VMMessage( "sdl_Resize" );
+
+         vm->pushParameter( (int64) evt.resize.w );
+         vm->pushParameter( (int64) evt.resize.h );
+      break;
+
+      case SDL_VIDEOEXPOSE:
+         if ( vm->getSlot( "sdl_Expose", false ) == 0 )
+            return;
+
+         msg = new VMMessage( "sdl_Expose" );
+      break;
+
+      case SDL_QUIT:
+          if ( vm->getSlot( "sdl_Quit", false ) == 0 )
+            return;
+
+         msg = new VMMessage( "sdl_Quit" );
+      break;
+
+      default:
+         params = 0;
+   }
+
+   vm->postMessage( msg );
+}
 
 /*#
-   @method PollEvent SDLEventHandler
+   @method PollEvent SDL
    @brief Polls for event and calls handlers if events are incoming.
    @return true if an event has been processed.
 
@@ -869,7 +1017,7 @@ void internal_dispatchEvent( VMachine *vm, SDL_Event &evt )
    immediately false.
 */
 
-FALCON_FUNC SDLEventHandler_PollEvent( VMachine *vm )
+FALCON_FUNC sdl_PollEvent( VMachine *vm )
 {
    SDL_Event evt;
    int res = SDL_PollEvent( &evt );
@@ -882,7 +1030,7 @@ FALCON_FUNC SDLEventHandler_PollEvent( VMachine *vm )
 }
 
 /*#
-   @method WaitEvent SDLEventHandler
+   @method WaitEvent SDL
    @brief Waits forever until an event is received.
 
    This method blocks the current coroutine until a SDL event is
@@ -915,7 +1063,7 @@ FALCON_FUNC SDLEventHandler_PollEvent( VMachine *vm )
       end
    @endcode
 */
-bool SDLEventHandler_WaitEvent_next( VMachine *vm )
+bool sdl_WaitEvent_next( VMachine *vm )
 {
    SDL_Event evt;
 
@@ -935,7 +1083,7 @@ bool SDLEventHandler_WaitEvent_next( VMachine *vm )
    }
 }
 
-FALCON_FUNC SDLEventHandler_WaitEvent( VMachine *vm )
+FALCON_FUNC sdl_WaitEvent( VMachine *vm )
 {
    SDL_Event evt;
    int res = SDL_PollEvent( &evt );
@@ -945,70 +1093,12 @@ FALCON_FUNC SDLEventHandler_WaitEvent( VMachine *vm )
    }
    else {
       // prepare to try again after a yield
-      vm->returnHandler( SDLEventHandler_WaitEvent_next );
+      vm->returnHandler( sdl_WaitEvent_next );
       vm->yieldRequest( 0.01 );
    }
 }
 
-/*#
-   @method PushEvent SDLEventHandler
-   @param type one of the SDL events.
-   @optparam ... Other parameters that vary depending on the event type
-   @return true on success, false if the event queue is full
 
-   @note Not yet implemented.
-
-*/
-
-FALCON_FUNC SDLEventHandler_PushEvent( VMachine *vm )
-{
-}
-
-/*#
-   @method PushUserEvent SDLEventHandler
-   @param code A numeric code that should tell what the receiver should do.
-   @optparam data any item or object that will be passed to the receiver.
-   @return true on success, false if the event queue is full
-
-   After this call is pefrormed when a PollEvent or WaitEvent method is issued
-   on an event handler of class @a SDLEventHandler, the onUserData method of that handler is
-   invoked (if provided).
-
-   @note This is a static method. It can be called on the SDLEventHandler class.
-*/
-
-FALCON_FUNC SDLEventHandler_PushUserEvent( VMachine *vm )
-{
-   Item *i_code = vm->param( 0 );
-   Item *i_user_data = vm->param( 1 );
-
-   if( i_code == 0 || ! i_code->isOrdinal() )
-   {
-      vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "N,[X]" ) ) );
-      return;
-   }
-
-   SDL_Event evt;
-   evt.type = FALCON_SDL_USER_EVENT;
-   evt.user.code = (int) i_code->forceInteger();
-   GarbageLock *lock = 0;
-
-   if( i_user_data != 0 )
-   {
-      evt.user.data1 = lock = vm->lock( *i_user_data );
-   }
-   else
-      evt.user.data1 = 0;
-
-   if ( ::SDL_PushEvent( &evt ) == 0 )
-      vm->retval( true );
-   else {
-      if ( lock != 0 )
-         vm->unlock( lock );
-      vm->retval( false );
-   }
-}
 
 //=================================================================
 // Generic event mangling
@@ -1383,6 +1473,105 @@ FALCON_FUNC SDLMouseState_PumpAndRefresh( VMachine *vm )
 {
    ::SDL_PumpEvents();
    SDLMouseState_Refresh( vm );
+}
+
+//===============================================================
+// The event listener.
+//
+
+
+/*#
+   @method StartEvents SDL
+   @brief Stats dispatching of SDL events to this VM.
+
+   This automatically starts an event listen loop on this virtual machine.
+   Events are routed through the standard broadcasts.
+
+   If a previous event listener thread, eventually on a different virtual machine,
+   was active, it is stopped.
+
+*/
+FALCON_FUNC sdl_StartEvents( VMachine *vm )
+{
+   s_mtx_events->lock();
+   if ( s_EvtListener != 0 )
+   {
+      s_EvtListener->stop();
+      delete s_EvtListener;
+   }
+   s_EvtListener = new SDLEventListener( vm );
+   s_EvtListener->start();
+   s_mtx_events->unlock();
+}
+
+
+/*#
+   @method StopEvents SDL
+   @brief Stops dispatching of SDL events.
+
+   This immediately stops dispatching events.
+   It is NOT necessary to perform this call before closing a program, but a
+   VM may want to start manage events on its own, or to ignore them.
+
+   If asynchronous event dispatching wasn't active, this call has no effect.
+*/
+FALCON_FUNC sdl_StopEvents( VMachine *vm )
+{
+   s_mtx_events->lock();
+   if ( s_EvtListener != 0 )
+   {
+      s_EvtListener->stop();
+      delete s_EvtListener;
+      s_EvtListener = 0;
+   }
+   s_mtx_events->unlock();
+}
+
+
+SDLEventListener::SDLEventListener( VMachine* vm ):
+   m_vm( vm ),
+   m_th( 0 )
+{
+   vm->incref();
+}
+
+SDLEventListener::~SDLEventListener()
+{
+   m_vm->decref();
+}
+
+void* SDLEventListener::run()
+{
+   SDL_Event evt;
+
+   while( ! m_eTerminated.wait(20) )
+   {
+      while( SDL_PollEvent( &evt ) )
+      {
+         //printf( "Dispatching event\n" );
+         internal_dispatchEvent( m_vm, evt );
+      }
+   }
+}
+
+void SDLEventListener::start()
+{
+   if ( m_th == 0 )
+   {
+      m_th = new SysThread( this );
+      m_th->start();
+   }
+}
+
+void SDLEventListener::stop()
+{
+   if ( m_th != 0 )
+   {
+      m_eTerminated.set();
+      void *dummy;
+      m_th->join( dummy );
+      m_th = 0;
+   }
 }
 
 }

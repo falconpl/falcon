@@ -18,14 +18,19 @@
 
 load sdlmixer
 
-object listener from SDLEventHandler
-   function onChannelFinished( id )
+object listener
+   init
+      subscribe( "sdl_ChannelFinished", self )
+      subscribe( "sdl_Quit", self )
+   end
+   
+   function on_sdl_ChannelFinished( id )
       > "Channel ", id, " finished playing. - Restarting."
       global sound
       sound.Play(0,-1)
    end
    
-   function onQuit()
+   function on_sdl_Quit()
       > "Quitting"
       exit(0)
    end
@@ -48,9 +53,10 @@ try
       count++
       >> @"[$(count)]\r"
       if stdin.readAvailable(0.1): break
+      sleep(0.1)
       if count %80 == 0: MIX.FadeOutChannel( 0, 2.0 )
       
-      listener.PollEvent()
+      SDL.PollEvent()
    end
 
    MIX.CloseAudio()

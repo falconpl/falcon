@@ -18,12 +18,53 @@
 */
 
 #include <falcon/vm.h>
+#include <falcon/vmmsg.h>
 #include <falcon/membuf.h>
 #include <sdl_service.h>
 #include "sdlmixer_mod.h"
 
 namespace Falcon {
 namespace Ext {
+
+
+//=========================================================
+// Module-wide part
+//
+VMachine* m_channel_listener = 0;
+VMachine* m_music_listener = 0;
+
+Mutex* m_mtx_listener;
+
+SDLMixerModule::SDLMixerModule()
+{
+   m_mtx_listener = new Mutex;
+}
+
+SDLMixerModule::~SDLMixerModule()
+{
+   ::Mix_HookMusicFinished( NULL );
+   ::Mix_ChannelFinished( NULL );
+
+   m_mtx_listener->lock();
+
+   if ( m_channel_listener != 0 )
+   {
+      m_channel_listener->decref();
+   }
+
+   if ( m_music_listener != 0 )
+   {
+      m_music_listener->decref();
+   }
+
+   m_mtx_listener->unlock();
+
+   delete m_mtx_listener;
+
+}
+
+//=========================================================
+
 
 MixChunkCarrier::MixChunkCarrier( Mix_Chunk* c ):
    m_chunk( c )
@@ -96,23 +137,45 @@ FalconData* MixMusicCarrier::clone() const
 }
 }
 
-#include "SDL.h"
-
 void falcon_sdl_mixer_on_channel_done( int channel )
 {
-   // We must post a SDL user event for the main loop
-   SDL_Event evt;
-   evt.type = FALCON_SDL_CHANNEL_DONE_EVENT;
-   evt.user.code = channel;
-   ::SDL_PushEvent( &evt );
+   // Very probably this increffing here is an overkill,
+   // but it's nice to be on the bright side.
+
+   Falcon::Ext::m_mtx_listener->lock();
+   Falcon::VMachine* vm = Falcon::Ext::m_channel_listener;
+   if( vm == 0 )
+   {
+       Falcon::Ext::m_mtx_listener->unlock();
+       return;
+   }
+   vm->incref();
+   Falcon::Ext::m_mtx_listener->unlock();
+
+   Falcon::VMMessage *msg = new Falcon::VMMessage( "sdl_ChannelFinished" );
+   msg->addParam( (Falcon::int64) channel );
+   vm->postMessage( msg );
+   vm->decref();
 }
 
 void falcon_sdl_mixer_on_music_finished()
 {
-   // We must post a SDL user event for the main loop
-   SDL_Event evt;
-   evt.type = FALCON_SDL_MUSIC_DONE_EVENT;
-   ::SDL_PushEvent( &evt );
+   // Very probably this increffing here is an overkill,
+   // but it's nice to be on the bright side.
+
+   Falcon::Ext::m_mtx_listener->lock();
+   Falcon::VMachine* vm = Falcon::Ext::m_music_listener;
+   if( vm == 0 )
+   {
+      Falcon::Ext:: m_mtx_listener->unlock();
+       return;
+   }
+   vm->incref();
+   Falcon::Ext::m_mtx_listener->unlock();
+
+   Falcon::VMMessage *msg = new Falcon::VMMessage( "sdl_MusicFinished" );
+   vm->postMessage( msg );
+   vm->decref();
 }
 
 /* end of sdlmixer_mod.cpp */

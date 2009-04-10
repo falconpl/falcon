@@ -35,6 +35,19 @@ extern "C" {
 namespace Falcon {
 namespace Ext {
 
+extern VMachine* m_channel_listener;
+extern VMachine* m_music_listener;
+
+extern Mutex *m_mtx_listener;
+
+class FALCON_DYN_CLASS SDLMixerModule: public Module
+{
+
+public:
+   SDLMixerModule();
+   virtual ~SDLMixerModule();
+};
+
 class MixChunkCarrier: public FalconData
 {
 private:

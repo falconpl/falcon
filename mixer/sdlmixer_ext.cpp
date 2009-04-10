@@ -153,7 +153,9 @@ FALCON_FUNC mix_OpenAudio( VMachine *vm )
 
 FALCON_FUNC mix_CloseAudio( VMachine *vm )
 {
-  ::Mix_CloseAudio();
+   ::Mix_HookMusicFinished( NULL );
+   ::Mix_ChannelFinished( NULL );
+   ::Mix_CloseAudio();
 }
 
 /*#
@@ -470,7 +472,25 @@ FALCON_FUNC mix_ChannelFinished( VMachine *vm )
       return;
    }
 
-   ::Mix_ChannelFinished( i_active->isTrue() ? falcon_sdl_mixer_on_channel_done : NULL );
+   m_mtx_listener->lock();
+   if( i_active->isTrue() )
+   {
+      vm->incref();
+      if ( m_channel_listener != 0 )
+         m_channel_listener->decref();
+      m_channel_listener = vm;
+
+      ::Mix_ChannelFinished( falcon_sdl_mixer_on_channel_done );
+   }
+   else
+   {
+      if ( m_channel_listener != 0 )
+         m_channel_listener->decref();
+      m_channel_listener = 0;
+
+      ::Mix_ChannelFinished( NULL );
+   }
+   m_mtx_listener->unlock();
 }
 
 /*#
@@ -857,12 +877,26 @@ FALCON_FUNC mix_HookMusicFinished( VMachine *vm )
       return;
    }
 
+      m_mtx_listener->lock();
    if( i_active->isTrue() )
    {
+      vm->incref();
+      if ( m_music_listener != 0 )
+         m_music_listener->decref();
+      m_music_listener = vm;
+
       ::Mix_HookMusicFinished( falcon_sdl_mixer_on_music_finished );
    }
    else
+   {
+      if ( m_music_listener != 0 )
+         m_music_listener->decref();
+      m_music_listener = 0;
+
       ::Mix_HookMusicFinished( NULL );
+   }
+   m_mtx_listener->unlock();
+
 }
 
 //=======================================================================

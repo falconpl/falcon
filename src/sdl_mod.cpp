@@ -28,10 +28,37 @@ extern "C" {
    #include <SDL.h>
 }
 
-/*# @beginmodule fsdl */
+/*# @beginmodule sdl */
 
 namespace Falcon {
 namespace Ext {
+
+//====================================================
+// Module initialization.
+//
+
+SDLEventListener* s_EvtListener = 0;
+Mutex* s_mtx_events = 0;
+
+SDLModule::SDLModule()
+{
+   s_mtx_events = new Mutex;
+   s_EvtListener = 0; // to be sure
+}
+
+
+SDLModule::~SDLModule()
+{
+   SDLEventListener *evt;
+   s_mtx_events->lock();
+   evt = s_EvtListener;
+   s_EvtListener = 0;
+   s_mtx_events->unlock();
+
+   if( evt != 0 )
+      evt->stop();
+   delete s_mtx_events;
+}
 
 //=======================================
 // Surface reflection
