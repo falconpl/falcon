@@ -980,10 +980,10 @@ FALCON_FUNC SDLRect_init( ::Falcon::VMachine *vm )
 
    SDL_Rect* r = (SDL_Rect*) memAlloc( sizeof( SDL_Rect ) );
    vm->self().asObject()->setUserData(r);
-   r->x = i_x->forceInteger();
-   r->y = i_y->forceInteger();
-   r->w = i_width->forceInteger();
-   r->h = i_height->forceInteger();
+   r->x = i_x == 0 ? 0 : i_x->forceInteger();
+   r->y = i_y == 0 ? 0 : i_y->forceInteger();
+   r->w = i_width == 0 ? 0 : i_width->forceInteger();
+   r->h = i_height == 0 ? 0 : i_height->forceInteger();
 }
 
 //==================================================================
