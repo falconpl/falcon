@@ -1499,7 +1499,13 @@ public:
 
      \param paramCount Number of parameters to be passed in the coroutine stack.
    */
-   void coPrepare( int32 paramCount );
+   VMContext* coPrepare( int32 paramCount );
+
+   /** Executes an executable item in a coroutine.
+     \param callable The callable routine.
+     \param paramCount Number of parameters to be passed in the coroutine stack.
+   */
+   bool callCoroFrame( const Item &callable, int32 paramCount );
 
    /** Executes currently prepared frame. */
    void execFrame()

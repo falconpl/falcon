@@ -1605,7 +1605,7 @@ void VMachine::callItemAtomic(const Item &callable, int32 paramCount )
 
 void VMachine::returnHandler( ext_func_frame_t callbackFunc )
 {
-   if ( m_stackBase > VM_FRAME_SPACE )
+   if ( m_stackBase >= VM_FRAME_SPACE )
    {
       StackFrame *frame = (StackFrame *) m_stack->at( m_stackBase - VM_FRAME_SPACE );
       frame->m_endFrameFunc = callbackFunc;
@@ -1689,7 +1689,7 @@ void VMachine::putAtSleep( VMContext *ctx, numeric secs )
 {
    if ( secs < 0.0 )
    {
-	  secs = 0.0;
+      secs = 0.0;
    }
 
    numeric tgtTime = Sys::_seconds() + secs;
@@ -1853,8 +1853,6 @@ void VMachine::callReturn()
       Item oldA = m_regA;
       opcodeHandler_END( this );
       m_regA = oldA;
-      // not executing anymore.
-      m_symbol = 0;
       return;
    }
 
@@ -3420,7 +3418,7 @@ bool VMachine::isGcEnabled() const
 }
 
 
-void VMachine::coPrepare( int32 pSize )
+VMContext* VMachine::coPrepare( int32 pSize )
 {
    // create a new context
    VMContext *ctx = new VMContext( this );
@@ -3440,6 +3438,45 @@ void VMachine::coPrepare( int32 pSize )
    // rotate the context
    m_contexts.pushBack( ctx );
    putAtSleep( ctx, 0.0 );
+   return ctx;
+}
+
+
+bool VMachine::callCoroFrame( const Item &callable, int32 pSize )
+{
+   if ( ! callable.isCallable() )
+      return false;
+
+   // create a new context
+   VMContext *ctx = new VMContext( this );
+
+   // if there are some parameters...
+   if ( pSize > 0 )
+   {
+      // avoid reallocation afterwards.
+      ctx->getStack()->reserve( pSize );
+      // copy flat
+      for( int32 i = 0; i < pSize; i++ )
+      {
+         ctx->getStack()->push( &m_stack->itemAt( m_stack->size() - pSize + i ) );
+      }
+      m_stack->resize( m_stack->size() - pSize );
+   }
+   m_contexts.pushBack( ctx );
+
+   // rotate the context
+   m_currentContext->save( this );
+   putAtSleep( m_currentContext, 0.0 );
+   m_currentContext = ctx;
+   ctx->restore( this );
+   // fake the frame as a pure return value; this will force this coroutine to terminate
+   // without peeking any code in the module.
+   m_pc = i_pc_call_external_return;
+   m_pc_next = i_pc_call_external_return;
+   callFrame( callable, pSize );
+
+   return true;
+
 }
 
 //=====================================================================================
