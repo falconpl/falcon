@@ -697,7 +697,7 @@ void* MemPool::run()
 
    while( m_bLive )
    {
-      bMoreWork = false;
+      bMoreWork = false; // in case of sweep request, loop without pause.
 
       // first, detect the operating status.
       size_t memory = gcMemAllocated();
@@ -884,13 +884,23 @@ void* MemPool::run()
          bool signal = false;
          m_mtxRequest.lock();
          m_mtx_vms.lock();
-         if ( m_bRequestSweep && m_vmCount == 0 )
+         if ( m_bRequestSweep )
          {
-            // be sure to clear the garbage
-            oldMingen = m_mingen;
-            m_mingen = SWEEP_GENERATION;
-            m_bRequestSweep = false;
-            signal = true;
+            if ( m_vmCount == 0  )
+            {
+               // be sure to clear the garbage
+               oldMingen = m_mingen;
+               m_mingen = SWEEP_GENERATION;
+               m_bRequestSweep = false;
+               signal = true;
+            }
+            else {
+               // HACK: we are not able to kill correctly VMS in multithreading in 0.9.1,
+               // so we just let the request go;
+               // we'll clean them during 0.9.1->0.9.2
+               m_bRequestSweep = true;
+               signal = true;
+            }
          }
          m_mtx_vms.unlock();
          m_mtxRequest.unlock();
