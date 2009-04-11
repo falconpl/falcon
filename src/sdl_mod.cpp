@@ -78,9 +78,12 @@ SDLSurfaceCarrier_impl::SDLSurfaceCarrier_impl( const CoreClass* cls, SDL_Surfac
 
 SDLSurfaceCarrier_impl::~SDLSurfaceCarrier_impl()
 {
-   while( m_lockCount-- > 0 )
+   while( m_lockCount > 0 )
+   {
+      m_lockCount--;
       SDL_UnlockSurface( surface() );
-
+   }
+   
    if ( surface()->refcount == 1 )
       gcMemUnaccount( surface()->h * surface()->w * surface()->format->BytesPerPixel );
 

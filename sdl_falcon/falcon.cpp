@@ -5,7 +5,7 @@
    Falcon compiler and interpreter
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
-   Begin: ven set 10 2004
+   Begin: Fri, 10 Sept 2004 13:15:23 +0100
 
    -------------------------------------------------------------------
    (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
@@ -18,279 +18,100 @@
 
    Consider this a relatively complex example of an embedding application.
 */
-
 #include "SDL_main.h"
 
-#include <falcon/sys.h>
-#include <falcon/setup.h>
-#include <falcon/common.h>
-#include <falcon/compiler.h>
-#include <falcon/genhasm.h>
-#include <falcon/gencode.h>
-#include <falcon/gentree.h>
-#include <falcon/module.h>
-#include <falcon/vm.h>
-#include <falcon/modloader.h>
-#include <falcon/flcloader.h>
-#include <falcon/runtime.h>
-#include <falcon/core_ext.h>
-#include <falcon/string.h>
-#include <falcon/carray.h>
-#include <falcon/memory.h>
-#include <falcon/transcoding.h>
-#include <falcon/stream.h>
-#include <falcon/fstream.h>
-#include <falcon/stringstream.h>
-#include <falcon/stdstreams.h>
-#include <falcon/deferrorhandler.h>
-#include <fasm/comp.h>
-#include <falcon/fassert.h>
-#include <falcon/intcomp.h>
-
+#include "falcon.h"
 #include "options.h"
 
+#include <falcon/sys.h>
+#include <falcon/genhasm.h>
+#include <falcon/gentree.h>
+#include <falcon/gencode.h>
+#include <iostream>
+#include <stdio.h>
+
+
 using namespace Falcon;
-
-/********************************************
-   Static data used by Falcon command line
-*********************************************/
-/** Options for falcon command line */
-static HOptions options;
-Stream *stdOut;
-Stream *stdErr;
-Stream *stdIn;
-
+using namespace std;
 
 /************************************************
-   Functions used to account memory management
+   Falcon interpreter/compiler application
 *************************************************/
 
-//TODO: move in the engine and provide a better interface.
-//TODO: Record the address of the caller.
-
-static long s_allocatedMem = 0;
-static long s_outBlocks = 0;
-static long s_validAlloc = 1;
-
-#define MEMBLOCK_DATA_COUNT 2
-#define MEMBLOCK_SIZE (sizeof(long) * MEMBLOCK_DATA_COUNT)
-
-
-static void *account_alloc ( size_t size )
+AppFalcon::AppFalcon():
+   m_exitval(0),
+   m_errors(0),
+   m_script_pos( 0 )
 {
-   if ( size == 0 )
-      return 0;
+   // Install a void ctrl-c handler (let ctrl-c to kill this app)
+   Falcon::Sys::_dummy_ctrl_c_handler();
 
-   long *mem = ( long * ) malloc ( size + MEMBLOCK_SIZE );
-   mem[0] = ( long ) size;
-   mem[1] = 0xFEDCBA98;
-   s_allocatedMem += size;
-   s_outBlocks++;
-   return mem + MEMBLOCK_DATA_COUNT;
+   // Prepare the Falcon engine to start.
+   Engine::Init();
 }
 
-static void account_free ( void *mem )
+AppFalcon::~AppFalcon()
 {
-   if ( mem == 0 )
-      return;
-
-   long *block = ( long * ) mem;
-   block = block - MEMBLOCK_DATA_COUNT;
-
-   if ( block[1] != (long) 0xFEDCBA98 )
-   {
-      s_validAlloc = 0;
-      return;
-   }
-
-   s_allocatedMem -= block[0];
-   s_outBlocks--;
-
-   free ( block );
+   // turn off the Falcon engine
+   Engine::Shutdown();
 }
 
-static void *account_realloc ( void *mem, size_t size )
-{
-   long *block = ( long * ) mem;
+//=================================================
+// Utilities
 
-   if ( mem != 0 )
+
+void AppFalcon::terminate()
+{
+   if ( m_errors > 0 )
    {
-      block = block - MEMBLOCK_DATA_COUNT;
-      if ( block[1] != (long) 0xFEDCBA98 )
-      {
-         s_validAlloc = 0;
-         block = ( long * ) malloc ( size + MEMBLOCK_SIZE );
-      }
+      cerr << "falcon: exiting with ";
+      if ( m_errors > 1 )
+         cerr << m_errors << " errors." << endl;
       else
-      {
-         s_allocatedMem -= block[0];
-         block = ( long * ) realloc ( block, size + MEMBLOCK_SIZE );
-      }
-   }
-   else
-   {
-      block = ( long * ) malloc ( size + MEMBLOCK_SIZE );
-      s_outBlocks++;
+         cerr << "1 error." << endl;
    }
 
-   if ( size != 0 )
+   if ( m_options.wait_after )
    {
-      s_allocatedMem += ( long ) size;
-   }
-   else
-   {
-      s_outBlocks--;
-   }
-
-   block[0] = ( long ) size;
-   block[1] = 0xFEDCBA98;
-   return block + MEMBLOCK_DATA_COUNT;
-}
-
-/************************************************
-   Typical utility functions for command lines
-*************************************************/
-
-static void version()
-{
-   stdOut->writeString ( "Falcon compiler and interpreter.\n" );
-   stdOut->writeString ( "Version " );
-   stdOut->writeString ( FALCON_VERSION " (" FALCON_VERSION_NAME ")" );
-   stdOut->writeString ( "\n" );
-}
-
-static void usage()
-{
-   stdOut->writeString ( "Usage: falcon [options] file.fal [script options]\n" );
-   stdOut->writeString ( "\n" );
-   stdOut->writeString ( "Options:\n" );
-   stdOut->writeString ( "   -a          assemble the given module (a Falcon Assembly '.fas' file)\n" );
-   stdOut->writeString ( "   -c          compile only the given source\n" );
-   stdOut->writeString ( "   -C          Check for memory allocation correctness.\n" );
-   stdOut->writeString ( "   -d          Set directive (as <directive>=<value>).\n" );
-   stdOut->writeString ( "   -D          Set constant (as <constant>=<value>).\n" );
-   stdOut->writeString ( "   -e <enc>    Set given encoding as default for VM I/O.\n" );
-   stdOut->writeString ( "   -E <enc>    Source files are in <enc> encoding (overrides -e)\n" );
-   stdOut->writeString ( "   -f          force recompilation of modules even when .fam are found\n" );
-   stdOut->writeString ( "   -h/-?       this help\n" );
-   stdOut->writeString ( "   -i          interactive mode\n" );
-   stdOut->writeString ( "   -l <lang>   Set preferential language of loaded modules\n" );
-   stdOut->writeString ( "   -L <path>   set path for 'load' directive\n" );
-   stdOut->writeString ( "   -m          do NOT compile in memory (use temporary files)\n" );
-   stdOut->writeString ( "   -M          do NOT save the compiled modules in '.fam' files\n" );
-   stdOut->writeString ( "   -o <fn>     output to <fn> instead of [filename.xxx]\n" );
-   stdOut->writeString ( "   -p <module> preload (pump in) given module\n" );
-   stdOut->writeString ( "   -P          use load path also to find main module\n" );
-   stdOut->writeString ( "   -r          do NOT recompile sources to fulfil load directives\n" );
-   stdOut->writeString ( "   -s          compile via assembly\n" );
-   stdOut->writeString ( "   -S          produce an assembly output\n" );
-   stdOut->writeString ( "   -t          generate a syntactic tree (for logic debug)\n" );
-   stdOut->writeString ( "   -T          force input parsing as .ftd (template document)\n" );
-   stdOut->writeString ( "   -v          print copyright notice and version and exit\n" );
-   stdOut->writeString ( "   -w          Add an extra console wait after program exit\n" );
-   stdOut->writeString ( "   -x          execute a binary '.fam' module\n" );
-   stdOut->writeString ( "   -y          write string translation table for the module\n" );
-
-   stdOut->writeString ( "\n" );
-   stdOut->writeString ( "Paths must be in falcon file name format: directory separatros must be slashes [/] and\n" );
-   stdOut->writeString ( "multiple entries must be entered separed by a semicomma (';')\n" );
-   stdOut->writeString ( "File names may be set to '-' meaning standard input or output (depending on the option)\n" );
-   stdOut->writeString ( "\n" );
-}
-
-void findModuleName ( const String &filename, String &name )
-{
-   uint32 pos = filename.rfind ( "/" );
-   if ( pos == csh::npos )
-   {
-      name = filename;
-   }
-   else
-   {
-      name = filename.subString ( pos + 1 );
-   }
-
-   // find the dot
-   pos = name.rfind ( "." );
-   if ( pos != csh::npos )
-   {
-      name = name.subString ( 0, pos );
+      cout << "Press <ENTER> to terminate" << endl;
+      getchar();
    }
 }
 
 
-void findModulepath ( const String &filename, String &path )
+String AppFalcon::getLoadPath()
 {
-   uint32 pos = filename.rfind ( "/" );
-   if ( pos != csh::npos )
+   // should we ignore system paths?
+   if ( m_options.ignore_syspath )
    {
-      path = filename.subString ( 0, pos );
-   }
-}
-
-
-void exit_sequence ( int exit_value, int errors = 0 )
-{
-
-   if ( errors > 0 )
-   {
-      stdErr = stdErrorStream();
-      stdErr->writeString ( "falcon: exiting with " );
-      String cmpErrors;
-      cmpErrors.writeNumber ( ( int64 ) errors );
-      if ( errors > 1 )
-         stdErr->writeString ( cmpErrors + " errors\n" );
-      else
-         stdErr->writeString ( "1 error\n" );
+      return m_options.load_path;
    }
 
-   if ( options.wait_after )
-   {
-      stdIn = stdInputStream();
-      stdOut = stdOutputStream();
-      stdOut->writeString ( "Press <ENTER> to terminate\n" );
-      Falcon::byte chr;
-      stdIn->read ( &chr, 1 );
-   }
-
-   // we must clear the rest with the memalloc functions we had at beginning
-   memAlloc = account_alloc;
-   memFree = account_free;
-   memRealloc = account_realloc;
-
-   options.preloaded.clear();
-   options.preloaded.clear();
-
-   exit ( exit_value );
-}
-
-
-String get_load_path()
-{
    String envpath;
-   bool hasEnvPath = Sys::_getEnv ( "FALCON_LOAD_PATH", envpath );
+   String path = m_options.load_path;
 
-   if ( ! hasEnvPath && options.load_path == "" )
-      return FALCON_DEFAULT_LOAD_PATH;
-   else if ( hasEnvPath )
+   if( Sys::_getEnv ( "FALCON_LOAD_PATH", envpath ) )
    {
-      if ( options.load_path == "" )
-         return envpath;
-      else
-         return options.load_path +";"+ envpath;
+      if ( path.size() != 0 )
+         path += ";";
+      path += envpath;
    }
+
+   // Otherwise, get the load path.
+   if ( path.size() > 0)
+      return  path + ";" + FALCON_DEFAULT_LOAD_PATH;
    else
-      return options.load_path;
+      return FALCON_DEFAULT_LOAD_PATH;
 }
 
 
-String get_src_encoding()
+String AppFalcon::getSrcEncoding()
 {
-   if ( options.source_encoding != "" )
-      return options.source_encoding;
+   if ( m_options.source_encoding != "" )
+      return m_options.source_encoding;
 
-   if ( options.io_encoding != "" )
-      return options.io_encoding;
+   if ( m_options.io_encoding != "" )
+      return m_options.io_encoding;
 
    String envenc;
    if ( Sys::_getEnv ( "FALCON_SRC_ENCODING", envenc ) )
@@ -307,278 +128,29 @@ String get_src_encoding()
 }
 
 
-String get_io_encoding()
+String AppFalcon::getIoEncoding()
 {
-   if ( options.io_encoding != "" )
-      return options.io_encoding;
+   // I/O encoding and source encoding priority is reversed here.
+   if ( m_options.io_encoding != "" )
+      return m_options.io_encoding;
+
+   if ( m_options.source_encoding != "" )
+      return m_options.source_encoding;
 
    String ret;
    if ( Sys::_getEnv ( "FALCON_VM_ENCODING", ret ) )
       return ret;
 
-   GetSystemEncoding ( ret );
-   return ret;
+   if( GetSystemEncoding ( ret ) )
+      return ret;
+
+   return "C";
 }
 
 
-Stream *openInputStream ( bool bBinary = false )
+void AppFalcon::applyDirectives ( Compiler &compiler )
 {
-   if ( options.input == "" || options.input == "-" )
-   {
-      return stdIn;
-   }
-
-   FileStream *finput = new FileStream;
-   finput->open ( options.input, FileStream::e_omReadOnly );
-
-   if ( ! finput->good() )
-   {
-      stdErr->writeString ( "falcon: can't open input file " + options.input + "\n" );
-      delete finput;
-      exit_sequence ( 1 );
-   }
-
-   if ( ! bBinary )
-   {
-      String ioEncoding = get_src_encoding();
-      Transcoder *tcfile = TranscoderFactory ( ioEncoding, finput, true );
-      if ( tcfile )
-      {
-         return tcfile;
-      }
-      else
-      {
-         stdOut->writeString ( "Fatal: unrecognized encoding '" + ioEncoding + "'.\n\n" );
-         exit_sequence ( 1 );
-      }
-   }
-
-   return finput;
-}
-
-Stream *openOutputStream ( const String &ext, bool bBinary = false )
-{
-   if ( options.output == "-" )
-   {
-      return stdOut;
-   }
-
-   String outName;
-   if ( options.output == "" )
-   {
-      if ( options.input == "" || options.input == "-" )
-         outName = "stdin." + ext;
-      else
-      {
-         String name, path;
-         findModuleName ( options.input, name );
-         findModulepath ( options.input, path );
-         if ( path != "" )
-            outName = path + "/" + name + "." + ext;
-         else
-            outName = name + "." + ext;
-      }
-   }
-   else
-   {
-      outName = options.output;
-   }
-
-   FileStream *fout = new FileStream;
-   fout->create ( outName, FileStream::e_aUserWrite | FileStream::e_aReadOnly );
-
-   if ( ! fout->good() )
-   {
-      stdErr->writeString ( "falcon: can't open output file " + outName + "\n" );
-      delete fout;
-      exit_sequence ( 1 );
-   }
-
-   if ( ! bBinary )
-   {
-      String ioEncoding = get_src_encoding();
-      Transcoder *tcfile = TranscoderFactory ( ioEncoding, fout, true );
-      if ( tcfile )
-      {
-         return tcfile;
-      }
-      else
-      {
-         stdOut->writeString ( "Fatal: unrecognized encoding '" + ioEncoding + "'.\n\n" );
-         exit_sequence ( 1 );
-      }
-   }
-
-   return fout;
-}
-
-
-void parseOptions ( int argc, char **argv, int &script_pos )
-{
-   bool exitNow = false;
-
-   // option decoding
-   for ( int i = 1; i < argc; i++ )
-   {
-      char *op = argv[i];
-
-      if ( op[0] == '-' )
-      {
-         switch ( op[1] )
-         {
-            case 'a': options.assemble_only = true; break;
-            case 'c': options.compile_only = true; break;
-            case 'C': options.check_memory = true; break;
-            case 'd':
-               if ( op[2] == 0 && i + 1< argc )
-                  options.directives.pushBack ( new String ( argv[++i] ) );
-               else
-                  options.directives.pushBack ( new String ( op + 2 ) );
-               break;
-
-            case 'D':
-               if ( op[2] == 0 && i + 1< argc )
-                  options.defines.pushBack ( new String ( argv[++i] ) );
-               else
-                  options.defines.pushBack ( new String ( op + 2 ) );
-               break;
-
-            case 'e':
-               if ( op[2] == 0 && i + 1 < argc )
-               {
-                  options.io_encoding = argv[++i];
-               }
-               else
-               {
-                  options.io_encoding = op + 2;
-               }
-               break;
-
-            case 'E':
-               if ( op[2] == 0 && i + 1< argc )
-               {
-                  options.source_encoding = argv[++i];
-               }
-               else
-               {
-                  options.source_encoding = op + 2;
-               }
-               break;
-
-            case 'f': options.force_recomp = true; break;
-         case 'h': case '?': usage(); exitNow = true;
-            case 'i': options.interactive = true; break;
-
-            case 'L':
-               if ( op[2] == 0 && i + 1 < argc )
-                  options.load_path = argv[++i];
-               else
-                  options.load_path = op + 2;
-               break;
-
-            case 'l':
-               if ( op[2] == 0 && i + 1 < argc )
-                  options.module_language = argv[++i];
-               else
-                  options.module_language = op + 2;
-               break;
-
-            case 'm': options.comp_memory = false; break;
-            case 'M': options.save_modules = false; break;
-
-            case 'o':
-               if ( op[2] == 0 && i + 1< argc )
-                  options.output = argv[++i];
-               else
-                  options.output = op + 2;
-               break;
-
-            case 'p':
-               if ( op[2] == 0 && i + 1< argc )
-                  options.preloaded.pushBack ( new String ( argv[++i] ) );
-               else
-                  options.preloaded.pushBack ( new String ( op + 2 ) );
-               break;
-
-            case 'P': options.search_path = true; break;
-            case 'r': options.recompile_on_load = false; break;
-
-            case 's': options.via_asm = true; break;
-            case 'S': options.assemble_out = true; break;
-            case 't': options.tree_out = true; break;
-            case 'T': options.parse_ftd = true; break;
-            case 'x': options.run_only = true; break;
-            case 'v': version(); exitNow = true; break;
-            case 'w': options.wait_after = true; break;
-            case 'y': options.compile_tltable = true; break;
-
-            default:
-               stdErr->writeString ( "falcon: unrecognized option '" );
-               stdErr->writeString ( op );
-               stdErr->writeString ( "'.\n\n" );
-               usage();
-               exit_sequence ( 1 );
-         }
-      }
-      else
-      {
-         options.input = op;
-         script_pos = i+1;
-         // the other options are for the script.
-         break;
-      }
-   }
-
-   // check incompatible switchs
-   if ( options.assemble_only && options.compile_only )
-   {
-      stdErr->writeString ( "falcon: incompatible compile and assemble options specified." );
-      exit_sequence ( 1 );
-   }
-
-   // check incompatible switchs
-   if ( options.assemble_out && options.tree_out )
-   {
-      stdErr->writeString ( "falcon: incompatible output modes specified." );
-      exit_sequence ( 1 );
-   }
-
-   if ( ( options.assemble_only || options.compile_only ) &&
-         options.run_only )
-   {
-      stdErr->writeString ( "falcon: incompatible compilation only and execution only requests." );
-      exit_sequence ( 1 );
-   }
-
-   if ( ( options.assemble_out || options.tree_out ) &&
-         options.run_only )
-   {
-      stdErr->writeString ( "falcon: incompatible output mode requeste and execution only requests." );
-      exit_sequence ( 1 );
-   }
-
-   if ( ( options.compile_only || options.assemble_only ) &&
-         options.interactive )
-   {
-      stdErr->writeString ( "falcon: incompatible compilation request and interactive mode." );
-      exit_sequence ( 1 );
-   }
-
-   if ( ( options.assemble_out || options.tree_out ) &&
-         options.interactive )
-   {
-      stdErr->writeString ( "falcon: incompatible output mode request and interactive mode." );
-      exit_sequence ( 1 );
-   }
-
-   if ( exitNow )
-      exit_sequence ( 0 );
-}
-
-
-bool apply_directives ( Compiler &compiler )
-{
-   ListElement *dliter = options.directives.begin();
+   ListElement *dliter = m_options.directives.begin();
    while ( dliter != 0 )
    {
       String &directive = * ( ( String * ) dliter->data() );
@@ -586,10 +158,7 @@ bool apply_directives ( Compiler &compiler )
       uint32 pos = directive.find ( "=" );
       if ( pos == String::npos )
       {
-         stdErr->writeString ( "falcon: directive not in <directive>=<value> syntax'" );
-         stdErr->writeString ( directive );
-         stdErr->writeString ( "'\n\n" );
-         return false;
+         throw String( "directive not in <directive>=<value> syntax: \"" + directive + "\"" );
       }
 
       //split the directive
@@ -608,22 +177,17 @@ bool apply_directives ( Compiler &compiler )
 
       if ( ! result )
       {
-         stdErr->writeString ( "falcon: invalid directive or value '" );
-         stdErr->writeString ( directive );
-         stdErr->writeString ( "'\n\n" );
-         return false;
+         throw String( "invalid directive or value: \"" + directive + "\"" );
       }
 
       dliter = dliter->next();
    }
-
-   return true;
 }
 
 
-bool apply_constants ( Compiler &compiler )
+void AppFalcon::applyConstants ( Compiler &compiler )
 {
-   ListElement *dliter = options.defines.begin();
+   ListElement *dliter = m_options.defines.begin();
    while ( dliter != 0 )
    {
       String &directive = * ( ( String * ) dliter->data() );
@@ -631,10 +195,7 @@ bool apply_constants ( Compiler &compiler )
       uint32 pos = directive.find ( "=" );
       if ( pos == String::npos )
       {
-         stdErr->writeString ( "falcon: constant not in <constant>=<value> syntax'" );
-         stdErr->writeString ( directive );
-         stdErr->writeString ( "'\n\n" );
-         return false;
+         throw String( "constant not in <directive>=<value> syntax: \"" + directive + "\"" );
       }
 
       //split the directive
@@ -653,441 +214,357 @@ bool apply_constants ( Compiler &compiler )
 
       dliter = dliter->next();
    }
-
-   return true;
 }
 
-//===========================================
-// Interactive mode
-//===========================================
-void read_line( Stream *in, String &line, uint32 maxSize )
+
+bool AppFalcon::setup( int argc, char* argv[] )
 {
-   line.reserve( maxSize );
-   line.size(0);
-   uint32 chr;
-   while ( line.length() < maxSize && in->get( chr ) )
+   m_argc = argc;
+   m_argv = argv;
+   m_script_pos = argc;
+   m_options.parse( argc, argv, m_script_pos );
+
+   //=======================================
+   // Check parameters && settings
+
+   if ( ! m_options.wasJustInfo() )
    {
-      if ( chr == '\r' )
-         continue;
-      if ( chr == '\n' )
-         break;
-      line += chr;
-   }
-}
-
-void interactive_mode( FlcLoader *loader, Module *core )
-{
-   VMachine intcomp_vm;
-   intcomp_vm.link( core );
-
-   InteractiveCompiler comp( loader, &intcomp_vm );
-   comp.errorHandler( loader->errorHandler() );
-
-   version();
-   stdOut->writeString("\nWelcome to Falcon interactive mode.\n" );
-   stdOut->writeString("Write statements directly at the prompt; when finished press " );
-   #ifdef FALCON_SYSTEM_WIN
-      stdOut->writeString("CTRL+Z" );
-   #else
-      stdOut->writeString("CTRL+D" );
-   #endif
-
-   stdOut->writeString(" to exit\n" );
-
-   InteractiveCompiler::t_ret_type lastRet = InteractiveCompiler::e_nothing;
-   String line, pline, codeSlice;
-   while( stdIn->good() && ! stdIn->eof() )
-   {
-      const char *prompt = (
-            lastRet == InteractiveCompiler::e_more
-            ||lastRet == InteractiveCompiler::e_incomplete
-            )
-         ? "... " : ">>> ";
-
-      stdOut->writeString( prompt );
-      stdOut->flush();
-
-      read_line( stdIn, pline, 1024 );
-      if ( pline.size() > 0 )
+      String srcEncoding = getSrcEncoding();
+      if ( srcEncoding != "" )
       {
-         if( pline.getCharAt( pline.length() -1 ) == '\\' )
-         {
-            lastRet = InteractiveCompiler::e_more;
-            pline.setCharAt( pline.length() - 1, ' ');
-            line += pline;
-            continue;
-         }
-         else
-            line += pline;
-
-         InteractiveCompiler::t_ret_type lastRet1
-            = comp.compileNext( codeSlice + line + "\n" );
-
-         switch( lastRet1 )
-         {
-            case InteractiveCompiler::e_more:
-               codeSlice += line + "\n";
-               break;
-
-            case InteractiveCompiler::e_incomplete:
-               // is it incomplete because of '\\' at end?
-               if ( line.getCharAt( line.length()-1 ) == '\\' )
-                  line.setCharAt( line.length()-1, ' ' );
-               codeSlice += line + "\n";
-               break;
-
-            case InteractiveCompiler::e_call:
-               if ( comp.vm()->regA().isNil() )
-               {
-                  codeSlice.size(0);
-                  break;
-               }
-               // falltrhrough
-
-            case InteractiveCompiler::e_expression:
-               {
-                  String temp;
-                  comp.vm()->itemToString( temp, &comp.vm()->regA() );
-                  stdOut->writeString( ": " + temp + "\n" );
-               }
-               // falltrhrough
-
-            default:
-               if ( lastRet1 != InteractiveCompiler::e_error )
-               {
-                  // clear the previous data in all the cases exept when having
-                  // compilation errors, so the user may try to add another line
-                  codeSlice.size(0);
-               }
-         }
-
-         line.size(0);
-
-         // maintain previous status if having a compilation error.
-         if( lastRet1 != InteractiveCompiler::e_error )
-            lastRet = lastRet1;
+         Transcoder *tcin = TranscoderFactory ( srcEncoding, 0, false );
+         if ( tcin == 0 )
+            throw String( "unrecognized encoding '" + srcEncoding + "'." );
+         delete tcin;
       }
-      // else just continue.
+
+      String ioEncoding = getIoEncoding();
+      if ( ioEncoding != "" )
+      {
+         Transcoder *tcin = TranscoderFactory ( ioEncoding, 0, false );
+         if ( tcin == 0 )
+            throw String( "unrecognized encoding '" + ioEncoding + "'." );
+         delete tcin;
+      }
+
+      Engine::setEncodings( srcEncoding, ioEncoding );
    }
 
-   stdOut->writeString( "\r     \n\n");
+
+   return ! m_options.wasJustInfo();
 }
 
-//===========================================
-// Main Routine
-//===========================================
 
-int main ( int argc, char *argv[] )
+void AppFalcon::readyStreams()
 {
-   // Install a void ctrl-c handler (let ctrl-c to kill this app)
-   Sys::_dummy_ctrl_c_handler();
-   
    // Function wide statics must be created here, as we may be making memory accounting later on.
-   String ioEncoding;
-   String sysEncoding;
-   if ( ! GetSystemEncoding ( sysEncoding ) )
-      sysEncoding = "C";
-   // TODO: other languages.
-   setEngineLanguage ( "C" );
-
-   int script_pos=argc;  // presume no script -- stdin.
-
-   // start by checking memory. We'll remove memchecking later if not needed.
-   memAlloc = account_alloc;
-   memFree = account_free;
-   memRealloc = account_realloc;
-
-   EngineData data1;
-   Init ( data1 );
-
-   // provide minimal i/o during parameter parsing.
-   // Todo; first parse parameters and then prepare this.
-   stdOut = stdOutputStream();
-   stdErr = stdErrorStream();
-   stdIn = stdInputStream();
-
-   // Parse options
-   parseOptions ( argc, argv, script_pos );
-
-   // If memory check is NOT required, reset the default system
-   if ( ! options.check_memory )
-   {
-      delete stdOut;
-      delete stdErr;
-      delete stdIn;
-
-      memAlloc = DflMemAlloc;
-      memFree = DflMemFree;
-      memRealloc = DflMemRealloc;
-
-      EngineData data1;
-      Init ( data1 );
-
-      stdOut = stdOutputStream();
-      stdErr = stdErrorStream();
-      stdIn = stdInputStream();
-   }
-
-   // WARNING: the next 3 ops may allocate dynamic string memory.
-   // sets default encodings.
-   // if I/O encoding is not set, it defaults to system detect;
-   if ( options.io_encoding == "" )
-      options.io_encoding = sysEncoding;
-
-   //  and if source encoding is not found, it defaults system encoding.
-   if ( options.source_encoding == "" )
-      options.source_encoding = sysEncoding;
-
-   // now we can get the definitive encodings.
-   ioEncoding = get_io_encoding();
+   String ioEncoding = getIoEncoding();
 
    // change stdandard streams to fit needs
-   if ( ioEncoding != "" && ioEncoding != "C" && ! options.run_only )
+   if ( ioEncoding != "" && ioEncoding != "C" )
    {
-      Transcoder *tcin = TranscoderFactory ( ioEncoding, 0, false );
-      if ( tcin == 0 )
+      Transcoder* tcin = TranscoderFactory ( ioEncoding, new StreamBuffer( new StdInStream ), true );
+      m_stdIn = AddSystemEOL ( tcin );
+      Transcoder *tcout = TranscoderFactory ( ioEncoding, new StreamBuffer( new StdOutStream ), true );
+      m_stdOut = AddSystemEOL ( tcout );
+      Transcoder *tcerr = TranscoderFactory ( ioEncoding, new StreamBuffer( new StdErrStream ), true );
+      m_stdErr = AddSystemEOL ( tcerr );
+   }
+   else
+   {
+      m_stdIn = AddSystemEOL ( new StreamBuffer( new StdInStream ) );
+      m_stdOut = AddSystemEOL ( new StreamBuffer( new StdOutStream ) );
+      m_stdErr = AddSystemEOL ( new StreamBuffer( new StdErrStream ) );
+   }
+}
+
+
+Stream* AppFalcon::openOutputStream( const String &ext )
+{
+   Stream* out;
+
+   if ( m_options.output == "-" )
+   {
+      out = new StdOutStream;
+   }
+   else if ( m_options.output == "" )
+   {
+      // if input has a name, try to open there.
+      if ( m_options.input != "" && m_options.input != "-" )
       {
-         stdOut->writeString ( "falcon: Fatal: unrecognized encoding '" + ioEncoding + "'.\n\n" );
-         exit_sequence ( 1 );
+         #ifdef WIN32
+            Sys::falconConvertWinFname( m_options.input );
+         #endif
+         URI uri_input( m_options.input );
+         uri_input.pathElement().setExtension( ext );
+         FileStream* fout = new FileStream;
+         if ( ! fout->create( uri_input.get(), BaseFileStream::e_aUserRead | BaseFileStream::e_aUserWrite ) )
+         {
+            delete fout;
+            throw String( "can't open output file '"+ uri_input.get() +"'" );
+         }
+         out = fout;
       }
-
-      delete stdIn;
-      delete stdOut;
-      delete stdErr;
-
-      tcin->setUnderlying ( new StdInStream, true );
-      stdIn = AddSystemEOL ( tcin );
-      Transcoder *tcout = TranscoderFactory ( ioEncoding, new StdOutStream, true );
-      stdOut = AddSystemEOL ( tcout );
-      Transcoder *tcerr = TranscoderFactory ( ioEncoding, new StdErrStream, true );
-      stdErr = AddSystemEOL ( tcerr );
+      else {
+         // no input and no output; output on stdout
+         out = new StdOutStream;
+      }
+   }
+   else
+   {
+      FileStream* fout = new FileStream;
+      if ( ! fout->create( m_options.output, BaseFileStream::e_aUserRead | BaseFileStream::e_aUserWrite ) )
+      {
+         delete fout;
+         throw String( "can't open output file '"+ m_options.output +"'" );
+      }
+      out = fout;
    }
 
-   // our output stream is now completely setup; prepare the error handler
-   DefaultErrorHandler *errHand = new DefaultErrorHandler ( stdErr );
+   return out;
+}
 
-   // if we have been requested assembly output or tree output, just
-   // compile the source and produce the output.
-   if ( options.assemble_out || options.tree_out )
+
+Module* AppFalcon::loadInput( ModuleLoader &ml )
+{
+   ml.sourceEncoding( getSrcEncoding() );
+   Module* mod;
+
+   if ( m_options.input != "" && m_options.input != "-" )
    {
-      Module *module = new Module();
-      Stream *input = openInputStream();
-
-      Compiler compiler ( module, input );
-      // apply required directives
-      if ( ! apply_directives ( compiler ) )
-      {
-         exit_sequence ( 1 );
-      }
-
-      if ( ! apply_constants ( compiler ) )
-      {
-         exit_sequence ( 1 );
-      }
-
-      compiler.errorHandler ( errHand );
-
-      // is input an FTD?
-      if ( options.parse_ftd ||
-            options.input.rfind ( ".ftd" ) == options.input.length() - 4 )
-      {
-         compiler.parsingFtd ( true );
-      }
-
-      if ( ! compiler.compile() )
-      {
-         if ( input != stdIn )
-            delete input;
-
-         exit_sequence ( 1, compiler.errors() );
-      }
-
-      Stream *out;
-      if ( options.assemble_out )
-      {
-         out = openOutputStream ( "fas" );
-         GenHAsm hasm ( out );
-         hasm.generatePrologue ( compiler.module() );
-         hasm.generate ( compiler.sourceTree() );
-      }
-      else
-      {
-         out = openOutputStream ( "ftr" );
-         GenTree tree ( out );
-         ( ( Generator * ) &tree )->generate ( compiler.sourceTree() );
-      }
-
-      if ( input != stdIn )
-         delete input;
-
-      if ( out != stdOut )
-         delete out;
-
-      module->decref();
-      exit_sequence ( 0 );
+      #ifdef WIN32
+         Sys::falconConvertWinFname( m_options.input );
+      #endif
+      mod = ml.loadFile( m_options.input, ModuleLoader::t_none, true );
+   }
+   else
+   {
+      String ioEncoding = getSrcEncoding();
+      Transcoder *tcin = TranscoderFactory ( ioEncoding == "" ? "C" : ioEncoding,
+                                             new StreamBuffer( new StdInStream), true );
+      mod = ml.loadSource( AddSystemEOL( tcin ), "<stdin>", "stdin" );
+      delete tcin;
    }
 
-   // ======================================
-   // Load and execute the module
-   //
+   return mod;
+}
 
+
+void AppFalcon::compileTLTable()
+{
+   ModuleLoader ml;
+   // the load path is not relevant, as we load by file name or stream
+   // apply options
+   ml.compileTemplate( m_options.parse_ftd );
+   ml.saveModules( false );
+   ml.alwaysRecomp( true );
+
+   // will throw Error* on failure
+   Module* mod = loadInput( ml );
+
+   // try to open the oputput stream.
+   Stream* out = 0;
+   try
+   {
+       String ioEncoding = getIoEncoding();
+       out = AddSystemEOL(
+            TranscoderFactory ( ioEncoding == "" ? "C" : ioEncoding,
+                  openOutputStream ( "temp.ftt" ), true ) );
+      // Ok, we have the output stream.
+      if ( ! mod->saveTableTemplate( out, ioEncoding == "" ? "C" : ioEncoding ) )
+         throw String( "can't write on output stream." );
+   }
+   catch( const String & )
+   {
+      delete out;
+      mod->decref();
+      throw;
+   }
+
+   delete out;
+   mod->decref();
+}
+
+
+void AppFalcon::generateAssembly()
+{
+   ModuleLoader ml;
+   // the load path is not relevant, as we load by file name or stream
+   // apply options
+   ml.compileTemplate( m_options.parse_ftd );
+   ml.saveModules( false );
+   ml.alwaysRecomp( true );
+
+   // will throw Error* on failure
+   Module* mod = loadInput( ml );
+
+   // try to open the oputput stream.
+   Stream* out = 0;
+
+   try
+   {
+      String ioEncoding = getIoEncoding();
+      out = AddSystemEOL(
+         TranscoderFactory ( ioEncoding == "" ? "C" : ioEncoding,
+            openOutputStream( "fas" ), true ) );
+
+      // Ok, we have the output stream.
+      GenHAsm gasm(out);
+      gasm.generatePrologue( mod );
+      gasm.generate( ml.compiler().sourceTree() );
+      if ( ! out->good() )
+         throw String( "can't write on output stream." );
+   }
+   catch( const String & )
+   {
+      delete out;
+      mod->decref();
+      throw;
+   }
+
+   delete out;
+   mod->decref();
+}
+
+
+void AppFalcon::generateTree()
+{
+   ModuleLoader ml;
+   // the load path is not relevant, as we load by file name or stream
+   // apply options
+   ml.compileTemplate( m_options.parse_ftd );
+   ml.saveModules( false );
+   ml.alwaysRecomp( true );
+
+   // will throw Error* on failure
+   Module* mod = loadInput( ml );
+
+   // try to open the oputput stream.
+   Stream* out = 0;
+
+   try
+   {
+      String ioEncoding = getIoEncoding();
+      out = AddSystemEOL(
+         TranscoderFactory ( ioEncoding == "" ? "C" : ioEncoding,
+            openOutputStream ( "fr" ), true ) );
+
+      // Ok, we have the output stream.
+      GenTree gtree(out);
+      gtree.generate( ml.compiler().sourceTree() );
+      if ( ! out->good() )
+         throw String( "can't write on output stream." );
+   }
+   catch( const String & )
+   {
+      delete out;
+      mod->decref();
+      throw;
+   }
+
+   delete out;
+   mod->decref();
+}
+
+
+void AppFalcon::buildModule()
+{
+   ModuleLoader ml;
+   // the load path is not relevant, as we load by file name or stream
+   // apply options
+   ml.compileTemplate( m_options.parse_ftd );
+   ml.saveModules( false );
+   ml.alwaysRecomp( true );
+
+   // will throw Error* on failure
+   Module* mod = loadInput( ml );
+
+   // try to open the oputput stream.
+   Stream* out = 0;
+
+   try
+   {
+      // binary
+      out = openOutputStream ( "fam" );
+
+      // Ok, we have the output stream.
+      GenCode gcode(mod);
+      gcode.generate( ml.compiler().sourceTree() );
+      if ( ! mod->save( out ) )
+         throw String( "can't write on output stream." );
+   }
+   catch( const String & )
+   {
+      delete out;
+      mod->decref();
+      throw;
+   }
+
+   delete out;
+   mod->decref();
+}
+
+
+void AppFalcon::makeInteractive()
+{
+   m_options.version();
+   readyStreams();
+   IntMode ic( this );
+   ic.run();
+}
+
+void AppFalcon::prepareLoader( ModuleLoader &ml )
+{
    // 1. Ready the module loader
-   FlcLoader *modLoader = new FlcLoader ( get_load_path() );
+   ModuleLoader *modLoader = &ml;
+   ml.setSearchPath( getLoadPath() );
+
+   // adds also the input path.
+   if ( m_options.input != "" && m_options.input != "-" )
+   {
+      URI in_uri( m_options.input );
+      in_uri.pathElement().setFilename("");
+      // empty path? -- add current directory (may be removed from defaults)
+      if ( in_uri.get() == "" )
+         modLoader->addSearchPath ( "." );
+      else
+         modLoader->addSearchPath ( in_uri.get() );
+   }
 
    // set the module preferred language; ok also if default ("") is used
-   modLoader->setLanguage ( options.module_language );
-
-   if ( ! apply_directives ( modLoader->compiler() ) )
-   {
-      exit_sequence ( 1 );
-   }
-
-   if ( ! apply_constants ( modLoader->compiler() ) )
-   {
-      exit_sequence ( 1 );
-   }
-
-   if ( options.input != "" && options.input != "-" )
-   {
-      String source_path;
-      findModulepath ( options.input, source_path );
-      if ( source_path != "" )
-      {
-         modLoader->addSearchPath ( source_path );
-      }
-   }
-
-   modLoader->errorHandler ( errHand );
-   modLoader->compileInMemory ( options.comp_memory );
-   modLoader->compileViaAssembly ( options.via_asm );
+   modLoader->setLanguage ( m_options.module_language );
+   applyDirectives( modLoader->compiler() );
+   applyConstants( modLoader->compiler() );
 
    // save the main module also if compile only option is set
-   modLoader->saveModules ( options.save_modules || options.compile_only );
-
-   //... but disable if compiling tltables.
-   if ( options.compile_tltable )
-      modLoader->saveModules ( false );
-
-   modLoader->alwaysRecomp ( options.compile_only || options.force_recomp );
-   modLoader->sourceEncoding ( get_src_encoding() );
+   modLoader->saveModules ( m_options.save_modules );
+   modLoader->compileInMemory ( m_options.comp_memory );
+   modLoader->alwaysRecomp ( m_options.force_recomp );
+   modLoader->sourceEncoding ( getSrcEncoding() );
    // normally, save is not mandatory, unless we compile them our own
    // should be the default, but we reset it.
    modLoader->saveMandatory ( false );
 
    // should we forcefully consider input as ftd?
-   modLoader->compileTemplate ( options.parse_ftd );
+   modLoader->compileTemplate ( m_options.parse_ftd );
 
-   // enter in interactive mode now, if needed.
-   Module *core = core_module_init();
+}
 
-   if( options.interactive )
-   {
-      interactive_mode( modLoader, core );
-      core->decref();
-      exit_sequence(0);
-   }
 
-   // If we have to assemble or compile just a module...
-   if ( options.assemble_only || options.compile_only )
-   {
-      if ( options.assemble_only )
-         modLoader->sourceIsAssembly ( true );
-
-      // force not to save modules, we're saving it on our own
-      modLoader->saveModules ( false );
-
-      // give a copy of the loader to the meta compiler
-      modLoader->compiler().serviceLoader( modLoader->clone() );
-
-      Module *mod;
-      if ( options.input == "" || options.input == "-" )
-         mod = modLoader->loadSource ( stdIn, "<stdin>" );
-      else
-         mod = modLoader->loadSource ( options.input );
-
-      // if we had a module, save it at the right place.
-      if ( mod != 0 )
-      {
-         // should we save the module ?
-         if ( options.assemble_only || options.compile_only )
-         {
-            Stream *modstream = openOutputStream ( "fam" );
-            mod->save ( modstream );
-            modstream->close();
-         }
-      }
-
-      // whatever happened, we go to exit now.
-      exit_sequence ( modLoader->compileErrors() > 0 , modLoader->compileErrors() );
-   }
-
-   // At this point, we can ignore sources if only willing to run
-   // with ignore source option, the flcLoader will bypass loadSource and use loadModule.
-   modLoader->ignoreSources ( options.run_only );
-
-   // give a copy of the loader to the meta compiler
-   modLoader->compiler().serviceLoader( modLoader->clone() );
-
-   // Load the modules
-   Module *mainMod;
-
-   // the module loader has been already configured to to the job.
-   if ( options.input != "" && options.input != "-" )
-   {
-      mainMod = modLoader->loadFile ( options.input, FlcLoader::t_defaultSource );
-   }
-   else
-   {
-      if ( options.run_only )
-         mainMod = modLoader->loadModule ( stdIn );
-      else
-         mainMod = modLoader->loadSource ( stdIn, "<stdin>" );
-   }
-
-   if ( mainMod == 0 )
-   {
-      exit_sequence ( 1, modLoader->compileErrors() );
-   }
-
-   // Hack: on newer windows, CTRL+C doesn't cause the application to die.
-   // this check prevents to run modules without symbols
-   if ( mainMod->symbols().empty() )
-   {
-      exit_sequence ( 1, modLoader->compileErrors() );
-   }
-   // should we just write the string table?
-   if ( options.compile_tltable )
-   {
-      if ( mainMod->stringTable().internatCount() > 0 )
-      {
-         Stream *tplstream = openOutputStream ( "temp.ftt" );
-         if ( tplstream )
-         {
-            // Wrap using default encoding
-            if ( options.source_encoding != "" && options.source_encoding != "C" )
-               tplstream = TranscoderFactory ( options.source_encoding, tplstream, false );
-            mainMod->saveTableTemplate ( tplstream, options.source_encoding );
-            tplstream->close();
-         }
-         else
-            exit_sequence ( 1, 0 );
-      }
-
-      exit_sequence ( 0 , 0 );
-   }
+void AppFalcon::runModule()
+{
+   ModuleLoader ml;
+   prepareLoader( ml );
 
    // Create the runtime using the given module loader.
-   Runtime *runtime = new Runtime ( modLoader );
+   Runtime runtime( &ml );
 
    // now that we have the main module, inject other requested modules
-   ListElement *pliter = options.preloaded.begin();
+   ListElement *pliter = m_options.preloaded.begin();
    while ( pliter != 0 )
    {
-      Module *module = modLoader->loadName ( * ( ( String * ) pliter->data() ) );
-      if ( ! module )
-         exit_sequence ( 1 );
-      if ( ! runtime->addModule ( module ) )
-         exit_sequence ( 1 );
+      Module *module = ml.loadName ( * ( ( String * ) pliter->data() ) );
+      runtime.addModule( module );
 
       // abandon our reference to the injected module
       module->decref();
@@ -1096,11 +573,8 @@ int main ( int argc, char *argv[] )
    }
 
    // then add the main module
-   if ( ! runtime->addModule ( mainMod ) )
-   {
-      // addmodule should already have raised the error.
-      exit_sequence ( 1 );
-   }
+   Module* mainMod = loadInput(ml);
+   runtime.addModule( mainMod );
 
    // abandon our reference to the main module
    mainMod->decref();
@@ -1108,23 +582,22 @@ int main ( int argc, char *argv[] )
    //===========================================
    // Prepare the virtual machine
    //
-   VMachine *vmachine = new VMachine;
+   VMachineWrapper vmachine;
 
    //redirect the VM streams to ours.
    // The machine takes ownership of the streams, so they won't be useable anymore
    // after the machine destruction.
-   vmachine->stdIn ( stdIn );
-   vmachine->stdOut ( stdOut );
-   vmachine->stdErr ( stdErr );
+   readyStreams();
+   vmachine->stdIn( m_stdIn );
+   vmachine->stdOut( m_stdOut );
+   vmachine->stdErr( m_stdErr );
    // I have given real process streams to the vm
-   vmachine->hasProcessStreams ( true );
-
-   // Set the error handler
-   vmachine->errorHandler ( errHand );
+   vmachine->hasProcessStreams( true );
 
    // push the core module
    // we know we're not launching the core module.
-   vmachine->launchAtLink ( false );
+   vmachine->launchAtLink( false );
+   Module* core = core_module_init();
    #ifdef NDEBUG
       vmachine->link ( core );
    #else
@@ -1136,14 +609,15 @@ int main ( int argc, char *argv[] )
    // prepare environment
    Item *item_args = vmachine->findGlobalItem ( "args" );
    fassert ( item_args != 0 );
-   CoreArray *args = new CoreArray ( vmachine, argc - script_pos );
+   CoreArray *args = new CoreArray ( m_argc - m_script_pos );
 
-   for ( int ap = script_pos; ap < argc; ap ++ )
+   String ioEncoding = getIoEncoding();
+   for ( int ap = m_script_pos; ap < m_argc; ap ++ )
    {
-      String *cs = new CoreString ( vmachine );
-      if ( ! TranscodeFromString ( argv[ap], ioEncoding, *cs ) )
+      CoreString *cs = new CoreString;
+      if ( ! TranscodeFromString ( m_argv[ap], ioEncoding, *cs ) )
       {
-         cs->bufferize ( argv[ap] );
+         cs->bufferize ( m_argv[ap] );
       }
 
       args->append ( cs );
@@ -1153,81 +627,88 @@ int main ( int argc, char *argv[] )
 
    Item *script_name = vmachine->findGlobalItem ( "scriptName" );
    fassert ( script_name != 0 );
-   *script_name = new CoreString ( vmachine, mainMod->name() );
+   *script_name = new CoreString ( mainMod->name() );
 
    Item *script_path = vmachine->findGlobalItem ( "scriptPath" );
    fassert ( script_path != 0 );
-   *script_path = new CoreString ( vmachine, mainMod->path() );
+   *script_path = new CoreString ( mainMod->path() );
 
    // Link the runtime in the VM.
    // We'll be running the modules as we link them in.
    vmachine->launchAtLink ( true );
-   if ( ! vmachine->link ( runtime ) || ! vmachine->launch() )
+   if ( vmachine->link( &runtime ) && vmachine->launch() )
    {
-      delete vmachine;
-      delete runtime;
-
-      // a failed link means undefined symbols or error in object init.
-      exit_sequence ( 1 );
+      if ( vmachine->regA().isInteger() )
+         exitval( ( int32 ) vmachine->regA().asInteger() );
    }
+}
 
-   // manage suspension events.
-   while ( vmachine->lastEvent() == VMachine::eventSuspend )
-   {
-      stdOut->writeString ( "Virtual machine suspended. Please enter an event:\n" );
-      String ret;
-      uint32 chr;
-      while ( stdIn->get ( chr ) && chr != '\n' )
-         if ( chr != '\r' )
-            ret.append ( chr );
+void AppFalcon::run()
+{
+   // record the memory now -- we're gonna create the streams that will be handed to the VM
+   size_t memory = gcMemAllocated();
+   int32 items = memPool->allocatedItems();
 
-      vmachine->resume ( new CoreString ( vmachine, ret ) );
-      // items in resume are not automatically stored in the GC, so we can destroy
-      // the string here.
-   }
-
-   bool exitSeq = vmachine->regA().isInteger();
-   int32 exitVal;
-
-   if ( exitSeq )
-      exitVal = ( int32 ) vmachine->regA().asInteger();
+   // determine the operation mode
+   if( m_options.compile_tltable )
+      compileTLTable();
+   else if ( m_options.assemble_out )
+      generateAssembly();
+   else if ( m_options.tree_out )
+      generateTree();
+   else if ( m_options.compile_only )
+      buildModule();
+   else if ( m_options.interactive )
+      makeInteractive();
    else
-      exitVal = 0;
+      runModule();
 
-   delete vmachine;
-   delete runtime;
-   delete modLoader;
-   delete errHand;
+   memPool->performGC();
 
-   // to de-account memory
-   options.io_encoding = "";
-   options.source_encoding = "";
-   ioEncoding = "";
-
-   if ( options.check_memory )
+   if ( m_options.check_memory )
    {
-      // take memory now (should be 0 after re-creating the streams).
-      long mem = s_allocatedMem;
-      long blocks = s_outBlocks;
+      // be sure we have reclaimed all what's possible to reclaim.
+      size_t mem2 = gcMemAllocated();
+      int32 items2 = memPool->allocatedItems();
+      cout << "===============================================================" << std::endl;
+      cout << "                 M E M O R Y    R E P O R T" << std::endl;
+      cout << "===============================================================" << std::endl;
+      cout << " Unbalanced memory: " << mem2 - memory << endl;
+      cout << " Unbalanced items : " << items2 - items << endl;
+      cout << "===============================================================" << std::endl;
+   }
+}
 
-      // recreate an output stream
-      stdOut = stdOutputStream();
+//===========================================
+// Main Routine
+//===========================================
 
-      String temp = " Allocated Memory / Allocated Blocks : ";
-      temp.writeNumber ( ( int64 ) mem );
-      temp += " / ";
-      temp.writeNumber ( ( int64 ) blocks );
-      stdOut->writeString ( "-------------------------------------------------------\n"
-                           "Memory report:\n" );
-      stdOut->writeString ( temp );
-      stdOut->writeString ( s_validAlloc == 1 ? "  (valid blocks)" : "  (some deallocation error)" );
-      stdOut->writeString ( "\n-------------------------------------------------------\n" );
+int main ( int argc, char *argv[] )
+{
+   StdErrStream serr;
+   AppFalcon falcon;
 
-      delete stdOut;
+   try {
+      if ( falcon.setup( argc, argv ) )
+         falcon.run();
+   }
+   catch ( const String &fatal_error )
+   {
+      serr.writeString( "falcon: FATAL - " + fatal_error + "\n" );
+      falcon.exitval( 1 );
+   }
+   catch ( Error *err )
+   {
+      String temp;
+      err->toString( temp );
+      serr.writeString( "falcon: FATAL - Program terminated with error.\n" );
+      serr.writeString( temp + "\n" );
+      err->decref();
+      falcon.exitval( 1 );
    }
 
-   exit_sequence ( exitSeq ? exitVal : 0 );
-   return 0; // to make the compiler happy
+   falcon.terminate();
+   return falcon.exitval();
 }
 
 /* end of falcon.cpp */

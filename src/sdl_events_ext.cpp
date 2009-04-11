@@ -39,6 +39,9 @@
 namespace Falcon {
 namespace Ext {
 
+#if ! (defined(WIN32) || defined(FALCON_SYSTEM_MAC)) 
+   #define USE_SDL_EVENT_THREADS
+#endif
 
 FALCON_FUNC _coroutinePoll( VMachine *vm );
 
@@ -86,7 +89,7 @@ void declare_events( Module *self )
    self->addClassProperty( c_evttype, "VIDEOEXPOSE" ).setInteger( SDL_VIDEOEXPOSE );
    self->addClassProperty( c_evttype, "QUIT" ).setInteger( SDL_QUIT );
 
-   #ifdef WIN32
+   #ifndef USE_SDL_EVENT_THREADS
    Symbol* coropoll = self->addExtFunc( "_coroutinePoll", _coroutinePoll, false );
    coropoll->setWKS( true );
    #endif
@@ -1532,7 +1535,7 @@ FALCON_FUNC _coroutinePoll( VMachine *vm )
 */
 FALCON_FUNC sdl_StartEvents( VMachine *vm )
 {
-#ifndef WIN32
+#ifdef USE_SDL_EVENT_THREADS
    s_mtx_events->lock();
    if ( s_EvtListener != 0 )
    {
@@ -1562,7 +1565,7 @@ FALCON_FUNC sdl_StartEvents( VMachine *vm )
 */
 FALCON_FUNC sdl_StopEvents( VMachine *vm )
 {
-#ifndef WIN32
+#ifdef USE_SDL_EVENT_THREADS
    s_mtx_events->lock();
    if ( s_EvtListener != 0 )
    {

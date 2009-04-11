@@ -11,6 +11,8 @@ LINK_DIRECTORIES(BEFORE "${FALCON_LIB_PATH}")
 
 ADD_EXECUTABLE( sdl_falcon
    falcon.cpp
+   options.cpp
+   int_mode.cpp
    SDLMain.m
 )
 
@@ -23,11 +25,11 @@ TARGET_LINK_LIBRARIES(sdl_falcon falcon_engine ${SDL_LIBRARY})
       SET( FALCON_BIN_PATH "$ENV{FALCON_ACTIVE_TREE}/bin" )
    ENDIF ("$ENV{FALCON_ACTIVE_TREE}" STREQUAL "")
 
-if(NOT ${INSTDIR} STREQUAL "" )
-   set(BINDEST ${INSTDIR})
-else(NOT ${INSTDIR} STREQUAL "" )
+set(BINDEST ${INSTDIR})
+
+if("${BINDEST}" STREQUAL "" )
    set(BINDEST ${FALCON_BIN_PATH})
-endif(NOT ${INSTDIR} STREQUAL "" )
+endif("${BINDEST}" STREQUAL ""  )
 
 #Install
 MESSAGE( "Intalling sdl_falcon on ${BINDEST}" )
