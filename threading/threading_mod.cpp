@@ -109,6 +109,8 @@ void *VMRunnerThread::run()
    // unlock the threads objects
    m_vm->unlock( tiLock );
    m_vm->unlock( mthLock );
+   // it is now safe to inspect the VM.
+   m_vm->idle();
    return 0;
 }
 

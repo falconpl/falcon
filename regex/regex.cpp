@@ -101,16 +101,16 @@ A minimal example would look like the following:
    @endcode
 
    The parser provides single quoted literal strings, where the backslash has no special
-   meaning, (except for the sequence \' which is turned into a single quote).
+   meaning.
 
    In example:
    @code
-   re = Regex( '^\s*\w' )
+   re = Regex( '^\\s*\\w' )
    @endcode
 
    This would match any word near the beginning of a line, and it is equivalent to:
    @code
-   re = Regex( "^\\s*\\w" )
+   re = Regex( "^\\\\s*\\\\w" )
    @endcode
 
    Of course, the former is more readable and natural when dealing with regular

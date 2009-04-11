@@ -346,10 +346,13 @@ void ThreadProvider::setRunningThread( Thread *th )
    // This is a good moment to create the thread key.
    pthread_once( &runningThreadKey_once, make_runningThreadKey );
    pthread_setspecific( runningThreadKey, th );
-   th->m_mtx.lock();
-   th->m_bStarted = true;
-   ((POSIX_TH *)th->m_sysData)->thID = pthread_self();
-   th->m_mtx.unlock();
+   if ( th != 0 )
+   {
+      th->m_mtx.lock();
+      th->m_bStarted = true;
+      ((POSIX_TH *)th->m_sysData)->thID = pthread_self();
+      th->m_mtx.unlock();
+   }
 }
 
 

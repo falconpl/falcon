@@ -217,7 +217,7 @@ FALCON_FUNC Thread_start( VMachine *vm )
    sstream.seekBegin(0);
    Item i_remoteThread;
    #ifndef NDEBUG
-   Item::e_sercode result = 
+   Item::e_sercode result =
    #endif
        i_remoteThread.deserialize( &sstream, &thread->vm() );
    fassert( result == Item::sc_ok );
@@ -543,14 +543,14 @@ FALCON_FUNC Thread_getError( VMachine *vm )
          desc( FAL_STR( th_msg_threadnotterm ) ) ) );
       return;
    }
-   
+
    if ( thread->hadError() )
    {
       vm->retval( thread->exitError()->scriptize( vm ) );
    }
    else
       vm->retnil();
-  
+
    vm->retnil();
 }
 
