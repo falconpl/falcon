@@ -19,8 +19,8 @@
 load process
 
 if args.len() == 0
-   > "Please, specify the process to be launched. Use a single string.\n"
-     "   Example: \n"
+   > "Please, specify the process to be launched. Use a single string.\n" +
+     "   Example: \n" + 
      "            echoproc.fal \"ls -l /usr/lib\"\n"
    return 1
 end
