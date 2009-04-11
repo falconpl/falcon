@@ -119,6 +119,8 @@ String get_load_path()
       else
          return lp + ";" + envpath;
    }
+   
+   return lp;  // just a warning
 }
 
 
