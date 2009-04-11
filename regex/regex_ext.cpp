@@ -728,7 +728,7 @@ void s_expand( RegexCarrier *data, const String &orig, String &expanded )
             }
 
             uint32 val = expanded.getCharAt(pos) - 0x30;
-            if ( data->m_matches > val && val < 10 )
+            if ( ((uint32)data->m_matches) > val && val < 10 )
             {
                // is a valid number?
                expanded.change( pos-1, pos+1, orig.subString( data->m_ovector[val*2], data->m_ovector[val*2+1] ) );
