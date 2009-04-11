@@ -1765,8 +1765,8 @@ void VMachine::electContext()
 
       // elect NOW the new context
       m_sleepingContexts.popFront();
-      elect->restore( this );
       elect->wakeup();
+      elect->restore( this );
 
       m_currentContext = elect;
       m_opCount = 0;
@@ -1802,6 +1802,41 @@ void VMachine::electContext()
             unidle();
          }
       }
+   }
+}
+
+
+void VMachine::terminateCurrentContext()
+{
+   // scan the contexts and remove the current one.
+   if ( m_sleepingContexts.empty() )
+   {
+      // there is wating non-sleeping context that will never be awaken?
+      if( m_contexts.size() != 1 )
+      {
+         raiseRTError( new CodeError( ErrorParam( e_deadlock ).extra("END").origin( e_orig_vm ) ) );
+         return;
+      }
+
+      m_event = eventQuit;
+   }
+   else
+   {
+      ListElement *iter = m_contexts.begin();
+      while( iter != 0 ) {
+         if( iter->data() == m_currentContext ) {
+            m_contexts.erase( iter );
+               // removing the context also deletes it.
+
+               // Not necessary, but we do for debug reasons (i.e. if we access it before election, we crash)
+               m_currentContext = 0;
+
+               break;
+         }
+         iter = iter->next();
+      }
+
+      electContext();
    }
 }
 
@@ -1848,11 +1883,7 @@ void VMachine::callReturn()
    // if we have nowhere to return...
    if( m_stackBase == 0 )
    {
-      // do as if an end was in the code.
-      // End will nil A, so we must save it
-      Item oldA = m_regA;
-      opcodeHandler_END( this );
-      m_regA = oldA;
+      terminateCurrentContext();
       return;
    }
 

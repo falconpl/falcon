@@ -114,6 +114,7 @@ void VMContext::wakeup()
    if ( m_sleepingOn != 0 )
    {
       m_sleepingOn->unsubscribe( this );
+      m_regA.setBoolean(false); // we have not been awaken, and must return false
       m_sleepingOn = 0; // should be done by unsubscribe, but...
    }
 }

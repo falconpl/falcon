@@ -171,10 +171,10 @@ FALCON_FUNC  paramIsRef ( ::Falcon::VMachine *vm )
       if( val >= 0 && val < prevFrame->m_param_count )
       {
          val = oldbase - prevFrame->m_param_count - VM_FRAME_SPACE + val;
-         vm->retval( vm->stackItem( val ).isReference() ? (int64) 1 : (int64) 0 );
+         vm->regA().setBoolean( vm->stackItem( val ).isReference() ? true: false );
       }
       else {
-         vm->retval( (int64) 0 );
+         vm->regA().setBoolean( false );
       }
    }
 }

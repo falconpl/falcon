@@ -475,37 +475,8 @@ void VMachine::run()
 // 0
 void opcodeHandler_END( register VMachine *vm )
 {
-   // scan the contexts and remove the current one.
-   if ( vm->m_sleepingContexts.empty() )
-   {
-      // there is wating non-sleeping context that will never be awaken?
-      if( vm->m_contexts.size() != 1 )
-      {
-         vm->raiseRTError( new CodeError( ErrorParam( e_deadlock ).extra("END").origin( e_orig_vm ) ) );
-         return;
-      }
-
-      vm->m_event = VMachine::eventQuit;
-      // nil also the A register
-      vm->regA().setNil();
-   }
-   else {
-      ListElement *iter = vm->m_contexts.begin();
-      while( iter != 0 ) {
-         if( iter->data() == vm->m_currentContext ) {
-            vm->m_contexts.erase( iter );
-               // removing the context also deletes it.
-
-               // Not necessary, but we do for debug reasons (i.e. if we access it before election, we crash)
-               vm->m_currentContext = 0;
-
-               break;
-         }
-         iter = iter->next();
-      }
-
-      vm->electContext();
-   }
+   vm->regA().setNil();
+   vm->terminateCurrentContext();
 }
 
 

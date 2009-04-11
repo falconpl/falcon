@@ -471,6 +471,7 @@ protected:
    void putAtSleep( VMContext *ctx, numeric secs );
    void reschedule( VMContext *ctx, numeric secs );
    void rotateContext();
+   void terminateCurrentContext();
 
    /** Service recursive function called by LinkClass to create a class. */
    bool linkSubClass( LiveModule *mod , const Symbol *clssym, Map &props, ObjectFactory *factory );

@@ -38,6 +38,12 @@ Falcon (0.9.1)
   * fixed: Callback frame termination handler was not set if there was just one frame
            the stack.
   * major: It is now possible to launch symbols as coroutines without a FORK opcode.
+  * fixed: Since 0.8.0, VMachine::callReturn restored caller exit value in case of
+           context termination. This caused spurious wakeups and signal consumptions
+           in coroutine semaphores, as the return value of the wait() function must
+           be mangled from inside the sleeping context, and may be applied when a
+           context dies. As 0.9 uses small coroutines (dying often) to send messages,
+           the effect was dramatically visible.
 
 Falcon (0.9)
   * major: Removed "sender" from grammar.
