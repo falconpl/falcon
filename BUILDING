@@ -70,14 +70,21 @@ In example, suppose we want to build a Falcon that must be installed on
 software reads it and prepares a package as an RPM, DEB or PKG. The command
 required will be:
 
-   ./build.sh -p /tmp/falcon  -f /opt/falcon
+   $ ./build.sh -p /tmp/falcon  -f /opt/falcon
 
 and after the build process is complete:
 
-   ./build -i
+   $ ./build.sh -i
 
   This will move the needed files in /tmp/falcon, but will internally configure
 falcon to run from /opt/falcon/bin
+
+  *NOTICE: it is possible to specify the "-i" option directly on the first
+invocation of build.sh; this will install the created binaries and developement
+files immediately after having created them. This is useful for packaging
+systems that support a single build command, or on some platforms where CMAKE
+seems not to properly identify the completion of the first step, trying to
+rebuild all when ./build.sh is invoked.
 
 
 Changing library directory name
