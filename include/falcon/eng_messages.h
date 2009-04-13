@@ -101,7 +101,7 @@ FAL_ERRORDECL( e_mod_by_zero, 6, "Module by zero" );
 FAL_ERRORDECL( e_invalid_op, 7, "Invalid operator" );
 FAL_ERRORDECL( e_assign_const, 8, "Assignment to a constant" );
 FAL_ERRORDECL( e_assign_sym, 9, "Assignment to a non assignable symbol" );
-FAL_ERRORDECL( e_static_call, 10, "Non-staitc method called statically" );
+FAL_ERRORDECL( e_static_call, 10, "Non-static method called statically" );
 FAL_ERRORDECL( e_global_notin_func, 11, "Global statement not inside a function" );
 FAL_ERRORDECL( e_already_def, 12, "Symbol already defined" );
 FAL_ERRORDECL( e_inv_token, 13, "Unrecognized token" );
