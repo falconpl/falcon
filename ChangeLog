@@ -1,3 +1,8 @@
+Falcon (0.9.1.1)
+  * fixed: Correct parsing of octal number (0 and 7 was out...)
+  * fixed: Crash with statements == just numbers, and allowing interactive
+           compiler to parse non-stand alone expressions and evaluate them.
+
 Falcon (0.9.1)
   * fixed: String-blocks closed with " alone on a line werent' recognized.
   * fixed: Octal numbers weren't properly scanned.

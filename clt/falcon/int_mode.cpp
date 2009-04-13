@@ -46,6 +46,7 @@ void IntMode::run()
    intcomp_vm->link( core_module_init() );
 
    InteractiveCompiler comp( &ml, intcomp_vm.vm() );
+   comp.setInteractive( true );
 
    Stream *stdOut = m_owner->m_stdOut;
    Stream *stdIn = m_owner->m_stdIn;

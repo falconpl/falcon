@@ -64,6 +64,7 @@ Compiler::Compiler( Module *mod, Stream* in ):
    m_modVersion( 0 ),
    m_defContext( false ),
    m_bParsingFtd(false),
+   m_bInteractive( false ),
 
    m_rootError( 0 ),
    m_metacomp( 0 ),
@@ -100,6 +101,7 @@ Compiler::Compiler():
    m_modVersion( 0 ),
    m_defContext( false ),
    m_bParsingFtd(false),
+   m_bInteractive( false ),
    m_rootError( 0 ),
    m_metacomp(0),
    m_serviceVM( 0 ),

@@ -171,6 +171,8 @@ protected:
 
    bool m_bParsingFtd;
 
+   bool m_bInteractive;
+
    Error *m_rootError;
    InteractiveCompiler *m_metacomp;
    VMachine *m_serviceVM;
@@ -571,6 +573,18 @@ public:
       raised some errors during the processing of the files.
    */
    Error *detachErrors() { Error *e = m_rootError; m_rootError = 0; m_errors = 0; return e; }
+
+   /** Sets this compiler as interactive.
+      A compiler meant to run code from the command line has different
+      rules; in example, it can accept autoexpressions without raising
+      a "statement does nothing" error, as the meaning of expressions
+      on the command line is just that to be evaluated and their result
+      being interactively displayed.
+   */
+   void setInteractive( bool bint ) { m_bInteractive = bint; }
+
+   /** Checks if this compiler is as an interactive I/O */
+   bool isInteractive() const { return m_bInteractive; }
 };
 
 } // end of namespace

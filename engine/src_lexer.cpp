@@ -803,7 +803,7 @@ int SrcLexer::lex_normal()
 
          case e_octNumber:
             m_lineFilled = true;
-            if ( chr > '0' && chr < '7' )
+            if ( chr >= '0' && chr <= '7' )
             {
                m_string.append( chr );
             }

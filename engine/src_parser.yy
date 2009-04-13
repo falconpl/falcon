@@ -277,7 +277,7 @@ statement:
 
 base_statement:
    expression EOL {
-         if( ! $1->asExpr()->isStandAlone() )
+         if( (! COMPILER->isInteractive()) && ((!$1->isExpr()) || (!$1->asExpr()->isStandAlone()) ) )
          {
             Falcon::StmtFunction *func = COMPILER->getFunctionContext();
             if ( func == 0 || ! func->isLambda() )
