@@ -254,6 +254,16 @@ int dbh_realSqlExpand( VMachine *vm, DBIBaseTrans *dbh, String &sql, int startAt
 }
 
 
+void dbh_return_recordset( VMachine *vm, DBIRecordset *rec )
+{
+   Item *rsclass = vm->findWKI( "%DBIRecordset" );
+   fassert( rsclass != 0 && rsclass->isClass() );
+
+   CoreObject *oth = rsclass->asClass()->createInstance();
+   oth->setUserData( rec );
+   vm->retval( oth );
+}
+
 /******************************************************************************
  * Local Helper Functions - DBR recordset handle
  *****************************************************************************/

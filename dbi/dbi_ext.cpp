@@ -125,19 +125,8 @@ FALCON_FUNC DBIBaseTrans_query( VMachine *vm )
    DBIRecordset *recSet = dbh_query_base( dbh, sql );
 
    // recordset-less query?
-   if ( recSet == 0 )
-   {
-      vm->retnil();
-      return;
-   }
-
-   // creturn the recordset.
-   Item *rsclass = vm->findWKI( "%DBIRecordset" );
-   fassert( rsclass != 0 && rsclass->isClass() );
-
-   CoreObject *oth = rsclass->asClass()->createInstance();
-   oth->setUserData( recSet );
-   vm->retval( oth );
+   if ( recSet != 0 )
+      dbh_return_recordset( vm, recSet );
 }
 
 
@@ -321,11 +310,11 @@ FALCON_FUNC DBIBaseTrans_queryOneObject( VMachine *vm )
 
 /*#
    @method insert DBIBaseTrans
-   @brief Performa single insertion query given a dictionary.
+   @brief Performs a single insertion query given a dictionary.
    @param table The table name on which to insert a new record.
-   @param data The record to be inserted.
-   @return The value of the first field of the first record
-   @raise DBIError if the query doesn't return any result.
+   @param data The record to be inserted, as a dictionary.
+   @raise DBIError if the query generates an error in the SQL engine.
+   @raise ParamError if the data wasn't adequate to be inserted.
 
    This method automathises the task of creating the "insert" sql query
    given some variable data to be inserted. It actually expands into a
@@ -350,42 +339,244 @@ FALCON_FUNC DBIBaseTrans_insert( VMachine *vm )
                   .extra( "O" ) );
    }
 
-/*
-   CoreObject *obj = objI->asObject();
+
+   CoreObject *self = vm->self().asObject();
    DBIBaseTrans *dbh = static_cast<DBIBaseTrans *>( self->getUserData() );
 
    String sql = "insert into " + *i_table->asString() + "(";
    String vals = ") values (";
 
-   CoreIterator* iter = i_data->asDict();
+   DictIterator* iter = i_data->asDict()->first();
    bool bDone = false;
    while( iter->hasNext() )
    {
       String temp;
       if( iter->getCurrentKey().isString()  )
       {
-         if ( ! done )
+         if ( ! bDone )
          {
-            done = true;
+            bDone = true;
          }
          else {
             sql += ", ";
             vals += ", ";
          }
 
-         sql += iter->getCurrentKey();
-         dbh_itemToSqlValue( dbh, &iter->getCurrentValue(), temp );
+         sql += *iter->getCurrentKey().asString();
+         if ( ! dbh_itemToSqlValue( dbh, &iter->getCurrent(), temp ) )
+         {
+            bDone = false;
+            break;
+         }
          vals += temp;
       }
-   }
 
-   if ( done )
-   {
-      dbh->query(
+      iter->next();
    }
-*/
+   delete iter;
+
+   if ( bDone )
+   {
+      DBIRecordset *rec = dbh_query_base( dbh, sql + ";" );
+      if ( rec != 0 )
+      {
+         dbh_return_recordset( vm, rec );
+      }
+   }
+   else {
+       throw new ParamError( ErrorParam( e_param_range, __LINE__ )
+               .extra( "could not generate an insert query" ) );
+   }
 }
 
+/*#
+   @method update DBIBaseTrans
+   @brief Performs a single update query given a dictionary.
+   @param table The table name on which to insert a new record.
+   @param data The record to be inserted, as a dictionary.
+   @raise DBIError if the query doesn't return any result.
+   @raise ParamError if the data wasn't adequate to update the table.
+
+   This method automathises the task of creating the "update" sql query
+   given some variable data to be inserted. It actually expands into a
+   complete SQL "update" query that is then sent to the engine.
+
+   To determine a primary key or set of keys to insolate one (or more)
+   records to be updated, declare the keys as OOB strings (i.e. via
+   the oob() function). They won't be used in the 'SET' clause,
+   and will form a 'where' clause in which they are all required
+   (joint with an 'and' value).
+
+   This function will refuse to update in case there isn't at least
+   a key field in the dictionary.
+
+   @see DBIBaseTrans.update
+   @see DBIBaseTrans.delete
+*/
+
+FALCON_FUNC DBIBaseTrans_update( VMachine *vm )
+{
+   Item* i_table = vm->param(0);
+   Item* i_data = vm->param(1);
+
+   if ( i_table == 0 || ! i_table->isString()
+       || i_data == 0 || ! i_data->isDict() )
+   {
+       throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                  .extra( "O" ) );
+   }
+
+
+   CoreObject *self = vm->self().asObject();
+   DBIBaseTrans *dbh = static_cast<DBIBaseTrans *>( self->getUserData() );
+
+   String sql = "update " + *i_table->asString() + "set ";
+   String where = "where ";
+
+   DictIterator* iter = i_data->asDict()->first();
+   bool bDone = false;
+   bool bWhereDone = false;
+
+   while( iter->hasNext() )
+   {
+      String temp;
+      if( iter->getCurrentKey().isString()  )
+      {
+         if ( iter->getCurrentKey().isOob() )
+         {
+            // a key value
+            if ( ! bWhereDone )
+            {
+               bWhereDone = true;
+            }
+            else {
+               where += " and ";
+            }
+            where += *iter->getCurrentKey().asString();
+         }
+         else
+         {
+            if ( ! bDone )
+            {
+               bDone = true;
+            }
+            else {
+               sql += ", ";
+            }
+
+            dbh_itemToSqlValue( dbh, &iter->getCurrent(), temp );
+            sql += *iter->getCurrentKey().asString() + "="+temp;
+         }
+      }
+
+      iter->next();
+   }
+   delete iter;
+
+   if ( ! bWhereDone )
+   {
+      throw new ParamError( ErrorParam( e_param_range, __LINE__ )
+               .extra( "no key field designed for update" ) );
+   }
+
+   if ( bDone )
+   {
+      DBIRecordset *rec = dbh_query_base( dbh, sql + ";" );
+      if ( rec != 0 )
+      {
+         dbh_return_recordset( vm, rec );
+      }
+   }
+   else
+   {
+       throw new ParamError( ErrorParam( e_param_range, __LINE__ )
+               .extra( "could not generate an update query" ) );
+   }
+}
+
+
+/*#
+   @method delete DBIBaseTrans
+   @brief Performs a single delete query given a dictionary.
+   @param table The table name on which to insert a new record.
+   @param data The keys indicating the record to be deleted, as a dictionary.
+   @raise DBIError if the query doesn't return any result.
+   @raise ParamError if the data wasn't adequate to delete a record.
+
+   This method automathises the task of creating the "update" sql query
+   given some variable data to be inserted. It actually expands into a
+   complete SQL "update" query that is then sent to the engine.
+
+   To determine a primary key or set of keys to insolate one (or more)
+   records to be updated, declare the keys as OOB strings (i.e. via
+   the oob() function). They won't be used in the 'SET' clause,
+   and will form a 'where' clause in which they are all required
+   (joint with an 'and' value).
+
+   This function will refuse to update in case there isn't at least
+   a key field in the dictionary.
+
+   @see DBIBaseTrans.update
+   @see DBIBaseTrans.delete
+*/
+
+FALCON_FUNC DBIBaseTrans_delete( VMachine *vm )
+{
+   Item* i_table = vm->param(0);
+   Item* i_data = vm->param(1);
+
+   if ( i_table == 0 || ! i_table->isString()
+       || i_data == 0 || ! i_data->isDict() )
+   {
+       throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                  .extra( "O" ) );
+   }
+
+
+   CoreObject *self = vm->self().asObject();
+   DBIBaseTrans *dbh = static_cast<DBIBaseTrans *>( self->getUserData() );
+
+   String sql = "delete from " + *i_table->asString() + " where ";
+
+   DictIterator* iter = i_data->asDict()->first();
+   bool bWhereDone = false;
+
+   while( iter->hasNext() )
+   {
+      String temp;
+      if( iter->getCurrentKey().isString()  )
+      {
+         if ( ! bWhereDone )
+         {
+            bWhereDone = true;
+         }
+         else {
+            sql += " and ";
+         }
+         sql += *iter->getCurrentKey().asString();
+
+         dbh_itemToSqlValue( dbh, &iter->getCurrent(), temp );
+         sql += *iter->getCurrentKey().asString() + "="+temp;
+      }
+
+      iter->next();
+   }
+   delete iter;
+
+   if ( bWhereDone )
+   {
+      DBIRecordset *rec = dbh_query_base( dbh, sql );
+      if ( rec != 0 )
+      {
+         dbh_return_recordset( vm, rec );
+      }
+   }
+   else
+   {
+       throw new ParamError( ErrorParam( e_param_range, __LINE__ )
+               .extra( "could not generate a delete query" ) );
+   }
+}
 
 /*#
  @method close DBIHandle

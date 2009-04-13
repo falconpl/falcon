@@ -69,7 +69,7 @@ FALCON_MODULE_DECL
    self->addClassMethod( btrans_class, "insert",            Falcon::Ext::DBIBaseTrans_insert );
    self->addClassMethod( btrans_class, "update",            Falcon::Ext::DBIBaseTrans_update );
    self->addClassMethod( btrans_class, "delete",            Falcon::Ext::DBIBaseTrans_delete );
-   self->addClassMethod( btrans_class, "close",             Falcon::Ext::DBIBaseTrans_delete );
+   self->addClassMethod( btrans_class, "close",             Falcon::Ext::DBIBaseTrans_close );
 
    /*#
     @class DBIHandle

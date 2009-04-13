@@ -27,6 +27,7 @@ DBIRecordset *dbh_query_base( DBIBaseTrans* dbh, const String &sql );
 int dbh_itemToSqlValue( DBIBaseTrans *dbh, const Item *i, String &value );
 int dbh_realSqlExpand( VMachine *vm, DBIBaseTrans *dbh, String &sql, int startAt=0 );
 DBIRecordset *dbh_baseQueryOne( VMachine *vm, int startAt = 0 );
+void dbh_return_recordset( VMachine *vm, DBIRecordset *rec );
 
 
 int dbr_getItem( VMachine *vm, DBIRecordset *dbr, dbi_type typ, int cIdx, Item &item );
