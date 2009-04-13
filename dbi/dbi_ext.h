@@ -32,18 +32,25 @@ namespace Ext {
 FALCON_FUNC DBIConnect( VMachine *vm );
 
 //=====================
+// DBIBaseTrans
+//=====================
+
+FALCON_FUNC DBIBaseTrans_query( VMachine *vm );
+FALCON_FUNC DBIBaseTrans_queryOne( VMachine *vm );
+FALCON_FUNC DBIBaseTrans_queryOneArray( VMachine *vm );
+FALCON_FUNC DBIBaseTrans_queryOneDict( VMachine *vm );
+FALCON_FUNC DBIBaseTrans_queryOneObject( VMachine *vm );
+FALCON_FUNC DBIBaseTrans_insert( VMachine *vm );
+FALCON_FUNC DBIBaseTrans_update( VMachine *vm );
+FALCON_FUNC DBIBaseTrans_delete( VMachine *vm );
+FALCON_FUNC DBIBaseTrans_close( VMachine *vm );
+
+//=====================
 // DBI Handle
 //=====================
 
-FALCON_FUNC DBIHandle_startTransaction( VMachine *vm );
-FALCON_FUNC DBIHandle_query( VMachine *vm );
-FALCON_FUNC DBIHandle_queryOne( VMachine *vm );
-FALCON_FUNC DBIHandle_queryOneArray( VMachine *vm );
-FALCON_FUNC DBIHandle_queryOneDict( VMachine *vm );
-FALCON_FUNC DBIHandle_queryOneObject( VMachine *vm );
-FALCON_FUNC DBIHandle_execute( VMachine *vm );
 FALCON_FUNC DBIHandle_sqlExpand( VMachine *vm );
-FALCON_FUNC DBIHandle_close( VMachine *vm );
+FALCON_FUNC DBIHandle_startTransaction( VMachine *vm );
 FALCON_FUNC DBIHandle_getLastInsertedId( VMachine *vm );
 FALCON_FUNC DBIHandle_getLastError( VMachine *vm );
 
@@ -51,15 +58,13 @@ FALCON_FUNC DBIHandle_getLastError( VMachine *vm );
 // DBI Transaction
 //=====================
 
-FALCON_FUNC DBITransaction_query( VMachine *vm );
-FALCON_FUNC DBITransaction_execute( VMachine *vm );
-FALCON_FUNC DBITransaction_close( VMachine *vm );
-FALCON_FUNC DBITransaction_commit( VMachine *vm );
-FALCON_FUNC DBITransaction_rollback( VMachine *vm );
 FALCON_FUNC DBITransaction_openBlob( VMachine *vm );
 FALCON_FUNC DBITransaction_createBlob( VMachine *vm );
 FALCON_FUNC DBITransaction_readBlob( VMachine *vm );
 FALCON_FUNC DBITransaction_writeBlob( VMachine *vm );
+
+FALCON_FUNC DBITransaction_commit( VMachine *vm );
+FALCON_FUNC DBITransaction_rollback( VMachine *vm );
 
 
 //=====================

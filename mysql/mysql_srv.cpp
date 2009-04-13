@@ -463,7 +463,7 @@ dbi_status DBITransactionMySQL::rollback()
    return retval;
 }
 
-void DBITransactionMySQL::close()
+dbi_status DBITransactionMySQL::close()
 {
    // TODO: return a status code here because of the potential commit
    if ( m_inTransaction )
@@ -471,7 +471,7 @@ void DBITransactionMySQL::close()
 
    m_inTransaction = false;
 
-   m_dbh->closeTransaction( this );
+   return m_dbh->closeTransaction( this );
 }
 
 dbi_status DBITransactionMySQL::getLastError( String &description )
@@ -593,18 +593,18 @@ dbi_status DBIHandleMySQL::escapeString( const String &value, String &escaped )
    AutoCString asValue( value );
 
    int maxLen = ( value.length() * 2 ) + 1;
-   char *cTo = (char *) malloc( sizeof( char ) * maxLen );
+   char *cTo = (char *) memAlloc( sizeof( char ) * maxLen );
 
    size_t convertedSize = mysql_real_escape_string( m_conn, cTo,
                                                    asValue.c_str(), asValue.length() );
 
    if ( convertedSize < value.length() ) {
-      free( cTo );
+      memFree( cTo );
       return dbi_error;
    }
 
    escaped.fromUTF8( cTo );
-   free( cTo );
+   memFree( cTo );
 
    return dbi_ok;
 }
@@ -633,35 +633,57 @@ DBIHandle *DBIServiceMySQL::connect( const String &parameters, bool persistent,
 {
    char *host, *user, *passwd, *db, *port, *unixSocket, *clientFlags;
    unsigned int iPort, iClientFlag;
-
-   AutoCString asConnParams( parameters );
-   char *connParams = (char *) malloc( sizeof(char) * (asConnParams.length() + 1) );
-   strcpy( connParams, asConnParams.c_str() );
-
-
-   host        = strtok( connParams, "," );
-   user        = strtok( NULL, "," );
-   passwd      = strtok( NULL, "," );
-   db          = strtok( NULL, "," );
-   port        = strtok( NULL, "," );
-   unixSocket  = strtok( NULL, "," );
-   clientFlags = strtok( NULL, "," );
-
-   if ( passwd != NULL && (passwd[0] == '\0' || passwd[0] == '.') )
-      passwd = NULL;
-      
-   if ( unixSocket != NULL && strcmp( unixSocket, "0" ) == 0 )
-      unixSocket = NULL;
+   char** vals[] = { &host, &user, &passwd, &db, &port, &unixSocket, &clientFlags, 0 };
 
    MYSQL *conn = mysql_init( NULL );
 
    if ( conn == NULL ) {
       retval = dbi_memory_allocation_error;
-      free( connParams );
       return NULL;
    }
 
-   if ( mysql_real_connect( conn, host, user, passwd, db, atoi( port ),
+   AutoCString asConnParams( parameters );
+   char* connp = (char*) asConnParams.c_str();
+   char*** elem = vals;
+   char* beg = connp;
+
+   // tokenize ","
+   while( *connp && *elem )
+   {
+      if ( *connp == ',' )
+      {
+         if ( beg == connp )
+         {
+            // empty "," ?
+            **elem = 0;
+         }
+         else
+            **elem = beg;
+
+         ++elem;
+         *connp = '\0';
+         ++connp;
+         beg = connp;
+      }
+      else
+         ++connp;
+   }
+
+   // get the last element
+   if ( *elem )
+   {
+      **elem = beg;
+      ++elem;
+      // nulls remaining parameters.
+      while( *elem )
+      {
+         **elem = 0;
+         ++elem;
+      }
+   }
+
+
+   if ( mysql_real_connect( conn, host, user, passwd, db, port == 0 ? 0 : atoi( port ),
                            unixSocket, 0 ) == NULL )
    {
       errorMessage = mysql_error( conn );
@@ -669,14 +691,10 @@ DBIHandle *DBIServiceMySQL::connect( const String &parameters, bool persistent,
       mysql_close( conn );
 
       retval = dbi_connect_error;
-      free( connParams );
       return NULL;
    }
 
    retval = dbi_ok;
-
-   free( connParams );
-
    return new DBIHandleMySQL( conn );
 }
 

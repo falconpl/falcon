@@ -438,7 +438,7 @@ dbi_status DBITransactionSQLite3::rollback()
    return retval;
 }
 
-void DBITransactionSQLite3::close()
+dbi_status DBITransactionSQLite3::close()
 {
    // TODO: return a status code here because of the potential commit
    if ( m_inTransaction )
@@ -446,7 +446,7 @@ void DBITransactionSQLite3::close()
 
    m_inTransaction = false;
 
-   m_dbh->closeTransaction( this );
+   return m_dbh->closeTransaction( this );
 }
 
 dbi_status DBITransactionSQLite3::getLastError( String &description )

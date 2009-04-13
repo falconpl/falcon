@@ -74,7 +74,7 @@ public:
    virtual dbi_status begin();
    virtual dbi_status commit();
    virtual dbi_status rollback();
-   virtual void close();
+   virtual dbi_status close();
    virtual dbi_status getLastError( String &description );
 
    virtual DBIBlobStream *openBlob( const String &blobId, dbi_status &status );

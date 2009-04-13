@@ -23,6 +23,11 @@
 // Instantiate the driver service
 Falcon::DBIServiceMySQL theMySQLService;
 
+/*#
+   @module mysql MySQL Support module
+   @brief DBI extension supporting MySQL
+*/
+
 // the main module
 FALCON_MODULE_DECL
 {

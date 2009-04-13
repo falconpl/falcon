@@ -18,10 +18,38 @@
 #include "mysql_mod.h"
 #include "mysql_ext.h"
 
+/*#
+   @beginmodule mysql
+*/
 namespace Falcon
 {
 namespace Ext
 {
+
+/*#
+      @class MySQL
+      @brief Direct interface to MySQL database.
+*/
+
+
+/*#
+   @init MySQL
+   @brief Connects to a MySQL database.
+   @param connect String containing connection parameters.
+
+   The string is in the following format:
+   @code
+      <host>,<user>,<passwd>,<db>,<port>,<unixSocket>,<clientFlags>
+   @endcode
+
+   All the parameters are optional except for port or user. To pass an empty
+   parameter, just use two commas one beside anoter. In example, to connect
+   to a database "mydb" at localhost as "root" user without password, use:
+
+   @code
+      localost,root,,mydb
+   @endcode
+*/
 
 FALCON_FUNC MySQL_init( VMachine *vm )
 {
@@ -40,17 +68,17 @@ FALCON_FUNC MySQL_init( VMachine *vm )
 
    DBIHandleMySQL *dbh = static_cast<DBIHandleMySQL *>(
       theMySQLService.connect( params, false, status, connectErrorMessage ) );
-   
+
    if ( dbh == 0 )
    {
-      if ( connectErrorMessage.length() == 0 ) 
+      if ( connectErrorMessage.length() == 0 )
          connectErrorMessage = "An unknown error has occured during connect";
-      
+
       vm->raiseModError( new DBIError( ErrorParam( status, __LINE__ )
                                        .desc( connectErrorMessage ) ) );
       return ;
    }
-   
+
    self->setUserData( dbh );
 }
 
