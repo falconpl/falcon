@@ -375,9 +375,10 @@ FALCON_FUNC DBIBaseTrans_insert( VMachine *vm )
    }
    delete iter;
 
+   sql += vals + ");";
    if ( bDone )
    {
-      DBIRecordset *rec = dbh_query_base( dbh, sql + ";" );
+      DBIRecordset *rec = dbh_query_base( dbh, sql  );
       if ( rec != 0 )
       {
          dbh_return_recordset( vm, rec );
