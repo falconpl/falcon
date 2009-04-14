@@ -443,8 +443,10 @@ void CoreTable::gcMark( uint32 mark )
    // and all the tables.
    for( i = 0; i < m_pages.size(); i++ )
    {
-      Item temp = *(CoreArray **) m_pages.at(i);
-      memPool->markItem( temp );
+      CoreArray* page = *(CoreArray**)m_pages.at(i);
+      page->mark( mark );
+      for ( uint32 iid = 0; iid < page->length(); ++iid )
+         memPool->markItem( page->at( iid ) );
    }
 }
 
