@@ -431,7 +431,7 @@ FALCON_FUNC DBIBaseTrans_update( VMachine *vm )
    CoreObject *self = vm->self().asObject();
    DBIBaseTrans *dbh = static_cast<DBIBaseTrans *>( self->getUserData() );
 
-   String sql = "update " + *i_table->asString() + "set ";
+   String sql = "update " + *i_table->asString() + " set ";
    String where = "where ";
 
    DictIterator* iter = i_data->asDict()->first();
@@ -474,6 +474,9 @@ FALCON_FUNC DBIBaseTrans_update( VMachine *vm )
    }
    delete iter;
 
+   /*throw new ParamError( ErrorParam( e_param_range, __LINE__ )
+               .extra( sql + "\n" + where ) );*/
+
    if ( ! bWhereDone )
    {
       throw new ParamError( ErrorParam( e_param_range, __LINE__ )
@@ -482,7 +485,7 @@ FALCON_FUNC DBIBaseTrans_update( VMachine *vm )
 
    if ( bDone )
    {
-      DBIRecordset *rec = dbh_query_base( dbh, sql + ";" );
+      DBIRecordset *rec = dbh_query_base( dbh, sql + "\n" + where + ";" );
       if ( rec != 0 )
       {
          dbh_return_recordset( vm, rec );
