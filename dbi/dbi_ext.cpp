@@ -348,7 +348,7 @@ FALCON_FUNC DBIBaseTrans_insert( VMachine *vm )
 
    DictIterator* iter = i_data->asDict()->first();
    bool bDone = false;
-   while( iter->hasNext() )
+   while( iter->isValid() )
    {
       String temp;
       if( iter->getCurrentKey().isString()  )
@@ -438,7 +438,7 @@ FALCON_FUNC DBIBaseTrans_update( VMachine *vm )
    bool bDone = false;
    bool bWhereDone = false;
 
-   while( iter->hasNext() )
+   while( iter->isValid() )
    {
       String temp;
       if( iter->getCurrentKey().isString()  )
