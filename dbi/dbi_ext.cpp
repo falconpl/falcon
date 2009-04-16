@@ -453,7 +453,8 @@ FALCON_FUNC DBIBaseTrans_update( VMachine *vm )
             else {
                where += " and ";
             }
-            where += *iter->getCurrentKey().asString();
+            dbh_itemToSqlValue( dbh, &iter->getCurrent(), temp );
+            where += *iter->getCurrentKey().asString() + "="+temp;
          }
          else
          {
