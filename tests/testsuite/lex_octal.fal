@@ -1,0 +1,40 @@
+/****************************************************************************
+* Falcon test suite
+*
+*
+* ID: 40l
+* Category: types
+* Subcategory: octals
+* Short: Octal test
+* Description:
+* Checks for correctness of octal sintaxis as r'0[cC]?[0-7]+[0-7_]*'
+* [/Description]
+*
+****************************************************************************/
+
+// '0c' prefix
+if 0c44242 != 18594: failure( "0c44242" )
+if 0c44_242 != 18594: failure( "0c44_242" )
+if 0c_44242 != 18594: failure( "0c_44242" )
+if 0c44242_ != 18594: failure( "0c44242_" )
+if 0c_4_4_2_4_2_ != 18594: failure( "0c_4_4_2_4_2_" )
+if 0c__44242 != 18594: failure( "0c__44242" )
+
+// '0C' prefix
+if 0C44242 != 18594: failure( "0C44242" )
+if 0C_4_4_2_4_2_ != 18594: failure( "0C_4_4_2_4_2_" )
+if 0C__44242 != 18594: failure( "0C__44242" )
+
+// '0' prefix
+if 044242 != 18594: failure( "044242" )
+if 04_4_2_4_2_ != 18594: failure( "04_4_2_4_2_" )
+if 04_4242_ != 18594: failure( "044242" )
+
+if 0c_601_630 != 197528: failure( "0c_601_630" )
+if 02165303 != 584387: failure( "02165303" )
+if 02165307 != 584391: failure( "02165307" )
+
+
+success()
+
+/* End of file */

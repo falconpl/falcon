@@ -4,6 +4,7 @@ Falcon (0.9.1.1)
            compiler to parse non-stand alone expressions and evaluate them.
   * fixed: A leftover from version 0.8.14 caused tables not to properly mark
            their contents on garbage collection.
+  * fixed: More flexible int() and numeric() functions (thanks Kless).
 
 Falcon (0.9.1)
   * fixed: String-blocks closed with " alone on a line werent' recognized.

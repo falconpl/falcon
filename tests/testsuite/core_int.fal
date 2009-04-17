@@ -18,10 +18,17 @@ if int( -1 ) != -1: failure( "int( -1 )" )
 if int( 0.3 ) != 0: failure( "int( 0.3 )" )
 if int( 15.2 ) != 15: failure( "int( 15.2 )" )
 if int( -15.2 ) != -15: failure( "int( -15.2 )" )
+if int( 1234567891234 ) != 1234567891234: failure( "int( 1234567891234 )" )
+if int( -1234567891234 ) != -1234567891234: failure( "int( -1234567891234 )" )
+
 if int( "0" ) != 0: failure( "int( \"0\" )" )
+if int( "1" ) != 1: failure( "int( \"1\" )" )
+if int( "-1" ) != -1: failure( "int( \"-1\" )" )
+if int( "0.3" ) != 0: failure( "int( \"0.3\" )" )
+if int( "15.2" ) != 15: failure( "int( \"15.2\" )" )
+if int( "-15.2" ) != -15: failure( "int( \"-15.2\" )" )
 if int( "1234567891234" ) != 1234567891234: failure( "int( \"1234567891234\" )" )
 if int( "-1234567891234" ) != -1234567891234: failure( "int( \"-1234567891234\" )" )
-
 
 success()
 

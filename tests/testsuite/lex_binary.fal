@@ -1,0 +1,34 @@
+/****************************************************************************
+* Falcon test suite
+*
+*
+* ID: 40j
+* Category: types
+* Subcategory: binaries
+* Short: Binary test
+* Description:
+* Checks for correctness of binary sintaxis as r'0[bB][01_]+'
+* [/Description]
+*
+****************************************************************************/
+
+// '0b' prefix
+if 0b1111 != 15: failure( "0b1111" )
+if 0b11_11 != 15: failure( "0b11_11" )
+if 0b_1111 != 15: failure( "0b_1111" )
+if 0b1111_ != 15: failure( "0b1111_" )
+if 0b_1_1_1_1_ != 15: failure( "0b_1_1_1_1_" )
+if 0b__1111 != 15: failure( "0b__1111" )
+
+// '0B' prefix
+if 0B1111 != 15: failure( "0B1111" )
+if 0B_1_1_1_1_ != 15: failure( "0B_1_1_1_1_" )
+if 0B__1111 != 15: failure( "0B__1111" )
+
+if 0b11111010 != 250: failure( "0b11111010" )
+if 0b_1001_0110 != 150: failure( "0b_1001_0110" )
+
+
+success()
+
+/* End of file */

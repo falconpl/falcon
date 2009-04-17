@@ -117,8 +117,8 @@ FALCON_FUNC  val_int ( ::Falcon::VMachine *vm )
          if ( num > 9.223372036854775808e18 || num < -9.223372036854775808e18 )
          {
             vm->raiseRTError( new MathError( ErrorParam( e_domain, __LINE__ ) ) );
-            return;
          }
+         
          vm->retval( (int64)num );
       }
       break;
@@ -126,38 +126,23 @@ FALCON_FUNC  val_int ( ::Falcon::VMachine *vm )
       case FLC_ITEM_STRING:
       {
          String *cs = to_int->asString();
-         if ( cs->size() == 0 )
-            vm->retval(0);
-         else {
-            int32 pos = cs->size() -1;
-            if ( pos > 18 ) {
-               vm->raiseRTError( new ParseError( ErrorParam( e_numparse_long, __LINE__ ) ) );
+         int64 val;
+         if ( ! cs->parseInt( val ) )
+         {
+            numeric nval;
+            if ( cs->parseDouble( nval ) )
+            {
+               if ( nval > 9.223372036854775808e18 || nval < -9.223372036854775808e18 )
+               {
+                  vm->raiseRTError( new MathError( ErrorParam( e_domain, __LINE__ ) ) );
+               }
+               vm->retval( (int64) nval );
                return;
             }
-            uint32 chr =  cs->getCharAt( pos );
-            uint64 val = 0;
-            uint64 base = 1;
-            while( pos > 0 ) {
-               if ( chr < '0' || chr > '9' ) {
-                  vm->raiseRTError( new ParseError( ErrorParam( e_numparse, __LINE__ ) ) );
-                  return;
-               }
-               val += ( chr -'0') * base;
-               pos--;
-               chr =  cs->getCharAt( pos );
-               base *= 10;
-            }
-            if ( chr == '-' )
-               vm->retval( -(int64)val );
-            else {
-               if ( chr < '0' || chr > '9' ) {
-                  vm->raiseRTError( new ParseError( ErrorParam( e_numparse, __LINE__ ) ) );
-                  return;
-               }
-
-               vm->retval( (int64)(val + ( chr -'0' ) * base ) );
-            }
+            
+            vm->raiseRTError( new ParseError( ErrorParam( e_numparse, __LINE__ ) ) );
          }
+         vm->retval( val );
       }
       break;
 
@@ -203,48 +188,14 @@ FALCON_FUNC  val_numeric ( ::Falcon::VMachine *vm )
       case FLC_ITEM_STRING:
       {
          String *cs = to_numeric->asString();
-         if ( cs->size() == 0 )
-            vm->retval(0);
-         else {
-            int32 pos = cs->size() -1;
-            if ( pos > 18 ) {
-               vm->raiseRTError( new MathError( ErrorParam( e_numparse_long, __LINE__ ) ) );
-               return;
-            }
-            uint32 chr =  cs->getCharAt( pos );
-            numeric val = 0;
-            uint32 base = 1;
-            while( pos > 0 ) {
-               if ( chr == '.' ) {
-                  numeric decbase = 1 / (numeric) base;
-                  val *= decbase;
-
-                  pos--;
-                  chr = cs->getCharAt( pos );
-                  base = 1;
-                  continue;
-               }
-               else if ( chr < '0' || chr > '9' ) {
-                  vm->raiseRTError( new MathError( ErrorParam( e_numparse, __LINE__ ) ) );
-                  return;
-               }
-               val += ( chr -'0' ) * base;
-               pos--;
-               chr =  cs->getCharAt( pos );
-               base *= 10;
-            }
-
-            if ( chr == '-' )
-               vm->retval( -(numeric)val );
-            else {
-               if ( chr < '0' || chr > '9' ) {
-                  vm->raiseRTError( new MathError( ErrorParam( e_numparse, __LINE__ ) ) );
-                  return;
-               }
-
-               vm->retval( (numeric)(val + ( chr -'0' ) * base ) );
-            }
+         numeric value;
+         if ( ! cs->parseDouble( value ) )
+         {
+            
+            vm->raiseRTError( new ParseError( ErrorParam( e_numparse, __LINE__ ) ) );
+            return;
          }
+         vm->retval( value );
       }
       break;
 

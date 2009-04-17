@@ -1,0 +1,35 @@
+/****************************************************************************
+* Falcon test suite
+*
+*
+* ID: 40k
+* Category: types
+* Subcategory: hexadecimals
+* Short: Hexadecimal test
+* Description:
+* Checks for correctness of hexadecimal sintaxis as r'0[xX][a-fA-F0-9_]+'
+* [/Description]
+*
+****************************************************************************/
+
+//'0x' prefix
+if 0x110DB != 69851: failure( "0x110DB" )
+if 0x1_10DB != 69851: failure( "0x1_10DB" )
+if 0x_110DB != 69851: failure( "0x_110DB" )
+if 0x110DB_ != 69851: failure( "0x110DB_" )
+if 0x_1_1_0_D_B_ != 69851: failure( "0x_1_1_0_D_B_" )
+if 0x__110DB != 69851: failure( "0x__110DB" )
+
+// '0X' prefix
+if 0X110DB != 69851: failure( "0X110DB" )
+if 0X_1_1_0_D_B_ != 69851: failure( "0X_1_1_0_D_B_" )
+if 0X__110DB != 69851: failure( "0X__110DB" )
+
+if 0x110db != 69851: failure( "0x110db" )
+if 0x110dB != 69851: failure( "0x110dB" )
+if 0x_ABC_DEF5 != 180150005: failure( "0x_ABC_DEF5" )
+
+
+success()
+
+/* End of file */
