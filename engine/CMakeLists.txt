@@ -48,14 +48,20 @@ IF(UNIX OR APPLE)
    ENDIF(APPLE)
 
    #We need bison.
+   IF(SKIP_BISON)
+      MESSAGE("WARNING: skipping grammar files recompilation.")
+      SET(BISON_EXECUTABLE "" )
+   ELSE(SKIP_BISON)
    IF(NOT BISON_EXECUTABLE)
       FIND_PROGRAM(BISON_EXECUTABLE bison)
       IF (NOT BISON_EXECUTABLE)
-         MESSAGE(FATAL_ERROR "BISON not found - aborting")
+         MESSAGE("WARNING: BISON not found - won't perform grammar
+recompilation")
       ENDIF (NOT BISON_EXECUTABLE)
    ENDIF(NOT BISON_EXECUTABLE)
 
    # Adding bison parsers.
+   IF( BISON_EXECUTABLE)
    ADD_CUSTOM_TARGET(SrcParser echo "Creating src_parser.cpp")
    ADD_CUSTOM_TARGET(SrcParser_h echo "Creating src_parser.h")
 
@@ -77,6 +83,8 @@ IF(UNIX OR APPLE)
       TARGET SrcParser_h
       OUTPUTS
          ${FALCON_SRC_TREE}/core/engine/src_parser.h )
+   ENDIF(BISON_EXECUTABLE) 
+   ENDIF(SKIP_BISON) 
 
 
 ELSEIF(WIN32)
