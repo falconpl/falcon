@@ -1763,6 +1763,7 @@ void co_call_class( const Item &itm, VMachine *vm, int paramCount )
 
    cls->constructor().asFunction()->readyFrame( vm, paramCount );
    vm->self() = inst;
+   inst->gcMarkData( memPool->generation() );
 
    // also return self; we need to tell it to the VM
    vm->requestConstruct();

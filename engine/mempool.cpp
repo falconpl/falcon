@@ -384,7 +384,12 @@ bool MemPool::markVM( VMachine *vm )
       for( pos = 0; pos < stack->size(); pos++ ) {
          // an invalid item marks the beginning of the call frame
          if ( stack->itemAt( pos ).type() == FLC_ITEM_INVALID )
+         {
+            StackFrame *frame = (StackFrame*) stack->itemPtrAt( pos );
+            markItem(frame->m_self);
+            markItem(frame->m_binding);
             pos += VM_FRAME_SPACE - 1; // pos++
+         }
          else
             markItem( stack->itemAt( pos ) );
       }

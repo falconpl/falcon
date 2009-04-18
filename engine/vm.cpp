@@ -390,7 +390,6 @@ LiveModule *VMachine::link( Module *mod, bool isMainModule, bool bPrivate )
    // Ok, the module is now in.
    // We can now increment reference count and add it to ourselves
    LiveModule *livemod = new LiveModule( mod, bPrivate );
-   livemod->mark( generation() );
    // set this as the main module if required.
    if ( isMainModule )
       m_mainModule = livemod;
@@ -399,6 +398,7 @@ LiveModule *VMachine::link( Module *mod, bool isMainModule, bool bPrivate )
       return livemod;
 
    // no need to free on failure: livemod are garbaged
+   livemod->mark( generation() );
    return 0;
 }
 
@@ -409,8 +409,8 @@ LiveModule *VMachine::prelink( Module *mod, bool bIsMain, bool bPrivate )
    if ( oldMod == 0 )
    {
       oldMod = new LiveModule( mod, bPrivate );
-      oldMod->mark( generation() );
       m_liveModules.insert( &oldMod->name(), oldMod );
+      oldMod->mark( generation() );
    }
 
    if ( bIsMain )
@@ -572,6 +572,7 @@ bool VMachine::liveLink( LiveModule *livemod, t_linkMode mode )
    // We can now add the module to our list of available modules.
    m_liveModules.insert( &livemod->name(), livemod );
    livemod->initialized( LiveModule::init_complete );
+   livemod->mark( generation() );
 
    // execute the main code, if we have one
    // -- but only if this is NOT the main module
@@ -958,7 +959,7 @@ void VMachine::initializeInstance( const Symbol *obj, LiveModule *livemod )
    Symbol *cls = obj->getInstance();
    if ( cls->getClassDef()->constructor() != 0 )
    {
-      Item ctor = *globs->itemAt( cls->getClassDef()->constructor()->itemId() ).dereference();
+      SafeItem ctor = *globs->itemAt( cls->getClassDef()->constructor()->itemId() ).dereference();
       ctor.methodize( *globs->itemAt( obj->itemId() ).dereference() );
 
       // If we can't call, we have a wrong init.

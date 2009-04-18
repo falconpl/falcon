@@ -1,0 +1,50 @@
+/****************************************************************************
+* Falcon test suite
+*
+*
+* ID: 21o
+* Category: types
+* Subcategory: classes
+* Short: Class and GC
+* Description:
+* Performs several GC loops while mangling with classes (especially init).
+* [/Description]
+*
+****************************************************************************/
+
+class basic
+   prop_nil = nil
+   prop_num = 0
+   prop_str = "Nothing"
+   prop_array = ["An array", 2, 3]
+   prop_opt = nil
+   prop_test = ""
+
+   init
+      GC.perform( true )
+      if paramCount() > 0
+         self.prop_opt = paramNumber( 0 )
+      end
+      for i = 1 to 10
+         GC.perform( true )
+         self.prop_test += strReplicate( "a", 256 )
+      end
+   end
+
+   function multiply( param )
+      return param * self.prop_num
+   end
+
+   function dummy()
+      failure( "Missing overload" )
+   end
+end
+
+elem = basic( 10 )
+if elem.prop_nil != nil: failure( "Basic property / 2" )
+if len( elem.prop_array ) != 3: failure( "Automatic initializer" )
+if elem.prop_opt != 10: failure( "Explicit initializer" )
+
+success()
+
+/* End of file */
