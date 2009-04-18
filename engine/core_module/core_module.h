@@ -206,6 +206,9 @@ FALCON_FUNC  vmVersionName( ::Falcon::VMachine *vm );
 FALCON_FUNC  vmSystemType( ::Falcon::VMachine *vm );
 FALCON_FUNC  vmIsMain( ::Falcon::VMachine *vm );
 FALCON_FUNC  vmFalconPath( ::Falcon::VMachine *vm );
+FALCON_FUNC  vmModuleName( ::Falcon::VMachine *vm );
+FALCON_FUNC  vmModulePath( ::Falcon::VMachine *vm );
+FALCON_FUNC  vmRelativePath( ::Falcon::VMachine *vm );
 
 FALCON_FUNC  print ( ::Falcon::VMachine *vm );
 FALCON_FUNC  printl ( ::Falcon::VMachine *vm );

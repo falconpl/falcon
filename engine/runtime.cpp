@@ -174,7 +174,7 @@ void Runtime::loadName( const String &name, const String &parent, bool bIsPrivat
 
 void Runtime::loadFile( const String &file, bool bIsPrivate )
 {
-   Module *l = m_loader->loadFile( file );
+   Module *l = m_loader->loadFile( file, ModuleLoader::t_none, true );
 
    try
    {

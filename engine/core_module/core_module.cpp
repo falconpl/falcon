@@ -121,7 +121,7 @@ Module* core_module_init()
       applied to any item, while methods defined in specific
       item metaclasses derived from BOM, as i.e. the @a Dictionary
       metaclass, can be applied only to items of the reflected type.
-      
+
       @prop add__ Overrides +
       @prop sub__ Overrides -
       @prop mul__ Overrides *
@@ -728,6 +728,9 @@ Module* core_module_init()
    self->addExtFunc( "vmModuleVersionInfo", &Falcon::core::vmModuleVersionInfo );
    self->addExtFunc( "vmIsMain", &Falcon::core::vmIsMain );
    self->addExtFunc( "vmFalconPath", &Falcon::core::vmFalconPath );
+   self->addExtFunc( "vmModuleName", &Falcon::core::vmModuleName );
+   self->addExtFunc( "vmModulePath", &Falcon::core::vmModulePath );
+   self->addExtFunc( "vmRelativePath", &Falcon::core::vmRelativePath );
 
    // Format
    Symbol *format_class = self->addClass( "Format", &Falcon::core::Format_init );

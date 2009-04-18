@@ -5,6 +5,8 @@ Falcon (0.9.1.1)
   * fixed: A leftover from version 0.8.14 caused tables not to properly mark
            their contents on garbage collection.
   * fixed: More flexible int() and numeric() functions (thanks Kless).
+  * minor: Added functions vmModuleName, vmModulePath and vmRelativePath to
+           help solving dynamic dependencies.
 
 Falcon (0.9.1)
   * fixed: String-blocks closed with " alone on a line werent' recognized.
