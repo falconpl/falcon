@@ -577,20 +577,17 @@ FALCON_FUNC  mth_strSplit ( ::Falcon::VMachine *vm )
 
 /*#
    @method merge String
-   @brief Merges an array of strings into a this.
+   @brief Merges an array of strings into one.
    @param array An array of strings to be merged.
-   @optparam mergeStr A string placed between each merge.
-   @optparam count Maximum count of merges.
    @return This string.
 
-   This method works as strMerge, but merges the string in place.
-   In other words this string is modified with the merged strings
-   added in tail.
+   This method works as strMerge, using this string as
+   separator between the strings in the array.
 
    The function may be used in this way:
 
    @code
-   a = strMerge( [ "a", "string", "of", "words" ], " " )
+   a = " ".merge( [ "a", "string", "of", "words" ] )
    printl( a ) // prints "a string of words"
    @endcode
 
@@ -611,7 +608,7 @@ FALCON_FUNC  mth_strMerge ( ::Falcon::VMachine *vm )
    {
       throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
          .origin( e_orig_runtime )
-         .extra( "A,[S],[N]") );
+         .extra( vm->self().isMethodic() ? "A" : "A,[S],[N]" ) );
    }
 
    // Parameter estraction.
@@ -624,14 +621,14 @@ FALCON_FUNC  mth_strMerge ( ::Falcon::VMachine *vm )
       mr_str = mergestr->asString();
    }
    else
-      mr_str = 0;
+      mr_str = vm->self().isMethodic() ? vm->self().asString() : 0;
 
    Item *elements = source->asArray()->elements();
    uint32 len = source->asArray()->length();
    if ( limit < len )
       len = (uint32) limit;
 
-   CoreString *ts = vm->self().isMethodic() ? vm->self().asCoreString() : new CoreString;
+   CoreString *ts = new CoreString;
 
    // filling the target.
    for( uint32 i = 0; i < len ; i ++ ) {

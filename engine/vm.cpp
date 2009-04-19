@@ -3662,6 +3662,34 @@ uint32 VMachine::generation() const
    return m_generation;
 }
 
+
+void VMachine::setupScript( int argc, char** argv )
+{
+   if ( m_mainModule != 0 )
+   {
+      Item *scriptName = findGlobalItem( "scriptName" );
+      if ( scriptName != 0 )
+         *scriptName = new CoreString( mainMod->name() );
+
+      Item *scriptPath = findGlobalItem( "scriptPath" );
+      if ( scriptPath != 0 )
+         *scriptPath = new Falcon::CoreString( script_name );
+   }
+
+   Falcon::Item *args = findGlobalItem( "args" );
+   if ( args != 0 )
+   {
+      // create the arguments.
+      // It is correct to pass an empty array if we haven't any argument to pass.
+      Falcon::CoreArray *argsArray = new Falcon::CoreArray;
+      for( int i = 0; i < argc; i ++ )
+      {
+         argsArray->append( new Falcon::CoreString( argv[i] ) );
+      }
+      *args = argsArray;
+   }
+}
+
 }
 
 /* end of vm.cpp */

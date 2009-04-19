@@ -21,6 +21,8 @@ Falcon (0.9.1.1)
            whose dependency wasn't found).
   * fixed: Some functional selectors (any & c) still returned 0 on false and 1
            on true.
+  * minor: String.merge() now accepts only an array as parameters, and works
+           as String.join() does with its parameters.
 
 Falcon (0.9.1)
   * fixed: String-blocks closed with " alone on a line werent' recognized.

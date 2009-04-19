@@ -706,7 +706,7 @@ void* MemPool::run()
 
       // first, detect the operating status.
       size_t memory = gcMemAllocated();
-      int state = memory >= m_thresholdActive ? 2 :      // active mode
+      int state = m_bRequestSweep || memory >= m_thresholdActive ? 2 :      // active mode
                   memory >= m_thresholdNormal ? 1 :      // normal mode
                   0;                                     // dormient mode
 
@@ -903,8 +903,9 @@ void* MemPool::run()
                // HACK: we are not able to kill correctly VMS in multithreading in 0.9.1,
                // so we just let the request go;
                // we'll clean them during 0.9.1->0.9.2
-               m_bRequestSweep = true;
-               signal = true;
+               //m_bRequestSweep = true;
+               //signal = true;
+               TRACE( "Priority with %d\n", m_vmCount );
             }
          }
          m_mtx_vms.unlock();

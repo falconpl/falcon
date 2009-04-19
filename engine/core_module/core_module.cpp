@@ -331,7 +331,7 @@ Module* core_module_init()
    self->addClassMethod( array_meta, "remove", &Falcon::core::mth_arrayRemove ).asSymbol()->
       addParam("itemPos")->addParam("lastItemPos");
    self->addClassMethod( array_meta, "merge", &Falcon::core::mth_arrayMerge ).asSymbol()->
-      addParam("array")->addParam("insertPos")->addParam("start")->addParam("end");
+      addParam("array");
    self->addClassMethod( array_meta, "fill", &Falcon::core::mth_arrayFill ).asSymbol()->
       addParam("item");
    self->addClassMethod( array_meta, "head", &Falcon::core::mth_arrayHead );

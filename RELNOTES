@@ -3,7 +3,7 @@
 
                              Crane-dev Release
 
-                                  0.9.1
+                                  0.9.1.2
 
 
   "Crane" will mark the birth of the new development effort towards the final
@@ -49,7 +49,7 @@ shell.
 Usage tips
 ==========
 
-   Although the new Garbage Collector is relatively efficient in determining 
+   Although the new Garbage Collector is relatively efficient in determining
 the actual needs of your application and relatively discrete in reclaiming
 unused memory, the detection algorithm is still rudimentary and experimental.
 If your application is memory-intensive, be sure to read the Core Module

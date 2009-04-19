@@ -2224,20 +2224,18 @@ public:
 
 
 
-   /** Class automating idle-unidle fragments.
-      This purely inlined class automathises the task of calling
-      unidle() as a function putting the VM in idle (i.e. I/O function)
-      returns.
-   */
-   class Pauser
-   {
-      VMachine *m_vm;
-   public:
-      inline Pauser( VMachine *vm ):
-         m_vm( vm ) { m_vm->idle(); }
+   /** Setup the main script standard parameters and variables.
 
-      inline ~Pauser() { m_vm->unidle(); }
-   };
+      This is an utility function filling the follwing global variables,
+      provided they have been linked and are globally exported from some
+      module in the VM:
+
+      - script_name: the logical module name of the main module.
+      - script_path: physical path of the main module.
+      - args: filled with argc and argv.
+   */
+   void setupScript( int argc, char** argv );
+
 
 
    /** Accessor to the VM baton.
