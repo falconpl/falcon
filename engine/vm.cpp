@@ -3669,11 +3669,11 @@ void VMachine::setupScript( int argc, char** argv )
    {
       Item *scriptName = findGlobalItem( "scriptName" );
       if ( scriptName != 0 )
-         *scriptName = new CoreString( mainMod->name() );
+         *scriptName = new CoreString( m_mainModule->module()->name() );
 
       Item *scriptPath = findGlobalItem( "scriptPath" );
       if ( scriptPath != 0 )
-         *scriptPath = new Falcon::CoreString( script_name );
+         *scriptPath = new Falcon::CoreString( m_mainModule->module()->name() );
    }
 
    Falcon::Item *args = findGlobalItem( "args" );
