@@ -2223,7 +2223,6 @@ public:
    bool isGcEnabled() const;
 
 
-
    /** Setup the main script standard parameters and variables.
 
       This is an utility function filling the follwing global variables,
@@ -2237,6 +2236,20 @@ public:
    void setupScript( int argc, char** argv );
 
 
+   /** Class automating idle-unidle fragments.
+      This purely inlined class automathises the task of calling
+      unidle() as a function putting the VM in idle (i.e. I/O function)
+      returns.
+   */
+   class Pauser
+   {
+      VMachine *m_vm;
+   public:
+      inline Pauser( VMachine *vm ):
+         m_vm( vm ) { m_vm->idle(); }
+
+      inline ~Pauser() { m_vm->unidle(); }
+   };
 
    /** Accessor to the VM baton.
       Used to serialize concurrent access to this VM.
