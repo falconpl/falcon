@@ -1,12 +1,13 @@
+
 Feathers (0.9.1)
   * major: Ported to Falcon 0.9
   * minor: Added split() method to Regex.
   * minor: Added subst() method to Regex (to be thougly tested).
-  
-  
+
+
 Feathers (0.8.14.2)
   * minor: Added pread function to process module.
-  
+
 Feathers (0.8.12)
   * bugfix: Double inheritance in MXML::Document may have caused some compilers
             to mess up the virtual table. Fixed (using a carrier).
@@ -19,7 +20,7 @@ Feathers (0.8.12)
             as ZlibError); this caused a dynlink error in the VM on
             zlib errors.
   * bugfix: Zlib was not correctly extending the decompression buffer if
-            the initial extimate wasn't correct. 
+            the initial extimate wasn't correct.
 
 Feathers (0.8.10)
   * minor: Added load directive support for loadXXX on reflexive compiler.

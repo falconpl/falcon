@@ -92,6 +92,7 @@ void VMRunnerThread::prepareThreadInstance( const Item &instance, const Item &me
 
 void *VMRunnerThread::run()
 {
+   m_vm->incref();
    // hold a lock to the item, as it cannot be taken in the vm.
    GarbageLock *tiLock = m_vm->lock( m_threadInstance );
    GarbageLock *mthLock = m_vm->lock( m_method );
@@ -109,8 +110,8 @@ void *VMRunnerThread::run()
    // unlock the threads objects
    m_vm->unlock( tiLock );
    m_vm->unlock( mthLock );
-   // it is now safe to inspect the VM.
-   m_vm->idle();
+   m_vm->finalize();  // and we won't use it anymore
+
    return 0;
 }
 

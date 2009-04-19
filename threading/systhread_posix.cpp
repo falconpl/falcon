@@ -21,6 +21,7 @@
 #include "./mt.h"
 #include "systhread.h"
 #include "systhread_posix.h"
+#include "threading_mod.h"
 
 #include <sys/time.h>
 #include <time.h>
@@ -39,13 +40,21 @@
 
 //To make SUNC happy
 extern "C" {
-	static pthread_key_t runningThreadKey;
-	static pthread_once_t runningThreadKey_once = PTHREAD_ONCE_INIT;
+   static pthread_key_t runningThreadKey;
+   static pthread_once_t runningThreadKey_once = PTHREAD_ONCE_INIT;
 
-	static void make_runningThreadKey()
-	{
-	   pthread_key_create(&runningThreadKey, NULL);
-	}
+   static void vmthread_killer( void *vmt )
+   {
+      if ( vmt != 0 ) {
+         Falcon::Sys::Thread* del = ( Falcon::Sys::Thread* ) vmt;
+         //del->decref();
+      }
+   }
+
+   static void make_runningThreadKey()
+   {
+      pthread_key_create(&runningThreadKey, vmthread_killer);
+   }
 }
 
 
@@ -346,11 +355,13 @@ void ThreadProvider::setRunningThread( Thread *th )
    // This is a good moment to create the thread key.
    pthread_once( &runningThreadKey_once, make_runningThreadKey );
    pthread_setspecific( runningThreadKey, th );
+
    if ( th != 0 )
    {
       th->m_mtx.lock();
       th->m_bStarted = true;
       ((POSIX_TH *)th->m_sysData)->thID = pthread_self();
+      //th->incref();
       th->m_mtx.unlock();
    }
 }
