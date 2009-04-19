@@ -440,11 +440,7 @@ public:
    */
    virtual Module *loadBinaryModule( const String &module_path );
 
-   void raiseError( int code, const String &expl );
-   void raiseError( int code )
-   {
-      raiseError( code, "" );
-   }
+   void raiseError( int code, const String &expl, int fsError=0 );
 
    /** Get the search path used by this module loader.
       \param target a string where the path will be saved.

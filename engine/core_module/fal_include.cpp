@@ -125,7 +125,7 @@ FALCON_FUNC fal_include( Falcon::VMachine *vm )
    catch(Error* err)
    {
       CodeError *ce = new CodeError( ErrorParam( e_loaderror, __LINE__ ).
-         extra( *i_file->asString() ) );
+         extra( *vm->param(0)->asString() ) );
 
       ce->appendSubError(err);
       err->decref();

@@ -199,14 +199,14 @@ Stream *ModuleLoader::openResource( const String &path, t_filetype type )
 
    if ( !furi.isValid() )
    {
-      raiseError( e_malformed_uri, path );
+      raiseError( e_malformed_uri, path ); // upstream will fill the module
    }
 
    // find the appropriage provider.
    VFSProvider* vfs = Engine::getVFS( furi.scheme() );
    if ( vfs == 0 )
    {
-      raiseError( e_unknown_vfs, path );
+      raiseError( e_unknown_vfs, path );  // upstream will fill the module
    }
 
    Stream *in = vfs->open( furi, VFSProvider::OParams().rdOnly() );
@@ -226,7 +226,7 @@ Stream *ModuleLoader::openResource( const String &path, t_filetype type )
             return AddSystemEOL( inputStream );
 
          delete in;
-         raiseError( e_unknown_encoding, "loadSource" );
+         raiseError( e_unknown_encoding, m_srcEncoding ); // upstream will fill the module
       }
       else
          return AddSystemEOL( in );
@@ -271,7 +271,7 @@ Module *ModuleLoader::loadName( const String &module_name, const String &parent_
    // prevent doing a crashy thing.
    if ( module_name.length() == 0 )
       throw new CodeError( ErrorParam( e_modname_inv ).extra( module_name ).origin( e_orig_loader ).
-            module( "(Module loader)" ) );
+            module( "(loader)" ) );
 
    nmodName = Module::absoluteName( module_name, parent_name );
 
@@ -356,7 +356,7 @@ Module *ModuleLoader::loadFile( const String &module_path, t_filetype type, bool
       throw new CodeError( ErrorParam( e_malformed_uri )
             .extra( module_path )
             .origin( e_orig_loader )
-            .module( "(Module loader)" ) );
+            .module( "(loader)" ) );
    }
 
    VFSProvider *vfs = Engine::getVFS( origUri.scheme() );
@@ -365,7 +365,7 @@ Module *ModuleLoader::loadFile( const String &module_path, t_filetype type, bool
       throw new CodeError( ErrorParam( e_unknown_vfs )
             .extra( module_path )
             .origin( e_orig_loader )
-            .module( "(Module loader)" ) );
+            .module( "(loader)" ) );
    }
 
    // Check wether we have absolute files or files to be searched.
@@ -387,7 +387,7 @@ Module *ModuleLoader::loadFile( const String &module_path, t_filetype type, bool
                .extra( Engine::getMessage( msg_io_curdir ) )
                .origin( e_orig_loader )
                .sysError( error )
-               .module( "(Module loader)" ) );
+               .module( "(loader)" ) );
          }
          origUri.path( curdir + "/" + origUri.path() );
       }
@@ -673,25 +673,24 @@ bool ModuleLoader::applyLangTable( Module *mod, const String &file_path )
 Module *ModuleLoader::loadModule( const String &path )
 {
    // May throw on error.
-   Stream *in = openResource( path, t_vmmod );
+   Module *mod = 0;
 
-   Module *mod = loadModule( in );
-   in->close();
-   delete in;
-
-   if ( mod == 0 ) {
-      raiseError( e_invformat, path );
+   {
+      // loadModule may throw, so we need an autoptr not to leak in case of errors.
+      std::auto_ptr<Stream> in( openResource( path, t_vmmod ));
+      mod = loadModule( in.get() );
    }
-   else {
-      String modName;
-      getModuleName( path, modName );
-      mod->name( modName );
-      mod->path( path );
+   fassert( mod != 0 );
 
-      if ( m_language != "" && mod->language() != m_language )
-      {
-         loadLanguageTable( mod, m_language );
-      }
+   String modName;
+   getModuleName( path, modName );
+   mod->name( modName );
+   mod->path( path );
+
+   if ( m_language != "" && mod->language() != m_language )
+   {
+      // This should not throw.
+      loadLanguageTable( mod, m_language );
    }
 
    return mod;
@@ -773,7 +772,7 @@ Module *ModuleLoader::loadModule_select_ver( Stream *in )
       return  loadModule_ver_1_0( in );
    }
 
-   raiseError( e_modver );
+   raiseError( e_modver, "" );
    return 0;
 }
 
@@ -782,17 +781,19 @@ Module *ModuleLoader::loadModule_ver_1_0( Stream *in )
    Module *mod = new Module();
    if ( ! mod->load( in, true ) )
    {
-      raiseError( e_modformat );
+      raiseError( e_modformat, "" );
    }
    return mod;
 }
 
 
-void  ModuleLoader::raiseError( int code, const String &expl )
+void  ModuleLoader::raiseError( int code, const String &expl, int fsError )
 {
-   throw new IoError( ErrorParam( code ).extra( expl ).origin( e_orig_loader ).
-            module( "core" ).
-            module( "(Module loader)" )
+   throw new IoError( ErrorParam( code )
+            .extra( expl )
+            .origin( e_orig_loader )
+            .sysError( fsError )
+            .module( "(loader)" )
          );
 }
 
@@ -852,9 +853,10 @@ Module *ModuleLoader::loadSource( const String &file )
          {
             if ( m_saveMandatory )
             {
+               int fserr = (int) temp_binary->lastError();
                delete temp_binary;
                mod->decref();
-               raiseError( e_file_output, tguri.get() );
+               raiseError( e_file_output, tguri.get(), fserr );
             }
          }
 
@@ -903,9 +905,10 @@ Module *ModuleLoader::loadSource( Stream *fin, const String &path, const String 
       tb->create( tempFileName + "_1", Falcon::FileStream::e_aReadOnly | Falcon::FileStream::e_aUserWrite );
       if ( ! tb->good() )
       {
+         int fserr = (int)tb->lastError();
          delete tb;
          module->decref();
-         raiseError( e_file_output, tempFileName );
+         raiseError( e_file_output, tempFileName, fserr );
       }
       temp_binary = new StreamBuffer( tb );
    }

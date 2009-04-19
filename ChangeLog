@@ -7,6 +7,18 @@ Falcon (0.9.1.1)
   * fixed: More flexible int() and numeric() functions (thanks Kless).
   * minor: Added functions vmModuleName, vmModulePath and vmRelativePath to
            help solving dynamic dependencies.
+  * fixed: [DANGER]: Fixed missing GC marking of items in frame stacks (mainly
+           self and binding registers). This was in since 0.8.0; it was less
+           evident because 0.8 had sender which cached the last minus one
+           self objects, saving at least the previous caller, and it was
+           unlikely that the nth-2 caller wasn't cached somewhere else in the
+           VM.
+  * fixed: include() was using a cached pointer variable to create the error
+           message; the VM stack may have been (usually is) dirtied, so the
+           pointer was invalidated. This could have caused random crashes
+           and errors in reporting the failing module name.
+  * fixed: Finetuned module loader error reporting (now it indicates the module
+           whose dependency wasn't found).
 
 Falcon (0.9.1)
   * fixed: String-blocks closed with " alone on a line werent' recognized.

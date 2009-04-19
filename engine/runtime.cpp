@@ -107,13 +107,23 @@ void Runtime::addModule( Module *mod, bool isPrivate )
                l = m_loader->loadFile( *moduleName );
             else
                l = m_loader->loadName( *moduleName, mod->name() );
+         }
+         catch( Error* e)
+         {
+            e->module( mod->path() );
+            delete dep;
+            throw e;
+         }
 
+         fassert( l != 0 );
+
+         try
+         {
             addModule( l, depdata->isPrivate() );
          }
          catch( Error* )
          {
-            if ( l != 0 )
-               l->decref();
+            l->decref();
             delete dep;
             throw;
          }
