@@ -115,7 +115,7 @@ static bool core_any_next( ::Falcon::VMachine *vm )
       count++;
    }
 
-   vm->retval( (int64) 0 );
+   vm->regA().setBoolean( false );
    return false;
 }
 
@@ -170,7 +170,7 @@ FALCON_FUNC  core_any ( ::Falcon::VMachine *vm )
    }
 
    vm->returnHandler( 0 );
-   vm->retval( (int64) 0 );
+   vm->regA().setBoolean( false );
 }
 
 
@@ -296,7 +296,7 @@ static bool core_anyp_next( ::Falcon::VMachine *vm )
       count++;
    }
 
-   vm->retval( (int64) 0 );
+   vm->regA().setBoolean( false );
    return false;
 }
 
@@ -382,7 +382,7 @@ static bool core_allp_next( ::Falcon::VMachine *vm )
       count++;
    }
 
-   vm->retval( 1 );
+   vm->regA().setBoolean( true );
    return false;
 }
 

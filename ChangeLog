@@ -19,6 +19,8 @@ Falcon (0.9.1.1)
            and errors in reporting the failing module name.
   * fixed: Finetuned module loader error reporting (now it indicates the module
            whose dependency wasn't found).
+  * fixed: Some functional selectors (any & c) still returned 0 on false and 1
+           on true.
 
 Falcon (0.9.1)
   * fixed: String-blocks closed with " alone on a line werent' recognized.
