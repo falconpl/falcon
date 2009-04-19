@@ -20,7 +20,7 @@ ENDIF(WIN32)
 
 IF(WITH_INTERNAL_PCRE)
    #include local headers BEFORE
-   INCLUDE_DIRECTORIES( BEFORE .)
+   INCLUDE_DIRECTORIES( BEFORE "." )
 
    #Compile our version of PCRE...
    SET(PCRE_SOURCE
@@ -39,14 +39,14 @@ IF(WITH_INTERNAL_PCRE)
       pcre_study.c
       pcre_tables.c
       pcre_try_flipped.c
-      pcre_ucp_searchfuncs.c
+      pcre_ucd.c
       pcre_valid_utf8.c
       pcre_version.c
       pcre_xclass.c
    )
 
    #But consider PCRE function as C++ local functions:
-   ADD_DEFINITIONS( -DPCRE_EXP_DECL="extern" -DPCRE_STATIC="" -DPCRE_EXP_DEFN="" -DPCRE_EXP_DATA_DEFN="" )
+   ADD_DEFINITIONS( -DHAVE_CONFIG_H="" )
    SET_SOURCE_FILES_PROPERTIES(
       ${PCRE_SOURCE}
       PROPERTIES LANGUAGE "CXX"
