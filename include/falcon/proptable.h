@@ -131,6 +131,14 @@ public:
    PropEntry &getEntry( uint32 pos ) { return m_entries[pos]; }
    const PropEntry &getEntry( uint32 pos ) const { return m_entries[pos]; }
 
+   const Item *getValue( const String &key ) const
+   {
+       uint32 pos;
+       if( findKey( key, pos ) )
+         return getValue( pos );
+      return 0;
+   }
+
    Item *getValue( uint32 pos ) { return &m_entries[ pos ].m_value; }
    const Item *getValue( uint32 pos ) const { return &m_entries[ pos ].m_value; }
    const String *getKey( uint32 pos ) const { return m_entries[pos].m_name; }

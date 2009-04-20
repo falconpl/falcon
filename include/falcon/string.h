@@ -1238,6 +1238,8 @@ public:
 
    StringGarbage &garbage() { return m_gcptr; }
 
+   void mark( uint32 m ) { m_gcptr.mark( m ); }
+
    CoreString & operator+=( const CoreString &other ) { append( other ); return *this; }
    CoreString & operator+=( const String &other ) { append( other ); return *this; }
    CoreString & operator+=( uint32 other ) { append( other ); return *this; }

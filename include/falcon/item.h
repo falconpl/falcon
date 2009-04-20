@@ -626,6 +626,10 @@ public:
       \return true if the item can be called properly, false if it's not a callable.
    */
    bool methodize( const Item& self );
+   bool methodize( const CoreObject *co )
+   {
+      return methodize( const_cast<CoreObject *>(co) );
+   }
 
 
    /** Serialize this item.
