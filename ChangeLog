@@ -23,6 +23,8 @@ Falcon (0.9.1.1)
            on true.
   * minor: String.merge() now accepts only an array as parameters, and works
            as String.join() does with its parameters.
+  * fixed: Const atoms din't include negative numbers (i.e. negative numbers
+           couldn't be used in enum declarations).
 
 Falcon (0.9.1)
   * fixed: String-blocks closed with " alone on a line werent' recognized.

@@ -2155,7 +2155,7 @@ const_atom:
    NIL { $$ = new Falcon::Value(); }
    | TRUE_TOKEN { $$ = new Falcon::Value( true ); }
    | FALSE_TOKEN { $$ = new Falcon::Value( false ); }
-   | INTNUM { $$ = new Falcon::Value( $1 ); }
+   | INTNUM_WITH_MINUS { $$ = new Falcon::Value( $1 ); }
    | DBLNUM { $$ = new Falcon::Value( $1 ); }
    | STRING { $$ = new Falcon::Value( $1 ); }
 ;
