@@ -1,23 +1,39 @@
 THE FALCON PROGRAMMING LANGUAGE - RegEx Module.
 ===============================================
 
-   This module is heavily based on original PCRE 6.7 module,
+   This module is heavily based on original PCRE 7.9 module,
 taken out command line programs, tests and C++ extensions.
 
-   Changes to the source code of PCRE 6.7 may be applied to
+   Changes to the source code of PCRE 7.9 may be applied to
 improve conformance with Falcon module complicance.
 
    This module is released under the Falcon License; a copy of
 the license comes with Falcon sources, and is available at
 http://www.falconpl.org/?page_id=license
 
-The source code of PCRE 6.7 that has been included in this project
+The source code of PCRE 7.9 that has been included in this project
 is released under the original BSD license (of which a copy
 is included in this distribution).
 
-Authors of PCRE 6.7 are listed in the AUTHOR file in this
+Authors of PCRE 7.9 are listed in the AUTHOR file in this
 distribution. Authors of Regex Falcon Module are listed below.
 
+CHANGES
+=======
+
+  The internal version of PCRE is obtained by properly configuring
+pcre with UTF8 support and CR policy = ANY as a static library.
+  
+  Then, the pcre.h file is manually modified to remove the extern "C"
+block surrounding all the declarations; this makes internally 
+generated names mangled as C++ symbols and makes them unique.
+
+  Also, all the "extern" declarations are removed (otherwise
+elf loader may be invited to search the symbols in the loading
+applications); this requires to change PCRE_EXP_DEFN macro
+in front of global variables in pcre.h to a proper different
+macro. This to make those variable extern, but to allow
+functions not to be declared as extern.
 
 AUTHORS of Regex Falcon Module
 ==============================

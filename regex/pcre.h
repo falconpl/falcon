@@ -92,7 +92,7 @@ it is needed here for malloc. */
 /* Allow for C++ users */
 
 #ifdef __cplusplus
-extern "C" {
+//extern "C" {
 #endif
 
 /* Options. Some are compile-time only, some are run-time only, and some are
@@ -253,11 +253,11 @@ that is triggered by the (?) regex item. For Virtual Pascal, these definitions
 have to take another form. */
 
 #ifndef VPCOMPAT
-PCRE_EXP_DECL void *(*pcre_malloc)(size_t);
-PCRE_EXP_DECL void  (*pcre_free)(void *);
-PCRE_EXP_DECL void *(*pcre_stack_malloc)(size_t);
-PCRE_EXP_DECL void  (*pcre_stack_free)(void *);
-PCRE_EXP_DECL int   (*pcre_callout)(pcre_callout_block *);
+PCRE_EXP_DATA_DECL void *(*pcre_malloc)(size_t);
+PCRE_EXP_DATA_DECL void  (*pcre_free)(void *);
+PCRE_EXP_DATA_DECL void *(*pcre_stack_malloc)(size_t);
+PCRE_EXP_DATA_DECL void  (*pcre_stack_free)(void *);
+PCRE_EXP_DATA_DECL int   (*pcre_callout)(pcre_callout_block *);
 #else   /* VPCOMPAT */
 PCRE_EXP_DECL void *pcre_malloc(size_t);
 PCRE_EXP_DECL void  pcre_free(void *);
@@ -301,7 +301,7 @@ PCRE_EXP_DECL pcre_extra *pcre_study(const pcre *, int, const char **);
 PCRE_EXP_DECL const char *pcre_version(void);
 
 #ifdef __cplusplus
-}  /* extern "C" */
+//}  /* extern "C" */
 #endif
 
 #endif /* End of pcre.h */

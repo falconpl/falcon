@@ -762,15 +762,19 @@ static void s_replaceall( VMachine* vm, bool bExpand )
    uint32 destLen = dest->length();
 
    int from = 0;
+   int oldFrom = 0;
    do {
       internal_regex_match( data, source, from );
       if( data->m_matches > 0 )
       {
+         if ( data->m_ovector[0] == data->m_ovector[1] )
+              break;
+
          if ( clone == 0 ) {
             clone = new CoreString( *source );
             source = clone;
          }
-
+         
          if( bExpand )
          {
             String expanded( *dest );
@@ -781,7 +785,8 @@ static void s_replaceall( VMachine* vm, bool bExpand )
          else
             source->change( data->m_ovector[0], data->m_ovector[1], *dest );
 
-         from = data->m_ovector[0] + destLen;
+         oldFrom = from;
+         from = data->m_ovector[0] + destLen + 1;
          // as we're going to exit.
       }
    } while( data->m_matches > 0 && from < (int32) source->length() );

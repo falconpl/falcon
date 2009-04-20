@@ -45,8 +45,8 @@ IF(WITH_INTERNAL_PCRE)
       pcre_xclass.c
    )
 
-   #But consider PCRE function as C++ local functions:
-   ADD_DEFINITIONS( -DHAVE_CONFIG_H="" )
+   
+   ADD_DEFINITIONS( -DHAVE_CONFIG_H="1" -DPCRE_EXP_DECL="" -DPCRE_EXP_DATA_DECL="extern" -DPCRE_EXP_DEFN=" " -DPCRE_EXP_DATA_DEFN=" ")
    SET_SOURCE_FILES_PROPERTIES(
       ${PCRE_SOURCE}
       PROPERTIES LANGUAGE "CXX"
