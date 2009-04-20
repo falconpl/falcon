@@ -147,6 +147,28 @@ bool CoreObject::derivedFrom( const String &className ) const
    return (clssym->name() == className || m_generatedBy->derivedFrom( className ));
 }
 
+
+bool CoreObject::getMethodDefault( const String &name, Item &mth ) const
+{
+   const Falcon::Item* pmth = generator()->properties().getValue( name );
+
+   if ( pmth != 0 && pmth->isFunction() )
+   {
+      // yes, a valid method
+      mth = *pmth;
+
+      mth.methodize( Item( const_cast<CoreObject*>(this) ) );
+      return true;
+   }
+   return false;
+}
+
+
+//=======================================================================
+// Deep item overloading
+//=======================================================================
+
+
 bool CoreObject::setProperty( const String &propName, const String &value )
 {
    return setProperty( propName, new CoreString( value ) );
@@ -231,6 +253,7 @@ void CoreObject::writeProperty( const String &prop, const Item &target )
       throw new AccessError( ErrorParam( e_prop_acc, __LINE__ ).extra( prop ) );
    }
 }
+
 
 }
 

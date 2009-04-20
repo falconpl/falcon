@@ -628,7 +628,7 @@ public:
    bool methodize( const Item& self );
    bool methodize( const CoreObject *co )
    {
-      return methodize( const_cast<CoreObject *>(co) );
+      return methodize( Item(const_cast<CoreObject *>(co)) );
    }
 
 

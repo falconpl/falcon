@@ -157,6 +157,23 @@ protected:
    */
    void readOnlyError( const String &key ) const;
 
+protected:
+
+   /** Return a default method among those recorded in the generator class.
+
+      Takes the property table of the generator class and, if it's a function,
+      methodizes it.
+
+      @note This method is protected, and meant to extend objects by replacing
+      directly the getProperty() method; external users should rely on
+      getMethod().
+
+      @param name The name of the method to be searched.
+      @param mth The item that will be filled with a full ready method instance on success.
+      @return true if the property exists and can be methodized.
+   */
+   bool getMethodDefault( const String &name, Item &mth ) const;
+
 public:
 
    /** The base destructor does nothing.
