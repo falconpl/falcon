@@ -228,7 +228,8 @@ FAL_ERRORDECL( e_not_implemented, 162, "Feature not implemented/not available on
 FAL_ERRORDECL( e_nl_in_lit, 163, "New line in literal string" );
 FAL_ERRORDECL( e_fself_outside, 164, "'fself' outside functions or blocks" );
 FAL_ERRORDECL( e_undef_param, 165, "Required parameter not found" );
-FAL_ERRORDECL( e_noeffect, 166, "Statement has no effect (at least in part)." );
+FAL_ERRORDECL( e_noeffect, 166, "Statement has no effect (at least in part)" );
+FAL_ERRORDECL( e_ns_clash, 167, "Clash in namespaces aliasing" );
 
 FAL_ERRORDECL( e_open_file, 200, "Can't open file" );
 FAL_ERRORDECL( e_loaderror, 201, "Error in loading a module" );

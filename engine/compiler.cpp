@@ -1123,9 +1123,20 @@ void Compiler::addNamespace( const String &nspace, const String &alias, bool ful
 
       m_module->addDepend( nselfed, nspace, true, isFilename );
    }
-   // no? -- eventually change to load all.
-   else if ( *res == 0 && full )
-      *res = (void *) 1;
+   // no?
+   else {
+      // -- eventually change to load all.
+      if ( *res == 0 && full )
+         *res = (void *) 1;
+
+      // -- and check if this is a mis-redefinition
+      // raise an error if you try to alias a different module with an alredy existing namespace
+      ModuleDepData* mdPrev = m_module->dependencies().findModule( nselfed );
+      if ( mdPrev != 0 && *mdPrev->moduleName() != nspace )
+      {
+         raiseError( e_ns_clash, nselfed, lexer()->previousLine() );
+      }
+   }
 }
 
 

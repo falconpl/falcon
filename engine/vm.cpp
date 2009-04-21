@@ -605,21 +605,24 @@ bool VMachine::linkSymbol( const Symbol *sym, LiveModule *livemod )
       ModuleDepData *depData;
       LiveModule *lmod = 0;
 
-      if ( ( dotPos = sym->name().rfind( "." ) ) != String::npos )
+      if ( ( dotPos = sym->name().rfind( "." ) ) != String::npos && sym->imported() )
       {
          String nameSpace = sym->name().subString( 0, dotPos );
          // get the module name for the given module
          depData = mod->dependencies().findModule( nameSpace );
          // if we linked it, it must exist
-         fassert( depData != 0 );
+         // -- but in some cases, the compiler may generate a dotted symbol loaded from external sources
+         // -- this is usually an error, so let the undefined error to be declared.
+         if ( depData != 0 )
+         {
+            // ... then find the module in the item
+            lmod = findModule( Module::absoluteName(
+                  *depData->moduleName(), mod->name() ));
 
-         // ... then find the module in the item
-         lmod = findModule( Module::absoluteName(
-               *depData->moduleName(), mod->name() ));
-
-         // we must convert the name if it contains self or if it starts with "."
-         if ( lmod != 0 )
-            localSymName = sym->name().subString( dotPos + 1 );
+            // we must convert the name if it contains self or if it starts with "."
+            if ( lmod != 0 )
+               localSymName = sym->name().subString( dotPos + 1 );
+         }
       }
       else if ( sym->isImportAlias() )
       {

@@ -25,6 +25,10 @@ Falcon (0.9.1.1)
            as String.join() does with its parameters.
   * fixed: Const atoms din't include negative numbers (i.e. negative numbers
            couldn't be used in enum declarations).
+  * fixed: Reporting a consistent error when aliasing different modules to the
+           same namespace.
+  * fxied: Now the VM correctly lets imported undefined symbols not being
+           part of namespaces to generate a proper error.
 
 Falcon (0.9.1)
   * fixed: String-blocks closed with " alone on a line werent' recognized.
