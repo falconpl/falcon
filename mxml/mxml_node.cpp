@@ -454,9 +454,13 @@ void Node::read( Falcon::Stream &in, const int style, const int l, const int pos
 
    if ( m_type == typeTag && promote_data && the_data_node != 0 )
    {
-      m_data = the_data_node->m_data;
-      // Data node have not children, and delete calls unlink()
-      delete the_data_node;
+      // only if we have a single child node: the data child.
+      if ( child() == the_data_node && lastChild() == the_data_node )
+      {
+         m_data = the_data_node->m_data;
+         // Data node have not children, and delete calls unlink()
+         delete the_data_node;
+      }
    }
 
 }
