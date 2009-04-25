@@ -1,4 +1,4 @@
-Feathers (0.9.1.1)
+Feathers (0.9.1.2)
   * fixed: In MXML, removed promotion of data nodes when there are
            other sibling nodes.
 

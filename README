@@ -3,7 +3,7 @@
 
                              Falcon Feathers
 
-                                  0.8
+                                  0.9
 
 
 Falcon feathers are the fundamental, well known modules that are part of the
@@ -23,6 +23,7 @@ Modules admitted in the Feathers are currently:
    * process
    * regex
    * socket
+   * threading
 
 BUILDING
 ========
