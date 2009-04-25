@@ -1,4 +1,4 @@
-Falcon (0.9.1.1)
+Falcon (0.9.1.2)
   * fixed: Correct parsing of octal number (0 and 7 was out...)
   * fixed: Crash with statements == just numbers, and allowing interactive
            compiler to parse non-stand alone expressions and evaluate them.

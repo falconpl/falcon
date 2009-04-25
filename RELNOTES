@@ -5,6 +5,7 @@
 
                               0.9.1.2
 
+  Version 0.9.1.2 is a critical bugfix release for 0.9.1.
 
   "Crane" marks the birth of the new development effort towards the final
 1.0 release. This development release is meant as a pre-release for developers,
@@ -18,7 +19,6 @@ already usable, and has already been employed to port relevant applications and
 embeddings from version 0.8. While still not "official", and still bearing
 some known issues, it is usable enough to drive Falcon official site and
 run through our set of applications without any particular problems.
-
 
 Short term plans
 ================
