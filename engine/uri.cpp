@@ -566,6 +566,8 @@ const String &URI::get( bool synthQuery ) const
             m_encoded += "/";
       }
    }
+   else if ( m_scheme.size() != 0 && m_path.isAbsolute() )
+      m_encoded += "/";
 
    if ( m_path.get().size() != 0 )
       m_encoded += URLEncode( m_path.get() );

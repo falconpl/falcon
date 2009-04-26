@@ -337,7 +337,9 @@ public:
       \note on failure, the module loader will post an error to its error handler, if
       it has been provided.
 
-      \param module_path the relative or absolute path of the file to load
+      \param module_path the relative or absolute path of the file to load. The file is not
+         URI encoded; to load URI encoded filenames, pass directly the URI file.
+
       \param type the type of the file to be loaded, or t_none to autodetect
       \param scan if module_path is relative, set to true to allow scanning of the modloader path
       \return a valid module on success.
@@ -345,6 +347,15 @@ public:
    */
    virtual Module *loadFile( const String &module_path, t_filetype type=t_none, bool scan=false );
 
+   /** Loads a module by its URI.
+      \see Module *loadFile( const String &module_path, t_filetype type=t_none, bool scan=false );
+      \param module_URI the relative or absolute path of the file to load
+      \param type the type of the file to be loaded, or t_none to autodetect
+      \param scan if module_path is relative, set to true to allow scanning of the modloader path
+      \return a valid module on success.
+      \throw Error or appropriate subclass on error.
+   */
+   virtual Module *loadFile( const URI &module_URI, t_filetype type=t_none, bool scan=false );
 
    /** Loads a Falcon precompiled native module from the input stream.
 

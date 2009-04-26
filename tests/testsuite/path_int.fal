@@ -1,0 +1,51 @@
+/****************************************************************************
+* Falcon test suite
+*
+*
+* ID: 117c
+* Category: rtl
+* Subcategory: URI
+* Short: String width mix in URIs
+* Description:
+*    This test checks if URI and PATH classes can handle mixed width
+*    international character sequences.
+* [/Description]
+****************************************************************************/
+
+// Wide->small
+u = URI( "/国際/filename.dat", false )
+p = Path( u.path )
+p.file = p.file + "_fm"
+p.extension = "ext"
+u.path = p.path
+if URI.decode( u.uri ) != "/国際/filename_fm.ext": failure( "small in wide" )
+
+// shortening
+p.location = "/t"
+u.path = p.path
+if URI.decode( u.uri ) != "/t/filename_fm.ext": failure( "reducing" )
+
+// re-lenghtening
+p.location = "/国際"
+u.path = p.path
+if URI.decode( u.uri ) != "/国際/filename_fm.ext": failure( "re-enlarging" )
+
+
+
+// Small -> wide (shortening)
+u = URI( "/test_with_a_long_path/filename.dat" )
+p = Path( u.path )
+p.location = "/国際"
+p.file = p.file + "_fm"
+p.extension = "ext"
+u.path = p.path
+if URI.decode( u.uri ) != "/国際/filename_fm.ext": failure( "enlarging reduced" )
+
+// SMall->wide - lengthening
+u = URI( "/t/filename.dat" )
+p = Path( u.path )
+p.location = "/国際"
+p.file = p.file + "_fm"
+p.extension = "ext"
+u.path = p.path
+if URI.decode( u.uri ) != "/国際/filename_fm.ext": failure( "enlarging wide" )

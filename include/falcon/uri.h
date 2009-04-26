@@ -375,6 +375,12 @@ public:
       return t;
    }
 
+   /**
+     Decode an URI-URL encoded string.
+     \param source the string to be decoded.
+     \param target the target where to store the decoded string.
+     \return true if the decoding was succesful, false otherwise.
+   */
    static bool URLDecode( const String &source, String &target );
    static String URLDecode( const String &source )
    {

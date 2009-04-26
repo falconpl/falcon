@@ -119,7 +119,7 @@ void DllLoader_win::getErrorDescription( String &descr ) const
    {
       descr = (char *) lpMsgBuf;
       // force to copy
-      descr.reserve( 0 );
+      descr.bufferize();
    }
 
    LocalFree(lpMsgBuf);

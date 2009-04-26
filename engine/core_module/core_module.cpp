@@ -1378,7 +1378,8 @@ Module* core_module_init()
    //=======================================================================
    // The path class
    //=======================================================================
-   Falcon::Symbol *path_class = self->addClass( "Path", &Falcon::core::Path_init );
+   Falcon::Symbol *path_class = self->addClass( "Path", &Falcon::core::Path_init )
+         ->addParam( "path" );
    path_class->getClassDef()->factory( Falcon::core::PathObjectFactory );
    path_class->setWKS(true);
 
@@ -1398,7 +1399,8 @@ Module* core_module_init()
    //=======================================================================
    // The path class
    //=======================================================================
-   Falcon::Symbol *uri_class = self->addClass( "URI", &Falcon::core::URI_init );
+   Falcon::Symbol *uri_class = self->addClass( "URI", &Falcon::core::URI_init )
+      ->addParam( "path" )->addParam("decode");
    uri_class->getClassDef()->factory( Falcon::core::UriObjectFactory );
    uri_class->setWKS(true);
 

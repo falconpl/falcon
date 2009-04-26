@@ -1,3 +1,13 @@
+Falcon (0.9.1.4)
+  * fixed: As now files and modules loads are URIs, and URI decoding was
+           strict, modules with international names could not be loaded 
+           unless the name was previously URI escaped.
+  * minor: Now it's possible to prevent parsing (un-escaping) from URI
+           constructor.
+  * minor: Fixed error failed DLL load error report string in Windows.
+  * fixed: Now correctly importing symbols from modules named with 
+           strings.
+  
 Falcon (0.9.1.2)
   * fixed: Correct parsing of octal number (0 and 7 was out...)
   * fixed: Crash with statements == just numbers, and allowing interactive

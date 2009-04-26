@@ -63,6 +63,7 @@ CoreObject* UriObjectFactory( const CoreClass *me, void *uri, bool dyn )
 /*# @class URI
    @brief Interface to RFC3986 Universal Resource Indicator.
    @optparam path The URI that will be used as initial data.
+   @optparam decode True if the path is URI encoded, and must be decoded (default).
    @raise ParamError in case the inital URI is malformed.
 
    This class offers an object oriented interface to access
@@ -280,6 +281,7 @@ FALCON_FUNC  URI_init ( ::Falcon::VMachine *vm )
 {
    UriObject *self = dyncast<UriObject*>(vm->self().asObject());
    Item *p0 = vm->param(0);
+   Item *i_parse = vm->param(1);
 
 
    // nothing to do
@@ -294,7 +296,7 @@ FALCON_FUNC  URI_init ( ::Falcon::VMachine *vm )
          origin( e_orig_runtime ).extra( "[S]" ) ) );
    }
    else {
-      uri->parse( *p0->asString() );
+      uri->parse( *p0->asString(), false, (i_parse == 0 || i_parse->isTrue()) );
       if ( ! uri->isValid() )
       {
          vm->raiseModError( new ParamError( ErrorParam( e_inv_params ).

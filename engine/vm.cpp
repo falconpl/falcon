@@ -616,8 +616,9 @@ bool VMachine::linkSymbol( const Symbol *sym, LiveModule *livemod )
          if ( depData != 0 )
          {
             // ... then find the module in the item
-            lmod = findModule( Module::absoluteName(
-                  *depData->moduleName(), mod->name() ));
+            lmod = findModule( Module::absoluteName( 
+                  depData->isFile() ? nameSpace: *depData->moduleName(), 
+                  mod->name() ));
 
             // we must convert the name if it contains self or if it starts with "."
             if ( lmod != 0 )

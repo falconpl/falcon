@@ -1,0 +1,26 @@
+/****************************************************************************
+* Falcon test suite
+*
+*
+* ID: 53f
+* Category: modloader
+* Subcategory: import
+* Short: Import from spaced subdir.
+* Description:
+*   Subdirectories with spaces are escaped to "n+m" in URI format traveling in
+*   the modloader data. The DLL loader must back-escape it (or the module 
+*   loader must unescape it) before system request is tried. 
+*
+* [/Description]
+*
+****************************************************************************/
+// named with self
+import test1 from "Import spaced/imported.fal" in imported
+
+if imported.test1() != "From test1"
+   failure( "import test1 from import_self = first" )
+end
+
+success()
+
+/* End of file */

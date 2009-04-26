@@ -232,7 +232,6 @@ Stream *ModuleLoader::openResource( const String &path, t_filetype type )
          return AddSystemEOL( in );
    }
 
-
    return in;
 }
 
@@ -343,27 +342,17 @@ bool ModuleLoader::scanForFile( URI &origUri, VFSProvider* vfs, t_filetype &type
    return false;
 }
 
-
-Module *ModuleLoader::loadFile( const String &module_path, t_filetype type, bool scan )
+Module *ModuleLoader::loadFile( const URI& uri, t_filetype type, bool scan )
 {
+   URI origUri = uri;
    String file_path;
    t_filetype tf = t_none;
-
-   // Preliminary filtering -- get the URI and the filesystem.
-   URI origUri( module_path );
-   if ( ! origUri.isValid() )
-   {
-      throw new CodeError( ErrorParam( e_malformed_uri )
-            .extra( module_path )
-            .origin( e_orig_loader )
-            .module( "(loader)" ) );
-   }
 
    VFSProvider *vfs = Engine::getVFS( origUri.scheme() );
    if ( vfs == 0 )
    {
       throw new CodeError( ErrorParam( e_unknown_vfs )
-            .extra( module_path )
+         .extra( uri.scheme() )
             .origin( e_orig_loader )
             .module( "(loader)" ) );
    }
@@ -486,7 +475,7 @@ Module *ModuleLoader::loadFile( const String &module_path, t_filetype type, bool
          break;
 
       case t_vmmod: mod = loadModule( origUri.get() ); break;
-      case t_binmod: mod = loadBinaryModule( origUri.get() ); break;
+      case t_binmod: mod = loadBinaryModule( URI::URLDecode( origUri.get() ) ); break;
 
       default:
          // we have not been able to find it
@@ -496,7 +485,7 @@ Module *ModuleLoader::loadFile( const String &module_path, t_filetype type, bool
    }
    else
    {
-      raiseError( e_nofile, module_path );
+      raiseError( e_nofile, URI::URLDecode(uri.get()) );
    }
 
    // in case of errors, we already raised
@@ -514,6 +503,24 @@ Module *ModuleLoader::loadFile( const String &module_path, t_filetype type, bool
 
    // in case of errors, we already raised
    return mod;
+}
+
+
+Module *ModuleLoader::loadFile( const String &module_path, t_filetype type, bool scan )
+{
+   // Preliminary filtering -- get the URI and the filesystem.
+   URI origUri;
+   origUri.parse( module_path, true, false );
+  
+   if ( ! origUri.isValid() )
+   {
+      throw new CodeError( ErrorParam( e_malformed_uri )
+            .extra( module_path )
+            .origin( e_orig_loader )
+            .module( "(loader)" ) );
+   }
+   
+   return loadFile( origUri, type, scan );
 }
 
 
@@ -705,7 +712,8 @@ Module *ModuleLoader::loadBinaryModule( const String &path )
    {
       String error;
       dll.getErrorDescription( error );
-      raiseError( e_binload, path + ":" + error );
+      error.prepend( path + ": " );
+      raiseError( e_binload, error );
       return 0;
    }
 
