@@ -135,7 +135,7 @@ void Path::compose()
    if ( m_location.size() > 0 )
    {
       m_path += m_location;
-      if ( m_file.size() > 0 )
+      if ( m_location.getCharAt( m_location.length() - 1 ) != '/' && m_file.size() > 0 )
          m_path += "/";
    }
 
