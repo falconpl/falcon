@@ -867,8 +867,10 @@ void GenHAsm::gen_statement( const Statement *stmt )
          m_loops.pushBack( (void *) branch );
          String branchStr;
          branchStr.writeNumber( (int64) branch );
-         m_out->writeString( "_loop_next_" + branchStr + ":\n" );
          m_out->writeString( "_loop_begin_" + branchStr + ":\n" );
+         
+         if ( elem->condition() == 0 )
+            m_out->writeString( "_loop_next_" + branchStr + ":\n" );
 
          gen_block( &elem->children() );
 
@@ -877,17 +879,21 @@ void GenHAsm::gen_statement( const Statement *stmt )
             // endless loop
             m_out->writeString( "\tJMP \t_loop_begin_" + branchStr + "\n" );
          }
-         else if ( ! elem->condition()->isTrue() )
-         {
-            if ( elem->condition()->isSimple() ) {
-               m_out->writeString( "\tIFF \t_loop_begin_" + branchStr + ", " );
-               gen_operand( elem->condition() );
+         else {
+            m_out->writeString( "_loop_next_" + branchStr + ":\n" );
+            
+            if ( ! elem->condition()->isTrue() )
+            {
+               if ( elem->condition()->isSimple() ) {
+                  m_out->writeString( "\tIFF \t_loop_begin_" + branchStr + ", " );
+                  gen_operand( elem->condition() );
+               }
+               else {
+                  gen_complex_value( elem->condition() );
+                  m_out->writeString( "\tIFF \t_loop_begin_" + branchStr + ", A" );
+               }
+               m_out->writeString( "\n" );
             }
-            else {
-               gen_complex_value( elem->condition() );
-               m_out->writeString( "\tIFF \t_loop_begin_" + branchStr + ", A" );
-            }
-            m_out->writeString( "\n" );
          }
          // if it's true, terminate immediately
 

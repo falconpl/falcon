@@ -910,9 +910,12 @@ void GenCode::gen_statement( const Statement *stmt )
          c_jmptag tag( m_outTemp );
          m_labels_loop.pushBack( &tag );
 
-         // this is the place for next and begin
+         // this is the place for begin
          tag.defineBegin();
-         tag.defineNext();
+         
+         // if we don't have a check, continue can land at loop begin.
+         if ( elem->condition() == 0 )  
+            tag.defineNext();
 
          gen_block( &elem->children() );
 
@@ -922,14 +925,18 @@ void GenCode::gen_statement( const Statement *stmt )
             // endless loop
             gen_pcode( P_JMP, c_param_fixed( tag.addQueryBegin() ) );
          }
-         else if ( ! elem->condition()->isTrue() )
-         {
-            if ( elem->condition()->isSimple() ) {
-               gen_pcode( P_IFF, c_param_fixed( tag.addQueryBegin() ), elem->condition() );
-            }
-            else {
-               gen_complex_value( elem->condition() );
-               gen_pcode( P_IFF, c_param_fixed( tag.addQueryBegin() ), e_parA );
+         else {
+            tag.defineNext();
+
+            if ( ! elem->condition()->isTrue() )
+            {
+               if ( elem->condition()->isSimple() ) {
+                  gen_pcode( P_IFF, c_param_fixed( tag.addQueryBegin() ), elem->condition() );
+               }
+               else {
+                  gen_complex_value( elem->condition() );
+                  gen_pcode( P_IFF, c_param_fixed( tag.addQueryBegin() ), e_parA );
+               }
             }
          }
          // if it's true, terminate immediately
