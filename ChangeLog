@@ -1,6 +1,7 @@
 Falcon (0.9.1.6)
   * fixed: In loop statement, continue looped from the top skipping the
            loop condition (if it was present).
+  * fixed: Function "any" was STILL returning 0 instead of false.
            
 Falcon (0.9.1.4)
   * fixed: As now files and modules loads are URIs, and URI decoding was

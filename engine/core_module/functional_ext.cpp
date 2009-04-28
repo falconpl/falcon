@@ -179,7 +179,7 @@ static bool core_all_next( ::Falcon::VMachine *vm )
    // was the elaboration succesful?
    if ( ! vm->regA().isTrue() )
    {
-      vm->retval( (int64) 0 );
+      vm->regA().setBoolean( false );
       return false;
    }
 
@@ -196,7 +196,7 @@ static bool core_all_next( ::Falcon::VMachine *vm )
          return true;
       }
       else if ( ! vm->regA().isTrue() ) {
-         vm->retval( (int64) 0 );
+         vm->regA().setBoolean( false );
          return false;
       }
       count++;
@@ -241,7 +241,7 @@ FALCON_FUNC  core_all ( ::Falcon::VMachine *vm )
    uint32 count = arr->length();
    if ( count == 0 )
    {
-      vm->retval( (int64) 0 );
+      vm->regA().setBoolean( false );
       return;
    }
 
@@ -259,7 +259,7 @@ FALCON_FUNC  core_all ( ::Falcon::VMachine *vm )
       }
       else if ( ! vm->regA().isTrue() ) {
          vm->returnHandler( 0 );
-         vm->retval( (int64) 0 );
+         vm->regA().setBoolean( false );
          return;
       }
    }
