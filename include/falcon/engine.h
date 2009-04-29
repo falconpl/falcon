@@ -40,6 +40,9 @@
 #include <falcon/cclass.h>
 #include <falcon/cclass.h>
 #include <falcon/coreobject.h>
+#include <falcon/falconobject.h>
+#include <falcon/crobject.h>
+#include <falcon/reflectobject.h>
 #include <falcon/lineardict.h>
 #include <falcon/pagedict.h>
 #include <falcon/membuf.h>
