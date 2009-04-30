@@ -78,7 +78,6 @@ inline void copySame( byte* dest_, byte* src_, uint32 size )
 
 // service function; adapts a smaller buffer into a larger one
 // srclen is in "elements" (bytes * charLen).
-// // destCharLen >= srcCharLen
 // returns also the dynamic buffer manipulator useful to handle the target buffer
 static Base* adaptBuffer( byte *srcBuffer, uint32 srcPos, uint32 srcCharLen,
                           byte *destBuffer, uint32 destPos, uint32 destCharLen,
@@ -90,13 +89,18 @@ static Base* adaptBuffer( byte *srcBuffer, uint32 srcPos, uint32 srcCharLen,
    switch( destCharLen )
    {
       case 1:
-         copySame<byte>( destBuffer, srcBuffer, srcLen );
+         switch( srcCharLen ) {
+            case 1: copySame<byte>( destBuffer, srcBuffer, srcLen ); break;
+            case 2: copySized<byte, uint16>( destBuffer, srcBuffer, srcLen ); break;
+            case 4: copySized<byte, uint32>( destBuffer, srcBuffer, srcLen ); break;
+         }
          return &handler_buffer;
 
       case 2:
          switch( srcCharLen ) {
-            case 1: copySized<uint16,byte>( destBuffer, srcBuffer, srcLen ); break;
+            case 1: copySized<uint16, byte>( destBuffer, srcBuffer, srcLen ); break;
             case 2: copySame<uint16>( destBuffer, srcBuffer, srcLen ); break;
+            case 4: copySized<uint16, uint32>( destBuffer, srcBuffer, srcLen ); break;
          }
          return &handler_buffer16;
 
@@ -1657,6 +1661,56 @@ bool String::deserialize( Stream *in, bool bStatic )
    }
 
    return true;
+}
+
+
+void String::c_ize()
+{
+   if ( allocated() <= size() || getCharAt( length() ) != 0 )  
+   {
+      append( 0 );
+      size( size() - m_class->charSize() );
+   }
+}
+
+bool String::setCharSize( uint32 nsize, uint32 subst )
+{
+   // same size?
+   if ( nsize == m_class->charSize() )
+      return true;
+   
+   // change only the manipulator?
+   if( size() == 0 ) {
+      m_class->destroy( this ); // dispose anyhow
+      allocated(0);
+      switch( nsize ) {
+         case 1: m_class = &csh::handler_buffer; break;
+         case 2: m_class = &csh::handler_buffer16; break;
+         case 4: m_class = &csh::handler_buffer32; break;
+         default: return false;
+      }
+      
+      return true;
+   }
+   
+   if ( nsize != 1 && nsize != 2 && nsize != 4 )
+      return false;
+   
+   // full change.
+   // use allocated to decide re-allocation under new char size.
+   byte *mem = getRawStorage();
+   uint32 oldcs = m_class->charSize();
+   uint32 nalloc = (allocated()/oldcs) * nsize;
+   uint32 oldsize = size();
+   byte *nmem = (byte*) memAlloc( nalloc );
+   csh::Base* manipulator = csh::adaptBuffer( mem, 0, oldcs, nmem, 0, nsize, length() );
+   m_class->destroy( this );
+   allocated( nalloc );
+   size( (oldsize/oldcs)*nsize );
+   m_class = manipulator;
+   setRawStorage( nmem );
+
+   return true;         
 }
 
 

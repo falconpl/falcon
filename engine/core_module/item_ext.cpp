@@ -985,5 +985,91 @@ FALCON_FUNC mth_metaclass( VMachine *vm )
    vm->retval( cls );
 }
 
+
+
+/*#
+   @method ptr BOM
+   @brief Returns a raw memory pointer out of this data (as an integer).
+   @return An integer containing a pointer to this data.
+   
+   The default behavior of this method is to return the value of
+   the memory location where inner data is stored, if the data is
+   deep, and 0 otherwise. The Integer metaclass overrides this
+   method so that it returns a dereferenced pointer, that is,
+   the pointer value at the location indicated by the integer
+   value, and String items overload this so that a pointer to
+   the raw character sequence is returned.
+*/
+FALCON_FUNC BOM_ptr( VMachine *vm )
+{
+   if ( vm->self().isDeep() )
+   {
+      vm->retval( (int64) vm->self().asDeepItem() );
+   }
+   vm->retval( (int64) 0 );
+}
+
+/*#
+   @method ptr Integer
+   @brief Dereferences this integer as a pointer.
+   @return Returns the pointer value at the location indicated in this integer.
+   
+   This function returns a pointer value (stored in a Falcon integer)
+   taken from the memory location indicated by this integer.
+*/
+FALCON_FUNC Integer_ptr( VMachine *vm )
+{
+   void** ptr = (void**) vm->self().asInteger();
+   vm->retval( (int64) *ptr );
+}
+
+/*#
+   @method ptr GarbagePointer
+   @brief Returns the inner data stored in this ponter.
+   @return Deep data (as a pointer).
+   
+   This function returns a pointer value (stored in a Falcon integer)
+   pointing to the inner FalconData served this garbage pointer.
+*/
+FALCON_FUNC GarbagePointer_ptr( VMachine *vm )
+{
+   vm->retval( (int64) vm->self().asGCPointer() );
+}
+
+/*#
+   @method ptr String
+   @brief Returns a pointer to raw data contained in this string.
+   @return A string pointer.
+   
+   This function returns a pointer value (stored in a Falcon integer)
+   pointing to the raw data in the string. The string is not encoded
+   in any format, and its character size can be 1, 2 or 4 bytes per
+   character depending on the values previusly stored. The string
+   is granted to be terminated by an appropriate "\\0" value of the
+   correct size. The value exists and is valid only while the original
+   string (this item) stays unchanged.
+*/
+
+FALCON_FUNC String_ptr( VMachine *vm )
+{
+   String *str = vm->self().asString();
+   str->c_ize();
+   vm->retval( (int64) str->getRawStorage() );
+}
+
+/*#
+   @method ptr MemBuf
+   @brief Returns the pointer to the raw memory stored in this memory buffer.
+   @return A memory pointer.
+   
+   This function returns a pointer (as a Falcon integer) to the memory
+   area managed by this memory buffer.
+*/
+
+FALCON_FUNC MemoryBuffer_ptr( VMachine *vm )
+{
+   vm->retval( (int64) vm->self().asMemBuf()->data() );
+}
+
 }
 }

@@ -155,6 +155,7 @@ Module* core_module_init()
    self->addClassMethod( bom_meta, "baseClass", &Falcon::core::mth_baseClass );
    self->addClassMethod( bom_meta, "derivedFrom", &Falcon::core::mth_derivedFrom );
    self->addClassMethod( bom_meta, "metaclass", &Falcon::core::mth_metaclass );
+   self->addClassMethod( bom_meta, "ptr", &Falcon::core::BOM_ptr );
 
    Falcon::Symbol *nil_meta = self->addClass( "Nil" );
    nil_meta->getClassDef()->addInheritance( new Falcon::InheritDef( bom_meta ) );
@@ -182,6 +183,7 @@ Module* core_module_init()
       addParam("limit")->addParam("sequence");
    self->addClassMethod( int_meta, "downto", &Falcon::core::core_downto ).asSymbol()->setEta( true )->
       addParam("limit")->addParam("sequence");
+   self->addClassMethod( int_meta, "ptr", &Falcon::core::Integer_ptr );
 
    /*#
       @class Numeric
@@ -224,6 +226,7 @@ Module* core_module_init()
    gcptr_meta->getClassDef()->addInheritance( new Falcon::InheritDef( bom_meta ) );
    gcptr_meta->exported( false );
    gcptr_meta->getClassDef()->setMetaclassFor( FLC_ITEM_GCPTR );
+   self->addClassMethod( gcptr_meta, "ptr", &Falcon::core::GarbagePointer_ptr );
 
    //==================================================================
    // String class
@@ -287,6 +290,9 @@ Module* core_module_init()
       ->addParam("wildcard")->addParam("ignoreCase");
    self->addClassMethod( string_meta, "toMemBuf", &Falcon::core::mth_strToMemBuf ).asSymbol()
       ->addParam("wordWidth");
+   self->addClassMethod( string_meta, "ptr", &Falcon::core::String_ptr );
+   self->addClassMethod( string_meta, "charSize", &Falcon::core::String_charSize ).asSymbol()
+      ->addParam("bpc");
 
    //==================================================================
    // Array class
@@ -442,6 +448,8 @@ Module* core_module_init()
    self->addClassMethod( membuf_meta, "remaining", &Falcon::core::MemoryBuffer_remaining );
    self->addClassMethod( membuf_meta, "fill", &Falcon::core::MemoryBuffer_fill ).asSymbol()->
       addParam("value");
+   self->addClassMethod( membuf_meta, "ptr", &Falcon::core::MemoryBuffer_ptr );
+
 
    // reference has none
    Falcon::Symbol *clsmethod_meta = self->addClass( "ClassMethod" );

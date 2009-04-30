@@ -87,6 +87,39 @@ static void process_strFrontBackParams( VMachine *vm, String* &str, bool &bNumer
 */
 
 /*#
+   @method String charSize
+   @brief Returns or changes the size in bytes in this string.
+   @optparam bpc New value for bytes per character (1, 2 or 4).
+   @return This string if @b bpc is given, or the current character size value if not given.
+*/
+
+FALCON_FUNC String_charSize( VMachine *vm )
+{
+   Item *i_bpc = vm->param(0);
+   String* str = vm->self().asString();
+   
+   if ( i_bpc == 0 )
+   {
+      // no parameters -- just read us.
+      vm->retval( (int64) str->manipulator()->charSize() );   
+      return;
+   }
+   else if( ! i_bpc->isOrdinal() )
+   {
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+         .extra( "[N]" ) );
+   }
+   
+   uint32 bpc = (uint32) i_bpc->forceInteger();
+   if ( ! str->setCharSize( bpc ) )
+   {
+      throw new ParamError( ErrorParam( e_param_range, __LINE__ ) );
+   }
+   
+   vm->retval( str );
+}
+
+/*#
    @method front String
    @brief Returns the first character in a string.
    @optparam numeric If true, returns a character value instead of a string.

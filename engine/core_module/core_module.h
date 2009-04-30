@@ -29,6 +29,10 @@ Error *rtlError( int t, const String &desc );
 
 namespace core {
 
+FALCON_FUNC BOM_ptr( VMachine *vm );
+FALCON_FUNC Integer_ptr( VMachine *vm );
+FALCON_FUNC GarbagePointer_ptr( VMachine *vm );
+
 // Methodic functions
 FALCON_FUNC  mth_ToString ( ::Falcon::VMachine *vm );
 FALCON_FUNC  mth_len ( ::Falcon::VMachine *vm );
@@ -148,6 +152,7 @@ FALCON_FUNC MemoryBuffer_clear( ::Falcon::VMachine *vm );
 FALCON_FUNC MemoryBuffer_fill( ::Falcon::VMachine *vm );
 FALCON_FUNC MemoryBuffer_compact( ::Falcon::VMachine *vm );
 FALCON_FUNC MemoryBuffer_remaining( ::Falcon::VMachine *vm );
+FALCON_FUNC MemoryBuffer_ptr( VMachine *vm );
 
 FALCON_FUNC Method_source( ::Falcon::VMachine *vm );
 
@@ -292,7 +297,8 @@ FALCON_FUNC  strFromMemBuf ( ::Falcon::VMachine *vm );
 FALCON_FUNC  String_first ( ::Falcon::VMachine *vm );
 FALCON_FUNC  String_last ( ::Falcon::VMachine *vm );
 FALCON_FUNC  String_join ( ::Falcon::VMachine *vm );
-
+FALCON_FUNC  String_ptr( VMachine *vm );
+FALCON_FUNC  String_charSize( VMachine *vm );
 
 FALCON_FUNC  mth_arrayIns ( ::Falcon::VMachine *vm );
 FALCON_FUNC  mth_arrayDel ( ::Falcon::VMachine *vm );
