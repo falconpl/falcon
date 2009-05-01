@@ -413,6 +413,19 @@ FALCON_FUNC VMSlot_broadcast( ::Falcon::VMachine *vm )
 }
 
 /*#
+   @method name VMSlot
+   @brief Returns the name of this slot
+   @return The name of the event bind to this slot (as a string).
+*/
+
+FALCON_FUNC VMSlot_name( ::Falcon::VMachine *vm )
+{
+   CoreSlot* cs = (CoreSlot*) vm->self().asObject()->getUserData();
+   vm->retval( new CoreString(cs->name()) );
+}
+
+
+/*#
    @method subscribe VMSlot
    @brief Registers a callback handler on this slot.
    @param handler A callable item or instance providing callback support.

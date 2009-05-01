@@ -1098,6 +1098,7 @@ Module* core_module_init()
    vmslot_class->getClassDef()->factory( &Falcon::CoreSlotFactory );
 
    // methods -- the first example is equivalent to the following.
+   self->addClassMethod( vmslot_class, "name", &Falcon::core::VMSlot_name );
    self->addClassMethod( vmslot_class, "broadcast", &Falcon::core::VMSlot_broadcast );
    self->addClassMethod( vmslot_class, "subscribe", &Falcon::core::VMSlot_subscribe ).asSymbol()->
          addParam("handler")->addParam("prio");
