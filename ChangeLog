@@ -5,6 +5,8 @@ Falcon (0.9.1.6)
   * major: Added method ptr() to FBOM and various metaclasses.
   * major: Added explicit character size scaling and c-zation of 
            Falcon::Strings.
+  * fixed: Repeated assert() may have crashed depending on the stack 
+           status.
            
 Falcon (0.9.1.4)
   * fixed: As now files and modules loads are URIs, and URI decoding was

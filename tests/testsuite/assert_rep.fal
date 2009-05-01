@@ -1,0 +1,50 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 38h
+* Category: messages
+* Subcategory: assert
+* Short: Repeated assertion
+* Description:
+*   Verifies what happens on re-assertion and on broadcasts over existing
+*   assertions.
+* [/Description]
+*
+****************************************************************************/
+
+control = 0
+result = "untouched"
+
+function tfunc( data )
+   global control, result
+   
+   if data != control: failure( "Didn't receive expected data" )
+   result = data
+end   
+
+
+// we're clean now
+subscribe( "test", tfunc )
+if result != "untouched": failure( "Changed on subscription" )
+
+control = 100
+assert( "test", 100 )
+if result != 100: failure( "Not called on first assertion" )
+
+control = 200
+assert( "test", 200 )
+if result != 200: failure( "Not called on second assertion" )
+
+control = "onbkast"
+broadcast( "test", control )
+if result != control: failure( "Not called on broadcast" )
+
+retract( "test" )
+
+control = "onbkast-after"
+broadcast( "test", control )
+if result != control: failure( "Not called on broadcast after retract" )
+
+success()
+
+/* end of file */

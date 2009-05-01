@@ -143,7 +143,7 @@ void CoreSlot::assert( VMachine* vm, const Item &a )
    assert( a );
    if ( ! empty() )
    {
-      vm->addLocals( 4 );
+      vm->addLocals( 5 ); // Warning -- we add 5 to nil the msg ptr callback at local(4).
       CoreIterator* iter = getIterator();
       // we don't need to set the slot as owner, as we're sure it stays in range
       // (slots are marked) on themselves.
@@ -151,6 +151,7 @@ void CoreSlot::assert( VMachine* vm, const Item &a )
       *vm->local(1) = (int64) -1;
       *vm->local(2) = m_assertion;
       *vm->local(3) = new CoreString( m_name );
+      // local(4) must stay nil; it's used by broadcast_internal as msg callback pointer.
 
       vm->returnHandler( &coreslot_broadcast_internal );
    }
