@@ -692,6 +692,12 @@ Module* core_module_init()
       ->addParam( "code" )->addParam( "description")->addParam( "extra" );
    interr_cls->getClassDef()->addInheritance(  new Falcon::InheritDef( error_class ) );
    interr_cls->setWKS( true );
+   
+   Falcon::Symbol *msgerr_cls = self->addClass( "MessageError", &Falcon::core::MessageError_init )
+      ->addParam( "code" )->addParam( "description")->addParam( "extra" );
+   msgerr_cls->getClassDef()->addInheritance(  new Falcon::InheritDef( error_class ) );
+   msgerr_cls->setWKS( true );
+   
    //=========================================
 
    // Creating the semaphore class -- will be a FalconObject

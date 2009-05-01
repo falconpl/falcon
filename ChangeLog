@@ -9,6 +9,11 @@ Falcon (0.9.1.6)
            status.
   * fixed: Due to faulty method equality check, method unsubscription
            was failing.
+  * minor: Added subscription priority parameter.
+  * fixed: getAssert() didn't get the correct default parameter when
+           the required slot wasn't found, and VMSlot.getAssert wasn't parsing
+           correctly its parameters.
+  * fixed: MessageError wasn't exported to the Core module.
            
 Falcon (0.9.1.4)
   * fixed: As now files and modules loads are URIs, and URI decoding was

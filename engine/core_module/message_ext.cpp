@@ -297,6 +297,8 @@ FALCON_FUNC retract( ::Falcon::VMachine *vm )
 FALCON_FUNC getAssert( ::Falcon::VMachine *vm )
 {
    Item *i_msg = vm->param( 0 );
+   Item *i_defalut = vm->param(1);
+   
    if ( i_msg == 0 || ! i_msg->isString()  )
    {
       vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).
@@ -307,9 +309,9 @@ FALCON_FUNC getAssert( ::Falcon::VMachine *vm )
    CoreSlot* cs = vm->getSlot( *i_msg->asString(), true );
    if ( cs == 0 )
    {
-      if ( vm->paramCount() > 1 )
+      if ( i_defalut != 0 )
       {
-         vm->retval(*vm->param(1));
+         vm->regA() = *i_defalut;
       }
       else {
          vm->raiseRTError( new MessageError( ErrorParam( e_inv_params ).
@@ -324,9 +326,9 @@ FALCON_FUNC getAssert( ::Falcon::VMachine *vm )
       }
       else
       {
-         if ( vm->param(0) )
+         if ( i_defalut != 0 )
          {
-            vm->regA() = *vm->param(0);
+            vm->regA() = *i_defalut;
          }
          else {
             vm->raiseRTError( new MessageError( ErrorParam( e_inv_params ).
@@ -538,7 +540,7 @@ FALCON_FUNC VMSlot_getAssert( ::Falcon::VMachine *vm )
    }
    else
    {
-      if ( vm->param(0) )
+      if ( vm->paramCount() > 0 )
       {
          vm->regA() = *vm->param(0);
       }

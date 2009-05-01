@@ -1,0 +1,48 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 38i
+* Category: messages
+* Subcategory: assert
+* Short: getAssert
+* Description:
+*   Checks working of the getAssert function.
+* [/Description]
+*
+****************************************************************************/
+
+assert( "test", "assertval" )
+if getAssert( "test" ) != "assertval": failure( "existing assert" )
+
+// Tests on existing slot
+retract( "test" )
+// Tests on non existing slots
+try
+   getAssert( "test" )
+   failure( "Didn't raise message error on slot wihtout asserts" )
+catch MessageError 
+   // it's ok
+catch in another
+   failure( "Wrong exception raised in slot wihtout asserts" )
+end
+
+val = getAssert( "test", "a default" )
+if val != "a default": failure( "failing default on slot wihtout asserts" )
+
+//=========================================
+// Tests on non existing slots
+try
+   getAssert( "non-exist" )
+   failure( "Didn't raise message error on non-existing assert" )
+catch MessageError 
+   // it's ok
+catch in another
+   failure( "Wrong exception raised in non-existing assert" )
+end
+
+val = getAssert( "non-exist", "a default" )
+if val != "a default": failure( "failing default on non-existing assert" )
+
+success()
+
+/* end of file */

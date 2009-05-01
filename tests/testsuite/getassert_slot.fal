@@ -1,0 +1,35 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 38l
+* Category: messages
+* Subcategory: assert
+* Short: getAssert on slots
+* Description:
+*   Checks working of the getAssert method on slots
+* [/Description]
+*
+****************************************************************************/
+
+slot = VMSlot( "test" )
+slot.assert( "assertval" )
+if slot.getAssert() != "assertval": failure( "existing assert" )
+
+// Tests on existing slot
+slot.retract()
+// Tests on non existing slots
+try
+   slot.getAssert()
+   failure( "Didn't raise message error on slot wihtout asserts" )
+catch MessageError 
+   // it's ok
+catch in another
+   failure( "Wrong exception raised in slot wihtout asserts" )
+end
+
+val = slot.getAssert( "a default" )
+if val != "a default": failure( "failing default on slot wihtout asserts" )
+
+success()
+
+/* end of file */
