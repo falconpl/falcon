@@ -14,6 +14,11 @@ Falcon (0.9.1.6)
            the required slot wasn't found, and VMSlot.getAssert wasn't parsing
            correctly its parameters.
   * fixed: MessageError wasn't exported to the Core module.
+  * minor: Added CoreSlot.name() method.
+  * fixed: VMSlot wasn't properly setting the user data, so for/in didn't
+           know it was a sequence.
+  * minor: Added first() and last() methods to VMSlot to allow iterators
+           to work.
            
 Falcon (0.9.1.4)
   * fixed: As now files and modules loads are URIs, and URI decoding was

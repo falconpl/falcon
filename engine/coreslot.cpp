@@ -213,7 +213,7 @@ void CoreSlotCarrier::setSlot( CoreSlot* cs )
       old_cs->decref();
    cs->incref();
 
-   m_user_data = cs;
+   setUserData( cs );
 }
 
 

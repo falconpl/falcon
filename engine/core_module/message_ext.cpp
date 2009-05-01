@@ -564,7 +564,33 @@ FALCON_FUNC VMSlot_getAssert( ::Falcon::VMachine *vm )
    }
 }
 
+/*#
+   @method first VMSlot
+   @brief Gets an iterator to the first subscriber.
+   @return An iterator to the first subscriber of this message slot.
+*/
+FALCON_FUNC VMSlot_first( ::Falcon::VMachine *vm )
+{
+   CoreSlot* cs = (CoreSlot*) vm->self().asObject()->getUserData();
+   Item* cc = vm->findWKI( "Iterator" );
+   fassert( cc != 0 );
+   CoreObject *oi = cc->asClass()->createInstance( cs->getIterator(false) );
+   vm->retval( oi );
+}
 
+/*#
+   @method last VMSlot
+   @brief Gets an iterator to the last subscriber.
+   @return An iterator to the last subscriber of this message slot.
+*/
+FALCON_FUNC VMSlot_last( ::Falcon::VMachine *vm )
+{
+   CoreSlot* cs = (CoreSlot*) vm->self().asObject()->getUserData();
+   Item* cc = vm->findWKI( "Iterator" );
+   fassert( cc != 0 );
+   CoreObject *oi = cc->asClass()->createInstance( cs->getIterator(true) );
+   vm->retval( oi );
+}
 }
 }
 

@@ -1111,6 +1111,8 @@ Module* core_module_init()
    self->addClassMethod( vmslot_class, "retract", &Falcon::core::VMSlot_retract );
    self->addClassMethod( vmslot_class, "getAssert", &Falcon::core::VMSlot_getAssert ).asSymbol()->
          addParam("default");
+   self->addClassMethod( vmslot_class, "first", &Falcon::core::VMSlot_first );
+   self->addClassMethod( vmslot_class, "last", &Falcon::core::VMSlot_last );
 
    //=======================================================================
    // RTL CLASSES
