@@ -1197,6 +1197,19 @@ int co_ref_compare( const Item& first, const Item& second )
    return ref.compare( second );
 }
 
+int co_clsmethod_compare( const Item& first, const Item& second )
+{
+   if ( second.isReference() )
+   {
+      return co_clsmethod_compare( first, second.asReference()->origin() );
+   }
+   else if ( second.isClassMethod() )
+   {
+      return (int)(first.asMethodFunc() - second.asMethodFunc());
+   }
+
+   return first.type() - second.type();
+}
 
 int co_method_compare( const Item& first, const Item& second )
 {
@@ -1204,9 +1217,12 @@ int co_method_compare( const Item& first, const Item& second )
    {
       return co_method_compare( first, second.asReference()->origin() );
    }
-   else if ( second.isClassMethod() || second.isMethod() )
+   else if ( second.isMethod() )
    {
-      return (int)(first.asMethodFunc() - second.asMethodFunc());
+      int cp =  first.asMethodItem().compare(second.asMethodItem());
+      if ( cp == 0 )
+         return (int)(first.asMethodFunc() - second.asMethodFunc());
+      return cp;
    }
 
    return first.type() - second.type();
@@ -2188,7 +2204,7 @@ void* ClsMethodCommOpsTable[] = {
    (void*) co_fail,
 
    // cfr
-   (void*) co_method_compare,
+   (void*) co_clsmethod_compare,
 
    // set deep
    (void*) co_fail,

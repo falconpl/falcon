@@ -167,7 +167,7 @@ FALCON_FUNC unsubscribe( ::Falcon::VMachine *vm )
 
    if( ! cs->remove( *i_handler ) )
    {
-      vm->raiseRTError( new CodeError( ErrorParam( e_param_range, __LINE__ ).extra( "unregister" ) ) );
+      vm->raiseRTError( new CodeError( ErrorParam( e_param_range, __LINE__ ).extra( "unsubscribe" ) ) );
    }
 
    if ( cs->empty() && ! cs->hasAssert() )

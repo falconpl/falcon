@@ -1,0 +1,64 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 38j
+* Category: messages
+* Subcategory: 
+* Short: Controlled unsubscription
+* Description:
+*   Check that unsubscriptions during broadcasts are working properly.
+* [/Description]
+*
+****************************************************************************/
+
+control = 0
+result = "untouched"
+
+class subscriber( id )
+   id = id
+   init
+      subscribe( "test", self.manager )
+   end
+   
+   function manager( id, coop )
+      if id == self.id
+         unsubscribe( "test", self.manager )
+         coop[self.id] = -1
+      else
+         coop[self.id] = 1
+      end
+      
+   end
+   
+end
+
+subs = []
+for i in [0:3]: subs += subscriber( i )
+
+coop = .[0 0 0]
+broadcast( "test", 1, coop )
+if coop[0] != 1: failure( "First broadcast; receival 0" ) 
+if coop[1] != -1: failure( "First broadcast; receival 1" ) 
+if coop[2] != 1: failure( "First broadcast; receival 2" ) 
+
+coop = .[0 0 0]
+broadcast( "test", 2, coop )
+if coop[0] != 1: failure( "Second broadcast; receival 0" ) 
+if coop[1] != 0: failure( "Second broadcast; receival 1" ) 
+if coop[2] != -1: failure( "Second broadcast; receival 2" ) 
+
+coop = .[0 0 0]
+broadcast( "test", 0, coop )
+if coop[0] != -1: failure( "Third broadcast; receival 0" ) 
+if coop[1] != 0: failure( "Third broadcast; receival 1" ) 
+if coop[2] != 0: failure( "Third broadcast; receival 2" ) 
+
+coop = .[0 0 0]
+broadcast( "test", 1, coop )
+if coop[0] != 0: failure( "Fourth broadcast; receival 0" ) 
+if coop[1] != 0: failure( "Fourth broadcast; receival 1" ) 
+if coop[2] != 0: failure( "Fourth broadcast; receival 2" ) 
+
+success()
+
+/* end of file */
