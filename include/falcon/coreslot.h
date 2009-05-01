@@ -72,11 +72,17 @@ public:
    bool remove( const Item &subsriber );
 
 
-   void incref() const;  // can
+   void incref() const;
    void decref();
 
+   /** Returns true if this slot is associated with an assertion. */
    bool hasAssert() const { return m_bHasAssert; }
+   
+   /** Return the asserted data. 
+      This data is meaningless if hasAssert() isn't true.
+   */
    const Item &assertion() const { return m_assertion; }
+   
    /** Sets an assertion for this slot.
       No action is taken.
    */
@@ -87,7 +93,13 @@ public:
    */
    void assert( VMachine* vm, const Item &a );
 
-   void retract() { m_bHasAssert = false; }
+   /** Retracts the assert data. 
+      This function does nothing if the slot didn't have an assertion.
+   */
+   void retract() { 
+      m_bHasAssert = false; 
+      m_assertion.setNil(); // so the GC can rip it.
+   }
 
    virtual FalconData *clone() const;
    virtual void gcMark( uint32 mark );

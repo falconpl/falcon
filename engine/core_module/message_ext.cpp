@@ -114,12 +114,15 @@ FALCON_FUNC  broadcast( ::Falcon::VMachine *vm )
    @brief Registers a callback to a message slot.
    @param msg A string with the message name on which the item should be registered.
    @param handler A callable item or instance providing callback support.
+   @optparam prio Set to true to insert this subscription in front of the subscription list.
 */
 
 FALCON_FUNC subscribe( ::Falcon::VMachine *vm )
 {
    Item *i_msg = vm->param( 0 );
    Item *i_handler = vm->param( 1 );
+   Item *i_prio = vm->param(2);
+   
    if ( i_msg == 0 || ! i_msg->isString()
         || i_handler == 0  || ! ( i_handler->isCallable() || i_handler->isComposed() ) )
    {
@@ -130,7 +133,11 @@ FALCON_FUNC subscribe( ::Falcon::VMachine *vm )
 
    String *sub = i_msg->asString();
    CoreSlot* cs = vm->getSlot( *sub, true );
-   cs->push_back( *i_handler );
+   if ( i_prio != 0 && i_prio->isTrue() )
+      cs->push_front( *i_handler );
+   else
+      cs->push_back( *i_handler );
+      
    check_assertion( vm, cs, *i_handler );
 }
 
@@ -407,11 +414,13 @@ FALCON_FUNC VMSlot_broadcast( ::Falcon::VMachine *vm )
    @method subscribe VMSlot
    @brief Registers a callback handler on this slot.
    @param handler A callable item or instance providing callback support.
+   @optparam prio Set to true to have this handler called before the previous ones.
 */
 
 FALCON_FUNC VMSlot_subscribe( ::Falcon::VMachine *vm )
 {
    Item *callback = vm->param(0);
+   Item *i_prio = vm->param(1);
    if ( callback == 0 || ! ( callback->isCallable() || callback->isComposed() ) )
    {
       vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).
@@ -420,7 +429,11 @@ FALCON_FUNC VMSlot_subscribe( ::Falcon::VMachine *vm )
    }
 
    CoreSlot* cs = (CoreSlot*) vm->self().asObject()->getUserData();
-   cs->push_back( *callback );
+   if( i_prio != 0 && i_prio->isTrue() )
+      cs->push_front( *callback );
+   else
+      cs->push_back( *callback );
+   
    check_assertion( vm, cs, *callback );
 }
 

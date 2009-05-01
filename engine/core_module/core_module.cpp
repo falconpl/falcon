@@ -1073,7 +1073,7 @@ Module* core_module_init()
    self->addExtFunc( "broadcast", &Falcon::core::broadcast )->
       addParam("msg");
    self->addExtFunc( "subscribe", &Falcon::core::subscribe )->
-      addParam("msg")->addParam("handler");
+      addParam("msg")->addParam("handler")->addParam("prio");
    self->addExtFunc( "unsubscribe", &Falcon::core::unsubscribe )->
       addParam("msg")->addParam("handler");
    self->addExtFunc( "getSlot", &Falcon::core::getSlot )->
@@ -1094,7 +1094,7 @@ Module* core_module_init()
    // methods -- the first example is equivalent to the following.
    self->addClassMethod( vmslot_class, "broadcast", &Falcon::core::VMSlot_broadcast );
    self->addClassMethod( vmslot_class, "subscribe", &Falcon::core::VMSlot_subscribe ).asSymbol()->
-         addParam("handler");
+         addParam("handler")->addParam("prio");
    self->addClassMethod( vmslot_class, "unsubscribe", &Falcon::core::VMSlot_unsubscribe ).asSymbol()->
          addParam("handler");
    self->addClassMethod( vmslot_class, "prepend", &Falcon::core::VMSlot_prepend ).asSymbol()->

@@ -1,0 +1,51 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 38jk
+* Category: messages
+* Subcategory: 
+* Short: Message priority
+* Description:
+*   Check that unsubscriptions during broadcasts are working properly.
+* [/Description]
+*
+****************************************************************************/
+
+control = 0
+result = "untouched"
+
+class subscriber( id, prio )
+   id = id
+   init
+      subscribe( "test", self.manager, prio )
+   end
+   
+   function manager( coop, block )
+      coop += self.id
+      if block: consume()
+   end
+   
+end
+
+subs = []
+subs += subscriber( 0 )
+subs += subscriber( 1 )
+subs += subscriber( 2, true )
+
+// test for unfiltered message
+coop = .[]
+broadcast( "test", coop )
+if coop.len() != 3: failure( "Cooperation on broadcast" )
+if coop[0] != 2: failure( "High priority" ) 
+if coop[1] != 0: failure( "Normal priority" ) 
+if coop[2] != 1: failure( "Low priority" ) 
+
+// test for blocked message
+coop = .[]
+broadcast( "test", coop, true )
+if coop.len() != 1: failure( "Blocking msg" )
+if coop[0] != 2: failure( "Blocker id" ) 
+
+success()
+
+/* end of file */
