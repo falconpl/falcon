@@ -310,6 +310,14 @@ public:
 
 struct SYSTH_DATA {
    pthread_t pth;
+   /** Mutex controlling detachment and termination. */
+   Mutex m_mtxT;
+   /** True when the thread is done and this data is disposeable. */
+   bool m_bDone;
+   /** Controls joinability and destruction on run exit */
+   bool m_bDetached; 
+   
+   int m_lastError;
 };
 
 /** Performs an atomic thread safe increment. */

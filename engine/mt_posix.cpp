@@ -173,6 +173,9 @@ SysThread::SysThread( Runnable* r ):
    m_runnable( r )
 {
    m_sysdata = ( struct SYSTH_DATA* ) memAlloc( sizeof( struct SYSTH_DATA ) );
+   m_sysdata->m_bDetached = false;
+   m_sysdata->m_bDone = false;
+   m_sysdata->m_lastError = 0;
 }
 
 void SysThread::attachToCurrent()
@@ -190,13 +193,60 @@ void* SysThread::RunAThread( void *data )
 
 bool SysThread::start( const ThreadParams &params )
 {
-   int ret = pthread_create( &m_sysdata->pth, NULL, &SysThread::RunAThread, this );
-   return ret == 0;
+   pthread_attr_t attr;
+
+   pthread_attr_init( &attr );
+   if( params.stackSize() != 0 )
+   {
+      if( (m_sysdata->m_lastError =  pthread_attr_setstacksize( &attr, params.stackSize() ) ) != 0 )
+      {
+         pthread_attr_destroy( &attr );
+         return false;
+      }
+   }
+
+   if ( params.detached() )
+   {
+      if( (m_sysdata->m_lastError =  pthread_attr_setdetachstate( &attr, params.detached() ? 1:0 ) ) != 0 )
+      {
+         pthread_attr_destroy( &attr );
+         return false;
+      }
+   }
+
+   // time to increment the reference count of our thread that is going to run
+   if ( (m_sysdata->m_lastError = pthread_create( &m_sysdata->pth, &attr, &SysThread::RunAThread, this ) ) != 0 )
+   {
+      pthread_attr_destroy( &attr );
+      return false;
+   }
+   
+   if ( params.detached() )
+   {
+      detach();
+   }
+
+   pthread_attr_destroy( &attr );
+   return true;
 }
 
 void SysThread::detach()
 {
-   pthread_detach( m_sysdata->pth );
+   // are we already done?
+   m_sysdata->m_mtxT.lock();
+   if ( m_sysdata->m_bDone ) 
+   {
+      m_sysdata->m_mtxT.unlock();
+      // disengage system joins and free system data.
+      pthread_detach( m_sysdata->pth );
+      // free app data.
+      delete this;
+   }
+   else {
+      // tell the run function to dispose us when done.
+      m_sysdata->m_bDetached = true;
+      m_sysdata->m_mtxT.unlock();
+   }
 }
 
 bool SysThread::join( void* &result )
@@ -230,7 +280,21 @@ bool SysThread::equal( const SysThread *th1 ) const
 void *SysThread::run()
 {
    fassert( m_runnable !=  0 );
-   return m_runnable->run();
+   void* data = m_runnable->run();
+   
+   // have we been detached in the meanwhile? -- we must dispose our data now.
+   m_sysdata->m_mtxT.lock();
+   if( m_sysdata->m_bDetached ) 
+   {
+      m_sysdata->m_mtxT.unlock();
+      delete this;
+   }
+   else {
+      m_sysdata->m_bDone = true;
+      m_sysdata->m_mtxT.unlock();
+   }
+   
+   return data;
 }
 
 }

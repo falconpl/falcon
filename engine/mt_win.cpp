@@ -36,6 +36,10 @@ SysThread::SysThread( Runnable* r ):
    // The event isactually a barrier.
    m_sysdata->hEvtDetach = CreateEvent( 0, TRUE, FALSE, 0 );
    m_sysdata->retval = 0;
+
+   m_sysdata->m_bDone = false;
+   m_sysdata->m_bDetached = false;
+   m_sysdata->m_bJoining = false;
 }
 
 void SysThread::attachToCurrent()
@@ -70,28 +74,80 @@ bool SysThread::start( const ThreadParams &params )
    m_sysdata->hThread = (HANDLE) _beginthreadex( 0, params.stackSize(), &run_a_thread, this, 0, &m_sysdata->nThreadID );
    if ( m_sysdata->hThread == INVALID_HANDLE_VALUE )
       return false;
-      
+   
+   if ( params.detached() )
+      detach();
+
    return true;
 }
 
 void SysThread::detach()
 {
-   SetEvent( m_sysdata->hEvtDetach );
+   m_sysdata->m_mtxT.lock();
+   if( m_sysdata->m_bDone )
+   {
+      // if we're done, either we or the joiner must destroy us.
+      if ( m_sysdata->m_bJoining )
+      {
+         m_sysdata->m_bDetached = true;
+         SetEvent( m_sysdata->hEvtDetach );
+         m_sysdata->m_mtxT.unlock();
+      }
+      else {
+         // this prevents joiners to succed while we destroy ourself
+         m_sysdata->m_bJoining = true;
+         m_sysdata->m_mtxT.unlock();
+         delete this;
+      }
+   }
+   else {
+      m_sysdata->m_bDetached = true;
+      SetEvent( m_sysdata->hEvtDetach );
+      m_sysdata->m_mtxT.unlock();
+   }
 }
    
 bool SysThread::join( void* &result )
 {
+   // ensure just one thread can join.
+   m_sysdata->m_mtxT.lock();
+   if ( m_sysdata->m_bJoining || m_sysdata->m_bDetached )
+   { 
+      m_sysdata->m_mtxT.unlock();
+      return false;
+   }
+   else {
+      m_sysdata->m_bJoining = true;
+      m_sysdata->m_mtxT.unlock();
+   }
+   
    HANDLE hs[] = { m_sysdata->hEvtDetach, m_sysdata->hThread };
    DWORD wres = WaitForMultipleObjects( 2, hs, FALSE, INFINITE );
    
    if ( wres == WAIT_OBJECT_0 )
    {
-      // Ok, we joined the thread.
+      // The thread was detached -- if it's also done, we must destroy it.
+      m_sysdata->m_mtxT.lock();
+      if( m_sysdata->m_bDone )
+      {
+         m_sysdata->m_mtxT.unlock();
+         delete this;
+         return false;
+      }
+      
+      m_sysdata->m_bJoining = false;
+      m_sysdata->m_mtxT.unlock();
+      return false;  // can't join anymore.
+   }
+   else if ( wres == WAIT_OBJECT_0 + 1 )
+   {
+      // Ok, we joined the thread -- and it terminated.
       result = m_sysdata->retval;
       delete this;
       return true;
    }
    
+   // wait failed.
    return false;
 }
 
@@ -119,7 +175,23 @@ bool SysThread::equal( const SysThread *th1 ) const
 void *SysThread::run()
 {
    fassert( m_runnable !=  0 );
-   return m_runnable->run();
+   m_sysdata->retval = m_runnable->run();
+   
+   // if we're detached and not joined, we must destroy ourself.
+   m_sysdata->m_mtxT.lock();
+   if( m_sysdata->m_bDetached || ! m_sysdata->m_bJoining )
+   {
+      m_sysdata->m_mtxT.unlock();
+      delete this;
+      return 0;
+   }
+   else {
+      // otherwise, just let joiners or detachers to the dirty job.
+      m_sysdata->m_bDone = true;
+      m_sysdata->m_mtxT.unlock();
+   }
+   
+   return m_sysdata->retval;
 }
 
 }

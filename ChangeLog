@@ -19,6 +19,9 @@ Falcon (0.9.1.6)
            know it was a sequence.
   * minor: Added first() and last() methods to VMSlot to allow iterators
            to work.
+  * fixed: Detach() sequence was just a draft, and didn't actually free 
+           app-side data.
+  * fixed: Respecting ThreadParams settings in POSIX thread creation.
            
 Falcon (0.9.1.4)
   * fixed: As now files and modules loads are URIs, and URI decoding was

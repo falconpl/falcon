@@ -226,6 +226,14 @@ struct SYSTH_DATA {
    unsigned nThreadID;
    HANDLE hEvtDetach;
    void *retval;
+   
+   /** Mutex controlling detachment and termination. */
+   Mutex m_mtxT;
+   /** True when the thread is done and this data is disposeable. */
+   bool m_bDone;
+   /** Controls joinability and destruction on run exit */
+   bool m_bDetached;
+   bool m_bJoining;
 };
 
 
