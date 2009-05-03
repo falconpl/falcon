@@ -166,6 +166,7 @@ bool Event::wait( int32 to )
 
 SysThread::~SysThread()
 {
+   pthread_mutex_destroy( &m_sysdata->m_mtxT );
    memFree( m_sysdata );
 }
 
@@ -176,6 +177,7 @@ SysThread::SysThread( Runnable* r ):
    m_sysdata->m_bDetached = false;
    m_sysdata->m_bDone = false;
    m_sysdata->m_lastError = 0;
+   pthread_mutex_init( &m_sysdata->m_mtxT, NULL );
 }
 
 void SysThread::attachToCurrent()
@@ -233,10 +235,10 @@ bool SysThread::start( const ThreadParams &params )
 void SysThread::detach()
 {
    // are we already done?
-   m_sysdata->m_mtxT.lock();
+   pthread_mutex_lock( &m_sysdata->m_mtxT );
    if ( m_sysdata->m_bDone ) 
    {
-      m_sysdata->m_mtxT.unlock();
+      pthread_mutex_unlock( &m_sysdata->m_mtxT );
       // disengage system joins and free system data.
       pthread_detach( m_sysdata->pth );
       // free app data.
@@ -245,7 +247,7 @@ void SysThread::detach()
    else {
       // tell the run function to dispose us when done.
       m_sysdata->m_bDetached = true;
-      m_sysdata->m_mtxT.unlock();
+      pthread_mutex_unlock( &m_sysdata->m_mtxT );
    }
 }
 
@@ -283,15 +285,15 @@ void *SysThread::run()
    void* data = m_runnable->run();
    
    // have we been detached in the meanwhile? -- we must dispose our data now.
-   m_sysdata->m_mtxT.lock();
+   pthread_mutex_lock( &m_sysdata->m_mtxT );
    if( m_sysdata->m_bDetached ) 
    {
-      m_sysdata->m_mtxT.unlock();
+      pthread_mutex_unlock( &m_sysdata->m_mtxT );
       delete this;
    }
    else {
       m_sysdata->m_bDone = true;
-      m_sysdata->m_mtxT.unlock();
+      pthread_mutex_unlock( &m_sysdata->m_mtxT );
    }
    
    return data;

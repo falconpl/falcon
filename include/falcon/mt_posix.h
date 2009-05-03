@@ -311,7 +311,7 @@ public:
 struct SYSTH_DATA {
    pthread_t pth;
    /** Mutex controlling detachment and termination. */
-   Mutex m_mtxT;
+   pthread_mutex_t m_mtxT;
    /** True when the thread is done and this data is disposeable. */
    bool m_bDone;
    /** Controls joinability and destruction on run exit */
