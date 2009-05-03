@@ -43,6 +43,8 @@ class MyThread( id, counterIn, counterDone, panel ) from Thread
       loop
          // wait for the counter
          self.wait( self.counterIn )
+         // termination condition
+         if self.panel[0] == -1: break
 
          // start counting like mad
          for i in [0:1000]
@@ -50,27 +52,39 @@ class MyThread( id, counterIn, counterDone, panel ) from Thread
             sleep( 0.001 )
          end
 
+         self.panel[ self.id ] = 0
          // don't release the counter; the main thread will.
          self.counterDone.post() // declare we're done.
-         self.panel[ self.id ] = 0
       end
    end
 end
 
 class ControlThread( panel ) from Thread
    panel = panel
+   stopreq = false
+   
+   function display()
+      for n in [0: self.panel.len()]
+         forfirst: >> "\r", strReplicate( " ", 70 ), "\r"
+         >> n, ": "
+         if self.panel[n] <= 0
+            >> "_"
+         else
+            >> self.panel[n]
+         end
+         formiddle: >> "; "
+      end 
+   end
+
    function run()
       loop
-         sleep( 0.05 )
-         for n in [0: self.panel.len()]
-            forfirst: >> "\r", strReplicate( " ", 70 ), "\r"
-            >> n, ": "
-            if self.panel[n] == 0
-               >> "_"
-            else
-               >> self.panel[n]
-            end
-            formiddle: >> "; "
+         try
+            sleep( 0.05 )
+            self.display()
+         catch InterruptedError
+            // one last cleanup display
+            self.display()
+            break
          end
       end
    end
@@ -108,6 +122,10 @@ for count in [0: threadCount]
       finished++
    end
 end
+
+// ask thread termination
+panel[0] = -1
+counterIn.post( threadCount + 1 )
 
 // avoid breaking last output
 tcnt.stop()
