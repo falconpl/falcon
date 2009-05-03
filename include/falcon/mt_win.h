@@ -91,11 +91,12 @@ public:
 
    Directly mapping to the underlying type via inline functions.
 */
-class ThreadSpecific
+class FALCON_DYN_CLASS ThreadSpecific
 {
 private:
    DWORD m_key;
    void (*m_destructor)(void*);
+   ThreadSpecific* m_nextDestructor;
 
 public:
    ThreadSpecific()
@@ -104,12 +105,8 @@ public:
       m_destructor = 0;
    }
 
-   ThreadSpecific( void (*destructor)(void*) )
-   {
-      m_key = TlsAlloc();
-      m_destructor = destructor;
-   }
-
+   ThreadSpecific( void (*destructor)(void*) );
+   
    virtual ~ThreadSpecific()
    {
       #ifndef NDEBUG
@@ -120,15 +117,9 @@ public:
       #endif
    }
 
-   void set( void *value )
-   {
-      #ifndef NDEBUG
-      BOOL res = TlsSetValue( m_key, value );
-      fassert( res );
-      #else
-      TlsSetValue( m_key, value );
-      #endif
-   }
+   ThreadSpecific* clearAndNext();
+
+   void set( void *value );
 
    void* get() const
    {

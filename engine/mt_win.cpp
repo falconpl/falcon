@@ -19,6 +19,52 @@
 
 namespace Falcon
 {
+static DWORD s_nxd = 0;
+
+//=================================================================================
+// Thread Specific destruction sequence.
+//
+
+ThreadSpecific::ThreadSpecific( void (*destructor)(void*) )
+{
+   if ( s_nxd == 0 )
+      s_nxd = TlsAlloc();
+
+   m_key = TlsAlloc();
+   m_destructor = destructor;
+}
+
+
+ThreadSpecific* ThreadSpecific::clearAndNext()
+{
+   ThreadSpecific* nextd = m_nextDestructor;
+   void* value = TlsGetValue( m_key );
+   if( value != 0 )
+      m_destructor( value );
+
+   return nextd;
+}
+
+
+void ThreadSpecific::set( void *value )
+{
+   void* data = TlsGetValue( m_key );
+
+   #ifndef NDEBUG
+   BOOL res = TlsSetValue( m_key, value );
+   fassert( res );
+   #else
+   TlsSetValue( m_key, value );
+   #endif
+
+   if( data == 0 && value != 0 && m_destructor != 0 )
+   {
+      m_nextDestructor = (ThreadSpecific*) TlsGetValue( s_nxd );
+      TlsSetValue( s_nxd, this );
+   }
+}
+
+
 //==================================================================================
 // System threads. 
 //
@@ -65,7 +111,16 @@ extern "C" {
 void* SysThread::RunAThread( void *data )
 {
    SysThread* sth = (SysThread*) data;
-   return sth->run();
+   void* ret = sth->run();
+
+   // fire the destruction sequence
+   ThreadSpecific* tdnext = (ThreadSpecific *) TlsGetValue( s_nxd );
+   while( tdnext != 0 )
+   {
+      tdnext = tdnext->clearAndNext();
+   }
+   
+   return ret;
 }
 
 
@@ -175,15 +230,15 @@ bool SysThread::equal( const SysThread *th1 ) const
 void *SysThread::run()
 {
    fassert( m_runnable !=  0 );
-   m_sysdata->retval = m_runnable->run();
-   
+   void* data = m_runnable->run();
+   m_sysdata->retval = data;
+
    // if we're detached and not joined, we must destroy ourself.
    EnterCriticalSection( &m_sysdata->m_csT );
-   if( m_sysdata->m_bDetached || ! m_sysdata->m_bJoining )
+   if( m_sysdata->m_bDetached && (! m_sysdata->m_bJoining) )
    {
       LeaveCriticalSection( &m_sysdata->m_csT );
       delete this;
-      return 0;
    }
    else {
       // otherwise, just let joiners or detachers to the dirty job.
@@ -191,7 +246,7 @@ void *SysThread::run()
       LeaveCriticalSection( &m_sysdata->m_csT );
    }
    
-   return m_sysdata->retval;
+   return data;
 }
 
 }
