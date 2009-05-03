@@ -228,7 +228,8 @@ struct SYSTH_DATA {
    void *retval;
    
    /** Mutex controlling detachment and termination. */
-   Mutex m_mtxT;
+   CRITICAL_SECTION m_csT;
+
    /** True when the thread is done and this data is disposeable. */
    bool m_bDone;
    /** Controls joinability and destruction on run exit */

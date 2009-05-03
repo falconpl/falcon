@@ -26,6 +26,7 @@ namespace Falcon
 SysThread::~SysThread() 
 {
    CloseHandle( m_sysdata->hEvtDetach );
+   DeleteCriticalSection( &m_sysdata->m_csT );
    memFree( m_sysdata );
 }
 
@@ -40,6 +41,7 @@ SysThread::SysThread( Runnable* r ):
    m_sysdata->m_bDone = false;
    m_sysdata->m_bDetached = false;
    m_sysdata->m_bJoining = false;
+   InitializeCriticalSection( &m_sysdata->m_csT );
 }
 
 void SysThread::attachToCurrent()
@@ -58,14 +60,7 @@ extern "C" {
 void* SysThread::RunAThread( void *data )
 {
    SysThread* sth = (SysThread*) data;
-   void* retval = sth->run();
-   // If the thread is detached, we got to destroy it.
-   if ( WaitForSingleObject( sth->sysdata()->hEvtDetach, 0 ) == WAIT_OBJECT_0 )
-      delete sth;
-   else
-      sth->sysdata()->retval = retval;
-  
-   return retval;
+   return sth->run();
 }
 
 
@@ -83,7 +78,7 @@ bool SysThread::start( const ThreadParams &params )
 
 void SysThread::detach()
 {
-   m_sysdata->m_mtxT.lock();
+   EnterCriticalSection( &m_sysdata->m_csT );
    if( m_sysdata->m_bDone )
    {
       // if we're done, either we or the joiner must destroy us.
@@ -91,34 +86,34 @@ void SysThread::detach()
       {
          m_sysdata->m_bDetached = true;
          SetEvent( m_sysdata->hEvtDetach );
-         m_sysdata->m_mtxT.unlock();
+         LeaveCriticalSection( &m_sysdata->m_csT );
       }
       else {
          // this prevents joiners to succed while we destroy ourself
          m_sysdata->m_bJoining = true;
-         m_sysdata->m_mtxT.unlock();
+         LeaveCriticalSection( &m_sysdata->m_csT );
          delete this;
       }
    }
    else {
       m_sysdata->m_bDetached = true;
       SetEvent( m_sysdata->hEvtDetach );
-      m_sysdata->m_mtxT.unlock();
+      LeaveCriticalSection( &m_sysdata->m_csT );
    }
 }
    
 bool SysThread::join( void* &result )
 {
    // ensure just one thread can join.
-   m_sysdata->m_mtxT.lock();
+   EnterCriticalSection( &m_sysdata->m_csT );
    if ( m_sysdata->m_bJoining || m_sysdata->m_bDetached )
    { 
-      m_sysdata->m_mtxT.unlock();
+      LeaveCriticalSection( &m_sysdata->m_csT );
       return false;
    }
    else {
       m_sysdata->m_bJoining = true;
-      m_sysdata->m_mtxT.unlock();
+      LeaveCriticalSection( &m_sysdata->m_csT );
    }
    
    HANDLE hs[] = { m_sysdata->hEvtDetach, m_sysdata->hThread };
@@ -127,16 +122,16 @@ bool SysThread::join( void* &result )
    if ( wres == WAIT_OBJECT_0 )
    {
       // The thread was detached -- if it's also done, we must destroy it.
-      m_sysdata->m_mtxT.lock();
+      EnterCriticalSection( &m_sysdata->m_csT );
       if( m_sysdata->m_bDone )
       {
-         m_sysdata->m_mtxT.unlock();
+         LeaveCriticalSection( &m_sysdata->m_csT );
          delete this;
          return false;
       }
       
       m_sysdata->m_bJoining = false;
-      m_sysdata->m_mtxT.unlock();
+      LeaveCriticalSection( &m_sysdata->m_csT );
       return false;  // can't join anymore.
    }
    else if ( wres == WAIT_OBJECT_0 + 1 )
@@ -178,17 +173,17 @@ void *SysThread::run()
    m_sysdata->retval = m_runnable->run();
    
    // if we're detached and not joined, we must destroy ourself.
-   m_sysdata->m_mtxT.lock();
+   EnterCriticalSection( &m_sysdata->m_csT );
    if( m_sysdata->m_bDetached || ! m_sysdata->m_bJoining )
    {
-      m_sysdata->m_mtxT.unlock();
+      LeaveCriticalSection( &m_sysdata->m_csT );
       delete this;
       return 0;
    }
    else {
       // otherwise, just let joiners or detachers to the dirty job.
       m_sysdata->m_bDone = true;
-      m_sysdata->m_mtxT.unlock();
+      LeaveCriticalSection( &m_sysdata->m_csT );
    }
    
    return m_sysdata->retval;
