@@ -453,9 +453,6 @@ FALCON_MODULE_DECL
    //
    //self->publishService( &the_service );
 
-   // THIS MODULE SHALL NOT BE RELEASED for now.
-   self->incref();
-
    return self;
 }
 

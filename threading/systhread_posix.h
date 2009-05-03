@@ -26,7 +26,7 @@
 namespace Falcon {
 namespace Ext {
 
-class POSIX_THI_DATA
+class POSIX_THI_DATA: public BaseAlloc
 {
 public:
    POSIX_THI_DATA();
@@ -44,7 +44,7 @@ public:
    The signal/broadcast implementation of WaiterProvider will
    use this class to wake up the correct threads.
 */
-class POSIX_WAITABLE
+class POSIX_WAITABLE: public BaseAlloc
 {
 
 public:

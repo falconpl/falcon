@@ -35,17 +35,16 @@ class ThreadImpl: public Runnable, public BaseAlloc
 {
 protected:
    int m_nRefCount;
-   int m_nSelfCount;
+   SysThread* m_sth;
+   ThreadStatus m_thstatus;
    
    void* m_sysData;
-   ThreadStatus m_thstatus;
    
    VMachine *m_vm;
    Error *m_lastError;
    Item m_threadInstance;
    Item m_method;
    
-   SysThread* m_sth;
    int m_id;
    String m_name;
    
@@ -80,7 +79,9 @@ public:
       return WaitableProvider::waitForObjects( this, count, objects, time ); 
    }
 
+   bool join();
    bool detach();
+   void disengage() { m_sth->disengage(); }
    int getID() const { return m_id; }
    /** Return the name set for this thread. */
    const String& name() const { return m_name; }

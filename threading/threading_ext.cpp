@@ -21,6 +21,7 @@
 #include <falcon/autocstring.h>
 #include <falcon/stringstream.h>
 #include <falcon/rosstream.h>
+#include <falcon/garbagepointer.h>
 
 #include "threading_ext.h"
 #include "threading_mod.h"
@@ -29,7 +30,17 @@
 namespace Falcon {
 namespace Ext {
 
-ThreadImpl* checkMainThread( VMachine* vm )
+static void onMainOver( VMachine* vm )
+{
+   ThreadImpl* impl = getRunningThread();
+   if ( impl != 0 )
+   {
+      impl->disengage();
+      setRunningThread(0);
+   }
+}
+
+static ThreadImpl* checkMainThread( VMachine* vm )
 {
    ThreadImpl* self_th = getRunningThread();
    
@@ -38,6 +49,8 @@ ThreadImpl* checkMainThread( VMachine* vm )
       self_th = new ThreadImpl( vm );
       self_th->name( "__main__" );
       setRunningThread( self_th );
+      vm->setFinalizeCallback( &onMainOver );
+      self_th->decref();
    }
    return self_th;
 }
@@ -914,8 +927,8 @@ FALCON_FUNC Thread_join( VMachine *vm )
          return;
       }
    }
-
-   // we have the thread acquired in terminated status. Read its output values.
+   
+   // Read its output values.
    if ( th->hadError() )
    {
       //th->exitError()->incref();
