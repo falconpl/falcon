@@ -186,6 +186,7 @@ void *ThreadImpl::run()
    m_vm->finalize();  // and we won't use it anymore
    
    m_thstatus.terminated();
+
    return 0;
 }
 
