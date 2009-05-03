@@ -31,58 +31,9 @@
 #endif
 
 namespace Falcon {
-namespace Sys {
+namespace Ext {
 
-typedef int (*threadRoutine)( void *param );
-class ThreadParams;
-class Thread;
-class Waitable;
-class SystemData;
-
-/** System dependent thread provider.
-   This class is actually a collection of static routines that are
-   declared as "friend" of the base class Thread.
-*/
-class ThreadProvider
-{
-public:
-   static void initSys();
-   static void init( Thread *runner );
-   static void configure( Thread *runner, SystemData &sdt );
-   static bool start( Thread *runner, const ThreadParams &params );
-   static bool stop( Thread *runner );
-   static void interruptWaits( Thread *th );
-   static bool detach( Thread *runner );
-   static void destroy( Thread *runner );
-   static uint64 getID( const Thread *runner );
-   static uint64 getCurrentID();
-   static bool equal( const Thread *th1, const Thread *th2 );
-   static bool isCurrentThread( const Thread *runner );
-   static int waitForObjects( const Thread *runner, int32 count, Waitable **objects, int64 time );
-   static void wakeUp( Thread *runner, Waitable *object );
-   static Thread *getRunningThread();
-   static void setRunningThread( Thread *th );
-};
-
-
-class Mutex;
-
-/** System dependent mutex provider.
-   This class is actually a collection of static routines that are
-   declared as "friend" of the base class Mutex.
-*/
-class MutexProvider
-{
-public:
-   static void init( Mutex *mtx, long spincount );
-   static void destroy( Mutex *mtx );
-
-   static bool trylock( Mutex *mtx );
-   static void lock( Mutex *mtx );
-   static void unlock( Mutex *mtx );
-};
-
-
+class ThreadImpl;
 class Waitable;
 
 class WaitableProvider
@@ -96,7 +47,16 @@ public:
    static void lock( Waitable *wo );
    static bool acquireInternal( Waitable *wo );
    static void unlock( Waitable *wo );
+
+   static void interruptWaits( ThreadImpl *runner );
+   static int waitForObjects( const ThreadImpl *runner, int32 count, Waitable **objects, int64 time );
 };
+
+/** Return threading module system specific data. */
+void* createSysData();
+
+/** Dispose threading module system specific data. */
+void disposeSysData( void *data );
 
 }
 }

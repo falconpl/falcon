@@ -24,18 +24,13 @@
 #include <pthread.h>
 
 namespace Falcon {
-namespace Sys {
+namespace Ext {
 
-
-
-class POSIX_TH
+class POSIX_THI_DATA
 {
 public:
-   POSIX_TH();
-   ~POSIX_TH();
-
-   pthread_t thID;
-   int lastError;
+   POSIX_THI_DATA();
+   ~POSIX_THI_DATA();
 
    pthread_cond_t m_condSignaled;
    pthread_mutex_t m_mtx;
@@ -63,8 +58,8 @@ public:
       If successful returns true, if unsusccesful the thread is put in
       wait and will be signaled when the resource can be acquired.
    */
-   bool waitOnThis( POSIX_TH *th );
-   void cancelWait( POSIX_TH *th );
+   bool waitOnThis( POSIX_THI_DATA *th );
+   void cancelWait( POSIX_THI_DATA *th );
 };
 
 }

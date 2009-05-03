@@ -24,12 +24,12 @@
 #include <falcon/basealloc.h>
 #include <falcon/genericlist.h>
 #include <falcon/memory.h>
-#include <mt.h>
+#include <waitable.h>
 
 #include <systhread.h>
 
 namespace Falcon {
-namespace Sys {
+namespace Ext {
 
 void Waitable::incref()
 {
@@ -399,7 +399,7 @@ bool ThreadStatus::startable()
    bool bStatus;
 
    m_mtx.lock();
-   if( ! m_bDetached && ! m_bStarted && m_acquiredCount == 0 )
+   if( (! m_bDetached) && (! m_bStarted) && m_acquiredCount == 0 )
    {
       m_bTerminated = false;
       m_bStarted = true;
@@ -581,51 +581,6 @@ uint32 SyncQueue::size() const
    uint32 nSize = m_items.empty();
    m_mtx.unlock();
    return nSize;
-}
-
-
-//========================================================
-// Thread
-//
-
-// destructor.
-Thread::~Thread()
-{
-   bool bDetach;
-
-   // detach this thread; if it's terminated, it will be re-claimed
-   m_mtx.lock();
-   if( ! m_bDetached )
-   {
-      bDetach = true;
-      m_bDetached = true;
-   }
-   else
-      bDetach = false;
-   m_mtx.unlock();
-
-   if ( bDetach )
-      ThreadProvider::detach( this );
-   // else, it was already detached
-
-   ThreadProvider::destroy( this );
-}
-
-void Thread::incref()
-{
-   m_mtx.lock();
-   m_nRefCount++;
-   m_mtx.unlock();
-}
-
-void Thread::decref()
-{
-   m_mtx.lock();
-   bool del = m_nRefCount-- == 1;
-   m_mtx.unlock();
-
-   if ( del )
-      delete this;
 }
 
 }

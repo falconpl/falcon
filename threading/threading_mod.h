@@ -25,31 +25,65 @@
 #include <falcon/item.h>
 #include <falcon/error.h>
 #include <falcon/vm.h>
-#include <mt.h>
+#include <falcon/mt.h>
+#include <waitable.h>
 
 namespace Falcon {
 namespace Ext{
 
-//======================================================
-//
-
-/** This is the class that will run the target thread.
-*/
-class VMRunnerThread: public ::Falcon::Sys::Thread
+class ThreadImpl: public Runnable, public BaseAlloc
 {
+protected:
+   int m_nRefCount;
+   int m_nSelfCount;
+   
+   void* m_sysData;
+   ThreadStatus m_thstatus;
+   
    VMachine *m_vm;
+   Error *m_lastError;
    Item m_threadInstance;
    Item m_method;
-   Error *m_lastError;
+   
+   SysThread* m_sth;
 
-   ~VMRunnerThread();
 public:
-
-   /** Creates the VM thread -- and an empty VM. */
-   VMRunnerThread();
-
+   ThreadImpl();
+   virtual ~ThreadImpl();
+   
    /** Adopt a running VM in a threading shell. */
-   VMRunnerThread( VMachine *vm );
+   ThreadImpl( VMachine *vm );
+   
+   bool startable() { return m_thstatus.startable(); }
+   bool isTerminated() const { return m_thstatus.isTerminated(); }
+   bool isDetached() const { return m_thstatus.isDetached(); }
+   bool acquire() { return m_thstatus.acquire(); }
+   void release() { m_thstatus.release(); }
+   
+   bool start( const ThreadParams &params );
+   bool start() { return start( ThreadParams() ); }
+   void interruptWaits()
+   {
+      return WaitableProvider::interruptWaits( this );
+   }
+   
+   /** Wait for objects to be signaled.
+      This is relatively similar to the MS-SDK WaitForMultipleObjects() function, but
+      it uses posix cancelation semantics and its bound to the thread where the wait
+      is performed.
+   */
+   int waitForObjects( int32 count, Waitable **objects, int64 time=-1 )
+   { 
+      return WaitableProvider::waitForObjects( this, count, objects, time ); 
+   }
+
+   bool detach();
+   uint64 getID() const { return m_sth->getID(); }
+   bool equal( const ThreadImpl &other ) const { return m_sth->equal( other.m_sth ); }
+   bool isCurrentThread() const { return m_sth->isCurrentThread(); }
+
+   void incref();
+   void decref();
 
 
    /** Prepare the running instance.
@@ -71,13 +105,18 @@ public:
    */
    void prepareThreadInstance( const Item &instance, const Item &method );
 
+   virtual void *run();
+
    const VMachine &vm() const { return *m_vm; }
    VMachine &vm() { return *m_vm; }
-   virtual void *run();
+   
 
    bool hadError() const { return m_lastError != 0; }
    Error* exitError() const { return m_lastError; }
+   void* sysData() const { return m_sysData; }
+   ThreadStatus &status() { return m_thstatus; }
 };
+
 
 //======================================================
 //
@@ -85,32 +124,35 @@ public:
 class WaitableCarrier: public FalconData
 {
 protected:
-   ::Falcon::Sys::Waitable *m_wto;
+   Waitable *m_wto;
 
 public:
-   WaitableCarrier( ::Falcon::Sys::Waitable *t );
+   WaitableCarrier( Waitable *t );
    WaitableCarrier( const WaitableCarrier &other );
    virtual ~WaitableCarrier();
    virtual FalconData *clone() const;
    virtual void gcMark( ::Falcon::uint32  ) {}
 
-   ::Falcon::Sys::Waitable *waitable() const { return m_wto; }
+   Waitable *waitable() const { return m_wto; }
 };
 
 //======================================================
 //
 
-class ThreadCarrier: public WaitableCarrier
+class ThreadCarrier: public FalconData
 {
-
+protected:
+   ThreadImpl* m_thi;
+   
 public:
-   ThreadCarrier( VMRunnerThread *t );
+   ThreadCarrier( ThreadImpl *t );
    ThreadCarrier( const ThreadCarrier &other );
 
    virtual ~ThreadCarrier();
    virtual FalconData *clone() const;
+   virtual void gcMark( ::Falcon::uint32  ) {}
 
-   VMRunnerThread *thread() const { return static_cast<VMRunnerThread *>(m_wto); }
+   ThreadImpl *thread() const { return m_thi; }
    const VMachine &vm() const { return thread()->vm(); }
    VMachine &vm() { return thread()->vm(); }
 };
@@ -146,6 +188,12 @@ public:
       {}
 };
 
+//======================================================
+// Service functions:
+// 
+
+extern void setRunningThread( ThreadImpl* th );
+extern ThreadImpl* getRunningThread();
 
 }
 }

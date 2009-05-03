@@ -23,7 +23,7 @@ ENDIF(UNIX OR MAC)
 
 # Target
 ADD_LIBRARY( threading_fm MODULE
-   mt.cpp
+   waitable.cpp
    threading.cpp
    threading_ext.cpp
    threading_mod.cpp

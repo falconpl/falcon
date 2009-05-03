@@ -103,7 +103,6 @@ WIN_TH::WIN_TH( HANDLE canc )
 {
    hth = INVALID_HANDLE_VALUE;
    thID = 0;
-   eCancel = canc; 
    lastError = 0;
 }
 
@@ -197,14 +196,6 @@ void ThreadProvider::setRunningThread( Thread *th )
    ((WIN_TH *)th->m_sysData)->thID = GetCurrentThreadId();
    ((WIN_TH *)th->m_sysData)->hth = GetCurrentThread();
    th->m_mtx.unlock();
-}
-
-bool ThreadProvider::stop( Thread *runner )
-{
-   // Currently not used.
-   WIN_TH *wth = (WIN_TH *) runner->m_sysData;
-   SetEvent( wth->eCancel );
-   return true;
 }
 
 

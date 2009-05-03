@@ -27,23 +27,42 @@
 namespace Falcon {
 namespace Ext {
 
+static void vmthread_killer( void *vmt ) 
+{
+   // todo
+}
+
+static ThreadSpecific m_curthread( vmthread_killer );
+
+void setRunningThread( ThreadImpl* th )
+{
+   m_curthread.set( th );
+}
+
+ThreadImpl* getRunningThread()
+{
+   return static_cast<ThreadImpl*>( m_curthread.get() );
+}
 
 //========================================================
 // Thread carrier
 //
 
-ThreadCarrier::ThreadCarrier( VMRunnerThread *t ):
-   WaitableCarrier( t )
+ThreadCarrier::ThreadCarrier( ThreadImpl *t ):
+   m_thi( t )
 {
 }
 
 ThreadCarrier::ThreadCarrier( const ThreadCarrier &other ):
-   WaitableCarrier( other )
+   m_thi( other.m_thi )
 {
+   m_thi->incref();
 }
 
 ThreadCarrier::~ThreadCarrier()
-{}
+{
+   m_thi->decref();
+}
 
 
 FalconData *ThreadCarrier::clone() const
@@ -55,32 +74,54 @@ FalconData *ThreadCarrier::clone() const
 // VMRunner thread
 //
 
-VMRunnerThread::VMRunnerThread():
+
+ThreadImpl::ThreadImpl():
+   m_nRefCount(1),
    m_vm( new VMachine ),
-   m_lastError( 0 )
+   m_lastError( 0 ),
+   m_sth(0)
 {
    // remove the error handler
    m_vm->launchAtLink( false );
-
-   // configure through system data
-   Sys::ThreadProvider::configure( this, m_vm->systemData() );
+   
+   m_sysData = createSysData();
 }
 
-VMRunnerThread::VMRunnerThread( VMachine *vm ):
+ThreadImpl::ThreadImpl( VMachine *vm ):
+   m_nRefCount(1),
    m_vm( vm ),
-   m_lastError( 0 )
+   m_lastError( 0 ),
+   m_sth(0)
 {
    m_vm->incref();
    m_vm->launchAtLink( false );
-   m_bStarted = true; // an adopted VM is running.
+   m_thstatus.startable(); // an adopted VM is running.
+   m_sth = new SysThread;
+   m_sth->attachToCurrent();
+   
+   m_sysData = createSysData();
 }
 
-VMRunnerThread::~VMRunnerThread()
+ThreadImpl::~ThreadImpl()
 {
+   // don't delete sth; it has been disposed by detach or join.
    m_vm->decref();
+   disposeSysData( m_sysData );
 }
 
-void VMRunnerThread::prepareThreadInstance( const Item &instance, const Item &method )
+void ThreadImpl::incref()
+{
+   atomicInc( m_nRefCount );
+}
+
+void ThreadImpl::decref()
+{
+   if ( atomicDec( m_nRefCount ) == 0 )
+      delete this;
+}
+
+
+void ThreadImpl::prepareThreadInstance( const Item &instance, const Item &method )
 {
    // create the instance of the method for faster identify
    // The caller should have already certified that the instance has a "run" method
@@ -90,7 +131,7 @@ void VMRunnerThread::prepareThreadInstance( const Item &instance, const Item &me
 }
 
 
-void *VMRunnerThread::run()
+void *ThreadImpl::run()
 {
    m_vm->incref();
    // hold a lock to the item, as it cannot be taken in the vm.
@@ -111,15 +152,36 @@ void *VMRunnerThread::run()
    m_vm->unlock( tiLock );
    m_vm->unlock( mthLock );
    m_vm->finalize();  // and we won't use it anymore
-
+   
+   m_thstatus.terminated();
    return 0;
+}
+
+
+bool ThreadImpl::start( const ThreadParams &params )
+{
+   // never call this before startable... so.
+   fassert( m_sth == 0 );
+   m_sth = new SysThread(this);
+   return m_sth->start( params );
+}
+
+bool ThreadImpl::detach()
+{
+   if( m_thstatus.detach() )
+   {
+      m_sth->detach();
+      return true;
+   }
+   
+   return false;
 }
 
 //=========================================================
 // WaitableCarrier
 //
 
-WaitableCarrier::WaitableCarrier( ::Falcon::Sys::Waitable *t ):
+WaitableCarrier::WaitableCarrier( Waitable *t ):
    m_wto( t )
 {
    t->incref();

@@ -331,9 +331,6 @@ FALCON_MODULE_DECL
 {
    #define FALCON_DECLARE_MODULE self
 
-   // initialize threading system
-   Falcon::Sys::ThreadProvider::initSys();
-
    Falcon::Module *self = new Falcon::Module();
    self->name( "threading" );
    self->language( "en_US" );

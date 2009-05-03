@@ -19,14 +19,15 @@
    Mutexes, condition variables and threads. Very basic things.
 */
 
-#ifndef FLC_MT_H
-#define FLC_MT_H
+#ifndef FLC_WAITABLE_H
+#define FLC_WAITABLE_H
 
 #include <falcon/setup.h>
 #include <falcon/types.h>
 #include <falcon/basealloc.h>
 #include <falcon/genericlist.h>
 #include <falcon/error.h>
+#include <falcon/mt.h>
 
 #include <systhread.h>
 
@@ -34,23 +35,8 @@ namespace Falcon {
 
 class Item;
 
-namespace Sys {
+namespace Ext {
 
-typedef int (*threadRoutine)( void *param );
-
-class Mutex: public BaseAlloc
-{
-   friend class MutexProvider;
-   void *m_sysData;
-
-public:
-   Mutex( long spincount = 0 ) { MutexProvider::init( this, spincount); }
-   ~Mutex() { MutexProvider::destroy( this ); }
-
-   void lock() { MutexProvider::lock( this ); }
-   void unlock() { MutexProvider::unlock( this ); }
-   bool trylock() { return MutexProvider::trylock( this ); }
-};
 
 /** Waiter class
    This class waits for something to happen...
@@ -219,93 +205,6 @@ public:
    /** Turn the status in terminated, removing the started status. */
    bool terminated();
 };
-
-//*****************************************
-// Thread initialization parameters
-//
-
-class ThreadParams: public BaseAlloc
-{
-   uint32 m_stackSize;
-   bool m_bDetached;
-
-public:
-   ThreadParams():
-      m_stackSize(0),
-      m_bDetached( false )
-   {}
-
-   ThreadParams &stackSize( uint32 size ) { m_stackSize = size; return *this; }
-   ThreadParams &detached( bool setting ) { m_bDetached = setting; return *this; }
-
-   uint32 stackSize() const { return m_stackSize; }
-   bool detached() const { return m_bDetached; }
-};
-
-
-/** Thread base class.
-   Derive your thread class from this one and overload the run() method to
-   have Falcon engine multiplatform threading support.
-
-   All the functionalities of this class are provided by ThreadProvider;
-   the vast majority of the calls in this class are a direct inline
-   shortcut to the ThreadProvider, that will provide system-dependent threading.
-*/
-class Thread: public ThreadStatus
-{
-   friend class ThreadProvider;
-
-protected:
-   int m_nRefCount;
-   void *m_sysData;
-
-   Thread():
-      m_nRefCount( 1 )
-   { ThreadProvider::init( this ); }
-
-public:
-   virtual ~Thread();
-
-   bool start( const ThreadParams &params ) { return ThreadProvider::start( this, params ); }
-   bool start() { return ThreadProvider::start( this, ThreadParams() ); }
-   bool stop() { return ThreadProvider::stop( this ); }
-   void interruptWaits() { ThreadProvider::interruptWaits( this ); }
-
-   /** Warning; this is not a virtual method, it's just an override for this class. */
-   bool detach() {
-      if ( ThreadStatus::detach() )
-      {
-         ThreadProvider::detach( this );
-         return true;
-      }
-      return false;
-   }
-
-   uint64 getID() const { return ThreadProvider::getID( this ); }
-   static uint64 getCurrentID() { return ThreadProvider::getCurrentID(); }
-   bool equal( const Thread &other ) const { return ThreadProvider::equal( this, &other ); }
-   bool isCurrentThread() const { return ThreadProvider::isCurrentThread( this ); }
-
-   /** Wait for objects to be signaled.
-      This is relatively similar to the MS-SDK WaitForMultipleObjects() function, but
-      it uses posix cancelation semantics and its bound to the thread where the wait
-      is performed.
-   */
-   int waitForObjects( int32 count, Waitable **objects, int64 time=-1 )
-   {
-      return ThreadProvider::waitForObjects( this, count, objects, time );
-   }
-
-   void wakeUp( Waitable *object ) { ThreadProvider::wakeUp( this, object ); }
-
-   void incref();
-   void decref();
-
-   virtual void *run()=0;
-};
-
-
-
 
 }
 }

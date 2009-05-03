@@ -29,6 +29,8 @@
 namespace Falcon {
 namespace Ext {
 
+
+
 /*#
    @group waiting_funcs Waitings
    @brief Wating functions and methods.
@@ -130,7 +132,7 @@ FALCON_FUNC Thread_init( VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
    // setup the thread instance
-   self->setUserData( new ThreadCarrier( new VMRunnerThread ) );
+   self->setUserData( new ThreadCarrier( new ThreadImpl ) );
 }
 
 /*#
@@ -170,7 +172,7 @@ FALCON_FUNC Thread_init( VMachine *vm )
 FALCON_FUNC Thread_start( VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
-   VMRunnerThread *thread = static_cast<ThreadCarrier *>( self->getUserData() )->thread();
+   ThreadImpl *thread = static_cast<ThreadCarrier *>( self->getUserData() )->thread();
 
    // Require this instance to provide a runnable method
    Item i_run;
@@ -249,7 +251,7 @@ FALCON_FUNC Thread_start( VMachine *vm )
 FALCON_FUNC Thread_stop( VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
-   VMRunnerThread *thread = static_cast<ThreadCarrier *>( self->getUserData() )->thread();
+   ThreadImpl *thread = static_cast<ThreadCarrier *>( self->getUserData() )->thread();
    thread->vm().interrupt();
    thread->interruptWaits();
 }
@@ -289,7 +291,7 @@ FALCON_FUNC Thread_stop( VMachine *vm )
 FALCON_FUNC Thread_detach( VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
-   VMRunnerThread *th = static_cast<ThreadCarrier *>( self->getUserData() )->thread();
+   ThreadImpl *th = static_cast<ThreadCarrier *>( self->getUserData() )->thread();
 
    // declare this thread data is free
    if( ! th->detach() )
@@ -302,10 +304,10 @@ FALCON_FUNC Thread_detach( VMachine *vm )
    }
 }
 
-static void internal_thread_wait_array( VMachine *vm, VMRunnerThread *thread )
+static void internal_thread_wait_array( VMachine *vm, ThreadImpl *thread )
 {
    // threadWait applied to arrays
-   ::Falcon::Sys::Waitable *waited[ MAX_WAITER_OBJECTS ];
+   Waitable *waited[ MAX_WAITER_OBJECTS ];
 
    Item *i_array = vm->param(0);
    Item *i_timeout = vm->param(1);
@@ -330,16 +332,25 @@ static void internal_thread_wait_array( VMachine *vm, VMRunnerThread *thread )
    uint32 objId;
    for( objId = 0; objId < items.length(); objId++ )
    {
-      if ( ! items[objId].dereference()->isObject() ||
-           ! items[objId].dereference()->asObject()->derivedFrom( "Waitable" ) )
+      if ( items[objId].dereference()->isObject() )
       {
-         vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-            extra( ".. Waitable ..|A, [N]" ) ) );
-         return;
+         CoreObject* obj = items[objId].dereference()->asObjectSafe();
+         
+         if ( obj->derivedFrom( "Thread" ) )
+         {
+            waited[ objId ] = &static_cast< ThreadCarrier *>( obj->getUserData() )->thread()->status();
+            continue;
+         }
+         
+         if ( obj->derivedFrom( "Waitable" ) )
+         {
+            waited[ objId ] = static_cast< WaitableCarrier *>( obj->getUserData() )->waitable();
+            continue;
+         }
       }
-      else
-         waited[ objId ] = static_cast< WaitableCarrier *>( items[objId].dereference()->asObject()->getUserData() )->
-            waitable();
+      
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( ".. Waitable ..|A, [N]" ) );
    }
 
    int64 res = thread->waitForObjects( objId, waited, microsecs );
@@ -350,7 +361,7 @@ static void internal_thread_wait_array( VMachine *vm, VMRunnerThread *thread )
       vm->retval( res );
 }
 
-static void internal_thread_wait( VMachine *vm, VMRunnerThread *thread )
+static void internal_thread_wait( VMachine *vm, ThreadImpl *thread )
 {
    int pcount = vm->paramCount();
    if( pcount == 0 )
@@ -367,21 +378,35 @@ static void internal_thread_wait( VMachine *vm, VMRunnerThread *thread )
       return;
    }
 
-   ::Falcon::Sys::Waitable *waited[ MAX_WAITER_OBJECTS ];
+   Waitable *waited[ MAX_WAITER_OBJECTS ];
 
    // parameter check
    int objId;
    for( objId = 0; objId < pcount - 1; objId++ )
    {
-      if ( !vm->param(objId)->isObject() || ! vm->param(objId)->asObject()->derivedFrom( "Waitable" ) )
+      Item* param = vm->param(objId);
+      
+      if ( param->isObject() )
       {
-         vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-            extra( ".. Waitable ..|A, [N]" ) ) );
-         return;
+         CoreObject* obj = param->asObjectSafe();
+         
+         if ( obj->derivedFrom( "Thread" ) )
+         {
+            waited[ objId ] = &static_cast< ThreadCarrier *>( obj->getUserData() )
+               ->thread()->status();
+            continue;
+         }
+         
+         if ( obj->derivedFrom( "Waitable" ) )
+         {
+            waited[ objId ] = static_cast< WaitableCarrier *>( obj->getUserData() )->
+               waitable();
+            continue;
+         }
       }
-      else
-         waited[ objId ] = static_cast< WaitableCarrier *>( vm->param(objId)->asObject()->getUserData() )->
-            waitable();
+      
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( ".. Waitable ..|A, [N]" ) );
    }
 
    int64 microsecs;
@@ -392,15 +417,31 @@ static void internal_thread_wait( VMachine *vm, VMRunnerThread *thread )
    }
    else {
       microsecs = -1; // infinite wait
-      if ( !vm->param(objId)->isObject() || ! vm->param(objId)->asObject()->derivedFrom( "Waitable" ) )
+      bool bDone = false;
+      Item* param = vm->param( objId );
+      
+      if ( param->isObject() )
       {
-         vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-            extra( ".. Waitable .., [N]" ) ) );
-         return;
+         CoreObject* obj = param->asObjectSafe();
+         
+         if ( obj->derivedFrom( "Thread" ) )
+         {
+            waited[ objId ] = &static_cast< ThreadCarrier *>( obj->getUserData() )
+               ->thread()->status();
+            bDone = true;
+         }
+         else if ( obj->derivedFrom( "Waitable" ) )
+         {
+            waited[ objId ] = static_cast< WaitableCarrier *>( obj->getUserData() )->
+               waitable();
+            bDone = true;
+         }
       }
+      
+      if ( ! bDone )
+         throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+            extra( ".. Waitable ..|A, [N]" ) );
 
-      waited[ objId ] = static_cast< WaitableCarrier *>( vm->param(objId)->asObject()->getUserData() )->
-            waitable();
       objId++;
    }
 
@@ -437,7 +478,7 @@ static void internal_thread_wait( VMachine *vm, VMRunnerThread *thread )
 FALCON_FUNC Thread_vwait( VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
-   VMRunnerThread *thread = static_cast<ThreadCarrier *>( self->getUserData() )->thread();
+   ThreadImpl *thread = static_cast<ThreadCarrier *>( self->getUserData() )->thread();
 
    internal_thread_wait_array( vm, thread );
 }
@@ -514,7 +555,7 @@ FALCON_FUNC Thread_vwait( VMachine *vm )
 FALCON_FUNC Thread_wait( VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
-   VMRunnerThread *thread = static_cast<ThreadCarrier *>( self->getUserData() )->thread();
+   ThreadImpl *thread = static_cast<ThreadCarrier *>( self->getUserData() )->thread();
 
    internal_thread_wait( vm, thread );
 }
@@ -535,7 +576,7 @@ FALCON_FUNC Thread_wait( VMachine *vm )
 FALCON_FUNC Thread_getError( VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
-   VMRunnerThread *thread = static_cast<ThreadCarrier *>( self->getUserData() )->thread();
+   ThreadImpl *thread = static_cast<ThreadCarrier *>( self->getUserData() )->thread();
 
    if ( ! thread->isTerminated() )
    {
@@ -575,7 +616,7 @@ FALCON_FUNC Thread_getError( VMachine *vm )
 FALCON_FUNC Thread_getReturn( VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
-   VMRunnerThread *thread = static_cast<ThreadCarrier *>( self->getUserData() )->thread();
+   ThreadImpl *thread = static_cast<ThreadCarrier *>( self->getUserData() )->thread();
 
    if ( ! thread->isTerminated() )
    {
@@ -603,7 +644,7 @@ FALCON_FUNC Thread_getReturn( VMachine *vm )
 FALCON_FUNC Thread_hadError( VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
-   VMRunnerThread *thread = static_cast<ThreadCarrier *>( self->getUserData() )->thread();
+   ThreadImpl *thread = static_cast<ThreadCarrier *>( self->getUserData() )->thread();
 
    if ( ! thread->isTerminated() )
    {
@@ -627,7 +668,7 @@ FALCON_FUNC Thread_hadError( VMachine *vm )
 FALCON_FUNC Thread_terminated( VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
-   VMRunnerThread *thread = static_cast<ThreadCarrier *>( self->getUserData() )->thread();
+   ThreadImpl *thread = static_cast<ThreadCarrier *>( self->getUserData() )->thread();
 
    vm->retval ( thread->isTerminated() );
 }
@@ -641,7 +682,7 @@ FALCON_FUNC Thread_terminated( VMachine *vm )
 FALCON_FUNC Thread_detached( VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
-   VMRunnerThread *thread = static_cast<ThreadCarrier *>( self->getUserData() )->thread();
+   ThreadImpl *thread = static_cast<ThreadCarrier *>( self->getUserData() )->thread();
 
    vm->retval ( thread->isDetached() );
 }
@@ -662,7 +703,7 @@ FALCON_FUNC Thread_getThreadID( VMachine *vm )
 {
    // if we have no VM Thread object for this thread yet...
    CoreObject *self = vm->self().asObject();
-   VMRunnerThread *thread = static_cast<ThreadCarrier *>( self->getUserData() )->thread();
+   ThreadImpl *thread = static_cast<ThreadCarrier *>( self->getUserData() )->thread();
    vm->retval( (int64) thread->getID() );
 }
 
@@ -682,8 +723,8 @@ FALCON_FUNC Thread_sameThread( VMachine *vm )
       return;
    }
 
-   VMRunnerThread *th = static_cast<ThreadCarrier *>( vm->self().asObject()->getUserData() )->thread();
-   VMRunnerThread *self_th = static_cast<ThreadCarrier *>( pth->asObject()->getUserData())->thread();
+   ThreadImpl *th = static_cast<ThreadCarrier *>( vm->self().asObject()->getUserData() )->thread();
+   ThreadImpl *self_th = static_cast<ThreadCarrier *>( pth->asObject()->getUserData())->thread();
    vm->retval( self_th->equal( *th ) );
 }
 
@@ -714,16 +755,15 @@ FALCON_FUNC Thread_sameThread( VMachine *vm )
 */
 FALCON_FUNC Thread_join( VMachine *vm )
 {
-   VMRunnerThread *th = static_cast<ThreadCarrier *>( vm->self().asObject()->getUserData() )->thread();
+   ThreadImpl *th = static_cast<ThreadCarrier *>( vm->self().asObject()->getUserData() )->thread();
 
     // if we have no VM Thread object for this thread yet...
-   VMRunnerThread *self_th = static_cast<VMRunnerThread *>( ::Falcon::Sys::ThreadProvider::getRunningThread());
+   ThreadImpl *self_th = static_cast<ThreadImpl *>( getRunningThread() );
    if ( self_th == 0 )
    {
       // then this was the main thread, and we must set it
-      self_th = new VMRunnerThread( vm );
-      ::Falcon::Sys::ThreadProvider::configure( th, vm->systemData() );
-      ::Falcon::Sys::ThreadProvider::setRunningThread( self_th );
+      self_th = new ThreadImpl( vm );
+      setRunningThread( self_th );
    }
 
    // join may be used right after a wait; it is sensible to perform some fast checks before
@@ -735,8 +775,8 @@ FALCON_FUNC Thread_join( VMachine *vm )
       th->release(); // allow re-acquisition after wait.
       // ^^^^^ this is safe. The worst thing that can happen is the thread being
       //       terminated and re-launched while we start to wait for it.
-      ::Falcon::Sys::Waitable *waited[ 1 ];
-      waited[0] = th;
+      Waitable *waited[ 1 ];
+      waited[0] = &th->status();
       int64 res = self_th->waitForObjects( 1, waited, -1 );
 
       // if the res value is -2, then we have been interrupted.
@@ -859,7 +899,7 @@ FALCON_FUNC Waitable_release( VMachine *vm )
 */
 FALCON_FUNC Grant_init( VMachine *vm )
 {
-   ::Falcon::Sys::Grant *grant = new ::Falcon::Sys::Grant;
+   Grant *grant = new Grant;
    WaitableCarrier *wc = new WaitableCarrier( grant );
    vm->self().asObject()->setUserData( wc );
    grant->decref();
@@ -923,7 +963,7 @@ FALCON_FUNC Barrier_init( VMachine *vm )
 {
    bool bMode = vm->paramCount() > 0 ? vm->param(0)->isTrue() : false;
 
-   ::Falcon::Sys::Barrier *barrier = new ::Falcon::Sys::Barrier( bMode );
+   Barrier *barrier = new Barrier( bMode );
    WaitableCarrier *wc = new WaitableCarrier( barrier );
    vm->self().asObject()->setUserData( wc );
    barrier->decref();
@@ -938,7 +978,7 @@ FALCON_FUNC Barrier_init( VMachine *vm )
 FALCON_FUNC Barrier_open( VMachine *vm )
 {
    WaitableCarrier *wc = static_cast< WaitableCarrier *>( vm->self().asObject()->getUserData() );
-   static_cast< ::Falcon::Sys::Barrier *>( wc->waitable() )->open();
+   static_cast< Barrier *>( wc->waitable() )->open();
 }
 
 /*#
@@ -951,7 +991,7 @@ FALCON_FUNC Barrier_open( VMachine *vm )
 FALCON_FUNC Barrier_close( VMachine *vm )
 {
    WaitableCarrier *wc = static_cast< WaitableCarrier *>( vm->self().asObject()->getUserData() );
-   static_cast< ::Falcon::Sys::Barrier *>( wc->waitable() )->close();
+   static_cast< Barrier *>( wc->waitable() )->close();
 }
 
 
@@ -1013,7 +1053,7 @@ FALCON_FUNC Event_init( VMachine *vm )
    // defaults to true (autoreset)
    bool bMode = vm->paramCount() > 0 ? vm->param(0)->isTrue() : true;
 
-   ::Falcon::Sys::Event *event = new ::Falcon::Sys::Event( bMode );
+   Event *event = new Event( bMode );
    WaitableCarrier *wc = new WaitableCarrier( event );
    vm->self().asObject()->setUserData( wc );
    event->decref();
@@ -1026,7 +1066,7 @@ FALCON_FUNC Event_init( VMachine *vm )
 FALCON_FUNC Event_set( VMachine *vm )
 {
    WaitableCarrier *wc = static_cast< WaitableCarrier *>( vm->self().asObject()->getUserData() );
-   static_cast< ::Falcon::Sys::Event *>( wc->waitable() )->set();
+   static_cast< Event *>( wc->waitable() )->set();
 }
 
 /*#
@@ -1036,7 +1076,7 @@ FALCON_FUNC Event_set( VMachine *vm )
 FALCON_FUNC Event_reset( VMachine *vm )
 {
    WaitableCarrier *wc = static_cast< WaitableCarrier *>( vm->self().asObject()->getUserData() );
-   static_cast< ::Falcon::Sys::Event *>( wc->waitable() )->reset();
+   static_cast< Event *>( wc->waitable() )->reset();
 }
 
 //=====================================================
@@ -1090,7 +1130,7 @@ FALCON_FUNC SyncCounter_init( VMachine *vm )
    // defaults to true (autoreset)
    int iCount = (int) (i_initCount == 0 ? 0 : i_initCount->forceInteger());
 
-   ::Falcon::Sys::SyncCounter *counter = new ::Falcon::Sys::SyncCounter( iCount );
+   SyncCounter *counter = new SyncCounter( iCount );
    WaitableCarrier *wc = new WaitableCarrier( counter );
    vm->self().asObject()->setUserData( wc );
    counter->decref();
@@ -1117,7 +1157,7 @@ FALCON_FUNC SyncCounter_post( VMachine *vm )
    }
 
    WaitableCarrier *wc = static_cast< WaitableCarrier *>( vm->self().asObject()->getUserData() );
-   ::Falcon::Sys::SyncCounter *syncc = static_cast< ::Falcon::Sys::SyncCounter *>( wc->waitable() );
+   SyncCounter *syncc = static_cast< SyncCounter *>( wc->waitable() );
    syncc->post( (int) (i_initCount == 0 ? 1 : i_initCount->forceInteger()) );
 }
 
@@ -1150,7 +1190,7 @@ FALCON_FUNC SyncCounter_post( VMachine *vm )
 
 FALCON_FUNC SyncQueue_init( VMachine *vm )
 {
-   ::Falcon::Sys::SyncQueue *synq = new ::Falcon::Sys::SyncQueue( );
+   SyncQueue *synq = new SyncQueue( );
    WaitableCarrier *wc = new WaitableCarrier( synq );
    vm->self().asObject()->setUserData( wc );
    synq->decref();
@@ -1184,7 +1224,7 @@ static void internal_SyncQueue_push( VMachine *vm, bool front )
    ss.write( &written, sizeof( written ) );
 
    WaitableCarrier *wc = static_cast< WaitableCarrier *>( vm->self().asObject()->getUserData() );
-   ::Falcon::Sys::SyncQueue *synq = static_cast< ::Falcon::Sys::SyncQueue *>( wc->waitable() );
+   SyncQueue *synq = static_cast< SyncQueue *>( wc->waitable() );
 
    if ( front )
       synq->pushFront( ss.closeToBuffer() );
@@ -1196,7 +1236,7 @@ static void internal_SyncQueue_push( VMachine *vm, bool front )
 static void internal_SyncQueue_pop( VMachine *vm, bool front )
 {
    WaitableCarrier *wc = static_cast< WaitableCarrier *>( vm->self().asObject()->getUserData() );
-   ::Falcon::Sys::SyncQueue *synq = static_cast< ::Falcon::Sys::SyncQueue *>( wc->waitable() );
+   SyncQueue *synq = static_cast< SyncQueue *>( wc->waitable() );
 
    void *data;
    bool bSuccess = front ? synq->popFront( data ) : synq->popBack( data );
@@ -1300,7 +1340,7 @@ FALCON_FUNC SyncQueue_popFront( VMachine *vm )
 FALCON_FUNC SyncQueue_empty( VMachine *vm )
 {
    WaitableCarrier *wc = static_cast< WaitableCarrier *>( vm->self().asObject()->getUserData() );
-   ::Falcon::Sys::SyncQueue *synq = static_cast< ::Falcon::Sys::SyncQueue *>( wc->waitable() );
+   SyncQueue *synq = static_cast< SyncQueue *>( wc->waitable() );
    vm->retval( synq->empty() );
 }
 
@@ -1316,7 +1356,7 @@ FALCON_FUNC SyncQueue_empty( VMachine *vm )
 FALCON_FUNC SyncQueue_size( VMachine *vm )
 {
    WaitableCarrier *wc = static_cast< WaitableCarrier *>( vm->self().asObject()->getUserData() );
-   ::Falcon::Sys::SyncQueue *synq = static_cast< ::Falcon::Sys::SyncQueue *>( wc->waitable() );
+   SyncQueue *synq = static_cast< SyncQueue *>( wc->waitable() );
    vm->retval( (int64) synq->size() );
 }
 
@@ -1351,13 +1391,12 @@ FALCON_FUNC SyncQueue_size( VMachine *vm )
 FALCON_FUNC Threading_wait( VMachine *vm )
 {
    // if we have no VM Thread object for this thread yet...
-   VMRunnerThread *th = static_cast<VMRunnerThread *>( ::Falcon::Sys::ThreadProvider::getRunningThread());
+   ThreadImpl *th = static_cast<ThreadImpl *>( getRunningThread());
    if ( th == 0 )
    {
       // then this was the main thread, and we must set it
-      th = new VMRunnerThread( vm );
-      ::Falcon::Sys::ThreadProvider::configure( th, vm->systemData() );
-      ::Falcon::Sys::ThreadProvider::setRunningThread( th );
+      th = new ThreadImpl( vm );
+      setRunningThread( th );
    }
 
    internal_thread_wait( vm, th );
@@ -1386,13 +1425,12 @@ FALCON_FUNC Threading_wait( VMachine *vm )
 FALCON_FUNC Threading_vwait( VMachine *vm )
 {
    // if we have no VM Thread object for this thread yet...
-   VMRunnerThread *th = static_cast<VMRunnerThread *>( ::Falcon::Sys::ThreadProvider::getRunningThread());
+   ThreadImpl *th = static_cast<ThreadImpl *>( getRunningThread());
    if ( th == 0 )
    {
       // then this was the main thread, and we must set it
-      th = new VMRunnerThread( vm );
-      ::Falcon::Sys::ThreadProvider::configure( th, vm->systemData() );
-      ::Falcon::Sys::ThreadProvider::setRunningThread( th );
+      th = new ThreadImpl( vm );
+      setRunningThread( th );
    }
 
    internal_thread_wait_array( vm, th );
@@ -1408,7 +1446,7 @@ FALCON_FUNC Threading_vwait( VMachine *vm )
 FALCON_FUNC Threading_getCurrentID( VMachine *vm )
 {
    // if we have no VM Thread object for this thread yet...
-   vm->retval( (int64) ::Falcon::Sys::ThreadProvider::getCurrentID() );
+   vm->retval( (int64) SysThread::getCurrentID() );
 }
 
 /*#
@@ -1422,13 +1460,12 @@ FALCON_FUNC Threading_getCurrentID( VMachine *vm )
 */
 FALCON_FUNC Threading_getCurrent( VMachine *vm )
 {
-   VMRunnerThread *th = static_cast<VMRunnerThread *>( ::Falcon::Sys::ThreadProvider::getRunningThread());
+   ThreadImpl *th = static_cast<ThreadImpl *>( getRunningThread());
    if ( th == 0 )
    {
       // then this was the main thread, and we must set it
-      th = new VMRunnerThread( vm );
-      ::Falcon::Sys::ThreadProvider::configure( th, vm->systemData() );
-      ::Falcon::Sys::ThreadProvider::setRunningThread( th );
+      th = new ThreadImpl( vm );
+      setRunningThread( th );
    }
 
    Item *th_class = vm->findWKI( "Thread" );
@@ -1457,16 +1494,15 @@ FALCON_FUNC Threading_sameThread( VMachine *vm )
       return;
    }
 
-   VMRunnerThread *th = static_cast<VMRunnerThread *>( ::Falcon::Sys::ThreadProvider::getRunningThread());
+   ThreadImpl *th = static_cast<ThreadImpl *>( getRunningThread());
    if ( th == 0 )
    {
       // then this was the main thread, and we must set it
-      th = new VMRunnerThread( vm );
-      ::Falcon::Sys::ThreadProvider::configure( th, vm->systemData() );
-      ::Falcon::Sys::ThreadProvider::setRunningThread( th );
+      th = new ThreadImpl( vm );
+      setRunningThread( th );
    }
 
-   VMRunnerThread *self_th = static_cast<ThreadCarrier *>( pth->asObject()->getUserData())->thread();
+   ThreadImpl *self_th = static_cast<ThreadCarrier *>( pth->asObject()->getUserData())->thread();
    vm->retval( self_th->equal( *th ) );
 }
 
@@ -1510,7 +1546,7 @@ FALCON_FUNC Threading_start( VMachine *vm )
    }
 
    // Create the runtime that will hold all the modules
-   VMRunnerThread *thread = new VMRunnerThread;
+   ThreadImpl *thread = new ThreadImpl;
    Runtime rt;
 
    const LiveModuleMap &mods = vm->liveModules();
