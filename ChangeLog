@@ -22,6 +22,8 @@ Falcon (0.9.1.6)
   * fixed: Detach() sequence was just a draft, and didn't actually free 
            app-side data.
   * fixed: Respecting ThreadParams settings in POSIX thread creation.
+  * fixed: Dind't correctly generate InterruptedError on VM interruption 
+           requests.
 
 Falcon (0.9.1.4)
   * fixed: As now files and modules loads are URIs, and URI decoding was
