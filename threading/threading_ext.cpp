@@ -31,19 +31,15 @@ namespace Ext {
 
 ThreadImpl* checkMainThread( VMachine* vm )
 {
-   ThreadCarrier* thc = dyncast<ThreadCarrier *>( vm->threadData() );
+   ThreadImpl* self_th = getRunningThread();
    
-   if ( thc == 0 )
+   if( self_th == 0 )
    {
-      // then this was the main thread, and we must set it
-      ThreadImpl* self_th = new ThreadImpl( vm );
+      self_th = new ThreadImpl( vm );
       self_th->name( "__main__" );
-      vm->threadData( new ThreadCarrier( self_th ) );
-      self_th->decref(); // nooneelse than runningthread knows of me.
-      return self_th;
+      setRunningThread( self_th );
    }
-   
-   return thc->thread();
+   return self_th;
 }
 
 /*#
@@ -629,8 +625,6 @@ FALCON_FUNC Thread_getError( VMachine *vm )
    }
    else
       vm->retnil();
-
-   vm->retnil();
 }
 
 /*#
@@ -691,7 +685,7 @@ FALCON_FUNC Thread_hadError( VMachine *vm )
       return;
    }
 
-   vm->retval( thread->hadError() );
+   vm->regA().setBoolean( thread->hadError() );
 }
 
 /*#

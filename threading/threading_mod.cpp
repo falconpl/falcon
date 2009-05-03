@@ -153,6 +153,8 @@ void ThreadImpl::prepareThreadInstance( const Item &instance, const Item &method
 void *ThreadImpl::run()
 {
    m_vm->incref();
+   setRunningThread( this );
+   
    // hold a lock to the item, as it cannot be taken in the vm.
    GarbageLock *tiLock = m_vm->lock( m_threadInstance );
    GarbageLock *mthLock = m_vm->lock( m_method );
