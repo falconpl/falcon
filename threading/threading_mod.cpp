@@ -106,6 +106,9 @@ ThreadImpl::~ThreadImpl()
 {
    // don't delete sth; it has been disposed by detach or join.
    m_vm->decref();
+   if ( m_lastError != 0 )
+      m_lastError->decref();
+      
    disposeSysData( m_sysData );
 }
 

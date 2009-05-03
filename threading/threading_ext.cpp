@@ -252,8 +252,8 @@ FALCON_FUNC Thread_stop( VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
    ThreadImpl *thread = static_cast<ThreadCarrier *>( self->getUserData() )->thread();
-   thread->vm().interrupt();
    thread->interruptWaits();
+   thread->vm().interrupt();
 }
 
 /*#
@@ -654,7 +654,6 @@ FALCON_FUNC Thread_hadError( VMachine *vm )
    }
 
    vm->retval( thread->hadError() );
-   vm->retval( 0 );
 }
 
 /*#
