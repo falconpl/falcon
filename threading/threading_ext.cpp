@@ -29,7 +29,22 @@
 namespace Falcon {
 namespace Ext {
 
-
+ThreadImpl* checkMainThread( VMachine* vm )
+{
+   ThreadCarrier* thc = dyncast<ThreadCarrier *>( vm->threadData() );
+   
+   if ( thc == 0 )
+   {
+      // then this was the main thread, and we must set it
+      ThreadImpl* self_th = new ThreadImpl( vm );
+      self_th->name( "__main__" );
+      vm->threadData( new ThreadCarrier( self_th ) );
+      self_th->decref(); // nooneelse than runningthread knows of me.
+      return self_th;
+   }
+   
+   return thc->thread();
+}
 
 /*#
    @group waiting_funcs Waitings
@@ -123,6 +138,7 @@ namespace Ext {
 /*#
    @init Thread
    @brief Initializes the thread object.
+   @optparam name A symbolic name for this thread.
 
    The object can be safely created in any context. What
    creates the parallel execution evnironment is the
@@ -131,8 +147,26 @@ namespace Ext {
 FALCON_FUNC Thread_init( VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
+   Item* i_name = vm->param(0);
+   ThreadImpl *th;
+   
    // setup the thread instance
-   self->setUserData( new ThreadCarrier( new ThreadImpl ) );
+   if( i_name == 0 )
+   {
+      th = new ThreadImpl;
+   }
+   else {
+      if( ! i_name->isString() )
+      {
+         throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+            extra( "[S]" ) );
+      }
+      else {
+         th = new ThreadImpl( *i_name->asString() );
+      }
+   }
+   
+   self->setUserData( new ThreadCarrier( th ) );
 }
 
 /*#
@@ -171,6 +205,10 @@ FALCON_FUNC Thread_init( VMachine *vm )
 */
 FALCON_FUNC Thread_start( VMachine *vm )
 {
+   // get the thread implementation starting the new thread.
+   // we want to setup the main thread before it starts anything else.
+   checkMainThread( vm );
+   
    CoreObject *self = vm->self().asObject();
    ThreadImpl *thread = static_cast<ThreadCarrier *>( self->getUserData() )->thread();
 
@@ -691,11 +729,8 @@ FALCON_FUNC Thread_detached( VMachine *vm )
    @brief Gets an unique numeric ID for this thread.
    @return A numeric thread ID.
 
-   Usually, this is the system ID for the thread that is being run in the
-   target Falcon object; for those systems that doesn't provide a numeric
-   thread ID, this method returns an unique number identifying each thread.
-
-   If the thread isn't started, the method returns a meaningless number.
+   This is an unique counter assigned to each thread as they
+   are created.
 */
 
 FALCON_FUNC Thread_getThreadID( VMachine *vm )
@@ -704,6 +739,93 @@ FALCON_FUNC Thread_getThreadID( VMachine *vm )
    CoreObject *self = vm->self().asObject();
    ThreadImpl *thread = static_cast<ThreadCarrier *>( self->getUserData() )->thread();
    vm->retval( (int64) thread->getID() );
+}
+
+/*#
+   @method getName Thread
+   @brief Sets the symbolic name of this thread.
+   @return A string containing the name of this thread (may be empty if not set).
+   
+   @see Thread.setName
+   @see Thread.toString
+*/
+FALCON_FUNC Thread_getName( VMachine *vm )
+{
+   // if we have no VM Thread object for this thread yet...
+   CoreObject *self = vm->self().asObject();
+   ThreadImpl *thread = static_cast<ThreadCarrier *>( self->getUserData() )->thread();
+   CoreString* cs = new CoreString( thread->name() );
+   cs->bufferize();
+   vm->retval( cs );
+}
+
+/*#
+   @method setName Thread
+   @brief Sets the symbolic name of this thread.
+   @param name The new name for this thread.
+   
+   @see Thread.getName
+*/
+FALCON_FUNC Thread_setName( VMachine *vm )
+{
+   Item* i_name = vm->param(0);
+   
+   if ( i_name == 0 || ! i_name->isString() )
+   {   
+      throw new JoinError( ErrorParam( FALTH_ERR_NOTTERM, __LINE__ ).
+         desc( FAL_STR( th_msg_threadnotterm ) ) );
+   }
+   
+   CoreObject *self = vm->self().asObject();
+   ThreadImpl *thread = static_cast<ThreadCarrier *>( self->getUserData() )->thread();
+   thread->name( *i_name->asString() );
+}
+
+/*#
+   @method toString Thread
+   @brief Returns a string representation of this thread.
+   @return A string containing anagraphic data for this thread.
+   
+   @see Thread.setName
+*/
+FALCON_FUNC Thread_toString( VMachine *vm )
+{
+   CoreObject *self = vm->self().asObject();
+   ThreadImpl *thread = static_cast<ThreadCarrier *>( self->getUserData() )->thread();
+   
+   // if we have no VM Thread object for this thread yet...
+   CoreString* cs = new CoreString( "Thread \"" );
+   *cs += thread->name();
+   *cs += "\" ";
+   cs->writeNumber( (int64) thread->getID() );
+   *cs += " [0x";
+   cs->writeNumberHex( thread->getSystemID() );
+   *cs += "]";
+   
+   vm->retval( cs );
+}
+
+/*#
+   @method getSystemID Thread
+   @brief Gets the system low level thread ID for this thread.
+   @return A numeric thread ID.
+
+   UThis is the system ID for the thread that is being run in the
+   target Falcon object; for those systems that doesn't provide a numeric
+   thread ID, this method returns a pointer to the system resources
+   identifying the thread (as an integer value). It is always granted that
+   two different living threads have different identifiers, but a thread
+   ID may be re-assigned to newly started threads after previous one are
+   dead.
+
+   If the thread isn't started, the method returns a meaningless number.
+*/
+FALCON_FUNC Thread_getSystemID( VMachine *vm )
+{
+   // if we have no VM Thread object for this thread yet...
+   CoreObject *self = vm->self().asObject();
+   ThreadImpl *thread = static_cast<ThreadCarrier *>( self->getUserData() )->thread();
+   vm->retval( (int64) thread->getSystemID() );
 }
 
 /*#
@@ -756,14 +878,8 @@ FALCON_FUNC Thread_join( VMachine *vm )
 {
    ThreadImpl *th = static_cast<ThreadCarrier *>( vm->self().asObject()->getUserData() )->thread();
 
-    // if we have no VM Thread object for this thread yet...
-   ThreadImpl *self_th = static_cast<ThreadImpl *>( getRunningThread() );
-   if ( self_th == 0 )
-   {
-      // then this was the main thread, and we must set it
-      self_th = new ThreadImpl( vm );
-      setRunningThread( self_th );
-   }
+   // if we have no VM Thread object for this thread yet...
+   ThreadImpl *self_th = checkMainThread( vm );
 
    // join may be used right after a wait; it is sensible to perform some fast checks before
    // re-waiting.
@@ -1390,14 +1506,7 @@ FALCON_FUNC SyncQueue_size( VMachine *vm )
 FALCON_FUNC Threading_wait( VMachine *vm )
 {
    // if we have no VM Thread object for this thread yet...
-   ThreadImpl *th = static_cast<ThreadImpl *>( getRunningThread());
-   if ( th == 0 )
-   {
-      // then this was the main thread, and we must set it
-      th = new ThreadImpl( vm );
-      setRunningThread( th );
-   }
-
+   ThreadImpl *th = checkMainThread( vm );
    internal_thread_wait( vm, th );
 }
 
@@ -1424,13 +1533,7 @@ FALCON_FUNC Threading_wait( VMachine *vm )
 FALCON_FUNC Threading_vwait( VMachine *vm )
 {
    // if we have no VM Thread object for this thread yet...
-   ThreadImpl *th = static_cast<ThreadImpl *>( getRunningThread());
-   if ( th == 0 )
-   {
-      // then this was the main thread, and we must set it
-      th = new ThreadImpl( vm );
-      setRunningThread( th );
-   }
+   ThreadImpl *th = checkMainThread( vm );
 
    internal_thread_wait_array( vm, th );
 }
@@ -1459,13 +1562,7 @@ FALCON_FUNC Threading_getCurrentID( VMachine *vm )
 */
 FALCON_FUNC Threading_getCurrent( VMachine *vm )
 {
-   ThreadImpl *th = static_cast<ThreadImpl *>( getRunningThread());
-   if ( th == 0 )
-   {
-      // then this was the main thread, and we must set it
-      th = new ThreadImpl( vm );
-      setRunningThread( th );
-   }
+   ThreadImpl *th = checkMainThread( vm );
 
    Item *th_class = vm->findWKI( "Thread" );
    fassert( th_class != 0 && th_class->isClass() );
@@ -1493,13 +1590,7 @@ FALCON_FUNC Threading_sameThread( VMachine *vm )
       return;
    }
 
-   ThreadImpl *th = static_cast<ThreadImpl *>( getRunningThread());
-   if ( th == 0 )
-   {
-      // then this was the main thread, and we must set it
-      th = new ThreadImpl( vm );
-      setRunningThread( th );
-   }
+   ThreadImpl *th = checkMainThread( vm );
 
    ThreadImpl *self_th = static_cast<ThreadCarrier *>( pth->asObject()->getUserData())->thread();
    vm->retval( self_th->equal( *th ) );

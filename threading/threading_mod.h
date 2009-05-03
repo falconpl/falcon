@@ -46,9 +46,12 @@ protected:
    Item m_method;
    
    SysThread* m_sth;
-
+   int m_id;
+   String m_name;
+   
 public:
    ThreadImpl();
+   ThreadImpl( const String& name );
    virtual ~ThreadImpl();
    
    /** Adopt a running VM in a threading shell. */
@@ -78,7 +81,12 @@ public:
    }
 
    bool detach();
-   uint64 getID() const { return m_sth->getID(); }
+   int getID() const { return m_id; }
+   /** Return the name set for this thread. */
+   const String& name() const { return m_name; }
+   void name( const String &name ) { m_name = name; }
+   
+   uint64 getSystemID() const { return m_sth->getID(); }
    bool equal( const ThreadImpl &other ) const { return m_sth->equal( other.m_sth ); }
    bool isCurrentThread() const { return m_sth->isCurrentThread(); }
 

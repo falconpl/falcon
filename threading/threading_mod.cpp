@@ -29,13 +29,19 @@ namespace Ext {
 
 static void vmthread_killer( void *vmt ) 
 {
-   // todo
+   ThreadImpl *th = static_cast<ThreadImpl*>( vmt );
+   th->decref();
 }
 
 static ThreadSpecific m_curthread( vmthread_killer );
 
 void setRunningThread( ThreadImpl* th )
 {
+   ThreadImpl *old = static_cast<ThreadImpl*>( m_curthread.get() );
+   if ( old != 0 )
+      old->decref();
+   
+   th->incref();
    m_curthread.set( th );
 }
 
@@ -74,27 +80,37 @@ FalconData *ThreadCarrier::clone() const
 // VMRunner thread
 //
 
+static int s_threadId = 0;
 
 ThreadImpl::ThreadImpl():
    m_nRefCount(1),
    m_vm( new VMachine ),
    m_lastError( 0 ),
-   m_sth(0)
+   m_sth(0),
+   m_id( atomicInc( s_threadId ) )
 {
-   // remove the error handler
-   m_vm->launchAtLink( false );
-   
    m_sysData = createSysData();
 }
+
+ThreadImpl::ThreadImpl( const String &name ):
+   m_nRefCount(1),
+   m_vm( new VMachine ),
+   m_lastError( 0 ),
+   m_sth(0),
+   m_id( atomicInc( s_threadId ) ),
+   m_name( name )
+{
+   m_sysData = createSysData();
+}
+
 
 ThreadImpl::ThreadImpl( VMachine *vm ):
    m_nRefCount(1),
    m_vm( vm ),
    m_lastError( 0 ),
-   m_sth(0)
+   m_id( atomicInc( s_threadId ) )
 {
    m_vm->incref();
-   m_vm->launchAtLink( false );
    m_thstatus.startable(); // an adopted VM is running.
    m_sth = new SysThread;
    m_sth->attachToCurrent();
@@ -104,8 +120,8 @@ ThreadImpl::ThreadImpl( VMachine *vm ):
 
 ThreadImpl::~ThreadImpl()
 {
-   // don't delete sth; it has been disposed by detach or join.
    m_vm->decref();
+   // don't delete sth; it has been disposed by detach or join.
    if ( m_lastError != 0 )
       m_lastError->decref();
       

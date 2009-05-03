@@ -21,7 +21,7 @@
 load threading
 const threadCount = 8
 
-class MyThread(id, screenGrant, quit ) from Thread
+class MyThread(id, screenGrant, quit ) from Thread( "Waiter " + id )
    id = id
    screenGrant = screenGrant
    quit = quit
@@ -37,13 +37,13 @@ class MyThread(id, screenGrant, quit ) from Thread
       end
 
       self.wait( self.screenGrant )
-      > "Thread ", self.id, " terminated with: ", i
+      > self, " terminated with: ", i
       self.screenGrant.release()
    end
 
 end
 
-class MainThread( screenGrant ) from Thread
+class MainThread( screenGrant ) from Thread( "Control" )
    screenGrant = screenGrant
 
    function run()

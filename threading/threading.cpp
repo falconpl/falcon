@@ -384,6 +384,11 @@ FALCON_MODULE_DECL
    self->addClassMethod( c_thread, "terminated", Falcon::Ext::Thread_terminated );
    self->addClassMethod( c_thread, "detached", Falcon::Ext::Thread_detached );
    self->addClassMethod( c_thread, "join", Falcon::Ext::Thread_join );
+   self->addClassMethod( c_thread, "getSystemId", Falcon::Ext::Thread_getSystemID );
+   self->addClassMethod( c_thread, "setName", Falcon::Ext::Thread_setName ).asSymbol()->
+      addParam("name");
+   self->addClassMethod( c_thread, "getName", Falcon::Ext::Thread_getName );
+   self->addClassMethod( c_thread, "toString", Falcon::Ext::Thread_toString );
    self->addClassProperty( c_thread, "run" );
 
    //=================================================================

@@ -65,6 +65,10 @@ FALCON_FUNC Thread_wait( VMachine *vm );
 FALCON_FUNC Thread_vwait( VMachine *vm );
 FALCON_FUNC Thread_getThreadID( VMachine *vm );
 FALCON_FUNC Thread_sameThread( VMachine *vm );
+FALCON_FUNC Thread_getSystemID( VMachine *vm );
+FALCON_FUNC Thread_getName( VMachine *vm );
+FALCON_FUNC Thread_setName( VMachine *vm );
+FALCON_FUNC Thread_toString( VMachine *vm );
 
 FALCON_FUNC Thread_getError( VMachine *vm );
 FALCON_FUNC Thread_getReturn( VMachine *vm );
