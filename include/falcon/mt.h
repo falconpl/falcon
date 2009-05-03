@@ -174,6 +174,9 @@ public:
    SYSTH_DATA *sysdata() const { return m_sysdata; }
    
    static void *RunAThread(void *);
+   
+   /** Dispose of this object without modifying the underlying system data. */
+   void disengage();
 };
 
 }

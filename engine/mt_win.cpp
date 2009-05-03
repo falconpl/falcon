@@ -44,6 +44,11 @@ SysThread::SysThread( Runnable* r ):
    InitializeCriticalSection( &m_sysdata->m_csT );
 }
 
+void SysThread::disengage()
+{
+   delete this;
+}
+
 void SysThread::attachToCurrent()
 {
    m_sysdata->hThread = GetCurrentThread();

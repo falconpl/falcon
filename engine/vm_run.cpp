@@ -282,11 +282,11 @@ void VMachine::run()
          case eventInterrupt:
             if ( m_atomicMode )
             {
-               raiseError( new InterruptedError( ErrorParam( e_interrupted ).origin( e_orig_vm ).
+               the_error = new InterruptedError( ErrorParam( e_interrupted ).origin( e_orig_vm ).
                      symbol( m_symbol->name() ).
                      module( m_currentModule->module()->name() ).
                      line( __LINE__ ).
-                     hard() ) );
+                     hard() );
                // just re-parse the event
                m_pc = i_pc_redo_request;
                continue;

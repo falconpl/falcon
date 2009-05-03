@@ -548,6 +548,8 @@ protected:
    */
    volatile int m_refcount;
 
+   /** Finalization hook for MT system. */
+   void (*m_onFinalize)(VMachine *vm);
    //=============================================================
    // Private functions
    //
@@ -2345,6 +2347,12 @@ public:
       owner).
    */
    void finalize();
+   
+   /** Finalization callback function (used by MT) */
+   void setFinalizeCallback( void (*finfunc)( VMachine* vm ) )
+   {
+      m_onFinalize = finfunc;
+   }
 
 //==========================================================================
 //==========================================================================

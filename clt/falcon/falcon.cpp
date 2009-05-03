@@ -662,7 +662,7 @@ void AppFalcon::run()
       runModule();
 
    memPool->performGC();
-
+   
    if ( m_options.check_memory )
    {
       // be sure we have reclaimed all what's possible to reclaim.

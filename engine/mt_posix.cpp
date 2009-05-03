@@ -232,6 +232,11 @@ bool SysThread::start( const ThreadParams &params )
    return true;
 }
 
+void SysThread::disengage()
+{
+   delete this;
+}
+
 void SysThread::detach()
 {
    // are we already done?
@@ -254,7 +259,10 @@ void SysThread::detach()
 bool SysThread::join( void* &result )
 {
    if ( pthread_join( m_sysdata->pth, &result ) == 0 )
+   {
+      delete this;
       return true;
+   }
    return false;
 }
 

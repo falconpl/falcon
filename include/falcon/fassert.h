@@ -61,7 +61,7 @@ inline rtype_ptr dyncast(stype* pSource)
 {
 #ifndef NDEBUG
    // Fassert should resolve in nothing in release, but it may change in future.
-   fassert ( pSource != 0 && static_cast<rtype_ptr>(pSource) == dynamic_cast<rtype_ptr>(pSource) );
+   fassert ( pSource == 0 || ( static_cast<rtype_ptr>(pSource) == dynamic_cast<rtype_ptr>(pSource) ) );
 #endif
 
    return static_cast<rtype_ptr>(pSource);

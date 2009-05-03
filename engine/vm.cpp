@@ -108,6 +108,7 @@ void VMachine::internal_construct()
    m_lockRoot->next( m_lockRoot );
    m_lockRoot->prev( m_lockRoot );
 
+   m_onFinalize = 0;
    m_userData = 0;
    m_bhasStandardStreams = false;
    m_pc = 0;
@@ -300,6 +301,9 @@ void VMachine::finalize()
    {
       memPool->unregisterVM( this );
    }
+   
+   if ( m_onFinalize != 0 )
+      m_onFinalize( this );
 
    decref();
 }
