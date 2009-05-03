@@ -25,20 +25,17 @@
 #include <falcon/setup.h>
 
 namespace Falcon {
-namespace Sys {
+namespace Ext {
 
-class WIN_TH
+class WIN_THI_DATA
 {
 public:
-   WIN_TH( HANDLE canc );
-   ~WIN_TH();
+   WIN_THI_DATA();
+   ~WIN_THI_DATA();
 
    DWORD thID;
    int lastError;
    HANDLE hth;
-   
-   // will just point to the cancel handle of the VM where we've been creeated
-   HANDLE eCancel;
 };
 
 
