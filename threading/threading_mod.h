@@ -81,7 +81,7 @@ public:
 
    bool join();
    bool detach();
-   void disengage() { m_sth->disengage(); }
+   void disengage() { m_sth->disengage(); m_sth = 0; }
    int getID() const { return m_id; }
    /** Return the name set for this thread. */
    const String& name() const { return m_name; }

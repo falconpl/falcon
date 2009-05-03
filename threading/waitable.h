@@ -183,15 +183,13 @@ protected:
    bool m_bTerminated;
    bool m_bDetached;
    bool m_bStarted;
-   bool m_bJoined;
    int m_acquiredCount;
-   SysThread* m_sth;
 
 protected:
    virtual bool acquireInternal();
 
 public:
-   ThreadStatus( SysThread *th );
+   ThreadStatus();
    virtual ~ThreadStatus();
 
    virtual bool acquire();

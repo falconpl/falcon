@@ -86,8 +86,7 @@ static int s_threadId = 0;
 
 ThreadImpl::ThreadImpl():
    m_nRefCount(1),
-   m_sth( new SysThread(this) ),
-   m_thstatus( m_sth ),
+   m_sth(0),
    m_vm( new VMachine ),
    m_lastError( 0 ),
    m_id( atomicInc( s_threadId ) )
@@ -97,8 +96,7 @@ ThreadImpl::ThreadImpl():
 
 ThreadImpl::ThreadImpl( const String &name ):
    m_nRefCount(1),
-   m_sth( new SysThread(this) ),
-   m_thstatus( m_sth ),
+   m_sth(0),
    m_vm( new VMachine ),
    m_lastError( 0 ),
    m_id( atomicInc( s_threadId ) ),
@@ -110,15 +108,15 @@ ThreadImpl::ThreadImpl( const String &name ):
 
 ThreadImpl::ThreadImpl( VMachine *vm ):
    m_nRefCount(1),
-   m_sth(new SysThread),
-   m_thstatus( m_sth ),
    m_vm( vm ),
    m_lastError( 0 ),
    m_id( atomicInc( s_threadId ) )
 {
    m_vm->incref();
    m_thstatus.startable(); // an adopted VM is running.
+   m_sth = new SysThread;
    m_sth->attachToCurrent();
+   
    m_sysData = createSysData();
 }
 
@@ -130,6 +128,13 @@ ThreadImpl::~ThreadImpl()
       m_lastError->decref();
       
    disposeSysData( m_sysData );
+   
+   if ( m_sth != 0 )
+   {
+      void *data;
+      // ok even if detached.
+      m_sth->join( data );
+   }
 }
 
 void ThreadImpl::incref()
@@ -168,10 +173,10 @@ void *ThreadImpl::run()
    // Perform the call.
    try {
       m_vm->callItem( m_method, 0 );
+      m_lastError = 0;
    }
    catch( Error* err )
    {
-      err->incref();
       m_lastError = err;
    }
 
@@ -187,22 +192,18 @@ void *ThreadImpl::run()
 
 bool ThreadImpl::start( const ThreadParams &params )
 {
-   // never call this before startable... 
+   // never call this before startable... so.
+   fassert( m_sth == 0 );
+   m_sth = new SysThread(this);
    return m_sth->start( params );
 }
-
-bool ThreadImpl::join()
-{
-   void *dummy;
-   return m_sth->join(dummy);
-}
-
 
 bool ThreadImpl::detach()
 {
    if( m_thstatus.detach() )
    {
       m_sth->detach();
+      m_sth = 0;
       return true;
    }
    

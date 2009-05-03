@@ -22,7 +22,7 @@ class MyThread() from Thread
       >> "> "
       inf = stdIn()
       if inf.readAvailable()  // but wait for 10
-         > "You said '", inf.readLine(), "'"
+         > "You said '", inf.grabLine(), "'"
       end
    end
 end

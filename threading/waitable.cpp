@@ -313,13 +313,11 @@ void SyncCounter::post( int count )
 //=====================================
 // Thread statatus
 //
-ThreadStatus::ThreadStatus( SysThread* th ):
+ThreadStatus::ThreadStatus():
    m_bTerminated( false ),
    m_bDetached( false ),
    m_bStarted( false ),
-   m_bJoined( false ),
-   m_acquiredCount( 0 ),
-   m_sth( th )
+   m_acquiredCount( 0 )
 {}
 
 ThreadStatus::~ThreadStatus()
@@ -329,26 +327,15 @@ bool ThreadStatus::acquire()
 {
    m_mtx.lock();
    bool bStatus;
-   bool bJoin;
    if ( m_bTerminated || m_bDetached )
    {
       bStatus = true;
       m_acquiredCount++;
-      bJoin = ! m_bJoined;
-      m_bJoined = true;
    }
    else {
       bStatus = false;
-      bJoin = false;
    }
    m_mtx.unlock();
-   
-   if ( bJoin )
-   {
-      void* data = 0;
-      return m_sth->join(data);
-   }
-
    return bStatus;
 }
 
@@ -357,12 +344,7 @@ bool ThreadStatus::acquireInternal()
    if ( m_bTerminated || m_bDetached )
    {
       m_acquiredCount++;
-      if ( ! m_bJoined )
-      {
-         m_bJoined = true;
-         void* data = 0;
-         return m_sth->join(data);
-      }
+      return true;
    }
    return false;
 }
