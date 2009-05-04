@@ -1,6 +1,6 @@
 Feathers (0.9.1.6)
-  * minor: Added getName(), setName(), getSystemID() and toString() methods 
-           to thread.
+  * minor: Added getName(), setName(), getSystemID() and toString()
+           methods to thread.
   
 Feathers (0.9.1.2)
   * fixed: In MXML, removed promotion of data nodes when there are
