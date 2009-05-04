@@ -29,7 +29,7 @@
 
 #include <string.h>
 
-#include "pcre.h"
+#include <pcre.h>
 #include "regex_ext.h"
 #include "regex_mod.h"
 #include "regex_st.h"
