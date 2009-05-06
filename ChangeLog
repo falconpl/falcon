@@ -1,4 +1,4 @@
-Falcon (0.9.1.6)
+Falcon (0.9.1.5)
   * fixed: In loop statement, continue looped from the top skipping the
            loop condition (if it was present).
   * fixed: Function "any" was STILL returning 0 instead of false.
