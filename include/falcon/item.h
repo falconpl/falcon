@@ -811,7 +811,7 @@ public:
       \note You can use vm->execFrame() to execute the prepared frame
       immediately instead of waiting for the loop to complete.
    */
-   void readyFrame( VMachine *vm, int paramCount ) const
+   void readyFrame( VMachine *vm, uint32 paramCount ) const
    {
       void (*func)( const Item &first, VMachine *vm, int paramCount ) =
          (void (*)( const Item &first, VMachine *vm, int paramCount ))

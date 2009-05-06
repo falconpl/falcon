@@ -66,7 +66,7 @@ FALCON_FUNC  paramCount ( ::Falcon::VMachine *vm )
       }
 
       StackFrame *prevFrame = (StackFrame *) &vm->stackItem( thisFrame->m_stack_base - VM_FRAME_SPACE );
-      vm->retval( prevFrame->m_param_count );
+      vm->retval( (int64) prevFrame->m_param_count );
    }
 }
 
@@ -102,7 +102,7 @@ FALCON_FUNC  _parameter ( ::Falcon::VMachine *vm )
       vm->raiseRTError( new GenericError( ErrorParam( e_stackuf ) ) );
    }
    else {
-      int32 val = (int32) number->forceInteger();
+      uint32 val = (uint32) number->forceInteger();
 
       StackFrame *thisFrame = (StackFrame *) vm->currentStack().at( vm->stackBase() - VM_FRAME_SPACE );
       uint32 oldbase = thisFrame->m_stack_base;
@@ -157,7 +157,7 @@ FALCON_FUNC  paramIsRef ( ::Falcon::VMachine *vm )
    }
    else
    {
-      int32 val = (int32) number->forceInteger();
+      uint32 val = (uint32) number->forceInteger();
 
       StackFrame *thisFrame = (StackFrame *) &vm->stackItem( vm->stackBase() - VM_FRAME_SPACE );
       uint32 oldbase = thisFrame->m_stack_base;
@@ -210,7 +210,7 @@ FALCON_FUNC  paramSet ( ::Falcon::VMachine *vm )
    }
    else
    {
-      int32 val = (int32) number->forceInteger();
+      uint32 val = (uint32) number->forceInteger();
 
       StackFrame *thisFrame = (StackFrame *) &vm->stackItem( vm->stackBase() - VM_FRAME_SPACE );
       uint32 oldbase = thisFrame->m_stack_base;

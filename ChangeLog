@@ -24,6 +24,8 @@ Falcon (0.9.1.6)
   * fixed: Respecting ThreadParams settings in POSIX thread creation.
   * fixed: Dind't correctly generate InterruptedError on VM interruption 
            requests.
+  * fixed: Function parameters were still hard-limited to 255. Now they
+           are limited to uint32 (2^32).
 
 Falcon (0.9.1.4)
   * fixed: As now files and modules loads are URIs, and URI decoding was

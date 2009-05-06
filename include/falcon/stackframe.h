@@ -39,12 +39,12 @@ typedef struct tag_StackFrame
    uint32 m_ret_pc;
    uint32 m_call_pc;
    LiveModule *m_module;
-   bool m_break;
-   uint16 m_param_count;
+   uint32 m_param_count;
    uint32 m_stack_base;
    uint32 m_try_base;
    Item m_self;
    Item m_binding;
+   bool m_break;
 
    ext_func_frame_t m_endFrameFunc;
 } StackFrame;

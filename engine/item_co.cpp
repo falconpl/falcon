@@ -1611,7 +1611,7 @@ void co_class_setproperty( Item &item, const String &idx, const Item &result )
 // Call
 //
 
-void co_call_uncallable( VMachine *vm, int paramCount )
+void co_call_uncallable( VMachine *vm, uint32 paramCount )
 {
    //TODO: Useful? -- on throw we either unroll or close the VM...
    /*
@@ -1623,20 +1623,20 @@ void co_call_uncallable( VMachine *vm, int paramCount )
    throw new TypeError( ErrorParam( e_invop ).extra("CALL") );
 }
 
-void co_call_function( const Item &itm, VMachine *vm, int paramCount )
+void co_call_function( const Item &itm, VMachine *vm, uint32 paramCount )
 {
    // fill - in the missing parameters.
    itm.asFunction()->readyFrame( vm, paramCount );
    vm->self().setNil();
 }
 
-void co_call_reference( const Item &itm, VMachine *vm, int paramCount )
+void co_call_reference( const Item &itm, VMachine *vm, uint32 paramCount )
 {
    itm.asReference()->origin().readyFrame( vm, paramCount );
 }
 
 
-void co_call_array( const Item &itm, VMachine *vm, int paramCount )
+void co_call_array( const Item &itm, VMachine *vm, uint32 paramCount )
 {
    CoreArray *arr = itm.asArray();
 
@@ -1731,7 +1731,7 @@ void co_call_array( const Item &itm, VMachine *vm, int paramCount )
    throw new TypeError( ErrorParam( e_invop ).extra("CALL") );
 }
 
-void co_call_object( const Item &itm, VMachine *vm, int paramCount )
+void co_call_object( const Item &itm, VMachine *vm, uint32 paramCount )
 {
    // find the call__ member, if it exists.
    CoreObject *self = itm.asObjectSafe();
@@ -1751,7 +1751,7 @@ void co_call_object( const Item &itm, VMachine *vm, int paramCount )
    throw new TypeError( ErrorParam( e_invop ).extra("CALL") );
 }
 
-void co_call_method( const Item &itm, VMachine *vm, int paramCount )
+void co_call_method( const Item &itm, VMachine *vm, uint32 paramCount )
 {
    // fill - in the missing parameters.
    itm.asMethodFunc()->readyFrame( vm, paramCount );
@@ -1759,7 +1759,7 @@ void co_call_method( const Item &itm, VMachine *vm, int paramCount )
    itm.getMethodItem( vm->self() );
 }
 
-void co_call_class( const Item &itm, VMachine *vm, int paramCount )
+void co_call_class( const Item &itm, VMachine *vm, uint32 paramCount )
 {
    CoreClass *cls = itm.asClass();
    CoreObject* inst = cls->createInstance();

@@ -1569,7 +1569,7 @@ void VMachine::createFrame( uint32 paramCount )
    frame->m_ret_pc = m_pc_next;
    frame->m_call_pc = m_pc;
    frame->m_module = m_currentModule;
-   frame->m_param_count = (byte)paramCount;
+   frame->m_param_count = paramCount;
    frame->m_stack_base = m_stackBase;
    frame->m_try_base = m_tryFrame;
    frame->m_break = false;
