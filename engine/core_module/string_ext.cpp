@@ -664,15 +664,23 @@ FALCON_FUNC  mth_strMerge ( ::Falcon::VMachine *vm )
    CoreString *ts = new CoreString;
 
    // filling the target.
-   for( uint32 i = 0; i < len ; i ++ ) {
-      if ( elements[i].type() != FLC_ITEM_STRING ) {
-         vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
-         return;
+   for( uint32 i = 1; i <= len ; i ++ ) 
+   {
+      Item* item = elements+i;
+      
+      if ( item->isString() )
+         *ts += *item->asString();
+      else
+      {
+         String temp;
+         vm->itemToString( temp, item );
+         *ts += temp;
       }
-      String *src = elements[i].asString();
-      ts->append( *src );
-      if ( mr_str != 0 && i < len - 1 )
+
+      if ( mr_str != 0 && i < len )
          ts->append( *mr_str );
+
+      ts->reserve( len/i * ts->size() ); 
    }
 
    vm->retval( ts );
@@ -701,8 +709,9 @@ FALCON_FUNC  String_join ( ::Falcon::VMachine *vm )
    // Parameter estraction.
    CoreString *ts = new CoreString;
    String *self = vm->self().asString();
+   uint32 pc = vm->paramCount();
 
-   if ( vm->paramCount() > 0 )
+   if ( pc > 1 )
    {
       Item *head = vm->param(0);
       if ( head->isString() )
@@ -712,7 +721,7 @@ FALCON_FUNC  String_join ( ::Falcon::VMachine *vm )
 
       ts->bufferize();
 
-      for( int i = 1; i < vm->paramCount(); i++ )
+      for( uint32 i = 1; i < pc; i++ )
       {
          if( self->size() != 0 )
             *ts += *self;
@@ -726,6 +735,8 @@ FALCON_FUNC  String_join ( ::Falcon::VMachine *vm )
             vm->itemToString( temp, item );
             *ts += temp;
          }
+
+         ts->reserve( pc/i * ts->size() ); 
       }
    }
 
