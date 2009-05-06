@@ -621,13 +621,19 @@ StdInStream::StdInStream():
         GetStdHandle( STD_INPUT_HANDLE ),         // handle to duplicate
         curProc,  // handle to process to duplicate to
         &dupped,  // pointer to duplicate handle
-        0,    // access for duplicate handle
-        TRUE,      // handle inheritance flag
-        DUPLICATE_SAME_ACCESS           // optional actions
+        GENERIC_READ,    // access for duplicate handle
+        FALSE,      // handle inheritance flag
+        0           // optional actions
          )
       )
    {
-      dupped = (HANDLE) -1;
+      dupped = GetStdHandle( STD_INPUT_HANDLE );
+      if( dupped != INVALID_HANDLE_VALUE )
+      {
+         SetConsoleMode( dupped,
+			   ENABLE_ECHO_INPUT |
+			   ENABLE_PROCESSED_INPUT );
+      }
    }
    else {
 	   // remove the readline mode, as it breaks the WaitForXX functions.
@@ -650,13 +656,13 @@ StdOutStream::StdOutStream():
         GetStdHandle( STD_OUTPUT_HANDLE ),         // handle to duplicate
         curProc,  // handle to process to duplicate to
         &dupped,  // pointer to duplicate handle
-        0,    // access for duplicate handle
-        TRUE,      // handle inheritance flag
-        DUPLICATE_SAME_ACCESS           // optional actions
+        GENERIC_WRITE,    // access for duplicate handle
+        FALSE,      // handle inheritance flag
+        0           // optional actions
          )
       )
    {
-      dupped = (HANDLE) -1;
+      dupped = GetStdHandle( STD_OUTPUT_HANDLE );
    }
 
    m_fsData = new WinFileSysData( dupped, 0, true, WinFileSysData::e_dirOut );
@@ -673,13 +679,13 @@ StdErrStream::StdErrStream():
         GetStdHandle( STD_ERROR_HANDLE ),         // handle to duplicate
         curProc,  // handle to process to duplicate to
         &dupped,  // pointer to duplicate handle
-        0,    // access for duplicate handle
-        TRUE,      // handle inheritance flag
-        DUPLICATE_SAME_ACCESS           // optional actions
+        GENERIC_WRITE,    // access for duplicate handle
+        FALSE,      // handle inheritance flag
+        0           // optional actions
          )
       )
    {
-      dupped = (HANDLE) -1;
+      dupped = GetStdHandle( STD_ERROR_HANDLE );
    }
 
    m_fsData = new WinFileSysData( dupped, 0, true, WinFileSysData::e_dirOut );

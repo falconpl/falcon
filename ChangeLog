@@ -26,6 +26,7 @@ Falcon (0.9.1.5)
            requests.
   * fixed: Function parameters were still hard-limited to 255. Now they
            are limited to uint32 (2^32).
+  * fixed: std I/O blocked on Win7 (inheritance rights on DuplicateHandle).
 
 Falcon (0.9.1.4)
   * fixed: As now files and modules loads are URIs, and URI decoding was
