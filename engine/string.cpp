@@ -1547,7 +1547,7 @@ void String::serialize( Stream *out ) const
       {
          for( int i = 0; i < m_size/2; i ++ )
          {
-            uint16 chr = endianInt16((uint16) getCharAt( i ) );
+            uint16 chr = (uint32) endianInt16((uint16) getCharAt( i ) );
             out->write( (byte *) &chr, 2 );
             if (! out->good() )
                return;
@@ -1557,7 +1557,7 @@ void String::serialize( Stream *out ) const
       {
          for( int i = 0; i < m_size/4; i ++ )
          {
-            uint16 chr = endianInt32((uint32) getCharAt( i ) );
+            uint32 chr = (uint32) endianInt32( getCharAt( i ) );
             out->write( (byte *) &chr, 4 );
             if (! out->good() )
                return;
@@ -1630,31 +1630,24 @@ bool String::deserialize( Stream *in, bool bStatic )
       in->read( m_storage, m_size );
       #else
       // in big endian environ, we have to reverse the code.
-      if( chars == 1 )
+      in->read( m_storage, m_size );
+      if ( ! in->good() )
+         return;
+
+      if ( chars == 2 )
       {
-         in->read( m_storage, m_size );
-      }
-      else if ( chars == 2 )
-      {
+         uint16* storage16 = (uint16*) m_storage;
          for( int i = 0; i < m_size/2; i ++ )
          {
-            uint16 chr ;
-            in->read( (byte *) &chr, 2 );
-            ((uint16) *m_storage)[i] = endianInt16((uint16) chr );
-
-            if (! out->good() )
-               return;
+            storage16[i] = (uint16) endianInt16( storage16[i] );
          }
       }
       else if ( chars == 4 )
       {
+         uint32* storage32 = (uint32*) m_storage;
          for( int i = 0; i < m_size/4; i ++ )
          {
-            uint32 chr ;
-            in->read( (byte *) &chr, 4);
-            ((uint32) *m_storage)[i] = endianInt16((uint16) chr );
-            if (! out->good() )
-               return;
+            storage32[i] = (uint32) endianInt16( storage32[i] );
          }
       }
       #endif
@@ -1666,7 +1659,7 @@ bool String::deserialize( Stream *in, bool bStatic )
 
 void String::c_ize()
 {
-   if ( allocated() <= size() || getCharAt( length() ) != 0 )  
+   if ( allocated() <= size() || getCharAt( length() ) != 0 )
    {
       append( 0 );
       size( size() - m_class->charSize() );
@@ -1678,7 +1671,7 @@ bool String::setCharSize( uint32 nsize, uint32 subst )
    // same size?
    if ( nsize == m_class->charSize() )
       return true;
-   
+
    // change only the manipulator?
    if( size() == 0 ) {
       m_class->destroy( this ); // dispose anyhow
@@ -1689,13 +1682,13 @@ bool String::setCharSize( uint32 nsize, uint32 subst )
          case 4: m_class = &csh::handler_buffer32; break;
          default: return false;
       }
-      
+
       return true;
    }
-   
+
    if ( nsize != 1 && nsize != 2 && nsize != 4 )
       return false;
-   
+
    // full change.
    // use allocated to decide re-allocation under new char size.
    byte *mem = getRawStorage();
@@ -1710,7 +1703,7 @@ bool String::setCharSize( uint32 nsize, uint32 subst )
    m_class = manipulator;
    setRawStorage( nmem );
 
-   return true;         
+   return true;
 }
 
 
