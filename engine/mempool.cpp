@@ -32,6 +32,8 @@
 #include <typeinfo>
 
 #define GC_IDLE_TIME 250
+// default 128k
+#define GC_THREAD_STACK_SIZE  0x10000
 
 #if 0
 #define TRACE printf
@@ -678,7 +680,7 @@ void MemPool::start()
    {
       m_bLive = true;
       m_th = new SysThread( this );
-      m_th->start();
+      m_th->start( ThreadParams().stackSize( GC_THREAD_STACK_SIZE ) );
    }
 }
 
