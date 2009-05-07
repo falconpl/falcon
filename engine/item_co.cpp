@@ -1739,7 +1739,7 @@ void co_call_object( const Item &itm, VMachine *vm, uint32 paramCount )
    Item mth;
    if ( self->getMethod( "call__", mth ) )
    {
-      itm.asMethodFunc()->readyFrame( vm, paramCount );
+      mth.asMethodFunc()->readyFrame( vm, paramCount );
       vm->self() = self;
       return;
    }
