@@ -595,7 +595,7 @@ protected:
    /** Returns the next NTD64 parameter, advancing the pointer to the next instruction */
    int64 getNextNTD64()
    {
-      register int64 ret = endianInt64(*reinterpret_cast<int64 *>( m_code + m_pc_next ) );
+      register int64 ret = grabInt64( m_code + m_pc_next );
       m_pc_next += sizeof( int64 );
       return ret;
    }

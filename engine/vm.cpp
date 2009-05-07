@@ -1960,13 +1960,13 @@ bool VMachine::seekInteger( int64 value, byte *base, uint16 size, uint32 &landin
    {
       pos = base + point * SEEK_STEP;
 
-      if ( ((int64)endianInt64(*reinterpret_cast< int64 *>( pos ))) == value )
+      if ( ((int64)grabInt64( pos )) == value )
       {
          landing = endianInt32( *reinterpret_cast< int32 *>( pos + sizeof(int64) ) );
          return true;
       }
 
-      if ( value > (int64) endianInt64(*reinterpret_cast< int64 *>( pos )) )
+      if ( value > (int64) grabInt64( pos ) )
          lower = point;
       else
          higher = point;
@@ -1974,13 +1974,13 @@ bool VMachine::seekInteger( int64 value, byte *base, uint16 size, uint32 &landin
    }
 
    // see if it was in the last loop
-   if ( ((int64)endianInt64( *reinterpret_cast< int64 *>( base + lower * SEEK_STEP ) ) ) == value )
+   if ( ((int64)grabInt64( base + lower * SEEK_STEP ) ) == value )
    {
       landing =  endianInt32( *reinterpret_cast< uint32 *>( base + lower * SEEK_STEP + sizeof( int64 ) ) );
       return true;
    }
 
-   if ( lower != higher && ((int64)endianInt64( *reinterpret_cast< int64 *>( base + higher * SEEK_STEP ) ) ) == value )
+   if ( lower != higher && ((int64)grabInt64( base + higher * SEEK_STEP ) ) == value )
    {
       // YATTA, we found it at last
       landing =  endianInt32( *reinterpret_cast< uint32 *>( base + higher * SEEK_STEP + sizeof( int64 ) ) );

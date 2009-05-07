@@ -57,7 +57,7 @@ Item *VMachine::getOpcodeParam( register uint32 bc_pos )
       return m_imm + bc_pos;
 
       case P_PARAM_INT64:
-         m_imm[bc_pos].setInteger( endianInt64(*reinterpret_cast<int64 *>( m_code + m_pc_next ) ) );
+         m_imm[bc_pos].setInteger( grabInt64( m_code + m_pc_next  ) );
          m_pc_next += sizeof( int64 );
       return m_imm + bc_pos;
 
