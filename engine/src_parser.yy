@@ -1850,7 +1850,7 @@ init_decl:
 ;
 
 property_decl:
-   STATIC SYMBOL OP_EQ expression EOL
+   STATIC SYMBOL OP_EQ const_atom EOL
    {
       COMPILER->checkLocalUndefined();
       Falcon::StmtClass *cls = static_cast<Falcon::StmtClass *>( COMPILER->getContext() );

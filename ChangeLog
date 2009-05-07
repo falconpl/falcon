@@ -28,6 +28,8 @@ Falcon (0.9.1.5)
            are limited to uint32 (2^32).
   * fixed: std I/O blocked on Win7 (inheritance rights on DuplicateHandle).
   * fixed: crash in call__ callback for functors.
+  * fixed: static initializer in classes didn't use standard definition of
+           const_atom.
 
 Falcon (0.9.1.4)
   * fixed: As now files and modules loads are URIs, and URI decoding was
