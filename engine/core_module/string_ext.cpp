@@ -666,7 +666,7 @@ FALCON_FUNC  mth_strMerge ( ::Falcon::VMachine *vm )
    // filling the target.
    for( uint32 i = 1; i <= len ; i ++ ) 
    {
-      Item* item = elements+i;
+      Item* item = elements+(i-1);
       
       if ( item->isString() )
          *ts += *item->asString();
