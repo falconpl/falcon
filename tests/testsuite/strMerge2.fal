@@ -1,0 +1,31 @@
+/****************************************************************************
+* Falcon test suite
+*
+*
+* ID: 101p
+* Category: rtl
+* Subcategory: string
+* Short: merge method on strings 
+* Description:
+*   Test on String.merge method.
+* [/Description]
+*
+****************************************************************************/
+
+if "".merge([]) != "": failure( "Full empty merge" )
+if ",".merge([]) !="": failure( "Void merge" )
+if "".merge(["a word"]) != "a word": failure( "merge single word" )
+if "".merge( [1] ) != "1": failure( "merge toString" )
+if "x".merge( [640, 480] ) != "640x480": failure( "merge with a string" )
+if "".merge( [640, 480] ) != "640480": failure( "merge without strings" )
+if " tok ".merge( ["single"] ) != "single": failure( "merge single token" )
+if " tok ".merge( ["alpha", 1, 2, "beta"] ) != \
+   "alpha tok 1 tok 2 tok beta": failure( "merge token" )
+
+// Multibyte
+if ",".merge( ["安心", "しました"] ) != "安心,しました": failure( "merge multi mixed" )
+if "、".merge( ["安心", "しました"] ) != "安心、しました": failure( "merge multi pure" )
+
+success()
+
+/* End of file */

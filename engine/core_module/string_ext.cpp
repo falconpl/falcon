@@ -711,7 +711,7 @@ FALCON_FUNC  String_join ( ::Falcon::VMachine *vm )
    String *self = vm->self().asString();
    uint32 pc = vm->paramCount();
 
-   if ( pc > 1 )
+   if ( pc > 0 )
    {
       Item *head = vm->param(0);
       if ( head->isString() )
