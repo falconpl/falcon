@@ -6,7 +6,7 @@
 
 
    Serializer and deserializer for file streams.
-	Use parameter -o to write an output serialized file
+   Use parameter -o to write an output serialized file
    Use parameter -i to read a previously serialized file
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
@@ -19,11 +19,11 @@
 */
 
 object obj
-	a = 1.3
-	b = [ "c" => "d" ]
-	function test()
-		printl( "Test!!" )
-	end
+   a = 1.3
+   b = [ "c" => "d" ]
+   function test()
+      printl( "Test!!" )
+   end
 end
 
 printl( "Falcon sample programs." )
@@ -31,63 +31,63 @@ printl( "Serialization sample." )
 printl( "-------------------------" )
 
 if len( args ) < 2
-	printl( "specify '-i/-o <file>' on the command line" )
-	return
+   printl( "specify '-i/-o <file>' on the command line" )
+   return
 end
 
 if args[0] != "-o" and args[0] != "-i"
-	printl( "Specify either -i or -o on the command line" )
-	return
+   printl( "Specify either -i or -o on the command line" )
+   return
 end
 
 
 if args[0] == "-o"
-	printl( "Writing to file ", args[1], "\n" )
+   printl( "Writing to file ", args[1], "\n" )
 
-	array = [ "Hello world",
-		1,
-		nil,
-		1.3,
-		[3:-1],
-		[3:],
-		[1, 2, 3],
-		["a"=>1, "b"=>2, "c"=>3 ],
-		obj,
-		"last" ]
+   array = [ "Hello world",
+      1,
+      nil,
+      1.3,
+      [3:-1],
+      [3:],
+      [1, 2, 3],
+      ["a"=>1, "b"=>2, "c"=>3 ],
+      obj,
+      "last" ]
 
-	try
-		stream = OutputStream( args[1] )
-		for elem in array
-			elem.serialize( stream )
-		end
-		stream.close()
-	catch in err
-		printl( "Error while writing!" )
-		printl( err.toString() )
-	end
+   try
+      stream = OutputStream( args[1] )
+      for elem in array
+         elem.serialize( stream )
+      end
+      stream.close()
+   catch in err
+      printl( "Error while writing!" )
+      printl( err.toString() )
+   end
 else
-	printl( "Reading from file ", args[1], "\n" )
-	try
-		stream = InputStream( args[1] )
-		count = 1
-		while true
-      	item = deserialize( stream )
-      	if stream.eof()
-      		break
-			end
-      	print( "Deserialized ", count, ": " )
-      	inspect( item )
-	      count ++
-		end
-		stream.close()
-	catch in err
+   printl( "Reading from file ", args[1], "\n" )
+   try
+      stream = InputStream( args[1] )
+      count = 1
+      while true
+         item = deserialize( stream )
+         if stream.eof()
+            break
+         end
+         print( "Deserialized ", count, ": " )
+         inspect( item )
+         count ++
+      end
+      stream.close()
+   catch in err
       if stream.eof()
          > "Stream hit EOF."
       else
-   		printl( "Error while reading!" )
-   		printl( err.toString() )
+         printl( "Error while reading!" )
+         printl( err.toString() )
       end
-	end
+   end
 end
 
 printl( "-------------------------" )

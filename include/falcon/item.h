@@ -120,7 +120,9 @@ public:
          This serialization or deserialization operation required a VM to be provided,
          but it wasn't.
       */
-      sc_missvm
+      sc_missvm,
+      /** Hit EOF while de-serializing */
+      sc_eof
    }
    e_sercode;
 

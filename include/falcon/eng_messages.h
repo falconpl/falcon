@@ -241,6 +241,7 @@ FAL_ERRORDECL( e_unknown_encoding, 206, "Unknown encoding name" );
 FAL_ERRORDECL( e_unrec_file_type, 207, "Unrecognized file type" );
 FAL_ERRORDECL( e_io_unsup, 208, "Unrecognized file type" );
 FAL_ERRORDECL( e_io_invalid, 209, "Unrecognized file type" );
+FAL_ERRORDECL( e_deser_eof, 210, "Hit EOF while deserializing" );
 
 FAL_ERRORDECL( e_fmt_convert, 500, "Format not applicable to object" );
 FAL_ERRORDECL( e_interrupted, 501, "Asynchronous wait interruption" );

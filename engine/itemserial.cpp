@@ -393,8 +393,9 @@ Item::e_sercode Item::deserialize_class( Stream *file, VMachine *vm )
 
 Item::e_sercode Item::deserialize( Stream *file, VMachine *vm )
 {
-   byte type;
-   file->read((byte *) &type, 1 );
+   byte type = FLC_ITEM_NIL;
+   if ( file->read((byte *) &type, 1 ) == 0 )
+      return sc_eof;
 
    if( ! file->good() )
       return sc_ferror;
@@ -511,9 +512,12 @@ Item::e_sercode Item::deserialize( Stream *file, VMachine *vm )
          }*/
 
          MemBuf* mb;
-         file->read( &mb, sizeof( mb ) );
-         setMemBuf( mb );
-         return sc_ok;
+         if( file->read( &mb, sizeof( mb ) ) == sizeof(mb) )
+         {
+            setMemBuf( mb );
+            return sc_ok;
+         }
+         return sc_eof;
       }
 
       case FLC_ITEM_MEMBUF:

@@ -30,6 +30,7 @@ Falcon (0.9.1.5)
   * fixed: crash in call__ callback for functors.
   * fixed: static initializer in classes didn't use standard definition of
            const_atom.
+  * fixed: Secured deserialization on almost-last item.
   * major: Added support for operator overloading in poop, and Dictionary.set()
            /dictSet() to be able to bypass [] overloading if needed.
 

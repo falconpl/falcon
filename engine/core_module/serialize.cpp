@@ -179,7 +179,8 @@ FALCON_FUNC  deserialize ( ::Falcon::VMachine *vm )
    switch( sc )
    {
       case Item::sc_ok: return; // ok, we've nothing to do
-      case Item::sc_ferror: vm->raiseModError( new IoError( ErrorParam( e_modio, __LINE__ ).origin( e_orig_runtime ) ) );
+      case Item::sc_eof: vm->raiseModError( new IoError( ErrorParam( e_deser_eof, __LINE__ ).origin( e_orig_runtime ) ) );
+      case Item::sc_ferror: vm->raiseModError( new IoError( ErrorParam( e_io_error, __LINE__ ).origin( e_orig_runtime ) ) );
       case Item::sc_misssym: vm->raiseModError( new GenericError( ErrorParam( e_undef_sym, __LINE__ ).origin( e_orig_runtime ) ) );
       case Item::sc_missclass: vm->raiseModError( new GenericError( ErrorParam( e_undef_sym, __LINE__ ).origin( e_orig_runtime ) ) );
       case Item::sc_invformat: vm->raiseModError( new ParseError( ErrorParam( e_invformat, __LINE__ ).origin( e_orig_runtime ) ) );
