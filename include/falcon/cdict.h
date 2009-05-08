@@ -108,6 +108,18 @@ public:
 
    /** Returns true if this dictionary is blessed. */
    bool isBlessed() const { return m_blessed; }
+   
+   /** Returns a method out of this dictionary.
+   
+      This method returns true if there is a function item
+      stored under the given key, provided that this
+      dictionary is blessed.
+      
+      \param name The name of the method to be searched.
+      \param mth An item that will receive a full readied method on success.
+      \return true if the method was found.
+   */
+   bool getMethod( const String& name, Item &mth );
 
    /** Bless this dictionary.
       A blessed dictionary becomes a flessible instance.

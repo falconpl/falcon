@@ -335,6 +335,7 @@ FALCON_FUNC  mth_dictMerge( ::Falcon::VMachine *vm );
 FALCON_FUNC  mth_dictKeys( ::Falcon::VMachine *vm );
 FALCON_FUNC  mth_dictValues( ::Falcon::VMachine *vm );
 FALCON_FUNC  mth_dictGet( ::Falcon::VMachine *vm );
+FALCON_FUNC  mth_dictSet( ::Falcon::VMachine *vm );
 FALCON_FUNC  mth_dictFind( ::Falcon::VMachine *vm );
 FALCON_FUNC  mth_dictBest( ::Falcon::VMachine *vm );
 FALCON_FUNC  mth_dictRemove( ::Falcon::VMachine *vm );

@@ -380,6 +380,8 @@ Module* core_module_init()
    self->addClassMethod( dict_meta,  "values", &Falcon::core::mth_dictValues );
    self->addClassMethod( dict_meta,  "get", &Falcon::core::mth_dictGet ).asSymbol()->
       addParam("key");
+   self->addClassMethod( dict_meta,  "set", &Falcon::core::mth_dictSet ).asSymbol()->
+      addParam("key")->addParam("value");
    self->addClassMethod( dict_meta, "find", &Falcon::core::mth_dictFind ).asSymbol()->
       addParam("key");
    self->addClassMethod( dict_meta, "best", &Falcon::core::mth_dictBest ).asSymbol()->
@@ -1002,6 +1004,8 @@ Module* core_module_init()
       addParam("dict");
    self->addExtFunc( "dictGet", &Falcon::core::mth_dictGet )->
       addParam("dict")->addParam("key");
+   self->addExtFunc( "dictSet", &Falcon::core::mth_dictSet )->
+      addParam("dict")->addParam("key")->addParam("value");
    self->addExtFunc( "dictFind", &Falcon::core::mth_dictFind )->
       addParam("dict")->addParam("key");
    self->addExtFunc( "dictBest", &Falcon::core::mth_dictBest )->

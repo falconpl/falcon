@@ -513,6 +513,22 @@ FALCON_FUNC  mth_dictFill ( ::Falcon::VMachine *vm )
 
    @see oob
 */
+/*#
+   @method get Dictionary
+   @brief Retreives a value associated with the given key
+   @param key The key to be found.
+   @return The value associated with a key, or an out-of-band nil if not found.
+
+   Return the value associated with the key, if present, or one of the
+   values if more than one key matching the given one is present. If
+   not present, the value returned will be nil. Notice that nil may be also
+   returned if the value associated with a given key is exactly nil. In
+   case the key cannot be found, the returned value will be marked as OOB.
+   
+   @notice This method bypassess getIndex__ override in blessed (POOP) dictionaries.
+
+   @see oob
+*/
 FALCON_FUNC  mth_dictGet( ::Falcon::VMachine *vm )
 {
    Item *i_dict, *i_key;
@@ -543,6 +559,66 @@ FALCON_FUNC  mth_dictGet( ::Falcon::VMachine *vm )
    }
    else
       vm->retval( *value );
+}
+
+/*#
+   @function dictSet
+   @brief Stores a value in a dictionary
+   @param dict A dictionary.
+   @param key The key to be found.
+   @param value The key to be set.
+   @return True if the value was overwritten, false if it has been inserted anew.
+   
+   @notice This method bypassess setIndex__ override in blessed (POOP) dictionaries.
+
+   @see oob
+*/
+
+/*#
+   @function set Dictionary
+   @brief Stores a value in a dictionary
+   @param key The key to be found.
+   @param value The key to be set.
+   @return True if the value was overwritten, false if it has been inserted anew.
+   
+   @notice This method bypassess setIndex__ override in blessed (POOP) dictionaries.
+
+   @see oob
+*/
+FALCON_FUNC  mth_dictSet( ::Falcon::VMachine *vm )
+{
+   Item *i_dict, *i_key, *i_value;
+   
+   if( vm->self().isMethodic() )
+   {
+      i_dict = &vm->self();
+      i_key = vm->param(0);
+      i_value = vm->param(1);
+   }
+   else {
+      i_dict = vm->param(0);
+      i_key = vm->param(1);
+      i_value = vm->param(2);
+   }
+   
+   if( i_dict == 0  || ! i_dict->isDict() || i_key == 0 || i_value == 0 ) 
+   {
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+            .origin( e_orig_runtime )
+            .extra( vm->self().isMethodic() ? "X,X" : "D,X,X" ) );
+   }
+
+   CoreDict *dict = i_dict->asDict();
+   Item *value = dict->find( *i_key );
+   if ( value == 0 )
+   {
+      vm->regA().setBoolean( false );
+      dict->insert( *i_key, *i_value );
+   }
+   else {
+      vm->regA().setBoolean( true );
+      *value = *i_value;
+   }
 }
 
 /*#

@@ -119,6 +119,19 @@ void co_dict_add( const Item& first, const Item& second, Item& third )
 {
    CoreDict *source = first.asDict();
    const Item *op2 = second.dereference();
+   Item mth;
+   
+   if ( source->getMethod( "add__", mth ) )
+   {
+      VMachine *vm = VMachine::getCurrent();
+      if ( vm != 0 )
+      {
+         vm->pushParameter( *second.dereference() );
+         vm->callItemAtomic( mth, 1 );
+         third = vm->regA();
+         return;
+      }
+   }
 
    if ( op2->isDict() )
    {
@@ -273,7 +286,20 @@ void co_dict_sub( const Item& first, const Item& second, Item& third )
    // accomodate for selfsub
    CoreDict *dest = third.isDict() && third.asDict() == source ? source : source->clone();
    const Item *op2 = second.dereference();
-
+   Item mth;
+   
+   if ( source->getMethod( "sub__", mth ) )
+   {
+      VMachine *vm = VMachine::getCurrent();
+      if ( vm != 0 )
+      {
+         vm->pushParameter( *second.dereference() );
+         vm->callItemAtomic( mth, 1 );
+         third = vm->regA();
+         return;
+      }
+   }
+   
    // if we have an array, remove all of it
    if( op2->isArray() )
    {
@@ -404,6 +430,27 @@ void co_string_mul( const Item& first, const Item& second, Item& third )
 }
 
 
+void co_dict_mul( const Item& first, const Item& second, Item& third )
+{
+   CoreDict *self = first.asDict();
+
+   Item mth;
+   if ( self->getMethod( "mul__", mth ) )
+   {
+      VMachine *vm = VMachine::getCurrent();
+      if ( vm !=  0 )
+      {
+         vm->pushParameter( *second.dereference() );
+         vm->callItemAtomic( mth, 1 );
+         third = vm->regA();
+         return;
+      }
+   }
+
+   throw new TypeError( ErrorParam( e_invop ).extra( "mul__" ) );
+}
+
+
 void co_object_mul( const Item& first, const Item& second, Item& third )
 {
    CoreObject *self = first.asObjectSafe();
@@ -423,6 +470,7 @@ void co_object_mul( const Item& first, const Item& second, Item& third )
 
    throw new TypeError( ErrorParam( e_invop ).extra( "mul__" ) );
 }
+
 
 void co_ref_mul( const Item& first, const Item& second, Item& third )
 {
@@ -505,6 +553,27 @@ void co_num_div( const Item& first, const Item& second, Item& third )
 }
 
 
+void co_dict_div( const Item& first, const Item& second, Item& third )
+{
+   CoreDict *self = first.asDict();
+
+   Item mth;
+   if ( self->getMethod( "div__", mth ) )
+   {
+      VMachine *vm = VMachine::getCurrent();
+      if ( vm !=  0 )
+      {
+         vm->pushParameter( *second.dereference() );
+         vm->callItemAtomic( mth, 1 );
+         third = vm->regA();
+         return;
+      }
+   }
+
+   throw new TypeError( ErrorParam( e_invop ).extra( "div__" ) );
+}
+
+
 void co_object_div( const Item& first, const Item& second, Item& third )
 {
    CoreObject *self = first.asObjectSafe();
@@ -584,6 +653,27 @@ void co_num_mod( const Item& first, const Item& second, Item& third )
    }
 
    throw new TypeError( ErrorParam( e_invop ).extra( "MOD" ) );
+}
+
+
+void co_dict_mod( const Item& first, const Item& second, Item& third )
+{
+   CoreDict *self = first.asDict();
+
+   Item mth;
+   if ( self->getMethod( "mod__", mth ) )
+   {
+      VMachine *vm = VMachine::getCurrent();
+      if ( vm !=  0 )
+      {
+         vm->pushParameter( *second.dereference() );
+         vm->callItemAtomic( mth, 1 );
+         third = vm->regA();
+         return;
+      }
+   }
+
+   throw new TypeError( ErrorParam( e_invop ).extra( "mod__" ) );
 }
 
 
@@ -697,6 +787,27 @@ void co_num_pow( const Item& first, const Item& second, Item& third )
 }
 
 
+void co_dict_pow( const Item& first, const Item& second, Item& third )
+{
+   CoreDict *self = first.asDict();
+
+   Item mth;
+   if ( self->getMethod( "pow__", mth ) )
+   {
+      VMachine *vm = VMachine::getCurrent();
+      if ( vm !=  0 )
+      {
+         vm->pushParameter( *second.dereference() );
+         vm->callItemAtomic( mth, 1 );
+         third = vm->regA();
+         return;
+      }
+   }
+
+   throw new TypeError( ErrorParam( e_invop ).extra( "pow__" ) );
+}
+
+
 void co_object_pow( const Item& first, const Item& second, Item& third )
 {
    CoreObject *self = first.asObjectSafe();
@@ -738,6 +849,27 @@ void co_num_neg( const Item& first, Item& tgt )
    tgt = -first.asNumeric();
 }
 
+
+void co_dict_neg( const Item& first, const Item& second, Item& third )
+{
+   CoreDict *self = first.asDict();
+
+   Item mth;
+   if ( self->getMethod( "neg__", mth ) )
+   {
+      VMachine *vm = VMachine::getCurrent();
+      if ( vm !=  0 )
+      {
+         vm->callItemAtomic( mth, 0 );
+         third = vm->regA();
+         return;
+      }
+   }
+
+   throw new TypeError( ErrorParam( e_invop ).extra( "neg__" ) );
+}
+
+
 void co_object_neg( const Item& first, Item& third )
 {
    CoreObject *self = first.asObjectSafe();
@@ -778,6 +910,27 @@ void co_num_inc( Item& first )
    first = first.asNumeric() + 1.0;
 }
 
+
+void co_dict_inc( const Item& first, const Item& second, Item& third )
+{
+   CoreDict *self = first.asDict();
+
+   Item mth;
+   if ( self->getMethod( "inc__", mth ) )
+   {
+      VMachine *vm = VMachine::getCurrent();
+      if ( vm !=  0 )
+      {
+         vm->callItemAtomic( mth, 0 );
+         third = vm->regA();
+         return;
+      }
+   }
+
+   throw new TypeError( ErrorParam( e_invop ).extra( "inc__" ) );
+}
+
+
 void co_object_inc( Item& first )
 {
    CoreObject *self = first.asObjectSafe();
@@ -816,6 +969,27 @@ void co_num_dec( Item& first )
 {
    first = first.asNumeric() - 1.0;
 }
+
+
+void co_dict_dec( const Item& first, const Item& second, Item& third )
+{
+   CoreDict *self = first.asDict();
+
+   Item mth;
+   if ( self->getMethod( "dec__", mth ) )
+   {
+      VMachine *vm = VMachine::getCurrent();
+      if ( vm != 0 )
+      {
+         vm->callItemAtomic( mth, 0 );
+         third = vm->regA();
+         return;
+      }
+   }
+
+   throw new TypeError( ErrorParam( e_invop ).extra( "dec__" ) );
+}
+
 
 void co_object_dec( Item& first )
 {
@@ -858,6 +1032,28 @@ void co_num_incpost( Item& first, Item& tgt )
    first = first.asNumeric() + 1.0;
 }
 
+
+void co_dict_incpost( const Item& first, const Item& second, Item& third )
+{
+   CoreDict *self = first.asDict();
+
+   Item mth;
+   if ( self->getMethod( "incpost__", mth ) )
+   {
+      VMachine *vm = VMachine::getCurrent();
+      if ( vm !=  0 )
+      {
+         vm->callItemAtomic( mth, 0 );
+         third = vm->regA();
+         return;
+      }
+   }
+
+   throw new TypeError( ErrorParam( e_invop ).extra( "incpost__" ) );
+}
+
+
+
 void co_object_incpost( Item& first, Item& third )
 {
    CoreObject *self = first.asObjectSafe();
@@ -899,6 +1095,27 @@ void co_num_decpost( Item& first, Item& tgt )
    tgt = first;
    first = first.asNumeric() - 1.0;
 }
+
+
+void co_dict_decpost( const Item& first, const Item& second, Item& third )
+{
+   CoreDict *self = first.asDict();
+
+   Item mth;
+   if ( self->getMethod( "decpost__", mth ) )
+   {
+      VMachine *vm = VMachine::getCurrent();
+      if ( vm !=  0 )
+      {
+         vm->callItemAtomic( mth, 0 );
+         third = vm->regA();
+         return;
+      }
+   }
+
+   throw new TypeError( ErrorParam( e_invop ).extra( "decpost__" ) );
+}
+
 
 void co_object_decpost( Item& first, Item& third )
 {
@@ -1128,6 +1345,22 @@ int co_array_compare( const Item& first, const Item& second )
 
 int co_dict_compare( const Item& first, const Item& second )
 {
+   CoreDict *self = first.asDict();
+
+   Item mth;
+   if ( self->getMethod( "compare", mth ) )
+   {
+      VMachine *vm = VMachine::getCurrent();
+      if ( vm !=  0 )
+      {
+         vm->pushParameter( *second.dereference() );
+         vm->callItemAtomic( mth, 1 );
+         if ( ! vm->regA().isNil() )
+            return (int) vm->regA().forceInteger();
+            
+      }
+   }
+
    if ( second.isReference() )
    {
       return co_dict_compare( first, second.asReference()->origin() );
@@ -2080,17 +2313,17 @@ void* ArrayCommOpsTable[] = {
 void* DictCommOpsTable[] = {
    (void*) co_dict_add,
    (void*) co_dict_sub,
-   (void*) co_fail,
-   (void*) co_fail,
-   (void*) co_fail,
-   (void*) co_fail,
-   (void*) co_fail,
+   (void*) co_dict_mul,
+   (void*) co_dict_div,
+   (void*) co_dict_mod,
+   (void*) co_dict_pow,
+   (void*) co_dict_neg,
 
    // Inc/dec
-   (void*) co_fail,
-   (void*) co_fail,
-   (void*) co_fail,
-   (void*) co_fail,
+   (void*) co_dict_inc,
+   (void*) co_dict_dec,
+   (void*) co_dict_incpost,
+   (void*) co_dict_decpost,
 
    // cfr
    (void*) co_dict_compare,

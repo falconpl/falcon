@@ -19,6 +19,28 @@
 
 namespace Falcon {
 
+bool CoreDict::getMethod( const String &name, Item &mth )
+{
+   if ( m_blessed )
+   {
+      Item* found = find( name );
+      if ( found != 0 )
+      {
+         found = found->dereference();
+         if ( found->isCallable() )
+         {
+            mth = *found;
+            mth.methodize( this );
+            return true;
+         }
+      }
+   }
+   
+   return false;
+}
+
+
+
 Item *CoreDict::find( const String &key ) const
 {
    return find( const_cast<String *>(&key) );
@@ -80,6 +102,27 @@ void CoreDict::writeProperty( const String &prop, const Item &item )
 
 void CoreDict::readIndex( const Item &pos, Item &target )
 {
+   if( m_blessed )
+   {
+      Item *method;
+      if ( (method = find( "setIndex__" ) ) != 0 )
+      {
+         method = method->dereference();
+         if ( method->isFunction() )
+         {
+            VMachine* vm = VMachine::getCurrent();
+            if( vm != 0 )
+            {
+               Item mth = *method;
+               mth.methodize(this);
+               vm->pushParameter( target );
+               vm->callItemAtomic( mth, 1 );
+            }
+            return;
+         }
+      }
+   }
+   
    if( ! find( *pos.dereference(), target ) )
    {
       throw new AccessError( ErrorParam( e_arracc, __LINE__ ) );
@@ -88,26 +131,27 @@ void CoreDict::readIndex( const Item &pos, Item &target )
 
 void CoreDict::writeIndex( const Item &pos, const Item &target )
 {
-   /*
    if( m_blessed )
    {
       Item *method;
-      String index( "setIndex__" );
-      if ( (method = find( &index ) ) != 0 )
+      if ( (method = find( "setIndex__" ) ) != 0 )
       {
          method = method->dereference();
          if ( method->isFunction() )
          {
-            VMachine* vm = origin();
-            method->setTabMethod( this, method->asFunction(), method->asModule() );
-            vm->pushParameter( pos );
-            vm->pushParameter( target );
-            vm->callItemAtomic( *method, 2 );
-            return;
+           VMachine* vm = VMachine::getCurrent();
+            if( vm != 0 )
+            {
+               Item mth = *method;
+               mth.methodize(this);
+               vm->pushParameter( pos );
+               vm->pushParameter( target );
+               vm->callItemAtomic( mth, 2 );
+               return;
+            }
          }
       }
    }
-   */
 
    const Item *tgt = target.dereference();
    if( tgt->isString() )
