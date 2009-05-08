@@ -1528,7 +1528,8 @@ void String::unescape()
 
 void String::serialize( Stream *out ) const
 {
-   uint32 size = endianInt32( m_bExported ? m_size | 0x80000000 : m_size );
+   uint32 size = m_bExported ? m_size | 0x80000000 : m_size;
+   size = endianInt32( size );
 
    out->write( (byte *) &size, sizeof(size) );
    if ( m_size != 0 && out->good() )
@@ -1647,7 +1648,7 @@ bool String::deserialize( Stream *in, bool bStatic )
          uint32* storage32 = (uint32*) m_storage;
          for( int i = 0; i < m_size/4; i ++ )
          {
-            storage32[i] = (uint32) endianInt16( storage32[i] );
+            storage32[i] = (uint32) endianInt32( storage32[i] );
          }
       }
       #endif

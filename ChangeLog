@@ -33,6 +33,7 @@ Falcon (0.9.1.5)
   * fixed: Secured deserialization on almost-last item.
   * major: Added support for operator overloading in poop, and Dictionary.set()
            /dictSet() to be able to bypass [] overloading if needed.
+  * fixed: Interoperability of FAM and serialization across endianity.
 
 Falcon (0.9.1.4)
   * fixed: As now files and modules loads are URIs, and URI decoding was

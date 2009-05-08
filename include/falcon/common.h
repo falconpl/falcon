@@ -72,7 +72,7 @@ class CharPtrCmp
 
 #if FALCON_LITTLE_ENDIAN == 1
 
-inline uint64 grabInt64( void* data ) { return *(int64*)data; }
+inline uint64 grabInt64( void* data ) { return *(uint64*)data; }
 inline uint64 endianInt64( const uint64 param ) { return param; }
 inline uint32 endianInt32( const uint32 param ) { return param; }
 inline uint16 endianInt16( const uint16 param ) { return param; }
@@ -82,16 +82,16 @@ inline numeric endianNum( const numeric param ) { return param; }
 
 inline uint64 endianInt64( const uint64 param ) {
    byte *chars = (byte *) &param;
-   return ((uint64)chars[0]) << 56 | ((uint64)chars[1]) << 48 | ((uint64)chars[2]) << 40 |
-          ((uint64)chars[3]) << 32 | ((uint64)chars[4]) << 24 | ((uint64)chars[5]) << 16 |
-          ((uint64)chars[6]) << 8 | ((uint64)chars[7]);
+   return ((uint64)chars[7]) << 56 | ((uint64)chars[6]) << 48 | ((uint64)chars[5]) << 40 |
+          ((uint64)chars[4]) << 32 | ((uint64)chars[3]) << 24 | ((uint64)chars[2]) << 16 |
+          ((uint64)chars[1]) << 8 | ((uint64)chars[0]);
 }
 
 inline uint64 grabInt64( void* data ) { 
    byte *chars = (byte *) data;
-   return ((uint64)chars[0]) << 56 | ((uint64)chars[1]) << 48 | ((uint64)chars[2]) << 40 |
-          ((uint64)chars[3]) << 32 | ((uint64)chars[4]) << 24 | ((uint64)chars[5]) << 16 |
-          ((uint64)chars[6]) << 8 | ((uint64)chars[7]);
+   return ((uint64)chars[7]) << 56 | ((uint64)chars[6]) << 48 | ((uint64)chars[5]) << 40 |
+          ((uint64)chars[4]) << 32 | ((uint64)chars[3]) << 24 | ((uint64)chars[2]) << 16 |
+          ((uint64)chars[1]) << 8 | ((uint64)chars[0]);
 }
 
 inline numeric endianNum( const numeric &param )
@@ -113,12 +113,12 @@ inline numeric endianNum( const numeric &param )
 
 inline uint32 endianInt32( const uint32 param ) {
    byte *chars = (byte *) &param;
-   return ((uint32)chars[0]) << 24 | ((uint32)chars[1]) << 16 | ((uint32)chars[2]) << 8 | ((uint32)chars[3]);
+   return ((uint32)chars[3]) << 24 | ((uint32)chars[2]) << 16 | ((uint32)chars[1]) << 8 | ((uint32)chars[0]);
 }
 
 inline uint16 endianInt16( const uint16 param ) {
    byte *chars = (byte *) &param;
-   return ((uint32)chars[0]) << 8 | ((uint32)chars[1]);
+   return ((uint32)chars[1]) << 8 | ((uint32)chars[0]);
 }
 
 #endif /* FALCON_LITTLE_ENDIAN */

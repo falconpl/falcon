@@ -103,6 +103,7 @@ ENDIF(WIN32)
 ##############################################################################
 INCLUDE(TestBigEndian)
 
+MESSAGE( "Testing endianity on ${CMAKE_SYSTEM}" )
 TEST_BIG_ENDIAN(falcon_big_endian)
 IF(falcon_big_endian)
    SET(FALCON_LITTLE_ENDIAN 0)

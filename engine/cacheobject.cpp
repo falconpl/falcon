@@ -118,8 +118,9 @@ bool CacheObject::getProperty( const String &propName, Item &ret ) const
 
 bool CacheObject::serialize( Stream *stream, bool bLive ) const
 {
-   uint32 len = endianInt32( m_generatedBy->properties().added() );
-   stream->write((byte *) &len, sizeof(len) );
+   uint32 len = m_generatedBy->properties().added();
+   uint32 elen = endianInt32( m_generatedBy->properties().added() );
+   stream->write((byte *) &elen, sizeof(elen) );
 
    for( uint32 i = 0; i < len; i ++ )
    {
