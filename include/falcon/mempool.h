@@ -317,6 +317,11 @@ public:
    */
    bool rampMode( int mode );
    int rampMode() const;
+   
+   /** Alter the count of live items.
+     For internal use.
+   */
+   void accountItems( int itemCount );
 
    void performGC();
 };

@@ -35,6 +35,7 @@ LiveModule::LiveModule( Module *mod, bool bPrivate ):
    Garbageable(),
    m_module( mod ),
    m_aacc( 0 ),
+   m_iacc( 0 ),
    m_bPrivate( bPrivate ),
    m_bAlive(true),
    m_initState( init_none )
@@ -60,6 +61,8 @@ LiveModule::~LiveModule()
       memFree( m_strings );
 
    m_module->decref();
+   memPool->accountItems( m_iacc );
+   gcMemAccount( m_aacc );
 }
 
 void LiveModule::detachModule()
@@ -132,6 +135,10 @@ String* LiveModule::getString( uint32 stringId ) const
       CoreString* dest = new CoreString( *m_module->stringTable().get( stringId ) );
       m_strings[stringId] = dest;
       dest->bufferize();
+      gcMemUnaccount( sizeof( CoreString ) + dest->allocated() );
+      memPool->accountItems( -1 );
+      m_aacc += sizeof( CoreString ) + dest->allocated();
+      m_iacc++;
       return dest;
    }
 

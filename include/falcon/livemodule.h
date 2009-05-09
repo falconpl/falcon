@@ -73,6 +73,7 @@ class FALCON_DYN_CLASS LiveModule: public Garbageable
    mutable CoreString** m_strings;
    mutable uint32 m_strCount;
    mutable uint32 m_aacc;
+   mutable int32 m_iacc;
    ItemVector m_globals;
    ItemVector m_wkitems;
    bool m_bPrivate;

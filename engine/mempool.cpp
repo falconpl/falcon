@@ -333,6 +333,13 @@ void MemPool::storeForGarbage( Garbageable *ptr )
    m_mtx_newitem.unlock();
 }
 
+void MemPool::accountItems( int itemCount )
+{
+   m_mtx_newitem.lock();
+   m_allocatedItems += itemCount;
+   m_mtx_newitem.unlock();
+}
+
 
 bool MemPool::markVM( VMachine *vm )
 {
