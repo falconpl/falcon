@@ -70,7 +70,9 @@ namespace Falcon
 class FALCON_DYN_CLASS LiveModule: public Garbageable
 {
    Module *m_module;
-   CoreString** m_strings;
+   mutable CoreString** m_strings;
+   mutable uint32 m_strCount;
+   mutable uint32 m_aacc;
    ItemVector m_globals;
    ItemVector m_wkitems;
    bool m_bPrivate;

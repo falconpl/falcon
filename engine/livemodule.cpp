@@ -34,13 +34,21 @@ namespace Falcon {
 LiveModule::LiveModule( Module *mod, bool bPrivate ):
    Garbageable(),
    m_module( mod ),
+   m_aacc( 0 ),
    m_bPrivate( bPrivate ),
    m_bAlive(true),
    m_initState( init_none )
 {
    m_module->incref();
-   m_strings = static_cast<CoreString**>( memAlloc( sizeof(CoreString*) * mod->stringTable().size() ) );
-   memset( m_strings, 0, sizeof(CoreString*) * mod->stringTable().size() );
+   m_strCount = mod->stringTable().size();
+   if( m_strCount > 0 )
+   {
+      m_strings = static_cast<CoreString**>( memAlloc( sizeof(CoreString*) * m_strCount ) );
+      memset( m_strings, 0, sizeof(CoreString*) * m_strCount );
+   }
+   else {
+      m_strings = 0;
+  }
 }
 
 
@@ -48,7 +56,9 @@ LiveModule::~LiveModule()
 {
    fassert( m_module != 0 );
    
-   memFree( m_strings );
+   if ( m_strings != 0 )
+      memFree( m_strings );
+
    m_module->decref();
 }
 
@@ -109,6 +119,13 @@ void LiveModule::gcMark( uint32 mk )
 String* LiveModule::getString( uint32 stringId ) const
 {
    fassert( stringId < (uint32) m_module->stringTable().size() );
+   
+   if( stringId >= m_strCount )
+   {
+      m_strings = static_cast<CoreString**>(memRealloc( m_strings, sizeof( CoreString* ) * (stringId+1) ));
+      memset( m_strings + m_strCount, 0, sizeof( CoreString* ) * ( stringId - m_strCount +1) );
+      m_strCount = stringId+1;
+   }
    
    if( m_strings[stringId] == 0 )
    {
