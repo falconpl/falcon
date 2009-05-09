@@ -4,3 +4,6 @@ end
 
 > 'The main part of the module'
 
+function retString()
+   return "A string from the remote module"
+end

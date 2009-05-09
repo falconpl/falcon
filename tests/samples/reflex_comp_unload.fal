@@ -1,0 +1,59 @@
+/*
+   FALCON - Samples
+
+   FILE: reflex_comp_unload.fal
+
+   Loads an external resource and check that it can be unloaded.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: 2006-05-11 12:35
+
+   -------------------------------------------------------------------
+   (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+load compiler
+
+// create the compiler
+c = Compiler()
+c.sourceEncoding = "utf-8"
+
+// try to compile a source string
+
+try
+   // First param is the module logical name.
+   sourceMod = c.loadModule( "reflex_comp_external.fal" )
+
+   // in case of compilation error, we had an error and we bailed out
+
+   // load the symbol func from our module...
+   func = sourceMod.get( "func" )
+   // and execute it...
+   func( "test param" )
+
+   > "... hello from loader..."
+   >
+   
+   str = sourceMod.get( "retString" )()
+   > "The remote string: ", str
+   
+   // and now, unload
+   sourceMod.unload()
+   
+   // as we have references to them, we should still be able to access it
+   GC.perform(true)
+   func( "Again from main" )
+   > "The remote string again: ", str
+   
+   // and now discharge the module
+   func = nil
+   GC.perform(true)
+   
+   // but we should have cached the string in the local VM
+   > "Final check on the string: ", str
+
+catch CodeError in e
+   > "Had an error: ", e
+end
