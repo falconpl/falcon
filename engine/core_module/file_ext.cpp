@@ -1363,6 +1363,7 @@ FALCON_FUNC  OutputStream_creator ( ::Falcon::VMachine *vm )
          ::Falcon::BaseFileStream::e_smShareFull;
 
    VFSProvider::CParams params;
+   params.truncate();
    params.wrOnly();
 
    if ( shMode == BaseFileStream::e_smExclusive )
@@ -2011,6 +2012,7 @@ FALCON_FUNC  Stream_getBuffering ( ::Falcon::VMachine *vm )
    - "utf-16BE"
    - "utf-16LE"
    - "iso8859-1" to "iso8859-15"
+   - "gbk" (Chinese simplified)
    - "cp1252"
    - "C" (byte oriented – writes byte per byte)
 
@@ -2083,6 +2085,296 @@ FALCON_FUNC  Stream_setEncoding ( ::Falcon::VMachine *vm )
    self->setProperty( "eolMode", (int64) mode );
 }
 
+/*# 
+   @function readURI
+   @brief Reads fully data from a given file or URI source.
+   @param uri The item to be read (URI or string)
+   @optparam encoding The encoding.
+   @return A string containing the whole contents of the
+          given file.
+   @raise IoError in case of read error.
+   
+   This function reads as efficiently as possible a file
+   from the given source. If encoding isn't given, 
+   the file is read as binary data.
+   
+   Provided encodings are:
+   - "utf-8"
+   - "utf-16"
+   - "utf-16BE"
+   - "utf-16LE"
+   - "iso8859-1" to "iso8859-15"
+   - "gbk" (Chinese simplified)
+   - "cp1252"
+   - "C" (byte oriented – writes byte per byte)
+   
+   @note The maximum size of the data that can be read is
+   limited to 2 Gigabytes.
+*/
+FALCON_FUNC  readURI ( ::Falcon::VMachine *vm )
+{
+#define READURI_READ_BLOCK_SIZE 2048
+
+   Item *i_uri = vm->param(0);
+   Item *i_encoding = vm->param(1);
+
+   URI uri;
+   
+   if ( i_encoding != 0 && ! ( i_encoding->isString()|| i_encoding->isNil()) )
+   {
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+            .extra( "S|URI, [S]" ) );
+   }
+   
+   if ( i_uri->isString() )
+   {
+      uri.parse( *i_uri->asString() );
+      if( ! uri.isValid() ) {
+         throw new ParamError( ErrorParam( e_malformed_uri, __LINE__ )
+            .extra( *i_uri->asString() ) );
+      }
+   }
+   else if ( i_uri->isOfClass( "URI" ) )
+   {
+      uri = *dyncast<UriObject*>( i_uri->asObjectSafe() )->getUri();
+   }
+   else {
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+            .extra( "S|URI, [S]" ) );
+   }
+   
+   
+   // find the appropriage provider.
+   VFSProvider* vfs = Engine::getVFS( uri.scheme() );
+   if ( vfs == 0 )
+   {
+      throw new ParamError( ErrorParam( e_unknown_vfs, __LINE__ )
+            .extra( uri.scheme() ) );
+   }
+   
+   // Idling the VM here; we're starting to access the system.
+   vm->idle();
+   
+   Stream *in = vfs->open( uri, VFSProvider::OParams().rdOnly() );
+   if ( in == 0 )
+   {
+      vm->unidle();
+      throw vfs->getLastError();
+   }
+
+   FileStat fs;
+   int64 len;
+   if( ! vfs->readStats( uri, fs ) )
+   {
+      // we know the file exists; this means that the vfs doesn't provide file lenght.
+      len = -1;
+   }
+   else {
+      len = fs.m_size;
+   }
+
+   String *ret = new CoreString();
+   
+   // direct read?
+   if ( i_encoding == 0 || i_encoding->isNil() )
+   {
+      if ( len >= 0 && len < 2000000000 )
+         ret->reserve( (uint32) len );
+
+      int64 pos = 0;
+      while( ! in->eof() )
+      {
+         int rin = 0;
+         if ( len >= 0 && len < 2000000000 )
+         {
+            rin = in->read( ret->getRawStorage() + pos, len+1 ); // so we hit immediately EOF
+         }
+         else {
+            ret->reserve( pos + READURI_READ_BLOCK_SIZE );
+            rin = in->read( ret->getRawStorage() + pos, READURI_READ_BLOCK_SIZE );
+         }
+           
+         if ( rin < 0 )
+         {
+            vm->unidle();
+            int64 fsError = in->lastError();
+            delete in;
+            
+            throw new IoError( ErrorParam( e_io_error, __LINE__ )
+               .extra( uri.get() )
+               .sysError( fsError ) );
+         } 
+         
+         pos += rin;
+      }
+      ret->size( pos );
+      delete in;
+   }
+   else {
+      // text read.
+      Stream* tin = TranscoderFactory( *i_encoding->asString(), in, true );
+      String temp;
+
+      while( ! tin->eof() )
+      {
+         bool res;
+         if ( len >= 0 && len < 2000000000 )
+         {
+            res = tin->readString( temp, len );
+         }
+         else {
+            res = tin->readString( temp, READURI_READ_BLOCK_SIZE );
+         }
+           
+         if ( ! res )
+         {
+            vm->unidle();
+            int64 fsError = tin->lastError();
+            delete in;
+            
+            throw new IoError( ErrorParam( e_io_error, __LINE__ )
+               .extra( uri.get() )
+               .sysError( fsError ) );
+         } 
+         
+         ret->append( temp );
+      }
+      
+      delete tin;
+   }
+
+   vm->unidle();
+   vm->retval( ret );
+}
+
+/*#
+   @function writeURI
+   @brief Writes fully data to a given file or URI source.
+   @param uri The item to be read (URI or string)
+   @param data A string or membuf containing the data to be written.
+   @optparam encoding The encoding.
+   @raise IoError in case of write errors.
+   
+   This function writes all the data contained in the string or
+   memory buffer passed in the @b data parameter into the @b uri
+   output resource.
+   
+   If @b encoding is not given, the data is treated as binary data
+   and written as-is.
+   
+   Provided encodings are:
+   - "utf-8"
+   - "utf-16"
+   - "utf-16BE"
+   - "utf-16LE"
+   - "iso8859-1" to "iso8859-15"
+   - "gbk" (Chinese simplified)
+   - "cp1252"
+   - "C" (byte oriented – writes byte per byte)
+
+*/
+
+FALCON_FUNC  writeURI ( ::Falcon::VMachine *vm )
+{
+#define WRITEURI_WRITE_BLOCK_SIZE 2048
+
+   Item *i_uri = vm->param(0);
+   Item *i_data = vm->param(1);
+   Item *i_encoding = vm->param(2);
+
+   URI uri;
+   
+   if ( i_data == 0 || ! ( i_data->isString() )
+      || (i_encoding != 0 && ! (i_encoding->isString() || i_encoding->isNil())) )
+   {
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+            .extra( "S|URI, S, [S]" ) );
+   }
+   
+   if ( i_uri->isString() )
+   {
+      uri.parse( *i_uri->asString() );
+      if( ! uri.isValid() ) {
+         throw new ParamError( ErrorParam( e_malformed_uri, __LINE__ )
+            .extra( *i_uri->asString() ) );
+      }
+   }
+   else if ( i_uri->isOfClass( "URI" ) )
+   {
+      uri = *dyncast<UriObject*>( i_uri->asObjectSafe() )->getUri();
+   }
+   else {
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+            .extra( "S|URI, S, [S]" ) );
+   }
+   
+   // find the appropriage provider.
+   VFSProvider* vfs = Engine::getVFS( uri.scheme() );
+   if ( vfs == 0 )
+   {
+      throw new ParamError( ErrorParam( e_unknown_vfs, __LINE__ )
+            .extra( uri.scheme() ) );
+   }
+   
+   // Idling the VM here; we're starting to access the system.
+   vm->idle();
+   
+   VFSProvider::CParams params;
+   params.truncate();
+   params.wrOnly();
+   
+   Stream *out = vfs->create( uri, params );
+   if ( out == 0 )
+   {
+      vm->unidle();
+      throw vfs->getLastError();
+   }
+   
+   // direct read?
+   if ( i_encoding == 0 || i_encoding->isNil() )
+   {
+      byte* data = i_data->asString()->getRawStorage();
+      uint32 size =  i_data->asString()->size();
+
+      uint32 pos = 0;
+      while( pos < size )
+      {
+         int wout = out->write( data + pos, size - pos ); // so we hit immediately EOF
+      
+         if ( wout < 0 )
+         {
+            vm->unidle();
+            int64 fsError = out->lastError();
+            delete out;
+            
+            throw new IoError( ErrorParam( e_io_error, __LINE__ )
+               .extra( uri.get() )
+               .sysError( fsError ) );
+         } 
+         
+         pos += wout;
+      }
+
+      delete out;
+   }
+   else {
+      // text read.
+      Stream* tout = TranscoderFactory( *i_encoding->asString(), out, true );
+      if ( ! tout->writeString( *i_data->asString() ) )
+      {
+         vm->unidle();
+         int64 fsError = tout->lastError();
+         delete tout;
+         
+         throw new IoError( ErrorParam( e_io_error, __LINE__ )
+            .extra( uri.get() )
+            .sysError( fsError ) );
+      }
+      delete tout;
+   }
+
+   vm->unidle();
+}
 
 }}
 /* end of file.cpp */

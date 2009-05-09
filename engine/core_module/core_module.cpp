@@ -1133,6 +1133,11 @@ Module* core_module_init()
    self->addExtFunc( "IOStream", &Falcon::core::IOStream_creator )->
       addParam("fileName")->addParam("createMode")->addParam("shareMode");
 
+   self->addExtFunc( "readURI", &Falcon::core::readURI )->
+      addParam("uri")->addParam("encoding");
+   self->addExtFunc( "writeURI", &Falcon::core::writeURI )->
+      addParam("uri")->addParam("data")->addParam("encoding");
+
    // create the stream class (without constructor).
    Falcon::Symbol *stream_class = self->addClass( "Stream" );
    stream_class->setWKS(true);

@@ -245,6 +245,9 @@ FALCON_FUNC  Stream_write ( ::Falcon::VMachine *vm );
 FALCON_FUNC  Stream_writeText ( ::Falcon::VMachine *vm );
 FALCON_FUNC  Stream_setEncoding ( ::Falcon::VMachine *vm );
 FALCON_FUNC  Stream_clone ( ::Falcon::VMachine *vm );
+FALCON_FUNC  readURI ( ::Falcon::VMachine *vm );
+FALCON_FUNC  writeURI ( ::Falcon::VMachine *vm );
+
 
 #define   CR_TO_CR 0
 #define   CR_TO_CRLF 1
@@ -535,6 +538,29 @@ FALCON_FUNC  Tokenizer_token ( ::Falcon::VMachine *vm );
 #define TOKENIZER_OPT_GRROUPSEP 1
 #define TOKENIZER_OPT_BINDSEP 2
 #define TOKENIZER_OPT_TRIM 4
+
+class UriObject: public CRObject
+{
+public:
+   UriObject( const CoreClass *genr, URI* uri, bool bSerial ):
+      CRObject( genr, bSerial )
+   {
+      if ( uri == 0 )
+         uri = new URI();
+      setUserData( uri );
+      reflectFrom( uri );
+   }
+
+   UriObject( const UriObject &other );
+   virtual ~UriObject();
+   virtual CoreObject *clone() const;
+   virtual bool setProperty( const String &prop, const Item &value );
+   virtual void reflectFrom( void *user_data );
+   virtual void reflectTo( void *user_data ) const ;
+
+   URI* getUri() const { return static_cast<URI*>( m_user_data ); }
+};
+
 
 CoreObject* UriObjectFactory( const CoreClass *cr, void *uri, bool );
 

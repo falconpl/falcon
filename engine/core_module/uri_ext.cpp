@@ -33,28 +33,6 @@
 namespace Falcon {
 namespace core {
 
-class UriObject: public CRObject
-{
-public:
-   UriObject( const CoreClass *genr, URI* uri, bool bSerial ):
-      CRObject( genr, bSerial )
-   {
-      if ( uri == 0 )
-         uri = new URI();
-      setUserData( uri );
-      reflectFrom( uri );
-   }
-
-   UriObject( const UriObject &other );
-   virtual ~UriObject();
-   virtual CoreObject *clone() const;
-   virtual bool setProperty( const String &prop, const Item &value );
-   virtual void reflectFrom( void *user_data );
-   virtual void reflectTo( void *user_data ) const ;
-
-   URI* getUri() const { return static_cast<URI*>( m_user_data ); }
-};
-
 CoreObject* UriObjectFactory( const CoreClass *me, void *uri, bool dyn )
 {
    return new UriObject( me, static_cast<URI*>( uri ), dyn );
