@@ -20,6 +20,7 @@
 #include <falcon/livemodule.h>
 #include <falcon/memory.h>
 #include <falcon/fassert.h>
+#include <falcon/mempool.h>
 
 #include <string.h>
 
@@ -38,12 +39,16 @@ LiveModule::LiveModule( Module *mod, bool bPrivate ):
    m_initState( init_none )
 {
    m_module->incref();
+   m_strings = static_cast<CoreString**>( memAlloc( sizeof(CoreString*) * mod->stringTable().size() ) );
+   memset( m_strings, 0, sizeof(CoreString*) * mod->stringTable().size() );
 }
 
 
 LiveModule::~LiveModule()
 {
    fassert( m_module != 0 );
+   
+   memFree( m_strings );
    m_module->decref();
 }
 
@@ -84,36 +89,38 @@ bool LiveModule::finalize()
    return false;
 }
 
-/*
+void LiveModule::gcMark( uint32 mk )
+{
+   mark( mk );
+   
+   for( int32 i = 0; i < module()->stringTable().size(); ++i )
+   {
+      if( m_strings[i] != 0 )
+         m_strings[i]->mark( mk );
+   }
+   
+   for( uint32 j = 0; j < globals().size(); j++ )
+      memPool->markItem( globals().itemAt( j ) );
+
+   for( uint32 k = 0; k < wkitems().size(); k++ )
+      memPool->markItem( wkitems().itemAt( k ) );
+}
+
 String* LiveModule::getString( uint32 stringId ) const
 {
-   if ( stringId >= m_stringCount )
+   fassert( stringId < (uint32) m_module->stringTable().size() );
+   
+   if( m_strings[stringId] == 0 )
    {
-      String *dest;
-      uint32 size;
-
-      fassert( m_module != 0 );
-      dest = new String( *m_module->stringTable().get( stringId ), this );
-      size = m_module->stringTable().size();
-      // this may (legally) happen only when m_module is a flexy module
-      // and its table has been grown in the meanwhile
-      fassert( size > stringId );
-      const_cast<LiveModule*>(this)->m_strings = (String**) memRealloc( m_strings, sizeof(String *) * size );
-      memset( m_strings + m_stringCount, 0, (size - m_stringCount) * sizeof(String *) );
-
-      const_cast<LiveModule*>(this)->m_stringCount = size;
+      CoreString* dest = new CoreString( *m_module->stringTable().get( stringId ) );
       m_strings[stringId] = dest;
-   }
-   else if( m_strings[stringId] == 0 )
-   {
-      String* dest = new String( *m_module->stringTable().get( stringId ) );
-      dest->liveModule( this );
-      m_strings[stringId] = dest;
+      dest->bufferize();
+      return dest;
    }
 
    return m_strings[stringId];
 }
-*/
+
 
 //=================================================================================
 // Live module related traits

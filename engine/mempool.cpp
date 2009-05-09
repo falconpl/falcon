@@ -357,15 +357,7 @@ bool MemPool::markVM( VMachine *vm )
    {
       LiveModule *currentMod = *(LiveModule **) iter.currentValue();
       // We must mark the current module.
-      currentMod->mark( generation() );
-
-      ItemVector *current = &currentMod->globals();
-      for( uint32 j = 0; j < current->size(); j++ )
-         markItem( current->itemAt( j ) );
-
-      current = &currentMod->wkitems();
-      for( uint32 k = 0; k < current->size(); k++ )
-         markItem( current->itemAt( k ) );
+      currentMod->gcMark( generation() );
 
       iter.next();
    }

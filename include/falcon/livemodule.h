@@ -30,6 +30,7 @@
 #include <falcon/module.h>
 #include <falcon/basealloc.h>
 #include <falcon/vmmaps.h>
+#include <falcon/strtable.h>
 
 namespace Falcon
 {
@@ -48,6 +49,11 @@ namespace Falcon
    When a live module is unlinked, the contents of this class are zeroed and
    every callable item referencing this module becomes a nil as isCallable()
    gets called.
+   
+   The live module keeps also track of strings taken from the underlying module
+   string table and injected in the live VM. In this way, the strings become
+   independent from the underlying module, that can be unloaded while still
+   sharing string data with the host VM.
 
    This object is garbageable; it gets referenced when it's in the module map and by
    items holding a callable in this module. When a module is unlinked, the LiveModule
@@ -64,6 +70,7 @@ namespace Falcon
 class FALCON_DYN_CLASS LiveModule: public Garbageable
 {
    Module *m_module;
+   CoreString** m_strings;
    ItemVector m_globals;
    ItemVector m_wkitems;
    bool m_bPrivate;
@@ -133,12 +140,9 @@ public:
 
    /** Return the string in the module with the given ID.
    */
-   String* getString( uint32 stringId ) const
-   {
-      return const_cast<String *>(m_module->getString( stringId ));
-   }
-
-   //String* getString( uint32 stringId ) const;
+   String* getString( uint32 stringId ) const;
+   
+   void gcMark( uint32 mark );
 };
 
 
