@@ -1,3 +1,17 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 28a
+* Category: classes
+* Subcategory: override
+* Short: Basic override
+* Description:
+*  Test for correct accounting of garbage collection when no items are
+*  involved.
+* [/Description]
+*
+****************************************************************************/
+
 class Over
    numval = 0
    array = []
@@ -69,8 +83,7 @@ class Over
    end
 
    function neg__()
-      self.numval = -self.numval
-      return self
+      return -self.numval
    end
 
    function inc__()
@@ -89,43 +102,32 @@ class Over
       return self.numval--
    end
 
-   function compare( addend )
-      if addend provides numval
-         return self.numval - addend.numval
-      elif addend.typeId() == NumericType or addend.typeId() == IntegerType
-         return self.numval - addend
-      end
-      return nil  // let the VM to order us.
-   end
-
-   function call( p1, p2 )
-      self.numval = p1
-      if p2: self.array += p2
-      return p1 + len(self.array)
-   end
-
-   function setIndex__( n, value )
-      self.array[n] = value
-      return value
-   end
-
-   function getIndex__( n )
-      return self.array[n]
-   end
 end
 
 
 o = Over()
-> "o > 1 ", o > 1
-> "o < 1 ", o < 1
-> "o >= 1 ", o >= 1
-> "o <= 1 ", o <= 1
-> "o == 1 ", o == 1
-> "o != 1 ", o != 1
+o += 10
+if o.numval != 10: failure( "Plus override" )
+o -= 1
+if o.numval != 9: failure( "Minus override" )
+o *= 2
+if o.numval != 18: failure( "Times override" )
+o /= 2
+if o.numval != 9: failure( "Div override" )
+o %= 4
+if o.numval != 1: failure( "Mod override" )
+o.numval = 2
+o = o ** 3
+if o.numval != 8: failure( "Pow override" )
 
-> "o > 0 ", o > 0
-> "o < 0 ", o < 0
-> "o >= 0 ", o >= 0
-> "o <= 0 ", o <= 0
-> "o == 0 ", o == 0
-> "o != 0 ", o != 0
+if -o != -8: failure( "Neg override" )
+// prefix op will have the VM return the item itself 
+// no matter what we return from the method
+if (++o).numval != 9: failure( "Inc override" )
+if (--o).numval != 8: failure( "Dec override" )
+if o++ != 8: failure( "Inc override post - 1" )
+if o.numval != 9: failure( "Inc override post - 2" )
+if o-- != 9: failure( "Dec override post - 1" )
+if o.numval != 8: failure( "Dec override post - 2" )
+
+success()

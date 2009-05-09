@@ -1,3 +1,17 @@
+/****************************************************************************
+* Falcon test suite
+*
+*
+* ID: 28b
+* Category: classes
+* Subcategory: override
+* Short: Compare override
+* Description:
+* Basic classes and instantation.
+* [/Description]
+*
+****************************************************************************/
+
 globalCompare = compareByNum
 
 class Over( name )
@@ -31,30 +45,31 @@ end
 
 globalCompare = compareByNum
 
+// compare on numbers
 o = Over( "zero" )
-> "o > 1 ", o > 1
-> "o < 1 ", o < 1
-> "o >= 1 ", o >= 1
-> "o <= 1 ", o <= 1
-> "o == 1 ", o == 1
-> "o != 1 ", o != 1
+if o > 1: failure( "o > 1" )
+if not o < 1: failure( "o < 1" )
+if o >= 1: failure( "o >= 1" )
+if not o <= 1: failure( "o <= 1" )
+if o == 1: failure( "o == 1" )
+if not o != 1: failure( "o != 1" )
 
-> "o > 0 ", o > 0
-> "o < 0 ", o < 0
-> "o >= 0 ", o >= 0
-> "o <= 0 ", o <= 0
-> "o == 0 ", o == 0
-> "o != 0 ", o != 0
+if o > 0: failure( "o > 0" )
+if o < 0: failure( "o < 0" )
+if not o >= 0: failure( "o >= 0" )
+if not o <= 0: failure( "o <= 0" )
+if not o == 0: failure( "o == 0" )
+if o != 0: failure( "o != 0" )
 
 o1 = Over( "one" )
 o1.numval = 1
 
-> "o > o1 ", o > o1
-> "o < o1 ", o < o1
-> "o >= o1 ", o >= o1
-> "o <= o1 ", o <= o1
-> "o == o1 ", o == o1
-> "o != o1 ", o != o1
+if o > o1: failure( "o > o1" )
+if not o < o1: failure( "o < o1" )
+if o >= o1: failure( "o >= o1" )
+if not o <= o1: failure( "o <= o1" )
+if o == o1: failure( "o == o1" )
+if not o != o1: failure( "o != o1" )
 
 // Check for VM ordering in dicts
 // names and creation mixed to force randomic order in VM
@@ -68,10 +83,35 @@ o_three = Over( "three" )
 o_three.numval = 3
 
 dict = [ o1 => 1, o => 0, o_five => 5, o_four => 4, o_three => 3, o_two => 2 ]
-inspect( dict )
+res = []
+for k,v in dict
+   res += k
+end
+
+if res[0] != o or \
+   res[1] != o1 or \
+   res[2] != o_two or \
+   res[3] != o_three or \
+   res[4] != o_four or \
+   res[5] != o_five
+      failure( "Numeric ordering" )
+end
+   
+// Now by name
 globalCompare = compareByName
 dict = [ o1 => 1, o => 0, o_five => 5, o_four => 4, o_three => 3, o_two => 2 ]
-inspect( dict )
 
-// change ordering criterion on name
+res = []
+for k,v in dict
+   res += k
+end
+if res[0] != o_five or \
+   res[1] != o_four or \
+   res[2] != o1 or \
+   res[3] != o_three or \
+   res[4] != o_two or \
+   res[5] != o
+      failure( "Name ordering" )
+end
 
+success()
