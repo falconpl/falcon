@@ -1,0 +1,77 @@
+globalCompare = compareByNum
+
+class Over( name )
+   name = name
+   numval = 0
+   array = []
+
+   function compare( addend )
+      return globalCompare( self, addend )
+   end
+end
+
+
+function compareByNum( o1, o2 )
+   if o2 provides numval
+      return o1.numval - o2.numval
+   elif o2.typeId() == NumericType or o2.typeId() == IntegerType
+      return o1.numval - o2
+   end
+   return nil  // let the VM to order us.
+end
+
+function compareByName( o1, o2 )
+   if o2 provides name
+      return o1.name.compare( o2.name )
+   elif o2.typeId() == StringType
+      return o1.name.compare( o2 )
+   end
+   return nil  // let the VM to order us.
+end
+
+globalCompare = compareByNum
+
+o = Over( "zero" )
+> "o > 1 ", o > 1
+> "o < 1 ", o < 1
+> "o >= 1 ", o >= 1
+> "o <= 1 ", o <= 1
+> "o == 1 ", o == 1
+> "o != 1 ", o != 1
+
+> "o > 0 ", o > 0
+> "o < 0 ", o < 0
+> "o >= 0 ", o >= 0
+> "o <= 0 ", o <= 0
+> "o == 0 ", o == 0
+> "o != 0 ", o != 0
+
+o1 = Over( "one" )
+o1.numval = 1
+
+> "o > o1 ", o > o1
+> "o < o1 ", o < o1
+> "o >= o1 ", o >= o1
+> "o <= o1 ", o <= o1
+> "o == o1 ", o == o1
+> "o != o1 ", o != o1
+
+// Check for VM ordering in dicts
+// names and creation mixed to force randomic order in VM
+o_five = Over( "five" )
+o_five.numval = 5
+o_two = Over( "two" )
+o_two.numval = 2
+o_four = Over( "four" )
+o_four.numval = 4
+o_three = Over( "three" )
+o_three.numval = 3
+
+dict = [ o1 => 1, o => 0, o_five => 5, o_four => 4, o_three => 3, o_two => 2 ]
+inspect( dict )
+globalCompare = compareByName
+dict = [ o1 => 1, o => 0, o_five => 5, o_four => 4, o_three => 3, o_two => 2 ]
+inspect( dict )
+
+// change ordering criterion on name
+
