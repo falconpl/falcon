@@ -6,8 +6,7 @@
 * Subcategory: override
 * Short: Basic override
 * Description:
-*  Test for correct accounting of garbage collection when no items are
-*  involved.
+*   Tests basic operator overrides on classes.
 * [/Description]
 *
 ****************************************************************************/

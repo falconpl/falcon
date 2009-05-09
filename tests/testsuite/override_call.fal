@@ -1,0 +1,28 @@
+/****************************************************************************
+* Falcon test suite
+*
+*
+* ID: 28c
+* Category: classes
+* Subcategory: override
+* Short: Call override
+* Description:
+*   Tests call operator overrides on classes.
+* [/Description]
+*
+****************************************************************************/
+
+class Over()
+   inner = nil
+
+   function call__( data )
+      self.inner = data
+      return data.len()
+   end
+end
+
+x = Over()
+if x( "Hello" ) != 5: failure( "Override return" )
+if x.inner != "Hello": failure( "Override setting" )
+
+success()

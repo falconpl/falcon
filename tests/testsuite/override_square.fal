@@ -1,0 +1,34 @@
+/****************************************************************************
+* Falcon test suite
+*
+*
+* ID: 28d
+* Category: classes
+* Subcategory: override
+* Short: Square accessor override
+* Description:
+*   Checks for overriding the [N] accessor
+* [/Description]
+*
+****************************************************************************/
+
+class Over()
+   inner = [nil, nil, nil]
+
+   function setIndex__( pos, data )
+      self.inner[pos] = data
+      return data
+   end
+   
+   function getIndex__( pos )
+      return self.inner[pos]
+   end
+
+end
+
+x = Over()
+if (x[0] = 10) != 10: failure( "Override return" )
+if x[0] != 10: failure( "Override get" )
+if x[1] != nil: failure( "Override untouched" )
+
+success()

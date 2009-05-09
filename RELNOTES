@@ -1,13 +1,14 @@
 
-                      RELEASE NOTES for Falcon
+                         RELEASE NOTES for Falcon
 
-                         Crane-dev Release
+                            Crane-RC1 Release
 
-                              0.9.1.4
+                                0.9.1.6
 
-  Version 0.9.1.4 is a critical bugfix release for 0.9.1. With respect to
-0.9.1.2 there are minor updates on some module name processing issues that
-made some platform a bit uncomfortable to use.
+  Version 0.9.1.6 is the first release candidate for final public 0.9.2.
+This version is intended for all developers and wilful users to test
+and squeeze the last bugs that we weren't able to find out. It's supposed
+to be pretty stable, with all the blockesrs for final 0.9.2 gone.
 
   "Crane" marks the birth of the new development effort towards the final
 1.0 release. This development release is meant as a pre-release for developers,
@@ -29,25 +30,6 @@ Short term plans
 days from 0.9.0; this is an in-between version which we decided to release
 as a package to simplify the effort of developers moving to the 0.9 branch.
 
-Known Issues
-============
-
-  In multithreaded Falcon applications (using the "threading" feather module),
-the garbage collector is still unable to dispose of the terminated virtual
-machines. It's a minor glitch resulting from the fact that the old threading code
-came from a separate module in the 0.8 branch, and we just didn't have the
-time to correct it. Shouldn't be a big threat for the timing of the official
-release. The only direct consequence is that scripts in embedded applications
-using the threading module may leak at their termination. This has
-no consequence for stand-alone applications or for non-threaded embedded
-scripts.
-
-  It seems we have a problem with the interactive mode on windows 7 standard
-command console. This means that the interactive mode (still experimental)
-may not be available in that platform through the standard command line
-shell.
-
-
 Usage tips
 ==========
 
@@ -56,8 +38,11 @@ the actual needs of applications and in reclaiming
 unused memory, the detection algorithm is still rudimentary and experimental.
 If your application is memory-intensive, be sure to read the Core Module
 Documentation about the new GC object, which provides four default collection
-strategies and also allows you to implement your own. A finely tuned GC strategy can
-boost the performance of your application and reduce its memory footprint.
-Meanwhile we'll continue to work towards finding collection strategies applicable to the most
-common usage patterns and you're invited to provide your own, should this aspect
-of Falcon be critical to your application.
+strategies and also allows you to implement your own. A finely tuned GC 
+strategy can boost the performance of your application and reduce its memory 
+footprint.
+
+  Meanwhile we'll continue to work towards finding collection strategies 
+applicable to the most common usage patterns and you're invited to provide 
+your own, should this aspect of Falcon be critical to your application.
+
