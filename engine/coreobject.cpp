@@ -157,7 +157,7 @@ bool CoreObject::getMethodDefault( const String &name, Item &mth ) const
       // yes, a valid method
       mth = *pmth;
 
-      mth.methodize( Item( const_cast<CoreObject*>(this) ) );
+      mth.methodize( SafeItem( const_cast<CoreObject*>(this) ) );
       return true;
    }
    return false;

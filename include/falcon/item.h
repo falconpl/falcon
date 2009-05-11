@@ -746,18 +746,18 @@ public:
       func( *this, target );
    }
 
-   void inc() {
-      void (*func)( Item &first ) =
-         (void (*)( Item &first ))
+   void inc( Item& target ) {
+      void (*func)( Item &first, Item &second ) =
+         (void (*)( Item &first, Item &second ))
          CommOpsDict[type()][co_inc];
-      func( *this );
+      func( *this, target );
    }
 
-   void dec() {
-      void (*func)( Item &first ) =
-         (void (*)( Item &first ))
+   void dec( Item& target ) {
+      void (*func)( Item &first, Item &second ) =
+         (void (*)( Item &first, Item &second ))
          CommOpsDict[type()][co_dec];
-      func( *this );
+      func( *this, target );
    }
 
    void incpost( Item& target ) {

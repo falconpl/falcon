@@ -850,7 +850,7 @@ void co_num_neg( const Item& first, Item& tgt )
 }
 
 
-void co_dict_neg( const Item& first, const Item& second, Item& third )
+void co_dict_neg( const Item& first, Item& tgt )
 {
    CoreDict *self = first.asDict();
 
@@ -861,7 +861,7 @@ void co_dict_neg( const Item& first, const Item& second, Item& third )
       if ( vm !=  0 )
       {
          vm->callItemAtomic( mth, 0 );
-         third = vm->regA();
+         tgt = vm->regA();
          return;
       }
    }
@@ -900,18 +900,20 @@ void co_ref_neg( const Item& first, Item &tgt )
 // INC (prefix)
 //
 
-void co_int_inc( Item& first )
+void co_int_inc( Item& first, Item &target )
 {
    first = first.asInteger() + 1;
+   target = first;
 }
 
-void co_num_inc( Item& first )
+void co_num_inc( Item& first, Item &target )
 {
    first = first.asNumeric() + 1.0;
+   target = first;
 }
 
 
-void co_dict_inc( const Item& first, const Item& second, Item& third )
+void co_dict_inc( Item& first, Item &target )
 {
    CoreDict *self = first.asDict();
 
@@ -922,7 +924,7 @@ void co_dict_inc( const Item& first, const Item& second, Item& third )
       if ( vm !=  0 )
       {
          vm->callItemAtomic( mth, 0 );
-         third = vm->regA();
+         target = vm->regA();
          return;
       }
    }
@@ -931,7 +933,7 @@ void co_dict_inc( const Item& first, const Item& second, Item& third )
 }
 
 
-void co_object_inc( Item& first )
+void co_object_inc( Item& first, Item &target )
 {
    CoreObject *self = first.asObjectSafe();
 
@@ -942,6 +944,7 @@ void co_object_inc( Item& first )
       if ( vm !=  0 )
       {
          vm->callItemAtomic( mth, 0 );
+         target = vm->regA();
          return;
       }
    }
@@ -949,10 +952,10 @@ void co_object_inc( Item& first )
    throw new TypeError( ErrorParam( e_invop ).extra( "inc__" ) );
 }
 
-void co_ref_inc( Item& first )
+void co_ref_inc( Item& first, Item &target )
 {
    Item& ref = first.asReference()->origin();
-   ref.inc();
+   ref.inc(target);
 }
 
 
@@ -960,18 +963,20 @@ void co_ref_inc( Item& first )
 // DEC (prefix)
 //
 
-void co_int_dec( Item& first )
+void co_int_dec( Item& first, Item &target )
 {
    first = first.asInteger() - 1;
+   target = first;
 }
 
-void co_num_dec( Item& first )
+void co_num_dec( Item& first, Item &target )
 {
    first = first.asNumeric() - 1.0;
+   target = first;
 }
 
 
-void co_dict_dec( const Item& first, const Item& second, Item& third )
+void co_dict_dec( Item& first, Item &target )
 {
    CoreDict *self = first.asDict();
 
@@ -982,7 +987,7 @@ void co_dict_dec( const Item& first, const Item& second, Item& third )
       if ( vm != 0 )
       {
          vm->callItemAtomic( mth, 0 );
-         third = vm->regA();
+         target = vm->regA();
          return;
       }
    }
@@ -991,7 +996,7 @@ void co_dict_dec( const Item& first, const Item& second, Item& third )
 }
 
 
-void co_object_dec( Item& first )
+void co_object_dec( Item& first, Item &target )
 {
    CoreObject *self = first.asObjectSafe();
 
@@ -1002,6 +1007,7 @@ void co_object_dec( Item& first )
       if ( vm !=  0 )
       {
          vm->callItemAtomic( mth, 0 );
+         target = vm->regA();
          return;
       }
    }
@@ -1009,10 +1015,10 @@ void co_object_dec( Item& first )
    throw new TypeError( ErrorParam( e_invop ).extra( "dec__" ) );
 }
 
-void co_ref_dec( Item& first )
+void co_ref_dec( Item& first, Item &target )
 {
    Item& ref = first.asReference()->origin();
-   ref.dec();
+   ref.dec( target );
 }
 
 
@@ -1033,7 +1039,7 @@ void co_num_incpost( Item& first, Item& tgt )
 }
 
 
-void co_dict_incpost( const Item& first, const Item& second, Item& third )
+void co_dict_incpost( Item& first, Item& third )
 {
    CoreDict *self = first.asDict();
 
@@ -1097,7 +1103,7 @@ void co_num_decpost( Item& first, Item& tgt )
 }
 
 
-void co_dict_decpost( const Item& first, const Item& second, Item& third )
+void co_dict_decpost( Item& first, Item& third )
 {
    CoreDict *self = first.asDict();
 
@@ -1346,6 +1352,7 @@ int co_array_compare( const Item& first, const Item& second )
 int co_dict_compare( const Item& first, const Item& second )
 {
    CoreDict *self = first.asDict();
+   const Item* psecond = second.dereference();
 
    Item mth;
    if ( self->getMethod( "compare", mth ) )
@@ -1353,7 +1360,7 @@ int co_dict_compare( const Item& first, const Item& second )
       VMachine *vm = VMachine::getCurrent();
       if ( vm !=  0 )
       {
-         vm->pushParameter( *second.dereference() );
+         vm->pushParameter( *psecond );
          vm->callItemAtomic( mth, 1 );
          if ( ! vm->regA().isNil() )
             return (int) vm->regA().forceInteger();
@@ -1361,16 +1368,12 @@ int co_dict_compare( const Item& first, const Item& second )
       }
    }
 
-   if ( second.isReference() )
+   if ( psecond->isDict() )
    {
-      return co_dict_compare( first, second.asReference()->origin() );
-   }
-   else if ( second.isDict() )
-   {
-      return (int)(first.asDict() - second.asDict());
+      return (int)(first.asDict() - psecond->asDict());
    }
 
-   return first.type() - second.type();
+   return first.type() - psecond->type();
 }
 
 
@@ -1964,6 +1967,28 @@ void co_call_array( const Item &itm, VMachine *vm, uint32 paramCount )
    throw new TypeError( ErrorParam( e_invop ).extra("CALL") );
 }
 
+
+void co_call_dict( const Item &itm, VMachine *vm, uint32 paramCount )
+{
+   // find the call__ member, if it exists.
+   CoreDict *self = itm.asDict();
+
+   Item mth;
+   if ( self->getMethod( "call__", mth ) )
+   {
+      mth.asMethodFunc()->readyFrame( vm, paramCount );
+      vm->self() = self;
+      return;
+   }
+
+   //TODO: Useful? -- on throw we either unroll or close the VM...
+   /*if ( paramCount != 0 )
+         vm->currentStack().resize( vm->currentStack().size() - paramCount );*/
+   // TODO: correct error.
+   throw new TypeError( ErrorParam( e_invop ).extra("CALL") );
+}
+
+
 void co_call_object( const Item &itm, VMachine *vm, uint32 paramCount )
 {
    // find the call__ member, if it exists.
@@ -2335,7 +2360,7 @@ void* DictCommOpsTable[] = {
    (void*) co_deep_setproperty,
 
    //call
-   (void*) co_call_uncallable
+   (void*) co_call_dict
 };
 
 void* ObjectCommOpsTable[] = {

@@ -631,16 +631,14 @@ void opcodeHandler_POP( register VMachine *vm )
 void opcodeHandler_INC( register VMachine *vm )
 {
    Item *operand =  vm->getOpcodeParam( 1 );
-   operand->inc();
-   vm->regA() = *operand;
+   operand->inc(vm->regA());
 }
 
 // 10
 void opcodeHandler_DEC( register VMachine *vm )
 {
    Item *operand =  vm->getOpcodeParam( 1 );
-   operand->dec();
-   vm->regA() = *operand;
+   operand->dec(vm->regA());
 }
 
 

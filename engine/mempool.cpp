@@ -544,7 +544,7 @@ void MemPool::markItem( const Item &item )
             Item self;
             item.getMethodItem( self );
             markItem( self );
-         }
+         }         
       }
       break;
 

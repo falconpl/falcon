@@ -106,7 +106,7 @@ void LiveModule::gcMark( uint32 mk )
 {
    mark( mk );
    
-   for( int32 i = 0; i < m_strCount; ++i )
+   for( uint32 i = 0; i < m_strCount; ++i )
    {
       if( m_strings[i] != 0 )
          m_strings[i]->mark( mk );

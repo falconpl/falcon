@@ -26,13 +26,8 @@ bool CoreDict::getMethod( const String &name, Item &mth )
       Item* found = find( name );
       if ( found != 0 )
       {
-         found = found->dereference();
-         if ( found->isCallable() )
-         {
-            mth = *found;
-            mth.methodize( this );
-            return true;
-         }
+         mth = *found;
+         return mth.methodize( SafeItem( this ) );
       }
    }
    
@@ -105,17 +100,15 @@ void CoreDict::readIndex( const Item &pos, Item &target )
    if( m_blessed )
    {
       Item *method;
-      if ( (method = find( "setIndex__" ) ) != 0 )
+      if ( (method = find( "getIndex__" ) ) != 0 )
       {
-         method = method->dereference();
-         if ( method->isFunction() )
+         Item mth = *method;
+         if ( mth.methodize(this) )
          {
             VMachine* vm = VMachine::getCurrent();
             if( vm != 0 )
             {
-               Item mth = *method;
-               mth.methodize(this);
-               vm->pushParameter( target );
+               vm->pushParameter( pos );
                vm->callItemAtomic( mth, 1 );
             }
             return;
@@ -136,14 +129,12 @@ void CoreDict::writeIndex( const Item &pos, const Item &target )
       Item *method;
       if ( (method = find( "setIndex__" ) ) != 0 )
       {
-         method = method->dereference();
-         if ( method->isFunction() )
+         Item mth = *method;
+         if ( mth.methodize(this) )
          {
-           VMachine* vm = VMachine::getCurrent();
+            VMachine* vm = VMachine::getCurrent();
             if( vm != 0 )
-            {
-               Item mth = *method;
-               mth.methodize(this);
+            {   
                vm->pushParameter( pos );
                vm->pushParameter( target );
                vm->callItemAtomic( mth, 2 );

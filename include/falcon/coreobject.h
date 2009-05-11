@@ -325,7 +325,7 @@ public:
    bool getMethod( const String &propName, Item &method ) const
    {
       if ( getProperty( propName, method ) )
-         return method.methodize( const_cast<CoreObject*>(this) );
+         return method.methodize( SafeItem(const_cast<CoreObject*>(this)) );
       return false;
    }
 

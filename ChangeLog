@@ -1,5 +1,8 @@
 Falcon (0.9.1.8)
   * fixed: faltest didn't output help text when called with -h/-?
+  * fixed: Operator overriding in blessed dictionaries had many issues.
+  * fixed: prefix inc/dec operator overriding now returns what is returned
+           by the overriding function (formerly, it returned the item itself).
   
 Falcon (0.9.1.6)
   * fixed: In loop statement, continue looped from the top skipping the

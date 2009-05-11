@@ -120,10 +120,8 @@ o = o ** 3
 if o.numval != 8: failure( "Pow override" )
 
 if -o != -8: failure( "Neg override" )
-// prefix op will have the VM return the item itself 
-// no matter what we return from the method
-if (++o).numval != 9: failure( "Inc override" )
-if (--o).numval != 8: failure( "Dec override" )
+if ++o != 9: failure( "Inc override" )
+if --o != 8: failure( "Dec override" )
 if o++ != 8: failure( "Inc override post - 1" )
 if o.numval != 9: failure( "Inc override post - 2" )
 if o-- != 9: failure( "Dec override post - 1" )
