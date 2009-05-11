@@ -1,0 +1,122 @@
+/****************************************************************************
+* Falcon test suite
+*
+*
+* ID: 28g
+* Category: poop
+* Subcategory: override
+* Short: Poop compare override
+* Description:
+*    Tests comparation overrides on classes.
+* [/Description]
+*
+****************************************************************************/
+
+globalCompare = compareByNum
+
+o = bless([
+   "name" => nil,
+   "numval" => 0,
+   "array" => [],
+
+   "compare" => function( addend );
+      return globalCompare( self, addend );
+   end
+])
+
+
+function compareByNum( o1, o2 )
+   if o2 provides numval
+      return o1.numval - o2.numval
+   elif o2.typeId() == NumericType or o2.typeId() == IntegerType
+      return o1.numval - o2
+   end
+   return nil  // let the VM to order us.
+end
+
+function compareByName( o1, o2 )
+   if o2 provides name
+      return o1.name.compare( o2.name )
+   elif o2.typeId() == StringType
+      return o1.name.compare( o2 )
+   end
+   return nil  // let the VM to order us.
+end
+
+globalCompare = compareByNum
+
+// compare on numbers
+o.name = "zero"
+if o > 1: failure( "o > 1" )
+if not o < 1: failure( "o < 1" )
+if o >= 1: failure( "o >= 1" )
+if not o <= 1: failure( "o <= 1" )
+if o == 1: failure( "o == 1" )
+if not o != 1: failure( "o != 1" )
+
+if o > 0: failure( "o > 0" )
+if o < 0: failure( "o < 0" )
+if not o >= 0: failure( "o >= 0" )
+if not o <= 0: failure( "o <= 0" )
+if not o == 0: failure( "o == 0" )
+if o != 0: failure( "o != 0" )
+
+o1 = o.clone()
+o1.name = "one"
+o1.numval = 1
+
+if o > o1: failure( "o > o1" )
+if not o < o1: failure( "o < o1" )
+if o >= o1: failure( "o >= o1" )
+if not o <= o1: failure( "o <= o1" )
+if o == o1: failure( "o == o1" )
+if not o != o1: failure( "o != o1" )
+
+// Check for VM ordering in dicts
+// names and creation mixed to force randomic order in VM
+o_five = o.clone()
+o_five.name = "five"
+o_five.numval = 5
+o_two = o.clone()
+o_two.name = "two"
+o_two.numval = 2
+o_four = o.clone()
+o_four.name = "four"
+o_four.numval = 4
+o_three = o.clone()
+o_three.name = "three"
+o_three.numval = 3
+
+dict = [ o1 => 1, o => 0, o_five => 5, o_four => 4, o_three => 3, o_two => 2 ]
+res = []
+for k,v in dict
+   res += k
+end
+
+if res[0] != o or \
+   res[1] != o1 or \
+   res[2] != o_two or \
+   res[3] != o_three or \
+   res[4] != o_four or \
+   res[5] != o_five
+      failure( "Numeric ordering" )
+end
+   
+// Now by name
+globalCompare = compareByName
+dict = [ o1 => 1, o => 0, o_five => 5, o_four => 4, o_three => 3, o_two => 2 ]
+
+res = []
+for k,v in dict
+   res += k
+end
+if res[0] != o_five or \
+   res[1] != o_four or \
+   res[2] != o1 or \
+   res[3] != o_three or \
+   res[4] != o_two or \
+   res[5] != o
+      failure( "Name ordering" )
+end
+
+success()

@@ -1,0 +1,132 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 28e
+* Category: poop
+* Subcategory: override
+* Short: Basic override
+* Description:
+*   Tests basic operator overrides on classes.
+* [/Description]
+*
+****************************************************************************/
+
+GC.enable( false )
+
+o = bless([
+   "numval" => 0,
+   "array" => [],
+
+   "add__" => function( addend );
+      if addend provides numval;
+         self.numval += addend.numval;
+      elif addend.typeId() == NumericType or addend.typeId() == IntegerType;
+         self.numval += addend;
+      else;
+         raise Error( 10001, "Wrong operands for add__", addend );
+      end;
+      return self;
+   end,
+
+   "sub__" => function( addend );
+      if addend provides numval;
+         self.numval -= addend.numval;
+      elif addend.typeId() == NumericType or addend.typeId() == IntegerType;
+         self.numval -= addend;
+      else;
+         raise Error( 10001, "Wrong operands for sub__", addend );
+      end;
+      return self;
+   end,
+
+   "mul__" => function( addend );
+      if addend provides numval;
+         self.numval *= addend.numval;
+      elif addend.typeId() == NumericType or addend.typeId() == IntegerType;
+         self.numval *= addend;
+      else;
+         raise Error( 10001, "Wrong operands for mul__", addend );
+      end;
+      return self;
+   end,
+
+   "div__" => function( addend );
+      if addend provides numval;
+         self.numval /= addend.numval;
+      elif addend.typeId() == NumericType or addend.typeId() == IntegerType;
+         self.numval /= addend;
+      else;
+         raise Error( 10001, "Wrong operands for div__", addend );
+      end;
+      return self;
+   end,
+
+   "mod__" => function( addend );
+      if addend provides numval;
+         self.numval %= addend.numval;
+      elif addend.typeId() == NumericType or addend.typeId() == IntegerType;
+         self.numval %= addend;
+      else;
+         raise Error( 10001, "Wrong operands for mod__", addend );
+      end;
+      return self;
+   end,
+
+   "pow__" => function( addend );
+      if addend provides numval;
+         self.numval **= addend.numval;
+      elif addend.typeId() == NumericType or addend.typeId() == IntegerType;
+         self.numval **= addend;
+      else;
+         raise Error( 10001, "Wrong operands for mod__", addend );
+      end;
+      return self;
+   end,
+
+   "neg__" => function();
+      return -self.numval;
+   end,
+
+   "inc__" => function();
+      return ++self.numval;
+   end,
+
+   "dec__" => function();
+      return --self.numval;
+   end,
+
+   "incpost__" => function();
+      return self.numval++;
+   end,
+
+   "decpost__" => function();
+      return self.numval--;
+   end 
+])
+
+
+o += 10
+if o.numval != 10: failure( "Plus override" )
+o -= 1
+if o.numval != 9: failure( "Minus override" )
+o *= 2
+if o.numval != 18: failure( "Times override" )
+o /= 2
+if o.numval != 9: failure( "Div override" )
+o %= 4
+if o.numval != 1: failure( "Mod override" )
+o.numval = 2
+o = o ** 3
+if o.numval != 8: failure( "Pow override" )
+
+if -o != -8: failure( "Neg override" )
+// prefix op will have the VM return the item itself 
+// no matter what we return from the method
+if ++o != 9: failure( "Inc override" )
+if --o != 8: failure( "Dec override" )
+if o++ != 8: failure( "Inc override post - 1" )
+if o.numval != 9: failure( "Inc override post - 2" )
+if o-- != 9: failure( "Dec override post - 1" )
+if o.numval != 8: failure( "Dec override post - 2" )
+
+success()

@@ -1,0 +1,27 @@
+/****************************************************************************
+* Falcon test suite
+*
+*
+* ID: 28f
+* Category: poop
+* Subcategory: override
+* Short: Poop call override
+* Description:
+*   Tests call operator overrides on classes.
+* [/Description]
+*
+****************************************************************************/
+
+x = bless([
+   "inner" => nil,
+
+   "call__" => function( data );
+      self.inner = data;
+      return data.len();
+   end
+])
+
+if x( "Hello" ) != 5: failure( "Override return" )
+if x.inner != "Hello": failure( "Override setting" )
+
+success()

@@ -1,0 +1,44 @@
+/****************************************************************************
+* Falcon test suite
+*
+*
+* ID: 28h
+* Category: poop
+* Subcategory: override
+* Short: POOP square accessor override
+* Description:
+*   Checks for overriding the [N] accessor
+* [/Description]
+*
+****************************************************************************/
+
+x = bless([
+   "inner" => [nil, nil, nil],
+
+   "setIndex__" => function( pos, data );
+      if typeOf( pos ) == StringType;
+         self.set( pos, data );
+      else;
+         (self.inner)[pos] = data;
+      end;
+      return data;
+   end,
+   
+   "getIndex__" => function( pos );
+      if typeOf( pos ) == StringType;
+         return self.get( pos );
+      else;
+         return self.inner[pos];
+      end;
+   end
+])
+
+if (x[0] = 10) != 10: failure( "Override return" )
+if x[0] != 10: failure( "Override get" )
+if x[1] != nil: failure( "Override untouched" )
+
+// test if we can add strings
+x["hello"] = "world"
+if x["hello"] != "world": failure( "set/get in [] accessor")
+
+success()
