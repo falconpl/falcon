@@ -119,6 +119,7 @@ static void version()
    stdOut->writeString( "Version " );
    stdOut->writeString( FALCON_VERSION " (" FALCON_VERSION_NAME ")" );
    stdOut->writeString( "\n" );
+   stdOut->flush();
 }
 
 static void usage()
@@ -146,6 +147,7 @@ static void usage()
    stdOut->writeString( "Path must be in falcon file name format: directory separatros must be slashes.\n" );
    stdOut->writeString( "A list of space separated tests IDS to be performed may optionally be given.\n" );
    stdOut->writeString( "\n" );
+   stdOut->flush();
 }
 
 
@@ -226,7 +228,7 @@ void parse_options( int argc, char *argv[] )
                }
             break;
 
-            case '?': usage(); case 'h': usage(); exit(0);
+            case '?': case 'h': usage(); exit(0);
             case 'l': opt_justlist = true; break;
             case 'm': opt_compmem = false; break;
             case 'M': opt_checkmem = true; break;

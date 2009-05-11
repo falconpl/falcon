@@ -1,3 +1,6 @@
+Falcon (0.9.1.8)
+  * fixed: faltest didn't output help text when called with -h/-?
+  
 Falcon (0.9.1.6)
   * fixed: In loop statement, continue looped from the top skipping the
            loop condition (if it was present).
