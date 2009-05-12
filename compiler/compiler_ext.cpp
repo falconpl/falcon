@@ -146,7 +146,7 @@ void internal_link( ::Falcon::VMachine *vm, Module *mod, CompilerIface *iface )
 {
 
    Runtime rt( &iface->loader(), vm );
-
+   rt.hasMainModule(false);
    // let's try to link
    rt.addModule( mod, true );
    

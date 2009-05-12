@@ -20,7 +20,6 @@ load compiler
 c = Compiler()
 c.sourceEncoding = "utf-8"
 c.launchAtLink = true
-inspect( c )
 
 // try to compile a source string
 
