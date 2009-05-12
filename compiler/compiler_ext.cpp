@@ -79,6 +79,12 @@ namespace Ext {
    @prop sourceEncoding The encoding of the source file. It defaults to
       default system encoding that Falcon is able to detect. Use one of the
       encoding names known by the Transcoder class.
+   
+   @prop launchOnLink If true, the __main__ function (that is, the entry point)
+         of the loaded modules is executed before returning it. This allows
+         the modules to initalize themselves and set their global variables.
+         Notice that this step may be autonomusly performed also by the loader
+         after the loading is complete.
 
    @prop language Language code used to load language-specific string tables.
       When this entry is valorized to a valid international language code, as i.e.
@@ -143,7 +149,26 @@ void internal_link( ::Falcon::VMachine *vm, Module *mod, CompilerIface *iface )
 
    // let's try to link
    rt.addModule( mod, true );
-   vm->link( &rt );
+   
+   bool ll = vm->launchAtLink();
+   
+   // avoid a re-throw in the fast-path
+   if ( iface->launchAtLink() != ll )
+   {
+      vm->launchAtLink( iface->launchAtLink() );
+   
+      try {
+         vm->link( &rt );
+         vm->launchAtLink( ll );
+      }
+      catch( ... )
+      {
+         vm->launchAtLink( ll );
+         throw;
+      }
+   }
+   else
+      vm->link( &rt );
 
    // ok, the module is up and running.
    // wrap it
@@ -296,9 +321,10 @@ FALCON_FUNC Compiler_loadByName( ::Falcon::VMachine *vm )
 }
 
 /*#
-   @method loadModule Compiler
+   @method loadFile Compiler
    @brief Loads a Falcon resource from a location on the filesystem.
    @param modPath Relative or absolute path to a loadable Falcon module or source.
+   @optparam alias Alias under which the module should be loaded.
    @return On success, a @a Module instance that contains the loaded module.
    @raise SyntaxError if the module contains logical srror.
    @raise IoError if the input data is a file stream and there have been a read failure.
@@ -311,23 +337,47 @@ FALCON_FUNC Compiler_loadByName( ::Falcon::VMachine *vm )
    unless ignoreSource is true, "./test.fal" will be searched too, and if it's newer
    than ./test.fam it will be recompiled.
 
+   If @b alias parameter is given, the loaded modules assumes the given name.
+   The same naming conventions used by the load directive (names starting
+   with a single "." or with "self.") are provided. Notice that the path
+   separators are NOT automatically transformed into "." in the module
+   logical name, so to import the module under a local namespace, using
+   this parameter is essential.
+   
    In case a suitable module cannot be found, the method returns nil. If a module is found,
    a CodeError is raised in case compilation or link steps fails.
 */
-FALCON_FUNC Compiler_loadModule( ::Falcon::VMachine *vm )
+FALCON_FUNC Compiler_loadFile( ::Falcon::VMachine *vm )
 {
    Item *i_name = vm->param( 0 );
+   Item *i_alias = vm->param( 1 );
 
-   if( i_name == 0 || ! i_name->isString() )
+   if( i_name == 0 || ! i_name->isString() 
+       || ( i_alias != 0 && !i_alias->isString() ) )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).extra( "S" ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+            .extra( "S,[S]" ) );
    }
+
 
    CompilerIface *iface = dyncast<CompilerIface*>( vm->self().asObject() );
    Module *mod = 0;
+   
+      
    try {
       mod = iface->loader().loadFile( *i_name->asString() );
+      
+      // select the module name -- if no alias is given get the official name
+      const Symbol *caller_sym;
+      const Module *caller_mod;
+      String parent_name;
+      if ( vm->getCaller( caller_sym, caller_mod ) )
+         parent_name = caller_mod->name();
+      String nmodName = Module::absoluteName( 
+               i_alias == 0 ? mod->name() : *i_alias->asString(),
+               parent_name );
+      mod->name( nmodName );
+      
       internal_link( vm, mod, iface );
       // don't decref, on success internal_link does.
    }

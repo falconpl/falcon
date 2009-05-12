@@ -38,14 +38,14 @@ comp.saveModules = false
 
 // try once
 mod1 = comp.loadByName( "reflexcomp_1" )
-mod2 = comp.loadModule( modPath + "/reflexcomp_1.fal" )
+mod2 = comp.loadFile( modPath + "/reflexcomp_1.fal" )
 
 test( mod1, "Module1 - first try" )
 test( mod2, "Module2 - first try" )
 
 // try again
 mod1 = comp.loadByName( "reflexcomp_1" )
-mod2 = comp.loadModule( modPath + "/reflexcomp_1.fal" )
+mod2 = comp.loadFile( modPath + "/reflexcomp_1.fal" )
 
 test( mod1, "Module1 - second try" )
 test( mod2, "Module2 - second try" )

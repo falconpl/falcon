@@ -37,7 +37,7 @@ try
 end
 
 try
-	mod = comp.loadModule( "an impossible module" )
+	mod = comp.loadFile( "an impossible module" )
 	failure( "Load module error not raised" )
 end
 

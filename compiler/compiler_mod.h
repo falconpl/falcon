@@ -38,7 +38,8 @@ class CompilerIface: public CoreObject
 {
    ModuleLoader m_loader;
    String m_sourceEncoding;
-
+   bool m_bLaunchAtLink;
+   
 public:
    CompilerIface( const CoreClass* cls );
    CompilerIface( const CoreClass* cls, const String &path );
@@ -47,7 +48,10 @@ public:
 
    const ModuleLoader &loader() const { return m_loader; }
    ModuleLoader &loader() { return m_loader; }
-
+   
+   bool launchAtLink() const { return m_bLaunchAtLink; }
+   void launchAtLink( bool l ) { m_bLaunchAtLink = l; }
+   
    /** Returns a valid sequence instance if this object's user data is a "Falcon Sequence".
 
       Sequences can be used in sequential operations as the for-in loops,

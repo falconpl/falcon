@@ -1,3 +1,7 @@
+Feathers (0.9.1.7)
+  * major: Added property launchAtLink and optional parameter "alias" to 
+           compiler module.
+           
 Feathers (0.9.1.6)
   * minor: Added getName(), setName(), getSystemID() and toString()
            methods to thread.

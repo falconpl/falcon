@@ -34,7 +34,8 @@ CoreObject* CompilerIfaceFactory( const CoreClass *cls, void *, bool )
 // Implemented here to reduce inline overhead
 CompilerIface::CompilerIface( const CoreClass *cls ):
    CoreObject( cls ),
-   m_loader( "." )
+   m_loader( "." ),
+   m_bLaunchAtLink( false )
 {
    // get default source encoding
    m_sourceEncoding = m_loader.sourceEncoding();
@@ -44,7 +45,8 @@ CompilerIface::CompilerIface( const CoreClass *cls ):
 // Implemented here to reduce inline overhead
 CompilerIface::CompilerIface(  const CoreClass *cls, const String &path ):
    CoreObject( cls ),
-   m_loader( path )
+   m_loader( path ),
+   m_bLaunchAtLink( false )
 {
    // get default source encoding
    m_sourceEncoding = m_loader.sourceEncoding();
@@ -97,6 +99,10 @@ bool CompilerIface::getProperty( const String &propName, Item &prop ) const
    else if( propName == "compileTemplate" )
    {
       prop.setBoolean( m_loader.saveMandatory() );
+   }
+   else if( propName == "launchAtLink" )
+   {
+      prop.setBoolean( m_bLaunchAtLink );
    }
    else if( propName == "langauge" )
    {
@@ -153,6 +159,10 @@ bool CompilerIface::setProperty( const String &propName, const Item &prop )
    else if( propName == "compileTemplate" )
    {
       m_loader.compileTemplate( prop.isTrue() );
+   }
+   else if( propName == "launchAtLink" )
+   {
+      m_bLaunchAtLink = prop.isTrue();
    }
    else {
       readOnlyError( propName );

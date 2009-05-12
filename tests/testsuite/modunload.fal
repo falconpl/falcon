@@ -59,6 +59,7 @@ if str != "A string from the module"
    failure( "Remote string killed after unload" )
 end
 
+> instance.mth() 
 if instance.mth() != "a string"
    failure( "Instance killed after unload" )
 end

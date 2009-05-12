@@ -24,7 +24,7 @@ c.sourceEncoding = "utf-8"
 
 try
    // First param is the module logical name.
-   sourceMod = c.loadModule( "reflex_comp_external.fal" )
+   sourceMod = c.loadFile( "reflex_comp_external.fal" )
 
    // in case of compilation error, we had an error and we bailed out
 

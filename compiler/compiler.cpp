@@ -200,14 +200,15 @@ FALCON_MODULE_DECL
    self->addClassProperty( c_compiler, "saveMandatory" );
    self->addClassProperty( c_compiler, "detectTemplate" );
    self->addClassProperty( c_compiler, "compileTemplate" );
+   self->addClassProperty( c_compiler, "launchAtLink" );
    self->addClassProperty( c_compiler, "language" );
-
+   
    self->addClassMethod( c_compiler, "compile", &Falcon::Ext::Compiler_compile ).asSymbol()->
       addParam("modName")->addParam("data");
    self->addClassMethod( c_compiler, "loadByName", &Falcon::Ext::Compiler_loadByName ).asSymbol()->
       addParam("modName");
-   self->addClassMethod( c_compiler, "loadModule", &Falcon::Ext::Compiler_loadModule).asSymbol()->
-      addParam("modPath");
+   self->addClassMethod( c_compiler, "loadFile", &Falcon::Ext::Compiler_loadFile).asSymbol()->
+      addParam("modPath")->addParam( "alias" );
    self->addClassMethod( c_compiler, "setDirective", &Falcon::Ext::Compiler_setDirective).asSymbol()->
       addParam("dt")->addParam("value");
    self->addClassMethod( c_compiler, "addFalconPath", &Falcon::Ext::Compiler_addFalconPath);
