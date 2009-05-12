@@ -50,6 +50,8 @@ if GC.usedMem == mem or items == GC.items
    failure( "Memory increase after load not reported" )
 end
 
+other_string = instance.mth()
+
 // unload
 mod.unload()
 
@@ -58,10 +60,9 @@ GC.perform(true)
 if str != "A string from the module"
    failure( "Remote string killed after unload" )
 end
-
-> instance.mth() 
-if instance.mth() != "a string"
-   failure( "Instance killed after unload" )
+ 
+if other_string != "a string"
+   failure( "Returned string killed after unload" )
 end
 
 // discharge the module
