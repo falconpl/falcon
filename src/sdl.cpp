@@ -248,6 +248,7 @@ FALCON_MODULE_DECL
       addParam("x")->addParam("y")->addParam("value");
    self->addClassMethod( c_surface, "GetPixel", Falcon::Ext::SDLSurface_GetPixel ).asSymbol()->
       addParam("x")->addParam("y");
+   self->addClassMethod( c_surface, "DisplayFormatAlpha", Falcon::Ext::SDLSurface_DisplayFormatAlpha );
    self->addClassMethod( c_surface, "GetPixelIndex", Falcon::Ext::SDLSurface_GetPixelIndex ).asSymbol()->
       addParam("x")->addParam("y");
    self->addClassMethod( c_surface, "LockSurface", Falcon::Ext::SDLSurface_LockSurface );

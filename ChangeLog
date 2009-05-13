@@ -1,3 +1,6 @@
+SDL (0.9.10)
+   * added: SDLSurface.DisplayFormatAlpha
+   
 SDL (0.9.8)
    * added: Updated to Falcon 0.9
    * major: Module name is now "sdl".

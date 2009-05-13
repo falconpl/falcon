@@ -136,6 +136,41 @@ FALCON_FUNC SDLSurface_SaveBMP( ::Falcon::VMachine *vm )
    vm->retnil();
 }
 
+
+/*#
+   @method DisplayFormatAlpha SDLSurface
+   @brief Enables this surface to work with source alpha transparency.
+   @param srcRect a @a SDLRect containing the source coordinates or nil.
+   @param dest the destionation SDLSurface.
+   @optparam dstRect a @a SDLRect containing destination coordinates or nil.
+   @raise SDLError on copy failure.
+
+   This functions copies a part of an image into another. The srcRect parameter determines
+   which portion of the source image is copied; if nil, the whole image will be used.
+   Only x and y coordinates from dstRect are used; if not provided, the image is copied
+   starting at 0,0 (upper left corner).
+
+*/
+
+FALCON_FUNC SDLSurface_DisplayFormatAlpha( ::Falcon::VMachine *vm )
+{
+   CoreObject *self = vm->self().asObject();
+   SDL_Surface *source = dyncast<SDLSurfaceCarrier_impl*>( self )->surface();
+   SDL_Surface *nsource = ::SDL_DisplayFormatAlpha( source );
+   if ( nsource == 0 )
+   {
+      throw new SDLError( ErrorParam( FALCON_SDL_ERROR_BASE + 11, __LINE__ )
+         .desc( "Conversion error" )
+         .extra( SDL_GetError() ) );
+      
+   }
+   
+   dyncast<SDLSurfaceCarrier_impl*>( self )->setUserData( nsource );
+   SDL_FreeSurface( source );
+}
+
+
+
 /*#
    @method BlitSurface SDLSurface
    @brief Copies a surface of part of it onto another surface.

@@ -70,6 +70,7 @@ FALCON_FUNC SDLSurface_FillRect( VMachine *vm );
 FALCON_FUNC SDLSurface_SetColors( VMachine *vm );
 FALCON_FUNC SDLSurface_SetIcon ( VMachine *vm );
 FALCON_FUNC SDLSurface_SetAlpha ( VMachine *vm );
+FALCON_FUNC SDLSurface_DisplayFormatAlpha( VMachine *vm );
 
 // PixelFormat
 FALCON_FUNC SDLSurface_GetRGBA( VMachine *vm );
