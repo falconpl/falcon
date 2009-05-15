@@ -1,0 +1,34 @@
+/****************************************************************************
+* Falcon test suite
+*
+*
+* ID: 106b
+* Category: rtl
+* Subcategory: streams
+* Short: Stdout on string stream
+* Description:
+*   Testing the string stream.
+*   This checks for the string stream to respect stream copy semantic.
+*   We'll redirect the output steream to string stream, and then check
+*   if it is still accessible.
+* [/Description]
+*
+****************************************************************************/
+
+// empty string stream
+stream = StringStream()
+// store it as stdout
+old = stdOut( stream )
+
+// write to stdout
+>> "Hello world"
+
+// reset stdout
+stdOut( old )
+if stream.closeToString() != "Hello world"
+   failure( "not working" )
+end
+
+success()
+
+/* End of file */

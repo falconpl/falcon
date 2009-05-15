@@ -19,55 +19,57 @@
 
 #include <falcon/stringstream.h>
 #include <falcon/memory.h>
+#include <falcon/mt.h>
 #include <cstring>
 #include <string.h>
+
 namespace Falcon {
 
 StringStream::StringStream( int32 size ):
    Stream( t_membuf ),
-   m_length( 0 ),
-   m_allocated( size ),
-   m_pos( 0 ),
-   m_lastError( 0 )
+   m_b( new Buffer )
 {
+   m_b->m_length = 0;
+   m_b->m_pos = 0;
+   m_b->m_lastError = 0;
    if ( size == 0 )
       size = 32;
 
    if ( size > 0 )
    {
-      m_membuf = (byte *) memAlloc( size );
-      m_allocated = size;
+      m_b->m_membuf = (byte *) memAlloc( size );
+      m_b->m_allocated = size;
 
-      if ( m_membuf == 0 )
+      if ( m_b->m_membuf == 0 )
       {
          m_status = t_error;
-         m_lastError = -1;
+         m_b->m_lastError = -1;
       }
       else
          status( t_open );
    }
    else {
-      m_membuf = 0;
-      m_allocated = 0;
+      m_b->m_membuf = 0;
+      m_b->m_allocated = 0;
       status( t_open );
    }
 }
 
 StringStream::StringStream( const String &strbuf ):
    Stream( t_membuf ),
-   m_pos( 0 )
+   m_b( new Buffer )
 {
-   m_allocated = strbuf.size();
-   m_length = strbuf.size();
-   m_membuf = (byte *) memAlloc( m_allocated );
+   m_b->m_allocated = strbuf.size();
+   m_b->m_length = strbuf.size();
+   m_b->m_membuf = (byte *) memAlloc( m_b->m_allocated );
 
-   if ( m_membuf == 0 )
+   if ( m_b->m_membuf == 0 )
    {
       status( t_error );
-      m_lastError = -1;
+      m_b->m_lastError = -1;
    }
    else {
-      memcpy( m_membuf, strbuf.getRawStorage(), m_allocated );
+      memcpy( m_b->m_membuf, strbuf.getRawStorage(), m_b->m_allocated );
       status( t_open );
    }
 }
@@ -75,47 +77,29 @@ StringStream::StringStream( const String &strbuf ):
 StringStream::StringStream( const StringStream &strbuf ):
    Stream( strbuf )
 {
-   m_length = strbuf.m_length;
-   m_pos = strbuf.m_pos;
-   m_lastError = strbuf.m_lastError;
-
-
-   m_allocated = strbuf.m_allocated;
-
-   if ( m_allocated == 0 )
-      m_allocated = 32;
-
-   m_membuf = (byte *) memAlloc( m_allocated );
-
-   if ( m_membuf == 0 )
-   {
-      m_status = t_error;
-      m_allocated = 0;
-      m_lastError = -1;
-   }
-   else
-      status( t_open );
-
-   memcpy( m_membuf, strbuf.m_membuf, m_length );
+   atomicInc(strbuf.m_b->m_refcount);
+   m_b = strbuf.m_b;
 }
 
 
+StringStream::~StringStream()
+{
+   if ( atomicDec( m_b->m_refcount ) == 0 )
+   {
+      close();
+      delete m_b;
+   }
+}
+
 void StringStream::transfer( StringStream &strbuf )
 {
-   if ( m_membuf != 0 )
-      memFree( m_membuf );
-
-   status( strbuf.status() );
-   m_length = strbuf.m_length;
-   m_pos = strbuf.m_pos;
-   m_lastError = strbuf.m_lastError;
-   m_allocated = strbuf.m_allocated;
-   m_membuf = strbuf.closeToBuffer();
+   atomicInc(strbuf.m_b->m_refcount);
+   m_b = strbuf.m_b;
 }
 
 bool StringStream::errorDescription( String &description ) const
 {
-   switch( m_lastError )
+   switch( m_b->m_lastError )
    {
       case 0:  description = "None"; return true;
       case -1: description = "Out of Memory"; return true;
@@ -126,11 +110,11 @@ bool StringStream::errorDescription( String &description ) const
 
 bool StringStream::close()
 {
-   if( m_membuf != 0 ) {
-      m_allocated = 0;
-      m_length = 0;
-      memFree(m_membuf);
-      m_membuf = 0;
+   if( m_b->m_membuf != 0 ) {
+      m_b->m_allocated = 0;
+      m_b->m_length = 0;
+      memFree(m_b->m_membuf);
+      m_b->m_membuf = 0;
       status( t_none );
       return true;
    }
@@ -139,19 +123,19 @@ bool StringStream::close()
 
 int32 StringStream::read( void *buffer, int32 size )
 {
-   if ( m_membuf == 0 ) {
+   if ( m_b->m_membuf == 0 ) {
       m_status = t_error;
       return -1;
    }
 
-   if ( m_pos == m_length ) {
+   if ( m_b->m_pos == m_b->m_length ) {
       m_status = m_status | t_eof;
       return 0;
    }
 
-   int sret = size + m_pos < m_length ? size : m_length - m_pos;
-   memcpy( buffer, m_membuf + m_pos, sret );
-   m_pos += sret;
+   int sret = size + m_b->m_pos < m_b->m_length ? size : m_b->m_length - m_b->m_pos;
+   memcpy( buffer, m_b->m_membuf + m_b->m_pos, sret );
+   m_b->m_pos += sret;
    m_lastMoved = sret;
 
    return sret;
@@ -180,7 +164,7 @@ bool StringStream::readString( String &target, uint32 size )
       target_buffer = (byte *) memAlloc( size );
       if ( target_buffer == 0 )
       {
-         m_lastError = -1;
+         m_b->m_lastError = -1;
          return false;
       }
    }
@@ -197,30 +181,30 @@ bool StringStream::readString( String &target, uint32 size )
 
 int32 StringStream::write( const void *buffer, int32 size )
 {
-   if ( m_membuf == 0 ) {
+   if ( m_b->m_membuf == 0 ) {
       m_status = t_error;
       return -1;
    }
 
-   if( size + m_pos > m_allocated ) {
-      int32 alloc = m_allocated + size + 32;
+   if( size + m_b->m_pos > m_b->m_allocated ) {
+      int32 alloc = m_b->m_allocated + size + 32;
       byte *buf1 = (byte *) memAlloc( alloc );
       if ( buf1 == 0 )
       {
-         m_lastError = -1;
+         m_b->m_lastError = -1;
          return -1;
       }
 
-      m_allocated = alloc;
-      memcpy( buf1, m_membuf, m_length );
-      memFree( m_membuf );
-      m_membuf = buf1;
+      m_b->m_allocated = alloc;
+      memcpy( buf1, m_b->m_membuf, m_b->m_length );
+      memFree( m_b->m_membuf );
+      m_b->m_membuf = buf1;
    }
 
-   memcpy( m_membuf + m_pos, buffer, size );
-   m_pos += size;
-   if ( m_pos > m_length )
-      m_length = m_pos;
+   memcpy( m_b->m_membuf + m_b->m_pos, buffer, size );
+   m_b->m_pos += size;
+   if ( m_b->m_pos > m_b->m_length )
+      m_b->m_length = m_b->m_pos;
 
    m_lastMoved = size;
 
@@ -256,64 +240,64 @@ bool StringStream::get( uint32 &chr )
    if( popBuffer( chr ) )
       return true;
 
-   if ( m_membuf == 0 ) {
+   if ( m_b->m_membuf == 0 ) {
       m_status = t_error;
       return false;
    }
 
-   if ( m_pos == m_length ) {
+   if ( m_b->m_pos == m_b->m_length ) {
       m_status = m_status | t_eof;
       return false;
    }
    
-   chr = m_membuf[m_pos];
-   m_pos++;
+   chr = m_b->m_membuf[m_b->m_pos];
+   m_b->m_pos++;
    m_lastMoved = 1;
    return true;
 }
 
 int64 StringStream::seek( int64 pos, Stream::e_whence w )
 {
-   if ( m_membuf == 0 ) {
+   if ( m_b->m_membuf == 0 ) {
       m_status = t_error;
       return -1;
    }
 
    switch( w ) {
-      case Stream::ew_begin: m_pos = (int32) pos; break;
-      case Stream::ew_cur: m_pos += (int32) pos; break;
-      case Stream::ew_end: m_pos = (int32) (m_length + pos); break;
+      case Stream::ew_begin: m_b->m_pos = (int32) pos; break;
+      case Stream::ew_cur: m_b->m_pos += (int32) pos; break;
+      case Stream::ew_end: m_b->m_pos = (int32) (m_b->m_length + pos); break;
    }
 
-   if ( m_pos > m_length )
-      m_pos = m_length;
-   else if ( m_pos < 0 )
-      m_pos = 0;
+   if ( m_b->m_pos > m_b->m_length )
+      m_b->m_pos = m_b->m_length;
+   else if ( m_b->m_pos < 0 )
+      m_b->m_pos = 0;
 
-   return m_pos;
+   return m_b->m_pos;
 }
 
 int64 StringStream::tell()
 {
-   if ( m_membuf == 0 ) {
+   if ( m_b->m_membuf == 0 ) {
       m_status = t_error;
       return -1;
    }
 
-   return m_pos;
+   return m_b->m_pos;
 }
 
 bool StringStream::truncate( int64 pos )
 {
-   if ( m_membuf == 0 ) {
+   if ( m_b->m_membuf == 0 ) {
       m_status = t_error;
       return false;
    }
 
    if ( pos <= 0 )
-      m_length = 0;
+      m_b->m_length = 0;
    else
-      m_length = (int32) pos;
+      m_b->m_length = (int32) pos;
 
    return true;
 }
@@ -330,45 +314,45 @@ int32 StringStream::writeAvailable( int32, const Sys::SystemData * )
 
 void StringStream::getString( String &target ) const
 {
-   if ( m_length == 0 )
+   if ( m_b->m_length == 0 )
    {
       target.size(0);
    }
    else {
-      char *data = (char *) memAlloc( m_length );
-      memcpy( data, m_membuf, m_length );
-      target.adopt( data, m_length, m_length );
+      char *data = (char *) memAlloc( m_b->m_length );
+      memcpy( data, m_b->m_membuf, m_b->m_length );
+      target.adopt( data, m_b->m_length, m_b->m_length );
    }
 }
 
 bool StringStream::closeToString( String &target )
 {
-   if ( m_membuf == 0 )
+   if ( m_b->m_membuf == 0 )
       return false;
 
-   if ( m_length == 0 ) {
+   if ( m_b->m_length == 0 ) {
       target.size( 0 );
       return true;
    }
 
-   target.adopt( (char *) m_membuf, m_length, m_allocated );
+   target.adopt( (char *) m_b->m_membuf, m_b->m_length, m_b->m_allocated );
 
-   m_membuf = 0;
-   m_length = 0;
-   m_allocated = 0;
+   m_b->m_membuf = 0;
+   m_b->m_length = 0;
+   m_b->m_allocated = 0;
    return true;
 }
 
 byte * StringStream::closeToBuffer()
 {
-   if ( m_membuf == 0 || m_length == 0)
+   if ( m_b->m_membuf == 0 || m_b->m_length == 0)
       return 0;
 
-   byte *data = m_membuf;
+   byte *data = m_b->m_membuf;
 
-   m_membuf = 0;
-   m_length = 0;
-   m_allocated = 0;
+   m_b->m_membuf = 0;
+   m_b->m_length = 0;
+   m_b->m_allocated = 0;
    return data;
 }
 

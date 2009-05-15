@@ -3,6 +3,9 @@ Falcon (0.9.1.7)
   * fixed: Operator overriding in blessed dictionaries had many issues.
   * fixed: prefix inc/dec operator overriding now returns what is returned
            by the overriding function (formerly, it returned the item itself).
+  * fixed: StringStream wasn't respecting stream copy semantic (copy shell,
+           respect underlying stream). As a result, it couldn't be used to
+           communicate across threads.
   
 Falcon (0.9.1.6)
   * fixed: In loop statement, continue looped from the top skipping the

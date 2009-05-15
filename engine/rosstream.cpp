@@ -25,39 +25,39 @@ namespace Falcon {
 ROStringStream::ROStringStream( const String &source ):
    StringStream( -1 )
 {
-   m_membuf = const_cast< byte *>( source.getRawStorage() );
-   m_length = source.size();
-   m_allocated = source.size();
-   m_pos = 0;
-   m_lastError = 0;
+   m_b->m_membuf = const_cast< byte *>( source.getRawStorage() );
+   m_b->m_length = source.size();
+   m_b->m_allocated = source.size();
+   m_b->m_pos = 0;
+   m_b->m_lastError = 0;
 }
 
 ROStringStream::ROStringStream( const char *source, int size ):
    StringStream( -1 )
 {
-   m_membuf = (byte *) const_cast< char *>( source );
-   m_length = size == -1 ? strlen( source ) : size;
-   m_allocated = m_length;
-   m_pos = 0;
-   m_lastError = 0;
+   m_b->m_membuf = (byte *) const_cast< char *>( source );
+   m_b->m_length = size == -1 ? strlen( source ) : size;
+   m_b->m_allocated = m_b->m_length;
+   m_b->m_pos = 0;
+   m_b->m_lastError = 0;
 }
 
 ROStringStream::ROStringStream( const ROStringStream& other ):
    StringStream( -1 )
 {
-   m_membuf = other.m_membuf;
-   m_length = other.m_length;
-   m_allocated = other.m_allocated;
-   m_pos = other.m_pos;
-   m_lastError = other.m_lastError;
+   m_b->m_membuf = other.m_b->m_membuf;
+   m_b->m_length = other.m_b->m_length;
+   m_b->m_allocated = other.m_b->m_allocated;
+   m_b->m_pos = other.m_b->m_pos;
+   m_b->m_lastError = other.m_b->m_lastError;
 }
 
 bool ROStringStream::close()
 {
-   if( m_membuf != 0 ) {
-      m_allocated = 0;
-      m_length = 0;
-      m_membuf = 0;
+   if( m_b->m_membuf != 0 ) {
+      m_b->m_allocated = 0;
+      m_b->m_length = 0;
+      m_b->m_membuf = 0;
       status( t_none );
       return true;
    }

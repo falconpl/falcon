@@ -2187,10 +2187,10 @@ FALCON_FUNC  readURI ( ::Falcon::VMachine *vm )
          int rin = 0;
          if ( len >= 0 && len < 2000000000 )
          {
-            rin = in->read( ret->getRawStorage() + pos, len+1 ); // so we hit immediately EOF
+            rin = in->read( ret->getRawStorage() + pos, (int32)(len+1) ); // so we hit immediately EOF
          }
          else {
-            ret->reserve( pos + READURI_READ_BLOCK_SIZE );
+            ret->reserve( (int32) pos + READURI_READ_BLOCK_SIZE );
             rin = in->read( ret->getRawStorage() + pos, READURI_READ_BLOCK_SIZE );
          }
            
@@ -2202,12 +2202,12 @@ FALCON_FUNC  readURI ( ::Falcon::VMachine *vm )
             
             throw new IoError( ErrorParam( e_io_error, __LINE__ )
                .extra( uri.get() )
-               .sysError( fsError ) );
+               .sysError( (int32) fsError ) );
          } 
          
          pos += rin;
       }
-      ret->size( pos );
+      ret->size( (uint32) pos );
       delete in;
    }
    else {
@@ -2220,7 +2220,7 @@ FALCON_FUNC  readURI ( ::Falcon::VMachine *vm )
          bool res;
          if ( len >= 0 && len < 2000000000 )
          {
-            res = tin->readString( temp, len );
+            res = tin->readString( temp, (uint32) len );
          }
          else {
             res = tin->readString( temp, READURI_READ_BLOCK_SIZE );
@@ -2234,7 +2234,7 @@ FALCON_FUNC  readURI ( ::Falcon::VMachine *vm )
             
             throw new IoError( ErrorParam( e_io_error, __LINE__ )
                .extra( uri.get() )
-               .sysError( fsError ) );
+               .sysError( (uint32) fsError ) );
          } 
          
          ret->append( temp );
@@ -2349,7 +2349,7 @@ FALCON_FUNC  writeURI ( ::Falcon::VMachine *vm )
             
             throw new IoError( ErrorParam( e_io_error, __LINE__ )
                .extra( uri.get() )
-               .sysError( fsError ) );
+               .sysError( (uint32) fsError ) );
          } 
          
          pos += wout;
@@ -2368,7 +2368,7 @@ FALCON_FUNC  writeURI ( ::Falcon::VMachine *vm )
          
          throw new IoError( ErrorParam( e_io_error, __LINE__ )
             .extra( uri.get() )
-            .sysError( fsError ) );
+            .sysError( (uint32) fsError ) );
       }
       delete tout;
    }

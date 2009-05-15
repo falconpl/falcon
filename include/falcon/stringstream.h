@@ -28,19 +28,31 @@ namespace Falcon {
 class FALCON_DYN_CLASS StringStream: public Stream
 {
 protected:
-   byte *m_membuf;
-   uint32 m_length;
-   uint32 m_allocated;
-   uint32 m_pos;
-   int32 m_lastError;
+   class Buffer {
+   public:
+      byte *m_membuf;
+      uint32 m_length;
+      uint32 m_allocated;
+      uint32 m_pos;
+      int32 m_lastError;
+      int32 m_refcount;
+      
+      Buffer():
+         m_pos(0),
+         m_length(0),
+         m_lastError(0),
+         m_refcount(1)
+      {}
+   };
 
+   Buffer* m_b;
    virtual int64 seek( int64 pos, e_whence whence );
 public:
    StringStream( int32 size=0 );
    StringStream( const String &strbuf );
    StringStream( const StringStream &strbuf );
 
-   virtual ~StringStream() { close(); }
+   virtual ~StringStream();
 
    virtual bool close();
    virtual int32 read( void *buffer, int32 size );
@@ -55,9 +67,9 @@ public:
    virtual int64 tell();
    virtual bool truncate( int64 pos=-1 );
 
-   uint32 length() const { return m_length; }
-   uint32 allocated() const { return m_allocated; }
-   byte *data() const { return m_membuf; }
+   uint32 length() const { return m_b->m_length; }
+   uint32 allocated() const { return m_b->m_allocated; }
+   byte *data() const { return m_b->m_membuf; }
 
    virtual bool errorDescription( ::Falcon::String &description ) const;
 
@@ -114,7 +126,7 @@ public:
    */
    String *closeToString()
    {
-      if ( m_membuf == 0 )
+      if ( m_b->m_membuf == 0 )
          return 0;
       String *temp = new String;
       closeToString( *temp );
@@ -127,7 +139,7 @@ public:
    */
    CoreString *closeToCoreString()
    {
-      if ( m_membuf == 0 )
+      if ( m_b->m_membuf == 0 )
          return 0;
       CoreString *temp = new CoreString;
       closeToString( *temp );
@@ -152,7 +164,7 @@ public:
    */
    byte  *closeToBuffer();
 
-   virtual int64 lastError() const { return (int64) m_lastError; }
+   virtual int64 lastError() const { return (int64) m_b->m_lastError; }
 
    virtual FalconData *clone() const;
    virtual void gcMark( uint32 mark ) {}
