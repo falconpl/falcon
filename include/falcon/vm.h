@@ -639,6 +639,12 @@ protected:
 
    void markLocked();
 
+
+   bool linkDefinedSymbol( const Symbol *sym, LiveModule *lmod );
+   bool linkUndefinedSymbol( const Symbol *sym, LiveModule *lmod );
+   bool insmod( LiveModule *lmod );
+   bool completeMod( LiveModule *lmod );
+   
    /** Destroys the virtual machine.
       Protected as it can't be called directly.
    */
@@ -759,6 +765,7 @@ public:
       \return false if the link fails, true on success.
    */
    bool linkSymbol( const Symbol *sym, LiveModule *lmod );
+
 
    /** Try to link a dynamic symbol.
 

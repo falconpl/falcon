@@ -53,6 +53,9 @@ public:
    Module *module() const { return m_module; }
    bool isPrivate() const { return m_bIsPrivate; }
    void setPrivate( bool mode ) { m_bIsPrivate = mode; }
+   
+   /** Just a useful storage place for temporary listing. */
+   LiveModule* lmod; 
 };
 
 /** Map of module names-> modules.

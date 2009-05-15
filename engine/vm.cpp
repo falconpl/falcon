@@ -344,7 +344,8 @@ LiveModule* VMachine::link( Runtime *rt )
    // FIFO order is important.
    uint32 listSize = rt->moduleVector()->size();
    LiveModule* lmod = 0;
-   for( uint32 iter = 0; iter < listSize; ++iter )
+   uint32 iter;
+   for( iter = 0; iter < listSize; ++iter )
    {
       ModuleDep *md = rt->moduleVector()->moduleDepAt( iter );
       if ( (lmod = prelink( md->module(),
@@ -354,11 +355,19 @@ LiveModule* VMachine::link( Runtime *rt )
       {
          return 0;
       }
-
-      m_liveModules.insert( &lmod->name(), lmod );
+      
+      // use the temporary storage.
+      md->lmod = lmod;
+   }
+   
+   // now again, do the complete phase.
+   for( iter = 0; iter < listSize; ++iter )
+   {
+       ModuleDep *md = rt->moduleVector()->moduleDepAt( iter );
+       if ( ! completeMod( md->lmod ) )
+            return 0;
    }
 
-   postlink();
    // returns the topmost livemodule
    return lmod;
 }
@@ -370,7 +379,7 @@ LiveModule *VMachine::link( Module *mod, bool isMainModule, bool bPrivate )
    // We can now increment reference count and add it to ourselves
    LiveModule *livemod = prelink( mod, isMainModule, bPrivate );
 
-   if ( livemod && liveLink( livemod, lm_complete ) )
+   if ( livemod && completeMod( livemod ) )
       return livemod;
 
    return 0;
@@ -397,15 +406,6 @@ LiveModule *VMachine::prelink( Module *mod, bool isMainModule, bool bPrivate )
       return oldMod;
    }
 
-   // first of all link the exported services.
-   MapIterator svmap_iter = mod->getServiceMap().begin();
-   while( svmap_iter.hasCurrent() )
-   {
-      if ( ! publishService( *(Service ** ) svmap_iter.currentValue() ) )
-         return false;
-      svmap_iter.next();
-   }
-
    // Ok, the module is now in.
    // We can now increment reference count and add it to ourselves
    LiveModule *livemod = new LiveModule( mod, bPrivate );
@@ -416,6 +416,17 @@ LiveModule *VMachine::prelink( Module *mod, bool isMainModule, bool bPrivate )
 
    // no need to free on failure: livemod are garbaged
    livemod->mark( generation() );
+   
+   insmod( livemod );
+
+   // and for last, export all the services.
+   MapIterator svmap_iter = mod->getServiceMap().begin();
+   while( svmap_iter.hasCurrent() )
+   {
+      if ( ! publishService( *(Service ** ) svmap_iter.currentValue() ) )
+         return false;
+      svmap_iter.next();
+   }
 
    return livemod;
 }
@@ -429,7 +440,7 @@ bool VMachine::postlink()
 
       if ( livemod->initialized() != LiveModule::init_complete )
       {
-         if ( ! liveLink( livemod, lm_postlink ) )
+         if ( ! completeMod( livemod ) )
             return false;
       }
 
@@ -440,45 +451,162 @@ bool VMachine::postlink()
 }
 
 
-bool VMachine::liveLink( LiveModule *livemod, t_linkMode mode )
+
+bool VMachine::insmod( LiveModule *livemod )
 {
-   if ( mode == lm_postlink )
+   // then we always need the symbol table.
+   const SymbolTable *symtab = &livemod->module()->symbolTable();
+
+   // A shortcut
+   ItemVector *globs = &livemod->globals();
+
+   // resize() creates a series of NIL items.
+   globs->resize( symtab->size()+1 );
+
+   bool success = true;
+   // now, the symbol table must be traversed.
+   MapIterator iter = symtab->map().begin();
+   while( iter.hasCurrent() )
    {
-      // mark the module as being inspected
-      livemod->initialized( LiveModule::init_trav );
+      Symbol *sym = *(Symbol **) iter.currentValue();
 
-      MapIterator deps = livemod->module()->dependencies().begin();
-      while( deps.hasCurrent() )
+      if ( ! sym->isUndefined() )
       {
-         const ModuleDepData *depdata = *(const ModuleDepData **) deps.currentValue();
-         const String *moduleName = depdata->moduleName();
-
-         // have we got that module?
-         LiveModule *needed = findModule( *moduleName );
-         if( needed == 0 )
+         if ( ! linkDefinedSymbol( sym, livemod ) )
          {
-            // not present
-            return false;
+            // but continue to expose other errors as well.
+            success = false;
          }
-         else if( needed->initialized() == LiveModule::init_trav )
-         {
-            // ricular ref
-            return false;
-         }
-         else if( needed->initialized() == LiveModule::init_none )
-         {
-            // must link THAT before us
-            if ( ! liveLink( needed, mode ) )
-               return false;
-         }
-         // else the module is already linked in.
-
-         // have we got the module?
-         deps.next();
       }
+
+      // next symbol
+      iter.next();
    }
 
+   // return zero and dispose of the module if not succesful.
+   if ( ! success )
+   {
+      // LiveModule is garbageable, cannot be destroyed.
+      return false;
+   }
 
+   // We can now add the module to our list of available modules.
+   m_liveModules.insert( &livemod->name(), livemod );
+   livemod->mark( generation() );
+
+   return true;
+}
+
+
+bool VMachine::completeMod( LiveModule *livemod )
+{
+   // we need to record the classes in the module as they have to be evaluated last.
+   SymbolList modClasses;
+   SymbolList modObjects;
+
+   // then we always need the symbol table.
+   const SymbolTable *symtab = &livemod->module()->symbolTable();
+
+   // we won't be preemptible during link
+   bool atomic = m_atomicMode;
+   m_atomicMode = true;
+
+   bool success = true;
+   // now, the symbol table must be traversed.
+   MapIterator iter = symtab->map().begin();
+   while( iter.hasCurrent() )
+   {
+      Symbol *sym = *(Symbol **) iter.currentValue();
+      if ( sym->isUndefined() )
+      {
+         if (! linkUndefinedSymbol( sym, livemod ) )
+            success = false;
+      }
+      else
+      {
+         // save classes and objects for later linking.
+         if( sym->type() == Symbol::tclass )
+            modClasses.pushBack( sym );
+         else if ( sym->type() == Symbol::tinst )
+            modObjects.pushBack( sym );
+      }
+
+      // next symbol
+      iter.next();
+   }
+
+   // now that the symbols in the module have been linked, link the classes.
+   ListElement *cls_iter = modClasses.begin();
+   while( cls_iter != 0 )
+   {
+      Symbol *sym = (Symbol *) cls_iter->data();
+      fassert( sym->isClass() );
+
+      // on error, report failure but proceed.
+      if ( ! linkClassSymbol( sym, livemod ) )
+         success = false;
+
+      cls_iter = cls_iter->next();
+   }
+
+   // then, prepare the instances of standalone objects
+   ListElement *obj_iter = modObjects.begin();
+   while( obj_iter != 0 )
+   {
+      Symbol *obj = (Symbol *) obj_iter->data();
+      fassert( obj->isInstance() );
+
+      // on error, report failure but proceed.
+      if ( ! linkInstanceSymbol( obj, livemod ) )
+         success = false;
+
+      obj_iter = obj_iter->next();
+   }
+
+   // eventually, call the constructors declared by the instances
+   obj_iter = modObjects.begin();
+
+   // In case we have some objects to link - and while we have no errors,
+   // -- we can't afford calling constructors if everything is not ok.
+   while( success && obj_iter != 0 )
+   {
+      Symbol *obj = (Symbol *) obj_iter->data();
+      initializeInstance( obj, livemod );
+      obj_iter = obj_iter->next();
+   }
+
+   // Initializations of module objects is complete; return to non-atomic mode
+   m_atomicMode = atomic;
+
+   // return zero and dispose of the module if not succesful.
+   if ( ! success )
+   {
+      // LiveModule is garbageable, cannot be destroyed.
+      return false;
+   }
+
+   // We can now add the module to our list of available modules.
+   m_liveModules.insert( &livemod->name(), livemod );
+   livemod->initialized( LiveModule::init_complete );
+   livemod->mark( generation() );
+   
+   // execute the main code, if we have one
+   // -- but only if this is NOT the main module
+   if ( m_launchAtLink && m_mainModule != livemod )
+   {
+      Item *mainItem = livemod->findModuleItem( "__main__" );
+      if( mainItem != 0 )
+      {
+         callItem( *mainItem, 0 );
+      }
+   }
+   
+   return true;
+}
+
+
+bool VMachine::liveLink( LiveModule *livemod, t_linkMode mode )
+{
    // we need to record the classes in the module as they have to be evaluated last.
    SymbolList modClasses;
    SymbolList modObjects;
@@ -593,128 +721,19 @@ bool VMachine::liveLink( LiveModule *livemod, t_linkMode mode )
 // Link a single symbol
 bool VMachine::linkSymbol( const Symbol *sym, LiveModule *livemod )
 {
-   // A shortcut
-   ItemVector *globs = &livemod->globals();
-   const Module *mod = livemod->module();
-
    if ( sym->isUndefined() )
    {
-      // is the symbol name-spaced?
-      uint32 dotPos;
-
-      String localSymName;
-      ModuleDepData *depData;
-      LiveModule *lmod = 0;
-
-      if ( ( dotPos = sym->name().rfind( "." ) ) != String::npos && sym->imported() )
-      {
-         String nameSpace = sym->name().subString( 0, dotPos );
-         // get the module name for the given module
-         depData = mod->dependencies().findModule( nameSpace );
-         // if we linked it, it must exist
-         // -- but in some cases, the compiler may generate a dotted symbol loaded from external sources
-         // -- this is usually an error, so let the undefined error to be declared.
-         if ( depData != 0 )
-         {
-            // ... then find the module in the item
-            lmod = findModule( Module::absoluteName(
-                  depData->isFile() ? nameSpace: *depData->moduleName(),
-                  mod->name() ));
-
-            // we must convert the name if it contains self or if it starts with "."
-            if ( lmod != 0 )
-               localSymName = sym->name().subString( dotPos + 1 );
-         }
-      }
-      else if ( sym->isImportAlias() )
-      {
-         depData = mod->dependencies().findModule( *sym->getImportAlias()->origModule() );
-         // if we linked it, it must exist
-         fassert( depData != 0 );
-
-         // ... then find the module in the item
-         lmod = findModule( Module::absoluteName(
-               *depData->moduleName(), mod->name() ));
-
-         if( lmod != 0 )
-            localSymName = *sym->getImportAlias()->name();
-      }
-
-      // If we found it it...
-      if ( lmod != 0 )
-      {
-         Symbol *localSym = lmod->module()->findGlobalSymbol( localSymName );
-
-         if ( localSym != 0 )
-         {
-            referenceItem( globs->itemAt( sym->itemId() ),
-               lmod->globals().itemAt( localSym->itemId() ) );
-            return true;
-         }
-
-         // last chance: if the module is flexy, we may ask it do dynload it.
-         if( lmod->module()->isFlexy() )
-         {
-            // Destroy also constness; flexy modules love to be abused.
-            FlexyModule *fmod = (FlexyModule *)( lmod->module() );
-            Symbol *newsym = fmod->onSymbolRequest( localSymName );
-
-            // Found -- great, link it and if all it's fine, link again this symbol.
-            if ( newsym != 0 )
-            {
-               // be sure to allocate enough space in the module global table.
-               if ( newsym->itemId() >= lmod->globals().size() )
-               {
-                  lmod->globals().resize( newsym->itemId() );
-               }
-
-               // now we have space to link it.
-               if ( linkCompleteSymbol( newsym, lmod ) )
-               {
-                  referenceItem( globs->itemAt( sym->itemId() ), *lmod->globals().itemPtrAt( newsym->itemId() ) );
-                  return true;
-               }
-               else {
-                  // we found the symbol, but it was flacky. We must have raised an error,
-                  // and so we should return now.
-                  // Notice that there is no need to free the symbol.
-                  return false;
-               }
-            }
-         }
-         // ... otherwise, the symbol is undefined.
-      }
-      else {
-         // try to find the imported symbol.
-         SymModule *sm = (SymModule *) m_globalSyms.find( &sym->name() );
-
-         if( sm != 0 )
-         {
-            // link successful, we must set the current item as a reference of the original
-            referenceItem( globs->itemAt( sym->itemId() ), *sm->item() );
-            return true;
-         }
-      }
-
-      // try to dynamically load the symbol from flexy modules.
-      SymModule symmod;
-      if ( linkSymbolDynamic( sym->name(), symmod ) )
-      {
-         referenceItem( globs->itemAt( sym->itemId() ), *symmod.item() );
-         return true;
-      }
-
-      // We failed every try; raise undefined symbol.
-      Error *error = new CodeError(
-            ErrorParam( e_undef_sym, sym->declaredAt() ).origin( e_orig_vm ).
-            module( mod->name() ).
-            extra( sym->name() )
-            );
-
-      raiseError( error );
-      return false;
+      return linkUndefinedSymbol( sym, livemod );
    }
+   return  linkDefinedSymbol( sym, livemod );
+}
 
+
+bool VMachine::linkDefinedSymbol( const Symbol *sym, LiveModule *livemod )
+{
+   // A shortcut
+   ItemVector *globs = &livemod->globals();
+   
    // Ok, the symbol is defined here. Link (record) it.
 
    // create an appropriate item here.
@@ -757,6 +776,129 @@ bool VMachine::linkSymbol( const Symbol *sym, LiveModule *livemod )
       return false;
 
    return true;
+}
+
+
+bool VMachine::linkUndefinedSymbol( const Symbol *sym, LiveModule *livemod )
+{
+   // A shortcut
+   ItemVector *globs = &livemod->globals();
+   const Module *mod = livemod->module();
+
+   // is the symbol name-spaced?
+   uint32 dotPos;
+
+   String localSymName;
+   ModuleDepData *depData;
+   LiveModule *lmod = 0;
+
+   if ( ( dotPos = sym->name().rfind( "." ) ) != String::npos && sym->imported() )
+   {
+      String nameSpace = sym->name().subString( 0, dotPos );
+      // get the module name for the given module
+      depData = mod->dependencies().findModule( nameSpace );
+      // if we linked it, it must exist
+      // -- but in some cases, the compiler may generate a dotted symbol loaded from external sources
+      // -- this is usually an error, so let the undefined error to be declared.
+      if ( depData != 0 )
+      {
+         // ... then find the module in the item
+         lmod = findModule( Module::absoluteName(
+               depData->isFile() ? nameSpace: *depData->moduleName(),
+               mod->name() ));
+
+         // we must convert the name if it contains self or if it starts with "."
+         if ( lmod != 0 )
+            localSymName = sym->name().subString( dotPos + 1 );
+      }
+   }
+   else if ( sym->isImportAlias() )
+   {
+      depData = mod->dependencies().findModule( *sym->getImportAlias()->origModule() );
+      // if we linked it, it must exist
+      fassert( depData != 0 );
+
+      // ... then find the module in the item
+      lmod = findModule( Module::absoluteName(
+            *depData->moduleName(), mod->name() ));
+
+      if( lmod != 0 )
+         localSymName = *sym->getImportAlias()->name();
+   }
+
+   // If we found it it...
+   if ( lmod != 0 )
+   {
+      Symbol *localSym = lmod->module()->findGlobalSymbol( localSymName );
+
+      if ( localSym != 0 )
+      {
+         referenceItem( globs->itemAt( sym->itemId() ),
+            lmod->globals().itemAt( localSym->itemId() ) );
+         return true;
+      }
+
+      // last chance: if the module is flexy, we may ask it do dynload it.
+      if( lmod->module()->isFlexy() )
+      {
+         // Destroy also constness; flexy modules love to be abused.
+         FlexyModule *fmod = (FlexyModule *)( lmod->module() );
+         Symbol *newsym = fmod->onSymbolRequest( localSymName );
+
+         // Found -- great, link it and if all it's fine, link again this symbol.
+         if ( newsym != 0 )
+         {
+            // be sure to allocate enough space in the module global table.
+            if ( newsym->itemId() >= lmod->globals().size() )
+            {
+               lmod->globals().resize( newsym->itemId() );
+            }
+
+            // now we have space to link it.
+            if ( linkCompleteSymbol( newsym, lmod ) )
+            {
+               referenceItem( globs->itemAt( sym->itemId() ), *lmod->globals().itemPtrAt( newsym->itemId() ) );
+               return true;
+            }
+            else {
+               // we found the symbol, but it was flacky. We must have raised an error,
+               // and so we should return now.
+               // Notice that there is no need to free the symbol.
+               return false;
+            }
+         }
+      }
+      // ... otherwise, the symbol is undefined.
+   }
+   else {
+      // try to find the imported symbol.
+      SymModule *sm = (SymModule *) m_globalSyms.find( &sym->name() );
+
+      if( sm != 0 )
+      {
+         // link successful, we must set the current item as a reference of the original
+         referenceItem( globs->itemAt( sym->itemId() ), *sm->item() );
+         return true;
+      }
+   }
+
+   // try to dynamically load the symbol from flexy modules.
+   SymModule symmod;
+   if ( linkSymbolDynamic( sym->name(), symmod ) )
+   {
+      referenceItem( globs->itemAt( sym->itemId() ), *symmod.item() );
+      return true;
+   }
+
+   // We failed every try; raise undefined symbol.
+   Error *error = new CodeError(
+         ErrorParam( e_undef_sym, sym->declaredAt() ).origin( e_orig_vm ).
+         module( mod->name() ).
+         extra( sym->name() )
+         );
+
+   raiseError( error );
+   return false;
 }
 
 
