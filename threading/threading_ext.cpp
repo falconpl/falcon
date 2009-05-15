@@ -242,16 +242,17 @@ FALCON_FUNC Thread_start( VMachine *vm )
    const LiveModuleMap &mods = vm->liveModules();
    MapIterator iter = mods.begin();
    bool success = true;
+   Runtime rt;
    while( iter.hasCurrent() && success )
    {
       LiveModule *lmod = *(LiveModule **) iter.currentValue();
       Module *mod = const_cast<Module*>(lmod->module());
-      success = thread->vm().prelink( mod, lmod == vm->mainModule(), lmod->isPrivate() ) != 0;
+      rt.addModule( mod, lmod->isPrivate() );
       iter.next();
    }
 
    // Do not set error handler; errors will emerge in the module.
-   if ( ! success || ! thread->vm().postlink() )
+   if ( ! thread->vm().link( &rt ) )
    {
       vm->raiseModError( new ThreadError( ErrorParam( FALTH_ERR_PREPARE, __LINE__ )
          .desc( FAL_STR( th_msg_errlink ) ) ) );
@@ -268,7 +269,7 @@ FALCON_FUNC Thread_start( VMachine *vm )
    #ifndef NDEBUG
    Item::e_sercode result =
    #endif
-       i_remoteThread.deserialize( &sstream, &thread->vm() );
+               i_remoteThread.deserialize( &sstream, &thread->vm() );
    fassert( result == Item::sc_ok );
 
    // Setup the thread into the thread data.
