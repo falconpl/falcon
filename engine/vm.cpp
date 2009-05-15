@@ -301,7 +301,7 @@ void VMachine::finalize()
    {
       memPool->unregisterVM( this );
    }
-   
+
    if ( m_onFinalize != 0 )
       m_onFinalize( this );
 
@@ -347,21 +347,36 @@ LiveModule* VMachine::link( Runtime *rt )
    for( uint32 iter = 0; iter < listSize; ++iter )
    {
       ModuleDep *md = rt->moduleVector()->moduleDepAt( iter );
-      if ( (lmod = link( md->module(),
+      if ( (lmod = prelink( md->module(),
                        rt->hasMainModule() && (iter + 1 == listSize),
                        md->isPrivate() ) ) == 0
       )
       {
          return 0;
       }
+
+      m_liveModules.insert( &lmod->name(), lmod );
    }
 
+   postlink();
    // returns the topmost livemodule
    return lmod;
 }
 
 
 LiveModule *VMachine::link( Module *mod, bool isMainModule, bool bPrivate )
+{
+   // Ok, the module is now in.
+   // We can now increment reference count and add it to ourselves
+   LiveModule *livemod = prelink( mod, isMainModule, bPrivate );
+
+   if ( livemod && liveLink( livemod, lm_complete ) )
+      return livemod;
+
+   return 0;
+}
+
+LiveModule *VMachine::prelink( Module *mod, bool isMainModule, bool bPrivate )
 {
    // See if we have a module with the same name
    LiveModule *oldMod = findModule( mod->name() );
@@ -376,7 +391,7 @@ LiveModule *VMachine::link( Module *mod, bool isMainModule, bool bPrivate )
             return 0;
          }
          // success; change official policy and return the livemod
-         oldMod->setPrivate( true );
+         oldMod->setPrivate( false );
       }
 
       return oldMod;
@@ -394,33 +409,15 @@ LiveModule *VMachine::link( Module *mod, bool isMainModule, bool bPrivate )
    // Ok, the module is now in.
    // We can now increment reference count and add it to ourselves
    LiveModule *livemod = new LiveModule( mod, bPrivate );
+
    // set this as the main module if required.
    if ( isMainModule )
       m_mainModule = livemod;
 
-   if ( liveLink( livemod, lm_complete ) )
-      return livemod;
-
    // no need to free on failure: livemod are garbaged
    livemod->mark( generation() );
-   return 0;
-}
 
-LiveModule *VMachine::prelink( Module *mod, bool bIsMain, bool bPrivate )
-{
-   // See if we have a module with the same name
-   LiveModule *oldMod = findModule( mod->name() );
-   if ( oldMod == 0 )
-   {
-      oldMod = new LiveModule( mod, bPrivate );
-      m_liveModules.insert( &oldMod->name(), oldMod );
-      oldMod->mark( generation() );
-   }
-
-   if ( bIsMain )
-      m_mainModule = oldMod;
-
-   return oldMod;
+   return livemod;
 }
 
 bool VMachine::postlink()
@@ -620,8 +617,8 @@ bool VMachine::linkSymbol( const Symbol *sym, LiveModule *livemod )
          if ( depData != 0 )
          {
             // ... then find the module in the item
-            lmod = findModule( Module::absoluteName( 
-                  depData->isFile() ? nameSpace: *depData->moduleName(), 
+            lmod = findModule( Module::absoluteName(
+                  depData->isFile() ? nameSpace: *depData->moduleName(),
                   mod->name() ));
 
             // we must convert the name if it contains self or if it starts with "."

@@ -17,6 +17,8 @@
 class test
    // A static property
    static property = 0
+   static ptrue = true
+   static pfalse = false
 
    function stc_func()
       test.property++
@@ -25,6 +27,8 @@ end
 
 // smoke
 if test.property != 0: failure( "Basic static access" )
+if test.pfalse: failure( "Basic static access - bool false" )
+if not test.ptrue: failure( "Basic static access - bool true" )
 
 test.stc_func()
 test.stc_func()

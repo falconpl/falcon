@@ -261,6 +261,10 @@ VarDef *Value::genVarDef()
          def = new Falcon::VarDef( asString() );
       break;
 
+      case Falcon::Value::t_imm_bool:
+         def = new Falcon::VarDef( asBool() );
+      break;
+
       default:
          def = 0;  // set a nil expression
    }
