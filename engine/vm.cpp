@@ -373,6 +373,7 @@ LiveModule* VMachine::link( Runtime *rt )
    }
 
    // returns the topmost livemodule
+   delete lmodList;
    return lmod;
 }
 
