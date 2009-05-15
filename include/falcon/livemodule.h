@@ -78,6 +78,7 @@ class FALCON_DYN_CLASS LiveModule: public Garbageable
    ItemVector m_wkitems;
    bool m_bPrivate;
    bool m_bAlive;
+   bool m_needsCompleteLink;
 
 public:
    typedef enum {
@@ -144,6 +145,12 @@ public:
    /** Return the string in the module with the given ID.
    */
    String* getString( uint32 stringId ) const;
+   
+   /** True if this module requires a second link step. */
+   bool needsCompleteLink() const { return m_needsCompleteLink; }
+   
+   /** True if this module requires a second link step. */
+   void needsCompleteLink( bool l ) { m_needsCompleteLink = l; }
    
    void gcMark( uint32 mark );
 };

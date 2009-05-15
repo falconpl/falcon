@@ -38,7 +38,8 @@ LiveModule::LiveModule( Module *mod, bool bPrivate ):
    m_iacc( 0 ),
    m_bPrivate( bPrivate ),
    m_bAlive(true),
-   m_initState( init_none )
+   m_initState( init_none ),
+   m_needsCompleteLink( true )
 {
    m_module->incref();
    m_strCount = mod->stringTable().size();
