@@ -343,6 +343,7 @@ LiveModule* VMachine::link( Runtime *rt )
    // link all the modules in the runtime from first to last.
    // FIFO order is important.
    uint32 listSize = rt->moduleVector()->size();
+   LiveModule** lmodList = new LiveModule*[listSize];
    LiveModule* lmod = 0;
    uint32 iter;
    for( iter = 0; iter < listSize; ++iter )
@@ -353,19 +354,22 @@ LiveModule* VMachine::link( Runtime *rt )
                        md->isPrivate() ) ) == 0
       )
       {
+         delete lmodList;
          return 0;
       }
       
       // use the temporary storage.
-      md->lmod = lmod;
+      lmodList[ iter ] = lmod;
    }
    
    // now again, do the complete phase.
    for( iter = 0; iter < listSize; ++iter )
    {
-       ModuleDep *md = rt->moduleVector()->moduleDepAt( iter );
-       if ( ! completeMod( md->lmod ) )
-            return 0;
+       if ( ! completeModLink( lmodList[ iter ] ) )
+       {
+          delete lmodList;
+          return 0;
+       }
    }
 
    // returns the topmost livemodule
@@ -379,7 +383,7 @@ LiveModule *VMachine::link( Module *mod, bool isMainModule, bool bPrivate )
    // We can now increment reference count and add it to ourselves
    LiveModule *livemod = prelink( mod, isMainModule, bPrivate );
 
-   if ( livemod && completeMod( livemod ) )
+   if ( livemod && completeModLink( livemod ) )
       return livemod;
 
    return 0;
@@ -417,43 +421,6 @@ LiveModule *VMachine::prelink( Module *mod, bool isMainModule, bool bPrivate )
    // no need to free on failure: livemod are garbaged
    livemod->mark( generation() );
    
-   insmod( livemod );
-
-   // and for last, export all the services.
-   MapIterator svmap_iter = mod->getServiceMap().begin();
-   while( svmap_iter.hasCurrent() )
-   {
-      if ( ! publishService( *(Service ** ) svmap_iter.currentValue() ) )
-         return false;
-      svmap_iter.next();
-   }
-
-   return livemod;
-}
-
-bool VMachine::postlink()
-{
-   MapIterator iter = m_liveModules.begin();
-   while( iter.hasCurrent() )
-   {
-      LiveModule *livemod = *(LiveModule **) iter.currentValue();
-
-      if ( livemod->initialized() != LiveModule::init_complete )
-      {
-         if ( ! completeMod( livemod ) )
-            return false;
-      }
-
-      iter.next();
-   }
-
-   return true;
-}
-
-
-
-bool VMachine::insmod( LiveModule *livemod )
-{
    // then we always need the symbol table.
    const SymbolTable *symtab = &livemod->module()->symbolTable();
 
@@ -490,15 +457,11 @@ bool VMachine::insmod( LiveModule *livemod )
       return false;
    }
 
-   // We can now add the module to our list of available modules.
-   m_liveModules.insert( &livemod->name(), livemod );
-   livemod->mark( generation() );
-
-   return true;
+   return livemod;
 }
 
 
-bool VMachine::completeMod( LiveModule *livemod )
+bool VMachine::completeModLink( LiveModule *livemod )
 {
    // we need to record the classes in the module as they have to be evaluated last.
    SymbolList modClasses;
@@ -585,8 +548,18 @@ bool VMachine::completeMod( LiveModule *livemod )
       return false;
    }
 
+   // and for last, export all the services.
+   MapIterator svmap_iter = livemod->module()->getServiceMap().begin();
+   while( svmap_iter.hasCurrent() )
+   {
+      if ( ! publishService( *(Service ** ) svmap_iter.currentValue() ) )
+         return false;
+      svmap_iter.next();
+   }
+
    // We can now add the module to our list of available modules.
    m_liveModules.insert( &livemod->name(), livemod );
+
    livemod->initialized( LiveModule::init_complete );
    livemod->mark( generation() );
    
@@ -601,119 +574,6 @@ bool VMachine::completeMod( LiveModule *livemod )
       }
    }
    
-   return true;
-}
-
-
-bool VMachine::liveLink( LiveModule *livemod, t_linkMode mode )
-{
-   // we need to record the classes in the module as they have to be evaluated last.
-   SymbolList modClasses;
-   SymbolList modObjects;
-
-   // then we always need the symbol table.
-   const SymbolTable *symtab = &livemod->module()->symbolTable();
-
-   // A shortcut
-   ItemVector *globs = &livemod->globals();
-
-   // resize() creates a series of NIL items.
-   globs->resize( symtab->size()+1 );
-
-   // we won't be preemptible during link
-   bool atomic = m_atomicMode;
-   m_atomicMode = true;
-
-   bool success = true;
-   // now, the symbol table must be traversed.
-   MapIterator iter = symtab->map().begin();
-   while( iter.hasCurrent() )
-   {
-      Symbol *sym = *(Symbol **) iter.currentValue();
-
-      if ( linkSymbol( sym, livemod ) )
-      {
-         // save classes and objects for later linking.
-         if( sym->type() == Symbol::tclass )
-            modClasses.pushBack( sym );
-         else if ( sym->type() == Symbol::tinst )
-            modObjects.pushBack( sym );
-      }
-      else {
-         // but continue to expose other errors as well.
-         success = false;
-      }
-
-      // next symbol
-      iter.next();
-   }
-
-   // now that the symbols in the module have been linked, link the classes.
-   ListElement *cls_iter = modClasses.begin();
-   while( cls_iter != 0 )
-   {
-      Symbol *sym = (Symbol *) cls_iter->data();
-      fassert( sym->isClass() );
-
-      // on error, report failure but proceed.
-      if ( ! linkClassSymbol( sym, livemod ) )
-         success = false;
-
-      cls_iter = cls_iter->next();
-   }
-
-   // then, prepare the instances of standalone objects
-   ListElement *obj_iter = modObjects.begin();
-   while( obj_iter != 0 )
-   {
-      Symbol *obj = (Symbol *) obj_iter->data();
-      fassert( obj->isInstance() );
-
-      // on error, report failure but proceed.
-      if ( ! linkInstanceSymbol( obj, livemod ) )
-         success = false;
-
-      obj_iter = obj_iter->next();
-   }
-
-   // eventually, call the constructors declared by the instances
-   obj_iter = modObjects.begin();
-
-   // In case we have some objects to link - and while we have no errors,
-   // -- we can't afford calling constructors if everything is not ok.
-   while( success && obj_iter != 0 )
-   {
-      Symbol *obj = (Symbol *) obj_iter->data();
-      initializeInstance( obj, livemod );
-      obj_iter = obj_iter->next();
-   }
-
-   // Initializations of module objects is complete; return to non-atomic mode
-   m_atomicMode = atomic;
-
-   // return zero and dispose of the module if not succesful.
-   if ( ! success )
-   {
-      // LiveModule is garbageable, cannot be destroyed.
-      return false;
-   }
-
-   // We can now add the module to our list of available modules.
-   m_liveModules.insert( &livemod->name(), livemod );
-   livemod->initialized( LiveModule::init_complete );
-   livemod->mark( generation() );
-
-   // execute the main code, if we have one
-   // -- but only if this is NOT the main module
-   if ( m_launchAtLink && m_mainModule != livemod )
-   {
-      Item *mainItem = livemod->findModuleItem( "__main__" );
-      if( mainItem != 0 )
-      {
-         callItem( *mainItem, 0 );
-      }
-   }
-
    return true;
 }
 

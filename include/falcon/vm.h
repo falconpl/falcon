@@ -579,7 +579,6 @@ protected:
    */
    bool seekItemClass( const Item *obj, byte *base, uint16 size, uint32 &landing ) const;
 
-
    void internal_construct();
 
    Item *parseSquareAccessor( const Item &accessed, String &accessor ) const;
@@ -639,11 +638,10 @@ protected:
 
    void markLocked();
 
-
    bool linkDefinedSymbol( const Symbol *sym, LiveModule *lmod );
    bool linkUndefinedSymbol( const Symbol *sym, LiveModule *lmod );
-   bool insmod( LiveModule *lmod );
-   bool completeMod( LiveModule *lmod );
+   bool completeModLink( LiveModule *lmod );
+   LiveModule *prelink( Module *mod, bool bIsMain, bool bPrivate );
    
    /** Destroys the virtual machine.
       Protected as it can't be called directly.
@@ -2156,11 +2154,6 @@ public:
       lm_postlink
    } t_linkMode;
 
-   LiveModule *prelink( Module *mod, bool bIsMain, bool bPrivate );
-
-   bool postlink();
-
-   bool liveLink( LiveModule *livemod, t_linkMode mode );
 
    /** Request a constructor call after a call frame.
       If the preceding callFrame() was directed to an external function, requests the VM to treat
