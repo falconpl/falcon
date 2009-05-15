@@ -1,0 +1,31 @@
+/****************************************************************************
+* Falcon test suite
+*
+*
+* ID: 50e
+* Category: modloader
+* Subcategory:
+* Short: Circular loads.
+* Description:
+*    Tests for the VM to be able to link circular loads.
+*    Uses loop_module_a and loop_module_b submodules, linking each other.
+* [/Description]
+*
+****************************************************************************/
+
+load loop_module_a
+load loop_module_b
+
+ia = CModA()
+ib = CModB()
+
+if ib.prop != "Property from b": failure( "Direct init" )
+if ib.pb != "Value from A": failure( "Init via recursive symbol" )
+if not ia.pa.derivedFrom( CModB ): failure( "Recursive constructor" )
+if ia.pa.prop != "Property from b" : failure( "Recursive constructor direct init" )
+if ia.pa.pb != "Value from A": failure( "Recursive constructor init via recursive symbol" )
+
+success()
+
+
+

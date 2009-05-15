@@ -1,0 +1,25 @@
+/****************************************************************************
+* Falcon test suite
+*
+*
+* ID: --
+* Category: modloader
+* Subcategory:
+* Short: Circular loads.
+* Description:
+*    Used from test 50e (loop_module_main.fal)
+* [/Description]
+*
+****************************************************************************/
+
+load loop_module_b
+
+class CModA
+  pa = CModB()
+  
+  function value()
+     return "Value from A"
+  end
+end
+
+export CModA
