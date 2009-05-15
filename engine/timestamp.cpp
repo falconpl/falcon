@@ -531,14 +531,6 @@ void TimeStamp::fromLongFormat( int64 lf )
    m_year = (int16) lf;
 }
 
-numeric TimeStamp::asSeconds() const
-{
-   return 0;
-}
-
-void TimeStamp::fromSeconds( numeric seconds )
-{
-}
 
 void TimeStamp::add( const TimeStamp &ts )
 {

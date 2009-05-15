@@ -183,7 +183,7 @@ static void internal_add_dist( ::Falcon::VMachine *vm, int mode )
       else
          ts1->distance( *ts2 );
 
-      vm->retnil();
+      vm->val( ts1 );
    }
    else {
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ).
@@ -193,12 +193,19 @@ static void internal_add_dist( ::Falcon::VMachine *vm, int mode )
 
 /*#
    @method add TimeStamp
-   @brief Converts the current timestamp to a string.
+   @brief Adds a date value to this value (altering it).
    @param timestamp A timestamp to add
+   @return itself.
 
    Alters this timestamp by adding another one to itself.
    Years, months, days, hours, minutes, seconds and milliseconds
    from the parameters are added, and the target date is re-validated.
+   
+   To use this functionality without changing the contents of this instance,
+   use the clone semantic:
+   @code
+      added = orig.clone().add(addend)
+   @endcode
 */
 FALCON_FUNC  TimeStamp_add ( ::Falcon::VMachine *vm )
 {
@@ -207,13 +214,20 @@ FALCON_FUNC  TimeStamp_add ( ::Falcon::VMachine *vm )
 
 /*#
    @method distance TimeStamp
-   @brief Converts the current timestamp to a string.
+   @brief Determines the distance between this item and a target timestamp.
    @param timestamp The timestamp from which to calculate the distance.
+   @return itself
 
    The parameter is subtracted from the current object; the number of days,
    hours, minutes, seconds and milliseconds between the two dates is stored
    in the current object. The values may be negative if the given timestamp
    parameter is greater than this object.
+   
+   To use this functionality without changing the contents of this instance,
+   use the clone semantic:
+   @code
+      distance = currentDate.clone().distance( baseDate )
+   @endcode
 */
 FALCON_FUNC  TimeStamp_distance ( ::Falcon::VMachine *vm )
 {

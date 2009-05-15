@@ -176,8 +176,6 @@ public:
       Sys::Time::timestampFromSystemTime( st, *this );
    }
 
-   numeric asSeconds() const;
-   void fromSeconds( numeric seconds );
 
    void add( const TimeStamp &ts );
    void add( int32 days, int32 hours=0, int32 mins=0, int32 secs=0, int32 msecs=0 );
