@@ -27,26 +27,19 @@ namespace Falcon {
 
 class FALCON_DYN_CLASS StringStream: public Stream
 {
-protected:
-   class Buffer {
-   public:
-      byte *m_membuf;
-      uint32 m_length;
-      uint32 m_allocated;
-      uint32 m_pos;
-      int32 m_lastError;
-      int32 m_refcount;
-      
-      Buffer():
-         m_pos(0),
-         m_length(0),
-         m_lastError(0),
-         m_refcount(1)
-      {}
-   };
-
+private:
+   class Buffer;
    Buffer* m_b;
+   
+   
+protected:
+   uint32 m_pos;
    virtual int64 seek( int64 pos, e_whence whence );
+   
+   void setBuffer( const String &source );
+   void setBuffer( const char* source, int size=-1 );
+   bool detachBuffer();
+   
 public:
    StringStream( int32 size=0 );
    StringStream( const String &strbuf );
@@ -67,9 +60,9 @@ public:
    virtual int64 tell();
    virtual bool truncate( int64 pos=-1 );
 
-   uint32 length() const { return m_b->m_length; }
-   uint32 allocated() const { return m_b->m_allocated; }
-   byte *data() const { return m_b->m_membuf; }
+   uint32 length() const;
+   uint32 allocated() const;
+   byte *data() const;
 
    virtual bool errorDescription( ::Falcon::String &description ) const;
 
@@ -124,28 +117,14 @@ public:
 
       \return a string containing all the data in the stream.
    */
-   String *closeToString()
-   {
-      if ( m_b->m_membuf == 0 )
-         return 0;
-      String *temp = new String;
-      closeToString( *temp );
-      return temp;
-   }
+   String *closeToString();
    
    /** Gets the phisical memory created by this object and turns it into a newly created garbage collected string.
       \see closeToString()
       \return a string containing all the data in the stream.
    */
-   CoreString *closeToCoreString()
-   {
-      if ( m_b->m_membuf == 0 )
-         return 0;
-      CoreString *temp = new CoreString;
-      closeToString( *temp );
-      return temp;
-   }
-
+   CoreString *closeToCoreString();
+   
    /** Gets the phisical memory created by this object and turns it into a string.
       This version of the method stores the phisical memory in the given string,
       and configures it as a single byte memory buffer string.
@@ -164,8 +143,7 @@ public:
    */
    byte  *closeToBuffer();
 
-   virtual int64 lastError() const { return (int64) m_b->m_lastError; }
-
+   virtual int64 lastError() const;
    virtual FalconData *clone() const;
    virtual void gcMark( uint32 mark ) {}
 };

@@ -25,43 +25,23 @@ namespace Falcon {
 ROStringStream::ROStringStream( const String &source ):
    StringStream( -1 )
 {
-   m_b->m_membuf = const_cast< byte *>( source.getRawStorage() );
-   m_b->m_length = source.size();
-   m_b->m_allocated = source.size();
-   m_b->m_pos = 0;
-   m_b->m_lastError = 0;
+   setBuffer( source );
 }
 
 ROStringStream::ROStringStream( const char *source, int size ):
    StringStream( -1 )
 {
-   m_b->m_membuf = (byte *) const_cast< char *>( source );
-   m_b->m_length = size == -1 ? strlen( source ) : size;
-   m_b->m_allocated = m_b->m_length;
-   m_b->m_pos = 0;
-   m_b->m_lastError = 0;
+   setBuffer( source, size );
 }
 
 ROStringStream::ROStringStream( const ROStringStream& other ):
-   StringStream( -1 )
+   StringStream( other )
 {
-   m_b->m_membuf = other.m_b->m_membuf;
-   m_b->m_length = other.m_b->m_length;
-   m_b->m_allocated = other.m_b->m_allocated;
-   m_b->m_pos = other.m_b->m_pos;
-   m_b->m_lastError = other.m_b->m_lastError;
 }
 
 bool ROStringStream::close()
 {
-   if( m_b->m_membuf != 0 ) {
-      m_b->m_allocated = 0;
-      m_b->m_length = 0;
-      m_b->m_membuf = 0;
-      status( t_none );
-      return true;
-   }
-   return false;
+   return detachBuffer();
 }
 
 int32 ROStringStream::write( const void *buffer, int32 size )

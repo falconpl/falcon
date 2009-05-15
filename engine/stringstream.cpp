@@ -25,12 +25,29 @@
 
 namespace Falcon {
 
+class StringStream::Buffer {
+public:
+   byte *m_membuf;
+   uint32 m_length;
+   uint32 m_allocated;
+   int32 m_lastError;
+   int32 m_refcount;
+   Mutex m_mtx;
+   
+   Buffer():
+      m_length(0),
+      m_lastError(0),
+      m_refcount(1)
+   {}
+};
+
 StringStream::StringStream( int32 size ):
    Stream( t_membuf ),
-   m_b( new Buffer )
+   m_b( new Buffer ),
+   m_pos(0)
 {
    m_b->m_length = 0;
-   m_b->m_pos = 0;
+   m_pos = 0;
    m_b->m_lastError = 0;
    if ( size == 0 )
       size = 32;
@@ -57,7 +74,8 @@ StringStream::StringStream( int32 size ):
 
 StringStream::StringStream( const String &strbuf ):
    Stream( t_membuf ),
-   m_b( new Buffer )
+   m_b( new Buffer ),
+   m_pos(0)
 {
    m_b->m_allocated = strbuf.size();
    m_b->m_length = strbuf.size();
@@ -75,7 +93,8 @@ StringStream::StringStream( const String &strbuf ):
 }
 
 StringStream::StringStream( const StringStream &strbuf ):
-   Stream( strbuf )
+   Stream( strbuf ),
+   m_pos( strbuf.m_pos )
 {
    atomicInc(strbuf.m_b->m_refcount);
    m_b = strbuf.m_b;
@@ -90,6 +109,91 @@ StringStream::~StringStream()
       delete m_b;
    }
 }
+
+
+void StringStream::setBuffer( const String &source )
+{
+   m_pos = 0;
+   
+   m_b->m_mtx.lock();
+   m_b->m_membuf = const_cast< byte *>( source.getRawStorage() );
+   m_b->m_length = source.size();
+   m_b->m_allocated = source.size();
+   m_b->m_lastError = 0;
+   m_b->m_mtx.unlock();
+}
+
+
+void StringStream::setBuffer( const char* source, int size )
+{
+   m_pos = 0;
+   
+   m_b->m_mtx.lock();
+   m_b->m_membuf = (byte *) const_cast< char *>( source );
+   m_b->m_length = size == -1 ? strlen( source ) : size;
+   m_b->m_allocated = m_b->m_length;
+   m_b->m_lastError = 0;
+   m_b->m_mtx.unlock();
+}
+
+
+bool StringStream::detachBuffer()
+{
+   m_b->m_mtx.lock();
+   if( m_b->m_membuf != 0 ) {
+      m_b->m_allocated = 0;
+      m_b->m_length = 0;
+      m_b->m_membuf = 0;
+      m_b->m_mtx.unlock();
+      
+      status( t_none );
+      return true;
+   }
+   
+   m_b->m_mtx.unlock();
+   return false;
+}
+
+uint32 StringStream::length() const 
+{ 
+   return m_b->m_length; 
+}
+
+uint32 StringStream::allocated() const 
+{ 
+   return m_b->m_allocated; 
+}
+
+byte *StringStream::data() const
+{ 
+   return m_b->m_membuf; 
+}
+
+
+String *StringStream::closeToString()
+{
+   String *temp = new String;
+   if( closeToString( *temp ) )
+      return temp;
+   delete temp;
+   return 0;
+}
+
+
+CoreString *StringStream::closeToCoreString()
+{
+   CoreString *temp = new CoreString;
+   if (closeToString( *temp ))
+      return temp;
+   return 0; // CoreString is subject to GC
+}
+
+
+int64 StringStream::lastError() const
+{ 
+   return (int64) m_b->m_lastError; 
+}
+
 
 void StringStream::transfer( StringStream &strbuf )
 {
@@ -110,40 +214,53 @@ bool StringStream::errorDescription( String &description ) const
 
 bool StringStream::close()
 {
+   m_b->m_mtx.lock();
    if( m_b->m_membuf != 0 ) {
       m_b->m_allocated = 0;
       m_b->m_length = 0;
-      memFree(m_b->m_membuf);
+      byte* mem = m_b->m_membuf;
       m_b->m_membuf = 0;
+      m_b->m_mtx.unlock();
+      
+      memFree(mem);
       status( t_none );
       return true;
    }
+   
+   m_b->m_mtx.unlock();
    return false;
 }
 
 int32 StringStream::read( void *buffer, int32 size )
 {
+   m_b->m_mtx.lock();
    if ( m_b->m_membuf == 0 ) {
       m_status = t_error;
+      m_b->m_mtx.unlock();
+
       return -1;
    }
 
-   if ( m_b->m_pos == m_b->m_length ) {
+   if ( m_pos == m_b->m_length ) {
       m_status = m_status | t_eof;
+      m_b->m_mtx.unlock();
+      
       return 0;
    }
 
-   int sret = size + m_b->m_pos < m_b->m_length ? size : m_b->m_length - m_b->m_pos;
-   memcpy( buffer, m_b->m_membuf + m_b->m_pos, sret );
-   m_b->m_pos += sret;
+   int sret = size + m_pos < m_b->m_length ? size : m_b->m_length - m_pos;
+   memcpy( buffer, m_b->m_membuf + m_pos, sret );
+   m_pos += sret;
    m_lastMoved = sret;
+   m_b->m_mtx.unlock();
 
    return sret;
 }
 
 bool StringStream::readString( String &target, uint32 size )
 {
-   // TODO Optimize
+   m_b->m_mtx.lock();
+
    uint32 chr;
    target.size(0);
    target.manipulator( &csh::handler_buffer );
@@ -153,44 +270,28 @@ bool StringStream::readString( String &target, uint32 size )
       target.append( chr );
       size--;
    }
+   m_b->m_mtx.unlock();
 
    return true;
-   /*
-   byte *target_buffer;
-
-   if ( target.allocated() >= size )
-      target_buffer = target.getRawStorage();
-   else {
-      target_buffer = (byte *) memAlloc( size );
-      if ( target_buffer == 0 )
-      {
-         m_b->m_lastError = -1;
-         return false;
-      }
-   }
-
-   int32 sret = this->read( target_buffer, size );
-   if ( sret >= 0 )
-   {
-      target.adopt( (char *) target_buffer, sret );
-   }
-
-   return sret;
-   */
 }
+
 
 int32 StringStream::write( const void *buffer, int32 size )
 {
+   m_b->m_mtx.lock();
+   
    if ( m_b->m_membuf == 0 ) {
+      m_b->m_mtx.unlock();
       m_status = t_error;
       return -1;
    }
 
-   if( size + m_b->m_pos > m_b->m_allocated ) {
+   if( size + m_pos > m_b->m_allocated ) {
       int32 alloc = m_b->m_allocated + size + 32;
       byte *buf1 = (byte *) memAlloc( alloc );
       if ( buf1 == 0 )
       {
+         m_b->m_mtx.unlock();
          m_b->m_lastError = -1;
          return -1;
       }
@@ -201,12 +302,13 @@ int32 StringStream::write( const void *buffer, int32 size )
       m_b->m_membuf = buf1;
    }
 
-   memcpy( m_b->m_membuf + m_b->m_pos, buffer, size );
-   m_b->m_pos += size;
-   if ( m_b->m_pos > m_b->m_length )
-      m_b->m_length = m_b->m_pos;
+   memcpy( m_b->m_membuf + m_pos, buffer, size );
+   m_pos += size;
+   if ( m_pos > m_b->m_length )
+      m_b->m_length = m_pos;
 
    m_lastMoved = size;
+   m_b->m_mtx.unlock();
 
    return size;
 }
@@ -240,56 +342,74 @@ bool StringStream::get( uint32 &chr )
    if( popBuffer( chr ) )
       return true;
 
-   if ( m_b->m_membuf == 0 ) {
+   m_b->m_mtx.lock();
+   
+   if ( m_b->m_membuf == 0 ) 
+   {
+      m_b->m_mtx.unlock();
       m_status = t_error;
       return false;
    }
 
-   if ( m_b->m_pos == m_b->m_length ) {
+   if ( m_pos == m_b->m_length ) 
+   {
+      m_b->m_mtx.unlock();
       m_status = m_status | t_eof;
       return false;
    }
    
-   chr = m_b->m_membuf[m_b->m_pos];
-   m_b->m_pos++;
+   chr = m_b->m_membuf[m_pos];
+   m_pos++;
    m_lastMoved = 1;
+   m_b->m_mtx.unlock();
+   
    return true;
 }
 
 int64 StringStream::seek( int64 pos, Stream::e_whence w )
 {
+   m_b->m_mtx.lock();
+
    if ( m_b->m_membuf == 0 ) {
+      m_b->m_mtx.unlock();
       m_status = t_error;
       return -1;
    }
 
    switch( w ) {
-      case Stream::ew_begin: m_b->m_pos = (int32) pos; break;
-      case Stream::ew_cur: m_b->m_pos += (int32) pos; break;
-      case Stream::ew_end: m_b->m_pos = (int32) (m_b->m_length + pos); break;
+      case Stream::ew_begin: m_pos = (int32) pos; break;
+      case Stream::ew_cur: m_pos += (int32) pos; break;
+      case Stream::ew_end: m_pos = (int32) (m_b->m_length + pos); break;
    }
 
-   if ( m_b->m_pos > m_b->m_length )
-      m_b->m_pos = m_b->m_length;
-   else if ( m_b->m_pos < 0 )
-      m_b->m_pos = 0;
+   if ( m_pos > m_b->m_length )
+      m_pos = m_b->m_length;
+   else if ( m_pos < 0 )
+      m_pos = 0;
+      
+   m_b->m_mtx.unlock();
 
-   return m_b->m_pos;
+   return m_pos;
 }
 
 int64 StringStream::tell()
 {
+   m_b->m_mtx.lock();
    if ( m_b->m_membuf == 0 ) {
+      m_b->m_mtx.unlock();
       m_status = t_error;
       return -1;
    }
-
-   return m_b->m_pos;
+   
+   m_b->m_mtx.unlock();
+   return m_pos;
 }
 
 bool StringStream::truncate( int64 pos )
 {
+   m_b->m_mtx.lock();
    if ( m_b->m_membuf == 0 ) {
+      m_b->m_mtx.unlock();
       m_status = t_error;
       return false;
    }
@@ -299,6 +419,7 @@ bool StringStream::truncate( int64 pos )
    else
       m_b->m_length = (int32) pos;
 
+   m_b->m_mtx.unlock();
    return true;
 }
 
@@ -314,6 +435,7 @@ int32 StringStream::writeAvailable( int32, const Sys::SystemData * )
 
 void StringStream::getString( String &target ) const
 {
+   m_b->m_mtx.lock();
    if ( m_b->m_length == 0 )
    {
       target.size(0);
@@ -323,36 +445,49 @@ void StringStream::getString( String &target ) const
       memcpy( data, m_b->m_membuf, m_b->m_length );
       target.adopt( data, m_b->m_length, m_b->m_length );
    }
+   m_b->m_mtx.unlock();
 }
 
 bool StringStream::closeToString( String &target )
 {
+   m_b->m_mtx.lock();
    if ( m_b->m_membuf == 0 )
+   {
+      m_b->m_mtx.unlock();
       return false;
-
-   if ( m_b->m_length == 0 ) {
+   }
+   
+   if ( m_b->m_length == 0 ) 
+   {
       target.size( 0 );
+      m_b->m_mtx.unlock();
       return true;
    }
 
    target.adopt( (char *) m_b->m_membuf, m_b->m_length, m_b->m_allocated );
-
    m_b->m_membuf = 0;
    m_b->m_length = 0;
    m_b->m_allocated = 0;
+   m_b->m_mtx.unlock();
+   
    return true;
 }
 
 byte * StringStream::closeToBuffer()
 {
+   m_b->m_mtx.lock();
    if ( m_b->m_membuf == 0 || m_b->m_length == 0)
+   {
+      m_b->m_mtx.unlock();
       return 0;
+   }
 
    byte *data = m_b->m_membuf;
-
    m_b->m_membuf = 0;
    m_b->m_length = 0;
    m_b->m_allocated = 0;
+   m_b->m_mtx.unlock();
+   
    return data;
 }
 

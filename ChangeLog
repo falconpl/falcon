@@ -6,7 +6,9 @@ Falcon (0.9.1.7)
   * fixed: StringStream wasn't respecting stream copy semantic (copy shell,
            respect underlying stream). As a result, it couldn't be used to
            communicate across threads.
-  
+  * minor: StringStream is now interlocked; it can be proficiently used as
+           an interthread safe raw data exchange device.
+           
 Falcon (0.9.1.6)
   * fixed: In loop statement, continue looped from the top skipping the
            loop condition (if it was present).
