@@ -183,7 +183,7 @@ static void internal_add_dist( ::Falcon::VMachine *vm, int mode )
       else
          ts1->distance( *ts2 );
 
-      vm->val( ts1 );
+      vm->retval( ts1 );
    }
    else {
       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ).
