@@ -17,90 +17,90 @@ o = bless([
    "numval" => 0,
    "array" => [],
 
-   "add__" => function( addend );
-      if addend provides numval;
-         self.numval += addend.numval;
-      elif addend.typeId() == NumericType or addend.typeId() == IntegerType;
-         self.numval += addend;
-      else;
-         raise Error( 10001, "Wrong operands for add__", addend );
-      end;
-      return self;
+   "add__" => function( addend )
+      if addend provides numval
+         self.numval += addend.numval
+      elif addend.typeId() == NumericType or addend.typeId() == IntegerType
+         self.numval += addend
+      else
+         raise Error( 10001, "Wrong operands for add__", addend )
+      end
+      return self
    end,
 
-   "sub__" => function( addend );
-      if addend provides numval;
-         self.numval -= addend.numval;
-      elif addend.typeId() == NumericType or addend.typeId() == IntegerType;
-         self.numval -= addend;
-      else;
-         raise Error( 10001, "Wrong operands for sub__", addend );
-      end;
-      return self;
+   "sub__" => function( addend )
+      if addend provides numval
+         self.numval -= addend.numval
+      elif addend.typeId() == NumericType or addend.typeId() == IntegerType
+         self.numval -= addend
+      else
+         raise Error( 10001, "Wrong operands for sub__", addend )
+      end
+      return self
    end,
 
-   "mul__" => function( addend );
-      if addend provides numval;
-         self.numval *= addend.numval;
-      elif addend.typeId() == NumericType or addend.typeId() == IntegerType;
-         self.numval *= addend;
-      else;
-         raise Error( 10001, "Wrong operands for mul__", addend );
-      end;
-      return self;
+   "mul__" => function( addend )
+      if addend provides numval
+         self.numval *= addend.numval
+      elif addend.typeId() == NumericType or addend.typeId() == IntegerType
+         self.numval *= addend
+      else
+         raise Error( 10001, "Wrong operands for mul__", addend )
+      end
+      return self
    end,
 
-   "div__" => function( addend );
-      if addend provides numval;
-         self.numval /= addend.numval;
-      elif addend.typeId() == NumericType or addend.typeId() == IntegerType;
-         self.numval /= addend;
-      else;
-         raise Error( 10001, "Wrong operands for div__", addend );
-      end;
-      return self;
+   "div__" => function( addend )
+      if addend provides numval
+         self.numval /= addend.numval
+      elif addend.typeId() == NumericType or addend.typeId() == IntegerType
+         self.numval /= addend
+      else
+         raise Error( 10001, "Wrong operands for div__", addend )
+      end
+      return self
    end,
 
-   "mod__" => function( addend );
-      if addend provides numval;
-         self.numval %= addend.numval;
-      elif addend.typeId() == NumericType or addend.typeId() == IntegerType;
-         self.numval %= addend;
-      else;
-         raise Error( 10001, "Wrong operands for mod__", addend );
-      end;
-      return self;
+   "mod__" => function( addend )
+      if addend provides numval
+         self.numval %= addend.numval
+      elif addend.typeId() == NumericType or addend.typeId() == IntegerType
+         self.numval %= addend
+      else
+         raise Error( 10001, "Wrong operands for mod__", addend )
+      end
+      return self
    end,
 
-   "pow__" => function( addend );
-      if addend provides numval;
-         self.numval **= addend.numval;
-      elif addend.typeId() == NumericType or addend.typeId() == IntegerType;
-         self.numval **= addend;
-      else;
-         raise Error( 10001, "Wrong operands for mod__", addend );
-      end;
-      return self;
+   "pow__" => function( addend )
+      if addend provides numval
+         self.numval **= addend.numval
+      elif addend.typeId() == NumericType or addend.typeId() == IntegerType
+         self.numval **= addend
+      else
+         raise Error( 10001, "Wrong operands for mod__", addend )
+      end
+      return self
    end,
 
-   "neg__" => function();
-      return -self.numval;
+   "neg__" => function()
+      return -self.numval
    end,
 
-   "inc__" => function();
-      return ++self.numval;
+   "inc__" => function()
+      return ++self.numval
    end,
 
-   "dec__" => function();
-      return --self.numval;
+   "dec__" => function()
+      return --self.numval
    end,
 
-   "incpost__" => function();
-      return self.numval++;
+   "incpost__" => function()
+      return self.numval++
    end,
 
-   "decpost__" => function();
-      return self.numval--;
+   "decpost__" => function()
+      return self.numval--
    end 
 ])
 

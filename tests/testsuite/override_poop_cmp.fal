@@ -19,9 +19,9 @@ o = bless([
    "numval" => 0,
    "array" => [],
 
-   "compare" => function( addend );
+   "compare" => { addend =>
       return globalCompare( self, addend );
-   end
+   }
 ])
 
 

@@ -144,10 +144,11 @@ FAL_ERRORDECL( e_domain, 47, "Mathematical domain error" );
 FAL_ERRORDECL( e_charRange, 48, "Invalid character while parsing source" );
 FAL_ERRORDECL( e_par_close_unbal, 49, "Closing a parenthesis, but never opened" );
 FAL_ERRORDECL( e_square_close_unbal, 50, "Closing square bracket, but never opened" );
-FAL_ERRORDECL( e_inv_num_format, 51, "Invalid numeric format" );
-FAL_ERRORDECL( e_inv_esc_sequence, 52, "Invalid string escape sequence" );
-FAL_ERRORDECL( e_numparse_long, 53, "String too long for numeric conversion" );
-FAL_ERRORDECL( e_numparse, 54, "Invalid source data while converting to number" );
+FAL_ERRORDECL( e_graph_close_unbal, 51, "Closing a bracket, but never opened" );
+
+FAL_ERRORDECL( e_inv_num_format, 52, "Invalid numeric format" );
+FAL_ERRORDECL( e_inv_esc_sequence, 53, "Invalid string escape sequence" );
+FAL_ERRORDECL( e_numparse_long, 54, "String too long for numeric conversion" );
 FAL_ERRORDECL( e_bitwise_op, 55, "Bitwise operation on non-numeric parameters" );
 FAL_ERRORDECL( e_switch_body, 56, "Invalid statement in switch body" );
 FAL_ERRORDECL( e_select_body, 57, "Invalid statement in select body" );
@@ -160,6 +161,7 @@ FAL_ERRORDECL( e_malformed_uri, 62, "Malformed or invalid URI" );
 FAL_ERRORDECL( e_unknown_vfs, 63, "Unknown virtual file system for scheme part in URI" );
 FAL_ERRORDECL( e_modname_inv, 64, "Invalid module logical name" );
 FAL_ERRORDECL( e_final_inherit, 65, "Inheriting from a final class" );
+FAL_ERRORDECL( e_numparse, 66, "Invalid source data while converting to number" );
 
 FAL_ERRORDECL( e_default_decl, 100, "Syntax error in 'default' statement" );
 FAL_ERRORDECL( e_case_decl, 101, "Syntax error in case statement" );
@@ -220,8 +222,7 @@ FAL_ERRORDECL( e_fordot_outside, 155, "Statement '.=' must be inside a for/in lo
 FAL_ERRORDECL( e_par_unbal, 156, "Unbalanced parenthesis at end of file" );
 FAL_ERRORDECL( e_square_unbal, 157, "Unbalanced square parenthesis at end of file" );
 FAL_ERRORDECL( e_unclosed_string, 158, "Unclosed string at end of file" );
-FAL_ERRORDECL( e_directive_unk, 159, "Unknown directive" );
-FAL_ERRORDECL( e_directive_value, 160, "Invalid value for directive" );
+FAL_ERRORDECL( e_graph_unbal, 159, "Unbalanced bracket parenthesis at end of file" );
 
 FAL_ERRORDECL( e_cmp_unprep, 161, "Compiler unprepared (still needs to be fed with a module)" );
 FAL_ERRORDECL( e_not_implemented, 162, "Feature not implemented/not available on this instance" );
@@ -230,6 +231,8 @@ FAL_ERRORDECL( e_fself_outside, 164, "'fself' outside functions or blocks" );
 FAL_ERRORDECL( e_undef_param, 165, "Required parameter not found" );
 FAL_ERRORDECL( e_noeffect, 166, "Statement has no effect (at least in part)" );
 FAL_ERRORDECL( e_ns_clash, 167, "Clash in namespaces aliasing" );
+FAL_ERRORDECL( e_directive_unk, 168, "Unknown directive" );
+FAL_ERRORDECL( e_directive_value, 169, "Invalid value for directive" );
 
 FAL_ERRORDECL( e_open_file, 200, "Can't open file" );
 FAL_ERRORDECL( e_loaderror, 201, "Error in loading a module" );

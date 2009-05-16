@@ -31,14 +31,45 @@ class Stream;
 
 class FALCON_DYN_CLASS SrcLexer: public BaseAlloc
 {
+public:
+   /** Type of context */
+   typedef enum {
+      /** Topmost context */
+      ct_top,
+      /** Inside round parenthesis */
+      ct_round,
+      /** Inside square parenthesis */
+      ct_square,
+      /** Inside a string (of any kind; the kind is determined by the status) */
+      ct_string,
+      /** Inside function declaration */
+      ct_graph,
+      /** Inside an inner function */
+      ct_inner
+   } t_contextType;
+   
 private:
+
+   
+   class Context: public BaseAlloc
+   {
+   public:
+      t_contextType m_ct;
+      int m_oline;
+      Context* m_prev;
+      
+      Context( t_contextType ct, int openLine, Context* prev=0):
+         m_ct( ct ),
+         m_oline( openLine ),
+         m_prev( prev )
+      {
+      }
+   };
+    
    void *m_value;
    int m_line;
    int m_previousLine;
    int m_character;
-   uint32 m_contexts;
-   uint32 m_squareContexts;
-   uint32 m_ctxOpenLine;
    int m_prevStat;
    bool m_firstEq;
    bool m_done;
@@ -96,6 +127,8 @@ private:
    bool m_bWasntEmpty;
    String m_whiteLead;
 
+   Context* m_topCtx;
+   //==================
 
    /** Scans m_string for recognized tokens, and eventually returns them. */
    int checkUnlimitedTokens( uint32 nextChar );
@@ -158,9 +191,6 @@ public:
       return m_previousLine;
    }
 
-   /** Returns the line where the last context has been opened. */
-   int ctxOpenLine() const { return m_ctxOpenLine; }
-
    void resetContexts();
 
    void line( int val ) { m_line = val; }
@@ -189,13 +219,36 @@ public:
    bool parsingFtd() const { return m_bParsingFtd; }
    void parsingFtd( bool b );
 
-   bool hasOpenContexts() { return m_contexts != 0 || m_squareContexts != 0 || m_lineContContext != 0; }
+   bool hasOpenContexts() { return m_topCtx != 0 || m_lineContContext; }
    bool incremental() const { return m_incremental; }
    void incremental( bool b ) { m_incremental = b; }
 
    void appendStream( Stream *s );
    void parseMacro();
    void parseMacroCall();
+
+   /** Add a compilation lexer context. */
+   void pushContext( t_contextType ct, int startLine );
+   
+   /** Pops a compilation lexer context. 
+     \return true if the contest was popped, false if we had no context.
+   */
+   bool popContext();
+   
+   /** Reads the current context type.
+      \return ct_top if outside any context.
+   */
+   t_contextType currentContext();
+   
+   /** Gets the line at which the current context started. 
+   \return 0 if no context is open, a valid line otherwise.
+   */
+   int contextStart();
+   
+   /** Determines if the current context is a parentetic context.
+      \return true if in parenthesis.
+   */
+   bool inParCtx();
 
 };
 

@@ -43,9 +43,6 @@ SrcLexer::SrcLexer( Compiler *comp ):
    m_line( 1 ),
    m_previousLine( 1 ),
    m_character( 0 ),
-   m_contexts(0),
-   m_squareContexts(0),
-   m_ctxOpenLine(0),
    m_prevStat(0),
    m_firstEq( false ),
    m_done( false ),
@@ -61,7 +58,8 @@ SrcLexer::SrcLexer( Compiler *comp ):
    m_state( e_line ),
    m_mode( t_mNormal ),
    m_bParsingFtd(false),
-   m_bWasntEmpty(false)
+   m_bWasntEmpty(false),
+   m_topCtx(0)
 {}
 
 SrcLexer::~SrcLexer()
@@ -71,12 +69,12 @@ SrcLexer::~SrcLexer()
 
 void SrcLexer::reset()
 {
+   resetContexts();
+   m_addEol = false; // revert what's done by resetContext
+   
    m_prevStat = 0;
-   m_contexts = 0;
-   m_squareContexts = 0;
    m_character = 0;
    m_state = e_line;
-   m_ctxOpenLine = 0;
    m_bIsDirectiveLine = false;
    m_bWasntEmpty = false;
    m_whiteLead = "";
@@ -360,7 +358,7 @@ int SrcLexer::lex_normal()
       if ( ! (m_done && incremental() && hasOpenContexts()) )
       {
          m_lineFilled = false;
-         if ( m_contexts == 0 && m_squareContexts == 0 )
+         if ( ! inParCtx() )
          {
             m_bIsDirectiveLine = false;
             return EOL;
@@ -613,7 +611,7 @@ int SrcLexer::lex_normal()
                m_state = e_line;
 
                // a real EOL has been provided here.
-               if ( m_state == e_line && m_contexts == 0  && m_squareContexts == 0 )
+               if ( m_state == e_line && ! inParCtx() )
                {
                   m_bIsDirectiveLine = false;
                   if ( m_lineFilled )
@@ -871,6 +869,7 @@ int SrcLexer::lex_normal()
                   m_bIsDirectiveLine = false;
                   m_compiler->raiseError( e_nl_in_lit, m_previousLine );
                   m_state = e_line;
+                  popContext();
                }
                m_string.append( chr );
                m_previousLine = m_line;
@@ -886,6 +885,7 @@ int SrcLexer::lex_normal()
                }
                else {
                   m_state = e_line;
+                  popContext();
                   VALUE->stringp = m_compiler->addString( m_string );
                   m_string.exported( false );
                   return STRING;
@@ -946,6 +946,7 @@ int SrcLexer::lex_normal()
                   m_bIsDirectiveLine = false;
                   m_compiler->raiseError( e_nl_in_lit, m_previousLine );
                   m_state = e_line;
+                  popContext();
                }
                else
                   m_state = e_stringRunning;
@@ -957,6 +958,7 @@ int SrcLexer::lex_normal()
             }
             else if ( chr == m_chrEndString )
             {
+               popContext();
                m_state = e_line;
                VALUE->stringp = m_compiler->addString( m_string );
                m_string.exported( false );
@@ -977,6 +979,7 @@ int SrcLexer::lex_normal()
                }
                else if ( chr == m_chrEndString )
                {
+                  popContext();
                   m_state = e_line;
                   VALUE->stringp = m_compiler->addString( m_string );
                   m_string.exported( false );
@@ -1056,12 +1059,16 @@ int SrcLexer::lex_normal()
 
 void SrcLexer::checkContexts()
 {
-   if ( m_contexts != 0 )
-      m_compiler->raiseContextError( e_par_unbal, m_line, m_ctxOpenLine );
-   if ( m_squareContexts != 0 )
-      m_compiler->raiseContextError( e_square_unbal, m_line, m_ctxOpenLine );
-   if ( m_state == e_string || m_state == e_litString || m_state == e_stringRunning )
-      m_compiler->raiseContextError( e_unclosed_string, m_line, m_ctxOpenLine );
+   t_contextType ct = currentContext();
+   
+   if ( ct == ct_round )
+      m_compiler->raiseContextError( e_par_unbal, m_line, contextStart() );
+   else if ( ct == ct_square )
+      m_compiler->raiseContextError( e_square_unbal, m_line, contextStart() );
+   else if ( ct == ct_graph )
+      m_compiler->raiseContextError( e_graph_unbal, m_line, contextStart() );
+   else if ( ct == ct_string  )
+      m_compiler->raiseContextError( e_unclosed_string, m_line, contextStart() );
 }
 
 
@@ -1075,7 +1082,7 @@ int SrcLexer::state_line( uint32 chr )
 
       // a real EOL has been provided here.
       m_bIsDirectiveLine = false;
-      if ( m_lineFilled && m_contexts == 0 && m_squareContexts == 0 )
+      if ( m_lineFilled && ! inParCtx() )
       {
          m_lineFilled = false;
          return EOL;
@@ -1187,7 +1194,7 @@ int SrcLexer::state_line( uint32 chr )
          m_state = e_string;
       }
 
-      m_ctxOpenLine = m_line;
+      pushContext( ct_string, m_line );
       m_chrEndString = '"'; //... up to the matching "
    }
    else if ( chr == 0x201C )
@@ -1205,6 +1212,7 @@ int SrcLexer::state_line( uint32 chr )
          m_mlString = false;
       // we'll begin to read a string.
       m_state = e_string;
+      pushContext( ct_string, m_line );
       m_chrEndString = 0x201D; //... up to the matching close quote
    }
    else if ( chr == 0x300C )
@@ -1222,6 +1230,7 @@ int SrcLexer::state_line( uint32 chr )
          m_mlString = false;
       // we'll begin to read a string.
       m_state = e_string;
+      pushContext( ct_string, m_line );
       m_chrEndString = 0x300D; //... up to the matching close japanese quote
    }
    else if ( chr == '\'' )
@@ -1239,6 +1248,7 @@ int SrcLexer::state_line( uint32 chr )
          m_mlString = false;
 
       // we'll begin to read a non escaped string
+      pushContext( ct_string, m_line );
       m_state = e_litString;
    }
    else if ( chr == '0' )
@@ -1337,49 +1347,51 @@ int SrcLexer::checkUnlimitedTokens( uint32 nextChar )
          }
          else if ( chr == '(' || chr == 0xff08 )
          {
-            m_contexts++;
-            if ( m_contexts == 1 )
-               m_ctxOpenLine = m_line;
-
+            pushContext( ct_round, m_line );
             return OPENPAR;
          }
          else if ( chr == ')' || chr == 0xff09 )
          {
-            if ( m_contexts == 0 )
+            if ( currentContext() != ct_round )
                m_compiler->raiseError( e_par_close_unbal, m_line );
             else
             {
-               m_contexts--;
+               popContext();
                return CLOSEPAR;
             }
          }
          else if ( chr == '[' )
          {
-            m_squareContexts++;
-            if ( m_squareContexts == 1 )
-               m_ctxOpenLine = m_line;
+            pushContext( ct_square, m_line );
             return OPENSQUARE;
          }
          else if ( chr == ']' )
          {
-            if ( m_squareContexts == 0 )
+            if ( currentContext() != ct_square )
             {
                m_compiler->raiseError( e_square_close_unbal, m_line );
             }
             else
             {
-               m_squareContexts--;
+               popContext();
                return CLOSESQUARE;
             }
          }
          else if ( chr == '{' )
          {
+            pushContext( ct_graph, m_line );
             return OPEN_GRAPH;
          }
          else if ( chr == '}' )
          {
-            m_graphAgain = true;
-            return EOL;
+            if ( currentContext() == ct_graph )
+            {
+               m_graphAgain = true;
+               popContext();
+               return EOL;
+            }
+            else 
+               m_compiler->raiseError( e_graph_close_unbal, m_line );
          }
          else if ( chr == '@' )
          {
@@ -1455,9 +1467,7 @@ int SrcLexer::checkUnlimitedTokens( uint32 nextChar )
             return FORDOT;
          else if ( m_string == ".[" )
          {
-            m_squareContexts++;
-            if ( m_squareContexts == 1 )
-               m_ctxOpenLine = m_line;
+            pushContext( ct_square, m_line );
             return LISTPAR;
          }
          else if ( parsingFtd() && m_string == "?>" && (nextChar != '\n' || m_in->eof() ))
@@ -1665,11 +1675,18 @@ void SrcLexer::parsingFtd( bool b )
 
 void SrcLexer::resetContexts()
 {
+   // clear contexts
+   while( m_topCtx != 0 )
+   {
+      Context* ctx = m_topCtx->m_prev;
+      delete m_topCtx;
+      m_topCtx = ctx;
+   }
+   
    // force to generate a fake eol at next loop
    m_addEol = true;
    m_bIsDirectiveLine = false;
-   m_contexts = 0;
-   m_squareContexts = 0;
+   
    m_state = e_line;
    m_lineFilled = false;
    m_string = "";
@@ -1867,6 +1884,48 @@ void SrcLexer::parseMacroCall()
       // raise an error.
       m_compiler->raiseError( e_syn_macro_call, sDecl, startline );
    }
+}
+
+
+void SrcLexer::pushContext( t_contextType ct, int startLine )
+{
+   m_topCtx = new Context( ct, startLine, m_topCtx );
+}
+
+
+bool SrcLexer::popContext()
+{
+   if( m_topCtx == 0 )
+      return false;
+   
+   Context* current = m_topCtx;
+   m_topCtx = m_topCtx->m_prev;
+   delete current;
+   return true;
+}
+
+
+SrcLexer::t_contextType SrcLexer::currentContext()
+{
+   if( m_topCtx == 0 )
+      return ct_top;
+   
+   return m_topCtx->m_ct;
+}
+
+   
+int SrcLexer::contextStart()
+{
+   if( m_topCtx == 0 )
+      return 0;
+   
+   return m_topCtx->m_oline;
+}
+
+bool SrcLexer::inParCtx()
+{
+   return m_topCtx != 0 &&  
+         ( m_topCtx->m_ct == ct_round || m_topCtx->m_ct == ct_square );
 }
 
 }

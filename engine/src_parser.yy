@@ -35,7 +35,7 @@
 #define YYFREE Falcon::memFree
 
 #define  COMPILER  ( reinterpret_cast< Falcon::Compiler *>(yyparam) )
-#define  CTX_LINE  ( COMPILER->lexer()->ctxOpenLine() )
+#define  CTX_LINE  ( COMPILER->lexer()->contextStart() )
 #define  LINE      ( COMPILER->lexer()->previousLine() )
 #define  CURRENT_LINE      ( COMPILER->lexer()->line() )
 
@@ -2426,6 +2426,7 @@ nameless_func:
          COMPILER->pushFunctionContext( func );
          COMPILER->pushContextSet( &func->statements() );
          COMPILER->pushFunction( def );
+         COMPILER->lexer()->pushContext( Falcon::SrcLexer::ct_inner, COMPILER->lexer()->line() );
       }
       nameless_func_decl_inner
       static_block
@@ -2433,6 +2434,7 @@ nameless_func:
       statement_list
 
       END {
+            COMPILER->lexer()->popContext();
             $$ = COMPILER->closeClosure();
          }
 ;
@@ -2542,6 +2544,7 @@ innerfunc:
          COMPILER->pushFunctionContext( func );
          COMPILER->pushContextSet( &func->statements() );
          COMPILER->pushFunction( def );
+         COMPILER->lexer()->pushContext( Falcon::SrcLexer::ct_inner, COMPILER->lexer()->line() );
       }
       nameless_func_decl_inner
       static_block
@@ -2549,6 +2552,7 @@ innerfunc:
       statement_list
 
       END {
+            COMPILER->lexer()->popContext();
             Falcon::StmtFunction *func = static_cast<Falcon::StmtFunction *>(COMPILER->getContext());
             $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_lambda ,
                new Falcon::Value( func->symbol() ) ) );

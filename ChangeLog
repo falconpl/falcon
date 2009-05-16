@@ -8,6 +8,8 @@ Falcon (0.9.1.7)
            communicate across threads.
   * minor: StringStream is now interlocked; it can be proficiently used as
            an interthread safe raw data exchange device.
+  * fixed: Obviating the need for ";" in function declared inside 
+           dictionaries.
            
 Falcon (0.9.1.6)
   * fixed: In loop statement, continue looped from the top skipping the
