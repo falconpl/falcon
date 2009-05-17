@@ -193,7 +193,10 @@ function parseLanguage( file )
             end
          end
 
-         ltab.entries[ stringId ] = translated
+         if translated
+            ltab.entries[ stringId ] = translated
+         end
+         
          // should we keep the originals?
          if Options.merge
             ltab.originals[ stringId ] = original
@@ -202,7 +205,7 @@ function parseLanguage( file )
          child = child.nextSibling()
       end
 
-      > @i"Parsed file \"$(file)\""
+      > @i"fallc: Parsed file \"$(file)\""
       return ltab
 
    catch MXMLError in error
@@ -310,20 +313,20 @@ function saveTables( languages, output )
          continue
       end
 
+      langsize = lang.entries.len()
+      > @"Saving $langsize entries for language \"$name\""
       tempStream = StringStream()
       bytes = "\xFFFFFFFF"
-      bytes[0] = lang.entries.len()
+      bytes[0] = langsize
       tempStream.write( bytes )
 
       for id, entry in lang.entries
-         if entry
-            bytes[0] = id
-            tempStream.write( bytes )
-            utf8entry = transcodeTo( entry, "utf-8" )
-            bytes[0] = utf8entry.len()
-            tempStream.write( bytes )
-            tempStream.write( utf8entry )
-         end
+         bytes[0] = id
+         tempStream.write( bytes )
+         utf8entry = transcodeTo( entry, "utf-8" )
+         bytes[0] = utf8entry.len()
+         tempStream.write( bytes )
+         tempStream.write( utf8entry )
       end
 
       tables[name] = tempStream.closeToString()
