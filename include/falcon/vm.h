@@ -136,7 +136,7 @@ void opcodeHandler_ONCE( register VMachine *vm );
 void opcodeHandler_LDV ( register VMachine *vm );
 void opcodeHandler_LDP ( register VMachine *vm );
 void opcodeHandler_TRAN( register VMachine *vm );
-void opcodeHandler_UNPK( register VMachine *vm );
+void opcodeHandler_LDAS( register VMachine *vm );
 void opcodeHandler_SWCH( register VMachine *vm );
 void opcodeHandler_IN  ( register VMachine *vm );
 void opcodeHandler_NOIN( register VMachine *vm );
@@ -173,7 +173,7 @@ void opcodeHandler_SHRS( register VMachine *vm );
 //void opcodeHandler_LDPR( register VMachine *vm );
 void opcodeHandler_POWS( register VMachine *vm );
 void opcodeHandler_LSB( register VMachine *vm );
-void opcodeHandler_UNPS( register VMachine *vm );
+void opcodeHandler_OOB( register VMachine *vm );
 void opcodeHandler_SELE( register VMachine *vm );
 void opcodeHandler_INDI( register VMachine *vm );
 void opcodeHandler_STEX( register VMachine *vm );
@@ -182,7 +182,6 @@ void opcodeHandler_WRT( register VMachine *vm );
 void opcodeHandler_STO( register VMachine *vm );
 void opcodeHandler_FORB( register VMachine *vm );
 void opcodeHandler_EVAL( register VMachine *vm );
-void opcodeHandler_OOB( register VMachine *vm );
 
 
 class VMachine;
@@ -2430,7 +2429,7 @@ public:
    friend void opcodeHandler_LDV ( register VMachine *vm );
    friend void opcodeHandler_LDP ( register VMachine *vm );
    friend void opcodeHandler_TRAN( register VMachine *vm );
-   friend void opcodeHandler_UNPK( register VMachine *vm );
+   friend void opcodeHandler_LDAS( register VMachine *vm );
    friend void opcodeHandler_SWCH( register VMachine *vm );
    friend void opcodeHandler_IN  ( register VMachine *vm );
    friend void opcodeHandler_NOIN( register VMachine *vm );
@@ -2466,7 +2465,7 @@ public:
 //   friend void opcodeHandler_LDPR( register VMachine *vm );
    friend void opcodeHandler_POWS( register VMachine *vm );
    friend void opcodeHandler_LSB( register VMachine *vm );
-   friend void opcodeHandler_UNPS( register VMachine *vm );
+   friend void opcodeHandler_OOB( register VMachine *vm );
    friend void opcodeHandler_SELE( register VMachine *vm );
    friend void opcodeHandler_INDI( register VMachine *vm );
    friend void opcodeHandler_STEX( register VMachine *vm );
@@ -2475,7 +2474,6 @@ public:
    friend void opcodeHandler_STO( register VMachine *vm );
    friend void opcodeHandler_FORB( register VMachine *vm );
    friend void opcodeHandler_EVAL( register VMachine *vm );
-   friend void opcodeHandler_OOB( register VMachine *vm );
 };
 
 

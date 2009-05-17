@@ -2052,20 +2052,20 @@ void GenHAsm::gen_load( const Value *target, const Value *source )
 
             // then unpack the source in the array.
             if ( source->isSimple() ) {
-	            int size = gen_refArray( target->asArray(), false );
-					String instr = "\tUNPS\t";
-					instr.writeNumber( (int64) size );
+               int size = gen_refArray( target->asArray(), false );
+               String instr = "\tUNPS\t";
+               instr.writeNumber( (int64) size );
                m_out->writeString( instr );
-					m_out->writeString( ", " );
+               m_out->writeString( ", " );
                gen_operand( source );
                m_out->writeString( "\n" );
             }
             else {
                gen_complex_value( source );
                int size = gen_refArray( target->asArray(), false );
-					String instr = "\tUNPS\t";
-					instr.writeNumber( (int64) size );
-	            m_out->writeString( instr + ", A\n" );
+               String instr = "\tUNPS\t";
+               instr.writeNumber( (int64) size );
+               m_out->writeString( instr + ", A\n" );
             }
          }
       }

@@ -427,21 +427,37 @@ void AppFalcon::generateAssembly()
 
 void AppFalcon::generateTree()
 {
-   ModuleLoader ml;
+   Compiler comp;
    // the load path is not relevant, as we load by file name or stream
    // apply options
-   ml.compileTemplate( m_options.parse_ftd );
-   ml.saveModules( false );
-   ml.alwaysRecomp( true );
+   Stream* in = 0;
 
    // will throw Error* on failure
-   Module* mod = loadInput( ml );
-
+   if ( m_options.input != "" && m_options.input != "-" )
+   {
+      #ifdef WIN32
+         Sys::falconConvertWinFname( m_options.input );
+      #endif
+      FileStream* fs = new FileStream();
+      fs->open( m_options.input );
+      in = fs;
+   }
+   else
+   {
+      String ioEncoding = getSrcEncoding();
+      Transcoder *tcin = TranscoderFactory ( ioEncoding == "" ? "C" : ioEncoding,
+                                             new StreamBuffer( new StdInStream), true );
+      in = tcin;
+   }
+   
    // try to open the oputput stream.
    Stream* out = 0;
+   Module *mod = new Module;
 
    try
    {
+      comp.compile( mod, in );
+
       String ioEncoding = getIoEncoding();
       out = AddSystemEOL(
          TranscoderFactory ( ioEncoding == "" ? "C" : ioEncoding,
@@ -449,17 +465,19 @@ void AppFalcon::generateTree()
 
       // Ok, we have the output stream.
       GenTree gtree(out);
-      gtree.generate( ml.compiler().sourceTree() );
+      gtree.generate( comp.sourceTree() );
       if ( ! out->good() )
          throw String( "can't write on output stream." );
    }
    catch( const String & )
    {
+      delete in;
       delete out;
       mod->decref();
       throw;
    }
-
+   
+   delete in;
    delete out;
    mod->decref();
 }

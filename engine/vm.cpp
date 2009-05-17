@@ -230,7 +230,7 @@ void VMachine::internal_construct()
    m_opHandlers[ P_LDV ] = opcodeHandler_LDV ;
    m_opHandlers[ P_LDP ] = opcodeHandler_LDP ;
    m_opHandlers[ P_TRAN] = opcodeHandler_TRAN;
-   m_opHandlers[ P_UNPK] = opcodeHandler_UNPK;
+   m_opHandlers[ P_LDAS] = opcodeHandler_LDAS;
    m_opHandlers[ P_SWCH] = opcodeHandler_SWCH;
    m_opHandlers[ P_IN  ] = opcodeHandler_IN  ;
    m_opHandlers[ P_NOIN] = opcodeHandler_NOIN;
@@ -256,10 +256,8 @@ void VMachine::internal_construct()
    m_opHandlers[ P_SHR ] = opcodeHandler_SHR;
    m_opHandlers[ P_SHLS] = opcodeHandler_SHLS;
    m_opHandlers[ P_SHRS] = opcodeHandler_SHRS;
-//   m_opHandlers[ P_LDVR] = opcodeHandler_LDVR;
-//   m_opHandlers[ P_LDPR] = opcodeHandler_LDPR;
    m_opHandlers[ P_LSB ] = opcodeHandler_LSB;
-   m_opHandlers[ P_UNPS ] = opcodeHandler_UNPS;
+   m_opHandlers[ P_OOB ] = opcodeHandler_OOB;
    m_opHandlers[ P_SELE ] = opcodeHandler_SELE;
    m_opHandlers[ P_INDI ] = opcodeHandler_INDI;
    m_opHandlers[ P_STEX ] = opcodeHandler_STEX;
@@ -268,7 +266,7 @@ void VMachine::internal_construct()
    m_opHandlers[ P_STO ] = opcodeHandler_STO;
    m_opHandlers[ P_FORB ] = opcodeHandler_FORB;
    m_opHandlers[ P_EVAL ] = opcodeHandler_EVAL;
-   m_opHandlers[ P_OOB ] = opcodeHandler_OOB;
+   
 
    // Finally, register to the GC system
    memPool->registerVM( this );

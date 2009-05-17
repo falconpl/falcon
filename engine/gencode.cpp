@@ -1892,11 +1892,14 @@ void GenCode::gen_load( const Value *target, const Value *source )
             gen_store_to_deep( P_STP, exp->first(), exp->second(), source );
          }
       }
-      else if ( target->type() == Value::t_array_decl ) {
+      else if ( target->type() == Value::t_array_decl )
+      {
+         const ArrayDecl *tarr = target->asArray();
+         
          // if the source is also an array, fine, we have a 1:1 assignment.
-         if ( source->type() == Value::t_array_decl ) {
+         if ( source->type() == Value::t_array_decl )
+         {
             const ArrayDecl *sarr = source->asArray();
-            const ArrayDecl *tarr = target->asArray();
             ListElement *it_s = sarr->begin();
             ListElement *it_t = tarr->begin();
 
@@ -1915,21 +1918,23 @@ void GenCode::gen_load( const Value *target, const Value *source )
          else {
             // then unpack the source in the array.
             if ( source->isSimple() ) {
-					//gen_refArray( target->asArray() );
-               //gen_pcode( P_UNPK, e_parA, source );
-					int size = gen_refArray( target->asArray(), false );
-					gen_pcode( P_UNPS, c_param_fixed( size ), source );
+               gen_pcode( P_LDAS, c_param_fixed( tarr->size() ), source );
             }
             else {
-               /*gen_complex_value( source );
-               gen_pcode( P_PUSH, e_parA );
-					gen_refArray( target->asArray() );
-               gen_pcode( P_POP, e_parB );
-               gen_pcode( P_UNPK, e_parA, e_parB );
-					*/
 					gen_complex_value( source );
-					int size = gen_refArray( target->asArray(), false );
-               gen_pcode( P_UNPS, c_param_fixed( size ), e_parA );
+					gen_pcode( P_LDAS, c_param_fixed( tarr->size() ), e_parA );
+            }
+            
+            ListElement *it_t = tarr->end();
+            while( it_t != 0 ) {
+               const Value *t = (const Value *) it_t->data();
+               if( t->isSimple() )
+                   gen_pcode( P_POP, t );
+               else {
+                  gen_pcode( P_POP, e_parB );
+                  gen_load_from_reg( t, e_parB );
+               }
+               it_t = it_t->prev();
             }
          }
       }
@@ -2080,30 +2085,36 @@ void GenCode::gen_load_from_reg( const Value *target, t_paramType reg )
          else if ( exp->type() == Expression::t_obj_access ) {
             gen_store_to_deep_reg( P_STP, exp->first(), exp->second(), reg );
          }
+         else {
+            gen_pcode( P_PUSH, reg );
+            gen_expression( exp );
+            gen_pcode( P_POP, e_parB );
+            gen_pcode( P_LD, e_parA, e_parB );
+         }
       }
       else if ( target->type() == Value::t_array_decl ) {
          // if the source is also an array, fine, we have a 1:1 assignment.
          const ArrayDecl *tarr = target->asArray();
-         ListElement *it_t = tarr->begin();
-         int size = 0;
+         // push the source array on the stack.
+         gen_pcode( P_LDAS, c_param_fixed( tarr->size() ), reg );
 
-         gen_pcode( P_PUSH, reg );
+         // and load each element back in the array
+         ListElement *it_t = tarr->end();
 
-         // first generates an array of references
-         while( it_t != 0 ) {
-            // again, is the compiler that must make sure of this...
+         // Now load each element by popping it.
+         while( it_t != 0 ) 
+         {
             const Value *val = (const Value *) it_t->data();
-            fassert( val->isSimple() );
-
-            gen_pcode( P_PSHR, val );
-
-            ++size;
-            it_t = it_t->next();
+            if( val->isSimple() )
+            {
+               gen_pcode( P_POP, val );
+            }
+            else {
+               gen_pcode( P_POP, e_parB );
+               gen_load_from_reg( val, e_parB );
+            }
+            it_t = it_t->prev();
          }
-
-         gen_pcode( P_GENA, c_param_fixed( size ) );
-         gen_pcode( P_POP, e_parB );
-         gen_pcode( P_UNPK, e_parA, e_parB );
       }
    }
 }

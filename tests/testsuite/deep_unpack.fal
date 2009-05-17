@@ -1,0 +1,27 @@
+/****************************************************************************
+* Falcon test suite
+*
+*
+* ID: 33e
+* Category: expression
+* Subcategory: deep
+* Short: Deep indirect unpack
+* Description:
+*   Tests if n,m = v works also when complex expressions are involved.
+* [/Description]
+*
+****************************************************************************/
+
+object a
+  b = [0,0]
+end
+v = [1,2]
+a.b[0], a.b[1] = v
+
+if a.b[0] != 1 or a.b[1] != 2
+   failure( "Deep unpack" )
+end
+
+success()
+
+/* end of file */

@@ -529,8 +529,7 @@ void gen_code( Module *module, const FuncDef *fd, Stream *out, const t_labelMap 
          case P_LDV : csOpName = "LDV "; break;
          case P_LDP : csOpName = "LDP "; break;
          case P_TRAN: csOpName = "TRAN"; break;
-         case P_UNPK: csOpName = "UNPK"; break;
-         case P_UNPS: csOpName = "UNPS"; break;
+         case P_LDAS: csOpName = "LDAS"; break;
          // when isomorphic, switch is created through directive
          case P_SWCH: csOpName = options.m_isomorphic ? "" : "SWCH"; break;
          case P_IN  : csOpName = "IN  "; break;

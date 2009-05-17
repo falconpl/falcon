@@ -10,6 +10,8 @@ Falcon (0.9.1.7)
            an interthread safe raw data exchange device.
   * fixed: Obviating the need for ";" in function declared inside 
            dictionaries.
+  * minor: Falcon command line doesn't require full module generation to generate
+           the debug grammar tree module.
            
 Falcon (0.9.1.6)
   * fixed: In loop statement, continue looped from the top skipping the
@@ -60,6 +62,8 @@ Falcon (0.9.1.4)
   * minor: Fixed error failed DLL load error report string in Windows.
   * fixed: Now correctly importing symbols from modules named with 
            strings.
+  * fixed: Unpack is now working in every situation (and generally, more
+           efficiently).
   
 Falcon (0.9.1.2)
   * fixed: Correct parsing of octal number (0 and 7 was out...)

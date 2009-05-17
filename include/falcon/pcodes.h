@@ -17,7 +17,7 @@
 #define flc_PCODES_H
 
 #define FALCON_PCODE_VERSION  2
-#define FALCON_PCODE_MINOR  6
+#define FALCON_PCODE_MINOR  7
 
 /** \page opcode_format Virtual machine opcode format
 
@@ -123,7 +123,7 @@ while it will fill OP2 with an integer item containing 15H.
 #define P_PUSH        0x0C
 /** PSHR: pushes a reference to OP1 in the stack. */
 #define P_PSHR        0x0D
-/** POP: pops OP1 from the stack. */
+/** POP OP1: pops OP1 from the stack. */
 #define P_POP         0x0E
 /** INC: Inc prefix
    INC OP1: OP1 + 1 -> OP1, OP1-> A
@@ -263,8 +263,14 @@ while it will fill OP2 with an integer item containing 15H.
 */
 #define P_TRAN        0x3F
 
-/** UNPK: unpack vector OP1 into vector OP2. */
-#define P_UNPK        0x40
+/** LDAS \<int32\>, V: Load all in stack.
+   OP1: size to be loaded in the stack.
+   OP2: vector to be unpacked.
+   Each element in V is verbatim copied in the stack,
+   the highest stack element becomes the last element in the
+   array.
+*/
+#define P_LDAS        0x40
 
 /** SWCH: switch.
    \todo explain
@@ -342,8 +348,15 @@ while it will fill OP2 with an integer item containing 15H.
 /** Load from byte or character from sting  */
 #define P_LSB         0x5F
 
-/** UNPK: unpack vector OP2 into OP1 reference variables int the stack. */
-#define P_UNPS        0x60
+/** EVAL
+   Perform functional evaluation, direct call or return the value as-is
+   FORB OP1 -> A := if OP1 is callable
+                      if OP1 is array eval(op1)
+                      else OP1()
+                    else
+                       OP1
+*/
+#define P_EVAL        0x60
 
 /** SELECT: Select a branch depending on a variable type. Similar to switch. */
 #define P_SELE        0x61
@@ -372,16 +385,6 @@ while it will fill OP2 with an integer item containing 15H.
 */
 #define P_FORB         0x67
 
-/** EVAL
-   Perform functional evaluation, direct call or return the value as-is
-   FORB OP1 -> A := if OP1 is callable
-                      if OP1 is array eval(op1)
-                      else OP1()
-                    else
-                       OP1
-*/
-#define P_EVAL         0x68
-
 /** OOB
     Marks, unmarks or checks the code to be an oob.
     OOB NTD32, OP 
@@ -391,9 +394,9 @@ while it will fill OP2 with an integer item containing 15H.
       if NTD32 == 3 (or else )
          A := isOob( OP ) 
 */
-#define P_OOB           0x69
+#define P_OOB           0x68
 
-#define FLC_PCODE_COUNT 0x70
+#define FLC_PCODE_COUNT 0x69
 
 #endif
 

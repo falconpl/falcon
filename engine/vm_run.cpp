@@ -40,7 +40,8 @@
 
 #include <math.h>
 #include <errno.h>
-#include <stdio.h>
+#include <string.h>
+
 namespace Falcon {
 
 
@@ -1518,31 +1519,33 @@ void opcodeHandler_TRAN( register VMachine *vm )
 }
 
 //40
-void opcodeHandler_UNPK( register VMachine *vm )
+void opcodeHandler_LDAS( register VMachine *vm )
 {
-   Item *operand1 =  vm->getOpcodeParam( 1 )->dereference();
+   uint32 size = (uint32) vm->getNextNTD32();
    Item *operand2 =  vm->getOpcodeParam( 2 )->dereference();
-
-   if ( operand1->type() != operand2->type() || operand1->type() != FLC_ITEM_ARRAY ) {
-      vm->raiseRTError( new TypeError( ErrorParam( e_invop ).extra("UNPK").origin( e_orig_vm ) ) );
-      return;
-   }
-
-   CoreArray *source = operand2->asArray();
-   CoreArray *dest = operand1->asArray();
-   Item *s_elems = source->elements();
-   Item *d_elems = dest->elements();
-   uint32 len = source->length();
-
-   if( len != dest->length() )
+   
+   if( operand2->isArray() )
    {
-      vm->raiseRTError(
-         new AccessError( ErrorParam( e_unpack_size ).origin( e_orig_vm ) ) );
-      return;
+      CoreArray* arr = operand2->asArray();
+      if( arr->length() != size )
+      {
+         vm->raiseRTError(
+            new AccessError( ErrorParam( e_unpack_size )
+               .extra( "LDAS" )
+               .origin( e_orig_vm ) ) );
+      }
+      else {
+         uint32 oldpos = vm->m_stack->size();
+         vm->m_stack->resize( oldpos + size );
+         void* mem = vm->m_stack->itemPtrAt( oldpos );
+         memcpy( mem, arr->elements(), size * sizeof(Item) );
+     }
    }
-
-   for ( uint32 i = 0; i < len; i++ )  {
-      *d_elems[i].dereference() = *s_elems[i].dereference();
+   else {
+      vm->raiseRTError(
+            new AccessError( ErrorParam( e_invop )
+               .extra( "LDAS" )
+               .origin( e_orig_vm ) ) );
    }
 }
 
@@ -2255,44 +2258,40 @@ void opcodeHandler_LSB( register VMachine *vm )
       new TypeError( ErrorParam( e_invop ).origin( e_orig_vm ).extra( "LSB" ) ) );
 }
 
-//62
-void opcodeHandler_UNPS( register VMachine *vm )
+// 0x60
+void opcodeHandler_EVAL( register VMachine *vm )
 {
-   uint32 len = (uint32) vm->getNextNTD32();
-   Item *operand2 = vm->getOpcodeParam( 2 )->dereference();
+   // We know the first operand must be a string
+   Item *operand1 =  vm->getOpcodeParam( 1 )->dereference();
 
-   uint32 base = vm->m_stack->size();
-
-	if ( len > base )
-	{
-      vm->raiseError( e_stackuf, "UNPS" );
-      return;
-	}
-
-   base -= len;
-
-   if ( operand2->type() != FLC_ITEM_ARRAY ) {
-      vm->m_stack->resize( base );
-      vm->raiseRTError(
-         new TypeError( ErrorParam( e_invop ).origin( e_orig_vm ).extra( "UNPS" ) ) );
+   if ( operand1->isArray() )
+   {
+      CoreArray *arr = operand1->asArray();
+      if ( arr->length() > 0 ) {
+         // fake as if we were called by a function
+         // This will cause functionalEval to produce a correct return frame
+         // in case it needs sub functional evals.
+         vm->createFrame(0);
+         uint32 savePC = vm->m_pc_next;
+         vm->m_pc_next = VMachine::i_pc_call_external_return;
+         if( ! vm->functionalEval( *operand1 ) )
+         {
+            // it wasn't necessary; reset pc to the correct value
+            vm->callReturn();
+            vm->m_pc_next = savePC;
+         }
+         // ok here we're ready either to jump where required by functionalEval or
+         // to go on as usual
+         return;
+      }
+   }
+   else if ( operand1->isCallable() ) {
+      vm->callFrame( *operand1, 0 );
       return;
    }
 
-   CoreArray *source = operand2->asArray();
-
-   Item *s_elems = source->elements();
-	if ( len != source->length() )
-	{
-      vm->raiseRTError(
-         new AccessError( ErrorParam( e_unpack_size ).origin( e_orig_vm ).extra( "UNPS" ) ) );
-      return;
-   }
-
-   for ( uint32 i = 0; i < len; i++ )  {
-      *vm->stackItem(base + i).dereference() = *s_elems[i].dereference();
-   }
-
-   vm->m_stack->resize( base );
+   // by default, just copy the operand
+   vm->regA() = *operand1;
 }
 
 //61
@@ -2588,42 +2587,6 @@ void opcodeHandler_FORB( register VMachine *vm )
 }
 
 // 0x68
-void opcodeHandler_EVAL( register VMachine *vm )
-{
-   // We know the first operand must be a string
-   Item *operand1 =  vm->getOpcodeParam( 1 )->dereference();
-
-   if ( operand1->isArray() )
-   {
-      CoreArray *arr = operand1->asArray();
-      if ( arr->length() > 0 ) {
-         // fake as if we were called by a function
-         // This will cause functionalEval to produce a correct return frame
-         // in case it needs sub functional evals.
-         vm->createFrame(0);
-         uint32 savePC = vm->m_pc_next;
-         vm->m_pc_next = VMachine::i_pc_call_external_return;
-         if( ! vm->functionalEval( *operand1 ) )
-         {
-            // it wasn't necessary; reset pc to the correct value
-            vm->callReturn();
-            vm->m_pc_next = savePC;
-         }
-         // ok here we're ready either to jump where required by functionalEval or
-         // to go on as usual
-         return;
-      }
-   }
-   else if ( operand1->isCallable() ) {
-      vm->callFrame( *operand1, 0 );
-      return;
-   }
-
-   // by default, just copy the operand
-   vm->regA() = *operand1;
-}
-
-// 0x69
 void opcodeHandler_OOB( register VMachine *vm )
 {
    uint32 pmode = (uint32) vm->getNextNTD32();
