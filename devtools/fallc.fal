@@ -82,15 +82,17 @@ end
 function usage()
    version()
    >
-   > i"Usage:\n"
-     "  fallc [options] files ...\n"
-     "\n"
-     "Options:\n"
-     "  -c            Do NOT check for consistency in \$(varname) blocks.\n"
-     "  -m <file>     Merge mode (get original file .ftt and insert translation.\n"
-     "  -o <output>   Writes the results to this file.\n"
-     "  -h            Prints this help\n"
-     "  -v            Prints version informations.\n"
+   > i'
+   Usage:
+      fallc [options] files ...
+     
+   Options:
+      -c            Do NOT check for consistency in \$(varname) blocks.
+      -m <file>     Merge mode (get original file .ftt and insert translation.
+      -o <output>   Writes the results to this file.
+      -h            Prints this help.
+      -v            Prints version informations.
+'
 end
 
 function version()

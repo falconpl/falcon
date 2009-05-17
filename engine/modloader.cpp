@@ -569,6 +569,9 @@ bool ModuleLoader::applyLangTable( Module *mod, const String &file_path )
 
    // try to open the required file table.
    Stream *fsin_p = vfs->open( fsuri, VFSProvider::OParams().rdOnly() );
+   if( fsin_p == 0 )
+      return false;
+      
    std::auto_ptr<Stream> fsin( fsin_p );
 
    // check if this is a regular tab file.
