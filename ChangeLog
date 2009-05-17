@@ -15,6 +15,8 @@ Falcon (0.9.1.7)
   * major: Now allowing circular references in module loads.
   * fixed: Unpack is now working in every situation (and generally, more
            efficiently).
+  * fixed: Didn't set correctly the default .ftt extension for -y options, and 
+           caused the original file to be overwritten.
            
 Falcon (0.9.1.6)
   * fixed: In loop statement, continue looped from the top skipping the

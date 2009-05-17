@@ -294,7 +294,8 @@ Stream* AppFalcon::openOutputStream( const String &ext )
             Sys::falconConvertWinFname( m_options.input );
          #endif
          URI uri_input( m_options.input );
-         uri_input.pathElement().setExtension( ext );
+         uri_input.pathElement().setFilename( uri_input.pathElement().getFile() +
+            "." + ext );
          FileStream* fout = new FileStream;
          if ( ! fout->create( uri_input.get(), BaseFileStream::e_aUserRead | BaseFileStream::e_aUserWrite ) )
          {
@@ -372,7 +373,7 @@ void AppFalcon::compileTLTable()
       if ( ! mod->saveTableTemplate( out, ioEncoding == "" ? "C" : ioEncoding ) )
          throw String( "can't write on output stream." );
    }
-   catch( const String & )
+   catch( ... )
    {
       delete out;
       mod->decref();
