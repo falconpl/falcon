@@ -2092,7 +2092,8 @@ void GenCode::gen_load_from_reg( const Value *target, t_paramType reg )
             gen_pcode( P_LD, e_parA, e_parB );
          }
       }
-      else if ( target->type() == Value::t_array_decl ) {
+      else if ( target->type() == Value::t_array_decl ) 
+      {
          // if the source is also an array, fine, we have a 1:1 assignment.
          const ArrayDecl *tarr = target->asArray();
          // push the source array on the stack.

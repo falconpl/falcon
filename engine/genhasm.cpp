@@ -2028,11 +2028,14 @@ void GenHAsm::gen_load( const Value *target, const Value *source )
             gen_store_to_deep( "STP", exp->first(), exp->second(), source );
          }
       }
-      else if ( target->type() == Value::t_array_decl ) {
+      else if ( target->type() == Value::t_array_decl ) 
+      {
+         const ArrayDecl *tarr = target->asArray();
+         
          // if the source is also an array, fine, we have a 1:1 assignment.
          if ( source->type() == Value::t_array_decl ) {
             const ArrayDecl *sarr = source->asArray();
-            const ArrayDecl *tarr = target->asArray();
+            
             ListElement *it_s = sarr->begin();
             ListElement *it_t = tarr->begin();
 
@@ -2048,24 +2051,36 @@ void GenHAsm::gen_load( const Value *target, const Value *source )
             fassert( it_s == 0 && it_t == 0 );
          }
          // we must generate an unpack request
-         else {
-
+         else 
+         {
+            String ssize;
+            ssize.writeNumber( (int64) tarr->size() );
             // then unpack the source in the array.
-            if ( source->isSimple() ) {
-               int size = gen_refArray( target->asArray(), false );
-               String instr = "\tUNPS\t";
-               instr.writeNumber( (int64) size );
-               m_out->writeString( instr );
-               m_out->writeString( ", " );
+            if ( source->isSimple() ) 
+            {
+               m_out->writeString( "\tLDAS\t" + ssize + ", " );
                gen_operand( source );
                m_out->writeString( "\n" );
             }
             else {
-               gen_complex_value( source );
-               int size = gen_refArray( target->asArray(), false );
-               String instr = "\tUNPS\t";
-               instr.writeNumber( (int64) size );
-               m_out->writeString( instr + ", A\n" );
+					gen_complex_value( source );
+					m_out->writeString( "\tLDAS\t" + ssize + ", A\n" );
+            }
+            
+            ListElement *it_t = tarr->end();
+            while( it_t != 0 ) {
+               const Value *t = (const Value *) it_t->data();
+               if( t->isSimple() )
+               {
+                  m_out->writeString( "\tPOP \t" );
+                  gen_operand( t );
+                  m_out->writeString( "\n" );
+               }
+               else {
+                  m_out->writeString( "\tPOP \tB\n" );
+                  gen_load_from_reg( t, "B" );
+               }
+               it_t = it_t->prev();
             }
          }
       }
@@ -2263,35 +2278,42 @@ void GenHAsm::gen_load_from_reg( const Value *target, const char *reg )
          else if ( exp->type() == Expression::t_obj_access ) {
             gen_store_to_deep_reg( "STP", exp->first(), exp->second(), reg );
          }
+         else {
+            m_out->writeString( "\tPUSH\t" + regStr + "\n" );
+            gen_expression( exp );
+            m_out->writeString( "\tPOP \tB\n" );
+            m_out->writeString( "\tLD  \tA,B\n" );
+         }
       }
-      else if ( target->type() == Value::t_array_decl ) {
+      else if ( target->type() == Value::t_array_decl )
+      {
          // if the source is also an array, fine, we have a 1:1 assignment.
          const ArrayDecl *tarr = target->asArray();
-         ListElement *it_t = tarr->begin();
-         int size = 0;
+         String ssize;
+         ssize.writeNumber((int64) tarr->size() );
+         
+         // push the source array on the stack.
+         m_out->writeString( "\tLDAS\t" + ssize + ", " + regStr + "\n" );
 
-         m_out->writeString( "\tPUSH\t" + regStr + "\n" );
+         // and load each element back in the array
+         ListElement *it_t = tarr->end();
 
-         // first generates an array of references
-         while( it_t != 0 ) {
-            // again, is the compiler that must make sure of this...
+         // Now load each element by popping it.
+         while( it_t != 0 ) 
+         {
             const Value *val = (const Value *) it_t->data();
-            fassert( val->isSimple() );
-
-            m_out->writeString( "\tPSHR\t" );
-            gen_operand( val );
-            m_out->writeString( "\n" );
-
-            ++size;
-            it_t = it_t->next();
+            if( val->isSimple() )
+            {
+               m_out->writeString( "\tPOP \t" );
+               gen_operand( val );
+               m_out->writeString( "\n" );
+            }
+            else {
+               m_out->writeString( "\tPOP \tB\n" );
+               gen_load_from_reg( val, "B" );
+            }
+            it_t = it_t->prev();
          }
-         String sizeStr;
-         sizeStr.writeNumber( (int64) size );
-
-         m_out->writeString( "\tGENA\t" + sizeStr + "\n" );
-
-         m_out->writeString( "\tPOP \tB" );
-         m_out->writeString( "\tUNPK\tA, B" );
       }
    }
 }
