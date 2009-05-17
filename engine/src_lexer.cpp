@@ -508,7 +508,8 @@ int SrcLexer::lex_normal()
                      else {
                         m_state = chr == '"' ? e_string : e_litString;
                      }
-
+                     
+                     pushContext( ct_string, m_line );
                      m_string.size(0); // remove first char.
                      m_string.exported( true );
                      m_chrEndString = chr; //... up to the matching "
@@ -587,7 +588,8 @@ int SrcLexer::lex_normal()
                // We have aknowledged this can't be a valid token.
                m_in->unget( chr );
                m_state = e_line;
-               m_compiler->raiseError( e_inv_token, m_string, m_line );
+               m_string = m_string.subString( 0, 1 );
+               m_compiler->raiseError( e_inv_token, "'" + m_string + "'", m_line );
                // do not return.
             }
 
