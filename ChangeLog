@@ -21,6 +21,8 @@ Falcon (0.9.1.7)
   * minor: Added search path to the engine and to all the items involved into 
            compilation. Also, added vmSearchPath() script function to allow
            scripts to get the path as set by the application.
+  * fixed: Format wasn't correctly parsing ":0" (zero-length variable length
+           integer formatting).
   
 Falcon (0.9.1.6)
   * fixed: In loop statement, continue looped from the top skipping the

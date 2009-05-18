@@ -86,7 +86,7 @@ bool Format::parse( const String &fmt )
          // Basic state.
          //
          case e_sInitial:
-            if( chr >= '1' && chr <= '9' )
+            if( chr >= '0' && chr <= '9' )
             {
                // size already given
                if ( m_size != 0 )
