@@ -271,7 +271,8 @@ int main( int argc, char *argv[] )
    try
    {
       ModuleLoader *modloader = new ModuleLoader( source_path + get_load_path() );
-
+      Engine::setSearchPath( modloader->getSearchPath() );
+      
       // set the module preferred language; ok also if default ("") is used
       modloader->setLanguage( module_language );
 

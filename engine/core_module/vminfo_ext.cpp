@@ -173,6 +173,25 @@ FALCON_FUNC vmFalconPath( ::Falcon::VMachine *vm )
    }
 }
 
+
+/*#
+   @function vmSearchPath
+   @ingroup vminfo
+   @inset vminfo
+   @brief Returns the application specific load path.
+   @return A module search path as set by the application when creating the virtual machine.
+   
+   This string is at disposal of the embeddign application (or of the Falcon command line
+   interpreter) to communicate to scripts and underlying users the search path set at
+   applicaiton level. It is used by internal services, the @a include function, the
+   compiler Feather module and similar facilities.
+*/
+
+FALCON_FUNC vmSearchPath( ::Falcon::VMachine *vm )
+{
+   vm->retval( new CoreString( vm->appSearchPath() ) );
+}
+
 /*#
    @function vmModuleName
    @ingroup vminfo

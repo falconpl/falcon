@@ -157,6 +157,9 @@ void VMachine::internal_construct()
    m_metaClasses = (CoreClass**) memAlloc( FLC_ITEM_COUNT * sizeof(CoreClass*) );
    memset( m_metaClasses, 0, FLC_ITEM_COUNT * sizeof(CoreClass*) );
 
+   // Search path
+   appSearchPath( Engine::getSearchPath() );
+   
    // This code is actually here for debug reasons. Opcode management should
    // be performed via a swtich in the end, but until the beta version, this
    // method allows to have a stack trace telling immediately which opcode

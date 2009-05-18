@@ -549,6 +549,9 @@ protected:
 
    /** Finalization hook for MT system. */
    void (*m_onFinalize)(VMachine *vm);
+   
+   /** filtered load path */
+   String m_appSearchPath;
    //=============================================================
    // Private functions
    //
@@ -2352,6 +2355,12 @@ public:
    {
       m_onFinalize = finfunc;
    }
+   
+   /** Get the default application load path. */
+   const String& appSearchPath() const { return m_appSearchPath; }
+
+   /** Sets the default application load path (as seen by this vm). */
+   void appSearchPath( const String &p ) { m_appSearchPath = p; }
 
 //==========================================================================
 //==========================================================================

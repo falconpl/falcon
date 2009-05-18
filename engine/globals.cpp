@@ -40,6 +40,7 @@ namespace Engine
    static Map *s_serviceMap = 0;
    static String* s_sIOEnc = 0;
    static String* s_sSrcEnc = 0;
+   static String* s_searchPath = 0;
 
    bool addVFS( const String &name, VFSProvider *prv )
    {
@@ -160,6 +161,33 @@ namespace Engine
       sIOEnc = *s_sIOEnc;
       s_mtx.unlock();
    }
+   
+   void setSearchPath( const String &str )
+   {
+      s_mtx.lock();
+      if( s_searchPath != 0 )
+         delete s_searchPath;
+         
+      s_searchPath = new String( str );
+      s_searchPath->bufferize();
+      s_mtx.unlock();
+   }
+   
+   String getSearchPath()
+   {
+      s_mtx.lock();
+      if( s_searchPath != 0 )
+      {
+         String temp( *s_searchPath );
+         temp.bufferize();
+         s_mtx.unlock();
+         return temp;
+      }
+      
+      s_mtx.unlock();
+      return "";
+   }
+   
 }
 
 }

@@ -892,6 +892,7 @@ Module *ModuleLoader::loadSource( Stream *fin, const String &path, const String 
    module->path( path );
 
    m_compiler.reset();
+   m_compiler.searchPath( getSearchPath() );
 
    if ( m_forceTemplate )
       m_compiler.parsingFtd( true );

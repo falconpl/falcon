@@ -177,6 +177,9 @@ protected:
    InteractiveCompiler *m_metacomp;
    VMachine *m_serviceVM;
    ModuleLoader *m_serviceLoader;
+   
+   /** Search path inherited from upper facilities. */
+   String m_searchPath;
 
    /** Removes all the structures and temporary data used to compile a file.
       This function is called automatically by the various compile() and
@@ -585,6 +588,16 @@ public:
 
    /** Checks if this compiler is as an interactive I/O */
    bool isInteractive() const { return m_bInteractive; }
+   
+   /** Return the search path inherited from upper facilities. 
+      This search path is used to drive module loading in macro compiler.
+   */
+   const String& searchPath() const { return m_searchPath; }
+   
+   /** Sets the compiler-specific search path. 
+      This search path is used to drive module loading in macro compiler.
+   */
+   void searchPath( const String& path ) { m_searchPath = path; }
 };
 
 } // end of namespace

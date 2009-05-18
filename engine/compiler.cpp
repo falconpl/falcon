@@ -1232,6 +1232,7 @@ void Compiler::metaCompile( const String &data, int startline )
       if ( m_serviceVM == 0 )
       {
          m_serviceVM = new VMachine;
+         m_serviceVM->appSearchPath( searchPath() );
          Module*cm = core_module_init();
          m_serviceVM->link( cm );
          cm->decref();
@@ -1239,11 +1240,12 @@ void Compiler::metaCompile( const String &data, int startline )
 
       if ( m_serviceLoader == 0 )
       {
-         m_serviceLoader = new ModuleLoader( "." );
+         m_serviceLoader = new ModuleLoader( searchPath() );
          m_serviceLoader->sourceEncoding( srcEnc );
       }
 
       m_metacomp = new InteractiveCompiler( m_serviceLoader, m_serviceVM );
+      m_metacomp->searchPath( searchPath() );
 
       // not incremental...
       m_metacomp->lexer()->incremental( false );

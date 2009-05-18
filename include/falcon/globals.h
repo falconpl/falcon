@@ -69,9 +69,16 @@ namespace Engine
    FALCON_DYN_SYM bool addVFS( const String &name, VFSProvider *prv );
    FALCON_DYN_SYM VFSProvider* getVFS( const String &name );
 
-   const String &getMessage( uint32 id );
-   bool setTable( StringTable *tab );
-   bool setLanguage( const String &language );
+   FALCON_DYN_SYM const String &getMessage( uint32 id );
+   FALCON_DYN_SYM bool setTable( StringTable *tab );
+   FALCON_DYN_SYM bool setLanguage( const String &language );
+   /** Set application wide search path.
+      This is used by default in new VMs, module loaders and metacompilers.
+   */
+   FALCON_DYN_SYM void setSearchPath( const String &path );
+   
+   /** Returns the application-wide default search path by copy. */
+   FALCON_DYN_SYM String getSearchPath();
 
    class AutoInit {
    public:

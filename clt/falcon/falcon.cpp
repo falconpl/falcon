@@ -565,6 +565,7 @@ void AppFalcon::prepareLoader( ModuleLoader &ml )
    // should we forcefully consider input as ftd?
    modLoader->compileTemplate ( m_options.parse_ftd );
 
+   Engine::setSearchPath( modLoader->getSearchPath() );
 }
 
 

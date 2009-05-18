@@ -74,7 +74,7 @@ FALCON_FUNC fal_include( Falcon::VMachine *vm )
    }
 
    // create the loader/runtime pair.
-   ModuleLoader cpl( i_path == 0 || i_path->isNil() ? "." : String(*i_path->asString()) );
+   ModuleLoader cpl( i_path == 0 || i_path->isNil() ? vm->appSearchPath() : String(*i_path->asString()) );
    cpl.delayRaise(true);
    Runtime rt( &cpl, vm );
    rt.hasMainModule( false );
