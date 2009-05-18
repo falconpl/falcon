@@ -557,7 +557,8 @@ bool testScript( ScriptData *script,
    scriptModule->path( path );
 
    Compiler compiler( scriptModule, source );
-
+   compiler.searchPath( Engine::getSearchPath() );
+   
    if ( opt_timings )
       compTime = Sys::_seconds();
 
@@ -898,8 +899,9 @@ int main( int argc, char *argv[] )
    else
       appTime = 0.0;
 
-   ModuleLoader *modloader = new ModuleLoader( opt_libpath );
+   ModuleLoader *modloader = new ModuleLoader( opt_libpath == "" ? "." : opt_libpath );
    modloader->addFalconPath();
+   Engine::setSearchPath( modloader->getSearchPath() );
    modloader->alwaysRecomp( true );
    modloader->saveModules( false );
    modloader->compileInMemory( opt_compmem );
