@@ -1,11 +1,11 @@
 
                          RELEASE NOTES for Falcon
 
-                            Crane-RC1 Release
+                            Crane-RC2 Release
 
-                                0.9.1.6
+                                0.9.1.8
 
-  Version 0.9.1.6 is the first release candidate for final public 0.9.2.
+  Version 0.9.1.8 is the second release candidate for final public 0.9.2.
 This version is intended for all developers and wilful users to test
 and squeeze the last bugs that we weren't able to find out. It's supposed
 to be pretty stable, with all the blockesrs for final 0.9.2 gone.

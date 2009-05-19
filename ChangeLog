@@ -1,4 +1,4 @@
-Falcon (0.9.1.7)
+Falcon (0.9.1.8)
   * fixed: faltest didn't output help text when called with -h/-?
   * fixed: Operator overriding in blessed dictionaries had many issues.
   * fixed: prefix inc/dec operator overriding now returns what is returned
@@ -62,7 +62,6 @@ Falcon (0.9.1.6)
   * fixed: Interoperability of FAM and serialization across endianity.
   * fixed: Module unloading is now secure.
   * minor: Added readURI and writeURI functions.
-  * major: Now allowing circular references in module loads.
 
 Falcon (0.9.1.4)
   * fixed: As now files and modules loads are URIs, and URI decoding was
