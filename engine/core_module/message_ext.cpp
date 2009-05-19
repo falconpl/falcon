@@ -254,7 +254,7 @@ FALCON_FUNC assert( ::Falcon::VMachine *vm )
    }
 
    CoreSlot* cs = vm->getSlot( *i_msg->asString(), true );
-   cs->assert( vm, *i_data );
+   cs->setAssertion( vm, *i_data );
 }
 
 /*#
@@ -521,7 +521,7 @@ FALCON_FUNC VMSlot_assert( ::Falcon::VMachine *vm )
    }
 
    CoreSlot* cs = (CoreSlot*) vm->self().asObject()->getUserData();
-   cs->assert( vm, *i_data );
+   cs->setAssertion( vm, *i_data );
 }
 
 /*#

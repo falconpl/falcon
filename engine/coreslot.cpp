@@ -138,9 +138,9 @@ void CoreSlot::gcMark( uint32 mark )
    ItemList::gcMark( mark );
 }
 
-void CoreSlot::assert( VMachine* vm, const Item &a )
+void CoreSlot::setAssertion( VMachine* vm, const Item &a )
 {
-   assert( a );
+   setAssertion( a );
    if ( ! empty() )
    {
       vm->addLocals( 5 ); // Warning -- we add 5 to nil the msg ptr callback at local(4).
