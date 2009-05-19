@@ -991,7 +991,7 @@ int SrcLexer::lex_normal()
                   m_state = e_string;
                   if ( m_string.size() != 0 )
                      m_string.append( ' ' );
-                  m_string.append( chr );
+                  m_in->unget( chr );
                }
             }
          break;

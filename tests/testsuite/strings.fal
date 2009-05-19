@@ -77,6 +77,16 @@ if string != "A string Spawning On many lines."
    failure( "Multiline string 2" )
 end
 
+// compilationtest for multiline string 3
+string = "
+  A string
+      \"spawning\"
+         On many lines.
+"
+
+if string != "A string \"spawning\" On many lines."
+   failure( "Multiline string 3" )
+end
 
 
 success()
