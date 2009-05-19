@@ -105,6 +105,7 @@ FALCON_FUNC Compiler_init( ::Falcon::VMachine *vm )
 {
    Item *i_path = vm->param( 0 );
 
+   CompilerIface *iface = dyncast<CompilerIface*>( vm->self().asObject() );
    if( i_path != 0 )
    {
       if( ! i_path->isString() )
@@ -113,9 +114,11 @@ FALCON_FUNC Compiler_init( ::Falcon::VMachine *vm )
          return;
       }
 
-      CompilerIface *iface = dyncast<CompilerIface*>( vm->self().asObject() );
+      
       iface->loader().setSearchPath( *i_path->asString() );
    }
+   else
+      iface->loader().setSearchPath( Engine::getSearchPath() );
 }
 
 

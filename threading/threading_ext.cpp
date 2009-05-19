@@ -220,6 +220,8 @@ FALCON_FUNC Thread_start( VMachine *vm )
    
    CoreObject *self = vm->self().asObject();
    ThreadImpl *thread = static_cast<ThreadCarrier *>( self->getUserData() )->thread();
+   
+   thread->vm().appSearchPath( vm->appSearchPath() );
 
    // Require this instance to provide a runnable method
    Item i_run;
