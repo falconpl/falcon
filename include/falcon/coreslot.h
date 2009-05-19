@@ -86,12 +86,12 @@ public:
    /** Sets an assertion for this slot.
       No action is taken.
    */
-   void assert( const Item &a ) { m_assertion = a; m_bHasAssert = true; }
+   void setAssertion( const Item &a ) { m_assertion = a; m_bHasAssert = true; }
 
    /** Performs an assertion for this slot.
       Also, prepares the VM to run a broadcast loop with the asserted item.
    */
-   void assert( VMachine* vm, const Item &a );
+   void setAssertion( VMachine* vm, const Item &a );
 
    /** Retracts the assert data. 
       This function does nothing if the slot didn't have an assertion.

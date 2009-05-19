@@ -37,8 +37,10 @@ different systems.
 
 #ifdef FALCON_SYSTEM_WIN
    
-   // Minimal specific. 
+   // Minimal specific.
+   #if ! defined(_WIN32_WINNT)
    #define _WIN32_WINNT 0x0403
+   #endif
 
    //===============================
    // Compiler specific defines
