@@ -66,10 +66,13 @@ FALCON_MODULE_DECL
    self->addClassMethod( btrans_class, "queryOneArray",     Falcon::Ext::DBIBaseTrans_queryOneArray );
    self->addClassMethod( btrans_class, "queryOneDict",      Falcon::Ext::DBIBaseTrans_queryOneDict );
    self->addClassMethod( btrans_class, "queryOneObject",    Falcon::Ext::DBIBaseTrans_queryOneObject );
+   self->addClassMethod( btrans_class, "commit",            Falcon::Ext::DBIBaseTrans_commit );
+   self->addClassMethod( btrans_class, "rollback",          Falcon::Ext::DBIBaseTrans_rollback );
+   self->addClassMethod( btrans_class, "getLastError",      Falcon::Ext::DBIBaseTrans_getLastError );
+   
    self->addClassMethod( btrans_class, "insert",            Falcon::Ext::DBIBaseTrans_insert );
    self->addClassMethod( btrans_class, "update",            Falcon::Ext::DBIBaseTrans_update );
    self->addClassMethod( btrans_class, "delete",            Falcon::Ext::DBIBaseTrans_delete );
-   self->addClassMethod( btrans_class, "close",             Falcon::Ext::DBIBaseTrans_close );
 
    /*#
     @class DBIHandle
@@ -85,7 +88,7 @@ FALCON_MODULE_DECL
    self->addClassMethod( handler_class, "startTransaction",  Falcon::Ext::DBIHandle_startTransaction );
    self->addClassMethod( handler_class, "sqlExpand",         Falcon::Ext::DBIHandle_sqlExpand );
    self->addClassMethod( handler_class, "getLastInsertedId", Falcon::Ext::DBIHandle_getLastInsertedId );
-   self->addClassMethod( handler_class, "getLastError",      Falcon::Ext::DBIHandle_getLastError );
+   self->addClassMethod( handler_class, "close",             Falcon::Ext::DBIHandle_close );
 
 
    /*#
@@ -98,14 +101,13 @@ FALCON_MODULE_DECL
 
    // create the base class DBITransaction for falcon
    Falcon::Symbol *trans_class = self->addClass( "%DBITransaction", false ); // private class
-   handler_class->getClassDef()->addInheritance( new Falcon::InheritDef(btrans_class) );
+   trans_class->getClassDef()->addInheritance( new Falcon::InheritDef(btrans_class) );
    trans_class->setWKS( true );
-   self->addClassMethod( trans_class, "commit",      Falcon::Ext::DBITransaction_commit );
-   self->addClassMethod( trans_class, "rollback",    Falcon::Ext::DBITransaction_rollback );
    self->addClassMethod( trans_class, "openBlob",    Falcon::Ext::DBITransaction_openBlob );
    self->addClassMethod( trans_class, "createBlob",  Falcon::Ext::DBITransaction_createBlob );
    self->addClassMethod( trans_class, "readBlob",    Falcon::Ext::DBITransaction_readBlob );
    self->addClassMethod( trans_class, "writeBlob",   Falcon::Ext::DBITransaction_writeBlob );
+   self->addClassMethod( trans_class, "close",       Falcon::Ext::DBITransaction_close );
 
 
    /*#

@@ -27,13 +27,27 @@ namespace Falcon
 DBIRecordset *dbh_baseQueryOne( VMachine *vm, int startAt )
 {
    CoreObject *self = vm->self().asObject();
-   DBIHandle *dbh = static_cast<DBIHandle *>( self->getUserData() );
+   
+   DBIItemBase *dbiitem = static_cast<DBIItemBase *>( self->getUserData() );
+   DBIHandle* dbh;
+   DBITransaction* dbt;
+   
+   if ( dbiitem->isHandle() )
+   {
+      dbh = static_cast<DBIHandle*>(dbiitem);
+      dbt = dbh->getDefaultTransaction();
+   }
+   else {
+      dbt = static_cast<DBITransaction*>(dbiitem);
+      dbh = dbt->getHandle();
+   }
 
    String sql;
    dbh_realSqlExpand( vm, dbh, sql, startAt );
 
    dbi_status retval;
-   DBIRecordset *recSet = dbh->query( sql, retval );
+   int64 affected;
+   DBIRecordset *recSet = dbt->query( sql, affected, retval );
    if ( recSet == NULL ) {
       throw new DBIError( ErrorParam( DBI_ERROR_BASE + dbi_no_results, __LINE__ )
             .desc( "No results from query")
@@ -42,7 +56,7 @@ DBIRecordset *dbh_baseQueryOne( VMachine *vm, int startAt )
 
    if ( retval != dbi_ok ) {
       String errorMessage;
-      dbh->getLastError( errorMessage );
+      dbt->getLastError( errorMessage );
 
       vm->raiseModError( new DBIError( ErrorParam( DBI_ERROR_BASE + retval, __LINE__ )
                                        .desc( errorMessage ) ) );
@@ -57,14 +71,15 @@ DBIRecordset *dbh_baseQueryOne( VMachine *vm, int startAt )
    return recSet;
 }
 
-DBIRecordset *dbh_query_base( DBIBaseTrans* dbh, const String &sql )
+DBIRecordset *dbh_query_base( DBITransaction* dbt, const String &sql )
 {
    dbi_status retval;
-   DBIRecordset *recSet = dbh->query( sql, retval );
+   int64 affected;
+   DBIRecordset *recSet = dbt->query( sql, affected, retval );
 
    if ( retval != dbi_ok ) {
       String errorMessage;
-      dbh->getLastError( errorMessage );
+      dbt->getLastError( errorMessage );
 
       throw new DBIError( ErrorParam( DBI_ERROR_BASE + retval, __LINE__ )
                                        .desc( errorMessage ) );
@@ -84,7 +99,7 @@ dbi_type *recordset_getTypes( DBIRecordset *recSet )
 }
 
 
-int dbh_itemToSqlValue( DBIBaseTrans *dbh, const Item *i, String &value )
+int dbh_itemToSqlValue( DBIHandle *dbh, const Item *i, String &value )
 {
    switch( i->type() ) {
       case FLC_ITEM_BOOL:
@@ -128,7 +143,7 @@ int dbh_itemToSqlValue( DBIBaseTrans *dbh, const Item *i, String &value )
 }
 
 
-int dbh_realSqlExpand( VMachine *vm, DBIBaseTrans *dbh, String &sql, int startAt )
+int dbh_realSqlExpand( VMachine *vm, DBIHandle *dbh, String &sql, int startAt )
 {
    String errorMessage;
 
@@ -389,10 +404,13 @@ int dbr_checkValidColumn( VMachine *vm, DBIRecordset *dbr, int cIdx )
 void dbr_execute( VMachine *vm, DBIHandle *dbh, const String &sql )
 {
    dbi_status retval;
-   int affectedRows;
-
+   int64 affectedRows;
+   DBIRecordset* rs;
+   
+   DBITransaction* tr;
+   
    if ( vm->paramCount() == 0 )
-      affectedRows = dbh->execute( sql, retval );
+      tr = dbh->getDefaultTransaction();
    else {
       Item *trI = vm->param( 0 );
       if ( trI == 0 || ! trI->isObject() || ! trI->asObject()->derivedFrom( "DBITransaction" ) )
@@ -402,15 +420,23 @@ void dbr_execute( VMachine *vm, DBIHandle *dbh, const String &sql )
          return;
       }
       CoreObject *trO = trI->asObject();
-      DBITransaction *tr = static_cast<DBITransaction *>( trO->getUserData() );
-      affectedRows = tr->execute( sql, retval );
+      tr = static_cast<DBITransaction *>( trO->getUserData() );
    }
-
+   
+   rs = tr->query( sql, affectedRows, retval );
+   
+   // we don't expect a return recordset
+   #ifndef NDEBUG   
+      fassert( rs == 0 );
+   #else
+      delete rs; // can be 0
+   #endif
+      
    if ( retval == dbi_ok )
       vm->retval( affectedRows );
    else {
       String errorMessage;
-      dbh->getLastError( errorMessage );
+      tr->getLastError( errorMessage );
       vm->raiseModError( new DBIError( ErrorParam( DBI_ERROR_BASE + retval, __LINE__ )
                .desc( errorMessage ) ) );
    }

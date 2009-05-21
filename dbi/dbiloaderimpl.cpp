@@ -40,7 +40,7 @@ DBIService *DBILoaderImpl::loadDbProvider( VMachine *vm, const String &provName 
       try {
          vm->link( mod );
       }
-      catch( Error *e )
+      catch( Error * )
       {
          mod->decref();
          throw;

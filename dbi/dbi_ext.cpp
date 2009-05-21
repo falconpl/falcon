@@ -116,13 +116,26 @@ FALCON_FUNC DBIConnect( VMachine *vm )
 FALCON_FUNC DBIBaseTrans_query( VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
-   DBIHandle *dbh = static_cast<DBIHandle *>( self->getUserData() );
-
+   DBIItemBase *dbiitem = static_cast<DBIItemBase *>( self->getUserData() );
+   
+   DBIHandle* dbh;
+   DBITransaction* dbt;
    String sql;
+   
+   if ( dbiitem->isHandle() )
+   {
+      dbh = static_cast<DBIHandle*>(dbiitem);
+      dbt = dbh->getDefaultTransaction();
+   }
+   else {
+      dbt = static_cast<DBITransaction*>(dbiitem);
+      dbh = dbt->getHandle();
+   }
+   
    if ( dbh_realSqlExpand( vm, dbh, sql, 0 ) == 0 )
       return;
 
-   DBIRecordset *recSet = dbh_query_base( dbh, sql );
+   DBIRecordset *recSet = dbh_query_base( dbt, sql );
 
    // recordset-less query?
    if ( recSet != 0 )
@@ -341,7 +354,19 @@ FALCON_FUNC DBIBaseTrans_insert( VMachine *vm )
 
 
    CoreObject *self = vm->self().asObject();
-   DBIBaseTrans *dbh = static_cast<DBIBaseTrans *>( self->getUserData() );
+   DBIItemBase *dbiitem = static_cast<DBIItemBase *>( self->getUserData() );
+   DBIHandle* dbh;
+   DBITransaction* dbt;
+   
+   if ( dbiitem->isHandle() )
+   {
+      dbh = static_cast<DBIHandle*>(dbiitem);
+      dbt = dbh->getDefaultTransaction();
+   }
+   else {
+      dbt = static_cast<DBITransaction*>(dbiitem);
+      dbh = dbt->getHandle();
+   }
 
    String sql = "insert into " + *i_table->asString() + "(";
    String vals = ") values (";
@@ -378,7 +403,7 @@ FALCON_FUNC DBIBaseTrans_insert( VMachine *vm )
    sql += vals + ");";
    if ( bDone )
    {
-      DBIRecordset *rec = dbh_query_base( dbh, sql  );
+      DBIRecordset *rec = dbh_query_base( dbt, sql  );
       if ( rec != 0 )
       {
          dbh_return_recordset( vm, rec );
@@ -429,7 +454,19 @@ FALCON_FUNC DBIBaseTrans_update( VMachine *vm )
 
 
    CoreObject *self = vm->self().asObject();
-   DBIBaseTrans *dbh = static_cast<DBIBaseTrans *>( self->getUserData() );
+   DBIItemBase *dbiitem = static_cast<DBIItemBase *>( self->getUserData() );
+   DBIHandle* dbh;
+   DBITransaction* dbt;
+   
+   if ( dbiitem->isHandle() )
+   {
+      dbh = static_cast<DBIHandle*>(dbiitem);
+      dbt = dbh->getDefaultTransaction();
+   }
+   else {
+      dbt = static_cast<DBITransaction*>(dbiitem);
+      dbh = dbt->getHandle();
+   }
 
    String sql = "update " + *i_table->asString() + " set ";
    String where = "where ";
@@ -486,7 +523,7 @@ FALCON_FUNC DBIBaseTrans_update( VMachine *vm )
 
    if ( bDone )
    {
-      DBIRecordset *rec = dbh_query_base( dbh, sql + "\n" + where + ";" );
+      DBIRecordset *rec = dbh_query_base( dbt, sql + "\n" + where + ";" );
       if ( rec != 0 )
       {
          dbh_return_recordset( vm, rec );
@@ -539,7 +576,19 @@ FALCON_FUNC DBIBaseTrans_delete( VMachine *vm )
 
 
    CoreObject *self = vm->self().asObject();
-   DBIBaseTrans *dbh = static_cast<DBIBaseTrans *>( self->getUserData() );
+   DBIItemBase *dbiitem = static_cast<DBIItemBase *>( self->getUserData() );
+   DBIHandle* dbh;
+   DBITransaction* dbt;
+   
+   if ( dbiitem->isHandle() )
+   {
+      dbh = static_cast<DBIHandle*>(dbiitem);
+      dbt = dbh->getDefaultTransaction();
+   }
+   else {
+      dbt = static_cast<DBITransaction*>(dbiitem);
+      dbh = dbt->getHandle();
+   }
 
    String sql = "delete from " + *i_table->asString() + " where ";
 
@@ -570,7 +619,7 @@ FALCON_FUNC DBIBaseTrans_delete( VMachine *vm )
 
    if ( bWhereDone )
    {
-      DBIRecordset *rec = dbh_query_base( dbh, sql );
+      DBIRecordset *rec = dbh_query_base( dbt, sql );
       if ( rec != 0 )
       {
          dbh_return_recordset( vm, rec );
@@ -588,14 +637,24 @@ FALCON_FUNC DBIBaseTrans_delete( VMachine *vm )
  @brief Close the database handle.
  */
 
-FALCON_FUNC DBIBaseTrans_close( VMachine *vm )
+FALCON_FUNC DBIHandle_close( VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
-   DBIBaseTrans *dbh = static_cast<DBIBaseTrans *>( self->getUserData() );
+   DBIHandle *dbh = static_cast<DBIHandle *>( self->getUserData() );
    dbh->close();
 }
 
+/*#
+ @method close DBITransaction
+ @brief Close the current transaction handle.
+ */
 
+FALCON_FUNC DBITransaction_close( VMachine *vm )
+{
+   CoreObject *self = vm->self().asObject();
+   DBITransaction *dbt = static_cast<DBITransaction *>( self->getUserData() );
+   dbt->getHandle()->closeTransaction(dbt);
+}
 
 
 /**********************************************************
@@ -618,7 +677,7 @@ FALCON_FUNC DBIHandle_startTransaction( VMachine *vm )
    DBITransaction *trans = dbh->startTransaction();
    if ( trans == NULL ) {
       String errorMessage;
-      dbh->getLastError( errorMessage );
+      dbh->getDefaultTransaction()->getLastError( errorMessage );
       vm->raiseModError( new DBIError( ErrorParam( DBI_ERROR_BASE + dbi_error, __LINE__ )
                                       .desc( errorMessage ) ) );
       return;
@@ -666,7 +725,7 @@ FALCON_FUNC DBIHandle_getLastInsertedId( VMachine *vm )
 }
 
 /*#
- @method getLastError DBIHandle
+ @method getLastError DBIBaseTrans
  @brief Get the last error string from the database server.
  @return String
 
@@ -674,13 +733,27 @@ FALCON_FUNC DBIHandle_getLastInsertedId( VMachine *vm )
  as to the error.
  */
 
-FALCON_FUNC DBIHandle_getLastError( VMachine *vm )
+FALCON_FUNC DBIBaseTrans_getLastError( VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
-   DBIHandle *dbh = static_cast<DBIHandle *>( self->getUserData() );
+   DBIItemBase *dbiitem = static_cast<DBIItemBase *>( self->getUserData() );
+   
+   DBIHandle* dbh;
+   DBITransaction* dbt;
+   
+   if ( dbiitem->isHandle() )
+   {
+      dbh = static_cast<DBIHandle*>(dbiitem);
+      dbt = dbh->getDefaultTransaction();
+   }
+   else {
+      dbt = static_cast<DBITransaction*>(dbiitem);
+      dbh = dbt->getHandle();
+   }
+
 
    String value;
-   dbi_status retval = dbh->getLastError( value );
+   dbi_status retval = dbt->getLastError( value );
    if ( retval != dbi_ok ) {
       vm->raiseModError( new DBIError( ErrorParam( DBI_ERROR_BASE + retval, __LINE__ )
                                       .desc( "Unknown error" )
@@ -1080,18 +1153,36 @@ FALCON_FUNC DBITransaction_writeBlob( VMachine *vm )
 
 
 /*#
- @method commit DBITransaction
+ @method commit DBIBaseTtrans
  @brief Commit the transaction to the database.
- @return 1 on success
-
+ @raise DBIError on failure
+ 
+ This method is available also on the database handler (main transaction),
+ even if it's transaction-oriented, because some engine can provide a
+ commit/rollback feature while not providing a full parallel transaction support.
+ 
  This does not close the transaction. You can perform a commit at safe steps within
  the transaction if necessary.
  */
 
-FALCON_FUNC DBITransaction_commit( VMachine *vm )
+FALCON_FUNC DBIBaseTrans_commit( VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
-   DBITransaction *dbt = static_cast<DBITransaction *>( self->getUserData() );
+   DBIItemBase *dbiitem = static_cast<DBIItemBase *>( self->getUserData() );
+   
+   DBIHandle* dbh;
+   DBITransaction* dbt;
+   String sql;
+   
+   if ( dbiitem->isHandle() )
+   {
+      dbh = static_cast<DBIHandle*>(dbiitem);
+      dbt = dbh->getDefaultTransaction();
+   }
+   else {
+      dbt = static_cast<DBITransaction*>(dbiitem);
+      dbh = dbt->getHandle();
+   }
 
    dbi_status retval = dbt->commit();
    if ( retval != dbi_ok ) {
@@ -1104,18 +1195,32 @@ FALCON_FUNC DBITransaction_commit( VMachine *vm )
 }
 
 /*#
- @method rollback DBITransaction
+ @method rollback DBIBaseTrans
  @brief Rollback the transaction (undo) to last commit point.
- @return 1 on success
+ @raise DBIError on failure
 
  This does not close the transaction. You can rollback and try another operation
  within the same transaction as many times as you wish.
  */
 
-FALCON_FUNC DBITransaction_rollback( VMachine *vm )
+FALCON_FUNC DBIBaseTrans_rollback( VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
-   DBITransaction *dbt = static_cast<DBITransaction *>( self->getUserData() );
+   DBIItemBase *dbiitem = static_cast<DBIItemBase *>( self->getUserData() );
+   
+   DBIHandle* dbh;
+   DBITransaction* dbt;
+   String sql;
+   
+   if ( dbiitem->isHandle() )
+   {
+      dbh = static_cast<DBIHandle*>(dbiitem);
+      dbt = dbh->getDefaultTransaction();
+   }
+   else {
+      dbt = static_cast<DBITransaction*>(dbiitem);
+      dbh = dbt->getHandle();
+   }
 
    dbi_status retval = dbt->rollback();
    if ( retval != dbi_ok ) {
