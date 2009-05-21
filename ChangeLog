@@ -1,3 +1,10 @@
+Version 0.9.6
+  * major: More ergonomic approach to transaction/database handle separation
+           on C++ side of the service code.
+  * fixed: SQLLite query wasn't executing the query code.
+  * fixed: Uninit variables in ODBC driver code may have caused text queries
+           to crash
+
 Version 0.9.4
   * fixed: updated to Falcon Albatros
 

@@ -336,37 +336,8 @@ DBITransactionSQLite3::DBITransactionSQLite3( DBIHandle *dbh )
    m_inTransaction = false;
 }
 
-DBIRecordset *DBITransactionSQLite3::query( const String &query, dbi_status &retval )
-{
-   AutoCString asQuery( query );
-   sqlite3 *conn = ((DBIHandleSQLite3 *) m_dbh)->getConn();
-   sqlite3_stmt *res;
-   const char *unusedSQL;
-   int status = sqlite3_prepare( conn, asQuery.c_str(), asQuery.length(), &res, &unusedSQL );
 
-   if ( res == NULL ) {
-      retval = dbi_memory_allocation_error;
-      return NULL;
-   }
-
-   switch ( status )
-   {
-   case SQLITE_OK:
-      retval = dbi_ok;
-      break;
-
-   default: // TODO: return more useful information than this!
-      retval = dbi_error;
-      break;
-   }
-
-   if ( retval != dbi_ok )
-      return NULL;
-
-   return new DBIRecordsetSQLite3( m_dbh, res );
-}
-
-int DBITransactionSQLite3::execute( const String &query, dbi_status &retval )
+DBIRecordset* DBITransactionSQLite3::query( const String &query, int64 &affectedRows, dbi_status &retval )
 {
    AutoCString asQuery( query );
    sqlite3 *conn = ((DBIHandleSQLite3 *) m_dbh)->getConn();
@@ -383,8 +354,6 @@ int DBITransactionSQLite3::execute( const String &query, dbi_status &retval )
       status = sqlite3_step( res ); // execute the actual statement
    }
 
-   int affectedRows;
-
    switch ( status )
    {
    case SQLITE_OK:
@@ -394,21 +363,26 @@ int DBITransactionSQLite3::execute( const String &query, dbi_status &retval )
       break;
 
    default: // TODO: provide better error info than this!
-      retval = dbi_execute_error;
+      retval = dbi_error;
       affectedRows = -1;
       break;
    }
 
-   sqlite3_finalize( res );
+   if ( status != SQLITE_OK )
+   {
+      // in case of SQLLITE_DONE, there is no recordset to be returned.
+      sqlite3_finalize( res );
+      return 0;
+   }
 
-   return affectedRows;
+   return new DBIRecordsetSQLite3( m_dbh, res );   
 }
 
 dbi_status DBITransactionSQLite3::begin()
 {
    dbi_status retval;
-
-   execute( "BEGIN", retval );
+   int64 affected;
+   query( "BEGIN", affected, retval );
 
    if ( retval == dbi_ok )
       m_inTransaction = true;
@@ -419,8 +393,8 @@ dbi_status DBITransactionSQLite3::begin()
 dbi_status DBITransactionSQLite3::commit()
 {
    dbi_status retval;
-
-   execute( "COMMIT", retval );
+   int64 affected;
+   query( "COMMIT", affected, retval );
 
    m_inTransaction = false;
 
@@ -430,8 +404,8 @@ dbi_status DBITransactionSQLite3::commit()
 dbi_status DBITransactionSQLite3::rollback()
 {
    dbi_status retval;
-
-   execute( "ROLLBACK", retval );
+   int64 affected;
+   query( "ROLLBACK", affected, retval );
 
    m_inTransaction = false;
 
@@ -451,7 +425,16 @@ dbi_status DBITransactionSQLite3::close()
 
 dbi_status DBITransactionSQLite3::getLastError( String &description )
 {
+   sqlite3* conn = static_cast<DBIHandleSQLite3*>(getHandle())->getConn();
+   
+   const char *errorMessage = sqlite3_errmsg( conn );
+   if ( errorMessage == NULL )
+      return dbi_no_error_message;
+
+   description.bufferize( errorMessage );
+
    return dbi_ok;
+
 }
 
 DBIBlobStream *DBITransactionSQLite3::openBlob( const String &blobId, dbi_status &status )
@@ -506,23 +489,15 @@ dbi_status DBIHandleSQLite3::closeTransaction( DBITransaction *tr )
    return dbi_ok;
 }
 
-DBIRecordset *DBIHandleSQLite3::query( const String &sql, dbi_status &retval )
+DBITransaction *DBIHandleSQLite3::getDefaultTransaction()
 {
    if ( m_connTr == NULL ) {
       m_connTr = new DBITransactionSQLite3( this );
    }
 
-   return m_connTr->query( sql, retval );
+   return m_connTr;
 }
 
-int DBIHandleSQLite3::execute( const String &sql, dbi_status &retval )
-{
-   if ( m_connTr == NULL ) {
-      m_connTr = new DBITransactionSQLite3( this );
-   }
-
-   return m_connTr->execute( sql, retval );
-}
 
 int64 DBIHandleSQLite3::getLastInsertedId()
 {
@@ -534,20 +509,6 @@ int64 DBIHandleSQLite3::getLastInsertedId( const String& sequenceName )
 {
    // SQLite3 does not support insert id's by name
    return sqlite3_last_insert_rowid( m_conn );
-}
-
-dbi_status DBIHandleSQLite3::getLastError( String &description )
-{
-   if ( m_conn == NULL )
-      return dbi_invalid_connection;
-
-   const char *errorMessage = sqlite3_errmsg( m_conn );
-   if ( errorMessage == NULL )
-      return dbi_no_error_message;
-
-   description.bufferize( errorMessage );
-
-   return dbi_ok;
 }
 
 dbi_status DBIHandleSQLite3::escapeString( const String &value, String &escaped )

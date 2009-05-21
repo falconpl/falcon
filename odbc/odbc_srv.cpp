@@ -13,6 +13,11 @@
  * See LICENSE file for licensing details.
  */
 
+#if ! defined( _WIN32_WINNT ) || _WIN32_WINNT < 0x0403
+#undef _WIN32_WINNT
+#define _WIN32_WINNT 0x0403
+#endif
+
 #include <string.h>
 #include <stdio.h>
 #include <Windows.h>
@@ -437,7 +442,7 @@ DBITransactionODBC::DBITransactionODBC( DBIHandle *dbh )
    m_inTransaction = false;
 }
 
-DBIRecordset *DBITransactionODBC::query( const String &query, dbi_status &retval )
+DBIRecordset *DBITransactionODBC::query( const String &query, int64 &affected, dbi_status &retval )
 {
    AutoCString asQuery( query );
    ODBCConn *conn = ((DBIHandleODBC *) m_dbh)->getConn();
@@ -452,6 +457,7 @@ DBIRecordset *DBITransactionODBC::query( const String &query, dbi_status &retval
 
    SQLINTEGER nRowCount;
    RETCODE retcode = SQLRowCount( conn->m_hHstmt, &nRowCount );
+   affected = nRowCount;
 
    if( retcode != SQL_SUCCESS && retcode != SQL_SUCCESS_WITH_INFO )
    {
@@ -479,37 +485,12 @@ DBIRecordset *DBITransactionODBC::query( const String &query, dbi_status &retval
    return NULL;
 }
 
-int DBITransactionODBC::execute( const String &query, dbi_status &retval )
-{
-   AutoCString asQuery( query );
-   ODBCConn *conn = ((DBIHandleODBC *) m_dbh)->getConn();
-
-   RETCODE ret = SQLExecDirect( conn->m_hHstmt, ( SQLCHAR* )asQuery.c_str( ), SQL_NTS );
-
-   if( ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO )
-   {
-	   retval = dbi_query_error;
-	   return -1;
-   }
-
-   SQLINTEGER nRowCount;
-   ret = SQLRowCount( conn->m_hHstmt, &nRowCount );
-
-   if( ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO )
-   {
-	   retval = dbi_query_error;
-	   return -1;
-   }
-
-   retval = dbi_ok;
-   return nRowCount;
-}
 
 dbi_status DBITransactionODBC::begin()
 {
    dbi_status retval;
-
-   execute( "BEGIN", retval );
+   int64 affect;
+   query( "BEGIN", affect, retval );
 
    if ( retval == dbi_ok )
       m_inTransaction = true;
@@ -520,8 +501,8 @@ dbi_status DBITransactionODBC::begin()
 dbi_status DBITransactionODBC::commit()
 {
    dbi_status retval;
-
-   execute( "COMMIT", retval );
+   int64 affect;
+   query( "COMMIT", affect, retval );
 
    m_inTransaction = false;
 
@@ -531,15 +512,15 @@ dbi_status DBITransactionODBC::commit()
 dbi_status DBITransactionODBC::rollback()
 {
    dbi_status retval;
-
-   execute( "ROLLBACK", retval );
+   int64 affect;
+   query( "ROLLBACK", affect, retval );
 
    m_inTransaction = false;
 
    return retval;
 }
 
-void DBITransactionODBC::close()
+dbi_status DBITransactionODBC::close()
 {
    // TODO: return a status code here because of the potential commit
    if ( m_inTransaction )
@@ -547,7 +528,7 @@ void DBITransactionODBC::close()
 
    m_inTransaction = false;
 
-   m_dbh->closeTransaction( this );
+   return m_dbh->closeTransaction( this );
 }
 
 dbi_status DBITransactionODBC::getLastError( String &description )
@@ -609,23 +590,16 @@ dbi_status DBIHandleODBC::closeTransaction( DBITransaction *tr )
    return dbi_ok;
 }
 
-DBIRecordset *DBIHandleODBC::query( const String &sql, dbi_status &retval )
+
+DBITransaction *DBIHandleODBC::getDefaultTransaction()
 {
    if ( m_connTr == NULL ) {
       m_connTr = new DBITransactionODBC( this );
    }
 
-   return m_connTr->query( sql, retval );
+   return m_connTr;
 }
 
-int DBIHandleODBC::execute( const String &sql, dbi_status &retval )
-{
-   if ( m_connTr == NULL ) {
-      m_connTr = new DBITransactionODBC( this );
-   }
-
-   return m_connTr->execute( sql, retval );
-}
 
 int64 DBIHandleODBC::getLastInsertedId()
 {
@@ -637,12 +611,7 @@ int64 DBIHandleODBC::getLastInsertedId( const String& sequenceName )
    return -1;
 }
 
-dbi_status DBIHandleODBC::getLastError( String &description )
-{
-   GetErrorMessage( SQL_HANDLE_STMT, m_conn->m_hHstmt, TRUE );
 
-   return dbi_ok;
-}
 
 dbi_status DBIHandleODBC::escapeString( const String &value, String &escaped )
 {
@@ -656,6 +625,7 @@ dbi_status DBIHandleODBC::escapeString( const String &value, String &escaped )
 	int maxLen = ( sConv.length() * 2 ) + 1;
 	SQLCHAR* pRet = (SQLCHAR *) malloc( sizeof( SQLCHAR ) * maxLen );
 	SQLINTEGER nBuff, nBuffOut;
+	nBuff = maxLen;
 
 	RETCODE ret = SQLNativeSql( m_conn->m_hHdbc, ( SQLCHAR* )sConv.c_str( ), sConv.length( ), pRet, nBuff, &nBuffOut );
 

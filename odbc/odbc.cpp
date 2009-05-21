@@ -24,14 +24,11 @@
 Falcon::DBIServiceODBC theODBCService;
 
 // the main module
-FALCON_MODULE_DECL( const Falcon::EngineData &data )
+FALCON_MODULE_DECL
 {
-   // setup DLL engine common data
-   data.set();
-
    // Module declaration
    Falcon::Module *self = new Falcon::Module();
-   self->name( "fodbc" );
+   self->name( "odbc" );
    self->engineVersion( FALCON_VERSION_NUM );
    self->version( VERSION_MAJOR, VERSION_MINOR, VERSION_REVISION );
 

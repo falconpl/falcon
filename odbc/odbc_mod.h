@@ -121,12 +121,11 @@ namespace Falcon
 	public:
 	   DBITransactionODBC( DBIHandle *dbh );
 
-	   virtual DBIRecordset *query( const String &query, dbi_status &retval );
-	   virtual int execute( const String &query, dbi_status &retval );
+	   virtual DBIRecordset *query( const String &query, int64 &affected, dbi_status &retval );
 	   virtual dbi_status begin();
 	   virtual dbi_status commit();
 	   virtual dbi_status rollback();
-	   virtual void close();
+	   virtual dbi_status close();
 	   virtual dbi_status getLastError( String &description );
 
 	   virtual DBIBlobStream *openBlob( const String &blobId, dbi_status &status );
@@ -148,12 +147,10 @@ namespace Falcon
 		ODBCConn *getConn() { return m_conn; }
 
 		virtual DBITransaction *startTransaction();
+		virtual DBITransaction *getDefaultTransaction();
 		virtual dbi_status closeTransaction( DBITransaction *tr );
-		virtual DBIRecordset *query( const String &sql, dbi_status &retval );
-		virtual int execute( const String &sql, dbi_status &retval );
 		virtual int64 getLastInsertedId();
 		virtual int64 getLastInsertedId( const String &value );
-		virtual dbi_status getLastError( String &description );
 		virtual dbi_status escapeString( const String &value, String &escaped );
 		virtual dbi_status close();
 	};
