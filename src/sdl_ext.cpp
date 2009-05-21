@@ -296,16 +296,23 @@ FALCON_FUNC sdl_VideoDriverName( ::Falcon::VMachine *vm )
 
 FALCON_FUNC sdl_ListModes( ::Falcon::VMachine *vm )
 {
+   if ( SDL_WasInit(0) == 0 )
+   {
+      throw new SDLError( ErrorParam( FALCON_SDL_ERROR_BASE+1, __LINE__ ).
+         desc( "SDL not initialized" ) );
+   }
+   
    Item *i_format = vm->param(0);
    Item *i_flags = vm->param(1);
+   
 
    if ( (i_format != 0 &&
         (! i_format->isNil() &&
         ( ! i_format->isObject() || ! i_format->asObject()->derivedFrom( "SDLPixelFormat") ))) ||
       ( i_flags != 0 && ! i_flags->isOrdinal() ) )
    {
-      vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "[SDLPixelFormat, N]" ) ) );
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "[SDLPixelFormat, N]" ) );
       return;
    }
 
@@ -315,8 +322,11 @@ FALCON_FUNC sdl_ListModes( ::Falcon::VMachine *vm )
       pFmt = &fmt;
       ObjectToPixelFormat( i_format->asObject(), pFmt );
    }
-   else
-      pFmt = 0;
+   else 
+   {
+      const SDL_VideoInfo* myPointer = SDL_GetVideoInfo();
+      pFmt = myPointer->vfmt;
+   }
 
    Uint32 flags = i_flags == 0 ? 0 : (Uint32) i_flags->forceInteger();
 
