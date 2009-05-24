@@ -185,6 +185,7 @@ FALCON_FUNC  core_cascade ( ::Falcon::VMachine *vm );
 FALCON_FUNC  core_floop ( ::Falcon::VMachine *vm );
 FALCON_FUNC  core_firstof ( ::Falcon::VMachine *vm );
 FALCON_FUNC  core_let ( ::Falcon::VMachine *vm );
+FALCON_FUNC  core_brigade ( ::Falcon::VMachine *vm );
 
 FALCON_FUNC  core_oob( ::Falcon::VMachine *vm );
 FALCON_FUNC  core_deoob( ::Falcon::VMachine *vm );

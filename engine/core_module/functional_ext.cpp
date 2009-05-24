@@ -2035,6 +2035,173 @@ FALCON_FUNC  core_let ( ::Falcon::VMachine *vm )
    vm->regA() = *vm->param(0);
 }
 
+
+static bool core_brigade_next( ::Falcon::VMachine *vm )
+{
+   int64 next = vm->local(0)->asInteger();
+   
+   // Has the previous call returned something interesting?
+   if ( vm->regA().isOob() )
+   {
+      if( vm->regA().isInteger() )
+      {
+         // break request?
+         if( vm->regA().asInteger() == 0 )
+         {
+            vm->retnil();
+            return false;
+         }
+         else if( vm->regA().asInteger() == 1 )
+         {
+            // loop from start
+            next = 0;
+         }
+      }
+      else if ( vm->regA().isArray() )
+      {
+         CoreArray* newParams = vm->regA().asArray();
+         *vm->local(1) = newParams;
+         // add a space for the calls
+         newParams->prepend( Item() );
+      }
+   }
+   
+   CoreArray* list = vm->param(0)->asArray();
+
+   // are we done?
+   if( next >= list->length() )
+      return false;
+      
+   // prepare the local call
+   vm->local(0)->setInteger( next + 1 );
+   
+   bool success;
+   // anyhow, prepare the call
+   //-- have we changed parameters?
+   if ( vm->local(1)->isArray() )
+   {
+      CoreArray* callarr = vm->local(1)->asArray();
+      callarr->at(0) = list->at(next);
+      success = vm->callFrame( callarr, 0 );
+   }
+   else 
+   {
+      // no? -- use our original paramters.
+      for( int32 i = 1; i < vm->paramCount(); ++i )
+      {
+         vm->pushParameter( *vm->param(i) );
+      }
+      
+      success = vm->callFrame( list->at(next), vm->paramCount()-1 );
+   }
+   
+   if ( ! success ) 
+   {
+      throw new ParamError( ErrorParam( e_non_callable,__LINE__ ) );
+   }
+   
+   return true; // call me again
+}
+
+
+/*#
+   @function brigade
+   @inset functional_support
+   @brief Process a list of functions passing the same parameters to them.
+   @param fl The sequence of callable items to be called.
+   @param ...
+   @return The return value of the last function in fl.
+
+   This functions process a sequence of functions passing them the
+   same set of parameters. The idea is that of a "brigate" of functions
+   operating all on the same parameters so that it is possible to put
+   common code into separate functions.
+   
+   Items in the list are not functionally evaluated; they are simply called,
+   passing to them the same parameters that the brigade group receives. Brigate
+   is an ETA funcion, and this means that ongoing functional evaluation is
+   interrupted as soon as a brigate is encountered.
+   
+   @code
+   function mean( array )
+      value = 0
+      for elem in array: value += elem
+      return value / len( array )
+   end
+   
+   function dbl( array )
+      for i in [0:len(array)]: array[i] *= 2
+   end
+   
+   doubleMean = .[ brigade .[  
+      dbl
+      mean
+   ]]
+   
+   > "Mean: ", mean( [1,2,3] )
+   > "Double mean: ", doubleMean( [1,2,3] )
+   @endcode
+   
+   The above example brigades a "prefix" function to double the values in
+   an array that must be processed by the main function.
+   
+   Using out of band return values, the functions in the sequence can also
+   control the parameters that the following functions will receive, terminate
+   immediately the evaluation or restart it, forming a sort of iterative
+   functional loop. An oob 0 causes the sequence to be interrutped (and return oob(0) itself),
+   an out of band 1 will cause the first element of the sequence to be called again, and 
+   an out of band array will permanently change the parameters as seen by the functions.
+   
+   The following brigate performs a first step using the given parameters, and another one
+   using modified ones:
+   
+   @code
+   looper = .[brigade .[
+      { val, text => printl( text, ": ", val ) } // do things
+      { val, text => oob( [val+1, "Changed"] ) }  // change params
+      { val, text => val >= 10 ? oob(0) : oob(1)}  // loop control
+   ]]
+   
+   looper( 1, "Original" )
+   @endcode
+*/
+
+FALCON_FUNC  core_brigade ( ::Falcon::VMachine *vm )
+{
+   Item *i_fl = vm->param(0);
+
+   if( i_fl == 0 || ! i_fl->isArray() )
+   {
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "A" ) );
+   }
+   
+   // nothing to do?
+   if ( i_fl->asArray()->length() == 0 )
+   {
+      vm->retnil();
+      return;
+   }
+   
+   vm->returnHandler( &core_brigade_next );
+   vm->addLocals(2);
+   vm->local(0)->setInteger(1);
+   vm->local(1)->setNil();
+   
+   // anyhow, prepare the call
+   for( int32 i = 1; i < vm->paramCount(); ++i )
+   {
+      vm->pushParameter( *vm->param(i) );
+   }
+   
+   if ( ! vm->callFrame( vm->param(0)->asArray()->at(0), vm->paramCount()-1 ) )
+   {
+      throw new ParamError( ErrorParam( e_non_callable,__LINE__ ) );
+   }
+   
+}
+
+
 }
 }
 

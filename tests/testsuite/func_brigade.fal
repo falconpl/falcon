@@ -1,0 +1,48 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 63b
+* Category: functional
+* Subcategory: constructs
+* Short: Brigade
+* Description:
+*   Checks if the "brigade" function is correctly working.
+* [/Description]
+*
+****************************************************************************/
+
+function mean( array )
+   value = 0
+   for elem in array: value += elem
+   return value / len( array )
+end
+
+function dbl( array )
+   for i in [0:len(array)]: array[i] *= 2
+end
+
+doubleMean = .[ brigade .[
+   dbl
+   mean
+]]
+
+if doubleMean( [1,2,3] ) != 4: failure( "Simple brigade" )
+
+sum = 0
+looper = .[brigade
+   .[
+      { val, text => sum += val; return 0}
+      // or even change them via out-of-band
+      { val, text => oob( [val+1, "Changed"] ) }
+      // and ask repetition via out-of-band
+      // or return something at the end.
+      { val, text =>
+         val < 10 ? oob(1): "Completed." }
+   ]
+]
+
+final = looper( 1, "Original" )
+if sum != 1+2+3+4+5+6+7+8+9: failure( "looping" )
+if final != "Completed.": failure( "return value" )
+
+success()

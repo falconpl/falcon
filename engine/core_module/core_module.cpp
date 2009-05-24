@@ -274,7 +274,7 @@ Module* core_module_init()
    self->addClassMethod( string_meta, "merge", &Falcon::core::mth_strMerge ).asSymbol()
       ->addParam("array")->addParam("mergeStr")->addParam("count");
    self->addClassMethod( string_meta, "join", &Falcon::core::String_join );
-   self->addClassMethod( string_meta, "strFind", &Falcon::core::mth_strFind ).asSymbol()
+   self->addClassMethod( string_meta, "find", &Falcon::core::mth_strFind ).asSymbol()
       ->addParam("needle")->addParam("start")->addParam("end");
    self->addClassMethod( string_meta, "strBackFind", &Falcon::core::mth_strBackFind ).asSymbol()
       ->addParam("needle")->addParam("start")->addParam("end");
@@ -819,6 +819,8 @@ Module* core_module_init()
       addParam("item");
    self->addExtFunc( "cascade", &Falcon::core::core_cascade )->setEta( true )->
       addParam("callList");
+   self->addExtFunc( "brigade", &Falcon::core::core_brigade )->setEta( true )->
+      addParam("fl");
    self->addExtFunc( "dolist", &Falcon::core::core_dolist )->setEta( true )->
       addParam("processor")->addParam("sequence");
    self->addExtFunc( "floop", &Falcon::core::core_floop )->setEta( true )->
