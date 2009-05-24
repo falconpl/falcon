@@ -1,3 +1,7 @@
+Falcon (0.9.1.9)
+  * fixed: using more modern throw instead of the obsolete raise() functions
+           in many points.
+           
 Falcon (0.9.1.8)
   * fixed: faltest didn't output help text when called with -h/-?
   * fixed: Operator overriding in blessed dictionaries had many issues.

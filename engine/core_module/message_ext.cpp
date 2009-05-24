@@ -126,9 +126,8 @@ FALCON_FUNC subscribe( ::Falcon::VMachine *vm )
    if ( i_msg == 0 || ! i_msg->isString()
         || i_handler == 0  || ! ( i_handler->isCallable() || i_handler->isComposed() ) )
    {
-      vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).
-         extra( "S,C" ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params ).
+         extra( "S,C" ) );
    }
 
    String *sub = i_msg->asString();
@@ -159,17 +158,15 @@ FALCON_FUNC unsubscribe( ::Falcon::VMachine *vm )
    if ( i_msg == 0 || ! i_msg->isString()
         || i_handler == 0 || ! ( i_handler->isCallable() || i_handler->isComposed() ) )
    {
-      vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).
-         extra( "S,C" ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params ).
+         extra( "S,C" ) );
    }
 
    CoreSlot* cs = vm->getSlot( *i_msg->asString(), false );
    if ( cs == 0 )
    {
-      vm->raiseRTError( new AccessError( ErrorParam( e_inv_params ).
-         extra( *i_msg->asString() ) ) );
-      return;
+      throw new AccessError( ErrorParam( e_inv_params ).
+         extra( *i_msg->asString() ) );
    }
 
    if( ! cs->remove( *i_handler ) )
@@ -198,9 +195,8 @@ FALCON_FUNC getSlot( ::Falcon::VMachine *vm )
 
    if ( i_msg == 0 || ! i_msg->isString() )
    {
-      vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).
-         extra( "S" ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params ).
+         extra( "S" ) );
    }
 
    CoreSlot* cs = vm->getSlot( *i_msg->asString(), (vm->param(1) == 0 || vm->param(1)->isTrue())  );
@@ -248,9 +244,8 @@ FALCON_FUNC assert( ::Falcon::VMachine *vm )
    Item *i_data = vm->param( 1 );
    if ( i_msg == 0 || ! i_msg->isString() || i_data == 0  )
    {
-      vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).
-         extra( "S,X" ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params ).
+         extra( "S,X" ) );
    }
 
    CoreSlot* cs = vm->getSlot( *i_msg->asString(), true );
@@ -268,9 +263,8 @@ FALCON_FUNC retract( ::Falcon::VMachine *vm )
    Item *i_msg = vm->param( 0 );
    if ( i_msg == 0 || ! i_msg->isString()  )
    {
-      vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).
-         extra( "S" ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params ).
+         extra( "S" ) );
    }
 
    CoreSlot* cs = vm->getSlot( *i_msg->asString(), true );
@@ -301,9 +295,8 @@ FALCON_FUNC getAssert( ::Falcon::VMachine *vm )
    
    if ( i_msg == 0 || ! i_msg->isString()  )
    {
-      vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).
-         extra( "S" ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params ).
+         extra( "S" ) );
    }
 
    CoreSlot* cs = vm->getSlot( *i_msg->asString(), true );
@@ -386,9 +379,8 @@ FALCON_FUNC VMSlot_init( ::Falcon::VMachine *vm )
 
    if ( i_msg == 0 || ! i_msg->isString() )
    {
-      vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).
-         extra( "S" ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params ).
+         extra( "S" ) );
    }
 
    CoreSlot* vms = vm->getSlot( *i_msg->asString(), true );
@@ -438,9 +430,8 @@ FALCON_FUNC VMSlot_subscribe( ::Falcon::VMachine *vm )
    Item *i_prio = vm->param(1);
    if ( callback == 0 || ! ( callback->isCallable() || callback->isComposed() ) )
    {
-      vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).
-         extra( "C" ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params ).
+         extra( "C" ));
    }
 
    CoreSlot* cs = (CoreSlot*) vm->self().asObject()->getUserData();
@@ -464,9 +455,8 @@ FALCON_FUNC VMSlot_unsubscribe( ::Falcon::VMachine *vm )
    Item *callback = vm->param(0);
    if ( callback == 0 )
    {
-      vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).
-         extra( "S,C" ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params ).
+         extra( "S,C" ) );
    }
 
    CoreSlot* cs = (CoreSlot*) vm->self().asObject()->getUserData();
@@ -492,9 +482,8 @@ FALCON_FUNC VMSlot_prepend( ::Falcon::VMachine *vm )
    Item *callback = vm->param(0);
    if ( callback == 0 || ! ( callback->isCallable() || callback->isComposed() ) )
    {
-      vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).
-         extra( "C" ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params ).
+         extra( "C" ) );
    }
 
    CoreSlot* cs = (CoreSlot*) vm->self().asObject()->getUserData();
@@ -515,8 +504,8 @@ FALCON_FUNC VMSlot_assert( ::Falcon::VMachine *vm )
    Item *i_data = vm->param( 0 );
    if ( i_data == 0  )
    {
-      vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).
-         extra( "X" ) ) );
+      throw new ParamError( ErrorParam( e_inv_params ).
+         extra( "X" ) );
       return;
    }
 
