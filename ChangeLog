@@ -3,6 +3,9 @@ Falcon (0.9.1.9)
            in many points.
   * fixed: "find" method in strings was erroneusly named "strFind".
   * minor: Added brigade() ETA function.
+  * fixed: Directory class wasn't masked; as a result, using it caused crash.
+           As a fix, we removed DirectoryOpen function and allowed Directory
+           constructor to work as previously done by DirectoryOpen.
            
 Falcon (0.9.1.8)
   * fixed: faltest didn't output help text when called with -h/-?

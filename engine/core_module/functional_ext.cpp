@@ -2081,7 +2081,7 @@ static bool core_brigade_next( ::Falcon::VMachine *vm )
    if ( vm->local(1)->isArray() )
    {
       CoreArray* callarr = vm->local(1)->asArray();
-      callarr->at(0) = list->at(next);
+      callarr->at(0) = list->at((int32)next);
       success = vm->callFrame( callarr, 0 );
    }
    else 
@@ -2092,7 +2092,7 @@ static bool core_brigade_next( ::Falcon::VMachine *vm )
          vm->pushParameter( *vm->param(i) );
       }
       
-      success = vm->callFrame( list->at(next), vm->paramCount()-1 );
+      success = vm->callFrame( list->at((int32)next), vm->paramCount()-1 );
    }
    
    if ( ! success ) 

@@ -608,53 +608,13 @@ FALCON_FUNC  filePath ( ::Falcon::VMachine *vm )
       vm->retval( new CoreString );
 }
 
-/*
-   @function DirectoryOpen
-   @brief Opens a directory and returns a directory object.
-   @param dirname A relative or absolute path to a directory
-   @return An instance of the @a Directory class.
-   @raise IoError on failure.
-
-   If the function is successful, an instance of the Directory
-   class is returned. The instance can be used to retrieve the
-   directory entries one at a time.
-
-   On failure, an IoError instance with code 1010 is raised.
-*/
-
-FALCON_FUNC  DirectoryOpen ( ::Falcon::VMachine *vm )
-{
-   Item *name = vm->param(0);
-   if ( name == 0 || ! name->isString() )
-   {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
-      return;
-   }
-
-   int32 fsError;
-   DirEntry *dir = Sys::fal_openDir( *name->asString(), fsError );
-
-   if( dir != 0 ) {
-      Item *dir_class = vm->findWKI( "Directory" );
-      //if we wrote the std module, can't be zero.
-      fassert( dir_class != 0 );
-      CoreObject *self = dir_class->asClass()->createInstance(dir);
-      vm->retval( self );
-   }
-   else {
-      vm->raiseModError( new IoError( ErrorParam( 1010, __LINE__ ).
-         origin( e_orig_runtime ).desc( "Can't open directory" ).extra( *name->asString() ).
-         sysError( (uint32) Sys::_lastError() ) ) );
-   }
-}
-
 /*#
    @class Directory
    @brief Special iterator to access directory listings.
+   @param dirname A relative or absolute path to a directory
+   @raise IoError on failure.
 
-   The Directory class is used by DirectoryOpen() function to return an
-   object that the user can iterate upon. It should not be created directly,
-   but only through @a DirectoryOpen .
+   The Directory class allow to iterate through the contents of a local file directory.
 
    The caller should repeatedly call the read() method until nil is returned. In
    case an error is raised, the error() method may be called to get informations on
@@ -664,6 +624,39 @@ FALCON_FUNC  DirectoryOpen ( ::Falcon::VMachine *vm )
    associated with the object. The garbage collector will eventually take care of
    it, but it is better to close the object as soon as possible.
 */
+
+/*# 
+   @init Directory
+   @brief Opens a directory entry.
+   @raise IoError on failure.
+*/
+FALCON_FUNC  Directory_init ( ::Falcon::VMachine *vm )
+{
+   Item *name = vm->param(0);
+   if ( name == 0 || ! name->isString() )
+   {
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+         .origin( e_orig_runtime )
+         .extra( "S" ) );
+      return;
+   }
+
+   int32 fsError;
+   DirEntry *dir = Sys::fal_openDir( *name->asString(), fsError );
+
+   if( dir != 0 ) 
+   {
+      CoreObject *self = vm->self().asObjectSafe();
+      self->setUserData( dir );
+   }
+   else {
+      throw new IoError( ErrorParam( e_io_error, __LINE__ )
+         .origin( e_orig_runtime )
+         .extra( *name->asString() )
+         .sysError( (uint32) Sys::_lastError() ) );
+   }
+}
+
 
 /*#
    @method read Directory

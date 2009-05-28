@@ -1319,12 +1319,7 @@ Module* core_module_init()
    //=======================================================================
    // Directory class
    //=======================================================================
-
-   // factory function
-   self->addExtFunc( "DirectoryOpen", &Falcon::core::DirectoryOpen )->
-      addParam("dirname");
-
-   Falcon::Symbol *dir_class = self->addClass( "Directory" );
+   Falcon::Symbol *dir_class = self->addClass( "Directory", &Falcon::core::Directory_init );
    dir_class->setWKS(true);
    //dir_class->getClassDef()->setObjectManager( &core_falcon_data_manager );
    self->addClassMethod( dir_class, "read", &Falcon::core::Directory_read );

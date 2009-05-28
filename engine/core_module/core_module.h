@@ -355,7 +355,7 @@ FALCON_FUNC  Dictionary_last( ::Falcon::VMachine *vm );
 FALCON_FUNC  fileType( ::Falcon::VMachine *vm );
 FALCON_FUNC  fileNameSplit ( ::Falcon::VMachine *vm );
 FALCON_FUNC  fileNameMerge ( ::Falcon::VMachine *vm );
-FALCON_FUNC  DirectoryOpen ( ::Falcon::VMachine *vm );
+FALCON_FUNC  Directory_init ( ::Falcon::VMachine *vm );
 FALCON_FUNC  Directory_read ( ::Falcon::VMachine *vm );
 FALCON_FUNC  Directory_close ( ::Falcon::VMachine *vm );
 FALCON_FUNC  Directory_error ( ::Falcon::VMachine *vm );

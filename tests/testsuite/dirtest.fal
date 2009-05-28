@@ -48,7 +48,7 @@ try
    filelen[ "four" ] = file.tell()
    file.close()
 
-   dir = DirectoryOpen( "." )
+   dir = Directory( "." )
    element = dir.read()
    stats = FileStat()
    while element != nil
