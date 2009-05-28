@@ -1319,10 +1319,13 @@ Module* core_module_init()
    //=======================================================================
    // Directory class
    //=======================================================================
-   Falcon::Symbol *dir_class = self->addClass( "Directory", &Falcon::core::Directory_init );
+   Falcon::Symbol *dir_class = self->addClass( "Directory", &Falcon::core::Directory_init )
+         ->addParam("path");
    dir_class->setWKS(true);
    //dir_class->getClassDef()->setObjectManager( &core_falcon_data_manager );
    self->addClassMethod( dir_class, "read", &Falcon::core::Directory_read );
+   self->addClassMethod( dir_class, "descend", &Falcon::core::Directory_descend ).asSymbol()->
+      addParam("dfunc")->addParam("ffunc");
    self->addClassMethod( dir_class, "close", &Falcon::core::Directory_close );
    self->addClassMethod( dir_class, "error", &Falcon::core::Directory_error );
 

@@ -24,6 +24,7 @@
 
 #include <falcon/filestat.h>
 #include <falcon/falcondata.h>
+#include <falcon/string.h>
 
 namespace Falcon {
 
@@ -39,10 +40,12 @@ class DirEntry: public FalconData
 
 protected:
    uint32 m_lastError;
+   String m_path;
 
 public:
-   DirEntry():
-      m_lastError(0)
+   DirEntry( const String &path ):
+      m_lastError(0),
+      m_path( path )
    {}
 
    virtual bool read( String &fname ) = 0;
@@ -52,6 +55,8 @@ public:
    // unsupported (for now)
    virtual FalconData *clone() const { return 0; }
    virtual void gcMark( uint32 mark ) {}
+   
+   const String &path() const { return m_path; }
 };
 
 namespace Sys {

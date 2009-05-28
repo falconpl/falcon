@@ -41,8 +41,8 @@ protected:
    uint32 m_lastError;
 
 public:
-   DirEntry_win( HANDLE handle, WIN32_FIND_DATAW dir_data ):
-      DirEntry(),
+   DirEntry_win( const String &p, HANDLE handle, WIN32_FIND_DATAW dir_data ):
+      DirEntry(p),
       m_first( true ),
       m_lastError( 0 ),
       m_handle( handle ),

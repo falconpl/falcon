@@ -271,7 +271,7 @@ bool fal_chgrp( const String &fname, int32 owner )
       return 0;
    }
 
-   return new DirEntry_unix( dir );
+   return new DirEntry_unix( p, dir );
 }
 
 void fal_closeDir( ::Falcon::DirEntry *entry )

@@ -349,7 +349,7 @@ bool fal_writelink( const String &fname, String &link )
 	}
 
    if ( handle != INVALID_HANDLE_VALUE )
-      return new DirEntry_win( handle, dir_data );
+      return new DirEntry_win( path, handle, dir_data );
 
    fsError = GetLastError();
    return 0;

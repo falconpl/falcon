@@ -39,8 +39,8 @@ protected:
    DIR *m_raw_dir;
 
 public:
-   DirEntry_unix( DIR *d ):
-      DirEntry(),
+   DirEntry_unix( const String &p, DIR *d ):
+      DirEntry(p),
       m_raw_dir( d )
    {}
 

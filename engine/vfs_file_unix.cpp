@@ -102,7 +102,7 @@ DirEntry* VFSFile::openDir( const URI& uri )
       return 0;
    }
 
-   return new DirEntry_unix( dir );
+   return new DirEntry_unix( uri.path(), dir );
 }
 
 
