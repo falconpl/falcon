@@ -237,6 +237,7 @@ FALCON_FUNC  List_first ( ::Falcon::VMachine *vm )
    CoreObject *iobj = i_iclass->asClass()->createInstance();
    ItemListElement *iter = list->first();
    iobj->setUserData( new ItemListIterator( list, iter ) );
+   iobj->setProperty( "_origin", vm->self() );
    vm->retval( iobj );
 }
 
@@ -257,7 +258,7 @@ FALCON_FUNC  List_last ( ::Falcon::VMachine *vm )
    fassert( i_iclass != 0 );
 
    CoreObject *iobj = i_iclass->asClass()->createInstance();
-   iobj->setProperty( "origin", vm->self() );
+   iobj->setProperty( "_origin", vm->self() );
 
    ItemListElement *iter = list->last();
    iobj->setUserData( new ItemListIterator( list, iter ) );

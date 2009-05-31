@@ -8,6 +8,7 @@ Falcon (0.9.1.9)
            constructor to work as previously done by DirectoryOpen.
   * added: Directory.descend (it's meant to be a reminder for a complete
            do() framework).
+  * fixed: List.first() wasn't returning a fully prepared iterator.
            
 Falcon (0.9.1.8)
   * fixed: faltest didn't output help text when called with -h/-?

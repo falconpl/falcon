@@ -929,13 +929,14 @@ FALCON_FUNC  Iterator_insert( ::Falcon::VMachine *vm )
       }
       break;
 
-      case FLC_ITEM_OBJECT:
+      default:
       {
          CoreIterator *iter = dyncast<CoreIterator *>( self->getFalconData() );
-         if ( iter->insert( *i_key ) )
+         if( iter->insert( *i_key ) )
+         {
             return;
+         }
       }
-      break;
    }
 
    vm->raiseRTError( new AccessError( ErrorParam( e_arracc ).extra( "Iterator.insert" ) ) );
