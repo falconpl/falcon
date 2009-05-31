@@ -40,4 +40,9 @@ if not isoob( arr[2] ): failure( "Oob maitanin" )
 if isoob( item ): failure( "Oob remove" )
 if item != arr[2]: failure( "Equality of different oob stated data" )
 
+if not isoob( oob( "String" ) ): failure( "Oob immediate string" )
+l = oob( "String" )
+if not isoob(l): failure( "Oob copied string" )
+
+success()
 /* End of file */
