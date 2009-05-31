@@ -9,7 +9,9 @@ Falcon (0.9.1.9)
   * added: Directory.descend (it's meant to be a reminder for a complete
            do() framework).
   * fixed: List.first() wasn't returning a fully prepared iterator.
-           
+  * fixed: Oob wasn't working properly on immediate strings.
+  * fixed: isoob() was returning 0 or 1 instead or false/true.
+
 Falcon (0.9.1.8)
   * fixed: faltest didn't output help text when called with -h/-?
   * fixed: Operator overriding in blessed dictionaries had many issues.

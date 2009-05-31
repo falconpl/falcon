@@ -146,7 +146,7 @@ FALCON_FUNC  core_isoob( ::Falcon::VMachine *vm )
       return;
    }
 
-   vm->retval( (int64) (obbed->isOob() ? 1 : 0 ) );
+   vm->regA().setBoolean( obbed->isOob() );
 }
 
 }
