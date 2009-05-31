@@ -260,9 +260,14 @@ void VMachine::run()
                m_msg_head = msg->next();
                // it is ok if m_msg_tail is left dangling.
                m_mtx_mesasges.unlock();
-
-               processMessage( msg );
-               //delete msg;
+               if ( msg->error() )
+               {
+                  the_error = msg->error();
+                  the_error->incref();
+                  delete msg;
+               }
+               else
+                  processMessage( msg );  // do not delete msg
 
                // see if we have more messages in the meanwhile
                m_mtx_mesasges.lock();

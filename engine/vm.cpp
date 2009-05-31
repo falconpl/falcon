@@ -3531,36 +3531,45 @@ void VMachine::postMessage( VMMessage *msg )
    if ( m_baton.tryAcquire() )
    {
       processMessage( msg );
-      execFrame();
-      m_baton.release();
-   }
-   else
-   {
-      // ok, wa can't do it now; post the message
-      m_mtx_mesasges.lock();
-
-      if ( m_msg_head == 0 )
+      
+      try {
+         execFrame();
+      }
+      catch( Error* err )
       {
-         m_msg_head = msg;
+         // forward the error to this VM for sync management
+         msg = new VMMessage( "error" );
+         msg->error( err );
       }
-      else {
-         m_msg_tail->append( msg );
-      }
-
-      // reach the end of the msg list and set the new tail
-      while( msg->next() != 0 )
-         msg = msg->next();
-
-      m_msg_tail = msg;
-
-      // also, ask for early checks.
-      // We're really not concerned about spurious reads here or in the other thread,
-      // everything would be ok even without this operation. It's just ok if some of
-      // the two threads sync on this asap.
-      m_opNextCheck = m_opCount;
-
-      m_mtx_mesasges.unlock();
+      
+      m_baton.release();
+      return;
    }
+   
+   // ok, we can't do it now; post the message
+   m_mtx_mesasges.lock();
+
+   if ( m_msg_head == 0 )
+   {
+      m_msg_head = msg;
+   }
+   else {
+      m_msg_tail->append( msg );
+   }
+
+   // reach the end of the msg list and set the new tail
+   while( msg->next() != 0 )
+      msg = msg->next();
+
+   m_msg_tail = msg;
+
+   // also, ask for early checks.
+   // We're really not concerned about spurious reads here or in the other thread,
+   // everything would be ok even without this operation. It's just ok if some of
+   // the two threads sync on this asap.
+   m_opNextCheck = m_opCount;
+
+   m_mtx_mesasges.unlock();
 }
 
 void VMachine::processMessage( VMMessage *msg )

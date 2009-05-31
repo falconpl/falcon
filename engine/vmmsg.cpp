@@ -32,7 +32,8 @@ VMMessage::VMMessage( const String &msgName ):
    m_params(0),
    m_allocated(0),
    m_pcount(0),
-   m_next(0)
+   m_next(0),
+   m_error(0)
 {
 }
 
@@ -47,6 +48,16 @@ VMMessage::~VMMessage()
       }
       memFree( m_params );
    }
+   
+   if ( m_error != 0 )
+      m_error->decref();
+}
+
+
+void VMMessage::error( Error* err )
+{
+   err->incref(); 
+   m_error = err; 
 }
 
 

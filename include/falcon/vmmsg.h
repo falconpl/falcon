@@ -29,6 +29,8 @@ namespace Falcon {
 
 class GarbageLock;
 class VMachine;
+class Error;
+
 /** Asynchronous message for the Virtual Machine.
 
    When the virtual machine receives this, it executes a broadcast loop on a coroutine
@@ -49,6 +51,7 @@ class FALCON_DYN_CLASS VMMessage: public BaseAlloc
    uint32 m_allocated;
    uint32 m_pcount;
    VMMessage *m_next;
+   Error* m_error;
 
 public:
    /** Creates a VMMessage without parameters.
@@ -101,6 +104,14 @@ public:
       Should be called only by the target VM.
    */
    VMMessage *next() const { return m_next; }
+   
+   /** Transform this message in an async error notification.
+      The error is inc-reffed.
+   */
+   void error( Error* err );
+   
+   /** Returns the error associated with this message */
+   Error* error() const { return m_error; }
 };
 
 }

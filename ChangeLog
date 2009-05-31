@@ -11,6 +11,8 @@ Falcon (0.9.1.9)
   * fixed: List.first() wasn't returning a fully prepared iterator.
   * fixed: Oob wasn't working properly on immediate strings.
   * fixed: isoob() was returning 0 or 1 instead or false/true.
+  * fixed: PostMessage() wasn't forwarding errors to the main VM loop in case
+           of asynchronous message posting.
 
 Falcon (0.9.1.8)
   * fixed: faltest didn't output help text when called with -h/-?
