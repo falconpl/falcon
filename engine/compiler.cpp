@@ -317,7 +317,7 @@ void Compiler::raiseError( int code, const String &errorp, int line )
    SyntaxError *error = new SyntaxError( ErrorParam(code, line)
          .origin( e_orig_compiler ) );
    error->extraDescription( errorp );
-   error->module( m_module->path() );
+   error->module( String(m_module->path()).bufferize() );
 
    raiseError( error );
 }

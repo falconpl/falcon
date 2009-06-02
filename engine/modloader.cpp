@@ -354,7 +354,7 @@ Module *ModuleLoader::loadFile( const URI& uri, t_filetype type, bool scan )
       throw new CodeError( ErrorParam( e_unknown_vfs )
          .extra( uri.scheme() )
             .origin( e_orig_loader )
-            .module( "(loader)" ) );
+            );
    }
 
    // Check wether we have absolute files or files to be searched.
@@ -376,7 +376,7 @@ Module *ModuleLoader::loadFile( const URI& uri, t_filetype type, bool scan )
                .extra( Engine::getMessage( msg_io_curdir ) )
                .origin( e_orig_loader )
                .sysError( error )
-               .module( "(loader)" ) );
+               );
          }
          origUri.path( curdir + "/" + origUri.path() );
       }
@@ -517,7 +517,7 @@ Module *ModuleLoader::loadFile( const String &module_path, t_filetype type, bool
       throw new CodeError( ErrorParam( e_malformed_uri )
             .extra( module_path )
             .origin( e_orig_loader )
-            .module( "(loader)" ) );
+            );
    }
    
    return loadFile( origUri, type, scan );
@@ -804,7 +804,6 @@ void  ModuleLoader::raiseError( int code, const String &expl, int fsError )
             .extra( expl )
             .origin( e_orig_loader )
             .sysError( fsError )
-            .module( "(loader)" )
          );
 }
 

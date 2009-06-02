@@ -110,7 +110,8 @@ void Runtime::addModule( Module *mod, bool isPrivate )
          }
          catch( Error* e)
          {
-            e->module( mod->path() );
+            if ( e->module() == "" )
+               e->module( mod->path() );
             delete dep;
             throw e;
          }
