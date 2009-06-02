@@ -13,7 +13,8 @@ Falcon (0.9.1.9)
   * fixed: isoob() was returning 0 or 1 instead or false/true.
   * fixed: PostMessage() wasn't forwarding errors to the main VM loop in case
            of asynchronous message posting.
-  * fixed: More correct error messages in case of problems loading submodules. 
+  * fixed: More correct error messages in case of problems loading submodules.
+  * added: Method wordSize() to MemBuf metaclass.
 
 Falcon (0.9.1.8)
   * fixed: faltest didn't output help text when called with -h/-?

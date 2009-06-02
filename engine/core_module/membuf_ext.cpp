@@ -417,6 +417,17 @@ FALCON_FUNC MemoryBuffer_limit( ::Falcon::VMachine *vm )
    }
 }
 
+
+/*#
+   @method wordSize MemoryBuffer
+   @brief Returns the number of bytes used to store each entry of this Memory Buffer.
+   @return Size of each memory buffer entity in bytes.
+*/
+FALCON_FUNC MemoryBuffer_wordSize( ::Falcon::VMachine *vm )
+{
+   vm->retval( (int64) vm->self().asMemBuf()->wordSize() );
+}
+
 /*#
    @method fill MemoryBuffer
    @brief Fills all the elements in the memory buffer with a given value.

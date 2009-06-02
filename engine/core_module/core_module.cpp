@@ -450,6 +450,7 @@ Module* core_module_init()
    self->addClassMethod( membuf_meta, "remaining", &Falcon::core::MemoryBuffer_remaining );
    self->addClassMethod( membuf_meta, "fill", &Falcon::core::MemoryBuffer_fill ).asSymbol()->
       addParam("value");
+   self->addClassMethod( membuf_meta, "wordSize", &Falcon::core::MemoryBuffer_wordSize );
    self->addClassMethod( membuf_meta, "ptr", &Falcon::core::MemoryBuffer_ptr );
 
 

@@ -38,7 +38,7 @@ namespace Falcon {
 // Generic fail
 void co_fail()
 {
-   throw new TypeError( ErrorParam( e_invop ) );
+   throw new TypeError( ErrorParam( e_invop ).extra( "op" ) );
 }
 
 //=============================================================

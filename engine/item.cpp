@@ -489,7 +489,7 @@ void Item::toString( String &target ) const
          target.writeNumber( (int64) this->asMemBuf()->length() );
          target += " words long ";
             target.writeNumber( (int64) this->asMemBuf()->wordSize() );
-         target += "bytes }";
+         target += " bytes }";
       break;
 
       case FLC_ITEM_STRING:
