@@ -136,10 +136,10 @@ void sdl_surface_pixels_rfrom(CoreObject *co, void *user_data, Item &property, c
 
    switch( surf->format->BytesPerPixel )
    {
-      case 1: mb = new MemBuf_1( (byte*)surf->pixels, surf->h * surf->pitch, false ); break;
-      case 2: mb = new MemBuf_2( (byte*)surf->pixels, surf->h * surf->pitch, false ); break;
-      case 3: mb = new MemBuf_3( (byte*)surf->pixels, surf->h * surf->pitch, false ); break;
-      case 4: mb = new MemBuf_4( (byte*)surf->pixels, surf->h * surf->pitch, false ); break;
+      case 1: mb = new MemBuf_1( (byte*)surf->pixels, surf->h * surf->w, false ); break;
+      case 2: mb = new MemBuf_2( (byte*)surf->pixels, surf->h * surf->w, false ); break;
+      case 3: mb = new MemBuf_3( (byte*)surf->pixels, surf->h * surf->w, false ); break;
+      case 4: mb = new MemBuf_4( (byte*)surf->pixels, surf->h * surf->w, false ); break;
       default:
          fassert( false );
          return;
