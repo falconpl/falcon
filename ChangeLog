@@ -15,6 +15,8 @@ Falcon (0.9.1.9)
            of asynchronous message posting.
   * fixed: More correct error messages in case of problems loading submodules.
   * added: Method wordSize() to MemBuf metaclass.
+  * fixed: Particular errors in class declaration may have caused error detection
+           to segfault.
 
 Falcon (0.9.1.8)
   * fixed: faltest didn't output help text when called with -h/-?

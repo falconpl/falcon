@@ -1705,20 +1705,22 @@ class_decl:
          Falcon::StmtClass *cls = static_cast<Falcon::StmtClass *>($$);
 
          // if the class has no constructor, create one in case of inheritance.
-         if( cls->ctorFunction() == 0  )
+         if( cls != 0 )
          {
-            Falcon::ClassDef *cd = cls->symbol()->getClassDef();
-            if ( cd->inheritance().size() != 0 )
+            if ( cls->ctorFunction() == 0  )
             {
-               COMPILER->buildCtorFor( cls );
-               // COMPILER->addStatement( func ); should be done in buildCtorFor
-               // cls->ctorFunction( func ); idem
+               Falcon::ClassDef *cd = cls->symbol()->getClassDef();
+               if ( cd->inheritance().size() != 0 )
+               {
+                  COMPILER->buildCtorFor( cls );
+                  // COMPILER->addStatement( func ); should be done in buildCtorFor
+                  // cls->ctorFunction( func ); idem
+               }
             }
+            COMPILER->popContext();
+            //We didn't pushed a context set
+            COMPILER->popFunction();
          }
-
-         COMPILER->popContext();
-         //We didn't pushed a context set
-         COMPILER->popFunction();
       }
 ;
 

@@ -30,10 +30,6 @@
 #include <math.h>
 
 /*#
-
-*/
-
-/*#
    @funset core_random Random functions
    @brief Functions providing random numbers and sequences.
    @beginset core_random
@@ -292,7 +288,7 @@ FALCON_FUNC  flc_randomGrab ( ::Falcon::VMachine *vm )
    @function randomDice
    @brief Performs a virtual dice set trow.
    @param dices Number of dices to be thrown.
-   @optParam sides Number of faces in the virtual dices.
+   @optparam sides Number of faces in the virtual dices.
    @return A random value which is the sum of the virtual throws.
 
    This function generates a series of successive @b dices throws,

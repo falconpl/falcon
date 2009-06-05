@@ -28,10 +28,6 @@
 #include <falcon/timestamp.h>
 #include <falcon/time_sys.h>
 
-/*#
-
-*/
-
 namespace Falcon {
 namespace core {
 

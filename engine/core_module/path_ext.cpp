@@ -300,7 +300,7 @@ void Path_extension_rto(CoreObject *instance, void *user_data, Item &property, c
       file = "somefile"
       ext = "anext"
       p = Path( [ unit, location, file, ext ] )
-   @endocde
+   @endcode
 
    @b nil can be passed if some part of the specification is not used.
 
