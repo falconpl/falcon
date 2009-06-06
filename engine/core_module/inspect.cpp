@@ -24,10 +24,6 @@
 #include <falcon/stream.h>
 #include <falcon/membuf.h>
 
-/*#
-
-*/
-
 namespace Falcon {
 namespace core {
 

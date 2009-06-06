@@ -21,10 +21,6 @@ namespace Falcon {
 namespace core {
 
 /*#
-
-*/
-
-/*#
    @class Iterator
    @brief Indirect pointer to sequences.
    @ingroup general_purpose

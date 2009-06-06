@@ -257,8 +257,7 @@ FALCON_FUNC Table_len( VMachine* vm )
    @raise AccessError if the table is empty.
    @return The first item in the table.
 
-   This method overloads the BOM method @a BOM.front. If the table
-   is not empty, it returns the first element.
+   If the table is not empty, it returns the first element (row) in the table.
 */
 FALCON_FUNC  Table_front ( ::Falcon::VMachine *vm )
 {
@@ -280,8 +279,7 @@ FALCON_FUNC  Table_front ( ::Falcon::VMachine *vm )
    @raise AccessError if the table is empty.
    @return The last item in the table.
 
-   This method overloads the BOM method @a BOM.back. If the table
-   is not empty, it returns the last element.
+   If the table is not empty, it returns the last element (row) in the table.
 */
 FALCON_FUNC  Table_back ( ::Falcon::VMachine *vm )
 {
@@ -491,8 +489,7 @@ FALCON_FUNC  Table_columnPos ( ::Falcon::VMachine *vm )
    column data is changed. Anyhow, the previous value is returned.
 
    Notice that the column data of an existing column may be nil; to know
-   if a column with a given name exists, use the @a Table.column method.
-
+   if a column with a given name exists, use the @a Table.columnPos method.
 */
 
 FALCON_FUNC  Table_columnData ( ::Falcon::VMachine *vm )
@@ -533,7 +530,7 @@ FALCON_FUNC  Table_columnData ( ::Falcon::VMachine *vm )
    also, it inherits all the table clumns, that can be accessed as bindings with the
    dot accessor and will resolve in one of the element in the array.
 
-   In case of success, through the BOM method @a BOM.tabRow it is possible to retreive
+   In case of success, through the BOM method @a Array.tabRow it is possible to retreive
    the table row position of the returned array.
 */
 FALCON_FUNC  Table_find ( ::Falcon::VMachine *vm )
@@ -1094,7 +1091,7 @@ FALCON_FUNC  Table_choice ( ::Falcon::VMachine *vm )
    @optparam offer Offer column (number or name).
    @optparam rows Range of rows in which to perform the bidding.
    @return The winning row, or the coresponding value in the offer column.
-   @return AccessError if the table or ranges are empty.
+   @raise AccessError if the table or ranges are empty.
 
    This method calls iteratively all the items in a determined column of
    the table, recording their return value, which must be numeric. It is

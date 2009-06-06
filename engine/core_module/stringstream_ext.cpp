@@ -23,9 +23,6 @@
 #include <falcon/vm.h>
 #include <falcon/stringstream.h>
 
-/*#
-   
-*/
 
 namespace Falcon {
 namespace core {

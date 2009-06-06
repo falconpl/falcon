@@ -27,10 +27,6 @@
 #include <falcon/eng_messages.h>
 
 /*#
-   
-*/
-
-/*#
    @class CmdlineParser
    @brief Provides simple and powerful parsing of the command line options.
 

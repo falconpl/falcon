@@ -174,7 +174,7 @@ FALCON_FUNC  List_popFront ( ::Falcon::VMachine *vm )
    @raise AccessError if the list is empty.
    @return The first item in the list.
 
-   This method overloads the BOM method @a BOM.front. If the list
+   This method overloads the BOM method @b front. If the list
    is not empty, it returns the first element.
 */
 FALCON_FUNC  List_front ( ::Falcon::VMachine *vm )
@@ -197,7 +197,7 @@ FALCON_FUNC  List_front ( ::Falcon::VMachine *vm )
    @raise AccessError if the list is empty.
    @return The last item in the list.
 
-   This method overloads the BOM method @a BOM.back. If the list
+   This method overloads the BOM method @b back. If the list
    is not empty, it returns the last element.
 */
 FALCON_FUNC  List_back ( ::Falcon::VMachine *vm )

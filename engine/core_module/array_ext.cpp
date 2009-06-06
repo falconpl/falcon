@@ -32,13 +32,6 @@ namespace Falcon {
 namespace core {
 
 /*#
-   @class Array
-   @brief MetaClass for Falcon arrays.
-
-   This is the class reflecting the base array classes.
-*/
-
-/*#
    @method front Array
    @brief Returns and eventually extracts the first element in the array.
    @optparam remove true to remove the front item.

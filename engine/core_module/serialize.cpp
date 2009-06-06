@@ -29,10 +29,6 @@
 #include <falcon/stream.h>
 
 /*#
-
-*/
-
-/*#
    @funset core_serialization Serialization functions
    @brief Function used to store items persistently.
 
@@ -98,12 +94,7 @@ namespace core {
    is raised.
 
    The BOM method @a BOM.serialize is available for all the Falcon items,
-   and is equivalent to call this function. Also, the method
-   @a Stream.writeItem is equivalent to this function; the difference in
-   BOM.serialize() and Stream.writeItem() is only in the fact that
-   Item.serialize() accepts a stream on which to perform the serialization as the
-   parameter, while Stream.writeItem() must be provided with the item to be
-   serialized.
+   and is equivalent to call this function. 
 */
 FALCON_FUNC  mth_serialize ( ::Falcon::VMachine *vm )
 {
@@ -158,8 +149,7 @@ FALCON_FUNC  mth_serialize ( ::Falcon::VMachine *vm )
    If the underlying stream read causes an i/o failure, an error is raised.
 
    Also, an error is raised if the function cannot deserialize from the stream
-   because the data format is invalid. This call is equivalent to call
-   @a Stream.readItem method.
+   because the data format is invalid.
 */
 
 FALCON_FUNC  deserialize ( ::Falcon::VMachine *vm )

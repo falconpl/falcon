@@ -25,13 +25,8 @@
 #include <falcon/membuf.h>
 #include "core_module.h"
 
-/*#
-
-*/
-
 namespace Falcon {
 namespace core {
-
 
 /*#
    @funset core_transcoding_functions Transcoding functions

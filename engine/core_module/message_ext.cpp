@@ -74,7 +74,7 @@ static void check_assertion( VMachine *vm, CoreSlot *cs, const Item &itm )
    @see getSlot
 
    Broadcast function implicitly searches for a Virtual Machine Message Slot (@a VMSlot)
-   with the given @a msg name, and if it finds it, it emits a broadcast on that.
+   with the given @b msg name, and if it finds it, it emits a broadcast on that.
 
    If the message is not found, the broadcast is silently dropped (no error is raised),
    but the function returns false.
@@ -366,7 +366,7 @@ FALCON_FUNC getAssert( ::Falcon::VMachine *vm )
 */
 
 /*#
-   @endgroup message_model
+   @endgroup
 */
 
 /*#

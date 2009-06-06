@@ -28,10 +28,6 @@
 #include <string.h>
 
 /*#
-
-*/
-
-/*#
    @funset core_string_functions String functions
    @brief Functions manipulating strings
 
@@ -79,15 +75,7 @@ static void process_strFrontBackParams( VMachine *vm, String* &str, bool &bNumer
 }
 
 /*#
-   @class String
-   @from BOM
-   @brief Metaclass for string items.
-
-   This is the set of methods that can be applied to string items.
-*/
-
-/*#
-   @method String charSize
+   @method charSize String
    @brief Returns or changes the size in bytes in this string.
    @optparam bpc New value for bytes per character (1, 2 or 4).
    @return This string if @b bpc is given, or the current character size value if not given.
@@ -1058,7 +1046,7 @@ FALCON_FUNC  mth_strTrim ( ::Falcon::VMachine *vm )
    @function strFrontTrim
    @brief Removes white spaces from the front of the string.
    @param string The string to be trimmed.
-   @optParam trimSet A set of characters that must be removed.
+   @optparam trimSet A set of characters that must be removed.
    @return The trimmed substring.
 
    A new string, which is a copy of the original one with all characters in @b trimSet
@@ -1129,7 +1117,7 @@ FALCON_FUNC  mth_strFrontTrim ( ::Falcon::VMachine *vm )
    @function strBackTrim
    @brief Removes white spaces at both the beginning and the end of the string.
    @param string The string to be trimmed.
-   @optParam trimSet A set of characters that must be removed.
+   @optparam trimSet A set of characters that must be removed.
    @return The trimmed substring.
 
    A new string, which is a copy of the original one with all characters in @b trimSet
@@ -1637,10 +1625,12 @@ FALCON_FUNC  mth_strCmpIgnoreCase ( ::Falcon::VMachine *vm )
    - "*" matches everything
    - "a?b" matches "aab", "adb" and so on
    - "a*b" matches "ab", "annnb" and so on
+   
+   @see String.wmatch
 */
 
 /*#
-   @method wmatch
+   @method wmatch String
    @brief Perform an old-style file-like jolly-based wildcard match.
    @param wildcard A wildcard, possibly but not necessarily including a jolly character.
    @optparam ignoreCase If true, the latin 26 base letters case is ignored in matches.
@@ -1657,6 +1647,8 @@ FALCON_FUNC  mth_strCmpIgnoreCase ( ::Falcon::VMachine *vm )
    - "*" matches everything
    - "a?b" matches "aab", "adb" and so on
    - "a*b" matches "ab", "annnb" and so on
+   
+   @see strWildcardMatch
 */
 FALCON_FUNC  mth_strWildcardMatch ( ::Falcon::VMachine *vm )
 {
@@ -1811,7 +1803,7 @@ FALCON_FUNC  mth_strWildcardMatch ( ::Falcon::VMachine *vm )
 */
 
 /*#
-   @method toMemBuf
+   @method toMemBuf String
    @brief Convets this string into a Memory Buffer
    @optparam wordWidth The memory buffer word width (defaults to string character size).
    @return The resulting membuf.

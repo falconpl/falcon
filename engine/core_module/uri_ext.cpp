@@ -26,10 +26,6 @@
 #include <falcon/eng_messages.h>
 #include <falcon/crobject.h>
 
-/*#
-
-*/
-
 namespace Falcon {
 namespace core {
 

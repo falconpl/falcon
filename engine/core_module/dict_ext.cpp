@@ -57,14 +57,6 @@ static void process_dictFrontBackParams( VMachine *vm, CoreDict* &dict, bool &bK
 ****************************************/
 
 /*#
-   @class Dictionary
-   @from BOM
-   @brief Metaclass for Falcon dictionary types.
-   
-   This class holds the methods that can be applied to Falcon dictionary items.
-*/
-
-/*#
    @method front Dictionary
    @brief Returns the first item in the dictionary.
    @optparam remove If true, remove the dictionary entry too.
@@ -162,7 +154,7 @@ FALCON_FUNC Dictionary_first( VMachine *vm )
 }
 
 /*#
-   @method first Dictionary
+   @method last Dictionary
    @brief Returns an iterator to the head of this dictionary.
    @return An iterator.
 */
@@ -525,7 +517,7 @@ FALCON_FUNC  mth_dictFill ( ::Falcon::VMachine *vm )
    returned if the value associated with a given key is exactly nil. In
    case the key cannot be found, the returned value will be marked as OOB.
    
-   @notice This method bypassess getIndex__ override in blessed (POOP) dictionaries.
+   @note This method bypassess getIndex__ override in blessed (POOP) dictionaries.
 
    @see oob
 */
@@ -569,7 +561,7 @@ FALCON_FUNC  mth_dictGet( ::Falcon::VMachine *vm )
    @param value The key to be set.
    @return True if the value was overwritten, false if it has been inserted anew.
    
-   @notice This method bypassess setIndex__ override in blessed (POOP) dictionaries.
+   @note This method bypassess setIndex__ override in blessed (POOP) dictionaries.
 
    @see oob
 */
@@ -581,7 +573,7 @@ FALCON_FUNC  mth_dictGet( ::Falcon::VMachine *vm )
    @param value The key to be set.
    @return True if the value was overwritten, false if it has been inserted anew.
    
-   @notice This method bypassess setIndex__ override in blessed (POOP) dictionaries.
+   @note This method bypassess setIndex__ override in blessed (POOP) dictionaries.
 
    @see oob
 */

@@ -5,7 +5,7 @@ Falcon provides an ever growing set of modules which interacts with the host sys
 Also, there are many function meant to operate on the standard types, or to interact
 with the Virtual Machine itself.
 
-@section The core module
+@section core_module The core module
 
    The core module interacts with the virtual machine, to the point that, at times,
    the virtual machine itself refers to it. In example, while the exceptions can be of
@@ -54,7 +54,7 @@ three mechanisms:
    - Suspension on sleep request
    - Synchronous periodic callback
 
-@section Wait Interruption Protocol
+@section wait_interrupt Wait Interruption Protocol
 
 Blocking operations performed by the Virtual Machine can be
 asynchronously interrupted from another thread of the application
@@ -76,7 +76,7 @@ Compliant waiting functions are mainly @a sleep, @a Stream.readAvailable,
 @a Stream.writeAvailable and a few others. Compliancy to interruption protocol
 is specified in the item descriptions.
 
-@section Suspension on sleep request.
+@section suspend_on_sleep Suspension on sleep request.
 
 Embedding applications may also require the VM to suspend its execution on sleep
 requests coming from the scripts or from extension modules. It is usefull to have
@@ -87,7 +87,7 @@ The Embedding application may also decide to ignore the request, to reset the VM
 and start a new execution or to destroy it. After a return in sleep request state,
 the VM is clear for inspection, modification, concurrent execution and termination.
 
-@section Synchronous periodic callback.
+@section periodic_callback Synchronous periodic callback.
 
 The VM provides a callback hook that will be periodically called. This hook can
 be used by embedding applications to check for program status change, and it may
@@ -103,4 +103,14 @@ alter the state of the running VM.
 Frequency of the periodic callback is expressed in count of virtual instructions
 executed, and can be regulated and changed live.
 
+*/
+
+/*#
+   @group coroutine_support Support for coroutines
+   @brief All that's useful for coroutines.
+*/
+
+/*#
+   @group general_purpose General purpose
+   @brief Generic language and type oriented functions.
 */

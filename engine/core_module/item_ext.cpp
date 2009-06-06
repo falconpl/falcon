@@ -44,6 +44,15 @@ namespace core {
    value is 0.
 */
 
+/*#
+   @method len BOM
+   
+   @brief Retreives the lenght of a collection
+   @return the count of items in the sequence, or 0.
+
+   The returned value represent the "size" of this item.
+   @see len
+*/
 FALCON_FUNC  mth_len ( ::Falcon::VMachine *vm )
 {
    Item *elem;
@@ -230,6 +239,14 @@ FALCON_FUNC  val_numeric ( ::Falcon::VMachine *vm )
    - @b ClassType - the item is a class
    - @b MethodType - the item is a method
    - @b ClassMethodType - the item is a method inside a class
+*/
+
+/*#
+   @method typeId BOM
+   @brief Returns an integer indicating the type of this item.
+   @return A constant indicating the type of the item.
+
+   See @a typeOf() function for details.
 */
 FALCON_FUNC  mth_typeId ( ::Falcon::VMachine *vm )
 {
@@ -1058,7 +1075,7 @@ FALCON_FUNC String_ptr( VMachine *vm )
 }
 
 /*#
-   @method ptr MemBuf
+   @method ptr MemoryBuffer
    @brief Returns the pointer to the raw memory stored in this memory buffer.
    @return A memory pointer.
    

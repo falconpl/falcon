@@ -121,6 +121,11 @@ Module* core_module_init()
       applied to any item, while methods defined in specific
       item metaclasses derived from BOM, as i.e. the @a Dictionary
       metaclass, can be applied only to items of the reflected type.
+      
+      @note The method @a BOM.compare is meant to overload the behavior
+      of generic VM comparisons, including relational operators
+      (<, >, <=, >=, ==, !=) and generic ordering criterions, for example in
+      @a Dictionary insertions and @a arraySort.
 
       @prop add__ Overrides +
       @prop sub__ Overrides -
@@ -133,7 +138,6 @@ Module* core_module_init()
       @prop dec__ Overrides -- (prefix)
       @prop incpost__ Overrides postfix ++
       @prop decpost__ Overrides posrfix --
-      @prop compare Overrides <, >, <=, >=, == and != (return 1, 0, -1 or nil)
       @prop call__ Overrides () call operator.
       @prop setIndex__ Overrides accessor [] in write mode. Will receive 2 parameters (index, set value)
       @prop getIndex__ Overrides accessor [] in read mode. Will receive 1 parameter (index)
@@ -196,6 +200,22 @@ Module* core_module_init()
    num_meta->exported( false );
    num_meta->getClassDef()->setMetaclassFor( FLC_ITEM_NUM );
 
+   /*#
+      @class Range
+      @from BOM
+      @ingroup bom_classes
+      @brief Metaclass for Falcon range type.
+
+      This class holds the methods that can be applied to Falcon range items.
+      Ranges are created through the @b [:] operator, like this:
+      @code
+         r1 = [1:10]          // 1 to 10
+         r2 = [-1:0]          // reverse sequence
+         r3 = [0:10:2]        // stepping range
+
+         > "Hello world"[r2]  // reverses the string
+      @endcode
+   */
    Falcon::Symbol *range_meta = self->addClass( "Range" );
    range_meta->getClassDef()->addInheritance( new Falcon::InheritDef( bom_meta ) );
    range_meta->exported( false );
@@ -212,7 +232,7 @@ Module* core_module_init()
       @class Function
       @from BOM
       @ingroup bom_classes
-      @brief Generic number type basic object model metaclass.
+      @brief Metaclass for Falcon function type.
    */
    Falcon::Symbol *func_meta = self->addClass( "Function" );
    func_meta->getClassDef()->addInheritance( new Falcon::InheritDef( bom_meta ) );
@@ -222,6 +242,15 @@ Module* core_module_init()
    self->addClassMethod( func_meta, "caller", &Falcon::core::Function_caller ).asSymbol()->
       addParam("level");    //static
 
+   /*#
+      @class GarbagePointer
+      @from BOM
+      @ingroup bom_classes
+      @brief Metaclass for internal and application-wide garbage sensible data.
+      
+      GarbagePointer is a class used to reflect opaque data which can be automatically
+      destroyed by the Falcon Garbage Collector when it goes out of scope.
+   */
    Falcon::Symbol *gcptr_meta = self->addClass( "GarbagePointer" );
    gcptr_meta->getClassDef()->addInheritance( new Falcon::InheritDef( bom_meta ) );
    gcptr_meta->exported( false );
@@ -246,7 +275,9 @@ Module* core_module_init()
       @class String
       @from BOM
       @ingroup bom_classes
-      @brief Generic number type basic object model metaclass.
+      @brief Metaclass for string items.
+
+      This is the set of methods that can be applied to string items.
    */
 
    Falcon::Symbol *string_meta = self->addClass( "String" );
@@ -306,7 +337,9 @@ Module* core_module_init()
       @class Array
       @from BOM
       @ingroup bom_classes
-      @brief Array type basic object model metaclass.
+      @brief MetaClass for Falcon arrays.
+
+      This is the class reflecting the base array classes.
    */
    self->addClassMethod( array_meta, "front", &Falcon::core::Array_front ).asSymbol()->
       addParam("remove");
@@ -365,7 +398,9 @@ Module* core_module_init()
       @class Dictionary
       @from BOM
       @ingroup bom_classes
-      @brief Dictionary type basic object model metaclass.
+      @brief Metaclass for Falcon dictionary types.
+
+      This class holds the methods that can be applied to Falcon dictionary items.
    */
    self->addClassMethod( dict_meta, "front", &Falcon::core::mth_dictFront ).asSymbol()->
       addParam("remove")->addParam("key");
@@ -419,12 +454,7 @@ Module* core_module_init()
    //==================================================================
    // MemoryBuffer class
    //
-   /*#
-      @class MemoryBuffer
-      @from BOM
-      @ingroup bom_classes
-      @brief Memory buffer type basic object model metaclass.
-   */
+   /* Docs for this class are in membuf_ext.cpp */
    Falcon::Symbol *membuf_meta = self->addClass( "MemoryBuffer" );
    membuf_meta->getClassDef()->addInheritance( new Falcon::InheritDef( bom_meta ) );
    membuf_meta->exported( false );
@@ -487,7 +517,7 @@ Module* core_module_init()
    //=======================================================================
 
    /*#
-      @entity args
+      @global args
       @brief Script arguments
       @ingroup general_purpose
 
@@ -499,7 +529,7 @@ Module* core_module_init()
    self->addGlobal( "args", true );
 
    /*#
-      @entity scriptName
+      @global scriptName
       @brief Logical module name of current module
       @ingroup general_purpose
 
@@ -509,7 +539,7 @@ Module* core_module_init()
    self->addGlobal( "scriptName", true );
 
    /*#
-      @entity scriptPath
+      @global scriptPath
       @brief Complete path used to load the script
       @ingroup general_purpose
 

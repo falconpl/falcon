@@ -15,9 +15,6 @@
 
 #include "core_module.h"
 
-/*#
-
-*/
 namespace Falcon {
 namespace core {
 
@@ -523,7 +520,7 @@ FALCON_FUNC  core_valof ( ::Falcon::VMachine *vm )
 
    A standard VM comparation is performed, so the standard
    ordering rules apply. This also means that objects overloading
-   the @a FBOM.compare method may provide specialized ordering
+   the @a BOM.compare method may provide specialized ordering
    rules.
 
    If more than one item is found equal and lesser than
@@ -568,7 +565,7 @@ FALCON_FUNC  core_min ( ::Falcon::VMachine *vm )
 
    A standard VM comparation is performed, so the standard
    ordering rules apply. This also means that objects overloading
-   the @a FBOM.compare method may provide specialized ordering
+   the @a BOM.compare method may provide specialized ordering
    rules.
 
    If more than one item is found equal and greater than

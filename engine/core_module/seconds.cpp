@@ -22,17 +22,13 @@
 #include <windows.h>
 #endif
 
-/*#
-   
-*/
-
 namespace Falcon {
 namespace core {
 
 
 /*#
    @function seconds
-   @inset core_general_purpose
+   @inset general_purpose
    @brief Returns the number of seconds since the "epoch" as reported by the system.
    @return The number of seconds and fractions of seconds in a floating point value.
 

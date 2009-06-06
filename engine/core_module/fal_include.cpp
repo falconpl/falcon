@@ -29,7 +29,7 @@ namespace core {
    @optparam path A string of ';' separated search paths.
    @optparam symDict Symbols to be queried (or nil).
 
-   @raise IOError if the module cannot be found or loaded.
+   @raise IoError if the module cannot be found or loaded.
 
    A module indicated by filename is compiled, loaded and linked in the
    running Virtual Machine. The inclusion is relative to the current

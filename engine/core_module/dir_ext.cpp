@@ -34,10 +34,6 @@
 #include <string.h>
 
 /*#
-
-*/
-
-/*#
    @begingroup core_syssupport
 */
 
@@ -258,7 +254,7 @@ FALCON_FUNC FileStat_init( ::Falcon::VMachine *vm )
 }
 
 /*#
-   @method readStats FileStat
+   @method read FileStat
    @brief Fills the data in this instance reading them from a system file.
    @param filename Relative or absolute path to a file for which stats must be read
    @return True on success, false if the file cannot be queried.
@@ -448,7 +444,7 @@ FALCON_FUNC  fileNameSplit ( ::Falcon::VMachine *vm )
 }
 
 
-/*
+/*#
    @function fileNameMerge
    @brief Merges a filename split up in four elements.
    @param spec The disk or server specification, an array containing all the
@@ -528,7 +524,7 @@ FALCON_FUNC  fileNameMerge ( ::Falcon::VMachine *vm )
    vm->retval( new CoreString( p.get() ) );
 }
 
-/*
+/*#
    @function fileName
    @brief Determines the name of a file in a complete path.
    @param path A string containing a path.
@@ -567,7 +563,7 @@ FALCON_FUNC  fileName ( ::Falcon::VMachine *vm )
 }
 
 
-/*
+/*#
    @function filePath
    @brief Return the path specification part in a complete filename.
    @param fullpath A string containing a path.

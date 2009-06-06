@@ -38,7 +38,7 @@ namespace core {
 
    The TimeStamp class can be used to retrieve the system time and date.
    It is also used by other entities in the RTL to return informations
-   about the date (i.e. the @a FileReadStats ).
+   about the date (i.e. the @a FileStat).
 
    @prop year Timestamp year, absolute value.
    @prop month Month of the year, starting from 1.

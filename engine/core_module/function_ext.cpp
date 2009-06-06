@@ -22,7 +22,7 @@ namespace core {
 /*#
    @method name Function
    @brief Gets the symbolic name of the given function.
-   @returns A string containing the function name
+   @return A string containing the function name
 
    This is useful if the function symbol or has been
    re-assigned to temporary variables, or if it is applied
@@ -43,7 +43,7 @@ FALCON_FUNC  Function_name ( ::Falcon::VMachine *vm )
    @method caller Function
    @brief Gets the direct caller or one of the calling ancestors.
    @optparam level Caller level (starting from zero, the default).
-   @returns The item having performed the nth call.
+   @return The item having performed the nth call.
 
    This function returns the n-th caller (zero based) that caused
    this function to be called. It may be a function, a method

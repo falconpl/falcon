@@ -25,13 +25,6 @@
 
 /*#
 
-*/
-
-/*#
-   @begingroup core_syssupport
-*/
-
-/*#
    @funset core_environ Environment support
    @brief Functions used to access the process environment variables.
 
@@ -42,6 +35,7 @@
    Variables set with "setenv()" will be available to child processes in case
    they are launched with the utilities in the Process module.
 
+   @begingroup core_syssupport
    @beginset core_environ
 */
 

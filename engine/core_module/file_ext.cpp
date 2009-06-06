@@ -548,7 +548,7 @@ FALCON_FUNC  Stream_readLine ( ::Falcon::VMachine *vm )
 /*#
    @method grabLine Stream
    @brief Grabs a line of text encoded data.
-   @sparam size Maximum count of characters to be read before to return anyway.
+   @param size Maximum count of characters to be read before to return anyway.
    @return A string containing the read line.
    @raise IoError on system errors.
 
@@ -638,8 +638,8 @@ FALCON_FUNC  Stream_grabLine ( ::Falcon::VMachine *vm )
    copying the memory buffers.
 
    MemBuf items can participate to stream binary writes through their internal
-   position pointers. The buffer is written from @a MemBuf.position up to
-   @a MemBuf.limit, and upon completion @a MemBuf.position is advanced accordingly
+   position pointers. The buffer is written from @a MemoryBuffer.position up to
+   @a MemoryBuffer.limit, and upon completion @a MemoryBuffer.position is advanced accordingly
    to the number of bytes effectively stored on the stream. When a MemBuf is
    used, @b size and @b start parameters are ignored.
 */
@@ -1750,9 +1750,11 @@ FALCON_FUNC  stdErrRaw ( ::Falcon::VMachine *vm )
    internal_make_stream( vm, new RawStdErrStream(), 2 );
 }
 
+/*# @endset */
+
 /*#
    @function systemErrorDescription
-   @inset core_general_purpose
+   @inset general_purpose
    @brief Returns a system dependent message explaining an integer error code.
    @param errorCode A (possibly) numeric error code that some system function has returned.
    @return A system-specific error description.
@@ -1970,7 +1972,7 @@ FALCON_FUNC  Stream_setBuffering ( ::Falcon::VMachine *vm )
    @brief Returns the size of I/O buffering active on this stream.
    @return 0 if the stream is unbuffered or a positive number if it is buffered.
 
-   @see setBuffering
+   @see Stream.setBuffering
 */
 
 FALCON_FUNC  Stream_getBuffering ( ::Falcon::VMachine *vm )

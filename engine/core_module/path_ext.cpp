@@ -306,6 +306,7 @@ void Path_extension_rto(CoreObject *instance, void *user_data, Item &property, c
 
    @note Use the fileNameMerge() function to simply merge elements of a path
    specification into a string.
+   
    @see fileNameMerge
 */
 

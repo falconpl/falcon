@@ -167,7 +167,7 @@ FALCON_FUNC  Tokenizer_rewind ( ::Falcon::VMachine *vm )
    @raise IoError on errors on the underlying stream.
    @raise CodeError if called on an unprepared Tokenizer.
 
-   This method is actually a combination of @a Tokenizer.next followed by @a Tokenizer.current.
+   This method is actually a combination of @a Tokenizer.next followed by @a Tokenizer.token.
 
    Sample usage:
    @code
@@ -203,17 +203,17 @@ FALCON_FUNC  Tokenizer_nextToken ( ::Falcon::VMachine *vm )
    @raise CodeError if called on an unprepared Tokenizer.
 
    Contrarily to iterators, it is necessary to call this method at least once
-   before @a Tokenizer.current is available.
+   before @a Tokenizer.token is available.
 
    For example:
    @code
    t = Tokenizer( source|"A string to be tokenized" )
    while t.next()
-      > "Token: ", t.current()
+      > "Token: ", t.token()
    end
    @endcode
 
-   @see Tokenizer.current
+   @see Tokenizer.token
 */
 
 FALCON_FUNC  Tokenizer_next ( ::Falcon::VMachine *vm )
