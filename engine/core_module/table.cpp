@@ -60,6 +60,8 @@ FALCON_FUNC Table_init( VMachine* vm )
    table->setCurrentPage(0);
 
    CoreObject *self = vm->self().asObject();
+   self->setUserData( table );
+
 
    // now we can safely add every other row that has been passed.
    for (int i = 1; i < vm->paramCount(); i ++ )
@@ -77,11 +79,8 @@ FALCON_FUNC Table_init( VMachine* vm )
          return;
       }
       vi->asArray()->table( self );
-
       table->insertRow( vi->asArray() );
    }
-
-   self->setUserData( table );
 }
 
 

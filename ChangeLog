@@ -17,6 +17,10 @@ Falcon (0.9.1.9)
   * added: Method wordSize() to MemBuf metaclass.
   * fixed: Particular errors in class declaration may have caused error detection
            to segfault.
+  * fixed: Array back-mark to its table did not deep-mark its data; as a result,
+           the table got marked with the current generation and skipped its mark
+           processing loop as a standard object. This exposes the need to 
+           rationalize and simplify the Garbage/mark Object/gcMark interface.
 
 Falcon (0.9.1.8)
   * fixed: faltest didn't output help text when called with -h/-?

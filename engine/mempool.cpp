@@ -268,6 +268,7 @@ void MemPool::electOlderVM()
 
 void MemPool::clearRing( GarbageableBase *ringRoot )
 {
+   TRACE( "Entering sweep %d, allocated %d \n", gcMemAllocated(), m_allocatedItems );
    // delete the garbage ring.
    int32 killed = 0;
    GarbageableBase *ring = m_garbageRoot->nextGarbage();
@@ -314,6 +315,8 @@ void MemPool::clearRing( GarbageableBase *ringRoot )
    fassert( killed <= m_allocatedItems );
    m_allocatedItems -= killed;
    m_mtx_newitem.unlock();
+   
+   TRACE( "Sweeping done, allocated %d (killed %d)\n", m_allocatedItems, killed );
 }
 
 
@@ -500,9 +503,9 @@ void MemPool::markItem( const Item &item )
             }
 
             // and also the table
-            if ( array->table() != 0 )
+            if ( array->table() != 0 && array->table()->mark() != gen )
             {
-               array->table()->mark( gen );
+               array->table()->gcMarkData( gen );
             }
          }
       }
@@ -515,6 +518,8 @@ void MemPool::markItem( const Item &item )
          {
             co->gcMarkData( gen );
          }
+         else
+            co = 0;
       }
       break;
 

@@ -443,7 +443,7 @@ bool CoreTable::insert( CoreIterator *iter, const Item &item )
 void CoreTable::gcMark( uint32 mark )
 {
    uint32 i;
-
+   
    // mark the header data...
    for ( i = 0; i < m_headerData.size(); i ++ )
    {
@@ -456,7 +456,15 @@ void CoreTable::gcMark( uint32 mark )
       CoreArray* page = *(CoreArray**)m_pages.at(i);
       //page->mark( mark );
       for ( uint32 iid = 0; iid < page->length(); ++iid )
-         memPool->markItem( page->at( iid ) );
+      {
+         CoreArray* row = page->at( iid ).asArray();
+         row->mark(mark);
+         for( uint32 rid = 0; rid < row->length(); rid ++ )
+            memPool->markItem( row->elements()[rid] );
+         
+         if ( row->bindings() != 0 )
+            memPool->markItem( SafeItem(row->bindings() ) );
+      }
    }
 }
 

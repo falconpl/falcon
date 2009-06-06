@@ -141,6 +141,8 @@ protected:
 
    /** Guard for ramp modes. */
    mutable Mutex m_mtx_ramp;
+   
+   mutable Mutex m_mtx_gen;
 
    bool markVM( VMachine *vm );
    void gcSweep();
@@ -169,11 +171,6 @@ protected:
    void promote( uint32 oldgen, uint32 curgen );
    void advanceGeneration( VMachine* vm, uint32 oldGeneration );
 
-   enum constants {
-      MAX_GENERATION = 0xFFFFFFFE,
-      SWEEP_GENERATION = 0xFFFFFFFF
-   };
-
    RampMode* m_ramp[RAMP_MODE_COUNT];
    RampMode* m_curRampMode;
    int m_curRampID;
@@ -184,6 +181,11 @@ protected:
 
 
 public:
+   enum constants {
+      MAX_GENERATION = 0xFFFFFFFE,
+      SWEEP_GENERATION = 0xFFFFFFFF
+   };
+
    /** Builds a memory pool.
       Initializes all element at 0 and set buffer sizes to the FALCON default.
    */
@@ -216,7 +218,10 @@ public:
 
    /** Returns the current generation. */
    uint32 generation() const { return m_generation; }
-
+   /*
+   void generation( uint32 i );
+   uint32 incgen();
+   */
    /** Stores a garbageable instance in the pool.
       Called by the Garbageable constructor to ensure accounting of this item.
    */
