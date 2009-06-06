@@ -360,6 +360,9 @@ bool CoreTable::removePage( uint32 pos )
       // can't delete the only page left.
       return false;
    }
+   
+   // declare the page dead
+   page(pos)->mark(1);
 
    // are we going to remove the current page?
    if ( m_currentPageId == pos )

@@ -44,6 +44,7 @@ Falcon (0.9.1.8)
   * fixed: Format wasn't correctly parsing ":0" (zero-length variable length
            integer formatting).
   * fixed: Escapes at the beginning of multiline double-quote strings were lost.
+  * fixed: Possible reaping of table pages by an execessive GC usage.
   
 Falcon (0.9.1.6)
   * fixed: In loop statement, continue looped from the top skipping the
