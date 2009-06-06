@@ -8,9 +8,9 @@
 # Documentation generic data
 ################################################
 
-Title = Falcon - Base Function Reference.
+Title = Falcon - Core Function Reference.
 Author = The Falcon Committee
-Version = 0.9.0
+Version = 0.9.2
 
 ################################################
 # Faldoc Input settings
@@ -28,7 +28,8 @@ Input.extra=main.fd
 # Faldoc Output settings
 ################################################
 
-Output.module=html
+#Output.module=html
+Output.module=list
 
 ################################################
 # Faldoc HTML Output settings
@@ -36,6 +37,16 @@ Output.module=html
 # Output.<module>.<parameters> configs
 ################################################
 
-Output.html.directory=Falcon-docs-core.0.9.0
+Output.html.directory=Falcon-docs-core.0.9.2
 Output.html.url=.
 Output.html.doctitle=Falcon Function Reference
+
+################################################
+# Faldoc listing Output settings
+################################################
+
+Output.list.file=coreModule-0.9.2.lst
+Output.list.doctitle=Falcon Core Module - Function List
+Output.list.bytype=true
+Output.list.members=true
+Output.list.brief=true

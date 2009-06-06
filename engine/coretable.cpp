@@ -191,6 +191,13 @@ CoreTable::~CoreTable()
       memFree( m_biddingVals );
       m_biddingVals = 0;
    }
+   
+   for( uint32 i = 0; i < m_pages.size(); i++ )
+   {
+      // allow the pages to get killed.
+      page(i)->mark( 1 );
+   }
+
 }
 
 bool CoreTable::setHeader( CoreArray *header )
@@ -444,7 +451,7 @@ void CoreTable::gcMark( uint32 mark )
    for( i = 0; i < m_pages.size(); i++ )
    {
       CoreArray* page = *(CoreArray**)m_pages.at(i);
-      page->mark( mark );
+      //page->mark( mark );
       for ( uint32 iid = 0; iid < page->length(); ++iid )
          memPool->markItem( page->at( iid ) );
    }
