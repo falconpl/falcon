@@ -30,6 +30,10 @@
 #include "confparser_mod.h"
 #include "confparser_st.h"
 
+/*#
+   @beginmodule feather_configparser
+*/
+
 namespace Falcon {
 namespace Ext {
 

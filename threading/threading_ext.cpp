@@ -27,6 +27,10 @@
 #include "threading_mod.h"
 #include "threading_st.h"
 
+/*#
+   @beginmodule feathers_threading
+*/
+
 namespace Falcon {
 namespace Ext {
 

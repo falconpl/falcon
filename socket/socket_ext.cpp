@@ -720,7 +720,7 @@ FALCON_FUNC  TCPSocket_send( ::Falcon::VMachine *vm )
    @method recv TCPSocket
    @brief Reads incoming data.
    @param bufOrSize A pre-allocated buffer to fill, or a maximum size in bytes to be read.
-   @optParam size Maximum size in bytes to be read.
+   @optparam size Maximum size in bytes to be read.
    @return If @b bufOrSize is a size, returns a filled string buffer, otherwise it returns
       the amount of bytes actually read.
    @raise NetError on network error.
@@ -1161,7 +1161,7 @@ FALCON_FUNC  UDPSocket_sendTo( ::Falcon::VMachine *vm )
    @method recv UDPSocket
    @brief Reads incoming data.
    @param bufOrSize A pre-allocated buffer to fill, or a maximum size in bytes to be read.
-   @optParam size Maximum size in bytes to be read.
+   @optparam size Maximum size in bytes to be read.
    @return If @b bufOrSize is a size, returns a filled string buffer, otherwise it returns
       the amount of bytes actually read.
    @raise NetError on network error.

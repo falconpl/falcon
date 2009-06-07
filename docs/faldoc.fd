@@ -10,7 +10,7 @@
 
 Title = Falcon Feathers - The Standard Modules Reference.
 Author = The Falcon Committee
-Version = 0.9.0
+Version = 0.9.2
 
 ################################################
 # Faldoc Input settings
@@ -36,7 +36,8 @@ Input.extra=main.fd
 # Faldoc Output settings
 ################################################
 
-Output.module=html
+#Output.module=html
+Output.module=list
 
 ################################################
 # Faldoc HTML Output settings
@@ -44,7 +45,16 @@ Output.module=html
 # Output.<module>.<parameters> configs
 ################################################
 
-Output.html.directory=Falcon-feathers-docs.0.9.0
+Output.html.directory=Falcon-feathers-docs.0.9.2
 Output.html.url=.
 Output.html.doctitle=Falcon Feathers Function Reference
 
+################################################
+# Faldoc listing Output settings
+################################################
+
+Output.list.file=Falcon-feathers-0.9.2.lst
+Output.list.doctitle=Falcon Feather Modules - Function List
+Output.list.bytype=true
+Output.list.members=true
+Output.list.brief=true
