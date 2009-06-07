@@ -1754,7 +1754,7 @@ FALCON_FUNC  stdErrRaw ( ::Falcon::VMachine *vm )
 
 /*#
    @function systemErrorDescription
-   @inset general_purpose
+   @ingroup general_purpose
    @brief Returns a system dependent message explaining an integer error code.
    @param errorCode A (possibly) numeric error code that some system function has returned.
    @return A system-specific error description.

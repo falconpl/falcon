@@ -31,7 +31,6 @@ namespace core {
 
 /*#
    @function vmVersionInfo
-   @ingroup vminfo
    @inset vminfo
    @brief Returns an array containing VM version informations.
    @return Major, minor and revision numbers of the running virtual machine in a 3 elements array.
@@ -47,7 +46,6 @@ FALCON_FUNC  vmVersionInfo( ::Falcon::VMachine *vm )
 
 /*#
    @function vmModuleVersionInfo
-   @ingroup vminfo
    @inset vminfo
    @brief Returns an array containing current module version informations.
    @return Major, minor and revision numbers of the curerntly being executed module,
@@ -77,7 +75,6 @@ FALCON_FUNC  vmModuleVersionInfo( ::Falcon::VMachine *vm )
 
 /*#
    @function vmVersionName
-   @ingroup vminfo
    @inset vminfo
    @brief Returns the nickname for this VM version.
    @return A string containing the symbolic name of this VM version.
@@ -90,7 +87,6 @@ FALCON_FUNC  vmVersionName( ::Falcon::VMachine *vm )
 
 /*#
    @function vmSystemType
-   @ingroup vminfo
    @inset vminfo
    @brief Returns a descriptive name of the overall system architecture.
    @return A string containing a small descriptiuon of the system architecture.
@@ -106,7 +102,6 @@ FALCON_FUNC  vmSystemType( ::Falcon::VMachine *vm )
 
 /*#
    @function vmIsMain
-   @ingroup vminfo
    @inset vminfo
    @brief Returns true if the calling module is the main module of the application.
    @return True if the calling module is the main module.
@@ -152,7 +147,6 @@ FALCON_FUNC vmIsMain( ::Falcon::VMachine *vm )
 
 /*#
    @function vmFalconPath
-   @ingroup vminfo
    @inset vminfo
    @brief Returns default system path for Falcon load requests.
    @return The default compiled-in load path, or the value of the
@@ -176,7 +170,6 @@ FALCON_FUNC vmFalconPath( ::Falcon::VMachine *vm )
 
 /*#
    @function vmSearchPath
-   @ingroup vminfo
    @inset vminfo
    @brief Returns the application specific load path.
    @return A module search path as set by the application when creating the virtual machine.
@@ -194,7 +187,6 @@ FALCON_FUNC vmSearchPath( ::Falcon::VMachine *vm )
 
 /*#
    @function vmModuleName
-   @ingroup vminfo
    @inset vminfo
    @brief Returns the logical name of this module.
    @return Logical name of this module.
@@ -215,7 +207,6 @@ FALCON_FUNC vmModuleName( ::Falcon::VMachine *vm )
 
 /*
    @function vmModulePath
-   @ingroup vminfo
    @inset vminfo
    @brief Returns the phisical path (complete URI) from which this module was loaded.
    @return A string representing the load URI that individuates this module.
@@ -231,7 +222,6 @@ FALCON_FUNC vmModulePath( ::Falcon::VMachine *vm )
 
 /*
    @function vmRelativePath
-   @ingroup vminfo
    @inset vminfo
    @param path A relative (or absolute) path to a target file.
    @brief Relativize the URI of a given file to the path of the current module.

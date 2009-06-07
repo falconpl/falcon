@@ -28,7 +28,7 @@ namespace core {
 
 /*#
    @function seconds
-   @inset general_purpose
+   @ingroup general_purpose
    @brief Returns the number of seconds since the "epoch" as reported by the system.
    @return The number of seconds and fractions of seconds in a floating point value.
 

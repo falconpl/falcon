@@ -35,7 +35,7 @@ namespace core {
 
 /*#
    @function itemCopy
-   @inset general_purpose
+   @ingroup general_purpose
    @brief Performs a shallow copy of one item.
    @param item The item to be copied.
    @return A copy of the item.
