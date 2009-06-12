@@ -587,6 +587,90 @@ FALCON_FUNC Module_getReference( ::Falcon::VMachine *vm )
 }
 
 /*#
+   @method globals Module
+   @brief Returns the list of global symbols available in this module.
+   @return An array containing all the global symbols.
+
+   This method returns an array containing a list of strings, each one
+   representing a name of a global symbol exposed by this module.
+   
+   The symbol names can be then fed in @a Module.set and @a Module.get methods
+   to manipulate the symbols in the module.
+*/
+FALCON_FUNC Module_globals( ::Falcon::VMachine *vm )
+{
+   CoreObject *self = vm->self().asObject();
+   ModuleCarrier *modc = static_cast<ModuleCarrier *>( self->getUserData() );
+
+   // if the module is not alive, raise an error and exit
+   if ( modc == 0 || ! modc->liveModule()->isAlive() )
+   {
+      vm->raiseModError( new AccessError( ErrorParam( FALCOMP_ERR_UNLOADED, __LINE__ ).
+         desc( FAL_STR( cmp_msg_unloaded ) ) ) );
+      return;
+   }
+
+   const SymbolTable *symtab = &modc->liveModule()->module()->symbolTable();
+   CoreArray* ret = new CoreArray( symtab->size() );
+   MapIterator iter = symtab->map().begin();
+   while( iter.hasCurrent() )
+   {
+      Symbol *sym = *(Symbol **) iter.currentValue();
+      if ( ! sym->isUndefined() )
+         ret->append( new CoreString(sym->name()) );
+      // next symbol
+      iter.next();
+   }
+
+   vm->retval( ret );
+}
+
+/*#
+   @method exported Module
+   @brief Returns the list of exported symbols available in this module.
+   @return An array containing all the exported symbols.
+
+   This method returns an array containing a list of strings, each one
+   representing a name of a global symbol exported by this module.
+   
+   The symbol names can be then fed in @a Module.set and @a Module.get methods
+   to manipulate the symbols in the module.
+   
+   Notice that exported symbols are ignored by the module loader; they
+   are used by the Virtual Machine to fulfil @b load requests, but this
+   doesn't imply that they are honoured in every case.
+   
+*/
+FALCON_FUNC Module_exported( ::Falcon::VMachine *vm )
+{
+   CoreObject *self = vm->self().asObject();
+   ModuleCarrier *modc = static_cast<ModuleCarrier *>( self->getUserData() );
+
+   // if the module is not alive, raise an error and exit
+   if ( modc == 0 || ! modc->liveModule()->isAlive() )
+   {
+      vm->raiseModError( new AccessError( ErrorParam( FALCOMP_ERR_UNLOADED, __LINE__ ).
+         desc( FAL_STR( cmp_msg_unloaded ) ) ) );
+      return;
+   }
+
+   const SymbolTable *symtab = &modc->liveModule()->module()->symbolTable();
+   CoreArray* ret = new CoreArray( symtab->size() );
+   MapIterator iter = symtab->map().begin();
+   while( iter.hasCurrent() )
+   {
+      Symbol *sym = *(Symbol **) iter.currentValue();
+      if ( sym->exported() )
+         ret->append( new CoreString(sym->name()) );
+         
+      // next symbol
+      iter.next();
+   }
+
+   vm->retval( ret );
+}
+
+/*#
    @method unload Module
    @brief Removes the module from the running virtual machine.
    @return True on success, false on failure.

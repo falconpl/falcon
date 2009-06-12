@@ -3,6 +3,7 @@ Feathers (0.9.1.7)
            compiler module.
   * fixed: The RunTime used by the reflex compiler thought it had the
            main module.
+  * added: globals() and exported() methods to Module.
            
 Feathers (0.9.1.6)
   * minor: Added getName(), setName(), getSystemID() and toString()

@@ -218,7 +218,8 @@ FALCON_MODULE_DECL
    c_module->setWKS( true );
    self->addClassProperty( c_module, "name" );
    self->addClassProperty( c_module, "path" );
-
+   self->addClassMethod( c_module, "exported", &Falcon::Ext::Module_exported );
+   self->addClassMethod( c_module, "globals", &Falcon::Ext::Module_globals );
    self->addClassMethod( c_module, "get", &Falcon::Ext::Module_get ).asSymbol()->
       addParam("symName");
    self->addClassMethod( c_module, "set", &Falcon::Ext::Module_set ).asSymbol()->

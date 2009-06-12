@@ -42,6 +42,8 @@ FALCON_FUNC Compiler_setDirective( ::Falcon::VMachine *vm );
 FALCON_FUNC Compiler_addFalconPath( ::Falcon::VMachine *vm );
 
 
+FALCON_FUNC Module_globals( ::Falcon::VMachine *vm );
+FALCON_FUNC Module_exported( ::Falcon::VMachine *vm );
 FALCON_FUNC Module_get( ::Falcon::VMachine *vm );
 FALCON_FUNC Module_set( ::Falcon::VMachine *vm );
 FALCON_FUNC Module_getReference( ::Falcon::VMachine *vm );
