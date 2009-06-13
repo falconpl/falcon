@@ -73,7 +73,9 @@ void LiveModule::detachModule()
 
    for ( i = 0; i < m_globals.size(); ++i )
    {
-      m_globals.itemAt( i ).dereference()->setNil();
+      // disengage but not dereferece; we want to nil the globals here,
+      // not to destroy the imported symbols.
+      m_globals.itemAt( i ).setNil();
    }
 
    for ( i = 0; i < m_wkitems.size(); ++i )

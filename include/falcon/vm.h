@@ -987,7 +987,7 @@ public:
       Then the routine whose name is given is searched in the top module (the one that has been added last
       to the runtime). If not found there, it is searched in the exported symbols of the whole runtime.
       If not given, the __main__ symbol of the top module is executed. If the required symbol cannot be
-      found an error is risen and false is returned.
+      found an error is raised and false is returned.
 
       The routine returns true if execution is successful; the VM may return because the routine terminates,
       because of an explicit END opcode and because execution limit (single step or limited step count) is
