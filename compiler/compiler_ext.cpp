@@ -154,6 +154,7 @@ void internal_link( ::Falcon::VMachine *vm, Module *mod, CompilerIface *iface )
    rt.addModule( mod, true );
    
    bool ll = vm->launchAtLink();
+   LiveModule* lmod = 0;
    
    // avoid a re-throw in the fast-path
    if ( iface->launchAtLink() != ll )
@@ -161,7 +162,7 @@ void internal_link( ::Falcon::VMachine *vm, Module *mod, CompilerIface *iface )
       vm->launchAtLink( iface->launchAtLink() );
    
       try {
-         vm->link( &rt );
+         lmod = vm->link( &rt );
          vm->launchAtLink( ll );
       }
       catch( ... )
@@ -171,7 +172,7 @@ void internal_link( ::Falcon::VMachine *vm, Module *mod, CompilerIface *iface )
       }
    }
    else
-      vm->link( &rt );
+      lmod = vm->link( &rt );
 
    // ok, the module is up and running.
    // wrap it
@@ -179,7 +180,7 @@ void internal_link( ::Falcon::VMachine *vm, Module *mod, CompilerIface *iface )
    fassert( mod_class != 0 );
    CoreObject *co = mod_class->asClass()->createInstance();
    // we know the module IS in the VM.
-   co->setUserData( new ModuleCarrier( vm->findModule( mod->name() ) ) );
+   co->setUserData( new ModuleCarrier( lmod ) );
 
    co->setProperty( "name", mod->name() );
    co->setProperty( "path", mod->path() );
@@ -362,11 +363,9 @@ FALCON_FUNC Compiler_loadFile( ::Falcon::VMachine *vm )
             .extra( "S,[S]" ) );
    }
 
-
    CompilerIface *iface = dyncast<CompilerIface*>( vm->self().asObject() );
    Module *mod = 0;
    
-      
    try {
       mod = iface->loader().loadFile( *i_name->asString() );
       
