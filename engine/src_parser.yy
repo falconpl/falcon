@@ -1835,6 +1835,7 @@ init_decl:
 
             // prepare the statement allocation context
             COMPILER->pushContext( func );
+            COMPILER->pushFunctionContext( func );
             COMPILER->pushContextSet( &func->statements() );
             COMPILER->pushFunction( func->symbol()->getFuncDef() );
          }
@@ -1848,6 +1849,7 @@ init_decl:
          COMPILER->popContext();
          COMPILER->popContextSet();
          COMPILER->popFunction();
+         COMPILER->popFunctionContext();
       }
 ;
 

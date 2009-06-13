@@ -23,6 +23,7 @@ Falcon (0.9.1.9)
            rationalize and simplify the Garbage/mark Object/gcMark interface.
   * fixed: LiveModule::detach() was nilling the original (imported) values
            rather than the local objects.
+  * fixed: fself wasn't working in init blocks.
 
 Falcon (0.9.1.8)
   * fixed: faltest didn't output help text when called with -h/-?
