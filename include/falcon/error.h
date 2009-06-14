@@ -26,7 +26,7 @@
 #include <falcon/item.h>
 #include <falcon/genericlist.h>
 #include <falcon/string.h>
-#include <falcon/reflectobject.h>
+#include <falcon/crobject.h>
 #include <falcon/reflectfunc.h>
 
 namespace Falcon {
@@ -66,7 +66,7 @@ extern reflectionFuncDecl Error_line_rto;
 extern reflectionFuncDecl Error_pc_rto;
 
 /** Reflective class for error */
-class ErrorObject: public ReflectObject
+class ErrorObject: public CRObject
 {
 public:
    ErrorObject( const CoreClass* cls, Error *err );

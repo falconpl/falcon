@@ -24,6 +24,7 @@ Falcon (0.9.1.9)
   * fixed: LiveModule::detach() was nilling the original (imported) values
            rather than the local objects.
   * fixed: fself wasn't working in init blocks.
+  * fixed: Error class couldn't be inherited from scripts.
 
 Falcon (0.9.1.8)
   * fixed: faltest didn't output help text when called with -h/-?

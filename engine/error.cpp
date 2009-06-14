@@ -524,7 +524,7 @@ void Error_pc_rto(CoreObject *instance, void *userData, Item &property, const Pr
 // Reflector
 
 ErrorObject::ErrorObject( const CoreClass* cls, Error *err ):
-   ReflectObject( cls, err )
+   CRObject( cls, err )
 {
    if ( err != 0 )
       err->incref();
