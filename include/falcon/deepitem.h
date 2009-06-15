@@ -38,7 +38,7 @@ class Item;
    This is always true for the VM and ancillary modules.
 
    Code directly implementing this access at lower level,
-   as in example, getting a character from a string, doesn't
+   as for example, getting a character from a string, doesn't
    need to be consistent with this behavior (i.e. it may just
    return false on set error).
 

@@ -472,7 +472,7 @@ FALCON_FUNC  ParseError_init ( ::Falcon::VMachine *vm )
    does not respect this protocol, the item cannot be cloned.
 
    When this error is raised, it is usually because the script
-   tried to explicitly duplicate a "very special object" (in example,
+   tried to explicitly duplicate a "very special object" (for example,
    as an external resource handle created by a module).
 */
 FALCON_FUNC  CloneError_init ( ::Falcon::VMachine *vm )

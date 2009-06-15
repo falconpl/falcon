@@ -40,7 +40,7 @@ namespace core {
    can be generated for them using first() and last() BOM methods. Also,
    instances of the List class can be used as any other sequence in for/in loops.
 
-   In example, the following code:
+   For example, the following code:
    @code
    descr = List("blue", "red", "gray", "purple")
 
@@ -337,7 +337,7 @@ FALCON_FUNC  List_erase ( ::Falcon::VMachine *vm )
 
    Inserts an item at the position indicated by the iterator. After a successful
    insert, the new item is placed before the old one and the iterator points to the
-   new item. In example, if inserting at the position indicated by first(), the new
+   new item. For example, if inserting at the position indicated by first(), the new
    item is appended in front of the list and the iterator still points to the first
    item. To insert at the end of the list, get last() iterator, and move it forward
    with next(). The iterator is then invalidated, but an insert() will append an

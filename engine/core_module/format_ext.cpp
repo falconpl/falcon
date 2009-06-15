@@ -74,7 +74,7 @@ namespace core {
           while if it's set to zero, decimal numbers will be rounded.
 
       @b Decimal @b separator: a 'd' followed by any non-cipher character will be interpreted as decimal
-      separator setting. In example, to use central European standard for decimal nubmers and limit the
+      separator setting. For example, to use central European standard for decimal nubmers and limit the
       output to 3 decimals, write ".3d,", or "d,.3". The default value is '.'.
 
       @b (Thousands) @b Grouping: actually it's the integer part group separator, as it will be displayed

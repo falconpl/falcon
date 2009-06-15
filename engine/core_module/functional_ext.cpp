@@ -51,7 +51,7 @@ namespace core {
    so that when the VM finds a special construct in its evaluation process, it ceases using the
    default evaluation algorithm and passes evaluation control to the construct.
 
-   In example, the iff construct selects one of its branches to be evaluated only if the first
+   For example, the iff construct selects one of its branches to be evaluated only if the first
    parameter evaluates to true:
    @code
    list = [iff, someValueIsTrue, [func0, [func1, param1]], [func1, param2] ]
@@ -71,7 +71,7 @@ namespace core {
 
    Please, notice that "callable" doesn't necessarily mean "evaluable". To evaluate in functional
    context a callable symbol without parameter, it must be transformed into a single-element array.
-   In example:
+   For example:
    @code
    function func0(): ...
 
@@ -306,7 +306,7 @@ static bool core_anyp_next( ::Falcon::VMachine *vm )
 
    This function works like @a any, but the sequence may be specified directly
    in the parameters rather being given in a separate array. This make easier to write
-   anyp in callable arrays. In example, one may write
+   anyp in callable arrays. For example, one may write
    @code
       [anyp, 1, k, n ...]
    @endcode
@@ -392,7 +392,7 @@ static bool core_allp_next( ::Falcon::VMachine *vm )
 
    This function works like @a all, but the collection may be specified directly
    in the parameters rather being given in a separate array. This make easier to
-   write allp in callable arrays. In example, one may write
+   write allp in callable arrays. For example, one may write
    @code
       [allp, 1, k, n ...]
    @endcode
@@ -613,7 +613,7 @@ FALCON_FUNC  core_max ( ::Falcon::VMachine *vm )
    If mfunc returns an out of band nil item, map skips the given position in the target array,
    actually acting also as a filter function.
 
-   In example:
+   For example:
    @code
       function mapper( item )
          if item < 0: return oob(nil)  // discard negative items
@@ -850,7 +850,7 @@ static bool core_times_next_( ::Falcon::VMachine *vm )
    an out-of-band 0 or 1. If any function in the sequence returns an out-of-band 0, @b times terminates and
    return immediately (performing an operation similar to "break"). If a function returns an out-of-band 1,
    the rest of the items in @b sequence are ignored, and the loop is restarted with the index updated; this
-   is equivalent to a functional "continue". In example:
+   is equivalent to a functional "continue". For example:
 
    @code
    times( 10,
@@ -863,7 +863,7 @@ static bool core_times_next_( ::Falcon::VMachine *vm )
 
    The @b times function return the last generated value for the index. A natural termination of @b times
    can be detected thanks to the fact that the index is equal to the upper bound of the range, while
-   an anticipated termination causes @b times to return a different index. In example, if @b count is
+   an anticipated termination causes @b times to return a different index. For example, if @b count is
    10, the generated index (possibly received by the items in @b sequence) will range from 0 to 9 included,
    and if the function terminates correctly, it will return 10. If a function in @b sequence returns an
    out-of-band 0, causing a premature termination of the loop, the value returned by times will be the loop
@@ -1162,7 +1162,7 @@ static bool core_xmap_next( ::Falcon::VMachine *vm )
    The filter function may return an out of band nil item to signal that the current item should
    not be added to the final collection.
 
-    In example:
+    For example:
    @code
 
       mapper = { item => item < 0 ? oob(nil) : item ** 0.5 }
@@ -1422,7 +1422,7 @@ static bool core_iff_next( ::Falcon::VMachine *vm )
    Basically, this function is meant to return the second parameter or the third (or nil if not given),
    depending on the value of the first parameter; however, every item is evaluated in a functional
    context. This means that cfr may be a callable item, in which case its return value will be evaluated
-   for truthfulness, and also the other parameters may. In example:
+   for truthfulness, and also the other parameters may. For example:
    @code
       > iff( 0, "was true", "was false" )           // will print "was false"
       iff( [{a=>a*2}, 1] , [printl, "ok!"] )       // will print "ok!" and return nil
@@ -1556,7 +1556,7 @@ FALCON_FUNC  core_choice ( ::Falcon::VMachine *vm )
    This function is meant to interrupt functional evaluation of lists. It has
    the same meaning of the single quote literal ' operator of the LISP language.
 
-   In example, the following code will return either a callable instance of printl,
+   For example, the following code will return either a callable instance of printl,
    which prints a "prompt" before the parameter, or a callable instance of inspect:
    @code
       iff( a > 0, [lit, [printl, "val: "] ], inspect)( param )
@@ -1709,7 +1709,7 @@ static bool core_cascade_next ( ::Falcon::VMachine *vm )
    If the first function of the list declines processing by returning an oob item, the initial parameters
    are all passed to the second function, and so on till the last call.
 
-   In example:
+   For example:
 
    @code
       function whichparams( a, b )
@@ -1922,7 +1922,7 @@ FALCON_FUNC  core_firstof ( ::Falcon::VMachine *vm )
    The return value of this function, both used directly or pre-cached,
    can be seamlessly merged with the & operator in functional sequences.
 
-   In example, it is possible to write the following loop:
+   For example, it is possible to write the following loop:
    @code
       eval( .[
          .[ times 10 &count .[

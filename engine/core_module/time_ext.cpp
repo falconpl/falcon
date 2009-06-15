@@ -441,7 +441,7 @@ FALCON_FUNC  TimeStamp_toRFC2822 ( ::Falcon::VMachine *vm )
    shift between the @a TimeStamp.timezone member and the @b zone parameter. After the
    shift is performed, the new zone is set in the timezone property of this object.
 
-   In example, to convert the local time in GMT:
+   For example, to convert the local time in GMT:
    @code
       now = CurrentTime()
       > "Local time: ", now
@@ -453,7 +453,7 @@ FALCON_FUNC  TimeStamp_toRFC2822 ( ::Falcon::VMachine *vm )
    it is possible to set an arbitrary time and timezone by normal assignment, and then
    convert it to another time zone using this method.
 
-   In example:
+   For example:
    @code
       a_gmt_time = decodeTime( "..." )
       // let's say we know the timestamp is GMT.

@@ -1023,7 +1023,7 @@ public:
 
       If a symbol name is provided, then the symbol is executed retaining all the current
       status. The symbol is searched in the locals of the top module, and then in the
-      global of the runtime eaxtly as for launch(). This is useful, in example, to provide
+      global of the runtime eaxtly as for launch(). This is useful, for example, to provide
       callback entry points in scripts that must maintain their execution status between
       calls. In this way, each run maintain the previous status but grants execution of
       different entry points; also this is quite faster than having to enter the realization
@@ -1996,7 +1996,7 @@ public:
       embedding application. To provide application specific per-vm data to
       the scripts, the best solution for embedding applications is usually
       to extend the VM into a subclass. Contrarily, middleware extensions,
-      as, in example, script plugins for applications, may prefer to use the
+      as, for example, script plugins for applications, may prefer to use the
       standard Falcon VM and use this pointer to store application specific data.
 
       The VM makes no assumption on the kind of user data. The data is not destroyed

@@ -35,7 +35,7 @@
    bit more specific than just "operate".
 
    Some embedding applications may provide the scripts with a command line too;
-   in example, a "scanner" script in a FPS game may be provided with the objects
+   for example, a "scanner" script in a FPS game may be provided with the objects
    to search for in a "command line", that may be actually the string that represents
    its configuration in the user interface.
 
@@ -50,21 +50,21 @@
    The command line parser knows the following option categories:
 
    - @b short @b options: options consisting of a single character, case sensitive,
-     following a single "-". In example, "-a", "-B", "-x". Short options may be
-     chained in sequences of characters as, in example "-aBx" which is
+     following a single "-". For example, "-a", "-B", "-x". Short options may be
+     chained in sequences of characters as, for example "-aBx" which is
      equivalent to "-a -B -x". Short options may have also the special
      "switch off" semantic; if they are followed by a "-" sign, the parser
-     interprets it as a will to turn off some feature; in example, the
+     interprets it as a will to turn off some feature; for example, the
      sequence "-B-" means that the "B" option should be turned off.
      The semantic can be expressed also in chained options as "-aB-x".
 
    - @b long @b options: they consists of two minus followed by a word of any
-     length, as in example "--parameter", "--config", "--elements".
+     length, as for example "--parameter", "--config", "--elements".
      Long options are usually (but not necessarily) meant to receive a parameter,
-     in example "--debug off".
+     for example "--debug off".
 
    - @b free @b options: they are strings not leaded by any "-" sign. Usually the semantic
-     of a command gives free options a special meaning; in example the "cp" unix command
+     of a command gives free options a special meaning; for example the "cp" unix command
      accept an arbitrary amount of free options, where the first N-1 options are
      the name of the files to copy, and the Nth option is the copy destination.
      A single "-" not followed by any letter is considered a free option
@@ -78,7 +78,7 @@
 
    Short and long options may be parametric. The word (or string) following parametric
    option is considered the parameter of that option, and is not subject to parsing.
-   In example, if "--terminator" is a parametric option, it is possible to write
+   For example, if "--terminator" is a parametric option, it is possible to write
    "./myprg.fal --terminator -opt". The parameter "-opt" will be passed as-is to the
    script as "terminator" option parameter. In case of short option chaining,
    if more than one chained option is parametric, the parameter following the chained
@@ -90,7 +90,7 @@
    in the CmdlineParser class. The parser will call the methods of the subclasses as
    it finds options in the argument vector; the callbacks will configure the application,
    report errors and mis-usage, terminate the program on fatal errors and communicate
-   with the parser through member functions. In example, it is not necessary to declare
+   with the parser through member functions. For example, it is not necessary to declare
    in advance which are the parametric options; it's done on a per-option basis by calling
    the expectParam() method and returning to the parser.
 
@@ -204,7 +204,7 @@ namespace core {
    Start the parsing process. If args parameter is not provided, the method gets
    the content of the @a args global vector defined in the Core module.
 
-   Returns true if the parsing was complete, and false on error (in example,
+   Returns true if the parsing was complete, and false on error (for example,
    if some element in the array wasn't a string).
 */
 FALCON_FUNC  CmdlineParser_parse( ::Falcon::VMachine *vm )

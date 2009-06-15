@@ -26,7 +26,7 @@ namespace core {
    by embedding applications) is adequate for average scripts.
 
    However, some script meant to start from command line and dealing with time
-   critical data may find the action of the garbage collector too intrusive. In example
+   critical data may find the action of the garbage collector too intrusive. For example
    the GC may occuur at the wrong time. Other times, calculation intensive programs
    may generate a lot of data that they know in advance can be never garbaged
    during some period. In those case, having GC to scan periodically the

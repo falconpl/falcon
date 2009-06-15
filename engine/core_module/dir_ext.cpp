@@ -872,7 +872,7 @@ FALCON_FUNC  Directory_error( ::Falcon::VMachine *vm )
    It is possible to specify both a relative or absolute path; both
    the relative and absolute path can contain a subtree specification,
    that is, a set of directories separated by forward slashes, which
-   lead to the directory that should be created. In example:
+   lead to the directory that should be created. For example:
 
    @code
       dirMake( "top/middle/bottom" )

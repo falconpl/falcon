@@ -450,7 +450,7 @@ FALCON_FUNC  mth_strSplitTrimmed ( ::Falcon::VMachine *vm )
    at worst a single element containing a copy of the whole string passed as a
    parameter.
 
-   In example, the following may be useful to parse a INI file where keys are
+   For example, the following may be useful to parse a INI file where keys are
    separated from values by "=" signs:
 
    @code
@@ -683,7 +683,7 @@ FALCON_FUNC  mth_strMerge ( ::Falcon::VMachine *vm )
 
    If this string is not empty, it is copied between each joined string.
 
-   In example, the next code separates each value with ", "
+   For example, the next code separates each value with ", "
 
    @code
    > ", ".join( "have", "a", "nice", "day" )
@@ -1621,7 +1621,7 @@ FALCON_FUNC  mth_strCmpIgnoreCase ( ::Falcon::VMachine *vm )
 
    The wildcard must match completely the given string for the function to return true.
 
-   In example:
+   For example:
    - "*" matches everything
    - "a?b" matches "aab", "adb" and so on
    - "a*b" matches "ab", "annnb" and so on
@@ -1643,7 +1643,7 @@ FALCON_FUNC  mth_strCmpIgnoreCase ( ::Falcon::VMachine *vm )
 
    The wildcard must match completely the given string for the function to return true.
 
-   In example:
+   For example:
    - "*" matches everything
    - "a?b" matches "aab", "adb" and so on
    - "a*b" matches "ab", "annnb" and so on

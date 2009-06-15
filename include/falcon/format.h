@@ -27,7 +27,7 @@
 
 /* To be added to docs in the next version.
 convType
-Type of conversion; determines what type of variable is expected when formatting, depending on the format string. In example, when a decimal number is indicated in the format string, it is implied that the input variable to be formatted is meant to be a numeric value.
+Type of conversion; determines what type of variable is expected when formatting, depending on the format string. for example, when a decimal number is indicated in the format string, it is implied that the input variable to be formatted is meant to be a numeric value.
 decimalChr
 Unicode character used to separate decimal parts of numbers. Defaults to '.'.
 decimals
@@ -35,7 +35,7 @@ Number of decimals that should be represented. Zero means to represent only inte
 fixedSize
 If true, the 'size' field is mandatory, and representation of this variable is truncated to a maximum of 'size' characters.
 grouping
-Count of grouping characters in numeric representation. In example, a number like "1,000,000" has a grouping of 3, while Japanese stanrd representation is 4-grouping (like "10,0000"). Zero means no grouping.
+Count of grouping characters in numeric representation. For example, a number like "1,000,000" has a grouping of 3, while Japanese stanrd representation is 4-grouping (like "10,0000"). Zero means no grouping.
 groupingChr
 Character using for grouping. Defaults to comma (',').
 misAct
@@ -215,8 +215,8 @@ public:
       more character.
 
       Formats are meant to deal with different item types. A format thought
-      for a certain kind of object, in example, a number, may be applied to something
-      different, in example, a string, or the other way around.
+      for a certain kind of object, for example, a number, may be applied to something
+      different, for example, a string, or the other way around.
 
       For this reason, Falcon formats include also what to do if the given item is
       not thought for the given format.
@@ -231,10 +231,10 @@ public:
 
       - Padding: the padding character is appended after the formatted size, or it is prepended
             before it alignment is right. To define padding character, use 'p'
-            followed by the character. In example, p0 to fill the field with zeroes. Of course,
+            followed by the character. For example, p0 to fill the field with zeroes. Of course,
             the character may be any Unicode character (the format string accepts standard
             falcon character escapes). In the special case of p0, front sign indicators
-            are placed at the beginning of the field; in example "4p0+" will produce "+001"
+            are placed at the beginning of the field; for example "4p0+" will produce "+001"
             "-002" and so on, while "4px+" will produce "xx+1", "xx-2" etc.
 
       - Numeric base: the way an integer should be rendered. It may be:
@@ -256,7 +256,7 @@ public:
             will be rounded.
 
       - Decimal separator: a 'd' followed by any non-cipher character will be interpreted as
-            decimal separator setting. In example, to use central european standard for
+            decimal separator setting. For example, to use central european standard for
             decimal nubmers and limit the output to 3 decimals, write ".3d,", or "d,.3".
             The default value is '.'.
 
@@ -265,7 +265,7 @@ public:
             'g' followed by the separator character, it defaults to ','. Normally,
             it is not displayed; to activate it set also the integer grouping digit count;
             normally is 3, but it's 4 in Jpanaese and Chinese localses, while it may be useful
-            to set it to 2 or 4 for hexadecimal, 3 for octal and 4 or 8 for binary. In example
+            to set it to 2 or 4 for hexadecimal, 3 for octal and 4 or 8 for binary. For example
             'g4-' would group digits 4 by 4, grouping them with a "-". Zero would disable
             grouping.
 
@@ -284,12 +284,12 @@ public:
             and use the padding character in front and after positive numbers. Using parenthesis
             will prevent using '+', '++' or '--' formats. Format '-^' will add a - in front of
             padding space if the number is negative, while '+^' will add plus or minus depending
-            on number sign. In example, "5+" would render -12 as "  -12", while "5+^" will render
+            on number sign. For example, "5+" would render -12 as "  -12", while "5+^" will render
             as "-  12". If alignment is to the right, the sign will be added at the other side
             of the padding: "5+^r" would render -12 as "12  -".
             If size is not mandatory, parenthesis
             will be wrapped around the formatted field, while if size is mandatory they will be
-            wrapped around the whole field, included padding. In example "5[r" on -4 would render
+            wrapped around the whole field, included padding. For example "5[r" on -4 would render
             as "  (4)", while "5*[r" would render as "(  4)".
 
       - Object specific format: Objects may accept an object specific formatting as parameter
@@ -310,7 +310,7 @@ public:
          - 'nA': nil is rendered with "NA"
 
       - Action on error: Normally, if trying to format something different from
-            what is expected, format() the method will simply return false. In example,
+            what is expected, format() the method will simply return false. For example,
             to format a string in a number, a string using the date formatter, a number in
             a simple pad-and-size formatter etc. To change this
             behavior, use '/' followed by one of the following:
@@ -319,7 +319,7 @@ public:
                 the neuter member of the expected type.
          - 'r': raise a type error.
          A 'c' letter may be added after the '/' and before the specifier to try a basic conversion
-               into the expected type before triggering the requested effect. This will, in example,
+               into the expected type before triggering the requested effect. This will, for example,
                cause the toString() method of objects to be called if the formatting is detected
                to be a string-type format.
 

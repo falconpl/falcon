@@ -64,7 +64,7 @@ public:
 
    /** Skip the string table from a stream.
       This is useful when i.e. you have a string table embedded in a stream
-      but you don't want to load it, in example because you want to use
+      but you don't want to load it, for example because you want to use
       an external string table instead.
    */
    bool skip( Stream *in ) const;

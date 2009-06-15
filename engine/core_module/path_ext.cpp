@@ -292,7 +292,7 @@ void Path_extension_rto(CoreObject *instance, void *user_data, Item &property, c
 
    If the parameter is an array, it must have at least four
    string elements, and it will be used to build the path from
-   its constituents. In example:
+   its constituents. For example:
 
    @code
       unit = "C"

@@ -26,7 +26,7 @@ namespace core {
    Out-of-band items are normal items which can be tested for the out-of-band quality
    through the @a isoob function to perform special tasks. Some core and RTL functions can
    check for the item being out-of-band to take special decisions about the item, or to
-   modify their behavior. In example, the @a map function drops the item (acting like @a filter ),
+   modify their behavior. For example, the @a map function drops the item (acting like @a filter ),
    if it is out-of-band.
 
    This feature is available also to scripts; functions accepting any kind of items from

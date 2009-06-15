@@ -424,7 +424,7 @@ FALCON_FUNC flc_math_deg2rad( ::Falcon::VMachine *vm )
    @return The fractional part of a number.
 
    This function returns the non-integer part of a number.
-   In example,
+   For example,
    @code
    > fract( 1.234 )
    @endcode
@@ -456,7 +456,7 @@ FALCON_FUNC  flc_fract ( ::Falcon::VMachine *vm )
    @return A floating point number with fractional part zeroed.
 
    Fint function works like the core @a int function,
-   but it returns a floating point number. In example,
+   but it returns a floating point number. For example,
    @b fint applied on 3.58e200 will return the same number,
    while @a int would raise a math error, as the number
    cannot be represented in a integer
@@ -492,7 +492,7 @@ FALCON_FUNC  flc_fint( ::Falcon::VMachine *vm )
    floating point number. If the fractional part of the number
    is greater or equal to 0.5, the number is rounded up to the nearest
    biggest integer in absolute value, while if it's less than 0.5
-   the number is rounded down to the mere integer part. In example, 1.6
+   the number is rounded down to the mere integer part. For example, 1.6
    is rounded to 2, -1.6 is rounded to -2, 1.2 is rounded to 1
    and -1.2 is rounded to -1.
 */
@@ -534,7 +534,7 @@ FALCON_FUNC  flc_round ( ::Falcon::VMachine *vm )
    @return The smallest integer near to the given value.
 
    Floor function returns the smallest integer near to a given floating
-   point number. In example, floor of 1.9 is 1, and floor of -1.9 is -2.
+   point number. For example, floor of 1.9 is 1, and floor of -1.9 is -2.
    If an integer number is given, then the function returns the same number.
    This is similar to fint(), but in case of negative numbers @a fint would
    return the integer part; in case of -1.9 it would return -1.
@@ -562,7 +562,7 @@ FALCON_FUNC  flc_floor ( ::Falcon::VMachine *vm )
    @return The ceil value.
 
    Ceil function returns the highest integer near to a given floating point
-   number. In example, ceil of 1.1 is 2, and ceil of -1.1 is -1. If an
+   number. For example, ceil of 1.1 is 2, and ceil of -1.1 is -1. If an
    integer number is given, then the function returns the same number.
 */
 

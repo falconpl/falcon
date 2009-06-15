@@ -195,7 +195,7 @@ public:
       search path of those already known. Directory must be expressed in Falcon
       standard directory notation ( forward slashes to separate subdirectories).
       If the path contains more than one directory
-      they must be separated with a semicomma; in example:
+      they must be separated with a semicomma; for example:
 
       \code
          modloader.addSearchPath( "../;/my/modules;d:/other/modules" );
@@ -228,7 +228,7 @@ public:
       search path of those already known. Directory must be expressed in Falcon
       standard directory notation ( forward slashes to separate subdirectories).
       If the path contains more than one directory
-      they must be separated with a semicomma; in example:
+      they must be separated with a semicomma; for example:
 
       \code
          modloader.addSearchPath( "../;/my/modules;/other/modules" );

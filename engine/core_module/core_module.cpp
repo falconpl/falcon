@@ -94,7 +94,7 @@ Module* core_module_init()
 
       The methods can be applied both to symbols containing some data
       of a certain types, or directly to the constants specifying them.
-      In example, to obtain the length of the "Hello world" string, it is
+      For example, to obtain the length of the "Hello world" string, it is
       possible to do either:
 
       @code

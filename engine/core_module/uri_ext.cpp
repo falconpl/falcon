@@ -44,7 +44,7 @@ CoreObject* UriObjectFactory( const CoreClass *me, void *uri, bool dyn )
    URI elements.
 
    Setting the properties in this class immediately reflects on the
-   related fields; in example setting the value of the @b uri
+   related fields; for example setting the value of the @b uri
    property causes a complete re-parse of the item; setting a field
    as the query string will cause the uri to change.
 

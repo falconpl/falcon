@@ -35,7 +35,7 @@ namespace core {
 
    The StringStream class inherits from stream. It can be used to provide
    functions that are supposed to write to streams with a memory
-   buffer; in example, variables may be serialized on a string stream
+   buffer; for example, variables may be serialized on a string stream
    which can be then written completely on a physical stream, or sent over
    the network, or written in a database blob field. The reverse is of course
    possible: a string can be read from any source and then used to construct a

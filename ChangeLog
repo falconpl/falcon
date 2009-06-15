@@ -25,7 +25,8 @@ Falcon (0.9.1.9)
            rather than the local objects.
   * fixed: fself wasn't working in init blocks.
   * fixed: Error class couldn't be inherited from scripts.
-
+  * fixed: For/in loops with negative step exited immediately when start == stop
+  
 Falcon (0.9.1.8)
   * fixed: faltest didn't output help text when called with -h/-?
   * fixed: Operator overriding in blessed dictionaries had many issues.

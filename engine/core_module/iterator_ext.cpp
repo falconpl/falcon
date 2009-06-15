@@ -788,7 +788,7 @@ FALCON_FUNC  Iterator_erase( ::Falcon::VMachine *vm )
    greater than the desired key; it's the best position for an insertion of the searched
    key.
 
-   In example, to traverse all the items in a dictionary starting with 'C',
+   For example, to traverse all the items in a dictionary starting with 'C',
    the following code can be used:
 
    @code

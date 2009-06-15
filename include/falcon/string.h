@@ -149,7 +149,7 @@ public:
 
 /** Static byte oriented string manager.
    Useful to instantiante and manage strings whose content is byte oriented and whose size is
-   known in advance; in example, symbol names in the Falcon module are easily managed with this class.
+   known in advance; for example, symbol names in the Falcon module are easily managed with this class.
 
    Every write operation on strings managed by this class will cause its manager to be changed
    into the Buffer class.

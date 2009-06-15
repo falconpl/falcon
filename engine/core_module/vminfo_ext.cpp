@@ -25,7 +25,7 @@ namespace core {
    @brief Generic informations on the Virtual Machine.
 
    This functions are meant to provide minimal informations about the
-   virtual machine and its configuration. In example, they provide
+   virtual machine and its configuration. For example, they provide
    the VM version number and target architectures.
 */
 
@@ -113,7 +113,7 @@ FALCON_FUNC  vmSystemType( ::Falcon::VMachine *vm )
    to be executed at link time and a part that is menat to be executed only if the
    module is directly loaded and executed.
 
-   In example:
+   For example:
    @code
       // executes this at link time
       prtcode = printl

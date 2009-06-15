@@ -89,7 +89,7 @@ public:
       insertion causes append on tail, and at return they must be
       valid and point to the last valid element (the one just inserted).
 
-      If the iterator cannot be used, in example because their owner is
+      If the iterator cannot be used, for example because their owner is
       not this item, the function must return immediately false; in the
       right context, an appropriate error will be raised by the caller.
 
