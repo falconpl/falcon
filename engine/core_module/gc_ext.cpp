@@ -21,6 +21,7 @@ namespace core {
 
 /*#
    @page gc_control About the garbage collector.
+   
    The standard collector strategy (be it set up by the Falcon interpreter or
    by embedding applications) is adequate for average scripts.
 

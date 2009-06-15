@@ -31,7 +31,7 @@ namespace core {
 
    Format class is meant to provide an efficient way to format variables into
    strings that can then be sent to output streams. Internally, the format class
-   is used in string expansion (the '@' operator), but while string expansion causes
+   is used in string expansion (the '\@' operator), but while string expansion causes
    a string parsing to be initiated and an internal temporary Format object to be
    instantiated each time an expansion is performed, using a prebuilt Format object
    allows to optimize repeated formatting operations. Also, Format class instances may

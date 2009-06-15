@@ -52,7 +52,7 @@ CoreObject* UriObjectFactory( const CoreClass *me, void *uri, bool dyn )
    a ParseError if conformance of the URI object is broken.
 
    @prop scheme URI scheme.
-   @prop userInfo User, password or account specification preceding '@' host.
+   @prop userInfo User, password or account specification preceding '\@' host.
    @prop host Host specificator.
    @prop port Optional port specificator (following the host after a ':').
    @prop path Path specificator.

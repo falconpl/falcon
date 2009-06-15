@@ -8,7 +8,7 @@
 # Documentation generic data
 ################################################
 
-Title = Falcon - Core Function Reference.
+Title = Falcon Core Module
 Author = The Falcon Committee
 Version = 0.9.2
 
@@ -16,7 +16,7 @@ Version = 0.9.2
 # Faldoc Input settings
 ################################################
 
-#Input.directory=../engine/core_module
+Input.directory=../engine/core_module
 
 Input.wildcard=*.cpp     #we use only...
 Input.recursive=true

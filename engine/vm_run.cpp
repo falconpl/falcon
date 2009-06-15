@@ -2089,7 +2089,7 @@ void opcodeHandler_TRAV( register VMachine *vm )
 
       case FLC_ITEM_RANGE:
          if( source->asRangeIsOpen() ||
-             source->asRangeEnd() == source->asRangeStart() ||
+             (source->asRangeEnd() == source->asRangeStart() && source->asRangeStep() >= 0) ||
              ( source->asRangeStep() > 0 && source->asRangeStart() > source->asRangeEnd() ) ||
              ( source->asRangeStep() < 0 && source->asRangeStart() < source->asRangeEnd() )
             )
