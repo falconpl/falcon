@@ -47,7 +47,7 @@ namespace Ext {
    @optparam filename The name of the ini file to be parsed, if it exists.
    @optparam encoding An optional non default encoding which is used for that file.
 
-   @section Adding, setting or removing keys
+   @section confparser_key_manage Adding, setting or removing keys
 
    The most direct way to add a new key in an ini configuration file is to use the
    @a ConfParser.add method.
@@ -80,7 +80,7 @@ namespace Ext {
    be used to remove the main section; in fact, even if empty, that section always
    exists. To clear every key in that, use the clearMain() method.
 
-   @section Categorized keys
+   @section confparser_categorized_keys Categorized keys
 
    Categories are separated from the keys by dots "."; a complete categorized key
    may contain any amount of dots, or in other words, the categories can have an

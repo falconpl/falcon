@@ -52,7 +52,7 @@
 /*#
    @page threading_model Falcon multithreading model.
 
-   @section Forewords
+   @section threading_fore Forewords
 
    This document is by no mean an exhaustive explanation of multithreading
    in general. Concepts as "mutex", "synchronization primitive", "thread",
@@ -61,7 +61,7 @@
    document just deals with the specificities of Falcon approach to
    multithreading.
 
-   @section Basic Principles
+   @section threading_basics Basic Principles
 
    Falcon multithreading is amied to maximize the efficiency of the VM
    running in a multithreading context, and of the execution of the scripts
@@ -106,7 +106,7 @@
    to be used, and in example, it is possible to share plain memory which can
    be directly manipulated by each thread as it prefers.
 
-   @section Multithreading implementation
+   @section mt_impl Multithreading implementation
 
    The Falcon threading module provides each agent with a new Virtual Machine
    created on the spot. Those VMs are created "empty", that is, they will
@@ -173,7 +173,7 @@
    available, known and controllable by the topmost level, the overall agent-based model
    is not broken.
 
-   @section Synchronization structures
+   @section threading_sync_struct Synchronization structures
 
    Falcon agent-based model leverages on the concept of non-primitive structures used to
    synchronize and coordinate threads. Each structure has a different working principle which
@@ -197,7 +197,7 @@
 /*#
    @page threading_warnings Multithreading safety
 
-   @section Multithreading can break things
+   @section tw_threading_can_break Multithreading can break things
 
    Falcon won't try to recover from multithreading errors done by the scripts. This means that
    an ill designed script can deadlock, mess up embedding application data and break in the most
@@ -287,7 +287,7 @@
    automatically "fix" (hide) them, it is that to cure the program generating
    them so that they don't happen anymore.
 
-   @section Multithreading can break things (again)
+   @section tw_threading_can_break2 Multithreading can break things (again)
 
    We said that that
    an ill designed script can deadlock, mess up embedding application data and break in the most

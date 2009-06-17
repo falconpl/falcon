@@ -81,7 +81,7 @@ static MXML::Node *internal_getNodeParameter( VMachine *vm, int pid )
    an XML document must still be valid as an XML element of another document,
    but it implements some data specific for handling documents.
 
-   @section MXML document structure.
+   @section mxml_doc_struct MXML document structure.
 
    The XML document, as seen by the MXML module, is a tree of nodes. Some nodes have
    meta-informative value, and are meant to be used by the XML parser programs to

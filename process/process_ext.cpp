@@ -785,7 +785,7 @@ FALCON_FUNC  Process_getOutput ( ::Falcon::VMachine *vm )
 }
 
 /*#
-   @method Process_getAux Process
+   @method getAux Process
    @brief Returns the process auxiliary output stream.
    @return The child process auxiliary output stream (read-only)
 

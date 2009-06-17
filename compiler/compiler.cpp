@@ -43,7 +43,7 @@
    configure, alter, and execute arbitrary parts of the loaded module as if it were
    coded internally to the loader script.
 
-   @section Example usages
+   @section compiler_sample_usage Example usages
 
    The following script shows how a source module may be compiled and executed on the fly.
 

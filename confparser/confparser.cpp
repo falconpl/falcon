@@ -36,7 +36,7 @@
    original INI file, so that it stays familiar for the user after a modify that
    has been caused by the Falcon module.
 
-   @section Ini file format
+   @section confparser_ini_fformat Ini file format
 
    The ConfParser module parses INI files in the following format:
    @code
@@ -72,7 +72,7 @@
    Key: "A complex value containing\nescapes # and comment" ; real comment
    @endcode
 
-   @subsection Multiple values
+   @subsection confparser_multiple_values Multiple values
 
    Although it would be possible to put arbitrary lists into strings to save
    them on configuration files, and expand them in the program when reading them
@@ -89,7 +89,7 @@
    This will result in the three values to be returned in an array when the
    value of "Key" is asked.
 
-   @subsection Key categories
+   @subsection confparser_key_cat Key categories
 
    Keys can be categorized; tree-like or even recursive key groups can be
    represented with dots separating the key hierarchy elements.
