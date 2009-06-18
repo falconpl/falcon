@@ -344,23 +344,37 @@ DBIRecordset* DBITransactionSQLite3::query( const String &query, int64 &affected
    sqlite3_stmt *res;
    const char *unusedSQL;
    int status = sqlite3_prepare( conn, asQuery.c_str(), asQuery.length(), &res, &unusedSQL );
-
+   
+   
    if ( res == NULL ) {
       retval = dbi_memory_allocation_error;
       return 0;
    }
 
-   if ( status == SQLITE_OK ) {
-      status = sqlite3_step( res ); // execute the actual statement
+   if ( status != SQLITE_OK ) {
+      retval = dbi_error;
+      affectedRows = -1;
+      sqlite3_finalize( res );
+      return 0;
    }
+      
+   status = sqlite3_step( res ); // execute the actual statement
 
    switch ( status )
    {
    case SQLITE_OK:
    case SQLITE_DONE:
+      // in case of SQLLITE_DONE, there is no recordset to be returned.
+      sqlite3_finalize( res );
+      affectedRows = 0;
+      retval = dbi_ok;
+      return 0;
+      
+   case SQLITE_ROW:
       affectedRows = sqlite3_changes( conn );
       retval = dbi_ok;
-      break;
+      return new DBIRecordsetSQLite3( m_dbh, res );   
+      
 
    default: // TODO: provide better error info than this!
       retval = dbi_error;
@@ -368,14 +382,7 @@ DBIRecordset* DBITransactionSQLite3::query( const String &query, int64 &affected
       break;
    }
 
-   if ( status != SQLITE_OK )
-   {
-      // in case of SQLLITE_DONE, there is no recordset to be returned.
-      sqlite3_finalize( res );
-      return 0;
-   }
-
-   return new DBIRecordsetSQLite3( m_dbh, res );   
+   return 0;
 }
 
 dbi_status DBITransactionSQLite3::begin()
@@ -383,7 +390,7 @@ dbi_status DBITransactionSQLite3::begin()
    dbi_status retval;
    int64 affected;
    query( "BEGIN", affected, retval );
-
+   
    if ( retval == dbi_ok )
       m_inTransaction = true;
 
@@ -465,7 +472,6 @@ DBITransaction *DBIHandleSQLite3::startTransaction()
    if ( t->begin() != dbi_ok ) {
       // TODO: filter useful information to the script level
       delete t;
-
       return NULL;
    }
 

@@ -80,11 +80,10 @@ FALCON_FUNC DBIConnect( VMachine *vm )
          if ( connectErrorMessage.length() == 0 )
             connectErrorMessage = "An unknown error has occured during connect";
 
-         vm->raiseModError( new DBIError( ErrorParam( DBI_ERROR_BASE + status, __LINE__ )
+         throw new DBIError( ErrorParam( DBI_ERROR_BASE + status, __LINE__ )
                                           .desc( "Uknown error (**)" )
-                                          .extra( connectErrorMessage ) ) );
+                                          .extra( connectErrorMessage ) );
 
-         return;
       }
 
       // great, we have the database handler open. Now we must create a falcon object to store it.
