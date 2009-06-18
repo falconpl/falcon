@@ -28,7 +28,7 @@ Input.extra=main.fd
 # Faldoc Output settings
 ################################################
 
-Output.module=html
+#Output.module=html
 Output.module=list
 
 ################################################

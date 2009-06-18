@@ -85,11 +85,11 @@ FALCON_FUNC String_charSize( VMachine *vm )
 {
    Item *i_bpc = vm->param(0);
    String* str = vm->self().asString();
-   
+
    if ( i_bpc == 0 )
    {
       // no parameters -- just read us.
-      vm->retval( (int64) str->manipulator()->charSize() );   
+      vm->retval( (int64) str->manipulator()->charSize() );
       return;
    }
    else if( ! i_bpc->isOrdinal() )
@@ -97,13 +97,13 @@ FALCON_FUNC String_charSize( VMachine *vm )
       throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
          .extra( "[N]" ) );
    }
-   
+
    uint32 bpc = (uint32) i_bpc->forceInteger();
    if ( ! str->setCharSize( bpc ) )
    {
       throw new ParamError( ErrorParam( e_param_range, __LINE__ ) );
    }
-   
+
    vm->retval( str );
 }
 
@@ -652,10 +652,10 @@ FALCON_FUNC  mth_strMerge ( ::Falcon::VMachine *vm )
    CoreString *ts = new CoreString;
 
    // filling the target.
-   for( uint32 i = 1; i <= len ; i ++ ) 
+   for( uint32 i = 1; i <= len ; i ++ )
    {
       Item* item = elements+(i-1);
-      
+
       if ( item->isString() )
          *ts += *item->asString();
       else
@@ -668,7 +668,7 @@ FALCON_FUNC  mth_strMerge ( ::Falcon::VMachine *vm )
       if ( mr_str != 0 && i < len )
          ts->append( *mr_str );
 
-      ts->reserve( len/i * ts->size() ); 
+      ts->reserve( len/i * ts->size() );
    }
 
    vm->retval( ts );
@@ -724,7 +724,7 @@ FALCON_FUNC  String_join ( ::Falcon::VMachine *vm )
             *ts += temp;
          }
 
-         ts->reserve( pc/i * ts->size() ); 
+         ts->reserve( pc/i * ts->size() );
       }
    }
 
@@ -1508,6 +1508,136 @@ FALCON_FUNC  mth_strLower ( ::Falcon::VMachine *vm )
    }
 }
 
+
+/*#
+   @method startsWith String
+   @brief Check if a strings starts with a substring.
+   @param token The substring that will be compared with this string.
+   @optparam icase If true, pefroms a case neutral check
+   @return True if @b token matches the beginning of this string, false otherwise.
+
+   This method performs a comparation check at the beginning of the string.
+   If this string starts with @b token, the function returns true. If @b token
+   is larger than the string, the method will always return false, and
+   if @b token is an empty string, it will always match.
+
+   The optional parameter @b icase can be provided as true to have this
+   method to perform a case insensitive match.
+*/
+/*#
+   @function strStartsWith
+   @brief Check if a strings starts with a substring.
+   @param string The string that is going to be tested for the given token.
+   @param token The substring that will be compared with this string.
+   @optparam icase If true, pefroms a case neutral check
+   @return True if @b token matches the beginning of @b string, false otherwise.
+
+   This functioin performs a comparation check at the beginning of the @b string.
+   If this string starts with @b token, the function returns true. If @b token
+   is larger than the string, the function will always return false, and
+   if @b token is an empty string, it will always match.
+
+   The optional parameter @b icase can be provided as true to have this
+   function to perform a case insensitive match.
+*/
+
+FALCON_FUNC  mth_strStartsWith ( ::Falcon::VMachine *vm )
+{
+   Item* source;
+   Item* i_token;
+   Item* i_icase;
+
+   // Parameter checking;
+   if ( vm->self().isMethodic() )
+   {
+      source = &vm->self();
+      i_token = vm->param(0);
+      i_icase = vm->param(1);
+   }
+   else
+   {
+      source = vm->param(0);
+      i_token = vm->param(1);
+      i_icase = vm->param(2);
+   }
+
+   if ( source == 0 || ! source->isString() ||
+        i_token == 0 || ! i_token->isString() )
+   {
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+            .origin( e_orig_runtime )
+            .extra( vm->self().isMethodic() ? "S,[B]" : "S,S,[B]" ) );
+   }
+
+   String *src = source->asString();
+   vm->regA().setBoolean( src->startsWith( *i_token->asString(), i_icase ? i_icase->isTrue():false ) );
+}
+
+
+/*#
+   @method endsWith String
+   @brief Check if a strings ends with a substring.
+   @param token The substring that will be compared with this string.
+   @optparam icase If true, pefroms a case neutral check
+   @return True if @b token matches the end of this string, false otherwise.
+
+   This method performs a comparation check at the end of the string.
+   If this string ends with @b token, the function returns true. If @b token
+   is larger than the string, the method will always return false, and
+   if @b token is an empty string, it will always match.
+
+   The optional parameter @b icase can be provided as true to have this
+   method to perform a case insensitive match.
+*/
+/*#
+   @function strEndsWith
+   @brief Check if a strings ends with a substring.
+   @param string The string that is going to be tested for the given token.
+   @param token The substring that will be compared with this string.
+   @optparam icase If true, pefroms a case neutral check
+   @return True if @b token matches the end of @b string, false otherwise.
+
+   This functioin performs a comparation check at the end of the @b string.
+   If this string ends with @b token, the function returns true. If @b token
+   is larger than the string, the function will always return false, and
+   if @b token is an empty string, it will always match.
+
+   The optional parameter @b icase can be provided as true to have this
+   function to perform a case insensitive match.
+*/
+FALCON_FUNC  mth_strEndsWith ( ::Falcon::VMachine *vm )
+{
+   Item* source;
+   Item* i_token;
+   Item* i_icase;
+
+   // Parameter checking;
+   if ( vm->self().isMethodic() )
+   {
+      source = &vm->self();
+      i_token = vm->param(0);
+      i_icase = vm->param(1);
+   }
+   else
+   {
+      source = vm->param(0);
+      i_token = vm->param(1);
+      i_icase = vm->param(2);
+   }
+
+   if ( source == 0 || ! source->isString() ||
+        i_token == 0 || ! i_token->isString() )
+   {
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+            .origin( e_orig_runtime )
+            .extra( vm->self().isMethodic() ? "S,[B]" : "S,S,[B]" ) );
+   }
+
+   String *src = source->asString();
+   vm->regA().setBoolean( src->endsWith( *i_token->asString(), i_icase ? i_icase->isTrue() : false ) );
+}
+
+
 /*#
    @function strCmpIgnoreCase
    @brief Performs a lexicographic comparation of two strings, ignoring character case.
@@ -1625,7 +1755,7 @@ FALCON_FUNC  mth_strCmpIgnoreCase ( ::Falcon::VMachine *vm )
    - "*" matches everything
    - "a?b" matches "aab", "adb" and so on
    - "a*b" matches "ab", "annnb" and so on
-   
+
    @see String.wmatch
 */
 
@@ -1647,7 +1777,7 @@ FALCON_FUNC  mth_strCmpIgnoreCase ( ::Falcon::VMachine *vm )
    - "*" matches everything
    - "a?b" matches "aab", "adb" and so on
    - "a*b" matches "ab", "annnb" and so on
-   
+
    @see strWildcardMatch
 */
 FALCON_FUNC  mth_strWildcardMatch ( ::Falcon::VMachine *vm )

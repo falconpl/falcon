@@ -121,7 +121,7 @@ Module* core_module_init()
       applied to any item, while methods defined in specific
       item metaclasses derived from BOM, as i.e. the @a Dictionary
       metaclass, can be applied only to items of the reflected type.
-      
+
       @note The method @a BOM.compare is meant to overload the behavior
       of generic VM comparisons, including relational operators
       (<, >, <=, >=, ==, !=) and generic ordering criterions, for example in
@@ -247,7 +247,7 @@ Module* core_module_init()
       @from BOM
       @ingroup bom_classes
       @brief Metaclass for internal and application-wide garbage sensible data.
-      
+
       GarbagePointer is a class used to reflect opaque data which can be automatically
       destroyed by the Falcon Garbage Collector when it goes out of scope.
    */
@@ -324,6 +324,10 @@ Module* core_module_init()
    self->addClassMethod( string_meta, "ptr", &Falcon::core::String_ptr );
    self->addClassMethod( string_meta, "charSize", &Falcon::core::String_charSize ).asSymbol()
       ->addParam("bpc");
+   self->addClassMethod( string_meta, "startsWith", &Falcon::core::mth_strStartsWith ).asSymbol()
+      ->addParam("token")->addParam("icase");
+   self->addClassMethod( string_meta, "endsWith", &Falcon::core::mth_strEndsWith ).asSymbol()
+      ->addParam("token")->addParam("icase");
 
    //==================================================================
    // Array class
@@ -725,12 +729,12 @@ Module* core_module_init()
       ->addParam( "code" )->addParam( "description")->addParam( "extra" );
    interr_cls->getClassDef()->addInheritance(  new Falcon::InheritDef( error_class ) );
    interr_cls->setWKS( true );
-   
+
    Falcon::Symbol *msgerr_cls = self->addClass( "MessageError", &Falcon::core::MessageError_init )
       ->addParam( "code" )->addParam( "description")->addParam( "extra" );
    msgerr_cls->getClassDef()->addInheritance(  new Falcon::InheritDef( error_class ) );
    msgerr_cls->setWKS( true );
-   
+
    //=========================================
 
    // Creating the semaphore class -- will be a FalconObject
@@ -964,6 +968,10 @@ Module* core_module_init()
    //=======================================================================
    self->addExtFunc( "strFill", &Falcon::core::mth_strFill )
       ->addParam( "string" )->addParam( "chr" );
+   self->addExtFunc( "strStartsWith", &Falcon::core::mth_strStartsWith )
+      ->addParam( "string" )->addParam( "chr" )->addParam( "icase" );
+   self->addExtFunc( "strEndsWith", &Falcon::core::mth_strEndsWith )
+      ->addParam( "string" )->addParam( "token" )->addParam( "icase" );
    self->addExtFunc( "strSplit", &Falcon::core::mth_strSplit )
       ->addParam( "string" )->addParam( "token" )->addParam( "count" );
    self->addExtFunc( "strSplitTrimmed", &Falcon::core::mth_strSplitTrimmed )->

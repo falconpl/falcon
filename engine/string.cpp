@@ -121,6 +121,7 @@ uint32 Byte::length( const String *str ) const
    return str->size() / charSize();
 }
 
+
 uint32 Byte::getCharAt( const String *str, uint32 pos ) const
 {
    return (uint32) str->getRawStorage()[pos];
@@ -2163,13 +2164,70 @@ bool String::fromUTF8( const char *utf8 )
             // unrecognized pattern, protocol error
             return false;
          }
-
          chr |= (in & 0x3f) << count;
       }
 
       this->append( chr );
 
       utf8++;
+   }
+
+   return true;
+}
+
+bool String::startsWith( const String &str, bool icase ) const
+{
+   uint32 len = str.length();
+   if ( len > length() ) return false;
+
+   if ( icase )
+   {
+      for ( uint32 i = 0; i < len; i ++ )
+      {
+         uint32 chr1, chr2;
+         if ( (chr1 = str.getCharAt(i)) != (chr2 = getCharAt(i)) )
+         {
+            if ( chr1 >= 'A' && chr1 <= 'z' && (chr1 | 0x20) != chr2 )
+               return false;
+         }
+      }
+   }
+   else
+   {
+      for ( uint32 i = 0; i < len; i ++ )
+         if ( str.getCharAt(i) != getCharAt(i) )
+            return false;
+   }
+
+   return true;
+}
+
+
+bool String::endsWith( const String &str, bool icase ) const
+{
+   uint32 len = str.length();
+   uint32 mlen = length();
+   uint32 start = mlen-len;
+
+   if ( len > mlen ) return false;
+
+   if ( icase )
+   {
+      for ( uint32 i = 0; i < len; ++i )
+      {
+         uint32 chr1, chr2;
+         if ( (chr1 = str.getCharAt(i)) != (chr2 = getCharAt(i+start)) )
+         {
+            if ( chr1 >= 'A' && chr1 <= 'z' && (chr1 | 0x20) != chr2 )
+               return false;
+         }
+      }
+   }
+   else
+   {
+      for ( uint32 i = 0; i <= len; ++i )
+         if ( str.getCharAt(i) != getCharAt(i+start) )
+            return false;
    }
 
    return true;

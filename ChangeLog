@@ -19,14 +19,16 @@ Falcon (0.9.1.9)
            to segfault.
   * fixed: Array back-mark to its table did not deep-mark its data; as a result,
            the table got marked with the current generation and skipped its mark
-           processing loop as a standard object. This exposes the need to 
+           processing loop as a standard object. This exposes the need to
            rationalize and simplify the Garbage/mark Object/gcMark interface.
   * fixed: LiveModule::detach() was nilling the original (imported) values
            rather than the local objects.
   * fixed: fself wasn't working in init blocks.
   * fixed: Error class couldn't be inherited from scripts.
   * fixed: For/in loops with negative step exited immediately when start == stop
-  
+  * added: Added String.startsWith, String.endsWith, strStartWith(), strEndWith()
+
+
 Falcon (0.9.1.8)
   * fixed: faltest didn't output help text when called with -h/-?
   * fixed: Operator overriding in blessed dictionaries had many issues.
@@ -37,32 +39,32 @@ Falcon (0.9.1.8)
            communicate across threads.
   * minor: StringStream is now interlocked; it can be proficiently used as
            an interthread safe raw data exchange device.
-  * fixed: Obviating the need for ";" in function declared inside 
+  * fixed: Obviating the need for ";" in function declared inside
            dictionaries.
   * minor: Falcon command line doesn't require full module generation to generate
            the debug grammar tree module.
   * major: Now allowing circular references in module loads.
   * fixed: Unpack is now working in every situation (and generally, more
            efficiently).
-  * fixed: Didn't set correctly the default .ftt extension for -y options, and 
+  * fixed: Didn't set correctly the default .ftt extension for -y options, and
            caused the original file to be overwritten.
   * fixed: Issues on multilanguage and internationalization.
-  * minor: Added search path to the engine and to all the items involved into 
+  * minor: Added search path to the engine and to all the items involved into
            compilation. Also, added vmSearchPath() script function to allow
            scripts to get the path as set by the application.
   * fixed: Format wasn't correctly parsing ":0" (zero-length variable length
            integer formatting).
   * fixed: Escapes at the beginning of multiline double-quote strings were lost.
   * fixed: Possible reaping of table pages by an execessive GC usage.
-  
+
 Falcon (0.9.1.6)
   * fixed: In loop statement, continue looped from the top skipping the
            loop condition (if it was present).
   * fixed: Function "any" was STILL returning 0 instead of false.
   * major: Added method ptr() to FBOM and various metaclasses.
-  * major: Added explicit character size scaling and c-zation of 
+  * major: Added explicit character size scaling and c-zation of
            Falcon::Strings.
-  * fixed: Repeated assert() may have crashed depending on the stack 
+  * fixed: Repeated assert() may have crashed depending on the stack
            status.
   * fixed: Due to faulty method equality check, method unsubscription
            was failing.
@@ -76,10 +78,10 @@ Falcon (0.9.1.6)
            know it was a sequence.
   * minor: Added first() and last() methods to VMSlot to allow iterators
            to work.
-  * fixed: Detach() sequence was just a draft, and didn't actually free 
+  * fixed: Detach() sequence was just a draft, and didn't actually free
            app-side data.
   * fixed: Respecting ThreadParams settings in POSIX thread creation.
-  * fixed: Dind't correctly generate InterruptedError on VM interruption 
+  * fixed: Dind't correctly generate InterruptedError on VM interruption
            requests.
   * fixed: Function parameters were still hard-limited to 255. Now they
            are limited to uint32 (2^32).
@@ -96,14 +98,14 @@ Falcon (0.9.1.6)
 
 Falcon (0.9.1.4)
   * fixed: As now files and modules loads are URIs, and URI decoding was
-           strict, modules with international names could not be loaded 
+           strict, modules with international names could not be loaded
            unless the name was previously URI escaped.
   * minor: Now it's possible to prevent parsing (un-escaping) from URI
            constructor.
   * minor: Fixed error failed DLL load error report string in Windows.
-  * fixed: Now correctly importing symbols from modules named with 
+  * fixed: Now correctly importing symbols from modules named with
            strings.
-  
+
 Falcon (0.9.1.2)
   * fixed: Correct parsing of octal number (0 and 7 was out...)
   * fixed: Crash with statements == just numbers, and allowing interactive

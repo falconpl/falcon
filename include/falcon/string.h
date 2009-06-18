@@ -1088,33 +1088,52 @@ public:
    /** Sets wether this string should be exported in international context or not.
    */
    void exported( bool e ) { m_bExported = e; }
-   
+
    /** Adds an extra '\0' terminator past the end of the string.
-      This makes the string data (available through getRawStorage()) suitable 
+      This makes the string data (available through getRawStorage()) suitable
       to be sent to C functions compatible with the character size of this
       string.
-      
+
       Eventually, it should be preceded by a call to setCharSize().
    */
    void c_ize();
-   
+
+   /** Compares a string with the beginning of this string.
+      If \b str is empty, returns true, if it's larger than
+      this string returns false.
+      \param str The string to be compared against the beginning of this string.
+      \param icase true to perform a case neutral compare
+      \return true on success.
+   */
+   bool startsWith( const String &str, bool icase=false ) const;
+
+   /** Compares a string with the end of this string.
+      If \b str is empty, returns true, if it's larger than
+      this string returns false.
+      \param str The string to be compared against the end of this string.
+      \param icase true to perform a case neutral compare
+      \return true on success.
+   */
+   bool endsWith( const String &str, bool icase=false ) const;
+
+
    /** Alters the character size of this string.
-       
+
        Changes the number of bytes used to represent a single
        character in this string. The number of byte used can be
        1, 2 or 4.
-       
+
        If the new character size of this string is smaller than
        the original one, characters that cannot be represented
        are substituted with a \b subst value (by default, the
        maximum value allowed for the given character size).
-       
-       If the original character size was different, the 
+
+       If the original character size was different, the
        string is bufferized into a new memory area, otherwise
        the string is unchanged.
-       
+
        \note subst param is not currently implemented.
-       
+
        @param nsize The new character size for the string.
        @param subst The substitute character to be used when reducing size.
        @return True if the nsize value is valid, false otherwise.

@@ -286,7 +286,8 @@ FALCON_FUNC  StringStream_closeToString ( ::Falcon::VMachine *vm );
 
 FALCON_FUNC  mth_strFront ( ::Falcon::VMachine *vm );
 FALCON_FUNC  mth_strBack ( ::Falcon::VMachine *vm );
-
+FALCON_FUNC  mth_strStartsWith ( ::Falcon::VMachine *vm );
+FALCON_FUNC  mth_strEndsWith ( ::Falcon::VMachine *vm );
 FALCON_FUNC  mth_strFill ( ::Falcon::VMachine *vm );
 FALCON_FUNC  mth_strSplit ( ::Falcon::VMachine *vm );
 FALCON_FUNC  mth_strSplitTrimmed ( ::Falcon::VMachine *vm );
