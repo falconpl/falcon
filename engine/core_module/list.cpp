@@ -62,6 +62,8 @@ namespace core {
 
 /*#
    @init List
+   @brief Creates and eventually fills the list.
+   
    This constructor creates a list that may be initially
    filled with the items passed as parameters. The items
    are inserted in the order they are passed.

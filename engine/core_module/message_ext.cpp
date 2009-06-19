@@ -68,7 +68,7 @@ static void check_assertion( VMachine *vm, CoreSlot *cs, const Item &itm )
    @param msg A message (string) to be broadcast.
    @optparam ... Zero or more data to be broadcaset.
    @brief Sends a message to every callable item subscribed to a message.
-   @return true if @a msg is found, false if it doesn't exist.
+   @return true if @b msg is found, false if it doesn't exist.
    @inset set_message_model
    @see VMSlot
    @see getSlot

@@ -235,7 +235,6 @@ FALCON_FUNC Array_last( VMachine *vm )
    @param array The array where the item should be placed.
    @param itempos  The position where the item should be placed.
    @param item The item to be inserted.
-
    The item is inserted before the given position. If pos is 0, the item is
    inserted in the very first position, while if it's equal to the array length, it
    is appended at the array tail.

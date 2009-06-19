@@ -206,6 +206,7 @@ FALCON_FUNC  Format_init ( ::Falcon::VMachine *vm )
 
 /*#
    @method format Format
+   @brief Performs desired formatting on a target item.
    @param item The item to be formatted
    @optparam dest A string where to store the formatted data.
    @return A formatted string
@@ -258,6 +259,7 @@ FALCON_FUNC  Format_format ( ::Falcon::VMachine *vm )
 
 /*#
    @method toString Format
+   @brief Represents this format as a string.
    @return The format specifier.
 
    Returns a string representation of the format instance.

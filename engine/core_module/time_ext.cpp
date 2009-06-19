@@ -52,6 +52,7 @@ namespace core {
 
 /*#
    @init TimeStamp
+   @brief Intializes the time stamp.
 
    The instance is created empty and unset, unless the @b date parameter
    is provided. In that case, the new instance is copied from a previously

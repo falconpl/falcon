@@ -315,7 +315,7 @@ FALCON_FUNC String_last( VMachine *vm )
 
    @note this function is equivalent to the fbom method String.splittr
 
-   @note See @a Tokienizer for a more adequate function to scan extensively
+   @note See @a Tokenizer for a more adequate function to scan extensively
    wide strings.
 */
 
