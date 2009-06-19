@@ -139,6 +139,20 @@ end
 if result != -1 +1+2+3+4 : failure( "Filled range, mixed down - value" )
 if count != 6: failure( "Filled range, mixed down - times" )
 
+//===================================================
+// Test for negative empty loop
+
+result = 0
+count = 0
+
+for c in [5: 5:-1]
+   result += c
+   count++
+end
+
+if result != 5: failure( "Empty downto range - value" )
+if count != 1: failure( "Empty downto range - times" )
+
 success()
 
 /* End of file */
