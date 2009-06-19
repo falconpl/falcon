@@ -88,7 +88,7 @@ FALCON_FUNC  falcon_getHostName( ::Falcon::VMachine *vm )
    method will resolve the target address on its own.
 
    This function can be used on the value returned by @a getHostName, or using
-   "localhost" as the @a address parameter, to receive a
+   "localhost" as the @b address parameter, to receive a
    list of the interfaces that are available under the network name of the host the
    VM is running on. This is useful to i.e. bind some services only to one of the
    available interfaces.
@@ -169,15 +169,16 @@ FALCON_FUNC  socketErrorDesc( ::Falcon::VMachine *vm )
 
 /*#
    @class Socket
-   @brief TCP/IP networking base class,
+   @brief TCP/IP networking base class.
+   
    The Socket class is the base class for both UDP and TCP socket.
    It provides common methods and properties,
    and so it should not be directly instantiated.
 
-   @prop timedout True if the last operation has timed out. See @a Socket.setTimeout..
+   @prop timedout True if the last operation has timed out. See @a Socket.setTimeout.
 
    @prop lastError Numeric value of system level error that has occoured on the socket.
-      @a getErrorDescription may be used to get a human-readable description of the error.
+      Standard Function @b socketErrorDesc may be used to get a human-readable description of the error.
       The error is usually also written in the fsError field of the exceptions,
       if case they are caught.
 */
@@ -191,6 +192,7 @@ FALCON_FUNC  Socket_init( ::Falcon::VMachine *vm )
 
 /*#
    @method setTimeout Socket
+   @brief Sets the default timeout for lengthy operations.
    @param timeout Timeout in seconds and fractions.
 
    This function sets a default timeout for the read/write operations, or for other
@@ -653,9 +655,9 @@ FALCON_FUNC  TCPSocket_isConnected( ::Falcon::VMachine *vm )
    case the sent data may get corrupted as a transmission may deliver only part
    of a character or of a number stored in a memory buffer.
 
-   If a @a size parameter is not specified, the method will try to send the whole
+   If a @b size parameter is not specified, the method will try to send the whole
    content of the buffer, otherwise it will send at maximum size bytes. If a
-   @a start parameter is specified, then the data sent will be taken starting
+   @b start parameter is specified, then the data sent will be taken starting
    from that position in the buffer (counting in bytes from the start).
 
    This is useful when sending big buffers in several steps, so that
@@ -1059,6 +1061,7 @@ FALCON_FUNC  UDPSocket_init( ::Falcon::VMachine *vm )
 
 /*#
    @method sendTo UDPSocket
+   @brief Sends a datagram to a given address.
    @param host Remote host where to send the datagram.
    @param service Remote service or port number where to send the datagram.
    @param buffer The buffer to be sent.
@@ -1072,11 +1075,11 @@ FALCON_FUNC  UDPSocket_init( ::Falcon::VMachine *vm )
    filled before being sent, provided that the specified size
    does not exceed datagram size limits.
 
-   The @a host parameter may be an host name to be resolved or an address;
+   The @b host parameter may be an host name to be resolved or an address;
    if the @a UDPSocket.broadcast method has been successfully called,
    it may be also a multicast or broadcast address.
 
-   The @a service parameter is a string containing either a service name
+   The @b service parameter is a string containing either a service name
    (i.e. "http") or  a numeric port number (i.e. "80", as a string).
 
    The @b buffer may be a byte-only string or a

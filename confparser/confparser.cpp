@@ -66,7 +66,7 @@
    also after a value, if a value itself contains one of those characters it
    should be enclosed by quotes, or part of the value will be considered a comment.
 
-   In example:
+   For example:
 
    @code
    Key: "A complex value containing\nescapes # and comment" ; real comment
@@ -79,8 +79,8 @@
    back, it is possible to store array of values in configuration files by
    declaring multiple times the same key.
 
+   For example:
    @code
-   In example:
    Key = value1
    Key = value2
    Key = value3

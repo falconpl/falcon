@@ -983,7 +983,7 @@ FALCON_FUNC Thread_join( VMachine *vm )
 
    Actually, this class represents the interface exposed by synchronization structures
    to script. Objects derived from this class can be used in functions and methods in
-   the group "@a waiting_funcs". Usually, the Waitable class is implemented by
+   the group @a waiting_funcs. Usually, the Waitable class is implemented by
    Structures, but any object providing a mean to be acquired, released and waited for
    a change in the acquirability state can be derived from this class.
 

@@ -95,7 +95,7 @@ namespace Ext {
    category only, or it can be arbitrarily deep. Only the keys in deeper categories
    will be returned.
 
-   In example; if the configuration file contains the following entries:
+   For example; if the configuration file contains the following entries:
 
    @code
    Key.cat1 = 1
@@ -145,7 +145,7 @@ namespace Ext {
    ordinary get() or getOne() methods, a whole category tree can be imported with
    the method getCategory().
 
-   In example, consider the same configuration structure we have used before. If
+   For example, consider the same configuration structure we have used before. If
    the category parameter  of getCategory() is set to "Key", all the entries will
    be returned. If it's set to "cat1", the first entry won't be returned, as it's
    consider a key cat1 in category Key. If category is set to "key.cat1.subcat1",
@@ -156,7 +156,7 @@ namespace Ext {
    stripped of their category part by adding an asterisk at the end of the first
    parameter.
 
-   In example:
+   For example:
 
    @code
    category = "Key.cat1"
@@ -185,6 +185,8 @@ namespace Ext {
 
 /*#
    @init ConfParser
+   
+   @brief Prepares the confparser, and eventually opens a config file.
 
    The constructor of this class allows to set up a filename for the
    configuration file that is going to be read and/or written. If the name is not
