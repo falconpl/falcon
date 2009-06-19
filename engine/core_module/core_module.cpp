@@ -749,7 +749,7 @@ Module* core_module_init()
    // GC support
    Symbol *gcsing = self->addSingleton( "GC", Falcon::core::GC_init  );
    Symbol *gc_cls = gcsing->getInstance();
-   gc_cls->getClassDef()->factory(Falcon::ReflectOpaqueFactory);
+   gc_cls->getClassDef()->factory(&Falcon::ReflectOpaqueFactory);
    self->addClassProperty( gc_cls, "usedMem" ).
       setReflectFunc( &Falcon::core::GC_usedMem_rfrom );
    self->addClassProperty( gc_cls, "aliveMem" ).

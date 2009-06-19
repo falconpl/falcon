@@ -1,0 +1,105 @@
+/****************************************************************************
+* Falcon test suite
+*
+*
+* ID: 101q
+* Category: rtl
+* Subcategory: string
+* Short: StartsWith
+* Description:
+*   Testing the startsWith function and method.
+* [/Description]
+*
+****************************************************************************/
+
+//=================================================
+// Starts with - positive cases.
+//
+
+if not strStartsWith( "abc", "a" ): failure( "Minimal match startsWith func" )
+if not strStartsWith( "abc", "ab" ): failure( "Double match startsWith func" )
+if not strStartsWith( "abc", "abc" ): failure( "Complete match startsWith func" )
+
+if not strStartsWith( "abc", "" ): failure( "Zero match startsWith func" )
+if not strStartsWith( "", "" ): failure( "Double zero match startsWith func" )
+
+//=================================================
+// Starts with - negative cases.
+//
+if strStartsWith( "", "a" ): failure( "False positive 1 startsWith func" )
+if strStartsWith( "bcd", "a" ): failure( "False positive 2 startsWith func" )
+if strStartsWith( "bacd", "a" ): failure( "False positive 3 startsWith func" )
+if strStartsWith( "bacd", "abcd" ): failure( "False positive 4 startsWith func" )
+if strStartsWith( "abcd", "abcde" ): failure( "False positive 5 startsWith func" )
+
+//=================================================
+// Starts with - mixed case positive cases.
+//
+
+if not strStartsWith( "abc", "A", true ): failure( "Minimal match mixed 1 startsWith func" )
+if not strStartsWith( "Abc", "a", true ): failure( "Minimal match mixed 2 startsWith func" )
+if not strStartsWith( "Abc", "aB", true ): failure( "Double match mixed startsWith func" )
+if not strStartsWith( "aBc", "AbC", true ): failure( "Complete match mixed startsWith func" )
+
+if not strStartsWith( "abc", "", true ): failure( "Zero match startsWith func" )
+if not strStartsWith( "", "", true ): failure( "Double zero match startsWith func" )
+
+
+//=================================================
+// METHOD Starts with - positive cases.
+//=================================================
+
+//=================================================
+// Starts with - positive cases.
+//
+
+if not "abc".startsWith( "a" ): failure( "Minimal match startsWith method" )
+if not "abc".startsWith( "ab" ): failure( "Double match startsWith method" )
+if not "abc".startsWith( "abc" ): failure( "Complete match startsWith method" )
+
+if not "abc".startsWith( "" ): failure( "Zero match startsWith method" )
+if not "".startsWith( "" ): failure( "Double zero match startsWith method" )
+
+//=================================================
+// Starts with - negative cases.
+//
+if "".startsWith( "a" ): failure( "False positive 1 startsWith method" )
+if "bcd".startsWith( "a" ): failure( "False positive 2 startsWith method" )
+if "bacd".startsWith( "a" ): failure( "False positive 3 startsWith method" )
+if "bacd".startsWith( "abcd" ): failure( "False positive 4 startsWith method" )
+if "abcd".startsWith( "abcde" ): failure( "False positive 5 startsWith method" )
+
+//=================================================
+// Starts with - mixed case positive cases.
+//
+
+if not "abc".startsWith( "A", true ): failure( "Minimal match mixed 1 startsWith method" )
+if not "abc".startsWith( "a", true ): failure( "Minimal match mixed 2 startsWith method" )
+if not "abc".startsWith( "aB", true ): failure( "Double match mixed startsWith method" )
+if not "abc".startsWith( "AbC", true ): failure( "Complete match mixed startsWith method" )
+
+if not "abc".startsWith( "", true ): failure( "Zero match startsWith method" )
+if not "".startsWith( "", true ): failure( "Double zero match startsWith method" )
+
+//=================================================
+// Parameter error control
+//
+try
+   strStartsWith( "abc", 88, true )
+   failure( "Error not rised for param error in function 1" )
+catch ParamError
+end
+
+try
+   strStartsWith( 88, "abc", true )
+   failure( "Error not rised for param error in function 2" )
+catch ParamError
+end
+
+try
+   "abc".startsWith( 88, true )
+   failure( "Error not rised for param error in method" )
+catch ParamError
+end
+
+success()

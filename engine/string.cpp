@@ -2187,7 +2187,7 @@ bool String::startsWith( const String &str, bool icase ) const
          uint32 chr1, chr2;
          if ( (chr1 = str.getCharAt(i)) != (chr2 = getCharAt(i)) )
          {
-            if ( chr1 >= 'A' && chr1 <= 'z' && (chr1 | 0x20) != chr2 )
+            if ( chr1 >= 'A' && chr1 <= 'z' && (chr1 | 0x20) != (chr2|0x20) )
                return false;
          }
       }
@@ -2218,7 +2218,7 @@ bool String::endsWith( const String &str, bool icase ) const
          uint32 chr1, chr2;
          if ( (chr1 = str.getCharAt(i)) != (chr2 = getCharAt(i+start)) )
          {
-            if ( chr1 >= 'A' && chr1 <= 'z' && (chr1 | 0x20) != chr2 )
+            if ( chr1 >= 'A' && chr1 <= 'z' && (chr1 | 0x20) != (chr2|0x20) )
                return false;
          }
       }

@@ -1,0 +1,105 @@
+/****************************************************************************
+* Falcon test suite
+*
+*
+* ID: 101r
+* Category: rtl
+* Subcategory: string
+* Short: EndsWith
+* Description:
+*   Testing the endsWith functions and method.
+* [/Description]
+*
+****************************************************************************/
+
+//=================================================
+// Starts with - positive cases.
+//
+
+if not strEndsWith( "abc", "c" ): failure( "Minimal match endsWith func" )
+if not strEndsWith( "abc", "bc" ): failure( "Double match endsWith func" )
+if not strEndsWith( "abc", "abc" ): failure( "Complete match endsWith func" )
+
+if not strEndsWith( "abc", "" ): failure( "Zero match endsWith func" )
+if not strEndsWith( "", "" ): failure( "Double zero match endsWith func" )
+
+//=================================================
+// Starts with - negative cases.
+//
+if strEndsWith( "", "a" ): failure( "False positive 1 endsWith func" )
+if strEndsWith( "bcd", "a" ): failure( "False positive 2 endsWith func" )
+if strEndsWith( "bacd", "a" ): failure( "False positive 3 endsWith func" )
+if strEndsWith( "bacd", "abcd" ): failure( "False positive 4 endsWith func" )
+if strEndsWith( "abcd", "abcde" ): failure( "False positive 5 endsWith func" )
+
+//=================================================
+// Starts with - mixed case positive cases.
+//
+
+if not strEndsWith( "abc", "C", true ): failure( "Minimal match mixed 1 endsWith func" )
+if not strEndsWith( "Abc", "c", true ): failure( "Minimal match mixed 2 endsWith func" )
+if not strEndsWith( "AbC", "bC", true ): failure( "Double match mixed endsWith func" )
+if not strEndsWith( "aBc", "AbC", true ): failure( "Complete match mixed endsWith func" )
+
+if not strEndsWith( "abc", "", true ): failure( "Zero match endsWith func" )
+if not strEndsWith( "", "", true ): failure( "Double zero match endsWith func" )
+
+
+//=================================================
+// METHOD Starts with - positive cases.
+//=================================================
+
+//=================================================
+// Starts with - positive cases.
+//
+
+if not "abc".endsWith( "c" ): failure( "Minimal match endsWith method" )
+if not "abc".endsWith( "bc" ): failure( "Double match endsWith method" )
+if not "abc".endsWith( "abc" ): failure( "Complete match endsWith method" )
+
+if not "abc".endsWith( "" ): failure( "Zero match endsWith method" )
+if not "".endsWith( "" ): failure( "Double zero match endsWith method" )
+
+//=================================================
+// Starts with - negative cases.
+//
+if "".endsWith( "a" ): failure( "False positive 1 endsWith method" )
+if "bcd".endsWith( "a" ): failure( "False positive 2 endsWith method" )
+if "bacd".endsWith( "a" ): failure( "False positive 3 endsWith method" )
+if "bacd".endsWith( "abcd" ): failure( "False positive 4 endsWith method" )
+if "abcd".endsWith( "abcde" ): failure( "False positive 5 endsWith method" )
+
+//=================================================
+// Starts with - mixed case positive cases.
+//
+
+if not "abc".endsWith( "C", true ): failure( "Minimal match mixed 1 endsWith method" )
+if not "abc".endsWith( "c", true ): failure( "Minimal match mixed 2 endsWith method" )
+if not "abc".endsWith( "bC", true ): failure( "Double match mixed endsWith method" )
+if not "abc".endsWith( "AbC", true ): failure( "Complete match mixed endsWith method" )
+
+if not "abc".endsWith( "", true ): failure( "Zero match endsWith method" )
+if not "".endsWith( "", true ): failure( "Double zero match endsWith method" )
+
+//=================================================
+// Parameter error control
+//
+try
+   strEndsWith( "abc", 88, true )
+   failure( "Error not rised for param error in function 1" )
+catch ParamError
+end
+
+try
+   strEndsWith( 88, "abc", true )
+   failure( "Error not rised for param error in function 2" )
+catch ParamError
+end
+
+try
+   "abc".endsWith( 88, true )
+   failure( "Error not rised for param error in method" )
+catch ParamError
+end
+
+success()

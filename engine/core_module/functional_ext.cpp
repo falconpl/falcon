@@ -2106,10 +2106,10 @@ static bool core_brigade_next( ::Falcon::VMachine *vm )
    @inset functional_support
    @brief Process a list of functions passing the same parameters to them.
    @param fl The sequence of callable items to be called.
-   @param ...
+   @param ... Arbitrary parameters used by the brigade functions.
    @return The return value of the last function in fl.
 
-   This functions process a sequence of functions passing them the
+   This function process a sequence of functions passing them the
    same set of parameters. The idea is that of a "brigate" of functions
    operating all on the same parameters so that it is possible to put
    common code into separate functions.
@@ -2117,7 +2117,7 @@ static bool core_brigade_next( ::Falcon::VMachine *vm )
    Items in the list are not functionally evaluated; they are simply called,
    passing to them the same parameters that the brigade group receives. Brigate
    is an ETA funcion, and this means that ongoing functional evaluation is
-   interrupted as soon as a brigate is encountered.
+   interrupted as soon as a brigade is encountered.
    
    @code
    function mean( array )
