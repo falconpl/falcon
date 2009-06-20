@@ -250,6 +250,11 @@ public:
    */
    bool inParCtx();
 
+   /** Specialized version of ReadAhead, killing unneeded \\r
+      \return true if the character could be read ahead
+      \param chr Where to place the read character
+   */
+   bool readAhead( uint32 &chr );
 };
 
 }

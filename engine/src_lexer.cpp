@@ -208,7 +208,7 @@ int SrcLexer::lex_outscape()
                // and break from the loop so to return the string to print.
                break;
             }
-            else if ( chr == ' ' || chr == '\t' || chr == '\r' || chr == '\n' )
+            else if ( chr == ' ' || chr == '\t' || chr == '\n' )
             {
                // reset lead chars and eventually remove last \n
                m_whiteLead.size(0);
@@ -282,7 +282,7 @@ int SrcLexer::lex_outscape()
          break;
 
          case e_escL:
-            if ( chr == ' ' || chr == '\t' || chr == '\r' || chr == '\n')
+            if ( chr == ' ' || chr == '\t' || chr == '\n')
             {
                // reset lead chars and eventually remove last \n
                m_whiteLead.size(0);
@@ -455,6 +455,10 @@ int SrcLexer::lex_normal()
 
       m_character++;
 
+      // Totally ignore '\r'
+      if ( chr == '\r' )
+         continue;
+
       switch ( m_state )
       {
          case e_line:
@@ -497,7 +501,7 @@ int SrcLexer::lex_normal()
                   {
                      uint32 nextChr;
                      // we'll begin to read a string.
-                     if ( m_in->readAhead( nextChr ) && nextChr == '\n' )
+                     if ( readAhead( nextChr ) && nextChr == '\n' )
                      {
                         m_mlString = true;
                         m_line++;
@@ -635,7 +639,7 @@ int SrcLexer::lex_normal()
             else if ( chr == '*' )
             {
                uint32 nextChr;
-               m_in->readAhead( nextChr );
+               readAhead( nextChr );
                if ( nextChr == '/' )
                {
                   m_in->discardReadAhead( nextChr );
@@ -650,7 +654,7 @@ int SrcLexer::lex_normal()
             {
                // a method on a number?
                uint32 nextChr;
-               if ( m_in->readAhead( nextChr ) && (nextChr < '0' || nextChr > '9') )
+               if ( readAhead( nextChr ) && (nextChr < '0' || nextChr > '9') )
                {
                   // end
                   m_in->unget( chr );
@@ -880,7 +884,7 @@ int SrcLexer::lex_normal()
             else if ( chr == '\'' )
             {
                uint32 nextChar;
-               if ( m_in->readAhead( nextChar ) && nextChar == '\'' )
+               if ( readAhead( nextChar ) && nextChar == '\'' )
                {
                   m_string.append( '\'' );
                   m_in->discardReadAhead(1);
@@ -903,7 +907,7 @@ int SrcLexer::lex_normal()
             if ( chr == '\\' )
             {
                uint32 nextChar;
-               m_in->readAhead( nextChar );
+               readAhead( nextChar );
                switch ( nextChar )
                {
                   case '\\': nextChar = '\\'; break;
@@ -1094,7 +1098,7 @@ int SrcLexer::state_line( uint32 chr )
    {
       // don't return at next eol:
       uint32 nextChr;
-      if ( ! m_in->readAhead( nextChr ) )
+      if ( ! readAhead( nextChr ) )
       {
          // end of file; if we're in incremental mode,
          // declare the opening of a temporary context
@@ -1109,19 +1113,6 @@ int SrcLexer::state_line( uint32 chr )
          m_line ++;
          m_character = 0;
          m_in->discardReadAhead( 1 );
-      }
-      else if ( nextChr == '\r' )
-      {
-         // discard next char
-         m_in->discardReadAhead( 1 );
-         m_in->readAhead( nextChr );
-         if ( nextChr == '\n' )
-         {
-            m_previousLine = m_line;
-            m_line++;
-            m_character = 0;
-            m_in->discardReadAhead( 1 );
-         }
       }
       else if ( nextChr == '\\' )
       {
@@ -1183,7 +1174,7 @@ int SrcLexer::state_line( uint32 chr )
    {
       uint32 nextChr;
       // we'll begin to read a string.
-      if ( m_in->readAhead( nextChr ) && nextChr == '\n' )
+      if ( readAhead( nextChr ) && nextChr == '\n' )
       {
          m_mlString = true;
          m_line++;
@@ -1203,7 +1194,7 @@ int SrcLexer::state_line( uint32 chr )
    {
       uint32 nextChr;
       // we'll begin to read a string.
-      if ( m_in->readAhead( nextChr ) && nextChr == '\n' )
+      if ( readAhead( nextChr ) && nextChr == '\n' )
       {
          m_mlString = true;
          m_line++;
@@ -1221,7 +1212,7 @@ int SrcLexer::state_line( uint32 chr )
    {
       uint32 nextChr;
       // we'll begin to read a string.
-      if ( m_in->readAhead( nextChr ) && nextChr == '\n' )
+      if ( readAhead( nextChr ) && nextChr == '\n' )
       {
          m_mlString = true;
          m_line++;
@@ -1239,7 +1230,7 @@ int SrcLexer::state_line( uint32 chr )
    {
       uint32 nextChr;
       // we'll begin to read a string.
-      if ( m_in->readAhead( nextChr ) && nextChr == '\n' )
+      if ( readAhead( nextChr ) && nextChr == '\n' )
       {
          m_mlString = true;
          m_line++;
@@ -1928,6 +1919,18 @@ bool SrcLexer::inParCtx()
 {
    return m_topCtx != 0 &&  
          ( m_topCtx->m_ct == ct_round || m_topCtx->m_ct == ct_square );
+}
+
+bool SrcLexer::readAhead( uint32 &chr )
+{
+   bool res;
+
+   while( (res = m_in->readAhead( chr )) && chr == '\r' )
+   {
+      m_in->discardReadAhead( 1 );
+   }
+
+   return res;
 }
 
 }
