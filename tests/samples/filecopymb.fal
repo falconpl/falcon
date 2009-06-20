@@ -1,4 +1,4 @@
-#!/usr/bin/falcon
+#!/usr/bin/falcons
 /*
    FALCON - Samples
 
@@ -40,6 +40,7 @@ try
 
    // continue until the last read returns 0 (and this sets the EOF flag).
    while not source.eof()
+      block.rewind()
       count = source.read( block )
       // write the block. As memblocks are fixed length, we do NEED to
       // specify it
@@ -78,7 +79,7 @@ function gauge( max, current )
    if lastRatio == int(ratio)
       return
    else
-      lastRatio == int(ratio)
+      lastRatio = int(ratio)
    end
 
 	gauge = strReplicate( "#", ratio )
@@ -87,4 +88,4 @@ function gauge( max, current )
 
 end
 
-/* end of filecopy.fal */
+/* end of filecopymb.fal */

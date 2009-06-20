@@ -36,7 +36,7 @@ try
    source.seek(0)
 
    // first, read a block initializing a suitable variable.
-   block = source.read( 1024 )
+   block = source.grab( 1024 )
    readSize = len(block)
 
    // continue until the last read returns 0 (and this sets the EOF flag).
@@ -77,7 +77,7 @@ function gauge( max, current )
    if lastRatio == int(ratio)
       return
    else
-      lastRatio == int(ratio)
+      lastRatio = int(ratio)
    end
 
 	gauge = strReplicate( "#", ratio )
@@ -86,4 +86,4 @@ function gauge( max, current )
 
 end
 
-/* end of filecopy.flc */
+/* end of filecopy.fal */

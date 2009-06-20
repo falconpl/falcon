@@ -24,7 +24,7 @@ dir = len( args ) == 0 ? "." : args[0]
 printl( "Directory list for: ", dir )
 
 try
-   dirHandle = DirectoryOpen( dir )
+   dirHandle = Directory( dir )
    elem = dirHandle.read()
    stats = FileStat()
    while elem != nil
