@@ -2225,7 +2225,7 @@ bool String::endsWith( const String &str, bool icase ) const
    }
    else
    {
-      for ( uint32 i = 0; i <= len; ++i )
+      for ( uint32 i = 0; i < len; ++i )
          if ( str.getCharAt(i) != getCharAt(i+start) )
             return false;
    }
