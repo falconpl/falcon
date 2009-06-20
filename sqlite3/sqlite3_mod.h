@@ -30,11 +30,12 @@ protected:
    int m_columnCount;
 
    sqlite3_stmt *m_res;
+   bool m_bHasRow;
 
    static dbi_type getFalconType( int typ );
 
 public:
-   DBIRecordsetSQLite3( DBIHandle *dbh, sqlite3_stmt *res );
+   DBIRecordsetSQLite3( DBIHandle *dbh, sqlite3_stmt *res, bool bHasRow = false );
    ~DBIRecordsetSQLite3();
 
    virtual dbi_status next();

@@ -33,6 +33,7 @@ function createNamesTable(dbh)
    tr.query( "INSERT INTO names (name, dob) VALUES (:1, :2)", "John", "1963-08-11" )
    tr.query( "INSERT INTO names (name, dob) VALUES (:1, :2)", "Jeff", "1978-03-29" )
    tr.query( "INSERT INTO names (name, dob) VALUES (:1, :2)", "Jane", "1932-10-01" )
+   tr.query( "INSERT INTO names (name, dob) VALUES (:1, :2)", "Jude", "1932-11-01" )
    tr.close()
 end
 

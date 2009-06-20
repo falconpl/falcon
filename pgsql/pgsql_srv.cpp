@@ -384,7 +384,7 @@ DBITransactionPgSQL::DBITransactionPgSQL( DBIHandle *dbh )
    m_inTransaction = false;
 }
 
-DBIRecordset *DBITransactionPgSQL::query( const String &query, dbi_status &retval )
+DBIRecordset *DBITransactionPgSQL::query( const String &query, int64 &affected_rows, dbi_status &retval )
 {
    AutoCString asQuery( query );
    PGconn *conn = ((DBIHandlePgSQL *) m_dbh)->getPGconn();
@@ -395,17 +395,24 @@ DBIRecordset *DBITransactionPgSQL::query( const String &query, dbi_status &retva
       return NULL;
    }
 
-   switch ( PQresultStatus( res ) )
+   int pres = PQresultStatus( res );
+   switch ( pres )
    {
    case PGRES_TUPLES_OK:
-      retval = dbi_ok;
-      break;
 
    case PGRES_EMPTY_QUERY:
    case PGRES_COMMAND_OK:
    case PGRES_COPY_OUT:
    case PGRES_COPY_IN:
-      retval = dbi_no_results;
+      retval = PGRES_TUPLES_OK == 0 ? dbi_ok : dbi_no_results;
+      {
+         char *sAffectedRows = PQcmdTuples( res );
+         if ( sAffectedRows == NULL || strlen( sAffectedRows ) == 0 )
+            affected_rows = 0;
+         else
+            affected_rows = atoi( sAffectedRows );
+         retval = dbi_ok;
+      }
       break;
 
    case PGRES_BAD_RESPONSE:
@@ -425,59 +432,11 @@ DBIRecordset *DBITransactionPgSQL::query( const String &query, dbi_status &retva
    return new DBIRecordsetPgSQL( m_dbh, res );
 }
 
-int DBITransactionPgSQL::execute( const String &query, dbi_status &retval )
-{
-   AutoCString asQuery( query );
-   PGconn *conn = ((DBIHandlePgSQL *) m_dbh)->getPGconn();
-   PGresult *res = PQexec( conn, asQuery.c_str() );
-
-   if ( res == NULL ) {
-      retval = dbi_memory_allocation_error;
-      return 0;
-   }
-
-   int affectedRows;
-
-   switch ( PQresultStatus( res ) )
-   {
-   case PGRES_EMPTY_QUERY:
-   case PGRES_COMMAND_OK:
-   case PGRES_TUPLES_OK:
-   case PGRES_COPY_OUT:
-   case PGRES_COPY_IN:
-      {
-         char *sAffectedRows = PQcmdTuples( res );
-         if ( sAffectedRows == NULL || strlen( sAffectedRows ) == 0 )
-            affectedRows = 0;
-         else
-            affectedRows = atoi( sAffectedRows );
-         retval = dbi_ok;
-      }
-      break;
-
-   case PGRES_BAD_RESPONSE:
-   case PGRES_NONFATAL_ERROR: // TODO: should this really trip an error?
-   case PGRES_FATAL_ERROR:
-      retval = dbi_execute_error;
-      affectedRows = -1;
-      break;
-
-   default:                  // Unknown error, this should never be reached
-      retval = dbi_error;
-      affectedRows = -1;
-      break;
-   }
-
-   PQclear( res );
-
-   return affectedRows;
-}
-
 dbi_status DBITransactionPgSQL::begin()
 {
    dbi_status retval;
-
-   execute( "BEGIN", retval );
+   int64 dummy;
+   query( "BEGIN", dummy, retval );
 
    if ( retval == dbi_ok )
       m_inTransaction = true;
@@ -488,8 +447,8 @@ dbi_status DBITransactionPgSQL::begin()
 dbi_status DBITransactionPgSQL::commit()
 {
    dbi_status retval;
-
-   execute( "COMMIT", retval );
+   int64 dummy;
+   query( "COMMIT", dummy, retval );
 
    m_inTransaction = false;
 
@@ -499,8 +458,8 @@ dbi_status DBITransactionPgSQL::commit()
 dbi_status DBITransactionPgSQL::rollback()
 {
    dbi_status retval;
-
-   execute( "ROLLBACK", retval );
+   int64 dummy;
+   query( "ROLLBACK", dummy, retval );
 
    m_inTransaction = false;
 
@@ -546,6 +505,12 @@ DBIHandlePgSQL::~DBIHandlePgSQL()
    close();
 }
 
+
+DBITransaction* DBIHandlePgSQL::getDefaultTransaction()
+{
+   return m_connTr == NULL ? (m_connTr = new DBITransactionPgSQL( this )) : m_connTr;
+}
+
 DBITransaction *DBIHandlePgSQL::startTransaction()
 {
    DBITransactionPgSQL *t = new DBITransactionPgSQL( this );
@@ -576,24 +541,6 @@ dbi_status DBIHandlePgSQL::closeTransaction( DBITransaction *tr )
    return dbi_ok;
 }
 
-DBIRecordset *DBIHandlePgSQL::query( const String &sql, dbi_status &retval )
-{
-   if ( m_connTr == NULL ) {
-      m_connTr = new DBITransactionPgSQL( this );
-   }
-
-   return m_connTr->query( sql, retval );
-}
-
-int DBIHandlePgSQL::execute( const String &sql, dbi_status &retval )
-{
-   if ( m_connTr == NULL ) {
-      m_connTr = new DBITransactionPgSQL( this );
-   }
-
-   return m_connTr->execute( sql, retval );
-}
-
 int64 DBIHandlePgSQL::getLastInsertedId()
 {
    // PostgreSQL requires a sequence name
@@ -608,7 +555,8 @@ int64 DBIHandlePgSQL::getLastInsertedId( const String& sequenceName )
    snprintf( sql, 128, "SELECT CURRVAL('%s')", asSequenceName.c_str() );
 
    dbi_status retval;
-   DBIRecordset *rs = query( sql, retval );
+   int64 dummy;
+   DBIRecordset *rs = getDefaultTransaction()->query( sql, dummy, retval );
 
    int64 insertedId = 0;
    if ( retval == dbi_ok && rs->next() == 0 )

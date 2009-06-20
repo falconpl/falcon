@@ -347,7 +347,7 @@ DBITransactionMySQL::DBITransactionMySQL( DBIHandle *dbh )
    m_inTransaction = false;
 }
 
-DBIRecordset *DBITransactionMySQL::query( const String &query, dbi_status &retval )
+DBIRecordset *DBITransactionMySQL::query( const String &query, int64 &affectedRows, dbi_status &retval )
 {
    retval = dbi_ok;
 
@@ -385,55 +385,17 @@ DBIRecordset *DBITransactionMySQL::query( const String &query, dbi_status &retva
       return new DBIRecordsetMySQL( m_dbh, res );
    }
 
+   affectedRows = (int64) mysql_affected_rows( conn );
+   
    // query without recordset
    return NULL;
-}
-
-int DBITransactionMySQL::execute( const String &query, dbi_status &retval )
-{
-   AutoCString asQuery( query );
-   MYSQL *conn = ((DBIHandleMySQL *) m_dbh)->getConn();
-
-   if ( mysql_real_query( conn, asQuery.c_str(), asQuery.length() ) != 0 ) {
-      switch ( mysql_errno( conn ) )
-      {
-      case CR_COMMANDS_OUT_OF_SYNC:
-         retval = dbi_query_error;
-         break;
-
-      case CR_SERVER_GONE_ERROR:
-      case CR_SERVER_LOST:
-         retval = dbi_invalid_connection;
-         break;
-
-      default:
-         retval = dbi_error;
-      }
-      return -1;
-   }
-
-   if ( mysql_field_count( conn ) > 0 ) {
-      MYSQL_RES* res = mysql_store_result( conn );
-
-      if ( res == NULL ) {
-         retval = dbi_memory_allocation_error;
-         return -1;
-      }
-
-      mysql_free_result( res );
-   }
-
-   retval = dbi_ok;
-
-   // TODO: Convert this function to return an int64
-   return (int) mysql_affected_rows( conn );
 }
 
 dbi_status DBITransactionMySQL::begin()
 {
    dbi_status retval;
-
-   execute( "BEGIN", retval );
+   int64 dummy;
+   query( "BEGIN", dummy, retval );
 
    if ( retval == dbi_ok )
       m_inTransaction = true;
@@ -444,8 +406,8 @@ dbi_status DBITransactionMySQL::begin()
 dbi_status DBITransactionMySQL::commit()
 {
    dbi_status retval;
-
-   execute( "COMMIT", retval );
+   int64 dummy;
+   query( "COMMIT", dummy, retval );
 
    m_inTransaction = false;
 
@@ -455,8 +417,8 @@ dbi_status DBITransactionMySQL::commit()
 dbi_status DBITransactionMySQL::rollback()
 {
    dbi_status retval;
-
-   execute( "ROLLBACK", retval );
+   int64 dummy;
+   query( "ROLLBACK", dummy, retval );
 
    m_inTransaction = false;
 
@@ -526,6 +488,11 @@ DBITransaction *DBIHandleMySQL::startTransaction()
    return t;
 }
 
+DBITransaction* DBIHandleMySQL::getDefaultTransaction()
+{
+   return m_connTr == NULL ? (m_connTr = new DBITransactionMySQL( this )): m_connTr;
+}
+   
 DBIHandleMySQL::DBIHandleMySQL()
 {
    m_conn = NULL;
@@ -541,24 +508,6 @@ DBIHandleMySQL::DBIHandleMySQL( MYSQL *conn )
 dbi_status DBIHandleMySQL::closeTransaction( DBITransaction *tr )
 {
    return dbi_ok;
-}
-
-DBIRecordset *DBIHandleMySQL::query( const String &sql, dbi_status &retval )
-{
-   if ( m_connTr == NULL ) {
-      m_connTr = new DBITransactionMySQL( this );
-   }
-
-   return m_connTr->query( sql, retval );
-}
-
-int DBIHandleMySQL::execute( const String &sql, dbi_status &retval )
-{
-   if ( m_connTr == NULL ) {
-      m_connTr = new DBITransactionMySQL( this );
-   }
-
-   return m_connTr->execute( sql, retval );
 }
 
 int64 DBIHandleMySQL::getLastInsertedId()

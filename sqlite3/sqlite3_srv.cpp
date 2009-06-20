@@ -26,8 +26,9 @@ namespace Falcon
  * Recordset class
  *****************************************************************************/
 
-DBIRecordsetSQLite3::DBIRecordsetSQLite3( DBIHandle *dbh, sqlite3_stmt *res )
-    : DBIRecordset( dbh )
+DBIRecordsetSQLite3::DBIRecordsetSQLite3( DBIHandle *dbh, sqlite3_stmt *res, bool bHasRow )
+    : DBIRecordset( dbh ),
+      m_bHasRow( bHasRow )
 {
    m_res = res;
 
@@ -58,7 +59,16 @@ dbi_type DBIRecordsetSQLite3::getFalconType( int typ )
 
 dbi_status DBIRecordsetSQLite3::next()
 {
-   int res = sqlite3_step( m_res );
+   int res;
+   
+   if ( m_bHasRow )
+   {
+      m_bHasRow = false;
+      res = SQLITE_ROW;
+   }
+   else
+      res = sqlite3_step( m_res );
+   
    switch ( res )
    {
    case SQLITE_DONE:
@@ -345,7 +355,6 @@ DBIRecordset* DBITransactionSQLite3::query( const String &query, int64 &affected
    const char *unusedSQL;
    int status = sqlite3_prepare( conn, asQuery.c_str(), asQuery.length(), &res, &unusedSQL );
    
-   
    if ( res == NULL ) {
       retval = dbi_memory_allocation_error;
       return 0;
@@ -357,23 +366,24 @@ DBIRecordset* DBITransactionSQLite3::query( const String &query, int64 &affected
       sqlite3_finalize( res );
       return 0;
    }
-      
+
+   
    status = sqlite3_step( res ); // execute the actual statement
 
    switch ( status )
    {
    case SQLITE_OK:
-   case SQLITE_DONE:
       // in case of SQLLITE_DONE, there is no recordset to be returned.
       sqlite3_finalize( res );
       affectedRows = 0;
-      retval = dbi_ok;
+      retval = dbi_no_results;
       return 0;
-      
+
+   case SQLITE_DONE:
    case SQLITE_ROW:
       affectedRows = sqlite3_changes( conn );
       retval = dbi_ok;
-      return new DBIRecordsetSQLite3( m_dbh, res );   
+      return new DBIRecordsetSQLite3( m_dbh, res, status == SQLITE_ROW );
       
 
    default: // TODO: provide better error info than this!

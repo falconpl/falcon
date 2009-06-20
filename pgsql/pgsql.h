@@ -65,8 +65,7 @@ protected:
 public:
    DBITransactionPgSQL( DBIHandle *dbh );
 
-   virtual DBIRecordset *query( const String &query, dbi_status &retval );
-   virtual int execute( const String &query, dbi_status &retval );
+   virtual DBIRecordset *query( const String &query, int64 &affected_rows, dbi_status &retval );
    virtual dbi_status begin();
    virtual dbi_status commit();
    virtual dbi_status rollback();
@@ -93,13 +92,12 @@ public:
 
    virtual DBITransaction *startTransaction();
    virtual dbi_status closeTransaction( DBITransaction *tr );
-   virtual DBIRecordset *query( const String &sql, dbi_status &retval );
-   virtual int execute( const String &sql, dbi_status &retval );
    virtual int64 getLastInsertedId();
    virtual int64 getLastInsertedId( const String &value );
    virtual dbi_status getLastError( String &description );
    virtual dbi_status escapeString( const String &value, String &escaped );
    virtual dbi_status close();
+   virtual DBITransaction* getDefaultTransaction();
 };
 
 class DBIServicePgSQL : public DBIService
