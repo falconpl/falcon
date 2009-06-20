@@ -93,6 +93,13 @@ IF( WIN32 )
 
 ELSE( WIN32 )
    LINK_DIRECTORIES( "${FALCON_LIB_DIR}" )
+
+   #prepare RPATH to the final destination/lib dir
+   IF ("${FALCON_RPATH}" STREQUAL "")
+      SET(CMAKE_INSTALL_RPATH "${FALCON_RPATH}")
+   ELSE ("${FALCON_RPATH}" STREQUAL "")
+      SET(CMAKE_INSTALL_RPATH "${FALCON_LIB_DIR}")
+   ENDIF("${FALCON_RPATH}" STREQUAL "")
 ENDIF( WIN32 )
 
 #Project directories

@@ -31,7 +31,7 @@ BUILDING
 To build the Falcon Feathers, you'll need a well setup Falcon Development
 Environment, as specified in the relative document at
 
-   http://www.falconpl.org/wiki/tiki-index.php?page=The+build+environment
+   http://old.falconpl.org/wiki/tiki-index.php?page=The+build+environment
 
 The core must be built and installed in the active tree before starting
 feathers configuration.
