@@ -1,42 +1,116 @@
 
                          RELEASE NOTES for Falcon
 
-                            Crane-RC2 Release
+                              Crane Release
 
-                                0.9.1.8
-
-  Version 0.9.1.8 is the second release candidate for final public 0.9.2.
-This version is intended for all developers and wilful users to test
-and squeeze the last bugs that we weren't able to find out. It's supposed
-to be pretty stable, with all the blockesrs for final 0.9.2 gone.
+                                  0.9.2
 
   "Crane" marks the birth of the new development effort towards the final
-1.0 release. This development release is meant as a pre-release for developers,
-willful users, and module designers so that they can install it on their
-systems and test it, use it and develop the new modules on it. In short, it's
-a stabilization of the 0.9 branch, which is released as a package so that
-the surrounding modules and applications can be developed and tested.
+1.0 release. The main news with respect to 0.8 branch are:
 
-  While Albatross (0.9.0) was a totally experimental version, this release is
-already usable, and has already been employed to port relevant applications and
-embeddings from version 0.8. While still not "official", and still bearing
-some known issues, it is usable enough to drive Falcon official site and
-run through our set of applications without any particular problems.
+  - Native multithreading integrated in the engine.
+  - Cooperative parallel Garbage Collector.
+  - Extended support for message oriented programming.
+  - Completing of Base Object Model through type-specialized metaclasses.
+  - Integration of Functional Paradigm with crucial functions as
+    brigade(), and introduction of the concept of "parametric evaluation".
+  - Introduction of cached streams, incrementing I/O performances of
+    several times.
+  - Virtualization of the loading and stream services provided by the
+    engine (now URI driven).
+  - Introduction of operator overloading for objects and blessed
+    dictionaries.
+  - Added support for circular references in loaded modules.
+
+  The most prominent changes that require attention in porting Falcon
+scripts from 0.8 are:
+
+  - The attribute keyword has been removed. Message oriented programming
+    is now performed through the VM assisted class VMSlot. With that,
+    give, has and hasnt keyword has been removed as well.
+  - The sender keyword has been removed. Instead, the fself keyword (pointing
+    to the function or method currently executed) has been introduced,
+    and it is possible to discover the calling entity (be it a method,
+    of which it is possible to retrieve the caller object that would have
+    been available through sender, or a normal function) through the
+    caller() method of the Function BOM metaclass.
+  - Multiline string declaration has been changed. Now, a single " or '
+    at the end of a line opens a multiline block which is closed by
+    the corresponding " or '. It is illegal to break a string across
+    lines except if the string was opened this way.
+  - Strings are not automatically concatenated anymore. Now, "a" "b" represent
+    two separate tokens; however, the '+' operator on literal string is
+    calculate at compile time. This obviated the need for the dot-quote
+    operator that has been removed.
+  - If math operators are the last token in a line, the instruction can
+    continue on the next line without the need of a terminal backslash.
+  - Single quote strings perform no escape whatsoever. The only sequence
+    specially processed is the repeated single quote (''), which is expanded
+    in a single quote, so that a string declared as 'what''s that' expands
+    into "what's that".
+  - The loop keyword doesn't accept a statement on its line anymore, while the
+    corresponding end keyword accepts an optional terminal condition (similar
+    to repeat->until loops).
+  - The lambda keyword has been removed; in its place,
+         { p1...pn => <statements> }
+    nameless function declaration has been added. contrarily to
+         function(p1...pn); ...; end
+    nameless function declaration, and similarly to the lambda keyword, if the
+    statements to the right of => consists in just one expression, its value
+    is automatically returned. {=>} notation is called "code block".
+
+  Other than that, a couple of relevant script level functions and classes has
+been changed; mainly the Directory class and serialization functions. It is
+advisable to read the change log for a complete overview of the work.
+  
+   
+Future plans
+============
+
+  We'll concentrate mainly in three aspect in the next releases:
+
+  - Optimization: starting from this version, we're beginning to optimize
+    various aspects of the engine, and to employ state-of-the-art
+    programming techniques to boost performances in critical areas as
+    concurrency, memory pooling, stack compression, dictionary search
+    caching and method early binding. Also, we'll start introducing compile
+    time optimizations to boost the performance of the generated code using
+    the best possible sequence of Virtual Machine opcodes, and we may
+    extend the VM model to allow for more effective optimizations (as local
+    caching of frequently used objects).
+  - Completion: Message programming and Tabular programming are growing more
+    solid, but their employ out in the wild showed some uncovered area that
+    requires work. For example, messages could be excellent means to have
+    coroutines, and possibly threads, to cooperate if just integrated with
+    the wait functions.
+  - Extension: three are the issues that must be covered before reaching the
+    1.0 stage: logic programming, type contracts (or optional typing) and
+    native support for arbitrary precision math. We'll try to introduce all
+    the three as soon as possible, so that they are involved since the
+    beginning in the optimization and completion steps.
+
 
 Short term plans
 ================
 
-  As planned, we're releasing 0.9.2 (the first official version) in 30-45
-days from 0.9.0; this is an in-between version which we decided to release
-as a package to simplify the effort of developers moving to the 0.9 branch.
+  As this is the first official release after more than six months, and as
+the changes in the engine are quite extensive, we expect that the release
+out on the wild will expose unspotted problems. This, and the need to
+integrate logic programming, type contracts and arbitrary precision math
+fast has made us plan an official release 0.9.4 in 45-60 days.
+
+  The development group will concentrate in updating and releasing critical
+modules as DBI, DynLib and SDL, plus critical projects as the embedding
+sample suite and Faldoc as soon as possible, possibly in 1-2 weeks.
 
 Usage tips
 ==========
 
    Although the new Garbage Collector is relatively efficient in determining
-the actual needs of applications and in reclaiming
-unused memory, the detection algorithm is still rudimentary and experimental.
-If your application is memory-intensive, be sure to read the Core Module
+the actual needs of applications and in reclaiming unused memory, the standard
+detection algorithms are still a bit naive.
+
+  If your application is memory-intensive, be sure to read the Core Module
 Documentation about the new GC object, which provides four default collection
 strategies and also allows you to implement your own. A finely tuned GC 
 strategy can boost the performance of your application and reduce its memory 

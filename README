@@ -12,7 +12,7 @@ SVN BUILD INSTRUCTIONS
   To build the currently working version from the active repository, please
 refer to this document:
 
-   http://www.falconpl.org/wiki/tiki-index.php?page=The+build+environment
+   http://old.falconpl.org/wiki/tiki-index.php?page=The+build+environment
 
   Instructions on how to build the released source packages are contained
 in the "BUILDING" document.

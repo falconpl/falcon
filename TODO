@@ -6,6 +6,7 @@ TODO for 0.9.4
    - Provide Stream interface to Sockets.
    - Add version prefix to include/ install
    - [Desiderata] Submodule-loading (i.e. load core=>strings)
-   - [Desiderata] Extra string functions.
    - [MINOR] Fix GC_init workaround for pure reflections.
+   - Native support for big numbers.
+   - Type contracts.
 

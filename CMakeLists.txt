@@ -69,9 +69,6 @@ SET(FALCON_BUILD_TREE   $ENV{FALCON_BUILD_TREE})
 
 MESSAGE( "Compiling Falcon on ${CMAKE_SYSTEM}" )
 
-
-MESSAGE( "Compiling Falcon on ${CMAKE_SYSTEM}" )
-
 ##############################################################################
 # Including specific build informations
 # This is a user-configurable script containing vars
@@ -141,6 +138,14 @@ IF(WIN32)
       set( CMAKE_MODULE_LINKER_FLAGS -mthreads )
    ENDIF ( "${CMAKE_GENERATOR}" STREQUAL "MinGW Makefiles" )
 ELSE(WIN32)
+
+   #prepare RPATH to the final destination/lib dir
+   IF ("${FALCON_RPATH}" STREQUAL "")
+      SET(CMAKE_INSTALL_RPATH "${FALCON_RPATH}")
+   ELSE ("${FALCON_RPATH}" STREQUAL "")
+      SET(CMAKE_INSTALL_RPATH "${FALCON_FINAL_DESTINATION_LIB}")
+   ENDIF("${FALCON_RPATH}" STREQUAL "")
+   
    # Set common UNIX warnings.
    IF("${CMAKE_SYSTEM_NAME}" STREQUAL "SunOS")
    ELSE("${CMAKE_SYSTEM_NAME}" STREQUAL "SunOS")
