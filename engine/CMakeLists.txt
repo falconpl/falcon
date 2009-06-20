@@ -55,8 +55,7 @@ IF(UNIX OR APPLE)
    IF(NOT BISON_EXECUTABLE)
       FIND_PROGRAM(BISON_EXECUTABLE bison)
       IF (NOT BISON_EXECUTABLE)
-         MESSAGE("WARNING: BISON not found - won't perform grammar
-recompilation")
+         MESSAGE("WARNING: BISON not found - won't perform grammar recompilation")
       ENDIF (NOT BISON_EXECUTABLE)
    ENDIF(NOT BISON_EXECUTABLE)
 
