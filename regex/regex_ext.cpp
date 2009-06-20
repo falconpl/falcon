@@ -88,8 +88,8 @@ namespace Ext {
       match "abdabc" starting from character 3, but if anchored option is set it won't match, as
       "abc" will start to match at the beginning of string, but then will fail when "d" is met.
    - @b i: ignore case while matching. Case ignoring is currently supported only for Unicode
-      characters below 128; this means that accented latin case ignoring is not supported. In
-      example, "�" and "�" won't match even if "i" option is set.
+      characters below 128; this means that accented latin case ignoring is not supported. For
+      example, "è" and "È" won't match even if "i" option is set.
    - @b m: multiline match. Usually, the special characters "^" and "$" matches respectively
       the begin and the end of the string, so that "^pattern$" will match only "pattern", and not
       "this is a pattern". With "m" option, "^" and "$" matches the begin and the end of a line,
@@ -103,7 +103,7 @@ namespace Ext {
    - @b f: first line. Match must start before or at the first "\n", or else it will fail.
    - @b g: ungreedy match. Repetition patterns behave normally in a way that is defined
       "greedy", unless followed by a question mark. Greedy matching will force quantifiers to
-      match as many characters as possible in the target string. In example, normally
+      match as many characters as possible in the target string. For example, normally
       'field:\s*(.*);', if applied to a string with two ";" after "field" will return the longest
       possible match. If applied to "field: a; b; c; and the rest" would return "a; b; c" as first
       submatch. Using a question mark would force to match the shortest alternative:
