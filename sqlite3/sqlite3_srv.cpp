@@ -376,14 +376,19 @@ DBIRecordset* DBITransactionSQLite3::query( const String &query, int64 &affected
       // in case of SQLLITE_DONE, there is no recordset to be returned.
       sqlite3_finalize( res );
       affectedRows = 0;
-      retval = dbi_no_results;
+      retval = dbi_ok;
       return 0;
 
    case SQLITE_DONE:
+      affectedRows = sqlite3_changes( conn );
+      sqlite3_finalize( res );
+      retval = dbi_ok;
+      return 0;
+
    case SQLITE_ROW:
       affectedRows = sqlite3_changes( conn );
       retval = dbi_ok;
-      return new DBIRecordsetSQLite3( m_dbh, res, status == SQLITE_ROW );
+      return new DBIRecordsetSQLite3( m_dbh, res, true );
       
 
    default: // TODO: provide better error info than this!
