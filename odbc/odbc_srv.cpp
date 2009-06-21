@@ -12,7 +12,7 @@
  *
  * See LICENSE file for licensing details.
  */
-
+#define _WIN32_WINNT 0x0500
 #if ! defined( _WIN32_WINNT ) || _WIN32_WINNT < 0x0403
 #undef _WIN32_WINNT
 #define _WIN32_WINNT 0x0403
@@ -310,9 +310,9 @@ dbi_status DBIRecordsetODBC::asDate( const int columnIndex, TimeStamp &value )
    tv.subString( 5, 7 ).parseInt( month );
    tv.subString( 8, 10 ).parseInt( day );
 
-   value.m_year = year;
-   value.m_month = month;
-   value.m_day = day;
+   value.m_year = (int16)year;
+   value.m_month = (int16) month;
+   value.m_day = (int16) day;
    value.m_hour = 0;
    value.m_minute = 0;
    value.m_second = 0;
@@ -343,9 +343,9 @@ dbi_status DBIRecordsetODBC::asTime( const int columnIndex, TimeStamp &value )
    value.m_year = 0;
    value.m_month = 0;
    value.m_day = 0;
-   value.m_hour = hour;
-   value.m_minute = minute;
-   value.m_second = second;
+   value.m_hour = (int16) hour;
+   value.m_minute = (int16) minute;
+   value.m_second = (int16) second;
    value.m_msec = 0;
 
    return dbi_ok;
@@ -373,12 +373,12 @@ dbi_status DBIRecordsetODBC::asDateTime( const int columnIndex, TimeStamp &value
    tv.subString( 14, 16 ).parseInt( minute );
    tv.subString( 17, 19 ).parseInt( second );
 
-   value.m_year = year;
-   value.m_month = month;
-   value.m_day = day;
-   value.m_hour = hour;
-   value.m_minute = minute;
-   value.m_second = second;
+   value.m_year = (int16) year;
+   value.m_month = (int16) month;
+   value.m_day = (int16) day;
+   value.m_hour = (int16) hour;
+   value.m_minute = (int16) minute;
+   value.m_second = (int16) second;
    value.m_msec = 0;
 
    return dbi_ok;

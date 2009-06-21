@@ -2,7 +2,7 @@
  * FALCON - The Falcon Programming Language.
  * FILE: odbc_ext.cpp
  *
- * MySQL Falcon extension interface
+ * ODBC Falcon extension interface
  * -------------------------------------------------------------------
  * Author: Tiziano De Rubeis
  * Begin: Tue Sep 30 17:00:00 2008

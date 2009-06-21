@@ -14,6 +14,8 @@ endif(COMMAND cmake_policy)
 SET(ODBC_INCLUDE_SEARCH_PATH
   ${ODBC_INCLUDE_DIR}
   "$ENV{ProgramFiles}/Microsoft Visual Studio 8/VC/PlatformSDK/include"
+  "$ENV{ProgramFiles}/Microsoft Visual Studio 9/VC/PlatformSDK/include"
+  "$ENV{ProgramFiles}/Microsoft Platform SDK/Include"
 )
 FIND_PATH(ODBC_REAL_INCLUDE_DIR odbcss.h ${ODBC_INCLUDE_SEARCH_PATH})
 
@@ -21,6 +23,8 @@ FIND_PATH(ODBC_REAL_INCLUDE_DIR odbcss.h ${ODBC_INCLUDE_SEARCH_PATH})
 SET(ODBC_LIB_SEARCH_PATH
    ${ODBC_LIB_DIR}
    "$ENV{ProgramFiles}/Microsoft Visual Studio 8/VC/PlatformSDK/lib"
+   "$ENV{ProgramFiles}/Microsoft Visual Studio 9/VC/PlatformSDK/lib"
+   "$ENV{ProgramFiles}/Microsoft Platform SDK/Lib"
   )
 
 FIND_LIBRARY(ODBC_LIBRARY
