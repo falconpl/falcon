@@ -1,4 +1,4 @@
-Version 0.9.7
+Version 0.9.8
   * major: More ergonomic approach to transaction/database handle separation
            on C++ side of the service code.
   * fixed: SQLLite query wasn't executing the query code.

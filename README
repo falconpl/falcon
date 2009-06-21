@@ -3,7 +3,7 @@
 
                               Falcon DBI
 
-                                  0.9.3
+                                 0.9.8
 
 
 Falcon DBI is the database abstraction layer that is part of the official
@@ -16,7 +16,6 @@ erratic and cause sudden changes in the interfaces.
 
 Modules admitted in the DBI are currently:
 
-   * sql
    * mysql
    * pgsql
    * sqlite3

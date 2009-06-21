@@ -6,10 +6,6 @@ MISCELLANEOUS:
      appending to the end as I see the need for a new one
      thus they are in a very erradic order.
 
-QUERY RELATED:
-   * dbh/tr.insert( tableName, dict [, seq] )
-   * dbh/tr.update( tableName, where, dict )
-
 OBJECT PERSISTENCE:
    * Object persistence needs to be rethought. Many potential problems
      have appeared along the way. I am going to leave it as is but
@@ -19,8 +15,5 @@ OBJECT PERSISTENCE:
      changed right away.
    
 DRIVERS:
-   * mysql driver
-   * sqlite3 driver
    * firebird/interbase driver
-   * odbc driver
    * mssql driver
