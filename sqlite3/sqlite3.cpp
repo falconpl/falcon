@@ -22,7 +22,10 @@
 
 // Instantiate the driver service
 Falcon::DBIServiceSQLite3 theSQLite3Service;
-
+/*#
+   @module sqlite3 Sqlite driver module
+   @brief DBI extension supporting sqlite3 embedded database engine
+*/
 // the main module
 FALCON_MODULE_DECL
 {

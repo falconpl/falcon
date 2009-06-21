@@ -19,10 +19,29 @@
 #include "sqlite3_mod.h"
 #include "sqlite3_ext.h"
 
+/*#
+   @beginmodule sqlite3
+*/
 namespace Falcon
 {
 namespace Ext
 {
+
+/*#
+      @class SQLite3
+      @brief Direct interface to SQLite3 database.
+      @param connect String containing connection parameters.
+*/
+
+
+/*#
+   @init SQLite3
+   @brief Connects to a SQLite3 database.
+
+   The @b connect string is directly passed to the low level
+   @link "http://www.sqlite.org/capi3ref.html#sqlite3_open" sqlite3_open() function
+   of the SQLITE API.
+*/
 
 FALCON_FUNC SQLite3_init( VMachine *vm )
 {

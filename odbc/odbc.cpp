@@ -20,6 +20,11 @@
 #include "version.h"
 #include "odbc_ext.h"
 
+/*#
+   @module odbc ODBC driver module
+   @brief DBI extension supporting ODBC connections
+*/
+
 // Instantiate the driver service
 Falcon::DBIServiceODBC theODBCService;
 

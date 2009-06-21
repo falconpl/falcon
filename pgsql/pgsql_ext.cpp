@@ -19,10 +19,27 @@
 #include "pgsql.h"
 #include "pgsql_ext.h"
 
+/*#
+   @beginmodule pgsql
+*/
 namespace Falcon
 {
 namespace Ext
 {
+
+/*#
+      @class PgSQL
+      @brief Direct interface to Postgre SQL database.
+      @param connect String containing connection parameters.
+*/
+
+
+/*#
+   @init PgSQL
+   @brief Connects to a PgSQL database.
+
+   The @b connect string is directly passed to the low level postgre driver.
+*/
 
 FALCON_FUNC PgSQL_init( VMachine *vm )
 {

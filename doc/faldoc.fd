@@ -10,7 +10,7 @@
 
 Title = Falcon - DBI Module.
 Author = The Falcon Committee
-Version = 1.0.0
+Version = 0.9.8
 
 ################################################
 # Faldoc Input settings
@@ -20,6 +20,7 @@ Input.directory=../dbi
 Input.directory=../mysql
 Input.directory=../pgsql
 Input.directory=../sqlite3
+Input.directory=../odbc
 
 Input.wildcard=*.cpp     #we use only...
 Input.recursive=false
@@ -39,6 +40,6 @@ Output.module=html
 # Output.<module>.<parameters> configs
 ################################################
 
-Output.html.directory=html
+Output.html.directory=Falcon-dbi.0.9.8-docs
 Output.html.url=.
 Output.html.doctitle=Falcon DBI Module reference.

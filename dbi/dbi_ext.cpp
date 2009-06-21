@@ -49,7 +49,7 @@ CoreObject *dbi_defaultHandle; // Temporary until I figure how to set static cla
   - <code>pgsql:normal postgresql connection string</code>
   - <code>sqlite3:sqlite_db_filename.db</code>
   - <code>mysql:normal mysql connection string</code>
- */
+*/
 
 FALCON_FUNC DBIConnect( VMachine *vm )
 {
@@ -810,7 +810,7 @@ FALCON_FUNC DBIHandle_sqlExpand( VMachine *vm )
  **********************************************************/
 /*#
    @method openBlob DBITransaction
-   @param Opens an existing blob entity.
+   @brief Opens an existing blob entity.
    @param blobID A string containing the blob ID to be opened.
    @return On success, a DBIBlobStream that can be used to read or write from/to the blob.
    @raise DBIError on error.
@@ -1152,7 +1152,7 @@ FALCON_FUNC DBITransaction_writeBlob( VMachine *vm )
 
 
 /*#
- @method commit DBIBaseTtrans
+ @method commit DBIBaseTrans
  @brief Commit the transaction to the database.
  @raise DBIError on failure
  

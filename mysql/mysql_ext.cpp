@@ -29,13 +29,15 @@ namespace Ext
 /*#
       @class MySQL
       @brief Direct interface to MySQL database.
+      @param connect String containing connection parameters.
+
 */
 
 
 /*#
    @init MySQL
    @brief Connects to a MySQL database.
-   @param connect String containing connection parameters.
+
 
    The string is in the following format:
    @code

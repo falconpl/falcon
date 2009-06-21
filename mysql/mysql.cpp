@@ -24,7 +24,7 @@
 Falcon::DBIServiceMySQL theMySQLService;
 
 /*#
-   @module mysql MySQL Support module
+   @module mysql MySQL driver module
    @brief DBI extension supporting MySQL
 */
 

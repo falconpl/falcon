@@ -27,11 +27,12 @@
  - <a target="_new" href="http://postgresql.org/">PostgreSQL</a>
  - <a target="_new" href="http://mysql.com/">MySQL</a>
  - <a target="_new" href="http://sqlite.org/">SQLite</a>
-
+ - <a target="_new" href="http://it.wikipedia.org/wiki/ODBC">ODBC</a>
+ 
  One or more database libraries are required to make DBI useful.
 
  @beginmodule dbi
- */
+*/
 
 // Instantiate the loader service
 Falcon::DBILoaderImpl theDBIService;
@@ -112,8 +113,8 @@ FALCON_MODULE_DECL
 
    /*#
     @class DBIRecordset
-    @brief Represent a collection of database records as required from @a DBIHandle.query.
-    You will not instantiate this class directly, instead, you must use @a DBIHandle.query.
+    @brief Represent a collection of database records as required from @a DBIBaseTrans.query.
+    You will not instantiate this class directly, instead, you must use @a DBIBaseTrans.query.
     */
 
    // create the base class DBIRecordset for falcon

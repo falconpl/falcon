@@ -20,6 +20,11 @@
 #include "version.h"
 #include "pgsql_ext.h"
 
+/*#
+   @module pgsql Postgre SQL database driver module
+   @brief DBI extension supporting Postgre SQL database
+*/
+
 // Instantiate the driver service
 Falcon::DBIServicePgSQL thePgSQLService;
 
