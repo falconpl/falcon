@@ -238,7 +238,10 @@ void CoreObject::readProperty( const String &prop, Item &target )
       break;
 
       case FLC_ITEM_CLASS:
-         target.setClassMethod( this, p->asClass() );
+         if ( derivedFrom( p->asClass()->symbol()->name() ) )
+            target.setClassMethod( this, p->asClass() );
+         else
+            target.setClass( p->asClass() );
       break;
 
       default:

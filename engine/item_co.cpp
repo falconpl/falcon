@@ -120,7 +120,7 @@ void co_dict_add( const Item& first, const Item& second, Item& third )
    CoreDict *source = first.asDict();
    const Item *op2 = second.dereference();
    Item mth;
-   
+
    if ( source->getMethod( "add__", mth ) )
    {
       VMachine *vm = VMachine::getCurrent();
@@ -287,7 +287,7 @@ void co_dict_sub( const Item& first, const Item& second, Item& third )
    CoreDict *dest = third.isDict() && third.asDict() == source ? source : source->clone();
    const Item *op2 = second.dereference();
    Item mth;
-   
+
    if ( source->getMethod( "sub__", mth ) )
    {
       VMachine *vm = VMachine::getCurrent();
@@ -299,7 +299,7 @@ void co_dict_sub( const Item& first, const Item& second, Item& third )
          return;
       }
    }
-   
+
    // if we have an array, remove all of it
    if( op2->isArray() )
    {
@@ -1364,7 +1364,7 @@ int co_dict_compare( const Item& first, const Item& second )
          vm->callItemAtomic( mth, 1 );
          if ( ! vm->regA().isNil() )
             return (int) vm->regA().forceInteger();
-            
+
       }
    }
 
@@ -2470,8 +2470,9 @@ void* ClsMethodCommOpsTable[] = {
    (void*) co_classmeth_getproperty,
    (void*) co_fail,
 
-   //call
-   (void*) co_call_uncallable
+   //call -- act as a class
+   // this is possible as long as asMethodClass() === asClass()
+   (void*) co_call_class
 
 };
 

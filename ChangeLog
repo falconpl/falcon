@@ -1,3 +1,8 @@
+Falcon (0.9.2.1)
+  * fixed: ClassMethod couldn't be used as classes for new instances, and
+           any class in a property would have generated a class method when
+           accessed.
+
 Falcon (0.9.2)
   * fixed: using more modern throw instead of the obsolete raise() functions
            in many points.
@@ -27,7 +32,7 @@ Falcon (0.9.2)
   * fixed: Error class couldn't be inherited from scripts.
   * fixed: For/in loops with negative step exited immediately when start == stop
   * added: Added String.startsWith, String.endsWith, strStartWith(), strEndWith()
-  * fixed: Multiline strings in MS-Win text file format sources (CRLF) couldn't 
+  * fixed: Multiline strings in MS-Win text file format sources (CRLF) couldn't
            be correctly parsed.
 
 Falcon (0.9.1.8)
