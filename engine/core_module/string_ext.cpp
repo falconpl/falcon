@@ -110,16 +110,21 @@ FALCON_FUNC String_charSize( VMachine *vm )
 /*#
    @method front String
    @brief Returns the first character in a string.
+   @optparam count Number of characters to be returned (1 by default).
    @optparam numeric If true, returns a character value instead of a string.
    @optparam remove If true, remove also the character.
    @return The first element or nil if the string is empty.
 
-   If @b numeric is true if it's true,
-   the UNICODE value of the string character will be returned, otherwise the caller
-   will receive a string containing the desired character.
-
+   This method returns a string containing one character from the beginning of the string,
+   or eventually more characters in case a number > 1 is specified in @b count.
+   
    If @b remove is true, then the character is removed and the string is shrinked.
    @see strFront
+   
+   If @b numeric is true,
+   the UNICODE value of the string character will be returned, otherwise the caller
+   will receive a string containing the desired character. In this case, @b count
+   parameter will be ignored and only one UNICODE value will be returned.
 */
 
 /*#
@@ -131,14 +136,16 @@ FALCON_FUNC String_charSize( VMachine *vm )
    @optparam numeric If true, returns a character value instead of a string.
    @return The first element or nil if the string is empty.
 
-
+   This function returns a string containing one character from the beginning of @b str,
+   or eventually more characters in case a number > 1 is specified in @b count.
+   
    If @b remove is true, then the character is removed and the string is shrinked.
    @see String.front
 
-   If @b numeric is true if it's true,
+   If @b numeric is true,
    the UNICODE value of the string character will be returned, otherwise the caller
    will receive a string containing the desired character. In this case, @b count
-   parameter will be ignored and only one character will be returned.
+   parameter will be ignored and only one UNICODE value will be returned.
 */
 
 FALCON_FUNC mth_strFront( VMachine *vm )
@@ -184,32 +191,42 @@ FALCON_FUNC mth_strFront( VMachine *vm )
 /*#
    @method back String
    @brief Returns the first character in a string.
+   @optparam count Number of characters to be taken (defaults to 1).
    @optparam numeric If true, returns a character value instead of a string.
    @optparam remove If true, remove also the character.
    @return The first element or nil if the string is empty.
 
-   If @b numeric is true if it's true,
-   the UNICODE value of the string character will be returned, otherwise the caller
-   will receive a string containing the desired character.
-
+   This function returns a string containing one character from the end of this string,
+   or eventually more characters in case a number > 1 is specified in @b count.
+   
    If @b remove is true, then the character is removed and the string is shrinked.
    @see strFront
+   
+   If @b numeric is true,
+   the UNICODE value of the string character will be returned, otherwise the caller
+   will receive a string containing the desired character. In this case, @b count
+   parameter will be ignored and only one UNICODE value will be returned.
 */
 
 /*#
    @function strBack
    @brief Returns the first character in a string.
    @param str The string on which to operate.
+   @optparam count Number of characters to be taken (defaults to 1).
    @optparam remove If true, remove also the character.
    @optparam numeric If true, returns a character value instead of a string.
    @return The first element or nil if the string is empty.
 
-   If @b numeric is true if it's true,
-   the UNICODE value of the string character will be returned, otherwise the caller
-   will receive a string containing the desired character.
-
+   This function returns a string containing one character from the end of @b str,
+   or eventually more characters in case a number > 1 is specified in @icount.
+   
    If @b remove is true, then the character is removed and the string is shrinked.
    @see String.front
+   
+   If @b numeric is true,
+   the UNICODE value of the string character will be returned, otherwise the caller
+   will receive a string containing the desired character. In this case, @b count
+   parameter will be ignored and only one UNICODE value will be returned.
 */
 
 FALCON_FUNC mth_strBack( VMachine *vm )
