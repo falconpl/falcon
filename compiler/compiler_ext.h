@@ -34,12 +34,19 @@ namespace Falcon {
 
 namespace Ext {
 
+FALCON_FUNC BaseCompiler_setDirective( ::Falcon::VMachine *vm );
+FALCON_FUNC BaseCompiler_addFalconPath( ::Falcon::VMachine *vm );
+
 FALCON_FUNC Compiler_init( ::Falcon::VMachine *vm );
 FALCON_FUNC Compiler_compile( ::Falcon::VMachine *vm );
 FALCON_FUNC Compiler_loadByName( ::Falcon::VMachine *vm );
 FALCON_FUNC Compiler_loadFile( ::Falcon::VMachine *vm );
-FALCON_FUNC Compiler_setDirective( ::Falcon::VMachine *vm );
-FALCON_FUNC Compiler_addFalconPath( ::Falcon::VMachine *vm );
+
+FALCON_FUNC ICompiler_init( ::Falcon::VMachine *vm );
+FALCON_FUNC ICompiler_compileNext( ::Falcon::VMachine *vm );
+FALCON_FUNC ICompiler_compileAll( ::Falcon::VMachine *vm );
+FALCON_FUNC ICompiler_reset( ::Falcon::VMachine *vm );
+
 
 
 FALCON_FUNC Module_globals( ::Falcon::VMachine *vm );

@@ -21,6 +21,7 @@
 #include <falcon/coreobject.h>
 #include <falcon/vm.h>
 #include <falcon/stream.h>
+#include <falcon/core_ext.h>
 
 #include "compiler_mod.h"
 
@@ -173,12 +174,23 @@ bool CompilerIface::setProperty( const String &propName, const Item &prop )
    return true;
 }
 
+//=========================================================
+// Interactive compiler carrier
+//=======================================================
+
+
+CoreObject* ICompilerIfaceFactory( const CoreClass *cls, void *, bool )
+{
+   return new ICompilerIface(cls);
+}
 
 ICompilerIface::ICompilerIface( const CoreClass* cls ):
    CompilerIface( cls )
 {
    m_vm = new VMachine;
+   m_vm->link( core_module_init() );
    m_intcomp = new InteractiveCompiler( &m_loader, m_vm );
+   m_intcomp->setInteractive( true );
 }
 
 ICompilerIface::ICompilerIface( const CoreClass* cls, const String &path ):
@@ -231,7 +243,7 @@ bool ICompilerIface::getProperty( const String &prop, Item &ret ) const
    {
       s = m_vm->stdErr();
    }
-   else if( prop == "value" )
+   else if( prop == "result" )
    {
       ret = m_vm->regA();
       return true;
@@ -253,8 +265,8 @@ bool ICompilerIface::getProperty( const String &prop, Item &ret ) const
 
 
 //=========================================================
-
-
+// Module carrier
+//=======================================================
 
 ModuleCarrier::ModuleCarrier( LiveModule *module ):
    m_lmodule( module )

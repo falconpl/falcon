@@ -69,6 +69,8 @@ public:
 };
 
 
+CoreObject* ICompilerIfaceFactory( const CoreClass *cls, void *, bool );
+
 /** Interactive version of the compiler */
 class ICompilerIface: public CompilerIface
 {
@@ -87,6 +89,9 @@ public:
    virtual bool setProperty( const String &prop, const Item &value );
    // Override get property
    virtual bool getProperty( const String &key, Item &ret ) const;
+   
+   VMachine* vm() const { return m_vm; }
+   InteractiveCompiler* intcomp() const { return m_intcomp; }
 };
 
 

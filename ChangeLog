@@ -1,3 +1,6 @@
+Feathers (0.9.2.1)
+  * major: Added support for interactive compiler in Compiler module.
+
 Feathers (0.9.2)
   * major: Added property launchAtLink and optional parameter "alias" to 
            compiler module.

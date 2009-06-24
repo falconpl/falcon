@@ -189,30 +189,59 @@ FALCON_MODULE_DECL
    // Message setting
    #include "compiler_st.h"
 
+   Falcon::Symbol *c_base_compiler = self->addClass( "BaseCompiler" );
+   c_base_compiler->exported(false);
+   self->addClassProperty( c_base_compiler, "path" );
+   self->addClassProperty( c_base_compiler, "alwaysRecomp" );
+   self->addClassProperty( c_base_compiler, "compileInMemory" );
+   self->addClassProperty( c_base_compiler, "ignoreSources" );
+   self->addClassProperty( c_base_compiler, "saveModules" );
+   self->addClassProperty( c_base_compiler, "sourceEncoding" );
+   self->addClassProperty( c_base_compiler, "saveMandatory" );
+   self->addClassProperty( c_base_compiler, "detectTemplate" );
+   self->addClassProperty( c_base_compiler, "compileTemplate" );
+   self->addClassProperty( c_base_compiler, "launchAtLink" );
+   self->addClassProperty( c_base_compiler, "language" );
+   
+   self->addClassMethod( c_base_compiler, "setDirective", &Falcon::Ext::BaseCompiler_setDirective).asSymbol()->
+      addParam("dt")->addParam("value");
+   self->addClassMethod( c_base_compiler, "addFalconPath", &Falcon::Ext::BaseCompiler_addFalconPath);
+
+
    Falcon::Symbol *c_compiler = self->addClass( "Compiler", &Falcon::Ext::Compiler_init );
    c_compiler->getClassDef()->factory( &Falcon::Ext::CompilerIfaceFactory );
-   self->addClassProperty( c_compiler, "path" );
-   self->addClassProperty( c_compiler, "alwaysRecomp" );
-   self->addClassProperty( c_compiler, "compileInMemory" );
-   self->addClassProperty( c_compiler, "ignoreSources" );
-   self->addClassProperty( c_compiler, "saveModules" );
-   self->addClassProperty( c_compiler, "sourceEncoding" );
-   self->addClassProperty( c_compiler, "saveMandatory" );
-   self->addClassProperty( c_compiler, "detectTemplate" );
-   self->addClassProperty( c_compiler, "compileTemplate" );
-   self->addClassProperty( c_compiler, "launchAtLink" );
-   self->addClassProperty( c_compiler, "language" );
-   
+   c_compiler->getClassDef()->addInheritance( new Falcon::InheritDef(c_base_compiler) );
    self->addClassMethod( c_compiler, "compile", &Falcon::Ext::Compiler_compile ).asSymbol()->
       addParam("modName")->addParam("data");
    self->addClassMethod( c_compiler, "loadByName", &Falcon::Ext::Compiler_loadByName ).asSymbol()->
       addParam("modName");
    self->addClassMethod( c_compiler, "loadFile", &Falcon::Ext::Compiler_loadFile).asSymbol()->
       addParam("modPath")->addParam( "alias" );
-   self->addClassMethod( c_compiler, "setDirective", &Falcon::Ext::Compiler_setDirective).asSymbol()->
-      addParam("dt")->addParam("value");
-   self->addClassMethod( c_compiler, "addFalconPath", &Falcon::Ext::Compiler_addFalconPath);
 
+
+
+   Falcon::Symbol *c_icompiler = self->addClass( "ICompiler", &Falcon::Ext::ICompiler_init );
+   c_icompiler->getClassDef()->factory( &Falcon::Ext::ICompilerIfaceFactory );
+   c_icompiler->getClassDef()->addInheritance( new Falcon::InheritDef(c_base_compiler) );
+   self->addClassProperty( c_icompiler, "stdOut" );
+   self->addClassProperty( c_icompiler, "stdErr" );
+   self->addClassProperty( c_icompiler, "stdIn" );
+   self->addClassProperty( c_icompiler, "result" );
+   
+   self->addClassProperty( c_icompiler, "NOTHING" ).setInteger( (Falcon::int64) Falcon::InteractiveCompiler::e_nothing );
+   self->addClassProperty( c_icompiler, "MORE" ).setInteger( (Falcon::int64) Falcon::InteractiveCompiler::e_more );
+   self->addClassProperty( c_icompiler, "INCOMPLETE" ).setInteger( (Falcon::int64) Falcon::InteractiveCompiler::e_incomplete );
+   self->addClassProperty( c_icompiler, "DECL" ).setInteger( (Falcon::int64) Falcon::InteractiveCompiler::e_decl );
+   self->addClassProperty( c_icompiler, "STATEMENT" ).setInteger( (Falcon::int64) Falcon::InteractiveCompiler::e_statement );
+   self->addClassProperty( c_icompiler, "EXPRESSION" ).setInteger( (Falcon::int64) Falcon::InteractiveCompiler::e_expression );
+   self->addClassProperty( c_icompiler, "CALL" ).setInteger( (Falcon::int64) Falcon::InteractiveCompiler::e_call );
+   
+   self->addClassMethod( c_icompiler, "compileNext", &Falcon::Ext::ICompiler_compileNext ).asSymbol()->
+      addParam("code");
+   self->addClassMethod( c_icompiler, "compileAll", &Falcon::Ext::ICompiler_compileAll ).asSymbol()->
+      addParam("code");
+   self->addClassMethod( c_icompiler, "reset", &Falcon::Ext::ICompiler_reset );
+   
 
    Falcon::Symbol *c_module = self->addClass( "Module" );
    c_module->setWKS( true );

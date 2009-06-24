@@ -35,24 +35,13 @@ namespace Falcon {
 namespace Ext {
 
 /*#
-   @class Compiler
-   @brief Main interface to the reflexive compiler.
-   @optparam path The default search path of the compiler.
-
-   Although a single compiler should be enough for the needs of a simple script
-   program, it is possible to create as many instances of the compiler as needed.
-
-   However, it is sensible to instance this class through singleton objects,
-   so that they get prepared by the link step of the VM:
-
-   @code
-      load compiler
-
-      object MyCompiler from Compiler
-      end
-
-   @endcode
-
+   @class _BaseCompiler
+   @brief Abstract base class for the @a Compiler and @a ICompiler classes.
+   
+   This base class is used to put some common properties at disposal of both
+   the subclasses: the standard @a Compiler, and the @a ICompiler (Incremental Compiler)
+   that allows live evaluation in a protected children virtual machine.
+   
    @prop alwaysRecomp If true, a load method finding a valid .fam that may
        substitute a .fal will ignore it, and will try to compile and
        load the .fal instead.
@@ -96,6 +85,103 @@ namespace Ext {
 */
 
 /*#
+   @method addFalconPath _BaseCompiler
+   @brief Adds the default system paths to the path searched by this compiler.
+
+   This method instructs the compiler that the default search path used by
+   Falcon engine should be also searched when loading modules. This means
+   that the directory in which official Falcon modules are stored, or
+   those set in the FALCON_LOAD_PATH environment variables, or compiled
+   in for a particular installation of Falcon, will be searched whenever
+   loading a module.
+
+   The paths are inserted at the beginning; so, they will be the first
+   searched. It is possible then to alter the search path by changing
+   the @a Compiler.path property and i.e. prepending a desired local
+   search path to it.
+*/
+
+/*#
+   @method setDirective _BaseCompiler
+   @brief Compiles a script on the fly.
+   @param dt Directive to be set.
+   @param value Value to be given to the directive.
+   @return On success, a @a Module instance that contains the loaded module.
+   @raise SyntaxError if the module contains logical srror.
+   @raise IoError if the input data is a file stream and there have been a read failure.
+
+   Sets a directive as if the scripts that will be loaded by this compiler defined it
+   through the directive statement. Scripts can always override a directive by setting
+   it to a different value in their code; notice also that compilation directives are
+   useful only if a compilation actually take places. In case a .fam or a binary module
+   is loaded, they have no effect.
+*/
+
+FALCON_FUNC BaseCompiler_setDirective( ::Falcon::VMachine *vm )
+{
+   Item *i_directive = vm->param( 0 );
+   Item *i_value = vm->param( 1 );
+
+   if( i_directive == 0 || ! i_directive->isString() ||
+       i_value == 0 || ( ! i_value->isString() && ! i_value->isOrdinal() ) )
+   {
+      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).extra( "S,S|N" ) ) );
+      return;
+   }
+
+   CompilerIface *iface = dyncast<CompilerIface*>( vm->self().asObject() );
+
+   if ( i_value->isString() )
+      iface->loader().compiler().setDirective( *i_directive->asString(), *i_value->asString() );
+   else
+      iface->loader().compiler().setDirective( *i_directive->asString(), i_value->forceInteger() );
+
+   // in case of problems, an error is already raised.
+}
+FALCON_FUNC BaseCompiler_addFalconPath( ::Falcon::VMachine *vm )
+{
+   CompilerIface *iface = dyncast<CompilerIface*>( vm->self().asObject() );
+   iface->loader().addFalconPath();
+
+}
+
+
+/*#
+   @class Compiler
+   @from _BaseCompiler
+   @brief Main interface to the reflexive compiler.
+   @optparam path The default search path of the compiler.
+   
+   The static compiler class is an interface to the compilation facilities
+   and the vritual machine currently running the caller Falcon program.
+   
+   Compiled resources (either external binary modules or falcon scripts, that
+   can be stored on external resources or compiled on-the-fly) are integrated
+   in the running virtual machine as a separate module, immediately linked and
+   made runnable. The caller script receives a @a Module instance which can be
+   used to control the execution of the target module, or to unload it at a
+   later time.
+   
+   The linked modules receive every globally exported symbol that is accessible
+   to the caller script, but their export requests are ignored (they can't modify
+   the global execution environment of the calling script).
+
+   Although a single compiler should be enough for the needs of a simple script
+   program, it is possible to create as many instances of the compiler as needed.
+
+   However, it is sensible to instance this class through singleton objects,
+   so that they get prepared by the link step of the VM:
+
+   @code
+      load compiler
+
+      object MyCompiler from Compiler
+      end
+   @endcode
+   
+*/
+
+/*#
    @init Compiler
    @brief Initializes the compiler with a default path.
    If @b path is not provided, defaults to "." (script current working directory).
@@ -114,7 +200,6 @@ FALCON_FUNC Compiler_init( ::Falcon::VMachine *vm )
          return;
       }
 
-      
       iface->loader().setSearchPath( *i_path->asString() );
    }
    else
@@ -122,28 +207,6 @@ FALCON_FUNC Compiler_init( ::Falcon::VMachine *vm )
 }
 
 
-/*#
-   @method addFalconPath Compiler
-   @brief Adds the default system paths to the path searched by this compiler.
-
-   This method instructs the compiler that the default search path used by
-   Falcon engine should be also searched when loading modules. This means
-   that the directory in which official Falcon modules are stored, or
-   those set in the FALCON_LOAD_PATH environment variables, or compiled
-   in for a particular installation of Falcon, will be searched whenever
-   loading a module.
-
-   The paths are inserted at the beginning; so, they will be the first
-   searched. It is possible then to alter the search path by changing
-   the @a Compiler.path property and i.e. prepending a desired local
-   search path to it.
-*/
-FALCON_FUNC Compiler_addFalconPath( ::Falcon::VMachine *vm )
-{
-   CompilerIface *iface = dyncast<CompilerIface*>( vm->self().asObject() );
-   iface->loader().addFalconPath();
-
-}
 
 void internal_link( ::Falcon::VMachine *vm, Module *mod, CompilerIface *iface )
 {
@@ -397,45 +460,223 @@ FALCON_FUNC Compiler_loadFile( ::Falcon::VMachine *vm )
    }
 }
 
+//=========================================================
+// Incremental compiler
+//
 
 /*#
-   @method setDirective Compiler
-   @brief Compiles a script on the fly.
-   @param dt Directive to be set.
-   @param value Value to be given to the directive.
-   @return On success, a @a Module instance that contains the loaded module.
-   @raise SyntaxError if the module contains logical srror.
-   @raise IoError if the input data is a file stream and there have been a read failure.
+   @class ICompiler
+   @from _BaseCompiler
+   @brief Interaface to incremental evaluator.
+   @optparam path The default search path of the compiler.
 
-   Sets a directive as if the scripts that will be loaded by this compiler defined it
-   through the directive statement. Scripts can always override a directive by setting
-   it to a different value in their code; notice also that compilation directives are
-   useful only if a compilation actually take places. In case a .fam or a binary module
-   is loaded, they have no effect.
+   The incremental compiler, or "evaluator", is meant to provide a falcon-in-falcon
+   compilation environment.
+   
+   @note The incremental compiler is currently under development, and subject to
+         sudden changes in behaviors and interfaces.
+         
+   While the @a Compiler class is meant to help scripts to load and use foreign code
+   in their context, the @b ICompiler class provides it's own private virtual machine
+   and executes all the code it receives in a totally separate environment.
+   
+   Compiling a script through the @b ICompiler is phisically equivalent to start a new
+   'falcon' command line interpreter and ordering it to run a script, with two main
+   differences: first, the ICompiler instance runs serially with the caller in the
+   same process, and second, the ICompiler also allows incremental compilation.
+   
+   Incremental compilation means that it's possible to evaluate falcon statements
+   incrementally as they are compiled on the fly and executed one by one.
+   
+   Compilation methods @a ICompiler.compileNext and @a ICompiler.compileAll returns a
+   compilation state (or eventually raise an error), that is useful to determine
+   what happened and what action to take after a partial compilation. Possible
+   return values are:
+   
+   - @b ICompiler.NOTHING - No operation performed (i.e. returned for just comments or whitespaces).
+   - @b ICompiler.MORE - The statement is not complete and requires more input.
+   - @b ICompiler.INCOMPLETE - While the last statement is complete, the context is still open and requires
+                      some more "end" to be closed.
+   - @b ICompiler.DECL - The compiler parsed and commited a complete declaration (top level function,
+                  class, object etc).
+   - @b ICompiler.STATEMENT - A toplevel statement was parsed and executed. Loops, branches, and non-expression
+           statements fall in this category.
+   - @b ICompiler.EXPRESSION - A single complete expression was parsed. The evaluated result is available through
+                      the @a ICompiler.result
+    - @b ICompiler.CALL - It was determined that the expression was a single call, in the form <exp1>(<exp2>). 
+         Some may want to know this information to avoid printing obvious results (calls returning nil
+         are porbably better to be handled silently).
+    
+    When the functions return MORE or INCOMPLETE, no operation is actually performed. The caller should
+    provide new input with more data adding it to the previously parsed one, like in the following example:
+    
+    @code
+    load compiler
+    
+    ic = ICompiler()
+    str = "printl( 'hello',"  // incomplete
+    > ic.compileNext( str )   // will do nothing and return 2 == ICompiler.MORE
+    str += " 'world')\n"      // add \n for a complete statement
+    > ic.compileNext( str )   // will do the print return 6 == ICompiler.CALL 
+    @endcode
+    
+    Everything happening in @ ICompiler.compileNext and @a ICompiler.compileAll happens in a 
+    separate virtual machine which is totally unrelated with the calling one. Nevertheless,
+    they can safely share the values in the @a ICompiler.result property:
+    
+    @code
+    load compiler
+    
+    ic = ICompiler()
+    ic.compileNext( "a = [1,2,3,4]\n" )
+    > inspect( ic.result )   // will be the array created by the statement
+    ic.result[0] = "Changed"
+    ic.compileNext( "inspect( a )\n" )   // will show the change in 'a'
+    @endcode
+    
+    @note Always remember to add a \n or ';' after a complete statement in incremental
+          compilation (this requirement might be removed in future).
+    
+    @note Don't try to share and call callable symbols. Chances are that they may be
+          callable in one VM, but unaccessible from the other.
+          
+    Setting the streams in @a ICompiler.stdIn, @a ICompiler.stdOut and @a ICompiler.stdErr
+    to new values, it is possible to intercept output coming from the virtual machine used
+    by the incremental compiler, and to feed different input into it. This is the mechanism
+    used by the macro compiler.
+    
+    @prop stdIn standard input stream of the incremental compiler virtual machine.
+    @prop stdOut standard output stream of the incremental compiler virtual machine.
+    @prop stdErr standard error stream of the incremental compiler virtual machine. This is
+          used by default error reporting and informative functions as inspect().
+    @prop result Item containing last evaluation result.
 */
 
-FALCON_FUNC Compiler_setDirective( ::Falcon::VMachine *vm )
+/*# @init ICompiler
+    @brief Initializes the interactive compiler, eventually setting a path for 
+           the module loader.
+           
+    If @b path is not given, the default system path is used.
+*/
+    
+FALCON_FUNC ICompiler_init( ::Falcon::VMachine *vm )
 {
-   Item *i_directive = vm->param( 0 );
-   Item *i_value = vm->param( 1 );
+   Item *i_path = vm->param( 0 );
 
-   if( i_directive == 0 || ! i_directive->isString() ||
-       i_value == 0 || ( ! i_value->isString() && ! i_value->isOrdinal() ) )
+   ICompilerIface *iface = dyncast<ICompilerIface*>( vm->self().asObject() );
+   if( i_path != 0 )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).extra( "S,S|N" ) ) );
-      return;
+      if( ! i_path->isString() )
+      {
+         vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).extra( "[S]" ) ) );
+         return;
+      }
+
+      iface->loader().setSearchPath( *i_path->asString() );
    }
-
-   CompilerIface *iface = dyncast<CompilerIface*>( vm->self().asObject() );
-
-   if ( i_value->isString() )
-      iface->loader().compiler().setDirective( *i_directive->asString(), *i_value->asString() );
    else
-      iface->loader().compiler().setDirective( *i_directive->asString(), i_value->forceInteger() );
-
-   // in case of problems, an error is already raised.
+      iface->loader().setSearchPath( Engine::getSearchPath() );
 }
 
+
+/*#
+   @method compileNext ICompiler
+   @brief Compiles and executes at most one complete statement or declaration.
+   @param code A string or a @a Stream containing at least a complete line of code.
+   @return One of the enumeration values in @a ICompiler return values.
+   @raise CodeError on compilation error.
+   @raise Error (any kind of error) on runtime error.
+   
+   This method reads exactly one statement (up to the next \n or ';') and executes it
+   immediately.
+   
+   One or more compilation errors will cause a CodeError containing all the detected
+   errors to be raised.
+   
+   A runtime error will be re-thrown in the context of the calling program.
+   
+   The method returns a number representing the kind of code detected and eventually
+   executed by the interactive compiler. For more details, see the description of
+   the @a ICompiler class.
+*/
+
+FALCON_FUNC ICompiler_compileNext( ::Falcon::VMachine *vm )
+{
+   Item *i_code = vm->param( 0 );
+
+   ICompilerIface *iface = dyncast<ICompilerIface*>( vm->self().asObject() );
+   if( i_code != 0 )
+   {
+      if( i_code->isString() )
+      {
+         InteractiveCompiler::t_ret_type ret = iface->intcomp()->compileNext( *i_code->asString() );
+         vm->retval( (int64) ret );
+         return;
+      }
+      else if ( i_code->isObject() && i_code->asObjectSafe()->derivedFrom( "Stream" ) )
+      {
+         InteractiveCompiler::t_ret_type ret = iface->intcomp()->compileNext( 
+            dyncast<Stream*>(i_code->asObject()->getFalconData()) );
+         vm->retval( (int64) ret );
+         return;
+      }
+   }
+
+   throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).extra( "S|Stream" ) );
+}
+
+/*#
+   @method compileAll ICompiler
+   @brief Compiles entierely the given input.
+   @param code A string containing a complete program (even small).
+   @return One of the enumeration values in @a ICompiler return values.
+   @raise CodeError on compilation error.
+   @raise Error (any kind of error) on runtime error.
+   
+   This method reads exactly as many statements as possible, compiles them and runs
+   them on the fly.
+   
+   One or more compilation errors will cause a CodeError containing all the detected
+   errors to be raised.
+   
+   A runtime error will be re-thrown in the context of the calling program.
+   
+   The method returns a number representing the kind of code detected and eventually
+   executed by the interactive compiler. For more details, see the description of
+   the @a ICompiler class.
+*/
+FALCON_FUNC ICompiler_compileAll( ::Falcon::VMachine *vm )
+{
+   Item *i_code = vm->param( 0 );
+
+   ICompilerIface *iface = dyncast<ICompilerIface*>( vm->self().asObject() );
+   if( i_code != 0 )
+   {
+      if( i_code->isString() )
+      {
+         InteractiveCompiler::t_ret_type ret = iface->intcomp()->compileAll( *i_code->asString() );
+         vm->retval( (int64) ret );
+         return;
+      }
+   }
+
+   throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).extra( "S" ) );
+}
+
+/*#
+   @method reset ICompiler
+   @brief Resets the compiler.
+   
+   This method destroys all the entities declared by the module and clears the 
+   references held by its virtual machine. It's practically equivalent to create
+   a new instance of the ICompiler, with less overhead.
+*/
+
+FALCON_FUNC ICompiler_reset( ::Falcon::VMachine *vm )
+{
+   ICompilerIface *iface = dyncast<ICompilerIface*>( vm->self().asObject() );
+   iface->intcomp()->reset();
+}
 
 //=========================================================
 // Module
