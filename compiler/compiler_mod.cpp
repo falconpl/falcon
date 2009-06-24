@@ -20,6 +20,8 @@
 #include <falcon/module.h>
 #include <falcon/coreobject.h>
 #include <falcon/vm.h>
+#include <falcon/stream.h>
+
 #include "compiler_mod.h"
 
 namespace Falcon {
@@ -167,6 +169,84 @@ bool CompilerIface::setProperty( const String &propName, const Item &prop )
    else {
       readOnlyError( propName );
    }
+
+   return true;
+}
+
+
+ICompilerIface::ICompilerIface( const CoreClass* cls ):
+   CompilerIface( cls )
+{
+   m_vm = new VMachine;
+   m_intcomp = new InteractiveCompiler( &m_loader, m_vm );
+}
+
+ICompilerIface::ICompilerIface( const CoreClass* cls, const String &path ):
+   CompilerIface( cls, path )
+{
+   m_vm = new VMachine;
+}
+
+ICompilerIface::~ICompilerIface()
+{
+   delete m_intcomp;
+   m_vm->finalize();
+}
+
+
+bool ICompilerIface::setProperty( const String &prop, const Item &value )
+{
+   if( prop == "stdIn" && value.isObject() && value.asObjectSafe()->derivedFrom("Stream") )
+   {
+      Stream *clone = static_cast<Stream *>( value.asObjectSafe()->getFalconData()->clone());
+      m_vm->stdIn( clone );
+   }
+   else if( prop == "stdOut" && value.isObject() && value.asObjectSafe()->derivedFrom("Stream") )
+   {
+      Stream *clone = static_cast<Stream *>( value.asObjectSafe()->getFalconData()->clone());
+      m_vm->stdOut( clone );
+   }
+   else if( prop == "stdErr" && value.isObject() && value.asObjectSafe()->derivedFrom("Stream") )
+   {
+      Stream *clone = static_cast<Stream *>( value.asObjectSafe()->getFalconData()->clone());
+      m_vm->stdErr( clone );
+   }
+
+   return CompilerIface::setProperty( prop, value );
+}
+
+bool ICompilerIface::getProperty( const String &prop, Item &ret ) const
+{
+   Stream *s = 0;
+
+   if( prop == "stdIn" )
+   {
+      s = m_vm->stdIn();
+   }
+   else if( prop == "stdOut" )
+   {
+      s = m_vm->stdOut();
+   }
+   else if( prop == "stdErr" )
+   {
+      s = m_vm->stdErr();
+   }
+   else if( prop == "value" )
+   {
+      ret = m_vm->regA();
+      return true;
+   }
+   else {
+      return CompilerIface::getProperty( prop, ret );
+   }
+
+   // s here is initialized
+   fassert( s != 0 );
+
+   Item* stream_class = VMachine::getCurrent()->findWKI( "StdStream" );
+   fassert( stream_class != 0 );
+   CoreObject *co = stream_class->asClass()->createInstance( s->clone() );
+   ret = co;
 
    return true;
 }
