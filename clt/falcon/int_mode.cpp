@@ -88,7 +88,8 @@ void IntMode::run()
             line += pline;
 
          InteractiveCompiler::t_ret_type lastRet1;
-
+         
+         bool hadError = false;
          try
          {
             lastRet1 = comp.compileNext( codeSlice + line + "\n" );
@@ -96,10 +97,9 @@ void IntMode::run()
          catch( Error *err )
          {
             String temp = err->toString();
-
             err->decref();
-            lastRet1 = InteractiveCompiler::e_error;
             stdOut->writeString( temp );
+            hadError = true;
          }
 
          switch( lastRet1 )
@@ -121,7 +121,7 @@ void IntMode::run()
                   codeSlice.size(0);
                   break;
                }
-               // falltrhrough
+               // fallthrough
 
             case InteractiveCompiler::e_expression:
                {
@@ -129,22 +129,20 @@ void IntMode::run()
                   comp.vm()->itemToString( temp, &comp.vm()->regA() );
                   stdOut->writeString( ": " + temp + "\n" );
                }
-               // falltrhrough
-
+               // fallthrough
+               
             default:
-               if ( lastRet1 != InteractiveCompiler::e_error )
-               {
-                  // clear the previous data in all the cases exept when having
-                  // compilation errors, so the user may try to add another line
-                  codeSlice.size(0);
-               }
+               codeSlice.size(0);
          }
-
-         line.size(0);
-
-         // maintain previous status if having a compilation error.
-         if( lastRet1 != InteractiveCompiler::e_error )
+         
+         // do not clear the input on error.
+         // -- so the user can try to re-add the last line.
+         if ( ! hadError )
+         {
+            // maintain previous status if having a compilation error.
             lastRet = lastRet1;
+         }
+         line.size(0);
       }
       // else just continue.
    }

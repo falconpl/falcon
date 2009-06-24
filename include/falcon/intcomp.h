@@ -60,15 +60,22 @@ public:
    ~InteractiveCompiler();
 
    typedef enum {
+      /** Do-nothing statements (comments, whitespaces ...)*/
       e_nothing,
+      /** We need more to finish the current statement */
       e_more,
+      /** Incomplete context */
       e_incomplete,
+      /** Statement was a complete declaration (function, object, class...) */
       e_decl,
+      /** Normal statement (assignment, if block, while block...) */
       e_statement,
+      /** Stand alone expression (sum, sub, single value) */
       e_expression,
-      e_call,
-      e_error,
-      e_vm_error
+      /** Special expression consisting of a single call to a sub expression.
+         Usually, the user expects a return value.
+      */
+      e_call
    } t_ret_type;
 
    /** Compile another code slice coming from the stream.

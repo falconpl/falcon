@@ -69,11 +69,8 @@ InteractiveCompiler::t_ret_type InteractiveCompiler::compileAll( const String &i
 
    while ( ! ss.eof() )
    {
+      // on error, we'll throw.
       ret = compileNext( &ss );
-      if ( ret == e_vm_error || ret == e_error )
-      {
-         return ret;
-      }
    }
 
    return ret;
