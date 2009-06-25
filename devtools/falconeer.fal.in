@@ -36,14 +36,14 @@ const skelname = "fmodskel"
 
 // using falcon string concatenation to prevent cmake
 // to mangle with this values.
-const var_prjname = "@" "PROJECT_NAME@"
-const var_desc    = "@" "DESCRIPTION@"
-const var_author  = "@" "AUTHOR@"
-const var_date    = "@" "DATE@"
-const var_year    = "@" "YEAR@"
-const var_copy    = "@" "COPYRIGHT@"
-const var_license = "@" "LICENSE@"
-const var_mainprj = "@" "MAIN_PRJ@"
+var_prjname = "@"+"PROJECT_NAME@"
+var_desc    = "@"+"DESCRIPTION@"
+var_author  = "@"+"AUTHOR@"
+var_date    = "@"+"DATE@"
+var_year    = "@"+"YEAR@"
+var_copy    = "@"+"COPYRIGHT@"
+var_license = "@"+"LICENSE@"
+var_mainprj = "@"+"MAIN_PRJ@"
 
 const default_license = '
       Licensed under the Falcon Programming Language License,
@@ -78,12 +78,7 @@ files = [\
    "templates/" + skelname + "_h_template",
    "docs/" + skelname + "_faldoc.fd:docs/faldoc.fd",
    skelname + "_CMakeLists.txt:CMakeLists.txt",
-   skelname + "_build.sh:build.sh",
-   skelname + "_falmod.cmake:falmod.cmake",
-   skelname + ".sln",
-   skelname + ".vcproj",
-   skelname + "_Makefile.gnu",
-   skelname + "_Makefile.mac"
+   skelname + "_falmod.cmake:falmod.cmake"
 ]
 
 chgRegex = Regex( skelname )
@@ -155,7 +150,7 @@ object MyParser from CmdlineParser
          "  Enter a directory where the Falcon Skeleton Module has been unpacked\n" +
          "  and load this script setting the '-n' option.\n" +
          "  Relevant the files in the skeleton directory will be renamed accordingly\n" +
-         "  to your settings, and configurable placeholder variables in each file\n"
+         "  to your settings, and configurable placeholder variables in each file\n" +
          "  will be overwritten.\n"
 
       >  "  Options:\n" +
@@ -176,7 +171,13 @@ end
 function parse_file( fileName, destName )
    global variables
 
-   fin = InputStream( fileName )
+   try
+      fin = InputStream( fileName )
+   catch IoError in error
+      > "Skipping file ", fileName
+      return
+   end
+   
    // convert the name
    if not destName
       foutName = fileName
@@ -248,14 +249,16 @@ variables[var_license] = MyParser.licplate
 variables[var_mainprj] = MyParser.mainprj
 
 for file in files
+
    if ":" in file
-      file, dest = strSplit( file, ":", 2 )
+      orig, dest = strSplit( file, ":", 2 )
    else
+      orig = file
       dest = nil
    end
 
-   > "Examining ", file, "..."
-   parse_file( file, dest )
+   > "Examining ", orig, "..."
+   parse_file( orig, dest )
 end
 
 /* End of falconeer.fal */
