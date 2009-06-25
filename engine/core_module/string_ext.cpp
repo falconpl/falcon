@@ -218,7 +218,7 @@ FALCON_FUNC mth_strFront( VMachine *vm )
    @return The first element or nil if the string is empty.
 
    This function returns a string containing one character from the end of @b str,
-   or eventually more characters in case a number > 1 is specified in @icount.
+   or eventually more characters in case a number > 1 is specified in @b count.
    
    If @b remove is true, then the character is removed and the string is shrinked.
    @see String.front

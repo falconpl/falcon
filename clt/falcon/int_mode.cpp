@@ -87,7 +87,7 @@ void IntMode::run()
          else
             line += pline;
 
-         InteractiveCompiler::t_ret_type lastRet1;
+         InteractiveCompiler::t_ret_type lastRet1 = InteractiveCompiler::e_nothing;
          
          bool hadError = false;
          try
@@ -114,6 +114,11 @@ void IntMode::run()
                   line.setCharAt( line.length()-1, ' ' );
                codeSlice += line + "\n";
                break;
+               
+            case InteractiveCompiler::e_terminated:
+               stdOut->writeString( "falcon: Terminated\n\n");
+               stdOut->flush();
+               return;
 
             case InteractiveCompiler::e_call:
                if ( comp.vm()->regA().isNil() )
@@ -148,6 +153,7 @@ void IntMode::run()
    }
 
    stdOut->writeString( "\r     \n\n");
+   stdOut->flush();
 }
 
 /* end of int_mode.cpp */

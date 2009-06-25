@@ -75,7 +75,10 @@ public:
       /** Special expression consisting of a single call to a sub expression.
          Usually, the user expects a return value.
       */
-      e_call
+      e_call,
+      
+      /** The statement/expression caused the vm to raise a termination request. */
+      e_terminated
    } t_ret_type;
 
    /** Compile another code slice coming from the stream.
