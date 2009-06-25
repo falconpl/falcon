@@ -468,6 +468,7 @@ void VMachine::run()
          continue;
 
          case eventQuit:
+         case eventRQuit:
             m_pc = m_pc_next;
             // quit the machine
          return;

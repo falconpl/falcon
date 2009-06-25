@@ -270,7 +270,8 @@ public:
       eventSingleStep,
       eventOpLimit,
       eventSleep,
-      eventInterrupt
+      eventInterrupt,
+      eventRQuit
    } tEvent;
 
    /** This valuess indicates that the VM is in external execution mode.
@@ -1294,7 +1295,7 @@ public:
    */
    Item &latcher() { return m_regL2; }
 
-   void requestQuit() { m_event = eventQuit; }
+   void requestQuit() { m_event = eventRQuit; }
    void requestSuspend() { m_event = eventSuspend; }
    tEvent lastEvent() const { return m_event; }
 
@@ -1820,6 +1821,7 @@ public:
    bool hadStoppingEvent() const {
       return
          m_event == eventQuit ||
+         m_event == eventRQuit ||
          m_event == eventRisen ||
          m_event == eventOpLimit; }
 

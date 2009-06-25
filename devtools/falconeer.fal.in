@@ -45,20 +45,21 @@ const var_copy    = "@" "COPYRIGHT@"
 const var_license = "@" "LICENSE@"
 const var_mainprj = "@" "MAIN_PRJ@"
 
-const default_license = \
-   "   Licensed under the Falcon Programming Language License,\n"
-   "   Version 1.1 (the \"License\"); you may not use this file\n"
-   "   except in compliance with the License. You may obtain\n"
-   "   a copy of the License at\n"
-   "\n"
-   "      http://www.falconpl.org/?page_id=license_1_1\n"
-   "\n"
-   "   Unless required by applicable law or agreed to in writing,\n"
-   "   software distributed under the License is distributed on\n"
-   "   an \"AS IS\" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY\n"
-   "   KIND, either express or implied. See the License for the\n"
-   "   specific language governing permissions and limitations\n"
-   "   under the License.\n"
+const default_license = '
+      Licensed under the Falcon Programming Language License,
+      Version 1.1 (the "License"); you may not use this file
+      except in compliance with the License. You may obtain
+      a copy of the License at
+
+         http://www.falconpl.org/?page_id=license_1_1
+
+      Unless required by applicable law or agreed to in writing,
+      software distributed under the License is distributed on
+      an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+      KIND, either express or implied. See the License for the
+      specific language governing permissions and limitations
+      under the License.
+'
 
 const default_prj = "FALCON - The Falcon Programming Language."
 
@@ -150,21 +151,21 @@ object MyParser from CmdlineParser
    end
 
    function usage()
-      >  "Falconeer -- the skeleton module configurator.\n"
-         "  Enter a directory where the Falcon Skeleton Module has been unpacked\n"
-         "  and load this script setting the '-n' option.\n"
-         "  Relevant the files in the skeleton directory will be renamed accordingly\n"
+      >  "Falconeer -- the skeleton module configurator.\n" +
+         "  Enter a directory where the Falcon Skeleton Module has been unpacked\n" +
+         "  and load this script setting the '-n' option.\n" +
+         "  Relevant the files in the skeleton directory will be renamed accordingly\n" +
          "  to your settings, and configurable placeholder variables in each file\n"
          "  will be overwritten.\n"
 
-      >  "  Options:\n"
-         "     -?,--help               \tPrints this help\n"
-         "     -n/--name <value>       \tName of the project (will affect filenames)\n"
-         "     -a/--author <value>     \tAuthor(s) of the project\n"
-         "     -c/--copyright <value>  \tCopyright owner\n"
-         "     -d/--description <value>\tDescription for the project\n"
-         "     -l/--license <file>     \tPointer to a license plate\n"
-         "     -p/--project <value>    \tMain project to which this module belongs\n\n"
+      >  "  Options:\n" +
+         "     -?,--help               \tPrints this help\n" +
+         "     -n/--name <value>       \tName of the project (will affect filenames)\n" +
+         "     -a/--author <value>     \tAuthor(s) of the project\n" +
+         "     -c/--copyright <value>  \tCopyright owner\n" +
+         "     -d/--description <value>\tDescription for the project\n" +
+         "     -l/--license <file>     \tPointer to a license plate\n" +
+         "     -p/--project <value>    \tMain project to which this module belongs\n\n" +
          "  -n option is mandatory.\n"
    end
 end

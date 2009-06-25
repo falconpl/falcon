@@ -291,7 +291,7 @@ InteractiveCompiler::t_ret_type InteractiveCompiler::compileNext( Stream *input 
    if ( ret == e_statement || ret == e_call || ret == e_expression )
    {
       m_vm->launch();
-      if (m_vm->lastEvent() == VMachine::eventQuit )
+      if (m_vm->lastEvent() == VMachine::eventRQuit )
          ret = e_terminated;
    }
 
