@@ -502,11 +502,11 @@ FALCON_FUNC Compiler_loadFile( ::Falcon::VMachine *vm )
    - @b ICompiler.STATEMENT - A toplevel statement was parsed and executed. Loops, branches, and non-expression
            statements fall in this category.
    - @b ICompiler.EXPRESSION - A single complete expression was parsed. The evaluated result is available through
-                      the @a ICompiler.result
-    - @b ICompiler.CALL - It was determined that the expression was a single call, in the form <exp1>(<exp2>). 
+                      the @a ICompiler.result property.
+   - @b ICompiler.CALL - It was determined that the expression was a single call, in the form <exp1>(<exp2>). 
          Some may want to know this information to avoid printing obvious results (calls returning nil
          are porbably better to be handled silently).
-    - @b ICompiler.TERMINATED - The virtual machine has been requested to terminate.
+   - @b ICompiler.TERMINATED - The virtual machine has been requested to terminate.
     
     When the functions return MORE or INCOMPLETE, no operation is actually performed. The caller should
     provide new input with more data adding it to the previously parsed one, like in the following example:
