@@ -506,6 +506,7 @@ FALCON_FUNC Compiler_loadFile( ::Falcon::VMachine *vm )
     - @b ICompiler.CALL - It was determined that the expression was a single call, in the form <exp1>(<exp2>). 
          Some may want to know this information to avoid printing obvious results (calls returning nil
          are porbably better to be handled silently).
+    - @b ICompiler.TERMINATED - The virtual machine has been requested to terminate.
     
     When the functions return MORE or INCOMPLETE, no operation is actually performed. The caller should
     provide new input with more data adding it to the previously parsed one, like in the following example:
@@ -520,7 +521,7 @@ FALCON_FUNC Compiler_loadFile( ::Falcon::VMachine *vm )
     > ic.compileNext( str )   // will do the print return 6 == ICompiler.CALL 
     @endcode
     
-    Everything happening in @ ICompiler.compileNext and @a ICompiler.compileAll happens in a 
+    Everything happening in @a ICompiler.compileNext and @a ICompiler.compileAll happens in a 
     separate virtual machine which is totally unrelated with the calling one. Nevertheless,
     they can safely share the values in the @a ICompiler.result property:
     

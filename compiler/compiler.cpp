@@ -235,6 +235,7 @@ FALCON_MODULE_DECL
    self->addClassProperty( c_icompiler, "STATEMENT" ).setInteger( (Falcon::int64) Falcon::InteractiveCompiler::e_statement );
    self->addClassProperty( c_icompiler, "EXPRESSION" ).setInteger( (Falcon::int64) Falcon::InteractiveCompiler::e_expression );
    self->addClassProperty( c_icompiler, "CALL" ).setInteger( (Falcon::int64) Falcon::InteractiveCompiler::e_call );
+   self->addClassProperty( c_icompiler, "TERMINATED" ).setInteger( (Falcon::int64) Falcon::InteractiveCompiler::e_terminated );
    
    self->addClassMethod( c_icompiler, "compileNext", &Falcon::Ext::ICompiler_compileNext ).asSymbol()->
       addParam("code");
