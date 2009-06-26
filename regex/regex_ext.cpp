@@ -814,14 +814,11 @@ static void s_replaceall( VMachine* vm, bool bExpand )
    @brief Replaces all the possible matches of this regular expression in a target with a given string.
    @param string String where to scan for the pattern.
    @param replacer The string to replace the matched pattern with.
-   @return The string with the matching content replaced.
+   @return The string with the matching content replaced, or nil if no change is perfomed.
 
    This method replaces all the occurrences of the pattern in string with the
    replacer parameter. If a change can be performed, a modified instance
-   of string is returned, else nil is returned. An if an optional start parameter
-   is given, the search and replacement is performed beginning at the given
-   point, and if a maxCount is given, only maxCount replacements, at maximum,
-   will be performed.
+   of string is returned, else nil is returned.
 */
 FALCON_FUNC Regex_replaceAll( ::Falcon::VMachine *vm )
 {
@@ -833,10 +830,21 @@ FALCON_FUNC Regex_replaceAll( ::Falcon::VMachine *vm )
    @brief Replaces all the matches expanding placeholders.
    @param string String where to scan for the pattern.
    @param replacer The string to replace the matched pattern with.
-   @return The string with the matching content replaced.
+   @return The string with the matching content replaced, or nil if no change is perfomed.
 
    This method works exacly like @a Regex.replaceAll, but it expands backslash
-   placeholders with captured expressions.
+   placeholders with captured expressions. Each captured expression can be addressed
+   via standard substitution backslashes (\0 is the whole expression, \1 is the first captured 
+   expression, \2 the second and so on). 
+   
+   @code
+   load regex
+   
+   r = Regex("a([0-9]+)b")
+   > r.subst( 'a100b', 'Number was \1.' )
+   @endcode
+   
+   @note Remember to use double backslash on double quoted strings.
 */
 FALCON_FUNC Regex_subst( ::Falcon::VMachine *vm )
 {
