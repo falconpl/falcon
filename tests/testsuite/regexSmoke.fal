@@ -1,0 +1,24 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 30a
+* Category: regex
+* Subcategory:
+* Short: Smoke regex
+* Description:
+*   Checks minimal working of the regex module.
+*   Notice: Tests in "regex" category are not meant to check the correctness
+*   of the regular expression syntax and constructs; those are delegated to
+*   the underlying PCRE library. This tests are 
+* [/Description]
+*
+****************************************************************************/
+
+load regex
+
+r = Regex( "a.b" )
+if not r.version(): failure( "missing version" )
+if not r.match( "abb" ): failure( "False negative" )
+if r.match( "zzz" ): failure( "False positive" )
+
+success()
