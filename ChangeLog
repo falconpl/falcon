@@ -1,5 +1,7 @@
 SDL (0.9.10)
    * added: SDLSurface.DisplayFormatAlpha
+   * major: Removed SDLEventManager; now using falcon broadcasts to 
+            dispatch SDL events.
    
 SDL (0.9.8)
    * added: Updated to Falcon 0.9
