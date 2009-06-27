@@ -27,6 +27,7 @@
 #include <falcon/setup.h>
 #include <falcon/module.h>
 #include <falcon/falcondata.h>
+#include <falcon/reflectobject.h>
 #include <sdl_service.h>
 
 

@@ -19,8 +19,12 @@
 load sdlmixer
 
 
-object listener from SDLEventHandler
-   function onQuit()
+object listener
+   init
+      subscribe( "sdl_Quit", self )
+   end
+   
+   function on_sdl_Quit()
       > "Quitting"
       exit(0)
    end
@@ -39,6 +43,8 @@ try
    music.Play( fadeIn| 6 )
    count = 0
    stdin = stdIn()
+   SDL.StartEvents()
+   
    loop
       count++
       >> @"[$(count)]\r"
@@ -68,7 +74,6 @@ try
          MIX.HaltMusic()
       end
 
-      listener.PollEvent()
    end stdin.readAvailable(0.1)
 
    MIX.CloseAudio()

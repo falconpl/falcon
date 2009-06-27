@@ -19,13 +19,18 @@
 load sdlmixer
 
 
-object listener from SDLEventHandler
-   function onMusicFinished()
+object listener
+   init
+      subscribe( "sdl_MusicFinished", self )
+      subscribe( "on_sdl_Quit", self )
+   end
+   
+   function on_sdl_MusicFinished()
       > "Music finished."
       exit(0)
    end
 
-   function onQuit()
+   function on_sdl_Quit()
       > "Quitting"
       exit(0)
    end
@@ -44,12 +49,14 @@ try
    MIX.HookMusicFinished( true )
    count = 0
    stdin = stdIn()
+   
+   SDL.StartEvents()
    loop
       count++
       >> @"[$(count)]\r"
-      listener.PollEvent()
    end stdin.readAvailable(0.1)
-
+   SDL.StopEvents()
+   
    MIX.CloseAudio()
 catch in e
    > "Test failed: "

@@ -23,17 +23,22 @@
 
 load sdl
 
-object MyEventManager from SDLEventHandler
+object MyEventManager
    quitRequest = false
 
-   function onQuit( state, x, y, xrel, yrel )
+   init
+      subscribe( "sdl_Quit", self )
+      subscribe( "sdl_Expose", self )
+   end
+   
+   function on_sdl_Quit( state, x, y, xrel, yrel )
       global quitRequest
       > strReplicate( " ", 60 )
       > "== Quit! =="
       self.quitRequest = true
    end
 
-   function onExpose()
+   function on_sdl_Expose()
       global screen
       screen.UpdateRect()
    end
@@ -95,9 +100,8 @@ try
    > "Click the X on the bar to quit the app."
 
    mouse = SDLMouseState()
+   SDL.StartEvents()
    while not MyEventManager.quitRequest
-      MyEventManager.PollEvent()
-
       mouse.Refresh()
       >> "X=", mouse.x, " Y=", mouse.y, \
          " Xrel=", mouse.xrel, " YRel=",mouse.yrel, \
