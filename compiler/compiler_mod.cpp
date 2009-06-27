@@ -168,7 +168,7 @@ bool CompilerIface::setProperty( const String &propName, const Item &prop )
       m_bLaunchAtLink = prop.isTrue();
    }
    else {
-      readOnlyError( propName );
+      throw new AccessError( ErrorParam( e_prop_acc, __LINE__ ).extra( propName ) );
    }
 
    return true;
@@ -208,20 +208,38 @@ ICompilerIface::~ICompilerIface()
 
 bool ICompilerIface::setProperty( const String &prop, const Item &value )
 {
-   if( prop == "stdIn" && value.isObject() && value.asObjectSafe()->derivedFrom("Stream") )
+   if( prop == "stdIn" )
    {
-      Stream *clone = static_cast<Stream *>( value.asObjectSafe()->getFalconData()->clone());
-      m_vm->stdIn( clone );
+      if ( value.isObject() && value.asObjectSafe()->derivedFrom("Stream") )
+      {
+         Stream *clone = static_cast<Stream *>( value.asObjectSafe()->getFalconData()->clone());
+         m_vm->stdIn( clone );
+         return true;
+      }
+
+      throw new ParamError( ErrorParam( e_param_type, __LINE__).extra( "Stream" ) ); 
    }
-   else if( prop == "stdOut" && value.isObject() && value.asObjectSafe()->derivedFrom("Stream") )
+   else if( prop == "stdOut" )
    {
-      Stream *clone = static_cast<Stream *>( value.asObjectSafe()->getFalconData()->clone());
-      m_vm->stdOut( clone );
+      if ( value.isObject() && value.asObjectSafe()->derivedFrom("Stream") )
+      {
+         Stream *clone = static_cast<Stream *>( value.asObjectSafe()->getFalconData()->clone());
+         m_vm->stdOut( clone );
+         return true;
+      }
+
+      throw new ParamError( ErrorParam( e_param_type, __LINE__).extra( "Stream" ) ); 
    }
-   else if( prop == "stdErr" && value.isObject() && value.asObjectSafe()->derivedFrom("Stream") )
+   else if( prop == "stdErr" )
    {
-      Stream *clone = static_cast<Stream *>( value.asObjectSafe()->getFalconData()->clone());
-      m_vm->stdErr( clone );
+      if ( value.isObject() && value.asObjectSafe()->derivedFrom("Stream") )
+      {
+         Stream *clone = static_cast<Stream *>( value.asObjectSafe()->getFalconData()->clone());
+         m_vm->stdErr( clone );
+         return true;
+      }
+
+      throw new ParamError( ErrorParam( e_param_type, __LINE__).extra( "Stream" ) ); 
    }
 
    return CompilerIface::setProperty( prop, value );
@@ -255,7 +273,7 @@ bool ICompilerIface::getProperty( const String &prop, Item &ret ) const
    // s here is initialized
    fassert( s != 0 );
 
-   Item* stream_class = VMachine::getCurrent()->findWKI( "StdStream" );
+   Item* stream_class = VMachine::getCurrent()->findWKI( "Stream" );
    fassert( stream_class != 0 );
    CoreObject *co = stream_class->asClass()->createInstance( s->clone() );
    ret = co;
