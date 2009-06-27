@@ -10,7 +10,7 @@
 
 Title = Falcon - SDL Module.
 Author = The Falcon Committee
-Version = 0.9.8
+Version = 0.9.10
 
 ################################################
 # Faldoc Input settings
@@ -39,6 +39,6 @@ Output.module=html
 # Output.<module>.<parameters> configs
 ################################################
 
-Output.html.directory=Falcon-sdl-0.9.8-docs
+Output.html.directory=Falcon-sdl-0.9.10-docs
 Output.html.url=.
 Output.html.doctitle=Falcon SDL Module reference.

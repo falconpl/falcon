@@ -29,7 +29,7 @@ extern "C"
 #include "sdlttf_mod.h"
 
 /*#
-   @module sdlttf True Type extensions for the Falcon SDL module.
+   @module sdlttf True Type
    @brief True Type extensions for the Falcon SDL module.
 
    This module wraps the True Type extensions for SDL. Namely, this module

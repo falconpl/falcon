@@ -12,7 +12,7 @@
    SDL and its extensions are mainly focused on 2D graphics and sound management
    and they provide a simple but powerful application framework.
 
-   @section Setup
+   @section sdl_main_setup Setup
 
    A minimal setup for this module may be something like the
    following:
