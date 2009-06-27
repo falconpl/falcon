@@ -552,7 +552,7 @@ FALCON_FUNC mix_Paused( VMachine *vm )
 }
 
 /*#
-   @method Paused MIX
+   @method FadingChannel MIX
    @brief Returns the number of channels currently fading out.
    @param channel Channel ID that is to be queried (-1 for all).
    @return One of the MIX.FADING_IN, MIX.FADING_OUT or MIX.NO_FADING values
@@ -1019,7 +1019,7 @@ FALCON_FUNC MixMusic_init( VMachine *vm )
 }
 
 /*#
-   @method MixMusic GetType
+   @method GetType MixMusic
    @brief Return the loaded music type.
    @return One of the @a MUS enum items.
 */

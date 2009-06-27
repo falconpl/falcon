@@ -113,7 +113,7 @@ FALCON_FUNC sdl_ShowCursor( ::Falcon::VMachine *vm )
 
    The characters in the image are considered as follows:
 
-      - "@": white opaque pixel
+      - "\@": white opaque pixel
       - ".": black opaque pixel
       - "X": reverse pixel (not always available)
       - " ": transparent pixel.

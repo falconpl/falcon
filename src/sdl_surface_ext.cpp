@@ -29,7 +29,7 @@
 
 #include <SDL.h>
 
-/*# @beginmodule fsdl */
+/*# @beginmodule sdl */
 
 namespace Falcon {
 namespace Ext {
@@ -717,7 +717,6 @@ FALCON_FUNC SDLSurface_SetColors( ::Falcon::VMachine *vm )
 /*#
    @method SetIcon SDLSurface
    @brief Sets this surface as the icon for the SDL window.
-   @todo Add the mask parameter and use it.
 
    This function must be called before the first call to @a SDL.SetVideoMode.
 */
@@ -944,6 +943,7 @@ FALCON_FUNC SDLScreen_ToggleFullScreen ( ::Falcon::VMachine *vm )
 
 /*#
    @class SDLPixelFormat
+   @brief Encapsulates SDL_PixelFormat structure.
 
    This class stores the SDL_PixelFormat structure. Scripts don't usually
    want to use this, but it may be useful to determine and set color

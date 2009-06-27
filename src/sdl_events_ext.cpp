@@ -441,8 +441,6 @@ void declare_events( Module *self )
       @prop xrel Relative x movement with respect to last check.
       @prop yrel Relative y movement with respect to last check.
       @prop state Mouse button pression state.
-
-      @see @a SDLEventHandler.WaitEvent
    */
    Falcon::Symbol *c_sdlmouse = self->addClass( "SDLMouseState" );
    c_sdlmouse->getClassDef()->factory( &SdlMouseState_Factory );
@@ -463,397 +461,6 @@ void declare_events( Module *self )
    self->addClassMethod( c_sdlmouse, "PumpAndRefresh", &SDLMouseState_PumpAndRefresh );
 }
 
-/*#
-   @method onActive SDLEventHandler
-   @brief Application visibility event handler.
-   @param gain 0 if the event is a loss or 1 if it is a gain.
-   @param state SDL.APPMOUSEFOCUS if mouse focus was gained
-         or lost, SDL.APPINPUTFOCUS if input focus was gained or lost,
-         or SDL.APPACTIVE if the application was iconified (gain=0) or
-         restored (gain=1).
-
-   See SDL_ActiveEvent description in SDL documentation.
-
-   Overload this method to receive ActiveEvent notifications.
-*/
-
-/*#
-   @method onKeyDown SDLEventHandler
-   @brief Keyboard key down event handler.
-   @param state SDL.PRESSED or SDL.RELEASED
-   @param scancode  Hardware specific scancode
-   @param sym  SDL virtual keysym
-   @param mod  Current key modifiers
-   @param unicode  Translated character
-
-   See SDL_KeyboardEvent description in SDL documentation.
-
-   Overload this method to receive SDL_KEYDOWN notifications.
-*/
-
-/*#
-   @method onKeyUp SDLEventHandler
-   @brief Keyboard key down event handler.
-   @param state SDL.PRESSED or SDL.RELEASED
-   @param scancode  Hardware specific scancode
-   @param sym  SDL virtual keysym
-   @param mod  Current key modifiers
-   @param unicode  Translated character
-
-   See SDL_KeyboardEvent description in SDL documentation.
-
-   Overload this method to receive SDL_KEYUP notifications.
-*/
-
-/*#
-   @method onMouseMotion SDLEventHandler
-   @brief  Mouse motion event handler
-   @param state The current button state
-   @param x  X coordinate of the mouse
-   @param y  X coordinate of the mouse
-   @param xrel relative movement of mouse on the X axis with respect to last notification.
-   @param yrel relative movement of mouse on the X axis with respect to last notification.
-
-   See SDL_MouseMotionEvent description in SDL documentation.
-
-   Overload this method to receive SDL_MOUSEMOTION notifications.
-*/
-
-/*#
-   @method onMouseButtonDown SDLEventHandler
-   @brief  Mouse button event handler
-   @param state The current button state
-   @param button The mouse button index (SDL_BUTTON_LEFT, SDL_BUTTON_MIDDLE, SDL_BUTTON_RIGHT)
-   @param x X coordinate of the mouse
-   @param y X coordinate of the mouse
-
-   See SDL_MouseButtonEvent description in SDL documentation.
-
-   Overload this method to receive SDL_MOUSEBUTTONDOWN notifications.
-*/
-
-/*#
-   @method onMouseButtonUp SDLEventHandler
-   @brief  Mouse button event handler
-   @param state The current button state
-   @param button The mouse button index (SDL_BUTTON_LEFT, SDL_BUTTON_MIDDLE, SDL_BUTTON_RIGHT)
-   @param x X coordinate of the mouse
-   @param y X coordinate of the mouse
-
-   See SDL_MouseButtonEvent description in SDL documentation.
-
-   Overload this method to receive SDL_MOUSEBUTTONUP notifications.
-*/
-
-/*#
-   @method onJoyAxisMotion SDLEventHandler
-   @brief  Joystick axis motion event handler
-   @param which  Joystick device index
-   @param axis  Joystick axis index
-   @param value  Axis value (range: -32768 to 32767)
-
-   See SDL_JoyAxisEvent description in SDL documentation.
-
-   Overload this method to receive SDL_JOYAXISMOTION notifications.
-*/
-
-/*#
-   @method onJoyButtonDown SDLEventHandler
-   @brief  Joystick button event handler
-   @param which  Joystick device index
-   @param button  Joystick button index
-   @param state  SDL_PRESSED or SDL_RELEASED
-
-   See SDL_JoyButtonEvent description in SDL documentation.
-
-   Overload this method to receive SDL_JOYBUTTONDOWN notifications.
-*/
-
-/*#
-   @method onJoyButtonUp SDLEventHandler
-   @brief  Joystick button event handler
-   @param which  Joystick device index
-   @param button  Joystick button index
-   @param state  SDL_PRESSED or SDL_RELEASED
-
-   See SDL_JoyButtonEvent description in SDL documentation.
-
-   Overload this method to receive SDL_JOYBUTTONUP notifications.
-*/
-
-/*#
-   @method onJoyHatMotion SDLEventHandler
-   @brief Joystick hat position change event handler
-   @param which  Joystick device index
-   @param hat  Joystick hat index
-   @param value  hat position.
-
-   See SDL_JoyHatEvent description in SDL documentation.
-
-   Overload this method to receive SDL_JOYHATMOTION notifications.
-*/
-
-/*#
-   @method onJoyBallMotion SDLEventHandler
-   @brief Joystick trackball motion event handler
-   @param which  Joystick device index
-   @param ball  Joystick trackball index
-   @param xrel  The relative motion in the X direction
-   @param yrel  The relative motion in the Y direction
-
-   See SDL_JoyBallEvent description in SDL documentation.
-
-   Overload this method to receive SDL_JOYBALLMOTION notifications.
-*/
-
-/*#
-   @method onResize SDLEventHandler
-   @brief Window resize event handler
-   @param w  New width of the window
-   @param h  New height of the window
-
-   See SDL_ResizeEvent description in SDL documentation.
-
-   Overload this method to receive SDL_VIDEORESIZE notifications.
-*/
-
-/*#
-   @method onExpose SDLEventHandler
-   @brief Window exposition (need redraw) notification.
-
-   See SDL_ExposeEvent description in SDL documentation.
-
-   Overload this method to receive SDL_VIDEOEXPOSE notifications.
-*/
-
-/*#
-   @method onQuit SDLEventHandler
-   @brief Quit requested event.
-
-   See SDL_Quit description in SDL documentation.
-   This notification means that the user asked the application to terminate.
-   The application should call exit(0) if no other cleanup routines are needed,
-   or perform cleanup and notifications for clean exit to other threads/coroutines.
-*/
-
-/*#
-   @method onUserEvent SDLEventHandler
-   @brief Receives custom events generated by the application.
-   @param code An arbitrary integer code available for the application.
-   @param item An arbitrary item that can be passed to the handler.
-
-   Applications can generate user events through SDL.PushUserEvent or
-   the static method @a SDLEventHandler.PushUserEvent (they are the same).
-
-   Optionally, those calls can pass an arbitrary item of any type or class
-   to the handler; the handler can inspect it and even manipulate it.
-*/
-
-#if 0
-void internal_dispatchEvent( VMachine *vm, SDL_Event &evt )
-{
-   Item method;
-   uint32 params;
-
-   CoreObject *self = vm->self().asObject();
-
-   switch( evt.type )
-   {
-      case SDL_ACTIVEEVENT:
-         if ( ! self->getMethod( "onActive", method ) )
-            return;
-
-         vm->pushParameter( (int64) evt.active.gain );
-         vm->pushParameter( (int64) evt.active.state );
-         params = 2;
-      break;
-
-      case SDL_KEYDOWN:
-         if ( ! self->getMethod( "onKeyDown", method ) )
-            return;
-
-         vm->pushParameter( (int64) evt.key.state );
-         vm->pushParameter( (int64) evt.key.keysym.scancode );
-         vm->pushParameter( (int64) evt.key.keysym.sym );
-         vm->pushParameter( (int64) evt.key.keysym.mod );
-         vm->pushParameter( (int64) evt.key.keysym.unicode );
-         params = 5;
-      break;
-
-      case SDL_KEYUP:
-         if ( ! self->getMethod( "onKeyUp", method ) )
-            return;
-
-         vm->pushParameter( (int64) evt.key.state );
-         vm->pushParameter( (int64) evt.key.keysym.scancode );
-         vm->pushParameter( (int64) evt.key.keysym.sym );
-         vm->pushParameter( (int64) evt.key.keysym.mod );
-         vm->pushParameter( (int64) evt.key.keysym.unicode );
-         params = 5;
-      break;
-
-      case SDL_MOUSEMOTION:
-         if ( ! self->getMethod( "onMouseMotion", method ) )
-            return;
-
-
-         vm->pushParameter( (int64) evt.motion.state );
-         vm->pushParameter( (int64) evt.motion.x );
-         vm->pushParameter( (int64) evt.motion.y );
-         vm->pushParameter( (int64) evt.motion.xrel );
-         vm->pushParameter( (int64) evt.motion.yrel );
-
-         params = 5;
-      break;
-
-      case SDL_MOUSEBUTTONDOWN:
-         if ( ! self->getMethod( "onMouseButtonDown", method ) )
-            return;
-
-         vm->pushParameter( (int64) evt.button.button );
-         vm->pushParameter( (int64) evt.button.state );
-         vm->pushParameter( (int64) evt.button.x );
-         vm->pushParameter( (int64) evt.button.y );
-         params = 4;
-      break;
-
-      case SDL_MOUSEBUTTONUP:
-         if ( ! self->getMethod( "onMouseButtonUp", method ) )
-            return;
-
-         vm->pushParameter( (int64) evt.button.button );
-         vm->pushParameter( (int64) evt.button.state );
-         vm->pushParameter( (int64) evt.button.x );
-         vm->pushParameter( (int64) evt.button.y );
-         params = 4;
-      break;
-
-      case SDL_JOYAXISMOTION:
-         if ( ! self->getMethod( "onJoyAxisMotion", method ) )
-            return;
-
-         vm->pushParameter( (int64) evt.jaxis.which );
-         vm->pushParameter( (int64) evt.jaxis.axis );
-         vm->pushParameter( (int64) evt.jaxis.value );
-         params = 3;
-      break;
-
-      case SDL_JOYBALLMOTION:
-         if ( ! self->getMethod( "onJoyBallMotion", method ) )
-            return;
-
-         vm->pushParameter( (int64) evt.jball.which );
-         vm->pushParameter( (int64) evt.jball.ball );
-         vm->pushParameter( (int64) evt.jball.xrel );
-         vm->pushParameter( (int64) evt.jball.yrel );
-         params = 4;
-      break;
-
-      case SDL_JOYHATMOTION:
-         if ( ! self->getMethod( "onJoyHatMotion", method ) )
-            return;
-
-         vm->pushParameter( (int64) evt.jhat.which );
-         vm->pushParameter( (int64) evt.jhat.hat );
-         vm->pushParameter( (int64) evt.jhat.value );
-         params = 3;
-      break;
-
-      case SDL_JOYBUTTONDOWN:
-         if ( ! self->getMethod( "onJoyButtonDown", method ) )
-            return;
-
-         vm->pushParameter( (int64) evt.jbutton.which );
-         vm->pushParameter( (int64) evt.jbutton.button );
-         vm->pushParameter( (int64) evt.jbutton.state );
-         params = 3;
-      break;
-
-      case SDL_JOYBUTTONUP:
-         if ( ! self->getMethod( "onJoyButtonUp", method ) )
-            return;
-
-         vm->pushParameter( (int64) evt.jbutton.which );
-         vm->pushParameter( (int64) evt.jbutton.button );
-         vm->pushParameter( (int64) evt.jbutton.state );
-         params = 3;
-      break;
-
-      case SDL_VIDEORESIZE:
-         if ( ! self->getMethod( "onResize", method ) )
-            return;
-
-         vm->pushParameter( (int64) evt.resize.w );
-         vm->pushParameter( (int64) evt.resize.h );
-         params = 2;
-      break;
-
-      case SDL_VIDEOEXPOSE:
-         if ( ! self->getMethod( "onExpose", method ) )
-            return;
-
-         params = 0;
-      break;
-
-      case SDL_QUIT:
-         if ( ! self->getMethod( "onQuit", method ) )
-            return;
-
-         params = 0;
-      break;
-
-      case FALCON_SDL_USER_EVENT:
-         // we must anyhow unlock the garbage data if it's not zero
-         if ( ! self->getMethod( "onUserEvent", method ) )
-         {
-            GarbageLock *lock = (GarbageLock *) evt.user.data1;
-            if ( lock != 0 )
-               vm->unlock( lock );
-            return;
-         }
-
-         vm->pushParameter( (int64) evt.user.code );
-         if( evt.user.data1 == 0 )
-         {
-            params = 1;
-         }
-         else {
-            GarbageLock *lock = (GarbageLock *) evt.user.data1;
-            vm->pushParameter( lock->item() );
-            vm->unlock( lock );
-            params = 2;
-         }
-      break;
-
-      case FALCON_SDL_CHANNEL_DONE_EVENT:
-         // we must anyhow unlock the garbage data if it's not zero
-         if ( ! self->getMethod( "onChannelFinished", method ) )
-         {
-            return;
-         }
-
-         // channel number is in the data2 pointer
-         vm->pushParameter( (int64) evt.user.code );
-         params = 1;
-         break;
-
-      case FALCON_SDL_MUSIC_DONE_EVENT:
-         // we must anyhow unlock the garbage data if it's not zero
-         if ( ! self->getMethod( "onMusicFinished", method ) )
-         {
-            return;
-         }
-
-         params = 0;
-         break;
-
-      default:
-         params = 0;
-   }
-
-   vm->callFrame( method, params );
-}
-#endif
 
 void internal_dispatchEvent( VMachine *vm, SDL_Event &evt )
 {
@@ -1050,9 +657,6 @@ FALCON_FUNC sdl_PollEvent( VMachine *vm )
    received. However, the VM is able to proceed with other
    coroutines.
 
-   To unblock this wait from another coroutine, just post an unprocessable
-   event through @a SDLEventHandler.PushUserEvent.
-
    As soon as a message is received and processed, the function returns, so
    it is possible to set a global flag in the message processors to communicate
    new program status to the subsequent code.
@@ -1060,21 +664,28 @@ FALCON_FUNC sdl_PollEvent( VMachine *vm )
    In example, the following is a minimal responsive SDL Falcon application.
 
    @code
-      object handler from SDLEventHandler
+      object handler
          shouldQuit = false
 
-         function onQuit()
+         function on_sdl_Quit()
             self.shouldQuit = true
          end
       end
 
       ...
       ...
+      
       // main code
+      subscribe( "sdl_Quit", handler )
+      
       while not handler.shouldQuit
-         handler.WaitEvent()
+         SDL.WaitEvent()
       end
    @endcode
+   
+   @note You can also start an automatic event listener and dispatcher in
+   a parallel thread with @a SDL.StartEvents. This will oviate the need for
+   a polling or waiting loop.
 */
 bool sdl_WaitEvent_next( VMachine *vm )
 {
@@ -1167,8 +778,8 @@ FALCON_FUNC sdl_EventState( VMachine *vm )
    if a given item in the membuf is 1, then the key is currently pressed, else it
    it is released.
 
-   This memory buffer is automaitcally updated when @a SDLEventHandler.WaitEvent or
-   @a SDLEventHandler.PollEvent are called. If the program doesn't call those function,
+   This memory buffer is automaitcally updated when @a SDL.WaitEvent or
+   @a SDL.PollEvent are called. If the program doesn't call those function,
    the @a SDL.PumpEvents method can be used to update current keyboard status.
 
    @note Calling this method more than once per program will cause cause useless duplication
@@ -1368,7 +979,7 @@ SDL_JoystickEventState -- Enable/disable joystick event polling
    @method PumpEvents SDL
    @brief Update event listing and queueing during long operations.
 
-   Normally, a responsive SDL-Falcon program should issue a @a SDLEventHandler.WaitEvent
+   Normally, a responsive SDL-Falcon program should issue a @a SDL.WaitEvent
    loop in its main code to start marshalling events to listeners, but it is also possible
    to periodically poll the status of keyboard and other devices with direct query functions.
 
@@ -1464,8 +1075,9 @@ FALCON_FUNC SDLMouseState_init( VMachine *vm )
    or waits for them regularly. Otherwise, use
    @a SDLMouseState.PumpAndRefresh.
 
-   @see @a SDLEventHandler.WaitEvent
-   @see @a SDL.PumpEvents
+   @see SDL.WaitEvent
+   @see SDL.PumpEvents
+   @see SDL.StartEvents
 */
 FALCON_FUNC SDLMouseState_Refresh( VMachine *vm )
 {
@@ -1531,8 +1143,187 @@ FALCON_FUNC _coroutinePoll( VMachine *vm )
 
    If a previous event listener thread, eventually on a different virtual machine,
    was active, it is stopped.
-
+   
+   Events are generated as broadcast message that can be received via 
+   standard subscribe.
 */
+
+/*#
+   @message sdl_Active
+   @brief Application visibility event handler.
+   @param gain 0 if the event is a loss or 1 if it is a gain.
+   @param state SDL.APPMOUSEFOCUS if mouse focus was gained
+         or lost, SDL.APPINPUTFOCUS if input focus was gained or lost,
+         or SDL.APPACTIVE if the application was iconified (gain=0) or
+         restored (gain=1).
+
+   See SDL_ActiveEvent description in SDL documentation.
+
+   Subscribe to this message method to receive ActiveEvent notifications.
+*/
+
+/*#
+   @message sdl_KeyDown
+   @brief Keyboard key down event handler.
+   @param state SDL.PRESSED or SDL.RELEASED
+   @param scancode  Hardware specific scancode
+   @param sym  SDL virtual keysym
+   @param mod  Current key modifiers
+   @param unicode  Translated character
+
+   See SDL_KeyboardEvent description in SDL documentation.
+
+   Subscribe to this message method to receive SDL_KEYDOWN notifications.
+*/
+
+/*#
+   @message sdl_KeyUp
+   @brief Keyboard key down event handler.
+   @param state SDL.PRESSED or SDL.RELEASED
+   @param scancode  Hardware specific scancode
+   @param sym  SDL virtual keysym
+   @param mod  Current key modifiers
+   @param unicode  Translated character
+
+   See SDL_KeyboardEvent description in SDL documentation.
+
+   Subscribe to this message method to receive SDL_KEYUP notifications.
+*/
+
+/*#
+   @message sdl_MouseMotion
+   @brief  Mouse motion event handler
+   @param state The current button state
+   @param x  X coordinate of the mouse
+   @param y  X coordinate of the mouse
+   @param xrel relative movement of mouse on the X axis with respect to last notification.
+   @param yrel relative movement of mouse on the X axis with respect to last notification.
+
+   See SDL_MouseMotionEvent description in SDL documentation.
+
+   Subscribe to this message method to receive SDL_MOUSEMOTION notifications.
+*/
+
+/*#
+   @message sdl_MouseButtonDown
+   @brief  Mouse button event handler
+   @param state The current button state
+   @param button The mouse button index (SDL_BUTTON_LEFT, SDL_BUTTON_MIDDLE, SDL_BUTTON_RIGHT)
+   @param x X coordinate of the mouse
+   @param y X coordinate of the mouse
+
+   See SDL_MouseButtonEvent description in SDL documentation.
+
+   Subscribe to this message method to receive SDL_MOUSEBUTTONDOWN notifications.
+*/
+
+/*#
+   @message sdl_MouseButtonUp
+   @brief  Mouse button event handler
+   @param state The current button state
+   @param button The mouse button index (SDL_BUTTON_LEFT, SDL_BUTTON_MIDDLE, SDL_BUTTON_RIGHT)
+   @param x X coordinate of the mouse
+   @param y X coordinate of the mouse
+
+   See SDL_MouseButtonEvent description in SDL documentation.
+
+   Subscribe to this message method to receive SDL_MOUSEBUTTONUP notifications.
+*/
+
+/*#
+   @message sdl_JoyAxisMotion
+   @brief  Joystick axis motion event handler
+   @param which  Joystick device index
+   @param axis  Joystick axis index
+   @param value  Axis value (range: -32768 to 32767)
+
+   See SDL_JoyAxisEvent description in SDL documentation.
+
+   Subscribe to this message method to receive SDL_JOYAXISMOTION notifications.
+*/
+
+/*#
+   @message sdl_JoyButtonDown
+   @brief  Joystick button event handler
+   @param which  Joystick device index
+   @param button  Joystick button index
+   @param state  SDL_PRESSED or SDL_RELEASED
+
+   See SDL_JoyButtonEvent description in SDL documentation.
+
+   Subscribe to this message method to receive SDL_JOYBUTTONDOWN notifications.
+*/
+
+/*#
+   @message sdl_JoyButtonUp
+   @brief  Joystick button event handler
+   @param which  Joystick device index
+   @param button  Joystick button index
+   @param state  SDL_PRESSED or SDL_RELEASED
+
+   See SDL_JoyButtonEvent description in SDL documentation.
+
+   Subscribe to this message method to receive SDL_JOYBUTTONUP notifications.
+*/
+
+/*#
+   @message sdl_JoyHatMotion
+   @brief Joystick hat position change event handler
+   @param which  Joystick device index
+   @param hat  Joystick hat index
+   @param value  hat position.
+
+   See SDL_JoyHatEvent description in SDL documentation.
+
+   Subscribe to this message method to receive SDL_JOYHATMOTION notifications.
+*/
+
+/*#
+   @message sdl_JoyBallMotion
+   @brief Joystick trackball motion event handler
+   @param which  Joystick device index
+   @param ball  Joystick trackball index
+   @param xrel  The relative motion in the X direction
+   @param yrel  The relative motion in the Y direction
+
+   See SDL_JoyBallEvent description in SDL documentation.
+
+   Subscribe to this message method to receive SDL_JOYBALLMOTION notifications.
+*/
+
+/*#
+   @message sdl_Resize
+   @brief Window resize event handler
+   @param w  New width of the window
+   @param h  New height of the window
+
+   See SDL_ResizeEvent description in SDL documentation.
+
+   Subscribe to this message method to receive SDL_VIDEORESIZE notifications.
+*/
+
+/*#
+   @message sdl_Expose
+   @brief Window exposition (need redraw) notification.
+
+   See SDL_ExposeEvent description in SDL documentation.
+
+   Subscribe to this message method to receive SDL_VIDEOEXPOSE notifications.
+*/
+
+/*#
+   @message onQuit SDLEventHandler
+   @brief Quit requested event.
+
+   See SDL_Quit description in SDL documentation.
+   
+   Subscribe to this message method to receive SDL_Quit events.
+   
+   This notification means that the user asked the application to terminate.
+   The application should call exit(0) if no other cleanup routines are needed,
+   or perform cleanup and notifications for clean exit to other threads/coroutines.
+*/
+
 FALCON_FUNC sdl_StartEvents( VMachine *vm )
 {
 #ifdef USE_SDL_EVENT_THREADS
