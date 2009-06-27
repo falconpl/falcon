@@ -43,7 +43,7 @@ namespace Ext {
 
 /*#
    @method Compiled_Version MIX
-//    @brief Determine the version used to compile this SDL mixer module.
+   @brief Determine the version used to compile this SDL mixer module.
    @return a three element array containing the major, minor and fix versions.
    @see MIX.Linked_Version
 */

@@ -33,7 +33,7 @@
    This is the base of the falcon SDL subsystem.
    The SDL library can be found at <a target="_new" href="http://www.libsdl.org/">http://www.libsdl.org</a>.
 
-   @section Forewords
+   @section sdl_forewords Forewords
 
    The SDL Falcon module tries to stick with SDL interface and conventions
    whenever possible. However, in some cases where Falcon programming language
