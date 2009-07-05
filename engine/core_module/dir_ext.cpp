@@ -937,6 +937,86 @@ FALCON_FUNC  dirMake ( ::Falcon::VMachine *vm )
 }
 
 /*#
+   @function fileCopy
+   @ingroup core_syssupport
+   @param source Source file to be copied
+   @param dest Destination file.
+   @brief Copies a whole file from one position to another.
+   @raise IoError on system error.
+
+   This function performs a file copy. The function is still
+   experimental and needs addition of VM interruption protocol
+   compliancy, as well as the possibility to preserve or change
+   the system attributes in the target copy.
+*/
+FALCON_FUNC  fileCopy ( ::Falcon::VMachine *vm )
+{
+   Item *filename = vm->param(0);
+   Item *filedest = vm->param(1);
+
+   if ( filename == 0 || ! filename->isString() ||
+        filedest == 0 || ! filedest->isString()
+      )
+   {
+      vm->raiseModError( new ParamError(
+         ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ).
+         extra("S,S") ) );
+      return;
+   }
+
+   const String &source = *filename->asString();
+   const String &dest = *filedest->asString();
+
+   ::Falcon::BaseFileStream::t_shareMode shMode = ::Falcon::BaseFileStream::e_smShareFull;
+
+   FileStream instream, outstream;
+   instream.open( source, ::Falcon::BaseFileStream::e_omReadOnly, shMode );
+   if ( ! instream.good() )
+   {
+      vm->raiseModError( new IoError( ErrorParam( e_io_error, __LINE__ ).
+         extra( source ).
+         sysError( (uint32) instream.lastError() ) ) );
+      return;
+   }
+
+   outstream.create( dest, (Falcon::BaseFileStream::t_attributes) 0644, shMode );
+   if ( ! outstream.good() )
+   {
+      instream.close();
+      vm->raiseModError( new IoError( ErrorParam( e_io_error, __LINE__ ).
+         extra( dest ).
+         sysError( (uint32) outstream.lastError() ) ) );
+      return;
+   }
+
+   // Declaring the VM idle from now on.
+   VMachine::Pauser pauser( vm );
+
+   byte buffer[4096];
+   int count = 0;
+   while( ( count = instream.read( buffer, 4096) ) > 0 )
+   {
+      if ( outstream.write( buffer, count ) < 0 )
+      {
+         vm->raiseModError( new IoError( ErrorParam( e_io_error, __LINE__ ).
+            sysError( (uint32) outstream.lastError() ) ) );
+         instream.close();
+         outstream.close();
+         return;
+      }
+   }
+
+   if ( count < 0 )
+   {
+      vm->raiseModError( new IoError( ErrorParam( e_io_error, __LINE__ ).
+            sysError( (uint32) instream.lastError() ) ) );
+   }
+
+   instream.close();
+   outstream.close();
+}
+
+/*#
    @function dirRemove
    @brief Removes an empty directory.
    @param dir The path to the directory to be removed.
@@ -1082,82 +1162,6 @@ FALCON_FUNC  fileMove ( ::Falcon::VMachine *vm )
          origin( e_orig_runtime ).desc( "Cannot move target file" ).extra( *strName + " -> " + *strDest ).
          sysError( (uint32) Sys::_lastError() ) ) );
    }
-}
-
-/*#
-   @function fileCopy
-   @param source Source file to be copied
-   @param dest Destination file.
-   @brief Copies a whole file from one position to another.
-   @raise IoError on system error.
-
-   This function performs a file copy. The function is still
-   experimental and needs addition of VM interruption protocol
-   compliancy, as well as the possibility to preserve or change
-   the system attributes in the target copy.
-*/
-FALCON_FUNC  fileCopy ( ::Falcon::VMachine *vm )
-{
-   Item *filename = vm->param(0);
-   Item *filedest = vm->param(1);
-
-   if ( filename == 0 || ! filename->isString() ||
-        filedest == 0 || ! filedest->isString()
-      )
-   {
-      vm->raiseModError( new ParamError(
-         ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ).
-         extra("S,S") ) );
-      return;
-   }
-
-   const String &source = *filename->asString();
-   const String &dest = *filedest->asString();
-
-   ::Falcon::GenericStream::t_shareMode shMode = ::Falcon::GenericStream::e_smShareFull;
-
-   FileStream instream, outstream;
-   instream.open( source, ::Falcon::GenericStream::e_omReadOnly, shMode );
-   if ( ! instream.good() )
-   {
-      vm->raiseModError( new IoError( ErrorParam( e_io_error, __LINE__ ).
-         extra( source ).
-         sysError( (uint32) instream.lastError() ) ) );
-      return;
-   }
-
-   outstream.create( dest, (Falcon::GenericStream::t_attributes) 0644, shMode );
-   if ( ! outstream.good() )
-   {
-      instream.close();
-      vm->raiseModError( new IoError( ErrorParam( e_io_error, __LINE__ ).
-         extra( dest ).
-         sysError( (uint32) outstream.lastError() ) ) );
-      return;
-   }
-
-   byte buffer[4096];
-   int count = 0;
-   while( ( count = instream.read( buffer, 4096) ) > 0 )
-   {
-      if ( outstream.write( buffer, count ) < 0 )
-      {
-         vm->raiseModError( new IoError( ErrorParam( e_io_error, __LINE__ ).
-            sysError( (uint32) outstream.lastError() ) ) );
-         instream.close();
-         outstream.close();
-         return;
-      }
-   }
-
-   if ( count < 0 )
-   {
-      vm->raiseModError( new IoError( ErrorParam( e_io_error, __LINE__ ).
-            sysError( (uint32) instream.lastError() ) ) );
-   }
-
-   instream.close();
-   outstream.close();
 }
 
 

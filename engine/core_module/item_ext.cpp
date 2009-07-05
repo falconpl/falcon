@@ -1088,5 +1088,36 @@ FALCON_FUNC MemoryBuffer_ptr( VMachine *vm )
    vm->retval( (int64) vm->self().asMemBuf()->data() );
 }
 
+FALCON_FUNC LateBinding_value( VMachine *vm )
+{
+   if ( vm->self().isFutureBind() )
+      vm->retval( vm->self().asFutureBind() );
+   else
+      vm->retnil();
+}
+
+FALCON_FUNC LateBinding_bound( VMachine *vm )
+{
+   vm->regA().setBoolean( vm->self().isFutureBind() );
+}
+
+FALCON_FUNC LateBinding_bind( VMachine *vm )
+{
+   Item* i_item = vm->param(0);
+   
+   if( i_item == 0 )
+   {
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).extra( "X" ) );
+   }
+   
+   vm->self().setLBind( vm->self().asLBind(), new GarbageItem( *i_item ) );
+   vm->regA() = vm->self();
+}
+
+FALCON_FUNC LateBinding_unbind( VMachine *vm )
+{
+   vm->self().setLBind( vm->self().asLBind() );
+}
+
 }
 }

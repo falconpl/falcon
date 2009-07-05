@@ -227,6 +227,10 @@ Module* core_module_init()
    lbind_meta->getClassDef()->addInheritance( new Falcon::InheritDef( bom_meta ) );
    lbind_meta->exported( false );
    lbind_meta->getClassDef()->setMetaclassFor( FLC_ITEM_LBIND );
+   self->addClassMethod( lbind_meta, "value", &Falcon::core::LateBinding_value );
+   self->addClassMethod( lbind_meta, "bound", &Falcon::core::LateBinding_bound );
+   self->addClassMethod( lbind_meta, "bind", &Falcon::core::LateBinding_bind );
+   self->addClassMethod( lbind_meta, "unbind", &Falcon::core::LateBinding_unbind );
 
    /*#
       @class Function
@@ -453,7 +457,6 @@ Module* core_module_init()
       addParam("propName");
    self->addClassMethod( object_meta, "setProperty", &Falcon::core::mth_setProperty ).asSymbol()->
       addParam("propName")->addParam("value");
-
 
    //==================================================================
    // MemoryBuffer class

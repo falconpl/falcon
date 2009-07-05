@@ -69,6 +69,10 @@ FALCON_FUNC  Iterator_erase( ::Falcon::VMachine *vm );
 FALCON_FUNC  Iterator_find( ::Falcon::VMachine *vm );
 FALCON_FUNC  Iterator_insert( ::Falcon::VMachine *vm );
 FALCON_FUNC  Iterator_getOrigin( ::Falcon::VMachine *vm );
+FALCON_FUNC  LateBinding_value( ::Falcon::VMachine *vm );
+FALCON_FUNC  LateBinding_bound( ::Falcon::VMachine *vm );
+FALCON_FUNC  LateBinding_bind( ::Falcon::VMachine *vm );
+FALCON_FUNC  LateBinding_unbind( ::Falcon::VMachine *vm );
 
 FALCON_FUNC  Error_init ( ::Falcon::VMachine *vm );
 FALCON_FUNC  Error_toString ( ::Falcon::VMachine *vm );
