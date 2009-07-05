@@ -1,0 +1,109 @@
+/*
+   FALCON - Module binding witer tool
+
+   FILE: mystr_class.fal
+
+   Test for pseudo class type encapsulation.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Sun, 20 Jul 2008 12:27:30 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2008: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+/* Final module name
+ It describes the name of the module (modname.so) and the subdirectory
+ where the skeleton files are configured.
+*/
+name = "gd2"
+
+/* Source XML generated from CPP-XML from where to read the XML binding
+   relative to this dir
+*/
+source = "gd2_def.xml"
+
+/* Work directory where the files are written.
+ overrides $name/
+ relative to this dir
+*/
+workdir = "../src"
+
+/* Language for internationalization */
+module_lang = "en_US"
+
+/* Must be an instance of class version info. */
+module_version = VersionInfo( 1, 0, 0 )
+
+/* Prologue in front of the module to be generated */
+prologue= '
+extern "C" {
+   #include <gd.h>
+}
+'
+
+/* epilogue of the module to be generated */
+epilogue = '/* Done with falbind */'
+
+/* Reflection for fucntions.
+*/
+binding = .[
+   // Don't support deprecated functions
+   RuleIgnore( "gdImagePngToSink" )
+   RuleIgnore( "gdNewSSCtx" )
+   
+   RuleIgnore( "gdImageDestroy$" )
+   //RuleFunc( "gdImageCreateFrom(.+)Ctx", "gdImageCreateFrom(\\1)" )
+   RuleIgnore( "gdImageCreateFrom(.+)Ctx" )
+   RuleFunc( "gdImageCreateFrom(.+)Ptr", "gdImageCreateFrom(\\1)Ptr" )
+   RuleIgnore( "gdImage(Jpeg|WBMP|Png|PngEx|Gif|GifAnimBegin|GifAnimAdd|GifAnimEnd|Gd2|Gd)(Ctx|CtxEx)?$" )
+   
+   RuleIgnore( "gdImageDestroy$" )
+   RuleIgnore( "gdImageCreateFrom(.+)" )
+
+
+
+   RuleFunc( "gdFontGet(.+)", "gdFontGet(\\1)" )
+
+   RulePseudoInit( "gdImageCreate$", "gdImage" )
+   RulePseudoMethod( "gdImage(.+)Ctx", "GdImage", "gdImage", "\\1" )
+   RulePseudoMethod( "gdImage(.+)", "GdImage", "gdImage", "\\1" )
+
+   RuleIgnore( ".*" )
+]
+
+/* Reflection for types
+*/
+types = .[
+   RulePseudoClass( "^gdImage$", "GdImage", "gdImageDestroy" )
+
+   // fonts are never destroyed
+   RuleTypeOpaque( "gdFont$", "GdFont", nil )
+   RuleTypeOpaque( "gdPoint$", "GdFont", nil )
+   RuleTypeOpaque( "gdFTStringExtra$", "gdFTStringExtra$", nil )
+   RuleTypeOpaque( "gdSkin$", "gdSkin", nil )
+   
+   //RuleTypeOpaque( "gdIOCtx$", "Stream", nil )
+]
+
+TypeInfo.alias( "gdImageStruct", "gdImage" )
+TypeInfo.alias( "gdImagePtr", "gdImage*" )
+TypeInfo.alias( "gdImageStruct*", "gdImage*" )
+
+TypeInfo.alias( "gdFontStruct", "gdFont" )
+TypeInfo.alias( "gdFontStruct*", "gdFont*" )
+
+TypeInfo.alias( "gdPointStruct", "gdPoint" )
+TypeInfo.alias( "gdPointStruct*", "gdPoint*" )
+
+TypeInfo.alias( "gdFTStringExtraStruct", "gdFTStringExtra" )
+TypeInfo.alias( "gdFTStringExtraStruct*", "gdFTStringExtra*" )
+
+TypeInfo.alias( "gdSkinStruct", "gdSkin" )
+TypeInfo.alias( "gdSkinStruct*", "gdSkin*" )
+
+TypeInfo.alias( "char*", "char const*" )
+TypeInfo.alias( "unsigned char*", "char const*" )
+
