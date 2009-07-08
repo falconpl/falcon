@@ -64,7 +64,7 @@ FALCON_FUNC  falcon_getenv( ::Falcon::VMachine *vm )
    Item *i_var = vm->param( 0 );
    if ( i_var == 0 || ! i_var->isString() )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) );
       return;
    }
 
@@ -105,8 +105,7 @@ FALCON_FUNC  falcon_setenv( ::Falcon::VMachine *vm )
    Item *i_value = vm->param( 1 );
    if ( i_var == 0 || ! i_var->isString() || i_value == 0  )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) );
    }
 
    String *value;
@@ -122,10 +121,10 @@ FALCON_FUNC  falcon_setenv( ::Falcon::VMachine *vm )
 
    if ( ! Sys::_setEnv( *i_var->asString(), *value ) )
    {
-      vm->raiseModError( new IoError( ErrorParam( 1000, __LINE__ ).
+      throw new IoError( ErrorParam( 1000, __LINE__ ).
          origin( e_orig_runtime ).desc( "Environment variable set failed." ).
          extra( *i_var->asString() ).
-         sysError( (uint32) Sys::_lastError() ) ) );
+         sysError( (uint32) Sys::_lastError() ) );
    }
 }
 
@@ -144,8 +143,7 @@ FALCON_FUNC  falcon_unsetenv( ::Falcon::VMachine *vm )
    Item *i_var = vm->param( 0 );
    if ( i_var == 0 || ! i_var->isString() )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) );
    }
 
    Sys::_unsetEnv( *i_var->asString() );

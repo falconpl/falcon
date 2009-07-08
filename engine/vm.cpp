@@ -37,8 +37,12 @@
 #include <falcon/vmmsg.h>
 #include <falcon/livemodule.h>
 #include <falcon/garbagelock.h>
+#include <falcon/vmevent.h>
 
 #include <string.h>
+
+
+
 namespace Falcon {
 
 static ThreadSpecific s_currentVM;
@@ -117,7 +121,6 @@ void VMachine::internal_construct()
    m_opLimit = 0;
    m_generation = 0;
    m_bSingleStep = false;
-   m_sleepAsRequests = false;
    m_stdIn = 0;
    m_stdOut = 0;
    m_stdErr = 0;
@@ -546,8 +549,8 @@ bool VMachine::completeModLink( LiveModule *livemod )
    MapIterator svmap_iter = livemod->module()->getServiceMap().begin();
    while( svmap_iter.hasCurrent() )
    {
-      if ( ! publishService( *(Service ** ) svmap_iter.currentValue() ) )
-         return false;
+      // throws on error.
+      publishService( *(Service ** ) svmap_iter.currentValue() );
       svmap_iter.next();
    }
 
@@ -745,14 +748,11 @@ bool VMachine::linkUndefinedSymbol( const Symbol *sym, LiveModule *livemod )
    }
 
    // We failed every try; raise undefined symbol.
-   Error *error = new CodeError(
+   throw new CodeError(
          ErrorParam( e_undef_sym, sym->declaredAt() ).origin( e_orig_vm ).
          module( mod->name() ).
          extra( sym->name() )
          );
-
-   raiseError( error );
-   return false;
 }
 
 
@@ -796,12 +796,9 @@ bool VMachine::exportSymbol( const Symbol *sym, LiveModule *livemod )
 
       if ( m_globalSyms.find( &sym->name() ) != 0 )
       {
-         raiseError(
-            new CodeError( ErrorParam( e_already_def, sym->declaredAt() ).origin( e_orig_vm ).
+         throw new CodeError( ErrorParam( e_already_def, sym->declaredAt() ).origin( e_orig_vm ).
                   module( mod->name() ).
-                  symbol( sym->name() ) )
-            );
-         return false;
+                  symbol( sym->name() ) );
       }
 
       SymModule tmp( globs->itemPtrAt( sym->itemId() ), livemod, sym );
@@ -823,13 +820,12 @@ bool VMachine::exportSymbol( const Symbol *sym, LiveModule *livemod )
    {
       if ( m_wellKnownSyms.find( &sym->name() ) != 0 )
       {
-         raiseError(
+         throw
             new CodeError( ErrorParam( e_already_def, sym->declaredAt() ).origin( e_orig_vm ).
                   module( mod->name() ).
                   symbol( sym->name() ).
-                  extra( "Well Known Item" ) )
+                  extra( "Well Known Item" )
             );
-         return false;
       }
 
       SymModule tmp( livemod->wkitems().size(), livemod, sym );
@@ -929,10 +925,9 @@ bool VMachine::linkInstanceSymbol( const Symbol *obj, LiveModule *livemod )
    Item *clsItem = globs->itemAt( cls->itemId() ).dereference();
 
    if ( clsItem == 0 || ! clsItem->isClass() ) {
-      raiseError(
          new CodeError( ErrorParam( e_no_cls_inst, obj->declaredAt() ).origin( e_orig_vm ).
             symbol( obj->name() ).
-            module( obj->module()->name() ) )
+            module( obj->module()->name() )
       );
       return false;
    }
@@ -1177,23 +1172,18 @@ bool VMachine::linkSubClass( LiveModule *lmod, const Symbol *clssym,
    // If the class is final, we're doomed, as this is called on subclasses
    if( cd->isFinal() )
    {
-      raiseError(
-         new CodeError( ErrorParam( e_final_inherit, clssym->declaredAt() ).origin( e_orig_vm ).
+      throw new CodeError( ErrorParam( e_final_inherit, clssym->declaredAt() ).origin( e_orig_vm ).
             symbol( clssym->name() ).
-            module( class_module->name() ) )
-            );
-      return false;
+            module( class_module->name() ) );
    }
 
    if( *factory != 0 && cd->factory() != 0 )
    {
       // raise an error for duplicated object manager.
-      raiseError(
-         new CodeError( ErrorParam( e_inv_inherit2, clssym->declaredAt() ).origin( e_orig_vm ).
+      throw new CodeError( ErrorParam( e_inv_inherit2, clssym->declaredAt() ).origin( e_orig_vm ).
             symbol( clssym->name() ).
-            module( class_module->name() ) )
+            module( class_module->name() )
             );
-      return false;
    }
 
    ObjectFactory subFactory = 0;
@@ -1218,12 +1208,10 @@ bool VMachine::linkSubClass( LiveModule *lmod, const Symbol *clssym,
 
          if ( ! icls->isClass() )
          {
-            raiseError(
-               new CodeError( ErrorParam( e_inv_inherit, clssym->declaredAt() ).origin( e_orig_vm ).
+            throw new CodeError( ErrorParam( e_inv_inherit, clssym->declaredAt() ).origin( e_orig_vm ).
                   symbol( clssym->name() ).
-                  module( class_module->name() ) )
+                  module( class_module->name() )
                   );
-            return false;
          }
 
          parent = icls->asClass()->symbol();
@@ -1233,11 +1221,9 @@ bool VMachine::linkSubClass( LiveModule *lmod, const Symbol *clssym,
       }
       else
       {
-         raiseError( new CodeError( ErrorParam( e_inv_inherit, clssym->declaredAt() ).origin( e_orig_vm ).
+         throw new CodeError( ErrorParam( e_inv_inherit, clssym->declaredAt() ).origin( e_orig_vm ).
                   symbol( clssym->name() ).
-                  module( class_module->name() ) )
-         );
-         return false;
+                  module( class_module->name() ) );
       }
       from_iter = from_iter->next();
    }
@@ -1286,11 +1272,10 @@ bool VMachine::prepare( const String &startSym, uint32 paramCount )
    {
       SymModule *it_global = (SymModule *) m_globalSyms.find( &startSym );
       if( it_global == 0 ) {
-         raiseError( new CodeError(
+         throw new CodeError(
             ErrorParam( e_undef_sym ).origin( e_orig_vm ).extra( startSym ).
             symbol( "prepare" ).
-            module( "core.vm" ) )
-            );
+            module( "core.vm" ) );
          return false;
       }
       else {
@@ -1303,14 +1288,12 @@ bool VMachine::prepare( const String &startSym, uint32 paramCount )
 
    /** \todo allow to call classes at startup. Something like "all-classes" a-la-java */
    if ( ! execSym->isFunction() ) {
-      raiseError( new CodeError(
+      new CodeError(
             ErrorParam( e_non_callable, execSym->declaredAt() ).origin( e_orig_vm ).
             symbol( execSym->name() ).
-            module( execSym->module()->name() ) )
-            );
-      return false;
+            module( execSym->module()->name() ) );
    }
-   
+
    // reset the VM to ready it for execution
    reset();
 
@@ -1343,7 +1326,7 @@ void VMachine::reset()
 
    // reset counters
    resetCounters();
-   resetEvent();
+
    // reset stackbase
    stackBase() = 0;
 
@@ -1373,67 +1356,6 @@ void VMachine::reset()
 const SymModule *VMachine::findGlobalSymbol( const String &name ) const
 {
    return (SymModule *) m_globalSyms.find( &name );
-}
-
-void VMachine::raiseError( int code, const String &expl, int32 line )
-{
-   Error *err = new CodeError(
-         ErrorParam( code, line ).origin( e_orig_vm ).hard().extra( expl )
-      );
-
-   // of course, if we're not executing, there nothing to raise
-   if( currentSymbol() != 0 )
-   {
-      fillErrorContext( err );
-      m_event = eventRisen;
-   }
-
-   throw err;
-}
-
-
-void VMachine::raiseError( Error *err )
-{
-   // of course, if we're not executing, there nothing to raise
-   if( currentSymbol() != 0 )
-   {
-      fillErrorContext( err );
-      m_event = eventRisen;
-   }
-
-   throw err;
-}
-
-void VMachine::raiseRTError( Error *err )
-{
-   // give an origin
-   err->origin( e_orig_runtime );
-   // of course, if we're not executing, there nothing to raise
-   if( currentSymbol() != 0 )
-   {
-      fillErrorContext( err );
-      m_event = eventRisen;
-   }
-
-   throw err;
-}
-
-void VMachine::raiseModError( Error *err )
-{
-   // of course, if we're not executing, there nothing to raise
-   if( currentSymbol() != 0 )
-   {
-      if ( err->module().size() == 0 )
-         err->module( currentSymbol()->module()->name() );
-
-      if ( err->symbol().size() == 0 )
-         err->symbol( currentSymbol()->name() );
-
-      fillErrorTraceback( *err );
-      m_event = eventRisen;
-   }
-
-   throw err;
 }
 
 void VMachine::fillErrorTraceback( Error &error )
@@ -1555,7 +1477,7 @@ void VMachine::createFrame( uint32 paramCount )
    frame->m_call_pc = m_currentContext->pc();
    frame->m_module = m_currentContext->lmodule();
    frame->m_param_count = paramCount;
-   frame->m_stack_base = stackBase();
+   frame->m_stack_base = m_currentContext->stackBase();
    frame->m_try_base = m_currentContext->tryFrame();
    frame->m_break = false;
    frame->m_binding = regBind();
@@ -1565,7 +1487,7 @@ void VMachine::createFrame( uint32 paramCount )
    frame->m_endFrameFunc = 0;
 
    // now we can change the stack base
-   stackBase() = stack().size();
+   m_currentContext->stackBase() = stack().size();
 }
 
 
@@ -1621,60 +1543,19 @@ void VMachine::yield( numeric secs )
 {
    if ( m_atomicMode )
    {
-      throw new InterruptedError( ErrorParam( e_wait_in_atomic ).origin( e_orig_vm ).
-            symbol( "yield" ).
-            module( "core.vm" ).
-            line( __LINE__ ).
-            hard() );
+      throw new InterruptedError( ErrorParam( e_wait_in_atomic, __LINE__ )
+            .origin( e_orig_vm )
+            .symbol( "yield" )
+            .module( "core.vm" )
+            .hard() );
    }
 
    // be sure to allow yelding.
    m_allowYield = true;
-
-   if ( m_sleepingContexts.empty() )
-   {
-      if( secs >= 0.0 )
-      {
-         // should we ask the embedding application to wait for us??
-         if ( m_sleepAsRequests )
-         {
-            m_event = eventSleep;
-            m_yieldTime = secs;
-         }
-         else
-         {
-            // else just ask the system to sleep.
-            idle();
-            if ( ! m_systemData.sleep( secs ) )
-            {
-               m_systemData.resetInterrupt();
-               unidle();
-
-               fassert( currentSymbol()->isFunction() 
-                        || currentSymbol()->isExtFunc() );
-
-               throw new InterruptedError(
-                  ErrorParam( e_interrupted ).origin( e_orig_vm ).
-                     symbol( m_currentContext->symbol()->name() ).
-                     module( currentModule()->name() )
-                  );
-            }
-
-            unidle();
-         }
-      }
-   }
-   else if ( secs < 0.0 )
-   {
-      // terminate the context.
-      opcodeHandler_END( this );
-   }
-   else
-   {
-      // instead of just rotating, set a yielding sleep of 0
-      putAtSleep( m_currentContext, secs );
-      electContext();
-   }
+   
+   // and rotate the context
+   putAtSleep( m_currentContext, secs );
+   electContext();
 }
 
 
@@ -1746,50 +1627,40 @@ void VMachine::rotateContext()
 
 void VMachine::electContext()
 {
-   // reset the event, so, in exit, we'll know if we have to wait.
-   m_event = eventNone;
-
    // if there is some sleeping context...
    if ( ! m_sleepingContexts.empty() )
    {
       VMContext *elect = (VMContext *) m_sleepingContexts.front();
       numeric tgtTime = elect->schedule() - Sys::_seconds();
-
-      // elect NOW the new context
-      m_sleepingContexts.popFront();
-      elect->wakeup();
-
+      
+      // changhe the context to the first ready to run.
       m_currentContext = elect;
-      m_opCount = 0;
+      
       // we must move to the next instruction after the context was swapped.
       m_currentContext->pc() = m_currentContext->pc_next();
-
-      // but eventually sleep.
-      if ( tgtTime > 0.0 )
+      
+      // ready to run?
+      if ( tgtTime <= 0.0 )
       {
-         // should we ask the embedding application to wait for us??
-         if ( m_sleepAsRequests )
-         {
-            m_event = eventSleep;
-            m_yieldTime = tgtTime;
-            return;
-         }
-         else {
-            // raise an interrupted error on need.
-            idle();
-            if ( ! m_systemData.sleep( tgtTime ) )
-            {
-               m_systemData.resetInterrupt();
-               unidle();
+         // Wake up the context.
+         m_sleepingContexts.popFront();
+         
+         // wakeup may consume a signal if it is currently pending.
+         elect->wakeup();
 
-               //fassert( currentSymbol()->isFunction() );
-               throw new InterruptedError(
-                  ErrorParam( e_interrupted ).origin( e_orig_vm ).
-                     symbol( currentSymbol()->name() ).
-                     module( currentModule()->name() )
-                  );
-            }
-            unidle();
+         m_opCount = 0;
+      }
+      // but eventually sleep.
+      else
+      {
+         // raise an interrupted error on need.
+         if ( ! onIdleTime( tgtTime ) )
+         {
+            throw new InterruptedError(
+               ErrorParam( e_interrupted ).origin( e_orig_vm ).
+                  symbol( currentSymbol()->name() ).
+                  module( currentModule()->name() )
+               );
          }
       }
    }
@@ -1798,35 +1669,28 @@ void VMachine::electContext()
 
 void VMachine::terminateCurrentContext()
 {
-   // scan the contexts and remove the current one.
-   if ( m_sleepingContexts.empty() )
+   // don't destroy this context if it's the last one.
+   // inspectors outside this VM may want to check it.
+   if ( m_contexts.size() > 1 )
    {
-      // there is wating non-sleeping context that will never be awaken?
-      if( m_contexts.size() != 1 )
-      {
-         raiseRTError( new CodeError( ErrorParam( e_deadlock ).extra("END").origin( e_orig_vm ) ) );
-         return;
-      }
-
-      m_event = eventQuit;
-   }
-   else
-   {
+      // scan the contexts and remove the current one.
       ListElement *iter = m_contexts.begin();
       while( iter != 0 ) {
          if( iter->data() == m_currentContext ) {
             m_contexts.erase( iter );
-               // removing the context also deletes it.
-
-               // Not necessary, but we do for debug reasons (i.e. if we access it before election, we crash)
-               m_currentContext = 0;
-
-               break;
+            m_currentContext = 0;
+            break;
          }
          iter = iter->next();
       }
-
+      
+      // there must be something sleeping
+      fassert( !  m_sleepingContexts.empty() );
       electContext();
+   }
+   else {
+      // we're done
+      throw VMEventQuit();
    }
 }
 
@@ -1878,11 +1742,11 @@ void VMachine::callReturn()
    }
 
    // Get the stack frame.
-   StackFrame &frame = *(StackFrame *) stack().at( stackBase() - VM_FRAME_SPACE );
+   StackFrame &frame = *currentFrame();
 
    // if the stack frame requires an end handler...
    // ... but only if not unrolling a stack because of error...
-   if ( ! hadStoppingEvent() && frame.m_endFrameFunc != 0 )
+   if ( frame.m_endFrameFunc != 0 )
    {
       // reset pc-next to allow re-call of this frame in case of need.
       m_currentContext->pc_next() = m_currentContext->pc();
@@ -1892,16 +1756,13 @@ void VMachine::callReturn()
          return;
       }
    }
+   
+   bool bBreak = frame.m_break;
 
    // Ok, we can unroll the stak.
    // reset bidings and self
    regBind() = frame.m_binding;
    self() = frame.m_self;
-
-   if( frame.m_break )
-   {
-      m_event = eventReturn;
-   }
 
    // change symbol
    m_currentContext->symbol( frame.m_symbol );
@@ -1917,7 +1778,12 @@ void VMachine::callReturn()
    uint32 oldBase = stackBase() -frame.m_param_count - VM_FRAME_SPACE;
    stackBase() = frame.m_stack_base;
    stack().resize( oldBase );
-
+   
+   if( bBreak )
+   {
+      m_currentContext->pc() = m_currentContext->pc_next();
+      throw VMEventReturn();
+   }
 }
 
 
@@ -2194,22 +2060,19 @@ success:
    return true;
 }
 
-bool VMachine::publishService( Service *svr )
+void VMachine::publishService( Service *svr )
 {
    Service **srv = (Service **) m_services.find( &svr->getServiceName() );
    if ( srv == 0 )
    {
       m_services.insert( &svr->getServiceName(), svr );
-      return true;
    }
    else {
-      raiseError( new CodeError(
+      throw new CodeError(
             ErrorParam( e_service_adef ).origin( e_orig_vm ).
             extra( svr->getServiceName() ).
             symbol( "publishService" ).
-            module( "core.vm" ) )
-            );
-      return false;
+            module( "core.vm" ) );
    }
 }
 
@@ -2288,23 +2151,21 @@ void VMachine::pushTry( uint32 landingPC )
 void VMachine::popTry( bool moveTo )
 {
    // If the try frame is wrong or not in current stack frame...
-   if ( stack().size() <= m_currentContext->tryFrame() || stackBase() > m_currentContext->tryFrame() )
+   if ( stack().size() <= tryFrame() || stackBase() > tryFrame() )
    {
       //TODO: raise proper error
-      raiseError( new CodeError( ErrorParam( e_stackuf, currentSymbol()->declaredAt() ).
+      throw new CodeError( ErrorParam( e_stackuf, currentSymbol()->declaredAt() ).
          origin( e_orig_vm ).
          symbol( currentSymbol()->name() ).
-         module( currentLiveModule()->name() ) )
-      );
-      return;
+         module( currentLiveModule()->name() ) );
    }
 
    // get the frame and resize the stack
-   int64 tf_land = stack().itemAt( m_currentContext->tryFrame() ).asInteger();
-   stack().resize( m_currentContext->tryFrame() );
+   int64 tf_land = stack().itemAt( tryFrame() ).asInteger();
+   stack().resize( tryFrame() );
 
    // Change the try frame, and eventually move the PC to the proper position
-   m_currentContext->tryFrame() = (uint32) tf_land;
+   tryFrame() = (uint32) tf_land;
    if( moveTo )
    {
       m_currentContext->pc_next() = (uint32)(tf_land>>32);
@@ -3295,12 +3156,11 @@ bool VMachine::interrupted( bool raise, bool reset, bool dontCheck )
             currentModule()->getLineAt( currentSymbol()->getFuncDef()->basePC() + programCounter() )
             : 0;
 
-         raiseError( new InterruptedError(
+         throw new InterruptedError(
             ErrorParam( e_interrupted ).origin( e_orig_vm ).
                symbol( currentSymbol()->name() ).
                module( currentModule()->name() ).
-               line( line )
-            ) );
+               line( line ) );
       }
 
       return true;
@@ -3673,17 +3533,6 @@ void VMachine::prepareFrame( CoreFunc* target, uint32 paramCount )
 
       //jump
       this->m_currentContext->pc_next() = 0;
-
-      // If the function is not called internally by the VM, another run is issued.
-      /*
-      if( callMode == e_callNormal || callMode == e_callInst )
-      {
-         // hitting the stack limit forces the RET code to raise a return event,
-         // and this forces the machine to exit run().
-         frame->m_break = true;
-         run();
-      }
-      */
    }
    else
    {
@@ -3700,29 +3549,6 @@ void VMachine::prepareFrame( CoreFunc* target, uint32 paramCount )
    }
 }
 
-
-
-//=====================================================================================
-// baton
-//
-
-void VMBaton::release()
-{
-   Baton::release();
-   // See if the memPool has anything interesting for us.
-   memPool->idleVM( m_owner );
-}
-
-void VMBaton::releaseNotIdle()
-{
-   Baton::release();
-}
-
-void VMBaton::onBlockedAcquire()
-{
-   // See if the memPool has anything interesting for us.
-   memPool->idleVM( m_owner );
-}
 
 
 GarbageLock *VMachine::lock( const Item &itm )
@@ -3800,6 +3626,243 @@ void VMachine::setupScript( int argc, char** argv )
       }
       *args = argsArray;
    }
+}
+
+bool VMachine::onIdleTime( numeric seconds )
+{
+   idle();
+   bool interrupted = m_systemData.sleep( seconds );
+   unidle();
+   return interrupted;
+}
+
+
+void VMachine::handleRaisedItem( Item& value )
+{
+   // can someone get it?
+   if( tryFrame() == i_noTryFrame )  // uncaught error raised from scripts...
+   {
+      // create the error that the external application will see.
+      Error *err;
+      if ( value.isOfClass( "Error" ) )
+      {
+         // in case of an error of class Error, we have already a good error inside of it.
+         err = static_cast<core::ErrorObject *>(value.asObjectSafe())->getError();
+         err->incref();
+      }
+      else {
+         // else incapsulate the item in an error.
+         err = new GenericError( ErrorParam( e_uncaught ).origin( e_orig_vm ) );
+         err->raised( value );
+      }
+      err->hasTraceback();
+      throw err;
+   }
+   
+   // Enter the stack frame that should handle the error (or raise to the top if uncaught)
+   while( stackBase() > tryFrame() )
+   {
+      // incase of return request...
+      try {
+         // neutralize post-processors
+         currentFrame()->m_endFrameFunc = 0;
+         callReturn();
+      }
+      catch( VMEventReturn & )
+      {
+         // rethrow the item -- upper VM will have to deliver it to the script
+         throw value;
+      }
+   }
+   
+   // we must be out of that loop in a stack area where tryframe is landed.
+   fassert ( tryFrame() != i_noTryFrame );  
+   
+   regB() = value;
+   // We are in the frame that should handle the error, in one way or another
+   // should we catch it?
+   popTry( true );
+}
+
+
+void VMachine::handleRaisedError( Error* err )
+{
+   err->origin( e_orig_vm );
+
+   if( ! err->hasTraceback() )
+      fillErrorContext( err, true );
+
+   // catch it if possible
+   if( err->catchable() && tryFrame() != i_noTryFrame )
+   {
+      // Enter the stack frame that should handle the error (or raise to the top if uncaught)
+      while( stackBase() > tryFrame() )
+      {
+         // incase of return request...
+         try {
+            // neutralize post-processors
+            currentFrame()->m_endFrameFunc = 0;
+            callReturn();
+         }
+         catch( VMEventReturn & )
+         {
+            // rethrow the item -- upper VM will have to deliver it to the script
+            throw err;
+         }
+      }
+
+      CoreObject *obj = err->scriptize( this );
+      err->decref();
+      if ( obj != 0 )
+      {
+         regB() = obj;
+         // We are in the frame that should handle the error, in one way or another
+         // should we catch it?
+         popTry( true );
+      }
+      else {
+         // Panic. Should not happen -- scriptize has raised a symbol not found error
+         // describing the missing error class; we must tell the user so that the module
+         // not declaring the correct error class, or failing to export it, can be
+         // fixed.
+         fassert( false );
+         throw err;
+      }
+   }
+   // we couldn't catch the error (this also means we're at stackBase() zero)
+   // we should handle it then exit
+   else {
+      // we should manage the error; if we're here, stackBase() is zero,
+      // so we are the last in charge
+      throw err;
+   }
+}
+
+
+void VMachine::periodicChecks()
+{
+   // pulse VM idle
+   if( m_bGcEnabled )
+      m_baton.checkBlock();
+
+   if ( m_opLimit > 0 )
+   {
+      // Bail out???
+      if ( m_opCount > m_opLimit )
+         return;
+      else
+         if ( m_opNextCheck > m_opLimit )
+            m_opNextCheck = m_opLimit;
+   }
+
+   if( ! m_atomicMode )
+   {
+      if( m_allowYield && ! m_sleepingContexts.empty() && m_opCount > m_opNextContext ) {
+         rotateContext();
+         m_opNextContext = m_opCount + m_loopsContext;
+         if( m_opNextContext < m_opNextCheck )
+            m_opNextCheck = m_opNextContext;
+      }
+
+      // Periodic Callback
+      if( m_loopsCallback > 0 && m_opCount > m_opNextCallback )
+      {
+         periodicCallback();
+         m_opNextCallback = m_opCount + m_loopsCallback;
+         if( m_opNextCallback < m_opNextCheck )
+            m_opNextCheck = m_opNextCallback;
+      }
+
+      // in case of single step:
+      if( m_bSingleStep )
+      {
+         // stop also next op
+         m_opNextCheck = m_opCount + 1;
+         return; // maintain the event we have, but exit now.
+      }
+
+      // perform messages
+      m_mtx_mesasges.lock();
+      while( m_msg_head != 0 )
+      {
+         VMMessage* msg = m_msg_head;
+         m_msg_head = msg->next();
+         // it is ok if m_msg_tail is left dangling.
+         m_mtx_mesasges.unlock();
+         if ( msg->error() )
+         {
+            Error* err = msg->error();
+            err->incref();
+            delete msg;
+            throw err;
+         }
+         else
+            processMessage( msg );  // do not delete msg
+
+         // see if we have more messages in the meanwhile
+         m_mtx_mesasges.lock();
+      }
+
+      m_msg_tail = 0;
+      m_mtx_mesasges.unlock();
+   }
+}
+
+
+void VMachine::raiseHardError( int code, const String &expl, int32 line )
+{
+   Error *err = new CodeError(
+         ErrorParam( code, line ).origin( e_orig_vm )
+         .hard()
+         .extra( expl )
+      );
+
+   // of course, if we're not executing, there nothing to raise
+   if( currentSymbol() != 0 )
+   {
+      fillErrorContext( err );
+   }
+
+   throw err;
+}
+
+bool VMachine::launch( const String &startSym, uint32 paramCount )
+{
+   if ( prepare( startSym, paramCount ) ) 
+   {
+      try
+      {
+         run();
+      }
+      catch ( VMEventQuit & )
+      {
+         // a standard quit.
+         return true;
+      }
+   }
+   return false;
+}
+
+//=====================================================================================
+// baton
+//
+
+void VMBaton::release()
+{
+   Baton::release();
+   // See if the memPool has anything interesting for us.
+   memPool->idleVM( m_owner );
+}
+
+void VMBaton::releaseNotIdle()
+{
+   Baton::release();
+}
+
+void VMBaton::onBlockedAcquire()
+{
+   // See if the memPool has anything interesting for us.
+   memPool->idleVM( m_owner );
 }
 
 }

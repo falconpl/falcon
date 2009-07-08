@@ -53,15 +53,14 @@ FALCON_FUNC flc_math_log( ::Falcon::VMachine *vm )
 
    if ( num1 == 0 || ! num1->isOrdinal() )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ).extra("N") );
    }
 
    errno = 0;
    numeric res = log( num1->forceNumeric() );
    if ( errno != 0 )
    {
-      vm->raiseModError( new MathError( ErrorParam( e_domain, __LINE__).extra( "log()" ) ) );
+      throw new MathError( ErrorParam( e_domain, __LINE__).origin( e_orig_runtime ) );
    }
    else {
       vm->retval( res );
@@ -84,7 +83,7 @@ FALCON_FUNC flc_math_exp( ::Falcon::VMachine *vm )
 
    if ( num1 == 0 || ! num1->isOrdinal() )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ).extra("N") );
       return;
    }
 
@@ -92,7 +91,7 @@ FALCON_FUNC flc_math_exp( ::Falcon::VMachine *vm )
    numeric res = exp( num1->forceNumeric() );
    if ( errno != 0 )
    {
-      vm->raiseModError( new MathError( ErrorParam( e_domain, __LINE__).extra( "exp()" ) ) );
+      throw new MathError( ErrorParam( e_domain, __LINE__).origin( e_orig_runtime ) );
    }
    else {
       vm->retval( res );
@@ -117,7 +116,7 @@ FALCON_FUNC flc_math_pow( ::Falcon::VMachine *vm )
 
    if ( num1 == 0 || ! num1->isOrdinal() || num2 == 0 || ! num2->isOrdinal() )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ).extra("N,N") );
       return;
    }
 
@@ -125,7 +124,7 @@ FALCON_FUNC flc_math_pow( ::Falcon::VMachine *vm )
    numeric res = pow( num1->forceNumeric(), num2->forceNumeric() );
    if ( errno != 0 )
    {
-      vm->raiseModError( new MathError( ErrorParam( e_domain, __LINE__).extra( "pow()" ) ) );
+      throw new MathError( ErrorParam( e_domain, __LINE__).origin( e_orig_runtime ) );
    }
    else {
       vm->retval( res );
@@ -150,15 +149,14 @@ FALCON_FUNC flc_math_sin( ::Falcon::VMachine *vm )
 
    if ( num1 == 0 || ! num1->isOrdinal() )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ).extra("N") );
    }
 
    errno = 0;
    numeric res = sin( num1->forceNumeric() );
    if ( errno != 0 )
    {
-      vm->raiseModError( new MathError( ErrorParam( e_domain, __LINE__).extra( "sin()" ) ) );
+      throw new MathError( ErrorParam( e_domain, __LINE__).origin( e_orig_runtime ) );
    }
    else {
       vm->retval( res );
@@ -183,15 +181,14 @@ FALCON_FUNC flc_math_cos( ::Falcon::VMachine *vm )
 
    if ( num1 == 0 || ! num1->isOrdinal() )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ).extra( "N" ) );
    }
 
    errno = 0;
    numeric res = cos( num1->forceNumeric() );
    if ( errno != 0 )
    {
-      vm->raiseModError( new MathError( ErrorParam( e_domain, __LINE__).extra( "acos()" ) ) );
+      throw new MathError( ErrorParam( e_domain, __LINE__).origin( e_orig_runtime ) );
    }
    else {
       vm->retval( res );
@@ -216,15 +213,14 @@ FALCON_FUNC flc_math_tan( ::Falcon::VMachine *vm )
 
    if ( num1 == 0 || ! num1->isOrdinal() )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ).extra("N") );
    }
 
    errno = 0;
    numeric res = tan( num1->forceNumeric() );
    if ( errno != 0 )
    {
-      vm->raiseModError( new MathError( ErrorParam( e_domain, __LINE__).extra( "tan()" ) ) );
+      throw new MathError( ErrorParam( e_domain, __LINE__).origin( e_orig_runtime ) );
    }
    else {
       vm->retval( res );
@@ -250,15 +246,14 @@ FALCON_FUNC flc_math_asin( ::Falcon::VMachine *vm )
 
    if ( num1 == 0 || ! num1->isOrdinal() )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ).extra("N") );
    }
 
    errno = 0;
    numeric res = asin( num1->forceNumeric() );
    if ( errno != 0 )
    {
-      vm->raiseModError( new MathError( ErrorParam( e_domain, __LINE__).extra( "asin()" ) ) );
+      throw new MathError( ErrorParam( e_domain, __LINE__).origin( e_orig_runtime ) );
    }
    else {
       vm->retval( res );
@@ -287,7 +282,7 @@ FALCON_FUNC flc_math_acos( ::Falcon::VMachine *vm )
 
    if ( num1 == 0 || ! num1->isOrdinal() )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ).extra("N") );
       return;
    }
 
@@ -295,7 +290,7 @@ FALCON_FUNC flc_math_acos( ::Falcon::VMachine *vm )
    numeric res = acos( num1->forceNumeric() );
    if ( errno != 0 )
    {
-      vm->raiseModError( new MathError( ErrorParam( e_domain, __LINE__).extra( "acos()" ) ) );
+      throw new MathError( ErrorParam( e_domain, __LINE__).origin( e_orig_runtime ) );
    }
    else {
       vm->retval( res );
@@ -323,7 +318,7 @@ FALCON_FUNC flc_math_atan( ::Falcon::VMachine *vm )
 
    if ( num1 == 0 || ! num1->isOrdinal() )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ).extra("N") );
       return;
    }
 
@@ -331,7 +326,7 @@ FALCON_FUNC flc_math_atan( ::Falcon::VMachine *vm )
    numeric res = atan( num1->forceNumeric() );
    if ( errno != 0 )
    {
-      vm->raiseModError( new MathError( ErrorParam( e_domain, __LINE__).extra( "atan()" ) ) );
+      throw new MathError( ErrorParam( e_domain, __LINE__).origin( e_orig_runtime ) );
    }
    else {
       vm->retval( res );
@@ -362,7 +357,7 @@ FALCON_FUNC flc_math_atan2( ::Falcon::VMachine *vm )
 
    if ( num1 == 0 || ! num1->isOrdinal() || num2 == 0 || ! num2->isOrdinal() )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ).extra("N") );
       return;
    }
 
@@ -370,7 +365,7 @@ FALCON_FUNC flc_math_atan2( ::Falcon::VMachine *vm )
    numeric res = atan2( num1->forceNumeric(), num2->forceNumeric() );
    if ( errno != 0 )
    {
-      vm->raiseModError( new MathError( ErrorParam( e_domain, __LINE__).extra( "atan2()" ) ) );
+      throw new MathError( ErrorParam( e_domain, __LINE__).origin( e_orig_runtime ) );
    }
    else {
       vm->retval( res );
@@ -390,7 +385,7 @@ FALCON_FUNC flc_math_rad2deg( ::Falcon::VMachine *vm )
 
    if ( num1 == 0 || ! num1->isOrdinal() )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ).extra("N") );
       return;
    }
 
@@ -409,7 +404,7 @@ FALCON_FUNC flc_math_deg2rad( ::Falcon::VMachine *vm )
 
    if ( num1 == 0 || ! num1->isOrdinal() )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ).extra("N") );
       return;
    }
 
@@ -445,7 +440,7 @@ FALCON_FUNC  flc_fract ( ::Falcon::VMachine *vm )
       vm->retval( modf( num->asNumeric(), &intpart ) );
    }
    else {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ).extra("N") );
    }
 }
 
@@ -478,7 +473,7 @@ FALCON_FUNC  flc_fint( ::Falcon::VMachine *vm )
          vm->retval( intpart );
    }
    else {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ).extra("N") );
    }
 }
 
@@ -523,7 +518,7 @@ FALCON_FUNC  flc_round ( ::Falcon::VMachine *vm )
       #endif
    }
    else {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ).extra("N") );
    }
 }
 
@@ -551,7 +546,7 @@ FALCON_FUNC  flc_floor ( ::Falcon::VMachine *vm )
       vm->retval( (int64) floor( num->asNumeric() ) );
    }
    else {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ).extra("N") );
    }
 }
 
@@ -578,7 +573,7 @@ FALCON_FUNC  flc_ceil ( ::Falcon::VMachine *vm )
       vm->retval( (int64) ceil( num->asNumeric() ) );
    }
    else {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ).extra("N") );
    }
 }
 
@@ -606,7 +601,7 @@ FALCON_FUNC  flc_abs ( ::Falcon::VMachine *vm )
       vm->retval( fabs( n ) );
    }
    else {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ).extra("N") );
    }
 }
 
@@ -639,23 +634,21 @@ FALCON_FUNC flc_math_factorial( ::Falcon::VMachine *vm )
 
    if ( num1 == 0 || ! num1->isOrdinal() )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ).extra("N") );
    }
 
    numeric num = num1->forceNumeric();
 
    if ( num < 0 )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_param_range, __LINE__ ).origin( e_orig_runtime ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_param_range, __LINE__ ).origin( e_orig_runtime ) );
    }
 
    errno = 0;
    numeric res = fact( num );
    if ( errno != 0 )
    {
-      vm->raiseModError( new MathError( ErrorParam( e_domain, __LINE__).extra( "fact()" ) ) );
+      throw new MathError( ErrorParam( e_domain, __LINE__).origin( e_orig_runtime ) );
    }
    else {
       vm->retval( res );
@@ -682,7 +675,7 @@ FALCON_FUNC flc_math_permutations( ::Falcon::VMachine *vm )
 
    if ( num1 == 0 || ! num1->isOrdinal() || num2 == 0 || ! num2->isOrdinal() )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ).extra("N,N") );
       return;
    }
 
@@ -692,9 +685,7 @@ FALCON_FUNC flc_math_permutations( ::Falcon::VMachine *vm )
    // n must be > 0, but r may be zero.
    if ( n <= 0 || r < 0)
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_param_range, __LINE__ ).
-      origin( e_orig_runtime ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_param_range, __LINE__ ).origin( e_orig_runtime ) );
    }
 
    errno = 0;
@@ -709,7 +700,7 @@ FALCON_FUNC flc_math_permutations( ::Falcon::VMachine *vm )
 
    if ( errno != 0 )
    {
-      vm->raiseModError( new MathError( ErrorParam( e_domain, __LINE__).extra( "permutations()" ) ) );
+      throw new MathError( ErrorParam( e_domain, __LINE__).origin( e_orig_runtime ) );
    }
    else {
       vm->retval( res );
@@ -735,8 +726,7 @@ FALCON_FUNC flc_math_combinations( ::Falcon::VMachine *vm )
 
    if ( num1 == 0 || ! num1->isOrdinal() || num2 == 0 || ! num2->isOrdinal() )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ).extra("N,N") );
    }
 
    numeric n = num1->forceNumeric();
@@ -744,8 +734,7 @@ FALCON_FUNC flc_math_combinations( ::Falcon::VMachine *vm )
    // check to make sure numbers aren't the same
    if ( n <= 0 || r < 0)
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_param_range, __LINE__ ).origin( e_orig_runtime ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_param_range, __LINE__ ).origin( e_orig_runtime ) );
    }
 
    if ( n == r )
@@ -758,7 +747,7 @@ FALCON_FUNC flc_math_combinations( ::Falcon::VMachine *vm )
       numeric res = fact( n ) / (fact( r ) * fact(n-r));
       if ( errno != 0 )
       {
-         vm->raiseModError( new MathError( ErrorParam( e_domain, __LINE__).extra( "combinations()" ) ) );
+         throw new MathError( ErrorParam( e_domain, __LINE__).origin( e_orig_runtime ) );
       }
       else {
          vm->retval( res );

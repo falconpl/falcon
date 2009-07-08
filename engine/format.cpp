@@ -773,7 +773,8 @@ bool Format::processMismatch( VMachine *vm, const Item &source, String &target )
       case e_actRaise:
          if( vm != 0 )
          {
-            vm->raiseRTError( new TypeError( ErrorParam( e_fmt_convert ) ) );
+            throw new TypeError( ErrorParam( e_fmt_convert, __LINE__ )
+               .origin( e_orig_runtime ) );
          }
          return false;
    }

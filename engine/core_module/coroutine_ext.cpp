@@ -46,7 +46,7 @@ namespace core {
 */
 FALCON_FUNC  yield ( ::Falcon::VMachine *vm )
 {
-   vm->yieldRequest( 0.0 );
+   vm->rotateContext();
 }
 
 /*#
@@ -67,11 +67,13 @@ FALCON_FUNC  yield ( ::Falcon::VMachine *vm )
 FALCON_FUNC  yieldOut ( ::Falcon::VMachine *vm )
 {
    Item *ret = vm->param(0);
-   vm->yieldRequest( -1.0 );
+   
    if ( ret != 0 )
       vm->retval( *ret );
    else
       vm->retnil();
+
+   vm->terminateCurrentContext();
 }
 
 
@@ -123,7 +125,7 @@ FALCON_FUNC  _f_sleep ( ::Falcon::VMachine *vm )
          pause = 0.0;
    }
 
-   vm->yieldRequest( pause );
+   vm->yield( pause );
 }
 
 /*#
@@ -213,8 +215,7 @@ FALCON_FUNC  Semaphore_init ( ::Falcon::VMachine *vm )
       else if ( qty->type() == FLC_ITEM_NUM )
          value = (int32) qty->asNumeric();
       else {
-         vm->raiseRTError( new ParamError( ErrorParam( e_param_range ).extra( "( N )" ) ) );
-         return;
+         throw new ParamError( ErrorParam( e_param_range ).extra( "( N )" ) );
       }
    }
 
@@ -243,8 +244,7 @@ FALCON_FUNC  Semaphore_post ( ::Falcon::VMachine *vm )
       else if ( qty->type() == FLC_ITEM_NUM )
          value = (int32) qty->asNumeric();
       else {
-         vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).extra( "( N )" ) ) );
-         return;
+         throw new ParamError( ErrorParam( e_inv_params ).extra( "( N )" ) );
       }
       if (value <= 0)
          value = 1;
@@ -270,66 +270,10 @@ FALCON_FUNC  Semaphore_wait ( ::Falcon::VMachine *vm )
    else {
       if ( ! i_wc->isOrdinal() )
       {
-         vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).extra( "(N)" ) ) );
-         return;
+         throw new ParamError( ErrorParam( e_inv_params ).extra( "(N)" ) );
       }
       semaphore->wait( vm, i_wc->forceNumeric() );
    }
-}
-
-/*#
-   @function suspend
-   @brief Temporarily suspends the execution of the Virtual Machine.
-   @optparam timeout Optional maximum wait in seconds.
-   @return an item posted by the embedding application.
-   @ingroup coroutine_support
-
-   This function is meant to provide a very simple means of communication
-   with the embedding application. Other means are provided as well; they all
-   require less work on the script side, but more integration work on the embedding
-   application side. So, this communcation mean may be interesting for very simple
-   embedding applications, or in the early stage of the integration process.
-
-   This function hasn't any utility for stand-alone applications, and should not
-   be used by them, except than for testing.
-
-   After this call, the VM exits immediately and the control is given back to the
-   embedder. The embedder can check for the VM to have exited because of a suspend
-   call, and in this case, it may call the VM method Falcon::VMachine::resume()
-   to make the script to proceed from the point it was suspended.
-
-   The resume method of the virtual machine may accept an item that is then passed
-   to the suspended script as the return value of the suspend call. In this way,
-   the script may receive a callback notification of events happening in the main
-   application, and manage them. This is an example:
-
-   @code
-   lastEvent = "none"
-
-   while lastEvent != "quit"
-
-      lastEvent = suspend()
-
-      switch lastEvent
-         case "this"
-            doThis()
-         case "that"
-            doThat()
-      end
-   end
-   @endcode
-
-   The kind of item that is returned by suspend() call is a convention between the
-   script and the embedding application, and may be a complex item as well as an
-   instance of an embedder specific class.
-
-   While in suspended state, the VM may be also destroyed, or the calling module may
-   be unlinked from it, or the execution may be restarted instead of resumed.
-*/
-
-FALCON_FUNC vmSuspend( ::Falcon::VMachine *vm )
-{
-   vm->requestSuspend();
 }
 
 }

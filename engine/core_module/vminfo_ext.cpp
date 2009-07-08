@@ -136,7 +136,7 @@ FALCON_FUNC vmIsMain( ::Falcon::VMachine *vm )
 {
    if ( vm->stackBase() == 0 )
    {
-      vm->raiseRTError( new GenericError( ErrorParam( e_stackuf ) ) );
+      throw new GenericError( ErrorParam( e_stackuf, __LINE__ ).origin( e_orig_runtime ) );
    }
    else {
       // get the calling symbol module
@@ -244,9 +244,9 @@ FALCON_FUNC vmRelativePath( ::Falcon::VMachine *vm )
    Item *i_path = vm->param(0);
    if( i_path == 0 || ! i_path->isString())
    {
-      vm->raiseModError( new Falcon::ParamError(
+      throw new Falcon::ParamError(
          Falcon::ErrorParam( Falcon::e_inv_params, __LINE__ ).
-         extra( "S" ) ) );
+         extra( "S" ) );
    }
 
    const Symbol* sym;

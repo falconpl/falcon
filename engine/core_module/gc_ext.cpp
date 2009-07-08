@@ -145,11 +145,14 @@ FALCON_FUNC  GC_adjust( ::Falcon::VMachine *vm )
    {
       if ( ! i_setting->isOrdinal() )
       {
-         vm->raiseRTError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).extra( "N" ) ) );
+         throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+            .origin(e_orig_runtime)
+            .extra( "N" ) );
       }
       else if ( ! memPool->rampMode( (int) i_setting->forceInteger() ) )
       {
-         vm->raiseRTError( new ParamError( ErrorParam( e_param_range, __LINE__ ) ) );
+         throw new ParamError( ErrorParam( e_param_range, __LINE__ )
+            .origin(e_orig_runtime) );
       }
    }
 }

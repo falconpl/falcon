@@ -269,10 +269,9 @@ FALCON_FUNC FileStat_read ( ::Falcon::VMachine *vm )
 
    if ( name == 0 || ! name->isString() )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
          .origin( e_orig_runtime )
-         .extra("S") ) );
-      return;
+         .extra("S") );
    }
 
    FileStatObject *self = dyncast<FileStatObject*>(vm->self().asObject());
@@ -307,9 +306,9 @@ FALCON_FUNC  fileType( ::Falcon::VMachine *vm )
 
    if ( name == 0 || ! name->isString() )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
          .origin( e_orig_runtime )
-         .extra( "S" ) ) );
+         .extra( "S" ) );
       return;
    }
 
@@ -336,7 +335,8 @@ FALCON_FUNC  dirReadLink( ::Falcon::VMachine *vm )
 
    if ( name == 0 || ! name->isString() )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+         .origin( e_orig_runtime ) );
       return;
    }
 
@@ -376,8 +376,8 @@ FALCON_FUNC  dirMakeLink( ::Falcon::VMachine *vm )
 
    if ( name == 0 || ! name->isString() || dest == 0 || ! dest->isString() )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+         .origin( e_orig_runtime ) );
    }
 
    if ( ! Sys::fal_readlink( *name->asString(), *dest->asString() ) ) {
@@ -414,17 +414,15 @@ FALCON_FUNC  fileNameSplit ( ::Falcon::VMachine *vm )
    Item *name = vm->param(0);
    if ( name == 0 || ! name->isString() )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) );
    }
 
    Path path( *name->asString() );
    if ( ! path.isValid() )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
          origin( e_orig_runtime ).
-         extra( vm->moduleString( rtl_invalid_path ) ) ) );
-      return;
+         extra( vm->moduleString( rtl_invalid_path ) ) );
    }
 
    CoreArray *parts = new CoreArray( 4 );
@@ -515,10 +513,9 @@ FALCON_FUNC  fileNameMerge ( ::Falcon::VMachine *vm )
    p.join( *unitspec, *fpath, *fname, *fext );
    if ( ! p.isValid() )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
          origin( e_orig_runtime ).
-         extra( vm->moduleString( rtl_invalid_path ) ) ) );
-      return;
+         extra( vm->moduleString( rtl_invalid_path ) ) );
    }
 
    vm->retval( new CoreString( p.get() ) );
@@ -541,8 +538,7 @@ FALCON_FUNC  fileName ( ::Falcon::VMachine *vm )
    Item *filename = vm->param(0);
    if ( filename == 0 || ! filename->isString() )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) );
    }
 
    String *name = filename->asString();
@@ -581,8 +577,7 @@ FALCON_FUNC  filePath ( ::Falcon::VMachine *vm )
    Item *filename = vm->param(0);
    if ( filename == 0 || ! filename->isString() )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) );
    }
 
 
@@ -889,8 +884,7 @@ FALCON_FUNC  dirMake ( ::Falcon::VMachine *vm )
    Item *name = vm->param(0);
    if ( name == 0 || ! name->isString() )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) );
    }
    const String &strName = *name->asString();
    bool descend = vm->param(1) == 0 ? false : vm->param(1)->isTrue();
@@ -930,9 +924,9 @@ FALCON_FUNC  dirMake ( ::Falcon::VMachine *vm )
 
    if ( fsError != 0 )
    {
-      vm->raiseModError( new IoError( ErrorParam( 1011, __LINE__ ).
+      throw  new IoError( ErrorParam( 1011, __LINE__ ).
          origin( e_orig_runtime ).desc( "Cannot create directory" ).extra( strName ).
-         sysError( (uint32) Sys::_lastError() ) ) );
+         sysError( (uint32) Sys::_lastError() ) );
    }
 }
 
@@ -958,10 +952,9 @@ FALCON_FUNC  fileCopy ( ::Falcon::VMachine *vm )
         filedest == 0 || ! filedest->isString()
       )
    {
-      vm->raiseModError( new ParamError(
+      throw new ParamError(
          ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ).
-         extra("S,S") ) );
-      return;
+         extra("S,S") );
    }
 
    const String &source = *filename->asString();
@@ -973,20 +966,18 @@ FALCON_FUNC  fileCopy ( ::Falcon::VMachine *vm )
    instream.open( source, ::Falcon::BaseFileStream::e_omReadOnly, shMode );
    if ( ! instream.good() )
    {
-      vm->raiseModError( new IoError( ErrorParam( e_io_error, __LINE__ ).
+      throw new IoError( ErrorParam( e_io_error, __LINE__ ).
          extra( source ).
-         sysError( (uint32) instream.lastError() ) ) );
-      return;
+         sysError( (uint32) instream.lastError() ) );
    }
 
    outstream.create( dest, (Falcon::BaseFileStream::t_attributes) 0644, shMode );
    if ( ! outstream.good() )
    {
       instream.close();
-      vm->raiseModError( new IoError( ErrorParam( e_io_error, __LINE__ ).
+      throw new IoError( ErrorParam( e_io_error, __LINE__ ).
          extra( dest ).
-         sysError( (uint32) outstream.lastError() ) ) );
-      return;
+         sysError( (uint32) outstream.lastError() ) );
    }
 
    // Declaring the VM idle from now on.
@@ -998,18 +989,17 @@ FALCON_FUNC  fileCopy ( ::Falcon::VMachine *vm )
    {
       if ( outstream.write( buffer, count ) < 0 )
       {
-         vm->raiseModError( new IoError( ErrorParam( e_io_error, __LINE__ ).
-            sysError( (uint32) outstream.lastError() ) ) );
          instream.close();
          outstream.close();
-         return;
+         throw new IoError( ErrorParam( e_io_error, __LINE__ ).
+            sysError( (uint32) outstream.lastError() ) );
       }
    }
 
    if ( count < 0 )
    {
-      vm->raiseModError( new IoError( ErrorParam( e_io_error, __LINE__ ).
-            sysError( (uint32) instream.lastError() ) ) );
+      throw new IoError( ErrorParam( e_io_error, __LINE__ ).
+            sysError( (uint32) instream.lastError() ) );
    }
 
    instream.close();
@@ -1030,16 +1020,15 @@ FALCON_FUNC  dirRemove ( ::Falcon::VMachine *vm )
    Item *name = vm->param(0);
    if ( name == 0 || ! name->isString() )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) );
    }
    String *strName = name->asString();
 
    int32 fsError;
    if( ! Sys::fal_rmdir( *strName, fsError ) ) {
-      vm->raiseModError( new IoError( ErrorParam( 1012, __LINE__ ).
+      throw new IoError( ErrorParam( 1012, __LINE__ ).
          origin( e_orig_runtime ).desc( "Cannot remove directory" ).extra( *strName ).
-         sysError( (uint32) Sys::_lastError() ) ) );
+         sysError( (uint32) Sys::_lastError() ) );
    }
 }
 
@@ -1059,16 +1048,15 @@ FALCON_FUNC  dirChange ( ::Falcon::VMachine *vm )
    Item *name = vm->param(0);
    if ( name == 0 || ! name->isString() )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
-      return;
+      throw  new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) );
    }
    String *strName = name->asString();
 
    int32 fsError;
    if( ! Sys::fal_chdir( *strName, fsError ) ) {
-      vm->raiseModError( new IoError( ErrorParam( 1013, __LINE__ ).
+      throw  new IoError( ErrorParam( 1013, __LINE__ ).
          origin( e_orig_runtime ).desc( "Cannot change working directory" ).extra( *strName ).
-         sysError( (uint32) Sys::_lastError() ) ) );
+         sysError( (uint32) Sys::_lastError() ) );
    }
    else
       vm->retnil();
@@ -1090,9 +1078,9 @@ FALCON_FUNC  dirCurrent ( ::Falcon::VMachine *vm )
    int32 fsError;
    CoreString *ret = new CoreString;
    if( ! Sys::fal_getcwd( *ret, fsError ) ) {
-      vm->raiseModError( new IoError( ErrorParam( 1014, __LINE__ ).
+      throw  new IoError( ErrorParam( 1014, __LINE__ ).
          origin( e_orig_runtime ).desc( "Cannot read current working directory" ).
-         sysError( (uint32) Sys::_lastError() ) ) );
+         sysError( (uint32) Sys::_lastError() ) );
    }
    else
       vm->retval( ret );
@@ -1114,17 +1102,17 @@ FALCON_FUNC  fileRemove ( ::Falcon::VMachine *vm )
    Item *name = vm->param(0);
    if ( name == 0 || ! name->isString() )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         origin( e_orig_runtime ) ) );
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         origin( e_orig_runtime ) );
       return;
    }
    String *strName = name->asString();
 
    int32 fsError;
    if( ! Sys::fal_unlink( *strName, fsError ) ) {
-      vm->raiseModError( new IoError( ErrorParam( 1015, __LINE__ ).
+      throw new IoError( ErrorParam( 1015, __LINE__ ).
          origin( e_orig_runtime ).desc( "Cannot remove target file" ).extra( *strName ).
-         sysError( (uint32) Sys::_lastError() ) ) );
+         sysError( (uint32) Sys::_lastError() ) );
    }
 }
 
@@ -1148,8 +1136,8 @@ FALCON_FUNC  fileMove ( ::Falcon::VMachine *vm )
 
    if ( name == 0 || ! name->isString() || dest == 0 || ! dest->isString() )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         origin( e_orig_runtime ) ) );
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         origin( e_orig_runtime ) );
       return;
    }
 
@@ -1158,9 +1146,9 @@ FALCON_FUNC  fileMove ( ::Falcon::VMachine *vm )
 
    int32 fsError;
    if( ! Sys::fal_move( *strName, *strDest, fsError ) ) {
-      vm->raiseModError( new IoError( ErrorParam( 1016, __LINE__ ).
+      throw new IoError( ErrorParam( 1016, __LINE__ ).
          origin( e_orig_runtime ).desc( "Cannot move target file" ).extra( *strName + " -> " + *strDest ).
-         sysError( (uint32) Sys::_lastError() ) ) );
+         sysError( (uint32) Sys::_lastError() ) );
    }
 }
 
@@ -1183,16 +1171,15 @@ FALCON_FUNC  fileChmod ( ::Falcon::VMachine *vm )
 
    if ( name == 0 || ! name->isString() || mode == 0 || ! mode->isOrdinal() )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-      origin( e_orig_runtime ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+      origin( e_orig_runtime ) );
    }
 
    if( ! Sys::fal_chmod( *name->asString(), (uint32) mode->forceInteger() ) )
    {
-      vm->raiseModError( new IoError( ErrorParam( 1016, __LINE__ ).
+      throw new IoError( ErrorParam( 1016, __LINE__ ).
          origin( e_orig_runtime ).desc( "Cannot change target file mode" ).extra( *name->asString() ).
-         sysError( (uint32) Sys::_lastError() ) ) );
+         sysError( (uint32) Sys::_lastError() ) );
    }
 }
 
@@ -1214,16 +1201,16 @@ FALCON_FUNC  fileChown ( ::Falcon::VMachine *vm )
 
    if ( name == 0 || ! name->isString() || mode == 0 || ! mode->isOrdinal() )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         origin( e_orig_runtime ) ) );
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         origin( e_orig_runtime ) );
       return;
    }
 
    if( Sys::fal_chown( *name->asString(), (int32) mode->forceInteger() ) )
    {
-      vm->raiseModError( new IoError( ErrorParam( 1017, __LINE__ ).
+      throw new IoError( ErrorParam( 1017, __LINE__ ).
          origin( e_orig_runtime ).desc( "Cannot change target file owner" ).extra( *name->asString() ).
-         sysError( (uint32) Sys::_lastError() ) ) );
+         sysError( (uint32) Sys::_lastError() ) );
    }
 }
 
@@ -1244,16 +1231,15 @@ FALCON_FUNC  fileChgroup ( ::Falcon::VMachine *vm )
 
    if ( name == 0 || ! name->isString() || mode == 0 || ! mode->isOrdinal() )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         origin( e_orig_runtime ) ) );
-      return;
+      throw  new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         origin( e_orig_runtime ) );
    }
 
    if( Sys::fal_chgrp( *name->asString(), (int32) mode->forceInteger() ) )
    {
-      vm->raiseModError( new IoError( ErrorParam( 1018, __LINE__ ).
+      throw  new IoError( ErrorParam( 1018, __LINE__ ).
          origin( e_orig_runtime ).desc( "Cannot change target file owner" ).extra( *name->asString() ).
-         sysError( (uint32) Sys::_lastError() ) ) );
+         sysError( (uint32) Sys::_lastError() ) );
    }
 }
 

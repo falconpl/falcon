@@ -67,7 +67,9 @@ FALCON_FUNC  Iterator_init( ::Falcon::VMachine *vm )
 
    if( collection == 0 || ( pos != 0 && ! pos->isOrdinal() ) )
    {
-      vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).extra( "X,[N]" ) ) );
+      throw new ParamError( ErrorParam( e_inv_params )
+         .origin( e_orig_runtime )
+         .extra( "X,[N]" ) );
       return;
    }
 
@@ -88,8 +90,7 @@ FALCON_FUNC  Iterator_init( ::Falcon::VMachine *vm )
             self->setProperty( "_pos", (int64) p );
          }
          else {
-            vm->raiseRTError( new AccessError( ErrorParam( e_inv_params ) ) );
-            return;
+            throw new AccessError( ErrorParam( e_inv_params ).origin( e_orig_runtime ) );
          }
       }
       break;
@@ -110,8 +111,7 @@ FALCON_FUNC  Iterator_init( ::Falcon::VMachine *vm )
             self->setProperty( "_pos", (int64) len - p );
          }
          else {
-            vm->raiseRTError( new AccessError( ErrorParam( e_inv_params ) ) );
-            return;
+            throw new AccessError( ErrorParam( e_inv_params ).origin( e_orig_runtime ) );
          }
       }
       break;
@@ -125,8 +125,7 @@ FALCON_FUNC  Iterator_init( ::Falcon::VMachine *vm )
             self->setProperty( "_pos", (int64) p );
          }
          else {
-            vm->raiseRTError( new AccessError( ErrorParam( e_inv_params ) ) );
-            return;
+            throw new AccessError( ErrorParam( e_inv_params ).origin( e_orig_runtime ) );
          }
       }
       break;
@@ -141,8 +140,7 @@ FALCON_FUNC  Iterator_init( ::Falcon::VMachine *vm )
          else if( p == -1 )
             iter = orig->last();
          else {
-            vm->raiseRTError( new AccessError( ErrorParam( e_inv_params ) ) );
-            return;
+            throw new AccessError( ErrorParam( e_inv_params ).origin( e_orig_runtime ) );
          }
 
          self->setUserData( iter );
@@ -162,12 +160,12 @@ FALCON_FUNC  Iterator_init( ::Falcon::VMachine *vm )
             self->setUserData( iter );
             return;
          }
-         vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ) ) );
+         throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) ;
       }
       break;
 
       default:
-         vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ) ) );
+         throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) );
    }
 }
 
@@ -484,7 +482,9 @@ FALCON_FUNC  Iterator_value( ::Falcon::VMachine *vm )
                   break;
 
                   default:
-                     vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).extra( "S/N" ) ) );
+                     throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                     .origin( e_orig_runtime )
+                     .extra( "S/N" ) );
                }
             }
             return;
@@ -552,7 +552,9 @@ FALCON_FUNC  Iterator_value( ::Falcon::VMachine *vm )
       }
    }
 
-   vm->raiseRTError( new AccessError( ErrorParam( e_arracc ).extra( "Iterator.value" ) ) );
+   throw new AccessError( ErrorParam( e_arracc, __LINE__ )
+         .origin( e_orig_runtime )
+         .extra( "Iterator.value" ) );
 }
 
 /*#
@@ -583,7 +585,9 @@ FALCON_FUNC  Iterator_key( ::Falcon::VMachine *vm )
       }
    }
 
-   vm->raiseRTError( new AccessError( ErrorParam( e_arracc ).extra( "missing key" ) ) );
+   throw new AccessError( ErrorParam( e_arracc )
+      .origin( e_orig_runtime )
+      .extra( "missing key" ) );
 }
 
 
@@ -603,8 +607,7 @@ FALCON_FUNC  Iterator_compare( ::Falcon::VMachine *vm )
 
    if( i_other == 0 )
    {
-      vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).extra( "O" ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).extra( "O" ).origin( e_orig_runtime ) );
    }
 
    if( i_other->isObject() )
@@ -679,8 +682,9 @@ FALCON_FUNC  Iterator_clone( ::Falcon::VMachine *vm )
       if ( iclone == 0 )
       {
          // uncloneable iterator
-         vm->raiseError( new CloneError( ErrorParam( e_uncloneable, __LINE__ ).origin( e_orig_runtime ) ) );
-         return;
+         throw new CloneError( ErrorParam( e_uncloneable, __LINE__ )
+            .hard()
+            .origin( e_orig_runtime ) );
       }
    }
    else {
@@ -765,7 +769,9 @@ FALCON_FUNC  Iterator_erase( ::Falcon::VMachine *vm )
       }
    }
 
-   vm->raiseRTError( new AccessError( ErrorParam( e_arracc ).extra( "Iterator.erase" ) ) );
+   throw new AccessError( ErrorParam( e_arracc, __LINE__ )
+         .origin( e_orig_runtime )
+         .extra( "Iterator.erase" ) );
 }
 
 /*#
@@ -811,8 +817,9 @@ FALCON_FUNC  Iterator_find( ::Falcon::VMachine *vm )
 
    if( i_key == 0 )
    {
-      vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).extra( "X" ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+         .origin( e_orig_runtime )
+         .extra( "X" ) );
    }
 
    CoreObject *self = vm->self().asObject();
@@ -832,7 +839,8 @@ FALCON_FUNC  Iterator_find( ::Falcon::VMachine *vm )
       }
    }
 
-   vm->raiseRTError( new AccessError( ErrorParam( e_arracc ).extra( "Iterator.find" ) ) );
+   throw new AccessError( ErrorParam( e_arracc, __LINE__ )
+      .origin( e_orig_runtime ).extra( "Iterator.find" ) );
 }
 
 /*#
@@ -859,8 +867,9 @@ FALCON_FUNC  Iterator_insert( ::Falcon::VMachine *vm )
 
    if( i_key == 0 )
    {
-      vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).extra( "X" ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+         .origin( e_orig_runtime )
+         .extra( "X" ) );
    }
 
    CoreObject *self = vm->self().asObject();
@@ -879,8 +888,8 @@ FALCON_FUNC  Iterator_insert( ::Falcon::VMachine *vm )
 
          if ( ! i_key->isString() )
          {
-            vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).extra( "S" ) ) );
-            return;
+            throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+               .origin( e_orig_runtime ).extra( "S" ) );
          }
 
          if ( p < str->length() )
@@ -910,8 +919,8 @@ FALCON_FUNC  Iterator_insert( ::Falcon::VMachine *vm )
       {
          if ( i_value == 0 )
          {
-            vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).extra( "X,X" ) ) );
-            return;
+            throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                  .origin( e_orig_runtime ).extra( "X,X" ) );
          }
 
          DictIterator *iter = dyncast<DictIterator *>( self->getFalconData() );
@@ -935,7 +944,8 @@ FALCON_FUNC  Iterator_insert( ::Falcon::VMachine *vm )
       }
    }
 
-   vm->raiseRTError( new AccessError( ErrorParam( e_arracc ).extra( "Iterator.insert" ) ) );
+   throw new AccessError( ErrorParam( e_arracc, __LINE__ )
+         .origin( e_orig_runtime ).extra( "Iterator.insert" ) );
 }
 
 

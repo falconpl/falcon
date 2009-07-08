@@ -66,18 +66,18 @@ FALCON_FUNC  Function_caller ( ::Falcon::VMachine *vm )
          int64 i64level =  i_level->forceInteger();
          if( i64level < 0 )
          {
-            vm->raiseRTError( new ParamError( ErrorParam( e_param_range, __LINE__ ).
-               extra( "N" ) ) );
-            return;
+            throw new ParamError( ErrorParam( e_param_range, __LINE__ )
+               .origin(e_orig_runtime)
+               .extra( "N" ) );
          }
 
          level = (uint32)i64level+1;
       }
       else
       {
-         vm->raiseRTError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-            extra( "N" ) ) );
-         return;
+         throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+            .origin(e_orig_runtime)
+            .extra( "N" ) );
       }
    }
    else {

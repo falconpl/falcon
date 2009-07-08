@@ -233,45 +233,6 @@ class FALCON_DYN_CLASS VMachine: public BaseAlloc
    friend class MemPool;
 
 public:
-   /** VM events.
-      This enumeration contains the list of events that the VM may receive.
-
-      They are divided in three categories: normal events, suspension events
-      and stopping events.
-
-      Stopping events requires the VM to stop or quit immediately, and they cause
-      destruction of the stack. Some of them (i.e. eventRisen that signal an error
-      risal) can be intercepted and blocked; in that case, the stack below the
-      intercept point is still valid. Stopping events are namely eventOpLimit,
-      eventQuit and eventRaise.
-      \note The stack may not actually be destroyed, i.e. because it is useless
-      to properly unroll a stack that is not going to be used anymore. However,
-      it must be considered unuseable after the VM has returned having such an
-      event set.
-
-      Suspension events are those that require a temporary suspension of the VM,
-      and they are meant to leave the VM in a coherent state for immediate resumal.
-      eventSleep, eventSuspend and eventSingleStep are suspension events.
-
-      Other events are labeled "normal", and they just require the VM to do something
-      in its current working frame without changing state. They are eventYield, eventWait
-      and event Return.
-   */
-
-   typedef enum {
-      eventNone,
-      eventQuit,
-      eventRisen,
-      eventReturn,
-      eventYield,
-      eventWait,
-      eventSuspend,
-      eventSingleStep,
-      eventOpLimit,
-      eventSleep,
-      eventInterrupt,
-      eventRQuit
-   } tEvent;
 
    /** This valuess indicates that the VM is in external execution mode.
       With this value in m_pc, the VM will execute the symbol found
@@ -369,24 +330,8 @@ protected:
    /** Execute at link time? */
    bool m_launchAtLink;
 
-
    /** Opcode handler function calls. */
    tOpcodeHandler *m_opHandlers;
-
-   /** Events that are required */
-   tEvent m_event;
-
-   /** Switch to suspend terminated modules.
-      With this switch on, it is possible to not discard global variables when the execution of
-      a module terminates. In this case, the global variables are stored in the globals ID vector,
-      and can be reused later on without the need to be re-created.
-   */
-   bool m_onDoneSuspend;
-
-   /** Switch to suspend return instead waiting.
-      \see returnOnSleep()
-   */
-   bool m_sleepAsRequests;
 
    /** Map of global symbols (and the item they are connected to).
       Each item of the map contains a Symbol * and an ID that allows to
@@ -397,14 +342,9 @@ protected:
       Each item of the map contains a Symbol * and an ID that allows to
    */
    SymModuleMap m_wellKnownSyms;
-
-   numeric m_yieldTime;
-
-   void yield( numeric seconds );
+   
    void putAtSleep( VMContext *ctx, numeric secs );
    void reschedule( VMContext *ctx, numeric secs );
-   void rotateContext();
-   void terminateCurrentContext();
 
    /** Service recursive function called by LinkClass to create a class. */
    bool linkSubClass( LiveModule *mod , const Symbol *clssym, Map &props, ObjectFactory *factory );
@@ -540,6 +480,40 @@ protected:
    /** Gets the nth parameter of an opcode. */
    Item *getOpcodeParam( register uint32 bc_pos );
 
+   
+   /** Perform an item raise.
+   
+      This implements the "raise" keyword or "RIS" opcode, that is,
+      takes an item and sends it to the relevant catch in the call
+      hierarcy.
+      
+      If the item can't be caught by the current context, then it is
+      eventually encapsulated in an error and thrown to the applicaiton
+      with a C++ throw new Error*. If the item contains an instance of
+      a Falcon Error class, the inner core Error* is taken and that is
+      raised instead.
+      
+      After this call, if the item or error could be caught by the script,
+      the context is prepared to run the error handler at the very next
+      VM loop.
+   
+      @param value The item to be raised, possibly but not necessarily
+      derived from a Falcon level Error class.
+   */
+   void handleRaisedItem( Item& value );
+
+   /** Decides what to do with an error incoming in the main loop.
+   
+      Usually, this get either rethrown to the application or 
+      handled as an item down to the script.
+      
+      Stack is eventually unrolled till the item handler is found.
+   */
+   void handleRaisedError( Error* err );
+   
+   /** Performs periodic checks on the virtual machine. */
+   void periodicChecks();
+
    /** Creates a new stack frame.
       \param paramCount number of parameters in the stack
    */
@@ -565,7 +539,7 @@ protected:
       This searches for the slot requierd by the message;
       if it is found, the message is broadcast to the slot in a newly created coroutine,
       otherwise the onMessageComplete is immedately called.
-
+   void terminateCurrentContext();
       The message will be immediately destroyed if it can't be broadcast.
 
       \param msg The message to be processed.
@@ -578,6 +552,8 @@ protected:
    bool linkUndefinedSymbol( const Symbol *sym, LiveModule *lmod );
    bool completeModLink( LiveModule *lmod );
    LiveModule *prelink( Module *mod, bool bIsMain, bool bPrivate );
+   
+   void raiseHardError( int code, const String &expl, int32 line );
    
    /** Destroys the virtual machine.
       Protected as it can't be called directly.
@@ -634,7 +610,7 @@ public:
         process stdout.
       - m_stdErr: standard error. The default is to use an instance returned by
         stdErrorStream(), which interfaces a localized text version of
-        process stderr.
+        process stderr.   void terminateCurrentContext();
 
       The subclass should set up its own items, if the default ones are not
       suitable, and then call the base class init(). The base init will
@@ -713,7 +689,7 @@ public:
       the global symbol map.
 
       The method may raise any error that linkSymbolComplete may raise. The same
-      cares used for LinkSymbolComplete should be used.
+      cares used for LinkSymbolComplete   void terminateCurrentContext(); should be used.
 
       The method is virtual, so subclasses are able to create symbols dynamically
       by providing them directly. However, subclasses creating directly symbols
@@ -723,7 +699,7 @@ public:
       It is advisable to call the base class version of the method on subclass
       default.
 
-      \param name The symbol to be searched for.
+      \param name The symbol to be searched for. 
       \param symdata Coordinates of the linked symbol, on success.
       \return true on success, false if the symbol is not found or if it was found
          but couldn't be linked.
@@ -935,14 +911,7 @@ public:
       \param paramCount Number of parameters that have been pushed in the stack as parameters.
       \return true if execution is successful, false otherwise.
    */
-   bool launch( const String &startSym, uint32 paramCount = 0 )
-   {
-      if ( prepare( startSym, paramCount ) ) {
-         run();
-         return true;
-      }
-      return false;
-   }
+   bool launch( const String &startSym, uint32 paramCount = 0 );
 
 
    /** Virtual machine main loop.
@@ -967,72 +936,6 @@ public:
       is not provided.
    */
    void run();
-
-
-   /** Raises a prebuilt error.
-      This method raises an error as-is, without creating a traceback nor setting a
-      context for it.
-      \param err the pre-built error to be raised.
-   */
-   void raiseError( Error *err );
-
-   /** Raises an error generated at runtime.
-      This method raises an error and fill its running context: execution line, PC, symbol
-      and module, other than the traceback.
-
-      \param err the pre-built error to be raised.
-   */
-   void raiseRTError( Error *err );
-
-   /** Raises an error coming from a module.
-
-      This version of the method raises an error that has been created with its own
-      execution context (module, symbol, line and PC). However, the traceback gets
-      filled by the VM.
-
-      Usually, extension modules will want to use this method as they may be interested
-      to place their own module ID and C source line in the error context.
-
-      \param err the pre-built error to be raised.
-   */
-   void raiseModError( Error *err );
-
-   /** Raises a VM specific error.
-
-      If a context is actually active, (i.e. if we are running a symbol),
-      the context and the traceback are set accordingly; The class of the
-      error is set to CodeError, and the origin is set to VM.
-
-      This function is used by opcodes and other VM related stuff, and should
-      not be used otherwise.
-
-      \note As this function is meant to raise VM errors, it raises HARD errors, that is
-      errors that can't be stopped by scripts.
-
-      \param code the error code to be risen.
-      \param line the script line where the error happened. If zero, it will be
-         determined by the context, if we're running one.
-
-   */
-   void raiseError( int code, int32 line = 0 ) { raiseError( code, "", line ); }
-
-   /** Raises a VM specific error.
-      If a context is actually active, (i.e. if we are running a symbol),
-      the context and the traceback are set accordingly; The class of the
-      error is set to CodeError, and the origin is set to VM.
-
-      This function is used by opcodes and other VM related stuff, and should
-      not be used otherwise.
-
-      \note As this function is meant to raise VM errors, it raises HARD errors, that is
-      errors that can't be stopped by scripts.
-
-      \param code the error code to be risen.
-      \param line the script line where the error happened. If zero, it will be
-         determined by the context, if we're running one.
-      \param expl an eventual explanation of the error conditions.
-   */
-   void raiseError( int code, const String &expl, int32 line = 0 );
 
 
    /** Fills an error traceback with the current VM traceback. */
@@ -1233,21 +1136,6 @@ public:
    */
    Item &latcher() { return m_currentContext->latcher(); }
 
-   void requestQuit() { m_event = eventRQuit; }
-   void requestSuspend() { m_event = eventSuspend; }
-   tEvent lastEvent() const { return m_event; }
-
-   void resume()
-   {
-      retnil();
-      run();
-   }
-
-   void resume( const Item &returned )
-   {
-      retval( returned );
-      run();
-   }
 
    void retval( bool val ) {
        m_currentContext->regA().setBoolean( val );
@@ -1310,7 +1198,17 @@ public:
    uint32 programCounter() const { return m_currentContext->pc(); }
 
    const SymModule *findGlobalSymbol( const String &str ) const;
+   
+   /** Make this context to sleep and elect a new one.
+   
+      If no other context can be elected, the VM may issue an
+      onIdleTime() and eventually sleep a bit.
+   */
+   void yield( numeric seconds );
 
+   void rotateContext();
+   void terminateCurrentContext();
+      
    /** Returns a well known item.
       A well known item is an item that does not phiscally resides in any module, and is
       at complete disposal of VM.
@@ -1584,16 +1482,13 @@ public:
 
    /** True if the VM is allowed to execute a context switch. */
    bool allowYield() { return m_allowYield; }
+   
    /** Change turnover mode. */
    void allowYield( bool mode ) { m_allowYield = mode; }
-   void yieldRequest( numeric time ) { m_event = eventYield; m_yieldTime = time; }
 
 
    const ContextList *getCtxList() const { return &m_contexts; }
    const ContextList *getSleepingList() const { return &m_sleepingContexts; }
-
-   void suspendOnDone( bool sus=true ) { m_onDoneSuspend = sus; }
-   bool suspendOnDone() const { return m_onDoneSuspend; }
 
    /** Return from the last called subroutine.
       Usually used internally by the opcodes of the VM.
@@ -1630,9 +1525,9 @@ public:
    /** Publish a service.
       Will raise an error and return false if the service is already published.
       \param svr the service to be published on this VM.
-      \return true if the service can be registered, false (with error risal) if another service had that name.
+      \throws CodeError on dupilcated names.
    */
-   bool publishService( Service *svr );
+   void publishService( Service *svr );
 
 
    /** Queries the VM for a published service.
@@ -1749,93 +1644,6 @@ public:
    */
    void hasProcessStreams( bool b ) { m_bhasStandardStreams = b; }
 
-   /** True if the VM exited with any event set.
-
-      The vast majority of the extension function calling the VM again,
-      as indirect calls, functional evaluation and so on, are not interested
-      int the kind of event that interrupted VM execution. As they just must
-      respect the request and pass it on the higher level (that is, the VM
-      that called them, or the embedding environment), they should just interrupt
-      iterations and return in case an event is raised at return of a
-      callItem.
-      \see tEvent
-      \return true if the VM has any event set.
-   */
-   bool hadEvent() const { return m_event != eventNone; }
-
-   /** True if VM exited with a stopping event.
-      \see tEvent
-      \return true if the VM had one of the stopping events.
-   */
-   bool hadStoppingEvent() const {
-      return
-         m_event == eventQuit ||
-         m_event == eventRQuit ||
-         m_event == eventRisen ||
-         m_event == eventOpLimit; }
-
-   /** True if VM exited with a suspension event.
-      \see tEvent
-      \return true if the VM had one of the suspension events.
-   */
-   bool hadSuspensionEvent() const {
-      return
-         m_event == eventSuspend ||
-         m_event == eventSingleStep ||
-         m_event == eventSleep; }
-
-   /** In case of VM sleeps, return to the main application.
-      If a yield request has been sent to the VM, and that
-      request would generate a vm sleep, the default behavior is that of
-      stopping the process for a given time.
-
-      However, the embedding application may wish to get in control
-      during this waits, either to perform some background tasks
-      or to accept asynchronous messages during the wait.
-
-      To have the VM to return instead of waiting when some sleep request
-      is processed, call this method with true as parameter.
-
-      When the VM returns this way, hadSleepreQuest() returns true,
-      lastEvent() is set to sleepRequest and sleepRequestTime
-      returns the number of seconds after which the VM should
-      be called again.
-
-      \note to re-enable the VM after this wait, just call its run()
-      method. Remember to reset the sleep event with resetEvent() before
-      relaunching the VM.
-
-      \param r true to have the VM exit the run() loop instaed of waiting.
-   */
-   void returnOnSleep( bool r ) { m_sleepAsRequests = r; }
-
-   /** Checks the current status of the returnOnSleep( bool ) setting.
-      \return true if wait requests causes a VM return.
-   */
-   bool returnOnSleep() const { return m_sleepAsRequests; }
-
-   /** True if the VM exited because of sleep request.
-      The embedding application should sleep for the time specified
-      in sleepRequestTime().
-
-      To have the VM to return from the run() loop with this request
-      set, instead of waiting on its own, the embedding application
-      should call returnOnSleep( bool ) method.
-
-      \return true if vm exited because of a sleep request.
-   */
-   bool hadSleepRequest() const { return m_event == eventSleep; }
-
-   /** Time for which the embedding application should sleep.
-      When the VM exits the run() loop with the hadSleepReuqest()
-      method returning true (or lastEvent() == eventSleep ), this
-      number indicates the number of seconds the embedding application
-      should sleep.
-
-      \return number of seconds to wait (with fractional parts).
-   */
-   numeric sleepRequestTime() const { return m_yieldTime; }
-
    /** Return current module string at given ID.
       Retreives the module string which has been given the passed ID,
       and returns it to the caller. If the string is not found, a
@@ -1850,7 +1658,6 @@ public:
    */
    void reset();
 
-   void resetEvent() { m_event = eventNone; }
    void limitLoops( uint32 l ) { m_opLimit = l; }
    uint32 limitLoops() const { return m_opLimit; }
    bool limitLoopsHit() const { return m_opLimit >= m_opCount; }
@@ -2316,6 +2123,27 @@ public:
 
    /** Sets the default application load path (as seen by this vm). */
    void appSearchPath( const String &p ) { m_appSearchPath = p; }
+   
+   /** Call back on sleep requests.
+      This method is called back when the virtual machine detects the
+      need to perform a pause.
+      
+      The default VMachine version calls the system "sleep" routine,
+      but the application may find something more interesting to
+      do.
+      
+      @note The application should eventually call idle() and
+      unidle() respectively at enter and exit of this callback if
+      it doesn't use the VM while in this routine.
+      
+      @param seconds Number of seconds (and fractions) that the VM is
+      idle.
+      
+      @return true if the wait is complete, false if it was interrupted
+      by a VM interruption request.
+    */
+    
+    virtual bool onIdleTime( numeric seconds );
 
 //==========================================================================
 //==========================================================================

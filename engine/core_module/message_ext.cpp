@@ -91,9 +91,9 @@ FALCON_FUNC  broadcast( ::Falcon::VMachine *vm )
    Item *i_msg = vm->param( 0 );
    if ( ! i_msg->isString() )
    {
-      vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).
-         extra( "S,..." ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+         .origin( e_orig_runtime )
+         .extra( "S,..." ) );
    }
 
    CoreSlot* cs = vm->getSlot( *i_msg->asString(), false );
@@ -126,8 +126,9 @@ FALCON_FUNC subscribe( ::Falcon::VMachine *vm )
    if ( i_msg == 0 || ! i_msg->isString()
         || i_handler == 0  || ! ( i_handler->isCallable() || i_handler->isComposed() ) )
    {
-      throw new ParamError( ErrorParam( e_inv_params ).
-         extra( "S,C" ) );
+      throw new ParamError( ErrorParam( e_inv_params )
+         .origin( e_orig_runtime )
+         .extra( "S,C" ) );
    }
 
    String *sub = i_msg->asString();
@@ -165,13 +166,15 @@ FALCON_FUNC unsubscribe( ::Falcon::VMachine *vm )
    CoreSlot* cs = vm->getSlot( *i_msg->asString(), false );
    if ( cs == 0 )
    {
-      throw new AccessError( ErrorParam( e_inv_params ).
-         extra( *i_msg->asString() ) );
+      throw new AccessError( ErrorParam( e_inv_params, __LINE__ )
+         .origin( e_orig_runtime )
+         .extra( *i_msg->asString() ) );
    }
 
    if( ! cs->remove( *i_handler ) )
    {
-      vm->raiseRTError( new CodeError( ErrorParam( e_param_range, __LINE__ ).extra( "unsubscribe" ) ) );
+      throw new CodeError( ErrorParam( e_param_range, __LINE__ )
+         .origin( e_orig_runtime ).extra( "unsubscribe" ) );
    }
 
    if ( cs->empty() && ! cs->hasAssert() )
@@ -195,15 +198,17 @@ FALCON_FUNC getSlot( ::Falcon::VMachine *vm )
 
    if ( i_msg == 0 || ! i_msg->isString() )
    {
-      throw new ParamError( ErrorParam( e_inv_params ).
-         extra( "S" ) );
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+         .origin( e_orig_runtime )
+         .extra( "S" ) );
    }
 
    CoreSlot* cs = vm->getSlot( *i_msg->asString(), (vm->param(1) == 0 || vm->param(1)->isTrue())  );
    if ( cs == 0 )
    {
-      vm->raiseRTError( new MessageError( ErrorParam( e_inv_params ).
-         extra( *i_msg->asString() ) ) );
+      throw new MessageError( ErrorParam( e_inv_params, __LINE__ )
+         .origin( e_orig_runtime )
+         .extra( *i_msg->asString() ) );
    }
    else
    {
@@ -244,8 +249,9 @@ FALCON_FUNC assert( ::Falcon::VMachine *vm )
    Item *i_data = vm->param( 1 );
    if ( i_msg == 0 || ! i_msg->isString() || i_data == 0  )
    {
-      throw new ParamError( ErrorParam( e_inv_params ).
-         extra( "S,X" ) );
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+         .origin( e_orig_runtime )
+         .extra( "S,X" ) );
    }
 
    CoreSlot* cs = vm->getSlot( *i_msg->asString(), true );
@@ -263,8 +269,9 @@ FALCON_FUNC retract( ::Falcon::VMachine *vm )
    Item *i_msg = vm->param( 0 );
    if ( i_msg == 0 || ! i_msg->isString()  )
    {
-      throw new ParamError( ErrorParam( e_inv_params ).
-         extra( "S" ) );
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+         .origin( e_orig_runtime )
+         .extra( "S" ) );
    }
 
    CoreSlot* cs = vm->getSlot( *i_msg->asString(), true );
@@ -295,8 +302,9 @@ FALCON_FUNC getAssert( ::Falcon::VMachine *vm )
    
    if ( i_msg == 0 || ! i_msg->isString()  )
    {
-      throw new ParamError( ErrorParam( e_inv_params ).
-         extra( "S" ) );
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+         .origin( e_orig_runtime )
+         .extra( "S" ) );
    }
 
    CoreSlot* cs = vm->getSlot( *i_msg->asString(), true );
@@ -307,8 +315,9 @@ FALCON_FUNC getAssert( ::Falcon::VMachine *vm )
          vm->regA() = *i_defalut;
       }
       else {
-         vm->raiseRTError( new MessageError( ErrorParam( e_inv_params ).
-            extra( *i_msg->asString() ) ) );
+         throw new MessageError( ErrorParam( e_inv_params, __LINE__ )
+            .origin( e_orig_runtime )
+            .extra( *i_msg->asString() ) );
       }
    }
    else
@@ -324,8 +333,9 @@ FALCON_FUNC getAssert( ::Falcon::VMachine *vm )
             vm->regA() = *i_defalut;
          }
          else {
-            vm->raiseRTError( new MessageError( ErrorParam( e_inv_params ).
-               extra( *i_msg->asString() ) ) );
+            throw new MessageError( ErrorParam( e_inv_params )
+               .origin( e_orig_runtime )
+               .extra( *i_msg->asString() ) );
          }
 
       }
@@ -379,8 +389,9 @@ FALCON_FUNC VMSlot_init( ::Falcon::VMachine *vm )
 
    if ( i_msg == 0 || ! i_msg->isString() )
    {
-      throw new ParamError( ErrorParam( e_inv_params ).
-         extra( "S" ) );
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+         .origin( e_orig_runtime )
+         .extra( "S" ) );
    }
 
    CoreSlot* vms = vm->getSlot( *i_msg->asString(), true );
@@ -430,8 +441,9 @@ FALCON_FUNC VMSlot_subscribe( ::Falcon::VMachine *vm )
    Item *i_prio = vm->param(1);
    if ( callback == 0 || ! ( callback->isCallable() || callback->isComposed() ) )
    {
-      throw new ParamError( ErrorParam( e_inv_params ).
-         extra( "C" ));
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+         .origin( e_orig_runtime )
+         .extra( "C" ));
    }
 
    CoreSlot* cs = (CoreSlot*) vm->self().asObject()->getUserData();
@@ -455,14 +467,17 @@ FALCON_FUNC VMSlot_unsubscribe( ::Falcon::VMachine *vm )
    Item *callback = vm->param(0);
    if ( callback == 0 )
    {
-      throw new ParamError( ErrorParam( e_inv_params ).
-         extra( "S,C" ) );
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+         .origin( e_orig_runtime )
+         .extra( "S,C" ) );
    }
 
    CoreSlot* cs = (CoreSlot*) vm->self().asObject()->getUserData();
    if( ! cs->remove( *callback ) )
    {
-      vm->raiseRTError( new CodeError( ErrorParam( e_param_range, __LINE__ ).extra( "unregister" ) ) );
+      throw new CodeError( ErrorParam( e_param_range, __LINE__ )
+         .origin( e_orig_runtime )
+         .extra( "unregister" ) );
    }
 
    if ( cs->empty() && ! cs->hasAssert() )
@@ -482,8 +497,9 @@ FALCON_FUNC VMSlot_prepend( ::Falcon::VMachine *vm )
    Item *callback = vm->param(0);
    if ( callback == 0 || ! ( callback->isCallable() || callback->isComposed() ) )
    {
-      throw new ParamError( ErrorParam( e_inv_params ).
-         extra( "C" ) );
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+         .origin( e_orig_runtime )
+         .extra( "C" ) );
    }
 
    CoreSlot* cs = (CoreSlot*) vm->self().asObject()->getUserData();
@@ -504,9 +520,9 @@ FALCON_FUNC VMSlot_assert( ::Falcon::VMachine *vm )
    Item *i_data = vm->param( 0 );
    if ( i_data == 0  )
    {
-      throw new ParamError( ErrorParam( e_inv_params ).
-         extra( "X" ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+         .origin( e_orig_runtime )
+         .extra( "X" ) );
    }
 
    CoreSlot* cs = (CoreSlot*) vm->self().asObject()->getUserData();
@@ -547,8 +563,9 @@ FALCON_FUNC VMSlot_getAssert( ::Falcon::VMachine *vm )
          vm->regA() = *vm->param(0);
       }
       else {
-         vm->raiseRTError( new MessageError( ErrorParam( e_inv_params ).
-             extra( "..." ) ) );
+         throw new MessageError( ErrorParam( e_inv_params, __LINE__ )
+            .origin( e_orig_runtime )
+            .extra( "..." ) );
       }
    }
 }

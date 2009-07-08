@@ -83,8 +83,7 @@ FALCON_FUNC  transcodeTo ( ::Falcon::VMachine *vm )
    if ( i_source == 0 || ( ! i_source->isString() && ! i_source->isMemBuf() ) ||
         i_encoding == 0 || ! i_encoding->isString() )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ).extra("S|M,[M]") );
    }
 
    CoreString *res = new CoreString;
@@ -104,8 +103,7 @@ FALCON_FUNC  transcodeTo ( ::Falcon::VMachine *vm )
 
    if ( ! TranscodeString( *source, *(i_encoding->asString()), *res ) )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) );
    }
 
    vm->retval( res );
@@ -131,8 +129,7 @@ FALCON_FUNC  transcodeFrom ( ::Falcon::VMachine *vm )
    if ( i_source == 0 || ( ! i_source->isString() && !i_source->isMemBuf() ) ||
         i_encoding == 0 || ! i_encoding->isString() )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ).extra( "S|M,S" ) );
    }
 
    CoreString *res = new CoreString;
@@ -152,8 +149,7 @@ FALCON_FUNC  transcodeFrom ( ::Falcon::VMachine *vm )
 
    if ( ! TranscodeFromString( *source, *(i_encoding->asString()), *res ) )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) );
    }
 
    vm->retval( res );

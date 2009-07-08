@@ -96,7 +96,7 @@ if res[0] != o or \
    res[5] != o_five
       failure( "Numeric ordering" )
 end
-   
+
 // Now by name
 globalCompare = compareByName
 dict = [ o1 => 1, o => 0, o_five => 5, o_four => 4, o_three => 3, o_two => 2 ]

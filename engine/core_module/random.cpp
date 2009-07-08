@@ -95,7 +95,8 @@ FALCON_FUNC  flc_random ( ::Falcon::VMachine *vm )
                vm->retval( ((int64) rand()) % num );
          }
          else
-            vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
+            throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+               .origin( e_orig_runtime ).extra( "[N],[N]" ) );
       break;
 
       case 2:
@@ -145,7 +146,8 @@ FALCON_FUNC  flc_randomChoice( ::Falcon::VMachine *vm )
    {
       case 0:
       case 1:
-         vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
+         throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+            .origin( e_orig_runtime ).extra( "X,X,..." ) );
       break;
 
       default:
@@ -171,8 +173,9 @@ FALCON_FUNC  flc_randomPick ( ::Falcon::VMachine *vm )
 
    if ( series == 0 || ! series->isArray() || series->asArray()->length() == 0 )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+            .origin( e_orig_runtime )
+            .extra( "A" ) );
    }
 
    CoreArray &source = *series->asArray();
@@ -204,13 +207,10 @@ FALCON_FUNC  flc_randomWalk ( ::Falcon::VMachine *vm )
    Item *series = vm->param(0);
    Item *qty = vm->param(1);
 
-   if ( series == 0 || ! series->isArray() )  {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
-      return;
-   }
-   if ( qty != 0 && ! qty->isOrdinal() )  {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
-      return;
+   if ( series == 0 || ! series->isArray() 
+      || (qty != 0 && ! qty->isOrdinal()) )  
+   {
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ).extra( "A,[N]" ) );
    }
 
    int32 number = qty == 0 ? 1 : (int32)qty->forceInteger();
@@ -257,15 +257,12 @@ FALCON_FUNC  flc_randomGrab ( ::Falcon::VMachine *vm )
    Item *series = vm->param(0);
    Item *qty = vm->param(1);
 
-   if ( series == 0 || ! series->isArray() )  {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
-      return;
+   if ( series == 0 || ! series->isArray() 
+      || (qty != 0 && ! qty->isOrdinal()) )  
+   {
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ).extra( "A,[N]" ) );
    }
-   if ( qty != 0 && ! qty->isOrdinal() )  {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
-      return;
-   }
-
+   
    int32 number = qty == 0 ? 1 : (int32)qty->forceInteger();
    if( number < 1 ) number = series->asArray()->length();
 
@@ -309,20 +306,18 @@ FALCON_FUNC  flc_randomDice( ::Falcon::VMachine *vm )
    Item *i_sides = vm->param(1);
 
    if ( i_dices == 0 || ! i_dices->isOrdinal() || ( i_sides != 0 && ! i_sides->isOrdinal()) )  {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
          origin( e_orig_runtime ).
-         extra( "N,N") ) );
-      return;
+         extra( "N,N") );
    }
 
    int64 dices = i_dices->forceInteger();
    int64 sides = i_sides == 0 ? 6 : i_sides->forceInteger();
    if( dices < 1 || sides < 2 )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_param_range, __LINE__ ).
+      throw new ParamError( ErrorParam( e_param_range, __LINE__ ).
          origin( e_orig_runtime ).
-         extra( ">0,>1") ) );
-      return;
+         extra( ">0,>1" ) );
    }
 
    int64 result = 0;
@@ -364,8 +359,7 @@ FALCON_FUNC  flc_randomSeed ( ::Falcon::VMachine *vm )
    else {
       if ( ! num->isOrdinal() )
       {
-         vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
-         return;
+         throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ).extra("N") );
       }
 
       value = (unsigned int) num->forceInteger();

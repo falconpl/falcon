@@ -77,7 +77,6 @@ public:
       */
       e_call,
       
-      /** The statement/expression caused the vm to raise a termination request. */
       e_terminated
    } t_ret_type;
 

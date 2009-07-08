@@ -52,13 +52,12 @@ FALCON_FUNC  paramCount ( ::Falcon::VMachine *vm )
 {
    // temporarily save the call environment.
    if ( vm->stackBase() == 0 ) {
-      vm->raiseRTError( new GenericError( ErrorParam( e_stackuf ) ) );
+      throw new GenericError( ErrorParam( e_stackuf, __LINE__ ).origin( e_orig_runtime ) );
    }
    else {
       StackFrame *thisFrame = (StackFrame *) &vm->stackItem( vm->stackBase() - VM_FRAME_SPACE );
       if( thisFrame->m_stack_base == 0 ) {
-         vm->raiseRTError( new GenericError( ErrorParam( e_param_range ) ) );
-         return;
+         throw new GenericError( ErrorParam( e_param_range, __LINE__ ).origin( e_orig_runtime ) );
       }
 
       StackFrame *prevFrame = (StackFrame *) &vm->stackItem( thisFrame->m_stack_base - VM_FRAME_SPACE );
@@ -89,13 +88,12 @@ FALCON_FUNC  _parameter ( ::Falcon::VMachine *vm )
 {
    Item *number = vm->param(0);
    if ( number == 0 || ! number->isOrdinal() ) {
-      vm->raiseRTError( new ParamError( ErrorParam( e_param_range ).extra( "(N)" ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_param_range ).origin( e_orig_runtime ).extra( "(N)" ) );
    }
 
    if ( vm->stackBase() == 0 )
    {
-      vm->raiseRTError( new GenericError( ErrorParam( e_stackuf ) ) );
+      throw new GenericError( ErrorParam( e_stackuf, __LINE__ ).origin( e_orig_runtime ) );
    }
    else {
       uint32 val = (uint32) number->forceInteger();
@@ -103,7 +101,7 @@ FALCON_FUNC  _parameter ( ::Falcon::VMachine *vm )
       StackFrame *thisFrame = (StackFrame *) vm->stack().at( vm->stackBase() - VM_FRAME_SPACE );
       uint32 oldbase = thisFrame->m_stack_base;
       if( oldbase == 0 ) {
-         vm->raiseRTError( new GenericError( ErrorParam( e_param_range ) ) );
+         throw new GenericError( ErrorParam( e_param_range, __LINE__ ).origin( e_orig_runtime ) );
          return;
       }
 
@@ -143,13 +141,12 @@ FALCON_FUNC  paramIsRef ( ::Falcon::VMachine *vm )
 {
    Item *number = vm->param(0);
    if ( number == 0 || ! number->isOrdinal() ) {
-      vm->raiseRTError( new ParamError( ErrorParam( e_param_range ).extra( "N" ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_param_range, __LINE__ ).origin( e_orig_runtime ).extra( "N" ) );
    }
 
    if ( vm->stackBase() == 0 )
    {
-      vm->raiseRTError( new GenericError( ErrorParam( e_stackuf ) ) );
+      throw new GenericError( ErrorParam( e_stackuf, __LINE__ ).origin( e_orig_runtime ) );
    }
    else
    {
@@ -158,8 +155,7 @@ FALCON_FUNC  paramIsRef ( ::Falcon::VMachine *vm )
       StackFrame *thisFrame = (StackFrame *) &vm->stackItem( vm->stackBase() - VM_FRAME_SPACE );
       uint32 oldbase = thisFrame->m_stack_base;
       if( oldbase == 0 ) {
-         vm->raiseRTError( new GenericError( ErrorParam( e_stackuf ) ) );
-         return;
+         throw new GenericError( ErrorParam( e_stackuf, __LINE__ ).origin( e_orig_runtime ) );
       }
 
       StackFrame *prevFrame = (StackFrame *) &vm->stackItem( oldbase - VM_FRAME_SPACE );
@@ -196,13 +192,12 @@ FALCON_FUNC  paramSet ( ::Falcon::VMachine *vm )
    Item *number = vm->param(0);
    Item *value = vm->param(1);
    if ( number == 0 || ! number->isOrdinal() || value == 0) {
-      vm->raiseRTError( new ParamError( ErrorParam( e_param_range ).extra( "N,X" ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_param_range ).origin( e_orig_runtime ).extra( "N,X" ) );
    }
 
    if ( vm->stackBase() == 0 )
    {
-      vm->raiseRTError( new GenericError( ErrorParam( e_stackuf ) ) );
+      throw new GenericError( ErrorParam( e_stackuf, __LINE__ ).origin( e_orig_runtime ) );
    }
    else
    {
@@ -211,8 +206,7 @@ FALCON_FUNC  paramSet ( ::Falcon::VMachine *vm )
       StackFrame *thisFrame = (StackFrame *) &vm->stackItem( vm->stackBase() - VM_FRAME_SPACE );
       uint32 oldbase = thisFrame->m_stack_base;
       if( oldbase == 0 ) {
-         vm->raiseRTError( new GenericError( ErrorParam( e_param_range ) ) );
-         return;
+         throw new GenericError( ErrorParam( e_param_range, __LINE__ ).origin( e_orig_runtime ) );
       }
 
       StackFrame *prevFrame = (StackFrame *) &vm->stackItem( oldbase - VM_FRAME_SPACE );

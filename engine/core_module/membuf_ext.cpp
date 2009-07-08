@@ -27,16 +27,16 @@ FALCON_FUNC Make_MemBuf( ::Falcon::VMachine *vm )
        ( i_wordSize != 0 && ! i_wordSize->isOrdinal() )
       )
    {
-      vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).extra( "N,[N]" ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+            .origin( e_orig_runtime ).extra( "N,[N]" ) );
    }
 
    int64 wordSize = i_wordSize == 0 ? 1: i_wordSize->forceInteger();
    int64 size = i_size->forceInteger();
    if ( wordSize < 1 || wordSize > 4 || size <= 0 )
    {
-      vm->raiseRTError( new ParamError( ErrorParam( e_param_range ) ) );
-      return;
+      throw  new ParamError( ErrorParam( e_param_range, __LINE__ )
+         .origin( e_orig_runtime ) );
    }
 
    MemBuf *mb = 0;
@@ -154,7 +154,7 @@ FALCON_FUNC MemoryBuffer_front( VMachine *vm )
    MemBuf* self = vm->self().asMemBuf();
    if ( self->length() == 0 )
    {
-       vm->raiseRTError( new AccessError( ErrorParam( e_arracc ) ) );
+       throw new AccessError( ErrorParam( e_arracc, __LINE__ ).origin( e_orig_runtime ) );
    }
    else {
        vm->retval( (int64) self->get(0) );
@@ -172,7 +172,7 @@ FALCON_FUNC MemoryBuffer_back( VMachine *vm )
    MemBuf* self = vm->self().asMemBuf();
    if ( self->length() == 0 )
    {
-       vm->raiseRTError( new AccessError( ErrorParam( e_arracc ) ) );
+       throw new AccessError( ErrorParam( e_arracc, __LINE__ ).origin( e_orig_runtime ) );
    }
    else {
        vm->retval( (int64) self->get(self->length() - 1) );
@@ -193,7 +193,7 @@ FALCON_FUNC MemoryBuffer_put( ::Falcon::VMachine *vm )
    Item *i_data = vm->param(0);
    if ( i_data == 0 || ! i_data->isOrdinal() )
    {
-      vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).extra( "N" ) ) );
+      throw  new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ).extra( "N" ) );
       return;
    }
 
@@ -343,7 +343,7 @@ FALCON_FUNC MemoryBuffer_position( ::Falcon::VMachine *vm )
    }
    else if ( ! i_pos->isOrdinal() )
    {
-      vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).extra( "N" ) ) );
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).extra( "N" ) );
    }
    else
    {
@@ -389,7 +389,7 @@ FALCON_FUNC MemoryBuffer_limit( ::Falcon::VMachine *vm )
    }
    else if ( ! i_limit->isOrdinal() )
    {
-      vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).extra( "N" ) ) );
+      throw new ParamError( ErrorParam( e_inv_params ).origin( e_orig_runtime ).extra( "N" ) );
    }
    else
    {
@@ -425,7 +425,7 @@ FALCON_FUNC MemoryBuffer_fill( ::Falcon::VMachine *vm )
    {
       throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
          .origin( e_orig_runtime )
-         .extra(  "X" ) );
+         .extra( "X" ) );
    }
 
    uint32 value = (uint32) i_item->forceInteger();

@@ -77,8 +77,7 @@ FALCON_FUNC  StringStream_init ( ::Falcon::VMachine *vm )
       }
       else
       {
-         vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
-         return;
+         throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ).extra( "S|N" ) );
       }
    }
    else

@@ -114,12 +114,12 @@ void IntMode::run()
                   line.setCharAt( line.length()-1, ' ' );
                codeSlice += line + "\n";
                break;
-               
+           
             case InteractiveCompiler::e_terminated:
                stdOut->writeString( "falcon: Terminated\n\n");
                stdOut->flush();
                return;
-
+               
             case InteractiveCompiler::e_call:
                if ( comp.vm()->regA().isNil() )
                {

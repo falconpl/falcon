@@ -115,8 +115,9 @@ FALCON_FUNC  core_deoob( ::Falcon::VMachine *vm )
    Item *obbed = vm->param(0);
    if ( ! obbed )
    {
-      vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).
-         extra( "X" ) ) );
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+         .origin( e_orig_runtime )
+         .extra( "X" ) );
       return;
    }
 
@@ -139,8 +140,9 @@ FALCON_FUNC  core_isoob( ::Falcon::VMachine *vm )
    Item *obbed = vm->param(0);
    if ( ! obbed )
    {
-      vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).
-         extra( "X" ) ) );
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+         .origin( e_orig_runtime )
+         .extra( "X" ) );
       return;
    }
 

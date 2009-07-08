@@ -67,10 +67,9 @@ FALCON_FUNC  input ( ::Falcon::VMachine *vm )
    {
       if ( ::read( STDIN_FILENO, mem + size, 1 ) != 1 )
       {
-         vm->raiseModError( new IoError( ErrorParam( e_io_error )
+            throw new IoError( ErrorParam( e_io_error )
             .origin( e_orig_runtime )
-            .sysError( errno ) ) );
-         return;
+            .sysError( errno ) );
       }
 
       if( mem[size] == '\n' ) {

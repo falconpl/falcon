@@ -753,10 +753,9 @@ FALCON_FUNC  Stream_writeText ( ::Falcon::VMachine *vm )
       (begin != 0 && begin->type() != FLC_ITEM_INT ) ||
       (end != 0 && end->type() != FLC_ITEM_INT ) )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
             .origin( e_orig_runtime )
-            .extra( "S,[N],[N]" ) ) );
-      return;
+            .extra( "S,[N],[N]" ) );
    }
 
    iBegin = begin == 0 ? 0 : (uint32) begin->asInteger();
@@ -796,8 +795,7 @@ FALCON_FUNC  Stream_seek ( ::Falcon::VMachine *vm )
    Item *position = vm->param(0);
    if ( position== 0 || ! position->isOrdinal() )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) );
    }
 
    vm->idle();
@@ -835,8 +833,7 @@ FALCON_FUNC  Stream_seekCur ( ::Falcon::VMachine *vm )
    Item *position = vm->param(0);
    if ( position== 0 || ! position->isOrdinal() )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) );
    }
 
    vm->idle();
@@ -877,8 +874,7 @@ FALCON_FUNC  Stream_seekEnd ( ::Falcon::VMachine *vm )
    Item *position = vm->param(0);
    if ( position== 0 || ! position->isOrdinal() )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) );
    }
 
    vm->idle();
@@ -1314,8 +1310,7 @@ FALCON_FUNC  OutputStream_creator ( ::Falcon::VMachine *vm )
 {
    Item *fileName = vm->param(0);
    if ( fileName == 0 || ! fileName->isString() ) {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) );
    }
 
    URI furi( *fileName->asString() );
@@ -1345,8 +1340,7 @@ FALCON_FUNC  OutputStream_creator ( ::Falcon::VMachine *vm )
    else
    {
       if ( ! osMode->isOrdinal() ) {
-         vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
-         return;
+         throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) );
       }
 
       mode = (int) osMode->forceInteger();
@@ -1354,8 +1348,7 @@ FALCON_FUNC  OutputStream_creator ( ::Falcon::VMachine *vm )
 
    Item *fileShare = vm->param(2);
    if ( fileShare != 0 && ! fileShare->isInteger() ) {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) );
    }
 
    ::Falcon::BaseFileStream::t_shareMode shMode = fileShare != 0 ?
@@ -1416,8 +1409,7 @@ FALCON_FUNC  IOStream_creator ( ::Falcon::VMachine *vm )
 {
    Item *fileName = vm->param(0);
    if ( fileName == 0 || ! fileName->isString() ) {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) );
    }
 
    URI furi( *fileName->asString() );
@@ -1426,7 +1418,7 @@ FALCON_FUNC  IOStream_creator ( ::Falcon::VMachine *vm )
    {
       throw new ParamError( ErrorParam( e_malformed_uri, __LINE__ )
             .origin( e_orig_runtime )
-            .extra( *fileName->asString() )  );
+            .extra( *fileName->asString() ) );
    }
 
    // find the appropriage provider.
@@ -1435,7 +1427,7 @@ FALCON_FUNC  IOStream_creator ( ::Falcon::VMachine *vm )
    {
       throw new ParamError( ErrorParam( e_unknown_vfs, __LINE__ )
             .origin( e_orig_runtime )
-            .extra( *fileName->asString() )  );
+            .extra( *fileName->asString() ) );
    }
 
    Item *osMode = vm->param(1);
@@ -1447,8 +1439,7 @@ FALCON_FUNC  IOStream_creator ( ::Falcon::VMachine *vm )
    else
    {
       if ( ! osMode->isOrdinal() ) {
-         vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
-         return;
+         throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) );
       }
 
       mode = (int) osMode->forceInteger();
@@ -1456,8 +1447,7 @@ FALCON_FUNC  IOStream_creator ( ::Falcon::VMachine *vm )
 
    Item *fileShare = vm->param(2);
    if ( fileShare != 0 && ! fileShare->isInteger() ) {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) );
    }
 
    ::Falcon::BaseFileStream::t_shareMode shMode = fileShare != 0 ?
@@ -1498,8 +1488,7 @@ static CoreObject *internal_make_stream( VMachine *vm, FalconData *clone, int us
    // to share a virtual standard stream with us.
    if ( clone == 0 )
    {
-       vm->raiseModError( new CloneError( ErrorParam( e_uncloneable, __LINE__ ).origin( e_orig_runtime )  ) );
-       return 0;
+       throw new CloneError( ErrorParam( e_uncloneable, __LINE__ ).origin( e_orig_runtime ) );
    }
 
    Item *stream_class;
@@ -1553,8 +1542,7 @@ FALCON_FUNC  _stdIn ( ::Falcon::VMachine *vm )
       Item *p1 = vm->param(0);
       if( ! p1->isObject() || ! p1->asObject()->derivedFrom("Stream") )
       {
-         vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
-         return;
+         throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) );
       }
 
       //keep the stream
@@ -1564,8 +1552,7 @@ FALCON_FUNC  _stdIn ( ::Falcon::VMachine *vm )
       Stream *clone = (Stream *) orig->clone();
       if ( clone == 0 )
       {
-         vm->raiseModError( new CloneError( ErrorParam( e_uncloneable, __LINE__ ).origin( e_orig_runtime )  ) );
-         return;
+         throw new CloneError( ErrorParam( e_uncloneable, __LINE__ ).origin( e_orig_runtime ) );
       }
       // but change it
       vm->stdIn( clone );
@@ -1603,8 +1590,7 @@ FALCON_FUNC  _stdOut ( ::Falcon::VMachine *vm )
       Item *p1 = vm->param(0);
       if( ! p1->isObject() || ! p1->asObject()->derivedFrom("Stream") )
       {
-         vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
-         return;
+         throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) );
       }
 
       //keep the stream
@@ -1613,8 +1599,7 @@ FALCON_FUNC  _stdOut ( ::Falcon::VMachine *vm )
       Stream *clone = (Stream *) orig->clone();
       if ( clone == 0 )
       {
-         vm->raiseModError( new CloneError( ErrorParam( e_uncloneable, __LINE__ ).origin( e_orig_runtime )  ) );
-         return;
+         throw new CloneError( ErrorParam( e_uncloneable, __LINE__ ).origin( e_orig_runtime ) );
       }
       // but change it
       vm->stdOut( clone );
@@ -1651,8 +1636,7 @@ FALCON_FUNC  _stdErr ( ::Falcon::VMachine *vm )
       Item *p1 = vm->param(0);
       if( ! p1->isObject() || ! p1->asObject()->derivedFrom("Stream") )
       {
-         vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
-         return;
+         throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) );
       }
 
       //keep the stream
@@ -1661,8 +1645,7 @@ FALCON_FUNC  _stdErr ( ::Falcon::VMachine *vm )
       Stream *clone = (Stream *) orig->clone();
       if ( clone == 0 )
       {
-         vm->raiseModError( new CloneError( ErrorParam( e_uncloneable, __LINE__ ).origin( e_orig_runtime )  ) );
-         return;
+         throw new CloneError( ErrorParam( e_uncloneable, __LINE__ ).origin( e_orig_runtime ) );
       }
       // but change it
       vm->stdErr( clone );
@@ -1770,8 +1753,7 @@ FALCON_FUNC  systemErrorDescription ( ::Falcon::VMachine *vm )
    Item *number = vm->param(0);
    if ( ! number->isOrdinal() )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) );
    }
 
    CoreString *str = new CoreString;
@@ -1962,8 +1944,7 @@ FALCON_FUNC  Stream_setEncoding ( ::Falcon::VMachine *vm )
 
    if ( i_encoding == 0 || ! i_encoding->isString() )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) );
    }
 
    int mode = ( i_eolMode == 0 ? SYSTEM_DETECT : (int) i_eolMode->forceInteger());
@@ -1988,8 +1969,7 @@ FALCON_FUNC  Stream_setEncoding ( ::Falcon::VMachine *vm )
 
    if ( trans == 0 )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_param_range, __LINE__ ).origin( e_orig_runtime ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_param_range, __LINE__ ).origin( e_orig_runtime ) );
    }
 
    Stream *final;

@@ -68,9 +68,10 @@ FALCON_FUNC fal_include( Falcon::VMachine *vm )
       || (i_path != 0 && !(i_path->isString() || i_path->isNil()) )
       )
    {
-      vm->raiseModError( new Falcon::ParamError(
-         Falcon::ErrorParam( Falcon::e_inv_params, __LINE__ ).
-         extra( "S,[S],[S],[D]" ) ) );
+      throw new Falcon::ParamError(
+         Falcon::ErrorParam( Falcon::e_inv_params, __LINE__ )
+         .origin(e_orig_runtime)
+         .extra( "S,[S],[S],[D]" ) );
    }
 
    // create the loader/runtime pair.

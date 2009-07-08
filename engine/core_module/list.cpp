@@ -91,9 +91,9 @@ FALCON_FUNC  List_push ( ::Falcon::VMachine *vm )
 
    if( data == 0 )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
          origin( e_orig_runtime ).
-         extra("X") ) );
+         extra("X") );
       return;
    }
 
@@ -116,8 +116,8 @@ FALCON_FUNC  List_pop ( ::Falcon::VMachine *vm )
 
    if( list->size() == 0 )  //empty() is virtual
    {
-      vm->raiseModError( new AccessError( ErrorParam( e_arracc, __LINE__ ).
-         origin( e_orig_runtime ) ) );
+      throw new AccessError( ErrorParam( e_arracc, __LINE__ ).
+         origin( e_orig_runtime ) );
       return;
    }
 
@@ -136,9 +136,9 @@ FALCON_FUNC  List_pushFront ( ::Falcon::VMachine *vm )
 
    if( data == 0 )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
          origin( e_orig_runtime ).
-         extra("X") ) );
+         extra("X") );
       return;
    }
 
@@ -161,8 +161,8 @@ FALCON_FUNC  List_popFront ( ::Falcon::VMachine *vm )
 
    if( list->size() == 0 )  //empty() is virtual
    {
-      vm->raiseModError( new AccessError( ErrorParam( e_arracc, __LINE__ ).
-         origin( e_orig_runtime ) ) );
+      throw new AccessError( ErrorParam( e_arracc, __LINE__ ).
+         origin( e_orig_runtime ) );
       return;
    }
 
@@ -185,8 +185,8 @@ FALCON_FUNC  List_front ( ::Falcon::VMachine *vm )
 
    if( list->size() == 0 ) // empty() is virtual
    {
-      vm->raiseModError( new AccessError( ErrorParam( e_arracc, __LINE__ ).
-         origin( e_orig_runtime ) ) );
+      throw new AccessError( ErrorParam( e_arracc, __LINE__ ).
+         origin( e_orig_runtime ) );
       return;
    }
 
@@ -208,8 +208,8 @@ FALCON_FUNC  List_back ( ::Falcon::VMachine *vm )
 
    if( list->size() == 0 )  // empty() is virtual
    {
-      vm->raiseModError( new AccessError( ErrorParam( e_arracc, __LINE__ ).
-         origin( e_orig_runtime ) ) );
+      throw new AccessError( ErrorParam( e_arracc, __LINE__ ).
+         origin( e_orig_runtime ) );
       return;
    }
 
@@ -315,8 +315,8 @@ FALCON_FUNC  List_erase ( ::Falcon::VMachine *vm )
 
    if ( i_iter == 0 || ! i_iter->isOfClass( "Iterator" ) )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         origin( e_orig_runtime ).extra( vm->moduleString( rtl_invalid_iter ) ) ) );
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         origin( e_orig_runtime ).extra( vm->moduleString( rtl_invalid_iter ) ) );
       return;
    }
 
@@ -325,8 +325,8 @@ FALCON_FUNC  List_erase ( ::Falcon::VMachine *vm )
 
    if ( ! list->erase( iter ) )
    {
-      vm->raiseModError( new AccessError( ErrorParam( e_inv_params, __LINE__ ).
-         origin( e_orig_runtime ).extra( vm->moduleString( rtl_invalid_iter ) ) ) );
+      throw new AccessError( ErrorParam( e_inv_params, __LINE__ ).
+         origin( e_orig_runtime ).extra( vm->moduleString( rtl_invalid_iter ) ) );
    }
 }
 
@@ -358,15 +358,15 @@ FALCON_FUNC  List_insert ( ::Falcon::VMachine *vm )
 
    if ( i_iter == 0 || i_item == 0 )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         origin( e_orig_runtime ).extra( "O,X" ) ) );
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         origin( e_orig_runtime ).extra( "O,X" ) );
       return;
    }
 
    if ( ! i_iter->isOfClass( "Iterator" ) )
    {
-      vm->raiseModError( new AccessError( ErrorParam( e_inv_params, __LINE__ ).
-         origin( e_orig_runtime ).extra( vm->moduleString( rtl_invalid_iter ) ) ) );
+      throw new AccessError( ErrorParam( e_inv_params, __LINE__ ).
+         origin( e_orig_runtime ).extra( vm->moduleString( rtl_invalid_iter ) ) );
       return;
    }
 
@@ -376,8 +376,8 @@ FALCON_FUNC  List_insert ( ::Falcon::VMachine *vm )
    // is the iterator a valid iterator on our item?
    if ( ! list->insert( iter, *i_item ) )
    {
-      vm->raiseModError( new AccessError( ErrorParam( e_inv_params, __LINE__ ).
-         origin( e_orig_runtime ).extra( vm->moduleString( rtl_invalid_iter ) ) ) );
+      throw new AccessError( ErrorParam( e_inv_params, __LINE__ ).
+         origin( e_orig_runtime ).extra( vm->moduleString( rtl_invalid_iter ) ) );
    }
 }
 

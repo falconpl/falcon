@@ -45,8 +45,9 @@ FALCON_FUNC  Array_front ( ::Falcon::VMachine *vm )
 
    if ( array->length() == 0 )
    {
-      vm->raiseModError( new AccessError( ErrorParam( e_inv_params, __LINE__ ).
-         origin( e_orig_runtime ).extra( vm->moduleString( rtl_emptyarr ) ) ) );
+      throw new AccessError( ErrorParam( e_inv_params, __LINE__ )
+         .origin( e_orig_runtime )
+         .extra( vm->moduleString( rtl_emptyarr ) ) );
       return;
    }
 
@@ -69,9 +70,8 @@ FALCON_FUNC  Array_back ( ::Falcon::VMachine *vm )
 
    if ( array->length() == 0 )
    {
-      vm->raiseModError( new AccessError( ErrorParam( e_inv_params, __LINE__ ).
-         origin( e_orig_runtime ).extra( vm->moduleString( rtl_emptyarr ) ) ) );
-      return;
+      throw new AccessError( ErrorParam( e_inv_params, __LINE__ ).
+         origin( e_orig_runtime ).extra( vm->moduleString( rtl_emptyarr ) ) );
    }
 
    vm->retval( array->at( array->length() - 1 ) );
@@ -125,8 +125,8 @@ FALCON_FUNC Array_tabField( VMachine *vm )
    if ( i_field == 0 ||
       ! ( i_field->isString() || i_field->isOrdinal() ))
    {
-      vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).
-               extra( "(N)" ) ) );
+      throw new ParamError( ErrorParam( e_inv_params ).
+               extra( "(N)" ) );
       return;
    }
 
@@ -163,7 +163,7 @@ FALCON_FUNC Array_tabField( VMachine *vm )
          return;
       }
 
-      vm->raiseRTError( new AccessError( ErrorParam( e_param_range ) ) );
+      throw new AccessError( ErrorParam( e_param_range ) );
       return;
    }
 
@@ -285,9 +285,8 @@ FALCON_FUNC  mth_arrayIns ( ::Falcon::VMachine *vm )
 
    if ( ! array->insert( *item, pos ) ) {
       // array access error
-      vm->raiseModError( new AccessError( ErrorParam( e_arracc, __LINE__ ).
-         origin( e_orig_runtime ) )
-         );
+      throw new AccessError( ErrorParam( e_arracc, __LINE__ )
+         .origin( e_orig_runtime ) );
    }
 }
 
@@ -628,8 +627,8 @@ FALCON_FUNC  mth_arrayRemove( ::Falcon::VMachine *vm )
       res = array->remove( pos );
 
    if ( ! res ) {
-      vm->raiseModError( new AccessError( ErrorParam( e_arracc, __LINE__ ).
-         origin( e_orig_runtime ) ) );
+      throw new AccessError( ErrorParam( e_arracc, __LINE__ ).
+         origin( e_orig_runtime ) );
    }
 }
 
@@ -654,10 +653,9 @@ FALCON_FUNC  arrayBuffer ( ::Falcon::VMachine *vm )
 
    if ( item_size == 0 || ! item_size->isOrdinal() )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
          .origin( e_orig_runtime )
-         .extra( "N,[X]" ) ) );
-      return;
+         .extra( "N,[X]" ) );
    }
 
    int32 nsize = (int32) item_size->forceInteger();
@@ -727,8 +725,8 @@ FALCON_FUNC  mth_arrayHead ( ::Falcon::VMachine *vm )
    CoreArray *array = array_x->asArray();
    if ( array->length() == 0 )
    {
-      vm->raiseModError( new AccessError( ErrorParam( e_inv_params, __LINE__ ).
-         origin( e_orig_runtime ).extra( vm->moduleString( rtl_emptyarr ) ) ) );
+      throw new AccessError( ErrorParam( e_inv_params, __LINE__ ).
+         origin( e_orig_runtime ).extra( vm->moduleString( rtl_emptyarr ) ) );
       return;
    }
 
@@ -777,8 +775,8 @@ FALCON_FUNC  mth_arrayTail ( ::Falcon::VMachine *vm )
    CoreArray *array = array_x->asArray();
    if ( array->length() == 0 )
    {
-      vm->raiseModError( new AccessError( ErrorParam( e_inv_params, __LINE__ ).
-         origin( e_orig_runtime ).extra( vm->moduleString( rtl_emptyarr ) ) ) );
+      throw new AccessError( ErrorParam( e_inv_params, __LINE__ ).
+         origin( e_orig_runtime ).extra( vm->moduleString( rtl_emptyarr ) ) );
       return;
    }
 
@@ -972,9 +970,8 @@ FALCON_FUNC  mth_arrayScan ( ::Falcon::VMachine *vm )
 
    if ( pos_start < 0 || pos_start >= (int32) array->length() ||
          pos_end > (int32) array->length()) {
-       vm->raiseModError( new AccessError( ErrorParam( e_arracc, __LINE__ ).
-         origin( e_orig_runtime ) ) );
-      return;
+       throw new AccessError( ErrorParam( e_arracc, __LINE__ ).
+         origin( e_orig_runtime ) );
    }
 
    Item *elements = array->elements();
@@ -1288,16 +1285,15 @@ FALCON_FUNC  mth_arrayMerge( ::Falcon::VMachine *vm )
       CoreArray *third = second->partition( (int32)start, (int32)end );
       third->mark( vm->generation() );
       if ( third ==  0 ) {
-         vm->raiseError( e_arracc );
-         return;
+         throw new AccessError( ErrorParam( e_arracc, __LINE__ ).
+         origin( e_orig_runtime ) );
       }
       val = first->change( *third, (int32) from, (int32) from );
    }
 
    if ( ! val ) {
-       vm->raiseModError( new AccessError( ErrorParam( e_arracc, __LINE__ ).
-         origin( e_orig_runtime ).extra( Engine::getMessage( rtl_start_outrange ) ) ) );
-      return;
+       throw new AccessError( ErrorParam( e_arracc, __LINE__ ).
+         origin( e_orig_runtime ).extra( Engine::getMessage( rtl_start_outrange ) ) );
    }
 }
 

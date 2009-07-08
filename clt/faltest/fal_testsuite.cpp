@@ -23,6 +23,7 @@
 #include <falcon/string.h>
 #include <falcon/testsuite.h>
 #include <falcon/fstream.h>
+#include <falcon/vmevent.h>
 
 #include "version.h"
 
@@ -95,7 +96,7 @@ FALCON_FUNC  flc_testrelect ( ::Falcon::VMachine *vm )
 FALCON_FUNC  flc_success ( ::Falcon::VMachine *vm )
 {
    s_testStatus = true;
-   vm->requestQuit();
+   throw Falcon::VMEventQuit();
 }
 
 FALCON_FUNC  flc_failure ( ::Falcon::VMachine *vm )
@@ -107,7 +108,7 @@ FALCON_FUNC  flc_failure ( ::Falcon::VMachine *vm )
    }
    else
       s_lastFailure = "";
-   vm->requestQuit();
+   throw Falcon::VMEventQuit();
 }
 
 FALCON_FUNC  flc_alive ( ::Falcon::VMachine *vm )

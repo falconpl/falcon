@@ -111,7 +111,6 @@ FALCON_FUNC  endCritical ( ::Falcon::VMachine *vm );
 FALCON_FUNC  Semaphore_init ( ::Falcon::VMachine *vm );
 FALCON_FUNC  Semaphore_post ( ::Falcon::VMachine *vm );
 FALCON_FUNC  Semaphore_wait ( ::Falcon::VMachine *vm );
-FALCON_FUNC vmSuspend( ::Falcon::VMachine *vm );
 
 FALCON_FUNC  Format_parse ( ::Falcon::VMachine *vm );
 FALCON_FUNC  Format_init ( ::Falcon::VMachine *vm );

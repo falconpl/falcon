@@ -141,9 +141,9 @@ FALCON_FUNC  core_any ( ::Falcon::VMachine *vm )
    Item *i_param = vm->param(0);
    if( i_param == 0 || !i_param->isArray() )
    {
-      vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).
-         extra( "A" ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params )
+         .origin(e_orig_runtime)
+         .extra( "A" ) );
    }
 
    CoreArray *arr = i_param->asArray();
@@ -229,9 +229,9 @@ FALCON_FUNC  core_all ( ::Falcon::VMachine *vm )
    Item *i_param = vm->param(0);
    if( i_param == 0 || !i_param->isArray() )
    {
-      vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).
-         extra( "A" ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params )
+         .origin(e_orig_runtime)
+         .extra( "A" ) );
    }
 
    CoreArray *arr = i_param->asArray();
@@ -465,9 +465,9 @@ FALCON_FUNC  core_eval ( ::Falcon::VMachine *vm )
    Item *i_param = vm->param(0);
    if( i_param == 0 )
    {
-      vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).
-         extra( "X" ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params )
+         .origin(e_orig_runtime)
+         .extra( "X" ) );
    }
    uint32 pcount = vm->paramCount() - 1;
    for ( uint32 i = pcount; i > 0; i-- )
@@ -544,9 +544,6 @@ FALCON_FUNC  core_min ( ::Falcon::VMachine *vm )
       {
          elem = vm->param(i);
       }
-
-      if (vm->hadEvent())
-         return;
    }
 
    vm->retval( *elem );
@@ -590,9 +587,6 @@ FALCON_FUNC  core_max ( ::Falcon::VMachine *vm )
       {
          elem = vm->param(i);
       }
-
-      if (vm->hadEvent())
-         return;
    }
 
    vm->retval( *elem );
@@ -657,9 +651,9 @@ FALCON_FUNC  core_map ( ::Falcon::VMachine *vm )
        i_origin == 0 || !i_origin->isArray()
       )
    {
-      vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).
-         extra( "C,A" ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params )
+         .origin(e_orig_runtime)
+         .extra( "C,A" ) );
    }
 
    CoreArray *origin = i_origin->asArray();
@@ -742,9 +736,9 @@ FALCON_FUNC  core_dolist ( ::Falcon::VMachine *vm )
        i_origin == 0 || !i_origin->isArray()
       )
    {
-      vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).
-         extra( "C,A" ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params )
+         .origin(e_orig_runtime)
+         .extra( "C,A" ) );
    }
 
    CoreArray *origin = i_origin->asArray();
@@ -917,9 +911,9 @@ FALCON_FUNC  core_times ( ::Falcon::VMachine *vm )
        i_sequence == 0 || ! ( i_sequence->isArray() || i_sequence->isCallable() )
       )
    {
-      vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).
-         extra( "N|R, A|C" ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params )
+         .origin(e_orig_runtime)
+         .extra( "N|R, A|C" ) );
    }
 
    int64 start, end, step;
@@ -927,9 +921,9 @@ FALCON_FUNC  core_times ( ::Falcon::VMachine *vm )
    {
       if ( i_count->asRangeIsOpen() )
       {
-         vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).
-            extra( "open range" ) ) );
-         return;
+         throw new ParamError( ErrorParam( e_inv_params )
+            .origin(e_orig_runtime)
+            .extra( "open range" ) );
       }
 
       start = i_count->asRangeStart();
@@ -1005,9 +999,9 @@ FALCON_FUNC  core_upto ( ::Falcon::VMachine *vm )
        i_sequence == 0 || ! ( i_sequence->isArray() || i_sequence->isCallable() )
       )
    {
-      vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).
-         extra( "N|R, A|C" ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params )
+         .origin(e_orig_runtime)
+         .extra( "N|R, A|C" ) );
    }
 
    int64 start =  vm->self().asInteger();
@@ -1072,9 +1066,9 @@ FALCON_FUNC  core_downto ( ::Falcon::VMachine *vm )
        i_sequence == 0 || ! ( i_sequence->isArray() || i_sequence->isCallable() )
       )
    {
-      vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).
-         extra( "N|R, A|C" ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params )
+         .origin(e_orig_runtime)
+         .extra( "N|R, A|C" ) );
    }
 
    int64 start =  vm->self().asInteger();
@@ -1183,9 +1177,9 @@ FALCON_FUNC  core_xmap ( ::Falcon::VMachine *vm )
        i_origin == 0 || !i_origin->isArray()
       )
    {
-      vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).
-         extra( "C,A" ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params )
+         .origin(e_orig_runtime)
+         .extra( "C,A" ) );
    }
 
    CoreArray *origin = i_origin->asArray();
@@ -1257,9 +1251,9 @@ FALCON_FUNC  core_filter ( ::Falcon::VMachine *vm )
       i_origin == 0 || !i_origin->isArray()
       )
    {
-      vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).
-         extra( "C,A" ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params )
+         .origin(e_orig_runtime)
+         .extra( "C,A" ) );
    }
 
    CoreArray *origin = i_origin->asArray();
@@ -1337,9 +1331,9 @@ FALCON_FUNC  core_reduce ( ::Falcon::VMachine *vm )
       i_origin == 0 || !i_origin->isArray()
       )
    {
-      vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).
-         extra( "C,A,[X]" ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params )
+         .origin(e_orig_runtime)
+         .extra( "C,A,[X]" ) );
    }
 
    CoreArray *origin = i_origin->asArray();
@@ -1447,9 +1441,9 @@ FALCON_FUNC  core_iff ( ::Falcon::VMachine *vm )
 
    if( i_cond == 0 || i_ifTrue == 0 )
    {
-      vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).
-         extra( "X,X,[X]" ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params )
+         .origin(e_orig_runtime)
+         .extra( "X,X,[X]" ) );
    }
 
    // we can use pre-fetched values as we have stack unchanged on
@@ -1522,9 +1516,8 @@ FALCON_FUNC  core_choice ( ::Falcon::VMachine *vm )
 
    if( i_cond == 0 || i_ifTrue == 0 )
    {
-      vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).
-         extra( "X,X,[X]" ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params ).
+         extra( "X,X,[X]" ) );
    }
 
    vm->returnHandler( &core_choice_next );
@@ -1572,9 +1565,9 @@ FALCON_FUNC  core_lit ( ::Falcon::VMachine *vm )
 
    if( i_cond == 0 )
    {
-      vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).
-         extra( "X" ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params )
+         .origin(e_orig_runtime)
+         .extra( "X" ) );
    }
 
    vm->regA() = *i_cond;
@@ -1641,8 +1634,7 @@ static bool core_cascade_next ( ::Falcon::VMachine *vm )
    // perform call
    if ( ! vm->callFrame( callables->at(count), pc ) )
    {
-      vm->raiseRTError( new ParamError( ErrorParam( e_non_callable ) ) );
-      return false;
+      throw new ParamError( ErrorParam( e_non_callable ).origin(e_orig_runtime) );
    }
 
    return true;
@@ -1732,9 +1724,9 @@ FALCON_FUNC  core_cascade ( ::Falcon::VMachine *vm )
 
    if( i_callables == 0 || !i_callables->isArray() )
    {
-      vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).
-         extra( "A,..." ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params )
+         .origin(e_orig_runtime)
+         .extra( "A,..." ) );
    }
 
    // for the first callable...
@@ -1769,7 +1761,7 @@ FALCON_FUNC  core_cascade ( ::Falcon::VMachine *vm )
    // perform the real call
    if ( ! vm->callFrame( callables->at(0), pcount ) )
    {
-      vm->raiseRTError( new ParamError( ErrorParam( e_non_callable ) ) );
+      throw new ParamError( ErrorParam( e_non_callable ).origin(e_orig_runtime) );
    }
 }
 
@@ -1843,8 +1835,9 @@ FALCON_FUNC  core_floop ( ::Falcon::VMachine *vm )
 
    if( i_callables == 0 || !i_callables->isArray() )
    {
-      vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).
-         extra( "A" ) ) );
+      throw new ParamError( ErrorParam( e_inv_params )
+         .origin(e_orig_runtime)
+         .extra( "A" ) );
       return;
    }
 
@@ -1977,9 +1970,9 @@ FALCON_FUNC  core_lbind ( ::Falcon::VMachine *vm )
 
    if( i_name == 0 || !i_name->isString() )
    {
-      vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).
-         extra( "S" ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params )
+         .origin(e_orig_runtime)
+         .extra( "S" ) );
    }
    GarbageItem *itm = i_value == 0 ? 0 : new GarbageItem( *i_value );
 
@@ -2016,9 +2009,9 @@ FALCON_FUNC  core_let ( ::Falcon::VMachine *vm )
 
    if( i_dest == 0 || ! vm->isParamByRef( 0 ) || i_source == 0 )
    {
-      vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).
-         extra( "$X,X" ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params )
+         .origin(e_orig_runtime)
+         .extra( "$X,X" ) );
    }
 
    vm->returnHandler( &core_let_next );
@@ -2094,7 +2087,9 @@ static bool core_brigade_next( ::Falcon::VMachine *vm )
    
    if ( ! success ) 
    {
-      throw new ParamError( ErrorParam( e_non_callable,__LINE__ ) );
+      throw new ParamError(
+         ErrorParam( e_non_callable,__LINE__ )
+         .origin(e_orig_runtime) );
    }
    
    return true; // call me again
@@ -2169,8 +2164,9 @@ FALCON_FUNC  core_brigade ( ::Falcon::VMachine *vm )
 
    if( i_fl == 0 || ! i_fl->isArray() )
    {
-      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "A" ) );
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+         .origin(e_orig_runtime)
+         .extra( "A" ) );
    }
    
    // nothing to do?
@@ -2193,7 +2189,7 @@ FALCON_FUNC  core_brigade ( ::Falcon::VMachine *vm )
    
    if ( ! vm->callFrame( vm->param(0)->asArray()->at(0), vm->paramCount()-1 ) )
    {
-      throw new ParamError( ErrorParam( e_non_callable,__LINE__ ) );
+      throw new ParamError( ErrorParam( e_non_callable,__LINE__ ).origin(e_orig_runtime) );
    }
    
 }

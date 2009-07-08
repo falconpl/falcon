@@ -321,9 +321,8 @@ FALCON_FUNC  Path_init ( ::Falcon::VMachine *vm )
    
    if ( ( ! p0->isString() && ! p0->isArray() ) )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         origin( e_orig_runtime ).extra( "[S|A]" ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         origin( e_orig_runtime ).extra( "[S|A]" ) );
    }
 
    PathObject *self = dyncast<PathObject*>( vm->self().asObject() );
@@ -367,10 +366,9 @@ FALCON_FUNC  Path_init ( ::Falcon::VMachine *vm )
 
    if ( ! path->isValid() )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
          origin( e_orig_runtime ).
-         extra( vm->moduleString( rtl_invalid_path ) ) ) );
-      return;
+         extra( vm->moduleString( rtl_invalid_path ) ) );
    }
 }
 

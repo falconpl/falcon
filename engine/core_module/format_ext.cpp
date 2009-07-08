@@ -175,13 +175,13 @@ FALCON_FUNC  Format_parse ( ::Falcon::VMachine *vm )
    {
       if( ! param->isString() )
       {
-         vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).extra( "[S]" ) ) );
+         throw new ParamError( ErrorParam( e_inv_params ).extra( "[S]" ) );
       }
       else  {
          fmt->parse( *param->asString() );
          if( ! fmt->isValid() )
          {
-            vm->raiseRTError( new ParseError( ErrorParam( e_param_fmt_code ) ) );
+            throw new ParseError( ErrorParam( e_param_fmt_code ) );
          }
       }
    }
@@ -235,7 +235,7 @@ FALCON_FUNC  Format_format ( ::Falcon::VMachine *vm )
    Item *dest = vm->param( 1 );
    if( param == 0 || ( dest != 0 && ! dest->isString() ) )
    {
-      vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).extra( "X,[S]" ) ) );
+      throw new ParamError( ErrorParam( e_inv_params ).extra( "X,[S]" ) );
    }
    else
    {

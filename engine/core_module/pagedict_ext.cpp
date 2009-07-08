@@ -56,8 +56,7 @@ FALCON_FUNC  PageDict( ::Falcon::VMachine *vm )
 
    if( i_pageSize != 0 && ! i_pageSize->isOrdinal() )
    {
-      vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).extra( "[N]" ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params ).origin( e_orig_runtime ).extra( "[N]" ) );
    }
 
    uint32 pageSize = (uint32)( i_pageSize == 0 ? 33 : (uint32)i_pageSize->forceInteger() );

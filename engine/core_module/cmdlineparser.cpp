@@ -217,14 +217,12 @@ FALCON_FUNC  CmdlineParser_parse( ::Falcon::VMachine *vm )
       // get the parameters from the VM args object
       i_params = vm->findGlobalItem( "args" );
       if ( i_params == 0 || ! i_params->isArray() ) {
-         vm->raiseRTError( new CodeError( ErrorParam( e_undef_sym ).extra( "args" ).hard() ) );
-         return;
+         throw new CodeError( ErrorParam( e_undef_sym ).extra( "args" ).hard() );
       }
    }
    else if ( ! i_params->isArray() )
    {
-      vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).extra( "( A )" ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params ).extra( "( A )" ) );
    }
 
    CoreArray *args = i_params->asArray();
@@ -255,13 +253,8 @@ FALCON_FUNC  CmdlineParser_parse( ::Falcon::VMachine *vm )
       Item &i_opt = args->at( i );
       if ( !i_opt.isString() )
       {
-         vm->raiseRTError(
-            new ParamError( ErrorParam( e_param_type ).
-                  extra( vm->moduleString( rtl_cmdp_0 ) )
-               )
-            );
-
-         return;
+         throw new ParamError( ErrorParam( e_param_type ).
+                  extra( vm->moduleString( rtl_cmdp_0 ) ) );
       }
 
       String &opt = *i_opt.asString();
@@ -274,10 +267,6 @@ FALCON_FUNC  CmdlineParser_parse( ::Falcon::VMachine *vm )
             vm->pushParameter( new CoreString(currentOption) );
             vm->pushParameter( i_opt );
             vm->callItemAtomic( i_method, 2 );
-            if( vm->hadEvent() )
-               return;
-
-            vm->resetEvent();
             state = t_none;
          }
          else
@@ -295,10 +284,6 @@ FALCON_FUNC  CmdlineParser_parse( ::Falcon::VMachine *vm )
          {
             vm->pushParameter( i_opt );
             vm->callItemAtomic( i_method, 1 );
-            if( vm->hadEvent() )
-               return;
-            vm->resetEvent();
-
          }
          else
          {
@@ -329,8 +314,6 @@ FALCON_FUNC  CmdlineParser_parse( ::Falcon::VMachine *vm )
                }
 
                vm->callItemAtomic( i_method, 1 );
-               if( vm->hadEvent() )
-                  return;
                self->getProperty( "_request", _request );
                // value requested?
                if ( _request.asInteger() == 1 ) {
@@ -361,8 +344,6 @@ FALCON_FUNC  CmdlineParser_parse( ::Falcon::VMachine *vm )
                   {
                      vm->pushParameter( new CoreString(subParam) );
                      vm->callItemAtomic( i_method, 1 );
-                     if( vm->hadEvent() )
-                        return;
                  }
                   else
                   {
@@ -378,8 +359,6 @@ FALCON_FUNC  CmdlineParser_parse( ::Falcon::VMachine *vm )
                   {
                      vm->pushParameter( new CoreString(subParam) );
                      vm->callItemAtomic( i_method, 1 );
-                     if( vm->hadEvent() )
-                        return;
                   }
                   else
                   {
@@ -415,7 +394,6 @@ FALCON_FUNC  CmdlineParser_parse( ::Falcon::VMachine *vm )
    }
 
    self->setProperty( "lastParsed", (int64) i );
-   vm->resetEvent();
    vm->retval( true );
 }
 

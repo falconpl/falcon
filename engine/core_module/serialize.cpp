@@ -114,9 +114,8 @@ FALCON_FUNC  mth_serialize ( ::Falcon::VMachine *vm )
    
    if( fileId == 0 || source == 0 || ! fileId->isObject() || ! fileId->asObjectSafe()->derivedFrom( "Stream" ) )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ).
-         extra( vm->self().isMethodic() ? "Stream" : "X,Stream" ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ).
+         extra( vm->self().isMethodic() ? "Stream" : "X,Stream" ) );
    }
 
 
@@ -125,7 +124,8 @@ FALCON_FUNC  mth_serialize ( ::Falcon::VMachine *vm )
    switch( sc )
    {
       case Item::sc_ok: vm->retval( 1 ); break;
-      case Item::sc_ferror: vm->raiseModError( new IoError( ErrorParam( e_modio, __LINE__ ).origin( e_orig_runtime ) ) );
+      case Item::sc_ferror: 
+         throw new IoError( ErrorParam( e_modio, __LINE__ ).origin( e_orig_runtime ) );
       default:
          vm->retnil(); // VM may already have raised an error.
          //TODO: repeat error.
@@ -158,8 +158,8 @@ FALCON_FUNC  deserialize ( ::Falcon::VMachine *vm )
 
    if( fileId == 0 || ! fileId->isObject() || ! fileId->isObject() || ! fileId->asObjectSafe()->derivedFrom( "Stream" ) )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ).
-         extra( "O:Stream" ) ) );
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ).
+         extra( "O:Stream" ) );
       return;
    }
 
@@ -169,11 +169,11 @@ FALCON_FUNC  deserialize ( ::Falcon::VMachine *vm )
    switch( sc )
    {
       case Item::sc_ok: return; // ok, we've nothing to do
-      case Item::sc_eof: vm->raiseModError( new IoError( ErrorParam( e_deser_eof, __LINE__ ).origin( e_orig_runtime ) ) );
-      case Item::sc_ferror: vm->raiseModError( new IoError( ErrorParam( e_io_error, __LINE__ ).origin( e_orig_runtime ) ) );
-      case Item::sc_misssym: vm->raiseModError( new GenericError( ErrorParam( e_undef_sym, __LINE__ ).origin( e_orig_runtime ) ) );
-      case Item::sc_missclass: vm->raiseModError( new GenericError( ErrorParam( e_undef_sym, __LINE__ ).origin( e_orig_runtime ) ) );
-      case Item::sc_invformat: vm->raiseModError( new ParseError( ErrorParam( e_invformat, __LINE__ ).origin( e_orig_runtime ) ) );
+      case Item::sc_eof: throw new IoError( ErrorParam( e_deser_eof, __LINE__ ).origin( e_orig_runtime ) );
+      case Item::sc_ferror: throw new IoError( ErrorParam( e_io_error, __LINE__ ).origin( e_orig_runtime ) );
+      case Item::sc_misssym: throw new GenericError( ErrorParam( e_undef_sym, __LINE__ ).origin( e_orig_runtime ) );
+      case Item::sc_missclass: throw new GenericError( ErrorParam( e_undef_sym, __LINE__ ).origin( e_orig_runtime ) );
+      case Item::sc_invformat: throw new ParseError( ErrorParam( e_invformat, __LINE__ ).origin( e_orig_runtime ) );
 
       case Item::sc_vmerror:
       default:

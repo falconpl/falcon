@@ -46,8 +46,7 @@ void VMSemaphore::wait( VMachine *vm, numeric to )
    if ( m_count == 0 ) {
       m_waiting.pushBack( vm->m_currentContext );
       vm->m_currentContext->sleepOn( this );
-      vm->m_event = VMachine::eventWait;
-      vm->m_yieldTime = to;
+      vm->yield( to < 0.0 ? 10e270 : to );
       vm->regA().setBoolean( false ); // by default will be zero; 1 if correctly awaken
    }
    else {

@@ -1000,8 +1000,7 @@ FALCON_FUNC  mth_strTrim ( ::Falcon::VMachine *vm )
       Item *i_str = vm->param( 0 );
       if ( i_str == 0 || ! i_str->isString() )
       {
-         vm->raiseRTError( new ParamError( ErrorParam( e_inv_params, __LINE__ ) ) );
-         return;
+         throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) );
       }
 
       self = i_str->asString();
@@ -1017,8 +1016,7 @@ FALCON_FUNC  mth_strTrim ( ::Falcon::VMachine *vm )
    }
    else if ( ! trimChars->isString() )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) );
    }
    else
    {
@@ -1086,8 +1084,7 @@ FALCON_FUNC  mth_strFrontTrim ( ::Falcon::VMachine *vm )
       Item *i_str = vm->param( 0 );
       if ( i_str == 0 || ! i_str->isString() )
       {
-         vm->raiseRTError( new ParamError( ErrorParam( e_inv_params, __LINE__ ) ) );
-         return;
+         throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) );
       }
 
       self = i_str->asString();
@@ -1100,8 +1097,7 @@ FALCON_FUNC  mth_strFrontTrim ( ::Falcon::VMachine *vm )
       vm->retval( cs );
    }
    else if ( ! trimChars->isString() ) {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) );
    }
    else {
       int pos = 0;
@@ -1157,8 +1153,7 @@ FALCON_FUNC  mth_strBackTrim ( ::Falcon::VMachine *vm )
       Item *i_str = vm->param( 0 );
       if ( i_str == 0 || ! i_str->isString() )
       {
-         vm->raiseRTError( new ParamError( ErrorParam( e_inv_params, __LINE__ ) ) );
-         return;
+         throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) );
       }
 
       self = i_str->asString();
@@ -1171,7 +1166,7 @@ FALCON_FUNC  mth_strBackTrim ( ::Falcon::VMachine *vm )
       vm->retval( cs );
    }
    else if ( ! trimChars->isString() ) {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) );
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) );
    }
    else
    {
@@ -2009,9 +2004,9 @@ FALCON_FUNC  mth_strToMemBuf ( ::Falcon::VMachine *vm )
 
       if ( result == 0 )
       {
-         vm->raiseModError( new ParamError( ErrorParam( e_param_range, __LINE__ ).origin( e_orig_runtime ).
-           extra("0-4") ) );
-         return;
+         throw new ParamError( ErrorParam( e_param_range, __LINE__ )
+           .origin( e_orig_runtime )
+           .extra("0-4") );
       }
 
       if ( ww == charSize )
@@ -2054,9 +2049,9 @@ FALCON_FUNC  strFromMemBuf ( ::Falcon::VMachine *vm )
 
    if( i_membuf == 0 || ! i_membuf->isMemBuf() )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ).
-           extra("M") ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+         .origin( e_orig_runtime )
+         .extra("M") );
    }
 
    MemBuf *mb = i_membuf->asMemBuf();

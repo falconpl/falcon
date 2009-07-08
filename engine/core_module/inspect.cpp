@@ -373,10 +373,9 @@ FALCON_FUNC  inspect ( ::Falcon::VMachine *vm )
       || ( i_depth != 0 && ! i_depth->isNil() && ! i_depth->isOrdinal() )
       || ( i_maxLen != 0 && ! i_maxLen->isNil() && ! i_maxLen->isOrdinal() ) )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
          origin( e_orig_runtime ).
-         extra("X,[N],[N]") ) );
-      return;
+         extra("X,[N],[N]") );
    }
 
    int32 depth = (int32) (i_depth == 0 || i_depth->isNil() ? 3 : i_depth->forceInteger());

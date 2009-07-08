@@ -290,9 +290,13 @@ InteractiveCompiler::t_ret_type InteractiveCompiler::compileNext( Stream *input 
    // launch the vm.
    if ( ret == e_statement || ret == e_call || ret == e_expression )
    {
-      m_vm->launch();
-      if (m_vm->lastEvent() == VMachine::eventRQuit )
+      try {
+         m_vm->launch();
+      }
+      catch( VMEventQuit & )
+      {
          ret = e_terminated;
+      }
    }
 
    return ret;

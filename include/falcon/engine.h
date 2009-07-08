@@ -66,6 +66,8 @@
 #include <falcon/flexymodule.h>
 #include <falcon/vm.h>
 #include <falcon/garbagelock.h>
+#include <falcon/vmevent.h>
+
 
 // Environmental support
 #include <falcon/core_ext.h>
@@ -83,6 +85,7 @@
 
 // Falcon specific object user_data
 #include <falcon/falcondata.h>
+
 
 #endif
 

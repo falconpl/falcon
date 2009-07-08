@@ -303,12 +303,13 @@ CoreObject *Error::scriptize( VMachine *vm )
       error_class = vm->findGlobalItem( m_className );
 
    if ( error_class == 0 || ! error_class->isClass() ) {
-      Error *error = new GenericError(
-         ErrorParam( e_undef_sym, __LINE__).origin(e_orig_vm).module( "core.Error" ).
-         symbol( "Error::scriptize" ).extra( m_className ).hard()
+      throw new GenericError(
+         ErrorParam( e_undef_sym, __LINE__)
+         .origin(e_orig_vm)
+         .module( "core.Error" ).
+         symbol( "Error::scriptize" )
+         .extra( m_className ).hard()
          );
-      vm->raiseRTError( error );
-      return 0;
    }
 
    // CreateInstance will use ErrorObject, which increfs to us.

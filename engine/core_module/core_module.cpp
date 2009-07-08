@@ -576,8 +576,6 @@ Module* core_module_init()
       addParam("time");
    self->addExtFunc( "beginCritical", &Falcon::core::beginCritical );
    self->addExtFunc( "endCritical", &Falcon::core::endCritical );
-   self->addExtFunc( "suspend", &Falcon::core::vmSuspend )->
-      addParam("timeout");
 
    self->addExtFunc( "int", &Falcon::core::val_int )->
       addParam("item");

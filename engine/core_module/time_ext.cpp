@@ -75,16 +75,18 @@ FALCON_FUNC  TimeStamp_init ( ::Falcon::VMachine *vm )
       else if ( date->isObject() ) {
          CoreObject *other = date->asObject();
          if( !other->derivedFrom( "TimeStamp" ) ) {
-            vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ).
-               extra( "Parameter is not a TimeStamp" ) ) );
+            throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+               .origin( e_orig_runtime )
+               .extra( "Parameter is not a TimeStamp" ) );
          }
 
          self->setUserData( new TimeStamp( * static_cast<TimeStamp *>( other->getUserData() ) ) );
 
       }
       else {
-         vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ).
-               extra( "TimeStamp class init requires an integer or TimeStamp parameter" ) ) );
+         throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+            .origin( e_orig_runtime )
+            .extra( "TimeStamp class init requires an integer or TimeStamp parameter" ) );
       }
    }
    else
@@ -138,15 +140,15 @@ FALCON_FUNC  TimeStamp_toString ( ::Falcon::VMachine *vm )
    {
       if( ! format->isString() )
       {
-         vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ).
-            extra( "[S]" ) ) );
+         throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+            .origin( e_orig_runtime ).extra( "[S]" ) );
          return;
       }
 
       if( !  ts->toString( *str, *format->asString() ) )
       {
-         vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ).
-            extra( "Invalid TimeStamp format" ) ) );
+         throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ).
+            extra( "Invalid TimeStamp format" ) );
          return;
       }
    }
@@ -168,8 +170,8 @@ static void internal_add_dist( ::Falcon::VMachine *vm, int mode )
       CoreObject *other = date->asObject();
       if( !other->derivedFrom( "TimeStamp" ) )
       {
-         vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ).
-               extra( "not a TimeStamp" ) ) );
+         throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ).
+               extra( "not a TimeStamp" ) );
          return;
       }
 
@@ -183,8 +185,8 @@ static void internal_add_dist( ::Falcon::VMachine *vm, int mode )
       vm->retval( self );
    }
    else {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ).
-            extra( "Not a TimeStamp" ) ) );
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ).
+            extra( "Not a TimeStamp" ) );
    }
 }
 
@@ -328,8 +330,8 @@ FALCON_FUNC  TimeStamp_fromLongFormat ( ::Falcon::VMachine *vm )
 
    if ( ! data->isInteger() )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ).
-         extra( "Only integer parameter allowed" ) ) );
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ).
+         extra( "Only integer parameter allowed" ) );
    }
 
    ts->fromLongFormat( data->asInteger() );
@@ -402,8 +404,8 @@ FALCON_FUNC  TimeStamp_fromRFC2822 ( ::Falcon::VMachine *vm )
    Item *i_string = vm->param(0);
    if( i_string == 0 || ! i_string->isString() )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ).
-         extra( "S" ) ) );
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ).
+         extra( "S" ) );
       return;
    }
 
@@ -476,15 +478,15 @@ FALCON_FUNC  TimeStamp_changeZone ( ::Falcon::VMachine *vm )
    Item *i_tz = vm->param(0);
    if( i_tz == 0 || ! i_tz->isOrdinal() )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ).
-         extra( "N" ) ) );
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ).
+         extra( "N" ) );
       return;
    }
    int tz = (int) i_tz->forceInteger();
    if ( tz < 0 || tz >= 32 )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_param_range, __LINE__ ).origin( e_orig_runtime ).
-         extra( "Invalid timezone" ) ) );
+      throw new ParamError( ErrorParam( e_param_range, __LINE__ ).origin( e_orig_runtime ).
+         extra( "Invalid timezone" ) );
       return;
    }
    CoreObject *self = vm->self().asObject();
@@ -529,8 +531,8 @@ FALCON_FUNC  ParseRFC2822 ( ::Falcon::VMachine *vm )
    Item *i_string = vm->param(0);
    if( i_string == 0 || ! i_string->isString() )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ).
-         extra( "S" ) ) );
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ).
+         extra( "S" ) );
       return;
    }
 
@@ -603,15 +605,15 @@ FALCON_FUNC  TimeZone_getDisplacement ( ::Falcon::VMachine *vm )
    Item *i_tz = vm->param(0);
    if( i_tz == 0 || ! i_tz->isOrdinal() )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ).
-         extra( "N" ) ) );
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ).
+         extra( "N" ) );
       return;
    }
    int tz = (int) i_tz->forceInteger();
    if ( tz < 0 || tz >= 32 )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_param_range, __LINE__ ).origin( e_orig_runtime ).
-         extra( "Invalid timezone" ) ) );
+      throw new ParamError( ErrorParam( e_param_range, __LINE__ ).origin( e_orig_runtime ).
+         extra( "Invalid timezone" ) );
       return;
    }
 
@@ -636,15 +638,15 @@ FALCON_FUNC  TimeZone_describe ( ::Falcon::VMachine *vm )
    Item *i_tz = vm->param(0);
    if( i_tz == 0 || ! i_tz->isOrdinal() )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ).
-         extra( "N" ) ) );
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ).
+         extra( "N" ) );
       return;
    }
    int tz = (int) i_tz->forceInteger();
    if ( tz < 0 || tz >= 32 )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_param_range, __LINE__ ).origin( e_orig_runtime ).
-         extra( "Invalid timezone" ) ) );
+      throw new ParamError( ErrorParam( e_param_range, __LINE__ ).origin( e_orig_runtime ).
+         extra( "Invalid timezone" ) );
       return;
    }
 

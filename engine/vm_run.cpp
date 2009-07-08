@@ -37,6 +37,7 @@
 #include <falcon/stream.h>
 #include <falcon/membuf.h>
 #include <falcon/vmmsg.h>
+#include <falcon/vmevent.h>
 
 #include <math.h>
 #include <errno.h>
@@ -132,35 +133,21 @@ Item *VMachine::getOpcodeParam( register uint32 bc_pos )
 void VMachine::run()
 {
    tOpcodeHandler *ops = m_opHandlers;
-   m_event = eventNone;
-   Error *the_error = 0;
 
    // declare this as the running machine
    setCurrent();
 
-   /*
-   class AutoIdle
+   while( true )
    {
-      VMachine  *m_vm;
-   public:
-      inline AutoIdle( VMachine *vm ):
-         m_vm(vm) { vm->pulseIdle(); }
-         // ^^we are already idle, but pulseidle force to honor pending
-         // blocking requets.
-      inline ~AutoIdle() { m_vm->idle(); }
-   } l_autoidle(this);
-   */
+      try {
+         // move m_currentContext->pc_next() to the end of instruction and beginning of parameters.
+         // in case of opcode in the call_request range, this will move next pc to return.
+         m_currentContext->pc_next() = m_currentContext->pc() + sizeof( uint32 );
 
-   while( 1 )
-   {
-      // move m_currentContext->pc_next() to the end of instruction and beginning of parameters.
-      // in case of opcode in the call_request range, this will move next pc to return.
-      m_currentContext->pc_next() = m_currentContext->pc() + sizeof( uint32 );
+         // external call required?
+         if ( m_currentContext->pc() >= i_pc_call_request )
+         {
 
-      // external call required?
-      if ( m_currentContext->pc() >= i_pc_call_request )
-      {
-         try {
             switch( m_currentContext->pc() )
             {
                case i_pc_call_external_ctor_return:
@@ -181,301 +168,45 @@ void VMachine::run()
                   currentSymbol()->getExtFuncDef()->call( this );
             }
          }
-         catch( Error *err )
+         else
          {
-            // fake an error raisal
-            the_error = err;
-            m_event = eventRisen;
-         }
-      }
-      else
-      {
-         // execute the opcode.
-         try {
             ops[ m_currentContext->code()[ m_currentContext->pc() ] ]( this );
          }
-         catch( Error *err )
+         
+         m_opCount ++;
+         
+         //=========================
+         // Executes periodic checks
+         //
+         
+         if ( m_opCount > m_opNextCheck )
          {
-            m_event = eventRisen;
-            the_error = err;
-            err->origin( e_orig_vm );
-         }
-      }
-
-      m_opCount ++;
-
-      //=========================
-      // Executes periodic checks
-
-      if ( m_opCount > m_opNextCheck )
-      {
-         // By default, if nothing else happens, we should do a check no sooner than this.
-         m_opNextCheck = m_opCount + FALCON_VM_DFAULT_CHECK_LOOPS;
-
-         // pulse VM idle
-         if( m_bGcEnabled )
-            m_baton.checkBlock();
-
-         if ( m_opLimit > 0 )
-         {
-            // Bail out???
-            if ( m_opCount > m_opLimit )
-               return;
-            else
-               if ( m_opNextCheck > m_opLimit )
-                  m_opNextCheck = m_opLimit;
-         }
-
-         if( ! m_atomicMode )
-         {
-            if( m_allowYield && ! m_sleepingContexts.empty() && m_opCount > m_opNextContext ) {
-               rotateContext();
-               m_opNextContext = m_opCount + m_loopsContext;
-               if( m_opNextContext < m_opNextCheck )
-                  m_opNextCheck = m_opNextContext;
-            }
-
-            // Periodic Callback
-            if( m_loopsCallback > 0 && m_opCount > m_opNextCallback )
-            {
-               periodicCallback();
-               m_opNextCallback = m_opCount + m_loopsCallback;
-               if( m_opNextCallback < m_opNextCheck )
-                  m_opNextCheck = m_opNextCallback;
-            }
-
-            // in case of single step:
-            if( m_bSingleStep )
-            {
-               // stop also next op
-               m_opNextCheck = m_opCount + 1;
-               return; // maintain the event we have, but exit now.
-            }
-
-            // perform messages
-            m_mtx_mesasges.lock();
-            while( m_msg_head != 0 )
-            {
-               VMMessage* msg = m_msg_head;
-               m_msg_head = msg->next();
-               // it is ok if m_msg_tail is left dangling.
-               m_mtx_mesasges.unlock();
-               if ( msg->error() )
-               {
-                  the_error = msg->error();
-                  the_error->incref();
-                  delete msg;
-               }
-               else
-                  processMessage( msg );  // do not delete msg
-
-               // see if we have more messages in the meanwhile
-               m_mtx_mesasges.lock();
-            }
-
-            m_msg_tail = 0;
-            m_mtx_mesasges.unlock();
-         }
-      }
-
-      //===============================
-      // consider requests.
-      //
-      switch( m_event )
-      {
-
-         // This events leads to VM main loop exit.
-         case eventInterrupt:
-            if ( m_atomicMode )
-            {
-               the_error = new InterruptedError( ErrorParam( e_interrupted ).origin( e_orig_vm ).
-                     symbol( currentSymbol()->name() ).
-                     module( currentModule()->name() ).
-                     line( __LINE__ ).
-                     hard() );
-               // just re-parse the event
-               m_currentContext->pc() = i_pc_redo_request;
-               continue;
-            }
-
-            m_currentContext->pc() = m_currentContext->pc_next();
-         return;
-
-         // event return is used to return from a temporary frame,
-         // so it is better to reset it on exit so that the calling function
-         // do not need this burden.
-         case eventReturn:
-            m_currentContext->pc() = m_currentContext->pc_next();
-            resetEvent();
-         return;
-
-         // manage try/catch
-         case eventRisen:
-            // While the try frame is not in the current frame, we should return.
-            // this unless stackBase() is zero; in that case, the VM must take some action.
-
-            // However, before proceding we have to create a correct stack frame report for the error.
-            // If the error is internally generated, a frame has been already created. We should
-            // create here only error data about uncaught raises from the scripts.
-
-            if( tryFrame() == i_noTryFrame && the_error == 0 )  // uncaught error raised from scripts...
-            {
-               // create the error that the external application will see.
-               Error *err;
-               if ( regB().isOfClass( "Error" ) )
-               {
-                  // in case of an error of class Error, we have already a good error inside of it.
-                  err = static_cast<core::ErrorObject *>(regB().asObjectSafe())->getError();
-                  err->incref();
-               }
-               else {
-                  // else incapsulate the item in an error.
-                  err = new GenericError( ErrorParam( e_uncaught ).origin( e_orig_vm ) );
-                  err->raised( regB() );
-               }
-               the_error = err;
-            }
-
-            if( the_error != 0 && ! the_error->hasTraceback() )
-               fillErrorContext( the_error, true );
-
-            // Enter the stack frame that should handle the error (or raise to the top if uncaught)
-            while( stackBase() != 0 && ( stackBase() > tryFrame() || tryFrame() == i_noTryFrame ) )
-            {
-               callReturn();
-               if ( m_event == eventReturn )
-               {
-                  // yes, exit but of course, maintain the error status
-                  m_event = eventRisen;
-
-                  // we must return only if the stackbase is not zero; otherwise, we return to a
-                  // base callItem, and we must manage internally that case.
-                  if ( stackBase() != 0 )
-                  {
-                     if ( the_error != 0 )
-                     {
-                        throw the_error;
-                     }
-                     return;
-                  }
-               }
-               // call return may raise eventQuit, but only when stackBase() is zero,
-               // so we don't consider it.
-            }
-
-            // We are in the frame that should handle the error, in one way or another
-            // should we catch it?
-            // If the error is zero, we know we have a script exception ready to be caught
-            // as we have filtered it before
-            if ( the_error == 0 )
-            {
-               popTry( true );
-               m_event = eventNone;
-               continue;
-            }
-            // else catch it only if allowed.
-            else if( the_error->catchable() && tryFrame() != i_noTryFrame )
-            {
-               CoreObject *obj = the_error->scriptize( this );
-               the_error->decref();
-               the_error = 0;
-               if ( obj != 0 )
-               {
-                  // we'll manage the error throuhg the obj, so we release the ref.
-                  regB().setObject( obj );
-                  popTry( true );
-                  //the_error->decref();  // scriptize adds a reference
-                  m_event = eventNone;
-                  continue;
-               }
-               else {
-                  // Panic. Should not happen -- scriptize has raised a symbol not found error
-                  // describing the missing error class; we must tell the user so that the module
-                  // not declaring the correct error class, or failing to export it, can be
-                  // fixed.
-                  throw the_error;
-               }
-            }
-            // we couldn't catch the error (this also means we're at stackBase() zero)
-            // we should handle it then exit
-            else {
-               // we should manage the error; if we're here, stackBase() is zero,
-               // so we are the last in charge
-               throw the_error;
-            }
-         break;
-
-         case eventYield:
-            m_currentContext->pc() = m_currentContext->pc_next();
-            m_event = eventNone;
-            try
-            {
-               yield( m_yieldTime );
-               if ( m_event == eventSleep )
-                  return;
-               m_event = eventNone;
-            }
-            catch( Error* e )
-            {
-               m_currentContext->pc() = i_pc_redo_request;
-               the_error = e;
-               m_event = eventRisen;
-            }
+            // By default, if nothing else happens, we should do a check no sooner than this.
+            m_opNextCheck = m_opCount + FALCON_VM_DFAULT_CHECK_LOOPS;
             
-         continue;
-
-         // this can only be generated by an electContext or rotateContext that finds there's the need to sleep
-         // as contexts cannot be elected in atomic mode, and as wait event is
-         // already guarded against atomic mode breaks, we let this through
-         case eventSleep:
-            return;
-
-         case eventWait:
-            if ( m_atomicMode )
-            {
-               the_error = new InterruptedError( ErrorParam( e_interrupted ).origin( e_orig_vm ).
-                     symbol( "vm_run" ).
-                     module( "core.vm" ).
-                     line( __LINE__ ).
-                     hard() );
-               // just re-parse the event
-               m_currentContext->pc() = i_pc_redo_request;
-               m_event = eventRisen;
-               continue;
-            }
-            if ( m_sleepingContexts.empty() && !m_sleepAsRequests && m_yieldTime < 0.0 )
-            {
-               Error* the_error = new GenericError( ErrorParam( e_deadlock ).origin( e_orig_vm ) );
-               fillErrorContext( the_error );
-               m_event = eventRisen;
-               throw the_error;
-            }
-
-            m_currentContext->pc() = m_currentContext->pc_next();
-
-            // if wait time is > 0, put at sleep
-            if( m_yieldTime > 0.0 )
-               putAtSleep( m_currentContext, m_yieldTime );
-
-            electContext();
-
-            if ( m_event == eventSleep )
-               return;
-
-            m_event = eventNone;
-         continue;
-
-         case eventQuit:
-         case eventRQuit:
-            m_currentContext->pc() = m_currentContext->pc_next();
-            // quit the machine
-         return;
-
-         default:
-            // switch to next instruction
-            m_currentContext->pc() = m_currentContext->pc_next();
+            // manage periodic callbacks
+            periodicChecks();
+         }
+         
+         m_currentContext->pc() = m_currentContext->pc_next();
       }
-
+      catch( VMEventReturn & )
+      {
+         //m_currentContext->pc() = m_currentContext->pc_next();
+         return;
+      }
+      // catches explicitly raised items.
+      catch( Item& raised )
+      {
+         handleRaisedItem( raised );
+      }
+      // errors thrown by C extensions;
+      // they may get encapsulated in Error() instances and handled by the script
+      // via handleRaised
+      catch( Error *err )
+      {
+         handleRaisedError( err );
+      }
    } // end while -- VM LOOP
 }
 
@@ -582,9 +313,14 @@ void opcodeHandler_GEND( register VMachine *vm )
    LinearDict *dict = new LinearDict( length );
 
    // copy the m-topmost items in the stack into the array
-   int32 base = vm->stack().size() - ( length * 2 );
-   for ( register uint32 i = base; i < vm->stack().size(); i += 2 ) {
-      dict->insert( vm->stackItem(i), vm->stackItem(i+1));
+   uint32 len =  vm->stack().size();
+   uint32 base = len - ( length * 2 );
+   for ( uint32 i = base ; i < len; i += 2 ) {
+      // insert may modify the stack (if using special "compare" functions
+      Item i1 = vm->stackItem(i);
+      Item i2 = vm->stackItem(i+1);
+      dict->insert( i1, i2 );
+      fassert( vm->stack().size() == len );
    }
    vm->stack().resize( base );
    vm->regA().setDict( dict );
@@ -623,7 +359,7 @@ void opcodeHandler_PSHR( register VMachine *vm )
 void opcodeHandler_POP( register VMachine *vm )
 {
    if ( vm->stack().size() == vm->stackBase() ) {
-      vm->raiseError( e_stackuf, "POP" );
+      vm->raiseHardError( e_stackuf, "POP", __LINE__ );
       return;
    }
    //  --- WARNING: do not dereference!
@@ -668,7 +404,7 @@ void opcodeHandler_TRAL( register VMachine *vm )
    uint32 pcNext = vm->getNextNTD32();
 
    if ( vm->stack().size() < 3 ) {
-      vm->raiseError( e_stackuf, "TRAL" );
+      vm->raiseHardError( e_stackuf, "TRAL", __LINE__ );
       return;
    }
 
@@ -729,8 +465,7 @@ void opcodeHandler_TRAL( register VMachine *vm )
       break;
 
       default:
-         vm->raiseRTError( new TypeError( ErrorParam( e_invop ).extra("TRAL").origin( e_orig_vm ) ) );
-         return;
+         throw new TypeError( ErrorParam( e_invop ).extra("TRAL").origin( e_orig_vm ) );
    }
 }
 
@@ -741,7 +476,7 @@ void opcodeHandler_IPOP( register VMachine *vm )
 {
    register uint32 amount = (uint32) vm->getNextNTD32();
    if ( vm->stack().size() < amount ) {
-      vm->raiseError( e_stackuf, "IPOP" );
+      vm->raiseHardError( e_stackuf, "IPOP", __LINE__ );
       return;
    }
 
@@ -783,8 +518,9 @@ void opcodeHandler_JTRY( register VMachine *vm )
 //19
 void opcodeHandler_RIS( register VMachine *vm )
 {
-   vm->regB() = *vm->getOpcodeParam( 1 )->dereference();
-   vm->m_event = VMachine::eventRisen;
+   // todo - when this will be in the main loop,
+   // we may use directly handleRaisedEvent()
+   throw *vm->getOpcodeParam( 1 )->dereference();
 }
 
 //1A
@@ -795,7 +531,7 @@ void opcodeHandler_BNOT( register VMachine *vm )
       vm->regA().setInteger( ~operand->asInteger() );
    }
    else
-      vm->raiseRTError( new TypeError( ErrorParam( e_bitwise_op ).extra("BNOT").origin( e_orig_vm ) ) );
+      throw new TypeError( ErrorParam( e_bitwise_op ).extra("BNOT").origin( e_orig_vm ) );
 }
 
 //1B
@@ -806,7 +542,7 @@ void opcodeHandler_NOTS( register VMachine *vm )
    if ( operand1->isOrdinal() )
       operand1->setInteger( ~operand1->forceInteger() );
    else
-      vm->raiseRTError( new TypeError( ErrorParam( e_bitwise_op ).extra("NOTS").origin( e_orig_vm ) ) );
+      throw new TypeError( ErrorParam( e_bitwise_op ).extra("NOTS").origin( e_orig_vm ) );
 }
 
 //1c
@@ -815,7 +551,7 @@ void opcodeHandler_PEEK( register VMachine *vm )
    register Item *operand = vm->getOpcodeParam( 1 )->dereference();
 
    if ( vm->stack().size() == 0 ) {
-      vm->raiseError( e_stackuf, "PEEK" );
+      vm->raiseHardError( e_stackuf, "PEEK", __LINE__ );
       return;
    }
    *operand = vm->stack().topItem();
@@ -1003,7 +739,7 @@ void opcodeHandler_BAND( register VMachine *vm )
       vm->regA().setInteger( operand1->forceInteger() & operand2->forceInteger() );
    }
    else
-      vm->raiseRTError( new TypeError( ErrorParam( e_invop ).extra("BAND").origin( e_orig_vm ) ) );
+      throw new TypeError( ErrorParam( e_invop ).extra("BAND").origin( e_orig_vm ) );
 }
 
 //2C
@@ -1016,7 +752,7 @@ void opcodeHandler_BOR( register VMachine *vm )
       vm->regA().setInteger( operand1->forceInteger() | operand2->forceInteger() );
    }
    else
-      vm->raiseRTError( new TypeError( ErrorParam( e_invop ).extra("BOR").origin( e_orig_vm ) ) );
+      throw new TypeError( ErrorParam( e_invop ).extra("BOR").origin( e_orig_vm ) );
 }
 
 //2D
@@ -1029,7 +765,7 @@ void opcodeHandler_BXOR( register VMachine *vm )
       vm->regA().setInteger( operand1->forceInteger() ^ operand2->forceInteger() );
    }
    else
-      vm->raiseRTError( new TypeError( ErrorParam( e_invop ).extra("BXOR").origin( e_orig_vm ) ) );
+      throw new TypeError( ErrorParam( e_invop ).extra("BXOR").origin( e_orig_vm ) );
 }
 
 //2E
@@ -1042,7 +778,7 @@ void opcodeHandler_ANDS( register VMachine *vm )
       operand1->setInteger( operand1->forceInteger() & operand2->forceInteger() );
    }
    else
-      vm->raiseRTError( new TypeError( ErrorParam( e_invop ).extra("ANDS").origin( e_orig_vm ) ) );
+      throw new TypeError( ErrorParam( e_invop ).extra("ANDS").origin( e_orig_vm ) );
 }
 
 //2F
@@ -1055,7 +791,7 @@ void opcodeHandler_ORS( register VMachine *vm )
       operand1->setInteger( operand1->asInteger() | operand2->asInteger() );
    }
    else
-      vm->raiseRTError( new TypeError( ErrorParam( e_invop ).extra("ORS").origin( e_orig_vm ) ) );
+      throw new TypeError( ErrorParam( e_invop ).extra("ORS").origin( e_orig_vm ) );
 }
 
 //30
@@ -1068,7 +804,7 @@ void opcodeHandler_XORS( register VMachine *vm )
       operand1->setInteger( operand1->forceInteger() ^ operand2->forceInteger() );
    }
    else
-      vm->raiseRTError( new TypeError( ErrorParam( e_invop ).extra("XORS").origin( e_orig_vm ) ) );
+      throw new TypeError( ErrorParam( e_invop ).extra("XORS").origin( e_orig_vm ) );
 }
 
 //31
@@ -1194,8 +930,7 @@ void opcodeHandler_INST( register VMachine *vm )
 
    if( operand2->type() != FLC_ITEM_CLASS )
    {
-      vm->raiseRTError( new TypeError( ErrorParam( e_invop ).extra("INST").origin( e_orig_vm ) ) );
-      return;
+      throw new TypeError( ErrorParam( e_invop ).extra("INST").origin( e_orig_vm ) );
    }
 
    Item method = operand2->asClass()->constructor();
@@ -1235,7 +970,7 @@ void opcodeHandler_ONCE( register VMachine *vm )
       return;
    }
 
-   vm->raiseError( e_invop, "ONCE" );
+   vm->raiseHardError( e_invop, "ONCE", __LINE__ );
 }
 
 //3D
@@ -1263,9 +998,9 @@ void opcodeHandler_LDP( register VMachine *vm )
       operand1->getProperty( *property, vm->regA() );
    }
    else
-      vm->raiseRTError(
+      throw
          new AccessError( ErrorParam( e_prop_acc ).origin( e_orig_vm ) .
-            extra( operand2->isString() ? *operand2->asString() : "?" ) ) );
+            extra( operand2->isString() ? *operand2->asString() : "?" ) );
 }
 
 
@@ -1277,8 +1012,7 @@ void opcodeHandler_TRAN( register VMachine *vm )
    uint32 p3 = vm->getNextNTD32();
 
    if ( vm->stack().size() < 3 ) {
-      vm->raiseError( e_stackuf, "TRAN" );
-      return;
+      vm->raiseHardError( e_stackuf, "TRAN", __LINE__ );
    }
 
    register int size = vm->stack().size();
@@ -1294,8 +1028,7 @@ void opcodeHandler_TRAN( register VMachine *vm )
       {
          if ( isIterator )
          {
-            vm->raiseError( e_stackuf, "TRAN" );
-            return;
+            vm->raiseHardError( e_stackuf, "TRAN", __LINE__ );
          }
 
          CoreArray *sarr = source->asArray();
@@ -1305,7 +1038,7 @@ void opcodeHandler_TRAN( register VMachine *vm )
          {
             if ( counter >= sarr->length() )
             {
-               vm->raiseError( e_arracc, "TRAN" );
+               vm->raiseHardError( e_arracc, "TRAN", __LINE__  );
                return;
             }
             sarr->remove( counter );
@@ -1327,9 +1060,8 @@ void opcodeHandler_TRAN( register VMachine *vm )
          {
             uint32 vars = (uint32) dest->asInteger();
             if ( ! source->isArray() || vars != source->asArray()->length() ) {
-               vm->raiseRTError(
-                  new AccessError( ErrorParam( e_unpack_size ).origin( e_orig_vm ).extra( "TRAN" ) ) );
-               return;
+               throw
+                  new AccessError( ErrorParam( e_unpack_size ).origin( e_orig_vm ).extra( "TRAN" ) );
             }
 
             CoreArray *sarr = source->asArray();
@@ -1346,16 +1078,15 @@ void opcodeHandler_TRAN( register VMachine *vm )
       case FLC_ITEM_DICT:
          if ( ! isIterator || ! isDestStack )
          {
-            vm->raiseRTError(
-               new AccessError( ErrorParam( e_unpack_size ).origin( e_orig_vm ).extra( "TRAN" ) ) );
-            return;
+            throw
+               new AccessError( ErrorParam( e_unpack_size ).origin( e_orig_vm ).extra( "TRAN" ) );
          }
          else {
             DictIterator *iter = (DictIterator *) iterator->asGCPointer();
 
             if( ! iter->isValid() )
             {
-               vm->raiseError( e_arracc, "TRAN" );
+               vm->raiseHardError( e_arracc, "TRAN", __LINE__  );
                return;
             }
 
@@ -1388,7 +1119,7 @@ void opcodeHandler_TRAN( register VMachine *vm )
       case FLC_ITEM_OBJECT:
          if ( ! isIterator )
          {
-            vm->raiseError( e_arracc, "TRAN" );
+            vm->raiseHardError( e_arracc, "TRAN", __LINE__  );
             return;
          }
          else {
@@ -1396,7 +1127,7 @@ void opcodeHandler_TRAN( register VMachine *vm )
 
             if( ! iter->isValid() )
             {
-               vm->raiseError( e_arracc, "TRAN" );
+               vm->raiseHardError( e_arracc, "TRAN", __LINE__  );
                return;
             }
 
@@ -1404,7 +1135,7 @@ void opcodeHandler_TRAN( register VMachine *vm )
             {
                if( ! iter->erase() )
                {
-                  vm->raiseError( e_arracc, "TRAN" );
+                  vm->raiseHardError( e_arracc, "TRAN", __LINE__  );
                   return;
                }
                // had the delete invalidated this?
@@ -1430,9 +1161,8 @@ void opcodeHandler_TRAN( register VMachine *vm )
       case FLC_ITEM_STRING:
          if ( isIterator || isDestStack )
          {
-            vm->raiseRTError(
-               new AccessError( ErrorParam( e_unpack_size ).origin( e_orig_vm ).extra( "TRAN" ) ) );
-            return;
+            throw
+               new AccessError( ErrorParam( e_unpack_size ).origin( e_orig_vm ).extra( "TRAN" ) );
          }
          else {
             uint32 counter = (uint32) iterator->asInteger();
@@ -1461,9 +1191,8 @@ void opcodeHandler_TRAN( register VMachine *vm )
       case FLC_ITEM_MEMBUF:
          if ( isIterator || isDestStack )
          {
-            vm->raiseRTError(
-               new AccessError( ErrorParam( e_unpack_size ).origin( e_orig_vm ).extra( "TRAN" ) ) );
-            return;
+            throw
+               new AccessError( ErrorParam( e_unpack_size ).origin( e_orig_vm ).extra( "TRAN" ) );
          }
          else {
             uint32 counter = (uint32) iterator->asInteger();
@@ -1485,9 +1214,8 @@ void opcodeHandler_TRAN( register VMachine *vm )
       case FLC_ITEM_RANGE:
          if ( isIterator || isDestStack )
          {
-            vm->raiseRTError(
-               new AccessError( ErrorParam( e_unpack_size ).origin( e_orig_vm ).extra( "TRAN" ) ) );
-            return;
+            throw
+               new AccessError( ErrorParam( e_unpack_size ).origin( e_orig_vm ).extra( "TRAN" ) );
          }
          else {
             int64 counter = iterator->asInteger();
@@ -1517,7 +1245,7 @@ void opcodeHandler_TRAN( register VMachine *vm )
       break;
 
       default:
-         vm->raiseError( e_invop, "TRAN" );
+         vm->raiseHardError( e_invop, "TRAN", __LINE__  );
          return;
    }
 
@@ -1536,10 +1264,10 @@ void opcodeHandler_LDAS( register VMachine *vm )
       CoreArray* arr = operand2->asArray();
       if( arr->length() != size )
       {
-         vm->raiseRTError(
+         throw
             new AccessError( ErrorParam( e_unpack_size )
                .extra( "LDAS" )
-               .origin( e_orig_vm ) ) );
+               .origin( e_orig_vm ) );
       }
       else {
          uint32 oldpos = vm->stack().size();
@@ -1549,10 +1277,10 @@ void opcodeHandler_LDAS( register VMachine *vm )
      }
    }
    else {
-      vm->raiseRTError(
+      throw
             new AccessError( ErrorParam( e_invop )
                .extra( "LDAS" )
-               .origin( e_orig_vm ) ) );
+               .origin( e_orig_vm ) );
    }
 }
 
@@ -1698,7 +1426,7 @@ void opcodeHandler_PROV( register VMachine *vm )
    Item *operand2 =  vm->getOpcodeParam( 2 )->dereference();
 
    if ( operand2->type() != FLC_ITEM_STRING ) {
-      vm->raiseError( e_invop, "PROV" ); // hard error, as the string should be created by the compiler
+      vm->raiseHardError( e_invop, "PROV", __LINE__  ); // hard error, as the string should be created by the compiler
       return;
    }
 
@@ -1734,7 +1462,7 @@ void opcodeHandler_STVS( register VMachine *vm )
 {
    if(  vm->stack().empty() )
    {
-      vm->raiseError( e_stackuf, "STVS" );
+      vm->raiseHardError( e_stackuf, "STVS", __LINE__  );
       return;
    }
 
@@ -1753,7 +1481,7 @@ void opcodeHandler_STPS( register VMachine *vm )
 {
    if( vm->stack().empty() )
    {
-      vm->raiseError( e_stackuf, "STPS" );
+      vm->raiseHardError( e_stackuf, "STPS", __LINE__  );
       return;
    }
 
@@ -1769,7 +1497,7 @@ void opcodeHandler_STPS( register VMachine *vm )
    else
    {
       vm->stack().pop();
-      vm->raiseRTError( new TypeError( ErrorParam( e_prop_acc ).extra("STPS").origin( e_orig_vm ) ) );
+      throw new TypeError( ErrorParam( e_prop_acc ).extra("STPS").origin( e_orig_vm ) );
    }
 }
 
@@ -1824,7 +1552,7 @@ void opcodeHandler_STP( register VMachine *vm )
       return;
    }
 
-   vm->raiseRTError( new TypeError( ErrorParam( e_invop ).extra("STP").origin( e_orig_vm ) ) );
+   throw new TypeError( ErrorParam( e_invop ).extra("STP").origin( e_orig_vm ) );
 
 /**
    \todo check this code
@@ -1888,9 +1616,9 @@ void opcodeHandler_LDPT( register VMachine *vm )
       operand1->getProperty( *property, *vm->getOpcodeParam( 3 ) );
    }
    else
-      vm->raiseRTError(
+      throw
          new AccessError( ErrorParam( e_prop_acc ).origin( e_orig_vm ) .
-            extra( operand2->isString() ? *operand2->asString() : "?" ) ) );
+            extra( operand2->isString() ? *operand2->asString() : "?" ) );
 }
 
 //54
@@ -1931,8 +1659,7 @@ void opcodeHandler_STPR( register VMachine *vm )
       return;
    }
 
-   vm->raiseRTError( new TypeError( ErrorParam( e_prop_acc ).extra("STPR").origin( e_orig_vm ) ) );
-   return;
+   throw new TypeError( ErrorParam( e_prop_acc ).extra("STPR").origin( e_orig_vm ) );
 }
 
 //56
@@ -1967,9 +1694,8 @@ void opcodeHandler_TRAV( register VMachine *vm )
             if( sourceItem->type() != FLC_ITEM_ARRAY ||
                varCount != sourceItem->asArray()->length() )
             {
-               vm->raiseRTError(
-                  new AccessError( ErrorParam( e_unpack_size ).origin( e_orig_vm ).extra( "TRAV" ) ) );
-               return;
+               throw
+                  new AccessError( ErrorParam( e_unpack_size ).origin( e_orig_vm ).extra( "TRAV" ) );
             }
 
             for ( uint32 i = 0; i < varCount; i ++ ) {
@@ -1995,9 +1721,8 @@ void opcodeHandler_TRAV( register VMachine *vm )
          if( ! ( vm->operandType( 1 ) == P_PARAM_INT32 ||  vm->operandType( 1 ) == P_PARAM_INT64 ) ||
               dest->asInteger() != 2 )
          {
-            vm->raiseRTError(
-               new AccessError( ErrorParam( e_unpack_size ).origin( e_orig_vm ).extra( "TRAV" ) ) );
-            return;
+            throw
+               new AccessError( ErrorParam( e_unpack_size ).origin( e_orig_vm ).extra( "TRAV" ) );
          }
 
          // we need an iterator...
@@ -2020,8 +1745,7 @@ void opcodeHandler_TRAV( register VMachine *vm )
          Sequence* seq = source->asObjectSafe()->getSequence();
          if( seq == 0 )
          {
-            vm->raiseRTError( new TypeError( ErrorParam( e_invop ).extra("TRAV").origin( e_orig_vm ) ) );
-            goto trav_go_away;
+            throw new TypeError( ErrorParam( e_invop ).extra("TRAV").origin( e_orig_vm ) );
          }
 
          if ( seq->empty() )
@@ -2031,9 +1755,8 @@ void opcodeHandler_TRAV( register VMachine *vm )
 
          if( vm->operandType( 1 ) == P_PARAM_INT32 || vm->operandType( 1 ) == P_PARAM_INT64 )
          {
-            vm->raiseRTError(
-               new AccessError( ErrorParam( e_unpack_size ).origin( e_orig_vm ).extra( "TRAV" ) ) );
-            return;
+            throw
+               new AccessError( ErrorParam( e_unpack_size ).origin( e_orig_vm ).extra( "TRAV" ) );
          }
 
          // we need an iterator...
@@ -2063,9 +1786,8 @@ void opcodeHandler_TRAV( register VMachine *vm )
 
          if( vm->operandType( 1 ) == P_PARAM_INT32 || vm->operandType( 1 ) == P_PARAM_INT64 )
          {
-            vm->raiseRTError(
-               new AccessError( ErrorParam( e_unpack_size ).origin( e_orig_vm ).extra( "TRAV" ) ) );
-            return;
+            throw
+               new AccessError( ErrorParam( e_unpack_size ).origin( e_orig_vm ).extra( "TRAV" ) );
          }
          *dest->dereference() = new CoreString( sstr->subString(0,1) );
          vm->stack().itemAt( vm->stack().size()-3 ) = ( (int64) 0 );
@@ -2078,9 +1800,8 @@ void opcodeHandler_TRAV( register VMachine *vm )
 
          if( vm->operandType( 1 ) == P_PARAM_INT32 || vm->operandType( 1 ) == P_PARAM_INT64 )
          {
-            vm->raiseRTError(
-               new AccessError( ErrorParam( e_unpack_size ).origin( e_orig_vm ).extra( "TRAV" ) ) );
-            return;
+            throw
+               new AccessError( ErrorParam( e_unpack_size ).origin( e_orig_vm ).extra( "TRAV" ) );
          }
          *dest->dereference() = (int64) source->asMemBuf()->get(0);
          vm->stack().itemAt( vm->stack().size()-3 ) = ( (int64) 0 );
@@ -2098,9 +1819,8 @@ void opcodeHandler_TRAV( register VMachine *vm )
 
          if( vm->operandType( 1 ) == P_PARAM_INT32 || vm->operandType( 1 ) == P_PARAM_INT64 )
          {
-            vm->raiseRTError(
-               new AccessError( ErrorParam( e_unpack_size ).origin( e_orig_vm ).extra( "TRAV" ) ) );
-            return;
+            throw
+               new AccessError( ErrorParam( e_unpack_size ).origin( e_orig_vm ).extra( "TRAV" ) );
          }
          *dest->dereference() = (int64) source->asRangeStart();
          vm->stack().itemAt( vm->stack().size()-3 ) = ( (int64) source->asRangeStart() );
@@ -2112,8 +1832,7 @@ void opcodeHandler_TRAV( register VMachine *vm )
 
 
       default:
-         vm->raiseRTError( new TypeError( ErrorParam( e_invop ).extra("TRAV").origin( e_orig_vm ) ) );
-         goto trav_go_away;
+         throw new TypeError( ErrorParam( e_invop ).extra("TRAV").origin( e_orig_vm ) );
    }
 
    // after the iterator/counter, push the source
@@ -2144,7 +1863,7 @@ trav_go_away:
 
    if( vars + 3 > vm->stack().size() )
    {
-      vm->raiseError( e_stackuf, "TRAV" );
+      vm->raiseHardError( e_stackuf, "TRAV", __LINE__  );
    }
    else {
       vm->stack().resize( vm->stack().size() - vars - 3 );
@@ -2183,8 +1902,8 @@ void opcodeHandler_SHL( register VMachine *vm )
    if( operand1->isInteger() && operand2->isInteger() )
       vm->regA().setInteger( operand1->asInteger() << operand2->asInteger() );
    else
-      vm->raiseRTError(
-         new TypeError( ErrorParam( e_invop ).origin( e_orig_vm ).extra("SHL") ) );
+      throw
+         new TypeError( ErrorParam( e_invop ).origin( e_orig_vm ).extra("SHL") );
 
 }
 
@@ -2197,8 +1916,8 @@ void opcodeHandler_SHR( register VMachine *vm )
    if( operand1->isInteger() && operand2->isInteger() )
       vm->regA().setInteger( operand1->asInteger() >> operand2->asInteger() );
    else
-      vm->raiseRTError(
-         new TypeError( ErrorParam( e_invop ).origin( e_orig_vm ).extra("SHR") ) );
+      throw
+         new TypeError( ErrorParam( e_invop ).origin( e_orig_vm ).extra("SHR") );
 }
 
 //5B
@@ -2210,8 +1929,8 @@ void opcodeHandler_SHLS( register VMachine *vm )
    if( operand1->isInteger() && operand2->isInteger() )
       operand1->setInteger( operand1->asInteger() << operand2->asInteger() );
    else
-      vm->raiseRTError(
-         new TypeError( ErrorParam( e_invop ).origin( e_orig_vm ).extra("SHLS") ) );
+      throw
+         new TypeError( ErrorParam( e_invop ).origin( e_orig_vm ).extra("SHLS") );
 }
 
 //5C
@@ -2223,8 +1942,8 @@ void opcodeHandler_SHRS( register VMachine *vm )
    if( operand1->isInteger() && operand2->isInteger() )
       operand1->setInteger( operand1->asInteger() >> operand2->asInteger() );
    else
-      vm->raiseRTError(
-         new TypeError( ErrorParam( e_invop ).origin( e_orig_vm ).extra("SHRS") ) );
+      throw
+         new TypeError( ErrorParam( e_invop ).origin( e_orig_vm ).extra("SHRS") );
 }
 
 
@@ -2255,14 +1974,14 @@ void opcodeHandler_LSB( register VMachine *vm )
          if ( cs->checkPosBound( pos ) )
             vm->retval( (int64) cs->getCharAt( pos ) );
          else
-            vm->raiseRTError(
-               new AccessError( ErrorParam( e_arracc ).origin( e_orig_vm ).extra( "LSB" ) ) );
+            throw
+               new AccessError( ErrorParam( e_arracc ).origin( e_orig_vm ).extra( "LSB" ) );
       }
       return;
    }
 
-   vm->raiseRTError(
-      new TypeError( ErrorParam( e_invop ).origin( e_orig_vm ).extra( "LSB" ) ) );
+   throw
+      new TypeError( ErrorParam( e_invop ).origin( e_orig_vm ).extra( "LSB" ) );
 }
 
 // 0x60
@@ -2341,9 +2060,7 @@ void opcodeHandler_SELE( register VMachine *vm )
 
    if ( reRaise && hasDefault ) // in case of re-raise
    {
-      vm->m_event = VMachine::eventRisen;
-      // error already in B, as we didn't execute any code.
-      return;
+      throw vm->regB();
    }
 
    // in case of failure go to default or past sele...
@@ -2357,14 +2074,13 @@ void opcodeHandler_INDI( register VMachine *vm )
 
    if ( ! operand1->isString() )
    {
-      vm->raiseRTError( new TypeError( ErrorParam( e_invop ).extra("INDI").origin( e_orig_vm ) ) );
-      return;
+      throw new TypeError( ErrorParam( e_invop ).extra("INDI").origin( e_orig_vm ) );
    }
 
    if ( ! vm->findLocalVariable( *operand1->asString(), vm->regA() ) )
    {
-       vm->raiseRTError(
-            new ParamError( ErrorParam( e_param_indir_code ).origin( e_orig_vm ).extra( "INDI" ) ) );
+       throw
+            new ParamError( ErrorParam( e_param_indir_code ).origin( e_orig_vm ).extra( "INDI" ) );
    }
 }
 
@@ -2375,8 +2091,7 @@ void opcodeHandler_STEX( register VMachine *vm )
 
    if ( ! operand1->isString() )
    {
-      vm->raiseRTError( new TypeError( ErrorParam( e_invop ).extra("STEX").origin( e_orig_vm ) ) );
-      return;
+      throw new TypeError( ErrorParam( e_invop ).extra("STEX").origin( e_orig_vm ) );
    }
 
    CoreString *target = new CoreString;
@@ -2390,18 +2105,18 @@ void opcodeHandler_STEX( register VMachine *vm )
       break;
 
       case VMachine::return_error_parse_fmt:
-         vm->raiseRTError(
-            new TypeError( ErrorParam( e_fmt_convert ).origin( e_orig_vm ).extra( "STEX" ) ) );
+         throw
+            new TypeError( ErrorParam( e_fmt_convert ).origin( e_orig_vm ).extra( "STEX" ) );
       break;
 
       case VMachine::return_error_string:
-         vm->raiseRTError(
-            new ParamError( ErrorParam( e_param_strexp_code ).origin( e_orig_vm ).extra( "STEX" ) ) );
+         throw
+            new ParamError( ErrorParam( e_param_strexp_code ).origin( e_orig_vm ).extra( "STEX" ) );
       break;
 
       case VMachine::return_error_parse:
-         vm->raiseRTError(
-               new ParamError( ErrorParam( e_param_indir_code ).origin( e_orig_vm ).extra( "STEX" ) ) );
+         throw
+               new ParamError( ErrorParam( e_param_indir_code ).origin( e_orig_vm ).extra( "STEX" ) );
       break;
 
       default:  // warning no-op
@@ -2415,7 +2130,7 @@ void opcodeHandler_TRAC( register VMachine *vm )
    Item *operand1 = vm->getOpcodeParam( 1 )->dereference();
 
    if ( vm->stack().size() < 3 ) {
-      vm->raiseError( e_stackuf, "TRAC" );
+      vm->raiseHardError( e_stackuf, "TRAC", __LINE__  );
       return;
    }
 
@@ -2434,7 +2149,7 @@ void opcodeHandler_TRAC( register VMachine *vm )
       {
          if ( isIterator )
          {
-            vm->raiseError( e_stackuf, "TRAC" );
+            vm->raiseHardError( e_stackuf, "TRAC", __LINE__  );
             return;
          }
 
@@ -2455,7 +2170,7 @@ void opcodeHandler_TRAC( register VMachine *vm )
       case FLC_ITEM_OBJECT:
          if ( ! isIterator )
          {
-            vm->raiseError( e_stackuf, "TRAC" );
+            vm->raiseHardError( e_stackuf, "TRAC", __LINE__  );
             return;
          }
          else {
@@ -2474,7 +2189,7 @@ void opcodeHandler_TRAC( register VMachine *vm )
       case FLC_ITEM_MEMBUF:
          if ( isIterator )
          {
-            vm->raiseError( e_stackuf, "TRAC" );
+            vm->raiseHardError( e_stackuf, "TRAC", __LINE__  );
          }
          else {
             uint32 counter = (uint32) iterator->asInteger();
@@ -2487,7 +2202,7 @@ void opcodeHandler_TRAC( register VMachine *vm )
             if( copied->isOrdinal() )
                mb->set( counter, (uint32) copied->forceInteger() );
             else {
-               vm->raiseError( e_invop, "TRAC" );
+               vm->raiseHardError( e_invop, "TRAC", __LINE__  );
             }
          }
       // always return, we've managed the string.
@@ -2496,7 +2211,7 @@ void opcodeHandler_TRAC( register VMachine *vm )
       case FLC_ITEM_STRING:
          if ( isIterator )
          {
-            vm->raiseError( e_stackuf, "TRAC" );
+            vm->raiseHardError( e_stackuf, "TRAC", __LINE__  );
          }
          else {
             uint32 counter = (uint32) iterator->asInteger();
@@ -2513,7 +2228,7 @@ void opcodeHandler_TRAC( register VMachine *vm )
             else if( copied->isOrdinal() )
                sstr->setCharAt( counter, (uint32) copied->forceInteger() );
             else {
-               vm->raiseError( e_invop, "TRAC" );
+               vm->raiseHardError( e_invop, "TRAC", __LINE__  );
             }
          }
       // always return, we've managed the string.
@@ -2524,7 +2239,7 @@ void opcodeHandler_TRAC( register VMachine *vm )
          return;
 
       default:
-         vm->raiseError( e_invop, "TRAC" );
+         vm->raiseHardError( e_invop, "TRAC", __LINE__  );
          return;
    }
 
@@ -2543,7 +2258,7 @@ void opcodeHandler_WRT( register VMachine *vm )
    Stream *stream = vm->stdOut();
    if ( stream == 0 )
    {
-      vm->raiseError( e_invop, "WRT" );
+      vm->raiseHardError( e_invop, "WRT", __LINE__  );
       return;
    }
 
@@ -2585,7 +2300,7 @@ void opcodeHandler_FORB( register VMachine *vm )
 
    if ( ! operand1->isString() )
    {
-      vm->raiseError( e_invop, "FORB" );
+      vm->raiseHardError( e_invop, "FORB", __LINE__  );
       return;
    }
 

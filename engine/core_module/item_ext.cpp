@@ -125,7 +125,7 @@ FALCON_FUNC  val_int ( ::Falcon::VMachine *vm )
          numeric num = to_int->asNumeric();
          if ( num > 9.223372036854775808e18 || num < -9.223372036854775808e18 )
          {
-            vm->raiseRTError( new MathError( ErrorParam( e_domain, __LINE__ ) ) );
+            throw new MathError( ErrorParam( e_domain, __LINE__ ).origin( e_orig_runtime ) );
          }
          
          vm->retval( (int64)num );
@@ -143,20 +143,21 @@ FALCON_FUNC  val_int ( ::Falcon::VMachine *vm )
             {
                if ( nval > 9.223372036854775808e18 || nval < -9.223372036854775808e18 )
                {
-                  vm->raiseRTError( new MathError( ErrorParam( e_domain, __LINE__ ) ) );
+                  throw new MathError( ErrorParam( e_domain, __LINE__ ).origin( e_orig_runtime ) );
                }
                vm->retval( (int64) nval );
                return;
             }
             
-            vm->raiseRTError( new ParseError( ErrorParam( e_numparse, __LINE__ ) ) );
+            throw new ParseError( ErrorParam( e_numparse, __LINE__ ).origin( e_orig_runtime ) );
          }
          vm->retval( val );
       }
       break;
 
       default:
-         vm->raiseRTError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).extra( "N|S" ) ) );
+         throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+            .origin( e_orig_runtime ).extra( "N|S" ) );
    }
 }
 
@@ -200,16 +201,14 @@ FALCON_FUNC  val_numeric ( ::Falcon::VMachine *vm )
          numeric value;
          if ( ! cs->parseDouble( value ) )
          {
-            
-            vm->raiseRTError( new ParseError( ErrorParam( e_numparse, __LINE__ ) ) );
-            return;
+            throw new ParseError( ErrorParam( e_numparse, __LINE__ ).origin( e_orig_runtime ) );
          }
          vm->retval( value );
       }
       break;
 
       default:
-         vm->raiseRTError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).extra( "(N|S)" ) ) );
+         throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ).extra( "(N|S)" ) );
    }
 }
 
@@ -256,7 +255,7 @@ FALCON_FUNC  mth_typeId ( ::Falcon::VMachine *vm )
       if ( vm->paramCount() > 0 )
          vm->regA() = (int64) vm->param(0)->type();
       else
-         vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).extra( "X" ) ) );
+         throw new ParamError( ErrorParam( e_inv_params ).origin( e_orig_runtime ).extra( "X" ) );
    }
 }
 
@@ -289,7 +288,7 @@ FALCON_FUNC  mth_isCallable ( ::Falcon::VMachine *vm )
       if ( vm->paramCount() > 0 )
          vm->regA().setBoolean( vm->param( 0 )->isCallable() ? 1 : 0 );
       else
-         vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).extra( "X" ) ) );
+         throw new ParamError( ErrorParam( e_inv_params ).origin( e_orig_runtime ).extra( "X" ) );
    }
 }
 
@@ -336,7 +335,8 @@ FALCON_FUNC  mth_getProperty( ::Falcon::VMachine *vm )
    }
 
    if ( obj_x == 0 || ! obj_x->isDeep() || prop_x == 0 || ! prop_x->isString() ) {
-      vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).extra( "O,S" ) ) );
+      throw new ParamError( ErrorParam( e_inv_params )
+            .origin( e_orig_runtime ).extra( "O,S" ) );
    }
 
    obj_x->asDeepItem()->readProperty( *prop_x->asString(), vm->regA() );
@@ -407,8 +407,8 @@ FALCON_FUNC  mth_setProperty( ::Falcon::VMachine *vm )
    }
 
    if ( obj_x == 0 || ! obj_x->isDeep() || prop_x == 0 || ! prop_x->isString() || new_item == 0) {
-      vm->raiseRTError( new ParamError( ErrorParam( e_inv_params )
-         .extra( "O,S" ) ) );
+      throw new ParamError( ErrorParam( e_inv_params )
+         .origin( e_orig_runtime ).extra( "O,S" ) );
    }
 
    obj_x->asDeepItem()->writeProperty( *prop_x->asString(), *new_item );
@@ -436,8 +436,8 @@ FALCON_FUNC  chr ( ::Falcon::VMachine *vm )
    else if ( elem->type() == FLC_ITEM_NUM )
       val = (uint32) elem->asNumeric();
    else {
-      vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).extra( "N" ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params )
+            .origin( e_orig_runtime ).extra( "N" ) );
    }
 
    CoreString *ret = new CoreString;
@@ -461,7 +461,7 @@ FALCON_FUNC  ord ( ::Falcon::VMachine *vm )
    Item *elem = vm->param(0);
    if ( elem == 0 || ! elem->isString() || elem->asString()->size() == 0 )
    {
-      vm->raiseRTError( new ParamError( ErrorParam( e_inv_params).extra( "S" ) ) );
+      throw new ParamError( ErrorParam( e_inv_params).origin( e_orig_runtime ).extra( "S" ) );
       return;
    }
 
@@ -551,7 +551,8 @@ FALCON_FUNC  mth_ToString ( ::Falcon::VMachine *vm )
       }
       else
       {
-         vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).extra( vm->self().isMethodic() ? "[S]" :  "X,[S]" ) ) );
+         throw new ParamError( ErrorParam( e_inv_params )
+            .origin( e_orig_runtime ).extra( vm->self().isMethodic() ? "[S]" :  "X,[S]" ) );
          return;
       }
    }
@@ -631,8 +632,8 @@ FALCON_FUNC mth_compare( VMachine *vm )
 
    if( first == 0 || second == 0 )
    {
-      vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).extra( vm->self().isMethodic() ? "X" : "X,X" ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params )
+            .origin( e_orig_runtime ).extra( vm->self().isMethodic() ? "X" : "X,X" ) );
    }
 
 
@@ -710,8 +711,7 @@ FALCON_FUNC mth_clone( VMachine *vm )
    {
       if( vm->paramCount() == 0 )
       {
-         vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).extra("X") ) );
-         return;
+         throw new ParamError( ErrorParam( e_inv_params ).origin( e_orig_runtime ).extra("X") );
       }
       else
       {
@@ -720,7 +720,9 @@ FALCON_FUNC mth_clone( VMachine *vm )
    }
 
    if( ! result )
-      vm->raiseError( new CloneError( ErrorParam( e_uncloneable, __LINE__ ).origin( e_orig_runtime ) ) );
+      throw new CloneError( ErrorParam( e_uncloneable, __LINE__ )
+         .hard()
+         .origin( e_orig_runtime ) );
 }
 
 /*#
@@ -760,7 +762,8 @@ FALCON_FUNC mth_className( VMachine *vm )
       self = vm->param(0);
       if ( self == 0 )
       {
-         vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).extra("X") ) );
+         throw new ParamError( ErrorParam( e_inv_params )
+            .origin( e_orig_runtime ).extra("X") );
          return;
       }
    }
@@ -830,8 +833,8 @@ FALCON_FUNC mth_baseClass( VMachine *vm )
       self = vm->param(0);
       if ( self == 0 )
       {
-         vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).extra("X") ) );
-         return;
+         throw new ParamError( ErrorParam( e_inv_params )
+               .origin( e_orig_runtime ).extra("X") );
       }
    }
 
@@ -930,8 +933,8 @@ FALCON_FUNC mth_derivedFrom( VMachine *vm )
 
    if( i_clsName == 0 || ! (i_clsName->isString() || i_clsName->isClass()) )
    {
-      vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).extra( "S|C" ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+         .origin( e_orig_runtime ).extra( "S|C" ) );
    }
 
    const String *name;
@@ -992,8 +995,7 @@ FALCON_FUNC mth_metaclass( VMachine *vm )
       self = vm->param(0);
       if ( self == 0 )
       {
-         vm->raiseRTError( new ParamError( ErrorParam( e_inv_params ).extra("X") ) );
-         return;
+         throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ).extra("X") );
       }
    }
 

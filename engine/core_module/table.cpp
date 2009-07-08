@@ -33,10 +33,9 @@ FALCON_FUNC Table_init( VMachine* vm )
    Item *i_heading = vm->param( 0 );
    if ( i_heading != 0 && ! i_heading->isArray() )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
          .origin( e_orig_runtime )
-         .extra( Engine::getMessage(rtl_no_tabhead) ) ) );
-      return;
+         .extra( Engine::getMessage(rtl_no_tabhead) ) );
    }
 
    CoreTable* table = new CoreTable();
@@ -44,10 +43,9 @@ FALCON_FUNC Table_init( VMachine* vm )
    {
       if (! table->setHeader( i_heading->asArray() ) )
       {
-         vm->raiseModError( new ParamError( ErrorParam( e_param_type, __LINE__ )
+         throw new ParamError( ErrorParam( e_param_type, __LINE__ )
             .origin( e_orig_runtime )
-            .extra( Engine::getMessage(rtl_invalid_tabhead) ) ) );
-         return;
+            .extra( Engine::getMessage(rtl_invalid_tabhead) ) );
       }
    }
 
@@ -73,10 +71,9 @@ FALCON_FUNC Table_init( VMachine* vm )
          tempString += ": [";
          tempString.writeNumber( (int64)( i-1 ) );
          tempString += "]";
-         vm->raiseModError( new ParamError( ErrorParam( e_param_type, __LINE__ )
+         throw new ParamError( ErrorParam( e_param_type, __LINE__ )
             .origin( e_orig_runtime )
-            .extra( tempString ) ) );
-         return;
+            .extra( tempString ) );
       }
       vi->asArray()->table( self );
       table->insertRow( vi->asArray() );
@@ -99,10 +96,9 @@ FALCON_FUNC Table_setHeader( VMachine* vm )
    Item *i_heading = vm->param( 0 );
    if ( i_heading != 0 && ! i_heading->isArray() )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
          .origin( e_orig_runtime )
-         .extra( Engine::getMessage(rtl_no_tabhead) ) ) );
-      return;
+         .extra( Engine::getMessage(rtl_no_tabhead) ) );
    }
 
    CoreObject* self = vm->self().asObject();
@@ -110,18 +106,16 @@ FALCON_FUNC Table_setHeader( VMachine* vm )
 
    if ( table->order() != CoreTable::noitem )
    {
-      vm->raiseModError( new CodeError( ErrorParam( e_table_aconf, __LINE__ )
+      throw new CodeError( ErrorParam( e_table_aconf, __LINE__ )
          .origin( e_orig_runtime )
-         .extra( Engine::getMessage(rtl_tabhead_given) ) ) );
-      return;
+         .extra( Engine::getMessage(rtl_tabhead_given) ) );
    }
 
    if (! table->setHeader( i_heading->asArray() ) )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_param_type, __LINE__ )
+      throw new ParamError( ErrorParam( e_param_type, __LINE__ )
          .origin( e_orig_runtime )
-         .extra( Engine::getMessage(rtl_invalid_tabhead) ) ) );
-      return;
+         .extra( Engine::getMessage(rtl_invalid_tabhead) ) );
    }
 }
 
@@ -139,10 +133,9 @@ FALCON_FUNC Table_getHeader( VMachine* vm )
    Item *i_pos = vm->param( 0 );
    if ( i_pos != 0 && ! i_pos->isOrdinal() )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
          .origin( e_orig_runtime )
-         .extra( "(N)" ) ) );
-      return;
+         .extra( "(N)" ) );
    }
 
    if( i_pos != 0 )
@@ -150,9 +143,8 @@ FALCON_FUNC Table_getHeader( VMachine* vm )
       uint32 pos = (uint32) i_pos->forceInteger();
       if( pos > table->order() )
       {
-         vm->raiseModError( new ParamError( ErrorParam( e_param_range, __LINE__ )
-         .origin( e_orig_runtime ) ) );
-         return;
+         throw new ParamError( ErrorParam( e_param_range, __LINE__ )
+         .origin( e_orig_runtime ) );
       }
 
       vm->retval( new CoreString(  table->heading(pos) ) );
@@ -186,10 +178,9 @@ FALCON_FUNC Table_getColData( VMachine* vm )
    Item *i_pos = vm->param( 0 );
    if ( i_pos != 0 && ! i_pos->isOrdinal() )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
          .origin( e_orig_runtime )
-         .extra( "(N)" ) ) );
-      return;
+         .extra( "(N)" ) );
    }
 
    if( i_pos != 0 )
@@ -197,9 +188,8 @@ FALCON_FUNC Table_getColData( VMachine* vm )
       uint32 pos = (uint32) i_pos->forceInteger();
       if( pos > table->order() )
       {
-         vm->raiseModError( new ParamError( ErrorParam( e_param_range, __LINE__ )
-         .origin( e_orig_runtime ) ) );
-         return;
+         throw new ParamError( ErrorParam( e_param_range, __LINE__ )
+         .origin( e_orig_runtime ) );
       }
 
       vm->retval( table->columnData(pos) );
@@ -264,9 +254,8 @@ FALCON_FUNC  Table_front ( ::Falcon::VMachine *vm )
 
    if( table->empty() ) // empty() is virtual
    {
-      vm->raiseModError( new AccessError( ErrorParam( e_arracc, __LINE__ ).
-         origin( e_orig_runtime ) ) );
-      return;
+      throw new AccessError( ErrorParam( e_arracc, __LINE__ ).
+         origin( e_orig_runtime ) );
    }
 
    vm->retval( table->front() );
@@ -286,9 +275,8 @@ FALCON_FUNC  Table_back ( ::Falcon::VMachine *vm )
 
    if( table->empty() )  // empty() is virtual
    {
-      vm->raiseModError( new AccessError( ErrorParam( e_arracc, __LINE__ ).
-         origin( e_orig_runtime ) ) );
-      return;
+      throw new AccessError( ErrorParam( e_arracc, __LINE__ ).
+         origin( e_orig_runtime ) );
    }
 
    vm->retval( table->back() );
@@ -300,9 +288,8 @@ static void internal_first_last( VMachine *vm, bool mode )
 
    if( table->empty() )  // empty() is virtual
    {
-      vm->raiseModError( new AccessError( ErrorParam( e_arracc, __LINE__ ).
-         origin( e_orig_runtime ) ) );
-      return;
+      throw new AccessError( ErrorParam( e_arracc, __LINE__ ).
+         origin( e_orig_runtime ) );
    }
 
 
@@ -351,10 +338,9 @@ static uint32 internal_col_pos( CoreTable *table, VMachine *vm, Item *i_column )
       if ( colPos == CoreTable::noitem )
       {
          // there isn't such field
-         vm->raiseModError( new AccessError( ErrorParam( e_prop_acc, __LINE__ )
+         throw new AccessError( ErrorParam( e_prop_acc, __LINE__ )
             .origin( e_orig_runtime )
-            .extra( *i_column->asString() ) ) );
-         return CoreTable::noitem;
+            .extra( *i_column->asString() ) );
       }
    }
    else {
@@ -364,10 +350,9 @@ static uint32 internal_col_pos( CoreTable *table, VMachine *vm, Item *i_column )
          String temp;
          temp = "col ";
          temp.writeNumber( (int64) colPos );
-         vm->raiseModError( new AccessError( ErrorParam( e_prop_acc, __LINE__ )
+         throw new AccessError( ErrorParam( e_prop_acc, __LINE__ )
             .origin( e_orig_runtime )
-            .extra( temp ) ) );
-         return CoreTable::noitem;
+            .extra( temp ) );
       }
    }
 
@@ -421,10 +406,9 @@ FALCON_FUNC  Table_get ( ::Falcon::VMachine *vm )
    if ( i_pos == 0 || ! i_pos->isOrdinal()
       || ( i_column != 0 && ! (i_column->isString() || i_column->isOrdinal()) ) )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
          .origin( e_orig_runtime )
-         .extra( "N, [S|N]" ) ) );
-      return;
+         .extra( "N, [S|N]" ) );
    }
 
    CoreArray* page = table->currentPage();
@@ -433,9 +417,8 @@ FALCON_FUNC  Table_get ( ::Falcon::VMachine *vm )
    uint32 pos = (uint32) i_pos->forceInteger();
    if ( pos >= page->length() )
    {
-      vm->raiseModError( new AccessError( ErrorParam( e_prop_acc, __LINE__ )
-         .origin( e_orig_runtime ) ) );
-      return;
+      throw new AccessError( ErrorParam( e_prop_acc, __LINE__ )
+         .origin( e_orig_runtime ) );
    }
 
    // Should we also get a single item?
@@ -464,10 +447,9 @@ FALCON_FUNC  Table_columnPos ( ::Falcon::VMachine *vm )
 
    if ( i_column != 0 && ! i_column->isString() )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
          .origin( e_orig_runtime )
-         .extra( "S" ) ) );
-      return;
+         .extra( "S" ) );
    }
 
    uint32 colpos = table->getHeaderPos( *i_column->asString() );
@@ -499,10 +481,9 @@ FALCON_FUNC  Table_columnData ( ::Falcon::VMachine *vm )
 
    if ( i_column != 0 && ! i_column->isString() && ! i_column->isOrdinal() )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
          .origin( e_orig_runtime )
-         .extra( "S" ) ) );
-      return;
+         .extra( "S" ) );
    }
 
    uint32 colpos = internal_col_pos( table, vm, i_column );
@@ -543,10 +524,9 @@ FALCON_FUNC  Table_find ( ::Falcon::VMachine *vm )
         i_value == 0 ||
         ( i_tcol != 0 && ! (i_tcol->isString()|| i_tcol->isOrdinal()) ) )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
          .origin( e_orig_runtime )
-         .extra( "S|N,X,[S|N]" ) ) );
-      return;
+         .extra( "S|N,X,[S|N]" ) );
    }
 
    CoreArray* page = table->currentPage();
@@ -573,9 +553,8 @@ FALCON_FUNC  Table_find ( ::Falcon::VMachine *vm )
    if ( pos == CoreTable::noitem )
    {
       // there isn't such field
-      vm->raiseModError( new AccessError( ErrorParam( e_prop_acc, __LINE__ )
-         .origin( e_orig_runtime )));
-      return;
+      throw new AccessError( ErrorParam( e_prop_acc, __LINE__ )
+         .origin( e_orig_runtime ));
    }
 
    // we know we have a valid pos here.
@@ -616,20 +595,18 @@ FALCON_FUNC  Table_insert ( ::Falcon::VMachine *vm )
         || i_element == 0 || ! i_element->isArray()
         )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
          .origin( e_orig_runtime )
-         .extra( "N,A" ) ) );
-      return;
+         .extra( "N,A" ) );
    }
 
    CoreArray* element = i_element->asArray();
    uint32 pos = (uint32)( i_pos->isNil() ? table->order() : i_pos->forceInteger());
    if ( element->length() != table->order() )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_param_type, __LINE__ )
+      throw new ParamError( ErrorParam( e_param_type, __LINE__ )
          .origin( e_orig_runtime )
-         .extra( Engine::getMessage( rtl_invalid_tabrow ) ) ) );
-      return;
+         .extra( Engine::getMessage( rtl_invalid_tabrow ) ) );
    }
 
    CoreArray* page = table->currentPage();
@@ -661,10 +638,9 @@ FALCON_FUNC  Table_remove ( ::Falcon::VMachine *vm )
 
    if (i_row == 0 || ! i_row->isOrdinal() )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
          .origin( e_orig_runtime )
-         .extra( "N" ) ) );
-      return;
+         .extra( "N" ) );
    }
 
    uint32 pos = (uint32) i_row->forceInteger();
@@ -674,9 +650,8 @@ FALCON_FUNC  Table_remove ( ::Falcon::VMachine *vm )
       pos = page->length() - pos;
 
    if ( pos >= page->length() ) {
-      vm->raiseModError( new AccessError( ErrorParam( e_param_range, __LINE__ )
-         .origin( e_orig_runtime ) ) );
-      return;
+      throw new AccessError( ErrorParam( e_param_range, __LINE__ )
+         .origin( e_orig_runtime ) );
    }
 
    CoreArray *rem = (*page)[pos].asArray();
@@ -706,10 +681,9 @@ FALCON_FUNC  Table_setColumn ( ::Falcon::VMachine *vm )
    if (i_column == 0 || ! ( i_column->isOrdinal()|| i_column->isString())
       || i_name == 0 || ! ( i_name->isNil() || i_name->isString()) )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
          .origin( e_orig_runtime )
-         .extra( "N|S, Nil|S, [X]" ) ) );
-      return;
+         .extra( "N|S, Nil|S, [X]" ) );
    }
 
    uint32 colpos = internal_col_pos( table, vm, i_column );
@@ -756,10 +730,9 @@ FALCON_FUNC  Table_insertColumn ( ::Falcon::VMachine *vm )
    if ( i_column == 0 || ! ( i_column->isOrdinal()|| i_column->isString())
       || i_name == 0 || ! i_name->isString() )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
          .origin( e_orig_runtime )
-         .extra( "N|S, S, [X], [X]" ) ) );
-      return;
+         .extra( "N|S, S, [X], [X]" ) );
    }
 
    uint32 colpos;
@@ -811,10 +784,9 @@ FALCON_FUNC  Table_removeColumn ( ::Falcon::VMachine *vm )
 
    if ( i_column == 0 || ! ( i_column->isOrdinal() || i_column->isString()) )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
          .origin( e_orig_runtime )
-         .extra( "N|S" ) ) );
-      return;
+         .extra( "N|S" ) );
    }
 
    if ( i_column->isOrdinal() && i_column->forceInteger() < 0 )
@@ -865,10 +837,9 @@ static bool table_choice_next( Falcon::VMachine *vm )
 
       // a bit paranoid, but users may really screw up the table.
       if ( pos > table->biddingsSize() ) {
-         vm->raiseModError( new AccessError( ErrorParam( e_continue_out, __LINE__ )
+         throw new AccessError( ErrorParam( e_continue_out, __LINE__ )
          .origin( e_orig_runtime )
-         .extra( Engine::getMessage( rtl_broken_table ) ) ) );
-         return false;
+         .extra( Engine::getMessage( rtl_broken_table ) ) );
       }
 
       numeric *biddings = table->biddings();
@@ -941,12 +912,9 @@ static bool table_choice_next( Falcon::VMachine *vm )
 
       // else, the item is not callable! Raise an error.
       // (it's ok also if we pushed the parameter; stack is unwinded).
-      vm->raiseModError( new AccessError( ErrorParam( e_non_callable, __LINE__ )
+      throw new AccessError( ErrorParam( e_non_callable, __LINE__ )
          .origin( e_orig_runtime )
-         .extra( Engine::getMessage( rtl_uncallable_col ) ) ) );
-
-      // pitifully, we're done.
-      return false;
+         .extra( Engine::getMessage( rtl_uncallable_col ) ) );
    }
    else {
       // function provided externally
@@ -1070,10 +1038,9 @@ FALCON_FUNC  Table_choice ( ::Falcon::VMachine *vm )
          || (i_rows != 0 && ! i_rows->isRange() )
        )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
          .origin( e_orig_runtime )
-         .extra( "C,[N|S],[R]" ) ) );
-      return;
+         .extra( "C,[N|S],[R]" ) );
    }
 
    // prepare local stack and function pointer
@@ -1121,10 +1088,9 @@ FALCON_FUNC  Table_bidding ( ::Falcon::VMachine *vm )
          || (i_rows != 0 && ! i_rows->isRange() )
        )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
          .origin( e_orig_runtime )
-         .extra( "[N|S],[N|S],[R]" ) ) );
-      return;
+         .extra( "[N|S],[N|S],[R]" ) );
    }
 
    CoreTable *table = static_cast<CoreTable *>( vm->self().asObject()->getUserData() );
@@ -1164,10 +1130,9 @@ FALCON_FUNC  Table_setPage ( ::Falcon::VMachine *vm )
 
    if ( i_page == 0 || ! i_page->isOrdinal() )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
          .origin( e_orig_runtime )
-         .extra( "N" ) ) );
-      return;
+         .extra( "N" ) );
    }
 
    CoreTable *table = static_cast<CoreTable *>( vm->self().asObject()->getUserData() );
@@ -1177,10 +1142,9 @@ FALCON_FUNC  Table_setPage ( ::Falcon::VMachine *vm )
 
    if ( ! table->setCurrentPage( pid ) )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_param_range, __LINE__ )
+      throw new ParamError( ErrorParam( e_param_range, __LINE__ )
          .origin( e_orig_runtime )
-         .extra( Engine::getMessage( rtl_no_page ) ) ) );
-      return;
+         .extra( Engine::getMessage( rtl_no_page ) ) );
    }
 }
 
@@ -1214,10 +1178,9 @@ FALCON_FUNC  Table_insertPage ( ::Falcon::VMachine *vm )
    if ( (i_pos != 0 && ! ( i_pos->isOrdinal() || i_pos->isNil() ))
       || ( i_data != 0 && ! i_data->isArray() ) )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
          .origin( e_orig_runtime )
-         .extra( "[N],[A]" ) ) );
-      return;
+         .extra( "[N],[A]" ) );
    }
 
    uint32 pos = i_pos == 0 || i_pos->isNil() ? CoreTable::noitem : (uint32) i_pos->forceInteger();
@@ -1233,10 +1196,9 @@ FALCON_FUNC  Table_insertPage ( ::Falcon::VMachine *vm )
       //page->mark( vm->generation() );
       if ( ! table->insertPage( vm->self().asObject(), page, pos ) )
       {
-         vm->raiseModError( new ParamError( ErrorParam( e_param_type, __LINE__ )
+         throw new ParamError( ErrorParam( e_param_type, __LINE__ )
             .origin( e_orig_runtime )
-            .extra( Engine::getMessage( rtl_invalid_tabrow ) ) ));
-         return;
+            .extra( Engine::getMessage( rtl_invalid_tabrow ) ) );
       }
    }
 }
@@ -1255,18 +1217,17 @@ FALCON_FUNC  Table_removePage ( ::Falcon::VMachine *vm )
 
    if ( i_pos == 0 || ! i_pos->isOrdinal() )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
          .origin( e_orig_runtime )
-         .extra( "N" ) ) );
-      return;
+         .extra( "N" ) );
    }
 
    CoreTable *table = static_cast<CoreTable *>( vm->self().asObject()->getUserData() );
    if ( ! table->removePage( (uint32) i_pos->forceInteger() ) )
    {
-      vm->raiseModError( new AccessError( ErrorParam( e_arracc, __LINE__ )
+      throw new AccessError( ErrorParam( e_arracc, __LINE__ )
          .origin( e_orig_runtime )
-         .extra( Engine::getMessage( rtl_no_page ) ) ) );
+         .extra( Engine::getMessage( rtl_no_page ) ) );
    }
 }
 
@@ -1290,10 +1251,9 @@ FALCON_FUNC  Table_getPage ( ::Falcon::VMachine *vm )
 
    if ( i_pos != 0 && ! i_pos->isOrdinal() )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
          .origin( e_orig_runtime )
-         .extra( "[N]" ) ) );
-      return;
+         .extra( "[N]" ) );
    }
 
    CoreTable *table = static_cast<CoreTable *>( vm->self().asObject()->getUserData() );
@@ -1302,10 +1262,9 @@ FALCON_FUNC  Table_getPage ( ::Falcon::VMachine *vm )
 
    if ( page == 0 )
    {
-      vm->raiseModError( new AccessError( ErrorParam( e_arracc, __LINE__ )
+      throw new AccessError( ErrorParam( e_arracc, __LINE__ )
          .origin( e_orig_runtime )
-         .extra( Engine::getMessage( rtl_no_page ) ) ) );
-      return;
+         .extra( Engine::getMessage( rtl_no_page ) ) );
    }
 
    vm->retval( page->clone() );
@@ -1353,10 +1312,9 @@ FALCON_FUNC  Table_resetColumn ( ::Falcon::VMachine *vm )
         (i_row != 0 && !(i_row->isOrdinal() || i_row->isRange() ))
    )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
          .origin( e_orig_runtime )
-         .extra( "N|S,[X],[N|R],[X]" ) ) );
-      return;
+         .extra( "N|S,[X],[N|R],[X]" ) );
    }
 
    CoreTable *table = static_cast<CoreTable *>( vm->self().asObject()->getUserData() );
@@ -1412,9 +1370,8 @@ FALCON_FUNC  Table_resetColumn ( ::Falcon::VMachine *vm )
    }
 
    if ( ((uint32)start) >= page.length() || ((uint32)end) > page.length() ) {
-      vm->raiseModError( new ParamError( ErrorParam( e_param_range, __LINE__ )
-         .origin( e_orig_runtime ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_param_range, __LINE__ )
+         .origin( e_orig_runtime ) );
    }
 
    Item dummyTrue;

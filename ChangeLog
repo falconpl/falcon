@@ -6,6 +6,11 @@ Falcon (0.9.2.1)
            compiler.
   * fixed: Re-enabled falconeer and updated falcon skeleton module.
   * added: methods bind(), unbind(), bound() and value() to LateBind metaclass.
+  * minor: Removed VMachine::raise*Error functions. This removal has also
+           helped to spot many buglests in various modules that consisted in
+           calling the old functions, now actually shortcuts for "throw",
+           before doing some cleanup.
+  * major: VM main loop and context (coroutine) support redesigned.
 
 Falcon (0.9.2)
   * fixed: using more modern throw instead of the obsolete raise() functions

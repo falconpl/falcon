@@ -14,6 +14,7 @@
 */
 
 #include "core_module.h"
+#include <falcon/vmevent.h>
 
 namespace Falcon {
 namespace core {
@@ -39,9 +40,12 @@ FALCON_FUNC  core_exit ( ::Falcon::VMachine *vm )
 {
    Item *ret = vm->param(0);
 
-   vm->requestQuit();
    if ( ret != 0 )
       vm->retval( *ret );
+   else
+      vm->retnil();
+   
+   throw VMEventQuit();
 }
 
 }

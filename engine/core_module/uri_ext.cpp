@@ -152,15 +152,17 @@ bool UriObject::setProperty( const String &prop, const Item &value )
    if ( ! uri.isValid() )
    {
       VMachine* vm = VMachine::getCurrent();
-      throw new AccessError( ErrorParam( e_param_range, __LINE__).
-         extra( vm != 0 ? vm->moduleString( rtl_invalid_uri ) : "" ) );
+      throw new AccessError( ErrorParam( e_param_range, __LINE__)
+         .origin( e_orig_runtime )
+         .extra( vm != 0 ? vm->moduleString( rtl_invalid_uri ) : "" ) );
    }
 
    return CacheObject::setProperty( prop, value );
 
    complain:
-      throw new AccessError( ErrorParam( e_param_type, __LINE__).
-               extra( "S" ) );
+      throw new AccessError( ErrorParam( e_param_type, __LINE__)
+         .origin( e_orig_runtime )
+         .extra( "S" ) );
 }
 
 void UriObject::reflectTo( void* user_data ) const
@@ -205,12 +207,13 @@ void UriObject::reflectTo( void* user_data ) const
    if ( ! uri.isValid() )
    {
       VMachine* vm = VMachine::getCurrent();
-      throw new CodeError( ErrorParam( e_prop_invalid, __LINE__).
-         extra( vm != 0 ? vm->moduleString( rtl_invalid_uri ) : "" ) );
+      throw new CodeError( ErrorParam( e_prop_invalid, __LINE__)
+         .origin( e_orig_runtime )
+         .extra( vm != 0 ? vm->moduleString( rtl_invalid_uri ) : "" ) );
    }
 
 complain:
-   throw new CodeError( ErrorParam( e_prop_invalid, __LINE__) );
+   throw new CodeError( ErrorParam( e_prop_invalid, __LINE__).origin( e_orig_runtime ) );
 }
 
 
@@ -266,16 +269,16 @@ FALCON_FUNC  URI_init ( ::Falcon::VMachine *vm )
    URI *uri = self->getUri();
    if ( ! p0->isString() )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         origin( e_orig_runtime ).extra( "[S]" ) ) );
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         origin( e_orig_runtime ).extra( "[S]" ) );
    }
    else {
       uri->parse( *p0->asString(), false, (i_parse == 0 || i_parse->isTrue()) );
       if ( ! uri->isValid() )
       {
-         vm->raiseModError( new ParamError( ErrorParam( e_inv_params ).
+         throw new ParamError( ErrorParam( e_inv_params ).
             origin( e_orig_runtime ).
-            extra( vm->moduleString( rtl_invalid_uri ) ) ) );
+            extra( vm->moduleString( rtl_invalid_uri ) ) );
       }
       else
          self->reflectFrom( uri );
@@ -297,8 +300,8 @@ FALCON_FUNC  URI_encode ( ::Falcon::VMachine *vm )
 
    if ( ( p0 == 0 ) || ( ! p0->isString() ) )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         origin( e_orig_runtime ).extra( "S" ) ) );
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         origin( e_orig_runtime ).extra( "S" ) );
       return;
    }
 
@@ -319,16 +322,16 @@ FALCON_FUNC  URI_decode ( ::Falcon::VMachine *vm )
 
    if ( ( p0 == 0 ) || ( ! p0->isString() ) )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         origin( e_orig_runtime ).extra( "S" ) ) );
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         origin( e_orig_runtime ).extra( "S" ) );
       return;
    }
 
    CoreString *str = new CoreString;
    if ( ! URI::URLDecode( *p0->asString(), *str ) )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         origin( e_orig_runtime ).extra( vm->moduleString( rtl_invalid_uri ) ) ) );
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         origin( e_orig_runtime ).extra( vm->moduleString( rtl_invalid_uri ) ) );
       return;
    }
 
@@ -358,8 +361,8 @@ FALCON_FUNC  URI_getFields ( ::Falcon::VMachine *vm )
       if ( ! uri.parseQuery( true ) )
       {
          // todo: better signalation
-         vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-            origin( e_orig_runtime ).extra( vm->moduleString( rtl_invalid_uri ) ) ) );
+         throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+            origin( e_orig_runtime ).extra( vm->moduleString( rtl_invalid_uri ) ) );
          return;
       }
 
@@ -405,8 +408,8 @@ FALCON_FUNC  URI_setFields ( ::Falcon::VMachine *vm )
 
    if ( ( p0 == 0 ) || ( ! p0->isDict() ) )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         origin( e_orig_runtime ).extra( "S" ) ) );
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         origin( e_orig_runtime ).extra( "S" ) );
       return;
    }
 
@@ -418,8 +421,8 @@ FALCON_FUNC  URI_setFields ( ::Falcon::VMachine *vm )
    {
       if ( ( !key.isString()) || (! value.isString() ) )
       {
-         vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         origin( e_orig_runtime ).extra( "S" ) ) );
+         throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+            origin( e_orig_runtime ).extra( "S" ) );
          return;
       }
 
