@@ -348,15 +348,6 @@ bool MemPool::markVM( VMachine *vm )
 {
    vm->markLocked();
 
-   // presume that all the registers need fresh marking
-   markItem( vm->regA() );
-   markItem( vm->regB() );
-   markItem( vm->self() );
-
-   // Latch and latcher are not necessary here because they must exist elsewhere.
-   markItem( vm->regBind() );
-   markItem( vm->regBindP() );
-
    // mark all the messaging system.
    vm->markSlots( generation() );
 
@@ -382,9 +373,13 @@ bool MemPool::markVM( VMachine *vm )
 
       markItem( ctx->regA() );
       markItem( ctx->regB() );
+      markItem( ctx->latch() );
       markItem( ctx->latcher() );
+      
+      markItem( vm->regBind() );
+      markItem( vm->regBindP() );
 
-      stack = ctx->getStack();
+      stack = &ctx->stack();
       for( pos = 0; pos < stack->size(); pos++ ) {
          // an invalid item marks the beginning of the call frame
          if ( stack->itemAt( pos ).type() == FLC_ITEM_INVALID )

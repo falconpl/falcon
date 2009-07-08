@@ -38,6 +38,7 @@
 #include <falcon/coreslot.h>
 #include <falcon/baton.h>
 #include <falcon/livemodule.h>
+#include <falcon/vmcontext.h>
 
 #define FALCON_VM_DFAULT_CHECK_LOOPS 3500
 
@@ -45,10 +46,8 @@ namespace Falcon {
 
 class Runtime;
 class VMachine;
-class VMContext;
 class PropertyTable;
 class AttribHandler;
-class CoreFunc;
 class MemPool;
 class VMMessage;
 class GarbageLock;
@@ -302,31 +301,13 @@ protected:
    /** Mutex guarding the slot structure. */
    mutable Mutex m_slot_mtx;
 
-   /** Currently executed symbol.
-      May be 0 if the startmodule has not a "__main__" symbol;
-      this should be impossible when things are set up properly
-      \todo, make always nonzeor
-   */
-   const Symbol* m_symbol;
-
-   /** Module that contains the currently being executed symbol. */
-   LiveModule *m_currentModule;
-
-   /** Main module.
+    /** Main module.
       This is the last linked module, that should also be the module where to search
       for start symbols; by default, prepare() and launch() searches symbol here,
       and if not found, they search start symbols in globally exported symbol tables.
    */
    LiveModule *m_mainModule;
 
-   Item m_regA;
-   Item m_regB;
-   Item m_regS1;
-   Item m_regL1;
-   Item m_regL2;
-
-   Item m_regBind;
-   Item m_regBindP;
 
    /** Space for immediate operands. */
    Item m_imm[4];
@@ -335,12 +316,7 @@ protected:
    Stream *m_stdOut;
    Stream *m_stdErr;
    bool m_bhasStandardStreams;
-
-   /** Current stack.
-      Selected from one of the contexts (coroutines).
-   */
-   ItemVector *m_stack;
-
+   
    /** Number of opcodes that the current coroutine has performed. */
    uint32 m_opCount;
 
@@ -372,38 +348,10 @@ protected:
    */
    LiveModuleMap m_liveModules;
 
-   /** Stack base is the position of the current stack frame.
-      As there can't be any stack frame at 0, a position of 0 means that the VM is running
-      the global module code.
-   */
-   uint32 m_stackBase;
-
-   /** Position of the topmost try frame handler. */
-   uint32 m_tryFrame;
-
    /** This value indicate that there isn't any active try handler in the stack */
    enum {
       i_noTryFrame = 0xFFFFFFFF
    };
-
-   /** Currently executed code.
-      It's the code from m_symbol->module()->code(),
-      fetched here for brevity. Possibly removed.
-   */
-   byte *m_code;
-
-   /** Program counter register.
-      Current execution point in current code.
-   */
-   uint32 m_pc;
-
-   /** Next program counter register.
-      This is the next instruction the VM has to execute.
-      Call returns and jumps can easily modify the VM execution flow by
-      changing this value, that is normally set just to m_pc + the lenght
-      of the current instruction.
-   */
-   uint32 m_pc_next;
 
    /** Context currently being executed. */
    VMContext *m_currentContext;
@@ -421,21 +369,6 @@ protected:
    /** Execute at link time? */
    bool m_launchAtLink;
 
-   /** Stack of global variables for the current module.
-      This is a vector (or stack) of variables that represent the globals for the active module.
-
-      This pointer points to one of the m_globals vector; it is also stored here to spare
-      a possibly frequent access to the nth member of m_globals.
-
-      As they are allocate either in the original symbol or by the memory pool manager,
-      the void * in the stack are \b not owned by this vector, which just refers them and
-      puts them in relation with the global symbol ID stored in the module opcodes.
-
-      As the module list cannot be changed after the link phase, this pointer is granted to
-      stay valid for the whole VM run activity; if this ever changes (i.e. if the some ability
-      to load the modules at runtime is provided) this pointer must be removed.
-   */
-   ItemVector *m_currentGlobals;
 
    /** Opcode handler function calls. */
    tOpcodeHandler *m_opHandlers;
@@ -589,16 +522,18 @@ protected:
    /** Returns the next NTD32 parameter, advancing the pointer to the next instruction */
    int32 getNextNTD32()
    {
-      register int32 ret = endianInt32(*reinterpret_cast<int32 *>( m_code + m_pc_next ) );
-      m_pc_next += sizeof( int32 );
+      register int32 ret = endianInt32(*reinterpret_cast<int32 *>( 
+         m_currentContext->code() + m_currentContext->pc_next()  ) );
+      m_currentContext->pc_next() += sizeof( int32 );
       return ret;
    }
 
    /** Returns the next NTD64 parameter, advancing the pointer to the next instruction */
    int64 getNextNTD64()
    {
-      register int64 ret = grabInt64( m_code + m_pc_next );
-      m_pc_next += sizeof( int64 );
+      register int64 ret = grabInt64( 
+         m_currentContext->code() + m_currentContext->pc_next() );
+      m_currentContext->pc_next() += sizeof( int64 );
       return ret;
    }
 
@@ -625,8 +560,6 @@ protected:
       not to nest call into different VMs in the same thread
    */
    void setCurrent() const;
-
-   friend class CoreFunc;
 
    /** Processes an incoming message.
       This searches for the slot requierd by the message;
@@ -1130,22 +1063,28 @@ public:
    void fillErrorContext( Error *err, bool filltb = true );
 
    /** Returns the current stack as a reference. */
-   ItemVector &currentStack() { return *m_stack; }
+   ItemVector &stack() { return m_currentContext->stack(); }
 
    /** Returns the current stack as a reference (const version). */
-   const ItemVector &currentStack() const { return *m_stack; }
+   const ItemVector &stack() const { return m_currentContext->stack(); }
+   
+   /** Returns the current try frame as a reference. */
+   uint32& tryFrame() { return m_currentContext->tryFrame(); }
+
+   /** Returns the current try frame as a reference (const version). */
+   const uint32& tryFrame() const { return m_currentContext->tryFrame(); }
 
    /** Returns a reference to the nth item in the current stack. */
-   Item &stackItem( uint32 pos ) { return *(Item *) currentStack().at( pos ); }
+   Item &stackItem( uint32 pos ) { return *(Item *) stack().at( pos ); }
 
    /** Returns a reference to the nth item in the current stack (const version). */
-   const Item &stackItem( uint32 pos ) const { return *(Item *)currentStack().at(pos); }
+   const Item &stackItem( uint32 pos ) const { return *(Item *)stack().at(pos); }
 
    /** Returns the current module global variables vector. */
-   ItemVector &currentGlobals() { return *m_currentGlobals; }
+   ItemVector &currentGlobals() { return m_currentContext->globals(); }
 
    /** Returns the current module global variables vector (const version). */
-   const ItemVector &currentGlobals() const { return *m_currentGlobals; }
+   const ItemVector &currentGlobals() const { return m_currentContext->globals(); }
 
    /** Returns a reference to the nth item in the current module global variables vector. */
    Item &moduleItem( uint32 pos ) { return currentGlobals().itemAt( pos ); }
@@ -1154,10 +1093,10 @@ public:
    const Item &moduleItem( uint32 pos ) const { return currentGlobals().itemAt( pos ); }
 
    /** Returns the module in which the execution is currently taking place. */
-   const Module *currentModule() const { return m_currentModule->module(); }
+   const Module *currentModule() const { return m_currentContext->lmodule()->module(); }
 
    /** Returns the module in which the execution is currently taking place. */
-   const LiveModule *currentLiveModule() const { return m_currentModule; }
+   const LiveModule *currentLiveModule() const { return m_currentContext->lmodule(); }
 
    /** Find a linked module with a given name.
       Returns a pointer to the linked live module if the name exists, or 0 if the named module
@@ -1180,9 +1119,8 @@ public:
       \return parameter count for the current function.
    */
    int32 paramCount() const {
-      return ((StackFrame *)m_stack->at( m_stackBase - VM_FRAME_SPACE ) )->m_param_count;
+      return ((StackFrame *)stack().at( stackBase() - VM_FRAME_SPACE ) )->m_param_count;
    }
-
 
    /** Returns the nth paramter passed to the VM.
       Const version of param(uint32).
@@ -1191,7 +1129,7 @@ public:
    {
       register uint32 params = paramCount();
       if ( itemId >= params ) return 0;
-      return stackItem( m_stackBase - params - VM_FRAME_SPACE + itemId ).dereference();
+      return stackItem( m_currentContext->stackBase() - params - VM_FRAME_SPACE + itemId ).dereference();
    }
 
    /** Returns the nth paramter passed to the VM.
@@ -1223,7 +1161,7 @@ public:
    {
       register uint32 params = paramCount();
       if ( itemId >= params ) return 0;
-      return stackItem( m_stackBase - params - VM_FRAME_SPACE + itemId ).dereference();
+      return stackItem( m_currentContext->stackBase() - params - VM_FRAME_SPACE + itemId ).dereference();
    }
 
 
@@ -1240,7 +1178,7 @@ public:
    */
    const Item *local( uint32 itemId ) const
    {
-      return stackItem( m_stackBase + itemId ).dereference();
+      return stackItem( m_currentContext->stackBase() + itemId ).dereference();
    }
 
    /** Returns the nth local item.
@@ -1251,7 +1189,7 @@ public:
    */
    Item *local( uint32 itemId )
    {
-      return stackItem( m_stackBase + itemId ).dereference();
+      return stackItem( m_currentContext->stackBase() + itemId ).dereference();
    }
 
    /** Returns true if the nth element of the current function has been passed by reference.
@@ -1262,38 +1200,38 @@ public:
    {
       register uint32 params = paramCount();
       if ( itemId >= params ) return false;
-      return stackItem( m_stackBase - params - VM_FRAME_SPACE + itemId ).type() == FLC_ITEM_REFERENCE;
+      return stackItem( m_currentContext->stackBase() - params - VM_FRAME_SPACE + itemId ).type() == FLC_ITEM_REFERENCE;
    }
 
-   const Item &regA() const { return m_regA; }
-   Item &regA() { return m_regA; }
-   const Item &regB() const { return m_regB; }
-   Item &regB() { return m_regB; }
-   const Item &regBind() const { return m_regBind; }
-   Item &regBind() { return m_regBind; }
-   const Item &regBindP() const { return m_regBindP; }
-   Item &regBindP() { return m_regBind; }
+   const Item &regA() const { return m_currentContext->regA(); }
+   Item &regA() { return m_currentContext->regA(); }
+   const Item &regB() const { return m_currentContext->regB(); }
+   Item &regB() { return m_currentContext->regB(); }
+   const Item &regBind() const { return m_currentContext->regBind(); }
+   Item &regBind() { return m_currentContext->regBind(); }
+   const Item &regBindP() const { return m_currentContext->regBindP(); }
+   Item &regBindP() { return m_currentContext->regBindP(); }
 
-   const Item &self() const { return m_regS1; }
-   Item &self() { return m_regS1; }
+   const Item &self() const { return m_currentContext->self(); }
+   Item &self() { return m_currentContext->self(); }
 
    /** Latch item.
       Generated on load property/vector instructions, it stores the accessed object.
    */
-   const Item &latch() const { return m_regL1; }
+   const Item &latch() const { return m_currentContext->latch(); }
    /** Latch item.
       Generated on load property/vector instructions, it stores the accessed object.
    */
-   Item &latch() { return m_regL1; }
+   Item &latch() { return m_currentContext->latch(); }
 
    /** Latcher item.
       Generated on load property/vector instructions, it stores the accessor item.
    */
-   const Item &latcher() const { return m_regL2; }
+   const Item &latcher() const { return m_currentContext->latcher(); }
    /** Latcher item.
       Generated on load property/vector instructions, it stores the accessor item.
    */
-   Item &latcher() { return m_regL2; }
+   Item &latcher() { return m_currentContext->latcher(); }
 
    void requestQuit() { m_event = eventRQuit; }
    void requestSuspend() { m_event = eventSuspend; }
@@ -1311,20 +1249,24 @@ public:
       run();
    }
 
+   void retval( bool val ) {
+       m_currentContext->regA().setBoolean( val );
+   }
+   
    void retval( int32 val ) {
-       m_regA.setInteger( (int64) val );
+       m_currentContext->regA().setInteger( (int64) val );
    }
 
    void retval( int64 val ) {
-       m_regA.setInteger( val );
+       m_currentContext->regA().setInteger( val );
    }
 
    void retval( numeric val ) {
-       m_regA.setNumeric( val );
+       m_currentContext->regA().setNumeric( val );
    }
 
    void retval( const Item &val ) {
-       m_regA = val;
+       m_currentContext->regA() = val;
    }
 
    /** Returns a garbageable string.
@@ -1333,35 +1275,39 @@ public:
    */
    void retval( CoreString *cs )
    {
-      m_regA.setString(cs);
+      m_currentContext->regA().setString(cs);
    }
 
    void retval( CoreArray *ca ) {
-      m_regA.setArray(ca);
+      m_currentContext->regA().setArray(ca);
+   }
+   
+   void retval( MemBuf* mb ) {
+      m_currentContext->regA().setMemBuf(mb);
    }
 
    void retval( CoreDict *cd ) {
-      m_regA.setDict( cd );
+      m_currentContext->regA().setDict( cd );
    }
 
    void retval( CoreObject *co ) {
-      m_regA.setObject(co);
+      m_currentContext->regA().setObject(co);
    }
 
    void retval( CoreClass *cc ) {
-      m_regA.setClass(cc);
+      m_currentContext->regA().setClass(cc);
    }
 
    void retval( const String &cs ) {
       CoreString *cs1 = new CoreString( cs );
       cs1->bufferize();
-      m_regA.setString( cs1 );
+      m_currentContext->regA().setString( cs1 );
    }
 
-   void retnil() { m_regA.setNil();}
+   void retnil() { m_currentContext->regA().setNil();}
 
-   const Symbol *currentSymbol() const { return m_symbol; }
-   uint32 programCounter() const { return m_pc; }
+   const Symbol *currentSymbol() const { return m_currentContext->symbol(); }
+   uint32 programCounter() const { return m_currentContext->pc(); }
 
    const SymModule *findGlobalSymbol( const String &str ) const;
 
@@ -1501,6 +1447,9 @@ public:
       callable.readyFrame( this, paramCount );
       return true;
    }
+   
+   /** Prepare a frame for a function call */
+   void prepareFrame( CoreFunc* cf, uint32 paramCount );
 
    /** Prepare a coroutine context.
 
@@ -1522,13 +1471,13 @@ public:
    void execFrame()
    {
       currentFrame()->m_break = true; // force to exit when meeting this limit
-      m_pc = m_pc_next;
+      m_currentContext->pc() = m_currentContext->pc_next();
       run();
    }
 
    StackFrame* currentFrame()
    {
-      return (StackFrame *) m_stack->at( m_stackBase - VM_FRAME_SPACE );
+      return (StackFrame *) stack().at( m_currentContext->stackBase() - VM_FRAME_SPACE );
    }
 
    /** Resets the return handler and prepares to call given external handler.
@@ -1573,7 +1522,7 @@ public:
             better if they are also return frame handlers.
       \see callFrameNow()
    */
-   void recallFrame() { m_pc_next = m_pc; } // reset pc advancement
+   void recallFrame() { m_currentContext->pc_next() = m_currentContext->pc(); } // reset pc advancement
 
    /** Call an item in atomic mode.
       This method is meant to call the vm run loop from inside another vm
@@ -1618,19 +1567,19 @@ public:
       \see callFrame
       \param item the item to be passes as a parameter to the next call.
    */
-   void pushParameter( const Item &item ) { m_stack->push( const_cast< Item *>(&item) ); }
+   void pushParameter( const Item &item ) { stack().push( const_cast< Item *>(&item) ); }
 
    /** Adds some local space
       \param amount how many local variables must be created
    */
    void addLocals( uint32 space )
    {
-      if ( m_stack->size() < m_stackBase + space )
-         m_stack->resize( m_stackBase + space );
+      if ( stack().size() < m_currentContext->stackBase() + space )
+         stack().resize( m_currentContext->stackBase() + space );
    }
 
    byte operandType( byte opNum ) const {
-      return m_code[m_pc + 1 + opNum];
+      return m_currentContext->code()[m_currentContext->pc() + 1 + opNum];
    }
 
    /** True if the VM is allowed to execute a context switch. */
@@ -1910,7 +1859,7 @@ public:
 
    /** Performs a single VM step and return. */
    void step() {
-      m_pc = m_pc_next;
+      m_currentContext->pc() = m_currentContext->pc_next();
       m_bSingleStep = true;
       // stop next loop
       m_opNextCheck = m_opCount + 1;
@@ -1991,7 +1940,8 @@ public:
    */
    void referenceItem( Item &target, Item &source );
 
-   uint32 stackBase() const { return m_stackBase; }
+   const uint32& stackBase() const { return m_currentContext->stackBase(); }
+   uint32& stackBase() { return m_currentContext->stackBase(); }
 
    /** Set user data.
       VM is passed to every extension function, and is also quite used by the
@@ -2115,7 +2065,7 @@ public:
       The binding context is automatically removed at
       frame return.
    */
-   void setBindingContext( CoreDict *ctx ) { m_regBind = ctx; }
+   void setBindingContext( CoreDict *ctx ) { m_currentContext->regBind() = ctx; }
 
    /** Return the value associated with a binding symbol.
 
@@ -2163,7 +2113,10 @@ public:
       If the preceding callFrame() was directed to an external function, requests the VM to treat
       the return value as an init() return, placing self() in regA() when all is done.
    */
-   void requestConstruct() { if( m_pc_next == i_pc_call_external ) m_pc_next = i_pc_call_external_ctor; }
+   void requestConstruct() {
+      if( m_currentContext->pc_next() == i_pc_call_external )
+         m_currentContext->pc_next() = i_pc_call_external_ctor;
+   }
 
    void setMetaClass( int itemID, CoreClass *metaClass )
    {

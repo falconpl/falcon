@@ -100,7 +100,7 @@ FALCON_FUNC  _parameter ( ::Falcon::VMachine *vm )
    else {
       uint32 val = (uint32) number->forceInteger();
 
-      StackFrame *thisFrame = (StackFrame *) vm->currentStack().at( vm->stackBase() - VM_FRAME_SPACE );
+      StackFrame *thisFrame = (StackFrame *) vm->stack().at( vm->stackBase() - VM_FRAME_SPACE );
       uint32 oldbase = thisFrame->m_stack_base;
       if( oldbase == 0 ) {
          vm->raiseRTError( new GenericError( ErrorParam( e_param_range ) ) );
@@ -108,7 +108,7 @@ FALCON_FUNC  _parameter ( ::Falcon::VMachine *vm )
       }
 
       // ...but we want the parameter count of our caller.
-      StackFrame *prevFrame = (StackFrame *) vm->currentStack().at( oldbase - VM_FRAME_SPACE );
+      StackFrame *prevFrame = (StackFrame *) vm->stack().at( oldbase - VM_FRAME_SPACE );
       // ...while the parameters are below our frame's base.
 
       if( val >= 0 && val < prevFrame->m_param_count )

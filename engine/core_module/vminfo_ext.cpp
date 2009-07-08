@@ -140,7 +140,7 @@ FALCON_FUNC vmIsMain( ::Falcon::VMachine *vm )
    }
    else {
       // get the calling symbol module
-      StackFrame *thisFrame = (StackFrame *) vm->currentStack().at( vm->stackBase() - VM_FRAME_SPACE );
+      StackFrame *thisFrame = (StackFrame *) vm->stack().at( vm->stackBase() - VM_FRAME_SPACE );
       vm->retval( (bool) (thisFrame->m_module == vm->mainModule() ) );
    }
 }

@@ -1883,7 +1883,7 @@ void co_call_array( const Item &itm, VMachine *vm, uint32 paramCount )
       if ( carr.isCallable() )
       {
          uint32 arraySize = arr->length();
-         uint32 sizeNow = vm->currentStack().size();
+         uint32 sizeNow = vm->stack().size();
          CoreDict* bindings = arr->bindings();
          bool hasFuture = false;
 
@@ -1892,12 +1892,12 @@ void co_call_array( const Item &itm, VMachine *vm, uint32 paramCount )
          if ( arraySize > 0 )
          {
             // first array element is the called item.
-            vm->currentStack().resize( sizeNow + arraySize );
+            vm->stack().resize( sizeNow + arraySize );
 
             sizeNow -= paramCount;
             for ( uint32 j = sizeNow + paramCount; j > sizeNow; j -- )
             {
-               vm->currentStack().itemAt( j-1 + arraySize ) = vm->currentStack().itemAt( j-1 );
+               vm->stack().itemAt( j-1 + arraySize ) = vm->stack().itemAt( j-1 );
             }
 
             // push array paramers
@@ -1924,23 +1924,23 @@ void co_call_array( const Item &itm, VMachine *vm, uint32 paramCount )
                            bound = bindings->find( *itm.asLBind() );
                         }
 
-                        vm->currentStack().itemAt( i + sizeNow ) = *bound;
+                        vm->stack().itemAt( i + sizeNow ) = *bound;
                      }
                      else
                      {
                         // fall back to currently provided bindings
-                        vm->currentStack().itemAt( i + sizeNow ) = *vm->getSafeBinding( *itm.asLBind() );
+                        vm->stack().itemAt( i + sizeNow ) = *vm->getSafeBinding( *itm.asLBind() );
                      }
                   }
                   else {
                      // treat as a future binding
                      hasFuture = true;
-                     vm->currentStack().itemAt( i + sizeNow ) = itm;
+                     vm->stack().itemAt( i + sizeNow ) = itm;
                   }
                }
                else {
                   // just transfer the parameters
-                  vm->currentStack().itemAt( i + sizeNow ) = itm;
+                  vm->stack().itemAt( i + sizeNow ) = itm;
                }
             }
          }
@@ -2031,7 +2031,7 @@ void co_call_class( const Item &itm, VMachine *vm, uint32 paramCount )
       vm->regA().setObject( inst );
 
       // pop the stack
-      vm->currentStack().resize( vm->currentStack().size() - paramCount );
+      vm->stack().resize( vm->stack().size() - paramCount );
       return;
    }
 

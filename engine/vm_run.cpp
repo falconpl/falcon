@@ -50,36 +50,36 @@ Item *VMachine::getOpcodeParam( register uint32 bc_pos )
    Item *ret;
 
    // Load the operator ?
-   switch( m_code[ m_pc + bc_pos ]  )
+   switch( m_currentContext->code()[ m_currentContext->pc() + bc_pos ]  )
    {
       case P_PARAM_INT32:
-         m_imm[bc_pos].setInteger( endianInt32(*reinterpret_cast<int32 *>( m_code + m_pc_next ) ) );
-         m_pc_next += sizeof( int32 );
+         m_imm[bc_pos].setInteger( endianInt32(*reinterpret_cast<int32 *>( m_currentContext->code() + m_currentContext->pc_next() ) ) );
+         m_currentContext->pc_next() += sizeof( int32 );
       return m_imm + bc_pos;
 
       case P_PARAM_INT64:
-         m_imm[bc_pos].setInteger( grabInt64( m_code + m_pc_next  ) );
-         m_pc_next += sizeof( int64 );
+         m_imm[bc_pos].setInteger( grabInt64( m_currentContext->code() + m_currentContext->pc_next()  ) );
+         m_currentContext->pc_next() += sizeof( int64 );
       return m_imm + bc_pos;
 
       case P_PARAM_STRID:
          {
-            String *temp = currentLiveModule()->getString( endianInt32(*reinterpret_cast<int32 *>( m_code + m_pc_next ) ) );
+            String *temp = currentLiveModule()->getString( endianInt32(*reinterpret_cast<int32 *>( m_currentContext->code() + m_currentContext->pc_next() ) ) );
             //m_imm[bc_pos].setString( temp, const_cast<LiveModule*>(currentLiveModule()) );
             m_imm[bc_pos].setString( temp );
-            m_pc_next += sizeof( int32 );
+            m_currentContext->pc_next() += sizeof( int32 );
          }
       return m_imm + bc_pos;
 
       case P_PARAM_LBIND:
          m_imm[bc_pos].setLBind( currentLiveModule()->getString(
-            endianInt32(*reinterpret_cast<int32 *>( m_code + m_pc_next ) ) ) );
-         m_pc_next += sizeof( int32 );
+            endianInt32(*reinterpret_cast<int32 *>( m_currentContext->code() + m_currentContext->pc_next() ) ) ) );
+         m_currentContext->pc_next() += sizeof( int32 );
       return m_imm + bc_pos;
 
       case P_PARAM_NUM:
-         m_imm[bc_pos].setNumeric( endianNum( *reinterpret_cast<numeric *>( m_code + m_pc_next ) ) );
-         m_pc_next += sizeof( numeric );
+         m_imm[bc_pos].setNumeric( endianNum( *reinterpret_cast<numeric *>( m_currentContext->code() + m_currentContext->pc_next() ) ) );
+         m_currentContext->pc_next() += sizeof( numeric );
       return m_imm + bc_pos;
 
       case P_PARAM_NIL:
@@ -88,22 +88,22 @@ Item *VMachine::getOpcodeParam( register uint32 bc_pos )
 
       case P_PARAM_GLOBID:
       {
-         register int32 id = endianInt32(*reinterpret_cast< int32 * >( m_code + m_pc_next ) );
-         m_pc_next+=sizeof( int32 );
+         register int32 id = endianInt32(*reinterpret_cast< int32 * >( m_currentContext->code() + m_currentContext->pc_next() ) );
+         m_currentContext->pc_next()+=sizeof( int32 );
          return &moduleItem( id );
       }
       break;
 
       case P_PARAM_LOCID:
-         ret = &stackItem( m_stackBase +
-               endianInt32(*reinterpret_cast< int32 * >( m_code + m_pc_next ) ) );
-         m_pc_next+=sizeof(int32);
+         ret = &stackItem( stackBase() +
+               endianInt32(*reinterpret_cast< int32 * >( m_currentContext->code() + m_currentContext->pc_next() ) ) );
+         m_currentContext->pc_next()+=sizeof(int32);
       return ret;
 
       case P_PARAM_PARID:
-         ret = &stackItem( m_stackBase - paramCount() - VM_FRAME_SPACE +
-               endianInt32(*reinterpret_cast< int32 * >( m_code + m_pc_next ) ) );
-         m_pc_next+=sizeof(int32);
+         ret = &stackItem( stackBase() - paramCount() - VM_FRAME_SPACE +
+               endianInt32(*reinterpret_cast< int32 * >( m_currentContext->code() + m_currentContext->pc_next() ) ) );
+         m_currentContext->pc_next()+=sizeof(int32);
       return ret;
 
       case P_PARAM_TRUE:
@@ -114,13 +114,13 @@ Item *VMachine::getOpcodeParam( register uint32 bc_pos )
          m_imm[bc_pos].setBoolean( false );
       return m_imm + bc_pos;
 
-      case P_PARAM_NTD32: m_pc_next += sizeof(int32); return 0;
-      case P_PARAM_NTD64: m_pc_next += sizeof(int64); return 0;
-      case P_PARAM_REGA: return &m_regA;
-      case P_PARAM_REGB: return &m_regB;
-      case P_PARAM_REGS1: return &m_regS1;
-      case P_PARAM_REGL1: return &m_regL1;
-      case P_PARAM_REGL2: return &m_regL2;
+      case P_PARAM_NTD32: m_currentContext->pc_next() += sizeof(int32); return 0;
+      case P_PARAM_NTD64: m_currentContext->pc_next() += sizeof(int64); return 0;
+      case P_PARAM_REGA: return &regA();
+      case P_PARAM_REGB: return &regB();
+      case P_PARAM_REGS1: return &self();
+      case P_PARAM_REGL1: return &latch();
+      case P_PARAM_REGL2: return &latcher();
    }
 
    // we should not be here.
@@ -153,18 +153,18 @@ void VMachine::run()
 
    while( 1 )
    {
-      // move m_pc_next to the end of instruction and beginning of parameters.
+      // move m_currentContext->pc_next() to the end of instruction and beginning of parameters.
       // in case of opcode in the call_request range, this will move next pc to return.
-      m_pc_next = m_pc + sizeof( uint32 );
+      m_currentContext->pc_next() = m_currentContext->pc() + sizeof( uint32 );
 
       // external call required?
-      if ( m_pc >= i_pc_call_request )
+      if ( m_currentContext->pc() >= i_pc_call_request )
       {
          try {
-            switch( m_pc )
+            switch( m_currentContext->pc() )
             {
                case i_pc_call_external_ctor_return:
-                  m_regA = m_regS1;
+                  regA() = self();
                   //fallthrough
                case i_pc_call_external_return:
                   callReturn();
@@ -177,8 +177,8 @@ void VMachine::run()
                break;
 
                default:
-                  m_regA.setNil();
-                  m_symbol->getExtFuncDef()->call( this );
+                  regA().setNil();
+                  currentSymbol()->getExtFuncDef()->call( this );
             }
          }
          catch( Error *err )
@@ -192,7 +192,7 @@ void VMachine::run()
       {
          // execute the opcode.
          try {
-            ops[ m_code[ m_pc ] ]( this );
+            ops[ m_currentContext->code()[ m_currentContext->pc() ] ]( this );
          }
          catch( Error *err )
          {
@@ -289,49 +289,49 @@ void VMachine::run()
             if ( m_atomicMode )
             {
                the_error = new InterruptedError( ErrorParam( e_interrupted ).origin( e_orig_vm ).
-                     symbol( m_symbol->name() ).
-                     module( m_currentModule->module()->name() ).
+                     symbol( currentSymbol()->name() ).
+                     module( currentModule()->name() ).
                      line( __LINE__ ).
                      hard() );
                // just re-parse the event
-               m_pc = i_pc_redo_request;
+               m_currentContext->pc() = i_pc_redo_request;
                continue;
             }
 
-            m_pc = m_pc_next;
+            m_currentContext->pc() = m_currentContext->pc_next();
          return;
 
          // event return is used to return from a temporary frame,
          // so it is better to reset it on exit so that the calling function
          // do not need this burden.
          case eventReturn:
-            m_pc = m_pc_next;
+            m_currentContext->pc() = m_currentContext->pc_next();
             resetEvent();
          return;
 
          // manage try/catch
          case eventRisen:
             // While the try frame is not in the current frame, we should return.
-            // this unless m_stackBase is zero; in that case, the VM must take some action.
+            // this unless stackBase() is zero; in that case, the VM must take some action.
 
             // However, before proceding we have to create a correct stack frame report for the error.
             // If the error is internally generated, a frame has been already created. We should
             // create here only error data about uncaught raises from the scripts.
 
-            if( m_tryFrame == i_noTryFrame && the_error == 0 )  // uncaught error raised from scripts...
+            if( tryFrame() == i_noTryFrame && the_error == 0 )  // uncaught error raised from scripts...
             {
                // create the error that the external application will see.
                Error *err;
-               if ( m_regB.isOfClass( "Error" ) )
+               if ( regB().isOfClass( "Error" ) )
                {
                   // in case of an error of class Error, we have already a good error inside of it.
-                  err = static_cast<core::ErrorObject *>(m_regB.asObjectSafe())->getError();
+                  err = static_cast<core::ErrorObject *>(regB().asObjectSafe())->getError();
                   err->incref();
                }
                else {
                   // else incapsulate the item in an error.
                   err = new GenericError( ErrorParam( e_uncaught ).origin( e_orig_vm ) );
-                  err->raised( m_regB );
+                  err->raised( regB() );
                }
                the_error = err;
             }
@@ -340,7 +340,7 @@ void VMachine::run()
                fillErrorContext( the_error, true );
 
             // Enter the stack frame that should handle the error (or raise to the top if uncaught)
-            while( m_stackBase != 0 && ( m_stackBase > m_tryFrame || m_tryFrame == i_noTryFrame ) )
+            while( stackBase() != 0 && ( stackBase() > tryFrame() || tryFrame() == i_noTryFrame ) )
             {
                callReturn();
                if ( m_event == eventReturn )
@@ -350,7 +350,7 @@ void VMachine::run()
 
                   // we must return only if the stackbase is not zero; otherwise, we return to a
                   // base callItem, and we must manage internally that case.
-                  if ( m_stackBase != 0 )
+                  if ( stackBase() != 0 )
                   {
                      if ( the_error != 0 )
                      {
@@ -359,7 +359,7 @@ void VMachine::run()
                      return;
                   }
                }
-               // call return may raise eventQuit, but only when m_stackBase is zero,
+               // call return may raise eventQuit, but only when stackBase() is zero,
                // so we don't consider it.
             }
 
@@ -374,7 +374,7 @@ void VMachine::run()
                continue;
             }
             // else catch it only if allowed.
-            else if( the_error->catchable() && m_tryFrame != i_noTryFrame )
+            else if( the_error->catchable() && tryFrame() != i_noTryFrame )
             {
                CoreObject *obj = the_error->scriptize( this );
                the_error->decref();
@@ -382,7 +382,7 @@ void VMachine::run()
                if ( obj != 0 )
                {
                   // we'll manage the error throuhg the obj, so we release the ref.
-                  m_regB.setObject( obj );
+                  regB().setObject( obj );
                   popTry( true );
                   //the_error->decref();  // scriptize adds a reference
                   m_event = eventNone;
@@ -396,17 +396,17 @@ void VMachine::run()
                   throw the_error;
                }
             }
-            // we couldn't catch the error (this also means we're at m_stackBase zero)
+            // we couldn't catch the error (this also means we're at stackBase() zero)
             // we should handle it then exit
             else {
-               // we should manage the error; if we're here, m_stackBase is zero,
+               // we should manage the error; if we're here, stackBase() is zero,
                // so we are the last in charge
                throw the_error;
             }
          break;
 
          case eventYield:
-            m_pc = m_pc_next;
+            m_currentContext->pc() = m_currentContext->pc_next();
             m_event = eventNone;
             try
             {
@@ -417,7 +417,7 @@ void VMachine::run()
             }
             catch( Error* e )
             {
-               m_pc = i_pc_redo_request;
+               m_currentContext->pc() = i_pc_redo_request;
                the_error = e;
                m_event = eventRisen;
             }
@@ -439,7 +439,7 @@ void VMachine::run()
                      line( __LINE__ ).
                      hard() );
                // just re-parse the event
-               m_pc = i_pc_redo_request;
+               m_currentContext->pc() = i_pc_redo_request;
                m_event = eventRisen;
                continue;
             }
@@ -451,9 +451,7 @@ void VMachine::run()
                throw the_error;
             }
 
-            m_pc = m_pc_next;
-
-            m_currentContext->save( this );
+            m_currentContext->pc() = m_currentContext->pc_next();
 
             // if wait time is > 0, put at sleep
             if( m_yieldTime > 0.0 )
@@ -469,13 +467,13 @@ void VMachine::run()
 
          case eventQuit:
          case eventRQuit:
-            m_pc = m_pc_next;
+            m_currentContext->pc() = m_currentContext->pc_next();
             // quit the machine
          return;
 
          default:
             // switch to next instruction
-            m_pc = m_pc_next;
+            m_currentContext->pc() = m_currentContext->pc_next();
       }
 
    } // end while -- VM LOOP
@@ -501,7 +499,7 @@ void opcodeHandler_NOP( register VMachine *vm )
 // 2
 void opcodeHandler_PSHN( register VMachine *vm )
 {
-   vm->m_stack->resize( vm->m_stack->size() + 1 );
+   vm->stack().resize( vm->stack().size() + 1 );
 }
 
 // 3
@@ -517,8 +515,8 @@ void opcodeHandler_RETA( register VMachine *vm )
    vm->callReturn();
 
    //? Check this -- I don't think is anymore necessary
-   if( vm->m_regA.type() == FLC_ITEM_REFERENCE )
-      vm->m_regA.copy( vm->m_regA.asReference()->origin() );
+   if( vm->regA().type() == FLC_ITEM_REFERENCE )
+      vm->regA().copy( vm->regA().asReference()->origin() );
 }
 
 // 5
@@ -543,20 +541,20 @@ void opcodeHandler_LNIL( register VMachine *vm )
 // 7
 void opcodeHandler_RETV(register VMachine *vm)
 {
-   vm->m_regA = *vm->getOpcodeParam( 1 )->dereference();
+   vm->regA() = *vm->getOpcodeParam( 1 )->dereference();
    vm->callReturn();
 }
 
 // 8
 void opcodeHandler_BOOL( register VMachine *vm )
 {
-   vm->m_regA.setBoolean( vm->getOpcodeParam( 1 )->dereference()->isTrue() );
+   vm->regA().setBoolean( vm->getOpcodeParam( 1 )->dereference()->isTrue() );
 }
 
 // 9
 void opcodeHandler_JMP( register VMachine *vm )
 {
-   vm->m_pc_next = vm->getNextNTD32();
+   vm->m_currentContext->pc_next() = vm->getNextNTD32();
 }
 
 // 0A
@@ -567,14 +565,14 @@ void opcodeHandler_GENA( register VMachine *vm )
 
    // copy the m-topmost items in the stack into the array
    Item *data = array->elements();
-   int32 base = vm->m_stack->size() - size;
+   int32 base = vm->stack().size() - size;
 
    for ( uint32 i = 0; i < size; i++ ) {
-      data[ i ] = vm->m_stack->itemAt(i + base);
+      data[ i ] = vm->stack().itemAt(i + base);
    }
    array->length( size );
-   vm->m_stack->resize( base );
-   vm->m_regA.setArray( array );
+   vm->stack().resize( base );
+   vm->regA().setArray( array );
 }
 
 // 0B
@@ -584,12 +582,12 @@ void opcodeHandler_GEND( register VMachine *vm )
    LinearDict *dict = new LinearDict( length );
 
    // copy the m-topmost items in the stack into the array
-   int32 base = vm->m_stack->size() - ( length * 2 );
-   for ( register uint32 i = base; i < vm->m_stack->size(); i += 2 ) {
+   int32 base = vm->stack().size() - ( length * 2 );
+   for ( register uint32 i = base; i < vm->stack().size(); i += 2 ) {
       dict->insert( vm->stackItem(i), vm->stackItem(i+1));
    }
-   vm->m_stack->resize( base );
-   vm->m_regA.setDict( dict );
+   vm->stack().resize( base );
+   vm->regA().setDict( dict );
 }
 
 
@@ -602,9 +600,9 @@ void opcodeHandler_PUSH( register VMachine *vm )
    {
       // with this marker, the next call operation will search its parameters.
       // Let's consider this a temporary (but legitimate) hack.
-      vm->m_regBind.flags( 0xF0 );
+      vm->regBind().flags( 0xF0 );
    }
-   vm->m_stack->push( data );
+   vm->stack().push( data );
 }
 
 // 0D
@@ -617,20 +615,20 @@ void opcodeHandler_PSHR( register VMachine *vm )
       referenced->setReference( ref );
    }
 
-   vm->m_stack->push( referenced );
+   vm->stack().push( referenced );
 }
 
 
 // 0E
 void opcodeHandler_POP( register VMachine *vm )
 {
-   if ( vm->m_stack->size() == vm->m_stackBase ) {
+   if ( vm->stack().size() == vm->stackBase() ) {
       vm->raiseError( e_stackuf, "POP" );
       return;
    }
    //  --- WARNING: do not dereference!
-   vm->getOpcodeParam( 1 )->copy( vm->m_stack->topItem() );
-   vm->m_stack->pop();
+   vm->getOpcodeParam( 1 )->copy( vm->stack().topItem() );
+   vm->stack().pop();
 }
 
 
@@ -660,7 +658,7 @@ void opcodeHandler_NEG( register VMachine *vm )
 // 12
 void opcodeHandler_NOT( register VMachine *vm )
 {
-   vm->m_regA.setInteger( vm->getOpcodeParam( 1 )->dereference()->isTrue() ? 0 : 1 );
+   vm->regA().setInteger( vm->getOpcodeParam( 1 )->dereference()->isTrue() ? 0 : 1 );
 }
 
 
@@ -669,20 +667,20 @@ void opcodeHandler_TRAL( register VMachine *vm )
 {
    uint32 pcNext = vm->getNextNTD32();
 
-   if ( vm->m_stack->size() < 3 ) {
+   if ( vm->stack().size() < 3 ) {
       vm->raiseError( e_stackuf, "TRAL" );
       return;
    }
 
-   register uint32 size = vm->m_stack->size();
-   Item *iterator = vm->m_stack->itemPtrAt( size - 3 );
-   Item *source = vm->m_stack->itemPtrAt( size - 1 );
+   register uint32 size = vm->stack().size();
+   Item *iterator = vm->stack().itemPtrAt( size - 3 );
+   Item *source = vm->stack().itemPtrAt( size - 1 );
 
    switch( source->type() )
    {
       case FLC_ITEM_ARRAY:
          if ( iterator->asInteger() + 1 >= source->asArray()->length()  )
-            vm->m_pc_next = pcNext;
+            vm->m_currentContext->pc_next() = pcNext;
       break;
 
       case FLC_ITEM_DICT:
@@ -690,25 +688,25 @@ void opcodeHandler_TRAL( register VMachine *vm )
       {
          CoreIterator *iter = (CoreIterator *) iterator->asGCPointer();
          if ( ! iter->hasNext() )
-            vm->m_pc_next = pcNext;
+            vm->m_currentContext->pc_next() = pcNext;
       }
       break;
 
       case FLC_ITEM_STRING:
          if ( iterator->asInteger() + 1 >= source->asString()->length() )
-            vm->m_pc_next = pcNext;
+            vm->m_currentContext->pc_next() = pcNext;
       break;
 
       case FLC_ITEM_MEMBUF:
          if ( iterator->asInteger() + 1 >= source->asMemBuf()->length() )
-            vm->m_pc_next = pcNext;
+            vm->m_currentContext->pc_next() = pcNext;
       break;
 
       case FLC_ITEM_RANGE:
       {
          if ( source->asRangeIsOpen() )
          {
-            vm->m_pc_next = pcNext;
+            vm->m_currentContext->pc_next() = pcNext;
          }
 
          int64 increment = source->asRangeStep();
@@ -718,14 +716,14 @@ void opcodeHandler_TRAL( register VMachine *vm )
                increment = 1;
 
             if ( iterator->asInteger() + increment >= source->asRangeEnd() )
-               vm->m_pc_next = pcNext;
+               vm->m_currentContext->pc_next() = pcNext;
          }
          else {
             if ( increment == 0 )
                increment = -1;
 
             if ( iterator->asInteger() + increment < source->asRangeEnd() )
-               vm->m_pc_next = pcNext;
+               vm->m_currentContext->pc_next() = pcNext;
          }
       }
       break;
@@ -742,12 +740,12 @@ void opcodeHandler_TRAL( register VMachine *vm )
 void opcodeHandler_IPOP( register VMachine *vm )
 {
    register uint32 amount = (uint32) vm->getNextNTD32();
-   if ( vm->m_stack->size() < amount ) {
+   if ( vm->stack().size() < amount ) {
       vm->raiseError( e_stackuf, "IPOP" );
       return;
    }
 
-   vm->m_stack->resize( vm->m_stack->size() - amount );
+   vm->stack().resize( vm->stack().size() - amount );
 }
 
 //15
@@ -756,8 +754,8 @@ void opcodeHandler_XPOP( register VMachine *vm )
    Item *operand = vm->getOpcodeParam( 1 )->dereference();
    // use copy constructor.
    Item itm( *operand );
-   operand->copy( vm->m_stack->topItem() );
-   vm->m_stack->topItem().copy( itm );
+   operand->copy( vm->stack().topItem() );
+   vm->stack().topItem().copy( itm );
 }
 
 //16
@@ -779,13 +777,13 @@ void opcodeHandler_JTRY( register VMachine *vm )
    register int32 target = vm->getNextNTD32();
 
    vm->popTry( false );  // underflows are checked here
-   vm->m_pc_next = target;
+   vm->m_currentContext->pc_next() = target;
 }
 
 //19
 void opcodeHandler_RIS( register VMachine *vm )
 {
-   vm->m_regB = *vm->getOpcodeParam( 1 )->dereference();
+   vm->regB() = *vm->getOpcodeParam( 1 )->dereference();
    vm->m_event = VMachine::eventRisen;
 }
 
@@ -794,7 +792,7 @@ void opcodeHandler_BNOT( register VMachine *vm )
 {
    register Item *operand = vm->getOpcodeParam( 1 )->dereference();
    if ( operand->type() == FLC_ITEM_INT ) {
-      vm->m_regA.setInteger( ~operand->asInteger() );
+      vm->regA().setInteger( ~operand->asInteger() );
    }
    else
       vm->raiseRTError( new TypeError( ErrorParam( e_bitwise_op ).extra("BNOT").origin( e_orig_vm ) ) );
@@ -816,11 +814,11 @@ void opcodeHandler_PEEK( register VMachine *vm )
 {
    register Item *operand = vm->getOpcodeParam( 1 )->dereference();
 
-   if ( vm->m_stack->size() == 0 ) {
+   if ( vm->stack().size() == 0 ) {
       vm->raiseError( e_stackuf, "PEEK" );
       return;
    }
-   *operand = vm->m_stack->topItem();
+   *operand = vm->stack().topItem();
 }
 
 // 1D
@@ -833,8 +831,8 @@ void opcodeHandler_FORK( register VMachine *vm )
    vm->coPrepare( pSize );
 
    // fork
-   vm->m_pc = pJump;
-   vm->m_pc_next = pJump;
+   vm->m_currentContext->pc() = pJump;
+   vm->m_currentContext->pc_next() = pJump;
 }
 
 // 1D - Missing
@@ -1002,7 +1000,7 @@ void opcodeHandler_BAND( register VMachine *vm )
    Item *operand2 =  vm->getOpcodeParam( 2 )->dereference();
 
    if ( operand1->isOrdinal() && operand2->isOrdinal() ) {
-      vm->m_regA.setInteger( operand1->forceInteger() & operand2->forceInteger() );
+      vm->regA().setInteger( operand1->forceInteger() & operand2->forceInteger() );
    }
    else
       vm->raiseRTError( new TypeError( ErrorParam( e_invop ).extra("BAND").origin( e_orig_vm ) ) );
@@ -1015,7 +1013,7 @@ void opcodeHandler_BOR( register VMachine *vm )
    Item *operand2 =  vm->getOpcodeParam( 2 )->dereference();
 
    if ( operand1->isOrdinal() && operand2->isOrdinal() ) {
-      vm->m_regA.setInteger( operand1->forceInteger() | operand2->forceInteger() );
+      vm->regA().setInteger( operand1->forceInteger() | operand2->forceInteger() );
    }
    else
       vm->raiseRTError( new TypeError( ErrorParam( e_invop ).extra("BOR").origin( e_orig_vm ) ) );
@@ -1028,7 +1026,7 @@ void opcodeHandler_BXOR( register VMachine *vm )
    Item *operand2 =  vm->getOpcodeParam( 2 )->dereference();
 
    if ( operand1->isOrdinal() && operand2->isOrdinal() ) {
-      vm->m_regA.setInteger( operand1->forceInteger() ^ operand2->forceInteger() );
+      vm->regA().setInteger( operand1->forceInteger() ^ operand2->forceInteger() );
    }
    else
       vm->raiseRTError( new TypeError( ErrorParam( e_invop ).extra("BXOR").origin( e_orig_vm ) ) );
@@ -1088,8 +1086,8 @@ void opcodeHandler_GENR( register VMachine *vm )
    int64 step;
    if ( operand3->isNil() )
    {
-      step = vm->m_stack->itemAt( vm->m_stack->size() - 1).forceIntegerEx();
-      vm->m_stack->pop();
+      step = vm->stack().itemAt( vm->stack().size() - 1).forceIntegerEx();
+      vm->stack().pop();
    }
    else {
       step = operand3->forceIntegerEx();
@@ -1104,7 +1102,7 @@ void opcodeHandler_GENR( register VMachine *vm )
          step = -1;
    }
 
-   vm->m_regA.setRange( new CoreRange(
+   vm->regA().setRange( new CoreRange(
       firstOp,
       secondOp,
       step   ) );
@@ -1166,7 +1164,7 @@ void opcodeHandler_IFT( register VMachine *vm )
    Item *operand2 =  vm->getOpcodeParam( 2 )->dereference();
 
    if( operand2->isTrue() )
-      vm->m_pc_next = pNext;
+      vm->m_currentContext->pc_next() = pNext;
 }
 
 //39
@@ -1176,7 +1174,7 @@ void opcodeHandler_IFF( register VMachine *vm )
    Item *operand2 =  vm->getOpcodeParam( 2 )->dereference();
 
    if( ! operand2->isTrue() )
-      vm->m_pc_next = pNext;
+      vm->m_currentContext->pc_next() = pNext;
 }
 
 //3A
@@ -1233,7 +1231,7 @@ void opcodeHandler_ONCE( register VMachine *vm )
       if ( vm->moduleItem( itemId ).isNil() )
          vm->moduleItem( itemId ).setInteger( 1 );
       else
-         vm->m_pc_next = pNext;
+         vm->m_currentContext->pc_next() = pNext;
       return;
    }
 
@@ -1278,12 +1276,12 @@ void opcodeHandler_TRAN( register VMachine *vm )
    uint32 p2 = vm->getNextNTD32();
    uint32 p3 = vm->getNextNTD32();
 
-   if ( vm->m_stack->size() < 3 ) {
+   if ( vm->stack().size() < 3 ) {
       vm->raiseError( e_stackuf, "TRAN" );
       return;
    }
 
-   register int size = vm->m_stack->size();
+   register int size = vm->stack().size();
    Item *iterator = &vm->stackItem( size - 3 );
    bool isIterator = ! iterator->isInteger();
    Item *dest = &vm->stackItem( size - 2 );
@@ -1320,7 +1318,7 @@ void opcodeHandler_TRAN( register VMachine *vm )
 
          if ( counter >= sarr->length() ) {
             //we are done -- go on trough last element block and cleanup
-            vm->m_pc_next = p2;
+            vm->m_currentContext->pc_next() = p2;
             return;
          }
 
@@ -1367,7 +1365,7 @@ void opcodeHandler_TRAN( register VMachine *vm )
                sdict->remove( *iter );
                if( ! iter->isValid() )
                {
-                  vm->m_pc_next = p2;
+                  vm->m_currentContext->pc_next() = p2;
                   return;
                }
             }
@@ -1375,7 +1373,7 @@ void opcodeHandler_TRAN( register VMachine *vm )
                if( ! iter->next() )
                {
                   // great, we're done -- let the code pass through.
-                  vm->m_pc_next = p2;
+                  vm->m_currentContext->pc_next() = p2;
                   return;
                }
             }
@@ -1412,7 +1410,7 @@ void opcodeHandler_TRAN( register VMachine *vm )
                // had the delete invalidated this?
                if( ! iter->isValid() )
                {
-                  vm->m_pc_next = p2;
+                  vm->m_currentContext->pc_next() = p2;
                   return;
                }
             }
@@ -1420,7 +1418,7 @@ void opcodeHandler_TRAN( register VMachine *vm )
                if( ! iter->next() )
                {
                   // great, we're done -- let the code pass through.
-                  vm->m_pc_next = p2;
+                  vm->m_currentContext->pc_next() = p2;
                   return;
                }
             }
@@ -1451,7 +1449,7 @@ void opcodeHandler_TRAN( register VMachine *vm )
             }
 
             if( counter >= sstr->length() ) {
-               vm->m_pc_next = p2;
+               vm->m_currentContext->pc_next() = p2;
                return;
             }
 
@@ -1476,7 +1474,7 @@ void opcodeHandler_TRAN( register VMachine *vm )
             iterator->setInteger( counter );
 
             if( counter >= smb->length() ) {
-               vm->m_pc_next = p2;
+               vm->m_currentContext->pc_next() = p2;
                return;
             }
 
@@ -1500,14 +1498,14 @@ void opcodeHandler_TRAN( register VMachine *vm )
             {
                counter += increment == 0 ? 1 : increment;
                if ( counter >= source->asRangeEnd() ) {
-                  vm->m_pc_next = p2;
+                  vm->m_currentContext->pc_next() = p2;
                   return;
                }
             }
             else {
                counter += increment == 0 ? -1 : increment;
                if ( counter < source->asRangeEnd() ) {
-                  vm->m_pc_next = p2;
+                  vm->m_currentContext->pc_next() = p2;
                   return;
                }
             }
@@ -1524,7 +1522,7 @@ void opcodeHandler_TRAN( register VMachine *vm )
    }
 
    // loop to begin.
-   vm->m_pc_next = p1;
+   vm->m_currentContext->pc_next() = p1;
 }
 
 //40
@@ -1544,9 +1542,9 @@ void opcodeHandler_LDAS( register VMachine *vm )
                .origin( e_orig_vm ) ) );
       }
       else {
-         uint32 oldpos = vm->m_stack->size();
-         vm->m_stack->resize( oldpos + size );
-         void* mem = vm->m_stack->itemPtrAt( oldpos );
+         uint32 oldpos = vm->stack().size();
+         vm->stack().resize( oldpos + size );
+         void* mem = vm->stack().itemPtrAt( oldpos );
          memcpy( mem, arr->elements(), size * sizeof(Item) );
      }
    }
@@ -1565,7 +1563,7 @@ void opcodeHandler_SWCH( register VMachine *vm )
    Item *operand2 =  vm->getOpcodeParam( 2 )->dereference();
    uint64 sw_count = (uint64) vm->getNextNTD64();
 
-   byte *tableBase =  vm->m_code + vm->m_pc_next;
+   byte *tableBase =  vm->m_currentContext->code() + vm->m_currentContext->pc_next();
 
    uint16 sw_int = (int16) (sw_count >> 48);
    uint16 sw_rng = (int16) (sw_count >> 32);
@@ -1577,30 +1575,30 @@ void opcodeHandler_SWCH( register VMachine *vm )
    {
       case FLC_ITEM_NIL:
          if ( *reinterpret_cast<uint32 *>( tableBase ) != 0xFFFFFFFF ) {
-            vm->m_pc_next = endianInt32( *reinterpret_cast<uint32 *>( tableBase )  );
+            vm->m_currentContext->pc_next() = endianInt32( *reinterpret_cast<uint32 *>( tableBase )  );
             return;
          }
       break;
 
       case FLC_ITEM_INT:
          if ( sw_int > 0 &&
-               vm->seekInteger( operand2->asInteger(), tableBase + sizeof(uint32), sw_int, vm->m_pc_next ) )
+               vm->seekInteger( operand2->asInteger(), tableBase + sizeof(uint32), sw_int, vm->m_currentContext->pc_next() ) )
             return;
          if ( sw_rng > 0 &&
                vm->seekInRange( operand2->asInteger(),
                      tableBase + sizeof(uint32) + sw_int * (sizeof(uint64) + sizeof(uint32) ),
-                     sw_rng, vm->m_pc_next ) )
+                     sw_rng, vm->m_currentContext->pc_next() ) )
             return;
       break;
 
       case FLC_ITEM_NUM:
          if ( sw_int > 0 &&
-               vm->seekInteger( operand2->forceInteger(), tableBase + sizeof(uint32), sw_int, vm->m_pc_next ) )
+               vm->seekInteger( operand2->forceInteger(), tableBase + sizeof(uint32), sw_int, vm->m_currentContext->pc_next() ) )
             return;
          if ( sw_rng > 0 &&
                vm->seekInRange( operand2->forceInteger(),
                      tableBase + sizeof(uint32) + sw_int * (sizeof(uint64) + sizeof(uint32) ),
-                     sw_rng, vm->m_pc_next ) )
+                     sw_rng, vm->m_currentContext->pc_next() ) )
             return;
       break;
 
@@ -1611,7 +1609,7 @@ void opcodeHandler_SWCH( register VMachine *vm )
                      sw_int * (sizeof(uint64) + sizeof(uint32) )+
                      sw_rng * (sizeof(uint64) + sizeof(uint32) ),
                      sw_str,
-                     vm->m_pc_next ) )
+                     vm->m_currentContext->pc_next() ) )
             return;
       break;
    }
@@ -1624,11 +1622,11 @@ void opcodeHandler_SWCH( register VMachine *vm )
                sw_rng * (sizeof(uint64) + sizeof(uint32) ) +
                sw_str * (sizeof(uint32) + sizeof(uint32) ),
                sw_obj,
-               vm->m_pc_next ) )
+               vm->m_currentContext->pc_next() ) )
             return;
 
    // in case of failure...
-   vm->m_pc_next = pNext;
+   vm->m_currentContext->pc_next() = pNext;
 }
 
 
@@ -1682,7 +1680,7 @@ void opcodeHandler_IN( register VMachine *vm )
       break;
    }
 
-   vm->m_regA.setBoolean( result );
+   vm->regA().setBoolean( result );
 }
 
 //47
@@ -1734,7 +1732,7 @@ void opcodeHandler_PROV( register VMachine *vm )
 //49
 void opcodeHandler_STVS( register VMachine *vm )
 {
-   if(  vm->m_stack->empty() )
+   if(  vm->stack().empty() )
    {
       vm->raiseError( e_stackuf, "STVS" );
       return;
@@ -1742,18 +1740,18 @@ void opcodeHandler_STVS( register VMachine *vm )
 
    Item *operand1 =  vm->getOpcodeParam( 1 );
    Item *operand2 =  vm->getOpcodeParam( 2 );
-   Item *origin = &vm->m_stack->topItem();
+   Item *origin = &vm->stack().topItem();
 
    operand1->setIndex( *operand2, *origin );
    vm->regA() = *origin;
-   vm->m_stack->pop();
+   vm->stack().pop();
 
 }
 
 //4A
 void opcodeHandler_STPS( register VMachine *vm )
 {
-   if( vm->m_stack->empty() )
+   if( vm->stack().empty() )
    {
       vm->raiseError( e_stackuf, "STPS" );
       return;
@@ -1764,13 +1762,13 @@ void opcodeHandler_STPS( register VMachine *vm )
 
    if ( method->isString() )
    {
-      target->setProperty( *method->asString(), vm->m_stack->topItem() );
-      vm->regA() = vm->m_stack->topItem();
-      vm->m_stack->pop();
+      target->setProperty( *method->asString(), vm->stack().topItem() );
+      vm->regA() = vm->stack().topItem();
+      vm->stack().pop();
    }
    else
    {
-      vm->m_stack->pop();
+      vm->stack().pop();
       vm->raiseRTError( new TypeError( ErrorParam( e_prop_acc ).extra("STPS").origin( e_orig_vm ) ) );
    }
 }
@@ -1781,7 +1779,7 @@ void opcodeHandler_AND( register VMachine *vm )
    Item *operand1 =  vm->getOpcodeParam( 1 )->dereference();
    Item *operand2 =  vm->getOpcodeParam( 2 )->dereference();
 
-   vm->m_regA.setBoolean( operand1->isTrue() && operand2->isTrue() );
+   vm->regA().setBoolean( operand1->isTrue() && operand2->isTrue() );
 }
 
 //4C
@@ -1790,7 +1788,7 @@ void opcodeHandler_OR( register VMachine *vm )
    Item *operand1 =  vm->getOpcodeParam( 1 )->dereference();
    Item *operand2 =  vm->getOpcodeParam( 2 )->dereference();
 
-   vm->m_regA.setBoolean( operand1->isTrue() || operand2->isTrue() );
+   vm->regA().setBoolean( operand1->isTrue() || operand2->isTrue() );
 }
 
 //50
@@ -1942,7 +1940,7 @@ void opcodeHandler_TRAV( register VMachine *vm )
 {
    // we need some spare space. We preallocate it because if the parameters are in
    // the stack, we need their pointers to stay valid.
-   vm->m_stack->resize( vm->m_stack->size() + 3 );
+   vm->stack().resize( vm->stack().size() + 3 );
 
    // get the jump label.
    int wayout = vm->getNextNTD32();
@@ -1975,7 +1973,7 @@ void opcodeHandler_TRAV( register VMachine *vm )
             }
 
             for ( uint32 i = 0; i < varCount; i ++ ) {
-               vm->stackItem( vm->m_stack->size() - (uint32)varCount + i - 3).dereference()->copy(
+               vm->stackItem( vm->stack().size() - (uint32)varCount + i - 3).dereference()->copy(
                         * ((* sourceItem->asArray() )[i].dereference()) );
             }
          }
@@ -1983,7 +1981,7 @@ void opcodeHandler_TRAV( register VMachine *vm )
             dest->copy( *(sourceItem->dereference()) );
 
          // prepare ... iterator
-         vm->m_stack->itemAt( vm->m_stack->size()-3 ) = ( (int64) 0 );
+         vm->stack().itemAt( vm->stack().size()-3 ) = ( (int64) 0 );
       }
       break;
 
@@ -2005,7 +2003,7 @@ void opcodeHandler_TRAV( register VMachine *vm )
          // we need an iterator...
          DictIterator *iter = dict->first();
 
-         register int stackSize = vm->m_stack->size();
+         register int stackSize = vm->stack().size();
          vm->stackItem( stackSize - 5 ).dereference()->
                copy( iter->getCurrentKey() );
          vm->stackItem( stackSize - 4 ).dereference()->
@@ -2013,7 +2011,7 @@ void opcodeHandler_TRAV( register VMachine *vm )
 
          // prepare... iterator
          iter->setOwner( dict );
-         vm->m_stack->itemAt( vm->m_stack->size()-3 ).setGCPointer( iter );
+         vm->stack().itemAt( vm->stack().size()-3 ).setGCPointer( iter );
       }
       break;
 
@@ -2045,7 +2043,7 @@ void opcodeHandler_TRAV( register VMachine *vm )
 
          // prepare... iterator
          iter->setOwner( seq );
-         vm->m_stack->itemAt( vm->m_stack->size()-3 ).setGCPointer( iter );
+         vm->stack().itemAt( vm->stack().size()-3 ).setGCPointer( iter );
       }
       break;
 
@@ -2070,7 +2068,7 @@ void opcodeHandler_TRAV( register VMachine *vm )
             return;
          }
          *dest->dereference() = new CoreString( sstr->subString(0,1) );
-         vm->m_stack->itemAt( vm->m_stack->size()-3 ) = ( (int64) 0 );
+         vm->stack().itemAt( vm->stack().size()-3 ) = ( (int64) 0 );
          }
          break;
 
@@ -2085,7 +2083,7 @@ void opcodeHandler_TRAV( register VMachine *vm )
             return;
          }
          *dest->dereference() = (int64) source->asMemBuf()->get(0);
-         vm->m_stack->itemAt( vm->m_stack->size()-3 ) = ( (int64) 0 );
+         vm->stack().itemAt( vm->stack().size()-3 ) = ( (int64) 0 );
          break;
 
       case FLC_ITEM_RANGE:
@@ -2105,7 +2103,7 @@ void opcodeHandler_TRAV( register VMachine *vm )
             return;
          }
          *dest->dereference() = (int64) source->asRangeStart();
-         vm->m_stack->itemAt( vm->m_stack->size()-3 ) = ( (int64) source->asRangeStart() );
+         vm->stack().itemAt( vm->stack().size()-3 ) = ( (int64) source->asRangeStart() );
          break;
 
       case FLC_ITEM_NIL:
@@ -2121,22 +2119,22 @@ void opcodeHandler_TRAV( register VMachine *vm )
    // after the iterator/counter, push the source
    if ( vm->operandType( 1 ) == P_PARAM_INT32 || vm->operandType( 1 ) == P_PARAM_INT64 )
    {
-      vm->m_stack->itemAt( vm->m_stack->size()-2 ) = dest->asInteger();
+      vm->stack().itemAt( vm->stack().size()-2 ) = dest->asInteger();
    }
    else {
       Item refDest;
       vm->referenceItem( refDest, *real_dest );
-      vm->m_stack->itemAt( vm->m_stack->size()-2 ) = refDest;
+      vm->stack().itemAt( vm->stack().size()-2 ) = refDest;
    }
 
    // and then the source by copy
-   vm->m_stack->itemAt( vm->m_stack->size()-1 ) = *source;
+   vm->stack().itemAt( vm->stack().size()-1 ) = *source;
 
    // we're done.
    return;
 
 trav_go_away:
-   vm->m_pc_next = wayout;
+   vm->m_currentContext->pc_next() = wayout;
    uint32 vars = 0;
    // eventually pop referenced vars
    if ( vm->operandType( 1 ) == P_PARAM_INT32 || vm->operandType( 1 ) == P_PARAM_INT64 )
@@ -2144,12 +2142,12 @@ trav_go_away:
       vars = (uint32) dest->asInteger();
    }
 
-   if( vars + 3 > vm->m_stack->size() )
+   if( vars + 3 > vm->stack().size() )
    {
       vm->raiseError( e_stackuf, "TRAV" );
    }
    else {
-      vm->m_stack->resize( vm->m_stack->size() - vars - 3 );
+      vm->stack().resize( vm->stack().size() - vars - 3 );
    }
 }
 
@@ -2183,7 +2181,7 @@ void opcodeHandler_SHL( register VMachine *vm )
    Item *operand2 = vm->getOpcodeParam( 2 )->dereference();
 
    if( operand1->isInteger() && operand2->isInteger() )
-      vm->m_regA.setInteger( operand1->asInteger() << operand2->asInteger() );
+      vm->regA().setInteger( operand1->asInteger() << operand2->asInteger() );
    else
       vm->raiseRTError(
          new TypeError( ErrorParam( e_invop ).origin( e_orig_vm ).extra("SHL") ) );
@@ -2197,7 +2195,7 @@ void opcodeHandler_SHR( register VMachine *vm )
    Item *operand2 = vm->getOpcodeParam( 2 )->dereference();
 
    if( operand1->isInteger() && operand2->isInteger() )
-      vm->m_regA.setInteger( operand1->asInteger() >> operand2->asInteger() );
+      vm->regA().setInteger( operand1->asInteger() >> operand2->asInteger() );
    else
       vm->raiseRTError(
          new TypeError( ErrorParam( e_invop ).origin( e_orig_vm ).extra("SHR") ) );
@@ -2281,13 +2279,13 @@ void opcodeHandler_EVAL( register VMachine *vm )
          // This will cause functionalEval to produce a correct return frame
          // in case it needs sub functional evals.
          vm->createFrame(0);
-         uint32 savePC = vm->m_pc_next;
-         vm->m_pc_next = VMachine::i_pc_call_external_return;
+         uint32 savePC = vm->m_currentContext->pc_next();
+         vm->m_currentContext->pc_next() = VMachine::i_pc_call_external_return;
          if( ! vm->functionalEval( *operand1 ) )
          {
             // it wasn't necessary; reset pc to the correct value
             vm->callReturn();
-            vm->m_pc_next = savePC;
+            vm->m_currentContext->pc_next() = savePC;
          }
          // ok here we're ready either to jump where required by functionalEval or
          // to go on as usual
@@ -2311,7 +2309,7 @@ void opcodeHandler_SELE( register VMachine *vm )
    Item *op2 = real_op2->dereference();
    uint64 sw_count = (uint64) vm->getNextNTD64();
 
-   byte *tableBase = vm->m_code + vm->m_pc_next;
+   byte *tableBase = vm->m_currentContext->code() + vm->m_currentContext->pc_next();
 
    // SELE B has a special semantic used as a TRY/CATCH helper
    bool hasDefault = endianInt32( *reinterpret_cast<uint32 *>( tableBase )  ) == 0;
@@ -2325,7 +2323,7 @@ void opcodeHandler_SELE( register VMachine *vm )
    int type = op2->type();
    if ( sw_int > 0 )
    {
-      if ( vm->seekInteger( type, tableBase + sizeof(uint32), sw_int, vm->m_pc_next ) )
+      if ( vm->seekInteger( type, tableBase + sizeof(uint32), sw_int, vm->m_currentContext->pc_next() ) )
          return;
    }
 
@@ -2337,7 +2335,7 @@ void opcodeHandler_SELE( register VMachine *vm )
                tableBase + sizeof(uint32) +
                   sw_int * (sizeof(uint64) + sizeof(uint32) ),
                   sw_obj,
-                  vm->m_pc_next ) )
+                  vm->m_currentContext->pc_next() ) )
                return;
    }
 
@@ -2349,7 +2347,7 @@ void opcodeHandler_SELE( register VMachine *vm )
    }
 
    // in case of failure go to default or past sele...
-   vm->m_pc_next = pNext;
+   vm->m_currentContext->pc_next() = pNext;
 }
 
 //62
@@ -2363,7 +2361,7 @@ void opcodeHandler_INDI( register VMachine *vm )
       return;
    }
 
-   if ( ! vm->findLocalVariable( *operand1->asString(), vm->m_regA ) )
+   if ( ! vm->findLocalVariable( *operand1->asString(), vm->regA() ) )
    {
        vm->raiseRTError(
             new ParamError( ErrorParam( e_param_indir_code ).origin( e_orig_vm ).extra( "INDI" ) ) );
@@ -2388,7 +2386,7 @@ void opcodeHandler_STEX( register VMachine *vm )
    switch( retval )
    {
       case VMachine::return_ok:
-         vm->m_regA = target;
+         vm->regA() = target;
       break;
 
       case VMachine::return_error_parse_fmt:
@@ -2416,12 +2414,12 @@ void opcodeHandler_TRAC( register VMachine *vm )
 {
    Item *operand1 = vm->getOpcodeParam( 1 )->dereference();
 
-   if ( vm->m_stack->size() < 3 ) {
+   if ( vm->stack().size() < 3 ) {
       vm->raiseError( e_stackuf, "TRAC" );
       return;
    }
 
-   register int size = vm->m_stack->size();
+   register int size = vm->stack().size();
    Item *iterator = &vm->stackItem( size - 3 );
    bool isIterator = ! iterator->isInteger();
    Item *source = &vm->stackItem( size - 1 );
@@ -2603,22 +2601,22 @@ void opcodeHandler_OOB( register VMachine *vm )
    switch( pmode )
    {
       case 0:
-         vm->m_regA = *operand;
-         vm->m_regA.setOob( false );
+         vm->regA() = *operand;
+         vm->regA().setOob( false );
          break;
 
       case 1:
-         vm->m_regA = *operand;
-         vm->m_regA.setOob( true );
+         vm->regA() = *operand;
+         vm->regA().setOob( true );
          break;
 
       case 2:
-         vm->m_regA = *operand;
-         vm->m_regA.setOob( ! operand->isOob() );
+         vm->regA() = *operand;
+         vm->regA().setOob( ! operand->isOob() );
          break;
 
       default:
-         vm->m_regA.setBoolean( operand->isOob() );
+         vm->regA().setBoolean( operand->isOob() );
    }
 }
 
