@@ -60,9 +60,9 @@ FALCON_FUNC  falcon_getHostName( ::Falcon::VMachine *vm )
       vm->retval( s );
    else {
       delete s;
-      vm->raiseModError(  new NetError( ErrorParam( FALSOCK_ERR_GENERIC, __LINE__ )
+      throw  new NetError( ErrorParam( FALSOCK_ERR_GENERIC, __LINE__ )
          .desc( FAL_STR( sk_msg_generic ) )
-         .sysError( (uint32) errno ) ) );
+         .sysError( (uint32) errno ) );
    }
 }
 
@@ -106,18 +106,16 @@ FALCON_FUNC  resolveAddress( ::Falcon::VMachine *vm )
    Item *address = vm->param( 0 );
    if ( address == 0 || ! address->isString() )
    {
-      vm->raiseModError(  new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "S" ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "S" ) );
    }
 
    Sys::Address addr;
    addr.set( *address->asString() );
    if ( ! addr.resolve() ) {
-      vm->raiseModError(  new NetError( ErrorParam( FALSOCK_ERR_RESOLV, __LINE__ )
+      throw  new NetError( ErrorParam( FALSOCK_ERR_RESOLV, __LINE__ )
          .desc( FAL_STR( sk_msg_errresolv ) )
-         .sysError( (uint32) addr.lastError() ) ) );
-      return;
+         .sysError( (uint32) addr.lastError() ) );
    }
 
    CoreArray *ret = new CoreArray( addr.getResolvedCount() );
@@ -218,9 +216,8 @@ FALCON_FUNC  Socket_setTimeout( ::Falcon::VMachine *vm )
    Item *i_to = vm->param(0);
    if ( i_to == 0 || ! i_to->isOrdinal() )
    {
-      vm->raiseModError(  new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "N" ) ) );
-      return;
+      throw  new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "N" ) );
    }
 
    CoreObject *self = vm->self().asObject();
@@ -296,9 +293,8 @@ FALCON_FUNC  Socket_readAvailable( ::Falcon::VMachine *vm )
    Item *to = vm->param( 0 );
    if ( to != 0 && ! to->isOrdinal() )
    {
-      vm->raiseModError(  new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "[N]" ) ) );
-      return;
+      throw  new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "[N]" ) );
    }
 
    int64 timeout = to == 0 ? -1 : int64(to->forceNumeric() * 1000.0);
@@ -324,11 +320,12 @@ FALCON_FUNC  Socket_readAvailable( ::Falcon::VMachine *vm )
          vm->regA().setBoolean( false );
       }
       else {
-         vm->raiseModError(  new NetError( ErrorParam( FALSOCK_ERR_GENERIC, __LINE__ )
-            .desc( FAL_STR( sk_msg_generic ) )
-            .sysError( (uint32) tcps->lastError() ) ) );
          self->setProperty( "lastError", tcps->lastError() );
          self->setProperty( "timedOut", Item( false ) );
+         
+         throw  new NetError( ErrorParam( FALSOCK_ERR_GENERIC, __LINE__ )
+            .desc( FAL_STR( sk_msg_generic ) )
+            .sysError( (uint32) tcps->lastError() ) );
       }
    }
    else {
@@ -376,9 +373,8 @@ FALCON_FUNC  Socket_writeAvailable( ::Falcon::VMachine *vm )
    Item *to = vm->param( 0 );
    if ( to != 0 && ! to->isOrdinal() )
    {
-      vm->raiseModError(  new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "[N]" ) ) );
-      return;
+      throw  new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "[N]" ) );
    }
 
    int64 timeout = to == 0 ? -1 : int64(to->forceNumeric() * 1000.0);
@@ -405,11 +401,11 @@ FALCON_FUNC  Socket_writeAvailable( ::Falcon::VMachine *vm )
       }
       else {
          // error
-         vm->raiseModError(  new NetError( ErrorParam( FALSOCK_ERR_GENERIC, __LINE__ )
-            .desc( FAL_STR( sk_msg_generic ) )
-            .sysError( (uint32) tcps->lastError() ) ) );
          self->setProperty( "lastError", tcps->lastError() );
          self->setProperty( "timedOut", Item( false ) );
+         throw  new NetError( ErrorParam( FALSOCK_ERR_GENERIC, __LINE__ )
+            .desc( FAL_STR( sk_msg_generic ) )
+            .sysError( (uint32) tcps->lastError() ) );
       }
    }
    else {
@@ -519,9 +515,9 @@ FALCON_FUNC  TCPSocket_init( ::Falcon::VMachine *vm )
 
    if ( skt->lastError() != 0 ) {
       self->setProperty( "lastError", (int64) skt->lastError() );
-      vm->raiseModError(  new NetError( ErrorParam( FALSOCK_ERR_CREATE, __LINE__ )
+      throw  new NetError( ErrorParam( FALSOCK_ERR_CREATE, __LINE__ )
          .desc( FAL_STR( sk_msg_errcreate ) )
-         .sysError( (uint32) skt->lastError() ) ) );
+         .sysError( (uint32) skt->lastError() ) );
    }
 }
 
@@ -559,9 +555,8 @@ FALCON_FUNC  TCPSocket_connect( ::Falcon::VMachine *vm )
    if ( i_server == 0 || i_service == 0 || ! i_server->isString() ||
          ! i_service->isString() )
    {
-      vm->raiseModError(  new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "S, S" ) ) );
-      return;
+      throw  new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "S, S" ) );
    }
 
    // try to resolve them.
@@ -571,10 +566,9 @@ FALCON_FUNC  TCPSocket_connect( ::Falcon::VMachine *vm )
    //in case of failed resolution, raise an error.
    if ( ! addr.resolve() ) {
       self->setProperty( "lastError", addr.lastError() );
-      vm->raiseModError(  new NetError( ErrorParam( FALSOCK_ERR_RESOLV, __LINE__ )
+      throw  new NetError( ErrorParam( FALSOCK_ERR_RESOLV, __LINE__ )
          .desc( FAL_STR( sk_msg_errcreate ) )
-         .sysError( (uint32) addr.lastError() ) ) );
-      return;
+         .sysError( (uint32) addr.lastError() ) );
    }
 
    vm->idle();
@@ -597,9 +591,9 @@ FALCON_FUNC  TCPSocket_connect( ::Falcon::VMachine *vm )
       self->setProperty( "lastError", tcps->lastError() );
       self->setProperty( "timedOut", Item( false ) );
 
-      vm->raiseModError(  new NetError( ErrorParam( FALSOCK_ERR_CONNECT, __LINE__ )
+      throw  new NetError( ErrorParam( FALSOCK_ERR_CONNECT, __LINE__ )
          .desc( FAL_STR( sk_msg_errconnect ) )
-         .sysError( (uint32) tcps->lastError() ) ) );
+         .sysError( (uint32) tcps->lastError() ) );
    }
 }
 
@@ -627,9 +621,10 @@ FALCON_FUNC  TCPSocket_isConnected( ::Falcon::VMachine *vm )
 
       // an error!
       self->setProperty( "lastError", tcps->lastError() );
-      vm->raiseModError( new NetError( ErrorParam( FALSOCK_ERR_CONNECT, __LINE__ )
+      self->setProperty( "timedOut", Item( false ) );
+      throw new NetError( ErrorParam( FALSOCK_ERR_CONNECT, __LINE__ )
          .desc( FAL_STR( sk_msg_errconnect ) )
-         .sysError( (uint32) tcps->lastError() ) ) );
+         .sysError( (uint32) tcps->lastError() ) );
    }
    else {
       // success
@@ -685,9 +680,8 @@ FALCON_FUNC  TCPSocket_send( ::Falcon::VMachine *vm )
        ( start != 0 && ! start->isOrdinal() )
       )
    {
-      vm->raiseModError(  new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "S, [I], [I]" ) ) );
-      return;
+      throw  new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "S, [I], [I]" ) );
    }
 
    String *dataStr = data->asString();
@@ -705,10 +699,9 @@ FALCON_FUNC  TCPSocket_send( ::Falcon::VMachine *vm )
    
    if( res == -1 ) {
       self->setProperty( "lastError", tcps->lastError() );
-      vm->raiseModError(  new NetError( ErrorParam( FALSOCK_ERR_SEND, __LINE__ )
+      throw  new NetError( ErrorParam( FALSOCK_ERR_SEND, __LINE__ )
          .desc( FAL_STR( sk_msg_errsend ) )
-         .sysError( (uint32) tcps->lastError() ) ) );
-      return;
+         .sysError( (uint32) tcps->lastError() ) );
    }
    else if ( res == -2 )
       self->setProperty( "timedOut", Item( true ) );
@@ -769,17 +762,15 @@ FALCON_FUNC  TCPSocket_recv( ::Falcon::VMachine *vm )
    bool returnTarget;
 
    if ( target == 0 ) {
-      vm->raiseModError(  new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "X, [N]" ) ) );
-      return;
+      throw  new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "X, [N]" ) );
    }
 
    if ( last != 0 ) {
       size = (int32) last->forceInteger();
       if ( size <= 0 ) {
-         vm->raiseModError(  new ParamError( ErrorParam( e_param_range, __LINE__ ).
-            extra( FAL_STR( sk_msg_lesszero) ) ) );
-         return;
+         throw  new ParamError( ErrorParam( e_param_range, __LINE__ ).
+            extra( FAL_STR( sk_msg_lesszero) ) );
       }
 
       if ( target->isString() )
@@ -789,9 +780,8 @@ FALCON_FUNC  TCPSocket_recv( ::Falcon::VMachine *vm )
          cs_target->reserve( size );
       }
       else {
-         vm->raiseModError(  new ParamError( ErrorParam( e_param_type, __LINE__ ).
-            extra( FAL_STR( sk_msg_firstnostring ) ) ) );
-         return;
+         throw  new ParamError( ErrorParam( e_param_type, __LINE__ ).
+            extra( FAL_STR( sk_msg_firstnostring ) ) );
       }
       returnTarget = false;
    }
@@ -805,9 +795,8 @@ FALCON_FUNC  TCPSocket_recv( ::Falcon::VMachine *vm )
       if ( size <= 0 ) {
          size = cs_target->size();
          if ( size <= 0 ) {
-            vm->raiseModError(  new ParamError( ErrorParam( e_param_range, __LINE__ ).
-               extra( FAL_STR( sk_msg_stringnospace ) ) ) );
-            return;
+            throw  new ParamError( ErrorParam( e_param_range, __LINE__ ).
+               extra( FAL_STR( sk_msg_stringnospace ) ) );
          }
 
          cs_target->reserve( size ); // force to bufferize
@@ -819,9 +808,8 @@ FALCON_FUNC  TCPSocket_recv( ::Falcon::VMachine *vm )
    {
       size = (int32) target->forceInteger();
       if ( size <= 0 ) {
-         vm->raiseModError(  new ParamError( ErrorParam( e_param_range, __LINE__ ).
-            extra( FAL_STR( sk_msg_lesszero) ) ) );
-         return;
+         throw  new ParamError( ErrorParam( e_param_range, __LINE__ ).
+            extra( FAL_STR( sk_msg_lesszero) ) );
       }
       cs_target = new CoreString;
       cs_target->reserve( size );
@@ -830,9 +818,8 @@ FALCON_FUNC  TCPSocket_recv( ::Falcon::VMachine *vm )
    }
    else
    {
-      vm->raiseModError(  new ParamError( ErrorParam( e_param_type, __LINE__ ).
-         extra( "X, [S|I]" ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_param_type, __LINE__ ).
+         extra( "X, [S|I]" ) );
    }
 
    vm->idle();
@@ -841,10 +828,9 @@ FALCON_FUNC  TCPSocket_recv( ::Falcon::VMachine *vm )
    
    if( size == -1 ) {
       self->setProperty( "lastError", tcps->lastError() ) ;
-      vm->raiseModError(  new NetError( ErrorParam( FALSOCK_ERR_RECV, __LINE__ )
+      throw  new NetError( ErrorParam( FALSOCK_ERR_RECV, __LINE__ )
          .desc( FAL_STR( sk_msg_errrecv ) )
-         .sysError( (uint32) tcps->lastError() ) ) );
-      return;
+         .sysError( (uint32) tcps->lastError() ) );
    }
    else if ( size == -2 ) {
       self->setProperty( "timedOut", Item( true ) );
@@ -892,7 +878,7 @@ FALCON_FUNC  TCPSocket_closeRead( ::Falcon::VMachine *vm )
    
    vm->idle();
    if ( ! tcps->closeRead() ) {
-   vm->unidle();
+      vm->unidle();
       // may time out
       if ( tcps->lastError() == 0 ) {
          self->setProperty( "timedOut", Item( true ) );
@@ -903,14 +889,14 @@ FALCON_FUNC  TCPSocket_closeRead( ::Falcon::VMachine *vm )
       // an error!
       self->setProperty( "lastError", tcps->lastError() );
       self->setProperty( "timedOut", Item( false ) );
-      vm->raiseModError(  new NetError( ErrorParam( FALSOCK_ERR_CLOSE, __LINE__ )
+      throw  new NetError( ErrorParam( FALSOCK_ERR_CLOSE, __LINE__ )
          .desc( FAL_STR( sk_msg_errclose ) )
-         .sysError( (uint32) tcps->lastError() ) ) );
-      return;
+         .sysError( (uint32) tcps->lastError() ) );
    }
-   
-   vm->unidle();
-   vm->regA().setBoolean( true );
+   else {
+      vm->unidle();
+      vm->regA().setBoolean( true );
+   }
 }
 
 
@@ -948,12 +934,12 @@ FALCON_FUNC  TCPSocket_closeWrite( ::Falcon::VMachine *vm )
    }
    else {
       // an error!
+      vm->unidle();
       self->setProperty( "lastError", tcps->lastError() );
-      vm->raiseModError(  new NetError( ErrorParam( FALSOCK_ERR_CLOSE, __LINE__ )
+      throw  new NetError( ErrorParam( FALSOCK_ERR_CLOSE, __LINE__ )
          .desc( FAL_STR( sk_msg_errclose ) )
-         .sysError( (uint32) tcps->lastError() ) ) );
+         .sysError( (uint32) tcps->lastError() ) );
    }
-   vm->unidle();
 }
 
 
@@ -991,14 +977,14 @@ FALCON_FUNC  TCPSocket_close( ::Falcon::VMachine *vm )
       // an error!
       self->setProperty( "lastError", tcps->lastError() );
       self->setProperty( "timedOut", Item( false ) );
-      vm->raiseModError(  new NetError( ErrorParam( FALSOCK_ERR_CLOSE, __LINE__ )
+      throw  new NetError( ErrorParam( FALSOCK_ERR_CLOSE, __LINE__ )
          .desc( FAL_STR( sk_msg_errclose ) )
-         .sysError( (uint32) tcps->lastError() ) ) );
-      return;
+         .sysError( (uint32) tcps->lastError() ) );
    }
-
-   vm->unidle();
-   vm->regA().setBoolean( true );
+   else {
+      vm->unidle();
+      vm->regA().setBoolean( true );
+   }
 }
 
 // ==============================================
@@ -1032,8 +1018,8 @@ FALCON_FUNC  UDPSocket_init( ::Falcon::VMachine *vm )
    {
       if ( ! address_i->isString() || ( service_i != 0 && ! service_i->isString() ) )
       {
-         vm->raiseModError(  new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-            extra( "S, [S]" ) ) );
+         throw  new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+            extra( "S, [S]" ) );
          return;
       }
       Sys::Address addr;
@@ -1052,9 +1038,9 @@ FALCON_FUNC  UDPSocket_init( ::Falcon::VMachine *vm )
 
    if ( skt->lastError() != 0 ) {
       self->setProperty( "lastError", (int64) skt->lastError() );
-      vm->raiseModError(  new NetError( ErrorParam( FALSOCK_ERR_CREATE, __LINE__ )
+      throw  new NetError( ErrorParam( FALSOCK_ERR_CREATE, __LINE__ )
          .desc( FAL_STR( sk_msg_errcreate ) )
-         .sysError( (uint32) skt->lastError() ) ) );
+         .sysError( (uint32) skt->lastError() ) );
    }
 }
 
@@ -1122,8 +1108,8 @@ FALCON_FUNC  UDPSocket_sendTo( ::Falcon::VMachine *vm )
        ( start != 0 && ! start->isOrdinal() )
       )
    {
-      vm->raiseModError(  new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "S, S, [N], [N]" ) ) );
+      throw  new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "S, S, [N], [N]" ) );
       return;
    }
 
@@ -1146,9 +1132,9 @@ FALCON_FUNC  UDPSocket_sendTo( ::Falcon::VMachine *vm )
    
    if( res == -1 ) {
       self->setProperty( "lastError", udps->lastError() );
-      vm->raiseModError(  new NetError( ErrorParam( FALSOCK_ERR_SEND, __LINE__ )
+      throw  new NetError( ErrorParam( FALSOCK_ERR_SEND, __LINE__ )
          .desc( FAL_STR( sk_msg_errsend ) )
-         .sysError( (uint32) udps->lastError() ) ) );
+         .sysError( (uint32) udps->lastError() ) );
       return;
    }
    else if ( res == -2 )
@@ -1218,16 +1204,15 @@ FALCON_FUNC  UDPSocket_recv( ::Falcon::VMachine *vm )
    bool returnTarget;
 
    if ( target == 0 ) {
-      vm->raiseModError(  new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "X, [N]" ) ) );
-      return;
+      throw  new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "X, [N]" ) );
    }
 
    if ( last != 0 ) {
       size = (int32) last->forceInteger();
       if ( size <= 0 ) {
-         vm->raiseModError(  new ParamError( ErrorParam( e_param_range, __LINE__ ).
-            extra( FAL_STR( sk_msg_lesszero) ) ) );
+         throw  new ParamError( ErrorParam( e_param_range, __LINE__ ).
+            extra( FAL_STR( sk_msg_lesszero) ) );
          return;
       }
 
@@ -1238,9 +1223,8 @@ FALCON_FUNC  UDPSocket_recv( ::Falcon::VMachine *vm )
          cs_target->reserve( size );
       }
       else {
-         vm->raiseModError(  new ParamError( ErrorParam( e_param_type, __LINE__ ).
-            extra( FAL_STR( sk_msg_firstnostring ) ) ) );
-            return;
+         throw  new ParamError( ErrorParam( e_param_type, __LINE__ ).
+            extra( FAL_STR( sk_msg_firstnostring ) ) );
       }
       returnTarget = false;
    }
@@ -1252,9 +1236,8 @@ FALCON_FUNC  UDPSocket_recv( ::Falcon::VMachine *vm )
       size = cs_target->size();
 
       if ( size <= 0 ) {
-         vm->raiseModError(  new ParamError( ErrorParam( e_param_range, __LINE__ ).
-            extra( FAL_STR( sk_msg_stringnospace ) ) ) );
-         return;
+         throw  new ParamError( ErrorParam( e_param_range, __LINE__ ).
+            extra( FAL_STR( sk_msg_stringnospace ) ) );
       }
 
       cs_target->reserve( size ); // force to bufferize
@@ -1264,9 +1247,8 @@ FALCON_FUNC  UDPSocket_recv( ::Falcon::VMachine *vm )
    {
       size = (int32) target->forceInteger();
       if ( size <= 0 ) {
-         vm->raiseModError(  new ParamError( ErrorParam( e_param_range, __LINE__ ).
-            extra( FAL_STR( sk_msg_lesszero) ) ) );
-         return;
+         throw  new ParamError( ErrorParam( e_param_range, __LINE__ ).
+            extra( FAL_STR( sk_msg_lesszero) ) );
       }
       cs_target = new CoreString;
       cs_target->reserve( size );
@@ -1275,9 +1257,8 @@ FALCON_FUNC  UDPSocket_recv( ::Falcon::VMachine *vm )
    }
    else
    {
-      vm->raiseModError( new  ParamError( ErrorParam( e_param_type, __LINE__ ).
-         extra( "X, S|I" ) ) );
-      return;
+      throw new  ParamError( ErrorParam( e_param_type, __LINE__ ).
+         extra( "X, S|I" ) );
    }
 
    Sys::Address from;
@@ -1287,10 +1268,9 @@ FALCON_FUNC  UDPSocket_recv( ::Falcon::VMachine *vm )
 
    if( size == -1 ) {
       self->setProperty( "lastError", udps->lastError() ) ;
-      vm->raiseModError(  new NetError( ErrorParam( FALSOCK_ERR_SEND, __LINE__ )
+      throw  new NetError( ErrorParam( FALSOCK_ERR_SEND, __LINE__ )
          .desc( FAL_STR( sk_msg_errsend ) )
-         .sysError( (uint32) udps->lastError() ) ) );
-      return;
+         .sysError( (uint32) udps->lastError() ) );
    }
    else if ( size == -2 ) {
       self->setProperty( "timedOut", Item( true ) );
@@ -1371,9 +1351,9 @@ FALCON_FUNC  TCPServer_init( ::Falcon::VMachine *vm )
 
    if ( skt->lastError() != 0 ) {
       self->setProperty( "lastError", (int64) skt->lastError() );
-      vm->raiseModError(  new NetError( ErrorParam( FALSOCK_ERR_CREATE, __LINE__ )
+      throw  new NetError( ErrorParam( FALSOCK_ERR_CREATE, __LINE__ )
          .desc( FAL_STR( sk_msg_errcreate ) )
-         .sysError( (uint32) skt->lastError() ) ) );
+         .sysError( (uint32) skt->lastError() ) );
    }
 }
 
@@ -1427,8 +1407,8 @@ FALCON_FUNC  TCPServer_bind( ::Falcon::VMachine *vm )
 
    if ( i_first == 0 || ! i_first->isString() || ( i_second != 0 && ! i_second->isString() ) )
    {
-         vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
-            extra( "S, [S]" ) ) );
+         throw new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
+            extra( "S, [S]" ) );
       return;
    }
 
@@ -1441,9 +1421,9 @@ FALCON_FUNC  TCPServer_bind( ::Falcon::VMachine *vm )
    if ( ! srvs->bind( addr ) )
    {
       self->setProperty( "lastError", srvs->lastError() );
-      vm->raiseModError(  new  NetError( ErrorParam( FALSOCK_ERR_BIND, __LINE__ )
+      throw  new  NetError( ErrorParam( FALSOCK_ERR_BIND, __LINE__ )
          .desc( FAL_STR(sk_msg_errbind) )
-         .sysError( (uint32) srvs->lastError() ) ) );
+         .sysError( (uint32) srvs->lastError() ) );
    }
 
    vm->retnil();
@@ -1485,8 +1465,8 @@ FALCON_FUNC  TCPServer_accept( ::Falcon::VMachine *vm )
       srvs->timeout( (int32) to->forceInteger() );
    }
    else {
-      vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "[N]" ) ) );
+      throw new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "[N]" ) );
       return;
    }
 
@@ -1497,8 +1477,8 @@ FALCON_FUNC  TCPServer_accept( ::Falcon::VMachine *vm )
    if ( srvs->lastError() != 0 )
    {
       self->setProperty( "lastError", srvs->lastError() );
-      vm->raiseModError( new  NetError( ErrorParam( FALSOCK_ERR_ACCEPT, __LINE__ ).
-         desc( FAL_STR( sk_msg_erraccept ) ).sysError( (uint32) srvs->lastError() ) ) );
+      throw new  NetError( ErrorParam( FALSOCK_ERR_ACCEPT, __LINE__ ).
+         desc( FAL_STR( sk_msg_erraccept ) ).sysError( (uint32) srvs->lastError() ) );
       return;
    }
 

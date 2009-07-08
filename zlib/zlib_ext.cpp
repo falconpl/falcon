@@ -86,9 +86,8 @@ FALCON_FUNC ZLib_compress( ::Falcon::VMachine *vm )
    Item *dataI = vm->param( 0 );
    if ( dataI == 0 || ( ! dataI->isString() && ! dataI->isMemBuf() ) )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                                        .extra( "S|M" ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                                        .extra( "S|M" ) );
    }
 
    int err;
@@ -131,10 +130,9 @@ FALCON_FUNC ZLib_compress( ::Falcon::VMachine *vm )
    if ( err != Z_OK )
    {
       // as err is < 0, we reverse it.
-      vm->raiseModError( new ZLibError(
+      throw new ZLibError(
             ErrorParam( FALCON_ZLIB_ERROR_BASE - err, __LINE__ )
-            .desc( internal_getErrorMsg( vm, err ) ) ) );
-      return;
+            .desc( internal_getErrorMsg( vm, err ) ) );
    }
 
 
@@ -165,9 +163,8 @@ FALCON_FUNC ZLib_compressText( ::Falcon::VMachine *vm )
    Item *dataI = vm->param( 0 );
    if ( dataI == 0 || ! dataI->isString() )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                  .extra( "S" ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                  .extra( "S" ) );
    }
 
    int err;
@@ -214,9 +211,8 @@ FALCON_FUNC ZLib_compressText( ::Falcon::VMachine *vm )
 
    if ( err != Z_OK )
    {
-      vm->raiseModError( new ZLibError( ErrorParam( FALCON_ZLIB_ERROR_BASE -err, __LINE__ )
-               .desc( internal_getErrorMsg( vm, err ) ) ) );
-      return;
+      throw new ZLibError( ErrorParam( FALCON_ZLIB_ERROR_BASE -err, __LINE__ )
+               .desc( internal_getErrorMsg( vm, err ) ) );
    }
 
 
@@ -245,9 +241,8 @@ FALCON_FUNC ZLib_uncompress( ::Falcon::VMachine *vm )
 
    if ( dataI == 0 || ( ! dataI->isString() && ! dataI->isMemBuf() ) )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
-               .extra( "S|M" ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+               .extra( "S|M" ) );
    }
 
    int err;
@@ -298,10 +293,9 @@ FALCON_FUNC ZLib_uncompress( ::Falcon::VMachine *vm )
 
    if ( err != Z_OK )
    {
-      vm->raiseModError( new ZLibError(
+      throw new ZLibError(
                ErrorParam( FALCON_ZLIB_ERROR_BASE-err, __LINE__ )
-               .desc( internal_getErrorMsg( vm, err ) ) ) );
-      return;
+               .desc( internal_getErrorMsg( vm, err ) ) );
    }
 
    if ( compLen < allocLen )
@@ -330,9 +324,8 @@ FALCON_FUNC ZLib_uncompressText( ::Falcon::VMachine *vm )
 
    if ( dataI == 0 || ( ! dataI->isString() && ! dataI->isMemBuf() ) )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                                        .extra( "S|M" ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                                        .extra( "S|M" ) );
    }
 
    int err;
@@ -356,9 +349,8 @@ FALCON_FUNC ZLib_uncompressText( ::Falcon::VMachine *vm )
    // type of string
    if ( dataIn[0] != 1 && dataIn[0] != 2 && dataIn[0] != 4 )
    {
-      vm->raiseModError( new ZLibError( ErrorParam( FALCON_ZLIB_ERROR_BASE, __LINE__ ).
-               desc( FAL_STR(zl_msg_notct) ) ) );
-      return;
+      throw new ZLibError( ErrorParam( FALCON_ZLIB_ERROR_BASE, __LINE__ ).
+               desc( FAL_STR(zl_msg_notct) ) );
    }
 
    // get length
@@ -369,10 +361,9 @@ FALCON_FUNC ZLib_uncompressText( ::Falcon::VMachine *vm )
 
    if ( err != Z_OK )
    {
-      vm->raiseModError( new ZLibError(
+      throw new ZLibError(
                ErrorParam( FALCON_ZLIB_ERROR_BASE-err, __LINE__ )
-               .desc( internal_getErrorMsg( vm, err ) ) ) );
-      return;
+               .desc( internal_getErrorMsg( vm, err ) ) );
    }
 
    CoreString *result = new CoreString;

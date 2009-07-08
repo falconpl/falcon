@@ -202,7 +202,7 @@ FALCON_FUNC  ConfParser_init( ::Falcon::VMachine *vm )
 
    if ( (i_fname != 0 && ! i_fname->isString()) || ( i_encoding != 0 && ! i_encoding->isString() ) )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).extra( "S, [S]" ) ) );
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).extra( "S, [S]" ) );
       return;
    }
 
@@ -263,7 +263,7 @@ FALCON_FUNC  ConfParser_read( ::Falcon::VMachine *vm )
 
       if ( ! bValid )
       {
-         vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).extra( "Stream" ) ) );
+         throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).extra( "Stream" ) );
          return;
       }
    }
@@ -273,18 +273,18 @@ FALCON_FUNC  ConfParser_read( ::Falcon::VMachine *vm )
       // is this an I/O or a parsing error?
       if ( cfile->fsError() != 0 )
       {
-         vm->raiseModError( new IoError( ErrorParam( e_loaderror, __LINE__ ).
+         throw new IoError( ErrorParam( e_loaderror, __LINE__ ).
             sysError( cfile->fsError() ).
-            extra( cfile->errorMessage() ) ) );
+            extra( cfile->errorMessage() ) );
       }
       else {
          String msg = cfile->errorMessage() + " at ";
          msg.writeNumber( (int64) cfile->errorLine() );
          self->setProperty( "error", cfile->errorMessage() );
          self->setProperty( "errorLine", (int64) cfile->errorLine() );
-         vm->raiseModError( new ParseError( ErrorParam( FALCP_ERR_INVFORMAT, __LINE__ )
+         throw new ParseError( ErrorParam( FALCP_ERR_INVFORMAT, __LINE__ )
             .desc( FAL_STR(cp_msg_invformat) )
-            .extra( msg ) ) );
+            .extra( msg ) );
       }
    }
 
@@ -331,7 +331,7 @@ FALCON_FUNC  ConfParser_write( ::Falcon::VMachine *vm )
 
       if ( ! bValid )
       {
-         vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).extra( "Stream" ) ) );
+         throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).extra( "Stream" ) );
          return;
       }
    }
@@ -341,17 +341,17 @@ FALCON_FUNC  ConfParser_write( ::Falcon::VMachine *vm )
       // is this a file error?
       if ( cfile->fsError() )
       {
-         vm->raiseModError( new IoError( ErrorParam( e_file_output, __LINE__ ).
+         throw new IoError( ErrorParam( e_file_output, __LINE__ ).
             sysError( cfile->fsError() ).
-            extra( cfile->errorMessage() ) ) );
+            extra( cfile->errorMessage() ) );
       }
       else
       {
          // no -- it's a configuration file.d
          self->setProperty( "error", cfile->errorMessage() );
          self->setProperty( "errorLine", (int64) cfile->errorLine() );
-         vm->raiseModError( new ParseError( ErrorParam( FALCP_ERR_STORE, __LINE__ ).
-            desc( FAL_STR(cp_msg_errstore)  ).extra( cfile->errorMessage() ) ) );
+         throw new ParseError( ErrorParam( FALCP_ERR_STORE, __LINE__ ).
+            desc( FAL_STR(cp_msg_errstore)  ).extra( cfile->errorMessage() ) );
       }
    }
 }
@@ -389,8 +389,7 @@ FALCON_FUNC  ConfParser_get( ::Falcon::VMachine *vm )
         ( i_section != 0 && ! i_section->isString() && ! i_section->isNil() )
       )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ) );
    }
 
    String value;
@@ -451,8 +450,7 @@ FALCON_FUNC  ConfParser_getOne( ::Falcon::VMachine *vm )
         ( i_section != 0 && ! i_section->isString() && ! i_section->isNil() )
       )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ) );
    }
 
    String value;
@@ -498,8 +496,7 @@ FALCON_FUNC  ConfParser_getMultiple( ::Falcon::VMachine *vm )
         ( i_section != 0 && ! i_section->isString() && ! i_section->isNil() )
       )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ) );
    }
 
    String value;
@@ -576,7 +573,7 @@ FALCON_FUNC  ConfParser_getKeys( ::Falcon::VMachine *vm )
 
    if ( i_section != 0 && ! i_section->isString() && ! i_section->isNil() )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ) ) );
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ) );
       return;
    }
 
@@ -622,7 +619,7 @@ FALCON_FUNC  ConfParser_getCategoryKeys( ::Falcon::VMachine *vm )
         ( i_section != 0 && ! i_section->isString() && ! i_section->isNil() )
       )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ) ) );
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ) );
       return;
    }
 
@@ -670,8 +667,7 @@ FALCON_FUNC  ConfParser_getCategory( ::Falcon::VMachine *vm )
         ( i_section != 0 && ! i_section->isString() && ! i_section->isNil() )
       )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ) );
    }
 
    if ( i_section != 0 && i_section->isNil() )
@@ -764,8 +760,7 @@ FALCON_FUNC  ConfParser_getDictionary( ::Falcon::VMachine *vm )
 
    if ( i_section != 0 && ! i_section->isString() )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ) );
    }
 
    String key;
@@ -837,8 +832,7 @@ FALCON_FUNC  ConfParser_add( ::Falcon::VMachine *vm )
         ( i_section != 0 && ! i_section->isString() && ! i_section->isNil() )
       )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).extra( "S, S" ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).extra( "S, S" ) );
    }
 
    String *value;
@@ -885,8 +879,7 @@ FALCON_FUNC  ConfParser_set( ::Falcon::VMachine *vm )
         ( i_section != 0 && ! i_section->isString() && ! i_section->isNil() )
       )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).extra( "S, S" ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).extra( "S, S" ) );
    }
 
    if ( i_section != 0 && i_section->isNil() )
@@ -985,8 +978,7 @@ FALCON_FUNC  ConfParser_remove( ::Falcon::VMachine *vm )
          ( i_section != 0 && ! i_section->isString() && ! i_section->isNil() )
       )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).extra( "S, S" ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).extra( "S, S" ) );
    }
 
    if ( i_section == 0 || i_section->isNil() )
@@ -1021,8 +1013,7 @@ FALCON_FUNC  ConfParser_removeCategory( ::Falcon::VMachine *vm )
          ( i_section != 0 && ! i_section->isString() && ! i_section->isNil() )
       )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).extra( "S, S" ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).extra( "S, S" ) );
    }
 
    if ( i_section == 0 || i_section->isNil() )
@@ -1053,8 +1044,7 @@ FALCON_FUNC  ConfParser_addSection( ::Falcon::VMachine *vm )
 
    if ( i_section == 0 ||  ! i_section->isString() )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).extra( "S" ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).extra( "S" ) );
    }
 
    vm->retval( (int64) ( cfile->addSection( *i_section->asString() ) == 0 ? 0: 1) );
@@ -1081,8 +1071,7 @@ FALCON_FUNC  ConfParser_removeSection( ::Falcon::VMachine *vm )
 
    if ( i_section == 0 ||  ! i_section->isString() )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).extra( "S" ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).extra( "S" ) );
    }
 
    vm->retval( (int64) ( cfile->removeSection( *i_section->asString() ) ? 1: 0) );

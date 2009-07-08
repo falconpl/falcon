@@ -126,9 +126,8 @@ FALCON_FUNC Regex_init( ::Falcon::VMachine *vm )
 
    if( param == 0 || ! param->isString() || ( options != 0 && ! options->isString() ) )
    {
-      vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "S, [S]" ) ) );
-      return;
+      throw new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "S, [S]" ) );
    }
 
    // read pattern options
@@ -151,8 +150,8 @@ FALCON_FUNC Regex_init( ::Falcon::VMachine *vm )
             case 'g': optVal |= PCRE_UNGREEDY; break;
             case 'S': bStudy = true; break;
             default:
-               vm->raiseModError( new ParamError( ErrorParam( e_param_range, __LINE__ ).
-                  extra( FAL_STR( re_msg_optunknown ) ) ) );
+               throw new ParamError( ErrorParam( e_param_range, __LINE__ ).
+                  extra( FAL_STR( re_msg_optunknown ) ) );
          }
       }
    }
@@ -175,9 +174,9 @@ FALCON_FUNC Regex_init( ::Falcon::VMachine *vm )
 
    if ( pattern == 0 )
    {
-      vm->raiseModError( new RegexError( ErrorParam( FALRE_ERR_INVALID, __LINE__ )
+      throw new RegexError( ErrorParam( FALRE_ERR_INVALID, __LINE__ )
          .desc( FAL_STR( re_msg_invalid ) )
-         .extra( errDesc ) ) );
+         .extra( errDesc ) );
       return;
    }
 
@@ -189,9 +188,9 @@ FALCON_FUNC Regex_init( ::Falcon::VMachine *vm )
       data->m_extra = pcre_study( pattern, 0, &errDesc );
       if ( data->m_extra == 0 && errDesc != 0 )
       {
-         vm->raiseModError( new RegexError( ErrorParam( FALRE_ERR_STUDY, __LINE__ )
+         throw new RegexError( ErrorParam( FALRE_ERR_STUDY, __LINE__ )
             .desc( FAL_STR( re_msg_errstudy ) )
-            .extra( errDesc ) ) );
+            .extra( errDesc ) );
          return;
       }
    }
@@ -219,9 +218,9 @@ FALCON_FUNC Regex_study( ::Falcon::VMachine *vm )
    data->m_extra = pcre_study( data->m_pattern, 0, &errDesc );
    if ( data->m_extra == 0 && errDesc != 0 )
    {
-      vm->raiseModError( new RegexError( ErrorParam( FALRE_ERR_STUDY, __LINE__ )
+      throw new RegexError( ErrorParam( FALRE_ERR_STUDY, __LINE__ )
             .desc( FAL_STR( re_msg_errstudy ) )
-            .extra( errDesc ) ) );
+            .extra( errDesc ) );
    }
 }
 
@@ -355,9 +354,8 @@ FALCON_FUNC Regex_match( ::Falcon::VMachine *vm )
 
    if( source == 0 || ! source->isString() )
    {
-      vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "S" ) ) );
-      return;
+      throw new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "S" ) );
    }
 
    internal_regex_match( data, source->asString(), 0 );
@@ -372,10 +370,9 @@ FALCON_FUNC Regex_match( ::Falcon::VMachine *vm )
    {
       String errVal = FAL_STR( re_msg_internal );
       errVal.writeNumber( (int64) data->m_matches );
-      vm->raiseModError( new RegexError( ErrorParam( FALRE_ERR_ERRMATCH, __LINE__ )
+      throw new RegexError( ErrorParam( FALRE_ERR_ERRMATCH, __LINE__ )
          .desc( FAL_STR( re_msg_errmatch ) )
-         .extra( errVal ) ) );
-      return;
+         .extra( errVal ) );
    }
 
    vm->regA().setBoolean( true );
@@ -408,9 +405,8 @@ FALCON_FUNC Regex_find( ::Falcon::VMachine *vm )
 
    if( source == 0 || ! source->isString() || ( from_i != 0 && ! from_i->isOrdinal() ) )
    {
-      vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "S, [I]" ) ) );
-      return;
+      throw new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "S, [I]" ) );
    }
 
    int from = 0;
@@ -437,9 +433,9 @@ FALCON_FUNC Regex_find( ::Falcon::VMachine *vm )
    {
       String errVal = FAL_STR( re_msg_internal );
       errVal.writeNumber( (int64) data->m_matches );
-      vm->raiseModError( new RegexError( ErrorParam( FALRE_ERR_ERRMATCH, __LINE__ )
+      throw new RegexError( ErrorParam( FALRE_ERR_ERRMATCH, __LINE__ )
          .desc( FAL_STR( re_msg_errmatch ) )
-         .extra( errVal ) ) );
+         .extra( errVal ) );
    }
 }
 
@@ -479,9 +475,8 @@ FALCON_FUNC Regex_split( ::Falcon::VMachine *vm )
       || ( count_i != 0 && ! ( count_i->isOrdinal() || count_i->isNil() ) )
       )
    {
-      vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "S, [N], [B]" ) ) );
-      return;
+      throw new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "S, [N], [B]" ) );
    }
 
    // Fast path: if we don't match, get away now.
@@ -496,9 +491,9 @@ FALCON_FUNC Regex_split( ::Falcon::VMachine *vm )
    {
       String errVal = FAL_STR( re_msg_internal );
       errVal.writeNumber( (int64) data->m_matches );
-      vm->raiseModError( new RegexError( ErrorParam( FALRE_ERR_ERRMATCH, __LINE__ )
+      throw new RegexError( ErrorParam( FALRE_ERR_ERRMATCH, __LINE__ )
          .desc( FAL_STR( re_msg_errmatch ) )
-         .extra( errVal ) ) );
+         .extra( errVal ) );
    }
 
    uint32 count = 0xFFFFFFFF;
@@ -546,9 +541,8 @@ static void internal_findAll( Falcon::VMachine *vm, bool overlapped )
       ( maxCount_i != 0 && ! maxCount_i->isOrdinal() )
       )
    {
-      vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "S, [I], [I]" ) ) );
-      return;
+      throw new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "S, [I], [I]" ) );
    }
 
    int from = 0;
@@ -589,10 +583,9 @@ static void internal_findAll( Falcon::VMachine *vm, bool overlapped )
    {
       String errVal = FAL_STR( re_msg_internal );
       errVal.writeNumber( (int64) data->m_matches );
-      vm->raiseModError( new RegexError( ErrorParam( FALRE_ERR_ERRMATCH, __LINE__ )
+      throw new RegexError( ErrorParam( FALRE_ERR_ERRMATCH, __LINE__ )
          .desc( FAL_STR( re_msg_errmatch ) )
-         .extra( errVal ) ) );
-      return;
+         .extra( errVal ) );
    }
 
    // always return an array, even if empty
@@ -669,9 +662,8 @@ FALCON_FUNC Regex_replace( ::Falcon::VMachine *vm )
       ( from_i != 0 && ! from_i->isOrdinal() )
       )
    {
-      vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "S, S, [I]" ) ) );
-      return;
+      throw new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "S, S, [I]" ) );
    }
 
    int from = 0;
@@ -697,10 +689,9 @@ FALCON_FUNC Regex_replace( ::Falcon::VMachine *vm )
    {
       String errVal = FAL_STR( re_msg_internal );
       errVal.writeNumber( (int64) data->m_matches );
-      vm->raiseModError( new RegexError( ErrorParam( FALRE_ERR_ERRMATCH, __LINE__ )
+      throw new RegexError( ErrorParam( FALRE_ERR_ERRMATCH, __LINE__ )
          .desc( FAL_STR( re_msg_errmatch ) )
-         .extra( errVal ) ) );
-      return;
+         .extra( errVal ) );
    }
 
    source->change( data->m_ovector[0], data->m_ovector[1], *dest );
@@ -751,9 +742,8 @@ static void s_replaceall( VMachine* vm, bool bExpand )
 
    if( source_i == 0 || ! source_i->isString() || dest_i == 0 || ! dest_i->isString() )
    {
-      vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "S, S" ) ) );
-      return;
+      throw new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "S, S" ) );
    }
 
    String *source = source_i->asString();
@@ -796,10 +786,9 @@ static void s_replaceall( VMachine* vm, bool bExpand )
    {
       String errVal = FAL_STR( re_msg_internal );
       errVal.writeNumber( (int64) data->m_matches );
-      vm->raiseModError( new RegexError( ErrorParam( FALRE_ERR_ERRMATCH, __LINE__ )
+      throw new RegexError( ErrorParam( FALRE_ERR_ERRMATCH, __LINE__ )
          .desc( FAL_STR( re_msg_errmatch ) )
-         .extra( errVal ) ) );
-      return;
+         .extra( errVal ) );
    }
 
    if ( clone != 0 )
@@ -897,9 +886,8 @@ FALCON_FUNC Regex_captured( ::Falcon::VMachine *vm )
    Item *pos_i = vm->param(0);
    if( pos_i == 0 || ! pos_i->isOrdinal() )
    {
-      vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "I" ) ) );
-      return;
+      throw new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "I" ) );
    }
 
 
@@ -909,9 +897,8 @@ FALCON_FUNC Regex_captured( ::Falcon::VMachine *vm )
 
    if ( count < 0 ||  count >= maxCount )
    {
-      vm->raiseModError( new  ParamError( ErrorParam( e_param_range, __LINE__ )
-         .extra( FAL_STR( re_msg_outofrange ) ) ) );
-      return;
+      throw new  ParamError( ErrorParam( e_param_range, __LINE__ )
+         .extra( FAL_STR( re_msg_outofrange ) ) );
    }
 
    Item rng;
@@ -937,9 +924,8 @@ FALCON_FUNC Regex_grab( Falcon::VMachine *vm )
 
    if( source == 0 || ! source->isString() )
    {
-      vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ )
-         .extra( "S" ) ) );
-      return;
+      throw new  ParamError( ErrorParam( e_inv_params, __LINE__ )
+         .extra( "S" ) );
    }
 
    internal_regex_match( data, source->asString(), 0 );
@@ -954,10 +940,9 @@ FALCON_FUNC Regex_grab( Falcon::VMachine *vm )
    {
       String errVal = FAL_STR( re_msg_internal );
       errVal.writeNumber( (int64) data->m_matches );
-      vm->raiseModError( new RegexError( ErrorParam( FALRE_ERR_ERRMATCH, __LINE__ )
+      throw new RegexError( ErrorParam( FALRE_ERR_ERRMATCH, __LINE__ )
          .desc( FAL_STR( re_msg_errmatch ) )
-         .extra( errVal ) ) );
-      return;
+         .extra( errVal ) );
    }
 
    // grab all the strings
@@ -994,9 +979,8 @@ FALCON_FUNC Regex_compare( Falcon::VMachine *vm )
 
    if( source == 0 )
    {
-      vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "X" ) ) );
-      return;
+      throw new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "X" ) );
    }
 
    // minimal match vector

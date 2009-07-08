@@ -71,7 +71,7 @@ FALCON_FUNC  falcon_processKill( ::Falcon::VMachine *vm )
 
    if ( id == 0 || ! id->isOrdinal() )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ) ) );
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ) );
    }
 
    if ( mode == 0 || ! mode->isTrue() )
@@ -149,9 +149,8 @@ FALCON_FUNC  ProcessEnum_next  ( ::Falcon::VMachine *vm )
    {
       if ( res == -1 )
       {
-         vm->raiseModError( new ProcessError( ErrorParam( FALPROC_ERR_READLIST, __LINE__ )
-            .desc( FAL_STR(proc_msg_errlist) ) ) );
-         return;
+         throw new ProcessError( ErrorParam( FALPROC_ERR_READLIST, __LINE__ )
+            .desc( FAL_STR(proc_msg_errlist) ) );
       }
    }
    else {
@@ -177,8 +176,8 @@ FALCON_FUNC  ProcessEnum_close  ( ::Falcon::VMachine *vm )
    CoreObject *self = vm->self().asObject();
    Sys::ProcessEnum *pe = (Sys::ProcessEnum *)self->getUserData();
    if ( ! pe->close() ) {
-         vm->raiseModError( new ProcessError( ErrorParam( FALPROC_ERR_CLOSELIST, __LINE__ )
-            .desc( FAL_STR( proc_msg_errlist2 ) ) ) );
+         throw new ProcessError( ErrorParam( FALPROC_ERR_CLOSELIST, __LINE__ )
+            .desc( FAL_STR( proc_msg_errlist2 ) ) );
       return;
    }
 }
@@ -216,7 +215,7 @@ FALCON_FUNC  falcon_system ( ::Falcon::VMachine *vm )
 
    if( sys_req == 0 || ( sys_req->type() != FLC_ITEM_STRING ) )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ) ) );
+      new ParamError( ErrorParam( e_inv_params, __LINE__ ) );
       return;
    }
 
@@ -240,9 +239,9 @@ FALCON_FUNC  falcon_system ( ::Falcon::VMachine *vm )
    else 
    {
       vm->unidle();
-      vm->raiseModError( new ProcessError( ErrorParam( FALPROC_ERR_CREATLIST, __LINE__ )
+      new ProcessError( ErrorParam( FALPROC_ERR_CREATLIST, __LINE__ )
          .desc( FAL_STR(proc_msg_errlist3) )
-         .sysError( retval ) ) );
+         .sysError( retval ) );
    }
 }
 
@@ -281,8 +280,7 @@ FALCON_FUNC  falcon_systemCall ( ::Falcon::VMachine *vm )
 
    if( sys_req == 0 || ( sys_req->type() != FLC_ITEM_STRING &&  sys_req->type() != FLC_ITEM_ARRAY ) )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ) ) );
-      return;
+      new ParamError( ErrorParam( e_inv_params, __LINE__ ) );
    }
 
    vm->idle();
@@ -298,9 +296,8 @@ FALCON_FUNC  falcon_systemCall ( ::Falcon::VMachine *vm )
       CoreArray *array = sys_req->asArray();
       for( count = 0; count < array->length(); count ++ )
          if ( array->at( count ).type() != FLC_ITEM_STRING ) {
-            vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-               extra( FAL_STR( proc_msg_allstr ) ) ) );
-            return;
+            throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+               extra( FAL_STR( proc_msg_allstr ) ) );
          }
 
       argv = (String **) memAlloc( (array->length()+1) * sizeof( String * ) );
@@ -329,9 +326,9 @@ FALCON_FUNC  falcon_systemCall ( ::Falcon::VMachine *vm )
       else
          memFree( argv );
          
-      vm->raiseModError( new ProcessError( ErrorParam( FALPROC_ERR_CREATPROC, __LINE__ )
+      throw new ProcessError( ErrorParam( FALPROC_ERR_CREATPROC, __LINE__ )
          .desc( FAL_STR( proc_msg_prccreate ) )
-         .sysError( retval ) ) );
+         .sysError( retval ) );
    }
 
    if( sys_req->type() == FLC_ITEM_STRING )
@@ -372,8 +369,7 @@ FALCON_FUNC  falcon_pread ( ::Falcon::VMachine *vm )
 
    if( sys_req == 0 || ( sys_req->type() != FLC_ITEM_STRING &&  sys_req->type() != FLC_ITEM_ARRAY ) )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ) );
    }
 
    bool background = mode == 0 ? false : mode->isTrue();
@@ -392,17 +388,17 @@ FALCON_FUNC  falcon_pread ( ::Falcon::VMachine *vm )
    {
       if ( retval == 0x7F00 )
       {
-         vm->raiseModError( new ProcessError( ErrorParam( FALPROC_ERR_CREATPROC, __LINE__ )
+         throw new ProcessError( ErrorParam( FALPROC_ERR_CREATPROC, __LINE__ )
             .desc( FAL_STR( proc_msg_prccreate ) )
-            .sysError( 0 ) ) );
+            .sysError( 0 ) );
       }
       else
          vm->retval( gs );
    }
    else {
-      vm->raiseModError( new ProcessError( ErrorParam( FALPROC_ERR_CREATPROC, __LINE__ )
+      throw new ProcessError( ErrorParam( FALPROC_ERR_CREATPROC, __LINE__ )
          .desc( FAL_STR( proc_msg_prccreate ) )
-         .sysError( retval ) ) );
+         .sysError( retval ) );
    }
 }
 
@@ -436,8 +432,7 @@ FALCON_FUNC  falcon_exec ( ::Falcon::VMachine *vm )
 
    if( sys_req == 0 || ( sys_req->type() != FLC_ITEM_STRING &&  sys_req->type() != FLC_ITEM_ARRAY ) )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ) );
    }
 
    String **argv;
@@ -450,9 +445,8 @@ FALCON_FUNC  falcon_exec ( ::Falcon::VMachine *vm )
       CoreArray *array = sys_req->asArray();
       for( count = 0; count < array->length(); count ++ )
          if ( array->at( count ).type() != FLC_ITEM_STRING ) {
-            vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-               extra( FAL_STR( proc_msg_allstr ) ) ) );
-            return;
+            throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+               extra( FAL_STR( proc_msg_allstr ) ) );
          }
 
       argv = (String **) memAlloc( (array->length()+1) * sizeof( char * ) );
@@ -468,8 +462,8 @@ FALCON_FUNC  falcon_exec ( ::Falcon::VMachine *vm )
    if( ::Falcon::Sys::spawn( argv, true, false, &retval ) )
       vm->retval( retval );
    else {
-      vm->raiseModError( new ProcessError( ErrorParam( FALPROC_ERR_CREATPROC, __LINE__ ).
-         desc( FAL_STR( proc_msg_prccreate ) ).sysError( retval ) ) );
+      throw new ProcessError( ErrorParam( FALPROC_ERR_CREATPROC, __LINE__ ).
+         desc( FAL_STR( proc_msg_prccreate ) ).sysError( retval ) );
    }
 
    if( sys_req->type() == FLC_ITEM_STRING )
@@ -521,9 +515,8 @@ FALCON_FUNC  Process_init ( ::Falcon::VMachine *vm )
    if( sys_req == 0 || ( ! sys_req->isString() && ! sys_req->isArray() ) ||
       (mode_itm != 0 && ! mode_itm->isOrdinal())  )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
-         .extra( "( S|A, [I] )" ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+         .extra( "( S|A, [I] )" ) );
    }
 
    String **argv;
@@ -556,9 +549,8 @@ FALCON_FUNC  Process_init ( ::Falcon::VMachine *vm )
       CoreArray *array = sys_req->asArray();
       for( count = 0; count < array->length(); count ++ )
          if ( array->at( count ).type() != FLC_ITEM_STRING ) {
-            vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
-               .extra( FAL_STR( proc_msg_allstr ) ) ) );
-            return;
+            throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+               .extra( FAL_STR( proc_msg_allstr ) ) );
          }
       argv = (String **) memAlloc( (array->length()+1) * sizeof( String * ) );
       for( count = 0; count < array->length(); count ++ )
@@ -578,10 +570,10 @@ FALCON_FUNC  Process_init ( ::Falcon::VMachine *vm )
    if ( handle->lastError() == 0 )
       vm->self().asObject()->setUserData( handle );
    else {
-      vm->raiseModError( new ProcessError( ErrorParam( FALPROC_ERR_CREATPROC, __LINE__ )
-         .desc( FAL_STR(proc_msg_prccreate) )
-         .sysError( handle->lastError() ) ) );
       delete handle;
+      throw new ProcessError( ErrorParam( FALPROC_ERR_CREATPROC, __LINE__ )
+         .desc( FAL_STR(proc_msg_prccreate) )
+         .sysError( handle->lastError() ) );
    }
 
    if ( delArgs )
@@ -623,9 +615,9 @@ FALCON_FUNC  Process_wait ( ::Falcon::VMachine *vm )
    if( ! handle->wait( true ) ) 
    {
       vm->unidle();
-      vm->raiseModError( new ProcessError( ErrorParam( FALPROC_ERR_WAIT, __LINE__ )
+      throw new ProcessError( ErrorParam( FALPROC_ERR_WAIT, __LINE__ )
          .desc( FAL_STR( proc_msg_waitfail ) )
-         .sysError( handle->lastError() ) ) );
+         .sysError( handle->lastError() ) );
    }
    else {
       handle->close();
@@ -659,8 +651,8 @@ FALCON_FUNC  Process_terminate ( ::Falcon::VMachine *vm )
    {
       bool sev = severe == 0 ? false : severe->isTrue();
       if( ! handle->terminate( sev ) ) {
-         vm->raiseModError( new ProcessError( ErrorParam( FALPROC_ERR_TERM, __LINE__ ).
-            desc( FAL_STR( proc_msg_termfail ) ).sysError( handle->lastError() ) ) );
+         throw new ProcessError( ErrorParam( FALPROC_ERR_TERM, __LINE__ ).
+            desc( FAL_STR( proc_msg_termfail ) ).sysError( handle->lastError() ) );
       }
    }
 }
@@ -695,9 +687,9 @@ FALCON_FUNC  Process_value ( ::Falcon::VMachine *vm )
       if( ! handle->wait( true ) ) {
          handle->close();
          vm->unidle();
-         vm->raiseModError( new ProcessError( ErrorParam( FALPROC_ERR_WAIT, __LINE__ )
+         throw new ProcessError( ErrorParam( FALPROC_ERR_WAIT, __LINE__ )
             .desc( FAL_STR( proc_msg_waitfail ) )
-            .sysError( handle->lastError() ) ) );
+            .sysError( handle->lastError() ) );
       }
       else
          vm->unidle();
@@ -705,9 +697,9 @@ FALCON_FUNC  Process_value ( ::Falcon::VMachine *vm )
    // give a test to see if the process is terminated in the meanwhile
    else if ( ! handle->done() ) {
       if( ! handle->wait( false ) ) {
-         vm->raiseModError( new ProcessError( ErrorParam( FALPROC_ERR_WAIT, __LINE__ )
+         throw new ProcessError( ErrorParam( FALPROC_ERR_WAIT, __LINE__ )
             .desc( FAL_STR( proc_msg_waitfail ) )
-            .sysError( handle->lastError() ) ) );
+            .sysError( handle->lastError() ) );
       }
    }
 

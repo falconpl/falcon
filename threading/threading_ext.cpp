@@ -231,17 +231,15 @@ FALCON_FUNC Thread_start( VMachine *vm )
    Item i_run;
    if( ! self->getMethod( "run", i_run ) )
    {
-      vm->raiseModError( new ThreadError( ErrorParam( FALTH_ERR_NOTRUN, __LINE__ ).
-         desc( FAL_STR( th_msg_notrunnable ) ) ) );
-      return;
+      throw new ThreadError( ErrorParam( FALTH_ERR_NOTRUN, __LINE__ ).
+         desc( FAL_STR( th_msg_notrunnable ) ) );
    }
 
    // refuse to run if running, and atomically change to running.
    if( ! thread->startable() )
    {
-      vm->raiseModError( new ThreadError( ErrorParam( FALTH_ERR_RUNNING, __LINE__ ).
-         desc( FAL_STR( th_msg_running ) ) ) );
-      return;
+      throw new ThreadError( ErrorParam( FALTH_ERR_RUNNING, __LINE__ ).
+         desc( FAL_STR( th_msg_running ) ) );
    }
 
    // Prelink the modules into the new VM
@@ -260,9 +258,8 @@ FALCON_FUNC Thread_start( VMachine *vm )
    // Do not set error handler; errors will emerge in the module.
    if ( ! thread->vm().link( &rt ) )
    {
-      vm->raiseModError( new ThreadError( ErrorParam( FALTH_ERR_PREPARE, __LINE__ )
-         .desc( FAL_STR( th_msg_errlink ) ) ) );
-      return;
+      throw new ThreadError( ErrorParam( FALTH_ERR_PREPARE, __LINE__ )
+         .desc( FAL_STR( th_msg_errlink ) ) );
    }
 
    // Save the item.
@@ -285,9 +282,8 @@ FALCON_FUNC Thread_start( VMachine *vm )
    // our machine is ready to go.
    if ( ! thread->start() )
    {
-      vm->raiseModError( new ThreadError( ErrorParam( FALTH_ERR_START, __LINE__ ).
-         desc( FAL_STR(th_msg_errstart) ) ) );
-      return;
+      throw new ThreadError( ErrorParam( FALTH_ERR_START, __LINE__ ).
+         desc( FAL_STR(th_msg_errstart) ) );
    }
 }
 
@@ -352,9 +348,8 @@ FALCON_FUNC Thread_detach( VMachine *vm )
    {
       // then, also the th must be zero by definition.
       // so we can ignore it.
-      vm->raiseModError( new ThreadError( ErrorParam( FALTH_ERR_NOTRUNNING, __LINE__ ).
-         desc( FAL_STR( th_msg_notrunning ) ) ) );
-      return;
+      throw new ThreadError( ErrorParam( FALTH_ERR_NOTRUNNING, __LINE__ ).
+         desc( FAL_STR( th_msg_notrunning ) ) );
    }
 }
 
@@ -367,9 +362,8 @@ static void internal_thread_wait_array( VMachine *vm, ThreadImpl *thread )
    Item *i_timeout = vm->param(1);
    if ( i_timeout != 0 && ! i_timeout->isOrdinal() )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( ".. Waitable ..|A, [N]" ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( ".. Waitable ..|A, [N]" ) );
    }
 
    int64 microsecs = i_timeout == 0 ? -1 : (int64)(i_timeout->forceNumeric() * 1000000.0);
@@ -377,9 +371,8 @@ static void internal_thread_wait_array( VMachine *vm, ThreadImpl *thread )
 
    if ( items.length() > MAX_WAITER_OBJECTS )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-            extra( ">32" ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+            extra( ">32" ) );
    }
 
    // parameter check
@@ -427,9 +420,8 @@ static void internal_thread_wait( VMachine *vm, ThreadImpl *thread )
    }
    else if ( pcount > MAX_WAITER_OBJECTS )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-            extra( ">32" ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+            extra( ">32" ) );
    }
 
    Waitable *waited[ MAX_WAITER_OBJECTS ];
@@ -634,9 +626,8 @@ FALCON_FUNC Thread_getError( VMachine *vm )
 
    if ( ! thread->isTerminated() )
    {
-      vm->raiseModError( new JoinError( ErrorParam( FALTH_ERR_NOTTERM, __LINE__ ).
-         desc( FAL_STR( th_msg_threadnotterm ) ) ) );
-      return;
+      throw new JoinError( ErrorParam( FALTH_ERR_NOTTERM, __LINE__ ).
+         desc( FAL_STR( th_msg_threadnotterm ) ) );
    }
 
    if ( thread->hadError() )
@@ -672,9 +663,8 @@ FALCON_FUNC Thread_getReturn( VMachine *vm )
 
    if ( ! thread->isTerminated() )
    {
-      vm->raiseModError( new JoinError( ErrorParam( FALTH_ERR_NOTTERM, __LINE__ ).
-         desc( FAL_STR( th_msg_threadnotterm ) ) ) );
-      return;
+      throw new JoinError( ErrorParam( FALTH_ERR_NOTTERM, __LINE__ ).
+         desc( FAL_STR( th_msg_threadnotterm ) ) );
    }
 
    StringStream sstream(512); // a good prealloc size
@@ -700,9 +690,8 @@ FALCON_FUNC Thread_hadError( VMachine *vm )
 
    if ( ! thread->isTerminated() )
    {
-      vm->raiseModError( new JoinError( ErrorParam( FALTH_ERR_NOTTERM, __LINE__ ).
-         desc( FAL_STR( th_msg_threadnotterm ) ) ) );
-      return;
+      throw new JoinError( ErrorParam( FALTH_ERR_NOTTERM, __LINE__ ).
+         desc( FAL_STR( th_msg_threadnotterm ) ) );
    }
 
    vm->regA().setBoolean( thread->hadError() );
@@ -853,9 +842,8 @@ FALCON_FUNC Thread_sameThread( VMachine *vm )
    Item *pth = vm->param( 0 );
    if ( pth == 0 || ! pth->isObject() || ! pth->asObject()->derivedFrom( "Thread" ) )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "Thread" ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "Thread" ) );
    }
 
    ThreadImpl *th = static_cast<ThreadCarrier *>( vm->self().asObject()->getUserData() )->thread();
@@ -921,9 +909,8 @@ FALCON_FUNC Thread_join( VMachine *vm )
       {
          JoinError *therr = new JoinError( ErrorParam( FALTH_ERR_JOIN, __LINE__ ).
             desc( FAL_STR( th_msg_ejoin ) ) );
-         vm->raiseModError( therr );
          // we didn't acquire the thread.
-         return;
+         throw therr;
       }
    }
    else {
@@ -938,12 +925,12 @@ FALCON_FUNC Thread_join( VMachine *vm )
    // Read its output values.
    if ( th->hadError() )
    {
-      //th->exitError()->incref();
+      th->release();
       // we got to raise a threading error containing the output error of the other vm.
       ThreadError *therr = new ThreadError( ErrorParam( FALTH_ERR_JOINE, __LINE__ ).
          desc( FAL_STR( th_msg_joinwitherr ) ) );
       therr->appendSubError( th->exitError() );
-      vm->raiseModError( therr );
+      throw therr;
    }
    else {
       // return the item in the output value
@@ -953,9 +940,10 @@ FALCON_FUNC Thread_join( VMachine *vm )
       // restore it in the new vm
       sstream.seekBegin(0);
       vm->regA().deserialize( &sstream, vm );
+      th->release();
    }
 
-   th->release();
+   
 }
 
 /*#
@@ -1251,9 +1239,8 @@ FALCON_FUNC SyncCounter_init( VMachine *vm )
    Item *i_initCount = vm->param(0);
    if ( i_initCount != 0 && ! i_initCount->isOrdinal() )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "[N]" ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "[N]" ) );
    }
 
    // defaults to true (autoreset)
@@ -1280,9 +1267,8 @@ FALCON_FUNC SyncCounter_post( VMachine *vm )
    Item *i_initCount = vm->param(0);
    if ( i_initCount != 0 && ! i_initCount->isOrdinal() )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "[N]" ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "[N]" ) );
    }
 
    WaitableCarrier *wc = static_cast< WaitableCarrier *>( vm->self().asObject()->getUserData() );
@@ -1329,9 +1315,8 @@ static void internal_SyncQueue_push( VMachine *vm, bool front )
 {
    if( vm->paramCount() != 1 )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "X" ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "X" ) );
 
    }
 
@@ -1342,9 +1327,8 @@ static void internal_SyncQueue_push( VMachine *vm, bool front )
 
    if ( vm->param(0)->serialize( &ss, true ) != Item::sc_ok )
    {
-      vm->raiseModError( new CodeError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "not serializable" ) ) );
-      return;
+      throw new CodeError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "not serializable" ) );
    }
 
    // and now write the real size
@@ -1372,9 +1356,8 @@ static void internal_SyncQueue_pop( VMachine *vm, bool front )
 
    if ( ! bSuccess )
    {
-      vm->raiseModError( new ThreadError( ErrorParam( FALTH_ERR_QEMPTY, __LINE__ ).
-         desc( FAL_STR( th_msg_qempty ) ) ) );
-      return;
+      throw new ThreadError( ErrorParam( FALTH_ERR_QEMPTY, __LINE__ ).
+         desc( FAL_STR( th_msg_qempty ) ) );
    }
 
    uint32 *written = (uint32 *) data;
@@ -1383,10 +1366,9 @@ static void internal_SyncQueue_pop( VMachine *vm, bool front )
    Item retreived;
    if ( retreived.deserialize( &ss, vm ) != Item::sc_ok )
    {
-      vm->raiseModError( new ThreadError( ErrorParam( FALTH_ERR_DESERIAL, __LINE__ ).
-         desc( FAL_STR( th_msg_errdes ) ) ) );
       memFree( data );
-      return;
+      throw new ThreadError( ErrorParam( FALTH_ERR_DESERIAL, __LINE__ ).
+         desc( FAL_STR( th_msg_errdes ) ) );
    }
 
    memFree( data );
@@ -1599,9 +1581,8 @@ FALCON_FUNC Threading_sameThread( VMachine *vm )
    Item *pth = vm->param( 0 );
    if ( pth == 0 || ! pth->isObject() || ! pth->asObject()->derivedFrom( "Thread" ) )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "Thread" ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "Thread" ) );
    }
 
    ThreadImpl *th = checkMainThread( vm );
@@ -1644,9 +1625,8 @@ FALCON_FUNC Threading_start( VMachine *vm )
    Item *i_routine = vm->param( 0 );
    if ( i_routine == 0 || ! i_routine->isCallable() )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "C" ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "C" ) );
    }
 
    // Create the runtime that will hold all the modules
@@ -1666,9 +1646,8 @@ FALCON_FUNC Threading_start( VMachine *vm )
    // Do not set error handler; errors will emerge in the module.
    if ( ! thread->vm().link( &rt ) )
    {
-      vm->raiseModError( new ThreadError( ErrorParam( FALTH_ERR_PREPARE, __LINE__ )
-         .desc( FAL_STR( th_msg_errlink ) ) ) );
-      return;
+      throw new ThreadError( ErrorParam( FALTH_ERR_PREPARE, __LINE__ )
+         .desc( FAL_STR( th_msg_errlink ) ) );
    }
 
    // Save the item.
@@ -1698,9 +1677,8 @@ FALCON_FUNC Threading_start( VMachine *vm )
       vm->retval( objThread );
    }
    else {
-      vm->raiseModError( new ThreadError( ErrorParam( FALTH_ERR_START, __LINE__ ).
-         desc( FAL_STR(th_msg_errstart) ) ) );
-      return;
+      throw new ThreadError( ErrorParam( FALTH_ERR_START, __LINE__ ).
+         desc( FAL_STR(th_msg_errstart) ) );
    }
 }
 

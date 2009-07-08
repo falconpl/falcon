@@ -61,8 +61,8 @@ static MXML::Node *internal_getNodeParameter( VMachine *vm, int pid )
 
    if ( i_child == 0 || ! i_child->isObject() || ! i_child->asObject()->derivedFrom( "MXMLNode" ) )
    {
-      vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "MXMLNode" ) ) );
+      throw new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "MXMLNode" ) );
       return 0;
    }
 
@@ -172,8 +172,8 @@ FALCON_FUNC MXMLDocument_init( ::Falcon::VMachine *vm )
    if ( ( i_encoding != 0 && ! i_encoding->isString() && ! i_encoding->isNil() ) ||
       ( i_style != 0 && ! i_style->isInteger()) )
    {
-       vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "[S,I]" ) ) );
+       throw new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "[S,I]" ) );
       return;
    }
 
@@ -206,8 +206,8 @@ FALCON_FUNC MXMLDocument_deserialize( ::Falcon::VMachine *vm )
 
    if ( i_stream == 0 || ! i_stream->isObject() || ! i_stream->asObject()->derivedFrom( "Stream" ) )
    {
-      vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "Stream" ) ) );
+      throw new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "Stream" ) );
       return;
    }
 
@@ -221,15 +221,15 @@ FALCON_FUNC MXMLDocument_deserialize( ::Falcon::VMachine *vm )
    }
    catch( MXML::MalformedError &err )
    {
-      vm->raiseModError( new MXMLError( ErrorParam( FALCON_MXML_ERROR_BASE + err.numericCode(), __LINE__ )
+      throw new MXMLError( ErrorParam( FALCON_MXML_ERROR_BASE + err.numericCode(), __LINE__ )
       .desc( err.description() )
-      .extra( err.describeLine() ) ) );
+      .extra( err.describeLine() ) );
    }
    catch( MXML::IOError &err )
    {
-      vm->raiseModError( new IoError( ErrorParam( FALCON_MXML_ERROR_BASE + err.numericCode(), __LINE__ )
+      throw new IoError( ErrorParam( FALCON_MXML_ERROR_BASE + err.numericCode(), __LINE__ )
       .desc( err.description() )
-      .extra( err.describeLine() ) ) );
+      .extra( err.describeLine() ) );
    }
 }
 
@@ -251,8 +251,8 @@ FALCON_FUNC MXMLDocument_serialize( ::Falcon::VMachine *vm )
 
    if ( i_stream == 0 || ! i_stream->isObject() || ! i_stream->asObject()->derivedFrom( "Stream" ) )
    {
-      vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "Stream" ) ) );
+      throw new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "Stream" ) );
       return;
    }
 
@@ -266,15 +266,15 @@ FALCON_FUNC MXMLDocument_serialize( ::Falcon::VMachine *vm )
    }
    catch( MXML::MalformedError &err )
    {
-      vm->raiseModError( new MXMLError( ErrorParam( FALCON_MXML_ERROR_BASE + err.numericCode(), __LINE__ )
+      throw new MXMLError( ErrorParam( FALCON_MXML_ERROR_BASE + err.numericCode(), __LINE__ )
       .desc( err.description() )
-      .extra( err.describeLine() ) ) );
+      .extra( err.describeLine() ) );
    }
    catch( MXML::IOError &err )
    {
-      vm->raiseModError( new IoError( ErrorParam( FALCON_MXML_ERROR_BASE + err.numericCode(), __LINE__ )
+      throw new IoError( ErrorParam( FALCON_MXML_ERROR_BASE + err.numericCode(), __LINE__ )
       .desc( err.description() )
-      .extra( err.describeLine() ) ) );
+      .extra( err.describeLine() ) );
    }
 }
 
@@ -310,8 +310,8 @@ FALCON_FUNC MXMLDocument_style( ::Falcon::VMachine *vm )
 
    if ( i_style == 0 || ! i_style->isInteger() )
    {
-      vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "N" ) ) );
+      throw new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "N" ) );
       return;
    }
 
@@ -437,8 +437,8 @@ FALCON_FUNC MXMLDocument_find( ::Falcon::VMachine *vm )
        ( i_data != 0 && (! i_data->isString() && ! i_data->isNil() ))
    )
    {
-      vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "S,[S,S,S]" ) ) );
+      throw new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "S,[S,S,S]" ) );
       return;
    }
 
@@ -535,8 +535,8 @@ Item *i_name = vm->param(0);
    // parameter sanity check
    if( i_name == 0 || ! i_name->isString() )
    {
-      vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "S" ) ) );
+      throw new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "S" ) );
       return;
    }
 
@@ -593,8 +593,8 @@ FALCON_FUNC MXMLDocument_save( ::Falcon::VMachine *vm )
 
    if ( i_uri == 0 || ! i_uri->isString() )
    {
-      vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "N" ) ) );
+      throw new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "N" ) );
       return;
    }
 
@@ -615,8 +615,8 @@ FALCON_FUNC MXMLDocument_save( ::Falcon::VMachine *vm )
          if ( output == 0 )
          {
             vm->unidle();
-            vm->raiseModError( new MXMLError( ErrorParam( e_inv_params, __LINE__ )
-               .extra( "Invalid encoding " + doc->encoding() ) ) );
+            throw new MXMLError( ErrorParam( e_inv_params, __LINE__ )
+               .extra( "Invalid encoding " + doc->encoding() ) );
             return;
          }
       }
@@ -630,24 +630,24 @@ FALCON_FUNC MXMLDocument_save( ::Falcon::VMachine *vm )
       catch( MXML::MalformedError &err )
       {
          vm->unidle();
-         vm->raiseModError( new MXMLError( ErrorParam( FALCON_MXML_ERROR_BASE + err.numericCode(), __LINE__ )
-         .desc( err.description() )
-         .extra( err.describeLine() ) ) );
+         throw new MXMLError( ErrorParam( FALCON_MXML_ERROR_BASE + err.numericCode(), __LINE__ )
+            .desc( err.description() )
+            .extra( err.describeLine() ) );
       }
       catch( MXML::IOError &err )
       {
          vm->unidle();
-         vm->raiseModError( new IoError( ErrorParam( FALCON_MXML_ERROR_BASE + err.numericCode(), __LINE__ )
+         throw new IoError( ErrorParam( FALCON_MXML_ERROR_BASE + err.numericCode(), __LINE__ )
          .desc( err.description() )
-         .extra( err.describeLine() ) ) );
+         .extra( err.describeLine() ) );
       }
    }
    else
    {
       vm->unidle();
-      vm->raiseModError( new IoError( ErrorParam(
+      throw new IoError( ErrorParam(
          FALCON_MXML_ERROR_BASE + (int) MXML::Error::errIo , __LINE__ )
-         .desc( FAL_STR( MXML_ERR_IO ) ) ) );
+         .desc( FAL_STR( MXML_ERR_IO ) ) );
    }
 }
 
@@ -673,8 +673,8 @@ FALCON_FUNC MXMLDocument_load( ::Falcon::VMachine *vm )
 
    if ( i_uri == 0 || ! i_uri->isString() )
    {
-      vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "S" ) ) );
+      throw new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "S" ) );
       return;
    }
 
@@ -695,8 +695,8 @@ FALCON_FUNC MXMLDocument_load( ::Falcon::VMachine *vm )
          if ( input == 0 )
          {
             vm->unidle();
-            vm->raiseModError( new MXMLError( ErrorParam( e_inv_params, __LINE__ )
-            .extra( FAL_STR( MXML_ERR_INVENC ) + doc->encoding() ) ) );
+            throw new MXMLError( ErrorParam( e_inv_params, __LINE__ )
+               .extra( FAL_STR( MXML_ERR_INVENC ) + doc->encoding() ) );
             return;
          }
 
@@ -711,18 +711,18 @@ FALCON_FUNC MXMLDocument_load( ::Falcon::VMachine *vm )
       catch( MXML::MalformedError &err )
       {
          vm->unidle();
-         vm->raiseModError( new MXMLError(
+         throw new MXMLError(
             ErrorParam( FALCON_MXML_ERROR_BASE + err.numericCode(), __LINE__ )
             .desc( err.description() )
-            .extra( err.describeLine() ) ) );
+            .extra( err.describeLine() ) );
       }
       catch( MXML::IOError &err )
       {
          vm->unidle();
-         vm->raiseModError( new IoError(
+         throw new IoError(
             ErrorParam( FALCON_MXML_ERROR_BASE + err.numericCode(), __LINE__ )
             .desc( err.description() )
-            .extra( err.describeLine() ) ) );
+            .extra( err.describeLine() ) );
       }
 
       in.close();
@@ -731,9 +731,9 @@ FALCON_FUNC MXMLDocument_load( ::Falcon::VMachine *vm )
    
    if ( ! in.good() )
    {
-      vm->raiseModError( new IoError( ErrorParam(
+      throw new IoError( ErrorParam(
          FALCON_MXML_ERROR_BASE + (int) MXML::Error::errIo , __LINE__ )
-         .desc( FAL_STR( MXML_ERR_IO )  ) ) );
+         .desc( FAL_STR( MXML_ERR_IO ) ) );
    }
 
    in.close();
@@ -759,8 +759,8 @@ FALCON_FUNC MXMLDocument_setEncoding( ::Falcon::VMachine *vm )
 
    if ( i_encoding == 0 || ! i_encoding->isString() )
    {
-      vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "S" ) ) );
+      throw new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "S" ) );
       return;
    }
 
@@ -768,8 +768,8 @@ FALCON_FUNC MXMLDocument_setEncoding( ::Falcon::VMachine *vm )
    Transcoder *tr = TranscoderFactory( encoding );
    if ( tr == 0 )
    {
-      vm->raiseModError( new  ParamError( ErrorParam( e_param_range, __LINE__ ).
-         extra( encoding ) ) );
+      throw new  ParamError( ErrorParam( e_param_range, __LINE__ ).
+         extra( encoding ) );
       return;
    }
    delete tr;
@@ -847,8 +847,8 @@ FALCON_FUNC MXMLNode_init( ::Falcon::VMachine *vm )
       ( i_name != 0 && ! (i_name->isString() || i_name->isNil()) ) ||
       ( i_data != 0 && ! i_data->isString() )  )
    {
-      vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "[N,S,S]" ) ) );
+      throw new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "[N,S,S]" ) );
       return;
    }
 
@@ -857,8 +857,8 @@ FALCON_FUNC MXMLNode_init( ::Falcon::VMachine *vm )
 
    if ( type < 0 || type > (int) MXML::Node::typeFakeClosing )
    {
-      vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "Invalid type" ) ) );
+      throw new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "Invalid type" ) );
       return;
    }
 
@@ -887,8 +887,8 @@ FALCON_FUNC MXMLNode_serialize( ::Falcon::VMachine *vm )
 
    if ( i_stream == 0 || ! i_stream->isObject() || ! i_stream->asObject()->derivedFrom( "Stream" ) )
    {
-      vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "Stream" ) ) );
+      throw new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "Stream" ) );
       return;
    }
 
@@ -902,17 +902,17 @@ FALCON_FUNC MXMLNode_serialize( ::Falcon::VMachine *vm )
    }
    catch( MXML::MalformedError &err )
    {
-      vm->raiseModError( new MXMLError(
+      throw new MXMLError(
       ErrorParam( FALCON_MXML_ERROR_BASE + err.numericCode(), __LINE__ )
          .desc( err.description() )
-         .extra( err.describeLine() ) ) );
+         .extra( err.describeLine() ) );
    }
    catch( MXML::IOError &err )
    {
-      vm->raiseModError( new MXMLError(
+      throw new MXMLError(
          ErrorParam( FALCON_MXML_ERROR_BASE + err.numericCode(), __LINE__ )
          .desc( err.description() )
-         .extra( err.describeLine() ) ) );
+         .extra( err.describeLine() ) );
    }
 
 }
@@ -934,8 +934,8 @@ FALCON_FUNC MXMLNode_deserialize( ::Falcon::VMachine *vm )
 
    if ( i_stream == 0 || ! i_stream->isObject() || ! i_stream->asObject()->derivedFrom( "Stream" ) )
    {
-      vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "Stream" ) ) );
+      throw new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "Stream" ) );
       return;
    }
 
@@ -952,18 +952,18 @@ FALCON_FUNC MXMLNode_deserialize( ::Falcon::VMachine *vm )
    }
    catch( MXML::MalformedError &err )
    {
-      vm->raiseModError( new MXMLError(
+      throw new MXMLError(
          ErrorParam( FALCON_MXML_ERROR_BASE + err.numericCode(), __LINE__ )
          .desc( err.description() )
-         .extra( err.describeLine() ) ) );
+         .extra( err.describeLine() ) );
       delete node;
    }
    catch( MXML::IOError &err )
    {
-      vm->raiseModError( new MXMLError(
+      throw new MXMLError(
          ErrorParam( FALCON_MXML_ERROR_BASE + err.numericCode(), __LINE__ )
          .desc( err.description() )
-         .extra( err.describeLine() ) ) );
+         .extra( err.describeLine() ) );
       delete node;
    }
 }
@@ -997,8 +997,8 @@ FALCON_FUNC MXMLNode_name( ::Falcon::VMachine *vm )
 
    if ( i_name != 0 && ! i_name->isString() )
    {
-      vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "[S]" ) ) );
+      throw new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "[S]" ) );
       return;
    }
 
@@ -1029,8 +1029,8 @@ FALCON_FUNC MXMLNode_data( ::Falcon::VMachine *vm )
 
    if ( i_data != 0 && ! i_data->isString() )
    {
-      vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "[S]" ) ) );
+      throw new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "[S]" ) );
       return;
    }
 
@@ -1072,8 +1072,8 @@ FALCON_FUNC MXMLNode_setAttribute( ::Falcon::VMachine *vm )
         i_attrValue == 0
       )
    {
-      vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "S,X" ) ) );
+      throw new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "S,X" ) );
       return;
    }
 
@@ -1119,8 +1119,8 @@ FALCON_FUNC MXMLNode_getAttribute( ::Falcon::VMachine *vm )
 
    if ( i_attrName == 0 || ! i_attrName->isString() )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "S" ) ) );
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "S" ) );
       return;
    }
 

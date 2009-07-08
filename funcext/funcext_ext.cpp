@@ -97,10 +97,9 @@ FALCON_FUNC  fe_at ( ::Falcon::VMachine *vm )
 
    if ( i_array == 0 || i_pos == 0 )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
             origin( e_orig_runtime ).
-            extra("X, N|R|S, [X]") ) );
-      return;
+            extra("X, N|R|S, [X]") );
    }
 
    switch( i_array->type() )
@@ -135,11 +134,9 @@ FALCON_FUNC  fe_at ( ::Falcon::VMachine *vm )
                return;
             }
             else {
-               vm->raiseModError( new AccessError( ErrorParam( e_prop_acc, __LINE__ ).
+               throw new AccessError( ErrorParam( e_prop_acc, __LINE__ ).
                   origin( e_orig_runtime ).
-                  extra( *i_pos->asString() ) )
-               );
-               return;
+                  extra( *i_pos->asString() ) );
             }
          }
       }
@@ -149,10 +146,8 @@ FALCON_FUNC  fe_at ( ::Falcon::VMachine *vm )
          if ( pos < 0 ) pos = ca->length() - pos;
          if ( pos >= (int32) ca->length() )
          {
-            vm->raiseModError( new AccessError( ErrorParam( e_arracc, __LINE__ ).
-               origin( e_orig_runtime ) )
-               );
-            return;
+            throw new AccessError( ErrorParam( e_arracc, __LINE__ ).
+               origin( e_orig_runtime ) );
          }
          vm->retval( ca->at( pos ) );
          if ( i_val != 0 )
@@ -192,10 +187,8 @@ FALCON_FUNC  fe_at ( ::Falcon::VMachine *vm )
                return;
          }
          else {
-            vm->raiseModError( new AccessError( ErrorParam( e_arracc, __LINE__ ).
-               origin( e_orig_runtime ) )
-               );
-            return;
+            throw new AccessError( ErrorParam( e_arracc, __LINE__ ).
+               origin( e_orig_runtime ) );
          }
       }
    }
@@ -211,10 +204,8 @@ FALCON_FUNC  fe_at ( ::Falcon::VMachine *vm )
          if ( pos < 0 ) pos = str->length() - pos;
          if ( pos >= (int32) str->length() )
          {
-            vm->raiseModError( new AccessError( ErrorParam( e_arracc, __LINE__ ).
-               origin( e_orig_runtime ) )
-               );
-            return;
+            throw new AccessError( ErrorParam( e_arracc, __LINE__ ).
+               origin( e_orig_runtime ) );
          }
          vm->retval( new CoreString( str->subString( pos, pos+1) ) );
 
@@ -259,10 +250,8 @@ FALCON_FUNC  fe_at ( ::Falcon::VMachine *vm )
             return;
          }
 
-         vm->raiseModError( new AccessError( ErrorParam( e_arracc, __LINE__ ).
-            origin( e_orig_runtime ) )
-            );
-         return;
+         throw new AccessError( ErrorParam( e_arracc, __LINE__ ).
+            origin( e_orig_runtime ) );
       }
       break;
 
@@ -295,21 +284,18 @@ FALCON_FUNC  fe_at ( ::Falcon::VMachine *vm )
             {
                if ( ! self->setProperty( *i_pos->asString(), *i_val ) )
                {
-                  vm->raiseModError( new AccessError( ErrorParam( e_prop_ro, __LINE__ ).
+                  throw new AccessError( ErrorParam( e_prop_ro, __LINE__ ).
                      origin( e_orig_runtime ).
-                     extra( *i_pos->asString()) )
-                     );
+                     extra( *i_pos->asString()) );
                }
             }
             //it's ok anyhow
             return;
          }
 
-         vm->raiseModError( new AccessError( ErrorParam( e_prop_acc, __LINE__ ).
+         throw new AccessError( ErrorParam( e_prop_acc, __LINE__ ).
             origin( e_orig_runtime ).
-            extra( *i_pos->asString()) )
-            );
-         return;
+            extra( *i_pos->asString()) );
       }
       break;
 
@@ -321,11 +307,9 @@ FALCON_FUNC  fe_at ( ::Falcon::VMachine *vm )
    case FLC_ITEM_CLASS:
       if ( i_val != 0 )
       {
-         vm->raiseModError( new AccessError( ErrorParam( e_prop_ro, __LINE__ ).
+         throw new AccessError( ErrorParam( e_prop_ro, __LINE__ ).
             origin( e_orig_runtime ).
-            extra( *i_pos->asString()) )
-            );
-         return;
+            extra( *i_pos->asString()) );
       }
 
       if ( sourceClass == 0 )
@@ -353,18 +337,16 @@ FALCON_FUNC  fe_at ( ::Falcon::VMachine *vm )
             return;
          }
 
-         vm->raiseModError( new AccessError( ErrorParam( e_prop_acc, __LINE__ ).
+         throw new AccessError( ErrorParam( e_prop_acc, __LINE__ ).
             origin( e_orig_runtime ).
-            extra( *i_pos->asString() ))
-            );
-         return;
+            extra( *i_pos->asString() ));
       }
       break;
    }
 
-   vm->raiseModError( new ParamError( ErrorParam( e_param_type, __LINE__ ).
+   throw new ParamError( ErrorParam( e_param_type, __LINE__ ).
       origin( e_orig_runtime ).
-      extra("X, N|S|R, [X]") ) );
+      extra("X, N|S|R, [X]") );
 }
 
 
@@ -382,10 +364,9 @@ FALCON_FUNC  fe_gt ( ::Falcon::VMachine *vm )
 
    if ( i_a == 0 || i_b == 0 )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
          origin( e_orig_runtime ).
-         extra("X,X") ) );
-      return;
+         extra("X,X") );
    }
 
    vm->regA().setBoolean( i_a->compare( *i_b ) > 0 );
@@ -405,10 +386,9 @@ FALCON_FUNC  fe_ge ( ::Falcon::VMachine *vm )
 
    if ( i_a == 0 || i_b == 0 )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
          origin( e_orig_runtime ).
-         extra("X,X") ) );
-      return;
+         extra("X,X") );
    }
 
    vm->regA().setBoolean( i_a->compare( *i_b ) >= 0 );
@@ -428,10 +408,9 @@ FALCON_FUNC  fe_lt ( ::Falcon::VMachine *vm )
 
    if ( i_a == 0 || i_b == 0 )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
          origin( e_orig_runtime ).
-         extra("X,X") ) );
-      return;
+         extra("X,X") );
    }
 
    vm->regA().setBoolean( i_a->compare( *i_b ) < 0 );
@@ -451,10 +430,9 @@ FALCON_FUNC  fe_le ( ::Falcon::VMachine *vm )
 
    if ( i_a == 0 || i_b == 0 )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
          origin( e_orig_runtime ).
-         extra("X,X") ) );
-      return;
+         extra("X,X") );
    }
 
    vm->regA().setBoolean( i_a->compare( *i_b ) <= 0 );
@@ -474,10 +452,9 @@ FALCON_FUNC  fe_eq ( ::Falcon::VMachine *vm )
 
    if ( i_a == 0 || i_b == 0 )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
          origin( e_orig_runtime ).
-         extra("X,X") ) );
-      return;
+         extra("X,X") );
    }
 
    vm->regA().setBoolean( i_a->compare( *i_b ) == 0 );
@@ -497,10 +474,9 @@ FALCON_FUNC  fe_neq ( ::Falcon::VMachine *vm )
 
    if ( i_a == 0 || i_b == 0 )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
          origin( e_orig_runtime ).
-         extra("X,X") ) );
-      return;
+         extra("X,X") );
    }
 
    vm->regA().setBoolean( i_a->compare( *i_b ) != 0 );
@@ -575,11 +551,10 @@ FALCON_FUNC  fe_deq( ::Falcon::VMachine *vm )
    Item *second = vm->param(1);
    if ( first == 0 || second == 0 )
    {
-      vm->raiseModError( new ParamError(
+      throw new ParamError(
          ErrorParam( e_inv_params ).
          origin( e_orig_runtime ).
-         extra( "X,X" ) ) );
-      return;
+         extra( "X,X" ) );
    }
 
    vm->retval( internal_eq( vm, *first, *second ) ? 1:0);
@@ -604,11 +579,10 @@ FALCON_FUNC  fe_add( ::Falcon::VMachine *vm )
    Item *operand2 = vm->param(1);
    if ( operand2 == 0 || operand2 == 0 )
    {
-      vm->raiseModError( new ParamError(
+      throw new ParamError(
          ErrorParam( e_inv_params ).
             origin( e_orig_runtime ).
-            extra( "X,X" ) ) );
-      return;
+            extra( "X,X" ) );
    }
 
    switch( operand1->type() << 8 | operand2->type() )
@@ -676,10 +650,10 @@ FALCON_FUNC  fe_add( ::Falcon::VMachine *vm )
       return;
    }
 
-   vm->raiseModError( new ParamError(
+   throw new ParamError(
          ErrorParam( e_inv_params ).
             origin( e_orig_runtime ).
-            extra( "X,X" ) ) );
+            extra( "X,X" ) );
 }
 
 
@@ -701,11 +675,10 @@ FALCON_FUNC  fe_sub( ::Falcon::VMachine *vm )
    Item *operand2 = vm->param(1);
    if ( operand2 == 0 || operand2 == 0 )
    {
-      vm->raiseModError( new ParamError(
+      throw new ParamError(
          ErrorParam( e_inv_params ).
             origin( e_orig_runtime ).
-            extra( "X,X" ) ) );
-      return;
+            extra( "X,X" ) );
    }
 
    switch( operand1->type() << 8 | operand2->type() )
@@ -778,10 +751,10 @@ FALCON_FUNC  fe_sub( ::Falcon::VMachine *vm )
       return;
    }
 
-   vm->raiseModError( new ParamError(
+   throw new ParamError(
          ErrorParam( e_inv_params ).
             origin( e_orig_runtime ).
-            extra( "X,X" ) ) );
+            extra( "X,X" ) );
 }
 
 
@@ -802,11 +775,10 @@ FALCON_FUNC  fe_mul( ::Falcon::VMachine *vm )
    Item *operand2 = vm->param(1);
    if ( operand2 == 0 || operand2 == 0 )
    {
-      vm->raiseModError( new ParamError(
+      throw new ParamError(
          ErrorParam( e_inv_params ).
             origin( e_orig_runtime ).
-            extra( "X,X" ) ) );
-      return;
+            extra( "X,X" ) );
    }
 
 
@@ -843,10 +815,10 @@ FALCON_FUNC  fe_mul( ::Falcon::VMachine *vm )
       break;
    }
 
-   vm->raiseModError( new ParamError(
+   throw new ParamError(
          ErrorParam( e_inv_params ).
             origin( e_orig_runtime ).
-            extra( "X,X" ) ) );
+            extra( "X,X" ) );
 }
 
 /*#
@@ -863,11 +835,10 @@ FALCON_FUNC  fe_div( ::Falcon::VMachine *vm )
    Item *operand2 = vm->param(1);
    if ( operand2 == 0 || operand2 == 0 )
    {
-      vm->raiseModError( new ParamError(
+      throw new ParamError(
          ErrorParam( e_inv_params ).
             origin( e_orig_runtime ).
-            extra( "N,N" ) ) );
-      return;
+            extra( "N,N" ) );
    }
 
    switch( operand2->type() )
@@ -876,7 +847,7 @@ FALCON_FUNC  fe_div( ::Falcon::VMachine *vm )
       {
          int64 val2 = operand2->asInteger();
          if ( val2 == 0 ) {
-            vm->raiseModError( new MathError( ErrorParam( e_div_by_zero ).origin( e_orig_runtime ) ) );
+            throw new MathError( ErrorParam( e_div_by_zero ).origin( e_orig_runtime ) );
             return;
          }
 
@@ -895,8 +866,7 @@ FALCON_FUNC  fe_div( ::Falcon::VMachine *vm )
       {
          numeric val2 = operand2->asNumeric();
          if ( val2 == 0.0 ) {
-            vm->raiseRTError( new MathError( ErrorParam( e_div_by_zero ).origin( e_orig_vm ) ) );
-            return;
+            throw new MathError( ErrorParam( e_div_by_zero ).origin( e_orig_vm ) );
          }
 
          switch( operand1->type() ) {
@@ -911,10 +881,10 @@ FALCON_FUNC  fe_div( ::Falcon::VMachine *vm )
       break;
    }
 
-   vm->raiseModError( new ParamError(
+   throw new ParamError(
          ErrorParam( e_inv_params ).
             origin( e_orig_runtime ).
-            extra( "N,N" ) ) );
+            extra( "N,N" ) );
 }
 
 
@@ -932,31 +902,31 @@ FALCON_FUNC  fe_mod( ::Falcon::VMachine *vm )
    Item *operand2 = vm->param(1);
    if ( operand2 == 0 || operand2 == 0 )
    {
-      vm->raiseModError( new ParamError(
+      throw new ParamError(
          ErrorParam( e_inv_params ).
             origin( e_orig_runtime ).
-            extra( "N,N" ) ) );
+            extra( "N,N" ) );
       return;
    }
 
    if ( operand1->type() == FLC_ITEM_INT && operand2->type() == FLC_ITEM_INT ) {
       if ( operand2->asInteger() == 0 )
-         vm->raiseRTError( new TypeError( ErrorParam( e_invop ).extra("MOD").origin( e_orig_vm ) ) );
+         throw new TypeError( ErrorParam( e_invop ).extra("MOD").origin( e_orig_vm ) );
       else
          vm->regA().setInteger( operand1->asInteger() % operand2->asInteger() );
    }
    else if ( operand1->isOrdinal() && operand2->isOrdinal() )
    {
       if ( operand2->forceNumeric() == 0.0 )
-         vm->raiseRTError( new TypeError( ErrorParam( e_invop ).extra("MOD").origin( e_orig_vm ) ) );
+         throw new TypeError( ErrorParam( e_invop ).extra("MOD").origin( e_orig_vm ) );
       else
          vm->regA().setNumeric( fmod( operand1->forceNumeric(), operand2->forceNumeric() ) );
    }
    else
-      vm->raiseModError( new ParamError(
+      throw new ParamError(
          ErrorParam( e_inv_params ).
             origin( e_orig_runtime ).
-            extra( "N,N" ) ) );
+            extra( "N,N" ) );
 }
 
 }

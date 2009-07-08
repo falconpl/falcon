@@ -125,8 +125,7 @@ FALCON_FUNC BaseCompiler_setDirective( ::Falcon::VMachine *vm )
    if( i_directive == 0 || ! i_directive->isString() ||
        i_value == 0 || ( ! i_value->isString() && ! i_value->isOrdinal() ) )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).extra( "S,S|N" ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).extra( "S,S|N" ) );
    }
 
    CompilerIface *iface = dyncast<CompilerIface*>( vm->self().asObject() );
@@ -196,7 +195,7 @@ FALCON_FUNC Compiler_init( ::Falcon::VMachine *vm )
    {
       if( ! i_path->isString() )
       {
-         vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).extra( "[S]" ) ) );
+         throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).extra( "[S]" ) );
          return;
       }
 
@@ -279,8 +278,7 @@ FALCON_FUNC Compiler_compile( ::Falcon::VMachine *vm )
    if( i_name == 0 || ! i_name->isString() ||
       i_data == 0 || (! i_data->isString() && ! i_data->isObject()) )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).extra( "S, S|Stream" ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).extra( "S, S|Stream" ) );
    }
 
    Stream *input;
@@ -293,9 +291,8 @@ FALCON_FUNC Compiler_compile( ::Falcon::VMachine *vm )
       CoreObject *data = i_data->asObject();
       if ( ! data->derivedFrom( "Stream" ) )
       {
-         vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-            extra( "S, S|Stream" ) ) );
-         return;
+         throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+            extra( "S, S|Stream" ) );
       }
 
       // ok, get the stream
@@ -354,8 +351,7 @@ FALCON_FUNC Compiler_loadByName( ::Falcon::VMachine *vm )
 
    if( i_name == 0 || ! i_name->isString() )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).extra( "S" ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).extra( "S" ) );
    }
 
    CompilerIface *iface = dyncast<CompilerIface*>( vm->self().asObject() );
@@ -592,8 +588,7 @@ FALCON_FUNC ICompiler_init( ::Falcon::VMachine *vm )
    {
       if( ! i_path->isString() )
       {
-         vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).extra( "[S]" ) ) );
-         return;
+         throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).extra( "[S]" ) );
       }
 
       iface->loader().setSearchPath( *i_path->asString() );
@@ -732,8 +727,7 @@ FALCON_FUNC Module_get( ::Falcon::VMachine *vm )
 
    if( i_name == 0 || ! i_name->isString() )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).extra( "S" ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).extra( "S" ) );
    }
 
    CoreObject *self = vm->self().asObject();
@@ -742,17 +736,15 @@ FALCON_FUNC Module_get( ::Falcon::VMachine *vm )
    // if the module is not alive, raise an error and exit
    if ( modc == 0 || ! modc->liveModule()->isAlive() )
    {
-      vm->raiseModError( new AccessError( ErrorParam( FALCOMP_ERR_UNLOADED, __LINE__ ).
-         desc( FAL_STR( cmp_msg_unloaded ) ) ) );
-      return;
+      throw new AccessError( ErrorParam( FALCOMP_ERR_UNLOADED, __LINE__ ).
+         desc( FAL_STR( cmp_msg_unloaded ) ) );
    }
 
    Item *itm = modc->liveModule()->findModuleItem( *i_name->asString() );
    if( itm == 0 )
    {
-      vm->raiseModError( new AccessError( ErrorParam( e_undef_sym, __LINE__ ).
-         extra(*i_name->asString()) ) );
-      return;
+      throw new AccessError( ErrorParam( e_undef_sym, __LINE__ ).
+         extra(*i_name->asString()) );
    }
 
    vm->retval( *itm );
@@ -778,8 +770,7 @@ FALCON_FUNC Module_set( ::Falcon::VMachine *vm )
 
    if( i_name == 0 || ! i_name->isString() || i_value == 0 )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).extra( "S,X" ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).extra( "S,X" ) );
    }
 
    CoreObject *self = vm->self().asObject();
@@ -788,17 +779,15 @@ FALCON_FUNC Module_set( ::Falcon::VMachine *vm )
    // if the module is not alive, raise an error and exit
    if ( modc == 0|| ! modc->liveModule()->isAlive() )
    {
-      vm->raiseModError( new AccessError( ErrorParam( FALCOMP_ERR_UNLOADED, __LINE__ ).
-         desc( FAL_STR( cmp_msg_unloaded ) ) ) );
-      return;
+      throw new AccessError( ErrorParam( FALCOMP_ERR_UNLOADED, __LINE__ ).
+         desc( FAL_STR( cmp_msg_unloaded ) ) );
    }
 
    Item *itm = modc->liveModule()->findModuleItem( *i_name->asString() );
    if( itm == 0 )
    {
-      vm->raiseModError( new AccessError( ErrorParam( e_undef_sym, __LINE__ ).
-         extra(*i_name->asString()) ) );
-      return;
+      throw new AccessError( ErrorParam( e_undef_sym, __LINE__ ).
+         extra(*i_name->asString()) );
    }
 
    *itm = *i_value;
@@ -824,8 +813,7 @@ FALCON_FUNC Module_getReference( ::Falcon::VMachine *vm )
 
    if( i_name == 0 || ! i_name->isString() )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).extra( "S" ) ) );
-      return;
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).extra( "S" ) );
    }
 
    CoreObject *self = vm->self().asObject();
@@ -834,17 +822,15 @@ FALCON_FUNC Module_getReference( ::Falcon::VMachine *vm )
    // if the module is not alive, raise an error and exit
    if ( modc == 0 || ! modc->liveModule()->isAlive() )
    {
-      vm->raiseModError( new AccessError( ErrorParam( FALCOMP_ERR_UNLOADED, __LINE__ ).
-         desc( FAL_STR( cmp_msg_unloaded ) ) ) );
-      return;
+      throw new AccessError( ErrorParam( FALCOMP_ERR_UNLOADED, __LINE__ ).
+         desc( FAL_STR( cmp_msg_unloaded ) ) );
    }
 
    Item *itm = modc->liveModule()->findModuleItem( *i_name->asString() );
    if( itm == 0 )
    {
-      vm->raiseModError( new AccessError( ErrorParam( e_undef_sym, __LINE__ ).
-         extra(*i_name->asString()) ) );
-      return;
+      throw new AccessError( ErrorParam( e_undef_sym, __LINE__ ).
+         extra(*i_name->asString()) );
    }
 
    vm->referenceItem( vm->regA(), *itm );
@@ -869,9 +855,8 @@ FALCON_FUNC Module_globals( ::Falcon::VMachine *vm )
    // if the module is not alive, raise an error and exit
    if ( modc == 0 || ! modc->liveModule()->isAlive() )
    {
-      vm->raiseModError( new AccessError( ErrorParam( FALCOMP_ERR_UNLOADED, __LINE__ ).
-         desc( FAL_STR( cmp_msg_unloaded ) ) ) );
-      return;
+      throw new AccessError( ErrorParam( FALCOMP_ERR_UNLOADED, __LINE__ ).
+         desc( FAL_STR( cmp_msg_unloaded ) ) );
    }
 
    const SymbolTable *symtab = &modc->liveModule()->module()->symbolTable();
@@ -913,9 +898,8 @@ FALCON_FUNC Module_exported( ::Falcon::VMachine *vm )
    // if the module is not alive, raise an error and exit
    if ( modc == 0 || ! modc->liveModule()->isAlive() )
    {
-      vm->raiseModError( new AccessError( ErrorParam( FALCOMP_ERR_UNLOADED, __LINE__ ).
-         desc( FAL_STR( cmp_msg_unloaded ) ) ) );
-      return;
+      throw new AccessError( ErrorParam( FALCOMP_ERR_UNLOADED, __LINE__ ).
+         desc( FAL_STR( cmp_msg_unloaded ) ) );
    }
 
    const SymbolTable *symtab = &modc->liveModule()->module()->symbolTable();
@@ -955,9 +939,8 @@ FALCON_FUNC Module_unload( ::Falcon::VMachine *vm )
    // if the module is not alive, raise an error and exit
    if ( ! modc->liveModule()->isAlive() )
    {
-      vm->raiseModError( new AccessError( ErrorParam( FALCOMP_ERR_UNLOADED, __LINE__ ).
-         desc( FAL_STR( cmp_msg_unloaded ) ) ) );
-      return;
+      throw new AccessError( ErrorParam( FALCOMP_ERR_UNLOADED, __LINE__ ).
+         desc( FAL_STR( cmp_msg_unloaded ) ) );
    }
 
    // unlink
@@ -980,9 +963,8 @@ FALCON_FUNC Module_engineVersion( ::Falcon::VMachine *vm )
    ModuleCarrier *modc = static_cast<ModuleCarrier *>( self->getUserData() );
    if ( modc == 0 || ! modc->liveModule()->isAlive() )
    {
-      vm->raiseModError( new AccessError( ErrorParam( FALCOMP_ERR_UNLOADED, __LINE__ ).
-         desc( FAL_STR( cmp_msg_unloaded ) ) ) );
-      return;
+      throw new AccessError( ErrorParam( FALCOMP_ERR_UNLOADED, __LINE__ ).
+         desc( FAL_STR( cmp_msg_unloaded ) ) );
    }
 
    const Module *mod = modc->module();
