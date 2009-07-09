@@ -1,0 +1,67 @@
+/*
+   Falcon Samples.
+
+   Coroutine and message subscription.
+
+   Normally, 'broadcast' function works
+   in the context of the caller.
+
+*/
+
+const number = 5
+
+function handler( id, data )
+   > @ "Handler $id called with $data"
+end
+
+
+function coro( id, sem )
+   subscribe( "msg", .[handler id ] )
+   wtime = random( 500 )/100  // 0...5 seconds
+   > @ "Coroutine $id started, sleeping $(wtime:.3) second"
+   sleep( wtime )
+   > @ "Coroutine $id terminated"
+   sem.post()
+end
+
+
+function sender()
+   secs = random( 500 )/100  // 0...5 seconds
+   > @ "Sender started, sleeping $(secs:.3) second"
+   sleep( secs )
+   broadcast( "msg", "Hello world" )
+end
+
+function waiter( wsem )
+   wtime = seconds()
+   while not wsem.wait(0.1)
+      wsec = seconds() - wtime
+      >> @"Counting: $(wsec:.2)\r"
+   end
+   >
+   > "Counter done"
+end
+
+
+//=====================================
+counter = 0
+
+semaphores = []
+for i = 1 to number
+   sem = Semaphore()
+   launch coro( i, sem )
+   semaphores += sem
+end
+launch sender()
+
+complete = Semaphore()
+launch waiter( complete )
+
+// wait all the coroutines
+for sem in semaphores
+   sem.wait()
+end
+> "All the handlers terminated"
+
+complete.post()
+> "Main done."
