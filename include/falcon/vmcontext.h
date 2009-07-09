@@ -57,11 +57,14 @@ class FALCON_DYN_CLASS VMContext: public BaseAlloc
 
    /** Module that contains the currently being executed symbol. */
    LiveModule *m_lmodule;
-   
+
+   /** Point in time when this context is due to run again.
+    (this is an absolute measure).
+   */
    numeric m_schedule;
 
    int32 m_priority;
-   
+
    /** Program counter register.
       Current execution point in current code.
    */
@@ -74,7 +77,7 @@ class FALCON_DYN_CLASS VMContext: public BaseAlloc
       of the current instruction.
    */
    uint32 m_pc_next;
-   
+
    /** Stack base is the position of the current stack frame.
       As there can't be any stack frame at 0, a position of 0 means that the VM is running
       the global module code.
@@ -90,9 +93,9 @@ public:
    VMContext();
    VMContext( const VMContext& other );
    ~VMContext();
-   
+
    /** Wakes up the context after a wait. */
-   void wakeup();
+   void wakeup( bool signaled = false );
 
    void priority( int32 value ) { m_priority = value; }
    int32 priority() const { return m_priority; }
@@ -100,16 +103,33 @@ public:
    void schedule( numeric value ) { m_schedule = value; }
    numeric schedule() const { return m_schedule; }
 
+   /** Schedule this context after some time from now.
+      This function add the current system time to secs and
+      prepares this context to be scheduled after that absolute
+      time.
+
+      @param secs Number of seconds and fraction after current time.
+   */
+   void scheduleAfter( numeric secs );
+
+   /** Return true if this is waiting forever on a semaphore signal */
+   bool isWaitingForever() const { return m_sleepingOn != 0 && m_schedule < 0; }
+
+   VMSemaphore* waitingOn() const { return m_sleepingOn; }
+
+   void waitOn( VMSemaphore* sem, numeric value=-1 );
+   void signaled();
+
    //===========================
    uint32& pc() { return m_pc; }
    const uint32& pc() const { return m_pc; }
 
    uint32& pc_next() { return m_pc_next; }
    const uint32& pc_next() const { return m_pc_next; }
-   
+
    uint32& stackBase() { return m_stackBase; }
    const uint32& stackBase() const { return m_stackBase; }
-   
+
    uint32& tryFrame() { return m_tryFrame; }
    const uint32& tryFrame() const { return m_tryFrame; }
 
@@ -148,13 +168,13 @@ public:
 
    VMSemaphore *sleepingOn() const { return m_sleepingOn; }
    void sleepOn( VMSemaphore *sl ) { m_sleepingOn = sl; }
-   
+
    /** Returns the current module global variables vector. */
    ItemVector &globals() { return m_lmodule->globals(); }
 
    /** Returns the current module global variables vector (const version). */
    const ItemVector &globals() const { return m_lmodule->globals(); }
-   
+
    /** Returns the currently active live module. */
    LiveModule *lmodule() const { return m_lmodule; }
 
@@ -163,10 +183,10 @@ public:
 
    /** Returns the currently active symbol. */
    const Symbol *symbol() const { return m_symbol; }
-   
+
    /** Changes the currently active symbol. */
    void symbol( const Symbol* s ) { m_symbol = s; }
-   
+
    /** Returns the current code. */
    byte* code() const {
       fassert( m_symbol->isFunction() );

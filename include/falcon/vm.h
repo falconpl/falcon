@@ -277,7 +277,7 @@ protected:
    Stream *m_stdOut;
    Stream *m_stdErr;
    bool m_bhasStandardStreams;
-   
+
    /** Number of opcodes that the current coroutine has performed. */
    uint32 m_opCount;
 
@@ -342,9 +342,23 @@ protected:
       Each item of the map contains a Symbol * and an ID that allows to
    */
    SymModuleMap m_wellKnownSyms;
-   
-   void putAtSleep( VMContext *ctx, numeric secs );
-   void reschedule( VMContext *ctx, numeric secs );
+
+   /** Puts the given context at sleep.
+      This function inserts the given context in the sleep queue, inserting it in
+      schedule order.
+
+      Contexts waiting forever are put at bottom; contexts not wishing to sleep
+      are put at top.
+   */
+   void putAtSleep( VMContext *ctx );
+
+   /** Resort this context changing its position in the sleep list.
+
+      Actually, this function works as putAtSleep(), but it
+      continues to scan the sleeping context sleep till it finds
+      the previous position of the context to remove it.
+   */
+   void reschedule( VMContext *ctx );
 
    /** Service recursive function called by LinkClass to create a class. */
    bool linkSubClass( LiveModule *mod , const Symbol *clssym, Map &props, ObjectFactory *factory );
@@ -423,7 +437,7 @@ protected:
 
    /** Finalization hook for MT system. */
    void (*m_onFinalize)(VMachine *vm);
-   
+
    /** filtered load path */
    String m_appSearchPath;
    //=============================================================
@@ -462,7 +476,7 @@ protected:
    /** Returns the next NTD32 parameter, advancing the pointer to the next instruction */
    int32 getNextNTD32()
    {
-      register int32 ret = endianInt32(*reinterpret_cast<int32 *>( 
+      register int32 ret = endianInt32(*reinterpret_cast<int32 *>(
          m_currentContext->code() + m_currentContext->pc_next()  ) );
       m_currentContext->pc_next() += sizeof( int32 );
       return ret;
@@ -471,7 +485,7 @@ protected:
    /** Returns the next NTD64 parameter, advancing the pointer to the next instruction */
    int64 getNextNTD64()
    {
-      register int64 ret = grabInt64( 
+      register int64 ret = grabInt64(
          m_currentContext->code() + m_currentContext->pc_next() );
       m_currentContext->pc_next() += sizeof( int64 );
       return ret;
@@ -480,37 +494,37 @@ protected:
    /** Gets the nth parameter of an opcode. */
    Item *getOpcodeParam( register uint32 bc_pos );
 
-   
+
    /** Perform an item raise.
-   
+
       This implements the "raise" keyword or "RIS" opcode, that is,
       takes an item and sends it to the relevant catch in the call
       hierarcy.
-      
+
       If the item can't be caught by the current context, then it is
       eventually encapsulated in an error and thrown to the applicaiton
       with a C++ throw new Error*. If the item contains an instance of
       a Falcon Error class, the inner core Error* is taken and that is
       raised instead.
-      
+
       After this call, if the item or error could be caught by the script,
       the context is prepared to run the error handler at the very next
       VM loop.
-   
+
       @param value The item to be raised, possibly but not necessarily
       derived from a Falcon level Error class.
    */
    void handleRaisedItem( Item& value );
 
    /** Decides what to do with an error incoming in the main loop.
-   
-      Usually, this get either rethrown to the application or 
+
+      Usually, this get either rethrown to the application or
       handled as an item down to the script.
-      
+
       Stack is eventually unrolled till the item handler is found.
    */
    void handleRaisedError( Error* err );
-   
+
    /** Performs periodic checks on the virtual machine. */
    void periodicChecks();
 
@@ -552,9 +566,9 @@ protected:
    bool linkUndefinedSymbol( const Symbol *sym, LiveModule *lmod );
    bool completeModLink( LiveModule *lmod );
    LiveModule *prelink( Module *mod, bool bIsMain, bool bPrivate );
-   
+
    void raiseHardError( int code, const String &expl, int32 line );
-   
+
    /** Destroys the virtual machine.
       Protected as it can't be called directly.
    */
@@ -699,7 +713,7 @@ public:
       It is advisable to call the base class version of the method on subclass
       default.
 
-      \param name The symbol to be searched for. 
+      \param name The symbol to be searched for.
       \param symdata Coordinates of the linked symbol, on success.
       \return true on success, false if the symbol is not found or if it was found
          but couldn't be linked.
@@ -970,7 +984,7 @@ public:
 
    /** Returns the current stack as a reference (const version). */
    const ItemVector &stack() const { return m_currentContext->stack(); }
-   
+
    /** Returns the current try frame as a reference. */
    uint32& tryFrame() { return m_currentContext->tryFrame(); }
 
@@ -1140,7 +1154,7 @@ public:
    void retval( bool val ) {
        m_currentContext->regA().setBoolean( val );
    }
-   
+
    void retval( int32 val ) {
        m_currentContext->regA().setInteger( (int64) val );
    }
@@ -1169,7 +1183,7 @@ public:
    void retval( CoreArray *ca ) {
       m_currentContext->regA().setArray(ca);
    }
-   
+
    void retval( MemBuf* mb ) {
       m_currentContext->regA().setMemBuf(mb);
    }
@@ -1198,9 +1212,9 @@ public:
    uint32 programCounter() const { return m_currentContext->pc(); }
 
    const SymModule *findGlobalSymbol( const String &str ) const;
-   
+
    /** Make this context to sleep and elect a new one.
-   
+
       If no other context can be elected, the VM may issue an
       onIdleTime() and eventually sleep a bit.
    */
@@ -1208,7 +1222,7 @@ public:
 
    void rotateContext();
    void terminateCurrentContext();
-      
+
    /** Returns a well known item.
       A well known item is an item that does not phiscally resides in any module, and is
       at complete disposal of VM.
@@ -1345,7 +1359,7 @@ public:
       callable.readyFrame( this, paramCount );
       return true;
    }
-   
+
    /** Prepare a frame for a function call */
    void prepareFrame( CoreFunc* cf, uint32 paramCount );
 
@@ -1482,7 +1496,7 @@ public:
 
    /** True if the VM is allowed to execute a context switch. */
    bool allowYield() { return m_allowYield; }
-   
+
    /** Change turnover mode. */
    void allowYield( bool mode ) { m_allowYield = mode; }
 
@@ -2111,39 +2125,40 @@ public:
       owner).
    */
    void finalize();
-   
+
    /** Finalization callback function (used by MT) */
    void setFinalizeCallback( void (*finfunc)( VMachine* vm ) )
    {
       m_onFinalize = finfunc;
    }
-   
+
    /** Get the default application load path. */
    const String& appSearchPath() const { return m_appSearchPath; }
 
    /** Sets the default application load path (as seen by this vm). */
    void appSearchPath( const String &p ) { m_appSearchPath = p; }
-   
+
    /** Call back on sleep requests.
       This method is called back when the virtual machine detects the
       need to perform a pause.
-      
+
       The default VMachine version calls the system "sleep" routine,
       but the application may find something more interesting to
       do.
-      
+
       @note The application should eventually call idle() and
       unidle() respectively at enter and exit of this callback if
       it doesn't use the VM while in this routine.
-      
+
       @param seconds Number of seconds (and fractions) that the VM is
       idle.
-      
-      @return true if the wait is complete, false if it was interrupted
-      by a VM interruption request.
+
+      @throws InterruptedError if the wait was interrupted.
+      @throws CodeError if the wait is < 0 (infinite) and there are
+              no active contexts able to wake up this one.
     */
-    
-    virtual bool onIdleTime( numeric seconds );
+
+    virtual void onIdleTime( numeric seconds );
 
 //==========================================================================
 //==========================================================================

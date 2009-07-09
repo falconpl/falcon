@@ -40,6 +40,7 @@
 #include <falcon/vmevent.h>
 
 #include <string.h>
+#include <stdio.h>
 
 
 
@@ -154,7 +155,7 @@ void VMachine::internal_construct()
 
    // Search path
    appSearchPath( Engine::getSearchPath() );
-   
+
    // This code is actually here for debug reasons. Opcode management should
    // be performed via a swtich in the end, but until the beta version, this
    // method allows to have a stack trace telling immediately which opcode
@@ -264,7 +265,7 @@ void VMachine::internal_construct()
    m_opHandlers[ P_STO ] = opcodeHandler_STO;
    m_opHandlers[ P_FORB ] = opcodeHandler_FORB;
    m_opHandlers[ P_EVAL ] = opcodeHandler_EVAL;
-   
+
 
    // Finally, register to the GC system
    memPool->registerVM( this );
@@ -353,11 +354,11 @@ LiveModule* VMachine::link( Runtime *rt )
          delete lmodList;
          return 0;
       }
-      
+
       // use the temporary storage.
       lmodList[ iter ] = lmod;
    }
-   
+
    // now again, do the complete phase.
    for( iter = 0; iter < listSize; ++iter )
    {
@@ -417,7 +418,7 @@ LiveModule *VMachine::prelink( Module *mod, bool isMainModule, bool bPrivate )
 
    // no need to free on failure: livemod are garbaged
    livemod->mark( generation() );
-   
+
    // then we always need the symbol table.
    const SymbolTable *symtab = &livemod->module()->symbolTable();
 
@@ -559,7 +560,7 @@ bool VMachine::completeModLink( LiveModule *livemod )
 
    livemod->initialized( LiveModule::init_complete );
    livemod->mark( generation() );
-   
+
    // execute the main code, if we have one
    // -- but only if this is NOT the main module
    if ( m_launchAtLink && m_mainModule != livemod )
@@ -570,7 +571,7 @@ bool VMachine::completeModLink( LiveModule *livemod )
          callItem( *mainItem, 0 );
       }
    }
-   
+
    return true;
 }
 
@@ -590,7 +591,7 @@ bool VMachine::linkDefinedSymbol( const Symbol *sym, LiveModule *livemod )
 {
    // A shortcut
    ItemVector *globs = &livemod->globals();
-   
+
    // Ok, the symbol is defined here. Link (record) it.
 
    // create an appropriate item here.
@@ -1552,26 +1553,30 @@ void VMachine::yield( numeric secs )
 
    // be sure to allow yelding.
    m_allowYield = true;
-   
-   // and rotate the context
-   putAtSleep( m_currentContext, secs );
-   electContext();
+
+   // a pure sleep time can never be < 0.
+   if( secs < 0.0 )
+      secs = 0.0;
+
+   m_currentContext->scheduleAfter( secs );
+
+   rotateContext();
 }
 
 
-void VMachine::putAtSleep( VMContext *ctx, numeric secs )
+void VMachine::putAtSleep( VMContext *ctx )
 {
-   if ( secs < 0.0 )
+   // consider the special case of a context not willing to be awaken
+   if( ctx->isWaitingForever() )
    {
-      secs = 0.0;
+      m_sleepingContexts.pushBack( ctx );
+      return;
    }
 
-   numeric tgtTime = Sys::_seconds() + secs;
-   ctx->schedule( tgtTime );
    ListElement *iter = m_sleepingContexts.begin();
    while( iter != 0 ) {
       VMContext *curctx = (VMContext *) iter->data();
-      if ( tgtTime < curctx->schedule() ) {
+      if ( ctx->schedule() < curctx->schedule() || curctx->schedule() < 0.0 ) {
          m_sleepingContexts.insertBefore( iter, ctx );
          return;
       }
@@ -1583,13 +1588,12 @@ void VMachine::putAtSleep( VMContext *ctx, numeric secs )
 }
 
 
-void VMachine::reschedule( VMContext *ctx, numeric secs )
+void VMachine::reschedule( VMContext *ctx )
 {
-   numeric tgtTime = Sys::_seconds() + secs;
-   ctx->schedule( tgtTime );
    ListElement *iter = m_sleepingContexts.begin();
 
-   bool bFound = false;
+   bool bPlaced = false;
+   bool bRemoved = false;
    while( iter != 0 )
    {
       VMContext *curctx = (VMContext *) iter->data();
@@ -1601,26 +1605,47 @@ void VMachine::reschedule( VMContext *ctx, numeric secs )
          ListElement *old = iter;
          iter = iter->next();
          m_sleepingContexts.erase( old );
+         // -- did we find the position where to place it, we did it all.
+         // -- go away.
+         if ( bPlaced )
+            return;
+
+         // but if item was not placed because it has an endless sleep, we have
+         // no gain in scanning more than this. So just place at the end
+         // (by breaking)
+         if( ctx->schedule() < 0.0 )
+            break;
+
+         // otherwise, continue working
+         bRemoved = true;
          continue;
       }
 
-      if ( tgtTime < curctx->schedule() )
+      // avoid to place twice
+      if ( ! bPlaced &&
+         ( ctx->schedule() < curctx->schedule() || curctx->schedule() < 0.0 )
+         )
       {
          m_sleepingContexts.insertBefore( iter, ctx );
-         bFound = true;
+         // if we have also already removed the previous position, we did all
+         if( bRemoved )
+            return;
+
+         bPlaced = true;
       }
+
       iter = iter->next();
    }
 
-   // can't find it anywhere?
-   if ( ! bFound )
+   // can't find any place to store it?
+   if ( ! bPlaced )
       m_sleepingContexts.pushBack( ctx );
 }
 
 
 void VMachine::rotateContext()
 {
-   putAtSleep( m_currentContext, 0.0 );
+   putAtSleep( m_currentContext );
    electContext();
 }
 
@@ -1631,38 +1656,29 @@ void VMachine::electContext()
    if ( ! m_sleepingContexts.empty() )
    {
       VMContext *elect = (VMContext *) m_sleepingContexts.front();
-      numeric tgtTime = elect->schedule() - Sys::_seconds();
-      
+      m_sleepingContexts.popFront();
+
+      numeric tgtTime = elect->schedule();
+
       // changhe the context to the first ready to run.
       m_currentContext = elect;
-      
+
       // we must move to the next instruction after the context was swapped.
       m_currentContext->pc() = m_currentContext->pc_next();
-      
-      // ready to run?
-      if ( tgtTime <= 0.0 )
-      {
-         // Wake up the context.
-         m_sleepingContexts.popFront();
-         
-         // wakeup may consume a signal if it is currently pending.
-         elect->wakeup();
 
-         m_opCount = 0;
-      }
-      // but eventually sleep.
-      else
+      // tell the context that it is not waiting anymore, if it was.
+      elect->wakeup( false );
+
+      // Is the most ready context willing to sleep?
+      if( tgtTime < 0.0 ||  (tgtTime -= Sys::_seconds()) > 0.0 )
       {
-         // raise an interrupted error on need.
-         if ( ! onIdleTime( tgtTime ) )
-         {
-            throw new InterruptedError(
-               ErrorParam( e_interrupted ).origin( e_orig_vm ).
-                  symbol( currentSymbol()->name() ).
-                  module( currentModule()->name() )
-               );
-         }
+         // raise an interrupted error if interrutped.
+         // also, this may wait forever (with a tgtime < 0);
+         // in this case the function may throw a deadlock error
+         onIdleTime( tgtTime );
       }
+
+      m_opCount = 0;
    }
 }
 
@@ -1671,7 +1687,7 @@ void VMachine::terminateCurrentContext()
 {
    // don't destroy this context if it's the last one.
    // inspectors outside this VM may want to check it.
-   if ( m_contexts.size() > 1 )
+   if ( ! m_contexts.empty() && m_contexts.begin()->next() != 0 )
    {
       // scan the contexts and remove the current one.
       ListElement *iter = m_contexts.begin();
@@ -1683,7 +1699,7 @@ void VMachine::terminateCurrentContext()
          }
          iter = iter->next();
       }
-      
+
       // there must be something sleeping
       fassert( !  m_sleepingContexts.empty() );
       electContext();
@@ -1756,7 +1772,7 @@ void VMachine::callReturn()
          return;
       }
    }
-   
+
    bool bBreak = frame.m_break;
 
    // Ok, we can unroll the stak.
@@ -1778,7 +1794,7 @@ void VMachine::callReturn()
    uint32 oldBase = stackBase() -frame.m_param_count - VM_FRAME_SPACE;
    stackBase() = frame.m_stack_base;
    stack().resize( oldBase );
-   
+
    if( bBreak )
    {
       m_currentContext->pc() = m_currentContext->pc_next();
@@ -3314,7 +3330,7 @@ VMContext* VMachine::coPrepare( int32 pSize )
    }
    // rotate the context
    m_contexts.pushBack( ctx );
-   putAtSleep( ctx, 0.0 );
+   putAtSleep( ctx );
    return ctx;
 }
 
@@ -3342,7 +3358,7 @@ bool VMachine::callCoroFrame( const Item &callable, int32 pSize )
    m_contexts.pushBack( ctx );
 
    // rotate the context
-   putAtSleep( m_currentContext, 0.0 );
+   putAtSleep( m_currentContext );
    m_currentContext = ctx;
    // fake the frame as a pure return value; this will force this coroutine to terminate
    // without peeking any code in the module.
@@ -3365,7 +3381,7 @@ void VMachine::postMessage( VMMessage *msg )
    if ( m_baton.tryAcquire() )
    {
       processMessage( msg );
-      
+
       try {
          execFrame();
       }
@@ -3375,12 +3391,12 @@ void VMachine::postMessage( VMMessage *msg )
          msg = new VMMessage( "error" );
          msg->error( err );
       }
-      
+
       m_baton.release();
       return;
    }
    */
-   
+
    // ok, we can't do it now; post the message
    m_mtx_mesasges.lock();
 
@@ -3628,12 +3644,30 @@ void VMachine::setupScript( int argc, char** argv )
    }
 }
 
-bool VMachine::onIdleTime( numeric seconds )
+void VMachine::onIdleTime( numeric seconds )
 {
+   if ( seconds < 0.0 )
+   {
+      printf( "SECONDS %g\n", seconds );
+      throw new CodeError(
+         ErrorParam( e_deadlock ).origin( e_orig_vm ).
+            symbol( currentSymbol()->name() ).
+            module( currentModule()->name() )
+         );
+   }
+
    idle();
-   bool interrupted = m_systemData.sleep( seconds );
+   bool complete = m_systemData.sleep( seconds );
    unidle();
-   return interrupted;
+
+   if ( ! complete )
+   {
+      throw new InterruptedError(
+         ErrorParam( e_interrupted ).origin( e_orig_vm ).
+            symbol( currentSymbol()->name() ).
+            module( currentModule()->name() )
+         );
+   }
 }
 
 
@@ -3658,7 +3692,7 @@ void VMachine::handleRaisedItem( Item& value )
       err->hasTraceback();
       throw err;
    }
-   
+
    // Enter the stack frame that should handle the error (or raise to the top if uncaught)
    while( stackBase() > tryFrame() )
    {
@@ -3674,10 +3708,10 @@ void VMachine::handleRaisedItem( Item& value )
          throw value;
       }
    }
-   
+
    // we must be out of that loop in a stack area where tryframe is landed.
-   fassert ( tryFrame() != i_noTryFrame );  
-   
+   fassert ( tryFrame() != i_noTryFrame );
+
    regB() = value;
    // We are in the frame that should handle the error, in one way or another
    // should we catch it?
@@ -3828,7 +3862,7 @@ void VMachine::raiseHardError( int code, const String &expl, int32 line )
 
 bool VMachine::launch( const String &startSym, uint32 paramCount )
 {
-   if ( prepare( startSym, paramCount ) ) 
+   if ( prepare( startSym, paramCount ) )
    {
       try
       {

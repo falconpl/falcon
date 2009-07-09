@@ -172,22 +172,22 @@ void VMachine::run()
          {
             ops[ m_currentContext->code()[ m_currentContext->pc() ] ]( this );
          }
-         
+
          m_opCount ++;
-         
+
          //=========================
          // Executes periodic checks
          //
-         
+
          if ( m_opCount > m_opNextCheck )
          {
             // By default, if nothing else happens, we should do a check no sooner than this.
             m_opNextCheck = m_opCount + FALCON_VM_DFAULT_CHECK_LOOPS;
-            
+
             // manage periodic callbacks
             periodicChecks();
          }
-         
+
          m_currentContext->pc() = m_currentContext->pc_next();
       }
       catch( VMEventReturn & )
@@ -236,8 +236,14 @@ void opcodeHandler_PSHN( register VMachine *vm )
 // 3
 void opcodeHandler_RET( register VMachine *vm )
 {
-   vm->callReturn();
-   vm->retnil();
+   if( vm->stackBase() == 0 )
+   {
+      vm->terminateCurrentContext();
+   }
+   else {
+      vm->callReturn();
+      vm->retnil();
+   }
 }
 
 // 4
@@ -1258,7 +1264,7 @@ void opcodeHandler_LDAS( register VMachine *vm )
 {
    uint32 size = (uint32) vm->getNextNTD32();
    Item *operand2 =  vm->getOpcodeParam( 2 )->dereference();
-   
+
    if( operand2->isArray() )
    {
       CoreArray* arr = operand2->asArray();

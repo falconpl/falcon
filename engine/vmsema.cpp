@@ -28,13 +28,8 @@ void VMSemaphore::post( VMachine *vm, int32 count )
    while( m_count > 0 && ! m_waiting.empty() )
    {
       VMContext *ctx = (VMContext *) m_waiting.front();
-      ctx->sleepOn( 0 );
-      // correctly awaken, so...
-      ctx->m_regA.setBoolean( true );
-      //ctx->m_regA.setString( new CoreString( "Signales" ) );
-
-      // put the context in the sleeping list, but only if it was on endless wait
-      vm->reschedule( ctx, 0.0 );
+      ctx->signaled();
+      vm->reschedule( ctx );
 
       m_waiting.popFront();
       m_count --;
@@ -45,9 +40,11 @@ void VMSemaphore::wait( VMachine *vm, numeric to )
 {
    if ( m_count == 0 ) {
       m_waiting.pushBack( vm->m_currentContext );
-      vm->m_currentContext->sleepOn( this );
-      vm->yield( to < 0.0 ? 10e270 : to );
-      vm->regA().setBoolean( false ); // by default will be zero; 1 if correctly awaken
+      vm->m_currentContext->waitOn( this, to );
+      // by default will be zero; 1 if correctly awaken
+      vm->regA().setBoolean( false );
+      // now we can change the context
+      vm->rotateContext();
    }
    else {
       vm->regA().setBoolean( true );
@@ -64,8 +61,6 @@ void VMSemaphore::unsubscribe( VMContext *ctx )
       if ( ctx == cty )
       {
          m_waiting.erase( elem );
-         cty->sleepOn(0);
-         cty->m_regA.setBoolean(false);
          return;
       }
       elem = elem->next();

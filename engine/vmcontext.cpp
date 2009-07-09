@@ -22,8 +22,9 @@
 #include <falcon/vmcontext.h>
 #include <falcon/traits.h>
 #include <falcon/genericvector.h>
+#include <falcon/sys.h>
 
-#define VM_STACK_MEMORY_THRESHOLD 128
+#define VM_STACK_MEMORY_THRESHOLD 256
 
 
 namespace Falcon {
@@ -43,7 +44,7 @@ VMContext::VMContext()
    m_stackBase = 0;
 
    m_tryFrame = VMachine::i_noTryFrame;
-   
+
    m_pc = 0;
    m_pc_next = 0;
    m_symbol = 0;
@@ -62,7 +63,7 @@ VMContext::VMContext( const VMContext& other )
    m_stackBase = 0;
 
    m_tryFrame = VMachine::i_noTryFrame;
-   
+
    m_pc = other.m_pc;
    m_pc_next = other.m_pc_next;
    m_symbol = other.m_symbol;
@@ -74,14 +75,45 @@ VMContext::~VMContext()
    delete  m_stack;
 }
 
-void VMContext::wakeup()
+void VMContext::scheduleAfter( numeric secs )
 {
-   if ( m_sleepingOn != 0 )
+   m_schedule = Sys::_seconds() + secs;
+}
+
+
+void VMContext::waitOn( VMSemaphore* sem, numeric secs )
+{
+   if( secs < 0.0 )
+      m_schedule = -1.0;
+   else
+      m_schedule =  Sys::_seconds() + secs;
+
+   m_sleepingOn = sem;
+}
+
+void VMContext::wakeup( bool signaled )
+{
+   if ( m_sleepingOn != 0 )  // overkill, but...
    {
       m_sleepingOn->unsubscribe( this );
-      m_regA.setBoolean(false); // we have not been awaken, and must return false
-      m_sleepingOn = 0; // should be done by unsubscribe, but...
+      m_sleepingOn = 0;
+      m_schedule = 0.0;  // immediately runnable
+
+      // don't change the A status if not sleeping on a semaphore.
+      regA().setBoolean(signaled); // we have not been awaken, and must return false
    }
+}
+
+void VMContext::signaled()
+{
+   if ( m_sleepingOn != 0 )  // overkill, but...
+   {
+      // Don't unsubscribe; the semaphore is unsubscribing us.
+      m_sleepingOn = 0;
+      m_schedule = 0.0;  // immediately runnable
+   }
+
+   regA().setBoolean(true); // we have not been awaken, and must return false}
 }
 
 }
