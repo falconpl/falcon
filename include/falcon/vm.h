@@ -1171,6 +1171,14 @@ public:
        m_currentContext->regA() = val;
    }
 
+
+   /** Returns a non garbageable string. */
+   void retval( String *cs )
+   {
+      m_currentContext->regA().setString(cs);
+   }
+
+
    /** Returns a garbageable string.
 
       \note to put a nongarbage string in the VM use regA() accessor, but you must know what you're doing.

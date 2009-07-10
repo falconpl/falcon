@@ -546,7 +546,66 @@ FALCON_FUNC  mth_properties( ::Falcon::VMachine *vm )
          vm->retval( ret );
       }
       break;
+      
+      case FLC_ITEM_CLASS:
+      {
+         CoreClass *cls= obj_x->asClass();
+         const PropertyTable &pt = cls->properties();
+         CoreArray *ret = new CoreArray(pt.added());
 
+         for( uint32 count = 0; count < pt.added() ; count++ )
+         {
+            const String &propName = *pt.getKey( count );
+            ret->append( new CoreString( propName ) );
+         }
+         vm->retval( ret );
+      }
+      break;
+      
+      case FLC_ITEM_DICT:
+      {
+         CoreDict *dict = obj_x->asDict();
+         if ( dict->isBlessed() )
+         {
+            DictIterator* iter = dict->first();
+            CoreArray *ret = new CoreArray( dict->length() );
+            while( iter->isValid() )
+            {
+               const Item& itm = iter->getCurrentKey();
+               if ( itm.isString() )
+               {
+                  String* str = itm.asString();
+                  //TODO Skip impossible strings.
+                  ret->append( *str );
+               }
+            }
+            vm->retval( ret );
+         }
+      }
+      break;
+         
+      case FLC_ITEM_ARRAY:
+      {
+         CoreArray *arr = obj_x->asArray();
+         if ( arr->bindings() != 0 )
+         {
+            CoreDict* dict = arr->bindings();
+            DictIterator* iter = dict->first();            
+            CoreArray *ret = new CoreArray( dict->length() );
+            while( iter->isValid() )
+            {
+               const Item& itm = iter->getCurrentKey();
+               if ( itm.isString() )
+               {
+                  String* str = itm.asString();
+                  //TODO Skip impossible strings.
+                  ret->append( *str );
+               }
+            }
+            vm->retval( ret );
+         }
+      }
+      break;
    }
 }
 
@@ -1226,6 +1285,14 @@ FALCON_FUNC MemoryBuffer_ptr( VMachine *vm )
    vm->retval( (int64) vm->self().asMemBuf()->data() );
 }
 
+/*#
+   @method value LateBinding
+   @brief Returns the value associated with a late binding.
+   @return A value or nil if no value is associated.
+
+   To determine if this binding has a "nil" value associated,
+   use @a LateBinding.bound.
+*/
 FALCON_FUNC LateBinding_value( VMachine *vm )
 {
    if ( vm->self().isFutureBind() )
@@ -1234,6 +1301,11 @@ FALCON_FUNC LateBinding_value( VMachine *vm )
       vm->retnil();
 }
 
+/*#
+   @method bound LateBinding
+   @brief Checks if the late binding is bound.
+   @return True if this late binding has a bound value.
+*/
 FALCON_FUNC LateBinding_bound( VMachine *vm )
 {
    vm->regA().setBoolean( vm->self().isFutureBind() );
