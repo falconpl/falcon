@@ -51,6 +51,9 @@ void IntMode::run()
    Stream *stdOut = m_owner->m_stdOut;
    Stream *stdIn = m_owner->m_stdIn;
 
+   stdOut->writeString("\n===NOTICE===\n" );
+   stdOut->writeString("Interactive mode is currently UNDER DEVELOPMENT.\n" );
+
    stdOut->writeString("\nWelcome to Falcon interactive mode.\n" );
    stdOut->writeString("Write statements directly at the prompt; when finished press " );
    #ifdef FALCON_SYSTEM_WIN

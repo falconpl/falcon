@@ -388,6 +388,7 @@ Module* core_module_init()
       addParam("propName");
    self->addClassMethod( array_meta, "setProperty", &Falcon::core::mth_setProperty ).asSymbol()->
       addParam("propName")->addParam("value");
+   self->addClassMethod( array_meta, "properties", &Falcon::core::mth_properties );
 
    //==================================================================
    // Dict class
@@ -439,6 +440,7 @@ Module* core_module_init()
       addParam("propName");
    self->addClassMethod( dict_meta, "setProperty", &Falcon::core::mth_setProperty ).asSymbol()->
       addParam("propName")->addParam("value");
+   self->addClassMethod( dict_meta, "properties", &Falcon::core::mth_properties );
 
    //==================================================================
    // Object class
@@ -457,6 +459,7 @@ Module* core_module_init()
       addParam("propName");
    self->addClassMethod( object_meta, "setProperty", &Falcon::core::mth_setProperty ).asSymbol()->
       addParam("propName")->addParam("value");
+   self->addClassMethod( object_meta, "properties", &Falcon::core::mth_properties );
 
    //==================================================================
    // MemoryBuffer class
@@ -518,6 +521,7 @@ Module* core_module_init()
    class_meta->getClassDef()->addInheritance( new Falcon::InheritDef( bom_meta ) );
    class_meta->exported( false );
    class_meta->getClassDef()->setMetaclassFor( FLC_ITEM_CLASS );
+   self->addClassMethod( class_meta, "properties", &Falcon::core::mth_properties );
 
    //=======================================================================
    // Module declaration body
@@ -568,6 +572,8 @@ Module* core_module_init()
       addParam("obj")->addParam("propName");
    self->addExtFunc( "setProperty", &Falcon::core::mth_setProperty )->
       addParam("obj")->addParam("propName")->addParam("value");
+   self->addExtFunc( "properties", &Falcon::core::mth_properties )->
+      addParam("obj");
 
    self->addExtFunc( "yield", &Falcon::core::yield );
    self->addExtFunc( "yieldOut", &Falcon::core::yieldOut )->

@@ -46,7 +46,7 @@ namespace core {
 
 /*#
    @method len BOM
-   
+
    @brief Retreives the lenght of a collection
    @return the count of items in the sequence, or 0.
 
@@ -127,7 +127,7 @@ FALCON_FUNC  val_int ( ::Falcon::VMachine *vm )
          {
             throw new MathError( ErrorParam( e_domain, __LINE__ ).origin( e_orig_runtime ) );
          }
-         
+
          vm->retval( (int64)num );
       }
       break;
@@ -148,7 +148,7 @@ FALCON_FUNC  val_int ( ::Falcon::VMachine *vm )
                vm->retval( (int64) nval );
                return;
             }
-            
+
             throw new ParseError( ErrorParam( e_numparse, __LINE__ ).origin( e_orig_runtime ) );
          }
          vm->retval( val );
@@ -370,6 +370,7 @@ FALCON_FUNC  mth_getProperty( ::Falcon::VMachine *vm )
    an AccessError is raised.
 
 */
+
 /*#
    @method setProperty Array
    @brief Sets a binding (as a property) in the array.
@@ -412,6 +413,141 @@ FALCON_FUNC  mth_setProperty( ::Falcon::VMachine *vm )
    }
 
    obj_x->asDeepItem()->writeProperty( *prop_x->asString(), *new_item );
+}
+
+
+/*#
+   @method properties Array
+   @brief Returns an array of properties (bindings) in the array.
+   @return An array with 0 or more strings.
+
+   This methods returns all the properties in the given array,
+   which represents the list of array bindings. If the array
+   has no bindings, this method returns an empty array.
+
+   The property list includes properties that refer to any kind
+   of data, including functions (that is, methods), but it
+   doesn't include properties in the metaclass of this item
+   (FBOM properties).
+
+   The returned list is ordered by UNICODE value of the property
+   names.
+*/
+
+/*#
+   @method properties Dictionary
+   @brief Returns all the properties in the dictionary.
+   @return An array of strings representing property names.
+
+   This method returns all the property name in this dictionary.
+   If the dictionary is not blessed, returns an empty array.
+
+   The returned list contains all those keys that are suitable
+   to be directly accessed as properties (that is, strings without
+   spaces, puntaction and so on). You may use @a Dictionary.keys
+   instead if you know that all the keys can be used as
+   properties.
+
+   The property list includes properties that refer to any kind
+   of data, including functions (that is, methods), but it
+   doesn't include properties in the metaclass of this item
+   (FBOM properties).
+
+   The returned list is ordered by UNICODE value of the property
+   names.
+*/
+
+/*#
+   @method properties Object
+   @brief Returns all the properties in the object.
+   @return An array of strings representing property names.
+
+   This method returns all the properties in this object.
+
+   The property list includes properties that refer to any kind
+   of data, including functions (that is, methods), but it
+   doesn't include properties in the metaclass of this item
+   (FBOM properties).
+
+   The returned list is ordered by UNICODE value of the property
+   names.
+
+   @note Subclasses are seen as properties, so they will returned
+         in the list too.
+*/
+
+/*#
+   @method properties Class
+   @brief Returns all the properties in the class.
+   @return An array of strings representing property names.
+
+   This method returns all the properties in this class.
+
+   The property list includes properties that refer to any kind
+   of data, including functions (that is, methods), but it
+   doesn't include properties in the metaclass of this item
+   (FBOM properties).
+
+   The returned list is ordered by UNICODE value of the property
+   names.
+
+   @note Subclasses are seen as properties, so they will returned
+         in the list too.
+*/
+
+/*#
+   @function properties
+   @brief Returns all the properties in the given item.
+   @oaram item An item that can be accessed via dot accessor.
+   @return An array of strings representing property names.
+
+   This function returns the properties offered by an item
+   as a list of strings in an array. FBOM methods (item metaclass
+   methods) are not returned; only explicitly declared properties
+   are taken into account.
+
+   The item susceptible of returning an array of properties
+   are:
+   - Objects (see @a Objects.properties)
+   - Dictionaries (if blessed, see @a Dictioanry.properties)
+   - Arrays (see @a Array.properties)
+   - Classes (see @a Class.properties)
+
+   This function, applied to any other item type, returns @b nil.
+*/
+
+FALCON_FUNC  mth_properties( ::Falcon::VMachine *vm )
+{
+   Item *obj_x;
+   if( vm->self().isMethodic() ) {
+      obj_x = &vm->self();
+   }
+   else {
+      obj_x= vm->param(0);
+      if ( obj_x == 0 ) {
+         throw new ParamError( ErrorParam( e_inv_params )
+            .origin( e_orig_runtime ).extra( "X" ) );
+      }
+   }
+
+   switch( obj_x->type() )
+   {
+      case FLC_ITEM_OBJECT:
+      {
+         CoreObject *obj = obj_x->asObjectSafe();
+         const PropertyTable &pt = obj->generator()->properties();
+         CoreArray *ret = new CoreArray(pt.added());
+
+         for( uint32 count = 0; count < pt.added() ; count++ )
+         {
+            const String &propName = *pt.getKey( count );
+            ret->append( new CoreString( propName ) );
+         }
+         vm->retval( ret );
+      }
+      break;
+
+   }
 }
 
 /*#
@@ -1010,7 +1146,7 @@ FALCON_FUNC mth_metaclass( VMachine *vm )
    @method ptr BOM
    @brief Returns a raw memory pointer out of this data (as an integer).
    @return An integer containing a pointer to this data.
-   
+
    The default behavior of this method is to return the value of
    the memory location where inner data is stored, if the data is
    deep, and 0 otherwise. The Integer metaclass overrides this
@@ -1032,7 +1168,7 @@ FALCON_FUNC BOM_ptr( VMachine *vm )
    @method ptr Integer
    @brief Dereferences this integer as a pointer.
    @return Returns the pointer value at the location indicated in this integer.
-   
+
    This function returns a pointer value (stored in a Falcon integer)
    taken from the memory location indicated by this integer.
 */
@@ -1046,7 +1182,7 @@ FALCON_FUNC Integer_ptr( VMachine *vm )
    @method ptr GarbagePointer
    @brief Returns the inner data stored in this ponter.
    @return Deep data (as a pointer).
-   
+
    This function returns a pointer value (stored in a Falcon integer)
    pointing to the inner FalconData served this garbage pointer.
 */
@@ -1059,7 +1195,7 @@ FALCON_FUNC GarbagePointer_ptr( VMachine *vm )
    @method ptr String
    @brief Returns a pointer to raw data contained in this string.
    @return A string pointer.
-   
+
    This function returns a pointer value (stored in a Falcon integer)
    pointing to the raw data in the string. The string is not encoded
    in any format, and its character size can be 1, 2 or 4 bytes per
@@ -1080,7 +1216,7 @@ FALCON_FUNC String_ptr( VMachine *vm )
    @method ptr MemoryBuffer
    @brief Returns the pointer to the raw memory stored in this memory buffer.
    @return A memory pointer.
-   
+
    This function returns a pointer (as a Falcon integer) to the memory
    area managed by this memory buffer.
 */
@@ -1106,12 +1242,12 @@ FALCON_FUNC LateBinding_bound( VMachine *vm )
 FALCON_FUNC LateBinding_bind( VMachine *vm )
 {
    Item* i_item = vm->param(0);
-   
+
    if( i_item == 0 )
    {
       throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).extra( "X" ) );
    }
-   
+
    vm->self().setLBind( vm->self().asLBind(), new GarbageItem( *i_item ) );
    vm->regA() = vm->self();
 }

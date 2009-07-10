@@ -48,6 +48,7 @@ FALCON_FUNC  mth_metaclass ( ::Falcon::VMachine *vm );
 
 FALCON_FUNC  mth_getProperty( ::Falcon::VMachine *vm );
 FALCON_FUNC  mth_setProperty( ::Falcon::VMachine *vm );
+FALCON_FUNC  mth_properties( ::Falcon::VMachine *vm );
 //FALCON_FUNC  mth_hasProperty( ::Falcon::VMachine *vm );
 
 FALCON_FUNC  Function_name ( ::Falcon::VMachine *vm );
