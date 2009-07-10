@@ -49,7 +49,7 @@ class MyThread( id, counterIn, counterDone, panel ) from Thread
          // start counting like mad
          for i in [0:1000]
             self.panel[ self.id ] = i
-            sleep( 0.001 )
+            sleep( 0.01 )
          end
 
          self.panel[ self.id ] = 0
