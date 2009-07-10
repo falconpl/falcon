@@ -1862,7 +1862,7 @@ void co_call_uncallable( VMachine *vm, uint32 paramCount )
 void co_call_function( const Item &itm, VMachine *vm, uint32 paramCount )
 {
    // fill - in the missing parameters.
-   itm.asFunction()->readyFrame( vm, paramCount );
+   vm->prepareFrame( itm.asFunction(), paramCount );
    vm->self().setNil();
 }
 
@@ -1976,7 +1976,7 @@ void co_call_dict( const Item &itm, VMachine *vm, uint32 paramCount )
    Item mth;
    if ( self->getMethod( "call__", mth ) )
    {
-      mth.asMethodFunc()->readyFrame( vm, paramCount );
+      vm->prepareFrame( mth.asMethodFunc(), paramCount );
       vm->self() = self;
       return;
    }
@@ -1997,7 +1997,7 @@ void co_call_object( const Item &itm, VMachine *vm, uint32 paramCount )
    Item mth;
    if ( self->getMethod( "call__", mth ) )
    {
-      mth.asMethodFunc()->readyFrame( vm, paramCount );
+      vm->prepareFrame( mth.asMethodFunc(), paramCount );
       vm->self() = self;
       return;
    }
@@ -2012,7 +2012,7 @@ void co_call_object( const Item &itm, VMachine *vm, uint32 paramCount )
 void co_call_method( const Item &itm, VMachine *vm, uint32 paramCount )
 {
    // fill - in the missing parameters.
-   itm.asMethodFunc()->readyFrame( vm, paramCount );
+   vm->prepareFrame( itm.asMethodFunc(), paramCount );
 
    itm.getMethodItem( vm->self() );
 }
@@ -2035,7 +2035,7 @@ void co_call_class( const Item &itm, VMachine *vm, uint32 paramCount )
       return;
    }
 
-   cls->constructor().asFunction()->readyFrame( vm, paramCount );
+   vm->prepareFrame( cls->constructor().asFunction(), paramCount );
    vm->self() = inst;
    inst->gcMarkData( memPool->generation() );
 

@@ -1632,10 +1632,9 @@ static bool core_cascade_next ( ::Falcon::VMachine *vm )
    vm->local(0)->setInteger( count + 1 );
 
    // perform call
-   if ( ! vm->callFrame( callables->at(count), pc ) )
-   {
-      throw new ParamError( ErrorParam( e_non_callable ).origin(e_orig_runtime) );
-   }
+   vm->callFrame( callables->at(count), pc ); // will throw noncallable in case of noncallable item.
+   //throw new ParamError( ErrorParam( e_non_callable ).origin(e_orig_runtime) );
+
 
    return true;
 }
@@ -1759,10 +1758,8 @@ FALCON_FUNC  core_cascade ( ::Falcon::VMachine *vm )
    vm->returnHandler( &core_cascade_next );
 
    // perform the real call
-   if ( ! vm->callFrame( callables->at(0), pcount ) )
-   {
-      throw new ParamError( ErrorParam( e_non_callable ).origin(e_orig_runtime) );
-   }
+   vm->callFrame( callables->at(0), pcount );
+   //throw new ParamError( ErrorParam( e_non_callable ).origin(e_orig_runtime) );
 }
 
 
@@ -1801,7 +1798,11 @@ static bool core_floop_next ( ::Falcon::VMachine *vm )
    // save the count
    *vm->local(0) = (int64) count;
    // find a callable in the array
-   if ( ! vm->callFrame( (*callables)[count], 0 ) )
+   if ( (*callables)[count].isCallable() )
+   {
+       vm->callFrame( (*callables)[count], 0 );
+   }
+   else
    {
       // set the item as A and recall ourself for evaluation
       vm->regA() = (*callables)[count];
@@ -2029,7 +2030,7 @@ FALCON_FUNC  core_let ( ::Falcon::VMachine *vm )
 static bool core_brigade_next( ::Falcon::VMachine *vm )
 {
    int64 next = vm->local(0)->asInteger();
-   
+
    // Has the previous call returned something interesting?
    if ( vm->regA().isOob() )
    {
@@ -2055,43 +2056,35 @@ static bool core_brigade_next( ::Falcon::VMachine *vm )
          newParams->prepend( Item() );
       }
    }
-   
+
    CoreArray* list = vm->param(0)->asArray();
 
    // are we done?
    if( next >= list->length() )
       return false;
-      
+
    // prepare the local call
    vm->local(0)->setInteger( next + 1 );
-   
-   bool success;
+
    // anyhow, prepare the call
    //-- have we changed parameters?
    if ( vm->local(1)->isArray() )
    {
       CoreArray* callarr = vm->local(1)->asArray();
       callarr->at(0) = list->at((int32)next);
-      success = vm->callFrame( callarr, 0 );
+      vm->callFrame( callarr, 0 );
    }
-   else 
+   else
    {
       // no? -- use our original paramters.
       for( int32 i = 1; i < vm->paramCount(); ++i )
       {
          vm->pushParameter( *vm->param(i) );
       }
-      
-      success = vm->callFrame( list->at((int32)next), vm->paramCount()-1 );
+
+      vm->callFrame( list->at((int32)next), vm->paramCount()-1 );
    }
-   
-   if ( ! success ) 
-   {
-      throw new ParamError(
-         ErrorParam( e_non_callable,__LINE__ )
-         .origin(e_orig_runtime) );
-   }
-   
+
    return true; // call me again
 }
 
@@ -2108,52 +2101,52 @@ static bool core_brigade_next( ::Falcon::VMachine *vm )
    same set of parameters. The idea is that of a "brigate" of functions
    operating all on the same parameters so that it is possible to put
    common code into separate functions.
-   
+
    Items in the list are not functionally evaluated; they are simply called,
    passing to them the same parameters that the brigade group receives. Brigate
    is an ETA funcion, and this means that ongoing functional evaluation is
    interrupted as soon as a brigade is encountered.
-   
+
    @code
    function mean( array )
       value = 0
       for elem in array: value += elem
       return value / len( array )
    end
-   
+
    function dbl( array )
       for i in [0:len(array)]: array[i] *= 2
    end
-   
-   doubleMean = .[ brigade .[  
+
+   doubleMean = .[ brigade .[
       dbl
       mean
    ]]
-   
+
    > "Mean: ", mean( [1,2,3] )
    > "Double mean: ", doubleMean( [1,2,3] )
    @endcode
-   
+
    The above example brigades a "prefix" function to double the values in
    an array that must be processed by the main function.
-   
+
    Using out of band return values, the functions in the sequence can also
    control the parameters that the following functions will receive, terminate
    immediately the evaluation or restart it, forming a sort of iterative
    functional loop. An oob 0 causes the sequence to be interrutped (and return oob(0) itself),
-   an out of band 1 will cause the first element of the sequence to be called again, and 
+   an out of band 1 will cause the first element of the sequence to be called again, and
    an out of band array will permanently change the parameters as seen by the functions.
-   
+
    The following brigate performs a first step using the given parameters, and another one
    using modified ones:
-   
+
    @code
    looper = .[brigade .[
       { val, text => printl( text, ": ", val ) } // do things
       { val, text => oob( [val+1, "Changed"] ) }  // change params
       { val, text => val >= 10 ? oob(0) : oob(1)}  // loop control
    ]]
-   
+
    looper( 1, "Original" )
    @endcode
 */
@@ -2168,30 +2161,27 @@ FALCON_FUNC  core_brigade ( ::Falcon::VMachine *vm )
          .origin(e_orig_runtime)
          .extra( "A" ) );
    }
-   
+
    // nothing to do?
    if ( i_fl->asArray()->length() == 0 )
    {
       vm->retnil();
       return;
    }
-   
+
    vm->returnHandler( &core_brigade_next );
    vm->addLocals(2);
    vm->local(0)->setInteger(1);
    vm->local(1)->setNil();
-   
+
    // anyhow, prepare the call
    for( int32 i = 1; i < vm->paramCount(); ++i )
    {
       vm->pushParameter( *vm->param(i) );
    }
-   
-   if ( ! vm->callFrame( vm->param(0)->asArray()->at(0), vm->paramCount()-1 ) )
-   {
-      throw new ParamError( ErrorParam( e_non_callable,__LINE__ ).origin(e_orig_runtime) );
-   }
-   
+
+   vm->callFrame( vm->param(0)->asArray()->at(0), vm->paramCount()-1 );
+   //throw new ParamError( ErrorParam( e_non_callable,__LINE__ ).origin(e_orig_runtime) );
 }
 
 

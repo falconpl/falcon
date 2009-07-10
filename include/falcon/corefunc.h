@@ -62,8 +62,6 @@ public:
    LiveModule *liveModule() const { return m_lm; }
    const Symbol *symbol() const { return m_symbol; }
    const String& name() const { return m_symbol->name(); }
-
-   void readyFrame( VMachine *vm, uint32 params );
 };
 
 }

@@ -1499,8 +1499,7 @@ static CoreObject *internal_make_stream( VMachine *vm, FalconData *clone, int us
 
    //if we wrote the RTL module, can't be zero.
    fassert( stream_class != 0 );
-   CoreObject *co = stream_class->asClass()->createInstance();
-   co->setUserData( clone );
+   CoreObject *co = stream_class->asClass()->createInstance(clone);
    if ( userMode >= 0 )
       co->setProperty( "_stdStreamType", userMode );
 
@@ -1989,7 +1988,7 @@ FALCON_FUNC  Stream_setEncoding ( ::Falcon::VMachine *vm )
    self->setProperty( "eolMode", (int64) mode );
 }
 
-/*# 
+/*#
    @function readURI
    @brief Reads fully data from a given file or URI source.
    @param uri The item to be read (URI or string)
@@ -1997,11 +1996,11 @@ FALCON_FUNC  Stream_setEncoding ( ::Falcon::VMachine *vm )
    @return A string containing the whole contents of the
           given file.
    @raise IoError in case of read error.
-   
+
    This function reads as efficiently as possible a file
-   from the given source. If encoding isn't given, 
+   from the given source. If encoding isn't given,
    the file is read as binary data.
-   
+
    Provided encodings are:
    - "utf-8"
    - "utf-16"
@@ -2011,7 +2010,7 @@ FALCON_FUNC  Stream_setEncoding ( ::Falcon::VMachine *vm )
    - "gbk" (Chinese simplified)
    - "cp1252"
    - "C" (byte oriented – writes byte per byte)
-   
+
    @note The maximum size of the data that can be read is
    limited to 2 Gigabytes.
 */
@@ -2023,13 +2022,13 @@ FALCON_FUNC  readURI ( ::Falcon::VMachine *vm )
    Item *i_encoding = vm->param(1);
 
    URI uri;
-   
+
    if ( i_encoding != 0 && ! ( i_encoding->isString()|| i_encoding->isNil()) )
    {
       throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
             .extra( "S|URI, [S]" ) );
    }
-   
+
    if ( i_uri->isString() )
    {
       uri.parse( *i_uri->asString() );
@@ -2046,8 +2045,8 @@ FALCON_FUNC  readURI ( ::Falcon::VMachine *vm )
       throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
             .extra( "S|URI, [S]" ) );
    }
-   
-   
+
+
    // find the appropriage provider.
    VFSProvider* vfs = Engine::getVFS( uri.scheme() );
    if ( vfs == 0 )
@@ -2055,10 +2054,10 @@ FALCON_FUNC  readURI ( ::Falcon::VMachine *vm )
       throw new ParamError( ErrorParam( e_unknown_vfs, __LINE__ )
             .extra( uri.scheme() ) );
    }
-   
+
    // Idling the VM here; we're starting to access the system.
    vm->idle();
-   
+
    Stream *in = vfs->open( uri, VFSProvider::OParams().rdOnly() );
    if ( in == 0 )
    {
@@ -2078,7 +2077,7 @@ FALCON_FUNC  readURI ( ::Falcon::VMachine *vm )
    }
 
    String *ret = new CoreString();
-   
+
    // direct read?
    if ( i_encoding == 0 || i_encoding->isNil() )
    {
@@ -2097,18 +2096,18 @@ FALCON_FUNC  readURI ( ::Falcon::VMachine *vm )
             ret->reserve( (int32) pos + READURI_READ_BLOCK_SIZE );
             rin = in->read( ret->getRawStorage() + pos, READURI_READ_BLOCK_SIZE );
          }
-           
+
          if ( rin < 0 )
          {
             vm->unidle();
             int64 fsError = in->lastError();
             delete in;
-            
+
             throw new IoError( ErrorParam( e_io_error, __LINE__ )
                .extra( uri.get() )
                .sysError( (int32) fsError ) );
-         } 
-         
+         }
+
          pos += rin;
       }
       ret->size( (uint32) pos );
@@ -2129,21 +2128,21 @@ FALCON_FUNC  readURI ( ::Falcon::VMachine *vm )
          else {
             res = tin->readString( temp, READURI_READ_BLOCK_SIZE );
          }
-           
+
          if ( ! res )
          {
             vm->unidle();
             int64 fsError = tin->lastError();
             delete in;
-            
+
             throw new IoError( ErrorParam( e_io_error, __LINE__ )
                .extra( uri.get() )
                .sysError( (uint32) fsError ) );
-         } 
-         
+         }
+
          ret->append( temp );
       }
-      
+
       delete tin;
    }
 
@@ -2158,14 +2157,14 @@ FALCON_FUNC  readURI ( ::Falcon::VMachine *vm )
    @param data A string or membuf containing the data to be written.
    @optparam encoding The encoding.
    @raise IoError in case of write errors.
-   
+
    This function writes all the data contained in the string or
    memory buffer passed in the @b data parameter into the @b uri
    output resource.
-   
+
    If @b encoding is not given, the data is treated as binary data
    and written as-is.
-   
+
    Provided encodings are:
    - "utf-8"
    - "utf-16"
@@ -2187,14 +2186,14 @@ FALCON_FUNC  writeURI ( ::Falcon::VMachine *vm )
    Item *i_encoding = vm->param(2);
 
    URI uri;
-   
+
    if ( i_data == 0 || ! ( i_data->isString() )
       || (i_encoding != 0 && ! (i_encoding->isString() || i_encoding->isNil())) )
    {
       throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
             .extra( "S|URI, S, [S]" ) );
    }
-   
+
    if ( i_uri->isString() )
    {
       uri.parse( *i_uri->asString() );
@@ -2211,7 +2210,7 @@ FALCON_FUNC  writeURI ( ::Falcon::VMachine *vm )
       throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
             .extra( "S|URI, S, [S]" ) );
    }
-   
+
    // find the appropriage provider.
    VFSProvider* vfs = Engine::getVFS( uri.scheme() );
    if ( vfs == 0 )
@@ -2219,21 +2218,21 @@ FALCON_FUNC  writeURI ( ::Falcon::VMachine *vm )
       throw new ParamError( ErrorParam( e_unknown_vfs, __LINE__ )
             .extra( uri.scheme() ) );
    }
-   
+
    // Idling the VM here; we're starting to access the system.
    vm->idle();
-   
+
    VFSProvider::CParams params;
    params.truncate();
    params.wrOnly();
-   
+
    Stream *out = vfs->create( uri, params );
    if ( out == 0 )
    {
       vm->unidle();
       throw vfs->getLastError();
    }
-   
+
    // direct read?
    if ( i_encoding == 0 || i_encoding->isNil() )
    {
@@ -2244,18 +2243,18 @@ FALCON_FUNC  writeURI ( ::Falcon::VMachine *vm )
       while( pos < size )
       {
          int wout = out->write( data + pos, size - pos ); // so we hit immediately EOF
-      
+
          if ( wout < 0 )
          {
             vm->unidle();
             int64 fsError = out->lastError();
             delete out;
-            
+
             throw new IoError( ErrorParam( e_io_error, __LINE__ )
                .extra( uri.get() )
                .sysError( (uint32) fsError ) );
-         } 
-         
+         }
+
          pos += wout;
       }
 
@@ -2269,7 +2268,7 @@ FALCON_FUNC  writeURI ( ::Falcon::VMachine *vm )
          vm->unidle();
          int64 fsError = tout->lastError();
          delete tout;
-         
+
          throw new IoError( ErrorParam( e_io_error, __LINE__ )
             .extra( uri.get() )
             .sysError( (uint32) fsError ) );

@@ -24,11 +24,6 @@
 namespace Falcon
 {
 
-void CoreFunc::readyFrame( VMachine *vm, uint32 paramCount )
-{
-   vm->prepareFrame( this, paramCount );
-}
-
 }
 
 /* end of corefunc.cpp */

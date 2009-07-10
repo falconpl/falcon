@@ -315,7 +315,7 @@ void MemPool::clearRing( GarbageableBase *ringRoot )
    fassert( killed <= m_allocatedItems );
    m_allocatedItems -= killed;
    m_mtx_newitem.unlock();
-   
+
    TRACE( "Sweeping done, allocated %d (killed %d)\n", m_allocatedItems, killed );
 }
 
@@ -373,9 +373,10 @@ bool MemPool::markVM( VMachine *vm )
 
       markItem( ctx->regA() );
       markItem( ctx->regB() );
+      markItem( ctx->self() );
       markItem( ctx->latch() );
       markItem( ctx->latcher() );
-      
+
       markItem( vm->regBind() );
       markItem( vm->regBindP() );
 
@@ -544,7 +545,7 @@ void MemPool::markItem( const Item &item )
             Item self;
             item.getMethodItem( self );
             markItem( self );
-         }         
+         }
       }
       break;
 

@@ -1339,14 +1339,11 @@ public:
       \param callable the item to be called.
       \param paramCount the number of elements in the stack to be considered parameters.
       \param mode the item call mode.
-
-      \return false if the item is not callable, true if the item is called.
    */
-   bool callItem( const Item &callable, int32 paramCount )
+   void callItem( const Item &callable, int32 paramCount )
    {
       callFrame( callable, paramCount );
       execFrame();
-      return true;
    }
 
    /** Shortcut for to call an item from a VM frame.
@@ -1362,10 +1359,9 @@ public:
       If the function needs to continue or do some post-processing after calling
       the callable item, it must install a return frame handler using returnHandler()
    */
-   bool callFrame( const Item &callable, int32 paramCount )
+   void callFrame( const Item &callable, int32 paramCount )
    {
       callable.readyFrame( this, paramCount );
-      return true;
    }
 
    /** Prepare a frame for a function call */

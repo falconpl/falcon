@@ -5,9 +5,8 @@
 ALIVE=ord("O")
 DEAD=ord("-")
 
-so = stdOut()
 // strange, doing write = stdOut().write crashes after a few calls to write()
-write = so.write
+write = stdOut().write
 
 class Life( width, height )
    w = width
@@ -124,12 +123,12 @@ life.spawn(GLIDER, 5,4)
   life.spawn(FISH, 4,12)
 // run until break
 gen = 0
-so.write("\x1b[2J")	// ANSI clear screen
+write("\x1b[2J")	// ANSI clear screen
 while gen < 2000
    life.evolve()
-   so.write("\x1b[H")	// ANSI home cursor
+   write("\x1b[H")	// ANSI home cursor
    life.draw()
-   so.write( "Life - generation " + ++gen )
+   write( "Life - generation " + ++gen )
    //sleep(0.05) // slight delay
 end
 

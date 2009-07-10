@@ -40,9 +40,6 @@
 #include <falcon/vmevent.h>
 
 #include <string.h>
-#include <stdio.h>
-
-
 
 namespace Falcon {
 
@@ -3648,7 +3645,6 @@ void VMachine::onIdleTime( numeric seconds )
 {
    if ( seconds < 0.0 )
    {
-      printf( "SECONDS %g\n", seconds );
       throw new CodeError(
          ErrorParam( e_deadlock ).origin( e_orig_vm ).
             symbol( currentSymbol()->name() ).
