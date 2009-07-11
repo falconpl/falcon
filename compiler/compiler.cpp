@@ -202,7 +202,7 @@ FALCON_MODULE_DECL
    self->addClassProperty( c_base_compiler, "compileTemplate" );
    self->addClassProperty( c_base_compiler, "launchAtLink" );
    self->addClassProperty( c_base_compiler, "language" );
-   
+
    self->addClassMethod( c_base_compiler, "setDirective", &Falcon::Ext::BaseCompiler_setDirective).asSymbol()->
       addParam("dt")->addParam("value");
    self->addClassMethod( c_base_compiler, "addFalconPath", &Falcon::Ext::BaseCompiler_addFalconPath);
@@ -227,7 +227,7 @@ FALCON_MODULE_DECL
    self->addClassProperty( c_icompiler, "stdErr" );
    self->addClassProperty( c_icompiler, "stdIn" );
    self->addClassProperty( c_icompiler, "result" );
-   
+
    self->addClassProperty( c_icompiler, "NOTHING" ).setInteger( (Falcon::int64) Falcon::InteractiveCompiler::e_nothing );
    self->addClassProperty( c_icompiler, "MORE" ).setInteger( (Falcon::int64) Falcon::InteractiveCompiler::e_more );
    self->addClassProperty( c_icompiler, "INCOMPLETE" ).setInteger( (Falcon::int64) Falcon::InteractiveCompiler::e_incomplete );
@@ -236,13 +236,13 @@ FALCON_MODULE_DECL
    self->addClassProperty( c_icompiler, "EXPRESSION" ).setInteger( (Falcon::int64) Falcon::InteractiveCompiler::e_expression );
    self->addClassProperty( c_icompiler, "CALL" ).setInteger( (Falcon::int64) Falcon::InteractiveCompiler::e_call );
    self->addClassProperty( c_icompiler, "TERMINATED" ).setInteger( (Falcon::int64) Falcon::InteractiveCompiler::e_terminated );
-   
+
    self->addClassMethod( c_icompiler, "compileNext", &Falcon::Ext::ICompiler_compileNext ).asSymbol()->
       addParam("code");
    self->addClassMethod( c_icompiler, "compileAll", &Falcon::Ext::ICompiler_compileAll ).asSymbol()->
       addParam("code");
    self->addClassMethod( c_icompiler, "reset", &Falcon::Ext::ICompiler_reset );
-   
+
 
    Falcon::Symbol *c_module = self->addClass( "Module" );
    c_module->setWKS( true );
@@ -259,6 +259,7 @@ FALCON_MODULE_DECL
    self->addClassMethod( c_module, "unload", &Falcon::Ext::Module_unload );
    self->addClassMethod( c_module, "engineVersion", &Falcon::Ext::Module_engineVersion );
    self->addClassMethod( c_module, "moduleVersion", &Falcon::Ext::Module_moduleVersion );
+   self->addClassMethod( c_module, "attributes", &Falcon::Ext::Module_attributes );
 
    return self;
 }

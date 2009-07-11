@@ -4,9 +4,10 @@ Feathers (0.9.2.1)
            resources.
   * fixed: In socket throwing errors before cleaning up and unidling the
            VM.
+  * added: attributes() method to Module class.
 
 Feathers (0.9.2)
-  * major: Added property launchAtLink and optional parameter "alias" to 
+  * major: Added property launchAtLink and optional parameter "alias" to
            compiler module.
   * fixed: The RunTime used by the reflex compiler thought it had the
            main module.
@@ -15,7 +16,7 @@ Feathers (0.9.2)
 Feathers (0.9.1.6)
   * minor: Added getName(), setName(), getSystemID() and toString()
            methods to thread.
-  
+
 Feathers (0.9.1.2)
   * fixed: In MXML, removed promotion of data nodes when there are
            other sibling nodes.
@@ -24,7 +25,7 @@ Feathers (0.9.1)
   * major: Ported to Falcon 0.9
   * minor: Added split() method to Regex.
   * minor: Added subst() method to Regex (to be thougly tested).
-           
+
 Feathers (0.8.14.2)
   * minor: Added pread function to process module.
 

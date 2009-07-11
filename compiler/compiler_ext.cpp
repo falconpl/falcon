@@ -21,6 +21,8 @@
 #include <falcon/module.h>
 #include <falcon/vm.h>
 #include <falcon/rosstream.h>
+#include <falcon/attribmap.h>
+#include <falcon/lineardict.h>
 
 #include "compiler_ext.h"
 #include "compiler_mod.h"
@@ -37,11 +39,11 @@ namespace Ext {
 /*#
    @class _BaseCompiler
    @brief Abstract base class for the @a Compiler and @a ICompiler classes.
-   
+
    This base class is used to put some common properties at disposal of both
    the subclasses: the standard @a Compiler, and the @a ICompiler (Incremental Compiler)
    that allows live evaluation in a protected children virtual machine.
-   
+
    @prop alwaysRecomp If true, a load method finding a valid .fam that may
        substitute a .fal will ignore it, and will try to compile and
        load the .fal instead.
@@ -68,7 +70,7 @@ namespace Ext {
    @prop sourceEncoding The encoding of the source file. It defaults to
       default system encoding that Falcon is able to detect. Use one of the
       encoding names known by the Transcoder class.
-   
+
    @prop launchOnLink If true, the __main__ function (that is, the entry point)
          of the loaded modules is executed before returning it. This allows
          the modules to initalize themselves and set their global variables.
@@ -150,17 +152,17 @@ FALCON_FUNC BaseCompiler_addFalconPath( ::Falcon::VMachine *vm )
    @from _BaseCompiler
    @brief Main interface to the reflexive compiler.
    @optparam path The default search path of the compiler.
-   
+
    The static compiler class is an interface to the compilation facilities
    and the vritual machine currently running the caller Falcon program.
-   
+
    Compiled resources (either external binary modules or falcon scripts, that
    can be stored on external resources or compiled on-the-fly) are integrated
    in the running virtual machine as a separate module, immediately linked and
    made runnable. The caller script receives a @a Module instance which can be
    used to control the execution of the target module, or to unload it at a
    later time.
-   
+
    The linked modules receive every globally exported symbol that is accessible
    to the caller script, but their export requests are ignored (they can't modify
    the global execution environment of the calling script).
@@ -177,7 +179,7 @@ FALCON_FUNC BaseCompiler_addFalconPath( ::Falcon::VMachine *vm )
       object MyCompiler from Compiler
       end
    @endcode
-   
+
 */
 
 /*#
@@ -214,15 +216,15 @@ void internal_link( ::Falcon::VMachine *vm, Module *mod, CompilerIface *iface )
    rt.hasMainModule(false);
    // let's try to link
    rt.addModule( mod, true );
-   
+
    bool ll = vm->launchAtLink();
    LiveModule* lmod = 0;
-   
+
    // avoid a re-throw in the fast-path
    if ( iface->launchAtLink() != ll )
    {
       vm->launchAtLink( iface->launchAtLink() );
-   
+
       try {
          lmod = vm->link( &rt );
          vm->launchAtLink( ll );
@@ -406,7 +408,7 @@ FALCON_FUNC Compiler_loadByName( ::Falcon::VMachine *vm )
    separators are NOT automatically transformed into "." in the module
    logical name, so to import the module under a local namespace, using
    this parameter is essential.
-   
+
    In case a suitable module cannot be found, the method returns nil. If a module is found,
    a CodeError is raised in case compilation or link steps fails.
 */
@@ -415,7 +417,7 @@ FALCON_FUNC Compiler_loadFile( ::Falcon::VMachine *vm )
    Item *i_name = vm->param( 0 );
    Item *i_alias = vm->param( 1 );
 
-   if( i_name == 0 || ! i_name->isString() 
+   if( i_name == 0 || ! i_name->isString()
        || ( i_alias != 0 && !i_alias->isString() ) )
    {
       throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
@@ -424,21 +426,21 @@ FALCON_FUNC Compiler_loadFile( ::Falcon::VMachine *vm )
 
    CompilerIface *iface = dyncast<CompilerIface*>( vm->self().asObject() );
    Module *mod = 0;
-   
+
    try {
       mod = iface->loader().loadFile( *i_name->asString() );
-      
+
       // select the module name -- if no alias is given get the official name
       const Symbol *caller_sym;
       const Module *caller_mod;
       String parent_name;
       if ( vm->getCaller( caller_sym, caller_mod ) )
          parent_name = caller_mod->name();
-      String nmodName = Module::absoluteName( 
+      String nmodName = Module::absoluteName(
                i_alias == 0 ? mod->name() : *i_alias->asString(),
                parent_name );
       mod->name( nmodName );
-      
+
       internal_link( vm, mod, iface );
       // don't decref, on success internal_link does.
    }
@@ -468,27 +470,27 @@ FALCON_FUNC Compiler_loadFile( ::Falcon::VMachine *vm )
 
    The incremental compiler, or "evaluator", is meant to provide a falcon-in-falcon
    compilation environment.
-   
+
    @note The incremental compiler is currently under development, and subject to
          sudden changes in behaviors and interfaces.
-         
+
    While the @a Compiler class is meant to help scripts to load and use foreign code
    in their context, the @b ICompiler class provides it's own private virtual machine
    and executes all the code it receives in a totally separate environment.
-   
+
    Compiling a script through the @b ICompiler is phisically equivalent to start a new
    'falcon' command line interpreter and ordering it to run a script, with two main
    differences: first, the ICompiler instance runs serially with the caller in the
    same process, and second, the ICompiler also allows incremental compilation.
-   
+
    Incremental compilation means that it's possible to evaluate falcon statements
    incrementally as they are compiled on the fly and executed one by one.
-   
+
    Compilation methods @a ICompiler.compileNext and @a ICompiler.compileAll returns a
    compilation state (or eventually raise an error), that is useful to determine
    what happened and what action to take after a partial compilation. Possible
    return values are:
-   
+
    - @b ICompiler.NOTHING - No operation performed (i.e. returned for just comments or whitespaces).
    - @b ICompiler.MORE - The statement is not complete and requires more input.
    - @b ICompiler.INCOMPLETE - While the last statement is complete, the context is still open and requires
@@ -499,44 +501,44 @@ FALCON_FUNC Compiler_loadFile( ::Falcon::VMachine *vm )
            statements fall in this category.
    - @b ICompiler.EXPRESSION - A single complete expression was parsed. The evaluated result is available through
                       the @a ICompiler.result property.
-   - @b ICompiler.CALL - It was determined that the expression was a single call, in the form <exp1>(<exp2>). 
+   - @b ICompiler.CALL - It was determined that the expression was a single call, in the form <exp1>(<exp2>).
          Some may want to know this information to avoid printing obvious results (calls returning nil
          are porbably better to be handled silently).
    - @b ICompiler.TERMINATED - The virtual machine has been requested to terminate.
-    
+
     When the functions return MORE or INCOMPLETE, no operation is actually performed. The caller should
     provide new input with more data adding it to the previously parsed one, like in the following example:
-    
+
     @code
     load compiler
-    
+
     ic = ICompiler()
     str = "printl( 'hello',"  // incomplete
     > ic.compileNext( str )   // will do nothing and return 2 == ICompiler.MORE
     str += " 'world')\n"      // add \n for a complete statement
-    > ic.compileNext( str )   // will do the print return 6 == ICompiler.CALL 
+    > ic.compileNext( str )   // will do the print return 6 == ICompiler.CALL
     @endcode
-    
-    Everything happening in @a ICompiler.compileNext and @a ICompiler.compileAll happens in a 
+
+    Everything happening in @a ICompiler.compileNext and @a ICompiler.compileAll happens in a
     separate virtual machine which is totally unrelated with the calling one. Nevertheless,
     they can safely share the values in the @a ICompiler.result property:
-    
+
     @code
     load compiler
-    
+
     ic = ICompiler()
     ic.compileNext( "a = [1,2,3,4]\n" )
     > inspect( ic.result )   // will be the array created by the statement
     ic.result[0] = "Changed"
     ic.compileNext( "inspect( a )\n" )   // will show the change in 'a'
     @endcode
-    
+
     @note Always remember to add a \n or ';' after a complete statement in incremental
           compilation (this requirement might be removed in future).
-    
+
     @note Don't try to share and call callable symbols. Chances are that they may be
           callable in one VM, but unaccessible from the other.
-          
+
     Setting the streams in @a ICompiler.stdIn, @a ICompiler.stdOut and @a ICompiler.stdErr
     to new values, it is possible to intercept output coming from the virtual machine used
     by the incremental compiler, and to feed different input into it. This is the mechanism
@@ -564,7 +566,7 @@ FALCON_FUNC Compiler_loadFile( ::Falcon::VMachine *vm )
     // get the result, but through our original item.
     > ss.getString()       // prints Hello world
     @endcode
-    
+
     @prop stdIn standard input stream of the incremental compiler virtual machine.
     @prop stdOut standard output stream of the incremental compiler virtual machine.
     @prop stdErr standard error stream of the incremental compiler virtual machine. This is
@@ -573,12 +575,12 @@ FALCON_FUNC Compiler_loadFile( ::Falcon::VMachine *vm )
 */
 
 /*# @init ICompiler
-    @brief Initializes the interactive compiler, eventually setting a path for 
+    @brief Initializes the interactive compiler, eventually setting a path for
            the module loader.
-           
+
     If @b path is not given, the default system path is used.
 */
-    
+
 FALCON_FUNC ICompiler_init( ::Falcon::VMachine *vm )
 {
    Item *i_path = vm->param( 0 );
@@ -605,15 +607,15 @@ FALCON_FUNC ICompiler_init( ::Falcon::VMachine *vm )
    @return One of the enumeration values in @a ICompiler return values.
    @raise CodeError on compilation error.
    @raise Error (any kind of error) on runtime error.
-   
+
    This method reads exactly one statement (up to the next \n or ';') and executes it
    immediately.
-   
+
    One or more compilation errors will cause a CodeError containing all the detected
    errors to be raised.
-   
+
    A runtime error will be re-thrown in the context of the calling program.
-   
+
    The method returns a number representing the kind of code detected and eventually
    executed by the interactive compiler. For more details, see the description of
    the @a ICompiler class.
@@ -634,7 +636,7 @@ FALCON_FUNC ICompiler_compileNext( ::Falcon::VMachine *vm )
       }
       else if ( i_code->isObject() && i_code->asObjectSafe()->derivedFrom( "Stream" ) )
       {
-         InteractiveCompiler::t_ret_type ret = iface->intcomp()->compileNext( 
+         InteractiveCompiler::t_ret_type ret = iface->intcomp()->compileNext(
             dyncast<Stream*>(i_code->asObject()->getFalconData()) );
          vm->retval( (int64) ret );
          return;
@@ -651,15 +653,15 @@ FALCON_FUNC ICompiler_compileNext( ::Falcon::VMachine *vm )
    @return One of the enumeration values in @a ICompiler return values.
    @raise CodeError on compilation error.
    @raise Error (any kind of error) on runtime error.
-   
+
    This method reads exactly as many statements as possible, compiles them and runs
    them on the fly.
-   
+
    One or more compilation errors will cause a CodeError containing all the detected
    errors to be raised.
-   
+
    A runtime error will be re-thrown in the context of the calling program.
-   
+
    The method returns a number representing the kind of code detected and eventually
    executed by the interactive compiler. For more details, see the description of
    the @a ICompiler class.
@@ -685,8 +687,8 @@ FALCON_FUNC ICompiler_compileAll( ::Falcon::VMachine *vm )
 /*#
    @method reset ICompiler
    @brief Resets the compiler.
-   
-   This method destroys all the entities declared by the module and clears the 
+
+   This method destroys all the entities declared by the module and clears the
    references held by its virtual machine. It's practically equivalent to create
    a new instance of the ICompiler, with less overhead.
 */
@@ -843,7 +845,7 @@ FALCON_FUNC Module_getReference( ::Falcon::VMachine *vm )
 
    This method returns an array containing a list of strings, each one
    representing a name of a global symbol exposed by this module.
-   
+
    The symbol names can be then fed in @a Module.set and @a Module.get methods
    to manipulate the symbols in the module.
 */
@@ -881,14 +883,14 @@ FALCON_FUNC Module_globals( ::Falcon::VMachine *vm )
 
    This method returns an array containing a list of strings, each one
    representing a name of a global symbol exported by this module.
-   
+
    The symbol names can be then fed in @a Module.set and @a Module.get methods
    to manipulate the symbols in the module.
-   
+
    Notice that exported symbols are ignored by the module loader; they
    are used by the Virtual Machine to fulfil @b load requests, but this
    doesn't imply that they are honoured in every case.
-   
+
 */
 FALCON_FUNC Module_exported( ::Falcon::VMachine *vm )
 {
@@ -910,7 +912,7 @@ FALCON_FUNC Module_exported( ::Falcon::VMachine *vm )
       Symbol *sym = *(Symbol **) iter.currentValue();
       if ( sym->exported() )
          ret->append( new CoreString(sym->name()) );
-         
+
       // next symbol
       iter.next();
    }
@@ -1004,6 +1006,54 @@ FALCON_FUNC Module_moduleVersion( ::Falcon::VMachine *vm )
    ca->append( (int64) re );
    vm->retval( ca );
 }
+
+/*#
+   @method attributes Module
+   @brief Gets the decoration attributes of this module.
+   @return A dictionary with the attributes or nil if the module provides none.
+*/
+FALCON_FUNC Module_attributes( ::Falcon::VMachine *vm )
+{
+   CoreObject *self = vm->self().asObject();
+   ModuleCarrier *modc = static_cast<ModuleCarrier *>( self->getUserData() );
+   const Module *mod = modc->module();
+   AttribMap* attr = mod->attributes();
+
+   if ( attr == 0)
+      return;
+
+   MapIterator iter = attr->begin();
+   CoreDict* cd = new LinearDict( attr->size() );
+   while( iter.hasCurrent() )
+   {
+      VarDef* vd = *(VarDef**) iter.currentValue();
+
+      Item itm;
+      switch( vd->type() )
+      {
+         case VarDef::t_bool: itm.setBoolean( vd->asBool() ); break;
+         case VarDef::t_int: itm.setInteger( vd->asInteger() ); break;
+         case VarDef::t_num: itm.setNumeric( vd->asNumeric() ); break;
+         case VarDef::t_string:
+         {
+            itm.setString( new CoreString( *vd->asString() ) );
+         }
+         break;
+
+         default:
+            itm.setNil();
+      }
+
+      cd->insert( new CoreString(
+         *(String*) iter.currentKey() ),
+         itm
+         );
+      iter.next();
+   }
+
+   vm->retval( cd );
+}
+
 
 }
 }

@@ -57,6 +57,7 @@ FALCON_FUNC Module_getReference( ::Falcon::VMachine *vm );
 FALCON_FUNC Module_unload( ::Falcon::VMachine *vm );
 FALCON_FUNC Module_engineVersion( ::Falcon::VMachine *vm );
 FALCON_FUNC Module_moduleVersion( ::Falcon::VMachine *vm );
+FALCON_FUNC Module_attributes( ::Falcon::VMachine *vm );
 
 }
 }
