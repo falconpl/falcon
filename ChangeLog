@@ -15,6 +15,7 @@ Falcon (0.9.2.1)
            indirectly by the new VMContext system. This also greatly improves
            context switches times.
   * added: Methodic function properties() to determine properties of OOP items.
+  * fixed: GC Marking of items stored uniquely as method "self" part was broken.
 
 Falcon (0.9.2)
   * fixed: using more modern throw instead of the obsolete raise() functions

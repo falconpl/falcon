@@ -542,10 +542,11 @@ void MemPool::markItem( const Item &item )
          {
             item.asMethodFunc()->mark( gen );
             item.asMethodFunc()->liveModule()->mark( gen );
-            Item self;
-            item.getMethodItem( self );
-            markItem( self );
          }
+
+         Item self;
+         item.getMethodItem( self );
+         markItem( self );
       }
       break;
 
