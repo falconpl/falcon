@@ -264,7 +264,7 @@ protected:
 
     /** Main module.
       This is the last linked module, that should also be the module where to search
-      for start symbols; by default, prepare() and launch() searches symbol here,
+      for start symbols; by default, launch() searches symbol here,
       and if not found, they search start symbols in globally exported symbol tables.
    */
    LiveModule *m_mainModule;
@@ -883,19 +883,11 @@ public:
    */
    CoreClass *linkClass( LiveModule *lmod, const Symbol *clsym );
 
-   /** Prepares a routine.
-      The launch() method calls prepare() and run() in succession.
-      A debugging environment should call prepare() and then singleStep()
-      iteratively.
-   */
-   bool prepare( const String &startSym, uint32 paramCount = 0 );
-
 
    /** Launches the "__main__" symbol.
-      This is a proxy call to launch( const String &);
-      \return true if execution is successful, false otherwise.
+      This is a proxy call to launch( "__main__" );
    */
-   bool launch() { return launch( "__main__" ); }
+   void launch() { launch( "__main__" ); }
 
    /** Launches a routine.
 
@@ -923,9 +915,9 @@ public:
 
       \param startSym the name of a routine to be executed.
       \param paramCount Number of parameters that have been pushed in the stack as parameters.
-      \return true if execution is successful, false otherwise.
+      \throw CodeError* if the symbol to be launched couldn't be found.
    */
-   bool launch( const String &startSym, uint32 paramCount = 0 );
+   void launch( const String &startSym, uint32 paramCount = 0 );
 
 
    /** Virtual machine main loop.
@@ -1338,11 +1330,14 @@ public:
 
       \param callable the item to be called.
       \param paramCount the number of elements in the stack to be considered parameters.
+      \param asApp Consider this as falcon application entry point.
+                   If true, the VM will throw a VMQuitEvent autonomously when finished.
       \param mode the item call mode.
    */
-   void callItem( const Item &callable, int32 paramCount )
+   void callItem( const Item &callable, int32 paramCount, bool asApp = false )
    {
       callFrame( callable, paramCount );
+      if ( asApp ) currentFrame()->m_break = false;
       execFrame();
    }
 

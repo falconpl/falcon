@@ -558,7 +558,7 @@ bool testScript( ScriptData *script,
 
    Compiler compiler( scriptModule, source );
    compiler.searchPath( Engine::getSearchPath() );
-   
+
    if ( opt_timings )
       compTime = Sys::_seconds();
 
@@ -671,8 +671,13 @@ bool testScript( ScriptData *script,
 
    try
    {
-      if (!vmachine->launch() )
+      try
       {
+         vmachine->launch();
+      }
+      catch( CodeError* err )
+      {
+         err->decref();
          trace = "";
          reason = "Non executable script.";
          return false;

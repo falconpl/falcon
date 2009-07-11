@@ -119,7 +119,7 @@ String get_load_path()
       else
          return lp + ";" + envpath;
    }
-   
+
    return lp;  // just a warning
 }
 
@@ -272,7 +272,7 @@ int main( int argc, char *argv[] )
    {
       ModuleLoader *modloader = new ModuleLoader( source_path + get_load_path() );
       Engine::setSearchPath( modloader->getSearchPath() );
-      
+
       // set the module preferred language; ok also if default ("") is used
       modloader->setLanguage( module_language );
 
@@ -316,12 +316,14 @@ int main( int argc, char *argv[] )
       // the runtime will try to load the references.
       runtime->addModule( main_mod );
 
-      if( vmachine->link( runtime ) && vmachine->launch() )
+      if( vmachine->link( runtime ) )
       {
+         vmachine->launch();
+
          if ( vmachine->regA().type() == FLC_ITEM_INT )
             return (int32) vmachine->regA().asInteger();
-         else
-            return 0;
+
+         return 0;
       }
 
       vmachine->finalize();

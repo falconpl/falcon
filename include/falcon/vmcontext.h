@@ -39,6 +39,7 @@ class FALCON_DYN_CLASS VMContext: public BaseAlloc
 {
    Item m_regA;
    Item m_regB;
+
    Item m_regS1;
    Item m_regL1;
    Item m_regL2;

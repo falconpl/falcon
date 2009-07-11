@@ -287,6 +287,12 @@ InteractiveCompiler::t_ret_type InteractiveCompiler::compileNext( Stream *input 
       throw e;
    }
 
+   // finally, link main
+   if ( ! m_root->statements().empty() )
+   {
+      vm()->linkCompleteSymbol( module()->findGlobalSymbol("__main__" ), m_lmodule );
+   }
+
    // launch the vm.
    if ( ret == e_statement || ret == e_call || ret == e_expression )
    {

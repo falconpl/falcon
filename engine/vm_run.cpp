@@ -188,6 +188,8 @@ void VMachine::run()
             periodicChecks();
          }
 
+         // Jump to next isntruction.
+
          m_currentContext->pc() = m_currentContext->pc_next();
       }
       catch( VMEventReturn & )
@@ -236,14 +238,8 @@ void opcodeHandler_PSHN( register VMachine *vm )
 // 3
 void opcodeHandler_RET( register VMachine *vm )
 {
-   if( vm->stackBase() == 0 )
-   {
-      vm->terminateCurrentContext();
-   }
-   else {
-      vm->callReturn();
-      vm->retnil();
-   }
+   vm->callReturn();
+   vm->retnil();
 }
 
 // 4
@@ -570,10 +566,9 @@ void opcodeHandler_FORK( register VMachine *vm )
    uint32 pJump = (uint32) vm->getNextNTD32();
 
    // create the coroutine
-   vm->coPrepare( pSize );
+   vm->putAtSleep( vm->coPrepare( pSize ) );
 
    // fork
-   vm->m_currentContext->pc() = pJump;
    vm->m_currentContext->pc_next() = pJump;
 }
 

@@ -450,7 +450,7 @@ void AppFalcon::generateTree()
                                              new StreamBuffer( new StdInStream), true );
       in = tcin;
    }
-   
+
    // try to open the oputput stream.
    Stream* out = 0;
    Module *mod = new Module;
@@ -477,7 +477,7 @@ void AppFalcon::generateTree()
       mod->decref();
       throw;
    }
-   
+
    delete in;
    delete out;
    mod->decref();
@@ -653,9 +653,11 @@ void AppFalcon::runModule()
 
    // Link the runtime in the VM.
    // We'll be running the modules as we link them in.
-   vmachine->launchAtLink ( true );
-   if ( vmachine->link( &runtime ) && vmachine->launch() )
+   vmachine->launchAtLink( true );
+   if ( vmachine->link( &runtime ) )
    {
+      vmachine->launch();
+
       if ( vmachine->regA().isInteger() )
          exitval( ( int32 ) vmachine->regA().asInteger() );
    }
@@ -682,7 +684,7 @@ void AppFalcon::run()
       runModule();
 
    memPool->performGC();
-   
+
    if ( m_options.check_memory )
    {
       // be sure we have reclaimed all what's possible to reclaim.

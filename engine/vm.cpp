@@ -1253,7 +1253,7 @@ bool VMachine::linkSubClass( LiveModule *lmod, const Symbol *clssym,
    return true;
 }
 
-
+#if 0
 bool VMachine::prepare( const String &startSym, uint32 paramCount )
 {
    // we must have at least one module.
@@ -1316,7 +1316,7 @@ bool VMachine::prepare( const String &startSym, uint32 paramCount )
 
    return true;
 }
-
+#endif
 
 void VMachine::reset()
 {
@@ -1747,13 +1747,6 @@ void VMachine::itemToString( String &target, const Item *itm, const String &form
 
 void VMachine::callReturn()
 {
-   // if we have nowhere to return...
-   if( stackBase() == 0 )
-   {
-      terminateCurrentContext();
-      return;
-   }
-
    // Get the stack frame.
    StackFrame &frame = *currentFrame();
 
@@ -1792,10 +1785,15 @@ void VMachine::callReturn()
    stackBase() = frame.m_stack_base;
    stack().resize( oldBase );
 
+   // if we have nowhere to return...
    if( bBreak )
    {
       m_currentContext->pc() = m_currentContext->pc_next();
       throw VMEventReturn();
+   }
+   else if( stackBase() == 0 )
+   {
+      terminateCurrentContext();
    }
 }
 
@@ -3327,7 +3325,7 @@ VMContext* VMachine::coPrepare( int32 pSize )
    }
    // rotate the context
    m_contexts.pushBack( ctx );
-   putAtSleep( ctx );
+
    return ctx;
 }
 
@@ -3337,30 +3335,14 @@ bool VMachine::callCoroFrame( const Item &callable, int32 pSize )
    if ( ! callable.isCallable() )
       return false;
 
-   // create a new context
-   VMContext *ctx = new VMContext;
-
-   // if there are some parameters...
-   if ( pSize > 0 )
-   {
-      // avoid reallocation afterwards.
-      ctx->stack().reserve( pSize );
-      // copy flat
-      for( int32 i = 0; i < pSize; i++ )
-      {
-         ctx->stack().push( &stack().itemAt( stack().size() - pSize + i ) );
-      }
-      stack().resize( stack().size() - pSize );
-   }
-   m_contexts.pushBack( ctx );
-
    // rotate the context
    putAtSleep( m_currentContext );
-   m_currentContext = ctx;
+
+   m_currentContext = coPrepare( pSize );
+
    // fake the frame as a pure return value; this will force this coroutine to terminate
    // without peeking any code in the module.
-   ctx->pc() = i_pc_call_external_return;
-   ctx->pc_next() = i_pc_call_external_return;
+   m_currentContext->pc_next() = i_pc_call_external_return;
    callFrame( callable, pSize );
 
    return true;
@@ -3430,11 +3412,15 @@ void VMachine::processMessage( VMMessage *msg )
       delete msg;
    }
 
-   // create the coroutine
+   // create the coroutine, whose first operation will be
+   // to call our external return frame.
    uint32 pcnext = m_currentContext->pc_next();
    m_currentContext->pc_next() = i_pc_call_external_return;
    m_currentContext->pc() = i_pc_call_external_return;
-   coPrepare(0);
+
+   putAtSleep( coPrepare(0) );
+
+   // restore real return location.
    m_currentContext->pc_next() = pcnext;
    for ( uint32 i = 0; i < msg->paramCount(); ++i )
    {
@@ -3856,21 +3842,44 @@ void VMachine::raiseHardError( int code, const String &expl, int32 line )
    throw err;
 }
 
-bool VMachine::launch( const String &startSym, uint32 paramCount )
+
+void VMachine::launch( const String &startSym, uint32 paramCount )
 {
-   if ( prepare( startSym, paramCount ) )
+   Item* lItem = 0;
+
+   if( m_mainModule != 0 ) {
+      lItem = m_mainModule->findModuleItem( startSym );
+   }
+
+   if ( lItem == 0 )
    {
-      try
-      {
-         run();
-      }
-      catch ( VMEventQuit & )
-      {
-         // a standard quit.
-         return true;
+      lItem = findGlobalItem( startSym );
+      if( lItem == 0 ) {
+         throw new CodeError(
+            ErrorParam( e_undef_sym, __LINE__ ).origin( e_orig_vm ).extra( startSym ).
+            symbol( "launch" ).
+            module( "core.vm" ) );
       }
    }
-   return false;
+
+   /** \todo allow to call classes at startup. Something like "all-classes" a-la-java */
+   if ( ! lItem->isCallable() ) {
+      throw new CodeError(
+            ErrorParam( e_non_callable, __LINE__ ).origin( e_orig_vm ).
+               extra( startSym ).
+               symbol( "launch" ).
+               module( "core.vm" ) );
+   }
+
+   // be sure to pass a clean env.
+   try
+   {
+      reset();
+      callItem( *lItem, paramCount, true );
+   }
+   catch( VMEventQuit&  )
+   {
+   }
 }
 
 //=====================================================================================
