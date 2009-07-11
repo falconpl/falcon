@@ -116,6 +116,37 @@ void VMContext::signaled()
    regA().setBoolean(true); // we have not been awaken, and must return false}
 }
 
+
+void VMContext::createFrame( uint32 paramCount, ext_func_frame_t frameEndFunc )
+{
+   // space for frame
+   stack().resize( stack().size() + VM_FRAME_SPACE );
+   StackFrame *frame = (StackFrame *) stack().at( stack().size() - VM_FRAME_SPACE );
+   frame->header.type( FLC_ITEM_INVALID );
+
+   frame->m_symbol = symbol();
+   frame->m_module = lmodule();
+
+   frame->m_ret_pc = pc_next();
+   frame->m_call_pc = pc();
+   frame->m_break = false;
+
+   frame->m_stack_base = stackBase();
+   frame->m_try_base = tryFrame();
+
+   // parameter count.
+   frame->m_param_count = paramCount;
+
+   // iterative processing support
+   frame->m_endFrameFunc = frameEndFunc;
+
+   frame->m_self.setNil();
+   frame->m_binding.setNil();
+
+   // now we can change the stack base
+   stackBase() = stack().size();
+}
+
 }
 
 /* end of vmcontext.cpp */

@@ -1463,32 +1463,6 @@ void VMachine::fillErrorContext( Error *err, bool filltb )
 
 }
 
-
-void VMachine::createFrame( uint32 paramCount )
-{
-   // space for frame
-   stack().resize( stack().size() + VM_FRAME_SPACE );
-   StackFrame *frame = (StackFrame *) stack().at( stack().size() - VM_FRAME_SPACE );
-   frame->header.type( FLC_ITEM_INVALID );
-   frame->m_symbol = m_currentContext->symbol();
-   frame->m_ret_pc = m_currentContext->pc_next();
-   frame->m_call_pc = m_currentContext->pc();
-   frame->m_module = m_currentContext->lmodule();
-   frame->m_param_count = paramCount;
-   frame->m_stack_base = m_currentContext->stackBase();
-   frame->m_try_base = m_currentContext->tryFrame();
-   frame->m_break = false;
-   frame->m_binding = regBind();
-   frame->m_self = m_currentContext->self();
-
-   // iterative processing support
-   frame->m_endFrameFunc = 0;
-
-   // now we can change the stack base
-   m_currentContext->stackBase() = stack().size();
-}
-
-
 void VMachine::callFrameNow( ext_func_frame_t callbackFunc )
 {
    ((StackFrame *)stack().at( stackBase() - VM_FRAME_SPACE ) )->m_endFrameFunc = callbackFunc;
@@ -1766,9 +1740,6 @@ void VMachine::callReturn()
    bool bBreak = frame.m_break;
 
    // Ok, we can unroll the stak.
-   // reset bidings and self
-   regBind() = frame.m_binding;
-   self() = frame.m_self;
 
    // change symbol
    m_currentContext->symbol( frame.m_symbol );

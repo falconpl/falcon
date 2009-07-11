@@ -17,8 +17,8 @@
    Virtual Machine coroutine execution context.
 */
 
-#ifndef flc_flc_vmcontext_H
-#define flc_flc_vmcontext_H
+#ifndef flc_vmcontext_H
+#define flc_vmcontext_H
 
 #include <falcon/setup.h>
 #include <falcon/types.h>
@@ -26,6 +26,7 @@
 #include <falcon/genericlist.h>
 #include <falcon/basealloc.h>
 #include <falcon/livemodule.h>
+#include <falcon/stackframe.h>
 
 namespace Falcon {
 
@@ -40,10 +41,10 @@ class FALCON_DYN_CLASS VMContext: public BaseAlloc
    Item m_regA;
    Item m_regB;
 
-   Item m_regS1;
+   //Item m_regS1;
    Item m_regL1;
    Item m_regL2;
-   Item m_regBind;
+   //Item m_regBind;
    Item m_regBindP;
 
    ItemVector *m_stack;
@@ -138,14 +139,23 @@ public:
    const Item &regA() const { return m_regA; }
    Item &regB() { return m_regB; }
    const Item &regB() const { return m_regB; }
+   /*
    Item &regBind() { return m_regBind; }
    const Item &regBind() const { return m_regBind; }
+   */
+   Item &regBind() { return currentFrame()->m_binding; }
+   const Item &regBind() const { return currentFrame()->m_binding; }
+
    Item &regBindP() { return m_regBindP; }
    const Item &regBindP() const { return m_regBindP; }
 
+   Item &self() { return currentFrame()->m_self; }
+   const Item &self() const { return currentFrame()->m_self; }
+
+   /*
    Item &self() { return m_regS1; }
    const Item &self() const { return m_regS1; }
-
+   */
    /** Latch item.
       Generated on load property/vector instructions, it stores the accessed object.
    */
@@ -190,9 +200,22 @@ public:
 
    /** Returns the current code. */
    byte* code() const {
-      fassert( m_symbol->isFunction() );
-      return m_symbol->getFuncDef()->code();
+      fassert( symbol()->isFunction() );
+      return symbol()->getFuncDef()->code();
    }
+
+   /** The currently active frame in this context */
+   StackFrame* currentFrame() const
+   {
+      return (StackFrame *) stack().at( stackBase() - VM_FRAME_SPACE );
+   }
+
+   /** Creates a stack frame taking a certain number of parameters.
+      The frame is created directly in the stack of this context.
+      \param paramCount number of parameters in the stack
+      \param frameEndFunc Callback function to be executed at frame end
+   */
+   void createFrame( uint32 pcount, ext_func_frame_t frameEndFunc = 0 );
 };
 
 }

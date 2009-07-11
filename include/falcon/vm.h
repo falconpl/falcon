@@ -528,10 +528,14 @@ protected:
    /** Performs periodic checks on the virtual machine. */
    void periodicChecks();
 
-   /** Creates a new stack frame.
+   /** Creates a new stack frame in the current context
       \param paramCount number of parameters in the stack
+      \param frameEndFunc Callback function to be executed at frame end
    */
-   void createFrame( uint32 paramCount );
+   void createFrame( uint32 paramCount, ext_func_frame_t frameEndFunc = 0 )
+   {
+      m_currentContext->createFrame( paramCount, frameEndFunc );
+   }
 
    /** Sets the currently running VM.
       The Currently running VM is the VM currently in control
@@ -1386,9 +1390,9 @@ public:
       run();
    }
 
-   StackFrame* currentFrame()
+   StackFrame* currentFrame() const
    {
-      return (StackFrame *) stack().at( m_currentContext->stackBase() - VM_FRAME_SPACE );
+      return m_currentContext->currentFrame();
    }
 
    /** Resets the return handler and prepares to call given external handler.

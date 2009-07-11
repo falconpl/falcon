@@ -15,7 +15,7 @@
 
    See LICENSE file for licensing details.
 */
-
+GC.enable(false)
 // Usign strict directive, we must declare variables with def.
 directive strict = on
 
