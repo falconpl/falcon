@@ -53,6 +53,7 @@ FALCON_FUNC  mth_properties( ::Falcon::VMachine *vm );
 
 FALCON_FUNC  Function_name ( ::Falcon::VMachine *vm );
 FALCON_FUNC  Function_caller ( ::Falcon::VMachine *vm );
+FALCON_FUNC  Function_attributes( ::Falcon::VMachine *vm );
 
 // Iterator class
 FALCON_FUNC  Iterator_init( ::Falcon::VMachine *vm );
@@ -95,6 +96,7 @@ FALCON_FUNC  MessageError_init ( ::Falcon::VMachine *vm );
 FALCON_FUNC  val_int ( ::Falcon::VMachine *vm );
 FALCON_FUNC  val_numeric ( ::Falcon::VMachine *vm );
 
+FALCON_FUNC  attributes ( ::Falcon::VMachine *vm );
 FALCON_FUNC  chr ( ::Falcon::VMachine *vm );
 FALCON_FUNC  ord ( ::Falcon::VMachine *vm );
 
@@ -472,7 +474,9 @@ reflectionFuncDecl FileStats_ctime_rfrom;
 reflectionFuncDecl FileStats_atime_rfrom;
 
 FALCON_FUNC  fal_include( ::Falcon::VMachine *vm );
-FALCON_FUNC  Object_attribs( ::Falcon::VMachine *vm );
+FALCON_FUNC  Object_attributes( ::Falcon::VMachine *vm );
+FALCON_FUNC  Method_attributes( ::Falcon::VMachine *vm );
+FALCON_FUNC  Class_attributes( ::Falcon::VMachine *vm );
 
 
 /** Path class */

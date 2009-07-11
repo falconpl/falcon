@@ -2013,7 +2013,6 @@ void co_call_method( const Item &itm, VMachine *vm, uint32 paramCount )
 {
    // fill - in the missing parameters.
    vm->prepareFrame( itm.asMethodFunc(), paramCount );
-
    itm.getMethodItem( vm->self() );
 }
 

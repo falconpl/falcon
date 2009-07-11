@@ -757,6 +757,20 @@ void Compiler::addPredefs()
 
 }
 
+
+void Compiler::addAttribute( const String &name, Value *val, uint32 line )
+{
+   String n = name;
+   FuncDef* fd = getFunction();
+   if( fd == 0 )
+   {
+      m_module->addAttribute( name, val->genVarDef() );
+   }
+   else {
+      fd->addAttrib(name, val->genVarDef() );
+   }
+}
+
 void Compiler::addIntConstant( const String &name, int64 value, uint32 line )
 {
    addConstant( name, new Value( value ), line );

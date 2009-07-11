@@ -16,9 +16,6 @@
 #include "core_module.h"
 #include <falcon/format.h>
 
-/*#
-
-*/
 
 namespace Falcon {
 namespace core {
@@ -546,7 +543,7 @@ FALCON_FUNC  mth_properties( ::Falcon::VMachine *vm )
          vm->retval( ret );
       }
       break;
-      
+
       case FLC_ITEM_CLASS:
       {
          CoreClass *cls= obj_x->asClass();
@@ -561,7 +558,7 @@ FALCON_FUNC  mth_properties( ::Falcon::VMachine *vm )
          vm->retval( ret );
       }
       break;
-      
+
       case FLC_ITEM_DICT:
       {
          CoreDict *dict = obj_x->asDict();
@@ -583,14 +580,14 @@ FALCON_FUNC  mth_properties( ::Falcon::VMachine *vm )
          }
       }
       break;
-         
+
       case FLC_ITEM_ARRAY:
       {
          CoreArray *arr = obj_x->asArray();
          if ( arr->bindings() != 0 )
          {
             CoreDict* dict = arr->bindings();
-            DictIterator* iter = dict->first();            
+            DictIterator* iter = dict->first();
             CoreArray *ret = new CoreArray( dict->length() );
             while( iter->isValid() )
             {

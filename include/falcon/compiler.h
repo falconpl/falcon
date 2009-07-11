@@ -177,7 +177,7 @@ protected:
    InteractiveCompiler *m_metacomp;
    VMachine *m_serviceVM;
    ModuleLoader *m_serviceLoader;
-   
+
    /** Search path inherited from upper facilities. */
    String m_searchPath;
 
@@ -350,16 +350,9 @@ public:
    void addNumConstant( const String &name, numeric value, uint32 line=0 );
    void addStringConstant( const String &name, const String &value, uint32 line=0 );
    void addConstant( const String &name, Value *val, uint32 line=0 );
-/*
-   void Compiler::addConstant( const char *name, SyntreeElement *value );
 
-   SyntreeElement *Compiler::findConstant( const char *name ) const
-   {
-      tConstMap::const_iterator ci =  m_constants.find( name );
-      if ( ci != m_constants.end() )
-         return ci->second;
-      return 0;
-   }*/
+   /** Adds an attribute to the currently active context-sensible symbol */
+   void addAttribute( const String &name, Value *val, uint32 line=0 );
 
 
    SourceTree *sourceTree() const { return m_root; }
@@ -588,13 +581,13 @@ public:
 
    /** Checks if this compiler is as an interactive I/O */
    bool isInteractive() const { return m_bInteractive; }
-   
-   /** Return the search path inherited from upper facilities. 
+
+   /** Return the search path inherited from upper facilities.
       This search path is used to drive module loading in macro compiler.
    */
    const String& searchPath() const { return m_searchPath; }
-   
-   /** Sets the compiler-specific search path. 
+
+   /** Sets the compiler-specific search path.
       This search path is used to drive module loading in macro compiler.
    */
    void searchPath( const String& path ) { m_searchPath = path; }

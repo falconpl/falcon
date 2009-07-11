@@ -267,6 +267,7 @@ load_statement:
 
 statement:
    base_statement { COMPILER->checkLocalUndefined(); $$ = $1; }
+   | attribute_statement {$$=0;}/* no action */
    | EOL { $$ = 0; }
    | FUNCDECL error EOL { COMPILER->raiseError(Falcon::e_toplevel_func ); $$ = 0; }
    | OBJECT error EOL { COMPILER->raiseError(Falcon::e_toplevel_obj ); $$ = 0; }
@@ -1605,6 +1606,19 @@ import_statement:
       }
 ;
 
+
+attribute_statement:
+   SYMBOL COLON const_atom EOL
+     {
+      COMPILER->addAttribute( *$1, $3, LINE );
+     }
+
+   | SYMBOL COLON error EOL
+     {
+      COMPILER->raiseError(Falcon::e_syn_attrdecl );
+     }
+;
+
 import_symbol_list:
    SYMBOL
       {
@@ -1817,6 +1831,7 @@ class_statement:
       }
    }
    | init_decl
+   | attribute_statement
 ;
 
 init_decl:
@@ -1964,7 +1979,7 @@ enum_item_decl:
       {
          COMPILER->addEnumerator( *$1, $3 );
       }
-
+   | attribute_statement
    | SYMBOL enum_item_terminator
       {
          COMPILER->addEnumerator( *$1 );
@@ -2084,6 +2099,7 @@ object_statement:
       }
    }
    | init_decl
+   | attribute_statement
 ;
 
 /*****************************************************

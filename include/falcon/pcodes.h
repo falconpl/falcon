@@ -17,7 +17,7 @@
 #define flc_PCODES_H
 
 #define FALCON_PCODE_VERSION  2
-#define FALCON_PCODE_MINOR  7
+#define FALCON_PCODE_MINOR  8
 
 /** \page opcode_format Virtual machine opcode format
 
@@ -387,12 +387,12 @@ while it will fill OP2 with an integer item containing 15H.
 
 /** OOB
     Marks, unmarks or checks the code to be an oob.
-    OOB NTD32, OP 
+    OOB NTD32, OP
       if NTD32 == 0 -> A := deOob( OP )
       if NTD32 == 1 -> A := oob( OP )
-      if NTD32 == 2 -> A := isOob( OP ) ? deOob( OP ) : oob( OP ) 
+      if NTD32 == 2 -> A := isOob( OP ) ? deOob( OP ) : oob( OP )
       if NTD32 == 3 (or else )
-         A := isOob( OP ) 
+         A := isOob( OP )
 */
 #define P_OOB           0x68
 

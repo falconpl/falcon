@@ -67,7 +67,7 @@
 #include <falcon/vm.h>
 #include <falcon/garbagelock.h>
 #include <falcon/vmevent.h>
-
+#include <falcon/attribmap.h>
 
 // Environmental support
 #include <falcon/core_ext.h>

@@ -18,7 +18,7 @@
 #include <falcon/symtab.h>
 #include <falcon/module.h>
 #include <falcon/stream.h>
-#include <falcon/traits.h>
+#include <falcon/attribmap.h>
 
 namespace Falcon
 {
@@ -255,13 +255,15 @@ FuncDef::FuncDef( byte *code, uint32 codeSize ):
    m_locals( 0 ),
    m_undefined( 0 ),
    m_onceItemId( NO_STATE ),
-   m_basePC(0)
+   m_basePC(0),
+   m_attributes(0)
 {
 }
 
 FuncDef::~FuncDef()
 {
    memFree( m_code );
+   delete m_attributes;
 }
 
 Symbol *FuncDef::addParameter( Symbol *sym )
@@ -311,9 +313,28 @@ bool FuncDef::save( Stream *out ) const
       out->write( m_code, m_codeSize );
    }
 
+   if ( m_attributes !=  0)
+   {
+      basePC = endianInt32(1);
+      out->write( &basePC, sizeof( basePC ) );
+      m_attributes->save( out );
+   }
+   else {
+      basePC = endianInt32(0);
+      out->write( &basePC, sizeof( basePC ) );
+   }
+
    return m_symtab.save( out );
 }
 
+
+void FuncDef::addAttrib( const String& name, VarDef* vd )
+{
+   if ( m_attributes == 0 )
+      m_attributes = new AttribMap;
+
+   m_attributes->insertAttrib( name, vd );
+}
 
 bool FuncDef::load( Module *mod, Stream *in )
 {
@@ -346,6 +367,14 @@ bool FuncDef::load( Module *mod, Stream *in )
       in->read( m_code, m_codeSize );
       // it's essential to check for errors now.
       if ( ! in->good() )
+         return false;
+   }
+
+   in->read( &basePC, sizeof( basePC ) );
+   if( basePC != 0 )
+   {
+      m_attributes = new AttribMap;
+      if ( ! m_attributes->load( mod, in ) )
          return false;
    }
 

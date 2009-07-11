@@ -193,7 +193,7 @@ FAL_ERRORDECL( e_inv_const_val, 127, "Invalid value for constant declaration" );
 FAL_ERRORDECL( e_syn_const, 128, "Syntax error in 'const' statement" );
 FAL_ERRORDECL( e_syn_export, 129, "Syntax error in 'export' statement" );
 FAL_ERRORDECL( e_syn_forin, 130, "Syntax error in 'for..in' statement" );
-FAL_ERRORDECL( e_inv_attrib, 131, "Invalid attribute name" );
+FAL_ERRORDECL( e_syn_attrdecl, 131, "Syntax error in attribute declaration" );
 FAL_ERRORDECL( e_syn_class, 132, "Syntax error in 'class' statement" );
 FAL_ERRORDECL( e_syn_object, 133, "Syntax error in 'object' statement" );
 FAL_ERRORDECL( e_syn_global, 134, "Syntax error in 'global' statement" );

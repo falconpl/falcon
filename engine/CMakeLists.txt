@@ -82,8 +82,8 @@ IF(UNIX OR APPLE)
       TARGET SrcParser_h
       OUTPUTS
          ${FALCON_SRC_TREE}/core/engine/src_parser.h )
-   ENDIF(BISON_EXECUTABLE) 
-   ENDIF(SKIP_BISON) 
+   ENDIF(BISON_EXECUTABLE)
+   ENDIF(SKIP_BISON)
 
 
 ELSEIF(WIN32)
@@ -110,6 +110,7 @@ INCLUDE_DIRECTORIES(core_module)
 
 SET( CORE_MODULE_SOURCES
    core_module/array_ext.cpp
+   core_module/attrib_ext.cpp
    core_module/cmdlineparser.cpp
    core_module/core_module.cpp
    core_module/coroutine_ext.cpp
@@ -152,6 +153,7 @@ SET( CORE_MODULE_SOURCES
 
 ADD_LIBRARY( falcon_engine SHARED
    src_parser.cpp
+   attribmap.cpp
    autocstring.cpp
    autowstring.cpp
    basealloc.cpp

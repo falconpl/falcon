@@ -33,6 +33,7 @@ namespace Falcon {
 
 class String;
 class Stream;
+class AttribMap;
 
 /** Module class abstraction.
 
@@ -113,6 +114,8 @@ protected:
    DllLoader *detachLoader();
 
    Map m_serviceMap;
+
+   AttribMap* m_attributes;
 
    virtual ~Module();
 
@@ -632,6 +635,15 @@ public:
 
    /** Extract the full logical module name from current module name and parent loader. */
    static String absoluteName( const String &module_name, const String &parent_name );
+
+   /** Adds a module-wide attribute. */
+   void addAttribute( const String &name, VarDef* vd );
+
+   /** Returns the module-wide attribute list.
+      May be zero if this module has no attributes.
+   */
+   AttribMap* attributes() const { return m_attributes; }
+
 };
 
 }

@@ -242,6 +242,7 @@ Module* core_module_init()
    func_meta->getClassDef()->addInheritance( new Falcon::InheritDef( bom_meta ) );
    func_meta->exported( false );
    func_meta->getClassDef()->setMetaclassFor( FLC_ITEM_FUNC );
+   self->addClassMethod( func_meta, "attributes", &Falcon::core::Function_attributes );
    self->addClassMethod( func_meta, "name", &Falcon::core::Function_name );
    self->addClassMethod( func_meta, "caller", &Falcon::core::Function_caller ).asSymbol()->
       addParam("level");    //static
@@ -455,6 +456,7 @@ Module* core_module_init()
    object_meta->getClassDef()->addInheritance( new Falcon::InheritDef( bom_meta ) );
    object_meta->exported( false );
    object_meta->getClassDef()->setMetaclassFor( FLC_ITEM_OBJECT );
+   self->addClassMethod( object_meta, "attributes", &Falcon::core::Object_attributes );
    self->addClassMethod( object_meta, "getProperty", &Falcon::core::mth_getProperty ).asSymbol()->
       addParam("propName");
    self->addClassMethod( object_meta, "setProperty", &Falcon::core::mth_setProperty ).asSymbol()->
@@ -499,6 +501,7 @@ Module* core_module_init()
    clsmethod_meta->getClassDef()->addInheritance( new Falcon::InheritDef( bom_meta ) );
    clsmethod_meta->exported( false );
    clsmethod_meta->getClassDef()->setMetaclassFor( FLC_ITEM_CLSMETHOD );
+   self->addClassMethod( clsmethod_meta, "attributes", &Falcon::core::Method_attributes );
 
    /*#
       @class Method
@@ -515,12 +518,14 @@ Module* core_module_init()
    method_meta->exported( false );
    method_meta->getClassDef()->setMetaclassFor( FLC_ITEM_METHOD );
    self->addClassMethod( method_meta, "source", &Falcon::core::Method_source );
+   self->addClassMethod( method_meta, "attributes", &Falcon::core::Method_attributes );
 
 
    Falcon::Symbol *class_meta = self->addClass( "Class" );
    class_meta->getClassDef()->addInheritance( new Falcon::InheritDef( bom_meta ) );
    class_meta->exported( false );
    class_meta->getClassDef()->setMetaclassFor( FLC_ITEM_CLASS );
+   self->addClassMethod( class_meta, "attributes", &Falcon::core::Class_attributes );
    self->addClassMethod( class_meta, "properties", &Falcon::core::mth_properties );
 
    //=======================================================================
@@ -561,6 +566,8 @@ Module* core_module_init()
    */
    self->addGlobal( "scriptPath", true );
 
+
+   self->addExtFunc( "attributes", &Falcon::core::attributes );
 
    self->addExtFunc( "chr", &Falcon::core::chr )->
       addParam("number");

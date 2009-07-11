@@ -534,6 +534,7 @@ public:
    void getMethodItem( Item &itm ) const {
       itm = *this;
       itm.type( all.ctx.base.bits.oldType );
+      if ( itm.isReference() ) itm = *itm.dereference();
       itm.flagsOn( flagIsMethodic );
    }
 

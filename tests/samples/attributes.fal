@@ -1,0 +1,56 @@
+/*
+   Falcon Samples.
+
+   Show how attributes can make a program nicer.
+*/
+
+name: "The Falcon Programming Language - Properties."
+author: "Giancarlo Niccolai."
+purpose: "Show off attribute powers."
+
+function test()
+   purpose: "Provide something to test"
+
+   > "Hello from test"
+end
+
+class MyTestClass
+   purpose: "A class with some private attrib"
+   persistent: "alpha"
+
+   alpha = 0
+   beta = 1
+
+   function aMethod()
+      author: "Giancarlo Niccolai"
+      purpose: "Show attributes also in methods."
+
+      return "Hello from method"
+   end
+   
+end
+
+> '
+Test showing symbol attributes (falcon equivalent for annotation)
+
+  We will now show how to retreive compile-time attributes associated
+  with symbols.
+'
+
+> "Attributes of this program: " 
+for key, value in attributes(): > "  ", key, ": ", value
+
+>
+> "Attributes of function test: " 
+for key, value in test.attributes(): > "  ", key, ": ", value
+
+>
+> "Attributes of class MyTestClass: "
+for key, value in MyTestClass.attributes(): > "  ", key, ": ", value
+
+>
+> "Attributes of method aMethod: "
+for key, value in MyTestClass.aMethod.attributes(): > "  ", key, ": ", value
+
+>
+> "Done."

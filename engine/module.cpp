@@ -24,6 +24,8 @@
 #include <falcon/traits.h>
 #include <falcon/pcodes.h>
 #include <falcon/mt.h>
+#include <falcon/attribmap.h>
+
 #include <string.h>
 
 namespace Falcon {
@@ -37,7 +39,8 @@ Module::Module():
    m_engineVersion( 0 ),
    m_lineInfo( 0 ),
    m_loader(0),
-   m_serviceMap( &traits::t_string(), &traits::t_voidp() )
+   m_serviceMap( &traits::t_string(), &traits::t_voidp() ),
+   m_attributes(0)
 {
    m_strTab = new StringTable;
    m_bOwnStringTable = true;
@@ -54,6 +57,8 @@ Module::~Module()
    // ... the module will take care of them.
 
    delete m_lineInfo;
+
+   delete m_attributes;
 
    if ( m_bOwnStringTable )
       delete m_strTab;
@@ -354,6 +359,20 @@ bool Module::save( Stream *out, bool skipCode ) const
    if ( ! m_depend.save( out ) )
       return false;
 
+
+   if( m_attributes != 0 )
+   {
+      iver = endianInt32(1);
+      out->write( &iver, sizeof( iver ) );
+
+      if ( ! m_attributes->save( out ) )
+         return false;
+   }
+   else {
+      iver = endianInt32(0);
+      out->write( &iver, sizeof( iver ) );
+   }
+
    if ( m_lineInfo != 0 )
    {
       int32 infoInd = endianInt32( 1 );
@@ -411,6 +430,14 @@ bool Module::load( Stream *is, bool skipHeader )
 
    if ( ! m_depend.load( this, is ) )
       return false;
+
+   is->read( &ver, sizeof( ver ) );
+   if( ver != 0 )
+   {
+      m_attributes = new AttribMap;
+      if ( ! m_attributes->load( this, is ) )
+         return false;
+   }
 
    // load lineinfo indicator.
    int32 infoInd;
@@ -569,6 +596,15 @@ String Module::absoluteName( const String &module_name, const String &parent_nam
    }
    else
       return module_name;
+}
+
+
+void Module::addAttribute( const String &name, VarDef* vd )
+{
+   if( m_attributes == 0 )
+      m_attributes = new AttribMap;
+
+   m_attributes->insertAttrib( name, vd );
 }
 
 }
