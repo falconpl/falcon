@@ -51,8 +51,8 @@ FALCON_FUNC sdl_WM_SetCaption ( ::Falcon::VMachine *vm )
         ( i_iconName != 0 && ! i_iconName->isString() )
       )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "S,[S]" ) ) );
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "S,[S]" ) ) ;
       return;
    }
 
@@ -98,9 +98,9 @@ FALCON_FUNC sdl_WM_IconifyWindow ( ::Falcon::VMachine *vm )
 {
    if( SDL_WM_IconifyWindow() == 0 )
    {
-      vm->raiseModError( new SDLError( ErrorParam( FALCON_SDL_ERROR_BASE + 10, __LINE__ )
+      throw new SDLError( ErrorParam( FALCON_SDL_ERROR_BASE + 10, __LINE__ )
          .desc( "SDL Iconify Window Error" )
-         .extra( SDL_GetError() ) ) );
+         .extra( SDL_GetError() ) ) ;
    }
 }
 
@@ -133,8 +133,8 @@ FALCON_FUNC sdl_WM_GrabInput ( ::Falcon::VMachine *vm )
          mode != SDL_GRAB_QUERY )
    )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "I" ) ) );
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "I" ) ) ;
       return;
    }
 

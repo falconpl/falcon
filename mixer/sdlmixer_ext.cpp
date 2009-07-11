@@ -107,8 +107,8 @@ FALCON_FUNC mix_OpenAudio( VMachine *vm )
         i_channels == 0 || ! i_channels->isOrdinal() ||
         i_chunksize == 0 || ! i_chunksize->isOrdinal() )
    {
-      vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "N,N,N,N" ) ) );
+      throw new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "N,N,N,N" ) ) ;
       return;
    }
 
@@ -120,9 +120,9 @@ FALCON_FUNC mix_OpenAudio( VMachine *vm )
 
    if ( retval != 0 )
    {
-      vm->raiseModError( new SDLError( ErrorParam( FALCON_SDLMIXER_ERROR_BASE, __LINE__ )
+      throw new SDLError( ErrorParam( FALCON_SDLMIXER_ERROR_BASE, __LINE__ )
          .desc( "Mixer open" )
-         .extra( Mix_GetError() ) ) );
+         .extra( Mix_GetError() ) ) ;
       return;
    }
 
@@ -132,8 +132,8 @@ FALCON_FUNC mix_OpenAudio( VMachine *vm )
 
    if ( s_service == 0 )
    {
-      vm->raiseModError( new SDLError( ErrorParam( FALCON_SDLMIXER_ERROR_BASE+1, __LINE__ )
-         .desc( "SDL service not in the target VM" ) ) );
+      throw new SDLError( ErrorParam( FALCON_SDLMIXER_ERROR_BASE+1, __LINE__ )
+         .desc( "SDL service not in the target VM" ) ) ;
    }
 }
 
@@ -178,9 +178,9 @@ FALCON_FUNC mix_QuerySpec( VMachine *vm )
    if ( res == 0 )
    {
       // not initialized.
-      vm->raiseModError( new SDLError( ErrorParam( FALCON_SDLMIXER_ERROR_BASE+1, __LINE__ )
+      throw new SDLError( ErrorParam( FALCON_SDLMIXER_ERROR_BASE+1, __LINE__ )
          .desc( "Mixer not initialized" )
-         .extra( Mix_GetError() ) ) );
+         .extra( Mix_GetError() ) ) ;
       return;
    }
 
@@ -219,8 +219,8 @@ FALCON_FUNC mix_LoadWAV( VMachine *vm )
             !( i_filename->isObject() && i_filename->asObject()->derivedFrom("Stream") ))
       )
    {
-      vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "S|Stream" ) ) );
+      throw new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "S|Stream" ) ) ;
       return;
    }
 
@@ -241,9 +241,9 @@ FALCON_FUNC mix_LoadWAV( VMachine *vm )
    if ( chunk == 0 )
    {
       // not initialized.
-      vm->raiseModError( new SDLError( ErrorParam( FALCON_SDLMIXER_ERROR_BASE+2, __LINE__ )
+      throw new SDLError( ErrorParam( FALCON_SDLMIXER_ERROR_BASE+2, __LINE__ )
          .desc( "Error in I/O operation" )
-         .extra( Mix_GetError() ) ) );
+         .extra( Mix_GetError() ) ) ;
       return;
    }
 
@@ -293,8 +293,8 @@ FALCON_FUNC mix_AllocateChannels( VMachine *vm )
       vm->retval( (int64) Mix_AllocateChannels((int) i_channels->forceInteger() ) );
    }
    else {
-      vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "[N]" ) ) );
+      throw new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "[N]" ) ) ;
    }
 }
 
@@ -319,8 +319,8 @@ FALCON_FUNC mix_Volume( VMachine *vm )
    if ( i_channel == 0 || ! i_channel->isOrdinal() ||
         (i_volume != 0 && ! i_volume->isNil() && ! i_volume->isOrdinal() ) )
    {
-      vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "N,[N]" ) ) );
+      throw new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "N,[N]" ) ) ;
    }
 
    int channel = (int) i_channel->forceInteger();
@@ -344,8 +344,8 @@ FALCON_FUNC mix_Pause( VMachine *vm )
 
    if ( i_channel == 0 || ! i_channel->isOrdinal() )
    {
-      vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "N" ) ) );
+      throw new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "N" ) ) ;
       return;
    }
 
@@ -366,8 +366,8 @@ FALCON_FUNC mix_Resume( VMachine *vm )
 
    if ( i_channel == 0 || ! i_channel->isOrdinal() )
    {
-      vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "N" ) ) );
+      throw new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "N" ) ) ;
       return;
    }
 
@@ -389,8 +389,8 @@ FALCON_FUNC mix_HaltChannel( VMachine *vm )
 
    if ( i_channel == 0 || ! i_channel->isOrdinal() )
    {
-      vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "N" ) ) );
+      throw new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "N" ) ) ;
       return;
    }
 
@@ -415,8 +415,8 @@ FALCON_FUNC mix_ExpireChannel( VMachine *vm )
    if ( i_channel == 0 || ! i_channel->isOrdinal() ||
         i_time == 0 || ! i_time->isOrdinal() )
    {
-      vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "N,N" ) ) );
+      throw new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "N,N" ) ) ;
       return;
    }
 
@@ -442,8 +442,8 @@ FALCON_FUNC mix_FadeOutChannel( VMachine *vm )
    if ( i_channel == 0 || ! i_channel->isOrdinal() ||
         i_time == 0 || ! i_time->isOrdinal() )
    {
-      vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "N,N" ) ) );
+      throw new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "N,N" ) ) ;
       return;
    }
 
@@ -467,8 +467,8 @@ FALCON_FUNC mix_ChannelFinished( VMachine *vm )
    Item *i_active = vm->param(0);
    if ( i_active == 0 )
    {
-      vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "X" ) ) );
+      throw new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "X" ) ) ;
       return;
    }
 
@@ -511,8 +511,8 @@ FALCON_FUNC mix_Playing( VMachine *vm )
    if ( i_channel != 0 &&
        ( ! i_channel->isOrdinal() || i_channel->isNil()) )
    {
-      vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "[N]" ) ) );
+      throw new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "[N]" ) ) ;
       return;
    }
 
@@ -540,8 +540,8 @@ FALCON_FUNC mix_Paused( VMachine *vm )
    if ( i_channel != 0 &&
        ( ! i_channel->isOrdinal() || i_channel->isNil()) )
    {
-      vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "[N]" ) ) );
+      throw new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "[N]" ) ) ;
       return;
    }
 
@@ -565,8 +565,8 @@ FALCON_FUNC mix_FadingChannel( VMachine *vm )
    Item *i_channel = vm->param(0);
    if ( i_channel == 0 || i_channel->isOrdinal() )
    {
-      vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "N" ) ) );
+      throw new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "N" ) ) ;
       return;
    }
 
@@ -574,8 +574,8 @@ FALCON_FUNC mix_FadingChannel( VMachine *vm )
 
    if ( channel < 0 )
    {
-      vm->raiseModError( new  ParamError( ErrorParam( e_param_range, __LINE__ ).
-         extra( "N>0" ) ) );
+      throw new  ParamError( ErrorParam( e_param_range, __LINE__ ).
+         extra( "N>0" ) ) ;
       return;
    }
 
@@ -613,8 +613,8 @@ FALCON_FUNC mix_LoadMUS( VMachine *vm )
             !( i_filename->isObject() && i_filename->asObject()->derivedFrom("Stream") ))
       )
    {
-      vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "S|Stream" ) ) );
+      throw new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "S|Stream" ) ) ;
       return;
    }
 
@@ -635,9 +635,9 @@ FALCON_FUNC mix_LoadMUS( VMachine *vm )
    if ( music == 0 )
    {
       // not initialized.
-      vm->raiseModError( new SDLError( ErrorParam( FALCON_SDLMIXER_ERROR_BASE+2, __LINE__ )
+      throw new SDLError( ErrorParam( FALCON_SDLMIXER_ERROR_BASE+2, __LINE__ )
          .desc( "Error in I/O operation" )
-         .extra( Mix_GetError() ) ) );
+         .extra( Mix_GetError() ) ) ;
       return;
    }
 
@@ -665,8 +665,8 @@ FALCON_FUNC mix_VolumeMusic( VMachine *vm )
 
    if ( i_volume != 0 && ! i_volume->isOrdinal() && ! i_volume->isNil() )
    {
-      vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "[N]" ) ) );
+      throw new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "[N]" ) ) ;
       return;
    }
 
@@ -698,8 +698,8 @@ FALCON_FUNC mix_FadeOutMusic( VMachine *vm )
 
    if ( i_fadeout == 0 || ! i_fadeout->isOrdinal() )
    {
-      vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "N" ) ) );
+      throw new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "N" ) ) ;
       return;
    }
 
@@ -768,16 +768,16 @@ FALCON_FUNC mix_SetMusicPosition( VMachine *vm )
 
    if ( i_position == 0 || ! i_position->isOrdinal() )
    {
-      vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "[N]" ) ) );
+      throw new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "[N]" ) ) ;
       return;
    }
 
    if ( ::Mix_SetMusicPosition( i_position->forceNumeric() ) == 0 )
    {
-      vm->raiseModError( new  SDLError( ErrorParam( FALCON_SDLMIXER_ERROR_BASE+5, __LINE__ ).
+      throw new  SDLError( ErrorParam( FALCON_SDLMIXER_ERROR_BASE+5, __LINE__ ).
          desc( "Not implemented").
-         extra( "SetMusicPosition" ) ) );
+         extra( "SetMusicPosition" ) ) ;
    }
 }
 
@@ -808,17 +808,17 @@ FALCON_FUNC mix_SetMusicCMD( VMachine *vm )
 
    if ( i_command == 0 || ! i_command->isString() )
    {
-      vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "S" ) ) );
+      throw new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "S" ) ) ;
       return;
    }
 
    AutoCString command( *i_command->asString() );
    if( ::Mix_SetMusicCMD( command.c_str() ) == 0 )
    {
-      vm->raiseModError( new  SDLError( ErrorParam( FALCON_SDLMIXER_ERROR_BASE+2, __LINE__ )
+      throw new  SDLError( ErrorParam( FALCON_SDLMIXER_ERROR_BASE+2, __LINE__ )
          .desc( "Error in I/O operation" )
-         .extra( Mix_GetError() ) ) );
+         .extra( Mix_GetError() ) ) ;
    }
 }
 
@@ -835,8 +835,8 @@ FALCON_FUNC mix_SetSynchroValue( VMachine *vm )
 
    if ( i_value == 0 || ! i_value->isOrdinal() )
    {
-      vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "N" ) ) );
+      throw new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "N" ) ) ;
       return;
    }
 
@@ -872,8 +872,8 @@ FALCON_FUNC mix_HookMusicFinished( VMachine *vm )
    Item *i_active = vm->param(0);
    if ( i_active == 0  )
    {
-      vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "X" ) ) );
+      throw new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "X" ) ) ;
       return;
    }
 
@@ -904,8 +904,8 @@ FALCON_FUNC mix_HookMusicFinished( VMachine *vm )
 //
 FALCON_FUNC MixChunk_init( VMachine *vm )
 {
-   vm->raiseModError( new SDLError( ErrorParam( FALCON_SDLMIXER_ERROR_BASE+3, __LINE__ )
-      .desc( "Can't instantiate directly this class" ) ) );
+   throw new SDLError( ErrorParam( FALCON_SDLMIXER_ERROR_BASE+3, __LINE__ )
+      .desc( "Can't instantiate directly this class" ) ) ;
 }
 
 /*#
@@ -930,8 +930,8 @@ FALCON_FUNC MixChunk_Volume( VMachine *vm )
    }
    else if ( ! i_volume->isOrdinal() )
    {
-       vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "[N]" ) ) );
+       throw new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "[N]" ) ) ;
    }
    else {
       vm->retval( (int64) Mix_VolumeChunk( chunk, (int) i_volume->forceInteger() ) );
@@ -974,8 +974,8 @@ FALCON_FUNC MixChunk_Play( VMachine *vm )
         (i_time != 0 && ! i_time->isNil() && ! i_time->isOrdinal()) ||
         (i_fadeIn != 0 && ! i_fadeIn->isNil() && ! i_fadeIn->isOrdinal()) )
    {
-      vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "N,[N],[N],[N]" ) ) );
+      throw new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "N,[N],[N],[N]" ) ) ;
    }
 
    CoreObject *self = vm->self().asObject();
@@ -1000,9 +1000,9 @@ FALCON_FUNC MixChunk_Play( VMachine *vm )
 
    if ( res < 0 )
    {
-      vm->raiseModError( new SDLError( ErrorParam( FALCON_SDLMIXER_ERROR_BASE+4, __LINE__ )
+      throw new SDLError( ErrorParam( FALCON_SDLMIXER_ERROR_BASE+4, __LINE__ )
          .desc( "Playback error" )
-         .extra( Mix_GetError() ) ) );
+         .extra( Mix_GetError() ) ) ;
       return;
    }
 
@@ -1014,8 +1014,8 @@ FALCON_FUNC MixChunk_Play( VMachine *vm )
 //
 FALCON_FUNC MixMusic_init( VMachine *vm )
 {
-   vm->raiseModError( new SDLError( ErrorParam( FALCON_SDLMIXER_ERROR_BASE+3, __LINE__ )
-      .desc( "Can't instantiate directly this class" ) ) );
+   throw new SDLError( ErrorParam( FALCON_SDLMIXER_ERROR_BASE+3, __LINE__ )
+      .desc( "Can't instantiate directly this class" ) ) ;
 }
 
 /*#
@@ -1059,8 +1059,8 @@ FALCON_FUNC MixMusic_Play( VMachine *vm )
         (i_position != 0 && ! i_position->isNil() && ! i_position->isOrdinal())
       )
    {
-      vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "[N],[N],[N]" ) ) );
+      throw new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "[N],[N],[N]" ) ) ;
    }
 
    CoreObject *self = vm->self().asObject();
@@ -1082,9 +1082,9 @@ FALCON_FUNC MixMusic_Play( VMachine *vm )
 
    if ( res < 0 )
    {
-      vm->raiseModError( new SDLError( ErrorParam( FALCON_SDLMIXER_ERROR_BASE+4, __LINE__ )
+      throw new SDLError( ErrorParam( FALCON_SDLMIXER_ERROR_BASE+4, __LINE__ )
          .desc( "Playback error" )
-         .extra( Mix_GetError() ) ) );
+         .extra( Mix_GetError() ) ) ;
       return;
    }
 }

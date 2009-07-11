@@ -87,8 +87,8 @@ FALCON_FUNC img_Load ( VMachine *vm )
             !( i_file->isObject() && i_file->asObject()->derivedFrom("Stream") ))||
       ( i_type != 0 && ! i_type->isString() ) )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "S|Stream, [S]" ) ) );
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "S|Stream, [S]" ) ) ;
       return;
    }
 
@@ -108,9 +108,9 @@ FALCON_FUNC img_Load ( VMachine *vm )
       surf = ::IMG_Load( fname.c_str() );
       if ( surf == NULL )
       {
-         vm->raiseModError( new SDLError( ErrorParam( FALCON_SDL_ERROR_BASE + 3, __LINE__ )
+         throw new SDLError( ErrorParam( FALCON_SDL_ERROR_BASE + 3, __LINE__ )
             .desc( "IMG_Load" )
-            .extra( IMG_GetError() ) ) );
+            .extra( IMG_GetError() ) ) ;
          return;
       }
    }
@@ -156,8 +156,8 @@ static void img_checkImageType( VMachine *vm, t_check_func func )
         !( i_file->isObject() && i_file->asObject()->derivedFrom("Stream") )
       )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "Stream" ) ) );
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "Stream" ) ) ;
       return;
    }
 
@@ -341,8 +341,8 @@ FALCON_FUNC img_SetError ( VMachine *vm )
    // Is a string?
    if ( i_string == 0 || ! i_string->isString() )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "Not a string" ) ) );
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "Not a string" ) ) ;
       return;
    }
 

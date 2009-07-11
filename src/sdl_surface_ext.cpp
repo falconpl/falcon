@@ -116,8 +116,8 @@ FALCON_FUNC SDLSurface_SaveBMP( ::Falcon::VMachine *vm )
    Item *i_file = vm->param(0);
    if ( i_file == 0 || ! i_file->isString() )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "S" ) ) );
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "S" ) ) ;
       return;
    }
 
@@ -128,9 +128,9 @@ FALCON_FUNC SDLSurface_SaveBMP( ::Falcon::VMachine *vm )
 
    if ( ::SDL_SaveBMP( source, fname.c_str() ) < 0 )
    {
-      vm->raiseModError( new SDLError( ErrorParam( FALCON_SDL_ERROR_BASE + 5, __LINE__ )
+      throw new SDLError( ErrorParam( FALCON_SDL_ERROR_BASE + 5, __LINE__ )
          .desc( "SDL SaveBMP" )
-         .extra( SDL_GetError() ) ) );
+         .extra( SDL_GetError() ) ) ;
       return;
    }
    vm->retnil();
@@ -201,8 +201,8 @@ FALCON_FUNC SDLSurface_BlitSurface( ::Falcon::VMachine *vm )
       || ( i_dstrect != 0 && ! ( i_dstrect->isNil() || ( i_dstrect->isObject() && i_dstrect->asObject()->derivedFrom( "SDLRect" ) ) ) )
       )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ )
-         .extra( "SDLRect|Nil, SDLSurface [, SDLRect|Nil]" ) ) );
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+         .extra( "SDLRect|Nil, SDLSurface [, SDLRect|Nil]" ) ) ;
    }
    else
    {
@@ -231,9 +231,9 @@ FALCON_FUNC SDLSurface_BlitSurface( ::Falcon::VMachine *vm )
    int res = ::SDL_BlitSurface( source, pSrcRect, dest, pDstRect );
    if( res < 0 )
    {
-      vm->raiseModError( new SDLError( ErrorParam( FALCON_SDL_ERROR_BASE + 4, __LINE__ )
+      throw new SDLError( ErrorParam( FALCON_SDL_ERROR_BASE + 4, __LINE__ )
          .desc( "SDL BlitSurface" )
-         .extra( SDL_GetError() ) ) );
+         .extra( SDL_GetError() ) ) ;
       return;
    }
 }
@@ -266,8 +266,8 @@ FALCON_FUNC SDLSurface_SetPixel( ::Falcon::VMachine *vm )
         i_value == 0 || ! i_value->isOrdinal()
       )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "N,N,N" ) ) );
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "N,N,N" ) ) ;
       return;
    }
 
@@ -278,7 +278,7 @@ FALCON_FUNC SDLSurface_SetPixel( ::Falcon::VMachine *vm )
 
    if ( x < 0 || x >= surface->w || y < 0 || y >= surface->h )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_param_range, __LINE__ ) ) );
+      throw new ParamError( ErrorParam( e_param_range, __LINE__ ) ) ;
       return;
    }
 
@@ -339,8 +339,8 @@ FALCON_FUNC SDLSurface_GetPixel( ::Falcon::VMachine *vm )
         i_y == 0 || ! i_y->isOrdinal()
       )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "N,N" ) ) );
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "N,N" ) ) ;
       return;
    }
 
@@ -351,7 +351,7 @@ FALCON_FUNC SDLSurface_GetPixel( ::Falcon::VMachine *vm )
 
    if ( x < 0 || x >= surface->w || y < 0 || y >= surface->h )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_param_range, __LINE__ ) ) );
+      throw new ParamError( ErrorParam( e_param_range, __LINE__ ) ) ;
       return;
    }
 
@@ -410,8 +410,8 @@ FALCON_FUNC SDLSurface_GetPixelIndex( ::Falcon::VMachine *vm )
         i_y == 0 || ! i_y->isOrdinal()
       )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "N,N" ) ) );
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "N,N" ) ) ;
       return;
    }
 
@@ -422,7 +422,7 @@ FALCON_FUNC SDLSurface_GetPixelIndex( ::Falcon::VMachine *vm )
 
    if ( x < 0 || x >= surface->w || y < 0 || y >= surface->h )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_param_range, __LINE__ ) ) );
+      throw new ParamError( ErrorParam( e_param_range, __LINE__ ) ) ;
       return;
    }
 
@@ -524,8 +524,8 @@ FALCON_FUNC SDLSurface_FillRect( ::Falcon::VMachine *vm )
       ( ! i_rect->isNil() && ! ( i_rect->isObject() && i_rect->asObject()->derivedFrom("SDLRect") ) )
    )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "SDLRect|Nil, N" ) ) );
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "SDLRect|Nil, N" ) ) ;
       return;
    }
 
@@ -535,9 +535,9 @@ FALCON_FUNC SDLSurface_FillRect( ::Falcon::VMachine *vm )
 
    if ( ::SDL_FillRect( surface, pRect, (Uint32) i_color->forceInteger() ) != 0 )
    {
-      vm->raiseModError( new SDLError( ErrorParam( FALCON_SDL_ERROR_BASE + 6, __LINE__ )
+      throw new SDLError( ErrorParam( FALCON_SDL_ERROR_BASE + 6, __LINE__ )
          .desc( "SDL FillRect error" )
-         .extra( SDL_GetError() ) ) );
+         .extra( SDL_GetError() ) ) ;
    }
 }
 
@@ -562,8 +562,8 @@ FALCON_FUNC SDLSurface_GetRGBA( ::Falcon::VMachine *vm )
         ( i_array != 0 && ! i_array->isArray() )
       )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "N" ) ) );
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "N" ) ) ;
       return;
    }
 
@@ -612,8 +612,8 @@ FALCON_FUNC SDLSurface_SetAlpha( ::Falcon::VMachine *vm )
         i_alpha == 0 || ! i_alpha->isOrdinal()
       )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "I,I" ) ) );
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "I,I" ) ) ;
       return;
    }
 
@@ -625,9 +625,9 @@ FALCON_FUNC SDLSurface_SetAlpha( ::Falcon::VMachine *vm )
 
    if ( ::SDL_SetAlpha( surface, flags, alpha ) != 0 )
    {
-      vm->raiseModError( new SDLError( ErrorParam( FALCON_SDL_ERROR_BASE + 10, __LINE__ )
+      throw new SDLError( ErrorParam( FALCON_SDL_ERROR_BASE + 10, __LINE__ )
          .desc( "SDL SetAlpha error" )
-         .extra( SDL_GetError() ) ) );
+         .extra( SDL_GetError() ) ) ;
    }
 }
 
@@ -655,8 +655,8 @@ FALCON_FUNC SDLSurface_MapRGBA( ::Falcon::VMachine *vm )
         (i_alpha != 0 && ! i_alpha->isOrdinal())
       )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "N,N,N,N" ) ) );
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "N,N,N,N" ) ) ;
       return;
    }
 
@@ -699,8 +699,8 @@ FALCON_FUNC SDLSurface_SetColors( ::Falcon::VMachine *vm )
    if ( i_colors == 0 || ! i_colors->isMemBuf() ||
         i_first == 0 || ! i_first->isOrdinal() )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "M,N" ) ) );
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "M,N" ) ) ;
       return;
    }
 
@@ -772,8 +772,8 @@ FALCON_FUNC SDLScreen_UpdateRect( ::Falcon::VMachine *vm )
 
       if( ! i_rect->isObject() || ! i_rect->asObject()->derivedFrom( "SDLRect" ) )
       {
-         vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-            extra( "SDLRect|N,[N,N,N]" ) ) );
+         throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+            extra( "SDLRect|N,[N,N,N]" ) ) ;
          return;
       }
 
@@ -793,8 +793,8 @@ FALCON_FUNC SDLScreen_UpdateRect( ::Falcon::VMachine *vm )
           i_h == 0  || ! i_h->isOrdinal()
         )
       {
-         vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-            extra( "SDLRect|N,[N,N,N]" ) ) );
+         throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+            extra( "SDLRect|N,[N,N,N]" ) ) ;
          return;
       }
 
@@ -830,8 +830,8 @@ FALCON_FUNC SDLScreen_UpdateRects( ::Falcon::VMachine *vm )
    Item *i_aRect = vm->param(0);
    if ( i_aRect == 0 || ! i_aRect->isArray() )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "A" ) ) );
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "A" ) ) ;
       return;
    }
 
@@ -854,8 +854,8 @@ FALCON_FUNC SDLScreen_UpdateRects( ::Falcon::VMachine *vm )
       if ( ! obj.isObject() || ! obj.asObject()->derivedFrom( "SDLRect" ) )
       {
          memFree( rects );
-         vm->raiseModError( new ParamError( ErrorParam( e_param_type, __LINE__ ).
-            extra( "A->SDLRect" ) ) );
+         throw new ParamError( ErrorParam( e_param_type, __LINE__ ).
+            extra( "A->SDLRect" ) ) ;
          return;
       }
       *r = *(SDL_Rect*) obj.asObject()->getUserData();
@@ -900,8 +900,8 @@ FALCON_FUNC SDLScreen_SetPalette( ::Falcon::VMachine *vm )
         i_colors == 0 || ! i_colors->isMemBuf() ||
         i_first == 0 || ! i_first->isOrdinal() )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "N,M,N" ) ) );
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "N,M,N" ) ) ;
       return;
    }
 
@@ -930,9 +930,9 @@ FALCON_FUNC SDLScreen_ToggleFullScreen ( ::Falcon::VMachine *vm )
 
    if ( SDL_WM_ToggleFullScreen( surface ) == 0 )
    {
-      vm->raiseModError( new SDLError( ErrorParam( FALCON_SDL_ERROR_BASE + 11, __LINE__ )
+      throw new SDLError( ErrorParam( FALCON_SDL_ERROR_BASE + 11, __LINE__ )
          .desc( "SDL Toggle Full Screen Error" )
-         .extra( SDL_GetError() ) ) );
+         .extra( SDL_GetError() ) ) ;
    }
 
 }
@@ -1001,8 +1001,8 @@ FALCON_FUNC  SDLPalette_getColor( ::Falcon::VMachine *vm )
         (i_target != 0 && ! i_target->isArray())
       )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-            extra( "N,[A]" ) ) );
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+            extra( "N,[A]" ) ) ;
          return;
    }
 
@@ -1010,8 +1010,8 @@ FALCON_FUNC  SDLPalette_getColor( ::Falcon::VMachine *vm )
    vm->self().asObject()->getProperty( "colors", i_colors );
    if ( ! i_colors.isMemBuf() )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-            extra( "self.colors.type() != MemBuf" ) ) );
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+            extra( "self.colors.type() != MemBuf" ) ) ;
          return;
    }
 
@@ -1020,7 +1020,7 @@ FALCON_FUNC  SDLPalette_getColor( ::Falcon::VMachine *vm )
    int64 index = i_index->forceInteger();
    if ( index < 0 || index >= (int64) colors->length() )
    {
-      vm->raiseModError( new AccessError( ErrorParam( e_param_range, __LINE__ ) ) );
+      throw new AccessError( ErrorParam( e_param_range, __LINE__ ) ) ;
          return;
    }
 
@@ -1061,8 +1061,8 @@ FALCON_FUNC  SDLPalette_setColor( ::Falcon::VMachine *vm )
          )
       )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-            extra( "N,A|N,[N,N]" ) ) );
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+            extra( "N,A|N,[N,N]" ) ) ;
          return;
    }
 
@@ -1070,8 +1070,8 @@ FALCON_FUNC  SDLPalette_setColor( ::Falcon::VMachine *vm )
    vm->self().asObject()->getProperty( "colors", i_colors );
    if ( !i_colors.isMemBuf() )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-            extra( "self.colors.type() != MemBuf" ) ) );
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+            extra( "self.colors.type() != MemBuf" ) ) ;
       return;
    }
 
@@ -1080,7 +1080,7 @@ FALCON_FUNC  SDLPalette_setColor( ::Falcon::VMachine *vm )
    int64 index = i_index->forceInteger();
    if ( index < 0 || index >= (int64) colors->length() )
    {
-      vm->raiseModError( new AccessError( ErrorParam( e_param_range, __LINE__ ) ) );
+      throw new AccessError( ErrorParam( e_param_range, __LINE__ ) ) ;
       return;
    }
 
@@ -1092,7 +1092,7 @@ FALCON_FUNC  SDLPalette_setColor( ::Falcon::VMachine *vm )
       CoreArray *colArr = i_red->asArray();
       if ( colArr->length() < 3 )
       {
-         vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ) ) );
+         throw new ParamError( ErrorParam( e_inv_params, __LINE__ ) ) ;
          return;
       }
       red = colArr->at(0).forceInteger();

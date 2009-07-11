@@ -84,8 +84,8 @@ FALCON_FUNC sdl_ShowCursor( ::Falcon::VMachine *vm )
             mode != SDL_QUERY )
       )
       {
-         vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "I" ) ) );
+         throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "I" ) ) ;
          return;
       }
 
@@ -150,8 +150,8 @@ FALCON_FUNC sdl_MakeCursor( ::Falcon::VMachine *vm )
       ( ! (i_yspot = vm->param(2))->isOrdinal() )
       )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "A,N,N" ) ) );
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "A,N,N" ) ) ;
       return;
    }
 
@@ -162,8 +162,8 @@ FALCON_FUNC sdl_MakeCursor( ::Falcon::VMachine *vm )
    int height = (int) array->length();
    if ( height < 1 )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "Array empty" ) ) );
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "Array empty" ) ) ;
       return;
    }
 
@@ -174,16 +174,16 @@ FALCON_FUNC sdl_MakeCursor( ::Falcon::VMachine *vm )
       Item &elem = array->at(i);
       if( ! elem.isString() )
       {
-         vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-            extra( "Array contains non-strings" ) ) );
+         throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+            extra( "Array contains non-strings" ) ) ;
          return;
       }
 
       String &row = *elem.asString();
       if( row.length() == 0 || row.length() % 8 != 0 )
       {
-         vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-            extra( "Strings not modulo 8" ) ) );
+         throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+            extra( "Strings not modulo 8" ) ) ;
          if ( data != 0 )
          {
             memFree( data );
@@ -203,8 +203,8 @@ FALCON_FUNC sdl_MakeCursor( ::Falcon::VMachine *vm )
       }
       else if ( width != (int) row.length() )
       {
-         vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-            extra( "Strings of different sizes" ) ) );
+         throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+            extra( "Strings of different sizes" ) ) ;
          return;
       }
 
@@ -238,8 +238,8 @@ FALCON_FUNC sdl_MakeCursor( ::Falcon::VMachine *vm )
                // error
                memFree( data );
                memFree( mask );
-               vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-                  extra( "Unrecognized char in string" ) ));
+               throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+                  extra( "Unrecognized char in string" ) );
                return;
          }
       }
@@ -285,8 +285,8 @@ FALCON_FUNC sdl_CreateCursor( ::Falcon::VMachine *vm )
       ! (i_yspot = vm->param(5) )->isOrdinal()
       )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "M,M,N,N,N,N" ) ) );
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "M,M,N,N,N,N" ) ) ;
       return;
    }
 
@@ -295,8 +295,8 @@ FALCON_FUNC sdl_CreateCursor( ::Falcon::VMachine *vm )
    // we are not interested in their word size.
    if( data->size() || data->size() != mask->size() )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_param_type, __LINE__ ).
-         extra( "Membuf must be of same size" ) ) );
+      throw new ParamError( ErrorParam( e_param_type, __LINE__ ).
+         extra( "Membuf must be of same size" ) ) ;
       return;
    }
 
@@ -307,22 +307,22 @@ FALCON_FUNC sdl_CreateCursor( ::Falcon::VMachine *vm )
 
    if( width < 8 || height < 1 || width % 8 != 0 )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_param_type, __LINE__ ).
-         extra( "Invalid sizes" ) ) );
+      throw new ParamError( ErrorParam( e_param_type, __LINE__ ).
+         extra( "Invalid sizes" ) ) ;
       return;
    }
 
    if( data->size() != (uint32)( width/8 * height ) )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_param_type, __LINE__ ).
-         extra( "Membuf doesn't match width and height" ) ) );
+      throw new ParamError( ErrorParam( e_param_type, __LINE__ ).
+         extra( "Membuf doesn't match width and height" ) ) ;
       return;
    }
 
    if( xspot < 0  || xspot >= width || yspot < 0 || yspot >= height )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_param_type, __LINE__ ).
-         extra( "Hotspot outside cursor" ) ) );
+      throw new ParamError( ErrorParam( e_param_type, __LINE__ ).
+         extra( "Hotspot outside cursor" ) ) ;
       return;
    }
 
@@ -332,9 +332,9 @@ FALCON_FUNC sdl_CreateCursor( ::Falcon::VMachine *vm )
 
    if ( cursor == 0 )
    {
-      vm->raiseModError( new SDLError( ErrorParam( FALCON_SDL_ERROR_BASE + 11, __LINE__ )
+      throw new SDLError( ErrorParam( FALCON_SDL_ERROR_BASE + 11, __LINE__ )
          .desc( "SDL Create Cursor" )
-         .extra( SDL_GetError() ) ) );
+         .extra( SDL_GetError() ) ) ;
       return;
    }
 

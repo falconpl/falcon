@@ -93,17 +93,17 @@ FALCON_FUNC sdl_Init( ::Falcon::VMachine *vm )
 
    if ( i_init == 0 || ! i_init->isOrdinal() )
    {
-      vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "N" ) ) );
+      throw new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "N" ) ) ;
       return;
    }
 
    int retval = ::SDL_Init( (Uint32) i_init->forceInteger() );
    if ( retval < 0 )
    {
-      vm->raiseModError( new SDLError( ErrorParam( FALCON_SDL_ERROR_BASE, __LINE__ )
+      throw new SDLError( ErrorParam( FALCON_SDL_ERROR_BASE, __LINE__ )
          .desc( "SDL Error" )
-         .extra( SDL_GetError() ) ) );
+         .extra( SDL_GetError() ) ) ;
    }
 
    // Falcon is all about unicode.
@@ -135,17 +135,17 @@ FALCON_FUNC sdl_InitAuto( ::Falcon::VMachine *vm )
 
    if ( i_init == 0 || ! i_init->isOrdinal() )
    {
-       vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "N" ) ) );
+       throw new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "N" ) ) ;
       return;
    }
 
    int retval = ::SDL_Init( (Uint32) i_init->forceInteger() );
    if ( retval < 0 )
    {
-      vm->raiseModError( new SDLError( ErrorParam( FALCON_SDL_ERROR_BASE, __LINE__ )
+      throw new SDLError( ErrorParam( FALCON_SDL_ERROR_BASE, __LINE__ )
          .desc( "SDL Init error" )
-         .extra( SDL_GetError() ) ) );
+         .extra( SDL_GetError() ) ) ;
       return;
    }
 
@@ -172,8 +172,8 @@ FALCON_FUNC sdl_WasInit( ::Falcon::VMachine *vm )
 
    if ( i_init != 0 && ! i_init->isOrdinal() )
    {
-       vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "[N]" ) ) );
+       throw new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "[N]" ) ) ;
       return;
    }
 
@@ -210,8 +210,8 @@ FALCON_FUNC sdl_QuitSubSystem( ::Falcon::VMachine *vm )
 
    if ( i_init == 0 || ! i_init->isOrdinal() )
    {
-      vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "N" ) ) );
+      throw new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "N" ) ) ;
       return;
    }
 
@@ -245,9 +245,9 @@ FALCON_FUNC sdl_GetVideoInfo( ::Falcon::VMachine *vm )
    const SDL_VideoInfo *vi = SDL_GetVideoInfo();
    if ( vi == 0 )
    {
-      vm->raiseModError( new SDLError( ErrorParam( FALCON_SDL_ERROR_BASE + 6, __LINE__ )
+      throw new SDLError( ErrorParam( FALCON_SDL_ERROR_BASE + 6, __LINE__ )
          .desc( "SDL Video Info error" )
-         .extra( SDL_GetError() ) ) );
+         .extra( SDL_GetError() ) ) ;
       return;
    }
 
@@ -266,9 +266,9 @@ FALCON_FUNC sdl_VideoDriverName( ::Falcon::VMachine *vm )
 
    if ( SDL_VideoDriverName( name, 1023) == 0 )
    {
-      vm->raiseModError( new SDLError( ErrorParam( FALCON_SDL_ERROR_BASE, __LINE__ )
+      throw new SDLError( ErrorParam( FALCON_SDL_ERROR_BASE, __LINE__ )
          .desc( "SDL Init error" )
-         .extra( SDL_GetError() ) ) );
+         .extra( SDL_GetError() ) ) ;
       return;
    }
 
@@ -385,8 +385,8 @@ FALCON_FUNC sdl_VideoModeOK( ::Falcon::VMachine *vm )
         ( i_flags != 0 && ! i_flags->isOrdinal() )
       )
    {
-       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "N,N,[N,N]" ) ) );
+       throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "N,N,[N,N]" ) ) ;
       return;
    }
 
@@ -447,8 +447,8 @@ FALCON_FUNC sdl_SetVideoMode( ::Falcon::VMachine *vm )
         ( i_flags != 0 && ! i_flags->isOrdinal() )
       )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "N,N,[N,N]" ) ) );
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "N,N,[N,N]" ) ) ;
       return;
    }
 
@@ -461,9 +461,9 @@ FALCON_FUNC sdl_SetVideoMode( ::Falcon::VMachine *vm )
 
    if ( screen == 0 )
    {
-      vm->raiseModError( new SDLError( ErrorParam( FALCON_SDL_ERROR_BASE + 2, __LINE__ )
+      throw new SDLError( ErrorParam( FALCON_SDL_ERROR_BASE + 2, __LINE__ )
          .desc( "SDL Set video mode error" )
-         .extra( SDL_GetError() ) ) );
+         .extra( SDL_GetError() ) ) ;
       return;
    }
 
@@ -499,8 +499,8 @@ FALCON_FUNC sdl_LoadBMP( ::Falcon::VMachine *vm )
    Item *i_file = vm->param(0);
    if ( i_file == 0 || ! i_file->isString() )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "S" ) ) );
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "S" ) ) ;
       return;
    }
 
@@ -509,9 +509,9 @@ FALCON_FUNC sdl_LoadBMP( ::Falcon::VMachine *vm )
    ::SDL_Surface *surf = ::SDL_LoadBMP( fname.c_str() );
    if ( surf == 0 )
    {
-      vm->raiseModError( new SDLError( ErrorParam( FALCON_SDL_ERROR_BASE + 3, __LINE__ )
+      throw new SDLError( ErrorParam( FALCON_SDL_ERROR_BASE + 3, __LINE__ )
          .desc( "SDL LoadBMP" )
-         .extra( SDL_GetError() ) ) );
+         .extra( SDL_GetError() ) ) ;
       return;
    }
 
@@ -535,9 +535,9 @@ FALCON_FUNC sdl_GetVideoSurface( ::Falcon::VMachine *vm )
    ::SDL_Surface *surf = ::SDL_GetVideoSurface();
    if ( surf == 0 )
    {
-      vm->raiseModError( new SDLError( ErrorParam( FALCON_SDL_ERROR_BASE + 5, __LINE__ )
+      throw new SDLError( ErrorParam( FALCON_SDL_ERROR_BASE + 5, __LINE__ )
          .desc( "SDL GetVideoSurface" )
-         .extra( SDL_GetError() ) ) );
+         .extra( SDL_GetError() ) ) ;
       return;
    }
 
@@ -568,8 +568,8 @@ FALCON_FUNC sdl_SetGamma ( ::Falcon::VMachine *vm )
       ! ( i_blue = vm->param(2) )->isOrdinal()
    )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "N,N,N" ) ) );
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "N,N,N" ) ) ;
       return;
    }
 
@@ -577,9 +577,9 @@ FALCON_FUNC sdl_SetGamma ( ::Falcon::VMachine *vm )
 
    if ( res == -1 )
    {
-      vm->raiseModError( new SDLError( ErrorParam( FALCON_SDL_ERROR_BASE + 8, __LINE__ )
+      throw new SDLError( ErrorParam( FALCON_SDL_ERROR_BASE + 8, __LINE__ )
          .desc( "SDL Set Gamma" )
-         .extra( SDL_GetError() ) ) );
+         .extra( SDL_GetError() ) ) ;
       return;
    }
 }
@@ -603,8 +603,8 @@ FALCON_FUNC sdl_GetGammaRamp ( ::Falcon::VMachine *vm )
 
    if( i_arr != 0 && ! i_arr->isArray() )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "N,N,N" ) ) );
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "N,N,N" ) ) ;
       return;
    }
 
@@ -623,9 +623,9 @@ FALCON_FUNC sdl_GetGammaRamp ( ::Falcon::VMachine *vm )
 
    if ( res == -1 )
    {
-      vm->raiseModError( new SDLError( ErrorParam( FALCON_SDL_ERROR_BASE + 8, __LINE__ )
+      throw new SDLError( ErrorParam( FALCON_SDL_ERROR_BASE + 8, __LINE__ )
          .desc( "SDL Get Gamma Ramp" )
-         .extra( SDL_GetError() ) ) );
+         .extra( SDL_GetError() ) ) ;
       return;
    }
 
@@ -659,8 +659,8 @@ FALCON_FUNC sdl_SetGammaRamp ( ::Falcon::VMachine *vm )
        i_bluemb == 0 || ( ! i_bluemb->isMemBuf() && ! i_bluemb->isNil() )
    )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "M|Nil,M|nil,M|Nil" ) ) );
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "M|Nil,M|nil,M|Nil" ) ) ;
       return;
    }
 
@@ -705,7 +705,7 @@ FALCON_FUNC sdl_SetGammaRamp ( ::Falcon::VMachine *vm )
 
    if( ! valid )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_param_range, __LINE__ ) ) );
+      throw new ParamError( ErrorParam( e_param_range, __LINE__ ) ) ;
       return;
    }
 
@@ -713,9 +713,9 @@ FALCON_FUNC sdl_SetGammaRamp ( ::Falcon::VMachine *vm )
 
    if ( res == -1 )
    {
-      vm->raiseModError( new SDLError( ErrorParam( FALCON_SDL_ERROR_BASE + 8, __LINE__ )
+      throw new SDLError( ErrorParam( FALCON_SDL_ERROR_BASE + 8, __LINE__ )
          .desc( "SDL Get Gamma Ramp" )
-         .extra( SDL_GetError() ) ) );
+         .extra( SDL_GetError() ) ) ;
       return;
    }
 }
@@ -755,8 +755,8 @@ static void sdl_CreateRGBSurface_internal ( ::Falcon::VMachine *vm, MemBuf *mb, 
               mb->length() != (i_width->forceInteger() * i_height->forceInteger() ) )
             )
          {
-            vm->raiseModError( new ParamError( ErrorParam( e_param_range, __LINE__ ).
-               extra( "Membuf not matching sizes" ) ) );
+            throw new ParamError( ErrorParam( e_param_range, __LINE__ ).
+               extra( "Membuf not matching sizes" ) ) ;
             return;
          }
          else if( pcount == 8  )
@@ -811,8 +811,8 @@ static void sdl_CreateRGBSurface_internal ( ::Falcon::VMachine *vm, MemBuf *mb, 
    if( ! bValid )
    {
       const char *extra = mb == 0 ? "I,N,N,N,[I,I,I,I]" : "M,N,N,N,[I,I,I,I]";
-      vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( extra ) ) );
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( extra ) ) ;
       return;
    }
 
@@ -833,9 +833,9 @@ static void sdl_CreateRGBSurface_internal ( ::Falcon::VMachine *vm, MemBuf *mb, 
    // Success?
    if ( surf == 0 )
    {
-      vm->raiseModError( new SDLError( ErrorParam( FALCON_SDL_ERROR_BASE + 9, __LINE__ )
+      throw new SDLError( ErrorParam( FALCON_SDL_ERROR_BASE + 9, __LINE__ )
          .desc( "SDL Create RGB Surface error" )
-         .extra( SDL_GetError() ) ) );
+         .extra( SDL_GetError() ) ) ;
       return;
    }
 
@@ -900,8 +900,8 @@ FALCON_FUNC sdl_CreateRGBSurface ( ::Falcon::VMachine *vm )
    Item *i_flags = vm->param(0);
    if( ! i_flags->isInteger() )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_param_range, __LINE__ ).
-         extra( "I,N,N,N,[I,I,I,I]") ) );
+      throw new ParamError( ErrorParam( e_param_range, __LINE__ ).
+         extra( "I,N,N,N,[I,I,I,I]") ) ;
    }
    else
    {
@@ -930,8 +930,8 @@ FALCON_FUNC sdl_CreateRGBSurfaceFrom ( ::Falcon::VMachine *vm )
    Item *i_pixels = vm->param(0);
    if( ! i_pixels->isMemBuf() )
    {
-      vm->raiseModError( new ParamError( ErrorParam( e_param_range, __LINE__ ).
-         extra( "M,N,N,N,[I,I,I,I]") ) );
+      throw new ParamError( ErrorParam( e_param_range, __LINE__ ).
+         extra( "M,N,N,N,[I,I,I,I]") ) ;
    }
    else
    {
@@ -983,8 +983,8 @@ FALCON_FUNC SDLRect_init( ::Falcon::VMachine *vm )
         ( i_height != 0 && ! i_height->isOrdinal() )
       )
    {
-       vm->raiseModError( new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "[N,N,N,N]" ) ) );
+       throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "[N,N,N,N]" ) ) ;
       return;
    }
 
@@ -1018,8 +1018,8 @@ FALCON_FUNC SDLColor_init( VMachine *vm )
        ! ( i_b = vm->param(2) )->isOrdinal()
       )
    {
-      vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "N,N,N" ) ) );
+      throw new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "N,N,N" ) ) ;
       return;
    }
 

@@ -702,7 +702,7 @@ bool sdl_WaitEvent_next( VMachine *vm )
    }
    else {
       // prepare to try again after a yield
-      vm->yieldRequest( 0.01 );
+      vm->yield( 0.01 );
       return true;
    }
 }
@@ -718,7 +718,7 @@ FALCON_FUNC sdl_WaitEvent( VMachine *vm )
    else {
       // prepare to try again after a yield
       vm->returnHandler( sdl_WaitEvent_next );
-      vm->yieldRequest( 0.01 );
+      vm->yield( 0.01 );
    }
 }
 
@@ -759,8 +759,8 @@ FALCON_FUNC sdl_EventState( VMachine *vm )
       ! ( i_state = vm->param(1) )->isOrdinal()
       )
    {
-      vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "N,N" ) ) );
+      throw new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "N,N" ) ) ;
       return;
    }
 
@@ -826,8 +826,8 @@ FALCON_FUNC sdl_SetModState( VMachine *vm )
       ! ( i_state = vm->param(0) )->isOrdinal()
       )
    {
-      vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "N" ) ) );
+      throw new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "N" ) ) ;
       return;
    }
 
@@ -848,8 +848,8 @@ FALCON_FUNC sdl_GetKeyName( VMachine *vm )
       ! ( i_key = vm->param(0) )->isOrdinal()
       )
    {
-      vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "N" ) ) );
+      throw new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "N" ) ) ;
       return;
    }
 
@@ -881,8 +881,8 @@ FALCON_FUNC sdl_EnableUNICODE( VMachine *vm )
       ! ( i_mode = vm->param(0) )->isInteger()
       )
    {
-      vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "I" ) ) );
+      throw new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "I" ) ) ;
       return;
    }
 
@@ -915,16 +915,16 @@ FALCON_FUNC sdl_EnableKeyRepeat( VMachine *vm )
       ! ( i_interval = vm->param(1) )->isNumeric()
       )
    {
-      vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "N,N" ) ) );
+      throw new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "N,N" ) ) ;
       return;
    }
 
    if ( ::SDL_EnableKeyRepeat( (int) i_delay->forceInteger(), (int) i_interval->forceInteger() ) != 0 )
    {
-      vm->raiseModError( new SDLError( ErrorParam( FALCON_SDL_ERROR_BASE + 12, __LINE__ )
+      throw new SDLError( ErrorParam( FALCON_SDL_ERROR_BASE + 12, __LINE__ )
          .desc( "SDL Enable Key Repeat" )
-         .extra( SDL_GetError() ) ) );
+         .extra( SDL_GetError() ) ) ;
    }
 }
 
@@ -953,16 +953,16 @@ FALCON_FUNC sdl_GetMouseState( VMachine *vm )
       ! ( i_interval = vm->param(1) )->isNumeric()
       )
    {
-      vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "N,N" ) ) );
+      throw new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "N,N" ) ) ;
       return;
    }
 
    if ( ::SDL_EnableKeyRepeat( (int) i_delay->forceInteger(), (int) i_interval->forceInteger() ) != 0 )
    {
-      vm->raiseModError( new SDLError( ErrorParam( FALCON_SDL_ERROR_BASE + 12, __LINE__ )
+      throw new SDLError( ErrorParam( FALCON_SDL_ERROR_BASE + 12, __LINE__ )
          .desc( "SDL Enable Key Repeat" )
-         .extra( SDL_GetError() ) ) );
+         .extra( SDL_GetError() ) ) ;
    }
 }
 
@@ -1033,8 +1033,8 @@ FALCON_FUNC sdl_JoystickEventState( VMachine *vm )
       ! ( i_code = vm->param(0) )->isInteger()
       )
    {
-      vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "I" ) ) );
+      throw new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "I" ) ) ;
       return;
    }
 
@@ -1122,7 +1122,7 @@ bool _coroutinePollNext( VMachine *vm )
       return false;
    }
 
-   vm->yieldRequest( 0.05 );
+   vm->yield( 0.05 );
 
    return true;
 }

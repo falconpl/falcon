@@ -53,9 +53,9 @@ FALCON_FUNC ttf_Init( VMachine *vm )
    int retval = ::TTF_Init();
    if ( retval < 0 )
    {
-      vm->raiseModError( new SDLError( ErrorParam( FALCON_TTF_ERROR_BASE, __LINE__ )
+      throw new SDLError( ErrorParam( FALCON_TTF_ERROR_BASE, __LINE__ )
          .desc( "TTF Error" )
-         .extra( TTF_GetError() ) ) );
+         .extra( TTF_GetError() ) ) ;
       return;
    }
 
@@ -63,8 +63,8 @@ FALCON_FUNC ttf_Init( VMachine *vm )
    s_service = (SDLService *) vm->getService( "SDLService" );
    if ( s_service == 0 )
    {
-      vm->raiseModError( new SDLError( ErrorParam( FALCON_TTF_ERROR_BASE+2, __LINE__ )
-         .desc( "SDL service not in the target VM" ) ) );
+      throw new SDLError( ErrorParam( FALCON_TTF_ERROR_BASE+2, __LINE__ )
+         .desc( "SDL service not in the target VM" ) ) ;
    }
 }
 
@@ -98,9 +98,9 @@ FALCON_FUNC ttf_InitAuto( VMachine *vm )
    int retval = ::TTF_Init();
    if ( retval < 0 )
    {
-      vm->raiseModError( new SDLError( ErrorParam( FALCON_TTF_ERROR_BASE, __LINE__ )
+      throw new SDLError( ErrorParam( FALCON_TTF_ERROR_BASE, __LINE__ )
          .desc( "TTF Init error" )
-         .extra( TTF_GetError() ) ) );
+         .extra( TTF_GetError() ) ) ;
       return;
    }
 
@@ -108,8 +108,8 @@ FALCON_FUNC ttf_InitAuto( VMachine *vm )
    s_service = (SDLService *) vm->getService( "SDLService" );
    if ( s_service == 0 )
    {
-      vm->raiseModError( new SDLError( ErrorParam( FALCON_TTF_ERROR_BASE+2, __LINE__ )
-         .desc( "SDL service not in the target VM" ) ) );
+      throw new SDLError( ErrorParam( FALCON_TTF_ERROR_BASE+2, __LINE__ )
+         .desc( "SDL service not in the target VM" ) ) ;
    }
 
    // also create an object for auto quit.
@@ -188,8 +188,8 @@ FALCON_FUNC ttf_ByteSwappedUNICODE( VMachine *vm )
 
    if( i_mode == 0 || ! i_mode->isOrdinal() )
    {
-      vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "N" ) ) );
+      throw new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "N" ) ) ;
       return;
    }
 
@@ -217,8 +217,8 @@ FALCON_FUNC ttf_OpenFont( VMachine *vm )
        ( i_index != 0 && ! i_index->isOrdinal() )
       )
    {
-      vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "S,N,[N]" ) ) );
+      throw new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "S,N,[N]" ) ) ;
       return;
    }
 
@@ -230,9 +230,9 @@ FALCON_FUNC ttf_OpenFont( VMachine *vm )
 
    if( fnt == 0 )
    {
-      vm->raiseModError( new SDLError( ErrorParam( FALCON_TTF_ERROR_BASE + 1, __LINE__ )
+      throw new SDLError( ErrorParam( FALCON_TTF_ERROR_BASE + 1, __LINE__ )
          .desc( "TTF Load error" )
-         .extra( TTF_GetError() ) ) );
+         .extra( TTF_GetError() ) ) ;
       return;
    }
 
@@ -276,8 +276,8 @@ FALCON_FUNC ttf_SetFontStyle( VMachine *vm )
 
    if( i_style == 0 || ! i_style->isOrdinal() )
    {
-      vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "N" ) ) );
+      throw new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "N" ) ) ;
       return;
    }
 
@@ -417,8 +417,8 @@ FALCON_FUNC ttf_GlyphMetrics( VMachine *vm )
        ( i_storage != 0 && !i_storage->isObject() )
       )
    {
-      vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "N,[O]" ) ) );
+      throw new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "N,[O]" ) ) ;
       return;
    }
 
@@ -483,8 +483,8 @@ FALCON_FUNC ttf_SizeText( VMachine *vm )
        ( i_storage != 0 && !i_storage->isObject() )
       )
    {
-      vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "S,[O]" ) ) );
+      throw new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "S,[O]" ) ) ;
       return;
    }
 
@@ -546,8 +546,8 @@ static void internal_render( VMachine *vm, int mode )
        (mode == 1 && (i_colorbg == 0 || ! i_colorbg->isObject() ))
       )
    {
-      vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "N|S,O" ) ) );
+      throw new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "N|S,O" ) ) ;
       return;
    }
 
@@ -560,15 +560,15 @@ static void internal_render( VMachine *vm, int mode )
         ( mode == 1 && ! internal_object_to_color(i_colorbg->asObject(), colorbg ) )
       )
    {
-      vm->raiseModError( new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "Object is not a color" ) ) );
+      throw new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "Object is not a color" ) ) ;
       return;
    }
    // we need the service here
    if ( s_service == 0 )
    {
-       vm->raiseModError( new SDLError( ErrorParam( FALCON_TTF_ERROR_BASE+2, __LINE__ )
-         .desc( "Service not initialized" ) ) );
+       throw new SDLError( ErrorParam( FALCON_TTF_ERROR_BASE+2, __LINE__ )
+         .desc( "Service not initialized" ) ) ;
    }
 
    ::TTF_Font *font = static_cast<TTFFontCarrier *>(vm->self().asObject()->getUserData())->m_font;
@@ -608,9 +608,9 @@ static void internal_render( VMachine *vm, int mode )
 
    if ( text_surface == 0 )
    {
-       vm->raiseModError( new SDLError( ErrorParam( FALCON_TTF_ERROR_BASE+1, __LINE__ )
+       throw new SDLError( ErrorParam( FALCON_TTF_ERROR_BASE+1, __LINE__ )
          .desc( "TTF Render Error" )
-         .extra( TTF_GetError() ) ) );
+         .extra( TTF_GetError() ) ) ;
    }
 
    // we need the service here
