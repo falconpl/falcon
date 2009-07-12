@@ -28,6 +28,7 @@ function main(limit)
    flags = MemBuf(8193,4)
    count = 0
 
+   try
    for num in [1:limit+1]
 
       for i in [1: 8193]: flags[i] = num
@@ -35,13 +36,17 @@ function main(limit)
       for i in [2:8193]
          if flags[i]
             .[times ,[i+i:8193:i]
-               .[ .[ function( x,y ); x[y] = 0; end  flags &1 ] .[ { x => ++x } $count ] ]
+               .[ .[ function( x,y ); > y; x[y] = 0; end  flags &1 ] .[ { x => ++x } $count ] ]
                ]()
          end
       end
 
       alive( num / limit*100 )
   end
+  catch
+     inspect( flags )
+     failure( "ops" )
+   end
 end
 
 main(loops)

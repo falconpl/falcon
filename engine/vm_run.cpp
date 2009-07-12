@@ -297,14 +297,15 @@ void opcodeHandler_GENA( register VMachine *vm )
    CoreArray *array = new CoreArray( size );
 
    // copy the m-topmost items in the stack into the array
-   Item *data = array->elements();
-   int32 base = vm->stack().size() - size;
-
-   for ( uint32 i = 0; i < size; i++ ) {
-      data[ i ] = vm->stack().itemAt(i + base);
+   if( size > 0 )
+   {
+      Item *data = array->elements();
+      int32 base = vm->stack().size() - size;
+      memcpy( data, vm->stack().itemPtrAt( base ), sizeof(Item)*size );
+      array->length( size );
+      vm->stack().resize( base );
    }
-   array->length( size );
-   vm->stack().resize( base );
+
    vm->regA().setArray( array );
 }
 
