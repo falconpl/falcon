@@ -729,6 +729,33 @@ bool Item::clone( Item &target) const
 
    return true;
 }
+/*
+void Item::copy( const Item &other )
+{
+   if ( isLBind() )
+   {
+      VMachine* current = VMachine::getCurrent();
+      if ( current != 0 )
+      {
+         current->bindItem( *asLBind(), other );
+         return;
+      }
+
+   }
+
+   if( other.isLBind() )
+   {
+      VMachine* current = VMachine::getCurrent();
+      if ( current != 0 )
+      {
+         current->unbindItem( *other.asLBind(), *this );
+         return;
+      }
+   }
+
+   all = other.all;
+}
+*/
 
 }
 

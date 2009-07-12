@@ -2163,6 +2163,24 @@ public:
 
     virtual void onIdleTime( numeric seconds );
 
+   /** Binds a late binding in the current context.
+
+      As late bindings are known by name, only the name is necessary
+      for the binding to complete.
+      \param name the symbolic name of the binding.
+      \param value the value to be associated with the late binding.
+   */
+   void bindItem( const String& name, const Item& value );
+
+   /** Unbinds a late binding on the given target.
+      If the lbind item is not a late binding, tgt is copied from this item.
+      If lbind is a literal late binding, returns a non-literal late binding.
+      If lbind is a non-literal late binding tries to resolve the late binding;
+      in success placese the bound item (by value) in tgt.
+   */
+
+   void unbindItem( const String& name, Item &tgt ) const;
+
 //==========================================================================
 //==========================================================================
 //==========================================================================

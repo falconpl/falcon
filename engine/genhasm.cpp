@@ -868,7 +868,7 @@ void GenHAsm::gen_statement( const Statement *stmt )
          String branchStr;
          branchStr.writeNumber( (int64) branch );
          m_out->writeString( "_loop_begin_" + branchStr + ":\n" );
-         
+
          if ( elem->condition() == 0 )
             m_out->writeString( "_loop_next_" + branchStr + ":\n" );
 
@@ -881,7 +881,7 @@ void GenHAsm::gen_statement( const Statement *stmt )
          }
          else {
             m_out->writeString( "_loop_next_" + branchStr + ":\n" );
-            
+
             if ( ! elem->condition()->isTrue() )
             {
                if ( elem->condition()->isSimple() ) {
@@ -2028,14 +2028,14 @@ void GenHAsm::gen_load( const Value *target, const Value *source )
             gen_store_to_deep( "STP", exp->first(), exp->second(), source );
          }
       }
-      else if ( target->type() == Value::t_array_decl ) 
+      else if ( target->type() == Value::t_array_decl )
       {
          const ArrayDecl *tarr = target->asArray();
-         
+
          // if the source is also an array, fine, we have a 1:1 assignment.
          if ( source->type() == Value::t_array_decl ) {
             const ArrayDecl *sarr = source->asArray();
-            
+
             ListElement *it_s = sarr->begin();
             ListElement *it_t = tarr->begin();
 
@@ -2051,12 +2051,12 @@ void GenHAsm::gen_load( const Value *target, const Value *source )
             fassert( it_s == 0 && it_t == 0 );
          }
          // we must generate an unpack request
-         else 
+         else
          {
             String ssize;
             ssize.writeNumber( (int64) tarr->size() );
             // then unpack the source in the array.
-            if ( source->isSimple() ) 
+            if ( source->isSimple() )
             {
                m_out->writeString( "\tLDAS\t" + ssize + ", " );
                gen_operand( source );
@@ -2066,7 +2066,7 @@ void GenHAsm::gen_load( const Value *target, const Value *source )
 					gen_complex_value( source );
 					m_out->writeString( "\tLDAS\t" + ssize + ", A\n" );
             }
-            
+
             ListElement *it_t = tarr->end();
             while( it_t != 0 ) {
                const Value *t = (const Value *) it_t->data();
@@ -2291,7 +2291,7 @@ void GenHAsm::gen_load_from_reg( const Value *target, const char *reg )
          const ArrayDecl *tarr = target->asArray();
          String ssize;
          ssize.writeNumber((int64) tarr->size() );
-         
+
          // push the source array on the stack.
          m_out->writeString( "\tLDAS\t" + ssize + ", " + regStr + "\n" );
 
@@ -2299,7 +2299,7 @@ void GenHAsm::gen_load_from_reg( const Value *target, const char *reg )
          ListElement *it_t = tarr->end();
 
          // Now load each element by popping it.
-         while( it_t != 0 ) 
+         while( it_t != 0 )
          {
             const Value *val = (const Value *) it_t->data();
             if( val->isSimple() )

@@ -912,9 +912,9 @@ void GenCode::gen_statement( const Statement *stmt )
 
          // this is the place for begin
          tag.defineBegin();
-         
+
          // if we don't have a check, continue can land at loop begin.
-         if ( elem->condition() == 0 )  
+         if ( elem->condition() == 0 )
             tag.defineNext();
 
          gen_block( &elem->children() );
@@ -1895,7 +1895,7 @@ void GenCode::gen_load( const Value *target, const Value *source )
       else if ( target->type() == Value::t_array_decl )
       {
          const ArrayDecl *tarr = target->asArray();
-         
+
          // if the source is also an array, fine, we have a 1:1 assignment.
          if ( source->type() == Value::t_array_decl )
          {
@@ -1924,7 +1924,7 @@ void GenCode::gen_load( const Value *target, const Value *source )
 					gen_complex_value( source );
 					gen_pcode( P_LDAS, c_param_fixed( tarr->size() ), e_parA );
             }
-            
+
             ListElement *it_t = tarr->end();
             while( it_t != 0 ) {
                const Value *t = (const Value *) it_t->data();
@@ -2092,7 +2092,7 @@ void GenCode::gen_load_from_reg( const Value *target, t_paramType reg )
             gen_pcode( P_LD, e_parA, e_parB );
          }
       }
-      else if ( target->type() == Value::t_array_decl ) 
+      else if ( target->type() == Value::t_array_decl )
       {
          // if the source is also an array, fine, we have a 1:1 assignment.
          const ArrayDecl *tarr = target->asArray();
@@ -2103,7 +2103,7 @@ void GenCode::gen_load_from_reg( const Value *target, t_paramType reg )
          ListElement *it_t = tarr->end();
 
          // Now load each element by popping it.
-         while( it_t != 0 ) 
+         while( it_t != 0 )
          {
             const Value *val = (const Value *) it_t->data();
             if( val->isSimple() )

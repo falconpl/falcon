@@ -44,7 +44,7 @@ class FALCON_DYN_CLASS VMContext: public BaseAlloc
    //Item m_regS1;
    Item m_regL1;
    Item m_regL2;
-   //Item m_regBind;
+   Item m_regBind;
    Item m_regBindP;
 
    ItemVector *m_stack;
@@ -139,13 +139,13 @@ public:
    const Item &regA() const { return m_regA; }
    Item &regB() { return m_regB; }
    const Item &regB() const { return m_regB; }
-   /*
+
    Item &regBind() { return m_regBind; }
    const Item &regBind() const { return m_regBind; }
-   */
+   /*
    Item &regBind() { return currentFrame()->m_binding; }
    const Item &regBind() const { return currentFrame()->m_binding; }
-
+   */
    Item &regBindP() { return m_regBindP; }
    const Item &regBindP() const { return m_regBindP; }
 

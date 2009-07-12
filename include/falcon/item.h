@@ -181,16 +181,16 @@ protected:
 	#if _MSC_VER < 1299
 	#define flagIsMethodic 0x02
 	#define flagIsOob 0x04
-	#define flagFuture 0x08
+	#define flagLiteral 0x08
 	#else
 	   static const byte flagIsMethodic = 0x02;
 	   static const byte flagIsOob = 0x04;
-	   static const byte flagFuture = 0x08;
+	   static const byte flagLiteral = 0x08;
 	#endif
 #else
    static const byte flagIsMethodic = 0x02;
    static const byte flagIsOob = 0x04;
-   static const byte flagFuture = 0x08;
+   static const byte flagLiteral = 0x08;
 #endif
 
 public:
@@ -375,6 +375,9 @@ public:
    String *asLBind() const { return (String *) all.ctx.data.ptr.voidp; }
    GarbageItem *asFBind() const { return (GarbageItem *) all.ctx.data.ptr.extra; }
 
+   bool isLitLBind() const { return isLBind() && asLBind()->getCharAt(0) == '.'; }
+
+
    const Item &asFutureBind() const;
    Item &asFutureBind();
 
@@ -526,6 +529,7 @@ public:
    Item asMethodItem() const {
       Item temp = *this;
       temp.type( all.ctx.base.bits.oldType );
+      temp = *temp.dereference();
       temp.flagsOn( flagIsMethodic );
       return temp;
    }
@@ -534,7 +538,7 @@ public:
    void getMethodItem( Item &itm ) const {
       itm = *this;
       itm.type( all.ctx.base.bits.oldType );
-      if ( itm.isReference() ) itm = *itm.dereference();
+      itm = *itm.dereference();
       itm.flagsOn( flagIsMethodic );
    }
 

@@ -202,6 +202,11 @@ void co_ref_add( const Item& first, const Item& second, Item& third )
    ref.add( second, third );
 }
 
+void co_lbind_add( const Item& first, const Item& second, Item& third )
+{
+   Item& ref = first.asReference()->origin();
+   ref.add( second, third );
+}
 
 //=============================================================
 // Sub

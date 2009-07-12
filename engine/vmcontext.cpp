@@ -141,7 +141,7 @@ void VMContext::createFrame( uint32 paramCount, ext_func_frame_t frameEndFunc )
    frame->m_endFrameFunc = frameEndFunc;
 
    frame->m_self.setNil();
-   frame->m_binding.setNil();
+   frame->m_binding = regBind();
 
    // now we can change the stack base
    stackBase() = stack().size();

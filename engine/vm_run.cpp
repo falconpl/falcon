@@ -319,7 +319,7 @@ void opcodeHandler_GEND( register VMachine *vm )
    uint32 len =  vm->stack().size();
    uint32 base = len - ( length * 2 );
    for ( uint32 i = base ; i < len; i += 2 ) {
-      // insert may modify the stack (if using special "compare" functions
+      // insert may modify the stack (if using special "compare" functions)
       Item i1 = vm->stackItem(i);
       Item i2 = vm->stackItem(i+1);
       dict->insert( i1, i2 );
@@ -580,6 +580,33 @@ void opcodeHandler_LD( register VMachine *vm )
 {
    Item *operand1 =  vm->getOpcodeParam( 1 )->dereference();
    Item *operand2 =  vm->getOpcodeParam( 2 )->dereference();
+
+   /*
+   if( operand1->isLBind() && operand1->asLBind()->getCharAt(0) != '.' )
+   {
+      vm->bindItem( *operand1->asLBind(), *operand2 );
+      vm->regA() =  *operand2;
+   }
+   else
+   {
+      switch( operand2->type() )
+      {
+         case FLC_ITEM_STRING:
+            operand1->setString( new CoreString( *operand2->asString() ) );
+            operand1->flags( operand2->flags() );
+            break;
+
+         case FLC_ITEM_LBIND:
+            vm->unbindItem( *operand2->asLBind(), *operand1 );
+            break;
+
+         default:
+            operand1->copy( *operand2 );
+      }
+
+      vm->regA() =  *operand1;
+   }
+   */
 
    if ( operand2->isString() )
    {

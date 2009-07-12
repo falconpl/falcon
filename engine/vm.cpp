@@ -38,6 +38,7 @@
 #include <falcon/livemodule.h>
 #include <falcon/garbagelock.h>
 #include <falcon/vmevent.h>
+#include <falcon/lineardict.h>
 
 #include <string.h>
 
@@ -1750,6 +1751,8 @@ void VMachine::callReturn()
 
    // reset try frame
    m_currentContext->tryFrame() = frame.m_try_base;
+
+   m_currentContext->regBind() = frame.m_binding;
 
    // reset stack base and resize the stack
    uint32 oldBase = stackBase() -frame.m_param_count - VM_FRAME_SPACE;
@@ -3850,6 +3853,38 @@ void VMachine::launch( const String &startSym, uint32 paramCount )
    }
    catch( VMEventQuit&  )
    {
+   }
+}
+
+
+void VMachine::bindItem( const String& name, const Item &tgt )
+{
+   if ( ! regBind().isDict() )
+   {
+      regBind() = new LinearDict;
+   }
+
+   CoreDict* cd = regBind().asDict();
+   cd->insert( Item( new CoreString( name ) ), tgt );
+}
+
+void VMachine::unbindItem( const String& name, Item &tgt ) const
+{
+   fassert( name.size() > 0 );
+
+   if ( name[0] == '.' )
+   {
+      tgt.setLBind( new CoreString( name, 1 ) );
+   }
+   else {
+      if ( regBind().isDict() )
+      {
+         if( regBind().asDict()->find( Item( const_cast<String*>(&name) ), tgt ) )
+            return;
+      }
+
+      // create the lbind.
+      tgt.setLBind( new CoreString( name ) );
    }
 }
 

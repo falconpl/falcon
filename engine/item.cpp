@@ -612,6 +612,7 @@ CoreObject *Item::asObject() const {
    return (CoreObject *) all.ctx.data.ptr.voidp;
 }
 
+
 }
 
 /* end of item.cpp */

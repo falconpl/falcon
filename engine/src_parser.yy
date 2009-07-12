@@ -2232,6 +2232,9 @@ expression:
    | AMPER SYMBOL { $$ = new Falcon::Value(); $$->setLBind( $2 ); /* do not add the symbol to the compiler */ }
    | AMPER INTNUM { char space[32]; sprintf(space, "%d", (int)$2 ); $$ = new Falcon::Value(); $$->setLBind( COMPILER->addString(space) ); }
    | AMPER SELF { $$ = new Falcon::Value(); $$->setLBind( COMPILER->addString("self") ); /* do not add the symbol to the compiler */ }
+   | AMPER DOT SYMBOL { $$ = new Falcon::Value(); $3->prepend( "." ); $$->setLBind( $3 ); /* do not add the symbol to the compiler */ }
+   | AMPER DOT INTNUM { char space[32]; sprintf(space, ".%d", (int)$3 ); $$ = new Falcon::Value(); $$->setLBind( COMPILER->addString(space) ); }
+   | AMPER DOT SELF { $$ = new Falcon::Value(); $$->setLBind( COMPILER->addString(".self") ); /* do not add the symbol to the compiler */ }
    | MINUS expression %prec NEG { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_neg, $2 ) ); }
    | SYMBOL VBAR expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_fbind, new Falcon::Value($1), $3) ); }
    | expression PLUS OPT_EOL expression {
