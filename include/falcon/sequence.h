@@ -26,6 +26,8 @@
 
 namespace Falcon {
 
+class VMachine;
+
 /** Abstract sequence class.
    A sequence is a special user data wich is used as internal mean
    by sequence oriented falcon classes. It may be also used by
@@ -135,6 +137,19 @@ public:
 
    /** Prepend an item at the beginning of the sequence. */
    virtual void prepend( const Item &data ) = 0;
+
+   /** Appends to a sequence comprehension.
+
+      Just create the target sequence, and then use this function to
+      fulfil compounds.
+      \note DON'T PASS directly parameter pointers, as the stack may be destroyed in the
+            meanwhile. Instead, pass copies of the items.
+      \param vm The virtual machine where to perform atomic calls.
+      \param compounder a range, a sequence or a generator function providing a sequence of data.
+      \param filter an optional filter function returning true to accept elemnts, false to discard them
+         pass nil if none.
+   */
+   virtual void comprehension( VMachine* vm, const Item& compounder, const Item& filter );
 };
 
 }

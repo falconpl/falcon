@@ -18,6 +18,12 @@ Falcon (0.9.2.1)
   * fixed: GC Marking of items stored uniquely as method "self" part was broken.
   * fixed: Methods of methods was not correctly dereferenced into vm->self.
   * major: Added support annotation attributes.
+  * major: The CoreArray is now based on an inner element derived from Sequence.
+           This makes possible to abstract many operations (but this is not visible
+           at language level).
+  * major: Added compound method to Array and List classes (this can be used to create
+           lists from list definitions very similarly to Python, but still being
+           more flexible.
 
 Falcon (0.9.2)
   * fixed: using more modern throw instead of the obsolete raise() functions

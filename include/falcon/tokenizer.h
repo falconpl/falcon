@@ -195,8 +195,6 @@ public:
 
    virtual void append( const Item& itm );
    virtual void prepend( const Item& itm );
-
-
 };
 
 

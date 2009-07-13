@@ -207,6 +207,7 @@ ADD_LIBRARY( falcon_engine SHARED
    reflectobject.cpp
    rosstream.cpp
    runtime.cpp
+   sequence.cpp
    service.cpp
    smba.cpp
    src_lexer.cpp

@@ -334,6 +334,7 @@ FALCON_FUNC  mth_arrayFill ( ::Falcon::VMachine *vm );
 FALCON_FUNC  arrayBuffer ( ::Falcon::VMachine *vm );
 
 
+FALCON_FUNC  Array_comp ( ::Falcon::VMachine *vm );
 FALCON_FUNC  Array_front ( ::Falcon::VMachine *vm );
 FALCON_FUNC  Array_back ( ::Falcon::VMachine *vm );
 FALCON_FUNC  Array_table ( ::Falcon::VMachine *vm );
@@ -446,6 +447,7 @@ extern reflectionFuncDecl TimeStamp_timezone_rfrom;
 extern reflectionFuncDecl TimeStamp_timezone_rto;
 
 FALCON_FUNC  List_init ( ::Falcon::VMachine *vm );
+FALCON_FUNC  List_comp ( ::Falcon::VMachine *vm );
 FALCON_FUNC  List_push ( ::Falcon::VMachine *vm );
 FALCON_FUNC  List_pop ( ::Falcon::VMachine *vm );
 FALCON_FUNC  List_pushFront ( ::Falcon::VMachine *vm );

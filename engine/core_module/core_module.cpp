@@ -390,6 +390,7 @@ Module* core_module_init()
    self->addClassMethod( array_meta, "setProperty", &Falcon::core::mth_setProperty ).asSymbol()->
       addParam("propName")->addParam("value");
    self->addClassMethod( array_meta, "properties", &Falcon::core::mth_properties );
+   self->addClassMethod( array_meta, "comp", &Falcon::core::Array_comp );
 
    //==================================================================
    // Dict class
@@ -1440,6 +1441,7 @@ Module* core_module_init()
    self->addClassMethod( list_class, "push", &Falcon::core::List_push ).asSymbol()->
       addParam("item");
    self->addClassMethod( list_class, "pop", &Falcon::core::List_pop );
+   self->addClassMethod( list_class, "comp", &Falcon::core::List_comp );
    self->addClassMethod( list_class, "pushFront", &Falcon::core::List_pushFront ).asSymbol()->
       addParam("item");
    self->addClassMethod( list_class, "popFront", &Falcon::core::List_popFront );
