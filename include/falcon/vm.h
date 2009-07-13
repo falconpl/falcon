@@ -324,9 +324,6 @@ protected:
    /** Wether or not to allow a VM hostile takeover of the current context. */
    bool m_allowYield;
 
-   /** In atomic mode, the VM refuses to be kindly interrupted or to rotate contexts. */
-   bool m_atomicMode;
-
    /** Execute at link time? */
    bool m_launchAtLink;
 

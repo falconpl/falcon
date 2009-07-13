@@ -89,6 +89,9 @@ class FALCON_DYN_CLASS VMContext: public BaseAlloc
    /** Position of the topmost try frame handler. */
    uint32 m_tryFrame;
 
+   /** In atomic mode, the VM refuses to be kindly interrupted or to rotate contexts. */
+   bool m_atomicMode;
+
    friend class VMSemaphore;
 
 public:
@@ -216,6 +219,9 @@ public:
       \param frameEndFunc Callback function to be executed at frame end
    */
    void createFrame( uint32 pcount, ext_func_frame_t frameEndFunc = 0 );
+
+   bool atomicMode() const { return m_atomicMode; }
+   void atomicMode( bool b ) { m_atomicMode = b; }
 };
 
 }

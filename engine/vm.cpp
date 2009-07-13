@@ -134,7 +134,7 @@ void VMachine::internal_construct()
    // this initialization must be performed by all vms.
    m_mainModule = 0;
    m_allowYield = true;
-   m_atomicMode = false;
+
    m_opCount = 0;
 
    // This vectror has also context ownership -- when we remove a context here, it's dead
@@ -467,8 +467,8 @@ bool VMachine::completeModLink( LiveModule *livemod )
    const SymbolTable *symtab = &livemod->module()->symbolTable();
 
    // we won't be preemptible during link
-   bool atomic = m_atomicMode;
-   m_atomicMode = true;
+   bool atomic = m_currentContext->atomicMode();
+   m_currentContext->atomicMode(true);
 
    bool success = true;
    // now, the symbol table must be traversed.
@@ -535,7 +535,7 @@ bool VMachine::completeModLink( LiveModule *livemod )
    }
 
    // Initializations of module objects is complete; return to non-atomic mode
-   m_atomicMode = atomic;
+   m_currentContext->atomicMode( atomic );
 
    // return zero and dispose of the module if not succesful.
    if ( ! success )
@@ -1483,11 +1483,11 @@ void VMachine::callFrameNow( ext_func_frame_t callbackFunc )
 
 void VMachine::callItemAtomic(const Item &callable, int32 paramCount )
 {
-   bool oldAtomic = m_atomicMode;
-   m_atomicMode = true;
+   bool oldAtomic = m_currentContext->atomicMode();
+   m_currentContext->atomicMode( true );
    callFrame( callable, paramCount );
    execFrame();
-   m_atomicMode = oldAtomic;
+   m_currentContext->atomicMode( oldAtomic );
 }
 
 
@@ -1514,7 +1514,7 @@ ext_func_frame_t VMachine::returnHandler()
 
 void VMachine::yield( numeric secs )
 {
-   if ( m_atomicMode )
+   if ( m_currentContext->atomicMode() )
    {
       throw new InterruptedError( ErrorParam( e_wait_in_atomic, __LINE__ )
             .origin( e_orig_vm )
@@ -2918,12 +2918,11 @@ static bool vm_func_eval( VMachine *vm )
 
    // if the first element is not callable, generate an array
    CoreArray *array = new CoreArray( count );
-   Item *data = array->elements();
+   Item *data = array->items().elements();
    int32 base = vm->stack().size() - count;
 
-   for ( uint32 i = 0; i < count; i++ ) {
-      data[ i ] = vm->stack().itemAt(i + base);
-   }
+   memcpy( data, vm->stack().itemPtrAt(base),array->items().esize( count ) );
+
    array->length( count );
    vm->regA() = array;
    vm->stack().resize( base );
@@ -3006,12 +3005,10 @@ bool VMachine::functionalEval( const Item &itm, uint32 paramCount, bool retArray
          if( retArray )
          {
             CoreArray *array = new CoreArray( count );
-            Item *data = array->elements();
+            Item *data = array->items().elements();
             int32 base = stack().size() - count;
 
-            for ( uint32 i = 0; i < count; i++ ) {
-               data[ i ] = stack().itemAt(i + base);
-            }
+            memcpy( data, stack().itemPtrAt(base), array->items().esize( count ) );
             array->length( count );
             regA() = array;
          }
@@ -3745,7 +3742,7 @@ void VMachine::periodicChecks()
             m_opNextCheck = m_opLimit;
    }
 
-   if( ! m_atomicMode )
+   if( ! m_currentContext->atomicMode() )
    {
       if( m_allowYield && ! m_sleepingContexts.empty() && m_opCount > m_opNextContext ) {
          rotateContext();

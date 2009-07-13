@@ -76,17 +76,17 @@ bool Tokenizer::next()
 
    if ( m_input->eof() )
       return false;
-      
+
    // reset the input buffer
    m_temp.size(0);
    m_version++;
 
-      
+
    uint32 chr;
    while( m_input->get( chr ) )
    {
       bool skip = false;
-      
+
       // is this character a separator?
       for( uint32 i = 0; i < m_separators.length(); i ++ )
       {
@@ -98,25 +98,25 @@ bool Tokenizer::next()
                skip = true;
                break; // we have to decide what to do outside.
             }
-               
+
             // should we pack the thing?
             if( m_params.isBindSep() )
                m_temp+=chr;
-               
+
             if ( m_params.isTrim() )
                m_temp.trim();
 
             return true;
-               
+
          }
       }
-      
+
       if ( skip )
          continue;
 
       // no, add this character
       m_temp += chr;
-      
+
       if( m_params.maxToken() > 0 && m_temp.length() >= (uint32) m_params.maxToken() )
       {
          if ( m_params.isTrim() )
@@ -125,7 +125,7 @@ bool Tokenizer::next()
          return true;
       }
    }
-   
+
    if ( m_params.isTrim() )
       m_temp.trim();
    // ok we can't find any more character; but is this a valid token?
@@ -143,7 +143,7 @@ void Tokenizer::rewind()
    {
       m_input->seekBegin(0);
       m_version = 0;
-   } 
+   }
 }
 
 
@@ -180,6 +180,15 @@ void Tokenizer::clear()
    throw new CodeError( ErrorParam( e_not_implemented, __LINE__ ).origin( e_orig_runtime ).extra( "Tokenizer::clear" ) );
 }
 
+void Tokenizer::append( const Item& itm )
+{
+   throw new CodeError( ErrorParam( e_not_implemented, __LINE__ ).origin( e_orig_runtime ).extra( "Tokenizer::append" ) );
+}
+
+void Tokenizer::prepend( const Item& itm )
+{
+   throw new CodeError( ErrorParam( e_not_implemented, __LINE__ ).origin( e_orig_runtime ).extra( "Tokenizer::prepend" ) );
+}
 
 void Tokenizer::parse( const String &data )
 {

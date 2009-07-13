@@ -129,6 +129,12 @@ public:
          false otherwise.
    */
    virtual bool empty() const =0;
+
+   /** Append an item at the end of the sequence. */
+   virtual void append( const Item &data ) = 0;
+
+   /** Prepend an item at the beginning of the sequence. */
+   virtual void prepend( const Item &data ) = 0;
 };
 
 }

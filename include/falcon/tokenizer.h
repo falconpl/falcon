@@ -193,6 +193,10 @@ public:
    /** Returns true if the tokenizer has been readied with a stream. */
    bool isReady() const { return m_input != 0; }
 
+   virtual void append( const Item& itm );
+   virtual void prepend( const Item& itm );
+
+
 };
 
 

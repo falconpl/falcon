@@ -47,7 +47,7 @@ public:
       The item is shallow copied.
    */
    ItemListElement( const Item &itm, ItemListElement *p = 0, ItemListElement *n = 0 ):
-      m_item( itm ),   
+      m_item( itm ),
       m_next( n ),
       m_prev( p )
    {}
@@ -140,7 +140,7 @@ public:
    /** Clones a list. */
    ItemList( const ItemList &l );
 
-   virtual ~ItemList() 
+   virtual ~ItemList()
    {
       clear();
    }
@@ -189,6 +189,9 @@ public:
       \return a newly created iterator.
    */
    virtual CoreIterator *getIterator( bool tail=false );
+
+   virtual void append( const Item& itm ) { push_back( itm ); }
+   virtual void prepend( const Item& itm ) { push_front( itm ); }
 
    /** Pushes a shallow copy of the item to the end of the list.
       \param itm the item to be pushed.

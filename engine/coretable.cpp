@@ -191,7 +191,7 @@ CoreTable::~CoreTable()
       memFree( m_biddingVals );
       m_biddingVals = 0;
    }
-   
+
    for( uint32 i = 0; i < m_pages.size(); i++ )
    {
       // allow the pages to get killed.
@@ -360,7 +360,7 @@ bool CoreTable::removePage( uint32 pos )
       // can't delete the only page left.
       return false;
    }
-   
+
    // declare the page dead
    page(pos)->mark(1);
 
@@ -393,6 +393,27 @@ const Item &CoreTable::front() const
    return fake;
 }
 
+
+void CoreTable::append( const Item &data )
+{
+   if ( ! data.isArray() )
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+         .origin( e_orig_runtime )
+         .extra( "A" ) );
+
+   insertRow( data.asArray() );
+}
+
+/** Prepend an item at the beginning of the sequence. */
+void CoreTable::prepend( const Item &data )
+{
+      if ( ! data.isArray() )
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+         .origin( e_orig_runtime )
+         .extra( "A" ) );
+
+   insertRow( data.asArray(), 0 );
+}
 
 const Item &CoreTable::back() const
 {
@@ -443,7 +464,7 @@ bool CoreTable::insert( CoreIterator *iter, const Item &item )
 void CoreTable::gcMark( uint32 mark )
 {
    uint32 i;
-   
+
    // mark the header data...
    for ( i = 0; i < m_headerData.size(); i ++ )
    {
@@ -460,8 +481,8 @@ void CoreTable::gcMark( uint32 mark )
          CoreArray* row = page->at( iid ).asArray();
          row->mark(mark);
          for( uint32 rid = 0; rid < row->length(); rid ++ )
-            memPool->markItem( row->elements()[rid] );
-         
+            memPool->markItem( row->items()[rid] );
+
          if ( row->bindings() != 0 )
             memPool->markItem( SafeItem(row->bindings() ) );
       }

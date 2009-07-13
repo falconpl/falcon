@@ -39,6 +39,8 @@ VMContext::VMContext()
    m_schedule = 0.0;
    m_priority = 0;
 
+   m_atomicMode = false;
+
    m_stack = new ItemVector;
    m_stack->threshHold( VM_STACK_MEMORY_THRESHOLD );
    m_stackBase = 0;

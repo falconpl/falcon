@@ -259,7 +259,7 @@ int CoreSlotPtrTraits::compare( const void *firstz, const void *secondz ) const
    if ( sizeof(int) == sizeof(void*))
       return (int)(((int64)firstz) - ((int64)secondz));
    else
-      return (((int64)firstz) > ((int64)secondz)) ? -1 : 
+      return (((int64)firstz) > ((int64)secondz)) ? -1 :
 	     (((int64)firstz) < ((int64)secondz)) ? 1 : 0;
 }
 

@@ -60,7 +60,7 @@ void CoreIterator::gcMark( uint32 mark )
    // AARRG
    if ( m_creator != 0 )
       m_creator->mark( mark );
-   
+
    if ( m_creatorSeq != 0 )
       m_creatorSeq->gcMark( mark );
 }

@@ -377,7 +377,7 @@ bool MemPool::markVM( VMachine *vm )
       markItem( ctx->latch() );
       markItem( ctx->latcher() );
 
-      //markItem( vm->regBind() );
+      markItem( vm->regBind() );
       markItem( vm->regBindP() );
 
       stack = &ctx->stack();
@@ -478,9 +478,7 @@ void MemPool::markItem( const Item &item )
          CoreArray *array = item.asArray();
          if( array->mark() != gen ) {
             array->mark(gen);
-            for( uint32 pos = 0; pos < array->length(); pos++ ) {
-               markItem( array->at( pos ) );
-            }
+            array->items().gcMark(gen);
 
             // mark also the bindings
             if ( array->bindings() != 0 )

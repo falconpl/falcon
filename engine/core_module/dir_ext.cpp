@@ -616,7 +616,7 @@ FALCON_FUNC  filePath ( ::Falcon::VMachine *vm )
    it, but it is better to close the object as soon as possible.
 */
 
-/*# 
+/*#
    @init Directory
    @brief Opens a directory entry.
    @raise IoError on failure.
@@ -635,7 +635,7 @@ FALCON_FUNC  Directory_init ( ::Falcon::VMachine *vm )
    int32 fsError;
    DirEntry *dir = Sys::fal_openDir( *name->asString(), fsError );
 
-   if( dir != 0 ) 
+   if( dir != 0 )
    {
       CoreObject *self = vm->self().asObjectSafe();
       self->setUserData( dir );
@@ -703,28 +703,28 @@ static bool Directory_descend_next_descend ( ::Falcon::VMachine *vm )
       if ( vm->regA().asInteger() == 0 || vm->regA().asInteger() == 1 )
          return false;
    }
-   
+
    // we're in a directory. descend.
    int32 fsError;
    DirEntry *dir = Sys::fal_openDir( *vm->param(0)->asString(), fsError );
    vm->regB().setNil();
-   
-   if( dir != 0 ) 
+
+   if( dir != 0 )
    {
       Item* i_dir = vm->findWKI( "Directory" );
       fassert( i_dir != 0 && i_dir->isClass() );
-      
+
       // we don't want to be called anymore.
       // when this frame returns, resume previous frame.
       vm->returnHandler( 0 );
-      
+
       CoreClass* dircls = i_dir->asClass();
       CoreObject *self = dircls->createInstance( dir );
       vm->param(1)->asArray()->append( self );
       // and be sure that the VM will execute this last time
       return false;
    }
-   
+
    throw new IoError( ErrorParam( e_io_error, __LINE__ )
          .origin( e_orig_runtime )
          .extra( *vm->param(0)->asString() )
@@ -738,15 +738,15 @@ static bool Directory_descend_next ( ::Falcon::VMachine *vm )
    fassert( pushed->length() > 0 );
    Item& self = pushed->at( pushed->length() -1 );
    DirEntry *dir = dyncast<DirEntry *>(self.asObjectSafe()->getFalconData());
-   
+
    if( vm->regA().isOob() && vm->regA().isInteger() && vm->regA().asInteger() == 0 )
    {
       // we're out of here.
       return false;
    }
-      
+
    String fnext;
-   
+
    // skip this and parent dir
    while( fnext == "" || fnext == "." || fnext == ".." )
    {
@@ -759,11 +759,11 @@ static bool Directory_descend_next ( ::Falcon::VMachine *vm )
          return pushed->length() != 0;
       }
    }
-   
+
    // is this a directory?
    if ( dir->path().size() != 0 )
       fnext.prepend( dir->path() + "/" );
-   
+
    FileStat fs;
    Sys::fal_stats( fnext, fs );
    if( fs.m_type == FileStat::t_dir )
@@ -772,7 +772,7 @@ static bool Directory_descend_next ( ::Falcon::VMachine *vm )
       vm->pushParameter( (new CoreString( fnext ))->bufferize() );
       vm->pushParameter( pushed );
       vm->callFrame( *vm->param(0), 2 );
-      
+
       // prepare the descent
       vm->returnHandler( &Directory_descend_next_descend );
    }
@@ -786,7 +786,7 @@ static bool Directory_descend_next ( ::Falcon::VMachine *vm )
          // no need for extra params
       }
    }
-   
+
    return true;
 }
 
@@ -795,25 +795,25 @@ static bool Directory_descend_next ( ::Falcon::VMachine *vm )
    @brief Descends into subdirectories, iteratively calling a function.
    @param dfunc Function to be called upon directories.
    @optparam ffunc Function to be called upon files.
-   
+
    This function calls iteratively a function on directory entries.
-   If an entry is detected to be a directory, it is passed to 
+   If an entry is detected to be a directory, it is passed to
    @b dfunc as the only parameter. If @b ffunc is also provided,
    then it will receive all the non-directory entries. Entries
    coresponding to the current directory and the parent directory
    will never be sent to the handler functions.
-   
+
    @note The parameters for @b dfunc and @b ffunc will always
    be relative to the directory on which this object has been
    created.
-   
+
    Retunring an out of band 0, any of the callbacks involved may
    stop the processing and return immediately. An out of band 1
-   will skip the currently processed item and proceed. 
-   The @b dfunc handler is called before descending into the found 
+   will skip the currently processed item and proceed.
+   The @b dfunc handler is called before descending into the found
    subdirectory; this gives the handlers the chance to skip directories
    or interrupt the search.
-   
+
    @note After a complete descend, this directory will be closed and won't
    be usable anymore.
 */
@@ -821,7 +821,7 @@ FALCON_FUNC  Directory_descend ( ::Falcon::VMachine *vm )
 {
    Item *i_dfunc = vm->param(0);
    Item *i_ffunc = vm->param(1);
-   
+
    if ( i_dfunc == 0 || ! i_dfunc->isCallable()
         || ( i_ffunc != 0 && ! i_ffunc->isCallable() ) )
    {
@@ -830,11 +830,11 @@ FALCON_FUNC  Directory_descend ( ::Falcon::VMachine *vm )
          .extra( "C,[C]" ) );
       return;
    }
-   
+
    vm->addLocals(1);
    *vm->local(0) = new CoreArray(1);
    vm->local(0)->asArray()->append( vm->self() );
-   
+
    // be sure we won't loop out
    vm->regA().setNil();
    vm->returnHandler( &Directory_descend_next );

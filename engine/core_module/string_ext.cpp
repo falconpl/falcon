@@ -117,10 +117,10 @@ FALCON_FUNC String_charSize( VMachine *vm )
 
    This method returns a string containing one character from the beginning of the string,
    or eventually more characters in case a number > 1 is specified in @b count.
-   
+
    If @b remove is true, then the character is removed and the string is shrinked.
    @see strFront
-   
+
    If @b numeric is true,
    the UNICODE value of the string character will be returned, otherwise the caller
    will receive a string containing the desired character. In this case, @b count
@@ -138,7 +138,7 @@ FALCON_FUNC String_charSize( VMachine *vm )
 
    This function returns a string containing one character from the beginning of @b str,
    or eventually more characters in case a number > 1 is specified in @b count.
-   
+
    If @b remove is true, then the character is removed and the string is shrinked.
    @see String.front
 
@@ -198,10 +198,10 @@ FALCON_FUNC mth_strFront( VMachine *vm )
 
    This function returns a string containing one character from the end of this string,
    or eventually more characters in case a number > 1 is specified in @b count.
-   
+
    If @b remove is true, then the character is removed and the string is shrinked.
    @see strFront
-   
+
    If @b numeric is true,
    the UNICODE value of the string character will be returned, otherwise the caller
    will receive a string containing the desired character. In this case, @b count
@@ -219,10 +219,10 @@ FALCON_FUNC mth_strFront( VMachine *vm )
 
    This function returns a string containing one character from the end of @b str,
    or eventually more characters in case a number > 1 is specified in @b count.
-   
+
    If @b remove is true, then the character is removed and the string is shrinked.
    @see String.front
-   
+
    If @b numeric is true,
    the UNICODE value of the string character will be returned, otherwise the caller
    will receive a string containing the desired character. In this case, @b count
@@ -661,7 +661,7 @@ FALCON_FUNC  mth_strMerge ( ::Falcon::VMachine *vm )
    else
       mr_str = vm->self().isMethodic() ? vm->self().asString() : 0;
 
-   Item *elements = source->asArray()->elements();
+   Item *elements = source->asArray()->items().elements();
    uint32 len = source->asArray()->length();
    if ( limit < len )
       len = (uint32) limit;

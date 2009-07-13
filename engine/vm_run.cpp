@@ -299,7 +299,7 @@ void opcodeHandler_GENA( register VMachine *vm )
    // copy the m-topmost items in the stack into the array
    if( size > 0 )
    {
-      Item *data = array->elements();
+      Item *data = array->items().elements();
       int32 base = vm->stack().size() - size;
       memcpy( data, vm->stack().itemPtrAt( base ), sizeof(Item)*size );
       array->length( size );
@@ -1302,7 +1302,7 @@ void opcodeHandler_LDAS( register VMachine *vm )
          uint32 oldpos = vm->stack().size();
          vm->stack().resize( oldpos + size );
          void* mem = vm->stack().itemPtrAt( oldpos );
-         memcpy( mem, arr->elements(), size * sizeof(Item) );
+         memcpy( mem, arr->items().elements(), size * sizeof(Item) );
      }
    }
    else {
@@ -1404,7 +1404,7 @@ void opcodeHandler_IN( register VMachine *vm )
 
       case FLC_ITEM_ARRAY:
       {
-         Item *elements =  operand2->asArray()->elements();
+         Item *elements =  operand2->asArray()->items().elements();
          for( uint32 pos = 0; pos <operand2->asArray()->length(); pos++ )
          {
             if( elements[pos] == *operand1 ) {

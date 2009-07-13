@@ -202,6 +202,7 @@ public:
    */
    bool removeRow( uint32 pos, uint32 page = noitem );
 
+
    /** Inserts a page.
       The function checks if the array is actually a matrix with an order compatible
       with the table.
@@ -255,6 +256,12 @@ public:
    /** Implementing sequence interface */
    virtual bool insert( CoreIterator *iter, const Item &item );
 
+   /** Append an item at the end of the sequence. */
+   virtual void append( const Item &data );
+
+   /** Prepend an item at the beginning of the sequence. */
+   virtual void prepend( const Item &data );
+
    /** Tells if the list is empty.
       \return true if the list is empty.
    */
@@ -263,6 +270,7 @@ public:
    /** Perform marking of items stored in the table.
    */
    virtual void gcMark( uint32 mark );
+
 
    /** Returns bidding results.
       Must be initialized with makebiddings().

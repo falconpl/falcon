@@ -27,9 +27,57 @@
 #include <falcon/vm.h>
 #include <falcon/eng_messages.h>
 
-#include <falcon/eng_messages.h>
+#include <string.h>
+
 namespace Falcon {
 namespace core {
+
+#if 0
+FALCON_FUNC  Array_generate ( ::Falcon::VMachine *vm )
+{
+   CoreArray *ret;
+   Item* i_pgen = vm->param(0);
+   Item* i_pcheck = vm->param(1);
+
+   if ( i_pgen == 0 || i_pcheck != 0 && ! i_pcheck->isCallable() )
+   {
+      throw new ParamError( ErrorParams( e_inv_params, __LINE__ )
+         .extra( "R|A|C|Sequence, C" );
+   }
+
+   // Save the parameters as the stack may change greatly.
+   CoreArray* arr
+
+   switch( i_pgen->type() )
+   {
+      case FLC_ITEM_RANGE:
+      {
+         if ( i_gen.asRangeIsOpen() )
+         {
+            throw new ParamError( ErrorParams( e_param_range, __LINE__ )
+               .extra( "open range" );
+         }
+
+         int64 start = i_i_gen end,
+         i_gen.start()
+         if ( i_pcheck != 0 )
+         {
+            i_check = *i_pcheck;
+
+
+   if ( array->length() == 0 )
+   {
+      throw new AccessError( ErrorParam( e_inv_params, __LINE__ )
+         .origin( e_orig_runtime )
+         .extra( vm->moduleString( rtl_emptyarr ) ) );
+      return;
+   }
+
+   vm->retval( array->at(0) );
+   if ( vm->param(0) != 0 && vm->param(0)->isTrue() )
+      array->remove(0);
+}
+#endif
 
 /*#
    @method front Array
@@ -342,7 +390,7 @@ FALCON_FUNC  mth_arrayDel ( ::Falcon::VMachine *vm )
 
    // find the element
    CoreArray *array = array_x->asArray();
-   Item *elements = array->elements();
+   const ItemArray& elements = array->items();
    for( uint32 i = 0; i < array->length(); i++ ) {
       if ( elements[i] == *item_rem ) {
          array->remove( i );
@@ -407,7 +455,7 @@ FALCON_FUNC  mth_arrayDelAll ( ::Falcon::VMachine *vm )
    // find the element
    bool done = false;
    CoreArray *array = array_x->asArray();
-   Item *elements = array->elements();
+   const ItemArray& elements = array->items();
    uint32 i = 0;
    while( i < array->length() )
    {
@@ -660,13 +708,11 @@ FALCON_FUNC  arrayBuffer ( ::Falcon::VMachine *vm )
 
    int32 nsize = (int32) item_size->forceInteger();
    CoreArray *array = new CoreArray( nsize );
-   Item *mem = array->elements();
+   Item *mem = array->items().elements();
 
    if( i_item == 0 )
    {
-      for ( int i = 0; i < nsize; i++ ) {
-         mem[i].setNil();
-      }
+      memset( mem, 0, array->items().esize( nsize ) );
    }
    else
    {
@@ -871,7 +917,7 @@ FALCON_FUNC  mth_arrayFind ( ::Falcon::VMachine *vm )
       return;
    }
 
-   Item *elements = array->elements();
+   const ItemArray& elements = array->items();
    for( int32 i = pos_start; i < pos_end; i++ )
    {
       if ( elements[i] == *item )
@@ -974,7 +1020,7 @@ FALCON_FUNC  mth_arrayScan ( ::Falcon::VMachine *vm )
          origin( e_orig_runtime ) );
    }
 
-   Item *elements = array->elements();
+   const ItemArray& elements = array->items();
    // fetching as we're going to change the stack
    Item func = *func_x;
    for( int32 i = pos_start; i < pos_end; i++ )
@@ -1187,7 +1233,7 @@ FALCON_FUNC  mth_arraySort( ::Falcon::VMachine *vm )
    }
 
    CoreArray *array = array_itm->asArray();
-   Item *vector = array->elements();
+   Item *vector = array->items().elements();
 
    if ( sorter_itm == 0 )
    {

@@ -549,7 +549,7 @@ Item::e_sercode Item::deserialize( Stream *file, VMachine *vm )
 
             for( int i = 0; i < val; i ++ )
             {
-               retval = array->elements()[i].deserialize( file, vm );
+               retval = array->items()[i].deserialize( file, vm );
                if( retval != sc_ok ) {
                   break;
                }

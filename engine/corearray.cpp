@@ -27,47 +27,61 @@
 
 namespace Falcon {
 
-CoreArray::CoreArray( ):
-   Garbageable(),
+ItemArray::ItemArray():
    m_alloc(0),
    m_size(0),
-   m_data(0),
-   m_bindings(0),
-   m_table(0),
-   m_tablePos(0)
+   m_data(0)
 {}
 
+ItemArray::ItemArray( const ItemArray& other )
+{
+   if( other.m_size != 0 )
+   {
+      m_alloc = other.m_size;
+      m_size = other.m_size;
+      m_data = (Item *) memAlloc( esize(other.m_size) );
+      memcpy( m_data, other.m_data, esize(other.m_size) );
+   }
+   else
+   {
+      m_alloc = 0;
+      m_size = 0;
+      m_data = 0;
+   }
+}
 
-CoreArray::CoreArray( uint32 prealloc ):
-   Garbageable(),
-   m_bindings(0),
-   m_table(0),
-   m_tablePos(0)
+
+ItemArray::ItemArray( uint32 prealloc )
 {
    m_data = (Item *) memAlloc( esize(prealloc) );
    m_alloc = prealloc;
    m_size = 0;
 }
 
-CoreArray::CoreArray( Item *buffer, uint32 size, uint32 alloc ):
-   Garbageable(),
-   m_bindings(0),
-   m_table(0),
-   m_tablePos(0)
-{
-   m_data = buffer;
-   m_alloc = alloc;
-   m_size = size;
-}
 
-CoreArray::~CoreArray()
+ItemArray::ItemArray( Item *buffer, uint32 size, uint32 alloc ):
+   m_alloc(alloc),
+   m_size(size),
+   m_data(buffer)
+{}
+
+
+ItemArray::~ItemArray()
 {
    if ( m_data != 0 )
       memFree( m_data );
 }
 
 
-void CoreArray::append( const Item &ndata )
+void ItemArray::gcMark( uint32 mark )
+{
+   for( uint32 pos = 0; pos < m_size; pos++ ) {
+      memPool->markItem( m_data[pos] );
+   }
+}
+
+
+void ItemArray::append( const Item &ndata )
 {
    // create enough space to hold the data
    if ( m_alloc <= m_size )
@@ -79,11 +93,9 @@ void CoreArray::append( const Item &ndata )
    m_size++;
 }
 
-void CoreArray::merge( const CoreArray &other )
-{
-   if ( m_table != 0 )
-      return;
 
+void ItemArray::merge( const ItemArray &other )
+{
    if ( other.m_size == 0 )
       return;
 
@@ -96,11 +108,8 @@ void CoreArray::merge( const CoreArray &other )
    m_size += other.m_size;
 }
 
-void CoreArray::prepend( const Item &ndata )
+void ItemArray::prepend( const Item &ndata )
 {
-   if ( m_table != 0 )
-      return;
-
    // create enough space to hold the data
    Item *mem = (Item *) memAlloc( esize(m_size + 1) );
    m_alloc = m_size + 1;
@@ -113,11 +122,8 @@ void CoreArray::prepend( const Item &ndata )
    m_size++;
 }
 
-void CoreArray::merge_front( const CoreArray &other )
+void ItemArray::merge_front( const ItemArray &other )
 {
-   if ( m_table != 0 )
-      return;
-
    if ( other.m_size == 0 )
       return;
 
@@ -140,11 +146,8 @@ void CoreArray::merge_front( const CoreArray &other )
    }
 }
 
-bool CoreArray::insert( const Item &ndata, int32 pos )
+bool ItemArray::insert( const Item &ndata, int32 pos )
 {
-   if ( m_table != 0 )
-      return false;
-
    if ( pos < 0 )
       pos = m_size + pos;
    if ( pos < 0 || pos > (int32) m_size )
@@ -172,11 +175,8 @@ bool CoreArray::insert( const Item &ndata, int32 pos )
    return true;
 }
 
-bool CoreArray::insert( const CoreArray &other, int32 pos )
+bool ItemArray::insert( const ItemArray &other, int32 pos )
 {
-   if ( m_table != 0 )
-      return false;
-
    if ( other.m_size == 0 )
       return true;
 
@@ -210,11 +210,8 @@ bool CoreArray::insert( const CoreArray &other, int32 pos )
    return true;
 }
 
-bool CoreArray::remove( int32 first, int32 last )
+bool ItemArray::remove( int32 first, int32 last )
 {
-   if ( m_table != 0 )
-      return false;
-
    if ( first < 0 )
       first = m_size + first;
    if ( first < 0 || first >= (int32)m_size )
@@ -239,7 +236,7 @@ bool CoreArray::remove( int32 first, int32 last )
    return true;
 }
 
-int32 CoreArray::find( const Item &itm ) const
+int32 ItemArray::find( const Item &itm ) const
 {
    for( uint32 i = 0; i < m_size; i ++ )
    {
@@ -251,11 +248,8 @@ int32 CoreArray::find( const Item &itm ) const
 }
 
 
-bool CoreArray::remove( int32 first )
+bool ItemArray::remove( int32 first )
 {
-   if ( m_table != 0 )
-      return false;
-
    if ( first < 0 )
       first = m_size + first;
    if ( first < 0 || first >= (int32)m_size )
@@ -267,7 +261,7 @@ bool CoreArray::remove( int32 first )
    return true;
 }
 
-bool CoreArray::change( const CoreArray &other, int32 begin, int32 end )
+bool ItemArray::change( const ItemArray &other, int32 begin, int32 end )
 {
    if ( begin < 0 )
       begin = m_size + begin;
@@ -316,11 +310,8 @@ bool CoreArray::change( const CoreArray &other, int32 begin, int32 end )
    return true;
 }
 
-bool CoreArray::insertSpace( uint32 pos, uint32 size )
+bool ItemArray::insertSpace( uint32 pos, uint32 size )
 {
-   if ( m_table != 0 )
-      return false;
-
    if ( size == 0 )
       return true;
 
@@ -357,7 +348,7 @@ bool CoreArray::insertSpace( uint32 pos, uint32 size )
 }
 
 
-CoreArray *CoreArray::partition( int32 start, int32 end ) const
+ItemArray *ItemArray::partition( int32 start, int32 end ) const
 {
    int32 size;
    Item *buffer;
@@ -381,34 +372,24 @@ CoreArray *CoreArray::partition( int32 start, int32 end ) const
    }
    else {
       if( end == start ) {
-         return new CoreArray();
+         return new ItemArray();
       }
       size = end - start;
       buffer = (Item *) memAlloc( esize( size ) );
       memcpy( buffer, m_data + start, esize( size )  );
    }
-   return new CoreArray( buffer, size, size );
+
+   return new ItemArray( buffer, size, size );
 }
 
-CoreArray *CoreArray::clone() const
+
+FalconData *ItemArray::clone() const
 {
-   Item *buffer = (Item *) memAlloc( esize( m_size ) );
-   memcpy( buffer, m_data, esize( m_size )  );
-   CoreArray *ca = new CoreArray( buffer, m_size, m_size );
-   ca->m_table = m_table;
-   ca->m_tablePos = m_tablePos;
-
-   if ( m_bindings != 0 )
-   {
-      ca->m_bindings = m_bindings->clone();
-      ca->m_bindings->mark( mark() );
-   }
-
-   return ca;
+   return new ItemArray( *this );
 }
 
 
-void CoreArray::resize( uint32 size ) {
+void ItemArray::resize( uint32 size ) {
    if ( size == 0 ) {
       if ( m_data != 0 ) {
          memFree( m_data );
@@ -426,12 +407,65 @@ void CoreArray::resize( uint32 size ) {
    m_alloc = size;
 }
 
-void CoreArray::reserve( uint32 size ) {
+void ItemArray::reserve( uint32 size ) {
    if ( size > m_alloc ) {
       m_data = (Item *) memRealloc( m_data, esize( size ) );
       m_alloc = size;
    }
 }
+
+
+//========================================================
+//
+//========================================================
+
+CoreArray::CoreArray( ):
+   Garbageable(),
+   m_bindings(0),
+   m_table(0),
+   m_tablePos(0)
+{}
+
+
+CoreArray::CoreArray( const CoreArray& other ):
+   Garbageable( other ),
+   m_itemarray( other.m_itemarray )
+{
+   m_table = other.m_table;
+   m_tablePos = other.m_tablePos;
+
+   if ( other.m_bindings != 0 )
+   {
+      m_bindings = other.m_bindings->clone();
+         //m_bindings->mark( mark() );
+   }
+   else
+      m_bindings = 0;
+}
+
+CoreArray::CoreArray( uint32 prealloc ):
+   Garbageable(),
+   m_itemarray( prealloc ),
+   m_bindings(0),
+   m_table(0),
+   m_tablePos(0)
+{
+}
+
+CoreArray::CoreArray( Item *buffer, uint32 size, uint32 alloc ):
+   Garbageable(),
+   m_itemarray( buffer, size, alloc ),
+   m_bindings(0),
+   m_table(0),
+   m_tablePos(0)
+{
+}
+
+CoreArray::~CoreArray()
+{
+}
+
+
 
 CoreDict *CoreArray::makeBindings()
 {
@@ -546,7 +580,7 @@ void CoreArray::readIndex( const Item &index, Item &target )
          {
             if ( -pos <= (int32) length() )
             {
-               target = elements()[length()+pos];
+               target = m_itemarray[length()+pos];
                return;
             }
          }
@@ -554,7 +588,7 @@ void CoreArray::readIndex( const Item &index, Item &target )
          {
             if( pos < (int) length() )
             {
-               target = elements()[pos];
+               target = m_itemarray[pos];
                return;
             }
          }
@@ -568,7 +602,7 @@ void CoreArray::readIndex( const Item &index, Item &target )
          {
             if ( -pos <= (int32) length() )
             {
-               target = elements()[length()+pos];
+               target = m_itemarray[length()+pos];
                return;
             }
          }
@@ -576,7 +610,7 @@ void CoreArray::readIndex( const Item &index, Item &target )
          {
             if( pos < (int) length() )
             {
-               target = elements()[pos];
+               target = m_itemarray[pos];
                return;
             }
          }
@@ -613,6 +647,47 @@ void CoreArray::readIndex( const Item &index, Item &target )
    throw new AccessError( ErrorParam( e_arracc, __LINE__ ).extra( "LDP" ) );
 }
 
+
+CoreArray* CoreArray::partition( int32 start, int32 end ) const
+{
+   int32 size;
+   Item *buffer;
+
+   if ( start < 0 )
+      start = m_itemarray.m_size + start;
+   if ( start < 0 || start >= (int32) m_itemarray.m_size )
+      return 0;
+
+   if ( end < 0 )
+      end = m_itemarray.m_size + end;
+   if ( end < 0 || end > (int32) m_itemarray.m_size )
+      return 0;
+
+   if( end < start ) {
+      size = start - end + 1;
+      buffer = (Item *) memAlloc( m_itemarray.esize( size ) );
+
+      for( int i = 0; i < size; i ++ )
+         buffer[i] = m_itemarray.m_data[start - i];
+   }
+   else {
+      if( end == start ) {
+         return new CoreArray;
+      }
+      size = end - start;
+      buffer = (Item *) memAlloc( m_itemarray.esize( size ) );
+      memcpy( buffer, m_itemarray.m_data + start, m_itemarray.esize( size )  );
+   }
+
+   return new CoreArray( buffer, size, size );
+}
+
+CoreArray *CoreArray::clone() const
+{
+   return new CoreArray( *this );
+}
+
+
 void CoreArray::writeIndex( const Item &index, const Item &target )
 {
   switch ( index.type() )
@@ -625,9 +700,9 @@ void CoreArray::writeIndex( const Item &index, const Item &target )
             if ( -pos <= (int32) length() )
             {
                if ( target.isString() )
-                  elements()[length()+pos] = new CoreString( *target.asString() );
+                  m_itemarray[length()+pos] = new CoreString( *target.asString() );
                else
-                  elements()[length()+pos] = target;
+                  m_itemarray[length()+pos] = target;
                return;
             }
          }
@@ -636,9 +711,9 @@ void CoreArray::writeIndex( const Item &index, const Item &target )
             if( pos < (int) length() )
             {
                if ( target.isString() )
-                  elements()[pos] = new CoreString( *target.asString() );
+                  m_itemarray[pos] = new CoreString( *target.asString() );
                else
-                  elements()[pos] = target;
+                  m_itemarray[pos] = target;
                return;
             }
          }
@@ -653,9 +728,9 @@ void CoreArray::writeIndex( const Item &index, const Item &target )
             if ( -pos <= (int32) length() )
             {
                if ( target.isString() )
-                  elements()[length()+pos] = new CoreString( *target.asString() );
+                  m_itemarray[length()+pos] = new CoreString( *target.asString() );
                else
-                  elements()[length()+pos] = target;
+                  m_itemarray[length()+pos] = target;
                return;
             }
          }
@@ -664,9 +739,9 @@ void CoreArray::writeIndex( const Item &index, const Item &target )
             if( pos < (int) length() )
             {
                 if ( target.isString() )
-                  elements()[pos] = new CoreString( *target.asString() );
+                  m_itemarray[pos] = new CoreString( *target.asString() );
                else
-                  elements()[pos] = target;
+                  m_itemarray[pos] = target;
                return;
             }
          }

@@ -24,6 +24,7 @@
 #include <falcon/garbageable.h>
 #include <falcon/item.h>
 #include <falcon/deepitem.h>
+#include <falcon/sequence.h>
 
 #define flc_ARRAY_GROWTH   32
 
@@ -31,15 +32,108 @@ namespace Falcon {
 
 class Item;
 class Bindings;
+class CoreArray;
+
+class ItemArray: public Sequence
+{
+   uint32 m_alloc;
+   uint32 m_size;
+   Item *m_data;
+
+   friend class CoreArray;
+
+   ItemArray( Item *buffer, uint32 size, uint32 alloc );
+
+public:
+   ItemArray();
+   ItemArray( const ItemArray& other );
+   ItemArray( uint32 prealloc );
+
+   virtual ~ItemArray();
+
+   virtual const Item &front() const { return m_data[0]; }
+   virtual const Item &back() const { return m_data[m_size-1]; }
+
+   Item *elements() const { return m_data; }
+   void elements( Item *d ) { m_data = d; }
+   uint32 allocated() const { return m_alloc; }
+   uint32 length()  const { return m_size; }
+   void length( uint32 size ) { m_size = size; }
+   void allocated( uint32 size ) { m_alloc = size; }
+
+   virtual CoreIterator *getIterator( bool tail = false ) { return 0; }
+   virtual bool insert( CoreIterator *iter, const Item &data ) { return true; }
+   virtual bool erase( CoreIterator *iter ) { return true; }
+   virtual void clear() { m_size = 0; }
+   virtual bool empty() const { return m_size == 0; }
+
+   virtual void gcMark( uint32 mark );
+   virtual FalconData *clone() const ;
+
+   virtual void append( const Item &ndata );
+   virtual void prepend( const Item &ndata );
+
+   void merge( const ItemArray &other );
+   void merge_front( const ItemArray &other );
+
+   bool insert( const Item &ndata, int32 pos );
+   bool insert( const ItemArray &other, int32 pos );
+   bool remove( int32 pos );
+   bool remove( int32 first, int32 last );
+   bool change( const ItemArray &other, int32 begin, int32 end );
+   int32 find( const Item &itm ) const;
+   bool insertSpace( uint32 pos, uint32 size );
+
+   void resize( uint32 size );
+   void reserve( uint32 size );
+
+   ItemArray *partition( int32 start, int32 end ) const;
+
+   inline virtual const Item &at( int32 pos ) const
+   {
+      if ( pos < 0 )
+         pos = m_size + pos;
+      if ( pos < 0 || pos > (int32) m_size )
+         throw "Invalid range while accessing Falcon::CoreArray";
+      return m_data[pos];
+   }
+
+   inline virtual Item &at( int32 pos )
+   {
+      if ( pos < 0 )
+         pos = m_size + pos;
+      if ( pos < 0 || pos > (int32)m_size )
+         throw "Invalid range while accessing Falcon::CoreArray";
+      return m_data[pos];
+   }
+
+   inline Item &operator[]( int32 pos ) throw()
+   {
+      return m_data[pos];
+   }
+
+   inline const Item &operator[]( int32 pos ) const throw()
+   {
+      return m_data[pos];
+   }
+
+
+   /** An inline utility to compute element size.
+    *
+    * @param count numbrer of elements
+    * @return the amout of bytes needed to store the elements
+    */
+   int32 esize( int32 count=1 ) const { return sizeof( Item ) * count; }
+
+};
+
 
 /** Core array (or array of items).
 */
 
 class FALCON_DYN_CLASS CoreArray:  public DeepItem, public Garbageable
 {
-   uint32 m_alloc;
-   uint32 m_size;
-   Item *m_data;
+   ItemArray m_itemarray;
    CoreDict *m_bindings;
    CoreObject *m_table;
    uint32 m_tablePos;
@@ -50,35 +144,92 @@ public:
 
    /** Creates the core array. */
    CoreArray();
+   CoreArray( const CoreArray& other );
    CoreArray( uint32 prealloc );
 
    ~CoreArray();
 
-   Item *elements() const { return m_data; }
-   void elements( Item *d ) { m_data = d; }
-   uint32 allocated() const { return m_alloc; }
-   uint32 length()  const { return m_size; }
-   void length( uint32 size ) { m_size = size; }
-   void allocated( uint32 size ) { m_alloc = size; }
+   const ItemArray& items() const { return m_itemarray; }
+   ItemArray& items() { return m_itemarray; }
 
-   void append( const Item &ndata );
-   void prepend( const Item &ndata );
-   void merge( const CoreArray &other );
-   void merge_front( const CoreArray &other );
+   void append( const Item &ndata ) {
+      if ( m_table != 0 )
+         return;
+      m_itemarray.append( ndata );
+   }
+   void prepend( const Item &ndata ) {
+      if ( m_table != 0 )
+         return;
 
-   bool insert( const Item &ndata, int32 pos );
-   bool insert( const CoreArray &other, int32 pos );
-   bool remove( int32 pos );
-   bool remove( int32 first, int32 last );
-   bool change( const CoreArray &other, int32 begin, int32 end );
-   int32 find( const Item &itm ) const;
-   bool insertSpace( uint32 pos, uint32 size );
+      m_itemarray.prepend( ndata );
+   }
+
+   void merge( const CoreArray &other ) {
+      if ( m_table != 0 )
+         return;
+      m_itemarray.merge( other.m_itemarray );
+   }
+
+   void merge_front( const CoreArray &other ) {
+      if ( m_table != 0 )
+         return;
+      m_itemarray.merge( other.m_itemarray );
+   }
+
+   bool insert( const Item &ndata, int32 pos ) {
+      if ( m_table != 0 )
+         return false;
+      return m_itemarray.insert( ndata, pos );
+   }
+
+   bool insert( const CoreArray &other, int32 pos ) {
+      if ( m_table != 0 )
+         return false;
+      return m_itemarray.insert( other.m_itemarray, pos );
+   }
+
+   bool remove( int32 pos ) {
+      if ( m_table != 0 )
+         return false;
+      return m_itemarray.remove( pos );
+   }
+
+   bool remove( int32 first, int32 last ) {
+      if ( m_table != 0 )
+         return false;
+      return m_itemarray.remove( first, last );
+   }
+
+   bool change( const CoreArray &other, int32 begin, int32 end ) {
+      if ( m_table != 0 )
+         return false;
+
+      return m_itemarray.change( other.m_itemarray, begin, end );
+   }
+
+   int32 find( const Item &itm ) const { return m_itemarray.find( itm ); }
+
+   bool insertSpace( uint32 pos, uint32 size ) {
+      if ( m_table != 0 )
+         return false;
+      return m_itemarray.insertSpace( pos, size );
+   }
+
+   void resize( uint32 size ) {
+      if ( m_table != 0 )
+         return;
+      m_itemarray.resize( size );
+   }
+
+   void reserve( uint32 size ) {
+      m_itemarray.reserve( size );
+   }
 
    CoreArray *partition( int32 start, int32 end ) const;
    CoreArray *clone() const;
 
-   void resize( uint32 size );
-   void reserve( uint32 size );
+   uint32 length() const { return m_itemarray.length(); }
+   void length( uint32 size ) { return m_itemarray.length( size ); }
 
    /** Create the bindings for this array, or get those already created. */
    CoreDict *makeBindings();
@@ -120,43 +271,24 @@ public:
       return true;
     }
 
-   /** An inline utility to compute element size.
-    *
-    * @param count numbrer of elements
-    * @return the amout of bytes needed to store the elements
-    */
-   int32 esize( int32 count=1 ) const { return sizeof( Item ) * count; }
-
    const Item &at( int32 pos ) const
    {
-      if ( pos < 0 )
-         pos = m_size + pos;
-      if ( pos < 0 || pos > (int32) m_size )
-         throw "Invalid range while accessing Falcon::CoreArray";
-      return m_data[pos];
+      return m_itemarray.at( pos );
    }
 
    Item &at( int32 pos )
    {
-      if ( pos < 0 )
-         pos = m_size + pos;
-      if ( pos < 0 || pos > (int32)m_size )
-         throw "Invalid range while accessing Falcon::CoreArray";
-      return m_data[pos];
+      return m_itemarray.at( pos );
    }
 
    Item &operator[]( int32 pos ) throw()
    {
-      if ( pos < 0 )
-         pos = m_size + pos;
-      return m_data[pos];
+      return m_itemarray[pos];
    }
 
    const Item &operator[]( int32 pos ) const throw()
    {
-      if ( pos < 0 )
-         pos = m_size + pos;
-      return m_data[pos];
+      return m_itemarray[pos];
    }
 
    CoreObject *table() const { return m_table; }
