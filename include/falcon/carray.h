@@ -34,7 +34,7 @@ class Item;
 class Bindings;
 class CoreArray;
 
-class ItemArray: public Sequence
+class FALCON_DYN_CLASS ItemArray: public Sequence
 {
    uint32 m_alloc;
    uint32 m_size;

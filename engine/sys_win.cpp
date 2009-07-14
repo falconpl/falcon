@@ -147,7 +147,7 @@ void _tempName( String &res )
 	{
 		char *bufname_c = (char *) wct;
 		if( temp_dir.toCString( bufname_c, tempLen ) > 0 )
-			attribs = GetFileAttributes( bufname_c );
+			attribs = GetFileAttributesA( bufname_c );
 	}
 
    if ( GetLastError() != 0 || ((attribs & FILE_ATTRIBUTE_DIRECTORY) == 0) )
