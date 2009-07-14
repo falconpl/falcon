@@ -24,6 +24,10 @@ Falcon (0.9.2.1)
   * major: Added compound method to Array and List classes (this can be used to create
            lists from list definitions very similarly to Python, but still being
            more flexible.
+  * fixed: Some string methods renamed: 
+             String.backFind => String.rfind  (wasn't working anyhow)
+             String.backTrim => String.rtrim
+             String.frontTrim => String.ftrim
 
 Falcon (0.9.2)
   * fixed: using more modern throw instead of the obsolete raise() functions

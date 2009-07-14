@@ -857,14 +857,14 @@ FALCON_FUNC  mth_strFind ( ::Falcon::VMachine *vm )
 */
 
 /*#
-   @method backFind String
+   @method rfind String
    @brief Finds a substring bakwards.
    @param needle Substring to search for.
    @optparam start Optional position from which to start the search in string.
    @optparam end Optional position at which to end the search in string.
    @return The position where the substring is found, or -1.
 
-   @see strFind
+   @see strBackFind
 */
 
 FALCON_FUNC  mth_strBackFind ( ::Falcon::VMachine *vm )
@@ -931,7 +931,7 @@ FALCON_FUNC  mth_strBackFind ( ::Falcon::VMachine *vm )
 }
 
 /*#
-   @method backTrim String
+   @method rtrim String
    @brief Trims trailing whitespaces in a string.
    @optparam trimSet A set of characters that must be removed.
    @return The trimmed version of the string.
@@ -944,7 +944,7 @@ FALCON_FUNC  mth_strBackFind ( ::Falcon::VMachine *vm )
 */
 
 /*#
-   @method frontTrim String
+   @method ftrim String
    @brief Trims front whitespaces in a string.
    @optparam trimSet A set of characters that must be removed.
    @return The trimmed version of the string.
@@ -955,7 +955,7 @@ FALCON_FUNC  mth_strBackFind ( ::Falcon::VMachine *vm )
    defaults to space, tabulation characters, new lines and carriage returns. The
    original string is unmodified.
 
-   @see strBackTrim
+   @see strFrontTrim
 */
 
 /*#

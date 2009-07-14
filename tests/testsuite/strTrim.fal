@@ -18,8 +18,8 @@ nonspaced = "non spaced"
 if strBackTrim( spaced ) != " a spaced string": failure( "strBackTrim" )
 if strFrontTrim( spaced ) != "a spaced string ": failure( "strFrontTrim" )
 if strTrim( spaced ) != "a spaced string": failure( "strTrim" )
-if spaced.backTrim() != " a spaced string": failure( ".backTrim" )
-if spaced.frontTrim() != "a spaced string ": failure( ".frontTrim" )
+if spaced.rtrim() != " a spaced string": failure( ".rtrim" )
+if spaced.ftrim() != "a spaced string ": failure( ".ftrim" )
 if spaced.trim() != "a spaced string": failure( ".trim" )
 
 spaced = "  \t a spaced string  \t "
@@ -27,15 +27,15 @@ spaced = "  \t a spaced string  \t "
 if strBackTrim( spaced ) != "  \t a spaced string": failure( "strBackTrim 2" )
 if strFrontTrim( spaced ) != "a spaced string  \t ": failure( "strFrontTrim 2" )
 if strTrim( spaced ) != "a spaced string": failure( "strTrim 2" )
-if spaced.backTrim() != "  \t a spaced string": failure( ".backTrim 2" )
-if spaced.frontTrim() != "a spaced string  \t ": failure( ".frontTrim 2" )
+if spaced.rtrim() != "  \t a spaced string": failure( ".rtrim 2" )
+if spaced.ftrim() != "a spaced string  \t ": failure( ".ftrim 2" )
 if spaced.trim() != "a spaced string": failure( ".trim 2" )
 
 if strBackTrim( nonspaced ) != "non spaced": failure( "strBackTrim nonspaced" )
 if strFrontTrim( nonspaced ) != "non spaced": failure( "strFrontTrim nonspaced" )
 if strTrim( nonspaced ) != "non spaced": failure( "strTrim nonspaced" )
-if nonspaced.backTrim() != "non spaced": failure( ".backTrim nonspaced" )
-if nonspaced.frontTrim() != "non spaced": failure( ".frontTrim nonspaced" )
+if nonspaced.rtrim() != "non spaced": failure( ".rtrim nonspaced" )
+if nonspaced.ftrim() != "non spaced": failure( ".ftrim nonspaced" )
 if nonspaced.trim() != "non spaced": failure( ".trim nonspaced" )
 
 other = "54321 hello world 12345"
@@ -43,6 +43,10 @@ other = "54321 hello world 12345"
 if strBackTrim( other, "12345 " ) != "54321 hello world": failure( "strBackTrim other" )
 if strFrontTrim( other, "12345 ") != "hello world 12345": failure( "strFrontTrim other" )
 if strTrim( other, "12345 " ) != "hello world": failure( "strTrim other" )
+
+if other.rtrim( "12345 " ) != "54321 hello world": failure( "other.rtrim" )
+if other.ftrim( "12345 ") != "hello world 12345": failure( "other.ftrim" )
+if other.trim( "12345 " ) != "hello world": failure( "other.trim" )
 
 success()
 

@@ -295,9 +295,9 @@ Module* core_module_init()
       addParam("chr");
    self->addClassMethod( string_meta, "back", &Falcon::core::mth_strBack ).asSymbol()->
       addParam("count")->addParam("remove")->addParam("numeric");
-   self->addClassMethod( string_meta, "frontTrim", &Falcon::core::mth_strFrontTrim ).asSymbol()->
+   self->addClassMethod( string_meta, "ftrim", &Falcon::core::mth_strFrontTrim ).asSymbol()->
       addParam("trimSet");
-   self->addClassMethod( string_meta, "backTrim", &Falcon::core::mth_strBackTrim ).asSymbol()->
+   self->addClassMethod( string_meta, "rtrim", &Falcon::core::mth_strBackTrim ).asSymbol()->
       addParam("trimSet");
    self->addClassMethod( string_meta, "trim", &Falcon::core::mth_strTrim ).asSymbol()->
       addParam("trimSet");
@@ -312,7 +312,7 @@ Module* core_module_init()
    self->addClassMethod( string_meta, "join", &Falcon::core::String_join );
    self->addClassMethod( string_meta, "find", &Falcon::core::mth_strFind ).asSymbol()
       ->addParam("needle")->addParam("start")->addParam("end");
-   self->addClassMethod( string_meta, "strBackFind", &Falcon::core::mth_strBackFind ).asSymbol()
+   self->addClassMethod( string_meta, "rfind", &Falcon::core::mth_strBackFind ).asSymbol()
       ->addParam("needle")->addParam("start")->addParam("end");
    self->addClassMethod( string_meta, "replace", &Falcon::core::mth_strReplace ).asSymbol()
       ->addParam("substr")->addParam("repstr")->addParam("start")->addParam("end");

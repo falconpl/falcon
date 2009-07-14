@@ -38,6 +38,33 @@ if pos != 10: failure( "strBackFind, char from-to" )
 pos = strBackFind( string, "asdf" )
 if pos != -1: failure( "strBackFind, negative" )
 
+//===========================================
+// Methodic version
+//
+pos = string.find( "a" )
+if pos != 8: failure( "string.find, single char" )
+pos = string.find( "a str" )
+if pos != 8: failure( "string.find, string" )
+pos = string.find( "s", 6 )
+if pos != 6: failure( "string.find, char from" )
+pos = string.find( "s", 6, 12 )
+if pos != 6: failure( "string.find, char from-to" )
+pos = string.find( "str", 5, 13 )
+if pos != 10: failure( "string.find, string from-to" )
+pos = string.find( "s", 13 )
+if pos != -1: failure( "string.find, negative" )
+
+pos = string.rfind( "t" )
+if pos != 11: failure( "string.rfind, single char" )
+pos = string.rfind( "a str" )
+if pos != 8: failure( "string.rfind, string" )
+pos = string.rfind( "s", 12 )
+if pos != -1: failure( "string.rfind, char from" )
+pos = string.rfind( "s", 6, 12 )
+if pos != 10: failure( "string.rfind, char from-to" )
+pos = string.rfind( "asdf" )
+if pos != -1: failure( "string.rfind, negative" )
+
 success()
 
 /* End of file */
