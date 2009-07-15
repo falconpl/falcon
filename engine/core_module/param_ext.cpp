@@ -219,6 +219,91 @@ FALCON_FUNC  paramSet ( ::Falcon::VMachine *vm )
    }
 }
 
+
+/*#
+   @function argv
+   @inset varparams_support
+   @brief Returns all the parameters of the current function as a vector.
+
+   If the current function doesn't receive any parameter, it returns nil.  
+*/
+FALCON_FUNC core_argv( VMachine *vm )
+{
+   if ( vm->stackBase() == 0 )
+      throw new GenericError( ErrorParam( e_stackuf, __LINE__ ).origin( e_orig_runtime ) );
+      
+   // get the previous stack frame.
+   StackFrame *thisFrame = (StackFrame *) vm->stack().at( vm->stackBase() - VM_FRAME_SPACE );
+   uint32 oldbase = thisFrame->m_stack_base;
+   if( oldbase == 0 )
+      throw new GenericError( ErrorParam( e_param_range, __LINE__ ).origin( e_orig_runtime ) );
+
+   // ...but we want the parameter count of our caller.
+   StackFrame *prevFrame = (StackFrame *) vm->stack().at( oldbase - VM_FRAME_SPACE );
+   // ...while the parameters are below our frame's base.
+   if( prevFrame->m_param_count > 0 )
+   {
+      CoreArray* arr = new CoreArray(prevFrame->m_param_count);
+      Item* first = vm->stack().itemPtrAt( oldbase - VM_FRAME_SPACE - prevFrame->m_param_count );
+      memcpy( arr->items().elements(), first, arr->items().esize( prevFrame->m_param_count ) );
+      arr->length( prevFrame->m_param_count );
+      vm->retval( arr );
+   }
+}
+
+/*#
+   @function argd
+   @inset varparams_support
+   @brief Returns a dictionary containing all the parameters passed to the current function.
+
+   The dictionary contains the parameter names associated with the value passed by the caller.
+   Parameters received beyond the officially declared ones aren't returned in this dictionary.
+   
+   If the function doesn't declare any parameter, returns nil.
+*/
+FALCON_FUNC core_argd( VMachine *vm )
+{
+   if ( vm->stackBase() == 0 )
+      throw new GenericError( ErrorParam( e_stackuf, __LINE__ ).origin( e_orig_runtime ) );
+      
+   // get the previous stack frame.
+   StackFrame *thisFrame = (StackFrame *) vm->stack().at( vm->stackBase() - VM_FRAME_SPACE );
+   uint32 oldbase = thisFrame->m_stack_base;
+   
+   if( oldbase == 0 )
+      throw new GenericError( ErrorParam( e_param_range, __LINE__ ).origin( e_orig_runtime ) );
+
+   // ...but we want the parameter count of our caller.
+   StackFrame *prevFrame = (StackFrame *) vm->stack().at( oldbase - VM_FRAME_SPACE );
+   
+   // get the caller function symbol --- it holds the declared parameters
+   const Symbol* sym = thisFrame->m_symbol;
+   const Map* st =  sym->isFunction()? 
+      &sym->getFuncDef()->symtab().map() :
+      &sym->getExtFuncDef()->parameters()->map();
+      
+   CoreDict* ret = 0;
+   Item* first = vm->stack().itemPtrAt( oldbase - VM_FRAME_SPACE - prevFrame->m_param_count );
+      
+   // ...while the parameters are below our frame's base.
+   MapIterator iter = st->begin();
+   while( iter.hasCurrent() )
+   {
+      Symbol *p = (*(Symbol**)iter.currentValue());
+      if( p->isParam() )
+      {
+         if( ret == 0 )
+            ret = new LinearDict;
+         ret->insert( Item(new CoreString( p->name() )), first[p->itemId()] );
+      }
+      
+     iter.next();
+   }
+   
+   if ( ret != 0 )
+      vm->retval( ret );
+}
+
 }
 }
 

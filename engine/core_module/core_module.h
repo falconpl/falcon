@@ -33,6 +33,9 @@ FALCON_FUNC BOM_ptr( VMachine *vm );
 FALCON_FUNC Integer_ptr( VMachine *vm );
 FALCON_FUNC GarbagePointer_ptr( VMachine *vm );
 
+FALCON_FUNC core_argv( VMachine *vm );
+FALCON_FUNC core_argd( VMachine *vm );
+
 // Methodic functions
 FALCON_FUNC  mth_ToString ( ::Falcon::VMachine *vm );
 FALCON_FUNC  mth_len ( ::Falcon::VMachine *vm );

@@ -1,11 +1,11 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: print.cpp
+   FILE: inspect.cpp
 
    Basic module
    -------------------------------------------------------------------
-   Author: $AUTHOR
-   Begin: $DATE
+   Author: Giancarlo Niccolai
+   Begin: Wed, 15 Jul 2009 07:03:13 -0700
 
    -------------------------------------------------------------------
    (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
