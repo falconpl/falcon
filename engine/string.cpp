@@ -172,11 +172,13 @@ uint32 Buffer32::getCharAt( const String *str, uint32 pos ) const
 
 void Byte::subString( const String *str, int32 start, int32 end, String *tgt ) const
 {
+   uint32 nlen = str->length();
+   
    if( start < 0 )
-      start = int(str->length()) + start;
+      start = int(nlen) + start;
    if( end < 0 )
-      end = int(str->length()) + end + 1;
-   if ( start < 0 || start >= (int)str->size() || end < 0 || end > (int)str->size() || end == start) {
+      end = int(nlen) + end + 1;
+   if ( start < 0 || start >= (int)nlen || end < 0 || end == start) {
       tgt->size( 0 );
       return;
    }
@@ -212,6 +214,7 @@ void Byte::subString( const String *str, int32 start, int32 end, String *tgt ) c
                storage16[i] = source16[start-i];
             tgt->size( len * 2 );
          }
+         break;
 
          case 4:
          {
@@ -221,12 +224,16 @@ void Byte::subString( const String *str, int32 start, int32 end, String *tgt ) c
                storage32[i] = source32[start-i];
             tgt->size( len * 4 );
          }
+         break;
       }
    }
    else {
-      uint32 len = (end - start) * cs;
-      if ( tgt->allocated() < len * cs ) {
-         storage = (byte *) memAlloc( len * cs );
+      if ( end > (int)nlen ) 
+         end = nlen;
+         
+      uint32 len = (end - start)*cs;
+      if ( tgt->allocated() < len ) {
+         storage = (byte *) memAlloc( len );
       }
       else
          storage = tgt->getRawStorage();

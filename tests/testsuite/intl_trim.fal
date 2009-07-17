@@ -1,0 +1,25 @@
+/****************************************************************************
+* Falcon test suite
+*
+*
+* ID: 120b
+* Category: rtl
+* Subcategory: internat
+* Short: Trim international
+* Description:
+*   Checks if trim works correctly with wide strings.
+* [/Description]
+*
+****************************************************************************/
+
+// check working on international strings.
+cats = strSplit("Falcon, Gedit,Check , Ubuntu ,\xf20", ",")
+
+if cats[0].trim() != "Falcon": failure( "International trim - none" )
+if cats[1].trim() != "Gedit": failure( "International trim - front" )
+if cats[2].trim() != "Check": failure( "International trim - back" )
+if cats[3].trim() != "Ubuntu": failure( "International trim - both" )
+
+success()
+
+/* end of file */

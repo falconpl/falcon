@@ -1,0 +1,26 @@
+/****************************************************************************
+* Falcon test suite
+*
+*
+* ID: 120a
+* Category: rtl
+* Subcategory: internat
+* Short: Substring international
+* Description:
+*   Check if ranged access works with international strings.
+* [/Description]
+*
+****************************************************************************/
+
+// check working on international strings.
+cats = "Falcon, Gedit,Check , Ubuntu ,\xf20"
+
+if cats[0:6] != "Falcon": failure( "International sub[0:6]" )
+if cats[14:19] != "Check": failure( "International sub[14:20]" )
+if cats[5:0] != "noclaF": failure( "International sub[5:0]" )
+if cats[-9:-3] != "Ubuntu": failure( "International [-10:-3]" )
+if cats[-1:-5] != "\xf20, ut": failure( "International [-10:-3]" )
+
+success()
+
+/* end of file */
