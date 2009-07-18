@@ -644,6 +644,26 @@ public:
    */
    AttribMap* attributes() const { return m_attributes; }
 
+   /** Unrolls the symbols back to a previous state.
+    *    This function removes the symbols added past a size.
+    *  This allows to return to a previous state in the module
+    *  declaration, that can be simply recored by getting
+    *  the size of the symbol table.
+    *
+    *  For example.
+    *  @code
+    *  int modSize = module->symbols().size();
+    *  try {
+    *     // ... do something altering the module
+    *  }
+    *  catch( Error* e )
+    *  {
+    *     // roll back
+    *     module->rollBackSymbols( modSize );
+    *     throw;
+    *  }
+    */
+   void rollBackSymbols( uint32 size );
 };
 
 }

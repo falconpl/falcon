@@ -129,36 +129,26 @@ InteractiveCompiler::t_ret_type InteractiveCompiler::compileNext( Stream *input 
    m_module->language( m_language );
    m_module->version( (uint32) m_modVersion );
 
-   // faulty compilation in incremental steps?
-   if( !m_context.empty() || m_contextSet.size() != 1 || m_lexer->hasOpenContexts() )
-   {
-      // unroll changes to the module.
-      for (uint32 pos = modSymSize; pos < m_module->symbols().size(); pos ++ )
-      {
-         Symbol *sym = m_module->symbols().symbolAt( pos );
-         m_module->symbolTable().remove( sym->name() );
-         delete sym;
-      }
-      m_module->symbols().resize(modSymSize);
-   }
-
    // some errors during compilation?
    if( m_errors != 0 )
    {
-      // but do not reset errors, the onwer may want to know.
+      // but do not reset errors, the owner may want to know.
       Error *err = m_rootError;
       m_rootError = 0;
+      m_module->rollBackSymbols( modSymSize );
       throw err;
    }
 
    if ( m_lexer->hasOpenContexts() )
    {
+      m_module->rollBackSymbols( modSymSize );
       return e_incomplete;
    }
 
    // If the context is not empty, then we have a partial data.
    // more is needed
    if ( !m_context.empty() || m_contextSet.size() != 1 ) {
+      m_module->rollBackSymbols( modSymSize );
       return e_more;
    }
 
@@ -170,6 +160,7 @@ InteractiveCompiler::t_ret_type InteractiveCompiler::compileNext( Stream *input 
    // empty?
    if ( m_root->classes().empty() && m_root->functions().empty() && m_root->statements().empty() )
    {
+      m_module->rollBackSymbols( modSymSize );
       return e_nothing;
    }
 
@@ -284,6 +275,7 @@ InteractiveCompiler::t_ret_type InteractiveCompiler::compileNext( Stream *input 
    {
       Error *e = m_rootError;
       m_rootError = 0;
+      m_module->rollBackSymbols( modSymSize );
       throw e;
    }
 
@@ -297,7 +289,16 @@ InteractiveCompiler::t_ret_type InteractiveCompiler::compileNext( Stream *input 
    if ( ret == e_statement || ret == e_call || ret == e_expression )
    {
       try {
-         m_vm->launch();
+         Item* i_main = m_vm->mainModule()->findModuleItem("__main__");
+         if( i_main == 0 )
+         {
+            throw new CodeError( ErrorParam( e_undef_sym, __LINE__ )
+                  .origin( e_orig_compiler )
+                  .extra( "__main__ (check modules link order/mode)" ) );
+         }
+
+         m_vm->reset();
+         m_vm->callItem( *i_main, 0 );
       }
       catch( VMEventQuit & )
       {

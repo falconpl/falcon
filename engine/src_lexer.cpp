@@ -1281,7 +1281,7 @@ int SrcLexer::checkUnlimitedTokens( uint32 nextChar )
          {
             m_bIsDirectiveLine = false;
             // but not first sym
-            if ( m_lineFilled )
+            if ( m_lineFilled && ! inParCtx() )
             {
                m_lineFilled = false;
                return EOL;

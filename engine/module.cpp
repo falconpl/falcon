@@ -607,5 +607,20 @@ void Module::addAttribute( const String &name, VarDef* vd )
    m_attributes->insertAttrib( name, vd );
 }
 
+
+void Module::rollBackSymbols( uint32 nsize )
+{
+   uint32 size = symbols().size();
+
+   for (uint32 pos = size; pos < size; pos ++ )
+   {
+      Symbol *sym = symbols().symbolAt( pos );
+      symbolTable().remove( sym->name() );
+      delete sym;
+   }
+
+   symbols().resize(nsize);
+}
+
 }
 /* end module.cpp */

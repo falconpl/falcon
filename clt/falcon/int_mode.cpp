@@ -15,7 +15,7 @@
 
 #include "int_mode.h"
 #include <falcon/intcomp.h>
-
+#include <falcon/src_lexer.h>
 
 IntMode::IntMode( AppFalcon* owner ):
    m_owner( owner )
@@ -66,6 +66,7 @@ void IntMode::run()
 
    InteractiveCompiler::t_ret_type lastRet = InteractiveCompiler::e_nothing;
    String line, pline, codeSlice;
+   int linenum = 1;
    while( stdIn->good() && ! stdIn->eof() )
    {
       const char *prompt = (
@@ -92,9 +93,9 @@ void IntMode::run()
 
          InteractiveCompiler::t_ret_type lastRet1 = InteractiveCompiler::e_nothing;
          
-         bool hadError = false;
          try
          {
+			comp.lexer()->line( linenum );
             lastRet1 = comp.compileNext( codeSlice + line + "\n" );
          }
          catch( Error *err )
@@ -102,7 +103,17 @@ void IntMode::run()
             String temp = err->toString();
             err->decref();
             stdOut->writeString( temp );
-            hadError = true;
+            // in case of error detected at context end, close it.
+            line.trim();
+            if( line == "end" || line.endsWith( "]" )
+            		  || line.endsWith( "}" ) || line.endsWith( ")" ) )
+            {
+            	codeSlice.size( 0 );
+            	lastRet = InteractiveCompiler::e_nothing;
+            	linenum = 1;
+            }
+            line.size(0);
+            continue;
          }
 
          switch( lastRet1 )
@@ -141,16 +152,14 @@ void IntMode::run()
                
             default:
                codeSlice.size(0);
+               linenum = 0;
          }
          
-         // do not clear the input on error.
-         // -- so the user can try to re-add the last line.
-         if ( ! hadError )
-         {
-            // maintain previous status if having a compilation error.
-            lastRet = lastRet1;
-         }
-         line.size(0);
+
+		// maintain previous status if having a compilation error.
+		lastRet = lastRet1;
+		line.size( 0 );
+		linenum++;
       }
       // else just continue.
    }
