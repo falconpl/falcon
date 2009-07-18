@@ -40,7 +40,7 @@
 #include <falcon/livemodule.h>
 #include <falcon/vmcontext.h>
 
-#define FALCON_VM_DFAULT_CHECK_LOOPS 3500
+#define FALCON_VM_DFAULT_CHECK_LOOPS 5000
 
 namespace Falcon {
 

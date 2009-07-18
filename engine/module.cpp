@@ -612,7 +612,7 @@ void Module::rollBackSymbols( uint32 nsize )
 {
    uint32 size = symbols().size();
 
-   for (uint32 pos = size; pos < size; pos ++ )
+   for (uint32 pos =  nsize; pos < size; pos ++ )
    {
       Symbol *sym = symbols().symbolAt( pos );
       symbolTable().remove( sym->name() );

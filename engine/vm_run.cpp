@@ -179,10 +179,10 @@ void VMachine::run()
          // Executes periodic checks
          //
 
-         if ( m_opCount > m_opNextCheck )
+         if ( m_opCount >= m_opNextCheck )
          {
             // By default, if nothing else happens, we should do a check no sooner than this.
-            m_opNextCheck = m_opCount + FALCON_VM_DFAULT_CHECK_LOOPS;
+            m_opNextCheck += FALCON_VM_DFAULT_CHECK_LOOPS;
 
             // manage periodic callbacks
             periodicChecks();
