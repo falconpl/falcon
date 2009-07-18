@@ -41,6 +41,10 @@ public:
    Falcon::String io_encoding;
    Falcon::String source_encoding;
    Falcon::String module_language;
+#ifndef NDEBUG
+   Falcon::String trace_file;
+#endif
+
    Falcon::List preloaded;
    Falcon::List directives;
    Falcon::List defines;

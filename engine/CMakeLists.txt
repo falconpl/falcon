@@ -221,6 +221,7 @@ ADD_LIBRARY( falcon_engine SHARED
    symtab.cpp
    syntree.cpp
    timestamp.cpp
+   trace.cpp
    traits.cpp
    transcoding.cpp
    tokenizer.cpp

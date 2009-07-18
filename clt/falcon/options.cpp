@@ -85,8 +85,11 @@ void FalconOptions::usage( bool deep )
       << "   -T          consider given [module] as .ftd (template document)" << endl
       << endl
       << "Run options (r_opts):" << endl
-      << "   -C          check for memory allocation correctness." << endl
-      << "   -e <enc>    set given encoding as default for VM I/O." << endl
+      << "   -C          check for memory allocation correctness" << endl
+      << "   -e <enc>    set given encoding as default for VM I/O" << endl
+#ifndef NDEBUG
+      << "   -F <file>   Output TRACE debug statements to <file>" << endl
+#endif
       << "   -l <lang>   Set preferential language of loaded modules" << endl
       << "   -L <path>   Add path for 'load' directive (start with ';' remove std paths)" << endl
       << "   -M          do NOT save the compiled modules in '.fam' files" << endl
@@ -175,6 +178,14 @@ void FalconOptions::parse( int argc, char **argv, int &script_pos )
                break;
 
             case 'f': force_recomp = true; break;
+#ifndef NDEBUG
+            case 'F':
+               if ( op[2] == 0 && i + 1 < argc )
+                  trace_file = argv[++i];
+               else
+                  trace_file = op + 2;
+               break;
+#endif
             case 'h': case '?': usage(false); m_justinfo = true; break;
             case 'H': usage(true); m_justinfo = true; break;
             case 'i': modalGiven(); interactive = true; break;

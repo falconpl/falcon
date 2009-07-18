@@ -13,6 +13,8 @@
    See LICENSE file for licensing details.
 */
 
+#include <falcon/trace.h>
+
 #include <falcon/memory.h>
 #include <falcon/mempool.h>
 #include <falcon/item.h>
@@ -28,6 +30,7 @@
 #include <falcon/membuf.h>
 #include <falcon/garbagepointer.h>
 
+
 #include <string>
 #include <typeinfo>
 
@@ -35,12 +38,6 @@
 // default 128k
 #define GC_THREAD_STACK_SIZE  0x10000
 
-#if 0
-#define TRACE printf
-#include <stdio.h>
-#else
-   #define TRACE(...)
-#endif
 
 // By default, 1MB
 #define TEMP_MEM_THRESHOLD 1000000
@@ -268,7 +265,7 @@ void MemPool::electOlderVM()
 
 void MemPool::clearRing( GarbageableBase *ringRoot )
 {
-   TRACE( "Entering sweep %d, allocated %d \n", gcMemAllocated(), m_allocatedItems );
+   TRACE( "Entering sweep %d, allocated %d", gcMemAllocated(), m_allocatedItems );
    // delete the garbage ring.
    int32 killed = 0;
    GarbageableBase *ring = m_garbageRoot->nextGarbage();
@@ -299,7 +296,7 @@ void MemPool::clearRing( GarbageableBase *ringRoot )
       }
    }
 
-   TRACE( "Sweeping step 1 complete %d\n", gcMemAllocated() );
+   TRACE( "Sweeping step 1 complete %d", gcMemAllocated() );
 
    // deleting persistent finalized items.
    while( later_ring != 0 )
@@ -309,14 +306,14 @@ void MemPool::clearRing( GarbageableBase *ringRoot )
       delete current;
       killed++;
    }
-   TRACE( "Sweeping step 2 complete %d\n", gcMemAllocated() );
+   TRACE( "Sweeping step 2 complete %d", gcMemAllocated() );
 
    m_mtx_newitem.lock();
    fassert( killed <= m_allocatedItems );
    m_allocatedItems -= killed;
    m_mtx_newitem.unlock();
 
-   TRACE( "Sweeping done, allocated %d (killed %d)\n", m_allocatedItems, killed );
+   TRACE( "Sweeping done, allocated %d (killed %d)", m_allocatedItems, killed );
 }
 
 
@@ -597,7 +594,7 @@ void MemPool::markItem( const Item &item )
 
 void MemPool::gcSweep()
 {
-   TRACE( "Sweeping %d (mingen: %d, gen: %d)\n", gcMemAllocated(), m_mingen, m_generation );
+   TRACE( "Sweeping %d (mingen: %d, gen: %d)", gcMemAllocated(), m_mingen, m_generation );
    m_mtx_ramp.lock();
    RampMode *rm = m_curRampMode;
    if( m_curRampMode != 0 )
@@ -711,7 +708,7 @@ void* MemPool::run()
                   memory >= m_thresholdNormal ? 1 :      // normal mode
                   0;                                     // dormient mode
 
-      TRACE( "Working %d (in mode %d) \n", gcMemAllocated(), state );
+      TRACE( "Working %d (in mode %d)", gcMemAllocated(), state );
 
       // put the new ring in the garbage ring
       m_mtx_newitem.lock();
@@ -730,7 +727,7 @@ void* MemPool::run()
             m_mtx_newitem.unlock();
 
             // and now, store the disengaged ring in the standard reclaimable garbage ring.
-            TRACE( "Storing the garbage new ring in the normal ring\n" );
+            MESSAGE( "Storing the garbage new ring in the normal ring" );
             newRingBack->nextGarbage( m_garbageRoot );
             newRingFront->prevGarbage( m_garbageRoot->prevGarbage() );
             m_garbageRoot->prevGarbage()->nextGarbage( newRingFront );
@@ -741,7 +738,7 @@ void* MemPool::run()
       }
       else {
          m_mtx_newitem.unlock();
-         TRACE( "Skipping new ring inclusion due to safe area lock.\n" );
+         MESSAGE( "Skipping new ring inclusion due to safe area lock." );
       }
 
       // if we're in active mode, send a block request to all the enabled vms.
@@ -753,7 +750,7 @@ void* MemPool::run()
          {
             if ( vm->isGcEnabled() )
             {
-               TRACE( "Activating blocking request vm %p\n", vm );
+               TRACE( "Activating blocking request vm %p", vm );
                vm->baton().block();
             }
             vm = vm->m_nextVM;
@@ -761,7 +758,7 @@ void* MemPool::run()
             {
                if ( vm->isGcEnabled() )
                {
-                  TRACE( "Activating blocking request vm %p\n", vm );
+                  TRACE( "Activating blocking request vm %p", vm );
                   vm->baton().block();
                }
                vm = vm->m_nextVM;
@@ -800,7 +797,7 @@ void* MemPool::run()
             vm->decref();
             m_mtx_idlevm.unlock();
 
-            TRACE( "Discarding idle vm %p\n", vm );
+            TRACE( "Discarding idle vm %p", vm );
             continue;
          }
 
@@ -812,7 +809,7 @@ void* MemPool::run()
             m_mtx_idlevm.unlock();
             // we're done with this VM here
             vm->decref();
-            TRACE( "Was going to mark vm %p, but forfaited\n", vm );
+            TRACE( "Was going to mark vm %p, but forfaited", vm );
             // oh damn, we lost the occasion. The VM is back alive.
             continue;
          }
@@ -824,7 +821,7 @@ void* MemPool::run()
          advanceGeneration( vm, oldGeneration );
          m_mtx_vms.unlock();
 
-         TRACE( "Marking idle vm %p at %d\n", vm, m_generation );
+         TRACE( "Marking idle vm %p at %d", vm, m_generation );
 
          // and then mark
          markVM( vm );
@@ -865,7 +862,7 @@ void* MemPool::run()
                advanceGeneration( vm, oldGeneration );
                m_mtx_vms.unlock();
 
-               TRACE( "Marking oldest vm %p at %d \n", vm, m_generation );
+               TRACE( "Marking oldest vm %p at %d", vm, m_generation );
                // and then mark
                markVM( vm );
                // the VM is now free to go.
@@ -906,7 +903,7 @@ void* MemPool::run()
                // we'll clean them during 0.9.1->0.9.2
                //m_bRequestSweep = true;
                //signal = true;
-               TRACE( "Priority with %d\n", m_vmCount );
+               TRACE( "Priority with %d", m_vmCount );
             }
          }
          m_mtx_vms.unlock();
@@ -937,12 +934,12 @@ void* MemPool::run()
       // if we have nothing to do, we shall wait a bit.
       if( ! bMoreWork )
       {
-         TRACE( "Waiting GC idle time\n" );
+         MESSAGE( "Waiting GC idle time" );
          m_eRequest.wait(GC_IDLE_TIME);
       }
    }
 
-   TRACE( "Stopping %d \n", gcMemAllocated() );
+   TRACE( "Stopping %d", gcMemAllocated() );
    return 0;
 }
 

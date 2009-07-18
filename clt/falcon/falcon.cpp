@@ -28,6 +28,9 @@
 #include <iostream>
 #include <stdio.h>
 
+#ifndef NDEBUG
+#include <falcon/trace.h>
+#endif
 
 using namespace Falcon;
 using namespace std;
@@ -246,6 +249,13 @@ bool AppFalcon::setup( int argc, char* argv[] )
       }
 
       Engine::setEncodings( srcEncoding, ioEncoding );
+#ifndef NDEBUG
+      if ( m_options.trace_file != "" )
+      {
+         AutoCString trace_file(m_options.trace_file);
+         TRACE_ON( trace_file.c_str() );
+      }
+#endif
    }
 
 
