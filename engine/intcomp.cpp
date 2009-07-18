@@ -19,6 +19,7 @@
 #include <falcon/runtime.h>
 #include <falcon/modloader.h>
 #include <falcon/src_lexer.h>
+#include <falcon/transcoding.h>
 #include "core_module/core_module.h"
 
 namespace Falcon
@@ -58,19 +59,47 @@ InteractiveCompiler::~InteractiveCompiler()
 
 InteractiveCompiler::t_ret_type InteractiveCompiler::compileNext( const String &input )
 {
-   ROStringStream ss( input );
-   return compileNext( &ss );
+   // we split the thing for performance
+   // and use stack based object to protect against exception raisal
+   if( input.manipulator()->charSize() == 1 )
+   {
+      ROStringStream ss( input );
+      return compileNext( &ss );
+   }
+   else {
+      String temp;
+      TranscodeString(input, "utf-16", temp );
+      ROStringStream ss( temp );
+      TranscoderUTF16 tr( &ss, false );
+      return compileNext( &tr );
+   }
 }
 
 InteractiveCompiler::t_ret_type InteractiveCompiler::compileAll( const String &input )
 {
-   ROStringStream ss( input );
    t_ret_type ret = e_nothing;
 
-   while ( ! ss.eof() )
+   // we split the thing for performance
+   // and use stack based object to protect against exception raisal
+   if( input.manipulator()->charSize() == 1 )
    {
-      // on error, we'll throw.
-      ret = compileNext( &ss );
+      ROStringStream ss( input );
+      while ( ! ss.eof() )
+      {
+         // on error, we'll throw.
+         ret = compileNext( &ss );
+      }
+   }
+   else {
+      String temp;
+      TranscodeString(input, "utf-16", temp );
+      ROStringStream ss( temp );
+      TranscoderUTF16 tr( &ss, false );
+      while ( ! tr.eof() )
+      {
+         // on error, we'll throw.
+         ret = compileNext( &tr );
+      }
    }
 
    return ret;
