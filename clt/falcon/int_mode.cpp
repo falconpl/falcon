@@ -44,6 +44,8 @@ void IntMode::run()
 
    VMachineWrapper intcomp_vm;
    intcomp_vm->link( core_module_init() );
+   Item* describe = intcomp_vm->findGlobalItem("describe");
+   fassert( describe != 0 );
 
    InteractiveCompiler comp( &ml, intcomp_vm.vm() );
    comp.setInteractive( true );
@@ -144,9 +146,9 @@ void IntMode::run()
 
             case InteractiveCompiler::e_expression:
                {
-                  String temp;
-                  comp.vm()->itemToString( temp, &comp.vm()->regA() );
-                  stdOut->writeString( ": " + temp + "\n" );
+                  comp.vm()->pushParameter( comp.vm()->regA() );
+                  comp.vm()->callItem( *describe, 1 );
+                  stdOut->writeString( ": " + *comp.vm()->regA().asString() + "\n" );
                }
                // fallthrough
                

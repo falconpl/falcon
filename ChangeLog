@@ -34,7 +34,10 @@ Falcon (0.9.2.1)
            international strings.
   * fixed: Better behavior of the interactive compiler, now a bit more resistant
            to user error.
-  * fixed: interactive mode didn't work with wide strings and international characters.
+  * fixed: interactive mode didn't work with wide strings and international 
+           characters.
+  * added: Methodic function describe() that can be used as a reflective insect()
+  * minor: Now using describe() instead of toString() in interactive mode.
            
 Falcon (0.9.2)
   * fixed: using more modern throw instead of the obsolete raise() functions

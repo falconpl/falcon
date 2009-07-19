@@ -235,6 +235,7 @@ FALCON_FUNC  vmRelativePath( ::Falcon::VMachine *vm );
 FALCON_FUNC  print ( ::Falcon::VMachine *vm );
 FALCON_FUNC  printl ( ::Falcon::VMachine *vm );
 FALCON_FUNC  inspect ( ::Falcon::VMachine *vm );
+FALCON_FUNC  mth_describe ( ::Falcon::VMachine *vm );
 FALCON_FUNC  seconds ( ::Falcon::VMachine *vm );
 FALCON_FUNC  input ( ::Falcon::VMachine *vm );
 FALCON_FUNC  falcon_getenv( ::Falcon::VMachine *vm );

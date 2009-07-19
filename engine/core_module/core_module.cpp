@@ -82,6 +82,8 @@ Module* core_module_init()
       addParam("item")->addParam("cls");
    self->addExtFunc( "metaclass", &Falcon::core::mth_metaclass )->
       addParam("item");
+   self->addExtFunc( "describe", &Falcon::core::mth_describe )->
+      addParam("item")->addParam("depth")->addParam("maxLen");
 
 
    /*#
@@ -160,6 +162,8 @@ Module* core_module_init()
    self->addClassMethod( bom_meta, "derivedFrom", &Falcon::core::mth_derivedFrom );
    self->addClassMethod( bom_meta, "metaclass", &Falcon::core::mth_metaclass );
    self->addClassMethod( bom_meta, "ptr", &Falcon::core::BOM_ptr );
+   self->addClassMethod( bom_meta, "describe", &Falcon::core::mth_describe ).asSymbol()
+      ->addParam("depth")->addParam("maxLen");
 
    Falcon::Symbol *nil_meta = self->addClass( "Nil" );
    nil_meta->getClassDef()->addInheritance( new Falcon::InheritDef( bom_meta ) );

@@ -130,10 +130,7 @@ void GenericVector::push( void *data )
    {
       m_allocated = m_size + alloc_block;
       byte *target_data = (byte *) memRealloc( m_data, m_allocated * m_itemSize );
-      if ( target_data != 0 )
-      {
-         m_data = target_data;
-      }
+      m_data = target_data;
       //TODO: raise appropriate error
    }
 }

@@ -2,7 +2,7 @@
    FALCON - The Falcon Programming Language.
    FILE: inspect.cpp
 
-   Basic module
+   Deep inspect function.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: Wed, 15 Jul 2009 07:03:13 -0700
@@ -337,17 +337,17 @@ void inspect_internal( VMachine *vm, const Item *elem, int32 level, int32 maxLev
 
    Output is sent to the VM auxiliary stream; for stand-alone scripts,
    this translates into the "standard error stream". Embedders may provide
-   simple debugging facilities by overloading and interceptiong the VM
+   simple debugging facilities by overloading and intercepting the VM
    auxiliary stream and provide separate output for that.
 
-   This function traverse arrays and items deeply; there isn't any protection
+   This function traverses arrays and items deeply; there isn't any protection
    against circular references, which may cause endless loop. However, the
    default maximum depth is 3, which is a good depth for debugging (goes deep,
    but doesn't dig beyond average interesting points). Set to -1 to have
    infinite depth.
 
    By default, only the first 60 characters of strings and elements of membufs
-   are displayed. You may change this default by providing a maxlen parameter.
+   are displayed. You may change this default by providing a @b maxLen parameter.
 
    You may create personalized inspect functions using forward bindings, like
    the following:
@@ -385,6 +385,323 @@ FALCON_FUNC  inspect ( ::Falcon::VMachine *vm )
 }
 
 
+
+
+static void describe_internal( VMachine *vm, String &tgt, const Item *elem, int32 level, int32 maxLevel, int32 maxSize )
+{
+   uint32 count;
+
+   // return if we reached the maximum level.
+   if ( maxLevel >= 0 && level > maxLevel )
+   {
+      tgt += "...";
+      return;
+   }
+
+   switch( elem->type() )
+   {
+      case FLC_ITEM_NIL:
+         tgt += "Nil";
+      break;
+
+      case FLC_ITEM_BOOL:
+         tgt += elem->asBoolean() ? "true" : "false";
+      break;
+
+
+      case FLC_ITEM_INT:
+         tgt.writeNumber( elem->asInteger() );
+      break;
+
+      case FLC_ITEM_NUM:
+         tgt.writeNumber( elem->asNumeric(), "%g" );
+      break;
+
+      case FLC_ITEM_RANGE:
+         elem->toString(tgt);
+      break;
+
+      case FLC_ITEM_STRING:
+         tgt += "\"";
+         if ( maxSize < 0 || elem->asString()->length() < (uint32) maxSize )
+         {
+            tgt += *elem->asString();
+            tgt += "\"";
+         }
+         else {
+            tgt += elem->asString()->subString(0, maxSize );
+            tgt += " ... \"";
+         }
+      break;
+
+      case FLC_ITEM_LBIND:
+         tgt += "&";
+         tgt += *elem->asLBind();
+         if (elem->isFutureBind())
+         {
+            tgt +="|";
+            describe_internal( vm, tgt, &elem->asFutureBind(), level+1, maxLevel, maxSize );
+         }
+      break;
+
+      case FLC_ITEM_MEMBUF:
+      {
+         MemBuf *mb = elem->asMemBuf();
+         tgt += "MB(";
+         tgt.writeNumber( (int64) mb->length() );
+         tgt += ",";
+         tgt.writeNumber( (int64) mb->wordSize() );
+         tgt += ")";
+
+         tgt += " [";
+
+         String fmt;
+         int limit = 0;
+         switch ( mb->wordSize() )
+         {
+            case 1: fmt = "%02X"; limit = 24; break;
+            case 2: fmt = "%04X"; limit = 12; break;
+            case 3: fmt = "%06X"; limit = 9; break;
+            case 4: fmt = "%08X"; limit = 6; break;
+         }
+
+         uint32 max = maxSize < 0 || mb->length() < (uint32) maxSize ? mb->length() : (uint32) maxSize;
+         for( count = 0; count < max; count++ )
+         {
+            tgt.writeNumber( (int64)  mb->get( count ), fmt );
+            tgt += " ";
+         }
+         if ( count == (uint32) maxSize )
+            tgt += " ...";
+         tgt += "]";
+      }
+      break;
+
+      case FLC_ITEM_ARRAY:
+      {
+         CoreArray *arr = elem->asArray();
+         tgt += "[";
+
+         if ( level == maxLevel )
+         {
+            tgt += "...]";
+            break;
+         }
+
+         for( count = 0; count < arr->length(); count++ ) {
+            if ( count == 0 ) tgt += " ";
+
+            describe_internal( vm, tgt, & ((*arr)[count]), level + 1, maxLevel, maxSize );
+
+            if ( count + 1 < arr->length() )
+               tgt += ", ";
+         }
+
+         tgt +="]";
+      }
+      break;
+
+      case FLC_ITEM_DICT:
+      {
+         CoreDict *dict = elem->asDict();
+         if( dict->isBlessed() )
+            tgt += "*";
+
+         tgt += "[";
+
+         if ( level == maxLevel )
+         {
+            tgt += "...=>...]";
+            break;
+         }
+
+         if ( dict->length() == 0 )
+         {
+            tgt += "=>]";
+            break;
+         }
+
+         Item key, value;
+         dict->traverseBegin();
+
+         // separate the first loop to be able to add ", "
+         dict->traverseNext( key, value );
+         describe_internal( vm, tgt, &key, level + 1, maxLevel, maxSize );
+         tgt += " => ";
+         describe_internal( vm, tgt, &value, level + 1, maxLevel, maxSize );
+
+         while( dict->traverseNext( key, value ) )
+         {
+            tgt += ", ";
+            describe_internal( vm, tgt, &key, level + 1, maxLevel, maxSize );
+            tgt += " => ";
+            describe_internal( vm, tgt, &value, level + 1, maxLevel, maxSize );
+         }
+
+         tgt += "]";
+      }
+      break;
+
+      case FLC_ITEM_OBJECT:
+      {
+         CoreObject *arr = elem->asObjectSafe();
+         tgt += arr->generator()->symbol()->name() + "(){ ";
+
+         if ( level == maxLevel )
+         {
+            tgt += "...}";
+            break;
+         }
+
+         const PropertyTable &pt = arr->generator()->properties();
+
+         for( count = 0; count < pt.added() ; count++ )
+         {
+            const String &propName = *pt.getKey( count );
+            Item dummy;
+            arr->getProperty( propName, dummy);
+
+            // in describe skip methods.
+            if ( dummy.isMethod() )
+               continue;
+
+            tgt += propName + " = ";
+
+            describe_internal( vm, tgt, &dummy, level + 1, maxLevel, maxSize );
+            if (count+1 < pt.added())
+            {
+               tgt += ", ";
+            }
+         }
+
+         tgt += "}";
+      }
+      break;
+
+      case FLC_ITEM_CLASS:
+         tgt += "Class " + elem->asClass()->symbol()->name();
+      break;
+
+      case FLC_ITEM_METHOD:
+      {
+         tgt += "(";
+         Item itemp;
+         elem->getMethodItem( itemp );
+         describe_internal( vm, tgt, &itemp, level + 1, maxLevel, maxSize );
+         tgt += ").";
+         tgt += elem->asMethodFunc()->symbol()->name() + "()";
+      }
+      break;
+
+      case FLC_ITEM_CLSMETHOD:
+         tgt += "Class ";
+         tgt += elem->asMethodClassOwner()->generator()->symbol()->name();
+         tgt += "." + elem->asMethodClass()->symbol()->name() + "()";
+      break;
+
+      case FLC_ITEM_FUNC:
+      {
+         const Symbol *funcSym = elem->asFunction()->symbol();
+         tgt += funcSym->name() + "()";
+      }
+      break;
+
+      case FLC_ITEM_REFERENCE:
+         tgt += "->";
+         describe_internal( vm, tgt, elem->dereference(), level + 1, maxLevel, maxSize );
+      break;
+
+      default:
+         tgt += "?";
+   }
+}
+
+
+/*#
+   @function describe
+   @param item The item to be inspected.
+   @optparam depth Maximum inspect depth.
+   @optparam maxLen Limit the display size of possibly very long items as i.e. strings or membufs.
+   @brief Returns the deep contents of an item on a string representation.
+
+   This function returns a string containing a representation of the given item.
+   If the item is deep (an array, an instance, a dictionary) the contents are
+   also passed through this function.
+
+   This function traverses arrays and items deeply; there isn't any protection
+   against circular references, which may cause endless loop. However, the
+   default maximum depth is 3, which is a good depth for debugging (goes deep,
+   but doesn't dig beyond average interesting points). Set to -1 to have
+   infinite depth.
+
+   By default, only the first 60 characters of strings and elements of membufs
+   are displayed. You may change this default by providing a @b maxLen parameter.
+
+   You may create personalized inspect functions using forward bindings, like
+   the following:
+   @code
+   compactDescribe = .[inspect depth|1 maxLen|15]
+   @endcode
+*/
+
+/*#
+   @method describe BOM
+   @optparam depth Maximum inspect depth.
+   @optparam maxLen Limit the display size of possibly very long items as i.e. strings or membufs.
+   @brief Returns the deep contents of an item on a string representation.
+
+   This method returns a string containing a representation of this item.
+   If the item is deep (an array, an instance, a dictionary) the contents are
+   also passed through this function.
+
+   This method traverses arrays and items deeply; there isn't any protection
+   against circular references, which may cause endless loop. However, the
+   default maximum depth is 3, which is a good depth for debugging (goes deep,
+   but doesn't dig beyond average interesting points). Set to -1 to have
+   infinite depth.
+
+   By default, only the first 60 characters of strings and elements of membufs
+   are displayed. You may change this default by providing a @b maxLen parameter.
+*/
+
+FALCON_FUNC  mth_describe ( ::Falcon::VMachine *vm )
+{
+   Item *i_item;
+   Item *i_depth;
+   Item *i_maxLen;
+
+   if( vm->self().isMethodic() )
+   {
+      i_item = &vm->self();
+      i_depth = vm->param(0);
+      i_maxLen = vm->param(1);
+   }
+   else {
+      i_item = vm->param(0);
+      i_depth = vm->param(1);
+      i_maxLen = vm->param(2);
+   }
+
+   if ( i_item == 0
+      || ( i_depth != 0 && ! i_depth->isNil() && ! i_depth->isOrdinal() )
+      || ( i_maxLen != 0 && ! i_maxLen->isNil() && ! i_maxLen->isOrdinal() ) )
+   {
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         origin( e_orig_runtime ).
+         extra( vm->self().isMethodic() ? "[N],[N]" : "X,[N],[N]") );
+   }
+
+   int32 depth = (int32) (i_depth == 0 || i_depth->isNil() ? 3 : i_depth->forceInteger());
+   int32 maxlen = (int32) (i_maxLen == 0 || i_maxLen->isNil() ? 60 : i_maxLen->forceInteger());
+
+
+   String temp;
+   describe_internal( vm, temp, i_item, 0, depth, maxlen );
+   CoreString* res = new CoreString(temp);
+   vm->retval( res );
+}
+
+
 }}
 
-/* end of print.cpp */
+/* end of inspect.cpp */
