@@ -57,17 +57,19 @@ binding = .[
    RuleIgnore( "gdImageDestroy$" )
    //RuleFunc( "gdImageCreateFrom(.+)Ctx", "gdImageCreateFrom(\\1)" )
    RuleIgnore( "gdImageCreateFrom(.+)Ctx" )
-   RuleFunc( "gdImageCreateFrom(.+)Ptr", "gdImageCreateFrom(\\1)Ptr" )
+   RuleFunc( "gdImageCreateFrom(.+)Ptr", "gdImageCreateFrom\\1Ptr" )
    RuleIgnore( "gdImage(Jpeg|WBMP|Png|PngEx|Gif|GifAnimBegin|GifAnimAdd|GifAnimEnd|Gd2|Gd)(Ctx|CtxEx)?$" )
    
    RuleIgnore( "gdImageDestroy$" )
    RuleIgnore( "gdImageCreateFrom(.+)" )
 
+   // UBUNTU version of gd2 is a bit broken. -- it doesn't export gdDrawEllipse
+   RuleIgnore( "gdImageEllipse" )
 
 
-   RuleFunc( "gdFontGet(.+)", "gdFontGet(\\1)" )
+   RuleFunc( "gdFontGet(.+)", "gdFontGet\\1" )
 
-   RulePseudoInit( "gdImageCreate$", "gdImage" )
+   RulePseudoInit( "gdImageCreate$", "GdImage" )
    RulePseudoMethod( "gdImage(.+)Ctx", "GdImage", "gdImage", "\\1" )
    RulePseudoMethod( "gdImage(.+)", "GdImage", "gdImage", "\\1" )
 
@@ -81,8 +83,8 @@ types = .[
 
    // fonts are never destroyed
    RuleTypeOpaque( "gdFont$", "GdFont", nil )
-   RuleTypeOpaque( "gdPoint$", "GdFont", nil )
-   RuleTypeOpaque( "gdFTStringExtra$", "gdFTStringExtra$", nil )
+   RuleTypeOpaque( "gdPoint$", "GdPoint", nil )
+   RuleTypeOpaque( "gdFTStringExtra$", "gdFTStringExtra", nil )
    RuleTypeOpaque( "gdSkin$", "gdSkin", nil )
    
    //RuleTypeOpaque( "gdIOCtx$", "Stream", nil )
@@ -103,7 +105,4 @@ TypeInfo.alias( "gdFTStringExtraStruct*", "gdFTStringExtra*" )
 
 TypeInfo.alias( "gdSkinStruct", "gdSkin" )
 TypeInfo.alias( "gdSkinStruct*", "gdSkin*" )
-
-TypeInfo.alias( "char*", "char const*" )
-TypeInfo.alias( "unsigned char*", "char const*" )
 

@@ -27,10 +27,10 @@ ADD_LIBRARY( ${CURRENT_MODULE} MODULE
 )
 
 #Link
-FALCON_LINK_MODULE( ${CURRENT_MODULE} )
+#FALCON_LINK_MODULE( ${CURRENT_MODULE} )
 
 #If your module needs some lib more, use the followings:
 #
-# TARGET_LINK_LIBRARIES( ${CURRENT_MODULE} falcon_engine)
-# FALCON_INSTALL_MODULE( ${CURRENT_MODULE} )
+TARGET_LINK_LIBRARIES( ${CURRENT_MODULE} falcon_engine libgd.a fontconfig png z jpeg freetype m)
+FALCON_INSTALL_MODULE( ${CURRENT_MODULE} )
 #

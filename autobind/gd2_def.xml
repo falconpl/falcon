@@ -155,20 +155,6 @@
 <Argument id="_82" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
 </Argument>
 </Function>
-<Function id="_461" name="gdImageEllipse" scope="" context="" fullname="gdImageEllipse" member_of="" access="public" type_name="void" type_base="void" >
-<Argument id="_462" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
-</Argument>
-<Argument id="_463" name="cx" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_464" name="cy" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_465" name="w" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_466" name="h" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-<Argument id="_467" name="color" scope="" context="" type_name="int" type_base="int" >
-</Argument>
-</Function>
 <Function id="_435" name="gdImageEllipse" scope="" context="" fullname="gdImageEllipse" member_of="" access="public" type_name="void" type_base="void" >
 <Argument id="_436" name="im" scope="" context="" type_name="gdImageStruct*" type_base="gdImageStruct" indirections="1" >
 </Argument>
