@@ -1751,22 +1751,17 @@ void co_class_getproperty( const Item &item, const String &idx, Item &result )
    {
       Item *prop = sourceClass->properties().getValue( pos );
 
-      // now, accessing a method in a class means that we want to call the base method in a
-      // self item:
       switch( prop->type() )
       {
+         // it is legal to get methods in classes; We can have static methods.
          case FLC_ITEM_FUNC:
-            // the function may be a dead function; by so, the method will become a dead method,
-            // and it's ok for us.
             {
-               VMachine* vm = VMachine::getCurrent();
-               if ( vm != 0 && vm->self().isObject() )
-                  result.setMethod( vm->self().asObjectSafe(), prop->asFunction() );
-               else
-                  result.setMethod( sourceClass, prop->asFunction() );
+               result.setMethod( item, prop->asFunction() );
             }
             break;
 
+         // getting a class in a class creates a classMethod, as getting a class in
+         // an object.
          case FLC_ITEM_CLASS:
             {
                VMachine* vm = VMachine::getCurrent();
