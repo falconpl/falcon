@@ -32,9 +32,26 @@
    @brief Function and classes supporting OS and environment.
 
    This group of functions and classes is meant to provide OS and
-   enviromental basic support to Falcon scripts.
+   environmental basic support to Falcon scripts.
 */
 
+
+/*#
+   @group memory_manipulation Raw memory manipulation functions.
+   @brief DANGEROUS group of functions and methods manipulating memory.
+
+   This group of functions is meant to manipulate directly memory. It is useful
+   to support raw bindings from external C modules returning raw memory areas,
+   or requiring raw memory areas to be passed to them.
+
+   In Falcon, raw memory pointers are just represented as 64-bit integers, eventually
+   cast down to proper sizes on different architectures. In short, they are integers
+   that can be directly modified by the Falcon script and fed in the library.
+
+   Messing with functions in this group is the fastest and safest way to find
+   troubles. Avoid them unless it is necessary to deal with raw pointers coming
+   from outer bindings.
+*/
 
 namespace Falcon {
 
@@ -616,7 +633,10 @@ Module* core_module_init()
       addParam("number")->addParam("value");
    self->addExtFunc( "PageDict", &Falcon::core::PageDict )->
       addParam("pageSize");
-   self->addExtFunc( "MemBuf", &Falcon::core::Make_MemBuf );
+   self->addExtFunc( "MemBuf", &Falcon::core::Make_MemBuf )->
+      addParam("size")->addParam("wordSize");
+   self->addExtFunc( "MemBufFromPtr", &Falcon::core::Make_MemBufFromPtr )->
+      addParam("data")->addParam("size")->addParam("wordSize");
 
    // Creating the TraceStep class:
    // ... first the constructor

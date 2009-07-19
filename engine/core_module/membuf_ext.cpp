@@ -51,6 +51,53 @@ FALCON_FUNC Make_MemBuf( ::Falcon::VMachine *vm )
    vm->retval( mb );
 }
 
+/*#
+   @function MemBufFromPtr
+   @ingroup memory_manipulation
+   @brief Creates a memory buffer to store raw memory coming from external providers.
+   @param data A pointer to the raw memory (as an integer value).
+   @param size The maximum size of the memory.
+   @optparam wordSize Size of each word in bytes (1, 2, 3 or 4).
+
+   Intentionally left undocumented. Don't use if you don't know what you're doing.
+*/
+
+FALCON_FUNC Make_MemBufFromPtr( ::Falcon::VMachine *vm )
+{
+   Item *i_ptr = vm->param(0);
+   Item *i_size = vm->param(1);
+   Item *i_wordSize = vm->param(2);
+
+   if( ( i_ptr == 0 || ! i_ptr->isInteger() ) ||
+       ( i_size == 0 || ! i_size->isOrdinal() ) ||
+       ( i_wordSize != 0 && ! i_wordSize->isOrdinal() )
+      )
+   {
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+            .origin( e_orig_runtime ).extra( "N,[N]" ) );
+   }
+
+   int64 wordSize = i_wordSize == 0 ? 1: i_wordSize->forceInteger();
+   int64 size = i_size->forceInteger();
+   if ( wordSize < 1 || wordSize > 4 || size <= 0 )
+   {
+      throw  new ParamError( ErrorParam( e_param_range, __LINE__ )
+         .origin( e_orig_runtime ) );
+   }
+
+   MemBuf *mb = 0;
+   byte *data = (byte*) i_ptr->asInteger();
+   switch( wordSize )
+   {
+      case 1: mb = new MemBuf_1( data, (uint32) size, false ); break;
+      case 2: mb = new MemBuf_2( data, (uint32) size, false ); break;
+      case 3: mb = new MemBuf_3( data, (uint32) size, false ); break;
+      case 4: mb = new MemBuf_4( data, (uint32) size, false ); break;
+   }
+   fassert( mb != 0 );
+   vm->retval( mb );
+}
+
 
 /*#
    @class MemoryBuffer

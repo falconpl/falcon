@@ -149,6 +149,7 @@ FALCON_FUNC  VMSlot_last( ::Falcon::VMachine *vm );
 FALCON_FUNC  core_exit ( ::Falcon::VMachine *vm );
 FALCON_FUNC  PageDict( ::Falcon::VMachine *vm );
 FALCON_FUNC Make_MemBuf( ::Falcon::VMachine *vm );
+FALCON_FUNC Make_MemBufFromPtr( ::Falcon::VMachine *vm );
 FALCON_FUNC MemoryBuffer_first( ::Falcon::VMachine *vm );
 FALCON_FUNC MemoryBuffer_last( ::Falcon::VMachine *vm );
 FALCON_FUNC MemoryBuffer_front( ::Falcon::VMachine *vm );
