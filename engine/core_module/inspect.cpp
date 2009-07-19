@@ -559,10 +559,10 @@ static void describe_internal( VMachine *vm, String &tgt, const Item *elem, int3
          {
             const String &propName = *pt.getKey( count );
             Item dummy;
-            arr->getProperty( propName, dummy);
+            arr->getProperty( propName, dummy );
 
             // in describe skip methods.
-            if ( dummy.isMethod() )
+            if ( dummy.isFunction() || dummy.isMethod() )
                continue;
 
             tgt += propName + " = ";

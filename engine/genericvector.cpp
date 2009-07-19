@@ -36,7 +36,8 @@ GenericVector::GenericVector( const ElementTraits *traits, uint32 prealloc ):
    if ( m_itemSize % 4 != 0 )
       m_itemSize = (m_itemSize/4 + 1) * 4;
 
-   m_data = (byte *) memAlloc( m_allocated * m_itemSize );
+   if ( m_allocated > 0 )
+      m_data = (byte *) memAlloc( m_allocated * m_itemSize );
 }
 
 void GenericVector::init( const ElementTraits *traits, uint32 prealloc )
@@ -51,7 +52,8 @@ void GenericVector::init( const ElementTraits *traits, uint32 prealloc )
    if ( m_itemSize % 4 != 0 )
       m_itemSize = (m_itemSize/4 + 1) * 4;
 
-   m_data = (byte *) memAlloc( m_allocated * m_itemSize );
+   if( m_allocated > 0 )
+      m_data = (byte *) memAlloc( m_allocated * m_itemSize );
 }
 
 GenericVector::~GenericVector()
@@ -131,7 +133,6 @@ void GenericVector::push( void *data )
       m_allocated = m_size + alloc_block;
       byte *target_data = (byte *) memRealloc( m_data, m_allocated * m_itemSize );
       m_data = target_data;
-      //TODO: raise appropriate error
    }
 }
 

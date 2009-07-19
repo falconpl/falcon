@@ -46,7 +46,13 @@ protected:
 	uint32 m_itemSize;
 	const ElementTraits *m_traits;
 
-	GenericVector() {}
+	GenericVector():
+	   m_data(0),
+	   m_size(0),
+	   m_allocated(0),
+	   m_threshold_size(0)
+	{}
+
 	void init( const ElementTraits *traits, uint32 prealloc );
 
 public:
