@@ -30,7 +30,6 @@
 namespace Falcon {
 
 class Module;
-class ItemVector;
 
 typedef struct tag_StackFrame
 {

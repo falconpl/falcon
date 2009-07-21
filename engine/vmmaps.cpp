@@ -69,7 +69,7 @@ SymModuleMap::SymModuleMap():
 
 
 SymModule::SymModule( LiveModule *mod, const Symbol *sym ):
-   m_item( mod->globals().itemPtrAt( sym->itemId() ) ),
+   m_item( &mod->globals()[ sym->itemId() ] ),
    m_symbol( sym ),
    m_lmod( mod ),
    m_wkiid( -1 )

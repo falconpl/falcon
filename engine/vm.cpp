@@ -421,10 +421,10 @@ LiveModule *VMachine::prelink( Module *mod, bool isMainModule, bool bPrivate )
    const SymbolTable *symtab = &livemod->module()->symbolTable();
 
    // A shortcut
-   ItemVector *globs = &livemod->globals();
+   ItemArray& globs = livemod->globals();
 
    // resize() creates a series of NIL items.
-   globs->resize( symtab->size()+1 );
+   globs.resize( symtab->size()+1 );
 
    bool success = true;
    // now, the symbol table must be traversed.
@@ -588,7 +588,7 @@ bool VMachine::linkSymbol( const Symbol *sym, LiveModule *livemod )
 bool VMachine::linkDefinedSymbol( const Symbol *sym, LiveModule *livemod )
 {
    // A shortcut
-   ItemVector *globs = &livemod->globals();
+   ItemArray& globs = livemod->globals();
 
    // Ok, the symbol is defined here. Link (record) it.
 
@@ -598,21 +598,21 @@ bool VMachine::linkDefinedSymbol( const Symbol *sym, LiveModule *livemod )
    {
       case Symbol::tfunc:
       case Symbol::textfunc:
-         globs->itemAt( sym->itemId() ).setFunction( new CoreFunc( sym, livemod ) );
+         globs[ sym->itemId() ].setFunction( new CoreFunc( sym, livemod ) );
       break;
 
       case Symbol::tvar:
       case Symbol::tconst:
       {
-         Item *itm = globs->itemPtrAt( sym->itemId() );
+         Item& itm = globs[ sym->itemId() ];
          VarDef *vd = sym->getVarDef();
          switch( vd->type() ) {
-            case VarDef::t_bool: itm->setBoolean( vd->asBool() ); break;
-            case VarDef::t_int: itm->setInteger( vd->asInteger() ); break;
-            case VarDef::t_num: itm->setNumeric( vd->asNumeric() ); break;
+            case VarDef::t_bool: itm.setBoolean( vd->asBool() ); break;
+            case VarDef::t_int: itm.setInteger( vd->asInteger() ); break;
+            case VarDef::t_num: itm.setNumeric( vd->asNumeric() ); break;
             case VarDef::t_string:
             {
-               itm->setString( new CoreString( *vd->asString() ) );
+               itm.setString( new CoreString( *vd->asString() ) );
             }
             break;
 
@@ -624,7 +624,7 @@ bool VMachine::linkDefinedSymbol( const Symbol *sym, LiveModule *livemod )
 
       // nil when we don't know what it is.
       default:
-         globs->itemAt( sym->itemId() ).setNil();
+         globs[ sym->itemId() ].setNil();
    }
 
    // see if the symbol needs exportation and eventually do that.
@@ -638,7 +638,7 @@ bool VMachine::linkDefinedSymbol( const Symbol *sym, LiveModule *livemod )
 bool VMachine::linkUndefinedSymbol( const Symbol *sym, LiveModule *livemod )
 {
    // A shortcut
-   ItemVector *globs = &livemod->globals();
+   ItemArray& globs = livemod->globals();
    const Module *mod = livemod->module();
 
    // is the symbol name-spaced?
@@ -689,8 +689,8 @@ bool VMachine::linkUndefinedSymbol( const Symbol *sym, LiveModule *livemod )
 
       if ( localSym != 0 )
       {
-         referenceItem( globs->itemAt( sym->itemId() ),
-            lmod->globals().itemAt( localSym->itemId() ) );
+         referenceItem( globs[ sym->itemId() ],
+            lmod->globals()[ localSym->itemId() ] );
          return true;
       }
 
@@ -705,7 +705,7 @@ bool VMachine::linkUndefinedSymbol( const Symbol *sym, LiveModule *livemod )
          if ( newsym != 0 )
          {
             // be sure to allocate enough space in the module global table.
-            if ( newsym->itemId() >= lmod->globals().size() )
+            if ( newsym->itemId() >= lmod->globals().length() )
             {
                lmod->globals().resize( newsym->itemId() );
             }
@@ -713,7 +713,7 @@ bool VMachine::linkUndefinedSymbol( const Symbol *sym, LiveModule *livemod )
             // now we have space to link it.
             if ( linkCompleteSymbol( newsym, lmod ) )
             {
-               referenceItem( globs->itemAt( sym->itemId() ), *lmod->globals().itemPtrAt( newsym->itemId() ) );
+               referenceItem( globs[ sym->itemId() ], lmod->globals()[newsym->itemId()] );
                return true;
             }
             else {
@@ -733,7 +733,7 @@ bool VMachine::linkUndefinedSymbol( const Symbol *sym, LiveModule *livemod )
       if( sm != 0 )
       {
          // link successful, we must set the current item as a reference of the original
-         referenceItem( globs->itemAt( sym->itemId() ), *sm->item() );
+         referenceItem( globs[ sym->itemId() ], *sm->item() );
          return true;
       }
    }
@@ -742,7 +742,7 @@ bool VMachine::linkUndefinedSymbol( const Symbol *sym, LiveModule *livemod )
    SymModule symmod;
    if ( linkSymbolDynamic( sym->name(), symmod ) )
    {
-      referenceItem( globs->itemAt( sym->itemId() ), *symmod.item() );
+      referenceItem( globs[ sym->itemId() ], *symmod.item() );
       return true;
    }
 
@@ -783,7 +783,7 @@ bool VMachine::exportAllSymbols( LiveModule *livemod )
 bool VMachine::exportSymbol( const Symbol *sym, LiveModule *livemod )
 {
    // A shortcut
-   ItemVector *globs = &livemod->globals();
+   ItemArray& globs = livemod->globals();
    const Module *mod = livemod->module();
 
       // Is this symbol exported?
@@ -800,7 +800,7 @@ bool VMachine::exportSymbol( const Symbol *sym, LiveModule *livemod )
                   symbol( sym->name() ) );
       }
 
-      SymModule tmp( globs->itemPtrAt( sym->itemId() ), livemod, sym );
+      SymModule tmp( &globs[ sym->itemId() ], livemod, sym );
       m_globalSyms.insert( &sym->name(), &tmp );
 
       // export also the instance, if it is not already exported.
@@ -808,7 +808,7 @@ bool VMachine::exportSymbol( const Symbol *sym, LiveModule *livemod )
       {
          sym = sym->getInstance();
          if ( ! sym->exported() ) {
-            SymModule tmp( globs->itemPtrAt( sym->itemId() ), livemod, sym );
+            SymModule tmp( &globs[ sym->itemId() ], livemod, sym );
             m_globalSyms.insert( &sym->name(), &tmp );
          }
       }
@@ -827,11 +827,11 @@ bool VMachine::exportSymbol( const Symbol *sym, LiveModule *livemod )
             );
       }
 
-      SymModule tmp( livemod->wkitems().size(), livemod, sym );
+      SymModule tmp( livemod->wkitems().length(), livemod, sym );
       m_wellKnownSyms.insert( &sym->name(), &tmp );
 
       // and don't forget to add a copy of the item
-      livemod->wkitems().push( globs->itemPtrAt( sym->itemId() ) );
+      livemod->wkitems().append( globs[ sym->itemId() ] );
    }
 
    return true;
@@ -857,7 +857,7 @@ bool VMachine::linkSymbolDynamic( const String &name, SymModule &symdata )
          if ( newsym != 0 )
          {
             // be sure to allocate enough space in the module global table.
-            if ( newsym->itemId() >= lmod->globals().size() )
+            if ( newsym->itemId() >= lmod->globals().length() )
             {
                lmod->globals().resize( newsym->itemId() );
             }
@@ -865,7 +865,7 @@ bool VMachine::linkSymbolDynamic( const String &name, SymModule &symdata )
             // now we have space to link it.
             if ( linkCompleteSymbol( newsym, lmod ) )
             {
-               symdata = SymModule( lmod->globals().itemPtrAt( newsym->itemId() ), lmod, newsym );
+               symdata = SymModule( &lmod->globals()[ newsym->itemId() ], lmod, newsym );
                return true;
             }
             else {
@@ -888,7 +888,7 @@ bool VMachine::linkSymbolDynamic( const String &name, SymModule &symdata )
 bool VMachine::linkClassSymbol( const Symbol *sym, LiveModule *livemod )
 {
    // shortcut
-   ItemVector *globs = &livemod->globals();
+   ItemArray& globs = livemod->globals();
 
    CoreClass *cc = linkClass( livemod, sym );
    if ( cc == 0 )
@@ -897,14 +897,14 @@ bool VMachine::linkClassSymbol( const Symbol *sym, LiveModule *livemod )
    // we need to add it anyhow to the GC to provoke its destruction at VM end.
    // and hey, you could always destroy symbols if your mood is so from falcon ;-)
    // dereference as other classes may have referenced this item1
-   globs->itemAt( cc->symbol()->itemId() ).dereference()->setClass( cc );
+   globs[ cc->symbol()->itemId() ].dereference()->setClass( cc );
 
    // if this class was a WKI, we must also set the relevant exported symbol
    if ( sym->isWKS() )
    {
       SymModule *tmp = (SymModule *) m_wellKnownSyms.find( &sym->name() );
       fassert( tmp != 0 ); // we just added it
-      tmp->liveModule()->wkitems().itemAt( tmp->wkiid() ) = cc;
+      tmp->liveModule()->wkitems()[ tmp->wkiid() ] = cc;
    }
 
    if ( sym->getClassDef()->isMetaclassFor() >= 0 )
@@ -919,9 +919,9 @@ bool VMachine::linkClassSymbol( const Symbol *sym, LiveModule *livemod )
 bool VMachine::linkInstanceSymbol( const Symbol *obj, LiveModule *livemod )
 {
    // shortcut
-   ItemVector *globs = &livemod->globals();
+   ItemArray& globs = livemod->globals();
    Symbol *cls = obj->getInstance();
-   Item *clsItem = globs->itemAt( cls->itemId() ).dereference();
+   Item *clsItem = globs[ cls->itemId() ].dereference();
 
    if ( clsItem == 0 || ! clsItem->isClass() ) {
          new CodeError( ErrorParam( e_no_cls_inst, obj->declaredAt() ).origin( e_orig_vm ).
@@ -932,14 +932,14 @@ bool VMachine::linkInstanceSymbol( const Symbol *obj, LiveModule *livemod )
    }
    else {
       CoreObject *co = clsItem->asClass()->createInstance();
-      globs->itemAt( obj->itemId() ).dereference()->setObject( co );
+      globs[ obj->itemId() ].dereference()->setObject( co );
 
       // if this class was a WKI, we must also set the relevant exported symbol
       if ( obj->isWKS() )
       {
          SymModule *tmp = (SymModule *) m_wellKnownSyms.find( &obj->name() );
          fassert( tmp != 0 ); // we just added it
-         tmp->liveModule()->wkitems().itemAt( tmp->wkiid() ) = co;
+         tmp->liveModule()->wkitems()[ tmp->wkiid() ] = co;
       }
    }
 
@@ -949,13 +949,13 @@ bool VMachine::linkInstanceSymbol( const Symbol *obj, LiveModule *livemod )
 
 void VMachine::initializeInstance( const Symbol *obj, LiveModule *livemod )
 {
-   ItemVector *globs = &livemod->globals();
+   ItemArray& globs = livemod->globals();
 
    Symbol *cls = obj->getInstance();
    if ( cls->getClassDef()->constructor() != 0 )
    {
-      SafeItem ctor = *globs->itemAt( cls->getClassDef()->constructor()->itemId() ).dereference();
-      ctor.methodize( *globs->itemAt( obj->itemId() ).dereference() );
+      SafeItem ctor = *globs[cls->getClassDef()->constructor()->itemId() ].dereference();
+      ctor.methodize( *globs[ obj->itemId() ].dereference() );
 
       // If we can't call, we have a wrong init.
       try {
@@ -1075,9 +1075,7 @@ PropertyTable *VMachine::createClassTemplate( LiveModule *lmod, const Map &pt )
          case VarDef::t_reference:
          {
             const Symbol *sym = vd->asSymbol();
-            Item *ptr = vdmod->lmod->globals().itemPtrAt( sym->itemId() );
-            referenceItem( e.m_value, *ptr );
-
+            referenceItem( e.m_value, vdmod->lmod->globals()[ sym->itemId() ] );
          }
          break;
 
@@ -1203,7 +1201,7 @@ bool VMachine::linkSubClass( LiveModule *lmod, const Symbol *clssym,
       else if ( parent->isUndefined() )
       {
          // we have already linked the symbol for sure.
-         Item *icls = lmod->globals().itemAt( parent->itemId() ).dereference();
+         Item *icls = lmod->globals()[ parent->itemId() ].dereference();
 
          if ( ! icls->isClass() )
          {
@@ -1346,7 +1344,7 @@ void VMachine::reset()
    }
    else
    {
-      stack().resize(0);
+      stack().length(0);
       m_currentContext->tryFrame() = i_noTryFrame;
    }
 
@@ -1383,7 +1381,7 @@ void VMachine::fillErrorTraceback( Error &error )
 
    while( base != 0 )
    {
-      StackFrame &frame = *(StackFrame *) stack().at( base - VM_FRAME_SPACE );
+      StackFrame &frame = *(StackFrame *) &stack()[ base - VM_FRAME_SPACE ];
       const Symbol *sym = frame.m_symbol;
       if ( sym != 0 )
       { // possible when VM has not been initiated from main
@@ -1408,7 +1406,7 @@ bool VMachine::getCaller( const Symbol *&sym, const Module *&module)
    if ( stackBase() < VM_FRAME_SPACE )
       return false;
 
-   StackFrame &frame = *(StackFrame *) stack().at( stackBase() - VM_FRAME_SPACE );
+   StackFrame &frame = *(StackFrame *) &stack()[ stackBase() - VM_FRAME_SPACE ];
    sym = frame.m_symbol;
    module = frame.m_module->module();
    return sym != 0 && module != 0;
@@ -1419,7 +1417,7 @@ bool VMachine::getCallerItem( Item &caller, uint32 level )
    uint32 sbase = stackBase();
    while( sbase >= VM_FRAME_SPACE && level > 0 )
    {
-      StackFrame &frame = *(StackFrame *) stack().at( sbase - VM_FRAME_SPACE );
+      StackFrame &frame = *(StackFrame *) &stack()[ sbase - VM_FRAME_SPACE ];
       sbase = frame.m_stack_base;
       level--;
    }
@@ -1427,10 +1425,10 @@ bool VMachine::getCallerItem( Item &caller, uint32 level )
    if ( sbase < VM_FRAME_SPACE )
       return false;
 
-   StackFrame &frame = *(StackFrame *) stack().at( sbase - VM_FRAME_SPACE );
+   StackFrame &frame = *(StackFrame *) &stack()[ sbase - VM_FRAME_SPACE ];
    const Symbol* sym = frame.m_symbol;
    const LiveModule* module = frame.m_module;
-   caller = module->globals().itemAt( sym->itemId() );
+   caller = module->globals()[ sym->itemId() ];
    if ( ! caller.isFunction() )
       return false;
 
@@ -1466,7 +1464,7 @@ void VMachine::fillErrorContext( Error *err, bool filltb )
 
 void VMachine::callFrameNow( ext_func_frame_t callbackFunc )
 {
-   ((StackFrame *)stack().at( stackBase() - VM_FRAME_SPACE ) )->m_endFrameFunc = callbackFunc;
+   ((StackFrame *)&stack()[stackBase() - VM_FRAME_SPACE ])->m_endFrameFunc = callbackFunc;
    switch( m_currentContext->pc() )
    {
       case i_pc_call_external_ctor:
@@ -1496,7 +1494,7 @@ void VMachine::returnHandler( ext_func_frame_t callbackFunc )
 {
    if ( stackBase() >= VM_FRAME_SPACE )
    {
-      StackFrame *frame = (StackFrame *) stack().at( stackBase() - VM_FRAME_SPACE );
+      StackFrame *frame = (StackFrame *) &stack()[ stackBase() - VM_FRAME_SPACE ];
       frame->m_endFrameFunc = callbackFunc;
    }
 }
@@ -1506,7 +1504,7 @@ ext_func_frame_t VMachine::returnHandler()
 {
    if ( stackBase() > VM_FRAME_SPACE )
    {
-      StackFrame *frame = (StackFrame *) stack().at( stackBase() - VM_FRAME_SPACE );
+      StackFrame *frame = (StackFrame *) &stack()[ stackBase() - VM_FRAME_SPACE ];
       return frame->m_endFrameFunc;
    }
    return 0;
@@ -2129,14 +2127,14 @@ void VMachine::periodicCallback()
 void VMachine::pushTry( uint32 landingPC )
 {
    Item frame1( (((int64) landingPC) << 32) | (int64) m_currentContext->tryFrame() );
-   m_currentContext->tryFrame() = stack().size();
-   stack().push( &frame1 );
+   m_currentContext->tryFrame() = stack().length();
+   stack().append( frame1 );
 }
 
 void VMachine::popTry( bool moveTo )
 {
    // If the try frame is wrong or not in current stack frame...
-   if ( stack().size() <= tryFrame() || stackBase() > tryFrame() )
+   if ( stack().length() <= tryFrame() || stackBase() > tryFrame() )
    {
       //TODO: raise proper error
       throw new CodeError( ErrorParam( e_stackuf, currentSymbol()->declaredAt() ).
@@ -2146,7 +2144,7 @@ void VMachine::popTry( bool moveTo )
    }
 
    // get the frame and resize the stack
-   int64 tf_land = stack().itemAt( tryFrame() ).asInteger();
+   int64 tf_land = stack()[ tryFrame() ].asInteger();
    stack().resize( tryFrame() );
 
    // Change the try frame, and eventually move the PC to the proper position
@@ -2919,9 +2917,9 @@ static bool vm_func_eval( VMachine *vm )
    // if the first element is not callable, generate an array
    CoreArray *array = new CoreArray( count );
    Item *data = array->items().elements();
-   int32 base = vm->stack().size() - count;
+   int32 base = vm->stack().length() - count;
 
-   memcpy( data, vm->stack().itemPtrAt(base),array->items().esize( count ) );
+   memcpy( data, &vm->stack()[base],array->items().esize( count ) );
 
    array->length( count );
    vm->regA() = array;
@@ -2940,12 +2938,12 @@ bool VMachine::functionalEval( const Item &itm, uint32 paramCount, bool retArray
       {
          CoreArray *arr = itm.asArray();
          // prepare for parametric evaluation
-         fassert( stackBase() + paramCount <= stack().size() );
+         fassert( stackBase() + paramCount <= stack().length() );
          for( uint32 pi = 1; pi <= paramCount; ++pi )
          {
             String s;
             s.writeNumber( (int64) pi );
-            arr->setProperty(s, stack().itemAt( stack().size() - pi ) );
+            arr->setProperty(s, stack()[ stack().length() - pi] );
          }
 
          createFrame(0);
@@ -3006,9 +3004,9 @@ bool VMachine::functionalEval( const Item &itm, uint32 paramCount, bool retArray
          {
             CoreArray *array = new CoreArray( count );
             Item *data = array->items().elements();
-            int32 base = stack().size() - count;
+            int32 base = stack().length() - count;
 
-            memcpy( data, stack().itemPtrAt(base), array->items().esize( count ) );
+            memcpy( data, &stack()[base], array->items().esize( count ) );
             array->length( count );
             regA() = array;
          }
@@ -3070,7 +3068,7 @@ Item *VMachine::findWKI( const String &name ) const
 {
    const SymModule *sm = (SymModule *) m_wellKnownSyms.find( &name );
    if ( sm == 0 ) return 0;
-   return sm->liveModule()->wkitems().itemPtrAt( sm->wkiid() );
+   return &sm->liveModule()->wkitems()[ sm->wkiid() ];
 }
 
 
@@ -3243,15 +3241,15 @@ bool VMachine::consumeSignal()
 
    while( base != 0 )
    {
-      StackFrame &frame = *(StackFrame *) stack().at( base - VM_FRAME_SPACE );
+      StackFrame &frame = *(StackFrame *) &stack()[ base - VM_FRAME_SPACE ];
       if( frame.m_endFrameFunc == coreslot_broadcast_internal )
       {
          frame.m_endFrameFunc = 0;
          // eventually call the onMessageComplete
-         Item *msgItem = (Item *) stack().at( base + 4 );  // local(4)
-         if( msgItem->isInteger() )
+         const Item& msgItem = stack()[base + 4];  // local(4)
+         if( msgItem.isInteger() )
          {
-            VMMessage* msg = (VMMessage*) msgItem->asInteger();
+            VMMessage* msg = (VMMessage*) msgItem.asInteger();
             msg->onMsgComplete( true );
             delete msg;
          }
@@ -3290,9 +3288,9 @@ VMContext* VMachine::coPrepare( int32 pSize )
       // copy flat
       for( int32 i = 0; i < pSize; i++ )
       {
-         ctx->stack().push( &stack().itemAt( stack().size() - pSize + i ) );
+         ctx->stack().append( stack()[ stack().length() - pSize + i ] );
       }
-      stack().resize( stack().size() - pSize );
+      stack().resize( stack().length() - pSize );
    }
    // rotate the context
    m_contexts.pushBack( ctx );
@@ -3428,25 +3426,25 @@ void VMachine::prepareFrame( CoreFunc* target, uint32 paramCount )
 
       this->regBind().flags(0);
       // We know we have (probably) a named parameter.
-      uint32 size = this->stack().size();
+      uint32 size = this->stack().length();
       uint32 paramBase = size - paramCount;
-      ItemVector iv(8);
+      ItemArray iv(8);
 
       uint32 pid = 0;
 
       // first step; identify future binds and pack parameters.
       while( paramBase+pid < size )
       {
-         Item &item = this->stack().itemAt( paramBase+pid );
+         Item &item = this->stack()[ paramBase+pid ];
          if ( item.isFutureBind() )
          {
             // we must move the parameter into the right position
-            iv.push( &item );
+            iv.append( item );
             for( uint32 pos = paramBase + pid + 1; pos < size; pos ++ )
             {
-               this->stack().itemAt( pos - 1 ) = this->stack().itemAt( pos );
+               this->stack()[ pos - 1 ] = this->stack()[ pos ];
             }
-            this->stack().itemAt( size-1 ).setNil();
+            this->stack()[ size-1 ].setNil();
             size--;
             paramCount--;
          }
@@ -3456,9 +3454,9 @@ void VMachine::prepareFrame( CoreFunc* target, uint32 paramCount )
       this->stack().resize( size );
 
       // second step: apply future binds.
-      for( uint32 i = 0; i < iv.size(); i ++ )
+      for( uint32 i = 0; i < iv.length(); i ++ )
       {
-         Item &item = iv.itemAt( i );
+         Item &item = iv[i];
 
          // try to find the parameter
          const String *pname = item.asLBind();
@@ -3468,13 +3466,13 @@ void VMachine::prepareFrame( CoreFunc* target, uint32 paramCount )
          }
 
          // place it in the stack; if the stack is not big enough, resize it.
-         if ( this->stack().size() <= param->itemId() + paramBase )
+         if ( this->stack().length() <= param->itemId() + paramBase )
          {
             paramCount = param->itemId()+1;
             this->stack().resize( paramCount + paramBase );
          }
 
-         this->stack().itemAt( param->itemId() + paramBase ) = item.asFBind()->origin();
+         this->stack()[ param->itemId() + paramBase ] = item.asFBind()->origin();
       }
    }
 
@@ -3485,14 +3483,14 @@ void VMachine::prepareFrame( CoreFunc* target, uint32 paramCount )
 
       if( paramCount < tg_def->params() )
       {
-         this->stack().resize( this->stack().size() + tg_def->params() - paramCount );
+         this->stack().resize( this->stack().length() + tg_def->params() - paramCount );
          paramCount = tg_def->params();
       }
 
       this->createFrame( paramCount );
 
       // now we can change the stack base
-      this->stackBase() = this->stack().size();
+      this->stackBase() = this->stack().length();
 
       // space for locals
       if ( tg_def->locals() > 0 )
@@ -3509,7 +3507,7 @@ void VMachine::prepareFrame( CoreFunc* target, uint32 paramCount )
       this->createFrame( paramCount );
 
       // now we can change the stack base
-      this->stackBase() = this->stack().size();
+      this->stackBase() = this->stack().length();
 
       // so we can have adequate tracebacks.
       this->m_currentContext->lmodule( target->liveModule() );

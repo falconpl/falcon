@@ -41,8 +41,6 @@ VMContext::VMContext()
 
    m_atomicMode = false;
 
-   m_stack = new ItemVector;
-   m_stack->threshHold( VM_STACK_MEMORY_THRESHOLD );
    m_stackBase = 0;
 
    m_tryFrame = VMachine::i_noTryFrame;
@@ -60,8 +58,6 @@ VMContext::VMContext( const VMContext& other )
    m_schedule = 0.0;
    m_priority = 0;
 
-   m_stack = new ItemVector;
-   m_stack->threshHold( VM_STACK_MEMORY_THRESHOLD );
    m_stackBase = 0;
 
    m_tryFrame = VMachine::i_noTryFrame;
@@ -74,7 +70,6 @@ VMContext::VMContext( const VMContext& other )
 
 VMContext::~VMContext()
 {
-   delete  m_stack;
 }
 
 void VMContext::scheduleAfter( numeric secs )
@@ -122,8 +117,8 @@ void VMContext::signaled()
 void VMContext::createFrame( uint32 paramCount, ext_func_frame_t frameEndFunc )
 {
    // space for frame
-   stack().resize( stack().size() + VM_FRAME_SPACE );
-   StackFrame *frame = (StackFrame *) stack().at( stack().size() - VM_FRAME_SPACE );
+   stack().resize( stack().length() + VM_FRAME_SPACE );
+   StackFrame *frame = (StackFrame *) &stack()[ stack().length() - VM_FRAME_SPACE ];
    frame->header.type( FLC_ITEM_INVALID );
 
    frame->m_symbol = symbol();
@@ -146,7 +141,7 @@ void VMContext::createFrame( uint32 paramCount, ext_func_frame_t frameEndFunc )
    frame->m_binding = regBind();
 
    // now we can change the stack base
-   stackBase() = stack().size();
+   stackBase() = stack().length();
 }
 
 }

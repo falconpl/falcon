@@ -285,7 +285,7 @@ bool ItemArray::change( const ItemArray &other, int32 begin, int32 end )
    // this considers also negative range which already includes their extreme.
    if ( m_size - rsize + other.m_size > m_alloc )
    {
-      m_alloc =  m_size - rsize +other.m_size;
+      m_alloc =  m_size - rsize + other.m_size;
       Item *mem = (Item *) memAlloc( esize( m_alloc ) );
       if ( begin > 0 )
          memcpy( mem, m_data, esize( begin ) );
@@ -321,7 +321,7 @@ bool ItemArray::insertSpace( uint32 pos, uint32 size )
       return false;
 
    if ( m_alloc < m_size + size ) {
-      m_alloc = m_size + size;
+      m_alloc = ((m_size + size)/flc_ARRAY_GROWTH+1)*flc_ARRAY_GROWTH;
       Item *mem = (Item *) memAlloc( esize( m_alloc ) );
       if ( pos > 0 )
          memcpy( mem , m_data, esize( pos ) );
@@ -395,16 +395,34 @@ void ItemArray::resize( uint32 size ) {
          memFree( m_data );
          m_data = 0;
       }
+      m_alloc = 0;
    }
    // use this request also to force size in shape with alloc.
-   else if ( m_size != size || m_alloc != m_size ) {
-      m_data = (Item *) memRealloc( m_data, esize( size ) );
-      for( uint32 i = m_size; i < size; i++ ) {
-         m_data[ i ].type( FLC_ITEM_NIL );
-      }
+   else if ( size > m_alloc ) {
+      m_alloc = (size/flc_ARRAY_GROWTH + 1) *flc_ARRAY_GROWTH;
+      m_data = (Item *) memRealloc( m_data, esize( m_alloc ) );
+      memset( m_data + m_size, 0, esize( m_alloc - m_size ) );
    }
+   else if ( size > m_size )
+      memset( m_data + m_size, 0, esize( size - m_size ) );
+
    m_size = size;
-   m_alloc = size;
+}
+
+void ItemArray::compact() {
+   if ( m_size == 0 ) {
+      if ( m_data != 0 ) {
+         memFree( m_data );
+         m_data = 0;
+      }
+      m_alloc = 0;
+   }
+   else if ( m_size < m_alloc )
+   {
+      m_alloc = m_size;
+      m_data = (Item *) memRealloc( m_data, esize( m_alloc ) );
+      memset( m_data + m_size, 0, esize( m_alloc - m_size ) );
+   }
 }
 
 void ItemArray::reserve( uint32 size ) {

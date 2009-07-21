@@ -57,7 +57,7 @@ FALCON_FUNC  paramCount ( ::Falcon::VMachine *vm )
       throw new GenericError( ErrorParam( e_stackuf, __LINE__ ).origin( e_orig_runtime ) );
    }
    else {
-      StackFrame *thisFrame = (StackFrame *) &vm->stackItem( vm->stackBase() - VM_FRAME_SPACE );
+      StackFrame *thisFrame = vm->currentFrame();
       if( thisFrame->m_stack_base == 0 ) {
          throw new GenericError( ErrorParam( e_param_range, __LINE__ ).origin( e_orig_runtime ) );
       }
@@ -100,7 +100,7 @@ FALCON_FUNC  _parameter ( ::Falcon::VMachine *vm )
    else {
       uint32 val = (uint32) number->forceInteger();
 
-      StackFrame *thisFrame = (StackFrame *) vm->stack().at( vm->stackBase() - VM_FRAME_SPACE );
+      StackFrame *thisFrame = vm->currentFrame();
       uint32 oldbase = thisFrame->m_stack_base;
       if( oldbase == 0 ) {
          throw new GenericError( ErrorParam( e_param_range, __LINE__ ).origin( e_orig_runtime ) );
@@ -108,7 +108,7 @@ FALCON_FUNC  _parameter ( ::Falcon::VMachine *vm )
       }
 
       // ...but we want the parameter count of our caller.
-      StackFrame *prevFrame = (StackFrame *) vm->stack().at( oldbase - VM_FRAME_SPACE );
+      StackFrame *prevFrame = (StackFrame *) &vm->stack()[ oldbase - VM_FRAME_SPACE ];
       // ...while the parameters are below our frame's base.
 
       if( val >= 0 && val < prevFrame->m_param_count )
@@ -205,7 +205,7 @@ FALCON_FUNC  paramSet ( ::Falcon::VMachine *vm )
    {
       uint32 val = (uint32) number->forceInteger();
 
-      StackFrame *thisFrame = (StackFrame *) &vm->stackItem( vm->stackBase() - VM_FRAME_SPACE );
+      StackFrame *thisFrame = vm->currentFrame();
       uint32 oldbase = thisFrame->m_stack_base;
       if( oldbase == 0 ) {
          throw new GenericError( ErrorParam( e_param_range, __LINE__ ).origin( e_orig_runtime ) );
@@ -235,18 +235,18 @@ FALCON_FUNC core_argv( VMachine *vm )
       throw new GenericError( ErrorParam( e_stackuf, __LINE__ ).origin( e_orig_runtime ) );
       
    // get the previous stack frame.
-   StackFrame *thisFrame = (StackFrame *) vm->stack().at( vm->stackBase() - VM_FRAME_SPACE );
+   StackFrame *thisFrame = vm->currentFrame();
    uint32 oldbase = thisFrame->m_stack_base;
    if( oldbase == 0 )
       throw new GenericError( ErrorParam( e_param_range, __LINE__ ).origin( e_orig_runtime ) );
 
    // ...but we want the parameter count of our caller.
-   StackFrame *prevFrame = (StackFrame *) vm->stack().at( oldbase - VM_FRAME_SPACE );
+   StackFrame *prevFrame = (StackFrame *) &vm->stack()[ oldbase - VM_FRAME_SPACE ];
    // ...while the parameters are below our frame's base.
    if( prevFrame->m_param_count > 0 )
    {
       CoreArray* arr = new CoreArray(prevFrame->m_param_count);
-      Item* first = vm->stack().itemPtrAt( oldbase - VM_FRAME_SPACE - prevFrame->m_param_count );
+      Item* first = &vm->stack()[ oldbase - VM_FRAME_SPACE - prevFrame->m_param_count ];
       memcpy( arr->items().elements(), first, arr->items().esize( prevFrame->m_param_count ) );
       arr->length( prevFrame->m_param_count );
       vm->retval( arr );
@@ -269,14 +269,14 @@ FALCON_FUNC core_argd( VMachine *vm )
       throw new GenericError( ErrorParam( e_stackuf, __LINE__ ).origin( e_orig_runtime ) );
       
    // get the previous stack frame.
-   StackFrame *thisFrame = (StackFrame *) vm->stack().at( vm->stackBase() - VM_FRAME_SPACE );
+   StackFrame *thisFrame = (StackFrame *) &vm->stack()[ vm->stackBase() - VM_FRAME_SPACE ];
    uint32 oldbase = thisFrame->m_stack_base;
    
    if( oldbase == 0 )
       throw new GenericError( ErrorParam( e_param_range, __LINE__ ).origin( e_orig_runtime ) );
 
    // ...but we want the parameter count of our caller.
-   StackFrame *prevFrame = (StackFrame *) vm->stack().at( oldbase - VM_FRAME_SPACE );
+   StackFrame *prevFrame = (StackFrame *) &vm->stack()[ oldbase - VM_FRAME_SPACE ];
    
    // get the caller function symbol --- it holds the declared parameters
    const Symbol* sym = thisFrame->m_symbol;
@@ -285,7 +285,7 @@ FALCON_FUNC core_argd( VMachine *vm )
       &sym->getExtFuncDef()->parameters()->map();
       
    CoreDict* ret = 0;
-   Item* first = vm->stack().itemPtrAt( oldbase - VM_FRAME_SPACE - prevFrame->m_param_count );
+   Item* first = &vm->stack()[ oldbase - VM_FRAME_SPACE - prevFrame->m_param_count ];
       
    // ...while the parameters are below our frame's base.
    MapIterator iter = st->begin();

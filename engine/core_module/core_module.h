@@ -337,7 +337,7 @@ FALCON_FUNC  mth_arrayHead ( ::Falcon::VMachine *vm );
 FALCON_FUNC  mth_arrayTail ( ::Falcon::VMachine *vm );
 FALCON_FUNC  mth_arrayFill ( ::Falcon::VMachine *vm );
 FALCON_FUNC  arrayBuffer ( ::Falcon::VMachine *vm );
-
+FALCON_FUNC  mth_arrayCompact ( ::Falcon::VMachine *vm );
 
 FALCON_FUNC  Array_comp ( ::Falcon::VMachine *vm );
 FALCON_FUNC  Array_front ( ::Falcon::VMachine *vm );

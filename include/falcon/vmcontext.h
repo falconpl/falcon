@@ -32,7 +32,6 @@ namespace Falcon {
 
 class Symbol;
 class Item;
-class ItemVector;
 class VMSemaphore;
 
 /** Class representing a coroutine execution context. */
@@ -47,7 +46,7 @@ class FALCON_DYN_CLASS VMContext: public BaseAlloc
    Item m_regBind;
    Item m_regBindP;
 
-   ItemVector *m_stack;
+   ItemArray m_stack;
    VMSemaphore *m_sleepingOn;
 
    /** Currently executed symbol.
@@ -177,17 +176,17 @@ public:
    */
    Item &latcher() { return m_regL2; }
 
-   ItemVector &stack() { return *m_stack; }
-   const ItemVector &stack() const { return *m_stack; }
+   ItemArray &stack() { return m_stack; }
+   const ItemArray &stack() const { return m_stack; }
 
    VMSemaphore *sleepingOn() const { return m_sleepingOn; }
    void sleepOn( VMSemaphore *sl ) { m_sleepingOn = sl; }
 
    /** Returns the current module global variables vector. */
-   ItemVector &globals() { return m_lmodule->globals(); }
+   ItemArray &globals() { return m_lmodule->globals(); }
 
    /** Returns the current module global variables vector (const version). */
-   const ItemVector &globals() const { return m_lmodule->globals(); }
+   const ItemArray &globals() const { return m_lmodule->globals(); }
 
    /** Returns the currently active live module. */
    LiveModule *lmodule() const { return m_lmodule; }
@@ -210,7 +209,7 @@ public:
    /** The currently active frame in this context */
    StackFrame* currentFrame() const
    {
-      return (StackFrame *) stack().at( stackBase() - VM_FRAME_SPACE );
+      return (StackFrame *) &m_stack[ stackBase() - VM_FRAME_SPACE ];
    }
 
    /** Creates a stack frame taking a certain number of parameters.

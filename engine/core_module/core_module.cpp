@@ -412,6 +412,7 @@ Module* core_module_init()
       addParam("propName")->addParam("value");
    self->addClassMethod( array_meta, "properties", &Falcon::core::mth_properties );
    self->addClassMethod( array_meta, "comp", &Falcon::core::Array_comp );
+   self->addClassMethod( array_meta, "compact", &Falcon::core::mth_arrayCompact );
 
    //==================================================================
    // Dict class
@@ -1073,6 +1074,8 @@ Module* core_module_init()
       addParam("size")->addParam("defItem");
    self->addExtFunc( "arrayFill", &Falcon::core::mth_arrayFill )->
       addParam("array")->addParam("item");
+   self->addExtFunc( "arrayCompact", &Falcon::core::mth_arrayCompact )->
+      addParam("array");
 
    //=======================================================================
    // RTL dictionary

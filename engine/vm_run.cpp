@@ -232,7 +232,7 @@ void opcodeHandler_NOP( register VMachine *vm )
 // 2
 void opcodeHandler_PSHN( register VMachine *vm )
 {
-   vm->stack().resize( vm->stack().size() + 1 );
+   vm->stack().append( Item() );
 }
 
 // 3
@@ -300,8 +300,8 @@ void opcodeHandler_GENA( register VMachine *vm )
    if( size > 0 )
    {
       Item *data = array->items().elements();
-      int32 base = vm->stack().size() - size;
-      memcpy( data, vm->stack().itemPtrAt( base ), sizeof(Item)*size );
+      int32 base = vm->stack().length() - size;
+      memcpy( data, &vm->stack()[ base ], sizeof(Item)*size );
       array->length( size );
       vm->stack().resize( base );
    }
@@ -316,14 +316,14 @@ void opcodeHandler_GEND( register VMachine *vm )
    LinearDict *dict = new LinearDict( length );
 
    // copy the m-topmost items in the stack into the array
-   uint32 len =  vm->stack().size();
+   uint32 len =  vm->stack().length();
    uint32 base = len - ( length * 2 );
    for ( uint32 i = base ; i < len; i += 2 ) {
       // insert may modify the stack (if using special "compare" functions)
       Item i1 = vm->stackItem(i);
       Item i2 = vm->stackItem(i+1);
       dict->insert( i1, i2 );
-      fassert( vm->stack().size() == len );
+      fassert( vm->stack().length() == len );
    }
    vm->stack().resize( base );
    vm->regA().setDict( dict );
@@ -341,7 +341,7 @@ void opcodeHandler_PUSH( register VMachine *vm )
       // Let's consider this a temporary (but legitimate) hack.
       vm->regBind().flags( 0xF0 );
    }
-   vm->stack().push( data );
+   vm->stack().append( *data );
 }
 
 // 0D
@@ -354,20 +354,20 @@ void opcodeHandler_PSHR( register VMachine *vm )
       referenced->setReference( ref );
    }
 
-   vm->stack().push( referenced );
+   vm->stack().append( *referenced );
 }
 
 
 // 0E
 void opcodeHandler_POP( register VMachine *vm )
 {
-   if ( vm->stack().size() == vm->stackBase() ) {
+   if ( vm->stack().length() == vm->stackBase() ) {
       vm->raiseHardError( e_stackuf, "POP", __LINE__ );
       return;
    }
    //  --- WARNING: do not dereference!
-   vm->getOpcodeParam( 1 )->copy( vm->stack().topItem() );
-   vm->stack().pop();
+   vm->getOpcodeParam( 1 )->copy( vm->stack().back() );
+   vm->stack().resize( vm->stack().length() - 1);
 }
 
 
@@ -406,14 +406,14 @@ void opcodeHandler_TRAL( register VMachine *vm )
 {
    uint32 pcNext = vm->getNextNTD32();
 
-   if ( vm->stack().size() < 3 ) {
+   if ( vm->stack().length() < 3 ) {
       vm->raiseHardError( e_stackuf, "TRAL", __LINE__ );
       return;
    }
 
-   register uint32 size = vm->stack().size();
-   Item *iterator = vm->stack().itemPtrAt( size - 3 );
-   Item *source = vm->stack().itemPtrAt( size - 1 );
+   register uint32 size = vm->stack().length();
+   Item *iterator = &vm->stack()[ size - 3 ];;
+   Item *source = &vm->stack()[ size - 1 ];;
 
    switch( source->type() )
    {
@@ -478,12 +478,12 @@ void opcodeHandler_TRAL( register VMachine *vm )
 void opcodeHandler_IPOP( register VMachine *vm )
 {
    register uint32 amount = (uint32) vm->getNextNTD32();
-   if ( vm->stack().size() < amount ) {
+   if ( vm->stack().length() < amount ) {
       vm->raiseHardError( e_stackuf, "IPOP", __LINE__ );
       return;
    }
 
-   vm->stack().resize( vm->stack().size() - amount );
+   vm->stack().resize( vm->stack().length() - amount );
 }
 
 //15
@@ -492,8 +492,8 @@ void opcodeHandler_XPOP( register VMachine *vm )
    Item *operand = vm->getOpcodeParam( 1 )->dereference();
    // use copy constructor.
    Item itm( *operand );
-   operand->copy( vm->stack().topItem() );
-   vm->stack().topItem().copy( itm );
+   operand->copy( vm->stack()[vm->stack().length() - 1] );
+   vm->stack()[vm->stack().length() - 1].copy( itm );
 }
 
 //16
@@ -553,11 +553,11 @@ void opcodeHandler_PEEK( register VMachine *vm )
 {
    register Item *operand = vm->getOpcodeParam( 1 )->dereference();
 
-   if ( vm->stack().size() == 0 ) {
+   if ( vm->stack().length() == 0 ) {
       vm->raiseHardError( e_stackuf, "PEEK", __LINE__ );
       return;
    }
-   *operand = vm->stack().topItem();
+   *operand = vm->stack().back();
 }
 
 // 1D
@@ -851,8 +851,8 @@ void opcodeHandler_GENR( register VMachine *vm )
    int64 step;
    if ( operand3->isNil() )
    {
-      step = vm->stack().itemAt( vm->stack().size() - 1).forceIntegerEx();
-      vm->stack().pop();
+      step = vm->stack()[ vm->stack().length() - 1].forceIntegerEx();
+      vm->stack().resize( vm->stack().length() - 1);
    }
    else {
       step = operand3->forceIntegerEx();
@@ -1033,11 +1033,11 @@ void opcodeHandler_TRAN( register VMachine *vm )
    uint32 p2 = vm->getNextNTD32();
    uint32 p3 = vm->getNextNTD32();
 
-   if ( vm->stack().size() < 3 ) {
+   if ( vm->stack().length() < 3 ) {
       vm->raiseHardError( e_stackuf, "TRAN", __LINE__ );
    }
 
-   register int size = vm->stack().size();
+   register int size = vm->stack().length();
    Item *iterator = &vm->stackItem( size - 3 );
    bool isIterator = ! iterator->isInteger();
    Item *dest = &vm->stackItem( size - 2 );
@@ -1292,9 +1292,9 @@ void opcodeHandler_LDAS( register VMachine *vm )
                .origin( e_orig_vm ) );
       }
       else {
-         uint32 oldpos = vm->stack().size();
+         uint32 oldpos = vm->stack().length();
          vm->stack().resize( oldpos + size );
-         void* mem = vm->stack().itemPtrAt( oldpos );
+         void* mem = &vm->stack()[ oldpos ];;
          memcpy( mem, arr->items().elements(), size * sizeof(Item) );
      }
    }
@@ -1490,11 +1490,11 @@ void opcodeHandler_STVS( register VMachine *vm )
 
    Item *operand1 =  vm->getOpcodeParam( 1 );
    Item *operand2 =  vm->getOpcodeParam( 2 );
-   Item *origin = &vm->stack().topItem();
+   Item *origin = &vm->stack()[vm->stack().length() - 1];
 
    operand1->setIndex( *operand2, *origin );
    vm->regA() = *origin;
-   vm->stack().pop();
+   vm->stack().resize( vm->stack().length() - 1);
 
 }
 
@@ -1512,13 +1512,13 @@ void opcodeHandler_STPS( register VMachine *vm )
 
    if ( method->isString() )
    {
-      target->setProperty( *method->asString(), vm->stack().topItem() );
-      vm->regA() = vm->stack().topItem();
-      vm->stack().pop();
+      target->setProperty( *method->asString(), vm->stack()[vm->stack().length() - 1] );
+      vm->regA() = vm->stack()[vm->stack().length() - 1];
+      vm->stack().resize( vm->stack().length() - 1 );
    }
    else
    {
-      vm->stack().pop();
+      vm->stack().resize( vm->stack().length() - 1 );
       throw new TypeError( ErrorParam( e_prop_acc ).extra("STPS").origin( e_orig_vm ) );
    }
 }
@@ -1689,7 +1689,7 @@ void opcodeHandler_TRAV( register VMachine *vm )
 {
    // we need some spare space. We preallocate it because if the parameters are in
    // the stack, we need their pointers to stay valid.
-   vm->stack().resize( vm->stack().size() + 3 );
+   vm->stack().resize( vm->stack().length() + 3 );
 
    // get the jump label.
    int wayout = vm->getNextNTD32();
@@ -1721,7 +1721,7 @@ void opcodeHandler_TRAV( register VMachine *vm )
             }
 
             for ( uint32 i = 0; i < varCount; i ++ ) {
-               vm->stackItem( vm->stack().size() - (uint32)varCount + i - 3).dereference()->copy(
+               vm->stackItem( vm->stack().length() - (uint32)varCount + i - 3).dereference()->copy(
                         * ((* sourceItem->asArray() )[i].dereference()) );
             }
          }
@@ -1729,7 +1729,7 @@ void opcodeHandler_TRAV( register VMachine *vm )
             dest->copy( *(sourceItem->dereference()) );
 
          // prepare ... iterator
-         vm->stack().itemAt( vm->stack().size()-3 ) = ( (int64) 0 );
+         vm->stack()[ vm->stack().length()-3 ] = ( (int64) 0 );
       }
       break;
 
@@ -1750,7 +1750,7 @@ void opcodeHandler_TRAV( register VMachine *vm )
          // we need an iterator...
          DictIterator *iter = dict->first();
 
-         register int stackSize = vm->stack().size();
+         register int stackSize = vm->stack().length();
          vm->stackItem( stackSize - 5 ).dereference()->
                copy( iter->getCurrentKey() );
          vm->stackItem( stackSize - 4 ).dereference()->
@@ -1758,7 +1758,7 @@ void opcodeHandler_TRAV( register VMachine *vm )
 
          // prepare... iterator
          iter->setOwner( dict );
-         vm->stack().itemAt( vm->stack().size()-3 ).setGCPointer( iter );
+         vm->stack()[ vm->stack().length()-3 ].setGCPointer( iter );
       }
       break;
 
@@ -1784,11 +1784,11 @@ void opcodeHandler_TRAV( register VMachine *vm )
          // we need an iterator...
          CoreIterator *iter = seq->getIterator();
 
-         *dest->dereference() = iter->getCurrent();
+         *dest = iter->getCurrent();
 
          // prepare... iterator
          iter->setOwner( seq );
-         vm->stack().itemAt( vm->stack().size()-3 ).setGCPointer( iter );
+         vm->stack()[ vm->stack().length()-3 ].setGCPointer( iter );
       }
       break;
 
@@ -1811,8 +1811,8 @@ void opcodeHandler_TRAV( register VMachine *vm )
             throw
                new AccessError( ErrorParam( e_unpack_size ).origin( e_orig_vm ).extra( "TRAV" ) );
          }
-         *dest->dereference() = new CoreString( sstr->subString(0,1) );
-         vm->stack().itemAt( vm->stack().size()-3 ) = ( (int64) 0 );
+         *dest = new CoreString( sstr->subString(0,1) );
+         vm->stack()[ vm->stack().length()-3 ] = ( (int64) 0 );
          }
          break;
 
@@ -1825,8 +1825,8 @@ void opcodeHandler_TRAV( register VMachine *vm )
             throw
                new AccessError( ErrorParam( e_unpack_size ).origin( e_orig_vm ).extra( "TRAV" ) );
          }
-         *dest->dereference() = (int64) source->asMemBuf()->get(0);
-         vm->stack().itemAt( vm->stack().size()-3 ) = ( (int64) 0 );
+         *dest = (int64) source->asMemBuf()->get(0);
+         vm->stack()[ vm->stack().length()-3 ] = ( (int64) 0 );
          break;
 
       case FLC_ITEM_RANGE:
@@ -1844,8 +1844,8 @@ void opcodeHandler_TRAV( register VMachine *vm )
             throw
                new AccessError( ErrorParam( e_unpack_size ).origin( e_orig_vm ).extra( "TRAV" ) );
          }
-         *dest->dereference() = (int64) source->asRangeStart();
-         vm->stack().itemAt( vm->stack().size()-3 ) = ( (int64) source->asRangeStart() );
+         *dest = (int64) source->asRangeStart();
+         vm->stack()[ vm->stack().length()-3 ] = ( (int64) source->asRangeStart() );
          break;
 
       case FLC_ITEM_NIL:
@@ -1860,16 +1860,16 @@ void opcodeHandler_TRAV( register VMachine *vm )
    // after the iterator/counter, push the source
    if ( vm->operandType( 1 ) == P_PARAM_INT32 || vm->operandType( 1 ) == P_PARAM_INT64 )
    {
-      vm->stack().itemAt( vm->stack().size()-2 ) = dest->asInteger();
+      vm->stack()[ vm->stack().length()-2 ] = dest->asInteger();
    }
    else {
       Item refDest;
       vm->referenceItem( refDest, *real_dest );
-      vm->stack().itemAt( vm->stack().size()-2 ) = refDest;
+      vm->stack()[ vm->stack().length()-2 ] = refDest;
    }
 
    // and then the source by copy
-   vm->stack().itemAt( vm->stack().size()-1 ) = *source;
+   vm->stack()[ vm->stack().length()-1 ] = *source;
 
    // we're done.
    return;
@@ -1883,12 +1883,12 @@ trav_go_away:
       vars = (uint32) dest->asInteger();
    }
 
-   if( vars + 3 > vm->stack().size() )
+   if( vars + 3 > vm->stack().length() )
    {
       vm->raiseHardError( e_stackuf, "TRAV", __LINE__  );
    }
    else {
-      vm->stack().resize( vm->stack().size() - vars - 3 );
+      vm->stack().resize( vm->stack().length() - vars - 3 );
    }
 }
 
@@ -2151,12 +2151,12 @@ void opcodeHandler_TRAC( register VMachine *vm )
 {
    Item *operand1 = vm->getOpcodeParam( 1 )->dereference();
 
-   if ( vm->stack().size() < 3 ) {
+   if ( vm->stack().length() < 3 ) {
       vm->raiseHardError( e_stackuf, "TRAC", __LINE__  );
       return;
    }
 
-   register int size = vm->stack().size();
+   register int size = vm->stack().length();
    Item *iterator = &vm->stackItem( size - 3 );
    bool isIterator = ! iterator->isInteger();
    Item *source = &vm->stackItem( size - 1 );

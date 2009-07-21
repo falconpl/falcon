@@ -276,8 +276,8 @@ InteractiveCompiler::t_ret_type InteractiveCompiler::compileNext( Stream *input 
       // try to link undefined symbols.
 
       if ( sym->isUndefined() &&
-         (m_lmodule->globals().size() <= sym->itemId() ||
-          m_lmodule->globals().itemAt( sym->itemId() ).isNil() )
+         (m_lmodule->globals().length() <= sym->itemId() ||
+          m_lmodule->globals()[ sym->itemId() ].isNil() )
           )
       {
          try

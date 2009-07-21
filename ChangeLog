@@ -42,6 +42,8 @@ Falcon (0.9.2.1)
   * fixed: In ranges, step 0 now represents the "default step"; open range is indicated
            with a special value.
   * minor: Ranged access to membuf now creates membuf slices.
+  * minor: Added function arrayCompact and method Array.compact() for finer memory
+           usage control.
            
 Falcon (0.9.2)
   * fixed: using more modern throw instead of the obsolete raise() functions

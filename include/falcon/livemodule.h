@@ -22,14 +22,12 @@
 
 #include <falcon/setup.h>
 #include <falcon/types.h>
-#include <falcon/genericvector.h>
+#include <falcon/carray.h>
 #include <falcon/genericmap.h>
-#include <falcon/itemtraits.h>
 #include <falcon/symbol.h>
 #include <falcon/string.h>
 #include <falcon/module.h>
 #include <falcon/basealloc.h>
-#include <falcon/vmmaps.h>
 #include <falcon/strtable.h>
 
 namespace Falcon
@@ -74,8 +72,8 @@ class FALCON_DYN_CLASS LiveModule: public Garbageable
    mutable uint32 m_strCount;
    mutable uint32 m_aacc;
    mutable int32 m_iacc;
-   ItemVector m_globals;
-   ItemVector m_wkitems;
+   ItemArray m_globals;
+   ItemArray m_wkitems;
    bool m_bPrivate;
    bool m_bAlive;
    bool m_needsCompleteLink;
@@ -97,11 +95,11 @@ public:
    virtual bool finalize();
 
    const Module *module() const { return m_module; }
-   const ItemVector &globals() const { return m_globals; }
-   ItemVector &globals() { return m_globals; }
+   const ItemArray &globals() const { return m_globals; }
+   ItemArray &globals() { return m_globals; }
 
-   const ItemVector &wkitems() const { return m_wkitems; }
-   ItemVector &wkitems() { return m_wkitems; }
+   const ItemArray &wkitems() const { return m_wkitems; }
+   ItemArray &wkitems() { return m_wkitems; }
 
    /** Just a shortcut to the name of the module held by this LiveModule. */
    const String &name() const { return m_module->name(); }

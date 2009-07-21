@@ -36,7 +36,7 @@ function main(limit)
       for i in [2:8193]
          if flags[i]
             .[times ,[i+i:8193:i]
-               .[ .[ function( x,y ); > y; x[y] = 0; end  flags &1 ] .[ { x => ++x } $count ] ]
+               .[ .[ function( x,y ); x[y] = 0; end  flags &1 ] .[ { x => ++x } $count ] ]
                ]()
          end
       end

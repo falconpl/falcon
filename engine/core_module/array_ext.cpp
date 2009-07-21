@@ -724,6 +724,57 @@ FALCON_FUNC  arrayBuffer ( ::Falcon::VMachine *vm )
 }
 
 /*#
+   @function arrayCompact
+   @brief Reduces the memory used by an array.
+   @param array The array itself.
+   @return Itself
+
+   Normally, array operations, as insertions, additions and so on
+   cause the array to grow to accommodate items that may come in the future.
+   also, reducing the size of an array doesn't automatically dispose of the
+   memory held by the array to store its elements.
+
+   This function grants that the memory used by the array is strictly the
+   memory needed to store its data.
+*/
+
+/*#
+   @method compact Array
+   @brief Reduces the memory used by an array.
+   @return Itself
+
+   Normally, array operations, as insertions, additions and so on
+   cause the array to grow to accommodate items that may come in the future.
+   also, reducing the size of an array doesn't automatically dispose of the
+   memory held by the array to store its elements.
+
+   This method grants that the memory used by the array is strictly the
+   memory needed to store its data.
+*/
+FALCON_FUNC  mth_arrayCompact ( ::Falcon::VMachine *vm )
+{
+   Item *array_x;
+
+   if ( vm->self().isMethodic() )
+   {
+      array_x = &vm->self();
+   }
+   else
+   {
+      array_x = vm->param(0);
+      if ( array_x == 0 || !array_x->isArray() )
+      {
+         throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+            .origin( e_orig_runtime )
+            .extra( "A" ) );
+      }
+   }
+
+   array_x->asArray()->items().compact();
+   vm->retval( *array_x );
+}
+
+/*#
    @function arrayHead
    @brief Extracts the first element of an array and returns it.
    @param array The array that will be modified.

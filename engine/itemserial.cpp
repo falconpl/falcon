@@ -61,7 +61,7 @@ bool Item::serialize_function( Stream *file, const CoreFunc *func ) const
       uint32 itemId = fdef->onceItemId();
       if ( itemId != FuncDef::NO_STATE )
       {
-         byte called = func->liveModule()->globals().itemAt( itemId ).isNil() ? 0 : 1;
+         byte called = func->liveModule()->globals()[ itemId ].isNil() ? 0 : 1;
          file->write( &called, 1 );
       }
    }
@@ -349,9 +349,9 @@ Item::e_sercode Item::deserialize_function( Stream *file, VMachine *vm )
       byte called;
       file->read( &called, 1 );
       if( called )
-         lmod->globals().itemAt( itemId ).setInteger( 1 );
+         lmod->globals()[ itemId ].setInteger( 1 );
       else
-         lmod->globals().itemAt( itemId ).setNil();
+         lmod->globals()[ itemId ].setNil();
    }
 
    setFunction( new CoreFunc( sym, lmod ) );
@@ -652,7 +652,7 @@ Item::e_sercode Item::deserialize( Stream *file, VMachine *vm )
          if ( sc != sc_ok  )
             return sc;
 
-         Item *clitem = lmod->globals().itemPtrAt( sym->itemId() );
+         Item *clitem = &lmod->globals()[ sym->itemId() ];
 
          // Create the core object, but don't fill attribs.
          CoreObject *object = clitem->asClass()->createInstance(0, true);

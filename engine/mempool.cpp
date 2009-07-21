@@ -363,7 +363,6 @@ bool MemPool::markVM( VMachine *vm )
    // mark all the items in the coroutines.
    ListElement *ctx_iter = vm->getCtxList()->begin();
    uint32 pos;
-   ItemVector *stack;
    while( ctx_iter != 0 )
    {
       VMContext *ctx = (VMContext *) ctx_iter->data();
@@ -377,18 +376,18 @@ bool MemPool::markVM( VMachine *vm )
       markItem( vm->regBind() );
       markItem( vm->regBindP() );
 
-      stack = &ctx->stack();
-      for( pos = 0; pos < stack->size(); pos++ ) {
+      ItemArray& stack = ctx->stack();
+      for( pos = 0; pos < stack.length(); pos++ ) {
          // an invalid item marks the beginning of the call frame
-         if ( stack->itemAt( pos ).type() == FLC_ITEM_INVALID )
+         if ( stack[ pos ].type() == FLC_ITEM_INVALID )
          {
-            StackFrame *frame = (StackFrame*) stack->itemPtrAt( pos );
+            StackFrame *frame = (StackFrame*) &stack[ pos ];
             markItem(frame->m_self);
             markItem(frame->m_binding);
             pos += VM_FRAME_SPACE - 1; // pos++
          }
          else
-            markItem( stack->itemAt( pos ) );
+            markItem( stack[ pos ] );
       }
 
       ctx_iter = ctx_iter->next();

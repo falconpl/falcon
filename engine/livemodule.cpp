@@ -71,16 +71,17 @@ void LiveModule::detachModule()
    // disengage all the items.
    uint32 i;
 
-   for ( i = 0; i < m_globals.size(); ++i )
+   // TODO: memset to 0
+   for ( i = 0; i < m_globals.length(); ++i )
    {
       // disengage but not dereferece; we want to nil the globals here,
       // not to destroy the imported symbols.
-      m_globals.itemAt( i ).setNil();
+      m_globals[ i ].setNil();
    }
 
-   for ( i = 0; i < m_wkitems.size(); ++i )
+   for ( i = 0; i < m_wkitems.length(); ++i )
    {
-      wkitems().itemAt(i).dereference()->setNil();
+      wkitems()[i].dereference()->setNil();
    }
 
    m_bAlive = false;
@@ -96,7 +97,7 @@ Item *LiveModule::findModuleItem( const String &symName ) const
    if ( sym == 0 )
       return 0;
 
-   return m_globals.itemPtrAt( sym->itemId() );
+   return const_cast<Item*>(&m_globals[ sym->itemId() ]);
 }
 
 bool LiveModule::finalize()
@@ -115,11 +116,11 @@ void LiveModule::gcMark( uint32 mk )
          m_strings[i]->mark( mk );
    }
    
-   for( uint32 j = 0; j < globals().size(); j++ )
-      memPool->markItem( globals().itemAt( j ) );
+   for( uint32 j = 0; j < globals().length(); j++ )
+      memPool->markItem( globals()[ j ] );
 
-   for( uint32 k = 0; k < wkitems().size(); k++ )
-      memPool->markItem( wkitems().itemAt( k ) );
+   for( uint32 k = 0; k < wkitems().length(); k++ )
+      memPool->markItem( wkitems()[ k ] );
 }
 
 String* LiveModule::getString( uint32 stringId ) const

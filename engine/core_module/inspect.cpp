@@ -298,7 +298,7 @@ void inspect_internal( VMachine *vm, const Item *elem, int32 level, int32 maxLev
             uint32 itemId = def->onceItemId();
             if ( itemId != FuncDef::NO_STATE )
             {
-               if ( elem->asFunction()->liveModule()->globals().itemAt( itemId ).isNil() )
+               if ( elem->asFunction()->liveModule()->globals()[ itemId ].isNil() )
                   stream->writeString( "{ not called }");
                else
                   stream->writeString( "{ called }");

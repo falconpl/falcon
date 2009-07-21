@@ -36,36 +36,6 @@ class Symbol;
 class Item;
 class LiveModule;
 
-class FALCON_DYN_CLASS ItemVector: public GenericVector
-{
-
-public:
-   ItemVector( uint32 prealloc=0 ):
-      GenericVector()
-  {
-     init( &traits::t_item(), prealloc );
-  }
-
-   Item &itemAt( uint32 pos ) const { return *(Item *) at( pos ); }
-   Item *itemPtrAt( uint32 pos ) const { return (Item *) at( pos ); }
-   void setItem( const Item &item, uint32 pos ) { set( const_cast<Item *>(&item), pos ); }
-   Item &topItem() const { return *(Item *) top(); }
-};
-
-class FALCON_DYN_CLASS GlobalsVector: public GenericVector
-{
-public:
-   GlobalsVector( uint32 prealloc=0 ):
-      GenericVector()
-   {
-      init( &traits::t_voidp(), prealloc );
-   }
-
-   ItemVector &vat( uint32 pos ) const { return **(ItemVector **) at( pos ); }
-   ItemVector *vpat( uint32 pos ) const { return *(ItemVector **) at( pos ); }
-   ItemVector &topvp() const { return **(ItemVector **) top(); }
-};
-
 
 /** Pair of the symbol and the module it is declared in.
    This is just a commodity class used to store the association between a certain symbol and the module

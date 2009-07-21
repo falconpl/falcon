@@ -973,10 +973,10 @@ public:
    void fillErrorContext( Error *err, bool filltb = true );
 
    /** Returns the current stack as a reference. */
-   ItemVector &stack() { return m_currentContext->stack(); }
+   ItemArray &stack() { return m_currentContext->stack(); }
 
    /** Returns the current stack as a reference (const version). */
-   const ItemVector &stack() const { return m_currentContext->stack(); }
+   const ItemArray &stack() const { return m_currentContext->stack(); }
 
    /** Returns the current try frame as a reference. */
    uint32& tryFrame() { return m_currentContext->tryFrame(); }
@@ -985,22 +985,22 @@ public:
    const uint32& tryFrame() const { return m_currentContext->tryFrame(); }
 
    /** Returns a reference to the nth item in the current stack. */
-   Item &stackItem( uint32 pos ) { return *(Item *) stack().at( pos ); }
+   Item &stackItem( uint32 pos ) { return stack()[ pos ]; }
 
    /** Returns a reference to the nth item in the current stack (const version). */
-   const Item &stackItem( uint32 pos ) const { return *(Item *)stack().at(pos); }
+   const Item &stackItem( uint32 pos ) const { return stack()[pos]; }
 
    /** Returns the current module global variables vector. */
-   ItemVector &currentGlobals() { return m_currentContext->globals(); }
+   ItemArray &currentGlobals() { return m_currentContext->globals(); }
 
    /** Returns the current module global variables vector (const version). */
-   const ItemVector &currentGlobals() const { return m_currentContext->globals(); }
+   const ItemArray &currentGlobals() const { return m_currentContext->globals(); }
 
    /** Returns a reference to the nth item in the current module global variables vector. */
-   Item &moduleItem( uint32 pos ) { return currentGlobals().itemAt( pos ); }
+   Item &moduleItem( uint32 pos ) { return currentGlobals()[ pos ]; }
 
    /** Returns a reference to the nth item in the current module global variables vector (const version). */
-   const Item &moduleItem( uint32 pos ) const { return currentGlobals().itemAt( pos ); }
+   const Item &moduleItem( uint32 pos ) const { return currentGlobals()[ pos ]; }
 
    /** Returns the module in which the execution is currently taking place. */
    const Module *currentModule() const { return m_currentContext->lmodule()->module(); }
@@ -1029,7 +1029,7 @@ public:
       \return parameter count for the current function.
    */
    int32 paramCount() const {
-      return ((StackFrame *)stack().at( stackBase() - VM_FRAME_SPACE ) )->m_param_count;
+      return ((StackFrame *)&stack()[ stackBase() - VM_FRAME_SPACE ] )->m_param_count;
    }
 
    /** Returns the nth paramter passed to the VM.
@@ -1479,14 +1479,14 @@ public:
       \see callFrame
       \param item the item to be passes as a parameter to the next call.
    */
-   void pushParameter( const Item &item ) { stack().push( const_cast< Item *>(&item) ); }
+   void pushParameter( const Item &item ) { stack().append(item); }
 
    /** Adds some local space
       \param amount how many local variables must be created
    */
    void addLocals( uint32 space )
    {
-      if ( stack().size() < m_currentContext->stackBase() + space )
+      if ( stack().length() < m_currentContext->stackBase() + space )
          stack().resize( m_currentContext->stackBase() + space );
    }
 

@@ -26,7 +26,7 @@
 #include <falcon/deepitem.h>
 #include <falcon/sequence.h>
 
-#define flc_ARRAY_GROWTH   32
+#define flc_ARRAY_GROWTH   128
 
 namespace Falcon {
 
@@ -85,6 +85,10 @@ public:
    bool insertSpace( uint32 pos, uint32 size );
 
    void resize( uint32 size );
+   /**
+    * Reduce the memory used by this array to exactly its size.
+    */
+   void compact();
    void reserve( uint32 size );
 
    ItemArray *partition( int32 start, int32 end ) const;
