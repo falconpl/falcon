@@ -99,7 +99,7 @@ FALCON_FUNC  mth_len ( ::Falcon::VMachine *vm )
    @raise MathError if a given floating point value is too large to be converted to an integer.
 
    Integer values are just copied. Floating point values are converted to long integer;
-   in case they are too big to be prepresented a RangeError is raised.
+   in case they are too big to be represented a RangeError is raised.
    Strings are converted from base 10. If the string cannot be converted,
    or if the value is anything else, a MathError instance is raised.
 */

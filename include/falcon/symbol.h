@@ -95,7 +95,7 @@ public:
       must stay valid for all the time this function stays valid.
 
       Extra data will be available to m_func through VMachine::symbol(),
-      which will return the symbol containig this funcdef.
+      which will return the symbol containing this funcdef.
    */
    void extra( void *e )  { m_extra = e; }
 

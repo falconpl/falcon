@@ -1,0 +1,28 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 118c
+* Category: membuf
+* Subcategory: range
+* Short: Memory buffer ranged accessors.
+* Description:
+*   Checks if the range accessor correctly creates memory buffer slices.
+* [/Description]
+*
+****************************************************************************/
+
+mb = MemBuf( 10 )
+for i in [0:10]: mb[i] = i + 0x60
+
+m2 = mb[:]
+if m2.len() != 10: failure( "Clone size" )
+
+m2.describe() != "MB(10,1) [60 61 62 63 64 65 66 67 68 69 ]" and failure( "[:]" )
+m2[2:5].describe() != "MB(3,1) [62 63 64 ]" and failure( "[2:5]" )
+m2[2:2].describe() != "MB(0,1) []" and failure( "[2:2]" )
+m2[3:-1].describe() != "MB(6,1) [63 64 65 66 67 68 ]" and failure( "[3:-1]" )
+m2[7:3].describe() != "MB(5,1) [67 66 65 64 63 ]" and failure( "[7:3]" )
+m2[1:5:2].describe() != "MB(2,1) [61 63 ]" and failure( "[1:5:2]" )
+m2[-2:3:-2].describe() != "MB(3,1) [68 66 64 ]" and failure( "[-2:3:-2]" )
+
+success()

@@ -2000,7 +2000,7 @@ FALCON_FUNC  mth_strToMemBuf ( ::Falcon::VMachine *vm )
    }
    else
    {
-      result = MemBuf::create( vm, charSize, string->length() );
+      result = MemBuf::create( charSize, string->length() );
 
       if ( result == 0 )
       {

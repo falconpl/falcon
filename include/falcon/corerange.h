@@ -19,6 +19,7 @@
 #include <falcon/setup.h>
 #include <falcon/types.h>
 #include <falcon/garbageable.h>
+#include <limits.h>
 
 namespace Falcon {
 
@@ -33,21 +34,21 @@ public:
       Garbageable(),
       m_start(0),
       m_end( 0 ),
-      m_step( 1 )
+      m_step( 0 )
    {}
 
    CoreRange( int64 start ):
       Garbageable(),
       m_start( start ),
       m_end( 0 ),
-      m_step( 0 )
+      m_step( LLONG_MIN )
    {}
 
    CoreRange( int64 start, int64 end ):
       Garbageable(),
       m_start( start ),
       m_end( end ),
-      m_step( start <= end ? 1 : -1 )
+      m_step( 0 )
    {}
 
    CoreRange( int64 start, int64 end, int64 step ):
@@ -66,12 +67,12 @@ public:
 
    virtual ~CoreRange() {}
 
-   bool isOpen() const { return m_step == 0; }
+   bool isOpen() const { return m_step == LLONG_MIN; }
    int64 start() const { return m_start; }
    int64 end() const { return m_end; }
    int64 step() const { return m_step; }
 
-   void setOpen() { m_step = 0 ; }
+   void setOpen() { m_step = LLONG_MIN; }
    void start( int64 s ) { m_start = s; }
    void end( int64 s ) { m_end = s; }
    void step( int64 s ) { m_step = s; }

@@ -34,6 +34,13 @@ class CoreObject;
 
 class FALCON_DYN_CLASS MemBuf: public DeepItem, public Garbageable
 {
+public:
+   typedef void (*tf_deletor)( void* memory );
+   enum {
+      INVALID_MARK = 0xFFFFFFFF,
+      MAX_LEN = 0xFFFFFFFF
+   } t_enum_mark;
+
 protected:
    byte *m_memory;
 
@@ -46,16 +53,52 @@ protected:
    uint16 m_byteOrder;
 
    CoreObject *m_dependant;
-   bool m_bOwn;
-
-   enum {
-      INVALID_MARK = 0xFFFFFFFF
-   } t_enum_mark;
+   tf_deletor m_deletor;
 
 public:
 
+   /** Creates a pure memory based memory buffer.
+    *
+    * This constructor creates a memory buffer containing a memory data that
+    * will be freed at buffer destruction.
+    */
    MemBuf( uint32 ws, uint32 length );
-   MemBuf( uint32 ws, byte *data, uint32 length, bool bOwn = false );
+
+   /** Creates an unowned memory buffer.
+    *
+    * This simply stores the data in this memory buffer;
+    * the ownership of the data stays on the creator, which must dispose it
+    * separately.
+    *
+    * \param ws Size of each element in bytes (1-4)
+    * \param data The memory buffer
+    * \param length Maximum length of the buffer; pass MAX_LEN if unknown, or
+    *        0 if unknown and unavailable to the calling program.
+    */
+   MemBuf( uint32 ws, byte *data, uint32 length );
+
+   /** Creates an owned memory buffer.
+    *
+    * This stores the memory in the memory buffer and associates it with
+    * a deletor function which will be called when this MemBuf is disposed of.
+    * the ownership of the data stays on the creator, which must dispose it
+    * separately.
+    *
+    * \param ws Size of each element in bytes (1-4)
+    * \param data The memory buffer
+    * \param length Maximum length of the buffer; pass MAX_LEN if unknown, or
+    *        0 if unknown and unavailable to the calling program.
+    * \param deletor The deletor for the given data. Pass memFree for data
+    *        created with memAlloc, or 0 to make data unowned.
+    */
+   MemBuf( uint32 ws, byte *data, uint32 length, tf_deletor deletor );
+
+   /**
+    * Destructor.
+    *
+    * The destructor will also destroy the associated data if a deletor
+    * function has been specified in the constructor.
+    */
    virtual ~MemBuf();
 
    uint16 wordSize() const { return m_wordSize; }
@@ -101,6 +144,11 @@ public:
 
    /** Resizes the Memory Buffer
       Invariants are maintained.
+      \note This method uses memRealloc, so it can be used only
+         if the memory buffer has been created through memAlloc and should
+         be released with memFree. The method doesn't perform any check, so
+         be sure that you're knowing what you're doing when you use it.
+
       \param newSize number of items stored.
    */
    void resize( uint32 newSize );
@@ -208,7 +256,7 @@ public:
       The actual size in bytes is obtained multiplying this length by the word size.
    */
    void length( uint32 s ) { m_length = s; }
-   void setData( byte *data, uint32 length, bool bOwn=true );
+   void setData( byte *data, uint32 length, tf_deletor deletor = 0 );
 
    /** Return the CoreObject that stores vital data for this mempool.
       \see void dependant( CoreObject *g )
@@ -234,8 +282,9 @@ public:
       The length parameter is the final element count; it gets multiplied
       by nWordSize.
    */
-   static MemBuf *create( VMachine *vm, int nWordSize, uint32 length );
+   static MemBuf *create( int nWordSize, uint32 length );
 
+   virtual MemBuf* clone() const;
 
    virtual void readProperty( const String &, Item &item );
    virtual void writeProperty( const String &, const Item &item );
@@ -250,8 +299,8 @@ public:
       MemBuf( 1, length )
    {}
 
-   MemBuf_1( byte *data, uint32 length, bool bOwn = false ):
-      MemBuf( 1, data, length, bOwn )
+   MemBuf_1( byte *data, uint32 length, tf_deletor deletor = 0 ):
+      MemBuf( 1, data, length, deletor )
    {}
 
    virtual uint32 get( uint32 pos ) const;
@@ -265,8 +314,8 @@ public:
       MemBuf( 2, length )
    {}
 
-   MemBuf_2( byte *data, uint32 length, bool bOwn = false ):
-      MemBuf( 2, data, length, bOwn )
+   MemBuf_2( byte *data, uint32 length, tf_deletor deletor = 0 ):
+      MemBuf( 2, data, length, deletor )
    {}
 
    virtual uint32 get( uint32 pos ) const;
@@ -280,12 +329,12 @@ public:
       MemBuf( 3, length )
    {}
 
-   MemBuf_3( byte *data, uint32 length, bool bOwn = false ):
-      MemBuf( 3, data, length, bOwn )
+   MemBuf_3( byte *data, uint32 length, tf_deletor deletor = 0 ):
+      MemBuf( 3, data, length, deletor )
    {}
 
    virtual uint32 get( uint32 pos ) const;
-   virtual void set( uint32 pos, uint32 value );
+   virtual void set( uint32 pos, uint32 deletor );
 };
 
 class FALCON_DYN_CLASS MemBuf_4: public virtual MemBuf
@@ -295,8 +344,8 @@ public:
       MemBuf( 4, length )
    {}
 
-   MemBuf_4( byte *data, uint32 length, bool bOwn = false ):
-      MemBuf( 4, data, length, bOwn )
+   MemBuf_4( byte *data, uint32 length, tf_deletor deletor = 0 ):
+      MemBuf( 4, data, length, deletor )
    {}
 
    virtual uint32 get( uint32 pos ) const;

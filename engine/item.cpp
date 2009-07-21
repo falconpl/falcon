@@ -468,8 +468,7 @@ void Item::toString( String &target ) const
          if ( ! this->asRangeIsOpen() )
          {
             target.writeNumber( (int64) this->asRangeEnd() );
-            if ( ((int64) this->asRangeStart() <= (int64) this->asRangeEnd() && this->asRangeStep() != 1 ) ||
-                 ((int64) this->asRangeStart() > (int64) this->asRangeEnd() && this->asRangeStep() != -1 ) )
+            if ( this->asRangeStep() != 0 )
             {
                target += ":";
                target.writeNumber( (int64) this->asRangeStep() );
@@ -485,11 +484,11 @@ void Item::toString( String &target ) const
       break;
 
       case FLC_ITEM_MEMBUF:
-         target = "{MemBuf of ";
+         target = "MemBuf( ";
          target.writeNumber( (int64) this->asMemBuf()->length() );
-         target += " words long ";
+         target += ", ";
             target.writeNumber( (int64) this->asMemBuf()->wordSize() );
-         target += " bytes }";
+         target += " )";
       break;
 
       case FLC_ITEM_STRING:
@@ -497,7 +496,14 @@ void Item::toString( String &target ) const
       break;
 
       case FLC_ITEM_LBIND:
-         target = "&" + *asLBind();
+         if ( isFutureBind() )
+         {
+            String temp;
+            asFutureBind().toString(temp);
+            target = *asLBind() + "|" + temp;
+         }
+         else
+            target = "&" + *asLBind();
       break;
 
       case FLC_ITEM_REFERENCE:
@@ -505,7 +511,7 @@ void Item::toString( String &target ) const
       break;
 
       case FLC_ITEM_OBJECT:
-         target = "Object";
+         target = "Object from " + asObjectSafe()->generator()->symbol()->name();
       break;
 
       case FLC_ITEM_ARRAY:

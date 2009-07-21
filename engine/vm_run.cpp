@@ -859,13 +859,6 @@ void opcodeHandler_GENR( register VMachine *vm )
    }
 
    int64 firstOp = operand1->forceIntegerEx();
-   if( step == 0 )
-   {
-      if ( firstOp <= secondOp )
-          step = 1;
-      else
-         step = -1;
-   }
 
    vm->regA().setRange( new CoreRange(
       firstOp,

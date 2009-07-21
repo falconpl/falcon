@@ -39,6 +39,9 @@ Falcon (0.9.2.1)
   * added: Methodic function describe() that can be used as a reflective insect()
   * minor: Now using describe() instead of toString() in interactive mode.
   * fixed: Access to static methods in classes was broken.
+  * fixed: In ranges, step 0 now represents the "default step"; open range is indicated
+           with a special value.
+  * minor: Ranged access to membuf now creates membuf slices.
            
 Falcon (0.9.2)
   * fixed: using more modern throw instead of the obsolete raise() functions

@@ -38,10 +38,10 @@ MemBuf::MemBuf( uint32 ws, uint32 length ):
    m_dependant(0)
 {
    m_memory = (byte *) memAlloc( length * ws );
-   m_bOwn = true;
+   m_deletor = memFree;
 }
 
-MemBuf::MemBuf( uint32 ws, byte *data, uint32 length, bool bOwn ):
+MemBuf::MemBuf( uint32 ws, byte *data, uint32 length ):
    Garbageable(),
    m_memory( data ),
    m_length( length ),
@@ -50,24 +50,37 @@ MemBuf::MemBuf( uint32 ws, byte *data, uint32 length, bool bOwn ):
    m_position( 0 ),
    m_wordSize( ws ),
    m_dependant(0),
-   m_bOwn( bOwn )
+   m_deletor( 0 )
+{
+}
+
+MemBuf::MemBuf( uint32 ws, byte *data, uint32 length, tf_deletor deletor ):
+   Garbageable(),
+   m_memory( data ),
+   m_length( length ),
+   m_mark( INVALID_MARK ),
+   m_limit( length ),
+   m_position( 0 ),
+   m_wordSize( ws ),
+   m_dependant(0),
+   m_deletor( deletor )
 {
 }
 
 MemBuf::~MemBuf()
 {
-   if ( m_bOwn && m_memory != 0 )
-      memFree( m_memory );
+   if ( m_deletor != 0 && m_memory != 0 )
+      m_deletor( m_memory );
 }
 
-void MemBuf::setData( byte *data, uint32 size, bool bOwn )
+void MemBuf::setData( byte *data, uint32 size, tf_deletor deletor )
 {
-   if ( m_bOwn && m_memory != 0 )
-      memFree( m_memory );
+   if ( m_deletor != 0 && m_memory != 0 )
+      m_deletor( m_memory );
 
    m_memory = data;
    m_length = size/m_wordSize;
-   m_bOwn = bOwn;
+   m_deletor = deletor;
 }
 
 
@@ -149,16 +162,16 @@ MemBuf *MemBuf::deserialize( VMachine *vm, Stream *stream )
 
    switch( nWordSize )
    {
-      case 1: return new MemBuf_1( mem, nSize, true );
-      case 2: return new MemBuf_2( mem, nSize, true );
-      case 3: return new MemBuf_3( mem, nSize, true );
-      case 4: return new MemBuf_4( mem, nSize, true );
+      case 1: return new MemBuf_1( mem, nSize, memFree );
+      case 2: return new MemBuf_2( mem, nSize, memFree );
+      case 3: return new MemBuf_3( mem, nSize, memFree );
+      case 4: return new MemBuf_4( mem, nSize, memFree );
    }
 
    return 0; // impossible
 }
 
-MemBuf *MemBuf::create( VMachine *vm, int bpp, uint32 nSize )
+MemBuf *MemBuf::create( int bpp, uint32 nSize )
 {
    switch( bpp )
    {
@@ -166,6 +179,29 @@ MemBuf *MemBuf::create( VMachine *vm, int bpp, uint32 nSize )
       case 2: return new MemBuf_2( nSize );
       case 3: return new MemBuf_3( nSize );
       case 4: return new MemBuf_4( nSize );
+   }
+
+   return 0;
+}
+
+MemBuf *MemBuf::clone() const
+{
+   byte* data;
+
+   if( m_length != 0 )
+   {
+      data = (byte*) memAlloc( m_length * m_wordSize );
+      memcpy( data, m_memory, m_length * m_wordSize );
+   }
+   else
+      data = 0;
+
+   switch( m_wordSize )
+   {
+      case 1: return new MemBuf_1( data, m_length, memFree );
+      case 2: return new MemBuf_2( data, m_length, memFree );
+      case 3: return new MemBuf_3( data, m_length, memFree );
+      case 4: return new MemBuf_4( data, m_length, memFree );
    }
 
    return 0;
@@ -277,6 +313,68 @@ void MemBuf::readIndex( const Item &index, Item &target )
             target = get( uPos );
             return;
          }
+      }
+      break;
+
+      case FLC_ITEM_RANGE:
+      {
+         int64 pos = (int64) index.asRangeStart();
+         int64 end;
+         int64 step;
+
+         if( index.asRangeIsOpen() )
+         {
+            if( pos == 0 ) {
+               target = clone();
+               return;
+            }
+
+            end = m_length;
+         }
+         else
+            end = index.asRangeEnd();
+
+         if ( pos < 0 ) pos += m_length;
+         if ( end < 0 ) end += m_length;
+         if( pos >= m_length || end > m_length ) break;
+
+         step = index.asRangeStep();
+         MemBuf* mb;
+         if ( pos <= end )
+         {
+            if ( step < 0 )
+            {
+               mb = create( m_wordSize, 0 );
+            }
+            else
+            {
+               if ( step == 0 ) step = 1;
+               uint32 size = (uint32) ((end - pos)/step);
+               mb = create( m_wordSize, size );
+               for (uint32 i = 0; pos < end; i++, pos += step ) {
+                  mb->set(i, get(pos));
+               }
+            }
+         }
+         else
+         {
+            if ( step > 0 )
+            {
+               mb = create( m_wordSize, 0 );
+            }
+            else
+            {
+               if ( step == 0 )  step = -1;
+               uint32 size = (uint32) ((pos-end)/(-step))+1;
+               mb = create( m_wordSize, size );
+               for (uint32 i = 0; pos >= end; i++, pos += step ) {
+                  mb->set(i, get(pos));
+               }
+            }
+         }
+
+         target = mb;
+         return;
       }
       break;
 
