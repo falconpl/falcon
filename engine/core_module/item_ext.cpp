@@ -1222,16 +1222,19 @@ FALCON_FUNC BOM_ptr( VMachine *vm )
 
 /*#
    @method ptr Integer
-   @brief Dereferences this integer as a pointer.
-   @return Returns the pointer value at the location indicated in this integer.
+   @brief Returns the value itself.
+   @return The value in this integer.
 
-   This function returns a pointer value (stored in a Falcon integer)
-   taken from the memory location indicated by this integer.
+   Falcon integers can be used to store memory locations, as the are granted to be
+   wide at least as the widest pointer on the target platform. For this reason, they
+   can be used to transport raw pointers coming from external libraries.
+
+   This function override ensures that .ptr() applied to an integer returns the original
+   integer value (and doesn't get mangled as with other ptr overrides).
 */
 FALCON_FUNC Integer_ptr( VMachine *vm )
 {
-   void** ptr = (void**) vm->self().asInteger();
-   vm->retval( (int64) *ptr );
+   vm->retval( vm->self().asInteger() );
 }
 
 /*#
