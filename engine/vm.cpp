@@ -42,6 +42,11 @@
 
 #include <string.h>
 
+#if FALCON_LITTLE_ENDIAN != 1
+#include <falcon/pcode.h>
+#endif
+
+
 namespace Falcon {
 
 static ThreadSpecific s_currentVM;
@@ -597,6 +602,11 @@ bool VMachine::linkDefinedSymbol( const Symbol *sym, LiveModule *livemod )
    switch( sym->type() )
    {
       case Symbol::tfunc:
+      #if FALCON_LITTLE_ENDIAN != 1
+         PCODE::deendianize( sym->getFuncDef()->code(),  sym->getFuncDef()->codeSize() );
+      #endif
+      // fallback 
+
       case Symbol::textfunc:
          globs[ sym->itemId() ].setFunction( new CoreFunc( sym, livemod ) );
       break;

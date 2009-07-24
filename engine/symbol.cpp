@@ -20,10 +20,6 @@
 #include <falcon/stream.h>
 #include <falcon/attribmap.h>
 
-#if FALCON_LITTLE_ENDIAN != 1
-#include <falcon/pcode.h>
-#endif
-
 namespace Falcon
 {
 
@@ -372,11 +368,7 @@ bool FuncDef::load( Module *mod, Stream *in )
       // it's essential to check for errors now.
       if ( ! in->good() )
          return false;
-
-      #if FALCON_LITTLE_ENDIAN != 1
-         PCODE::deendianize( m_code, m_codeSize );
-      #endif
-   }
+   } 
 
    in->read( &basePC, sizeof( basePC ) );
    if( basePC != 0 )

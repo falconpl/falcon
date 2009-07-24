@@ -473,8 +473,8 @@ protected:
    /** Returns the next NTD32 parameter, advancing the pointer to the next instruction */
    int32 getNextNTD32()
    {
-      register int32 ret = endianInt32(*reinterpret_cast<int32 *>(
-         m_currentContext->code() + m_currentContext->pc_next()  ) );
+      register int32 ret = *reinterpret_cast<int32 *>(
+         m_currentContext->code() + m_currentContext->pc_next()  );
       m_currentContext->pc_next() += sizeof( int32 );
       return ret;
    }
@@ -482,7 +482,7 @@ protected:
    /** Returns the next NTD64 parameter, advancing the pointer to the next instruction */
    int64 getNextNTD64()
    {
-      register int64 ret = grabInt64(
+      register int64 ret = loadInt64(
          m_currentContext->code() + m_currentContext->pc_next() );
       m_currentContext->pc_next() += sizeof( int64 );
       return ret;

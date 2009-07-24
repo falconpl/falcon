@@ -98,14 +98,10 @@ inline uint64 grabInt64( void* data ) {
           ((uint64)chars[1]) << 8 | ((uint64)chars[0]);
 }
 
-inline numeric endianNum( const numeric &param )
-{
-   return grabNum( (void*) &param );
-}
 
 inline numeric grabNum( void* numMemory )
 {
-   const byte* data = numMemory;
+   const byte* data = (const byte*) numMemory;
 
    union t_unumeric {
       byte buffer[ sizeof(numeric) ];
@@ -120,9 +116,15 @@ inline numeric grabNum( void* numMemory )
    return unumeric.number;
 }
 
+inline numeric endianNum( const numeric &param )
+{
+   return grabNum( (void*) &param );
+}
+
+
 inline numeric loadNum( void* data )
 {
-   byte* bdata = data;
+   byte* bdata = (byte*) data;
 
    union t_unumeric {
       struct t_integer {
@@ -141,9 +143,11 @@ inline numeric loadNum( void* data )
 
 inline int64 loadInt64( void* data )
 {
-   byte* bdata = data;
+   byte* bdata = (byte*) data;
 
-   uint64 res = *reinterpret_cast<uint32*>(bdata) << 32 | *reinterpret_cast<uint32*>(bdata+sizeof(uint32));
+   uint64 res = *reinterpret_cast<uint32*>(bdata);
+   res <<= 32;
+   res |= *reinterpret_cast<uint32*>(bdata+sizeof(uint32));
    return (int64) res;
 }
 
