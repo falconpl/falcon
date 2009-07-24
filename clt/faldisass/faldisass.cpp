@@ -566,7 +566,7 @@ void gen_code( Module *module, const FuncDef *fd, Stream *out, const t_labelMap 
          case P_STO : csOpName = "STO "; break;
          case P_FORB: csOpName = "FORB"; break;
          case P_EVAL: csOpName = "EVAL"; break;
-         case P_OOB: csOpName = "OOB "; break;
+         case P_OOB : csOpName = "OOB "; break;
          default:
             csOpName = "????";
       }

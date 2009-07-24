@@ -1239,7 +1239,7 @@ FALCON_FUNC Integer_ptr( VMachine *vm )
 
 /*#
    @method ptr GarbagePointer
-   @brief Returns the inner data stored in this ponter.
+   @brief Returns the inner data stored in this pointer.
    @return Deep data (as a pointer).
 
    This function returns a pointer value (stored in a Falcon integer)

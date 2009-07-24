@@ -1786,13 +1786,13 @@ bool VMachine::seekInteger( int64 value, byte *base, uint16 size, uint32 &landin
    {
       pos = base + point * SEEK_STEP;
 
-      if ( ((int64)grabInt64( pos )) == value )
+      if ( loadInt64( pos ) == value )
       {
-         landing = endianInt32( *reinterpret_cast< int32 *>( pos + sizeof(int64) ) );
+         landing = *reinterpret_cast< uint32 *>( pos + sizeof(int64) );
          return true;
       }
 
-      if ( value > (int64) grabInt64( pos ) )
+      if ( value > loadInt64( pos ) )
          lower = point;
       else
          higher = point;
@@ -1800,16 +1800,16 @@ bool VMachine::seekInteger( int64 value, byte *base, uint16 size, uint32 &landin
    }
 
    // see if it was in the last loop
-   if ( ((int64)grabInt64( base + lower * SEEK_STEP ) ) == value )
+   if ( loadInt64( base + lower * SEEK_STEP ) == value )
    {
-      landing =  endianInt32( *reinterpret_cast< uint32 *>( base + lower * SEEK_STEP + sizeof( int64 ) ) );
+      landing =  *reinterpret_cast< uint32 *>( base + lower * SEEK_STEP + sizeof( int64 ) );
       return true;
    }
 
-   if ( lower != higher && ((int64)grabInt64( base + higher * SEEK_STEP ) ) == value )
+   if ( lower != higher && loadInt64( base + higher * SEEK_STEP ) == value )
    {
       // YATTA, we found it at last
-      landing =  endianInt32( *reinterpret_cast< uint32 *>( base + higher * SEEK_STEP + sizeof( int64 ) ) );
+      landing =  *reinterpret_cast< uint32 *>( base + higher * SEEK_STEP + sizeof( int64 ) );
       return true;
    }
 
@@ -1833,14 +1833,14 @@ bool VMachine::seekInRange( int64 numLong, byte *base, uint16 size, uint32 &land
    {
       pos = base + point * SEEK_STEP;
 
-      if ( (int32)endianInt32(*reinterpret_cast< int32 *>( pos )) <= value &&
-                (int32)endianInt32(*reinterpret_cast< int32 *>( pos + sizeof( int32 ) )) >= value)
+      if ( *reinterpret_cast< int32 *>( pos ) <= value &&
+                *reinterpret_cast< int32 *>( pos + sizeof( int32 ) ) >= value)
       {
-         landing = endianInt32( *reinterpret_cast< int32 *>( pos + sizeof( int32 ) + sizeof( int32 ) ) );
+         landing = *reinterpret_cast< int32 *>( pos + sizeof( int32 ) + sizeof( int32 ) );
          return true;
       }
 
-      if ( value > (int32) endianInt32(*reinterpret_cast< int32 *>( pos )) )
+      if ( value > *reinterpret_cast< int32 *>( pos ) )
          lower = point;
       else
          higher = point;
@@ -1849,21 +1849,21 @@ bool VMachine::seekInRange( int64 numLong, byte *base, uint16 size, uint32 &land
 
    // see if it was in the last loop
    pos = base + lower * SEEK_STEP;
-   if ( (int32)endianInt32( *reinterpret_cast< int32 *>( pos ) ) <= value &&
-       (int32)endianInt32( *reinterpret_cast< int32 *>( pos + sizeof( int32 ) ) ) >= value )
+   if ( *reinterpret_cast< int32 *>( pos ) <= value &&
+        *reinterpret_cast< int32 *>( pos + sizeof( int32 ) ) >= value )
    {
-      landing =  endianInt32( *reinterpret_cast< uint32 *>( pos + sizeof( int32 ) + sizeof( int32 ) ) );
+      landing =  *reinterpret_cast< uint32 *>( pos + sizeof( int32 ) + sizeof( int32 ) );
       return true;
    }
 
    if( lower != higher )
    {
       pos = base + higher * SEEK_STEP;
-      if ( (int32)endianInt32( *reinterpret_cast< int32 *>( pos ) ) <= value &&
-         (int32)endianInt32( *reinterpret_cast< int32 *>( pos + sizeof( int32 ) ) ) >= value )
+      if ( *reinterpret_cast< int32 *>( pos ) <= value &&
+           *reinterpret_cast< int32 *>( pos + sizeof( int32 ) ) >= value )
       {
          // YATTA, we found it at last
-         landing =  endianInt32( *reinterpret_cast< uint32 *>( pos + sizeof( int32 ) + sizeof( int32 ) ) );
+         landing = *reinterpret_cast< uint32 *>( pos + sizeof( int32 ) + sizeof( int32 ) );
          return true;
       }
    }
@@ -1887,13 +1887,13 @@ bool VMachine::seekString( const String *value, byte *base, uint16 size, uint32 
    while ( lower < higher - 1 )
    {
       pos = base + point * SEEK_STEP;
-      paragon = currentModule()->getString( endianInt32(*reinterpret_cast< int32 *>( pos )));
+      paragon = currentModule()->getString( *reinterpret_cast< int32 *>( pos ) );
       fassert( paragon != 0 );
       if ( paragon == 0 )
          return false;
       if ( *paragon == *value )
       {
-         landing = endianInt32( *reinterpret_cast< int32 *>( pos + sizeof(int32) ) );
+         landing = *reinterpret_cast< int32 *>( pos + sizeof(int32) );
          return true;
       }
 
@@ -1905,20 +1905,20 @@ bool VMachine::seekString( const String *value, byte *base, uint16 size, uint32 
    }
 
    // see if it was in the last loop
-   paragon = currentModule()->getString( endianInt32(*reinterpret_cast< int32 *>( base + lower * SEEK_STEP )));
+   paragon = currentModule()->getString( *reinterpret_cast< uint32 *>( base + lower * SEEK_STEP ) );
    if ( paragon != 0 && *paragon == *value )
    {
-      landing =  endianInt32( *reinterpret_cast< uint32 *>( base + lower * SEEK_STEP + sizeof( int32 ) ) );
+      landing = *reinterpret_cast< uint32 *>( base + lower * SEEK_STEP + sizeof( int32 ) );
       return true;
    }
 
    if ( lower != higher )
    {
-      paragon = currentModule()->getString( endianInt32(*reinterpret_cast< int32 *>( base + higher * SEEK_STEP )));
+      paragon = currentModule()->getString( *reinterpret_cast< uint32 *>( base + higher * SEEK_STEP ) );
       if ( paragon != 0 && *paragon == *value )
       {
          // YATTA, we found it at last
-         landing =  endianInt32( *reinterpret_cast< uint32 *>( base + higher * SEEK_STEP + sizeof( int32 ) ) );
+         landing = *reinterpret_cast< uint32 *>( base + higher * SEEK_STEP + sizeof( int32 ) );
          return true;
       }
    }
@@ -1935,7 +1935,7 @@ bool VMachine::seekItem( const Item *item, byte *base, uint16 size, uint32 &land
 
    while ( base < target )
    {
-      Symbol *sym = currentModule()->getSymbol( endianInt32( *reinterpret_cast< int32 *>( base ) ) );
+      Symbol *sym = currentModule()->getSymbol( *reinterpret_cast< int32 *>( base ) );
 
       fassert( sym );
       if ( sym == 0 )
@@ -1964,7 +1964,7 @@ bool VMachine::seekItem( const Item *item, byte *base, uint16 size, uint32 &land
    return false;
 
 success:
-   landing = endianInt32( *reinterpret_cast< int32 *>( base + sizeof(int32) ));
+   landing = *reinterpret_cast< uint32 *>( base + sizeof(int32) );
    return true;
 }
 
@@ -1977,7 +1977,7 @@ bool VMachine::seekItemClass( const Item *itm, byte *base, uint16 size, uint32 &
 
    while ( base < target )
    {
-      Symbol *sym = currentModule()->getSymbol( endianInt32( *reinterpret_cast< int32 *>( base ) ) );
+      Symbol *sym = currentModule()->getSymbol( *reinterpret_cast< uint32 *>( base ) );
       fassert( sym );
       if ( sym == 0 )
          return false;
@@ -2039,7 +2039,7 @@ bool VMachine::seekItemClass( const Item *itm, byte *base, uint16 size, uint32 &
    return false;
 
 success:
-   landing = endianInt32( *reinterpret_cast< int32 *>( base + sizeof(int32) ));
+   landing = *reinterpret_cast< uint32 *>( base + sizeof(int32) );
    return true;
 }
 

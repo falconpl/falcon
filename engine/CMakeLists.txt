@@ -202,6 +202,7 @@ ADD_LIBRARY( falcon_engine SHARED
    module.cpp
    pagedict.cpp
    path.cpp
+   pcode.cpp
    proptable.cpp
    rampmode.cpp
    reflectobject.cpp

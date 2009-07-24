@@ -73,6 +73,10 @@ class CharPtrCmp
 #if FALCON_LITTLE_ENDIAN == 1
 
 inline uint64 grabInt64( void* data ) { return *(uint64*)data; }
+inline int64 loadInt64( void* data ) { return *(int64*)data; }
+inline numeric grabNum( void* data ) {  return *(numeric*)data; }
+inline numeric loadNum( void* data ) {  return *(numeric*)data; }
+
 inline uint64 endianInt64( const uint64 param ) { return param; }
 inline uint32 endianInt32( const uint32 param ) { return param; }
 inline uint16 endianInt16( const uint16 param ) { return param; }
@@ -96,7 +100,12 @@ inline uint64 grabInt64( void* data ) {
 
 inline numeric endianNum( const numeric &param )
 {
-   const byte* data = (byte*) &param;
+   return grabNum( (void*) &param );
+}
+
+inline numeric grabNum( void* numMemory )
+{
+   const byte* data = numMemory;
 
    union t_unumeric {
       byte buffer[ sizeof(numeric) ];
@@ -110,6 +119,34 @@ inline numeric endianNum( const numeric &param )
 
    return unumeric.number;
 }
+
+inline numeric loadNum( void* data )
+{
+   byte* bdata = data;
+
+   union t_unumeric {
+      struct t_integer {
+         uint32 high;
+         uint32 low;
+      } integer;
+      numeric number;
+   }  unumeric;
+
+   unumeric.integer.high = *reinterpret_cast<uint32*>(bdata);
+   unumeric.integer.low = *reinterpret_cast<uint32*>(bdata+sizeof(uint32));
+
+   return unumeric.number;
+}
+
+
+inline int64 loadInt64( void* data )
+{
+   byte* bdata = data;
+
+   uint64 res = *reinterpret_cast<uint32*>(bdata) << 32 | *reinterpret_cast<uint32*>(bdata+sizeof(uint32));
+   return (int64) res;
+}
+
 
 inline uint32 endianInt32( const uint32 param ) {
    byte *chars = (byte *) &param;

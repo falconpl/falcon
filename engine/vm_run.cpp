@@ -54,18 +54,18 @@ Item *VMachine::getOpcodeParam( register uint32 bc_pos )
    switch( m_currentContext->code()[ m_currentContext->pc() + bc_pos ]  )
    {
       case P_PARAM_INT32:
-         m_imm[bc_pos].setInteger( endianInt32(*reinterpret_cast<int32 *>( m_currentContext->code() + m_currentContext->pc_next() ) ) );
+         m_imm[bc_pos].setInteger( *reinterpret_cast<int32 *>( m_currentContext->code() + m_currentContext->pc_next() ) );
          m_currentContext->pc_next() += sizeof( int32 );
       return m_imm + bc_pos;
 
       case P_PARAM_INT64:
-         m_imm[bc_pos].setInteger( grabInt64( m_currentContext->code() + m_currentContext->pc_next()  ) );
+         m_imm[bc_pos].setInteger( loadInt64( m_currentContext->code() + m_currentContext->pc_next()  ) );
          m_currentContext->pc_next() += sizeof( int64 );
       return m_imm + bc_pos;
 
       case P_PARAM_STRID:
          {
-            String *temp = currentLiveModule()->getString( endianInt32(*reinterpret_cast<int32 *>( m_currentContext->code() + m_currentContext->pc_next() ) ) );
+            String *temp = currentLiveModule()->getString( *reinterpret_cast<int32 *>( m_currentContext->code() + m_currentContext->pc_next() ) );
             //m_imm[bc_pos].setString( temp, const_cast<LiveModule*>(currentLiveModule()) );
             m_imm[bc_pos].setString( temp );
             m_currentContext->pc_next() += sizeof( int32 );
@@ -74,12 +74,12 @@ Item *VMachine::getOpcodeParam( register uint32 bc_pos )
 
       case P_PARAM_LBIND:
          m_imm[bc_pos].setLBind( currentLiveModule()->getString(
-            endianInt32(*reinterpret_cast<int32 *>( m_currentContext->code() + m_currentContext->pc_next() ) ) ) );
+            *reinterpret_cast<int32 *>( m_currentContext->code() + m_currentContext->pc_next() ) ) );
          m_currentContext->pc_next() += sizeof( int32 );
       return m_imm + bc_pos;
 
       case P_PARAM_NUM:
-         m_imm[bc_pos].setNumeric( endianNum( *reinterpret_cast<numeric *>( m_currentContext->code() + m_currentContext->pc_next() ) ) );
+         m_imm[bc_pos].setNumeric( loadNum( m_currentContext->code() + m_currentContext->pc_next() ) );
          m_currentContext->pc_next() += sizeof( numeric );
       return m_imm + bc_pos;
 
@@ -89,7 +89,7 @@ Item *VMachine::getOpcodeParam( register uint32 bc_pos )
 
       case P_PARAM_GLOBID:
       {
-         register int32 id = endianInt32(*reinterpret_cast< int32 * >( m_currentContext->code() + m_currentContext->pc_next() ) );
+         register int32 id = *reinterpret_cast< int32 * >( m_currentContext->code() + m_currentContext->pc_next() );
          m_currentContext->pc_next()+=sizeof( int32 );
          return &moduleItem( id );
       }
@@ -97,13 +97,13 @@ Item *VMachine::getOpcodeParam( register uint32 bc_pos )
 
       case P_PARAM_LOCID:
          ret = &stackItem( stackBase() +
-               endianInt32(*reinterpret_cast< int32 * >( m_currentContext->code() + m_currentContext->pc_next() ) ) );
+               *reinterpret_cast< int32 * >( m_currentContext->code() + m_currentContext->pc_next() ) );
          m_currentContext->pc_next()+=sizeof(int32);
       return ret;
 
       case P_PARAM_PARID:
          ret = &stackItem( stackBase() - paramCount() - VM_FRAME_SPACE +
-               endianInt32(*reinterpret_cast< int32 * >( m_currentContext->code() + m_currentContext->pc_next() ) ) );
+               *reinterpret_cast< int32 * >( m_currentContext->code() + m_currentContext->pc_next() ) );
          m_currentContext->pc_next()+=sizeof(int32);
       return ret;
 
@@ -1325,7 +1325,7 @@ void opcodeHandler_SWCH( register VMachine *vm )
    {
       case FLC_ITEM_NIL:
          if ( *reinterpret_cast<uint32 *>( tableBase ) != 0xFFFFFFFF ) {
-            vm->m_currentContext->pc_next() = endianInt32( *reinterpret_cast<uint32 *>( tableBase )  );
+            vm->m_currentContext->pc_next() = *reinterpret_cast<uint32 *>( tableBase );
             return;
          }
       break;
@@ -2053,7 +2053,7 @@ void opcodeHandler_SELE( register VMachine *vm )
    byte *tableBase = vm->m_currentContext->code() + vm->m_currentContext->pc_next();
 
    // SELE B has a special semantic used as a TRY/CATCH helper
-   bool hasDefault = endianInt32( *reinterpret_cast<uint32 *>( tableBase )  ) == 0;
+   bool hasDefault = *reinterpret_cast<uint32 *>( tableBase )  == 0;
    bool reRaise = real_op2 == &vm->regB();
 
    // In select we use only integers and object fields.
