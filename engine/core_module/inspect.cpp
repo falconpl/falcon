@@ -133,10 +133,10 @@ void inspect_internal( VMachine *vm, const Item *elem, int32 level, int32 maxLev
             int limit = 0;
             switch ( mb->wordSize() )
             {
-               case 1: fmt = "%02X"; limit = 24; break;
-               case 2: fmt = "%04X"; limit = 12; break;
-               case 3: fmt = "%06X"; limit = 9; break;
-               case 4: fmt = "%08X"; limit = 6; break;
+               case 1: fmt = "%02" LLFMT "X"; limit = 24; break;
+               case 2: fmt = "%04" LLFMT "X"; limit = 12; break;
+               case 3: fmt = "%06" LLFMT "X"; limit = 9; break;
+               case 4: fmt = "%08" LLFMT "X"; limit = 6; break;
             }
 
             int written = 0;
@@ -459,10 +459,10 @@ static void describe_internal( VMachine *vm, String &tgt, const Item *elem, int3
          int limit = 0;
          switch ( mb->wordSize() )
          {
-            case 1: fmt = "%02X"; limit = 24; break;
-            case 2: fmt = "%04X"; limit = 12; break;
-            case 3: fmt = "%06X"; limit = 9; break;
-            case 4: fmt = "%08X"; limit = 6; break;
+            case 1: fmt = "%02" LLFMT "X"; limit = 24; break;
+            case 2: fmt = "%04" LLFMT "X"; limit = 12; break;
+            case 3: fmt = "%06" LLFMT "X"; limit = 9; break;
+            case 4: fmt = "%08" LLFMT "X"; limit = 6; break;
          }
 
          uint32 max = maxSize < 0 || mb->length() < (uint32) maxSize ? mb->length() : (uint32) maxSize;

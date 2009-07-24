@@ -91,7 +91,7 @@ different systems.
       #pragma warning (disable: 4291 )
       #pragma warning (disable: 579 )
       #pragma warning (disable: 4290 )
-	   #pragma warning (disable: 4231 )
+      #pragma warning (disable: 4231 )
       #pragma warning (disable: 4355)
       #pragma warning (disable: 4996)
 
@@ -103,6 +103,7 @@ different systems.
 
       #define atoll _atoi64
       #define snprintf _snprintf
+      #define LLFMT    "I64"
    #endif
 
    /* Specifics for Gcc/Mingw */
@@ -166,6 +167,7 @@ different systems.
    #define DIR_SEP_CHR   '/'
    #define DEFAULT_TEMP_DIR "/tmp"
    #define FALCON_SYS_EOL "\n"
+   #define LLFMT "ll"
 
 #endif
 
