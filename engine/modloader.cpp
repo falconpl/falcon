@@ -31,7 +31,13 @@
 #include <falcon/streambuffer.h>
 #include <falcon/stdstreams.h>
 
+#if FALCON_LITTLE_ENDIAN != 1
+#include <falcon/pcode.h>
+#endif
+
 #include <memory>
+
+
 
 #define BINMODULE_EXT "_fm"
 
@@ -760,8 +766,17 @@ Module *ModuleLoader::loadModule( Stream *in )
    in->read( &c1, 1 );
    in->read( &c2, 1 );
 
-   if(c1 =='F' && c2 =='M') {
+   if(c1 =='F' && c2 =='M')
+   {
       Module *ret = loadModule_select_ver( in );
+
+      #if FALCON_LITTLE_ENDIAN != 1
+      if( ret != 0 )
+      {
+         PCODE::deendianize( ret );
+      }
+      #endif
+
       return ret;
    }
 
@@ -929,6 +944,11 @@ Module *ModuleLoader::loadSource( Stream *fin, const String &path, const String 
 
    // import the binary stream in the module;
    delete temp_binary;
+
+   #if FALCON_LITTLE_ENDIAN != 1
+      PCODE::deendianize( module );
+   #endif
+
    return module;
 }
 

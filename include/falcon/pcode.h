@@ -23,6 +23,8 @@
 namespace Falcon
 {
 
+class Module;
+
 class FALCON_DYN_SYM PCODE
 {
 public:
@@ -32,6 +34,7 @@ public:
     * \param codeSize the size in bytes of the code sequence.
     */
    static void deendianize( byte* code, uint32 codeSize );
+   static void deendianize( Module* mod );
    static void convertEndianity( uint32 paramType, byte* targetArea );
    static uint32 advanceParam( uint32 paramType );
 };

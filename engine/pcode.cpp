@@ -15,6 +15,8 @@
 
 #include <falcon/pcode.h>
 #include <falcon/common.h>
+#include <falcon/module.h>
+#include <falcon/symbol.h>
 
 namespace Falcon {
 
@@ -40,7 +42,7 @@ void PCODE::convertEndianity( uint32 paramType, byte* targetArea )
 
          // high part - low part
          *reinterpret_cast<uint32 *>(targetArea) = value64 >> 32;
-         *reinterpret_cast<uint32 *>(targetArea+sizeof(uint32)) = (uint32) (value64 & 0xFFFFFFFF);
+         *reinterpret_cast<uint32 *>(targetArea+sizeof(uint32)) = (uint32) value64;
       }
       break;
 
@@ -131,7 +133,7 @@ void PCODE::deendianize( byte* code, uint32 codeSize )
       if ( opcode == P_SWCH && opcode == P_SELE )
       {
          // get the switch table (aready de-endianized)
-         uint64 sw_count = grabInt64(code - sizeof(int64));
+         uint64 sw_count = *reinterpret_cast<uint64 *>(code - sizeof(int64));
 
          uint16 sw_int = (int16) (sw_count >> 48);
          uint16 sw_rng = (int16) (sw_count >> 32);
@@ -204,6 +206,29 @@ void PCODE::deendianize( byte* code, uint32 codeSize )
          }
       }
 
+   }
+}
+
+
+void PCODE::deendianize( Module* mod )
+{
+   const SymbolTable &symtab = mod->symbolTable();
+
+
+   // now, the symbol table must be traversed.
+   MapIterator iter = symtab.map().begin();
+   while( iter.hasCurrent() )
+   {
+      Symbol *sym = *(Symbol **) iter.currentValue();
+
+      if ( sym->isFunction() )
+      {
+         FuncDef* fd = sym->getFuncDef();
+         deendianize( fd->code(), fd->codeSize() );
+      }
+
+      // next symbol
+      iter.next();
    }
 }
 
