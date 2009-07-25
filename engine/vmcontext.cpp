@@ -24,7 +24,7 @@
 #include <falcon/genericvector.h>
 #include <falcon/sys.h>
 
-#define VM_STACK_MEMORY_THRESHOLD 256
+#define VM_STACK_MEMORY_THRESHOLD 128
 
 
 namespace Falcon {
@@ -33,7 +33,7 @@ namespace Falcon {
 // Deletor for the frame list.
 
 VMContext::VMContext():
-   m_stack(4096)
+   m_stack(VM_STACK_MEMORY_THRESHOLD)
 {
    m_sleepingOn = 0;
 
@@ -53,7 +53,7 @@ VMContext::VMContext():
 }
 
 VMContext::VMContext( const VMContext& other ):
-   m_stack(4096)
+   m_stack(VM_STACK_MEMORY_THRESHOLD)
 {
    m_sleepingOn = 0;
 
