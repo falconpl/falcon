@@ -151,10 +151,10 @@ protected:
 
          union {
             struct {
-               byte methodId;
-               byte oldType;
                byte type;
                byte flags;
+               byte oldType;
+               byte methodId;
             } bits;
             uint16 half;
             uint32 whole;
@@ -475,7 +475,18 @@ public:
 
    void copy( const Item &other )
    {
-      all = other.all;
+      #ifdef _SPARC32_ITEM_HACK
+      register int32 *pthis, *pother;
+      pthis = (int32*) this;
+      pother = (int32*) &other;
+      pthis[0]= pother[0];
+      pthis[1]= pother[1];
+      pthis[2]= pother[2];
+      pthis[3]= pother[3];
+
+      #else
+         all = other.all;
+      #endif
    }
 
    /** Tells if this item is callable.

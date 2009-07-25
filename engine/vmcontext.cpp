@@ -32,7 +32,8 @@ namespace Falcon {
 //==================================
 // Deletor for the frame list.
 
-VMContext::VMContext()
+VMContext::VMContext():
+   m_stack(4096)
 {
    m_sleepingOn = 0;
 
@@ -51,7 +52,8 @@ VMContext::VMContext()
    m_lmodule = 0;
 }
 
-VMContext::VMContext( const VMContext& other )
+VMContext::VMContext( const VMContext& other ):
+   m_stack(4096)
 {
    m_sleepingOn = 0;
 
