@@ -108,32 +108,32 @@ void PCODE::deendianize( byte* code, uint32 codeSize )
    while( iPos < codeSize )
    {
       opcode = code[ iPos ];
-
+      uint32 iStart = iPos;
       // get the options
       iPos += 4;
-      if( code[ 1 ] != 0 )
+      if( code[ iStart + 1 ] != 0 )
       {
-         convertEndianity( code[ 1 ], code + iPos );
-         iPos += advanceParam( code[1] );
+         convertEndianity( code[ iStart + 1 ], code + iPos );
+         iPos += advanceParam( code[iStart + 1] );
 
-         if( code[ 2 ] != 0 )
+         if( code[ iStart + 2 ] != 0 )
          {
-            convertEndianity( code[2], code + iPos );
-            iPos += advanceParam( code[2] );
+            convertEndianity( code[iStart + 2], code + iPos );
+            iPos += advanceParam( code[iStart + 2] );
 
-            if( code[ 3 ] != 0 )
+            if( code[ iStart + 3 ] != 0 )
             {
-               convertEndianity( code[3], code + iPos );
-               iPos += advanceParam( code[3] );
+               convertEndianity( code[iStart + 3], code + iPos );
+               iPos += advanceParam( code[iStart + 3] );
             }
          }
       }
 
       // if the operation is a switch, it's handled a bit specially.
-      if ( opcode == P_SWCH && opcode == P_SELE )
+      if ( opcode == P_SWCH || opcode == P_SELE )
       {
          // get the switch table (aready de-endianized)
-         uint64 sw_count = *reinterpret_cast<uint64 *>(code - sizeof(int64));
+         uint64 sw_count = *reinterpret_cast<uint64 *>(code + iPos - sizeof(int64));
 
          uint16 sw_int = (int16) (sw_count >> 48);
          uint16 sw_rng = (int16) (sw_count >> 32);

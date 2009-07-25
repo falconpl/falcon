@@ -22,6 +22,11 @@
 #include <falcon/transcoding.h>
 #include "core_module/core_module.h"
 
+#if FALCON_LITTLE_ENDIAN != 1
+#include <falcon/pcode.h>
+#endif
+
+
 namespace Falcon
 {
 
@@ -241,6 +246,9 @@ InteractiveCompiler::t_ret_type InteractiveCompiler::compileNext( Stream *input 
          }
 
          m_vm->linkCompleteSymbol( init->symbol(), m_lmodule );
+         #if FALCON_LITTLE_ENDIAN != 1
+            PCODE::deendianize( init->symbol()->getFuncDef()->code(), init->symbol()->getFuncDef()->codeSize() );
+         #endif
       }
 
       m_vm->linkCompleteSymbol( cls->symbol(), m_lmodule );
@@ -261,6 +269,9 @@ InteractiveCompiler::t_ret_type InteractiveCompiler::compileNext( Stream *input 
    {
       StmtFunction *func = static_cast<StmtFunction *>( m_root->functions().front() );
       m_vm->linkCompleteSymbol( func->symbol(), m_lmodule );
+      #if FALCON_LITTLE_ENDIAN != 1
+         PCODE::deendianize( func->symbol()->getFuncDef()->code(), func->symbol()->getFuncDef()->codeSize() );
+      #endif 
 
       if ( ret == e_nothing )
          ret = e_decl;
@@ -311,7 +322,11 @@ InteractiveCompiler::t_ret_type InteractiveCompiler::compileNext( Stream *input 
    // finally, link main
    if ( ! m_root->statements().empty() )
    {
-      vm()->linkCompleteSymbol( module()->findGlobalSymbol("__main__" ), m_lmodule );
+      Symbol* msym = module()->findGlobalSymbol("__main__" );
+      vm()->linkCompleteSymbol( msym, m_lmodule );
+      #if FALCON_LITTLE_ENDIAN != 1
+         PCODE::deendianize( msym->getFuncDef()->code(), msym->getFuncDef()->codeSize() );
+      #endif
    }
 
    // launch the vm.

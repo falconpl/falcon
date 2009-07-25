@@ -42,6 +42,10 @@
 #include <falcon/transcoding.h>
 #include <falcon/path.h>
 
+#if FALCON_LITTLE_ENDIAN != 1
+#include <falcon/pcode.h>
+#endif
+
 #include "scriptdata.h"
 
 #define DEF_PREC  5
@@ -626,6 +630,10 @@ bool testScript( ScriptData *script,
 
    try
    {
+      // a good moment for a de-endianization
+      #if FALCON_LITTLE_ENDIAN != 1
+         PCODE::deendianize( scriptModule );
+      #endif
       runtime.addModule( scriptModule );
    }
    catch (Error *err)
