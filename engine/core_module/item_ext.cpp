@@ -222,8 +222,7 @@ FALCON_FUNC  val_numeric ( ::Falcon::VMachine *vm )
    The value returned may be one of the following:
    - @b NilType - the item is NIL
    - @b BooleanType - the item is true or false
-   - @b IntegerType - the item is an integer
-   - @b NumericType - the item is a floating point number
+   - @b NumericType - the item is a number
    - @b RangeType - the item is a range (a pair of two integers)
    - @b FunctionType - the item is a function
    - @b StringType - the item is a string
@@ -246,14 +245,17 @@ FALCON_FUNC  val_numeric ( ::Falcon::VMachine *vm )
 */
 FALCON_FUNC  mth_typeId ( ::Falcon::VMachine *vm )
 {
+   byte type;
    if ( vm->self().isMethodic() )
-      vm->regA() = (int64) vm->self().dereference()->type();
+      type = vm->self().dereference()->type();
    else {
       if ( vm->paramCount() > 0 )
-         vm->regA() = (int64) vm->param(0)->type();
+         type = (int64) vm->param(0)->type();
       else
          throw new ParamError( ErrorParam( e_inv_params ).origin( e_orig_runtime ).extra( "X" ) );
    }
+
+   vm->regA() = (int64) ( type == FLC_ITEM_INT ? FLC_ITEM_NUM : type );
 }
 
 /*#

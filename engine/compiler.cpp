@@ -741,7 +741,7 @@ void Compiler::addPredefs()
 
    addIntConstant( "NilType", FLC_ITEM_NIL );
    addIntConstant( "BooleanType", FLC_ITEM_BOOL );
-   addIntConstant( "IntegerType", FLC_ITEM_INT );
+   //addIntConstant( "IntegerType", FLC_ITEM_INT );
    addIntConstant( "NumericType", FLC_ITEM_NUM );
    addIntConstant( "RangeType", FLC_ITEM_RANGE );
    addIntConstant( "FunctionType", FLC_ITEM_FUNC );
