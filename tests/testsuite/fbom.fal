@@ -43,7 +43,7 @@ aNil = nil
 
 // Test 1: types
 if aNil.typeId() != NilType: failure( "NilType" )
-if integer.typeId() != IntegerType: failure( "IntegerType" )
+if integer.typeId() != NumericType: failure( "NumericType -- from int" )
 if float.typeId() != NumericType: failure( "NumericType" )
 if range.typeId() != RangeType: failure( "RangeType" )
 if string.typeId() != StringType: failure( "StringType" )

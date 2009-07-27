@@ -29,7 +29,7 @@ end
 
 object test
    function compare( a )
-      if typeOf( a ) != IntegerType: return nil
+      if typeOf( a ) != NumericType: return nil
       return 0 - a
    end
 end

@@ -22,7 +22,7 @@ end
 function callInMod1()
    try
       raiseInMod2()
-   catch IntegerType in err
+   catch NumericType in err
       failure( "Type catch - mod1 - 1" )
    catch StringType in err
       if err != "Hello from module 2"

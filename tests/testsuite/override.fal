@@ -18,7 +18,7 @@ class Over
    function add__( addend )
       if addend provides numval
          self.numval += addend.numval
-      elif addend.typeId() == NumericType or addend.typeId() == IntegerType
+      elif addend.typeId() == NumericType
          self.numval += addend
       else
          raise Error( 10001, "Wrong operands for add__", addend )
@@ -29,7 +29,7 @@ class Over
    function sub__( addend )
       if addend provides numval
          self.numval -= addend.numval
-      elif addend.typeId() == NumericType or addend.typeId() == IntegerType
+      elif addend.typeId() == NumericType
          self.numval -= addend
       else
          raise Error( 10001, "Wrong operands for sub__", addend )
@@ -40,7 +40,7 @@ class Over
    function mul__( addend )
       if addend provides numval
          self.numval *= addend.numval
-      elif addend.typeId() == NumericType or addend.typeId() == IntegerType
+      elif addend.typeId() == NumericType
          self.numval *= addend
       else
          raise Error( 10001, "Wrong operands for mul__", addend )
@@ -51,7 +51,7 @@ class Over
    function div__( addend )
       if addend provides numval
          self.numval /= addend.numval
-      elif addend.typeId() == NumericType or addend.typeId() == IntegerType
+      elif addend.typeId() == NumericType
          self.numval /= addend
       else
          raise Error( 10001, "Wrong operands for div__", addend )
@@ -62,7 +62,7 @@ class Over
    function mod__( addend )
       if addend provides numval
          self.numval %= addend.numval
-      elif addend.typeId() == NumericType or addend.typeId() == IntegerType
+      elif addend.typeId() == NumericType
          self.numval %= addend
       else
          raise Error( 10001, "Wrong operands for mod__", addend )
@@ -73,7 +73,7 @@ class Over
    function pow__( addend )
       if addend provides numval
          self.numval **= addend.numval
-      elif addend.typeId() == NumericType or addend.typeId() == IntegerType
+      elif addend.typeId() == NumericType
          self.numval **= addend
       else
          raise Error( 10001, "Wrong operands for mod__", addend )

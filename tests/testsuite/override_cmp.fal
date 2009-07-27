@@ -28,7 +28,7 @@ end
 function compareByNum( o1, o2 )
    if o2 provides numval
       return o1.numval - o2.numval
-   elif o2.typeId() == NumericType or o2.typeId() == IntegerType
+   elif o2.typeId() == NumericType
       return o1.numval - o2
    end
    return nil  // let the VM to order us.

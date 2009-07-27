@@ -17,7 +17,7 @@ load trycatch_mod1
 
 try
 	raiseInMod1()
-catch IntegerType in err
+catch NumericType in err
 	failure( "Type catch - top - 1" )
 catch StringType in err
 	if err != "Hello from module 1"
@@ -36,7 +36,7 @@ try
 	// this call a function in module 1 which calls a function in module 2
 	// which raises a string
 	callInMod1_2()
-catch IntegerType in err
+catch NumericType in err
 	failure( "Type catch - top - 4" )
 catch StringType in err
 	if err != "Hello from module 2"

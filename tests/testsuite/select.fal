@@ -15,7 +15,7 @@ function call_select( param )
 
    select param
 
-      case IntegerType, NumericType
+      case NumericType
          return "number"
 
       case StringType: return "string"

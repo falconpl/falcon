@@ -27,7 +27,7 @@ if a != 1: failure( "Specific error branch not executed" )
 // single integer
 try
 	raise 1
-catch IntegerType
+catch NumericType
 	a = 2
 end
 
@@ -36,7 +36,7 @@ if a != 2: failure( "Raise int / 1" )
 // single integer, single type
 try
 	raise 1
-catch IntegerType
+catch NumericType
 	a = 3
 catch StringType
 	a = 2
@@ -47,7 +47,7 @@ if a != 3: failure( "Raise int / 2" )
 try
 	raise 1
 	a = 1
-catch IntegerType, StringType
+catch NumericType, StringType
 	a = 4
 catch TypeError
 	a = 2
@@ -58,7 +58,7 @@ if a != 4: failure( "Raise int / 3" )
 try
 	raise 1
 	a = 1
-catch IntegerType, StringType
+catch NumericType, StringType
 	a = 5
 catch TypeError, Error
 	a = 2
@@ -69,7 +69,7 @@ if a != 5: failure( "Raise int / 4" )
 try
 	raise 1
 	a = 1
-catch IntegerType, StringType
+catch NumericType, StringType
 	a = 6
 catch TypeError, Error
 	a = 2
@@ -83,7 +83,7 @@ if a != 6: failure( "Raise / complete" )
 try
 	raise "message"
 	a = 1
-catch IntegerType in err
+catch NumericType in err
 	a = 2
 catch StringType in err
 	if err != "message": failure( "catch in / caught value" )
@@ -100,7 +100,7 @@ if a != 4: failure( "Raise / catch in 1" )
 a = 0
 try
 	a = 9 + nil
-catch IntegerType in err
+catch NumericType in err
 	a = 1
 catch TypeError
 	a = 10
@@ -116,7 +116,7 @@ if a != 10: failure( "Catch order / 1" )
 a = 0
 try
 	a = 9 + nil
-catch IntegerType in err
+catch NumericType in err
 	a = 1
 catch Error
 	a = 10
@@ -136,7 +136,7 @@ end
 a = 0
 try
 	raise test
-catch IntegerType in err
+catch NumericType in err
 	a = 1
 catch TypeError
 	a = 2
@@ -155,7 +155,7 @@ if a != 10: failure( "Catch raised item" )
 a = 0
 try
 	raise test
-catch IntegerType in err
+catch NumericType in err
 	a = 1
 catch TypeError
 	a = 2

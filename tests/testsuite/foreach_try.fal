@@ -25,7 +25,7 @@ vector = [ [1,2],
 function tryToReturn()
    try
       for v1, v2 in vector
-         if typeOf( v1 ) != IntegerType: failure( "Unpacking TRAV - ret " )
+         if typeOf( v1 ) != NumericType: failure( "Unpacking TRAV - ret " )
       end
    catch 
       if v2 != 6 // last catched value
@@ -40,7 +40,7 @@ end
 //
 function tryToRaise()
    for v1, v2 in vector
-      if typeOf( v1 ) != IntegerType: failure( "Unpacking TRAV - ret " )
+      if typeOf( v1 ) != NumericType: failure( "Unpacking TRAV - ret " )
    end
 end
 //====================
@@ -49,7 +49,7 @@ end
 for subvect in vector
    try
       v1, v2 = subvect
-      if typeOf( v1 ) != IntegerType: failure( "Unpacking UNPS " )
+      if typeOf( v1 ) != NumericType: failure( "Unpacking UNPS " )
    catch 
       if subvect != 7
          failure( "Catch in unps" )
@@ -60,7 +60,7 @@ end
      
 try
    for v1, v2 in vector
-      if typeOf( v1 ) != IntegerType: failure( "Unpacking TRAV " )
+      if typeOf( v1 ) != NumericType: failure( "Unpacking TRAV " )
    end
 catch 
    if v2 != 6 // last catched value
@@ -82,7 +82,7 @@ tryToReturn()
 for subvect in vector
    try
       for v1, v2 in vector
-         if typeOf( v1 ) != IntegerType: failure( "Unpacking TRAV - inner " )
+         if typeOf( v1 ) != NumericType: failure( "Unpacking TRAV - inner " )
       end
    catch
       if v2 != 6 // last catched value

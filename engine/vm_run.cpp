@@ -2093,6 +2093,9 @@ void opcodeHandler_SELE( register VMachine *vm )
    int type = op2->type();
    if ( sw_int > 0 )
    {
+      if ( type == FLC_ITEM_INT )
+         type = FLC_ITEM_NUM;
+
       if ( vm->seekInteger( type, tableBase + sizeof(uint32), sw_int, vm->m_currentContext->pc_next() ) )
          return;
    }

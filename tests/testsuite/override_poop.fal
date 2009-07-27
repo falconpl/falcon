@@ -20,7 +20,7 @@ o = bless([
    "add__" => function( addend )
       if addend provides numval
          self.numval += addend.numval
-      elif addend.typeId() == NumericType or addend.typeId() == IntegerType
+      elif addend.typeId() == NumericType
          self.numval += addend
       else
          raise Error( 10001, "Wrong operands for add__", addend )
@@ -31,7 +31,7 @@ o = bless([
    "sub__" => function( addend )
       if addend provides numval
          self.numval -= addend.numval
-      elif addend.typeId() == NumericType or addend.typeId() == IntegerType
+      elif addend.typeId() == NumericType
          self.numval -= addend
       else
          raise Error( 10001, "Wrong operands for sub__", addend )
@@ -42,7 +42,7 @@ o = bless([
    "mul__" => function( addend )
       if addend provides numval
          self.numval *= addend.numval
-      elif addend.typeId() == NumericType or addend.typeId() == IntegerType
+      elif addend.typeId() == NumericType
          self.numval *= addend
       else
          raise Error( 10001, "Wrong operands for mul__", addend )
@@ -53,7 +53,7 @@ o = bless([
    "div__" => function( addend )
       if addend provides numval
          self.numval /= addend.numval
-      elif addend.typeId() == NumericType or addend.typeId() == IntegerType
+      elif addend.typeId() == NumericType
          self.numval /= addend
       else
          raise Error( 10001, "Wrong operands for div__", addend )
@@ -64,7 +64,7 @@ o = bless([
    "mod__" => function( addend )
       if addend provides numval
          self.numval %= addend.numval
-      elif addend.typeId() == NumericType or addend.typeId() == IntegerType
+      elif addend.typeId() == NumericType
          self.numval %= addend
       else
          raise Error( 10001, "Wrong operands for mod__", addend )
@@ -75,7 +75,7 @@ o = bless([
    "pow__" => function( addend )
       if addend provides numval
          self.numval **= addend.numval
-      elif addend.typeId() == NumericType or addend.typeId() == IntegerType
+      elif addend.typeId() == NumericType
          self.numval **= addend
       else
          raise Error( 10001, "Wrong operands for mod__", addend )

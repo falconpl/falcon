@@ -24,7 +24,7 @@ function func()
 end
 
 if typeOf( nil ) != NilType: failure( "Nil type" )
-if typeOf( 1 ) != IntegerType: failure( "Integer type" )
+if typeOf( 1 ) != NumericType: failure( "Integer (NumericType) type" )
 if typeOf( 1.1 ) != NumericType: failure( "Numberic type" )
 if typeOf( [1:2] ) != RangeType: failure( "Range type" )
 if typeOf( func ) != FunctionType: failure( "Function type" )
