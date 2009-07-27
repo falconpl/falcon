@@ -16,7 +16,7 @@
 #ifndef NDEBUG
 
 #include <falcon/trace.h>
-FILE* _falcon_trace_fp = 0;
+FALCON_DYN_SYM FILE* _falcon_trace_fp = 0;
 
 #endif
 

@@ -26,7 +26,7 @@
 #else
 
 #include <stdio.h>
-
+#include <falcon/setup.h>
 
 #define TRACE_ON( name )  _falcon_trace_fp = fopen( name, "w" );
 #define TRACE_OFF  fclose(_falcon_trace_fp);  _falcon_trace_fp = 0;
@@ -35,7 +35,7 @@
 #define MESSAGE( fmt ) if( _falcon_trace_fp != 0 ) fprintf( _falcon_trace_fp, "%s:%d: " fmt "\n", __FILE__, __LINE__ );
 #define TRACEVAR( type, var ) if( _falcon_trace_fp != 0 ) fprintf( _falcon_trace_fp, "%s:%d: %s=%" type "\n", __FILE__, __LINE__, #var, var );
 
-extern FILE* _falcon_trace_fp;
+extern FALCON_DYN_SYM FILE* _falcon_trace_fp;
 
 #endif
 
