@@ -52,6 +52,9 @@ Falcon (0.9.2.1)
   * minor: TypeID returned by typeOf and typeId for integer items is now NumericType.
   * major: Closures are not anymore transparent (arrays). From the outside, they look
            as functions, but they record the value of local variable.
+  * major: A more flexible definition of methods, and a more formal definition of
+           call points and call structures allowed to fix some weirdness in the
+           resloution of "self" with methodic arrays.
              
 Falcon (0.9.2)
   * fixed: using more modern throw instead of the obsolete raise() functions
