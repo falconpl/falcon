@@ -274,7 +274,16 @@ Item::e_sercode Item::serialize( Stream *file, bool bLive ) const
          if( sc != sc_ok )
             return sc;
 
-         serialize_function( file, this->asMethodFunc(), bLive );
+         CallPoint* cp = this->asMethodFunc();
+         if ( cp->isFunc() )
+         {
+            serialize_function( file, static_cast<CoreFunc*>(cp), bLive );
+         }
+         else
+         {
+            SafeItem arr( static_cast<CoreArray*>(cp) );
+            arr.serialize(file, bLive );
+         }
       }
       break;
 
@@ -673,10 +682,15 @@ Item::e_sercode Item::deserialize( Stream *file, VMachine *vm )
          sc = func.deserialize( file, vm );
          if ( sc != sc_ok )
             return sc;
-         if ( ! func.isFunction() )
+         if ( func.isFunction() )
+            setMethod( obj, func.asMethodFunc() );
+         else if ( func.isArray() && func.isCallable() )
+         {
+            setMethod( obj, func.asArray() );
+         }
+         else
             return sc_invformat;
 
-         setMethod( obj, func.asMethodFunc() );
          return sc_ok;
       }
 

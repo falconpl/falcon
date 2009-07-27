@@ -1863,6 +1863,7 @@ void co_call_function( const Item &itm, VMachine *vm, uint32 paramCount )
 {
    // fill - in the missing parameters.
    vm->prepareFrame( itm.asFunction(), paramCount );
+   // TODO: Still needed?
    vm->self().setNil();
 }
 
@@ -1876,93 +1877,23 @@ void co_call_array( const Item &itm, VMachine *vm, uint32 paramCount )
 {
    CoreArray *arr = itm.asArray();
 
+
    if ( arr->length() != 0 )
    {
       const Item &carr = arr->at(0);
 
-      if ( carr.isCallable() )
+      if ( carr.asArray() != arr && carr.isCallable() )
       {
-         uint32 arraySize = arr->length();
-         uint32 sizeNow = vm->stack().length();
-         CoreDict* bindings = arr->bindings();
-         bool hasFuture = false;
+         vm->prepareFrame( arr, paramCount );
 
-         // move parameters beyond array parameters
-         arraySize -- ; // first element is the callable item.
-         if ( arraySize > 0 )
-         {
-            // first array element is the called item.
-            vm->stack().length( sizeNow + arraySize );
+         // the prepare for array already checks for self -- tables
+         if ( arr->table() != 0 )
+            vm->self() = arr->table();
 
-            sizeNow -= paramCount;
-            for ( uint32 j = sizeNow + paramCount; j > sizeNow; j -- )
-            {
-               vm->stack()[ j-1 + arraySize ] = vm->stack()[ j-1 ];
-            }
-
-            // push array paramers
-            for ( uint32 i = 0; i < arraySize; i ++ )
-            {
-               Item &itm = (*arr)[i + 1];
-               if( itm.isLBind() )
-               {
-                  if ( itm.asFBind() == 0 )
-                  {
-                     if ( vm->regBind().isNil() && bindings == 0 )
-                     {
-                        // we must create bindings for this array.
-                        bindings = arr->makeBindings();
-                     }
-
-                     if ( bindings != 0 )
-                     {
-                        // have we got this binding?
-                        Item *bound = bindings->find( *itm.asLBind() );
-                        if ( ! bound )
-                        {
-                           arr->setProperty( *itm.asLBind(), Item() );
-                           bound = bindings->find( *itm.asLBind() );
-                        }
-
-                        vm->stack()[ i + sizeNow ] = *bound;
-                     }
-                     else
-                     {
-                        // fall back to currently provided bindings
-                        vm->stack()[ i + sizeNow ] = *vm->getSafeBinding( *itm.asLBind() );
-                     }
-                  }
-                  else {
-                     // treat as a future binding
-                     hasFuture = true;
-                     vm->stack()[ i + sizeNow ] = itm;
-                  }
-               }
-               else {
-                  // just transfer the parameters
-                  vm->stack()[ i + sizeNow ] = itm;
-               }
-            }
-         }
-
-         // inform the called about future state
-         if( hasFuture )
-            vm->regBind().flagsOn( 0xF0 );
-
-         carr.readyFrame( vm, arraySize + paramCount );
-
-         // change the bindings now, before the VM runs this frame.
-         if ( vm->regBind().isNil() && arr->bindings() != 0 )
-         {
-            vm->regBind() = arr->bindings();
-         }
          return;
       }
    }
 
-   //TODO: Useful? -- on throw we either unroll or close the VM...
-   /*if ( paramCount != 0 )
-         vm->currentStack().resize( vm->currentStack().size() - paramCount );*/
    // TODO: correct error.
    throw new TypeError( ErrorParam( e_invop ).extra("CALL") );
 }
@@ -1973,17 +1904,14 @@ void co_call_dict( const Item &itm, VMachine *vm, uint32 paramCount )
    // find the call__ member, if it exists.
    CoreDict *self = itm.asDict();
 
-   Item mth;
-   if ( self->getMethod( "call__", mth ) )
+   Item *mth;
+   if ( (mth = self->find( "call__" ) ) != 0 && mth->isCallable() )
    {
-      vm->prepareFrame( mth.asMethodFunc(), paramCount );
+      mth->readyFrame( vm, paramCount );
       vm->self() = self;
       return;
    }
 
-   //TODO: Useful? -- on throw we either unroll or close the VM...
-   /*if ( paramCount != 0 )
-         vm->currentStack().resize( vm->currentStack().size() - paramCount );*/
    // TODO: correct error.
    throw new TypeError( ErrorParam( e_invop ).extra("CALL") );
 }
@@ -1995,16 +1923,13 @@ void co_call_object( const Item &itm, VMachine *vm, uint32 paramCount )
    CoreObject *self = itm.asObjectSafe();
 
    Item mth;
-   if ( self->getMethod( "call__", mth ) )
+   if ( self->getProperty( "call__", mth ) && mth.isCallable() )
    {
-      vm->prepareFrame( mth.asMethodFunc(), paramCount );
+      mth.readyFrame( vm, paramCount );
       vm->self() = self;
       return;
    }
 
-   //TODO: Useful? -- on throw we either unroll or close the VM...
-   /*if ( paramCount != 0 )
-         vm->currentStack().resize( vm->currentStack().size() - paramCount );*/
    // TODO: correct error.
    throw new TypeError( ErrorParam( e_invop ).extra("CALL") );
 }
@@ -2012,7 +1937,7 @@ void co_call_object( const Item &itm, VMachine *vm, uint32 paramCount )
 void co_call_method( const Item &itm, VMachine *vm, uint32 paramCount )
 {
    // fill - in the missing parameters.
-   vm->prepareFrame( itm.asMethodFunc(), paramCount );
+   itm.asMethodFunc()->readyFrame( vm, paramCount );
    itm.getMethodItem( vm->self() );
 }
 

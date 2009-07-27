@@ -3525,6 +3525,86 @@ void VMachine::prepareFrame( CoreFunc* target, uint32 paramCount )
    }
 }
 
+void VMachine::prepareFrame( CoreArray* arr, uint32 paramCount )
+{
+   fassert( arr->length() > 0 && arr->at(0).isCallable() );
+   Item& carr = (*arr)[0];
+
+   uint32 arraySize = arr->length();
+   uint32 sizeNow = this->stack().length();
+   CoreDict* bindings = arr->bindings();
+   bool hasFuture = false;
+
+   // move parameters beyond array parameters
+   arraySize -- ; // first element is the callable item.
+   if ( arraySize > 0 )
+   {
+      // first array element is the called item.
+      this->stack().length( sizeNow + arraySize );
+
+      sizeNow -= paramCount;
+      for ( uint32 j = sizeNow + paramCount; j > sizeNow; j -- )
+      {
+         this->stack()[ j-1 + arraySize ] = this->stack()[ j-1 ];
+      }
+
+      // push array paramers
+      for ( uint32 i = 0; i < arraySize; i ++ )
+      {
+         Item &itm = (*arr)[i + 1];
+         if( itm.isLBind() )
+         {
+            if ( itm.asFBind() == 0 )
+            {
+               if ( this->regBind().isNil() && bindings == 0 )
+               {
+                  // we must create bindings for this array.
+                  bindings = arr->makeBindings();
+               }
+
+               if ( bindings != 0 )
+               {
+                  // have we got this binding?
+                  Item *bound = bindings->find( *itm.asLBind() );
+                  if ( ! bound )
+                  {
+                     arr->setProperty( *itm.asLBind(), Item() );
+                     bound = bindings->find( *itm.asLBind() );
+                  }
+
+                  this->stack()[ i + sizeNow ] = *bound;
+               }
+               else
+               {
+                  // fall back to currently provided bindings
+                  this->stack()[ i + sizeNow ] = *this->getSafeBinding( *itm.asLBind() );
+               }
+            }
+            else {
+               // treat as a future binding
+               hasFuture = true;
+               this->stack()[ i + sizeNow ] = itm;
+            }
+         }
+         else {
+            // just transfer the parameters
+            this->stack()[ i + sizeNow ] = itm;
+         }
+      }
+   }
+
+   // inform the called about future state
+   if( hasFuture )
+      this->regBind().flagsOn( 0xF0 );
+
+   carr.readyFrame( this, arraySize + paramCount );
+
+   // change the bindings now, before the VM runs this frame.
+   if ( this->regBind().isNil() && arr->bindings() != 0 )
+   {
+      this->regBind() = arr->bindings();
+   }
+}
 
 
 GarbageLock *VMachine::lock( const Item &itm )

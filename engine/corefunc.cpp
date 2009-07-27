@@ -20,9 +20,20 @@
 #include <falcon/corefunc.h>
 #include <falcon/vm.h>
 #include <falcon/eng_messages.h>
+#include <falcon/itemarray.h>
 
 namespace Falcon
 {
+
+CoreFunc::~CoreFunc()
+{
+   delete m_closure;
+}
+
+void CoreFunc::readyFrame( VMachine* vm, uint32 paramCount )
+{
+   vm->prepareFrame( this, paramCount );
+}
 
 }
 

@@ -139,7 +139,7 @@ void Item::setLBind( String *lbind, GarbageItem *val )
        assignToVm( val );
 }
 
-void Item::setMethod( const Item &data, CoreFunc *func )
+void Item::setMethod( const Item &data, CallPoint *func )
 {
    *this = data;
    all.ctx.base.bits.oldType = all.ctx.base.bits.type;
@@ -261,7 +261,7 @@ void SafeItem::setLBind( String *lbind, GarbageItem *val )
        assignToVm( val );
 }
 
-void SafeItem::setMethod( const Item &data, CoreFunc *func )
+void SafeItem::setMethod( const Item &data, CallPoint *func )
 {
    copy( data );
    all.ctx.base.bits.oldType = all.ctx.base.bits.type;
@@ -562,20 +562,14 @@ bool Item::methodize( const Item &self )
       return true;
 
       case FLC_ITEM_ARRAY:
-         if ( data->asArray()->length() > 0 )
+      {
+         CoreArray& arr = *asArray();
+         // even if arr[0] is not an array, the check is harmless, as we check by ptr value.
+         if ( arr.length() > 0 && arr[0].asArray() != &arr && arr[0].isCallable() )
          {
-            Item *citem = &data->asArray()->at(0);
-            if ( citem->isMethod() && citem->asMethodItem() == self )
-            {
-               return true;
-            }
-            else if ( citem->isCallable() )
-            {
-               *data = data->asArray()->clone();
-               data->asArray()->at(0).methodize( self );
-               return true;
-            }
+            data->setMethod( self, &arr );
          }
+      }
       return false;
    }
 
@@ -590,12 +584,12 @@ bool Item::isCallable() const
    //a bit more complex: a callable array...
    if( type() == FLC_ITEM_ARRAY )
    {
-      CoreArray *arr = asArray();
-      if ( arr->length() > 0 )
+      CoreArray& arr = *asArray();
+      if ( arr.length() > 0 )
       {
-         const Item &first = arr->at(0);
-         if ( ! first.isArray() && first.isCallable() )
-            return true;
+         // avoid infinite recursion.
+         // even if arr[0] is not an array, the check is harmless, as we check by ptr value.
+         return arr[0].asArray() != &arr && arr[0].isCallable();
       }
    }
 

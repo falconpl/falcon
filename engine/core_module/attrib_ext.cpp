@@ -166,7 +166,10 @@ FALCON_FUNC  Function_attributes ( ::Falcon::VMachine *vm )
 
 FALCON_FUNC  Method_attributes ( ::Falcon::VMachine *vm )
 {
-   const Symbol* sym = vm->self().asMethodFunc()->symbol();
+   if ( ! vm->self().asMethodFunc()->isFunc() )
+      return;
+
+   const Symbol* sym = static_cast<CoreFunc*>(vm->self().asMethodFunc())->symbol();
 
    // currently, extfunc are not supported; let the VM return nil
    if ( sym->isExtFunc() )

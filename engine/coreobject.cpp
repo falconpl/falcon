@@ -231,11 +231,6 @@ void CoreObject::readProperty( const String &prop, Item &target )
       p = target.dereference();
 
    switch( p->type() ) {
-      case FLC_ITEM_FUNC:
-         // the function may be a dead function; by so, the method will become a dead method,
-         // and it's ok for us.
-         target.setMethod( this, p->asFunction() );
-      break;
 
       case FLC_ITEM_CLASS:
          if ( derivedFrom( p->asClass()->symbol()->name() ) )
@@ -246,6 +241,7 @@ void CoreObject::readProperty( const String &prop, Item &target )
 
       default:
         target = *p;
+        target.methodize( this );
    }
 }
 

@@ -535,8 +535,19 @@ void MemPool::markItem( const Item &item )
          // if the item isn't alive, give it the death blow.
          if( item.asMethodFunc()->mark() != gen )
          {
-            item.asMethodFunc()->mark( gen );
-            item.asMethodFunc()->liveModule()->mark( gen );
+            CallPoint* cp = item.asMethodFunc();
+
+            if( cp->isFunc() )
+            {
+               cp->mark( gen );
+               static_cast<CoreFunc*>(cp)->liveModule()->mark( gen );
+            }
+            else
+            {
+               // TODO: add a mark function to inner types.
+               SafeItem temp( static_cast<CoreArray*>(cp) );
+               markItem(temp);
+            }
          }
 
          Item self;

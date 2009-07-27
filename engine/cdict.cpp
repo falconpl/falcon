@@ -50,13 +50,8 @@ void CoreDict::readProperty( const String &prop, Item &item )
       
       if ( ( method = find( prop ) ) != 0 )
       {
-         method = method->dereference();
-         if ( method->isFunction() )
-         {
-            method->setMethod( this, method->asFunction() );
-         }
-
-         item = *method;
+         item = *method->dereference();
+         item.methodize( this );  // may fail but it's ok
          return;
       }
    }

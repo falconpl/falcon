@@ -26,6 +26,7 @@
 #include <falcon/deepitem.h>
 #include <falcon/sequence.h>
 #include <falcon/itemarray.h>
+#include <falcon/callpoint.h>
 
 #define flc_ARRAY_GROWTH   128
 
@@ -40,7 +41,7 @@ class CoreArray;
 /** Core array (or array of items).
 */
 
-class FALCON_DYN_CLASS CoreArray:  public DeepItem, public Garbageable
+class FALCON_DYN_CLASS CoreArray: public DeepItem, public CallPoint
 {
    ItemArray m_itemarray;
    CoreDict *m_bindings;
@@ -49,6 +50,7 @@ class FALCON_DYN_CLASS CoreArray:  public DeepItem, public Garbageable
 
    CoreArray( Item *buffer, uint32 size, uint32 alloc );
 
+   static String ARRAY_NAME;
 public:
 
    /** Creates the core array. */
@@ -206,10 +208,15 @@ public:
    uint32 tablePos() const { return m_tablePos; }
    void tablePos( uint32 tp ) { m_tablePos = tp; }
 
+   virtual bool isFunc() const { return false; }
+   virtual void readyFrame( VMachine* vm, uint32 paramCount );
+   virtual const String& name() const;
+
    virtual void readProperty( const String &prop, Item &item );
    virtual void writeProperty( const String &prop, const Item &item );
    virtual void readIndex( const Item &pos, Item &target );
    virtual void writeIndex( const Item &pos, const Item &target );
+
 };
 
 }

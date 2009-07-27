@@ -261,7 +261,7 @@ void inspect_internal( VMachine *vm, const Item *elem, int32 level, int32 maxLev
       case FLC_ITEM_METHOD:
       {
          temp = "Method ";
-         temp += "->" + elem->asMethodFunc()->symbol()->name();
+         temp += "->" + elem->asMethodFunc()->name();
          stream->writeString( temp );
 
          Item itemp;
@@ -589,7 +589,7 @@ static void describe_internal( VMachine *vm, String &tgt, const Item *elem, int3
          elem->getMethodItem( itemp );
          describe_internal( vm, tgt, &itemp, level + 1, maxLevel, maxSize );
          tgt += ").";
-         tgt += elem->asMethodFunc()->symbol()->name() + "()";
+         tgt += elem->asMethodFunc()->name() + "()";
       }
       break;
 

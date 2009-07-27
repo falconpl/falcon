@@ -20,15 +20,18 @@
 
 #include <falcon/carray.h>
 #include <falcon/memory.h>
+#include <falcon/string.h>
 #include <falcon/vm.h>
 #include <string.h>
 #include <falcon/lineardict.h>
 #include <falcon/coretable.h>
 
+
 namespace Falcon {
 
+String CoreArray::ARRAY_NAME( "Array" );
+
 CoreArray::CoreArray():
-   Garbageable(),
    m_bindings(0),
    m_table(0),
    m_tablePos(0)
@@ -36,7 +39,6 @@ CoreArray::CoreArray():
 
 
 CoreArray::CoreArray( const CoreArray& other ):
-   Garbageable( other ),
    m_itemarray( other.m_itemarray )
 {
    m_table = other.m_table;
@@ -52,7 +54,6 @@ CoreArray::CoreArray( const CoreArray& other ):
 }
 
 CoreArray::CoreArray( uint32 prealloc ):
-   Garbageable(),
    m_itemarray( prealloc ),
    m_bindings(0),
    m_table(0),
@@ -61,7 +62,6 @@ CoreArray::CoreArray( uint32 prealloc ):
 }
 
 CoreArray::CoreArray( Item *buffer, uint32 size, uint32 alloc ):
-   Garbageable(),
    m_itemarray( buffer, size, alloc ),
    m_bindings(0),
    m_table(0),
@@ -73,6 +73,14 @@ CoreArray::~CoreArray()
 {
 }
 
+const String& CoreArray::name() const {
+   return ARRAY_NAME;
+}
+
+void CoreArray::readyFrame( VMachine* vm, uint32 paramCount )
+{
+   vm->prepareFrame( this, paramCount );
+}
 
 
 CoreDict *CoreArray::makeBindings()
@@ -166,10 +174,8 @@ void CoreArray::readProperty( const String &prop, Item &item )
       fassert( ! p->isReference() );
    }
 
-   if ( p->isFunction() )
-      item.setMethod( this, p->asFunction() );
-   else
-      item = *p;
+   item = *p->dereference();
+   item.methodize( this );  // may fail but it's ok
 }
 
 void CoreArray::writeProperty( const String &prop, const Item &item )

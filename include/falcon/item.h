@@ -36,6 +36,7 @@ class CoreObject;
 class CoreDict;
 class CoreArray;
 class CoreClass;
+class CallPoint;
 class CoreFunc;
 class GarbageItem;
 class VMachine;
@@ -147,7 +148,7 @@ protected:
 
          } data;
 
-         CoreFunc *method;
+         CallPoint *method;
 
          union {
             struct {
@@ -385,7 +386,7 @@ public:
       The method is able to remember if it was called with
       a Function pointer or using an external function.
    */
-   Item( const Item &data, CoreFunc* func )
+   Item( const Item &data, CallPoint* func )
    {
       setMethod( data, func );
    }
@@ -399,7 +400,7 @@ public:
       The method is able to remember if it was called with
       a Function pointer or using an external function.
    */
-   void setMethod( const Item &data, CoreFunc *func );
+   void setMethod( const Item &data, CallPoint *func );
 
    void setClassMethod( CoreObject *obj, CoreClass *cls );
 
@@ -534,7 +535,7 @@ public:
 
    CoreClass* asClass() const { return (CoreClass *) all.ctx.data.ptr.extra; }
    CoreFunc* asFunction() const { return (CoreFunc*) all.ctx.data.ptr.extra; }
-   CoreFunc* asMethodFunc() const { return (CoreFunc*) all.ctx.method; }
+   CallPoint* asMethodFunc() const { return (CallPoint*) all.ctx.method; }
 
    /** Gets the "self" in an item (return the item version). */
    Item asMethodItem() const {
@@ -971,7 +972,7 @@ public:
    SafeItem( GarbageItem *r ) { setReference( r ); }
    SafeItem( CoreFunc* cf ) { setFunction( cf ); }
    SafeItem( String *lbind, GarbageItem *val ) { setLBind( lbind, val ); }
-   SafeItem( const Item &data, CoreFunc *func ) { setMethod( data, func ); }
+   SafeItem( const Item &data, CallPoint *func ) { setMethod( data, func ); }
    SafeItem( CoreObject *obj, CoreClass *cls ) { setClassMethod( obj, cls ); }
    SafeItem( CoreClass *cls ) { setClass( cls ); }
    SafeItem( FalconData *ptr, uint32 sig ) { setGCPointer( ptr, sig ); }
@@ -986,7 +987,7 @@ public:
    void setReference( GarbageItem *r );
    void setFunction( CoreFunc* cf );
    void setLBind( String *lbind, GarbageItem *val );
-   void setMethod( const Item &data, CoreFunc *func );
+   void setMethod( const Item &data, CallPoint *func );
    void setClassMethod( CoreObject *obj, CoreClass *cls );
    void setClass( CoreClass *cls );
    void setGCPointer( FalconData *ptr, uint32 sig );

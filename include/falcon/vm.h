@@ -1363,6 +1363,15 @@ public:
    /** Prepare a frame for a function call */
    void prepareFrame( CoreFunc* cf, uint32 paramCount );
 
+   /** Prepare a frame for an array call.
+
+       The function oesn't check for the array to be callable because
+       it's supposed that the check is on the caller.
+
+       However, a debug assert is performed.
+    */
+   void prepareFrame( CoreArray* ca, uint32 paramCount );
+
    /** Prepare a coroutine context.
 
      The context is immediately swapped, so any operation performed by

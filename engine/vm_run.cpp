@@ -976,9 +976,9 @@ void opcodeHandler_ONCE( register VMachine *vm )
    {
       call = operand2->asFunction()->symbol();
    }
-   else if ( operand2->isMethod() )
+   else if ( operand2->isMethod() && operand2->asMethodFunc()->isFunc() )
    {
-      call = operand2->asMethodFunc()->symbol();
+      call = static_cast<CoreFunc*>(operand2->asMethodFunc())->symbol();
    }
 
    if ( call != 0 && call->isFunction() )

@@ -17,6 +17,7 @@
 #include <falcon/coretable.h>
 #include <falcon/vm.h>
 #include <falcon/globals.h>
+#include <falcon/corefunc.h>
 
 namespace Falcon {
 namespace core {
