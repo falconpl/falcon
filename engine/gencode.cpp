@@ -1692,7 +1692,25 @@ void GenCode::gen_expression( const Expression *exp, t_valType &xValue )
 
       case Expression::t_lambda:
          xValue = l_value;
-         gen_pcode( P_STO, e_parA, exp->first()->asSymbol() );
+         if( exp->second() != 0 )
+         {
+            // we must create the lambda closure
+            int size = 0;
+            ListElement *iter = exp->second()->asArray()->begin();
+            while( iter != 0 )
+            {
+               const Value *val = (Value *) iter->data();
+               gen_push( val );
+               size++;
+               iter = iter->next();
+            }
+
+            gen_pcode( P_CLOS, c_param_fixed(size), e_parA, exp->first()->asSymbol() );
+         }
+         else
+         {
+            gen_pcode( P_STO, e_parA, exp->first()->asSymbol() );
+         }
       return;
 
       case Expression::t_oob:

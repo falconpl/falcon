@@ -187,6 +187,7 @@ ADD_LIBRARY( falcon_engine SHARED
    intcomp.cpp
    item.cpp
    item_co.cpp
+   itemarray.cpp
    itemlist.cpp
    itemserial.cpp
    itemtraits.cpp

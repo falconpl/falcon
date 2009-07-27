@@ -961,7 +961,7 @@ Value *Compiler::closeClosure()
    if( fd->undefined() > 0 )
    {
       // we have to find all the local variables that exist in the upper context and
-      // transform them in parameters.
+      // transform them in the first part of the local array.
       SymbolTable &funcTable = fd->symtab();
       ArrayDecl *closureDecl = new ArrayDecl;
 
@@ -975,8 +975,8 @@ Value *Compiler::closeClosure()
          Symbol *sym = *(Symbol **) iter.currentValue();
          if ( sym->isLocalUndef() )
          {
-            // ok, this must become a parameter...
-            sym->setParam();
+            // ok, this must become a local symbol...
+            sym->setLocal();
             sym->itemId( moved );
             moved ++;
 
@@ -991,29 +991,25 @@ Value *Compiler::closeClosure()
                raiseError( e_undef_sym, "", sym->declaredAt() );
             }
          }
-         else if ( sym->isParam() )
+         else if ( sym->isLocal() )
          {
-            // push forward all parameters
+            // push forward all the locals
             sym->itemId( fd->undefined() + sym->itemId() );
          }
 
          iter.next();
       }
 
-      // no more undefs -- now they are params
-      fd->params( fd->params() + fd->undefined() );
+      // no more undefs -- now they are locals
+      fd->locals( fd->locals() + fd->undefined() );
       fd->undefined( 0 );
 
-      // ... put it in front of our array and return it.
-      closureDecl->pushFront( lambda_call );
-      return new Value( closureDecl );
-   }
-   else
-   {
-      // just create create a lambda call for this function
-      return lambda_call;
+      // ... put as third element of the lambda call.
+      lambda_call->asExpr()->second( new Value( closureDecl ) );
    }
 
+   // just create create a lambda call for this function
+   return lambda_call;
 }
 
 

@@ -25,12 +25,14 @@
 #include <falcon/garbageable.h>
 #include <falcon/symbol.h>
 #include <falcon/livemodule.h>
+#include <falcon/itemarray.h>
 
 namespace Falcon
 {
 
 class LiveModule;
 class VMachine;
+class ItemArray;
 
 /** Class implementing a live function in the VM.
 */
@@ -38,6 +40,7 @@ class FALCON_DYN_CLASS CoreFunc: public Garbageable
 {
    LiveModule *m_lm;
    const Symbol* m_symbol;
+   ItemArray* m_closure;
 
 public:
 
@@ -47,21 +50,25 @@ public:
    CoreFunc( const Symbol *sym, LiveModule *lm ):
       Garbageable(),
       m_lm( lm ),
-      m_symbol( sym )
+      m_symbol( sym ),
+      m_closure(0)
    {}
 
    CoreFunc( const CoreFunc& other ):
-      Garbageable()
+      Garbageable(),
+      m_closure(0)
    {
       m_lm = other.m_lm;
       m_symbol = other.m_symbol;
    }
 
-   virtual ~CoreFunc() {}
+   virtual ~CoreFunc() { delete m_closure; }
 
    LiveModule *liveModule() const { return m_lm; }
    const Symbol *symbol() const { return m_symbol; }
    const String& name() const { return m_symbol->name(); }
+   ItemArray* closure() const  { return m_closure; }
+   void closure( ItemArray* cl ) { m_closure = cl; }
 };
 
 }

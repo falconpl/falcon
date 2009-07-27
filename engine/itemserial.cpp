@@ -45,9 +45,11 @@ bool Item::serialize_symbol( Stream *file, const Symbol *sym ) const
 }
 
 
-bool Item::serialize_function( Stream *file, const CoreFunc *func ) const
+bool Item::serialize_function( Stream *file, const CoreFunc *func, bool bLive ) const
 {
    byte type = FLC_ITEM_FUNC;
+   if ( bLive )
+         type |= 0x80;
    file->write( &type, 1 );
 
    // we don't serialize the module ID because it is better to rebuild it on deserialization
@@ -63,6 +65,25 @@ bool Item::serialize_function( Stream *file, const CoreFunc *func ) const
       {
          byte called = func->liveModule()->globals()[ itemId ].isNil() ? 0 : 1;
          file->write( &called, 1 );
+      }
+
+      // and we may need to serialize also it's closure.
+      ItemArray* closed = func->closure();
+      if( closed != 0 )
+      {
+         int32 len = endianInt32( closed->length() );
+         file->write( (byte *) &len, sizeof( len ) );
+
+         for( uint32 i = 0; i < closed->length(); i ++ )
+         {
+            (*closed)[i].serialize( file, bLive );
+            if( ! file->good() )
+               return false;
+         }
+      }
+      else {
+         int32 len = 0;
+         file->write( (byte *) &len, sizeof( len ) );
       }
    }
 
@@ -241,7 +262,7 @@ Item::e_sercode Item::serialize( Stream *file, bool bLive ) const
       break;
 
       case FLC_ITEM_FUNC:
-         serialize_function( file, this->asFunction() );
+         serialize_function( file, this->asFunction(), bLive );
       break;
 
       case FLC_ITEM_METHOD:
@@ -253,7 +274,7 @@ Item::e_sercode Item::serialize( Stream *file, bool bLive ) const
          if( sc != sc_ok )
             return sc;
 
-         serialize_function( file, this->asMethodFunc() );
+         serialize_function( file, this->asMethodFunc(), bLive );
       }
       break;
 
@@ -271,7 +292,7 @@ Item::e_sercode Item::serialize( Stream *file, bool bLive ) const
 
        case FLC_ITEM_CLSMETHOD:
          serialize_class( file, this->asMethodClass() );
-         serialize_function( file, this->asFunction() );
+         serialize_function( file, this->asFunction(), bLive );
       break;
 
       default:
@@ -354,7 +375,28 @@ Item::e_sercode Item::deserialize_function( Stream *file, VMachine *vm )
          lmod->globals()[ itemId ].setNil();
    }
 
-   setFunction( new CoreFunc( sym, lmod ) );
+   CoreFunc* function = new CoreFunc( sym, lmod );
+   // read the closure state.
+   uint32 closlen;
+   file->read( &closlen, sizeof( closlen ) );
+   if( closlen != 0 )
+   {
+      ItemArray* closure = new ItemArray( closlen );
+      closure->resize( closlen );
+
+      // put the state in now, so we can destroy it in case of error.
+      function->closure( closure );
+
+      // deserialize all the items.
+      for( uint32 i = 0; i < closlen; i++ ) {
+         Item::e_sercode res = (*closure)[i].deserialize(file, vm );
+         if ( res != sc_ok )
+            return res;
+      }
+
+   }
+
+   setFunction( function );
    return sc_ok;
 }
 
@@ -606,13 +648,15 @@ Item::e_sercode Item::deserialize( Stream *file, VMachine *vm )
       }
       break;
 
-
+      case FLC_ITEM_FUNC | 0x80:
       case FLC_ITEM_FUNC:
+      {
          if( vm == 0 )
             return sc_missvm;
 
          return deserialize_function( file, vm );
-      break;
+      }
+     break;
 
       case FLC_ITEM_METHOD:
       {

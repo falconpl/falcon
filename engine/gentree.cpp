@@ -724,6 +724,13 @@ void GenTree::gen_expression( const Expression *exp )
 
       case 8:
          m_out->writeString( exp->first()->asSymbol()->name() );
+         if( exp->second() != 0 )
+         {
+            m_out->writeString( " closure (" );
+            gen_array( exp->second()->asArray() );
+            m_out->writeString( " )" );
+         }
+
       break;
 
       case 10:

@@ -263,7 +263,7 @@ void VMachine::internal_construct()
    m_opHandlers[ P_STO ] = opcodeHandler_STO;
    m_opHandlers[ P_FORB ] = opcodeHandler_FORB;
    m_opHandlers[ P_EVAL ] = opcodeHandler_EVAL;
-
+   m_opHandlers[ P_CLOS ] = opcodeHandler_CLOS;
 
    // Finally, register to the GC system
    memPool->registerVM( this );
@@ -3494,7 +3494,15 @@ void VMachine::prepareFrame( CoreFunc* target, uint32 paramCount )
 
       // space for locals
       if ( tg_def->locals() > 0 )
+      {
          this->stack().resize( this->stackBase() + tg_def->locals() );
+
+         // are part of this locals closed?
+         if( target->closure() != 0 ) {
+            fassert( target->closure()->length() <= tg_def->locals() );
+            this->stack().copyOnto( this->stackBase(), *target->closure() );
+         }
+      }
 
       this->m_currentContext->lmodule( target->liveModule() );
       this->m_currentContext->symbol( target->symbol() );

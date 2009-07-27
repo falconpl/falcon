@@ -419,8 +419,9 @@ void MemPool::markItem( const Item &item )
             {
                func->mark( gen );
                func->liveModule()->mark( gen );
-               /*else
-                  const_cast<Item*>(&item)->setNil();*/
+               // mark also closed items
+               if ( func->closure() != 0 )
+                  func->closure()->gcMark( gen );
             }
          }
          break;

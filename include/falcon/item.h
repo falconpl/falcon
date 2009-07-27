@@ -170,7 +170,7 @@ protected:
 
    bool serialize_object( Stream *file, CoreObject *obj, bool bLive ) const;
    bool serialize_symbol( Stream *file, const Symbol *sym ) const;
-   bool serialize_function( Stream *file, const CoreFunc *func ) const;
+   bool serialize_function( Stream *file, const CoreFunc *func, bool bLive ) const;
    bool serialize_class( Stream *file, const CoreClass *cls ) const;
 
    e_sercode deserialize_symbol( Stream *file, VMachine *vm, Symbol **tg_sym, LiveModule **modId );

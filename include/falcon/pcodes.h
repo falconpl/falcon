@@ -336,11 +336,17 @@ while it will fill OP2 with an integer item containing 15H.
 /** Shift right op1 of op2 positions and place the result in OP1*/
 #define P_SHRS        0x5B
 
-/** Load vector item reference. $OP1[OP2] --> A */
-#define P_LDVR        0x5C
+/** Create a closure.
+   CLOS N, <tgt>, <src>
 
-/** Load property reference. $OP1.OP2 --> A */
-#define P_LDPR        0x5D
+   N elements from the stack are extracted and an array is made
+   as for GENA; The function in src is cloned into <tgt>, and
+   the closed array is added in tgt.
+*/
+#define P_CLOS        0x5C
+
+/** free */
+// free     0x5D
 
 /** POWS: self power, OP1 ** OP2 -> OP1 */
 #define P_POWS        0x5E

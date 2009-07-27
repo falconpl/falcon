@@ -555,8 +555,7 @@ void gen_code( Module *module, const FuncDef *fd, Stream *out, const t_labelMap 
          case P_SHL : csOpName = "SHL "; break;
          case P_SHRS: csOpName = "SHRS"; break;
          case P_SHLS: csOpName = "SHLS"; break;
-         case P_LDVR: csOpName = "LDVR"; break;
-         case P_LDPR: csOpName = "LDPR"; break;
+         case P_CLOS: csOpName = "CLOS"; break;
          case P_LSB : csOpName = "LSB "; break;
          case P_SELE: csOpName = options.m_isomorphic  ? "": "SELE"; break;
          case P_INDI: csOpName = "INDI"; break;

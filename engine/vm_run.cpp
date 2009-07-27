@@ -1968,6 +1968,35 @@ void opcodeHandler_SHRS( register VMachine *vm )
          new TypeError( ErrorParam( e_invop ).origin( e_orig_vm ).extra("SHRS") );
 }
 
+//5D
+void opcodeHandler_CLOS( register VMachine *vm )
+{
+   uint32 size = (uint32) vm->getNextNTD32();
+   Item *tgt = vm->getOpcodeParam( 2 )->dereference();
+   Item *src = vm->getOpcodeParam( 3 )->dereference();
+
+   fassert( src->isFunction() );
+   *tgt = new CoreFunc( *src->asFunction() );
+
+   if( size > 0 )
+   {
+      if ( size + vm->stackBase() > vm->stack().length() )
+      {
+         throw
+            new CodeError( ErrorParam( e_stackuf ).origin( e_orig_vm ).extra("CLOS") );
+      }
+
+      ItemArray* closure = new ItemArray( size );
+      Item *data = closure->elements();
+      int32 base = vm->stack().length() - size;
+      memcpy( data, &vm->stack()[ base ], sizeof(Item)*size );
+      closure->length( size );
+      vm->stack().resize( base );
+
+      tgt->asFunction()->closure( closure );
+   }
+}
+
 
 // 60
 void opcodeHandler_POWS( register VMachine *vm )

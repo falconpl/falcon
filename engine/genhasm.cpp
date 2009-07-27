@@ -1778,7 +1778,28 @@ void GenHAsm::gen_expression( const Expression *exp, t_valType &xValue )
       case Expression::t_lambda:
       {
          xValue = l_value;
-         m_out->writeString( "\tSTO \tA, $" + exp->first()->asSymbol()->name() + "\n" );
+         if( exp->second() != 0 )
+         {
+            // we must create the lambda closure
+            int size = 0;
+            ListElement *iter = exp->second()->asArray()->begin();
+            while( iter != 0 )
+            {
+               const Value *val = (Value *) iter->data();
+               gen_push( val );
+               size++;
+               iter = iter->next();
+            }
+
+            String temp; temp.writeNumber((int64) size);
+            m_out->writeString( "\tCLOS\t" + temp +
+                  ", A, $" + exp->first()->asSymbol()->name() + "\n" );
+         }
+         else
+         {
+            m_out->writeString( "\tSTO \tA, $" + exp->first()->asSymbol()->name() + "\n" );
+
+         }
       }
       return;
 
