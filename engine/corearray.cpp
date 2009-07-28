@@ -29,8 +29,6 @@
 
 namespace Falcon {
 
-String CoreArray::ARRAY_NAME( "Array" );
-
 CoreArray::CoreArray():
    m_bindings(0),
    m_table(0),
@@ -74,7 +72,8 @@ CoreArray::~CoreArray()
 }
 
 const String& CoreArray::name() const {
-   return ARRAY_NAME;
+   static String name( "Array" );
+   return name;
 }
 
 void CoreArray::readyFrame( VMachine* vm, uint32 paramCount )

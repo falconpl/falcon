@@ -50,7 +50,6 @@ class FALCON_DYN_CLASS CoreArray: public DeepItem, public CallPoint
 
    CoreArray( Item *buffer, uint32 size, uint32 alloc );
 
-   static String ARRAY_NAME;
 public:
 
    /** Creates the core array. */
