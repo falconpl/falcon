@@ -1700,7 +1700,7 @@ void GenCode::gen_expression( const Expression *exp, t_valType &xValue )
             while( iter != 0 )
             {
                const Value *val = (Value *) iter->data();
-               gen_push( val );
+               gen_pcode( P_PSHL, val );
                size++;
                iter = iter->next();
             }

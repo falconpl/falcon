@@ -449,7 +449,8 @@ bool ItemArray::copyOnto( uint32 from, const ItemArray& src, uint32 first, uint3
    if ( from + amount > length() )
       resize( from + amount );
 
-  memcpy( m_data + from, src.m_data + first, esize( amount ) );
+   memcpy( m_data + from, src.m_data + first, esize( amount ) );
+   return true;
 }
 
 }

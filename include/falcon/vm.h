@@ -169,6 +169,7 @@ void opcodeHandler_SHR( register VMachine *vm );
 void opcodeHandler_SHLS( register VMachine *vm );
 void opcodeHandler_SHRS( register VMachine *vm );
 void opcodeHandler_CLOS( register VMachine *vm );
+void opcodeHandler_PSHL( register VMachine *vm );
 
 void opcodeHandler_POWS( register VMachine *vm );
 void opcodeHandler_LSB( register VMachine *vm );
@@ -2296,6 +2297,7 @@ public:
    friend void opcodeHandler_SHLS( register VMachine *vm );
    friend void opcodeHandler_SHRS( register VMachine *vm );
    friend void opcodeHandler_CLOS( register VMachine *vm );
+   friend void opcodeHandler_PSHL( register VMachine *vm );
    friend void opcodeHandler_POWS( register VMachine *vm );
    friend void opcodeHandler_LSB( register VMachine *vm );
    friend void opcodeHandler_OOB( register VMachine *vm );

@@ -1997,8 +1997,14 @@ void opcodeHandler_CLOS( register VMachine *vm )
    }
 }
 
+// 5D
+void opcodeHandler_PSHL( register VMachine *vm )
+{
+   vm->stack().append( *vm->getOpcodeParam( 1 ) );
+}
 
-// 60
+
+// 5E
 void opcodeHandler_POWS( register VMachine *vm )
 {
    Item *operand1 = vm->getOpcodeParam( 1 )->dereference();
@@ -2009,7 +2015,7 @@ void opcodeHandler_POWS( register VMachine *vm )
    vm->regA() = *operand1;
 }
 
-//61
+//5F
 void opcodeHandler_LSB( register VMachine *vm )
 {
    Item *operand1 = vm->getOpcodeParam( 1 )->dereference();
@@ -2035,7 +2041,7 @@ void opcodeHandler_LSB( register VMachine *vm )
       new TypeError( ErrorParam( e_invop ).origin( e_orig_vm ).extra( "LSB" ) );
 }
 
-// 0x60
+// 60
 void opcodeHandler_EVAL( register VMachine *vm )
 {
    // We know the first operand must be a string

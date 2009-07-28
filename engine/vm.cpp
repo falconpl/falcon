@@ -264,6 +264,7 @@ void VMachine::internal_construct()
    m_opHandlers[ P_FORB ] = opcodeHandler_FORB;
    m_opHandlers[ P_EVAL ] = opcodeHandler_EVAL;
    m_opHandlers[ P_CLOS ] = opcodeHandler_CLOS;
+   m_opHandlers[ P_PSHL ] = opcodeHandler_PSHL;
 
    // Finally, register to the GC system
    memPool->registerVM( this );

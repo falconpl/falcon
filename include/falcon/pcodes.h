@@ -345,6 +345,19 @@ while it will fill OP2 with an integer item containing 15H.
 */
 #define P_CLOS        0x5C
 
+/** Shift right op1 of op2 positions and place the result in OP1*/
+#define P_SHRS        0x5B
+
+/** PUSH LITERAL
+   PSHL OP1  ->  OP1 => stack
+
+   This opcode pushes the operand on the stack without peforming
+   any check (and without dereferencing it). It allows to push 
+   raw references in the stack.
+*/
+#define P_PSHL        0x5D
+
+
 /** free */
 // free     0x5D
 

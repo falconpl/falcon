@@ -1786,7 +1786,16 @@ void GenHAsm::gen_expression( const Expression *exp, t_valType &xValue )
             while( iter != 0 )
             {
                const Value *val = (Value *) iter->data();
-               gen_push( val );
+               if( val->isSimple() ) {
+                  m_out->writeString( "\tPSHL\t" );
+                  gen_operand( val );
+               }
+               else {
+                  gen_complex_value( val );
+                  m_out->writeString( "\tPUSH\tA" );
+               }
+               m_out->writeString( "\n" );
+               
                size++;
                iter = iter->next();
             }
