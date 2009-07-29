@@ -59,6 +59,8 @@ VMContext::VMContext( const VMContext& other ):
 
    m_schedule = 0.0;
    m_priority = 0;
+   
+   m_atomicMode = false;
 
    m_stackBase = 0;
 
