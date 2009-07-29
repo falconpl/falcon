@@ -136,10 +136,10 @@ void sdl_surface_pixels_rfrom(CoreObject *co, void *user_data, Item &property, c
 
    switch( surf->format->BytesPerPixel )
    {
-      case 1: mb = new MemBuf_1( (byte*)surf->pixels, surf->h * surf->w, false ); break;
-      case 2: mb = new MemBuf_2( (byte*)surf->pixels, surf->h * surf->w, false ); break;
-      case 3: mb = new MemBuf_3( (byte*)surf->pixels, surf->h * surf->w, false ); break;
-      case 4: mb = new MemBuf_4( (byte*)surf->pixels, surf->h * surf->w, false ); break;
+      case 1: mb = new MemBuf_1( (byte*)surf->pixels, surf->h * surf->w, 0 ); break;
+      case 2: mb = new MemBuf_2( (byte*)surf->pixels, surf->h * surf->w, 0 ); break;
+      case 3: mb = new MemBuf_3( (byte*)surf->pixels, surf->h * surf->w, 0 ); break;
+      case 4: mb = new MemBuf_4( (byte*)surf->pixels, surf->h * surf->w, 0 ); break;
       default:
          fassert( false );
          return;
@@ -281,7 +281,7 @@ CoreObject *MakePixelFormatInst( VMachine *vm, SDLSurfaceCarrier *carrier, ::SDL
       fassert( clspal != 0 );
       CoreObject *objpal = clspal->asClass()->createInstance();
       // create the MemBuf we need; it refers the surface inside the carrier.
-      MemBuf *colors = new MemBuf_4( (byte *) fmt->palette->colors, fmt->palette->ncolors, false );
+      MemBuf *colors = new MemBuf_4( (byte *) fmt->palette->colors, fmt->palette->ncolors, 0 );
 
       if ( carrier != 0 )
          colors->dependant( obj );

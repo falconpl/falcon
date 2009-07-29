@@ -792,7 +792,8 @@ FALCON_FUNC sdl_GetKeyState( VMachine *vm )
    int size;
 
    data = ::SDL_GetKeyState( &size );
-   vm->retval( new MemBuf_1( data, size, false ) );
+   // the data is static, needs no destructor.
+   vm->retval( new MemBuf_1( data, size, 0 ) );
 }
 
 /*#
