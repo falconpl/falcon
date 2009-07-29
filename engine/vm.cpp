@@ -3384,14 +3384,15 @@ void VMachine::processMessage( VMMessage *msg )
 
    // create the coroutine, whose first operation will be
    // to call our external return frame.
-   uint32 pcnext = m_currentContext->pc_next();
-   m_currentContext->pc_next() = i_pc_call_external_return;
-   m_currentContext->pc() = i_pc_call_external_return;
+   VMContext* sleepCtx = coPrepare(0);
+   sleepCtx->createFrame(0);
+   
+   sleepCtx->pc_next() = i_pc_call_external_return;
+   sleepCtx->pc() = i_pc_call_external_return;
 
-   putAtSleep( coPrepare(0) );
+   putAtSleep( sleepCtx );
 
    // restore real return location.
-   m_currentContext->pc_next() = pcnext;
    for ( uint32 i = 0; i < msg->paramCount(); ++i )
    {
       pushParameter( *msg->param(i) );
