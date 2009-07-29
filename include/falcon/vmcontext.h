@@ -221,6 +221,79 @@ public:
 
    bool atomicMode() const { return m_atomicMode; }
    void atomicMode( bool b ) { m_atomicMode = b; }
+
+   /** Adds some space in the local stack for local variables. */
+   void addLocals( uint32 space )
+   {
+      if ( stack().length() < stackBase() + space )
+         stack().resize( stackBase() + space );
+   }
+
+   /** Returns the nth local item.
+      The first variable in the local context is numbered 0.
+      \note Fetched item pointers are valid while the stack doesn't change.
+            Pushes, addLocal(), item calls and VM operations may alter the
+            stack. Using this method again after such operations allows to
+            get a valid pointer to the desired item again. Items extracted with
+            this method can be also saved locally in an Item instance, at
+            the cost of a a flat item copy (a few bytes).
+      \param itemId the number of the local item accessed.
+      \return a valid pointer to the (dereferenced) local variable or 0 if itemId is invalid.
+   */
+   const Item *local( uint32 itemId ) const
+   {
+      return stack()[ stackBase() + itemId ].dereference();
+   }
+
+   /** Returns the nth local item.
+      This is just the non-const version.
+      The first variable in the local context is numbered 0.
+      \param itemId the number of the local item accessed.
+      \return a valid pointer to the (dereferenced) local variable or 0 if itemId is invalid.
+   */
+   Item *local( uint32 itemId )
+   {
+      return stack()[ stackBase() + itemId ].dereference();
+   }
+
+   /** Installs a post-processing return frame handler.
+      The function passed as a parmeter will receive a pointer to this VM.
+
+      The function <b>MUST</b> return true if it performs another frame item call. This will
+      tell the VM that the stack cannot be freed now, as a new call stack has been
+      prepared for immediate execution. When done, the function will be called again.
+
+      A frame handler willing to call another frame and not willing to be called anymore
+      must first unininstall itself by calling this method with parameters set at 0,
+      and then it <b>MUST return true</b>.
+
+      A frame handler not installing a new call frame <b>MUST return false</b>. This will
+      terminate the current stack frame and cause the VM to complete the return stack.
+      \param callbackFunct the return frame handler, or 0 to disinstall a previously set handler.
+   */
+
+   void returnHandler( ext_func_frame_t callbackFunc )
+   {
+      currentFrame()->m_endFrameFunc = callbackFunc;
+   }
+
+
+   ext_func_frame_t returnHandler() const
+   {
+      if ( stackBase() > VM_FRAME_SPACE )
+      {
+         return currentFrame()->m_endFrameFunc;
+      }
+      return 0;
+   }
+
+   /** Pushes a parameter for the vm callItem and callFrame functions.
+      \see callItem
+      \see callFrame
+      \param item the item to be passes as a parameter to the next call.
+   */
+   void pushParameter( const Item &item ) { stack().append(item); }
+
 };
 
 }

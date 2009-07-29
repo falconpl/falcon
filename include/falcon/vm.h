@@ -1089,7 +1089,7 @@ public:
    */
    const Item *local( uint32 itemId ) const
    {
-      return stackItem( m_currentContext->stackBase() + itemId ).dereference();
+      return m_currentContext->local( itemId );
    }
 
    /** Returns the nth local item.
@@ -1100,7 +1100,7 @@ public:
    */
    Item *local( uint32 itemId )
    {
-      return stackItem( m_currentContext->stackBase() + itemId ).dereference();
+      return m_currentContext->local( itemId );
    }
 
    /** Returns true if the nth element of the current function has been passed by reference.
@@ -1402,6 +1402,11 @@ public:
       return m_currentContext->currentFrame();
    }
 
+   VMContext* currentContext() const
+   {
+      return m_currentContext;
+   }
+
    /** Resets the return handler and prepares to call given external handler.
       This function prepares the VM to execute a return handler immediately
       after the calling function returns.
@@ -1477,7 +1482,15 @@ public:
       terminate the current stack frame and cause the VM to complete the return stack.
       \param callbackFunct the return frame handler, or 0 to disinstall a previously set handler.
    */
-   void returnHandler( ext_func_frame_t callbackFunc );
+   void returnHandler( ext_func_frame_t callbackFunc ) {
+      m_currentContext->returnHandler( callbackFunc );
+   }
+
+   ext_func_frame_t returnHandler() const
+   {
+      return m_currentContext->returnHandler();
+   }
+
 
    /** Returns currently installed return handler, or zero if none.
       \return  currently installed return handler, or zero if none.
@@ -1489,16 +1502,16 @@ public:
       \see callFrame
       \param item the item to be passes as a parameter to the next call.
    */
-   void pushParameter( const Item &item ) { stack().append(item); }
+   void pushParameter( const Item &item ) { m_currentContext->pushParameter(item); }
 
-   /** Adds some local space
+   /** Adds some local space in the current context.
       \param amount how many local variables must be created
    */
    void addLocals( uint32 space )
    {
-      if ( stack().length() < m_currentContext->stackBase() + space )
-         stack().resize( m_currentContext->stackBase() + space );
+      m_currentContext->addLocals( space );
    }
+
 
    byte operandType( byte opNum ) const {
       return m_currentContext->code()[m_currentContext->pc() + 1 + opNum];

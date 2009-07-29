@@ -148,6 +148,8 @@ void VMContext::createFrame( uint32 paramCount, ext_func_frame_t frameEndFunc )
    stackBase() = stack().length();
 }
 
+
+
 }
 
 /* end of vmcontext.cpp */

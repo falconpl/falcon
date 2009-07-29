@@ -27,6 +27,7 @@
 namespace Falcon {
 
 class VMachine;
+class VMContext;
 class VMMessage;
 
 /** Slot for messages sent around by the VM.
@@ -59,12 +60,12 @@ public:
       perform broadcasts, this function prepares the multi-call frame
       used for repeated broadcast-based calls.
 
-      @param vm The VM on which the broadcast is going to be performed.
+      @param vmc The VM context on which the broadcast is going to be performed.
       @param pfirst The first parameter in the current call frame that must be repeated.
       @param pcount Parameter count to be passed in the broadcast.
       \param msg The message that caused the slot to be broadcast (can be none if internally broadcast).
    */
-   void prepareBroadcast( VMachine *vm, uint32 pfirst, uint32 pcount, VMMessage* msg = 0 );
+   void prepareBroadcast( VMContext *vmc, uint32 pfirst, uint32 pcount, VMMessage* msg = 0 );
 
    /** Remove a ceratin item from this slot.
       This will remove an item considered equal to the subscriber from this list.

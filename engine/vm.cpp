@@ -1490,27 +1490,6 @@ void VMachine::callItemAtomic(const Item &callable, int32 paramCount )
 }
 
 
-
-void VMachine::returnHandler( ext_func_frame_t callbackFunc )
-{
-   if ( stackBase() >= VM_FRAME_SPACE )
-   {
-      StackFrame *frame = (StackFrame *) &stack()[ stackBase() - VM_FRAME_SPACE ];
-      frame->m_endFrameFunc = callbackFunc;
-   }
-}
-
-
-ext_func_frame_t VMachine::returnHandler()
-{
-   if ( stackBase() > VM_FRAME_SPACE )
-   {
-      StackFrame *frame = (StackFrame *) &stack()[ stackBase() - VM_FRAME_SPACE ];
-      return frame->m_endFrameFunc;
-   }
-   return 0;
-}
-
 void VMachine::yield( numeric secs )
 {
    if ( m_currentContext->atomicMode() )
@@ -3385,25 +3364,29 @@ void VMachine::processMessage( VMMessage *msg )
    // create the coroutine, whose first operation will be
    // to call our external return frame.
    VMContext* sleepCtx = coPrepare(0);
-   sleepCtx->createFrame(0);
+
+   // Push the message parameters
+   // Push the message parameters
+   for ( uint32 i = 0; i < msg->paramCount(); ++i )
+   {
+      sleepCtx->pushParameter( *msg->param(i) );
+   }
+   // and create a full functional frame.
+   sleepCtx->createFrame(msg->paramCount());
    
+   // force the sleeping context to call the return frame immediately
    sleepCtx->pc_next() = i_pc_call_external_return;
    sleepCtx->pc() = i_pc_call_external_return;
 
-   putAtSleep( sleepCtx );
-
-   // restore real return location.
-   for ( uint32 i = 0; i < msg->paramCount(); ++i )
-   {
-      pushParameter( *msg->param(i) );
-   }
-
-   // create the frame used by the broadcast process
-   createFrame( msg->paramCount() );
-
    // prepare the broadcast in the frame.
-   slot->prepareBroadcast( this, 0, msg->paramCount(), msg );
-   callReturn();
+   slot->prepareBroadcast( sleepCtx, 0, msg->paramCount(), msg );
+
+   // force immediate context rotation
+   putAtSleep( m_currentContext );
+   m_currentContext = sleepCtx;
+
+   // process immediate execution.
+   //callReturn();
 }
 
 void VMachine::performGC( bool bWaitForCollect )

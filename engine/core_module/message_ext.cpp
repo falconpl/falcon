@@ -99,7 +99,7 @@ FALCON_FUNC  broadcast( ::Falcon::VMachine *vm )
    CoreSlot* cs = vm->getSlot( *i_msg->asString(), false );
    if ( cs )
    {
-      cs->prepareBroadcast( vm, 1, vm->paramCount() - 1 );
+      cs->prepareBroadcast( vm->currentContext(), 1, vm->paramCount() - 1 );
       vm->regA().setBoolean(true);
    }
    else
@@ -412,7 +412,7 @@ FALCON_FUNC VMSlot_init( ::Falcon::VMachine *vm )
 FALCON_FUNC VMSlot_broadcast( ::Falcon::VMachine *vm )
 {
    CoreSlot* cs = (CoreSlot*) vm->self().asObject()->getUserData();
-   cs->prepareBroadcast( vm, 0, vm->paramCount() );
+   cs->prepareBroadcast( vm->currentContext(), 0, vm->paramCount() );
 }
 
 /*#
