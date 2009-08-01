@@ -427,7 +427,10 @@ void Compiler::defineVal( Value *val )
       if ( staticPrefix() == 0 )
       {
          Symbol *sym;
-         if ( getFunction() != 0 ) {
+         // are we in a function that misses that symbol?
+         if ( getFunction() != 0 )
+         {
+            // we're creating the local symbol
             // addlocal must also define the symbol
             sym = addLocalSymbol( val->asSymdef(), false );
          }
@@ -481,22 +484,35 @@ Symbol *Compiler::addLocalSymbol( const String *symname, bool parameter )
    Symbol *sym = table.findByName( *symname );
    if( sym == 0 )
    {
-      if ( m_strict && ! m_defContext )
-      {
-         raiseError( e_undef_sym, "", lexer()->previousLine() );
-      }
-
       // now we can add the symbol. As we have the string from
       // the module already, we keep it.
       sym = new Symbol( m_module, symname );
       m_module->addSymbol( sym );
       sym->declaredAt( lexer()->previousLine() );
+
+      // this flag marks closure forward definitions
+      bool taken = false;
       if ( parameter ) {
          sym = func->addParameter( sym );
       }
       else
       {
-         sym = func->addLocal( sym );
+         // If we're in a closure, we may wish to add
+         // a local undefined that will be filled at closure ending
+         if ( m_closureContexts and searchLocalSymbol( symname, true ) != 0 )
+         {
+            taken = true;
+            sym = func->addUndefined( sym );
+         }
+         else
+            sym = func->addLocal( sym );
+      }
+
+      // in strict mode raise an error if we're not in def, but not if
+      // we taken the symbol from some parent.
+      if ( !taken && m_strict && !m_defContext )
+      {
+         raiseError( e_undef_sym, "", lexer()->previousLine() );
       }
    }
    return sym;
@@ -513,30 +529,33 @@ bool Compiler::checkLocalUndefined()
       {
          Symbol *sym = 0;
 
-         // Yes, it's undefined. Are we in a closure context,
-         // so that we have to find it in parents?
          if ( m_closureContexts > 0 )
          {
             // still undefined after some loop?
             // in case of undef == x[undef.len()] we have double
             // un-definition of undef on the same line.
-            fassert( m_functions.end() );
-            const FuncDef *fd_current = reinterpret_cast<const FuncDef *>
-                  ( m_functions.end()->data() );
+            fassert( m_functions.end() != 0 );
+            ListElement* le = m_functions.end();
+            const FuncDef *fd_current = reinterpret_cast<const FuncDef *>( le->data() );
 
+            // try to find it locally -- may have been defined in a previous loop
             sym = fd_current->symtab().findByName( *val->asSymdef() );
-            if ( sym == 0 && m_functions.begin() != m_functions.end() )
+            if  ( sym == 0 )
             {
-               const FuncDef *fd_parent = reinterpret_cast<const FuncDef *>
-                  ( m_functions.end()->prev()->data() );
-
-               if( fd_parent != 0 )
+               le = le->prev();
+               while( le != 0 )
                {
+                  const FuncDef *fd_parent = reinterpret_cast<const FuncDef *>( le->data() );
+
                   if( fd_parent->symtab().findByName( *val->asSymdef() ) != 0 )
                   {
-                     sym = getFunction()->addUndefined(
-                        m_module->addSymbol(*val->asSymdef()) );
+                     sym = m_module->addSymbol(*val->asSymdef());
+                     sym->declaredAt( lexer()->previousLine() );
+                     getFunction()->addUndefined( sym );
+                     break;
                   }
+
+                  le = le->prev();
                }
             }
          }
@@ -544,17 +563,34 @@ bool Compiler::checkLocalUndefined()
          // still nothing?
          if (sym == 0)
          {
-            sym = addGlobalSymbol( val->asSymdef() );
+            // --- import a symbol, unless we're strict
+            if( m_strict )
+            {
+               sym = m_module->findGlobalSymbol( *val->asSymdef() );
+
+               if( sym == 0 )
+               {
+                  raiseError( e_undef_sym, *val->asSymdef(), lexer()->previousLine() );
+                  // but add the symbol nevertheless.
+                  sym = addGlobalSymbol( val->asSymdef() );
+               }
+            }
+            else
+            {
+               sym = addGlobalSymbol( val->asSymdef() );
+            }
          }
+
          val->setSymbol( sym );
       }
+
       l->popFront();
    }
    return true;
 }
 
 
-Symbol *Compiler::searchLocalSymbol( const String *symname )
+Symbol *Compiler::searchLocalSymbol( const String *symname, bool recurse )
 {
    if( m_functions.empty() )
       return searchGlobalSymbol( symname );
@@ -566,8 +602,22 @@ Symbol *Compiler::searchLocalSymbol( const String *symname )
       return *sympp;
 
    // then try in the local symtab or just return 0.
-   FuncDef *fd = (FuncDef *) m_functions.back();
-   return fd->symtab().findByName( *symname );
+   ListElement* lastFunc = m_functions.end();
+   while( lastFunc != 0 )
+   {
+      FuncDef *fd = (FuncDef *)lastFunc->data();
+      Symbol *found;
+      if( (found = fd->symtab().findByName( *symname )) )
+         return found;
+
+      if ( ! recurse )
+         return 0;
+
+      lastFunc = lastFunc->prev();
+   }
+
+   // definitely not found.
+   return 0;
 }
 
 Symbol *Compiler::searchOuterSymbol( const String *symname )
@@ -980,13 +1030,38 @@ Value *Compiler::closeClosure()
             sym->itemId( moved );
             moved ++;
 
-            Symbol *parentSym;
-            if ( (parentSym = searchLocalSymbol( &sym->name() )) != 0 )
+            // and now let's find the father's having this local undefined.
+            fassert( m_functions.end() != 0 );
+            ListElement* le = m_functions.end();
+            Symbol *parentSym = 0;
+
+            while( le != 0 )
             {
-               //... and the parent symbol must be stored in parametric array...
-               closureDecl->pushBack( new Value( parentSym ) );
+               FuncDef *fd_parent = ( FuncDef *) le->data();
+
+               // when we find it...
+               if( ( parentSym = fd_parent->symtab().findByName( sym->name() )) != 0 )
+               {
+                  // we must now force the declaration of local undefined for this
+                  // symbol up to this closure, so that it sent down the stack on runtime.
+                  le = le->next();
+                  while( le != 0 )
+                  {
+                     fd_parent = (FuncDef *) le->data();
+                     parentSym = fd_parent->addUndefined( m_module->addSymbol( sym->name() ) );
+                     le = le->next();
+                  }
+
+                  //... and the parent symbol must be stored in parametric array...
+                  closureDecl->pushBack( new Value( parentSym ) );
+                  break;
+               }
+
+               le = le->prev();
             }
-            else {
+
+            if ( parentSym == 0 )
+            {
                // closures can't have undefs.
                raiseError( e_undef_sym, "", sym->declaredAt() );
             }

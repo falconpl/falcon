@@ -1700,7 +1700,8 @@ void GenCode::gen_expression( const Expression *exp, t_valType &xValue )
             while( iter != 0 )
             {
                const Value *val = (Value *) iter->data();
-               gen_pcode( P_PSHL, val );
+               // push the reference; we want a reference in the closure.
+               gen_pcode( P_PSHR, val );
                size++;
                iter = iter->next();
             }

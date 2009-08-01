@@ -29,6 +29,9 @@ end
 function token1(t)
     f = function (s)
         try
+            // the trick in this line is that we use undefined "t" twice in a line.
+            // the compiler must be able to assign the undefined symbol only the first time
+            // and use the created symbol the second time.
             return t == s[ 0 : t.len() ]
         catch Error in error
             failure( "Param access 2" )
@@ -41,7 +44,7 @@ t = token( "foo" )
 if t( "barfoo" ) != "bar": failure( "Closure result 1" )
 
 t = token1( "foo" )
-if not t( "foo" ) : failure( "Closure result 2" )
+if not t( "foo" ) : failure( "Closure result 2 (double undefined on one line)" )
 if t( "bar" ) : failure( "Closure result 3" )
 success()
 

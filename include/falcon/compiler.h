@@ -279,7 +279,24 @@ public:
    void raiseError( int errorNum, const String &errorp, int errorLine=0);
    void addError() { m_errors++; }
 
-   Symbol *searchLocalSymbol( const String *symname );
+   /** Searches a symbol in the local context.
+    *
+    *  If the current context is the global context, then it just calls
+    *  searchGlobalSymbol. If there is a local context, the symbol is serched
+    *  in the current context; in case it's not found, this method returns
+    *  if bRecurse is false.
+    *
+    *  If bRecurse is true, the symbol is searched down in the parent contexts
+    *  until found or until there is no more local context. In that case, the
+    *  method returns 0; so if there is the need to bind a local symbol or a global
+    *  one if local symbols are not found, this must be done by the caller
+    *  calling searchGlobalSymbol when this method returns 0.
+    *
+    *  \param symname The symbol name as a pointer to a module string.
+    *  \param bRecurse true to bind symbols from any parent, false to search in the local context.
+    *  \return The symbol if found or 0 otherwise.
+    */
+   Symbol *searchLocalSymbol( const String *symname, bool bRecurse = false );
    Symbol *searchGlobalSymbol( const String *symname );
    Symbol *addLocalSymbol( const String *symname, bool parameter );
    Symbol *addGlobalSymbol( const String *symname );

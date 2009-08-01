@@ -1,0 +1,59 @@
+/****************************************************************************
+* Falcon test suite
+*
+*
+* ID: 60g
+* Category: functional
+* Subcategory: closure
+* Short: Functional closure
+* Description:
+*   Test for second level closures. This checks for being able to close
+*   and modify remote parent local data.
+* [/Description]
+*
+****************************************************************************/
+
+
+
+function makeSharedDeep()
+   locvar = 0
+   make_get = function()
+      return {=> c = locvar; return c }
+   end
+
+   make_set = function()
+      return {a=> locvar = a}
+   end
+
+   return [make_get(), make_set()]
+end
+
+function makePrivateDeep()
+   locvar = 0
+   make_get = function()
+      return {=>locvar}
+   end
+
+   make_set = innerfunc()
+      return {a=> locvar = a}
+   end
+
+   return [make_get(), make_set()]
+end
+
+
+get, set = makeSharedDeep()
+set( "Hello" )
+if get() != "Hello": failure( "Share deep" )
+
+get, set = makeSharedDeep()
+if get() != 0: failure( "Contamination of local" )
+
+get, set = makePrivateDeep()
+set( "Hello" )
+if get() != 0: failure( "Inner func insolation failed" )
+
+
+success()
+
+/* end of file */
