@@ -18,11 +18,14 @@
    Core arrays are meant to hold item pointers.
 */
 
-#include <falcon/carray.h>
+#include <falcon/itemarray.h>
+#include <falcon/iterator.h>
 #include <falcon/memory.h>
 #include <falcon/vm.h>
 #include <falcon/lineardict.h>
 #include <falcon/coretable.h>
+#include <falcon/error.h>
+#include <falcon/eng_messages.h>
 
 #include <string.h>
 
@@ -33,10 +36,12 @@ namespace Falcon
 ItemArray::ItemArray():
    m_alloc(0),
    m_size(0),
-   m_data(0)
+   m_data(0),
+   m_owner( 0 )
 {}
 
-ItemArray::ItemArray( const ItemArray& other )
+ItemArray::ItemArray( const ItemArray& other ):
+   m_owner( 0 )
 {
    if( other.m_size != 0 )
    {
@@ -54,7 +59,8 @@ ItemArray::ItemArray( const ItemArray& other )
 }
 
 
-ItemArray::ItemArray( uint32 prealloc )
+ItemArray::ItemArray( uint32 prealloc ):
+   m_owner( 0 )
 {
    m_data = (Item *) memAlloc( esize(prealloc) );
    m_alloc = prealloc;
@@ -65,7 +71,8 @@ ItemArray::ItemArray( uint32 prealloc )
 ItemArray::ItemArray( Item *buffer, uint32 size, uint32 alloc ):
    m_alloc(alloc),
    m_size(size),
-   m_data(buffer)
+   m_data(buffer),
+   m_owner( 0 )
 {}
 
 
@@ -78,6 +85,8 @@ ItemArray::~ItemArray()
 
 void ItemArray::gcMark( uint32 mark )
 {
+   Sequence::gcMark( mark );
+
    for( uint32 pos = 0; pos < m_size; pos++ ) {
       memPool->markItem( m_data[pos] );
    }
@@ -452,6 +461,105 @@ bool ItemArray::copyOnto( uint32 from, const ItemArray& src, uint32 first, uint3
    memcpy( m_data + from, src.m_data + first, esize( amount ) );
    return true;
 }
+
+//============================================================
+// Iterator management.
+//============================================================
+
+void ItemArray::getIterator( Iterator& tgt, bool tail ) const
+{
+   tgt.position( tail ? (length()>0? length()-1: 0) : 0 );
+}
+
+
+void ItemArray::copyIterator( Iterator& tgt, const Iterator& source ) const
+{
+   tgt.position( source.position() );
+}
+
+
+void ItemArray::disposeIterator( Iterator& tgt ) const
+{
+   // no need to do anything
+}
+
+
+void ItemArray::gcMarkIterator( Iterator& tgt ) const
+{
+   // no need to do anything
+}
+
+void ItemArray::insert( Iterator &iter, const Item &data )
+{
+   if ( ! iter.isValid() )
+      throw new CodeError( ErrorParam( e_invalid_iter, __LINE__ ) );
+
+   insert( data, iter.position() );
+}
+
+void ItemArray::erase( Iterator &iter )
+{
+   if ( ! iter.isValid() )
+      throw new CodeError( ErrorParam( e_invalid_iter, __LINE__ ) );
+
+   if ( iter.position() > length() )
+      throw new AccessError( ErrorParam( e_iter_outrange, __LINE__ ) );
+
+   remove( iter.position() );
+   iter.invalidate();
+}
+
+
+bool ItemArray::hasNext( const Iterator &iter ) const
+{
+   return iter.isValid() && iter.position() < length();
+}
+
+
+bool ItemArray::hasPrev( const Iterator &iter ) const
+{
+   return iter.isValid() && iter.position() > 0;
+}
+
+bool ItemArray::hasCurrent( const Iterator &iter ) const
+{
+   return iter.isValid() && iter.position() < length();
+}
+
+
+bool ItemArray::next( Iterator &iter ) const
+{
+   if (iter.isValid() && iter.position() < length())
+      iter.position( iter.position() + 1 );
+}
+
+
+bool ItemArray::prev( Iterator &iter ) const
+{
+   if (iter.isValid() && iter.position() > 0 )
+      iter.position( iter.position() - 1 );
+}
+
+Item& ItemArray::getCurrent( const Iterator &iter )
+{
+   if ( iter.isValid() && iter.position() < length() )
+      return m_data[ iter.position() ];
+
+   throw new AccessError( ErrorParam( e_iter_outrange, __LINE__ ) );
+}
+
+
+Item& ItemArray::getCurrentKey( const Iterator &iter )
+{
+   throw new CodeError( ErrorParam( e_non_dict_seq, __LINE__ ) );
+}
+
+
+bool ItemArray::equalIterator( const Iterator &first, const Iterator &second ) const
+{
+   return first.position() == second.position();
+}
+
 
 }
 

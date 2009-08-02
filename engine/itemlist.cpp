@@ -23,8 +23,7 @@
 
 namespace Falcon {
 
-ItemList::ItemList( const ItemList &l ):
-   m_iters(0)
+ItemList::ItemList( const ItemList &l )
 {
    ItemListElement *h = l.m_head;
    if ( h == 0 )
@@ -81,12 +80,6 @@ ItemListElement *ItemList::last() const
 }
 
 
-CoreIterator *ItemList::getIterator( bool tail )
-{
-   return new ItemListIterator( this, tail ? m_tail : m_head );
-}
-
-
 void ItemList::push_back( const Item &itm )
 {
    if ( m_tail == 0 )
@@ -106,18 +99,18 @@ void ItemList::pop_back()
 {
    if( m_tail != 0 )
    {
-      notifyDeletion( m_tail );
       m_tail = m_tail->prev();
 
       // was the only element?
       if ( m_tail == 0 )
       {
          // delete it and update head.
-         delete m_head;
+         m_head->decref();
          m_head = 0;
       }
       else {
-         delete m_tail->next();
+         m_tail->next()->prev(0);
+         m_tail->next()->decref();
          m_tail->next(0);
       }
       m_size--;
@@ -144,41 +137,22 @@ void ItemList::pop_front()
 {
    if( m_head != 0 )
    {
-      notifyDeletion( m_head );
       m_head = m_head->next();
       
       // was the only element?
       if ( m_head == 0 )
       {
          // delete it and update head.
-         delete m_tail;
+         m_tail->decref();
          m_tail = 0;
       }
       else {
-         delete m_head->prev();
+         m_head->prev()->next(0);
+         m_head->prev()->decref();
          m_head->prev(0);
       }
       m_size--;
    }
-}
-
-
-bool ItemList::erase( CoreIterator *iter )
-{
-   if ( iter->isOwner( this ) )
-   {
-      ItemListIterator *li = static_cast<ItemListIterator *>( iter );
-      ItemListElement *elem = li->getCurrentElement();
-      if ( elem != 0 )
-      {
-         elem = li->getCurrentElement();
-         li->setCurrentElement( elem->next() );
-         erase( elem );
-         return true;
-      }
-   }
-
-   return false;
 }
 
 
@@ -213,9 +187,10 @@ ItemListElement *ItemList::erase( ItemListElement *elem )
    }
 
    ItemListElement *retval = elem->next();
-   notifyDeletion( elem );
-   delete elem;
+
+   elem->decref();
    m_size--;
+
    return retval;
 }
 
@@ -245,20 +220,6 @@ void ItemList::insert( ItemListElement *elem, const Item &item )
    m_size++;
 }
 
-bool ItemList::insert( CoreIterator *iter, const Item &item )
-{
-   if ( iter->isOwner( this ) )
-   {
-      ItemListIterator *li = static_cast< ItemListIterator *>( iter );
-      ItemListElement *elem = li->getCurrentElement();
-      insert( elem, item );
-      // was a tail insertion?
-      li->setCurrentElement( elem == 0 ? m_tail : elem->prev() );
-      return true;
-   }
-
-   return false;
-}
 
 void ItemList::clear()
 {
@@ -266,67 +227,23 @@ void ItemList::clear()
    while( h != 0 )
    {
       ItemListElement *nx = h->next();
-      delete h;
+      h->next(0);
+      h->prev(0);
+      h->decref();
+
       h = nx;
    }
    m_head = 0;
    m_tail = 0;
    m_size = 0;
-   
-   ItemListIterator *iter = m_iters;
-   while( iter != 0 )
-   {
-      iter->invalidate();
-      iter->m_owner = 0;
-      iter = iter->m_next;
-   }
+
 }
 
-
-void ItemList::addIterator( ItemListIterator *iter )
-{
-   // add the iterator on top
-   iter->m_next = m_iters;
-   iter->m_prev = 0;
-   if ( m_iters != 0 )
-      m_iters->m_prev = iter;
-   m_iters = iter;
-}
-
-void ItemList::removeIterator( ItemListIterator *iter )
-{
-   if ( iter->m_prev != 0 )
-   {
-      iter->m_prev->m_next = iter->m_next;
-   }
-   else {
-      m_iters = iter->m_next;
-   }
-
-   if ( iter->m_next != 0 )
-   {
-      iter->m_next->m_prev = iter->m_prev;
-      iter->m_next = 0;
-   }
-   iter->m_prev = 0;
-   iter->m_owner = 0;
-}
-
-void ItemList::notifyDeletion( ItemListElement *elem )
-{
-   ItemListIterator *iter = m_iters;
-   while( iter != 0 )
-   {
-      ItemListIterator *in = iter->m_next;
-      // invalidate would disrupt the list
-      if ( elem == iter->m_element )
-         iter->invalidate();
-      iter = in;
-   }
-}
 
 void ItemList::gcMark( uint32 mark )
 {
+   Sequence::gcMark( mark );
+
    // we don't have to record the mark byte, as we woudln't have been called
    // if the coreobject holding us had the right mark.
 
@@ -339,123 +256,149 @@ void ItemList::gcMark( uint32 mark )
 }
 
 
+//========================================================
+// Iterator implementation.
+//========================================================
 
-//====================================================
-
-ItemListIterator::ItemListIterator( ItemList *owner, ItemListElement *elem ):
-   m_owner( owner ),
-   m_element( elem ),
-   m_next( 0 ),
-   m_prev( 0 )
+void ItemList::getIterator( Iterator& tgt, bool tail ) const
 {
-   if ( m_owner != 0 )
+   if( ! empty() )
    {
-      m_owner->addIterator( this );
+      tgt.data( tail ? m_tail : m_head );
+   }
+   // else keep the 0 value
+}
+
+
+void ItemList::copyIterator( Iterator& tgt, const Iterator& source ) const
+{
+   tgt.data( source.data() );
+}
+
+void ItemList::disposeIterator( Iterator& tgt ) const
+{
+   ItemListElement* ptr = (ItemListElement*) tgt.data();
+   if( ptr != 0 )
+      ptr->decref();
+}
+
+void ItemList::gcMarkIterator( Iterator& tgt ) const
+{
+   // nothing
+}
+
+void ItemList::insert( Iterator &tgt, const Item &data )
+{
+   ItemListElement* ptr = (ItemListElement*) tgt.data();
+   if( ptr != 0 )
+      ptr->decref();
+}
+
+void ItemList::erase( Iterator &tgt )
+{
+   ItemListElement* ptr = (ItemListElement*) tgt.data();
+   if ( ptr == 0 )
+   {
+      tgt.invalidate();
+      throw new AccessError( ErrorParam( e_invalid_iter ) );
+   }
+
+   ItemListElement* next = erase( ptr );
+   if ( next != 0 )
+      next->incref();
+
+   // isolate the item
+   next->next(0);
+   next->prev(0);
+
+   ptr->decref();
+   tgt.data( next );
+}
+
+
+bool ItemList::hasNext( const Iterator &iter ) const
+{
+   ItemListElement* ptr = (ItemListElement*) iter.data();
+   return ptr != 0 && ptr->next() != 0;
+}
+
+
+bool ItemList::hasPrev( const Iterator &iter ) const
+{
+   ItemListElement* ptr = (ItemListElement*) iter.data();
+   return ptr != 0 && ptr->prev() != 0;
+}
+
+
+bool ItemList::next( Iterator &iter ) const
+{
+   ItemListElement* ptr = (ItemListElement*) iter.data();
+   if ( ptr == 0 )
+   {
+      iter.invalidate();
+      throw new AccessError( ErrorParam( e_invalid_iter, __LINE__ ) );
+   }
+
+   ptr->decref();
+   ItemListElement* next = ptr->next();
+   ptr->decref();
+   if ( next != 0 )
+      next->incref();
+
+   iter.data( next );
+}
+
+
+bool ItemList::prev( Iterator &iter ) const
+{
+   ItemListElement* ptr = (ItemListElement*) iter.data();
+   if ( ptr == 0 )
+   {
+      iter.invalidate();
+      throw new AccessError( ErrorParam( e_invalid_iter, __LINE__ ) );
+   }
+
+   ItemListElement* prev = ptr->prev();
+   ptr->decref();
+   if ( prev != 0 )
+      prev->incref();
+
+   iter.data( prev );
+}
+
+Item& ItemList::getCurrent( const Iterator &iter )
+{
+   ItemListElement* ptr = (ItemListElement*) iter.data();
+   if ( ptr == 0 )
+   {
+      throw new AccessError( ErrorParam( e_invalid_iter, __LINE__ ) );
+   }
+
+   return ptr->item();
+}
+
+Item& ItemList::getCurrentKey( const Iterator &iter )
+{
+   ItemListElement* ptr = (ItemListElement*) iter.data();
+   if ( ptr == 0 )
+   {
+      throw new CodeError( ErrorParam( e_non_dict_seq, __LINE__ ) );
    }
 }
 
-
-ItemListIterator::~ItemListIterator()
+bool ItemList::equalIterator( const Iterator &first, const Iterator &second ) const
 {
-   if ( m_owner != 0 )
-      m_owner->removeIterator( this );
+   return first.data() == second.data();
 }
 
+//========================================================
 
-bool ItemListIterator::next()
+void ItemListElement::decref()
 {
-   if ( m_element )
+   if ( atomicDec( m_refCount ) == 0 )
    {
-      m_element = m_element->next();
-      return m_element != 0;
+      delete this;
    }
-
-   return false;
-}
-
-bool ItemListIterator::prev()
-{
-   if ( m_element )
-   {
-      m_element = m_element->prev();
-      return m_element != 0;
-   }
-
-   return false;
-}
-
-
-bool ItemListIterator::hasNext() const
-{
-   return m_element != 0 && m_element->next() != 0;
-}
-
-bool ItemListIterator::hasPrev() const
-{
-   return m_element != 0 && m_element->prev() != 0;
-}
-
-
-Item &ItemListIterator::getCurrent() const
-{
-   return m_element->item();
-}
-
-
-bool ItemListIterator::isValid() const
-{
-   return m_element != 0;
-}
-
-
-bool ItemListIterator::isOwner( void *collection ) const
-{
-   return m_owner == collection;
-}
-
-
-bool ItemListIterator::equal( const CoreIterator &other ) const
-{
-   if( other.isOwner( m_owner ) )
-      return m_element == static_cast<const ItemListIterator *>( &other )->m_element;
-   return false;
-}
-
-void ItemListIterator::invalidate()
-{
-   m_element = 0;
-}
-
-
-FalconData *ItemListIterator::clone() const
-{
-   if ( m_element == 0 )
-      return 0;
-
-   return new ItemListIterator( m_owner, m_element );
-}
-
-void ItemListIterator::setCurrentElement( ItemListElement *e )
-{
-   m_element = e;
-}
-
-bool ItemListIterator::erase()
-{
-   if ( m_owner != 0 )
-   {
-      return m_owner->erase( this );
-   }
-   return false;
-}
-
-bool ItemListIterator::insert( const Item &item )
-{
-   if ( m_owner != 0 )
-   {
-      return m_owner->insert( this, item );
-   }
-   return false;
 }
 
 }

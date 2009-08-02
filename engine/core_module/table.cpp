@@ -298,7 +298,7 @@ static void internal_first_last( VMachine *vm, bool mode )
    fassert( i_iclass != 0 );
 
    CoreObject *iobj = i_iclass->asClass()->createInstance();
-   iobj->setUserData( table->getIterator(mode) );
+   iobj->setUserData( new Iterator( table, mode) );
    vm->retval( iobj );
 }
 

@@ -1961,7 +1961,7 @@ void co_call_class( const Item &itm, VMachine *vm, uint32 paramCount )
 
    vm->prepareFrame( cls->constructor().asFunction(), paramCount );
    vm->self() = inst;
-   inst->gcMarkData( memPool->generation() );
+   inst->gcMark( memPool->generation() );
 
    // also return self; we need to tell it to the VM
    vm->requestConstruct();

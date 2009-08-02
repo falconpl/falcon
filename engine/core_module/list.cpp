@@ -77,6 +77,7 @@ FALCON_FUNC  List_init ( ::Falcon::VMachine *vm )
       list->push_back( *vm->param(p) );
    }
 
+   list->owner( vm->self().asObject() );
    vm->self().asObject()->setUserData( list );
 }
 
@@ -277,8 +278,7 @@ FALCON_FUNC  List_first ( ::Falcon::VMachine *vm )
    fassert( i_iclass != 0 );
 
    CoreObject *iobj = i_iclass->asClass()->createInstance();
-   ItemListElement *iter = list->first();
-   iobj->setUserData( new ItemListIterator( list, iter ) );
+   iobj->setUserData( new Iterator( list ) );
    iobj->setProperty( "_origin", vm->self() );
    vm->retval( iobj );
 }
@@ -302,8 +302,7 @@ FALCON_FUNC  List_last ( ::Falcon::VMachine *vm )
    CoreObject *iobj = i_iclass->asClass()->createInstance();
    iobj->setProperty( "_origin", vm->self() );
 
-   ItemListElement *iter = list->last();
-   iobj->setUserData( new ItemListIterator( list, iter ) );
+   iobj->setUserData( new Iterator( list, true ) );
    vm->retval( iobj );
 }
 
@@ -365,13 +364,9 @@ FALCON_FUNC  List_erase ( ::Falcon::VMachine *vm )
    }
 
    CoreObject *iobj = i_iter->asObject();
-   CoreIterator *iter = (CoreIterator *) iobj->getUserData();
+   Iterator *iter = (Iterator *) iobj->getUserData();
 
-   if ( ! list->erase( iter ) )
-   {
-      throw new AccessError( ErrorParam( e_inv_params, __LINE__ ).
-         origin( e_orig_runtime ).extra( vm->moduleString( rtl_invalid_iter ) ) );
-   }
+   iter->erase();
 }
 
 /*#
@@ -415,14 +410,10 @@ FALCON_FUNC  List_insert ( ::Falcon::VMachine *vm )
    }
 
    CoreObject *iobj = i_iter->asObject();
-   CoreIterator *iter = (CoreIterator *) iobj->getUserData();
+   Iterator *iter = (Iterator *) iobj->getUserData();
 
    // is the iterator a valid iterator on our item?
-   if ( ! list->insert( iter, *i_item ) )
-   {
-      throw new AccessError( ErrorParam( e_inv_params, __LINE__ ).
-         origin( e_orig_runtime ).extra( vm->moduleString( rtl_invalid_iter ) ) );
-   }
+   iter->insert( *i_item );
 }
 
 }

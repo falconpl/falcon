@@ -1703,9 +1703,9 @@ void opcodeHandler_TRAV( register VMachine *vm )
       case FLC_ITEM_ARRAY:
       {
          CoreArray *array = source->asArray();
-         if( array->length() == 0 ) {
+         if( array->length() == 0 )
             goto trav_go_away;
-         }
+
 
          Item *sourceItem = &(*array)[ 0 ];
          // is dest a distributed array? -- it has been pushed in the stack
@@ -1726,7 +1726,7 @@ void opcodeHandler_TRAV( register VMachine *vm )
             }
          }
          else
-            dest->copy( *(sourceItem->dereference()) );
+            dest->copy( *sourceItem->dereference() );
 
          // prepare ... iterator
          vm->stack()[ vm->stack().length()-3 ] = ( (int64) 0 );
@@ -1782,12 +1782,8 @@ void opcodeHandler_TRAV( register VMachine *vm )
          }
 
          // we need an iterator...
-         CoreIterator *iter = seq->getIterator();
-
+         Iterator* iter = new Iterator( seq );
          *dest = iter->getCurrent();
-
-         // prepare... iterator
-         iter->setOwner( seq );
          vm->stack()[ vm->stack().length()-3 ].setGCPointer( iter );
       }
       break;

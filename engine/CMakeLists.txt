@@ -191,6 +191,7 @@ ADD_LIBRARY( falcon_engine SHARED
    itemlist.cpp
    itemserial.cpp
    itemtraits.cpp
+   iterator.cpp
    lineardict.cpp
    linemap.cpp
    livemodule.cpp

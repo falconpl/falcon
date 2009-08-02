@@ -156,7 +156,7 @@ FALCON_FUNC  Iterator_init( ::Falcon::VMachine *vm )
          if ( seq != 0 )
          {
             self->setProperty( "_origin", *collection );
-            CoreIterator *iter = seq->getIterator( p != 0 );
+            Iterator* iter = new Iterator( seq, p != 0 );
             self->setUserData( iter );
             return;
          }

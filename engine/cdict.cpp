@@ -14,7 +14,7 @@
 */
 
 
-#include <falcon/cdict.h>
+#include <falcon/coredict.h>
 #include <falcon/vm.h>
 
 namespace Falcon {
@@ -148,8 +148,14 @@ void CoreDict::writeIndex( const Item &pos, const Item &target )
    else {
       insert( *pos.dereference(), *tgt );
    }
-
 }
+
+void CoreDict::gcMark( uint32 gen )
+{
+   mark( gen );
+   m_dict->gcMark( gen );
+}
+
 
 }
 

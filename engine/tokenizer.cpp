@@ -16,6 +16,7 @@
 #include <falcon/tokenizer.h>
 #include <falcon/rosstream.h>
 #include <falcon/error.h>
+#include <falcon/eng_messages.h>
 #include <falcon/fassert.h>
 #include <falcon/vm.h>
 
@@ -56,16 +57,6 @@ Tokenizer::~Tokenizer()
 {
    if ( m_bOwnStream )
       delete m_input;
-}
-
-
-CoreIterator *Tokenizer::getIterator( bool tail )
-{
-   // moved?
-   if ( m_version != 0 )
-      rewind();
-
-   return new TokenIterator( this );
 }
 
 
@@ -165,16 +156,6 @@ const Item &Tokenizer::back() const
    throw new CodeError( ErrorParam( e_not_implemented, __LINE__ ).origin( e_orig_runtime ).extra( "Tokenizer::back" ) );
 }
 
-bool Tokenizer::insert( CoreIterator *iter, const Item &data )
-{
-   throw new CodeError( ErrorParam( e_not_implemented, __LINE__ ).origin( e_orig_runtime ).extra( "Tokenizer::insert" ) );
-}
-
-bool Tokenizer::erase( CoreIterator *iter )
-{
-   throw new CodeError( ErrorParam( e_not_implemented, __LINE__ ).origin( e_orig_runtime ).extra( "Tokenizer::erase" ) );
-}
-
 void Tokenizer::clear()
 {
    throw new CodeError( ErrorParam( e_not_implemented, __LINE__ ).origin( e_orig_runtime ).extra( "Tokenizer::clear" ) );
@@ -212,105 +193,89 @@ void Tokenizer::parse( Stream *in, bool bOwn )
 }
 
 
-//=====================================================
-// Iterator
-//
+//============================================================
+// Iterator management.
+//============================================================
 
-TokenIterator::TokenIterator( Tokenizer *owner ):
-   m_owner( owner ),
-   m_version( owner->m_version )
+void Tokenizer::getIterator( Iterator& tgt, bool tail ) const
 {
+   // nothing to do
 }
 
-TokenIterator::TokenIterator( const TokenIterator &other ):
-   m_owner( other.m_owner ),
-   m_version( other.m_owner == 0 ? 0 : other.m_owner->m_version )
+
+void Tokenizer::copyIterator( Iterator& tgt, const Iterator& source ) const
 {
+   // nothing to do
 }
 
-bool TokenIterator::next()
+
+void Tokenizer::disposeIterator( Iterator& tgt ) const
 {
-   if( m_owner != 0 && m_version == m_owner->m_version )
-   {
-      bool v = m_owner->next();
-      m_version = m_owner->m_version;
-      return v;
-   }
+   // no need to do anything
+}
+
+
+void Tokenizer::gcMarkIterator( Iterator& tgt ) const
+{
+   // no need to do anything
+}
+
+void Tokenizer::insert( Iterator &iter, const Item &data )
+{
+   throw new CodeError( ErrorParam( e_not_implemented, __LINE__ ).origin( e_orig_runtime ).extra( "Tokenizer::insert" ) );
+}
+
+void Tokenizer::erase( Iterator &iter )
+{
+   throw new CodeError( ErrorParam( e_not_implemented, __LINE__ ).origin( e_orig_runtime ).extra( "Tokenizer::insert" ) );
+}
+
+
+bool Tokenizer::hasNext( const Iterator &iter ) const
+{
+   return isReady();
+}
+
+
+bool Tokenizer::hasPrev( const Iterator &iter ) const
+{
+   throw new CodeError( ErrorParam( e_not_implemented, __LINE__ ).origin( e_orig_runtime ).extra( "Tokenizer::insert" ) );
+}
+
+bool Tokenizer::hasCurrent( const Iterator &iter ) const
+{
+   return isReady();
+}
+
+
+bool Tokenizer::next( Iterator &iter ) const
+{
+   return const_cast<Tokenizer*>(this)->next();
+}
+
+
+bool Tokenizer::prev( Iterator &iter ) const
+{
    return false;
 }
 
-bool TokenIterator::hasNext() const
+Item& Tokenizer::getCurrent( const Iterator &iter )
 {
-   if( m_owner != 0 && m_version == m_owner->m_version )
-   {
-      return !m_owner->empty();
-   }
+   static Item i_temp;
+   i_temp = new CoreString( m_temp );
+   return i_temp;
+}
+
+
+Item& Tokenizer::getCurrentKey( const Iterator &iter )
+{
+   throw new CodeError( ErrorParam( e_non_dict_seq, __LINE__ ) );
+}
+
+
+bool Tokenizer::equalIterator( const Iterator &first, const Iterator &second ) const
+{
    return false;
-
 }
-
-Item &TokenIterator::getCurrent() const
-{
-   fassert( m_owner != 0 && m_version == m_owner->m_version );
-
-   // force to load the initial token.
-   if ( m_version == 0 )
-   {
-      m_owner->next();
-      m_version = m_owner->m_version;
-   }
-
-   CoreString* ret = new CoreString( m_owner->getToken() );
-   ret->bufferize();
-
-   m_cacheItem.setString( ret );
-   return m_cacheItem;
-}
-
-bool TokenIterator::isOwner( void *collection ) const
-{
-   return m_owner == collection;
-}
-
-bool TokenIterator::equal( const CoreIterator &other ) const
-{
-   return other.isOwner( m_owner );
-}
-
-void TokenIterator::invalidate()
-{
-   m_owner = 0;
-}
-
-bool TokenIterator::prev()
-{
-   throw new CodeError( ErrorParam( e_not_implemented, __LINE__ ).origin( e_orig_runtime ).extra( "TokenIterator::prev" ) );
-}
-
-bool TokenIterator::hasPrev() const
-{
-   throw new CodeError( ErrorParam( e_not_implemented, __LINE__ ).origin( e_orig_runtime ).extra( "TokenIterator::hasPrev" ) );
-}
-
-bool TokenIterator::isValid() const
-{
-   return m_version == m_owner->m_version && m_owner->m_input != 0;
-}
-
-bool TokenIterator::erase()
-{
-   throw new CodeError( ErrorParam( e_not_implemented, __LINE__ ).origin( e_orig_runtime ).extra( "TokenIterator::erase" ) );
-}
-
-bool TokenIterator::insert( const Item &item )
-{
-   throw new CodeError( ErrorParam( e_not_implemented, __LINE__ ).origin( e_orig_runtime ).extra( "TokenIterator::insert" ) );
-}
-
-FalconData* TokenIterator::clone() const
-{
-   return new TokenIterator( *this );
-}
-
 
 }

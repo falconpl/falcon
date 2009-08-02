@@ -57,6 +57,10 @@ Garbageable::Garbageable( const Garbageable &other ):
 Garbageable::~Garbageable()
 {}
 
+void Garbageable::gcMark( uint32 mk )
+{
+   mark( mk );
+}
 
 }
 

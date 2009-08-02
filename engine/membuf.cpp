@@ -446,6 +446,21 @@ void MemBuf::compact()
    m_limit = m_length;
 }
 
+
+void MemBuf::gcMark( uint32 gen )
+{
+   if ( mark() != gen )
+   {
+      mark( gen );
+
+      // small optimization; resolve the problem here instead of looping again.
+      if( dependant() != 0 && dependant()->mark() != gen )
+      {
+         dependant()->gcMark( gen );
+      }
+   }
+}
+
 }
 
 /* end of membuf.cpp */

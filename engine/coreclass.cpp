@@ -53,7 +53,7 @@ CoreClass::~CoreClass()
 }
 
 
-void CoreClass::gcMarkData( uint32 gen ) const
+void CoreClass::gcMark( uint32 gen ) const
 {
    // first, mark ourselves.
    mark( gen );
