@@ -50,7 +50,7 @@ public:
       If this object contains an external FalconData instance, it gets marked;
       anyhow, this function marks the cache items.
    */
-   virtual void gcMark( uint32 mark );
+   virtual void gcMarkData( uint32 mark );
 
    Item *cachedProperty( const String &name ) const
    {

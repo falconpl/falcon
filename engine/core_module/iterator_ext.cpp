@@ -16,7 +16,6 @@
 #include "core_module.h"
 #include <falcon/sequence.h>
 #include <falcon/falconobject.h>
-#include <falcon/iterator.h>
 
 namespace Falcon {
 namespace core {
@@ -135,11 +134,11 @@ FALCON_FUNC  Iterator_init( ::Falcon::VMachine *vm )
       {
          CoreDict *orig = collection->asDict();
          self->setProperty( "_origin", *collection );
-         Iterator *iter;
+         DictIterator *iter;
          if( p == 0 )
-            iter = new Iterator( &orig->items() );
+            iter = orig->first();
          else if( p == -1 )
-            iter = new Iterator( &orig->items(), true );
+            iter = orig->last();
          else {
             throw new AccessError( ErrorParam( e_inv_params ).origin( e_orig_runtime ) );
          }
@@ -157,7 +156,7 @@ FALCON_FUNC  Iterator_init( ::Falcon::VMachine *vm )
          if ( seq != 0 )
          {
             self->setProperty( "_origin", *collection );
-            Iterator* iter = new Iterator( seq, p != 0 );
+            CoreIterator *iter = seq->getIterator( p != 0 );
             self->setUserData( iter );
             return;
          }
@@ -217,7 +216,7 @@ FALCON_FUNC  Iterator_hasCurrent( ::Falcon::VMachine *vm )
 
       default:
       {
-         Iterator *iter = dyncast<Iterator *>( self->getFalconData() );
+         CoreIterator *iter = dyncast<CoreIterator *>( self->getFalconData() );
          vm->retval( (int64) ( iter != 0 && iter->isValid() ? 1: 0 ) );
       }
    }
@@ -268,7 +267,7 @@ FALCON_FUNC  Iterator_hasNext( ::Falcon::VMachine *vm )
 
       default:
       {
-         Iterator *iter = dyncast<Iterator *>( self->getFalconData() );
+         CoreIterator *iter = dyncast<CoreIterator *>( self->getFalconData() );
          vm->regA().setBoolean( iter != 0 && iter->hasNext() );
       }
    }
@@ -301,7 +300,7 @@ FALCON_FUNC  Iterator_hasPrev( ::Falcon::VMachine *vm )
 
       default:
       {
-         Iterator *iter = dyncast<Iterator *>( self->getFalconData() );
+         CoreIterator *iter = dyncast<CoreIterator *>( self->getFalconData() );
          vm->regA().setBoolean( iter != 0 && iter->hasPrev() );
       }
    }
@@ -376,7 +375,7 @@ FALCON_FUNC  Iterator_next( ::Falcon::VMachine *vm )
 
       default:
       {
-         Iterator *iter = dyncast<Iterator *>( self->getFalconData() );
+         CoreIterator *iter = dyncast<CoreIterator *>( self->getFalconData() );
          vm->regA().setBoolean( iter != 0 && iter->next() );
       }
    }
@@ -421,7 +420,7 @@ FALCON_FUNC  Iterator_prev( ::Falcon::VMachine *vm )
 
       default:
       {
-         Iterator *iter = dyncast<Iterator *>( self->getFalconData() );
+         CoreIterator *iter = dyncast<CoreIterator *>( self->getFalconData() );
          vm->regA().setBoolean( iter != 0 && iter->prev() );
       }
    }
@@ -538,7 +537,7 @@ FALCON_FUNC  Iterator_value( ::Falcon::VMachine *vm )
 
       default:
       {
-         Iterator *iter = dyncast<Iterator *>( self->getFalconData() );
+         CoreIterator *iter = dyncast<CoreIterator *>( self->getFalconData() );
          if( iter->isValid() )
          {
             vm->retval( iter->getCurrent() );
@@ -578,8 +577,8 @@ FALCON_FUNC  Iterator_key( ::Falcon::VMachine *vm )
 
    if( origin.isDict() )
    {
-      Iterator *iter = dyncast<Iterator *>( self->getFalconData() );
-      if( iter->hasCurrent() )
+      DictIterator *iter = dyncast<DictIterator *>( self->getFalconData() );
+      if( iter->isValid() )
       {
          vm->retval( iter->getCurrentKey() );
          return;
@@ -640,8 +639,8 @@ FALCON_FUNC  Iterator_compare( ::Falcon::VMachine *vm )
 
                default:
                {
-                  Iterator *iter = dyncast<Iterator *>( self->getFalconData() );
-                  Iterator *other_iter = dyncast<Iterator *>( other->getFalconData() );
+                  CoreIterator *iter = dyncast<CoreIterator *>( self->getFalconData() );
+                  CoreIterator *other_iter = dyncast<CoreIterator *>( other->getFalconData() );
                   if( iter->equal( *other_iter ) )
                   {
                      vm->regA().setInteger( 0 );
@@ -674,12 +673,12 @@ FALCON_FUNC  Iterator_compare( ::Falcon::VMachine *vm )
 FALCON_FUNC  Iterator_clone( ::Falcon::VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
-   Iterator *iter = dyncast<Iterator *>( self->getFalconData() );
-   Iterator *iclone;
+   CoreIterator *iter = dyncast<CoreIterator *>( self->getFalconData() );
+   CoreIterator *iclone;
 
    // copy low level iterator, if we have one
    if ( iter != 0 ) {
-      iclone = static_cast<Iterator *>(iter->clone());
+      iclone = static_cast<CoreIterator *>(iter->clone());
       if ( iclone == 0 )
       {
          // uncloneable iterator
@@ -761,7 +760,7 @@ FALCON_FUNC  Iterator_erase( ::Falcon::VMachine *vm )
 
       default:
       {
-         Iterator *iter = dyncast<Iterator *>( self->getFalconData() );
+         CoreIterator *iter = dyncast<CoreIterator *>( self->getFalconData() );
          if( iter->isValid() )
          {
             iter->erase();
@@ -830,12 +829,12 @@ FALCON_FUNC  Iterator_find( ::Falcon::VMachine *vm )
 
    if ( porigin->isDict() )
    {
-      Iterator *iter = dyncast<Iterator *>( self->getFalconData() );
+      DictIterator *iter = dyncast<DictIterator *>( self->getFalconData() );
       CoreDict* dict = porigin->asDict();
 
       if( iter->isOwner( dict ) )
       {
-         vm->regA().setBoolean( dict->findIterator( *i_key, *iter ) );
+         vm->regA().setBoolean( dict->find( *i_key, *iter ) );
          return;
       }
    }
@@ -924,7 +923,7 @@ FALCON_FUNC  Iterator_insert( ::Falcon::VMachine *vm )
                   .origin( e_orig_runtime ).extra( "X,X" ) );
          }
 
-         Iterator *iter = dyncast<Iterator *>( self->getFalconData() );
+         DictIterator *iter = dyncast<DictIterator *>( self->getFalconData() );
          CoreDict *dict = porigin->asDict();
 
          if( iter->isOwner( dict ) && iter->isValid() )
@@ -937,8 +936,11 @@ FALCON_FUNC  Iterator_insert( ::Falcon::VMachine *vm )
 
       default:
       {
-         Iterator *iter = dyncast<Iterator *>( self->getFalconData() );
-         iter->insert( *i_key );
+         CoreIterator *iter = dyncast<CoreIterator *>( self->getFalconData() );
+         if( iter->insert( *i_key ) )
+         {
+            return;
+         }
       }
    }
 

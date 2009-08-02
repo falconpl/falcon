@@ -21,7 +21,7 @@
 #define flc_lineardict_H
 
 #include <falcon/types.h>
-#include <falcon/itemdict.h>
+#include <falcon/cdict.h>
 #include <falcon/item.h>
 #include <stdlib.h>
 
@@ -31,7 +31,6 @@ namespace Falcon {
 
 class LinearDict;
 class VMachine;
-class Iterator;
 
 /** Class representing one element in a dictionary. */
 class FALCON_DYN_CLASS LinearDictEntry
@@ -57,12 +56,41 @@ public:
 };
 
 
-class FALCON_DYN_CLASS LinearDict: public ItemDict
+class LinearDictIterator: public DictIterator
+{
+   uint32 m_dictPos;
+   LinearDict *m_dict;
+   uint32 m_versionNumber;
+
+public:
+   LinearDictIterator( LinearDict *owner, uint32 pos );
+
+   virtual bool next();
+   virtual bool prev();
+   virtual bool hasNext() const;
+   virtual bool hasPrev() const;
+   virtual Item &getCurrent() const;
+   virtual const Item &getCurrentKey() const;
+
+   virtual bool isValid() const;
+   virtual bool isOwner( void *collection ) const;
+   virtual void invalidate();
+   virtual bool equal( const CoreIterator &other ) const;
+   virtual bool erase();
+   virtual bool insert( const Item &data );
+
+   virtual FalconData *clone() const;
+
+   friend class LinearDict;
+};
+
+class FALCON_DYN_CLASS LinearDict: public CoreDict
 {
    uint32 m_size;
    uint32 m_alloc;
-   uint32 m_version;
    LinearDictEntry *m_data;
+   uint32 m_version;
+   uint32 m_travPos;
 
    bool addInternal( uint32 pos, const Item &key, const Item &value );
 
@@ -81,25 +109,30 @@ public:
    LinearDict();
    LinearDict( uint32 prealloc );
    ~LinearDict();
-   virtual FalconData *clone() const;
-   virtual void gcMark( uint32 gen );
 
    virtual uint32 length() const;
    virtual Item *find( const Item &key ) const;
-   virtual bool findIterator( const Item &key, Iterator &iter );
+   virtual bool find( const Item &key, DictIterator &iter );
+   virtual DictIterator *findIterator( const Item &key );
 
-   virtual const Item &front() const;
-   virtual const Item &back() const;
-   virtual void append( const Item& item );
-   virtual void prepend( const Item& item );
-
+   virtual bool remove( DictIterator &iter );
    virtual bool remove( const Item &key );
    virtual void insert( const Item &key, const Item &value );
-   virtual void smartInsert( const Iterator &iter, const Item &key, const Item &value );
+   virtual void smartInsert( DictIterator &iter, const Item &key, const Item &value );
 
-   virtual void merge( const ItemDict &dict );
+   virtual void first( DictIterator &iter );
+   virtual void last( DictIterator &iter );
+   virtual DictIterator *first();
+   virtual DictIterator *last();
+
+   virtual bool equal( const CoreDict &other ) const;
+   virtual CoreDict *clone() const;
+   virtual void merge( const CoreDict &dict );
    virtual void clear();
-   virtual bool empty() const;
+
+   virtual void traverseBegin();
+   virtual bool traverseNext( Item &key, Item &value );
+
 
    uint32 version() const { return m_version; }
    uint32 esize( uint32 num ) const { return sizeof( LinearDictEntry ) * num; }
@@ -121,29 +154,6 @@ public:
    bool find( const Item &key, uint32 &ret_pos ) const {
       return findInternal( key, ret_pos );
    }
-
-   //========================================================
-   // Iterator implementation.
-   //========================================================
-protected:
-
-   virtual void getIterator( Iterator& tgt, bool tail = false ) const;
-   virtual void copyIterator( Iterator& tgt, const Iterator& source ) const;
-
-   virtual void disposeIterator( Iterator& tgt ) const;
-   virtual void gcMarkIterator( Iterator& tgt ) const;
-
-   virtual void insert( Iterator &iter, const Item &data );
-   virtual void erase( Iterator &iter );
-   virtual bool hasNext( const Iterator &iter ) const;
-   virtual bool hasPrev( const Iterator &iter ) const;
-   virtual bool hasCurrent( const Iterator &iter ) const;
-   virtual bool next( Iterator &iter ) const;
-   virtual bool prev( Iterator &iter ) const;
-   virtual Item& getCurrent( const Iterator &iter );
-   virtual Item& getCurrentKey( const Iterator &iter );
-   virtual bool equalIterator( const Iterator &first, const Iterator &second ) const;
-   virtual bool isValid( const Iterator &first ) const;
 };
 
 }

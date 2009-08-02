@@ -31,7 +31,7 @@
 #include <falcon/string.h>
 #include <falcon/cclass.h>
 #include <falcon/carray.h>
-#include <falcon/coredict.h>
+#include <falcon/cdict.h>
 #include <falcon/corefunc.h>
 #include <falcon/error.h>
 #include <falcon/stream.h>
@@ -326,7 +326,7 @@ void opcodeHandler_GEND( register VMachine *vm )
       fassert( vm->stack().length() == len );
    }
    vm->stack().resize( base );
-   vm->regA().setDict( new CoreDict(dict) );
+   vm->regA().setDict( dict );
 }
 
 
@@ -425,7 +425,7 @@ void opcodeHandler_TRAL( register VMachine *vm )
       case FLC_ITEM_DICT:
       case FLC_ITEM_OBJECT:
       {
-         Iterator *iter = (Iterator *) iterator->asGCPointer();
+         CoreIterator *iter = (CoreIterator *) iterator->asGCPointer();
          if ( ! iter->hasNext() )
             vm->m_currentContext->pc_next() = pcNext;
       }
@@ -1104,7 +1104,7 @@ void opcodeHandler_TRAN( register VMachine *vm )
                new AccessError( ErrorParam( e_unpack_size ).origin( e_orig_vm ).extra( "TRAN" ) );
          }
          else {
-            Iterator *iter = (Iterator *) iterator->asGCPointer();
+            DictIterator *iter = (DictIterator *) iterator->asGCPointer();
 
             if( ! iter->isValid() )
             {
@@ -1115,8 +1115,8 @@ void opcodeHandler_TRAN( register VMachine *vm )
             if( p3 == 1 )
             {
                CoreDict *sdict = source->asDict();
-               iter->erase();
-               if( ! iter->isValid()|| ! iter->hasCurrent() )
+               sdict->remove( *iter );
+               if( ! iter->isValid() )
                {
                   vm->m_currentContext->pc_next() = p2;
                   return;
@@ -1145,7 +1145,7 @@ void opcodeHandler_TRAN( register VMachine *vm )
             return;
          }
          else {
-            Iterator *iter = (Iterator *) iterator->asGCPointer();
+            CoreIterator *iter = (CoreIterator *) iterator->asGCPointer();
 
             if( ! iter->isValid() )
             {
@@ -1155,10 +1155,13 @@ void opcodeHandler_TRAN( register VMachine *vm )
 
             if( p3 == 1 )
             {
-               iter->erase();
-
+               if( ! iter->erase() )
+               {
+                  vm->raiseHardError( e_arracc, "TRAN", __LINE__  );
+                  return;
+               }
                // had the delete invalidated this?
-               if( ! iter->isValid() || ! iter->hasCurrent() )
+               if( ! iter->isValid() )
                {
                   vm->m_currentContext->pc_next() = p2;
                   return;
@@ -1700,9 +1703,9 @@ void opcodeHandler_TRAV( register VMachine *vm )
       case FLC_ITEM_ARRAY:
       {
          CoreArray *array = source->asArray();
-         if( array->length() == 0 )
+         if( array->length() == 0 ) {
             goto trav_go_away;
-
+         }
 
          Item *sourceItem = &(*array)[ 0 ];
          // is dest a distributed array? -- it has been pushed in the stack
@@ -1723,7 +1726,7 @@ void opcodeHandler_TRAV( register VMachine *vm )
             }
          }
          else
-            dest->copy( *sourceItem->dereference() );
+            dest->copy( *(sourceItem->dereference()) );
 
          // prepare ... iterator
          vm->stack()[ vm->stack().length()-3 ] = ( (int64) 0 );
@@ -1745,7 +1748,7 @@ void opcodeHandler_TRAV( register VMachine *vm )
          }
 
          // we need an iterator...
-         Iterator *iter = new Iterator( &dict->items() );
+         DictIterator *iter = dict->first();
 
          register int stackSize = vm->stack().length();
          vm->stackItem( stackSize - 5 ).dereference()->
@@ -1754,6 +1757,7 @@ void opcodeHandler_TRAV( register VMachine *vm )
                copy( *iter->getCurrent().dereference() );
 
          // prepare... iterator
+         iter->setOwner( dict );
          vm->stack()[ vm->stack().length()-3 ].setGCPointer( iter );
       }
       break;
@@ -1778,8 +1782,12 @@ void opcodeHandler_TRAV( register VMachine *vm )
          }
 
          // we need an iterator...
-         Iterator* iter = new Iterator( seq );
+         CoreIterator *iter = seq->getIterator();
+
          *dest = iter->getCurrent();
+
+         // prepare... iterator
+         iter->setOwner( seq );
          vm->stack()[ vm->stack().length()-3 ].setGCPointer( iter );
       }
       break;
@@ -2226,7 +2234,7 @@ void opcodeHandler_TRAC( register VMachine *vm )
             return;
          }
          else {
-            Iterator *iter = (Iterator *) iterator->asGCPointer();
+            CoreIterator *iter = (CoreIterator *) iterator->asGCPointer();
 
             if( ! iter->isValid() )
             {

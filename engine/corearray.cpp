@@ -33,9 +33,7 @@ CoreArray::CoreArray():
    m_bindings(0),
    m_table(0),
    m_tablePos(0)
-{
-   m_itemarray.owner( this );
-}
+{}
 
 
 CoreArray::CoreArray( const CoreArray& other ):
@@ -43,12 +41,11 @@ CoreArray::CoreArray( const CoreArray& other ):
 {
    m_table = other.m_table;
    m_tablePos = other.m_tablePos;
-   m_itemarray.owner( this );
 
    if ( other.m_bindings != 0 )
    {
-      m_bindings = static_cast<CoreDict*>( other.m_bindings->clone() );
-      m_bindings->gcMark( mark() );
+      m_bindings = other.m_bindings->clone();
+         //m_bindings->mark( mark() );
    }
    else
       m_bindings = 0;
@@ -60,7 +57,6 @@ CoreArray::CoreArray( uint32 prealloc ):
    m_table(0),
    m_tablePos(0)
 {
-   m_itemarray.owner( this );
 }
 
 CoreArray::CoreArray( Item *buffer, uint32 size, uint32 alloc ):
@@ -69,7 +65,6 @@ CoreArray::CoreArray( Item *buffer, uint32 size, uint32 alloc ):
    m_table(0),
    m_tablePos(0)
 {
-   m_itemarray.owner( this );
 }
 
 CoreArray::~CoreArray()
@@ -91,9 +86,9 @@ CoreDict *CoreArray::makeBindings()
 {
    if ( m_bindings == 0 )
    {
-      m_bindings = new CoreDict( new LinearDict( ) );
+      m_bindings = new LinearDict( );
       m_bindings->insert( new CoreString( "self" ), this );
-      m_bindings->gcMark( mark() );
+      m_bindings->mark( mark() );
    }
 
    return m_bindings;
@@ -419,28 +414,6 @@ void CoreArray::writeIndex( const Item &index, const Item &target )
    throw new AccessError( ErrorParam( e_arracc, __LINE__ ).extra( "STP" ) );
 }
 
-void CoreArray::gcMark( uint32 gen )
-{
-   CoreArray *array = this;
-
-   if( array->mark() != gen )
-   {
-      array->mark(gen);
-      array->items().gcMark(gen);
-
-      // mark also the bindings
-      if ( array->bindings() != 0 )
-      {
-         array->bindings()->gcMark( gen );
-      }
-
-      // and also the table
-      if ( array->table() != 0 && array->table()->mark() != gen )
-      {
-         array->table()->gcMark( gen );
-      }
-   }
-}
 
 }
 

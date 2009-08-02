@@ -36,7 +36,7 @@
 #include <falcon/item.h>
 #include <falcon/string.h>
 #include <falcon/carray.h>
-#include <falcon/coredict.h>
+#include <falcon/cdict.h>
 #include <falcon/cclass.h>
 #include <falcon/cclass.h>
 #include <falcon/coreobject.h>
@@ -85,8 +85,6 @@
 
 // Falcon specific object user_data
 #include <falcon/falcondata.h>
-#include <falcon/sequence.h>
-#include <falcon/iterator.h>
 
 
 #endif

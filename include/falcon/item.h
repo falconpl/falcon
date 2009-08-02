@@ -141,6 +141,11 @@ protected:
                void *extra;
             } ptr;
 
+            struct {
+               GarbagePointer *gcptr;
+               int32 signature;
+            } gptr;
+
          } data;
 
          CallPoint *method;
@@ -439,11 +444,12 @@ public:
    /** Set this item as a user-defined Garbage pointers.
        VM provides GC-control over them.
    */
-   void setGCPointer( FalconData *ptr );
-   void setGCPointer( GarbagePointer *shell );
+   void setGCPointer( FalconData *ptr, uint32 sig = 0 );
+   void setGCPointer( GarbagePointer *shell, uint32 sig = 0 );
 
    FalconData *asGCPointer() const;
-   GarbagePointer *asGCPointerShell() const;
+   GarbagePointer *asGCPointerShell() const { return all.ctx.data.gptr.gcptr; }
+   uint32 asGCPointerSignature()  const { return all.ctx.data.gptr.signature; }
 
    bool isGCPointer() const { return type() == FLC_ITEM_GCPTR; }
 
@@ -969,8 +975,8 @@ public:
    SafeItem( const Item &data, CallPoint *func ) { setMethod( data, func ); }
    SafeItem( CoreObject *obj, CoreClass *cls ) { setClassMethod( obj, cls ); }
    SafeItem( CoreClass *cls ) { setClass( cls ); }
-   SafeItem( FalconData *ptr ) { setGCPointer( ptr ); }
-   SafeItem( GarbagePointer *shell ) { setGCPointer( shell ); }
+   SafeItem( FalconData *ptr, uint32 sig ) { setGCPointer( ptr, sig ); }
+   SafeItem( GarbagePointer *shell, uint32 sig ) { setGCPointer( shell, sig ); }
 
    void setRange( CoreRange *r );
    void setString( String *str );
@@ -984,8 +990,8 @@ public:
    void setMethod( const Item &data, CallPoint *func );
    void setClassMethod( CoreObject *obj, CoreClass *cls );
    void setClass( CoreClass *cls );
-   void setGCPointer( FalconData *ptr );
-   void setGCPointer( GarbagePointer *shell );
+   void setGCPointer( FalconData *ptr, uint32 sig );
+   void setGCPointer( GarbagePointer *shell, uint32 sig );
 };
 
 }

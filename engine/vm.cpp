@@ -3929,7 +3929,7 @@ void VMachine::bindItem( const String& name, const Item &tgt )
 {
    if ( ! regBind().isDict() )
    {
-      regBind() = new CoreDict(new LinearDict() );
+      regBind() = new LinearDict;
    }
 
    CoreDict* cd = regBind().asDict();

@@ -42,7 +42,7 @@ static void inner_make_item( VarDef* vd, Item& itm )
 
 static CoreDict* interal_make_attrib_dict( Map* attr )
 {
-   CoreDict* cd = new CoreDict( new LinearDict( attr->size() ) );
+   CoreDict* cd = new LinearDict( attr->size() );
 
    MapIterator iter = attr->begin();
    while( iter.hasCurrent() )

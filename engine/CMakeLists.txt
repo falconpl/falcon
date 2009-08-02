@@ -158,11 +158,12 @@ ADD_LIBRARY( falcon_engine SHARED
    autowstring.cpp
    basealloc.cpp
    cacheobject.cpp
+   cdict.cpp
+   citerator.cpp
    crobject.cpp
    compiler.cpp
    corearray.cpp
    coreclass.cpp
-   coredict.cpp
    corefunc.cpp
    coreobject.cpp
    coreslot.cpp
@@ -190,7 +191,6 @@ ADD_LIBRARY( falcon_engine SHARED
    itemlist.cpp
    itemserial.cpp
    itemtraits.cpp
-   iterator.cpp
    lineardict.cpp
    linemap.cpp
    livemodule.cpp

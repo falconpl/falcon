@@ -21,7 +21,7 @@
 #include <falcon/symbol.h>
 #include <falcon/coreobject.h>
 #include <falcon/carray.h>
-#include <falcon/coredict.h>
+#include <falcon/cdict.h>
 #include <falcon/cclass.h>
 #include <falcon/corefunc.h>
 #include <falcon/membuf.h>
@@ -141,10 +141,10 @@ void co_dict_add( const Item& first, const Item& second, Item& third )
          source->merge( *op2->asDict() );
       }
       else {
-         LinearDict *dict = new LinearDict( source->length() + op2->asDict()->length() );
-         dict->merge( source->items() );
-         dict->merge( op2->asDict()->items() );
-         third = new CoreDict( dict );
+         CoreDict *dict = new LinearDict( source->length() + op2->asDict()->length() );
+         dict->merge( *source );
+         dict->merge( *op2->asDict() );
+         third = dict;
       }
       return;
    }
@@ -1961,7 +1961,7 @@ void co_call_class( const Item &itm, VMachine *vm, uint32 paramCount )
 
    vm->prepareFrame( cls->constructor().asFunction(), paramCount );
    vm->self() = inst;
-   inst->gcMark( memPool->generation() );
+   inst->gcMarkData( memPool->generation() );
 
    // also return self; we need to tell it to the VM
    vm->requestConstruct();

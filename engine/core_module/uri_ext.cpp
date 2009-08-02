@@ -376,7 +376,7 @@ FALCON_FUNC  URI_getFields ( ::Falcon::VMachine *vm )
 
    // ok, build our dictionary
    uint32 count = uri.fieldCount();
-   CoreDict *dict = new CoreDict( new LinearDict( count ) );
+   CoreDict *dict = new LinearDict( count );
    CoreString *key = new CoreString;
    CoreString *value = new CoreString;
    uri.firstField( *key, *value );
@@ -414,19 +414,19 @@ FALCON_FUNC  URI_setFields ( ::Falcon::VMachine *vm )
    }
 
    CoreDict *dict = p0->asDict();
-   Iterator iter( &dict->items() );
+   dict->traverseBegin();
+   Item key, value;
 
-   while( iter.hasCurrent() )
+   while( dict->traverseNext( key, value ) )
    {
-      if ( ( !iter.getCurrentKey().isString()) || (! iter.getCurrent().isString() ) )
+      if ( ( !key.isString()) || (! value.isString() ) )
       {
          throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
             origin( e_orig_runtime ).extra( "S" ) );
          return;
       }
 
-      uri.setField( *iter.getCurrentKey().asString(), *iter.getCurrent().asString() );
-      iter.next();
+      uri.setField( *key.asString(), *value.asString() );
    }
 
    uri.makeQuery();

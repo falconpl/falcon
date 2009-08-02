@@ -580,7 +580,7 @@ FALCON_FUNC VMSlot_first( ::Falcon::VMachine *vm )
    CoreSlot* cs = (CoreSlot*) vm->self().asObject()->getUserData();
    Item* cc = vm->findWKI( "Iterator" );
    fassert( cc != 0 );
-   CoreObject *oi = cc->asClass()->createInstance( new Iterator( cs ) );
+   CoreObject *oi = cc->asClass()->createInstance( cs->getIterator(false) );
    vm->retval( oi );
 }
 
@@ -594,7 +594,7 @@ FALCON_FUNC VMSlot_last( ::Falcon::VMachine *vm )
    CoreSlot* cs = (CoreSlot*) vm->self().asObject()->getUserData();
    Item* cc = vm->findWKI( "Iterator" );
    fassert( cc != 0 );
-   CoreObject *oi = cc->asClass()->createInstance( new Iterator( cs, true) );
+   CoreObject *oi = cc->asClass()->createInstance( cs->getIterator(true) );
    vm->retval( oi );
 }
 }

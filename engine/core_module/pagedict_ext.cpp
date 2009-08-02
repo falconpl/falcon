@@ -14,7 +14,6 @@
 */
 
 #include "core_module.h"
-#include <falcon/pagedict.h>
 
 /*#
 
@@ -61,7 +60,7 @@ FALCON_FUNC  PageDict( ::Falcon::VMachine *vm )
    }
 
    uint32 pageSize = (uint32)( i_pageSize == 0 ? 33 : (uint32)i_pageSize->forceInteger() );
-   CoreDict *cd = new CoreDict( new ::Falcon::PageDict( pageSize ) );
+   CoreDict *cd = new ::Falcon::PageDict( pageSize );
    vm->retval( cd );
 }
 

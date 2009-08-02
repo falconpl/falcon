@@ -16,7 +16,6 @@
 #include <falcon/sequence.h>
 #include <falcon/vm.h>
 #include <falcon/error.h>
-#include <falcon/garbageable.h>
 
 namespace Falcon {
 
@@ -114,12 +113,21 @@ void Sequence::comprehension( VMachine* vm, const Item& cmp, const Item& filter 
       //Sequence* seq = cmp.isArray() ? &cmp.asArray()->items() : cmp.asObjectSafe()->getSequence();
 
       Sequence* seq = cmp.asObjectSafe()->getSequence();
-      Iterator iter( seq );
-      while( iter.hasCurrent() )
-      {
-         s_appendMe( vm, this, iter.getCurrent(), filter );
-         iter.next();
+      CoreIterator *iter = seq->getIterator();
+      try {
+         while( iter->isValid() )
+         {
+            s_appendMe( vm, this, iter->getCurrent(), filter );
+            iter->next();
+         }
       }
+      catch(...)
+      {
+         delete iter;
+         throw;
+      }
+
+      delete iter;
    }
    else {
       throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
@@ -127,13 +135,6 @@ void Sequence::comprehension( VMachine* vm, const Item& cmp, const Item& filter 
                .extra( "A|C|R|Sequence, [C]" ) );
    }
 }
-
-void Sequence::gcMark( uint32 gen )
-{
-   if ( m_owner != 0 && m_owner->mark() != gen )
-      m_owner->gcMark( gen );
-}
-
 
 }
 

@@ -1,5 +1,6 @@
-TODO for 0.9.6
+TODO for 0.9.4
 
+   - Resolution of closed symbols deep down ancestors.
    - Expansion of the Tokenizer (with custom recognizers) and deep testing.
    - Detangle the iterator - sequence - garbageable loop.
    - Provide Stream interface to Sockets.

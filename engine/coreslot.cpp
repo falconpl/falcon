@@ -18,13 +18,13 @@
 #include <falcon/traits.h>
 #include <falcon/deepitem.h>
 #include <falcon/vmmsg.h>
-#include <falcon/iterator.h>
+
 
 namespace Falcon {
 
 bool coreslot_broadcast_internal( VMachine *vm )
 {
-   Iterator *ci = static_cast< Iterator *>( vm->local(0)->asGCPointer() );
+   CoreIterator *ci = static_cast<CoreIterator *>( vm->local(0)->asGCPointer() );
 
    if ( ! ci->isValid() )
    {
@@ -79,17 +79,18 @@ bool coreslot_broadcast_internal( VMachine *vm )
 
 void CoreSlot::prepareBroadcast( VMContext *vmc, uint32 pfirst, uint32 pcount, VMMessage *msg )
 {
-   if( empty() )
+   CoreIterator *ci = getIterator();
+   // nothing to broadcast?
+   if( ! ci->isValid() )
    {
+      delete ci;
       return;
    }
-
-   Iterator* iter = new Iterator( this );
 
    // we don't need to set the slot as owner, as we're sure it stays in range
    // (slots are marked) on themselves.
    vmc->addLocals( 5 );
-   vmc->local(0)->setGCPointer( iter );
+   vmc->local(0)->setGCPointer( ci );
    *vmc->local(1) = (int64) pfirst;
    *vmc->local(2) = (int64) pcount;
    *vmc->local(3) = new CoreString( m_name );
@@ -106,19 +107,20 @@ void CoreSlot::prepareBroadcast( VMContext *vmc, uint32 pfirst, uint32 pcount, V
 
 bool CoreSlot::remove( const Item &subscriber )
 {
-   Iterator iter( this );
-
-   while( iter.hasCurrent() )
+   CoreIterator *iter = getIterator();
+   while( iter->isValid() )
    {
-      if ( iter.getCurrent() == subscriber )
+      if ( iter->getCurrent() == subscriber )
       {
          erase( iter );
+         delete iter;
          return true;
       }
 
-      iter.next();
+      iter->next();
    }
 
+   delete iter;
    return false;
 }
 
@@ -142,7 +144,7 @@ void CoreSlot::setAssertion( VMachine* vm, const Item &a )
    if ( ! empty() )
    {
       vm->addLocals( 5 ); // Warning -- we add 5 to nil the msg ptr callback at local(4).
-      Iterator* iter = new Iterator( this );
+      CoreIterator* iter = getIterator();
       // we don't need to set the slot as owner, as we're sure it stays in range
       // (slots are marked) on themselves.
       vm->local(0)->setGCPointer( iter );
