@@ -403,14 +403,17 @@ void MemPool::markItem( const Item &item )
    switch( item.type() )
    {
    case FLC_ITEM_RANGE:
-   case FLC_ITEM_FUNC:
    case FLC_ITEM_GCPTR:
    case FLC_ITEM_ARRAY:
    case FLC_ITEM_DICT:
    case FLC_ITEM_OBJECT:
    case FLC_ITEM_MEMBUF:
-   case FLC_ITEM_CLASS:
       item.content()->gcMark( gen );
+      break;
+
+   case FLC_ITEM_CLASS:
+   case FLC_ITEM_FUNC:
+      item.asFunction()->gcMark( gen );
       break;
 
    case FLC_ITEM_REFERENCE:
