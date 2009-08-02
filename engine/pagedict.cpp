@@ -16,6 +16,7 @@
 
 
 #include <falcon/pagedict.h>
+#include <falcon/iterator.h>
 #include <falcon/item.h>
 #include <falcon/memory.h>
 #include <falcon/mempool.h>
@@ -34,113 +35,12 @@ namespace Falcon
 // Iterator
 //
 
-
-PageDictIterator::PageDictIterator( PageDict *owner, const MapIterator &iter ):
-   m_iter( iter ),
-   m_owner( owner )
-{
-   m_versionNumber = owner->version();
-}
-
-bool PageDictIterator::next()
-{
-   return m_iter.next();
-}
-
-bool PageDictIterator::prev()
-{
-   return m_iter.prev();
-}
-
-FalconData *PageDictIterator::clone() const
-{
-   return new PageDictIterator( *this );
-}
-
-bool PageDictIterator::isValid() const
-{
-   if( m_versionNumber != m_owner->version() )
-      return false;
-   return m_iter.hasCurrent();
-}
-
-bool PageDictIterator::isOwner( void *collection ) const
-{
-   return m_owner == collection;
-}
-
-void PageDictIterator::invalidate()
-{
-   m_versionNumber--;
-}
-
-Item &PageDictIterator::getCurrent() const
-{
-   return *(Item *) m_iter.currentValue();
-}
-
-const Item &PageDictIterator::getCurrentKey() const
-{
-   return *(const Item *) m_iter.currentKey();
-}
-
-bool PageDictIterator::hasNext() const
-{
-   if( m_versionNumber != m_owner->version() )
-      return false;
-   return m_iter.hasNext();
-}
-
-bool PageDictIterator::hasPrev() const
-{
-   if( m_versionNumber != m_owner->version() )
-      return false;
-   return m_iter.hasPrev();
-}
-
-bool PageDictIterator::equal( const CoreIterator &other ) const
-{
-   if ( ! isValid() && ! other.isValid() )
-      return true;
-
-   if ( ! isValid() || ! other.isValid() )
-      return false;
-
-   if ( other.isOwner( m_owner ) )
-   {
-      return m_iter.equal( static_cast<const PageDictIterator *>(&other)->m_iter );
-   }
-
-   return false;
-}
-
-bool PageDictIterator::erase()
-{
-   if ( m_owner != 0 )
-   {
-      return m_owner->remove( *this );
-   }
-
-   return false;
-}
-
-bool PageDictIterator::insert( const Item & )
-{
-   return false;
-}
-
-//=======================================================
-// Iterator
-//
-
 PageDict::PageDict():
-   CoreDict( sizeof( this ) ),
    m_map( &m_itemTraits, &m_itemTraits ),
    m_version( 0 )
 {}
 
 PageDict::PageDict( uint32 pageSize ):
-   CoreDict( sizeof( PageDict ) ),
    m_map( &m_itemTraits, &m_itemTraits, (uint16) pageSize ),
    m_version( 0 )
 {
@@ -155,32 +55,7 @@ uint32 PageDict::length() const
    return m_map.size();
 }
 
-DictIterator *PageDict::first()
-{
-   return new PageDictIterator( this, m_map.begin() );
-}
 
-DictIterator *PageDict::last()
-{
-   return new PageDictIterator( this, m_map.end() );
-}
-
-
-void PageDict::first( DictIterator &iter )
-{
-   PageDictIterator *ptr = static_cast<PageDictIterator *>( &iter );
-   ptr->m_owner = this;
-   ptr->m_iter = m_map.begin();
-   ptr->m_versionNumber = version();
-}
-
-void PageDict::last( DictIterator &iter )
-{
-   PageDictIterator *ptr = static_cast<PageDictIterator *>( &iter );
-   ptr->m_owner = this;
-   ptr->m_iter = m_map.end();
-   ptr->m_versionNumber = version();
-}
 
 Item *PageDict::find( const Item &key ) const
 {
@@ -188,38 +63,12 @@ Item *PageDict::find( const Item &key ) const
 }
 
 
-bool PageDict::find( const Item &key, DictIterator &di )
+bool PageDict::findIterator( const Item &key, Iterator &di )
 {
-   PageDictIterator *ptr = static_cast<PageDictIterator *>( &di );
-   ptr->m_versionNumber = version();
-   ptr->m_owner = this;
-
-   return m_map.find( &key, ptr->m_iter );
-}
-
-DictIterator *PageDict::findIterator( const Item &key )
-{
-   MapIterator iter;
-   if ( m_map.find( &key, iter ) )
-   {
-      return new PageDictIterator( this, iter );
-   }
-   return 0;
-}
-
-bool PageDict::remove( DictIterator &iter )
-{
-   if( ! iter.isOwner( this ) || ! iter.isValid() )
-      return false;
-
-   PageDictIterator *pit = static_cast< PageDictIterator *>( &iter );
-   m_map.erase( pit->m_iter );
-
-   m_version++;
-
-   // maintain compatibility
-   pit->m_versionNumber = m_version;
-   return true;
+   MapIterator *mi = (MapIterator *) di.data();
+   bool ret = m_map.find( &key, *mi );
+   di.data( mi );
+   di.version( version() );
 }
 
 
@@ -242,34 +91,25 @@ void PageDict::insert( const Item &key, const Item &value )
 }
 
 
-void PageDict::smartInsert( DictIterator &iter, const Item &key, const Item &value )
+void PageDict::smartInsert( const Iterator &iter, const Item &key, const Item &value )
 {
    // todo
    insert( key, value );
 }
 
-
-bool PageDict::equal( const CoreDict &other ) const
+void PageDict::merge( const ItemDict &dict )
 {
-   if ( &other == this )
-      return true;
-   return false;
-}
+   Iterator iter( const_cast<ItemDict*>(&dict) );
 
-
-void PageDict::merge( const CoreDict &dict )
-{
-   const_cast< CoreDict *>( &dict )->traverseBegin();
-
-   Item key, value;
-   while( const_cast< CoreDict *>( &dict )->traverseNext( key, value ) )
+   while( iter.hasCurrent() )
    {
-      insert( key, value );
+      insert( iter.getCurrentKey(), iter.getCurrent() );
+      iter.next();
    }
 }
 
 
-CoreDict *PageDict::clone() const
+FalconData *PageDict::clone() const
 {
    PageDict *ret;
 
@@ -283,24 +123,47 @@ CoreDict *PageDict::clone() const
       ret->merge( *this );
    }
 
-   ret->bless( isBlessed() );
    return ret;
 }
 
-void PageDict::traverseBegin()
+const Item &PageDict::front() const
 {
-   m_traverseIter = m_map.begin();
+   if( m_map.empty() )
+      throw new AccessError( ErrorParam( e_iter_outrange, __LINE__ )
+         .origin( e_orig_runtime ).extra( "PageDict::front" ) );
+
+   return **(Item**) m_map.begin().currentValue();
 }
 
-bool PageDict::traverseNext( Item &key, Item &value )
+const Item &PageDict::back() const
 {
-   if( ! m_traverseIter.hasCurrent() )
-      return false;
+   if( m_map.empty() )
+      throw new AccessError( ErrorParam( e_iter_outrange, __LINE__ )
+         .origin( e_orig_runtime ).extra( "PageDict::back" ) );
 
-   key = *(Item *) m_traverseIter.currentKey();
-   value = *(Item *) m_traverseIter.currentValue();
-   m_traverseIter.next();
-   return true;
+   return **(Item**) m_map.end().currentValue();
+}
+
+void PageDict::append( const Item& item )
+{
+   if( item.isArray() )
+   {
+      ItemArray& pair = item.asArray()->items();
+      if ( pair.length() == 2 )
+      {
+         m_map.insert( &pair[0], &pair[1] );
+         return;
+      }
+   }
+
+   throw new AccessError( ErrorParam( e_not_implemented, __LINE__ )
+      .origin( e_orig_runtime ).extra( "PageDict::append" ) );
+
+}
+
+void PageDict::prepend( const Item& item )
+{
+   append( item );
 }
 
 void PageDict::clear()
@@ -308,6 +171,159 @@ void PageDict::clear()
    m_map.clear();
    m_version++;
 }
+
+bool PageDict::empty() const
+{
+   return m_map.empty();
+}
+
+//============================================================
+// Iterator management.
+//============================================================
+
+void PageDict::getIterator( Iterator& tgt, bool tail ) const
+{
+   MapIterator* mi = (MapIterator *) tgt.data();
+   if ( mi == 0 )
+   {
+      mi = new MapIterator;
+      tgt.data( mi );
+   }
+
+   *mi = tail ? m_map.end() : m_map.begin();
+   tgt.version( version() );
+}
+
+
+void PageDict::copyIterator( Iterator& tgt, const Iterator& source ) const
+{
+   if ( source.version() != version() )
+        throw new CodeError( ErrorParam( e_invalid_iter, __LINE__ )
+           .origin( e_orig_runtime ).extra( "PageDict::copyIterator" ) );
+
+   tgt.data( new MapIterator( *((MapIterator*) source.data() ) )  );
+   tgt.version( version() );
+}
+
+
+void PageDict::disposeIterator( Iterator& tgt ) const
+{
+   delete (MapIterator* ) tgt.data();
+}
+
+
+void PageDict::gcMarkIterator( Iterator& tgt ) const
+{
+   // no need to do anything
+}
+
+void PageDict::insert( Iterator &iter, const Item &data )
+{
+   throw new CodeError( ErrorParam( e_not_implemented, __LINE__ )
+         .origin( e_orig_runtime ).extra( "PageDict::insert" ) );
+}
+
+void PageDict::erase( Iterator &iter )
+{
+   if ( iter.version() != version() )
+      throw new CodeError( ErrorParam( e_invalid_iter, __LINE__ )
+         .origin( e_orig_runtime ).extra( "PageDict::erase" ) );
+
+   MapIterator* mi = (MapIterator*) iter.data();
+
+   if ( ! mi->hasCurrent() )
+      throw new AccessError( ErrorParam( e_iter_outrange, __LINE__ )
+            .origin( e_orig_runtime ).extra( "PageDict::erase" ) );
+
+   // map erase grants the validity of mi
+   m_map.erase( *mi );
+   m_version++;
+   iter.version( version() );
+}
+
+
+bool PageDict::hasNext( const Iterator &iter ) const
+{
+   MapIterator* mi = (MapIterator*) iter.data();
+   return iter.version() == version() && mi->hasNext();
+}
+
+
+bool PageDict::hasPrev( const Iterator &iter ) const
+{
+   MapIterator* mi = (MapIterator*) iter.data();
+   return iter.version() == version() && mi->hasPrev();
+}
+
+bool PageDict::hasCurrent( const Iterator &iter ) const
+{
+   MapIterator* mi = (MapIterator*) iter.data();
+   return iter.version() == version() && mi->hasCurrent();
+}
+
+
+bool PageDict::next( Iterator &iter ) const
+{
+   if( iter.version() != version() )
+      throw new CodeError( ErrorParam( e_invalid_iter, __LINE__ )
+               .origin( e_orig_runtime ).extra( "PageDict::next" ) );
+
+   MapIterator* mi = (MapIterator*) iter.data();
+   return mi->next();
+ }
+
+
+bool PageDict::prev( Iterator &iter ) const
+{
+   if( iter.version() != version() )
+      throw new CodeError( ErrorParam( e_invalid_iter, __LINE__ )
+               .origin( e_orig_runtime ).extra( "PageDict::prev" ) );
+
+   MapIterator* mi = (MapIterator*) iter.data();
+   return mi->prev();
+}
+
+Item& PageDict::getCurrent( const Iterator &iter )
+{
+   if( iter.version() != version() )
+      throw new CodeError( ErrorParam( e_invalid_iter, __LINE__ )
+               .origin( e_orig_runtime ).extra( "PageDict::getCurrent" ) );
+
+   MapIterator* mi = (MapIterator*) iter.data();
+   if ( mi->hasCurrent() )
+      return **(Item**) mi->currentValue();
+
+   throw new AccessError( ErrorParam( e_iter_outrange, __LINE__ )
+         .origin( e_orig_runtime ).extra( "PageDict::getCurrent" ) );
+}
+
+
+Item& PageDict::getCurrentKey( const Iterator &iter )
+{
+   if( iter.version() != version() )
+         throw new CodeError( ErrorParam( e_invalid_iter, __LINE__ )
+                  .origin( e_orig_runtime ).extra( "PageDict::getCurrentKey" ) );
+
+   MapIterator* mi = (MapIterator*) iter.data();
+   if ( mi->hasCurrent() )
+         return **(Item**) mi->currentKey();
+
+   throw new AccessError( ErrorParam( e_iter_outrange, __LINE__ )
+         .origin( e_orig_runtime ).extra( "PageDict::getCurrent" ) );
+
+}
+
+
+bool PageDict::equalIterator( const Iterator &first, const Iterator &second ) const
+{
+   return first.position() == second.position();
+}
+
+bool PageDict::isValid( const Iterator &iter ) const
+{
+   return iter.version() == version();
+}
+
 
 }
 

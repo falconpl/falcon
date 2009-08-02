@@ -156,6 +156,16 @@ void CoreDict::gcMark( uint32 gen )
    m_dict->gcMark( gen );
 }
 
+bool CoreDict::find( const Item &key, Item &value )
+{
+   Item *itm;
+   if( ( itm = find( key ) ) != 0 )
+   {
+     value = *itm;
+     return true;
+   }
+   return false;
+}
 
 }
 

@@ -295,7 +295,7 @@ FALCON_FUNC core_argd( VMachine *vm )
       if( p->isParam() )
       {
          if( ret == 0 )
-            ret = new LinearDict;
+            ret = new CoreDict( new LinearDict );
          ret->insert( Item(new CoreString( p->name() )), first[p->itemId()] );
       }
       

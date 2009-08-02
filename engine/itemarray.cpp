@@ -492,7 +492,8 @@ void ItemArray::gcMarkIterator( Iterator& tgt ) const
 void ItemArray::insert( Iterator &iter, const Item &data )
 {
    if ( ! iter.isValid() )
-      throw new CodeError( ErrorParam( e_invalid_iter, __LINE__ ) );
+      throw new CodeError( ErrorParam( e_invalid_iter, __LINE__ )
+            .origin( e_orig_runtime ).extra( "ItemArray::insert" ) );
 
    insert( data, iter.position() );
 }
@@ -500,19 +501,20 @@ void ItemArray::insert( Iterator &iter, const Item &data )
 void ItemArray::erase( Iterator &iter )
 {
    if ( ! iter.isValid() )
-      throw new CodeError( ErrorParam( e_invalid_iter, __LINE__ ) );
+      throw new CodeError( ErrorParam( e_invalid_iter, __LINE__ )
+            .origin( e_orig_runtime ).extra( "ItemArray::erase" ) );
 
    if ( iter.position() > length() )
-      throw new AccessError( ErrorParam( e_iter_outrange, __LINE__ ) );
+      throw new AccessError( ErrorParam( e_iter_outrange, __LINE__ )
+            .origin( e_orig_runtime ).extra( "ItemArray::erase" ) );
 
    remove( iter.position() );
-   iter.invalidate();
 }
 
 
 bool ItemArray::hasNext( const Iterator &iter ) const
 {
-   return iter.isValid() && iter.position() < length();
+   return iter.isValid() && iter.position()+1 < length();
 }
 
 
@@ -530,14 +532,22 @@ bool ItemArray::hasCurrent( const Iterator &iter ) const
 bool ItemArray::next( Iterator &iter ) const
 {
    if (iter.isValid() && iter.position() < length())
+   {
       iter.position( iter.position() + 1 );
+      return true;
+   }
+   return false;
 }
 
 
 bool ItemArray::prev( Iterator &iter ) const
 {
    if (iter.isValid() && iter.position() > 0 )
+   {
       iter.position( iter.position() - 1 );
+      return true;
+   }
+   return false;
 }
 
 Item& ItemArray::getCurrent( const Iterator &iter )
@@ -545,13 +555,15 @@ Item& ItemArray::getCurrent( const Iterator &iter )
    if ( iter.isValid() && iter.position() < length() )
       return m_data[ iter.position() ];
 
-   throw new AccessError( ErrorParam( e_iter_outrange, __LINE__ ) );
+   throw new AccessError( ErrorParam( e_iter_outrange, __LINE__ )
+         .origin( e_orig_runtime ).extra( "ItemArray::getCurrent" ) );
 }
 
 
 Item& ItemArray::getCurrentKey( const Iterator &iter )
 {
-   throw new CodeError( ErrorParam( e_non_dict_seq, __LINE__ ) );
+   throw new CodeError( ErrorParam( e_non_dict_seq, __LINE__ )
+         .origin( e_orig_runtime ).extra( "ItemArray::getCurrentKey" ) );
 }
 
 
@@ -560,6 +572,10 @@ bool ItemArray::equalIterator( const Iterator &first, const Iterator &second ) c
    return first.position() == second.position();
 }
 
+bool ItemArray::isValid( const Iterator &iter ) const
+{
+   return iter.position() <= length();
+}
 
 }
 

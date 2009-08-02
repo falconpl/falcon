@@ -222,12 +222,14 @@ void Tokenizer::gcMarkIterator( Iterator& tgt ) const
 
 void Tokenizer::insert( Iterator &iter, const Item &data )
 {
-   throw new CodeError( ErrorParam( e_not_implemented, __LINE__ ).origin( e_orig_runtime ).extra( "Tokenizer::insert" ) );
+   throw new CodeError( ErrorParam( e_not_implemented, __LINE__ )
+         .origin( e_orig_runtime ).extra( "Tokenizer::insert" ) );
 }
 
 void Tokenizer::erase( Iterator &iter )
 {
-   throw new CodeError( ErrorParam( e_not_implemented, __LINE__ ).origin( e_orig_runtime ).extra( "Tokenizer::insert" ) );
+   throw new CodeError( ErrorParam( e_not_implemented, __LINE__ )
+         .origin( e_orig_runtime ).extra( "Tokenizer::erase" ) );
 }
 
 
@@ -239,7 +241,8 @@ bool Tokenizer::hasNext( const Iterator &iter ) const
 
 bool Tokenizer::hasPrev( const Iterator &iter ) const
 {
-   throw new CodeError( ErrorParam( e_not_implemented, __LINE__ ).origin( e_orig_runtime ).extra( "Tokenizer::insert" ) );
+   throw new CodeError( ErrorParam( e_not_implemented, __LINE__ )
+         .origin( e_orig_runtime ).extra( "Tokenizer::hasPrev" ) );
 }
 
 bool Tokenizer::hasCurrent( const Iterator &iter ) const
@@ -256,7 +259,8 @@ bool Tokenizer::next( Iterator &iter ) const
 
 bool Tokenizer::prev( Iterator &iter ) const
 {
-   return false;
+   throw new CodeError( ErrorParam( e_not_implemented, __LINE__ )
+            .origin( e_orig_runtime ).extra( "Tokenizer::prev" ) );
 }
 
 Item& Tokenizer::getCurrent( const Iterator &iter )
@@ -276,6 +280,11 @@ Item& Tokenizer::getCurrentKey( const Iterator &iter )
 bool Tokenizer::equalIterator( const Iterator &first, const Iterator &second ) const
 {
    return false;
+}
+
+bool Tokenizer::isValid( const Iterator &first ) const
+{
+   return true;
 }
 
 }

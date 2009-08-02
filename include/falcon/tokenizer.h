@@ -201,7 +201,7 @@ protected:
    virtual Item& getCurrent( const Iterator &iter );
    virtual Item& getCurrentKey( const Iterator &iter );
    virtual bool equalIterator( const Iterator &first, const Iterator &second ) const;
-
+   virtual bool isValid( const Iterator &first ) const;
 };
 
 

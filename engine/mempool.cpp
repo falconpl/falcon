@@ -23,7 +23,7 @@
 #include <falcon/carray.h>
 #include <falcon/corefunc.h>
 #include <falcon/corerange.h>
-#include <falcon/cdict.h>
+#include <falcon/coredict.h>
 #include <falcon/cclass.h>
 #include <falcon/vm.h>
 #include <falcon/vmcontext.h>

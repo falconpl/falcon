@@ -304,7 +304,7 @@ void CoreTable::clear()
 }
 
 
-void CoreTable::gcMark( uint32 mark )
+void CoreTable::gcMark( uint32 gen )
 {
    uint32 i;
 
@@ -322,12 +322,7 @@ void CoreTable::gcMark( uint32 mark )
       for ( uint32 iid = 0; iid < page->length(); ++iid )
       {
          CoreArray* row = page->at( iid ).asArray();
-         row->mark(mark);
-         for( uint32 rid = 0; rid < row->length(); rid ++ )
-            memPool->markItem( row->items()[rid] );
-
-         if ( row->bindings() != 0 )
-            memPool->markItem( SafeItem(row->bindings() ) );
+         row->gcMark( gen );
       }
    }
 }
@@ -537,6 +532,12 @@ Item& CoreTable::getCurrentKey( const Iterator &iter )
 }
 
 bool CoreTable::equalIterator( const Iterator &first, const Iterator &second ) const
+{
+   // actually never called
+   return false;
+}
+
+bool CoreTable::isValid( const Iterator &iter ) const
 {
    // actually never called
    return false;

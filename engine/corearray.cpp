@@ -47,8 +47,8 @@ CoreArray::CoreArray( const CoreArray& other ):
 
    if ( other.m_bindings != 0 )
    {
-      m_bindings = other.m_bindings->clone();
-         //m_bindings->mark( mark() );
+      m_bindings = static_cast<CoreDict*>( other.m_bindings->clone() );
+      m_bindings->gcMark( mark() );
    }
    else
       m_bindings = 0;
@@ -91,9 +91,9 @@ CoreDict *CoreArray::makeBindings()
 {
    if ( m_bindings == 0 )
    {
-      m_bindings = new LinearDict( );
+      m_bindings = new CoreDict( new LinearDict( ) );
       m_bindings->insert( new CoreString( "self" ), this );
-      m_bindings->mark( mark() );
+      m_bindings->gcMark( mark() );
    }
 
    return m_bindings;

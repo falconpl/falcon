@@ -23,7 +23,6 @@
 #include <falcon/vm.h>
 #include <falcon/string.h>
 #include <falcon/carray.h>
-#include <falcon/cdict.h>
 #include <falcon/memory.h>
 
 #include <falcon/stream.h>

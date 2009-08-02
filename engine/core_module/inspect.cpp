@@ -18,7 +18,7 @@
 #include <falcon/vm.h>
 #include <falcon/string.h>
 #include <falcon/carray.h>
-#include <falcon/cdict.h>
+#include <falcon/coredict.h>
 #include <falcon/cclass.h>
 #include <falcon/corefunc.h>
 #include <falcon/stream.h>
@@ -205,13 +205,13 @@ void inspect_internal( VMachine *vm, const Item *elem, int32 level, int32 maxLev
 
          stream->writeString( "{\n" );
 
-         Item key, value;
-         dict->traverseBegin();
-         while( dict->traverseNext( key, value ) )
+         Iterator iter( &dict->items() );
+         while( iter.hasCurrent() )
          {
-            inspect_internal( vm, &key, level + 1, maxLevel, maxSize, true, false );
+            inspect_internal( vm, &iter.getCurrentKey(), level + 1, maxLevel, maxSize, true, false );
             stream->writeString( " => " );
-            inspect_internal( vm, &value, level + 1, maxLevel, maxSize, false, true );
+            inspect_internal( vm, &iter.getCurrent(), level + 1, maxLevel, maxSize, false, true );
+            iter.next();
          }
          for ( i = 0; i < level; i ++ )
          {
@@ -522,20 +522,20 @@ static void describe_internal( VMachine *vm, String &tgt, const Item *elem, int3
          }
 
          Item key, value;
-         dict->traverseBegin();
+         Iterator iter( &dict->items() );
 
          // separate the first loop to be able to add ", "
-         dict->traverseNext( key, value );
-         describe_internal( vm, tgt, &key, level + 1, maxLevel, maxSize );
+         describe_internal( vm, tgt, &iter.getCurrentKey(), level + 1, maxLevel, maxSize );
          tgt += " => ";
-         describe_internal( vm, tgt, &value, level + 1, maxLevel, maxSize );
-
-         while( dict->traverseNext( key, value ) )
+         describe_internal( vm, tgt, &iter.getCurrent(), level + 1, maxLevel, maxSize );
+         iter.next();
+         while( iter.hasCurrent() )
          {
             tgt += ", ";
-            describe_internal( vm, tgt, &key, level + 1, maxLevel, maxSize );
+            describe_internal( vm, tgt, &iter.getCurrentKey(), level + 1, maxLevel, maxSize );
             tgt += " => ";
-            describe_internal( vm, tgt, &value, level + 1, maxLevel, maxSize );
+            describe_internal( vm, tgt, &iter.getCurrent(), level + 1, maxLevel, maxSize );
+            iter.next();
          }
 
          tgt += "]";

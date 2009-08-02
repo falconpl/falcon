@@ -18,13 +18,13 @@
 #include <falcon/traits.h>
 #include <falcon/deepitem.h>
 #include <falcon/vmmsg.h>
-
+#include <falcon/iterator.h>
 
 namespace Falcon {
 
 bool coreslot_broadcast_internal( VMachine *vm )
 {
-   CoreIterator *ci = static_cast<CoreIterator *>( vm->local(0)->asGCPointer() );
+   Iterator *ci = static_cast< Iterator *>( vm->local(0)->asGCPointer() );
 
    if ( ! ci->isValid() )
    {

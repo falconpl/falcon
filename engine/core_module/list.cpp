@@ -21,7 +21,7 @@
 #include <falcon/setup.h>
 #include <falcon/types.h>
 #include <falcon/itemlist.h>
-#include <falcon/citerator.h>
+#include <falcon/iterator.h>
 #include <falcon/vm.h>
 #include "core_module.h"
 #include <falcon/eng_messages.h>

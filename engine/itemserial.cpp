@@ -247,16 +247,17 @@ Item::e_sercode Item::serialize( Stream *file, bool bLive ) const
          int32 len = endianInt32( dict->length() );
          file->write( (byte *) &len, sizeof( len ) );
 
-         Item key, value;
-         dict->traverseBegin();
-         while( dict->traverseNext( key, value ) )
+         Iterator iter( &dict->items() );
+         while( iter.hasCurrent() )
          {
-            key.serialize( file, bLive );
+            iter.getCurrentKey().serialize( file, bLive );
             if( ! file->good() )
                return sc_ferror;
-            value.serialize( file, bLive );
+            iter.getCurrent().serialize( file, bLive );
             if( ! file->good() )
                return sc_ferror;
+
+            iter.next();
          }
       }
       break;
@@ -646,11 +647,14 @@ Item::e_sercode Item::deserialize( Stream *file, VMachine *vm )
             }
 
             if( retval == sc_ok ) {
-               dict->bless( blessed ? true : false );
-               setDict( dict );
+               CoreDict* cdict = new CoreDict( dict );
+               cdict->bless( blessed ? true : false );
+               setDict( cdict );
 
                return sc_ok;
             }
+            else
+               delete dict;
 
             return retval;
          }

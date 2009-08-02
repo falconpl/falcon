@@ -23,6 +23,7 @@
 #include <falcon/types.h>
 #include <falcon/garbageable.h>
 #include <falcon/itemdict.h>
+#include <falcon/deepitem.h>
 
 namespace Falcon {
 
@@ -37,12 +38,19 @@ public:
    CoreDict( ItemDict* dict ):
       m_blessed( false ),
       m_dict( dict )
-   {}
+   {
+      m_dict->owner( this );
+   }
 
    CoreDict( const CoreDict& other ):
       m_blessed( other.m_blessed ),
       m_dict( (ItemDict*) other.m_dict->clone() )
-   {}
+   {
+      m_dict->owner( this );
+   }
+
+   const ItemDict& items() const { return *m_dict; }
+   ItemDict& items() { return *m_dict; }
 
    uint32 length() const { return m_dict->length(); }
 
@@ -56,8 +64,8 @@ public:
    }
 
    CoreDict *clone() const { return new CoreDict( *this ); }
-   void merge( const CoreDict &dict );
-   void clear() = 0;
+   void merge( const CoreDict &dict ) { m_dict->merge( *dict.m_dict ); }
+   void clear() { m_dict->clear(); }
 
    /** Performs a find using a static string as a key.
        This wraps the string in a temporary item and calls
@@ -68,16 +76,7 @@ public:
    //=======================================
    // Utilities
 
-   bool find( const Item &key, Item &value )
-   {
-      Item *itm;
-      if( ( itm = find( key ) ) != 0 )
-      {
-         value = *itm;
-         return true;
-      }
-      return false;
-   }
+   bool find( const Item &key, Item &value );
 
    bool empty() const { return length() == 0; }
 
