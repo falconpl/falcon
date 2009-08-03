@@ -250,7 +250,7 @@ FALCON_FUNC  mth_typeId ( ::Falcon::VMachine *vm )
       type = vm->self().dereference()->type();
    else {
       if ( vm->paramCount() > 0 )
-         type = (int64) vm->param(0)->type();
+         type = vm->param(0)->type();
       else
          throw new ParamError( ErrorParam( e_inv_params ).origin( e_orig_runtime ).extra( "X" ) );
    }
