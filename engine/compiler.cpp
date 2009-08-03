@@ -499,7 +499,7 @@ Symbol *Compiler::addLocalSymbol( const String *symname, bool parameter )
       {
          // If we're in a closure, we may wish to add
          // a local undefined that will be filled at closure ending
-         if ( m_closureContexts and searchLocalSymbol( symname, true ) != 0 )
+         if ( m_closureContexts && searchLocalSymbol( symname, true ) != 0 )
          {
             taken = true;
             sym = func->addUndefined( sym );
