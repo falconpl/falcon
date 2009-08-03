@@ -2,7 +2,7 @@
 * Falcon test suite
 *
 *
-* ID: 11g
+* ID: 11m
 * Category: types
 * Subcategory: range
 * Short: Range as array
@@ -22,11 +22,11 @@ if range != [1:3]: failure( "Range comparation" )
 if range[0] != 1: failure( "Range access begin" )
 if range[1] != 3: failure( "Range access end" )
 if range[-2] != 3: failure( "Range access -end" )
-if range[-1] != 1: failure( "Range access -step" )
+if range[-1] != 0: failure( "Range access -step" )
 
 // test for range write
 range[0] = 4
-if range != [4:3:1]: failure( "range set begin" )
+if range != [4:3]: failure( "range set begin" )
 
 range[1] = 4
 if range != [4:4]: failure( "range set end" )
@@ -35,11 +35,11 @@ range[-1] = 5
 if range != [4:4:5]: failure( "range set -end" )
 
 // opening the range
-range[2] = 0
+range[2] = nil
 if range != [4:]: failure( "range opening" )
 
 range = [1:2]
-range[-1] = 0
+range[-1] = nil
 if range != [1:]: failure( "range -opening" )
 
 success()

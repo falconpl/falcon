@@ -1552,25 +1552,6 @@ void co_ref_getindex( const Item &item, const Item &idx, Item &result )
 
 void co_range_setindex( Item &item, const Item &idx, const Item &nval )
 {
-   int32 value;
-   switch( nval.type() )
-   {
-      case FLC_ITEM_INT:
-         value = (int32) nval.asInteger();
-         break;
-
-      case FLC_ITEM_NUM:
-         value = (int32) nval.asNumeric();
-         break;
-
-      case FLC_ITEM_REFERENCE:
-         co_range_setindex( item, idx, nval.asReference()->origin() );
-         return;
-
-      default:
-         throw new TypeError( ErrorParam( e_param_type ).extra( "STV" ) );
-   }
-
    int32 pos;
    switch( idx.type() )
    {
@@ -1588,6 +1569,31 @@ void co_range_setindex( Item &item, const Item &idx, const Item &nval )
 
       default:
          throw new AccessError( ErrorParam( e_arracc ).extra( "STV" ) );
+   }
+   
+   int32 value;
+   switch( nval.type() )
+   {
+      case FLC_ITEM_NIL:
+         if ( pos == -1 || pos == 2 )
+         item.asRange()->setOpen();
+         // no more things to do, let's return.
+         return;
+         
+      case FLC_ITEM_INT:
+         value = (int32) nval.asInteger();
+         break;
+
+      case FLC_ITEM_NUM:
+         value = (int32) nval.asNumeric();
+         break;
+
+      case FLC_ITEM_REFERENCE:
+         co_range_setindex( item, idx, nval.asReference()->origin() );
+         return;
+
+      default:
+         throw new TypeError( ErrorParam( e_param_type ).extra( "STV" ) );
    }
 
    CoreRange *cr = item.asRange();
