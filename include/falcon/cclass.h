@@ -127,7 +127,7 @@ public:
       This marks the class, the livemodule it is bound to, the property table data
       and the ancestors.
    */
-   void gcMarkData( uint32 mark ) const;
+   void gcMark( uint32 mark ) const;
 
 
 };

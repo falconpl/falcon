@@ -566,17 +566,18 @@ FALCON_FUNC  mth_properties( ::Falcon::VMachine *vm )
          CoreDict *dict = obj_x->asDict();
          if ( dict->isBlessed() )
          {
-            DictIterator* iter = dict->first();
+            Iterator iter( &dict->items() );
             CoreArray *ret = new CoreArray( dict->length() );
-            while( iter->isValid() )
+            while( iter.hasCurrent() )
             {
-               const Item& itm = iter->getCurrentKey();
+               const Item& itm = iter.getCurrentKey();
                if ( itm.isString() )
                {
                   String* str = itm.asString();
                   //TODO Skip impossible strings.
                   ret->append( *str );
                }
+               iter.next();
             }
             vm->retval( ret );
          }
@@ -589,17 +590,19 @@ FALCON_FUNC  mth_properties( ::Falcon::VMachine *vm )
          if ( arr->bindings() != 0 )
          {
             CoreDict* dict = arr->bindings();
-            DictIterator* iter = dict->first();
+            Iterator iter( &dict->items() );
             CoreArray *ret = new CoreArray( dict->length() );
-            while( iter->isValid() )
+            while( iter.hasCurrent() )
             {
-               const Item& itm = iter->getCurrentKey();
+               const Item& itm = iter.getCurrentKey();
                if ( itm.isString() )
                {
                   String* str = itm.asString();
                   //TODO Skip impossible strings.
                   ret->append( *str );
                }
+
+               iter.next();
             }
             vm->retval( ret );
          }

@@ -18,11 +18,14 @@
    Core arrays are meant to hold item pointers.
 */
 
-#include <falcon/carray.h>
+#include <falcon/itemarray.h>
+#include <falcon/iterator.h>
 #include <falcon/memory.h>
 #include <falcon/vm.h>
 #include <falcon/lineardict.h>
 #include <falcon/coretable.h>
+#include <falcon/error.h>
+#include <falcon/eng_messages.h>
 
 #include <string.h>
 
@@ -33,10 +36,12 @@ namespace Falcon
 ItemArray::ItemArray():
    m_alloc(0),
    m_size(0),
-   m_data(0)
+   m_data(0),
+   m_owner( 0 )
 {}
 
-ItemArray::ItemArray( const ItemArray& other )
+ItemArray::ItemArray( const ItemArray& other ):
+   m_owner( 0 )
 {
    if( other.m_size != 0 )
    {
@@ -54,7 +59,8 @@ ItemArray::ItemArray( const ItemArray& other )
 }
 
 
-ItemArray::ItemArray( uint32 prealloc )
+ItemArray::ItemArray( uint32 prealloc ):
+   m_owner( 0 )
 {
    m_data = (Item *) memAlloc( esize(prealloc) );
    m_alloc = prealloc;
@@ -65,7 +71,8 @@ ItemArray::ItemArray( uint32 prealloc )
 ItemArray::ItemArray( Item *buffer, uint32 size, uint32 alloc ):
    m_alloc(alloc),
    m_size(size),
-   m_data(buffer)
+   m_data(buffer),
+   m_owner( 0 )
 {}
 
 
@@ -78,6 +85,8 @@ ItemArray::~ItemArray()
 
 void ItemArray::gcMark( uint32 mark )
 {
+   Sequence::gcMark( mark );
+
    for( uint32 pos = 0; pos < m_size; pos++ ) {
       memPool->markItem( m_data[pos] );
    }
@@ -123,6 +132,7 @@ void ItemArray::prepend( const Item &ndata )
       memFree( m_data );
    m_data = mem;
    m_size++;
+   invalidateAllIters();
 }
 
 void ItemArray::merge_front( const ItemArray &other )
@@ -147,6 +157,8 @@ void ItemArray::merge_front( const ItemArray &other )
       memcpy( m_data, other.m_data, esize( other.m_size ) );
       m_size += other.m_size;
    }
+   
+   invalidateAllIters();
 }
 
 bool ItemArray::insert( const Item &ndata, int32 pos )
@@ -175,6 +187,13 @@ bool ItemArray::insert( const Item &ndata, int32 pos )
       m_data[pos] = ndata;
       m_size ++;
    }
+   
+   if ( m_iterList != 0 )
+   {
+      m_invalidPoint = pos;
+      invalidateIteratorOnCriterion();
+   }
+   
    return true;
 }
 
@@ -210,6 +229,12 @@ bool ItemArray::insert( const ItemArray &other, int32 pos )
       m_size += other.m_size;
    }
 
+   if ( m_iterList != 0 )
+   {
+      m_invalidPoint = pos;
+      invalidateIteratorOnCriterion();
+   }
+   
    return true;
 }
 
@@ -236,6 +261,13 @@ bool ItemArray::remove( int32 first, int32 last )
    if ( last < (int32)m_size )
       memmove( m_data + first, m_data + last, esize(m_size - last) );
    m_size -= rsize;
+   
+   if ( m_iterList != 0 )
+   {
+      m_invalidPoint = first;
+      invalidateIteratorOnCriterion();
+   }
+   
    return true;
 }
 
@@ -261,6 +293,13 @@ bool ItemArray::remove( int32 first )
    if ( first < (int32)m_size - 1 )
       memmove( m_data + first, m_data + first + 1, esize(m_size - first) );
    m_size --;
+   
+   if ( m_iterList != 0 )
+   {
+      m_invalidPoint = first;
+      invalidateIteratorOnCriterion();
+   }
+   
    return true;
 }
 
@@ -309,6 +348,12 @@ bool ItemArray::change( const ItemArray &other, int32 begin, int32 end )
          memcpy( m_data + begin, other.m_data, esize( other.m_size ) );
       m_size = m_size - rsize + other.m_size;
    }
+   
+   if ( m_iterList != 0 )
+   {
+      m_invalidPoint = begin;
+      invalidateIteratorOnCriterion();
+   }
 
    return true;
 }
@@ -345,6 +390,12 @@ bool ItemArray::insertSpace( uint32 pos, uint32 size )
       for( uint32 i = pos; i < pos + size; i ++ )
          m_data[i] = Item();
       m_size += size;
+   }
+   
+   if ( m_iterList != 0 )
+   {
+      m_invalidPoint = pos;
+      invalidateIteratorOnCriterion();
    }
 
    return true;
@@ -408,8 +459,17 @@ void ItemArray::resize( uint32 size ) {
    }
    else if ( size > m_size )
       memset( m_data + m_size, 0, esize( size - m_size ) );
+   else {
+      if( m_iterList != 0 )
+      {
+         m_invalidPoint = size;
+         invalidateIteratorOnCriterion();
+      }
+   }
 
    m_size = size;
+   
+   
 }
 
 void ItemArray::compact() {
@@ -450,7 +510,127 @@ bool ItemArray::copyOnto( uint32 from, const ItemArray& src, uint32 first, uint3
       resize( from + amount );
 
    memcpy( m_data + from, src.m_data + first, esize( amount ) );
+   
+   if( m_iterList != 0 )
+   {
+      m_invalidPoint = from;
+      invalidateIteratorOnCriterion();
+   }
+   
    return true;
+}
+
+//============================================================
+// Iterator management.
+//============================================================
+
+void ItemArray::getIterator( Iterator& tgt, bool tail ) const
+{
+   Sequence::getIterator( tgt, tail );
+   tgt.position( tail ? (length()>0? length()-1: 0) : 0 );
+}
+
+
+void ItemArray::copyIterator( Iterator& tgt, const Iterator& source ) const
+{
+   Sequence::copyIterator( tgt, source );
+   tgt.position( source.position() );
+}
+
+
+void ItemArray::insert( Iterator &iter, const Item &data )
+{
+   if ( ! iter.isValid() )
+      throw new CodeError( ErrorParam( e_invalid_iter, __LINE__ )
+            .origin( e_orig_runtime ).extra( "ItemArray::insert" ) );
+
+   insert( data, iter.position() );
+   m_invalidPoint = iter.position()+1;
+   invalidateIteratorOnCriterion();
+   // the iterator inserted before this position, so the element has moved forward
+   iter.position( iter.position() + 1 ); 
+}
+
+void ItemArray::erase( Iterator &iter )
+{
+   if ( iter.position() >= length() )
+      throw new AccessError( ErrorParam( e_iter_outrange, __LINE__ )
+            .origin( e_orig_runtime ).extra( "ItemArray::erase" ) );
+
+   uint32 first = iter.position();
+   if ( first+1 < m_size )
+      memmove( m_data + first, m_data + first + 1, esize(m_size - first) );
+   m_size --;
+   
+   invalidateAnyOtherIter( &iter );   
+}
+
+
+bool ItemArray::hasNext( const Iterator &iter ) const
+{
+   return iter.position()+1 < length();
+}
+
+
+bool ItemArray::hasPrev( const Iterator &iter ) const
+{
+   return iter.position() > 0;
+}
+
+bool ItemArray::hasCurrent( const Iterator &iter ) const
+{
+   return iter.position() < length();
+}
+
+
+bool ItemArray::next( Iterator &iter ) const
+{
+   if ( iter.position() < length())
+   {
+      iter.position( iter.position() + 1 );
+      return iter.position() < length();
+   }
+   return false;
+}
+
+
+bool ItemArray::prev( Iterator &iter ) const
+{
+   if ( iter.position() > 0 )
+   {
+      iter.position( iter.position() - 1 );
+      return true;
+   }
+
+   iter.position( length() );
+   return false;
+}
+
+Item& ItemArray::getCurrent( const Iterator &iter )
+{
+   if ( iter.position() < length() )
+      return m_data[ iter.position() ];
+
+   throw new AccessError( ErrorParam( e_iter_outrange, __LINE__ )
+         .origin( e_orig_runtime ).extra( "ItemArray::getCurrent" ) );
+}
+
+
+Item& ItemArray::getCurrentKey( const Iterator &iter )
+{
+   throw new CodeError( ErrorParam( e_non_dict_seq, __LINE__ )
+         .origin( e_orig_runtime ).extra( "ItemArray::getCurrentKey" ) );
+}
+
+
+bool ItemArray::equalIterator( const Iterator &first, const Iterator &second ) const
+{
+   return first.position() == second.position();
+}
+
+bool ItemArray::onCriterion( Iterator* elem ) const
+{
+   return elem->position() >= m_invalidPoint;
 }
 
 }

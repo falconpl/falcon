@@ -31,7 +31,7 @@
 #include <falcon/string.h>
 #include <falcon/cclass.h>
 #include <falcon/carray.h>
-#include <falcon/cdict.h>
+#include <falcon/coredict.h>
 #include <falcon/corefunc.h>
 #include <falcon/error.h>
 #include <falcon/stream.h>
@@ -295,6 +295,7 @@ void opcodeHandler_GENA( register VMachine *vm )
 {
    register uint32 size = (uint32) vm->getNextNTD32();
    CoreArray *array = new CoreArray( size );
+   vm->regA().setArray( array );
 
    // copy the m-topmost items in the stack into the array
    if( size > 0 )
@@ -305,8 +306,6 @@ void opcodeHandler_GENA( register VMachine *vm )
       array->length( size );
       vm->stack().resize( base );
    }
-
-   vm->regA().setArray( array );
 }
 
 // 0B
@@ -326,7 +325,7 @@ void opcodeHandler_GEND( register VMachine *vm )
       fassert( vm->stack().length() == len );
    }
    vm->stack().resize( base );
-   vm->regA().setDict( dict );
+   vm->regA().setDict( new CoreDict(dict) );
 }
 
 
@@ -425,7 +424,7 @@ void opcodeHandler_TRAL( register VMachine *vm )
       case FLC_ITEM_DICT:
       case FLC_ITEM_OBJECT:
       {
-         CoreIterator *iter = (CoreIterator *) iterator->asGCPointer();
+         Iterator *iter = (Iterator *) iterator->asGCPointer();
          if ( ! iter->hasNext() )
             vm->m_currentContext->pc_next() = pcNext;
       }
@@ -1104,7 +1103,7 @@ void opcodeHandler_TRAN( register VMachine *vm )
                new AccessError( ErrorParam( e_unpack_size ).origin( e_orig_vm ).extra( "TRAN" ) );
          }
          else {
-            DictIterator *iter = (DictIterator *) iterator->asGCPointer();
+            Iterator *iter = (Iterator *) iterator->asGCPointer();
 
             if( ! iter->isValid() )
             {
@@ -1114,9 +1113,8 @@ void opcodeHandler_TRAN( register VMachine *vm )
 
             if( p3 == 1 )
             {
-               CoreDict *sdict = source->asDict();
-               sdict->remove( *iter );
-               if( ! iter->isValid() )
+               iter->erase();
+               if( ! iter->hasCurrent() )
                {
                   vm->m_currentContext->pc_next() = p2;
                   return;
@@ -1145,7 +1143,7 @@ void opcodeHandler_TRAN( register VMachine *vm )
             return;
          }
          else {
-            CoreIterator *iter = (CoreIterator *) iterator->asGCPointer();
+            Iterator *iter = (Iterator *) iterator->asGCPointer();
 
             if( ! iter->isValid() )
             {
@@ -1155,13 +1153,10 @@ void opcodeHandler_TRAN( register VMachine *vm )
 
             if( p3 == 1 )
             {
-               if( ! iter->erase() )
-               {
-                  vm->raiseHardError( e_arracc, "TRAN", __LINE__  );
-                  return;
-               }
+               iter->erase();
+
                // had the delete invalidated this?
-               if( ! iter->isValid() )
+               if( ! iter->hasCurrent() )
                {
                   vm->m_currentContext->pc_next() = p2;
                   return;
@@ -1703,9 +1698,9 @@ void opcodeHandler_TRAV( register VMachine *vm )
       case FLC_ITEM_ARRAY:
       {
          CoreArray *array = source->asArray();
-         if( array->length() == 0 ) {
+         if( array->length() == 0 )
             goto trav_go_away;
-         }
+
 
          Item *sourceItem = &(*array)[ 0 ];
          // is dest a distributed array? -- it has been pushed in the stack
@@ -1726,7 +1721,7 @@ void opcodeHandler_TRAV( register VMachine *vm )
             }
          }
          else
-            dest->copy( *(sourceItem->dereference()) );
+            dest->copy( *sourceItem->dereference() );
 
          // prepare ... iterator
          vm->stack()[ vm->stack().length()-3 ] = ( (int64) 0 );
@@ -1748,7 +1743,7 @@ void opcodeHandler_TRAV( register VMachine *vm )
          }
 
          // we need an iterator...
-         DictIterator *iter = dict->first();
+         Iterator *iter = new Iterator( &dict->items() );
 
          register int stackSize = vm->stack().length();
          vm->stackItem( stackSize - 5 ).dereference()->
@@ -1757,7 +1752,6 @@ void opcodeHandler_TRAV( register VMachine *vm )
                copy( *iter->getCurrent().dereference() );
 
          // prepare... iterator
-         iter->setOwner( dict );
          vm->stack()[ vm->stack().length()-3 ].setGCPointer( iter );
       }
       break;
@@ -1782,12 +1776,8 @@ void opcodeHandler_TRAV( register VMachine *vm )
          }
 
          // we need an iterator...
-         CoreIterator *iter = seq->getIterator();
-
+         Iterator* iter = new Iterator( seq );
          *dest = iter->getCurrent();
-
-         // prepare... iterator
-         iter->setOwner( seq );
          vm->stack()[ vm->stack().length()-3 ].setGCPointer( iter );
       }
       break;
@@ -1831,7 +1821,7 @@ void opcodeHandler_TRAV( register VMachine *vm )
 
       case FLC_ITEM_RANGE:
          if( source->asRangeIsOpen() ||
-             (source->asRangeEnd() == source->asRangeStart() && source->asRangeStep() >= 0) ||
+             (source->asRangeEnd() == source->asRangeStart() && source->asRangeStep() == 0) ||
              ( source->asRangeStep() > 0 && source->asRangeStart() > source->asRangeEnd() ) ||
              ( source->asRangeStep() < 0 && source->asRangeStart() < source->asRangeEnd() )
             )
@@ -2234,7 +2224,7 @@ void opcodeHandler_TRAC( register VMachine *vm )
             return;
          }
          else {
-            CoreIterator *iter = (CoreIterator *) iterator->asGCPointer();
+            Iterator *iter = (Iterator *) iterator->asGCPointer();
 
             if( ! iter->isValid() )
             {

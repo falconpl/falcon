@@ -84,7 +84,6 @@ public:
    int32 maxToken() const { return m_nMaxToken; }
 };
 
-class TokenIterator;
 
 /** Base tokenizer base class.
    Although this class is declared as a sequence, it only supports empty() and getIterator()
@@ -109,8 +108,6 @@ class TokenIterator;
 */
 class FALCON_DYN_CLASS Tokenizer: public Sequence
 {
-   friend class TokenIterator;
-
    String m_separators;
    TokenizerParams m_params;
 
@@ -143,19 +140,6 @@ public:
    */
    virtual const Item &back() const;
 
-   /** Returns an iterator to this tokenizer.
-      Also, calls the rewind() method.
-   */
-   virtual CoreIterator *getIterator( bool tail = false );
-
-   /** Calling this causes a CodeError (unimplemented) to be raised.
-      Subclasses may provide a consistent behavior if they wish.
-   */
-   virtual bool insert( CoreIterator *iter, const Item &data );
-   /** Calling this causes a CodeError (unimplemented) to be raised.
-      Subclasses may provide a consistent behavior if they wish.
-   */
-   virtual bool erase( CoreIterator *iter );
    /** Calling this causes a CodeError (unimplemented) to be raised.
       Subclasses may provide a consistent behavior if they wish.
    */
@@ -177,7 +161,7 @@ public:
    virtual void rewind();
 
    virtual FalconData* clone() const;
-   virtual void gcMark( uint32 mark ) {};
+   virtual void gcMark( uint32 mark ) { Sequence::gcMark( mark ); }
 
    /** Resets the tokenizer providing new data to be tokenized.
       The string \b data must stay alive as long as this parser
@@ -195,55 +179,27 @@ public:
 
    virtual void append( const Item& itm );
    virtual void prepend( const Item& itm );
+
+   //========================================================
+   // Iterator implementation.
+   //========================================================
+protected:
+
+   virtual void getIterator( Iterator& tgt, bool tail = false ) const;
+   virtual void copyIterator( Iterator& tgt, const Iterator& source ) const;
+   virtual void insert( Iterator &iter, const Item &data );
+   virtual void erase( Iterator &iter );
+   virtual bool hasNext( const Iterator &iter ) const;
+   virtual bool hasPrev( const Iterator &iter ) const;
+   virtual bool hasCurrent( const Iterator &iter ) const;
+   virtual bool next( Iterator &iter ) const;
+   virtual bool prev( Iterator &iter ) const;
+   virtual Item& getCurrent( const Iterator &iter );
+   virtual Item& getCurrentKey( const Iterator &iter );
+   virtual bool equalIterator( const Iterator &first, const Iterator &second ) const;
 };
 
 
-/** Iterator for the Tokenizer.
-
-   It is provided for compatibilty with the Trav loop.
-*/
-class FALCON_DYN_CLASS TokenIterator: public CoreIterator
-{
-
-private:
-   Tokenizer *m_owner;
-   mutable uint32 m_version;
-   mutable Item m_cacheItem;
-
-public:
-   TokenIterator( Tokenizer *owner );
-   TokenIterator( const TokenIterator &other );
-   virtual ~TokenIterator() {};
-
-   virtual bool next();
-
-   /** Throws a code error (not implemented) */
-   virtual bool prev();
-
-   virtual bool hasNext() const;
-
-   /** Throws a code error (not implemented) */
-   virtual bool hasPrev() const;
-
-   /** Must be called after an isValid() check */
-   virtual Item &getCurrent() const;
-
-   virtual bool isValid() const;
-
-   virtual bool isOwner( void *collection ) const;
-
-   virtual bool equal( const CoreIterator &other ) const;
-
-   /** Must be called after an isValid() check */
-   virtual bool erase();
-
-   /** Must be called after an isValid() check */
-   virtual bool insert( const Item &item );
-
-   virtual void invalidate();
-
-   virtual FalconData* clone() const;
-};
 
 }
 

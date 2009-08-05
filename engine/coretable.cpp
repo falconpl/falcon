@@ -14,148 +14,12 @@
 */
 
 #include <falcon/coretable.h>
+#include <falcon/iterator.h>
 #include <falcon/traits.h>
 #include <falcon/itemtraits.h>
 #include <falcon/vm.h>
 
 namespace Falcon {
-
-CoreTableIterator::CoreTableIterator( CoreTable *owner, uint32 pageNum, uint32 itemNum ):
-   m_owner( owner ),
-   m_pageNum( pageNum ),
-   m_itemNum( itemNum )
-{}
-
-CoreTableIterator::~CoreTableIterator()
-{}
-
-bool CoreTableIterator::next()
-{
-   CoreArray *page = m_owner->page( m_pageNum );
-   if( page == 0 )
-      return false;
-
-   m_itemNum++;
-   if ( m_itemNum >= page->length() )
-   {
-      if ( m_itemNum > page->length() )
-         m_itemNum--;
-      return false;
-   }
-
-   return true;
-}
-
-bool CoreTableIterator::prev()
-{
-   CoreArray *page = m_owner->page( m_pageNum );
-   if( page == 0 )
-      return false;
-
-   if ( m_itemNum > page->length() )
-   {
-      return false;
-   }
-
-   m_itemNum--;
-   return true;
-}
-
-
-bool CoreTableIterator::hasNext() const
-{
-   CoreArray *page = m_owner->page( m_pageNum );
-   if( page == 0 )
-      return false;
-
-   return m_itemNum < page->length()-1;
-}
-
-
-bool CoreTableIterator::hasPrev() const
-{
-   CoreArray *page = m_owner->page( m_pageNum );
-   if( page == 0 )
-      return false;
-
-   return m_itemNum <= page->length();
-}
-
-
-Item &CoreTableIterator::getCurrent() const
-{
-   // oh well, if invalid we should crash, so it hasn't much meaning to
-   // check for page...
-   CoreArray *page = m_owner->page( m_pageNum );
-   fassert( page != 0 );
-   fassert( m_itemNum < page->length() );
-   Item &itm = (*page)[m_itemNum];
-   itm.asArray()->tablePos(m_itemNum);
-   return itm;
-}
-
-
-bool CoreTableIterator::isValid() const
-{
-   CoreArray *page = m_owner->page( m_pageNum );
-   if( page == 0 )
-      return false;
-
-   return m_itemNum < page->length();
-}
-
-
-bool CoreTableIterator::isOwner( void *collection ) const
-{
-   return ((void *) m_owner ) == collection;
-}
-
-
-bool CoreTableIterator::equal( const CoreIterator &other ) const
-{
-   if ( ! other.isOwner( m_owner ) )
-      return false;
-
-   // same owner, same class...
-   CoreTableIterator *tother = (CoreTableIterator *) &other;
-   return tother->m_pageNum == m_pageNum && tother->m_itemNum == m_itemNum;
-}
-
-
-bool CoreTableIterator::erase()
-{
-   CoreArray *page = m_owner->page( m_pageNum );
-   if( page == 0 )
-      return false;
-
-   if ( m_itemNum < page->length() )
-   {
-      page->remove( m_itemNum );
-      return true;
-   }
-   return false;
-}
-
-
-bool CoreTableIterator::insert( const Item &other )
-{
-   if( ! other.isArray() )
-      return false;
-
-   return m_owner->insertRow( other.asArray(), m_itemNum, m_pageNum );
-}
-
-
-void CoreTableIterator::invalidate()
-{
-   m_itemNum = noitem;
-}
-
-
-FalconData *CoreTableIterator::clone() const
-{
-   return new CoreTableIterator( m_owner, m_pageNum, m_itemNum );
-}
 
 //===============================================================
 
@@ -433,15 +297,6 @@ FalconData *CoreTable::clone() const
 }
 
 
-CoreIterator *CoreTable::getIterator( bool tail )
-{
-   return new CoreTableIterator( this, m_currentPageId,
-      tail ? (
-         m_currentPage != 0 && m_currentPage->length() > 0 ?
-            currentPage()->length()-1 : 0 ) : 0
-         );
-}
-
 void CoreTable::clear()
 {
    if ( m_currentPage != 0 )
@@ -449,19 +304,7 @@ void CoreTable::clear()
 }
 
 
-bool CoreTable::erase( CoreIterator *iter )
-{
-   return iter->erase();
-}
-
-
-bool CoreTable::insert( CoreIterator *iter, const Item &item )
-{
-   return iter->insert(item);
-}
-
-
-void CoreTable::gcMark( uint32 mark )
+void CoreTable::gcMark( uint32 gen )
 {
    uint32 i;
 
@@ -479,12 +322,7 @@ void CoreTable::gcMark( uint32 mark )
       for ( uint32 iid = 0; iid < page->length(); ++iid )
       {
          CoreArray* row = page->at( iid ).asArray();
-         row->mark(mark);
-         for( uint32 rid = 0; rid < row->length(); rid ++ )
-            memPool->markItem( row->items()[rid] );
-
-         if ( row->bindings() != 0 )
-            memPool->markItem( SafeItem(row->bindings() ) );
+         row->gcMark( gen );
       }
    }
 }
@@ -613,6 +451,82 @@ bool CoreTable::removeColumn( uint32 pos )
 
    return true;
 }
+
+
+//============================================
+// Iterator implementation
+//============================================
+
+void CoreTable::getIterator( Iterator& tgt, bool tail ) const
+{
+   // give up the ownership of the iterator to the current page.
+   tgt.owner( &m_currentPage->items() );
+   m_currentPage->items().getIterator( tgt, tail );
+}
+
+void CoreTable::copyIterator( Iterator& tgt, const Iterator& source ) const
+{
+   // actually never called
+}
+
+void CoreTable::insert( Iterator &iter, const Item &data )
+{
+   // actually never called
+}
+
+void CoreTable::erase( Iterator &iter )
+{
+   // actually never called
+}
+
+bool CoreTable::hasNext( const Iterator &iter ) const
+{
+   // actually never called
+   return false;
+}
+
+bool CoreTable::hasPrev( const Iterator &iter ) const
+{
+   // actually never called
+   return false;
+}
+
+bool CoreTable::hasCurrent( const Iterator &iter ) const
+{
+   // actually never called
+   return false;
+}
+
+bool CoreTable::next( Iterator &iter ) const
+{
+   // actually never called
+   return false;
+}
+
+bool CoreTable::prev( Iterator &iter ) const
+{
+   // actually never called
+   return false;
+}
+
+Item& CoreTable::getCurrent( const Iterator &iter )
+{
+   // actually never called
+   throw new CodeError( ErrorParam( e_invalid_iter, __LINE__ ) );
+}
+
+Item& CoreTable::getCurrentKey( const Iterator &iter )
+{
+   // actually never called
+   throw new CodeError( ErrorParam( e_invalid_iter, __LINE__ ) );
+}
+
+bool CoreTable::equalIterator( const Iterator &first, const Iterator &second ) const
+{
+   // actually never called
+   return false;
+}
+
 
 }
 

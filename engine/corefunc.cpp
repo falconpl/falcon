@@ -35,6 +35,18 @@ void CoreFunc::readyFrame( VMachine* vm, uint32 paramCount )
    vm->prepareFrame( this, paramCount );
 }
 
+void CoreFunc::gcMark( uint32 gen )
+{
+   if( mark() != gen )
+   {
+      mark( gen );
+      liveModule()->gcMark( gen );
+      // mark also closed items
+      if ( closure() != 0 )
+         closure()->gcMark( gen );
+   }
+}
+
 }
 
 /* end of corefunc.cpp */

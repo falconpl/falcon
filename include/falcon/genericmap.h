@@ -104,9 +104,6 @@ public:
    */
    bool find( const void *key, MapIterator &iter )const ;
 
-   void *first() const;
-   void *last() const;
-
    MapIterator begin() const;
    MapIterator end() const;
 

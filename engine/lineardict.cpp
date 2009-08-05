@@ -16,168 +16,24 @@
 
 
 #include <falcon/lineardict.h>
+#include <falcon/iterator.h>
 #include <falcon/item.h>
 #include <falcon/memory.h>
 #include <falcon/mempool.h>
 #include <falcon/vm.h>
-   #include <string.h>
-   #include <cstring>
+#include <string.h>
+#include <cstring>
 
 namespace Falcon
 {
 
-//=======================================================
-// Iterator
-//
-
-LinearDictIterator::LinearDictIterator( LinearDict *owner, uint32 pos ):
-   m_dictPos( pos ),
-   m_dict( owner )
-{
-   m_versionNumber = owner->version();
-}
-
-bool LinearDictIterator::next()
-{
-   if( m_dict == 0 )
-      return false;
-
-   register uint32 size = m_dict->length();
-
-   if ( m_versionNumber == m_dict->version() && size != 0 && size -1 > m_dictPos )
-   {
-      m_dictPos++;
-      return true;
-   }
-
-   // also invalidate
-   m_dict = 0;
-   return false;
-}
-
-bool LinearDictIterator::prev()
-{
-   if( m_dict == 0 )
-      return false;
-
-   if ( m_versionNumber == m_dict->version() && m_dictPos > 0 )
-   {
-      m_dictPos--;
-      return true;
-   }
-
-   // also invalidate
-   m_dict = 0;
-   return false;
-}
-
-
-bool LinearDictIterator::isValid() const
-{
-   return ( m_dict != 0 && m_dict->length() > m_dictPos );
-}
-
-bool LinearDictIterator::isOwner( void *collection ) const
-{
-   return m_dict == collection;
-}
-
-void LinearDictIterator::invalidate()
-{
-   m_dict = 0;
-}
-
-Item &LinearDictIterator::getCurrent() const
-{
-   return m_dict->elementAt( m_dictPos )->value();
-}
-
-const Item &LinearDictIterator::getCurrentKey() const
-{
-   return m_dict->elementAt( m_dictPos )->key();
-}
-
-bool LinearDictIterator::hasNext() const
-{
-   if( m_dict == 0 )
-      return false;
-
-   register uint32 size = m_dict->length();
-   if ( m_versionNumber == m_dict->version() && size > 0 && size -1 > m_dictPos )
-   {
-      return true;
-   }
-
-   return false;
-}
-
-bool LinearDictIterator::hasPrev() const
-{
-   if( m_dict == 0 )
-      return false;
-
-   if ( m_versionNumber == m_dict->version() && m_dictPos > 0 )
-   {
-      return true;
-   }
-
-   return false;
-}
-
-bool LinearDictIterator::equal( const CoreIterator &other ) const
-{
-   if ( ! isValid() && ! other.isValid() )
-      return true;
-
-   if ( ! isValid() || ! other.isValid() )
-      return false;
-
-   if ( other.isOwner( m_dict ) )
-   {
-      const LinearDictIterator *oti = static_cast< const LinearDictIterator*>( &other );
-      return oti->m_dictPos == m_dictPos;
-   }
-
-   return false;
-}
-
-bool LinearDictIterator::erase()
-{
-   if ( m_dict != 0 )
-   {
-      return m_dict->remove( *this );
-   }
-   return false;
-}
-
-bool LinearDictIterator::insert( const Item &data )
-{
-   return false;
-}
-
-FalconData *LinearDictIterator::clone() const
-{
-   return new LinearDictIterator( *this );
-}
-
-
-//=======================================================
-// Iterator
-//
-
 LinearDict::LinearDict():
-   CoreDict( sizeof( *this ) ),
    m_size(0),
    m_alloc(0),
-   m_data(0),
-   m_version( 0 ),
-   m_travPos( 0 )
+   m_data(0)
 {}
 
-LinearDict::LinearDict( uint32 size ):
-   CoreDict( esize( size ) + sizeof( LinearDict ) ),
-   m_version( 0 ),
-   m_travPos( 0 )
+LinearDict::LinearDict( uint32 size )
 {
    m_data = (LinearDictEntry *) memAlloc( esize( size ) );
    length(0);
@@ -195,31 +51,50 @@ uint32 LinearDict::length() const
    return m_size;
 }
 
-DictIterator *LinearDict::first()
+bool LinearDict::empty() const
 {
-   return new LinearDictIterator( this, 0 );
+   return m_size == 0;
 }
 
-DictIterator *LinearDict::last()
+const Item &LinearDict::front() const
 {
-   return new LinearDictIterator( this, m_size - 1 );
+   if( m_size == 0 )
+      throw new AccessError( ErrorParam( e_iter_outrange, __LINE__ )
+         .origin( e_orig_runtime ).extra( "LinearDict::front" ) );
+
+   return m_data[0].value();
 }
 
-void LinearDict::first( DictIterator &iter )
+const Item &LinearDict::back() const
 {
-   LinearDictIterator *lit = static_cast< LinearDictIterator *>( &iter );
-   lit->m_versionNumber = version();
-   lit->m_dictPos = 0;
-   lit->m_dict = this;
+   if( m_size == 0 )
+      throw new AccessError( ErrorParam( e_iter_outrange, __LINE__ )
+         .origin( e_orig_runtime ).extra( "LinearDict::back" ) );
+
+   return m_data[m_size-1].value();
 }
 
-void LinearDict::last( DictIterator &iter )
+void LinearDict::append( const Item& item )
 {
+   if( item.isArray() )
+   {
+      ItemArray& pair = item.asArray()->items();
+      if ( pair.length() == 2 )
+      {
+         insert( pair[0], pair[1] );
+         return;
+      }
+   }
 
-   LinearDictIterator *lit = static_cast< LinearDictIterator *>( &iter );
-   lit->m_versionNumber = version();
-   lit->m_dictPos =  m_size - 1;
-   lit->m_dict = this;
+   throw new AccessError( ErrorParam( e_not_implemented, __LINE__ )
+      .origin( e_orig_runtime ).extra( "LinearDict::append" ) );
+
+}
+
+void LinearDict::prepend( const Item& item )
+{
+   append( item );
+   invalidateAllIters();
 }
 
 
@@ -236,42 +111,14 @@ Item *LinearDict::find( const Item &key ) const
    return 0;
 }
 
-bool LinearDict::find( const Item &key, DictIterator &iter )
+bool LinearDict::findIterator( const Item &key, Iterator &iter )
 {
    uint32 posHint;
 
    // Insert supports substitution semantics.
    bool val = findInternal( key, posHint );
-   LinearDictIterator *li = static_cast< LinearDictIterator *>( &iter );
-   li->m_dictPos = posHint;
-   li->m_dict = this;
-   li->m_versionNumber = version();
+   iter.position( posHint );
    return val;
-}
-
-DictIterator *LinearDict::findIterator( const Item &key )
-{
-   uint32 posHint;
-
-   if ( findInternal( key, posHint ) )
-   {
-      return new LinearDictIterator( this, posHint );
-   }
-
-   return 0;
-}
-
-bool LinearDict::remove( DictIterator &iter )
-{
-   if( ! iter.isOwner( this ) || ! iter.isValid() )
-      return false;
-
-   LinearDictIterator *ldi = static_cast<LinearDictIterator *>(&iter);
-
-   removeAt( ldi->m_dictPos );
-   // maintain compatibility
-   ldi->m_versionNumber = m_version;
-   return true;
 }
 
 bool LinearDict::remove( const Item &key )
@@ -281,6 +128,8 @@ bool LinearDict::remove( const Item &key )
    // Insert supports substitution semantics.
    if ( findInternal( key, posHint ) ) {
       removeAt( posHint );
+      m_invalidPos = posHint;
+      invalidateIteratorOnCriterion();
       return true;
    }
 
@@ -299,9 +148,11 @@ void LinearDict::insert( const Item &key, const Item &value )
 
    // Entry not found, must be added
    addInternal( posHint, key, value );
+   m_invalidPos = posHint;
+   invalidateIteratorOnCriterion();
 }
 
-void LinearDict::smartInsert( DictIterator &iter, const Item &key, const Item &value )
+void LinearDict::smartInsert( const Iterator &iter, const Item &key, const Item &value )
 {
    if ( m_size == 0 )
    {
@@ -309,11 +160,9 @@ void LinearDict::smartInsert( DictIterator &iter, const Item &key, const Item &v
       return;
    }
 
-   if ( iter.isOwner( this ) && iter.isValid() )
+   if ( iter.hasCurrent() )
    {
-      uint32 posHint;
-      LinearDictIterator *ldi = static_cast<LinearDictIterator *>(&iter);
-      posHint = ldi->m_dictPos;
+      uint32 posHint = iter.position();
 
       // right position?
       if (  key == m_data[posHint].key() )
@@ -328,7 +177,8 @@ void LinearDict::smartInsert( DictIterator &iter, const Item &key, const Item &v
          ( posHint == m_size || key < m_data[posHint].key() ) )
       {
          addInternal( posHint, key, value );
-         ldi->m_versionNumber = version();
+         m_invalidPos = posHint;
+         invalidateIteratorOnCriterion();
          return;
       }
    }
@@ -337,25 +187,25 @@ void LinearDict::smartInsert( DictIterator &iter, const Item &key, const Item &v
    insert( key, value );
 }
 
-bool LinearDict::equal( const CoreDict &other ) const
+
+void LinearDict::merge( const ItemDict &dict )
 {
-   if ( &other == this )
-      return true;
-   return false;
-}
-
-
-void LinearDict::merge( const CoreDict &dict )
-{
-   const_cast< CoreDict *>( &dict )->traverseBegin();
-
-   Item key, value;
-   while( const_cast< CoreDict *>( &dict )->traverseNext( key, value ) )
+   if ( dict.length() > 0 )
    {
-      insert( key, value );
-   }
-}
+      m_alloc = m_size + dict.length();
 
+      m_data = (LinearDictEntry*) memRealloc( m_data, sizeof( LinearDictEntry )*m_alloc );
+      Iterator iter( const_cast<ItemDict*>( &dict ) );
+
+      while( iter.hasCurrent() )
+      {
+         insert( iter.getCurrentKey(), iter.getCurrent() );
+         iter.next();
+      }
+   }
+   
+   invalidateAllIters();
+}  
 
 
 bool LinearDict::addInternal( uint32 pos, const Item &key, const Item &value )
@@ -391,7 +241,6 @@ bool LinearDict::addInternal( uint32 pos, const Item &key, const Item &value )
   }
 
    length( m_size + 1 );
-   m_version++;
    return true;
 }
 
@@ -408,7 +257,8 @@ bool LinearDict::removeAt( uint32 pos )
    length( m_size - 1 );
 
    // for now, do not reallocate.
-   m_version++;
+   m_invalidPos = pos;
+   invalidateIteratorOnCriterion();
 
    return true;
 }
@@ -483,7 +333,7 @@ bool LinearDict::findInternal( const Item &key, uint32 &ret_pos ) const
 }
 
 
-CoreDict *LinearDict::clone() const
+FalconData *LinearDict::clone() const
 {
    LinearDict *ret;
 
@@ -498,26 +348,9 @@ CoreDict *LinearDict::clone() const
       memcpy( ret->m_data, m_data, esize( m_size ) );
    }
 
-   ret->bless( isBlessed() );
-
    return ret;
 }
 
-void LinearDict::traverseBegin()
-{
-   m_travPos = 0;
-}
-
-bool LinearDict::traverseNext( Item &key, Item &value )
-{
-   if( m_travPos >= m_size )
-      return false;
-
-   key = m_data[ m_travPos ].key();
-   value = m_data[ m_travPos ].value();
-   m_travPos++;
-   return true;
-}
 
 void LinearDict::clear()
 {
@@ -525,7 +358,132 @@ void LinearDict::clear()
    m_data = 0;
    m_alloc = 0;
    m_size = 0;
-   m_version++;
+   invalidateAllIters();
+}
+
+void LinearDict::gcMark( uint32 gen )
+{
+   Sequence::gcMark( gen );
+
+   for( uint32 i = 0; i < length(); ++i )
+   {
+      memPool->markItem( m_data[i].key() );
+      memPool->markItem( m_data[i].value() );
+   }
+}
+
+//============================================================
+// Iterator management.
+//============================================================
+
+void LinearDict::getIterator( Iterator& tgt, bool tail ) const
+{
+   Sequence::getIterator( tgt, tail );
+   tgt.position( tail ? (length()>0? length()-1: 0) : 0 );
+}
+
+
+void LinearDict::copyIterator( Iterator& tgt, const Iterator& source ) const
+{
+   Sequence::copyIterator( tgt, source );
+   tgt.position( source.position() );
+}
+
+void LinearDict::insert( Iterator &iter, const Item &data )
+{
+   throw new CodeError( ErrorParam( e_not_implemented, __LINE__ )
+         .origin( e_orig_runtime ).extra( "LinearDict::insert" ) );
+}
+
+void LinearDict::erase( Iterator &iter )
+{
+   if ( iter.position() >= length() )
+      throw new AccessError( ErrorParam( e_iter_outrange, __LINE__ )
+            .origin( e_orig_runtime ).extra( "LinearDict::erase" ) );
+   
+   uint32 pos = iter.position();
+   if ( pos < m_size - 1 )
+      memmove( m_data + pos, m_data + pos + 1, esize( m_size - pos ) );
+   // otherwise, there's nothing to move...
+
+   length( m_size - 1 );
+
+   // the next item has automatically moved on the position pointed by us
+   // but the other iterators should be killed.
+   invalidateAnyOtherIter( &iter );
+}
+
+
+bool LinearDict::hasNext( const Iterator &iter ) const
+{
+   return iter.position()+1 < length();
+}
+
+
+bool LinearDict::hasPrev( const Iterator &iter ) const
+{
+   return iter.position() > 0;
+}
+
+bool LinearDict::hasCurrent( const Iterator &iter ) const
+{
+   return iter.position() < length();
+}
+
+
+bool LinearDict::next( Iterator &iter ) const
+{
+   if ( iter.position() < length() )
+   {
+      iter.position( iter.position() + 1 );
+      return iter.position() < length();
+   }
+
+   return false;
+}
+
+
+bool LinearDict::prev( Iterator &iter ) const
+{
+   if ( iter.position() > 0 )
+   {
+      iter.position( iter.position() - 1 );
+      return true;
+   }
+
+   iter.position( length() );
+   return false;
+}
+
+Item& LinearDict::getCurrent( const Iterator &iter )
+{
+   if ( iter.position() < length() )
+      return m_data[ iter.position() ].value();
+
+   throw new AccessError( ErrorParam( e_iter_outrange, __LINE__ )
+         .origin( e_orig_runtime ).extra( "LinearDict::getCurrent" ) );
+}
+
+
+Item& LinearDict::getCurrentKey( const Iterator &iter )
+{
+   if ( iter.position() < length() )
+         return m_data[ iter.position() ].key();
+
+   throw new AccessError( ErrorParam( e_iter_outrange, __LINE__ )
+         .origin( e_orig_runtime ).extra( "LinearDict::getCurrent" ) );
+
+}
+
+
+bool LinearDict::equalIterator( const Iterator &first, const Iterator &second ) const
+{
+   return first.position() == second.position();
+}
+
+bool LinearDict::onCriterion( Iterator* elem ) const
+{
+   return elem->position() < m_invalidPos;
 }
 
 }

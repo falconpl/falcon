@@ -14,7 +14,7 @@
 */
 
 
-#include <falcon/cdict.h>
+#include <falcon/coredict.h>
 #include <falcon/vm.h>
 
 namespace Falcon {
@@ -30,7 +30,7 @@ bool CoreDict::getMethod( const String &name, Item &mth )
          return mth.methodize( SafeItem( this ) );
       }
    }
-   
+
    return false;
 }
 
@@ -47,7 +47,7 @@ void CoreDict::readProperty( const String &prop, Item &item )
    if( m_blessed )
    {
       Item *method;
-      
+
       if ( ( method = find( prop ) ) != 0 )
       {
          item = *method->dereference();
@@ -110,7 +110,7 @@ void CoreDict::readIndex( const Item &pos, Item &target )
          }
       }
    }
-   
+
    if( ! find( *pos.dereference(), target ) )
    {
       throw new AccessError( ErrorParam( e_arracc, __LINE__ ) );
@@ -129,7 +129,7 @@ void CoreDict::writeIndex( const Item &pos, const Item &target )
          {
             VMachine* vm = VMachine::getCurrent();
             if( vm != 0 )
-            {   
+            {
                vm->pushParameter( pos );
                vm->pushParameter( target );
                vm->callItemAtomic( mth, 2 );
@@ -148,7 +148,26 @@ void CoreDict::writeIndex( const Item &pos, const Item &target )
    else {
       insert( *pos.dereference(), *tgt );
    }
+}
 
+void CoreDict::gcMark( uint32 gen )
+{
+   if ( gen != mark() )
+   {
+      mark( gen );
+      m_dict->gcMark( gen );
+   }
+}
+
+bool CoreDict::find( const Item &key, Item &value )
+{
+   Item *itm;
+   if( ( itm = find( key ) ) != 0 )
+   {
+     value = *itm;
+     return true;
+   }
+   return false;
 }
 
 }

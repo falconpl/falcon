@@ -34,7 +34,7 @@ namespace Falcon {
 
 class Item;
 class Bindings;
-class CoreArray;
+class LinearDict;
 
 
 
@@ -58,6 +58,8 @@ public:
    CoreArray( uint32 prealloc );
 
    ~CoreArray();
+
+   virtual void gcMark( uint32 gen );
 
    const ItemArray& items() const { return m_itemarray; }
    ItemArray& items() { return m_itemarray; }

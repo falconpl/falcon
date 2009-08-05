@@ -250,12 +250,10 @@ public:
 
    /** Performs GC marking of the inner object data.
 
-      If the inner object is a falcon data, it gets marked through its
-      FalconData::gcMark function. By default, this function does nothing,
-      but some extensions may wish to store in the inner object data complete
-      items, and they shall be marked.
+     This marks properties and eventually inner data, if it's
+     a FalconData* subclass instance.
    */
-   virtual void gcMarkData( uint32 mark );
+   virtual void gcMark( uint32 mark );
 
    /** Returns true if the class provides a certain property.
       Should not account Object metaclass properties, unless explicitly overloaded.

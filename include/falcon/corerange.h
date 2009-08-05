@@ -21,6 +21,10 @@
 #include <falcon/garbageable.h>
 #include <limits.h>
 
+#ifndef LLONG_MIN
+#define LLONG_MIN (-9223372036854775807LL-1)
+#endif
+
 namespace Falcon {
 
 class FALCON_DYN_CLASS CoreRange: public Garbageable
@@ -67,7 +71,7 @@ public:
 
    virtual ~CoreRange() {}
 
-   bool isOpen() const { return m_step == LLONG_MIN; }
+   bool isOpen() const { return m_step == (int64) LLONG_MIN; }
    int64 start() const { return m_start; }
    int64 end() const { return m_end; }
    int64 step() const { return m_step; }

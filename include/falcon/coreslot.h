@@ -104,6 +104,11 @@ public:
 
    virtual FalconData *clone() const;
    virtual void gcMark( uint32 mark );
+
+   virtual void getIterator( Iterator& tgt, bool tail = false ) const;
+   virtual void copyIterator( Iterator& tgt, const Iterator& source ) const;
+
+   virtual void disposeIterator( Iterator& tgt ) const;
 };
 
 

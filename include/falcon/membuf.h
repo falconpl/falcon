@@ -285,6 +285,7 @@ public:
    static MemBuf *create( int nWordSize, uint32 length );
 
    virtual MemBuf* clone() const;
+   virtual void gcMark( uint32 gen );
 
    virtual void readProperty( const String &, Item &item );
    virtual void writeProperty( const String &, const Item &item );

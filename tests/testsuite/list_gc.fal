@@ -61,6 +61,7 @@ a = 2 * 1
 
 // be sure to kill both marks
 GC.perform( true )
+GC.perform( true )
 
 if aliveMem != GC.aliveMem: failure( "unmatching allocated memory" )
 if usedMem != GC.usedMem: failure( "unmatching used memory" )

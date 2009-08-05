@@ -28,46 +28,6 @@ namespace Falcon {
 
 class CoreTable;
 
-class CoreTableIterator: public CoreIterator
-{
-   CoreTable *m_owner;
-   uint32 m_pageNum;
-   uint32 m_itemNum;
-
-   enum {
-      noitem = 0xFFFFFFFF
-   };
-
-   friend class CoreTable;
-public:
-
-   CoreTableIterator( CoreTable *owner, uint32 pageNum, uint32 itemNum );
-   virtual ~CoreTableIterator();
-
-   virtual bool next();
-   virtual bool prev();
-   virtual bool hasNext() const;
-   virtual bool hasPrev() const;
-
-   virtual Item &getCurrent() const;
-
-   virtual bool isValid() const;
-   virtual bool isOwner( void *collection ) const;
-   virtual bool equal( const CoreIterator &other ) const;
-   virtual bool erase();
-   virtual bool insert( const Item &other );
-
-   virtual void invalidate();
-
-   virtual FalconData *clone() const;
-
-   // specific interface
-   CoreTable *table() const { return m_owner; }
-   uint32 pageNum() const { return m_pageNum; }
-   uint32 itemNum() const { return m_itemNum; }
-};
-
-
 //=========================================================
 //
 
@@ -234,27 +194,9 @@ public:
    virtual const Item &front() const;
    virtual const Item &back() const;
 
-   /** Creates an iterator item for the object.
-      The CoreTableIterator is an instance of the CoreIterator class and can be used
-      as a part of the VM iterator system.
-      This method returns a newly created CoreTableIterator pointing to the first or
-      last row of the current page in this table.
-      If the table is empty, the item will be declared invalid.
-
-      \param tail true to get the iterator to the last element in the list.
-      \return a newly created iterator.
-   */
-   virtual CoreIterator *getIterator( bool tail=false );
-
 
    /** Removes all the raws in the current page. */
    virtual void clear();
-
-   /** Implementing sequence interface */
-   virtual bool erase( CoreIterator *iter );
-
-   /** Implementing sequence interface */
-   virtual bool insert( CoreIterator *iter, const Item &item );
 
    /** Append an item at the end of the sequence. */
    virtual void append( const Item &data );
@@ -281,6 +223,25 @@ public:
    uint32 biddingsSize() const { return m_biddingSize; }
 
    void reserveBiddings( uint32 size );
+
+   //============================================
+   // Iterator implementation
+   //============================================
+protected:
+   virtual void getIterator( Iterator& tgt, bool tail = false ) const ;
+   virtual void copyIterator( Iterator& tgt, const Iterator& source ) const ;
+
+   virtual void insert( Iterator &iter, const Item &data ) ;
+   virtual void erase( Iterator &iter ) ;
+   virtual bool hasNext( const Iterator &iter ) const ;
+   virtual bool hasPrev( const Iterator &iter ) const ;
+   virtual bool hasCurrent( const Iterator &iter ) const ;
+   virtual bool next( Iterator &iter ) const ;
+   virtual bool prev( Iterator &iter ) const ;
+   virtual Item& getCurrent( const Iterator &iter ) ;
+   virtual Item& getCurrentKey( const Iterator &iter ) ;
+   virtual bool equalIterator( const Iterator &first, const Iterator &second ) const ;
+
 };
 
 }

@@ -69,6 +69,7 @@ public:
    virtual bool isFunc() const { return true; }
    virtual const String& name() const { return m_symbol->name(); }
 
+   virtual void gcMark( uint32 gen );
 };
 
 }

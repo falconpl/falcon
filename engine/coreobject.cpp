@@ -62,19 +62,22 @@ CoreObject::~CoreObject()
 }
 
 
-void CoreObject::gcMarkData( uint32 gen )
+void CoreObject::gcMark( uint32 gen )
 {
-   // mark ourseleves
-   mark( gen );
-
-   // our class
-   m_generatedBy->gcMarkData( gen );
-
-   // and possibly our inner falcon data
-   if ( m_bIsFalconData )
+   if( gen != mark() )
    {
-      fassert( m_user_data != 0 );
-      static_cast<FalconData* >(m_user_data)->gcMark( gen );
+      // mark ourseleves
+      mark( gen );
+
+      // our class
+      m_generatedBy->gcMark( gen );
+
+      // and possibly our inner falcon data
+      if ( m_bIsFalconData )
+      {
+         fassert( m_user_data != 0 );
+         static_cast<FalconData* >(m_user_data)->gcMark( gen );
+      }
    }
 }
 

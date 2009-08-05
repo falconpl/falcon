@@ -27,7 +27,7 @@
 #include <falcon/corefunc.h>
 #include <falcon/carray.h>
 #include <falcon/garbagepointer.h>
-#include <falcon/cdict.h>
+#include <falcon/coredict.h>
 #include <falcon/cclass.h>
 #include <falcon/membuf.h>
 #include <falcon/vmmaps.h>
@@ -41,7 +41,7 @@ namespace Falcon
 
 inline void assignToVm( Garbageable *gcdata )
 {
-   gcdata->mark( memPool->generation() );
+   gcdata->gcMark( memPool->generation() );
 }
 
 //=================================================================
@@ -160,33 +160,39 @@ void Item::setClassMethod( CoreObject *obj, CoreClass *cls )
 void Item::setClass( CoreClass *cls )
 {
    type( FLC_ITEM_CLASS );
-   // warning: class in extra to be omologue to methodClass()
+   // warning: class in extra to be homologue to methodClass()
    all.ctx.data.ptr.extra = cls;
    assignToVm( cls );
 }
 
-void Item::setGCPointer( FalconData *ptr, uint32 sig )
+void Item::setGCPointer( FalconData *ptr )
 {
    type( FLC_ITEM_GCPTR );
-   all.ctx.data.gptr.signature = sig;
-   all.ctx.data.gptr.gcptr = new GarbagePointer( ptr );
-   assignToVm( all.ctx.data.gptr.gcptr );
-   ptr->gcMark( memPool->generation() );
+   all.ctx.data.content = new GarbagePointer( ptr );
+   assignToVm( all.ctx.data.content );
+   // Done in assingToVM
+   //ptr->gcMark( memPool->generation() );
 }
 
-void Item::setGCPointer( GarbagePointer *shell, uint32 sig )
+void Item::setGCPointer( GarbagePointer *shell )
 {
    type( FLC_ITEM_GCPTR );
-   all.ctx.data.gptr.signature = sig;
-   all.ctx.data.gptr.gcptr = shell;
+   all.ctx.data.content = shell;
    assignToVm( shell );
-   shell->ptr()->gcMark( memPool->generation() );
+   // Done in assingToVM
+   //shell->ptr()->gcMark( memPool->generation() );
 }
 
 FalconData *Item::asGCPointer() const
 {
-   return all.ctx.data.gptr.gcptr->ptr();
+   return static_cast<GarbagePointer*>(all.ctx.data.content)->ptr();
 }
+
+GarbagePointer *Item::asGCPointerShell() const
+{
+   return static_cast<GarbagePointer*>(all.ctx.data.content);
+}
+
 
 //====================================================
 // Safe items.
@@ -284,18 +290,16 @@ void SafeItem::setClass( CoreClass *cls )
    all.ctx.data.ptr.extra = cls;
 }
 
-void SafeItem::setGCPointer( FalconData *ptr, uint32 sig )
+void SafeItem::setGCPointer( FalconData *ptr )
 {
    type( FLC_ITEM_GCPTR );
-   all.ctx.data.gptr.signature = sig;
-   all.ctx.data.gptr.gcptr = new GarbagePointer( ptr );
+   all.ctx.data.content = new GarbagePointer( ptr );
 }
 
-void SafeItem::setGCPointer( GarbagePointer *shell, uint32 sig )
+void SafeItem::setGCPointer( GarbagePointer *shell )
 {
    type( FLC_ITEM_GCPTR );
-   all.ctx.data.gptr.signature = sig;
-   all.ctx.data.gptr.gcptr = shell;
+   all.ctx.data.content = shell;
 }
 
 

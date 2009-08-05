@@ -31,11 +31,10 @@ if dest != "ackz": failure( "Forward iteration -- key" )
 it = Iterator( dictionary, -1 )
 dest = ""
 destNum = 0
-while it.hasCurrent()
+loop 
 	dest += it.key()
 	destNum += it.value()
-	it.prev()
-end
+end not it.prev()
 
 if destNum != 10: failure( "Reverse iteration -- value" )
 if dest != "zkca": failure( "Reverse iteration -- key" )

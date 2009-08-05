@@ -90,6 +90,14 @@ public:
    Garbageable( const Garbageable &other );
 
    virtual ~Garbageable();
+
+   /** Applies mark to subclasses.
+    * By default, this method just changes the mark() value.
+    *
+    * Subclasses having deep data may overload this to take care
+    * of marking it.
+    */
+   virtual void gcMark( uint32 mk );
 };
 
 }

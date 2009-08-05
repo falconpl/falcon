@@ -68,17 +68,18 @@ CacheObject::~CacheObject()
    memFree( m_cache );
 }
 
-void CacheObject::gcMarkData( uint32 mark )
+void CacheObject::gcMark( uint32 mk )
 {
-   CoreObject::gcMarkData( mark );
-
-   const PropertyTable &props = m_generatedBy->properties();
-   for ( uint32 i = 0; i < props.added(); i ++ )
+   if( mk != mark() )
    {
-     memPool->markItem( m_cache[i] );
-   }
+      CoreObject::gcMark( mk );
 
-   // Subclasses shall eventually mark the user data.
+      const PropertyTable &props = m_generatedBy->properties();
+      for ( uint32 i = 0; i < props.added(); i ++ )
+      {
+        memPool->markItem( m_cache[i] );
+      }
+   }
 }
 
 bool CacheObject::setProperty( const String &propName, const Item &value )

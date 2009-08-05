@@ -100,24 +100,23 @@ FALCON_FUNC fal_include( Falcon::VMachine *vm )
          CoreDict *dict = i_syms->asDict();
 
          // traverse the dictionary
-         DictIterator *iter = dict->first();
-         while( iter->isValid() )
+         Iterator iter( &dict->items() );
+         while( iter.hasCurrent() )
          {
-            // if the key is a string and a coresponding item is found...
+            // if the key is a string and a corresponding item is found...
             Item *ival;
-            if ( iter->getCurrentKey().isString() &&
-                  ( ival = lmod->findModuleItem( *iter->getCurrentKey().asString() ) ) != 0 )
+            if ( iter.getCurrentKey().isString() &&
+                  ( ival = lmod->findModuleItem( *iter.getCurrentKey().asString() ) ) != 0 )
             {
                // copy it locally
-               iter->getCurrent() = *ival;
+               iter.getCurrent() = *ival;
             }
             else {
-               iter->getCurrent().setNil();
+               iter.getCurrent().setNil();
             }
 
-            iter->next();
+            iter.next();
          }
-         delete iter;
       }
 
       // reset launch status

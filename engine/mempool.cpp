@@ -23,7 +23,7 @@
 #include <falcon/carray.h>
 #include <falcon/corefunc.h>
 #include <falcon/corerange.h>
-#include <falcon/cdict.h>
+#include <falcon/coredict.h>
 #include <falcon/cclass.h>
 #include <falcon/vm.h>
 #include <falcon/vmcontext.h>
@@ -402,131 +402,65 @@ void MemPool::markItem( const Item &item )
 
    switch( item.type() )
    {
-      case FLC_ITEM_REFERENCE:
-      {
-         GarbageItem *gi = item.asReference();
-         if( gi->mark() != gen ) {
-            gi->mark( gen );
-            markItem( gi->origin() );
-         }
+   case FLC_ITEM_RANGE:
+      item.asRange()->gcMark( gen );
+      break;
+
+   case FLC_ITEM_GCPTR:
+      item.asGCPointerShell()->gcMark( gen );
+      break;
+
+   case FLC_ITEM_ARRAY:
+      item.asArray()->gcMark( gen );
+      break;
+
+   case FLC_ITEM_DICT:
+      item.asDict()->gcMark( gen );
+      break;
+
+   case FLC_ITEM_OBJECT:
+      item.asObject()->gcMark( gen );
+      break;
+
+   case FLC_ITEM_MEMBUF:
+      item.asMemBuf()->gcMark( gen );
+      break;
+
+   case FLC_ITEM_CLASS:
+      item.asClass()->gcMark( gen );
+      break;
+
+   case FLC_ITEM_FUNC:
+      item.asFunction()->gcMark( gen );
+      break;
+
+   case FLC_ITEM_REFERENCE:
+   {
+      GarbageItem *gi = item.asReference();
+      if( gi->mark() != gen ) {
+         gi->mark( gen );
+         markItem( gi->origin() );
       }
-      break;
+   }
+   break;
 
-      case FLC_ITEM_FUNC:
-         {
-            CoreFunc* func = item.asFunction();
-            if( func->mark() != gen )
-            {
-               func->mark( gen );
-               func->liveModule()->mark( gen );
-               // mark also closed items
-               if ( func->closure() != 0 )
-                  func->closure()->gcMark( gen );
-            }
-         }
-         break;
-
-      case FLC_ITEM_RANGE:
-         item.asRange()->mark( gen );
-         break;
-
-      case FLC_ITEM_LBIND:
-         if ( item.asFBind() != 0 )
-         {
-            GarbageItem *gi = item.asFBind();
-            if ( gi->mark() != gen )
-               gi->mark( gen );
-         }
-
-         {
-            String* str = item.asString();
-            if( str->isCore() )
-            {
-               StringGarbage &gs = static_cast<CoreString*>(str)->garbage();
-               gs.mark( gen );
-            }
-         }
-         break;
-
-      case FLC_ITEM_STRING:
-         {
-            String* str = item.asString();
-            if( str->isCore() )
-            {
-               StringGarbage &gs = static_cast<CoreString*>(str)->garbage();
-               gs.mark( gen );
-            }
-            else
-            {
-               if ( item.asStringModule() != 0 )
-                  item.asStringModule()->mark( gen );
-            }
-         }
-      break;
-
-
-      case FLC_ITEM_GCPTR:
-         item.asGCPointerShell()->mark( gen );
-         item.asGCPointer()->gcMark( gen );
-         break;
-
-      case FLC_ITEM_ARRAY:
+   case FLC_ITEM_LBIND:
+      if ( item.asFBind() != 0 )
       {
-         CoreArray *array = item.asArray();
-         if( array->mark() != gen ) {
-            array->mark(gen);
-            array->items().gcMark(gen);
-
-            // mark also the bindings
-            if ( array->bindings() != 0 )
-            {
-               CoreDict *cd = array->bindings();
-               if( cd->mark() != gen ) {
-                  cd->mark( gen );
-                  Item key, value;
-                  cd->traverseBegin();
-                  while( cd->traverseNext( key, value ) )
-                  {
-                     markItem( key );
-                     markItem( value );
-                  }
-               }
-            }
-
-            // and also the table
-            if ( array->table() != 0 && array->table()->mark() != gen )
-            {
-               array->table()->gcMarkData( gen );
-            }
-         }
+         item.asFBind()->gcMark( gen );
       }
-      break;
 
-      case FLC_ITEM_OBJECT:
+      // fallthrough
+
+   case FLC_ITEM_STRING:
       {
-         CoreObject *co = item.asObjectSafe();
-         if( co->mark() != gen )
+         String* str = item.asString();
+         if( str->isCore() )
          {
-            co->gcMarkData( gen );
+            StringGarbage &gs = static_cast<CoreString*>(str)->garbage();
+            gs.mark( gen );
          }
-         else
-            co = 0;
-      }
-      break;
 
-      case FLC_ITEM_DICT:
-      {
-         CoreDict *cd = item.asDict();
-         if( cd->mark() != gen ) {
-            cd->mark( gen );
-            Item key, value;
-            cd->traverseBegin();
-            while( cd->traverseNext( key, value ) )
-            {
-               markItem( key );
-               markItem( value );
-            }
-         }
       }
       break;
 
@@ -536,18 +470,7 @@ void MemPool::markItem( const Item &item )
          if( item.asMethodFunc()->mark() != gen )
          {
             CallPoint* cp = item.asMethodFunc();
-
-            if( cp->isFunc() )
-            {
-               cp->mark( gen );
-               static_cast<CoreFunc*>(cp)->liveModule()->mark( gen );
-            }
-            else
-            {
-               // TODO: add a mark function to inner types.
-               SafeItem temp( static_cast<CoreArray*>(cp) );
-               markItem(temp);
-            }
+            cp->gcMark( gen );
          }
 
          Item self;
@@ -560,39 +483,14 @@ void MemPool::markItem( const Item &item )
       {
          CoreObject *co = item.asMethodClassOwner();
          if( co->mark() != gen ) {
-            co->gcMarkData( gen );
+            co->gcMark( gen );
          }
 
          CoreClass *cls = item.asMethodClass();
          // if the class is the generator of the method, we have already marked it.
          if( cls->mark() != gen )
          {
-            cls->gcMarkData( gen );
-         }
-      }
-      break;
-
-      case FLC_ITEM_CLASS:
-      {
-         CoreClass *cls = item.asClass();
-         if( cls->mark() != gen ) {
-            cls->gcMarkData( gen );
-         }
-      }
-      break;
-
-      case FLC_ITEM_MEMBUF:
-      {
-         MemBuf *mb = item.asMemBuf();
-         if ( mb->mark() != gen )
-         {
-            mb->mark( gen );
-            CoreObject *co = item.asMemBuf()->dependant();
-            // small optimization; resolve the problem here instead of looping again.
-            if( co != 0 && co->mark() != gen )
-            {
-               co->gcMarkData( gen );
-            }
+            cls->gcMark( gen );
          }
       }
       break;

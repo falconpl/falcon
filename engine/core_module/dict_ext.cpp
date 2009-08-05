@@ -21,7 +21,8 @@
 #include <falcon/module.h>
 #include <falcon/item.h>
 #include <falcon/carray.h>
-#include <falcon/cdict.h>
+#include <falcon/coredict.h>
+#include <falcon/iterator.h>
 #include <falcon/vm.h>
 #include <falcon/fassert.h>
 #include <falcon/eng_messages.h>
@@ -97,15 +98,14 @@ FALCON_FUNC  mth_dictFront( ::Falcon::VMachine *vm )
    bool bRemove;
    
    process_dictFrontBackParams( vm, dict, bKey, bRemove );
-   DictIterator* iter = dict->first();
+   Iterator iter( &dict->items() );
    if ( bKey )
-      vm->retval( iter->getCurrentKey() );
+      vm->retval( iter.getCurrentKey() );
    else
-      vm->retval( iter->getCurrent() );
+      vm->retval( iter.getCurrent() );
    
    if ( bRemove )
-      dict->remove( *iter );
-   delete iter;
+      iter.erase();
 }
 
 /*#
@@ -124,17 +124,15 @@ FALCON_FUNC  mth_dictBack( ::Falcon::VMachine *vm )
    bool bRemove;
    
    process_dictFrontBackParams( vm, dict, bKey, bRemove );
-   DictIterator* iter = dict->last();
+   Iterator iter( &dict->items(), true );
    
    if ( bKey )
-      vm->retval( iter->getCurrentKey() );
+      vm->retval( iter.getCurrentKey() );
    else
-      vm->retval( iter->getCurrent() );
+      vm->retval( iter.getCurrent() );
    
    if ( bRemove )
-      dict->remove( *iter );
-   
-   delete iter;
+      iter.erase();
 }
 
 /*#
@@ -148,7 +146,8 @@ FALCON_FUNC Dictionary_first( VMachine *vm )
    Item *itclass = vm->findWKI( "Iterator" );
    fassert( itclass != 0 );
 
-   CoreObject *iterator = itclass->asClass()->createInstance( vm->self().asDict()->first() );
+   CoreObject *iterator = itclass->asClass()->createInstance(
+         new Iterator( &vm->self().asDict()->items() ) );
    iterator->setProperty( "_origin", vm->self() );
    vm->retval( iterator );
 }
@@ -164,7 +163,8 @@ FALCON_FUNC Dictionary_last( VMachine *vm )
    Item *itclass = vm->findWKI( "Iterator" );
    fassert( itclass != 0 );
 
-   CoreObject *iterator = itclass->asClass()->createInstance( vm->self().asDict()->last() );
+   CoreObject *iterator = itclass->asClass()->createInstance(
+         new Iterator( &vm->self().asDict()->items(), true ) );
    iterator->setProperty( "_origin", vm->self() );
    vm->retval( iterator );
 }
@@ -362,14 +362,13 @@ FALCON_FUNC  mth_dictKeys( ::Falcon::VMachine *vm )
    CoreDict *dict = i_dict->asDict();
    CoreArray *array = new CoreArray;
    array->reserve( dict->length() );
-   DictIterator *iter = dict->first();
+   Iterator iter( &dict->items() );
 
-   while( iter->isValid() )
+   while( iter.hasCurrent() )
    {
-      array->append( iter->getCurrentKey() );
-      iter->next();
+      array->append( iter.getCurrentKey() );
+      iter.next();
    }
-   delete iter;
 
    vm->retval( array );
 }
@@ -418,14 +417,13 @@ FALCON_FUNC  mth_dictValues( ::Falcon::VMachine *vm )
    CoreDict *dict = i_dict->asDict();
    CoreArray *array = new CoreArray;
    array->reserve( dict->length() );
-   CoreIterator *iter = dict->first();
+   Iterator iter( &dict->items() );
 
-   while( iter->isValid() )
+   while( iter.hasCurrent() )
    {
-      array->append( iter->getCurrent() );
-      iter->next();
+      array->append( iter.getCurrent() );
+      iter.next();
    }
-   delete iter;
 
    vm->retval( array );
 }
@@ -475,18 +473,18 @@ FALCON_FUNC  mth_dictFill ( ::Falcon::VMachine *vm )
    }
 
    CoreDict *dict = i_dict->asDict();
-   DictIterator* iter = dict->first();
-   while( iter->isValid() )
+   Iterator iter( &dict->items() );
+
+   while( iter.hasCurrent() )
    {
       if ( i_item->isString() )
-         iter->getCurrent() = new CoreString( *i_item->asString() );
+         iter.getCurrent() = new CoreString( *i_item->asString() );
       else
-         iter->getCurrent() = *i_item;
+         iter.getCurrent() = *i_item;
       
-      iter->next();
+      iter.next();
    }
    
-   delete iter;
    vm->retval( dict );
 }
 
@@ -660,9 +658,9 @@ FALCON_FUNC  mth_dictFind( ::Falcon::VMachine *vm )
    }
 
    CoreDict *dict = i_dict->asDict();
+   Iterator iter( &dict->items() );
 
-   DictIterator *value = dict->findIterator( *i_key );
-   if ( value == 0 )
+   if ( ! dict->findIterator( *i_key, iter ) )
       vm->retnil();
    else 
    {
@@ -670,7 +668,7 @@ FALCON_FUNC  mth_dictFind( ::Falcon::VMachine *vm )
       Item *i_iclass = vm->findWKI( "Iterator" );
       fassert( i_iclass != 0 );
       
-      CoreObject *ival = i_iclass->asClass()->createInstance( value );
+      CoreObject *ival = i_iclass->asClass()->createInstance( new Iterator( iter ) );
       ival->setProperty( "_origin", *i_dict );
       vm->retval( ival );
    }
@@ -758,11 +756,12 @@ FALCON_FUNC  mth_dictBest( ::Falcon::VMachine *vm )
    fassert( i_iclass != 0 );
 
    CoreDict *dict = i_dict->asDict();
-   DictIterator *iter = dict->first();
+   Iterator* iter = new Iterator( &dict->items() );
    CoreObject *ival = i_iclass->asClass()->createInstance( iter );
    ival->setProperty( "_origin", *i_dict );
+
    vm->regA() = ival;
-   if ( ! dict->find( *i_key, *iter ) )
+   if ( ! dict->findIterator( *i_key, *iter ) )
    {
       vm->regA().setOob();
    }

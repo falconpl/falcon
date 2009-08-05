@@ -29,7 +29,7 @@
 #include <falcon/carray.h>
 #include <falcon/string.h>
 #include <falcon/coreobject.h>
-#include <falcon/cdict.h>
+#include <falcon/coredict.h>
 #include <falcon/cclass.h>
 #include <falcon/genericmap.h>
 #include <falcon/genericlist.h>

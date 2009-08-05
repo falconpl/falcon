@@ -18,19 +18,28 @@
 
 #include <falcon/setup.h>
 #include <falcon/sequence.h>
+#include <falcon/item.h>
+#include <falcon/iterator.h>
 
 namespace Falcon
 {
 
 class CoreArray;
+class CoreTable;
 
 class FALCON_DYN_CLASS ItemArray: public Sequence
 {
    uint32 m_alloc;
    uint32 m_size;
    Item *m_data;
+   Garbageable* m_owner;
+   
+   // point starting from which the iterators to this sequence are invalidated (included).
+   // needs no initialization
+   uint32 m_invalidPoint;
 
    friend class CoreArray;
+   friend class CoreTable;
 
    ItemArray( Item *buffer, uint32 size, uint32 alloc );
 
@@ -51,9 +60,6 @@ public:
    void length( uint32 size ) { m_size = size; }
    void allocated( uint32 size ) { m_alloc = size; }
 
-   virtual CoreIterator *getIterator( bool tail = false ) { return 0; }
-   virtual bool insert( CoreIterator *iter, const Item &data ) { return true; }
-   virtual bool erase( CoreIterator *iter ) { return true; }
    virtual void clear() { m_size = 0; }
    virtual bool empty() const { return m_size == 0; }
 
@@ -155,6 +161,26 @@ public:
     */
    int32 esize( int32 count=1 ) const { return sizeof( Item ) * count; }
 
+   //========================================================
+   // Iterator implementation.
+   //========================================================
+protected:
+
+   virtual void getIterator( Iterator& tgt, bool tail = false ) const;
+   virtual void copyIterator( Iterator& tgt, const Iterator& source ) const;
+
+   virtual void insert( Iterator &iter, const Item &data );
+   virtual void erase( Iterator &iter );
+   virtual bool hasNext( const Iterator &iter ) const;
+   virtual bool hasPrev( const Iterator &iter ) const;
+   virtual bool hasCurrent( const Iterator &iter ) const;
+   virtual bool next( Iterator &iter ) const;
+   virtual bool prev( Iterator &iter ) const;
+   virtual Item& getCurrent( const Iterator &iter );
+   virtual Item& getCurrentKey( const Iterator &iter );
+   virtual bool equalIterator( const Iterator &first, const Iterator &second ) const;
+   
+   virtual bool onCriterion( Iterator* elem ) const;
 };
 
 }

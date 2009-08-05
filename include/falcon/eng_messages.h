@@ -224,7 +224,7 @@ FAL_ERRORDECL( e_square_unbal, 157, "Unbalanced square parenthesis at end of fil
 FAL_ERRORDECL( e_unclosed_string, 158, "Unclosed string at end of file" );
 FAL_ERRORDECL( e_graph_unbal, 159, "Unbalanced bracket parenthesis at end of file" );
 
-FAL_ERRORDECL( e_cmp_unprep, 161, "Compiler unprepared (still needs to be fed with a module)" );
+FAL_ERRORDECL( e_cmp_unprep, 161, "Compiler not prepared (still needs to be fed with a module)" );
 FAL_ERRORDECL( e_not_implemented, 162, "Feature not implemented/not available on this instance" );
 FAL_ERRORDECL( e_nl_in_lit, 163, "New line in literal string" );
 FAL_ERRORDECL( e_fself_outside, 164, "'fself' outside functions or blocks" );
@@ -257,8 +257,9 @@ FAL_ERRORDECL( e_wait_in_atomic, 508, "VM received a suspension request in an at
 FAL_ERRORDECL( e_table_aconf, 509, "Table already configured" );
 FAL_ERRORDECL( e_non_callable, 510, "Non callable symbol called" );
 FAL_ERRORDECL( e_prop_invalid, 511, "Invalid or inconsistent property value" );
-
-
+FAL_ERRORDECL( e_invalid_iter, 512, "Invalid iterator applied to sequence method" );
+FAL_ERRORDECL( e_iter_outrange, 513, "Iterator out of range" );
+FAL_ERRORDECL( e_non_dict_seq, 514, "Given sequence is not a dictionary sequence");
 
 FAL_ERRORDECL( e_inv_params, 900, "Invalid parameters" );
 FAL_ERRORDECL( e_missing_params, 901, "Mandatory parameter missing" );

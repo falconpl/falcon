@@ -25,13 +25,14 @@
 #include <falcon/falcondata.h>
 #include <falcon/sequence.h>
 #include <falcon/item.h>
-#include <falcon/citerator.h>
+#include <falcon/iterator.h>
+#include <falcon/mt.h>
 
 namespace Falcon {
 
-class ItemListIterator;
 class ItemListElement;
 class ItemList;
+class Iterator;
 
 /** Element of a standard list of Falcon items. */
 class FALCON_DYN_CLASS ItemListElement: public BaseAlloc
@@ -40,6 +41,7 @@ class FALCON_DYN_CLASS ItemListElement: public BaseAlloc
 
    ItemListElement *m_next;
    ItemListElement *m_prev;
+      
 
 public:
 
@@ -53,11 +55,11 @@ public:
    {}
 
    /** Deletes the element.
-      Any iterator pointing to this element is invalidated.
-   */
-   ~ItemListElement()
-   {
-   }
+        Called when all the iterators pointing to this element are gone.
+    */
+  ~ItemListElement()
+  {
+  }
 
    const Item &item() const { return m_item; }
    Item &item() { return m_item; }
@@ -67,44 +69,6 @@ public:
 
    void prev( ItemListElement *p ) { m_prev = p; }
    ItemListElement *prev() const { return m_prev; }
-
-};
-
-
-class FALCON_DYN_CLASS ItemListIterator: public CoreIterator
-{
-   ItemList *m_owner;
-   ItemListElement *m_element;
-
-   ItemListIterator *m_next;
-   ItemListIterator *m_prev;
-
-   friend class ItemList;
-public:
-
-   ItemListIterator( ItemList *owner, ItemListElement *elem );
-   ~ItemListIterator();
-
-   virtual bool next();
-   virtual bool prev();
-   virtual bool hasNext() const;
-   virtual bool hasPrev() const;
-
-   virtual Item &getCurrent() const;
-
-   virtual bool isValid() const;
-   virtual bool isOwner( void *collection ) const;
-   virtual bool equal( const CoreIterator &other ) const;
-   virtual bool erase();
-   virtual bool insert( const Item &other );
-
-   virtual void invalidate();
-
-   virtual FalconData *clone() const;
-
-   // specific interface
-   ItemListElement *getCurrentElement() const { return m_element; }
-   void setCurrentElement( ItemListElement *e );
 };
 
 
@@ -120,13 +84,10 @@ private:
    uint32 m_size;
    ItemListElement *m_head;
    ItemListElement *m_tail;
-
-   ItemListIterator *m_iters;
-   void addIterator( ItemListIterator *iter );
-   void removeIterator( ItemListIterator *iter );
-   void notifyDeletion( ItemListElement *elem );
-
-   friend class ItemListIterator;
+   
+   // temporary variable using during iter-erase
+   Iterator* m_erasingIter;
+   ItemListElement* m_disposingElem;
 
 public:
    /** Builds an empty list. */
@@ -134,7 +95,8 @@ public:
       m_size(0),
       m_head(0),
       m_tail(0),
-      m_iters(0)
+      m_erasingIter(0),
+      m_disposingElem(0)
    {}
 
    /** Clones a list. */
@@ -178,18 +140,6 @@ public:
    */
    ItemListElement *last() const;
 
-   /** Creates an iterator item for the object.
-      The ListIterator is an instance of the CoreIterator class and can be used
-      as a part of the VM iterator system.
-      This method returns a newly created ListIterator pointing to the first or
-      last element of the list (depending on the tail parameter).
-      If the list is empty, the returned iterator will be created invalid.
-
-      \param tail true to get the iterator to the last element in the list.
-      \return a newly created iterator.
-   */
-   virtual CoreIterator *getIterator( bool tail=false );
-
    virtual void append( const Item& itm ) { push_back( itm ); }
    virtual void prepend( const Item& itm ) { push_front( itm ); }
 
@@ -226,8 +176,6 @@ public:
    */
    ItemListElement *erase( ItemListElement *elem );
 
-   /** Implementing sequence interface */
-   virtual bool erase( CoreIterator *iter );
 
    /** Insert an item after given before given element.
       To insert an item past the last element, use 0 as element pointer (last->next);
@@ -238,8 +186,6 @@ public:
    */
    void insert( ItemListElement *elem, const Item &item );
 
-   /** Implementing sequence interface */
-   virtual bool insert( CoreIterator *iter, const Item &item );
 
    /** Tells if the list is empty.
       \return true if the list is empty.
@@ -254,6 +200,28 @@ public:
    /** Perform marking of items stored in the list.
    */
    virtual void gcMark( uint32 mark );
+   
+   // Deletion criterion.
+   virtual bool onCriterion( Iterator* elem ) const;
+
+   //========================================================
+   // Iterator implementation.
+   //========================================================
+protected:
+
+   virtual void getIterator( Iterator& tgt, bool tail = false ) const;
+   virtual void copyIterator( Iterator& tgt, const Iterator& source ) const;
+
+   virtual void insert( Iterator &iter, const Item &data );
+   virtual void erase( Iterator &iter );
+   virtual bool hasNext( const Iterator &iter ) const;
+   virtual bool hasPrev( const Iterator &iter ) const;
+   virtual bool hasCurrent( const Iterator &iter ) const;
+   virtual bool next( Iterator &iter ) const;
+   virtual bool prev( Iterator &iter ) const;
+   virtual Item& getCurrent( const Iterator &iter );
+   virtual Item& getCurrentKey( const Iterator &iter );
+   virtual bool equalIterator( const Iterator &first, const Iterator &second ) const;
 };
 
 

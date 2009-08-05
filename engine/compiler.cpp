@@ -563,22 +563,8 @@ bool Compiler::checkLocalUndefined()
          // still nothing?
          if (sym == 0)
          {
-            // --- import a symbol, unless we're strict
-            if( m_strict )
-            {
-               sym = m_module->findGlobalSymbol( *val->asSymdef() );
-
-               if( sym == 0 )
-               {
-                  raiseError( e_undef_sym, *val->asSymdef(), lexer()->previousLine() );
-                  // but add the symbol nevertheless.
-                  sym = addGlobalSymbol( val->asSymdef() );
-               }
-            }
-            else
-            {
-               sym = addGlobalSymbol( val->asSymdef() );
-            }
+            // --- import the symbol
+            sym = addGlobalSymbol( val->asSymdef() );
          }
 
          val->setSymbol( sym );

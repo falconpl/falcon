@@ -107,6 +107,21 @@ namespace Engine
 
       delete engineStrings;
       engineStrings = 0;
+
+      // clear all the service ( and VSF );
+      s_mtx.lock();
+      if( s_serviceMap )
+      {
+         MapIterator mi = s_serviceMap->begin();
+         while ( mi.hasCurrent() ) {
+            delete *(VFSProvider**) mi.currentValue();
+            mi.next();
+         }
+
+         delete s_serviceMap;
+         s_serviceMap = 0;
+      }
+      s_mtx.unlock();
    }
 
 
@@ -161,18 +176,18 @@ namespace Engine
       sIOEnc = *s_sIOEnc;
       s_mtx.unlock();
    }
-   
+
    void setSearchPath( const String &str )
    {
       s_mtx.lock();
       if( s_searchPath != 0 )
          delete s_searchPath;
-         
+
       s_searchPath = new String( str );
       s_searchPath->bufferize();
       s_mtx.unlock();
    }
-   
+
    String getSearchPath()
    {
       s_mtx.lock();
@@ -183,11 +198,11 @@ namespace Engine
          s_mtx.unlock();
          return temp;
       }
-      
+
       s_mtx.unlock();
       return "";
    }
-   
+
 }
 
 }

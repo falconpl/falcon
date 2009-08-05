@@ -16,6 +16,7 @@
 #include <falcon/sequence.h>
 #include <falcon/vm.h>
 #include <falcon/error.h>
+#include <falcon/garbageable.h>
 
 namespace Falcon {
 
@@ -113,27 +114,139 @@ void Sequence::comprehension( VMachine* vm, const Item& cmp, const Item& filter 
       //Sequence* seq = cmp.isArray() ? &cmp.asArray()->items() : cmp.asObjectSafe()->getSequence();
 
       Sequence* seq = cmp.asObjectSafe()->getSequence();
-      CoreIterator *iter = seq->getIterator();
-      try {
-         while( iter->isValid() )
-         {
-            s_appendMe( vm, this, iter->getCurrent(), filter );
-            iter->next();
-         }
-      }
-      catch(...)
+      Iterator iter( seq );
+      while( iter.hasCurrent() )
       {
-         delete iter;
-         throw;
+         s_appendMe( vm, this, iter.getCurrent(), filter );
+         iter.next();
       }
-
-      delete iter;
    }
    else {
       throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
                .origin( e_orig_runtime )
                .extra( "A|C|R|Sequence, [C]" ) );
    }
+}
+
+void Sequence::gcMark( uint32 gen )
+{
+   if ( m_owner != 0 && m_owner->mark() != gen )
+      m_owner->gcMark( gen );
+}
+
+
+void Sequence::invalidateAllIters()
+{
+   while( m_iterList != 0 )
+   {
+      m_iterList->invalidate();
+      m_iterList = m_iterList->nextIter();
+   }
+}
+
+
+void Sequence::invalidateAnyOtherIter( Iterator* iter )
+{
+   // is the iterator really in our list?
+   bool foundMe = false;
+   
+   while( m_iterList != 0 )
+   {
+      if ( m_iterList != iter )
+      {
+         m_iterList->invalidate();
+      }
+      else
+         foundMe = true;
+         
+      m_iterList = m_iterList->nextIter();      
+   }
+   
+   //... then save it and set it at the only iterator.
+   fassert( foundMe );  // actually, it should be...
+   
+   if ( foundMe ) 
+   {
+      iter->nextIter( 0 );
+      m_iterList = iter;
+   }
+}
+
+
+void Sequence::getIterator( Iterator& tgt, bool tail ) const
+{
+   tgt.owner( const_cast<Sequence*>(this) );
+   tgt.nextIter( m_iterList );
+   m_iterList = &tgt;   
+}
+
+
+void Sequence::copyIterator( Iterator& tgt, const Iterator& source ) const
+{
+   tgt.owner( const_cast<Sequence*>(this) );
+   tgt.nextIter( m_iterList );
+   m_iterList = &tgt;   
+}
+
+
+void Sequence::disposeIterator( Iterator& tgt ) const
+{
+   Iterator *iter = m_iterList;
+   Iterator *piter = 0;
+   
+   while( iter != 0 )
+   {
+      if ( iter == &tgt )
+      {
+         // found!
+         if ( piter == 0) {
+            // was the first one!
+            m_iterList = iter->nextIter();
+         }
+         else {
+            piter->nextIter( iter->nextIter() );
+         }
+         
+         iter->invalidate();
+         return;
+      }
+      
+      piter = iter;
+      iter = iter->nextIter();
+   }  
+   
+   // we should have found an iterator of ours
+   fassert( false );
+}
+
+void Sequence::invalidateIteratorOnCriterion() const
+{
+   Iterator *iter = m_iterList;
+   Iterator *piter = 0;
+   
+   while( iter != 0 )
+   {
+      if ( onCriterion( iter ) )
+      {
+         // found!
+         if ( piter == 0) {
+            // was the first one!
+            m_iterList = iter->nextIter();
+         }
+         else {
+            piter->nextIter( iter->nextIter() );
+         }
+         
+         iter->invalidate();
+         Iterator* old = iter;
+         iter = iter->nextIter();
+         old->nextIter( 0 );
+         continue;
+      }
+      
+      piter = iter;
+      iter = iter->nextIter();
+   }  
 }
 
 }

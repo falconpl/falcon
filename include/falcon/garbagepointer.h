@@ -55,15 +55,27 @@ public:
    GarbagePointer( FalconData *p ):
       Garbageable(),
       m_ptr(p)
-   {}
+   {
+      if ( p->isSequence() )
+         static_cast<Sequence*>(p)->owner( this );
+   }
 
    /** Destructor.
       The guard will destroy its content with it.
    */
-   virtual ~GarbagePointer() { delete m_ptr; }
+   virtual ~GarbagePointer() {}
+   virtual bool finalize() { delete m_ptr; return false; }
 
    /** Returns the inner data stored in this garbage pointer. */
    FalconData *ptr() const { return m_ptr; }
+
+   virtual void gcMark( uint32 gen ) {
+      if( mark() != gen )
+      {
+         mark( gen );
+         m_ptr->gcMark( gen );
+      }
+   }
 };
 
 }

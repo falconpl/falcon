@@ -108,19 +108,22 @@ bool LiveModule::finalize()
 
 void LiveModule::gcMark( uint32 mk )
 {
-   mark( mk );
-   
-   for( uint32 i = 0; i < m_strCount; ++i )
+   if( mk != mark() )
    {
-      if( m_strings[i] != 0 )
-         m_strings[i]->mark( mk );
-   }
-   
-   for( uint32 j = 0; j < globals().length(); j++ )
-      memPool->markItem( globals()[ j ] );
+      mark( mk );
 
-   for( uint32 k = 0; k < wkitems().length(); k++ )
-      memPool->markItem( wkitems()[ k ] );
+      for( uint32 i = 0; i < m_strCount; ++i )
+      {
+         if( m_strings[i] != 0 )
+            m_strings[i]->mark( mk );
+      }
+
+      for( uint32 j = 0; j < globals().length(); j++ )
+         memPool->markItem( globals()[ j ] );
+   
+      for( uint32 k = 0; k < wkitems().length(); k++ )
+         memPool->markItem( wkitems()[ k ] );
+   }
 }
 
 String* LiveModule::getString( uint32 stringId ) const

@@ -43,6 +43,8 @@ try
    failure( "Insert with invalid iterator" )
 end
 
+iter = list.first()
+
 try
    list.erase( iter )
    failure( "Erase with invalid iterator" )

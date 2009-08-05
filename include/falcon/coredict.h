@@ -1,6 +1,6 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: flc_cdict.h
+   FILE: coredict.h
 
    Core dictionary -- base abstract class for dictionary interfaces.
    -------------------------------------------------------------------
@@ -17,92 +17,71 @@
    Core dictionary -- base abstract class for dictionary interfaces.
 */
 
-#ifndef flc_cdict_H
-#define flc_cdict_H
+#ifndef FALCON_CORE_DICT_H
+#define FALCON_CORE_DICT_H
 
 #include <falcon/types.h>
-#include <falcon/citerator.h>
 #include <falcon/garbageable.h>
-#include <falcon/item.h>
+#include <falcon/itemdict.h>
+#include <falcon/deepitem.h>
 
 namespace Falcon {
 
-class FALCON_DYN_CLASS DictIterator: public CoreIterator
-{
-protected:
-   DictIterator() {}
-
-public:
-   virtual const Item &getCurrentKey() const = 0;
-};
-
-
+class Item;
 
 class FALCON_DYN_CLASS CoreDict: public DeepItem, public Garbageable
 {
    bool m_blessed;
-
-protected:
-   CoreDict():
-      Garbageable(),
-      m_blessed( false )
-   {}
-
-   CoreDict( uint32 alloc ):
-      Garbageable(),
-      m_blessed( false )
-   {}
+   ItemDict* m_dict;
 
 public:
-   //=======================================
-   // Public overridable interface
-   //
+   CoreDict( ItemDict* dict ):
+      m_blessed( false ),
+      m_dict( dict )
+   {
+      m_dict->owner( this );
+   }
 
-   virtual uint32 length() const =0;
+   CoreDict( const CoreDict& other ):
+      m_blessed( other.m_blessed ),
+      m_dict( (ItemDict*) other.m_dict->clone() )
+   {
+      m_dict->owner( this );
+   }
+
+   virtual ~CoreDict()
+   {
+      delete m_dict;
+   }
+
+   const ItemDict& items() const { return *m_dict; }
+   ItemDict& items() { return *m_dict; }
+
+   uint32 length() const { return m_dict->length(); }
+
+   Item *find( const Item &key ) const { return m_dict->find( key ); }
+   bool findIterator( const Item &key, Iterator &iter ) { return m_dict->findIterator( key, iter ); }
+
+   bool remove( const Item &key ) { return m_dict->remove( key ); }
+   void insert( const Item &key, const Item &value ) { return m_dict->insert( key, value ); }
+   void smartInsert( const Iterator &iter, const Item &key, const Item &value ) {
+      return m_dict->smartInsert( iter, key, value );
+   }
+
+   CoreDict *clone() const { return new CoreDict( *this ); }
+   void merge( const CoreDict &dict ) { m_dict->merge( *dict.m_dict ); }
+   void clear() { m_dict->clear(); }
+
    /** Performs a find using a static string as a key.
-      This wraps the string in a temporary item and calls
-      the normal find(const Item &)
-   */
+       This wraps the string in a temporary item and calls
+       the normal find(const Item &)
+    */
    Item *find( const String &key ) const;
-   virtual Item *find( const Item &key ) const = 0;
-   virtual bool find( const Item &key, DictIterator &iter ) = 0;
-   virtual DictIterator *findIterator( const Item &key ) = 0;
-
-   virtual bool remove( DictIterator &iter ) = 0;
-   virtual bool remove( const Item &key ) = 0;
-   virtual void insert( const Item &key, const Item &value ) = 0;
-   virtual void smartInsert( DictIterator &iter, const Item &key, const Item &value ) = 0;
-
-   virtual void first( DictIterator &iter ) = 0;
-   virtual void last( DictIterator &iter ) = 0;
-   virtual DictIterator *first() = 0;
-   virtual DictIterator *last() = 0;
-
-   virtual bool equal( const CoreDict &other ) const = 0;
-   virtual CoreDict *clone() const = 0;
-   virtual void merge( const CoreDict &dict ) = 0;
-   virtual void clear() = 0;
-
-
-   /** Generic traversal interface.
-      Usually, dictionary traversal is needed by VM or other engine related classes.
-   */
-   virtual void traverseBegin() = 0;
-   virtual bool traverseNext( Item &key, Item &value ) = 0;
 
    //=======================================
    // Utilities
 
-   bool find( const Item &key, Item &value )
-   {
-      Item *itm;
-      if( ( itm = find( key ) ) != 0 )
-      {
-         value = *itm;
-         return true;
-      }
-      return false;
-   }
+   bool find( const Item &key, Item &value );
 
    bool empty() const { return length() == 0; }
 
@@ -135,10 +114,12 @@ public:
    virtual void writeProperty( const String &, const Item &item );
    virtual void readIndex( const Item &pos, Item &target );
    virtual void writeIndex( const Item &pos, const Item &target );
+
+   virtual void gcMark( uint32 gen );
 };
 
 }
 
 #endif
 
-/* end of flc_cdict.h */
+/* end of coredict.h */
