@@ -1,12 +1,9 @@
-TODO for 0.9.4
+TODO for 0.9.6
 
-   - Resolution of closed symbols deep down ancestors.
    - Expansion of the Tokenizer (with custom recognizers) and deep testing.
-   - Detangle the iterator - sequence - garbageable loop.
    - Provide Stream interface to Sockets.
    - Add version prefix to include/ install
    - [Desiderata] Submodule-loading (i.e. load core=>strings)
-   - [MINOR] Fix GC_init workaround for pure reflections.
    - Native support for big numbers.
    - Type contracts.
 
