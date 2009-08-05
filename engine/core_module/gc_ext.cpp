@@ -62,11 +62,10 @@ namespace core {
    @see gc_control
 */
 
-FALCON_FUNC  GC_init( ::Falcon::VMachine *vm )
+CoreObject* GC_Factory( const CoreClass *cls, void *user_data, bool )
 {
    // just to mark our user data.
-
-   vm->self().asObject()->setUserData( (void*) 1 );
+   return new ReflectObject( cls, (void*)1 );
 }
 
 /*#

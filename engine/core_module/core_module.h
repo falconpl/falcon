@@ -211,8 +211,9 @@ reflectionFuncDecl GC_th_normal_rfrom;
 reflectionFuncDecl GC_th_normal_rto;
 reflectionFuncDecl GC_th_active_rfrom;
 reflectionFuncDecl GC_th_active_rto;
+CoreObject* GC_Factory( const CoreClass *cls, void *user_data, bool );
+
 FALCON_FUNC  GC_adjust( ::Falcon::VMachine *vm );
-FALCON_FUNC  GC_init( ::Falcon::VMachine *vm );
 FALCON_FUNC  GC_enable( ::Falcon::VMachine *vm );
 FALCON_FUNC  GC_perform( ::Falcon::VMachine *vm );
 

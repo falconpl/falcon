@@ -789,9 +789,9 @@ Module* core_module_init()
       addParam("timeout");
 
    // GC support
-   Symbol *gcsing = self->addSingleton( "GC", Falcon::core::GC_init  );
+   Symbol *gcsing = self->addSingleton( "GC" );
    Symbol *gc_cls = gcsing->getInstance();
-   gc_cls->getClassDef()->factory(&Falcon::ReflectOpaqueFactory);
+   gc_cls->getClassDef()->factory(&Falcon::core::GC_Factory);
    self->addClassProperty( gc_cls, "usedMem" ).
       setReflectFunc( &Falcon::core::GC_usedMem_rfrom );
    self->addClassProperty( gc_cls, "aliveMem" ).
