@@ -92,6 +92,11 @@ try
 end
 
 try
+   string.first()
+   failure( "String have first" )
+end
+
+try
 	float.first()
 	failure( "Float have first" )
 end
@@ -116,7 +121,6 @@ try
 	failure( "Method have first" )
 end
 
-if string.first() != Iterator( string ): failure( "String first" )
 if array.first() != Iterator( array ): failure( "Array first" )
 if dictionary.first() != Iterator( dictionary ): failure( "Dictionary first" )
 
@@ -129,6 +133,11 @@ end
 try
 	integer.last()
 	failure( "Integer have last" )
+end
+
+try
+   string.last()
+   failure( "String have last" )
 end
 
 try
@@ -156,7 +165,6 @@ try
 	failure( "Method have last" )
 end
 
-if string.last() != Iterator( string, -1 ): failure( "String last" )
 if array.last() != Iterator( array, -1 ): failure( "Array last" )
 if dictionary.last() != Iterator( dictionary, -1 ): failure( "Dictionary last" )
 

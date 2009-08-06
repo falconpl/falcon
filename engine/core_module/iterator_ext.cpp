@@ -17,6 +17,7 @@
 #include <falcon/sequence.h>
 #include <falcon/falconobject.h>
 #include <falcon/iterator.h>
+#include <falcon/itemid.h>
 
 namespace Falcon {
 namespace core {
@@ -26,7 +27,7 @@ namespace core {
    @brief Indirect pointer to sequences.
    @ingroup general_purpose
    @param collection The collection on which to iterate.
-   @optparam position Indicator for start position.
+   @optparam atEnd Indicator for start position.
 
    An iterator is an object meant to point to a certain position in a collection
    (array, dictionary, string, or eventually user defined types), and to access
@@ -54,120 +55,61 @@ namespace core {
 
    The iterator is normally created at the begin of the sequence.
    If items in the collection can be directly accessed
-      (i.e. if the collection is an array or a string), the @b position
-      parameter can be any valid index.
 
-   Otherwise, @b position can be 0 (the default) or -1. If it's -1,
-   an iterator pointing to the last element of the collection will be returned.
+   If @b position is given and true, the iterator starts from the end
+   of the sequence (that is, pointing tho the last valid element in the
+   sequence), otherwise it points at the first valid element.
 */
 
 FALCON_FUNC  Iterator_init( ::Falcon::VMachine *vm )
 {
    Item *collection = vm->param(0);
-   Item *pos = vm->param(1);
 
-   if( collection == 0 || ( pos != 0 && ! pos->isOrdinal() ) )
+   if( collection == 0 )
    {
       throw new ParamError( ErrorParam( e_inv_params )
          .origin( e_orig_runtime )
-         .extra( "X,[N]" ) );
+         .extra( "Sequence,[B]" ) );
       return;
    }
 
-   FalconObject *self = dyncast<FalconObject *>( vm->self().asObject() );
-   int32 p = pos == 0 ? 0: (int32) pos->forceInteger();
+   Iterator* iter;
+   bool fromEnd = vm->param(1) != 0 && vm->param(1)->isTrue();
 
    switch( collection->type() )
    {
-      case FLC_ITEM_STRING:
-      {
-         Item tgt;
-         String *orig = collection->asString();
-         vm->referenceItem( tgt, *collection );
-         self->setProperty( "_origin", tgt );
+   case FLC_ITEM_ARRAY:
+      iter = new Iterator( &collection->asArray()->items(), fromEnd );
+      break;
 
-         if( orig->checkPosBound( p ) )
+   case FLC_ITEM_DICT:
+      iter = new Iterator( &collection->asDict()->items(), fromEnd );
+      break;
+
+   case FLC_ITEM_OBJECT:
+      {
+         CoreObject* obj = collection->asObjectSafe();
+         Sequence* seq = obj->getSequence();
+         if( seq != 0 )
          {
-            self->setProperty( "_pos", (int64) p );
+            iter = new Iterator( seq, fromEnd );
          }
          else {
-            throw new AccessError( ErrorParam( e_inv_params ).origin( e_orig_runtime ) );
+            throw new ParamError( ErrorParam( e_inv_params )
+                     .origin( e_orig_runtime )
+                     .extra( "Sequence,[B]" ) );
          }
       }
-      break;
+   break;
 
-      case FLC_ITEM_MEMBUF:
-      {
-         Item tgt;
-         MemBuf *orig = collection->asMemBuf();
-         vm->referenceItem( tgt, *collection );
-         self->setProperty( "_origin", tgt );
-         int64 len = (int64) orig->length();
-         if( p >= 0 && p < len )
-         {
-            self->setProperty( "_pos", (int64) p );
-         }
-         else if ( p < 0 && p >= -len )
-         {
-            self->setProperty( "_pos", (int64) len - p );
-         }
-         else {
-            throw new AccessError( ErrorParam( e_inv_params ).origin( e_orig_runtime ) );
-         }
-      }
-      break;
-
-      case FLC_ITEM_ARRAY:
-      {
-         CoreArray *orig = collection->asArray();
-         self->setProperty( "_origin", *collection );
-         if( orig->checkPosBound( p ) )
-         {
-            self->setProperty( "_pos", (int64) p );
-         }
-         else {
-            throw new AccessError( ErrorParam( e_inv_params ).origin( e_orig_runtime ) );
-         }
-      }
-      break;
-
-      case FLC_ITEM_DICT:
-      {
-         CoreDict *orig = collection->asDict();
-         self->setProperty( "_origin", *collection );
-         Iterator *iter;
-         if( p == 0 )
-            iter = new Iterator( &orig->items() );
-         else if( p == -1 )
-            iter = new Iterator( &orig->items(), true );
-         else {
-            throw new AccessError( ErrorParam( e_inv_params ).origin( e_orig_runtime ) );
-         }
-
-         self->setUserData( iter );
-      }
-      break;
-
-      case FLC_ITEM_OBJECT:
-      {
-         // Objects can have iterators if they have sequence extensions.
-         CoreObject *obj = collection->asObject();
-
-         Sequence *seq = obj->getSequence();
-         if ( seq != 0 )
-         {
-            self->setProperty( "_origin", *collection );
-            Iterator* iter = new Iterator( seq, p != 0 );
-            self->setUserData( iter );
-            return;
-         }
-         throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) ) ;
-      }
-      break;
-
-      default:
-         throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) );
+   default:
+      throw new ParamError( ErrorParam( e_inv_params )
+                           .origin( e_orig_runtime )
+                           .extra( "Sequence,[B]" ) );
    }
+
+   FalconObject *self = dyncast<FalconObject *>( vm->self().asObject() );
+   self->setUserData( iter );
 }
 
 
@@ -182,45 +124,8 @@ FALCON_FUNC  Iterator_init( ::Falcon::VMachine *vm )
 FALCON_FUNC  Iterator_hasCurrent( ::Falcon::VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
-   Item origin, *porigin;
-   self->getProperty( "_origin", origin );
-   porigin = origin.dereference();
-
-   switch( porigin->type() )
-   {
-      case FLC_ITEM_STRING:
-      {
-         Item pos;
-         self->getProperty( "_pos", pos );
-         int64 p = pos.forceInteger();
-         vm->retval( p >= 0 && ( p < porigin->asString()->length() ) );
-      }
-      break;
-
-      case FLC_ITEM_MEMBUF:
-      {
-         Item pos;
-         self->getProperty( "_pos", pos );
-         int64 p = pos.forceInteger();
-         vm->retval( p >= 0 && ( p < porigin->asMemBuf()->length() ) );
-      }
-      break;
-
-      case FLC_ITEM_ARRAY:
-      {
-         Item pos;
-         self->getProperty( "_pos", pos );
-         int64 p = pos.forceInteger();
-         vm->retval( p >= 0 && ( p < porigin->asArray()->length() ) );
-      }
-      break;
-
-      default:
-      {
-         Iterator *iter = dyncast<Iterator *>( self->getFalconData() );
-         vm->regA().setBoolean( iter->hasCurrent() );
-      }
-   }
+   Iterator* iter = dyncast<Iterator *>( self->getFalconData() );
+   vm->regA().setBoolean( iter->hasCurrent() );
 }
 
 /*#
@@ -233,45 +138,8 @@ FALCON_FUNC  Iterator_hasCurrent( ::Falcon::VMachine *vm )
 FALCON_FUNC  Iterator_hasNext( ::Falcon::VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
-   Item origin, *porigin;
-   self->getProperty( "_origin", origin );
-   porigin = origin.dereference();
-
-   switch( porigin->type() )
-   {
-      case FLC_ITEM_STRING:
-      {
-         Item pos;
-         self->getProperty( "_pos", pos );
-         int64 p = pos.forceInteger();
-         vm->regA().setBoolean( p >= 0 && (p + 1 < porigin->asString()->length() ) );
-      }
-      break;
-
-      case FLC_ITEM_MEMBUF:
-      {
-         Item pos;
-         self->getProperty( "_pos", pos );
-         int64 p = pos.forceInteger();
-         vm->regA().setBoolean( p >= 0 && (p + 1 < porigin->asMemBuf()->length() ) );
-      }
-      break;
-
-      case FLC_ITEM_ARRAY:
-      {
-         Item pos;
-         self->getProperty( "_pos", pos );
-         int64 p = pos.forceInteger();
-         vm->regA().setBoolean( p >= 0 && (p + 1 < porigin->asArray()->length() ) );
-      }
-      break;
-
-      default:
-      {
-         Iterator *iter = dyncast<Iterator *>( self->getFalconData() );
-         vm->regA().setBoolean( iter != 0 && iter->hasNext() );
-      }
-   }
+   Iterator* iter = dyncast<Iterator *>( self->getFalconData() );
+   vm->regA().setBoolean( iter->hasNext() );
 }
 
 /*#
@@ -283,28 +151,8 @@ FALCON_FUNC  Iterator_hasNext( ::Falcon::VMachine *vm )
 FALCON_FUNC  Iterator_hasPrev( ::Falcon::VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
-   Item origin, *porigin;
-   self->getProperty( "_origin", origin );
-   porigin = origin.dereference();
-
-   switch( porigin->type() )
-   {
-      case FLC_ITEM_STRING:
-      case FLC_ITEM_MEMBUF:
-      case FLC_ITEM_ARRAY:
-      {
-         Item pos;
-         self->getProperty( "_pos", pos );
-         vm->regA().setBoolean( pos.forceInteger() >= 0 );
-      }
-      break;
-
-      default:
-      {
-         Iterator *iter = dyncast<Iterator *>( self->getFalconData() );
-         vm->regA().setBoolean( iter != 0 && iter->hasPrev() );
-      }
-   }
+   Iterator* iter = dyncast<Iterator *>( self->getFalconData() );
+   vm->regA().setBoolean( iter->hasPrev() );
 }
 
 /*#
@@ -320,66 +168,12 @@ FALCON_FUNC  Iterator_hasPrev( ::Falcon::VMachine *vm )
 FALCON_FUNC  Iterator_next( ::Falcon::VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
-   Item origin, *porigin;
-   self->getProperty( "_origin", origin );
-   porigin = origin.dereference();
+   Iterator* iter = dyncast<Iterator *>( self->getFalconData() );
+   if( ! iter->isValid() )
+      throw new ParamError( ErrorParam( e_invalid_iter )
+               .origin( e_orig_runtime ) );
 
-   switch( porigin->type() )
-   {
-      case FLC_ITEM_STRING:
-      {
-         Item pos;
-         self->getProperty( "_pos", pos );
-         uint32 p = (uint32) pos.forceInteger();
-         if ( p < porigin->asString()->length() )
-         {
-            p++;
-            vm->retval( p != porigin->asString()->length() );
-            self->setProperty( "_pos", (int64) p );
-         }
-         else
-            vm->regA().setBoolean( false );
-      }
-      break;
-
-      case FLC_ITEM_MEMBUF:
-      {
-         Item pos;
-         self->getProperty( "_pos", pos );
-         uint32 p = (uint32) pos.forceInteger();
-         if ( p < porigin->asMemBuf()->length() )
-         {
-            p++;
-            vm->regA().setBoolean( p != porigin->asMemBuf()->length() );
-            self->setProperty( "_pos", (int64) p );
-         }
-         else
-            vm->regA().setBoolean( false );
-      }
-      break;
-
-      case FLC_ITEM_ARRAY:
-      {
-         Item pos;
-         self->getProperty( "_pos", pos );
-         uint32 p = (uint32) pos.forceInteger();
-         if ( p < porigin->asArray()->length() )
-         {
-            p++;
-            vm->regA().setBoolean( p != porigin->asArray()->length() );
-            self->setProperty( "_pos", (int64) p );
-         }
-         else
-            vm->regA().setBoolean( false );
-      }
-      break;
-
-      default:
-      {
-         Iterator *iter = dyncast<Iterator *>( self->getFalconData() );
-         vm->regA().setBoolean( iter != 0 && iter->next() );
-      }
-   }
+   vm->regA().setBoolean( iter->next() );
 }
 
 
@@ -396,35 +190,12 @@ FALCON_FUNC  Iterator_next( ::Falcon::VMachine *vm )
 FALCON_FUNC  Iterator_prev( ::Falcon::VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
-   Item origin, *porigin;
-   self->getProperty( "_origin", origin );
-   porigin = origin.dereference();
+   Iterator* iter = dyncast<Iterator *>( self->getFalconData() );
+   if( ! iter->isValid() )
+      throw new ParamError( ErrorParam( e_invalid_iter )
+               .origin( e_orig_runtime ) );
 
-   switch( porigin->type() )
-   {
-      case FLC_ITEM_STRING:
-      case FLC_ITEM_MEMBUF:
-      case FLC_ITEM_ARRAY:
-      {
-         Item pos;
-         self->getProperty( "_pos", pos );
-         int64 p = pos.forceInteger();
-         if ( p >= 0 )
-         {
-            self->setProperty( "_pos", p - 1 );
-            vm->regA().setBoolean( p != 0 );
-         }
-         else
-            vm->regA().setBoolean( false );
-      }
-      break;
-
-      default:
-      {
-         Iterator *iter = dyncast<Iterator *>( self->getFalconData() );
-         vm->regA().setBoolean( iter != 0 && iter->prev() );
-      }
-   }
+   vm->regA().setBoolean( iter->prev() );
 }
 
 /*#
@@ -443,119 +214,16 @@ FALCON_FUNC  Iterator_prev( ::Falcon::VMachine *vm )
 FALCON_FUNC  Iterator_value( ::Falcon::VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
-   Item origin, *porigin;
-   self->getProperty( "_origin", origin );
-   porigin = origin.dereference();
-   Item *subst = vm->param( 0 );
+   Iterator* iter = dyncast<Iterator *>( self->getFalconData() );
+   if( ! iter->isValid() )
+      throw new ParamError( ErrorParam( e_invalid_iter )
+               .origin( e_orig_runtime ) );
 
-   switch( porigin->type() )
-   {
-      case FLC_ITEM_STRING:
-      {
-         Item pos;
-         self->getProperty( "_pos", pos );
-
-         if ( pos.forceInteger() < 0 )
-            break;
-
-         uint32 p = (uint32) pos.forceInteger();
-         if( p < porigin->asString()->length() )
-         {
-            CoreString *str = new CoreString( 
-               porigin->asString()->subString( p, p + 1 ) );
-            vm->retval( str );
-
-            // change value
-            if( subst != 0 )
-            {
-               switch( subst->type() )
-               {
-                  case FLC_ITEM_STRING:
-                     porigin->asString()->change( p, p + 1, *subst->asString() );
-                  break;
-
-                  case FLC_ITEM_NUM:
-                     porigin->asString()->setCharAt( p, (uint32) subst->asNumeric() );
-                  break;
-
-                  case FLC_ITEM_INT:
-                     porigin->asString()->setCharAt( p, (uint32) subst->asInteger() );
-                  break;
-
-                  default:
-                     throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                     .origin( e_orig_runtime )
-                     .extra( "S/N" ) );
-               }
-            }
-            return;
-         }
-      }
-      break;
-
-      case FLC_ITEM_MEMBUF:
-      {
-         Item pos;
-         self->getProperty( "_pos", pos );
-         if ( pos.forceInteger() < 0 )
-            break;
-         uint32 p = (uint32) pos.forceInteger();
-         if( p < porigin->asMemBuf()->length() )
-         {
-            vm->retval( (int64) porigin->asMemBuf()->get( p ) );
-            // change value
-            if( subst != 0 )
-            {
-               if ( subst->isOrdinal() )
-                  porigin->asMemBuf()->set( p, (uint32) subst->forceInteger() );
-               else
-                  break; // only numbers allowed
-            }
-            return;
-         }
-      }
-      break;
-
-      case FLC_ITEM_ARRAY:
-      {
-         Item pos;
-         self->getProperty( "_pos", pos );
-         if ( pos.forceInteger() < 0 )
-            break;
-         uint32 p = (uint32) pos.forceInteger();
-         if( p < porigin->asArray()->length() )
-         {
-            vm->retval( porigin->asArray()->at( p ) );
-            // change value
-            if( subst != 0 )
-            {
-               porigin->asArray()->at( p ) = *subst;
-            }
-            return;
-         }
-      }
-      break;
-
-      default:
-      {
-         Iterator *iter = dyncast<Iterator *>( self->getFalconData() );
-         if( iter->hasCurrent() )
-         {
-            vm->retval( iter->getCurrent() );
-            // change value
-            if( subst != 0 )
-            {
-               iter->getCurrent() = *subst;
-            }
-
-            return;
-         }
-      }
-   }
-
-   throw new AccessError( ErrorParam( e_arracc, __LINE__ )
-         .origin( e_orig_runtime )
-         .extra( "Iterator.value" ) );
+   Item* i_subst = vm->param(0);
+   if( i_subst != 0 )
+      iter->getCurrent() = *i_subst;
+   else
+      vm->regA() = iter->getCurrent();
 }
 
 /*#
@@ -572,23 +240,12 @@ FALCON_FUNC  Iterator_value( ::Falcon::VMachine *vm )
 FALCON_FUNC  Iterator_key( ::Falcon::VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
-   Item origin, *porigin;
-   self->getProperty( "_origin", origin );
-   porigin = origin.dereference();
+   Iterator* iter = dyncast<Iterator *>( self->getFalconData() );
+   if( ! iter->isValid() )
+      throw new ParamError( ErrorParam( e_invalid_iter )
+               .origin( e_orig_runtime ) );
 
-   if( origin.isDict() )
-   {
-      Iterator *iter = dyncast<Iterator *>( self->getFalconData() );
-      if( iter->hasCurrent() )
-      {
-         vm->retval( iter->getCurrentKey() );
-         return;
-      }
-   }
-
-   throw new AccessError( ErrorParam( e_arracc )
-      .origin( e_orig_runtime )
-      .extra( "missing key" ) );
+   vm->regA() = iter->getCurrentKey();
 }
 
 
@@ -605,58 +262,25 @@ FALCON_FUNC  Iterator_key( ::Falcon::VMachine *vm )
 FALCON_FUNC  Iterator_compare( ::Falcon::VMachine *vm )
 {
    Item *i_other = vm->param(0);
+   CoreObject *self = vm->self().asObject();
+   Iterator* iter = dyncast<Iterator *>( self->getFalconData() );
 
-   if( i_other == 0 )
+   if( i_other == 0 || ! i_other->isOfClass( "Iterator" ) )
    {
-      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).extra( "O" ).origin( e_orig_runtime ) );
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).extra( "Iterator" ).origin( e_orig_runtime ) );
    }
 
-   if( i_other->isObject() )
-   {
-      CoreObject *other = i_other->asObject();
+   Iterator* other = static_cast<Iterator*>( i_other->asObjectSafe()->getUserData() );
 
-      if( other->derivedFrom( "Iterator" ) )
-      {
-         CoreObject *self = vm->self().asObject();
+   if( ! iter->isValid() || ! other->isValid() )
+      throw new ParamError( ErrorParam( e_invalid_iter )
+               .origin( e_orig_runtime ) );
 
-         Item origin, other_origin;
-         self->getProperty( "_origin", origin );
-         other->getProperty( "_origin", other_origin );
-         if( *origin.dereference() == *other_origin.dereference() )
-         {
-            switch( origin.type() )
-            {
-               case FLC_ITEM_STRING:
-               case FLC_ITEM_MEMBUF:
-               case FLC_ITEM_REFERENCE:
-               case FLC_ITEM_ARRAY:
-               {
-                  Item pos1, pos2;
-                  self->getProperty( "_pos", pos1 );
-                  other->getProperty( "_pos", pos2 );
-                  vm->regA().setInteger( pos1.forceInteger() - pos2.forceInteger() );
-               }
-               return;
-
-               default:
-               {
-                  Iterator *iter = dyncast<Iterator *>( self->getFalconData() );
-                  Iterator *other_iter = dyncast<Iterator *>( other->getFalconData() );
-                  if( iter->equal( *other_iter ) )
-                  {
-                     vm->regA().setInteger( 0 );
-                     return;
-                  }
-               }
-               break;
-
-            }
-         }
-      }
-   }
-
-   // let the standard algorithm to decide.
-   vm->retnil();
+   if( other->equal(*iter) )
+      vm->retval( (int64) 0 );   // declare them equal
+   else
+      // let the standard algorithm to decide.
+      vm->retnil();
 }
 
 /*#
@@ -675,37 +299,17 @@ FALCON_FUNC  Iterator_clone( ::Falcon::VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
    Iterator *iter = dyncast<Iterator *>( self->getFalconData() );
-   Iterator *iclone;
+   if( ! iter->isValid() )
+      throw new ParamError( ErrorParam( e_invalid_iter )
+               .origin( e_orig_runtime ) );
 
-   // copy low level iterator, if we have one
-   if ( iter != 0 ) {
-      iclone = static_cast<Iterator *>(iter->clone());
-      if ( iclone == 0 )
-      {
-         // uncloneable iterator
-         throw new CloneError( ErrorParam( e_uncloneable, __LINE__ )
-            .hard()
-            .origin( e_orig_runtime ) );
-      }
-   }
-   else {
-      iclone = 0;
-   }
+   Item* i_itercls = vm->findWKI( "Iterator" );
+   fassert( i_itercls != 0 && i_itercls->isClass() );
+   CoreClass* Itercls = i_itercls->asClass();
+   CoreObject* io = Itercls->createInstance();
+   io->setUserData( iter->clone() );
 
-   // create an instance
-   Item *i_cls = vm->findWKI( "Iterator" );
-   fassert( i_cls != 0 );
-   CoreObject *other = i_cls->asClass()->createInstance(iclone);
-
-   // then copy properties
-   Item prop;
-   self->getProperty( "_origin", prop );
-   other->setProperty( "_origin", prop );
-   self->getProperty( "_pos", prop );
-   other->setProperty( "_pos", prop );
-
-   // we can return the object
-   vm->retval( other );
+   vm->retval( io );
 }
 
 /*#
@@ -723,56 +327,11 @@ FALCON_FUNC  Iterator_clone( ::Falcon::VMachine *vm )
 FALCON_FUNC  Iterator_erase( ::Falcon::VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
-   Item origin, *porigin;
-   self->getProperty( "_origin", origin );
-   porigin = origin.dereference();
-
-   switch( porigin->type() )
-   {
-      case FLC_ITEM_STRING:
-      {
-         Item pos;
-         self->getProperty( "_pos", pos );
-         uint32 p = (uint32) pos.forceInteger();
-         String *str = porigin->asString();
-
-         if ( p < str->length() )
-         {
-            str->remove( p, 1 );
-            return;
-         }
-      }
-      break;
-
-      case FLC_ITEM_ARRAY:
-      {
-         Item pos;
-         self->getProperty( "_pos", pos );
-         uint32 p = (uint32) pos.forceInteger();
-         CoreArray *array = porigin->asArray();
-
-         if ( p < array->length() )
-         {
-            array->remove( p );
-            return;
-         }
-      }
-      break;
-
-      default:
-      {
-         Iterator *iter = dyncast<Iterator *>( self->getFalconData() );
-         if( iter->hasCurrent() )
-         {
-            iter->erase();
-            return;
-         }
-      }
-   }
-
-   throw new AccessError( ErrorParam( e_arracc, __LINE__ )
-         .origin( e_orig_runtime )
-         .extra( "Iterator.erase" ) );
+   Iterator *iter = dyncast<Iterator *>( self->getFalconData() );
+   if( ! iter->isValid() )
+      throw new ParamError( ErrorParam( e_invalid_iter )
+               .origin( e_orig_runtime ) );
+   iter->erase();
 }
 
 /*#
@@ -814,34 +373,31 @@ FALCON_FUNC  Iterator_erase( ::Falcon::VMachine *vm )
 */
 FALCON_FUNC  Iterator_find( ::Falcon::VMachine *vm )
 {
-   Item *i_key = vm->param(0);
+   CoreObject *self = vm->self().asObject();
+   Iterator *iter = dyncast<Iterator *>( self->getFalconData() );
+   Item* i_key = vm->param(0);
 
    if( i_key == 0 )
    {
-      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
-         .origin( e_orig_runtime )
-         .extra( "X" ) );
+      throw new ParamError( ErrorParam( e_inv_params )
+                     .origin( e_orig_runtime )
+                     .extra( "X" ) );
    }
 
-   CoreObject *self = vm->self().asObject();
-   Item origin, *porigin;
-   self->getProperty( "_origin", origin );
-   porigin = origin.dereference();
+   if( ! iter->isValid() )
+      throw new ParamError( ErrorParam( e_invalid_iter )
+               .origin( e_orig_runtime ) );
 
-   if ( porigin->isDict() )
+   if( iter->sequence()->isDictionary() )
    {
-      Iterator *iter = dyncast<Iterator *>( self->getFalconData() );
-      CoreDict* dict = porigin->asDict();
-
-      if( iter->isOwner( dict ) )
-      {
-         vm->regA().setBoolean( dict->findIterator( *i_key, *iter ) );
-         return;
-      }
+      ItemDict* dict = static_cast<ItemDict*>(iter->sequence());
+      vm->regA().setBoolean( dict->findIterator( *i_key, *iter ) );
    }
-
-   throw new AccessError( ErrorParam( e_arracc, __LINE__ )
-      .origin( e_orig_runtime ).extra( "Iterator.find" ) );
+   else
+   {
+      throw new ParamError( ErrorParam( e_non_dict_seq )
+                     .origin( e_orig_runtime ) );
+   }
 }
 
 /*#
@@ -863,100 +419,45 @@ FALCON_FUNC  Iterator_find( ::Falcon::VMachine *vm )
 
 FALCON_FUNC  Iterator_insert( ::Falcon::VMachine *vm )
 {
-   Item *i_key = vm->param(0);
-   Item *i_value = vm->param(1);
+   CoreObject *self = vm->self().asObject();
+   Iterator *iter = dyncast<Iterator *>( self->getFalconData() );
 
-   if( i_key == 0 )
+   if( ! iter->isValid() )
+        throw new ParamError( ErrorParam( e_invalid_iter )
+                 .origin( e_orig_runtime ) );
+
+   if( iter->sequence()->isDictionary() )
    {
+      Item *i_key = vm->param(0);
+      Item *i_value = vm->param(1);
+      if( i_key == 0 || i_value == 0 )
+      {
+         throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+            .origin( e_orig_runtime )
+            .extra( "X,X" ) );
+      }
+
+      static_cast<ItemDict*>( iter->sequence() )->insert( *i_key, *i_value );
+   }
+   else
+   {
+      Item *i_key = vm->param(0);
+      if( vm->param(1) != 0 )
+      {
+         throw new ParamError( ErrorParam( e_non_dict_seq )
+                              .origin( e_orig_runtime ) );
+      }
+
+      if( i_key == 0 )
+      {
       throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
          .origin( e_orig_runtime )
          .extra( "X" ) );
+      }
+
+
+      iter->insert( *i_key );
    }
-
-   CoreObject *self = vm->self().asObject();
-   Item origin, *porigin;
-   self->getProperty( "_origin", origin );
-   porigin = origin.dereference();
-
-   switch( porigin->type() )
-   {
-      case FLC_ITEM_STRING:
-      {
-         Item pos;
-         self->getProperty( "_pos", pos );
-         uint32 p = (uint32) pos.forceInteger();
-         String *str = porigin->asString();
-
-         if ( ! i_key->isString() )
-         {
-            throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
-               .origin( e_orig_runtime ).extra( "S" ) );
-         }
-
-         if ( p < str->length() )
-         {
-            str->insert( p, 0, *i_key->asString() );
-            return;
-         }
-      }
-      break;
-
-      case FLC_ITEM_ARRAY:
-      {
-         Item pos;
-         self->getProperty( "_pos", pos );
-         uint32 p = (uint32) pos.forceInteger();
-         CoreArray *array = porigin->asArray();
-
-         if ( p < array->length() )
-         {
-            array->insert( *i_key, p );
-            return;
-         }
-      }
-      break;
-
-      case FLC_ITEM_DICT:
-      {
-         if ( i_value == 0 )
-         {
-            throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                  .origin( e_orig_runtime ).extra( "X,X" ) );
-         }
-
-         Iterator *iter = dyncast<Iterator *>( self->getFalconData() );
-         CoreDict *dict = porigin->asDict();
-
-         if( iter->isOwner( dict ) && iter->isValid() )
-         {
-            dict->smartInsert( *iter, *i_key, *i_value );
-            return;
-         }
-      }
-      break;
-
-      default:
-      {
-         Iterator *iter = dyncast<Iterator *>( self->getFalconData() );
-         iter->insert( *i_key );
-         return;
-      }
-   }
-
-   throw new AccessError( ErrorParam( e_arracc, __LINE__ )
-         .origin( e_orig_runtime ).extra( "Iterator.insert" ) );
-}
-
-
-/*#
-   @method getOrigin Iterator
-   @brief Returns the underlying sequence.
-   @return The sequence being pointed by this iterator.
-*/
-FALCON_FUNC  Iterator_getOrigin( ::Falcon::VMachine *vm )
-{
-   CoreObject *self = vm->self().asObject();
-   self->getProperty( "_origin", vm->regA() );
 }
 
 }

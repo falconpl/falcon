@@ -252,8 +252,8 @@ FALCON_FUNC Array_first( VMachine *vm )
    fassert( itclass != 0 );
 
    CoreObject *iterator = itclass->asClass()->createInstance();
-   iterator->setProperty( "_pos", Item((int64) 0) );
-   iterator->setProperty( "_origin", vm->self() );
+   // we need to set the FalconData flag
+   iterator->setUserData( new Iterator( &vm->self().asArray()->items() ) );
    vm->retval( iterator );
 }
 
@@ -269,9 +269,8 @@ FALCON_FUNC Array_last( VMachine *vm )
    fassert( itclass != 0 );
 
    CoreObject *iterator = itclass->asClass()->createInstance();
-   CoreArray *orig = vm->self().asArray();
-   iterator->setProperty( "_pos", Item(orig->length() == 0 ? 0 : (int64) orig->length() - 1) );
-   iterator->setProperty( "_origin", vm->self() );
+   // we need to set the FalconData flag
+   iterator->setUserData( new Iterator( &vm->self().asArray()->items(), true ) );
    vm->retval( iterator );
 }
 

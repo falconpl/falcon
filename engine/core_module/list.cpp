@@ -278,8 +278,8 @@ FALCON_FUNC  List_first ( ::Falcon::VMachine *vm )
    fassert( i_iclass != 0 );
 
    CoreObject *iobj = i_iclass->asClass()->createInstance();
+   // we need it separated to activate the FalconData bit
    iobj->setUserData( new Iterator( list ) );
-   iobj->setProperty( "_origin", vm->self() );
    vm->retval( iobj );
 }
 
@@ -300,8 +300,7 @@ FALCON_FUNC  List_last ( ::Falcon::VMachine *vm )
    fassert( i_iclass != 0 );
 
    CoreObject *iobj = i_iclass->asClass()->createInstance();
-   iobj->setProperty( "_origin", vm->self() );
-
+   // we need it separated to activate the FalconData bit
    iobj->setUserData( new Iterator( list, true ) );
    vm->retval( iobj );
 }

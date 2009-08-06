@@ -146,9 +146,9 @@ FALCON_FUNC Dictionary_first( VMachine *vm )
    Item *itclass = vm->findWKI( "Iterator" );
    fassert( itclass != 0 );
 
-   CoreObject *iterator = itclass->asClass()->createInstance(
-         new Iterator( &vm->self().asDict()->items() ) );
-   iterator->setProperty( "_origin", vm->self() );
+   CoreObject *iterator = itclass->asClass()->createInstance();
+   // we need to set the FalconData flag
+   iterator->setUserData( new Iterator( &vm->self().asDict()->items() ) );
    vm->retval( iterator );
 }
 
@@ -163,9 +163,9 @@ FALCON_FUNC Dictionary_last( VMachine *vm )
    Item *itclass = vm->findWKI( "Iterator" );
    fassert( itclass != 0 );
 
-   CoreObject *iterator = itclass->asClass()->createInstance(
-         new Iterator( &vm->self().asDict()->items(), true ) );
-   iterator->setProperty( "_origin", vm->self() );
+   CoreObject *iterator = itclass->asClass()->createInstance();
+   // we need to set the FalconData flag
+   iterator->setUserData( new Iterator( &vm->self().asDict()->items(), true  ) );
    vm->retval( iterator );
 }
       

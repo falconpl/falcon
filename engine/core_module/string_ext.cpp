@@ -272,13 +272,13 @@ FALCON_FUNC mth_strBack( VMachine *vm )
    }
 }
 
-/*#
+/**
    @method first String
    @brief Returns an iterator to the head of this string.
    @return An iterator.
 */
 
-FALCON_FUNC String_first( VMachine *vm )
+/*FALCON_FUNC String_first( VMachine *vm )
 {
    Item *itclass = vm->findWKI( "Iterator" );
    fassert( itclass != 0 );
@@ -287,15 +287,15 @@ FALCON_FUNC String_first( VMachine *vm )
    iterator->setProperty( "_pos", Item( 0 ) );
    iterator->setProperty( "_origin", vm->self() );
    vm->retval( iterator );
-}
+}*/
 
-/*#
+/**
    @method last String
    @brief Returns an iterator to the tail of this string.
    @return An iterator.
 */
 
-FALCON_FUNC String_last( VMachine *vm )
+/*FALCON_FUNC String_last( VMachine *vm )
 {
    Item *itclass = vm->findWKI( "Iterator" );
    fassert( itclass != 0 );
@@ -305,7 +305,7 @@ FALCON_FUNC String_last( VMachine *vm )
    iterator->setProperty( "_pos", Item( orig->size() == 0 ? 0 : (int64) orig->length() - 1 ) );
    iterator->setProperty( "_origin", vm->self() );
    vm->retval( iterator );
-}
+}*/
 
 
 /*#

@@ -322,8 +322,8 @@ Module* core_module_init()
       addParam("trimSet");
    self->addClassMethod( string_meta, "trim", &Falcon::core::mth_strTrim ).asSymbol()->
       addParam("trimSet");
-   self->addClassMethod( string_meta, "first", &Falcon::core::String_first );
-   self->addClassMethod( string_meta, "last", &Falcon::core::String_last );
+   //self->addClassMethod( string_meta, "first", &Falcon::core::String_first );
+   //self->addClassMethod( string_meta, "last", &Falcon::core::String_last );
    self->addClassMethod( string_meta, "split", &Falcon::core::mth_strSplit ).asSymbol()
       ->addParam( "token" )->addParam( "count" );
    self->addClassMethod( string_meta, "splittr", &Falcon::core::mth_strSplitTrimmed ).asSymbol()
@@ -852,7 +852,7 @@ Module* core_module_init()
    // Iterators
    Symbol *iterator_class = self->addClass( "Iterator", &Falcon::core::Iterator_init );
    iterator_class->setWKS( true );
-   //iterator_class->getClassDef()->setObjectManager( &core_falcon_data_manager );
+   iterator_class->addParam("collection")->addParam( "atEnd" );
    self->addClassMethod( iterator_class, "hasCurrent", &Falcon::core::Iterator_hasCurrent );
    self->addClassMethod( iterator_class, "hasNext", &Falcon::core::Iterator_hasNext );
    self->addClassMethod( iterator_class, "hasPrev", &Falcon::core::Iterator_hasPrev );
@@ -869,9 +869,6 @@ Module* core_module_init()
       addParam("key");
    self->addClassMethod( iterator_class, "insert", &Falcon::core::Iterator_insert ).asSymbol()->
       addParam("key")->addParam("value");
-   self->addClassMethod( iterator_class, "getOrigin", &Falcon::core::Iterator_getOrigin );
-   self->addClassProperty( iterator_class, "_origin" );
-   self->addClassProperty( iterator_class, "_pos" );
 
    // ================================================
    // Functional extensions

@@ -91,6 +91,8 @@ Falcon (0.9.2)
   * added: Added String.startsWith, String.endsWith, strStartWith(), strEndWith()
   * fixed: Multiline strings in MS-Win text file format sources (CRLF) couldn't
            be correctly parsed.
+  * minor: Rationalized iterators; as a result, they won't work on Strings and
+           MemBuf, for a few release at least.
 
 Falcon (0.9.1.8)
   * fixed: faltest didn't output help text when called with -h/-?

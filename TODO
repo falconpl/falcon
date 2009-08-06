@@ -1,5 +1,7 @@
 TODO for 0.9.6
-
+   
+   - Introduction of iterators on string and membufs.
+   - Move dictionary find methods to standard sequences.
    - Expansion of the Tokenizer (with custom recognizers) and deep testing.
    - Provide Stream interface to Sockets.
    - Add version prefix to include/ install
