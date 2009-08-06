@@ -21,6 +21,7 @@
 #include <falcon/module.h>
 #include <falcon/vm.h>
 #include <falcon/lineardict.h>
+#include <falcon/iterator.h>
 
 #include "funcext_ext.h"
 //#include "compiler_st.h"
@@ -128,7 +129,7 @@ FALCON_FUNC  fe_at ( ::Falcon::VMachine *vm )
          else {
             if ( i_val != 0 ) {
                if ( ca->bindings() == 0 )
-                  ca->setBindings( new LinearDict() );
+                  ca->makeBindings();
                ca->bindings()->insert( i_pos->asString(), *i_val );
                vm->retnil();
                return;
@@ -264,21 +265,15 @@ FALCON_FUNC  fe_at ( ::Falcon::VMachine *vm )
          {
             // we must create a method if the property is a function.
             Item *p = prop.dereference();
-
-            switch( p->type() ) {
-               case FLC_ITEM_FUNC:
-                  // the function may be a dead function; by so, the method will become a dead method,
-                  // and it's ok for us.
-                  vm->regA().setMethod( self, p->asFunction() );
-                  break;
-
-               case FLC_ITEM_CLASS:
-                  vm->regA().setClassMethod( self, p->asClass() );
-                  break;
-
-               default:
-                  vm->regA() = *p;
+            if( p->isClass() && self->derivedFrom( p->asClass()->symbol()->name() ) )
+            {
+               vm->regA().setClassMethod( self, p->asClass() );
             }
+            else {
+               vm->regA() = *p;
+               vm->regA().methodize( self );
+            }
+
             // we can set the property now
             if ( i_val != 0 )
             {
@@ -319,20 +314,21 @@ FALCON_FUNC  fe_at ( ::Falcon::VMachine *vm )
       {
          if( sourceClass->properties().findKey( *i_pos->asString(), pos ) )
          {
-            Item *prop = sourceClass->properties().getValue( pos );
+            Item *p = sourceClass->properties().getValue( pos );
 
             // now, accessing a method in a class means that we want to call the base method in a
             // self item:
-            if( prop->type() == FLC_ITEM_FUNC )
+            if ( self == 0 )
             {
-               if ( self != 0 )
-                  vm->regA().setMethod( self, prop->asFunction() );
-               else
-                  vm->regA().setFunction( prop->asFunction());
+               vm->regA() = *p;
             }
-            else
+            else if( p->isClass() && self->derivedFrom( p->asClass()->symbol()->name() ) )
             {
-               vm->regA() = *prop;
+               vm->regA().setClassMethod( self, p->asClass() );
+            }
+            else {
+               vm->regA() = *p;
+               vm->regA().methodize( self );
             }
             return;
          }
@@ -523,21 +519,18 @@ static bool internal_eq( ::Falcon::VMachine *vm, const Item &first, const Item &
       if ( d1->length() != d2->length() )
          return false;
 
-      DictIterator *di1 = d1->first();
-      DictIterator *di2 = d2->first();
-      while( di1->isValid() )
+      Iterator di1( &d1->items() );
+      Iterator di2( &d2->items() );
+
+      while( di1.hasCurrent() )
       {
-         if ( ! internal_eq( vm, di1->getCurrentKey(), di2->getCurrentKey() ) ||
-              ! internal_eq( vm, di1->getCurrent(), di2->getCurrent() ) )
+         if ( ! internal_eq( vm, di1.getCurrentKey(), di2.getCurrentKey() ) ||
+              ! internal_eq( vm, di1.getCurrent(), di2.getCurrent() ) )
          {
-            delete d1;
-            delete d2;
             return false;
          }
       }
 
-      delete d1;
-      delete d2;
       return true;
    }
 
@@ -627,10 +620,10 @@ FALCON_FUNC  fe_add( ::Falcon::VMachine *vm )
 
       case FLC_ITEM_DICT<< 8 | FLC_ITEM_DICT:
       {
-         CoreDict *dict = new LinearDict( operand1->asDict()->length() + operand2->asDict()->length() );
-         dict->merge( *operand1->asDict() );
-         dict->merge( *operand2->asDict() );
-         vm->regA().setDict( dict );
+         LinearDict *dict = new LinearDict( operand1->asDict()->length() + operand2->asDict()->length() );
+         dict->merge( operand1->asDict()->items() );
+         dict->merge( operand2->asDict()->items() );
+         vm->regA().setDict( new CoreDict(dict) );
       }
       return;
    }

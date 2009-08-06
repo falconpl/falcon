@@ -1023,7 +1023,7 @@ FALCON_FUNC Module_attributes( ::Falcon::VMachine *vm )
       return;
 
    MapIterator iter = attr->begin();
-   CoreDict* cd = new LinearDict( attr->size() );
+   LinearDict* cd = new LinearDict( attr->size() );
    while( iter.hasCurrent() )
    {
       VarDef* vd = *(VarDef**) iter.currentValue();
@@ -1051,7 +1051,7 @@ FALCON_FUNC Module_attributes( ::Falcon::VMachine *vm )
       iter.next();
    }
 
-   vm->retval( cd );
+   vm->retval( new CoreDict(cd) );
 }
 
 

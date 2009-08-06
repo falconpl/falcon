@@ -674,8 +674,8 @@ FALCON_FUNC  ConfParser_getCategory( ::Falcon::VMachine *vm )
       i_section = 0;
 
    String key, keymask;
-   CoreDict *ret = new LinearDict();
-   CoreDict *current = ret;
+   LinearDict *ret = new LinearDict();
+   LinearDict *current = ret;
    bool next;
 
    bool stripNames;
@@ -736,7 +736,7 @@ FALCON_FUNC  ConfParser_getCategory( ::Falcon::VMachine *vm )
       next = cfile->getNextKey( key );
    }
 
-   vm->retval( ret );
+   vm->retval( new CoreDict(ret) );
 }
 
 
@@ -764,8 +764,8 @@ FALCON_FUNC  ConfParser_getDictionary( ::Falcon::VMachine *vm )
    }
 
    String key;
-   CoreDict *ret = new LinearDict();
-   CoreDict *current = ret;
+   LinearDict *ret = new LinearDict();
+   LinearDict *current = ret;
    bool next;
 
    if ( i_section != 0 ) {
@@ -805,7 +805,7 @@ FALCON_FUNC  ConfParser_getDictionary( ::Falcon::VMachine *vm )
       next = cfile->getNextKey( key );
    }
 
-   vm->retval( ret );
+   vm->retval( new CoreDict(ret) );
 }
 
 /*#

@@ -1160,7 +1160,7 @@ FALCON_FUNC MXMLNode_getAttribs( ::Falcon::VMachine *vm )
 
    const MXML::AttribList &attribs = node->attribs();
 
-   CoreDict *dict = new LinearDict( attribs.size() );
+   LinearDict *dict = new LinearDict( attribs.size() );
 
    MXML::AttribList::const_iterator iter = attribs.begin();
    while( iter != attribs.end() )
@@ -1170,7 +1170,7 @@ FALCON_FUNC MXMLNode_getAttribs( ::Falcon::VMachine *vm )
       ++iter;
    }
 
-   vm->retval( dict );
+   vm->retval( new CoreDict(dict) );
 }
 
 /*#
