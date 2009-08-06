@@ -17,7 +17,7 @@ list = List()
 // erase in an empty list
 iter = list.first()
 try
-   list.erase( iter )
+   iter.erase()
    failure( "Invalid exception not raised" )
 end
 
@@ -26,14 +26,14 @@ if list.len() != 0: failure( "erase empty" )
 // head erase
 list = List( "a", "b", "c" )
 iter = list.first()
-list.erase( iter )
+iter.erase()
 if list.len() != 2 or list.front() != "b": failure( "head erase" )
 if iter.value() != "b": failure( "Iterator status after erase" )
 
 // tail erase
 list = List( "a", "b", "c" )
 iter = list.last()
-list.erase( iter )
+iter.erase()
 if list.len() != 2 or list.back() != "b": failure( "tail erase" )
 if iter.hasCurrent(): failure( "Invalidation of tail erase" )
 
@@ -41,7 +41,7 @@ if iter.hasCurrent(): failure( "Invalidation of tail erase" )
 list = List( "a", "b", "c" )
 iter = list.first()
 iter.next()
-list.erase( iter )
+iter.erase()
 if list.front() != "a": failure( "Head after erase middle" )
 if list.back() != "c": failure( "Tail after erase middle" )
 if iter.value() != "c": failure( "Tail after erase middle" )
@@ -64,7 +64,7 @@ iter3.prev()
 
 // a first pre-check
 if iter1.value() != iter3.value(): failure( "erase invalidation pre" )
-list.erase( iter1 )
+iter1.erase()
 if iter3.hasCurrent(): failure( "iter3 not invalid" )
 if iter0.value() != "a": failure( "iter0 moved" )
 if iter2.value() != "c": failure( "iter2 moved" )

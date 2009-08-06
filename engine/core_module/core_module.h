@@ -349,7 +349,6 @@ FALCON_FUNC  Array_tabRow ( ::Falcon::VMachine *vm );
 FALCON_FUNC  Array_first ( ::Falcon::VMachine *vm );
 FALCON_FUNC  Array_last ( ::Falcon::VMachine *vm );
 
-
 FALCON_FUNC  bless( ::Falcon::VMachine *vm );
 FALCON_FUNC  mth_dictMerge( ::Falcon::VMachine *vm );
 FALCON_FUNC  mth_dictKeys( ::Falcon::VMachine *vm );
@@ -365,7 +364,7 @@ FALCON_FUNC  mth_dictBack( ::Falcon::VMachine *vm );
 FALCON_FUNC  mth_dictFill ( ::Falcon::VMachine *vm );
 FALCON_FUNC  Dictionary_first( ::Falcon::VMachine *vm );
 FALCON_FUNC  Dictionary_last( ::Falcon::VMachine *vm );
-
+FALCON_FUNC  Dictionary_comp ( ::Falcon::VMachine *vm );
 
 FALCON_FUNC  fileType( ::Falcon::VMachine *vm );
 FALCON_FUNC  fileNameSplit ( ::Falcon::VMachine *vm );
@@ -464,8 +463,6 @@ FALCON_FUNC  List_first ( ::Falcon::VMachine *vm );
 FALCON_FUNC  List_last ( ::Falcon::VMachine *vm );
 FALCON_FUNC  List_len( ::Falcon::VMachine *vm );
 FALCON_FUNC  List_empty( ::Falcon::VMachine *vm );
-FALCON_FUNC  List_erase ( ::Falcon::VMachine *vm );
-FALCON_FUNC  List_insert ( ::Falcon::VMachine *vm );
 FALCON_FUNC  List_clear ( ::Falcon::VMachine *vm );
 
 FALCON_FUNC  CmdlineParser_parse( ::Falcon::VMachine *vm );

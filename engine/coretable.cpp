@@ -460,7 +460,7 @@ bool CoreTable::removeColumn( uint32 pos )
 void CoreTable::getIterator( Iterator& tgt, bool tail ) const
 {
    // give up the ownership of the iterator to the current page.
-   tgt.owner( &m_currentPage->items() );
+   tgt.sequence( &m_currentPage->items() );
    m_currentPage->items().getIterator( tgt, tail );
 }
 

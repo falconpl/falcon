@@ -206,6 +206,7 @@ ADD_LIBRARY( falcon_engine SHARED
    pcode.cpp
    proptable.cpp
    rampmode.cpp
+   rangeseq.cpp
    reflectobject.cpp
    rosstream.cpp
    runtime.cpp

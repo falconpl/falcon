@@ -16,7 +16,7 @@ list = List()
 
 // insertion in an empty list
 iter = list.first()
-list.insert( iter, "a" )
+iter.insert( "a" )
 if list.len() != 1 or list.front() != "a": failure( "insert in empty" )
 
 // head insertion
@@ -28,7 +28,7 @@ if list.len() != 4 or list.front() != "z": failure( "head insertion" )
 // tail nsertion
 iter = list.last()
 iter.next()
-list.insert( iter, "y" )
+iter.insert( "y" )
 if list.len() != 5 or list.back() != "y": failure( "head insertion" )
 
 // middle insertion
@@ -47,7 +47,7 @@ iter2.next()
 // record the data that should be here.
 data = iter.value()
 
-list.insert( iter, "n" )
+iter.insert( "n" )
 // is the old data still there?
 if iter2.value() != data: failure( "Iterator consistent validity" )
 // ... and the new data under current iterator?

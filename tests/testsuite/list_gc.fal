@@ -39,9 +39,6 @@ end
 // a recursive list
 list.pushFront( list )
 
-// a tester in a property
-list.erase = tester( toString(1) )
-
 // we have no reference of the original items, but they are stored deep in the list.
 // so, if we destroy them, we'll crash here:
 GC.perform( true )

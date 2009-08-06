@@ -441,6 +441,9 @@ Module* core_module_init()
       addParam("remove")->addParam("key");
    self->addClassMethod( dict_meta, "first", &Falcon::core::Dictionary_first );
    self->addClassMethod( dict_meta, "last", &Falcon::core::Dictionary_last );
+   self->addClassMethod( dict_meta, "comp", &Falcon::core::Dictionary_comp ).asSymbol()->
+      addParam( "item" )->addParam( "filter" );
+
 
    self->addClassMethod( dict_meta, "merge", &Falcon::core::mth_dictMerge ).asSymbol()->
       addParam("sourceDict");
@@ -1477,10 +1480,6 @@ Module* core_module_init()
    self->addClassMethod( list_class, "first", &Falcon::core::List_first );
    self->addClassMethod( list_class, "len", &Falcon::core::List_len );
    self->addClassMethod( list_class, "empty", &Falcon::core::List_empty );
-   self->addClassMethod( list_class, "erase", &Falcon::core::List_erase ).asSymbol()->
-      addParam("iter");
-   self->addClassMethod( list_class, "insert", &Falcon::core::List_insert ).asSymbol()->
-      addParam("it")->addParam("item");
    self->addClassMethod( list_class, "clear", &Falcon::core::List_clear );
 
    //=======================================================================

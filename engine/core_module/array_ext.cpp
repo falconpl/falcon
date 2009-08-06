@@ -50,9 +50,9 @@ namespace core {
    in the item will be appended to this array.
 
    If @b item is a callable item, it is called repeatedly to generate the sequence.
-   All the items it returns will be appended, untill
+   All the items it returns will be appended, until
    it declares being terminated by returning an oob(0). The function is called
-   atomically, so it can't perform coroutine swithces or any form of wait.
+   atomically, so it can't perform coroutine switches or any form of wait.
 
    If a @b filter callable is provided, all the items that should be appended
    are first passed to to it; if the callable returns true, the item is added,

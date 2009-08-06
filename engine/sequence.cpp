@@ -175,7 +175,7 @@ void Sequence::invalidateAnyOtherIter( Iterator* iter )
 
 void Sequence::getIterator( Iterator& tgt, bool tail ) const
 {
-   tgt.owner( const_cast<Sequence*>(this) );
+   tgt.sequence( const_cast<Sequence*>(this) );
    tgt.nextIter( m_iterList );
    m_iterList = &tgt;   
 }
@@ -183,7 +183,7 @@ void Sequence::getIterator( Iterator& tgt, bool tail ) const
 
 void Sequence::copyIterator( Iterator& tgt, const Iterator& source ) const
 {
-   tgt.owner( const_cast<Sequence*>(this) );
+   tgt.sequence( const_cast<Sequence*>(this) );
    tgt.nextIter( m_iterList );
    m_iterList = &tgt;   
 }

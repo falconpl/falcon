@@ -1,0 +1,47 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 121a
+* Category: comp
+* Subcategory: dict
+* Short: Comprehension on dictionaries
+* Description:
+*   Comprehension is an expression or expression set generating
+*   lists or sets.
+*
+*   Falcon comprehension is quite articulated, as it is composed of
+*   <sequence>.comp( <item>, [<filter>] )
+*
+*   where <sequence> is the target sequence, <item> is a generating
+*   item (range, source sequence or generator function) and filter may
+*   transform the data in the item on the fly or discard it.
+*
+*   This series of test is aimed to test comprehension on dictionaries.
+* [/Description]
+*
+****************************************************************************/
+
+// direct comprehension
+a = [=>].comp( .[ .['c' 1] .['b' 2] .['a' 3] ] )
+if a.len() != 3: failure( "Direct comprehension, size" )
+if a['a'] != 3: failure( "Direct comprehension, 'a'" )
+if a['b'] != 2: failure( "Direct comprehension, 'b'" )
+if a['c'] != 1: failure( "Direct comprehension, 'c'" )
+
+// indirect
+a = [=>].comp( ['c','b','a'], { letter=> [letter, ord(letter)] } )
+if a.len() != 3: failure( "Indirect comprehension, size" )
+if a['a'] != ord('a'): failure( "Indirect comprehension, 'a'" )
+if a['b'] != ord('b'): failure( "Indirect comprehension, 'b'" )
+if a['c'] != ord('c'): failure( "Indirect comprehension, 'c'" )
+
+// ranged comprehension
+a = [=>].comp( [ ord('a'): ord('d')], { ln => [chr(ln), ln] } )
+if a.len() != 3: failure( "Ranged comprehension, size" )
+if a['a'] != ord('a'): failure( "Ranged comprehension, 'a'" )
+if a['b'] != ord('b'): failure( "Ranged comprehension, 'b'" )
+if a['c'] != ord('c'): failure( "Ranged comprehension, 'c'" )
+
+success()
+
+/* end of file */

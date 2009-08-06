@@ -107,7 +107,7 @@ private:
    Sequence* m_owner;
 
    typedef union t_position_holder {
-      uint32 pos;
+      int64 pos;
       void* ptr;
    } u_idata;
 
@@ -240,13 +240,13 @@ public:
 
    Sequence* sequence() const { return m_owner; }
 
-   void owner( Sequence* s ) { m_owner = s; }
+   void sequence( Sequence* s ) { m_owner = s; }
 
    void *data() const { return m_idata.ptr; }
    void data( void* dt ) { m_idata.ptr = dt; }
 
-   uint32 position() const { return m_idata.pos; }
-   void position( uint32 pos ) { m_idata.pos = pos; }
+   int64 position() const { return m_idata.pos; }
+   void position( int64 pos ) { m_idata.pos = pos; }
    
    Iterator* nextIter() const { return m_next; }
    void nextIter( Iterator* n ) { m_next = n; }
