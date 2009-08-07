@@ -1,24 +1,24 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: itemlist.h
+   FILE: itemset.h
 
-   List of Falcon Items
+   (Ordered) set of falcon items.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
-   Begin: 2007-12-01
+   Begin: Fri, 07 Aug 2009 18:36:22 +0200
 
    -------------------------------------------------------------------
-   (C) Copyright 2007: the FALCON developers (see list in AUTHORS file)
+   (C) Copyright 2009: the FALCON developers (see list in AUTHORS file)
 
    See LICENSE file for licensing details.
 */
 
 /** \file
-   List of Falcon Items definition
+   Setof Falcon Items definition
 */
 
-#ifndef flc_itemlist_H
-#define flc_itemlist_H
+#ifndef FALCON_itemset_H
+#define FALCON_itemset_H
 
 #include <falcon/setup.h>
 #include <falcon/basealloc.h>
@@ -30,17 +30,17 @@
 
 namespace Falcon {
 
-class ItemListElement;
-class ItemList;
-class Iterator;
+class ItemSetElement;
+class ItemSet;
 
-/** Element of a standard list of Falcon items. */
-class FALCON_DYN_CLASS ItemListElement: public BaseAlloc
+/** Element of a standard set of Falcon items. */
+class FALCON_DYN_CLASS ItemSetElement: public BaseAlloc
 {
    Item m_item;
 
-   ItemListElement *m_next;
-   ItemListElement *m_prev;
+   ItemSetElement *m_left;
+   ItemSetElement *m_right;
+   ItemSetElement *m_parent;
 
 
 public:
@@ -48,61 +48,66 @@ public:
    /** Create the element by copying an item.
       The item is shallow copied.
    */
-   ItemListElement( const Item &itm, ItemListElement *p = 0, ItemListElement *n = 0 ):
+   ItemSetElement( const Item &itm, ItemSetElement* p=0, ItemSetElement *l = 0, ItemSetElement *r = 0 ):
       m_item( itm ),
-      m_next( n ),
-      m_prev( p )
+      m_left( l ),
+      m_right( r ),
+      m_parent( p )
    {}
 
    /** Deletes the element.
-        Called when all the iterators pointing to this element are gone.
     */
-  ~ItemListElement()
+  ~ItemSetElement()
   {
   }
 
    const Item &item() const { return m_item; }
    Item &item() { return m_item; }
 
-   void next( ItemListElement *n ) { m_next = n; }
-   ItemListElement *next() const { return m_next; }
+   void left( ItemSetElement *n ) { m_left = n; }
+   ItemSetElement *next() const { return m_left; }
 
-   void prev( ItemListElement *p ) { m_prev = p; }
-   ItemListElement *prev() const { return m_prev; }
+   void right( ItemSetElement *p ) { m_right = p; }
+   ItemSetElement *prev() const { return m_right; }
+
+   void parent( ItemSetElement *p ) { m_parent = p; }
+   ItemSetElement *parent() const { return m_parent; }
 };
 
 
-/** List of Falcon items.
+/** Set of Falcon items.
+
    This class is designed to work together with Falcon object
-   as a UserData, but it can be also used for other reasons,
-   when an Array is not the best way to represent data.
+   as a UserData, but it can be also used alone to store unique
+   entities of items.
+
+   The set is internally represented as a binary tree (eventuall
+   balanced).
 */
 
-class FALCON_DYN_CLASS ItemList: public Sequence
+class FALCON_DYN_CLASS ItemSet: public Sequence
 {
 private:
    uint32 m_size;
-   ItemListElement *m_head;
-   ItemListElement *m_tail;
+   ItemSetElement *m_root;
 
    // temporary variable using during iter-erase
    Iterator* m_erasingIter;
-   ItemListElement* m_disposingElem;
+   ItemSetElement* m_disposingElem;
 
 public:
    /** Builds an empty list. */
-   ItemList():
+   ItemSet():
       m_size(0),
-      m_head(0),
-      m_tail(0),
+      m_root(0),
       m_erasingIter(0),
       m_disposingElem(0)
    {}
 
    /** Clones a list. */
-   ItemList( const ItemList &l );
+   ItemSet( const ItemList &l );
 
-   virtual ~ItemList()
+   virtual ~ItemSet()
    {
       clear();
    }
@@ -131,39 +136,18 @@ public:
       If the list is empty, this method will return 0.
       \return the pointer to the first element pointer, or 0.
    */
-   ItemListElement *first() const;
+   ItemSetElement *first() const;
 
    /** Gets the pointer to the last element for list traversal.
       The list element is just an item with previous and next pointers.
       If the list is empty, this method will return 0.
       \return the pointer to the last element pointer, or 0.
    */
-   ItemListElement *last() const;
+   ItemSetElement *last() const;
 
-   virtual void append( const Item& itm ) { push_back( itm ); }
-   virtual void prepend( const Item& itm ) { push_front( itm ); }
+   virtual void append( const Item& itm ) { insert( itm ); }
+   virtual void prepend( const Item& itm ) { insert( itm ); }
 
-   /** Pushes a shallow copy of the item to the end of the list.
-      \param itm the item to be pushed.
-   */
-   void push_back( const Item &itm );
-
-   /** Removes the last element from the list.
-      The item is shallowly removed. Deep content will be reclaimed through GC.
-      Calling pop_back() on an empty list will have no effect.
-   */
-   void pop_back();
-
-   /** Pushes a shallow copy of the item in front of the list.
-      \param itm the item to be pushed.
-   */
-   void push_front( const Item &itm );
-
-   /** Removes the first element from the list.
-      The item is shallowly removed. Deep content will be reclaimed by GC.
-      Calling pop_front() on an empty list will have no effect.
-   */
-   void pop_front();
 
    /** Removes all the elements in the list. */
    virtual void clear();
@@ -174,17 +158,16 @@ public:
       in the list, and that now has its place.
       \param elem an element from this list (or you'll witness psychedelic crashes)
    */
-   ItemListElement *erase( ItemListElement *elem );
+   ItemListElement *erase( ItemSetElement *elem );
 
 
    /** Insert an item after given before given element.
       To insert an item past the last element, use 0 as element pointer (last->next);
       this will work also to insert an item in an empty list.
 
-      \param elem the element before which to insert the item, or 0 to apped at tail.
       \param item the item to be inserted.
    */
-   void insert( ItemListElement *elem, const Item &item );
+   void insert( const Item &item );
 
 
    /** Tells if the list is empty.
@@ -229,4 +212,4 @@ protected:
 
 #endif
 
-/* end of itemlist.h */
+/* end of itemset.h */
