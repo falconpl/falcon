@@ -17,8 +17,8 @@
    Setof Falcon Items definition
 */
 
-#ifndef FALCON_itemset_H
-#define FALCON_itemset_H
+#ifndef FALCON_ITEMSET_H
+#define FALCON_ITEMSET_H
 
 #include <falcon/setup.h>
 #include <falcon/basealloc.h>
@@ -41,8 +41,6 @@ class FALCON_DYN_CLASS ItemSetElement: public BaseAlloc
    ItemSetElement *m_left;
    ItemSetElement *m_right;
    ItemSetElement *m_parent;
-
-
 public:
 
    /** Create the element by copying an item.
@@ -65,10 +63,10 @@ public:
    Item &item() { return m_item; }
 
    void left( ItemSetElement *n ) { m_left = n; }
-   ItemSetElement *next() const { return m_left; }
+   ItemSetElement *left() const { return m_left; }
 
    void right( ItemSetElement *p ) { m_right = p; }
-   ItemSetElement *prev() const { return m_right; }
+   ItemSetElement *right() const { return m_right; }
 
    void parent( ItemSetElement *p ) { m_parent = p; }
    ItemSetElement *parent() const { return m_parent; }
@@ -90,22 +88,33 @@ class FALCON_DYN_CLASS ItemSet: public Sequence
 private:
    uint32 m_size;
    ItemSetElement *m_root;
+   uint32 m_mark;
 
    // temporary variable using during iter-erase
    Iterator* m_erasingIter;
    ItemSetElement* m_disposingElem;
+
+   static ItemSetElement* duplicateSubTree( ItemSetElement* parent, const ItemSetElement* source );
+   static void clearSubTree( ItemSetElement* source );
+   static ItemSetElement* smallestInTree( ItemSetElement* e );
+   static ItemSetElement* largestInTree( ItemSetElement* e );
+   static bool insertInSubtree( ItemSetElement* elem, const Item& item );
+   static void markSubTree( ItemSetElement* e );
+   static ItemSetElement* nextElem( ItemSetElement* e );
+   static ItemSetElement* prevElem( ItemSetElement* e );
 
 public:
    /** Builds an empty list. */
    ItemSet():
       m_size(0),
       m_root(0),
+      m_mark( 0xFFFFFFFF ),
       m_erasingIter(0),
       m_disposingElem(0)
    {}
 
    /** Clones a list. */
-   ItemSet( const ItemList &l );
+   ItemSet( const ItemSet &l );
 
    virtual ~ItemSet()
    {
@@ -158,7 +167,7 @@ public:
       in the list, and that now has its place.
       \param elem an element from this list (or you'll witness psychedelic crashes)
    */
-   ItemListElement *erase( ItemSetElement *elem );
+   void erase( ItemSetElement *elem );
 
 
    /** Insert an item after given before given element.
@@ -173,7 +182,7 @@ public:
    /** Tells if the list is empty.
       \return true if the list is empty.
    */
-   virtual bool empty() const { return m_size == 0; }
+   virtual bool empty() const { return m_root != 0; }
 
    /** Return the number of the items in the list.
       \return count of items in the list

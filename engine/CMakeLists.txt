@@ -189,6 +189,7 @@ ADD_LIBRARY( falcon_engine SHARED
    itemarray.cpp
    itemlist.cpp
    itemserial.cpp
+   itemset.cpp
    itemtraits.cpp
    iterator.cpp
    lineardict.cpp
