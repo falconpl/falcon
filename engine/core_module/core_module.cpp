@@ -411,7 +411,8 @@ Module* core_module_init()
    self->addClassMethod( array_meta, "setProperty", &Falcon::core::mth_setProperty ).asSymbol()->
       addParam("propName")->addParam("value");
    self->addClassMethod( array_meta, "properties", &Falcon::core::mth_properties );
-   self->addClassMethod( array_meta, "comp", &Falcon::core::Array_comp );
+   self->addClassMethod( array_meta, "comp", &Falcon::core::Array_comp ).asSymbol()->
+      addParam("source")->addParam("filter");
    self->addClassMethod( array_meta, "compact", &Falcon::core::mth_arrayCompact );
 
    //==================================================================
@@ -442,7 +443,7 @@ Module* core_module_init()
    self->addClassMethod( dict_meta, "first", &Falcon::core::Dictionary_first );
    self->addClassMethod( dict_meta, "last", &Falcon::core::Dictionary_last );
    self->addClassMethod( dict_meta, "comp", &Falcon::core::Dictionary_comp ).asSymbol()->
-      addParam( "item" )->addParam( "filter" );
+      addParam( "source" )->addParam( "filter" );
 
 
    self->addClassMethod( dict_meta, "merge", &Falcon::core::mth_dictMerge ).asSymbol()->
@@ -1462,25 +1463,39 @@ Module* core_module_init()
       addParam("path");
 
    //=======================================================================
+   // The sequence class
+   //=======================================================================
+   Falcon::Symbol *sequence_class = self->addClass( "Sequence" );
+   sequence_class->exported(false);
+
+   self->addClassMethod( sequence_class, "comp", &Falcon::core::Sequence_comp ).asSymbol()->
+      addParam("source")->addParam("filter");
+   self->addClassMethod( sequence_class, "front", &Falcon::core::Sequence_front );
+   self->addClassMethod( sequence_class, "back", &Falcon::core::Sequence_back );
+   self->addClassMethod( sequence_class, "last", &Falcon::core::Sequence_last );
+   self->addClassMethod( sequence_class, "first", &Falcon::core::Sequence_first );
+   self->addClassMethod( sequence_class, "empty", &Falcon::core::Sequence_empty );
+   self->addClassMethod( sequence_class, "clear", &Falcon::core::Sequence_clear );
+   self->addClassMethod( sequence_class, "append", &Falcon::core::Sequence_append ).asSymbol()->
+      addParam("item");
+   self->addClassMethod( sequence_class, "prepend", &Falcon::core::Sequence_prepend ).asSymbol()->
+      addParam("item");
+
+   //=======================================================================
    // The list class
    //=======================================================================
    Falcon::Symbol *list_class = self->addClass( "List", &Falcon::core::List_init );
    list_class->setWKS(true);
+   // inherits from stream.
+   list_class->getClassDef()->addInheritance(  new Falcon::InheritDef( sequence_class ) );
 
    self->addClassMethod( list_class, "push", &Falcon::core::List_push ).asSymbol()->
       addParam("item");
    self->addClassMethod( list_class, "pop", &Falcon::core::List_pop );
-   self->addClassMethod( list_class, "comp", &Falcon::core::List_comp );
    self->addClassMethod( list_class, "pushFront", &Falcon::core::List_pushFront ).asSymbol()->
       addParam("item");
    self->addClassMethod( list_class, "popFront", &Falcon::core::List_popFront );
-   self->addClassMethod( list_class, "front", &Falcon::core::List_front );
-   self->addClassMethod( list_class, "back", &Falcon::core::List_back );
-   self->addClassMethod( list_class, "last", &Falcon::core::List_last );
-   self->addClassMethod( list_class, "first", &Falcon::core::List_first );
    self->addClassMethod( list_class, "len", &Falcon::core::List_len );
-   self->addClassMethod( list_class, "empty", &Falcon::core::List_empty );
-   self->addClassMethod( list_class, "clear", &Falcon::core::List_clear );
 
    //=======================================================================
    // The path class

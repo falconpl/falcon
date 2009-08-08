@@ -128,8 +128,8 @@ SET( CORE_MODULE_SOURCES
    core_module/inspect.cpp
    core_module/item_ext.cpp
    core_module/iterator_ext.cpp
-   core_module/list.cpp
-   core_module/math.cpp
+   core_module/list_ext.cpp
+   core_module/math_ext.cpp
    core_module/membuf_ext.cpp
    core_module/message_ext.cpp
    core_module/oob_ext.cpp
@@ -139,6 +139,7 @@ SET( CORE_MODULE_SOURCES
    core_module/print.cpp
    core_module/random.cpp
    core_module/seconds.cpp
+   core_module/sequence_ext.cpp
    core_module/serialize.cpp
    core_module/string_ext.cpp
    core_module/stringstream_ext.cpp

@@ -2269,8 +2269,11 @@ expression:
             {
                if ( $4->isInteger() )
                {
-                  Falcon::String str( *$1->asString() );
-                  str.append( (Falcon::uint32) $4->asInteger() );
+                  Falcon::String str( $1->asString()->length() );
+                  for( int i = 0; i < $4->asInteger(); ++i )
+                  {
+                     str.append( *$1->asString()  );
+                  }
                   $1->setString( COMPILER->addString( str ) );
                   delete $4;
                   $$ = $1;
@@ -2281,8 +2284,47 @@ expression:
             else
                $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_times, $1, $4 ) );
       }
-   | expression SLASH OPT_EOL expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_divide, $1, $4 ) ); }
-   | expression PERCENT OPT_EOL expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_modulo, $1, $4 ) ); }
+   | expression SLASH OPT_EOL expression {
+            if ( $1->isString() )
+            {
+               if( $1->asString()->length() == 0 )
+               {
+                  COMPILER->raiseError( Falcon::e_invop );
+               }
+               else {
+               
+                  if ( $4->isInteger() )
+                  {
+                     Falcon::String str( *$1->asString() );
+                     str.setCharAt( str.length()-1, str.getCharAt(str.length()-1) + $4->asInteger() );
+                     $1->setString( COMPILER->addString( str ) );
+                     delete $4;
+                     $$ = $1;
+                  }
+                  else
+                     $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_divide, $1, $4 ) );
+               }
+            }
+            else
+               $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_divide, $1, $4 ) );
+      }
+   | expression PERCENT OPT_EOL expression {
+            if ( $1->isString() )
+            {
+               if ( $4->isInteger() )
+               {
+                  Falcon::String str( *$1->asString() );
+                  str.append( (Falcon::uint32) $4->asInteger() );
+                  $1->setString( COMPILER->addString( str ) );
+                  delete $4;
+                  $$ = $1;
+               }
+               else
+                  $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_modulo, $1, $4 ) );
+            }
+            else
+               $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_modulo, $1, $4 ) );
+      }
    | expression POW OPT_EOL expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_power, $1, $4 ) ); }
    | expression AMPER_AMPER OPT_EOL expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_bin_and, $1, $4 ) ); }
    | expression VBAR_VBAR OPT_EOL expression { $$ = new Falcon::Value( new Falcon::Expression( Falcon::Expression::t_bin_or, $1, $4 ) ); }

@@ -393,33 +393,22 @@ void co_num_mul( const Item& first, const Item& second, Item& third )
    throw new TypeError( ErrorParam( e_invop ).extra( "MUL" ) );
 }
 
-
 void co_string_mul( const Item& first, const Item& second, Item& third )
 {
-   String *str = first.asString();
-
    switch( second.type() )
    {
       case FLC_ITEM_INT:
-         {
-            int64 chr = second.asInteger();
-            if ( chr >= 0 && chr <= (int64) 0xFFFFFFFF )
-            {
-               CoreString *gcs = new CoreString( *str );
-               gcs->append( (uint32) chr );
-               third = gcs;
-               return;
-            }
-            break;
-         }
-
       case FLC_ITEM_NUM:
          {
-            numeric chr = second.asNumeric();
-            if ( chr >= 0 && chr <= (numeric) 0xFFFFFFFF )
+            String *str = first.asString();
+            int64 chr = second.forceInteger();
+            if ( chr >= 0 && chr <= (int64) 0xFFFFFFFF )
             {
-               CoreString *gcs = new CoreString( *str );
-               gcs->append( (uint32) chr );
+               CoreString *gcs = new CoreString( str->length() );
+               for ( int i = 0; i < chr; i ++ )
+               {
+                  gcs->append( *str );
+               }
                third = gcs;
                return;
             }
@@ -558,6 +547,34 @@ void co_num_div( const Item& first, const Item& second, Item& third )
 }
 
 
+void co_string_div( const Item& first, const Item& second, Item& third )
+{
+   switch( second.type() )
+   {
+      case FLC_ITEM_INT:
+      case FLC_ITEM_NUM:
+         {
+            String *str = first.asString();
+            int64 chr = second.forceInteger();
+            uint32 len = str->length();
+            if ( chr >= -(int64) 0xFFFFFFFF && chr <= (int64) 0xFFFFFFFF && len > 0 )
+            {
+               CoreString *gcs = new CoreString( *str );
+               gcs->setCharAt( len-1, gcs->getCharAt(len-1) + chr );
+               third = gcs;
+               return;
+            }
+            break;
+         }
+
+      case FLC_ITEM_REFERENCE:
+         co_string_div( first, second.asReference()->origin(), third );
+         return;
+   }
+
+   throw new TypeError( ErrorParam( e_invop ).extra( "DIV" ) );
+}
+
 void co_dict_div( const Item& first, const Item& second, Item& third )
 {
    CoreDict *self = first.asDict();
@@ -655,6 +672,47 @@ void co_num_mod( const Item& first, const Item& second, Item& third )
 
       case FLC_ITEM_REFERENCE:
          co_num_mod( first, second.asReference()->origin(), third );
+   }
+
+   throw new TypeError( ErrorParam( e_invop ).extra( "MOD" ) );
+}
+
+
+void co_string_mod( const Item& first, const Item& second, Item& third )
+{
+   String *str = first.asString();
+
+   switch( second.type() )
+   {
+      case FLC_ITEM_INT:
+         {
+            int64 chr = second.asInteger();
+            if ( chr >= 0 && chr <= (int64) 0xFFFFFFFF )
+            {
+               CoreString *gcs = new CoreString( *str );
+               gcs->append( (uint32) chr );
+               third = gcs;
+               return;
+            }
+            break;
+         }
+
+      case FLC_ITEM_NUM:
+         {
+            numeric chr = second.asNumeric();
+            if ( chr >= 0 && chr <= (numeric) 0xFFFFFFFF )
+            {
+               CoreString *gcs = new CoreString( *str );
+               gcs->append( (uint32) chr );
+               third = gcs;
+               return;
+            }
+            break;
+         }
+
+      case FLC_ITEM_REFERENCE:
+         co_string_mod( first, second.asReference()->origin(), third );
+         return;
    }
 
    throw new TypeError( ErrorParam( e_invop ).extra( "MOD" ) );
@@ -1869,8 +1927,7 @@ void co_call_function( const Item &itm, VMachine *vm, uint32 paramCount )
 {
    // fill - in the missing parameters.
    vm->prepareFrame( itm.asFunction(), paramCount );
-   // TODO: Still needed?
-   vm->self().setNil();
+   // leave self as is.
 }
 
 void co_call_reference( const Item &itm, VMachine *vm, uint32 paramCount )
@@ -2213,8 +2270,8 @@ void* StringCommOpsTable[] = {
    (void*) co_string_add,
    (void*) co_fail,
    (void*) co_string_mul,
-   (void*) co_fail,
-   (void*) co_fail,
+   (void*) co_string_div,
+   (void*) co_string_mod,
    (void*) co_fail,
    (void*) co_fail,
 

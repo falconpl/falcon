@@ -451,19 +451,22 @@ FALCON_FUNC  TimeZone_getLocal ( ::Falcon::VMachine *vm );
 extern reflectionFuncDecl TimeStamp_timezone_rfrom;
 extern reflectionFuncDecl TimeStamp_timezone_rto;
 
+FALCON_FUNC  Sequence_comp ( ::Falcon::VMachine *vm );
+FALCON_FUNC  Sequence_front ( ::Falcon::VMachine *vm );
+FALCON_FUNC  Sequence_back ( ::Falcon::VMachine *vm );
+FALCON_FUNC  Sequence_first ( ::Falcon::VMachine *vm );
+FALCON_FUNC  Sequence_last ( ::Falcon::VMachine *vm );
+FALCON_FUNC  Sequence_empty( ::Falcon::VMachine *vm );
+FALCON_FUNC  Sequence_clear ( ::Falcon::VMachine *vm );
+FALCON_FUNC  Sequence_append ( ::Falcon::VMachine *vm );
+FALCON_FUNC  Sequence_prepend ( ::Falcon::VMachine *vm );
+
 FALCON_FUNC  List_init ( ::Falcon::VMachine *vm );
-FALCON_FUNC  List_comp ( ::Falcon::VMachine *vm );
 FALCON_FUNC  List_push ( ::Falcon::VMachine *vm );
 FALCON_FUNC  List_pop ( ::Falcon::VMachine *vm );
 FALCON_FUNC  List_pushFront ( ::Falcon::VMachine *vm );
 FALCON_FUNC  List_popFront ( ::Falcon::VMachine *vm );
-FALCON_FUNC  List_front ( ::Falcon::VMachine *vm );
-FALCON_FUNC  List_back ( ::Falcon::VMachine *vm );
-FALCON_FUNC  List_first ( ::Falcon::VMachine *vm );
-FALCON_FUNC  List_last ( ::Falcon::VMachine *vm );
 FALCON_FUNC  List_len( ::Falcon::VMachine *vm );
-FALCON_FUNC  List_empty( ::Falcon::VMachine *vm );
-FALCON_FUNC  List_clear ( ::Falcon::VMachine *vm );
 
 FALCON_FUNC  CmdlineParser_parse( ::Falcon::VMachine *vm );
 FALCON_FUNC  CmdlineParser_expectValue( ::Falcon::VMachine *vm );

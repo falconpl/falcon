@@ -64,6 +64,8 @@ Falcon (0.9.2.1)
   * minor: removed List.erase() and List.insert() (now done via iterators).
   * major: Added comprehension to dictionaries (just as other sequences, but with 
            pair being taken as [key, value] items for addition).
+  * major: Now, '*' operator on strings replicates them. Unicode addition is done
+           via '%', while '/'
              
 Falcon (0.9.2)
   * fixed: using more modern throw instead of the obsolete raise() functions

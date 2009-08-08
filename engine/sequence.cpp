@@ -20,7 +20,7 @@
 
 namespace Falcon {
 
-inline void s_appendMe( VMachine *vm, Sequence* me, const Item &source, const Item &filter )
+inline bool s_appendMe( VMachine *vm, Sequence* me, const Item &source, const Item &filter )
 {
    if( filter.isNil() )
    {
@@ -29,10 +29,15 @@ inline void s_appendMe( VMachine *vm, Sequence* me, const Item &source, const It
    else
    {
       vm->pushParameter( source );
-      vm->callItemAtomic(filter,1);
+      vm->pushParameter( vm->self() );
+      vm->callItemAtomic(filter,2);
       if ( ! vm->regA().isOob() )
          me->append( vm->regA() );
+      else if ( vm->regA().isInteger() && vm->regA().asInteger() == 0 )
+         return false;
    }
+
+   return true;
 }
 
 void Sequence::comprehension( VMachine* vm, const Item& cmp, const Item& filter )
@@ -67,7 +72,8 @@ void Sequence::comprehension( VMachine* vm, const Item& cmp, const Item& filter 
 
             while( start < end )
             {
-               s_appendMe( vm, this, start, filter );
+               if ( ! s_appendMe( vm, this, start, filter ) )
+                  break;
                start += step;
             }
          }
@@ -79,7 +85,8 @@ void Sequence::comprehension( VMachine* vm, const Item& cmp, const Item& filter 
 
             while( start >= end )
             {
-               s_appendMe( vm, this, start, filter );
+               if ( ! s_appendMe( vm, this, start, filter ) )
+                  break;
                start += step;
             }
          }
@@ -96,7 +103,8 @@ void Sequence::comprehension( VMachine* vm, const Item& cmp, const Item& filter 
          }
 
          Item temp = vm->regA();
-         s_appendMe( vm, this, temp, filter );
+         if( ! s_appendMe( vm, this, temp, filter ) )
+            break;
       }
    }
    // todo --- remove this as soon as we have iterators on ItemArrays
@@ -106,10 +114,11 @@ void Sequence::comprehension( VMachine* vm, const Item& cmp, const Item& filter 
 
       for( uint32 i = 0; i < arr.length(); i ++ )
       {
-         s_appendMe( vm, this, arr[i], filter );
+         if ( ! s_appendMe( vm, this, arr[i], filter ) )
+            break;
       }
    }
-   else if ( (cmp.isObject() && cmp.asObjectSafe()->getFalconData()->isSequence()) )
+   else if ( (cmp.isObject() && cmp.asObjectSafe()->getSequence() ) )
    {
       //Sequence* seq = cmp.isArray() ? &cmp.asArray()->items() : cmp.asObjectSafe()->getSequence();
 
@@ -117,7 +126,8 @@ void Sequence::comprehension( VMachine* vm, const Item& cmp, const Item& filter 
       Iterator iter( seq );
       while( iter.hasCurrent() )
       {
-         s_appendMe( vm, this, iter.getCurrent(), filter );
+         if ( ! s_appendMe( vm, this, iter.getCurrent(), filter ) )
+            break;
          iter.next();
       }
    }

@@ -35,7 +35,7 @@ loop
          mb.mark()
          mark = true
       else
-         word *= char
+         word %= char
       end
    end
    
