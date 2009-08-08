@@ -102,6 +102,7 @@ private:
    static void markSubTree( ItemSetElement* e );
    static ItemSetElement* nextElem( ItemSetElement* e );
    static ItemSetElement* prevElem( ItemSetElement* e );
+   static ItemSetElement* findInTree( ItemSetElement* elem, const Item &item );
 
 public:
    /** Builds an empty list. */
@@ -169,6 +170,17 @@ public:
    */
    void erase( ItemSetElement *elem );
 
+   /** Finds an item and eventually returns the relative element.
+    * This function is useful for direct deletion of an item,
+    * or creation of an iterator at a given position.
+    */
+   ItemSetElement* find( const Item &item );
+
+   /** Creates an iterator.
+    *
+    */
+   void getIteratorAt( Iterator &tgt, ItemSetElement* elem );
+
 
    /** Insert an item after given before given element.
       To insert an item past the last element, use 0 as element pointer (last->next);
@@ -182,7 +194,7 @@ public:
    /** Tells if the list is empty.
       \return true if the list is empty.
    */
-   virtual bool empty() const { return m_root != 0; }
+   virtual bool empty() const { return m_root == 0; }
 
    /** Return the number of the items in the list.
       \return count of items in the list

@@ -163,6 +163,39 @@ void ItemSet::erase( ItemSetElement *elem )
 }
 
 
+ItemSetElement* ItemSet::find( const Item &item )
+{
+   if( m_root == 0 )
+      return 0;
+   return findInTree( m_root, item );
+}
+
+
+ItemSetElement* ItemSet::findInTree( ItemSetElement* elem, const Item &item )
+{
+   int c = elem->item().compare( item );
+   if ( c < 0 )
+   {
+      if ( elem->right() != 0 )
+         return findInTree( elem->right(), item );
+   }
+   else if ( c > 0 )
+   {
+      if ( elem->left() != 0 )
+         return findInTree( elem->left(), item );
+   }
+   else // ==
+      return elem;
+
+   return 0;  // not found,
+}
+
+void ItemSet::getIteratorAt( Iterator &tgt, ItemSetElement* elem )
+{
+   Sequence::getIterator( tgt, false );
+   tgt.data( elem );
+}
+
 void ItemSet::insert( const Item &item )
 {
    if( m_root == 0 )
@@ -187,14 +220,14 @@ bool ItemSet::insertInSubtree( ItemSetElement* elem, const Item& item )
       return false;
    }
 
-   if( result > 0 )
+   if( result < 0 )
    {
       if ( elem->right() != 0 )
          return insertInSubtree( elem->right(), item );
       else
          elem->right( new ItemSetElement( item, elem ) );
    }
-   else if ( result < 0 )
+   else
    {
       if ( elem->left() != 0 )
         return insertInSubtree( elem->left(), item );

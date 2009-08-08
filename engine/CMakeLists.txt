@@ -141,6 +141,7 @@ SET( CORE_MODULE_SOURCES
    core_module/seconds.cpp
    core_module/sequence_ext.cpp
    core_module/serialize.cpp
+   core_module/set_ext.cpp
    core_module/string_ext.cpp
    core_module/stringstream_ext.cpp
    core_module/sys_ext.cpp

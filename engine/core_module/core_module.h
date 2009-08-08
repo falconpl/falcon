@@ -468,6 +468,13 @@ FALCON_FUNC  List_pushFront ( ::Falcon::VMachine *vm );
 FALCON_FUNC  List_popFront ( ::Falcon::VMachine *vm );
 FALCON_FUNC  List_len( ::Falcon::VMachine *vm );
 
+FALCON_FUNC  Set_init( ::Falcon::VMachine *vm );
+FALCON_FUNC  Set_remove( ::Falcon::VMachine *vm );
+FALCON_FUNC  Set_insert( ::Falcon::VMachine *vm );
+FALCON_FUNC  Set_contains( ::Falcon::VMachine *vm );
+FALCON_FUNC  Set_find( ::Falcon::VMachine *vm );
+FALCON_FUNC  Set_len( ::Falcon::VMachine *vm );
+
 FALCON_FUNC  CmdlineParser_parse( ::Falcon::VMachine *vm );
 FALCON_FUNC  CmdlineParser_expectValue( ::Falcon::VMachine *vm );
 FALCON_FUNC  CmdlineParser_terminate( ::Falcon::VMachine *vm );

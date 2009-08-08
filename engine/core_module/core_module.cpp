@@ -1498,6 +1498,24 @@ Module* core_module_init()
    self->addClassMethod( list_class, "len", &Falcon::core::List_len );
 
    //=======================================================================
+   // The Set class
+   //=======================================================================
+   Falcon::Symbol *set_class = self->addClass( "Set", &Falcon::core::Set_init );
+   set_class->setWKS(true);
+   // inherits from stream.
+   set_class->getClassDef()->addInheritance( new Falcon::InheritDef( sequence_class ) );
+
+   self->addClassMethod( set_class, "insert", &Falcon::core::Set_insert ).asSymbol()->
+      addParam("item");
+   self->addClassMethod( set_class, "remove", &Falcon::core::Set_remove ).asSymbol()->
+      addParam("item");
+   self->addClassMethod( set_class, "contains", &Falcon::core::Set_contains ).asSymbol()->
+      addParam("item");
+   self->addClassMethod( set_class, "find", &Falcon::core::Set_find ).asSymbol()->
+      addParam("item");
+   self->addClassMethod( set_class, "len", &Falcon::core::Set_len );
+
+   //=======================================================================
    // The path class
    //=======================================================================
    Falcon::Symbol *path_class = self->addClass( "Path", &Falcon::core::Path_init )
