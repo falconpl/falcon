@@ -119,7 +119,7 @@ void ItemSet::clearSubTree( ItemSetElement *e )
 void ItemSet::erase( ItemSetElement *elem )
 {
    // the new subtree root is the highest element in the left subtree.
-   ItemSetElement *newRoot;
+   ItemSetElement *newRoot = 0;
 
    if ( elem->left() )
    {

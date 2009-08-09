@@ -59,4 +59,6 @@ time -= timeAlive
 
 timings( time, loops )
 
+success()
+
 /* end of file */
