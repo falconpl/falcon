@@ -16,8 +16,8 @@
 *
 ****************************************************************************/
 
-loops = 100000 * timeFactor()
-each = int(loops/10)
+loops = 500000 * timeFactor()
+each = int(loops/60)
 
 function nonStatic()
    return "a nonstatic"
@@ -27,12 +27,12 @@ end
 time = seconds()
 static_string = "Static string"
 for i in [ 0 : loops ]
-  var = [ 1, 2, strBuffer(100000), "This is " + nonStatic() +" string", 5 ]
+  var = [ 1, 2, strBuffer(1000), "This is " + nonStatic() +" string", 5 ]
   var1 = [ i, var ]
   var2 = [ i, var1 ]
   if i % each == 0
       alive( i/loops*100 )
-      GC.perform()
+      GC.perform(true)
   end
   var2 = 0
 end

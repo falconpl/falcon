@@ -13,7 +13,7 @@
 * [/Description]
 ****************************************************************************/
 
-loops = 1000000 * timeFactor()
+loops = 12000000 * timeFactor()
 each = int(loops/10)
 
 function toBeCalled( first, second, third, fourth, fifth )

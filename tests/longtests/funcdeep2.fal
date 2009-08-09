@@ -12,7 +12,7 @@
 ****************************************************************************/
 
 const depth = 1000
-loops = (10000000/depth) * timeFactor()
+loops = (13000000/depth) * timeFactor()
 each = int(loops/10)
 
 function deepCall( counter, a, b, c, d )

@@ -12,7 +12,7 @@
 * [/Description]
 ****************************************************************************/
 
-loops = 1000000 * timeFactor()
+loops = 10000000 * timeFactor()
 each = int(loops/10)
 
 object item

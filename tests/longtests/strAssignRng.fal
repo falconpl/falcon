@@ -1,7 +1,7 @@
 /****************************************************************************
 * Falcon direct benchmarks
 *
-* ID: 3f
+* ID: 3d
 * Category: strings
 * Subcategory:
 * Short: String range assign
@@ -10,18 +10,17 @@
 * [/Description]
 ****************************************************************************/
 
-loops = 10000 * timeFactor()
+loops = 2500000 * timeFactor()
 each = int(loops/10)
 
-
-str = "the string that will be accessed"
 str7= "abc" // we'll change three chars
 
 // getting time
-
+r = [5:7]
 time = seconds()
 for i in [ 0 : loops ]
-   str[5:7] = str7
+   str = "the string that will be accessed"
+   str[r] = str7
 
    if i % each == 0
       alive( i/loops*100 )

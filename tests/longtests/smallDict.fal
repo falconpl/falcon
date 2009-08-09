@@ -74,4 +74,6 @@ time -= timeAlive
 // we have produced 100 operations per loop
 timings( time, loops * 20 )
 
+success()
+
 /* end of file */

@@ -10,7 +10,7 @@
 * [/Description]
 ****************************************************************************/
 
-loops = 1000000 * timeFactor()
+loops = 2000000 * timeFactor()
 each = int(loops/10)
 
 part = "second"
