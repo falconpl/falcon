@@ -36,7 +36,7 @@ Falcon (0.9.2.1)
            to user error.
   * fixed: interactive mode didn't work with wide strings and international 
            characters.
-  * added: Methodic function describe() that can be used as a reflective insect()
+  * added: Methodic function describe() that can be used as a reflective inspect()
   * minor: Now using describe() instead of toString() in interactive mode.
   * fixed: Access to static methods in classes was broken.
   * fixed: In ranges, step 0 now represents the "default step"; open range is indicated

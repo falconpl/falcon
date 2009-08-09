@@ -43,12 +43,12 @@ void PageDict::PageDictIterDeletor( Iterator* iter )
 
 PageDict::PageDict():
    m_map( &m_itemTraits, &m_itemTraits ),
-   m_version( 0 )
+   m_mark( 0xFFFFFFFF )
 {}
 
 PageDict::PageDict( uint32 pageSize ):
    m_map( &m_itemTraits, &m_itemTraits, (uint16) pageSize ),
-   m_version( 0 )
+   m_mark( 0xFFFFFFFF )
 {
 }
 
@@ -186,6 +186,23 @@ void PageDict::clear()
 bool PageDict::empty() const
 {
    return m_map.empty();
+}
+
+void PageDict::gcMark( uint32 gen )
+{
+   if( m_mark != gen )
+   {
+      m_mark = gen;
+      Sequence::gcMark( gen );
+
+      MapIterator iter = m_map.begin();
+      while( iter.hasCurrent() )
+      {
+         memPool->markItem( *(Item*)iter.currentKey() );
+         memPool->markItem( *(Item*)iter.currentValue() );
+         iter.next();
+      }
+   }
 }
 
 //============================================================

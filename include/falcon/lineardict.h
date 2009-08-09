@@ -63,6 +63,7 @@ class FALCON_DYN_CLASS LinearDict: public ItemDict
    uint32 m_alloc;
    uint32 m_invalidPos;
    LinearDictEntry *m_data;
+   uint32 m_mark;
 
    bool addInternal( uint32 pos, const Item &key, const Item &value );
 

@@ -41,7 +41,7 @@ class FALCON_DYN_CLASS PageDict: public ItemDict
 {
    ItemTraits m_itemTraits;
    Map m_map;
-   uint32 m_version;
+   uint32 m_mark;
 
    static void PageDictIterDeletor( Iterator* iter );
 public:
@@ -67,8 +67,7 @@ public:
    virtual void merge( const ItemDict &dict );
    virtual void clear();
    virtual bool empty() const;
-
-   uint32 version() const { return m_version; }
+   void gcMark( uint32 gen );
 
    //========================================================
    // Iterator implementation.

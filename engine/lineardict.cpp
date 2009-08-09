@@ -30,10 +30,12 @@ namespace Falcon
 LinearDict::LinearDict():
    m_size(0),
    m_alloc(0),
-   m_data(0)
+   m_data(0),
+   m_mark( 0xFFFFFFFF )
 {}
 
-LinearDict::LinearDict( uint32 size )
+LinearDict::LinearDict( uint32 size ):
+   m_mark( 0xFFFFFFFF )
 {
    m_data = (LinearDictEntry *) memAlloc( esize( size ) );
    length(0);
@@ -363,12 +365,17 @@ void LinearDict::clear()
 
 void LinearDict::gcMark( uint32 gen )
 {
-   Sequence::gcMark( gen );
-
-   for( uint32 i = 0; i < length(); ++i )
+   if ( m_mark  != gen )
    {
-      memPool->markItem( m_data[i].key() );
-      memPool->markItem( m_data[i].value() );
+      m_mark = gen;
+
+      Sequence::gcMark( gen );
+
+      for( uint32 i = 0; i < length(); ++i )
+      {
+         memPool->markItem( m_data[i].key() );
+         memPool->markItem( m_data[i].value() );
+      }
    }
 }
 
