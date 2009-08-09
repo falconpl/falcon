@@ -572,6 +572,7 @@ bool Item::methodize( const Item &self )
          if ( arr.length() > 0 && arr[0].asArray() != &arr && arr[0].isCallable() )
          {
             data->setMethod( self, &arr );
+            return true;
          }
       }
       return false;
