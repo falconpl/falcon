@@ -1,11 +1,11 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: rangeseq.h
+   FILE: generatorseq.h
 
-   Virtual sequence that can be used to iterate over ranges.
+   Virtual sequence that can be used to iterate over generators.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
-   Begin: Thu, 06 Aug 2009 22:10:00 +0200
+   Begin: Sun, 09 Aug 2009 19:04:17 +0200
 
    -------------------------------------------------------------------
    (C) Copyright 2009: the FALCON developers (see list in AUTHORS file)
@@ -14,8 +14,8 @@
 */
 
 
-#ifndef FALCON_RANGESEQ_H
-#define FALCON_RANGESEQ_H
+#ifndef FALCON_GENERATORSEQ_H
+#define FALCON_GENERATORSEQ_H
 
 #include <falcon/setup.h>
 #include <falcon/sequence.h>
@@ -23,24 +23,26 @@
 
 namespace Falcon {
 
-class FALCON_DYN_CLASS RangeSeq: public Sequence
+class FALCON_DYN_CLASS GeneratorSeq: public Sequence
 {
-   int64 m_start;
-   int64 m_end;
-   int64 m_step;
+   VMachine* m_vm;
 
-   mutable Item m_number;
+   Item m_callable;
+   mutable Item m_cache_cur;
+   mutable Item m_cache_next;
+
+   mutable bool m_bHasCachedCur;
+   mutable bool m_bHasCachedNext;
+   mutable bool m_bComplete;
+
+   bool fillCurrentValue() const;
+   bool fillNextValue() const;
 
 public:
-   RangeSeq( const CoreRange &rng );
-   RangeSeq( int64 s, int64 e, int64 step );
-   RangeSeq( const RangeSeq& other ):
-      m_start( other.m_start ),
-      m_end( other.m_end ),
-      m_step( other.m_step )
-      {}
+   GeneratorSeq( VMachine* runEvn, const Item& callable );
+   GeneratorSeq( const GeneratorSeq& other );
 
-   virtual ~RangeSeq();
+   virtual ~GeneratorSeq();
 
    virtual const Item &front() const;
    virtual const Item &back() const;
@@ -49,6 +51,7 @@ public:
    virtual void append( const Item &data );
    virtual void prepend( const Item &data );
    virtual FalconData* clone() const;
+   virtual void gcMark( uint32 gen );
 
    //==============================================================
    // Iterator management
@@ -74,6 +77,6 @@ protected:
 
 }
 
-#endif /* FALCON_RANGESEQ_H */
+#endif /* FALCON_GENERATORSEQ_H */
 
-/* end of rangeseq.h */
+/* end of generatorseq.h */

@@ -1,0 +1,48 @@
+/****************************************************************************
+* Falcon test suite
+*
+*
+* ID: 75b
+* Category: functional
+* Subcategory: generators
+* Short: Forin object generators
+* Description:
+*   Tests for/in loop applied to generators (as objects).
+* [/Description]
+*
+****************************************************************************/
+
+// A generator object
+object genobj
+   counter = 1
+
+   function call__()
+      if self.counter == 5: return oob(0)
+      return self.counter ++
+   end
+end
+
+
+sum = 0
+for value in genobj
+   sum += value
+end
+
+if sum != 1+2+3+4: failure( "Simple loop" )
+
+// reset the generator function
+genobj.counter = 1
+
+str = ""
+for value in genobj
+   forfirst: str += "Begin: "
+   str += value
+   formiddle: str += ", "
+   forlast: str += "."
+end
+
+if str != "Begin: 1, 2, 3, 4.": failure( "Complete loop" )
+
+success()
+
+/* end of file */

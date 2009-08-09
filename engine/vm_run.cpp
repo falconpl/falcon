@@ -39,6 +39,7 @@
 #include <falcon/vmmsg.h>
 #include <falcon/vmevent.h>
 #include <falcon/rangeseq.h>
+#include <falcon/generatorseq.h>
 #include <falcon/garbagepointer.h>
 
 #include <math.h>
@@ -1428,57 +1429,77 @@ void opcodeHandler_TRAV( register VMachine *vm )
 
    switch( source->type() )
    {
-      case FLC_ITEM_ARRAY:
-         seq = &source->asArray()->items();
-         break;
+   case FLC_ITEM_ARRAY:
+      seq = &source->asArray()->items();
+      break;
 
-      case FLC_ITEM_DICT:
-         seq = &source->asDict()->items();
-         break;
+   case FLC_ITEM_DICT:
+      seq = &source->asDict()->items();
+      break;
 
-      case FLC_ITEM_OBJECT:
-         seq = source->asObjectSafe()->getSequence();
-         // we have mess on the stack, but it doesn't matter here.
-         if( seq == 0 )
-            throw new TypeError( ErrorParam( e_invop ).extra("TRAV").origin( e_orig_vm ) );
-         break;
-
-
-      case FLC_ITEM_RANGE:
-         // optimize: avoid creating a bit of stuff if not needed
-         if( source->asRangeIsOpen() ||
-             (source->asRangeEnd() == source->asRangeStart() && source->asRangeStep() == 0) ||
-             ( source->asRangeStep() > 0 && source->asRangeStart() > source->asRangeEnd() ) ||
-             ( source->asRangeStep() < 0 && source->asRangeStart() < source->asRangeEnd() )
-            )
+   case FLC_ITEM_OBJECT:
+      seq = source->asObjectSafe()->getSequence();
+      // is the object a direct sequence?
+      if( seq == 0 )
+      {
+         // is it a callable entity?
+         if ( source->asObjectSafe()->hasProperty("call__"))
          {
-            vm->jump( wayout );
-            return;
-         }
-
-         // ok, the range can generate a sequence. Hence...
-         try {
-            seq = new RangeSeq( *source->asRange() );
-            // also, save the sequence in a garbage sensible item.
-            // we don't record anywhere this item, but it will be marked
-            // as long as we have the iterator active in the stack.
+            seq = new GeneratorSeq( vm, *source );
             GarbagePointer* ptr = new GarbagePointer( seq );
             seq->owner( ptr );
-            seq->gcMark( vm->generation() ); // will mark our pointer
          }
-         catch( ... ) {
-            fassert( false ); // must not throw
-         }
-         break;
+         else
+            // we have mess on the stack, but it doesn't matter here.
+            throw new TypeError( ErrorParam( e_invop ).extra("TRAV").origin( e_orig_vm ) );
+      }
+      break;
 
-      case FLC_ITEM_NIL:
-         // jump out
+
+   case FLC_ITEM_RANGE:
+      // optimize: avoid creating a bit of stuff if not needed
+      if( source->asRangeIsOpen() ||
+          (source->asRangeEnd() == source->asRangeStart() && source->asRangeStep() == 0) ||
+          ( source->asRangeStep() > 0 && source->asRangeStart() > source->asRangeEnd() ) ||
+          ( source->asRangeStep() < 0 && source->asRangeStart() < source->asRangeEnd() )
+         )
+      {
          vm->jump( wayout );
          return;
+      }
+
+      // ok, the range can generate a sequence. Hence...
+      try {
+         seq = new RangeSeq( *source->asRange() );
+         // also, save the sequence in a garbage sensible item.
+         // we don't record anywhere this item, but it will be marked
+         // as long as we have the iterator active in the stack.
+         GarbagePointer* ptr = new GarbagePointer( seq );
+         seq->owner( ptr );
+         seq->gcMark( vm->generation() ); // will mark our pointer
+      }
+      catch( ... ) {
+         fassert( false ); // must not throw
+      }
+      break;
+
+   case FLC_ITEM_NIL:
+      // jump out
+      vm->jump( wayout );
+      return;
 
 
-      default:
+   default:
+      if( source->isCallable() )
+      {
+         seq = new GeneratorSeq( vm, *source );
+         GarbagePointer* ptr = new GarbagePointer( seq );
+         seq->owner( ptr );
+      }
+      else
+      {
          throw new TypeError( ErrorParam( e_invop ).extra("TRAV").origin( e_orig_vm ) );
+      }
    }
 
    // empty sequence?

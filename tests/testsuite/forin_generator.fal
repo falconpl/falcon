@@ -1,0 +1,52 @@
+/****************************************************************************
+* Falcon test suite
+*
+*
+* ID: 75a
+* Category: functional
+* Subcategory: generators
+* Short: Forin generators
+* Description:
+*   Tests for/in loop applied to generators.
+* [/Description]
+*
+****************************************************************************/
+
+// A generator function
+function gen_func( reset )
+static
+   counter = 1
+end
+   if reset
+      counter = 1
+      return
+   end
+   
+   if counter == 5: return oob(0)
+   return counter ++
+end
+
+
+sum = 0
+for value in gen_func
+   sum += value
+end
+
+if sum != 1+2+3+4: failure( "Simple loop" )
+
+// reset the generator function
+gen_func( true )
+
+str = ""
+for value in gen_func
+   forfirst: str += "Begin: "
+   str += value
+   formiddle: str += ", "
+   forlast: str += "."
+end
+
+if str != "Begin: 1, 2, 3, 4.": failure( "Complete loop" )
+
+success()
+
+/* end of file */

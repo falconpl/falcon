@@ -585,6 +585,11 @@ bool Item::isCallable() const
    if ( isClass() || isFunction() || isMethod() )
       return true;
 
+   if( isObject() )
+   {
+      return asObjectSafe()->hasProperty( "call__" );
+   }
+
    //a bit more complex: a callable array...
    if( type() == FLC_ITEM_ARRAY )
    {

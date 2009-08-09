@@ -179,6 +179,7 @@ ADD_LIBRARY( falcon_engine SHARED
    garbageable.cpp
    gcalloc.cpp
    gencode.cpp
+   generatorseq.cpp
    genericlist.cpp
    genericmap.cpp
    genericvector.cpp
