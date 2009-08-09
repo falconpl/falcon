@@ -919,10 +919,10 @@ class FALCON_DYN_CLASS StmtForin: public StmtBlock
    StatementList m_middle;
 
    Value *m_source;
-   Value *m_dest;
+   ArrayDecl *m_dest;
 
 public:
-   StmtForin( uint32 line, Value *dest, Value *source ):
+   StmtForin( uint32 line, ArrayDecl *dest, Value *source ):
       StmtBlock( line, t_forin ),
       m_source( source ),
       m_dest( dest )
@@ -940,7 +940,7 @@ public:
    StatementList &middleBlock() { return m_middle; }
 
    Value *source() const { return m_source; }
-   Value *dest() const { return m_dest; }
+   ArrayDecl *dest() const { return m_dest; }
 
    virtual Statement *clone() const;
 };

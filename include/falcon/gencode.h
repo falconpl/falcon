@@ -59,7 +59,8 @@ class FALCON_DYN_CLASS GenCode: public Generator
 
       uint32 m_tries;
       uint32 m_offset;
-      bool m_bIsForIn;
+      bool m_bIsForLast;
+      const StmtForin* m_ForinLoop;
       Stream *m_stream;
 
       uint32 addQuery( uint32 id, uint32 pos );
@@ -96,8 +97,11 @@ class FALCON_DYN_CLASS GenCode: public Generator
       void addTry( uint32 count = 1 ) { m_tries += count; }
       void removeTry( uint32 count = 1 ) { m_tries -= count; }
       uint32 tryCount() const { return m_tries; }
-      bool isForIn() const { return m_bIsForIn; }
-      void setForIn( bool b ) { m_bIsForIn = b; }
+      bool isForIn() const { return m_ForinLoop != 0; }
+      const StmtForin* ForinLoop() const { return m_ForinLoop; }
+      void setForIn( const StmtForin* forin ) { m_ForinLoop = forin; }
+      void setForLast( bool l ) { m_bIsForLast = l; }
+      bool isForLast() const { return m_bIsForLast; }
    };
 
    class c_varpar {

@@ -137,8 +137,12 @@ while it will fill OP2 with an integer item containing 15H.
 #define P_NEG         0x11
 /** NOT: sets OP1 to 0 if it's true, and to 1 if it's false. */
 #define P_NOT         0x12
-/** TRAL \<int32\>: Traverse last. */
+
+/** TRAL \<int32\>: Traverse last.
+ * @see P_TRAV
+ * */
 #define P_TRAL        0x13
+
 /** IPOP: Pops last OP1 elements from the stack. */
 #define P_IPOP        0x14
 /** XPOP: exchange OP1 and the topmost stack element. */
@@ -254,12 +258,9 @@ while it will fill OP2 with an integer item containing 15H.
 /** LDV: Load from object OP1 the property OP2 in A, OP1.OP2 -> A  */
 #define P_LDP         0x3E
 
-/** TRAN \<int32\>, \<int32\>, \<int32\>
+/** TRAN \<int32\>, \<int32\>
    Traverse next.
-   First parameter is the loop point (begin of the loop), second is the loop end
-   (loop cleanup sequence). If third parameter is NTD32 == 0, the TRAV iterator is advanced,
-   if it's 1 the current element is removed and iterator is updated.
-   If this was the last element of the collection, IP is set to param2, else it's set to param1.
+   @see P_TRAV
 */
 #define P_TRAN        0x3F
 
@@ -309,10 +310,117 @@ while it will fill OP2 with an integer item containing 15H.
 /** STPR: store reference to OP3 into property OP2 of OP1:  &OP3 -> OP1.OP2 */
 #define P_STPR        0x54
 
-/** TRAV is a ternary opcode;
-   TRAV DEST, SOURCE, jmp_position.
-   It push 3 items in the stack ( a number, the destination and the source )
+/** TRAV, Traverse an iterable Sequence.
 
+     TRAV is a complex instruction that involves the stack, a set
+   of target variables, and 3 other opcodes (TRAN traverse next,
+   TRDN, Traverse dropping next and TRAL, traverse last). This
+   instructions are meant to map the for/in loop at Falcon language
+   level.
+
+     TRAV initializes the loop adding an iterator to the SOURCE
+   variable on top of the stack, or eventually skips the loop
+   altogether if the source is empty (or nil).
+
+     TRAV declares how many variables will receive elements
+   from source. Those variables are then stored immediately
+   below as NOP opcodes with a single parameter (a target variable).
+
+     If source is a dictionary sequence, TRAV must be provided with
+   exactly two variables that will receive the key and the value of
+   each element; otherwise, if provided with one variable,
+   TRAV will store the current item in that variable, and if provided
+   with more variables, it will try to consider each element as an
+   array and unpack it in the variables.
+
+     TRAN and TRDN work similarly to TRAN, but they use the variable at
+   stack top as the current iterator.
+
+     A for/in loop is divided in 4 areas, all of which optional. The main
+   area (MAIN) is executed for each item in the collection. The FIRST
+   block is executed only BEFORE the first time MAIN is executed, the
+   MIDDLE block is executed after each MAIN block execution except for
+   the last one (when the iterator has not a "next" element), and the
+   LAST block which is executed after the MAIN for the last element.
+
+     If a MIDDLE block is provided, then then loop is configured as if
+   there was a LAST block, possibly left empty if there isn't any code
+   for that.
+
+     TRAN skips to the next element and loads the variables in its var
+   block. If there is a loop to be performed, it loops to the MAIN block,
+   otherwise it proceeds.
+
+     TRDN is similar to TRAN, but instead advancing to the next element,
+   it deletes the current element, and loads the loop variables with the
+   new value of the iterator. It is generated 1:1 on "continue dropping"
+   instruction.
+
+     BOTH TRAN and TRDN are meant to execute the last block after the last
+   element main block for the last element has been executed. If there isn't
+   any last block, it is simply left empty and the jump label lands at the
+   same position of the loop end (same target as a "break" instruction).
+
+     TRAL simply jumps to its label if the current item is the last item
+   in the sequence (i.e. if the iterator on stack top ! hasNext()). This
+   switches the middle and last blocks.
+
+   \code
+      TRAV NV, p_label_loop_end, $S    ==> push iterator($S)
+      {VARBLOCK: NV rep of NOP $v }
+
+      [FIRST BLOCK
+         ...
+         TRDN  NV, label_loop_begin, label_loop_last
+         {VARBLOCK: NV rep of NOP $v }
+         ...
+      ]
+
+      label_loop_begin:
+      [MAIN BLOCK
+         ...
+         TRDN  NV, label_loop_begin, label_loop_last
+         {VARBLOCK: NV rep of NOP $v }
+         ...
+      ]
+
+      [MIDDLE BLOCK
+         ; this skips this block if the current element is the last one.
+         TRAL label_loop_last
+         ...
+         TRDN NV, label_loop_begin, label_loop_last
+         {VARBLOCK: NV rep of NOP $v }
+         ...
+      ]
+
+      label_loop_next:
+      TRAN NV, label_loop_begin
+      {VARBLOCK: NV rep of NOP $v }
+
+      label_loop_last:
+      [LAST BLOCK
+         ...
+         TRDN  0, label_loop_end, label_loop_end
+         ...
+      ]
+
+      label_loop_end:
+      POP
+
+      p_label_loop_end:
+   \endcode
+
+   \note TRAV, TRAN and TRDN VARBLOCK elements can contain only
+         global, local or parameter symbols.
+
+   \note TRDN has a special behavior when OP1 == 0: it pops the
+         last element in the sequence and goes to loop end, instead of
+         erasing the current element and preparing the loop variables.
+
+   \note TRAL also advances the iterator past the last element, to have
+         the position of the iterator at last block after the last element,
+         as TRDN and TRAV would leave it, and so that "TRDN 0, .., .." can
+         go back one position and delete the element.
 */
 #define P_TRAV        0x55
 
@@ -386,7 +494,11 @@ while it will fill OP2 with an integer item containing 15H.
 /** STEX: String expansion; expand string in OP1. */
 #define P_STEX        0x63
 
-/** TRAC: Traverse change. Change current (value) item in traversal loops to shallow copy of OP1 */
+/** TRAC: Traverse change.
+ *  TRAC OP1  => OP1-> current value
+ *  Change current (value) item in traversal loops to shallow copy of OP1
+ *  @see TRAV
+ *  */
 #define P_TRAC        0x64
 
 /** WRT: Write on standard output (TODO: also other vm streams using parameters) */
@@ -415,7 +527,14 @@ while it will fill OP2 with an integer item containing 15H.
 */
 #define P_OOB           0x68
 
-#define FLC_PCODE_COUNT 0x69
+/** TRDN: Traverse dropping next.
+ *  TRDN \<int32\>, \<int32\>, \<int32\>
+ *  @see TRAV
+ *  */
+#define P_TRDN          0x69
+
+
+#define FLC_PCODE_COUNT 0x70
 
 #endif
 

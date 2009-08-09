@@ -254,7 +254,6 @@ void VMachine::internal_construct()
    m_opHandlers[ P_SHLS] = opcodeHandler_SHLS;
    m_opHandlers[ P_SHRS] = opcodeHandler_SHRS;
    m_opHandlers[ P_LSB ] = opcodeHandler_LSB;
-   m_opHandlers[ P_OOB ] = opcodeHandler_OOB;
    m_opHandlers[ P_SELE ] = opcodeHandler_SELE;
    m_opHandlers[ P_INDI ] = opcodeHandler_INDI;
    m_opHandlers[ P_STEX ] = opcodeHandler_STEX;
@@ -265,6 +264,8 @@ void VMachine::internal_construct()
    m_opHandlers[ P_EVAL ] = opcodeHandler_EVAL;
    m_opHandlers[ P_CLOS ] = opcodeHandler_CLOS;
    m_opHandlers[ P_PSHL ] = opcodeHandler_PSHL;
+   m_opHandlers[ P_OOB ] = opcodeHandler_OOB;
+   m_opHandlers[ P_TRDN ] = opcodeHandler_TRDN;
 
    // Finally, register to the GC system
    memPool->registerVM( this );
@@ -3954,6 +3955,88 @@ void VMachine::unbindItem( const String& name, Item &tgt ) const
       // create the lbind.
       tgt.setLBind( new CoreString( name ) );
    }
+}
+
+
+void VMachine::expandTRAV( uint32 count, Iterator& iter )
+{
+   // we work a bit differently for dictionaries and normal sequences.
+   if ( iter.sequence()->isDictionary() )
+   {
+      if( count == 1 )
+      {
+         // if we have one variable, we must create a pair holding key and value
+         CoreArray* ca = new CoreArray(2);
+         ca->items()[0] = iter.getCurrentKey();
+         ca->items()[1] = iter.getCurrent();
+         ca->length(2);
+         *getNextTravVar() = ca;
+      }
+      else if ( count != 2 )
+      {
+         throw
+            new AccessError( ErrorParam( e_unpack_size ).origin( e_orig_vm ).extra( "TR*" ) );
+      }
+      else {
+         // we have two vars to decode
+         Item* k = getNextTravVar();
+         Item* v = getNextTravVar();
+         *k = iter.getCurrentKey();
+         *v = iter.getCurrent();
+      }
+   }
+   else {
+      // for all the other cases, when we have 1 variable we must just set it inside...
+      if( count == 1 )
+      {
+         *getNextTravVar() = iter.getCurrent();
+      }
+      else {
+         // otherwise, we must match the number of variables with the count of sub-variables.
+         const Item& current = iter.getCurrent();
+         if( ! current.isArray() || current.asArray()->length() != count )
+         {
+            throw
+               new AccessError( ErrorParam( e_unpack_size ).origin( e_orig_vm ).extra( "TR*" ) );
+         }
+
+         CoreArray* source = current.asArray();
+         for( int p = 0; p < count; p++ )
+         {
+            *getNextTravVar() = source->items()[p];
+         }
+      }
+   }
+}
+
+Item* VMachine::getNextTravVar()
+{
+   fassert( m_currentContext->pc_next() % 4 == 0 );
+
+   byte* code = m_currentContext->code();
+   fassert( code[ m_currentContext->pc_next() ] == P_NOP );
+
+   int32 type = int( code[ m_currentContext->pc_next()+1 ] );
+   m_currentContext->pc_next()+=sizeof( int32 );
+   int32 id = *reinterpret_cast< int32 * >( code + m_currentContext->pc_next() );
+   m_currentContext->pc_next()+=sizeof( int32 );
+
+   switch( type )
+   {
+   case P_PARAM_GLOBID:
+      return &moduleItem( id );
+
+   case P_PARAM_LOCID:
+      return local( id );
+
+   case P_PARAM_PARID:
+      return param( id );
+
+   }
+
+   // shall never be here.
+   fassert( false );
+   return 0;
 }
 
 //=====================================================================================

@@ -706,7 +706,7 @@ StmtForin::StmtForin( const StmtForin &other ):
    m_middle( other.m_middle )
 {
    m_source = other.m_source == 0 ? 0 : new Value( * other.m_source );
-   m_dest = other.m_dest == 0 ? 0 : new Value( * other.m_dest );
+   m_dest = other.m_dest == 0 ? 0 : new ArrayDecl( * other.m_dest );
 }
 
 StmtForin::~StmtForin()

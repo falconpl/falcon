@@ -2,7 +2,7 @@
 * Falcon test suite
 *
 *
-* ID: 15q
+* ID: 15m
 * Category: loops
 * Subcategory: forin
 * Short: Forin dictionary complete
@@ -28,16 +28,15 @@ for key, value in dict
    if value % 2 == 1
       continue dropping
    end
-
-   result += key + "=" + value.toString()
    
+   result += key + "=" + value.toString()
    .= "Changed"
    
    formiddle: result += ","
    forlast: result += "."
 end
 
-if result != "f:beta=2,delta=4,.": failure( "In looping" )
+if result != "f:beta=2,delta=4,": failure( "In looping" )
 
 if dict.len() != 2: failure( "In dropping" )
 

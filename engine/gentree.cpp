@@ -373,7 +373,7 @@ void GenTree::generate( const Statement *cmp, const char *specifier, bool sameli
       {
          m_out->writeString( "FOR-IN " );
          const StmtForin *sfor = static_cast< const StmtForin *>( cmp );
-         gen_value( sfor->dest() );
+         gen_array( sfor->dest() );
          m_out->writeString( " IN " );
          gen_value( sfor->source() );
          m_out->writeString( "\n" );
@@ -408,7 +408,7 @@ void GenTree::generate( const Statement *cmp, const char *specifier, bool sameli
             m_out->writeString( "\n" );
          }
 
-         // generatest the switch symbol list
+         // Generates the switch symbol list
          if ( ! stry->objCases().empty() )
          {
             m_out->writeString( "SYMBOL CATCHES " );

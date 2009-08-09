@@ -173,7 +173,6 @@ void opcodeHandler_PSHL( register VMachine *vm );
 
 void opcodeHandler_POWS( register VMachine *vm );
 void opcodeHandler_LSB( register VMachine *vm );
-void opcodeHandler_OOB( register VMachine *vm );
 void opcodeHandler_SELE( register VMachine *vm );
 void opcodeHandler_INDI( register VMachine *vm );
 void opcodeHandler_STEX( register VMachine *vm );
@@ -182,6 +181,8 @@ void opcodeHandler_WRT( register VMachine *vm );
 void opcodeHandler_STO( register VMachine *vm );
 void opcodeHandler_FORB( register VMachine *vm );
 void opcodeHandler_EVAL( register VMachine *vm );
+void opcodeHandler_OOB( register VMachine *vm );
+void opcodeHandler_TRDN( register VMachine *vm );
 
 
 class VMachine;
@@ -570,6 +571,9 @@ protected:
    LiveModule *prelink( Module *mod, bool bIsMain, bool bPrivate );
 
    void raiseHardError( int code, const String &expl, int32 line );
+
+   /** Gets the next item in a trav loop */
+   Item* getNextTravVar();
 
    /** Destroys the virtual machine.
       Protected as it can't be called directly.
@@ -2201,6 +2205,20 @@ public:
 
    void unbindItem( const String& name, Item &tgt ) const;
 
+   /** Change the position of the next executed instruction. */
+   void jump( uint32 pos )
+   {
+      m_currentContext->pc_next() = pos;
+   }
+
+   /** Expand a number of variables from the current value of an iterator.
+
+       Uses the current VM pc_next position to decode \b count variables
+    stored in NOP opcodes, storing the current value of the iterator
+    into them.
+    * */
+   void expandTRAV( uint32 count, Iterator& iter );
+
 //==========================================================================
 //==========================================================================
 //==========================================================================
@@ -2313,7 +2331,6 @@ public:
    friend void opcodeHandler_PSHL( register VMachine *vm );
    friend void opcodeHandler_POWS( register VMachine *vm );
    friend void opcodeHandler_LSB( register VMachine *vm );
-   friend void opcodeHandler_OOB( register VMachine *vm );
    friend void opcodeHandler_SELE( register VMachine *vm );
    friend void opcodeHandler_INDI( register VMachine *vm );
    friend void opcodeHandler_STEX( register VMachine *vm );
@@ -2322,6 +2339,8 @@ public:
    friend void opcodeHandler_STO( register VMachine *vm );
    friend void opcodeHandler_FORB( register VMachine *vm );
    friend void opcodeHandler_EVAL( register VMachine *vm );
+   friend void opcodeHandler_OOB( register VMachine *vm );
+   friend void opcodeHandler_TRDN( register VMachine *vm );
 };
 
 

@@ -34,6 +34,11 @@ class FALCON_DYN_CLASS RangeSeq: public Sequence
 public:
    RangeSeq( const CoreRange &rng );
    RangeSeq( int64 s, int64 e, int64 step );
+   RangeSeq( const RangeSeq& other ):
+      m_start( other.m_start ),
+      m_end( other.m_end ),
+      m_step( other.m_step )
+      {}
 
    virtual ~RangeSeq();
 
@@ -43,6 +48,7 @@ public:
    virtual bool empty() const;
    virtual void append( const Item &data );
    virtual void prepend( const Item &data );
+   virtual FalconData* clone() const;
 
    //==============================================================
    // Iterator management

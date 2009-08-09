@@ -168,6 +168,20 @@ class FALCON_DYN_CLASS GenHAsm: public Generator
    List m_loops;
    List m_trys;
 
+   class LoopInfo
+   {
+   public:
+      LoopInfo( int id, const Statement* l ):
+         m_loop( l ),
+         m_id( id ),
+         m_isForLast( false )
+         {}
+
+      const Statement* m_loop;
+      int m_id;
+      bool m_isForLast;
+   };
+
    /** Current context of functions, needed i.e. for states. */
    List m_functions;
 

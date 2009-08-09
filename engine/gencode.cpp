@@ -32,7 +32,8 @@ GenCode::c_jmptag::c_jmptag( Stream *stream, uint32 offset ):
    m_elifQueries( &traits::t_List() ),
    m_tries( 0 ),
    m_offset( offset ),
-   m_bIsForIn( false ),
+   m_bIsForLast( false ),
+   m_ForinLoop(0),
    m_stream( stream )
 {
    m_defs[0] = m_defs[1] = m_defs[2] = m_defs[3] = JMPTAG_UNDEFINED;
@@ -563,10 +564,50 @@ void GenCode::gen_statement( const Statement *stmt )
             if( tag.isForIn() )
             {
                const StmtContinue *cont = static_cast<const StmtContinue *>( stmt );
-               gen_pcode( P_TRAN,
-                  c_param_fixed( tag.addQueryBegin() ),
-                  c_param_fixed( tag.addQueryElif( 0, 2 ) ),
-                  c_param_fixed( cont->dropping() ? 1 : 0 ) );
+               // last element has a special continue semantic.
+               if( tag.isForLast() )
+               {
+                  // on dropping, just drop the last and go away
+                  if( cont->dropping() )
+                  {
+                     gen_pcode( P_TRDN,
+                       c_param_fixed( tag.addQueryEnd() ),
+                       c_param_fixed( 0 ),
+                       c_param_fixed( 0 ) );
+                  }
+                  else
+                  {
+                     // exactly as a break
+                     jmppos = tag.addQueryEnd();
+                     gen_pcode( P_JMP, c_param_fixed( jmppos ) );
+                  }
+               }
+               else
+               {
+                  if( cont->dropping() )
+                  {
+                     const StmtForin* fi = tag.ForinLoop();
+                     uint32 nv = fi->dest()->size();
+                     gen_pcode( P_TRDN,
+                          c_param_fixed( tag.addQueryBegin() ),
+                          c_param_fixed( tag.addQueryEnd( 2 ) ),
+                          c_param_fixed( nv ) );
+
+                     ListElement* ite = fi->dest()->begin();
+                     while( ite != 0 )
+                     {
+                        Value* v = (Value*) ite->data();
+                        fassert( v->isSimple() );
+                        gen_pcode( P_NOP, v );
+                        ite = ite->next();
+                     }
+                  }
+                  else {
+                     // a normal continue -> next
+                     jmppos = tag.addQueryNext();
+                     gen_pcode( P_JMP, c_param_fixed( jmppos ) );
+                  }
+               }
             }
             else {
                jmppos = tag.addQueryNext();
@@ -963,87 +1004,37 @@ void GenCode::gen_statement( const Statement *stmt )
       case Statement::t_forin:
       {
          const StmtForin *loop = static_cast<const StmtForin *>( stmt );
-         int neededVars = 0;  // vars pushed by reference for target expansion
 
          // begin a new loop
          c_jmptag tag( m_outTemp );
-         tag.setForIn( true );
+         tag.setForIn( loop );
          m_labels_loop.pushBack( &tag );
 
-         // ================================== Trav block
-         // PSHR  $var1
-         // ...
-         // PSHR  $varN
-         // TRAV Jump On Failure, NumberOfVars (immediate int), SOURCE (or A),
-         //            ----or----
-         // TRAV Jump On Failure, $target, SOURCE (or A)
-         //    ---> Push immediate int (counter) or object (iterator)
-         //    ---> Push PSHR $target / immediate integer (num of vars)
-         //    ---> Push source
+         uint32 neededVars = loop->dest()->size();
 
-         //    [FORFIRST Block]
-         //   ...
-         // begin:
-         //    [loop body]
-         //    [If we have a forlast block  --
-         //      TRAL (last)]
-         // [FORMIDDLE block]
-         //
-         // TRAN begin
-         // last:
-         //   [last block]
-         // exit:
-         // ipop 3 + pushed vars.
-
-         if ( loop->dest()->isSimple() ) {
-            if ( loop->source()->isSimple() ) {
-               gen_pcode( P_TRAV, c_param_fixed( tag.addQueryPostEnd() ), loop->dest(), loop->source() );
-            }
-            else {
-               gen_value( loop->source() );
-               gen_pcode( P_TRAV, c_param_fixed( tag.addQueryPostEnd() ), loop->dest(), e_parA );
-            }
+         if( loop->source()->isSimple() )
+         {
+            gen_pcode( P_TRAV,
+                  c_param_fixed( tag.addQueryPostEnd() ),
+                  c_param_fixed( neededVars ),
+                  loop->source() );
          }
-         else {
-            if( loop->dest()->type() == Value::t_array_decl ) {
-               // push in the stack needed vars.
-               ListElement *it_t = loop->dest()->asArray()->begin();
-               neededVars = 0;
-
-               while( it_t != 0 ) {
-                  const Value *val = (const Value *) it_t->data();
-                  if( val->isSimple() )
-                     gen_pcode( P_PSHR, val );
-                  else {
-                     gen_value( val );
-                     gen_pcode( P_PSHR, e_parA );
-                  }
-                  ++neededVars;
-                  it_t = it_t->next();
-               }
-
-               if ( loop->source()->isSimple() ) {
-                  gen_pcode( P_TRAV, c_param_fixed( tag.addQueryPostEnd() ),
-                     (int32) neededVars, loop->source() );
-               }
-               else {
-                  gen_value( loop->source() );
-                  gen_pcode( P_TRAV, c_param_fixed( tag.addQueryPostEnd() ),
-                     (int32) neededVars, e_parA );
-               }
-            }
-            else {
-               gen_value( loop->dest() );
-               if ( loop->source()->isSimple() ) {
-                  gen_pcode( P_TRAV, c_param_fixed( tag.addQueryPostEnd() ), e_parA, loop->source() );
-               }
-               else {
-                  gen_pcode( P_PUSH, e_parA );
-                  gen_value( loop->source() );
-                  gen_pcode( P_POP, e_parB );
-                  gen_pcode( P_TRAV, c_param_fixed( tag.addQueryPostEnd() ), e_parB, e_parA );
-               }
-            }
+         else
+         {
+            gen_value( loop->source() );
+            gen_pcode( P_TRAV,
+                  c_param_fixed( tag.addQueryPostEnd() ),
+                  c_param_fixed( neededVars ),
+                  e_parA );
+         }
+            // generate all the NOPs
+         ListElement* ite = loop->dest()->begin();
+         while( ite != 0 )
+         {
+            Value* v = (Value*) ite->data();
+            fassert( v->isSimple() );
+            gen_pcode( P_NOP, v );
+            ite = ite->next();
          }
 
          // have we got a "first" block?
@@ -1068,20 +1059,29 @@ void GenCode::gen_statement( const Statement *stmt )
          // after the formiddle block we have the next element pick
          tag.defineNext();
 
-         // second parameter 0 --> do not delete.
-         gen_pcode( P_TRAN, c_param_fixed( tag.addQueryBegin() ),
-               c_param_fixed( tag.addQueryElif( 0, 2 ) ),
-               c_param_fixed( 0 ) );
+         gen_pcode( P_TRAN,
+               c_param_fixed( tag.addQueryBegin() ),
+               c_param_fixed( neededVars )
+               );
+         ite = loop->dest()->begin();
+         while( ite != 0 )
+         {
+            Value* v = (Value*) ite->data();
+            fassert( v->isSimple() );
+            gen_pcode( P_NOP, v );
+            ite = ite->next();
+         }
 
          // and the last time...
          tag.defineElif( 0 );
          if( ! loop->lastBlock().empty() ) {
+            tag.setForLast( true );
             gen_block( &loop->lastBlock() );
          }
 
          // create break landing code:
          tag.defineEnd();
-         gen_pcode( P_IPOP, c_param_fixed( 3 + neededVars) );
+         gen_pcode( P_IPOP, c_param_fixed(1) );
          tag.definePostEnd();
 
          m_labels_loop.popBack();

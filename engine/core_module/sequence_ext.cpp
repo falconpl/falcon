@@ -89,6 +89,10 @@ namespace core {
       // (1): "A" / number == chr( ord("A") + number )
    @endcode
 
+   This method actually adds each item in the comprehension to the sequence or
+   sequence-compatible item in self. This means that comprehension needs not to
+   be performed on a new, empty sequence; it may be also used to integrate more
+   data in already existing sequences.
 */
 FALCON_FUNC  Sequence_comp ( ::Falcon::VMachine *vm )
 {

@@ -38,6 +38,8 @@
 #include <falcon/membuf.h>
 #include <falcon/vmmsg.h>
 #include <falcon/vmevent.h>
+#include <falcon/rangeseq.h>
+#include <falcon/garbagepointer.h>
 
 #include <math.h>
 #include <errno.h>
@@ -403,71 +405,23 @@ void opcodeHandler_NOT( register VMachine *vm )
 //13
 void opcodeHandler_TRAL( register VMachine *vm )
 {
-   uint32 pcNext = vm->getNextNTD32();
-
-   if ( vm->stack().length() < 3 ) {
+   if ( vm->stack().length() < 1 ) {
       vm->raiseHardError( e_stackuf, "TRAL", __LINE__ );
-      return;
    }
 
-   register uint32 size = vm->stack().length();
-   Item *iterator = &vm->stack()[ size - 3 ];;
-   Item *source = &vm->stack()[ size - 1 ];;
+   uint32 loop_last = vm->getNextNTD32();
 
-   switch( source->type() )
+   const Item &top = vm->stack().back();
+   fassert( top.isGCPointer() );
+
+   Iterator* iter = dyncast<Iterator*>(top.asGCPointer());
+   // is this the last element?
+   if (  ! iter->hasNext() )
    {
-      case FLC_ITEM_ARRAY:
-         if ( iterator->asInteger() + 1 >= source->asArray()->length()  )
-            vm->m_currentContext->pc_next() = pcNext;
-      break;
+      if( iter->hasCurrent() )
+         iter->next(); // position past last element
 
-      case FLC_ITEM_DICT:
-      case FLC_ITEM_OBJECT:
-      {
-         Iterator *iter = (Iterator *) iterator->asGCPointer();
-         if ( ! iter->hasNext() )
-            vm->m_currentContext->pc_next() = pcNext;
-      }
-      break;
-
-      case FLC_ITEM_STRING:
-         if ( iterator->asInteger() + 1 >= source->asString()->length() )
-            vm->m_currentContext->pc_next() = pcNext;
-      break;
-
-      case FLC_ITEM_MEMBUF:
-         if ( iterator->asInteger() + 1 >= source->asMemBuf()->length() )
-            vm->m_currentContext->pc_next() = pcNext;
-      break;
-
-      case FLC_ITEM_RANGE:
-      {
-         if ( source->asRangeIsOpen() )
-         {
-            vm->m_currentContext->pc_next() = pcNext;
-         }
-
-         int64 increment = source->asRangeStep();
-         if ( source->asRangeStart() < source->asRangeEnd() )
-         {
-            if ( increment == 0 )
-               increment = 1;
-
-            if ( iterator->asInteger() + increment >= source->asRangeEnd() )
-               vm->m_currentContext->pc_next() = pcNext;
-         }
-         else {
-            if ( increment == 0 )
-               increment = -1;
-
-            if ( iterator->asInteger() + increment < source->asRangeEnd() )
-               vm->m_currentContext->pc_next() = pcNext;
-         }
-      }
-      break;
-
-      default:
-         throw new TypeError( ErrorParam( e_invop ).extra("TRAL").origin( e_orig_vm ) );
+      vm->jump( loop_last );
    }
 }
 
@@ -1028,246 +982,26 @@ void opcodeHandler_LDP( register VMachine *vm )
 // 3F
 void opcodeHandler_TRAN( register VMachine *vm )
 {
-   uint32 p1 = vm->getNextNTD32();
-   uint32 p2 = vm->getNextNTD32();
-   uint32 p3 = vm->getNextNTD32();
-
-   if ( vm->stack().length() < 3 ) {
+   if ( vm->stack().length() < 1 ) {
       vm->raiseHardError( e_stackuf, "TRAN", __LINE__ );
    }
 
-   register int size = vm->stack().length();
-   Item *iterator = &vm->stackItem( size - 3 );
-   bool isIterator = ! iterator->isInteger();
-   Item *dest = &vm->stackItem( size - 2 );
-   bool isDestStack = ! dest->isReference();
-   Item *source = &vm->stackItem( size - 1 );
+   uint32 loop_begin = vm->getNextNTD32();
+   uint32 varCount = vm->getNextNTD32();
+   const Item &top = vm->stack().back();
+   fassert( top.isGCPointer() );
 
-   switch( source->type() )
+   Iterator* iter = dyncast<Iterator*>(top.asGCPointer());
+   if( iter->isValid() && iter->next() )
    {
-      case FLC_ITEM_ARRAY:
-      {
-         if ( isIterator )
-         {
-            vm->raiseHardError( e_stackuf, "TRAN", __LINE__ );
-         }
-
-         CoreArray *sarr = source->asArray();
-         uint32 counter = (uint32) iterator->asInteger();
-
-         if( p3 == 1 )
-         {
-            if ( counter >= sarr->length() )
-            {
-               vm->raiseHardError( e_arracc, "TRAN", __LINE__  );
-               return;
-            }
-            sarr->remove( counter );
-         }
-         else {
-            counter++;
-            //update counter
-            iterator->setInteger( counter );
-         }
-
-         if ( counter >= sarr->length() ) {
-            //we are done -- go on trough last element block and cleanup
-            vm->m_currentContext->pc_next() = p2;
-            return;
-         }
-
-         source = & (*sarr)[counter];
-         if( isDestStack )
-         {
-            uint32 vars = (uint32) dest->asInteger();
-            if ( ! source->isArray() || vars != source->asArray()->length() ) {
-               throw
-                  new AccessError( ErrorParam( e_unpack_size ).origin( e_orig_vm ).extra( "TRAN" ) );
-            }
-
-            CoreArray *sarr = source->asArray();
-            for ( uint32 i = 0; i < vars; i ++ ) {
-               vm->stackItem( size - 3 - vars + i ).dereference()->copy( (* sarr )[i] );
-            }
-         }
-         else
-            dest->dereference()->copy( *source );
-
-      }
-      break;
-
-      case FLC_ITEM_DICT:
-         if ( ! isIterator || ! isDestStack )
-         {
-            throw
-               new AccessError( ErrorParam( e_unpack_size ).origin( e_orig_vm ).extra( "TRAN" ) );
-         }
-         else {
-            Iterator *iter = (Iterator *) iterator->asGCPointer();
-
-            if( ! iter->isValid() )
-            {
-               vm->raiseHardError( e_arracc, "TRAN", __LINE__  );
-               return;
-            }
-
-            if( p3 == 1 )
-            {
-               iter->erase();
-               if( ! iter->hasCurrent() )
-               {
-                  vm->m_currentContext->pc_next() = p2;
-                  return;
-               }
-            }
-            else {
-               if( ! iter->next() )
-               {
-                  // great, we're done -- let the code pass through.
-                  vm->m_currentContext->pc_next() = p2;
-                  return;
-               }
-            }
-
-            vm->stackItem( size -3 - 2 ).dereference()->
-                  copy( iter->getCurrentKey() );
-            vm->stackItem( size -3 - 1 ).dereference()->
-                  copy( *iter->getCurrent().dereference() );
-         }
-      break;
-
-      case FLC_ITEM_OBJECT:
-         if ( ! isIterator )
-         {
-            vm->raiseHardError( e_arracc, "TRAN", __LINE__  );
-            return;
-         }
-         else {
-            Iterator *iter = (Iterator *) iterator->asGCPointer();
-
-            if( ! iter->isValid() )
-            {
-               vm->raiseHardError( e_arracc, "TRAN", __LINE__  );
-               return;
-            }
-
-            if( p3 == 1 )
-            {
-               iter->erase();
-
-               // had the delete invalidated this?
-               if( ! iter->hasCurrent() )
-               {
-                  vm->m_currentContext->pc_next() = p2;
-                  return;
-               }
-            }
-            else {
-               if( ! iter->next() )
-               {
-                  // great, we're done -- let the code pass through.
-                  vm->m_currentContext->pc_next() = p2;
-                  return;
-               }
-            }
-
-            *dest->dereference() = iter->getCurrent();
-         }
-      break;
-
-      case FLC_ITEM_STRING:
-         if ( isIterator || isDestStack )
-         {
-            throw
-               new AccessError( ErrorParam( e_unpack_size ).origin( e_orig_vm ).extra( "TRAN" ) );
-         }
-         else {
-            uint32 counter = (uint32) iterator->asInteger();
-            String *sstr = source->asString();
-
-            if( p3 == 1 )
-            {
-               sstr->remove( counter, 1 );
-            }
-            else {
-               counter++;
-               //update counter
-               iterator->setInteger( counter );
-            }
-
-            if( counter >= sstr->length() ) {
-               vm->m_currentContext->pc_next() = p2;
-               return;
-            }
-
-            *dest->dereference() = new CoreString(
-                  sstr->subString( counter, counter + 1 ) );
-         }
-      break;
-
-      case FLC_ITEM_MEMBUF:
-         if ( isIterator || isDestStack )
-         {
-            throw
-               new AccessError( ErrorParam( e_unpack_size ).origin( e_orig_vm ).extra( "TRAN" ) );
-         }
-         else {
-            uint32 counter = (uint32) iterator->asInteger();
-            MemBuf *smb = source->asMemBuf();
-
-            counter++;
-            //update counter
-            iterator->setInteger( counter );
-
-            if( counter >= smb->length() ) {
-               vm->m_currentContext->pc_next() = p2;
-               return;
-            }
-
-            *dest->dereference() = (int64) smb->get(counter);
-         }
-      break;
-
-      case FLC_ITEM_RANGE:
-         if ( isIterator || isDestStack )
-         {
-            throw
-               new AccessError( ErrorParam( e_unpack_size ).origin( e_orig_vm ).extra( "TRAN" ) );
-         }
-         else {
-            int64 counter = iterator->asInteger();
-            int64 increment = source->asRangeStep();
-            // if( p3 == 1 ) -- we Ignore this case, and let continue dropping to act as continue.
-
-            if( source->asRangeStart() < source->asRangeEnd() )
-            {
-               counter += increment == 0 ? 1 : increment;
-               if ( counter >= source->asRangeEnd() ) {
-                  vm->m_currentContext->pc_next() = p2;
-                  return;
-               }
-            }
-            else {
-               counter += increment == 0 ? -1 : increment;
-               if ( counter < source->asRangeEnd() ) {
-                  vm->m_currentContext->pc_next() = p2;
-                  return;
-               }
-            }
-
-            //update counter
-            iterator->setInteger( counter );
-            *dest->dereference() = (int64) counter;
-         }
-      break;
-
-      default:
-         vm->raiseHardError( e_invop, "TRAN", __LINE__  );
-         return;
+      // Ok, we proceeded to the next item; prepare the vars
+      vm->expandTRAV( varCount, *iter );
+      vm->currentContext()->pc_next() = loop_begin;
    }
-
-   // loop to begin.
-   vm->m_currentContext->pc_next() = p1;
+   else
+   {
+      vm->currentContext()->pc_next() += sizeof(uint32) * 2 * varCount;
+   }
 }
 
 //40
@@ -1682,204 +1416,89 @@ void opcodeHandler_STPR( register VMachine *vm )
 //56
 void opcodeHandler_TRAV( register VMachine *vm )
 {
-   // we need some spare space. We preallocate it because if the parameters are in
-   // the stack, we need their pointers to stay valid.
-   vm->stack().resize( vm->stack().length() + 3 );
 
    // get the jump label.
-   int wayout = vm->getNextNTD32();
-   Item *real_dest = vm->getOpcodeParam( 2 );  // we may need it undereferenced
+   uint32 wayout = (uint32) vm->getNextNTD32();
+   // get the number of variables in the trav loop
+   uint32 varcount = (uint32) vm->getNextNTD32();
    Item *source = vm->getOpcodeParam( 3 )->dereference();
 
-   Item *dest = real_dest->dereference();
+   // our sequence:
+   Sequence *seq;
 
    switch( source->type() )
    {
       case FLC_ITEM_ARRAY:
-      {
-         CoreArray *array = source->asArray();
-         if( array->length() == 0 )
-            goto trav_go_away;
-
-
-         Item *sourceItem = &(*array)[ 0 ];
-         // is dest a distributed array? -- it has been pushed in the stack
-         if( vm->operandType( 1 ) == P_PARAM_INT32 || vm->operandType( 1 ) == P_PARAM_INT64 )
-         {
-            uint64 varCount = dest->asInteger();
-
-            if( sourceItem->type() != FLC_ITEM_ARRAY ||
-               varCount != sourceItem->asArray()->length() )
-            {
-               throw
-                  new AccessError( ErrorParam( e_unpack_size ).origin( e_orig_vm ).extra( "TRAV" ) );
-            }
-
-            for ( uint32 i = 0; i < varCount; i ++ ) {
-               vm->stackItem( vm->stack().length() - (uint32)varCount + i - 3).dereference()->copy(
-                        * ((* sourceItem->asArray() )[i].dereference()) );
-            }
-         }
-         else
-            dest->copy( *sourceItem->dereference() );
-
-         // prepare ... iterator
-         vm->stack()[ vm->stack().length()-3 ] = ( (int64) 0 );
-      }
-      break;
+         seq = &source->asArray()->items();
+         break;
 
       case FLC_ITEM_DICT:
-      {
-         CoreDict *dict = source->asDict();
-         if( dict->length() == 0 ) {
-            goto trav_go_away;
-         }
-
-         if( ! ( vm->operandType( 1 ) == P_PARAM_INT32 ||  vm->operandType( 1 ) == P_PARAM_INT64 ) ||
-              dest->asInteger() != 2 )
-         {
-            throw
-               new AccessError( ErrorParam( e_unpack_size ).origin( e_orig_vm ).extra( "TRAV" ) );
-         }
-
-         // we need an iterator...
-         Iterator *iter = new Iterator( &dict->items() );
-
-         register int stackSize = vm->stack().length();
-         vm->stackItem( stackSize - 5 ).dereference()->
-               copy( iter->getCurrentKey() );
-         vm->stackItem( stackSize - 4 ).dereference()->
-               copy( *iter->getCurrent().dereference() );
-
-         // prepare... iterator
-         vm->stack()[ vm->stack().length()-3 ].setGCPointer( iter );
-      }
-      break;
+         seq = &source->asDict()->items();
+         break;
 
       case FLC_ITEM_OBJECT:
-      {
-         Sequence* seq = source->asObjectSafe()->getSequence();
+         seq = source->asObjectSafe()->getSequence();
+         // we have mess on the stack, but it doesn't matter here.
          if( seq == 0 )
-         {
             throw new TypeError( ErrorParam( e_invop ).extra("TRAV").origin( e_orig_vm ) );
-         }
-
-         if ( seq->empty() )
-         {
-            goto trav_go_away;
-         }
-
-         if( vm->operandType( 1 ) == P_PARAM_INT32 || vm->operandType( 1 ) == P_PARAM_INT64 )
-         {
-            throw
-               new AccessError( ErrorParam( e_unpack_size ).origin( e_orig_vm ).extra( "TRAV" ) );
-         }
-
-         // we need an iterator...
-         Iterator* iter = new Iterator( seq );
-         *dest = iter->getCurrent();
-         vm->stack()[ vm->stack().length()-3 ].setGCPointer( iter );
-      }
-      break;
-
-      case FLC_ITEM_STRING:
-         {
-         String *sstr = source->asString();
-
-         if( sstr->length() == 0 )
-            goto trav_go_away;
-
-         // the loop may alter the string. Be sure it is in core.
-         if ( ! sstr->isCore() )
-         {
-            sstr = new CoreString( *sstr );
-            source->setString( sstr );
-         }
-
-         if( vm->operandType( 1 ) == P_PARAM_INT32 || vm->operandType( 1 ) == P_PARAM_INT64 )
-         {
-            throw
-               new AccessError( ErrorParam( e_unpack_size ).origin( e_orig_vm ).extra( "TRAV" ) );
-         }
-         *dest = new CoreString( sstr->subString(0,1) );
-         vm->stack()[ vm->stack().length()-3 ] = ( (int64) 0 );
-         }
          break;
 
-      case FLC_ITEM_MEMBUF:
-         if( source->asMemBuf()->length() == 0 )
-            goto trav_go_away;
-
-         if( vm->operandType( 1 ) == P_PARAM_INT32 || vm->operandType( 1 ) == P_PARAM_INT64 )
-         {
-            throw
-               new AccessError( ErrorParam( e_unpack_size ).origin( e_orig_vm ).extra( "TRAV" ) );
-         }
-         *dest = (int64) source->asMemBuf()->get(0);
-         vm->stack()[ vm->stack().length()-3 ] = ( (int64) 0 );
-         break;
 
       case FLC_ITEM_RANGE:
+         // optimize: avoid creating a bit of stuff if not needed
          if( source->asRangeIsOpen() ||
              (source->asRangeEnd() == source->asRangeStart() && source->asRangeStep() == 0) ||
              ( source->asRangeStep() > 0 && source->asRangeStart() > source->asRangeEnd() ) ||
              ( source->asRangeStep() < 0 && source->asRangeStart() < source->asRangeEnd() )
             )
          {
-            goto trav_go_away;
+            vm->jump( wayout );
+            return;
          }
 
-         if( vm->operandType( 1 ) == P_PARAM_INT32 || vm->operandType( 1 ) == P_PARAM_INT64 )
-         {
-            throw
-               new AccessError( ErrorParam( e_unpack_size ).origin( e_orig_vm ).extra( "TRAV" ) );
+         // ok, the range can generate a sequence. Hence...
+         try {
+            seq = new RangeSeq( *source->asRange() );
+            // also, save the sequence in a garbage sensible item.
+            // we don't record anywhere this item, but it will be marked
+            // as long as we have the iterator active in the stack.
+            GarbagePointer* ptr = new GarbagePointer( seq );
+            seq->owner( ptr );
+            seq->gcMark( vm->generation() ); // will mark our pointer
          }
-         *dest = (int64) source->asRangeStart();
-         vm->stack()[ vm->stack().length()-3 ] = ( (int64) source->asRangeStart() );
+         catch( ... ) {
+            fassert( false ); // must not throw
+         }
          break;
 
       case FLC_ITEM_NIL:
          // jump out
-         goto trav_go_away;
+         vm->jump( wayout );
+         return;
 
 
       default:
          throw new TypeError( ErrorParam( e_invop ).extra("TRAV").origin( e_orig_vm ) );
    }
 
-   // after the iterator/counter, push the source
-   if ( vm->operandType( 1 ) == P_PARAM_INT32 || vm->operandType( 1 ) == P_PARAM_INT64 )
+   // empty sequence?
+   if ( seq->empty() )
    {
-      vm->stack()[ vm->stack().length()-2 ] = dest->asInteger();
-   }
-   else {
-      Item refDest;
-      vm->referenceItem( refDest, *real_dest );
-      vm->stack()[ vm->stack().length()-2 ] = refDest;
+      vm->jump(wayout);
+      return;
    }
 
-   // and then the source by copy
-   vm->stack()[ vm->stack().length()-1 ] = *source;
+   // create the iterator and push it.
+   Item iterItem;
+   Iterator* current = new Iterator( seq );
+   iterItem.setGCPointer( current );
+   vm->pushParameter( iterItem );
 
-   // we're done.
-   return;
+   // the source is safe through back-marking of the iterator on its sequence,
+   // and of the sequence on its owner.
 
-trav_go_away:
-   vm->m_currentContext->pc_next() = wayout;
-   uint32 vars = 0;
-   // eventually pop referenced vars
-   if ( vm->operandType( 1 ) == P_PARAM_INT32 || vm->operandType( 1 ) == P_PARAM_INT64 )
-   {
-      vars = (uint32) dest->asInteger();
-   }
-
-   if( vars + 3 > vm->stack().length() )
-   {
-      vm->raiseHardError( e_stackuf, "TRAV", __LINE__  );
-   }
-   else {
-      vm->stack().resize( vm->stack().length() - vars - 3 );
-   }
+   // now distribute the current value of the element on the variables.
+   vm->expandTRAV( varcount, *current );
 }
 
 
@@ -2177,127 +1796,19 @@ void opcodeHandler_STEX( register VMachine *vm )
 //64
 void opcodeHandler_TRAC( register VMachine *vm )
 {
+   if ( vm->stack().length() < 1 ) {
+      vm->raiseHardError( e_stackuf, "TRAC", __LINE__ );
+   }
+
    Item *operand1 = vm->getOpcodeParam( 1 )->dereference();
+   const Item &top = vm->stack().back();
+   fassert( top.isGCPointer() );
+   Iterator* iter = dyncast<Iterator*>(top.asGCPointer());
 
-   if ( vm->stack().length() < 3 ) {
-      vm->raiseHardError( e_stackuf, "TRAC", __LINE__  );
-      return;
-   }
-
-   register int size = vm->stack().length();
-   Item *iterator = &vm->stackItem( size - 3 );
-   bool isIterator = ! iterator->isInteger();
-   Item *source = &vm->stackItem( size - 1 );
-
-   Item *copied = operand1;
-
-   Item *dest = 0;
-
-   switch( source->type() )
-   {
-      case FLC_ITEM_ARRAY:
-      {
-         if ( isIterator )
-         {
-            vm->raiseHardError( e_stackuf, "TRAC", __LINE__  );
-            return;
-         }
-
-         CoreArray *sarr = source->asArray();
-         uint32 counter = (uint32) iterator->asInteger();
-
-         if ( counter >= sarr->length() ) {
-            // item has been killed. We should do nothing but exit.
-            return;
-         }
-
-         dest = sarr->at( counter ).dereference();
-
-      }
-      break;
-
-      case FLC_ITEM_DICT:
-      case FLC_ITEM_OBJECT:
-         if ( ! isIterator )
-         {
-            vm->raiseHardError( e_stackuf, "TRAC", __LINE__  );
-            return;
-         }
-         else {
-            Iterator *iter = (Iterator *) iterator->asGCPointer();
-
-            if( ! iter->isValid() )
-            {
-               // item has been killed. We should do nothing but exit.
-               return;
-            }
-
-            dest = iter->getCurrent().dereference();
-         }
-      break;
-
-      case FLC_ITEM_MEMBUF:
-         if ( isIterator )
-         {
-            vm->raiseHardError( e_stackuf, "TRAC", __LINE__  );
-         }
-         else {
-            uint32 counter = (uint32) iterator->asInteger();
-            MemBuf *mb = source->asMemBuf();
-            if ( mb->length() < counter )
-            {
-               return;
-            }
-
-            if( copied->isOrdinal() )
-               mb->set( counter, (uint32) copied->forceInteger() );
-            else {
-               vm->raiseHardError( e_invop, "TRAC", __LINE__  );
-            }
-         }
-      // always return, we've managed the string.
-      return;
-
-      case FLC_ITEM_STRING:
-         if ( isIterator )
-         {
-            vm->raiseHardError( e_stackuf, "TRAC", __LINE__  );
-         }
-         else {
-            uint32 counter = (uint32) iterator->asInteger();
-            String *sstr = source->asString();
-            if ( sstr->length() < counter )
-            {
-               return;
-            }
-
-            if( copied->isString() )
-            {
-               sstr->change( counter, counter + 1, *copied->asString() );
-            }
-            else if( copied->isOrdinal() )
-               sstr->setCharAt( counter, (uint32) copied->forceInteger() );
-            else {
-               vm->raiseHardError( e_invop, "TRAC", __LINE__  );
-            }
-         }
-      // always return, we've managed the string.
-      return;
-
-      case FLC_ITEM_RANGE:
-         //
-         return;
-
-      default:
-         vm->raiseHardError( e_invop, "TRAC", __LINE__  );
-         return;
-   }
-
-   /*if( copied->isString() )
-      *dest = new CoreString( *copied->asString() );
-   else*/
-      *dest = *copied;
-
+   if( operand1->isString() )
+      iter->getCurrent() = new CoreString( *operand1->asString() );
+   else
+      iter->getCurrent() = *operand1;
 }
 
 //65
@@ -2382,6 +1893,42 @@ void opcodeHandler_OOB( register VMachine *vm )
 
       default:
          vm->regA().setBoolean( operand->isOob() );
+   }
+}
+
+// 0x69
+void opcodeHandler_TRDN( register VMachine *vm )
+{
+   if ( vm->stack().length() < 1 ) {
+      vm->raiseHardError( e_stackuf, "TRAC", __LINE__ );
+   }
+
+   uint32 loop_begin = vm->getNextNTD32();
+   uint32 loop_out = vm->getNextNTD32();
+   uint32 vars = vm->getNextNTD32();
+
+   const Item &top = vm->stack().back();
+   fassert( top.isGCPointer() );
+   Iterator* iter = dyncast<Iterator*>(top.asGCPointer());
+
+   if( vars == 0 )
+   {
+      fassert( iter->hasPrev() );
+      iter->prev();
+      iter->erase();
+      vm->jump( loop_begin ); // actually, the "out" pointer
+   }
+   else
+   {
+      // a normal TRDN
+      iter->erase();
+      if( iter->hasCurrent() )
+      {
+         vm->expandTRAV( vars, *iter );
+         vm->jump( loop_begin );
+      }
+      else
+         vm->jump( loop_out );
    }
 }
 

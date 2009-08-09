@@ -506,17 +506,10 @@ void GenHAsm::gen_statement( const Statement *stmt )
       case Statement::t_continue:
       {
          fassert( ! m_loops.empty() );
-         int target_pos = (int) m_loops.end()->iData();
-         // was this a for/in loop? -- in that case, the number is negative.
-         bool bIsForin;
-         if( target_pos < 0 )
-         {
-            bIsForin = true;
-            target_pos = -target_pos;
-         }
-         else {
-            bIsForin = false;
-         }
+         LoopInfo* loop = (LoopInfo*)  m_loops.back();
+         int target_pos = loop->m_id;
+
+
          // there is a TRY statement above this one. If the TRY level is "inner"
          // ( try is inside the loop we are going to break ) we have to also pop
          // the TRY value while restarting the loop. If the TRY is outside the loop,
@@ -539,16 +532,46 @@ void GenHAsm::gen_statement( const Statement *stmt )
          if ( stmt->type() == Statement::t_continue )
          {
             const StmtContinue *cont = static_cast<const StmtContinue *>( stmt );
-            if( bIsForin )
+            // is a continue dropping? -- we must generate a TRDN opcode.
+            if( cont->dropping() )
             {
-               m_out->writeString( "\tTRAN\t_loop_begin_" + loopStr + ", _loop_tral_" + loopStr );
-               if( cont->dropping() )
-                  m_out->writeString( ", 1\n" ); // 1 -- delete
+               fassert( loop->m_loop->type() == Statement::t_forin );
+
+               // when generating the last element, TRDN is simpler.
+               if( loop->m_isForLast )
+               {
+                  m_out->writeString( "\tTRDN\t_loop_end_" + loopStr + ", 0, 0\n" );
+               }
                else
-                  m_out->writeString( ", 0\n" ); // 0 just TRAN
+               {
+                  StmtForin* fin = (StmtForin* ) loop->m_loop;
+                  String svars;
+                  svars.writeNumber((int64) fin->dest()->size() );
+                  m_out->writeString( "\tTRDN\t_loop_begin_" + loopStr + ", " +
+                                      "_loop_end_" + loopStr +
+                                      ", "+ svars +"\n" );
+                  ListElement *it_t = fin->dest()->begin();
+
+                  // first generates an array of references
+                  while( it_t != 0 ) {
+                     // again, is the compiler that must make sure of this...
+                     const Value *val = (const Value *) it_t->data();
+                     fassert( val->isSimple() );
+
+                     m_out->writeString( "\tNOP \t" );
+                     gen_operand( val );
+                     m_out->writeString( "\n" );
+
+                     it_t = it_t->next();
+                  }
+               }
             }
             else {
-               m_out->writeString( "\tJMP \t_loop_next_" + loopStr + "\n" );
+               // when generating the last element, continue == break.
+               if( loop->m_isForLast )
+                  m_out->writeString( "\tJMP \t_loop_end_" + loopStr + "\n" );
+               else
+                  m_out->writeString( "\tJMP \t_loop_next_" + loopStr + "\n" );
             }
          }
          else
@@ -832,7 +855,8 @@ void GenHAsm::gen_statement( const Statement *stmt )
          const StmtWhile *elem = static_cast<const StmtWhile *>( stmt );
 
          int branch = m_loop_id++;
-         m_loops.pushBack( (void *) branch );
+         LoopInfo loop( branch, elem );
+         m_loops.pushBack( (void *) &loop );
          String branchStr;
          branchStr.writeNumber( (int64) branch );
          m_out->writeString( "_loop_next_" + branchStr + ":\n" );
@@ -864,7 +888,8 @@ void GenHAsm::gen_statement( const Statement *stmt )
          const StmtLoop *elem = static_cast<const StmtLoop* >( stmt );
 
          int branch = m_loop_id++;
-         m_loops.pushBack( (void *) branch );
+         LoopInfo loop( branch, elem );
+         m_loops.pushBack( (void *) &loop );
          String branchStr;
          branchStr.writeNumber( (int64) branch );
          m_out->writeString( "_loop_begin_" + branchStr + ":\n" );
@@ -920,103 +945,43 @@ void GenHAsm::gen_statement( const Statement *stmt )
       case Statement::t_forin:
       {
          const StmtForin *loop = static_cast<const StmtForin *>( stmt );
-         int neededVars = 0;  // vars pushed by reference for target expansion
 
          int loopId = m_loop_id++;
 
-         // we push the negative number to signal this is a for/in loop
-         m_loops.pushBack( (void *) (-loopId) );
+         LoopInfo li( loopId, loop );
+         m_loops.pushBack( (void *) &li );
 
          String loopStr;
          loopStr.writeNumber( (int64) loopId );
 
-         // ================================== Trav block
-         // PSHR  $var1
-         // ...
-         // PSHR  $varN
-         // TRAV Jump On Failure, NumberOfVars (immediate int), SOURCE (or A),
-         //            ----or----
-         // TRAV Jump On Failure, $target, SOURCE (or A)
-         //    ---> Push immediate int (counter) or object (iterator)
-         //    ---> Push PSHR $target / immediate integer (num of vars)
-         //    ---> Push source
+         String snv;
+         snv.writeNumber( (int64) loop->dest()->size() );
 
-         //    [FORFIRST Block]
-         //   ...
-         // begin:
-         //    [loop body]
-         //    [If we have a forlast block  --
-         //      TRAL (last)]
-         // [FORMIDDLE block]
-         //
-         // TRAN begin
-         // last:
-         //   [last block]
-         // exit:
-         // ipop 3 + pushed vars.
-
-         if ( loop->dest()->isSimple() ) {
-            if ( loop->source()->isSimple() ) {
-               m_out->writeString( "\tTRAV\t" );
-               m_out->writeString( "_p_loop_end_" + loopStr + ", " );
-               gen_operand( loop->dest() );
-               m_out->writeString( ", " );
-               gen_operand( loop->source() );
-               m_out->writeString( "\n" );
-            }
-            else {
-               gen_value( loop->source() );
-               m_out->writeString( "\tTRAV\t_p_loop_end_" + loopStr + ", " );
-               gen_operand( loop->dest() );
-               m_out->writeString( ", A\n" );
-            }
+         if ( loop->source()->isSimple() ) {
+            m_out->writeString( "\tTRAV\t_p_loop_end_" + loopStr + ", " );
+            m_out->writeString( snv + ", " );
+            gen_operand( loop->source() );
+            m_out->writeString( "\n" );
          }
          else {
-            if( loop->dest()->type() == Value::t_array_decl ) {
-               ListElement *it_t = loop->dest()->asArray()->begin();
+            gen_value( loop->source() );
+            m_out->writeString( "\tTRAV\t_p_loop_end_" + loopStr + ", " );
+            m_out->writeString( snv + ", A\n" );
+         }
 
-               // first generates an array of references
-               while( it_t != 0 ) {
-                  // again, is the compiler that must make sure of this...
-                  const Value *val = (const Value *) it_t->data();
-                  fassert( val->isSimple() );
+         ListElement* it_t = loop->dest()->begin();
 
-                  m_out->writeString( "\tPSHR\t" );
-                  gen_operand( val );
-                  m_out->writeString( "\n" );
+         // first generates an array of references
+         while( it_t != 0 ) {
+            // again, is the compiler that must make sure of this...
+            const Value *val = (const Value *) it_t->data();
+            fassert( val->isSimple() );
 
-                  ++neededVars;
-                  it_t = it_t->next();
-               }
+            m_out->writeString( "\tNOP \t" );
+            gen_operand( val );
+            m_out->writeString( "\n" );
 
-               String snv;
-               snv.writeNumber( (int64) neededVars );
-               if ( loop->source()->isSimple() ) {
-                  m_out->writeString( "\tTRAV\t_p_loop_end_" + loopStr +", " );
-                  m_out->writeString( snv + ", " );
-                  gen_operand( loop->source() );
-                  m_out->writeString( "\n" );
-               }
-               else {
-                  gen_value( loop->source() );
-                  m_out->writeString( "\tTRAV\t_p_loop_end_" + loopStr +", " );
-                  m_out->writeString( snv + ", A\n" );
-               }
-            }
-            else {
-               gen_value( loop->dest() );
-               if ( loop->source()->isSimple() ) {
-                  m_out->writeString( "\tTRAV\t_p_loop_end_" + loopStr +", A, " );
-                  gen_operand( loop->source() );
-                  m_out->writeString( "\n" );
-               }
-               else {
-                  m_out->writeString( "\tPUSH\tA\n" ); // so we save the expression in B
-                  gen_value( loop->source() );
-                  m_out->writeString( "\tPOP \tB\n" ); // so we save the expression in B
-                  m_out->writeString( "\tTRAV\t_p_loop_end_" + loopStr + ", B, A\n" );
-               }
-            }
+            it_t = it_t->next();
          }
 
          // have we got a "first" block?
@@ -1034,25 +999,37 @@ void GenHAsm::gen_statement( const Statement *stmt )
          if( ! loop->middleBlock().empty() ) {
             // skip it for the last element
             m_out->writeString( "\tTRAL\t_loop_tral_" + loopStr + "\n" );
-
             gen_block( &loop->middleBlock() );
          }
 
          m_out->writeString( "_loop_next_" + loopStr + ":\n" );
-         m_out->writeString( "\tTRAN\t_loop_begin_" + loopStr + ", _loop_tral_" + loopStr + ", 0\n" );
+         m_out->writeString( "\tTRAN\t_loop_begin_" + loopStr + ", "+ snv +",\n");
+         it_t = loop->dest()->begin();
+
+         // first generates an array of references
+         while( it_t != 0 ) {
+           // again, is the compiler that must make sure of this...
+           const Value *val = (const Value *) it_t->data();
+           fassert( val->isSimple() );
+
+           m_out->writeString( "\tNOP \t" );
+           gen_operand( val );
+           m_out->writeString( "\n" );
+
+           it_t = it_t->next();
+         }
 
          // generate the last block
          m_out->writeString( "_loop_tral_" + loopStr + ":\n" );
          if( ! loop->lastBlock().empty() ) {
             // and the last time...
+            li.m_isForLast = true;
             gen_block( &loop->lastBlock() );
          }
 
          // create break landing code:
          m_out->writeString( "_loop_end_" + loopStr + ":\n" );
-         String varToPop;
-         varToPop.writeNumber( (int64) (3 + neededVars) );
-         m_out->writeString( "\tIPOP\t" + varToPop + "\n" );
+         m_out->writeString( "\tIPOP\t1\n" );
          // internal loop out used by TRAV, TRAN and TRAL
          m_out->writeString( "_p_loop_end_" + loopStr + ":\n" );
 
@@ -1070,7 +1047,7 @@ void GenHAsm::gen_statement( const Statement *stmt )
          if ( m_loops.empty() )
             m_trys.pushBack( (void *) -1 );
          else
-            m_trys.pushBack( m_loops.back() );
+            m_trys.pushBack( ((LoopInfo*) m_loops.back())->m_id );
 
          int branch = m_try_id++;
          String branchStr;

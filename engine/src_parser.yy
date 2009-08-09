@@ -539,14 +539,8 @@ forin_statement:
    FOR symbol_list OP_IN expression
       {
          Falcon::StmtForin *f;
-         Falcon::ArrayDecl *decl = $2;
-         if ( decl->front() == decl->back() ) {
-            f = new Falcon::StmtForin( LINE, (Falcon::Value *) decl->front(), $4 );
-            decl->deletor(0);
-            delete decl;
-         }
-         else
-            f = new Falcon::StmtForin( LINE, new Falcon::Value(decl), $4 );
+         Falcon::ArrayDecl *decl = $2;     
+         f = new Falcon::StmtForin( LINE, decl, $4 );
          COMPILER->pushLoop( f );
          COMPILER->pushContext( f );
          COMPILER->pushContextSet( &f->children() );
@@ -566,7 +560,9 @@ forin_statement:
       {
          Falcon::StmtForin *f;
          COMPILER->defineVal( $2 );
-         f = new Falcon::StmtForin( LINE, $2, $4 );
+         Falcon::ArrayDecl *decl = new Falcon::ArrayDecl();
+         decl->pushBack( $2 );
+         f = new Falcon::StmtForin( LINE, decl, $4 );
          COMPILER->pushLoop( f );
          COMPILER->pushContext( f );
          COMPILER->pushContextSet( &f->children() );
