@@ -352,7 +352,7 @@ void MemBuf::readIndex( const Item &index, Item &target )
                uint32 size = (uint32) ((end - pos)/step);
                mb = create( m_wordSize, size );
                for (uint32 i = 0; pos < end; i++, pos += step ) {
-                  mb->set(i, get(pos));
+                  mb->set(i, get((uint32)pos));
                }
             }
          }
@@ -368,7 +368,7 @@ void MemBuf::readIndex( const Item &index, Item &target )
                uint32 size = (uint32) ((pos-end)/(-step))+1;
                mb = create( m_wordSize, size );
                for (uint32 i = 0; pos >= end; i++, pos += step ) {
-                  mb->set(i, get(pos));
+                  mb->set(i, get((uint32)pos));
                }
             }
          }

@@ -580,7 +580,7 @@ void co_string_div( const Item& first, const Item& second, Item& third )
             if ( chr >= -(int64) 0xFFFFFFFF && chr <= (int64) 0xFFFFFFFF && len > 0 )
             {
                CoreString *gcs = new CoreString( *str );
-               gcs->setCharAt( len-1, gcs->getCharAt(len-1) + chr );
+               gcs->setCharAt( len-1, gcs->getCharAt(len-1) + (uint32)chr );
                third = gcs;
                return;
             }

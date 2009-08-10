@@ -544,8 +544,8 @@ void ItemArray::insert( Iterator &iter, const Item &data )
       throw new CodeError( ErrorParam( e_invalid_iter, __LINE__ )
             .origin( e_orig_runtime ).extra( "ItemArray::insert" ) );
 
-   insert( data, iter.position() );
-   m_invalidPoint = iter.position()+1;
+   insert( data, (int32) iter.position() );
+   m_invalidPoint = (uint32) iter.position()+1;
    invalidateIteratorOnCriterion();
    // the iterator inserted before this position, so the element has moved forward
    iter.position( iter.position() + 1 ); 
@@ -557,7 +557,7 @@ void ItemArray::erase( Iterator &iter )
       throw new AccessError( ErrorParam( e_iter_outrange, __LINE__ )
             .origin( e_orig_runtime ).extra( "ItemArray::erase" ) );
 
-   uint32 first = iter.position();
+   uint32 first = (uint32) iter.position();
    if ( first+1 < m_size )
       memmove( m_data + first, m_data + first + 1, esize(m_size - first) );
    m_size --;

@@ -1201,7 +1201,7 @@ FALCON_FUNC Method_base( VMachine *vm )
          CoreFunc* func = dyncast<CoreFunc*>(self->asMethodFunc());
          if ( ! func->symbol()->isExtFunc() )
          {
-            vm->retval( func );
+            vm->regA().setFunction( func );
             return;
          }
       }

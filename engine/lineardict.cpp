@@ -164,7 +164,7 @@ void LinearDict::smartInsert( const Iterator &iter, const Item &key, const Item 
 
    if ( iter.hasCurrent() )
    {
-      uint32 posHint = iter.position();
+      uint32 posHint = (uint32) iter.position();
 
       // right position?
       if (  key == m_data[posHint].key() )
@@ -408,7 +408,7 @@ void LinearDict::erase( Iterator &iter )
       throw new AccessError( ErrorParam( e_iter_outrange, __LINE__ )
             .origin( e_orig_runtime ).extra( "LinearDict::erase" ) );
    
-   uint32 pos = iter.position();
+   uint32 pos = (uint32)iter.position();
    if ( pos < m_size - 1 )
       memmove( m_data + pos, m_data + pos + 1, esize( m_size - pos ) );
    // otherwise, there's nothing to move...
