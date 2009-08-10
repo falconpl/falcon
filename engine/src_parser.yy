@@ -99,7 +99,6 @@ inline int flc_src_lex (void *lvalp, void *yyparam)
 %token CLASS FROM OBJECT
 %token RETURN
 %token GLOBAL
-%token LAMBDA
 %token INIT
 %token LOAD
 %token LAUNCH
@@ -158,7 +157,7 @@ inline int flc_src_lex (void *lvalp, void *yyparam)
 %type <fal_val> for_to_expr for_to_step_clause loop_terminator
 %type <fal_val> switch_decl select_decl while_decl while_short_decl
 %type <fal_val> if_decl if_short_decl elif_decl
-%type <fal_val> const_atom var_atom  atomic_symbol /* atom */
+%type <fal_val> const_atom const_atom_non_minus var_atom  atomic_symbol /* atom */
 %type <fal_val> dotarray_decl dict_decl
 %type <fal_val> inherit_call
 %type <fal_stat> break_statement continue_statement
@@ -2165,7 +2164,14 @@ return_statement:
    Grammar tokens
 ******************************************************/
 
-
+const_atom_non_minus:
+   NIL { $$ = new Falcon::Value(); }
+   | TRUE_TOKEN { $$ = new Falcon::Value( true ); }
+   | FALSE_TOKEN { $$ = new Falcon::Value( false ); }
+   | INTNUM { $$ = new Falcon::Value( $1 ); }
+   | DBLNUM { $$ = new Falcon::Value( $1 ); }
+   | STRING { $$ = new Falcon::Value( $1 ); }
+;
 
 const_atom:
    NIL { $$ = new Falcon::Value(); }
@@ -2223,7 +2229,7 @@ OPT_EOL:
 ;
 
 expression:
-     const_atom
+     const_atom_non_minus
    | var_atom
    | AMPER SYMBOL { $$ = new Falcon::Value(); $$->setLBind( $2 ); /* do not add the symbol to the compiler */ }
    | AMPER INTNUM { char space[32]; sprintf(space, "%d", (int)$2 ); $$ = new Falcon::Value(); $$->setLBind( COMPILER->addString(space) ); }

@@ -1594,8 +1594,6 @@ int SrcLexer::checkLimitedTokens()
             return GLOBAL;
          if ( m_string == "launch" )
             return LAUNCH;
-         if ( m_string == "lambda" )
-            return LAMBDA;
          if ( m_string == "object" )
             return OBJECT;
          if ( m_string == "return" )
