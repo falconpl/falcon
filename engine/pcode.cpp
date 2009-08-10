@@ -132,13 +132,17 @@ void PCODE::deendianize( byte* code, uint32 codeSize )
       // if the operation is a switch, it's handled a bit specially.
       if ( opcode == P_SWCH || opcode == P_SELE )
       {
-         // get the switch table (aready de-endianized)
-         uint64 sw_count = grabInt64(code + iPos - sizeof(int64));
+         // get the switch table (aready de-endianized in the above step)
+         iPos -= sizeof(int64);
 
-         uint16 sw_int = (int16) (sw_count >> 48);
-         uint16 sw_rng = (int16) (sw_count >> 32);
-         uint16 sw_str = (int16) (sw_count >> 16);
-         uint16 sw_obj = (int16) sw_count;
+         uint32 sw_count1 = *reinterpret_cast<uint32 *>(code+iPos) ;
+         uint16 sw_int = (int16) (sw_count1 >> 16);
+         uint16 sw_rng = (int16) (sw_count1 & 0xFFFF);
+         iPos += sizeof( uint32 );
+         sw_count1 = *reinterpret_cast<uint32 *>(code+iPos) ;
+         uint16 sw_str = (int16) (sw_count1 >> 16);
+         uint16 sw_obj = (int16) (sw_count1 & 0xFFFF);
+         iPos += sizeof( uint32 );
 
          // Endianize the nil landing
          *reinterpret_cast<uint32 *>(code+iPos) = endianInt32( *reinterpret_cast<uint32 *>(code+iPos) );
