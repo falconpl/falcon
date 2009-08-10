@@ -83,7 +83,7 @@ void LinearDict::append( const Item& item )
       ItemArray& pair = item.asArray()->items();
       if ( pair.length() == 2 )
       {
-         insert( pair[0], pair[1] );
+         put( pair[0], pair[1] );
          return;
       }
    }
@@ -138,7 +138,7 @@ bool LinearDict::remove( const Item &key )
    return false;
 }
 
-void LinearDict::insert( const Item &key, const Item &value )
+void LinearDict::put( const Item &key, const Item &value )
 {
    uint32 posHint;
 
@@ -186,7 +186,7 @@ void LinearDict::smartInsert( const Iterator &iter, const Item &key, const Item 
    }
 
    // nothing to do, perform a full search
-   insert( key, value );
+   put( key, value );
 }
 
 
@@ -201,7 +201,7 @@ void LinearDict::merge( const ItemDict &dict )
 
       while( iter.hasCurrent() )
       {
-         insert( iter.getCurrentKey(), iter.getCurrent() );
+         put( iter.getCurrentKey(), iter.getCurrent() );
          iter.next();
       }
    }

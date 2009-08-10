@@ -437,7 +437,7 @@ FALCON_FUNC  Iterator_insert( ::Falcon::VMachine *vm )
             .extra( "X,X" ) );
       }
 
-      static_cast<ItemDict*>( iter->sequence() )->insert( *i_key, *i_value );
+      static_cast<ItemDict*>( iter->sequence() )->put( *i_key, *i_value );
    }
    else
    {

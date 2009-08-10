@@ -51,7 +51,7 @@ static CoreDict* interal_make_attrib_dict( Map* attr )
       Item temp;
       inner_make_item( vd, temp );
 
-      cd->insert( new CoreString(
+      cd->put( new CoreString(
          *(String*) iter.currentKey() ),
          temp
          );

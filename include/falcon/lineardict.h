@@ -95,7 +95,7 @@ public:
    virtual void prepend( const Item& item );
 
    virtual bool remove( const Item &key );
-   virtual void insert( const Item &key, const Item &value );
+   virtual void put( const Item &key, const Item &value );
    virtual void smartInsert( const Iterator &iter, const Item &key, const Item &value );
 
    virtual void merge( const ItemDict &dict );

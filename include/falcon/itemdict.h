@@ -43,7 +43,7 @@ public:
    virtual bool findIterator( const Item &key, Iterator &iter ) = 0;
 
    virtual bool remove( const Item &key ) = 0;
-   virtual void insert( const Item &key, const Item &value ) = 0;
+   virtual void put( const Item &key, const Item &value ) = 0;
    virtual void smartInsert( const Iterator &iter, const Item &key, const Item &value ) = 0;
 
    virtual void merge( const ItemDict &dict ) = 0;

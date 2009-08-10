@@ -324,7 +324,7 @@ void opcodeHandler_GEND( register VMachine *vm )
       // insert may modify the stack (if using special "compare" functions)
       Item i1 = vm->stackItem(i);
       Item i2 = vm->stackItem(i+1);
-      dict->insert( i1, i2 );
+      dict->put( i1, i2 );
       fassert( vm->stack().length() == len );
    }
    vm->stack().resize( base );

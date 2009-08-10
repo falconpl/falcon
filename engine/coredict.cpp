@@ -143,10 +143,10 @@ void CoreDict::writeIndex( const Item &pos, const Item &target )
    if( tgt->isString() )
    {
       //TODO: Methodize
-      insert( *pos.dereference(), new CoreString( *tgt->asString() ) );
+      put( *pos.dereference(), new CoreString( *tgt->asString() ) );
    }
    else {
-      insert( *pos.dereference(), *tgt );
+      put( *pos.dereference(), *tgt );
    }
 }
 

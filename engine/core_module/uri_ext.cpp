@@ -381,14 +381,14 @@ FALCON_FUNC  URI_getFields ( ::Falcon::VMachine *vm )
    CoreString *value = new CoreString;
    uri.firstField( *key, *value );
    count--;
-   dict->insert( key, value );
+   dict->put( key, value );
    while( count > 0 )
    {
       key = new CoreString;
       value = new CoreString;
       uri.nextField( *key, *value );
       count --;
-      dict->insert( key, value );
+      dict->put( key, value );
    }
 
    vm->retval( dict );

@@ -3146,7 +3146,7 @@ Item *VMachine::getSafeBinding( const String &bind )
    Item *found = regBind().asDict()->find( bind );
    if ( found == 0 )
    {
-      regBind().asDict()->insert( new CoreString( bind ), Item() );
+      regBind().asDict()->put( new CoreString( bind ), Item() );
       found = regBind().asDict()->find( bind );
       found->setReference( new GarbageItem( Item() ) );
    }
@@ -3160,7 +3160,7 @@ bool VMachine::setBinding( const String &bind, const Item &value )
    if ( ! regBind().isDict() )
       return false;
 
-   regBind().asDict()->insert( new CoreString(bind), value );
+   regBind().asDict()->put( new CoreString(bind), value );
    return true;
 }
 
@@ -3934,7 +3934,7 @@ void VMachine::bindItem( const String& name, const Item &tgt )
    }
 
    CoreDict* cd = regBind().asDict();
-   cd->insert( Item( new CoreString( name ) ), tgt );
+   cd->put( Item( new CoreString( name ) ), tgt );
 }
 
 void VMachine::unbindItem( const String& name, Item &tgt ) const

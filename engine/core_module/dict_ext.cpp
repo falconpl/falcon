@@ -603,7 +603,7 @@ FALCON_FUNC  mth_dictSet( ::Falcon::VMachine *vm )
    if ( value == 0 )
    {
       vm->regA().setBoolean( false );
-      dict->insert( *i_key, *i_value );
+      dict->put( *i_key, *i_value );
    }
    else {
       vm->regA().setBoolean( true );

@@ -91,7 +91,7 @@ bool PageDict::remove( const Item &key )
 }
 
 
-void PageDict::insert( const Item &key, const Item &value )
+void PageDict::put( const Item &key, const Item &value )
 {
    if( m_map.insert( &key, &value ) )
       invalidateAllIters();
@@ -101,7 +101,7 @@ void PageDict::insert( const Item &key, const Item &value )
 void PageDict::smartInsert( const Iterator &iter, const Item &key, const Item &value )
 {
    // todo
-   insert( key, value );
+   put( key, value );
 }
 
 void PageDict::merge( const ItemDict &dict )
@@ -110,7 +110,7 @@ void PageDict::merge( const ItemDict &dict )
 
    while( iter.hasCurrent() )
    {
-      insert( iter.getCurrentKey(), iter.getCurrent() );
+      put( iter.getCurrentKey(), iter.getCurrent() );
       iter.next();
    }
    invalidateAllIters();

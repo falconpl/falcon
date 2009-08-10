@@ -63,7 +63,7 @@ public:
    bool findIterator( const Item &key, Iterator &iter ) { return m_dict->findIterator( key, iter ); }
 
    bool remove( const Item &key ) { return m_dict->remove( key ); }
-   void insert( const Item &key, const Item &value ) { return m_dict->insert( key, value ); }
+   void put( const Item &key, const Item &value ) { return m_dict->put( key, value ); }
    void smartInsert( const Iterator &iter, const Item &key, const Item &value ) {
       return m_dict->smartInsert( iter, key, value );
    }

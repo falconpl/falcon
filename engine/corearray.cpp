@@ -92,7 +92,7 @@ CoreDict *CoreArray::makeBindings()
    if ( m_bindings == 0 )
    {
       m_bindings = new CoreDict( new LinearDict( ) );
-      m_bindings->insert( new CoreString( "self" ), this );
+      m_bindings->put( new CoreString( "self" ), this );
       m_bindings->gcMark( mark() );
    }
 
@@ -155,7 +155,7 @@ void CoreArray::setProperty( const String &name, const Item &data )
    if ( vm )
       vm->referenceItem( ref, *const_cast<Item*>(&data) );
 
-   m_bindings->insert( new CoreString( name ), ref );
+   m_bindings->put( new CoreString( name ), ref );
 }
 
 
