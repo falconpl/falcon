@@ -19,7 +19,7 @@
 
 #define FDIS_VERSION_MAJOR        0
 #define FDIS_VERSION_MINOR        9
-#define FDIS_VERSION_REVISION     2
+#define FDIS_VERSION_REVISION     4
 
 #endif
 
