@@ -40,11 +40,13 @@ for i in [0: memory.len()]
 end
 > "]"
 
+/*
+temporary removed
 // you can create the very same membuffer using strToMemBuf
 memory = strToMemBuf( str )
 > "Through for/in:"
 // again
-for byte in memory
+for byte in memory.len()
    forfirst: >> "["
    >> fmt.format( byte )
    formiddle: >> ", "
@@ -71,5 +73,5 @@ end
 > strFromMemBuf( memory )
 > "Complete."
 
-
+*/
 /* end */
