@@ -1102,6 +1102,7 @@ void usage()
    stdOut->writeString( "\t-h: show this help\n" );
    stdOut->writeString( "\t-i: create an isomorphic version of the original assembly\n" );
    stdOut->writeString( "\tIf 'filename' is '-' or missing, read from stdin\n" );
+   stdOut->flush();
 }
 
 }
@@ -1143,6 +1144,7 @@ int main( int argc, char *argv[] )
                   stdErr->put( option[pos] );
                   stdErr->writeString( "'.\n" );
                   usage();
+                  stdErr->flush();
                   return 1;
             }
             ++pos;
@@ -1165,6 +1167,7 @@ int main( int argc, char *argv[] )
          stdErr->writeString( "faldisass: can't open file " );
          stdErr->writeString( options.m_fname );
          stdErr->writeString( "\n" );
+         stdErr->flush();
          return 1;
       }
       in = &inf;
@@ -1185,6 +1188,7 @@ int main( int argc, char *argv[] )
          stdErr->writeString( options.m_fname );
          stdErr->writeString( "\n" );
       }
+      stdErr->flush();
       return 1;
    }
 
