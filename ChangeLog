@@ -6,6 +6,7 @@ Feathers (0.9.4)
            VM.
   * added: attributes() method to Module class.
   * fixed: Regex - not nulling initial match count (may crash)
+  * minor: Harmonized all the DLL versions with main Falcon release.
 
 Feathers (0.9.2)
   * major: Added property launchAtLink and optional parameter "alias" to
