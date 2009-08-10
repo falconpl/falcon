@@ -48,11 +48,9 @@ t = arrayBuffer(threadCount)
 for i in [0:t.len()]
    // assign the i, i+1 (circular) to the events.
    t[i] = Thread()
-   t[i].run = [ threadRunner, "ID" + toString(i), evts[i], evts[ i + 1 ] ]
+   formiddle: t[i].run = [ threadRunner, "ID" + toString(i), evts[i], evts[ i + 1 ] ]
+   forlast: t[i].run = [ threadRunner, "ID" + toString(i), evts[i], evts[ i + 1 ], true ]
 end
-
-// In form the last thread that he's the last
-t[-1].run += true
 
 // start all the threads
 for thread in t
