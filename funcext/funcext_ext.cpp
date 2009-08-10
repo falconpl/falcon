@@ -130,7 +130,7 @@ FALCON_FUNC  fe_at ( ::Falcon::VMachine *vm )
             if ( i_val != 0 ) {
                if ( ca->bindings() == 0 )
                   ca->makeBindings();
-               ca->bindings()->insert( i_pos->asString(), *i_val );
+               ca->bindings()->put( i_pos->asString(), *i_val );
                vm->retnil();
                return;
             }
@@ -244,7 +244,7 @@ FALCON_FUNC  fe_at ( ::Falcon::VMachine *vm )
          }
          else {
             bool find = dict->find( *i_pos, vm->regA() );
-            dict->insert( *i_pos, *i_val );
+            dict->put( *i_pos, *i_val );
             // assign the value itself if find is not found
             if (! find) 
                vm->retnil();

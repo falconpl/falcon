@@ -722,15 +722,15 @@ FALCON_FUNC  ConfParser_getCategory( ::Falcon::VMachine *vm )
 
          // we have used KEY; now what we want to save is just the non-category
          if ( stripNames )
-            current->insert( new CoreString( key, keymask.length() + 1 ), array );
+            current->put( new CoreString( key, keymask.length() + 1 ), array );
          else
-            current->insert( new CoreString( key), array );
+            current->put( new CoreString( key), array );
       }
       else {
           if ( stripNames )
-            current->insert( new CoreString( key, keymask.length() + 1 ), new CoreString( value ) );
+            current->put( new CoreString( key, keymask.length() + 1 ), new CoreString( value ) );
          else
-            current->insert(  new CoreString( key) , new CoreString( value ) );
+            current->put(  new CoreString( key) , new CoreString( value ) );
       }
 
       next = cfile->getNextKey( key );
@@ -796,10 +796,10 @@ FALCON_FUNC  ConfParser_getDictionary( ::Falcon::VMachine *vm )
          while( cfile->getNextValue( value1 ) )
             array->append( new CoreString( value1 ) );
 
-         current->insert( new CoreString( key ), array );
+         current->put( new CoreString( key ), array );
       }
       else {
-         current->insert( new CoreString( key ), new CoreString( value ) );
+         current->put( new CoreString( key ), new CoreString( value ) );
       }
 
       next = cfile->getNextKey( key );

@@ -1165,7 +1165,7 @@ FALCON_FUNC MXMLNode_getAttribs( ::Falcon::VMachine *vm )
    MXML::AttribList::const_iterator iter = attribs.begin();
    while( iter != attribs.end() )
    {
-      dict->insert( new CoreString( (*iter)->name()),
+      dict->put( new CoreString( (*iter)->name()),
          new CoreString( (*iter)->value()) );
       ++iter;
    }

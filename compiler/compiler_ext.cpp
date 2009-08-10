@@ -1044,7 +1044,7 @@ FALCON_FUNC Module_attributes( ::Falcon::VMachine *vm )
             itm.setNil();
       }
 
-      cd->insert( new CoreString(
+      cd->put( new CoreString(
          *(String*) iter.currentKey() ),
          itm
          );
