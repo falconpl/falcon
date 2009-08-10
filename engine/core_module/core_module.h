@@ -493,6 +493,7 @@ FALCON_FUNC  Object_attributes( ::Falcon::VMachine *vm );
 FALCON_FUNC  Method_attributes( ::Falcon::VMachine *vm );
 FALCON_FUNC  Class_attributes( ::Falcon::VMachine *vm );
 
+FALCON_FUNC  Object_comp( ::Falcon::VMachine *vm );
 
 /** Path class */
 FALCON_FUNC Path_init ( ::Falcon::VMachine *vm );

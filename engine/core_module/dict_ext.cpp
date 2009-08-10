@@ -26,7 +26,7 @@
 #include <falcon/vm.h>
 #include <falcon/fassert.h>
 #include <falcon/eng_messages.h>
-
+#include <falcon/poopseq.h>
 
 namespace Falcon {
 namespace core {
@@ -792,7 +792,17 @@ FALCON_FUNC  Dictionary_comp ( ::Falcon::VMachine *vm )
    Item i_gen = *vm->param(0);
    Item i_check = vm->param(1) == 0 ? Item(): *vm->param(1);
 
-   dict->items().comprehension( vm, i_gen, i_check );
+   // if this is a blessed dictionary, we must use the append method.
+   if ( dict->isBlessed() )
+   {
+      // this will throw if dict has not "append"
+      PoopSeq seq( vm, dict );
+      seq.comprehension( vm, i_gen, i_check );
+   }
+   else {
+      dict->items().comprehension( vm, i_gen, i_check );
+   }
+
    vm->retval( vm->self() );
 }
 

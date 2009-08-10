@@ -489,6 +489,7 @@ Module* core_module_init()
    self->addClassMethod( object_meta, "setProperty", &Falcon::core::mth_setProperty ).asSymbol()->
       addParam("propName")->addParam("value");
    self->addClassMethod( object_meta, "properties", &Falcon::core::mth_properties );
+   self->addClassMethod( object_meta, "comp", &Falcon::core::Object_comp );
 
    //==================================================================
    // MemoryBuffer class

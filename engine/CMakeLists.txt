@@ -136,6 +136,7 @@ SET( CORE_MODULE_SOURCES
    core_module/pagedict_ext.cpp
    core_module/param_ext.cpp
    core_module/path_ext.cpp
+   core_module/poopseq_ext.cpp
    core_module/print.cpp
    core_module/random.cpp
    core_module/seconds.cpp
@@ -208,6 +209,7 @@ ADD_LIBRARY( falcon_engine SHARED
    pagedict.cpp
    path.cpp
    pcode.cpp
+   poopseq.cpp
    proptable.cpp
    rampmode.cpp
    rangeseq.cpp

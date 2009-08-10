@@ -1,4 +1,4 @@
-Falcon (0.9.2.1)
+Falcon (0.9.4)
   * fixed: ClassMethod couldn't be used as classes for new instances, and
            any class in a property would have generated a class method when
            accessed.
@@ -21,9 +21,9 @@ Falcon (0.9.2.1)
   * major: The CoreArray is now based on an inner element derived from Sequence.
            This makes possible to abstract many operations (but this is not visible
            at language level).
-  * major: Added compound method to Array and List classes (this can be used to create
-           lists from list definitions very similarly to Python, but still being
-           more flexible.
+  * major: Added comprehension method to Array and List classes (this can be used
+           to create lists from list definitions very similarly to Python, but
+           still being more flexible.
   * fixed: Some string methods renamed: 
              String.backFind => String.rfind  (wasn't working anyhow)
              String.backTrim => String.rtrim
@@ -39,26 +39,29 @@ Falcon (0.9.2.1)
   * added: Methodic function describe() that can be used as a reflective inspect()
   * minor: Now using describe() instead of toString() in interactive mode.
   * fixed: Access to static methods in classes was broken.
-  * fixed: In ranges, step 0 now represents the "default step"; open range is indicated
-           with a special value.
+  * fixed: In ranges, step 0 now represents the "default step"; open range is
+           indicated with a special value.
   * minor: Ranged access to membuf now creates membuf slices.
   * minor: Added function arrayCompact and method Array.compact() for finer memory
            usage control.
-  * minor: .ptr() for integer dereferenced them; this seems to be unneeded, at least
-            in the main engine; now ptr() on integers just returns the integer itself.         
+  * minor: .ptr() for integer dereferenced them; this seems to be unneeded, at
+            least in the main engine; now ptr() on integers just returns the
+            integer itself.
   * fixed: Representation of memory buffers on big endian machines.
   * fixed: Slowness on Sparc32 bit platform.
   * minor: Performance issue on Big endian platforms.
-  * minor: TypeID returned by typeOf and typeId for integer items is now NumericType.
-  * major: Closures are not anymore transparent (arrays). From the outside, they look
-           as functions, but they record the value of local variable.
+  * minor: TypeID returned by typeOf and typeId for integer items is now
+           NumericType.
+  * major: Closures are not anymore transparent (arrays). From the outside, they
+           look as functions, but they record the value of local variable.
   * major: A more flexible definition of methods, and a more formal definition of
            call points and call structures allowed to fix some weirdness in the
            resolution of "self" with methodic arrays.
-  * fixed: Closures can now refer to symbols in any parent, not just in the topmost parent.
+  * fixed: Closures can now refer to symbols in any parent, not just in the topmost
+           parent.
   * minor: Closed variables in closures are now always received by reference. This
-           allows all the closures created in a function to share and be able to modify
-           the same variable environment.
+           allows all the closures created in a function to share and be able to
+           modify the same variable environment.
   * minor: Rationalized iterators; as a result, they won't work on Strings and
            MemBuf, for a few releases at least.
   * minor: removed List.erase() and List.insert() (now done via iterators).
