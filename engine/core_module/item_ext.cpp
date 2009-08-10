@@ -497,7 +497,7 @@ FALCON_FUNC  mth_setProperty( ::Falcon::VMachine *vm )
 /*#
    @function properties
    @brief Returns all the properties in the given item.
-   @oaram item An item that can be accessed via dot accessor.
+   @param item An item that can be accessed via dot accessor.
    @return An array of strings representing property names.
 
    This function returns the properties offered by an item
@@ -507,8 +507,8 @@ FALCON_FUNC  mth_setProperty( ::Falcon::VMachine *vm )
 
    The item susceptible of returning an array of properties
    are:
-   - Objects (see @a Objects.properties)
-   - Dictionaries (if blessed, see @a Dictioanry.properties)
+   - Objects (see @a Object.properties)
+   - Dictionaries (if blessed, see @a Dictionary.properties)
    - Arrays (see @a Array.properties)
    - Classes (see @a Class.properties)
 

@@ -82,6 +82,10 @@ if 2 notin arr2: failure( "Notin operator - negative" )
 if 10 in arr2: failure( "In operator - negative" )
 if not 10 notin arr2: failure( "Notin operator - negative" )
 
+// resize with a negative integer.
+arr2.resize(-1)  // as 0
+if arr2.len() > 0: failure( "Resize negative" )
+
 success()
 
 /* End of file */

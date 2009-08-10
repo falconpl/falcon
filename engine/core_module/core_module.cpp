@@ -244,6 +244,15 @@ Module* core_module_init()
    self->addClassMethod( range_meta, "times", &Falcon::core::core_times ).asSymbol()->setEta( true )->
       addParam("count")->addParam("sequence");
 
+   /*#
+      @class LateBinding
+      @from BOM
+      @ingroup bom_classes
+      @brief Metaclass for LateBinding type.
+
+      Late bindings are special items treated as "symbols", that
+      can receive an associated value at runtime.
+   */
    Falcon::Symbol *lbind_meta = self->addClass( "LateBinding" );
    lbind_meta->getClassDef()->addInheritance( new Falcon::InheritDef( bom_meta ) );
    lbind_meta->exported( false );
@@ -524,7 +533,16 @@ Module* core_module_init()
    self->addClassMethod( membuf_meta, "ptr", &Falcon::core::MemoryBuffer_ptr );
 
 
-   // reference has none
+   /*#
+      @class ClassMethod
+      @from BOM
+      @ingroup bom_classes
+      @brief Metaclass of ClassMethod items.
+
+      ClassMethods are special methods that, once applied to objects or
+      methods, resolve in a new method taking the original object, but the
+      function/code of one of the base classes.
+   */
    Falcon::Symbol *clsmethod_meta = self->addClass( "ClassMethod" );
    clsmethod_meta->getClassDef()->addInheritance( new Falcon::InheritDef( bom_meta ) );
    clsmethod_meta->exported( false );
@@ -549,7 +567,15 @@ Module* core_module_init()
    self->addClassMethod( method_meta, "base", &Falcon::core::Method_base );
    self->addClassMethod( method_meta, "attributes", &Falcon::core::Method_attributes );
 
+   /*#
+      @class Class
+      @from BOM
+      @ingroup bom_classes
+      @brief Metaclass of Class items.
 
+      This is the class reflecting falcon class items. A class is a callable
+      item that can generate instances.
+   */
    Falcon::Symbol *class_meta = self->addClass( "Class" );
    class_meta->getClassDef()->addInheritance( new Falcon::InheritDef( bom_meta ) );
    class_meta->exported( false );

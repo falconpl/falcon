@@ -331,7 +331,7 @@ FALCON_FUNC  mth_dictMerge ( ::Falcon::VMachine *vm )
 */
 
 /*#
-   @method dict Dictionary
+   @method keys Dictionary
    @brief Returns an array containing all the keys in this dictionary.
    @return An array containing all the keys.
 
@@ -768,7 +768,7 @@ FALCON_FUNC  mth_dictBest( ::Falcon::VMachine *vm )
 }
 
 /*#
-   @method comp Dict
+   @method comp Dictionary
    @brief Appends elements to this dictionary through a filter.
    @param source A sequence, a range or a callable generating items.
    @optparam filter A filtering function receiving one item at a time.

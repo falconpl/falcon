@@ -31,6 +31,7 @@ namespace core {
 
 /*#
    @class List
+   @from Sequence ...
    @brief Fast growable double linked list.
    @param ... An arbitrary list of parameters.
 

@@ -31,6 +31,7 @@ namespace core {
 
 /*#
    @class Set
+   @from Sequence ...
    @brief Storage for uniquely defined items (and ordering criterion).
    @param ... An arbitrary list of parameters.
 
@@ -123,7 +124,7 @@ FALCON_FUNC  Set_remove ( ::Falcon::VMachine *vm )
 }
 
 /*#
-   @method contain Set
+   @method contains Set
    @brief Checks if a certain item is in the set.
    @param item The item to be found.
    @return True if the item is in the set, false otherwise.
@@ -146,7 +147,7 @@ FALCON_FUNC  Set_contains ( ::Falcon::VMachine *vm )
 }
 
 /*#
-   @method contain Set
+   @method find Set
    @brief Checks if a certain item is in the set.
    @param item The item to be found.
    @return True if the item is in the set, false otherwise.
