@@ -5,10 +5,10 @@
 
                                   0.9.4
 
-  "Eagle" version represents a strenghtening, a bugfix and formalization of
+  "Eagle" version represents a strengthening, a bug-fix and formalization of
 the previous version. The initial plan was that of stuffing some of the new
 features we want to introduce in 0.9 release set right in 0.9.4, but as the
-changelog was growing, we decided to concentrate in code cleaning and bugfix.
+changelog was growing, we decided to concentrate in code cleaning and bug-fix.
 
   This will give us the time needed to work on modules and extensions through
 a very stable base, and "stable" meant both as with a long lasting interface
@@ -24,7 +24,7 @@ code cleaning. However, this sole operation had the side effect of removing
 a long lasting rust in various parts of the engine, and this earned a
 performance boost of about 15-25% in VM intensive tasks; the most relevant
 performance increase has been registered in the call stack related routines;
-to make an example, the fibonacci recursive (non-optimized) test, which
+to make an example, the Fibonacci recursive (non-optimized) test, which
 stresses the ability to recursively call functions (with no tail-stack
 optimizations yet) is consistently about 33% faster than in Crane version.
 
@@ -45,55 +45,106 @@ features:
   - Comprehension (using also generator functions).
   - Symbol annotations (attributes).
   - Addition of the Set class.
+  - Improving of stability in interactive mode.
 
   The star of this release is the long-wished-for feature of "list"
 comprehension, to which a new chapter of the Survival Guide has been
-dedicated. Falcon uses its OOP/functional hybridation to perform comprehension
-on any item or class instance supporting the Sequence VM interface. At this
-moment, this is available only for 
+dedicated. Falcon uses its OOP/functional hybridization to perform comprehension
+on any item or class instance supporting the Sequence VM interface.
+Comprehension is also available for any instance or prototyped object
+exposing an "append" method.
+
+  The Set class is a simple set collection which orderly stores unique
+copies of items.
+
+  Attributes allow to specify compile-time values for modules or prominent
+symbols, which can be used by external tools to query the module contents
+or by the program themselves to configure runtime behavior. For example,
+an organization may require all the modules to be signed by an authority
+through a special attribute, and check the validity of that signature before
+allowing the modules to be loaded and executed. A specialized serialization
+routine or a persistent-storage system may use the attribute informations to
+decide which elements to persistently store and restore.
+
+  Generator functions are simply functions returning one item at a time, to
+be iteratively used in while loops, or automatically used in for/in loops
+and as comprehension source set generators. They just need to return a special
+Out of Band 0 integer item when the generation is terminated.
+
+  The interactive mode, althrough still not perfect, has been improved
+under many aspects. It is now much more robust to user errors, and it recovers
+more gracefully under many situations.
+
 
 Backward incompatibilities
 ==========================
 
+  This release introduces some minimal incompatibility with the previous
+version. In details:
 
-Future plans
-============
+  - Closures are not anymore transparent arrays; they are full fledged
+    opaquely closed functions. Code relying on callable arrays to be
+    generated when returning closures (i.e. mangling the returned array)
+    must be reviewed.
 
-  We'll concentrate mainly in three aspect in the next releases:
+  - Callable arrays stored in object properties are now retrieved as functions,
+    or more precisely, as methods. This makes impossible (at the moment) to
+    mangle with their contents once stored.
 
-  - Optimization: starting from this version, we're beginning to optimize
-    various aspects of the engine, and to employ state-of-the-art
-    programming techniques to boost performances in critical areas as
-    concurrency, memory pooling, stack compression, dictionary search
-    caching and method early binding. Also, we'll start introducing compile
-    time optimizations to boost the performance of the generated code using
-    the best possible sequence of Virtual Machine opcodes, and we may
-    extend the VM model to allow for more effective optimizations (as local
-    caching of frequently used objects).
-  - Completion: Message programming and Tabular programming are growing more
-    solid, but their employ out in the wild showed some uncovered area that
-    requires work. For example, messages could be excellent means to have
-    coroutines, and possibly threads, to cooperate if just integrated with
-    the wait functions.
-  - Extension: three are the issues that must be covered before reaching the
-    1.0 stage: logic programming, type contracts (or optional typing) and
-    native support for arbitrary precision math. We'll try to introduce all
-    the three as soon as possible, so that they are involved since the
-    beginning in the optimization and completion steps.
+  - Strings and memory buffers are not anymore supported by iterators and by
+    the for/in loop. It is actually possible to have this interface back
+    for them, but this way to access them is highly inefficient. So, it's
+    preferable to encourage more direct techniques to deal with strings
+    and memory buffers. In case this turns out to be a bad decision, we'll
+    activate the support in iterators and for/in loops again in a future
+    release.
+
+  - Closures now can close a symbol in any parent; this may break some code
+    that uses improperly a name of a variable not present in the direct
+    parent, but declared at a higher closure level.
+
+  - Operator '*' on strings now replicates them. Addition of Unicode values
+    is now performed by the '%' operator; so
+
+       a = "abc" * 2      // "abcabc"
+       a = "abc" % 65     // "abcA"
+
+  - Renamed some common string methods:
+      String.backFind => String.rfind 
+      String.backTrim => String.rtrim
+      String.frontTrim => String.ftrim
+
+  - Removed List methods insert() and erase() (now performed via iterators).
 
 
-Short term plans
-================
+Minor additions
+===============
 
-  As this is the first official release after more than six months, and as
-the changes in the engine are quite extensive, we expect that the release
-out on the wild will expose unspotted problems. This, and the need to
-integrate logic programming, type contracts and arbitrary precision math
-fast has made us plan an official release 0.9.4 in 45-60 days.
+  A set of minor, but significant upgrades have been introduced as well to make
+the coding experience more complete and interesting.
 
-  The development group will concentrate in updating and releasing critical
-modules as DBI, DynLib and SDL, plus critical projects as the embedding
-sample suite and Faldoc as soon as possible, possibly in 1-2 weeks.
+  - A "properties()" BOM method has been added; it returns an array containing
+    all the properties declared by instances, and can be used to iterate
+    dynamically over properties and methods (via the getProperty() BOM method).
+
+  - A methodic "describe()" BOM method has been added to all the item types;
+    it performs a compact inspect() rendered to a string that is then returned.
+    It's a bit heavier than toString().
+
+  - bind(), unbind(), bound() and value() methods has been added to late binding
+    items.
+
+  - Added argv() and argd() functions that return respectively a vector and a
+    dictionary with all the parameters passed to a function.
+
+  - Added "add Unicode value" operator for strings ("/"). "A" / 1 => "B",
+    "Z" / -1 => "Y".
+
+  - The Compiler module can be used to access also an incremental compiler;
+    the incremental compiler has its own Virtual Machine sandboxed in, so it
+    is concretely possible to control a separate Falcon Virtual Machine from
+    inside falcon scripts.
+
 
 Usage tips
 ==========
