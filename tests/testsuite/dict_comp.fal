@@ -1,7 +1,7 @@
 /****************************************************************************
 * Falcon test suite
 *
-* ID: 121a
+* ID: 121b
 * Category: comp
 * Subcategory: dict
 * Short: Comprehension on dictionaries
@@ -41,6 +41,25 @@ if a.len() != 3: failure( "Ranged comprehension, size" )
 if a['a'] != ord('a'): failure( "Ranged comprehension, 'a'" )
 if a['b'] != ord('b'): failure( "Ranged comprehension, 'b'" )
 if a['c'] != ord('c'): failure( "Ranged comprehension, 'c'" )
+
+
+// ranged comprehension
+function gengen()
+  val = ord('a')
+  gen = function()
+      v = val
+      val += 1
+      if chr(val) == 'e': return oob(0)
+      return v
+  end
+  return gen
+end
+      
+a = [=>].comp( gengen(), { ln => [chr(ln), ln] } )
+if a.len() != 3: failure( "Generator comprehension, size" )
+if a['a'] != ord('a'): failure( "Generator comprehension, 'a'" )
+if a['b'] != ord('b'): failure( "Generator comprehension, 'b'" )
+if a['c'] != ord('c'): failure( "Generator comprehension, 'c'" )
 
 success()
 

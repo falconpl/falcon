@@ -1,0 +1,63 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 121a
+* Category: comp
+* Subcategory: array
+* Short: Comprehension on arrays
+* Description:
+*   Comprehension is an expression or expression set generating
+*   lists or sets.
+*
+*   Falcon comprehension is quite articulated, as it is composed of
+*   <sequence>.comp( <item>, [<filter>] )
+*
+*   where <sequence> is the target sequence, <item> is a generating
+*   item (range, source sequence or generator function) and filter may
+*   transform the data in the item on the fly or discard it.
+*
+* [/Description]
+*
+****************************************************************************/
+
+// direct comprehension
+a = [].comp( .[ 'a' 'b' 'c' ] )
+if a.len() != 3: failure( "Direct comprehension, size" )
+if a[0] != 'a': failure( "Direct comprehension, 'a'" )
+if a[1] != 'b': failure( "Direct comprehension, 'b'" )
+if a[2] != 'c': failure( "Direct comprehension, 'c'" )
+
+// indirect
+a = [].comp( ['a','b','c'], { letter=> ord(letter) } )
+if a.len() != 3: failure( "Indirect comprehension, size" )
+if a[0] != ord('a'): failure( "Indirect comprehension, 'a'" )
+if a[1] != ord('b'): failure( "Indirect comprehension, 'b'" )
+if a[2] != ord('c'): failure( "Indirect comprehension, 'c'" )
+
+// ranged comprehension
+a = [].comp( [ ord('a'): ord('d')], { ln => chr(ln) } )
+if a.len() != 3: failure( "Ranged comprehension, size" )
+if a[0] != 'a': failure( "Ranged comprehension, 'a'" )
+if a[1] != 'b': failure( "Ranged comprehension, 'b'" )
+if a[2] != 'c': failure( "Ranged comprehension, 'c'" )
+
+
+// ranged comprehension
+function gengen()
+  val = 0
+  gen = function()
+      v = val
+      val += 1
+      if val == 4: return oob(0)
+      return v
+  end
+  return gen
+end
+
+a = [].comp( gengen(), { ln => 'a' / ln } )
+if a.len() != 3: failure( "Generator comprehension, size" )
+if a[0] != 'a': failure( "Generator comprehension, 'a'" )
+if a[1] != 'b': failure( "Generator comprehension, 'b'" )
+if a[2] != 'c': failure( "Generator comprehension, 'c'" )
+
+success()

@@ -1,0 +1,33 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 121c
+* Category: comp
+* Subcategory: array
+* Short: Custom comprehension
+* Description:
+*   Test on custom comprehension.
+*
+* [/Description]
+*
+****************************************************************************/
+
+class MetaArray
+  array = []
+
+  function append( data )
+     self.array.add( data )
+  end
+end
+
+ma = MetaArray()
+ma.comp( [0:3], {x=> x*2} )
+
+if ma.array.len() != 3: failure( "Size" )
+if ma.array[0] != 0: failure( "Zero" )
+if ma.array[1] != 2: failure( "One" )
+if ma.array[2] != 4: failure( "Twi" )
+
+success()
+
+/* end of file */

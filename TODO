@@ -8,4 +8,6 @@ TODO for 0.9.6
    - [Desiderata] Submodule-loading (i.e. load core=>strings)
    - Native support for big numbers.
    - Type contracts.
+   - Revision of equality concepts (== equal, === coincident).
+   
 
