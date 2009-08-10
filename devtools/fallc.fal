@@ -385,7 +385,7 @@ for glob in Options.globs
    filename = path.filename
    // try to diropen the location
    try
-      direnum = DirectoryOpen( location )
+      direnum = Directory( location )
       while (file = direnum.read() )
          if strWildcardMatch( glob, file )
             Options.inputs += location + "/" + file
