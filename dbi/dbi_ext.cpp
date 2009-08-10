@@ -254,7 +254,7 @@ FALCON_FUNC DBIBaseTrans_queryOneDict( VMachine *vm )
       CoreString *gsName = new CoreString;
       gsName->bufferize( cNames[cIdx] );
 
-      dict->insert( gsName, i );
+      dict->put( gsName, i );
    }
 
    memFree( cTypes );
@@ -1358,7 +1358,7 @@ FALCON_FUNC DBIRecordset_fetchDict( VMachine *vm )
       Item i;
       if ( dbr_getItem( vm, dbr, cTypes[cIdx], cIdx, i ) )
       {
-         dict->insert( gsName, i );
+         dict->put( gsName, i );
       } else {
          // TODO: handle error
       }
