@@ -1,0 +1,30 @@
+/****************************************************************************
+* Falcon test suite
+*
+* ID: 27d
+* Category: methods
+* Subcategory:
+* Short: Method array add/sub
+* Description:
+*   Check if methods created through arrays can still be seen as arrays.
+* [/Description]
+*
+****************************************************************************/
+
+// bom methods
+class Test
+    a = [{x,y=> y = x}, "new value" ]
+end
+
+t = Test()
+if t.a.base().typeId() != ArrayType: failure( "base method" )
+
+// see if we can also access the item iteself via the base method
+t.a += "Item"
+if t.a[2] != "Item": failure( "Method-array addition" )
+t.a.base() -= "Item"
+if t.a.base().len() != 2: failure( "Method-array base extraction removal" )
+
+success()
+
+/* End of file */

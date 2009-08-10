@@ -1425,7 +1425,7 @@ void opcodeHandler_TRAV( register VMachine *vm )
    Item *source = vm->getOpcodeParam( 3 )->dereference();
 
    // our sequence:
-   Sequence *seq;
+   Sequence *seq = 0;
 
    switch( source->type() )
    {
@@ -1503,7 +1503,7 @@ void opcodeHandler_TRAV( register VMachine *vm )
    }
 
    // empty sequence?
-   if ( seq->empty() )
+   if ( seq == 0 || seq->empty() )
    {
       vm->jump(wayout);
       return;
