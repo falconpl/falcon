@@ -591,7 +591,10 @@ FALCON_FUNC  mth_arrayResize ( ::Falcon::VMachine *vm )
    }
 
    CoreArray *array = array_x->asArray();
-   array->resize( (int32) item_size->forceInteger() );
+   int64 size = item_size->forceInteger();
+   if ( size < 0 )
+      size = 0;
+   array->resize( (uint32) size );
 }
 
 /*#
