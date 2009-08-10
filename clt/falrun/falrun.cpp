@@ -47,11 +47,12 @@ static void version()
    stdOut->writeString( "Version " );
    stdOut->writeString( FALCON_VERSION " (" FALCON_VERSION_NAME ")" );
    stdOut->writeString( "\n" );
+   stdOut->flush();
 }
 
 static void usage()
 {
-   stdOut->writeString( "Usage: falrun [options] file.hsc [script options]\n" );
+   stdOut->writeString( "Usage: falrun [options] file.fam [script options]\n" );
    stdOut->writeString( "\n" );
    stdOut->writeString( "Options:\n" );
    stdOut->writeString( "   -e <enc>    select default encoding for VM streams\n" );
@@ -65,6 +66,7 @@ static void usage()
    stdOut->writeString( "Paths must be in falcon file name format: directory separatros must be slashes and\n" );
    stdOut->writeString( "multiple entries must be entered separed by a semicomma (';')\n" );
    stdOut->writeString( "\n" );
+   stdOut->flush();
 }
 
 void findModuleName( const String &filename, String &name )
@@ -252,6 +254,7 @@ int main( int argc, char *argv[] )
       stdOut->writeString( "falrun: Can't open file " );
       stdOut->writeString( input_file );
       stdOut->writeString( "\n" );
+      stdOut->flush();
       return 1;
    }
 
