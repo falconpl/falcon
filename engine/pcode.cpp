@@ -133,7 +133,7 @@ void PCODE::deendianize( byte* code, uint32 codeSize )
       if ( opcode == P_SWCH || opcode == P_SELE )
       {
          // get the switch table (aready de-endianized)
-         uint64 sw_count = *reinterpret_cast<uint64 *>(code + iPos - sizeof(int64));
+         uint64 sw_count = grabInt64(code + iPos - sizeof(int64));
 
          uint16 sw_int = (int16) (sw_count >> 48);
          uint16 sw_rng = (int16) (sw_count >> 32);
